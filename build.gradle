@@ -15,7 +15,7 @@ repositories {
     maven { url = 'https://jitpack.io' }
 }
 
-def mainName = 'org.athenian.Config'
+def mainName = 'com.github.pambrose.readingbat.Config'
 def appName = 'server'
 
 def junitVersion = '5.6.1'
