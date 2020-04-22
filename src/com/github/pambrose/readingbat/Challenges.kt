@@ -46,13 +46,17 @@ class Configuration {
     }
 
   fun python(block: LanguageGroup.() -> Unit) {
-    pythonLanguageGroup.apply(block)
-    pythonLanguageGroup.validate()
+    pythonLanguageGroup.apply {
+      apply(block)
+      validate()
+    }
   }
 
   fun java(block: LanguageGroup.() -> Unit) {
-    javaLanguageGroup.apply(block)
-    javaLanguageGroup.validate()
+    javaLanguageGroup.apply {
+      apply(block)
+      validate()
+    }
   }
 
   companion object {

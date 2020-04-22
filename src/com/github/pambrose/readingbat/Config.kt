@@ -138,9 +138,9 @@ object Config {
 
         group("Warm-up 3") {}
         group("Warm-up 4") {}
-        //group("Warm-up 5") {}
-        //group("Warm-up 6") {}
-        //group("Warm-up 7") {}
+        group("Warm-up 5") {}
+        group("Warm-up 6") {}
+        group("Warm-up 7") {}
       }
     }
   }
