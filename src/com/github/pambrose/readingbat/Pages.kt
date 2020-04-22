@@ -80,7 +80,7 @@ fun Application.module(testing: Boolean = false, config: Configuration) {
   val check = "/$static/check.jpg"
   val cssName = "/styles.css"
   val sessionCounter = AtomicInteger(0)
-  val production: Boolean by lazy { System.getProperty("PRODUCTION")?.toBoolean() ?: false }
+  val production: Boolean by lazy { System.getenv("PRODUCTION")?.toBoolean() ?: false }
 
   val analytics: HEAD.() -> Unit = {
     if (production) {
