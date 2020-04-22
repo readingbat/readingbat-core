@@ -6,9 +6,11 @@ import com.github.pambrose.readingbat.LanguageType.Java
 import com.github.pambrose.readingbat.LanguageType.Python
 import io.ktor.server.cio.CIO
 import io.ktor.server.engine.embeddedServer
+import mu.KLogging
 import java.net.URL
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.time.measureTimedValue
 
 enum class LanguageType(val useDoubleQuotes: Boolean) {
   Java(true), Python(false);
@@ -230,7 +232,7 @@ abstract class AbstractChallenge(internal val challengeGroup: ChallengeGroup) {
   }
 }
 
-class PythonChallenge(challengeGroup: ChallengeGroup) : AbstractChallenge(challengeGroup) {
+class PythonChallenge(group: ChallengeGroup) : AbstractChallenge(group) {
   override fun funcText(): String {
     return """
     def pos_neg(a, b, negative):
@@ -240,15 +242,20 @@ class PythonChallenge(challengeGroup: ChallengeGroup) : AbstractChallenge(challe
         return ((a < 0 and b > 0) or (a > 0 and b < 0))
               """.trimIndent()
   }
+
+  companion object : KLogging()
 }
 
-class JavaChallenge(challengeGroup: ChallengeGroup) : AbstractChallenge(challengeGroup) {
+class JavaChallenge(group: ChallengeGroup) : AbstractChallenge(group) {
   override fun funcText() =
-    sourcesMap.computeIfAbsent(challengeId) { i ->
-      val codePath = "${challengeGroup.languageGroup.rawRepoRoot}${fileName.ensureSuffix(".${languageType.lcname}")}"
-      findJavaFunction(URL(codePath).readText())
+    sourcesMap.computeIfAbsent(challengeId) {
+      val path = "${challengeGroup.languageGroup.rawRepoRoot}${fileName.ensureSuffix(".${languageType.lcname}")}"
+      val (content, dur) = measureTimedValue { URL(path).readText() }
+      logger.info { "Fetching ${challengeGroup.name.toDoubleQuoted()}/${funcName.toDoubleQuoted()} $path in $dur" }
+      findJavaFunction(content)
     }
 
+  companion object : KLogging()
 }
 
 class InvalidConfigurationException(msg: String) : Exception(msg)

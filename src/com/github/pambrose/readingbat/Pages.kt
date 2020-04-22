@@ -76,17 +76,35 @@ fun Application.module(testing: Boolean = false, config: Configuration) {
   val fs = 115.pct
   val processAnswers = "processAnswers"
   val title = "ReadingBat"
-  val subTitle = "What does this code do?"
   val static = "static"
   val check = "/$static/check.jpg"
   val cssName = "/styles.css"
   val sessionCounter = AtomicInteger(0)
+  val production: Boolean by lazy { System.getProperty("PRODUCTION")?.toBoolean() ?: false }
+
+  val analytics: HEAD.() -> Unit = {
+    if (production) {
+      unsafe {
+        raw(
+          """
+        <script async src="https://www.googletagmanager.com/gtag/js?id=UA-164310007-1"></script>
+        <script>
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+          gtag('config', 'UA-164310007-1');
+        </script>
+      """.trimIndent()
+        )
+      }
+    }
+  }
 
   fun header(languageType: LanguageType): BODY.() -> Unit = {
     div(classes = "header") {
       a { href = "/"; span { style = "font-size:200%;"; +title } }
       unsafe { raw("&nbsp;") }
-      span { +"reading code practice" }
+      span { +"code reading practice" }
     }
     nav {
       ul {
@@ -121,7 +139,9 @@ fun Application.module(testing: Boolean = false, config: Configuration) {
     head {
       title(title)
       link { rel = "stylesheet"; href = cssName; type = "text/css" }
+      analytics.invoke(this)
     }
+
     body {
       header(languageType).invoke(this)
 
@@ -160,7 +180,9 @@ fun Application.module(testing: Boolean = false, config: Configuration) {
     head {
       title(title)
       link { rel = "stylesheet"; href = cssName; type = "text/css" }
+      analytics.invoke(this)
     }
+
     body {
       header(languageType).invoke(this)
 
@@ -277,8 +299,10 @@ fun Application.module(testing: Boolean = false, config: Configuration) {
         }
       }
 
+
       link { rel = "stylesheet"; href = cssName; type = "text/css" }
       link { rel = "stylesheet"; href = "/$static/${languageType.lcname}-prism.css"; type = "text/css" }
+      analytics.invoke(this)
     }
 
     body {
