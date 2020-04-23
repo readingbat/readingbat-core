@@ -11,9 +11,9 @@ object Config {
       python {
         repoRoot = "https://github.com/readingbat/readingbat-python-content"
 
-        group("Warm-up 1") {
+        group("Warmup 1") {
           packageName = "warmup1"
-          description = "This is a description of Warm-up 1"
+          description = "This is a description of Warmup 1"
 
           challenge("pythonFrontBack") {
             fileName = "front_back.py"
@@ -25,34 +25,34 @@ object Config {
           }
 
           challenge("pythonFrontBackBool") {
-            fileName = "FrontBack.py"
+            fileName = "front_back.py"
 
             "this is a test" returns true
             "this" returns false
           }
         }
 
-        group("Warm-up 2") {
-          description = "This is a description of Warm-up 2"
+        group("Warmup 2") {
+          description = "This is a description of Warmup 2"
 
           challenge("pythonLongerMulti") {
-            fileName = "FrontBack.py"
+            fileName = "front_back.py"
             description = """
-          
-        """.trimIndent()
+              This is a description of front_back.py
+            """
 
             listOf("thist", true, 4, 2.3) returns 5
           }
 
           challenge("pythonStringArray2") {
-            fileName = "FrontBack.py"
+            fileName = "front_back.py"
 
             listOf(listOf("first", "second"), listOf(2, 4), listOf(true, false)) returns true
           }
         }
 
-        group("Warm-up 3") {
-          description = "This is a description of Warm-up 3"
+        group("Warmup 3") {
+          description = "This is a description of Warmup 3"
 
           challenge("pythonStringArray3") {
             fileName = "FrontBack.py"
@@ -60,17 +60,27 @@ object Config {
             listOf(listOf("first", "second"), listOf(2, 4), listOf(true, false)) returns true
           }
         }
+
+        group("Logic 1") {}
+        group("Logic 2") {}
+        group("String 1") {}
+        group("String 2") {}
+        group("Array 1") {}
+        group("Array 2") {}
       }
 
       java {
         repoRoot = "https://github.com/readingbat/readingbat-java-content"
 
-        group("Warm-up 1") {
+        group("Warmup 1") {
           packageName = "warmup1"
-          description = "This is a description a description a description of Warm-up 1"
+          description = "This is a **description** of [Warmup 1](/python)"
 
           challenge("frontBack") {
             fileName = "FrontBack.java"
+            description = """
+              This is a **description** of *FrontBack.java* [Warmup 1](/java)
+            """
             codingBatEquiv = "p171896"
 
             "this is a test" returns "tt"
@@ -105,8 +115,7 @@ object Config {
             "thistest8.7" returns 8.7
           }
         }
-
-        group("Warm-up 2") {
+        group("Warmup 2") {
           packageName = "warmup2"
 
           challenge("longerMulti") {
@@ -132,11 +141,12 @@ object Config {
           }
         }
 
-        group("Warm-up 3") {}
-        group("Warm-up 4") {}
-        group("Warm-up 5") {}
-        group("Warm-up 6") {}
-        group("Warm-up 7") {}
+        group("Logic 1") {}
+        group("Logic 2") {}
+        group("String 1") {}
+        group("String 2") {}
+        group("Array 1") {}
+        group("Array 2") {}
       }
     }
   }

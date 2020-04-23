@@ -4,6 +4,9 @@ import com.github.pambrose.common.util.*
 import com.github.pambrose.readingbat.Configuration.Companion.config
 import com.github.pambrose.readingbat.LanguageType.Java
 import com.github.pambrose.readingbat.LanguageType.Python
+import com.vladsch.flexmark.html.HtmlRenderer
+import com.vladsch.flexmark.parser.Parser
+import com.vladsch.flexmark.util.data.MutableDataSet
 import io.ktor.server.cio.CIO
 import io.ktor.server.engine.embeddedServer
 import mu.KLogging
@@ -20,8 +23,6 @@ enum class LanguageType(val useDoubleQuotes: Boolean, val suffix: String) {
   fun isJava() = this == Java
   fun isPython() = this == Python
 }
-
-fun fromPath(s: String) = s.capitalize().let { cap -> LanguageType.values().first { it.name == cap } }
 
 fun configuration(start: Boolean = true, block: Configuration.() -> Unit): Configuration {
   config = Configuration().apply(block)
@@ -91,8 +92,17 @@ class LanguageGroup(internal val languageType: LanguageType) {
 
 class ChallengeGroup(internal val language: LanguageGroup, internal val name: String) {
   internal val challenges = mutableListOf<AbstractChallenge>()
-  var description = ""
   var packageName = ""
+  var description = ""
+
+  val parsedDescription
+      by lazy {
+        val options = MutableDataSet().apply { set(HtmlRenderer.SOFT_BREAK, "<br />\n") }
+        val parser = Parser.builder(options).build()
+        val renderer = HtmlRenderer.builder(options).build()
+        val document = parser.parse(description.trimIndent())
+        renderer.render(document)
+      }
 
   private fun contains(name: String) = challenges.any { it.name == name }
 
@@ -123,6 +133,15 @@ abstract class AbstractChallenge(internal val group: ChallengeGroup) {
   var codingBatEquiv = ""
   var description: String = ""
 
+  val parsedDescription
+      by lazy {
+        val options = MutableDataSet().apply { set(HtmlRenderer.SOFT_BREAK, "<br />\n") }
+        val parser = Parser.builder(options).build()
+        val renderer = HtmlRenderer.builder(options).build()
+        val document = parser.parse(description.trimIndent())
+        renderer.render(document)
+      }
+
   abstract fun findFuncInfo(code: String): FunInfo
 
   fun funcInfo() =
@@ -144,7 +163,7 @@ abstract class AbstractChallenge(internal val group: ChallengeGroup) {
     if (set.size > 1)
       throw InvalidConfigurationException(
         "${name.toDoubleQuoted()} has inconsistent function arguments: " +
-          set.joinToString(" and ") { "($it)" }
+            set.joinToString(" and ") { "($it)" }
       )
   }
 
@@ -234,4 +253,5 @@ class FunInfo(val name: String, val code: String)
 
 class InvalidConfigurationException(msg: String) : Exception(msg)
 
+fun fromPath(s: String) = s.capitalize().let { cap -> LanguageType.values().first { it.name == cap } }
 fun List<String>.toPath() = this.map { it.ensureSuffix("/") }.joinToString("")

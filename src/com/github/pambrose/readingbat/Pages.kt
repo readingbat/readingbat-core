@@ -31,6 +31,7 @@ import org.slf4j.event.Level
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.milliseconds
 
+
 @Suppress("unused") // Referenced in application.conf
 @JvmOverloads
 fun Application.module(testing: Boolean = false, config: Configuration) {
@@ -73,7 +74,7 @@ fun Application.module(testing: Boolean = false, config: Configuration) {
   val lang = "lang"
   val tabs = "tabs"
   val selected = "selected"
-  val fs = 115.pct
+  val fs = 120.pct
   val processAnswers = "processAnswers"
   val title = "ReadingBat"
   val static = "static"
@@ -122,13 +123,28 @@ fun Application.module(testing: Boolean = false, config: Configuration) {
     }
   }
 
-  fun groupItem(prefix: String, name: String, description: String): TR.() -> Unit {
+  fun groupItem(prefix: String, group: ChallengeGroup): TR.() -> Unit {
+    val name = group.name
+    val description = group.description
+    val parsedDescription = group.parsedDescription
     return {
       td(classes = funcItem) {
         div(classes = groupItem) {
           a(classes = funcChoice) { href = "/$prefix/$name"; +name }
-          br { if (description.isNotBlank()) +description else unsafe { raw("&nbsp;") } }
+          br {
+            unsafe { raw(if (description.isNotBlank()) parsedDescription else "&nbsp;") }
+          }
         }
+      }
+    }
+  }
+
+  fun funcCall(prefix: String, groupName: String, challenge: AbstractChallenge): TR.() -> Unit {
+    return {
+      td(classes = funcItem) {
+        img { src = check }
+        unsafe { raw("&nbsp;") }
+        a(classes = funcChoice) { href = "/$prefix/$groupName/${challenge.name}"; +challenge.name }
       }
     }
   }
@@ -156,15 +172,15 @@ fun Application.module(testing: Boolean = false, config: Configuration) {
 
           (0 until rows).forEach { i ->
             tr {
-              groups[i].also { g -> groupItem(languageName, g.name, g.description).invoke(this) }
+              groups[i].also { group -> groupItem(languageName, group).invoke(this) }
 
               if (i + rows < size)
-                groups[i + rows].also { g -> groupItem(languageName, g.name, g.description).invoke(this) }
+                groups[i + rows].also { group -> groupItem(languageName, group).invoke(this) }
               else
                 td {}
 
               if (i + (2 * rows) < size)
-                groups[i + (2 * rows)].also { g -> groupItem(languageName, g.name, g.description).invoke(this) }
+                groups[i + (2 * rows)].also { group -> groupItem(languageName, group).invoke(this) }
               else
                 td {}
             }
@@ -197,35 +213,9 @@ fun Application.module(testing: Boolean = false, config: Configuration) {
 
           (0 until rows).forEach { i ->
             tr {
-              challenges[i].also { g ->
-                td(classes = funcItem) {
-                  img { src = check }
-                  unsafe { raw("&nbsp;") }
-                  a(classes = funcChoice) { href = "/$prefix/$groupName/${g.name}"; +g.name }
-                }
-              }
-
-              if (i + rows < size)
-                challenges[i + rows].also { g ->
-                  td(classes = funcItem) {
-                    img { src = check }
-                    unsafe { raw("&nbsp;") }
-                    a(classes = funcChoice) { href = "/$prefix/$groupName/${g.name}"; +g.name }
-                  }
-                }
-              else
-                td {}
-
-              if (i + (2 * rows) < size)
-                challenges[i + (2 * rows)].also { g ->
-                  td(classes = funcItem) {
-                    img { src = check }
-                    unsafe { raw("&nbsp;") }
-                    a(classes = funcChoice) { href = "/$prefix/$groupName/${g.name}"; +g.name }
-                  }
-                }
-              else
-                td {}
+              challenges[i].also { funcCall(prefix, groupName, it).invoke(this) }
+              challenges.elementAtOrNull(i + rows)?.also { funcCall(prefix, groupName, it).invoke(this) } ?: td {}
+              challenges.elementAtOrNull(i + (2 * rows))?.also { funcCall(prefix, groupName, it).invoke(this) } ?: td {}
             }
           }
         }
@@ -321,10 +311,11 @@ fun Application.module(testing: Boolean = false, config: Configuration) {
 
       div(classes = tabs) {
         h2 {
-          a {
-            href = "/$languageName/$groupName"; +groupName.decode()
-          }; unsafe { raw("&rarr;") }; +name
+          a { href = "/$languageName/$groupName"; +groupName.decode() }; unsafe { raw("&nbsp;&rarr;&nbsp;") }; +name
         }
+
+        if (challenge.description.isNotEmpty())
+          div(classes = "challenge-desc") { unsafe { raw(challenge.parsedDescription) } }
 
         pre(classes = "line-numbers") {
           code(classes = "language-$languageName") { +challenge.funcInfo().code }
@@ -344,24 +335,28 @@ fun Application.module(testing: Boolean = false, config: Configuration) {
               tr {
                 td(classes = funcCol) { +"${challenge.funcInfo().name}(${v.first})" }
                 td(classes = arrow) { unsafe { raw("&rarr;") } }
-                td { textInput(classes = answer) { id = "$answer$k" } }
+                td {
+                  textInput(classes = answer) {
+                    id = "$answer$k"; onKeyPress = "$processAnswers(${funcArgs.size})"
+                  }
+                }
                 td(classes = feedback) { id = "$feedback$k" }
                 td { hiddenInput { id = "$solution$k"; value = v.second } }
               }
             }
           }
 
-          button(classes = checkAnswers) { onClick = "$processAnswers(${funcArgs.size});"; +"Check My Answers!" }
+          button(classes = checkAnswers) { onClick = "$processAnswers(${funcArgs.size})"; +"Check My Answers!" }
           span(classes = status) { id = status }
 
           p(classes = refs) {
             +"Experiment with this code on "
-            a { href = "https://gitpod.io/#${challenge.gitpodUrl}"; target = "_blank"; +"Gitpod" }
+            a { href = "https://gitpod.io/#${challenge.gitpodUrl}"; target = "_blank"; +"Gitpod.io" }
           }
           if (challenge.codingBatEquiv.isNotEmpty()) {
             p(classes = refs) {
               +"Work on a similar problem on "
-              a { href = "https://codingbat.com/prob/${challenge.codingBatEquiv}"; target = "_blank"; +"CodingBat" }
+              a { href = "https://codingbat.com/prob/${challenge.codingBatEquiv}"; target = "_blank"; +"CodingBat.com" }
             }
           }
 
@@ -404,8 +399,10 @@ fun Application.module(testing: Boolean = false, config: Configuration) {
         body {
           backgroundColor = Color.white
         }
-        p {
-          fontSize = 2.em
+        rule(".challenge-desc") {
+          fontSize = fs
+          marginLeft = 1.em
+          marginBottom = 1.em
         }
         rule(".header") {
           marginBottom = 2.em
