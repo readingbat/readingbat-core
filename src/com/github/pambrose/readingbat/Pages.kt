@@ -152,7 +152,7 @@ fun Application.module(testing: Boolean = false, config: Configuration) {
           val cols = 3
           val size = groups.size
           val rows = size.rows(cols)
-          val prefix = languageType.lcname
+          val prefix = languageType.lowerName
 
           (0 until rows).forEach { i ->
             tr {
@@ -175,7 +175,7 @@ fun Application.module(testing: Boolean = false, config: Configuration) {
   }
 
   fun challengeGroupPage(languageType: LanguageType, groupName: String): HTML.() -> Unit = {
-    val prefix = languageType.lcname
+    val prefix = languageType.lowerName
 
     head {
       title(title)
@@ -294,14 +294,27 @@ fun Application.module(testing: Boolean = false, config: Configuration) {
                }
               }
             }
-            """.trimIndent()
+            """
           )
         }
       }
 
-
+      link { rel = "stylesheet"; href = "/$static/${languageType.lowerName}-prism.css"; type = "text/css" }
       link { rel = "stylesheet"; href = cssName; type = "text/css" }
-      link { rel = "stylesheet"; href = "/$static/${languageType.lcname}-prism.css"; type = "text/css" }
+
+      style {
+        unsafe {
+          raw(
+            // This removes the prism shadow
+            """
+              pre[class*="language-"]:before,
+              pre[class*="language-"]:after {
+                display: none;
+              }
+            """
+          )
+        }
+      }
       analytics.invoke(this)
     }
 
@@ -309,56 +322,56 @@ fun Application.module(testing: Boolean = false, config: Configuration) {
       header(languageType).invoke(this)
 
       div(classes = tabs) {
-        h2 { a { href = "/${languageType.lcname}/$groupName"; +groupName.decode() }; unsafe { raw("&rarr;") }; +name }
+        h2 {
+          a {
+            href = "/${languageType.lowerName}/$groupName"; +groupName.decode()
+          }; unsafe { raw("&rarr;") }; +name
+        }
 
         pre(classes = "line-numbers") {
-          code(classes = "language-${languageType.lcname}") { +challenge.funcText() }
+          code(classes = "language-${languageType.lowerName}") { +challenge.funcText() }
         }
 
         div {
-          style = "margin-left:2em"
+          style = "margin-top: 2em;margin-left:2em"
 
-          div {
-            style = "margin-top: 2em;"
-
-            table {
+          table {
+            tr {
+              th { +"Function Call" }
+              th { +"" }
+              th { +"Return Value" }
+              th { +"" }
+            }
+            funcArgs.withIndex().forEach { (k, v) ->
               tr {
-                th { +"Function Call" }
-                th { +"" }
-                th { +"Return Value" }
-                th { +"" }
-              }
-              funcArgs.withIndex().forEach { (k, v) ->
-                tr {
-                  td(classes = funcCol) { +"$funcName(${v.first})" }
-                  td(classes = arrow) { unsafe { raw("&rarr;") } }
-                  td { textInput(classes = answer) { id = "$answer$k" } }
-                  td(classes = feedback) { id = "$feedback$k" }
-                  td { hiddenInput { id = "$solution$k"; value = v.second } }
-                }
+                td(classes = funcCol) { +"$funcName(${v.first})" }
+                td(classes = arrow) { unsafe { raw("&rarr;") } }
+                td { textInput(classes = answer) { id = "$answer$k" } }
+                td(classes = feedback) { id = "$feedback$k" }
+                td { hiddenInput { id = "$solution$k"; value = v.second } }
               }
             }
-
-            button(classes = checkAnswers) { onClick = "$processAnswers(${funcArgs.size});"; +"Check My Answers!" }
-            span(classes = status) { id = status }
-
-            p(classes = refs) {
-              +"Experiment with this code on "
-              a { href = "https://gitpod.io/#${challenge.gitpodUrl}"; target = "_blank"; +"Gitpod" }
-            }
-            if (challenge.codingBatEquiv.isNotEmpty()) {
-              p(classes = refs) {
-                +"Work on a similar problem on "
-                a { href = "https://codingbat.com/prob/${challenge.codingBatEquiv}"; target = "_blank"; +"CodingBat" }
-              }
-            }
-
-            div(classes = back) { a { href = "/${languageType.lcname}/$groupName"; unsafe { raw("&larr; Back") } } }
           }
+
+          button(classes = checkAnswers) { onClick = "$processAnswers(${funcArgs.size});"; +"Check My Answers!" }
+          span(classes = status) { id = status }
+
+          p(classes = refs) {
+            +"Experiment with this code on "
+            a { href = "https://gitpod.io/#${challenge.gitpodUrl}"; target = "_blank"; +"Gitpod" }
+          }
+          if (challenge.codingBatEquiv.isNotEmpty()) {
+            p(classes = refs) {
+              +"Work on a similar problem on "
+              a { href = "https://codingbat.com/prob/${challenge.codingBatEquiv}"; target = "_blank"; +"CodingBat" }
+            }
+          }
+
+          div(classes = back) { a { href = "/${languageType.lowerName}/$groupName"; unsafe { raw("&larr; Back") } } }
         }
       }
 
-      script { src = "/$static/${languageType.lcname}-prism.js" }
+      script { src = "/$static/${languageType.lowerName}-prism.js" }
     }
   }
 
@@ -366,15 +379,9 @@ fun Application.module(testing: Boolean = false, config: Configuration) {
     val req = call.request.uri
     val items = req.split("/").filter { it.isNotEmpty() }
 
-    if (items.size > 1 && (items[0] == "java" || items[0] == "python")) {
+    if (items.size > 1 && (items[0] in listOf(Java.lowerName, Python.lowerName))) {
       when (items.size) {
-        2 -> call.respondHtml(
-          block = challengeGroupPage(
-            fromPath(
-              items[0]
-            ), items[1]
-          )
-        )
+        2 -> call.respondHtml(block = challengeGroupPage(fromPath(items[0]), items[1]))
         3 -> call.respondHtml(block = challengePage(fromPath(items[0]), items[1], items[2]))
       }
     }
@@ -386,11 +393,11 @@ fun Application.module(testing: Boolean = false, config: Configuration) {
       call.respondRedirect("/java")
     }
 
-    get("/${Java.lcname}") {
+    get("/${Java.lowerName}") {
       call.respondHtml(block = languageGroupPage(Java))
     }
 
-    get("/${Python.lcname}") {
+    get("/${Python.lowerName}") {
       call.respondHtml(block = languageGroupPage(Python))
     }
 

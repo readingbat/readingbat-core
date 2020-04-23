@@ -15,7 +15,7 @@ import kotlin.time.measureTimedValue
 enum class LanguageType(val useDoubleQuotes: Boolean) {
   Java(true), Python(false);
 
-  val lcname get() = name.toLowerCase()
+  val lowerName = name.toLowerCase()
 
   fun isJava() = this == Java
   fun isPython() = this == Python
@@ -83,8 +83,6 @@ public class FrontBack {
         System.out.println(frontBack("This is a test"));
         System.out.println(frontBack(""));
     }
-}
-
       """
       println(findJavaFunction(s))
     }
@@ -93,14 +91,11 @@ public class FrontBack {
 }
 
 class LanguageGroup(internal val languageType: LanguageType) {
+  private val rawRoot by lazy { repoRoot.replace("github.com", "raw.githubusercontent.com") }
   internal val challengeGroups = mutableListOf<ChallengeGroup>()
-  internal val rawRepoRoot
-    get() = "${repoRoot.ensureSuffix("/")}master/${srcPrefix.ensureSuffix("/")}".replace(
-      "github.com",
-      "raw.githubusercontent.com"
-    )
-  internal val srcRoot get() = repoRoot.ensureSuffix("/") + srcPrefix.ensureSuffix("/")
-  internal val gitpodRoot get() = repoRoot.ensureSuffix("/") + "blob/master/" + srcPrefix.ensureSuffix("/")
+  internal val rawRepoRoot by lazy { listOf(rawRoot, "master", srcPrefix).toPath() }
+  internal val srcRoot by lazy { listOf(repoRoot, srcPrefix).toPath() }
+  internal val gitpodRoot by lazy { listOf(repoRoot, "blob/master/", srcPrefix).toPath() }
 
   var repoRoot = ""
   var srcPrefix = "src/main/java"  // default value
@@ -116,7 +111,7 @@ class LanguageGroup(internal val languageType: LanguageType) {
 
   internal fun validate() {
     if (repoRoot.isEmpty())
-      throw InvalidConfigurationException("${languageType.lcname} block is missing a repoRoot value")
+      throw InvalidConfigurationException("${languageType.lowerName} block is missing a repoRoot value")
   }
 }
 
@@ -129,9 +124,7 @@ class ChallengeGroup(internal val language: LanguageGroup, internal val name: St
 
   fun challenge(name: String, block: AbstractChallenge.() -> Unit) {
     val challenge =
-      (if (language.languageType == Java) JavaChallenge(this) else PythonChallenge(
-        this
-      )).apply {
+      (if (language.languageType == Java) JavaChallenge(this) else PythonChallenge(this)).apply {
         this.name = name
         this.funcName = name  // Default funcName to name
       }.apply(block)
@@ -154,21 +147,20 @@ fun findJavaFunction(code: String): String {
 }
 
 abstract class AbstractChallenge(internal val group: ChallengeGroup) {
-  protected val challengeId = counter.incrementAndGet()
   private val paramSignature = mutableListOf<String>()
+  private var multiArgTypes = ""
+  protected val challengeId = counter.incrementAndGet()
   internal val inputOutput = mutableListOf<Pair<String, String>>()
   internal val languageType get() = group.language.languageType
-  private var multiArgTypes = ""
-  val githubUrl get() = "${group.language.srcRoot}$fqName"
-  val gitpodUrl get() = "${group.language.gitpodRoot}$fqName"
+  internal val fqName by lazy { group.packageName.ensureSuffix("/") + fileName.ensureSuffix(".${languageType.lowerName}") }
+  internal val githubUrl by lazy { "${group.language.srcRoot}$fqName" }
+  internal val gitpodUrl by lazy { "${group.language.gitpodRoot}$fqName" }
 
   var name: String = ""
   var fileName: String = ""
   var funcName: String = ""
   var codingBatEquiv = ""
   var description: String = ""
-
-  val fqName get() = "${group.packageName.ensureSuffix("/")}${fileName.ensureSuffix(".${languageType.lcname}")}"
 
   abstract fun funcText(): String
 
@@ -267,3 +259,5 @@ class JavaChallenge(group: ChallengeGroup) : AbstractChallenge(group) {
 }
 
 class InvalidConfigurationException(msg: String) : Exception(msg)
+
+fun List<String>.toPath() = this.map { it.ensureSuffix("/") }.joinToString("")
