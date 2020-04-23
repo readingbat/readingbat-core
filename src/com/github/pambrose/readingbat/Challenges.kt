@@ -3,7 +3,7 @@ package com.github.pambrose.readingbat
 import com.github.pambrose.common.util.*
 import com.github.pambrose.readingbat.LanguageType.Java
 import com.github.pambrose.readingbat.LanguageType.Python
-import com.github.pambrose.readingbat.ReadingBatServer.userConfig
+import com.github.pambrose.readingbat.ReadingBatServer.userContent
 import com.vladsch.flexmark.html.HtmlRenderer
 import com.vladsch.flexmark.parser.Parser
 import com.vladsch.flexmark.util.data.MutableDataSet
@@ -25,21 +25,21 @@ enum class LanguageType(val useDoubleQuotes: Boolean, val suffix: String) {
 }
 
 object ReadingBatServer {
-  internal val userConfig = Configuration()
+  internal val userContent = Content()
 
-  fun start() {
-    config.validate()
+  fun start(content: Content) {
+    content.validate()
     val port = Integer.parseInt(System.getProperty("PORT") ?: "8080")
     //val clargs = commandLineEnvironment(args.plus("port=$port"))
-    val httpServer = embeddedServer(CIO, port = port) { module(config = userConfig) }
+    val httpServer = embeddedServer(CIO, port = port) { module(content = userContent) }
     httpServer.start(wait = true)
 
   }
 }
 
-fun configuration(block: Configuration.() -> Unit) = userConfig.apply(block)
+fun readingBatContent(block: Content.() -> Unit) = userContent.apply(block)
 
-class Configuration {
+class Content {
   private val languageList = listOf(LanguageGroup(Python), LanguageGroup(Java))
   private val languageMap = languageList.map { it.languageType to it }.toMap()
 

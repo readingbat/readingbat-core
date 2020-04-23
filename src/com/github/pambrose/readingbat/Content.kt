@@ -4,14 +4,13 @@ package com.github.pambrose.readingbat
 object Main {
   @JvmStatic
   fun main(args: Array<String>) {
-    ReadingBatServer.start()
+    ReadingBatServer.start(content)
   }
 }
 
+val content =
 
-val config =
-
-  configuration {
+  readingBatContent {
 
     python {
       repoRoot = "https://github.com/readingbat/readingbat-python-content"

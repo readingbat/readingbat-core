@@ -34,7 +34,7 @@ import kotlin.time.milliseconds
 
 @Suppress("unused") // Referenced in application.conf
 @JvmOverloads
-fun Application.module(testing: Boolean = false, config: Configuration) {
+fun Application.module(testing: Boolean = false, content: Content) {
 
   install(Compression) {
     gzip {
@@ -164,7 +164,7 @@ fun Application.module(testing: Boolean = false, config: Configuration) {
       div(classes = tabs) {
 
         table {
-          val groups = config.getLanguage(languageType).challengeGroups
+          val groups = content.getLanguage(languageType).challengeGroups
           val cols = 3
           val size = groups.size
           val rows = size.rows(cols)
@@ -206,7 +206,7 @@ fun Application.module(testing: Boolean = false, config: Configuration) {
         h2 { +groupName.decode() }
 
         table {
-          val challenges = config.getLanguage(languageType).find(groupName).challenges
+          val challenges = content.getLanguage(languageType).find(groupName).challenges
           val cols = 3
           val size = challenges.size
           val rows = size.rows(cols)
@@ -227,7 +227,7 @@ fun Application.module(testing: Boolean = false, config: Configuration) {
 
   fun challengePage(languageType: LanguageType, groupName: String, challengeName: String): HTML.() -> Unit = {
 
-    val challenge = config.getLanguage(languageType).find(groupName).challenges.first { it.name == challengeName }
+    val challenge = content.getLanguage(languageType).find(groupName).challenges.first { it.name == challengeName }
     val funcType = challenge.languageType
     val name = challenge.name
     val funcArgs = challenge.inputOutput
