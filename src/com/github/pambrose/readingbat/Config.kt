@@ -63,12 +63,12 @@ object Config {
         }
       }
 
-
       java {
         repoRoot = "https://github.com/readingbat/readingbat-java-content"
 
         group("Warm-up 1") {
           description = "This is a description a description a description of Warm-up 1"
+          packageName = "warmup1"
 
           challenge("frontBack") {
             fileName = "FrontBack.java"
@@ -90,9 +90,9 @@ object Config {
           challenge("frontBackInt") {
             fileName = "FrontBack.java"
 
-            "thistest8" returns 8
-            "thistest9" returns 9
-            "thistest10" returns 10
+            "thistest8" returns false
+            "thistest9" returns true
+            "thistest10" returns true
           }
 
           challenge("frontBackDouble") {
@@ -111,6 +111,7 @@ object Config {
         }
 
         group("Warm-up 2") {
+          packageName = "warmup2"
 
           challenge("longerMulti") {
             fileName = "FrontBack.java"

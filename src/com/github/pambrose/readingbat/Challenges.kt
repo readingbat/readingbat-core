@@ -103,7 +103,7 @@ class LanguageGroup(internal val languageType: LanguageType) {
   internal val gitpodRoot get() = repoRoot.ensureSuffix("/") + "blob/master/" + srcPrefix.ensureSuffix("/")
 
   var repoRoot = ""
-  var srcPrefix = "src/main/java"
+  var srcPrefix = "src/main/java"  // default value
 
   private fun contains(name: String) = challengeGroups.any { it.name == name }
   internal fun find(name: String) = name.decode().let { decoded -> challengeGroups.first { it.name == decoded } }
@@ -120,15 +120,16 @@ class LanguageGroup(internal val languageType: LanguageType) {
   }
 }
 
-class ChallengeGroup(internal val languageGroup: LanguageGroup, internal val name: String) {
+class ChallengeGroup(internal val language: LanguageGroup, internal val name: String) {
   internal val challenges = mutableListOf<AbstractChallenge>()
   var description = ""
+  var packageName = ""
 
   private fun contains(name: String) = challenges.any { it.name == name }
 
   fun challenge(name: String, block: AbstractChallenge.() -> Unit) {
     val challenge =
-      (if (languageGroup.languageType == Java) JavaChallenge(this) else PythonChallenge(
+      (if (language.languageType == Java) JavaChallenge(this) else PythonChallenge(
         this
       )).apply {
         this.name = name
@@ -152,14 +153,14 @@ fun findJavaFunction(code: String): String {
   return lines.subList(staticLineNums.first(), staticLineNums.last() - 1).joinToString("\n").trimIndent()
 }
 
-abstract class AbstractChallenge(internal val challengeGroup: ChallengeGroup) {
+abstract class AbstractChallenge(internal val group: ChallengeGroup) {
   protected val challengeId = counter.incrementAndGet()
   private val paramSignature = mutableListOf<String>()
   internal val inputOutput = mutableListOf<Pair<String, String>>()
-  internal val languageType get() = challengeGroup.languageGroup.languageType
+  internal val languageType get() = group.language.languageType
   private var multiArgTypes = ""
-  val githubUrl get() = "${challengeGroup.languageGroup.srcRoot}$fileName"
-  val gitpodUrl get() = "${challengeGroup.languageGroup.gitpodRoot}$fileName"
+  val githubUrl get() = "${group.language.srcRoot}$fqName"
+  val gitpodUrl get() = "${group.language.gitpodRoot}$fqName"
 
   var name: String = ""
   var fileName: String = ""
@@ -167,14 +168,16 @@ abstract class AbstractChallenge(internal val challengeGroup: ChallengeGroup) {
   var codingBatEquiv = ""
   var description: String = ""
 
+  val fqName get() = "${group.packageName.ensureSuffix("/")}${fileName.ensureSuffix(".${languageType.lcname}")}"
+
   abstract fun funcText(): String
 
-  infix fun Any.returns(solution: Any) {
+  infix fun <A : Any, B : Any> A.returns(solution: B) {
     inputOutput.add(prettyQuote() to solution.prettyQuote(useDoubleQuotes = true))
     paramSignature.add(simpleClassName)
   }
 
-  infix fun List<Any>.returns(solution: Any) {
+  infix fun <A : Any, B : Any> List<A>.returns(solution: B) {
     val argTypes = mutableListOf<String>()
     val args =
       this.map { arg ->
@@ -252,12 +255,13 @@ class PythonChallenge(group: ChallengeGroup) : AbstractChallenge(group) {
 
 class JavaChallenge(group: ChallengeGroup) : AbstractChallenge(group) {
   override fun funcText() =
-    sourcesMap.computeIfAbsent(challengeId) {
-      val path = "${challengeGroup.languageGroup.rawRepoRoot}${fileName.ensureSuffix(".${languageType.lcname}")}"
-      val (content, dur) = measureTimedValue { URL(path).readText() }
-      logger.info { "Fetching ${challengeGroup.name.toDoubleQuoted()}/${funcName.toDoubleQuoted()} $path in $dur" }
-      findJavaFunction(content)
-    }
+    sourcesMap
+      .computeIfAbsent(challengeId) {
+        val path = "${group.language.rawRepoRoot}$fqName"
+        val (content, dur) = measureTimedValue { URL(path).readText() }
+        logger.info { "Fetching ${group.name.toDoubleQuoted()}/${funcName.toDoubleQuoted()} $path in $dur" }
+        findJavaFunction(content)
+      }
 
   companion object : KLogging()
 }
