@@ -26,7 +26,7 @@ targetCompatibility = 1.8
 
 description = 'ReadingBat Core'
 group 'com.github.pambrose.readingbat'
-version '1.0.0'
+version '1.0.1'
 
 sourceSets {
     main.kotlin.srcDirs = main.java.srcDirs = ['src']
