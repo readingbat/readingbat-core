@@ -1,6 +1,14 @@
 package com.github.pambrose.readingbat
 
 
+object Main {
+  @JvmStatic
+  fun main(args: Array<String>) {
+    ReadingBatServer.start()
+  }
+}
+
+
 val config =
 
   configuration {

@@ -3,7 +3,7 @@ package com.github.pambrose.readingbat
 import com.github.pambrose.common.util.*
 import com.github.pambrose.readingbat.LanguageType.Java
 import com.github.pambrose.readingbat.LanguageType.Python
-import com.github.pambrose.readingbat.Main.userConfig
+import com.github.pambrose.readingbat.ReadingBatServer.userConfig
 import com.vladsch.flexmark.html.HtmlRenderer
 import com.vladsch.flexmark.parser.Parser
 import com.vladsch.flexmark.util.data.MutableDataSet
@@ -24,34 +24,34 @@ enum class LanguageType(val useDoubleQuotes: Boolean, val suffix: String) {
   fun isPython() = this == Python
 }
 
-object Main {
+object ReadingBatServer {
   internal val userConfig = Configuration()
 
-  @JvmStatic
-  fun main(args: Array<String>) {
+  fun start() {
     config.validate()
     val port = Integer.parseInt(System.getProperty("PORT") ?: "8080")
     //val clargs = commandLineEnvironment(args.plus("port=$port"))
     val httpServer = embeddedServer(CIO, port = port) { module(config = userConfig) }
     httpServer.start(wait = true)
+
   }
 }
 
-fun configuration(start: Boolean = true, block: Configuration.() -> Unit) = userConfig.apply(block)
+fun configuration(block: Configuration.() -> Unit) = userConfig.apply(block)
 
 class Configuration {
   private val languageList = listOf(LanguageGroup(Python), LanguageGroup(Java))
   private val languageMap = languageList.map { it.languageType to it }.toMap()
 
-  internal fun forLanguage(languageType: LanguageType) =
+  internal fun getLanguage(languageType: LanguageType) =
     languageMap[languageType] ?: throw InvalidConfigurationException("Invaid language $languageType")
 
   fun python(block: LanguageGroup.() -> Unit) {
-    forLanguage(Python).apply(block)
+    getLanguage(Python).apply(block)
   }
 
   fun java(block: LanguageGroup.() -> Unit) {
-    forLanguage(Java).apply(block)
+    getLanguage(Java).apply(block)
   }
 
   fun validate() = languageList.forEach { it.validate() }
@@ -217,13 +217,13 @@ class PythonChallenge(group: ChallengeGroup) : AbstractChallenge(group) {
   override fun findFuncInfo(code: String): FunInfo {
     val lines = code.split("\n")
     val lineNums =
-      lines.mapIndexed { i, code -> i to code }
+      lines.mapIndexed { i, str -> i to str }
         .filter { it.second.contains(Regex("^def.*\\(")) }
         .map { it.first }
 
     val funcName = lines[lineNums.first()].substringAfter("def ").substringBefore("(").trim()
-    val code = lines.subList(lineNums.first(), lineNums.last() - 1).joinToString("\n").trimIndent()
-    return FunInfo(funcName, code)
+    val funcCode = lines.subList(lineNums.first(), lineNums.last() - 1).joinToString("\n").trimIndent()
+    return FunInfo(funcName, funcCode)
   }
 }
 
@@ -231,13 +231,13 @@ class JavaChallenge(group: ChallengeGroup) : AbstractChallenge(group) {
   override fun findFuncInfo(code: String): FunInfo {
     val lines = code.split("\n")
     val lineNums =
-      lines.mapIndexed { i, code -> i to code }
+      lines.mapIndexed { i, str -> i to str }
         .filter { it.second.contains(Regex("static.*\\(")) }
         .map { it.first }
 
     val funcName = lines[lineNums.first()].substringAfter("static ").substringBefore("(").split(" ")[1].trim()
-    val code = lines.subList(lineNums.first(), lineNums.last() - 1).joinToString("\n").trimIndent()
-    return FunInfo(funcName, code)
+    val funcCode = lines.subList(lineNums.first(), lineNums.last() - 1).joinToString("\n").trimIndent()
+    return FunInfo(funcName, funcCode)
   }
 }
 
