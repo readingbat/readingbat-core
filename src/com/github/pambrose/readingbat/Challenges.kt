@@ -98,7 +98,7 @@ class LanguageGroup(internal val languageType: LanguageType) {
   internal val gitpodRoot by lazy { listOf(repoRoot, "blob/master/", srcPrefix).toPath() }
 
   var repoRoot = ""
-  var srcPrefix = "src/main/java"  // default value
+  var srcPrefix = if (languageType.isJava()) "src/main/java" else "src" // default value
 
   private fun contains(name: String) = challengeGroups.any { it.name == name }
   internal fun find(name: String) = name.decode().let { decoded -> challengeGroups.first { it.name == decoded } }

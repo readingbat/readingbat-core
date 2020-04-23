@@ -12,6 +12,7 @@ object Config {
         repoRoot = "https://github.com/readingbat/readingbat-python-content"
 
         group("Warm-up 1") {
+          packageName = "warmup1"
           description = "This is a description of Warm-up 1"
 
           challenge("pythonFrontBack") {
@@ -67,8 +68,8 @@ object Config {
         repoRoot = "https://github.com/readingbat/readingbat-java-content"
 
         group("Warm-up 1") {
-          description = "This is a description a description a description of Warm-up 1"
           packageName = "warmup1"
+          description = "This is a description a description a description of Warm-up 1"
 
           challenge("frontBack") {
             fileName = "FrontBack.java"
