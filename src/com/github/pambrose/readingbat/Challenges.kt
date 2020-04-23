@@ -1,9 +1,9 @@
 package com.github.pambrose.readingbat
 
 import com.github.pambrose.common.util.*
-import com.github.pambrose.readingbat.Configuration.Companion.config
 import com.github.pambrose.readingbat.LanguageType.Java
 import com.github.pambrose.readingbat.LanguageType.Python
+import com.github.pambrose.readingbat.Main.userConfig
 import com.vladsch.flexmark.html.HtmlRenderer
 import com.vladsch.flexmark.parser.Parser
 import com.vladsch.flexmark.util.data.MutableDataSet
@@ -24,45 +24,37 @@ enum class LanguageType(val useDoubleQuotes: Boolean, val suffix: String) {
   fun isPython() = this == Python
 }
 
-fun configuration(start: Boolean = true, block: Configuration.() -> Unit): Configuration {
-  config = Configuration().apply(block)
+object Main {
+  internal val userConfig = Configuration()
 
-  if (start) {
+  @JvmStatic
+  fun main(args: Array<String>) {
+    config.validate()
     val port = Integer.parseInt(System.getProperty("PORT") ?: "8080")
-    val httpServer = embeddedServer(CIO, port = port) { module(config = config) }
+    //val clargs = commandLineEnvironment(args.plus("port=$port"))
+    val httpServer = embeddedServer(CIO, port = port) { module(config = userConfig) }
     httpServer.start(wait = true)
   }
-
-  return config
 }
 
+fun configuration(start: Boolean = true, block: Configuration.() -> Unit) = userConfig.apply(block)
+
 class Configuration {
-  private val javaLanguageGroup = LanguageGroup(Java)
-  private val pythonLanguageGroup = LanguageGroup(Python)
+  private val languageList = listOf(LanguageGroup(Python), LanguageGroup(Java))
+  private val languageMap = languageList.map { it.languageType to it }.toMap()
 
   internal fun forLanguage(languageType: LanguageType) =
-    when (languageType) {
-      Python -> pythonLanguageGroup
-      else -> javaLanguageGroup
-    }
+    languageMap[languageType] ?: throw InvalidConfigurationException("Invaid language $languageType")
 
   fun python(block: LanguageGroup.() -> Unit) {
-    pythonLanguageGroup.apply {
-      apply(block)
-      validate()
-    }
+    forLanguage(Python).apply(block)
   }
 
   fun java(block: LanguageGroup.() -> Unit) {
-    javaLanguageGroup.apply {
-      apply(block)
-      validate()
-    }
+    forLanguage(Java).apply(block)
   }
 
-  companion object {
-    internal lateinit var config: Configuration
-  }
+  fun validate() = languageList.forEach { it.validate() }
 }
 
 class LanguageGroup(internal val languageType: LanguageType) {
