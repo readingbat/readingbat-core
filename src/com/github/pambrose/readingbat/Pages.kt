@@ -32,7 +32,6 @@ import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.milliseconds
 
 
-@Suppress("unused") // Referenced in application.conf
 @JvmOverloads
 fun Application.module(testing: Boolean = false, content: Content) {
 

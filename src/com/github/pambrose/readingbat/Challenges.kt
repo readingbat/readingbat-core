@@ -58,14 +58,14 @@ class Content {
 }
 
 class LanguageGroup(internal val languageType: LanguageType) {
-  private val rawRoot by lazy { repoRoot.replace("github.com", "raw.githubusercontent.com") }
+  private var srcPrefix = if (languageType.isJava()) "src/main/java" else "src" // default value
   internal val challengeGroups = mutableListOf<ChallengeGroup>()
+
+  private val rawRoot by lazy { repoRoot.replace("github.com", "raw.githubusercontent.com") }
   internal val rawRepoRoot by lazy { listOf(rawRoot, "master", srcPrefix).toPath() }
-  internal val srcRoot by lazy { listOf(repoRoot, srcPrefix).toPath() }
   internal val gitpodRoot by lazy { listOf(repoRoot, "blob/master/", srcPrefix).toPath() }
 
   var repoRoot = ""
-  var srcPrefix = if (languageType.isJava()) "src/main/java" else "src" // default value
 
   private fun contains(name: String) = challengeGroups.any { it.name == name }
   internal fun find(name: String) = name.decode().let { decoded -> challengeGroups.first { it.name == decoded } }
@@ -111,21 +111,16 @@ class ChallengeGroup(internal val language: LanguageGroup, internal val name: St
   }
 }
 
-abstract class AbstractChallenge(internal val group: ChallengeGroup) {
+abstract class AbstractChallenge(private val group: ChallengeGroup) {
   private val paramSignature = mutableListOf<String>()
   private var multiArgTypes = ""
-  protected val challengeId = counter.incrementAndGet()
+  private val challengeId = counter.incrementAndGet()
   internal val inputOutput = mutableListOf<Pair<String, String>>()
   internal val languageType = group.language.languageType
-  internal val fqName by lazy { group.packageName.ensureSuffix("/") + fileName.ensureSuffix(".${languageType.suffix}") }
+
+  private val fqName by lazy { group.packageName.ensureSuffix("/") + fileName.ensureSuffix(".${languageType.suffix}") }
   internal val gitpodUrl by lazy { "${group.language.gitpodRoot}$fqName" }
-
-  var name: String = ""
-  var fileName: String = ""
-  var codingBatEquiv = ""
-  var description: String = ""
-
-  val parsedDescription
+  internal val parsedDescription
       by lazy {
         val options = MutableDataSet().apply { set(HtmlRenderer.SOFT_BREAK, "<br />\n") }
         val parser = Parser.builder(options).build()
@@ -133,6 +128,12 @@ abstract class AbstractChallenge(internal val group: ChallengeGroup) {
         val document = parser.parse(description.trimIndent())
         renderer.render(document)
       }
+
+  var name: String = ""
+  var fileName: String = ""
+  var codingBatEquiv = ""
+  var description: String = ""
+
 
   abstract fun findFuncInfo(code: String): FunInfo
 
@@ -246,4 +247,4 @@ class FunInfo(val name: String, val code: String)
 class InvalidConfigurationException(msg: String) : Exception(msg)
 
 fun fromPath(s: String) = s.capitalize().let { cap -> LanguageType.values().first { it.name == cap } }
-fun List<String>.toPath() = this.map { it.ensureSuffix("/") }.joinToString("")
+fun List<String>.toPath() = joinToString("") { it.ensureSuffix("/") }
