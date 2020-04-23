@@ -152,19 +152,19 @@ fun Application.module(testing: Boolean = false, config: Configuration) {
           val cols = 3
           val size = groups.size
           val rows = size.rows(cols)
-          val prefix = languageType.lowerName
+          val languageName = languageType.lowerName
 
           (0 until rows).forEach { i ->
             tr {
-              groups[i].also { g -> groupItem(prefix, g.name, g.description).invoke(this) }
+              groups[i].also { g -> groupItem(languageName, g.name, g.description).invoke(this) }
 
               if (i + rows < size)
-                groups[i + rows].also { g -> groupItem(prefix, g.name, g.description).invoke(this) }
+                groups[i + rows].also { g -> groupItem(languageName, g.name, g.description).invoke(this) }
               else
                 td {}
 
               if (i + (2 * rows) < size)
-                groups[i + (2 * rows)].also { g -> groupItem(prefix, g.name, g.description).invoke(this) }
+                groups[i + (2 * rows)].also { g -> groupItem(languageName, g.name, g.description).invoke(this) }
               else
                 td {}
             }
@@ -240,8 +240,8 @@ fun Application.module(testing: Boolean = false, config: Configuration) {
     val challenge = config.forLanguage(languageType).find(groupName).challenges.first { it.name == challengeName }
     val funcType = challenge.languageType
     val name = challenge.name
-    val funcName = challenge.funcName
     val funcArgs = challenge.inputOutput
+    val languageName = languageType.lowerName
 
     head {
       title(title)
@@ -299,7 +299,7 @@ fun Application.module(testing: Boolean = false, config: Configuration) {
         }
       }
 
-      link { rel = "stylesheet"; href = "/$static/${languageType.lowerName}-prism.css"; type = "text/css" }
+      link { rel = "stylesheet"; href = "/$static/$languageName-prism.css"; type = "text/css" }
       link { rel = "stylesheet"; href = cssName; type = "text/css" }
 
       style {
@@ -308,9 +308,7 @@ fun Application.module(testing: Boolean = false, config: Configuration) {
             // This removes the prism shadow
             """
               pre[class*="language-"]:before,
-              pre[class*="language-"]:after {
-                display: none;
-              }
+              pre[class*="language-"]:after { display: none; }
             """
           )
         }
@@ -324,12 +322,12 @@ fun Application.module(testing: Boolean = false, config: Configuration) {
       div(classes = tabs) {
         h2 {
           a {
-            href = "/${languageType.lowerName}/$groupName"; +groupName.decode()
+            href = "/$languageName/$groupName"; +groupName.decode()
           }; unsafe { raw("&rarr;") }; +name
         }
 
         pre(classes = "line-numbers") {
-          code(classes = "language-${languageType.lowerName}") { +challenge.funcText() }
+          code(classes = "language-$languageName") { +challenge.funcInfo().code }
         }
 
         div {
@@ -344,7 +342,7 @@ fun Application.module(testing: Boolean = false, config: Configuration) {
             }
             funcArgs.withIndex().forEach { (k, v) ->
               tr {
-                td(classes = funcCol) { +"$funcName(${v.first})" }
+                td(classes = funcCol) { +"${challenge.funcInfo().name}(${v.first})" }
                 td(classes = arrow) { unsafe { raw("&rarr;") } }
                 td { textInput(classes = answer) { id = "$answer$k" } }
                 td(classes = feedback) { id = "$feedback$k" }
@@ -367,11 +365,11 @@ fun Application.module(testing: Boolean = false, config: Configuration) {
             }
           }
 
-          div(classes = back) { a { href = "/${languageType.lowerName}/$groupName"; unsafe { raw("&larr; Back") } } }
+          div(classes = back) { a { href = "/$languageName/$groupName"; unsafe { raw("&larr; Back") } } }
         }
       }
 
-      script { src = "/$static/${languageType.lowerName}-prism.js" }
+      script { src = "/$static/$languageName-prism.js" }
     }
   }
 

@@ -16,8 +16,7 @@ object Config {
           description = "This is a description of Warm-up 1"
 
           challenge("pythonFrontBack") {
-            fileName = "FrontBack.py"
-            funcName = "frontBack"
+            fileName = "front_back.py"
 
             "this is a test" returns "tt"
             "" returns ""
@@ -27,7 +26,6 @@ object Config {
 
           challenge("pythonFrontBackBool") {
             fileName = "FrontBack.py"
-            funcName = "frontBackBool"
 
             "this is a test" returns true
             "this" returns false
@@ -73,7 +71,6 @@ object Config {
 
           challenge("frontBack") {
             fileName = "FrontBack.java"
-            funcName = "frontBack"
             codingBatEquiv = "p171896"
 
             "this is a test" returns "tt"
@@ -98,14 +95,12 @@ object Config {
 
           challenge("frontBackDouble") {
             fileName = "FrontBack.java"
-            funcName = "frontBackDouble"
 
             "thistest8.7" returns 8.7
           }
 
           challenge("frontBackDouble2") {
             fileName = "FrontBack.java"
-            funcName = "frontBackDouble2"
 
             "thistest8.7" returns 8.7
           }
@@ -116,7 +111,6 @@ object Config {
 
           challenge("longerMulti") {
             fileName = "FrontBack.java"
-            funcName = "longerMulti"
 
             listOf("this", false, 4, 2.3) returns 5
             listOf("this", true, 4, 2.3) returns 5

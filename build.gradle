@@ -104,7 +104,8 @@ task uberjar(type: Jar, dependsOn: shadowJar) {
 compileKotlin {
     kotlinOptions.jvmTarget = '1.8'
     kotlinOptions.freeCompilerArgs += ['-Xuse-experimental=kotlin.time.ExperimentalTime',
-                                       '-Xuse-experimental=kotlinx.serialization.UnstableDefault']
+                                       '-Xuse-experimental=kotlinx.serialization.UnstableDefault',
+                                       "-XXLanguage:+InlineClasses"]
 }
 
 compileTestKotlin {
