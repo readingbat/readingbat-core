@@ -1,26 +1,39 @@
-package org.github
+package com.github.readingbat
 
 import com.github.readingbat.LanguageType.Java
 import com.github.readingbat.LanguageType.Python
-import com.github.readingbat.module
-import com.github.readingbat.readingBatContent
+import com.github.readingbat.ReadingBatServer.userContent
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.testing.handleRequest
 import io.ktor.server.testing.withTestApplication
-import kotlin.test.Test
+import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 
 class ServerTest {
   @Test
   fun testRoot() {
-    val content = readingBatContent {}
+    val content = readingBatContent {
 
-    withTestApplication({ module(testing = true, content = content) }) {
+      java {
+        repoRoot = "Something"
+      }
+
+      python {
+        repoRoot = "Something"
+      }
+    }
+
+    withTestApplication({
+      content.validate()
+      module(testing = true, content = userContent)
+    }
+    ) {
 
       handleRequest(HttpMethod.Get, "/").apply {
-        assertEquals(HttpStatusCode.OK, response.status())
+        assertEquals(HttpStatusCode.Found, response.status())
       }
+
       handleRequest(HttpMethod.Get, "/${Java.lowerName}").apply {
         assertEquals(HttpStatusCode.OK, response.status())
       }
