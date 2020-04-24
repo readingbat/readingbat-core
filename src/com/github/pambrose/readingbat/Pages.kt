@@ -1,13 +1,17 @@
 package com.github.pambrose.readingbat
 
-import com.github.pambrose.common.util.*
+import com.github.pambrose.common.util.decode
+import com.github.pambrose.common.util.isDoubleQuoted
+import com.github.pambrose.common.util.isSingleQuoted
+import com.github.pambrose.common.util.singleToDoubleQuoted
 import com.github.pambrose.readingbat.LanguageType.Companion.toLanguageType
 import com.github.pambrose.readingbat.LanguageType.Java
 import com.github.pambrose.readingbat.LanguageType.Python
 import io.ktor.application.*
 import io.ktor.features.*
 import io.ktor.html.respondHtml
-import io.ktor.http.ContentType
+import io.ktor.http.ContentType.Text
+import io.ktor.http.ContentType.Text.Plain
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.TextContent
 import io.ktor.http.content.resources
@@ -29,6 +33,7 @@ import kotlinx.css.properties.TextDecoration
 import kotlinx.html.*
 import org.slf4j.event.Level
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.text.Charsets.UTF_8
 import kotlin.time.milliseconds
 
 
@@ -59,7 +64,7 @@ fun Application.module(testing: Boolean = false, content: Content) {
   val static = "static"
   val check = "/$static/check.jpg"
   val cssName = "/styles.css"
-  val cssType = ContentType.Text.CSS.toString()
+  val cssType = Text.CSS.toString()
   val sp = "&nbsp;"
   val sessionCounter = AtomicInteger(0)
   val production: Boolean by lazy { System.getenv("PRODUCTION")?.toBoolean() ?: false }
@@ -344,12 +349,32 @@ fun Application.module(testing: Boolean = false, content: Content) {
     }
   }
 
+  fun HTML.errorPage(errorMessage: String) {
+
+    head {
+      title(title)
+      link {
+        rel = "stylesheet"; href = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
+      }
+      link { rel = "stylesheet"; href = cssName; type = cssType }
+
+      analytics()
+    }
+
+    body {
+      header(Java)
+
+      div(classes = tabs) {
+        p { +errorMessage }
+      }
+    }
+  }
+
   routing {
 
     get("/") {
       call.respondRedirect("/${Java.lowerName}")
     }
-
 
     get(cssName) {
       call.respondCss {
@@ -517,7 +542,6 @@ fun Application.module(testing: Boolean = false, content: Content) {
       call.respondText(results.toString())
     }
 
-    // Static feature. Try to access `/static/ktor_logo.svg`
     static("/$static") {
       resources(static)
     }
@@ -527,26 +551,22 @@ fun Application.module(testing: Boolean = false, content: Content) {
     val req = call.request.uri
     val items = req.split("/").filter { it.isNotEmpty() }
 
-    if (items.size > 0 && (items[0] in listOf(Java.lowerName, Python.lowerName))) {
+    if (items.isNotEmpty() && (items[0] in listOf(Java.lowerName, Python.lowerName))) {
       val languageType = items[0].toLanguageType()
       val groupName = items.elementAtOrNull(1) ?: ""
       val challengeName = items.elementAtOrNull(2) ?: ""
       when (items.size) {
         1 -> {
+          // This lookup has to take place outside of the lambda for proper exception handling
           val groups = content.getLanguage(languageType).challengeGroups
           call.respondHtml { languageGroupPage(Java, groups) }
         }
         2 -> {
-          val challengeGroup = content.getLanguage(languageType).find(groupName)
+          val challengeGroup = content.getLanguage(languageType).findChallengeGroup(groupName)
           call.respondHtml { challengeGroupPage(challengeGroup) }
         }
         3 -> {
-          val challenge =
-            content.getLanguage(languageType)
-              .find(groupName)
-              .challenges
-              .firstOrNull { it.name == challengeName }
-              ?: throw InvalidPathException("Challenge ${challengeName.toDoubleQuoted()} not found.")
+          val challenge = content.getLanguage(languageType).findChallenge(groupName, challengeName)
           call.respondHtml { challengePage(challenge) }
         }
         else -> throw InvalidPathException("Invalid path: $req")
@@ -554,8 +574,12 @@ fun Application.module(testing: Boolean = false, content: Content) {
     }
   }
 
+  intercept(ApplicationCallPipeline.Monitoring) {
+    // Set up metrics here
+  }
+
   intercept(ApplicationCallPipeline.Fallback) {
-    println("I am here in Failback")
+    // Count not found pages here
   }
 
   install(Compression) {
@@ -574,16 +598,16 @@ fun Application.module(testing: Boolean = false, content: Content) {
   }
 
   install(StatusPages) {
+
     exception<InvalidPathException> { cause ->
-      println("I am here with: ${cause.message}")
       call.respond(HttpStatusCode.NotFound)
+      //call.respondHtml { errorPage(cause.message?:"") }
     }
 
     //statusFile(HttpStatusCode.NotFound, HttpStatusCode.Unauthorized, filePattern = "error#.html")
 
     status(HttpStatusCode.NotFound) {
-      println("I am in NotFound")
-      call.respond(TextContent("${it.value} ${it.description}", ContentType.Text.Plain.withCharset(Charsets.UTF_8), it))
+      call.respond(TextContent("${it.value} ${it.description}", Plain.withCharset(UTF_8), it))
     }
 
     // Catch all
@@ -601,9 +625,7 @@ fun Application.module(testing: Boolean = false, content: Content) {
 }
 
 class InvalidPathException(msg: String) : RuntimeException(msg)
-class AuthenticationException : RuntimeException()
-class AuthorizationException : RuntimeException()
 
 suspend inline fun ApplicationCall.respondCss(builder: CSSBuilder.() -> Unit) {
-  this.respondText(CSSBuilder().apply(builder).toString(), ContentType.Text.CSS)
+  this.respondText(CSSBuilder().apply(builder).toString(), Text.CSS)
 }

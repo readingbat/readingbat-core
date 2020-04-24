@@ -73,10 +73,14 @@ class LanguageGroup(internal val languageType: LanguageType) {
 
   private fun contains(name: String) = challengeGroups.any { it.name == name }
 
-  internal fun find(name: String) =
-    name.decode()
+  internal fun findChallengeGroup(groupName: String) =
+    groupName.decode()
       .let { decoded -> challengeGroups.firstOrNull { it.name == decoded } }
-      ?: throw InvalidPathException(" Group ${name.toDoubleQuoted()} not found.")
+      ?: throw InvalidPathException("Group ${languageType.lowerName}/$groupName not found")
+
+  internal fun findChallenge(groupName: String, challengeName: String) =
+    findChallengeGroup(groupName).challenges.firstOrNull { it.name == challengeName }
+      ?: throw InvalidPathException("Challenge ${languageType.lowerName}/$groupName/$challengeName not found.")
 
   fun group(name: String, block: ChallengeGroup.() -> Unit) {
     if (contains(name))
