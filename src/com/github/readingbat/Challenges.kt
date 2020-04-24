@@ -1,9 +1,9 @@
-package com.github.pambrose.readingbat
+package com.github.readingbat
 
 import com.github.pambrose.common.util.*
-import com.github.pambrose.readingbat.LanguageType.Java
-import com.github.pambrose.readingbat.LanguageType.Python
-import com.github.pambrose.readingbat.ReadingBatServer.userContent
+import com.github.readingbat.LanguageType.Java
+import com.github.readingbat.LanguageType.Python
+import com.github.readingbat.ReadingBatServer.userContent
 import com.vladsch.flexmark.html.HtmlRenderer
 import com.vladsch.flexmark.parser.Parser
 import com.vladsch.flexmark.util.data.MutableDataSet
@@ -22,6 +22,10 @@ enum class LanguageType(val useDoubleQuotes: Boolean, val suffix: String) {
 
   fun isJava() = this == Java
   fun isPython() = this == Python
+
+  companion object {
+    fun String.toLanguageType() = values().first { it.name.equals(this, ignoreCase = true) }
+  }
 }
 
 object ReadingBatServer {
@@ -40,11 +44,16 @@ object ReadingBatServer {
 fun readingBatContent(block: Content.() -> Unit) = userContent.apply(block)
 
 class Content {
-  private val languageList = listOf(LanguageGroup(Python), LanguageGroup(Java))
+  private val languageList = listOf(
+    LanguageGroup(Python),
+    LanguageGroup(Java)
+  )
   private val languageMap = languageList.map { it.languageType to it }.toMap()
 
   internal fun getLanguage(languageType: LanguageType) =
-    languageMap[languageType] ?: throw InvalidConfigurationException("Invaid language $languageType")
+    languageMap[languageType] ?: throw InvalidConfigurationException(
+      "Invalid language $languageType"
+    )
 
   fun python(block: LanguageGroup.() -> Unit) {
     getLanguage(Python).apply(block)
@@ -68,7 +77,15 @@ class LanguageGroup(internal val languageType: LanguageType) {
   var repoRoot = ""
 
   private fun contains(name: String) = challengeGroups.any { it.name == name }
-  internal fun find(name: String) = name.decode().let { decoded -> challengeGroups.first { it.name == decoded } }
+
+  internal fun findChallengeGroup(groupName: String) =
+    groupName.decode()
+      .let { decoded -> challengeGroups.firstOrNull { it.name == decoded } }
+      ?: throw InvalidPathException("Group ${languageType.lowerName}/$groupName not found")
+
+  internal fun findChallenge(groupName: String, challengeName: String) =
+    findChallengeGroup(groupName).challenges.firstOrNull { it.name == challengeName }
+      ?: throw InvalidPathException("Challenge ${languageType.lowerName}/$groupName/$challengeName not found.")
 
   fun group(name: String, block: ChallengeGroup.() -> Unit) {
     if (contains(name))
@@ -78,12 +95,13 @@ class LanguageGroup(internal val languageType: LanguageType) {
 
   internal fun validate() {
     if (repoRoot.isEmpty())
-      throw InvalidConfigurationException("${languageType.lowerName} block is missing a repoRoot value")
+      throw InvalidConfigurationException("${languageType.lowerName} language section is missing a repoRoot value")
   }
 }
 
-class ChallengeGroup(internal val language: LanguageGroup, internal val name: String) {
+class ChallengeGroup(internal val languageGroup: LanguageGroup, internal val name: String) {
   internal val challenges = mutableListOf<AbstractChallenge>()
+  internal val languageType = languageGroup.languageType
   var packageName = ""
   var description = ""
 
@@ -100,7 +118,9 @@ class ChallengeGroup(internal val language: LanguageGroup, internal val name: St
 
   fun challenge(name: String, block: AbstractChallenge.() -> Unit) {
     val challenge =
-      (if (language.languageType == Java) JavaChallenge(this) else PythonChallenge(this)).apply {
+      (if (languageGroup.languageType == Java) JavaChallenge(this) else PythonChallenge(
+        this
+      )).apply {
         this.name = name
       }.apply(block)
     challenge.validate()
@@ -116,10 +136,11 @@ abstract class AbstractChallenge(private val group: ChallengeGroup) {
   private var multiArgTypes = ""
   private val challengeId = counter.incrementAndGet()
   internal val inputOutput = mutableListOf<Pair<String, String>>()
-  internal val languageType = group.language.languageType
+  internal val languageType = group.languageGroup.languageType
+  internal val groupName = group.name
 
   private val fqName by lazy { group.packageName.ensureSuffix("/") + fileName.ensureSuffix(".${languageType.suffix}") }
-  internal val gitpodUrl by lazy { "${group.language.gitpodRoot}$fqName" }
+  internal val gitpodUrl by lazy { "${group.languageGroup.gitpodRoot}$fqName" }
   internal val parsedDescription
       by lazy {
         val options = MutableDataSet().apply { set(HtmlRenderer.SOFT_BREAK, "<br />\n") }
@@ -135,12 +156,12 @@ abstract class AbstractChallenge(private val group: ChallengeGroup) {
   var description: String = ""
 
 
-  abstract fun findFuncInfo(code: String): FunInfo
+  abstract fun findFuncInfo(code: String): FuncInfo
 
   fun funcInfo() =
     sourcesMap
       .computeIfAbsent(challengeId) {
-        val path = "${group.language.rawRepoRoot}$fqName"
+        val path = "${group.languageGroup.rawRepoRoot}$fqName"
         val (content, dur) = measureTimedValue { URL(path).readText() }
         logger.info { "Fetching ${group.name.toDoubleQuoted()}/${fileName.toDoubleQuoted()} $path in $dur" }
         findFuncInfo(content)
@@ -210,12 +231,12 @@ abstract class AbstractChallenge(private val group: ChallengeGroup) {
 
   companion object : KLogging() {
     val counter = AtomicInteger(0)
-    val sourcesMap = ConcurrentHashMap<Int, FunInfo>()
+    val sourcesMap = ConcurrentHashMap<Int, FuncInfo>()
   }
 }
 
 class PythonChallenge(group: ChallengeGroup) : AbstractChallenge(group) {
-  override fun findFuncInfo(code: String): FunInfo {
+  override fun findFuncInfo(code: String): FuncInfo {
     val lines = code.split("\n")
     val lineNums =
       lines.mapIndexed { i, str -> i to str }
@@ -224,12 +245,12 @@ class PythonChallenge(group: ChallengeGroup) : AbstractChallenge(group) {
 
     val funcName = lines[lineNums.first()].substringAfter("def ").substringBefore("(").trim()
     val funcCode = lines.subList(lineNums.first(), lineNums.last() - 1).joinToString("\n").trimIndent()
-    return FunInfo(funcName, funcCode)
+    return FuncInfo(funcName, funcCode)
   }
 }
 
 class JavaChallenge(group: ChallengeGroup) : AbstractChallenge(group) {
-  override fun findFuncInfo(code: String): FunInfo {
+  override fun findFuncInfo(code: String): FuncInfo {
     val lines = code.split("\n")
     val lineNums =
       lines.mapIndexed { i, str -> i to str }
@@ -238,13 +259,12 @@ class JavaChallenge(group: ChallengeGroup) : AbstractChallenge(group) {
 
     val funcName = lines[lineNums.first()].substringAfter("static ").substringBefore("(").split(" ")[1].trim()
     val funcCode = lines.subList(lineNums.first(), lineNums.last() - 1).joinToString("\n").trimIndent()
-    return FunInfo(funcName, funcCode)
+    return FuncInfo(funcName, funcCode)
   }
 }
 
-class FunInfo(val name: String, val code: String)
+class FuncInfo(val name: String, val code: String)
 
 class InvalidConfigurationException(msg: String) : Exception(msg)
 
-fun fromPath(s: String) = s.capitalize().let { cap -> LanguageType.values().first { it.name == cap } }
-fun List<String>.toPath() = joinToString("") { it.ensureSuffix("/") }
+private fun List<String>.toPath() = joinToString("") { it.ensureSuffix("/") }
