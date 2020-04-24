@@ -28,7 +28,7 @@ object Constants {
   val titleText = "ReadingBat"
   val static = "static"
   val checkJpg = "/$static/check.jpg"
-  val cssName = "/styles.css"
+  val cssName = "styles.css"
   val cssType = ContentType.Text.CSS.toString()
   val sp = "&nbsp;"
   val sessionCounter = AtomicInteger(0)

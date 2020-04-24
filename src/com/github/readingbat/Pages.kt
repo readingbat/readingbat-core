@@ -32,7 +32,7 @@ import kotlinx.css.CSSBuilder
 import kotlinx.html.*
 
 fun HEAD.headDefault() {
-  link { rel = "stylesheet"; href = cssName; type = cssType }
+  link { rel = "stylesheet"; href = "/$cssName"; type = cssType }
   title(titleText)
 
   if (production)

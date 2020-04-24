@@ -64,7 +64,7 @@ fun Application.module(testing: Boolean = false, content: Content) {
       call.respondRedirect("/${Java.lowerName}")
     }
 
-    get(cssName) {
+    get("/$cssName") {
       call.respondCss {
         body {
           backgroundColor = Color.white
