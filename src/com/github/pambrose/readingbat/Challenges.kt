@@ -48,7 +48,7 @@ class Content {
   private val languageMap = languageList.map { it.languageType to it }.toMap()
 
   internal fun getLanguage(languageType: LanguageType) =
-    languageMap[languageType] ?: throw InvalidConfigurationException("Invaid language $languageType")
+    languageMap[languageType] ?: throw InvalidConfigurationException("Invalid language $languageType")
 
   fun python(block: LanguageGroup.() -> Unit) {
     getLanguage(Python).apply(block)
@@ -90,8 +90,9 @@ class LanguageGroup(internal val languageType: LanguageType) {
   }
 }
 
-class ChallengeGroup(internal val language: LanguageGroup, internal val name: String) {
+class ChallengeGroup(internal val languageGroup: LanguageGroup, internal val name: String) {
   internal val challenges = mutableListOf<AbstractChallenge>()
+  internal val languageType = languageGroup.languageType
   var packageName = ""
   var description = ""
 
@@ -108,7 +109,7 @@ class ChallengeGroup(internal val language: LanguageGroup, internal val name: St
 
   fun challenge(name: String, block: AbstractChallenge.() -> Unit) {
     val challenge =
-      (if (language.languageType == Java) JavaChallenge(this) else PythonChallenge(this)).apply {
+      (if (languageGroup.languageType == Java) JavaChallenge(this) else PythonChallenge(this)).apply {
         this.name = name
       }.apply(block)
     challenge.validate()
@@ -124,10 +125,11 @@ abstract class AbstractChallenge(private val group: ChallengeGroup) {
   private var multiArgTypes = ""
   private val challengeId = counter.incrementAndGet()
   internal val inputOutput = mutableListOf<Pair<String, String>>()
-  internal val languageType = group.language.languageType
+  internal val languageType = group.languageGroup.languageType
+  internal val groupName = group.name
 
   private val fqName by lazy { group.packageName.ensureSuffix("/") + fileName.ensureSuffix(".${languageType.suffix}") }
-  internal val gitpodUrl by lazy { "${group.language.gitpodRoot}$fqName" }
+  internal val gitpodUrl by lazy { "${group.languageGroup.gitpodRoot}$fqName" }
   internal val parsedDescription
       by lazy {
         val options = MutableDataSet().apply { set(HtmlRenderer.SOFT_BREAK, "<br />\n") }
@@ -148,7 +150,7 @@ abstract class AbstractChallenge(private val group: ChallengeGroup) {
   fun funcInfo() =
     sourcesMap
       .computeIfAbsent(challengeId) {
-        val path = "${group.language.rawRepoRoot}$fqName"
+        val path = "${group.languageGroup.rawRepoRoot}$fqName"
         val (content, dur) = measureTimedValue { URL(path).readText() }
         logger.info { "Fetching ${group.name.toDoubleQuoted()}/${fileName.toDoubleQuoted()} $path in $dur" }
         findFuncInfo(content)

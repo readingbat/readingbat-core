@@ -127,7 +127,7 @@ fun Application.module(testing: Boolean = false, content: Content) {
 
   fun Int.rows(cols: Int) = if (this % cols == 0) this / cols else (this / cols) + 1
 
-  fun HTML.languageGroupPage(languageType: LanguageType) {
+  fun HTML.languageGroupPage(languageType: LanguageType, groups: List<ChallengeGroup>) {
     head {
       title(title)
       link { rel = "stylesheet"; href = cssName; type = cssType }
@@ -138,9 +138,7 @@ fun Application.module(testing: Boolean = false, content: Content) {
       header(languageType)
 
       div(classes = tabs) {
-
         table {
-          val groups = content.getLanguage(languageType).challengeGroups
           val cols = 3
           val size = groups.size
           val rows = size.rows(cols)
@@ -158,8 +156,11 @@ fun Application.module(testing: Boolean = false, content: Content) {
     }
   }
 
-  fun HTML.challengeGroupPage(languageType: LanguageType, groupName: String) {
+  fun HTML.challengeGroupPage(challengeGroup: ChallengeGroup) {
 
+    val languageType = challengeGroup.languageType
+    val groupName = challengeGroup.name
+    val challenges = challengeGroup.challenges
     val prefix = languageType.lowerName
 
     head {
@@ -175,7 +176,6 @@ fun Application.module(testing: Boolean = false, content: Content) {
         h2 { +groupName.decode() }
 
         table {
-          val challenges = content.getLanguage(languageType).find(groupName).challenges
           val cols = 3
           val size = challenges.size
           val rows = size.rows(cols)
@@ -194,15 +194,11 @@ fun Application.module(testing: Boolean = false, content: Content) {
     }
   }
 
-  fun HTML.challengePage(languageType: LanguageType, groupName: String, challengeName: String) {
-    val challenge =
-      content.getLanguage(languageType)
-        .find(groupName)
-        .challenges
-        .firstOrNull { it.name == challengeName }
-        ?: throw InvalidPathException("Challenge ${challengeName.toDoubleQuoted()} not found.")
-    val langName = challenge.languageType.lowerName
+  fun HTML.challengePage(challenge: AbstractChallenge) {
+    val languageType = challenge.languageType
+    val groupName = challenge.groupName
     val name = challenge.name
+    val langName = languageType.lowerName
     val funcArgs = challenge.inputOutput
     val languageName = languageType.lowerName
 
@@ -354,13 +350,6 @@ fun Application.module(testing: Boolean = false, content: Content) {
       call.respondRedirect("/${Java.lowerName}")
     }
 
-    get("/${Java.lowerName}") {
-      call.respondHtml { languageGroupPage(Java) }
-    }
-
-    get("/${Python.lowerName}") {
-      call.respondHtml { languageGroupPage(Python) }
-    }
 
     get(cssName) {
       call.respondCss {
@@ -538,18 +527,35 @@ fun Application.module(testing: Boolean = false, content: Content) {
     val req = call.request.uri
     val items = req.split("/").filter { it.isNotEmpty() }
 
-    if (items.size > 1 && (items[0] in listOf(Java.lowerName, Python.lowerName))) {
+    if (items.size > 0 && (items[0] in listOf(Java.lowerName, Python.lowerName))) {
+      val languageType = items[0].toLanguageType()
+      val groupName = items.elementAtOrNull(1) ?: ""
+      val challengeName = items.elementAtOrNull(2) ?: ""
       when (items.size) {
+        1 -> {
+          val groups = content.getLanguage(languageType).challengeGroups
+          call.respondHtml { languageGroupPage(Java, groups) }
+        }
         2 -> {
-
-          call.respondHtml { challengeGroupPage(items[0].toLanguageType(), items[1]) }
+          val challengeGroup = content.getLanguage(languageType).find(groupName)
+          call.respondHtml { challengeGroupPage(challengeGroup) }
         }
         3 -> {
-          call.respondHtml { challengePage(items[0].toLanguageType(), items[1], items[2]) }
+          val challenge =
+            content.getLanguage(languageType)
+              .find(groupName)
+              .challenges
+              .firstOrNull { it.name == challengeName }
+              ?: throw InvalidPathException("Challenge ${challengeName.toDoubleQuoted()} not found.")
+          call.respondHtml { challengePage(challenge) }
         }
         else -> throw InvalidPathException("Invalid path: $req")
       }
     }
+  }
+
+  intercept(ApplicationCallPipeline.Fallback) {
+    println("I am here in Failback")
   }
 
   install(Compression) {
