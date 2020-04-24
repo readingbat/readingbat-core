@@ -24,7 +24,7 @@ enum class LanguageType(val useDoubleQuotes: Boolean, val suffix: String) {
   fun isPython() = this == Python
 
   companion object {
-    fun String.asLanguageType() = values().first { it.name.equals(this, ignoreCase = true) }
+    fun String.toLanguageType() = values().first { it.name.equals(this, ignoreCase = true) }
   }
 }
 
@@ -72,10 +72,11 @@ class LanguageGroup(internal val languageType: LanguageType) {
   var repoRoot = ""
 
   private fun contains(name: String) = challengeGroups.any { it.name == name }
+
   internal fun find(name: String) =
     name.decode()
       .let { decoded -> challengeGroups.firstOrNull { it.name == decoded } }
-      ?: throw InvalidPathException(" Group $name not found.")
+      ?: throw InvalidPathException(" Group ${name.toDoubleQuoted()} not found.")
 
   fun group(name: String, block: ChallengeGroup.() -> Unit) {
     if (contains(name))
@@ -85,7 +86,7 @@ class LanguageGroup(internal val languageType: LanguageType) {
 
   internal fun validate() {
     if (repoRoot.isEmpty())
-      throw InvalidConfigurationException("${languageType.lowerName} block is missing a repoRoot value")
+      throw InvalidConfigurationException("${languageType.lowerName} language section is missing a repoRoot value")
   }
 }
 

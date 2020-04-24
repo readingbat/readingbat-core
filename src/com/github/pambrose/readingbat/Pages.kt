@@ -1,10 +1,7 @@
 package com.github.pambrose.readingbat
 
-import com.github.pambrose.common.util.decode
-import com.github.pambrose.common.util.isDoubleQuoted
-import com.github.pambrose.common.util.isSingleQuoted
-import com.github.pambrose.common.util.singleToDoubleQuoted
-import com.github.pambrose.readingbat.LanguageType.Companion.asLanguageType
+import com.github.pambrose.common.util.*
+import com.github.pambrose.readingbat.LanguageType.Companion.toLanguageType
 import com.github.pambrose.readingbat.LanguageType.Java
 import com.github.pambrose.readingbat.LanguageType.Python
 import io.ktor.application.*
@@ -202,8 +199,9 @@ fun Application.module(testing: Boolean = false, content: Content) {
       content.getLanguage(languageType)
         .find(groupName)
         .challenges
-        .firstOrNull { it.name == challengeName } ?: throw InvalidPathException("Challenge $challengeName not found.")
-    val funcType = challenge.languageType
+        .firstOrNull { it.name == challengeName }
+        ?: throw InvalidPathException("Challenge ${challengeName.toDoubleQuoted()} not found.")
+    val langName = challenge.languageType.lowerName
     val name = challenge.name
     val funcArgs = challenge.inputOutput
     val languageName = languageType.lowerName
@@ -232,7 +230,7 @@ fun Application.module(testing: Boolean = false, content: Content) {
             var re = new XMLHttpRequest();
 
             function $processAnswers(cnt) { 
-              var data = "$sessionid=${sessionCounter.incrementAndGet()}&$lang=${funcType.name.toLowerCase()}";
+              var data = "$sessionid=${sessionCounter.incrementAndGet()}&$lang=$langName";
               try {
                 for (var i = 0; i < cnt; i++) {
                   var x = document.getElementById("$feedback"+i);
@@ -353,7 +351,7 @@ fun Application.module(testing: Boolean = false, content: Content) {
   routing {
 
     get("/") {
-      call.respondRedirect("/java")
+      call.respondRedirect("/${Java.lowerName}")
     }
 
     get("/${Java.lowerName}") {
@@ -542,8 +540,13 @@ fun Application.module(testing: Boolean = false, content: Content) {
 
     if (items.size > 1 && (items[0] in listOf(Java.lowerName, Python.lowerName))) {
       when (items.size) {
-        2 -> call.respondHtml { challengeGroupPage(items[0].asLanguageType(), items[1]) }
-        3 -> call.respondHtml { challengePage(items[0].asLanguageType(), items[1], items[2]) }
+        2 -> {
+
+          call.respondHtml { challengeGroupPage(items[0].toLanguageType(), items[1]) }
+        }
+        3 -> {
+          call.respondHtml { challengePage(items[0].toLanguageType(), items[1], items[2]) }
+        }
         else -> throw InvalidPathException("Invalid path: $req")
       }
     }
@@ -566,14 +569,14 @@ fun Application.module(testing: Boolean = false, content: Content) {
 
   install(StatusPages) {
     exception<InvalidPathException> { cause ->
-      println("I am here")
+      println("I am here with: ${cause.message}")
       call.respond(HttpStatusCode.NotFound)
     }
 
     //statusFile(HttpStatusCode.NotFound, HttpStatusCode.Unauthorized, filePattern = "error#.html")
 
     status(HttpStatusCode.NotFound) {
-      println("I am also here")
+      println("I am in NotFound")
       call.respond(TextContent("${it.value} ${it.description}", ContentType.Text.Plain.withCharset(Charsets.UTF_8), it))
     }
 
