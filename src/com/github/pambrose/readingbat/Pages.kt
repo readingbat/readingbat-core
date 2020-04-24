@@ -67,6 +67,7 @@ fun Application.module(testing: Boolean = false, content: Content) {
   val arrow = "arrow"
   val feedback = "feedback"
   val checkAnswers = "checkAnswers"
+  val spinner = "spinner"
   val status = "status"
   val refs = "refs"
   val back = "back"
@@ -79,6 +80,7 @@ fun Application.module(testing: Boolean = false, content: Content) {
   val static = "static"
   val check = "/$static/check.jpg"
   val cssName = "/styles.css"
+  val cssType = "text/css"
   val sessionCounter = AtomicInteger(0)
   val production: Boolean by lazy { System.getenv("PRODUCTION")?.toBoolean() ?: false }
 
@@ -153,7 +155,7 @@ fun Application.module(testing: Boolean = false, content: Content) {
   fun languageGroupPage(languageType: LanguageType): HTML.() -> Unit = {
     head {
       title(title)
-      link { rel = "stylesheet"; href = cssName; type = "text/css" }
+      link { rel = "stylesheet"; href = cssName; type = cssType }
       analytics.invoke(this)
     }
 
@@ -194,7 +196,7 @@ fun Application.module(testing: Boolean = false, content: Content) {
 
     head {
       title(title)
-      link { rel = "stylesheet"; href = cssName; type = "text/css" }
+      link { rel = "stylesheet"; href = cssName; type = cssType }
       analytics.invoke(this)
     }
 
@@ -269,9 +271,11 @@ fun Application.module(testing: Boolean = false, content: Content) {
             
             function handleDone(){
               if(re.readyState == 1) {  // starting
+                document.getElementById('$spinner').innerHTML = '<i class="fa fa-spinner w3-spin" style="font-size:32px">';
                 document.getElementById('$status').innerHTML = 'Checking answers...';
               }
               else if(re.readyState == 4) {  // done
+                document.getElementById('$spinner').innerHTML = "";
                 document.getElementById('$status').innerHTML = "";
                 var results = eval(re.responseText);
                 for (var i = 0; i < results.length; i++) {
@@ -288,8 +292,11 @@ fun Application.module(testing: Boolean = false, content: Content) {
         }
       }
 
-      link { rel = "stylesheet"; href = "/$static/$languageName-prism.css"; type = "text/css" }
-      link { rel = "stylesheet"; href = cssName; type = "text/css" }
+      val cloudflare = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
+      link { rel = "stylesheet"; href = "/$static/$languageName-prism.css"; type = cssType }
+      link { rel = "stylesheet"; href = cssName; type = cssType }
+      link { rel = "stylesheet"; href = "/$static/spin.css"; type = cssType }
+      link { rel = "stylesheet"; href = cloudflare; type = cssType }
 
       style {
         unsafe {
@@ -346,6 +353,7 @@ fun Application.module(testing: Boolean = false, content: Content) {
           }
 
           button(classes = checkAnswers) { onClick = "$processAnswers(${funcArgs.size})"; +"Check My Answers!" }
+          span(classes = spinner) { id = spinner }
           span(classes = status) { id = status }
 
           p(classes = refs) {
@@ -452,9 +460,12 @@ fun Application.module(testing: Boolean = false, content: Content) {
           borderRadius = 6.px
           marginTop = 1.em
         }
-        rule(".$status") {
+        rule(".$spinner") {
           marginTop = 0.em
           marginLeft = 2.em
+        }
+        rule(".$status") {
+          marginLeft = 1.em
           fontSize = fs
         }
         rule(".h2") {
