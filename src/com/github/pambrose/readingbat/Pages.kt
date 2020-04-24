@@ -66,6 +66,7 @@ fun Application.module(testing: Boolean = false, content: Content) {
   val funcCol = "funcCol"
   val arrow = "arrow"
   val feedback = "feedback"
+  val checkBar = "checkBar"
   val checkAnswers = "checkAnswers"
   val spinner = "spinner"
   val status = "status"
@@ -74,7 +75,7 @@ fun Application.module(testing: Boolean = false, content: Content) {
   val lang = "lang"
   val tabs = "tabs"
   val selected = "selected"
-  val fs = 120.pct
+  val fs = 115.pct
   val processAnswers = "processAnswers"
   val title = "ReadingBat"
   val static = "static"
@@ -352,10 +353,21 @@ fun Application.module(testing: Boolean = false, content: Content) {
             }
           }
 
-          button(classes = checkAnswers) { onClick = "$processAnswers(${funcArgs.size})"; +"Check My Answers!" }
-          span(classes = spinner) { id = spinner }
-          span(classes = status) { id = status }
-
+          div(classes = checkBar) {
+            table {
+              tr {
+                td {
+                  button(classes = checkAnswers) { onClick = "$processAnswers(${funcArgs.size})"; +"Check My Answers!" }
+                }
+                td {
+                  span(classes = spinner) { id = spinner }
+                }
+                td {
+                  span(classes = status) { id = status }
+                }
+              }
+            }
+          }
           p(classes = refs) {
             +"Experiment with this code on "
             a { href = "https://gitpod.io/#${challenge.gitpodUrl}"; target = "_blank"; +"Gitpod.io" }
@@ -451,6 +463,16 @@ fun Application.module(testing: Boolean = false, content: Content) {
           width = 10.em
           border = "7px solid white"
         }
+        // This will add an outline to all the tables
+        /*
+        rule("table th td") {
+          border = "1px solid black;"
+          borderCollapse = BorderCollapse.collapse
+        }
+        */
+        rule(".$checkBar") {
+          marginTop = 1.em
+        }
         rule(".$checkAnswers") {
           width = 14.em
           height = 2.em
@@ -458,15 +480,15 @@ fun Application.module(testing: Boolean = false, content: Content) {
           fontSize = fs
           fontWeight = FontWeight.bold
           borderRadius = 6.px
-          marginTop = 1.em
         }
         rule(".$spinner") {
-          marginTop = 0.em
           marginLeft = 2.em
+          verticalAlign = VerticalAlign.bottom
         }
         rule(".$status") {
           marginLeft = 1.em
           fontSize = fs
+          verticalAlign = VerticalAlign.bottom
         }
         rule(".h2") {
           fontSize = 166.pct
