@@ -1,7 +1,7 @@
 package org.github
 
-import com.github.pambrose.readingbat.module
-import com.github.pambrose.readingbat.readingBatContent
+import com.github.readingbat.module
+import com.github.readingbat.readingBatContent
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.testing.handleRequest

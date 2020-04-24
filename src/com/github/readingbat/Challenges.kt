@@ -1,9 +1,9 @@
-package com.github.pambrose.readingbat
+package com.github.readingbat
 
 import com.github.pambrose.common.util.*
-import com.github.pambrose.readingbat.LanguageType.Java
-import com.github.pambrose.readingbat.LanguageType.Python
-import com.github.pambrose.readingbat.ReadingBatServer.userContent
+import com.github.readingbat.LanguageType.Java
+import com.github.readingbat.LanguageType.Python
+import com.github.readingbat.ReadingBatServer.userContent
 import com.vladsch.flexmark.html.HtmlRenderer
 import com.vladsch.flexmark.parser.Parser
 import com.vladsch.flexmark.util.data.MutableDataSet
@@ -44,11 +44,16 @@ object ReadingBatServer {
 fun readingBatContent(block: Content.() -> Unit) = userContent.apply(block)
 
 class Content {
-  private val languageList = listOf(LanguageGroup(Python), LanguageGroup(Java))
+  private val languageList = listOf(
+    LanguageGroup(Python),
+    LanguageGroup(Java)
+  )
   private val languageMap = languageList.map { it.languageType to it }.toMap()
 
   internal fun getLanguage(languageType: LanguageType) =
-    languageMap[languageType] ?: throw InvalidConfigurationException("Invalid language $languageType")
+    languageMap[languageType] ?: throw InvalidConfigurationException(
+      "Invalid language $languageType"
+    )
 
   fun python(block: LanguageGroup.() -> Unit) {
     getLanguage(Python).apply(block)
@@ -113,7 +118,9 @@ class ChallengeGroup(internal val languageGroup: LanguageGroup, internal val nam
 
   fun challenge(name: String, block: AbstractChallenge.() -> Unit) {
     val challenge =
-      (if (languageGroup.languageType == Java) JavaChallenge(this) else PythonChallenge(this)).apply {
+      (if (languageGroup.languageType == Java) JavaChallenge(this) else PythonChallenge(
+        this
+      )).apply {
         this.name = name
       }.apply(block)
     challenge.validate()

@@ -1,5 +1,4 @@
-package com.github.pambrose.readingbat
-
+package com.github.readingbat
 
 object Main {
   @JvmStatic

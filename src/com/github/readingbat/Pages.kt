@@ -1,12 +1,12 @@
-package com.github.pambrose.readingbat
+package com.github.readingbat
 
 import com.github.pambrose.common.util.decode
 import com.github.pambrose.common.util.isDoubleQuoted
 import com.github.pambrose.common.util.isSingleQuoted
 import com.github.pambrose.common.util.singleToDoubleQuoted
-import com.github.pambrose.readingbat.LanguageType.Companion.toLanguageType
-import com.github.pambrose.readingbat.LanguageType.Java
-import com.github.pambrose.readingbat.LanguageType.Python
+import com.github.readingbat.LanguageType.Companion.toLanguageType
+import com.github.readingbat.LanguageType.Java
+import com.github.readingbat.LanguageType.Python
 import io.ktor.application.*
 import io.ktor.features.*
 import io.ktor.html.respondHtml

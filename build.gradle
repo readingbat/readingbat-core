@@ -14,7 +14,7 @@ repositories {
     maven { url = 'https://jitpack.io' }
 }
 
-def mainName = 'com.github.pambrose.readingbat.Main'
+def mainName = 'com.github.readingbat.Main'
 def appName = 'server'
 
 def flexmarkVersion = '0.61.0'
@@ -29,7 +29,7 @@ sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
 description = 'ReadingBat Core'
-group 'com.github.pambrose.readingbat'
+group 'com.github.readingbat'
 version '1.0.1'
 
 sourceSets {
