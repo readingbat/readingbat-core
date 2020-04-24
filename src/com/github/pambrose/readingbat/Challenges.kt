@@ -22,6 +22,10 @@ enum class LanguageType(val useDoubleQuotes: Boolean, val suffix: String) {
 
   fun isJava() = this == Java
   fun isPython() = this == Python
+
+  companion object {
+    fun String.asLanguageType() = values().first { it.name.equals(this, ignoreCase = true) }
+  }
 }
 
 object ReadingBatServer {
@@ -135,7 +139,7 @@ abstract class AbstractChallenge(private val group: ChallengeGroup) {
   var description: String = ""
 
 
-  abstract fun findFuncInfo(code: String): FunInfo
+  abstract fun findFuncInfo(code: String): FuncInfo
 
   fun funcInfo() =
     sourcesMap
@@ -210,12 +214,12 @@ abstract class AbstractChallenge(private val group: ChallengeGroup) {
 
   companion object : KLogging() {
     val counter = AtomicInteger(0)
-    val sourcesMap = ConcurrentHashMap<Int, FunInfo>()
+    val sourcesMap = ConcurrentHashMap<Int, FuncInfo>()
   }
 }
 
 class PythonChallenge(group: ChallengeGroup) : AbstractChallenge(group) {
-  override fun findFuncInfo(code: String): FunInfo {
+  override fun findFuncInfo(code: String): FuncInfo {
     val lines = code.split("\n")
     val lineNums =
       lines.mapIndexed { i, str -> i to str }
@@ -224,12 +228,12 @@ class PythonChallenge(group: ChallengeGroup) : AbstractChallenge(group) {
 
     val funcName = lines[lineNums.first()].substringAfter("def ").substringBefore("(").trim()
     val funcCode = lines.subList(lineNums.first(), lineNums.last() - 1).joinToString("\n").trimIndent()
-    return FunInfo(funcName, funcCode)
+    return FuncInfo(funcName, funcCode)
   }
 }
 
 class JavaChallenge(group: ChallengeGroup) : AbstractChallenge(group) {
-  override fun findFuncInfo(code: String): FunInfo {
+  override fun findFuncInfo(code: String): FuncInfo {
     val lines = code.split("\n")
     val lineNums =
       lines.mapIndexed { i, str -> i to str }
@@ -238,13 +242,12 @@ class JavaChallenge(group: ChallengeGroup) : AbstractChallenge(group) {
 
     val funcName = lines[lineNums.first()].substringAfter("static ").substringBefore("(").split(" ")[1].trim()
     val funcCode = lines.subList(lineNums.first(), lineNums.last() - 1).joinToString("\n").trimIndent()
-    return FunInfo(funcName, funcCode)
+    return FuncInfo(funcName, funcCode)
   }
 }
 
-class FunInfo(val name: String, val code: String)
+class FuncInfo(val name: String, val code: String)
 
 class InvalidConfigurationException(msg: String) : Exception(msg)
 
-fun fromPath(s: String) = s.capitalize().let { cap -> LanguageType.values().first { it.name == cap } }
-fun List<String>.toPath() = joinToString("") { it.ensureSuffix("/") }
+private fun List<String>.toPath() = joinToString("") { it.ensureSuffix("/") }

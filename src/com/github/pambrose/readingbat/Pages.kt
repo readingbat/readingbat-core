@@ -4,6 +4,7 @@ import com.github.pambrose.common.util.decode
 import com.github.pambrose.common.util.isDoubleQuoted
 import com.github.pambrose.common.util.isSingleQuoted
 import com.github.pambrose.common.util.singleToDoubleQuoted
+import com.github.pambrose.readingbat.LanguageType.Companion.asLanguageType
 import com.github.pambrose.readingbat.LanguageType.Java
 import com.github.pambrose.readingbat.LanguageType.Python
 import io.ktor.application.*
@@ -31,6 +32,8 @@ import org.slf4j.event.Level
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.milliseconds
 
+
+val String.toHtml: HTMLTag.() -> Unit get() = { unsafe { raw(this@toHtml) } }
 
 @JvmOverloads
 fun Application.module(testing: Boolean = false, content: Content) {
@@ -82,14 +85,13 @@ fun Application.module(testing: Boolean = false, content: Content) {
   val check = "/$static/check.jpg"
   val cssName = "/styles.css"
   val cssType = "text/css"
+  val SP = "&nbsp;"
   val sessionCounter = AtomicInteger(0)
   val production: Boolean by lazy { System.getenv("PRODUCTION")?.toBoolean() ?: false }
 
   val analytics: HEAD.() -> Unit = {
     if (production) {
-      unsafe {
-        raw(
-          """
+      """
         <script async src="https://www.googletagmanager.com/gtag/js?id=UA-164310007-1"></script>
         <script>
           window.dataLayer = window.dataLayer || [];
@@ -97,16 +99,14 @@ fun Application.module(testing: Boolean = false, content: Content) {
           gtag('js', new Date());
           gtag('config', 'UA-164310007-1');
         </script>
-      """.trimIndent()
-        )
-      }
+        """.toHtml(this)
     }
   }
 
   fun header(languageType: LanguageType): BODY.() -> Unit = {
     div(classes = "header") {
       a { href = "/"; span { style = "font-size:200%;"; +title } }
-      unsafe { raw("&nbsp;") }
+      SP.toHtml(this)
       span { +"code reading practice" }
     }
     nav {
@@ -125,29 +125,24 @@ fun Application.module(testing: Boolean = false, content: Content) {
     }
   }
 
-  fun groupItem(prefix: String, group: ChallengeGroup): TR.() -> Unit {
+  fun groupItem(prefix: String, group: ChallengeGroup): TR.() -> Unit = {
     val name = group.name
     val description = group.description
     val parsedDescription = group.parsedDescription
-    return {
-      td(classes = funcItem) {
-        div(classes = groupItem) {
-          a(classes = funcChoice) { href = "/$prefix/$name"; +name }
-          br {
-            unsafe { raw(if (description.isNotBlank()) parsedDescription else "&nbsp;") }
-          }
-        }
+
+    td(classes = funcItem) {
+      div(classes = groupItem) {
+        a(classes = funcChoice) { href = "/$prefix/$name"; +name }
+        br { (if (description.isNotBlank()) parsedDescription else SP).toHtml(this) }
       }
     }
   }
 
-  fun funcCall(prefix: String, groupName: String, challenge: AbstractChallenge): TR.() -> Unit {
-    return {
-      td(classes = funcItem) {
-        img { src = check }
-        unsafe { raw("&nbsp;") }
-        a(classes = funcChoice) { href = "/$prefix/$groupName/${challenge.name}"; +challenge.name }
-      }
+  fun funcCall(prefix: String, groupName: String, challenge: AbstractChallenge): TR.() -> Unit = {
+    td(classes = funcItem) {
+      img { src = check }
+      SP.toHtml(this)
+      a(classes = funcChoice) { href = "/$prefix/$groupName/${challenge.name}"; +challenge.name }
     }
   }
 
@@ -222,7 +217,7 @@ fun Application.module(testing: Boolean = false, content: Content) {
           }
         }
 
-        div(classes = back) { a { href = "/$prefix"; unsafe { raw("&larr; Back") } } }
+        div(classes = back) { a { href = "/$prefix"; "&larr; Back".toHtml(this) } }
       }
     }
   }
@@ -239,9 +234,7 @@ fun Application.module(testing: Boolean = false, content: Content) {
       title(title)
 
       script(type = ScriptType.textJavaScript) {
-        unsafe {
-          raw(
-            """
+        """
             var re = new XMLHttpRequest();
 
             function $processAnswers(cnt) { 
@@ -288,9 +281,7 @@ fun Application.module(testing: Boolean = false, content: Content) {
                }
               }
             }
-            """
-          )
-        }
+            """.toHtml(this)
       }
 
       val cloudflare = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
@@ -299,16 +290,12 @@ fun Application.module(testing: Boolean = false, content: Content) {
       link { rel = "stylesheet"; href = "/$static/spin.css"; type = cssType }
       link { rel = "stylesheet"; href = cloudflare; type = cssType }
 
+      // This removes the prism shadow
       style {
-        unsafe {
-          raw(
-            // This removes the prism shadow
-            """
-              pre[class*="language-"]:before,
-              pre[class*="language-"]:after { display: none; }
-            """
-          )
-        }
+        """
+            pre[class*="language-"]:before,
+            pre[class*="language-"]:after { display: none; }
+          """.toHtml(this)
       }
       analytics.invoke(this)
     }
@@ -318,11 +305,11 @@ fun Application.module(testing: Boolean = false, content: Content) {
 
       div(classes = tabs) {
         h2 {
-          a { href = "/$languageName/$groupName"; +groupName.decode() }; unsafe { raw("&nbsp;&rarr;&nbsp;") }; +name
+          a { href = "/$languageName/$groupName"; +groupName.decode() }; "$SP&rarr;$SP".toHtml(this); +name
         }
 
         if (challenge.description.isNotEmpty())
-          div(classes = "challenge-desc") { unsafe { raw(challenge.parsedDescription) } }
+          div(classes = "challenge-desc") { challenge.parsedDescription.toHtml(this) }
 
         pre(classes = "line-numbers") {
           code(classes = "language-$languageName") { +challenge.funcInfo().code }
@@ -341,7 +328,7 @@ fun Application.module(testing: Boolean = false, content: Content) {
             funcArgs.withIndex().forEach { (k, v) ->
               tr {
                 td(classes = funcCol) { +"${challenge.funcInfo().name}(${v.first})" }
-                td(classes = arrow) { unsafe { raw("&rarr;") } }
+                td(classes = arrow) { "&rarr;".toHtml(this) }
                 td {
                   textInput(classes = answer) {
                     id = "$answer$k"; onKeyPress = "$processAnswers(${funcArgs.size})"
@@ -379,7 +366,7 @@ fun Application.module(testing: Boolean = false, content: Content) {
             }
           }
 
-          div(classes = back) { a { href = "/$languageName/$groupName"; unsafe { raw("&larr; Back") } } }
+          div(classes = back) { a { href = "/$languageName/$groupName"; "&larr; Back".toHtml(this) } }
         }
       }
 
@@ -393,8 +380,8 @@ fun Application.module(testing: Boolean = false, content: Content) {
 
     if (items.size > 1 && (items[0] in listOf(Java.lowerName, Python.lowerName))) {
       when (items.size) {
-        2 -> call.respondHtml(block = challengeGroupPage(fromPath(items[0]), items[1]))
-        3 -> call.respondHtml(block = challengePage(fromPath(items[0]), items[1], items[2]))
+        2 -> call.respondHtml(block = challengeGroupPage(items[0].asLanguageType(), items[1]))
+        3 -> call.respondHtml(block = challengePage(items[0].asLanguageType(), items[1], items[2]))
       }
     }
   }
