@@ -151,7 +151,7 @@ abstract class AbstractChallenge(private val group: ChallengeGroup) {
       }
 
   var name: String = ""
-  var fileName: String = ""
+  var fileName: String = "$name.${languageType.suffix}"
   var codingBatEquiv = ""
   var description: String = ""
 
@@ -168,7 +168,7 @@ abstract class AbstractChallenge(private val group: ChallengeGroup) {
       }
 
   fun validate() {
-    if (fileName.isEmpty()) throw InvalidConfigurationException("${name.toDoubleQuoted()} is missing filename")
+    if (fileName.isEmpty()) throw InvalidConfigurationException("${name.toDoubleQuoted()} is empty")
 
     if (multiArgTypes.isNotEmpty())
       throw InvalidConfigurationException("${name.toDoubleQuoted()} has $multiArgTypes")
