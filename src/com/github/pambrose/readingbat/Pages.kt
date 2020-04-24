@@ -12,8 +12,10 @@ import io.ktor.features.*
 import io.ktor.html.respondHtml
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.content.TextContent
 import io.ktor.http.content.resources
 import io.ktor.http.content.static
+import io.ktor.http.withCharset
 import io.ktor.request.path
 import io.ktor.request.receiveParameters
 import io.ktor.request.uri
@@ -35,28 +37,6 @@ import kotlin.time.milliseconds
 
 @JvmOverloads
 fun Application.module(testing: Boolean = false, content: Content) {
-
-  install(Compression) {
-    gzip {
-      priority = 1.0
-    }
-    deflate {
-      priority = 10.0
-      minimumSize(1024) // condition
-    }
-  }
-
-  install(CallLogging) {
-    level = Level.INFO
-    filter { call -> call.request.path().startsWith("/") }
-  }
-
-  install(ShutDownUrl.ApplicationCallFeature) {
-    // The URL that will be intercepted (you can also use the application.conf's ktor.deployment.shutdown.url key)
-    shutDownUrl = "/ktor/application/shutdown"
-    // A function that will be executed to get the exit code of the process
-    exitCodeSupplier = { 0 } // ApplicationCall.() -> Int
-  }
 
   val sessionid = "sessionid"
   val groupItem = "groupItem"
@@ -83,13 +63,18 @@ fun Application.module(testing: Boolean = false, content: Content) {
   val check = "/$static/check.jpg"
   val cssName = "/styles.css"
   val cssType = ContentType.Text.CSS.toString()
-  val SP = "&nbsp;"
+  val sp = "&nbsp;"
   val sessionCounter = AtomicInteger(0)
   val production: Boolean by lazy { System.getenv("PRODUCTION")?.toBoolean() ?: false }
 
-  val analytics: HEAD.() -> Unit = {
+  fun HTMLTag.rawHtml(html: String) {
+    unsafe { raw(html) }
+  }
+
+  fun HEAD.analytics() {
     if (production) {
-      """
+      rawHtml(
+        """
         <script async src="https://www.googletagmanager.com/gtag/js?id=UA-164310007-1"></script>
         <script>
           window.dataLayer = window.dataLayer || [];
@@ -97,14 +82,15 @@ fun Application.module(testing: Boolean = false, content: Content) {
           gtag('js', new Date());
           gtag('config', 'UA-164310007-1');
         </script>
-        """.rawHtml(this)
+        """
+      )
     }
   }
 
-  fun header(languageType: LanguageType): BODY.() -> Unit = {
+  fun BODY.header(languageType: LanguageType) {
     div(classes = "header") {
       a { href = "/"; span { style = "font-size:200%;"; +title } }
-      SP.rawHtml(this)
+      rawHtml(sp)
       span { +"code reading practice" }
     }
     nav {
@@ -121,7 +107,7 @@ fun Application.module(testing: Boolean = false, content: Content) {
     }
   }
 
-  fun groupItem(prefix: String, group: ChallengeGroup): TR.() -> Unit = {
+  fun TR.groupItem(prefix: String, group: ChallengeGroup) {
     val name = group.name
     val description = group.description
     val parsedDescription = group.parsedDescription
@@ -129,30 +115,30 @@ fun Application.module(testing: Boolean = false, content: Content) {
     td(classes = funcItem) {
       div(classes = groupItem) {
         a(classes = funcChoice) { href = "/$prefix/$name"; +name }
-        br { (if (description.isNotBlank()) parsedDescription else SP).rawHtml(this) }
+        br { rawHtml(if (description.isNotBlank()) parsedDescription else sp) }
       }
     }
   }
 
-  fun funcCall(prefix: String, groupName: String, challenge: AbstractChallenge): TR.() -> Unit = {
+  fun TR.funcCall(prefix: String, groupName: String, challenge: AbstractChallenge) {
     td(classes = funcItem) {
       img { src = check }
-      SP.rawHtml(this)
+      rawHtml(sp)
       a(classes = funcChoice) { href = "/$prefix/$groupName/${challenge.name}"; +challenge.name }
     }
   }
 
   fun Int.rows(cols: Int) = if (this % cols == 0) this / cols else (this / cols) + 1
 
-  fun languageGroupPage(languageType: LanguageType): HTML.() -> Unit = {
+  fun HTML.languageGroupPage(languageType: LanguageType) {
     head {
       title(title)
       link { rel = "stylesheet"; href = cssName; type = cssType }
-      analytics.invoke(this)
+      analytics()
     }
 
     body {
-      header(languageType).invoke(this)
+      header(languageType)
 
       div(classes = tabs) {
 
@@ -165,9 +151,9 @@ fun Application.module(testing: Boolean = false, content: Content) {
 
           (0 until rows).forEach { i ->
             tr {
-              groups[i].also { group -> groupItem(languageName, group).invoke(this) }
-              groups.elementAtOrNull(i + rows)?.also { groupItem(languageName, it).invoke(this) } ?: td {}
-              groups.elementAtOrNull(i + (2 * rows))?.also { groupItem(languageName, it).invoke(this) } ?: td {}
+              groups[i].also { group -> groupItem(languageName, group) }
+              groups.elementAtOrNull(i + rows)?.also { groupItem(languageName, it) } ?: td {}
+              groups.elementAtOrNull(i + (2 * rows))?.also { groupItem(languageName, it) } ?: td {}
             }
           }
         }
@@ -175,18 +161,18 @@ fun Application.module(testing: Boolean = false, content: Content) {
     }
   }
 
-  fun challengeGroupPage(languageType: LanguageType, groupName: String): HTML.() -> Unit = {
+  fun HTML.challengeGroupPage(languageType: LanguageType, groupName: String) {
 
     val prefix = languageType.lowerName
 
     head {
       title(title)
       link { rel = "stylesheet"; href = cssName; type = cssType }
-      analytics.invoke(this)
+      analytics()
     }
 
     body {
-      header(languageType).invoke(this)
+      header(languageType)
 
       div(classes = tabs) {
         h2 { +groupName.decode() }
@@ -199,21 +185,24 @@ fun Application.module(testing: Boolean = false, content: Content) {
 
           (0 until rows).forEach { i ->
             tr {
-              challenges[i].also { funcCall(prefix, groupName, it).invoke(this) }
-              challenges.elementAtOrNull(i + rows)?.also { funcCall(prefix, groupName, it).invoke(this) } ?: td {}
-              challenges.elementAtOrNull(i + (2 * rows))?.also { funcCall(prefix, groupName, it).invoke(this) } ?: td {}
+              challenges[i].also { funcCall(prefix, groupName, it) }
+              challenges.elementAtOrNull(i + rows)?.also { funcCall(prefix, groupName, it) } ?: td {}
+              challenges.elementAtOrNull(i + (2 * rows))?.also { funcCall(prefix, groupName, it) } ?: td {}
             }
           }
         }
 
-        div(classes = back) { a { href = "/$prefix"; "&larr; Back".rawHtml(this) } }
+        div(classes = back) { a { href = "/$prefix"; rawHtml("&larr; Back") } }
       }
     }
   }
 
-  fun challengePage(languageType: LanguageType, groupName: String, challengeName: String): HTML.() -> Unit = {
-
-    val challenge = content.getLanguage(languageType).find(groupName).challenges.first { it.name == challengeName }
+  fun HTML.challengePage(languageType: LanguageType, groupName: String, challengeName: String) {
+    val challenge =
+      content.getLanguage(languageType)
+        .find(groupName)
+        .challenges
+        .firstOrNull { it.name == challengeName } ?: throw InvalidPathException("Challenge $challengeName not found.")
     val funcType = challenge.languageType
     val name = challenge.name
     val funcArgs = challenge.inputOutput
@@ -221,9 +210,25 @@ fun Application.module(testing: Boolean = false, content: Content) {
 
     head {
       title(title)
+      link {
+        rel = "stylesheet"; href = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
+      }
+      link { rel = "stylesheet"; href = "/$static/$languageName-prism.css"; type = cssType }
+      link { rel = "stylesheet"; href = cssName; type = cssType }
+
+      // Remove the prism shadow
+      style {
+        rawHtml(
+          """
+            pre[class*="language-"]:before,
+            pre[class*="language-"]:after { display: none; }
+          """
+        )
+      }
 
       script(type = ScriptType.textJavaScript) {
-        """
+        rawHtml(
+          """
             var re = new XMLHttpRequest();
 
             function $processAnswers(cnt) { 
@@ -254,7 +259,7 @@ fun Application.module(testing: Boolean = false, content: Content) {
             
             function handleDone(){
               if(re.readyState == 1) {  // starting
-                document.getElementById('$spinner').innerHTML = '<i class="fa fa-spinner w3-spin" style="font-size:32px">';
+                document.getElementById('$spinner').innerHTML = '<i class="fa fa-spinner fa-spin" style="font-size:24px"></i>';
                 document.getElementById('$status').innerHTML = 'Checking answers...';
               }
               else if(re.readyState == 4) {  // done
@@ -270,35 +275,23 @@ fun Application.module(testing: Boolean = false, content: Content) {
                }
               }
             }
-            """.rawHtml(this)
+            """
+        )
       }
 
-      val cloudflare = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
-      link { rel = "stylesheet"; href = "/$static/$languageName-prism.css"; type = cssType }
-      link { rel = "stylesheet"; href = cssName; type = cssType }
-      link { rel = "stylesheet"; href = "/$static/spin.css"; type = cssType }
-      link { rel = "stylesheet"; href = cloudflare; type = cssType }
-
-      // This removes the prism shadow
-      style {
-        """
-            pre[class*="language-"]:before,
-            pre[class*="language-"]:after { display: none; }
-          """.rawHtml(this)
-      }
-      analytics.invoke(this)
+      analytics()
     }
 
     body {
-      header(languageType).invoke(this)
+      header(languageType)
 
       div(classes = tabs) {
         h2 {
-          a { href = "/$languageName/$groupName"; +groupName.decode() }; "$SP&rarr;$SP".rawHtml(this); +name
+          a { href = "/$languageName/$groupName"; +groupName.decode() }; rawHtml("$sp&rarr;$sp"); +name
         }
 
         if (challenge.description.isNotEmpty())
-          div(classes = "challenge-desc") { challenge.parsedDescription.rawHtml(this) }
+          div(classes = "challenge-desc") { rawHtml(challenge.parsedDescription) }
 
         pre(classes = "line-numbers") {
           code(classes = "language-$languageName") { +challenge.funcInfo().code }
@@ -317,7 +310,7 @@ fun Application.module(testing: Boolean = false, content: Content) {
             funcArgs.withIndex().forEach { (i, v) ->
               tr {
                 td(classes = funcCol) { +"${challenge.funcInfo().name}(${v.first})" }
-                td(classes = arrow) { "&rarr;".rawHtml(this) }
+                td(classes = arrow) { rawHtml("&rarr;") }
                 td {
                   textInput(classes = answer) { id = "$answer$i"; onKeyPress = "$processAnswers(${funcArgs.size})" }
                 }
@@ -349,23 +342,11 @@ fun Application.module(testing: Boolean = false, content: Content) {
             }
           }
 
-          div(classes = back) { a { href = "/$languageName/$groupName"; "&larr; Back".rawHtml(this) } }
+          div(classes = back) { a { href = "/$languageName/$groupName"; rawHtml("&larr; Back") } }
         }
       }
 
       script { src = "/$static/$languageName-prism.js" }
-    }
-  }
-
-  intercept(ApplicationCallPipeline.Call) {
-    val req = call.request.uri
-    val items = req.split("/").filter { it.isNotEmpty() }
-
-    if (items.size > 1 && (items[0] in listOf(Java.lowerName, Python.lowerName))) {
-      when (items.size) {
-        2 -> call.respondHtml(block = challengeGroupPage(items[0].asLanguageType(), items[1]))
-        3 -> call.respondHtml(block = challengePage(items[0].asLanguageType(), items[1], items[2]))
-      }
     }
   }
 
@@ -376,11 +357,11 @@ fun Application.module(testing: Boolean = false, content: Content) {
     }
 
     get("/${Java.lowerName}") {
-      call.respondHtml(block = languageGroupPage(Java))
+      call.respondHtml { languageGroupPage(Java) }
     }
 
     get("/${Python.lowerName}") {
-      call.respondHtml(block = languageGroupPage(Python))
+      call.respondHtml { languageGroupPage(Python) }
     }
 
     get(cssName) {
@@ -452,11 +433,11 @@ fun Application.module(testing: Boolean = false, content: Content) {
           borderRadius = 6.px
         }
         rule(".$spinner") {
-          marginLeft = 2.em
+          marginLeft = 1.em
           verticalAlign = VerticalAlign.bottom
         }
         rule(".$status") {
-          marginLeft = 1.em
+          marginLeft = 5.px
           fontSize = fs
           verticalAlign = VerticalAlign.bottom
         }
@@ -515,7 +496,34 @@ fun Application.module(testing: Boolean = false, content: Content) {
         answers.indices.map { i ->
           val userResp = compareMap[answer + i]?.trim()
           val sol = compareMap[solution + i]?.trim()
-          compareValues(compareMap[lang] == "java", userResp, sol)
+
+          fun checkWithSolution(isJava: Boolean, userResp: String?, solution: String?) =
+            try {
+              fun String.isJavaBoolean() = this == "true" || this == "false"
+              fun String.isPythonBoolean() = this == "True" || this == "False"
+
+              if (isJava)
+                when {
+                  userResp.isNullOrEmpty() || solution.isNullOrEmpty() -> false
+                  userResp.isDoubleQuoted() || solution.isDoubleQuoted() -> userResp == solution
+                  userResp.contains(".") || solution.contains(".") -> userResp.toDouble() == solution.toDouble()
+                  userResp.isJavaBoolean() && solution.isJavaBoolean() -> userResp.toBoolean() == solution.toBoolean()
+                  else -> userResp.toInt() == solution.toInt()
+                }
+              else
+                when {
+                  userResp.isNullOrEmpty() || solution.isNullOrEmpty() -> false
+                  userResp.isDoubleQuoted() -> userResp == solution
+                  userResp.isSingleQuoted() -> userResp.singleToDoubleQuoted() == solution
+                  userResp.contains(".") || solution.contains(".") -> userResp.toDouble() == solution.toDouble()
+                  userResp.isPythonBoolean() && solution.isJavaBoolean() -> userResp.toBoolean() == solution.toBoolean()
+                  else -> userResp.toInt() == solution.toInt()
+                }
+            } catch (e: Exception) {
+              false
+            }
+
+          checkWithSolution(compareMap[lang] == "java", userResp, sol)
         }
 
       delay(200.milliseconds.toLongMilliseconds())
@@ -526,49 +534,67 @@ fun Application.module(testing: Boolean = false, content: Content) {
     static("/$static") {
       resources(static)
     }
+  }
 
-    install(StatusPages) {
-      exception<AuthenticationException> { cause ->
-        call.respond(HttpStatusCode.Unauthorized)
-      }
-      exception<AuthorizationException> { cause ->
-        call.respond(HttpStatusCode.Forbidden)
+  intercept(ApplicationCallPipeline.Call) {
+    val req = call.request.uri
+    val items = req.split("/").filter { it.isNotEmpty() }
+
+    if (items.size > 1 && (items[0] in listOf(Java.lowerName, Python.lowerName))) {
+      when (items.size) {
+        2 -> call.respondHtml { challengeGroupPage(items[0].asLanguageType(), items[1]) }
+        3 -> call.respondHtml { challengePage(items[0].asLanguageType(), items[1], items[2]) }
+        else -> throw InvalidPathException("Invalid path: $req")
       }
     }
   }
+
+  install(Compression) {
+    gzip {
+      priority = 1.0
+    }
+    deflate {
+      priority = 10.0
+      minimumSize(1024) // condition
+    }
+  }
+
+  install(CallLogging) {
+    level = Level.INFO
+    filter { call -> call.request.path().startsWith("/") }
+  }
+
+  install(StatusPages) {
+    exception<InvalidPathException> { cause ->
+      println("I am here")
+      call.respond(HttpStatusCode.NotFound)
+    }
+
+    //statusFile(HttpStatusCode.NotFound, HttpStatusCode.Unauthorized, filePattern = "error#.html")
+
+    status(HttpStatusCode.NotFound) {
+      println("I am also here")
+      call.respond(TextContent("${it.value} ${it.description}", ContentType.Text.Plain.withCharset(Charsets.UTF_8), it))
+    }
+
+    // Catch all
+    exception<Throwable> { cause ->
+      call.respond(HttpStatusCode.InternalServerError)
+    }
+  }
+
+  install(ShutDownUrl.ApplicationCallFeature) {
+    // The URL that will be intercepted (you can also use the application.conf's ktor.deployment.shutdown.url key)
+    shutDownUrl = "/ktor/application/shutdown"
+    // A function that will be executed to get the exit code of the process
+    exitCodeSupplier = { 0 } // ApplicationCall.() -> Int
+  }
 }
 
+class InvalidPathException(msg: String) : RuntimeException(msg)
 class AuthenticationException : RuntimeException()
 class AuthorizationException : RuntimeException()
 
 suspend inline fun ApplicationCall.respondCss(builder: CSSBuilder.() -> Unit) {
   this.respondText(CSSBuilder().apply(builder).toString(), ContentType.Text.CSS)
 }
-
-val String.rawHtml: HTMLTag.() -> Unit get() = { unsafe { raw(this@rawHtml) } }
-
-fun compareValues(isJava: Boolean, userResp: String?, solution: String?) =
-  try {
-    fun String.isJavaBoolean() = this == "true" || this == "false"
-    fun String.isPythonBoolean() = this == "True" || this == "False"
-
-    if (isJava)
-      when {
-        userResp.isNullOrEmpty() || solution.isNullOrEmpty() -> false
-        userResp.isDoubleQuoted() || solution.isDoubleQuoted() -> userResp == solution
-        userResp.contains(".") || solution.contains(".") -> userResp.toDouble() == solution.toDouble()
-        userResp.isJavaBoolean() && solution.isJavaBoolean() -> userResp.toBoolean() == solution.toBoolean()
-        else -> userResp.toInt() == solution.toInt()
-      }
-    else
-      when {
-        userResp.isNullOrEmpty() || solution.isNullOrEmpty() -> false
-        userResp.isDoubleQuoted() -> userResp == solution
-        userResp.isSingleQuoted() -> userResp.singleToDoubleQuoted() == solution
-        userResp.contains(".") || solution.contains(".") -> userResp.toDouble() == solution.toDouble()
-        userResp.isPythonBoolean() && solution.isJavaBoolean() -> userResp.toBoolean() == solution.toBoolean()
-        else -> userResp.toInt() == solution.toInt()
-      }
-  } catch (e: Exception) {
-    false
-  }

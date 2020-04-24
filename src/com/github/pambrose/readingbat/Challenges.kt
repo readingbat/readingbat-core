@@ -72,7 +72,10 @@ class LanguageGroup(internal val languageType: LanguageType) {
   var repoRoot = ""
 
   private fun contains(name: String) = challengeGroups.any { it.name == name }
-  internal fun find(name: String) = name.decode().let { decoded -> challengeGroups.first { it.name == decoded } }
+  internal fun find(name: String) =
+    name.decode()
+      .let { decoded -> challengeGroups.firstOrNull { it.name == decoded } }
+      ?: throw InvalidPathException(" Group $name not found.")
 
   fun group(name: String, block: ChallengeGroup.() -> Unit) {
     if (contains(name))
