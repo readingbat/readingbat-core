@@ -17,14 +17,6 @@ repositories {
 def mainName = 'com.github.readingbat.Main'
 def appName = 'server'
 
-def flexmarkVersion = '0.61.0'
-def junitVersion = '5.6.1'
-def kluentVersion = '1.60'
-def logbackVersion = '1.2.3'
-def loggingVersion = '1.7.9'
-def slf4jVersion = '1.7.28'
-def utilsVersion = '70bc014'
-
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
