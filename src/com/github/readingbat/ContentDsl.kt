@@ -1,9 +1,11 @@
 package com.github.readingbat
 
+import com.github.pambrose.common.script.KtsScript
 import com.github.pambrose.common.util.*
+import com.github.readingbat.Constants.github
+import com.github.readingbat.Constants.githubUserContent
 import com.github.readingbat.LanguageType.Java
 import com.github.readingbat.LanguageType.Python
-import com.github.readingbat.ReadingBatServer.userContent
 import com.vladsch.flexmark.html.HtmlRenderer
 import com.vladsch.flexmark.parser.Parser
 import com.vladsch.flexmark.util.data.MutableDataSet
@@ -29,31 +31,31 @@ enum class LanguageType(val useDoubleQuotes: Boolean, val suffix: String) {
 }
 
 object ReadingBatServer {
-  internal val userContent = Content()
-
   fun start(content: Content) {
-    content.validate()
     val port = Integer.parseInt(System.getProperty("PORT") ?: "8080")
     //val clargs = commandLineEnvironment(args.plus("port=$port"))
-    val httpServer = embeddedServer(CIO, port = port) { module(content = userContent) }
-    httpServer.start(wait = true)
-
+    embeddedServer(CIO, port = port) { module(content = content) }.start(wait = true)
   }
 }
 
-fun readingBatContent(block: Content.() -> Unit) = userContent.apply(block)
+
+fun readingBatContent(block: Content.() -> Unit) = Content().apply(block).apply { validate() }
 
 class Content {
   private val languageList = listOf(
     LanguageGroup(Python),
     LanguageGroup(Java)
-  )
+                                   )
   private val languageMap = languageList.map { it.languageType to it }.toMap()
+
+  val java get() = findLanguage(Java)
+  val python get() = findLanguage(Python)
 
   internal fun findLanguage(languageType: LanguageType) =
     languageMap[languageType] ?: throw InvalidConfigurationException("Invalid language $languageType")
 
   internal fun validate() = languageList.forEach { it.validate() }
+
 
   fun python(block: LanguageGroup.() -> Unit) {
     findLanguage(Python).apply(block)
@@ -62,13 +64,50 @@ class Content {
   fun java(block: LanguageGroup.() -> Unit) {
     findLanguage(Java).apply(block)
   }
+
+  operator fun LanguageGroup.unaryPlus(): Unit {
+    //text(this)
+  }
+
+  fun remoteContent(scheme: String = "https://",
+                    domainName: String = github,
+                    organization: String = "readingbat",
+                    repo: String,
+                    branch: String = "master",
+                    srcPath: String = "src/main/kotlin",
+                    fileName: String = "Content.kt",
+                    variableName: String = "content"): Content {
+
+    val path = scheme + domainName.replace(github, githubUserContent).ensureSuffix("/") +
+        listOf(organization, repo, branch, srcPath).toPath() + fileName.ensureSuffix(".kt")
+
+    val (content, dur) = measureTimedValue { URL(path).readText() }
+
+    val importDecl = "import com.github.readingbat.readingBatContent"
+
+    val code =
+      (if (content.contains(importDecl)) "" else importDecl) + """
+      $content
+      $variableName
+      """
+
+    KtsScript()
+      .apply {
+        val c = eval(code) as Content
+        println(c)
+      }
+
+    return this
+  }
+
+  override fun toString() = "Content(languageList=$languageList)"
 }
 
 class LanguageGroup(internal val languageType: LanguageType) {
   private var srcPrefix = if (languageType.isJava()) "src/main/java" else "src" // default value
   internal val challengeGroups = mutableListOf<ChallengeGroup>()
 
-  private val rawRoot by lazy { repoRoot.replace("github.com", "raw.githubusercontent.com") }
+  private val rawRoot by lazy { repoRoot.replace(github, githubUserContent) }
   internal val rawRepoRoot by lazy { listOf(rawRoot, "master", srcPrefix).toPath() }
   internal val gitpodRoot by lazy { listOf(repoRoot, "blob/master/", srcPrefix).toPath() }
 
@@ -85,8 +124,12 @@ class LanguageGroup(internal val languageType: LanguageType) {
     findChallengeGroup(groupName).findChallenge(challengeName)
 
   internal fun validate() {
-    if (repoRoot.isEmpty())
+    if (challengeGroups.isNotEmpty() && repoRoot.isEmpty())
       throw InvalidConfigurationException("${languageType.lowerName} language section is missing a repoRoot value")
+  }
+
+  operator fun ChallengeGroup.unaryPlus(): Unit {
+    //text(this)
   }
 
   fun group(name: String, block: ChallengeGroup.() -> Unit) {
@@ -95,6 +138,10 @@ class LanguageGroup(internal val languageType: LanguageType) {
     else
       challengeGroups += ChallengeGroup(this, name).apply(block)
   }
+
+  override fun toString() =
+    "LanguageGroup(languageType=$languageType, srcPrefix='$srcPrefix', challengeGroups=$challengeGroups, repoRoot='$repoRoot')"
+
 }
 
 class ChallengeGroup(internal val languageGroup: LanguageGroup, internal val name: String) {
@@ -128,6 +175,8 @@ class ChallengeGroup(internal val languageGroup: LanguageGroup, internal val nam
 
     challenges += challenge.apply { this.name = name }.apply(block).apply { validate() }
   }
+
+  override fun toString() = "ChallengeGroup(name='$name', challenges=$challenges, packageName='$packageName')"
 }
 
 abstract class AbstractChallenge(private val group: ChallengeGroup) {
@@ -181,7 +230,7 @@ abstract class AbstractChallenge(private val group: ChallengeGroup) {
       throw InvalidConfigurationException(
         "${name.toDoubleQuoted()} has inconsistent function arguments: " +
             set.joinToString(" and ") { "($it)" }
-      )
+                                         )
   }
 
   private fun Any?.prettyQuote(capitalizePythonBooleans: Boolean = true, useDoubleQuotes: Boolean = false) =
@@ -232,6 +281,8 @@ abstract class AbstractChallenge(private val group: ChallengeGroup) {
     paramSignature.add(argTypes.toCsv())
   }
 
+  override fun toString() = "AbstractChallenge(packageName='$packageName', fileName='$fileName')"
+
   companion object : KLogging() {
     val counter = AtomicInteger(0)
     val sourcesMap = ConcurrentHashMap<Int, FuncInfo>()
@@ -270,4 +321,4 @@ class FuncInfo(val name: String, val code: String)
 
 class InvalidConfigurationException(msg: String) : Exception(msg)
 
-private fun List<String>.toPath() = joinToString("") { it.ensureSuffix("/") }
+fun List<String>.toPath() = joinToString("") { it.ensureSuffix("/") }

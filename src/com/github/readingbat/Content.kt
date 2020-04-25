@@ -10,15 +10,19 @@ object Main {
 val content =
   readingBatContent {
 
+    +remoteContent(repo = "readingbat-java-content").java
+
     java {
       repoRoot = "https://github.com/readingbat/readingbat-java-content"
+
+      +remoteContent(repo = "readingbat-java-content").java.findChallengeGroup("Warmup 1")
 
       group("Warmup 1") {
         packageName = "warmup1"
         description = "This is a description of Warmup 1"
 
         challenge("JoinEnds") {
-          description = """This is a description of joinEnds()"""
+          description = "This is a description of joinEnds()"
           codingBatEquiv = "p141494"
 
           "Blue Zebra" returns "aB"

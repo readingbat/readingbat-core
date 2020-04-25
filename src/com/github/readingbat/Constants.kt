@@ -32,6 +32,8 @@ object Constants {
   val cssName = "styles.css"
   val cssType = ContentType.Text.CSS.toString()
   val sp = "&nbsp;"
+  val github = "github.com"
+  val githubUserContent = "raw.githubusercontent.com"
   val sessionCounter = AtomicInteger(0)
   val production: Boolean by lazy { System.getenv("PRODUCTION")?.toBoolean() ?: false }
 }
