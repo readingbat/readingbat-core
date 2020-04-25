@@ -66,7 +66,7 @@ fun Application.module(testing: Boolean = false, content: Content) {
         1 -> {
           // This lookup has to take place outside of the lambda for proper exception handling
           val groups = content.getLanguage(languageType).challengeGroups
-          call.respondHtml { languageGroupPage(Java, groups) }
+          call.respondHtml { languageGroupPage(languageType, groups) }
         }
         2 -> {
           val challengeGroup = content.getLanguage(languageType).findChallengeGroup(groupName)
