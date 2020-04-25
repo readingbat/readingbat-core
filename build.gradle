@@ -14,7 +14,7 @@ repositories {
     maven { url = 'https://jitpack.io' }
 }
 
-def mainName = 'com.github.readingbat.Main'
+def mainName = 'com.github.readingbat.MainTest'
 def appName = 'server'
 
 def flexmarkVersion = '0.61.0'
