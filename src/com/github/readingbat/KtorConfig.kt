@@ -46,7 +46,7 @@ fun Application.module(testing: Boolean = false, content: Content) {
     }
 
     post("/$checkAnswers") {
-      checkAnsers()
+      checkAnswers()
     }
 
     static("/$static") {

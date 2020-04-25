@@ -8,7 +8,6 @@ object Main {
 }
 
 val content =
-
   readingBatContent {
 
     java {
@@ -75,7 +74,7 @@ val content =
 
         challenge("simple_choice1") {
 
-          true returns true
+          true returns false
           false returns false
         }
 
