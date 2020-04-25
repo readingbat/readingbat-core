@@ -50,15 +50,15 @@ class Content {
   )
   private val languageMap = languageList.map { it.languageType to it }.toMap()
 
-  internal fun getLanguage(languageType: LanguageType) =
+  internal fun forLanguage(languageType: LanguageType) =
     languageMap[languageType] ?: throw InvalidConfigurationException("Invalid language $languageType")
 
   fun python(block: LanguageGroup.() -> Unit) {
-    getLanguage(Python).apply(block)
+    forLanguage(Python).apply(block)
   }
 
   fun java(block: LanguageGroup.() -> Unit) {
-    getLanguage(Java).apply(block)
+    forLanguage(Java).apply(block)
   }
 
   fun validate() = languageList.forEach { it.validate() }
@@ -74,7 +74,7 @@ class LanguageGroup(internal val languageType: LanguageType) {
 
   var repoRoot = ""
 
-  private fun contains(name: String) = challengeGroups.any { it.name == name }
+  internal fun hasChallengeGroup(groupName: String) = challengeGroups.any { it.name == groupName }
 
   internal fun findChallengeGroup(groupName: String) =
     groupName.decode()
@@ -82,13 +82,13 @@ class LanguageGroup(internal val languageType: LanguageType) {
       ?: throw InvalidPathException("Group ${languageType.lowerName}/$groupName not found")
 
   internal fun findChallenge(groupName: String, challengeName: String) =
-    findChallengeGroup(groupName).challenges.firstOrNull { it.name == challengeName }
-      ?: throw InvalidPathException("Challenge ${languageType.lowerName}/$groupName/$challengeName not found.")
+    findChallengeGroup(groupName).findChallenge(challengeName)
 
   fun group(name: String, block: ChallengeGroup.() -> Unit) {
-    if (contains(name))
-      throw InvalidConfigurationException("Group ${name.toDoubleQuoted()} already exists")
-    challengeGroups += ChallengeGroup(this, name).apply(block)
+    if (hasChallengeGroup(name))
+      findChallengeGroup(name).apply(block)
+    else
+      challengeGroups += ChallengeGroup(this, name).apply(block)
   }
 
   internal fun validate() {
@@ -100,6 +100,7 @@ class LanguageGroup(internal val languageType: LanguageType) {
 class ChallengeGroup(internal val languageGroup: LanguageGroup, internal val name: String) {
   internal val challenges = mutableListOf<AbstractChallenge>()
   internal val languageType = languageGroup.languageType
+  internal val prefix = "${languageType.lowerName}/$name"
 
   var packageName = ""
   var description = ""
@@ -113,20 +114,19 @@ class ChallengeGroup(internal val languageGroup: LanguageGroup, internal val nam
         renderer.render(document)
       }
 
-  private fun contains(name: String) = challenges.any { it.name == name }
+  private fun hasChallenge(name: String) = challenges.any { it.name == name }
+
+  internal fun findChallenge(name: String): AbstractChallenge =
+    challenges.firstOrNull { it.name == name }
+      ?: throw InvalidPathException("Challenge $prefix/$name not found.")
 
   fun challenge(name: String, block: AbstractChallenge.() -> Unit) {
-    val challenge =
-      (if (languageGroup.languageType == Java) JavaChallenge(this) else PythonChallenge(
-        this
-      )).apply {
-        this.name = name
-      }.apply(block)
-    challenge.validate()
+    if (hasChallenge(name))
+      throw InvalidConfigurationException("Challenge $prefix/$name already exists")
 
-    if (contains(name))
-      throw InvalidConfigurationException("Challenge ${name.toDoubleQuoted()} already exists")
-    challenges += challenge
+    val challenge = if (languageType == Java) JavaChallenge(this) else PythonChallenge(this)
+
+    challenges += challenge.apply { this.name = name }.apply(block).apply { validate() }
   }
 }
 
@@ -135,7 +135,7 @@ abstract class AbstractChallenge(private val group: ChallengeGroup) {
   private var multiArgTypes = ""
   private val challengeId = counter.incrementAndGet()
   internal val inputOutput = mutableListOf<Pair<String, String>>()
-  internal val languageType = group.languageGroup.languageType
+  internal val languageType = group.languageType
   internal val groupName = group.name
 
   private val fqName by lazy { group.packageName.ensureSuffix("/") + fileName.ensureSuffix(".${languageType.suffix}") }
@@ -153,7 +153,6 @@ abstract class AbstractChallenge(private val group: ChallengeGroup) {
   var fileName = ""
   var codingBatEquiv = ""
   var description = ""
-
 
   abstract fun findFuncInfo(code: String): FuncInfo
 
