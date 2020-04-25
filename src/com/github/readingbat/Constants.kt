@@ -14,6 +14,7 @@ object Constants {
   val funcCol = "funcCol"
   val arrow = "arrow"
   val feedback = "feedback"
+  val userInput = "userInput"
   val checkBar = "checkBar"
   val checkAnswers = "checkAnswers"
   val spinner = "spinner"

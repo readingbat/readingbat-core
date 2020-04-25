@@ -12,11 +12,16 @@ import com.github.readingbat.Constants.spinner
 import com.github.readingbat.Constants.status
 import kotlinx.html.SCRIPT
 
-fun SCRIPT.getScript(languageName: String) = rawHtml(
-  """
+fun SCRIPT.addScript(languageName: String) =
+  rawHtml(
+    """
     var re = new XMLHttpRequest();
 
-    function $processAnswers(cnt) { 
+    function $processAnswers(event , cnt) { 
+    
+      if (event != null && event.keyCode != 13) 
+        return;
+
       var data = "$sessionid=${sessionCounter.incrementAndGet()}&$langSrc=$languageName";
       try {
         for (var i = 0; i < cnt; i++) {
@@ -61,4 +66,4 @@ fun SCRIPT.getScript(languageName: String) = rawHtml(
       }
     }
   """
-)
+  )

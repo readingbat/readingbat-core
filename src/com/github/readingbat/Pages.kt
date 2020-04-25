@@ -25,6 +25,7 @@ import com.github.readingbat.Constants.static
 import com.github.readingbat.Constants.status
 import com.github.readingbat.Constants.tabs
 import com.github.readingbat.Constants.titleText
+import com.github.readingbat.Constants.userInput
 import io.ktor.application.ApplicationCall
 import io.ktor.http.ContentType
 import io.ktor.response.respondText
@@ -33,20 +34,22 @@ import kotlinx.html.*
 
 fun HEAD.headDefault() {
   link { rel = "stylesheet"; href = "/$cssName"; type = cssType }
+
   title(titleText)
 
-  if (production)
-    rawHtml(
-      """
-        <script async src="https://www.googletagmanager.com/gtag/js?id=UA-164310007-1"></script>
-        <script>
+  if (production) {
+    script { async = true; src = "https://www.googletagmanager.com/gtag/js?id=UA-164310007-1" }
+    script {
+      rawHtml(
+        """
           window.dataLayer = window.dataLayer || [];
           function gtag(){dataLayer.push(arguments);}
           gtag('js', new Date());
           gtag('config', 'UA-164310007-1');
-        </script>
         """
-    )
+      )
+    }
+  }
 }
 
 fun BODY.bodyHeader(languageType: LanguageType) {
@@ -176,7 +179,7 @@ fun HTML.challengePage(challenge: AbstractChallenge) {
     }
 
     script(type = ScriptType.textJavaScript) {
-      getScript(languageName)
+      addScript(languageName)
     }
 
     headDefault()
@@ -197,22 +200,18 @@ fun HTML.challengePage(challenge: AbstractChallenge) {
         code(classes = "language-$languageName") { +challenge.funcInfo().code }
       }
 
-      div {
-        style = "margin-top: 2em;margin-left:2em"
-
+      div(classes = userInput) {
         table {
-          tr {
-            th { +"Function Call" }
-            th { +"" }
-            th { +"Return Value" }
-            th { +"" }
-          }
+          tr { th { +"Function Call" }; th { +"" }; th { +"Return Value" }; th { +"" } }
           funcArgs.withIndex().forEach { (i, v) ->
             tr {
               td(classes = funcCol) { +"${challenge.funcInfo().name}(${v.first})" }
               td(classes = arrow) { rawHtml("&rarr;") }
               td {
-                textInput(classes = answer) { id = "$answer$i"; onKeyPress = "$processAnswers(${funcArgs.size})" }
+                //textInput(classes = answer) { id = "$answer$i" }
+                textInput(classes = answer) {
+                  id = "$answer$i"; onKeyPress = "$processAnswers(event, ${funcArgs.size})"
+                }
               }
               td(classes = feedback) { id = "$feedback$i" }
               td { hiddenInput { id = "$solution$i"; value = v.second } }
@@ -224,7 +223,9 @@ fun HTML.challengePage(challenge: AbstractChallenge) {
           table {
             tr {
               td {
-                button(classes = checkAnswers) { onClick = "$processAnswers(${funcArgs.size})"; +"Check My Answers!" }
+                button(classes = checkAnswers) {
+                  onClick = "$processAnswers(null, ${funcArgs.size})"; +"Check My Answers!"
+                }
               }
               td { span(classes = spinner) { id = spinner } }
               td { span(classes = status) { id = status } }
