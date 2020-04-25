@@ -51,9 +51,7 @@ class Content {
   private val languageMap = languageList.map { it.languageType to it }.toMap()
 
   internal fun getLanguage(languageType: LanguageType) =
-    languageMap[languageType] ?: throw InvalidConfigurationException(
-      "Invalid language $languageType"
-    )
+    languageMap[languageType] ?: throw InvalidConfigurationException("Invalid language $languageType")
 
   fun python(block: LanguageGroup.() -> Unit) {
     getLanguage(Python).apply(block)
@@ -102,6 +100,7 @@ class LanguageGroup(internal val languageType: LanguageType) {
 class ChallengeGroup(internal val languageGroup: LanguageGroup, internal val name: String) {
   internal val challenges = mutableListOf<AbstractChallenge>()
   internal val languageType = languageGroup.languageType
+
   var packageName = ""
   var description = ""
 
@@ -150,10 +149,10 @@ abstract class AbstractChallenge(private val group: ChallengeGroup) {
         renderer.render(document)
       }
 
-  var name: String = ""
-  var fileName: String = "$name.${languageType.suffix}"
+  var name = ""
+  var fileName = ""
   var codingBatEquiv = ""
-  var description: String = ""
+  var description = ""
 
 
   abstract fun findFuncInfo(code: String): FuncInfo
@@ -168,7 +167,11 @@ abstract class AbstractChallenge(private val group: ChallengeGroup) {
       }
 
   fun validate() {
-    if (fileName.isEmpty()) throw InvalidConfigurationException("${name.toDoubleQuoted()} is empty")
+    if (name.isEmpty())
+      throw InvalidConfigurationException("${name.toDoubleQuoted()} is empty")
+
+    if (fileName.isEmpty())
+      fileName = "$name.${languageType.suffix}"
 
     if (multiArgTypes.isNotEmpty())
       throw InvalidConfigurationException("${name.toDoubleQuoted()} has $multiArgTypes")

@@ -1,6 +1,6 @@
 package com.github.readingbat
 
-object MainTest {
+object Main {
   @JvmStatic
   fun main(args: Array<String>) {
     ReadingBatServer.start(content)
