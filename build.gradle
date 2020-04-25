@@ -35,6 +35,7 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
 
     implementation "com.github.pambrose.common-utils:core-utils:${utilsVersion}"
+    implementation "com.github.pambrose.common-utils:script-utils:${utilsVersion}"
 
     implementation "io.ktor:ktor-server-cio:$ktor_version"
     implementation "io.ktor:ktor-server-core:$ktor_version"

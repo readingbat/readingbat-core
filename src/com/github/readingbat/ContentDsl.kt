@@ -50,18 +50,18 @@ class Content {
   )
   private val languageMap = languageList.map { it.languageType to it }.toMap()
 
-  internal fun forLanguage(languageType: LanguageType) =
+  internal fun findLanguage(languageType: LanguageType) =
     languageMap[languageType] ?: throw InvalidConfigurationException("Invalid language $languageType")
 
+  internal fun validate() = languageList.forEach { it.validate() }
+
   fun python(block: LanguageGroup.() -> Unit) {
-    forLanguage(Python).apply(block)
+    findLanguage(Python).apply(block)
   }
 
   fun java(block: LanguageGroup.() -> Unit) {
-    forLanguage(Java).apply(block)
+    findLanguage(Java).apply(block)
   }
-
-  fun validate() = languageList.forEach { it.validate() }
 }
 
 class LanguageGroup(internal val languageType: LanguageType) {
@@ -84,16 +84,16 @@ class LanguageGroup(internal val languageType: LanguageType) {
   internal fun findChallenge(groupName: String, challengeName: String) =
     findChallengeGroup(groupName).findChallenge(challengeName)
 
+  internal fun validate() {
+    if (repoRoot.isEmpty())
+      throw InvalidConfigurationException("${languageType.lowerName} language section is missing a repoRoot value")
+  }
+
   fun group(name: String, block: ChallengeGroup.() -> Unit) {
     if (hasChallengeGroup(name))
       findChallengeGroup(name).apply(block)
     else
       challengeGroups += ChallengeGroup(this, name).apply(block)
-  }
-
-  internal fun validate() {
-    if (repoRoot.isEmpty())
-      throw InvalidConfigurationException("${languageType.lowerName} language section is missing a repoRoot value")
   }
 }
 
@@ -102,10 +102,7 @@ class ChallengeGroup(internal val languageGroup: LanguageGroup, internal val nam
   internal val languageType = languageGroup.languageType
   internal val prefix = "${languageType.lowerName}/$name"
 
-  var packageName = ""
-  var description = ""
-
-  val parsedDescription
+  internal val parsedDescription
       by lazy {
         val options = MutableDataSet().apply { set(HtmlRenderer.SOFT_BREAK, "<br />\n") }
         val parser = Parser.builder(options).build()
@@ -113,6 +110,9 @@ class ChallengeGroup(internal val languageGroup: LanguageGroup, internal val nam
         val document = parser.parse(description.trimIndent())
         renderer.render(document)
       }
+
+  var packageName = ""
+  var description = ""
 
   private fun hasChallenge(name: String) = challenges.any { it.name == name }
 
@@ -137,8 +137,9 @@ abstract class AbstractChallenge(private val group: ChallengeGroup) {
   internal val inputOutput = mutableListOf<Pair<String, String>>()
   internal val languageType = group.languageType
   internal val groupName = group.name
+  internal val packageName = group.packageName
 
-  private val fqName by lazy { group.packageName.ensureSuffix("/") + fileName.ensureSuffix(".${languageType.suffix}") }
+  private val fqName by lazy { packageName.ensureSuffix("/") + fileName.ensureSuffix(".${languageType.suffix}") }
   internal val gitpodUrl by lazy { "${group.languageGroup.gitpodRoot}$fqName" }
   internal val parsedDescription
       by lazy {
@@ -154,9 +155,9 @@ abstract class AbstractChallenge(private val group: ChallengeGroup) {
   var codingBatEquiv = ""
   var description = ""
 
-  abstract fun findFuncInfo(code: String): FuncInfo
+  internal abstract fun findFuncInfo(code: String): FuncInfo
 
-  fun funcInfo() =
+  internal fun funcInfo() =
     sourcesMap
       .computeIfAbsent(challengeId) {
         val path = "${group.languageGroup.rawRepoRoot}$fqName"
@@ -165,7 +166,7 @@ abstract class AbstractChallenge(private val group: ChallengeGroup) {
         findFuncInfo(content)
       }
 
-  fun validate() {
+  internal fun validate() {
     if (name.isEmpty())
       throw InvalidConfigurationException("${name.toDoubleQuoted()} is empty")
 

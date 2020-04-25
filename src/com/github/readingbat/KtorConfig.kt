@@ -65,15 +65,15 @@ fun Application.module(testing: Boolean = false, content: Content) {
       when (items.size) {
         1 -> {
           // This lookup has to take place outside of the lambda for proper exception handling
-          val groups = content.forLanguage(languageType).challengeGroups
+          val groups = content.findLanguage(languageType).challengeGroups
           call.respondHtml { languageGroupPage(languageType, groups) }
         }
         2 -> {
-          val challengeGroup = content.forLanguage(languageType).findChallengeGroup(groupName)
+          val challengeGroup = content.findLanguage(languageType).findChallengeGroup(groupName)
           call.respondHtml { challengeGroupPage(challengeGroup) }
         }
         3 -> {
-          val challenge = content.forLanguage(languageType).findChallenge(groupName, challengeName)
+          val challenge = content.findLanguage(languageType).findChallenge(groupName, challengeName)
           call.respondHtml { challengePage(challenge) }
         }
         else -> throw InvalidPathException("Invalid path: $req")

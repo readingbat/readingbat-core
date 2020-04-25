@@ -74,13 +74,12 @@ fun BODY.bodyHeader(languageType: LanguageType) {
 
 fun TR.groupItem(prefix: String, group: ChallengeGroup) {
   val name = group.name
-  val description = group.description
   val parsedDescription = group.parsedDescription
 
   td(classes = funcItem) {
     div(classes = groupItemSrc) {
       a(classes = funcChoice) { href = "/$prefix/$name"; +name }
-      br { rawHtml(if (description.isNotBlank()) parsedDescription else sp) }
+      br { rawHtml(if (parsedDescription.isNotBlank()) parsedDescription else sp) }
     }
   }
 }
