@@ -2,7 +2,6 @@ package com.github.readingbat
 
 import com.github.readingbat.LanguageType.Java
 import com.github.readingbat.LanguageType.Python
-import com.github.readingbat.ReadingBatServer.userContent
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.testing.handleRequest
@@ -26,7 +25,7 @@ class ServerTest {
 
     withTestApplication({
       content.validate()
-      module(testing = true, content = userContent)
+      module(testing = true, content = content)
     }
     ) {
 

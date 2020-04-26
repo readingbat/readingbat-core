@@ -74,14 +74,11 @@ fun readingBatContent(block: Content.() -> Unit) = Content().apply(block).apply 
 
 @ReadingBatTagMarker
 class Content {
-  private val languageList = listOf(
-    LanguageGroup(Python),
-    LanguageGroup(Java)
-                                   )
-  private val languageMap = languageList.map { it.languageType to it }.toMap()
+  val java = LanguageGroup(Java)
+  val python = LanguageGroup(Python)
 
-  val java get() = findLanguage(Java)
-  val python get() = findLanguage(Python)
+  private val languageList = listOf(java, python)
+  private val languageMap = languageList.map { it.languageType to it }.toMap()
 
   internal fun findLanguage(languageType: LanguageType) =
     languageMap[languageType] ?: throw InvalidConfigurationException("Invalid language $languageType")
@@ -101,13 +98,14 @@ class Content {
 
   @ReadingBatTagMarker
   operator fun LanguageGroup.unaryPlus(): Unit {
-    //text(this)
+    val languageGroup = this@Content.findLanguage(this.languageType)
+    challengeGroups.forEach { languageGroup.addGroup(it) }
   }
 
   override fun toString() = "Content(languageList=$languageList)"
 
   companion object {
-    val remoteMap = mutableMapOf<String, Content>()
+    internal val remoteMap = mutableMapOf<String, Content>()
   }
 }
 
@@ -124,6 +122,12 @@ class LanguageGroup(internal val languageType: LanguageType) {
 
   internal fun hasGroup(groupName: String) = challengeGroups.any { it.name == groupName }
 
+  fun addGroup(group: ChallengeGroup) {
+    if (hasGroup(group.name))
+      throw InvalidConfigurationException("Duplicate group name: ${group.name}")
+    challengeGroups += group
+  }
+
   fun findGroup(groupName: String) =
     groupName.decode()
       .let { decoded -> challengeGroups.firstOrNull { it.name == decoded } }
@@ -139,15 +143,14 @@ class LanguageGroup(internal val languageType: LanguageType) {
 
   @ReadingBatTagMarker
   operator fun ChallengeGroup.unaryPlus(): Unit {
-    //text(this)
+    this@LanguageGroup.addGroup(this)
   }
 
   @ReadingBatTagMarker
   fun group(name: String, block: ChallengeGroup.() -> Unit) {
     if (hasGroup(name))
-      findGroup(name).apply(block)
-    else
-      challengeGroups += ChallengeGroup(this, name).apply(block)
+      throw InvalidConfigurationException("Duplicate group name: $name")
+    challengeGroups += ChallengeGroup(this, name).apply(block)
   }
 
   override fun toString() =
@@ -181,16 +184,16 @@ class ChallengeGroup(internal val languageGroup: LanguageGroup, internal val nam
 
   @ReadingBatTagMarker
   operator fun AbstractChallenge.unaryPlus(): Unit {
-    //text(this)
+    if (this@ChallengeGroup.hasChallenge(name))
+      throw InvalidConfigurationException("Duplicate challenge name: $name")
+    this@ChallengeGroup.challenges += this
   }
 
   @ReadingBatTagMarker
   fun challenge(name: String, block: AbstractChallenge.() -> Unit) {
     if (hasChallenge(name))
       throw InvalidConfigurationException("Challenge $prefix/$name already exists")
-
     val challenge = if (languageType == Java) JavaChallenge(this) else PythonChallenge(this)
-
     challenges += challenge.apply { this.name = name }.apply(block).apply { validate() }
   }
 
