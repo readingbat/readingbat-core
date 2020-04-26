@@ -64,6 +64,7 @@ fun remoteContent(scheme: String = "https://",
       """
 
     val content = KtsScript().run { eval(code) as Content }
+    content.validate()
     println("In $dur got $content")
     content
   }
@@ -111,7 +112,9 @@ class Content {
 
 @ReadingBatTagMarker
 class LanguageGroup(internal val languageType: LanguageType) {
-  private var srcPrefix = if (languageType.isJava()) "src/main/java" else "src" // default value
+  private var localGroupCount = 0
+
+  private var srcPrefix = if (languageType.isJava()) "src/main/java" else "python" // default value
   val challengeGroups = mutableListOf<ChallengeGroup>()
 
   private val rawRoot by lazy { repoRoot.replace(github, githubUserContent) }
@@ -137,8 +140,8 @@ class LanguageGroup(internal val languageType: LanguageType) {
     findGroup(groupName).findChallenge(challengeName)
 
   internal fun validate() {
-    if (challengeGroups.isNotEmpty() && repoRoot.isEmpty())
-      throw InvalidConfigurationException("${languageType.lowerName} language section is missing a repoRoot value")
+    if (localGroupCount > 0 && repoRoot.isEmpty())
+      throw InvalidConfigurationException("${languageType.lowerName} section is missing a repoRoot value")
   }
 
   @ReadingBatTagMarker
@@ -151,6 +154,7 @@ class LanguageGroup(internal val languageType: LanguageType) {
     if (hasGroup(name))
       throw InvalidConfigurationException("Duplicate group name: $name")
     challengeGroups += ChallengeGroup(this, name).apply(block)
+    localGroupCount++
   }
 
   override fun toString() =

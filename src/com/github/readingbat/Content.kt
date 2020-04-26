@@ -12,6 +12,8 @@ val content =
 
     +remoteContent(repo = "readingbat-java-content").java
 
+    +remoteContent(repo = "readingbat-python-content").java
+/*
     java {
       repoRoot = "https://github.com/readingbat/readingbat-java-content"
 
@@ -70,7 +72,8 @@ val content =
         description = "This is a description of Array 2"
       }
     }
-
+*/
+    /*
     python {
       repoRoot = "https://github.com/readingbat/readingbat-python-content"
 
@@ -124,6 +127,7 @@ val content =
         description = "This is a description of Array 2"
       }
     }
+ */
   }
 
 /*
