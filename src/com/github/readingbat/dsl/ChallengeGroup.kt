@@ -18,6 +18,7 @@
 package com.github.readingbat.dsl
 
 import com.github.readingbat.InvalidPathException
+import com.github.readingbat.dsl.LanguageType.*
 import com.vladsch.flexmark.html.HtmlRenderer
 import com.vladsch.flexmark.parser.Parser
 import com.vladsch.flexmark.util.data.MutableDataSet
@@ -25,7 +26,7 @@ import com.vladsch.flexmark.util.data.MutableDataSet
 @ReadingBatDslMarker
 class ChallengeGroup(internal val languageGroup: LanguageGroup, internal val name: String) {
   internal val languageType = languageGroup.languageType
-  internal val challenges = mutableListOf<AbstractChallenge>()
+  internal val challenges = mutableListOf<Challenge>()
   internal val prefix = "${languageType.lowerName}/$name"
   internal val parsedDescription
       by lazy {
@@ -41,22 +42,26 @@ class ChallengeGroup(internal val languageGroup: LanguageGroup, internal val nam
 
   fun hasChallenge(name: String) = challenges.any { it.name == name }
 
-  fun findChallenge(name: String): AbstractChallenge =
+  fun findChallenge(name: String): Challenge =
     challenges.firstOrNull { it.name == name }
       ?: throw InvalidPathException("Challenge $prefix/$name not found.")
 
   @ReadingBatDslMarker
-  operator fun AbstractChallenge.unaryPlus(): Unit {
+  operator fun Challenge.unaryPlus(): Unit {
     if (this@ChallengeGroup.hasChallenge(name))
       throw InvalidConfigurationException("Duplicate challenge name: $name")
     this@ChallengeGroup.challenges += this
   }
 
   @ReadingBatDslMarker
-  fun challenge(name: String, block: AbstractChallenge.() -> Unit) {
+  fun challenge(name: String, block: Challenge.() -> Unit) {
     if (hasChallenge(name))
       throw InvalidConfigurationException("Challenge $prefix/$name already exists")
-    val challenge = if (languageType == LanguageType.Java) JavaChallenge(this) else PythonChallenge(this)
+    val challenge = when (languageType) {
+      Java -> JavaChallenge(this)
+      Python -> PythonChallenge(this)
+      Kotlin -> KotlinChallenge(this)
+    }
     challenges += challenge.apply { this.name = name }.apply(block).apply { validate() }
   }
 

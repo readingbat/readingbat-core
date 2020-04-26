@@ -42,9 +42,10 @@ import com.github.readingbat.Constants.status
 import com.github.readingbat.Constants.tabs
 import com.github.readingbat.Constants.titleText
 import com.github.readingbat.Constants.userInput
-import com.github.readingbat.dsl.AbstractChallenge
+import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.ChallengeGroup
 import com.github.readingbat.dsl.LanguageType
+import com.github.readingbat.dsl.LanguageType.*
 import io.ktor.application.ApplicationCall
 import io.ktor.http.ContentType
 import io.ktor.response.respondText
@@ -80,11 +81,15 @@ fun BODY.bodyHeader(languageType: LanguageType) {
     ul {
       li(classes = "h2") {
         if (languageType.isJava()) id = selected
-        a { href = "/${LanguageType.Java.lowerName}"; +LanguageType.Java.name }
+        a { href = "/${Java.lowerName}"; +Java.name }
       }
       li(classes = "h2") {
         if (languageType.isPython()) id = selected
-        a { href = "/${LanguageType.Python.lowerName}"; +LanguageType.Python.name }
+        a { href = "/${Python.lowerName}"; +Python.name }
+      }
+      li(classes = "h2") {
+        if (languageType.isKotlin()) id = selected
+        a { href = "/${Kotlin.lowerName}"; +Kotlin.name }
       }
     }
   }
@@ -102,7 +107,7 @@ fun TR.groupItem(prefix: String, group: ChallengeGroup) {
   }
 }
 
-fun TR.funcCall(prefix: String, groupName: String, challenge: AbstractChallenge) {
+fun TR.funcCall(prefix: String, groupName: String, challenge: Challenge) {
   td(classes = funcItem) {
     img { src = checkJpg }
     rawHtml(nbsp.text)
@@ -174,7 +179,7 @@ fun HTML.challengeGroupPage(challengeGroup: ChallengeGroup) {
   }
 }
 
-fun HTML.challengePage(challenge: AbstractChallenge) {
+fun HTML.challengePage(challenge: Challenge) {
   val languageType = challenge.languageType
   val groupName = challenge.groupName
   val name = challenge.name

@@ -17,14 +17,15 @@
 
 package com.github.readingbat.dsl
 
+import com.github.readingbat.dsl.LanguageType.*
+
 @ReadingBatDslMarker
 class ReadingBatContent {
-  val java =
-    LanguageGroup(LanguageType.Java)
-  val python =
-    LanguageGroup(LanguageType.Python)
+  val java = LanguageGroup(Java)
+  val python = LanguageGroup(Python)
+  val kotlin = LanguageGroup(Kotlin)
 
-  private val languageList = listOf(java, python)
+  private val languageList = listOf(java, python, kotlin)
   private val languageMap = languageList.map { it.languageType to it }.toMap()
 
   internal fun findLanguage(languageType: LanguageType) =
@@ -33,13 +34,18 @@ class ReadingBatContent {
   internal fun validate() = languageList.forEach { it.validate() }
 
   @ReadingBatDslMarker
-  fun ReadingBatContent.java(block: LanguageGroup.() -> Unit) {
-    findLanguage(LanguageType.Java).apply(block)
+  fun java(block: LanguageGroup.() -> Unit) {
+    findLanguage(Java).apply(block)
   }
 
   @ReadingBatDslMarker
   fun python(block: LanguageGroup.() -> Unit) {
-    findLanguage(LanguageType.Python).apply(block)
+    findLanguage(Python).apply(block)
+  }
+
+  @ReadingBatDslMarker
+  fun kotlin(block: LanguageGroup.() -> Unit) {
+    findLanguage(Kotlin).apply(block)
   }
 
   @ReadingBatDslMarker

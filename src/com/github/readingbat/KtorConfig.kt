@@ -21,9 +21,8 @@ import com.github.readingbat.Constants.checkAnswers
 import com.github.readingbat.Constants.cssName
 import com.github.readingbat.Constants.production
 import com.github.readingbat.Constants.static
+import com.github.readingbat.dsl.LanguageType.*
 import com.github.readingbat.dsl.LanguageType.Companion.toLanguageType
-import com.github.readingbat.dsl.LanguageType.Java
-import com.github.readingbat.dsl.LanguageType.Python
 import com.github.readingbat.dsl.ReadingBatContent
 import io.ktor.application.Application
 import io.ktor.application.ApplicationCallPipeline
@@ -76,7 +75,7 @@ fun Application.module(testing: Boolean = false, content: ReadingBatContent) {
     val req = call.request.uri
     val items = req.split("/").filter { it.isNotEmpty() }
 
-    if (items.isNotEmpty() && (items[0] in listOf(Java.lowerName, Python.lowerName))) {
+    if (items.isNotEmpty() && (items[0] in listOf(Java.lowerName, Python.lowerName, Kotlin.lowerName))) {
       val languageType = items[0].toLanguageType()
       val groupName = items.elementAtOrNull(1) ?: ""
       val challengeName = items.elementAtOrNull(2) ?: ""

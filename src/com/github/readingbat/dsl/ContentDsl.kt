@@ -34,7 +34,6 @@ class GitHubContent(repo: String, fileName: String = "Content.kt") :
                srcPath = "src/main/kotlin",
                fileName = fileName)
 
-
 fun readingBatContent(block: ReadingBatContent.() -> Unit) = ReadingBatContent()
   .apply(block).apply { validate() }
 
@@ -50,7 +49,7 @@ fun include(source: ContentSource, variableName: String = "content"): ReadingBat
 }
 
 private fun evalDsl(code: String, sourceName: String, variableName: String): ReadingBatContent {
-  val importDecl = "import ${::GitHubContent.javaClass.packageName}.readingBatContent"
+  val importDecl = "import ${::readingBatContent.javaClass.packageName}.readingBatContent"
   val code =
     (if (code.contains(importDecl)) "" else importDecl + "\n") +
         """

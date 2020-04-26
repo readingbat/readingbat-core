@@ -17,8 +17,7 @@
 
 package com.github.readingbat
 
-import com.github.readingbat.dsl.LanguageType.Java
-import com.github.readingbat.dsl.LanguageType.Python
+import com.github.readingbat.dsl.LanguageType.*
 import com.github.readingbat.dsl.readingBatContent
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
@@ -52,6 +51,9 @@ class ServerTest {
         assertEquals(HttpStatusCode.OK, response.status())
       }
       handleRequest(HttpMethod.Get, "/${Python.lowerName}").apply {
+        assertEquals(HttpStatusCode.OK, response.status())
+      }
+      handleRequest(HttpMethod.Get, "/${Kotlin.lowerName}").apply {
         assertEquals(HttpStatusCode.OK, response.status())
       }
     }

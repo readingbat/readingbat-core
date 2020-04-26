@@ -18,6 +18,7 @@
 package com.github.readingbat.dsl
 
 import com.github.pambrose.common.util.*
+import com.github.readingbat.dsl.LanguageType.Python
 import com.vladsch.flexmark.html.HtmlRenderer
 import com.vladsch.flexmark.parser.Parser
 import com.vladsch.flexmark.util.data.MutableDataSet
@@ -28,7 +29,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.measureTimedValue
 
 @ReadingBatDslMarker
-abstract class AbstractChallenge(private val group: ChallengeGroup) {
+sealed class Challenge(private val group: ChallengeGroup) {
   private val paramSignature = mutableListOf<String>()
   private var multiArgTypes = ""
   private val challengeId = counter.incrementAndGet()
@@ -86,7 +87,7 @@ abstract class AbstractChallenge(private val group: ChallengeGroup) {
   private fun Any?.prettyQuote(capitalizePythonBooleans: Boolean = true, useDoubleQuotes: Boolean = false) =
     if (this is String)
       if (languageType.useDoubleQuotes || useDoubleQuotes) toDoubleQuoted() else toSingleQuoted()
-    else if (capitalizePythonBooleans && this is Boolean && languageType == LanguageType.Python)
+    else if (capitalizePythonBooleans && this is Boolean && languageType == Python)
       toString().capitalize()
     else
       toString()
@@ -139,7 +140,7 @@ abstract class AbstractChallenge(private val group: ChallengeGroup) {
   }
 }
 
-class PythonChallenge(group: ChallengeGroup) : AbstractChallenge(group) {
+class PythonChallenge(group: ChallengeGroup) : Challenge(group) {
   override fun funcInfo(code: String): FuncInfo {
     val lines = code.split("\n")
     val lineNums =
@@ -153,7 +154,21 @@ class PythonChallenge(group: ChallengeGroup) : AbstractChallenge(group) {
   }
 }
 
-class JavaChallenge(group: ChallengeGroup) : AbstractChallenge(group) {
+class JavaChallenge(group: ChallengeGroup) : Challenge(group) {
+  override fun funcInfo(code: String): FuncInfo {
+    val lines = code.split("\n")
+    val lineNums =
+      lines.mapIndexed { i, str -> i to str }
+        .filter { it.second.contains(Regex("static.*\\(")) }
+        .map { it.first }
+
+    val funcName = lines[lineNums.first()].substringAfter("static ").substringBefore("(").split(" ")[1].trim()
+    val funcCode = lines.subList(lineNums.first(), lineNums.last() - 1).joinToString("\n").trimIndent()
+    return FuncInfo(funcName, funcCode)
+  }
+}
+
+class KotlinChallenge(group: ChallengeGroup) : Challenge(group) {
   override fun funcInfo(code: String): FuncInfo {
     val lines = code.split("\n")
     val lineNums =
