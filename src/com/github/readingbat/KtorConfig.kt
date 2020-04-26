@@ -69,7 +69,7 @@ fun Application.module(testing: Boolean = false, content: Content) {
           call.respondHtml { languageGroupPage(languageType, groups) }
         }
         2 -> {
-          val challengeGroup = content.findLanguage(languageType).findChallengeGroup(groupName)
+          val challengeGroup = content.findLanguage(languageType).findGroup(groupName)
           call.respondHtml { challengeGroupPage(challengeGroup) }
         }
         3 -> {

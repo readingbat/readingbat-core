@@ -19,7 +19,6 @@ import com.github.readingbat.Constants.production
 import com.github.readingbat.Constants.refs
 import com.github.readingbat.Constants.selected
 import com.github.readingbat.Constants.solution
-import com.github.readingbat.Constants.sp
 import com.github.readingbat.Constants.spinner
 import com.github.readingbat.Constants.static
 import com.github.readingbat.Constants.status
@@ -31,6 +30,7 @@ import io.ktor.http.ContentType
 import io.ktor.response.respondText
 import kotlinx.css.CSSBuilder
 import kotlinx.html.*
+import kotlinx.html.Entities.nbsp
 
 fun HEAD.headDefault() {
   link { rel = "stylesheet"; href = "/$cssName"; type = cssType }
@@ -40,14 +40,12 @@ fun HEAD.headDefault() {
   if (production) {
     script { async = true; src = "https://www.googletagmanager.com/gtag/js?id=UA-164310007-1" }
     script {
-      rawHtml(
-        """
+      rawHtml("""
           window.dataLayer = window.dataLayer || [];
           function gtag(){dataLayer.push(arguments);}
           gtag('js', new Date());
           gtag('config', 'UA-164310007-1');
-        """
-      )
+        """)
     }
   }
 }
@@ -55,7 +53,7 @@ fun HEAD.headDefault() {
 fun BODY.bodyHeader(languageType: LanguageType) {
   div(classes = "header") {
     a { href = "/"; span { style = "font-size:200%;"; +titleText } }
-    rawHtml(sp)
+    rawHtml(nbsp.text)
     span { +"code reading practice" }
   }
   nav {
@@ -79,7 +77,7 @@ fun TR.groupItem(prefix: String, group: ChallengeGroup) {
   td(classes = funcItem) {
     div(classes = groupItemSrc) {
       a(classes = funcChoice) { href = "/$prefix/$name"; +name }
-      br { rawHtml(if (parsedDescription.isNotBlank()) parsedDescription else sp) }
+      br { rawHtml(if (parsedDescription.isNotBlank()) parsedDescription else nbsp.text) }
     }
   }
 }
@@ -87,7 +85,7 @@ fun TR.groupItem(prefix: String, group: ChallengeGroup) {
 fun TR.funcCall(prefix: String, groupName: String, challenge: AbstractChallenge) {
   td(classes = funcItem) {
     img { src = checkJpg }
-    rawHtml(sp)
+    rawHtml(nbsp.text)
     a(classes = funcChoice) { href = "/$prefix/$groupName/${challenge.name}"; +challenge.name }
   }
 }
@@ -142,9 +140,11 @@ fun HTML.challengeGroupPage(challengeGroup: ChallengeGroup) {
 
         (0 until rows).forEach { i ->
           tr {
-            challenges[i].also { funcCall(prefix, groupName, it) }
-            challenges.elementAtOrNull(i + rows)?.also { funcCall(prefix, groupName, it) } ?: td {}
-            challenges.elementAtOrNull(i + (2 * rows))?.also { funcCall(prefix, groupName, it) } ?: td {}
+            challenges.apply {
+              elementAt(i).also { funcCall(prefix, groupName, it) }
+              elementAtOrNull(i + rows)?.also { funcCall(prefix, groupName, it) } ?: td {}
+              elementAtOrNull(i + (2 * rows))?.also { funcCall(prefix, groupName, it) } ?: td {}
+            }
           }
         }
       }
@@ -174,7 +174,7 @@ fun HTML.challengePage(challenge: AbstractChallenge) {
             pre[class*="language-"]:before,
             pre[class*="language-"]:after { display: none; }
           """
-      )
+             )
     }
 
     script(type = ScriptType.textJavaScript) {
@@ -189,7 +189,7 @@ fun HTML.challengePage(challenge: AbstractChallenge) {
 
     div(classes = tabs) {
       h2 {
-        a { href = "/$languageName/$groupName"; +groupName.decode() }; rawHtml("$sp&rarr;$sp"); +name
+        a { href = "/$languageName/$groupName"; +groupName.decode() }; rawHtml("${nbsp.text}&rarr;${nbsp.text}"); +name
       }
 
       if (challenge.description.isNotEmpty())

@@ -15,11 +15,13 @@ val content =
     java {
       repoRoot = "https://github.com/readingbat/readingbat-java-content"
 
-      +remoteContent(repo = "readingbat-java-content").java.findChallengeGroup("Warmup 1")
+      +remoteContent(repo = "readingbat-java-content").java.findGroup("Warmup 1")
 
       group("Warmup 1") {
         packageName = "warmup1"
         description = "This is a description of Warmup 1"
+
+        +remoteContent(repo = "readingbat-java-content").java.findGroup("Warmup 1").findChallenge("JoinEnds")
 
         challenge("JoinEnds") {
           description = "This is a description of joinEnds()"

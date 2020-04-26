@@ -31,7 +31,6 @@ object Constants {
   val checkJpg = "/$static/check.jpg"
   val cssName = "styles.css"
   val cssType = ContentType.Text.CSS.toString()
-  val sp = "&nbsp;"
   val github = "github.com"
   val githubUserContent = "raw.githubusercontent.com"
   val sessionCounter = AtomicInteger(0)

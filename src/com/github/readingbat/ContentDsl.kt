@@ -4,6 +4,7 @@ import com.github.pambrose.common.script.KtsScript
 import com.github.pambrose.common.util.*
 import com.github.readingbat.Constants.github
 import com.github.readingbat.Constants.githubUserContent
+import com.github.readingbat.Content.Companion.remoteMap
 import com.github.readingbat.LanguageType.Java
 import com.github.readingbat.LanguageType.Python
 import com.vladsch.flexmark.html.HtmlRenderer
@@ -30,6 +31,9 @@ enum class LanguageType(val useDoubleQuotes: Boolean, val suffix: String) {
   }
 }
 
+@DslMarker
+annotation class ReadingBatTagMarker
+
 object ReadingBatServer {
   fun start(content: Content) {
     val port = Integer.parseInt(System.getProperty("PORT") ?: "8080")
@@ -38,9 +42,37 @@ object ReadingBatServer {
   }
 }
 
+fun remoteContent(scheme: String = "https://",
+                  domainName: String = github,
+                  organization: String = "readingbat",
+                  repo: String,
+                  branch: String = "master",
+                  srcPath: String = "src/main/kotlin",
+                  fileName: String = "Content.kt",
+                  variableName: String = "content"): Content {
+  val p = scheme + domainName.replace(github, githubUserContent).ensureSuffix("/") +
+      listOf(organization, repo, branch, srcPath).toPath() + fileName.ensureSuffix(".kt")
+  return remoteMap.computeIfAbsent(p) { path ->
+    val (text, dur) = measureTimedValue { URL(path).readText() }
+
+    val importDecl = "import com.github.readingbat.readingBatContent"
+
+    val code =
+      (if (text.contains(importDecl)) "" else importDecl) + """
+      $text
+      $variableName
+      """
+
+    val content = KtsScript().run { eval(code) as Content }
+    println("In $dur got $content")
+    content
+  }
+}
+
 
 fun readingBatContent(block: Content.() -> Unit) = Content().apply(block).apply { validate() }
 
+@ReadingBatTagMarker
 class Content {
   private val languageList = listOf(
     LanguageGroup(Python),
@@ -56,56 +88,33 @@ class Content {
 
   internal fun validate() = languageList.forEach { it.validate() }
 
+  @ReadingBatTagMarker
+  fun Content.java(block: LanguageGroup.() -> Unit) {
+    findLanguage(Java).apply(block)
+  }
 
+  @ReadingBatTagMarker
   fun python(block: LanguageGroup.() -> Unit) {
     findLanguage(Python).apply(block)
   }
 
-  fun java(block: LanguageGroup.() -> Unit) {
-    findLanguage(Java).apply(block)
-  }
 
+  @ReadingBatTagMarker
   operator fun LanguageGroup.unaryPlus(): Unit {
     //text(this)
   }
 
-  fun remoteContent(scheme: String = "https://",
-                    domainName: String = github,
-                    organization: String = "readingbat",
-                    repo: String,
-                    branch: String = "master",
-                    srcPath: String = "src/main/kotlin",
-                    fileName: String = "Content.kt",
-                    variableName: String = "content"): Content {
-
-    val path = scheme + domainName.replace(github, githubUserContent).ensureSuffix("/") +
-        listOf(organization, repo, branch, srcPath).toPath() + fileName.ensureSuffix(".kt")
-
-    val (content, dur) = measureTimedValue { URL(path).readText() }
-
-    val importDecl = "import com.github.readingbat.readingBatContent"
-
-    val code =
-      (if (content.contains(importDecl)) "" else importDecl) + """
-      $content
-      $variableName
-      """
-
-    KtsScript()
-      .apply {
-        val c = eval(code) as Content
-        println(c)
-      }
-
-    return this
-  }
-
   override fun toString() = "Content(languageList=$languageList)"
+
+  companion object {
+    val remoteMap = mutableMapOf<String, Content>()
+  }
 }
 
+@ReadingBatTagMarker
 class LanguageGroup(internal val languageType: LanguageType) {
   private var srcPrefix = if (languageType.isJava()) "src/main/java" else "src" // default value
-  internal val challengeGroups = mutableListOf<ChallengeGroup>()
+  val challengeGroups = mutableListOf<ChallengeGroup>()
 
   private val rawRoot by lazy { repoRoot.replace(github, githubUserContent) }
   internal val rawRepoRoot by lazy { listOf(rawRoot, "master", srcPrefix).toPath() }
@@ -113,28 +122,30 @@ class LanguageGroup(internal val languageType: LanguageType) {
 
   var repoRoot = ""
 
-  internal fun hasChallengeGroup(groupName: String) = challengeGroups.any { it.name == groupName }
+  internal fun hasGroup(groupName: String) = challengeGroups.any { it.name == groupName }
 
-  internal fun findChallengeGroup(groupName: String) =
+  fun findGroup(groupName: String) =
     groupName.decode()
       .let { decoded -> challengeGroups.firstOrNull { it.name == decoded } }
       ?: throw InvalidPathException("Group ${languageType.lowerName}/$groupName not found")
 
   internal fun findChallenge(groupName: String, challengeName: String) =
-    findChallengeGroup(groupName).findChallenge(challengeName)
+    findGroup(groupName).findChallenge(challengeName)
 
   internal fun validate() {
     if (challengeGroups.isNotEmpty() && repoRoot.isEmpty())
       throw InvalidConfigurationException("${languageType.lowerName} language section is missing a repoRoot value")
   }
 
+  @ReadingBatTagMarker
   operator fun ChallengeGroup.unaryPlus(): Unit {
     //text(this)
   }
 
+  @ReadingBatTagMarker
   fun group(name: String, block: ChallengeGroup.() -> Unit) {
-    if (hasChallengeGroup(name))
-      findChallengeGroup(name).apply(block)
+    if (hasGroup(name))
+      findGroup(name).apply(block)
     else
       challengeGroups += ChallengeGroup(this, name).apply(block)
   }
@@ -144,12 +155,13 @@ class LanguageGroup(internal val languageType: LanguageType) {
 
 }
 
+@ReadingBatTagMarker
 class ChallengeGroup(internal val languageGroup: LanguageGroup, internal val name: String) {
-  internal val challenges = mutableListOf<AbstractChallenge>()
   internal val languageType = languageGroup.languageType
+  internal val challenges = mutableListOf<AbstractChallenge>()
   internal val prefix = "${languageType.lowerName}/$name"
 
-  internal val parsedDescription
+  val parsedDescription
       by lazy {
         val options = MutableDataSet().apply { set(HtmlRenderer.SOFT_BREAK, "<br />\n") }
         val parser = Parser.builder(options).build()
@@ -161,12 +173,18 @@ class ChallengeGroup(internal val languageGroup: LanguageGroup, internal val nam
   var packageName = ""
   var description = ""
 
-  private fun hasChallenge(name: String) = challenges.any { it.name == name }
+  fun hasChallenge(name: String) = challenges.any { it.name == name }
 
-  internal fun findChallenge(name: String): AbstractChallenge =
+  fun findChallenge(name: String): AbstractChallenge =
     challenges.firstOrNull { it.name == name }
       ?: throw InvalidPathException("Challenge $prefix/$name not found.")
 
+  @ReadingBatTagMarker
+  operator fun AbstractChallenge.unaryPlus(): Unit {
+    //text(this)
+  }
+
+  @ReadingBatTagMarker
   fun challenge(name: String, block: AbstractChallenge.() -> Unit) {
     if (hasChallenge(name))
       throw InvalidConfigurationException("Challenge $prefix/$name already exists")
@@ -179,6 +197,7 @@ class ChallengeGroup(internal val languageGroup: LanguageGroup, internal val nam
   override fun toString() = "ChallengeGroup(name='$name', challenges=$challenges, packageName='$packageName')"
 }
 
+@ReadingBatTagMarker
 abstract class AbstractChallenge(private val group: ChallengeGroup) {
   private val paramSignature = mutableListOf<String>()
   private var multiArgTypes = ""
@@ -215,7 +234,7 @@ abstract class AbstractChallenge(private val group: ChallengeGroup) {
         findFuncInfo(content)
       }
 
-  internal fun validate() {
+  fun validate() {
     if (name.isEmpty())
       throw InvalidConfigurationException("${name.toDoubleQuoted()} is empty")
 
@@ -229,8 +248,7 @@ abstract class AbstractChallenge(private val group: ChallengeGroup) {
     if (set.size > 1)
       throw InvalidConfigurationException(
         "${name.toDoubleQuoted()} has inconsistent function arguments: " +
-            set.joinToString(" and ") { "($it)" }
-                                         )
+            set.joinToString(" and ") { "($it)" })
   }
 
   private fun Any?.prettyQuote(capitalizePythonBooleans: Boolean = true, useDoubleQuotes: Boolean = false) =
