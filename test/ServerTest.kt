@@ -17,9 +17,9 @@
 
 package com.github.readingbat
 
-import com.github.readingbat.dsl.ContentDsl.readingBatContent
 import com.github.readingbat.dsl.LanguageType.Java
 import com.github.readingbat.dsl.LanguageType.Python
+import com.github.readingbat.dsl.readingBatContent
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.testing.handleRequest

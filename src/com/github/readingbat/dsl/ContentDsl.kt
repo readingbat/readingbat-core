@@ -22,35 +22,35 @@ import com.github.pambrose.common.util.ContentSource
 import com.github.pambrose.common.util.GitHubSource
 import com.github.pambrose.common.util.toDoubleQuoted
 import com.github.readingbat.dsl.ReadingBatContent.Companion.remoteMap
-import mu.KLogging
+import mu.KotlinLogging
 import kotlin.time.measureTimedValue
 
 @DslMarker
 annotation class ReadingBatDslMarker
 
-object ContentDsl : KLogging() {
-  fun readingBatContent(block: ReadingBatContent.() -> Unit) = ReadingBatContent()
-    .apply(block).apply { validate() }
+fun readingBatContent(block: ReadingBatContent.() -> Unit) = ReadingBatContent()
+  .apply(block).apply { validate() }
 
-  fun content(source: ContentSource, variableName: String = "content"): ReadingBatContent {
-    return remoteMap
-      .computeIfAbsent(source.path) {
-        val (code, dur) = measureTimedValue { source.content }
-        logger.info { "Read content from ${source.path.toDoubleQuoted()} in $dur" }
-        evalDsl(code, variableName)
-      }
-  }
+private val logger = KotlinLogging.logger {}
 
-  private fun evalDsl(code: String, variableName: String): ReadingBatContent {
-    val importDecl = "import ${ContentDsl.javaClass.name}.readingBatContent"
-    val code =
-      (if (code.contains(importDecl)) "" else importDecl + "\n") +
-          """
+fun include(source: ContentSource, variableName: String = "content"): ReadingBatContent {
+  return remoteMap
+    .computeIfAbsent(source.path) {
+      val (code, dur) = measureTimedValue { source.content }
+      logger.info { "Read content from ${source.path.toDoubleQuoted()} in $dur" }
+      evalDsl(code, variableName)
+    }
+}
+
+private fun evalDsl(code: String, variableName: String): ReadingBatContent {
+  val importDecl = "import ${::include.name}.readingBatContent"
+  val code =
+    (if (code.contains(importDecl)) "" else importDecl + "\n") +
+        """
               $code
               $variableName
             """
-    return KtsScript().run { eval(code) as ReadingBatContent }.apply { validate() }
-  }
+  return KtsScript().run { eval(code) as ReadingBatContent }.apply { validate() }
 }
 
 class GitHubContent(repo: String, fileName: String = "Content.kt") :

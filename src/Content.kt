@@ -15,10 +15,10 @@
  *
  */
 
-import com.github.readingbat.dsl.ContentDsl.content
-import com.github.readingbat.dsl.ContentDsl.readingBatContent
 import com.github.readingbat.dsl.GitHubContent
 import com.github.readingbat.dsl.ReadingBatServer
+import com.github.readingbat.dsl.include
+import com.github.readingbat.dsl.readingBatContent
 
 object Main {
   @JvmStatic
@@ -30,11 +30,11 @@ object Main {
 val content =
   readingBatContent {
 
-    +content(GitHubContent("readingbat-java-content")).java
+    +include(GitHubContent("readingbat-java-content")).java
 
-    +content(GitHubContent("readingbat-python-content")).python
+    +include(GitHubContent("readingbat-python-content")).python
 
     java {
-      +content(GitHubContent("readingbat-java-content")).java.findGroup("dd")
+      +include(GitHubContent("readingbat-java-content")).java.findGroup("dd")
     }
   }
