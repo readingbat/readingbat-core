@@ -35,6 +35,6 @@ val content =
     +include(GitHubContent("readingbat-python-content")).python
 
     java {
-      +include(GitHubContent("readingbat-java-content")).java.findGroup("dd")
+      //+include(GitHubContent("readingbat-java-content")).java.findGroup("dd")
     }
   }

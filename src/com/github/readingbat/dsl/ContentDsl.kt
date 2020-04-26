@@ -38,19 +38,24 @@ fun include(source: ContentSource, variableName: String = "content"): ReadingBat
     .computeIfAbsent(source.path) {
       val (code, dur) = measureTimedValue { source.content }
       logger.info { "Read content from ${source.path.toDoubleQuoted()} in $dur" }
-      evalDsl(code, variableName)
+      evalDsl(code, source.path, variableName)
     }
 }
 
-private fun evalDsl(code: String, variableName: String): ReadingBatContent {
-  val importDecl = "import ${::include.name}.readingBatContent"
+private fun evalDsl(code: String, sourceName: String, variableName: String): ReadingBatContent {
+  val importDecl = "import ${::readingBatContent.javaClass.packageName}.readingBatContent"
   val code =
     (if (code.contains(importDecl)) "" else importDecl + "\n") +
         """
               $code
               $variableName
             """
-  return KtsScript().run { eval(code) as ReadingBatContent }.apply { validate() }
+  try {
+    return KtsScript().run { eval(code) as ReadingBatContent }.apply { validate() }
+  } catch (e: Throwable) {
+    logger.info { "Error in $sourceName:\n$code" }
+    throw e
+  }
 }
 
 class GitHubContent(repo: String, fileName: String = "Content.kt") :
