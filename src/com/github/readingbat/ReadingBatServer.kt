@@ -15,9 +15,9 @@
  *
  */
 
-package com.github.readingbat.dsl
+package com.github.readingbat
 
-import com.github.readingbat.module
+import com.github.readingbat.dsl.ReadingBatContent
 import io.ktor.server.cio.CIO
 import io.ktor.server.engine.embeddedServer
 

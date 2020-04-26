@@ -18,7 +18,9 @@
 package com.github.readingbat.dsl
 
 enum class LanguageType(val useDoubleQuotes: Boolean, val suffix: String, val srcPrefix: String) {
-  Java(true, "java", "src/main/java"), Python(false, "py", "python"), Kotlin(false, "kt", "src/main/kotlin");
+  Java(true, "java", "src/main/java"),
+  Python(false, "py", "python"),
+  Kotlin(true, "kt", "src/main/kotlin");
 
   val lowerName = name.toLowerCase()
 
