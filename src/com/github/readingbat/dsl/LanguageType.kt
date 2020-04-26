@@ -15,4 +15,17 @@
  *
  */
 
-rootProject.name = "readingbat-core"
+package com.github.readingbat.dsl
+
+enum class LanguageType(val useDoubleQuotes: Boolean, val suffix: String) {
+  Java(true, "java"), Python(false, "py");
+
+  val lowerName = name.toLowerCase()
+
+  fun isJava() = this == Java
+  fun isPython() = this == Python
+
+  companion object {
+    fun String.toLanguageType() = values().first { it.name.equals(this, ignoreCase = true) }
+  }
+}

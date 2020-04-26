@@ -15,4 +15,25 @@
  *
  */
 
-rootProject.name = "readingbat-core"
+import com.github.readingbat.dsl.ContentDsl.readingBatContent
+import com.github.readingbat.dsl.ContentDsl.remoteContent
+import com.github.readingbat.dsl.ReadingBatServer
+
+object Main {
+  @JvmStatic
+  fun main(args: Array<String>) {
+    ReadingBatServer.start(content)
+  }
+}
+
+val content =
+  readingBatContent {
+
+    +remoteContent(repo = "readingbat-java-content").java
+
+    +remoteContent(repo = "readingbat-python-content").python
+
+    java {
+      +remoteContent(repo = "dddreadingbat-java-content").java.findGroup("dd")
+    }
+  }

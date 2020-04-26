@@ -15,4 +15,22 @@
  *
  */
 
-rootProject.name = "readingbat-core"
+package com.github.readingbat
+
+import com.github.readingbat.dsl.ContentDsl.toPath
+import org.amshove.kluent.shouldBeEqualTo
+import org.junit.jupiter.api.Test
+
+class UtilsTest {
+  @Test
+  fun testPaths() {
+
+    listOf("a", "b", "c").toPath() shouldBeEqualTo "a/b/c/"
+    listOf("/a", "/b", "c").toPath() shouldBeEqualTo "/a/b/c/"
+
+    listOf("a", "b", "c").toPath(false) shouldBeEqualTo "a/b/c"
+    listOf("a/", "/b/", "c").toPath(false) shouldBeEqualTo "a/b/c"
+    listOf("/a/", "/b/", "c").toPath(false) shouldBeEqualTo "/a/b/c"
+    listOf("/a/", "/b/", "/c").toPath(false) shouldBeEqualTo "/a/b/c"
+  }
+}
