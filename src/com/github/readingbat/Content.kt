@@ -12,7 +12,7 @@ val content =
 
     +remoteContent(repo = "readingbat-java-content").java
 
-    +remoteContent(repo = "readingbat-python-content").java
+    +remoteContent(repo = "readingbat-python-content").python
 /*
     java {
       repoRoot = "https://github.com/readingbat/readingbat-java-content"
