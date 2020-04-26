@@ -14,6 +14,7 @@ object Constants {
   val funcCol = "funcCol"
   val arrow = "arrow"
   val feedback = "feedback"
+  val userInput = "userInput"
   val checkBar = "checkBar"
   val checkAnswers = "checkAnswers"
   val spinner = "spinner"
@@ -30,7 +31,8 @@ object Constants {
   val checkJpg = "/$static/check.jpg"
   val cssName = "styles.css"
   val cssType = ContentType.Text.CSS.toString()
-  val sp = "&nbsp;"
+  val github = "github.com"
+  val githubUserContent = "raw.githubusercontent.com"
   val sessionCounter = AtomicInteger(0)
   val production: Boolean by lazy { System.getenv("PRODUCTION")?.toBoolean() ?: false }
 }

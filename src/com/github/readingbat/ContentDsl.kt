@@ -1,9 +1,12 @@
 package com.github.readingbat
 
+import com.github.pambrose.common.script.KtsScript
 import com.github.pambrose.common.util.*
+import com.github.readingbat.Constants.github
+import com.github.readingbat.Constants.githubUserContent
+import com.github.readingbat.Content.Companion.remoteMap
 import com.github.readingbat.LanguageType.Java
 import com.github.readingbat.LanguageType.Python
-import com.github.readingbat.ReadingBatServer.userContent
 import com.vladsch.flexmark.html.HtmlRenderer
 import com.vladsch.flexmark.parser.Parser
 import com.vladsch.flexmark.util.data.MutableDataSet
@@ -28,82 +31,142 @@ enum class LanguageType(val useDoubleQuotes: Boolean, val suffix: String) {
   }
 }
 
-object ReadingBatServer {
-  internal val userContent = Content()
+@DslMarker
+annotation class ReadingBatTagMarker
 
+object ReadingBatServer {
   fun start(content: Content) {
-    content.validate()
     val port = Integer.parseInt(System.getProperty("PORT") ?: "8080")
     //val clargs = commandLineEnvironment(args.plus("port=$port"))
-    val httpServer = embeddedServer(CIO, port = port) { module(content = userContent) }
-    httpServer.start(wait = true)
-
+    embeddedServer(CIO, port = port) { module(content = content) }.start(wait = true)
   }
 }
 
-fun readingBatContent(block: Content.() -> Unit) = userContent.apply(block)
+fun remoteContent(scheme: String = "https://",
+                  domainName: String = github,
+                  organization: String = "readingbat",
+                  repo: String,
+                  branch: String = "master",
+                  srcPath: String = "src/main/kotlin",
+                  fileName: String = "Content.kt",
+                  variableName: String = "content"): Content {
+  val p = scheme + domainName.replace(github, githubUserContent).ensureSuffix("/") +
+      listOf(organization, repo, branch, srcPath).toPath() + fileName.ensureSuffix(".kt")
+  return remoteMap.computeIfAbsent(p) { path ->
+    val (text, dur) = measureTimedValue { URL(path).readText() }
 
+    val importDecl = "import com.github.readingbat.readingBatContent"
+
+    val code =
+      (if (text.contains(importDecl)) "" else importDecl) + """
+      $text
+      $variableName
+      """
+
+    val content = KtsScript().run { eval(code) as Content }
+    content.validate()
+    println("In $dur got $content")
+    content
+  }
+}
+
+
+fun readingBatContent(block: Content.() -> Unit) = Content().apply(block).apply { validate() }
+
+@ReadingBatTagMarker
 class Content {
-  private val languageList = listOf(
-    LanguageGroup(Python),
-    LanguageGroup(Java)
-  )
+  val java = LanguageGroup(Java)
+  val python = LanguageGroup(Python)
+
+  private val languageList = listOf(java, python)
   private val languageMap = languageList.map { it.languageType to it }.toMap()
 
-  internal fun getLanguage(languageType: LanguageType) =
-    languageMap[languageType] ?: throw InvalidConfigurationException(
-      "Invalid language $languageType"
-    )
+  internal fun findLanguage(languageType: LanguageType) =
+    languageMap[languageType] ?: throw InvalidConfigurationException("Invalid language $languageType")
 
+  internal fun validate() = languageList.forEach { it.validate() }
+
+  @ReadingBatTagMarker
+  fun Content.java(block: LanguageGroup.() -> Unit) {
+    findLanguage(Java).apply(block)
+  }
+
+  @ReadingBatTagMarker
   fun python(block: LanguageGroup.() -> Unit) {
-    getLanguage(Python).apply(block)
+    findLanguage(Python).apply(block)
   }
 
-  fun java(block: LanguageGroup.() -> Unit) {
-    getLanguage(Java).apply(block)
+
+  @ReadingBatTagMarker
+  operator fun LanguageGroup.unaryPlus(): Unit {
+    val languageGroup = this@Content.findLanguage(this.languageType)
+    challengeGroups.forEach { languageGroup.addGroup(it) }
   }
 
-  fun validate() = languageList.forEach { it.validate() }
+  override fun toString() = "Content(languageList=$languageList)"
+
+  companion object {
+    internal val remoteMap = mutableMapOf<String, Content>()
+  }
 }
 
+@ReadingBatTagMarker
 class LanguageGroup(internal val languageType: LanguageType) {
-  private var srcPrefix = if (languageType.isJava()) "src/main/java" else "src" // default value
-  internal val challengeGroups = mutableListOf<ChallengeGroup>()
+  private var localGroupCount = 0
 
-  private val rawRoot by lazy { repoRoot.replace("github.com", "raw.githubusercontent.com") }
+  private var srcPrefix = if (languageType.isJava()) "src/main/java" else "python" // default value
+  val challengeGroups = mutableListOf<ChallengeGroup>()
+
+  private val rawRoot by lazy { repoRoot.replace(github, githubUserContent) }
   internal val rawRepoRoot by lazy { listOf(rawRoot, "master", srcPrefix).toPath() }
   internal val gitpodRoot by lazy { listOf(repoRoot, "blob/master/", srcPrefix).toPath() }
 
   var repoRoot = ""
 
-  private fun contains(name: String) = challengeGroups.any { it.name == name }
+  internal fun hasGroup(groupName: String) = challengeGroups.any { it.name == groupName }
 
-  internal fun findChallengeGroup(groupName: String) =
+  fun addGroup(group: ChallengeGroup) {
+    if (hasGroup(group.name))
+      throw InvalidConfigurationException("Duplicate group name: ${group.name}")
+    challengeGroups += group
+  }
+
+  fun findGroup(groupName: String) =
     groupName.decode()
       .let { decoded -> challengeGroups.firstOrNull { it.name == decoded } }
       ?: throw InvalidPathException("Group ${languageType.lowerName}/$groupName not found")
 
   internal fun findChallenge(groupName: String, challengeName: String) =
-    findChallengeGroup(groupName).challenges.firstOrNull { it.name == challengeName }
-      ?: throw InvalidPathException("Challenge ${languageType.lowerName}/$groupName/$challengeName not found.")
-
-  fun group(name: String, block: ChallengeGroup.() -> Unit) {
-    if (contains(name))
-      throw InvalidConfigurationException("Group ${name.toDoubleQuoted()} already exists")
-    challengeGroups += ChallengeGroup(this, name).apply(block)
-  }
+    findGroup(groupName).findChallenge(challengeName)
 
   internal fun validate() {
-    if (repoRoot.isEmpty())
-      throw InvalidConfigurationException("${languageType.lowerName} language section is missing a repoRoot value")
+    if (localGroupCount > 0 && repoRoot.isEmpty())
+      throw InvalidConfigurationException("${languageType.lowerName} section is missing a repoRoot value")
   }
+
+  @ReadingBatTagMarker
+  operator fun ChallengeGroup.unaryPlus(): Unit {
+    this@LanguageGroup.addGroup(this)
+  }
+
+  @ReadingBatTagMarker
+  fun group(name: String, block: ChallengeGroup.() -> Unit) {
+    if (hasGroup(name))
+      throw InvalidConfigurationException("Duplicate group name: $name")
+    challengeGroups += ChallengeGroup(this, name).apply(block)
+    localGroupCount++
+  }
+
+  override fun toString() =
+    "LanguageGroup(languageType=$languageType, srcPrefix='$srcPrefix', challengeGroups=$challengeGroups, repoRoot='$repoRoot')"
+
 }
 
+@ReadingBatTagMarker
 class ChallengeGroup(internal val languageGroup: LanguageGroup, internal val name: String) {
-  internal val challenges = mutableListOf<AbstractChallenge>()
   internal val languageType = languageGroup.languageType
-  var packageName = ""
-  var description = ""
+  internal val challenges = mutableListOf<AbstractChallenge>()
+  internal val prefix = "${languageType.lowerName}/$name"
 
   val parsedDescription
       by lazy {
@@ -114,32 +177,44 @@ class ChallengeGroup(internal val languageGroup: LanguageGroup, internal val nam
         renderer.render(document)
       }
 
-  private fun contains(name: String) = challenges.any { it.name == name }
+  var packageName = ""
+  var description = ""
 
-  fun challenge(name: String, block: AbstractChallenge.() -> Unit) {
-    val challenge =
-      (if (languageGroup.languageType == Java) JavaChallenge(this) else PythonChallenge(
-        this
-      )).apply {
-        this.name = name
-      }.apply(block)
-    challenge.validate()
+  fun hasChallenge(name: String) = challenges.any { it.name == name }
 
-    if (contains(name))
-      throw InvalidConfigurationException("Challenge ${name.toDoubleQuoted()} already exists")
-    challenges += challenge
+  fun findChallenge(name: String): AbstractChallenge =
+    challenges.firstOrNull { it.name == name }
+      ?: throw InvalidPathException("Challenge $prefix/$name not found.")
+
+  @ReadingBatTagMarker
+  operator fun AbstractChallenge.unaryPlus(): Unit {
+    if (this@ChallengeGroup.hasChallenge(name))
+      throw InvalidConfigurationException("Duplicate challenge name: $name")
+    this@ChallengeGroup.challenges += this
   }
+
+  @ReadingBatTagMarker
+  fun challenge(name: String, block: AbstractChallenge.() -> Unit) {
+    if (hasChallenge(name))
+      throw InvalidConfigurationException("Challenge $prefix/$name already exists")
+    val challenge = if (languageType == Java) JavaChallenge(this) else PythonChallenge(this)
+    challenges += challenge.apply { this.name = name }.apply(block).apply { validate() }
+  }
+
+  override fun toString() = "ChallengeGroup(name='$name', challenges=$challenges, packageName='$packageName')"
 }
 
+@ReadingBatTagMarker
 abstract class AbstractChallenge(private val group: ChallengeGroup) {
   private val paramSignature = mutableListOf<String>()
   private var multiArgTypes = ""
   private val challengeId = counter.incrementAndGet()
   internal val inputOutput = mutableListOf<Pair<String, String>>()
-  internal val languageType = group.languageGroup.languageType
+  internal val languageType = group.languageType
   internal val groupName = group.name
+  internal val packageName = group.packageName
 
-  private val fqName by lazy { group.packageName.ensureSuffix("/") + fileName.ensureSuffix(".${languageType.suffix}") }
+  private val fqName by lazy { packageName.ensureSuffix("/") + fileName.ensureSuffix(".${languageType.suffix}") }
   internal val gitpodUrl by lazy { "${group.languageGroup.gitpodRoot}$fqName" }
   internal val parsedDescription
       by lazy {
@@ -150,15 +225,14 @@ abstract class AbstractChallenge(private val group: ChallengeGroup) {
         renderer.render(document)
       }
 
-  var name: String = ""
-  var fileName: String = ""
+  var name = ""
+  var fileName = ""
   var codingBatEquiv = ""
-  var description: String = ""
+  var description = ""
 
+  internal abstract fun findFuncInfo(code: String): FuncInfo
 
-  abstract fun findFuncInfo(code: String): FuncInfo
-
-  fun funcInfo() =
+  internal fun funcInfo() =
     sourcesMap
       .computeIfAbsent(challengeId) {
         val path = "${group.languageGroup.rawRepoRoot}$fqName"
@@ -168,7 +242,11 @@ abstract class AbstractChallenge(private val group: ChallengeGroup) {
       }
 
   fun validate() {
-    if (fileName.isEmpty()) throw InvalidConfigurationException("${name.toDoubleQuoted()} is missing filename")
+    if (name.isEmpty())
+      throw InvalidConfigurationException("${name.toDoubleQuoted()} is empty")
+
+    if (fileName.isEmpty())
+      fileName = "$name.${languageType.suffix}"
 
     if (multiArgTypes.isNotEmpty())
       throw InvalidConfigurationException("${name.toDoubleQuoted()} has $multiArgTypes")
@@ -177,8 +255,7 @@ abstract class AbstractChallenge(private val group: ChallengeGroup) {
     if (set.size > 1)
       throw InvalidConfigurationException(
         "${name.toDoubleQuoted()} has inconsistent function arguments: " +
-            set.joinToString(" and ") { "($it)" }
-      )
+            set.joinToString(" and ") { "($it)" })
   }
 
   private fun Any?.prettyQuote(capitalizePythonBooleans: Boolean = true, useDoubleQuotes: Boolean = false) =
@@ -229,6 +306,8 @@ abstract class AbstractChallenge(private val group: ChallengeGroup) {
     paramSignature.add(argTypes.toCsv())
   }
 
+  override fun toString() = "AbstractChallenge(packageName='$packageName', fileName='$fileName')"
+
   companion object : KLogging() {
     val counter = AtomicInteger(0)
     val sourcesMap = ConcurrentHashMap<Int, FuncInfo>()
@@ -267,4 +346,4 @@ class FuncInfo(val name: String, val code: String)
 
 class InvalidConfigurationException(msg: String) : Exception(msg)
 
-private fun List<String>.toPath() = joinToString("") { it.ensureSuffix("/") }
+fun List<String>.toPath() = joinToString("") { it.ensureSuffix("/") }

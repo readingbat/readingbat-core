@@ -19,40 +19,41 @@ import com.github.readingbat.Constants.production
 import com.github.readingbat.Constants.refs
 import com.github.readingbat.Constants.selected
 import com.github.readingbat.Constants.solution
-import com.github.readingbat.Constants.sp
 import com.github.readingbat.Constants.spinner
 import com.github.readingbat.Constants.static
 import com.github.readingbat.Constants.status
 import com.github.readingbat.Constants.tabs
 import com.github.readingbat.Constants.titleText
+import com.github.readingbat.Constants.userInput
 import io.ktor.application.ApplicationCall
 import io.ktor.http.ContentType
 import io.ktor.response.respondText
 import kotlinx.css.CSSBuilder
 import kotlinx.html.*
+import kotlinx.html.Entities.nbsp
 
 fun HEAD.headDefault() {
   link { rel = "stylesheet"; href = "/$cssName"; type = cssType }
+
   title(titleText)
 
-  if (production)
-    rawHtml(
-      """
-        <script async src="https://www.googletagmanager.com/gtag/js?id=UA-164310007-1"></script>
-        <script>
+  if (production) {
+    script { async = true; src = "https://www.googletagmanager.com/gtag/js?id=UA-164310007-1" }
+    script {
+      rawHtml("""
           window.dataLayer = window.dataLayer || [];
           function gtag(){dataLayer.push(arguments);}
           gtag('js', new Date());
           gtag('config', 'UA-164310007-1');
-        </script>
-        """
-    )
+        """)
+    }
+  }
 }
 
 fun BODY.bodyHeader(languageType: LanguageType) {
   div(classes = "header") {
     a { href = "/"; span { style = "font-size:200%;"; +titleText } }
-    rawHtml(sp)
+    rawHtml(nbsp.text)
     span { +"code reading practice" }
   }
   nav {
@@ -71,13 +72,12 @@ fun BODY.bodyHeader(languageType: LanguageType) {
 
 fun TR.groupItem(prefix: String, group: ChallengeGroup) {
   val name = group.name
-  val description = group.description
   val parsedDescription = group.parsedDescription
 
   td(classes = funcItem) {
     div(classes = groupItemSrc) {
       a(classes = funcChoice) { href = "/$prefix/$name"; +name }
-      br { rawHtml(if (description.isNotBlank()) parsedDescription else sp) }
+      br { rawHtml(if (parsedDescription.isNotBlank()) parsedDescription else nbsp.text) }
     }
   }
 }
@@ -85,7 +85,7 @@ fun TR.groupItem(prefix: String, group: ChallengeGroup) {
 fun TR.funcCall(prefix: String, groupName: String, challenge: AbstractChallenge) {
   td(classes = funcItem) {
     img { src = checkJpg }
-    rawHtml(sp)
+    rawHtml(nbsp.text)
     a(classes = funcChoice) { href = "/$prefix/$groupName/${challenge.name}"; +challenge.name }
   }
 }
@@ -140,9 +140,11 @@ fun HTML.challengeGroupPage(challengeGroup: ChallengeGroup) {
 
         (0 until rows).forEach { i ->
           tr {
-            challenges[i].also { funcCall(prefix, groupName, it) }
-            challenges.elementAtOrNull(i + rows)?.also { funcCall(prefix, groupName, it) } ?: td {}
-            challenges.elementAtOrNull(i + (2 * rows))?.also { funcCall(prefix, groupName, it) } ?: td {}
+            challenges.apply {
+              elementAt(i).also { funcCall(prefix, groupName, it) }
+              elementAtOrNull(i + rows)?.also { funcCall(prefix, groupName, it) } ?: td {}
+              elementAtOrNull(i + (2 * rows))?.also { funcCall(prefix, groupName, it) } ?: td {}
+            }
           }
         }
       }
@@ -172,11 +174,11 @@ fun HTML.challengePage(challenge: AbstractChallenge) {
             pre[class*="language-"]:before,
             pre[class*="language-"]:after { display: none; }
           """
-      )
+             )
     }
 
     script(type = ScriptType.textJavaScript) {
-      getScript(languageName)
+      addScript(languageName)
     }
 
     headDefault()
@@ -187,7 +189,7 @@ fun HTML.challengePage(challenge: AbstractChallenge) {
 
     div(classes = tabs) {
       h2 {
-        a { href = "/$languageName/$groupName"; +groupName.decode() }; rawHtml("$sp&rarr;$sp"); +name
+        a { href = "/$languageName/$groupName"; +groupName.decode() }; rawHtml("${nbsp.text}&rarr;${nbsp.text}"); +name
       }
 
       if (challenge.description.isNotEmpty())
@@ -197,22 +199,18 @@ fun HTML.challengePage(challenge: AbstractChallenge) {
         code(classes = "language-$languageName") { +challenge.funcInfo().code }
       }
 
-      div {
-        style = "margin-top: 2em;margin-left:2em"
-
+      div(classes = userInput) {
         table {
-          tr {
-            th { +"Function Call" }
-            th { +"" }
-            th { +"Return Value" }
-            th { +"" }
-          }
+          tr { th { +"Function Call" }; th { +"" }; th { +"Return Value" }; th { +"" } }
           funcArgs.withIndex().forEach { (i, v) ->
             tr {
               td(classes = funcCol) { +"${challenge.funcInfo().name}(${v.first})" }
               td(classes = arrow) { rawHtml("&rarr;") }
               td {
-                textInput(classes = answer) { id = "$answer$i"; onKeyPress = "$processAnswers(${funcArgs.size})" }
+                //textInput(classes = answer) { id = "$answer$i" }
+                textInput(classes = answer) {
+                  id = "$answer$i"; onKeyPress = "$processAnswers(event, ${funcArgs.size})"
+                }
               }
               td(classes = feedback) { id = "$feedback$i" }
               td { hiddenInput { id = "$solution$i"; value = v.second } }
@@ -224,7 +222,9 @@ fun HTML.challengePage(challenge: AbstractChallenge) {
           table {
             tr {
               td {
-                button(classes = checkAnswers) { onClick = "$processAnswers(${funcArgs.size})"; +"Check My Answers!" }
+                button(classes = checkAnswers) {
+                  onClick = "$processAnswers(null, ${funcArgs.size})"; +"Check My Answers!"
+                }
               }
               td { span(classes = spinner) { id = spinner } }
               td { span(classes = status) { id = status } }
