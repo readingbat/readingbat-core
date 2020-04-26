@@ -51,8 +51,7 @@ class ReadingBatContent {
   override fun toString() = "Content(languageList=$languageList)"
 
   companion object {
-    internal val remoteMap = mutableMapOf<String, ReadingBatContent>()
-    internal val localMap = mutableMapOf<String, ReadingBatContent>()
+    internal val contentMap = mutableMapOf<String, ReadingBatContent>()
   }
 }
 

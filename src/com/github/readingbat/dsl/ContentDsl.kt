@@ -21,12 +21,19 @@ import com.github.pambrose.common.script.KtsScript
 import com.github.pambrose.common.util.ContentSource
 import com.github.pambrose.common.util.GitHubSource
 import com.github.pambrose.common.util.toDoubleQuoted
-import com.github.readingbat.dsl.ReadingBatContent.Companion.remoteMap
+import com.github.readingbat.dsl.ReadingBatContent.Companion.contentMap
 import mu.KotlinLogging
 import kotlin.time.measureTimedValue
 
 @DslMarker
 annotation class ReadingBatDslMarker
+
+class GitHubContent(repo: String, fileName: String = "Content.kt") :
+  GitHubSource(organization = "readingbat",
+               repo = repo,
+               srcPath = "src/main/kotlin",
+               fileName = fileName)
+
 
 fun readingBatContent(block: ReadingBatContent.() -> Unit) = ReadingBatContent()
   .apply(block).apply { validate() }
@@ -34,7 +41,7 @@ fun readingBatContent(block: ReadingBatContent.() -> Unit) = ReadingBatContent()
 private val logger = KotlinLogging.logger {}
 
 fun include(source: ContentSource, variableName: String = "content"): ReadingBatContent {
-  return remoteMap
+  return contentMap
     .computeIfAbsent(source.path) {
       val (code, dur) = measureTimedValue { source.content }
       logger.info { "Read content from ${source.path.toDoubleQuoted()} in $dur" }
@@ -43,13 +50,13 @@ fun include(source: ContentSource, variableName: String = "content"): ReadingBat
 }
 
 private fun evalDsl(code: String, sourceName: String, variableName: String): ReadingBatContent {
-  val importDecl = "import ${::readingBatContent.javaClass.packageName}.readingBatContent"
+  val importDecl = "import ${::GitHubContent.javaClass.packageName}.readingBatContent"
   val code =
     (if (code.contains(importDecl)) "" else importDecl + "\n") +
         """
-              $code
-              $variableName
-            """
+          $code
+          $variableName
+        """
   try {
     return KtsScript().run { eval(code) as ReadingBatContent }.apply { validate() }
   } catch (e: Throwable) {
@@ -57,10 +64,3 @@ private fun evalDsl(code: String, sourceName: String, variableName: String): Rea
     throw e
   }
 }
-
-class GitHubContent(repo: String, fileName: String = "Content.kt") :
-  GitHubSource(organization = "readingbat",
-               repo = repo,
-               srcPath = "src/main/kotlin",
-               fileName = fileName)
-

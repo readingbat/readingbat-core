@@ -26,13 +26,13 @@ import com.github.readingbat.InvalidPathException
 @ReadingBatDslMarker
 class LanguageGroup(internal val languageType: LanguageType) {
   private var localGroupCount = 0
-  private var srcPrefix = if (languageType.isJava()) "src/main/java" else "python" // default value
   internal val challengeGroups = mutableListOf<ChallengeGroup>()
 
   private val rawRoot by lazy { repoRoot.replace(github, githubUserContent) }
   internal val rawRepoRoot by lazy { listOf(rawRoot, "master", srcPrefix).toPath() }
   internal val gitpodRoot by lazy { listOf(repoRoot, "blob/master/", srcPrefix).toPath() }
 
+  var srcPrefix = languageType.srcPrefix
   var repoRoot = ""
 
   internal fun hasGroup(groupName: String) = challengeGroups.any { it.name == groupName }

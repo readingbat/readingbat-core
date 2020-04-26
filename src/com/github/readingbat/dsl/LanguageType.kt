@@ -17,13 +17,14 @@
 
 package com.github.readingbat.dsl
 
-enum class LanguageType(val useDoubleQuotes: Boolean, val suffix: String) {
-  Java(true, "java"), Python(false, "py");
+enum class LanguageType(val useDoubleQuotes: Boolean, val suffix: String, val srcPrefix: String) {
+  Java(true, "java", "src/main/java"), Python(false, "py", "python"), Kotlin(false, "kt", "src/main/kotlin");
 
   val lowerName = name.toLowerCase()
 
   fun isJava() = this == Java
   fun isPython() = this == Python
+  fun isKotlin() = this == Kotlin
 
   companion object {
     fun String.toLanguageType() = values().first { it.name.equals(this, ignoreCase = true) }
