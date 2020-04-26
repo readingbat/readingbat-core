@@ -18,14 +18,11 @@
 package com.github.readingbat.dsl
 
 import com.github.pambrose.common.script.KtsScript
-import com.github.pambrose.common.util.ensureSuffix
+import com.github.pambrose.common.util.ContentSource
+import com.github.pambrose.common.util.GitHubSource
 import com.github.pambrose.common.util.toDoubleQuoted
-import com.github.readingbat.Constants.github
-import com.github.readingbat.Constants.githubUserContent
-import com.github.readingbat.dsl.ReadingBatContent.Companion.localMap
 import com.github.readingbat.dsl.ReadingBatContent.Companion.remoteMap
 import mu.KLogging
-import java.net.URL
 import kotlin.time.measureTimedValue
 
 @DslMarker
@@ -35,26 +32,14 @@ object ContentDsl : KLogging() {
   fun readingBatContent(block: ReadingBatContent.() -> Unit) = ReadingBatContent()
     .apply(block).apply { validate() }
 
-  fun remoteContent(scheme: String = "https://",
-                    domainName: String = github,
-                    organization: String = "readingbat",
-                    repo: String,
-                    branch: String = "master",
-                    srcPath: String = "src/main/kotlin",
-                    fileName: String = "Content.kt",
-                    variableName: String = "content"): ReadingBatContent {
-    val path = scheme + domainName.replace(github, githubUserContent).ensureSuffix("/") +
-        listOf(organization, repo, branch, srcPath, fileName.ensureSuffix(".kt")).toPath(false)
+  fun content(source: ContentSource, variableName: String = "content"): ReadingBatContent {
     return remoteMap
-      .computeIfAbsent(path) {
-        val (code, dur) = measureTimedValue { URL(it).readText() }
-        logger.info { "Read content from ${path.toDoubleQuoted()} in $dur" }
+      .computeIfAbsent(source.path) {
+        val (code, dur) = measureTimedValue { source.content }
+        logger.info { "Read content from ${source.path.toDoubleQuoted()} in $dur" }
         evalDsl(code, variableName)
       }
   }
-
-  fun localContent(filePath: String = "Content.kt", variableName: String = "content") =
-    localMap.computeIfAbsent(filePath) { evalDsl(URL(it).readText(), variableName) }
 
   private fun evalDsl(code: String, variableName: String): ReadingBatContent {
     val importDecl = "import ${ContentDsl.javaClass.name}.readingBatContent"
@@ -66,9 +51,11 @@ object ContentDsl : KLogging() {
             """
     return KtsScript().run { eval(code) as ReadingBatContent }.apply { validate() }
   }
-
-  fun List<String>.toPath(addTrailingSeparator: Boolean = true, separator: CharSequence = "/") =
-    mapIndexed { i, s -> if (i != 0 && s.startsWith(separator)) s.substring(1) else s }
-      .mapIndexed { i, s -> if (i < size - 1 || addTrailingSeparator) s.ensureSuffix(separator) else s }
-      .joinToString("")
 }
+
+class GitHubContent(repo: String, fileName: String = "Content.kt") :
+  GitHubSource(organization = "readingbat",
+               repo = repo,
+               srcPath = "src/main/kotlin",
+               fileName = fileName)
+

@@ -46,7 +46,7 @@ suspend fun PipelineContext<Unit, ApplicationCall>.checkAnswers() {
   call.respondText(results.toString())
 }
 
-fun checkWithSolution(isJava: Boolean, userResp: String?, solution: String?) =
+private fun checkWithSolution(isJava: Boolean, userResp: String?, solution: String?) =
   try {
     fun String.isJavaBoolean() = this == "true" || this == "false"
     fun String.isPythonBoolean() = this == "True" || this == "False"

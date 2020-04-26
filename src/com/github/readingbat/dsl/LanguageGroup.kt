@@ -18,9 +18,10 @@
 package com.github.readingbat.dsl
 
 import com.github.pambrose.common.util.decode
-import com.github.readingbat.Constants
+import com.github.pambrose.common.util.toPath
+import com.github.readingbat.Constants.github
+import com.github.readingbat.Constants.githubUserContent
 import com.github.readingbat.InvalidPathException
-import com.github.readingbat.dsl.ContentDsl.toPath
 
 @ReadingBatDslMarker
 class LanguageGroup(internal val languageType: LanguageType) {
@@ -28,7 +29,7 @@ class LanguageGroup(internal val languageType: LanguageType) {
   private var srcPrefix = if (languageType.isJava()) "src/main/java" else "python" // default value
   internal val challengeGroups = mutableListOf<ChallengeGroup>()
 
-  private val rawRoot by lazy { repoRoot.replace(Constants.github, Constants.githubUserContent) }
+  private val rawRoot by lazy { repoRoot.replace(github, githubUserContent) }
   internal val rawRepoRoot by lazy { listOf(rawRoot, "master", srcPrefix).toPath() }
   internal val gitpodRoot by lazy { listOf(repoRoot, "blob/master/", srcPrefix).toPath() }
 

@@ -17,7 +17,7 @@
 
 package com.github.readingbat
 
-import com.github.readingbat.dsl.ContentDsl.toPath
+import com.github.pambrose.common.util.toPath
 import org.amshove.kluent.shouldBeEqualTo
 import org.junit.jupiter.api.Test
 

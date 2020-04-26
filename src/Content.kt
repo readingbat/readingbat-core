@@ -15,8 +15,9 @@
  *
  */
 
+import com.github.readingbat.dsl.ContentDsl.content
 import com.github.readingbat.dsl.ContentDsl.readingBatContent
-import com.github.readingbat.dsl.ContentDsl.remoteContent
+import com.github.readingbat.dsl.GitHubContent
 import com.github.readingbat.dsl.ReadingBatServer
 
 object Main {
@@ -29,11 +30,11 @@ object Main {
 val content =
   readingBatContent {
 
-    +remoteContent(repo = "readingbat-java-content").java
+    +content(GitHubContent("readingbat-java-content")).java
 
-    +remoteContent(repo = "readingbat-python-content").python
+    +content(GitHubContent("readingbat-python-content")).python
 
     java {
-      +remoteContent(repo = "dddreadingbat-java-content").java.findGroup("dd")
+      +content(GitHubContent("readingbat-java-content")).java.findGroup("dd")
     }
   }

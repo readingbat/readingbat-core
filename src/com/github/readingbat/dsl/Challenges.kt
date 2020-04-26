@@ -55,17 +55,15 @@ abstract class AbstractChallenge(private val group: ChallengeGroup) {
   var codingBatEquiv = ""
   var description = ""
 
-  internal abstract fun findFuncInfo(code: String): FuncInfo
+  internal abstract fun funcInfo(code: String): FuncInfo
 
   internal fun funcInfo() =
     sourcesMap
       .computeIfAbsent(challengeId) {
         val path = "${group.languageGroup.rawRepoRoot}$fqName"
-        val (content, dur) = measureTimedValue {
-          URL(path).readText()
-        }
+        val (content, dur) = measureTimedValue { URL(path).readText() }
         logger.info { "Fetching ${group.name.toDoubleQuoted()}/${fileName.toDoubleQuoted()} $path in $dur" }
-        findFuncInfo(content)
+        funcInfo(content)
       }
 
   internal fun validate() {
@@ -142,7 +140,7 @@ abstract class AbstractChallenge(private val group: ChallengeGroup) {
 }
 
 class PythonChallenge(group: ChallengeGroup) : AbstractChallenge(group) {
-  override fun findFuncInfo(code: String): FuncInfo {
+  override fun funcInfo(code: String): FuncInfo {
     val lines = code.split("\n")
     val lineNums =
       lines.mapIndexed { i, str -> i to str }
@@ -156,7 +154,7 @@ class PythonChallenge(group: ChallengeGroup) : AbstractChallenge(group) {
 }
 
 class JavaChallenge(group: ChallengeGroup) : AbstractChallenge(group) {
-  override fun findFuncInfo(code: String): FuncInfo {
+  override fun funcInfo(code: String): FuncInfo {
     val lines = code.split("\n")
     val lineNums =
       lines.mapIndexed { i, str -> i to str }
