@@ -42,6 +42,7 @@ object Constants {
   const val tabs = "tabs"
   const val selected = "selected"
   const val processAnswers = "processAnswers"
+  const val playground = "playground"
   const val titleText = "ReadingBat"
   const val static = "static"
   const val checkJpg = "/$static/check.jpg"

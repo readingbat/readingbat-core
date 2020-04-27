@@ -31,6 +31,7 @@ import com.github.readingbat.Constants.funcChoice
 import com.github.readingbat.Constants.funcCol
 import com.github.readingbat.Constants.funcItem
 import com.github.readingbat.Constants.groupItemSrc
+import com.github.readingbat.Constants.playground
 import com.github.readingbat.Constants.processAnswers
 import com.github.readingbat.Constants.production
 import com.github.readingbat.Constants.refs
@@ -42,9 +43,7 @@ import com.github.readingbat.Constants.status
 import com.github.readingbat.Constants.tabs
 import com.github.readingbat.Constants.titleText
 import com.github.readingbat.Constants.userInput
-import com.github.readingbat.dsl.Challenge
-import com.github.readingbat.dsl.ChallengeGroup
-import com.github.readingbat.dsl.LanguageType
+import com.github.readingbat.dsl.*
 import com.github.readingbat.dsl.LanguageType.*
 import io.ktor.application.ApplicationCall
 import io.ktor.http.ContentType
@@ -202,9 +201,7 @@ fun HTML.challengePage(challenge: Challenge) {
              )
     }
 
-    script(type = ScriptType.textJavaScript) {
-      addScript(languageName)
-    }
+    script(type = ScriptType.textJavaScript) { addScript(languageName) }
 
     headDefault()
   }
@@ -221,7 +218,7 @@ fun HTML.challengePage(challenge: Challenge) {
         div(classes = "challenge-desc") { rawHtml(challenge.parsedDescription) }
 
       pre(classes = "line-numbers") {
-        code(classes = "language-$languageName") { +challenge.funcInfo().code }
+        code(classes = "language-$languageName") { +challenge.funcInfo().snippet }
       }
 
       div(classes = userInput) {
@@ -261,11 +258,21 @@ fun HTML.challengePage(challenge: Challenge) {
           +"Experiment with this code on "
           a { href = "https://gitpod.io/#${challenge.gitpodUrl}"; target = "_blank"; +"Gitpod.io" }
         }
-        if (challenge.codingBatEquiv.isNotEmpty()) {
+
+        if (challenge.codingBatEquiv.isNotEmpty() && languageType in listOf(Java, Python)) {
           p(classes = refs) {
             +"Work on a similar problem on "
             a { href = "https://codingbat.com/prob/${challenge.codingBatEquiv}"; target = "_blank"; +"CodingBat.com" }
           }
+        }
+
+        if (languageType.isKotlin()) {
+          val kotlinChallenge = challenge as KotlinChallenge
+          p(classes = refs) {
+            +"Experiment with the code as a "
+            a { href = "/$playground/${kotlinChallenge.id}"; target = "_blank"; +"Kotlin Playground" }
+          }
+
         }
 
         div(classes = back) { a { href = "/$languageName/$groupName"; rawHtml("&larr; Back") } }
@@ -273,6 +280,34 @@ fun HTML.challengePage(challenge: Challenge) {
     }
 
     script { src = "/$static/$languageName-prism.js" }
+  }
+}
+
+fun HTML.kotlinPlayground(funcInfo: FuncInfo) {
+  val challenge = funcInfo.challenge
+  val languageType = challenge.languageType
+  val groupName = challenge.groupName
+  val name = challenge.name
+  val funcArgs = challenge.inputOutput
+  val languageName = languageType.lowerName
+
+  head {
+    script { src = "https://unpkg.com/kotlin-playground@1"; attributes["data-selector"] = "code" }
+
+    headDefault()
+  }
+
+  body {
+    div(classes = "kotlin-code") {
+      code(classes = "kotlin-code") {
+        //theme = "idea"
+        //indent = "4"
+        //style = "visibility: hidden; padding: 36px 0;"
+        style = "padding: 36px 0;"
+
+        rawHtml(funcInfo.code)
+      }
+    }
   }
 }
 

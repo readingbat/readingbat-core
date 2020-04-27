@@ -19,8 +19,10 @@ package com.github.readingbat
 
 import com.github.readingbat.Constants.checkAnswers
 import com.github.readingbat.Constants.cssName
+import com.github.readingbat.Constants.playground
 import com.github.readingbat.Constants.production
 import com.github.readingbat.Constants.static
+import com.github.readingbat.dsl.KotlinChallenge.Companion.kotlinMap
 import com.github.readingbat.dsl.LanguageType.*
 import com.github.readingbat.dsl.LanguageType.Companion.toLanguageType
 import com.github.readingbat.dsl.ReadingBatContent
@@ -74,26 +76,35 @@ fun Application.module(testing: Boolean = false, content: ReadingBatContent) {
   intercept(ApplicationCallPipeline.Call) {
     val req = call.request.uri
     val items = req.split("/").filter { it.isNotEmpty() }
+    if (items.isNotEmpty()) {
 
-    if (items.isNotEmpty() && (items[0] in listOf(Java.lowerName, Python.lowerName, Kotlin.lowerName))) {
-      val languageType = items[0].toLanguageType()
-      val groupName = items.elementAtOrNull(1) ?: ""
-      val challengeName = items.elementAtOrNull(2) ?: ""
-      when (items.size) {
-        1 -> {
-          // This lookup has to take place outside of the lambda for proper exception handling
-          val groups = content.findLanguage(languageType).challengeGroups
-          call.respondHtml { languageGroupPage(languageType, groups) }
+      if (items.size == 2 && items[0] == playground) {
+        val id = items[1].toInt()
+        val funcInfo = kotlinMap[id]
+        if (funcInfo != null)
+          call.respondHtml { kotlinPlayground(funcInfo) }
+      }
+
+      if (items[0] in listOf(Java.lowerName, Python.lowerName, Kotlin.lowerName)) {
+        val languageType = items[0].toLanguageType()
+        val groupName = items.elementAtOrNull(1) ?: ""
+        val challengeName = items.elementAtOrNull(2) ?: ""
+        when (items.size) {
+          1 -> {
+            // This lookup has to take place outside of the lambda for proper exception handling
+            val groups = content.findLanguage(languageType).challengeGroups
+            call.respondHtml { languageGroupPage(languageType, groups) }
+          }
+          2 -> {
+            val challengeGroup = content.findLanguage(languageType).findGroup(groupName)
+            call.respondHtml { challengeGroupPage(challengeGroup) }
+          }
+          3 -> {
+            val challenge = content.findLanguage(languageType).findChallenge(groupName, challengeName)
+            call.respondHtml { challengePage(challenge) }
+          }
+          else -> throw InvalidPathException("Invalid path: $req")
         }
-        2 -> {
-          val challengeGroup = content.findLanguage(languageType).findGroup(groupName)
-          call.respondHtml { challengeGroupPage(challengeGroup) }
-        }
-        3 -> {
-          val challenge = content.findLanguage(languageType).findChallenge(groupName, challengeName)
-          call.respondHtml { challengePage(challenge) }
-        }
-        else -> throw InvalidPathException("Invalid path: $req")
       }
     }
   }

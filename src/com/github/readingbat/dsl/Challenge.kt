@@ -18,7 +18,6 @@
 package com.github.readingbat.dsl
 
 import com.github.pambrose.common.util.*
-import com.github.readingbat.dsl.LanguageType.Python
 import com.vladsch.flexmark.html.HtmlRenderer
 import com.vladsch.flexmark.parser.Parser
 import com.vladsch.flexmark.util.data.MutableDataSet
@@ -86,7 +85,7 @@ sealed class Challenge(private val group: ChallengeGroup) {
   private fun Any?.prettyQuote(capitalizePythonBooleans: Boolean = true, useDoubleQuotes: Boolean = false) =
     when {
       this is String -> if (languageType.useDoubleQuotes || useDoubleQuotes) toDoubleQuoted() else toSingleQuoted()
-      capitalizePythonBooleans && this is Boolean && languageType == Python -> toString().capitalize()
+      capitalizePythonBooleans && this is Boolean && languageType.isPython() -> toString().capitalize()
       else -> toString()
     }
 
@@ -146,9 +145,8 @@ class PythonChallenge(group: ChallengeGroup) : Challenge(group) {
         .filter { it.second.contains(Regex("^def.*\\(")) }
         .map { it.first }
 
-    val funcName = lines[lineNums.first()].substringAfter("def ").substringBefore("(").trim()
     val funcCode = lines.subList(lineNums.first(), lineNums.last() - 1).joinToString("\n").trimIndent()
-    return FuncInfo(funcName, funcCode, lines.pythonInvokes(pythonStart, pythonEnd))
+    return FuncInfo(this, code, funcCode, lines.pythonInvokes(pythonStart, pythonEnd))
   }
 
   companion object {
@@ -174,12 +172,12 @@ class JavaChallenge(group: ChallengeGroup) : Challenge(group) {
         .filter { it.second.contains(Regex("static.*\\(")) }
         .map { it.first }
 
-    val funcName = lines[lineNums.first()].substringAfter("static ").substringBefore("(").split(" ")[1].trim()
     val funcCode = lines.subList(lineNums.first(), lineNums.last() - 1).joinToString("\n").trimIndent()
-    return FuncInfo(funcName, funcCode, lines.javaInvokes(javaStart, javaEnd))
+    return FuncInfo(this, code, funcCode, lines.javaInvokes(javaStart, javaEnd))
   }
 
   companion object {
+
     internal val javaStart = Regex("static\\svoid\\smain\\(")
     internal val javaEnd = Regex("}")
 
@@ -195,13 +193,19 @@ class JavaChallenge(group: ChallengeGroup) : Challenge(group) {
 }
 
 class KotlinChallenge(group: ChallengeGroup) : Challenge(group) {
+  val id = counter.incrementAndGet()
+
   override fun deriveFuncInfo(code: String): FuncInfo {
     val lines = code.split("\n").filter { !it.trimStart().startsWith("package") }
     val funcCode = lines.subList(0, lines.lastLineNumberOf(Regex("fun main\\("))).joinToString("\n").trimIndent()
-    return FuncInfo("kotlin", "\n$funcCode\n\n", lines.kotlinInvokes(kotlinStart, kotlinEnd))
+    kotlinMap[id] = FuncInfo(this, code, "\n$funcCode\n\n", lines.kotlinInvokes(kotlinStart, kotlinEnd))
+    return kotlinMap[id]!!
   }
 
   companion object {
+    private val counter = AtomicInteger(0)
+    internal val kotlinMap = ConcurrentHashMap<Int, FuncInfo>()
+
     internal val kotlinStart = Regex("static\\svoid\\smain\\(")
     internal val kotlinEnd = Regex("}")
 
@@ -216,4 +220,4 @@ class KotlinChallenge(group: ChallengeGroup) : Challenge(group) {
   }
 }
 
-internal class FuncInfo(val name: String, val code: String, val invokes: List<String>)
+class FuncInfo(val challenge: Challenge, val code: String, val snippet: String, val invokes: List<String>)
