@@ -43,7 +43,10 @@ import com.github.readingbat.Constants.status
 import com.github.readingbat.Constants.tabs
 import com.github.readingbat.Constants.titleText
 import com.github.readingbat.Constants.userInput
-import com.github.readingbat.dsl.*
+import com.github.readingbat.dsl.Challenge
+import com.github.readingbat.dsl.ChallengeGroup
+import com.github.readingbat.dsl.KotlinChallenge
+import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.dsl.LanguageType.*
 import io.ktor.application.ApplicationCall
 import io.ktor.http.ContentType
@@ -270,9 +273,8 @@ fun HTML.challengePage(challenge: Challenge) {
           val kotlinChallenge = challenge as KotlinChallenge
           p(classes = refs) {
             +"Experiment with the code as a "
-            a { href = "/$playground/${kotlinChallenge.id}"; target = "_blank"; +"Kotlin Playground" }
+            a { href = "/$playground/$groupName/$name"; target = "_blank"; +"Kotlin Playground" }
           }
-
         }
 
         div(classes = back) { a { href = "/$languageName/$groupName"; rawHtml("&larr; Back") } }
@@ -283,13 +285,10 @@ fun HTML.challengePage(challenge: Challenge) {
   }
 }
 
-fun HTML.kotlinPlayground(funcInfo: FuncInfo) {
-  val challenge = funcInfo.challenge
+fun HTML.kotlinPlayground(challenge: Challenge) {
   val languageType = challenge.languageType
   val groupName = challenge.groupName
   val name = challenge.name
-  val funcArgs = challenge.inputOutput
-  val languageName = languageType.lowerName
 
   head {
     script { src = "https://unpkg.com/kotlin-playground@1"; attributes["data-selector"] = "code" }
@@ -305,7 +304,7 @@ fun HTML.kotlinPlayground(funcInfo: FuncInfo) {
         //style = "visibility: hidden; padding: 36px 0;"
         style = "padding: 36px 0;"
 
-        rawHtml(funcInfo.code)
+        rawHtml(challenge.funcInfo().code)
       }
     }
   }

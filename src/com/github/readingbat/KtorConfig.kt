@@ -22,7 +22,6 @@ import com.github.readingbat.Constants.cssName
 import com.github.readingbat.Constants.playground
 import com.github.readingbat.Constants.production
 import com.github.readingbat.Constants.static
-import com.github.readingbat.dsl.KotlinChallenge.Companion.kotlinMap
 import com.github.readingbat.dsl.LanguageType.*
 import com.github.readingbat.dsl.LanguageType.Companion.toLanguageType
 import com.github.readingbat.dsl.ReadingBatContent
@@ -78,11 +77,9 @@ fun Application.module(testing: Boolean = false, content: ReadingBatContent) {
     val items = req.split("/").filter { it.isNotEmpty() }
     if (items.isNotEmpty()) {
 
-      if (items.size == 2 && items[0] == playground) {
-        val id = items[1].toInt()
-        val funcInfo = kotlinMap[id]
-        if (funcInfo != null)
-          call.respondHtml { kotlinPlayground(funcInfo) }
+      if (items.size == 3 && items[0] == playground) {
+        val challenge = content.findLanguage(Kotlin).findChallenge(items[1], items[2])
+        call.respondHtml { kotlinPlayground(challenge) }
       }
 
       if (items[0] in listOf(Java.lowerName, Python.lowerName, Kotlin.lowerName)) {

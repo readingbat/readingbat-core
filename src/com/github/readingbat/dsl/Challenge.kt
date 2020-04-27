@@ -146,7 +146,7 @@ class PythonChallenge(group: ChallengeGroup) : Challenge(group) {
         .map { it.first }
 
     val funcCode = lines.subList(lineNums.first(), lineNums.last() - 1).joinToString("\n").trimIndent()
-    return FuncInfo(this, code, funcCode, lines.pythonInvokes(pythonStart, pythonEnd))
+    return FuncInfo(code, funcCode, lines.pythonInvokes(pythonStart, pythonEnd))
   }
 
   companion object {
@@ -173,7 +173,7 @@ class JavaChallenge(group: ChallengeGroup) : Challenge(group) {
         .map { it.first }
 
     val funcCode = lines.subList(lineNums.first(), lineNums.last() - 1).joinToString("\n").trimIndent()
-    return FuncInfo(this, code, funcCode, lines.javaInvokes(javaStart, javaEnd))
+    return FuncInfo(code, funcCode, lines.javaInvokes(javaStart, javaEnd))
   }
 
   companion object {
@@ -198,14 +198,10 @@ class KotlinChallenge(group: ChallengeGroup) : Challenge(group) {
   override fun deriveFuncInfo(code: String): FuncInfo {
     val lines = code.split("\n").filter { !it.trimStart().startsWith("package") }
     val funcCode = lines.subList(0, lines.lastLineNumberOf(Regex("fun main\\("))).joinToString("\n").trimIndent()
-    kotlinMap[id] = FuncInfo(this, code, "\n$funcCode\n\n", lines.kotlinInvokes(kotlinStart, kotlinEnd))
-    return kotlinMap[id]!!
+    return FuncInfo(code, "\n$funcCode\n\n", lines.kotlinInvokes(kotlinStart, kotlinEnd))
   }
 
   companion object {
-    private val counter = AtomicInteger(0)
-    internal val kotlinMap = ConcurrentHashMap<Int, FuncInfo>()
-
     internal val kotlinStart = Regex("static\\svoid\\smain\\(")
     internal val kotlinEnd = Regex("}")
 
@@ -220,4 +216,4 @@ class KotlinChallenge(group: ChallengeGroup) : Challenge(group) {
   }
 }
 
-class FuncInfo(val challenge: Challenge, val code: String, val snippet: String, val invokes: List<String>)
+class FuncInfo(val code: String, val snippet: String, val invokes: List<String>)
