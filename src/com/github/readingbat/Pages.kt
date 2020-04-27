@@ -324,7 +324,7 @@ fun HTML.playgroundPage(challenge: Challenge) {
           //style = "visibility: hidden; padding: 36px 0;"
           style = "padding: 36px 0;"
 
-          rawHtml(challenge.funcInfo().code)
+          rawHtml(challenge.funcInfo().code.replace("<", "&lt;").replace(">", "&gt;"))
         }
       }
 
