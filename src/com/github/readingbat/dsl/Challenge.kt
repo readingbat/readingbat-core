@@ -79,9 +79,8 @@ sealed class Challenge(private val group: ChallengeGroup) {
 
     val set = paramSignature.toSet()
     if (set.size > 1)
-      throw InvalidConfigurationException(
-        "${name.toDoubleQuoted()} has inconsistent function arguments: " +
-            set.joinToString(" and ") { "($it)" })
+      throw InvalidConfigurationException("${name.toDoubleQuoted()} has inconsistent function arguments: " +
+                                              set.joinToString(" and ") { "($it)" })
   }
 
   private fun Any?.prettyQuote(capitalizePythonBooleans: Boolean = true, useDoubleQuotes: Boolean = false) =
@@ -170,16 +169,29 @@ class JavaChallenge(group: ChallengeGroup) : Challenge(group) {
 
 class KotlinChallenge(group: ChallengeGroup) : Challenge(group) {
   override fun funcInfo(code: String): FuncInfo {
-    val lines = code.split("\n")
-    val lineNums =
-      lines.mapIndexed { i, str -> i to str }
-        .filter { it.second.contains(Regex("static.*\\(")) }
-        .map { it.first }
-
-    val funcName = lines[lineNums.first()].substringAfter("static ").substringBefore("(").split(" ")[1].trim()
-    val funcCode = lines.subList(lineNums.first(), lineNums.last() - 1).joinToString("\n").trimIndent()
-    return FuncInfo(funcName, funcCode)
+    val lines = code.split("\n").filter { !it.trimStart().startsWith("package") }
+    val funcCode = lines.subList(0, lines.lastLineNumOf(Regex("fun main\\("))).joinToString("\n").trimIndent()
+    return FuncInfo("kotlin", "\n$funcCode\n\n")
   }
 }
+
+fun String.firstLineNumOf(regex: Regex) = split("\n").firstLineNumOf(regex)
+
+fun List<String>.firstLineNumOf(regex: Regex) =
+  asSequence()
+    .mapIndexed { i, str -> i to str }
+    .filter { it.second.contains(regex) }
+    .map { it.first }
+    .firstOrNull() ?: -1
+
+fun String.lastLineNumOf(regex: Regex) = split("\n").lastLineNumOf(regex)
+
+fun List<String>.lastLineNumOf(regex: Regex) =
+  mapIndexed { i, str -> i to str }
+    .asReversed()
+    .asSequence()
+    .filter { it.second.contains(regex) }
+    .map { it.first }
+    .firstOrNull() ?: -1
 
 internal class FuncInfo(val name: String, val code: String)

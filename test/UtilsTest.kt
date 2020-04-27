@@ -17,20 +17,31 @@
 
 package com.github.readingbat
 
-import com.github.pambrose.common.util.toPath
+import com.github.readingbat.dsl.firstLineNumOf
+import com.github.readingbat.dsl.lastLineNumOf
 import org.amshove.kluent.shouldBeEqualTo
 import org.junit.jupiter.api.Test
 
 class UtilsTest {
   @Test
-  fun testPaths() {
+  fun testLineIndexes() {
+    val s = """
+      aaa
+      bbb
+      ccc
+      ddd
+      eee
+      aaa
+      bbb
+      ccc
+      ddd
+      eee
+    """.trimIndent()
 
-    listOf("a", "b", "c").toPath() shouldBeEqualTo "a/b/c/"
-    listOf("/a", "/b", "c").toPath() shouldBeEqualTo "/a/b/c/"
+    s.firstLineNumOf(Regex("zzz")) shouldBeEqualTo -1
+    s.firstLineNumOf(Regex("bbb")) shouldBeEqualTo 1
 
-    listOf("a", "b", "c").toPath(false) shouldBeEqualTo "a/b/c"
-    listOf("a/", "/b/", "c").toPath(false) shouldBeEqualTo "a/b/c"
-    listOf("/a/", "/b/", "c").toPath(false) shouldBeEqualTo "/a/b/c"
-    listOf("/a/", "/b/", "/c").toPath(false) shouldBeEqualTo "/a/b/c"
+    s.lastLineNumOf(Regex("zzz")) shouldBeEqualTo -1
+    s.lastLineNumOf(Regex("bbb")) shouldBeEqualTo 6
   }
 }
