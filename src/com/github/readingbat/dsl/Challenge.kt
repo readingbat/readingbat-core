@@ -62,23 +62,23 @@ sealed class Challenge(private val group: ChallengeGroup) {
       .computeIfAbsent(challengeId) {
         val path = "${group.languageGroup.rawRepoRoot}$fqName"
         val (content, dur) = measureTimedValue { URL(path).readText() }
-        logger.info { "Fetching ${group.name.toDoubleQuoted()}/${fileName.toDoubleQuoted()} $path in $dur" }
+        logger.info { """Fetching "${group.name}/$fileName" $path in $dur""" }
         deriveFuncInfo(content)
       }
 
   internal fun validate() {
     if (name.isEmpty())
-      throw InvalidConfigurationException("${name.toDoubleQuoted()} is empty")
+      throw InvalidConfigurationException(""""$name" is empty""")
 
     if (fileName.isEmpty())
       fileName = "$name.${languageType.suffix}"
 
     if (multiArgTypes.isNotEmpty())
-      throw InvalidConfigurationException("${name.toDoubleQuoted()} has $multiArgTypes")
+      throw InvalidConfigurationException(""""$name" has $multiArgTypes""")
 
     val set = paramSignature.toSet()
     if (set.size > 1)
-      throw InvalidConfigurationException("${name.toDoubleQuoted()} has inconsistent function arguments: " +
+      throw InvalidConfigurationException(""""$name" has inconsistent function arguments: """ +
                                               set.joinToString(" and ") { "($it)" })
   }
 

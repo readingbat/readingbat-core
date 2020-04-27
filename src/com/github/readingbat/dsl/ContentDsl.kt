@@ -20,7 +20,6 @@ package com.github.readingbat.dsl
 import com.github.pambrose.common.script.KtsScript
 import com.github.pambrose.common.util.ContentSource
 import com.github.pambrose.common.util.GitHubSource
-import com.github.pambrose.common.util.toDoubleQuoted
 import com.github.readingbat.dsl.ReadingBatContent.Companion.contentMap
 import mu.KotlinLogging
 import kotlin.time.measureTimedValue
@@ -43,7 +42,7 @@ fun include(source: ContentSource, variableName: String = "content"): ReadingBat
   return contentMap
     .computeIfAbsent(source.path) {
       val (code, dur) = measureTimedValue { source.content }
-      logger.info { "Read content from ${source.path.toDoubleQuoted()} in $dur" }
+      logger.info { """Read content from "${source.path}" in $dur""" }
       evalDsl(code, source.path, variableName)
     }
 }
