@@ -79,7 +79,7 @@ fun Application.module(testing: Boolean = false, content: ReadingBatContent) {
 
       if (items.size == 3 && items[0] == playground) {
         val challenge = content.findLanguage(Kotlin).findChallenge(items[1], items[2])
-        call.respondHtml { kotlinPlayground(challenge) }
+        call.respondHtml { playgroundPage(challenge) }
       }
 
       if (items[0] in listOf(Java.lowerName, Python.lowerName, Kotlin.lowerName)) {

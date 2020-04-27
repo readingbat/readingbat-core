@@ -73,12 +73,18 @@ fun HEAD.headDefault() {
   }
 }
 
-fun BODY.bodyHeader(languageType: LanguageType) {
+fun BODY.bodyTitle() {
   div(classes = "header") {
     a { href = "/"; span { style = "font-size:200%;"; +titleText } }
     rawHtml(nbsp.text)
     span { +"code reading practice" }
   }
+}
+
+fun BODY.bodyHeader(languageType: LanguageType) {
+
+  bodyTitle()
+
   nav {
     ul {
       li(classes = "h2") {
@@ -183,10 +189,10 @@ fun HTML.challengeGroupPage(challengeGroup: ChallengeGroup) {
 
 fun HTML.challengePage(challenge: Challenge) {
   val languageType = challenge.languageType
+  val languageName = languageType.lowerName
   val groupName = challenge.groupName
   val name = challenge.name
   val funcArgs = challenge.inputOutput
-  val languageName = languageType.lowerName
 
   head {
     link {
@@ -285,8 +291,9 @@ fun HTML.challengePage(challenge: Challenge) {
   }
 }
 
-fun HTML.kotlinPlayground(challenge: Challenge) {
+fun HTML.playgroundPage(challenge: Challenge) {
   val languageType = challenge.languageType
+  val languageName = languageType.lowerName
   val groupName = challenge.groupName
   val name = challenge.name
 
@@ -297,15 +304,31 @@ fun HTML.kotlinPlayground(challenge: Challenge) {
   }
 
   body {
-    div(classes = "kotlin-code") {
-      code(classes = "kotlin-code") {
-        //theme = "idea"
-        //indent = "4"
-        //style = "visibility: hidden; padding: 36px 0;"
-        style = "padding: 36px 0;"
 
-        rawHtml(challenge.funcInfo().code)
+    bodyHeader(languageType)
+
+    div(classes = tabs) {
+      h2 {
+        a { href = "/$languageName/$groupName"; +groupName.decode() };
+        rawHtml("${nbsp.text}&rarr;${nbsp.text}");
+        a { href = "/$languageName/$groupName/$name"; +name.decode() };
       }
+
+      if (challenge.description.isNotEmpty())
+        div(classes = "challenge-desc") { rawHtml(challenge.parsedDescription) }
+
+      div(classes = "kotlin-code") {
+        code(classes = "kotlin-code") {
+          //theme = "idea"
+          //indent = "4"
+          //style = "visibility: hidden; padding: 36px 0;"
+          style = "padding: 36px 0;"
+
+          rawHtml(challenge.funcInfo().code)
+        }
+      }
+
+      div(classes = back) { a { href = "/$languageName/$groupName/$name"; rawHtml("&larr; Back") } }
     }
   }
 }
