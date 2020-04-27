@@ -27,7 +27,7 @@ import com.vladsch.flexmark.util.data.MutableDataSet
 class ChallengeGroup(internal val languageGroup: LanguageGroup, internal val name: String) {
   internal val languageType = languageGroup.languageType
   internal val challenges = mutableListOf<Challenge>()
-  internal val prefix = "${languageType.lowerName}/$name"
+  private val prefix = "${languageType.lowerName}/$name"
   internal val parsedDescription
       by lazy {
         val options = MutableDataSet().apply { set(HtmlRenderer.SOFT_BREAK, "<br />\n") }
@@ -47,7 +47,7 @@ class ChallengeGroup(internal val languageGroup: LanguageGroup, internal val nam
       ?: throw InvalidPathException("Challenge $prefix/$name not found.")
 
   @ReadingBatDslMarker
-  operator fun Challenge.unaryPlus(): Unit {
+  operator fun Challenge.unaryPlus() {
     if (this@ChallengeGroup.hasChallenge(name))
       throw InvalidConfigurationException("Duplicate challenge name: $name")
     this@ChallengeGroup.challenges += this

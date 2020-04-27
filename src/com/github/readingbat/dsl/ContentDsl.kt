@@ -50,16 +50,16 @@ fun include(source: ContentSource, variableName: String = "content"): ReadingBat
 
 private fun evalDsl(code: String, sourceName: String, variableName: String): ReadingBatContent {
   val importDecl = "import ${::readingBatContent.javaClass.packageName}.readingBatContent"
-  val code =
+  val processed =
     (if (code.contains(importDecl)) "" else importDecl + "\n") +
         """
           $code
           $variableName
         """
   try {
-    return KtsScript().run { eval(code) as ReadingBatContent }.apply { validate() }
+    return KtsScript().run { eval(processed) as ReadingBatContent }.apply { validate() }
   } catch (e: Throwable) {
-    logger.info { "Error in $sourceName:\n$code" }
+    logger.info { "Error in $sourceName:\n$processed" }
     throw e
   }
 }

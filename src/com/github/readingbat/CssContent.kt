@@ -153,6 +153,9 @@ fun CSSBuilder.cssContent() {
   rule(".language-python") {
     width = 950.px  // !important
   }
+  rule(".language-kotlin") {
+    width = 950.px  // !important
+  }
   rule(".$refs") {
     marginTop = 1.em
     fontSize = fs

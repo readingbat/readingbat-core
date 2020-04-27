@@ -35,7 +35,15 @@ class LanguageGroup(internal val languageType: LanguageType) {
   var srcPrefix = languageType.srcPrefix
   var repoRoot = ""
 
-  internal fun hasGroup(groupName: String) = challengeGroups.any { it.name == groupName }
+  fun findChallenge(groupName: String, challengeName: String) =
+    findGroup(groupName).findChallenge(challengeName)
+
+  fun hasGroup(groupName: String) = challengeGroups.any { it.name == groupName }
+
+  fun findGroup(groupName: String) =
+    groupName.decode()
+      .let { decoded -> challengeGroups.firstOrNull { it.name == decoded } }
+      ?: throw InvalidPathException("Group ${languageType.lowerName}/$groupName not found")
 
   internal fun addGroup(group: ChallengeGroup) {
     if (hasGroup(group.name))
@@ -43,21 +51,13 @@ class LanguageGroup(internal val languageType: LanguageType) {
     challengeGroups += group
   }
 
-  fun findGroup(groupName: String) =
-    groupName.decode()
-      .let { decoded -> challengeGroups.firstOrNull { it.name == decoded } }
-      ?: throw InvalidPathException("Group ${languageType.lowerName}/$groupName not found")
-
-  internal fun findChallenge(groupName: String, challengeName: String) =
-    findGroup(groupName).findChallenge(challengeName)
-
   internal fun validate() {
     if (localGroupCount > 0 && repoRoot.isEmpty())
       throw InvalidConfigurationException("${languageType.lowerName} section is missing a repoRoot value")
   }
 
   @ReadingBatDslMarker
-  operator fun ChallengeGroup.unaryPlus(): Unit {
+  operator fun ChallengeGroup.unaryPlus() {
     this@LanguageGroup.addGroup(this)
   }
 

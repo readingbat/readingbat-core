@@ -37,7 +37,7 @@ sealed class Challenge(private val group: ChallengeGroup) {
   internal val inputOutput = mutableListOf<Pair<String, String>>()
   internal val languageType = group.languageType
   internal val groupName = group.name
-  internal val packageName = group.packageName
+  private val packageName = group.packageName
 
   private val fqName by lazy { packageName.ensureSuffix("/") + fileName.ensureSuffix(".${languageType.suffix}") }
   internal val gitpodUrl by lazy { "${group.languageGroup.gitpodRoot}$fqName" }
@@ -162,7 +162,7 @@ class PythonChallenge(group: ChallengeGroup) : Challenge(group) {
         .filter { it.contains("print(") }
         .map { it.trim() }
         .map { it.replaceFirst("print(", "") }
-        .map { it.substring(0, it.indexOfLast { it == ')' }) }
+        .map { it.substring(0, it.indexOfLast { c -> c == ')' }) }
   }
 }
 
@@ -190,7 +190,7 @@ class JavaChallenge(group: ChallengeGroup) : Challenge(group) {
         .filter { it.contains("System.out.println(") }
         .map { it.trim() }
         .map { it.replaceFirst("System.out.println(", "") }
-        .map { it.substring(0, it.indexOfLast { it == ')' }) }
+        .map { it.substring(0, it.indexOfLast { c -> c == ')' }) }
   }
 }
 
@@ -212,7 +212,7 @@ class KotlinChallenge(group: ChallengeGroup) : Challenge(group) {
         .filter { it.contains("println(") }
         .map { it.trim() }
         .map { it.replaceFirst("println(", "") }
-        .map { it.substring(0, it.indexOfLast { it == ')' }) }
+        .map { it.substring(0, it.indexOfLast { c -> c == ')' }) }
   }
 }
 
