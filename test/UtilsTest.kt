@@ -24,34 +24,10 @@ import com.github.readingbat.dsl.KotlinChallenge.Companion.kotlinInvokes
 import com.github.readingbat.dsl.PythonChallenge.Companion.pythonEnd
 import com.github.readingbat.dsl.PythonChallenge.Companion.pythonInvokes
 import com.github.readingbat.dsl.PythonChallenge.Companion.pythonStart
-import com.github.readingbat.dsl.firstLineNumOf
-import com.github.readingbat.dsl.lastLineNumOf
 import org.amshove.kluent.shouldBeEqualTo
 import org.junit.jupiter.api.Test
 
 class UtilsTest {
-  @Test
-  fun testLineIndexes() {
-    val s = """
-      aaa
-      bbb
-      ccc
-      ddd
-      eee
-      aaa
-      bbb
-      ccc
-      ddd
-      eee
-    """.trimIndent()
-
-    s.firstLineNumOf(Regex("zzz")) shouldBeEqualTo -1
-    s.firstLineNumOf(Regex("bbb")) shouldBeEqualTo 1
-
-    s.lastLineNumOf(Regex("zzz")) shouldBeEqualTo -1
-    s.lastLineNumOf(Regex("bbb")) shouldBeEqualTo 6
-  }
-
   @Test
   fun pythonInvokesTest() {
     val s = """

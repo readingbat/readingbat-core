@@ -227,9 +227,10 @@ fun HTML.challengePage(challenge: Challenge) {
       div(classes = userInput) {
         table {
           tr { th { +"Function Call" }; th { +"" }; th { +"Return Value" }; th { +"" } }
+
           funcArgs.withIndex().forEach { (i, v) ->
             tr {
-              td(classes = funcCol) { +"${challenge.funcInfo().name}(${v.first})" }
+              td(classes = funcCol) { +challenge.funcInfo().invokes[i] }
               td(classes = arrow) { rawHtml("&rarr;") }
               td {
                 //textInput(classes = answer) { id = "$answer$i" }

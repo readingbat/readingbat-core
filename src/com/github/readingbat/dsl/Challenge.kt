@@ -56,7 +56,7 @@ sealed class Challenge(private val group: ChallengeGroup) {
   var codingBatEquiv = ""
   var description = ""
 
-  internal abstract fun funcInfo(code: String): FuncInfo
+  internal abstract fun deriveFuncInfo(code: String): FuncInfo
 
   internal fun funcInfo() =
     sourcesMap
@@ -64,7 +64,7 @@ sealed class Challenge(private val group: ChallengeGroup) {
         val path = "${group.languageGroup.rawRepoRoot}$fqName"
         val (content, dur) = measureTimedValue { URL(path).readText() }
         logger.info { "Fetching ${group.name.toDoubleQuoted()}/${fileName.toDoubleQuoted()} $path in $dur" }
-        funcInfo(content)
+        deriveFuncInfo(content)
       }
 
   internal fun validate() {
@@ -139,7 +139,7 @@ sealed class Challenge(private val group: ChallengeGroup) {
 }
 
 class PythonChallenge(group: ChallengeGroup) : Challenge(group) {
-  override fun funcInfo(code: String): FuncInfo {
+  override fun deriveFuncInfo(code: String): FuncInfo {
     val lines = code.split("\n")
     val lineNums =
       lines.mapIndexed { i, str -> i to str }
@@ -158,7 +158,7 @@ class PythonChallenge(group: ChallengeGroup) : Challenge(group) {
     internal fun String.pythonInvokes(start: Regex, end: Regex) = split("\n").pythonInvokes(start, end)
 
     internal fun List<String>.pythonInvokes(start: Regex, end: Regex) =
-      between(start, end)
+      linesBetween(start, end)
         .filter { it.contains("print(") }
         .map { it.trim() }
         .map { it.replaceFirst("print(", "") }
@@ -167,7 +167,7 @@ class PythonChallenge(group: ChallengeGroup) : Challenge(group) {
 }
 
 class JavaChallenge(group: ChallengeGroup) : Challenge(group) {
-  override fun funcInfo(code: String): FuncInfo {
+  override fun deriveFuncInfo(code: String): FuncInfo {
     val lines = code.split("\n")
     val lineNums =
       lines.mapIndexed { i, str -> i to str }
@@ -180,13 +180,13 @@ class JavaChallenge(group: ChallengeGroup) : Challenge(group) {
   }
 
   companion object {
-    internal val javaStart = Regex("static void main\\(")
+    internal val javaStart = Regex("static\\svoid\\smain\\(")
     internal val javaEnd = Regex("}")
 
     internal fun String.javaInvokes(start: Regex, end: Regex) = split("\n").javaInvokes(start, end)
 
     internal fun List<String>.javaInvokes(start: Regex, end: Regex) =
-      between(start, end)
+      linesBetween(start, end)
         .filter { it.contains("System.out.println(") }
         .map { it.trim() }
         .map { it.replaceFirst("System.out.println(", "") }
@@ -194,55 +194,26 @@ class JavaChallenge(group: ChallengeGroup) : Challenge(group) {
   }
 }
 
-fun main() {
-  val s = "eded\n a\nb\nc\n ed }\ndede\n}\n".split("\n")
-  println(s.lastLineNumOf(Regex("}")))
-  println(s.between(Regex("ed"), Regex("}")))
-}
-
 class KotlinChallenge(group: ChallengeGroup) : Challenge(group) {
-  override fun funcInfo(code: String): FuncInfo {
+  override fun deriveFuncInfo(code: String): FuncInfo {
     val lines = code.split("\n").filter { !it.trimStart().startsWith("package") }
-    val funcCode = lines.subList(0, lines.lastLineNumOf(Regex("fun main\\("))).joinToString("\n").trimIndent()
+    val funcCode = lines.subList(0, lines.lastLineNumberOf(Regex("fun main\\("))).joinToString("\n").trimIndent()
     return FuncInfo("kotlin", "\n$funcCode\n\n", lines.kotlinInvokes(kotlinStart, kotlinEnd))
   }
 
   companion object {
-    internal val kotlinStart = Regex("static void main\\(")
+    internal val kotlinStart = Regex("static\\svoid\\smain\\(")
     internal val kotlinEnd = Regex("}")
 
     internal fun String.kotlinInvokes(start: Regex, end: Regex) = split("\n").kotlinInvokes(start, end)
 
     internal fun List<String>.kotlinInvokes(start: Regex, end: Regex) =
-      between(start, end)
+      linesBetween(start, end)
         .filter { it.contains("println(") }
         .map { it.trim() }
         .map { it.replaceFirst("println(", "") }
         .map { it.substring(0, it.indexOfLast { it == ')' }) }
   }
 }
-
-fun String.firstLineNumOf(regex: Regex) = split("\n").firstLineNumOf(regex)
-
-fun List<String>.firstLineNumOf(regex: Regex) =
-  asSequence()
-    .mapIndexed { i, str -> i to str }
-    .filter { it.second.contains(regex) }
-    .map { it.first }
-    .firstOrNull() ?: -1
-
-fun String.lastLineNumOf(regex: Regex) = split("\n").lastLineNumOf(regex)
-
-fun List<String>.lastLineNumOf(regex: Regex) =
-  mapIndexed { i, str -> i to str }
-    .asReversed()
-    .asSequence()
-    .filter { it.second.contains(regex) }
-    .map { it.first }
-    .firstOrNull() ?: -1
-
-fun String.between(start: Regex, end: Regex) = split("\n").between(start, end)
-
-fun List<String>.between(start: Regex, end: Regex) = subList(firstLineNumOf(start) + 1, lastLineNumOf(end))
 
 internal class FuncInfo(val name: String, val code: String, val invokes: List<String>)
