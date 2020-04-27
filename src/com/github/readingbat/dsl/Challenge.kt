@@ -84,12 +84,11 @@ sealed class Challenge(private val group: ChallengeGroup) {
   }
 
   private fun Any?.prettyQuote(capitalizePythonBooleans: Boolean = true, useDoubleQuotes: Boolean = false) =
-    if (this is String)
-      if (languageType.useDoubleQuotes || useDoubleQuotes) toDoubleQuoted() else toSingleQuoted()
-    else if (capitalizePythonBooleans && this is Boolean && languageType == Python)
-      toString().capitalize()
-    else
-      toString()
+    when {
+      this is String -> if (languageType.useDoubleQuotes || useDoubleQuotes) toDoubleQuoted() else toSingleQuoted()
+      capitalizePythonBooleans && this is Boolean && languageType == Python -> toString().capitalize()
+      else -> toString()
+    }
 
   private fun List<*>.toQuotedStrings() = "[${map { it.prettyQuote() }.toCsv()}]"
 
@@ -149,7 +148,21 @@ class PythonChallenge(group: ChallengeGroup) : Challenge(group) {
 
     val funcName = lines[lineNums.first()].substringAfter("def ").substringBefore("(").trim()
     val funcCode = lines.subList(lineNums.first(), lineNums.last() - 1).joinToString("\n").trimIndent()
-    return FuncInfo(funcName, funcCode)
+    return FuncInfo(funcName, funcCode, lines.pythonInvokes(pythonStart, pythonEnd))
+  }
+
+  companion object {
+    internal val pythonStart = Regex("def main\\(")
+    internal val pythonEnd = Regex("__main__")
+
+    internal fun String.pythonInvokes(start: Regex, end: Regex) = split("\n").pythonInvokes(start, end)
+
+    internal fun List<String>.pythonInvokes(start: Regex, end: Regex) =
+      between(start, end)
+        .filter { it.contains("print(") }
+        .map { it.trim() }
+        .map { it.replaceFirst("print(", "") }
+        .map { it.substring(0, it.indexOfLast { it == ')' }) }
   }
 }
 
@@ -163,15 +176,49 @@ class JavaChallenge(group: ChallengeGroup) : Challenge(group) {
 
     val funcName = lines[lineNums.first()].substringAfter("static ").substringBefore("(").split(" ")[1].trim()
     val funcCode = lines.subList(lineNums.first(), lineNums.last() - 1).joinToString("\n").trimIndent()
-    return FuncInfo(funcName, funcCode)
+    return FuncInfo(funcName, funcCode, lines.javaInvokes(javaStart, javaEnd))
   }
+
+  companion object {
+    internal val javaStart = Regex("static void main\\(")
+    internal val javaEnd = Regex("}")
+
+    internal fun String.javaInvokes(start: Regex, end: Regex) = split("\n").javaInvokes(start, end)
+
+    internal fun List<String>.javaInvokes(start: Regex, end: Regex) =
+      between(start, end)
+        .filter { it.contains("System.out.println(") }
+        .map { it.trim() }
+        .map { it.replaceFirst("System.out.println(", "") }
+        .map { it.substring(0, it.indexOfLast { it == ')' }) }
+  }
+}
+
+fun main() {
+  val s = "eded\n a\nb\nc\n ed }\ndede\n}\n".split("\n")
+  println(s.lastLineNumOf(Regex("}")))
+  println(s.between(Regex("ed"), Regex("}")))
 }
 
 class KotlinChallenge(group: ChallengeGroup) : Challenge(group) {
   override fun funcInfo(code: String): FuncInfo {
     val lines = code.split("\n").filter { !it.trimStart().startsWith("package") }
     val funcCode = lines.subList(0, lines.lastLineNumOf(Regex("fun main\\("))).joinToString("\n").trimIndent()
-    return FuncInfo("kotlin", "\n$funcCode\n\n")
+    return FuncInfo("kotlin", "\n$funcCode\n\n", lines.kotlinInvokes(kotlinStart, kotlinEnd))
+  }
+
+  companion object {
+    internal val kotlinStart = Regex("static void main\\(")
+    internal val kotlinEnd = Regex("}")
+
+    internal fun String.kotlinInvokes(start: Regex, end: Regex) = split("\n").kotlinInvokes(start, end)
+
+    internal fun List<String>.kotlinInvokes(start: Regex, end: Regex) =
+      between(start, end)
+        .filter { it.contains("println(") }
+        .map { it.trim() }
+        .map { it.replaceFirst("println(", "") }
+        .map { it.substring(0, it.indexOfLast { it == ')' }) }
   }
 }
 
@@ -194,4 +241,8 @@ fun List<String>.lastLineNumOf(regex: Regex) =
     .map { it.first }
     .firstOrNull() ?: -1
 
-internal class FuncInfo(val name: String, val code: String)
+fun String.between(start: Regex, end: Regex) = split("\n").between(start, end)
+
+fun List<String>.between(start: Regex, end: Regex) = subList(firstLineNumOf(start) + 1, lastLineNumOf(end))
+
+internal class FuncInfo(val name: String, val code: String, val invokes: List<String>)
