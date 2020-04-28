@@ -198,7 +198,7 @@ class KotlinChallenge(group: ChallengeGroup) : Challenge(group) {
   override fun deriveFuncInfo(code: String): FuncInfo {
     val lines = code.split("\n").filter { !it.trimStart().startsWith("package") }
     val funcCode = lines.subList(0, lines.lastLineNumberOf(Regex("fun main\\("))).joinToString("\n").trimIndent()
-    return FuncInfo("\n${lines.joinToString("\n")}\n", "\n$funcCode\n\n", lines.kotlinInvokes(kotlinStart, kotlinEnd))
+    return FuncInfo(lines.joinToString("\n"), "\n$funcCode\n\n", lines.kotlinInvokes(kotlinStart, kotlinEnd))
   }
 
   companion object {
