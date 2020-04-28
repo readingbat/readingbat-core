@@ -17,23 +17,13 @@
 
 package com.github.readingbat.pages
 
-import com.github.readingbat.Constants.checkJpg
 import com.github.readingbat.Constants.cssName
 import com.github.readingbat.Constants.cssType
-import com.github.readingbat.Constants.funcChoice
-import com.github.readingbat.Constants.funcItem
-import com.github.readingbat.Constants.groupItemSrc
 import com.github.readingbat.Constants.production
 import com.github.readingbat.Constants.selected
 import com.github.readingbat.Constants.titleText
-import com.github.readingbat.dsl.Challenge
-import com.github.readingbat.dsl.ChallengeGroup
 import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.dsl.LanguageType.*
-import io.ktor.application.ApplicationCall
-import io.ktor.http.ContentType
-import io.ktor.response.respondText
-import kotlinx.css.CSSBuilder
 import kotlinx.html.*
 import kotlinx.html.Entities.nbsp
 
@@ -85,32 +75,8 @@ fun BODY.bodyHeader(languageType: LanguageType) {
   }
 }
 
-fun TR.groupItem(prefix: String, group: ChallengeGroup) {
-  val name = group.name
-  val parsedDescription = group.parsedDescription
-
-  td(classes = funcItem) {
-    div(classes = groupItemSrc) {
-      a(classes = funcChoice) { href = "/$prefix/$name"; +name }
-      br { rawHtml(if (parsedDescription.isNotBlank()) parsedDescription else nbsp.text) }
-    }
-  }
-}
-
-fun TR.funcCall(prefix: String, groupName: String, challenge: Challenge) {
-  td(classes = funcItem) {
-    img { src = checkJpg }
-    rawHtml(nbsp.text)
-    a(classes = funcChoice) { href = "/$prefix/$groupName/${challenge.name}"; +challenge.name }
-  }
-}
-
 fun HTMLTag.rawHtml(html: String) {
   unsafe { raw(html) }
-}
-
-suspend inline fun ApplicationCall.respondCss(builder: CSSBuilder.() -> Unit) {
-  this.respondText(CSSBuilder().apply(builder).toString(), ContentType.Text.CSS)
 }
 
 fun Int.rows(cols: Int) = if (this % cols == 0) this / cols else (this / cols) + 1

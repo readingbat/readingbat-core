@@ -25,13 +25,14 @@ import com.github.readingbat.Constants.static
 import com.github.readingbat.dsl.LanguageType.*
 import com.github.readingbat.dsl.LanguageType.Companion.toLanguageType
 import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.pages.*
-import io.ktor.application.Application
-import io.ktor.application.ApplicationCallPipeline
-import io.ktor.application.call
-import io.ktor.application.install
+import com.github.readingbat.pages.challengeGroupPage
+import com.github.readingbat.pages.challengePage
+import com.github.readingbat.pages.languageGroupPage
+import com.github.readingbat.pages.playgroundPage
+import io.ktor.application.*
 import io.ktor.features.*
 import io.ktor.html.respondHtml
+import io.ktor.http.ContentType
 import io.ktor.http.ContentType.Text.Plain
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.TextContent
@@ -42,10 +43,12 @@ import io.ktor.request.path
 import io.ktor.request.uri
 import io.ktor.response.respond
 import io.ktor.response.respondRedirect
+import io.ktor.response.respondText
 import io.ktor.routing.get
 import io.ktor.routing.post
 import io.ktor.routing.routing
 import io.ktor.server.engine.ShutDownUrl
+import kotlinx.css.CSSBuilder
 import org.slf4j.event.Level
 import kotlin.text.Charsets.UTF_8
 
@@ -157,6 +160,10 @@ fun Application.module(testing: Boolean = false, content: ReadingBatContent) {
       exitCodeSupplier = { 0 } // ApplicationCall.() -> Int
     }
   }
+}
+
+suspend inline fun ApplicationCall.respondCss(builder: CSSBuilder.() -> Unit) {
+  this.respondText(CSSBuilder().apply(builder).toString(), ContentType.Text.CSS)
 }
 
 class InvalidPathException(msg: String) : RuntimeException(msg)

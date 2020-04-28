@@ -47,3 +47,15 @@ fun HTML.languageGroupPage(languageType: LanguageType, groups: List<ChallengeGro
     }
   }
 }
+
+private fun TR.groupItem(prefix: String, group: ChallengeGroup) {
+  val name = group.name
+  val parsedDescription = group.parsedDescription
+
+  td(classes = Constants.funcItem) {
+    div(classes = Constants.groupItemSrc) {
+      a(classes = Constants.funcChoice) { href = "/$prefix/$name"; +name }
+      br { rawHtml(if (parsedDescription.isNotBlank()) parsedDescription else Entities.nbsp.text) }
+    }
+  }
+}

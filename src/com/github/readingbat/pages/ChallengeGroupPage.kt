@@ -19,6 +19,7 @@ package com.github.readingbat.pages
 
 import com.github.pambrose.common.util.decode
 import com.github.readingbat.Constants
+import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.ChallengeGroup
 import kotlinx.html.*
 
@@ -59,3 +60,12 @@ fun HTML.challengeGroupPage(challengeGroup: ChallengeGroup) {
     }
   }
 }
+
+private fun TR.funcCall(prefix: String, groupName: String, challenge: Challenge) {
+  td(classes = Constants.funcItem) {
+    img { src = Constants.checkJpg }
+    rawHtml(Entities.nbsp.text)
+    a(classes = Constants.funcChoice) { href = "/$prefix/$groupName/${challenge.name}"; +challenge.name }
+  }
+}
+
