@@ -17,6 +17,7 @@
 
 package com.github.readingbat.pages
 
+import com.github.readingbat.Constants.backLink
 import com.github.readingbat.Constants.bodyHeader
 import com.github.readingbat.Constants.cssName
 import com.github.readingbat.Constants.cssType
@@ -74,6 +75,10 @@ internal fun BODY.bodyHeader(languageType: LanguageType) {
       }
     }
   }
+}
+
+internal fun BODY.backLink(url: String) {
+  div(classes = backLink) { a { href = url; rawHtml("&larr; Back") } }
 }
 
 internal fun HTMLTag.rawHtml(html: String) {

@@ -18,11 +18,9 @@
 package com.github.readingbat.pages
 
 import com.github.pambrose.common.util.decode
-import com.github.readingbat.Constants.back
 import com.github.readingbat.Constants.challengeDesc
 import com.github.readingbat.Constants.kotlinCode
 import com.github.readingbat.Constants.tabs
-import com.github.readingbat.Constants.userInput
 import com.github.readingbat.dsl.Challenge
 import kotlinx.html.*
 import org.apache.commons.text.StringEscapeUtils
@@ -62,9 +60,8 @@ fun HTML.playgroundPage(challenge: Challenge) {
           </code>
         """)
       }
-      div(classes = userInput) {
-        div(classes = back) { a { href = "/$languageName/$groupName/$name"; rawHtml("&larr; Back") } }
-      }
     }
+
+    backLink("/$languageName/$groupName/$name")
   }
 }

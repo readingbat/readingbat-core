@@ -19,7 +19,7 @@ package com.github.readingbat.misc
 
 import com.github.readingbat.Constants.answer
 import com.github.readingbat.Constants.arrow
-import com.github.readingbat.Constants.back
+import com.github.readingbat.Constants.backLink
 import com.github.readingbat.Constants.bodyHeader
 import com.github.readingbat.Constants.challengeDesc
 import com.github.readingbat.Constants.checkAnswers
@@ -36,12 +36,12 @@ import com.github.readingbat.Constants.selected
 import com.github.readingbat.Constants.spinner
 import com.github.readingbat.Constants.status
 import com.github.readingbat.Constants.tabs
-import com.github.readingbat.Constants.userInput
+import com.github.readingbat.Constants.userAnswers
 import kotlinx.css.*
 import kotlinx.css.properties.TextDecoration
 
 private val fs = 115.pct
-private val codeFs = 100.pct
+private val codeFs = 95.pct
 
 fun CSSBuilder.cssContent() {
   body {
@@ -68,7 +68,7 @@ fun CSSBuilder.cssContent() {
   rule("th") {
     fontSize = fs
   }
-  rule(".$userInput") {
+  rule(".$userAnswers") {
     marginTop = 2.em
     marginLeft = 2.em
   }
@@ -157,9 +157,10 @@ fun CSSBuilder.cssContent() {
     marginTop = 1.em
     fontSize = fs
   }
-  rule(".$back") {
+  rule(".$backLink") {
     marginTop = 1.em
-    fontSize = fs
+    fontSize = 120.pct
+    marginLeft = 1.em
   }
 
   rule(".$codeBlock") {

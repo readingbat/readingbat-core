@@ -20,7 +20,6 @@ package com.github.readingbat.pages
 import com.github.pambrose.common.util.decode
 import com.github.readingbat.Constants.answer
 import com.github.readingbat.Constants.arrow
-import com.github.readingbat.Constants.back
 import com.github.readingbat.Constants.challengeDesc
 import com.github.readingbat.Constants.checkAnswers
 import com.github.readingbat.Constants.checkBar
@@ -36,12 +35,11 @@ import com.github.readingbat.Constants.spinner
 import com.github.readingbat.Constants.static
 import com.github.readingbat.Constants.status
 import com.github.readingbat.Constants.tabs
-import com.github.readingbat.Constants.userInput
+import com.github.readingbat.Constants.userAnswers
 import com.github.readingbat.dsl.Challenge
-import com.github.readingbat.dsl.KotlinChallenge
-import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.misc.addScript
 import kotlinx.html.*
+import kotlinx.html.Entities.nbsp
 
 fun HTML.challengePage(challenge: Challenge) {
   val languageType = challenge.languageType
@@ -77,14 +75,12 @@ fun HTML.challengePage(challenge: Challenge) {
 
     div(classes = tabs) {
       h2 {
-        a {
-          href = "/$languageName/$groupName"; +groupName.decode()
-        }; rawHtml("${Entities.nbsp.text}&rarr;${Entities.nbsp.text}"); +name
+        a { href = "/$languageName/$groupName"; +groupName.decode() }
+        rawHtml("${nbsp.text}&rarr;${nbsp.text}"); +name
       }
 
       if (challenge.description.isNotEmpty())
         div(classes = challengeDesc) { rawHtml(challenge.parsedDescription) }
-
 
       div(classes = codeBlock) {
         pre(classes = "line-numbers") {
@@ -92,8 +88,7 @@ fun HTML.challengePage(challenge: Challenge) {
         }
       }
 
-      div(classes = userInput) {
-
+      div(classes = userAnswers) {
 
         table {
           tr { th { +"Function Call" }; th { +"" }; th { +"Return Value" }; th { +"" } }
@@ -136,31 +131,27 @@ fun HTML.challengePage(challenge: Challenge) {
           }
         }
 
-        if (languageType.isKotlin()) {
-          val kotlinChallenge = challenge as KotlinChallenge
-          p(classes = refs) {
-            +"Experiment with this code as a "
-            a { href = "/$playground/$groupName/$name"; target = "_blank"; +"Kotlin Playground" }
-          }
-        }
-
         p(classes = refs) {
           +"Experiment with this code on "
           a { href = "https://gitpod.io/#${challenge.gitpodUrl}"; target = "_blank"; +"Gitpod.io" }
+          if (languageType.isKotlin()) {
+            +" or as a "
+            a { href = "/$playground/$groupName/$name"; target = "_blank"; +"Kotlin Playground" }
+          }
+          +"."
         }
 
-        if (challenge.codingBatEquiv.isNotEmpty() && languageType in listOf(LanguageType.Java,
-                                                                            LanguageType.Python)
-        ) {
+        if (challenge.codingBatEquiv.isNotEmpty() && (languageType.isJava() || languageType.isPython())) {
           p(classes = refs) {
             +"Work on a similar problem on "
             a { href = "https://codingbat.com/prob/${challenge.codingBatEquiv}"; target = "_blank"; +"CodingBat.com" }
+            +"."
           }
         }
-
-        div(classes = back) { a { href = "/$languageName/$groupName"; rawHtml("&larr; Back") } }
       }
     }
+
+    backLink("/$languageName/$groupName")
 
     script { src = "/$static/$languageName-prism.js" }
   }

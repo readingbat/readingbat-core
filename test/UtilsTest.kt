@@ -24,6 +24,7 @@ import com.github.readingbat.dsl.KotlinChallenge.Companion.kotlinInvokes
 import com.github.readingbat.dsl.PythonChallenge.Companion.pythonEnd
 import com.github.readingbat.dsl.PythonChallenge.Companion.pythonInvokes
 import com.github.readingbat.dsl.PythonChallenge.Companion.pythonStart
+import com.github.readingbat.dsl.addImports
 import org.amshove.kluent.shouldBeEqualTo
 import org.junit.jupiter.api.Test
 
@@ -93,5 +94,41 @@ class UtilsTest {
 
     s.kotlinInvokes(javaStart, javaEnd) shouldBeEqualTo listOf("""listOf("a").combine2()""",
                                                                """listOf("a", "b", "c", "d").combine2()""")
+  }
+
+  @Test
+  fun addImportTest() {
+
+    val variable = "content"
+    addImports("", variable).trim() shouldBeEqualTo variable
+
+    val s1 = "ReadingBatServer"
+    addImports(s1, variable).trimIndent() shouldBeEqualTo
+        """
+        import com.github.readingbat.ReadingBatServer
+
+        ReadingBatServer
+        content
+        """.trimIndent()
+
+    val s2 = "GitHubContent"
+    addImports(s2, variable).trimIndent() shouldBeEqualTo
+        """
+        import com.github.readingbat.dsl.GitHubContent
+
+        GitHubContent
+        content
+        """.trimIndent()
+
+    val s3 = "ReadingBatServer GitHubContent"
+    println(addImports(s3, variable))
+    addImports(s3, variable).trimIndent() shouldBeEqualTo
+        """
+        import com.github.readingbat.ReadingBatServer
+        import com.github.readingbat.dsl.GitHubContent
+
+        ReadingBatServer GitHubContent
+        content
+        """.trimIndent()
   }
 }

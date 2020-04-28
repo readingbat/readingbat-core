@@ -20,8 +20,10 @@ package com.github.readingbat.dsl
 import com.github.pambrose.common.script.KtsScript
 import com.github.pambrose.common.util.ContentSource
 import com.github.pambrose.common.util.GitHubSource
+import com.github.readingbat.ReadingBatServer
 import com.github.readingbat.dsl.ReadingBatContent.Companion.contentMap
 import mu.KotlinLogging
+import kotlin.reflect.KFunction
 import kotlin.time.measureTimedValue
 
 @DslMarker
@@ -43,26 +45,43 @@ fun include(source: ContentSource, variableName: String = "content"): ReadingBat
     .computeIfAbsent(source.path) {
       val (code, dur) = measureTimedValue { source.content }
       logger.info { """Read content from "${source.path}" in $dur""" }
-      evalDsl(code, source.path, variableName)
+      val withImports = addImports(code, variableName)
+      evalDsl(withImports, source.path)
     }
 }
 
-private fun evalDsl(code: String, sourceName: String, variableName: String): ReadingBatContent {
-  val method = ::readingBatContent
-  val packageName = method.javaClass.packageName
-  val methodName = method.name
-  val importDecl = "import $packageName.$methodName"
-  println(importDecl)
-  val processed =
-    (if (code.contains(importDecl)) "" else importDecl + "\n") +
-        """
-          $code
-          $variableName
-        """
+fun addImports(code: String, variableName: String): String {
+  val classImports =
+    listOf(ReadingBatServer::class, GitHubContent::class)
+      //.onEach { println("Checking for ${it.javaObjectType.name}") }
+      .filter { code.contains(it.javaObjectType.simpleName) }   // See if the class is referenced
+      .map { "import ${it.javaObjectType.name}" }         // Convert to import stmt
+      .filter { !code.contains(it) }                      // Do not include is import already present
+      .joinToString("\n")                                 // Turn into String
+
+  val funcImports =
+    listOf(::readingBatContent, ::include)
+      .filter { code.contains(it.name) }   // See if the function is referenced
+      .map { "import ${it.fqMethodName}" } // Convert to import stmt
+      .filter { !code.contains(it) }       // Do not include is import already present
+      .joinToString("\n")                  // Turn into String
+
+  return """
+      $classImports
+      $funcImports
+      $code
+      $variableName
+    """.trimMargin()
+}
+
+private val <T>  KFunction<T>.fqMethodName get() = "${javaClass.packageName}.$name"
+
+private fun evalDsl(code: String, sourceName: String): ReadingBatContent {
+
   try {
-    return KtsScript().run { eval(processed) as ReadingBatContent }.apply { validate() }
+    return KtsScript().run { eval(code) as ReadingBatContent }.apply { validate() }
   } catch (e: Throwable) {
-    logger.info { "Error in $sourceName:\n$processed" }
+    logger.info { "Error in $sourceName:\n$code" }
     throw e
   }
 }

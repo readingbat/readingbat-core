@@ -18,7 +18,6 @@
 package com.github.readingbat.pages
 
 import com.github.pambrose.common.util.decode
-import com.github.readingbat.Constants.back
 import com.github.readingbat.Constants.checkJpg
 import com.github.readingbat.Constants.funcChoice
 import com.github.readingbat.Constants.funcItem
@@ -43,6 +42,7 @@ fun HTML.challengeGroupPage(challengeGroup: ChallengeGroup) {
     bodyHeader(languageType)
 
     div(classes = tabs) {
+
       h2 { +groupName.decode() }
 
       table {
@@ -60,9 +60,9 @@ fun HTML.challengeGroupPage(challengeGroup: ChallengeGroup) {
           }
         }
       }
-
-      div(classes = back) { a { href = "/$prefix"; rawHtml("&larr; Back") } }
     }
+
+    backLink("/$prefix")
   }
 }
 
