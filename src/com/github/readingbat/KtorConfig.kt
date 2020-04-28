@@ -25,6 +25,8 @@ import com.github.readingbat.Constants.static
 import com.github.readingbat.dsl.LanguageType.*
 import com.github.readingbat.dsl.LanguageType.Companion.toLanguageType
 import com.github.readingbat.dsl.ReadingBatContent
+import com.github.readingbat.misc.checkAnswers
+import com.github.readingbat.misc.cssContent
 import com.github.readingbat.pages.challengeGroupPage
 import com.github.readingbat.pages.challengePage
 import com.github.readingbat.pages.languageGroupPage

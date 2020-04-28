@@ -18,10 +18,15 @@
 package com.github.readingbat.pages
 
 import com.github.pambrose.common.util.decode
-import com.github.readingbat.Constants
+import com.github.readingbat.Constants.back
+import com.github.readingbat.Constants.checkJpg
+import com.github.readingbat.Constants.funcChoice
+import com.github.readingbat.Constants.funcItem
+import com.github.readingbat.Constants.tabs
 import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.ChallengeGroup
 import kotlinx.html.*
+import kotlinx.html.Entities.nbsp
 
 fun HTML.challengeGroupPage(challengeGroup: ChallengeGroup) {
 
@@ -37,7 +42,7 @@ fun HTML.challengeGroupPage(challengeGroup: ChallengeGroup) {
   body {
     bodyHeader(languageType)
 
-    div(classes = Constants.tabs) {
+    div(classes = tabs) {
       h2 { +groupName.decode() }
 
       table {
@@ -56,16 +61,16 @@ fun HTML.challengeGroupPage(challengeGroup: ChallengeGroup) {
         }
       }
 
-      div(classes = Constants.back) { a { href = "/$prefix"; rawHtml("&larr; Back") } }
+      div(classes = back) { a { href = "/$prefix"; rawHtml("&larr; Back") } }
     }
   }
 }
 
 private fun TR.funcCall(prefix: String, groupName: String, challenge: Challenge) {
-  td(classes = Constants.funcItem) {
-    img { src = Constants.checkJpg }
-    rawHtml(Entities.nbsp.text)
-    a(classes = Constants.funcChoice) { href = "/$prefix/$groupName/${challenge.name}"; +challenge.name }
+  td(classes = funcItem) {
+    img { src = checkJpg }
+    rawHtml(nbsp.text)
+    a(classes = funcChoice) { href = "/$prefix/$groupName/${challenge.name}"; +challenge.name }
   }
 }
 

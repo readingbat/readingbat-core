@@ -15,7 +15,7 @@
  *
  */
 
-package com.github.readingbat
+package com.github.readingbat.misc
 
 import com.github.pambrose.common.util.isDoubleQuoted
 import com.github.pambrose.common.util.isSingleQuoted

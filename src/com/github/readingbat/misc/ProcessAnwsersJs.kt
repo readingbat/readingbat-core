@@ -15,7 +15,7 @@
  *
  */
 
-package com.github.readingbat
+package com.github.readingbat.misc
 
 import com.github.readingbat.Constants.answer
 import com.github.readingbat.Constants.checkAnswers

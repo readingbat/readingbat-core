@@ -17,6 +17,7 @@
 
 package com.github.readingbat.pages
 
+import com.github.readingbat.Constants.bodyHeader
 import com.github.readingbat.Constants.cssName
 import com.github.readingbat.Constants.cssType
 import com.github.readingbat.Constants.production
@@ -27,7 +28,7 @@ import com.github.readingbat.dsl.LanguageType.*
 import kotlinx.html.*
 import kotlinx.html.Entities.nbsp
 
-fun HEAD.headDefault() {
+internal fun HEAD.headDefault() {
   link { rel = "stylesheet"; href = "/$cssName"; type = cssType }
 
   title(titleText)
@@ -45,15 +46,15 @@ fun HEAD.headDefault() {
   }
 }
 
-fun BODY.bodyTitle() {
-  div(classes = "header") {
+internal fun BODY.bodyTitle() {
+  div(classes = bodyHeader) {
     a { href = "/"; span { style = "font-size:200%;"; +titleText } }
     rawHtml(nbsp.text)
     span { +"code reading practice" }
   }
 }
 
-fun BODY.bodyHeader(languageType: LanguageType) {
+internal fun BODY.bodyHeader(languageType: LanguageType) {
 
   bodyTitle()
 
@@ -75,8 +76,8 @@ fun BODY.bodyHeader(languageType: LanguageType) {
   }
 }
 
-fun HTMLTag.rawHtml(html: String) {
+internal fun HTMLTag.rawHtml(html: String) {
   unsafe { raw(html) }
 }
 
-fun Int.rows(cols: Int) = if (this % cols == 0) this / cols else (this / cols) + 1
+internal fun Int.rows(cols: Int) = if (this % cols == 0) this / cols else (this / cols) + 1

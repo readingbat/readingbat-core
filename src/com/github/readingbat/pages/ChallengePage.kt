@@ -18,11 +18,28 @@
 package com.github.readingbat.pages
 
 import com.github.pambrose.common.util.decode
-import com.github.readingbat.Constants
-import com.github.readingbat.addScript
+import com.github.readingbat.Constants.answer
+import com.github.readingbat.Constants.arrow
+import com.github.readingbat.Constants.back
+import com.github.readingbat.Constants.challengeDesc
+import com.github.readingbat.Constants.checkAnswers
+import com.github.readingbat.Constants.checkBar
+import com.github.readingbat.Constants.cssType
+import com.github.readingbat.Constants.feedback
+import com.github.readingbat.Constants.funcCol
+import com.github.readingbat.Constants.playground
+import com.github.readingbat.Constants.processAnswers
+import com.github.readingbat.Constants.refs
+import com.github.readingbat.Constants.solution
+import com.github.readingbat.Constants.spinner
+import com.github.readingbat.Constants.static
+import com.github.readingbat.Constants.status
+import com.github.readingbat.Constants.tabs
+import com.github.readingbat.Constants.userInput
 import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.KotlinChallenge
 import com.github.readingbat.dsl.LanguageType
+import com.github.readingbat.misc.addScript
 import kotlinx.html.*
 
 fun HTML.challengePage(challenge: Challenge) {
@@ -37,18 +54,16 @@ fun HTML.challengePage(challenge: Challenge) {
       rel = "stylesheet"; href = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
     }
     link {
-      rel = "stylesheet"; href = "/${Constants.static}/$languageName-prism.css"; type =
-      Constants.cssType
+      rel = "stylesheet"; href = "/$static/$languageName-prism.css"; type = cssType
     }
 
     // Remove the prism shadow
     style {
       rawHtml(
         """
-            pre[class*="language-"]:before,
-            pre[class*="language-"]:after { display: none; }
-          """
-             )
+          pre[class*="language-"]:before,
+          pre[class*="language-"]:after { display: none; }
+        """)
     }
 
     script(type = ScriptType.textJavaScript) { addScript(languageName) }
@@ -59,7 +74,7 @@ fun HTML.challengePage(challenge: Challenge) {
   body {
     bodyHeader(languageType)
 
-    div(classes = Constants.tabs) {
+    div(classes = tabs) {
       h2 {
         a {
           href = "/$languageName/$groupName"; +groupName.decode()
@@ -67,50 +82,49 @@ fun HTML.challengePage(challenge: Challenge) {
       }
 
       if (challenge.description.isNotEmpty())
-        div(classes = "challenge-desc") { rawHtml(challenge.parsedDescription) }
+        div(classes = challengeDesc) { rawHtml(challenge.parsedDescription) }
 
-      pre(classes = "line-numbers") {
-        code(classes = "language-$languageName") { +challenge.funcInfo().snippet }
-      }
+      div(classes = userInput) {
 
-      div(classes = Constants.userInput) {
+        pre(classes = "line-numbers") {
+          code(classes = "language-$languageName") { +challenge.funcInfo().snippet }
+        }
+
         table {
           tr { th { +"Function Call" }; th { +"" }; th { +"Return Value" }; th { +"" } }
 
           funcArgs.withIndex().forEach { (i, v) ->
             tr {
-              td(classes = Constants.funcCol) { +challenge.funcInfo().invokes[i] }
-              td(classes = Constants.arrow) { rawHtml("&rarr;") }
+              td(classes = funcCol) { +challenge.funcInfo().invokes[i] }
+              td(classes = arrow) { rawHtml("&rarr;") }
               td {
                 //textInput(classes = answer) { id = "$answer$i" }
-                textInput(classes = Constants.answer) {
-                  id = "${Constants.answer}$i"; onKeyPress = "${Constants.processAnswers}(event, ${funcArgs.size})"
+                textInput(classes = answer) {
+                  id = "$answer$i"; onKeyPress = "$processAnswers(event, ${funcArgs.size})"
                 }
               }
-              td(classes = Constants.feedback) { id = "${Constants.feedback}$i" }
-              td { hiddenInput { id = "${Constants.solution}$i"; value = v.second } }
+              td(classes = feedback) { id = "$feedback$i" }
+              td { hiddenInput { id = "$solution$i"; value = v.second } }
             }
           }
         }
 
-        div(classes = Constants.checkBar) {
+        div(classes = checkBar) {
           table {
             tr {
               td {
-                button(classes = Constants.checkAnswers) {
-                  onClick = "${Constants.processAnswers}(null, ${funcArgs.size})"; +"Check My Answers!"
+                button(classes = checkAnswers) {
+                  onClick = "$processAnswers(null, ${funcArgs.size})"; +"Check My Answers!"
                 }
               }
               td {
-                span(classes = Constants.spinner) {
-                  id =
-                    Constants.spinner
+                span(classes = spinner) {
+                  id = spinner
                 }
               }
               td {
-                span(classes = Constants.status) {
-                  id =
-                    Constants.status
+                span(classes = status) {
+                  id = status
                 }
               }
             }
@@ -119,13 +133,13 @@ fun HTML.challengePage(challenge: Challenge) {
 
         if (languageType.isKotlin()) {
           val kotlinChallenge = challenge as KotlinChallenge
-          p(classes = Constants.refs) {
+          p(classes = refs) {
             +"Experiment with this code as a "
-            a { href = "/${Constants.playground}/$groupName/$name"; target = "_blank"; +"Kotlin Playground" }
+            a { href = "/$playground/$groupName/$name"; target = "_blank"; +"Kotlin Playground" }
           }
         }
 
-        p(classes = Constants.refs) {
+        p(classes = refs) {
           +"Experiment with this code on "
           a { href = "https://gitpod.io/#${challenge.gitpodUrl}"; target = "_blank"; +"Gitpod.io" }
         }
@@ -133,16 +147,16 @@ fun HTML.challengePage(challenge: Challenge) {
         if (challenge.codingBatEquiv.isNotEmpty() && languageType in listOf(LanguageType.Java,
                                                                             LanguageType.Python)
         ) {
-          p(classes = Constants.refs) {
+          p(classes = refs) {
             +"Work on a similar problem on "
             a { href = "https://codingbat.com/prob/${challenge.codingBatEquiv}"; target = "_blank"; +"CodingBat.com" }
           }
         }
 
-        div(classes = Constants.back) { a { href = "/$languageName/$groupName"; rawHtml("&larr; Back") } }
+        div(classes = back) { a { href = "/$languageName/$groupName"; rawHtml("&larr; Back") } }
       }
     }
 
-    script { src = "/${Constants.static}/$languageName-prism.js" }
+    script { src = "/$static/$languageName-prism.js" }
   }
 }

@@ -17,7 +17,10 @@
 
 package com.github.readingbat.pages
 
-import com.github.readingbat.Constants
+import com.github.readingbat.Constants.funcChoice
+import com.github.readingbat.Constants.funcItem
+import com.github.readingbat.Constants.groupItemSrc
+import com.github.readingbat.Constants.tabs
 import com.github.readingbat.dsl.ChallengeGroup
 import com.github.readingbat.dsl.LanguageType
 import kotlinx.html.*
@@ -29,7 +32,7 @@ fun HTML.languageGroupPage(languageType: LanguageType, groups: List<ChallengeGro
 
   body {
     bodyHeader(languageType)
-    div(classes = Constants.tabs) {
+    div(classes = tabs) {
       table {
         val cols = 3
         val size = groups.size
@@ -52,9 +55,9 @@ private fun TR.groupItem(prefix: String, group: ChallengeGroup) {
   val name = group.name
   val parsedDescription = group.parsedDescription
 
-  td(classes = Constants.funcItem) {
-    div(classes = Constants.groupItemSrc) {
-      a(classes = Constants.funcChoice) { href = "/$prefix/$name"; +name }
+  td(classes = funcItem) {
+    div(classes = groupItemSrc) {
+      a(classes = funcChoice) { href = "/$prefix/$name"; +name }
       br { rawHtml(if (parsedDescription.isNotBlank()) parsedDescription else Entities.nbsp.text) }
     }
   }

@@ -49,6 +49,9 @@ object Constants {
   const val cssName = "styles.css"
   const val github = "github.com"
   const val githubUserContent = "raw.githubusercontent.com"
+  const val kotlinCode = "kotlin-code"
+  const val challengeDesc = "challenge-desc"
+  const val bodyHeader = "bodyHeader"
   val cssType = ContentType.Text.CSS.toString()
   val sessionCounter = AtomicInteger(0)
   val fs = 115.pct

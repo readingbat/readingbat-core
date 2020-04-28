@@ -18,7 +18,11 @@
 package com.github.readingbat.pages
 
 import com.github.pambrose.common.util.decode
-import com.github.readingbat.Constants
+import com.github.readingbat.Constants.back
+import com.github.readingbat.Constants.challengeDesc
+import com.github.readingbat.Constants.kotlinCode
+import com.github.readingbat.Constants.tabs
+import com.github.readingbat.Constants.userInput
 import com.github.readingbat.dsl.Challenge
 import kotlinx.html.*
 import org.apache.commons.text.StringEscapeUtils
@@ -39,26 +43,26 @@ fun HTML.playgroundPage(challenge: Challenge) {
 
     bodyHeader(languageType)
 
-    div(classes = Constants.tabs) {
+    div(classes = tabs) {
       h2 {
-        a { href = "/$languageName/$groupName"; +groupName.decode() };
-        rawHtml("${Entities.nbsp.text}&rarr;${Entities.nbsp.text}");
-        a { href = "/$languageName/$groupName/$name"; +name.decode() };
+        a { href = "/$languageName/$groupName"; +groupName.decode() }
+        rawHtml("${Entities.nbsp.text}&rarr;${Entities.nbsp.text}")
+        a { href = "/$languageName/$groupName/$name"; +name.decode() }
       }
 
       if (challenge.description.isNotEmpty())
-        div(classes = "challenge-desc") { rawHtml(challenge.parsedDescription) }
+        div(classes = challengeDesc) { rawHtml(challenge.parsedDescription) }
 
       // Customization details are here: https://jetbrains.github.io/kotlin-playground/
-      div(classes = "kotlin-code") {
+      div(classes = kotlinCode) {
         rawHtml("""
-          <code class="kotlin-code" theme="idea" indent = "2" lines=true highlight-on-fly=true data-autocomplete=true match-brackets=true>
+          <code class="$kotlinCode" theme="idea" indent = "2" lines=true highlight-on-fly=true data-autocomplete=true match-brackets=true>
           ${StringEscapeUtils.escapeHtml4(challenge.funcInfo().code)}
           </code>
         """)
       }
-      div(classes = Constants.userInput) {
-        div(classes = Constants.back) { a { href = "/$languageName/$groupName/$name"; rawHtml("&larr; Back") } }
+      div(classes = userInput) {
+        div(classes = back) { a { href = "/$languageName/$groupName/$name"; rawHtml("&larr; Back") } }
       }
     }
   }

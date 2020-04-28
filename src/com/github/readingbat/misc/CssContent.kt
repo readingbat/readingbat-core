@@ -15,11 +15,13 @@
  *
  */
 
-package com.github.readingbat
+package com.github.readingbat.misc
 
 import com.github.readingbat.Constants.answer
 import com.github.readingbat.Constants.arrow
 import com.github.readingbat.Constants.back
+import com.github.readingbat.Constants.bodyHeader
+import com.github.readingbat.Constants.challengeDesc
 import com.github.readingbat.Constants.checkAnswers
 import com.github.readingbat.Constants.checkBar
 import com.github.readingbat.Constants.feedback
@@ -28,6 +30,7 @@ import com.github.readingbat.Constants.funcChoice
 import com.github.readingbat.Constants.funcCol
 import com.github.readingbat.Constants.funcItem
 import com.github.readingbat.Constants.groupItemSrc
+import com.github.readingbat.Constants.kotlinCode
 import com.github.readingbat.Constants.refs
 import com.github.readingbat.Constants.selected
 import com.github.readingbat.Constants.spinner
@@ -41,12 +44,12 @@ fun CSSBuilder.cssContent() {
   body {
     backgroundColor = Color.white
   }
-  rule(".challenge-desc") {
+  rule(".$challengeDesc") {
     fontSize = fs
     marginLeft = 1.em
     marginBottom = 1.em
   }
-  rule(".header") {
+  rule(".$bodyHeader") {
     marginBottom = 2.em
   }
   rule(".$funcItem") {
@@ -164,8 +167,9 @@ fun CSSBuilder.cssContent() {
     marginTop = 1.em
     fontSize = fs
   }
-  rule(".kotlin-code") {
+  rule(".$kotlinCode") {
     width = 950.px  // !important
     marginLeft = 2.em
+    fontSize = fs
   }
 }
