@@ -48,8 +48,10 @@ fun include(source: ContentSource, variableName: String = "content"): ReadingBat
 }
 
 private fun evalDsl(code: String, sourceName: String, variableName: String): ReadingBatContent {
-  //val importDecl = "import ${::readingBatContent.javaClass.packageName}.readingBatContent"
-  val importDecl = "import ${::readingBatContent.javaClass.name}.readingBatContent"
+  val method = ::readingBatContent
+  val packageName = method.javaClass.packageName
+  val methodName = method.name
+  val importDecl = "import $packageName.$methodName"
   println(importDecl)
   val processed =
     (if (code.contains(importDecl)) "" else importDecl + "\n") +

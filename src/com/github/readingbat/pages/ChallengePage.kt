@@ -24,6 +24,7 @@ import com.github.readingbat.Constants.back
 import com.github.readingbat.Constants.challengeDesc
 import com.github.readingbat.Constants.checkAnswers
 import com.github.readingbat.Constants.checkBar
+import com.github.readingbat.Constants.codeBlock
 import com.github.readingbat.Constants.cssType
 import com.github.readingbat.Constants.feedback
 import com.github.readingbat.Constants.funcCol
@@ -84,11 +85,15 @@ fun HTML.challengePage(challenge: Challenge) {
       if (challenge.description.isNotEmpty())
         div(classes = challengeDesc) { rawHtml(challenge.parsedDescription) }
 
-      div(classes = userInput) {
 
+      div(classes = codeBlock) {
         pre(classes = "line-numbers") {
           code(classes = "language-$languageName") { +challenge.funcInfo().snippet }
         }
+      }
+
+      div(classes = userInput) {
+
 
         table {
           tr { th { +"Function Call" }; th { +"" }; th { +"Return Value" }; th { +"" } }

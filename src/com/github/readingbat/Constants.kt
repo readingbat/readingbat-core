@@ -18,7 +18,6 @@
 package com.github.readingbat
 
 import io.ktor.http.ContentType
-import kotlinx.css.pct
 import java.util.concurrent.atomic.AtomicInteger
 
 object Constants {
@@ -32,6 +31,7 @@ object Constants {
   const val arrow = "arrow"
   const val feedback = "feedback"
   const val userInput = "userInput"
+  const val codeBlock = "codeBlock"
   const val checkBar = "checkBar"
   const val checkAnswers = "checkAnswers"
   const val spinner = "spinner"
@@ -54,6 +54,5 @@ object Constants {
   const val bodyHeader = "bodyHeader"
   val cssType = ContentType.Text.CSS.toString()
   val sessionCounter = AtomicInteger(0)
-  val fs = 115.pct
   val production: Boolean by lazy { System.getenv("PRODUCTION")?.toBoolean() ?: false }
 }
