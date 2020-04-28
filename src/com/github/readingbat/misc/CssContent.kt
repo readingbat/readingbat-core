@@ -1,35 +1,58 @@
-package com.github.readingbat
+/*
+ * Copyright © 2020 Paul Ambrose (pambrose@mac.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+
+package com.github.readingbat.misc
 
 import com.github.readingbat.Constants.answer
 import com.github.readingbat.Constants.arrow
-import com.github.readingbat.Constants.back
+import com.github.readingbat.Constants.backLink
+import com.github.readingbat.Constants.bodyHeader
+import com.github.readingbat.Constants.challengeDesc
 import com.github.readingbat.Constants.checkAnswers
 import com.github.readingbat.Constants.checkBar
+import com.github.readingbat.Constants.codeBlock
 import com.github.readingbat.Constants.feedback
-import com.github.readingbat.Constants.fs
 import com.github.readingbat.Constants.funcChoice
 import com.github.readingbat.Constants.funcCol
 import com.github.readingbat.Constants.funcItem
 import com.github.readingbat.Constants.groupItemSrc
+import com.github.readingbat.Constants.kotlinCode
 import com.github.readingbat.Constants.refs
 import com.github.readingbat.Constants.selected
 import com.github.readingbat.Constants.spinner
 import com.github.readingbat.Constants.status
 import com.github.readingbat.Constants.tabs
-import com.github.readingbat.Constants.userInput
+import com.github.readingbat.Constants.userAnswers
 import kotlinx.css.*
 import kotlinx.css.properties.TextDecoration
+
+private val fs = 115.pct
+private val codeFs = 95.pct
 
 fun CSSBuilder.cssContent() {
   body {
     backgroundColor = Color.white
   }
-  rule(".challenge-desc") {
+  rule(".$challengeDesc") {
     fontSize = fs
     marginLeft = 1.em
     marginBottom = 1.em
   }
-  rule(".header") {
+  rule(".$bodyHeader") {
     marginBottom = 2.em
   }
   rule(".$funcItem") {
@@ -45,7 +68,7 @@ fun CSSBuilder.cssContent() {
   rule("th") {
     fontSize = fs
   }
-  rule(".$userInput") {
+  rule(".$userAnswers") {
     marginTop = 2.em
     marginLeft = 2.em
   }
@@ -130,18 +153,38 @@ fun CSSBuilder.cssContent() {
   rule("nav li a") {
     padding = "0 40px"
   }
-  rule(".language-java") {
-    width = 950.px  // !important
-  }
-  rule(".language-python") {
-    width = 950.px  // !important
-  }
   rule(".$refs") {
     marginTop = 1.em
     fontSize = fs
   }
-  rule(".$back") {
+  rule(".$backLink") {
     marginTop = 1.em
-    fontSize = fs
+    fontSize = 120.pct
+    marginLeft = 1.em
+  }
+
+  rule(".$codeBlock") {
+    marginTop = 2.em
+    marginLeft = 1.em
+    marginRight = 1.em
+    fontSize = codeFs
+  }
+  rule(".language-java") {
+    //width = 950.px  // !important
+  }
+  rule(".language-python") {
+    //width = 950.px  // !important
+  }
+  rule(".language-kotlin") {
+    //width = 950.px  // !important
+  }
+  rule(".$kotlinCode") {
+    marginLeft = 1.em
+    marginRight = 1.em
+  }
+  // KotlinPlayground code
+  rule(".CodeMirror") {
+    //height = 500.px
+    fontSize = codeFs
   }
 }
