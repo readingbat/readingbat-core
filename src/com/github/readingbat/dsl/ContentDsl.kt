@@ -70,7 +70,7 @@ fun addImports(code: String, variableName: String): String {
   return """
       $imports${if (imports.isBlank()) "" else "\n\n"}$code
       $variableName
-    """.trimMargin().split("\n").map { it.trimStart() }.joinToString("\n")
+    """.trimMargin().split("\n").joinToString("\n") { it.trimStart() }
 }
 
 private val <T>  KFunction<T>.fqMethodName get() = "${javaClass.packageName}.$name"

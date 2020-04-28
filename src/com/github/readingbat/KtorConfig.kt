@@ -20,7 +20,6 @@ package com.github.readingbat
 import com.github.readingbat.Constants.checkAnswers
 import com.github.readingbat.Constants.cssName
 import com.github.readingbat.Constants.playground
-import com.github.readingbat.Constants.production
 import com.github.readingbat.Constants.static
 import com.github.readingbat.dsl.LanguageType.*
 import com.github.readingbat.dsl.LanguageType.Companion.toLanguageType
@@ -153,14 +152,14 @@ fun Application.module(testing: Boolean = false, content: ReadingBatContent) {
     }
   }
 
-  if (!production) {
-    install(ShutDownUrl.ApplicationCallFeature) {
-      // The URL that will be intercepted (you can also use the application.conf's ktor.deployment.shutdown.url key)
-      shutDownUrl = "/ktor/application/shutdown"
-      // A function that will be executed to get the exit code of the process
-      exitCodeSupplier = { 0 } // ApplicationCall.() -> Int
-    }
+  //if (!production) {
+  install(ShutDownUrl.ApplicationCallFeature) {
+    // The URL that will be intercepted (you can also use the application.conf's ktor.deployment.shutdown.url key)
+    shutDownUrl = "/ktor/application/shutdown"
+    // A function that will be executed to get the exit code of the process
+    exitCodeSupplier = { 0 } // ApplicationCall.() -> Int
   }
+  //}
 }
 
 suspend inline fun ApplicationCall.respondCss(builder: CSSBuilder.() -> Unit) {
