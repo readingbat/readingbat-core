@@ -153,6 +153,14 @@ fun CSSBuilder.cssContent() {
   rule("nav li a") {
     padding = "0 40px"
   }
+  rule(".$refs") {
+    marginTop = 1.em
+    fontSize = fs
+  }
+  rule(".$back") {
+    marginTop = 1.em
+    fontSize = fs
+  }
 
   rule(".$codeBlock") {
     marginTop = 2.em
@@ -169,19 +177,11 @@ fun CSSBuilder.cssContent() {
   rule(".language-kotlin") {
     //width = 950.px  // !important
   }
-  rule(".$refs") {
-    marginTop = 1.em
-    fontSize = fs
-  }
-  rule(".$back") {
-    marginTop = 1.em
-    fontSize = fs
-  }
   rule(".$kotlinCode") {
-    //width = 950.px  // !important
     marginLeft = 1.em
     marginRight = 1.em
   }
+  // KotlinPlayground code
   rule(".CodeMirror") {
     //height = 500.px
     fontSize = codeFs
