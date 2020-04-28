@@ -97,7 +97,7 @@ class UtilsTest {
   }
 
   @Test
-  fun addImportTest() {
+  fun classImportTest() {
 
     val variable = "content"
     addImports("", variable).trim() shouldBeEqualTo variable
@@ -105,30 +105,148 @@ class UtilsTest {
     val s1 = "ReadingBatServer"
     addImports(s1, variable).trimIndent() shouldBeEqualTo
         """
-        import com.github.readingbat.ReadingBatServer
-
-        ReadingBatServer
-        content
+        $s1
+        $variable
         """.trimIndent()
 
-    val s2 = "GitHubContent"
+    val s2 = "ReadingBatServer()"
     addImports(s2, variable).trimIndent() shouldBeEqualTo
         """
-        import com.github.readingbat.dsl.GitHubContent
+        import com.github.readingbat.ReadingBatServer
 
-        GitHubContent
-        content
+        $s2
+        $variable
         """.trimIndent()
 
-    val s3 = "ReadingBatServer GitHubContent"
-    println(addImports(s3, variable))
+    val s3 = "GitHubContent"
     addImports(s3, variable).trimIndent() shouldBeEqualTo
+        """
+        $s3
+        $variable
+        """.trimIndent()
+
+    val s4 = "GitHubContent()"
+    addImports(s4, variable).trimIndent() shouldBeEqualTo
+        """
+        import com.github.readingbat.dsl.GitHubContent
+
+        $s4
+        $variable
+        """.trimIndent()
+
+    val s5 = "ReadingBatServer GitHubContent"
+    addImports(s5, variable).trimIndent() shouldBeEqualTo
+        """
+        $s5
+        $variable
+        """.trimIndent()
+
+    val s6 = "ReadingBatServer() GitHubContent()"
+    addImports(s6, variable).trimIndent() shouldBeEqualTo
         """
         import com.github.readingbat.ReadingBatServer
         import com.github.readingbat.dsl.GitHubContent
 
-        ReadingBatServer GitHubContent
-        content
+        $s6
+        $variable
+        """.trimIndent()
+  }
+
+  @Test
+  fun methodImportTest() {
+
+    val variable = "content"
+
+    val s1 = "readingBatContent"
+    addImports(s1, variable).trimIndent() shouldBeEqualTo
+        """
+        $s1
+        $variable
+        """.trimIndent()
+
+    val s2 = "readingBatContent()"
+    addImports(s2, variable).trimIndent() shouldBeEqualTo
+        """
+        import com.github.readingbat.dsl.readingBatContent
+        
+        $s2
+        $variable
+        """.trimIndent()
+
+    val s3 = "include"
+    addImports(s3, variable).trimIndent() shouldBeEqualTo
+        """
+        $s3
+        $variable
+        """.trimIndent()
+
+    val s4 = "include()"
+    addImports(s4, variable).trimIndent() shouldBeEqualTo
+        """
+        import com.github.readingbat.dsl.include
+        
+        $s4
+        $variable
+        """.trimIndent()
+
+    val s5 = "ReadingBatServer GitHubContent"
+    println(addImports(s5, variable))
+    addImports(s5, variable).trimIndent() shouldBeEqualTo
+        """
+        $s5
+        $variable
+        """.trimIndent()
+
+    val s6 = "ReadingBatServer() GitHubContent()"
+    println(addImports(s6, variable))
+    addImports(s6, variable).trimIndent() shouldBeEqualTo
+        """
+        import com.github.readingbat.ReadingBatServer
+        import com.github.readingbat.dsl.GitHubContent
+
+        $s6
+        $variable
+        """.trimIndent()
+  }
+
+  @Test
+  fun combinedImportTest() {
+    val variable = "content"
+
+    val s1 = "readingBatContent ReadingBatServer"
+    addImports(s1, variable).trimIndent() shouldBeEqualTo
+        """
+        $s1
+        $variable
+        """.trimIndent()
+
+    val s2 = "readingBatContent() ReadingBatServer()"
+    addImports(s2, variable).trimIndent() shouldBeEqualTo
+        """
+        import com.github.readingbat.ReadingBatServer
+        import com.github.readingbat.dsl.readingBatContent
+        
+        $s2
+        $variable
+        """.trimIndent()
+
+    val s3 = "include readingBatContent ReadingBatServer GitHubContent"
+    addImports(s3, variable).trimIndent() shouldBeEqualTo
+        """
+        $s3
+        $variable
+        """.trimIndent()
+
+    val s4 = "include() readingBatContent() ReadingBatServer() GitHubContent()"
+    addImports(s4, variable).trimIndent() shouldBeEqualTo
+        """
+        import com.github.readingbat.ReadingBatServer
+        import com.github.readingbat.dsl.GitHubContent
+        import com.github.readingbat.dsl.readingBatContent
+        import com.github.readingbat.dsl.include
+        
+        $s4
+        $variable
         """.trimIndent()
   }
 }

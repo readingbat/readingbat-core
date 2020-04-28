@@ -54,24 +54,23 @@ fun addImports(code: String, variableName: String): String {
   val classImports =
     listOf(ReadingBatServer::class, GitHubContent::class)
       //.onEach { println("Checking for ${it.javaObjectType.name}") }
-      .filter { code.contains(it.javaObjectType.simpleName) }   // See if the class is referenced
-      .map { "import ${it.javaObjectType.name}" }         // Convert to import stmt
-      .filter { !code.contains(it) }                      // Do not include is import already present
-      .joinToString("\n")                                 // Turn into String
+      .filter { code.contains("${it.javaObjectType.simpleName}(") }   // See if the class is referenced
+      .map { "import ${it.javaObjectType.name}" }                     // Convert to import stmt
+      .filter { !code.contains(it) }                                  // Do not include is import already present
+      .joinToString("\n")                                             // Turn into String
 
   val funcImports =
     listOf(::readingBatContent, ::include)
-      .filter { code.contains(it.name) }   // See if the function is referenced
-      .map { "import ${it.fqMethodName}" } // Convert to import stmt
-      .filter { !code.contains(it) }       // Do not include is import already present
-      .joinToString("\n")                  // Turn into String
+      .filter { code.contains("${it.name}(") }  // See if the function is referenced
+      .map { "import ${it.fqMethodName}" }      // Convert to import stmt
+      .filter { !code.contains(it) }            // Do not include is import already present
+      .joinToString("\n")                       // Turn into String
 
+  val imports = listOf(classImports, funcImports).filter { !it.isBlank() }.joinToString("\n")
   return """
-      $classImports
-      $funcImports
-      $code
+      $imports${if (imports.isBlank()) "" else "\n\n"}$code
       $variableName
-    """.trimMargin()
+    """.trimMargin().split("\n").map { it.trimStart() }.joinToString("\n")
 }
 
 private val <T>  KFunction<T>.fqMethodName get() = "${javaClass.packageName}.$name"
