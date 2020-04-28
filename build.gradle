@@ -34,8 +34,8 @@ sourceSets {
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
 
-    implementation "com.github.pambrose.common-utils:core-utils:${utilsVersion}"
-    implementation "com.github.pambrose.common-utils:script-utils:${utilsVersion}"
+    implementation "com.github.pambrose.common-utils:core-utils:${utils_version}"
+    implementation "com.github.pambrose.common-utils:script-utils:${utils_version}"
 
     implementation "io.ktor:ktor-server-cio:$ktor_version"
     implementation "io.ktor:ktor-server-core:$ktor_version"
@@ -46,16 +46,18 @@ dependencies {
     implementation "io.ktor:ktor-client-core:$ktor_version"
     implementation "io.ktor:ktor-client-core-jvm:$ktor_version"
     implementation "io.ktor:ktor-client-cio:$ktor_version"
-    implementation "com.vladsch.flexmark:flexmark-all:$flexmarkVersion"
 
-    implementation "ch.qos.logback:logback-classic:${logbackVersion}"
-    implementation "org.slf4j:jul-to-slf4j:${slf4jVersion}"
-    implementation "io.github.microutils:kotlin-logging:${loggingVersion}"
+    implementation "org.apache.commons:commons-text:$commons_version"
+    implementation "com.vladsch.flexmark:flexmark-all:$flexmark_version"
+
+    implementation "ch.qos.logback:logback-classic:${logback_version}"
+    implementation "org.slf4j:jul-to-slf4j:${slf4j_version}"
+    implementation "io.github.microutils:kotlin-logging:${logging_version}"
 
     testImplementation "io.ktor:ktor-server-tests:$ktor_version"
-    testImplementation "org.amshove.kluent:kluent:${kluentVersion}"
-    testImplementation "org.junit.jupiter:junit-jupiter-api:${junitVersion}"
-    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:${junitVersion}"
+    testImplementation "org.amshove.kluent:kluent:${kluent_version}"
+    testImplementation "org.junit.jupiter:junit-jupiter-api:${junit_version}"
+    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:${junit_version}"
 }
 
 task sourcesJar(type: Jar, dependsOn: classes) {

@@ -25,6 +25,7 @@ import com.github.readingbat.Constants.static
 import com.github.readingbat.dsl.LanguageType.*
 import com.github.readingbat.dsl.LanguageType.Companion.toLanguageType
 import com.github.readingbat.dsl.ReadingBatContent
+import com.github.readingbat.pages.*
 import io.ktor.application.Application
 import io.ktor.application.ApplicationCallPipeline
 import io.ktor.application.call

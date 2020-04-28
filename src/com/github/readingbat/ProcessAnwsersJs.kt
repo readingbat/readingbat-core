@@ -27,6 +27,7 @@ import com.github.readingbat.Constants.sessionid
 import com.github.readingbat.Constants.solution
 import com.github.readingbat.Constants.spinner
 import com.github.readingbat.Constants.status
+import com.github.readingbat.pages.rawHtml
 import kotlinx.html.SCRIPT
 
 fun SCRIPT.addScript(languageName: String) =

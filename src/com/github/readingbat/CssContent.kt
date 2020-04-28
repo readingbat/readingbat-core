@@ -164,4 +164,8 @@ fun CSSBuilder.cssContent() {
     marginTop = 1.em
     fontSize = fs
   }
+  rule(".kotlin-code") {
+    width = 950.px  // !important
+    marginLeft = 2.em
+  }
 }
