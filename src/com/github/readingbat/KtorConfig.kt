@@ -136,7 +136,6 @@ fun Application.module(testing: Boolean = false, content: ReadingBatContent) {
   }
 
   install(StatusPages) {
-
     exception<InvalidPathException> { cause ->
       call.respond(HttpStatusCode.NotFound)
       //call.respondHtml { errorPage(cause.message?:"") }

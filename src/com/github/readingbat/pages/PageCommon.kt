@@ -56,25 +56,28 @@ internal fun BODY.bodyTitle() {
 }
 
 internal fun BODY.bodyHeader(languageType: LanguageType) {
-
   bodyTitle()
 
   nav {
     ul {
       li(classes = "h2") {
         if (languageType.isJava()) id = selected
-        a { href = "/${Java.lowerName}"; +Java.name }
+        this@bodyHeader.addLink(Java.name, "/${Java.lowerName}")
       }
       li(classes = "h2") {
         if (languageType.isPython()) id = selected
-        a { href = "/${Python.lowerName}"; +Python.name }
+        this@bodyHeader.addLink(Python.name, "/${Python.lowerName}")
       }
       li(classes = "h2") {
         if (languageType.isKotlin()) id = selected
-        a { href = "/${Kotlin.lowerName}"; +Kotlin.name }
+        this@bodyHeader.addLink(Kotlin.name, "/${Kotlin.lowerName}")
       }
     }
   }
+}
+
+internal fun BODY.addLink(text: String, url: String, newWindow: Boolean = false) {
+  a { href = url; if (newWindow) target = "_blank"; +text }
 }
 
 internal fun BODY.backLink(url: String) {
