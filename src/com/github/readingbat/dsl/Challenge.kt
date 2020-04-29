@@ -42,8 +42,7 @@ sealed class Challenge(private val group: ChallengeGroup) {
   internal val gitpodUrl by lazy { "${group.languageGroup.gitpodRoot}$fqName" }
   internal val parsedDescription
       by lazy {
-        val options = MutableDataSet()
-          .apply { set(HtmlRenderer.SOFT_BREAK, "<br />\n") }
+        val options = MutableDataSet().apply { set(HtmlRenderer.SOFT_BREAK, "<br />\n") }
         val parser = Parser.builder(options).build()
         val renderer = HtmlRenderer.builder(options).build()
         val document = parser.parse(description.trimIndent())

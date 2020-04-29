@@ -40,7 +40,7 @@ fun readingBatContent(block: ReadingBatContent.() -> Unit) = ReadingBatContent()
 
 private val logger = KotlinLogging.logger {}
 
-fun include(source: ContentSource, variableName: String = "content"): ReadingBatContent {
+internal fun include(source: ContentSource, variableName: String = "content"): ReadingBatContent {
   return contentMap
     .computeIfAbsent(source.path) {
       val (code, dur) = measureTimedValue { source.content }
@@ -50,7 +50,7 @@ fun include(source: ContentSource, variableName: String = "content"): ReadingBat
     }
 }
 
-fun addImports(code: String, variableName: String): String {
+internal fun addImports(code: String, variableName: String): String {
   val classImports =
     listOf(ReadingBatServer::class, GitHubContent::class)
       //.onEach { println("Checking for ${it.javaObjectType.name}") }
@@ -70,17 +70,15 @@ fun addImports(code: String, variableName: String): String {
   return """
       $imports${if (imports.isBlank()) "" else "\n\n"}$code
       $variableName
-    """.trimMargin().split("\n").map { it.trimStart() }.joinToString("\n")
+    """.trimMargin().split("\n").joinToString("\n") { it.trimStart() }
 }
 
 private val <T>  KFunction<T>.fqMethodName get() = "${javaClass.packageName}.$name"
 
-private fun evalDsl(code: String, sourceName: String): ReadingBatContent {
-
+private fun evalDsl(code: String, sourceName: String) =
   try {
-    return KtsScript().run { eval(code) as ReadingBatContent }.apply { validate() }
+    KtsScript().run { eval(code) as ReadingBatContent }.apply { validate() }
   } catch (e: Throwable) {
     logger.info { "Error in $sourceName:\n$code" }
     throw e
   }
-}

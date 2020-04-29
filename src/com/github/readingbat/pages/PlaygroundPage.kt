@@ -33,19 +33,17 @@ fun HTML.playgroundPage(challenge: Challenge) {
 
   head {
     script { src = "https://unpkg.com/kotlin-playground@1"; attributes["data-selector"] = "code" }
-
     headDefault()
   }
 
   body {
-
     bodyHeader(languageType)
 
     div(classes = tabs) {
       h2 {
-        a { href = "/$languageName/$groupName"; +groupName.decode() }
+        this@body.addLink(groupName.decode(), "/$languageName/$groupName")
         rawHtml("${Entities.nbsp.text}&rarr;${Entities.nbsp.text}")
-        a { href = "/$languageName/$groupName/$name"; +name.decode() }
+        this@body.addLink(name.decode(), "/$languageName/$groupName/$name")
       }
 
       if (challenge.description.isNotEmpty())
@@ -54,8 +52,7 @@ fun HTML.playgroundPage(challenge: Challenge) {
       // Customization details are here: https://jetbrains.github.io/kotlin-playground/
       div(classes = kotlinCode) {
         rawHtml("""
-          <code class="$kotlinCode" theme="idea" indent="2" lines=true highlight-on-fly=true data-autocomplete=true
-            match-brackets=true >
+          <code class="$kotlinCode" theme="idea" indent="2" lines="true" highlight-on-fly="true" data-autocomplete="true" match-brackets="true" >
           ${StringEscapeUtils.escapeHtml4(challenge.funcInfo().code)}
           </code>
         """)

@@ -17,7 +17,7 @@
 
 package com.github.readingbat
 
-import io.ktor.http.ContentType
+import io.ktor.http.ContentType.Text.CSS
 import java.util.concurrent.atomic.AtomicInteger
 
 object Constants {
@@ -52,7 +52,7 @@ object Constants {
   const val kotlinCode = "kotlin-code"
   const val challengeDesc = "challenge-desc"
   const val bodyHeader = "bodyHeader"
-  val cssType = ContentType.Text.CSS.toString()
+  val cssType = CSS.toString()
   val sessionCounter = AtomicInteger(0)
   val production: Boolean by lazy { System.getenv("PRODUCTION")?.toBoolean() ?: false }
 }

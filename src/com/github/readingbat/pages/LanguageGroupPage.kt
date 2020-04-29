@@ -25,7 +25,7 @@ import com.github.readingbat.dsl.ChallengeGroup
 import com.github.readingbat.dsl.LanguageType
 import kotlinx.html.*
 
-fun HTML.languageGroupPage(languageType: LanguageType, groups: List<ChallengeGroup>) {
+internal fun HTML.languageGroupPage(languageType: LanguageType, groups: List<ChallengeGroup>) {
   head {
     headDefault()
   }

@@ -31,7 +31,7 @@ import io.ktor.util.pipeline.PipelineContext
 import kotlinx.coroutines.delay
 import kotlin.time.milliseconds
 
-suspend fun PipelineContext<Unit, ApplicationCall>.checkAnswers() {
+internal suspend fun PipelineContext<Unit, ApplicationCall>.checkAnswers() {
   val params = call.receiveParameters()
   val compareMap = params.entries().map { it.key to it.value[0] }.toMap()
   val answers = params.entries().filter { it.key.startsWith(answer) }

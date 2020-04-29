@@ -41,7 +41,7 @@ import com.github.readingbat.misc.addScript
 import kotlinx.html.*
 import kotlinx.html.Entities.nbsp
 
-fun HTML.challengePage(challenge: Challenge) {
+internal fun HTML.challengePage(challenge: Challenge) {
   val languageType = challenge.languageType
   val languageName = languageType.lowerName
   val groupName = challenge.groupName
@@ -49,24 +49,12 @@ fun HTML.challengePage(challenge: Challenge) {
   val funcArgs = challenge.inputOutput
 
   head {
-    link {
-      rel = "stylesheet"; href = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
-    }
-    link {
-      rel = "stylesheet"; href = "/$static/$languageName-prism.css"; type = cssType
-    }
-
-    // Remove the prism shadow
-    style {
-      rawHtml(
-        """
-          pre[class*="language-"]:before,
-          pre[class*="language-"]:after { display: none; }
-        """)
-    }
+    link { rel = "stylesheet"; href = spinnerCss }
+    link { rel = "stylesheet"; href = "/$static/$languageName-prism.css"; type = cssType }
 
     script(type = ScriptType.textJavaScript) { addScript(languageName) }
 
+    removePrismShadow()
     headDefault()
   }
 
@@ -75,7 +63,7 @@ fun HTML.challengePage(challenge: Challenge) {
 
     div(classes = tabs) {
       h2 {
-        a { href = "/$languageName/$groupName"; +groupName.decode() }
+        this@body.addLink(groupName.decode(), "/$languageName/$groupName")
         rawHtml("${nbsp.text}&rarr;${nbsp.text}"); +name
       }
 
@@ -89,7 +77,6 @@ fun HTML.challengePage(challenge: Challenge) {
       }
 
       div(classes = userAnswers) {
-
         table {
           tr { th { +"Function Call" }; th { +"" }; th { +"Return Value" }; th { +"" } }
 
@@ -98,7 +85,6 @@ fun HTML.challengePage(challenge: Challenge) {
               td(classes = funcCol) { +challenge.funcInfo().invokes[i] }
               td(classes = arrow) { rawHtml("&rarr;") }
               td {
-                //textInput(classes = answer) { id = "$answer$i" }
                 textInput(classes = answer) {
                   id = "$answer$i"; onKeyPress = "$processAnswers(event, ${funcArgs.size})"
                 }
@@ -117,26 +103,18 @@ fun HTML.challengePage(challenge: Challenge) {
                   onClick = "$processAnswers(null, ${funcArgs.size})"; +"Check My Answers!"
                 }
               }
-              td {
-                span(classes = spinner) {
-                  id = spinner
-                }
-              }
-              td {
-                span(classes = status) {
-                  id = status
-                }
-              }
+              td { span(classes = spinner) { id = spinner } }
+              td { span(classes = status) { id = status } }
             }
           }
         }
 
         p(classes = refs) {
           +"Experiment with this code on "
-          a { href = "https://gitpod.io/#${challenge.gitpodUrl}"; target = "_blank"; +"Gitpod.io" }
+          this@body.addLink("Gitpod.io", "https://gitpod.io/#${challenge.gitpodUrl}", true)
           if (languageType.isKotlin()) {
             +" or as a "
-            a { href = "/$playground/$groupName/$name"; target = "_blank"; +"Kotlin Playground" }
+            this@body.addLink("Kotlin Playground", "/$playground/$groupName/$name", true)
           }
           +"."
         }
@@ -144,7 +122,7 @@ fun HTML.challengePage(challenge: Challenge) {
         if (challenge.codingBatEquiv.isNotEmpty() && (languageType.isJava() || languageType.isPython())) {
           p(classes = refs) {
             +"Work on a similar problem on "
-            a { href = "https://codingbat.com/prob/${challenge.codingBatEquiv}"; target = "_blank"; +"CodingBat.com" }
+            this@body.addLink("CodingBat.com", "https://codingbat.com/prob/${challenge.codingBatEquiv}", true)
             +"."
           }
         }
@@ -154,5 +132,18 @@ fun HTML.challengePage(challenge: Challenge) {
     backLink("/$languageName/$groupName")
 
     script { src = "/$static/$languageName-prism.js" }
+  }
+}
+
+private const val spinnerCss = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
+
+private fun HEAD.removePrismShadow() {
+  // Remove the prism shadow
+  style {
+    rawHtml(
+      """
+          pre[class*="language-"]:before,
+          pre[class*="language-"]:after { display: none; }
+        """)
   }
 }

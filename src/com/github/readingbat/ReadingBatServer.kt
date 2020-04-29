@@ -17,7 +17,12 @@
 
 package com.github.readingbat
 
+import com.github.readingbat.config.installs
+import com.github.readingbat.config.intercepts
+import com.github.readingbat.config.locations
+import com.github.readingbat.config.routes
 import com.github.readingbat.dsl.ReadingBatContent
+import io.ktor.application.Application
 import io.ktor.server.cio.CIO
 import io.ktor.server.engine.embeddedServer
 
@@ -29,3 +34,13 @@ object ReadingBatServer {
       .start(wait = true)
   }
 }
+
+@JvmOverloads
+internal fun Application.module(testing: Boolean = false, content: ReadingBatContent) {
+  installs()
+  intercepts()
+  locations()
+  routes()
+}
+
+internal class InvalidPathException(msg: String) : RuntimeException(msg)
