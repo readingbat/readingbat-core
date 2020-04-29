@@ -17,6 +17,10 @@
 
 package com.github.readingbat
 
+import com.github.readingbat.config.installs
+import com.github.readingbat.config.intercepts
+import com.github.readingbat.config.locations
+import com.github.readingbat.config.routes
 import com.github.readingbat.dsl.ReadingBatContent
 import io.ktor.application.Application
 import io.ktor.server.cio.CIO

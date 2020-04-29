@@ -15,8 +15,10 @@
  *
  */
 
-package com.github.readingbat
+package com.github.readingbat.config
 
+import com.github.readingbat.Constants
+import com.github.readingbat.InvalidPathException
 import io.ktor.application.Application
 import io.ktor.application.call
 import io.ktor.application.install

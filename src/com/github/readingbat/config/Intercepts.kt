@@ -15,8 +15,9 @@
  *
  */
 
-package com.github.readingbat
+package com.github.readingbat.config
 
+import com.github.readingbat.InvalidPathException
 import com.github.readingbat.dsl.LanguageType.*
 import com.github.readingbat.dsl.LanguageType.Companion.toLanguageType
 import com.github.readingbat.pages.challengeGroupPage

@@ -15,7 +15,7 @@
  *
  */
 
-package com.github.readingbat
+package com.github.readingbat.config
 
 import com.github.readingbat.Constants.playground
 import com.github.readingbat.dsl.LanguageType.Kotlin
