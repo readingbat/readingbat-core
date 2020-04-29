@@ -50,7 +50,7 @@ class ReadingBatContent {
 
   @ReadingBatDslMarker
   operator fun LanguageGroup.unaryPlus() {
-    val languageGroup = this@ReadingBatContent.findLanguage(this.languageType)
+    val languageGroup = this@ReadingBatContent.findLanguage(languageType)
     challengeGroups.forEach { languageGroup.addGroup(it) }
   }
 
