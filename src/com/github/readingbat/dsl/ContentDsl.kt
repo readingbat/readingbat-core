@@ -40,7 +40,7 @@ fun readingBatContent(block: ReadingBatContent.() -> Unit) = ReadingBatContent()
 
 private val logger = KotlinLogging.logger {}
 
-internal fun include(source: ContentSource, variableName: String = "content"): ReadingBatContent {
+fun include(source: ContentSource, variableName: String = "content"): ReadingBatContent {
   return contentMap
     .computeIfAbsent(source.path) {
       val (code, dur) = measureTimedValue { source.content }
