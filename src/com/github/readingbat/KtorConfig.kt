@@ -17,40 +17,20 @@
 
 package com.github.readingbat
 
-import com.github.readingbat.Constants.checkAnswers
-import com.github.readingbat.Constants.cssName
-import com.github.readingbat.Constants.playground
 import com.github.readingbat.Constants.production
-import com.github.readingbat.Constants.static
-import com.github.readingbat.dsl.LanguageType.*
-import com.github.readingbat.dsl.LanguageType.Companion.toLanguageType
 import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.misc.checkAnswers
-import com.github.readingbat.misc.cssContent
-import com.github.readingbat.pages.challengeGroupPage
-import com.github.readingbat.pages.challengePage
-import com.github.readingbat.pages.languageGroupPage
-import com.github.readingbat.pages.playgroundPage
-import io.ktor.application.*
+import io.ktor.application.Application
+import io.ktor.application.call
+import io.ktor.application.install
 import io.ktor.features.*
-import io.ktor.html.respondHtml
-import io.ktor.http.ContentType
 import io.ktor.http.ContentType.Text.Plain
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.TextContent
-import io.ktor.http.content.resources
-import io.ktor.http.content.static
 import io.ktor.http.withCharset
 import io.ktor.request.path
-import io.ktor.request.uri
 import io.ktor.response.respond
-import io.ktor.response.respondRedirect
-import io.ktor.response.respondText
-import io.ktor.routing.get
-import io.ktor.routing.post
 import io.ktor.routing.routing
 import io.ktor.server.engine.ShutDownUrl
-import kotlinx.css.CSSBuilder
 import org.slf4j.event.Level
 import kotlin.text.Charsets.UTF_8
 
@@ -58,67 +38,10 @@ import kotlin.text.Charsets.UTF_8
 fun Application.module(testing: Boolean = false, content: ReadingBatContent) {
 
   routing {
-
-    get("/") {
-      call.respondRedirect("/${Java.lowerName}")
-    }
-
-    get("/$cssName") {
-      call.respondCss {
-        cssContent()
-      }
-    }
-
-    post("/$checkAnswers") {
-      checkAnswers()
-    }
-
-    static("/$static") {
-      resources(static)
-    }
+    routes()
   }
 
-  intercept(ApplicationCallPipeline.Call) {
-    val req = call.request.uri
-    val items = req.split("/").filter { it.isNotEmpty() }
-    if (items.isNotEmpty()) {
-
-      if (items.size == 3 && items[0] == playground) {
-        val challenge = content.findLanguage(Kotlin).findChallenge(items[1], items[2])
-        call.respondHtml { playgroundPage(challenge) }
-      }
-
-      if (items[0] in listOf(Java.lowerName, Python.lowerName, Kotlin.lowerName)) {
-        val languageType = items[0].toLanguageType()
-        val groupName = items.elementAtOrNull(1) ?: ""
-        val challengeName = items.elementAtOrNull(2) ?: ""
-        when (items.size) {
-          1 -> {
-            // This lookup has to take place outside of the lambda for proper exception handling
-            val groups = content.findLanguage(languageType).challengeGroups
-            call.respondHtml { languageGroupPage(languageType, groups) }
-          }
-          2 -> {
-            val challengeGroup = content.findLanguage(languageType).findGroup(groupName)
-            call.respondHtml { challengeGroupPage(challengeGroup) }
-          }
-          3 -> {
-            val challenge = content.findLanguage(languageType).findChallenge(groupName, challengeName)
-            call.respondHtml { challengePage(challenge) }
-          }
-          else -> throw InvalidPathException("Invalid path: $req")
-        }
-      }
-    }
-  }
-
-  intercept(ApplicationCallPipeline.Monitoring) {
-    // Set up metrics here
-  }
-
-  intercept(ApplicationCallPipeline.Fallback) {
-    // Count not found pages here
-  }
+  intercepts()
 
   install(Compression) {
     gzip {
@@ -133,6 +56,10 @@ fun Application.module(testing: Boolean = false, content: ReadingBatContent) {
   install(CallLogging) {
     level = Level.INFO
     filter { call -> call.request.path().startsWith("/") }
+  }
+
+  install(DefaultHeaders) {
+    header("X-Engine", "Ktor") // will send this header with each response
   }
 
   install(StatusPages) {
@@ -163,8 +90,5 @@ fun Application.module(testing: Boolean = false, content: ReadingBatContent) {
   }
 }
 
-suspend inline fun ApplicationCall.respondCss(builder: CSSBuilder.() -> Unit) {
-  this.respondText(CSSBuilder().apply(builder).toString(), ContentType.Text.CSS)
-}
 
 class InvalidPathException(msg: String) : RuntimeException(msg)
