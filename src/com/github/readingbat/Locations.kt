@@ -17,16 +17,25 @@
 
 package com.github.readingbat
 
-import com.github.readingbat.dsl.ReadingBatContent
+import com.github.readingbat.Constants.playground
+import com.github.readingbat.dsl.LanguageType.Kotlin
+import com.github.readingbat.pages.playgroundPage
+import content
 import io.ktor.application.Application
+import io.ktor.application.call
+import io.ktor.html.respondHtml
+import io.ktor.locations.Location
+import io.ktor.locations.get
+import io.ktor.routing.routing
 
-@JvmOverloads
-fun Application.module(testing: Boolean = false, content: ReadingBatContent) {
-  installs()
-  intercepts()
-  locations()
-  routes()
+fun Application.locations() {
+  routing {
+    get<PlaygroundRequest> {
+      val challenge = content.findLanguage(Kotlin).findChallenge(it.groupName, it.challengeName)
+      call.respondHtml { playgroundPage(challenge) }
+    }
+  }
 }
 
-
-class InvalidPathException(msg: String) : RuntimeException(msg)
+@Location("/$playground/{groupName}/{challengeName}")
+class PlaygroundRequest(val groupName: String, val challengeName: String)

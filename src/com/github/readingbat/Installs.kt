@@ -1,0 +1,84 @@
+/*
+ * Copyright © 2020 Paul Ambrose (pambrose@mac.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+
+package com.github.readingbat
+
+import io.ktor.application.Application
+import io.ktor.application.call
+import io.ktor.application.install
+import io.ktor.features.*
+import io.ktor.http.ContentType
+import io.ktor.http.HttpStatusCode
+import io.ktor.http.content.TextContent
+import io.ktor.http.withCharset
+import io.ktor.locations.Locations
+import io.ktor.request.path
+import io.ktor.response.respond
+import io.ktor.server.engine.ShutDownUrl
+import org.slf4j.event.Level
+
+fun Application.installs() {
+  install(Compression) {
+    gzip {
+      priority = 1.0
+    }
+    deflate {
+      priority = 10.0
+      minimumSize(1024) // condition
+    }
+  }
+
+  install(Locations) {
+  }
+
+  install(CallLogging) {
+    level = Level.INFO
+    filter { call -> call.request.path().startsWith("/") }
+  }
+
+  install(DefaultHeaders) {
+    header("X-Engine", "Ktor") // will send this header with each response
+  }
+
+  install(StatusPages) {
+    exception<InvalidPathException> { cause ->
+      call.respond(HttpStatusCode.NotFound)
+      //call.respondHtml { errorPage(cause.message?:"") }
+    }
+
+    //statusFile(HttpStatusCode.NotFound, HttpStatusCode.Unauthorized, filePattern = "error#.html")
+
+    status(HttpStatusCode.NotFound) {
+      call.respond(TextContent("${it.value} ${it.description}", ContentType.Text.Plain.withCharset(Charsets.UTF_8), it))
+    }
+
+    // Catch all
+    exception<Throwable> { cause ->
+      call.respond(HttpStatusCode.InternalServerError)
+    }
+  }
+
+  if (!Constants.production) {
+    install(ShutDownUrl.ApplicationCallFeature) {
+      // The URL that will be intercepted (you can also use the application.conf's ktor.deployment.shutdown.url key)
+      shutDownUrl = "/ktor/application/shutdown"
+      // A function that will be executed to get the exit code of the process
+      exitCodeSupplier = { 0 } // ApplicationCall.() -> Int
+    }
+  }
+
+}

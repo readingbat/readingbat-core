@@ -38,15 +38,17 @@ dependencies {
     implementation "com.github.pambrose.common-utils:core-utils:${utils_version}"
     implementation "com.github.pambrose.common-utils:script-utils:${utils_version}"
 
+    implementation "org.jetbrains:kotlin-css:$css_version"
+    implementation "org.jetbrains:kotlin-css-jvm:$css_version"
+
     implementation "io.ktor:ktor-server-cio:$ktor_version"
     implementation "io.ktor:ktor-server-core:$ktor_version"
     implementation "io.ktor:ktor-html-builder:$ktor_version"
-    implementation "org.jetbrains:kotlin-css:$css_version"
-    implementation "org.jetbrains:kotlin-css-jvm:$css_version"
-    implementation "io.ktor:ktor-metrics:$ktor_version"
-    implementation "io.ktor:ktor-client-core:$ktor_version"
-    implementation "io.ktor:ktor-client-core-jvm:$ktor_version"
-    implementation "io.ktor:ktor-client-cio:$ktor_version"
+    implementation "io.ktor:ktor-locations:$ktor_version"
+    //implementation "io.ktor:ktor-metrics:$ktor_version"
+    //implementation "io.ktor:ktor-client-core:$ktor_version"
+    //implementation "io.ktor:ktor-client-core-jvm:$ktor_version"
+    //implementation "io.ktor:ktor-client-cio:$ktor_version"
 
     implementation "org.apache.commons:commons-text:$commons_version"
     implementation "com.vladsch.flexmark:flexmark-all:$flexmark_version"
@@ -111,6 +113,7 @@ compileKotlin {
     kotlinOptions.jvmTarget = '1.8'
     kotlinOptions.freeCompilerArgs += ['-Xuse-experimental=kotlin.time.ExperimentalTime',
                                        '-Xuse-experimental=io.ktor.util.KtorExperimentalAPI',
+                                       '-Xuse-experimental=io.ktor.locations.KtorExperimentalLocationsAPI',
                                        '-Xuse-experimental=kotlin.ExperimentalStdlibApi',
                                        '-XXLanguage:+InlineClasses']
 }
@@ -119,6 +122,7 @@ compileTestKotlin {
     kotlinOptions.jvmTarget = '1.8'
     kotlinOptions.freeCompilerArgs += ['-Xuse-experimental=kotlin.time.ExperimentalTime',
                                        '-Xuse-experimental=io.ktor.util.KtorExperimentalAPI',
+                                       '-Xuse-experimental=io.ktor.locations.KtorExperimentalLocationsAPI',
                                        '-Xuse-experimental=kotlin.ExperimentalStdlibApi',
                                        '-XXLanguage:+InlineClasses']
 }

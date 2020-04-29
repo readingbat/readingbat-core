@@ -17,12 +17,11 @@
 
 package com.github.readingbat
 
-import com.github.readingbat.dsl.LanguageType
+import com.github.readingbat.dsl.LanguageType.*
 import com.github.readingbat.dsl.LanguageType.Companion.toLanguageType
 import com.github.readingbat.pages.challengeGroupPage
 import com.github.readingbat.pages.challengePage
 import com.github.readingbat.pages.languageGroupPage
-import com.github.readingbat.pages.playgroundPage
 import content
 import io.ktor.application.Application
 import io.ktor.application.ApplicationCallPipeline
@@ -34,36 +33,26 @@ fun Application.intercepts() {
   intercept(ApplicationCallPipeline.Call) {
     val req = call.request.uri
     val items = req.split("/").filter { it.isNotEmpty() }
-    if (items.isNotEmpty()) {
 
-      if (items.size == 3 && items[0] == Constants.playground) {
-        val challenge = content.findLanguage(LanguageType.Kotlin).findChallenge(items[1], items[2])
-        call.respondHtml { playgroundPage(challenge) }
-      }
-
-      if (items[0] in listOf(LanguageType.Java.lowerName,
-                             LanguageType.Python.lowerName,
-                             LanguageType.Kotlin.lowerName)
-      ) {
-        val languageType = items[0].toLanguageType()
-        val groupName = items.elementAtOrNull(1) ?: ""
-        val challengeName = items.elementAtOrNull(2) ?: ""
-        when (items.size) {
-          1 -> {
-            // This lookup has to take place outside of the lambda for proper exception handling
-            val groups = content.findLanguage(languageType).challengeGroups
-            call.respondHtml { languageGroupPage(languageType, groups) }
-          }
-          2 -> {
-            val challengeGroup = content.findLanguage(languageType).findGroup(groupName)
-            call.respondHtml { challengeGroupPage(challengeGroup) }
-          }
-          3 -> {
-            val challenge = content.findLanguage(languageType).findChallenge(groupName, challengeName)
-            call.respondHtml { challengePage(challenge) }
-          }
-          else -> throw InvalidPathException("Invalid path: $req")
+    if (items.isNotEmpty() && items[0] in listOf(Java.lowerName, Python.lowerName, Kotlin.lowerName)) {
+      val languageType = items[0].toLanguageType()
+      val groupName = items.elementAtOrNull(1) ?: ""
+      val challengeName = items.elementAtOrNull(2) ?: ""
+      when (items.size) {
+        1 -> {
+          // This lookup has to take place outside of the lambda for proper exception handling
+          val groups = content.findLanguage(languageType).challengeGroups
+          call.respondHtml { languageGroupPage(languageType, groups) }
         }
+        2 -> {
+          val challengeGroup = content.findLanguage(languageType).findGroup(groupName)
+          call.respondHtml { challengeGroupPage(challengeGroup) }
+        }
+        3 -> {
+          val challenge = content.findLanguage(languageType).findChallenge(groupName, challengeName)
+          call.respondHtml { challengePage(challenge) }
+        }
+        else -> throw InvalidPathException("Invalid path: $req")
       }
     }
   }

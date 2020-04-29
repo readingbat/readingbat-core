@@ -20,6 +20,7 @@ package com.github.readingbat
 import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.misc.checkAnswers
 import com.github.readingbat.misc.cssContent
+import io.ktor.application.Application
 import io.ktor.application.ApplicationCall
 import io.ktor.application.call
 import io.ktor.http.ContentType
@@ -27,28 +28,30 @@ import io.ktor.http.content.resources
 import io.ktor.http.content.static
 import io.ktor.response.respondRedirect
 import io.ktor.response.respondText
-import io.ktor.routing.Routing
 import io.ktor.routing.get
 import io.ktor.routing.post
+import io.ktor.routing.routing
 import kotlinx.css.CSSBuilder
 
-fun Routing.routes() {
-  get("/") {
-    call.respondRedirect("/${LanguageType.Java.lowerName}")
-  }
-
-  get("/${Constants.cssName}") {
-    call.respondCss {
-      cssContent()
+fun Application.routes() {
+  routing {
+    get("/") {
+      call.respondRedirect("/${LanguageType.Java.lowerName}")
     }
-  }
 
-  post("/${Constants.checkAnswers}") {
-    checkAnswers()
-  }
+    get("/${Constants.cssName}") {
+      call.respondCss {
+        cssContent()
+      }
+    }
 
-  static("/${Constants.static}") {
-    resources(Constants.static)
+    post("/${Constants.checkAnswers}") {
+      checkAnswers()
+    }
+
+    static("/${Constants.static}") {
+      resources(Constants.static)
+    }
   }
 }
 

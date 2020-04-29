@@ -52,8 +52,7 @@ fun HTML.playgroundPage(challenge: Challenge) {
       // Customization details are here: https://jetbrains.github.io/kotlin-playground/
       div(classes = kotlinCode) {
         rawHtml("""
-          <code class="$kotlinCode" theme="idea" indent="2" lines=true highlight-on-fly=true data-autocomplete=true
-            match-brackets=true >
+          <code class="$kotlinCode" theme="idea" indent="2" lines="true" highlight-on-fly="true" data-autocomplete="true" match-brackets="true" >
           ${StringEscapeUtils.escapeHtml4(challenge.funcInfo().code)}
           </code>
         """)
