@@ -17,7 +17,9 @@
 
 package com.github.readingbat.config
 
-import com.github.readingbat.Constants
+import com.github.readingbat.Constants.checkAnswers
+import com.github.readingbat.Constants.cssName
+import com.github.readingbat.Constants.static
 import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.misc.checkAnswers
 import com.github.readingbat.misc.cssContent
@@ -40,18 +42,18 @@ fun Application.routes() {
       call.respondRedirect("/${LanguageType.Java.lowerName}")
     }
 
-    get("/${Constants.cssName}") {
+    get("/$cssName") {
       call.respondCss {
         cssContent()
       }
     }
 
-    post("/${Constants.checkAnswers}") {
+    post("/$checkAnswers") {
       checkAnswers()
     }
 
-    static("/${Constants.static}") {
-      resources(Constants.static)
+    static("/$static") {
+      resources(static)
     }
   }
 }

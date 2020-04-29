@@ -17,7 +17,7 @@
 
 package com.github.readingbat.config
 
-import com.github.readingbat.Constants
+import com.github.readingbat.Constants.production
 import com.github.readingbat.InvalidPathException
 import io.ktor.application.Application
 import io.ktor.application.call
@@ -74,7 +74,7 @@ fun Application.installs() {
     }
   }
 
-  if (!Constants.production) {
+  if (!production) {
     install(ShutDownUrl.ApplicationCallFeature) {
       // The URL that will be intercepted (you can also use the application.conf's ktor.deployment.shutdown.url key)
       shutDownUrl = "/ktor/application/shutdown"
