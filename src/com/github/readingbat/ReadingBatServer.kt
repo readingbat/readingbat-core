@@ -36,7 +36,7 @@ object ReadingBatServer {
 }
 
 @JvmOverloads
-fun Application.module(testing: Boolean = false, content: ReadingBatContent) {
+internal fun Application.module(testing: Boolean = false, content: ReadingBatContent) {
   installs()
   intercepts()
   locations()
