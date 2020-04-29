@@ -43,7 +43,7 @@ import kotlinx.css.properties.TextDecoration
 private val fs = 115.pct
 private val codeFs = 95.pct
 
-fun CSSBuilder.cssContent() {
+internal fun CSSBuilder.cssContent() {
   body {
     backgroundColor = Color.white
   }

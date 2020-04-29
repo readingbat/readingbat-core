@@ -41,7 +41,7 @@ import com.github.readingbat.misc.addScript
 import kotlinx.html.*
 import kotlinx.html.Entities.nbsp
 
-fun HTML.challengePage(challenge: Challenge) {
+internal fun HTML.challengePage(challenge: Challenge) {
   val languageType = challenge.languageType
   val languageName = languageType.lowerName
   val groupName = challenge.groupName

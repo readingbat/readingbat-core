@@ -61,4 +61,4 @@ class ReadingBatContent {
   }
 }
 
-class InvalidConfigurationException(msg: String) : Exception(msg)
+internal class InvalidConfigurationException(msg: String) : Exception(msg)

@@ -22,7 +22,7 @@ enum class LanguageType(val useDoubleQuotes: Boolean, val suffix: String, val sr
   Python(false, "py", "python"),
   Kotlin(true, "kt", "src/main/kotlin");
 
-  val lowerName = name.toLowerCase()
+  internal val lowerName = name.toLowerCase()
 
   fun isJava() = this == Java
   fun isPython() = this == Python

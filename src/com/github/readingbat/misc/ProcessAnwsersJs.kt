@@ -30,7 +30,7 @@ import com.github.readingbat.Constants.status
 import com.github.readingbat.pages.rawHtml
 import kotlinx.html.SCRIPT
 
-fun SCRIPT.addScript(languageName: String) =
+internal fun SCRIPT.addScript(languageName: String) =
   rawHtml(
     """
     var re = new XMLHttpRequest();
