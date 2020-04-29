@@ -28,7 +28,7 @@ import io.ktor.locations.Location
 import io.ktor.locations.get
 import io.ktor.routing.routing
 
-fun Application.locations() {
+internal fun Application.locations() {
   routing {
     get<PlaygroundRequest> {
       val challenge = content.findLanguage(Kotlin).findChallenge(it.groupName, it.challengeName)
@@ -38,4 +38,4 @@ fun Application.locations() {
 }
 
 @Location("/$playground/{groupName}/{challengeName}")
-class PlaygroundRequest(val groupName: String, val challengeName: String)
+internal class PlaygroundRequest(val groupName: String, val challengeName: String)

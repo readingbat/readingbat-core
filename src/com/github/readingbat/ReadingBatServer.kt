@@ -43,4 +43,4 @@ fun Application.module(testing: Boolean = false, content: ReadingBatContent) {
   routes()
 }
 
-class InvalidPathException(msg: String) : RuntimeException(msg)
+internal class InvalidPathException(msg: String) : RuntimeException(msg)

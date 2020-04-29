@@ -33,7 +33,7 @@ import io.ktor.response.respond
 import io.ktor.server.engine.ShutDownUrl
 import org.slf4j.event.Level
 
-fun Application.installs() {
+internal fun Application.installs() {
   install(Compression) {
     gzip {
       priority = 1.0

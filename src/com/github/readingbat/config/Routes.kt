@@ -36,7 +36,7 @@ import io.ktor.routing.post
 import io.ktor.routing.routing
 import kotlinx.css.CSSBuilder
 
-fun Application.routes() {
+internal fun Application.routes() {
   routing {
     get("/") {
       call.respondRedirect("/${LanguageType.Java.lowerName}")

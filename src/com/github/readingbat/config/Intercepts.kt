@@ -30,7 +30,7 @@ import io.ktor.application.call
 import io.ktor.html.respondHtml
 import io.ktor.request.uri
 
-fun Application.intercepts() {
+internal fun Application.intercepts() {
   intercept(ApplicationCallPipeline.Call) {
     val req = call.request.uri
     val items = req.split("/").filter { it.isNotEmpty() }
