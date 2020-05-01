@@ -145,14 +145,14 @@ class PythonChallenge(group: ChallengeGroup) : Challenge(group) {
         .map { it.first }
 
     val funcCode = lines.subList(lineNums.first(), lineNums.last() - 1).joinToString("\n").trimIndent()
-    val args = lines.pythonArguments(pythonStart, pythonEnd)
+    val args = lines.pythonArguments(pythonStartRegex, pythonEndRegex)
 
     return FuncInfo(code, funcCode, args, listOf())
   }
 
   companion object {
-    internal val pythonStart = Regex("def main\\(")
-    internal val pythonEnd = Regex("__main__")
+    internal val pythonStartRegex = Regex("def main\\(")
+    internal val pythonEndRegex = Regex("__main__")
 
     internal fun String.pythonArguments(start: Regex, end: Regex) = split("\n").pythonArguments(start, end)
 
@@ -167,22 +167,24 @@ class PythonChallenge(group: ChallengeGroup) : Challenge(group) {
 
 class JavaChallenge(group: ChallengeGroup) : Challenge(group) {
   override fun computeFuncInfo(code: String): FuncInfo {
-    val lines = code.split("\n")
+    val lines = code.split("\n").filter { !it.trimStart().startsWith("package") }
     val lineNums =
       lines.mapIndexed { i, str -> i to str }
-        .filter { it.second.contains(Regex("static.*\\(")) }
+        .filter { it.second.contains(staticRegex) }
         .map { it.first }
 
     val funcCode = lines.subList(lineNums.first(), lineNums.last() - 1).joinToString("\n").trimIndent()
-    val args = lines.javaArguments(javaStart, javaEnd)
+    val args = lines.javaArguments(javaStartRegex, javaEndRegex)
+
 
     return FuncInfo(code, funcCode, args, listOf())
   }
 
   companion object {
 
-    internal val javaStart = Regex("static\\svoid\\smain\\(")
-    internal val javaEnd = Regex("}")
+    internal val staticRegex = Regex("static.*\\(")
+    internal val javaStartRegex = Regex("static\\svoid\\smain\\(")
+    internal val javaEndRegex = Regex("}")
 
     internal fun String.javaArguments(start: Regex, end: Regex) = split("\n").javaArguments(start, end)
 
@@ -201,14 +203,14 @@ class KotlinChallenge(group: ChallengeGroup) : Challenge(group) {
   override fun computeFuncInfo(code: String): FuncInfo {
     val lines = code.split("\n").filter { !it.trimStart().startsWith("package") }
     val funcCode = lines.subList(0, lines.lastLineNumberOf(Regex("fun main\\("))).joinToString("\n").trimIndent()
-    val args = lines.kotlinArguments(kotlinStart, kotlinEnd)
+    val args = lines.kotlinArguments(kotlinStartRegex, kotlinEndRegex)
 
     return FuncInfo(lines.joinToString("\n"), "\n$funcCode\n\n", args, listOf())
   }
 
   companion object {
-    internal val kotlinStart = Regex("static\\svoid\\smain\\(")
-    internal val kotlinEnd = Regex("}")
+    internal val kotlinStartRegex = Regex("static\\svoid\\smain\\(")
+    internal val kotlinEndRegex = Regex("}")
 
     internal fun String.kotlinArguments(start: Regex, end: Regex) = split("\n").kotlinArguments(start, end)
 

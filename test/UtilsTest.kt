@@ -17,13 +17,13 @@
 
 package com.github.readingbat
 
-import com.github.readingbat.dsl.JavaChallenge.Companion.deriveJavaArgs
-import com.github.readingbat.dsl.JavaChallenge.Companion.javaEnd
-import com.github.readingbat.dsl.JavaChallenge.Companion.javaStart
+import com.github.readingbat.dsl.JavaChallenge.Companion.javaArguments
+import com.github.readingbat.dsl.JavaChallenge.Companion.javaEndRegex
+import com.github.readingbat.dsl.JavaChallenge.Companion.javaStartRegex
 import com.github.readingbat.dsl.KotlinChallenge.Companion.kotlinArguments
 import com.github.readingbat.dsl.PythonChallenge.Companion.pythonArguments
-import com.github.readingbat.dsl.PythonChallenge.Companion.pythonEnd
-import com.github.readingbat.dsl.PythonChallenge.Companion.pythonStart
+import com.github.readingbat.dsl.PythonChallenge.Companion.pythonEndRegex
+import com.github.readingbat.dsl.PythonChallenge.Companion.pythonStartRegex
 import com.github.readingbat.dsl.addImports
 import org.amshove.kluent.shouldBeEqualTo
 import org.junit.jupiter.api.Test
@@ -47,8 +47,8 @@ class UtilsTest {
             main()
     """.trimIndent()
 
-    s.pythonArguments(pythonStart, pythonEnd) shouldBeEqualTo listOf("simple_choice2(True, True)",
-                                                                     "simple_choice2(True, False)")
+    s.pythonArguments(pythonStartRegex, pythonEndRegex) shouldBeEqualTo listOf("simple_choice2(True, True)",
+                                                                               "simple_choice2(True, False)")
   }
 
   @Test
@@ -75,8 +75,8 @@ class UtilsTest {
       }
     """.trimIndent()
 
-    s.deriveJavaArgs(javaStart, javaEnd) shouldBeEqualTo listOf("""joinEnds("Blue zebra")""",
-                                                                """joinEnds("Tree")""")
+    s.javaArguments(javaStartRegex, javaEndRegex) shouldBeEqualTo listOf("""joinEnds("Blue zebra")""",
+                                                                         """joinEnds("Tree")""")
   }
 
   @Test
@@ -92,8 +92,8 @@ class UtilsTest {
       }
     """.trimIndent()
 
-    s.kotlinArguments(javaStart, javaEnd) shouldBeEqualTo listOf("""listOf("a").combine2()""",
-                                                                 """listOf("a", "b", "c", "d").combine2()""")
+    s.kotlinArguments(javaStartRegex, javaEndRegex) shouldBeEqualTo listOf("""listOf("a").combine2()""",
+                                                                           """listOf("a", "b", "c", "d").combine2()""")
   }
 
   @Test
