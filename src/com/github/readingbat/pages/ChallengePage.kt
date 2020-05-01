@@ -72,7 +72,7 @@ internal fun HTML.challengePage(challenge: Challenge) {
 
       div(classes = codeBlock) {
         pre(classes = "line-numbers") {
-          code(classes = "language-$languageName") { +challenge.funcInfo().snippet }
+          code(classes = "language-$languageName") { +challenge.funcInfo().codeSnippet }
         }
       }
 
@@ -82,7 +82,7 @@ internal fun HTML.challengePage(challenge: Challenge) {
 
           funcArgs.withIndex().forEach { (i, v) ->
             tr {
-              td(classes = funcCol) { +challenge.funcInfo().invokes[i] }
+              td(classes = funcCol) { +challenge.funcInfo().arguments[i] }
               td(classes = arrow) { rawHtml("&rarr;") }
               td {
                 textInput(classes = answer) {

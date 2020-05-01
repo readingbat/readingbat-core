@@ -17,12 +17,12 @@
 
 package com.github.readingbat
 
+import com.github.readingbat.dsl.JavaChallenge.Companion.deriveJavaArgs
 import com.github.readingbat.dsl.JavaChallenge.Companion.javaEnd
-import com.github.readingbat.dsl.JavaChallenge.Companion.javaInvokes
 import com.github.readingbat.dsl.JavaChallenge.Companion.javaStart
-import com.github.readingbat.dsl.KotlinChallenge.Companion.kotlinInvokes
+import com.github.readingbat.dsl.KotlinChallenge.Companion.kotlinArguments
+import com.github.readingbat.dsl.PythonChallenge.Companion.pythonArguments
 import com.github.readingbat.dsl.PythonChallenge.Companion.pythonEnd
-import com.github.readingbat.dsl.PythonChallenge.Companion.pythonInvokes
 import com.github.readingbat.dsl.PythonChallenge.Companion.pythonStart
 import com.github.readingbat.dsl.addImports
 import org.amshove.kluent.shouldBeEqualTo
@@ -47,8 +47,8 @@ class UtilsTest {
             main()
     """.trimIndent()
 
-    s.pythonInvokes(pythonStart, pythonEnd) shouldBeEqualTo listOf("simple_choice2(True, True)",
-                                                                   "simple_choice2(True, False)")
+    s.pythonArguments(pythonStart, pythonEnd) shouldBeEqualTo listOf("simple_choice2(True, True)",
+                                                                     "simple_choice2(True, False)")
   }
 
   @Test
@@ -75,8 +75,8 @@ class UtilsTest {
       }
     """.trimIndent()
 
-    s.javaInvokes(javaStart, javaEnd) shouldBeEqualTo listOf("""joinEnds("Blue zebra")""",
-                                                             """joinEnds("Tree")""")
+    s.deriveJavaArgs(javaStart, javaEnd) shouldBeEqualTo listOf("""joinEnds("Blue zebra")""",
+                                                                """joinEnds("Tree")""")
   }
 
   @Test
@@ -92,8 +92,8 @@ class UtilsTest {
       }
     """.trimIndent()
 
-    s.kotlinInvokes(javaStart, javaEnd) shouldBeEqualTo listOf("""listOf("a").combine2()""",
-                                                               """listOf("a", "b", "c", "d").combine2()""")
+    s.kotlinArguments(javaStart, javaEnd) shouldBeEqualTo listOf("""listOf("a").combine2()""",
+                                                                 """listOf("a", "b", "c", "d").combine2()""")
   }
 
   @Test
