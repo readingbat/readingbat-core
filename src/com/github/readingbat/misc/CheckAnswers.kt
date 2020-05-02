@@ -17,12 +17,14 @@
 
 package com.github.readingbat.misc
 
+import com.github.pambrose.common.script.KotlinScript
 import com.github.pambrose.common.util.isDoubleQuoted
 import com.github.pambrose.common.util.isSingleQuoted
 import com.github.pambrose.common.util.singleToDoubleQuoted
 import com.github.readingbat.Constants.langSrc
 import com.github.readingbat.Constants.solution
 import com.github.readingbat.Constants.userResp
+import com.github.readingbat.dsl.InvalidConfigurationException
 import io.ktor.application.ApplicationCall
 import io.ktor.application.call
 import io.ktor.request.receiveParameters
@@ -42,8 +44,9 @@ object CheckAnswers : KLogging() {
     logger.info("Found ${userResps.size} user responses in $compareMap")
     val results =
       userResps.indices.map { i ->
-        val userResp = compareMap[userResp + i]?.trim()
-        val solution = compareMap[solution + i]?.trim()
+        val userResp = compareMap[userResp + i]?.trim() ?: throw InvalidConfigurationException("Missing user response")
+        val solution = compareMap[solution + i]?.trim() ?: throw InvalidConfigurationException("Missing solution")
+
         checkWithSolution(isJava, userResp, solution)
       }
 
@@ -51,24 +54,32 @@ object CheckAnswers : KLogging() {
     call.respondText(results.toString())
   }
 
-  private fun checkWithSolution(isJava: Boolean, userResp: String?, solution: String?) =
+  private fun checkWithSolution(isJava: Boolean, userResp: String, solution: String) =
     try {
       fun String.isJavaBoolean() = this == "true" || this == "false"
       fun String.isPythonBoolean() = this == "True" || this == "False"
 
-      logger.info("Comparing solution [$solution] with user response [$userResp]")
+      logger.info("""Comparing solution "$solution" with user response "$userResp"""")
 
-      if (isJava)
-        when {
-          userResp.isNullOrEmpty() || solution.isNullOrEmpty() -> false
-          userResp.isDoubleQuoted() || solution.isDoubleQuoted() -> userResp == solution
-          userResp.contains(".") || solution.contains(".") -> userResp.toDouble() == solution.toDouble()
-          userResp.isJavaBoolean() && solution.isJavaBoolean() -> userResp.toBoolean() == solution.toBoolean()
-          else -> userResp.toInt() == solution.toInt()
+      if (isJava) {
+        if (solution.startsWith("[") && solution.endsWith("]")) {
+          val solutionExpr = solution.substring(1, solution.length - 1)
+          val userRespExpr = userResp.substring(1, userResp.length - 1)
+          KotlinScript().eval("listOf($solutionExpr) == listOf($userRespExpr)") as Boolean
         }
+        else {
+          when {
+            userResp.isEmpty() || solution.isEmpty() -> false
+            userResp.isDoubleQuoted() || solution.isDoubleQuoted() -> userResp == solution
+            userResp.contains(".") || solution.contains(".") -> userResp.toDouble() == solution.toDouble()
+            userResp.isJavaBoolean() && solution.isJavaBoolean() -> userResp.toBoolean() == solution.toBoolean()
+            else -> userResp.toInt() == solution.toInt()
+          }
+        }
+      }
       else
         when {
-          userResp.isNullOrEmpty() || solution.isNullOrEmpty() -> false
+          userResp.isEmpty() || solution.isEmpty() -> false
           userResp.isDoubleQuoted() -> userResp == solution
           userResp.isSingleQuoted() -> userResp.singleToDoubleQuoted() == solution
           userResp.contains(".") || solution.contains(".") -> userResp.toDouble() == solution.toDouble()

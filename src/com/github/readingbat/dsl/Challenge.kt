@@ -30,8 +30,6 @@ import java.net.URL
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.reflect.KClass
-import kotlin.reflect.KTypeParameter
-import kotlin.reflect.full.isSuperclassOf
 import kotlin.reflect.typeOf
 import kotlin.time.measureTimedValue
 
@@ -320,39 +318,20 @@ class FunctionInfo(val challenge: Challenge,
   val answers = mutableListOf<String>()
 
   init {
-    val classifier = answerType.ktype.classifier
     rawAnswers.forEach { raw ->
-      when (classifier) {
-        is KClass<*> -> {
-          when {
-            List::class.isSuperclassOf(classifier) ||
-                classifier in listOf(Array<Any>::class, BooleanArray::class, IntArray::class) -> {
-              answers +=
-                when (challenge.returnType!!) {
-                  BooleanType, IntType -> raw.toString()
-                  StringType -> raw.toString().toDoubleQuoted()
-                  BooleanArrayType -> (raw as BooleanArray).toString()
-                  IntArrayType -> (raw as IntArray).toString()
-                  StringArrayType -> "[${(raw as Array<String>).map { it.toDoubleQuoted() }.joinToString()}]"
-                  BooleanListType -> (raw as List<Boolean>).toString()
-                  IntListType -> (raw as List<Int>).toString()
-                  StringListType -> "[${(raw as List<String>).map { it.toDoubleQuoted() }.joinToString()}]"
-                }
-            }
-
-            classifier == String::class -> answers += raw.toString().toDoubleQuoted()
-
-            else -> answers += raw.toString()
-          }
+      answers +=
+        when (challenge.returnType!!) {
+          BooleanType, IntType -> raw.toString()
+          StringType -> raw.toString().toDoubleQuoted()
+          BooleanArrayType -> (raw as BooleanArray).map { it }.joinToString().withBrackets
+          IntArrayType -> (raw as IntArray).map { it }.joinToString().withBrackets
+          StringArrayType -> (raw as Array<String>).map { it.toDoubleQuoted() }.joinToString().withBrackets
+          BooleanListType -> (raw as List<Boolean>).toString()
+          IntListType -> (raw as List<Int>).toString()
+          StringListType -> "[${(raw as List<String>).map { it.toDoubleQuoted() }.joinToString()}]"
         }
-
-        is KTypeParameter -> {
-          throw InvalidConfigurationException("Invalid type: $answerType in ${challenge.name}")
-        }
-
-        else -> throw InvalidConfigurationException("Invalid type: $answerType in ${challenge.name}")
-      }
     }
+
     logger.info { "Computed answers: $answers for arguments: $arguments in ${challenge.name}" }
 
     validate()
@@ -365,6 +344,8 @@ class FunctionInfo(val challenge: Challenge,
 
   companion object : KLogging()
 }
+
+internal val String.withBrackets get() = "[$this]"
 
 fun main() {
   val t = typeOf<List<String>>()
