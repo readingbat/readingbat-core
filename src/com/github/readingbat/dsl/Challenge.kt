@@ -187,6 +187,7 @@ class JavaChallenge(group: ChallengeGroup) : Challenge(group) {
     val funcCode = lines.subList(lineNums.first(), lineNums.last() - 1).joinToString("\n").trimIndent()
     val args = lines.javaArguments(javaStartRegex, javaEndRegex)
     val script = lines.convertToScript()
+    logger.info { "$name script: \n$script" }
 
     val answers: Any
     JavaScript()
@@ -194,7 +195,7 @@ class JavaChallenge(group: ChallengeGroup) : Challenge(group) {
         import(List::class.java)
         import(ArrayList::class.java)
         answers = evalScript(script)
-        println(answers)
+        logger.info { "Computed answers for $name: $answers" }
       }
 
     if (answers !is List<*>)
@@ -203,7 +204,7 @@ class JavaChallenge(group: ChallengeGroup) : Challenge(group) {
     return FunctionInfo(this, code, funcCode, args, returnType!!, answers)
   }
 
-  companion object {
+  companion object : KLogging() {
 
     internal val staticRegex = Regex("static.*\\(")
     internal val javaStartRegex = Regex("static\\svoid\\smain\\(")
@@ -211,41 +212,61 @@ class JavaChallenge(group: ChallengeGroup) : Challenge(group) {
 
     internal fun String.javaArguments(start: Regex, end: Regex) = split("\n").javaArguments(start, end)
 
-    internal fun List<String>.javaArguments(start: Regex, end: Regex) =
-      linesBetween(start, end)
-        .filter { it.contains("System.out.println(") }
-        .map { it.trim() }
-        .map { it.replaceFirst("System.out.println(", "") }
-        .map { it.substring(0, it.indexOfLast { c -> c == ')' }) }
+    internal fun List<String>.javaArguments(start: Regex, end: Regex): List<String> {
+      val prefixes =
+        listOf("System.out.println", "ArrayUtils.arrayPrint", "ListUtils.listPrint", "arrayPrint", "listPrint")
+      val lines = mutableListOf<String>()
+      prefixes.forEach { prefix ->
+        lines.addAll(
+          linesBetween(start, end)
+            .map { it.trim() }
+            .filter { it.startsWith("$prefix(") }
+            .map { it.replaceFirst("$prefix(", "") }
+            .map { it.substring(0, it.indexOfLast { c -> c == ')' }) })
+      }
+      return lines
+    }
 
     internal fun List<String>.convertToScript(): String {
       val scriptCode = mutableListOf<String>()
       val psvmRegex = Regex("""public\s*static\s*void\s*main.*\)""")
       val printlnRegex = Regex("""System\.out\.println\(.*\)""")
-      var insideMain = false
-      var printIndent = 0
+      val prefixes =
+        listOf(Regex("""System\.out\.println\(.*\)"""),
+               Regex("""ArrayUtils\.arrayPrint\("""),
+               Regex("""ListUtils\.listPrint\("""),
+               Regex("""arrayPrint\("""),
+               Regex("""listPrint\("""))
+
       val varName = "answers"
+      var exprIndent = 0
+      var insideMain = false
+
       this.forEach { line ->
         when {
           line.contains(psvmRegex) -> {
-            val indent = line.indexOf("public")
-            scriptCode += "".padStart(indent) + "public List<Object> $varName = new ArrayList<Object>();"
-            scriptCode += ""
+            val publicIndent = line.indexOf("public")
             insideMain = true
+            scriptCode += "".padStart(publicIndent) + "public List<Object> $varName = new ArrayList<Object>();"
+            scriptCode += ""
             scriptCode += line.replace(psvmRegex, "public List<Object> getValue()")
           }
-          insideMain && line.contains(printlnRegex) -> {
-            printIndent = line.indexOf("System")
-            val firstQuote = line.indexOfFirst { it == '(' }
-            val lastQuote = line.indexOfLast { it == ')' }
-            val printlnExpr = line.substring(firstQuote + 1, lastQuote)
-            scriptCode += line.replace(printlnRegex, "$varName.add($printlnExpr)")
+          insideMain && prefixes.any { line.contains(it) } -> {
+            exprIndent = kotlin.math.max(0, prefixes.map { line.indexOf(it.pattern.substring(0, 6)) }.max()!!)
+            val firstParen = line.indexOfFirst { it == '(' }
+            val lastParen = line.indexOfLast { it == ')' }
+            val expr = line.substring(firstParen + 1, lastParen)
+            //logger.info { "Content from: $firstParen to: $lastParen is: $expr" }
+            val str = "".padStart(exprIndent) + "$varName.add($expr);"
+            logger.info { "Transformed:\n$line\nto:\n$str" }
+            scriptCode += str
           }
-          insideMain && line.trim() == "}" -> {
-            scriptCode += ""
-            scriptCode += "".padStart(printIndent) + "return $varName;"
-            scriptCode += line
+          insideMain && line.trim().startsWith("}") -> {
+            logger.info { "Inserting return stmt" }
             insideMain = false
+            scriptCode += ""
+            scriptCode += "".padStart(exprIndent) + "return $varName;"
+            scriptCode += line
           }
           else -> {
             scriptCode += line
@@ -256,6 +277,8 @@ class JavaChallenge(group: ChallengeGroup) : Challenge(group) {
     }
   }
 }
+
+internal val String.deRegex get() = this.replace("\\", "")
 
 class KotlinChallenge(group: ChallengeGroup) : Challenge(group) {
   val id = counter.incrementAndGet()
