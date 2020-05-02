@@ -81,8 +81,9 @@ internal fun HTML.challengePage(challenge: Challenge) {
           tr { th { +"Function Call" }; th { +"" }; th { +"Return Value" }; th { +"" } }
 
           funcArgs.withIndex().forEach { (i, v) ->
+            val funcInfo = challenge.funcInfo()
             tr {
-              td(classes = funcCol) { +challenge.funcInfo().arguments[i] }
+              td(classes = funcCol) { +funcInfo.arguments[i] }
               td(classes = arrow) { rawHtml("&rarr;") }
               td {
                 textInput(classes = answer) {
@@ -90,7 +91,8 @@ internal fun HTML.challengePage(challenge: Challenge) {
                 }
               }
               td(classes = feedback) { id = "$feedback$i" }
-              td { hiddenInput { id = "$solution$i"; value = v.second } }
+              println("${v.second} and ${funcInfo.answers[i]}")
+              td { hiddenInput { id = "$solution$i"; value = funcInfo.answers[i] } }
             }
           }
         }

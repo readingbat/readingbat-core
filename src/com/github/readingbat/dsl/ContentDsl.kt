@@ -17,7 +17,7 @@
 
 package com.github.readingbat.dsl
 
-import com.github.pambrose.common.script.KtsScript
+import com.github.pambrose.common.script.KotlinScript
 import com.github.pambrose.common.util.ContentSource
 import com.github.pambrose.common.util.GitHubSource
 import com.github.readingbat.ReadingBatServer
@@ -73,11 +73,16 @@ internal fun addImports(code: String, variableName: String): String {
     """.trimMargin().split("\n").joinToString("\n") { it.trimStart() }
 }
 
-private val <T>  KFunction<T>.fqMethodName get() = "${javaClass.packageName}.$name"
+private val <T> KFunction<T>.fqMethodName get() = "${javaClass.packageName}.$name"
 
 private fun evalDsl(code: String, sourceName: String) =
   try {
-    KtsScript().run { eval(code) as ReadingBatContent }.apply { validate() }
+    KotlinScript()
+      .run {
+        eval(code) as ReadingBatContent
+      }.apply {
+        validate()
+      }
   } catch (e: Throwable) {
     logger.info { "Error in $sourceName:\n$code" }
     throw e

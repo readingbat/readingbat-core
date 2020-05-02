@@ -17,7 +17,9 @@
 
 package com.github.readingbat.dsl
 
+import com.github.pambrose.common.script.JavaScript
 import com.github.pambrose.common.util.*
+import com.github.readingbat.dsl.JavaChallenge.Companion.convertToScript
 import com.vladsch.flexmark.html.HtmlRenderer
 import com.vladsch.flexmark.parser.Parser
 import com.vladsch.flexmark.util.data.MutableDataSet
@@ -25,6 +27,11 @@ import mu.KLogging
 import java.net.URL
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.reflect.KClass
+import kotlin.reflect.KType
+import kotlin.reflect.KTypeParameter
+import kotlin.reflect.full.isSuperclassOf
+import kotlin.reflect.typeOf
 import kotlin.time.measureTimedValue
 
 @ReadingBatDslMarker
@@ -147,7 +154,7 @@ class PythonChallenge(group: ChallengeGroup) : Challenge(group) {
     val funcCode = lines.subList(lineNums.first(), lineNums.last() - 1).joinToString("\n").trimIndent()
     val args = lines.pythonArguments(pythonStartRegex, pythonEndRegex)
 
-    return FuncInfo(code, funcCode, args, listOf())
+    return FuncInfo(code, funcCode, args, listOf<Any>(), typeOf<List<String>>())
   }
 
   companion object {
@@ -175,9 +182,20 @@ class JavaChallenge(group: ChallengeGroup) : Challenge(group) {
 
     val funcCode = lines.subList(lineNums.first(), lineNums.last() - 1).joinToString("\n").trimIndent()
     val args = lines.javaArguments(javaStartRegex, javaEndRegex)
+    val script = lines.convertToScript()
 
+    val answers: Any
+    JavaScript()
+      .apply {
+        import(List::class.java)
+        import(ArrayList::class.java)
+        answers = evalScript(script)
+      }
 
-    return FuncInfo(code, funcCode, args, listOf())
+    if (answers !is List<*>)
+      throw InvalidConfigurationException("Invalid type returned from script")
+
+    return FuncInfo(code, funcCode, args, answers, typeOf<List<String>>())
   }
 
   companion object {
@@ -194,6 +212,43 @@ class JavaChallenge(group: ChallengeGroup) : Challenge(group) {
         .map { it.trim() }
         .map { it.replaceFirst("System.out.println(", "") }
         .map { it.substring(0, it.indexOfLast { c -> c == ')' }) }
+
+    internal fun List<String>.convertToScript(): String {
+      val scriptCode = mutableListOf<String>()
+      val psvmRegex = Regex("""public\s*static\s*void\s*main.*\)""")
+      val printlnRegex = Regex("""System\.out\.println\(.*\)""")
+      var insideMain = false
+      var printIndent = 0
+      val varName = "answers"
+      this.forEach { line ->
+        when {
+          line.contains(psvmRegex) -> {
+            val indent = line.indexOf("public")
+            scriptCode += "".padStart(indent) + "public List<Object> $varName = new ArrayList<Object>();"
+            scriptCode += ""
+            insideMain = true
+            scriptCode += line.replace(psvmRegex, "public List<Object> getValue()")
+          }
+          insideMain && line.contains(printlnRegex) -> {
+            printIndent = line.indexOf("System")
+            val firstQuote = line.indexOfFirst { it == '(' }
+            val lastQuote = line.indexOfLast { it == ')' }
+            val printlnExpr = line.substring(firstQuote + 1, lastQuote)
+            scriptCode += line.replace(printlnRegex, "$varName.add($printlnExpr)")
+          }
+          insideMain && line.trim() == "}" -> {
+            scriptCode += ""
+            scriptCode += "".padStart(printIndent) + "return $varName;"
+            scriptCode += line
+            insideMain = false
+          }
+          else -> {
+            scriptCode += line
+          }
+        }
+      }
+      return scriptCode.joinToString("\n")
+    }
   }
 }
 
@@ -205,7 +260,7 @@ class KotlinChallenge(group: ChallengeGroup) : Challenge(group) {
     val funcCode = lines.subList(0, lines.lastLineNumberOf(Regex("fun main\\("))).joinToString("\n").trimIndent()
     val args = lines.kotlinArguments(kotlinStartRegex, kotlinEndRegex)
 
-    return FuncInfo(lines.joinToString("\n"), "\n$funcCode\n\n", args, listOf())
+    return FuncInfo(lines.joinToString("\n"), "\n$funcCode\n\n", args, listOf<Any>(), typeOf<List<String>>())
   }
 
   companion object {
@@ -223,4 +278,77 @@ class KotlinChallenge(group: ChallengeGroup) : Challenge(group) {
   }
 }
 
-class FuncInfo(val originalCode: String, val codeSnippet: String, val arguments: List<String>, val solutions: List<Any>)
+class TypeDesc(val clazz: KType
+              )
+
+class FuncInfo(val originalCode: String,
+               val codeSnippet: String,
+               val arguments: List<String>,
+               rawAnswers: List<*>,
+               val answerType: KType) {
+
+  val answers = mutableListOf<String>()
+
+  init {
+    val classifier = answerType.classifier
+    rawAnswers.forEach {
+      if (classifier is KClass<*>) {
+        if (List::class.isSuperclassOf(classifier) || Array<Any>::class == classifier) {
+          if (classifier.typeParameters.size != 1)
+            throw InvalidConfigurationException("Invalid type: $answerType")
+          answers +=
+            if (classifier.typeParameters[0] == typeOf<String>())
+              it.toString().toDoubleQuoted().toDoubleQuoted()
+            else
+              it.toString().toDoubleQuoted()
+        }
+      }
+      else if (classifier is KTypeParameter) {
+        answers +=
+          if (classifier == String::class)
+            it.toString().toDoubleQuoted().toDoubleQuoted()
+          else
+            it.toString().toDoubleQuoted()
+      }
+      else
+        throw InvalidConfigurationException("Invalid type: $answerType")
+    }
+  }
+}
+
+fun main() {
+  val t = typeOf<List<String>>()
+  val c = t.classifier as KClass<*>
+
+  println(t.classifier)
+  println(t.arguments[0])
+  println()
+}
+
+fun main2() {
+  val s = """
+    public class JoinEnds {
+
+        public static String joinEnds(String str) {
+            if (str.length() < 2)
+                return str;
+
+            String b = str.substring(0, 1);
+            String e = str.substring(str.length() - 1);
+
+            return e + b;
+        }
+
+        public static void main(String[] args) {
+            System.out.println(joinEnds("Blue zebra"));
+            System.out.println(joinEnds("Tree"));
+            System.out.println(joinEnds("Re"));
+            System.out.println(joinEnds("p"));
+            System.out.println(joinEnds(""));
+        }
+    }
+  """.trimIndent()
+
+  println(s.split("\n").convertToScript())
+}
+
