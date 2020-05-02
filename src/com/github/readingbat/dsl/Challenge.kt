@@ -19,6 +19,7 @@ package com.github.readingbat.dsl
 
 import com.github.pambrose.common.script.JavaScript
 import com.github.pambrose.common.util.*
+import com.github.readingbat.ReturnTypes
 import com.github.readingbat.dsl.JavaChallenge.Companion.convertToScript
 import com.vladsch.flexmark.html.HtmlRenderer
 import com.vladsch.flexmark.parser.Parser
@@ -60,7 +61,7 @@ sealed class Challenge(private val group: ChallengeGroup) {
   var fileName = ""
   var codingBatEquiv = ""
   var description = ""
-  var returnType = typeOf<Challenge>()
+  var returnType: ReturnTypes? = null
 
   internal abstract fun computeFuncInfo(code: String): FuncInfo
 
@@ -88,8 +89,8 @@ sealed class Challenge(private val group: ChallengeGroup) {
       throw InvalidConfigurationException(""""$name" has inconsistent function arguments: """ +
                                               set.joinToString(" and ") { "($it)" })
 
-    if (returnType == typeOf<Challenge>())
-      throw InvalidConfigurationException("returnType property not set for $name")
+    if (returnType == null)
+      throw InvalidConfigurationException("$name is missing returnType property value")
   }
 
   private fun Any?.prettyQuote(capitalizePythonBooleans: Boolean = true, useDoubleQuotes: Boolean = false) =
