@@ -80,18 +80,19 @@ internal fun HTML.challengePage(challenge: Challenge) {
         table {
           tr { th { +"Function Call" }; th { +"" }; th { +"Return Value" }; th { +"" } }
 
-          funcArgs.withIndex().forEach { (i, v) ->
-            val funcInfo = challenge.funcInfo()
+          val funcInfo = challenge.funcInfo()
+          //funcArgs.withIndex().forEach { (i, v) ->
+          funcInfo.arguments.indices.forEach { i ->
             tr {
               td(classes = funcCol) { +funcInfo.arguments[i] }
               td(classes = arrow) { rawHtml("&rarr;") }
               td {
                 textInput(classes = answer) {
-                  id = "$answer$i"; onKeyPress = "$processAnswers(event, ${funcArgs.size})"
+                  id = "$answer$i"; onKeyPress = "$processAnswers(event, ${funcInfo.answers.size})"
                 }
               }
               td(classes = feedback) { id = "$feedback$i" }
-              println("${v.second} and ${funcInfo.answers[i]}")
+              //println("${v.second} and ${funcInfo.answers[i]}")
               td { hiddenInput { id = "$solution$i"; value = funcInfo.answers[i] } }
             }
           }

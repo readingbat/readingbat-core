@@ -21,7 +21,7 @@ import com.github.readingbat.Constants.checkAnswers
 import com.github.readingbat.Constants.cssName
 import com.github.readingbat.Constants.static
 import com.github.readingbat.dsl.LanguageType
-import com.github.readingbat.misc.checkAnswers
+import com.github.readingbat.misc.CheckAnswers.checkUserAnswers
 import com.github.readingbat.misc.cssContent
 import io.ktor.application.Application
 import io.ktor.application.ApplicationCall
@@ -49,7 +49,7 @@ internal fun Application.routes() {
     }
 
     post("/$checkAnswers") {
-      checkAnswers()
+      checkUserAnswers()
     }
 
     static("/$static") {

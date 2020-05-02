@@ -20,7 +20,7 @@ package com.github.readingbat
 import kotlin.reflect.KType
 import kotlin.reflect.typeOf
 
-enum class ReturnTypes(val ktype: KType) {
+enum class ReturnType(val ktype: KType) {
   BooleanType(typeOf<Boolean>()),
   IntType(typeOf<Int>()),
   LongType(typeOf<Long>()),

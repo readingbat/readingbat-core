@@ -19,7 +19,7 @@ package com.github.readingbat.dsl
 
 import com.github.pambrose.common.script.JavaScript
 import com.github.pambrose.common.util.*
-import com.github.readingbat.ReturnTypes
+import com.github.readingbat.ReturnType
 import com.github.readingbat.dsl.JavaChallenge.Companion.convertToScript
 import com.vladsch.flexmark.html.HtmlRenderer
 import com.vladsch.flexmark.parser.Parser
@@ -29,7 +29,6 @@ import java.net.URL
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.reflect.KClass
-import kotlin.reflect.KType
 import kotlin.reflect.KTypeParameter
 import kotlin.reflect.full.isSuperclassOf
 import kotlin.reflect.typeOf
@@ -61,9 +60,9 @@ sealed class Challenge(private val group: ChallengeGroup) {
   var fileName = ""
   var codingBatEquiv = ""
   var description = ""
-  var returnType: ReturnTypes? = null
+  var returnType: ReturnType? = null
 
-  internal abstract fun computeFuncInfo(code: String): FuncInfo
+  internal abstract fun computeFuncInfo(code: String, returnType: ReturnType?): FunctionInfo
 
   internal fun funcInfo() =
     sourcesMap
@@ -71,7 +70,7 @@ sealed class Challenge(private val group: ChallengeGroup) {
         val path = "${group.languageGroup.rawRepoRoot}$fqName"
         val (content, dur) = measureTimedValue { URL(path).readText() }
         logger.info { """Fetching "${group.name}/$fileName" $path in $dur""" }
-        computeFuncInfo(content)
+        computeFuncInfo(content, returnType)
       }
 
   internal fun validate() {
@@ -89,8 +88,8 @@ sealed class Challenge(private val group: ChallengeGroup) {
       throw InvalidConfigurationException(""""$name" has inconsistent function arguments: """ +
                                               set.joinToString(" and ") { "($it)" })
 
-    if (returnType == null)
-      throw InvalidConfigurationException("$name is missing returnType property value")
+    //if (returnType == null)
+    //  throw InvalidConfigurationException("$name is missing returnType property value")
   }
 
   private fun Any?.prettyQuote(capitalizePythonBooleans: Boolean = true, useDoubleQuotes: Boolean = false) =
@@ -144,12 +143,12 @@ sealed class Challenge(private val group: ChallengeGroup) {
 
   companion object : KLogging() {
     internal val counter = AtomicInteger(0)
-    internal val sourcesMap = ConcurrentHashMap<Int, FuncInfo>()
+    internal val sourcesMap = ConcurrentHashMap<Int, FunctionInfo>()
   }
 }
 
 class PythonChallenge(group: ChallengeGroup) : Challenge(group) {
-  override fun computeFuncInfo(code: String): FuncInfo {
+  override fun computeFuncInfo(code: String, returnType: ReturnType?): FunctionInfo {
     val lines = code.split("\n")
     val lineNums =
       lines.mapIndexed { i, str -> i to str }
@@ -159,7 +158,7 @@ class PythonChallenge(group: ChallengeGroup) : Challenge(group) {
     val funcCode = lines.subList(lineNums.first(), lineNums.last() - 1).joinToString("\n").trimIndent()
     val args = lines.pythonArguments(pythonStartRegex, pythonEndRegex)
 
-    return FuncInfo(code, funcCode, args, listOf<Any>(), typeOf<List<String>>())
+    return FunctionInfo(code, funcCode, args, ReturnType.StringType, listOf<Any>())
   }
 
   companion object {
@@ -178,7 +177,7 @@ class PythonChallenge(group: ChallengeGroup) : Challenge(group) {
 }
 
 class JavaChallenge(group: ChallengeGroup) : Challenge(group) {
-  override fun computeFuncInfo(code: String): FuncInfo {
+  override fun computeFuncInfo(code: String, returnType: ReturnType?): FunctionInfo {
     val lines = code.split("\n").filter { !it.trimStart().startsWith("package") }
     val lineNums =
       lines.mapIndexed { i, str -> i to str }
@@ -195,12 +194,13 @@ class JavaChallenge(group: ChallengeGroup) : Challenge(group) {
         import(List::class.java)
         import(ArrayList::class.java)
         answers = evalScript(script)
+        println(answers)
       }
 
     if (answers !is List<*>)
       throw InvalidConfigurationException("Invalid type returned from script")
 
-    return FuncInfo(code, funcCode, args, answers, typeOf<List<String>>())
+    return FunctionInfo(code, funcCode, args, returnType!!, answers)
   }
 
   companion object {
@@ -260,12 +260,14 @@ class JavaChallenge(group: ChallengeGroup) : Challenge(group) {
 class KotlinChallenge(group: ChallengeGroup) : Challenge(group) {
   val id = counter.incrementAndGet()
 
-  override fun computeFuncInfo(code: String): FuncInfo {
+  override fun computeFuncInfo(code: String, returnType: ReturnType?): FunctionInfo {
     val lines = code.split("\n").filter { !it.trimStart().startsWith("package") }
     val funcCode = lines.subList(0, lines.lastLineNumberOf(Regex("fun main\\("))).joinToString("\n").trimIndent()
     val args = lines.kotlinArguments(kotlinStartRegex, kotlinEndRegex)
+    val originalCode = lines.joinToString("\n")
+    val codeSnippet = "\n$funcCode\n\n"
 
-    return FuncInfo(lines.joinToString("\n"), "\n$funcCode\n\n", args, listOf<Any>(), typeOf<List<String>>())
+    return FunctionInfo(originalCode, codeSnippet, args, ReturnType.StringType, listOf<Any>())
   }
 
   companion object {
@@ -283,42 +285,51 @@ class KotlinChallenge(group: ChallengeGroup) : Challenge(group) {
   }
 }
 
-class TypeDesc(val clazz: KType
-              )
-
-class FuncInfo(val originalCode: String,
-               val codeSnippet: String,
-               val arguments: List<String>,
-               rawAnswers: List<*>,
-               val answerType: KType) {
+class FunctionInfo(val originalCode: String,
+                   val codeSnippet: String,
+                   val arguments: List<String>,
+                   val answerType: ReturnType,
+                   rawAnswers: List<*>) {
 
   val answers = mutableListOf<String>()
 
   init {
-    val classifier = answerType.classifier
+    val classifier = answerType.ktype.classifier
     rawAnswers.forEach {
-      if (classifier is KClass<*>) {
-        if (List::class.isSuperclassOf(classifier) || Array<Any>::class == classifier) {
-          if (classifier.typeParameters.size != 1)
-            throw InvalidConfigurationException("Invalid type: $answerType")
-          answers +=
-            if (classifier.typeParameters[0] == typeOf<String>())
-              it.toString().toDoubleQuoted().toDoubleQuoted()
-            else
-              it.toString().toDoubleQuoted()
+      when (classifier) {
+        is KClass<*> -> {
+          when {
+            List::class.isSuperclassOf(classifier) || classifier == Array<Any>::class -> {
+              if (classifier.typeParameters.size != 1)
+                throw InvalidConfigurationException("Invalid type: $answerType")
+
+              answers +=
+                if (classifier.typeParameters[0] == typeOf<String>())
+                  it.toString().toDoubleQuoted()
+                else
+                  it.toString()
+            }
+
+            classifier == String::class -> {
+              answers +=
+                if (classifier == String::class)
+                  it.toString().toDoubleQuoted()
+                else
+                  it.toString()
+            }
+            else -> throw InvalidConfigurationException("Invalid type: $answerType")
+          }
         }
+        is KTypeParameter -> {
+          throw InvalidConfigurationException("Invalid type: $answerType")
+        }
+        else -> throw InvalidConfigurationException("Invalid type: $answerType")
       }
-      else if (classifier is KTypeParameter) {
-        answers +=
-          if (classifier == String::class)
-            it.toString().toDoubleQuoted().toDoubleQuoted()
-          else
-            it.toString().toDoubleQuoted()
-      }
-      else
-        throw InvalidConfigurationException("Invalid type: $answerType")
     }
+    logger.info { "Computed answers: $answers" }
   }
+
+  companion object : KLogging()
 }
 
 fun main() {
