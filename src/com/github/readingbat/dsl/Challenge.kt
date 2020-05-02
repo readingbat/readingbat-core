@@ -60,6 +60,7 @@ sealed class Challenge(private val group: ChallengeGroup) {
   var fileName = ""
   var codingBatEquiv = ""
   var description = ""
+  var returnType = typeOf<Challenge>()
 
   internal abstract fun computeFuncInfo(code: String): FuncInfo
 
@@ -86,6 +87,9 @@ sealed class Challenge(private val group: ChallengeGroup) {
     if (set.size > 1)
       throw InvalidConfigurationException(""""$name" has inconsistent function arguments: """ +
                                               set.joinToString(" and ") { "($it)" })
+
+    if (returnType == typeOf<Challenge>())
+      throw InvalidConfigurationException("returnType property not set for $name")
   }
 
   private fun Any?.prettyQuote(capitalizePythonBooleans: Boolean = true, useDoubleQuotes: Boolean = false) =
