@@ -23,8 +23,13 @@ import kotlin.reflect.typeOf
 enum class ReturnType(val ktype: KType) {
   BooleanType(typeOf<Boolean>()),
   IntType(typeOf<Int>()),
-  LongType(typeOf<Long>()),
-  FloatType(typeOf<Float>()),
-  DoubleType(typeOf<Double>()),
-  StringType(typeOf<String>())
+  StringType(typeOf<String>()),
+
+  BooleanArrayType(typeOf<Array<Boolean>>()),
+  IntArrayType(typeOf<Array<Int>>()),
+  StringArrayType(typeOf<Array<String>>()),
+
+  BooleanListType(typeOf<List<Boolean>>()),
+  IntListType(typeOf<List<Int>>()),
+  StringListType(typeOf<List<String>>())
 }
