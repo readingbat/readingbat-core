@@ -199,9 +199,12 @@ class JavaChallenge(group: ChallengeGroup) : Challenge(group) {
       }
 
     if (rawAnswers !is List<*>)
-      throw InvalidConfigurationException("Invalid type returned from script")
+      throw InvalidConfigurationException("Invalid type returned for $name")
 
-    return FunctionInfo(this, code, funcCode, args, returnType!!, rawAnswers)
+    if (returnType == null)
+      throw InvalidConfigurationException("$name missing returnType value")
+
+    return FunctionInfo(this, code, funcCode, args, returnType, rawAnswers)
   }
 
   companion object : KLogging() {

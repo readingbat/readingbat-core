@@ -30,6 +30,7 @@ import io.ktor.response.respondText
 import io.ktor.util.pipeline.PipelineContext
 import kotlinx.coroutines.delay
 import mu.KLogging
+import javax.script.ScriptException
 import kotlin.time.milliseconds
 
 object CheckAnswers : KLogging() {
@@ -55,7 +56,7 @@ object CheckAnswers : KLogging() {
   internal infix fun String.equalsAsList(other: String) =
     try {
       KotlinScript().eval("listOf(${this.trimEnds()}) == listOf(${other.trimEnds()})") as Boolean
-    } catch (e: Exception) {
+    } catch (e: ScriptException) {
       logger.info { "Caught exception comparing $this and $other: ${e.message}" }
       false
     }
@@ -65,13 +66,12 @@ object CheckAnswers : KLogging() {
       fun String.isJavaBoolean() = this == "true" || this == "false"
       fun String.isPythonBoolean() = this == "True" || this == "False"
 
-      logger.info("""Comparing solution "$solution" with user response "$userResp"""")
+      logger.info("""Comparing solution: "$solution" with user response: "$userResp"""")
 
       if (isJava) {
-        if (solution.isBracketed()) {
+        if (solution.isBracketed())
           solution equalsAsList userResp
-        }
-        else {
+        else
           when {
             userResp.isEmpty() || solution.isEmpty() -> false
             userResp.isDoubleQuoted() || solution.isDoubleQuoted() -> userResp == solution
@@ -79,7 +79,6 @@ object CheckAnswers : KLogging() {
             userResp.isJavaBoolean() && solution.isJavaBoolean() -> userResp.toBoolean() == solution.toBoolean()
             else -> userResp.toInt() == solution.toInt()
           }
-        }
       }
       else
         when {
