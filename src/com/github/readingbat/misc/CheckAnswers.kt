@@ -54,7 +54,7 @@ object CheckAnswers : KLogging() {
 
   internal infix fun String.equalsAsList(other: String) =
     try {
-      KotlinScript().eval("listOf(${this.trimEnds()} == listOf(${other.trimEnds()}") as Boolean
+      KotlinScript().eval("listOf(${this.trimEnds()}) == listOf(${other.trimEnds()})") as Boolean
     } catch (e: Exception) {
       logger.info { "Caught exception comparing $this and $other: ${e.message}" }
       false
