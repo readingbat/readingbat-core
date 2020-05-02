@@ -25,7 +25,7 @@ object Constants {
   const val groupItemSrc = "groupItem"
   const val funcItem = "funcItem"
   const val funcChoice = "funcChoice"
-  const val answer = "answer"
+  const val userResp = "userResp"
   const val solution = "solution"
   const val funcCol = "funcCol"
   const val arrow = "arrow"

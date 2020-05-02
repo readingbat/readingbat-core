@@ -17,7 +17,6 @@
 
 package com.github.readingbat.misc
 
-import com.github.readingbat.Constants.answer
 import com.github.readingbat.Constants.arrow
 import com.github.readingbat.Constants.backLink
 import com.github.readingbat.Constants.bodyHeader
@@ -37,6 +36,7 @@ import com.github.readingbat.Constants.spinner
 import com.github.readingbat.Constants.status
 import com.github.readingbat.Constants.tabs
 import com.github.readingbat.Constants.userAnswers
+import com.github.readingbat.Constants.userResp
 import kotlinx.css.*
 import kotlinx.css.properties.TextDecoration
 
@@ -88,7 +88,7 @@ internal fun CSSBuilder.cssContent() {
     fontSize = fs
     textAlign = TextAlign.center
   }
-  rule(".$answer") {
+  rule(".$userResp") {
     width = 15.em
     fontSize = 90.pct
   }

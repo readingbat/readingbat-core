@@ -20,9 +20,9 @@ package com.github.readingbat.misc
 import com.github.pambrose.common.util.isDoubleQuoted
 import com.github.pambrose.common.util.isSingleQuoted
 import com.github.pambrose.common.util.singleToDoubleQuoted
-import com.github.readingbat.Constants.answer
 import com.github.readingbat.Constants.langSrc
 import com.github.readingbat.Constants.solution
+import com.github.readingbat.Constants.userResp
 import io.ktor.application.ApplicationCall
 import io.ktor.application.call
 import io.ktor.request.receiveParameters
@@ -37,12 +37,14 @@ object CheckAnswers : KLogging() {
   internal suspend fun PipelineContext<Unit, ApplicationCall>.checkUserAnswers() {
     val params = call.receiveParameters()
     val compareMap = params.entries().map { it.key to it.value[0] }.toMap()
-    val answers = params.entries().filter { it.key.startsWith(answer) }
+    val isJava = compareMap[langSrc] == "java"
+    val userResps = params.entries().filter { it.key.startsWith(userResp) }
+    logger.info("Found ${userResps.size} user responses in $compareMap")
     val results =
-      answers.indices.map { i ->
-        val userResp = compareMap[answer + i]?.trim()
-        val sol = compareMap[solution + i]?.trim()
-        checkWithSolution(compareMap[langSrc] == "java", userResp, sol)
+      userResps.indices.map { i ->
+        val userResp = compareMap[userResp + i]?.trim()
+        val solution = compareMap[solution + i]?.trim()
+        checkWithSolution(isJava, userResp, solution)
       }
 
     delay(200.milliseconds.toLongMilliseconds())

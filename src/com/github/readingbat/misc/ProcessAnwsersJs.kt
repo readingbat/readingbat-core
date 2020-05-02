@@ -17,7 +17,6 @@
 
 package com.github.readingbat.misc
 
-import com.github.readingbat.Constants.answer
 import com.github.readingbat.Constants.checkAnswers
 import com.github.readingbat.Constants.feedback
 import com.github.readingbat.Constants.langSrc
@@ -27,6 +26,7 @@ import com.github.readingbat.Constants.sessionid
 import com.github.readingbat.Constants.solution
 import com.github.readingbat.Constants.spinner
 import com.github.readingbat.Constants.status
+import com.github.readingbat.Constants.userResp
 import com.github.readingbat.pages.rawHtml
 import kotlinx.html.SCRIPT
 
@@ -35,7 +35,7 @@ internal fun SCRIPT.addScript(languageName: String) =
     """
     var re = new XMLHttpRequest();
 
-    function $processAnswers(event , cnt) { 
+    function $processAnswers(event, cnt) { 
     
       if (event != null && event.keyCode != 13) 
         return;
@@ -46,8 +46,8 @@ internal fun SCRIPT.addScript(languageName: String) =
           var x = document.getElementById("$feedback"+i);
           x.style.backgroundColor = "white";
           
-          var a = document.getElementById("$answer"+i).value;
-          data += "&$answer" + i + "="+encodeURIComponent(a);
+          var a = document.getElementById("$userResp"+i).value;
+          data += "&$userResp" + i + "="+encodeURIComponent(a);
           var s = document.getElementById("$solution"+i).value;
           console.log("Adding: " + s);
           data += "&$solution" + i + "="+encodeURIComponent(s);

@@ -18,7 +18,6 @@
 package com.github.readingbat.pages
 
 import com.github.pambrose.common.util.decode
-import com.github.readingbat.Constants.answer
 import com.github.readingbat.Constants.arrow
 import com.github.readingbat.Constants.challengeDesc
 import com.github.readingbat.Constants.checkAnswers
@@ -36,6 +35,7 @@ import com.github.readingbat.Constants.static
 import com.github.readingbat.Constants.status
 import com.github.readingbat.Constants.tabs
 import com.github.readingbat.Constants.userAnswers
+import com.github.readingbat.Constants.userResp
 import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.misc.addScript
 import kotlinx.html.*
@@ -46,7 +46,6 @@ internal fun HTML.challengePage(challenge: Challenge) {
   val languageName = languageType.lowerName
   val groupName = challenge.groupName
   val name = challenge.name
-  val funcArgs = challenge.inputOutput
 
   head {
     link { rel = "stylesheet"; href = spinnerCss }
@@ -76,19 +75,20 @@ internal fun HTML.challengePage(challenge: Challenge) {
         }
       }
 
+      val funcInfo = challenge.funcInfo()
+
       div(classes = userAnswers) {
         table {
           tr { th { +"Function Call" }; th { +"" }; th { +"Return Value" }; th { +"" } }
 
-          val funcInfo = challenge.funcInfo()
           //funcArgs.withIndex().forEach { (i, v) ->
           funcInfo.arguments.indices.forEach { i ->
             tr {
               td(classes = funcCol) { +funcInfo.arguments[i] }
               td(classes = arrow) { rawHtml("&rarr;") }
               td {
-                textInput(classes = answer) {
-                  id = "$answer$i"; onKeyPress = "$processAnswers(event, ${funcInfo.answers.size})"
+                textInput(classes = userResp) {
+                  id = "$userResp$i"; onKeyPress = "$processAnswers(event, ${funcInfo.answers.size})"
                 }
               }
               td(classes = feedback) { id = "$feedback$i" }
@@ -103,7 +103,7 @@ internal fun HTML.challengePage(challenge: Challenge) {
             tr {
               td {
                 button(classes = checkAnswers) {
-                  onClick = "$processAnswers(null, ${funcArgs.size})"; +"Check My Answers!"
+                  onClick = "$processAnswers(null, ${funcInfo.answers.size})"; +"Check My Answers!"
                 }
               }
               td { span(classes = spinner) { id = spinner } }

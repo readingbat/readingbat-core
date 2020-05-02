@@ -158,7 +158,7 @@ class PythonChallenge(group: ChallengeGroup) : Challenge(group) {
     val funcCode = lines.subList(lineNums.first(), lineNums.last() - 1).joinToString("\n").trimIndent()
     val args = lines.pythonArguments(pythonStartRegex, pythonEndRegex)
 
-    return FunctionInfo(code, funcCode, args, ReturnType.StringType, listOf<Any>())
+    return FunctionInfo(this, code, funcCode, args, ReturnType.StringType, listOf<Any>())
   }
 
   companion object {
@@ -200,7 +200,7 @@ class JavaChallenge(group: ChallengeGroup) : Challenge(group) {
     if (answers !is List<*>)
       throw InvalidConfigurationException("Invalid type returned from script")
 
-    return FunctionInfo(code, funcCode, args, returnType!!, answers)
+    return FunctionInfo(this, code, funcCode, args, returnType!!, answers)
   }
 
   companion object {
@@ -267,7 +267,7 @@ class KotlinChallenge(group: ChallengeGroup) : Challenge(group) {
     val originalCode = lines.joinToString("\n")
     val codeSnippet = "\n$funcCode\n\n"
 
-    return FunctionInfo(originalCode, codeSnippet, args, ReturnType.StringType, listOf<Any>())
+    return FunctionInfo(this, originalCode, codeSnippet, args, ReturnType.StringType, listOf<Any>())
   }
 
   companion object {
@@ -285,7 +285,8 @@ class KotlinChallenge(group: ChallengeGroup) : Challenge(group) {
   }
 }
 
-class FunctionInfo(val originalCode: String,
+class FunctionInfo(val challenge: Challenge,
+                   val originalCode: String,
                    val codeSnippet: String,
                    val arguments: List<String>,
                    val answerType: ReturnType,
@@ -301,7 +302,7 @@ class FunctionInfo(val originalCode: String,
           when {
             List::class.isSuperclassOf(classifier) || classifier == Array<Any>::class -> {
               if (classifier.typeParameters.size != 1)
-                throw InvalidConfigurationException("Invalid type: $answerType")
+                throw InvalidConfigurationException("Invalid parameter count for: $answerType in ${challenge.name}")
 
               answers +=
                 if (classifier.typeParameters[0] == typeOf<String>())
@@ -310,23 +311,25 @@ class FunctionInfo(val originalCode: String,
                   it.toString()
             }
 
-            classifier == String::class -> {
-              answers +=
-                if (classifier == String::class)
-                  it.toString().toDoubleQuoted()
-                else
-                  it.toString()
-            }
-            else -> throw InvalidConfigurationException("Invalid type: $answerType")
+            classifier == String::class -> answers += it.toString().toDoubleQuoted()
+
+            else -> answers += it.toString()
           }
         }
         is KTypeParameter -> {
-          throw InvalidConfigurationException("Invalid type: $answerType")
+          throw InvalidConfigurationException("Invalid type: $answerType in ${challenge.name}")
         }
-        else -> throw InvalidConfigurationException("Invalid type: $answerType")
+        else -> throw InvalidConfigurationException("Invalid type: $answerType in ${challenge.name}")
       }
     }
-    logger.info { "Computed answers: $answers" }
+    logger.info { "Computed answers: $answers for arguments: $arguments in ${challenge.name}" }
+
+    validate()
+  }
+
+  fun validate() {
+    if (answers.size != arguments.size)
+      throw InvalidConfigurationException("Mismatch between ${answers.size} answers and ${arguments.size} arguments in ${challenge.name}")
   }
 
   companion object : KLogging()
