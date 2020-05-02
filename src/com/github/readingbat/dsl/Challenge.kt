@@ -20,6 +20,7 @@ package com.github.readingbat.dsl
 import com.github.pambrose.common.script.JavaScript
 import com.github.pambrose.common.util.*
 import com.github.readingbat.ReturnType
+import com.github.readingbat.ReturnType.*
 import com.github.readingbat.dsl.JavaChallenge.Companion.convertToScript
 import com.vladsch.flexmark.html.HtmlRenderer
 import com.vladsch.flexmark.parser.Parser
@@ -158,7 +159,7 @@ class PythonChallenge(group: ChallengeGroup) : Challenge(group) {
     val funcCode = lines.subList(lineNums.first(), lineNums.last() - 1).joinToString("\n").trimIndent()
     val args = lines.pythonArguments(pythonStartRegex, pythonEndRegex)
 
-    return FunctionInfo(this, code, funcCode, args, ReturnType.StringType, listOf<Any>())
+    return FunctionInfo(this, code, funcCode, args, StringType, listOf<Any>())
   }
 
   companion object {
@@ -189,19 +190,20 @@ class JavaChallenge(group: ChallengeGroup) : Challenge(group) {
     val script = lines.convertToScript()
     logger.info { "$name script: \n$script" }
 
-    val answers: Any
+    val rawAnswers: Any
     JavaScript()
       .apply {
         import(List::class.java)
         import(ArrayList::class.java)
-        answers = evalScript(script)
-        logger.info { "Computed answers for $name: $answers" }
+        val timedValue = measureTimedValue { evalScript(script) }
+        rawAnswers = timedValue.value
+        logger.info { "Computed answers in ${timedValue.duration} for $name: $rawAnswers" }
       }
 
-    if (answers !is List<*>)
+    if (rawAnswers !is List<*>)
       throw InvalidConfigurationException("Invalid type returned from script")
 
-    return FunctionInfo(this, code, funcCode, args, returnType!!, answers)
+    return FunctionInfo(this, code, funcCode, args, returnType!!, rawAnswers)
   }
 
   companion object : KLogging() {
@@ -290,7 +292,7 @@ class KotlinChallenge(group: ChallengeGroup) : Challenge(group) {
     val originalCode = lines.joinToString("\n")
     val codeSnippet = "\n$funcCode\n\n"
 
-    return FunctionInfo(this, originalCode, codeSnippet, args, ReturnType.StringType, listOf<Any>())
+    return FunctionInfo(this, originalCode, codeSnippet, args, StringType, listOf<Any>())
   }
 
   companion object {
@@ -319,29 +321,35 @@ class FunctionInfo(val challenge: Challenge,
 
   init {
     val classifier = answerType.ktype.classifier
-    rawAnswers.forEach {
+    rawAnswers.forEach { raw ->
       when (classifier) {
         is KClass<*> -> {
           when {
-            List::class.isSuperclassOf(classifier) || classifier == Array<Any>::class -> {
-              if (classifier.typeParameters.size != 1)
-                throw InvalidConfigurationException("Invalid parameter count for: $answerType in ${challenge.name}")
-
+            List::class.isSuperclassOf(classifier) ||
+                classifier in listOf(Array<Any>::class, BooleanArray::class, IntArray::class) -> {
               answers +=
-                if (classifier.typeParameters[0] == typeOf<String>())
-                  it.toString().toDoubleQuoted()
-                else
-                  it.toString()
+                when (challenge.returnType!!) {
+                  BooleanType, IntType -> raw.toString()
+                  StringType -> raw.toString().toDoubleQuoted()
+                  BooleanArrayType -> (raw as BooleanArray).toString()
+                  IntArrayType -> (raw as IntArray).toString()
+                  StringArrayType -> "[${(raw as Array<String>).map { it.toDoubleQuoted() }.joinToString()}]"
+                  BooleanListType -> (raw as List<Boolean>).toString()
+                  IntListType -> (raw as List<Int>).toString()
+                  StringListType -> "[${(raw as List<String>).map { it.toDoubleQuoted() }.joinToString()}]"
+                }
             }
 
-            classifier == String::class -> answers += it.toString().toDoubleQuoted()
+            classifier == String::class -> answers += raw.toString().toDoubleQuoted()
 
-            else -> answers += it.toString()
+            else -> answers += raw.toString()
           }
         }
+
         is KTypeParameter -> {
           throw InvalidConfigurationException("Invalid type: $answerType in ${challenge.name}")
         }
+
         else -> throw InvalidConfigurationException("Invalid type: $answerType in ${challenge.name}")
       }
     }
