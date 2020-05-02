@@ -18,9 +18,7 @@
 package com.github.readingbat.misc
 
 import com.github.pambrose.common.script.KotlinScript
-import com.github.pambrose.common.util.isDoubleQuoted
-import com.github.pambrose.common.util.isSingleQuoted
-import com.github.pambrose.common.util.singleToDoubleQuoted
+import com.github.pambrose.common.util.*
 import com.github.readingbat.Constants.langSrc
 import com.github.readingbat.Constants.solution
 import com.github.readingbat.Constants.userResp
@@ -54,6 +52,14 @@ object CheckAnswers : KLogging() {
     call.respondText(results.toString())
   }
 
+  internal infix fun String.equalsAsList(other: String) =
+    try {
+      KotlinScript().eval("listOf(${this.trimEnds()} == listOf(${other.trimEnds()}") as Boolean
+    } catch (e: Exception) {
+      logger.info { "Caught exception comparing $this and $other: ${e.message}" }
+      false
+    }
+
   private fun checkWithSolution(isJava: Boolean, userResp: String, solution: String) =
     try {
       fun String.isJavaBoolean() = this == "true" || this == "false"
@@ -62,10 +68,8 @@ object CheckAnswers : KLogging() {
       logger.info("""Comparing solution "$solution" with user response "$userResp"""")
 
       if (isJava) {
-        if (solution.startsWith("[") && solution.endsWith("]")) {
-          val solutionExpr = solution.substring(1, solution.length - 1)
-          val userRespExpr = userResp.substring(1, userResp.length - 1)
-          KotlinScript().eval("listOf($solutionExpr) == listOf($userRespExpr)") as Boolean
+        if (solution.isBracketed()) {
+          solution equalsAsList userResp
         }
         else {
           when {
