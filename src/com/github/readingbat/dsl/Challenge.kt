@@ -159,8 +159,13 @@ class PythonChallenge(group: ChallengeGroup<*>) : Challenge(group) {
     val funcCode = extractFunction(lines)
     val args = extractArguments(lines, defMainRegex, ifMainEndRegex)
     val script = convertToScript(lines)
-
     val answers = mutableListOf<Any>()
+
+    if (!this::returnType.isInitialized)
+      throw InvalidConfigurationException("$name missing returnType value")
+
+    logger.info { "$name return type: $returnType script: \n${script.withLineNumbers()}" }
+
     val duration =
       PythonScript()
         .run {
@@ -168,19 +173,16 @@ class PythonChallenge(group: ChallengeGroup<*>) : Challenge(group) {
           measureTime { eval(script) }
         }
 
-    JavaChallenge.logger.info { "$name computed answers in $duration for: $answers" }
+    logger.info { "$name computed answers in $duration for: $answers" }
 
-    if (!this::returnType.isInitialized)
-      throw InvalidConfigurationException("$name missing returnType value")
-
-    return FunctionInfo(name, code, funcCode, args, returnType, answers)
+    return FunctionInfo(languageType, name, code, funcCode, args, returnType, answers)
   }
 
   companion object {
     internal val defMainRegex = Regex("""def\s+main\(""")
     internal val ifMainEndRegex = Regex("__main__")
     private val prefixRegex = listOf(Regex("""print\("""))
-    private val varName = "answers"
+    private const val varName = "answers"
 
     internal fun extractFunction(code: List<String>): String {
       val lineNums =
@@ -217,6 +219,7 @@ class PythonChallenge(group: ChallengeGroup<*>) : Challenge(group) {
           }
         }
       }
+      scriptCode += ""
       return scriptCode.joinToString("\n")
     }
 
@@ -256,7 +259,7 @@ class JavaChallenge(group: ChallengeGroup<*>) : Challenge(group) {
     if (rawAnswers !is List<*>)
       throw InvalidConfigurationException("Invalid type returned for $name")
 
-    return FunctionInfo(name, code, funcCode, args, returnType, rawAnswers)
+    return FunctionInfo(languageType, name, code, funcCode, args, returnType, rawAnswers)
   }
 
   internal fun deriveReturnType(code: List<String>) =
@@ -346,6 +349,7 @@ class JavaChallenge(group: ChallengeGroup<*>) : Challenge(group) {
           }
         }
       }
+      scriptCode += ""
       return scriptCode.joinToString("\n")
     }
   }
@@ -366,7 +370,7 @@ class KotlinChallenge(group: ChallengeGroup<*>) : Challenge(group) {
     if (!this::returnType.isInitialized)
       throw InvalidConfigurationException("$name missing returnType value")
 
-    return FunctionInfo(name, originalCode, codeSnippet, args, returnType, listOf<Any>())
+    return FunctionInfo(languageType, name, originalCode, codeSnippet, args, returnType, listOf<Any>())
   }
 
   companion object {

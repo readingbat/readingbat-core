@@ -23,7 +23,8 @@ import com.github.readingbat.ReturnType
 import com.github.readingbat.ReturnType.*
 import mu.KLogging
 
-class FunctionInfo(val name: String,
+class FunctionInfo(val languageType: LanguageType,
+                   val name: String,
                    val originalCode: String,
                    val codeSnippet: String,
                    val arguments: List<String>,
@@ -36,7 +37,13 @@ class FunctionInfo(val name: String,
     rawAnswers.forEach { raw ->
       answers +=
         when (returnType) {
-          BooleanType, IntType -> raw.toString()
+          BooleanType -> {
+            if (languageType.isPython())
+              raw.toString().capitalize()
+            else
+              raw.toString()
+          }
+          IntType -> raw.toString()
           StringType -> raw.toString().toDoubleQuoted()
           BooleanArrayType -> (raw as BooleanArray).map { it }.joinToString().asBracketed()
           IntArrayType -> (raw as IntArray).map { it }.joinToString().asBracketed()
