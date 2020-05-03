@@ -32,7 +32,7 @@ val content =
 
     +include(GitHubContent("readingbat-java-content", fileName = "Content2.kt"), variableName = "content2").java
 
-    +include(GitHubContent("readingbat-python-content")).python
+    +include(GitHubContent("readingbat-python-content", branch = "dev")).python
 
     +include(GitHubContent("readingbat-java-content", fileName = "Content2.kt"), variableName = "content2").kotlin
 

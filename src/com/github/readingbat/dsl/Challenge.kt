@@ -18,9 +18,11 @@
 package com.github.readingbat.dsl
 
 import com.github.pambrose.common.script.JavaScript
+import com.github.pambrose.common.script.PythonScript
 import com.github.pambrose.common.util.*
 import com.github.readingbat.ReturnType
 import com.github.readingbat.ReturnType.Companion.asReturnType
+import com.github.readingbat.dsl.PythonChallenge.Companion.convertToScript
 import com.vladsch.flexmark.html.HtmlRenderer
 import com.vladsch.flexmark.parser.Parser
 import com.vladsch.flexmark.util.data.MutableDataSet
@@ -28,6 +30,9 @@ import mu.KLogging
 import java.net.URL
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.math.max
+import kotlin.reflect.typeOf
+import kotlin.time.measureTime
 import kotlin.time.measureTimedValue
 
 @ReadingBatDslMarker
@@ -151,28 +156,75 @@ class PythonChallenge(group: ChallengeGroup<*>) : Challenge(group) {
 
   override fun computeFuncInfo(code: String): FunctionInfo {
     val lines = code.split("\n")
-    val lineNums =
-      lines.mapIndexed { i, str -> i to str }
-        .filter { it.second.contains(Regex("^def.*\\(")) }
-        .map { it.first }
+    val funcCode = extractFunction(lines)
+    val args = extractArguments(lines, defMainRegex, ifMainEndRegex)
+    val script = convertToScript(lines)
 
-    val funcCode = lines.subList(lineNums.first(), lineNums.last() - 1).joinToString("\n").trimIndent()
-    val args = lines.pythonArguments(pythonStartRegex, pythonEndRegex)
+    val answers = mutableListOf<Any>()
+    val duration =
+      PythonScript()
+        .run {
+          add(varName, answers, typeOf<Any>())
+          measureTime { eval(script) }
+        }
+
+    JavaChallenge.logger.info { "$name computed answers in $duration for: $answers" }
 
     if (!this::returnType.isInitialized)
       throw InvalidConfigurationException("$name missing returnType value")
 
-    return FunctionInfo(name, code, funcCode, args, returnType, listOf<Any>())
+    return FunctionInfo(name, code, funcCode, args, returnType, answers)
   }
 
   companion object {
-    internal val pythonStartRegex = Regex("def main\\(")
-    internal val pythonEndRegex = Regex("__main__")
+    internal val defMainRegex = Regex("""def\s+main\(""")
+    internal val ifMainEndRegex = Regex("__main__")
+    private val prefixRegex = listOf(Regex("""print\("""))
+    private val varName = "answers"
 
-    internal fun String.pythonArguments(start: Regex, end: Regex) = split("\n").pythonArguments(start, end)
+    internal fun extractFunction(code: List<String>): String {
+      val lineNums =
+        code.mapIndexed { i, str -> i to str }
+          .filter { it.second.contains(Regex("^def.*\\(")) }
+          .map { it.first }
 
-    internal fun List<String>.pythonArguments(start: Regex, end: Regex) =
-      linesBetween(start, end)
+      return code.subList(lineNums.first(), lineNums.last() - 1).joinToString("\n").trimIndent()
+    }
+
+    internal fun convertToScript(code: List<String>): String {
+      val scriptCode = mutableListOf<String>()
+      var insideMain = false
+
+      code.forEach { line ->
+        when {
+          line.contains(defMainRegex) -> {
+            insideMain = true
+          }
+          insideMain -> {
+            // Skip everything after def main(): that does not have a print
+            if (prefixRegex.any { line.contains(it) }) {
+              val firstParen = line.indexOfFirst { it == '(' }
+              val lastParen = line.indexOfLast { it == ')' }
+              val expr = line.substring(firstParen + 1, lastParen)
+              logger.debug { "Content from: $firstParen to: $lastParen is: $expr" }
+              val str = "$varName.add($expr)"
+              logger.info { "Transformed: ${line.trim()} to: $str" }
+              scriptCode += str
+            }
+          }
+          else -> {
+            scriptCode += line
+          }
+        }
+      }
+      return scriptCode.joinToString("\n")
+    }
+
+    internal fun extractArguments(code: String, start: Regex, end: Regex) =
+      extractArguments(code.split("\n"), start, end)
+
+    internal fun extractArguments(code: List<String>, start: Regex, end: Regex) =
+      code.linesBetween(start, end)
         .filter { it.contains("print(") }
         .map { it.trim() }
         .map { it.replaceFirst("print(", "") }
@@ -183,18 +235,12 @@ class PythonChallenge(group: ChallengeGroup<*>) : Challenge(group) {
 class JavaChallenge(group: ChallengeGroup<*>) : Challenge(group) {
   override fun computeFuncInfo(code: String): FunctionInfo {
     val lines = code.split("\n").filter { !it.trimStart().startsWith("package") }
-    val lineNums =
-      lines.mapIndexed { i, str -> i to str }
-        .filter { it.second.contains(staticRegex) }
-        .map { it.first }
+    val funcCode = extractFunction(lines)
+    val args = extractArguments(lines, svmRegex, javaEndRegex)
+    val returnType = deriveReturnType(lines)
+    val script = convertToScript(lines)
 
-    val funcCode = lines.subList(lineNums.first(), lineNums.last() - 1).joinToString("\n").trimIndent()
-    val args = lines.javaArguments(svmRegex, javaEndRegex)
-
-    val derivedReturnType = lines.deriveReturnType(this)
-    val script = lines.convertToScript()
-
-    logger.info { "$name return type: $derivedReturnType script: \n${script.withLineNumbers()}" }
+    logger.info { "$name return type: $returnType script: \n${script.withLineNumbers()}" }
 
     val timedValue =
       JavaScript()
@@ -203,14 +249,26 @@ class JavaChallenge(group: ChallengeGroup<*>) : Challenge(group) {
           import(ArrayList::class.java)
           measureTimedValue { evalScript(script) }
         }
+
     val rawAnswers = timedValue.value
     logger.info { "$name computed answers in ${timedValue.duration} for: $rawAnswers" }
 
     if (rawAnswers !is List<*>)
       throw InvalidConfigurationException("Invalid type returned for $name")
 
-    return FunctionInfo(name, code, funcCode, args, derivedReturnType, rawAnswers)
+    return FunctionInfo(name, code, funcCode, args, returnType, rawAnswers)
   }
+
+  internal fun deriveReturnType(code: List<String>) =
+    code.asSequence()
+      .filter { !it.contains(svmRegex) && (it.contains(staticStartRegex) || it.contains(psRegex)) }
+      .map { str ->
+        val words = str.trim().split(spaceRegex).filter { it.isNotBlank() }
+        val staticPos = words.indices.first { words[it] == "static" }
+        val typeStr = words[staticPos + 1]
+        typeStr.asReturnType ?: throw InvalidConfigurationException("In ${name} invalid type $typeStr")
+      }
+      .firstOrNull() ?: throw InvalidConfigurationException("In ${name} unable to determine return type")
 
   companion object : KLogging() {
     private val spaceRegex = Regex("""\s+""")
@@ -230,13 +288,20 @@ class JavaChallenge(group: ChallengeGroup<*>) : Challenge(group) {
     private val prefixes =
       listOf("System.out.println", "ArrayUtils.arrayPrint", "ListUtils.listPrint", "arrayPrint", "listPrint")
 
-    internal fun String.javaArguments(start: Regex, end: Regex) = split("\n").javaArguments(start, end)
+    internal fun extractFunction(code: List<String>): String {
+      val lineNums =
+        code.mapIndexed { i, str -> i to str }.filter { it.second.contains(staticRegex) }.map { it.first }
+      return code.subList(lineNums.first(), lineNums.last() - 1).joinToString("\n").trimIndent()
+    }
 
-    internal fun List<String>.javaArguments(start: Regex, end: Regex): List<String> {
+    internal fun extractArguments(code: String, start: Regex, end: Regex) =
+      extractArguments(code.split("\n"), start, end)
+
+    internal fun extractArguments(code: List<String>, start: Regex, end: Regex): List<String> {
       val lines = mutableListOf<String>()
       prefixes.forEach { prefix ->
         lines.addAll(
-          linesBetween(start, end)
+          code.linesBetween(start, end)
             .map { it.trim() }
             .filter { it.startsWith("$prefix(") }
             .map { it.replaceFirst("$prefix(", "") }
@@ -245,25 +310,13 @@ class JavaChallenge(group: ChallengeGroup<*>) : Challenge(group) {
       return lines
     }
 
-    internal fun List<String>.deriveReturnType(challenge: JavaChallenge) =
-      this
-        .asSequence()
-        .filter { !it.contains(svmRegex) && (it.contains(staticStartRegex) || it.contains(psRegex)) }
-        .map { str ->
-          val words = str.trim().split(spaceRegex).filter { it.isNotBlank() }
-          val staticPos = words.indices.first { words[it] == "static" }
-          val typeStr = words[staticPos + 1]
-          typeStr.asReturnType ?: throw InvalidConfigurationException("In ${challenge.name} invalid type $typeStr")
-        }
-        .firstOrNull() ?: throw InvalidConfigurationException("In ${challenge.name} unable to determine return type")
-
-    internal fun List<String>.convertToScript(): String {
+    internal fun convertToScript(code: List<String>): String {
       val scriptCode = mutableListOf<String>()
       val varName = "answers"
       var exprIndent = 0
       var insideMain = false
 
-      this.forEach { line ->
+      code.forEach { line ->
         when {
           line.contains(psvmRegex) -> {
             val publicIndent = line.indexOf("public")
@@ -273,7 +326,7 @@ class JavaChallenge(group: ChallengeGroup<*>) : Challenge(group) {
             scriptCode += line.replace(psvmRegex, "public List<Object> getValue()")
           }
           insideMain && prefixRegex.any { line.contains(it) } -> {
-            exprIndent = kotlin.math.max(0, prefixRegex.map { line.indexOf(it.pattern.substring(0, 6)) }.max()!!)
+            exprIndent = max(0, prefixRegex.map { line.indexOf(it.pattern.substring(0, 6)) }.max()!!)
             val firstParen = line.indexOfFirst { it == '(' }
             val lastParen = line.indexOfLast { it == ')' }
             val expr = line.substring(firstParen + 1, lastParen)
@@ -306,7 +359,7 @@ class KotlinChallenge(group: ChallengeGroup<*>) : Challenge(group) {
   override fun computeFuncInfo(code: String): FunctionInfo {
     val lines = code.split("\n").filter { !it.trimStart().startsWith("package") }
     val funcCode = lines.subList(0, lines.lastLineNumberOf(kotlinStartRegex)).joinToString("\n").trimIndent()
-    val args = lines.kotlinArguments(kotlinStartRegex, kotlinEndRegex)
+    val args = extractArguments(lines, kotlinStartRegex, kotlinEndRegex)
     val originalCode = lines.joinToString("\n")
     val codeSnippet = "\n$funcCode\n\n"
 
@@ -320,13 +373,65 @@ class KotlinChallenge(group: ChallengeGroup<*>) : Challenge(group) {
     internal val kotlinStartRegex = Regex("""^\s*fun\s*main.*\)""")
     internal val kotlinEndRegex = Regex("""\s*}\s*""")
 
-    internal fun String.kotlinArguments(start: Regex, end: Regex) = split("\n").kotlinArguments(start, end)
+    internal fun extractArguments(code: String, start: Regex, end: Regex) =
+      extractArguments(code.split("\n"), start, end)
 
-    internal fun List<String>.kotlinArguments(start: Regex, end: Regex) =
-      linesBetween(start, end)
+    internal fun extractArguments(code: List<String>, start: Regex, end: Regex) =
+      code.linesBetween(start, end)
         .filter { it.contains("println(") }
         .map { it.trim() }
         .map { it.replaceFirst("println(", "") }
         .map { it.substring(0, it.indexOfLast { c -> c == ')' }) }
   }
+}
+
+fun main() {
+  val list = mutableListOf(1)
+
+  PythonScript()
+    .apply {
+      add("list", list)
+
+      eval("""
+def front_back(s):
+    if (len(s) < 2):
+        return s
+    f = s[0]
+    e = s[-1]
+    return e + f
+
+
+#def main():
+list.add(front_back("This is a test"))
+list.add(front_back(""))
+list.add(front_back("t"))
+
+
+#main()
+                  """.trimIndent()
+          )
+    }
+  println(list)
+
+  val s = """
+
+def front_back(s):
+    if (len(s) < 2):
+        return s
+    f = s[0]
+    e = s[-1]
+    return e + f
+
+
+def main():
+    print(front_back("This is a test"))
+    print(front_back(""))
+    print(front_back("t"))
+
+
+if __name__ == "__main__":
+    main()  """.trimIndent()
+
+  println(convertToScript(s.split("\n")).withLineNumbers())
+
 }

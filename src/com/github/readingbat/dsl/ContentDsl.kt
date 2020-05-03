@@ -29,9 +29,10 @@ import kotlin.time.measureTimedValue
 @DslMarker
 annotation class ReadingBatDslMarker
 
-class GitHubContent(repo: String, fileName: String = "Content.kt") :
+class GitHubContent(repo: String, branch: String = "master", fileName: String = "Content.kt") :
   GitHubSource(organization = "readingbat",
                repo = repo,
+               branch = branch,
                srcPath = "src/main/kotlin",
                fileName = fileName)
 
