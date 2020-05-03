@@ -20,7 +20,6 @@ package com.github.readingbat.dsl
 import com.github.pambrose.common.script.JavaScript
 import com.github.pambrose.common.util.*
 import com.github.readingbat.ReturnType
-import com.github.readingbat.ReturnType.*
 import com.github.readingbat.ReturnType.Companion.asReturnType
 import com.vladsch.flexmark.html.HtmlRenderer
 import com.vladsch.flexmark.parser.Parser
@@ -186,11 +185,11 @@ class JavaChallenge(group: ChallengeGroup) : Challenge(group) {
         .map { it.first }
 
     val funcCode = lines.subList(lineNums.first(), lineNums.last() - 1).joinToString("\n").trimIndent()
-    val args = lines.javaArguments(javaStartRegex, javaEndRegex)
+    val args = lines.javaArguments(svmRegex, javaEndRegex)
 
     val derivedReturnType = lines.deriveReturnType(this)
     val script = lines.convertToScript(this)
-    logger.info { "$name script: \n$script" }
+    logger.info { "$name return type: $derivedReturnType script: \n$script" }
 
     val rawAnswers: Any
     JavaScript()
@@ -210,10 +209,14 @@ class JavaChallenge(group: ChallengeGroup) : Challenge(group) {
 
   companion object : KLogging() {
 
-    internal val staticRegex = Regex("static.*\\(")
-    internal val javaStartRegex = Regex("static\\svoid\\smain\\(")
+    internal val spaceRegex = Regex("""\s""")
+    internal val staticRegex = Regex("""static.*\(""")
     internal val javaEndRegex = Regex("}")
     internal val psvmRegex = Regex("""public\s*static\s*void\s*main.*\)""")
+    internal val svmRegex = Regex("""static\svoid\smain\(""")
+    internal val staticStartRegex = Regex("""\sstatic.*\(""")
+    internal val psRegex = Regex("""\spublic\sstatic.*\(""")
+
     val prefixRegex =
       listOf(Regex("""System\.out\.println\("""),
              Regex("""ArrayUtils\.arrayPrint\("""),
@@ -238,29 +241,20 @@ class JavaChallenge(group: ChallengeGroup) : Challenge(group) {
       return lines
     }
 
-    internal val svmRegex = Regex("""static\svoid\smain\(""")
-    internal val staticStartRegex = Regex("""^static\s""")
-    internal val psRegex = Regex("""^public\sstatic\s""")
-
-    internal fun List<String>.deriveReturnType(challenge: Challenge): ReturnType {
-      for (line in this) {
-        val ltrim = line.trim()
-        if (!ltrim.contains(svmRegex) && (ltrim.contains(staticStartRegex) || ltrim.contains(psRegex))) {
-          val words = ltrim.split(Regex("""\s"""))
+    internal fun List<String>.deriveReturnType(challenge: Challenge) =
+      this
+        .asSequence()
+        .filter { !it.contains(svmRegex) && (it.contains(staticStartRegex) || it.contains(psRegex)) }
+        .map {
+          val words = it.trim().split(spaceRegex)
           val staticPos = words.indices.first { words[it] == "static" }
           val typeStr = words[staticPos + 1]
-          val type =
-            typeStr.asReturnType ?: throw InvalidConfigurationException("Invalid type $typeStr in ${challenge.name}")
-          logger.info { "Return type = $type" }
-          return type
+          typeStr.asReturnType ?: throw InvalidConfigurationException("In ${challenge.name} invalid type $typeStr")
         }
-      }
-      throw InvalidConfigurationException("Unable to determine return type in ${challenge.name}")
-    }
+        .firstOrNull() ?: throw InvalidConfigurationException("In ${challenge.name} unable to determine return type")
 
     internal fun List<String>.convertToScript(challenge: Challenge): String {
       val scriptCode = mutableListOf<String>()
-
       val varName = "answers"
       var exprIndent = 0
       var insideMain = false
@@ -301,8 +295,6 @@ class JavaChallenge(group: ChallengeGroup) : Challenge(group) {
   }
 }
 
-internal val String.deRegex get() = this.replace("\\", "")
-
 class KotlinChallenge(group: ChallengeGroup) : Challenge(group) {
   lateinit var returnType: ReturnType
 
@@ -332,41 +324,4 @@ class KotlinChallenge(group: ChallengeGroup) : Challenge(group) {
         .map { it.replaceFirst("println(", "") }
         .map { it.substring(0, it.indexOfLast { c -> c == ')' }) }
   }
-}
-
-class FunctionInfo(val name: String,
-                   val originalCode: String,
-                   val codeSnippet: String,
-                   val arguments: List<String>,
-                   returnType: ReturnType,
-                   rawAnswers: List<*>) {
-
-  val answers = mutableListOf<String>()
-
-  init {
-    rawAnswers.forEach { raw ->
-      answers +=
-        when (returnType) {
-          BooleanType, IntType -> raw.toString()
-          StringType -> raw.toString().toDoubleQuoted()
-          BooleanArrayType -> (raw as BooleanArray).map { it }.joinToString().asBracketed()
-          IntArrayType -> (raw as IntArray).map { it }.joinToString().asBracketed()
-          StringArrayType -> (raw as Array<String>).map { it.toDoubleQuoted() }.joinToString().asBracketed()
-          BooleanListType -> (raw as List<Boolean>).toString()
-          IntListType -> (raw as List<Int>).toString()
-          StringListType -> "[${(raw as List<String>).map { it.toDoubleQuoted() }.joinToString()}]"
-        }
-    }
-
-    logger.info { "Computed answers: $answers for arguments: $arguments in $name" }
-
-    validate()
-  }
-
-  fun validate() {
-    if (answers.size != arguments.size)
-      throw InvalidConfigurationException("Mismatch between ${answers.size} answers and ${arguments.size} arguments in $name")
-  }
-
-  companion object : KLogging()
 }
