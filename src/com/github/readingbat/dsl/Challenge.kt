@@ -208,13 +208,13 @@ class JavaChallenge(group: ChallengeGroup) : Challenge(group) {
   }
 
   companion object : KLogging() {
-    private val spaceRegex = Regex("""\s""")
-    private val staticRegex = Regex("""static.*\(""")
-    private val staticStartRegex = Regex("""\sstatic.*\(""")
-    private val psRegex = Regex("""^\s*public\sstatic.*\(""")
+    private val spaceRegex = Regex("""\s+""")
+    private val staticRegex = Regex("""static.+\(""")
+    private val staticStartRegex = Regex("""\sstatic.+\(""")
+    private val psRegex = Regex("""^\s+public\s+static.+\(""")
     internal val javaEndRegex = Regex("""\s*}\s*""")
-    private val svmRegex = Regex("""\sstatic\svoid\smain\(""")
-    internal val psvmRegex = Regex("""^\s*public\s*static\s*void\s*main.*\)""")
+    private val svmRegex = Regex("""\s*static\s+void\s+main\(""")
+    internal val psvmRegex = Regex("""^\s*public\s+static\s+void\s+main.+\)""")
 
     private val prefixRegex =
       listOf(Regex("""System\.out\.println\("""),
@@ -245,7 +245,7 @@ class JavaChallenge(group: ChallengeGroup) : Challenge(group) {
         .asSequence()
         .filter { !it.contains(svmRegex) && (it.contains(staticStartRegex) || it.contains(psRegex)) }
         .map {
-          val words = it.trim().split(spaceRegex)
+          val words = it.trim().split(spaceRegex).filter { it.isNotBlank() }
           val staticPos = words.indices.first { words[it] == "static" }
           val typeStr = words[staticPos + 1]
           typeStr.asReturnType ?: throw InvalidConfigurationException("In ${challenge.name} invalid type $typeStr")

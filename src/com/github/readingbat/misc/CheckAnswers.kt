@@ -66,7 +66,7 @@ object CheckAnswers : KLogging() {
       fun String.isJavaBoolean() = this == "true" || this == "false"
       fun String.isPythonBoolean() = this == "True" || this == "False"
 
-      logger.info("""Comparing solution: "$solution" with user response: "$userResp"""")
+      logger.debug("""Comparing solution: "$solution" with user response: "$userResp"""")
 
       if (isJava) {
         if (solution.isBracketed())
