@@ -20,6 +20,7 @@ package com.github.readingbat.dsl
 import com.github.pambrose.common.util.asBracketed
 import com.github.pambrose.common.util.toDoubleQuoted
 import com.github.readingbat.ReturnType
+import com.github.readingbat.ReturnType.*
 import mu.KLogging
 
 class FunctionInfo(val name: String,
@@ -35,14 +36,14 @@ class FunctionInfo(val name: String,
     rawAnswers.forEach { raw ->
       answers +=
         when (returnType) {
-          ReturnType.BooleanType, ReturnType.IntType -> raw.toString()
-          ReturnType.StringType -> raw.toString().toDoubleQuoted()
-          ReturnType.BooleanArrayType -> (raw as BooleanArray).map { it }.joinToString().asBracketed()
-          ReturnType.IntArrayType -> (raw as IntArray).map { it }.joinToString().asBracketed()
-          ReturnType.StringArrayType -> (raw as Array<String>).map { it.toDoubleQuoted() }.joinToString().asBracketed()
-          ReturnType.BooleanListType -> (raw as List<Boolean>).toString()
-          ReturnType.IntListType -> (raw as List<Int>).toString()
-          ReturnType.StringListType -> "[${(raw as List<String>).map { it.toDoubleQuoted() }.joinToString()}]"
+          BooleanType, IntType -> raw.toString()
+          StringType -> raw.toString().toDoubleQuoted()
+          BooleanArrayType -> (raw as BooleanArray).map { it }.joinToString().asBracketed()
+          IntArrayType -> (raw as IntArray).map { it }.joinToString().asBracketed()
+          StringArrayType -> (raw as Array<String>).joinToString { it.toDoubleQuoted() }.asBracketed()
+          BooleanListType -> (raw as List<Boolean>).toString()
+          IntListType -> (raw as List<Int>).toString()
+          StringListType -> "[${(raw as List<String>).joinToString { it.toDoubleQuoted() }}]"
         }
     }
 
@@ -51,7 +52,7 @@ class FunctionInfo(val name: String,
     validate()
   }
 
-  fun validate() {
+  private fun validate() {
     if (answers.size != arguments.size)
       throw InvalidConfigurationException("Mismatch between ${answers.size} answers and ${arguments.size} arguments in $name")
   }

@@ -18,12 +18,12 @@
 package com.github.readingbat.config
 
 import com.github.readingbat.InvalidPathException
+import com.github.readingbat.Module.readingBatContent
 import com.github.readingbat.dsl.LanguageType.*
 import com.github.readingbat.dsl.LanguageType.Companion.toLanguageType
 import com.github.readingbat.pages.challengeGroupPage
 import com.github.readingbat.pages.challengePage
 import com.github.readingbat.pages.languageGroupPage
-import content
 import io.ktor.application.Application
 import io.ktor.application.ApplicationCallPipeline
 import io.ktor.application.call
@@ -42,15 +42,15 @@ internal fun Application.intercepts() {
       when (items.size) {
         1 -> {
           // This lookup has to take place outside of the lambda for proper exception handling
-          val groups = content.findLanguage(languageType).challengeGroups
+          val groups = readingBatContent.findLanguage(languageType).challengeGroups
           call.respondHtml { languageGroupPage(languageType, groups) }
         }
         2 -> {
-          val challengeGroup = content.findLanguage(languageType).findGroup(groupName)
+          val challengeGroup = readingBatContent.findLanguage(languageType).findGroup(groupName)
           call.respondHtml { challengeGroupPage(challengeGroup) }
         }
         3 -> {
-          val challenge = content.findLanguage(languageType).findChallenge(groupName, challengeName)
+          val challenge = readingBatContent.findLanguage(languageType).findChallenge(groupName, challengeName)
           call.respondHtml { challengePage(challenge) }
         }
         else -> throw InvalidPathException("Invalid path: $req")

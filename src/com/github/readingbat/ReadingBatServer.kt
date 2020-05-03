@@ -17,6 +17,7 @@
 
 package com.github.readingbat
 
+import com.github.readingbat.Module.module
 import com.github.readingbat.config.installs
 import com.github.readingbat.config.intercepts
 import com.github.readingbat.config.locations
@@ -27,20 +28,27 @@ import io.ktor.server.cio.CIO
 import io.ktor.server.engine.embeddedServer
 
 object ReadingBatServer {
+
   fun start(content: ReadingBatContent) {
     val port = Integer.parseInt(System.getProperty("PORT") ?: "8080")
     //val clargs = commandLineEnvironment(args.plus("port=$port"))
     embeddedServer(CIO, port = port) { module(content = content) }
       .start(wait = true)
   }
+
 }
 
-@JvmOverloads
-internal fun Application.module(testing: Boolean = false, content: ReadingBatContent) {
-  installs()
-  intercepts()
-  locations()
-  routes()
+object Module {
+  internal lateinit var readingBatContent: ReadingBatContent
+
+  internal fun Application.module(testing: Boolean = false, content: ReadingBatContent) {
+    readingBatContent = content
+
+    installs()
+    intercepts()
+    locations()
+    routes()
+  }
 }
 
 internal class InvalidPathException(msg: String) : RuntimeException(msg)

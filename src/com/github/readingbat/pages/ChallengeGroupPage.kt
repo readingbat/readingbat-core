@@ -27,7 +27,7 @@ import com.github.readingbat.dsl.ChallengeGroup
 import kotlinx.html.*
 import kotlinx.html.Entities.nbsp
 
-internal fun HTML.challengeGroupPage(challengeGroup: ChallengeGroup) {
+internal fun HTML.challengeGroupPage(challengeGroup: ChallengeGroup<*>) {
 
   val languageType = challengeGroup.languageType
   val groupName = challengeGroup.name

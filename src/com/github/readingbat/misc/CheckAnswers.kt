@@ -53,7 +53,7 @@ object CheckAnswers : KLogging() {
     call.respondText(results.toString())
   }
 
-  internal infix fun String.equalsAsList(other: String) =
+  private infix fun String.equalsAsList(other: String) =
     try {
       KotlinScript().eval("listOf(${this.trimEnds()}) == listOf(${other.trimEnds()})") as Boolean
     } catch (e: ScriptException) {

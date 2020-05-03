@@ -31,18 +31,19 @@ import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.measureTimedValue
 
 @ReadingBatDslMarker
-sealed class Challenge(private val group: ChallengeGroup) {
+sealed class Challenge(group: ChallengeGroup<*>) {
   private val paramSignature = mutableListOf<String>()
   private var multiArgTypes = ""
   private val challengeId = counter.incrementAndGet()
 
-  internal val inputOutput = mutableListOf<Pair<String, String>>()
+  private val inputOutput = mutableListOf<Pair<String, String>>()
+  private val languageGroup = group.languageGroup
+  private val packageName = group.packageName
   internal val languageType = group.languageType
   internal val groupName = group.name
-  private val packageName = group.packageName
 
   private val fqName by lazy { packageName.ensureSuffix("/") + fileName.ensureSuffix(".${languageType.suffix}") }
-  internal val gitpodUrl by lazy { "${group.languageGroup.gitpodRoot}$fqName" }
+  internal val gitpodUrl by lazy { "${languageGroup.gitpodRoot}$fqName" }
   internal val parsedDescription
       by lazy {
         val options = MutableDataSet().apply { set(HtmlRenderer.SOFT_BREAK, "<br />\n") }
@@ -52,6 +53,7 @@ sealed class Challenge(private val group: ChallengeGroup) {
         renderer.render(document)
       }
 
+  // User properties
   var name = ""
   var fileName = ""
   var codingBatEquiv = ""
@@ -62,9 +64,9 @@ sealed class Challenge(private val group: ChallengeGroup) {
   internal fun funcInfo() =
     sourcesMap
       .computeIfAbsent(challengeId) {
-        val path = "${group.languageGroup.rawRepoRoot}$fqName"
+        val path = "${languageGroup.rawRepoRoot}$fqName"
         val (content, dur) = measureTimedValue { URL(path).readText() }
-        logger.info { """Fetching "${group.name}/$fileName" $path in $dur""" }
+        logger.info { """Fetching "$groupName/$fileName" $path in $dur""" }
         computeFuncInfo(content)
       }
 
@@ -142,7 +144,9 @@ sealed class Challenge(private val group: ChallengeGroup) {
   }
 }
 
-class PythonChallenge(group: ChallengeGroup) : Challenge(group) {
+class PythonChallenge(group: ChallengeGroup<*>) : Challenge(group) {
+
+  // User properties
   lateinit var returnType: ReturnType
 
   override fun computeFuncInfo(code: String): FunctionInfo {
@@ -176,7 +180,7 @@ class PythonChallenge(group: ChallengeGroup) : Challenge(group) {
   }
 }
 
-class JavaChallenge(group: ChallengeGroup) : Challenge(group) {
+class JavaChallenge(group: ChallengeGroup<*>) : Challenge(group) {
   override fun computeFuncInfo(code: String): FunctionInfo {
     val lines = code.split("\n").filter { !it.trimStart().startsWith("package") }
     val lineNums =
@@ -186,9 +190,9 @@ class JavaChallenge(group: ChallengeGroup) : Challenge(group) {
 
     val funcCode = lines.subList(lineNums.first(), lineNums.last() - 1).joinToString("\n").trimIndent()
     val args = lines.javaArguments(svmRegex, javaEndRegex)
-
     val derivedReturnType = lines.deriveReturnType(this)
-    val script = lines.convertToScript(this)
+    val script = lines.convertToScript()
+
     logger.info { "$name return type: $derivedReturnType script: \n$script" }
 
     val rawAnswers: Any
@@ -198,7 +202,7 @@ class JavaChallenge(group: ChallengeGroup) : Challenge(group) {
         import(ArrayList::class.java)
         val timedValue = measureTimedValue { evalScript(script) }
         rawAnswers = timedValue.value
-        logger.info { "Computed answers in ${timedValue.duration} for $name: $rawAnswers" }
+        logger.info { "$name computed answers in ${timedValue.duration} for: $rawAnswers" }
       }
 
     if (rawAnswers !is List<*>)
@@ -240,19 +244,19 @@ class JavaChallenge(group: ChallengeGroup) : Challenge(group) {
       return lines
     }
 
-    internal fun List<String>.deriveReturnType(challenge: Challenge) =
+    internal fun List<String>.deriveReturnType(challenge: JavaChallenge) =
       this
         .asSequence()
         .filter { !it.contains(svmRegex) && (it.contains(staticStartRegex) || it.contains(psRegex)) }
-        .map {
-          val words = it.trim().split(spaceRegex).filter { it.isNotBlank() }
+        .map { str ->
+          val words = str.trim().split(spaceRegex).filter { it.isNotBlank() }
           val staticPos = words.indices.first { words[it] == "static" }
           val typeStr = words[staticPos + 1]
           typeStr.asReturnType ?: throw InvalidConfigurationException("In ${challenge.name} invalid type $typeStr")
         }
         .firstOrNull() ?: throw InvalidConfigurationException("In ${challenge.name} unable to determine return type")
 
-    internal fun List<String>.convertToScript(challenge: Challenge): String {
+    internal fun List<String>.convertToScript(): String {
       val scriptCode = mutableListOf<String>()
       val varName = "answers"
       var exprIndent = 0
@@ -294,7 +298,9 @@ class JavaChallenge(group: ChallengeGroup) : Challenge(group) {
   }
 }
 
-class KotlinChallenge(group: ChallengeGroup) : Challenge(group) {
+class KotlinChallenge(group: ChallengeGroup<*>) : Challenge(group) {
+
+  // User properties
   lateinit var returnType: ReturnType
 
   override fun computeFuncInfo(code: String): FunctionInfo {

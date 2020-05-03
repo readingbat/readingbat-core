@@ -25,7 +25,7 @@ import com.github.readingbat.dsl.ChallengeGroup
 import com.github.readingbat.dsl.LanguageType
 import kotlinx.html.*
 
-internal fun HTML.languageGroupPage(languageType: LanguageType, groups: List<ChallengeGroup>) {
+internal fun HTML.languageGroupPage(languageType: LanguageType, groups: List<ChallengeGroup<*>>) {
   head {
     headDefault()
   }
@@ -51,7 +51,7 @@ internal fun HTML.languageGroupPage(languageType: LanguageType, groups: List<Cha
   }
 }
 
-private fun TR.groupItem(prefix: String, group: ChallengeGroup) {
+private fun TR.groupItem(prefix: String, group: ChallengeGroup<*>) {
   val name = group.name
   val parsedDescription = group.parsedDescription
 

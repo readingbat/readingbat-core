@@ -35,20 +35,19 @@ class GitHubContent(repo: String, fileName: String = "Content.kt") :
                srcPath = "src/main/kotlin",
                fileName = fileName)
 
-fun readingBatContent(block: ReadingBatContent.() -> Unit) = ReadingBatContent()
-  .apply(block).apply { validate() }
+fun readingBatContent(block: ReadingBatContent.() -> Unit) =
+  ReadingBatContent().apply(block).apply { validate() }
 
 private val logger = KotlinLogging.logger {}
 
-fun include(source: ContentSource, variableName: String = "content"): ReadingBatContent {
-  return contentMap
+fun include(source: ContentSource, variableName: String = "content") =
+  contentMap
     .computeIfAbsent(source.path) {
       val (code, dur) = measureTimedValue { source.content }
       logger.info { """Read content from "${source.path}" in $dur""" }
       val withImports = addImports(code, variableName)
       evalDsl(withImports, source.path)
     }
-}
 
 internal fun addImports(code: String, variableName: String): String {
   val classImports =

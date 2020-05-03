@@ -18,9 +18,9 @@
 package com.github.readingbat.config
 
 import com.github.readingbat.Constants.playground
+import com.github.readingbat.Module.readingBatContent
 import com.github.readingbat.dsl.LanguageType.Kotlin
 import com.github.readingbat.pages.playgroundPage
-import content
 import io.ktor.application.Application
 import io.ktor.application.call
 import io.ktor.html.respondHtml
@@ -31,7 +31,7 @@ import io.ktor.routing.routing
 internal fun Application.locations() {
   routing {
     get<PlaygroundRequest> {
-      val challenge = content.findLanguage(Kotlin).findChallenge(it.groupName, it.challengeName)
+      val challenge = readingBatContent.findLanguage(Kotlin).findChallenge(it.groupName, it.challengeName)
       call.respondHtml { playgroundPage(challenge) }
     }
   }

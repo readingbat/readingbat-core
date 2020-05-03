@@ -22,66 +22,54 @@ import com.github.pambrose.common.util.toPath
 import com.github.readingbat.Constants.github
 import com.github.readingbat.Constants.githubUserContent
 import com.github.readingbat.InvalidPathException
-import com.github.readingbat.dsl.LanguageType.*
 
 @ReadingBatDslMarker
-sealed class LanguageGroup(internal val languageType: LanguageType) {
-  protected var localGroupCount = 0
-  internal val challengeGroups = mutableListOf<ChallengeGroup>()
+class LanguageGroup<T : Challenge>(internal val languageType: LanguageType) {
+  internal val challengeGroups = mutableListOf<ChallengeGroup<T>>()
+  private val rawRoot by lazy { checkedRepoRoot.replace(github, githubUserContent) }
 
-  private val rawRoot by lazy { repoRoot.replace(github, githubUserContent) }
-  internal val rawRepoRoot by lazy { listOf(rawRoot, "master", srcPrefix).toPath() }
-  internal val gitpodRoot by lazy { listOf(repoRoot, "blob/master/", srcPrefix).toPath() }
+  private val checkedRepoRoot: String
+    get() {
+      if (repoRoot.isEmpty())
+        throw InvalidConfigurationException("${languageType.lowerName} section is missing a repoRoot value")
+      return repoRoot
+    }
 
+  // User properties
   var srcPrefix = languageType.srcPrefix
   var repoRoot = ""
+  var branchName = "master"
 
-  fun findChallenge(groupName: String, challengeName: String) =
-    findGroup(groupName).findChallenge(challengeName)
+  internal val rawRepoRoot by lazy { listOf(rawRoot, branchName, srcPrefix).toPath() }
+  internal val gitpodRoot by lazy { listOf(checkedRepoRoot, "blob/$branchName/", srcPrefix).toPath() }
 
-  fun hasGroup(groupName: String) = challengeGroups.any { it.name == groupName }
+  internal fun validate() {
+    // Empty for now
+  }
 
-  fun findGroup(groupName: String) =
-    groupName.decode()
-      .let { decoded -> challengeGroups.firstOrNull { it.name == decoded } }
-      ?: throw InvalidPathException("Group ${languageType.lowerName}/$groupName not found")
-
-  internal fun addGroup(group: ChallengeGroup) {
+  internal fun addGroup(group: ChallengeGroup<T>) {
+    if (languageType != group.languageType)
+      throw InvalidConfigurationException("${group.name} language type mismatch: $languageType and ${group.languageType}")
     if (hasGroup(group.name))
       throw InvalidConfigurationException("Duplicate group name: ${group.name}")
     challengeGroups += group
-    localGroupCount++
   }
 
-  internal fun validate() {
-    if (localGroupCount > 0 && repoRoot.isEmpty())
-      throw InvalidConfigurationException("${languageType.lowerName} section is missing a repoRoot value")
-  }
+  fun hasGroup(groupName: String) = challengeGroups.any { it.name == groupName }
 
   @ReadingBatDslMarker
-  operator fun ChallengeGroup.unaryPlus() {
-    this@LanguageGroup.addGroup(this)
-  }
+  fun group(name: String, block: ChallengeGroup<T>.() -> Unit) =
+    addGroup(ChallengeGroup(this, name).apply(block))
+
+  @ReadingBatDslMarker
+  operator fun ChallengeGroup<T>.unaryPlus() = let { this@LanguageGroup.addGroup(this) }
+
+  fun findGroup(groupName: String) =
+    groupName.decode().let { decoded -> challengeGroups.firstOrNull { it.name == decoded } }
+      ?: throw InvalidPathException("Group ${languageType.lowerName}/$groupName not found")
+
+  fun findChallenge(groupName: String, challengeName: String) = findGroup(groupName).findChallenge(challengeName)
 
   override fun toString() =
-    "LanguageGroup(languageType=$languageType, srcPrefix='$srcPrefix', challengeGroups=$challengeGroups, repoRoot='$repoRoot')"
-
-}
-
-class PythonGroup : LanguageGroup(Python) {
-  @ReadingBatDslMarker
-  fun group(name: String, block: PythonChallengeGroup.() -> Unit) =
-    addGroup(PythonChallengeGroup(this, name).apply(block))
-}
-
-class JavaGroup : LanguageGroup(Java) {
-  @ReadingBatDslMarker
-  fun group(name: String, block: JavaChallengeGroup.() -> Unit) =
-    addGroup(JavaChallengeGroup(this, name).apply(block))
-}
-
-class KotlinGroup : LanguageGroup(Kotlin) {
-  @ReadingBatDslMarker
-  fun group(name: String, block: KotlinChallengeGroup.() -> Unit) =
-    addGroup(KotlinChallengeGroup(this, name).apply(block))
+    "LanguageGroup(languageType=$languageType, srcPrefix='$srcPrefix', challengeGroups=$challengeGroups, repoRoot='$repoRoot', branch='$branchName')"
 }

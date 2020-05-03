@@ -17,11 +17,13 @@
 
 package com.github.readingbat.dsl
 
+import com.github.readingbat.dsl.LanguageType.*
+
 @ReadingBatDslMarker
 class ReadingBatContent {
-  val java = JavaGroup()
-  val python = PythonGroup()
-  val kotlin = KotlinGroup()
+  val python = LanguageGroup<PythonChallenge>(Python)
+  val java = LanguageGroup<JavaChallenge>(Java)
+  val kotlin = LanguageGroup<KotlinChallenge>(Kotlin)
 
   private val languageList = listOf(java, python, kotlin)
   private val languageMap = languageList.map { it.languageType to it }.toMap()
@@ -32,23 +34,17 @@ class ReadingBatContent {
   internal fun validate() = languageList.forEach { it.validate() }
 
   @ReadingBatDslMarker
-  fun java(block: JavaGroup.() -> Unit) {
-    java.apply(block)
-  }
+  fun java(block: LanguageGroup<JavaChallenge>.() -> Unit) = java.run(block)
 
   @ReadingBatDslMarker
-  fun python(block: PythonGroup.() -> Unit) {
-    python.apply(block)
-  }
+  fun python(block: LanguageGroup<PythonChallenge>.() -> Unit) = python.run(block)
 
   @ReadingBatDslMarker
-  fun kotlin(block: KotlinGroup.() -> Unit) {
-    kotlin.apply(block)
-  }
+  fun kotlin(block: LanguageGroup<KotlinChallenge>.() -> Unit) = kotlin.run(block)
 
   @ReadingBatDslMarker
-  operator fun LanguageGroup.unaryPlus() {
-    val languageGroup = this@ReadingBatContent.findLanguage(languageType)
+  operator fun <T : Challenge> LanguageGroup<T>.unaryPlus() {
+    val languageGroup = this@ReadingBatContent.findLanguage(languageType) as LanguageGroup<T>
     challengeGroups.forEach { languageGroup.addGroup(it) }
   }
 

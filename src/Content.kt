@@ -36,7 +36,8 @@ val content =
 
     +include(GitHubContent("readingbat-java-content", fileName = "Content2.kt"), variableName = "content2").kotlin
 
-    java {
-      //+include(GitHubContent("readingbat-java-content")).java.findGroup("dd")
-    }
+    // java {
+    //+include(GitHubContent("readingbat-java-content")).java.findGroup("dd")
+    // }
   }
+
