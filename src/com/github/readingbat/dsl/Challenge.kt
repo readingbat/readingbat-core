@@ -181,7 +181,7 @@ class PythonChallenge(group: ChallengeGroup<*>) : Challenge(group) {
   companion object {
     internal val defMainRegex = Regex("""def\s+main\(""")
     internal val ifMainEndRegex = Regex("__main__")
-    private val prefixRegex = listOf(Regex("""print\("""))
+    private val prefixRegex = Regex("""print\(""")
     private const val varName = "answers"
 
     internal fun extractFunction(code: List<String>): String {
@@ -204,7 +204,7 @@ class PythonChallenge(group: ChallengeGroup<*>) : Challenge(group) {
           }
           insideMain -> {
             // Skip everything after def main(): that does not have a print
-            if (prefixRegex.any { line.contains(it) }) {
+            if (line.contains(prefixRegex)) {
               val firstParen = line.indexOfFirst { it == '(' }
               val lastParen = line.indexOfLast { it == ')' }
               val expr = line.substring(firstParen + 1, lastParen)

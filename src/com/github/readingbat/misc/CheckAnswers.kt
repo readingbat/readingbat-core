@@ -18,6 +18,7 @@
 package com.github.readingbat.misc
 
 import com.github.pambrose.common.script.KotlinScript
+import com.github.pambrose.common.script.PythonScript
 import com.github.pambrose.common.util.*
 import com.github.readingbat.Constants.langSrc
 import com.github.readingbat.Constants.solution
@@ -53,13 +54,27 @@ object CheckAnswers : KLogging() {
     call.respondText(results.toString())
   }
 
-  private infix fun String.equalsAsList(other: String) =
-    try {
-      KotlinScript().eval("listOf(${this.trimEnds()}) == listOf(${other.trimEnds()})") as Boolean
+  private infix fun String.equalsAsKotlinList(other: String): Boolean {
+    val compareExpr = "listOf(${this.trimEnds()}) == listOf(${other.trimEnds()})"
+    logger.debug { "Check answers expression: $compareExpr" }
+    return try {
+      KotlinScript().eval(compareExpr) as Boolean
     } catch (e: ScriptException) {
-      logger.info { "Caught exception comparing $this and $other: ${e.message}" }
+      logger.info { "Caught exception comparing $this and $other: ${e.message} in $compareExpr" }
       false
     }
+  }
+
+  private infix fun String.equalsAsPythonList(other: String): Boolean {
+    val compareExpr = "${this@equalsAsPythonList.trim()} == ${other.trim()}"
+    logger.debug { "Check answers expression: $compareExpr" }
+    return try {
+      PythonScript().eval(compareExpr) as Boolean
+    } catch (e: ScriptException) {
+      logger.info { "Caught exception comparing $this and $other: ${e.message} in: $compareExpr" }
+      false
+    }
+  }
 
   private fun checkWithSolution(isJava: Boolean, userResp: String, solution: String) =
     try {
@@ -70,7 +85,7 @@ object CheckAnswers : KLogging() {
 
       if (isJava) {
         if (solution.isBracketed())
-          solution equalsAsList userResp
+          solution equalsAsKotlinList userResp
         else
           when {
             userResp.isEmpty() || solution.isEmpty() -> false
@@ -81,16 +96,17 @@ object CheckAnswers : KLogging() {
           }
       }
       else
-        when {
-          userResp.isEmpty() || solution.isEmpty() -> false
-          userResp.isDoubleQuoted() -> userResp == solution
-          userResp.isSingleQuoted() -> userResp.singleToDoubleQuoted() == solution
-          userResp.contains(".") || solution.contains(".") -> userResp.toDouble() == solution.toDouble()
-          userResp.isPythonBoolean() && solution.isPythonBoolean() -> {
-            userResp.toBoolean() == solution.toBoolean()
+        if (solution.isBracketed())
+          solution equalsAsPythonList userResp
+        else
+          when {
+            userResp.isEmpty() || solution.isEmpty() -> false
+            userResp.isDoubleQuoted() -> userResp == solution
+            userResp.isSingleQuoted() -> userResp.singleToDoubleQuoted() == solution
+            userResp.contains(".") || solution.contains(".") -> userResp.toDouble() == solution.toDouble()
+            userResp.isPythonBoolean() && solution.isPythonBoolean() -> userResp.toBoolean() == solution.toBoolean()
+            else -> userResp.toInt() == solution.toInt()
           }
-          else -> userResp.toInt() == solution.toInt()
-        }
     } catch (e: Exception) {
       false
     }
