@@ -208,27 +208,26 @@ class JavaChallenge(group: ChallengeGroup) : Challenge(group) {
   }
 
   companion object : KLogging() {
+    private val spaceRegex = Regex("""\s""")
+    private val staticRegex = Regex("""static.*\(""")
+    private val staticStartRegex = Regex("""\sstatic.*\(""")
+    private val psRegex = Regex("""^\s*public\sstatic.*\(""")
+    internal val javaEndRegex = Regex("""\s*}\s*""")
+    private val svmRegex = Regex("""\sstatic\svoid\smain\(""")
+    internal val psvmRegex = Regex("""^\s*public\s*static\s*void\s*main.*\)""")
 
-    internal val spaceRegex = Regex("""\s""")
-    internal val staticRegex = Regex("""static.*\(""")
-    internal val javaEndRegex = Regex("}")
-    internal val psvmRegex = Regex("""public\s*static\s*void\s*main.*\)""")
-    internal val svmRegex = Regex("""static\svoid\smain\(""")
-    internal val staticStartRegex = Regex("""\sstatic.*\(""")
-    internal val psRegex = Regex("""\spublic\sstatic.*\(""")
-
-    val prefixRegex =
+    private val prefixRegex =
       listOf(Regex("""System\.out\.println\("""),
              Regex("""ArrayUtils\.arrayPrint\("""),
              Regex("""ListUtils\.listPrint\("""),
              Regex("""arrayPrint\("""),
              Regex("""listPrint\("""))
+    private val prefixes =
+      listOf("System.out.println", "ArrayUtils.arrayPrint", "ListUtils.listPrint", "arrayPrint", "listPrint")
 
     internal fun String.javaArguments(start: Regex, end: Regex) = split("\n").javaArguments(start, end)
 
     internal fun List<String>.javaArguments(start: Regex, end: Regex): List<String> {
-      val prefixes =
-        listOf("System.out.println", "ArrayUtils.arrayPrint", "ListUtils.listPrint", "arrayPrint", "listPrint")
       val lines = mutableListOf<String>()
       prefixes.forEach { prefix ->
         lines.addAll(
@@ -273,9 +272,9 @@ class JavaChallenge(group: ChallengeGroup) : Challenge(group) {
             val firstParen = line.indexOfFirst { it == '(' }
             val lastParen = line.indexOfLast { it == ')' }
             val expr = line.substring(firstParen + 1, lastParen)
-            //logger.info { "Content from: $firstParen to: $lastParen is: $expr" }
+            logger.debug { "Content from: $firstParen to: $lastParen is: $expr" }
             val str = "".padStart(exprIndent) + "$varName.add($expr);"
-            logger.info { "Transformed:\n$line\nto:\n$str" }
+            logger.debug { "Transformed:\n$line\nto:\n$str" }
             scriptCode += str
           }
           insideMain && line.trim().startsWith("}") -> {
@@ -300,7 +299,7 @@ class KotlinChallenge(group: ChallengeGroup) : Challenge(group) {
 
   override fun computeFuncInfo(code: String): FunctionInfo {
     val lines = code.split("\n").filter { !it.trimStart().startsWith("package") }
-    val funcCode = lines.subList(0, lines.lastLineNumberOf(Regex("fun main\\("))).joinToString("\n").trimIndent()
+    val funcCode = lines.subList(0, lines.lastLineNumberOf(kotlinStartRegex)).joinToString("\n").trimIndent()
     val args = lines.kotlinArguments(kotlinStartRegex, kotlinEndRegex)
     val originalCode = lines.joinToString("\n")
     val codeSnippet = "\n$funcCode\n\n"
@@ -312,8 +311,8 @@ class KotlinChallenge(group: ChallengeGroup) : Challenge(group) {
   }
 
   companion object {
-    internal val kotlinStartRegex = Regex("static\\svoid\\smain\\(")
-    internal val kotlinEndRegex = Regex("}")
+    internal val kotlinStartRegex = Regex("""^\s*fun\s*main.*\)""")
+    internal val kotlinEndRegex = Regex("""\s*}\s*""")
 
     internal fun String.kotlinArguments(start: Regex, end: Regex) = split("\n").kotlinArguments(start, end)
 

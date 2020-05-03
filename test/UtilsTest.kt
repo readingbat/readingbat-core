@@ -19,8 +19,10 @@ package com.github.readingbat
 
 import com.github.readingbat.dsl.JavaChallenge.Companion.javaArguments
 import com.github.readingbat.dsl.JavaChallenge.Companion.javaEndRegex
-import com.github.readingbat.dsl.JavaChallenge.Companion.javaStartRegex
+import com.github.readingbat.dsl.JavaChallenge.Companion.psvmRegex
 import com.github.readingbat.dsl.KotlinChallenge.Companion.kotlinArguments
+import com.github.readingbat.dsl.KotlinChallenge.Companion.kotlinEndRegex
+import com.github.readingbat.dsl.KotlinChallenge.Companion.kotlinStartRegex
 import com.github.readingbat.dsl.PythonChallenge.Companion.pythonArguments
 import com.github.readingbat.dsl.PythonChallenge.Companion.pythonEndRegex
 import com.github.readingbat.dsl.PythonChallenge.Companion.pythonStartRegex
@@ -75,8 +77,8 @@ class UtilsTest {
       }
     """.trimIndent()
 
-    s.javaArguments(javaStartRegex, javaEndRegex) shouldBeEqualTo listOf("""joinEnds("Blue zebra")""",
-                                                                         """joinEnds("Tree")""")
+    s.javaArguments(psvmRegex, javaEndRegex) shouldBeEqualTo listOf("""joinEnds("Blue zebra")""",
+                                                                    """joinEnds("Tree")""")
   }
 
   @Test
@@ -92,8 +94,8 @@ class UtilsTest {
       }
     """.trimIndent()
 
-    s.kotlinArguments(javaStartRegex, javaEndRegex) shouldBeEqualTo listOf("""listOf("a").combine2()""",
-                                                                           """listOf("a", "b", "c", "d").combine2()""")
+    s.kotlinArguments(kotlinStartRegex, kotlinEndRegex) shouldBeEqualTo listOf("""listOf("a").combine2()""",
+                                                                               """listOf("a", "b", "c", "d").combine2()""")
   }
 
   @Test
