@@ -190,20 +190,21 @@ class JavaChallenge(group: ChallengeGroup<*>) : Challenge(group) {
 
     val funcCode = lines.subList(lineNums.first(), lineNums.last() - 1).joinToString("\n").trimIndent()
     val args = lines.javaArguments(svmRegex, javaEndRegex)
+
     val derivedReturnType = lines.deriveReturnType(this)
     val script = lines.convertToScript()
 
-    logger.info { "$name return type: $derivedReturnType script: \n$script" }
+    logger.info { "$name return type: $derivedReturnType script: \n${script.withLineNumbers()}" }
 
-    val rawAnswers: Any
-    JavaScript()
-      .apply {
-        import(List::class.java)
-        import(ArrayList::class.java)
-        val timedValue = measureTimedValue { evalScript(script) }
-        rawAnswers = timedValue.value
-        logger.info { "$name computed answers in ${timedValue.duration} for: $rawAnswers" }
-      }
+    val timedValue =
+      JavaScript()
+        .run {
+          import(List::class.java)
+          import(ArrayList::class.java)
+          measureTimedValue { evalScript(script) }
+        }
+    val rawAnswers = timedValue.value
+    logger.info { "$name computed answers in ${timedValue.duration} for: $rawAnswers" }
 
     if (rawAnswers !is List<*>)
       throw InvalidConfigurationException("Invalid type returned for $name")
@@ -282,7 +283,6 @@ class JavaChallenge(group: ChallengeGroup<*>) : Challenge(group) {
             scriptCode += str
           }
           insideMain && line.trim().startsWith("}") -> {
-            logger.info { "Inserting return stmt" }
             insideMain = false
             scriptCode += ""
             scriptCode += "".padStart(exprIndent) + "return $varName;"
