@@ -20,16 +20,25 @@ package com.github.readingbat
 import kotlin.reflect.KType
 import kotlin.reflect.typeOf
 
-enum class ReturnType(val ktype: KType) {
-  BooleanType(typeOf<Boolean>()),
-  IntType(typeOf<Int>()),
-  StringType(typeOf<String>()),
+enum class ReturnType(val typeStr: String, val ktype: KType) {
+  BooleanType("boolean", typeOf<Boolean>()),
+  IntType("int", typeOf<Int>()),
+  StringType("String", typeOf<String>()),
 
-  BooleanArrayType(typeOf<Array<Boolean>>()),
-  IntArrayType(typeOf<Array<Int>>()),
-  StringArrayType(typeOf<Array<String>>()),
+  BooleanArrayType("boolean[]", typeOf<Array<Boolean>>()),
+  IntArrayType("int[]", typeOf<Array<Int>>()),
+  StringArrayType("String[]", typeOf<Array<String>>()),
 
-  BooleanListType(typeOf<List<Boolean>>()),
-  IntListType(typeOf<List<Int>>()),
-  StringListType(typeOf<List<String>>())
+  BooleanListType("List<Boolean>", typeOf<List<Boolean>>()),
+  IntListType("List<Integer>", typeOf<List<Int>>()),
+  StringListType("List<Strixng>", typeOf<List<String>>());
+
+  companion object {
+    val String.asReturnType: ReturnType?
+      get() = try {
+        values().first { this == it.typeStr }
+      } catch (e: NoSuchElementException) {
+        null
+      }
+  }
 }

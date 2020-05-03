@@ -21,7 +21,7 @@ import com.github.pambrose.common.script.JavaScript
 import com.github.pambrose.common.util.*
 import com.github.readingbat.ReturnType
 import com.github.readingbat.ReturnType.*
-import com.github.readingbat.dsl.JavaChallenge.Companion.convertToScript
+import com.github.readingbat.ReturnType.Companion.asReturnType
 import com.vladsch.flexmark.html.HtmlRenderer
 import com.vladsch.flexmark.parser.Parser
 import com.vladsch.flexmark.util.data.MutableDataSet
@@ -29,8 +29,6 @@ import mu.KLogging
 import java.net.URL
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
-import kotlin.reflect.KClass
-import kotlin.reflect.typeOf
 import kotlin.time.measureTimedValue
 
 @ReadingBatDslMarker
@@ -59,9 +57,8 @@ sealed class Challenge(private val group: ChallengeGroup) {
   var fileName = ""
   var codingBatEquiv = ""
   var description = ""
-  var returnType: ReturnType? = null
 
-  internal abstract fun computeFuncInfo(code: String, returnType: ReturnType?): FunctionInfo
+  internal abstract fun computeFuncInfo(code: String): FunctionInfo
 
   internal fun funcInfo() =
     sourcesMap
@@ -69,7 +66,7 @@ sealed class Challenge(private val group: ChallengeGroup) {
         val path = "${group.languageGroup.rawRepoRoot}$fqName"
         val (content, dur) = measureTimedValue { URL(path).readText() }
         logger.info { """Fetching "${group.name}/$fileName" $path in $dur""" }
-        computeFuncInfo(content, returnType)
+        computeFuncInfo(content)
       }
 
   internal fun validate() {
@@ -147,7 +144,9 @@ sealed class Challenge(private val group: ChallengeGroup) {
 }
 
 class PythonChallenge(group: ChallengeGroup) : Challenge(group) {
-  override fun computeFuncInfo(code: String, returnType: ReturnType?): FunctionInfo {
+  lateinit var returnType: ReturnType
+
+  override fun computeFuncInfo(code: String): FunctionInfo {
     val lines = code.split("\n")
     val lineNums =
       lines.mapIndexed { i, str -> i to str }
@@ -157,7 +156,10 @@ class PythonChallenge(group: ChallengeGroup) : Challenge(group) {
     val funcCode = lines.subList(lineNums.first(), lineNums.last() - 1).joinToString("\n").trimIndent()
     val args = lines.pythonArguments(pythonStartRegex, pythonEndRegex)
 
-    return FunctionInfo(this, code, funcCode, args, StringType, listOf<Any>())
+    if (!this::returnType.isInitialized)
+      throw InvalidConfigurationException("$name missing returnType value")
+
+    return FunctionInfo(name, code, funcCode, args, returnType, listOf<Any>())
   }
 
   companion object {
@@ -176,7 +178,7 @@ class PythonChallenge(group: ChallengeGroup) : Challenge(group) {
 }
 
 class JavaChallenge(group: ChallengeGroup) : Challenge(group) {
-  override fun computeFuncInfo(code: String, returnType: ReturnType?): FunctionInfo {
+  override fun computeFuncInfo(code: String): FunctionInfo {
     val lines = code.split("\n").filter { !it.trimStart().startsWith("package") }
     val lineNums =
       lines.mapIndexed { i, str -> i to str }
@@ -185,7 +187,9 @@ class JavaChallenge(group: ChallengeGroup) : Challenge(group) {
 
     val funcCode = lines.subList(lineNums.first(), lineNums.last() - 1).joinToString("\n").trimIndent()
     val args = lines.javaArguments(javaStartRegex, javaEndRegex)
-    val script = lines.convertToScript()
+
+    val derivedReturnType = lines.deriveReturnType(this)
+    val script = lines.convertToScript(this)
     logger.info { "$name script: \n$script" }
 
     val rawAnswers: Any
@@ -201,10 +205,7 @@ class JavaChallenge(group: ChallengeGroup) : Challenge(group) {
     if (rawAnswers !is List<*>)
       throw InvalidConfigurationException("Invalid type returned for $name")
 
-    if (returnType == null)
-      throw InvalidConfigurationException("$name missing returnType value")
-
-    return FunctionInfo(this, code, funcCode, args, returnType, rawAnswers)
+    return FunctionInfo(name, code, funcCode, args, derivedReturnType, rawAnswers)
   }
 
   companion object : KLogging() {
@@ -212,6 +213,13 @@ class JavaChallenge(group: ChallengeGroup) : Challenge(group) {
     internal val staticRegex = Regex("static.*\\(")
     internal val javaStartRegex = Regex("static\\svoid\\smain\\(")
     internal val javaEndRegex = Regex("}")
+    internal val psvmRegex = Regex("""public\s*static\s*void\s*main.*\)""")
+    val prefixRegex =
+      listOf(Regex("""System\.out\.println\("""),
+             Regex("""ArrayUtils\.arrayPrint\("""),
+             Regex("""ListUtils\.listPrint\("""),
+             Regex("""arrayPrint\("""),
+             Regex("""listPrint\("""))
 
     internal fun String.javaArguments(start: Regex, end: Regex) = split("\n").javaArguments(start, end)
 
@@ -230,16 +238,28 @@ class JavaChallenge(group: ChallengeGroup) : Challenge(group) {
       return lines
     }
 
-    internal fun List<String>.convertToScript(): String {
+    internal val svmRegex = Regex("""static\svoid\smain\(""")
+    internal val staticStartRegex = Regex("""^static\s""")
+    internal val psRegex = Regex("""^public\sstatic\s""")
+
+    internal fun List<String>.deriveReturnType(challenge: Challenge): ReturnType {
+      for (line in this) {
+        val ltrim = line.trim()
+        if (!ltrim.contains(svmRegex) && (ltrim.contains(staticStartRegex) || ltrim.contains(psRegex))) {
+          val words = ltrim.split(Regex("""\s"""))
+          val staticPos = words.indices.first { words[it] == "static" }
+          val typeStr = words[staticPos + 1]
+          val type =
+            typeStr.asReturnType ?: throw InvalidConfigurationException("Invalid type $typeStr in ${challenge.name}")
+          logger.info { "Return type = $type" }
+          return type
+        }
+      }
+      throw InvalidConfigurationException("Unable to determine return type in ${challenge.name}")
+    }
+
+    internal fun List<String>.convertToScript(challenge: Challenge): String {
       val scriptCode = mutableListOf<String>()
-      val psvmRegex = Regex("""public\s*static\s*void\s*main.*\)""")
-      val printlnRegex = Regex("""System\.out\.println\(.*\)""")
-      val prefixes =
-        listOf(Regex("""System\.out\.println\(.*\)"""),
-               Regex("""ArrayUtils\.arrayPrint\("""),
-               Regex("""ListUtils\.listPrint\("""),
-               Regex("""arrayPrint\("""),
-               Regex("""listPrint\("""))
 
       val varName = "answers"
       var exprIndent = 0
@@ -254,8 +274,8 @@ class JavaChallenge(group: ChallengeGroup) : Challenge(group) {
             scriptCode += ""
             scriptCode += line.replace(psvmRegex, "public List<Object> getValue()")
           }
-          insideMain && prefixes.any { line.contains(it) } -> {
-            exprIndent = kotlin.math.max(0, prefixes.map { line.indexOf(it.pattern.substring(0, 6)) }.max()!!)
+          insideMain && prefixRegex.any { line.contains(it) } -> {
+            exprIndent = kotlin.math.max(0, prefixRegex.map { line.indexOf(it.pattern.substring(0, 6)) }.max()!!)
             val firstParen = line.indexOfFirst { it == '(' }
             val lastParen = line.indexOfLast { it == ')' }
             val expr = line.substring(firstParen + 1, lastParen)
@@ -284,16 +304,19 @@ class JavaChallenge(group: ChallengeGroup) : Challenge(group) {
 internal val String.deRegex get() = this.replace("\\", "")
 
 class KotlinChallenge(group: ChallengeGroup) : Challenge(group) {
-  val id = counter.incrementAndGet()
+  lateinit var returnType: ReturnType
 
-  override fun computeFuncInfo(code: String, returnType: ReturnType?): FunctionInfo {
+  override fun computeFuncInfo(code: String): FunctionInfo {
     val lines = code.split("\n").filter { !it.trimStart().startsWith("package") }
     val funcCode = lines.subList(0, lines.lastLineNumberOf(Regex("fun main\\("))).joinToString("\n").trimIndent()
     val args = lines.kotlinArguments(kotlinStartRegex, kotlinEndRegex)
     val originalCode = lines.joinToString("\n")
     val codeSnippet = "\n$funcCode\n\n"
 
-    return FunctionInfo(this, originalCode, codeSnippet, args, StringType, listOf<Any>())
+    if (!this::returnType.isInitialized)
+      throw InvalidConfigurationException("$name missing returnType value")
+
+    return FunctionInfo(name, originalCode, codeSnippet, args, returnType, listOf<Any>())
   }
 
   companion object {
@@ -311,11 +334,11 @@ class KotlinChallenge(group: ChallengeGroup) : Challenge(group) {
   }
 }
 
-class FunctionInfo(val challenge: Challenge,
+class FunctionInfo(val name: String,
                    val originalCode: String,
                    val codeSnippet: String,
                    val arguments: List<String>,
-                   val answerType: ReturnType,
+                   returnType: ReturnType,
                    rawAnswers: List<*>) {
 
   val answers = mutableListOf<String>()
@@ -323,66 +346,27 @@ class FunctionInfo(val challenge: Challenge,
   init {
     rawAnswers.forEach { raw ->
       answers +=
-        when (challenge.returnType!!) {
+        when (returnType) {
           BooleanType, IntType -> raw.toString()
           StringType -> raw.toString().toDoubleQuoted()
-          BooleanArrayType -> (raw as BooleanArray).map { it }.joinToString().withBrackets
-          IntArrayType -> (raw as IntArray).map { it }.joinToString().withBrackets
-          StringArrayType -> (raw as Array<String>).map { it.toDoubleQuoted() }.joinToString().withBrackets
+          BooleanArrayType -> (raw as BooleanArray).map { it }.joinToString().asBracketed()
+          IntArrayType -> (raw as IntArray).map { it }.joinToString().asBracketed()
+          StringArrayType -> (raw as Array<String>).map { it.toDoubleQuoted() }.joinToString().asBracketed()
           BooleanListType -> (raw as List<Boolean>).toString()
           IntListType -> (raw as List<Int>).toString()
           StringListType -> "[${(raw as List<String>).map { it.toDoubleQuoted() }.joinToString()}]"
         }
     }
 
-    logger.info { "Computed answers: $answers for arguments: $arguments in ${challenge.name}" }
+    logger.info { "Computed answers: $answers for arguments: $arguments in $name" }
 
     validate()
   }
 
   fun validate() {
     if (answers.size != arguments.size)
-      throw InvalidConfigurationException("Mismatch between ${answers.size} answers and ${arguments.size} arguments in ${challenge.name}")
+      throw InvalidConfigurationException("Mismatch between ${answers.size} answers and ${arguments.size} arguments in $name")
   }
 
   companion object : KLogging()
 }
-
-internal val String.withBrackets get() = "[$this]"
-
-fun main() {
-  val t = typeOf<List<String>>()
-  val c = t.classifier as KClass<*>
-
-  println(t.classifier)
-  println(t.arguments[0])
-  println()
-}
-
-fun main2() {
-  val s = """
-    public class JoinEnds {
-
-        public static String joinEnds(String str) {
-            if (str.length() < 2)
-                return str;
-
-            String b = str.substring(0, 1);
-            String e = str.substring(str.length() - 1);
-
-            return e + b;
-        }
-
-        public static void main(String[] args) {
-            System.out.println(joinEnds("Blue zebra"));
-            System.out.println(joinEnds("Tree"));
-            System.out.println(joinEnds("Re"));
-            System.out.println(joinEnds("p"));
-            System.out.println(joinEnds(""));
-        }
-    }
-  """.trimIndent()
-
-  println(s.split("\n").convertToScript())
-}
-

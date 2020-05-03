@@ -40,12 +40,12 @@ object CheckAnswers : KLogging() {
     val compareMap = params.entries().map { it.key to it.value[0] }.toMap()
     val isJava = compareMap[langSrc] == "java"
     val userResps = params.entries().filter { it.key.startsWith(userResp) }
+
     logger.info("Found ${userResps.size} user responses in $compareMap")
     val results =
       userResps.indices.map { i ->
         val userResp = compareMap[userResp + i]?.trim() ?: throw InvalidConfigurationException("Missing user response")
         val solution = compareMap[solution + i]?.trim() ?: throw InvalidConfigurationException("Missing solution")
-
         checkWithSolution(isJava, userResp, solution)
       }
 
