@@ -18,16 +18,15 @@
 package com.github.readingbat.dsl
 
 import com.github.readingbat.InvalidPathException
-import com.github.readingbat.dsl.LanguageType.*
 import com.vladsch.flexmark.html.HtmlRenderer
 import com.vladsch.flexmark.parser.Parser
 import com.vladsch.flexmark.util.data.MutableDataSet
 
 @ReadingBatDslMarker
-class ChallengeGroup(internal val languageGroup: LanguageGroup, internal val name: String) {
+sealed class ChallengeGroup(internal val languageGroup: LanguageGroup, internal val name: String) {
   internal val languageType = languageGroup.languageType
   internal val challenges = mutableListOf<Challenge>()
-  private val prefix = "${languageType.lowerName}/$name"
+  protected val prefix = "${languageType.lowerName}/$name"
   internal val parsedDescription
       by lazy {
         val options = MutableDataSet().apply { set(HtmlRenderer.SOFT_BREAK, "<br />\n") }
@@ -53,17 +52,32 @@ class ChallengeGroup(internal val languageGroup: LanguageGroup, internal val nam
     this@ChallengeGroup.challenges += this
   }
 
+  override fun toString() = "ChallengeGroup(name='$name', challenges=$challenges, packageName='$packageName')"
+}
+
+class PythonChallengeGroup(languageGroup: LanguageGroup, name: String) : ChallengeGroup(languageGroup, name) {
   @ReadingBatDslMarker
-  fun challenge(name: String, block: Challenge.() -> Unit) {
+  fun challenge(name: String, block: PythonChallenge.() -> Unit) {
     if (hasChallenge(name))
       throw InvalidConfigurationException("Challenge $prefix/$name already exists")
-    val challenge = when (languageType) {
-      Java -> JavaChallenge(this)
-      Python -> PythonChallenge(this)
-      Kotlin -> KotlinChallenge(this)
-    }
-    challenges += challenge.apply { this.name = name }.apply(block).apply { validate() }
+    challenges += PythonChallenge(this).apply { this.name = name }.apply(block).apply { validate() }
   }
+}
 
-  override fun toString() = "ChallengeGroup(name='$name', challenges=$challenges, packageName='$packageName')"
+class JavaChallengeGroup(languageGroup: LanguageGroup, name: String) : ChallengeGroup(languageGroup, name) {
+  @ReadingBatDslMarker
+  fun challenge(name: String, block: JavaChallenge.() -> Unit) {
+    if (hasChallenge(name))
+      throw InvalidConfigurationException("Challenge $prefix/$name already exists")
+    challenges += JavaChallenge(this).apply { this.name = name }.apply(block).apply { validate() }
+  }
+}
+
+class KotlinChallengeGroup(languageGroup: LanguageGroup, name: String) : ChallengeGroup(languageGroup, name) {
+  @ReadingBatDslMarker
+  fun challenge(name: String, block: KotlinChallenge.() -> Unit) {
+    if (hasChallenge(name))
+      throw InvalidConfigurationException("Challenge $prefix/$name already exists")
+    challenges += KotlinChallenge(this).apply { this.name = name }.apply(block).apply { validate() }
+  }
 }

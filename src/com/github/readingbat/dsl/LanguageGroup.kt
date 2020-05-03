@@ -22,10 +22,11 @@ import com.github.pambrose.common.util.toPath
 import com.github.readingbat.Constants.github
 import com.github.readingbat.Constants.githubUserContent
 import com.github.readingbat.InvalidPathException
+import com.github.readingbat.dsl.LanguageType.*
 
 @ReadingBatDslMarker
-class LanguageGroup(internal val languageType: LanguageType) {
-  private var localGroupCount = 0
+sealed class LanguageGroup(internal val languageType: LanguageType) {
+  protected var localGroupCount = 0
   internal val challengeGroups = mutableListOf<ChallengeGroup>()
 
   private val rawRoot by lazy { repoRoot.replace(github, githubUserContent) }
@@ -49,6 +50,7 @@ class LanguageGroup(internal val languageType: LanguageType) {
     if (hasGroup(group.name))
       throw InvalidConfigurationException("Duplicate group name: ${group.name}")
     challengeGroups += group
+    localGroupCount++
   }
 
   internal fun validate() {
@@ -61,15 +63,25 @@ class LanguageGroup(internal val languageType: LanguageType) {
     this@LanguageGroup.addGroup(this)
   }
 
-  @ReadingBatDslMarker
-  fun group(name: String, block: ChallengeGroup.() -> Unit) {
-    if (hasGroup(name))
-      throw InvalidConfigurationException("Duplicate group name: $name")
-    challengeGroups += ChallengeGroup(this, name).apply(block)
-    localGroupCount++
-  }
-
   override fun toString() =
     "LanguageGroup(languageType=$languageType, srcPrefix='$srcPrefix', challengeGroups=$challengeGroups, repoRoot='$repoRoot')"
 
+}
+
+class PythonGroup : LanguageGroup(Python) {
+  @ReadingBatDslMarker
+  fun group(name: String, block: PythonChallengeGroup.() -> Unit) =
+    addGroup(PythonChallengeGroup(this, name).apply(block))
+}
+
+class JavaGroup : LanguageGroup(Java) {
+  @ReadingBatDslMarker
+  fun group(name: String, block: JavaChallengeGroup.() -> Unit) =
+    addGroup(JavaChallengeGroup(this, name).apply(block))
+}
+
+class KotlinGroup : LanguageGroup(Kotlin) {
+  @ReadingBatDslMarker
+  fun group(name: String, block: KotlinChallengeGroup.() -> Unit) =
+    addGroup(KotlinChallengeGroup(this, name).apply(block))
 }
