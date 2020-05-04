@@ -90,9 +90,10 @@ object JavaParse : KLogging() {
         line.contains(psvmRegex) -> {
           insideMain = true
           val publicIndent = line.indexOf("public ")
-          scriptCode += "".padStart(publicIndent) + "public List<Object> $varName = new ArrayList<Object>();"
+          val indent = "".padStart(publicIndent)
+          scriptCode += indent + "public List<Object> $varName = new ArrayList<Object>();"
           scriptCode += ""
-          scriptCode += line.replace(psvmRegex, "public List<Object> getValue()")
+          scriptCode += indent + line.replace(psvmRegex, "public List<Object> getValue()")
         }
         insideMain && prefixRegex.any { line.contains(it) } -> {
           val expr = line.substringBetween("(", ")")
