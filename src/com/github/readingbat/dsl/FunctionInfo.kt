@@ -19,8 +19,7 @@ package com.github.readingbat.dsl
 
 import com.github.pambrose.common.util.asBracketed
 import com.github.pambrose.common.util.toDoubleQuoted
-import com.github.readingbat.ReturnType
-import com.github.readingbat.ReturnType.*
+import com.github.readingbat.dsl.ReturnType.*
 import mu.KLogging
 
 class FunctionInfo(val languageType: LanguageType,

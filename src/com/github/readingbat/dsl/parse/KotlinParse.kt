@@ -25,7 +25,7 @@ object KotlinParse {
   internal val funMainRegex = Regex("""^\s*fun\s+main.*\)""")
   internal val kotlinEndRegex = Regex("""\s*}\s*""")
   private const val printlnPrefix = "println("
-  internal val varName = "answers"
+  internal const val varName = "answers"
 
   internal fun extractKotlinFunction(code: List<String>) =
     code.subList(0, code.lastLineNumberOf(funMainRegex)).joinToString("\n").trimIndent()

@@ -20,12 +20,12 @@ package com.github.readingbat.misc
 import com.github.pambrose.common.script.KotlinScript
 import com.github.pambrose.common.script.PythonScript
 import com.github.pambrose.common.util.*
-import com.github.readingbat.Constants.langSrc
-import com.github.readingbat.Constants.solution
-import com.github.readingbat.Constants.userResp
 import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.LanguageType.Java
 import com.github.readingbat.dsl.LanguageType.Kotlin
+import com.github.readingbat.misc.Constants.langSrc
+import com.github.readingbat.misc.Constants.solution
+import com.github.readingbat.misc.Constants.userResp
 import io.ktor.application.ApplicationCall
 import io.ktor.application.call
 import io.ktor.request.receiveParameters

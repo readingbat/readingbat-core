@@ -19,17 +19,17 @@ package com.github.readingbat.dsl.parse
 
 import com.github.pambrose.common.util.linesBetween
 import com.github.pambrose.common.util.substringBetween
-import com.github.readingbat.ReturnType.Companion.asReturnType
 import com.github.readingbat.dsl.InvalidConfigurationException
+import com.github.readingbat.dsl.ReturnType.Companion.asReturnType
 import mu.KLogging
 import kotlin.math.max
 
 object JavaParse : KLogging() {
 
-  internal val spaceRegex = Regex("""\s+""")
+  private val spaceRegex = Regex("""\s+""")
   private val staticRegex = Regex("""static.+\(""")
-  internal val staticStartRegex = Regex("""\sstatic.+\(""")
-  internal val psRegex = Regex("""^\s+public\s+static.+\(""")
+  private val staticStartRegex = Regex("""\sstatic.+\(""")
+  private val psRegex = Regex("""^\s+public\s+static.+\(""")
   internal val javaEndRegex = Regex("""\s*}\s*""")
   internal val svmRegex = Regex("""\s*static\s+void\s+main\(""")
   internal val psvmRegex = Regex("""^\s*public\s+static\s+void\s+main.+\)""")

@@ -18,10 +18,10 @@
 package com.github.readingbat.pages
 
 import com.github.pambrose.common.util.decode
-import com.github.readingbat.Constants.challengeDesc
-import com.github.readingbat.Constants.kotlinCode
-import com.github.readingbat.Constants.tabs
 import com.github.readingbat.dsl.Challenge
+import com.github.readingbat.misc.Constants.challengeDesc
+import com.github.readingbat.misc.Constants.kotlinCode
+import com.github.readingbat.misc.Constants.tabs
 import kotlinx.html.*
 import org.apache.commons.text.StringEscapeUtils
 

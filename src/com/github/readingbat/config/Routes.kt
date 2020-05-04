@@ -17,11 +17,11 @@
 
 package com.github.readingbat.config
 
-import com.github.readingbat.Constants.checkAnswers
-import com.github.readingbat.Constants.cssName
-import com.github.readingbat.Constants.static
 import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.misc.CheckAnswers.checkUserAnswers
+import com.github.readingbat.misc.Constants.checkAnswers
+import com.github.readingbat.misc.Constants.cssName
+import com.github.readingbat.misc.Constants.static
 import com.github.readingbat.misc.cssContent
 import io.ktor.application.Application
 import io.ktor.application.ApplicationCall

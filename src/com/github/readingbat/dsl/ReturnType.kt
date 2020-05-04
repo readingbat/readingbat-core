@@ -15,7 +15,7 @@
  *
  */
 
-package com.github.readingbat
+package com.github.readingbat.dsl
 
 import kotlin.reflect.KType
 import kotlin.reflect.typeOf

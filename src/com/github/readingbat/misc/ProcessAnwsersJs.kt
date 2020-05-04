@@ -17,16 +17,16 @@
 
 package com.github.readingbat.misc
 
-import com.github.readingbat.Constants.checkAnswers
-import com.github.readingbat.Constants.feedback
-import com.github.readingbat.Constants.langSrc
-import com.github.readingbat.Constants.processAnswers
-import com.github.readingbat.Constants.sessionCounter
-import com.github.readingbat.Constants.sessionid
-import com.github.readingbat.Constants.solution
-import com.github.readingbat.Constants.spinner
-import com.github.readingbat.Constants.status
-import com.github.readingbat.Constants.userResp
+import com.github.readingbat.misc.Constants.checkAnswers
+import com.github.readingbat.misc.Constants.feedback
+import com.github.readingbat.misc.Constants.langSrc
+import com.github.readingbat.misc.Constants.processAnswers
+import com.github.readingbat.misc.Constants.sessionCounter
+import com.github.readingbat.misc.Constants.sessionid
+import com.github.readingbat.misc.Constants.solution
+import com.github.readingbat.misc.Constants.spinner
+import com.github.readingbat.misc.Constants.status
+import com.github.readingbat.misc.Constants.userResp
 import com.github.readingbat.pages.rawHtml
 import kotlinx.html.SCRIPT
 

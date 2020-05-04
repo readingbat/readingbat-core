@@ -25,9 +25,9 @@ object PythonParse : KLogging() {
 
   internal val defMainRegex = Regex("""def\s+main\(""")
   internal val ifMainEndRegex = Regex("__main__")
-  private val printPrefix = "print("
-  private const val varName = "answers"
   private val defRegex = Regex("^def.*\\(")
+  private const val printPrefix = "print("
+  private const val varName = "answers"
 
   internal fun extractPythonFunction(code: List<String>): String {
     val lineNums =

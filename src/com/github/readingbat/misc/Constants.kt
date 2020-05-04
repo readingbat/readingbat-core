@@ -15,12 +15,12 @@
  *
  */
 
-package com.github.readingbat
+package com.github.readingbat.misc
 
 import io.ktor.http.ContentType.Text.CSS
 import java.util.concurrent.atomic.AtomicInteger
 
-object Constants {
+internal object Constants {
   const val sessionid = "sessionid"
   const val groupItemSrc = "groupItem"
   const val funcItem = "funcItem"

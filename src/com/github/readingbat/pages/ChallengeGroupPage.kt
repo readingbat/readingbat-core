@@ -18,12 +18,12 @@
 package com.github.readingbat.pages
 
 import com.github.pambrose.common.util.decode
-import com.github.readingbat.Constants.checkJpg
-import com.github.readingbat.Constants.funcChoice
-import com.github.readingbat.Constants.funcItem
-import com.github.readingbat.Constants.tabs
 import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.ChallengeGroup
+import com.github.readingbat.misc.Constants.checkJpg
+import com.github.readingbat.misc.Constants.funcChoice
+import com.github.readingbat.misc.Constants.funcItem
+import com.github.readingbat.misc.Constants.tabs
 import kotlinx.html.*
 import kotlinx.html.Entities.nbsp
 

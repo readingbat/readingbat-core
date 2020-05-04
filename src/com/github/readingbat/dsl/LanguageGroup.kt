@@ -19,9 +19,9 @@ package com.github.readingbat.dsl
 
 import com.github.pambrose.common.util.decode
 import com.github.pambrose.common.util.toPath
-import com.github.readingbat.Constants.github
-import com.github.readingbat.Constants.githubUserContent
 import com.github.readingbat.InvalidPathException
+import com.github.readingbat.misc.Constants.github
+import com.github.readingbat.misc.Constants.githubUserContent
 
 @ReadingBatDslMarker
 class LanguageGroup<T : Challenge>(internal val languageType: LanguageType) {

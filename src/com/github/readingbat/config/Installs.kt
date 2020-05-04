@@ -17,8 +17,8 @@
 
 package com.github.readingbat.config
 
-import com.github.readingbat.Constants.production
 import com.github.readingbat.InvalidPathException
+import com.github.readingbat.misc.Constants.production
 import io.ktor.application.Application
 import io.ktor.application.call
 import io.ktor.application.install

@@ -17,15 +17,15 @@
 
 package com.github.readingbat.pages
 
-import com.github.readingbat.Constants.backLink
-import com.github.readingbat.Constants.bodyHeader
-import com.github.readingbat.Constants.cssName
-import com.github.readingbat.Constants.cssType
-import com.github.readingbat.Constants.production
-import com.github.readingbat.Constants.selected
-import com.github.readingbat.Constants.titleText
 import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.dsl.LanguageType.*
+import com.github.readingbat.misc.Constants.backLink
+import com.github.readingbat.misc.Constants.bodyHeader
+import com.github.readingbat.misc.Constants.cssName
+import com.github.readingbat.misc.Constants.cssType
+import com.github.readingbat.misc.Constants.production
+import com.github.readingbat.misc.Constants.selected
+import com.github.readingbat.misc.Constants.titleText
 import kotlinx.html.*
 import kotlinx.html.Entities.nbsp
 

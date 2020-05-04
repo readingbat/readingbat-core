@@ -17,26 +17,26 @@
 
 package com.github.readingbat.misc
 
-import com.github.readingbat.Constants.arrow
-import com.github.readingbat.Constants.backLink
-import com.github.readingbat.Constants.bodyHeader
-import com.github.readingbat.Constants.challengeDesc
-import com.github.readingbat.Constants.checkAnswers
-import com.github.readingbat.Constants.checkBar
-import com.github.readingbat.Constants.codeBlock
-import com.github.readingbat.Constants.feedback
-import com.github.readingbat.Constants.funcChoice
-import com.github.readingbat.Constants.funcCol
-import com.github.readingbat.Constants.funcItem
-import com.github.readingbat.Constants.groupItemSrc
-import com.github.readingbat.Constants.kotlinCode
-import com.github.readingbat.Constants.refs
-import com.github.readingbat.Constants.selected
-import com.github.readingbat.Constants.spinner
-import com.github.readingbat.Constants.status
-import com.github.readingbat.Constants.tabs
-import com.github.readingbat.Constants.userAnswers
-import com.github.readingbat.Constants.userResp
+import com.github.readingbat.misc.Constants.arrow
+import com.github.readingbat.misc.Constants.backLink
+import com.github.readingbat.misc.Constants.bodyHeader
+import com.github.readingbat.misc.Constants.challengeDesc
+import com.github.readingbat.misc.Constants.checkAnswers
+import com.github.readingbat.misc.Constants.checkBar
+import com.github.readingbat.misc.Constants.codeBlock
+import com.github.readingbat.misc.Constants.feedback
+import com.github.readingbat.misc.Constants.funcChoice
+import com.github.readingbat.misc.Constants.funcCol
+import com.github.readingbat.misc.Constants.funcItem
+import com.github.readingbat.misc.Constants.groupItemSrc
+import com.github.readingbat.misc.Constants.kotlinCode
+import com.github.readingbat.misc.Constants.refs
+import com.github.readingbat.misc.Constants.selected
+import com.github.readingbat.misc.Constants.spinner
+import com.github.readingbat.misc.Constants.status
+import com.github.readingbat.misc.Constants.tabs
+import com.github.readingbat.misc.Constants.userAnswers
+import com.github.readingbat.misc.Constants.userResp
 import kotlinx.css.*
 import kotlinx.css.properties.TextDecoration
 

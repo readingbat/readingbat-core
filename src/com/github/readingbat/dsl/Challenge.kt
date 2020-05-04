@@ -20,8 +20,10 @@ package com.github.readingbat.dsl
 import com.github.pambrose.common.script.JavaScript
 import com.github.pambrose.common.script.KotlinScript
 import com.github.pambrose.common.script.PythonScript
-import com.github.pambrose.common.util.*
-import com.github.readingbat.ReturnType
+import com.github.pambrose.common.util.ensureSuffix
+import com.github.pambrose.common.util.toDoubleQuoted
+import com.github.pambrose.common.util.toSingleQuoted
+import com.github.pambrose.common.util.withLineNumbers
 import com.github.readingbat.dsl.parse.JavaParse
 import com.github.readingbat.dsl.parse.JavaParse.deriveJavaReturnType
 import com.github.readingbat.dsl.parse.JavaParse.extractJavaArguments
@@ -86,7 +88,7 @@ sealed class Challenge(group: ChallengeGroup<*>) {
         computeFuncInfo(content)
       }
 
-  internal fun validate() {
+  internal open fun validate() {
     if (name.isEmpty())
       throw InvalidConfigurationException(""""$name" is empty""")
 
@@ -101,8 +103,6 @@ sealed class Challenge(group: ChallengeGroup<*>) {
       else -> toString()
     }
 
-  private fun List<*>.toQuotedStrings() = "[${map { it.prettyQuote() }.toCsv()}]"
-
   override fun toString() = "AbstractChallenge(packageName='$packageName', fileName='$fileName')"
 
   companion object : KLogging() {
@@ -115,15 +115,19 @@ class PythonChallenge(group: ChallengeGroup<*>) : Challenge(group) {
   // User properties
   lateinit var returnType: ReturnType
 
+  override fun validate() {
+    super.validate()
+
+    if (!this::returnType.isInitialized)
+      throw InvalidConfigurationException("$name missing returnType value")
+  }
+
   override fun computeFuncInfo(code: String): FunctionInfo {
     val lines = code.lines()
     val funcCode = extractPythonFunction(lines)
     val args = extractPythonArguments(lines, defMainRegex, ifMainEndRegex)
     val script = convertToPythonScript(lines)
     val answers = mutableListOf<Any>()
-
-    if (!this::returnType.isInitialized)
-      throw InvalidConfigurationException("$name missing returnType value")
 
     logger.info { "$name return type: $returnType script: \n${script.withLineNumbers()}" }
 
@@ -172,6 +176,13 @@ class KotlinChallenge(group: ChallengeGroup<*>) : Challenge(group) {
   // User properties
   lateinit var returnType: ReturnType
 
+  override fun validate() {
+    super.validate()
+
+    if (!this::returnType.isInitialized)
+      throw InvalidConfigurationException("$name missing returnType value")
+  }
+
   override fun computeFuncInfo(code: String): FunctionInfo {
     val lines = code.lines().filter { !it.trimStart().startsWith("package") }
     val strippedCode = lines.joinToString("\n")
@@ -179,9 +190,6 @@ class KotlinChallenge(group: ChallengeGroup<*>) : Challenge(group) {
     val funcCode = "\n${extractKotlinFunction(lines)}\n\n"
     val args = extractKotlinArguments(lines, funMainRegex, kotlinEndRegex)
     val script = convertToKotlinScript(lines)
-
-    if (!this::returnType.isInitialized)
-      throw InvalidConfigurationException("$name missing returnType value")
 
     logger.info { "$name return type: $returnType script: \n${script.withLineNumbers()}" }
 

@@ -17,12 +17,12 @@
 
 package com.github.readingbat.pages
 
-import com.github.readingbat.Constants.funcChoice
-import com.github.readingbat.Constants.funcItem
-import com.github.readingbat.Constants.groupItemSrc
-import com.github.readingbat.Constants.tabs
 import com.github.readingbat.dsl.ChallengeGroup
 import com.github.readingbat.dsl.LanguageType
+import com.github.readingbat.misc.Constants.funcChoice
+import com.github.readingbat.misc.Constants.funcItem
+import com.github.readingbat.misc.Constants.groupItemSrc
+import com.github.readingbat.misc.Constants.tabs
 import kotlinx.html.*
 
 internal fun HTML.languageGroupPage(languageType: LanguageType, groups: List<ChallengeGroup<*>>) {
