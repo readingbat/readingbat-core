@@ -36,7 +36,10 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
 
     implementation "com.github.pambrose.common-utils:core-utils:${utils_version}"
-    implementation "com.github.pambrose.common-utils:script-utils:${utils_version}"
+    implementation "com.github.pambrose.common-utils:script-utils-common:${utils_version}"
+    implementation "com.github.pambrose.common-utils:script-utils-python:${utils_version}"
+    implementation "com.github.pambrose.common-utils:script-utils-java:${utils_version}"
+    implementation "com.github.pambrose.common-utils:script-utils-kotlin:${utils_version}"
 
     implementation "org.jetbrains:kotlin-css:$css_version"
     implementation "org.jetbrains:kotlin-css-jvm:$css_version"
@@ -52,6 +55,8 @@ dependencies {
     implementation "ch.qos.logback:logback-classic:${logback_version}"
     implementation "org.slf4j:jul-to-slf4j:${slf4j_version}"
     implementation "io.github.microutils:kotlin-logging:${logging_version}"
+
+    testImplementation "org.seleniumhq.selenium:selenium-java:$selenium_version"
 
     testImplementation "io.ktor:ktor-server-tests:$ktor_version"
     testImplementation "org.amshove.kluent:kluent:${kluent_version}"
