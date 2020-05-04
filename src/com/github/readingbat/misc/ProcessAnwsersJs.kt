@@ -17,7 +17,6 @@
 
 package com.github.readingbat.misc
 
-import com.github.readingbat.misc.Constants.answer
 import com.github.readingbat.misc.Constants.challengeSrc
 import com.github.readingbat.misc.Constants.checkAnswers
 import com.github.readingbat.misc.Constants.feedback
@@ -48,11 +47,8 @@ internal fun SCRIPT.addScript(languageName: String, groupName: String, challenge
           var x = document.getElementById("$feedback"+i);
           x.style.backgroundColor = "white";
           
-          var a = document.getElementById("$userResp"+i).value;
-          data += "&$userResp" + i + "="+encodeURIComponent(a);
-          var s = document.getElementById("$answer"+i).value;
-          console.log("Adding: " + s);
-          data += "&$answer" + i + "="+encodeURIComponent(s);
+          var ur = document.getElementById("$userResp"+i).value;
+          data += "&$userResp" + i + "="+encodeURIComponent(ur);
         }
       }
       catch(err) {

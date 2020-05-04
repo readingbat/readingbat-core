@@ -53,7 +53,7 @@ class FunctionInfo(val languageType: LanguageType,
         }
     }
 
-    logger.info { "In $name arguments: $arguments computed answers: $answers" }
+    logger.debug { "In $name arguments: $arguments computed answers: $answers" }
 
     validate()
   }

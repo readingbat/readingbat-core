@@ -19,7 +19,6 @@ package com.github.readingbat.pages
 
 import com.github.pambrose.common.util.decode
 import com.github.readingbat.dsl.Challenge
-import com.github.readingbat.misc.Constants.answer
 import com.github.readingbat.misc.Constants.arrow
 import com.github.readingbat.misc.Constants.challengeDesc
 import com.github.readingbat.misc.Constants.checkAnswers
@@ -92,8 +91,6 @@ internal fun HTML.challengePage(challenge: Challenge) {
                 }
               }
               td(classes = feedback) { id = "$feedback$i" }
-              //println("${v.second} and ${funcInfo.answers[i]}")
-              td { hiddenInput { id = "$answer$i"; value = funcInfo.answers[i] } }
             }
           }
         }

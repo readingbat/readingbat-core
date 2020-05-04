@@ -51,7 +51,7 @@ object CheckAnswers : KLogging() {
     val userResps = params.entries().filter { it.key.startsWith(userResp) }
     val challenge = Module.readingBatContent.findLanguage(lang.toLanguageType()).findChallenge(groupName, challengeName)
 
-    logger.info("Found ${userResps.size} user responses in $compareMap")
+    logger.debug("Found ${userResps.size} user responses in $compareMap")
     val results =
       userResps.indices.map { i ->
         val userResp = compareMap[userResp + i]?.trim() ?: throw InvalidConfigurationException("Missing user response")
@@ -90,7 +90,7 @@ object CheckAnswers : KLogging() {
       fun String.isJavaBoolean() = this == "true" || this == "false"
       fun String.isPythonBoolean() = this == "True" || this == "False"
 
-      logger.info("""Comparing user response: "$userResp" with answer: "$answer"""")
+      logger.debug("""Comparing user response: "$userResp" with answer: "$answer"""")
 
       if (isJvm) {
         if (answer.isBracketed())
