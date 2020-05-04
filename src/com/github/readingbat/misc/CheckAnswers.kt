@@ -24,6 +24,8 @@ import com.github.readingbat.Constants.langSrc
 import com.github.readingbat.Constants.solution
 import com.github.readingbat.Constants.userResp
 import com.github.readingbat.dsl.InvalidConfigurationException
+import com.github.readingbat.dsl.LanguageType.Java
+import com.github.readingbat.dsl.LanguageType.Kotlin
 import io.ktor.application.ApplicationCall
 import io.ktor.application.call
 import io.ktor.request.receiveParameters
@@ -39,7 +41,7 @@ object CheckAnswers : KLogging() {
   internal suspend fun PipelineContext<Unit, ApplicationCall>.checkUserAnswers() {
     val params = call.receiveParameters()
     val compareMap = params.entries().map { it.key to it.value[0] }.toMap()
-    val isJava = compareMap[langSrc] == "java"
+    val isJvm = compareMap[langSrc] == Java.lowerName || compareMap[langSrc] == Kotlin.lowerName
     val userResps = params.entries().filter { it.key.startsWith(userResp) }
 
     logger.info("Found ${userResps.size} user responses in $compareMap")
@@ -47,7 +49,7 @@ object CheckAnswers : KLogging() {
       userResps.indices.map { i ->
         val userResp = compareMap[userResp + i]?.trim() ?: throw InvalidConfigurationException("Missing user response")
         val solution = compareMap[solution + i]?.trim() ?: throw InvalidConfigurationException("Missing solution")
-        checkWithSolution(isJava, userResp, solution)
+        checkWithSolution(isJvm, userResp, solution)
       }
 
     delay(200.milliseconds.toLongMilliseconds())
@@ -76,14 +78,14 @@ object CheckAnswers : KLogging() {
     }
   }
 
-  private fun checkWithSolution(isJava: Boolean, userResp: String, solution: String) =
+  private fun checkWithSolution(isJvm: Boolean, userResp: String, solution: String) =
     try {
       fun String.isJavaBoolean() = this == "true" || this == "false"
       fun String.isPythonBoolean() = this == "True" || this == "False"
 
       logger.info("""Comparing solution: "$solution" with user response: "$userResp"""")
 
-      if (isJava) {
+      if (isJvm) {
         if (solution.isBracketed())
           solution equalsAsKotlinList userResp
         else

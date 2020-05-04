@@ -21,8 +21,8 @@ import com.github.readingbat.dsl.JavaChallenge
 import com.github.readingbat.dsl.JavaChallenge.Companion.javaEndRegex
 import com.github.readingbat.dsl.JavaChallenge.Companion.psvmRegex
 import com.github.readingbat.dsl.KotlinChallenge
+import com.github.readingbat.dsl.KotlinChallenge.Companion.funMainRegex
 import com.github.readingbat.dsl.KotlinChallenge.Companion.kotlinEndRegex
-import com.github.readingbat.dsl.KotlinChallenge.Companion.kotlinStartRegex
 import com.github.readingbat.dsl.PythonChallenge
 import com.github.readingbat.dsl.PythonChallenge.Companion.defMainRegex
 import com.github.readingbat.dsl.PythonChallenge.Companion.ifMainEndRegex
@@ -97,7 +97,7 @@ class UtilsTest {
     """.trimIndent()
 
     KotlinChallenge.extractArguments(s,
-                                     kotlinStartRegex,
+                                     funMainRegex,
                                      kotlinEndRegex) shouldBeEqualTo listOf("""listOf("a").combine2()""",
                                                                             """listOf("a", "b", "c", "d").combine2()""")
   }
