@@ -19,6 +19,7 @@ package com.github.readingbat.pages
 
 import com.github.pambrose.common.util.decode
 import com.github.readingbat.dsl.Challenge
+import com.github.readingbat.misc.Constants.answer
 import com.github.readingbat.misc.Constants.arrow
 import com.github.readingbat.misc.Constants.challengeDesc
 import com.github.readingbat.misc.Constants.checkAnswers
@@ -30,7 +31,6 @@ import com.github.readingbat.misc.Constants.funcCol
 import com.github.readingbat.misc.Constants.playground
 import com.github.readingbat.misc.Constants.processAnswers
 import com.github.readingbat.misc.Constants.refs
-import com.github.readingbat.misc.Constants.solution
 import com.github.readingbat.misc.Constants.spinner
 import com.github.readingbat.misc.Constants.static
 import com.github.readingbat.misc.Constants.status
@@ -51,7 +51,7 @@ internal fun HTML.challengePage(challenge: Challenge) {
     link { rel = "stylesheet"; href = spinnerCss }
     link { rel = "stylesheet"; href = "/$static/$languageName-prism.css"; type = cssType }
 
-    script(type = ScriptType.textJavaScript) { addScript(languageName) }
+    script(type = ScriptType.textJavaScript) { addScript(languageName, groupName, name) }
 
     removePrismShadow()
     headDefault()
@@ -93,7 +93,7 @@ internal fun HTML.challengePage(challenge: Challenge) {
               }
               td(classes = feedback) { id = "$feedback$i" }
               //println("${v.second} and ${funcInfo.answers[i]}")
-              td { hiddenInput { id = "$solution$i"; value = funcInfo.answers[i] } }
+              td { hiddenInput { id = "$answer$i"; value = funcInfo.answers[i] } }
             }
           }
         }

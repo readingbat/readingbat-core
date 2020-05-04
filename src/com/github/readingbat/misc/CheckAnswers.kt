@@ -20,11 +20,14 @@ package com.github.readingbat.misc
 import com.github.pambrose.common.script.KotlinScript
 import com.github.pambrose.common.script.PythonScript
 import com.github.pambrose.common.util.*
+import com.github.readingbat.Module
 import com.github.readingbat.dsl.InvalidConfigurationException
+import com.github.readingbat.dsl.LanguageType.Companion.toLanguageType
 import com.github.readingbat.dsl.LanguageType.Java
 import com.github.readingbat.dsl.LanguageType.Kotlin
+import com.github.readingbat.misc.Constants.challengeSrc
+import com.github.readingbat.misc.Constants.groupSrc
 import com.github.readingbat.misc.Constants.langSrc
-import com.github.readingbat.misc.Constants.solution
 import com.github.readingbat.misc.Constants.userResp
 import io.ktor.application.ApplicationCall
 import io.ktor.application.call
@@ -41,15 +44,19 @@ object CheckAnswers : KLogging() {
   internal suspend fun PipelineContext<Unit, ApplicationCall>.checkUserAnswers() {
     val params = call.receiveParameters()
     val compareMap = params.entries().map { it.key to it.value[0] }.toMap()
-    val isJvm = compareMap[langSrc] == Java.lowerName || compareMap[langSrc] == Kotlin.lowerName
+    val lang = compareMap[langSrc] ?: throw InvalidConfigurationException("Missing language")
+    val groupName = compareMap[groupSrc] ?: throw InvalidConfigurationException("Missing group name")
+    val challengeName = compareMap[challengeSrc] ?: throw InvalidConfigurationException("Missing challenge name")
+    val isJvm = lang in listOf(Java.lowerName, Kotlin.lowerName)
     val userResps = params.entries().filter { it.key.startsWith(userResp) }
+    val challenge = Module.readingBatContent.findLanguage(lang.toLanguageType()).findChallenge(groupName, challengeName)
 
     logger.info("Found ${userResps.size} user responses in $compareMap")
     val results =
       userResps.indices.map { i ->
         val userResp = compareMap[userResp + i]?.trim() ?: throw InvalidConfigurationException("Missing user response")
-        val solution = compareMap[solution + i]?.trim() ?: throw InvalidConfigurationException("Missing solution")
-        checkWithSolution(isJvm, userResp, solution)
+        val answer = challenge.funcInfo().answers[i]
+        checkWithAnswer(isJvm, userResp, answer)
       }
 
     delay(200.milliseconds.toLongMilliseconds())
@@ -78,36 +85,36 @@ object CheckAnswers : KLogging() {
     }
   }
 
-  private fun checkWithSolution(isJvm: Boolean, userResp: String, solution: String) =
+  private fun checkWithAnswer(isJvm: Boolean, userResp: String, answer: String) =
     try {
       fun String.isJavaBoolean() = this == "true" || this == "false"
       fun String.isPythonBoolean() = this == "True" || this == "False"
 
-      logger.info("""Comparing solution: "$solution" with user response: "$userResp"""")
+      logger.info("""Comparing user response: "$userResp" with answer: "$answer"""")
 
       if (isJvm) {
-        if (solution.isBracketed())
-          solution equalsAsKotlinList userResp
+        if (answer.isBracketed())
+          answer equalsAsKotlinList userResp
         else
           when {
-            userResp.isEmpty() || solution.isEmpty() -> false
-            userResp.isDoubleQuoted() || solution.isDoubleQuoted() -> userResp == solution
-            userResp.contains(".") || solution.contains(".") -> userResp.toDouble() == solution.toDouble()
-            userResp.isJavaBoolean() && solution.isJavaBoolean() -> userResp.toBoolean() == solution.toBoolean()
-            else -> userResp.toInt() == solution.toInt()
+            userResp.isEmpty() || answer.isEmpty() -> false
+            userResp.isDoubleQuoted() || answer.isDoubleQuoted() -> userResp == answer
+            userResp.contains(".") || answer.contains(".") -> userResp.toDouble() == answer.toDouble()
+            userResp.isJavaBoolean() && answer.isJavaBoolean() -> userResp.toBoolean() == answer.toBoolean()
+            else -> userResp.toInt() == answer.toInt()
           }
       }
       else
-        if (solution.isBracketed())
-          solution equalsAsPythonList userResp
+        if (answer.isBracketed())
+          answer equalsAsPythonList userResp
         else
           when {
-            userResp.isEmpty() || solution.isEmpty() -> false
-            userResp.isDoubleQuoted() -> userResp == solution
-            userResp.isSingleQuoted() -> userResp.singleToDoubleQuoted() == solution
-            userResp.contains(".") || solution.contains(".") -> userResp.toDouble() == solution.toDouble()
-            userResp.isPythonBoolean() && solution.isPythonBoolean() -> userResp.toBoolean() == solution.toBoolean()
-            else -> userResp.toInt() == solution.toInt()
+            userResp.isEmpty() || answer.isEmpty() -> false
+            userResp.isDoubleQuoted() -> userResp == answer
+            userResp.isSingleQuoted() -> userResp.singleToDoubleQuoted() == answer
+            userResp.contains(".") || answer.contains(".") -> userResp.toDouble() == answer.toDouble()
+            userResp.isPythonBoolean() && answer.isPythonBoolean() -> userResp.toBoolean() == answer.toBoolean()
+            else -> userResp.toInt() == answer.toInt()
           }
     } catch (e: Exception) {
       false

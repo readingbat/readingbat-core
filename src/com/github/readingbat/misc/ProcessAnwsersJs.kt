@@ -17,20 +17,22 @@
 
 package com.github.readingbat.misc
 
+import com.github.readingbat.misc.Constants.answer
+import com.github.readingbat.misc.Constants.challengeSrc
 import com.github.readingbat.misc.Constants.checkAnswers
 import com.github.readingbat.misc.Constants.feedback
+import com.github.readingbat.misc.Constants.groupSrc
 import com.github.readingbat.misc.Constants.langSrc
 import com.github.readingbat.misc.Constants.processAnswers
 import com.github.readingbat.misc.Constants.sessionCounter
 import com.github.readingbat.misc.Constants.sessionid
-import com.github.readingbat.misc.Constants.solution
 import com.github.readingbat.misc.Constants.spinner
 import com.github.readingbat.misc.Constants.status
 import com.github.readingbat.misc.Constants.userResp
 import com.github.readingbat.pages.rawHtml
 import kotlinx.html.SCRIPT
 
-internal fun SCRIPT.addScript(languageName: String) =
+internal fun SCRIPT.addScript(languageName: String, groupName: String, challengeName: String) =
   rawHtml(
     """
     var re = new XMLHttpRequest();
@@ -40,7 +42,7 @@ internal fun SCRIPT.addScript(languageName: String) =
       if (event != null && event.keyCode != 13) 
         return;
 
-      var data = "$sessionid=${sessionCounter.incrementAndGet()}&$langSrc=$languageName";
+      var data = "$sessionid=${sessionCounter.incrementAndGet()}&$langSrc=$languageName&$groupSrc=$groupName&$challengeSrc=$challengeName";
       try {
         for (var i = 0; i < cnt; i++) {
           var x = document.getElementById("$feedback"+i);
@@ -48,9 +50,9 @@ internal fun SCRIPT.addScript(languageName: String) =
           
           var a = document.getElementById("$userResp"+i).value;
           data += "&$userResp" + i + "="+encodeURIComponent(a);
-          var s = document.getElementById("$solution"+i).value;
+          var s = document.getElementById("$answer"+i).value;
           console.log("Adding: " + s);
-          data += "&$solution" + i + "="+encodeURIComponent(s);
+          data += "&$answer" + i + "="+encodeURIComponent(s);
         }
       }
       catch(err) {
