@@ -400,21 +400,13 @@ class KotlinChallenge(group: ChallengeGroup<*>) : Challenge(group) {
         when {
           line.contains(funMainRegex) -> {
             insideMain = true
-            val funMainIndent = line.indexOf("fun ")
-            //scriptCode += "".padStart(funMainIndent) + "val $varName = mutableListOf<Any>()"
-            scriptCode += ""
-            //scriptCode += line
           }
           insideMain && line.trimStart().startsWith(printlnPrefix) -> {
             val expr = line.substringBetween(printlnPrefix, ")")
-            val exprIndent = line.indexOf(printlnPrefix)
-            val str = /*"".padStart(exprIndent) +*/ "$varName.add($expr)"
-            logger.info { "Transformed:\n$line\nto:\n$str" }
-            scriptCode += str
+            scriptCode += "$varName.add($expr)"
           }
           insideMain && line.trimStart().startsWith("}") -> {
             insideMain = false
-            //scriptCode += line
           }
           else -> {
             scriptCode += line
