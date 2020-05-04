@@ -17,10 +17,12 @@
 
 package com.github.readingbat
 
+import com.github.readingbat.Module.module
 import com.github.readingbat.dsl.LanguageType.*
 import com.github.readingbat.dsl.readingBatContent
 import io.ktor.http.HttpMethod
-import io.ktor.http.HttpStatusCode
+import io.ktor.http.HttpStatusCode.Companion.Found
+import io.ktor.http.HttpStatusCode.Companion.OK
 import io.ktor.server.testing.handleRequest
 import io.ktor.server.testing.withTestApplication
 import org.junit.jupiter.api.Test
@@ -29,7 +31,7 @@ import kotlin.test.assertEquals
 class ServerTest {
   @Test
   fun testRoot() {
-    val content =
+    val testContent =
       readingBatContent {
 
         java {
@@ -39,22 +41,31 @@ class ServerTest {
         python {
           repoRoot = "Something"
         }
+
+        kotlin {
+          repoRoot = "Something"
+        }
       }
 
-    withTestApplication({ content.validate(); module(testing = true, content = content) }) {
+    withTestApplication({
+                          testContent.validate()
+                          module(testing = true, content = testContent)
+                        }) {
 
       handleRequest(HttpMethod.Get, "/").apply {
-        assertEquals(HttpStatusCode.Found, response.status())
+        assertEquals(Found, response.status())
       }
 
       handleRequest(HttpMethod.Get, "/${Java.lowerName}").apply {
-        assertEquals(HttpStatusCode.OK, response.status())
+        assertEquals(OK, response.status())
       }
+
       handleRequest(HttpMethod.Get, "/${Python.lowerName}").apply {
-        assertEquals(HttpStatusCode.OK, response.status())
+        assertEquals(OK, response.status())
       }
+
       handleRequest(HttpMethod.Get, "/${Kotlin.lowerName}").apply {
-        assertEquals(HttpStatusCode.OK, response.status())
+        assertEquals(OK, response.status())
       }
     }
   }

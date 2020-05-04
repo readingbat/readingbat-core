@@ -17,13 +17,13 @@
 
 package com.github.readingbat.config
 
-import com.github.readingbat.Constants.production
 import com.github.readingbat.InvalidPathException
+import com.github.readingbat.misc.Constants.production
 import io.ktor.application.Application
 import io.ktor.application.call
 import io.ktor.application.install
 import io.ktor.features.*
-import io.ktor.http.ContentType
+import io.ktor.http.ContentType.Text.Plain
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.TextContent
 import io.ktor.http.withCharset
@@ -32,6 +32,7 @@ import io.ktor.request.path
 import io.ktor.response.respond
 import io.ktor.server.engine.ShutDownUrl
 import org.slf4j.event.Level
+import kotlin.text.Charsets.UTF_8
 
 internal fun Application.installs() {
   install(Compression) {
@@ -44,8 +45,7 @@ internal fun Application.installs() {
     }
   }
 
-  install(Locations) {
-  }
+  install(Locations)
 
   install(CallLogging) {
     level = Level.INFO
@@ -53,7 +53,7 @@ internal fun Application.installs() {
   }
 
   install(DefaultHeaders) {
-    header("X-Engine", "Ktor") // will send this header with each response
+    header("X-Engine", "Ktor")
   }
 
   install(StatusPages) {
@@ -65,7 +65,7 @@ internal fun Application.installs() {
     //statusFile(HttpStatusCode.NotFound, HttpStatusCode.Unauthorized, filePattern = "error#.html")
 
     status(HttpStatusCode.NotFound) {
-      call.respond(TextContent("${it.value} ${it.description}", ContentType.Text.Plain.withCharset(Charsets.UTF_8), it))
+      call.respond(TextContent("${it.value} ${it.description}", Plain.withCharset(UTF_8), it))
     }
 
     // Catch all
@@ -82,5 +82,4 @@ internal fun Application.installs() {
       exitCodeSupplier = { 0 } // ApplicationCall.() -> Int
     }
   }
-
 }

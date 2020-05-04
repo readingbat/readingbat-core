@@ -18,25 +18,24 @@
 package com.github.readingbat.pages
 
 import com.github.pambrose.common.util.decode
-import com.github.readingbat.Constants.answer
-import com.github.readingbat.Constants.arrow
-import com.github.readingbat.Constants.challengeDesc
-import com.github.readingbat.Constants.checkAnswers
-import com.github.readingbat.Constants.checkBar
-import com.github.readingbat.Constants.codeBlock
-import com.github.readingbat.Constants.cssType
-import com.github.readingbat.Constants.feedback
-import com.github.readingbat.Constants.funcCol
-import com.github.readingbat.Constants.playground
-import com.github.readingbat.Constants.processAnswers
-import com.github.readingbat.Constants.refs
-import com.github.readingbat.Constants.solution
-import com.github.readingbat.Constants.spinner
-import com.github.readingbat.Constants.static
-import com.github.readingbat.Constants.status
-import com.github.readingbat.Constants.tabs
-import com.github.readingbat.Constants.userAnswers
 import com.github.readingbat.dsl.Challenge
+import com.github.readingbat.misc.Constants.arrow
+import com.github.readingbat.misc.Constants.challengeDesc
+import com.github.readingbat.misc.Constants.checkAnswers
+import com.github.readingbat.misc.Constants.checkBar
+import com.github.readingbat.misc.Constants.codeBlock
+import com.github.readingbat.misc.Constants.cssType
+import com.github.readingbat.misc.Constants.feedback
+import com.github.readingbat.misc.Constants.funcCol
+import com.github.readingbat.misc.Constants.playground
+import com.github.readingbat.misc.Constants.processAnswers
+import com.github.readingbat.misc.Constants.refs
+import com.github.readingbat.misc.Constants.spinner
+import com.github.readingbat.misc.Constants.static
+import com.github.readingbat.misc.Constants.status
+import com.github.readingbat.misc.Constants.tabs
+import com.github.readingbat.misc.Constants.userAnswers
+import com.github.readingbat.misc.Constants.userResp
 import com.github.readingbat.misc.addScript
 import kotlinx.html.*
 import kotlinx.html.Entities.nbsp
@@ -46,13 +45,12 @@ internal fun HTML.challengePage(challenge: Challenge) {
   val languageName = languageType.lowerName
   val groupName = challenge.groupName
   val name = challenge.name
-  val funcArgs = challenge.inputOutput
 
   head {
     link { rel = "stylesheet"; href = spinnerCss }
     link { rel = "stylesheet"; href = "/$static/$languageName-prism.css"; type = cssType }
 
-    script(type = ScriptType.textJavaScript) { addScript(languageName) }
+    script(type = ScriptType.textJavaScript) { addScript(languageName, groupName, name) }
 
     removePrismShadow()
     headDefault()
@@ -72,25 +70,27 @@ internal fun HTML.challengePage(challenge: Challenge) {
 
       div(classes = codeBlock) {
         pre(classes = "line-numbers") {
-          code(classes = "language-$languageName") { +challenge.funcInfo().snippet }
+          code(classes = "language-$languageName") { +challenge.funcInfo().codeSnippet }
         }
       }
+
+      val funcInfo = challenge.funcInfo()
 
       div(classes = userAnswers) {
         table {
           tr { th { +"Function Call" }; th { +"" }; th { +"Return Value" }; th { +"" } }
 
-          funcArgs.withIndex().forEach { (i, v) ->
+          //funcArgs.withIndex().forEach { (i, v) ->
+          funcInfo.arguments.indices.forEach { i ->
             tr {
-              td(classes = funcCol) { +challenge.funcInfo().invokes[i] }
+              td(classes = funcCol) { +funcInfo.arguments[i] }
               td(classes = arrow) { rawHtml("&rarr;") }
               td {
-                textInput(classes = answer) {
-                  id = "$answer$i"; onKeyPress = "$processAnswers(event, ${funcArgs.size})"
+                textInput(classes = userResp) {
+                  id = "$userResp$i"; onKeyPress = "$processAnswers(event, ${funcInfo.answers.size})"
                 }
               }
               td(classes = feedback) { id = "$feedback$i" }
-              td { hiddenInput { id = "$solution$i"; value = v.second } }
             }
           }
         }
@@ -100,7 +100,7 @@ internal fun HTML.challengePage(challenge: Challenge) {
             tr {
               td {
                 button(classes = checkAnswers) {
-                  onClick = "$processAnswers(null, ${funcArgs.size})"; +"Check My Answers!"
+                  onClick = "$processAnswers(null, ${funcInfo.answers.size})"; +"Check My Answers!"
                 }
               }
               td { span(classes = spinner) { id = spinner } }

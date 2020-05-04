@@ -15,18 +15,18 @@
  *
  */
 
-package com.github.readingbat
+package com.github.readingbat.misc
 
 import io.ktor.http.ContentType.Text.CSS
 import java.util.concurrent.atomic.AtomicInteger
 
-object Constants {
+internal object Constants {
   const val sessionid = "sessionid"
   const val groupItemSrc = "groupItem"
   const val funcItem = "funcItem"
   const val funcChoice = "funcChoice"
+  const val userResp = "userResp"
   const val answer = "answer"
-  const val solution = "solution"
   const val funcCol = "funcCol"
   const val arrow = "arrow"
   const val feedback = "feedback"
@@ -39,6 +39,8 @@ object Constants {
   const val refs = "refs"
   const val backLink = "backLink"
   const val langSrc = "lang"
+  const val groupSrc = "groupName"
+  const val challengeSrc = "challengeName"
   const val tabs = "tabs"
   const val selected = "selected"
   const val processAnswers = "processAnswers"

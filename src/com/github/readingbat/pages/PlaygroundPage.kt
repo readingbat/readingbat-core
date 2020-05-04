@@ -18,10 +18,10 @@
 package com.github.readingbat.pages
 
 import com.github.pambrose.common.util.decode
-import com.github.readingbat.Constants.challengeDesc
-import com.github.readingbat.Constants.kotlinCode
-import com.github.readingbat.Constants.tabs
 import com.github.readingbat.dsl.Challenge
+import com.github.readingbat.misc.Constants.challengeDesc
+import com.github.readingbat.misc.Constants.kotlinCode
+import com.github.readingbat.misc.Constants.tabs
 import kotlinx.html.*
 import org.apache.commons.text.StringEscapeUtils
 
@@ -49,11 +49,15 @@ fun HTML.playgroundPage(challenge: Challenge) {
       if (challenge.description.isNotEmpty())
         div(classes = challengeDesc) { rawHtml(challenge.parsedDescription) }
 
-      // Customization details are here: https://jetbrains.github.io/kotlin-playground/
+      // Customization details are here:
+      // https://jetbrains.github.io/kotlin-playground/
+      // https://jetbrains.github.io/kotlin-playground/examples/
       div(classes = kotlinCode) {
+        val options =
+          """theme="idea" indent="2" lines="true" highlight-on-fly="true" data-autocomplete="true" match-brackets="true""""
         rawHtml("""
-          <code class="$kotlinCode" theme="idea" indent="2" lines="true" highlight-on-fly="true" data-autocomplete="true" match-brackets="true" >
-          ${StringEscapeUtils.escapeHtml4(challenge.funcInfo().code)}
+          <code class="$kotlinCode" $options >
+          ${StringEscapeUtils.escapeHtml4(challenge.funcInfo().originalCode)}
           </code>
         """)
       }

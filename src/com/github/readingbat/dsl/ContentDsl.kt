@@ -17,7 +17,7 @@
 
 package com.github.readingbat.dsl
 
-import com.github.pambrose.common.script.KtsScript
+import com.github.pambrose.common.script.KotlinScript
 import com.github.pambrose.common.util.ContentSource
 import com.github.pambrose.common.util.GitHubSource
 import com.github.readingbat.ReadingBatServer
@@ -29,26 +29,26 @@ import kotlin.time.measureTimedValue
 @DslMarker
 annotation class ReadingBatDslMarker
 
-class GitHubContent(repo: String, fileName: String = "Content.kt") :
+class GitHubContent(repo: String, branch: String = "master", fileName: String = "Content.kt") :
   GitHubSource(organization = "readingbat",
                repo = repo,
+               branch = branch,
                srcPath = "src/main/kotlin",
                fileName = fileName)
 
-fun readingBatContent(block: ReadingBatContent.() -> Unit) = ReadingBatContent()
-  .apply(block).apply { validate() }
+fun readingBatContent(block: ReadingBatContent.() -> Unit) =
+  ReadingBatContent().apply(block).apply { validate() }
 
 private val logger = KotlinLogging.logger {}
 
-internal fun include(source: ContentSource, variableName: String = "content"): ReadingBatContent {
-  return contentMap
+fun include(source: ContentSource, variableName: String = "content") =
+  contentMap
     .computeIfAbsent(source.path) {
       val (code, dur) = measureTimedValue { source.content }
       logger.info { """Read content from "${source.path}" in $dur""" }
       val withImports = addImports(code, variableName)
       evalDsl(withImports, source.path)
     }
-}
 
 internal fun addImports(code: String, variableName: String): String {
   val classImports =
@@ -70,14 +70,19 @@ internal fun addImports(code: String, variableName: String): String {
   return """
       $imports${if (imports.isBlank()) "" else "\n\n"}$code
       $variableName
-    """.trimMargin().split("\n").joinToString("\n") { it.trimStart() }
+    """.trimMargin().lines().joinToString("\n") { it.trimStart() }
 }
 
-private val <T>  KFunction<T>.fqMethodName get() = "${javaClass.packageName}.$name"
+private val <T> KFunction<T>.fqMethodName get() = "${javaClass.packageName}.$name"
 
 private fun evalDsl(code: String, sourceName: String) =
   try {
-    KtsScript().run { eval(code) as ReadingBatContent }.apply { validate() }
+    KotlinScript()
+      .run {
+        eval(code) as ReadingBatContent
+      }.apply {
+        validate()
+      }
   } catch (e: Throwable) {
     logger.info { "Error in $sourceName:\n$code" }
     throw e
