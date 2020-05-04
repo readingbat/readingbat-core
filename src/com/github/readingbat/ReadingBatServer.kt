@@ -52,3 +52,5 @@ object Module {
 }
 
 internal class InvalidPathException(msg: String) : RuntimeException(msg)
+
+internal class InvalidConfigurationException(msg: String) : Exception(msg)

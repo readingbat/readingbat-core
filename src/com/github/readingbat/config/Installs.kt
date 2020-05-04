@@ -31,10 +31,14 @@ import io.ktor.locations.Locations
 import io.ktor.request.path
 import io.ktor.response.respond
 import io.ktor.server.engine.ShutDownUrl
+import mu.KotlinLogging
 import org.slf4j.event.Level
 import kotlin.text.Charsets.UTF_8
 
+private val logger = KotlinLogging.logger {}
+
 internal fun Application.installs() {
+
   install(Compression) {
     gzip {
       priority = 1.0
@@ -70,7 +74,8 @@ internal fun Application.installs() {
 
     // Catch all
     exception<Throwable> { cause ->
-      call.respond(HttpStatusCode.InternalServerError)
+      logger.info(cause) {}
+      call.respond(HttpStatusCode.NotFound)
     }
   }
 

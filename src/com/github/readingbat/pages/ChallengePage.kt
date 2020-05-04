@@ -30,6 +30,7 @@ import com.github.readingbat.misc.Constants.funcCol
 import com.github.readingbat.misc.Constants.playground
 import com.github.readingbat.misc.Constants.processAnswers
 import com.github.readingbat.misc.Constants.refs
+import com.github.readingbat.misc.Constants.root
 import com.github.readingbat.misc.Constants.spinner
 import com.github.readingbat.misc.Constants.static
 import com.github.readingbat.misc.Constants.status
@@ -61,7 +62,7 @@ internal fun HTML.challengePage(challenge: Challenge) {
 
     div(classes = tabs) {
       h2 {
-        this@body.addLink(groupName.decode(), "/$languageName/$groupName")
+        this@body.addLink(groupName.decode(), "/$root/$languageName/$groupName")
         rawHtml("${nbsp.text}&rarr;${nbsp.text}"); +name
       }
 
@@ -129,7 +130,7 @@ internal fun HTML.challengePage(challenge: Challenge) {
       }
     }
 
-    backLink("/$languageName/$groupName")
+    backLink("/$root/$languageName/$groupName")
 
     script { src = "/$static/$languageName-prism.js" }
   }

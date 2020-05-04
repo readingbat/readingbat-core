@@ -24,6 +24,7 @@ import com.github.readingbat.misc.Constants.bodyHeader
 import com.github.readingbat.misc.Constants.cssName
 import com.github.readingbat.misc.Constants.cssType
 import com.github.readingbat.misc.Constants.production
+import com.github.readingbat.misc.Constants.root
 import com.github.readingbat.misc.Constants.selected
 import com.github.readingbat.misc.Constants.titleText
 import kotlinx.html.*
@@ -62,15 +63,15 @@ internal fun BODY.bodyHeader(languageType: LanguageType) {
     ul {
       li(classes = "h2") {
         if (languageType.isJava()) id = selected
-        this@bodyHeader.addLink(Java.name, "/${Java.lowerName}")
+        this@bodyHeader.addLink(Java.name, "/$root/${Java.lowerName}")
       }
       li(classes = "h2") {
         if (languageType.isPython()) id = selected
-        this@bodyHeader.addLink(Python.name, "/${Python.lowerName}")
+        this@bodyHeader.addLink(Python.name, "/$root/${Python.lowerName}")
       }
       li(classes = "h2") {
         if (languageType.isKotlin()) id = selected
-        this@bodyHeader.addLink(Kotlin.name, "/${Kotlin.lowerName}")
+        this@bodyHeader.addLink(Kotlin.name, "/$root/${Kotlin.lowerName}")
       }
     }
   }

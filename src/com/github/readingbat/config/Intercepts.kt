@@ -17,45 +17,37 @@
 
 package com.github.readingbat.config
 
-import com.github.readingbat.InvalidPathException
-import com.github.readingbat.Module.readingBatContent
-import com.github.readingbat.dsl.LanguageType.*
-import com.github.readingbat.dsl.LanguageType.Companion.toLanguageType
-import com.github.readingbat.pages.challengeGroupPage
-import com.github.readingbat.pages.challengePage
-import com.github.readingbat.pages.languageGroupPage
 import io.ktor.application.Application
 import io.ktor.application.ApplicationCallPipeline
-import io.ktor.application.call
-import io.ktor.html.respondHtml
-import io.ktor.request.uri
 
 internal fun Application.intercepts() {
   intercept(ApplicationCallPipeline.Call) {
+    /*
     val req = call.request.uri
     val items = req.split("/").filter { it.isNotEmpty() }
 
     if (items.isNotEmpty() && items[0] in listOf(Java.lowerName, Python.lowerName, Kotlin.lowerName)) {
-      val languageType = items[0].toLanguageType()
+      val language = items[0].toLanguageType()
       val groupName = items.elementAtOrNull(1) ?: ""
       val challengeName = items.elementAtOrNull(2) ?: ""
       when (items.size) {
         1 -> {
           // This lookup has to take place outside of the lambda for proper exception handling
-          val groups = readingBatContent.findLanguage(languageType).challengeGroups
-          call.respondHtml { languageGroupPage(languageType, groups) }
+          val groups = readingBatContent.findLanguage(language).challengeGroups
+          call.respondHtml { languageGroupPage(language, groups) }
         }
         2 -> {
-          val challengeGroup = readingBatContent.findLanguage(languageType).findGroup(groupName)
+          val challengeGroup = readingBatContent.findLanguage(language).findGroup(groupName)
           call.respondHtml { challengeGroupPage(challengeGroup) }
         }
         3 -> {
-          val challenge = readingBatContent.findLanguage(languageType).findChallenge(groupName, challengeName)
+          val challenge = readingBatContent.findLanguage(language).findChallenge(groupName, challengeName)
           call.respondHtml { challengePage(challenge) }
         }
         else -> throw InvalidPathException("Invalid path: $req")
       }
     }
+     */
   }
 
   intercept(ApplicationCallPipeline.Monitoring) {

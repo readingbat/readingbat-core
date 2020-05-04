@@ -17,6 +17,7 @@
 
 package com.github.readingbat.dsl
 
+import com.github.readingbat.InvalidConfigurationException
 import com.github.readingbat.dsl.LanguageType.*
 
 @ReadingBatDslMarker
@@ -30,6 +31,12 @@ class ReadingBatContent {
 
   internal fun findLanguage(languageType: LanguageType) =
     languageMap[languageType] ?: throw InvalidConfigurationException("Invalid language $languageType")
+
+  internal fun findGroup(languageType: LanguageType, groupName: String) =
+    findLanguage(languageType).findGroup(groupName)
+
+  internal fun findChallenge(languageType: LanguageType, groupName: String, challengeName: String) =
+    findGroup(languageType, groupName).findChallenge(challengeName)
 
   internal fun validate() = languageList.forEach { it.validate() }
 
@@ -55,4 +62,3 @@ class ReadingBatContent {
   }
 }
 
-internal class InvalidConfigurationException(msg: String) : Exception(msg)

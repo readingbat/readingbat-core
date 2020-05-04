@@ -54,6 +54,7 @@ internal object Constants {
   const val kotlinCode = "kotlin-code"
   const val challengeDesc = "challenge-desc"
   const val bodyHeader = "bodyHeader"
+  const val root = "content"
   val cssType = CSS.toString()
   val sessionCounter = AtomicInteger(0)
   val production: Boolean by lazy { System.getenv("PRODUCTION")?.toBoolean() ?: false }

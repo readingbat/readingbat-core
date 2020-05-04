@@ -21,6 +21,7 @@ import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.misc.CheckAnswers.checkUserAnswers
 import com.github.readingbat.misc.Constants.checkAnswers
 import com.github.readingbat.misc.Constants.cssName
+import com.github.readingbat.misc.Constants.root
 import com.github.readingbat.misc.Constants.static
 import com.github.readingbat.misc.cssContent
 import io.ktor.application.Application
@@ -39,7 +40,11 @@ import kotlinx.css.CSSBuilder
 internal fun Application.routes() {
   routing {
     get("/") {
-      call.respondRedirect("/${LanguageType.Java.lowerName}")
+      call.respondRedirect("/$root/${LanguageType.Java.lowerName}")
+    }
+
+    get("/$root") {
+      call.respondRedirect("/$root/${LanguageType.Java.lowerName}")
     }
 
     get("/$cssName") {
@@ -57,6 +62,7 @@ internal fun Application.routes() {
     }
   }
 }
+
 
 private suspend inline fun ApplicationCall.respondCss(builder: CSSBuilder.() -> Unit) {
   respondText(CSSBuilder().apply(builder).toString(), ContentType.Text.CSS)

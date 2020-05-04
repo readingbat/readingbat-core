@@ -23,6 +23,7 @@ import com.github.readingbat.dsl.ChallengeGroup
 import com.github.readingbat.misc.Constants.checkJpg
 import com.github.readingbat.misc.Constants.funcChoice
 import com.github.readingbat.misc.Constants.funcItem
+import com.github.readingbat.misc.Constants.root
 import com.github.readingbat.misc.Constants.tabs
 import kotlinx.html.*
 import kotlinx.html.Entities.nbsp
@@ -30,9 +31,9 @@ import kotlinx.html.Entities.nbsp
 internal fun HTML.challengeGroupPage(challengeGroup: ChallengeGroup<*>) {
 
   val languageType = challengeGroup.languageType
+  val languageName = languageType.lowerName
   val groupName = challengeGroup.name
   val challenges = challengeGroup.challenges
-  val prefix = languageType.lowerName
 
   head {
     headDefault()
@@ -53,16 +54,16 @@ internal fun HTML.challengeGroupPage(challengeGroup: ChallengeGroup<*>) {
         (0 until rows).forEach { i ->
           tr {
             challenges.apply {
-              elementAt(i).also { funcCall(prefix, groupName, it) }
-              elementAtOrNull(i + rows)?.also { funcCall(prefix, groupName, it) } ?: td {}
-              elementAtOrNull(i + (2 * rows))?.also { funcCall(prefix, groupName, it) } ?: td {}
+              elementAt(i).also { funcCall(languageName, groupName, it) }
+              elementAtOrNull(i + rows)?.also { funcCall(languageName, groupName, it) } ?: td {}
+              elementAtOrNull(i + (2 * rows))?.also { funcCall(languageName, groupName, it) } ?: td {}
             }
           }
         }
       }
     }
 
-    backLink("/$prefix")
+    backLink("/$root/$languageName")
   }
 }
 
@@ -70,7 +71,7 @@ private fun TR.funcCall(prefix: String, groupName: String, challenge: Challenge)
   td(classes = funcItem) {
     img { src = checkJpg }
     rawHtml(nbsp.text)
-    a(classes = funcChoice) { href = "/$prefix/$groupName/${challenge.name}"; +challenge.name }
+    a(classes = funcChoice) { href = "/$root/$prefix/$groupName/${challenge.name}"; +challenge.name }
   }
 }
 

@@ -19,6 +19,7 @@ package com.github.readingbat.dsl
 
 import com.github.pambrose.common.util.decode
 import com.github.pambrose.common.util.toPath
+import com.github.readingbat.InvalidConfigurationException
 import com.github.readingbat.InvalidPathException
 import com.github.readingbat.misc.Constants.github
 import com.github.readingbat.misc.Constants.githubUserContent

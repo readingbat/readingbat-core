@@ -17,6 +17,8 @@
 
 package com.github.readingbat.dsl
 
+import com.github.readingbat.InvalidPathException
+
 enum class LanguageType(val useDoubleQuotes: Boolean, val suffix: String, val srcPrefix: String) {
   Java(true, "java", "src/main/java"),
   Python(false, "py", "python"),
@@ -29,6 +31,11 @@ enum class LanguageType(val useDoubleQuotes: Boolean, val suffix: String, val sr
   fun isKotlin() = this == Kotlin
 
   companion object {
-    fun String.toLanguageType() = values().first { it.name.equals(this, ignoreCase = true) }
+    fun String.toLanguageType() =
+      try {
+        values().first { it.name.equals(this, ignoreCase = true) }
+      } catch (e: NoSuchElementException) {
+        throw InvalidPathException("Invalid language request: $this")
+      }
   }
 }

@@ -22,6 +22,7 @@ import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.misc.Constants.funcChoice
 import com.github.readingbat.misc.Constants.funcItem
 import com.github.readingbat.misc.Constants.groupItemSrc
+import com.github.readingbat.misc.Constants.root
 import com.github.readingbat.misc.Constants.tabs
 import kotlinx.html.*
 
@@ -57,7 +58,7 @@ private fun TR.groupItem(prefix: String, group: ChallengeGroup<*>) {
 
   td(classes = funcItem) {
     div(classes = groupItemSrc) {
-      a(classes = funcChoice) { href = "/$prefix/$name"; +name }
+      a(classes = funcChoice) { href = "/$root/$prefix/$name"; +name }
       br { rawHtml(if (parsedDescription.isNotBlank()) parsedDescription else Entities.nbsp.text) }
     }
   }
