@@ -17,16 +17,16 @@
 
 package com.github.readingbat
 
-import com.github.readingbat.dsl.JavaChallenge
-import com.github.readingbat.dsl.JavaChallenge.Companion.javaEndRegex
-import com.github.readingbat.dsl.JavaChallenge.Companion.psvmRegex
-import com.github.readingbat.dsl.KotlinChallenge
-import com.github.readingbat.dsl.KotlinChallenge.Companion.funMainRegex
-import com.github.readingbat.dsl.KotlinChallenge.Companion.kotlinEndRegex
-import com.github.readingbat.dsl.PythonChallenge
-import com.github.readingbat.dsl.PythonChallenge.Companion.defMainRegex
-import com.github.readingbat.dsl.PythonChallenge.Companion.ifMainEndRegex
 import com.github.readingbat.dsl.addImports
+import com.github.readingbat.dsl.parse.JavaParse
+import com.github.readingbat.dsl.parse.JavaParse.javaEndRegex
+import com.github.readingbat.dsl.parse.JavaParse.psvmRegex
+import com.github.readingbat.dsl.parse.KotlinParse
+import com.github.readingbat.dsl.parse.KotlinParse.funMainRegex
+import com.github.readingbat.dsl.parse.KotlinParse.kotlinEndRegex
+import com.github.readingbat.dsl.parse.PythonParse
+import com.github.readingbat.dsl.parse.PythonParse.defMainRegex
+import com.github.readingbat.dsl.parse.PythonParse.ifMainEndRegex
 import org.amshove.kluent.shouldBeEqualTo
 import org.junit.jupiter.api.Test
 
@@ -49,10 +49,10 @@ class UtilsTest {
             main()
     """.trimIndent()
 
-    PythonChallenge.extractArguments(s,
-                                     defMainRegex,
-                                     ifMainEndRegex) shouldBeEqualTo listOf("simple_choice2(True, True)",
-                                                                            "simple_choice2(True, False)")
+    PythonParse.extractPythonArguments(s,
+                                       defMainRegex,
+                                       ifMainEndRegex) shouldBeEqualTo listOf("simple_choice2(True, True)",
+                                                                              "simple_choice2(True, False)")
   }
 
   @Test
@@ -79,7 +79,7 @@ class UtilsTest {
       }
     """.trimIndent()
 
-    JavaChallenge.extractArguments(s, psvmRegex, javaEndRegex) shouldBeEqualTo listOf("""joinEnds("Blue zebra")""",
+    JavaParse.extractJavaArguments(s, psvmRegex, javaEndRegex) shouldBeEqualTo listOf("""joinEnds("Blue zebra")""",
                                                                                       """joinEnds("Tree")""")
   }
 
@@ -96,10 +96,10 @@ class UtilsTest {
       }
     """.trimIndent()
 
-    KotlinChallenge.extractArguments(s,
-                                     funMainRegex,
-                                     kotlinEndRegex) shouldBeEqualTo listOf("""listOf("a").combine2()""",
-                                                                            """listOf("a", "b", "c", "d").combine2()""")
+    KotlinParse.extractKotlinArguments(s,
+                                       funMainRegex,
+                                       kotlinEndRegex) shouldBeEqualTo listOf("""listOf("a").combine2()""",
+                                                                              """listOf("a", "b", "c", "d").combine2()""")
   }
 
   @Test
