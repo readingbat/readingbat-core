@@ -20,7 +20,7 @@ import com.github.readingbat.dsl.GitHubContent
 import com.github.readingbat.dsl.include
 import com.github.readingbat.dsl.readingBatContent
 
-object Main {
+object TestMain {
   @JvmStatic
   fun main(args: Array<String>) {
     ReadingBatServer.start(content)
