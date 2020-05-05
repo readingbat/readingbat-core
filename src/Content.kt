@@ -30,11 +30,11 @@ object Main {
 val content =
   readingBatContent {
 
-    +include(GitHubContent("readingbat-java-content", branch = "master"), variableName = "content").java
+    +include(GitHubContent("readingbat", "readingbat-java-content", branch = "master"), variableName = "content").java
 
-    +include(GitHubContent("readingbat-python-content", branch = "master")).python
+    +include(GitHubContent("readingbat", "readingbat-python-content", branch = "master", srcPath = "src")).python
 
-    +include(GitHubContent("readingbat-java-content", branch = "master"), variableName = "content").kotlin
+    +include(GitHubContent("readingbat", "readingbat-java-content", branch = "master"), variableName = "content").kotlin
 
     // java {
     //+include(GitHubContent("readingbat-java-content")).java.findGroup("dd")
