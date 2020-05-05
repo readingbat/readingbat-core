@@ -85,8 +85,6 @@ internal fun BODY.backLink(url: String) {
   div(classes = backLink) { a { href = url; rawHtml("&larr; Back") } }
 }
 
-internal fun HTMLTag.rawHtml(html: String) {
-  unsafe { raw(html) }
-}
+internal fun HTMLTag.rawHtml(html: String) = unsafe { raw(html) }
 
 internal fun Int.rows(cols: Int) = if (this % cols == 0) this / cols else (this / cols) + 1
