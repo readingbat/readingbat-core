@@ -20,6 +20,7 @@ package com.github.readingbat
 import com.github.readingbat.Module.module
 import com.github.readingbat.dsl.LanguageType.*
 import com.github.readingbat.dsl.readingBatContent
+import com.github.readingbat.misc.Constants.root
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode.Companion.Found
 import io.ktor.http.HttpStatusCode.Companion.OK
@@ -56,15 +57,15 @@ class ServerTest {
         assertEquals(Found, response.status())
       }
 
-      handleRequest(HttpMethod.Get, "/${Java.lowerName}").apply {
+      handleRequest(HttpMethod.Get, "/$root/${Java.lowerName}").apply {
         assertEquals(OK, response.status())
       }
 
-      handleRequest(HttpMethod.Get, "/${Python.lowerName}").apply {
+      handleRequest(HttpMethod.Get, "/$root/${Python.lowerName}").apply {
         assertEquals(OK, response.status())
       }
 
-      handleRequest(HttpMethod.Get, "/${Kotlin.lowerName}").apply {
+      handleRequest(HttpMethod.Get, "/$root/${Kotlin.lowerName}").apply {
         assertEquals(OK, response.status())
       }
     }
