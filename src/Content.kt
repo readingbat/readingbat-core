@@ -25,19 +25,22 @@ object Main {
   fun main(args: Array<String>) {
     ReadingBatServer.start(content)
   }
+
+  val organization = "readingbat"
+  val branch = "dev"
+
+  val content =
+    readingBatContent {
+
+      +include(GitHubContent(organization, "readingbat-java-content", branch = branch)).java
+
+      +include(GitHubContent(organization, "readingbat-python-content", branch = branch, srcPath = "src")).python
+
+      +include(GitHubContent(organization, "readingbat-java-content", branch = branch)).kotlin
+
+      // java {
+      //+include(GitHubContent("readingbat-java-content")).java.findGroup("dd")
+      // }
+    }
+
 }
-
-val content =
-  readingBatContent {
-
-    +include(GitHubContent("readingbat", "readingbat-java-content", branch = "master"), variableName = "content").java
-
-    +include(GitHubContent("readingbat", "readingbat-python-content", branch = "master", srcPath = "src")).python
-
-    +include(GitHubContent("readingbat", "readingbat-java-content", branch = "master"), variableName = "content").kotlin
-
-    // java {
-    //+include(GitHubContent("readingbat-java-content")).java.findGroup("dd")
-    // }
-  }
-
