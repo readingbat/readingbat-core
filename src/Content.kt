@@ -17,6 +17,7 @@
 
 import com.github.pambrose.common.util.GitHubRepo
 import com.github.readingbat.ReadingBatServer
+import com.github.readingbat.dsl.ReturnType.BooleanType
 import com.github.readingbat.dsl.readingBatContent
 
 
@@ -42,7 +43,6 @@ object TestMain {
             packageName = "warmup1"
             description = "This is a description of Warmup 1"
             includeFiles = "*.java"
-            //includeFilesWithType = "*.java" returns BooleanType
 
             challenge("JoinEnds") {
               description = """This is a description of JoinEnds"""
@@ -51,6 +51,22 @@ object TestMain {
           }
         }
 
+        python {
+          repo = GitHubRepo("readingbat", "readingbat-python-content")
+          branchName = "dev"
+
+          group("Numeric Expressions") {
+            packageName = "numeric_expressions"
+            description = "Basic numeric expressions"
+            includeFilesWithType = "*.py" returns BooleanType
+
+            challenge("lt_expr") {
+              description = """Determine if one value is less than another with the "<" operator."""
+              returnType = BooleanType
+            }
+
+          }
+        }
         /*
         +include(GitHubContent(organization, "readingbat-java-content", branch = branch)).java
         +include(GitHubContent(organization, "readingbat-python-content", branch = branch, srcPath = "src")).python

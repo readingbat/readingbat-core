@@ -104,9 +104,11 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
   @ReadingBatDslMarker
   infix fun String.returns(returnType: ReturnType) = PatternReturnType(this, returnType)
 
+  private val excludes = Regex("^__.*__.*$")
   internal fun import(languageType: LanguageType, prts: List<PatternReturnType>) {
     prts.forEach { prt ->
       folderContents(repo, branchName, srcPath, packageName, listOf(prt.pattern))
+        .filterNot { it.contains(excludes) }
         .map { it.split(".").first() }
         .forEach { challengeName ->
           if (checkChallengeName(challengeName, false)) {
