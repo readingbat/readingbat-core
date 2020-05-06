@@ -41,7 +41,7 @@ object TestMain {
           group("Warmup 1") {
             packageName = "warmup1"
             description = "This is a description of Warmup 1"
-            defaultFiles = "*.java"
+            includeFiles = "*.java"
 
             import("Shifty.*", "StringLength.*")
 

@@ -58,7 +58,7 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
   // User properties
   var packageName = ""
   var description = ""
-  var defaultFiles by Delegate(includeList)
+  var includeFiles by Delegate(includeList)
 
   fun hasChallenge(name: String) = challenges.any { it.name == name }
 
