@@ -20,6 +20,7 @@ package com.github.readingbat.dsl
 import com.github.readingbat.InvalidConfigurationException
 import com.github.readingbat.InvalidPathException
 import com.github.readingbat.dsl.Challenge.Companion.challenge
+import com.github.readingbat.dsl.ReturnType.Runtime
 import com.github.readingbat.misc.GitHubUtils.folderContents
 import com.vladsch.flexmark.html.HtmlRenderer
 import com.vladsch.flexmark.parser.Parser
@@ -45,20 +46,33 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
         renderer.render(document)
       }
 
-  class Delegate(val includeList: MutableList<String>) {
+  private class IncludeFiles(val languageType: LanguageType, val includeList: MutableList<PatternReturnType>) {
     operator fun getValue(thisRef: Any?, property: KProperty<*>) = includeList.toString()
-
     operator fun setValue(thisRef: Any?, property: KProperty<*>, value: String) {
-      includeList += value
+      if (languageType.isJava())
+        includeList += PatternReturnType(value, Runtime)
+      else
+        throw InvalidConfigurationException("Use includeFilesWithType instead of includeFiles for ${languageType.lowerName} challenges")
     }
   }
 
-  internal val includeList = mutableListOf<String>()
+  private class IncludeFilesWithType(val languageType: LanguageType, val includeList: MutableList<PatternReturnType>) {
+    operator fun getValue(thisRef: Any?, property: KProperty<*>): PatternReturnType = PatternReturnType("", Runtime)
+    operator fun setValue(thisRef: Any?, property: KProperty<*>, value: PatternReturnType) {
+      if (!languageType.isJava())
+        includeList += value
+      else
+        throw InvalidConfigurationException("Use includeFiles instead of includeFilesWithType for ${languageType.lowerName} challenges")
+    }
+  }
+
+  internal val includeList = mutableListOf<PatternReturnType>()
 
   // User properties
   var packageName = ""
   var description = ""
-  var includeFiles by Delegate(includeList)
+  var includeFiles by IncludeFiles(languageType, includeList)
+  var includeFilesWithType by IncludeFilesWithType(languageType, includeList)
 
   fun hasChallenge(name: String) = challenges.any { it.name == name }
 
@@ -82,18 +96,31 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
     this@ChallengeGroup.challenges += this
   }
 
-  @ReadingBatDslMarker
-  fun includeFiles(vararg patterns: String) = import(patterns.toList())
+  //@ReadingBatDslMarker
+  //fun includeFiles(vararg patterns: String) = import(patterns.toList())
 
-  internal fun import(patterns: List<String>) {
-    folderContents(repo, branchName, srcPath, packageName, patterns)
-      .map { it.split(".").first() }
-      .forEach { challengeName ->
-        if (checkChallengeName(challengeName, false)) {
-          logger.debug { "Adding ${challengeName}" }
-          challenges += challenge(this, challengeName, true) as T
+  data class PatternReturnType(val pattern: String, val returnType: ReturnType)
+
+  @ReadingBatDslMarker
+  infix fun String.returns(returnType: ReturnType) = PatternReturnType(this, returnType)
+
+  internal fun import(languageType: LanguageType, prts: List<PatternReturnType>) {
+    prts.forEach { prt ->
+      folderContents(repo, branchName, srcPath, packageName, listOf(prt.pattern))
+        .map { it.split(".").first() }
+        .forEach { challengeName ->
+          if (checkChallengeName(challengeName, false)) {
+            logger.debug { "Adding ${challengeName}" }
+            val challenge = challenge(this, challengeName, true)
+            when {
+              languageType.isPython() -> (challenge as PythonChallenge).apply { returnType = prt.returnType }
+              languageType.isKotlin() -> (challenge as KotlinChallenge).apply { returnType = prt.returnType }
+            }
+
+            challenges += challenge as T
+          }
         }
-      }
+    }
   }
 
   private fun checkChallengeName(challengeName: String, throwExceptionIfPresent: Boolean = true): Boolean {

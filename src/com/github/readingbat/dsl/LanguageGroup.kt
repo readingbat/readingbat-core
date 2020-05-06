@@ -60,7 +60,7 @@ class LanguageGroup<T : Challenge>(internal val languageType: LanguageType) {
   @ReadingBatDslMarker
   fun group(name: String, block: ChallengeGroup<T>.() -> Unit) {
     val challengeGroup = ChallengeGroup(this, name).apply(block)
-    challengeGroup.import(challengeGroup.includeList)
+    challengeGroup.import(languageType, challengeGroup.includeList)
     addGroup(challengeGroup)
   }
 

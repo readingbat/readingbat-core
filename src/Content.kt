@@ -42,14 +42,12 @@ object TestMain {
             packageName = "warmup1"
             description = "This is a description of Warmup 1"
             includeFiles = "*.java"
-            //includeFiles("Shifty.*", "StringLength.*")
+            //includeFilesWithType = "*.java" returns BooleanType
 
             challenge("JoinEnds") {
               description = """This is a description of JoinEnds"""
               codingBatEquiv = "p141494"
             }
-
-
           }
         }
 

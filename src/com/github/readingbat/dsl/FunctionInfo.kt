@@ -51,6 +51,7 @@ class FunctionInfo(val languageType: LanguageType,
           BooleanListType -> (raw as List<Boolean>).toString()
           IntListType -> (raw as List<Int>).toString()
           StringListType -> "[${(raw as List<String>).joinToString { it.toDoubleQuoted() }}]"
+          Runtime -> throw InvalidConfigurationException("Invalid return type")
         }
     }
 

@@ -25,6 +25,7 @@ import com.github.pambrose.common.util.toDoubleQuoted
 import com.github.pambrose.common.util.toSingleQuoted
 import com.github.pambrose.common.util.withLineNumbers
 import com.github.readingbat.InvalidConfigurationException
+import com.github.readingbat.dsl.LanguageType.*
 import com.github.readingbat.dsl.parse.JavaParse
 import com.github.readingbat.dsl.parse.JavaParse.deriveJavaReturnType
 import com.github.readingbat.dsl.parse.JavaParse.extractJavaArguments
@@ -109,9 +110,9 @@ sealed class Challenge(group: ChallengeGroup<*>, val name: String, val replaceab
 
     internal fun challenge(challengeGroup: ChallengeGroup<*>, challengeName: String, replaceable: Boolean) =
       when (challengeGroup.languageType) {
-        LanguageType.Python -> PythonChallenge(challengeGroup, challengeName, replaceable)
-        LanguageType.Java -> JavaChallenge(challengeGroup, challengeName, replaceable)
-        LanguageType.Kotlin -> KotlinChallenge(challengeGroup, challengeName, replaceable)
+        Python -> PythonChallenge(challengeGroup, challengeName, replaceable)
+        Java -> JavaChallenge(challengeGroup, challengeName, replaceable)
+        Kotlin -> KotlinChallenge(challengeGroup, challengeName, replaceable)
       }
   }
 }
