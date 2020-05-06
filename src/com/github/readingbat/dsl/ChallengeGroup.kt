@@ -53,7 +53,7 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
     }
   }
 
-  private val includeList = mutableListOf<String>()
+  internal val includeList = mutableListOf<String>()
 
   // User properties
   var packageName = ""
@@ -83,7 +83,7 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
   }
 
   @ReadingBatDslMarker
-  fun import(vararg patterns: String) = import(patterns.toList())
+  fun includeFiles(vararg patterns: String) = import(patterns.toList())
 
   internal fun import(patterns: List<String>) {
     folderContents(repo, branchName, srcPath, packageName, patterns)

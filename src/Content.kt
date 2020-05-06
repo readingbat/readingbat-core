@@ -42,8 +42,7 @@ object TestMain {
             packageName = "warmup1"
             description = "This is a description of Warmup 1"
             includeFiles = "*.java"
-
-            import("Shifty.*", "StringLength.*")
+            //includeFiles("Shifty.*", "StringLength.*")
 
             challenge("JoinEnds") {
               description = """This is a description of JoinEnds"""
