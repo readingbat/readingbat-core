@@ -17,6 +17,7 @@
 
 package com.github.readingbat
 
+import com.github.pambrose.common.util.GitHubRepo
 import com.github.readingbat.Module.module
 import com.github.readingbat.dsl.LanguageType.*
 import com.github.readingbat.dsl.readingBatContent
@@ -36,15 +37,15 @@ class ServerTest {
       readingBatContent {
 
         java {
-          repoRoot = "Something"
+          repo = GitHubRepo("readingbat", "readingbat-java-content")
         }
 
         python {
-          repoRoot = "Something"
+          repo = GitHubRepo("readingbat", "readingbat-java-content")
         }
 
         kotlin {
-          repoRoot = "Something"
+          repo = GitHubRepo("readingbat", "readingbat-java-content")
         }
       }
 

@@ -15,32 +15,51 @@
  *
  */
 
+import com.github.pambrose.common.util.GitHubRepo
 import com.github.readingbat.ReadingBatServer
-import com.github.readingbat.dsl.GitHubContent
-import com.github.readingbat.dsl.include
 import com.github.readingbat.dsl.readingBatContent
+
 
 object TestMain {
   @JvmStatic
   fun main(args: Array<String>) {
-    ReadingBatServer.start(content)
-  }
 
-  val organization = "readingbat"
-  val branch = "dev"
+    val organization = "readingbat"
+    val branch = "dev"
 
-  val content =
-    readingBatContent {
+    //val r = GitHubRepo(organization, "readingbat-java-content")
+    //println(folderContents(r, branch, "/src/main/java/warmup1", "*Look*.java"))
+    //println(folderContents(r, branch, "/src/main/java/warmup1"))
 
-      +include(GitHubContent(organization, "readingbat-java-content", branch = branch)).java
+    val content by lazy {
+      readingBatContent {
 
-      +include(GitHubContent(organization, "readingbat-python-content", branch = branch, srcPath = "src")).python
+        java {
+          repo = GitHubRepo(organization, "readingbat-java-content")
+          branchName = branch
 
-      +include(GitHubContent(organization, "readingbat-java-content", branch = branch)).kotlin
+          group("Warmup 1") {
+            packageName = "warmup1"
+            description = "This is a description of Warmup 1"
 
-      // java {
-      //+include(GitHubContent("readingbat-java-content")).java.findGroup("dd")
-      // }
+            import("*.java")
+
+            challenge("JoinEnds") {
+              description = """This is a description of JoinEnds"""
+              codingBatEquiv = "p141494"
+            }
+          }
+        }
+
+        //+include(GitHubContent(organization, "readingbat-java-content", branch = branch)).java
+        // +include(GitHubContent(organization, "readingbat-python-content", branch = branch, srcPath = "src")).python
+        // +include(GitHubContent(organization, "readingbat-java-content", branch = branch)).kotlin
+        // java {
+        //+include(GitHubContent("readingbat-java-content")).java.findGroup("dd")
+        // }
+      }
     }
 
+    ReadingBatServer.start(content)
+  }
 }

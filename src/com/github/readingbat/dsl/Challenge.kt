@@ -54,7 +54,7 @@ import kotlin.time.measureTime
 import kotlin.time.measureTimedValue
 
 @ReadingBatDslMarker
-sealed class Challenge(group: ChallengeGroup<*>) {
+sealed class Challenge(group: ChallengeGroup<*>, val name: String, val replaceable: Boolean) {
   private val challengeId = counter.incrementAndGet()
   private val languageGroup = group.languageGroup
   private val packageName = group.packageName
@@ -73,8 +73,7 @@ sealed class Challenge(group: ChallengeGroup<*>) {
       }
 
   // User properties
-  var name = ""
-  var fileName = ""
+  var fileName = "$name.${languageType.suffix}"
   var codingBatEquiv = ""
   var description = ""
 
@@ -84,17 +83,15 @@ sealed class Challenge(group: ChallengeGroup<*>) {
     sourcesMap
       .computeIfAbsent(challengeId) {
         val path = "${languageGroup.rawRepoRoot}$fqName"
+        logger.info { """Fetching "$groupName/$fileName" from: $path""" }
         val (content, dur) = measureTimedValue { URL(path).readText() }
-        logger.info { """Fetching "$groupName/$fileName" $path in $dur""" }
+        logger.info { """Fetched "$groupName/$fileName" in: $dur""" }
         computeFuncInfo(content)
       }
 
   internal open fun validate() {
     if (name.isEmpty())
       throw InvalidConfigurationException(""""$name" is empty""")
-
-    if (fileName.isEmpty())
-      fileName = "$name.${languageType.suffix}"
   }
 
   private fun Any?.prettyQuote(capitalizePythonBooleans: Boolean = true, useDoubleQuotes: Boolean = false) =
@@ -109,10 +106,19 @@ sealed class Challenge(group: ChallengeGroup<*>) {
   companion object : KLogging() {
     internal val counter = AtomicInteger(0)
     internal val sourcesMap = ConcurrentHashMap<Int, FunctionInfo>()
+
+    internal fun challenge(challengeGroup: ChallengeGroup<*>, challengeName: String, replaceable: Boolean) =
+      when (challengeGroup.languageType) {
+        LanguageType.Python -> PythonChallenge(challengeGroup, challengeName, replaceable)
+        LanguageType.Java -> JavaChallenge(challengeGroup, challengeName, replaceable)
+        LanguageType.Kotlin -> KotlinChallenge(challengeGroup, challengeName, replaceable)
+      }
   }
 }
 
-class PythonChallenge(group: ChallengeGroup<*>) : Challenge(group) {
+class PythonChallenge(group: ChallengeGroup<*>, name: String, replaceable: Boolean) :
+  Challenge(group, name, replaceable) {
+
   // User properties
   lateinit var returnType: ReturnType
 
@@ -145,7 +151,9 @@ class PythonChallenge(group: ChallengeGroup<*>) : Challenge(group) {
   }
 }
 
-class JavaChallenge(group: ChallengeGroup<*>) : Challenge(group) {
+class JavaChallenge(group: ChallengeGroup<*>, name: String, replaceable: Boolean) :
+  Challenge(group, name, replaceable) {
+
   override fun computeFuncInfo(code: String): FunctionInfo {
     val lines = code.lines().filter { !it.trimStart().startsWith("package") }
     val funcCode = extractJavaFunction(lines)
@@ -173,7 +181,9 @@ class JavaChallenge(group: ChallengeGroup<*>) : Challenge(group) {
   }
 }
 
-class KotlinChallenge(group: ChallengeGroup<*>) : Challenge(group) {
+class KotlinChallenge(group: ChallengeGroup<*>, name: String, replaceable: Boolean) :
+  Challenge(group, name, replaceable) {
+
   // User properties
   lateinit var returnType: ReturnType
 
