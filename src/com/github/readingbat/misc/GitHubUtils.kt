@@ -31,7 +31,7 @@ object GitHubUtils : KLogging() {
                      branchName: String,
                      srcPath: String,
                      packageName: String,
-                     filePattern: String = ""): List<String> {
+                     filePatterns: Array<out String> = emptyArray()): List<String> {
     val repo = github.getOrganization(githubRepo.organizationName).getRepository(githubRepo.repoName)
     val elems = (srcPath.ensureSuffix("/") + packageName).split("/").filter { it.isNotEmpty() }
 
@@ -41,13 +41,17 @@ object GitHubUtils : KLogging() {
       currRoot = currRoot.tree.asSequence().filter { it.path == elem }.first().asTree()
     }
 
-    var files = currRoot.tree.map { it.path }
-    if (filePattern.isNotBlank()) {
-      val regex = filePattern.asRegex()
-      val filter: (String) -> Boolean = { it.contains(regex) }
-      files = files.filter { filter.invoke(it) }
+    val fileList = currRoot.tree.map { it.path }
+    val uniqueNames = mutableSetOf<String>()
+
+    filePatterns.forEach { filePattern ->
+      if (filePattern.isNotBlank()) {
+        val regex = filePattern.asRegex()
+        val filter: (String) -> Boolean = { it.contains(regex) }
+        uniqueNames += fileList.filter { filter.invoke(it) }
+      }
     }
 
-    return files
+    return uniqueNames.toList().sorted()
   }
 }

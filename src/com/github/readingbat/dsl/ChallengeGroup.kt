@@ -65,39 +65,42 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
       ?: throw InvalidPathException("Challenge $prefix/$name not found.")
 
   @ReadingBatDslMarker
-  operator fun T.unaryPlus() {
-    val challengeName = name
-    if (this@ChallengeGroup.hasChallenge(challengeName)) {
-      val challenge = this@ChallengeGroup.findChallenge(challengeName)
-      if (challenge.replaceable)
-        this@ChallengeGroup.removeChallenge(challengeName)
-      else
-        throw InvalidConfigurationException("Challenge ${this@ChallengeGroup.prefix}/$challengeName already exists")
-    }
-
+  fun T.unaryPlus() {
+    this@ChallengeGroup.checkChallengeName(name)
     this@ChallengeGroup.challenges += this
   }
 
   @ReadingBatDslMarker
-  fun import(pattern: String = "") {
-    folderContents(repo, branchName, srcPath, packageName, pattern)
+  fun import(vararg patterns: String) {
+    folderContents(repo, branchName, srcPath, packageName, patterns)
       .map { it.split(".").first() }
       .forEach { challengeName ->
-        logger.info { "Adding ${challengeName}" }
-        challenges += challenge(this, challengeName, true) as T
+        if (checkChallengeName(challengeName, false)) {
+          logger.debug { "Adding ${challengeName}" }
+          challenges += challenge(this, challengeName, true) as T
+        }
       }
+  }
+
+  private fun checkChallengeName(challengeName: String, throwExceptionIfPresent: Boolean = true): Boolean {
+    if (hasChallenge(challengeName)) {
+      val challenge = findChallenge(challengeName)
+      if (challenge.replaceable) {
+        removeChallenge(challengeName)
+      }
+      else {
+        if (throwExceptionIfPresent)
+          throw InvalidConfigurationException("Challenge $prefix/$challengeName already exists")
+        else
+          return false
+      }
+    }
+    return true
   }
 
   @ReadingBatDslMarker
   fun challenge(challengeName: String, block: T.() -> Unit) {
-    if (this@ChallengeGroup.hasChallenge(challengeName)) {
-      val challenge = this@ChallengeGroup.findChallenge(challengeName)
-      if (challenge.replaceable)
-        this@ChallengeGroup.removeChallenge(challengeName)
-      else
-        throw InvalidConfigurationException("Challenge $prefix/$challengeName already exists")
-    }
-
+    checkChallengeName(challengeName)
     val challenge = challenge(this, challengeName, false) as T
     challenges += challenge.apply(block).apply { validate() }
   }

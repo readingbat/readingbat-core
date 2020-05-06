@@ -42,18 +42,23 @@ object TestMain {
             packageName = "warmup1"
             description = "This is a description of Warmup 1"
 
-            import("*.java")
-
             challenge("JoinEnds") {
               description = """This is a description of JoinEnds"""
               codingBatEquiv = "p141494"
             }
+
+            import("Shifty.*", "StringLength.*")
+            import("Shifty.*", "StringLength.*", "JoinEnds.*")
+
           }
         }
 
-        //+include(GitHubContent(organization, "readingbat-java-content", branch = branch)).java
-        // +include(GitHubContent(organization, "readingbat-python-content", branch = branch, srcPath = "src")).python
-        // +include(GitHubContent(organization, "readingbat-java-content", branch = branch)).kotlin
+        /*
+        +include(GitHubContent(organization, "readingbat-java-content", branch = branch)).java
+        +include(GitHubContent(organization, "readingbat-python-content", branch = branch, srcPath = "src")).python
+        +include(GitHubContent(organization, "readingbat-java-content", branch = branch)).kotlin
+
+         */
         // java {
         //+include(GitHubContent("readingbat-java-content")).java.findGroup("dd")
         // }
