@@ -25,6 +25,7 @@ import com.vladsch.flexmark.html.HtmlRenderer
 import com.vladsch.flexmark.parser.Parser
 import com.vladsch.flexmark.util.data.MutableDataSet
 import mu.KLogging
+import kotlin.reflect.KProperty
 
 @ReadingBatDslMarker
 class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>, internal val name: String) {
@@ -44,9 +45,20 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
         renderer.render(document)
       }
 
+  class Delegate(val includeList: MutableList<String>) {
+    operator fun getValue(thisRef: Any?, property: KProperty<*>) = includeList.toString()
+
+    operator fun setValue(thisRef: Any?, property: KProperty<*>, value: String) {
+      includeList += value
+    }
+  }
+
+  private val includeList = mutableListOf<String>()
+
   // User properties
   var packageName = ""
   var description = ""
+  var defaultFiles by Delegate(includeList)
 
   fun hasChallenge(name: String) = challenges.any { it.name == name }
 
@@ -71,7 +83,9 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
   }
 
   @ReadingBatDslMarker
-  fun import(vararg patterns: String) {
+  fun import(vararg patterns: String) = import(patterns.toList())
+
+  internal fun import(patterns: List<String>) {
     folderContents(repo, branchName, srcPath, packageName, patterns)
       .map { it.split(".").first() }
       .forEach { challengeName ->

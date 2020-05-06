@@ -58,8 +58,11 @@ class LanguageGroup<T : Challenge>(internal val languageType: LanguageType) {
   fun hasGroup(groupName: String) = challengeGroups.any { it.name == groupName }
 
   @ReadingBatDslMarker
-  fun group(name: String, block: ChallengeGroup<T>.() -> Unit) =
-    addGroup(ChallengeGroup(this, name).apply(block))
+  fun group(name: String, block: ChallengeGroup<T>.() -> Unit) {
+    val challengeGroup = ChallengeGroup(this, name).apply(block)
+    challengeGroup.import(challengeGroup.includeList)
+    addGroup(challengeGroup)
+  }
 
   @ReadingBatDslMarker
   operator fun ChallengeGroup<T>.unaryPlus() = let { this@LanguageGroup.addGroup(this) }

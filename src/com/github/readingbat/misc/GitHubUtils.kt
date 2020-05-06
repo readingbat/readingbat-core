@@ -23,6 +23,8 @@ import com.github.pambrose.common.util.ensureSuffix
 import mu.KLogging
 import org.kohsuke.github.GitHub
 
+// https://github-api.kohsuke.org
+
 object GitHubUtils : KLogging() {
 
   private val github by lazy { GitHub.connect() }
@@ -31,7 +33,10 @@ object GitHubUtils : KLogging() {
                      branchName: String,
                      srcPath: String,
                      packageName: String,
-                     filePatterns: Array<out String> = emptyArray()): List<String> {
+                     filePatterns: List<String> = emptyList()): List<String> {
+    if (filePatterns.isEmpty())
+      return emptyList()
+
     val repo = github.getOrganization(githubRepo.organizationName).getRepository(githubRepo.repoName)
     val elems = (srcPath.ensureSuffix("/") + packageName).split("/").filter { it.isNotEmpty() }
 

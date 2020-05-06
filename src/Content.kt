@@ -41,14 +41,15 @@ object TestMain {
           group("Warmup 1") {
             packageName = "warmup1"
             description = "This is a description of Warmup 1"
+            defaultFiles = "*.java"
+
+            import("Shifty.*", "StringLength.*")
 
             challenge("JoinEnds") {
               description = """This is a description of JoinEnds"""
               codingBatEquiv = "p141494"
             }
 
-            import("Shifty.*", "StringLength.*")
-            import("Shifty.*", "StringLength.*", "JoinEnds.*")
 
           }
         }
