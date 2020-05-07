@@ -38,14 +38,23 @@ class ServerTest {
 
         java {
           repo = GitHubRepo("readingbat", "readingbat-java-content")
+          group("group1") {
+
+          }
         }
 
         python {
           repo = GitHubRepo("readingbat", "readingbat-java-content")
+          group("group1") {
+
+          }
         }
 
         kotlin {
           repo = GitHubRepo("readingbat", "readingbat-java-content")
+          group("group1") {
+
+          }
         }
       }
 
