@@ -17,7 +17,9 @@
 
 package com.github.readingbat.config
 
-import com.github.readingbat.dsl.LanguageType
+import com.github.readingbat.InvalidConfigurationException
+import com.github.readingbat.Module.readingBatContent
+import com.github.readingbat.dsl.LanguageType.*
 import com.github.readingbat.misc.CheckAnswers.checkUserAnswers
 import com.github.readingbat.misc.Constants.checkAnswers
 import com.github.readingbat.misc.Constants.cssName
@@ -37,14 +39,24 @@ import io.ktor.routing.post
 import io.ktor.routing.routing
 import kotlinx.css.CSSBuilder
 
+
 internal fun Application.routes() {
+
+  fun defaultTab() =
+    listOf(Java, Python, Kotlin)
+      .asSequence()
+      .filter { readingBatContent.hasGroups(it) }
+      .map { "/$root/${it.lowerName}" }
+      .firstOrNull()
+      ?: throw InvalidConfigurationException("Missing default language")
+
   routing {
     get("/") {
-      call.respondRedirect("/$root/${LanguageType.Java.lowerName}")
+      call.respondRedirect(defaultTab())
     }
 
     get("/$root") {
-      call.respondRedirect("/$root/${LanguageType.Java.lowerName}")
+      call.respondRedirect(defaultTab())
     }
 
     get("/$cssName") {

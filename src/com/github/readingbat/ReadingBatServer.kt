@@ -28,14 +28,11 @@ import io.ktor.server.cio.CIO
 import io.ktor.server.engine.embeddedServer
 
 object ReadingBatServer {
-
   fun start(content: ReadingBatContent) {
     val port = Integer.parseInt(System.getProperty("PORT") ?: "8080")
     //val clargs = commandLineEnvironment(args.plus("port=$port"))
-    embeddedServer(CIO, port = port) { module(content = content) }
-      .start(wait = true)
+    embeddedServer(CIO, port = port) { module(content = content) }.start(wait = true)
   }
-
 }
 
 object Module {

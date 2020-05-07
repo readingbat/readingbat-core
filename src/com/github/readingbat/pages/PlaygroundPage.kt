@@ -26,6 +26,10 @@ import com.github.readingbat.misc.Constants.tabs
 import kotlinx.html.*
 import org.apache.commons.text.StringEscapeUtils
 
+// Playground customization details are here:
+// https://jetbrains.github.io/kotlin-playground/
+// https://jetbrains.github.io/kotlin-playground/examples/
+
 fun HTML.playgroundPage(challenge: Challenge) {
   val languageType = challenge.languageType
   val languageName = languageType.lowerName
@@ -50,9 +54,6 @@ fun HTML.playgroundPage(challenge: Challenge) {
       if (challenge.description.isNotEmpty())
         div(classes = challengeDesc) { rawHtml(challenge.parsedDescription) }
 
-      // Customization details are here:
-      // https://jetbrains.github.io/kotlin-playground/
-      // https://jetbrains.github.io/kotlin-playground/examples/
       div(classes = kotlinCode) {
         val options =
           """theme="idea" indent="2" lines="true" highlight-on-fly="true" data-autocomplete="true" match-brackets="true""""

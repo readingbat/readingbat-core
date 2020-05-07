@@ -55,6 +55,8 @@ class LanguageGroup<T : Challenge>(internal val languageType: LanguageType) {
     challengeGroups += group
   }
 
+  fun hasGroups() = challengeGroups.isNotEmpty()
+
   fun hasGroup(groupName: String) = challengeGroups.any { it.name == groupName }
 
   @ReadingBatDslMarker

@@ -28,12 +28,9 @@ object TestMain {
     val organization = "readingbat"
     val branch = "dev"
 
-    //val r = GitHubRepo(organization, "readingbat-java-content")
-    //println(folderContents(r, branch, "/src/main/java/warmup1", "*Look*.java"))
-    //println(folderContents(r, branch, "/src/main/java/warmup1"))
-
     val content by lazy {
       readingBatContent {
+
 
         java {
           repo = GitHubRepo(organization, "readingbat-java-content")
@@ -67,12 +64,11 @@ object TestMain {
 
           }
         }
-        /*
-        +include(GitHubContent(organization, "readingbat-java-content", branch = branch)).java
-        +include(GitHubContent(organization, "readingbat-python-content", branch = branch, srcPath = "src")).python
-        +include(GitHubContent(organization, "readingbat-java-content", branch = branch)).kotlin
 
-         */
+        //+include(GitHubContent(organization, "readingbat-java-content", branch = branch)).java
+        //+include(GitHubContent(organization, "readingbat-python-content", branch = branch, srcPath = "src")).python
+        //+include(GitHubContent(organization, "readingbat-java-content", branch = branch)).kotlin
+
         // java {
         //+include(GitHubContent("readingbat-java-content")).java.findGroup("dd")
         // }

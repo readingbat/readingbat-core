@@ -112,7 +112,7 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
         .map { it.split(".").first() }
         .forEach { challengeName ->
           if (checkChallengeName(challengeName, false)) {
-            logger.debug { "Adding ${challengeName}" }
+            logger.debug { "Adding $challengeName" }
             val challenge = challenge(this, challengeName, true)
             when {
               languageType.isPython() -> (challenge as PythonChallenge).apply { returnType = prt.returnType }

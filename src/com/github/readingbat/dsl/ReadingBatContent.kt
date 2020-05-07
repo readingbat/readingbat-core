@@ -29,6 +29,10 @@ class ReadingBatContent {
   private val languageList = listOf(java, python, kotlin)
   private val languageMap = languageList.map { it.languageType to it }.toMap()
 
+  internal fun hasGroups(languageType: LanguageType) = findLanguage(languageType).hasGroups()
+
+  internal fun hasLanguage(languageType: LanguageType) = languageMap.containsKey(languageType)
+
   internal fun findLanguage(languageType: LanguageType) =
     languageMap[languageType] ?: throw InvalidConfigurationException("Invalid language $languageType")
 
