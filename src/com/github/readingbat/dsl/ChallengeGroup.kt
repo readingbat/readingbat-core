@@ -32,11 +32,9 @@ import kotlin.reflect.KProperty
 @ReadingBatDslMarker
 class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>, internal val name: String) {
   internal val languageType = languageGroup.languageType
-  internal val repo = languageGroup.checkedRepo
-  internal val branchName = languageGroup.branchName
-  internal val srcPath = languageGroup.srcPath
-
   internal val challenges = mutableListOf<T>()
+
+  internal val repo by lazy { languageGroup.checkedRepo }
   private val prefix by lazy { "${languageType.lowerName}/$name" }
   internal val parsedDescription
       by lazy {
@@ -108,7 +106,11 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
   private val excludes = Regex("^__.*__.*$")
   internal fun import(languageType: LanguageType, prts: List<PatternReturnType>) {
     prts.forEach { prt ->
-      folderContents(repo as GitHubRepo, branchName, srcPath, packageName, listOf(prt.pattern))
+      folderContents(repo as GitHubRepo,
+                     languageGroup.branchName,
+                     languageGroup.srcPath,
+                     packageName,
+                     listOf(prt.pattern))
         .filterNot { it.contains(excludes) }
         .map { it.split(".").first() }
         .forEach { challengeName ->
