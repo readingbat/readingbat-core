@@ -17,6 +17,7 @@
 
 package com.github.readingbat.config
 
+import com.github.readingbat.InvalidConfigurationException
 import com.github.readingbat.Module.readingBatContent
 import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.dsl.LanguageType.Companion.toLanguageType
@@ -30,47 +31,35 @@ import com.github.readingbat.pages.playgroundPage
 import io.ktor.application.Application
 import io.ktor.application.call
 import io.ktor.html.respondHtml
-import io.ktor.http.HttpStatusCode
 import io.ktor.locations.Location
 import io.ktor.locations.get
-import io.ktor.response.respond
 import io.ktor.routing.routing
 
 internal fun Application.locations() {
   routing {
 
-    fun isValidLanguage(languageType: LanguageType) =
-      readingBatContent.hasLanguage(languageType) && readingBatContent.hasGroups(languageType)
+    fun validateLanguage(languageType: LanguageType) {
+      if (!readingBatContent.hasLanguage(languageType) || !readingBatContent.hasGroups(languageType))
+        throw InvalidConfigurationException("Invlaid language: $languageType")
+    }
 
     get<Language> {
       // This lookup has to take place outside of the lambda for proper exception handling
-      if (!isValidLanguage(it.languageType)) {
-        call.respond(HttpStatusCode.NotFound)
-      }
-      else {
-        val languageGroup = readingBatContent.findLanguage(it.languageType)
-        call.respondHtml { languageGroupPage(it.languageType, languageGroup.challengeGroups) }
-      }
+      validateLanguage(it.languageType)
+      val languageGroup = readingBatContent.findLanguage(it.languageType)
+      call.respondHtml { languageGroupPage(it.languageType, languageGroup.challengeGroups) }
     }
 
     get<Language.Group> {
-      if (!isValidLanguage(it.languageType)) {
-        call.respond(HttpStatusCode.NotFound)
-      }
-      else {
-        val challengeGroup = readingBatContent.findGroup(it.languageType, it.groupName)
-        call.respondHtml { challengeGroupPage(challengeGroup) }
-      }
+      validateLanguage(it.languageType)
+      val challengeGroup = readingBatContent.findGroup(it.languageType, it.groupName)
+      call.respondHtml { challengeGroupPage(challengeGroup) }
     }
 
     get<Language.Group.Challenge> {
-      if (!isValidLanguage(it.languageType)) {
-        call.respond(HttpStatusCode.NotFound)
-      }
-      else {
-        val challenge = readingBatContent.findChallenge(it.languageType, it.groupName, it.challengeName)
-        call.respondHtml { challengePage(challenge) }
-      }
+      validateLanguage(it.languageType)
+      val challenge = readingBatContent.findChallenge(it.languageType, it.groupName, it.challengeName)
+      call.respondHtml { challengePage(challenge) }
     }
 
     get<PlaygroundRequest> {

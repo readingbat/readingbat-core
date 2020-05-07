@@ -23,8 +23,9 @@ import com.github.readingbat.dsl.LanguageType.*
 import com.github.readingbat.misc.CheckAnswers.checkUserAnswers
 import com.github.readingbat.misc.Constants.checkAnswers
 import com.github.readingbat.misc.Constants.cssName
+import com.github.readingbat.misc.Constants.icons
 import com.github.readingbat.misc.Constants.root
-import com.github.readingbat.misc.Constants.static
+import com.github.readingbat.misc.Constants.staticRoot
 import com.github.readingbat.misc.cssContent
 import io.ktor.application.Application
 import io.ktor.application.ApplicationCall
@@ -59,6 +60,10 @@ internal fun Application.routes() {
       call.respondRedirect(defaultTab())
     }
 
+    get("/favicon.ico") {
+      call.respondRedirect("/$staticRoot/$icons/favicon.ico")
+    }
+
     get("/$cssName") {
       call.respondCss {
         cssContent()
@@ -69,8 +74,8 @@ internal fun Application.routes() {
       checkUserAnswers()
     }
 
-    static("/$static") {
-      resources(static)
+    static("/$staticRoot") {
+      resources(staticRoot)
     }
   }
 }

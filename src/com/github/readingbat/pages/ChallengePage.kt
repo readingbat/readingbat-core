@@ -32,7 +32,7 @@ import com.github.readingbat.misc.Constants.processAnswers
 import com.github.readingbat.misc.Constants.refs
 import com.github.readingbat.misc.Constants.root
 import com.github.readingbat.misc.Constants.spinner
-import com.github.readingbat.misc.Constants.static
+import com.github.readingbat.misc.Constants.staticRoot
 import com.github.readingbat.misc.Constants.status
 import com.github.readingbat.misc.Constants.tabs
 import com.github.readingbat.misc.Constants.userAnswers
@@ -49,7 +49,7 @@ internal fun HTML.challengePage(challenge: Challenge) {
 
   head {
     link { rel = "stylesheet"; href = spinnerCss }
-    link { rel = "stylesheet"; href = "/$static/$languageName-prism.css"; type = cssType }
+    link { rel = "stylesheet"; href = "/$staticRoot/$languageName-prism.css"; type = cssType }
 
     script(type = ScriptType.textJavaScript) { addScript(languageName, groupName, name) }
 
@@ -132,7 +132,7 @@ internal fun HTML.challengePage(challenge: Challenge) {
 
     backLink("/$root/$languageName/$groupName")
 
-    script { src = "/$static/$languageName-prism.js" }
+    script { src = "/$staticRoot/$languageName-prism.js" }
   }
 }
 
