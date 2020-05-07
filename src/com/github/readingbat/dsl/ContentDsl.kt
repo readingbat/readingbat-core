@@ -19,7 +19,8 @@ package com.github.readingbat.dsl
 
 import com.github.pambrose.common.script.KotlinScript
 import com.github.pambrose.common.util.ContentSource
-import com.github.pambrose.common.util.GitHubSource
+import com.github.pambrose.common.util.GitHubFile
+import com.github.pambrose.common.util.GitHubRepo
 import com.github.readingbat.ReadingBatServer
 import com.github.readingbat.dsl.ReadingBatContent.Companion.contentMap
 import mu.KotlinLogging
@@ -29,12 +30,16 @@ import kotlin.time.measureTimedValue
 @DslMarker
 annotation class ReadingBatDslMarker
 
-class GitHubContent(repo: String, branch: String = "master", fileName: String = "Content.kt") :
-  GitHubSource(organization = "readingbat",
-               repo = repo,
-               branch = branch,
-               srcPath = "src/main/kotlin",
-               fileName = fileName)
+class GitHubContent(organization: String,
+                    repo: String,
+                    branch: String = "master",
+                    srcPath: String = "src/main/kotlin",
+                    fileName: String = "Content.kt") :
+  GitHubFile(GitHubRepo(organizationName = organization,
+                        repoName = repo),
+             branchName = branch,
+             srcPath = srcPath,
+             fileName = fileName)
 
 fun readingBatContent(block: ReadingBatContent.() -> Unit) =
   ReadingBatContent().apply(block).apply { validate() }

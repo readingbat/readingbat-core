@@ -17,21 +17,21 @@
 
 package com.github.readingbat.dsl
 
-import kotlin.reflect.KType
-import kotlin.reflect.typeOf
+enum class ReturnType(val typeStr: String) {
 
-enum class ReturnType(val typeStr: String, val ktype: KType) {
-  BooleanType("boolean", typeOf<Boolean>()),
-  IntType("int", typeOf<Int>()),
-  StringType("String", typeOf<String>()),
+  Runtime("runtime"),
 
-  BooleanArrayType("boolean[]", typeOf<Array<Boolean>>()),
-  IntArrayType("int[]", typeOf<Array<Int>>()),
-  StringArrayType("String[]", typeOf<Array<String>>()),
+  BooleanType("boolean"),
+  IntType("int"),
+  StringType("String"),
 
-  BooleanListType("List<Boolean>", typeOf<List<Boolean>>()),
-  IntListType("List<Integer>", typeOf<List<Int>>()),
-  StringListType("List<Strixng>", typeOf<List<String>>());
+  BooleanArrayType("boolean[]"),
+  IntArrayType("int[]"),
+  StringArrayType("String[]"),
+
+  BooleanListType("List<Boolean>"),
+  IntListType("List<Integer>"),
+  StringListType("List<Strixng>");
 
   companion object {
     val String.asReturnType: ReturnType?

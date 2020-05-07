@@ -17,21 +17,30 @@
 
 package com.github.readingbat.pages
 
+import com.github.readingbat.Module.readingBatContent
 import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.dsl.LanguageType.*
 import com.github.readingbat.misc.Constants.backLink
 import com.github.readingbat.misc.Constants.bodyHeader
 import com.github.readingbat.misc.Constants.cssName
 import com.github.readingbat.misc.Constants.cssType
+import com.github.readingbat.misc.Constants.icons
 import com.github.readingbat.misc.Constants.production
 import com.github.readingbat.misc.Constants.root
 import com.github.readingbat.misc.Constants.selected
+import com.github.readingbat.misc.Constants.staticRoot
 import com.github.readingbat.misc.Constants.titleText
 import kotlinx.html.*
 import kotlinx.html.Entities.nbsp
 
 internal fun HEAD.headDefault() {
   link { rel = "stylesheet"; href = "/$cssName"; type = cssType }
+
+  // From: https://favicon.io/emoji-favicons/glasses/
+  link { rel = "apple-touch-icon"; sizes = "180x180"; href = "/$staticRoot/$icons/apple-touch-icon.png" }
+  link { rel = "icon"; type = "image/png"; sizes = "32x32"; href = "/$staticRoot/$icons/favicon-32x32.png" }
+  link { rel = "icon"; type = "image/png"; sizes = "16x16"; href = "/$staticRoot/$icons/favicon-16x16.png" }
+  link { rel = "manifest"; href = "/$staticRoot/$icons/site.webmanifest" }
 
   title(titleText)
 
@@ -61,17 +70,12 @@ internal fun BODY.bodyHeader(languageType: LanguageType) {
 
   nav {
     ul {
-      li(classes = "h2") {
-        if (languageType.isJava()) id = selected
-        this@bodyHeader.addLink(Java.name, "/$root/${Java.lowerName}")
-      }
-      li(classes = "h2") {
-        if (languageType.isPython()) id = selected
-        this@bodyHeader.addLink(Python.name, "/$root/${Python.lowerName}")
-      }
-      li(classes = "h2") {
-        if (languageType.isKotlin()) id = selected
-        this@bodyHeader.addLink(Kotlin.name, "/$root/${Kotlin.lowerName}")
+      for (lang in listOf(Java, Python, Kotlin)) {
+        if (readingBatContent.hasGroups(lang))
+          li(classes = "h2") {
+            if (languageType == lang) id = selected
+            this@bodyHeader.addLink(lang.name, "/$root/${lang.lowerName}")
+          }
       }
     }
   }

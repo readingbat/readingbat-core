@@ -22,32 +22,6 @@ import io.ktor.application.ApplicationCallPipeline
 
 internal fun Application.intercepts() {
   intercept(ApplicationCallPipeline.Call) {
-    /*
-    val req = call.request.uri
-    val items = req.split("/").filter { it.isNotEmpty() }
-
-    if (items.isNotEmpty() && items[0] in listOf(Java.lowerName, Python.lowerName, Kotlin.lowerName)) {
-      val language = items[0].toLanguageType()
-      val groupName = items.elementAtOrNull(1) ?: ""
-      val challengeName = items.elementAtOrNull(2) ?: ""
-      when (items.size) {
-        1 -> {
-          // This lookup has to take place outside of the lambda for proper exception handling
-          val groups = readingBatContent.findLanguage(language).challengeGroups
-          call.respondHtml { languageGroupPage(language, groups) }
-        }
-        2 -> {
-          val challengeGroup = readingBatContent.findLanguage(language).findGroup(groupName)
-          call.respondHtml { challengeGroupPage(challengeGroup) }
-        }
-        3 -> {
-          val challenge = readingBatContent.findLanguage(language).findChallenge(groupName, challengeName)
-          call.respondHtml { challengePage(challenge) }
-        }
-        else -> throw InvalidPathException("Invalid path: $req")
-      }
-    }
-     */
   }
 
   intercept(ApplicationCallPipeline.Monitoring) {
@@ -57,5 +31,4 @@ internal fun Application.intercepts() {
   intercept(ApplicationCallPipeline.Fallback) {
     // Count not found pages here
   }
-
 }

@@ -15,29 +15,66 @@
  *
  */
 
+import com.github.pambrose.common.util.GitHubRepo
 import com.github.readingbat.ReadingBatServer
-import com.github.readingbat.dsl.GitHubContent
-import com.github.readingbat.dsl.include
+import com.github.readingbat.dsl.ReturnType.BooleanType
 import com.github.readingbat.dsl.readingBatContent
 
-object Main {
+
+object TestMain {
   @JvmStatic
   fun main(args: Array<String>) {
+
+    val organization = "readingbat"
+    val branch = "dev"
+
+    val content by lazy {
+      readingBatContent {
+
+
+        java {
+          repo = GitHubRepo(organization, "readingbat-java-content")
+          branchName = branch
+
+          group("Warmup 1") {
+            packageName = "warmup1"
+            description = "This is a description of Warmup 1"
+            includeFiles = "*.java"
+
+            challenge("JoinEnds") {
+              description = """This is a description of JoinEnds"""
+              codingBatEquiv = "p141494"
+            }
+          }
+        }
+
+        python {
+          repo = GitHubRepo("readingbat", "readingbat-python-content")
+          branchName = "dev"
+
+          group("Numeric Expressions") {
+            packageName = "numeric_expressions"
+            description = "Basic numeric expressions"
+            includeFilesWithType = "*.py" returns BooleanType
+
+            challenge("lt_expr") {
+              description = """Determine if one value is less than another with the "<" operator."""
+              returnType = BooleanType
+            }
+
+          }
+        }
+
+        //+include(GitHubContent(organization, "readingbat-java-content", branch = branch)).java
+        //+include(GitHubContent(organization, "readingbat-python-content", branch = branch, srcPath = "src")).python
+        //+include(GitHubContent(organization, "readingbat-java-content", branch = branch)).kotlin
+
+        // java {
+        //+include(GitHubContent("readingbat-java-content")).java.findGroup("dd")
+        // }
+      }
+    }
+
     ReadingBatServer.start(content)
   }
 }
-
-val content =
-  readingBatContent {
-
-    +include(GitHubContent("readingbat-java-content", branch = "master"), variableName = "content").java
-
-    +include(GitHubContent("readingbat-python-content", branch = "master")).python
-
-    +include(GitHubContent("readingbat-java-content", branch = "master"), variableName = "content").kotlin
-
-    // java {
-    //+include(GitHubContent("readingbat-java-content")).java.findGroup("dd")
-    // }
-  }
-

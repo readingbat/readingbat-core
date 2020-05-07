@@ -17,7 +17,9 @@
 
 package com.github.readingbat.config
 
+import com.github.readingbat.InvalidConfigurationException
 import com.github.readingbat.Module.readingBatContent
+import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.dsl.LanguageType.Companion.toLanguageType
 import com.github.readingbat.dsl.LanguageType.Kotlin
 import com.github.readingbat.misc.Constants.playground
@@ -35,18 +37,27 @@ import io.ktor.routing.routing
 
 internal fun Application.locations() {
   routing {
+
+    fun validateLanguage(languageType: LanguageType) {
+      if (!readingBatContent.hasLanguage(languageType) || !readingBatContent.hasGroups(languageType))
+        throw InvalidConfigurationException("Invlaid language: $languageType")
+    }
+
     get<Language> {
       // This lookup has to take place outside of the lambda for proper exception handling
-      val groups = readingBatContent.findLanguage(it.languageType)
-      call.respondHtml { languageGroupPage(it.languageType, groups.challengeGroups) }
+      validateLanguage(it.languageType)
+      val languageGroup = readingBatContent.findLanguage(it.languageType)
+      call.respondHtml { languageGroupPage(it.languageType, languageGroup.challengeGroups) }
     }
 
     get<Language.Group> {
-      val group = readingBatContent.findGroup(it.languageType, it.groupName)
-      call.respondHtml { challengeGroupPage(group) }
+      validateLanguage(it.languageType)
+      val challengeGroup = readingBatContent.findGroup(it.languageType, it.groupName)
+      call.respondHtml { challengeGroupPage(challengeGroup) }
     }
 
     get<Language.Group.Challenge> {
+      validateLanguage(it.languageType)
       val challenge = readingBatContent.findChallenge(it.languageType, it.groupName, it.challengeName)
       call.respondHtml { challengePage(challenge) }
     }

@@ -17,8 +17,7 @@
 
 package com.github.readingbat.dsl
 
-import com.github.pambrose.common.util.decode
-import com.github.pambrose.common.util.toPath
+import com.github.pambrose.common.util.*
 import com.github.readingbat.InvalidConfigurationException
 import com.github.readingbat.InvalidPathException
 import com.github.readingbat.misc.Constants.github
@@ -27,22 +26,22 @@ import com.github.readingbat.misc.Constants.githubUserContent
 @ReadingBatDslMarker
 class LanguageGroup<T : Challenge>(internal val languageType: LanguageType) {
   internal val challengeGroups = mutableListOf<ChallengeGroup<T>>()
-  private val rawRoot by lazy { checkedRepoRoot.replace(github, githubUserContent) }
+  private val rawRoot by lazy { (checkedRepo.url.ensureSuffix("/") + branchName).replace(github, githubUserContent) }
 
-  private val checkedRepoRoot: String
+  private val checkedRepo: AbstractRepo
     get() {
-      if (repoRoot.isEmpty())
-        throw InvalidConfigurationException("${languageType.lowerName} section is missing a repoRoot value")
-      return repoRoot
+      if (!this::repo.isInitialized)
+        throw InvalidConfigurationException("${languageType.lowerName} section is missing a repo value")
+      return repo
     }
 
   // User properties
-  var srcPrefix = languageType.srcPrefix
-  var repoRoot = ""
+  lateinit var repo: GitHubRepo
   var branchName = "master"
+  var srcPath = languageType.srcPrefix
 
-  internal val rawRepoRoot by lazy { listOf(rawRoot, branchName, srcPrefix).toPath() }
-  internal val gitpodRoot by lazy { listOf(checkedRepoRoot, "blob/$branchName/", srcPrefix).toPath() }
+  internal val rawRepoRoot by lazy { listOf(rawRoot, srcPath).toPath() }
+  internal val gitpodRoot by lazy { listOf(checkedRepo.url, "blob/$branchName", srcPath).toPath() }
 
   internal fun validate() {
     // Empty for now
@@ -56,11 +55,16 @@ class LanguageGroup<T : Challenge>(internal val languageType: LanguageType) {
     challengeGroups += group
   }
 
+  fun hasGroups() = challengeGroups.isNotEmpty()
+
   fun hasGroup(groupName: String) = challengeGroups.any { it.name == groupName }
 
   @ReadingBatDslMarker
-  fun group(name: String, block: ChallengeGroup<T>.() -> Unit) =
-    addGroup(ChallengeGroup(this, name).apply(block))
+  fun group(name: String, block: ChallengeGroup<T>.() -> Unit) {
+    val challengeGroup = ChallengeGroup(this, name).apply(block)
+    challengeGroup.import(languageType, challengeGroup.includeList)
+    addGroup(challengeGroup)
+  }
 
   @ReadingBatDslMarker
   operator fun ChallengeGroup<T>.unaryPlus() = let { this@LanguageGroup.addGroup(this) }
@@ -72,5 +76,5 @@ class LanguageGroup<T : Challenge>(internal val languageType: LanguageType) {
   fun findChallenge(groupName: String, challengeName: String) = findGroup(groupName).findChallenge(challengeName)
 
   override fun toString() =
-    "LanguageGroup(languageType=$languageType, srcPrefix='$srcPrefix', challengeGroups=$challengeGroups, repoRoot='$repoRoot', branch='$branchName')"
+    "LanguageGroup(languageType=$languageType, srcPrefix='$srcPath', challengeGroups=$challengeGroups, repo='$repo')"
 }
