@@ -35,8 +35,7 @@ class GitHubContent(organization: String,
                     branch: String = "master",
                     srcPath: String = "src/main/kotlin",
                     fileName: String = "Content.kt") :
-  GitHubFile(GitHubRepo(organizationName = organization,
-                        repoName = repo),
+  GitHubFile(GitHubRepo(organization, repo),
              branchName = branch,
              srcPath = srcPath,
              fileName = fileName)

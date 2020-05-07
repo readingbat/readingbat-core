@@ -17,6 +17,7 @@
 
 package com.github.readingbat.dsl
 
+import com.github.pambrose.common.util.GitHubRepo
 import com.github.readingbat.InvalidConfigurationException
 import com.github.readingbat.dsl.LanguageType.*
 
@@ -25,6 +26,17 @@ class ReadingBatContent {
   val python = LanguageGroup<PythonChallenge>(Python)
   val java = LanguageGroup<JavaChallenge>(Java)
   val kotlin = LanguageGroup<KotlinChallenge>(Kotlin)
+
+  // User properties
+  lateinit var repo: GitHubRepo
+  var googleAnalyticsId = ""
+
+  init {
+    // This is a hack. We need a handle to the current ReadingBatContent object in LanguageGroup
+    currentReadingBatContent = this
+  }
+
+  internal val isRepoInitialized get() = this::repo.isInitialized
 
   private val languageList = listOf(java, python, kotlin)
   private val languageMap = languageList.map { it.languageType to it }.toMap()
@@ -63,6 +75,8 @@ class ReadingBatContent {
 
   companion object {
     internal val contentMap = mutableMapOf<String, ReadingBatContent>()
+
+    internal lateinit var currentReadingBatContent: ReadingBatContent
   }
 }
 

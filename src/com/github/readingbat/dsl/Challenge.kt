@@ -55,12 +55,12 @@ import kotlin.time.measureTime
 import kotlin.time.measureTimedValue
 
 @ReadingBatDslMarker
-sealed class Challenge(group: ChallengeGroup<*>, val name: String, val replaceable: Boolean) {
+sealed class Challenge(challengeGroup: ChallengeGroup<*>, val name: String, val replaceable: Boolean) {
   private val challengeId = counter.incrementAndGet()
-  private val languageGroup = group.languageGroup
-  private val packageName = group.packageName
-  internal val languageType = group.languageType
-  internal val groupName = group.name
+  private val languageGroup = challengeGroup.languageGroup
+  private val packageName = challengeGroup.packageName
+  internal val languageType = challengeGroup.languageType
+  internal val groupName = challengeGroup.name
 
   private val fqName by lazy { packageName.ensureSuffix("/") + fileName.ensureSuffix(".${languageType.suffix}") }
   internal val gitpodUrl by lazy { "${languageGroup.gitpodRoot}$fqName" }
