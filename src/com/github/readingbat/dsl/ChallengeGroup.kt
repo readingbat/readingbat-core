@@ -17,6 +17,7 @@
 
 package com.github.readingbat.dsl
 
+import com.github.pambrose.common.util.GitHubRepo
 import com.github.readingbat.InvalidConfigurationException
 import com.github.readingbat.InvalidPathException
 import com.github.readingbat.dsl.Challenge.Companion.challenge
@@ -31,7 +32,7 @@ import kotlin.reflect.KProperty
 @ReadingBatDslMarker
 class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>, internal val name: String) {
   internal val languageType = languageGroup.languageType
-  internal val repo = languageGroup.repo
+  internal val repo = languageGroup.checkedRepo
   internal val branchName = languageGroup.branchName
   internal val srcPath = languageGroup.srcPath
 
@@ -107,7 +108,7 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
   private val excludes = Regex("^__.*__.*$")
   internal fun import(languageType: LanguageType, prts: List<PatternReturnType>) {
     prts.forEach { prt ->
-      folderContents(repo, branchName, srcPath, packageName, listOf(prt.pattern))
+      folderContents(repo as GitHubRepo, branchName, srcPath, packageName, listOf(prt.pattern))
         .filterNot { it.contains(excludes) }
         .map { it.split(".").first() }
         .forEach { challengeName ->

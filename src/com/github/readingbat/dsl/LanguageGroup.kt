@@ -17,7 +17,10 @@
 
 package com.github.readingbat.dsl
 
-import com.github.pambrose.common.util.*
+import com.github.pambrose.common.util.AbstractRepo
+import com.github.pambrose.common.util.decode
+import com.github.pambrose.common.util.ensureSuffix
+import com.github.pambrose.common.util.toPath
 import com.github.readingbat.InvalidConfigurationException
 import com.github.readingbat.InvalidPathException
 import com.github.readingbat.Module.readingBatContent
@@ -29,22 +32,21 @@ class LanguageGroup<T : Challenge>(internal val languageType: LanguageType) {
   internal val challengeGroups = mutableListOf<ChallengeGroup<T>>()
   private val rawRoot by lazy { (checkedRepo.url.ensureSuffix("/") + branchName).replace(github, githubUserContent) }
 
-  private val checkedRepo: AbstractRepo
+  internal val checkedRepo: AbstractRepo
     get() {
-      if (!this::repo.isInitialized)
-        throw InvalidConfigurationException("${languageType.lowerName} section is missing a repo value")
+      if (!this::repo.isInitialized) {
+        if (readingBatContent.isRepoInitialized)
+          repo = readingBatContent.repo
+        else
+          throw InvalidConfigurationException("${languageType.lowerName} section is missing a repo value")
+      }
       return repo
     }
 
   // User properties
-  lateinit var repo: GitHubRepo
+  lateinit var repo: AbstractRepo
   var branchName = "master"
   var srcPath = languageType.srcPrefix
-
-  init {
-    if (readingBatContent.isRepoInitialized)
-      repo = readingBatContent.repo
-  }
 
   internal val rawRepoRoot by lazy { listOf(rawRoot, srcPath).toPath() }
   internal val gitpodRoot by lazy { listOf(checkedRepo.url, "blob/$branchName", srcPath).toPath() }
@@ -82,5 +84,5 @@ class LanguageGroup<T : Challenge>(internal val languageType: LanguageType) {
   fun findChallenge(groupName: String, challengeName: String) = findGroup(groupName).findChallenge(challengeName)
 
   override fun toString() =
-    "LanguageGroup(languageType=$languageType, srcPrefix='$srcPath', challengeGroups=$challengeGroups, repo='$repo')"
+    "LanguageGroup(languageType=$languageType, srcPrefix='$srcPath', challengeGroups=$challengeGroups)"
 }
