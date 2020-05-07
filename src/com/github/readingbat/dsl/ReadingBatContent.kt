@@ -32,7 +32,8 @@ class ReadingBatContent {
   var googleAnalyticsId = ""
 
   init {
-    mostRecentReadingBatContent = this
+    // This is a hack. We need a handle to the current ReadingBatContent object in LanguageGroup
+    currentReadingBatContent = this
   }
 
   internal val isRepoInitialized get() = this::repo.isInitialized
@@ -74,8 +75,8 @@ class ReadingBatContent {
 
   companion object {
     internal val contentMap = mutableMapOf<String, ReadingBatContent>()
-    internal lateinit var mostRecentReadingBatContent: ReadingBatContent
 
+    internal lateinit var currentReadingBatContent: ReadingBatContent
   }
 }
 
