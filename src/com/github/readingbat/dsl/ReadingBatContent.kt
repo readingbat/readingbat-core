@@ -26,6 +26,9 @@ class ReadingBatContent {
   val java = LanguageGroup<JavaChallenge>(Java)
   val kotlin = LanguageGroup<KotlinChallenge>(Kotlin)
 
+  // User properties
+  var googleAnalyticsId = ""
+
   private val languageList = listOf(java, python, kotlin)
   private val languageMap = languageList.map { it.languageType to it }.toMap()
 

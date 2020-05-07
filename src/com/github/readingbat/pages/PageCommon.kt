@@ -37,21 +37,22 @@ internal fun HEAD.headDefault() {
   link { rel = "stylesheet"; href = "/$cssName"; type = cssType }
 
   // From: https://favicon.io/emoji-favicons/glasses/
-  link { rel = "apple-touch-icon"; sizes = "180x180"; href = "/$staticRoot/$icons/apple-touch-icon.png" }
-  link { rel = "icon"; type = "image/png"; sizes = "32x32"; href = "/$staticRoot/$icons/favicon-32x32.png" }
-  link { rel = "icon"; type = "image/png"; sizes = "16x16"; href = "/$staticRoot/$icons/favicon-16x16.png" }
-  link { rel = "manifest"; href = "/$staticRoot/$icons/site.webmanifest" }
+  val root = "$staticRoot/$icons"
+  link { rel = "apple-touch-icon"; sizes = "180x180"; href = "/$root/apple-touch-icon.png" }
+  link { rel = "icon"; type = "image/png"; sizes = "32x32"; href = "/$root/favicon-32x32.png" }
+  link { rel = "icon"; type = "image/png"; sizes = "16x16"; href = "/$root/favicon-16x16.png" }
+  link { rel = "manifest"; href = "/$root/site.webmanifest" }
 
   title(titleText)
 
-  if (production) {
-    script { async = true; src = "https://www.googletagmanager.com/gtag/js?id=UA-164310007-1" }
+  if (production && readingBatContent.googleAnalyticsId.isNotBlank()) {
+    script { async = true; src = "https://www.googletagmanager.com/gtag/js?id=${readingBatContent.googleAnalyticsId}" }
     script {
       rawHtml("""
           window.dataLayer = window.dataLayer || [];
           function gtag(){dataLayer.push(arguments);}
           gtag('js', new Date());
-          gtag('config', 'UA-164310007-1');
+          gtag('config', '${readingBatContent.googleAnalyticsId}');
         """)
     }
   }

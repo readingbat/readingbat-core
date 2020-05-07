@@ -31,7 +31,6 @@ object TestMain {
     val content by lazy {
       readingBatContent {
 
-
         java {
           repo = GitHubRepo(organization, "readingbat-java-content")
           branchName = branch
