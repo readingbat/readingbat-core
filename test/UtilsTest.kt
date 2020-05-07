@@ -196,7 +196,7 @@ class UtilsTest {
         """.trimIndent()
 
     val s5 = "ReadingBatServer GitHubContent"
-    println(addImports(s5, variable))
+    //println(addImports(s5, variable))
     addImports(s5, variable).trimIndent() shouldBeEqualTo
         """
         $s5
@@ -204,7 +204,7 @@ class UtilsTest {
         """.trimIndent()
 
     val s6 = "ReadingBatServer() GitHubContent()"
-    println(addImports(s6, variable))
+    //println(addImports(s6, variable))
     addImports(s6, variable).trimIndent() shouldBeEqualTo
         """
         import com.github.readingbat.ReadingBatServer
