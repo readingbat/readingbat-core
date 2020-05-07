@@ -20,6 +20,7 @@ package com.github.readingbat.dsl
 import com.github.pambrose.common.util.*
 import com.github.readingbat.InvalidConfigurationException
 import com.github.readingbat.InvalidPathException
+import com.github.readingbat.Module.readingBatContent
 import com.github.readingbat.misc.Constants.github
 import com.github.readingbat.misc.Constants.githubUserContent
 
@@ -39,6 +40,11 @@ class LanguageGroup<T : Challenge>(internal val languageType: LanguageType) {
   lateinit var repo: GitHubRepo
   var branchName = "master"
   var srcPath = languageType.srcPrefix
+
+  init {
+    if (readingBatContent.isRepoInitialized)
+      repo = readingBatContent.repo
+  }
 
   internal val rawRepoRoot by lazy { listOf(rawRoot, srcPath).toPath() }
   internal val gitpodRoot by lazy { listOf(checkedRepo.url, "blob/$branchName", srcPath).toPath() }

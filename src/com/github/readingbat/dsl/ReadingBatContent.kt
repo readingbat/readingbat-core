@@ -17,6 +17,7 @@
 
 package com.github.readingbat.dsl
 
+import com.github.pambrose.common.util.GitHubRepo
 import com.github.readingbat.InvalidConfigurationException
 import com.github.readingbat.dsl.LanguageType.*
 
@@ -27,7 +28,10 @@ class ReadingBatContent {
   val kotlin = LanguageGroup<KotlinChallenge>(Kotlin)
 
   // User properties
+  lateinit var repo: GitHubRepo
   var googleAnalyticsId = ""
+
+  internal val isRepoInitialized get() = this::repo.isInitialized
 
   private val languageList = listOf(java, python, kotlin)
   private val languageMap = languageList.map { it.languageType to it }.toMap()
