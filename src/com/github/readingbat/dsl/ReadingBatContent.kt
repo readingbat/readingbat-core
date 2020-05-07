@@ -31,6 +31,10 @@ class ReadingBatContent {
   lateinit var repo: GitHubRepo
   var googleAnalyticsId = ""
 
+  init {
+    mostRecentReadingBatContent = this
+  }
+
   internal val isRepoInitialized get() = this::repo.isInitialized
 
   private val languageList = listOf(java, python, kotlin)
@@ -70,6 +74,8 @@ class ReadingBatContent {
 
   companion object {
     internal val contentMap = mutableMapOf<String, ReadingBatContent>()
+    internal lateinit var mostRecentReadingBatContent: ReadingBatContent
+
   }
 }
 

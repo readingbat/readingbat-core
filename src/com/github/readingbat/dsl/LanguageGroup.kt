@@ -23,7 +23,7 @@ import com.github.pambrose.common.util.ensureSuffix
 import com.github.pambrose.common.util.toPath
 import com.github.readingbat.InvalidConfigurationException
 import com.github.readingbat.InvalidPathException
-import com.github.readingbat.Module.readingBatContent
+import com.github.readingbat.dsl.ReadingBatContent.Companion.mostRecentReadingBatContent
 import com.github.readingbat.misc.Constants.github
 import com.github.readingbat.misc.Constants.githubUserContent
 
@@ -35,8 +35,8 @@ class LanguageGroup<T : Challenge>(internal val languageType: LanguageType) {
   internal val checkedRepo: AbstractRepo
     get() {
       if (!this::repo.isInitialized) {
-        if (readingBatContent.isRepoInitialized)
-          repo = readingBatContent.repo
+        if (mostRecentReadingBatContent.isRepoInitialized)
+          repo = mostRecentReadingBatContent.repo
         else
           throw InvalidConfigurationException("${languageType.lowerName} section is missing a repo value")
       }

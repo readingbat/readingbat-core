@@ -21,7 +21,7 @@ import com.github.pambrose.common.script.KotlinScript
 import com.github.pambrose.common.script.PythonScript
 import com.github.pambrose.common.util.*
 import com.github.readingbat.InvalidConfigurationException
-import com.github.readingbat.Module
+import com.github.readingbat.Module.readingBatContent
 import com.github.readingbat.dsl.LanguageType.Companion.toLanguageType
 import com.github.readingbat.dsl.LanguageType.Java
 import com.github.readingbat.dsl.LanguageType.Kotlin
@@ -49,7 +49,7 @@ object CheckAnswers : KLogging() {
     val challengeName = compareMap[challengeSrc] ?: throw InvalidConfigurationException("Missing challenge name")
     val isJvm = lang in listOf(Java.lowerName, Kotlin.lowerName)
     val userResps = params.entries().filter { it.key.startsWith(userResp) }
-    val challenge = Module.readingBatContent.findLanguage(lang.toLanguageType()).findChallenge(groupName, challengeName)
+    val challenge = readingBatContent.findLanguage(lang.toLanguageType()).findChallenge(groupName, challengeName)
 
     logger.debug("Found ${userResps.size} user responses in $compareMap")
     val results =
