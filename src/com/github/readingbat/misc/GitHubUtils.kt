@@ -27,7 +27,7 @@ object GitHubUtils : KLogging() {
 
   private val github by lazy { GitHub.connect() }
 
-  fun GitHubRepo.folderContents(branchName: String, path: String): List<String> {
+  fun GitHubRepo.directoryContents(branchName: String, path: String): List<String> {
     val repo = github.getOrganization(organizationName).getRepository(repoName)
     val elems = path.split("/").filter { it.isNotEmpty() }
 

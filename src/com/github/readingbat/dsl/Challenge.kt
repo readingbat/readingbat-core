@@ -20,10 +20,7 @@ package com.github.readingbat.dsl
 import com.github.pambrose.common.script.JavaScript
 import com.github.pambrose.common.script.KotlinScript
 import com.github.pambrose.common.script.PythonScript
-import com.github.pambrose.common.util.ensureSuffix
-import com.github.pambrose.common.util.toDoubleQuoted
-import com.github.pambrose.common.util.toSingleQuoted
-import com.github.pambrose.common.util.withLineNumbers
+import com.github.pambrose.common.util.*
 import com.github.readingbat.InvalidConfigurationException
 import com.github.readingbat.dsl.LanguageType.*
 import com.github.readingbat.dsl.parse.JavaParse
@@ -62,6 +59,7 @@ sealed class Challenge(challengeGroup: ChallengeGroup<*>, val name: String, val 
   private val packageName = challengeGroup.packageName
   internal val languageType = challengeGroup.languageType
   internal val groupName = challengeGroup.name
+  internal val srcPath = languageGroup.srcPath
 
   private val fqName by lazy { packageName.ensureSuffix("/") + fileName.ensureSuffix(".${languageType.suffix}") }
   internal val gitpodUrl by lazy { "${languageGroup.gitpodRoot}$fqName" }
@@ -81,14 +79,22 @@ sealed class Challenge(challengeGroup: ChallengeGroup<*>, val name: String, val 
 
   internal abstract fun computeFuncInfo(code: String): FunctionInfo
 
-  internal fun funcInfo() =
+  internal fun funcInfo(): FunctionInfo =
     sourcesMap
       .computeIfAbsent(challengeId) {
-        val path = "${languageGroup.rawRepoRoot}$fqName"
-        logger.info { """Fetching "$groupName/$fileName" from: $path""" }
-        val (content, dur) = measureTimedValue { URL(path).readText() }
-        logger.info { """Fetched "$groupName/$fileName" in: $dur""" }
-        computeFuncInfo(content)
+        if (languageGroup.repo.remote) {
+          val path = "${languageGroup.repoRawRoot}$fqName"
+          logger.info { """Fetching "$groupName/$fileName" from: $path""" }
+          val (content, dur) = measureTimedValue { URL(path).readText() }
+          logger.info { """Fetched "$groupName/$fileName" in: $dur""" }
+          computeFuncInfo(content)
+        }
+        else {
+          val fs = languageGroup.repo as FileSystemSource
+          val f = FileSource(listOf(fs.pathPrefix, srcPath, packageName, fileName).toPath())
+          logger.info { """Fetching "${f.fileName}"""" }
+          computeFuncInfo(f.content)
+        }
       }
 
   internal open fun validate() {

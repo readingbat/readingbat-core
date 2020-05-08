@@ -22,7 +22,8 @@ import com.github.readingbat.InvalidConfigurationException
 import com.github.readingbat.InvalidPathException
 import com.github.readingbat.misc.Constants.github
 import com.github.readingbat.misc.Constants.githubUserContent
-import com.github.readingbat.misc.GitHubUtils.folderContents
+import com.github.readingbat.misc.GitHubUtils.directoryContents
+import java.io.File
 
 @ReadingBatDslMarker
 class LanguageGroup<T : Challenge>(internal val languageType: LanguageType) {
@@ -47,11 +48,9 @@ class LanguageGroup<T : Challenge>(internal val languageType: LanguageType) {
   var branchName = "master"
   var srcPath = languageType.srcPrefix
 
-  private val rawRoot by lazy {
-    (checkedRepo.sourcePrefix.ensureSuffix("/") + branchName).replace(github,
-                                                                      githubUserContent)
+  internal val repoRawRoot by lazy {
+    listOf(checkedRepo.sourcePrefix.replace(github, githubUserContent), branchName, srcPath).toPath()
   }
-  internal val rawRepoRoot by lazy { listOf(rawRoot, srcPath).toPath() }
   internal val gitpodRoot by lazy { listOf(checkedRepo.sourcePrefix, "blob/$branchName", srcPath).toPath() }
 
   internal fun validate() {
@@ -82,7 +81,9 @@ class LanguageGroup<T : Challenge>(internal val languageType: LanguageType) {
       val fileList =
         repo.let {
           when {
-            (it is GitHubRepo) -> it.folderContents(branchName, srcPath.ensureSuffix("/") + group.packageName)
+            (it is GitHubRepo) -> it.directoryContents(branchName, srcPath.ensureSuffix("/") + group.packageName)
+            (it is FileSystemSource) ->
+              File(listOf(it.pathPrefix, srcPath, group.packageName).toPath()).walk().map { it.name }.toList()
             else -> throw InvalidConfigurationException("Invalid repo type")
           }
         }

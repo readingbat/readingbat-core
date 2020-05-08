@@ -15,11 +15,10 @@
  *
  */
 
+import com.github.pambrose.common.util.FileSystemSource
 import com.github.pambrose.common.util.GitHubRepo
 import com.github.readingbat.ReadingBatServer
-import com.github.readingbat.dsl.GitHubContent
 import com.github.readingbat.dsl.ReturnType
-import com.github.readingbat.dsl.include
 import com.github.readingbat.dsl.readingBatContent
 
 
@@ -34,8 +33,8 @@ object TestMain {
       readingBatContent {
 
         java {
-          repo = GitHubRepo(organization, "readingbat-java-content")
-          //repo = FileSystemSource("/")
+          //repo = GitHubRepo(organization, "readingbat-java-content")
+          repo = FileSystemSource("./")
           branchName = branch
 
           group("Warmup 1") {
@@ -69,7 +68,7 @@ object TestMain {
 
         // +include(GitHubContent(organization, "readingbat-java-content", branch = branch)).java
         // +include(GitHubContent(organization, "readingbat-python-content", branch = branch, srcPath = "src")).python
-        +include(GitHubContent(organization, "readingbat-java-content", branch = branch)).kotlin
+        //+include(GitHubContent(organization, "readingbat-java-content", branch = branch)).kotlin
 
         // java {
         //+include(GitHubContent("readingbat-java-content")).java.findGroup("dd")
