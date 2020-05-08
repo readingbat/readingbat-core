@@ -17,6 +17,7 @@
 
 package com.github.readingbat.pages
 
+import com.github.readingbat.InvalidConfigurationException
 import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.dsl.LanguageType.*
 import com.github.readingbat.dsl.ReadingBatContent
@@ -30,6 +31,8 @@ import com.github.readingbat.misc.Constants.root
 import com.github.readingbat.misc.Constants.selected
 import com.github.readingbat.misc.Constants.staticRoot
 import com.github.readingbat.misc.Constants.titleText
+import io.ktor.application.ApplicationCall
+import io.ktor.util.pipeline.PipelineContext
 import kotlinx.html.*
 import kotlinx.html.Entities.nbsp
 
@@ -81,6 +84,14 @@ internal fun BODY.bodyHeader(readingBatContent: ReadingBatContent, languageType:
     }
   }
 }
+
+internal fun PipelineContext<Unit, ApplicationCall>.defaultTab(readingBatContent: ReadingBatContent) =
+  listOf(Java, Python, Kotlin)
+    .asSequence()
+    .filter { readingBatContent.hasGroups(it) }
+    .map { "/$root/${it.lowerName}" }
+    .firstOrNull()
+    ?: throw InvalidConfigurationException("Missing default language")
 
 internal fun BODY.addLink(text: String, url: String, newWindow: Boolean = false) {
   a { href = url; if (newWindow) target = "_blank"; +text }

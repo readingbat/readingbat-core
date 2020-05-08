@@ -17,8 +17,8 @@
 
 package com.github.readingbat.config
 
-import com.github.readingbat.InvalidConfigurationException
-import com.github.readingbat.dsl.LanguageType.*
+import com.codahale.metrics.jvm.ThreadDump
+import com.github.readingbat.config.ThreadDumpInfo.threadDump
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.CheckAnswers.checkUserAnswers
 import com.github.readingbat.misc.Constants.checkAnswers
@@ -27,6 +27,7 @@ import com.github.readingbat.misc.Constants.icons
 import com.github.readingbat.misc.Constants.root
 import com.github.readingbat.misc.Constants.staticRoot
 import com.github.readingbat.misc.cssContent
+import com.github.readingbat.pages.defaultTab
 import io.ktor.application.Application
 import io.ktor.application.ApplicationCall
 import io.ktor.application.call
@@ -39,25 +40,19 @@ import io.ktor.routing.get
 import io.ktor.routing.post
 import io.ktor.routing.routing
 import kotlinx.css.CSSBuilder
+import java.io.ByteArrayOutputStream
+import java.lang.management.ManagementFactory
 
 
 internal fun Application.routes(readingBatContent: ReadingBatContent) {
 
-  fun defaultTab() =
-    listOf(Java, Python, Kotlin)
-      .asSequence()
-      .filter { readingBatContent.hasGroups(it) }
-      .map { "/$root/${it.lowerName}" }
-      .firstOrNull()
-      ?: throw InvalidConfigurationException("Missing default language")
-
   routing {
     get("/") {
-      call.respondRedirect(defaultTab())
+      call.respondRedirect(defaultTab(readingBatContent))
     }
 
     get("/$root") {
-      call.respondRedirect(defaultTab())
+      call.respondRedirect(defaultTab(readingBatContent))
     }
 
     get("/favicon.ico") {
@@ -74,12 +69,30 @@ internal fun Application.routes(readingBatContent: ReadingBatContent) {
       checkUserAnswers(readingBatContent)
     }
 
+    get("/ping") {
+      call.respondText { "pong" }
+    }
+
+    get("/threaddump") {
+      try {
+        val baos = ByteArrayOutputStream()
+        baos.use { threadDump.dump(true, true, it) }
+        val output = String(baos.toByteArray(), Charsets.UTF_8)
+        call.respondText { output }
+      } catch (e: NoClassDefFoundError) {
+        call.respondText { "Sorry your runtime environment does not allow to dump threads." }
+      }
+    }
+
     static("/$staticRoot") {
       resources(staticRoot)
     }
   }
 }
 
+private object ThreadDumpInfo {
+  internal val threadDump by lazy { ThreadDump(ManagementFactory.getThreadMXBean()) }
+}
 
 private suspend inline fun ApplicationCall.respondCss(builder: CSSBuilder.() -> Unit) {
   respondText(CSSBuilder().apply(builder).toString(), ContentType.Text.CSS)

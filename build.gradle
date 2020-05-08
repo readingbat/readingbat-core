@@ -65,6 +65,7 @@ dependencies {
     implementation "io.ktor:ktor-server-core:$ktor_version"
     implementation "io.ktor:ktor-html-builder:$ktor_version"
     implementation "io.ktor:ktor-locations:$ktor_version"
+    implementation "io.ktor:ktor-metrics:$ktor_version"
 
     implementation "org.apache.commons:commons-text:$commons_version"
     implementation "com.vladsch.flexmark:flexmark-all:$flexmark_version"
@@ -73,8 +74,6 @@ dependencies {
 
     implementation "io.github.microutils:kotlin-logging:${logging_version}"
     implementation "ch.qos.logback:logback-classic:${logback_version}"
-    //implementation "org.slf4j:jul-to-slf4j:${slf4j_version}"
-    //implementation "org.slf4j:slf4j-simple:${slf4j_version}"
 
     testImplementation "org.seleniumhq.selenium:selenium-java:$selenium_version"
     testImplementation "io.ktor:ktor-server-tests:$ktor_version"
