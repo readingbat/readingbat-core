@@ -28,14 +28,19 @@ import com.github.readingbat.misc.Constants.githubUserContent
 
 @ReadingBatDslMarker
 class LanguageGroup<T : Challenge>(internal val languageType: LanguageType) {
-  internal val challengeGroups = mutableListOf<ChallengeGroup<T>>()
-  private val rawRoot by lazy { (checkedRepo.url.ensureSuffix("/") + branchName).replace(github, githubUserContent) }
   internal lateinit var readingBatContent: ReadingBatContent
+
+  internal val challengeGroups = mutableListOf<ChallengeGroup<T>>()
 
   internal val checkedRepo: AbstractRepo
     get() {
-      if (!this::repo.isInitialized)
-        throw InvalidConfigurationException("${languageType.lowerName} section is missing a repo value")
+      if (!this::repo.isInitialized) {
+        // Default to parent repo if language group's repo is null
+        if (readingBatContent.isRepoInitialized)
+          repo = readingBatContent.repo
+        else
+          throw InvalidConfigurationException("${languageType.lowerName} section is missing a repo value")
+      }
       return repo
     }
 
@@ -44,6 +49,7 @@ class LanguageGroup<T : Challenge>(internal val languageType: LanguageType) {
   var branchName = "master"
   var srcPath = languageType.srcPrefix
 
+  private val rawRoot by lazy { (checkedRepo.url.ensureSuffix("/") + branchName).replace(github, githubUserContent) }
   internal val rawRepoRoot by lazy { listOf(rawRoot, srcPath).toPath() }
   internal val gitpodRoot by lazy { listOf(checkedRepo.url, "blob/$branchName", srcPath).toPath() }
 

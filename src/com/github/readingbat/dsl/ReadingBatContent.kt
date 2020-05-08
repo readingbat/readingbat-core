@@ -53,24 +53,18 @@ class ReadingBatContent {
 
   @ReadingBatDslMarker
   fun java(block: LanguageGroup<JavaChallenge>.() -> Unit) {
-    if (isRepoInitialized)
-      java.repo = repo
     java.readingBatContent = this
     java.run(block)
   }
 
   @ReadingBatDslMarker
   fun python(block: LanguageGroup<PythonChallenge>.() -> Unit) {
-    if (isRepoInitialized)
-      python.repo = repo
     python.readingBatContent = this
     python.run(block)
   }
 
   @ReadingBatDslMarker
   fun kotlin(block: LanguageGroup<KotlinChallenge>.() -> Unit) {
-    if (isRepoInitialized)
-      kotlin.repo = repo
     kotlin.readingBatContent = this
     kotlin.run(block)
   }
