@@ -79,23 +79,30 @@ sealed class Challenge(challengeGroup: ChallengeGroup<*>, val name: String, val 
 
   internal abstract fun computeFuncInfo(code: String): FunctionInfo
 
+  private val compute = {
+    val fs = languageGroup.repo as FileSystemSource
+    val file = fs.file(listOf(fs.pathPrefix, srcPath, packageName, fileName).toPath())
+    logger.info { """Fetching "${file.fileName}"""" }
+    computeFuncInfo(file.content)
+  }
+
   internal fun funcInfo(): FunctionInfo =
-    sourcesMap
-      .computeIfAbsent(challengeId) {
-        if (languageGroup.repo.remote) {
+    if (languageGroup.repo.remote) {
+      sourcesMap
+        .computeIfAbsent(challengeId) {
           val path = "${languageGroup.repoRawRoot}$fqName"
           logger.info { """Fetching "$groupName/$fileName" from: $path""" }
           val (content, dur) = measureTimedValue { URL(path).readText() }
           logger.info { """Fetched "$groupName/$fileName" in: $dur""" }
           computeFuncInfo(content)
         }
-        else {
-          val fs = languageGroup.repo as FileSystemSource
-          val file = fs.file(listOf(fs.pathPrefix, srcPath, packageName, fileName).toPath())
-          logger.info { """Fetching "${file.fileName}"""" }
-          computeFuncInfo(file.content)
-        }
-      }
+    }
+    else {
+      if (readingBatContent.cacheChallenges)
+        sourcesMap.computeIfAbsent(challengeId) { compute.invoke() }
+      else
+        compute.invoke()
+    }
 
   internal open fun validate() {
     if (name.isEmpty())

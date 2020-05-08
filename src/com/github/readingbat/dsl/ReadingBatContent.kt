@@ -31,6 +31,7 @@ class ReadingBatContent {
   // User properties
   var repo: ContentRoot = defaultContentRoot
   var googleAnalyticsId = ""
+  var cacheChallenges = true
 
   private val languageList by lazy { listOf(java, python, kotlin) }
   private val languageMap by lazy { languageList.map { it.languageType to it }.toMap() }
