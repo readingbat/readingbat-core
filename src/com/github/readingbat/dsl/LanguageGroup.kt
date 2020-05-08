@@ -82,8 +82,7 @@ class LanguageGroup<T : Challenge>(internal val languageType: LanguageType) {
       val fileList =
         repo.let {
           when {
-            (it is GitHubRepo) -> it.folderContents(group.languageGroup.branchName,
-                                                    group.languageGroup.srcPath.ensureSuffix("/") + group.packageName)
+            (it is GitHubRepo) -> it.folderContents(branchName, srcPath.ensureSuffix("/") + group.packageName)
             else -> throw InvalidConfigurationException("Invalid repo type")
           }
         }
@@ -96,13 +95,12 @@ class LanguageGroup<T : Challenge>(internal val languageType: LanguageType) {
             val filter: (String) -> Boolean = { it.contains(regex) }
             uniqueVals +=
               fileList
-                .filterNot { it.contains(excludes) }
-                .filter { filter.invoke(it) }
+                .filter { !it.contains(excludes) && filter.invoke(it) }
                 .map { ChallengeFile(it, prt.returnType) }
           }
         }
 
-      group.addChallenge(languageType, uniqueVals.toList().sortedWith(compareBy { it.fileName }))
+      group.addChallenge(uniqueVals.toList().sortedWith(compareBy { it.fileName }))
     }
 
     addGroup(group)

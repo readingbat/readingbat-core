@@ -103,7 +103,7 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
   infix fun String.returns(returnType: ReturnType) = PatternReturnType(this, returnType)
 
 
-  internal fun addChallenge(languageType: LanguageType, challengeNames: List<LanguageGroup.ChallengeFile>) {
+  internal fun addChallenge(challengeNames: List<LanguageGroup.ChallengeFile>) {
     challengeNames
       .forEach { challengeFile ->
         val challengeName = challengeFile.fileName.split(".").first()
