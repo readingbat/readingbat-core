@@ -36,11 +36,11 @@ internal fun HTML.challengeGroupPage(challengeGroup: ChallengeGroup<*>) {
   val challenges = challengeGroup.challenges
 
   head {
-    headDefault()
+    headDefault(challengeGroup.readingBatContent)
   }
 
   body {
-    bodyHeader(languageType)
+    bodyHeader(challengeGroup.readingBatContent, languageType)
 
     div(classes = tabs) {
 

@@ -18,8 +18,8 @@
 package com.github.readingbat.config
 
 import com.github.readingbat.InvalidConfigurationException
-import com.github.readingbat.Module.readingBatContent
 import com.github.readingbat.dsl.LanguageType.*
+import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.CheckAnswers.checkUserAnswers
 import com.github.readingbat.misc.Constants.checkAnswers
 import com.github.readingbat.misc.Constants.cssName
@@ -41,7 +41,7 @@ import io.ktor.routing.routing
 import kotlinx.css.CSSBuilder
 
 
-internal fun Application.routes() {
+internal fun Application.routes(readingBatContent: ReadingBatContent) {
 
   fun defaultTab() =
     listOf(Java, Python, Kotlin)
@@ -71,7 +71,7 @@ internal fun Application.routes() {
     }
 
     post("/$checkAnswers") {
-      checkUserAnswers()
+      checkUserAnswers(readingBatContent)
     }
 
     static("/$staticRoot") {

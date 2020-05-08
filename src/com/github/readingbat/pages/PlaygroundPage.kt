@@ -38,11 +38,11 @@ fun HTML.playgroundPage(challenge: Challenge) {
 
   head {
     script { src = "https://unpkg.com/kotlin-playground@1"; attributes["data-selector"] = "code" }
-    headDefault()
+    headDefault(challenge.readingBatContent)
   }
 
   body {
-    bodyHeader(languageType)
+    bodyHeader(challenge.readingBatContent, languageType)
 
     div(classes = tabs) {
       h2 {

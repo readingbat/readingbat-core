@@ -17,9 +17,9 @@
 
 package com.github.readingbat.pages
 
-import com.github.readingbat.Module.readingBatContent
 import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.dsl.LanguageType.*
+import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.Constants.backLink
 import com.github.readingbat.misc.Constants.bodyHeader
 import com.github.readingbat.misc.Constants.cssName
@@ -33,7 +33,7 @@ import com.github.readingbat.misc.Constants.titleText
 import kotlinx.html.*
 import kotlinx.html.Entities.nbsp
 
-internal fun HEAD.headDefault() {
+internal fun HEAD.headDefault(readingBatContent: ReadingBatContent) {
   link { rel = "stylesheet"; href = "/$cssName"; type = cssType }
 
   // From: https://favicon.io/emoji-favicons/glasses/
@@ -66,7 +66,7 @@ internal fun BODY.bodyTitle() {
   }
 }
 
-internal fun BODY.bodyHeader(languageType: LanguageType) {
+internal fun BODY.bodyHeader(readingBatContent: ReadingBatContent, languageType: LanguageType) {
   bodyTitle()
 
   nav {

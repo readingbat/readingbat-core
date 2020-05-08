@@ -21,10 +21,10 @@ import com.github.pambrose.common.script.KotlinScript
 import com.github.pambrose.common.script.PythonScript
 import com.github.pambrose.common.util.*
 import com.github.readingbat.InvalidConfigurationException
-import com.github.readingbat.Module.readingBatContent
 import com.github.readingbat.dsl.LanguageType.Companion.toLanguageType
 import com.github.readingbat.dsl.LanguageType.Java
 import com.github.readingbat.dsl.LanguageType.Kotlin
+import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.Constants.challengeSrc
 import com.github.readingbat.misc.Constants.groupSrc
 import com.github.readingbat.misc.Constants.langSrc
@@ -41,7 +41,7 @@ import kotlin.time.milliseconds
 
 object CheckAnswers : KLogging() {
 
-  internal suspend fun PipelineContext<Unit, ApplicationCall>.checkUserAnswers() {
+  internal suspend fun PipelineContext<Unit, ApplicationCall>.checkUserAnswers(readingBatContent: ReadingBatContent) {
     val params = call.receiveParameters()
     val compareMap = params.entries().map { it.key to it.value[0] }.toMap()
     val lang = compareMap[langSrc] ?: throw InvalidConfigurationException("Missing language")

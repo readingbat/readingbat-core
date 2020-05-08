@@ -58,6 +58,7 @@ import kotlin.time.measureTimedValue
 sealed class Challenge(challengeGroup: ChallengeGroup<*>, val name: String, val replaceable: Boolean) {
   private val challengeId = counter.incrementAndGet()
   private val languageGroup = challengeGroup.languageGroup
+  internal val readingBatContent = languageGroup.readingBatContent
   private val packageName = challengeGroup.packageName
   internal val languageType = challengeGroup.languageType
   internal val groupName = challengeGroup.name

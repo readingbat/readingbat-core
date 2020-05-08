@@ -19,6 +19,7 @@ package com.github.readingbat.pages
 
 import com.github.readingbat.dsl.ChallengeGroup
 import com.github.readingbat.dsl.LanguageType
+import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.Constants.funcChoice
 import com.github.readingbat.misc.Constants.funcItem
 import com.github.readingbat.misc.Constants.groupItemSrc
@@ -26,13 +27,15 @@ import com.github.readingbat.misc.Constants.root
 import com.github.readingbat.misc.Constants.tabs
 import kotlinx.html.*
 
-internal fun HTML.languageGroupPage(languageType: LanguageType, groups: List<ChallengeGroup<*>>) {
+internal fun HTML.languageGroupPage(readingBatContent: ReadingBatContent,
+                                    languageType: LanguageType,
+                                    groups: List<ChallengeGroup<*>>) {
   head {
-    headDefault()
+    headDefault(readingBatContent)
   }
 
   body {
-    bodyHeader(languageType)
+    bodyHeader(readingBatContent, languageType)
     div(classes = tabs) {
       table {
         val cols = 3

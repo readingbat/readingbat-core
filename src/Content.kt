@@ -15,8 +15,10 @@
  *
  */
 
+import com.github.pambrose.common.util.GitHubRepo
 import com.github.readingbat.ReadingBatServer
 import com.github.readingbat.dsl.GitHubContent
+import com.github.readingbat.dsl.ReturnType
 import com.github.readingbat.dsl.include
 import com.github.readingbat.dsl.readingBatContent
 
@@ -30,7 +32,7 @@ object TestMain {
 
     val content by lazy {
       readingBatContent {
-/*
+
         java {
           repo = GitHubRepo(organization, "readingbat-java-content")
           branchName = branch
@@ -54,18 +56,18 @@ object TestMain {
           group("Numeric Expressions") {
             packageName = "numeric_expressions"
             description = "Basic numeric expressions"
-            includeFilesWithType = "*.py" returns BooleanType
+            includeFilesWithType = "*.py" returns ReturnType.BooleanType
 
             challenge("lt_expr") {
               description = """Determine if one value is less than another with the "<" operator."""
-              returnType = BooleanType
+              returnType = ReturnType.BooleanType
             }
 
           }
         }
-*/
-        +include(GitHubContent(organization, "readingbat-java-content", branch = branch)).java
-        +include(GitHubContent(organization, "readingbat-python-content", branch = branch, srcPath = "src")).python
+
+        // +include(GitHubContent(organization, "readingbat-java-content", branch = branch)).java
+        // +include(GitHubContent(organization, "readingbat-python-content", branch = branch, srcPath = "src")).python
         +include(GitHubContent(organization, "readingbat-java-content", branch = branch)).kotlin
 
         // java {

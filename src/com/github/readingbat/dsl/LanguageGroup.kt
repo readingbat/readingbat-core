@@ -23,7 +23,6 @@ import com.github.pambrose.common.util.ensureSuffix
 import com.github.pambrose.common.util.toPath
 import com.github.readingbat.InvalidConfigurationException
 import com.github.readingbat.InvalidPathException
-import com.github.readingbat.dsl.ReadingBatContent.Companion.currentReadingBatContent
 import com.github.readingbat.misc.Constants.github
 import com.github.readingbat.misc.Constants.githubUserContent
 
@@ -31,15 +30,12 @@ import com.github.readingbat.misc.Constants.githubUserContent
 class LanguageGroup<T : Challenge>(internal val languageType: LanguageType) {
   internal val challengeGroups = mutableListOf<ChallengeGroup<T>>()
   private val rawRoot by lazy { (checkedRepo.url.ensureSuffix("/") + branchName).replace(github, githubUserContent) }
+  internal lateinit var readingBatContent: ReadingBatContent
 
   internal val checkedRepo: AbstractRepo
     get() {
-      if (!this::repo.isInitialized) {
-        if (currentReadingBatContent.isRepoInitialized)
-          repo = currentReadingBatContent.repo
-        else
-          throw InvalidConfigurationException("${languageType.lowerName} section is missing a repo value")
-      }
+      if (!this::repo.isInitialized)
+        throw InvalidConfigurationException("${languageType.lowerName} section is missing a repo value")
       return repo
     }
 
@@ -75,7 +71,9 @@ class LanguageGroup<T : Challenge>(internal val languageType: LanguageType) {
   }
 
   @ReadingBatDslMarker
-  operator fun ChallengeGroup<T>.unaryPlus() = let { this@LanguageGroup.addGroup(this) }
+  operator fun ChallengeGroup<T>.unaryPlus() {
+    this@LanguageGroup.addGroup(this)
+  }
 
   fun findGroup(groupName: String) =
     groupName.decode().let { decoded -> challengeGroups.firstOrNull { it.name == decoded } }

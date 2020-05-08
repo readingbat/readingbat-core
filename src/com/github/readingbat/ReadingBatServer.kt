@@ -36,15 +36,15 @@ object ReadingBatServer {
 }
 
 object Module {
-  internal lateinit var readingBatContent: ReadingBatContent
+  private lateinit var readingBatContent: ReadingBatContent
 
   internal fun Application.module(testing: Boolean = false, content: ReadingBatContent) {
     readingBatContent = content
 
     installs()
     intercepts()
-    locations()
-    routes()
+    locations(readingBatContent)
+    routes(readingBatContent)
   }
 }
 

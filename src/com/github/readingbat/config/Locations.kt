@@ -18,10 +18,10 @@
 package com.github.readingbat.config
 
 import com.github.readingbat.InvalidConfigurationException
-import com.github.readingbat.Module.readingBatContent
 import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.dsl.LanguageType.Companion.toLanguageType
 import com.github.readingbat.dsl.LanguageType.Kotlin
+import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.Constants.playground
 import com.github.readingbat.misc.Constants.root
 import com.github.readingbat.pages.challengeGroupPage
@@ -35,7 +35,7 @@ import io.ktor.locations.Location
 import io.ktor.locations.get
 import io.ktor.routing.routing
 
-internal fun Application.locations() {
+internal fun Application.locations(readingBatContent: ReadingBatContent) {
   routing {
 
     fun validateLanguage(languageType: LanguageType) {
@@ -47,7 +47,7 @@ internal fun Application.locations() {
       // This lookup has to take place outside of the lambda for proper exception handling
       validateLanguage(it.languageType)
       val languageGroup = readingBatContent.findLanguage(it.languageType)
-      call.respondHtml { languageGroupPage(it.languageType, languageGroup.challengeGroups) }
+      call.respondHtml { languageGroupPage(readingBatContent, it.languageType, languageGroup.challengeGroups) }
     }
 
     get<Language.Group> {

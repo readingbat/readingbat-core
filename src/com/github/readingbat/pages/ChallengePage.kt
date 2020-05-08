@@ -54,11 +54,11 @@ internal fun HTML.challengePage(challenge: Challenge) {
     script(type = ScriptType.textJavaScript) { addScript(languageName, groupName, name) }
 
     removePrismShadow()
-    headDefault()
+    headDefault(challenge.readingBatContent)
   }
 
   body {
-    bodyHeader(languageType)
+    bodyHeader(challenge.readingBatContent, languageType)
 
     div(classes = tabs) {
       h2 {

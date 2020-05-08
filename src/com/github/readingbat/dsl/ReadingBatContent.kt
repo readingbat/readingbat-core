@@ -31,11 +31,6 @@ class ReadingBatContent {
   lateinit var repo: GitHubRepo
   var googleAnalyticsId = ""
 
-  init {
-    // This is a hack. We need a handle to the current ReadingBatContent object in LanguageGroup
-    currentReadingBatContent = this
-  }
-
   internal val isRepoInitialized get() = this::repo.isInitialized
 
   private val languageList = listOf(java, python, kotlin)
@@ -57,13 +52,28 @@ class ReadingBatContent {
   internal fun validate() = languageList.forEach { it.validate() }
 
   @ReadingBatDslMarker
-  fun java(block: LanguageGroup<JavaChallenge>.() -> Unit) = java.run(block)
+  fun java(block: LanguageGroup<JavaChallenge>.() -> Unit) {
+    if (isRepoInitialized)
+      java.repo = repo
+    java.readingBatContent = this
+    java.run(block)
+  }
 
   @ReadingBatDslMarker
-  fun python(block: LanguageGroup<PythonChallenge>.() -> Unit) = python.run(block)
+  fun python(block: LanguageGroup<PythonChallenge>.() -> Unit) {
+    if (isRepoInitialized)
+      python.repo = repo
+    python.readingBatContent = this
+    python.run(block)
+  }
 
   @ReadingBatDslMarker
-  fun kotlin(block: LanguageGroup<KotlinChallenge>.() -> Unit) = kotlin.run(block)
+  fun kotlin(block: LanguageGroup<KotlinChallenge>.() -> Unit) {
+    if (isRepoInitialized)
+      kotlin.repo = repo
+    kotlin.readingBatContent = this
+    kotlin.run(block)
+  }
 
   @ReadingBatDslMarker
   operator fun <T : Challenge> LanguageGroup<T>.unaryPlus() {
@@ -75,8 +85,6 @@ class ReadingBatContent {
 
   companion object {
     internal val contentMap = mutableMapOf<String, ReadingBatContent>()
-
-    internal lateinit var currentReadingBatContent: ReadingBatContent
   }
 }
 
