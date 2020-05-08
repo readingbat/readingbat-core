@@ -17,7 +17,7 @@
 
 package com.github.readingbat.dsl
 
-import com.github.pambrose.common.util.GitHubRepo
+import com.github.pambrose.common.util.ContentRoot
 import com.github.readingbat.InvalidConfigurationException
 import com.github.readingbat.dsl.LanguageType.*
 
@@ -28,7 +28,7 @@ class ReadingBatContent {
   val kotlin = LanguageGroup<KotlinChallenge>(Kotlin)
 
   // User properties
-  lateinit var repo: GitHubRepo
+  lateinit var repo: ContentRoot
   var googleAnalyticsId = ""
 
   internal val isRepoInitialized get() = this::repo.isInitialized

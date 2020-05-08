@@ -17,12 +17,10 @@
 
 package com.github.readingbat.dsl
 
-import com.github.pambrose.common.util.GitHubRepo
 import com.github.readingbat.InvalidConfigurationException
 import com.github.readingbat.InvalidPathException
 import com.github.readingbat.dsl.Challenge.Companion.challenge
 import com.github.readingbat.dsl.ReturnType.Runtime
-import com.github.readingbat.misc.GitHubUtils.folderContents
 import com.vladsch.flexmark.html.HtmlRenderer
 import com.vladsch.flexmark.parser.Parser
 import com.vladsch.flexmark.util.data.MutableDataSet
@@ -104,29 +102,22 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
   @ReadingBatDslMarker
   infix fun String.returns(returnType: ReturnType) = PatternReturnType(this, returnType)
 
-  private val excludes = Regex("^__.*__.*$")
-  internal fun import(languageType: LanguageType, prts: List<PatternReturnType>) {
-    prts.forEach { prt ->
-      folderContents(repo as GitHubRepo,
-                     languageGroup.branchName,
-                     languageGroup.srcPath,
-                     packageName,
-                     listOf(prt.pattern))
-        .filterNot { it.contains(excludes) }
-        .map { it.split(".").first() }
-        .forEach { challengeName ->
-          if (checkChallengeName(challengeName, false)) {
-            logger.debug { "Adding $challengeName" }
-            val challenge = challenge(this, challengeName, true)
-            when {
-              languageType.isPython() -> (challenge as PythonChallenge).apply { returnType = prt.returnType }
-              languageType.isKotlin() -> (challenge as KotlinChallenge).apply { returnType = prt.returnType }
-            }
 
-            challenges += challenge as T
+  internal fun addChallenge(languageType: LanguageType, challengeNames: List<LanguageGroup.ChallengeFile>) {
+    challengeNames
+      .forEach { challengeFile ->
+        val challengeName = challengeFile.fileName.split(".").first()
+        if (checkChallengeName(challengeName, false)) {
+          logger.debug { "Adding $challengeName" }
+          val challenge = challenge(this, challengeName, true)
+          // Skip this next step for Java because returnType is calculated
+          when {
+            languageType.isPython() -> (challenge as PythonChallenge).apply { returnType = challengeFile.returnType }
+            languageType.isKotlin() -> (challenge as KotlinChallenge).apply { returnType = challengeFile.returnType }
           }
+          challenges += challenge as T
         }
-    }
+      }
   }
 
   private fun checkChallengeName(challengeName: String, throwExceptionIfPresent: Boolean = true): Boolean {

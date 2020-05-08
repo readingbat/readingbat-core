@@ -35,6 +35,7 @@ object TestMain {
 
         java {
           repo = GitHubRepo(organization, "readingbat-java-content")
+          //repo = FileSystemSource("/")
           branchName = branch
 
           group("Warmup 1") {

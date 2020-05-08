@@ -45,13 +45,13 @@ fun readingBatContent(block: ReadingBatContent.() -> Unit) =
 
 private val logger = KotlinLogging.logger {}
 
-fun include(source: ContentSource, variableName: String = "content") =
+fun include(contentSource: ContentSource, variableName: String = "content") =
   contentMap
-    .computeIfAbsent(source.path) {
-      val (code, dur) = measureTimedValue { source.content }
-      logger.info { """Read content from "${source.path}" in $dur""" }
+    .computeIfAbsent(contentSource.source) {
+      val (code, dur) = measureTimedValue { contentSource.content }
+      logger.info { """Read content from "${contentSource.source}" in $dur""" }
       val withImports = addImports(code, variableName)
-      evalDsl(withImports, source.path)
+      evalDsl(withImports, contentSource.source)
     }
 
 internal fun addImports(code: String, variableName: String): String {

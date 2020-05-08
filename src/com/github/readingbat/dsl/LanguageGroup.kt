@@ -17,14 +17,12 @@
 
 package com.github.readingbat.dsl
 
-import com.github.pambrose.common.util.AbstractRepo
-import com.github.pambrose.common.util.decode
-import com.github.pambrose.common.util.ensureSuffix
-import com.github.pambrose.common.util.toPath
+import com.github.pambrose.common.util.*
 import com.github.readingbat.InvalidConfigurationException
 import com.github.readingbat.InvalidPathException
 import com.github.readingbat.misc.Constants.github
 import com.github.readingbat.misc.Constants.githubUserContent
+import com.github.readingbat.misc.GitHubUtils.folderContents
 
 @ReadingBatDslMarker
 class LanguageGroup<T : Challenge>(internal val languageType: LanguageType) {
@@ -32,7 +30,7 @@ class LanguageGroup<T : Challenge>(internal val languageType: LanguageType) {
 
   internal val challengeGroups = mutableListOf<ChallengeGroup<T>>()
 
-  internal val checkedRepo: AbstractRepo
+  internal val checkedRepo: ContentRoot
     get() {
       if (!this::repo.isInitialized) {
         // Default to parent repo if language group's repo is null
@@ -45,13 +43,16 @@ class LanguageGroup<T : Challenge>(internal val languageType: LanguageType) {
     }
 
   // User properties
-  lateinit var repo: AbstractRepo
+  lateinit var repo: ContentRoot
   var branchName = "master"
   var srcPath = languageType.srcPrefix
 
-  private val rawRoot by lazy { (checkedRepo.url.ensureSuffix("/") + branchName).replace(github, githubUserContent) }
+  private val rawRoot by lazy {
+    (checkedRepo.sourcePrefix.ensureSuffix("/") + branchName).replace(github,
+                                                                      githubUserContent)
+  }
   internal val rawRepoRoot by lazy { listOf(rawRoot, srcPath).toPath() }
-  internal val gitpodRoot by lazy { listOf(checkedRepo.url, "blob/$branchName", srcPath).toPath() }
+  internal val gitpodRoot by lazy { listOf(checkedRepo.sourcePrefix, "blob/$branchName", srcPath).toPath() }
 
   internal fun validate() {
     // Empty for now
@@ -69,11 +70,42 @@ class LanguageGroup<T : Challenge>(internal val languageType: LanguageType) {
 
   fun hasGroup(groupName: String) = challengeGroups.any { it.name == groupName }
 
+  private val excludes = Regex("^__.*__.*$")
+
+  internal data class ChallengeFile(val fileName: String, val returnType: ReturnType)
+
   @ReadingBatDslMarker
   fun group(name: String, block: ChallengeGroup<T>.() -> Unit) {
-    val challengeGroup = ChallengeGroup(this, name).apply(block)
-    challengeGroup.import(languageType, challengeGroup.includeList)
-    addGroup(challengeGroup)
+    val group = ChallengeGroup(this, name).apply(block)
+
+    if (group.includeList.isNotEmpty()) {
+      val fileList =
+        repo.let {
+          when {
+            (it is GitHubRepo) -> it.folderContents(group.languageGroup.branchName,
+                                                    group.languageGroup.srcPath.ensureSuffix("/") + group.packageName)
+            else -> throw InvalidConfigurationException("Invalid repo type")
+          }
+        }
+
+      val uniqueVals = mutableSetOf<ChallengeFile>()
+      group.includeList
+        .forEach { prt ->
+          if (prt.pattern.isNotBlank()) {
+            val regex = prt.pattern.asRegex()
+            val filter: (String) -> Boolean = { it.contains(regex) }
+            uniqueVals +=
+              fileList
+                .filterNot { it.contains(excludes) }
+                .filter { filter.invoke(it) }
+                .map { ChallengeFile(it, prt.returnType) }
+          }
+        }
+
+      group.addChallenge(languageType, uniqueVals.toList().sortedWith(compareBy { it.fileName }))
+    }
+
+    addGroup(group)
   }
 
   @ReadingBatDslMarker
