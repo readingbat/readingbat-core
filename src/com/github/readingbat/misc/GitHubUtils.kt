@@ -30,8 +30,6 @@ object GitHubUtils : KLogging() {
   fun GitHubRepo.directoryContents(branchName: String, path: String): List<String> {
     val repo = github.getOrganization(organizationName).getRepository(repoName)
     val elems = path.split("/").filter { it.isNotEmpty() }
-
-    //logger.info("Walking elems: $elems")
     var currRoot = repo.getTree(branchName)
     elems.forEach { elem -> currRoot = currRoot.tree.asSequence().filter { it.path == elem }.first().asTree() }
     return currRoot.tree.map { it.path }
