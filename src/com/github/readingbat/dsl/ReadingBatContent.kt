@@ -19,22 +19,21 @@ package com.github.readingbat.dsl
 
 import com.github.pambrose.common.util.ContentRoot
 import com.github.readingbat.InvalidConfigurationException
+import com.github.readingbat.dsl.LanguageGroup.Companion.defaultContentRoot
 import com.github.readingbat.dsl.LanguageType.*
 
 @ReadingBatDslMarker
 class ReadingBatContent {
-  val python = LanguageGroup<PythonChallenge>(Python)
-  val java = LanguageGroup<JavaChallenge>(Java)
-  val kotlin = LanguageGroup<KotlinChallenge>(Kotlin)
+  val python by lazy { LanguageGroup<PythonChallenge>(this, Python) }
+  val java by lazy { LanguageGroup<JavaChallenge>(this, Java) }
+  val kotlin by lazy { LanguageGroup<KotlinChallenge>(this, Kotlin) }
 
   // User properties
-  lateinit var repo: ContentRoot
+  var repo: ContentRoot = defaultContentRoot
   var googleAnalyticsId = ""
 
-  internal val isRepoInitialized get() = this::repo.isInitialized
-
-  private val languageList = listOf(java, python, kotlin)
-  private val languageMap = languageList.map { it.languageType to it }.toMap()
+  private val languageList by lazy { listOf(java, python, kotlin) }
+  private val languageMap by lazy { languageList.map { it.languageType to it }.toMap() }
 
   internal fun hasGroups(languageType: LanguageType) = findLanguage(languageType).hasGroups()
 
@@ -52,22 +51,13 @@ class ReadingBatContent {
   internal fun validate() = languageList.forEach { it.validate() }
 
   @ReadingBatDslMarker
-  fun java(block: LanguageGroup<JavaChallenge>.() -> Unit) {
-    java.readingBatContent = this
-    java.run(block)
-  }
+  fun java(block: LanguageGroup<JavaChallenge>.() -> Unit) = java.run(block)
 
   @ReadingBatDslMarker
-  fun python(block: LanguageGroup<PythonChallenge>.() -> Unit) {
-    python.readingBatContent = this
-    python.run(block)
-  }
+  fun python(block: LanguageGroup<PythonChallenge>.() -> Unit) = python.run(block)
 
   @ReadingBatDslMarker
-  fun kotlin(block: LanguageGroup<KotlinChallenge>.() -> Unit) {
-    kotlin.readingBatContent = this
-    kotlin.run(block)
-  }
+  fun kotlin(block: LanguageGroup<KotlinChallenge>.() -> Unit) = kotlin.run(block)
 
   @ReadingBatDslMarker
   operator fun <T : Challenge> LanguageGroup<T>.unaryPlus() {

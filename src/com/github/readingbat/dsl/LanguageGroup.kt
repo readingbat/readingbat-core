@@ -26,32 +26,26 @@ import com.github.readingbat.misc.GitHubUtils.directoryContents
 import java.io.File
 
 @ReadingBatDslMarker
-class LanguageGroup<T : Challenge>(internal val languageType: LanguageType) {
-  internal lateinit var readingBatContent: ReadingBatContent
+class LanguageGroup<T : Challenge>(internal val readingBatContent: ReadingBatContent,
+                                   internal val languageType: LanguageType) {
 
   internal val challengeGroups = mutableListOf<ChallengeGroup<T>>()
 
-  internal val checkedRepo: ContentRoot
-    get() {
-      if (!this::repo.isInitialized) {
-        // Default to parent repo if language group's repo is null
-        if (readingBatContent.isRepoInitialized)
-          repo = readingBatContent.repo
-        else
-          throw InvalidConfigurationException("${languageType.lowerName} section is missing a repo value")
-      }
-      return repo
-    }
-
   // User properties
-  lateinit var repo: ContentRoot
+  var repo: ContentRoot = readingBatContent.repo
+    get() =
+      if (field == defaultContentRoot)
+        throw InvalidConfigurationException("${languageType.lowerName} section is missing a repo value")
+      else
+        field
+
   var branchName = "master"
   var srcPath = languageType.srcPrefix
 
   internal val repoRawRoot by lazy {
-    listOf(checkedRepo.sourcePrefix.replace(github, githubUserContent), branchName, srcPath).toPath()
+    listOf(repo.sourcePrefix.replace(github, githubUserContent), branchName, srcPath).toPath()
   }
-  internal val gitpodRoot by lazy { listOf(checkedRepo.sourcePrefix, "blob/$branchName", srcPath).toPath() }
+  internal val gitpodRoot by lazy { listOf(repo.sourcePrefix, "blob/$branchName", srcPath).toPath() }
 
   internal fun validate() {
     // Empty for now
@@ -120,4 +114,19 @@ class LanguageGroup<T : Challenge>(internal val languageType: LanguageType) {
 
   override fun toString() =
     "LanguageGroup(languageType=$languageType, srcPrefix='$srcPath', challengeGroups=$challengeGroups)"
+
+  companion object {
+    internal val defaultContentRoot =
+      object : ContentRoot {
+        override val sourcePrefix = ""
+        override val remote = false
+
+        override fun file(path: String) =
+          object : ContentSource {
+            override val content = ""
+            override val remote = false
+            override val source = ""
+          }
+      }
+  }
 }

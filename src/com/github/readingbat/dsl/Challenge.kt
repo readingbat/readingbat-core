@@ -91,9 +91,9 @@ sealed class Challenge(challengeGroup: ChallengeGroup<*>, val name: String, val 
         }
         else {
           val fs = languageGroup.repo as FileSystemSource
-          val f = FileSource(listOf(fs.pathPrefix, srcPath, packageName, fileName).toPath())
-          logger.info { """Fetching "${f.fileName}"""" }
-          computeFuncInfo(f.content)
+          val file = fs.file(listOf(fs.pathPrefix, srcPath, packageName, fileName).toPath())
+          logger.info { """Fetching "${file.fileName}"""" }
+          computeFuncInfo(file.content)
         }
       }
 

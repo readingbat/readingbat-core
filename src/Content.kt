@@ -15,7 +15,6 @@
  *
  */
 
-import com.github.pambrose.common.util.FileSystemSource
 import com.github.pambrose.common.util.GitHubRepo
 import com.github.readingbat.ReadingBatServer
 import com.github.readingbat.dsl.ReturnType
@@ -31,10 +30,11 @@ object TestMain {
 
     val content by lazy {
       readingBatContent {
+        //repo = GitHubRepo(organization, "readingbat-java-content")
 
         java {
-          //repo = GitHubRepo(organization, "readingbat-java-content")
-          repo = FileSystemSource("./")
+          repo = GitHubRepo(organization, "readingbat-java-content")
+          //repo = FileSystemSource("./")
           branchName = branch
 
           group("Warmup 1") {

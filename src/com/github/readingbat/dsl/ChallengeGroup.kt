@@ -33,7 +33,6 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
   internal val readingBatContent = languageGroup.readingBatContent
   internal val challenges = mutableListOf<T>()
 
-  internal val repo by lazy { languageGroup.checkedRepo }
   private val prefix by lazy { "${languageType.lowerName}/$name" }
   internal val parsedDescription
       by lazy {
