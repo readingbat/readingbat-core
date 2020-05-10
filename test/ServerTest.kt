@@ -59,7 +59,7 @@ class ServerTest {
 
     withTestApplication({
                           testContent.validate()
-                          mymodule()
+                          module()
                         }) {
 
       handleRequest(HttpMethod.Get, "/").apply {
