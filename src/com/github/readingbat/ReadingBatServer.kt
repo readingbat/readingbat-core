@@ -17,35 +17,25 @@
 
 package com.github.readingbat
 
-import TestContent
 import com.github.readingbat.config.installs
 import com.github.readingbat.config.intercepts
 import com.github.readingbat.config.locations
 import com.github.readingbat.config.routes
-import com.github.readingbat.dsl.ReadingBatContent
+import com.github.readingbat.dsl.FileSystemContent
+import com.github.readingbat.dsl.readDsl
 import io.ktor.application.Application
 import io.ktor.server.cio.CIO
 import io.ktor.server.engine.commandLineEnvironment
 import io.ktor.server.engine.embeddedServer
 
-
 object ReadingBatServer {
-  lateinit var myContent: ReadingBatContent
-
-  fun start(userContent: ReadingBatContent) {
-    myContent = userContent
-    val port = Integer.parseInt(System.getProperty("PORT") ?: "8080")
-    val clargs = commandLineEnvironment(emptyArray())
-    embeddedServer(CIO, clargs).start(wait = true)
-    //port = port,
-    //watchPaths = listOf("readingbat-core"),
-    // module = Application::mymodule
-
+  fun start(args: Array<String>) {
+    embeddedServer(CIO, commandLineEnvironment(args)).start(wait = true)
   }
 }
 
 internal fun Application.mymodule() {
-  val readingBatContent = TestContent.content
+  val readingBatContent = readDsl(FileSystemContent(srcPath = "src", fileName = "Content.kt"))
 
   installs()
   intercepts()

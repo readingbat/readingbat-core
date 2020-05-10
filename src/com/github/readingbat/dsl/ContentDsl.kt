@@ -18,9 +18,7 @@
 package com.github.readingbat.dsl
 
 import com.github.pambrose.common.script.KotlinScript
-import com.github.pambrose.common.util.ContentSource
-import com.github.pambrose.common.util.GitHubFile
-import com.github.pambrose.common.util.GitHubRepo
+import com.github.pambrose.common.util.*
 import com.github.readingbat.ReadingBatServer
 import com.github.readingbat.dsl.ReadingBatContent.Companion.contentMap
 import mu.KotlinLogging
@@ -34,11 +32,15 @@ class GitHubContent(organization: String,
                     repo: String,
                     branch: String = "master",
                     srcPath: String = "src/main/kotlin",
-                    fileName: String = "TestContent.kt") :
+                    fileName: String = "Content.kt") :
   GitHubFile(GitHubRepo(organization, repo),
              branchName = branch,
              srcPath = srcPath,
              fileName = fileName)
+
+class FileSystemContent(srcPath: String = "src/main/kotlin",
+                        fileName: String = "Content.kt") :
+  FileSource(fileName = srcPath.ensureSuffix("/") + fileName)
 
 fun readingBatContent(block: ReadingBatContent.() -> Unit) =
   ReadingBatContent().apply(block).apply { validate() }
@@ -46,13 +48,14 @@ fun readingBatContent(block: ReadingBatContent.() -> Unit) =
 private val logger = KotlinLogging.logger {}
 
 fun include(contentSource: ContentSource, variableName: String = "content") =
-  contentMap
-    .computeIfAbsent(contentSource.source) {
-      val (code, dur) = measureTimedValue { contentSource.content }
-      logger.info { """Read content from "${contentSource.source}" in $dur""" }
-      val withImports = addImports(code, variableName)
-      evalDsl(withImports, contentSource.source)
-    }
+  contentMap.computeIfAbsent(contentSource.source) { readDsl(contentSource, variableName) }
+
+internal fun readDsl(contentSource: ContentSource, variableName: String = "content"): ReadingBatContent {
+  val (code, dur) = measureTimedValue { contentSource.content }
+  logger.info { """Read content from "${contentSource.source}" in $dur""" }
+  val withImports = addImports(code, variableName)
+  return evalDsl(withImports, contentSource.source)
+}
 
 internal fun addImports(code: String, variableName: String): String {
   val classImports =

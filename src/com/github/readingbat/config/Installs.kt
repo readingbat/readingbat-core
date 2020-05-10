@@ -17,26 +17,22 @@
 
 package com.github.readingbat.config
 
-import com.codahale.metrics.Slf4jReporter
 import com.github.readingbat.InvalidPathException
 import com.github.readingbat.misc.Constants.production
 import io.ktor.application.Application
 import io.ktor.application.call
 import io.ktor.application.install
-import io.ktor.application.log
 import io.ktor.features.*
 import io.ktor.http.ContentType.Text.Plain
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.TextContent
 import io.ktor.http.withCharset
 import io.ktor.locations.Locations
-import io.ktor.metrics.dropwizard.DropwizardMetrics
 import io.ktor.request.path
 import io.ktor.response.respond
 import io.ktor.server.engine.ShutDownUrl
 import mu.KotlinLogging
 import org.slf4j.event.Level
-import java.util.concurrent.TimeUnit
 import kotlin.text.Charsets.UTF_8
 
 private val logger = KotlinLogging.logger {}
@@ -64,6 +60,7 @@ internal fun Application.installs() {
     header("X-Engine", "Ktor")
   }
 
+  /*
   install(DropwizardMetrics) {
     val reporter =
       Slf4jReporter.forRegistry(registry)
@@ -73,6 +70,7 @@ internal fun Application.installs() {
         .build();
     //reporter.start(1, TimeUnit.HOURS);
   }
+  */
 
   install(StatusPages) {
     exception<InvalidPathException> { cause ->
