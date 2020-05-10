@@ -32,7 +32,7 @@ internal fun HTML.challengeGroupPage(challengeGroup: ChallengeGroup<*>) {
 
   val languageType = challengeGroup.languageType
   val languageName = languageType.lowerName
-  val groupName = challengeGroup.name
+  val groupName = challengeGroup.groupName
   val challenges = challengeGroup.challenges
 
   head {

@@ -50,8 +50,6 @@ internal object Constants {
   const val icons = "icons"
   const val checkJpg = "/$staticRoot/check.jpg"
   const val cssName = "styles.css"
-  const val github = "github.com"
-  const val githubUserContent = "raw.githubusercontent.com"
   const val kotlinCode = "kotlin-code"
   const val challengeDesc = "challenge-desc"
   const val bodyHeader = "bodyHeader"

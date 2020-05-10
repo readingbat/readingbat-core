@@ -28,12 +28,12 @@ import mu.KLogging
 import kotlin.reflect.KProperty
 
 @ReadingBatDslMarker
-class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>, internal val name: String) {
+class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>, internal val groupName: String) {
   internal val languageType = languageGroup.languageType
   internal val readingBatContent = languageGroup.readingBatContent
   internal val challenges = mutableListOf<T>()
 
-  private val prefix by lazy { "${languageType.lowerName}/$name" }
+  private val prefix by lazy { "${languageType.lowerName}/$groupName" }
   internal val parsedDescription
       by lazy {
         val options = MutableDataSet().apply { set(HtmlRenderer.SOFT_BREAK, "<br />\n") }
@@ -142,7 +142,7 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
     challenges += challenge.apply(block).apply { validate() }
   }
 
-  override fun toString() = "ChallengeGroup(name='$name', challenges=$challenges, packageName='$packageName')"
+  override fun toString() = "ChallengeGroup(name='$groupName', challenges=$challenges, packageName='$packageName')"
 
   companion object : KLogging()
 }

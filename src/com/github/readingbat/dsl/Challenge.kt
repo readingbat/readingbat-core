@@ -56,13 +56,16 @@ sealed class Challenge(challengeGroup: ChallengeGroup<*>, val name: String, val 
   private val challengeId = counter.incrementAndGet()
   private val languageGroup = challengeGroup.languageGroup
   internal val readingBatContent = languageGroup.readingBatContent
+  private val repo = languageGroup.repo
+  private val branchName = languageGroup.branchName
+  internal val srcPath = languageGroup.srcPath
   private val packageName = challengeGroup.packageName
   internal val languageType = challengeGroup.languageType
-  internal val groupName = challengeGroup.name
-  internal val srcPath = languageGroup.srcPath
+  internal val groupName = challengeGroup.groupName
 
   private val fqName by lazy { packageName.ensureSuffix("/") + fileName.ensureSuffix(".${languageType.suffix}") }
-  internal val gitpodUrl by lazy { "${languageGroup.gitpodRoot}$fqName" }
+  internal val gitpodUrl by lazy { listOf(repo.sourcePrefix, "blob/${branchName}", srcPath, fqName).toPath(false) }
+
   internal val parsedDescription
       by lazy {
         val options = MutableDataSet().apply { set(HtmlRenderer.SOFT_BREAK, "<br />\n") }
@@ -80,17 +83,17 @@ sealed class Challenge(challengeGroup: ChallengeGroup<*>, val name: String, val 
   internal abstract fun computeFuncInfo(code: String): FunctionInfo
 
   private val compute = {
-    val fs = languageGroup.repo as FileSystemSource
+    val fs = repo as FileSystemSource
     val file = fs.file(listOf(fs.pathPrefix, srcPath, packageName, fileName).toPath())
     logger.info { """Fetching "${file.fileName}"""" }
     computeFuncInfo(file.content)
   }
 
   internal fun funcInfo(): FunctionInfo =
-    if (languageGroup.repo.remote) {
+    if (repo.remote) {
       sourcesMap
         .computeIfAbsent(challengeId) {
-          val path = "${languageGroup.repoRawRoot}$fqName"
+          val path = listOf((repo as AbstractRepo).rawSourcePrefix, branchName, srcPath, fqName).toPath(false)
           logger.info { """Fetching "$groupName/$fileName" from: $path""" }
           val (content, dur) = measureTimedValue { URL(path).readText() }
           logger.info { """Fetched "$groupName/$fileName" in: $dur""" }

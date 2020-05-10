@@ -80,7 +80,7 @@ internal fun Application.routes(readingBatContent: ReadingBatContent) {
         val output = String(baos.toByteArray(), Charsets.UTF_8)
         call.respondText { output }
       } catch (e: NoClassDefFoundError) {
-        call.respondText { "Sorry your runtime environment does not allow to dump threads." }
+        call.respondText { "Sorry, your runtime environment does not allow dump threads." }
       }
     }
 
