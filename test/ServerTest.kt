@@ -18,7 +18,6 @@
 package com.github.readingbat
 
 import com.github.pambrose.common.util.GitHubRepo
-import com.github.readingbat.Module.module
 import com.github.readingbat.dsl.LanguageType.*
 import com.github.readingbat.dsl.readingBatContent
 import com.github.readingbat.misc.Constants.root
@@ -60,7 +59,7 @@ class ServerTest {
 
     withTestApplication({
                           testContent.validate()
-                          module(testing = true, content = testContent)
+                          mymodule()
                         }) {
 
       handleRequest(HttpMethod.Get, "/").apply {

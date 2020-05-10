@@ -17,7 +17,7 @@
 
 package com.github.readingbat
 
-import com.github.readingbat.Module.module
+import TestContent
 import com.github.readingbat.config.installs
 import com.github.readingbat.config.intercepts
 import com.github.readingbat.config.locations
@@ -25,27 +25,32 @@ import com.github.readingbat.config.routes
 import com.github.readingbat.dsl.ReadingBatContent
 import io.ktor.application.Application
 import io.ktor.server.cio.CIO
+import io.ktor.server.engine.commandLineEnvironment
 import io.ktor.server.engine.embeddedServer
 
+
 object ReadingBatServer {
-  fun start(content: ReadingBatContent) {
+  lateinit var myContent: ReadingBatContent
+
+  fun start(userContent: ReadingBatContent) {
+    myContent = userContent
     val port = Integer.parseInt(System.getProperty("PORT") ?: "8080")
-    //val clargs = commandLineEnvironment(args.plus("port=$port"))
-    embeddedServer(CIO, port = port) { module(content = content) }.start(wait = true)
+    val clargs = commandLineEnvironment(emptyArray())
+    embeddedServer(CIO, clargs).start(wait = true)
+    //port = port,
+    //watchPaths = listOf("readingbat-core"),
+    // module = Application::mymodule
+
   }
 }
 
-object Module {
-  private lateinit var readingBatContent: ReadingBatContent
+internal fun Application.mymodule() {
+  val readingBatContent = TestContent.content
 
-  internal fun Application.module(testing: Boolean = false, content: ReadingBatContent) {
-    readingBatContent = content
-
-    installs()
-    intercepts()
-    locations(readingBatContent)
-    routes(readingBatContent)
-  }
+  installs()
+  intercepts()
+  locations(readingBatContent)
+  routes(readingBatContent)
 }
 
 internal class InvalidPathException(msg: String) : RuntimeException(msg)

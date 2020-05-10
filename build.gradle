@@ -17,6 +17,7 @@
 
 plugins {
     id 'java'
+    id 'application'
     id 'maven'  // Required for jitpack.io to do: ./gradlew install
     id 'org.jetbrains.kotlin.jvm' version '1.3.72'
     id "com.github.ben-manes.versions" version "0.28.0"
@@ -32,8 +33,15 @@ repositories {
     maven { url = 'https://jitpack.io' }
 }
 
-def mainName = 'com.github.readingbat.Main'
+// These are for the uber target
+def mainName = 'TestMain'
 def appName = 'server'
+
+// This is for ./gradlew run
+application {
+    mainClassName = mainName
+}
+
 
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
