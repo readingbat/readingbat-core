@@ -45,7 +45,7 @@ fun readingBatContent(block: ReadingBatContent.() -> Unit) =
 
 private val logger = KotlinLogging.logger {}
 
-fun ContentSource.parse(variableName: String = "content"): ReadingBatContent =
+fun ContentSource.eval(variableName: String = "content"): ReadingBatContent =
   contentMap.computeIfAbsent(this.source) { readDsl(this, variableName) }
 
 internal fun oldInclude(contentSource: ContentSource, variableName: String = "content") =
