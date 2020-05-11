@@ -18,7 +18,9 @@
 package com.github.readingbat.dsl
 
 import com.github.pambrose.common.script.KotlinScript
-import com.github.pambrose.common.util.*
+import com.github.pambrose.common.util.ContentSource
+import com.github.pambrose.common.util.GitHubFile
+import com.github.pambrose.common.util.GitHubRepo
 import com.github.readingbat.ReadingBatServer
 import com.github.readingbat.dsl.ReadingBatContent.Companion.contentMap
 import mu.KotlinLogging
@@ -37,10 +39,6 @@ class GitHubContent(organization: String,
              branchName = branch,
              srcPath = srcPath,
              fileName = fileName)
-
-class FileSystemContent(srcPath: String = "src/main/kotlin",
-                        fileName: String = "Content.kt") :
-  FileSource(fileName = srcPath.ensureSuffix("/") + fileName)
 
 fun readingBatContent(block: ReadingBatContent.() -> Unit) =
   ReadingBatContent().apply(block).apply { validate() }

@@ -30,6 +30,8 @@ import io.ktor.server.engine.commandLineEnvironment
 import io.ktor.server.engine.embeddedServer
 import mu.KotlinLogging
 
+private val logger = KotlinLogging.logger {}
+
 object ReadingBatServer {
   fun start(args: Array<String>) {
     val environment = commandLineEnvironment(args)
@@ -37,24 +39,25 @@ object ReadingBatServer {
   }
 }
 
-private val logger = KotlinLogging.logger {}
-
 internal fun Application.module() {
 
-  val fileName =
-    try {
-      environment.config.property("readingbat.content.fileName").getString()
-    } catch (e: ApplicationConfigurationException) {
-      logger.warn { "Missing readingbat.content.fileName value in application.conf" }
-      "src/Content.kt"
-    }
-  val readingBatContent = readDsl(FileSource(fileName = fileName))
+  val fileName = property("readingbat.content.fileName", "src/Content.kt")
+  val variableName = property("readingbat.content.variableName", "content")
+  val readingBatContent = readDsl(FileSource(fileName = fileName), variableName = variableName)
 
   installs()
   intercepts()
   locations(readingBatContent)
   routes(readingBatContent)
 }
+
+private fun Application.property(name: String, default: String) =
+  try {
+    environment.config.property(name).getString()
+  } catch (e: ApplicationConfigurationException) {
+    logger.warn { "Missing ${name} value in application.conf" }
+    default
+  }
 
 internal class InvalidPathException(msg: String) : RuntimeException(msg)
 
