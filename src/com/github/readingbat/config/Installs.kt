@@ -17,6 +17,7 @@
 
 package com.github.readingbat.config
 
+import com.github.pambrose.common.util.simpleClassName
 import com.github.readingbat.InvalidPathException
 import com.github.readingbat.misc.Constants.production
 import io.ktor.application.Application
@@ -80,14 +81,14 @@ internal fun Application.installs() {
 
     //statusFile(HttpStatusCode.NotFound, HttpStatusCode.Unauthorized, filePattern = "error#.html")
 
-    status(HttpStatusCode.NotFound) {
-      call.respond(TextContent("${it.value} ${it.description}", Plain.withCharset(UTF_8), it))
-    }
-
     // Catch all
     exception<Throwable> { cause ->
-      logger.info(cause) {}
+      logger.info(cause) { " Throwable caught: ${cause.simpleClassName}" }
       call.respond(HttpStatusCode.NotFound)
+    }
+
+    status(HttpStatusCode.NotFound) {
+      call.respond(TextContent("${it.value} ${it.description}", Plain.withCharset(UTF_8), it))
     }
   }
 

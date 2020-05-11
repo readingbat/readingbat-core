@@ -42,7 +42,6 @@ application {
     mainClassName = mainName
 }
 
-
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
@@ -69,8 +68,8 @@ dependencies {
     implementation "org.jetbrains:kotlin-css:$css_version"
     implementation "org.jetbrains:kotlin-css-jvm:$css_version"
 
-    implementation "io.ktor:ktor-server-cio:$ktor_version"
     implementation "io.ktor:ktor-server-core:$ktor_version"
+    implementation "io.ktor:ktor-server-cio:$ktor_version"
     implementation "io.ktor:ktor-html-builder:$ktor_version"
     implementation "io.ktor:ktor-locations:$ktor_version"
     implementation "io.ktor:ktor-metrics:$ktor_version"
