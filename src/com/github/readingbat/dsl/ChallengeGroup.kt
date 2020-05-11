@@ -93,6 +93,13 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
     this@ChallengeGroup.challenges += this
   }
 
+  @ReadingBatDslMarker
+  fun include(challenge: T) {
+    this@ChallengeGroup.checkChallengeName(challenge.name)
+    this@ChallengeGroup.challenges += challenge
+  }
+
+
   //@ReadingBatDslMarker
   //fun includeFiles(vararg patterns: String) = import(patterns.toList())
 

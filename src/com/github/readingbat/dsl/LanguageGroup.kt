@@ -100,6 +100,11 @@ class LanguageGroup<T : Challenge>(internal val readingBatContent: ReadingBatCon
     this@LanguageGroup.addGroup(this)
   }
 
+  @ReadingBatDslMarker
+  fun include(challengeGroup: ChallengeGroup<T>) {
+    this@LanguageGroup.addGroup(challengeGroup)
+  }
+
   fun findGroup(groupName: String) =
     groupName.decode().let { decoded -> challengeGroups.firstOrNull { it.groupName == decoded } }
       ?: throw InvalidPathException("Group ${languageType.lowerName}/$groupName not found")

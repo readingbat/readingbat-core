@@ -45,7 +45,10 @@ fun readingBatContent(block: ReadingBatContent.() -> Unit) =
 
 private val logger = KotlinLogging.logger {}
 
-fun include(contentSource: ContentSource, variableName: String = "content") =
+fun ContentSource.parse(variableName: String = "content"): ReadingBatContent =
+  contentMap.computeIfAbsent(this.source) { readDsl(this, variableName) }
+
+internal fun oldInclude(contentSource: ContentSource, variableName: String = "content") =
   contentMap.computeIfAbsent(contentSource.source) { readDsl(contentSource, variableName) }
 
 internal fun readDsl(contentSource: ContentSource, variableName: String = "content"): ReadingBatContent {
@@ -65,7 +68,7 @@ internal fun addImports(code: String, variableName: String): String {
       .joinToString("\n")                                             // Turn into String
 
   val funcImports =
-    listOf(::readingBatContent, ::include)
+    listOf(::readingBatContent, ::oldInclude)
       .filter { code.contains("${it.name}(") }  // See if the function is referenced
       .map { "import ${it.fqMethodName}" }      // Convert to import stmt
       .filter { !code.contains(it) }            // Do not include is import already present
