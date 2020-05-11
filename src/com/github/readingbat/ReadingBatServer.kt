@@ -40,10 +40,13 @@ object ReadingBatServer {
 }
 
 internal fun Application.module() {
-
   val fileName = property("readingbat.content.fileName", "src/Content.kt")
   val variableName = property("readingbat.content.variableName", "content")
-  val readingBatContent = readDsl(FileSource(fileName = fileName), variableName = variableName)
+  val readingBatContent =
+    readDsl(FileSource(fileName = fileName), variableName = variableName)
+      .apply {
+        googleAnalyticsId = property("readingbat.site.googleAnalyticsId")
+      }
 
   installs()
   intercepts()
@@ -51,11 +54,12 @@ internal fun Application.module() {
   routes(readingBatContent)
 }
 
-private fun Application.property(name: String, default: String) =
+private fun Application.property(name: String, default: String = "", warn: Boolean = false) =
   try {
     environment.config.property(name).getString()
   } catch (e: ApplicationConfigurationException) {
-    logger.warn { "Missing ${name} value in application.conf" }
+    if (warn)
+      logger.warn { "Missing ${name} value in application.conf" }
     default
   }
 

@@ -24,13 +24,14 @@ import com.github.readingbat.dsl.LanguageType.*
 
 @ReadingBatDslMarker
 class ReadingBatContent {
+  internal var googleAnalyticsId = ""
+
   val python by lazy { LanguageGroup<PythonChallenge>(this, Python) }
   val java by lazy { LanguageGroup<JavaChallenge>(this, Java) }
   val kotlin by lazy { LanguageGroup<KotlinChallenge>(this, Kotlin) }
 
   // User properties
   var repo: ContentRoot = defaultContentRoot
-  var googleAnalyticsId = ""
   var cacheChallenges = true
 
   private val languageList by lazy { listOf(java, python, kotlin) }
