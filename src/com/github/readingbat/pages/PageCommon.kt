@@ -31,8 +31,6 @@ import com.github.readingbat.misc.Constants.root
 import com.github.readingbat.misc.Constants.selected
 import com.github.readingbat.misc.Constants.staticRoot
 import com.github.readingbat.misc.Constants.titleText
-import io.ktor.application.ApplicationCall
-import io.ktor.util.pipeline.PipelineContext
 import kotlinx.html.*
 import kotlinx.html.Entities.nbsp
 
@@ -85,7 +83,7 @@ internal fun BODY.bodyHeader(readingBatContent: ReadingBatContent, languageType:
   }
 }
 
-internal fun PipelineContext<Unit, ApplicationCall>.defaultTab(readingBatContent: ReadingBatContent) =
+internal fun defaultTab(readingBatContent: ReadingBatContent) =
   listOf(Java, Python, Kotlin)
     .asSequence()
     .filter { readingBatContent.hasGroups(it) }

@@ -19,7 +19,9 @@ package com.github.readingbat.config
 
 import com.github.pambrose.common.util.simpleClassName
 import com.github.readingbat.InvalidPathException
+import com.github.readingbat.RedisPool.pool
 import com.github.readingbat.misc.Constants.production
+import com.github.readingbat.misc.RedisSessionStorage
 import io.ktor.application.Application
 import io.ktor.application.call
 import io.ktor.application.install
@@ -34,10 +36,8 @@ import io.ktor.response.respond
 import io.ktor.server.engine.ShutDownUrl
 import io.ktor.sessions.Sessions
 import io.ktor.sessions.cookie
-import io.ktor.sessions.directorySessionStorage
 import mu.KotlinLogging
 import org.slf4j.event.Level
-import java.io.File
 import kotlin.text.Charsets.UTF_8
 
 private val logger = KotlinLogging.logger {}
@@ -62,7 +62,8 @@ internal fun Application.installs() {
     }
 
     cookie<ServerSession>("readingbat_session_id",
-                          storage = directorySessionStorage(File("server-sessions"), cached = true)) {
+                          storage = RedisSessionStorage(redis = pool.resource)) {
+      //storage = directorySessionStorage(File("server-sessions"), cached = true)) {
       cookie.path = "/"
     }
   }

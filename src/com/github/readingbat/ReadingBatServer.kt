@@ -29,8 +29,21 @@ import io.ktor.server.cio.CIO
 import io.ktor.server.engine.commandLineEnvironment
 import io.ktor.server.engine.embeddedServer
 import mu.KotlinLogging
+import redis.clients.jedis.JedisPool
+import redis.clients.jedis.JedisPoolConfig
+import redis.clients.jedis.Protocol
+import java.net.URI
 
 private val logger = KotlinLogging.logger {}
+
+object RedisPool {
+  private var redisURI: URI = URI(System.getenv("REDISTOGO_URL") ?: "redis://user:none@localhost:6379")
+  var pool: JedisPool = JedisPool(JedisPoolConfig(),
+                                  redisURI.host,
+                                  redisURI.port,
+                                  Protocol.DEFAULT_TIMEOUT,
+                                  redisURI.userInfo.split(Regex(":"), 2)[1])
+}
 
 object ReadingBatServer {
   fun start(args: Array<String>) {
@@ -59,7 +72,7 @@ private fun Application.property(name: String, default: String = "", warn: Boole
     environment.config.property(name).getString()
   } catch (e: ApplicationConfigurationException) {
     if (warn)
-      logger.warn { "Missing ${name} value in application.conf" }
+      logger.warn { "Missing $name value in application.conf" }
     default
   }
 
