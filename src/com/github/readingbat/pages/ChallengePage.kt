@@ -19,6 +19,7 @@ package com.github.readingbat.pages
 
 import com.github.pambrose.common.util.decode
 import com.github.readingbat.RedisPool
+import com.github.readingbat.RedisPool.gson
 import com.github.readingbat.config.ChallengeAnswers
 import com.github.readingbat.config.ClientSession
 import com.github.readingbat.dsl.Challenge
@@ -41,7 +42,6 @@ import com.github.readingbat.misc.Constants.tabs
 import com.github.readingbat.misc.Constants.userAnswers
 import com.github.readingbat.misc.Constants.userResp
 import com.github.readingbat.misc.addScript
-import com.google.gson.Gson
 import kotlinx.html.*
 import kotlinx.html.Entities.nbsp
 import mu.KotlinLogging
@@ -96,7 +96,6 @@ internal fun HTML.challengePage(challenge: Challenge, clientSession: ClientSessi
                 val key = clientSession.redisKey(languageName, groupName, challenge.challengeName)
                 logger.debug { "Fetching: $key" }
                 val json = redis.get(key)
-                val gson = Gson()
                 val challengeAnswers = gson.fromJson(json, ChallengeAnswers::class.java)
                 if (challengeAnswers != null)
                   previousAnswers = challengeAnswers.answers

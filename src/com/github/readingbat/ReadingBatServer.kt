@@ -23,6 +23,7 @@ import com.github.readingbat.config.intercepts
 import com.github.readingbat.config.locations
 import com.github.readingbat.config.routes
 import com.github.readingbat.dsl.readDsl
+import com.google.gson.Gson
 import io.ktor.application.Application
 import io.ktor.config.ApplicationConfigurationException
 import io.ktor.server.cio.CIO
@@ -43,6 +44,7 @@ object RedisPool {
                                   redisURI.port,
                                   Protocol.DEFAULT_TIMEOUT,
                                   redisURI.userInfo.split(Regex(":"), 2)[1])
+  val gson = Gson()
 }
 
 object ReadingBatServer {

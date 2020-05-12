@@ -21,6 +21,7 @@ import com.github.pambrose.common.script.KotlinScript
 import com.github.pambrose.common.script.PythonScript
 import com.github.pambrose.common.util.*
 import com.github.readingbat.InvalidConfigurationException
+import com.github.readingbat.RedisPool.gson
 import com.github.readingbat.RedisPool.pool
 import com.github.readingbat.config.ChallengeAnswers
 import com.github.readingbat.config.ClientSession
@@ -32,7 +33,6 @@ import com.github.readingbat.misc.Constants.challengeSrc
 import com.github.readingbat.misc.Constants.groupSrc
 import com.github.readingbat.misc.Constants.langSrc
 import com.github.readingbat.misc.Constants.userResp
-import com.google.gson.Gson
 import io.ktor.application.ApplicationCall
 import io.ktor.application.call
 import io.ktor.request.receiveParameters
@@ -58,11 +58,13 @@ object CheckAnswers : KLogging() {
       readingBatContent.findLanguage(languageName.toLanguageType()).findChallenge(groupName, challengeName)
 
     logger.debug("Found ${userResps.size} user responses in $compareMap")
+
     val results =
       userResps.indices.map { i ->
         val userResp = compareMap[userResp + i]?.trim() ?: throw InvalidConfigurationException("Missing user response")
-        val answer = challenge.funcInfo().answers[i]
-        checkWithAnswer(isJvm, userResp, answer)
+        val funcInfo = challenge.funcInfo()
+        val answer = funcInfo.answers[i]
+        Triple(funcInfo.arguments[i], userResp.isNotEmpty(), checkWithAnswer(isJvm, userResp, answer))
       }
 
     if (clientSession != null) {
@@ -73,19 +75,25 @@ object CheckAnswers : KLogging() {
         if (userResp.isNotEmpty())
           answerMap[argumentKey] = userResp
       }
+
       pool.resource
         .use { redis ->
           val key = clientSession.redisKey(languageName, groupName, challengeName)
           val challengeAnswers = ChallengeAnswers(clientSession.id, answerMap)
-          val gson = Gson()
           val json = gson.toJson(challengeAnswers)
-          logger.info { "Assigning: $key to $json" }
+          logger.debug { "Assigning: $key to $json" }
           redis.set(key, json)
         }
     }
 
+    results
+      .filter { it.second }
+      .forEach {
+        logger.info { "Item with args; ${it.first} was correct: ${it.third}" }
+      }
+
     delay(200.milliseconds.toLongMilliseconds())
-    call.respondText(results.toString())
+    call.respondText(results.map { it.third }.toString())
   }
 
   private infix fun String.equalsAsKotlinList(other: String): Boolean {
