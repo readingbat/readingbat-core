@@ -71,31 +71,31 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
   var includeFiles by IncludeFiles(languageType, includeList)
   var includeFilesWithType by IncludeFilesWithType(languageType, includeList)
 
-  fun hasChallenge(name: String) = challenges.any { it.name == name }
+  fun hasChallenge(name: String) = challenges.any { it.challengeName == name }
 
   fun removeChallenge(name: String) {
     val pos =
       challenges
         .asSequence()
         .mapIndexed { i, challenge -> i to challenge }
-        .first { it.second.name == name }
+        .first { it.second.challengeName == name }
         .first
     challenges.removeAt(pos)
   }
 
   fun findChallenge(name: String): T =
-    challenges.firstOrNull { it.name == name }
+    challenges.firstOrNull { it.challengeName == name }
       ?: throw InvalidPathException("Challenge $prefix/$name not found.")
 
   @ReadingBatDslMarker
   fun T.unaryPlus() {
-    this@ChallengeGroup.checkChallengeName(name)
+    this@ChallengeGroup.checkChallengeName(challengeName)
     this@ChallengeGroup.challenges += this
   }
 
   @ReadingBatDslMarker
   fun include(challenge: T) {
-    checkChallengeName(challenge.name)
+    checkChallengeName(challenge.challengeName)
     challenges += challenge
   }
 

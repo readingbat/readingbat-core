@@ -19,9 +19,7 @@ package com.github.readingbat.config
 
 import com.github.pambrose.common.util.simpleClassName
 import com.github.readingbat.InvalidPathException
-import com.github.readingbat.RedisPool.pool
 import com.github.readingbat.misc.Constants.production
-import com.github.readingbat.misc.RedisSessionStorage
 import io.ktor.application.Application
 import io.ktor.application.call
 import io.ktor.application.install
@@ -57,12 +55,8 @@ internal fun Application.installs() {
   install(Locations)
 
   install(Sessions) {
-    cookie<ClientSession>("readingbat_id") {
-      cookie.path = "/"
-    }
-
-    cookie<ServerSession>("readingbat_session_id",
-                          storage = RedisSessionStorage(redis = pool.resource)) {
+    cookie<ClientSession>("readingbat_session_id") {
+      //storage = RedisSessionStorage(redis = pool.resource)) {
       //storage = directorySessionStorage(File("server-sessions"), cached = true)) {
       cookie.path = "/"
     }

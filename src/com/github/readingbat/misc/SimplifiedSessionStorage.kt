@@ -36,7 +36,14 @@ abstract class SimplifiedSessionStorage : SessionStorage {
 
   override suspend fun <R> read(id: String, consumer: suspend (ByteReadChannel) -> R): R {
     val data = read(id) ?: throw NoSuchElementException("Session $id not found")
+    //try {
     return consumer(ByteReadChannel(data))
+    /*
+    }
+    catch (e: IllegalArgumentException) {
+      throw NoSuchElementException("Session $id not retrievable")
+    }
+    */
   }
 
   override suspend fun write(id: String, provider: suspend (ByteWriteChannel) -> Unit) {

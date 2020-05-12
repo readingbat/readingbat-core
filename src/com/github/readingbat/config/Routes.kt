@@ -18,6 +18,7 @@
 package com.github.readingbat.config
 
 import com.codahale.metrics.jvm.ThreadDump
+import com.github.pambrose.common.util.randomId
 import com.github.readingbat.config.ThreadDumpInfo.threadDump
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.CheckAnswers.checkUserAnswers
@@ -47,11 +48,13 @@ import kotlinx.css.CSSBuilder
 import mu.KotlinLogging
 import java.io.ByteArrayOutputStream
 import java.lang.management.ManagementFactory
-import java.util.concurrent.atomic.AtomicInteger
 
 
-data class ClientSession(val name: String, val value: Int)
-data class ServerSession(val name: String, val value: Int)
+data class ClientSession(val name: String, val id: String) {
+  fun redisKey(lang: String, groupName: String, challengeName: String) = "$id|$lang|$groupName|$challengeName"
+}
+
+data class ChallengeAnswers(val id: String, val answers: MutableMap<String, String> = mutableMapOf())
 
 private val logger = KotlinLogging.logger {}
 
@@ -77,36 +80,30 @@ internal fun Application.routes(readingBatContent: ReadingBatContent) {
     }
 
     post("/$checkAnswers") {
-      checkUserAnswers(readingBatContent)
+      val clientSession: ClientSession? = call.sessions.get<ClientSession>()
+      checkUserAnswers(readingBatContent, clientSession)
     }
 
-    val counter = AtomicInteger()
-
     get("/session-register") {
-      logger.info { call.sessions.get<ClientSession>() }
-      val cnt = counter.incrementAndGet()
-      call.sessions.set(ClientSession(name = "John Client", value = cnt))
+      val session = call.sessions.get<ClientSession>()
+      if (session == null) {
+        call.sessions.set(ClientSession(name = "Student name", id = randomId()))
+        logger.info { call.sessions.get<ClientSession>() }
+      }
 
-      logger.info { call.sessions.get<ServerSession>() }
-      val cnt2 = counter.incrementAndGet()
-      call.sessions.set(ServerSession(name = "John Server", value = cnt))
-
-      call.respondText { "registered $cnt" }
+      call.respondText { "registered ${call.sessions.get<ClientSession>()}" }
     }
 
     get("/session-check") {
-      val clientSession = call.sessions.get<ClientSession>()
-      logger.info { clientSession }
-      val serverSession = call.sessions.get<ServerSession>()
-      logger.info { serverSession }
-      call.respondText { "checked $clientSession $serverSession" }
+      val session = call.sessions.get<ClientSession>()
+      logger.info { session }
+
+      call.respondText { "checked $session" }
     }
 
-    get("/session-clear") {
+    get("/session-2clear") {
       logger.info { call.sessions.get<ClientSession>() }
       call.sessions.clear<ClientSession>()
-      logger.info { call.sessions.get<ServerSession>() }
-      call.sessions.clear<ServerSession>()
       call.respondText { "cleared" }
     }
 
@@ -114,7 +111,6 @@ internal fun Application.routes(readingBatContent: ReadingBatContent) {
 
     get("/threaddump") {
       try {
-        logger.info { call.sessions.get<ClientSession>() }
         val baos = ByteArrayOutputStream()
         baos.use { threadDump.dump(true, true, it) }
         val output = String(baos.toByteArray(), Charsets.UTF_8)

@@ -21,6 +21,9 @@ import com.github.pambrose.common.script.KotlinScript
 import com.github.pambrose.common.script.PythonScript
 import com.github.pambrose.common.util.*
 import com.github.readingbat.InvalidConfigurationException
+import com.github.readingbat.RedisPool.pool
+import com.github.readingbat.config.ChallengeAnswers
+import com.github.readingbat.config.ClientSession
 import com.github.readingbat.dsl.LanguageType.Companion.toLanguageType
 import com.github.readingbat.dsl.LanguageType.Java
 import com.github.readingbat.dsl.LanguageType.Kotlin
@@ -29,6 +32,7 @@ import com.github.readingbat.misc.Constants.challengeSrc
 import com.github.readingbat.misc.Constants.groupSrc
 import com.github.readingbat.misc.Constants.langSrc
 import com.github.readingbat.misc.Constants.userResp
+import com.google.gson.Gson
 import io.ktor.application.ApplicationCall
 import io.ktor.application.call
 import io.ktor.request.receiveParameters
@@ -41,15 +45,17 @@ import kotlin.time.milliseconds
 
 object CheckAnswers : KLogging() {
 
-  internal suspend fun PipelineContext<Unit, ApplicationCall>.checkUserAnswers(readingBatContent: ReadingBatContent) {
+  internal suspend fun PipelineContext<Unit, ApplicationCall>.checkUserAnswers(readingBatContent: ReadingBatContent,
+                                                                               clientSession: ClientSession?) {
     val params = call.receiveParameters()
     val compareMap = params.entries().map { it.key to it.value[0] }.toMap()
-    val lang = compareMap[langSrc] ?: throw InvalidConfigurationException("Missing language")
+    val languageName = compareMap[langSrc] ?: throw InvalidConfigurationException("Missing language")
     val groupName = compareMap[groupSrc] ?: throw InvalidConfigurationException("Missing group name")
     val challengeName = compareMap[challengeSrc] ?: throw InvalidConfigurationException("Missing challenge name")
-    val isJvm = lang in listOf(Java.lowerName, Kotlin.lowerName)
+    val isJvm = languageName in listOf(Java.lowerName, Kotlin.lowerName)
     val userResps = params.entries().filter { it.key.startsWith(userResp) }
-    val challenge = readingBatContent.findLanguage(lang.toLanguageType()).findChallenge(groupName, challengeName)
+    val challenge =
+      readingBatContent.findLanguage(languageName.toLanguageType()).findChallenge(groupName, challengeName)
 
     logger.debug("Found ${userResps.size} user responses in $compareMap")
     val results =
@@ -58,6 +64,25 @@ object CheckAnswers : KLogging() {
         val answer = challenge.funcInfo().answers[i]
         checkWithAnswer(isJvm, userResp, answer)
       }
+
+    if (clientSession != null) {
+      val answerMap = mutableMapOf<String, String>()
+      userResps.indices.forEach { i ->
+        val argumentKey = challenge.funcInfo().arguments[i]
+        val userResp = compareMap[userResp + i]?.trim() ?: throw InvalidConfigurationException("Missing user response")
+        if (userResp.isNotEmpty())
+          answerMap[argumentKey] = userResp
+      }
+      pool.resource
+        .use { redis ->
+          val key = clientSession.redisKey(languageName, groupName, challengeName)
+          val challengeAnswers = ChallengeAnswers(clientSession.id, answerMap)
+          val gson = Gson()
+          val json = gson.toJson(challengeAnswers)
+          logger.info { "Assigning: $key to $json" }
+          redis.set(key, json)
+        }
+    }
 
     delay(200.milliseconds.toLongMilliseconds())
     call.respondText(results.toString())

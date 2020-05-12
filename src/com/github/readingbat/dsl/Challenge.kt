@@ -52,7 +52,7 @@ import kotlin.time.measureTime
 import kotlin.time.measureTimedValue
 
 @ReadingBatDslMarker
-sealed class Challenge(challengeGroup: ChallengeGroup<*>, val name: String, val replaceable: Boolean) {
+sealed class Challenge(challengeGroup: ChallengeGroup<*>, val challengeName: String, val replaceable: Boolean) {
   private val challengeId = counter.incrementAndGet()
   private val languageGroup = challengeGroup.languageGroup
   internal val readingBatContent = languageGroup.readingBatContent
@@ -76,7 +76,7 @@ sealed class Challenge(challengeGroup: ChallengeGroup<*>, val name: String, val 
       }
 
   // User properties
-  var fileName = "$name.${languageType.suffix}"
+  var fileName = "$challengeName.${languageType.suffix}"
   var codingBatEquiv = ""
   var description = ""
 
@@ -108,8 +108,8 @@ sealed class Challenge(challengeGroup: ChallengeGroup<*>, val name: String, val 
     }
 
   internal open fun validate() {
-    if (name.isEmpty())
-      throw InvalidConfigurationException(""""$name" is empty""")
+    if (challengeName.isEmpty())
+      throw InvalidConfigurationException(""""$challengeName" is empty""")
   }
 
   private fun Any?.prettyQuote(capitalizePythonBooleans: Boolean = true, useDoubleQuotes: Boolean = false) =
@@ -144,7 +144,7 @@ class PythonChallenge(group: ChallengeGroup<*>, name: String, replaceable: Boole
     super.validate()
 
     if (!this::returnType.isInitialized)
-      throw InvalidConfigurationException("$name missing returnType value")
+      throw InvalidConfigurationException("$challengeName missing returnType value")
   }
 
   override fun computeFuncInfo(code: String): FunctionInfo {
@@ -154,7 +154,7 @@ class PythonChallenge(group: ChallengeGroup<*>, name: String, replaceable: Boole
     val script = convertToPythonScript(lines)
     val answers = mutableListOf<Any>()
 
-    logger.info { "$name return type: $returnType script: \n${script.withLineNumbers()}" }
+    logger.info { "$challengeName return type: $returnType script: \n${script.withLineNumbers()}" }
 
     val duration =
       PythonScript()
@@ -163,9 +163,9 @@ class PythonChallenge(group: ChallengeGroup<*>, name: String, replaceable: Boole
           measureTime { eval(script) }
         }
 
-    logger.info { "$name computed answers in $duration for: $answers" }
+    logger.info { "$challengeName computed answers in $duration for: $answers" }
 
-    return FunctionInfo(languageType, name, code, funcCode, args, returnType, answers)
+    return FunctionInfo(languageType, challengeName, code, funcCode, args, returnType, answers)
   }
 }
 
@@ -176,10 +176,10 @@ class JavaChallenge(group: ChallengeGroup<*>, name: String, replaceable: Boolean
     val lines = code.lines().filter { !it.trimStart().startsWith("package") }
     val funcCode = extractJavaFunction(lines)
     val args = extractJavaArguments(lines, svmRegex, javaEndRegex)
-    val returnType = deriveJavaReturnType(name, lines)
+    val returnType = deriveJavaReturnType(challengeName, lines)
     val script = JavaParse.convertToScript(lines)
 
-    logger.info { "$name return type: $returnType script: \n${script.withLineNumbers()}" }
+    logger.info { "$challengeName return type: $returnType script: \n${script.withLineNumbers()}" }
 
     val timedValue =
       JavaScript()
@@ -190,12 +190,12 @@ class JavaChallenge(group: ChallengeGroup<*>, name: String, replaceable: Boolean
         }
 
     val answers = timedValue.value
-    logger.info { "$name computed answers in ${timedValue.duration} for: $answers" }
+    logger.info { "$challengeName computed answers in ${timedValue.duration} for: $answers" }
 
     if (answers !is List<*>)
-      throw InvalidConfigurationException("Invalid type returned for $name")
+      throw InvalidConfigurationException("Invalid type returned for $challengeName")
 
-    return FunctionInfo(languageType, name, code, funcCode, args, returnType, answers)
+    return FunctionInfo(languageType, challengeName, code, funcCode, args, returnType, answers)
   }
 }
 
@@ -209,7 +209,7 @@ class KotlinChallenge(group: ChallengeGroup<*>, name: String, replaceable: Boole
     super.validate()
 
     if (!this::returnType.isInitialized)
-      throw InvalidConfigurationException("$name missing returnType value")
+      throw InvalidConfigurationException("$challengeName missing returnType value")
   }
 
   override fun computeFuncInfo(code: String): FunctionInfo {
@@ -220,7 +220,7 @@ class KotlinChallenge(group: ChallengeGroup<*>, name: String, replaceable: Boole
     val args = extractKotlinArguments(lines, funMainRegex, kotlinEndRegex)
     val script = convertToKotlinScript(lines)
 
-    logger.info { "$name return type: $returnType script: \n${script.withLineNumbers()}" }
+    logger.info { "$challengeName return type: $returnType script: \n${script.withLineNumbers()}" }
 
     val answers = mutableListOf<Any>()
     val duration =
@@ -229,8 +229,8 @@ class KotlinChallenge(group: ChallengeGroup<*>, name: String, replaceable: Boole
         measureTime { eval(script) }
       }
 
-    logger.info { "$name computed answers in $duration for: $answers" }
+    logger.info { "$challengeName computed answers in $duration for: $answers" }
 
-    return FunctionInfo(languageType, name, strippedCode, funcCode, args, returnType, answers)
+    return FunctionInfo(languageType, challengeName, strippedCode, funcCode, args, returnType, answers)
   }
 }

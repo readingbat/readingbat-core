@@ -71,7 +71,7 @@ private fun TR.funcCall(prefix: String, groupName: String, challenge: Challenge)
   td(classes = funcItem) {
     img { src = checkJpg }
     rawHtml(nbsp.text)
-    a(classes = funcChoice) { href = "/$root/$prefix/$groupName/${challenge.name}"; +challenge.name }
+    a(classes = funcChoice) { href = "/$root/$prefix/$groupName/${challenge.challengeName}"; +challenge.challengeName }
   }
 }
 

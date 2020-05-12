@@ -16,7 +16,8 @@
  */
 
 import com.github.pambrose.common.util.FileSystemSource
-import com.github.readingbat.dsl.ReturnType.BooleanType
+import com.github.readingbat.dsl.GitHubContent
+import com.github.readingbat.dsl.eval
 import com.github.readingbat.dsl.readingBatContent
 
 val organization = "readingbat"
@@ -26,7 +27,7 @@ val content by lazy {
   readingBatContent {
     //repo = GitHubRepo(organization, "readingbat-java-content")
     repo = FileSystemSource("./")
-
+/*
     java {
       //repo = GitHubRepo(organization, "readingbat-java-content")
       //repo = FileSystemSource("./")
@@ -60,8 +61,8 @@ val content by lazy {
 
       }
     }
-
-    //include(GitHubContent(organization, "readingbat-java-content", branch = branch).eval().java)
+*/
+    include(GitHubContent(organization, "readingbat-java-content", branch = branch).eval().java)
     //include(GitHubContent(organization, "readingbat-python-content", branch = branch, srcPath = "src").eval().python)
     //include(GitHubContent(organization, "readingbat-java-content", branch = branch).eval().kotlin)
 

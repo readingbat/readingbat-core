@@ -50,8 +50,6 @@ internal fun Application.locations(readingBatContent: ReadingBatContent) {
 
     get<Language> {
       // This lookup has to take place outside of the lambda for proper exception handling
-      val session = call.sessions.get<ClientSession>()
-      logger.info { session }
       validateLanguage(it.languageType)
       val languageGroup = readingBatContent.findLanguage(it.languageType)
       call.respondHtml { languageGroupPage(readingBatContent, it.languageType, languageGroup.challengeGroups) }
@@ -66,7 +64,8 @@ internal fun Application.locations(readingBatContent: ReadingBatContent) {
     get<Language.Group.Challenge> {
       validateLanguage(it.languageType)
       val challenge = readingBatContent.findChallenge(it.languageType, it.groupName, it.challengeName)
-      call.respondHtml { challengePage(challenge) }
+      val clientSession: ClientSession? = call.sessions.get<ClientSession>()
+      call.respondHtml { challengePage(challenge, clientSession) }
     }
 
     get<PlaygroundRequest> {

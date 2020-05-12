@@ -34,7 +34,7 @@ fun HTML.playgroundPage(challenge: Challenge) {
   val languageType = challenge.languageType
   val languageName = languageType.lowerName
   val groupName = challenge.groupName
-  val name = challenge.name
+  val name = challenge.challengeName
 
   head {
     script { src = "https://unpkg.com/kotlin-playground@1"; attributes["data-selector"] = "code" }

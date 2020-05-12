@@ -17,9 +17,12 @@
 
 package com.github.readingbat.misc
 
+import mu.KotlinLogging
 import redis.clients.jedis.Jedis
 import kotlin.time.Duration
 import kotlin.time.seconds
+
+private val logger = KotlinLogging.logger {}
 
 class RedisSessionStorage(val redis: Jedis,
                           val prefix: String = "session_",
@@ -27,21 +30,32 @@ class RedisSessionStorage(val redis: Jedis,
   private fun buildKey(id: String) = "$prefix$id"
 
   override suspend fun read(id: String): ByteArray? {
+    logger.info { "Redis read for $id" }
     val key = buildKey(id)
-    return redis.get(key)?.toByteArray(Charsets.UTF_8)
-      .apply {
-        redis.expire(key, ttl.inSeconds.toInt()) // refresh
-      }
+    try {
+      return redis.get(key)?.toByteArray(Charsets.UTF_8)
+        .apply {
+          redis.expire(key, ttl.inSeconds.toInt()) // refresh
+        }
+    } catch (e: Exception) {
+      e.printStackTrace()
+      return null
+    }
   }
 
   override suspend fun write(id: String, data: ByteArray?) {
+    logger.info { "Redis write for $id" }
     val key = buildKey(id)
     if (data == null) {
       redis.del(buildKey(id))
     }
     else {
-      redis.set(key, String(data))
-      redis.expire(key, ttl.inSeconds.toInt())
+      try {
+        redis.set(key, String(data))
+        redis.expire(key, ttl.inSeconds.toInt())
+      } catch (e: Exception) {
+        e.printStackTrace()
+      }
     }
   }
 }
