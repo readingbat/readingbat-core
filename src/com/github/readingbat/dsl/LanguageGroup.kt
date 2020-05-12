@@ -102,7 +102,7 @@ class LanguageGroup<T : Challenge>(internal val readingBatContent: ReadingBatCon
 
   @ReadingBatDslMarker
   fun include(challengeGroup: ChallengeGroup<T>) {
-    this@LanguageGroup.addGroup(challengeGroup)
+    addGroup(challengeGroup)
   }
 
   fun findGroup(groupName: String) =

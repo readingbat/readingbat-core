@@ -69,7 +69,7 @@ class ReadingBatContent {
 
   @ReadingBatDslMarker
   fun <T : Challenge> include(languageGroup: LanguageGroup<T>) {
-    val group = this@ReadingBatContent.findLanguage(languageGroup.languageType) as LanguageGroup<T>
+    val group = findLanguage(languageGroup.languageType) as LanguageGroup<T>
     languageGroup.challengeGroups.forEach { group.addGroup(it) }
   }
 

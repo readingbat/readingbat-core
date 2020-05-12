@@ -39,10 +39,21 @@ import io.ktor.response.respondText
 import io.ktor.routing.get
 import io.ktor.routing.post
 import io.ktor.routing.routing
+import io.ktor.sessions.clear
+import io.ktor.sessions.get
+import io.ktor.sessions.sessions
+import io.ktor.sessions.set
 import kotlinx.css.CSSBuilder
+import mu.KotlinLogging
 import java.io.ByteArrayOutputStream
 import java.lang.management.ManagementFactory
+import java.util.concurrent.atomic.AtomicInteger
 
+
+data class ClientSession(val name: String, val value: Int)
+data class ServerSession(val name: String, val value: Int)
+
+private val logger = KotlinLogging.logger {}
 
 internal fun Application.routes(readingBatContent: ReadingBatContent) {
 
@@ -69,12 +80,41 @@ internal fun Application.routes(readingBatContent: ReadingBatContent) {
       checkUserAnswers(readingBatContent)
     }
 
-    get("/ping") {
-      call.respondText { "pong" }
+    val counter = AtomicInteger()
+
+    get("/session-register") {
+      logger.info { call.sessions.get<ClientSession>() }
+      val cnt = counter.incrementAndGet()
+      call.sessions.set(ClientSession(name = "John Client", value = cnt))
+
+      logger.info { call.sessions.get<ServerSession>() }
+      val cnt2 = counter.incrementAndGet()
+      call.sessions.set(ServerSession(name = "John Server", value = cnt))
+
+      call.respondText { "registered $cnt" }
     }
+
+    get("/session-check") {
+      val clientSession = call.sessions.get<ClientSession>()
+      logger.info { clientSession }
+      val serverSession = call.sessions.get<ServerSession>()
+      logger.info { serverSession }
+      call.respondText { "checked $clientSession $serverSession" }
+    }
+
+    get("/session-clear") {
+      logger.info { call.sessions.get<ClientSession>() }
+      call.sessions.clear<ClientSession>()
+      logger.info { call.sessions.get<ServerSession>() }
+      call.sessions.clear<ServerSession>()
+      call.respondText { "cleared" }
+    }
+
+    get("/ping") { call.respondText { "pong" } }
 
     get("/threaddump") {
       try {
+        logger.info { call.sessions.get<ClientSession>() }
         val baos = ByteArrayOutputStream()
         baos.use { threadDump.dump(true, true, it) }
         val output = String(baos.toByteArray(), Charsets.UTF_8)

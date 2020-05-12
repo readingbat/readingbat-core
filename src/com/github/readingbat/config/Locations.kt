@@ -34,6 +34,11 @@ import io.ktor.html.respondHtml
 import io.ktor.locations.Location
 import io.ktor.locations.get
 import io.ktor.routing.routing
+import io.ktor.sessions.get
+import io.ktor.sessions.sessions
+import mu.KotlinLogging
+
+private val logger = KotlinLogging.logger {}
 
 internal fun Application.locations(readingBatContent: ReadingBatContent) {
   routing {
@@ -45,6 +50,8 @@ internal fun Application.locations(readingBatContent: ReadingBatContent) {
 
     get<Language> {
       // This lookup has to take place outside of the lambda for proper exception handling
+      val session = call.sessions.get<ClientSession>()
+      logger.info { session }
       validateLanguage(it.languageType)
       val languageGroup = readingBatContent.findLanguage(it.languageType)
       call.respondHtml { languageGroupPage(readingBatContent, it.languageType, languageGroup.challengeGroups) }

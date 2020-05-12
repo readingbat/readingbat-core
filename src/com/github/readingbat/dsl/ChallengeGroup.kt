@@ -95,8 +95,8 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
 
   @ReadingBatDslMarker
   fun include(challenge: T) {
-    this@ChallengeGroup.checkChallengeName(challenge.name)
-    this@ChallengeGroup.challenges += challenge
+    checkChallengeName(challenge.name)
+    challenges += challenge
   }
 
 

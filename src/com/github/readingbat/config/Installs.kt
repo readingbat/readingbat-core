@@ -32,8 +32,12 @@ import io.ktor.locations.Locations
 import io.ktor.request.path
 import io.ktor.response.respond
 import io.ktor.server.engine.ShutDownUrl
+import io.ktor.sessions.Sessions
+import io.ktor.sessions.cookie
+import io.ktor.sessions.directorySessionStorage
 import mu.KotlinLogging
 import org.slf4j.event.Level
+import java.io.File
 import kotlin.text.Charsets.UTF_8
 
 private val logger = KotlinLogging.logger {}
@@ -51,6 +55,17 @@ internal fun Application.installs() {
   }
 
   install(Locations)
+
+  install(Sessions) {
+    cookie<ClientSession>("readingbat_id") {
+      cookie.path = "/"
+    }
+
+    cookie<ServerSession>("readingbat_session_id",
+                          storage = directorySessionStorage(File("server-sessions"), cached = true)) {
+      cookie.path = "/"
+    }
+  }
 
   install(CallLogging) {
     level = Level.INFO
