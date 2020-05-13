@@ -37,11 +37,11 @@ import com.github.readingbat.misc.CSSNames.status
 import com.github.readingbat.misc.CSSNames.tabs
 import com.github.readingbat.misc.CSSNames.userAnswers
 import com.github.readingbat.misc.CSSNames.userResp
-import com.github.readingbat.misc.Constants.cssType
 import com.github.readingbat.misc.Constants.playground
 import com.github.readingbat.misc.Constants.root
 import com.github.readingbat.misc.Constants.staticRoot
 import com.github.readingbat.misc.addScript
+import io.ktor.http.ContentType.Text.CSS
 import kotlinx.html.*
 import kotlinx.html.Entities.nbsp
 import kotlinx.html.stream.createHTML
@@ -60,7 +60,7 @@ internal fun challengePage(challenge: Challenge, clientSession: ClientSession?) 
 
       head {
         link { rel = "stylesheet"; href = spinnerCss }
-        link { rel = "stylesheet"; href = "/$staticRoot/$languageName-prism.css"; type = cssType }
+        link { rel = "stylesheet"; href = "/$staticRoot/$languageName-prism.css"; type = CSS.toString() }
 
         script(type = ScriptType.textJavaScript) { addScript(languageName, groupName, name) }
 

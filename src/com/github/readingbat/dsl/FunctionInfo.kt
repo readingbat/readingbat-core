@@ -71,9 +71,9 @@ class FunctionInfo(val languageType: LanguageType,
       IntType -> "0"
       StringType -> {
         if (languageType.isPython())
-          """"""""
-        else
           "''"
+        else
+          """"""""
       }
       BooleanListType,
       BooleanArrayType -> {
@@ -87,9 +87,9 @@ class FunctionInfo(val languageType: LanguageType,
       StringListType,
       StringArrayType -> {
         if (languageType.isPython())
-          """["", ""]"""
-        else
           "['', '']"
+        else
+          """["", ""]"""
       }
       Runtime -> throw InvalidConfigurationException("Invalid return type")
     }

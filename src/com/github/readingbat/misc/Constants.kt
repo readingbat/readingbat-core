@@ -17,8 +17,6 @@
 
 package com.github.readingbat.misc
 
-import io.ktor.http.ContentType.Text.CSS
-
 internal object Constants {
   const val sessionid = "sessionid"
   const val playground = "playground"
@@ -27,5 +25,4 @@ internal object Constants {
   const val icons = "icons"
   const val cssName = "styles.css"
   const val root = "content"
-  val cssType = CSS.toString()
 }

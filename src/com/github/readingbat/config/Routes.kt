@@ -30,10 +30,9 @@ import com.github.readingbat.misc.Constants.staticRoot
 import com.github.readingbat.misc.cssContent
 import com.github.readingbat.pages.defaultTab
 import io.ktor.application.Application
-import io.ktor.application.ApplicationCall
 import io.ktor.application.call
 import io.ktor.auth.*
-import io.ktor.http.ContentType
+import io.ktor.http.ContentType.Text.CSS
 import io.ktor.http.ContentType.Text.Html
 import io.ktor.http.content.resources
 import io.ktor.http.content.static
@@ -48,7 +47,6 @@ import io.ktor.sessions.get
 import io.ktor.sessions.sessions
 import io.ktor.sessions.set
 import io.ktor.util.getDigestFunction
-import kotlinx.css.CSSBuilder
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 import mu.KotlinLogging
@@ -78,6 +76,7 @@ val hashedUserTable = UserHashedTableAuth(getDigestFunction("SHA-256") { "ktor${
 internal fun Application.routes(readingBatContent: ReadingBatContent) {
 
   routing {
+
     route("/login") {
       authentication {
         form {
@@ -115,11 +114,13 @@ internal fun Application.routes(readingBatContent: ReadingBatContent) {
     }
 
     get("/") {
-      call.respondRedirect(defaultTab(readingBatContent))
+      val tab = defaultTab(readingBatContent)
+      call.respondRedirect(tab)
     }
 
     get("/$root") {
-      call.respondRedirect(defaultTab(readingBatContent))
+      val tab = defaultTab(readingBatContent)
+      call.respondRedirect(tab)
     }
 
     get("/favicon.ico") {
@@ -127,9 +128,8 @@ internal fun Application.routes(readingBatContent: ReadingBatContent) {
     }
 
     get("/$cssName") {
-      call.respondCss {
-        cssContent()
-      }
+      val css = cssContent
+      call.respondText(css, CSS)
     }
 
     post("/$checkAnswers") {
@@ -182,8 +182,4 @@ internal fun Application.routes(readingBatContent: ReadingBatContent) {
 
 private object ThreadDumpInfo {
   internal val threadDump by lazy { ThreadDump(ManagementFactory.getThreadMXBean()) }
-}
-
-private suspend inline fun ApplicationCall.respondCss(builder: CSSBuilder.() -> Unit) {
-  respondText(CSSBuilder().apply(builder).toString(), ContentType.Text.CSS)
 }

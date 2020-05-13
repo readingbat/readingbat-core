@@ -26,16 +26,16 @@ import com.github.readingbat.misc.CSSNames.backLinkCls
 import com.github.readingbat.misc.CSSNames.bodyHeaderCls
 import com.github.readingbat.misc.CSSNames.selected
 import com.github.readingbat.misc.Constants.cssName
-import com.github.readingbat.misc.Constants.cssType
 import com.github.readingbat.misc.Constants.icons
 import com.github.readingbat.misc.Constants.root
 import com.github.readingbat.misc.Constants.staticRoot
 import com.github.readingbat.misc.Constants.titleText
+import io.ktor.http.ContentType.Text.CSS
 import kotlinx.html.*
 import kotlinx.html.Entities.nbsp
 
 internal fun HEAD.headDefault(readingBatContent: ReadingBatContent) {
-  link { rel = "stylesheet"; href = "/$cssName"; type = cssType }
+  link { rel = "stylesheet"; href = "/$cssName"; type = CSS.toString() }
 
   // From: https://favicon.io/emoji-favicons/glasses/
   val root = "$staticRoot/$icons"

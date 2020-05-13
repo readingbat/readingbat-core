@@ -43,7 +43,7 @@ internal fun Application.locations(readingBatContent: ReadingBatContent) {
 
     fun validateLanguage(languageType: LanguageType) {
       if (!readingBatContent.hasLanguage(languageType) || !readingBatContent.hasGroups(languageType))
-        throw InvalidConfigurationException("Invlaid language: $languageType")
+        throw InvalidConfigurationException("Invalid language: $languageType")
     }
 
     get<Language> { lang ->
