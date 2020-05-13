@@ -58,8 +58,10 @@ private data class ChallengeHistory(var argument: String,
 
   fun markIncorrect(userResp: String) {
     correct = false
-    attempts++
-    answers += userResp
+    if (userResp.isNotEmpty() && userResp !in answers) {
+      attempts++
+      answers += userResp
+    }
   }
 }
 
@@ -115,9 +117,9 @@ object CheckAnswers : KLogging() {
               val historyJson = redis.get(argumentKey)
               val history =
                 gson.fromJson(historyJson, ChallengeHistory::class.java) ?: ChallengeHistory(result.arguments)
-              logger.info { "Before: $history" }
+              logger.debug { "Before: $history" }
               history.apply { if (result.correct) markCorrect() else markIncorrect(result.userResponse) }
-              logger.info { "After: $history" }
+              logger.debug { "After: $history" }
               val updateJson = gson.toJson(history)
               redis.set(argumentKey, updateJson)
             }
@@ -127,7 +129,7 @@ object CheckAnswers : KLogging() {
     results
       .filter { it.answered }
       .forEach {
-        logger.info { "Item with args; ${it.arguments} was correct: ${it.correct}" }
+        logger.debug { "Item with args; ${it.arguments} was correct: ${it.correct}" }
       }
 
     delay(200.milliseconds.toLongMilliseconds())
