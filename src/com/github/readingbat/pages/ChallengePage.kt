@@ -93,7 +93,7 @@ internal fun HTML.challengePage(challenge: Challenge, clientSession: ClientSessi
           if (clientSession != null) {
             RedisPool.pool.resource
               .use { redis ->
-                val key = clientSession.redisKey(languageName, groupName, challenge.challengeName)
+                val key = clientSession.challengeKey(languageName, groupName, challenge.challengeName)
                 logger.debug { "Fetching: $key" }
                 val json = redis.get(key)
                 val challengeAnswers = gson.fromJson(json, ChallengeAnswers::class.java)

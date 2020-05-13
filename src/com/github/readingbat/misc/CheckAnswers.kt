@@ -43,6 +43,26 @@ import mu.KLogging
 import javax.script.ScriptException
 import kotlin.time.milliseconds
 
+private data class ChallengeResults(val arguments: String,
+                                    val userResponse: String,
+                                    val answered: Boolean,
+                                    val correct: Boolean)
+
+private data class ChallengeHistory(var argument: String,
+                                    var correct: Boolean = false,
+                                    var attempts: Int = 0,
+                                    val answers: MutableList<String> = mutableListOf()) {
+  fun markCorrect() {
+    correct = true
+  }
+
+  fun markIncorrect(userResp: String) {
+    correct = false
+    attempts++
+    answers += userResp
+  }
+}
+
 object CheckAnswers : KLogging() {
 
   internal suspend fun PipelineContext<Unit, ApplicationCall>.checkUserAnswers(readingBatContent: ReadingBatContent,
@@ -61,10 +81,14 @@ object CheckAnswers : KLogging() {
 
     val results =
       userResps.indices.map { i ->
-        val userResp = compareMap[userResp + i]?.trim() ?: throw InvalidConfigurationException("Missing user response")
+        val userResponse =
+          compareMap[userResp + i]?.trim() ?: throw InvalidConfigurationException("Missing user response")
         val funcInfo = challenge.funcInfo()
         val answer = funcInfo.answers[i]
-        Triple(funcInfo.arguments[i], userResp.isNotEmpty(), checkWithAnswer(isJvm, userResp, answer))
+        ChallengeResults(funcInfo.arguments[i],
+                         userResponse,
+                         userResponse.isNotEmpty(),
+                         checkWithAnswer(isJvm, userResponse, answer))
       }
 
     if (clientSession != null) {
@@ -78,22 +102,36 @@ object CheckAnswers : KLogging() {
 
       pool.resource
         .use { redis ->
-          val key = clientSession.redisKey(languageName, groupName, challengeName)
+          val challengeKey = clientSession.challengeKey(languageName, groupName, challengeName)
           val challengeAnswers = ChallengeAnswers(clientSession.id, answerMap)
-          val json = gson.toJson(challengeAnswers)
-          logger.debug { "Assigning: $key to $json" }
-          redis.set(key, json)
+          val challengeJson = gson.toJson(challengeAnswers)
+          logger.debug { "Assigning: $challengeKey to $challengeJson" }
+          redis.set(challengeKey, challengeJson)
+
+          results
+            .filter { it.answered }
+            .forEach { result ->
+              val argumentKey = clientSession.argumentKey(languageName, groupName, challengeName, result.arguments)
+              val historyJson = redis.get(argumentKey)
+              val history =
+                gson.fromJson(historyJson, ChallengeHistory::class.java) ?: ChallengeHistory(result.arguments)
+              logger.info { "Before: $history" }
+              history.apply { if (result.correct) markCorrect() else markIncorrect(result.userResponse) }
+              logger.info { "After: $history" }
+              val updateJson = gson.toJson(history)
+              redis.set(argumentKey, updateJson)
+            }
         }
     }
 
     results
-      .filter { it.second }
+      .filter { it.answered }
       .forEach {
-        logger.info { "Item with args; ${it.first} was correct: ${it.third}" }
+        logger.info { "Item with args; ${it.arguments} was correct: ${it.correct}" }
       }
 
     delay(200.milliseconds.toLongMilliseconds())
-    call.respondText(results.map { it.third }.toString())
+    call.respondText(results.map { it.correct }.toString())
   }
 
   private infix fun String.equalsAsKotlinList(other: String): Boolean {

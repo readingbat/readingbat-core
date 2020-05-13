@@ -50,11 +50,15 @@ import java.io.ByteArrayOutputStream
 import java.lang.management.ManagementFactory
 
 
-data class ClientSession(val name: String, val id: String) {
-  fun redisKey(lang: String, groupName: String, challengeName: String) = "$id|$lang|$groupName|$challengeName"
+internal data class ClientSession(val name: String, val id: String) {
+  fun challengeKey(languageName: String, groupName: String, challengeName: String) =
+    "$id|$languageName|$groupName|$challengeName"
+
+  fun argumentKey(languageName: String, groupName: String, challengeName: String, argument: String) =
+    "${challengeKey(languageName, groupName, challengeName)}|$argument"
 }
 
-data class ChallengeAnswers(val id: String, val answers: MutableMap<String, String> = mutableMapOf())
+internal data class ChallengeAnswers(val id: String, val answers: MutableMap<String, String> = mutableMapOf())
 
 private val logger = KotlinLogging.logger {}
 
