@@ -17,19 +17,28 @@
 
 package com.github.readingbat.misc
 
-import com.github.readingbat.misc.Constants.challengeSrc
-import com.github.readingbat.misc.Constants.checkAnswers
-import com.github.readingbat.misc.Constants.feedback
-import com.github.readingbat.misc.Constants.groupSrc
-import com.github.readingbat.misc.Constants.langSrc
-import com.github.readingbat.misc.Constants.processAnswers
-import com.github.readingbat.misc.Constants.sessionCounter
+import com.github.readingbat.misc.Answers.challengeSrc
+import com.github.readingbat.misc.Answers.groupSrc
+import com.github.readingbat.misc.Answers.langSrc
+import com.github.readingbat.misc.Answers.processAnswers
+import com.github.readingbat.misc.CSSNames.checkAnswers
+import com.github.readingbat.misc.CSSNames.feedback
+import com.github.readingbat.misc.CSSNames.spinner
+import com.github.readingbat.misc.CSSNames.status
+import com.github.readingbat.misc.CSSNames.userResp
 import com.github.readingbat.misc.Constants.sessionid
-import com.github.readingbat.misc.Constants.spinner
-import com.github.readingbat.misc.Constants.status
-import com.github.readingbat.misc.Constants.userResp
 import com.github.readingbat.pages.rawHtml
 import kotlinx.html.SCRIPT
+import java.util.concurrent.atomic.AtomicInteger
+
+internal object Answers {
+  const val langSrc = "lang"
+  const val groupSrc = "groupName"
+  const val challengeSrc = "challengeName"
+  const val processAnswers = "processAnswers"
+}
+
+private val sessionCounter = AtomicInteger(0)
 
 internal fun SCRIPT.addScript(languageName: String, groupName: String, challengeName: String) =
   rawHtml(

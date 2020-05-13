@@ -20,40 +20,43 @@ package com.github.readingbat.pages
 import com.github.readingbat.dsl.ChallengeGroup
 import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.misc.Constants.funcChoice
-import com.github.readingbat.misc.Constants.funcItem
-import com.github.readingbat.misc.Constants.groupItemSrc
+import com.github.readingbat.misc.CSSNames.funcChoice
+import com.github.readingbat.misc.CSSNames.funcItem
+import com.github.readingbat.misc.CSSNames.groupItemSrc
+import com.github.readingbat.misc.CSSNames.tabs
 import com.github.readingbat.misc.Constants.root
-import com.github.readingbat.misc.Constants.tabs
 import kotlinx.html.*
+import kotlinx.html.stream.createHTML
 
-internal fun HTML.languageGroupPage(readingBatContent: ReadingBatContent,
-                                    languageType: LanguageType,
-                                    groups: List<ChallengeGroup<*>>) {
-  head {
-    headDefault(readingBatContent)
-  }
+internal fun languageGroupPage(readingBatContent: ReadingBatContent,
+                               languageType: LanguageType,
+                               groups: List<ChallengeGroup<*>>) =
+  createHTML()
+    .html {
+      head {
+        headDefault(readingBatContent)
+      }
 
-  body {
-    bodyHeader(readingBatContent, languageType)
-    div(classes = tabs) {
-      table {
-        val cols = 3
-        val size = groups.size
-        val rows = size.rows(cols)
-        val languageName = languageType.lowerName
+      body {
+        bodyHeader(readingBatContent, languageType)
+        div(classes = tabs) {
+          table {
+            val cols = 3
+            val size = groups.size
+            val rows = size.rows(cols)
+            val languageName = languageType.lowerName
 
-        (0 until rows).forEach { i ->
-          tr {
-            groups[i].also { group -> groupItem(languageName, group) }
-            groups.elementAtOrNull(i + rows)?.also { groupItem(languageName, it) } ?: td {}
-            groups.elementAtOrNull(i + (2 * rows))?.also { groupItem(languageName, it) } ?: td {}
+            (0 until rows).forEach { i ->
+              tr {
+                groups[i].also { group -> groupItem(languageName, group) }
+                groups.elementAtOrNull(i + rows)?.also { groupItem(languageName, it) } ?: td {}
+                groups.elementAtOrNull(i + (2 * rows))?.also { groupItem(languageName, it) } ?: td {}
+              }
+            }
           }
         }
       }
     }
-  }
-}
 
 private fun TR.groupItem(prefix: String, challengeGroup: ChallengeGroup<*>) {
   val name = challengeGroup.groupName

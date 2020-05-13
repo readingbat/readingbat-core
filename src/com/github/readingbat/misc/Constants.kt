@@ -18,43 +18,14 @@
 package com.github.readingbat.misc
 
 import io.ktor.http.ContentType.Text.CSS
-import java.util.concurrent.atomic.AtomicInteger
 
 internal object Constants {
   const val sessionid = "sessionid"
-  const val groupItemSrc = "groupItem"
-  const val funcItem = "funcItem"
-  const val funcChoice = "funcChoice"
-  const val userResp = "userResp"
-  const val answer = "answer"
-  const val funcCol = "funcCol"
-  const val arrow = "arrow"
-  const val feedback = "feedback"
-  const val userAnswers = "userAnswers"
-  const val codeBlock = "codeBlock"
-  const val checkBar = "checkBar"
-  const val checkAnswers = "checkAnswers"
-  const val spinner = "spinner"
-  const val status = "status"
-  const val refs = "refs"
-  const val backLink = "backLink"
-  const val langSrc = "lang"
-  const val groupSrc = "groupName"
-  const val challengeSrc = "challengeName"
-  const val tabs = "tabs"
-  const val selected = "selected"
-  const val processAnswers = "processAnswers"
   const val playground = "playground"
   const val titleText = "ReadingBat"
   const val staticRoot = "static"
   const val icons = "icons"
-  const val checkJpg = "/$staticRoot/check.jpg"
   const val cssName = "styles.css"
-  const val kotlinCode = "kotlin-code"
-  const val challengeDesc = "challenge-desc"
-  const val bodyHeader = "bodyHeader"
   const val root = "content"
   val cssType = CSS.toString()
-  val sessionCounter = AtomicInteger(0)
-  val production: Boolean by lazy { System.getenv("PRODUCTION")?.toBoolean() ?: false }
 }

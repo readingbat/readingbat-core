@@ -19,52 +19,55 @@ package com.github.readingbat.pages
 
 import com.github.pambrose.common.util.decode
 import com.github.readingbat.dsl.Challenge
-import com.github.readingbat.misc.Constants.challengeDesc
-import com.github.readingbat.misc.Constants.kotlinCode
+import com.github.readingbat.misc.CSSNames.challengeDesc
+import com.github.readingbat.misc.CSSNames.kotlinCode
+import com.github.readingbat.misc.CSSNames.tabs
 import com.github.readingbat.misc.Constants.root
-import com.github.readingbat.misc.Constants.tabs
 import kotlinx.html.*
+import kotlinx.html.stream.createHTML
 import org.apache.commons.text.StringEscapeUtils
 
 // Playground customization details are here:
 // https://jetbrains.github.io/kotlin-playground/
 // https://jetbrains.github.io/kotlin-playground/examples/
 
-fun HTML.playgroundPage(challenge: Challenge) {
-  val languageType = challenge.languageType
-  val languageName = languageType.lowerName
-  val groupName = challenge.groupName
-  val name = challenge.challengeName
+fun playgroundPage(challenge: Challenge) =
+  createHTML()
+    .html {
+      val languageType = challenge.languageType
+      val languageName = languageType.lowerName
+      val groupName = challenge.groupName
+      val name = challenge.challengeName
 
-  head {
-    script { src = "https://unpkg.com/kotlin-playground@1"; attributes["data-selector"] = "code" }
-    headDefault(challenge.readingBatContent)
-  }
-
-  body {
-    bodyHeader(challenge.readingBatContent, languageType)
-
-    div(classes = tabs) {
-      h2 {
-        this@body.addLink(groupName.decode(), "/$languageName/$groupName")
-        rawHtml("${Entities.nbsp.text}&rarr;${Entities.nbsp.text}")
-        this@body.addLink(name.decode(), "/$languageName/$groupName/$name")
+      head {
+        script { src = "https://unpkg.com/kotlin-playground@1"; attributes["data-selector"] = "code" }
+        headDefault(challenge.readingBatContent)
       }
 
-      if (challenge.description.isNotEmpty())
-        div(classes = challengeDesc) { rawHtml(challenge.parsedDescription) }
+      body {
+        bodyHeader(challenge.readingBatContent, languageType)
 
-      div(classes = kotlinCode) {
-        val options =
-          """theme="idea" indent="2" lines="true" highlight-on-fly="true" data-autocomplete="true" match-brackets="true""""
-        rawHtml("""
+        div(classes = tabs) {
+          h2 {
+            this@body.addLink(groupName.decode(), "/$languageName/$groupName")
+            rawHtml("${Entities.nbsp.text}&rarr;${Entities.nbsp.text}")
+            this@body.addLink(name.decode(), "/$languageName/$groupName/$name")
+          }
+
+          if (challenge.description.isNotEmpty())
+            div(classes = challengeDesc) { rawHtml(challenge.parsedDescription) }
+
+          div(classes = kotlinCode) {
+            val options =
+              """theme="idea" indent="2" lines="true" highlight-on-fly="true" data-autocomplete="true" match-brackets="true""""
+            rawHtml("""
           <code class="$kotlinCode" $options >
           ${StringEscapeUtils.escapeHtml4(challenge.funcInfo().originalCode)}
           </code>
         """)
+          }
+        }
+
+        backLink("/$root/$languageName/$groupName/$name")
       }
     }
-
-    backLink("/$root/$languageName/$groupName/$name")
-  }
-}

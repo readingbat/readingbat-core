@@ -52,11 +52,11 @@ val content by lazy {
       group("Numeric Expressions") {
         packageName = "numeric_expressions"
         description = "Basic numeric expressions"
-        includeFilesWithType = "*.py" returns BooleanType
+        includeFilesWithType = "*.py" returns ReturnType.BooleanType
 
         challenge("lt_expr") {
           description = """Determine if one value is less than another with the "<" operator."""
-          returnType = BooleanType
+          returnType = ReturnType.BooleanType
         }
 
       }

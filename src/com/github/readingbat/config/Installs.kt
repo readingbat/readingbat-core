@@ -19,10 +19,10 @@ package com.github.readingbat.config
 
 import com.github.pambrose.common.util.simpleClassName
 import com.github.readingbat.InvalidPathException
-import com.github.readingbat.misc.Constants.production
 import io.ktor.application.Application
 import io.ktor.application.call
 import io.ktor.application.install
+import io.ktor.auth.*
 import io.ktor.features.*
 import io.ktor.http.ContentType.Text.Plain
 import io.ktor.http.HttpStatusCode
@@ -31,6 +31,7 @@ import io.ktor.http.withCharset
 import io.ktor.locations.Locations
 import io.ktor.request.path
 import io.ktor.response.respond
+import io.ktor.response.respondRedirect
 import io.ktor.server.engine.ShutDownUrl
 import io.ktor.sessions.Sessions
 import io.ktor.sessions.cookie
@@ -39,6 +40,59 @@ import org.slf4j.event.Level
 import kotlin.text.Charsets.UTF_8
 
 private val logger = KotlinLogging.logger {}
+internal val production: Boolean by lazy { System.getenv("PRODUCTION")?.toBoolean() ?: false }
+
+object FormFields {
+  const val USERNAME = "username"
+  const val PASSWORD = "password"
+}
+
+object AuthName {
+  const val SESSION = "session"
+  const val FORM = "form"
+}
+
+object CommonRoutes {
+  const val LOGIN = "/login"
+  const val LOGOUT = "/logout"
+  const val PROFILE = "/profile"
+}
+
+object TestCredentials {
+  const val USERNAME = "foo"
+  const val PASSWORD = "bar"
+}
+
+private fun Authentication.Configuration.configureFormAuth() {
+  form(AuthName.FORM) {
+    userParamName = FormFields.USERNAME
+    passwordParamName = FormFields.PASSWORD
+    challenge {
+      // I don't think form auth supports multiple errors, but we're conservatively assuming there will be at
+      // most one error, which we handle here. Worst case, we just send the user to login with no context.
+      val errors: Map<Any, AuthenticationFailedCause> = call.authentication.errors
+      when (errors.values.singleOrNull()) {
+        AuthenticationFailedCause.InvalidCredentials ->
+          call.respondRedirect("${CommonRoutes.LOGIN}?invalid")
+
+        AuthenticationFailedCause.NoCredentials ->
+          call.respondRedirect("${CommonRoutes.LOGIN}?no")
+
+        else ->
+          call.respondRedirect(CommonRoutes.LOGIN)
+      }
+    }
+    validate { cred: UserPasswordCredential ->
+      // Realistically you'd look up the user in a database or something here; this is just a toy example.
+      // The values here will be whatever was submitted in the form.
+      if (cred.name == TestCredentials.USERNAME && cred.password == TestCredentials.PASSWORD)
+        UserIdPrincipal(cred.name)
+      else
+        null
+    }
+  }
+}
+
 
 internal fun Application.installs() {
 
@@ -61,6 +115,11 @@ internal fun Application.installs() {
       cookie.path = "/"
     }
   }
+
+  install(Authentication) {
+    configureFormAuth()
+  }
+
 
   install(CallLogging) {
     level = Level.INFO

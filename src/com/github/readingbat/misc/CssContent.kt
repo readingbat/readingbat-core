@@ -17,31 +17,56 @@
 
 package com.github.readingbat.misc
 
-import com.github.readingbat.misc.Constants.arrow
-import com.github.readingbat.misc.Constants.backLink
-import com.github.readingbat.misc.Constants.bodyHeader
-import com.github.readingbat.misc.Constants.challengeDesc
-import com.github.readingbat.misc.Constants.checkAnswers
-import com.github.readingbat.misc.Constants.checkBar
-import com.github.readingbat.misc.Constants.codeBlock
-import com.github.readingbat.misc.Constants.feedback
-import com.github.readingbat.misc.Constants.funcChoice
-import com.github.readingbat.misc.Constants.funcCol
-import com.github.readingbat.misc.Constants.funcItem
-import com.github.readingbat.misc.Constants.groupItemSrc
-import com.github.readingbat.misc.Constants.kotlinCode
-import com.github.readingbat.misc.Constants.refs
-import com.github.readingbat.misc.Constants.selected
-import com.github.readingbat.misc.Constants.spinner
-import com.github.readingbat.misc.Constants.status
-import com.github.readingbat.misc.Constants.tabs
-import com.github.readingbat.misc.Constants.userAnswers
-import com.github.readingbat.misc.Constants.userResp
+import com.github.readingbat.misc.CSSNames.arrow
+import com.github.readingbat.misc.CSSNames.backLinkCls
+import com.github.readingbat.misc.CSSNames.bodyHeaderCls
+import com.github.readingbat.misc.CSSNames.challengeDesc
+import com.github.readingbat.misc.CSSNames.checkAnswers
+import com.github.readingbat.misc.CSSNames.checkBar
+import com.github.readingbat.misc.CSSNames.codeBlock
+import com.github.readingbat.misc.CSSNames.codeFs
+import com.github.readingbat.misc.CSSNames.feedback
+import com.github.readingbat.misc.CSSNames.fs
+import com.github.readingbat.misc.CSSNames.funcChoice
+import com.github.readingbat.misc.CSSNames.funcCol
+import com.github.readingbat.misc.CSSNames.funcItem
+import com.github.readingbat.misc.CSSNames.groupItemSrc
+import com.github.readingbat.misc.CSSNames.kotlinCode
+import com.github.readingbat.misc.CSSNames.refs
+import com.github.readingbat.misc.CSSNames.selected
+import com.github.readingbat.misc.CSSNames.spinner
+import com.github.readingbat.misc.CSSNames.status
+import com.github.readingbat.misc.CSSNames.tabs
+import com.github.readingbat.misc.CSSNames.userAnswers
+import com.github.readingbat.misc.CSSNames.userResp
 import kotlinx.css.*
 import kotlinx.css.properties.TextDecoration
 
-private val fs = 115.pct
-private val codeFs = 95.pct
+internal object CSSNames {
+  const val checkBar = "checkBar"
+  const val checkAnswers = "checkAnswers"
+  const val spinner = "spinner"
+  const val feedback = "feedback"
+  const val funcCol = "funcCol"
+  const val arrow = "arrow"
+  const val refs = "refs"
+  const val backLinkCls = "backLink"
+  const val codeBlock = "codeBlock"
+  const val kotlinCode = "kotlin-code"
+  const val tabs = "tabs"
+  const val userResp = "userResp"
+  const val challengeDesc = "challenge-desc"
+  const val userAnswers = "userAnswers"
+  const val bodyHeaderCls = "bodyHeader"
+  const val funcChoice = "funcChoice"
+  const val funcItem = "funcItem"
+  const val groupItemSrc = "groupItem"
+  const val selected = "selected"
+  const val status = "status"
+  val fs = 115.pct
+  val codeFs = 95.pct
+}
+
 
 internal fun CSSBuilder.cssContent() {
   body {
@@ -52,7 +77,7 @@ internal fun CSSBuilder.cssContent() {
     marginLeft = 1.em
     marginBottom = 1.em
   }
-  rule(".$bodyHeader") {
+  rule(".$bodyHeaderCls") {
     marginBottom = 2.em
   }
   rule(".$funcItem") {
@@ -157,8 +182,8 @@ internal fun CSSBuilder.cssContent() {
     marginTop = 1.em
     fontSize = fs
   }
-  rule(".$backLink") {
-    marginTop = 1.em
+  rule(".$backLinkCls") {
+    //marginTop = 1.em
     fontSize = 120.pct
     marginLeft = 1.em
   }

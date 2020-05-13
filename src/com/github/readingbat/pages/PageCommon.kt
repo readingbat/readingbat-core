@@ -18,17 +18,17 @@
 package com.github.readingbat.pages
 
 import com.github.readingbat.InvalidConfigurationException
+import com.github.readingbat.config.production
 import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.dsl.LanguageType.*
 import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.misc.Constants.backLink
-import com.github.readingbat.misc.Constants.bodyHeader
+import com.github.readingbat.misc.CSSNames.backLinkCls
+import com.github.readingbat.misc.CSSNames.bodyHeaderCls
+import com.github.readingbat.misc.CSSNames.selected
 import com.github.readingbat.misc.Constants.cssName
 import com.github.readingbat.misc.Constants.cssType
 import com.github.readingbat.misc.Constants.icons
-import com.github.readingbat.misc.Constants.production
 import com.github.readingbat.misc.Constants.root
-import com.github.readingbat.misc.Constants.selected
 import com.github.readingbat.misc.Constants.staticRoot
 import com.github.readingbat.misc.Constants.titleText
 import kotlinx.html.*
@@ -60,7 +60,7 @@ internal fun HEAD.headDefault(readingBatContent: ReadingBatContent) {
 }
 
 internal fun BODY.bodyTitle() {
-  div(classes = bodyHeader) {
+  div(classes = bodyHeaderCls) {
     a { href = "/"; span { style = "font-size:200%;"; +titleText } }
     rawHtml(nbsp.text)
     span { +"code reading practice" }
@@ -96,7 +96,8 @@ internal fun BODY.addLink(text: String, url: String, newWindow: Boolean = false)
 }
 
 internal fun BODY.backLink(url: String) {
-  div(classes = backLink) { a { href = url; rawHtml("&larr; Back") } }
+  br
+  div(classes = backLinkCls) { a { href = url; rawHtml("&larr; Back") } }
 }
 
 internal fun HTMLTag.rawHtml(html: String) = unsafe { raw(html) }

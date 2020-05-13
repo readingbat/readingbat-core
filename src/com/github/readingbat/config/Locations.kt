@@ -30,15 +30,13 @@ import com.github.readingbat.pages.languageGroupPage
 import com.github.readingbat.pages.playgroundPage
 import io.ktor.application.Application
 import io.ktor.application.call
-import io.ktor.html.respondHtml
+import io.ktor.http.ContentType.Text.Html
 import io.ktor.locations.Location
 import io.ktor.locations.get
+import io.ktor.response.respondText
 import io.ktor.routing.routing
 import io.ktor.sessions.get
 import io.ktor.sessions.sessions
-import mu.KotlinLogging
-
-private val logger = KotlinLogging.logger {}
 
 internal fun Application.locations(readingBatContent: ReadingBatContent) {
   routing {
@@ -48,29 +46,33 @@ internal fun Application.locations(readingBatContent: ReadingBatContent) {
         throw InvalidConfigurationException("Invlaid language: $languageType")
     }
 
-    get<Language> {
+    get<Language> { lang ->
       // This lookup has to take place outside of the lambda for proper exception handling
-      validateLanguage(it.languageType)
-      val languageGroup = readingBatContent.findLanguage(it.languageType)
-      call.respondHtml { languageGroupPage(readingBatContent, it.languageType, languageGroup.challengeGroups) }
+      validateLanguage(lang.languageType)
+      val languageGroup = readingBatContent.findLanguage(lang.languageType)
+      val html = languageGroupPage(readingBatContent, lang.languageType, languageGroup.challengeGroups)
+      call.respondText(html, Html)
     }
 
-    get<Language.Group> {
-      validateLanguage(it.languageType)
-      val challengeGroup = readingBatContent.findGroup(it.languageType, it.groupName)
-      call.respondHtml { challengeGroupPage(challengeGroup) }
+    get<Language.Group> { group ->
+      validateLanguage(group.languageType)
+      val challengeGroup = readingBatContent.findGroup(group.languageType, group.groupName)
+      val html = challengeGroupPage(challengeGroup)
+      call.respondText(html, Html)
     }
 
-    get<Language.Group.Challenge> {
-      validateLanguage(it.languageType)
-      val challenge = readingBatContent.findChallenge(it.languageType, it.groupName, it.challengeName)
+    get<Language.Group.Challenge> { gc ->
+      validateLanguage(gc.languageType)
+      val challenge = readingBatContent.findChallenge(gc.languageType, gc.groupName, gc.challengeName)
       val clientSession: ClientSession? = call.sessions.get<ClientSession>()
-      call.respondHtml { challengePage(challenge, clientSession) }
+      val html = challengePage(challenge, clientSession)
+      call.respondText(html, Html)
     }
 
-    get<PlaygroundRequest> {
-      val challenge = readingBatContent.findLanguage(Kotlin).findChallenge(it.groupName, it.challengeName)
-      call.respondHtml { playgroundPage(challenge) }
+    get<PlaygroundRequest> { request ->
+      val challenge = readingBatContent.findLanguage(Kotlin).findChallenge(request.groupName, request.challengeName)
+      val html = playgroundPage(challenge)
+      call.respondText(html, Html)
     }
   }
 }

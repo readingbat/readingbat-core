@@ -20,56 +20,58 @@ package com.github.readingbat.pages
 import com.github.pambrose.common.util.decode
 import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.ChallengeGroup
-import com.github.readingbat.misc.Constants.checkJpg
-import com.github.readingbat.misc.Constants.funcChoice
-import com.github.readingbat.misc.Constants.funcItem
+import com.github.readingbat.misc.CSSNames.funcChoice
+import com.github.readingbat.misc.CSSNames.funcItem
+import com.github.readingbat.misc.CSSNames.tabs
 import com.github.readingbat.misc.Constants.root
-import com.github.readingbat.misc.Constants.tabs
+import com.github.readingbat.misc.Constants.staticRoot
 import kotlinx.html.*
 import kotlinx.html.Entities.nbsp
+import kotlinx.html.stream.createHTML
 
-internal fun HTML.challengeGroupPage(challengeGroup: ChallengeGroup<*>) {
+internal fun challengeGroupPage(challengeGroup: ChallengeGroup<*>) =
+  createHTML()
+    .html {
+      val languageType = challengeGroup.languageType
+      val languageName = languageType.lowerName
+      val groupName = challengeGroup.groupName
+      val challenges = challengeGroup.challenges
 
-  val languageType = challengeGroup.languageType
-  val languageName = languageType.lowerName
-  val groupName = challengeGroup.groupName
-  val challenges = challengeGroup.challenges
+      head {
+        headDefault(challengeGroup.readingBatContent)
+      }
 
-  head {
-    headDefault(challengeGroup.readingBatContent)
-  }
+      body {
+        bodyHeader(challengeGroup.readingBatContent, languageType)
 
-  body {
-    bodyHeader(challengeGroup.readingBatContent, languageType)
+        div(classes = tabs) {
 
-    div(classes = tabs) {
+          h2 { +groupName.decode() }
 
-      h2 { +groupName.decode() }
+          table {
+            val cols = 3
+            val size = challenges.size
+            val rows = size.rows(cols)
 
-      table {
-        val cols = 3
-        val size = challenges.size
-        val rows = size.rows(cols)
-
-        (0 until rows).forEach { i ->
-          tr {
-            challenges.apply {
-              elementAt(i).also { funcCall(languageName, groupName, it) }
-              elementAtOrNull(i + rows)?.also { funcCall(languageName, groupName, it) } ?: td {}
-              elementAtOrNull(i + (2 * rows))?.also { funcCall(languageName, groupName, it) } ?: td {}
+            (0 until rows).forEach { i ->
+              tr {
+                challenges.apply {
+                  elementAt(i).also { funcCall(languageName, groupName, it) }
+                  elementAtOrNull(i + rows)?.also { funcCall(languageName, groupName, it) } ?: td {}
+                  elementAtOrNull(i + (2 * rows))?.also { funcCall(languageName, groupName, it) } ?: td {}
+                }
+              }
             }
           }
         }
+
+        backLink("/$root/$languageName")
       }
     }
 
-    backLink("/$root/$languageName")
-  }
-}
-
 private fun TR.funcCall(prefix: String, groupName: String, challenge: Challenge) {
   td(classes = funcItem) {
-    img { src = checkJpg }
+    img { src = "/$staticRoot/check.jpg" }
     rawHtml(nbsp.text)
     a(classes = funcChoice) { href = "/$root/$prefix/$groupName/${challenge.challengeName}"; +challenge.challengeName }
   }

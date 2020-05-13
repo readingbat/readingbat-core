@@ -29,10 +29,10 @@ import com.github.readingbat.dsl.LanguageType.Companion.toLanguageType
 import com.github.readingbat.dsl.LanguageType.Java
 import com.github.readingbat.dsl.LanguageType.Kotlin
 import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.misc.Constants.challengeSrc
-import com.github.readingbat.misc.Constants.groupSrc
-import com.github.readingbat.misc.Constants.langSrc
-import com.github.readingbat.misc.Constants.userResp
+import com.github.readingbat.misc.Answers.challengeSrc
+import com.github.readingbat.misc.Answers.groupSrc
+import com.github.readingbat.misc.Answers.langSrc
+import com.github.readingbat.misc.CSSNames.userResp
 import io.ktor.application.ApplicationCall
 import io.ktor.application.call
 import io.ktor.request.receiveParameters
