@@ -134,8 +134,8 @@ sealed class Challenge(challengeGroup: ChallengeGroup<*>, val challengeName: Str
   }
 }
 
-class PythonChallenge(group: ChallengeGroup<*>, name: String, replaceable: Boolean) :
-  Challenge(group, name, replaceable) {
+class PythonChallenge(challengeGroup: ChallengeGroup<*>, challengeName: String, replaceable: Boolean) :
+  Challenge(challengeGroup, challengeName, replaceable) {
 
   // User properties
   lateinit var returnType: ReturnType
@@ -169,8 +169,8 @@ class PythonChallenge(group: ChallengeGroup<*>, name: String, replaceable: Boole
   }
 }
 
-class JavaChallenge(group: ChallengeGroup<*>, name: String, replaceable: Boolean) :
-  Challenge(group, name, replaceable) {
+class JavaChallenge(challengeGroup: ChallengeGroup<*>, challengeName: String, replaceable: Boolean) :
+  Challenge(challengeGroup, challengeName, replaceable) {
 
   override fun computeFuncInfo(code: String): FunctionInfo {
     val lines = code.lines().filter { !it.trimStart().startsWith("package") }
@@ -199,8 +199,8 @@ class JavaChallenge(group: ChallengeGroup<*>, name: String, replaceable: Boolean
   }
 }
 
-class KotlinChallenge(group: ChallengeGroup<*>, name: String, replaceable: Boolean) :
-  Challenge(group, name, replaceable) {
+class KotlinChallenge(challengeGroup: ChallengeGroup<*>, challengeName: String, replaceable: Boolean) :
+  Challenge(challengeGroup, challengeName, replaceable) {
 
   // User properties
   lateinit var returnType: ReturnType

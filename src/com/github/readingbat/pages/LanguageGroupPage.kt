@@ -55,9 +55,9 @@ internal fun HTML.languageGroupPage(readingBatContent: ReadingBatContent,
   }
 }
 
-private fun TR.groupItem(prefix: String, group: ChallengeGroup<*>) {
-  val name = group.groupName
-  val parsedDescription = group.parsedDescription
+private fun TR.groupItem(prefix: String, challengeGroup: ChallengeGroup<*>) {
+  val name = challengeGroup.groupName
+  val parsedDescription = challengeGroup.parsedDescription
 
   td(classes = funcItem) {
     div(classes = groupItemSrc) {

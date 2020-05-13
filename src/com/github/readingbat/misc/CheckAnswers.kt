@@ -43,6 +43,11 @@ import mu.KLogging
 import javax.script.ScriptException
 import kotlin.time.milliseconds
 
+internal data class StudentInfo(val studentId: String, val firstName: String, val lastName: String)
+
+internal data class ClassEnrollment(val sessionId: String,
+                                    val students: List<StudentInfo> = mutableListOf())
+
 private data class ChallengeResults(val arguments: String,
                                     val userResponse: String,
                                     val answered: Boolean,

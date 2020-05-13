@@ -47,6 +47,7 @@ import kotlinx.html.Entities.nbsp
 import mu.KotlinLogging
 
 private val logger = KotlinLogging.logger {}
+private val emptyAnswerMap = mutableMapOf<String, String>()
 
 internal fun HTML.challengePage(challenge: Challenge, clientSession: ClientSession?) {
   val languageType = challenge.languageType
@@ -88,8 +89,7 @@ internal fun HTML.challengePage(challenge: Challenge, clientSession: ClientSessi
         table {
           tr { th { +"Function Call" }; th { +"" }; th { +"Return Value" }; th { +"" } }
 
-
-          var previousAnswers = mutableMapOf<String, String>()
+          var previousAnswers = emptyAnswerMap
           if (clientSession != null) {
             RedisPool.pool.resource
               .use { redis ->
@@ -102,7 +102,6 @@ internal fun HTML.challengePage(challenge: Challenge, clientSession: ClientSessi
               }
           }
 
-          //funcArgs.withIndex().forEach { (i, v) ->
           funcInfo.arguments.indices.forEach { i ->
             tr {
               val args = funcInfo.arguments[i]

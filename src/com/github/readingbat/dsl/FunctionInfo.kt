@@ -24,7 +24,7 @@ import com.github.readingbat.dsl.ReturnType.*
 import mu.KLogging
 
 class FunctionInfo(val languageType: LanguageType,
-                   val name: String,
+                   val challengeName: String,
                    val originalCode: String,
                    val codeSnippet: String,
                    val arguments: List<String>,
@@ -55,14 +55,14 @@ class FunctionInfo(val languageType: LanguageType,
         }
     }
 
-    logger.debug { "In $name arguments: $arguments computed answers: $answers" }
+    logger.debug { "In $challengeName arguments: $arguments computed answers: $answers" }
 
     validate()
   }
 
   private fun validate() {
     if (answers.size != arguments.size)
-      throw InvalidConfigurationException("Mismatch between ${answers.size} answers and ${arguments.size} arguments in $name")
+      throw InvalidConfigurationException("Mismatch between ${answers.size} answers and ${arguments.size} arguments in $challengeName")
   }
 
   companion object : KLogging()
