@@ -28,6 +28,7 @@ import com.github.readingbat.pages.challengePage
 import com.github.readingbat.pages.languageGroupPage
 import com.github.readingbat.pages.playgroundPage
 import io.ktor.application.Application
+import io.ktor.application.ApplicationCall
 import io.ktor.application.call
 import io.ktor.auth.UserIdPrincipal
 import io.ktor.auth.authenticate
@@ -35,10 +36,12 @@ import io.ktor.auth.principal
 import io.ktor.http.ContentType.Text.Html
 import io.ktor.locations.Location
 import io.ktor.locations.get
+import io.ktor.locations.post
 import io.ktor.response.respondText
 import io.ktor.routing.routing
 import io.ktor.sessions.get
 import io.ktor.sessions.sessions
+import io.ktor.util.pipeline.PipelineContext
 import mu.KotlinLogging
 
 private val logger = KotlinLogging.logger {}
@@ -48,16 +51,42 @@ internal fun Application.locations(readingBatContent: ReadingBatContent) {
 
     // Create the pages outside of the call.respondText() for proper exception handling
 
-    authenticate(AuthName.SESSION) {
-      get<Language> { lang ->
+    /*
+    route("/lll") {
+      get {
+
+      }
+
+    }
+    */
+    authenticate(AuthName.FORM, optional = true) {
+
+      val langAction: PipelineContext<Unit, ApplicationCall>.(Language) -> String = { lang ->
         readingBatContent.checkLanguage(lang.languageType)
         val principal = call.principal<UserIdPrincipal>()
         val languageGroup = readingBatContent.findLanguage(lang.languageType)
-        val html = languageGroupPage(principal, readingBatContent, lang.languageType, languageGroup.challengeGroups)
+        languageGroupPage(principal, readingBatContent, lang.languageType, languageGroup.challengeGroups)
+      }
+
+      get<Language> { lang ->
+        val html = langAction.invoke(this, lang)
+        call.respondText(html, Html)
+      }
+
+      post<Language> { lang ->
+        val html = langAction.invoke(this, lang)
         call.respondText(html, Html)
       }
 
       get<Language.Group> { group ->
+        readingBatContent.checkLanguage(group.languageType)
+        val principal = call.principal<UserIdPrincipal>()
+        val challengeGroup = readingBatContent.findGroup(group.languageType, group.groupName)
+        val html = challengeGroupPage(principal, challengeGroup)
+        call.respondText(html, Html)
+      }
+
+      post<Language.Group> { group ->
         readingBatContent.checkLanguage(group.languageType)
         val principal = call.principal<UserIdPrincipal>()
         val challengeGroup = readingBatContent.findGroup(group.languageType, group.groupName)
@@ -74,7 +103,23 @@ internal fun Application.locations(readingBatContent: ReadingBatContent) {
         call.respondText(html, Html)
       }
 
+      post<Language.Group.Challenge> { gc ->
+        readingBatContent.checkLanguage(gc.languageType)
+        val principal = call.principal<UserIdPrincipal>()
+        val challenge = readingBatContent.findChallenge(gc.languageType, gc.groupName, gc.challengeName)
+        val clientSession = call.sessions.get<ClientSession>()
+        val html = challengePage(principal, challenge, clientSession)
+        call.respondText(html, Html)
+      }
+
       get<PlaygroundRequest> { request ->
+        val principal = call.principal<UserIdPrincipal>()
+        val challenge = readingBatContent.findLanguage(Kotlin).findChallenge(request.groupName, request.challengeName)
+        val html = playgroundPage(principal, challenge)
+        call.respondText(html, Html)
+      }
+
+      post<PlaygroundRequest> { request ->
         val principal = call.principal<UserIdPrincipal>()
         val challenge = readingBatContent.findLanguage(Kotlin).findChallenge(request.groupName, request.challengeName)
         val html = playgroundPage(principal, challenge)

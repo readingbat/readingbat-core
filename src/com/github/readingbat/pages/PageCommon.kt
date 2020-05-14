@@ -95,8 +95,9 @@ internal fun BODY.helpAndLogin(principal: UserIdPrincipal?, loginPath: String) {
       }
 */
       table {
+        val path = "/$root/$loginPath"
         form(method = FormMethod.post) {
-          action = "/login"
+          action = path
           this@table.tr {
             td { +"id/email" }
             td { textInput { name = "uname"; size = "20" } }
@@ -109,7 +110,7 @@ internal fun BODY.helpAndLogin(principal: UserIdPrincipal?, loginPath: String) {
             td {}
             td { submitInput { name = "dologin"; value = "log in" } }
           }
-          hiddenInput { name = "fromurl"; value = "/java" }
+          hiddenInput { name = "fromurl"; value = path }
         }
         tr {
           td {

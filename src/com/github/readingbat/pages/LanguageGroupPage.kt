@@ -35,18 +35,20 @@ internal fun languageGroupPage(principal: UserIdPrincipal?,
                                groups: List<ChallengeGroup<*>>) =
   createHTML()
     .html {
+      val languageName = languageType.lowerName
+      val loginPath = languageName
+
       head {
         headDefault(readingBatContent)
       }
 
       body {
-        bodyHeader(principal, readingBatContent, languageType)
+        bodyHeader(principal, readingBatContent, languageType, loginPath)
         div(classes = tabs) {
           table {
             val cols = 3
             val size = groups.size
             val rows = size.rows(cols)
-            val languageName = languageType.lowerName
 
             (0 until rows).forEach { i ->
               tr {
@@ -61,12 +63,12 @@ internal fun languageGroupPage(principal: UserIdPrincipal?,
     }
 
 private fun TR.groupItem(prefix: String, challengeGroup: ChallengeGroup<*>) {
-  val name = challengeGroup.groupName
+  val groupName = challengeGroup.groupName
   val parsedDescription = challengeGroup.parsedDescription
 
   td(classes = funcItem) {
     div(classes = groupItemSrc) {
-      a(classes = funcChoice) { href = "/$root/$prefix/$name"; +name }
+      a(classes = funcChoice) { href = "/$root/$prefix/$groupName"; +groupName }
       br { rawHtml(if (parsedDescription.isNotBlank()) parsedDescription else Entities.nbsp.text) }
     }
   }

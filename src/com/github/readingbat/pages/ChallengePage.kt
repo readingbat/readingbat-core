@@ -18,6 +18,7 @@
 package com.github.readingbat.pages
 
 import com.github.pambrose.common.util.decode
+import com.github.pambrose.common.util.toPath
 import com.github.readingbat.RedisPool
 import com.github.readingbat.RedisPool.gson
 import com.github.readingbat.config.ChallengeAnswers
@@ -58,25 +59,26 @@ internal fun challengePage(principal: UserIdPrincipal?, challenge: Challenge, cl
       val languageName = languageType.lowerName
       val readingBatContent = challenge.readingBatContent
       val groupName = challenge.groupName
-      val name = challenge.challengeName
+      val challengeName = challenge.challengeName
+      val loginPath = listOf(languageName, groupName, challengeName).toPath()
 
       head {
         link { rel = "stylesheet"; href = spinnerCss }
         link { rel = "stylesheet"; href = "/$staticRoot/$languageName-prism.css"; type = CSS.toString() }
 
-        script(type = ScriptType.textJavaScript) { addScript(languageName, groupName, name) }
+        script(type = ScriptType.textJavaScript) { addScript(languageName, groupName, challengeName) }
 
         removePrismShadow()
         headDefault(readingBatContent)
       }
 
       body {
-        bodyHeader(principal, readingBatContent, languageType)
+        bodyHeader(principal, readingBatContent, languageType, loginPath)
 
         div(classes = tabs) {
           h2 {
             this@body.addLink(groupName.decode(), "/$root/$languageName/$groupName")
-            rawHtml("${nbsp.text}&rarr;${nbsp.text}"); +name
+            rawHtml("${nbsp.text}&rarr;${nbsp.text}"); +challengeName
           }
 
           if (challenge.description.isNotEmpty())
@@ -146,7 +148,7 @@ internal fun challengePage(principal: UserIdPrincipal?, challenge: Challenge, cl
               this@body.addLink("Gitpod.io", "https://gitpod.io/#${challenge.gitpodUrl}", true)
               if (languageType.isKotlin()) {
                 +" or as a "
-                this@body.addLink("Kotlin Playground", "/$playground/$groupName/$name", true)
+                this@body.addLink("Kotlin Playground", "/$playground/$groupName/$challengeName", true)
               }
               +"."
             }

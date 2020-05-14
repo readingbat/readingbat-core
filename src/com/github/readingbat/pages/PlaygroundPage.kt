@@ -18,6 +18,7 @@
 package com.github.readingbat.pages
 
 import com.github.pambrose.common.util.decode
+import com.github.pambrose.common.util.toPath
 import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.misc.CSSNames.challengeDesc
 import com.github.readingbat.misc.CSSNames.kotlinCode
@@ -39,7 +40,8 @@ fun playgroundPage(principal: UserIdPrincipal?, challenge: Challenge) =
       val languageName = languageType.lowerName
       val readingBatContent = challenge.readingBatContent
       val groupName = challenge.groupName
-      val name = challenge.challengeName
+      val challengeName = challenge.challengeName
+      val loginPath = listOf(languageName, groupName, challengeName).toPath()
 
       head {
         script { src = "https://unpkg.com/kotlin-playground@1"; attributes["data-selector"] = "code" }
@@ -47,13 +49,13 @@ fun playgroundPage(principal: UserIdPrincipal?, challenge: Challenge) =
       }
 
       body {
-        bodyHeader(principal, readingBatContent, languageType)
+        bodyHeader(principal, readingBatContent, languageType, loginPath)
 
         div(classes = tabs) {
           h2 {
             this@body.addLink(groupName.decode(), "/$languageName/$groupName")
             rawHtml("${Entities.nbsp.text}&rarr;${Entities.nbsp.text}")
-            this@body.addLink(name.decode(), "/$languageName/$groupName/$name")
+            this@body.addLink(challengeName.decode(), "/$languageName/$groupName/$challengeName")
           }
 
           if (challenge.description.isNotEmpty())
@@ -62,14 +64,15 @@ fun playgroundPage(principal: UserIdPrincipal?, challenge: Challenge) =
           div(classes = kotlinCode) {
             val options =
               """theme="idea" indent="2" lines="true" highlight-on-fly="true" data-autocomplete="true" match-brackets="true""""
-            rawHtml("""
-          <code class="$kotlinCode" $options >
-          ${StringEscapeUtils.escapeHtml4(challenge.funcInfo().originalCode)}
-          </code>
-        """)
+            rawHtml(
+              """
+              <code class="$kotlinCode" $options >
+              ${StringEscapeUtils.escapeHtml4(challenge.funcInfo().originalCode)}
+              </code>
+              """)
           }
         }
 
-        backLink("/$root/$languageName/$groupName/$name")
+        backLink("/$root/$languageName/$groupName/$challengeName")
       }
     }

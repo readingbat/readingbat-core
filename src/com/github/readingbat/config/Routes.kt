@@ -187,7 +187,7 @@ internal fun Routing.loginRoute() {
     }
 
     authenticate(FORM) {
-      logger.info { "Inside authenticate" }
+      logger.info { "Inside authenticate 1" }
       post {
         // Get the principle (which we know we'll have)
         val principal = call.principal<UserIdPrincipal>()

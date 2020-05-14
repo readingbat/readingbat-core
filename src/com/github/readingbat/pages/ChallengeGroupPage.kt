@@ -39,7 +39,7 @@ internal fun challengeGroupPage(principal: UserIdPrincipal?, challengeGroup: Cha
       val readingBatContent = challengeGroup.readingBatContent
       val groupName = challengeGroup.groupName
       val challenges = challengeGroup.challenges
-      val loginPath = "/${listOf(languageName, groupName).toPath()}"
+      val loginPath = listOf(languageName, groupName).toPath()
 
       head {
         headDefault(readingBatContent)
