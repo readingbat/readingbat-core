@@ -30,6 +30,7 @@ import com.github.readingbat.misc.Constants.icons
 import com.github.readingbat.misc.Constants.root
 import com.github.readingbat.misc.Constants.staticRoot
 import com.github.readingbat.misc.Constants.titleText
+import io.ktor.auth.UserIdPrincipal
 import io.ktor.http.ContentType.Text.CSS
 import kotlinx.html.*
 import kotlinx.html.Entities.nbsp
@@ -59,6 +60,93 @@ internal fun HEAD.headDefault(readingBatContent: ReadingBatContent) {
   }
 }
 
+internal fun BODY.helpAndLogin(principal: UserIdPrincipal?, loginPath: String) {
+  if (principal != null)
+    div {
+      style = "float:right;  margin:0px; border: 1px solid lightgray;"
+      table {
+        tr {
+          td { +"pambrose"; br; +"@mac.com" }
+        }
+        tr {
+          td {
+            a {
+              href = "/doc/practice/code-badges.html"; img {
+              width = "30"; style = "vertical-align: middle"; src = "/s5j.png"
+            }
+            }
+            +"["
+            a { href = "/logout"; +"log out" }
+            +"]"
+          }
+        }
+      }
+    }
+  else
+    div {
+      style = "float:right;  margin:0px; border: 1px solid lightgray;"
+      /*
+      form(method = FormMethod.post) {
+        textInput(name = FormFields.USERNAME) { placeholder = "user (${TestCredentials.userEmail})" }
+        br
+        passwordInput(name = FormFields.PASSWORD) { placeholder = "password (${TestCredentials.password})" }
+        br
+        submitInput { value = "Log in" }
+      }
+*/
+      table {
+        form(method = FormMethod.post) {
+          action = "/login"
+          this@table.tr {
+            td { +"id/email" }
+            td { textInput { name = "uname"; size = "20" } }
+          }
+          this@table.tr {
+            td { +"password" }
+            td { passwordInput { name = "pw"; size = "20" } }
+          }
+          this@table.tr {
+            td {}
+            td { submitInput { name = "dologin"; value = "log in" } }
+          }
+          hiddenInput { name = "fromurl"; value = "/java" }
+        }
+        tr {
+          td {
+            colSpan = "2"
+            a { href = "/reset"; +"forgot password" }
+            +" | "
+            a { href = "/pref?docreate=1"; +"create account" }
+          }
+        }
+      }
+    }
+  div {
+    style = "float:right"
+    table {
+      tr {
+        td {
+          //valign = "top"
+          style = "text-align:right"
+          colSpan = "1"
+          a { href = "/about.html"; +"about" }
+          +" | "
+          a { href = "/help.html"; +"help" }
+          +" | "
+          a {
+            href = "/doc/code-help-videos.html"; +"code help+videos | "
+            a { href = "/done?user=pambrose@mac.com&tag=6621428513"; +"done" }
+            +" | "
+            a { href = "/report"; +"report" }
+            +" | "
+            a { href = "/pref"; +"prefs" }
+          }
+        }
+      }
+    }
+  }
+}
+
 internal fun BODY.bodyTitle() {
   div(classes = bodyHeaderCls) {
     a { href = "/"; span { style = "font-size:200%;"; +titleText } }
@@ -67,7 +155,13 @@ internal fun BODY.bodyTitle() {
   }
 }
 
-internal fun BODY.bodyHeader(readingBatContent: ReadingBatContent, languageType: LanguageType) {
+internal fun BODY.bodyHeader(principal: UserIdPrincipal?,
+                             readingBatContent:
+                             ReadingBatContent,
+                             languageType: LanguageType,
+                             loginPath: String) {
+
+  helpAndLogin(principal, loginPath)
   bodyTitle()
 
   nav {

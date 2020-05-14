@@ -73,6 +73,11 @@ class ReadingBatContent {
     languageGroup.challengeGroups.forEach { group.addGroup(it) }
   }
 
+  internal fun checkLanguage(languageType: LanguageType) {
+    if (!hasLanguage(languageType) || !hasGroups(languageType))
+      throw InvalidConfigurationException("Invalid language: $languageType")
+  }
+
   override fun toString() = "Content(languageList=$languageList)"
 
   companion object {

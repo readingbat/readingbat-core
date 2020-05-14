@@ -21,34 +21,42 @@ import com.codahale.metrics.jvm.ThreadDump
 import com.github.pambrose.common.util.randomId
 import com.github.readingbat.config.ThreadDumpInfo.threadDump
 import com.github.readingbat.dsl.ReadingBatContent
+import com.github.readingbat.misc.AuthName.FORM
+import com.github.readingbat.misc.AuthName.SESSION
 import com.github.readingbat.misc.CSSNames.checkAnswers
 import com.github.readingbat.misc.CheckAnswers.checkUserAnswers
+import com.github.readingbat.misc.CommonRoutes.LOGIN
+import com.github.readingbat.misc.CommonRoutes.LOGOUT
+import com.github.readingbat.misc.CommonRoutes.PROFILE
 import com.github.readingbat.misc.Constants.cssName
 import com.github.readingbat.misc.Constants.icons
 import com.github.readingbat.misc.Constants.root
 import com.github.readingbat.misc.Constants.staticRoot
+import com.github.readingbat.misc.FormFields.PASSWORD
+import com.github.readingbat.misc.FormFields.USERNAME
+import com.github.readingbat.misc.TestCredentials.password
+import com.github.readingbat.misc.TestCredentials.userEmail
 import com.github.readingbat.misc.cssContent
 import com.github.readingbat.pages.defaultTab
 import io.ktor.application.Application
 import io.ktor.application.call
-import io.ktor.auth.*
+import io.ktor.auth.UserHashedTableAuth
+import io.ktor.auth.UserIdPrincipal
+import io.ktor.auth.authenticate
+import io.ktor.auth.principal
+import io.ktor.html.respondHtml
 import io.ktor.http.ContentType.Text.CSS
-import io.ktor.http.ContentType.Text.Html
 import io.ktor.http.content.resources
 import io.ktor.http.content.static
 import io.ktor.response.respondRedirect
 import io.ktor.response.respondText
-import io.ktor.routing.get
-import io.ktor.routing.post
-import io.ktor.routing.route
-import io.ktor.routing.routing
+import io.ktor.routing.*
 import io.ktor.sessions.clear
 import io.ktor.sessions.get
 import io.ktor.sessions.sessions
 import io.ktor.sessions.set
 import io.ktor.util.getDigestFunction
 import kotlinx.html.*
-import kotlinx.html.stream.createHTML
 import mu.KotlinLogging
 import java.io.ByteArrayOutputStream
 import java.lang.management.ManagementFactory
@@ -77,41 +85,9 @@ internal fun Application.routes(readingBatContent: ReadingBatContent) {
 
   routing {
 
-    route("/login") {
-      authentication {
-        form {
-          validate { up: UserPasswordCredential ->
-            when {
-              up.password == "ppp" -> UserIdPrincipal(up.name)
-              else -> null
-            }
-          }
-        }
-      }
-
-      handle {
-        val principal = call.authentication.principal<UserIdPrincipal>()
-        if (principal != null) {
-          call.respondText("Hello, ${principal.name}")
-        }
-        else {
-          val html =
-            createHTML()
-              .html {
-                body {
-                  form(action = "/login",
-                       encType = FormEncType.applicationXWwwFormUrlEncoded,
-                       method = FormMethod.post) {
-                    p { +"User:"; textInput(name = "user") { value = principal?.name ?: "" } }
-                    p { +"Password:"; passwordInput(name = "pass") }
-                    p { submitInput() { value = "Login" } }
-                  }
-                }
-              }
-          call.respondText(html, Html)
-        }
-      }
-    }
+    loginRoute()
+    logoutRoute()
+    profileRoute()
 
     get("/") {
       val tab = defaultTab(readingBatContent)
@@ -182,4 +158,65 @@ internal fun Application.routes(readingBatContent: ReadingBatContent) {
 
 private object ThreadDumpInfo {
   internal val threadDump by lazy { ThreadDump(ManagementFactory.getThreadMXBean()) }
+}
+
+internal fun Routing.loginRoute() {
+  route(LOGIN) {
+    get {
+      call.respondHtml {
+        body {
+          // Create a form that POSTs back to this same route
+          form(method = FormMethod.post) {
+            // handle any possible errors
+            val queryParams = call.request.queryParameters
+            val errorMsg = when {
+              "invalid" in queryParams -> "Sorry, incorrect username or password."
+              "no" in queryParams -> "Sorry, you need to be logged in to do that."
+              else -> null
+            }
+            if (errorMsg != null)
+              div { style = "color:red;"; +errorMsg }
+            textInput(name = USERNAME) { placeholder = "user ($userEmail)" }
+            br
+            passwordInput(name = PASSWORD) { placeholder = "password ($password)" }
+            br
+            submitInput { value = "Log in" }
+          }
+        }
+      }
+    }
+
+    authenticate(FORM) {
+      logger.info { "Inside authenticate" }
+      post {
+        // Get the principle (which we know we'll have)
+        val principal = call.principal<UserIdPrincipal>()
+        // Set the cookie
+        call.sessions.set(principal)
+        call.respondRedirect(PROFILE)
+      }
+    }
+  }
+}
+
+internal fun Routing.logoutRoute() {
+  get(LOGOUT) {
+    // Purge ExamplePrinciple from cookie data
+    call.sessions.clear<UserIdPrincipal>()
+    call.respondRedirect(LOGIN)
+  }
+}
+
+internal fun Route.profileRoute() {
+  authenticate(SESSION) {
+    get(PROFILE) {
+      val principal = call.principal<UserIdPrincipal>()
+      call.respondHtml {
+        body {
+          div { +"Hello, $principal!" }
+          div { a(href = LOGOUT) { +"Log out" } }
+        }
+      }
+    }
+  }
 }

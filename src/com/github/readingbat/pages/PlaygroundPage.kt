@@ -23,6 +23,7 @@ import com.github.readingbat.misc.CSSNames.challengeDesc
 import com.github.readingbat.misc.CSSNames.kotlinCode
 import com.github.readingbat.misc.CSSNames.tabs
 import com.github.readingbat.misc.Constants.root
+import io.ktor.auth.UserIdPrincipal
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 import org.apache.commons.text.StringEscapeUtils
@@ -31,21 +32,22 @@ import org.apache.commons.text.StringEscapeUtils
 // https://jetbrains.github.io/kotlin-playground/
 // https://jetbrains.github.io/kotlin-playground/examples/
 
-fun playgroundPage(challenge: Challenge) =
+fun playgroundPage(principal: UserIdPrincipal?, challenge: Challenge) =
   createHTML()
     .html {
       val languageType = challenge.languageType
       val languageName = languageType.lowerName
+      val readingBatContent = challenge.readingBatContent
       val groupName = challenge.groupName
       val name = challenge.challengeName
 
       head {
         script { src = "https://unpkg.com/kotlin-playground@1"; attributes["data-selector"] = "code" }
-        headDefault(challenge.readingBatContent)
+        headDefault(readingBatContent)
       }
 
       body {
-        bodyHeader(challenge.readingBatContent, languageType)
+        bodyHeader(principal, readingBatContent, languageType)
 
         div(classes = tabs) {
           h2 {

@@ -18,6 +18,7 @@
 package com.github.readingbat.pages
 
 import com.github.pambrose.common.util.decode
+import com.github.pambrose.common.util.toPath
 import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.ChallengeGroup
 import com.github.readingbat.misc.CSSNames.funcChoice
@@ -25,24 +26,27 @@ import com.github.readingbat.misc.CSSNames.funcItem
 import com.github.readingbat.misc.CSSNames.tabs
 import com.github.readingbat.misc.Constants.root
 import com.github.readingbat.misc.Constants.staticRoot
+import io.ktor.auth.UserIdPrincipal
 import kotlinx.html.*
 import kotlinx.html.Entities.nbsp
 import kotlinx.html.stream.createHTML
 
-internal fun challengeGroupPage(challengeGroup: ChallengeGroup<*>) =
+internal fun challengeGroupPage(principal: UserIdPrincipal?, challengeGroup: ChallengeGroup<*>) =
   createHTML()
     .html {
       val languageType = challengeGroup.languageType
       val languageName = languageType.lowerName
+      val readingBatContent = challengeGroup.readingBatContent
       val groupName = challengeGroup.groupName
       val challenges = challengeGroup.challenges
+      val loginPath = "/${listOf(languageName, groupName).toPath()}"
 
       head {
-        headDefault(challengeGroup.readingBatContent)
+        headDefault(readingBatContent)
       }
 
       body {
-        bodyHeader(challengeGroup.readingBatContent, languageType)
+        bodyHeader(principal, readingBatContent, languageType, loginPath)
 
         div(classes = tabs) {
 

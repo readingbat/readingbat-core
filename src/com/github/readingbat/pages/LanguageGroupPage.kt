@@ -25,10 +25,12 @@ import com.github.readingbat.misc.CSSNames.funcItem
 import com.github.readingbat.misc.CSSNames.groupItemSrc
 import com.github.readingbat.misc.CSSNames.tabs
 import com.github.readingbat.misc.Constants.root
+import io.ktor.auth.UserIdPrincipal
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 
-internal fun languageGroupPage(readingBatContent: ReadingBatContent,
+internal fun languageGroupPage(principal: UserIdPrincipal?,
+                               readingBatContent: ReadingBatContent,
                                languageType: LanguageType,
                                groups: List<ChallengeGroup<*>>) =
   createHTML()
@@ -38,7 +40,7 @@ internal fun languageGroupPage(readingBatContent: ReadingBatContent,
       }
 
       body {
-        bodyHeader(readingBatContent, languageType)
+        bodyHeader(principal, readingBatContent, languageType)
         div(classes = tabs) {
           table {
             val cols = 3

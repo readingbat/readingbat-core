@@ -41,6 +41,7 @@ import com.github.readingbat.misc.Constants.playground
 import com.github.readingbat.misc.Constants.root
 import com.github.readingbat.misc.Constants.staticRoot
 import com.github.readingbat.misc.addScript
+import io.ktor.auth.UserIdPrincipal
 import io.ktor.http.ContentType.Text.CSS
 import kotlinx.html.*
 import kotlinx.html.Entities.nbsp
@@ -50,11 +51,12 @@ import mu.KotlinLogging
 private val logger = KotlinLogging.logger {}
 private val emptyAnswerMap = mutableMapOf<String, String>()
 
-internal fun challengePage(challenge: Challenge, clientSession: ClientSession?) =
+internal fun challengePage(principal: UserIdPrincipal?, challenge: Challenge, clientSession: ClientSession?) =
   createHTML()
     .html {
       val languageType = challenge.languageType
       val languageName = languageType.lowerName
+      val readingBatContent = challenge.readingBatContent
       val groupName = challenge.groupName
       val name = challenge.challengeName
 
@@ -65,11 +67,11 @@ internal fun challengePage(challenge: Challenge, clientSession: ClientSession?) 
         script(type = ScriptType.textJavaScript) { addScript(languageName, groupName, name) }
 
         removePrismShadow()
-        headDefault(challenge.readingBatContent)
+        headDefault(readingBatContent)
       }
 
       body {
-        bodyHeader(challenge.readingBatContent, languageType)
+        bodyHeader(principal, readingBatContent, languageType)
 
         div(classes = tabs) {
           h2 {

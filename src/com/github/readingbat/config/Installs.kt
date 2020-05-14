@@ -19,6 +19,12 @@ package com.github.readingbat.config
 
 import com.github.pambrose.common.util.simpleClassName
 import com.github.readingbat.InvalidPathException
+import com.github.readingbat.misc.AuthName
+import com.github.readingbat.misc.AuthName.FORM
+import com.github.readingbat.misc.CommonRoutes.LOGIN
+import com.github.readingbat.misc.Cookies
+import com.github.readingbat.misc.FormFields
+import com.github.readingbat.misc.TestCredentials
 import io.ktor.application.Application
 import io.ktor.application.call
 import io.ktor.application.install
@@ -42,59 +48,19 @@ import kotlin.text.Charsets.UTF_8
 private val logger = KotlinLogging.logger {}
 internal val production: Boolean by lazy { System.getenv("PRODUCTION")?.toBoolean() ?: false }
 
-object FormFields {
-  const val USERNAME = "username"
-  const val PASSWORD = "password"
-}
-
-object AuthName {
-  const val SESSION = "session"
-  const val FORM = "form"
-}
-
-object CommonRoutes {
-  const val LOGIN = "/login"
-  const val LOGOUT = "/logout"
-  const val PROFILE = "/profile"
-}
-
-object TestCredentials {
-  const val USERNAME = "foo"
-  const val PASSWORD = "bar"
-}
-
-private fun Authentication.Configuration.configureFormAuth() {
-  form(AuthName.FORM) {
-    userParamName = FormFields.USERNAME
-    passwordParamName = FormFields.PASSWORD
-    challenge {
-      // I don't think form auth supports multiple errors, but we're conservatively assuming there will be at
-      // most one error, which we handle here. Worst case, we just send the user to login with no context.
-      val errors: Map<Any, AuthenticationFailedCause> = call.authentication.errors
-      when (errors.values.singleOrNull()) {
-        AuthenticationFailedCause.InvalidCredentials ->
-          call.respondRedirect("${CommonRoutes.LOGIN}?invalid")
-
-        AuthenticationFailedCause.NoCredentials ->
-          call.respondRedirect("${CommonRoutes.LOGIN}?no")
-
-        else ->
-          call.respondRedirect(CommonRoutes.LOGIN)
-      }
-    }
-    validate { cred: UserPasswordCredential ->
-      // Realistically you'd look up the user in a database or something here; this is just a toy example.
-      // The values here will be whatever was submitted in the form.
-      if (cred.name == TestCredentials.USERNAME && cred.password == TestCredentials.PASSWORD)
-        UserIdPrincipal(cred.name)
-      else
-        null
-    }
-  }
-}
-
-
 internal fun Application.installs() {
+
+  install(Locations)
+
+  install(Sessions) {
+    configureSessionIdCookie()
+    configureAuthCookie()
+  }
+
+  install(Authentication) {
+    configureSessionAuth()
+    configureFormAuth()
+  }
 
   install(Compression) {
     gzip {
@@ -105,21 +71,6 @@ internal fun Application.installs() {
       minimumSize(1024) // condition
     }
   }
-
-  install(Locations)
-
-  install(Sessions) {
-    cookie<ClientSession>("readingbat_session_id") {
-      //storage = RedisSessionStorage(redis = pool.resource)) {
-      //storage = directorySessionStorage(File("server-sessions"), cached = true)) {
-      cookie.path = "/"
-    }
-  }
-
-  install(Authentication) {
-    configureFormAuth()
-  }
-
 
   install(CallLogging) {
     level = Level.INFO
@@ -167,6 +118,80 @@ internal fun Application.installs() {
       shutDownUrl = "/ktor/application/shutdown"
       // A function that will be executed to get the exit code of the process
       exitCodeSupplier = { 0 } // ApplicationCall.() -> Int
+    }
+  }
+}
+
+private fun Sessions.Configuration.configureSessionIdCookie() {
+  cookie<ClientSession>("readingbat_session_id") {
+    //storage = RedisSessionStorage(redis = pool.resource)) {
+    //storage = directorySessionStorage(File("server-sessions"), cached = true)) {
+    cookie.path = "/"
+  }
+}
+
+private fun Sessions.Configuration.configureAuthCookie() {
+  cookie<UserIdPrincipal>(
+    // We set a cookie by this name upon login.
+    Cookies.AUTH_COOKIE
+    //,
+    // Stores session contents in memory...good for development only.
+    //storage = SessionStorageMemory()
+                         ) {
+    cookie.path = "/"
+    // CSRF protection in modern browsers. Make sure your important side-effect-y operations, like ordering,
+    // uploads, and changing settings, use "unsafe" HTTP verbs like POST and PUT, not GET or HEAD.
+    // https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies#SameSite_cookies
+    cookie.extensions["SameSite"] = "lax"
+  }
+}
+
+/**
+ * Form-based authentication is a interceptor that reads attributes off a POST request in order to validate the user.
+ * Only needed by whatever your login form is POSTing to.
+ *
+ * If validation fails, the user will be challenged, e.g. sent to a login page to authenticate.
+ */
+private fun Authentication.Configuration.configureFormAuth() {
+  form(FORM) {
+    userParamName = FormFields.USERNAME
+    passwordParamName = FormFields.PASSWORD
+    challenge {
+      // I don't think form auth supports multiple errors, but we're conservatively assuming there will be at
+      // most one error, which we handle here. Worst case, we just send the user to login with no context.
+      val errors: Map<Any, AuthenticationFailedCause> = call.authentication.errors
+      when (errors.values.singleOrNull()) {
+        AuthenticationFailedCause.InvalidCredentials -> call.respondRedirect("$LOGIN?invalid")
+        AuthenticationFailedCause.NoCredentials -> call.respondRedirect("$LOGIN?no")
+        else -> call.respondRedirect(LOGIN)
+      }
+    }
+    validate { cred: UserPasswordCredential ->
+      // Realistically you'd look up the user in a database or something here; this is just a toy example.
+      // The values here will be whatever was submitted in the form.
+      if (cred.name == TestCredentials.userEmail && cred.password == TestCredentials.password)
+        UserIdPrincipal(cred.name)
+      else
+        null
+    }
+  }
+}
+
+/**
+ * Let the user authenticate by their session (a cookie).
+ *
+ * This is related to the configureAuthCookie method by virtue of the common `PrincipalType` object.
+ */
+private fun Authentication.Configuration.configureSessionAuth() {
+  session<UserIdPrincipal>(AuthName.SESSION) {
+    challenge {
+      // What to do if the user isn't authenticated
+      // Uncomment this to send user to login page
+      //call.respondRedirect("${CommonRoutes.LOGIN}?no")
+    }
+    validate { session: UserIdPrincipal ->
+      // If you need to do additional validation on session data, you can do so here.
+      session
     }
   }
 }
