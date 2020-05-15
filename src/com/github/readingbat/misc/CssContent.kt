@@ -70,8 +70,20 @@ internal object CSSNames {
 internal val cssContent by lazy {
   CSSBuilder()
     .apply {
+      rule("body, a, p, td, h1, h2, h3") {
+        fontFamily = "normal small verdana, arial, helvetica, sans-serif"
+      }
       body {
         backgroundColor = Color.white
+      }
+      a {
+        textDecoration = TextDecoration.none
+      }
+      h2 {
+        fontSize = LinearDimension("150%")
+      }
+      p {
+        maxWidth = LinearDimension("700px")
       }
       rule(".$challengeDesc") {
         fontSize = fs

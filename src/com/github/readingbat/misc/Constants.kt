@@ -18,16 +18,15 @@
 package com.github.readingbat.misc
 
 internal object Constants {
+  const val titleText = "ReadingBat"
   const val sessionid = "sessionid"
   const val playground = "playground"
-  const val titleText = "ReadingBat"
-  const val staticRoot = "static"
   const val icons = "icons"
   const val cssName = "styles.css"
-  const val rootPath = "content"
-  const val languagePath = "language"
-  const val groupNamePath = "groupName"
-  const val challengeNamePath = "challengeName"
+  const val staticRoot = "static"
+  const val challengeRoot = "content"
+  const val PREFS = "/prefs"
+  const val ABOUT = "/about.html"
 }
 
 object FormFields {
@@ -40,8 +39,7 @@ object AuthName {
   const val FORM = "form"
 }
 
-object CommonRoutes {
-  const val LOGIN = "/login"
+object AuthRoutes {
   const val LOGOUT = "/logout"
   const val PROFILE = "/profile"
 }

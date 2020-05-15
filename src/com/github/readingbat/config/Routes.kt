@@ -21,23 +21,27 @@ import com.codahale.metrics.jvm.ThreadDump
 import com.github.pambrose.common.util.randomId
 import com.github.readingbat.config.ThreadDumpInfo.threadDump
 import com.github.readingbat.dsl.ReadingBatContent
+import com.github.readingbat.misc.AuthRoutes.LOGOUT
+import com.github.readingbat.misc.AuthRoutes.PROFILE
 import com.github.readingbat.misc.CSSNames.checkAnswers
 import com.github.readingbat.misc.CheckAnswers.checkUserAnswers
-import com.github.readingbat.misc.CommonRoutes.LOGIN
-import com.github.readingbat.misc.CommonRoutes.LOGOUT
-import com.github.readingbat.misc.CommonRoutes.PROFILE
+import com.github.readingbat.misc.Constants.ABOUT
+import com.github.readingbat.misc.Constants.PREFS
+import com.github.readingbat.misc.Constants.challengeRoot
 import com.github.readingbat.misc.Constants.cssName
 import com.github.readingbat.misc.Constants.icons
-import com.github.readingbat.misc.Constants.rootPath
 import com.github.readingbat.misc.Constants.staticRoot
 import com.github.readingbat.misc.cssContent
+import com.github.readingbat.pages.aboutPage
 import com.github.readingbat.pages.defaultTab
+import com.github.readingbat.pages.prefsPage
 import io.ktor.application.Application
 import io.ktor.application.call
 import io.ktor.auth.UserHashedTableAuth
 import io.ktor.auth.UserIdPrincipal
 import io.ktor.html.respondHtml
 import io.ktor.http.ContentType.Text.CSS
+import io.ktor.http.ContentType.Text.Html
 import io.ktor.http.content.resources
 import io.ktor.http.content.static
 import io.ktor.response.respondRedirect
@@ -89,13 +93,30 @@ internal fun Application.routes(readingBatContent: ReadingBatContent) {
       call.respondRedirect(tab)
     }
 
-    get("/$rootPath") {
+    get("/$challengeRoot") {
       val tab = defaultTab(readingBatContent)
       call.respondRedirect(tab)
     }
 
-    get("/favicon.ico") {
-      call.respondRedirect("/$staticRoot/$icons/favicon.ico")
+    post("/$checkAnswers") {
+      val clientSession: ClientSession? = call.sessions.get<ClientSession>()
+      checkUserAnswers(readingBatContent, clientSession)
+    }
+
+    get(LOGOUT) {
+      // Purge UserIdPrincipal from cookie data
+      call.sessions.clear<UserIdPrincipal>()
+      call.respondRedirect("/")
+    }
+
+    get(PROFILE) {
+      val principal = call.sessions.get<UserIdPrincipal>()
+      call.respondHtml {
+        body {
+          div { +"Hello, ${principal?.name}!" }
+          div { a(href = LOGOUT) { +"log out" } }
+        }
+      }
     }
 
     get("/$cssName") {
@@ -103,10 +124,10 @@ internal fun Application.routes(readingBatContent: ReadingBatContent) {
       call.respondText(css, CSS)
     }
 
-    post("/$checkAnswers") {
-      val clientSession: ClientSession? = call.sessions.get<ClientSession>()
-      checkUserAnswers(readingBatContent, clientSession)
+    get("/favicon.ico") {
+      call.respondRedirect("/$staticRoot/$icons/favicon.ico")
     }
+
 
     get("/session-register") {
       val session = call.sessions.get<ClientSession>()
@@ -116,22 +137,6 @@ internal fun Application.routes(readingBatContent: ReadingBatContent) {
       }
 
       call.respondText { "registered ${call.sessions.get<ClientSession>()}" }
-    }
-
-    get(LOGOUT) {
-      // Purge ExamplePrinciple from cookie data
-      call.sessions.clear<UserIdPrincipal>()
-      call.respondRedirect(LOGIN)
-    }
-
-    get(PROFILE) {
-      val principal = call.sessions.get<UserIdPrincipal>()
-      call.respondHtml {
-        body {
-          div { +"Hello, ${principal?.name}!" }
-          div { a(href = LOGOUT) { +"Log out" } }
-        }
-      }
     }
 
     get("/session-check") {
@@ -144,6 +149,16 @@ internal fun Application.routes(readingBatContent: ReadingBatContent) {
       logger.info { call.sessions.get<ClientSession>() }
       call.sessions.clear<ClientSession>()
       call.respondText { "cleared" }
+    }
+
+    get(ABOUT) {
+      val html = aboutPage(readingBatContent)
+      call.respondText(html, Html)
+    }
+
+    get(PREFS) {
+      val html = prefsPage(readingBatContent)
+      call.respondText(html, Html)
     }
 
     get("/ping") { call.respondText { "pong" } }

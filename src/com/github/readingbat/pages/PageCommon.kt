@@ -22,12 +22,15 @@ import com.github.readingbat.config.production
 import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.dsl.LanguageType.Companion.languageTypesInOrder
 import com.github.readingbat.dsl.ReadingBatContent
+import com.github.readingbat.misc.AuthRoutes.LOGOUT
 import com.github.readingbat.misc.CSSNames.backLinkCls
 import com.github.readingbat.misc.CSSNames.bodyHeaderCls
 import com.github.readingbat.misc.CSSNames.selected
+import com.github.readingbat.misc.Constants.ABOUT
+import com.github.readingbat.misc.Constants.PREFS
+import com.github.readingbat.misc.Constants.challengeRoot
 import com.github.readingbat.misc.Constants.cssName
 import com.github.readingbat.misc.Constants.icons
-import com.github.readingbat.misc.Constants.rootPath
 import com.github.readingbat.misc.Constants.staticRoot
 import com.github.readingbat.misc.Constants.titleText
 import com.github.readingbat.misc.FormFields
@@ -82,13 +85,15 @@ internal fun BODY.helpAndLogin(principal: UserIdPrincipal?, loginPath: String) {
         }
         tr {
           td {
+            /*
             a {
               href = "/doc/practice/code-badges.html"; img {
-              width = "30"; style = "vertical-align: middle"; src = "/s5j.png"
+              width = "30"; style = "vertical-align: middle"; src = "/$staticRoot/s5j.png"
             }
             }
+             */
             +"["
-            a { href = "/logout"; +"log out" }
+            a { href = LOGOUT; +"log out" }
             +"]"
           }
         }
@@ -107,7 +112,7 @@ internal fun BODY.helpAndLogin(principal: UserIdPrincipal?, loginPath: String) {
       }
 */
       table {
-        val path = "/$rootPath/$loginPath"
+        val path = "/$challengeRoot/$loginPath"
         form(method = FormMethod.post) {
           //action = path
           this@table.tr {
@@ -142,17 +147,17 @@ internal fun BODY.helpAndLogin(principal: UserIdPrincipal?, loginPath: String) {
           //valign = "top"
           style = "text-align:right"
           colSpan = "1"
-          a { href = "/about.html"; +"about" }
+          a { href = ABOUT; +"about" }
           +" | "
-          a { href = "/help.html"; +"help" }
-          +" | "
+          //a { href = "/help.html"; +"help" }
+          //+" | "
           a {
-            href = "/doc/code-help-videos.html"; +"code help+videos | "
-            a { href = "/done?user=pambrose@mac.com&tag=6621428513"; +"done" }
-            +" | "
-            a { href = "/report"; +"report" }
-            +" | "
-            a { href = "/pref"; +"prefs" }
+            //href = "/doc/code-help-videos.html"; +"code help+videos | "
+            //a { href = "/done?user=pambrose@mac.com&tag=6621428513"; +"done" }
+            //+" | "
+            //a { href = "/report"; +"report" }
+            //+" | "
+            a { href = PREFS; +"prefs" }
           }
         }
       }
@@ -182,7 +187,7 @@ internal fun BODY.bodyHeader(principal: UserIdPrincipal?,
         if (readingBatContent.hasGroups(lang))
           li(classes = "h2") {
             if (languageType == lang) id = selected
-            this@bodyHeader.addLink(lang.name, "/$rootPath/${lang.lowerName}")
+            this@bodyHeader.addLink(lang.name, "/$challengeRoot/${lang.lowerName}")
           }
       }
     }
@@ -193,7 +198,7 @@ internal fun defaultTab(readingBatContent: ReadingBatContent) =
   languageTypesInOrder
     .asSequence()
     .filter { readingBatContent.hasGroups(it) }
-    .map { "/$rootPath/${it.lowerName}" }
+    .map { "/$challengeRoot/${it.lowerName}" }
     .firstOrNull()
     ?: throw InvalidConfigurationException("Missing default language")
 

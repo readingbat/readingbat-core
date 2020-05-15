@@ -24,7 +24,7 @@ import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.CSSNames.challengeDesc
 import com.github.readingbat.misc.CSSNames.kotlinCode
 import com.github.readingbat.misc.CSSNames.tabs
-import com.github.readingbat.misc.Constants.rootPath
+import com.github.readingbat.misc.Constants.challengeRoot
 import io.ktor.auth.UserIdPrincipal
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
@@ -74,6 +74,6 @@ fun playgroundPage(principal: UserIdPrincipal?, readingBatContent: ReadingBatCon
           }
         }
 
-        backLink("/$rootPath/$languageName/$groupName/$challengeName")
+        backLink("/$challengeRoot/$languageName/$groupName/$challengeName")
       }
     }

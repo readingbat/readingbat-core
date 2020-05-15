@@ -24,7 +24,7 @@ import com.github.readingbat.misc.CSSNames.funcChoice
 import com.github.readingbat.misc.CSSNames.funcItem
 import com.github.readingbat.misc.CSSNames.groupItemSrc
 import com.github.readingbat.misc.CSSNames.tabs
-import com.github.readingbat.misc.Constants.rootPath
+import com.github.readingbat.misc.Constants.challengeRoot
 import io.ktor.auth.UserIdPrincipal
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
@@ -67,7 +67,7 @@ private fun TR.groupItem(prefix: String, challengeGroup: ChallengeGroup<*>) {
 
   td(classes = funcItem) {
     div(classes = groupItemSrc) {
-      a(classes = funcChoice) { href = "/$rootPath/$prefix/$groupName"; +groupName }
+      a(classes = funcChoice) { href = "/$challengeRoot/$prefix/$groupName"; +groupName }
       br { rawHtml(if (parsedDescription.isNotBlank()) parsedDescription else Entities.nbsp.text) }
     }
   }

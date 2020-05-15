@@ -21,8 +21,8 @@ import com.github.readingbat.dsl.LanguageType.Companion.toLanguageType
 import com.github.readingbat.dsl.LanguageType.Kotlin
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.AuthName.FORM
+import com.github.readingbat.misc.Constants.challengeRoot
 import com.github.readingbat.misc.Constants.playground
-import com.github.readingbat.misc.Constants.rootPath
 import com.github.readingbat.pages.challengeGroupPage
 import com.github.readingbat.pages.challengePage
 import com.github.readingbat.pages.languageGroupPage
@@ -110,7 +110,7 @@ internal fun Application.locations(readingBatContent: ReadingBatContent) {
   }
 }
 
-@Location("/$rootPath/{language}")
+@Location("/$challengeRoot/{language}")
 data class Language(val language: String) {
   val languageType get() = language.toLanguageType()
 
