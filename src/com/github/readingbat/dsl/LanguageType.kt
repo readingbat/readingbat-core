@@ -31,6 +31,8 @@ enum class LanguageType(val useDoubleQuotes: Boolean, val suffix: String, val sr
   fun isKotlin() = this == Kotlin
 
   companion object {
+    val languageTypesInOrder by lazy { listOf(Java, Python, Kotlin) }
+
     fun String?.toLanguageType(): LanguageType =
       if (this == null)
         throw InvalidPathException("Missing language value")

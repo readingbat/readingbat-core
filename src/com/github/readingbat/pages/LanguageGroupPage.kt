@@ -36,14 +36,13 @@ internal fun languageGroupPage(principal: UserIdPrincipal?,
   createHTML()
     .html {
       val languageName = languageType.lowerName
-      val loginPath = languageName
 
       head {
         headDefault(readingBatContent)
       }
 
       body {
-        bodyHeader(principal, readingBatContent, languageType, loginPath)
+        bodyHeader(principal, readingBatContent, languageType, languageName)
         div(classes = tabs) {
           table {
             val cols = 3

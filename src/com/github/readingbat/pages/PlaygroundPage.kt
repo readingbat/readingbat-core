@@ -20,6 +20,7 @@ package com.github.readingbat.pages
 import com.github.pambrose.common.util.decode
 import com.github.pambrose.common.util.toPath
 import com.github.readingbat.dsl.Challenge
+import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.CSSNames.challengeDesc
 import com.github.readingbat.misc.CSSNames.kotlinCode
 import com.github.readingbat.misc.CSSNames.tabs
@@ -33,14 +34,14 @@ import org.apache.commons.text.StringEscapeUtils
 // https://jetbrains.github.io/kotlin-playground/
 // https://jetbrains.github.io/kotlin-playground/examples/
 
-fun playgroundPage(principal: UserIdPrincipal?, challenge: Challenge) =
+fun playgroundPage(principal: UserIdPrincipal?, readingBatContent: ReadingBatContent, challenge: Challenge) =
   createHTML()
     .html {
       val languageType = challenge.languageType
       val languageName = languageType.lowerName
-      val readingBatContent = challenge.readingBatContent
       val groupName = challenge.groupName
       val challengeName = challenge.challengeName
+      val funcInfo = challenge.funcInfo(readingBatContent)
       val loginPath = listOf(languageName, groupName, challengeName).toPath()
 
       head {
@@ -67,7 +68,7 @@ fun playgroundPage(principal: UserIdPrincipal?, challenge: Challenge) =
             rawHtml(
               """
               <code class="$kotlinCode" $options >
-              ${StringEscapeUtils.escapeHtml4(challenge.funcInfo().originalCode)}
+              ${StringEscapeUtils.escapeHtml4(funcInfo.originalCode)}
               </code>
               """)
           }

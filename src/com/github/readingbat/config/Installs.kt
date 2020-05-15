@@ -165,7 +165,7 @@ private fun Authentication.Configuration.configureFormAuth() {
       // I don't think form auth supports multiple errors, but we're conservatively assuming there will be at
       // most one error, which we handle here. Worst case, we just send the user to login with no context.
       val errors: List<AuthenticationFailedCause> = call.authentication.allFailures
-      logger.info { "Inside challenge: $errors" }
+      //logger.info { "Inside challenge: $errors" }
       /*
         when (errors.singleOrNull()) {
           AuthenticationFailedCause.InvalidCredentials -> call.respondRedirect("$LOGIN?invalid")
@@ -178,7 +178,7 @@ private fun Authentication.Configuration.configureFormAuth() {
     validate { cred: UserPasswordCredential ->
       // Realistically you'd look up the user in a database or something here; this is just a toy example.
       // The values here will be whatever was submitted in the form.
-      logger.info { "Inside validate" }
+      //logger.info { "Inside validate" }
       if (cred.name == TestCredentials.userEmail && cred.password == TestCredentials.password) {
         logger.info { "Login success" }
         UserIdPrincipal(cred.name)

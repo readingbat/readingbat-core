@@ -30,7 +30,7 @@ import kotlin.reflect.KProperty
 @ReadingBatDslMarker
 class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>, internal val groupName: String) {
   internal val languageType = languageGroup.languageType
-  internal val readingBatContent = languageGroup.readingBatContent
+  //internal val readingBatContent = languageGroup.readingBatContent
   internal val challenges = mutableListOf<T>()
 
   private val prefix by lazy { "${languageType.lowerName}/$groupName" }

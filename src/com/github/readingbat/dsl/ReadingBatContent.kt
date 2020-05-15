@@ -22,6 +22,7 @@ import com.github.readingbat.InvalidConfigurationException
 import com.github.readingbat.dsl.LanguageGroup.Companion.defaultContentRoot
 import com.github.readingbat.dsl.LanguageType.*
 
+
 @ReadingBatDslMarker
 class ReadingBatContent {
   internal var googleAnalyticsId = ""

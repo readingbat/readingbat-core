@@ -20,7 +20,7 @@ package com.github.readingbat.pages
 import com.github.readingbat.InvalidConfigurationException
 import com.github.readingbat.config.production
 import com.github.readingbat.dsl.LanguageType
-import com.github.readingbat.dsl.LanguageType.*
+import com.github.readingbat.dsl.LanguageType.Companion.languageTypesInOrder
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.CSSNames.backLinkCls
 import com.github.readingbat.misc.CSSNames.bodyHeaderCls
@@ -107,7 +107,7 @@ internal fun BODY.helpAndLogin(principal: UserIdPrincipal?, loginPath: String) {
       }
 */
       table {
-        val path = "/test/java"  // "/$root/$loginPath"
+        val path = "/$rootPath/$loginPath"
         form(method = FormMethod.post) {
           //action = path
           this@table.tr {
@@ -169,8 +169,7 @@ internal fun BODY.bodyTitle() {
 }
 
 internal fun BODY.bodyHeader(principal: UserIdPrincipal?,
-                             readingBatContent:
-                             ReadingBatContent,
+                             readingBatContent: ReadingBatContent,
                              languageType: LanguageType,
                              loginPath: String) {
 
@@ -179,7 +178,7 @@ internal fun BODY.bodyHeader(principal: UserIdPrincipal?,
 
   nav {
     ul {
-      for (lang in listOf(Java, Python, Kotlin)) {
+      for (lang in languageTypesInOrder) {
         if (readingBatContent.hasGroups(lang))
           li(classes = "h2") {
             if (languageType == lang) id = selected
@@ -191,7 +190,7 @@ internal fun BODY.bodyHeader(principal: UserIdPrincipal?,
 }
 
 internal fun defaultTab(readingBatContent: ReadingBatContent) =
-  listOf(Java, Python, Kotlin)
+  languageTypesInOrder
     .asSequence()
     .filter { readingBatContent.hasGroups(it) }
     .map { "/$rootPath/${it.lowerName}" }

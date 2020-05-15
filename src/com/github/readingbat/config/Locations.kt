@@ -20,7 +20,7 @@ package com.github.readingbat.config
 import com.github.readingbat.dsl.LanguageType.Companion.toLanguageType
 import com.github.readingbat.dsl.LanguageType.Kotlin
 import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.misc.AuthName
+import com.github.readingbat.misc.AuthName.FORM
 import com.github.readingbat.misc.Constants.playground
 import com.github.readingbat.misc.Constants.rootPath
 import com.github.readingbat.pages.challengeGroupPage
@@ -33,7 +33,6 @@ import io.ktor.application.call
 import io.ktor.auth.UserIdPrincipal
 import io.ktor.auth.authenticate
 import io.ktor.auth.principal
-import io.ktor.http.ContentType
 import io.ktor.http.ContentType.Text.Html
 import io.ktor.locations.Location
 import io.ktor.locations.get
@@ -44,87 +43,69 @@ import io.ktor.sessions.get
 import io.ktor.sessions.sessions
 import io.ktor.sessions.set
 import io.ktor.util.pipeline.PipelineContext
-import mu.KotlinLogging
 
-private val logger = KotlinLogging.logger {}
+typealias PipelineCall = PipelineContext<Unit, ApplicationCall>
 
 internal fun Application.locations(readingBatContent: ReadingBatContent) {
   routing {
 
-    // Create the pages outside of the call.respondText() for proper exception handling
-
-    fun PipelineContext<Unit, ApplicationCall>.retrievePrincipal() =
+    fun PipelineCall.retrievePrincipal() =
       call.sessions.get<UserIdPrincipal>()
 
-    fun PipelineContext<Unit, ApplicationCall>.assignPrincipal() =
-      call.principal<UserIdPrincipal>()
-        .apply {
-          // Set the cookie
-          if (this != null)
-            call.sessions.set(this)
-        }
+    fun PipelineCall.assignPrincipal() =
+      call.principal<UserIdPrincipal>().apply { if (this != null) call.sessions.set(this) }  // Set the cookie
 
-    val langAction: suspend PipelineContext<Unit, ApplicationCall>.(Language, UserIdPrincipal?) -> Unit =
-      { lang, principal ->
-        readingBatContent.checkLanguage(lang.languageType)
-        val languageGroup = readingBatContent.findLanguage(lang.languageType)
-        val html = languageGroupPage(principal, readingBatContent, lang.languageType, languageGroup.challengeGroups)
-        call.respondText(html, Html)
-      }
-
-    get<Language> { lang -> langAction.invoke(this, lang, retrievePrincipal()) }
-
-    authenticate(AuthName.FORM) {
-      post<Language> { lang ->
-        langAction.invoke(this, lang, assignPrincipal())
-      }
+    suspend fun PipelineCall.langAction(lang: Language, principal: UserIdPrincipal?) {
+      // Create the pages outside of the call.respondText() for proper exception handling
+      readingBatContent.checkLanguage(lang.languageType)
+      val languageGroup = readingBatContent.findLanguage(lang.languageType)
+      val html = languageGroupPage(principal, readingBatContent, lang.languageType, languageGroup.challengeGroups)
+      call.respondText(html, Html)
     }
 
-    val groupAction: suspend PipelineContext<Unit, ApplicationCall>.(Language.Group, UserIdPrincipal?) -> Unit =
-      { group, principal ->
-        readingBatContent.checkLanguage(group.languageType)
-        val challengeGroup = readingBatContent.findGroup(group.languageType, group.groupName)
-        val html = challengeGroupPage(principal, challengeGroup)
-        call.respondText(html, ContentType.Text.Html)
-      }
+    get<Language> { language -> langAction(language, retrievePrincipal()) }
 
-    get<Language.Group> { group -> groupAction.invoke(this, group, retrievePrincipal()) }
-
-    authenticate(AuthName.FORM) {
-      post<Language.Group> { group -> groupAction.invoke(this, group, assignPrincipal()) }
+    authenticate(FORM) {
+      post<Language> { language -> langAction(language, assignPrincipal()) }
     }
 
-    suspend fun PipelineContext<Unit, ApplicationCall>.challengeAction(gc: Language.Group.Challenge,
-                                                                       principal: UserIdPrincipal?) {
+    suspend fun PipelineCall.groupAction(group: Language.Group, principal: UserIdPrincipal?) {
+      readingBatContent.checkLanguage(group.languageType)
+      val challengeGroup = readingBatContent.findGroup(group.languageType, group.groupName)
+      val html = challengeGroupPage(principal, readingBatContent, challengeGroup)
+      call.respondText(html, Html)
+    }
+
+    get<Language.Group> { groupChallenge -> groupAction(groupChallenge, retrievePrincipal()) }
+
+    authenticate(FORM) {
+      post<Language.Group> { languageGroup -> groupAction(languageGroup, assignPrincipal()) }
+    }
+
+    suspend fun PipelineCall.challengeAction(gc: Language.Group.Challenge, principal: UserIdPrincipal?) {
       readingBatContent.checkLanguage(gc.languageType)
       val challenge = readingBatContent.findChallenge(gc.languageType, gc.groupName, gc.challengeName)
       val clientSession = call.sessions.get<ClientSession>()
-      val html = challengePage(principal, challenge, clientSession)
+      val html = challengePage(principal, readingBatContent, challenge, clientSession)
       call.respondText(html, Html)
     }
 
-    get<Language.Group.Challenge> { gc ->
-      challengeAction(gc, retrievePrincipal())
+    get<Language.Group.Challenge> { groupChallenge -> challengeAction(groupChallenge, retrievePrincipal()) }
+
+    authenticate(FORM) {
+      post<Language.Group.Challenge> { groupChallenge -> challengeAction(groupChallenge, assignPrincipal()) }
     }
 
-    authenticate(AuthName.FORM) {
-      post<Language.Group.Challenge> { gc ->
-        challengeAction(gc, assignPrincipal())
-      }
-    }
-
-    get<PlaygroundRequest> { request ->
-      val principal = call.principal<UserIdPrincipal>()
+    suspend fun PipelineCall.playground(request: PlaygroundRequest, principal: UserIdPrincipal?) {
       val challenge = readingBatContent.findLanguage(Kotlin).findChallenge(request.groupName, request.challengeName)
-      val html = playgroundPage(principal, challenge)
+      val html = playgroundPage(principal, readingBatContent, challenge)
       call.respondText(html, Html)
     }
 
-    post<PlaygroundRequest> { request ->
-      val principal = call.principal<UserIdPrincipal>()
-      val challenge = readingBatContent.findLanguage(Kotlin).findChallenge(request.groupName, request.challengeName)
-      val html = playgroundPage(principal, challenge)
-      call.respondText(html, Html)
+    get<PlaygroundRequest> { request -> playground(request, retrievePrincipal()) }
+
+    authenticate(FORM) {
+      post<PlaygroundRequest> { request -> playground(request, assignPrincipal()) }
     }
   }
 }

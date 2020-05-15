@@ -21,6 +21,7 @@ import com.github.pambrose.common.util.decode
 import com.github.pambrose.common.util.toPath
 import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.ChallengeGroup
+import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.CSSNames.funcChoice
 import com.github.readingbat.misc.CSSNames.funcItem
 import com.github.readingbat.misc.CSSNames.tabs
@@ -31,12 +32,13 @@ import kotlinx.html.*
 import kotlinx.html.Entities.nbsp
 import kotlinx.html.stream.createHTML
 
-internal fun challengeGroupPage(principal: UserIdPrincipal?, challengeGroup: ChallengeGroup<*>) =
+internal fun challengeGroupPage(principal: UserIdPrincipal?,
+                                readingBatContent: ReadingBatContent,
+                                challengeGroup: ChallengeGroup<*>) =
   createHTML()
     .html {
       val languageType = challengeGroup.languageType
       val languageName = languageType.lowerName
-      val readingBatContent = challengeGroup.readingBatContent
       val groupName = challengeGroup.groupName
       val challenges = challengeGroup.challenges
       val loginPath = listOf(languageName, groupName).toPath()

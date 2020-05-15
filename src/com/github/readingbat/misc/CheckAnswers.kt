@@ -25,6 +25,7 @@ import com.github.readingbat.RedisPool.gson
 import com.github.readingbat.RedisPool.pool
 import com.github.readingbat.config.ChallengeAnswers
 import com.github.readingbat.config.ClientSession
+import com.github.readingbat.config.PipelineCall
 import com.github.readingbat.dsl.LanguageType.Companion.toLanguageType
 import com.github.readingbat.dsl.LanguageType.Java
 import com.github.readingbat.dsl.LanguageType.Kotlin
@@ -33,11 +34,9 @@ import com.github.readingbat.misc.Answers.challengeSrc
 import com.github.readingbat.misc.Answers.groupSrc
 import com.github.readingbat.misc.Answers.langSrc
 import com.github.readingbat.misc.CSSNames.userResp
-import io.ktor.application.ApplicationCall
 import io.ktor.application.call
 import io.ktor.request.receiveParameters
 import io.ktor.response.respondText
-import io.ktor.util.pipeline.PipelineContext
 import kotlinx.coroutines.delay
 import mu.KLogging
 import javax.script.ScriptException
@@ -72,8 +71,8 @@ private data class ChallengeHistory(var argument: String,
 
 object CheckAnswers : KLogging() {
 
-  internal suspend fun PipelineContext<Unit, ApplicationCall>.checkUserAnswers(readingBatContent: ReadingBatContent,
-                                                                               clientSession: ClientSession?) {
+  internal suspend fun PipelineCall.checkUserAnswers(readingBatContent: ReadingBatContent,
+                                                     clientSession: ClientSession?) {
     val params = call.receiveParameters()
     val compareMap = params.entries().map { it.key to it.value[0] }.toMap()
     val languageName = compareMap[langSrc] ?: throw InvalidConfigurationException("Missing language")
@@ -83,6 +82,7 @@ object CheckAnswers : KLogging() {
     val userResps = params.entries().filter { it.key.startsWith(userResp) }
     val challenge =
       readingBatContent.findLanguage(languageName.toLanguageType()).findChallenge(groupName, challengeName)
+    val funcInfo = challenge.funcInfo(readingBatContent)
 
     logger.debug("Found ${userResps.size} user responses in $compareMap")
 
@@ -90,7 +90,6 @@ object CheckAnswers : KLogging() {
       userResps.indices.map { i ->
         val userResponse =
           compareMap[userResp + i]?.trim() ?: throw InvalidConfigurationException("Missing user response")
-        val funcInfo = challenge.funcInfo()
         val answer = funcInfo.answers[i]
         ChallengeResults(funcInfo.arguments[i],
                          userResponse,
@@ -101,7 +100,7 @@ object CheckAnswers : KLogging() {
     if (clientSession != null) {
       val answerMap = mutableMapOf<String, String>()
       userResps.indices.forEach { i ->
-        val argumentKey = challenge.funcInfo().arguments[i]
+        val argumentKey = funcInfo.arguments[i]
         val userResp = compareMap[userResp + i]?.trim() ?: throw InvalidConfigurationException("Missing user response")
         if (userResp.isNotEmpty())
           answerMap[argumentKey] = userResp

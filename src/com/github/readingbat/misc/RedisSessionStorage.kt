@@ -32,14 +32,14 @@ class RedisSessionStorage(val redis: Jedis,
   override suspend fun read(id: String): ByteArray? {
     logger.info { "Redis read for $id" }
     val key = buildKey(id)
-    try {
-      return redis.get(key)?.toByteArray(Charsets.UTF_8)
+    return try {
+      redis.get(key)?.toByteArray(Charsets.UTF_8)
         .apply {
           redis.expire(key, ttl.inSeconds.toInt()) // refresh
         }
     } catch (e: Exception) {
       e.printStackTrace()
-      return null
+      null
     }
   }
 

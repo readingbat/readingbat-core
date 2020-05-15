@@ -55,7 +55,6 @@ import kotlin.time.measureTimedValue
 sealed class Challenge(challengeGroup: ChallengeGroup<*>, val challengeName: String, val replaceable: Boolean) {
   private val challengeId = counter.incrementAndGet()
   private val languageGroup = challengeGroup.languageGroup
-  internal val readingBatContent = languageGroup.readingBatContent
   private val repo = languageGroup.repo
   private val branchName = languageGroup.branchName
   internal val srcPath = languageGroup.srcPath
@@ -89,7 +88,7 @@ sealed class Challenge(challengeGroup: ChallengeGroup<*>, val challengeName: Str
     computeFuncInfo(file.content)
   }
 
-  internal fun funcInfo(): FunctionInfo =
+  internal fun funcInfo(readingBatContent: ReadingBatContent): FunctionInfo =
     if (repo.remote) {
       sourcesMap
         .computeIfAbsent(challengeId) {

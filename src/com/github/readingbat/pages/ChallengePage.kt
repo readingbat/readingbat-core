@@ -24,6 +24,7 @@ import com.github.readingbat.RedisPool.gson
 import com.github.readingbat.config.ChallengeAnswers
 import com.github.readingbat.config.ClientSession
 import com.github.readingbat.dsl.Challenge
+import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.Answers.processAnswers
 import com.github.readingbat.misc.CSSNames.arrow
 import com.github.readingbat.misc.CSSNames.challengeDesc
@@ -52,14 +53,17 @@ import mu.KotlinLogging
 private val logger = KotlinLogging.logger {}
 private val emptyAnswerMap = mutableMapOf<String, String>()
 
-internal fun challengePage(principal: UserIdPrincipal?, challenge: Challenge, clientSession: ClientSession?) =
+internal fun challengePage(principal: UserIdPrincipal?,
+                           readingBatContent: ReadingBatContent,
+                           challenge: Challenge,
+                           clientSession: ClientSession?) =
   createHTML()
     .html {
       val languageType = challenge.languageType
       val languageName = languageType.lowerName
-      val readingBatContent = challenge.readingBatContent
       val groupName = challenge.groupName
       val challengeName = challenge.challengeName
+      val funcInfo = challenge.funcInfo(readingBatContent)
       val loginPath = listOf(languageName, groupName, challengeName).toPath()
 
       head {
@@ -86,11 +90,9 @@ internal fun challengePage(principal: UserIdPrincipal?, challenge: Challenge, cl
 
           div(classes = codeBlock) {
             pre(classes = "line-numbers") {
-              code(classes = "language-$languageName") { +challenge.funcInfo().codeSnippet }
+              code(classes = "language-$languageName") { +funcInfo.codeSnippet }
             }
           }
-
-          val funcInfo = challenge.funcInfo()
 
           div(classes = userAnswers) {
             table {
@@ -148,7 +150,7 @@ internal fun challengePage(principal: UserIdPrincipal?, challenge: Challenge, cl
               this@body.addLink("Gitpod.io", "https://gitpod.io/#${challenge.gitpodUrl}", true)
               if (languageType.isKotlin()) {
                 +" or as a "
-                this@body.addLink("Kotlin Playground", "/$playground/$groupName/$challengeName", true)
+                this@body.addLink("Kotlin Playground", "/$playground/$groupName/$challengeName", false)
               }
               +"."
             }
