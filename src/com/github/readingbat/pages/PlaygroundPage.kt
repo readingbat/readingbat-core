@@ -23,7 +23,7 @@ import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.misc.CSSNames.challengeDesc
 import com.github.readingbat.misc.CSSNames.kotlinCode
 import com.github.readingbat.misc.CSSNames.tabs
-import com.github.readingbat.misc.Constants.root
+import com.github.readingbat.misc.Constants.rootPath
 import io.ktor.auth.UserIdPrincipal
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
@@ -73,6 +73,6 @@ fun playgroundPage(principal: UserIdPrincipal?, challenge: Challenge) =
           }
         }
 
-        backLink("/$root/$languageName/$groupName/$challengeName")
+        backLink("/$rootPath/$languageName/$groupName/$challengeName")
       }
     }

@@ -20,31 +20,37 @@ package com.github.readingbat.config
 import com.codahale.metrics.jvm.ThreadDump
 import com.github.pambrose.common.util.randomId
 import com.github.readingbat.config.ThreadDumpInfo.threadDump
+import com.github.readingbat.dsl.LanguageType.Companion.toLanguageType
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.AuthName.FORM
-import com.github.readingbat.misc.AuthName.SESSION
 import com.github.readingbat.misc.CSSNames.checkAnswers
 import com.github.readingbat.misc.CheckAnswers.checkUserAnswers
 import com.github.readingbat.misc.CommonRoutes.LOGIN
 import com.github.readingbat.misc.CommonRoutes.LOGOUT
 import com.github.readingbat.misc.CommonRoutes.PROFILE
 import com.github.readingbat.misc.Constants.cssName
+import com.github.readingbat.misc.Constants.groupNamePath
 import com.github.readingbat.misc.Constants.icons
-import com.github.readingbat.misc.Constants.root
+import com.github.readingbat.misc.Constants.languagePath
+import com.github.readingbat.misc.Constants.rootPath
 import com.github.readingbat.misc.Constants.staticRoot
 import com.github.readingbat.misc.FormFields.PASSWORD
 import com.github.readingbat.misc.FormFields.USERNAME
 import com.github.readingbat.misc.TestCredentials.password
 import com.github.readingbat.misc.TestCredentials.userEmail
 import com.github.readingbat.misc.cssContent
+import com.github.readingbat.pages.challengeGroupPage
 import com.github.readingbat.pages.defaultTab
+import com.github.readingbat.pages.languageGroupPage
 import io.ktor.application.Application
+import io.ktor.application.ApplicationCall
 import io.ktor.application.call
 import io.ktor.auth.UserHashedTableAuth
 import io.ktor.auth.UserIdPrincipal
 import io.ktor.auth.authenticate
 import io.ktor.auth.principal
 import io.ktor.html.respondHtml
+import io.ktor.http.ContentType
 import io.ktor.http.ContentType.Text.CSS
 import io.ktor.http.content.resources
 import io.ktor.http.content.static
@@ -56,6 +62,7 @@ import io.ktor.sessions.get
 import io.ktor.sessions.sessions
 import io.ktor.sessions.set
 import io.ktor.util.getDigestFunction
+import io.ktor.util.pipeline.PipelineContext
 import kotlinx.html.*
 import mu.KotlinLogging
 import java.io.ByteArrayOutputStream
@@ -85,16 +92,15 @@ internal fun Application.routes(readingBatContent: ReadingBatContent) {
 
   routing {
 
-    loginRoute()
-    logoutRoute()
-    profileRoute()
+    //languageGroup(readingBatContent)
+    //challengeGroup(readingBatContent)
 
     get("/") {
       val tab = defaultTab(readingBatContent)
       call.respondRedirect(tab)
     }
 
-    get("/$root") {
+    get("/$rootPath") {
       val tab = defaultTab(readingBatContent)
       call.respondRedirect(tab)
     }
@@ -121,6 +127,22 @@ internal fun Application.routes(readingBatContent: ReadingBatContent) {
       }
 
       call.respondText { "registered ${call.sessions.get<ClientSession>()}" }
+    }
+
+    get(LOGOUT) {
+      // Purge ExamplePrinciple from cookie data
+      call.sessions.clear<UserIdPrincipal>()
+      call.respondRedirect(LOGIN)
+    }
+
+    get(PROFILE) {
+      val principal = call.sessions.get<UserIdPrincipal>()
+      call.respondHtml {
+        body {
+          div { +"Hello, ${principal?.name}!" }
+          div { a(href = LOGOUT) { +"Log out" } }
+        }
+      }
     }
 
     get("/session-check") {
@@ -187,36 +209,76 @@ internal fun Routing.loginRoute() {
     }
 
     authenticate(FORM) {
-      logger.info { "Inside authenticate 1" }
       post {
+        logger.info { "Inside authenticate 22" }
         // Get the principle (which we know we'll have)
         val principal = call.principal<UserIdPrincipal>()
         // Set the cookie
-        call.sessions.set(principal)
+        if (principal != null)
+          call.sessions.set(principal)
         call.respondRedirect(PROFILE)
       }
     }
   }
 }
 
-internal fun Routing.logoutRoute() {
-  get(LOGOUT) {
-    // Purge ExamplePrinciple from cookie data
-    call.sessions.clear<UserIdPrincipal>()
-    call.respondRedirect(LOGIN)
-  }
-}
 
-internal fun Route.profileRoute() {
-  authenticate(SESSION) {
-    get(PROFILE) {
-      val principal = call.principal<UserIdPrincipal>()
-      call.respondHtml {
-        body {
-          div { +"Hello, $principal!" }
-          div { a(href = LOGOUT) { +"Log out" } }
-        }
+private fun Routing.languageGroup(readingBatContent: ReadingBatContent) {
+  route("/$rootPath/{$languagePath}") {
+
+    val langAction: suspend PipelineContext<Unit, ApplicationCall>.(UserIdPrincipal?) -> Unit =
+      { principal ->
+        val lang = call.parameters[languagePath].toLanguageType()
+        readingBatContent.checkLanguage(lang)
+        val languageGroup = readingBatContent.findLanguage(lang)
+        val html = languageGroupPage(principal, readingBatContent, lang, languageGroup.challengeGroups)
+        call.respondText(html, ContentType.Text.Html)
+      }
+
+    get {
+      val principal = call.sessions.get<UserIdPrincipal>()
+      langAction.invoke(this, principal)
+    }
+
+    authenticate(FORM) {
+      post {
+        val principal = call.principal<UserIdPrincipal>()
+        // Set the cookie
+        if (principal != null)
+          call.sessions.set(principal)
+        langAction.invoke(this, principal)
       }
     }
   }
 }
+
+private fun Routing.challengeGroup(readingBatContent: ReadingBatContent) {
+  route("/$rootPath/{$languagePath}/{$groupNamePath}") {
+
+    val groupAction: suspend PipelineContext<Unit, ApplicationCall>.(UserIdPrincipal?) -> Unit =
+      { principal ->
+        val lang = call.parameters[languagePath].toLanguageType()
+        val groupName = call.parameters[groupNamePath] ?: ""
+        readingBatContent.checkLanguage(lang)
+        val challengeGroup = readingBatContent.findGroup(lang, groupName)
+        val html = challengeGroupPage(principal, challengeGroup)
+        call.respondText(html, ContentType.Text.Html)
+      }
+
+    get {
+      val principal = call.sessions.get<UserIdPrincipal>()
+      groupAction.invoke(this, principal)
+    }
+
+    authenticate(FORM) {
+      post {
+        val principal = call.principal<UserIdPrincipal>()
+        // Set the cookie
+        if (principal != null)
+          call.sessions.set(principal)
+        groupAction.invoke(this, principal)
+      }
+    }
+  }
+}
+

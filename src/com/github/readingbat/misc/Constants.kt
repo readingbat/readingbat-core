@@ -24,7 +24,10 @@ internal object Constants {
   const val staticRoot = "static"
   const val icons = "icons"
   const val cssName = "styles.css"
-  const val root = "content"
+  const val rootPath = "content"
+  const val languagePath = "language"
+  const val groupNamePath = "groupName"
+  const val challengeNamePath = "challengeName"
 }
 
 object FormFields {
@@ -48,6 +51,6 @@ object Cookies {
 }
 
 object TestCredentials {
-  const val userEmail = "foo"
+  const val userEmail = "pambrose@mac.com"
   const val password = "bar"
 }

@@ -27,13 +27,17 @@ import com.github.readingbat.misc.CSSNames.bodyHeaderCls
 import com.github.readingbat.misc.CSSNames.selected
 import com.github.readingbat.misc.Constants.cssName
 import com.github.readingbat.misc.Constants.icons
-import com.github.readingbat.misc.Constants.root
+import com.github.readingbat.misc.Constants.rootPath
 import com.github.readingbat.misc.Constants.staticRoot
 import com.github.readingbat.misc.Constants.titleText
+import com.github.readingbat.misc.FormFields
 import io.ktor.auth.UserIdPrincipal
 import io.ktor.http.ContentType.Text.CSS
 import kotlinx.html.*
 import kotlinx.html.Entities.nbsp
+import mu.KotlinLogging
+
+private val logger = KotlinLogging.logger {}
 
 internal fun HEAD.headDefault(readingBatContent: ReadingBatContent) {
   link { rel = "stylesheet"; href = "/$cssName"; type = CSS.toString() }
@@ -66,7 +70,15 @@ internal fun BODY.helpAndLogin(principal: UserIdPrincipal?, loginPath: String) {
       style = "float:right;  margin:0px; border: 1px solid lightgray;"
       table {
         tr {
-          td { +"pambrose"; br; +"@mac.com" }
+          val elems = principal.name.split("@")
+          td {
+            if (elems.size == 1) {
+              +elems[0]
+            }
+            else {
+              +elems[0]; br; +"@${elems[1]}"
+            }
+          }
         }
         tr {
           td {
@@ -95,20 +107,20 @@ internal fun BODY.helpAndLogin(principal: UserIdPrincipal?, loginPath: String) {
       }
 */
       table {
-        val path = "/$root/$loginPath"
+        val path = "/test/java"  // "/$root/$loginPath"
         form(method = FormMethod.post) {
-          action = path
+          //action = path
           this@table.tr {
             td { +"id/email" }
-            td { textInput { name = "uname"; size = "20" } }
+            td { textInput { name = FormFields.USERNAME; size = "20" } }
           }
           this@table.tr {
             td { +"password" }
-            td { passwordInput { name = "pw"; size = "20" } }
+            td { passwordInput { name = FormFields.PASSWORD; size = "20" } }
           }
           this@table.tr {
             td {}
-            td { submitInput { name = "dologin"; value = "log in" } }
+            td { submitInput { name = "dologin"; value = "Log in" } }
           }
           hiddenInput { name = "fromurl"; value = path }
         }
@@ -171,7 +183,7 @@ internal fun BODY.bodyHeader(principal: UserIdPrincipal?,
         if (readingBatContent.hasGroups(lang))
           li(classes = "h2") {
             if (languageType == lang) id = selected
-            this@bodyHeader.addLink(lang.name, "/$root/${lang.lowerName}")
+            this@bodyHeader.addLink(lang.name, "/$rootPath/${lang.lowerName}")
           }
       }
     }
@@ -182,7 +194,7 @@ internal fun defaultTab(readingBatContent: ReadingBatContent) =
   listOf(Java, Python, Kotlin)
     .asSequence()
     .filter { readingBatContent.hasGroups(it) }
-    .map { "/$root/${it.lowerName}" }
+    .map { "/$rootPath/${it.lowerName}" }
     .firstOrNull()
     ?: throw InvalidConfigurationException("Missing default language")
 

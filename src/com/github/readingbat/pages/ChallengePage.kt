@@ -39,7 +39,7 @@ import com.github.readingbat.misc.CSSNames.tabs
 import com.github.readingbat.misc.CSSNames.userAnswers
 import com.github.readingbat.misc.CSSNames.userResp
 import com.github.readingbat.misc.Constants.playground
-import com.github.readingbat.misc.Constants.root
+import com.github.readingbat.misc.Constants.rootPath
 import com.github.readingbat.misc.Constants.staticRoot
 import com.github.readingbat.misc.addScript
 import io.ktor.auth.UserIdPrincipal
@@ -77,7 +77,7 @@ internal fun challengePage(principal: UserIdPrincipal?, challenge: Challenge, cl
 
         div(classes = tabs) {
           h2 {
-            this@body.addLink(groupName.decode(), "/$root/$languageName/$groupName")
+            this@body.addLink(groupName.decode(), "/$rootPath/$languageName/$groupName")
             rawHtml("${nbsp.text}&rarr;${nbsp.text}"); +challengeName
           }
 
@@ -163,7 +163,7 @@ internal fun challengePage(principal: UserIdPrincipal?, challenge: Challenge, cl
           }
         }
 
-        backLink("/$root/$languageName/$groupName")
+        backLink("/$rootPath/$languageName/$groupName")
 
         script { src = "/$staticRoot/$languageName-prism.js" }
       }

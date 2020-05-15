@@ -24,7 +24,7 @@ import com.github.readingbat.dsl.ChallengeGroup
 import com.github.readingbat.misc.CSSNames.funcChoice
 import com.github.readingbat.misc.CSSNames.funcItem
 import com.github.readingbat.misc.CSSNames.tabs
-import com.github.readingbat.misc.Constants.root
+import com.github.readingbat.misc.Constants.rootPath
 import com.github.readingbat.misc.Constants.staticRoot
 import io.ktor.auth.UserIdPrincipal
 import kotlinx.html.*
@@ -69,7 +69,7 @@ internal fun challengeGroupPage(principal: UserIdPrincipal?, challengeGroup: Cha
           }
         }
 
-        backLink("/$root/$languageName")
+        backLink("/$rootPath/$languageName")
       }
     }
 
@@ -77,7 +77,9 @@ private fun TR.funcCall(prefix: String, groupName: String, challenge: Challenge)
   td(classes = funcItem) {
     img { src = "/$staticRoot/check.jpg" }
     rawHtml(nbsp.text)
-    a(classes = funcChoice) { href = "/$root/$prefix/$groupName/${challenge.challengeName}"; +challenge.challengeName }
+    a(classes = funcChoice) {
+      href = "/$rootPath/$prefix/$groupName/${challenge.challengeName}"; +challenge.challengeName
+    }
   }
 }
 

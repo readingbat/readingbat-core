@@ -21,7 +21,6 @@ import com.github.pambrose.common.util.simpleClassName
 import com.github.readingbat.InvalidPathException
 import com.github.readingbat.misc.AuthName
 import com.github.readingbat.misc.AuthName.FORM
-import com.github.readingbat.misc.CommonRoutes.LOGIN
 import com.github.readingbat.misc.Cookies
 import com.github.readingbat.misc.FormFields
 import com.github.readingbat.misc.TestCredentials
@@ -37,7 +36,6 @@ import io.ktor.http.withCharset
 import io.ktor.locations.Locations
 import io.ktor.request.path
 import io.ktor.response.respond
-import io.ktor.response.respondRedirect
 import io.ktor.server.engine.ShutDownUrl
 import io.ktor.sessions.Sessions
 import io.ktor.sessions.cookie
@@ -139,6 +137,12 @@ private fun Sessions.Configuration.configureAuthCookie() {
     //storage = SessionStorageMemory()
                          ) {
     cookie.path = "/"
+
+    if (production)
+      cookie.secure = true
+
+    cookie.maxAgeInSeconds = 7L * 24 * 3600 // 7 days
+
     // CSRF protection in modern browsers. Make sure your important side-effect-y operations, like ordering,
     // uploads, and changing settings, use "unsafe" HTTP verbs like POST and PUT, not GET or HEAD.
     // https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies#SameSite_cookies
@@ -154,28 +158,35 @@ private fun Sessions.Configuration.configureAuthCookie() {
  */
 private fun Authentication.Configuration.configureFormAuth() {
   form(FORM) {
-    logger.info { "Inside form" }
     userParamName = FormFields.USERNAME
     passwordParamName = FormFields.PASSWORD
+
     challenge {
-      logger.info { "Inside challenge 2" }
       // I don't think form auth supports multiple errors, but we're conservatively assuming there will be at
       // most one error, which we handle here. Worst case, we just send the user to login with no context.
-      val errors: Map<Any, AuthenticationFailedCause> = call.authentication.errors
-      when (errors.values.singleOrNull()) {
-        AuthenticationFailedCause.InvalidCredentials -> call.respondRedirect("$LOGIN?invalid")
-        AuthenticationFailedCause.NoCredentials -> call.respondRedirect("$LOGIN?no")
-        else -> call.respondRedirect(LOGIN)
-      }
+      val errors: List<AuthenticationFailedCause> = call.authentication.allFailures
+      logger.info { "Inside challenge: $errors" }
+      /*
+        when (errors.singleOrNull()) {
+          AuthenticationFailedCause.InvalidCredentials -> call.respondRedirect("$LOGIN?invalid")
+          AuthenticationFailedCause.NoCredentials -> call.respondRedirect("$LOGIN?no")
+          else -> call.respondRedirect(LOGIN)
+        }
+         */
     }
+
     validate { cred: UserPasswordCredential ->
       // Realistically you'd look up the user in a database or something here; this is just a toy example.
       // The values here will be whatever was submitted in the form.
       logger.info { "Inside validate" }
-      if (cred.name == TestCredentials.userEmail && cred.password == TestCredentials.password)
+      if (cred.name == TestCredentials.userEmail && cred.password == TestCredentials.password) {
+        logger.info { "Login success" }
         UserIdPrincipal(cred.name)
-      else
+      }
+      else {
+        logger.info { "Login failure" }
         null
+      }
     }
   }
 }
