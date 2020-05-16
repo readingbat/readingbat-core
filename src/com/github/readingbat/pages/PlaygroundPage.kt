@@ -56,9 +56,10 @@ fun playgroundPage(principal: UserIdPrincipal?, readingBatContent: ReadingBatCon
 
         div(classes = tabs) {
           h2 {
-            this@body.addLink(groupName.decode(), "/$languageName/$groupName")
+            val groupPath = "/" + listOf(challengeRoot, languageName, groupName).toPath()
+            this@body.addLink(groupName.decode(), groupPath)
             rawHtml("${Entities.nbsp.text}&rarr;${Entities.nbsp.text}")
-            this@body.addLink(challengeName.decode(), "/$languageName/$groupName/$challengeName")
+            this@body.addLink(challengeName.decode(), listOf(groupPath, challengeName).toPath())
           }
 
           if (challenge.description.isNotEmpty())

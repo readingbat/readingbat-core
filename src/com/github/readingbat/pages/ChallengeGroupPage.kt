@@ -80,7 +80,8 @@ private fun TR.funcCall(prefix: String, groupName: String, challenge: Challenge)
     img { src = "/$staticRoot/check.jpg" }
     rawHtml(nbsp.text)
     a(classes = funcChoice) {
-      href = "/$challengeRoot/$prefix/$groupName/${challenge.challengeName}"; +challenge.challengeName
+      href = "/" + listOf(challengeRoot, prefix, groupName, challenge.challengeName).toPath();
+      +challenge.challengeName
     }
   }
 }

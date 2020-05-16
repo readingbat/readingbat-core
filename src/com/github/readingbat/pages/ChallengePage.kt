@@ -82,8 +82,10 @@ internal fun challengePage(principal: UserIdPrincipal?,
 
         div(classes = tabs) {
           h2 {
-            this@body.addLink(groupName.decode(), "/$challengeRoot/$languageName/$groupName")
-            rawHtml("${nbsp.text}&rarr;${nbsp.text}"); +challengeName
+            val groupPath = "/" + listOf(challengeRoot, languageName, groupName).toPath()
+            this@body.addLink(groupName.decode(), groupPath)
+            rawHtml("${nbsp.text}&rarr;${nbsp.text}")
+            +challengeName
           }
 
           if (challenge.description.isNotEmpty())
