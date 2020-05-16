@@ -18,8 +18,11 @@
 package com.github.readingbat.misc
 
 import com.github.pambrose.common.util.GitHubRepo
+import io.ktor.util.getDigestFunction
 import mu.KLogging
 import org.kohsuke.github.GitHub
+import java.security.MessageDigest
+import java.util.*
 
 // https://github-api.kohsuke.org
 
@@ -34,4 +37,37 @@ object GitHubUtils : KLogging() {
     elems.forEach { elem -> currRoot = currRoot.tree.asSequence().filter { it.path == elem }.first().asTree() }
     return currRoot.tree.map { it.path }
   }
+}
+
+fun String.md5(): String {
+  return hashString(this, "MD5")
+}
+
+fun String.sha256(): String {
+  return hashString(this, "SHA-256")
+}
+
+private fun hashString(input: String, algorithm: String) =
+  MessageDigest
+    .getInstance(algorithm)
+    .digest(input.toByteArray())
+    .fold("", { str, it -> str + "%02x".format(it) })
+
+fun main() {
+  println("test".sha256())
+  println("test".md5())
+
+  // https://docs.oracle.com/javase/6/docs/api/java/security/SecureRandom.html
+  val digester = getDigestFunction("SHA-256") { "readingbat${it.length}" }
+  val kk = digester.invoke("test")
+  val mm = kk.fold("", { str, it -> str + "%02x".format(it) })
+
+  val ii = Base64.getEncoder().encode(kk)
+  println(mm)
+  println(String(ii))
+
+  val pp = Base64.getDecoder()
+    .decode("GSjkHCHGAxTTbnkEDBbVYd+PUFRlcWiumc4+MWE9Rvw=").fold("", { str, it -> str + "%02x".format(it) })
+  println(pp)
+
 }

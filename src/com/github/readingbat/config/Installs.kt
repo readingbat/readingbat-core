@@ -60,6 +60,9 @@ internal fun Application.installs() {
     configureFormAuth()
   }
 
+  if (production)
+    install(HttpsRedirect)
+
   install(Compression) {
     gzip {
       priority = 1.0

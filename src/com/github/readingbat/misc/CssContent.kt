@@ -77,6 +77,14 @@ internal object CSSNames {
 internal val cssContent by lazy {
   CSSBuilder()
     .apply {
+
+      rule("html, body") {
+        //+"font-size: small;"
+      }
+      rule("html, body") {
+        /* MOBILE-CSS prevents crazy shrinking of font in table e.g. on section page */
+        //"-webkit-text-size-adjust:none; text-size-adjust:none;"
+      }
       rule("body, a, p, td, h1, h2, h3") {
         fontFamily = "normal small verdana, arial, helvetica, sans-serif"
       }
