@@ -41,6 +41,7 @@ import com.github.readingbat.misc.CSSNames.userAnswers
 import com.github.readingbat.misc.CSSNames.userResp
 import kotlinx.css.*
 import kotlinx.css.properties.TextDecoration
+import kotlinx.css.properties.boxShadow
 
 internal object CSSNames {
   const val checkBar = "checkBar"
@@ -207,6 +208,13 @@ internal val cssContent by lazy {
         marginRight = 1.em
         fontSize = codeFs
       }
+      // This takes care of the blue vertical stripe to the left of the code
+      rule("pre[class*=\"language-\"] > code") {
+        val color = "#0600EE"
+        borderLeft = "10px solid $color"
+        boxShadow(Color(color), -1.px, 0.px, 0.px, 0.px)
+        boxShadow(Color("#dfdfdf"), 0.px, 0.px, 0.px, 1.px)
+      }
       rule(".language-java") {
         //width = 950.px  // !important
       }
@@ -222,8 +230,11 @@ internal val cssContent by lazy {
       }
       // KotlinPlayground code
       rule(".CodeMirror") {
-        //height = 500.px
         fontSize = codeFs
+      }
+      // This fixes a bug in the window size
+      rule(".CodeMirror-scroll") {
+        height = LinearDimension.auto
       }
     }.toString()
 }

@@ -52,6 +52,7 @@ import mu.KotlinLogging
 
 private val logger = KotlinLogging.logger {}
 private val emptyAnswerMap = mutableMapOf<String, String>()
+private const val spinnerCss = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
 
 internal fun challengePage(principal: UserIdPrincipal?,
                            readingBatContent: ReadingBatContent,
@@ -170,8 +171,6 @@ internal fun challengePage(principal: UserIdPrincipal?,
         script { src = "/$staticRoot/$languageName-prism.js" }
       }
     }
-
-private const val spinnerCss = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
 
 private fun HEAD.removePrismShadow() {
   // Remove the prism shadow

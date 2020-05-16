@@ -45,7 +45,7 @@ fun playgroundPage(principal: UserIdPrincipal?, readingBatContent: ReadingBatCon
       val loginPath = listOf(languageName, groupName, challengeName).toPath()
 
       head {
-        script { src = "https://unpkg.com/kotlin-playground@1"; attributes["data-selector"] = "code" }
+        script { src = "https://unpkg.com/kotlin-playground@1"; attributes["data-selector"] = ".$kotlinCode" }
         headDefault(readingBatContent)
       }
 
@@ -62,16 +62,15 @@ fun playgroundPage(principal: UserIdPrincipal?, readingBatContent: ReadingBatCon
           if (challenge.description.isNotEmpty())
             div(classes = challengeDesc) { rawHtml(challenge.parsedDescription) }
 
-          div(classes = kotlinCode) {
-            val options =
-              """theme="idea" indent="2" lines="true" highlight-on-fly="true" data-autocomplete="true" match-brackets="true""""
-            rawHtml(
-              """
-              <code class="$kotlinCode" $options >
+          val options =
+            """theme="idea" indent="2" lines="true"  highlight-on-fly="true" data-autocomplete="true" match-brackets="true" """
+
+          rawHtml(
+            """
+              <div class=$kotlinCode $options>  
               ${StringEscapeUtils.escapeHtml4(funcInfo.originalCode)}
-              </code>
+              </div>
               """)
-          }
         }
 
         backLink("/$challengeRoot/$languageName/$groupName/$challengeName")

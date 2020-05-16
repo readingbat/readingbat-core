@@ -63,8 +63,8 @@ val content by lazy {
     }
 */
     include(GitHubContent(organization, "readingbat-java-content", branch = branch).eval().java)
-    //include(GitHubContent(organization, "readingbat-python-content", branch = branch, srcPath = "src").eval().python)
-    //include(GitHubContent(organization, "readingbat-java-content", branch = branch).eval().kotlin)
+    include(GitHubContent(organization, "readingbat-python-content", branch = branch, srcPath = "src").eval().python)
+    include(GitHubContent(organization, "readingbat-java-content", branch = branch).eval().kotlin)
 
     java {
       //include(GitHubContent(organization, "readingbat-java-content").parse().java.findGroup("dd"))
