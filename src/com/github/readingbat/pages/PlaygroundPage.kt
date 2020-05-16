@@ -85,6 +85,7 @@ fun playgroundPage(principal: UserIdPrincipal?, readingBatContent: ReadingBatCon
           img { height = "25"; style = "vertical-align: bottom"; src = "/$staticRoot/run-button.png" }
           +" to run the code"
         }
-        backLink("/$challengeRoot/$languageName/$groupName/$challengeName")
+
+        backLink(challengeRoot, languageName, groupName, challengeName)
       }
     }

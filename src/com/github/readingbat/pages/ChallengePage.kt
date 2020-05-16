@@ -168,7 +168,7 @@ internal fun challengePage(principal: UserIdPrincipal?,
           }
         }
 
-        backLink("/$challengeRoot/$languageName/$groupName")
+        backLink(challengeRoot, languageName, groupName)
 
         script { src = "/$staticRoot/$languageName-prism.js" }
       }

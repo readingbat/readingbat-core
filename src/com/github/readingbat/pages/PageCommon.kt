@@ -17,6 +17,7 @@
 
 package com.github.readingbat.pages
 
+import com.github.pambrose.common.util.toPath
 import com.github.readingbat.InvalidConfigurationException
 import com.github.readingbat.config.production
 import com.github.readingbat.dsl.LanguageType
@@ -25,6 +26,8 @@ import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.AuthRoutes.LOGOUT
 import com.github.readingbat.misc.CSSNames.backLinkCls
 import com.github.readingbat.misc.CSSNames.bodyHeaderCls
+import com.github.readingbat.misc.CSSNames.max
+import com.github.readingbat.misc.CSSNames.pretab
 import com.github.readingbat.misc.CSSNames.selected
 import com.github.readingbat.misc.Constants.ABOUT
 import com.github.readingbat.misc.Constants.PREFS
@@ -176,10 +179,15 @@ internal fun BODY.bodyTitle() {
 internal fun BODY.bodyHeader(principal: UserIdPrincipal?,
                              readingBatContent: ReadingBatContent,
                              languageType: LanguageType,
-                             loginPath: String) {
+                             loginPath: String,
+                             message: String = "") {
 
   helpAndLogin(principal, loginPath)
   bodyTitle()
+
+  div(classes = pretab) {
+    p(classes = max) { +message }
+  }
 
   nav {
     ul {
@@ -206,9 +214,9 @@ internal fun BODY.addLink(text: String, url: String, newWindow: Boolean = false)
   a { href = url; if (newWindow) target = "_blank"; +text }
 }
 
-internal fun BODY.backLink(url: String) {
+internal fun BODY.backLink(vararg url: String) {
   br
-  div(classes = backLinkCls) { a { href = url; rawHtml("&larr; Back") } }
+  div(classes = backLinkCls) { a { href = "/" + url.toList().toPath(false); rawHtml("&larr; Back") } }
 }
 
 internal fun HTMLTag.rawHtml(html: String) = unsafe { raw(html) }

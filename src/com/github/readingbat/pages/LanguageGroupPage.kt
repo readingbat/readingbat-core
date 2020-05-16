@@ -42,7 +42,8 @@ internal fun languageGroupPage(principal: UserIdPrincipal?,
       }
 
       body {
-        bodyHeader(principal, readingBatContent, languageType, languageName)
+        bodyHeader(principal, readingBatContent, languageType, languageName, "Welcome to ReadingBat.")
+
         div(classes = tabs) {
           table {
             val cols = 3

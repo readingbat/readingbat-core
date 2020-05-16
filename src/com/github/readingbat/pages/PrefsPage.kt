@@ -33,10 +33,7 @@ internal fun prefsPage(readingBatContent: ReadingBatContent) =
         bodyTitle()
 
         div {
-          h2 {
-            +"ReadingBat Prefs"
-          }
-
+          h2 { +"ReadingBat Prefs" }
         }
       }
     }

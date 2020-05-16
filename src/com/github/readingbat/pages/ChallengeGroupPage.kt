@@ -71,7 +71,7 @@ internal fun challengeGroupPage(principal: UserIdPrincipal?,
           }
         }
 
-        backLink("/$challengeRoot/$languageName")
+        backLink(challengeRoot, languageName)
       }
     }
 
