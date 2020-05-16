@@ -23,12 +23,14 @@ import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.CSSNames.challengeDesc
 import com.github.readingbat.misc.CSSNames.kotlinCode
+import com.github.readingbat.misc.CSSNames.pressGreenButton
 import com.github.readingbat.misc.CSSNames.tabs
 import com.github.readingbat.misc.Constants.challengeRoot
+import com.github.readingbat.misc.Constants.staticRoot
 import io.ktor.auth.UserIdPrincipal
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
-import org.apache.commons.text.StringEscapeUtils
+import org.apache.commons.text.StringEscapeUtils.escapeHtml4
 
 // Playground customization details are here:
 // https://jetbrains.github.io/kotlin-playground/
@@ -63,16 +65,25 @@ fun playgroundPage(principal: UserIdPrincipal?, readingBatContent: ReadingBatCon
             div(classes = challengeDesc) { rawHtml(challenge.parsedDescription) }
 
           val options =
-            """theme="idea" indent="2" lines="true"  highlight-on-fly="true" data-autocomplete="true" match-brackets="true" """
+            """
+|             theme="idea" indent="2" lines="true"  
+|             highlight-on-fly="true" data-autocomplete="true" match-brackets="true" 
+|             """.trimMargin()
 
           rawHtml(
             """
               <div class=$kotlinCode $options>  
-              ${StringEscapeUtils.escapeHtml4(funcInfo.originalCode)}
+              ${escapeHtml4(funcInfo.originalCode)}
               </div>
-              """)
+            """.trimMargin())
         }
 
+        br
+        div(classes = pressGreenButton) {
+          +"Click on"
+          img { height = "25"; style = "vertical-align: bottom"; src = "/$staticRoot/run-button.png" }
+          +" to run the code"
+        }
         backLink("/$challengeRoot/$languageName/$groupName/$challengeName")
       }
     }

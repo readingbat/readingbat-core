@@ -32,6 +32,7 @@ import com.github.readingbat.misc.CSSNames.funcCol
 import com.github.readingbat.misc.CSSNames.funcItem
 import com.github.readingbat.misc.CSSNames.groupItemSrc
 import com.github.readingbat.misc.CSSNames.kotlinCode
+import com.github.readingbat.misc.CSSNames.pressGreenButton
 import com.github.readingbat.misc.CSSNames.refs
 import com.github.readingbat.misc.CSSNames.selected
 import com.github.readingbat.misc.CSSNames.spinner
@@ -52,6 +53,7 @@ internal object CSSNames {
   const val arrow = "arrow"
   const val refs = "refs"
   const val backLinkCls = "backLink"
+  const val pressGreenButton = "pressGreenButton"
   const val codeBlock = "codeBlock"
   const val kotlinCode = "kotlin-code"
   const val tabs = "tabs"
@@ -199,6 +201,12 @@ internal val cssContent by lazy {
       rule(".$backLinkCls") {
         //marginTop = 1.em
         fontSize = 120.pct
+        marginLeft = 1.em
+      }
+
+      rule(".$pressGreenButton") {
+        //marginTop = 1.em
+        //fontSize = 120.pct
         marginLeft = 1.em
       }
 
