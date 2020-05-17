@@ -22,8 +22,7 @@ import com.github.pambrose.common.script.PythonScript
 import com.github.pambrose.common.util.*
 import com.github.readingbat.InvalidConfigurationException
 import com.github.readingbat.RedisPool.gson
-import com.github.readingbat.RedisPool.pool
-import com.github.readingbat.config.ChallengeAnswers
+import com.github.readingbat.RedisPool.redisAction
 import com.github.readingbat.config.ClientSession
 import com.github.readingbat.config.PipelineCall
 import com.github.readingbat.dsl.LanguageType.Companion.toLanguageType
@@ -106,28 +105,25 @@ object CheckAnswers : KLogging() {
           answerMap[argumentKey] = userResp
       }
 
-      pool.resource
-        .use { redis ->
-          val challengeKey = clientSession.challengeKey(languageName, groupName, challengeName)
-          val challengeAnswers = ChallengeAnswers(clientSession.id, answerMap)
-          val challengeJson = gson.toJson(challengeAnswers)
-          logger.debug { "Assigning: $challengeKey to $challengeJson" }
-          redis.set(challengeKey, challengeJson)
+      redisAction { redis ->
+        // Save the all the answers for the challenge
+        val challengeKey = clientSession.challengeKey(languageName, groupName, challengeName)
+        logger.debug { "Storing: $challengeKey" }
+        answerMap.forEach { args, userResp -> redis.hset(challengeKey, args, userResp) }
 
-          results
-            .filter { it.answered }
-            .forEach { result ->
-              val argumentKey = clientSession.argumentKey(languageName, groupName, challengeName, result.arguments)
-              val historyJson = redis.get(argumentKey)
-              val history =
-                gson.fromJson(historyJson, ChallengeHistory::class.java) ?: ChallengeHistory(result.arguments)
-              logger.debug { "Before: $history" }
-              history.apply { if (result.correct) markCorrect() else markIncorrect(result.userResponse) }
-              logger.debug { "After: $history" }
-              val updateJson = gson.toJson(history)
-              redis.set(argumentKey, updateJson)
-            }
-        }
+        // Save the history of each answer on a per-arguments basis
+        results
+          .filter { it.answered }
+          .forEach { result ->
+            val argumentKey = clientSession.argumentKey(languageName, groupName, challengeName, result.arguments)
+            val history = gson.fromJson(redis[argumentKey],
+                                        ChallengeHistory::class.java) ?: ChallengeHistory(result.arguments)
+            logger.debug { "Before: $history" }
+            history.apply { if (result.correct) markCorrect() else markIncorrect(result.userResponse) }
+            logger.debug { "After: $history" }
+            redis.set(argumentKey, gson.toJson(history))
+          }
+      }
     }
 
     results
@@ -196,4 +192,17 @@ object CheckAnswers : KLogging() {
     } catch (e: Exception) {
       false
     }
+}
+
+fun main() {
+  redisAction { redis ->
+    //redis.set("user|user1", "val1")
+    //redis.set("user|user2", "val2")
+
+    //println(redis.keys("*").joinToString("\n"))
+
+    //redis.keys("*").forEach { redis.del(it) }
+
+  }
+
 }

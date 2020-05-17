@@ -30,6 +30,7 @@ import io.ktor.server.cio.CIO
 import io.ktor.server.engine.commandLineEnvironment
 import io.ktor.server.engine.embeddedServer
 import mu.KotlinLogging
+import redis.clients.jedis.Jedis
 import redis.clients.jedis.JedisPool
 import redis.clients.jedis.JedisPoolConfig
 import redis.clients.jedis.Protocol
@@ -44,6 +45,13 @@ object RedisPool {
                                   redisURI.port,
                                   Protocol.DEFAULT_TIMEOUT,
                                   redisURI.userInfo.split(Regex(":"), 2)[1])
+
+  fun redisAction(block: (Jedis) -> Unit) {
+    pool.resource.use {
+      block.invoke(it)
+    }
+  }
+
   val gson = Gson()
 }
 

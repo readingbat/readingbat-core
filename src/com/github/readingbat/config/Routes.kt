@@ -66,10 +66,10 @@ private val logger = KotlinLogging.logger {}
 
 internal data class ClientSession(val name: String, val id: String) {
   fun challengeKey(languageName: String, groupName: String, challengeName: String) =
-    listOf(id, languageName, groupName, challengeName).joinToString("|")
+    listOf("challenge-answers", id, languageName, groupName, challengeName).joinToString("|")
 
   fun argumentKey(languageName: String, groupName: String, challengeName: String, argument: String) =
-    listOf(id, languageName, groupName, challengeName, argument).joinToString("|")
+    listOf("answer-history", id, languageName, groupName, challengeName, argument).joinToString("|")
 }
 
 internal data class ChallengeAnswers(val id: String, val answers: MutableMap<String, String> = mutableMapOf())

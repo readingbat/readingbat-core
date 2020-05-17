@@ -33,7 +33,7 @@ class RedisSessionStorage(val redis: Jedis,
     logger.info { "Redis read for $id" }
     val key = buildKey(id)
     return try {
-      redis.get(key)?.toByteArray(Charsets.UTF_8)
+      redis[key]?.toByteArray(Charsets.UTF_8)
         .apply {
           redis.expire(key, ttl.inSeconds.toInt()) // refresh
         }

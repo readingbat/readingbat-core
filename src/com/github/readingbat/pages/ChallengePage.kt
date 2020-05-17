@@ -19,9 +19,7 @@ package com.github.readingbat.pages
 
 import com.github.pambrose.common.util.decode
 import com.github.pambrose.common.util.toPath
-import com.github.readingbat.RedisPool
-import com.github.readingbat.RedisPool.gson
-import com.github.readingbat.config.ChallengeAnswers
+import com.github.readingbat.RedisPool.redisAction
 import com.github.readingbat.config.ClientSession
 import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.ReadingBatContent
@@ -103,15 +101,11 @@ internal fun challengePage(principal: UserIdPrincipal?,
 
               var previousAnswers = emptyAnswerMap
               if (clientSession != null) {
-                RedisPool.pool.resource
-                  .use { redis ->
-                    val key = clientSession.challengeKey(languageName, groupName, challenge.challengeName)
-                    logger.debug { "Fetching: $key" }
-                    val json = redis.get(key)
-                    val challengeAnswers = gson.fromJson(json, ChallengeAnswers::class.java)
-                    if (challengeAnswers != null)
-                      previousAnswers = challengeAnswers.answers
-                  }
+                redisAction { redis ->
+                  val key = clientSession.challengeKey(languageName, groupName, challenge.challengeName)
+                  logger.debug { "Fetching: $key" }
+                  previousAnswers = redis.hgetAll(key)
+                }
               }
 
               funcInfo.arguments.indices.forEach { i ->
