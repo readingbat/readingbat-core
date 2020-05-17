@@ -27,6 +27,8 @@ internal object Constants {
   const val challengeRoot = "content"
   const val PREFS = "/prefs"
   const val ABOUT = "/about.html"
+  const val CREATE_ACCOUNT = "/create-account"
+  const val PRIVACY = "/privacy.html"
 }
 
 object FormFields {

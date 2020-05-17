@@ -44,7 +44,7 @@ fun playgroundPage(principal: UserIdPrincipal?, readingBatContent: ReadingBatCon
       val groupName = challenge.groupName
       val challengeName = challenge.challengeName
       val funcInfo = challenge.funcInfo(readingBatContent)
-      val loginPath = listOf(languageName, groupName, challengeName).toPath()
+      val loginPath = listOf(languageName, groupName, challengeName).toPath(false, false)
 
       head {
         script { src = "https://unpkg.com/kotlin-playground@1"; attributes["data-selector"] = ".$kotlinCode" }
@@ -56,10 +56,10 @@ fun playgroundPage(principal: UserIdPrincipal?, readingBatContent: ReadingBatCon
 
         div(classes = tabs) {
           h2 {
-            val groupPath = "/" + listOf(challengeRoot, languageName, groupName).toPath()
+            val groupPath = listOf(challengeRoot, languageName, groupName).toPath(true, false)
             this@body.addLink(groupName.decode(), groupPath)
             rawHtml("${Entities.nbsp.text}&rarr;${Entities.nbsp.text}")
-            this@body.addLink(challengeName.decode(), listOf(groupPath, challengeName).toPath())
+            this@body.addLink(challengeName.decode(), listOf(groupPath, challengeName).toPath(false, false))
           }
 
           if (challenge.description.isNotEmpty())
@@ -67,16 +67,16 @@ fun playgroundPage(principal: UserIdPrincipal?, readingBatContent: ReadingBatCon
 
           val options =
             """
-|             theme="idea" indent="2" lines="true"  
-|             highlight-on-fly="true" data-autocomplete="true" match-brackets="true" 
-|             """.trimMargin()
+              theme="idea" indent="2" lines="true"  
+              highlight-on-fly="true" data-autocomplete="true" match-brackets="true" 
+            """.trimIndent()
 
           rawHtml(
             """
               <div class=$kotlinCode $options>  
               ${escapeHtml4(funcInfo.originalCode)}
               </div>
-            """.trimMargin())
+            """.trimIndent())
         }
 
         br

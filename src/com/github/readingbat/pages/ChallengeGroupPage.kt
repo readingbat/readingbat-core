@@ -41,7 +41,7 @@ internal fun challengeGroupPage(principal: UserIdPrincipal?,
       val languageName = languageType.lowerName
       val groupName = challengeGroup.groupName
       val challenges = challengeGroup.challenges
-      val loginPath = listOf(languageName, groupName).toPath()
+      val loginPath = listOf(languageName, groupName).toPath(false, false)
 
       head {
         headDefault(readingBatContent)
@@ -80,7 +80,7 @@ private fun TR.funcCall(prefix: String, groupName: String, challenge: Challenge)
     img { src = "/$staticRoot/check.jpg" }
     rawHtml(nbsp.text)
     a(classes = funcChoice) {
-      href = "/" + listOf(challengeRoot, prefix, groupName, challenge.challengeName).toPath();
+      href = listOf(challengeRoot, prefix, groupName, challenge.challengeName).toPath(true, false);
       +challenge.challengeName
     }
   }

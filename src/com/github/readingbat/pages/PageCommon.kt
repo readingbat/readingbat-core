@@ -31,6 +31,7 @@ import com.github.readingbat.misc.CSSNames.pretab
 import com.github.readingbat.misc.CSSNames.selected
 import com.github.readingbat.misc.CSSNames.tabc
 import com.github.readingbat.misc.Constants.ABOUT
+import com.github.readingbat.misc.Constants.CREATE_ACCOUNT
 import com.github.readingbat.misc.Constants.PREFS
 import com.github.readingbat.misc.Constants.challengeRoot
 import com.github.readingbat.misc.Constants.cssName
@@ -120,7 +121,7 @@ internal fun BODY.helpAndLogin(principal: UserIdPrincipal?, loginPath: String) {
             colSpan = "2"
             a { href = "/reset"; +"forgot password" }
             +" | "
-            a { href = "/pref?docreate=1"; +"create account" }
+            a { href = CREATE_ACCOUNT; +"create account" }
           }
         }
       }
@@ -204,7 +205,7 @@ internal fun BODY.addLink(text: String, url: String, newWindow: Boolean = false)
 
 internal fun BODY.backLink(vararg url: String) {
   br
-  div(classes = backLinkCls) { a { href = "/" + url.toList().toPath(false); rawHtml("&larr; Back") } }
+  div(classes = backLinkCls) { a { href = url.toList().toPath(true, false); rawHtml("&larr; Back") } }
 }
 
 internal fun HTMLTag.rawHtml(html: String) = unsafe { raw(html) }

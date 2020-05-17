@@ -24,9 +24,7 @@ import com.github.readingbat.misc.CSSNames.challengeDesc
 import com.github.readingbat.misc.CSSNames.checkAnswers
 import com.github.readingbat.misc.CSSNames.checkBar
 import com.github.readingbat.misc.CSSNames.codeBlock
-import com.github.readingbat.misc.CSSNames.codeFs
 import com.github.readingbat.misc.CSSNames.feedback
-import com.github.readingbat.misc.CSSNames.fs
 import com.github.readingbat.misc.CSSNames.funcChoice
 import com.github.readingbat.misc.CSSNames.funcCol
 import com.github.readingbat.misc.CSSNames.funcItem
@@ -74,11 +72,12 @@ internal object CSSNames {
   const val groupItemSrc = "groupItem"
   const val selected = "selected"
   const val status = "status"
-  val fs = 115.pct
-  val codeFs = 95.pct
 }
 
 internal val cssContent by lazy {
+  val textFs = 115.pct
+  val codeFs = 95.pct
+
   CSSBuilder()
     .apply {
 
@@ -91,8 +90,11 @@ internal val cssContent by lazy {
       }
       //rule("body, a, p, td, h1, h2, h3") {
       rule("html, body") {
-        fontSize = LinearDimension.minContent
-        fontFamily = " verdana, arial, helvetica, sans-serif"
+        fontSize = LinearDimension.auto
+        fontFamily = "verdana, arial, helvetica, sans-serif"
+      }
+      p {
+        maxWidth = 800.px
       }
       rule("p.max") {
         maxWidth = 800.px
@@ -135,11 +137,8 @@ internal val cssContent by lazy {
       h2 {
         fontSize = LinearDimension("150%")
       }
-      p {
-        maxWidth = LinearDimension("700px")
-      }
       rule(".$challengeDesc") {
-        fontSize = fs
+        fontSize = textFs
         marginLeft = 1.em
         marginBottom = 1.em
       }
@@ -171,7 +170,7 @@ internal val cssContent by lazy {
         textAlign = TextAlign.left
       }
       rule("th") {
-        fontSize = fs
+        fontSize = textFs
       }
       rule(".$userAnswers") {
         marginTop = 2.em
@@ -186,11 +185,11 @@ internal val cssContent by lazy {
         borderRadius = LinearDimension("1em")
       }
       rule("td.$funcCol") {
-        fontSize = fs
+        fontSize = textFs
       }
       rule("td.$arrow") {
         width = 2.em
-        fontSize = fs
+        fontSize = textFs
         textAlign = TextAlign.center
       }
       rule(".$userResp") {
@@ -215,7 +214,7 @@ internal val cssContent by lazy {
         width = 14.em
         height = 2.em
         backgroundColor = Color("#f1f1f1")
-        fontSize = fs
+        fontSize = textFs
         fontWeight = FontWeight.bold
         borderRadius = 6.px
       }
@@ -225,7 +224,7 @@ internal val cssContent by lazy {
       }
       rule(".$status") {
         marginLeft = 5.px
-        fontSize = fs
+        fontSize = textFs
         verticalAlign = VerticalAlign.bottom
       }
       rule(".h2") {
@@ -257,14 +256,13 @@ internal val cssContent by lazy {
       }
       rule(".$refs") {
         marginTop = 1.em
-        fontSize = fs
+        fontSize = textFs
       }
       rule(".$backLinkCls") {
         //marginTop = 1.em
         fontSize = 120.pct
         marginLeft = 1.em
       }
-
       rule(".$pressGreenButton") {
         //marginTop = 1.em
         //fontSize = 120.pct

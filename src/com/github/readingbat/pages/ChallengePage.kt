@@ -63,7 +63,7 @@ internal fun challengePage(principal: UserIdPrincipal?,
       val groupName = challenge.groupName
       val challengeName = challenge.challengeName
       val funcInfo = challenge.funcInfo(readingBatContent)
-      val loginPath = listOf(languageName, groupName, challengeName).toPath()
+      val loginPath = listOf(languageName, groupName, challengeName).toPath(false, false)
 
       head {
         link { rel = "stylesheet"; href = spinnerCss }
@@ -80,7 +80,7 @@ internal fun challengePage(principal: UserIdPrincipal?,
 
         div(classes = tabs) {
           h2 {
-            val groupPath = "/" + listOf(challengeRoot, languageName, groupName).toPath()
+            val groupPath = listOf(challengeRoot, languageName, groupName).toPath(true, false)
             this@body.addLink(groupName.decode(), groupPath)
             rawHtml("${nbsp.text}&rarr;${nbsp.text}")
             +challengeName
