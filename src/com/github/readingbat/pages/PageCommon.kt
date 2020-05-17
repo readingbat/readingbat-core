@@ -29,6 +29,7 @@ import com.github.readingbat.misc.CSSNames.bodyHeaderCls
 import com.github.readingbat.misc.CSSNames.max
 import com.github.readingbat.misc.CSSNames.pretab
 import com.github.readingbat.misc.CSSNames.selected
+import com.github.readingbat.misc.CSSNames.tabc
 import com.github.readingbat.misc.Constants.ABOUT
 import com.github.readingbat.misc.Constants.PREFS
 import com.github.readingbat.misc.Constants.challengeRoot
@@ -174,14 +175,16 @@ internal fun BODY.bodyHeader(principal: UserIdPrincipal?,
     p(classes = max) { +message }
   }
 
-  nav {
-    ul {
-      for (lang in languageTypesInOrder) {
-        if (readingBatContent.hasGroups(lang))
-          li(classes = "h2") {
-            if (languageType == lang) id = selected
-            this@bodyHeader.addLink(lang.name, "/$challengeRoot/${lang.lowerName}")
-          }
+  div(classes = tabc) {
+    nav {
+      ul {
+        for (lang in languageTypesInOrder) {
+          if (readingBatContent.hasGroups(lang))
+            li(classes = "h2") {
+              if (languageType == lang) id = selected
+              this@bodyHeader.addLink(lang.name, "/$challengeRoot/${lang.lowerName}")
+            }
+        }
       }
     }
   }

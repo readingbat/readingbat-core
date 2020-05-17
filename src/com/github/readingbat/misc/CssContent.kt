@@ -30,6 +30,7 @@ import com.github.readingbat.misc.CSSNames.fs
 import com.github.readingbat.misc.CSSNames.funcChoice
 import com.github.readingbat.misc.CSSNames.funcCol
 import com.github.readingbat.misc.CSSNames.funcItem
+import com.github.readingbat.misc.CSSNames.groupChoice
 import com.github.readingbat.misc.CSSNames.groupItemSrc
 import com.github.readingbat.misc.CSSNames.kotlinCode
 import com.github.readingbat.misc.CSSNames.max
@@ -39,6 +40,7 @@ import com.github.readingbat.misc.CSSNames.refs
 import com.github.readingbat.misc.CSSNames.selected
 import com.github.readingbat.misc.CSSNames.spinner
 import com.github.readingbat.misc.CSSNames.status
+import com.github.readingbat.misc.CSSNames.tabc
 import com.github.readingbat.misc.CSSNames.tabs
 import com.github.readingbat.misc.CSSNames.userAnswers
 import com.github.readingbat.misc.CSSNames.userResp
@@ -56,6 +58,7 @@ internal object CSSNames {
   const val refs = "refs"
   const val pretab = "pretab"
   const val max = "max"
+  const val tabc = "tabc"
   const val backLinkCls = "backLink"
   const val pressGreenButton = "pressGreenButton"
   const val codeBlock = "codeBlock"
@@ -65,6 +68,7 @@ internal object CSSNames {
   const val challengeDesc = "challenge-desc"
   const val userAnswers = "userAnswers"
   const val bodyHeaderCls = "bodyHeader"
+  const val groupChoice = "groupChoice"
   const val funcChoice = "funcChoice"
   const val funcItem = "funcItem"
   const val groupItemSrc = "groupItem"
@@ -85,8 +89,42 @@ internal val cssContent by lazy {
         /* MOBILE-CSS prevents crazy shrinking of font in table e.g. on section page */
         //"-webkit-text-size-adjust:none; text-size-adjust:none;"
       }
-      rule("body, a, p, td, h1, h2, h3") {
-        fontFamily = "normal small verdana, arial, helvetica, sans-serif"
+      //rule("body, a, p, td, h1, h2, h3") {
+      rule("html, body") {
+        fontSize = LinearDimension.minContent
+        fontFamily = " verdana, arial, helvetica, sans-serif"
+      }
+      rule("p.max") {
+        maxWidth = 800.px
+      }
+      rule(":link") {
+        color = Color("#0000DD;")
+      }
+      rule(":visited") {
+        color = Color("#551A8B;")
+      }
+      rule("td") {
+        verticalAlign = VerticalAlign.top
+      }
+      rule(".h1") {
+        fontSize = LinearDimension("300%")
+      }
+      rule(".h2") {
+        fontSize = LinearDimension("166%")
+      }
+      rule(".h3") {
+        fontSize = LinearDimension("120%")
+      }
+      rule("span.no") {
+        color = Color.red
+      }
+      rule("td.no") {
+        minWidth = 22.px
+        backgroundColor = Color.red
+      }
+      rule("td.ok") {
+        minWidth = 22.px
+        backgroundColor = Color.green
       }
       body {
         backgroundColor = Color.white
@@ -111,17 +149,25 @@ internal val cssContent by lazy {
       rule("p.$max") {
         maxWidth = 800.px
       }
+      rule("div.$tabc") {
+        minWidth = LinearDimension("10vw")
+        clear = Clear.both
+      }
       rule(".$bodyHeaderCls") {
-        marginBottom = 2.em
+        marginBottom = 0.em
       }
       rule(".$funcItem") {
         marginTop = 1.em
+        width = 275.px
+      }
+      rule(".$groupChoice") {
+        fontSize = 166.pct
       }
       rule(".$funcChoice") {
-        fontSize = 140.pct
+        fontSize = 110.pct
       }
       rule("th, td") {
-        padding = "5px"
+        padding = "1px"
         textAlign = TextAlign.left
       }
       rule("th") {
@@ -184,9 +230,6 @@ internal val cssContent by lazy {
       }
       rule(".h2") {
         fontSize = 166.pct
-        textDecoration = TextDecoration.none
-      }
-      rule("a:link") {
         textDecoration = TextDecoration.none
       }
       rule("div.$tabs") {

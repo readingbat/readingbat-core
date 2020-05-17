@@ -20,8 +20,8 @@ package com.github.readingbat.pages
 import com.github.readingbat.dsl.ChallengeGroup
 import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.misc.CSSNames.funcChoice
 import com.github.readingbat.misc.CSSNames.funcItem
+import com.github.readingbat.misc.CSSNames.groupChoice
 import com.github.readingbat.misc.CSSNames.groupItemSrc
 import com.github.readingbat.misc.CSSNames.tabs
 import com.github.readingbat.misc.Constants.challengeRoot
@@ -68,7 +68,7 @@ private fun TR.groupItem(prefix: String, challengeGroup: ChallengeGroup<*>) {
 
   td(classes = funcItem) {
     div(classes = groupItemSrc) {
-      a(classes = funcChoice) { href = "/$challengeRoot/$prefix/$groupName"; +groupName }
+      a(classes = groupChoice) { href = "/$challengeRoot/$prefix/$groupName"; +groupName }
       br { rawHtml(if (parsedDescription.isNotBlank()) parsedDescription else Entities.nbsp.text) }
     }
   }
