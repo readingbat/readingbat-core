@@ -24,9 +24,6 @@ import com.github.readingbat.misc.CSSNames.checkAnswers
 import com.github.readingbat.misc.CheckAnswers.checkUserAnswers
 import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.Constants.challengeRoot
-import com.github.readingbat.misc.Constants.cssName
-import com.github.readingbat.misc.Constants.icons
-import com.github.readingbat.misc.Constants.staticRoot
 import com.github.readingbat.misc.Endpoints.ABOUT
 import com.github.readingbat.misc.Endpoints.CREATE_ACCOUNT
 import com.github.readingbat.misc.Endpoints.PREFS
@@ -37,16 +34,12 @@ import com.github.readingbat.misc.KeyPrefixes.PASSWD
 import com.github.readingbat.misc.KeyPrefixes.SALT
 import com.github.readingbat.misc.KeyPrefixes.USER_ID
 import com.github.readingbat.misc.createAccount
-import com.github.readingbat.misc.cssContent
 import com.github.readingbat.pages.*
 import io.ktor.application.call
 import io.ktor.auth.UserHashedTableAuth
 import io.ktor.auth.UserIdPrincipal
 import io.ktor.http.ContentType
-import io.ktor.http.ContentType.Text.CSS
 import io.ktor.http.ContentType.Text.Html
-import io.ktor.http.content.resources
-import io.ktor.http.content.static
 import io.ktor.response.respondRedirect
 import io.ktor.response.respondText
 import io.ktor.routing.Routing
@@ -70,10 +63,6 @@ internal fun Routing.userRoutes(content: ReadingBatContent) {
 
   post("/$checkAnswers") { checkUserAnswers(content, retrievePrincipal(), call.sessions.get<ClientSession>()) }
 
-  get("/$cssName") { respondWith(CSS) { cssContent } }
-
-  get("/favicon.ico") { redirectTo { "/$staticRoot/$icons/favicon.ico" } }
-
   get(CREATE_ACCOUNT) { respondWith { createAccountPage(content, "", "", queryParam(RETURN_PATH) ?: "/") } }
 
   post(CREATE_ACCOUNT) { createAccount(content) }
@@ -88,10 +77,6 @@ internal fun Routing.userRoutes(content: ReadingBatContent) {
     // Purge UserIdPrincipal from cookie data
     call.sessions.clear<UserIdPrincipal>()
     call.respondRedirect("/")
-  }
-
-  static("/$staticRoot") {
-    resources(staticRoot)
   }
 }
 

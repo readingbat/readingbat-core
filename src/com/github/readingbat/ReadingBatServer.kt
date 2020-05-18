@@ -76,6 +76,7 @@ internal fun Application.module() {
     locations(readingBatContent)
     userRoutes(readingBatContent)
     adminRoutes(readingBatContent)
+    files(readingBatContent)
   }
 }
 
