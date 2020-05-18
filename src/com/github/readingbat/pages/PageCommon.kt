@@ -33,6 +33,7 @@ import com.github.readingbat.misc.CSSNames.tabc
 import com.github.readingbat.misc.Constants.ABOUT
 import com.github.readingbat.misc.Constants.CREATE_ACCOUNT
 import com.github.readingbat.misc.Constants.PREFS
+import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.Constants.challengeRoot
 import com.github.readingbat.misc.Constants.cssName
 import com.github.readingbat.misc.Constants.icons
@@ -121,7 +122,7 @@ internal fun BODY.helpAndLogin(principal: UserIdPrincipal?, loginPath: String) {
             colSpan = "2"
             a { href = "/reset"; +"forgot password" }
             +" | "
-            a { href = CREATE_ACCOUNT; +"create account" }
+            a { href = "$CREATE_ACCOUNT?$RETURN_PATH=$path"; +"create account" }
           }
         }
       }
@@ -163,6 +164,7 @@ internal fun BODY.bodyTitle() {
 }
 
 internal fun BODY.bodyHeader(principal: UserIdPrincipal?,
+                             loginAttempted: Boolean,
                              readingBatContent: ReadingBatContent,
                              languageType: LanguageType,
                              loginPath: String,
@@ -171,6 +173,9 @@ internal fun BODY.bodyHeader(principal: UserIdPrincipal?,
   helpAndLogin(principal, loginPath)
 
   bodyTitle()
+
+  if (loginAttempted && principal == null)
+    p { span(classes = "no") { +"Failed to login -- bad username or password." } }
 
   div(classes = pretab) {
     p(classes = max) { +message }

@@ -19,6 +19,7 @@ package com.github.readingbat.pages
 
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.Constants.CREATE_ACCOUNT
+import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.FormFields.PASSWORD
 import com.github.readingbat.misc.FormFields.USERNAME
 import kotlinx.html.*
@@ -43,7 +44,10 @@ internal fun prefsPage(readingBatContent: ReadingBatContent) =
       }
     }
 
-internal fun createAccount(readingBatContent: ReadingBatContent, defaultUserName: String = "", msg: String = "") =
+internal fun createAccount(readingBatContent: ReadingBatContent,
+                           defaultUserName: String,
+                           msg: String,
+                           returnPath: String) =
   createHTML()
     .html {
 
@@ -137,6 +141,7 @@ internal fun createAccount(readingBatContent: ReadingBatContent, defaultUserName
                 }
               }
             }
+            hiddenInput { name = RETURN_PATH; value = returnPath }
             tr {
               td { }
               td {
@@ -169,12 +174,11 @@ internal fun privacy(readingBatContent: ReadingBatContent) =
         h2 { +"ReadingBat Privacy" }
         p {
           +"""
-              ReadingBat is free -- anyone can access the site to learn and practice coding. 
-              The materials are copyright Paul Ambrose. We will not send you any marketing email (spam), and we 
-              will not sell your name or contact information to anyone for marketing. We will not identify you, 
-              your name or email address (if we should know them) in anything we make public. We collect regular 
-              web server logs, and may use the data and submitted code as part of research into teaching technology 
-              in action, but we will never make public specific names or email addresses.
+            ReadingBat is free -- anyone can access the site to learn and practice coding. We will not send you any 
+            marketing email (spam), and we will not sell your name or contact information to anyone for marketing. 
+            We will not identify you, your name or email address (if we should know them) in anything we make public. 
+            We collect regular web server logs, and may use the data and submitted answers as part of research into 
+            teaching technology, but we will never make public specific names or email addresses.
               """.trimIndent()
         }
 

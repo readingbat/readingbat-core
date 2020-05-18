@@ -28,9 +28,6 @@ import com.github.readingbat.misc.Constants.challengeRoot
 import io.ktor.auth.UserIdPrincipal
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
-import mu.KotlinLogging
-
-private val logger = KotlinLogging.logger {}
 
 internal fun languageGroupPage(principal: UserIdPrincipal?,
                                loginAttempted: Boolean,
@@ -46,9 +43,7 @@ internal fun languageGroupPage(principal: UserIdPrincipal?,
       }
 
       body {
-        if (loginAttempted && principal == null)
-          logger.info { "Failed login message" }
-        bodyHeader(principal, readingBatContent, languageType, languageName, "Welcome to ReadingBat.")
+        bodyHeader(principal, loginAttempted, readingBatContent, languageType, languageName, "Welcome to ReadingBat.")
 
         div(classes = tabs) {
           table {

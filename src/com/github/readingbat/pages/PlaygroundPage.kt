@@ -36,7 +36,10 @@ import org.apache.commons.text.StringEscapeUtils.escapeHtml4
 // https://jetbrains.github.io/kotlin-playground/
 // https://jetbrains.github.io/kotlin-playground/examples/
 
-fun playgroundPage(principal: UserIdPrincipal?, readingBatContent: ReadingBatContent, challenge: Challenge) =
+fun playgroundPage(principal: UserIdPrincipal?,
+                   loginAttempted: Boolean,
+                   readingBatContent: ReadingBatContent,
+                   challenge: Challenge) =
   createHTML()
     .html {
       val languageType = challenge.languageType
@@ -52,7 +55,7 @@ fun playgroundPage(principal: UserIdPrincipal?, readingBatContent: ReadingBatCon
       }
 
       body {
-        bodyHeader(principal, readingBatContent, languageType, loginPath)
+        bodyHeader(principal, loginAttempted, readingBatContent, languageType, loginPath)
 
         div(classes = tabs) {
           h2 {

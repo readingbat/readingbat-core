@@ -30,6 +30,7 @@ import com.github.readingbat.misc.Constants.ABOUT
 import com.github.readingbat.misc.Constants.CREATE_ACCOUNT
 import com.github.readingbat.misc.Constants.PREFS
 import com.github.readingbat.misc.Constants.PRIVACY
+import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.Constants.challengeRoot
 import com.github.readingbat.misc.Constants.cssName
 import com.github.readingbat.misc.Constants.icons
@@ -73,7 +74,7 @@ import kotlin.text.Charsets.UTF_8
 
 private val logger = KotlinLogging.logger {}
 
-internal fun Application.routes(readingBatContent: ReadingBatContent) {
+internal fun Application.routes(content: ReadingBatContent) {
 
   routing {
 
@@ -81,17 +82,17 @@ internal fun Application.routes(readingBatContent: ReadingBatContent) {
     //challengeGroup(readingBatContent)
 
     get("/") {
-      val tab = defaultTab(readingBatContent)
+      val tab = defaultTab(content)
       call.respondRedirect(tab)
     }
 
     get("/$challengeRoot") {
-      val tab = defaultTab(readingBatContent)
+      val tab = defaultTab(content)
       call.respondRedirect(tab)
     }
 
     post("/$checkAnswers") {
-      checkUserAnswers(readingBatContent, call.sessions.get<ClientSession>())
+      checkUserAnswers(content, call.sessions.get<ClientSession>())
     }
 
     get(LOGOUT) {
@@ -140,46 +141,60 @@ internal fun Application.routes(readingBatContent: ReadingBatContent) {
       call.respondText { "cleared" }
     }
 
-    get(ABOUT) { respondWith { aboutPage(readingBatContent) } }
+    get(ABOUT) { respondWith { aboutPage(content) } }
 
-    get(PREFS) { respondWith { prefsPage(readingBatContent) } }
+    get(PREFS) { respondWith { prefsPage(content) } }
 
-    get(CREATE_ACCOUNT) { respondWith { createAccount(readingBatContent) } }
+    get(CREATE_ACCOUNT) {
+      val returnPath = call.request.queryParameters[RETURN_PATH] ?: "/"
+      respondWith { createAccount(content, "", "", returnPath) }
+    }
 
     post(CREATE_ACCOUNT) {
       val parameters = call.receiveParameters()
-      val username = parameters[USERNAME]
-      val password = parameters[PASSWORD]
+      val username = parameters[USERNAME] ?: ""
+      val password = parameters[PASSWORD] ?: ""
+      val returnPath = parameters[RETURN_PATH] ?: "/"
+      logger.info { "Return path = $returnPath" }
       when {
-        username.isNullOrEmpty() -> respondWith { createAccount(readingBatContent, "Empty email value") }
-        !username.isValidEmail() -> respondWith { createAccount(readingBatContent, username, "Invalid email value") }
-        password.isNullOrBlank() -> respondWith { createAccount(readingBatContent, username, "Empty password value") }
-        password.length < 7 -> respondWith {
-          createAccount(readingBatContent,
-                        username,
-                        "Password value too short (must have at least 6 characters)")
-        }
+        username.isBlank() ->
+          respondWith {
+            createAccount(content, "", "Empty email value", returnPath)
+          }
+        !username.isValidEmail() ->
+          respondWith {
+            createAccount(content, username, "Invalid email value", returnPath)
+          }
+        password.isBlank() ->
+          respondWith {
+            createAccount(content, username, "Empty password value", returnPath)
+          }
+        password.length < 6 ->
+          respondWith {
+            createAccount(content, username, "Password value too short (must have at least 6 characters)", returnPath)
+          }
         password == "password" -> respondWith {
-          createAccount(readingBatContent,
-                        username,
-                        "Surely you can come up with a more clever password")
+          createAccount(content, username, "Surely you can come up with a more clever password", returnPath)
         }
         else -> {
           redisAction { redis ->
             // Check if username alread exists
             val userKey = userKey(username)
             if (redis.exists(userKey)) {
-              runBlocking { respondWith { createAccount(readingBatContent, "Empty email value") } }
+              runBlocking {
+                respondWith { createAccount(content, "", "Username already exists: username", returnPath) }
+              }
             }
             else {
               redis.set(userKey, password.sha256(username))
             }
           }
+          call.respondRedirect(returnPath)
         }
       }
     }
 
-    get(PRIVACY) { respondWith { privacy(readingBatContent) } }
+    get(PRIVACY) { respondWith { privacy(content) } }
 
     get("/ping") { call.respondText("pong", Plain) }
 

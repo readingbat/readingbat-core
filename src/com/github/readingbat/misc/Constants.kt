@@ -29,6 +29,7 @@ internal object Constants {
   const val ABOUT = "/about.html"
   const val CREATE_ACCOUNT = "/create-account"
   const val PRIVACY = "/privacy.html"
+  const val RETURN_PATH = "returnPath"
 }
 
 object FormFields {

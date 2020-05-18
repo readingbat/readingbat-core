@@ -53,6 +53,7 @@ private val emptyAnswerMap = mutableMapOf<String, String>()
 private const val spinnerCss = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
 
 internal fun challengePage(principal: UserIdPrincipal?,
+                           loginAttempted: Boolean,
                            readingBatContent: ReadingBatContent,
                            challenge: Challenge,
                            clientSession: ClientSession?) =
@@ -76,7 +77,7 @@ internal fun challengePage(principal: UserIdPrincipal?,
       }
 
       body {
-        bodyHeader(principal, readingBatContent, languageType, loginPath)
+        bodyHeader(principal, loginAttempted, readingBatContent, languageType, loginPath)
 
         div(classes = tabs) {
           h2 {
