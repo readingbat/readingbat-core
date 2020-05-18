@@ -64,7 +64,7 @@ internal fun addImports(code: String, variableName: String): String {
       //.onEach { println("Checking for ${it.javaObjectType.name}") }
       .filter { code.contains("${it.javaObjectType.simpleName}(") }   // See if the class is referenced
       .map { "import ${it.javaObjectType.name}" }                     // Convert to import stmt
-      .filter { !code.contains(it) }                                  // Do not include is import already present
+      .filter { !code.contains(it) }                                  // Do not include if import already present
       .joinToString("\n")                                             // Turn into String
 
   val funcImports =
