@@ -23,7 +23,7 @@ import com.github.readingbat.dsl.LanguageType.Companion.toLanguageType
 import com.github.readingbat.dsl.LanguageType.Kotlin
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.AuthName.FORM
-import com.github.readingbat.misc.ClientSession
+import com.github.readingbat.misc.BrowserSession
 import com.github.readingbat.misc.Constants.challengeRoot
 import com.github.readingbat.misc.Constants.playground
 import com.github.readingbat.pages.challengeGroupPage
@@ -85,9 +85,10 @@ suspend fun PipelineCall.challenge(principal: UserIdPrincipal?,
                                    content: ReadingBatContent,
                                    gc: Language.Group.Challenge) =
   respondWith {
+    registerBrowserSession()
     content.checkLanguage(gc.languageType)
     val challenge = content.findChallenge(gc.languageType, gc.groupName, gc.challengeName)
-    val clientSession = call.sessions.get<ClientSession>()
+    val clientSession = call.sessions.get<BrowserSession>()
     challengePage(principal, loginAttempt, content, challenge, clientSession)
   }
 

@@ -24,6 +24,7 @@ import com.github.readingbat.RedisPool.redisAction
 import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.Answers.processAnswers
+import com.github.readingbat.misc.BrowserSession
 import com.github.readingbat.misc.CSSNames.arrow
 import com.github.readingbat.misc.CSSNames.challengeDesc
 import com.github.readingbat.misc.CSSNames.checkAnswers
@@ -35,7 +36,6 @@ import com.github.readingbat.misc.CSSNames.spinner
 import com.github.readingbat.misc.CSSNames.status
 import com.github.readingbat.misc.CSSNames.tabs
 import com.github.readingbat.misc.CSSNames.userResp
-import com.github.readingbat.misc.ClientSession
 import com.github.readingbat.misc.Constants.challengeRoot
 import com.github.readingbat.misc.Constants.playground
 import com.github.readingbat.misc.Constants.staticRoot
@@ -57,7 +57,7 @@ internal fun challengePage(principal: UserIdPrincipal?,
                            loginAttempt: Boolean,
                            content: ReadingBatContent,
                            challenge: Challenge,
-                           clientSession: ClientSession?) =
+                           browserSession: BrowserSession?) =
   createHTML()
     .html {
       val languageType = challenge.languageType
@@ -104,20 +104,16 @@ internal fun challengePage(principal: UserIdPrincipal?,
 
               var previousAnswers = emptyAnswerMap
 
-              if (principal != null || clientSession != null) {
-                redisAction { redis ->
-                  val userId: UserId? = lookupUserId(redis, principal)
-                  var key = ""
-                  if (userId != null)
-                    key = userId.challengeKey(languageName, groupName, challenge.challengeName)
+              redisAction { redis ->
+                val userId: UserId? = lookupUserId(redis, principal)
+                val key =
+                  userId?.challengeKey(languageName, groupName, challenge.challengeName)
+                    ?: browserSession?.challengeKey(languageName, groupName, challenge.challengeName)
+                    ?: ""
 
-                  if (key.isEmpty() && clientSession != null)
-                    key = clientSession.challengeKey(languageName, groupName, challenge.challengeName)
-
-                  if (key.isNotEmpty()) {
-                    logger.debug { "Fetching: $key" }
-                    previousAnswers = redis.hgetAll(key)
-                  }
+                if (key.isNotEmpty()) {
+                  logger.debug { "Fetching: $key" }
+                  previousAnswers = redis.hgetAll(key)
                 }
               }
 

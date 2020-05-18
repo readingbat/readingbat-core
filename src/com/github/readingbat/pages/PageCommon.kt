@@ -36,6 +36,7 @@ import com.github.readingbat.misc.Constants.titleText
 import com.github.readingbat.misc.Endpoints.ABOUT
 import com.github.readingbat.misc.Endpoints.CREATE_ACCOUNT
 import com.github.readingbat.misc.Endpoints.PREFS
+import com.github.readingbat.misc.Endpoints.RESET_PASSWORD
 import com.github.readingbat.misc.FormFields.PASSWORD
 import com.github.readingbat.misc.FormFields.USERNAME
 import io.ktor.auth.UserIdPrincipal
@@ -117,7 +118,7 @@ internal fun BODY.helpAndLogin(principal: UserIdPrincipal?, loginPath: String) {
         tr {
           td {
             colSpan = "2"
-            a { href = "/reset"; +"forgot password" }
+            a { href = RESET_PASSWORD; +"forgot password" }
             +" | "
             a { href = "$CREATE_ACCOUNT?$RETURN_PATH=$path"; +"create account" }
           }

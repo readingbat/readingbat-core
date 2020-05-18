@@ -18,6 +18,7 @@
 package com.github.readingbat.misc
 
 import com.github.pambrose.common.util.randomId
+import java.time.Instant
 
 internal fun userIdKey(username: String) = "${KeyPrefixes.USER_ID}|$username"
 
@@ -35,7 +36,7 @@ internal class UserId(val id: String = randomId(25)) {
            KeyPrefixes.AUTH, id, languageName, groupName, challengeName, argument).joinToString("|")
 }
 
-internal data class ClientSession(val name: String, val id: String) {
+internal data class BrowserSession(val id: String, val created: Long = Instant.now().toEpochMilli()) {
   fun challengeKey(languageName: String, groupName: String, challengeName: String) =
     listOf(KeyPrefixes.CHALLENGE_ANSWERS,
            KeyPrefixes.NO_AUTH, id, languageName, groupName, challengeName).joinToString("|")

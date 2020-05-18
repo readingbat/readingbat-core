@@ -19,9 +19,9 @@ package com.github.readingbat.config
 
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.AuthRoutes.LOGOUT
+import com.github.readingbat.misc.BrowserSession
 import com.github.readingbat.misc.CSSNames.checkAnswers
 import com.github.readingbat.misc.CheckAnswers.checkUserAnswers
-import com.github.readingbat.misc.ClientSession
 import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.Constants.challengeRoot
 import com.github.readingbat.misc.Constants.cssName
@@ -31,6 +31,7 @@ import com.github.readingbat.misc.Endpoints.ABOUT
 import com.github.readingbat.misc.Endpoints.CREATE_ACCOUNT
 import com.github.readingbat.misc.Endpoints.PREFS
 import com.github.readingbat.misc.Endpoints.PRIVACY
+import com.github.readingbat.misc.Endpoints.RESET_PASSWORD
 import com.github.readingbat.misc.createAccount
 import com.github.readingbat.misc.cssContent
 import com.github.readingbat.pages.*
@@ -57,7 +58,7 @@ internal fun Routing.userRoutes(content: ReadingBatContent) {
 
   get("/$challengeRoot") { redirectTo { defaultTab(content) } }
 
-  post("/$checkAnswers") { checkUserAnswers(content, retrievePrincipal(), call.sessions.get<ClientSession>()) }
+  post("/$checkAnswers") { checkUserAnswers(content, retrievePrincipal(), call.sessions.get<BrowserSession>()) }
 
   get(CREATE_ACCOUNT) { respondWith { createAccountPage(content, "", "", queryParam(RETURN_PATH) ?: "/") } }
 
@@ -66,6 +67,8 @@ internal fun Routing.userRoutes(content: ReadingBatContent) {
   get(PRIVACY) { respondWith { privacyPage(content, queryParam(RETURN_PATH) ?: "") } }
 
   get(ABOUT) { respondWith { aboutPage(content) } }
+
+  get(RESET_PASSWORD) { respondWith { resetPasswordPage(content) } }
 
   get(PREFS) { respondWith { prefsPage(content) } }
 

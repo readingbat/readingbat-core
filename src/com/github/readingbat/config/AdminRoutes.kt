@@ -19,9 +19,11 @@ package com.github.readingbat.config
 
 import com.codahale.metrics.jvm.ThreadDump
 import com.github.pambrose.common.util.randomId
+import com.github.readingbat.PipelineCall
 import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.misc.AuthRoutes
-import com.github.readingbat.misc.ClientSession
+import com.github.readingbat.misc.AuthRoutes.COOKIES
+import com.github.readingbat.misc.BrowserSession
+import com.github.readingbat.redirectTo
 import io.ktor.application.call
 import io.ktor.auth.UserIdPrincipal
 import io.ktor.html.respondHtml
@@ -33,12 +35,15 @@ import io.ktor.sessions.clear
 import io.ktor.sessions.get
 import io.ktor.sessions.sessions
 import io.ktor.sessions.set
-import kotlinx.html.a
 import kotlinx.html.body
 import kotlinx.html.div
 import mu.KotlinLogging
 import java.io.ByteArrayOutputStream
 import java.lang.management.ManagementFactory
+import java.time.Instant
+import java.time.LocalDateTime
+import java.time.ZoneId
+
 
 private val logger = KotlinLogging.logger {}
 
@@ -57,37 +62,45 @@ internal fun Routing.adminRoutes(content: ReadingBatContent) {
     }
   }
 
-  get(AuthRoutes.PROFILE) {
+  get(COOKIES) {
     val principal = call.sessions.get<UserIdPrincipal>()
+    val session = call.sessions.get<BrowserSession>()
+    logger.info { "UserIdPrincipal: $principal BrowserSession: $session" }
+
     call.respondHtml {
       body {
-        div { +"Hello, ${principal?.name}!" }
-        div { a(href = AuthRoutes.LOGOUT) { +"log out" } }
+        if (principal == null && session == null)
+          div { +"No cookies are present." }
+        else {
+          if (principal != null)
+            div { +"UserIdPrincipal: ${principal.name}" }
+
+          if (session != null) {
+            val date = LocalDateTime.ofInstant(Instant.ofEpochMilli(session.created), ZoneId.systemDefault())
+            div { +"BrowserSession id: [${session.id}] created on: $date" }
+          }
+        }
       }
     }
   }
 
-  get("/session-register") {
-    val session = call.sessions.get<ClientSession>()
-    if (session == null) {
-      call.sessions.set(ClientSession(name = "Student name", id = randomId(15)))
-      logger.info { call.sessions.get<ClientSession>() }
+  get("/clear-browser-session") {
+    val session = call.sessions.get<BrowserSession>()
+    if (session != null) {
+      logger.info { "Clearing $session" }
+      // @TODO Should delete session data from redis
+      call.sessions.clear<BrowserSession>()
     }
-    call.respondText { "registered ${call.sessions.get<ClientSession>()}" }
+    redirectTo { "/" }
   }
+}
 
-  get("/session-check") {
-    val session = call.sessions.get<ClientSession>()
-    logger.info { session }
-    call.respondText { "checked $session" }
+internal fun PipelineCall.registerBrowserSession() {
+  val session = call.sessions.get<BrowserSession>()
+  if (session == null) {
+    call.sessions.set(BrowserSession(id = randomId(15)))
+    logger.info { "Created: ${call.sessions.get<BrowserSession>()}" }
   }
-
-  get("/session-2clear") {
-    logger.info { call.sessions.get<ClientSession>() }
-    call.sessions.clear<ClientSession>()
-    call.respondText { "cleared" }
-  }
-
 }
 
 private object ThreadDumpInfo {

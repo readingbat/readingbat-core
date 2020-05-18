@@ -73,7 +73,7 @@ object CheckAnswers : KLogging() {
 
   internal suspend fun PipelineCall.checkUserAnswers(content: ReadingBatContent,
                                                      principal: UserIdPrincipal?,
-                                                     clientSession: ClientSession?) {
+                                                     browserSession: BrowserSession?) {
     val params = call.receiveParameters()
     val compareMap = params.entries().map { it.key to it.value[0] }.toMap()
     val languageName = compareMap[langSrc] ?: throw InvalidConfigurationException("Missing language")
@@ -97,33 +97,37 @@ object CheckAnswers : KLogging() {
                          checkWithAnswer(isJvm, userResponse, answer))
       }
 
-    if (clientSession != null) {
-      val answerMap = mutableMapOf<String, String>()
-      userResps.indices.forEach { i ->
-        val argumentKey = funcInfo.arguments[i]
-        val userResp = compareMap[userResp + i]?.trim() ?: throw InvalidConfigurationException("Missing user response")
-        if (userResp.isNotEmpty())
-          answerMap[argumentKey] = userResp
-      }
+    val answerMap = mutableMapOf<String, String>()
+    userResps.indices.forEach { i ->
+      val argumentKey = funcInfo.arguments[i]
+      val userResp = compareMap[userResp + i]?.trim() ?: throw InvalidConfigurationException("Missing user response")
+      if (userResp.isNotEmpty())
+        answerMap[argumentKey] = userResp
+    }
 
-      // Save the all the answers for the challenge
-      redisAction { redis ->
-        val userId: UserId? = lookupUserId(redis, principal)
+    // Save the all the answers for the challenge
+    redisAction { redis ->
+      val userId = lookupUserId(redis, principal)
+      val challengeKey =
+        userId?.challengeKey(languageName, groupName, challengeName)
+          ?: browserSession?.challengeKey(languageName, groupName, challengeName)
+          ?: ""
 
-        val challengeKey =
-          userId?.challengeKey(languageName, groupName, challengeName)
-            ?: clientSession.challengeKey(languageName, groupName, challengeName)
+      if (challengeKey.isNotEmpty()) {
         logger.debug { "Storing: $challengeKey" }
         answerMap.forEach { (args, userResp) -> redis.hset(challengeKey, args, userResp) }
+      }
 
-        // Save the history of each answer on a per-arguments basis
-        results
-          .filter { it.answered }
-          .forEach { result ->
-            val argumentKey =
-              userId?.argumentKey(languageName, groupName, challengeName, result.arguments)
-                ?: clientSession.argumentKey(languageName, groupName, challengeName, result.arguments)
+      // Save the history of each answer on a per-arguments basis
+      results
+        .filter { it.answered }
+        .forEach { result ->
+          val argumentKey =
+            userId?.argumentKey(languageName, groupName, challengeName, result.arguments)
+              ?: browserSession?.argumentKey(languageName, groupName, challengeName, result.arguments)
+              ?: ""
 
+          if (argumentKey.isNotEmpty()) {
             val history = gson.fromJson(redis[argumentKey],
                                         ChallengeHistory::class.java) ?: ChallengeHistory(result.arguments)
             logger.debug { "Before: $history" }
@@ -131,7 +135,7 @@ object CheckAnswers : KLogging() {
             logger.debug { "After: $history" }
             redis.set(argumentKey, gson.toJson(history))
           }
-      }
+        }
     }
 
     results

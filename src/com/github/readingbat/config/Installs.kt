@@ -123,7 +123,7 @@ internal fun Application.installs() {
 }
 
 private fun Sessions.Configuration.configureSessionIdCookie() {
-  cookie<ClientSession>("readingbat_session_id") {
+  cookie<BrowserSession>("readingbat_session_id") {
     //storage = RedisSessionStorage(redis = pool.resource)) {
     //storage = directorySessionStorage(File("server-sessions"), cached = true)) {
     cookie.path = "/"
@@ -201,7 +201,7 @@ private fun Authentication.Configuration.configureFormAuth() {
       logger.info { "Login ${if (principal == null) "failure" else "success"}" }
 
       if (principal == null)
-        failedLoginLimiter.acquire(); // may wait
+        failedLoginLimiter.acquire() // may wait
 
       principal
     }

@@ -87,7 +87,7 @@ internal suspend fun PipelineCall.createAccount(content: ReadingBatContent) {
               exec()
             }
 
-            createAccountLimiter.acquire(); // may wait
+            createAccountLimiter.acquire() // may wait
 
             redirectTo { returnPath }
           }

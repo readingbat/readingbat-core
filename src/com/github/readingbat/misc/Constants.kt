@@ -33,6 +33,7 @@ object Endpoints {
   const val ABOUT = "/about.html"
   const val CREATE_ACCOUNT = "/create-account"
   const val PRIVACY = "/privacy.html"
+  const val RESET_PASSWORD = "/reset"
 }
 
 object KeyPrefixes {
@@ -57,7 +58,7 @@ object AuthName {
 
 object AuthRoutes {
   const val LOGOUT = "/logout"
-  const val PROFILE = "/profile"
+  const val COOKIES = "/cookies"
 }
 
 object Cookies {
