@@ -65,7 +65,7 @@ internal fun Routing.adminRoutes(content: ReadingBatContent) {
   get(COOKIES) {
     val principal = call.sessions.get<UserPrincipal>()
     val session = call.sessions.get<BrowserSession>()
-    logger.info { "AuthPrincipal: $principal BrowserSession: $session" }
+    logger.info { "UserPrincipal: $principal BrowserSession: $session" }
 
     call.respondHtml {
       body {
@@ -74,7 +74,7 @@ internal fun Routing.adminRoutes(content: ReadingBatContent) {
         else {
           if (principal != null) {
             val date = LocalDateTime.ofInstant(Instant.ofEpochMilli(principal.created), ZoneId.systemDefault())
-            div { +"AuthPrincipal: ${principal.userId} created on: $date" }
+            div { +"UserPrincipal: ${principal.userId} created on: $date" }
           }
 
           if (session != null) {

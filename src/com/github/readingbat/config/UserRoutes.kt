@@ -73,7 +73,7 @@ internal fun Routing.userRoutes(content: ReadingBatContent) {
   get(PREFS) { respondWith { prefsPage(content) } }
 
   get(LOGOUT) {
-    // Purge AuthPrincipal from cookie data
+    // Purge UserPrincipal from cookie data
     call.sessions.clear<UserPrincipal>()
     redirectTo { "/" }
   }
