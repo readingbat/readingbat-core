@@ -18,7 +18,6 @@
 package com.github.readingbat.misc
 
 import com.github.readingbat.misc.CSSNames.arrow
-import com.github.readingbat.misc.CSSNames.backLinkCls
 import com.github.readingbat.misc.CSSNames.bodyHeaderCls
 import com.github.readingbat.misc.CSSNames.challengeDesc
 import com.github.readingbat.misc.CSSNames.checkAnswers
@@ -32,7 +31,6 @@ import com.github.readingbat.misc.CSSNames.groupChoice
 import com.github.readingbat.misc.CSSNames.groupItemSrc
 import com.github.readingbat.misc.CSSNames.kotlinCode
 import com.github.readingbat.misc.CSSNames.max
-import com.github.readingbat.misc.CSSNames.pressGreenButton
 import com.github.readingbat.misc.CSSNames.pretab
 import com.github.readingbat.misc.CSSNames.refs
 import com.github.readingbat.misc.CSSNames.selected
@@ -57,8 +55,6 @@ internal object CSSNames {
   const val pretab = "pretab"
   const val max = "max"
   const val tabc = "tabc"
-  const val backLinkCls = "backLink"
-  const val pressGreenButton = "pressGreenButton"
   const val codeBlock = "codeBlock"
   const val kotlinCode = "kotlin-code"
   const val tabs = "tabs"
@@ -257,16 +253,6 @@ internal val cssContent by lazy {
       rule(".$refs") {
         marginTop = 1.em
         fontSize = textFs
-      }
-      rule(".$backLinkCls") {
-        //marginTop = 1.em
-        fontSize = 120.pct
-        marginLeft = 1.em
-      }
-      rule(".$pressGreenButton") {
-        //marginTop = 1.em
-        //fontSize = 120.pct
-        marginLeft = 1.em
       }
 
       rule(".$codeBlock") {

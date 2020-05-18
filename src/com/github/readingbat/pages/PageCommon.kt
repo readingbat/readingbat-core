@@ -24,7 +24,6 @@ import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.dsl.LanguageType.Companion.languageTypesInOrder
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.AuthRoutes.LOGOUT
-import com.github.readingbat.misc.CSSNames.backLinkCls
 import com.github.readingbat.misc.CSSNames.bodyHeaderCls
 import com.github.readingbat.misc.CSSNames.max
 import com.github.readingbat.misc.CSSNames.pretab
@@ -204,14 +203,18 @@ internal fun defaultTab(content: ReadingBatContent) =
     .firstOrNull()
     ?: throw InvalidConfigurationException("Missing default language")
 
-internal fun BODY.addLink(text: String, url: String, newWindow: Boolean = false) {
+internal fun BODY.addLink(text: String, url: String, newWindow: Boolean = false) =
   a { href = url; if (newWindow) target = "_blank"; +text }
+
+internal fun BODY.backLink(url: String) {
+  br
+  div {
+    style = "font-size: 120%; margin-left: 1em;"
+    a { href = url; rawHtml("&larr; Back") }
+  }
 }
 
-internal fun BODY.backLink(vararg url: String) {
-  br
-  div(classes = backLinkCls) { a { href = url.toList().toRootPath(); rawHtml("&larr; Back") } }
-}
+internal fun BODY.backLink(vararg pathElems: String) = backLink(pathElems.toList().toRootPath())
 
 internal fun HTMLTag.rawHtml(html: String) = unsafe { raw(html) }
 

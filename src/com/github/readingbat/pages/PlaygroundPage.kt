@@ -24,7 +24,6 @@ import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.CSSNames.challengeDesc
 import com.github.readingbat.misc.CSSNames.kotlinCode
-import com.github.readingbat.misc.CSSNames.pressGreenButton
 import com.github.readingbat.misc.CSSNames.tabs
 import com.github.readingbat.misc.Constants.challengeRoot
 import com.github.readingbat.misc.Constants.staticRoot
@@ -84,7 +83,8 @@ fun playgroundPage(principal: UserIdPrincipal?,
         }
 
         br
-        div(classes = pressGreenButton) {
+        div {
+          style = "margin-left: 1em;"
           +"Click on"
           img { height = "25"; style = "vertical-align: bottom"; src = "/$staticRoot/run-button.png" }
           +" to run the code"

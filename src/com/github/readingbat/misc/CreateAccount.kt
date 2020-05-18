@@ -20,6 +20,7 @@ package com.github.readingbat.misc
 import com.github.readingbat.PipelineCall
 import com.github.readingbat.RedisPool
 import com.github.readingbat.dsl.ReadingBatContent
+import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.Messages.CLEVER_PASSWORD
 import com.github.readingbat.misc.Messages.EMPTY_EMAIL
 import com.github.readingbat.misc.Messages.EMPTY_PASWORD
@@ -48,7 +49,7 @@ internal suspend fun PipelineCall.createAccount(content: ReadingBatContent) {
   val parameters = call.receiveParameters()
   val username = parameters[FormFields.USERNAME] ?: ""
   val password = parameters[FormFields.PASSWORD] ?: ""
-  val returnPath = parameters[Constants.RETURN_PATH] ?: "/"
+  val returnPath = parameters[RETURN_PATH] ?: "/"
   logger.debug { "Return path = $returnPath" }
 
   when {
@@ -72,10 +73,10 @@ internal suspend fun PipelineCall.createAccount(content: ReadingBatContent) {
             // userId -> salt
             // userId -> sha256-encoded password
 
-            val userId = UserId()
-            val salt = newStringSalt()
-
             redis.multi().apply {
+              val userId = UserId()
+              val salt = newStringSalt()
+
               set(userIdKey, userId.id)
               set(userId.saltKey(), salt)
               set(userId.passwordKey(), password.sha256(salt))

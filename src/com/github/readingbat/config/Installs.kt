@@ -165,8 +165,8 @@ private fun Authentication.Configuration.configureFormAuth() {
     challenge {
       // I don't think form auth supports multiple errors, but we're conservatively assuming there will be at
       // most one error, which we handle here. Worst case, we just send the user to login with no context.
-      val errors: List<AuthenticationFailedCause> = call.authentication.allFailures
-      //logger.info { "Inside challenge: $errors" }
+      // val errors: List<AuthenticationFailedCause> = call.authentication.allFailures
+      // logger.info { "Inside challenge: $errors" }
       // In apps that require a valid login, you would redirect the user to a login page from here
       // However, we allow non-logged in users, so we do nothing here.
       /*

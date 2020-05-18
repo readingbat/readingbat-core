@@ -37,35 +37,3 @@ internal fun prefsPage(content: ReadingBatContent) =
         }
       }
     }
-
-internal fun privacy(content: ReadingBatContent) =
-  createHTML()
-    .html {
-
-      head {
-        headDefault(content)
-      }
-
-      body {
-        bodyTitle()
-
-        h2 { +"ReadingBat Privacy" }
-        p {
-          +"""
-            ReadingBat is free -- anyone can access the site to learn and practice coding. We will not send you any 
-            marketing email (spam), and we will not sell your name or contact information to anyone for marketing. 
-            We will not identify you, your name or email address (if we should know them) in anything we make public. 
-            We collect regular web server logs, and may use the data and submitted answers as part of research into 
-            teaching technology, but we will never make public specific names or email addresses.
-              """.trimIndent()
-        }
-
-        p {
-          +"If you have any thoughts or suggestions about this server, please don't hesitate to email me at: "
-          a {
-            href = "mailto:pambrose@mac.com?subject=ReadingBat"
-            +"pambrose@mac.com"
-          }
-        }
-      }
-    }

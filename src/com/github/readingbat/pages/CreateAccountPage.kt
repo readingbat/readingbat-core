@@ -18,8 +18,8 @@
 package com.github.readingbat.pages
 
 import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.misc.Constants
-import com.github.readingbat.misc.Endpoints
+import com.github.readingbat.misc.Constants.RETURN_PATH
+import com.github.readingbat.misc.Endpoints.CREATE_ACCOUNT
 import com.github.readingbat.misc.FormFields
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
@@ -52,91 +52,96 @@ internal fun createAccountPage(content: ReadingBatContent,
         bodyTitle()
 
         h2 { +"Create Account" }
-        p {
-          style = "max-width:800px"
-          +"""
+
+        div {
+          style = "margin-left: 1em;"
+
+          p {
+            style = "max-width:800px"
+            +"""
           Please enter information to create a new account. We use your email address as your account id 
           (just so it's memorable) and for password reset, not for spamming. The password 
           must have at least 6 characters.
           """.trimIndent()
-        }
-        p {
-        }
-        if (msg.isNotEmpty()) {
-          p {
-            span(classes = "no") {
-              +msg
-            }
           }
-        }
-        p {
-        }
-        val inputFs = "font-size: 95%;"
-        val labelWidth = "width: 250;"
-        val formName = "pform"
-        form {
-          name = formName
-          action = Endpoints.CREATE_ACCOUNT
-          method = FormMethod.post
-          table {
-            tr {
-              td {
-                style = labelWidth
-                label { +"Email (used as account id)" }
-              }
-              td {
-                input {
-                  style = inputFs
-                  type = InputType.text
-                  size = "42"
-                  name = FormFields.USERNAME
-                  value = defaultUserName
+
+          p {}
+
+          if (msg.isNotEmpty())
+            p { span(classes = "no") { +msg } }
+
+          p {}
+
+          val inputFs = "font-size: 95%;"
+          val labelWidth = "width: 250;"
+          val formName = "pform"
+
+          form {
+            name = formName
+            action = CREATE_ACCOUNT
+            method = FormMethod.post
+            table {
+              tr {
+                td {
+                  style = labelWidth
+                  label { +"Email (used as account id)" }
+                }
+                td {
+                  input {
+                    style = inputFs
+                    type = InputType.text
+                    size = "42"
+                    name = FormFields.USERNAME
+                    value = defaultUserName
+                  }
                 }
               }
-            }
-            tr {
-              td {
-                style = labelWidth
-                label { +"Password" }
-              }
-              td {
-                input {
-                  style = inputFs
-                  type = InputType.password
-                  size = "42"
-                  name = FormFields.PASSWORD
-                  value = ""
-                  onKeyPress = "clickCreate(event);"
+              tr {
+                td {
+                  style = labelWidth
+                  label { +"Password" }
                 }
-              }
-              td {
-                button {
-                  style = "font-size:85%;"
-                  onClick =
-                    """
+                td {
+                  input {
+                    style = inputFs
+                    type = InputType.password
+                    size = "42"
+                    name = FormFields.PASSWORD
+                    value = ""
+                    onKeyPress = "clickCreate(event);"
+                  }
+                }
+                td {
+                  button {
+                    style = "font-size:85%;"
+                    onClick =
+                      """
                      var pw=document.$formName.${FormFields.PASSWORD}.type=="password"; 
                      document.$formName.${FormFields.PASSWORD}.type=pw?"text":"password"; 
                      return false;
                     """.trimIndent()
-                  +"show/hide"
+                    +"show/hide"
+                  }
                 }
               }
-            }
-            hiddenInput { name = Constants.RETURN_PATH; value = returnPath }
-            tr {
-              td { }
-              td {
-                input {
-                  style = "font-size : 25px; height: 35; width: 115;"
-                  type = InputType.submit
-                  id = createButton
-                  //name = "dosavecreate"
-                  value = "Create Account"
+              hiddenInput { name = RETURN_PATH; value = returnPath }
+              tr {
+                td { }
+                td {
+                  input {
+                    style = "font-size : 25px; height: 35; width: 115;"
+                    type = InputType.submit
+                    id = createButton
+                    //name = "dosavecreate"
+                    value = "Create Account"
+                  }
                 }
               }
             }
           }
+          p { a { href = "/privacy.html"; +"privacy statement" } }
         }
-        p { a { href = "/privacy.html"; +"privacy statement" } }
+
+        backLink(returnPath)
       }
     }
