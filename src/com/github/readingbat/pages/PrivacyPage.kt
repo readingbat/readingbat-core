@@ -58,6 +58,6 @@ internal fun privacyPage(content: ReadingBatContent, returnPath: String) =
           }
         }
 
-        backLink(CREATE_ACCOUNT + (if (returnPath.isNotEmpty()) "?$RETURN_PATH=$returnPath" else ""))
+        backLink("$CREATE_ACCOUNT${if (returnPath.isNotEmpty()) "?$RETURN_PATH=$returnPath" else ""}")
       }
     }

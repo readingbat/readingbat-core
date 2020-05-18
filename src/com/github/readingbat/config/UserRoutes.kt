@@ -43,7 +43,6 @@ import io.ktor.auth.UserIdPrincipal
 import io.ktor.http.ContentType.Text.CSS
 import io.ktor.http.content.resources
 import io.ktor.http.content.static
-import io.ktor.response.respondRedirect
 import io.ktor.routing.Routing
 import io.ktor.routing.get
 import io.ktor.routing.post
@@ -73,7 +72,7 @@ internal fun Routing.userRoutes(content: ReadingBatContent) {
   get(LOGOUT) {
     // Purge UserIdPrincipal from cookie data
     call.sessions.clear<UserIdPrincipal>()
-    call.respondRedirect("/")
+    redirectTo { "/" }
   }
 
   get("/$cssName") { respondWith(CSS) { cssContent } }

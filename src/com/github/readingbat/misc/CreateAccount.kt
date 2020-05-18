@@ -27,10 +27,11 @@ import com.github.readingbat.misc.Messages.EMPTY_PASWORD
 import com.github.readingbat.misc.Messages.INVALID_EMAIL
 import com.github.readingbat.misc.Messages.PASSWORD_TOO_SHORT
 import com.github.readingbat.pages.createAccountPage
+import com.github.readingbat.redirectTo
 import com.github.readingbat.respondWith
+import com.google.common.util.concurrent.RateLimiter
 import io.ktor.application.call
 import io.ktor.request.receiveParameters
-import io.ktor.response.respondRedirect
 import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
 import java.util.regex.Pattern
@@ -76,14 +77,19 @@ internal suspend fun PipelineCall.createAccount(content: ReadingBatContent) {
             redis.multi().apply {
               val userId = UserId()
               val salt = newStringSalt()
+              val digest = password.sha256(salt)
+
+              logger.info { "Created user $username ${userId.id} $salt $digest" }
 
               set(userIdKey, userId.id)
               set(userId.saltKey(), salt)
-              set(userId.passwordKey(), password.sha256(salt))
+              set(userId.passwordKey(), digest)
               exec()
             }
 
-            call.respondRedirect(returnPath)
+            createAccountLimiter.acquire(); // may wait
+
+            redirectTo { returnPath }
           }
         }
       }
@@ -91,6 +97,8 @@ internal suspend fun PipelineCall.createAccount(content: ReadingBatContent) {
   }
 
 }
+
+private val createAccountLimiter = RateLimiter.create(2.0) // rate 2.0 is "2 permits per second"
 
 private val emailPattern by lazy {
   Pattern.compile(

@@ -22,6 +22,7 @@ import com.github.readingbat.InvalidPathException
 import com.github.readingbat.RedisPool.redisAction
 import com.github.readingbat.misc.*
 import com.github.readingbat.misc.AuthName.FORM
+import com.google.common.util.concurrent.RateLimiter
 import io.ktor.application.Application
 import io.ktor.application.call
 import io.ktor.application.install
@@ -151,6 +152,8 @@ private fun Sessions.Configuration.configureAuthCookie() {
   }
 }
 
+private val failedLoginLimiter = RateLimiter.create(1.0) // rate 2.0 is "2 permits per second"
+
 /**
  * Form-based authentication is a interceptor that reads attributes off a POST request in order to validate the user.
  * Only needed by whatever your login form is POSTing to.
@@ -188,15 +191,17 @@ private fun Authentication.Configuration.configureFormAuth() {
           val userId = UserId(id)
           val salt = redis.get(userId.saltKey()) ?: ""
           val digest = redis.get(userId.passwordKey()) ?: ""
-          if (salt.isNotEmpty() && digest.isNotEmpty() && digest == cred.password.sha256(salt))
+          if (salt.isNotEmpty() && digest.isNotEmpty() && digest == cred.password.sha256(salt)) {
+            logger.info { "Found user ${cred.name} $id $salt $digest" }
             principal = UserIdPrincipal(cred.name)
+          }
         }
       }
 
+      logger.info { "Login ${if (principal == null) "failure" else "success"}" }
+
       if (principal == null)
-        logger.info { "Login failure" }
-      else
-        logger.info { "Login success" }
+        failedLoginLimiter.acquire(); // may wait
 
       principal
     }

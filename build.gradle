@@ -59,11 +59,11 @@ sourceSets {
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
 
-    implementation "com.github.pambrose.common-utils:core-utils:${utils_version}"
-    implementation "com.github.pambrose.common-utils:script-utils-common:${utils_version}"
-    implementation "com.github.pambrose.common-utils:script-utils-python:${utils_version}"
-    implementation "com.github.pambrose.common-utils:script-utils-java:${utils_version}"
-    implementation "com.github.pambrose.common-utils:script-utils-kotlin:${utils_version}"
+    implementation "com.github.pambrose.common-utils:core-utils:$utils_version"
+    implementation "com.github.pambrose.common-utils:script-utils-common:$utils_version"
+    implementation "com.github.pambrose.common-utils:script-utils-python:$utils_version"
+    implementation "com.github.pambrose.common-utils:script-utils-java:$utils_version"
+    implementation "com.github.pambrose.common-utils:script-utils-kotlin:$utils_version"
 
     implementation "org.jetbrains:kotlin-css:$css_version"
     implementation "org.jetbrains:kotlin-css-jvm:$css_version"
@@ -76,21 +76,23 @@ dependencies {
     implementation "io.ktor:ktor-metrics:$ktor_version"
 
     implementation "redis.clients:jedis:$redis_version"
+
     implementation "com.google.code.gson:gson:$gson_version"
+    implementation "com.google.guava:guava:$guava_version"
 
     implementation "org.apache.commons:commons-text:$commons_version"
     implementation "com.vladsch.flexmark:flexmark-all:$flexmark_version"
 
     implementation "org.kohsuke:github-api:1.111"
 
-    implementation "io.github.microutils:kotlin-logging:${logging_version}"
-    implementation "ch.qos.logback:logback-classic:${logback_version}"
+    implementation "io.github.microutils:kotlin-logging:$logging_version"
+    implementation "ch.qos.logback:logback-classic:$logback_version"
 
     testImplementation "org.seleniumhq.selenium:selenium-java:$selenium_version"
     testImplementation "io.ktor:ktor-server-tests:$ktor_version"
-    testImplementation "org.amshove.kluent:kluent:${kluent_version}"
-    testImplementation "org.junit.jupiter:junit-jupiter-api:${junit_version}"
-    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:${junit_version}"
+    testImplementation "org.amshove.kluent:kluent:$kluent_version"
+    testImplementation "org.junit.jupiter:junit-jupiter-api:$junit_version"
+    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:$junit_version"
 }
 
 task sourcesJar(type: Jar, dependsOn: classes) {
