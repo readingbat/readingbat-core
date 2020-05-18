@@ -81,7 +81,7 @@ dependencies {
     implementation "com.google.guava:guava:$guava_version"
 
     implementation "org.apache.commons:commons-text:$commons_version"
-    implementation "com.vladsch.flexmark:flexmark-all:$flexmark_version"
+    implementation "com.vladsch.flexmark:flexmark:$flexmark_version"
 
     implementation "org.kohsuke:github-api:1.111"
 
@@ -95,6 +95,16 @@ dependencies {
     testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:$junit_version"
 }
 
+shadowJar {
+    zip64 true
+    mergeServiceFiles()
+    exclude "META-INF/*.SF"
+    exclude 'META-INF/*.DSA'
+    exclude 'META-INF/*.RSA'
+    exclude "LICENSE*"
+}
+
+
 task sourcesJar(type: Jar, dependsOn: classes) {
     archiveClassifier = 'sources'
     from sourceSets.main.allSource
@@ -107,10 +117,6 @@ artifacts {
 // Include build uberjars in heroku deploy
 task stage(dependsOn: ['uberjar', 'build', 'clean'])
 build.mustRunAfter clean
-
-shadowJar {
-    mergeServiceFiles()
-}
 
 task uberjar(type: Jar, dependsOn: shadowJar) {
     archiveFileName = 'server.jar'
