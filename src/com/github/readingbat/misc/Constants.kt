@@ -41,6 +41,8 @@ object KeyPrefixes {
   const val PASSWD = "password"
   const val CHALLENGE_ANSWERS = "challenge-answers"
   const val ANSWER_HISTORY = "answer-history"
+  const val AUTH = "auth"
+  const val NO_AUTH = "noauth"
 }
 
 object FormFields {

@@ -24,7 +24,7 @@ import com.github.readingbat.misc.FormFields
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 
-internal fun createAccountPage(readingBatContent: ReadingBatContent,
+internal fun createAccountPage(content: ReadingBatContent,
                                defaultUserName: String,
                                msg: String,
                                returnPath: String) =
@@ -33,7 +33,7 @@ internal fun createAccountPage(readingBatContent: ReadingBatContent,
       val createButton = "createAccountButton"
 
       head {
-        headDefault(readingBatContent)
+        headDefault(content)
 
         script {
           rawHtml(

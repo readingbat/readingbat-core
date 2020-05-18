@@ -46,7 +46,7 @@ import io.ktor.http.ContentType.Text.CSS
 import kotlinx.html.*
 import kotlinx.html.Entities.nbsp
 
-internal fun HEAD.headDefault(readingBatContent: ReadingBatContent) {
+internal fun HEAD.headDefault(content: ReadingBatContent) {
   link { rel = "stylesheet"; href = "/$cssName"; type = CSS.toString() }
 
   // From: https://favicon.io/emoji-favicons/glasses/
@@ -58,14 +58,14 @@ internal fun HEAD.headDefault(readingBatContent: ReadingBatContent) {
 
   title(titleText)
 
-  if (production && readingBatContent.googleAnalyticsId.isNotBlank()) {
-    script { async = true; src = "https://www.googletagmanager.com/gtag/js?id=${readingBatContent.googleAnalyticsId}" }
+  if (production && content.googleAnalyticsId.isNotBlank()) {
+    script { async = true; src = "https://www.googletagmanager.com/gtag/js?id=${content.googleAnalyticsId}" }
     script {
       rawHtml("""
           window.dataLayer = window.dataLayer || [];
           function gtag(){dataLayer.push(arguments);}
           gtag('js', new Date());
-          gtag('config', '${readingBatContent.googleAnalyticsId}');
+          gtag('config', '${content.googleAnalyticsId}');
         """)
     }
   }
@@ -164,8 +164,8 @@ internal fun BODY.bodyTitle() {
 }
 
 internal fun BODY.bodyHeader(principal: UserIdPrincipal?,
-                             loginAttempted: Boolean,
-                             readingBatContent: ReadingBatContent,
+                             loginAttempt: Boolean,
+                             content: ReadingBatContent,
                              languageType: LanguageType,
                              loginPath: String,
                              message: String = "") {
@@ -174,7 +174,7 @@ internal fun BODY.bodyHeader(principal: UserIdPrincipal?,
 
   bodyTitle()
 
-  if (loginAttempted && principal == null)
+  if (loginAttempt && principal == null)
     p { span(classes = "no") { +"Failed to login -- bad username or password." } }
 
   div(classes = pretab) {
@@ -185,7 +185,7 @@ internal fun BODY.bodyHeader(principal: UserIdPrincipal?,
     nav {
       ul {
         for (lang in languageTypesInOrder) {
-          if (readingBatContent.hasGroups(lang))
+          if (content.hasGroups(lang))
             li(classes = "h2") {
               if (languageType == lang) id = selected
               this@bodyHeader.addLink(lang.name, listOf(challengeRoot, lang.lowerName).toRootPath())
@@ -196,10 +196,10 @@ internal fun BODY.bodyHeader(principal: UserIdPrincipal?,
   }
 }
 
-internal fun defaultTab(readingBatContent: ReadingBatContent) =
+internal fun defaultTab(content: ReadingBatContent) =
   languageTypesInOrder
     .asSequence()
-    .filter { readingBatContent.hasGroups(it) }
+    .filter { content.hasGroups(it) }
     .map { "/$challengeRoot/${it.lowerName}" }
     .firstOrNull()
     ?: throw InvalidConfigurationException("Missing default language")

@@ -38,8 +38,8 @@ import org.apache.commons.text.StringEscapeUtils.escapeHtml4
 // https://jetbrains.github.io/kotlin-playground/examples/
 
 fun playgroundPage(principal: UserIdPrincipal?,
-                   loginAttempted: Boolean,
-                   readingBatContent: ReadingBatContent,
+                   loginAttempt: Boolean,
+                   content: ReadingBatContent,
                    challenge: Challenge) =
   createHTML()
     .html {
@@ -47,16 +47,16 @@ fun playgroundPage(principal: UserIdPrincipal?,
       val languageName = languageType.lowerName
       val groupName = challenge.groupName
       val challengeName = challenge.challengeName
-      val funcInfo = challenge.funcInfo(readingBatContent)
+      val funcInfo = challenge.funcInfo(content)
       val loginPath = listOf(languageName, groupName, challengeName).join()
 
       head {
         script { src = "https://unpkg.com/kotlin-playground@1"; attributes["data-selector"] = ".$kotlinCode" }
-        headDefault(readingBatContent)
+        headDefault(content)
       }
 
       body {
-        bodyHeader(principal, loginAttempted, readingBatContent, languageType, loginPath)
+        bodyHeader(principal, loginAttempt, content, languageType, loginPath)
 
         div(classes = tabs) {
           h2 {

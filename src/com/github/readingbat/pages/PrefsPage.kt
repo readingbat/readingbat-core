@@ -21,12 +21,12 @@ import com.github.readingbat.dsl.ReadingBatContent
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 
-internal fun prefsPage(readingBatContent: ReadingBatContent) =
+internal fun prefsPage(content: ReadingBatContent) =
   createHTML()
     .html {
 
       head {
-        headDefault(readingBatContent)
+        headDefault(content)
       }
 
       body {
@@ -38,12 +38,12 @@ internal fun prefsPage(readingBatContent: ReadingBatContent) =
       }
     }
 
-internal fun privacy(readingBatContent: ReadingBatContent) =
+internal fun privacy(content: ReadingBatContent) =
   createHTML()
     .html {
 
       head {
-        headDefault(readingBatContent)
+        headDefault(content)
       }
 
       body {

@@ -20,11 +20,8 @@ package com.github.readingbat.config
 import com.github.pambrose.common.util.simpleClassName
 import com.github.readingbat.InvalidPathException
 import com.github.readingbat.RedisPool.redisAction
-import com.github.readingbat.misc.AuthName
+import com.github.readingbat.misc.*
 import com.github.readingbat.misc.AuthName.FORM
-import com.github.readingbat.misc.Cookies
-import com.github.readingbat.misc.FormFields
-import com.github.readingbat.misc.sha256
 import io.ktor.application.Application
 import io.ktor.application.call
 import io.ktor.application.install

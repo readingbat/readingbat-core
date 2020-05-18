@@ -17,11 +17,8 @@
 
 package com.github.readingbat.misc
 
+import com.github.readingbat.PipelineCall
 import com.github.readingbat.RedisPool
-import com.github.readingbat.config.PipelineCall
-import com.github.readingbat.config.UserId
-import com.github.readingbat.config.respondWith
-import com.github.readingbat.config.userIdKey
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.Messages.CLEVER_PASSWORD
 import com.github.readingbat.misc.Messages.EMPTY_EMAIL
@@ -29,6 +26,7 @@ import com.github.readingbat.misc.Messages.EMPTY_PASWORD
 import com.github.readingbat.misc.Messages.INVALID_EMAIL
 import com.github.readingbat.misc.Messages.PASSWORD_TOO_SHORT
 import com.github.readingbat.pages.createAccountPage
+import com.github.readingbat.respondWith
 import io.ktor.application.call
 import io.ktor.request.receiveParameters
 import io.ktor.response.respondRedirect

@@ -21,6 +21,7 @@ import com.codahale.metrics.jvm.ThreadDump
 import com.github.pambrose.common.util.randomId
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.AuthRoutes
+import com.github.readingbat.misc.ClientSession
 import io.ktor.application.call
 import io.ktor.auth.UserIdPrincipal
 import io.ktor.html.respondHtml
@@ -69,7 +70,7 @@ internal fun Routing.adminRoutes(content: ReadingBatContent) {
   get("/session-register") {
     val session = call.sessions.get<ClientSession>()
     if (session == null) {
-      call.sessions.set(ClientSession(name = "Student name", id = randomId()))
+      call.sessions.set(ClientSession(name = "Student name", id = randomId(15)))
       logger.info { call.sessions.get<ClientSession>() }
     }
     call.respondText { "registered ${call.sessions.get<ClientSession>()}" }

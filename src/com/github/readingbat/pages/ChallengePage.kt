@@ -21,8 +21,6 @@ import com.github.pambrose.common.util.decode
 import com.github.pambrose.common.util.join
 import com.github.pambrose.common.util.toRootPath
 import com.github.readingbat.RedisPool.redisAction
-import com.github.readingbat.config.ClientSession
-import com.github.readingbat.config.UserId
 import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.Answers.processAnswers
@@ -39,9 +37,11 @@ import com.github.readingbat.misc.CSSNames.status
 import com.github.readingbat.misc.CSSNames.tabs
 import com.github.readingbat.misc.CSSNames.userAnswers
 import com.github.readingbat.misc.CSSNames.userResp
+import com.github.readingbat.misc.ClientSession
 import com.github.readingbat.misc.Constants.challengeRoot
 import com.github.readingbat.misc.Constants.playground
 import com.github.readingbat.misc.Constants.staticRoot
+import com.github.readingbat.misc.UserId
 import com.github.readingbat.misc.addScript
 import com.github.readingbat.misc.lookupUserId
 import io.ktor.auth.UserIdPrincipal
@@ -56,8 +56,8 @@ private val emptyAnswerMap = mutableMapOf<String, String>()
 private const val spinnerCss = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
 
 internal fun challengePage(principal: UserIdPrincipal?,
-                           loginAttempted: Boolean,
-                           readingBatContent: ReadingBatContent,
+                           loginAttempt: Boolean,
+                           content: ReadingBatContent,
                            challenge: Challenge,
                            clientSession: ClientSession?) =
   createHTML()
@@ -66,7 +66,7 @@ internal fun challengePage(principal: UserIdPrincipal?,
       val languageName = languageType.lowerName
       val groupName = challenge.groupName
       val challengeName = challenge.challengeName
-      val funcInfo = challenge.funcInfo(readingBatContent)
+      val funcInfo = challenge.funcInfo(content)
       val loginPath = listOf(languageName, groupName, challengeName).join()
 
       head {
@@ -76,11 +76,11 @@ internal fun challengePage(principal: UserIdPrincipal?,
         script(type = ScriptType.textJavaScript) { addScript(languageName, groupName, challengeName) }
 
         removePrismShadow()
-        headDefault(readingBatContent)
+        headDefault(content)
       }
 
       body {
-        bodyHeader(principal, loginAttempted, readingBatContent, languageType, loginPath)
+        bodyHeader(principal, loginAttempt, content, languageType, loginPath)
 
         div(classes = tabs) {
           h2 {

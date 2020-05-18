@@ -21,12 +21,12 @@ import com.github.readingbat.dsl.ReadingBatContent
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 
-internal fun aboutPage(readingBatContent: ReadingBatContent) =
+internal fun aboutPage(content: ReadingBatContent) =
   createHTML()
     .html {
 
       head {
-        headDefault(readingBatContent)
+        headDefault(content)
       }
 
       body {

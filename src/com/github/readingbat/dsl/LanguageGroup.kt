@@ -24,13 +24,13 @@ import com.github.readingbat.misc.GitHubUtils.directoryContents
 import java.io.File
 
 @ReadingBatDslMarker
-class LanguageGroup<T : Challenge>(internal val readingBatContent: ReadingBatContent,
+class LanguageGroup<T : Challenge>(internal val content: ReadingBatContent,
                                    internal val languageType: LanguageType) {
 
   internal val challengeGroups = mutableListOf<ChallengeGroup<T>>()
 
   // User properties
-  var repo: ContentRoot = readingBatContent.repo
+  var repo: ContentRoot = content.repo
     get() =
       if (field == defaultContentRoot)
         throw InvalidConfigurationException("${languageType.lowerName} section is missing a repo value")

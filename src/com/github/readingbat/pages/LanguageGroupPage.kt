@@ -31,8 +31,8 @@ import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 
 internal fun languageGroupPage(principal: UserIdPrincipal?,
-                               loginAttempted: Boolean,
-                               readingBatContent: ReadingBatContent,
+                               loginAttempt: Boolean,
+                               content: ReadingBatContent,
                                languageType: LanguageType,
                                groups: List<ChallengeGroup<*>>) =
   createHTML()
@@ -40,11 +40,11 @@ internal fun languageGroupPage(principal: UserIdPrincipal?,
       val languageName = languageType.lowerName
 
       head {
-        headDefault(readingBatContent)
+        headDefault(content)
       }
 
       body {
-        bodyHeader(principal, loginAttempted, readingBatContent, languageType, languageName, "Welcome to ReadingBat.")
+        bodyHeader(principal, loginAttempt, content, languageType, languageName, "Welcome to ReadingBat.")
 
         div(classes = tabs) {
           table {

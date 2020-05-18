@@ -21,12 +21,9 @@ import com.github.pambrose.common.script.KotlinScript
 import com.github.pambrose.common.script.PythonScript
 import com.github.pambrose.common.util.*
 import com.github.readingbat.InvalidConfigurationException
+import com.github.readingbat.PipelineCall
 import com.github.readingbat.RedisPool.gson
 import com.github.readingbat.RedisPool.redisAction
-import com.github.readingbat.config.ClientSession
-import com.github.readingbat.config.PipelineCall
-import com.github.readingbat.config.UserId
-import com.github.readingbat.config.userIdKey
 import com.github.readingbat.dsl.LanguageType.Companion.toLanguageType
 import com.github.readingbat.dsl.LanguageType.Java
 import com.github.readingbat.dsl.LanguageType.Kotlin
@@ -74,7 +71,7 @@ private data class ChallengeHistory(var argument: String,
 
 object CheckAnswers : KLogging() {
 
-  internal suspend fun PipelineCall.checkUserAnswers(readingBatContent: ReadingBatContent,
+  internal suspend fun PipelineCall.checkUserAnswers(content: ReadingBatContent,
                                                      principal: UserIdPrincipal?,
                                                      clientSession: ClientSession?) {
     val params = call.receiveParameters()
@@ -84,9 +81,8 @@ object CheckAnswers : KLogging() {
     val challengeName = compareMap[challengeSrc] ?: throw InvalidConfigurationException("Missing challenge name")
     val isJvm = languageName in listOf(Java.lowerName, Kotlin.lowerName)
     val userResps = params.entries().filter { it.key.startsWith(userResp) }
-    val challenge =
-      readingBatContent.findLanguage(languageName.toLanguageType()).findChallenge(groupName, challengeName)
-    val funcInfo = challenge.funcInfo(readingBatContent)
+    val challenge = content.findLanguage(languageName.toLanguageType()).findChallenge(groupName, challengeName)
+    val funcInfo = challenge.funcInfo(content)
 
     logger.debug("Found ${userResps.size} user responses in $compareMap")
 

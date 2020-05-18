@@ -34,8 +34,8 @@ import kotlinx.html.Entities.nbsp
 import kotlinx.html.stream.createHTML
 
 internal fun challengeGroupPage(principal: UserIdPrincipal?,
-                                loginAttempted: Boolean,
-                                readingBatContent: ReadingBatContent,
+                                loginAttempt: Boolean,
+                                content: ReadingBatContent,
                                 challengeGroup: ChallengeGroup<*>) =
   createHTML()
     .html {
@@ -46,11 +46,11 @@ internal fun challengeGroupPage(principal: UserIdPrincipal?,
       val loginPath = listOf(languageName, groupName).join()
 
       head {
-        headDefault(readingBatContent)
+        headDefault(content)
       }
 
       body {
-        bodyHeader(principal, loginAttempted, readingBatContent, languageType, loginPath)
+        bodyHeader(principal, loginAttempt, content, languageType, loginPath)
 
         div(classes = tabs) {
 
