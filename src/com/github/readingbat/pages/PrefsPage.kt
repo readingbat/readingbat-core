@@ -18,8 +18,13 @@
 package com.github.readingbat.pages
 
 import com.github.readingbat.dsl.ReadingBatContent
+import com.github.readingbat.misc.Constants.CREATE_ACCOUNT
+import com.github.readingbat.misc.FormFields.PASSWORD
+import com.github.readingbat.misc.FormFields.USERNAME
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
+
+private const val createButton = "createAccountButton"
 
 internal fun prefsPage(readingBatContent: ReadingBatContent) =
   createHTML()
@@ -38,12 +43,24 @@ internal fun prefsPage(readingBatContent: ReadingBatContent) =
       }
     }
 
-internal fun createAccount(readingBatContent: ReadingBatContent) =
+internal fun createAccount(readingBatContent: ReadingBatContent, defaultUserName: String = "", msg: String = "") =
   createHTML()
     .html {
 
       head {
         headDefault(readingBatContent)
+
+        script {
+          rawHtml(
+            """
+              function clickCreate(event) {
+                if (event != null && event.keyCode == 13) {
+                  event.preventDefault();
+                  document.getElementById('$createButton').click();
+                }
+              }
+            """.trimIndent())
+        }
       }
 
       body {
@@ -60,11 +77,21 @@ internal fun createAccount(readingBatContent: ReadingBatContent) =
         }
         p {
         }
+        if (msg.isNotEmpty()) {
+          p {
+            span(classes = "no") {
+              +msg
+            }
+          }
+        }
+        p {
+        }
         val inputFs = "font-size: 95%;"
         val labelWidth = "width: 250;"
+        val formName = "pform"
         form {
-          name = "pform"
-          action = "/pref"
+          name = formName
+          action = CREATE_ACCOUNT
           method = FormMethod.post
           table {
             tr {
@@ -77,8 +104,8 @@ internal fun createAccount(readingBatContent: ReadingBatContent) =
                   style = inputFs
                   type = InputType.text
                   size = "42"
-                  name = "uname"
-                  value = ""
+                  name = USERNAME
+                  value = defaultUserName
                 }
               }
             }
@@ -92,15 +119,20 @@ internal fun createAccount(readingBatContent: ReadingBatContent) =
                   style = inputFs
                   type = InputType.password
                   size = "42"
-                  name = "pw1"
+                  name = PASSWORD
                   value = ""
+                  onKeyPress = "clickCreate(event);"
                 }
               }
               td {
                 button {
                   style = "font-size:85%;"
                   onClick =
-                    """var pw=document.pform.pw1.type=="password"; document.pform.pw1.type=pw?"text":"password"; return false;"""
+                    """
+|                     var pw=document.$formName.$PASSWORD.type=="password"; 
+|                     document.$formName.$PASSWORD.type=pw?"text":"password"; 
+|                     return false;
+|                   """.trimMargin()
                   +"show/hide"
                 }
               }
@@ -111,7 +143,8 @@ internal fun createAccount(readingBatContent: ReadingBatContent) =
                 input {
                   style = "font-size : 25px; height: 35; width: 115;"
                   type = InputType.submit
-                  name = "dosavecreate"
+                  id = createButton
+                  //name = "dosavecreate"
                   value = "Create Account"
                 }
               }

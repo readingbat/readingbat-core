@@ -19,11 +19,12 @@ package com.github.readingbat.config
 
 import com.github.pambrose.common.util.simpleClassName
 import com.github.readingbat.InvalidPathException
+import com.github.readingbat.RedisPool.redisAction
 import com.github.readingbat.misc.AuthName
 import com.github.readingbat.misc.AuthName.FORM
 import com.github.readingbat.misc.Cookies
 import com.github.readingbat.misc.FormFields
-import com.github.readingbat.misc.TestCredentials
+import com.github.readingbat.misc.sha256
 import io.ktor.application.Application
 import io.ktor.application.call
 import io.ktor.application.install
@@ -169,6 +170,8 @@ private fun Authentication.Configuration.configureFormAuth() {
       // most one error, which we handle here. Worst case, we just send the user to login with no context.
       val errors: List<AuthenticationFailedCause> = call.authentication.allFailures
       //logger.info { "Inside challenge: $errors" }
+      // In apps that require a valid login, you would redirect the user to a login page from here
+      // However, we allow non-logged in users, so we do nothing here.
       /*
         when (errors.singleOrNull()) {
           AuthenticationFailedCause.InvalidCredentials -> call.respondRedirect("$LOGIN?invalid")
@@ -179,9 +182,22 @@ private fun Authentication.Configuration.configureFormAuth() {
     }
 
     validate { cred: UserPasswordCredential ->
-      // Realistically you'd look up the user in a database or something here; this is just a toy example.
-      // The values here will be whatever was submitted in the form.
       //logger.info { "Inside validate" }
+      var principal: UserIdPrincipal? = null
+      redisAction { redis ->
+        val userKey = userKey(cred.name)
+        val digest: String? = redis.get(userKey)
+        if (digest != null && digest == cred.password.sha256(cred.name))
+          principal = UserIdPrincipal(cred.name)
+      }
+
+      if (principal == null)
+        logger.info { "Login failure" }
+      else
+        logger.info { "Login success" }
+
+      principal
+      /*
       if (cred.name == TestCredentials.userEmail && cred.password == TestCredentials.password) {
         logger.info { "Login success" }
         UserIdPrincipal(cred.name)
@@ -190,6 +206,7 @@ private fun Authentication.Configuration.configureFormAuth() {
         logger.info { "Login failure" }
         null
       }
+      */
     }
   }
 }

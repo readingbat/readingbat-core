@@ -33,7 +33,7 @@ internal object Constants {
 
 object FormFields {
   const val USERNAME = "username"
-  const val PASSWORD = "password"
+  const val PASSWORD = "passwd"
 }
 
 object AuthName {

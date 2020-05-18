@@ -22,7 +22,6 @@ import io.ktor.util.getDigestFunction
 import mu.KLogging
 import org.kohsuke.github.GitHub
 import java.security.MessageDigest
-import java.util.*
 
 // https://github-api.kohsuke.org
 
@@ -39,35 +38,27 @@ object GitHubUtils : KLogging() {
   }
 }
 
-fun String.md5(): String {
-  return hashString(this, "MD5")
-}
+fun String.md5(salt: String): String = encodedByteArray(this, { "$salt${it.length}" }, "MD5").asText
 
-fun String.sha256(): String {
-  return hashString(this, "SHA-256")
-}
+fun String.sha256(salt: String): String = encodedByteArray(this, { "$salt${it.length}" }, "SHA-256").asText
 
-private fun hashString(input: String, algorithm: String) =
-  MessageDigest
-    .getInstance(algorithm)
-    .digest(input.toByteArray())
-    .fold("", { str, it -> str + "%02x".format(it) })
+val ByteArray.asText get() = fold("", { str, it -> str + "%02x".format(it) })
+
+private fun encodedByteArray(input: String, salt: (String) -> String, algorithm: String) =
+  with(MessageDigest.getInstance(algorithm)) {
+    update(salt(input).toByteArray())
+    digest(input.toByteArray())
+  }
+
 
 fun main() {
-  println("test".sha256())
-  println("test".md5())
+  println("test".sha256("test2"))
+  println("test".md5("test2"))
 
   // https://docs.oracle.com/javase/6/docs/api/java/security/SecureRandom.html
-  val digester = getDigestFunction("SHA-256") { "readingbat${it.length}" }
+  val digester = getDigestFunction("SHA-256") { "it${it.length}" }
   val kk = digester.invoke("test")
-  val mm = kk.fold("", { str, it -> str + "%02x".format(it) })
+  val mm = kk.asText
 
-  val ii = Base64.getEncoder().encode(kk)
   println(mm)
-  println(String(ii))
-
-  val pp = Base64.getDecoder()
-    .decode("GSjkHCHGAxTTbnkEDBbVYd+PUFRlcWiumc4+MWE9Rvw=").fold("", { str, it -> str + "%02x".format(it) })
-  println(pp)
-
 }
