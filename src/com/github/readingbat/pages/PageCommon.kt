@@ -28,7 +28,6 @@ import com.github.readingbat.misc.CSSNames.bodyHeaderCls
 import com.github.readingbat.misc.CSSNames.max
 import com.github.readingbat.misc.CSSNames.pretab
 import com.github.readingbat.misc.CSSNames.selected
-import com.github.readingbat.misc.CSSNames.tabc
 import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.Constants.challengeRoot
 import com.github.readingbat.misc.Constants.cssName
@@ -180,7 +179,8 @@ internal fun BODY.bodyHeader(principal: UserIdPrincipal?,
     p(classes = max) { +message }
   }
 
-  div(classes = tabc) {
+  div {
+    style = "padding-top:10px; min-width:100vw; clear:both;"
     nav {
       ul {
         for (lang in languageTypesInOrder) {

@@ -36,7 +36,6 @@ import com.github.readingbat.misc.CSSNames.refs
 import com.github.readingbat.misc.CSSNames.selected
 import com.github.readingbat.misc.CSSNames.spinner
 import com.github.readingbat.misc.CSSNames.status
-import com.github.readingbat.misc.CSSNames.tabc
 import com.github.readingbat.misc.CSSNames.tabs
 import com.github.readingbat.misc.CSSNames.userAnswers
 import com.github.readingbat.misc.CSSNames.userResp
@@ -54,7 +53,6 @@ internal object CSSNames {
   const val refs = "refs"
   const val pretab = "pretab"
   const val max = "max"
-  const val tabc = "tabc"
   const val codeBlock = "codeBlock"
   const val kotlinCode = "kotlin-code"
   const val tabs = "tabs"
@@ -143,10 +141,6 @@ internal val cssContent by lazy {
       }
       rule("p.$max") {
         maxWidth = 800.px
-      }
-      rule("div.$tabc") {
-        minWidth = LinearDimension("10vw")
-        clear = Clear.both
       }
       rule(".$bodyHeaderCls") {
         marginBottom = 0.em
