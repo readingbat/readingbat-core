@@ -18,60 +18,73 @@
 package com.github.readingbat.pages
 
 import com.github.pambrose.common.util.decode
+import com.github.pambrose.common.util.join
+import com.github.pambrose.common.util.toRootPath
 import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.ChallengeGroup
-import com.github.readingbat.misc.Constants.checkJpg
-import com.github.readingbat.misc.Constants.funcChoice
-import com.github.readingbat.misc.Constants.funcItem
-import com.github.readingbat.misc.Constants.root
-import com.github.readingbat.misc.Constants.tabs
+import com.github.readingbat.dsl.ReadingBatContent
+import com.github.readingbat.misc.CSSNames.funcChoice
+import com.github.readingbat.misc.CSSNames.funcItem
+import com.github.readingbat.misc.CSSNames.tabs
+import com.github.readingbat.misc.Constants.challengeRoot
+import com.github.readingbat.misc.Constants.staticRoot
+import com.github.readingbat.misc.UserPrincipal
 import kotlinx.html.*
 import kotlinx.html.Entities.nbsp
+import kotlinx.html.stream.createHTML
 
-internal fun HTML.challengeGroupPage(challengeGroup: ChallengeGroup<*>) {
+internal fun challengeGroupPage(principal: UserPrincipal?,
+                                loginAttempt: Boolean,
+                                content: ReadingBatContent,
+                                challengeGroup: ChallengeGroup<*>) =
+  createHTML()
+    .html {
+      val languageType = challengeGroup.languageType
+      val languageName = languageType.lowerName
+      val groupName = challengeGroup.groupName
+      val challenges = challengeGroup.challenges
+      val loginPath = listOf(languageName, groupName).join()
 
-  val languageType = challengeGroup.languageType
-  val languageName = languageType.lowerName
-  val groupName = challengeGroup.name
-  val challenges = challengeGroup.challenges
+      head {
+        headDefault(content)
+      }
 
-  head {
-    headDefault()
-  }
+      body {
+        bodyHeader(principal, loginAttempt, content, languageType, loginPath)
 
-  body {
-    bodyHeader(languageType)
+        div(classes = tabs) {
 
-    div(classes = tabs) {
+          h2 { +groupName.decode() }
 
-      h2 { +groupName.decode() }
+          table {
+            val cols = 3
+            val size = challenges.size
+            val rows = size.rows(cols)
 
-      table {
-        val cols = 3
-        val size = challenges.size
-        val rows = size.rows(cols)
-
-        (0 until rows).forEach { i ->
-          tr {
-            challenges.apply {
-              elementAt(i).also { funcCall(languageName, groupName, it) }
-              elementAtOrNull(i + rows)?.also { funcCall(languageName, groupName, it) } ?: td {}
-              elementAtOrNull(i + (2 * rows))?.also { funcCall(languageName, groupName, it) } ?: td {}
+            (0 until rows).forEach { i ->
+              tr {
+                challenges.apply {
+                  elementAt(i).also { funcCall(languageName, groupName, it) }
+                  elementAtOrNull(i + rows)?.also { funcCall(languageName, groupName, it) } ?: td {}
+                  elementAtOrNull(i + (2 * rows))?.also { funcCall(languageName, groupName, it) } ?: td {}
+                }
+              }
             }
           }
         }
+
+        backLink(challengeRoot, languageName)
       }
     }
 
-    backLink("/$root/$languageName")
-  }
-}
-
 private fun TR.funcCall(prefix: String, groupName: String, challenge: Challenge) {
   td(classes = funcItem) {
-    img { src = checkJpg }
+    img { src = "/$staticRoot/check.jpg" }
     rawHtml(nbsp.text)
-    a(classes = funcChoice) { href = "/$root/$prefix/$groupName/${challenge.name}"; +challenge.name }
+    a(classes = funcChoice) {
+      href = listOf(challengeRoot, prefix, groupName, challenge.challengeName).toRootPath()
+      +challenge.challengeName
+    }
   }
 }
 

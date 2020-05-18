@@ -17,46 +17,50 @@
 
 package com.github.readingbat.misc
 
-import io.ktor.http.ContentType.Text.CSS
-import java.util.concurrent.atomic.AtomicInteger
-
 internal object Constants {
-  const val sessionid = "sessionid"
-  const val groupItemSrc = "groupItem"
-  const val funcItem = "funcItem"
-  const val funcChoice = "funcChoice"
-  const val userResp = "userResp"
-  const val answer = "answer"
-  const val funcCol = "funcCol"
-  const val arrow = "arrow"
-  const val feedback = "feedback"
-  const val userAnswers = "userAnswers"
-  const val codeBlock = "codeBlock"
-  const val checkBar = "checkBar"
-  const val checkAnswers = "checkAnswers"
-  const val spinner = "spinner"
-  const val status = "status"
-  const val refs = "refs"
-  const val backLink = "backLink"
-  const val langSrc = "lang"
-  const val groupSrc = "groupName"
-  const val challengeSrc = "challengeName"
-  const val tabs = "tabs"
-  const val selected = "selected"
-  const val processAnswers = "processAnswers"
-  const val playground = "playground"
   const val titleText = "ReadingBat"
-  const val staticRoot = "static"
+  const val sessionid = "sessionid"
+  const val playground = "playground"
   const val icons = "icons"
-  const val checkJpg = "/$staticRoot/check.jpg"
   const val cssName = "styles.css"
-  const val github = "github.com"
-  const val githubUserContent = "raw.githubusercontent.com"
-  const val kotlinCode = "kotlin-code"
-  const val challengeDesc = "challenge-desc"
-  const val bodyHeader = "bodyHeader"
-  const val root = "content"
-  val cssType = CSS.toString()
-  val sessionCounter = AtomicInteger(0)
-  val production: Boolean by lazy { System.getenv("PRODUCTION")?.toBoolean() ?: false }
+  const val staticRoot = "static"
+  const val challengeRoot = "content"
+  const val RETURN_PATH = "returnPath"
+}
+
+object Endpoints {
+  const val PREFS = "/prefs"
+  const val ABOUT = "/about.html"
+  const val CREATE_ACCOUNT = "/create-account"
+  const val PRIVACY = "/privacy.html"
+  const val RESET_PASSWORD = "/reset"
+}
+
+object KeyPrefixes {
+  const val USER_ID = "userId"
+  const val SALT = "salt"
+  const val PASSWD = "password"
+  const val CHALLENGE_ANSWERS = "challenge-answers"
+  const val ANSWER_HISTORY = "answer-history"
+  const val AUTH = "auth"
+  const val NO_AUTH = "noauth"
+}
+
+object FormFields {
+  const val USERNAME = "username"
+  const val PASSWORD = "passwd"
+}
+
+object AuthName {
+  const val SESSION = "session"
+  const val FORM = "form"
+}
+
+object AuthRoutes {
+  const val LOGOUT = "/logout"
+  const val COOKIES = "/cookies"
+}
+
+object Cookies {
+  const val AUTH_COOKIE = "auth"
 }

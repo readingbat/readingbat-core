@@ -15,65 +15,59 @@
  *
  */
 
-import com.github.readingbat.ReadingBatServer
+import com.github.pambrose.common.util.FileSystemSource
 import com.github.readingbat.dsl.GitHubContent
-import com.github.readingbat.dsl.include
+import com.github.readingbat.dsl.eval
 import com.github.readingbat.dsl.readingBatContent
 
+val organization = "readingbat"
+val branch = "dev"
 
-object TestMain {
-  @JvmStatic
-  fun main(args: Array<String>) {
-
-    val organization = "readingbat"
-    val branch = "dev"
-
-    val content by lazy {
-      readingBatContent {
+val content by lazy {
+  readingBatContent {
+    //repo = GitHubRepo(organization, "readingbat-java-content")
+    repo = FileSystemSource("./")
 /*
-        java {
-          repo = GitHubRepo(organization, "readingbat-java-content")
-          branchName = branch
+    java {
+      //repo = GitHubRepo(organization, "readingbat-java-content")
+      //repo = FileSystemSource("./")
+      branchName = branch
 
-          group("Warmup 1") {
-            packageName = "warmup1"
-            description = "This is a description of Warmup 1"
-            includeFiles = "*.java"
+      group("Warmup 1") {
+        packageName = "warmup1"
+        description = "This is a description of Warmup 1"
+        includeFiles = "*.java"
 
-            challenge("JoinEnds") {
-              description = """This is a description of JoinEnds"""
-              codingBatEquiv = "p141494"
-            }
-          }
+        challenge("JoinEnds") {
+          description = """This is a description of JoinEnds"""
+          codingBatEquiv = "p141494"
         }
-
-        python {
-          repo = GitHubRepo("readingbat", "readingbat-python-content")
-          branchName = "dev"
-
-          group("Numeric Expressions") {
-            packageName = "numeric_expressions"
-            description = "Basic numeric expressions"
-            includeFilesWithType = "*.py" returns BooleanType
-
-            challenge("lt_expr") {
-              description = """Determine if one value is less than another with the "<" operator."""
-              returnType = BooleanType
-            }
-
-          }
-        }
-*/
-        +include(GitHubContent(organization, "readingbat-java-content", branch = branch)).java
-        +include(GitHubContent(organization, "readingbat-python-content", branch = branch, srcPath = "src")).python
-        +include(GitHubContent(organization, "readingbat-java-content", branch = branch)).kotlin
-
-        // java {
-        //+include(GitHubContent("readingbat-java-content")).java.findGroup("dd")
-        // }
       }
     }
 
-    ReadingBatServer.start(content)
+    python {
+      //repo = GitHubRepo("readingbat", "readingbat-python-content")
+      branchName = "dev"
+
+      group("Numeric Expressions") {
+        packageName = "numeric_expressions"
+        description = "Basic numeric expressions"
+        includeFilesWithType = "*.py" returns ReturnType.BooleanType
+
+        challenge("lt_expr") {
+          description = """Determine if one value is less than another with the "<" operator."""
+          returnType = ReturnType.BooleanType
+        }
+
+      }
+    }
+*/
+    include(GitHubContent(organization, "readingbat-java-content", branch = branch).eval().java)
+    include(GitHubContent(organization, "readingbat-python-content", branch = branch, srcPath = "src").eval().python)
+    include(GitHubContent(organization, "readingbat-java-content", branch = branch).eval().kotlin)
+
+    java {
+      //include(GitHubContent(organization, "readingbat-java-content").parse().java.findGroup("dd"))
+    }
   }
 }

@@ -17,48 +17,60 @@
 
 package com.github.readingbat.pages
 
+import com.github.pambrose.common.util.toRootPath
 import com.github.readingbat.dsl.ChallengeGroup
 import com.github.readingbat.dsl.LanguageType
-import com.github.readingbat.misc.Constants.funcChoice
-import com.github.readingbat.misc.Constants.funcItem
-import com.github.readingbat.misc.Constants.groupItemSrc
-import com.github.readingbat.misc.Constants.root
-import com.github.readingbat.misc.Constants.tabs
+import com.github.readingbat.dsl.ReadingBatContent
+import com.github.readingbat.misc.CSSNames.funcItem
+import com.github.readingbat.misc.CSSNames.groupChoice
+import com.github.readingbat.misc.CSSNames.groupItemSrc
+import com.github.readingbat.misc.CSSNames.tabs
+import com.github.readingbat.misc.Constants.challengeRoot
+import com.github.readingbat.misc.UserPrincipal
 import kotlinx.html.*
+import kotlinx.html.stream.createHTML
 
-internal fun HTML.languageGroupPage(languageType: LanguageType, groups: List<ChallengeGroup<*>>) {
-  head {
-    headDefault()
-  }
+internal fun languageGroupPage(principal: UserPrincipal?,
+                               loginAttempt: Boolean,
+                               content: ReadingBatContent,
+                               languageType: LanguageType,
+                               groups: List<ChallengeGroup<*>>) =
+  createHTML()
+    .html {
+      val languageName = languageType.lowerName
 
-  body {
-    bodyHeader(languageType)
-    div(classes = tabs) {
-      table {
-        val cols = 3
-        val size = groups.size
-        val rows = size.rows(cols)
-        val languageName = languageType.lowerName
+      head {
+        headDefault(content)
+      }
 
-        (0 until rows).forEach { i ->
-          tr {
-            groups[i].also { group -> groupItem(languageName, group) }
-            groups.elementAtOrNull(i + rows)?.also { groupItem(languageName, it) } ?: td {}
-            groups.elementAtOrNull(i + (2 * rows))?.also { groupItem(languageName, it) } ?: td {}
+      body {
+        bodyHeader(principal, loginAttempt, content, languageType, languageName, "Welcome to ReadingBat.")
+
+        div(classes = tabs) {
+          table {
+            val cols = 3
+            val size = groups.size
+            val rows = size.rows(cols)
+
+            (0 until rows).forEach { i ->
+              tr {
+                groups[i].also { group -> groupItem(languageName, group) }
+                groups.elementAtOrNull(i + rows)?.also { groupItem(languageName, it) } ?: td {}
+                groups.elementAtOrNull(i + (2 * rows))?.also { groupItem(languageName, it) } ?: td {}
+              }
+            }
           }
         }
       }
     }
-  }
-}
 
-private fun TR.groupItem(prefix: String, group: ChallengeGroup<*>) {
-  val name = group.name
-  val parsedDescription = group.parsedDescription
+private fun TR.groupItem(prefix: String, challengeGroup: ChallengeGroup<*>) {
+  val groupName = challengeGroup.groupName
+  val parsedDescription = challengeGroup.parsedDescription
 
   td(classes = funcItem) {
     div(classes = groupItemSrc) {
-      a(classes = funcChoice) { href = "/$root/$prefix/$name"; +name }
+      a(classes = groupChoice) { href = listOf(challengeRoot, prefix, groupName).toRootPath(); +groupName }
       br { rawHtml(if (parsedDescription.isNotBlank()) parsedDescription else Entities.nbsp.text) }
     }
   }

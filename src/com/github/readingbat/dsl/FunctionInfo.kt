@@ -24,11 +24,11 @@ import com.github.readingbat.dsl.ReturnType.*
 import mu.KLogging
 
 class FunctionInfo(val languageType: LanguageType,
-                   val name: String,
+                   val challengeName: String,
                    val originalCode: String,
                    val codeSnippet: String,
                    val arguments: List<String>,
-                   returnType: ReturnType,
+                   val returnType: ReturnType,
                    rawAnswers: List<*>) {
 
   val answers = mutableListOf<String>()
@@ -55,14 +55,49 @@ class FunctionInfo(val languageType: LanguageType,
         }
     }
 
-    logger.debug { "In $name arguments: $arguments computed answers: $answers" }
+    logger.debug { "In $challengeName arguments: $arguments computed answers: $answers" }
 
     validate()
   }
 
+  fun placeHolder(): String {
+    return when (returnType) {
+      BooleanType -> {
+        if (languageType.isPython())
+          "True"
+        else
+          "true"
+      }
+      IntType -> "0"
+      StringType -> {
+        if (languageType.isPython())
+          "''"
+        else
+          """"""""
+      }
+      BooleanListType,
+      BooleanArrayType -> {
+        if (languageType.isPython())
+          "[True, False]"
+        else
+          "[true, false]"
+      }
+      IntListType,
+      IntArrayType -> "[0, 1]"
+      StringListType,
+      StringArrayType -> {
+        if (languageType.isPython())
+          "['', '']"
+        else
+          """["", ""]"""
+      }
+      Runtime -> throw InvalidConfigurationException("Invalid return type")
+    }
+  }
+
   private fun validate() {
     if (answers.size != arguments.size)
-      throw InvalidConfigurationException("Mismatch between ${answers.size} answers and ${arguments.size} arguments in $name")
+      throw InvalidConfigurationException("Mismatch between ${answers.size} answers and ${arguments.size} arguments in $challengeName")
   }
 
   companion object : KLogging()

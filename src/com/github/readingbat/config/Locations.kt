@@ -17,59 +17,92 @@
 
 package com.github.readingbat.config
 
-import com.github.readingbat.InvalidConfigurationException
-import com.github.readingbat.Module.readingBatContent
-import com.github.readingbat.dsl.LanguageType
+import com.github.readingbat.PipelineCall
+import com.github.readingbat.assignPrincipal
 import com.github.readingbat.dsl.LanguageType.Companion.toLanguageType
 import com.github.readingbat.dsl.LanguageType.Kotlin
+import com.github.readingbat.dsl.ReadingBatContent
+import com.github.readingbat.misc.AuthName.FORM
+import com.github.readingbat.misc.BrowserSession
+import com.github.readingbat.misc.Constants.challengeRoot
 import com.github.readingbat.misc.Constants.playground
-import com.github.readingbat.misc.Constants.root
+import com.github.readingbat.misc.UserPrincipal
 import com.github.readingbat.pages.challengeGroupPage
 import com.github.readingbat.pages.challengePage
 import com.github.readingbat.pages.languageGroupPage
 import com.github.readingbat.pages.playgroundPage
-import io.ktor.application.Application
+import com.github.readingbat.respondWith
+import com.github.readingbat.retrievePrincipal
 import io.ktor.application.call
-import io.ktor.html.respondHtml
+import io.ktor.auth.authenticate
 import io.ktor.locations.Location
 import io.ktor.locations.get
-import io.ktor.routing.routing
+import io.ktor.locations.post
+import io.ktor.routing.Routing
+import io.ktor.sessions.get
+import io.ktor.sessions.sessions
 
-internal fun Application.locations() {
-  routing {
+internal fun Routing.locations(content: ReadingBatContent) {
+  get<Language> { language -> language(retrievePrincipal(), false, content, language) }
+  get<Language.Group> { groupChallenge -> group(retrievePrincipal(), false, content, groupChallenge) }
+  get<Language.Group.Challenge> { gc -> challenge(retrievePrincipal(), false, content, gc) }
+  get<PlaygroundRequest> { request -> playground(retrievePrincipal(), false, content, request) }
 
-    fun validateLanguage(languageType: LanguageType) {
-      if (!readingBatContent.hasLanguage(languageType) || !readingBatContent.hasGroups(languageType))
-        throw InvalidConfigurationException("Invlaid language: $languageType")
-    }
-
-    get<Language> {
-      // This lookup has to take place outside of the lambda for proper exception handling
-      validateLanguage(it.languageType)
-      val languageGroup = readingBatContent.findLanguage(it.languageType)
-      call.respondHtml { languageGroupPage(it.languageType, languageGroup.challengeGroups) }
-    }
-
-    get<Language.Group> {
-      validateLanguage(it.languageType)
-      val challengeGroup = readingBatContent.findGroup(it.languageType, it.groupName)
-      call.respondHtml { challengeGroupPage(challengeGroup) }
-    }
-
-    get<Language.Group.Challenge> {
-      validateLanguage(it.languageType)
-      val challenge = readingBatContent.findChallenge(it.languageType, it.groupName, it.challengeName)
-      call.respondHtml { challengePage(challenge) }
-    }
-
-    get<PlaygroundRequest> {
-      val challenge = readingBatContent.findLanguage(Kotlin).findChallenge(it.groupName, it.challengeName)
-      call.respondHtml { playgroundPage(challenge) }
-    }
+  authenticate(FORM) {
+    post<Language> { language -> language(assignPrincipal(), true, content, language) }
+    post<Language.Group> { languageGroup -> group(assignPrincipal(), true, content, languageGroup) }
+    post<Language.Group.Challenge> { gc -> challenge(assignPrincipal(), true, content, gc) }
+    post<PlaygroundRequest> { request -> playground(assignPrincipal(), true, content, request) }
   }
 }
 
-@Location("/$root/{language}")
+suspend fun PipelineCall.language(principal: UserPrincipal?,
+                                  loginAttempt: Boolean,
+                                  content: ReadingBatContent,
+                                  lang: Language) =
+  respondWith {
+    content.checkLanguage(lang.languageType)
+    val languageGroup = content.findLanguage(lang.languageType)
+    languageGroupPage(principal,
+                      loginAttempt,
+                      content,
+                      lang.languageType,
+                      languageGroup.challengeGroups)
+  }
+
+suspend fun PipelineCall.group(principal: UserPrincipal?,
+                               loginAttempt: Boolean,
+                               content: ReadingBatContent,
+                               group: Language.Group) =
+  respondWith {
+    content.checkLanguage(group.languageType)
+    val challengeGroup = content.findGroup(group.languageType, group.groupName)
+    challengeGroupPage(principal, loginAttempt, content, challengeGroup)
+  }
+
+suspend fun PipelineCall.challenge(principal: UserPrincipal?,
+                                   loginAttempt: Boolean,
+                                   content: ReadingBatContent,
+                                   gc: Language.Group.Challenge) =
+  respondWith {
+    registerBrowserSession()
+    content.checkLanguage(gc.languageType)
+    val challenge = content.findChallenge(gc.languageType, gc.groupName, gc.challengeName)
+    val clientSession = call.sessions.get<BrowserSession>()
+    challengePage(principal, loginAttempt, content, challenge, clientSession)
+  }
+
+suspend fun PipelineCall.playground(principal: UserPrincipal?,
+                                    loginAttempt: Boolean,
+                                    content: ReadingBatContent,
+                                    request: PlaygroundRequest) =
+  respondWith {
+    val challenge = content.findLanguage(Kotlin).findChallenge(request.groupName, request.challengeName)
+    playgroundPage(principal, loginAttempt, content, challenge)
+  }
+
+
+@Location("/$challengeRoot/{language}")
 data class Language(val language: String) {
   val languageType get() = language.toLanguageType()
 
@@ -86,4 +119,4 @@ data class Language(val language: String) {
 }
 
 @Location("/$playground/{groupName}/{challengeName}")
-internal class PlaygroundRequest(val groupName: String, val challengeName: String)
+class PlaygroundRequest(val groupName: String, val challengeName: String)

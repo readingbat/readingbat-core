@@ -31,11 +31,16 @@ enum class LanguageType(val useDoubleQuotes: Boolean, val suffix: String, val sr
   fun isKotlin() = this == Kotlin
 
   companion object {
-    fun String.toLanguageType() =
-      try {
-        values().first { it.name.equals(this, ignoreCase = true) }
-      } catch (e: NoSuchElementException) {
-        throw InvalidPathException("Invalid language request: $this")
-      }
+    val languageTypesInOrder by lazy { listOf(Java, Python, Kotlin) }
+
+    fun String?.toLanguageType(): LanguageType =
+      if (this == null)
+        throw InvalidPathException("Missing language value")
+      else
+        try {
+          values().first { it.name.equals(this, ignoreCase = true) }
+        } catch (e: NoSuchElementException) {
+          throw InvalidPathException("Invalid language request: $this")
+        }
   }
 }

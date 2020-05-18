@@ -17,29 +17,26 @@
 
 package com.github.readingbat.dsl
 
-import com.github.pambrose.common.util.GitHubRepo
+import com.github.pambrose.common.util.ContentRoot
 import com.github.readingbat.InvalidConfigurationException
+import com.github.readingbat.dsl.LanguageGroup.Companion.defaultContentRoot
 import com.github.readingbat.dsl.LanguageType.*
+
 
 @ReadingBatDslMarker
 class ReadingBatContent {
-  val python = LanguageGroup<PythonChallenge>(Python)
-  val java = LanguageGroup<JavaChallenge>(Java)
-  val kotlin = LanguageGroup<KotlinChallenge>(Kotlin)
+  internal var googleAnalyticsId = ""
+
+  val python by lazy { LanguageGroup<PythonChallenge>(this, Python) }
+  val java by lazy { LanguageGroup<JavaChallenge>(this, Java) }
+  val kotlin by lazy { LanguageGroup<KotlinChallenge>(this, Kotlin) }
 
   // User properties
-  lateinit var repo: GitHubRepo
-  var googleAnalyticsId = ""
+  var repo: ContentRoot = defaultContentRoot
+  var cacheChallenges = true
 
-  init {
-    // This is a hack. We need a handle to the current ReadingBatContent object in LanguageGroup
-    currentReadingBatContent = this
-  }
-
-  internal val isRepoInitialized get() = this::repo.isInitialized
-
-  private val languageList = listOf(java, python, kotlin)
-  private val languageMap = languageList.map { it.languageType to it }.toMap()
+  private val languageList by lazy { listOf(java, python, kotlin) }
+  private val languageMap by lazy { languageList.map { it.languageType to it }.toMap() }
 
   internal fun hasGroups(languageType: LanguageType) = findLanguage(languageType).hasGroups()
 
@@ -71,12 +68,21 @@ class ReadingBatContent {
     challengeGroups.forEach { languageGroup.addGroup(it) }
   }
 
+  @ReadingBatDslMarker
+  fun <T : Challenge> include(languageGroup: LanguageGroup<T>) {
+    val group = findLanguage(languageGroup.languageType) as LanguageGroup<T>
+    languageGroup.challengeGroups.forEach { group.addGroup(it) }
+  }
+
+  internal fun checkLanguage(languageType: LanguageType) {
+    if (!hasLanguage(languageType) || !hasGroups(languageType))
+      throw InvalidConfigurationException("Invalid language: $languageType")
+  }
+
   override fun toString() = "Content(languageList=$languageList)"
 
   companion object {
     internal val contentMap = mutableMapOf<String, ReadingBatContent>()
-
-    internal lateinit var currentReadingBatContent: ReadingBatContent
   }
 }
 

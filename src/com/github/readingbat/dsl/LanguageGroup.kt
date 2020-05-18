@@ -17,39 +17,29 @@
 
 package com.github.readingbat.dsl
 
-import com.github.pambrose.common.util.AbstractRepo
-import com.github.pambrose.common.util.decode
-import com.github.pambrose.common.util.ensureSuffix
-import com.github.pambrose.common.util.toPath
+import com.github.pambrose.common.util.*
 import com.github.readingbat.InvalidConfigurationException
 import com.github.readingbat.InvalidPathException
-import com.github.readingbat.dsl.ReadingBatContent.Companion.currentReadingBatContent
-import com.github.readingbat.misc.Constants.github
-import com.github.readingbat.misc.Constants.githubUserContent
+import com.github.readingbat.misc.GitHubUtils.directoryContents
+import java.io.File
 
 @ReadingBatDslMarker
-class LanguageGroup<T : Challenge>(internal val languageType: LanguageType) {
-  internal val challengeGroups = mutableListOf<ChallengeGroup<T>>()
-  private val rawRoot by lazy { (checkedRepo.url.ensureSuffix("/") + branchName).replace(github, githubUserContent) }
+class LanguageGroup<T : Challenge>(internal val content: ReadingBatContent,
+                                   internal val languageType: LanguageType) {
 
-  internal val checkedRepo: AbstractRepo
-    get() {
-      if (!this::repo.isInitialized) {
-        if (currentReadingBatContent.isRepoInitialized)
-          repo = currentReadingBatContent.repo
-        else
-          throw InvalidConfigurationException("${languageType.lowerName} section is missing a repo value")
-      }
-      return repo
-    }
+  internal val challengeGroups = mutableListOf<ChallengeGroup<T>>()
 
   // User properties
-  lateinit var repo: AbstractRepo
+  var repo: ContentRoot = content.repo
+    get() =
+      if (field == defaultContentRoot)
+        throw InvalidConfigurationException("${languageType.lowerName} section is missing a repo value")
+      else
+        field
+
+  // User properties
   var branchName = "master"
   var srcPath = languageType.srcPrefix
-
-  internal val rawRepoRoot by lazy { listOf(rawRoot, srcPath).toPath() }
-  internal val gitpodRoot by lazy { listOf(checkedRepo.url, "blob/$branchName", srcPath).toPath() }
 
   internal fun validate() {
     // Empty for now
@@ -57,32 +47,86 @@ class LanguageGroup<T : Challenge>(internal val languageType: LanguageType) {
 
   internal fun addGroup(group: ChallengeGroup<T>) {
     if (languageType != group.languageType)
-      throw InvalidConfigurationException("${group.name} language type mismatch: $languageType and ${group.languageType}")
-    if (hasGroup(group.name))
-      throw InvalidConfigurationException("Duplicate group name: ${group.name}")
+      throw InvalidConfigurationException("${group.groupName} language type mismatch: $languageType and ${group.languageType}")
+    if (hasGroup(group.groupName))
+      throw InvalidConfigurationException("Duplicate group name: ${group.groupName}")
     challengeGroups += group
   }
 
   fun hasGroups() = challengeGroups.isNotEmpty()
 
-  fun hasGroup(groupName: String) = challengeGroups.any { it.name == groupName }
+  fun hasGroup(groupName: String) = challengeGroups.any { it.groupName == groupName }
+
+  private val excludes = Regex("^__.*__.*$")
+
+  internal data class ChallengeFile(val fileName: String, val returnType: ReturnType)
 
   @ReadingBatDslMarker
   fun group(name: String, block: ChallengeGroup<T>.() -> Unit) {
-    val challengeGroup = ChallengeGroup(this, name).apply(block)
-    challengeGroup.import(languageType, challengeGroup.includeList)
-    addGroup(challengeGroup)
+    val group = ChallengeGroup(this, name).apply(block)
+
+    if (group.includeList.isNotEmpty()) {
+      val fileList =
+        repo.let { root ->
+          when {
+            (root is GitHubRepo) -> root.directoryContents(branchName, srcPath.ensureSuffix("/") + group.packageName)
+            (root is FileSystemSource) ->
+              File(listOf(root.pathPrefix, srcPath, group.packageName).join()).walk().map { it.name }
+                .toList()
+            else -> throw InvalidConfigurationException("Invalid repo type")
+          }
+        }
+
+      val uniqueVals = mutableSetOf<ChallengeFile>()
+      group.includeList
+        .forEach { prt ->
+          if (prt.pattern.isNotBlank()) {
+            val regex = prt.pattern.asRegex()
+            val filter: (String) -> Boolean = { it.contains(regex) }
+            uniqueVals +=
+              fileList
+                .filter { !it.contains(excludes) && filter.invoke(it) }
+                .map { ChallengeFile(it, prt.returnType) }
+          }
+        }
+
+      group.addChallenge(uniqueVals.toList().sortedWith(compareBy { it.fileName }))
+    }
+
+    addGroup(group)
   }
 
   @ReadingBatDslMarker
-  operator fun ChallengeGroup<T>.unaryPlus() = let { this@LanguageGroup.addGroup(this) }
+  operator fun ChallengeGroup<T>.unaryPlus() {
+    this@LanguageGroup.addGroup(this)
+  }
+
+  @ReadingBatDslMarker
+  fun include(challengeGroup: ChallengeGroup<T>) {
+    addGroup(challengeGroup)
+  }
 
   fun findGroup(groupName: String) =
-    groupName.decode().let { decoded -> challengeGroups.firstOrNull { it.name == decoded } }
+    groupName.decode().let { decoded -> challengeGroups.firstOrNull { it.groupName == decoded } }
       ?: throw InvalidPathException("Group ${languageType.lowerName}/$groupName not found")
 
   fun findChallenge(groupName: String, challengeName: String) = findGroup(groupName).findChallenge(challengeName)
 
   override fun toString() =
     "LanguageGroup(languageType=$languageType, srcPrefix='$srcPath', challengeGroups=$challengeGroups)"
+
+  companion object {
+    internal val defaultContentRoot =
+      object : ContentRoot {
+        override val sourcePrefix = ""
+        override val remote = false
+
+        override fun file(path: String) =
+          object : ContentSource {
+            override val content = ""
+            override val remote = false
+            override val source = ""
+          }
+      }
+  }
 }

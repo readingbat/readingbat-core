@@ -17,12 +17,10 @@
 
 package com.github.readingbat.dsl
 
-import com.github.pambrose.common.util.GitHubRepo
 import com.github.readingbat.InvalidConfigurationException
 import com.github.readingbat.InvalidPathException
 import com.github.readingbat.dsl.Challenge.Companion.challenge
 import com.github.readingbat.dsl.ReturnType.Runtime
-import com.github.readingbat.misc.GitHubUtils.folderContents
 import com.vladsch.flexmark.html.HtmlRenderer
 import com.vladsch.flexmark.parser.Parser
 import com.vladsch.flexmark.util.data.MutableDataSet
@@ -30,12 +28,12 @@ import mu.KLogging
 import kotlin.reflect.KProperty
 
 @ReadingBatDslMarker
-class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>, internal val name: String) {
+class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>, internal val groupName: String) {
   internal val languageType = languageGroup.languageType
+  //internal val readingBatContent = languageGroup.readingBatContent
   internal val challenges = mutableListOf<T>()
 
-  internal val repo by lazy { languageGroup.checkedRepo }
-  private val prefix by lazy { "${languageType.lowerName}/$name" }
+  private val prefix by lazy { "${languageType.lowerName}/$groupName" }
   internal val parsedDescription
       by lazy {
         val options = MutableDataSet().apply { set(HtmlRenderer.SOFT_BREAK, "<br />\n") }
@@ -73,27 +71,34 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
   var includeFiles by IncludeFiles(languageType, includeList)
   var includeFilesWithType by IncludeFilesWithType(languageType, includeList)
 
-  fun hasChallenge(name: String) = challenges.any { it.name == name }
+  fun hasChallenge(challengeName: String) = challenges.any { it.challengeName == challengeName }
 
-  fun removeChallenge(name: String) {
+  fun removeChallenge(challengeName: String) {
     val pos =
       challenges
         .asSequence()
         .mapIndexed { i, challenge -> i to challenge }
-        .first { it.second.name == name }
+        .first { it.second.challengeName == challengeName }
         .first
     challenges.removeAt(pos)
   }
 
-  fun findChallenge(name: String): T =
-    challenges.firstOrNull { it.name == name }
-      ?: throw InvalidPathException("Challenge $prefix/$name not found.")
+  fun findChallenge(challengeName: String): T =
+    challenges.firstOrNull { it.challengeName == challengeName }
+      ?: throw InvalidPathException("Challenge $prefix/$challengeName not found.")
 
   @ReadingBatDslMarker
   fun T.unaryPlus() {
-    this@ChallengeGroup.checkChallengeName(name)
+    this@ChallengeGroup.checkChallengeName(challengeName)
     this@ChallengeGroup.challenges += this
   }
+
+  @ReadingBatDslMarker
+  fun include(challenge: T) {
+    checkChallengeName(challenge.challengeName)
+    challenges += challenge
+  }
+
 
   //@ReadingBatDslMarker
   //fun includeFiles(vararg patterns: String) = import(patterns.toList())
@@ -103,29 +108,22 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
   @ReadingBatDslMarker
   infix fun String.returns(returnType: ReturnType) = PatternReturnType(this, returnType)
 
-  private val excludes = Regex("^__.*__.*$")
-  internal fun import(languageType: LanguageType, prts: List<PatternReturnType>) {
-    prts.forEach { prt ->
-      folderContents(repo as GitHubRepo,
-                     languageGroup.branchName,
-                     languageGroup.srcPath,
-                     packageName,
-                     listOf(prt.pattern))
-        .filterNot { it.contains(excludes) }
-        .map { it.split(".").first() }
-        .forEach { challengeName ->
-          if (checkChallengeName(challengeName, false)) {
-            logger.debug { "Adding $challengeName" }
-            val challenge = challenge(this, challengeName, true)
-            when {
-              languageType.isPython() -> (challenge as PythonChallenge).apply { returnType = prt.returnType }
-              languageType.isKotlin() -> (challenge as KotlinChallenge).apply { returnType = prt.returnType }
-            }
 
-            challenges += challenge as T
+  internal fun addChallenge(challengeNames: List<LanguageGroup.ChallengeFile>) {
+    challengeNames
+      .forEach { challengeFile ->
+        val challengeName = challengeFile.fileName.split(".").first()
+        if (checkChallengeName(challengeName, false)) {
+          logger.debug { "Adding $challengeName" }
+          val challenge = challenge(this, challengeName, true)
+          // Skip this next step for Java because returnType is calculated
+          when {
+            languageType.isPython() -> (challenge as PythonChallenge).apply { returnType = challengeFile.returnType }
+            languageType.isKotlin() -> (challenge as KotlinChallenge).apply { returnType = challengeFile.returnType }
           }
+          challenges += challenge as T
         }
-    }
+      }
   }
 
   private fun checkChallengeName(challengeName: String, throwExceptionIfPresent: Boolean = true): Boolean {
@@ -151,7 +149,7 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
     challenges += challenge.apply(block).apply { validate() }
   }
 
-  override fun toString() = "ChallengeGroup(name='$name', challenges=$challenges, packageName='$packageName')"
+  override fun toString() = "ChallengeGroup(name='$groupName', challenges=$challenges, packageName='$packageName')"
 
   companion object : KLogging()
 }

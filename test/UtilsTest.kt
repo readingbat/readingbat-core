@@ -179,17 +179,17 @@ class UtilsTest {
         $variable
         """.trimIndent()
 
-    val s3 = "include"
+    val s3 = "oldInclude"
     addImports(s3, variable).trimIndent() shouldBeEqualTo
         """
         $s3
         $variable
         """.trimIndent()
 
-    val s4 = "include()"
+    val s4 = "oldInclude()"
     addImports(s4, variable).trimIndent() shouldBeEqualTo
         """
-        import com.github.readingbat.dsl.include
+        import com.github.readingbat.dsl.oldInclude
         
         $s4
         $variable
@@ -236,20 +236,20 @@ class UtilsTest {
         $variable
         """.trimIndent()
 
-    val s3 = "include readingBatContent ReadingBatServer GitHubContent"
+    val s3 = "oldInclude readingBatContent ReadingBatServer GitHubContent"
     addImports(s3, variable).trimIndent() shouldBeEqualTo
         """
         $s3
         $variable
         """.trimIndent()
 
-    val s4 = "include() readingBatContent() ReadingBatServer() GitHubContent()"
+    val s4 = "oldInclude() readingBatContent() ReadingBatServer() GitHubContent()"
     addImports(s4, variable).trimIndent() shouldBeEqualTo
         """
         import com.github.readingbat.ReadingBatServer
         import com.github.readingbat.dsl.GitHubContent
         import com.github.readingbat.dsl.readingBatContent
-        import com.github.readingbat.dsl.include
+        import com.github.readingbat.dsl.oldInclude
         
         $s4
         $variable

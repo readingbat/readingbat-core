@@ -18,10 +18,9 @@
 package com.github.readingbat
 
 import com.github.pambrose.common.util.GitHubRepo
-import com.github.readingbat.Module.module
 import com.github.readingbat.dsl.LanguageType.*
 import com.github.readingbat.dsl.readingBatContent
-import com.github.readingbat.misc.Constants.root
+import com.github.readingbat.misc.Constants.challengeRoot
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode.Companion.Found
 import io.ktor.http.HttpStatusCode.Companion.OK
@@ -60,22 +59,22 @@ class ServerTest {
 
     withTestApplication({
                           testContent.validate()
-                          module(testing = true, content = testContent)
+                          module()
                         }) {
 
       handleRequest(HttpMethod.Get, "/").apply {
         assertEquals(Found, response.status())
       }
 
-      handleRequest(HttpMethod.Get, "/$root/${Java.lowerName}").apply {
+      handleRequest(HttpMethod.Get, "/$challengeRoot/${Java.lowerName}").apply {
         assertEquals(OK, response.status())
       }
 
-      handleRequest(HttpMethod.Get, "/$root/${Python.lowerName}").apply {
+      handleRequest(HttpMethod.Get, "/$challengeRoot/${Python.lowerName}").apply {
         assertEquals(OK, response.status())
       }
 
-      handleRequest(HttpMethod.Get, "/$root/${Kotlin.lowerName}").apply {
+      handleRequest(HttpMethod.Get, "/$challengeRoot/${Kotlin.lowerName}").apply {
         assertEquals(OK, response.status())
       }
     }

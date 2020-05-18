@@ -20,10 +20,7 @@ package com.github.readingbat.dsl
 import com.github.pambrose.common.script.JavaScript
 import com.github.pambrose.common.script.KotlinScript
 import com.github.pambrose.common.script.PythonScript
-import com.github.pambrose.common.util.ensureSuffix
-import com.github.pambrose.common.util.toDoubleQuoted
-import com.github.pambrose.common.util.toSingleQuoted
-import com.github.pambrose.common.util.withLineNumbers
+import com.github.pambrose.common.util.*
 import com.github.readingbat.InvalidConfigurationException
 import com.github.readingbat.dsl.LanguageType.*
 import com.github.readingbat.dsl.parse.JavaParse
@@ -55,15 +52,21 @@ import kotlin.time.measureTime
 import kotlin.time.measureTimedValue
 
 @ReadingBatDslMarker
-sealed class Challenge(challengeGroup: ChallengeGroup<*>, val name: String, val replaceable: Boolean) {
+sealed class Challenge(challengeGroup: ChallengeGroup<*>, val challengeName: String, val replaceable: Boolean) {
   private val challengeId = counter.incrementAndGet()
   private val languageGroup = challengeGroup.languageGroup
+  private val repo = languageGroup.repo
+  private val branchName = languageGroup.branchName
+  internal val srcPath = languageGroup.srcPath
   private val packageName = challengeGroup.packageName
   internal val languageType = challengeGroup.languageType
-  internal val groupName = challengeGroup.name
+  internal val groupName = challengeGroup.groupName
 
   private val fqName by lazy { packageName.ensureSuffix("/") + fileName.ensureSuffix(".${languageType.suffix}") }
-  internal val gitpodUrl by lazy { "${languageGroup.gitpodRoot}$fqName" }
+  internal val gitpodUrl by lazy {
+    listOf(repo.sourcePrefix, "blob/${branchName}", srcPath, fqName).join()
+  }
+
   internal val parsedDescription
       by lazy {
         val options = MutableDataSet().apply { set(HtmlRenderer.SOFT_BREAK, "<br />\n") }
@@ -74,25 +77,40 @@ sealed class Challenge(challengeGroup: ChallengeGroup<*>, val name: String, val 
       }
 
   // User properties
-  var fileName = "$name.${languageType.suffix}"
+  var fileName = "$challengeName.${languageType.suffix}"
   var codingBatEquiv = ""
   var description = ""
 
   internal abstract fun computeFuncInfo(code: String): FunctionInfo
 
-  internal fun funcInfo() =
-    sourcesMap
-      .computeIfAbsent(challengeId) {
-        val path = "${languageGroup.rawRepoRoot}$fqName"
-        logger.info { """Fetching "$groupName/$fileName" from: $path""" }
-        val (content, dur) = measureTimedValue { URL(path).readText() }
-        logger.info { """Fetched "$groupName/$fileName" in: $dur""" }
-        computeFuncInfo(content)
-      }
+  private val compute = {
+    val fs = repo as FileSystemSource
+    val file = fs.file(listOf(fs.pathPrefix, srcPath, packageName, fileName).join())
+    logger.info { """Fetching "${file.fileName}"""" }
+    computeFuncInfo(file.content)
+  }
+
+  internal fun funcInfo(content: ReadingBatContent): FunctionInfo =
+    if (repo.remote) {
+      sourcesMap
+        .computeIfAbsent(challengeId) {
+          val path = listOf((repo as AbstractRepo).rawSourcePrefix, branchName, srcPath, fqName).join()
+          logger.info { """Fetching "$groupName/$fileName" from: $path""" }
+          val (code, dur) = measureTimedValue { URL(path).readText() }
+          logger.info { """Fetched "$groupName/$fileName" in: $dur""" }
+          computeFuncInfo(code)
+        }
+    }
+    else {
+      if (content.cacheChallenges)
+        sourcesMap.computeIfAbsent(challengeId) { compute.invoke() }
+      else
+        compute.invoke()
+    }
 
   internal open fun validate() {
-    if (name.isEmpty())
-      throw InvalidConfigurationException(""""$name" is empty""")
+    if (challengeName.isEmpty())
+      throw InvalidConfigurationException(""""$challengeName" is empty""")
   }
 
   private fun Any?.prettyQuote(capitalizePythonBooleans: Boolean = true, useDoubleQuotes: Boolean = false) =
@@ -117,8 +135,8 @@ sealed class Challenge(challengeGroup: ChallengeGroup<*>, val name: String, val 
   }
 }
 
-class PythonChallenge(group: ChallengeGroup<*>, name: String, replaceable: Boolean) :
-  Challenge(group, name, replaceable) {
+class PythonChallenge(challengeGroup: ChallengeGroup<*>, challengeName: String, replaceable: Boolean) :
+  Challenge(challengeGroup, challengeName, replaceable) {
 
   // User properties
   lateinit var returnType: ReturnType
@@ -127,7 +145,7 @@ class PythonChallenge(group: ChallengeGroup<*>, name: String, replaceable: Boole
     super.validate()
 
     if (!this::returnType.isInitialized)
-      throw InvalidConfigurationException("$name missing returnType value")
+      throw InvalidConfigurationException("$challengeName missing returnType value")
   }
 
   override fun computeFuncInfo(code: String): FunctionInfo {
@@ -137,7 +155,7 @@ class PythonChallenge(group: ChallengeGroup<*>, name: String, replaceable: Boole
     val script = convertToPythonScript(lines)
     val answers = mutableListOf<Any>()
 
-    logger.info { "$name return type: $returnType script: \n${script.withLineNumbers()}" }
+    logger.info { "$challengeName return type: $returnType script: \n${script.withLineNumbers()}" }
 
     val duration =
       PythonScript()
@@ -146,23 +164,23 @@ class PythonChallenge(group: ChallengeGroup<*>, name: String, replaceable: Boole
           measureTime { eval(script) }
         }
 
-    logger.info { "$name computed answers in $duration for: $answers" }
+    logger.info { "$challengeName computed answers in $duration for: $answers" }
 
-    return FunctionInfo(languageType, name, code, funcCode, args, returnType, answers)
+    return FunctionInfo(languageType, challengeName, code, funcCode, args, returnType, answers)
   }
 }
 
-class JavaChallenge(group: ChallengeGroup<*>, name: String, replaceable: Boolean) :
-  Challenge(group, name, replaceable) {
+class JavaChallenge(challengeGroup: ChallengeGroup<*>, challengeName: String, replaceable: Boolean) :
+  Challenge(challengeGroup, challengeName, replaceable) {
 
   override fun computeFuncInfo(code: String): FunctionInfo {
     val lines = code.lines().filter { !it.trimStart().startsWith("package") }
     val funcCode = extractJavaFunction(lines)
     val args = extractJavaArguments(lines, svmRegex, javaEndRegex)
-    val returnType = deriveJavaReturnType(name, lines)
+    val returnType = deriveJavaReturnType(challengeName, lines)
     val script = JavaParse.convertToScript(lines)
 
-    logger.info { "$name return type: $returnType script: \n${script.withLineNumbers()}" }
+    logger.info { "$challengeName return type: $returnType script: \n${script.withLineNumbers()}" }
 
     val timedValue =
       JavaScript()
@@ -173,17 +191,17 @@ class JavaChallenge(group: ChallengeGroup<*>, name: String, replaceable: Boolean
         }
 
     val answers = timedValue.value
-    logger.info { "$name computed answers in ${timedValue.duration} for: $answers" }
+    logger.info { "$challengeName computed answers in ${timedValue.duration} for: $answers" }
 
     if (answers !is List<*>)
-      throw InvalidConfigurationException("Invalid type returned for $name")
+      throw InvalidConfigurationException("Invalid type returned for $challengeName")
 
-    return FunctionInfo(languageType, name, code, funcCode, args, returnType, answers)
+    return FunctionInfo(languageType, challengeName, code, funcCode, args, returnType, answers)
   }
 }
 
-class KotlinChallenge(group: ChallengeGroup<*>, name: String, replaceable: Boolean) :
-  Challenge(group, name, replaceable) {
+class KotlinChallenge(challengeGroup: ChallengeGroup<*>, challengeName: String, replaceable: Boolean) :
+  Challenge(challengeGroup, challengeName, replaceable) {
 
   // User properties
   lateinit var returnType: ReturnType
@@ -192,7 +210,7 @@ class KotlinChallenge(group: ChallengeGroup<*>, name: String, replaceable: Boole
     super.validate()
 
     if (!this::returnType.isInitialized)
-      throw InvalidConfigurationException("$name missing returnType value")
+      throw InvalidConfigurationException("$challengeName missing returnType value")
   }
 
   override fun computeFuncInfo(code: String): FunctionInfo {
@@ -203,7 +221,7 @@ class KotlinChallenge(group: ChallengeGroup<*>, name: String, replaceable: Boole
     val args = extractKotlinArguments(lines, funMainRegex, kotlinEndRegex)
     val script = convertToKotlinScript(lines)
 
-    logger.info { "$name return type: $returnType script: \n${script.withLineNumbers()}" }
+    logger.info { "$challengeName return type: $returnType script: \n${script.withLineNumbers()}" }
 
     val answers = mutableListOf<Any>()
     val duration =
@@ -212,8 +230,8 @@ class KotlinChallenge(group: ChallengeGroup<*>, name: String, replaceable: Boole
         measureTime { eval(script) }
       }
 
-    logger.info { "$name computed answers in $duration for: $answers" }
+    logger.info { "$challengeName computed answers in $duration for: $answers" }
 
-    return FunctionInfo(languageType, name, strippedCode, funcCode, args, returnType, answers)
+    return FunctionInfo(languageType, challengeName, strippedCode, funcCode, args, returnType, answers)
   }
 }

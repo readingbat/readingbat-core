@@ -45,14 +45,18 @@ fun readingBatContent(block: ReadingBatContent.() -> Unit) =
 
 private val logger = KotlinLogging.logger {}
 
-fun include(source: ContentSource, variableName: String = "content") =
-  contentMap
-    .computeIfAbsent(source.path) {
-      val (code, dur) = measureTimedValue { source.content }
-      logger.info { """Read content from "${source.path}" in $dur""" }
-      val withImports = addImports(code, variableName)
-      evalDsl(withImports, source.path)
-    }
+fun ContentSource.eval(variableName: String = "content"): ReadingBatContent =
+  contentMap.computeIfAbsent(this.source) { readDsl(this, variableName) }
+
+internal fun oldInclude(contentSource: ContentSource, variableName: String = "content") =
+  contentMap.computeIfAbsent(contentSource.source) { readDsl(contentSource, variableName) }
+
+internal fun readDsl(contentSource: ContentSource, variableName: String = "content"): ReadingBatContent {
+  val (code, dur) = measureTimedValue { contentSource.content }
+  logger.info { """Read content from "${contentSource.source}" in $dur""" }
+  val withImports = addImports(code, variableName)
+  return evalDsl(withImports, contentSource.source)
+}
 
 internal fun addImports(code: String, variableName: String): String {
   val classImports =
@@ -60,11 +64,11 @@ internal fun addImports(code: String, variableName: String): String {
       //.onEach { println("Checking for ${it.javaObjectType.name}") }
       .filter { code.contains("${it.javaObjectType.simpleName}(") }   // See if the class is referenced
       .map { "import ${it.javaObjectType.name}" }                     // Convert to import stmt
-      .filter { !code.contains(it) }                                  // Do not include is import already present
+      .filter { !code.contains(it) }                                  // Do not include if import already present
       .joinToString("\n")                                             // Turn into String
 
   val funcImports =
-    listOf(::readingBatContent, ::include)
+    listOf(::readingBatContent, ::oldInclude)
       .filter { code.contains("${it.name}(") }  // See if the function is referenced
       .map { "import ${it.fqMethodName}" }      // Convert to import stmt
       .filter { !code.contains(it) }            // Do not include is import already present

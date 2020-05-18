@@ -18,53 +18,78 @@
 package com.github.readingbat.pages
 
 import com.github.pambrose.common.util.decode
+import com.github.pambrose.common.util.join
+import com.github.pambrose.common.util.toRootPath
 import com.github.readingbat.dsl.Challenge
-import com.github.readingbat.misc.Constants.challengeDesc
-import com.github.readingbat.misc.Constants.kotlinCode
-import com.github.readingbat.misc.Constants.root
-import com.github.readingbat.misc.Constants.tabs
+import com.github.readingbat.dsl.ReadingBatContent
+import com.github.readingbat.misc.CSSNames.challengeDesc
+import com.github.readingbat.misc.CSSNames.kotlinCode
+import com.github.readingbat.misc.CSSNames.tabs
+import com.github.readingbat.misc.Constants.challengeRoot
+import com.github.readingbat.misc.Constants.staticRoot
+import com.github.readingbat.misc.UserPrincipal
 import kotlinx.html.*
-import org.apache.commons.text.StringEscapeUtils
+import kotlinx.html.stream.createHTML
+import org.apache.commons.text.StringEscapeUtils.escapeHtml4
 
 // Playground customization details are here:
 // https://jetbrains.github.io/kotlin-playground/
 // https://jetbrains.github.io/kotlin-playground/examples/
 
-fun HTML.playgroundPage(challenge: Challenge) {
-  val languageType = challenge.languageType
-  val languageName = languageType.lowerName
-  val groupName = challenge.groupName
-  val name = challenge.name
+fun playgroundPage(principal: UserPrincipal?,
+                   loginAttempt: Boolean,
+                   content: ReadingBatContent,
+                   challenge: Challenge) =
+  createHTML()
+    .html {
+      val languageType = challenge.languageType
+      val languageName = languageType.lowerName
+      val groupName = challenge.groupName
+      val challengeName = challenge.challengeName
+      val funcInfo = challenge.funcInfo(content)
+      val loginPath = listOf(languageName, groupName, challengeName).join()
 
-  head {
-    script { src = "https://unpkg.com/kotlin-playground@1"; attributes["data-selector"] = "code" }
-    headDefault()
-  }
-
-  body {
-    bodyHeader(languageType)
-
-    div(classes = tabs) {
-      h2 {
-        this@body.addLink(groupName.decode(), "/$languageName/$groupName")
-        rawHtml("${Entities.nbsp.text}&rarr;${Entities.nbsp.text}")
-        this@body.addLink(name.decode(), "/$languageName/$groupName/$name")
+      head {
+        script { src = "https://unpkg.com/kotlin-playground@1"; attributes["data-selector"] = ".$kotlinCode" }
+        headDefault(content)
       }
 
-      if (challenge.description.isNotEmpty())
-        div(classes = challengeDesc) { rawHtml(challenge.parsedDescription) }
+      body {
+        bodyHeader(principal, loginAttempt, content, languageType, loginPath)
 
-      div(classes = kotlinCode) {
-        val options =
-          """theme="idea" indent="2" lines="true" highlight-on-fly="true" data-autocomplete="true" match-brackets="true""""
-        rawHtml("""
-          <code class="$kotlinCode" $options >
-          ${StringEscapeUtils.escapeHtml4(challenge.funcInfo().originalCode)}
-          </code>
-        """)
+        div(classes = tabs) {
+          h2 {
+            val groupPath = listOf(challengeRoot, languageName, groupName).toRootPath()
+            this@body.addLink(groupName.decode(), groupPath)
+            rawHtml("${Entities.nbsp.text}&rarr;${Entities.nbsp.text}")
+            this@body.addLink(challengeName.decode(), listOf(groupPath, challengeName).join())
+          }
+
+          if (challenge.description.isNotEmpty())
+            div(classes = challengeDesc) { rawHtml(challenge.parsedDescription) }
+
+          val options =
+            """
+              theme="idea" indent="2" lines="true"  
+              highlight-on-fly="true" data-autocomplete="true" match-brackets="true" 
+            """.trimIndent()
+
+          rawHtml(
+            """
+              <div class=$kotlinCode $options>  
+              ${escapeHtml4(funcInfo.originalCode)}
+              </div>
+            """.trimIndent())
+        }
+
+        br
+        div {
+          style = "margin-left: 1em;"
+          +"Click on"
+          img { height = "25"; style = "vertical-align: bottom"; src = "/$staticRoot/run-button.png" }
+          +" to run the code"
+        }
+
+        backLink(challengeRoot, languageName, groupName, challengeName)
       }
     }
-
-    backLink("/$root/$languageName/$groupName/$name")
-  }
-}

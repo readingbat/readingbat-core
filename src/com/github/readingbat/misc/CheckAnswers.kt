@@ -21,46 +21,130 @@ import com.github.pambrose.common.script.KotlinScript
 import com.github.pambrose.common.script.PythonScript
 import com.github.pambrose.common.util.*
 import com.github.readingbat.InvalidConfigurationException
-import com.github.readingbat.Module.readingBatContent
+import com.github.readingbat.PipelineCall
+import com.github.readingbat.RedisPool.gson
+import com.github.readingbat.RedisPool.redisAction
 import com.github.readingbat.dsl.LanguageType.Companion.toLanguageType
 import com.github.readingbat.dsl.LanguageType.Java
 import com.github.readingbat.dsl.LanguageType.Kotlin
-import com.github.readingbat.misc.Constants.challengeSrc
-import com.github.readingbat.misc.Constants.groupSrc
-import com.github.readingbat.misc.Constants.langSrc
-import com.github.readingbat.misc.Constants.userResp
-import io.ktor.application.ApplicationCall
+import com.github.readingbat.dsl.ReadingBatContent
+import com.github.readingbat.misc.Answers.challengeSrc
+import com.github.readingbat.misc.Answers.groupSrc
+import com.github.readingbat.misc.Answers.langSrc
+import com.github.readingbat.misc.CSSNames.userResp
 import io.ktor.application.call
 import io.ktor.request.receiveParameters
 import io.ktor.response.respondText
-import io.ktor.util.pipeline.PipelineContext
 import kotlinx.coroutines.delay
 import mu.KLogging
+import redis.clients.jedis.Jedis
 import javax.script.ScriptException
 import kotlin.time.milliseconds
 
+internal data class StudentInfo(val studentId: String, val firstName: String, val lastName: String)
+
+internal data class ClassEnrollment(val sessionId: String,
+                                    val students: List<StudentInfo> = mutableListOf())
+
+private data class ChallengeResults(val arguments: String,
+                                    val userResponse: String,
+                                    val answered: Boolean,
+                                    val correct: Boolean)
+
+private data class ChallengeHistory(var argument: String,
+                                    var correct: Boolean = false,
+                                    var attempts: Int = 0,
+                                    val answers: MutableList<String> = mutableListOf()) {
+  fun markCorrect() {
+    correct = true
+  }
+
+  fun markIncorrect(userResp: String) {
+    correct = false
+    if (userResp.isNotEmpty() && userResp !in answers) {
+      attempts++
+      answers += userResp
+    }
+  }
+}
+
 object CheckAnswers : KLogging() {
 
-  internal suspend fun PipelineContext<Unit, ApplicationCall>.checkUserAnswers() {
+  internal suspend fun PipelineCall.checkUserAnswers(content: ReadingBatContent,
+                                                     principal: UserPrincipal?,
+                                                     browserSession: BrowserSession?) {
     val params = call.receiveParameters()
     val compareMap = params.entries().map { it.key to it.value[0] }.toMap()
-    val lang = compareMap[langSrc] ?: throw InvalidConfigurationException("Missing language")
+    val languageName = compareMap[langSrc] ?: throw InvalidConfigurationException("Missing language")
     val groupName = compareMap[groupSrc] ?: throw InvalidConfigurationException("Missing group name")
     val challengeName = compareMap[challengeSrc] ?: throw InvalidConfigurationException("Missing challenge name")
-    val isJvm = lang in listOf(Java.lowerName, Kotlin.lowerName)
+    val isJvm = languageName in listOf(Java.lowerName, Kotlin.lowerName)
     val userResps = params.entries().filter { it.key.startsWith(userResp) }
-    val challenge = readingBatContent.findLanguage(lang.toLanguageType()).findChallenge(groupName, challengeName)
+    val challenge = content.findLanguage(languageName.toLanguageType()).findChallenge(groupName, challengeName)
+    val funcInfo = challenge.funcInfo(content)
 
     logger.debug("Found ${userResps.size} user responses in $compareMap")
+
     val results =
       userResps.indices.map { i ->
-        val userResp = compareMap[userResp + i]?.trim() ?: throw InvalidConfigurationException("Missing user response")
-        val answer = challenge.funcInfo().answers[i]
-        checkWithAnswer(isJvm, userResp, answer)
+        val userResponse =
+          compareMap[userResp + i]?.trim() ?: throw InvalidConfigurationException("Missing user response")
+        val answer = funcInfo.answers[i]
+        ChallengeResults(funcInfo.arguments[i],
+                         userResponse,
+                         userResponse.isNotEmpty(),
+                         checkWithAnswer(isJvm, userResponse, answer))
+      }
+
+    val answerMap = mutableMapOf<String, String>()
+    userResps.indices.forEach { i ->
+      val argumentKey = funcInfo.arguments[i]
+      val userResp = compareMap[userResp + i]?.trim() ?: throw InvalidConfigurationException("Missing user response")
+      if (userResp.isNotEmpty())
+        answerMap[argumentKey] = userResp
+    }
+
+    // Save the all the answers for the challenge
+    redisAction { redis ->
+      val userId = lookupUserId(redis, principal)
+      val challengeKey =
+        userId?.challengeKey(languageName, groupName, challengeName)
+          ?: browserSession?.challengeKey(languageName, groupName, challengeName)
+          ?: ""
+
+      if (challengeKey.isNotEmpty()) {
+        logger.debug { "Storing: $challengeKey" }
+        answerMap.forEach { (args, userResp) -> redis.hset(challengeKey, args, userResp) }
+      }
+
+      // Save the history of each answer on a per-arguments basis
+      results
+        .filter { it.answered }
+        .forEach { result ->
+          val argumentKey =
+            userId?.argumentKey(languageName, groupName, challengeName, result.arguments)
+              ?: browserSession?.argumentKey(languageName, groupName, challengeName, result.arguments)
+              ?: ""
+
+          if (argumentKey.isNotEmpty()) {
+            val history = gson.fromJson(redis[argumentKey],
+                                        ChallengeHistory::class.java) ?: ChallengeHistory(result.arguments)
+            logger.debug { "Before: $history" }
+            history.apply { if (result.correct) markCorrect() else markIncorrect(result.userResponse) }
+            logger.debug { "After: $history" }
+            redis.set(argumentKey, gson.toJson(history))
+          }
+        }
+    }
+
+    results
+      .filter { it.answered }
+      .forEach {
+        logger.debug { "Item with args; ${it.arguments} was correct: ${it.correct}" }
       }
 
     delay(200.milliseconds.toLongMilliseconds())
-    call.respondText(results.toString())
+    call.respondText(results.map { it.correct }.toString())
   }
 
   private infix fun String.equalsAsKotlinList(other: String): Boolean {
@@ -119,4 +203,27 @@ object CheckAnswers : KLogging() {
     } catch (e: Exception) {
       false
     }
+}
+
+internal fun lookupUserId(redis: Jedis, principal: UserPrincipal?): UserId? {
+  if (principal != null) {
+    val userIdKey = userIdKey(principal.userId)
+    val id = redis.get(userIdKey) ?: ""
+    if (id.isNotEmpty())
+      return UserId(id)
+  }
+  return null
+}
+
+fun main() {
+  redisAction { redis ->
+    //redis.set("user|user1", "val1")
+    //redis.set("user|user2", "val2")
+
+    //println(redis.keys("*").joinToString("\n"))
+
+    redis.keys("*").forEach { redis.del(it) }
+
+  }
+
 }
