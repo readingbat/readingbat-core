@@ -73,16 +73,20 @@ internal fun HEAD.headDefault(readingBatContent: ReadingBatContent) {
 
 internal fun BODY.helpAndLogin(principal: UserIdPrincipal?, loginPath: String) {
   div {
-    style = "float:right; margin:0px; border: 1px solid lightgray;"
+    style = "float:right; margin:0px; border: 1px solid lightgray; padding-bottom: 5px;"
     table {
-
       if (principal != null) {
         tr {
           val elems = principal.name.split("@")
           td {
-            if (elems.size == 1) +elems[0]
-            else {
-              +elems[0]; br; +"@${elems[1]}"
+            repeat(2) { rawHtml(nbsp.text) }
+            +elems[0]
+            repeat(2) { rawHtml(nbsp.text) }
+            if (elems.size > 1) {
+              br
+              repeat(2) { rawHtml(nbsp.text) }
+              +"@${elems[1]}"
+              repeat(2) { rawHtml(nbsp.text) }
             }
           }
         }
@@ -95,7 +99,9 @@ internal fun BODY.helpAndLogin(principal: UserIdPrincipal?, loginPath: String) {
           }
           }
            */
+            repeat(2) { rawHtml(nbsp.text) }
             +"["; a { href = LOGOUT; +"log out" }; +"]"
+            repeat(2) { rawHtml(nbsp.text) }
           }
         }
       }
@@ -147,7 +153,8 @@ internal fun BODY.helpAndLogin(principal: UserIdPrincipal?, loginPath: String) {
             //+" | "
             //a { href = "/report"; +"report" }
             //+" | "
-            a { href = PREFS; +"prefs " }
+            a { href = PREFS; +"prefs" }
+            repeat(2) { rawHtml(nbsp.text) }
           }
         }
       }

@@ -279,7 +279,7 @@ internal val cssContent by lazy {
       rule("pre[class*=\"language-\"] > code") {
         val color = "#0600EE"
         borderLeft = "10px solid $color"
-        boxShadow(Color(color), -1.px, 0.px, 0.px, 0.px)
+        boxShadow(Color(color), (-1).px, 0.px, 0.px, 0.px)
         boxShadow(Color("#dfdfdf"), 0.px, 0.px, 0.px, 1.px)
       }
       rule(".language-java") {
