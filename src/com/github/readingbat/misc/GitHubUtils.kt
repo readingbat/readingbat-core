@@ -50,7 +50,6 @@ private fun encodedByteArray(input: String, salt: (String) -> String, algorithm:
     digest(input.toByteArray())
   }
 
-
 fun main() {
   println("test".sha256("test2"))
   println("test".md5("test2"))

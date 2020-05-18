@@ -53,17 +53,21 @@ internal fun Application.locations(readingBatContent: ReadingBatContent) {
     fun PipelineCall.assignPrincipal() =
       call.principal<UserIdPrincipal>().apply { if (this != null) call.sessions.set(this) }  // Set the cookie
 
-    suspend fun PipelineCall.langAction(lang: Language, principal: UserIdPrincipal?) =
+    suspend fun PipelineCall.langAction(lang: Language, principal: UserIdPrincipal?, loginAttempted: Boolean) =
       respondWith {
         readingBatContent.checkLanguage(lang.languageType)
         val languageGroup = readingBatContent.findLanguage(lang.languageType)
-        languageGroupPage(principal, readingBatContent, lang.languageType, languageGroup.challengeGroups)
+        languageGroupPage(principal,
+                          loginAttempted,
+                          readingBatContent,
+                          lang.languageType,
+                          languageGroup.challengeGroups)
       }
 
-    get<Language> { language -> langAction(language, retrievePrincipal()) }
+    get<Language> { language -> langAction(language, retrievePrincipal(), false) }
 
     authenticate(FORM) {
-      post<Language> { language -> langAction(language, assignPrincipal()) }
+      post<Language> { language -> langAction(language, assignPrincipal(), true) }
     }
 
     suspend fun PipelineCall.groupAction(group: Language.Group, principal: UserIdPrincipal?) =

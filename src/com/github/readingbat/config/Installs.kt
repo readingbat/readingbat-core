@@ -182,8 +182,8 @@ private fun Authentication.Configuration.configureFormAuth() {
     }
 
     validate { cred: UserPasswordCredential ->
-      //logger.info { "Inside validate" }
       var principal: UserIdPrincipal? = null
+
       redisAction { redis ->
         val userKey = userKey(cred.name)
         val digest: String? = redis.get(userKey)
@@ -197,16 +197,6 @@ private fun Authentication.Configuration.configureFormAuth() {
         logger.info { "Login success" }
 
       principal
-      /*
-      if (cred.name == TestCredentials.userEmail && cred.password == TestCredentials.password) {
-        logger.info { "Login success" }
-        UserIdPrincipal(cred.name)
-      }
-      else {
-        logger.info { "Login failure" }
-        null
-      }
-      */
     }
   }
 }

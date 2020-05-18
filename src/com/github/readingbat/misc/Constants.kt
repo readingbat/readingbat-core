@@ -49,8 +49,3 @@ object AuthRoutes {
 object Cookies {
   const val AUTH_COOKIE = "auth"
 }
-
-object TestCredentials {
-  const val userEmail = "pambrose@mac.com"
-  const val password = "bar"
-}
