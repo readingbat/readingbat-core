@@ -18,10 +18,12 @@
 package com.github.readingbat.misc
 
 import com.github.pambrose.common.util.GitHubRepo
+import com.github.pambrose.common.util.randomId
 import io.ktor.util.getDigestFunction
 import mu.KLogging
 import org.kohsuke.github.GitHub
 import java.security.MessageDigest
+import java.security.SecureRandom
 
 // https://github-api.kohsuke.org
 
@@ -38,17 +40,31 @@ object GitHubUtils : KLogging() {
   }
 }
 
-fun String.md5(salt: String): String = encodedByteArray(this, { "$salt${it.length}" }, "MD5").asText
+fun String.md5(salt: String): String = encodedByteArray(this, { salt }, "MD5").asText
 
-fun String.sha256(salt: String): String = encodedByteArray(this, { "$salt${it.length}" }, "SHA-256").asText
+fun String.sha256(salt: String): String = encodedByteArray(this, { salt }, "SHA-256").asText
+
+fun String.md5(salt: ByteArray): String = encodedByteArray(this, salt, "MD5").asText
+
+fun String.sha256(salt: ByteArray): String = encodedByteArray(this, salt, "SHA-256").asText
 
 val ByteArray.asText get() = fold("", { str, it -> str + "%02x".format(it) })
+
+private fun encodedByteArray(input: String, salt: ByteArray, algorithm: String) =
+  with(MessageDigest.getInstance(algorithm)) {
+    update(salt)
+    digest(input.toByteArray())
+  }
 
 private fun encodedByteArray(input: String, salt: (String) -> String, algorithm: String) =
   with(MessageDigest.getInstance(algorithm)) {
     update(salt(input).toByteArray())
     digest(input.toByteArray())
   }
+
+fun newByteArraySalt(len: Int = 16): ByteArray = ByteArray(len).apply { SecureRandom().nextBytes(this) }
+fun newStringSalt(len: Int = 16): String = randomId(len)
+
 
 fun main() {
   println("test".sha256("test2"))

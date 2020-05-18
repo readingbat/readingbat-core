@@ -17,6 +17,7 @@
 
 package com.github.readingbat.pages
 
+import com.github.pambrose.common.util.toRootPath
 import com.github.readingbat.dsl.ChallengeGroup
 import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.dsl.ReadingBatContent
@@ -69,7 +70,7 @@ private fun TR.groupItem(prefix: String, challengeGroup: ChallengeGroup<*>) {
 
   td(classes = funcItem) {
     div(classes = groupItemSrc) {
-      a(classes = groupChoice) { href = "/$challengeRoot/$prefix/$groupName"; +groupName }
+      a(classes = groupChoice) { href = listOf(challengeRoot, prefix, groupName).toRootPath(); +groupName }
       br { rawHtml(if (parsedDescription.isNotBlank()) parsedDescription else Entities.nbsp.text) }
     }
   }

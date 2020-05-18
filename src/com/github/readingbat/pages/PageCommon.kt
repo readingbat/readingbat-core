@@ -17,7 +17,7 @@
 
 package com.github.readingbat.pages
 
-import com.github.pambrose.common.util.toPath
+import com.github.pambrose.common.util.toRootPath
 import com.github.readingbat.InvalidConfigurationException
 import com.github.readingbat.config.production
 import com.github.readingbat.dsl.LanguageType
@@ -30,15 +30,15 @@ import com.github.readingbat.misc.CSSNames.max
 import com.github.readingbat.misc.CSSNames.pretab
 import com.github.readingbat.misc.CSSNames.selected
 import com.github.readingbat.misc.CSSNames.tabc
-import com.github.readingbat.misc.Constants.ABOUT
-import com.github.readingbat.misc.Constants.CREATE_ACCOUNT
-import com.github.readingbat.misc.Constants.PREFS
 import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.Constants.challengeRoot
 import com.github.readingbat.misc.Constants.cssName
 import com.github.readingbat.misc.Constants.icons
 import com.github.readingbat.misc.Constants.staticRoot
 import com.github.readingbat.misc.Constants.titleText
+import com.github.readingbat.misc.Endpoints.ABOUT
+import com.github.readingbat.misc.Endpoints.CREATE_ACCOUNT
+import com.github.readingbat.misc.Endpoints.PREFS
 import com.github.readingbat.misc.FormFields.PASSWORD
 import com.github.readingbat.misc.FormFields.USERNAME
 import io.ktor.auth.UserIdPrincipal
@@ -73,20 +73,16 @@ internal fun HEAD.headDefault(readingBatContent: ReadingBatContent) {
 
 internal fun BODY.helpAndLogin(principal: UserIdPrincipal?, loginPath: String) {
   div {
-    style = "float:right; margin:0px; border: 1px solid lightgray; padding-bottom: 5px;"
+    style = "float:right; margin:0px; border: 1px solid lightgray; margin-left: 10px; padding: 5px;"
     table {
       if (principal != null) {
         tr {
           val elems = principal.name.split("@")
           td {
-            repeat(2) { rawHtml(nbsp.text) }
             +elems[0]
-            repeat(2) { rawHtml(nbsp.text) }
             if (elems.size > 1) {
               br
-              repeat(2) { rawHtml(nbsp.text) }
               +"@${elems[1]}"
-              repeat(2) { rawHtml(nbsp.text) }
             }
           }
         }
@@ -99,9 +95,7 @@ internal fun BODY.helpAndLogin(principal: UserIdPrincipal?, loginPath: String) {
           }
           }
            */
-            repeat(2) { rawHtml(nbsp.text) }
             +"["; a { href = LOGOUT; +"log out" }; +"]"
-            repeat(2) { rawHtml(nbsp.text) }
           }
         }
       }
@@ -154,7 +148,6 @@ internal fun BODY.helpAndLogin(principal: UserIdPrincipal?, loginPath: String) {
             //a { href = "/report"; +"report" }
             //+" | "
             a { href = PREFS; +"prefs" }
-            repeat(2) { rawHtml(nbsp.text) }
           }
         }
       }
@@ -195,7 +188,7 @@ internal fun BODY.bodyHeader(principal: UserIdPrincipal?,
           if (readingBatContent.hasGroups(lang))
             li(classes = "h2") {
               if (languageType == lang) id = selected
-              this@bodyHeader.addLink(lang.name, "/$challengeRoot/${lang.lowerName}")
+              this@bodyHeader.addLink(lang.name, listOf(challengeRoot, lang.lowerName).toRootPath())
             }
         }
       }
@@ -217,7 +210,7 @@ internal fun BODY.addLink(text: String, url: String, newWindow: Boolean = false)
 
 internal fun BODY.backLink(vararg url: String) {
   br
-  div(classes = backLinkCls) { a { href = url.toList().toPath(true, false); rawHtml("&larr; Back") } }
+  div(classes = backLinkCls) { a { href = url.toList().toRootPath(); rawHtml("&larr; Back") } }
 }
 
 internal fun HTMLTag.rawHtml(html: String) = unsafe { raw(html) }

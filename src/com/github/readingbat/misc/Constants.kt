@@ -25,11 +25,22 @@ internal object Constants {
   const val cssName = "styles.css"
   const val staticRoot = "static"
   const val challengeRoot = "content"
+  const val RETURN_PATH = "returnPath"
+}
+
+object Endpoints {
   const val PREFS = "/prefs"
   const val ABOUT = "/about.html"
   const val CREATE_ACCOUNT = "/create-account"
   const val PRIVACY = "/privacy.html"
-  const val RETURN_PATH = "returnPath"
+}
+
+object KeyPrefixes {
+  const val USER_ID = "userId"
+  const val SALT = "salt"
+  const val PASSWD = "password"
+  const val CHALLENGE_ANSWERS = "challenge-answers"
+  const val ANSWER_HISTORY = "answer-history"
 }
 
 object FormFields {

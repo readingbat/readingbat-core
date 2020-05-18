@@ -71,7 +71,7 @@ class LanguageGroup<T : Challenge>(internal val readingBatContent: ReadingBatCon
           when {
             (root is GitHubRepo) -> root.directoryContents(branchName, srcPath.ensureSuffix("/") + group.packageName)
             (root is FileSystemSource) ->
-              File(listOf(root.pathPrefix, srcPath, group.packageName).toPath(false, false)).walk().map { it.name }
+              File(listOf(root.pathPrefix, srcPath, group.packageName).join()).walk().map { it.name }
                 .toList()
             else -> throw InvalidConfigurationException("Invalid repo type")
           }

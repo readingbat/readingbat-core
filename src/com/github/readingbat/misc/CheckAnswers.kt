@@ -25,6 +25,8 @@ import com.github.readingbat.RedisPool.gson
 import com.github.readingbat.RedisPool.redisAction
 import com.github.readingbat.config.ClientSession
 import com.github.readingbat.config.PipelineCall
+import com.github.readingbat.config.UserId
+import com.github.readingbat.config.userIdKey
 import com.github.readingbat.dsl.LanguageType.Companion.toLanguageType
 import com.github.readingbat.dsl.LanguageType.Java
 import com.github.readingbat.dsl.LanguageType.Kotlin
@@ -34,10 +36,12 @@ import com.github.readingbat.misc.Answers.groupSrc
 import com.github.readingbat.misc.Answers.langSrc
 import com.github.readingbat.misc.CSSNames.userResp
 import io.ktor.application.call
+import io.ktor.auth.UserIdPrincipal
 import io.ktor.request.receiveParameters
 import io.ktor.response.respondText
 import kotlinx.coroutines.delay
 import mu.KLogging
+import redis.clients.jedis.Jedis
 import javax.script.ScriptException
 import kotlin.time.milliseconds
 
@@ -71,6 +75,7 @@ private data class ChallengeHistory(var argument: String,
 object CheckAnswers : KLogging() {
 
   internal suspend fun PipelineCall.checkUserAnswers(readingBatContent: ReadingBatContent,
+                                                     principal: UserIdPrincipal?,
                                                      clientSession: ClientSession?) {
     val params = call.receiveParameters()
     val compareMap = params.entries().map { it.key to it.value[0] }.toMap()
@@ -105,17 +110,28 @@ object CheckAnswers : KLogging() {
           answerMap[argumentKey] = userResp
       }
 
+      // Save the all the answers for the challenge
       redisAction { redis ->
-        // Save the all the answers for the challenge
-        val challengeKey = clientSession.challengeKey(languageName, groupName, challengeName)
+        val userId: UserId? = lookupUserId(redis, principal)
+
+        val challengeKey =
+          if (userId != null)
+            userId.challengeKey(languageName, groupName, challengeName)
+          else
+            clientSession.challengeKey(languageName, groupName, challengeName)
         logger.debug { "Storing: $challengeKey" }
-        answerMap.forEach { args, userResp -> redis.hset(challengeKey, args, userResp) }
+        answerMap.forEach { (args, userResp) -> redis.hset(challengeKey, args, userResp) }
 
         // Save the history of each answer on a per-arguments basis
         results
           .filter { it.answered }
           .forEach { result ->
-            val argumentKey = clientSession.argumentKey(languageName, groupName, challengeName, result.arguments)
+            val argumentKey =
+              if (userId != null)
+                userId.argumentKey(languageName, groupName, challengeName, result.arguments)
+              else
+                clientSession.argumentKey(languageName, groupName, challengeName, result.arguments)
+
             val history = gson.fromJson(redis[argumentKey],
                                         ChallengeHistory::class.java) ?: ChallengeHistory(result.arguments)
             logger.debug { "Before: $history" }
@@ -194,6 +210,16 @@ object CheckAnswers : KLogging() {
     }
 }
 
+internal fun lookupUserId(redis: Jedis, principal: UserIdPrincipal?): UserId? {
+  if (principal != null) {
+    val userIdKey = userIdKey(principal.name)
+    val id = redis.get(userIdKey) ?: ""
+    if (id.isNotEmpty())
+      return UserId(id)
+  }
+  return null
+}
+
 fun main() {
   redisAction { redis ->
     //redis.set("user|user1", "val1")
@@ -201,7 +227,7 @@ fun main() {
 
     //println(redis.keys("*").joinToString("\n"))
 
-    //redis.keys("*").forEach { redis.del(it) }
+    redis.keys("*").forEach { redis.del(it) }
 
   }
 

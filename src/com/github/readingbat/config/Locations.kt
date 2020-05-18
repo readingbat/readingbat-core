@@ -44,14 +44,14 @@ import io.ktor.util.pipeline.PipelineContext
 
 typealias PipelineCall = PipelineContext<Unit, ApplicationCall>
 
+internal fun PipelineCall.retrievePrincipal() =
+  call.sessions.get<UserIdPrincipal>()
+
+internal fun PipelineCall.assignPrincipal() =
+  call.principal<UserIdPrincipal>().apply { if (this != null) call.sessions.set(this) }  // Set the cookie
+
 internal fun Application.locations(readingBatContent: ReadingBatContent) {
   routing {
-
-    fun PipelineCall.retrievePrincipal() =
-      call.sessions.get<UserIdPrincipal>()
-
-    fun PipelineCall.assignPrincipal() =
-      call.principal<UserIdPrincipal>().apply { if (this != null) call.sessions.set(this) }  // Set the cookie
 
     suspend fun PipelineCall.langAction(lang: Language, principal: UserIdPrincipal?, loginAttempted: Boolean) =
       respondWith {

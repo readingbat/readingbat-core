@@ -178,17 +178,22 @@ private fun Authentication.Configuration.configureFormAuth() {
           AuthenticationFailedCause.NoCredentials -> call.respondRedirect("$LOGIN?no")
           else -> call.respondRedirect(LOGIN)
         }
-         */
+      */
     }
 
     validate { cred: UserPasswordCredential ->
       var principal: UserIdPrincipal? = null
 
       redisAction { redis ->
-        val userKey = userKey(cred.name)
-        val digest: String? = redis.get(userKey)
-        if (digest != null && digest == cred.password.sha256(cred.name))
-          principal = UserIdPrincipal(cred.name)
+        val userIdKey = userIdKey(cred.name)
+        val id = redis.get(userIdKey) ?: ""
+        if (id.isNotEmpty()) {
+          val userId = UserId(id)
+          val salt = redis.get(userId.saltKey()) ?: ""
+          val digest = redis.get(userId.passwordKey()) ?: ""
+          if (salt.isNotEmpty() && digest.isNotEmpty() && digest == cred.password.sha256(salt))
+            principal = UserIdPrincipal(cred.name)
+        }
       }
 
       if (principal == null)

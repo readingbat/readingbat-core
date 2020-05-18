@@ -18,7 +18,8 @@
 package com.github.readingbat.pages
 
 import com.github.pambrose.common.util.decode
-import com.github.pambrose.common.util.toPath
+import com.github.pambrose.common.util.join
+import com.github.pambrose.common.util.toRootPath
 import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.CSSNames.challengeDesc
@@ -47,7 +48,7 @@ fun playgroundPage(principal: UserIdPrincipal?,
       val groupName = challenge.groupName
       val challengeName = challenge.challengeName
       val funcInfo = challenge.funcInfo(readingBatContent)
-      val loginPath = listOf(languageName, groupName, challengeName).toPath(false, false)
+      val loginPath = listOf(languageName, groupName, challengeName).join()
 
       head {
         script { src = "https://unpkg.com/kotlin-playground@1"; attributes["data-selector"] = ".$kotlinCode" }
@@ -59,10 +60,10 @@ fun playgroundPage(principal: UserIdPrincipal?,
 
         div(classes = tabs) {
           h2 {
-            val groupPath = listOf(challengeRoot, languageName, groupName).toPath(true, false)
+            val groupPath = listOf(challengeRoot, languageName, groupName).toRootPath()
             this@body.addLink(groupName.decode(), groupPath)
             rawHtml("${Entities.nbsp.text}&rarr;${Entities.nbsp.text}")
-            this@body.addLink(challengeName.decode(), listOf(groupPath, challengeName).toPath(false, false))
+            this@body.addLink(challengeName.decode(), listOf(groupPath, challengeName).join())
           }
 
           if (challenge.description.isNotEmpty())

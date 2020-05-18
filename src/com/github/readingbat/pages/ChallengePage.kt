@@ -18,9 +18,11 @@
 package com.github.readingbat.pages
 
 import com.github.pambrose.common.util.decode
-import com.github.pambrose.common.util.toPath
+import com.github.pambrose.common.util.join
+import com.github.pambrose.common.util.toRootPath
 import com.github.readingbat.RedisPool.redisAction
 import com.github.readingbat.config.ClientSession
+import com.github.readingbat.config.UserId
 import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.Answers.processAnswers
@@ -41,6 +43,7 @@ import com.github.readingbat.misc.Constants.challengeRoot
 import com.github.readingbat.misc.Constants.playground
 import com.github.readingbat.misc.Constants.staticRoot
 import com.github.readingbat.misc.addScript
+import com.github.readingbat.misc.lookupUserId
 import io.ktor.auth.UserIdPrincipal
 import io.ktor.http.ContentType.Text.CSS
 import kotlinx.html.*
@@ -64,7 +67,7 @@ internal fun challengePage(principal: UserIdPrincipal?,
       val groupName = challenge.groupName
       val challengeName = challenge.challengeName
       val funcInfo = challenge.funcInfo(readingBatContent)
-      val loginPath = listOf(languageName, groupName, challengeName).toPath(false, false)
+      val loginPath = listOf(languageName, groupName, challengeName).join()
 
       head {
         link { rel = "stylesheet"; href = spinnerCss }
@@ -81,7 +84,7 @@ internal fun challengePage(principal: UserIdPrincipal?,
 
         div(classes = tabs) {
           h2 {
-            val groupPath = listOf(challengeRoot, languageName, groupName).toPath(true, false)
+            val groupPath = listOf(challengeRoot, languageName, groupName).toRootPath()
             this@body.addLink(groupName.decode(), groupPath)
             rawHtml("${nbsp.text}&rarr;${nbsp.text}")
             +challengeName
@@ -101,11 +104,21 @@ internal fun challengePage(principal: UserIdPrincipal?,
               tr { th { +"Function Call" }; th { +"" }; th { +"Return Value" }; th { +"" } }
 
               var previousAnswers = emptyAnswerMap
-              if (clientSession != null) {
+
+              if (principal != null || clientSession != null) {
                 redisAction { redis ->
-                  val key = clientSession.challengeKey(languageName, groupName, challenge.challengeName)
-                  logger.debug { "Fetching: $key" }
-                  previousAnswers = redis.hgetAll(key)
+                  val userId: UserId? = lookupUserId(redis, principal)
+                  var key = ""
+                  if (userId != null)
+                    key = userId.challengeKey(languageName, groupName, challenge.challengeName)
+
+                  if (key.isEmpty() && clientSession != null)
+                    key = clientSession.challengeKey(languageName, groupName, challenge.challengeName)
+
+                  if (key.isNotEmpty()) {
+                    logger.debug { "Fetching: $key" }
+                    previousAnswers = redis.hgetAll(key)
+                  }
                 }
               }
 
@@ -148,7 +161,7 @@ internal fun challengePage(principal: UserIdPrincipal?,
               this@body.addLink("Gitpod.io", "https://gitpod.io/#${challenge.gitpodUrl}", true)
               if (languageType.isKotlin()) {
                 +" or as a "
-                this@body.addLink("Kotlin Playground", "/$playground/$groupName/$challengeName", false)
+                this@body.addLink("Kotlin Playground", listOf(playground, groupName, challengeName).toRootPath(), false)
               }
               +"."
             }
@@ -174,8 +187,8 @@ private fun HEAD.removePrismShadow() {
   style {
     rawHtml(
       """
-          pre[class*="language-"]:before,
-          pre[class*="language-"]:after { display: none; }
-        """)
+        pre[class*="language-"]:before,
+        pre[class*="language-"]:after { display: none; }
+      """)
   }
 }

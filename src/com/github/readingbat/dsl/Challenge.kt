@@ -64,7 +64,7 @@ sealed class Challenge(challengeGroup: ChallengeGroup<*>, val challengeName: Str
 
   private val fqName by lazy { packageName.ensureSuffix("/") + fileName.ensureSuffix(".${languageType.suffix}") }
   internal val gitpodUrl by lazy {
-    listOf(repo.sourcePrefix, "blob/${branchName}", srcPath, fqName).toPath(false, false)
+    listOf(repo.sourcePrefix, "blob/${branchName}", srcPath, fqName).join()
   }
 
   internal val parsedDescription
@@ -85,7 +85,7 @@ sealed class Challenge(challengeGroup: ChallengeGroup<*>, val challengeName: Str
 
   private val compute = {
     val fs = repo as FileSystemSource
-    val file = fs.file(listOf(fs.pathPrefix, srcPath, packageName, fileName).toPath(false, false))
+    val file = fs.file(listOf(fs.pathPrefix, srcPath, packageName, fileName).join())
     logger.info { """Fetching "${file.fileName}"""" }
     computeFuncInfo(file.content)
   }
@@ -94,7 +94,7 @@ sealed class Challenge(challengeGroup: ChallengeGroup<*>, val challengeName: Str
     if (repo.remote) {
       sourcesMap
         .computeIfAbsent(challengeId) {
-          val path = listOf((repo as AbstractRepo).rawSourcePrefix, branchName, srcPath, fqName).toPath(false, false)
+          val path = listOf((repo as AbstractRepo).rawSourcePrefix, branchName, srcPath, fqName).join()
           logger.info { """Fetching "$groupName/$fileName" from: $path""" }
           val (content, dur) = measureTimedValue { URL(path).readText() }
           logger.info { """Fetched "$groupName/$fileName" in: $dur""" }

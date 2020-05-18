@@ -18,8 +18,8 @@
 package com.github.readingbat.pages
 
 import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.misc.Constants.CREATE_ACCOUNT
 import com.github.readingbat.misc.Constants.RETURN_PATH
+import com.github.readingbat.misc.Endpoints.CREATE_ACCOUNT
 import com.github.readingbat.misc.FormFields.PASSWORD
 import com.github.readingbat.misc.FormFields.USERNAME
 import kotlinx.html.*
@@ -133,10 +133,10 @@ internal fun createAccount(readingBatContent: ReadingBatContent,
                   style = "font-size:85%;"
                   onClick =
                     """
-|                     var pw=document.$formName.$PASSWORD.type=="password"; 
-|                     document.$formName.$PASSWORD.type=pw?"text":"password"; 
-|                     return false;
-|                   """.trimMargin()
+                     var pw=document.$formName.$PASSWORD.type=="password"; 
+                     document.$formName.$PASSWORD.type=pw?"text":"password"; 
+                     return false;
+                    """.trimIndent()
                   +"show/hide"
                 }
               }

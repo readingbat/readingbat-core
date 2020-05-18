@@ -26,18 +26,24 @@ import com.github.readingbat.misc.AuthRoutes.LOGOUT
 import com.github.readingbat.misc.AuthRoutes.PROFILE
 import com.github.readingbat.misc.CSSNames.checkAnswers
 import com.github.readingbat.misc.CheckAnswers.checkUserAnswers
-import com.github.readingbat.misc.Constants.ABOUT
-import com.github.readingbat.misc.Constants.CREATE_ACCOUNT
-import com.github.readingbat.misc.Constants.PREFS
-import com.github.readingbat.misc.Constants.PRIVACY
 import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.Constants.challengeRoot
 import com.github.readingbat.misc.Constants.cssName
 import com.github.readingbat.misc.Constants.icons
 import com.github.readingbat.misc.Constants.staticRoot
+import com.github.readingbat.misc.Endpoints.ABOUT
+import com.github.readingbat.misc.Endpoints.CREATE_ACCOUNT
+import com.github.readingbat.misc.Endpoints.PREFS
+import com.github.readingbat.misc.Endpoints.PRIVACY
 import com.github.readingbat.misc.FormFields.PASSWORD
 import com.github.readingbat.misc.FormFields.USERNAME
+import com.github.readingbat.misc.KeyPrefixes.ANSWER_HISTORY
+import com.github.readingbat.misc.KeyPrefixes.CHALLENGE_ANSWERS
+import com.github.readingbat.misc.KeyPrefixes.PASSWD
+import com.github.readingbat.misc.KeyPrefixes.SALT
+import com.github.readingbat.misc.KeyPrefixes.USER_ID
 import com.github.readingbat.misc.cssContent
+import com.github.readingbat.misc.newStringSalt
 import com.github.readingbat.misc.sha256
 import com.github.readingbat.pages.*
 import io.ktor.application.Application
@@ -72,14 +78,12 @@ import java.util.*
 import java.util.regex.Pattern
 import kotlin.text.Charsets.UTF_8
 
+
 private val logger = KotlinLogging.logger {}
 
 internal fun Application.routes(content: ReadingBatContent) {
 
   routing {
-
-    //languageGroup(readingBatContent)
-    //challengeGroup(readingBatContent)
 
     get("/") {
       val tab = defaultTab(content)
@@ -92,7 +96,8 @@ internal fun Application.routes(content: ReadingBatContent) {
     }
 
     post("/$checkAnswers") {
-      checkUserAnswers(content, call.sessions.get<ClientSession>())
+      val principal = retrievePrincipal()
+      checkUserAnswers(content, principal, call.sessions.get<ClientSession>())
     }
 
     get(LOGOUT) {
@@ -178,18 +183,33 @@ internal fun Application.routes(content: ReadingBatContent) {
         }
         else -> {
           redisAction { redis ->
-            // Check if username alread exists
-            val userKey = userKey(username)
-            if (redis.exists(userKey)) {
-              runBlocking {
-                respondWith { createAccount(content, "", "Username already exists: username", returnPath) }
+            runBlocking {
+              // Check if username already exists
+              val userIdKey = userIdKey(username)
+              if (redis.exists(userIdKey)) {
+                respondWith { createAccount(content, "", "Username already exists: $username", returnPath) }
+              }
+              else {
+                // The userName (email) is stored in only one KV pair, enabling changes to the userName
+                // Three things are stored:
+                // username -> userId
+                // userId -> salt
+                // userId -> sha256-encoded password
+
+                val userId = UserId()
+                val salt = newStringSalt()
+
+                redis.multi().apply {
+                  set(userIdKey, userId.id)
+                  set(userId.saltKey(), salt)
+                  set(userId.passwordKey(), password.sha256(salt))
+                  exec()
+                }
+
+                call.respondRedirect(returnPath)
               }
             }
-            else {
-              redis.set(userKey, password.sha256(username))
-            }
           }
-          call.respondRedirect(returnPath)
         }
       }
     }
@@ -225,7 +245,19 @@ private val emailPattern by lazy {
         + "([a-zA-Z]+[\\w-]+\\.)+[a-zA-Z]{2,4})$")
 }
 
-internal fun userKey(username: String) = "user|$username"
+internal class UserId(val id: String = randomId(25)) {
+  fun saltKey() = "$SALT|$id"
+
+  fun passwordKey() = "$PASSWD|$id"
+
+  fun challengeKey(languageName: String, groupName: String, challengeName: String) =
+    listOf(CHALLENGE_ANSWERS, id, languageName, groupName, challengeName).joinToString("|")
+
+  fun argumentKey(languageName: String, groupName: String, challengeName: String, argument: String) =
+    listOf(ANSWER_HISTORY, id, languageName, groupName, challengeName, argument).joinToString("|")
+}
+
+internal fun userIdKey(username: String) = "$USER_ID|$username"
 
 private fun String.isValidEmail() = emailPattern.matcher(this).matches()
 
@@ -237,10 +269,10 @@ private object ThreadDumpInfo {
 
 internal data class ClientSession(val name: String, val id: String) {
   fun challengeKey(languageName: String, groupName: String, challengeName: String) =
-    listOf("challenge-answers", id, languageName, groupName, challengeName).joinToString("|")
+    listOf(CHALLENGE_ANSWERS, id, languageName, groupName, challengeName).joinToString("|")
 
   fun argumentKey(languageName: String, groupName: String, challengeName: String, argument: String) =
-    listOf("answer-history", id, languageName, groupName, challengeName, argument).joinToString("|")
+    listOf(ANSWER_HISTORY, id, languageName, groupName, challengeName, argument).joinToString("|")
 }
 
 internal data class ChallengeAnswers(val id: String, val answers: MutableMap<String, String> = mutableMapOf())

@@ -18,7 +18,8 @@
 package com.github.readingbat.pages
 
 import com.github.pambrose.common.util.decode
-import com.github.pambrose.common.util.toPath
+import com.github.pambrose.common.util.join
+import com.github.pambrose.common.util.toRootPath
 import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.ChallengeGroup
 import com.github.readingbat.dsl.ReadingBatContent
@@ -42,7 +43,7 @@ internal fun challengeGroupPage(principal: UserIdPrincipal?,
       val languageName = languageType.lowerName
       val groupName = challengeGroup.groupName
       val challenges = challengeGroup.challenges
-      val loginPath = listOf(languageName, groupName).toPath(false, false)
+      val loginPath = listOf(languageName, groupName).join()
 
       head {
         headDefault(readingBatContent)
@@ -81,7 +82,7 @@ private fun TR.funcCall(prefix: String, groupName: String, challenge: Challenge)
     img { src = "/$staticRoot/check.jpg" }
     rawHtml(nbsp.text)
     a(classes = funcChoice) {
-      href = listOf(challengeRoot, prefix, groupName, challenge.challengeName).toPath(true, false);
+      href = listOf(challengeRoot, prefix, groupName, challenge.challengeName).toRootPath()
       +challenge.challengeName
     }
   }
