@@ -47,7 +47,7 @@ targetCompatibility = 1.8
 
 description = 'ReadingBat Core'
 group 'com.github.readingbat'
-version '1.0.9'
+version '1.0.10'
 
 sourceSets {
     main.kotlin.srcDirs = ['src']
