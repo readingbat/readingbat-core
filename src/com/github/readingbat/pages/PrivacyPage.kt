@@ -18,10 +18,12 @@
 package com.github.readingbat.pages
 
 import com.github.readingbat.dsl.ReadingBatContent
+import com.github.readingbat.misc.Constants.RETURN_PATH
+import com.github.readingbat.misc.Endpoints.CREATE_ACCOUNT
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 
-internal fun privacyPage(content: ReadingBatContent) =
+internal fun privacyPage(content: ReadingBatContent, returnPath: String) =
   createHTML()
     .html {
 
@@ -55,5 +57,7 @@ internal fun privacyPage(content: ReadingBatContent) =
             }
           }
         }
+
+        backLink(CREATE_ACCOUNT + (if (returnPath.isNotEmpty()) "?$RETURN_PATH=$returnPath" else ""))
       }
     }

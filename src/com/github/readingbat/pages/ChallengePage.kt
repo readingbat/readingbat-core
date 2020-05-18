@@ -27,7 +27,6 @@ import com.github.readingbat.misc.Answers.processAnswers
 import com.github.readingbat.misc.CSSNames.arrow
 import com.github.readingbat.misc.CSSNames.challengeDesc
 import com.github.readingbat.misc.CSSNames.checkAnswers
-import com.github.readingbat.misc.CSSNames.checkBar
 import com.github.readingbat.misc.CSSNames.codeBlock
 import com.github.readingbat.misc.CSSNames.feedback
 import com.github.readingbat.misc.CSSNames.funcCol
@@ -35,7 +34,6 @@ import com.github.readingbat.misc.CSSNames.refs
 import com.github.readingbat.misc.CSSNames.spinner
 import com.github.readingbat.misc.CSSNames.status
 import com.github.readingbat.misc.CSSNames.tabs
-import com.github.readingbat.misc.CSSNames.userAnswers
 import com.github.readingbat.misc.CSSNames.userResp
 import com.github.readingbat.misc.ClientSession
 import com.github.readingbat.misc.Constants.challengeRoot
@@ -99,7 +97,8 @@ internal fun challengePage(principal: UserIdPrincipal?,
             }
           }
 
-          div(classes = userAnswers) {
+          div {
+            style = "margin-top:2em; margin-left:2em;"
             table {
               tr { th { +"Function Call" }; th { +"" }; th { +"Return Value" }; th { +"" } }
 
@@ -142,7 +141,8 @@ internal fun challengePage(principal: UserIdPrincipal?,
               }
             }
 
-            div(classes = checkBar) {
+            div {
+              style = "margin-top:1em;"
               table {
                 tr {
                   td {

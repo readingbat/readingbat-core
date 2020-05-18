@@ -18,10 +18,8 @@
 package com.github.readingbat.misc
 
 import com.github.readingbat.misc.CSSNames.arrow
-import com.github.readingbat.misc.CSSNames.bodyHeaderCls
 import com.github.readingbat.misc.CSSNames.challengeDesc
 import com.github.readingbat.misc.CSSNames.checkAnswers
-import com.github.readingbat.misc.CSSNames.checkBar
 import com.github.readingbat.misc.CSSNames.codeBlock
 import com.github.readingbat.misc.CSSNames.feedback
 import com.github.readingbat.misc.CSSNames.funcChoice
@@ -37,14 +35,12 @@ import com.github.readingbat.misc.CSSNames.selected
 import com.github.readingbat.misc.CSSNames.spinner
 import com.github.readingbat.misc.CSSNames.status
 import com.github.readingbat.misc.CSSNames.tabs
-import com.github.readingbat.misc.CSSNames.userAnswers
 import com.github.readingbat.misc.CSSNames.userResp
 import kotlinx.css.*
 import kotlinx.css.properties.TextDecoration
 import kotlinx.css.properties.boxShadow
 
 internal object CSSNames {
-  const val checkBar = "checkBar"
   const val checkAnswers = "checkAnswers"
   const val spinner = "spinner"
   const val feedback = "feedback"
@@ -58,8 +54,6 @@ internal object CSSNames {
   const val tabs = "tabs"
   const val userResp = "userResp"
   const val challengeDesc = "challenge-desc"
-  const val userAnswers = "userAnswers"
-  const val bodyHeaderCls = "bodyHeader"
   const val groupChoice = "groupChoice"
   const val funcChoice = "funcChoice"
   const val funcItem = "funcItem"
@@ -142,9 +136,6 @@ internal val cssContent by lazy {
       rule("p.$max") {
         maxWidth = 800.px
       }
-      rule(".$bodyHeaderCls") {
-        marginBottom = 0.em
-      }
       rule(".$funcItem") {
         marginTop = 1.em
         width = 275.px
@@ -161,10 +152,6 @@ internal val cssContent by lazy {
       }
       rule("th") {
         fontSize = textFs
-      }
-      rule(".$userAnswers") {
-        marginTop = 2.em
-        marginLeft = 2.em
       }
       rule("div.$groupItemSrc") {
         maxWidth = 300.px
@@ -197,9 +184,6 @@ internal val cssContent by lazy {
         borderCollapse = BorderCollapse.collapse
       }
       */
-      rule(".$checkBar") {
-        marginTop = 1.em
-      }
       rule(".$checkAnswers") {
         width = 14.em
         height = 2.em

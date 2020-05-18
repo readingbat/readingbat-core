@@ -20,6 +20,7 @@ package com.github.readingbat.pages
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.Endpoints.CREATE_ACCOUNT
+import com.github.readingbat.misc.Endpoints.PRIVACY
 import com.github.readingbat.misc.FormFields
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
@@ -114,8 +115,7 @@ internal fun createAccountPage(content: ReadingBatContent,
                 td {
                   button {
                     style = "font-size:85%;"
-                    onClick =
-                      """
+                    onClick = """
                      var pw=document.$formName.${FormFields.PASSWORD}.type=="password"; 
                      document.$formName.${FormFields.PASSWORD}.type=pw?"text":"password"; 
                      return false;
@@ -139,7 +139,8 @@ internal fun createAccountPage(content: ReadingBatContent,
               }
             }
           }
-          p { a { href = "/privacy.html"; +"privacy statement" } }
+
+          p { a { href = "$PRIVACY?$RETURN_PATH=$returnPath"; +"privacy statement" } }
         }
 
         backLink(returnPath)

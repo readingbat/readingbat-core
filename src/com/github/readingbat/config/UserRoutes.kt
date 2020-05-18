@@ -64,7 +64,7 @@ internal fun Routing.userRoutes(content: ReadingBatContent) {
 
   post(CREATE_ACCOUNT) { createAccount(content) }
 
-  get(PRIVACY) { respondWith { privacyPage(content) } }
+  get(PRIVACY) { respondWith { privacyPage(content, queryParam(RETURN_PATH) ?: "") } }
 
   get(ABOUT) { respondWith { aboutPage(content) } }
 

@@ -24,7 +24,6 @@ import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.dsl.LanguageType.Companion.languageTypesInOrder
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.AuthRoutes.LOGOUT
-import com.github.readingbat.misc.CSSNames.bodyHeaderCls
 import com.github.readingbat.misc.CSSNames.max
 import com.github.readingbat.misc.CSSNames.pretab
 import com.github.readingbat.misc.CSSNames.selected
@@ -154,7 +153,8 @@ internal fun BODY.helpAndLogin(principal: UserIdPrincipal?, loginPath: String) {
 }
 
 internal fun BODY.bodyTitle() {
-  div(classes = bodyHeaderCls) {
+  div {
+    style = "margin-bottom: 0em;"
     a { href = "/"; span { style = "font-size:200%;"; +titleText } }
     rawHtml(nbsp.text)
     span { +"code reading practice" }
