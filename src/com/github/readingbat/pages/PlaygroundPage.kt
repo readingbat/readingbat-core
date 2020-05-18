@@ -27,7 +27,7 @@ import com.github.readingbat.misc.CSSNames.kotlinCode
 import com.github.readingbat.misc.CSSNames.tabs
 import com.github.readingbat.misc.Constants.challengeRoot
 import com.github.readingbat.misc.Constants.staticRoot
-import io.ktor.auth.UserIdPrincipal
+import com.github.readingbat.misc.UserPrincipal
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 import org.apache.commons.text.StringEscapeUtils.escapeHtml4
@@ -36,7 +36,7 @@ import org.apache.commons.text.StringEscapeUtils.escapeHtml4
 // https://jetbrains.github.io/kotlin-playground/
 // https://jetbrains.github.io/kotlin-playground/examples/
 
-fun playgroundPage(principal: UserIdPrincipal?,
+fun playgroundPage(principal: UserPrincipal?,
                    loginAttempt: Boolean,
                    content: ReadingBatContent,
                    challenge: Challenge) =

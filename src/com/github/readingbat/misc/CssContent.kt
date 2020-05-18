@@ -28,8 +28,6 @@ import com.github.readingbat.misc.CSSNames.funcItem
 import com.github.readingbat.misc.CSSNames.groupChoice
 import com.github.readingbat.misc.CSSNames.groupItemSrc
 import com.github.readingbat.misc.CSSNames.kotlinCode
-import com.github.readingbat.misc.CSSNames.max
-import com.github.readingbat.misc.CSSNames.pretab
 import com.github.readingbat.misc.CSSNames.refs
 import com.github.readingbat.misc.CSSNames.selected
 import com.github.readingbat.misc.CSSNames.spinner
@@ -47,8 +45,6 @@ internal object CSSNames {
   const val funcCol = "funcCol"
   const val arrow = "arrow"
   const val refs = "refs"
-  const val pretab = "pretab"
-  const val max = "max"
   const val codeBlock = "codeBlock"
   const val kotlinCode = "kotlin-code"
   const val tabs = "tabs"
@@ -129,12 +125,6 @@ internal val cssContent by lazy {
         fontSize = textFs
         marginLeft = 1.em
         marginBottom = 1.em
-      }
-      rule("div.$pretab") {
-        minHeight = 9.px
-      }
-      rule("p.$max") {
-        maxWidth = 800.px
       }
       rule(".$funcItem") {
         marginTop = 1.em

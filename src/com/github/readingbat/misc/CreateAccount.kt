@@ -95,7 +95,6 @@ internal suspend fun PipelineCall.createAccount(content: ReadingBatContent) {
       }
     }
   }
-
 }
 
 private val createAccountLimiter = RateLimiter.create(2.0) // rate 2.0 is "2 permits per second"

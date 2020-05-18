@@ -22,11 +22,15 @@ import com.github.readingbat.InvalidPathException
 import com.github.readingbat.RedisPool.redisAction
 import com.github.readingbat.misc.*
 import com.github.readingbat.misc.AuthName.FORM
+import com.github.readingbat.misc.AuthName.SESSION
 import com.google.common.util.concurrent.RateLimiter
 import io.ktor.application.Application
 import io.ktor.application.call
 import io.ktor.application.install
-import io.ktor.auth.*
+import io.ktor.auth.Authentication
+import io.ktor.auth.UserPasswordCredential
+import io.ktor.auth.form
+import io.ktor.auth.session
 import io.ktor.features.*
 import io.ktor.http.ContentType.Text.Plain
 import io.ktor.http.HttpStatusCode
@@ -131,13 +135,13 @@ private fun Sessions.Configuration.configureSessionIdCookie() {
 }
 
 private fun Sessions.Configuration.configureAuthCookie() {
-  cookie<UserIdPrincipal>(
+  cookie<UserPrincipal>(
     // We set a cookie by this name upon login.
     Cookies.AUTH_COOKIE
     //,
     // Stores session contents in memory...good for development only.
     //storage = SessionStorageMemory()
-                         ) {
+                       ) {
     cookie.path = "/"
 
     if (production)
@@ -182,7 +186,7 @@ private fun Authentication.Configuration.configureFormAuth() {
     }
 
     validate { cred: UserPasswordCredential ->
-      var principal: UserIdPrincipal? = null
+      var principal: UserPrincipal? = null
 
       redisAction { redis ->
         val userIdKey = userIdKey(cred.name)
@@ -193,7 +197,7 @@ private fun Authentication.Configuration.configureFormAuth() {
           val digest = redis.get(userId.passwordKey()) ?: ""
           if (salt.isNotEmpty() && digest.isNotEmpty() && digest == cred.password.sha256(salt)) {
             logger.info { "Found user ${cred.name} $id $salt $digest" }
-            principal = UserIdPrincipal(cred.name)
+            principal = UserPrincipal(cred.name)
           }
         }
       }
@@ -214,15 +218,15 @@ private fun Authentication.Configuration.configureFormAuth() {
  * This is related to the configureAuthCookie method by virtue of the common `PrincipalType` object.
  */
 private fun Authentication.Configuration.configureSessionAuth() {
-  session<UserIdPrincipal>(AuthName.SESSION) {
+  session<UserPrincipal>(SESSION) {
     challenge {
       // What to do if the user isn't authenticated
       // Uncomment this to send user to login page
       //call.respondRedirect("${CommonRoutes.LOGIN}?no")
     }
-    validate { session: UserIdPrincipal ->
+    validate { principal: UserPrincipal ->
       // If you need to do additional validation on session data, you can do so here.
-      session
+      principal
     }
   }
 }

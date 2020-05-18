@@ -23,8 +23,8 @@ import com.github.pambrose.common.util.toRootPath
 import com.github.readingbat.RedisPool.redisAction
 import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.ReadingBatContent
+import com.github.readingbat.misc.*
 import com.github.readingbat.misc.Answers.processAnswers
-import com.github.readingbat.misc.BrowserSession
 import com.github.readingbat.misc.CSSNames.arrow
 import com.github.readingbat.misc.CSSNames.challengeDesc
 import com.github.readingbat.misc.CSSNames.checkAnswers
@@ -39,10 +39,6 @@ import com.github.readingbat.misc.CSSNames.userResp
 import com.github.readingbat.misc.Constants.challengeRoot
 import com.github.readingbat.misc.Constants.playground
 import com.github.readingbat.misc.Constants.staticRoot
-import com.github.readingbat.misc.UserId
-import com.github.readingbat.misc.addScript
-import com.github.readingbat.misc.lookupUserId
-import io.ktor.auth.UserIdPrincipal
 import io.ktor.http.ContentType.Text.CSS
 import kotlinx.html.*
 import kotlinx.html.Entities.nbsp
@@ -53,7 +49,7 @@ private val logger = KotlinLogging.logger {}
 private val emptyAnswerMap = mutableMapOf<String, String>()
 private const val spinnerCss = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
 
-internal fun challengePage(principal: UserIdPrincipal?,
+internal fun challengePage(principal: UserPrincipal?,
                            loginAttempt: Boolean,
                            content: ReadingBatContent,
                            challenge: Challenge,

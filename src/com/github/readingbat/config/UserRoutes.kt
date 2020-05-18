@@ -32,6 +32,7 @@ import com.github.readingbat.misc.Endpoints.CREATE_ACCOUNT
 import com.github.readingbat.misc.Endpoints.PREFS
 import com.github.readingbat.misc.Endpoints.PRIVACY
 import com.github.readingbat.misc.Endpoints.RESET_PASSWORD
+import com.github.readingbat.misc.UserPrincipal
 import com.github.readingbat.misc.createAccount
 import com.github.readingbat.misc.cssContent
 import com.github.readingbat.pages.*
@@ -40,7 +41,6 @@ import com.github.readingbat.redirectTo
 import com.github.readingbat.respondWith
 import com.github.readingbat.retrievePrincipal
 import io.ktor.application.call
-import io.ktor.auth.UserIdPrincipal
 import io.ktor.http.ContentType.Text.CSS
 import io.ktor.http.content.resources
 import io.ktor.http.content.static
@@ -73,8 +73,8 @@ internal fun Routing.userRoutes(content: ReadingBatContent) {
   get(PREFS) { respondWith { prefsPage(content) } }
 
   get(LOGOUT) {
-    // Purge UserIdPrincipal from cookie data
-    call.sessions.clear<UserIdPrincipal>()
+    // Purge AuthPrincipal from cookie data
+    call.sessions.clear<UserPrincipal>()
     redirectTo { "/" }
   }
 

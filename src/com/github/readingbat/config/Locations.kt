@@ -26,6 +26,7 @@ import com.github.readingbat.misc.AuthName.FORM
 import com.github.readingbat.misc.BrowserSession
 import com.github.readingbat.misc.Constants.challengeRoot
 import com.github.readingbat.misc.Constants.playground
+import com.github.readingbat.misc.UserPrincipal
 import com.github.readingbat.pages.challengeGroupPage
 import com.github.readingbat.pages.challengePage
 import com.github.readingbat.pages.languageGroupPage
@@ -33,7 +34,6 @@ import com.github.readingbat.pages.playgroundPage
 import com.github.readingbat.respondWith
 import com.github.readingbat.retrievePrincipal
 import io.ktor.application.call
-import io.ktor.auth.UserIdPrincipal
 import io.ktor.auth.authenticate
 import io.ktor.locations.Location
 import io.ktor.locations.get
@@ -56,7 +56,7 @@ internal fun Routing.locations(content: ReadingBatContent) {
   }
 }
 
-suspend fun PipelineCall.language(principal: UserIdPrincipal?,
+suspend fun PipelineCall.language(principal: UserPrincipal?,
                                   loginAttempt: Boolean,
                                   content: ReadingBatContent,
                                   lang: Language) =
@@ -70,7 +70,7 @@ suspend fun PipelineCall.language(principal: UserIdPrincipal?,
                       languageGroup.challengeGroups)
   }
 
-suspend fun PipelineCall.group(principal: UserIdPrincipal?,
+suspend fun PipelineCall.group(principal: UserPrincipal?,
                                loginAttempt: Boolean,
                                content: ReadingBatContent,
                                group: Language.Group) =
@@ -80,7 +80,7 @@ suspend fun PipelineCall.group(principal: UserIdPrincipal?,
     challengeGroupPage(principal, loginAttempt, content, challengeGroup)
   }
 
-suspend fun PipelineCall.challenge(principal: UserIdPrincipal?,
+suspend fun PipelineCall.challenge(principal: UserPrincipal?,
                                    loginAttempt: Boolean,
                                    content: ReadingBatContent,
                                    gc: Language.Group.Challenge) =
@@ -92,7 +92,7 @@ suspend fun PipelineCall.challenge(principal: UserIdPrincipal?,
     challengePage(principal, loginAttempt, content, challenge, clientSession)
   }
 
-suspend fun PipelineCall.playground(principal: UserIdPrincipal?,
+suspend fun PipelineCall.playground(principal: UserPrincipal?,
                                     loginAttempt: Boolean,
                                     content: ReadingBatContent,
                                     request: PlaygroundRequest) =

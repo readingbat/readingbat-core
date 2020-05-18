@@ -28,12 +28,12 @@ import com.github.readingbat.misc.CSSNames.funcItem
 import com.github.readingbat.misc.CSSNames.tabs
 import com.github.readingbat.misc.Constants.challengeRoot
 import com.github.readingbat.misc.Constants.staticRoot
-import io.ktor.auth.UserIdPrincipal
+import com.github.readingbat.misc.UserPrincipal
 import kotlinx.html.*
 import kotlinx.html.Entities.nbsp
 import kotlinx.html.stream.createHTML
 
-internal fun challengeGroupPage(principal: UserIdPrincipal?,
+internal fun challengeGroupPage(principal: UserPrincipal?,
                                 loginAttempt: Boolean,
                                 content: ReadingBatContent,
                                 challengeGroup: ChallengeGroup<*>) =

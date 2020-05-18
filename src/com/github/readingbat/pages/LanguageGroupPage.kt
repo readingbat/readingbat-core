@@ -26,11 +26,11 @@ import com.github.readingbat.misc.CSSNames.groupChoice
 import com.github.readingbat.misc.CSSNames.groupItemSrc
 import com.github.readingbat.misc.CSSNames.tabs
 import com.github.readingbat.misc.Constants.challengeRoot
-import io.ktor.auth.UserIdPrincipal
+import com.github.readingbat.misc.UserPrincipal
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 
-internal fun languageGroupPage(principal: UserIdPrincipal?,
+internal fun languageGroupPage(principal: UserPrincipal?,
                                loginAttempt: Boolean,
                                content: ReadingBatContent,
                                languageType: LanguageType,

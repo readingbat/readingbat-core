@@ -18,6 +18,7 @@
 package com.github.readingbat.misc
 
 import com.github.pambrose.common.util.randomId
+import io.ktor.auth.Principal
 import java.time.Instant
 
 internal fun userIdKey(username: String) = "${KeyPrefixes.USER_ID}|$username"
@@ -35,6 +36,8 @@ internal class UserId(val id: String = randomId(25)) {
     listOf(KeyPrefixes.ANSWER_HISTORY,
            KeyPrefixes.AUTH, id, languageName, groupName, challengeName, argument).joinToString("|")
 }
+
+data class UserPrincipal(val userId: String, val created: Long = Instant.now().toEpochMilli()) : Principal
 
 internal data class BrowserSession(val id: String, val created: Long = Instant.now().toEpochMilli()) {
   fun challengeKey(languageName: String, groupName: String, challengeName: String) =

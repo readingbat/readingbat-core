@@ -24,8 +24,6 @@ import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.dsl.LanguageType.Companion.languageTypesInOrder
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.AuthRoutes.LOGOUT
-import com.github.readingbat.misc.CSSNames.max
-import com.github.readingbat.misc.CSSNames.pretab
 import com.github.readingbat.misc.CSSNames.selected
 import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.Constants.challengeRoot
@@ -39,7 +37,7 @@ import com.github.readingbat.misc.Endpoints.PREFS
 import com.github.readingbat.misc.Endpoints.RESET_PASSWORD
 import com.github.readingbat.misc.FormFields.PASSWORD
 import com.github.readingbat.misc.FormFields.USERNAME
-import io.ktor.auth.UserIdPrincipal
+import com.github.readingbat.misc.UserPrincipal
 import io.ktor.http.ContentType.Text.CSS
 import kotlinx.html.*
 import kotlinx.html.Entities.nbsp
@@ -69,13 +67,13 @@ internal fun HEAD.headDefault(content: ReadingBatContent) {
   }
 }
 
-internal fun BODY.helpAndLogin(principal: UserIdPrincipal?, loginPath: String) {
+internal fun BODY.helpAndLogin(principal: UserPrincipal?, loginPath: String) {
   div {
     style = "float:right; margin:0px; border: 1px solid lightgray; margin-left: 10px; padding: 5px;"
     table {
       if (principal != null) {
         tr {
-          val elems = principal.name.split("@")
+          val elems = principal.userId.split("@")
           td {
             +elems[0]
             if (elems.size > 1) {
@@ -162,7 +160,7 @@ internal fun BODY.bodyTitle() {
   }
 }
 
-internal fun BODY.bodyHeader(principal: UserIdPrincipal?,
+internal fun BODY.bodyHeader(principal: UserPrincipal?,
                              loginAttempt: Boolean,
                              content: ReadingBatContent,
                              languageType: LanguageType,
@@ -176,8 +174,12 @@ internal fun BODY.bodyHeader(principal: UserIdPrincipal?,
   if (loginAttempt && principal == null)
     p { span(classes = "no") { +"Failed to login -- bad username or password." } }
 
-  div(classes = pretab) {
-    p(classes = max) { +message }
+  div {
+    style = "min-height:9;"
+    p {
+      style = "max-width:800;"
+      +message
+    }
   }
 
   div {

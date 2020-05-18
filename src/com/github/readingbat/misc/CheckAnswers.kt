@@ -33,7 +33,6 @@ import com.github.readingbat.misc.Answers.groupSrc
 import com.github.readingbat.misc.Answers.langSrc
 import com.github.readingbat.misc.CSSNames.userResp
 import io.ktor.application.call
-import io.ktor.auth.UserIdPrincipal
 import io.ktor.request.receiveParameters
 import io.ktor.response.respondText
 import kotlinx.coroutines.delay
@@ -72,7 +71,7 @@ private data class ChallengeHistory(var argument: String,
 object CheckAnswers : KLogging() {
 
   internal suspend fun PipelineCall.checkUserAnswers(content: ReadingBatContent,
-                                                     principal: UserIdPrincipal?,
+                                                     principal: UserPrincipal?,
                                                      browserSession: BrowserSession?) {
     val params = call.receiveParameters()
     val compareMap = params.entries().map { it.key to it.value[0] }.toMap()
@@ -206,9 +205,9 @@ object CheckAnswers : KLogging() {
     }
 }
 
-internal fun lookupUserId(redis: Jedis, principal: UserIdPrincipal?): UserId? {
+internal fun lookupUserId(redis: Jedis, principal: UserPrincipal?): UserId? {
   if (principal != null) {
-    val userIdKey = userIdKey(principal.name)
+    val userIdKey = userIdKey(principal.userId)
     val id = redis.get(userIdKey) ?: ""
     if (id.isNotEmpty())
       return UserId(id)

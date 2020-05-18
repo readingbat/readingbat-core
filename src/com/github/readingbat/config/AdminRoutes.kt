@@ -23,9 +23,9 @@ import com.github.readingbat.PipelineCall
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.AuthRoutes.COOKIES
 import com.github.readingbat.misc.BrowserSession
+import com.github.readingbat.misc.UserPrincipal
 import com.github.readingbat.redirectTo
 import io.ktor.application.call
-import io.ktor.auth.UserIdPrincipal
 import io.ktor.html.respondHtml
 import io.ktor.http.ContentType
 import io.ktor.response.respondText
@@ -63,17 +63,19 @@ internal fun Routing.adminRoutes(content: ReadingBatContent) {
   }
 
   get(COOKIES) {
-    val principal = call.sessions.get<UserIdPrincipal>()
+    val principal = call.sessions.get<UserPrincipal>()
     val session = call.sessions.get<BrowserSession>()
-    logger.info { "UserIdPrincipal: $principal BrowserSession: $session" }
+    logger.info { "AuthPrincipal: $principal BrowserSession: $session" }
 
     call.respondHtml {
       body {
         if (principal == null && session == null)
           div { +"No cookies are present." }
         else {
-          if (principal != null)
-            div { +"UserIdPrincipal: ${principal.name}" }
+          if (principal != null) {
+            val date = LocalDateTime.ofInstant(Instant.ofEpochMilli(principal.created), ZoneId.systemDefault())
+            div { +"AuthPrincipal: ${principal.userId} created on: $date" }
+          }
 
           if (session != null) {
             val date = LocalDateTime.ofInstant(Instant.ofEpochMilli(session.created), ZoneId.systemDefault())

@@ -20,11 +20,11 @@ package com.github.readingbat
 import com.github.pambrose.common.util.FileSource
 import com.github.readingbat.config.*
 import com.github.readingbat.dsl.readDsl
+import com.github.readingbat.misc.UserPrincipal
 import com.google.gson.Gson
 import io.ktor.application.Application
 import io.ktor.application.ApplicationCall
 import io.ktor.application.call
-import io.ktor.auth.UserIdPrincipal
 import io.ktor.auth.principal
 import io.ktor.config.ApplicationConfigurationException
 import io.ktor.http.ContentType
@@ -102,10 +102,10 @@ private fun Application.property(name: String, default: String = "", warn: Boole
 typealias PipelineCall = PipelineContext<Unit, ApplicationCall>
 
 internal fun PipelineCall.retrievePrincipal() =
-  call.sessions.get<UserIdPrincipal>()
+  call.sessions.get<UserPrincipal>()
 
 internal fun PipelineCall.assignPrincipal() =
-  call.principal<UserIdPrincipal>().apply { if (this != null) call.sessions.set(this) }  // Set the cookie
+  call.principal<UserPrincipal>().apply { if (this != null) call.sessions.set(this) }  // Set the cookie
 
 internal fun PipelineCall.queryParam(key: String): String? = call.request.queryParameters[key]
 
