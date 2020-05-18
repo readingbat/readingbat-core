@@ -18,14 +18,12 @@
 package com.github.readingbat
 
 import com.github.pambrose.common.util.FileSource
-import com.github.readingbat.config.installs
-import com.github.readingbat.config.intercepts
-import com.github.readingbat.config.locations
-import com.github.readingbat.config.routes
+import com.github.readingbat.config.*
 import com.github.readingbat.dsl.readDsl
 import com.google.gson.Gson
 import io.ktor.application.Application
 import io.ktor.config.ApplicationConfigurationException
+import io.ktor.routing.routing
 import io.ktor.server.cio.CIO
 import io.ktor.server.engine.commandLineEnvironment
 import io.ktor.server.engine.embeddedServer
@@ -73,8 +71,12 @@ internal fun Application.module() {
 
   installs()
   intercepts()
-  locations(readingBatContent)
-  routes(readingBatContent)
+
+  routing {
+    locations(readingBatContent)
+    userRoutes(readingBatContent)
+    adminRoutes(readingBatContent)
+  }
 }
 
 private fun Application.property(name: String, default: String = "", warn: Boolean = false) =

@@ -115,10 +115,8 @@ object CheckAnswers : KLogging() {
         val userId: UserId? = lookupUserId(redis, principal)
 
         val challengeKey =
-          if (userId != null)
-            userId.challengeKey(languageName, groupName, challengeName)
-          else
-            clientSession.challengeKey(languageName, groupName, challengeName)
+          userId?.challengeKey(languageName, groupName, challengeName)
+            ?: clientSession.challengeKey(languageName, groupName, challengeName)
         logger.debug { "Storing: $challengeKey" }
         answerMap.forEach { (args, userResp) -> redis.hset(challengeKey, args, userResp) }
 
@@ -127,10 +125,8 @@ object CheckAnswers : KLogging() {
           .filter { it.answered }
           .forEach { result ->
             val argumentKey =
-              if (userId != null)
-                userId.argumentKey(languageName, groupName, challengeName, result.arguments)
-              else
-                clientSession.argumentKey(languageName, groupName, challengeName, result.arguments)
+              userId?.argumentKey(languageName, groupName, challengeName, result.arguments)
+                ?: clientSession.argumentKey(languageName, groupName, challengeName, result.arguments)
 
             val history = gson.fromJson(redis[argumentKey],
                                         ChallengeHistory::class.java) ?: ChallengeHistory(result.arguments)
