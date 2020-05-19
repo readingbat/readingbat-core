@@ -23,6 +23,7 @@ import com.github.readingbat.RedisPool.redisAction
 import com.github.readingbat.misc.*
 import com.github.readingbat.misc.AuthName.FORM
 import com.github.readingbat.misc.AuthName.SESSION
+import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
 import com.github.readingbat.misc.Constants.STATIC_ROOT
 import com.github.readingbat.misc.Endpoints.CSS_NAME
 import com.github.readingbat.misc.Endpoints.FAV_ICON
@@ -144,7 +145,7 @@ private fun Sessions.Configuration.configureSessionIdCookie() {
   cookie<BrowserSession>("readingbat_session_id") {
     //storage = RedisSessionStorage(redis = pool.resource)) {
     //storage = directorySessionStorage(File("server-sessions"), cached = true)) {
-    cookie.path = "/"
+    cookie.path = CHALLENGE_ROOT + "/"
   }
 }
 
@@ -156,7 +157,8 @@ private fun Sessions.Configuration.configureAuthCookie() {
     // Stores session contents in memory...good for development only.
     //storage = SessionStorageMemory()
                        ) {
-    cookie.path = "/"
+    cookie.path = CHALLENGE_ROOT + "/"
+    cookie.httpOnly = true
 
     //if (production)
     //  cookie.secure = true
