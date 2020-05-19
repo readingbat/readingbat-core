@@ -46,7 +46,6 @@ import kotlinx.html.stream.createHTML
 import mu.KotlinLogging
 
 private val logger = KotlinLogging.logger {}
-private val emptyAnswerMap = mutableMapOf<String, String>()
 private const val spinnerCss = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
 
 internal fun challengePage(principal: UserPrincipal?,
@@ -98,7 +97,7 @@ internal fun challengePage(principal: UserPrincipal?,
             table {
               tr { th { +"Function Call" }; th { +"" }; th { +"Return Value" }; th { +"" } }
 
-              var previousAnswers = emptyAnswerMap
+              var previousAnswers = mutableMapOf<String, String>()
 
               redisAction { redis ->
                 val userId: UserId? = lookupUserId(redis, principal)
