@@ -107,7 +107,7 @@ class HerokuHttpsRedirect(config: Configuration) {
         if (call.request.origin.scheme == "http" &&
           feature.excludePredicates.none { predicate -> predicate(call) }
         ) {
-          val redirectUrl = call.url { protocol = URLProtocol.HTTPS; host = feature.host }
+          val redirectUrl = call.url { protocol = URLProtocol.HTTPS; port = feature.redirectPort; host = feature.host }
           call.respondRedirect(redirectUrl, feature.permanent)
           finish()
         }
