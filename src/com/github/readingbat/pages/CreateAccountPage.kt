@@ -60,10 +60,10 @@ internal fun createAccountPage(content: ReadingBatContent,
           p {
             style = "max-width:800px"
             +"""
-          Please enter information to create a new account. We use your email address as your account id 
-          (just so it's memorable) and for password reset, not for spamming. The password 
-          must have at least 6 characters.
-          """.trimIndent()
+              Please enter information to create a new account. We use your email address as your account id 
+              (just so it's memorable) and for password reset, not for spamming. The password 
+              must have at least 6 characters.
+            """.trimIndent()
           }
 
           p {}

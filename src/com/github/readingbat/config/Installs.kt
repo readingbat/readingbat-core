@@ -50,6 +50,7 @@ import org.slf4j.event.Level
 import kotlin.text.Charsets.UTF_8
 
 private val logger = KotlinLogging.logger {}
+private val hostname: String by lazy { System.getenv("HOST_NAME") ?: "www.readingbat.com" }
 internal val production: Boolean by lazy { System.getenv("PRODUCTION")?.toBoolean() ?: false }
 
 internal fun Application.installs() {
@@ -69,7 +70,7 @@ internal fun Application.installs() {
 
   if (production)
     install(HerokuHttpsRedirect) {
-      host = "www.readingbat.com"
+      host = hostname
       // host = "testingbat.herokuapp.com"
       permanentRedirect = false
 
@@ -157,8 +158,8 @@ private fun Sessions.Configuration.configureAuthCookie() {
                        ) {
     cookie.path = "/"
 
-    if (production)
-      cookie.secure = true
+    //if (production)
+    //  cookie.secure = true
 
     cookie.maxAgeInSeconds = 7L * 24 * 3600 // 7 days
 
