@@ -43,6 +43,7 @@ import com.github.readingbat.redirectTo
 import com.github.readingbat.respondWith
 import com.github.readingbat.retrievePrincipal
 import io.ktor.application.call
+import io.ktor.features.origin
 import io.ktor.http.ContentType.Text.CSS
 import io.ktor.http.content.resources
 import io.ktor.http.content.static
@@ -52,13 +53,22 @@ import io.ktor.routing.post
 import io.ktor.sessions.clear
 import io.ktor.sessions.get
 import io.ktor.sessions.sessions
+import mu.KotlinLogging
 
+
+private val logger = KotlinLogging.logger {}
 
 internal fun Routing.userRoutes(content: ReadingBatContent) {
 
-  get(ROOT) { redirectTo { defaultTab(content) } }
+  get(ROOT) {
+    logger.info { "Redirecting from root: ${call.request.origin.scheme}" }
+    redirectTo { defaultTab(content) }
+  }
 
-  get(CHALLENGE_ROOT) { redirectTo { defaultTab(content) } }
+  get(CHALLENGE_ROOT) {
+    logger.info { "Redirecting from challenge root: ${call.request.origin.scheme}" }
+    redirectTo { defaultTab(content) }
+  }
 
   post(CHECK_ANSWERS_ROOT) { checkUserAnswers(content, retrievePrincipal(), call.sessions.get<BrowserSession>()) }
 

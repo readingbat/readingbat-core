@@ -69,10 +69,11 @@ internal fun Application.installs() {
 
   if (production)
     install(HerokuHttpsRedirect) {
-      host = "www.readingbat.com"
+      // host = "www.readingbat.com"
+      host = "testingbat.herokuapp.com"
       permanentRedirect = false
 
-      excludePrefix(STATIC_ROOT)
+      excludePrefix(STATIC_ROOT + "/")
       excludeSuffix(CSS_NAME)
       excludeSuffix(FAV_ICON)
     }
