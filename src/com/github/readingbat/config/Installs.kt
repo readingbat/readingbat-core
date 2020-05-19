@@ -23,9 +23,6 @@ import com.github.readingbat.RedisPool.redisAction
 import com.github.readingbat.misc.*
 import com.github.readingbat.misc.AuthName.FORM
 import com.github.readingbat.misc.AuthName.SESSION
-import com.github.readingbat.misc.Constants.STATIC_ROOT
-import com.github.readingbat.misc.Endpoints.CSS_NAME
-import com.github.readingbat.misc.Endpoints.FAV_ICON
 import com.google.common.util.concurrent.RateLimiter
 import io.ktor.application.Application
 import io.ktor.application.call
@@ -66,7 +63,7 @@ internal fun Application.installs() {
     configureFormAuth()
   }
 
-  /**/
+  /*
   if (production)
     install(HerokuHttpsRedirect) {
       host = "www.readingbat.com"
@@ -76,7 +73,7 @@ internal fun Application.installs() {
       excludeSuffix(CSS_NAME)
       excludeSuffix(FAV_ICON)
     }
-/**/
+*/
 
   install(Compression) {
     gzip {
