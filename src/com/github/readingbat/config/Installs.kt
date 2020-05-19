@@ -157,8 +157,8 @@ private fun Sessions.Configuration.configureAuthCookie() {
                        ) {
     cookie.path = "/"
 
-    //if (production)
-    //  cookie.secure = true
+    if (production)
+      cookie.secure = true
 
     cookie.maxAgeInSeconds = 7L * 24 * 3600 // 7 days
 
