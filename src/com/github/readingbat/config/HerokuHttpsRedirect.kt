@@ -10,6 +10,7 @@ import io.ktor.application.ApplicationFeature
 import io.ktor.application.call
 import io.ktor.features.origin
 import io.ktor.http.URLProtocol
+import io.ktor.response.respondRedirect
 import io.ktor.util.AttributeKey
 import io.ktor.util.KtorExperimentalAPI
 import io.ktor.util.url
