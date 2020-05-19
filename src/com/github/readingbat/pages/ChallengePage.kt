@@ -155,14 +155,12 @@ internal fun challengePage(principal: UserPrincipal?,
                 +" or as a "
                 this@body.addLink("Kotlin Playground", listOf(playground, groupName, challengeName).toRootPath(), false)
               }
-              +"."
             }
 
             if (challenge.codingBatEquiv.isNotEmpty() && (languageType.isJava() || languageType.isPython())) {
               p(classes = refs) {
                 +"Work on a similar problem on "
                 this@body.addLink("CodingBat.com", "https://codingbat.com/prob/${challenge.codingBatEquiv}", true)
-                +"."
               }
             }
           }
