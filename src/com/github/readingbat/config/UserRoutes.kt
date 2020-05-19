@@ -75,7 +75,7 @@ internal fun Routing.userRoutes(content: ReadingBatContent) {
   get(LOGOUT) {
     // Purge UserPrincipal from cookie data
     call.sessions.clear<UserPrincipal>()
-    redirectTo { "/" }
+    redirectTo { queryParam(RETURN_PATH) ?: "/" }
   }
 
   get("/$cssName") { respondWith(CSS) { cssContent } }

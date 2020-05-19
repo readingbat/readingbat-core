@@ -71,6 +71,7 @@ internal fun BODY.helpAndLogin(principal: UserPrincipal?, loginPath: String) {
   div {
     style = "float:right; margin:0px; border: 1px solid lightgray; margin-left: 10px; padding: 5px;"
     table {
+      val path = "/$challengeRoot/$loginPath"
       if (principal != null) {
         tr {
           val elems = principal.userId.split("@")
@@ -91,12 +92,11 @@ internal fun BODY.helpAndLogin(principal: UserPrincipal?, loginPath: String) {
           }
           }
            */
-            +"["; a { href = LOGOUT; +"log out" }; +"]"
+            +"["; a { href = "$LOGOUT?$RETURN_PATH=$path"; +"log out" }; +"]"
           }
         }
       }
       else {
-        val path = "/$challengeRoot/$loginPath"
         form(method = FormMethod.post) {
           action = path
           this@table.tr {
