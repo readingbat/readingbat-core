@@ -25,3 +25,6 @@ tests:
 
 versioncheck:
 	./gradlew dependencyUpdates
+
+depends:
+	./gradlew dependencies
