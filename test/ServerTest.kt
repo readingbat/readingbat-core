@@ -20,7 +20,6 @@ package com.github.readingbat
 import com.github.pambrose.common.util.GitHubRepo
 import com.github.readingbat.dsl.LanguageType.*
 import com.github.readingbat.dsl.readingBatContent
-import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode.Companion.Found
 import io.ktor.http.HttpStatusCode.Companion.OK
@@ -66,15 +65,15 @@ class ServerTest {
         assertEquals(Found, response.status())
       }
 
-      handleRequest(HttpMethod.Get, "$CHALLENGE_ROOT/${Java.lowerName}").apply {
+      handleRequest(HttpMethod.Get, Java.contentRoot).apply {
         assertEquals(OK, response.status())
       }
 
-      handleRequest(HttpMethod.Get, "$CHALLENGE_ROOT/${Python.lowerName}").apply {
+      handleRequest(HttpMethod.Get, Python.contentRoot).apply {
         assertEquals(OK, response.status())
       }
 
-      handleRequest(HttpMethod.Get, "$CHALLENGE_ROOT/${Kotlin.lowerName}").apply {
+      handleRequest(HttpMethod.Get, Kotlin.contentRoot).apply {
         assertEquals(OK, response.status())
       }
     }

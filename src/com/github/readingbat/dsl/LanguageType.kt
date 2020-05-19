@@ -18,6 +18,7 @@
 package com.github.readingbat.dsl
 
 import com.github.readingbat.InvalidPathException
+import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
 
 enum class LanguageType(val useDoubleQuotes: Boolean, val suffix: String, val srcPrefix: String) {
   Java(true, "java", "src/main/java"),
@@ -25,6 +26,7 @@ enum class LanguageType(val useDoubleQuotes: Boolean, val suffix: String, val sr
   Kotlin(true, "kt", "src/main/kotlin");
 
   internal val lowerName = name.toLowerCase()
+  internal val contentRoot = "$CHALLENGE_ROOT/$lowerName"
 
   fun isJava() = this == Java
   fun isPython() = this == Python

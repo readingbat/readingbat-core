@@ -24,6 +24,7 @@ import com.github.readingbat.misc.CheckAnswers.checkUserAnswers
 import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
 import com.github.readingbat.misc.Constants.ICONS
 import com.github.readingbat.misc.Constants.RETURN_PATH
+import com.github.readingbat.misc.Constants.ROOT
 import com.github.readingbat.misc.Constants.STATIC_ROOT
 import com.github.readingbat.misc.Endpoints.ABOUT
 import com.github.readingbat.misc.Endpoints.CHECK_ANSWERS_ROOT
@@ -55,7 +56,7 @@ import io.ktor.sessions.sessions
 
 internal fun Routing.userRoutes(content: ReadingBatContent) {
 
-  get("/") { redirectTo { defaultTab(content) } }
+  get(ROOT) { redirectTo { defaultTab(content) } }
 
   get(CHALLENGE_ROOT) { redirectTo { defaultTab(content) } }
 

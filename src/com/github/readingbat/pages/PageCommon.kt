@@ -203,9 +203,8 @@ internal fun defaultTab(content: ReadingBatContent) =
   languageTypesInOrder
     .asSequence()
     .filter { content.hasGroups(it) }
-    .map { "$CHALLENGE_ROOT/${it.lowerName}" }
-    .firstOrNull()
-    ?: throw InvalidConfigurationException("Missing default language")
+    .map { it.contentRoot }
+    .firstOrNull() ?: throw InvalidConfigurationException("Missing default language")
 
 internal fun BODY.addLink(text: String, url: String, newWindow: Boolean = false) =
   a { href = url; if (newWindow) target = "_blank"; +text }

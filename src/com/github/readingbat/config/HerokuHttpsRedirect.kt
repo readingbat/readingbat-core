@@ -14,6 +14,9 @@ import io.ktor.response.respondRedirect
 import io.ktor.util.AttributeKey
 import io.ktor.util.KtorExperimentalAPI
 import io.ktor.util.url
+import mu.KotlinLogging
+
+private val logger = KotlinLogging.logger {}
 
 /**
  * Redirect non-secure requests to HTTPS
@@ -107,9 +110,13 @@ class HerokuHttpsRedirect(config: Configuration) {
         if (call.request.origin.scheme == "http" &&
           feature.excludePredicates.none { predicate -> predicate(call) }
         ) {
-          val redirectUrl = call.url { protocol = URLProtocol.HTTPS; port = feature.redirectPort; host = feature.host }
+          val redirectUrl = call.url { protocol = URLProtocol.HTTPS; host = feature.host; port = feature.redirectPort }
+          logger.info { "Redirecting to: $redirectUrl" }
           call.respondRedirect(redirectUrl, feature.permanent)
           finish()
+        }
+        else {
+          logger.info { "Not redirecting: ${call.request.origin.scheme} ${call.request.origin.uri}" }
         }
       }
       return feature
