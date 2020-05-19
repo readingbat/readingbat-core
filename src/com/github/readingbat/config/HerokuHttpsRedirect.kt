@@ -10,7 +10,6 @@ import io.ktor.application.ApplicationFeature
 import io.ktor.application.call
 import io.ktor.features.origin
 import io.ktor.http.URLProtocol
-import io.ktor.response.respondRedirect
 import io.ktor.util.AttributeKey
 import io.ktor.util.KtorExperimentalAPI
 import io.ktor.util.url
@@ -112,8 +111,8 @@ class HerokuHttpsRedirect(config: Configuration) {
         ) {
           val redirectUrl = call.url { protocol = URLProtocol.HTTPS; host = feature.host; port = feature.redirectPort }
           logger.info { "Redirecting to: $redirectUrl" }
-          call.respondRedirect(redirectUrl, feature.permanent)
-          finish()
+          //call.respondRedirect(redirectUrl, feature.permanent)
+          //finish()
         }
         else {
           logger.info { "Not redirecting: ${call.request.origin.scheme} ${call.request.origin.uri}" }
