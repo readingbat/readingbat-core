@@ -86,7 +86,13 @@ internal fun Routing.adminRoutes(content: ReadingBatContent) {
     }
   }
 
-  get("/clear-browser-session") {
+  get("/clear-cookies") {
+    val principal = call.sessions.get<UserPrincipal>()
+    if (principal != null) {
+      logger.info { "Clearing $principal" }
+      call.sessions.clear<UserPrincipal>()
+    }
+
     val session = call.sessions.get<BrowserSession>()
     if (session != null) {
       logger.info { "Clearing $session" }
