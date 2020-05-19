@@ -19,15 +19,14 @@ package com.github.readingbat.pages
 
 import com.github.pambrose.common.util.decode
 import com.github.pambrose.common.util.join
-import com.github.pambrose.common.util.toRootPath
 import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.ChallengeGroup
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.CSSNames.funcChoice
 import com.github.readingbat.misc.CSSNames.funcItem
 import com.github.readingbat.misc.CSSNames.tabs
-import com.github.readingbat.misc.Constants.challengeRoot
-import com.github.readingbat.misc.Constants.staticRoot
+import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
+import com.github.readingbat.misc.Constants.STATIC_ROOT
 import com.github.readingbat.misc.UserPrincipal
 import kotlinx.html.*
 import kotlinx.html.Entities.nbsp
@@ -73,16 +72,16 @@ internal fun challengeGroupPage(principal: UserPrincipal?,
           }
         }
 
-        backLink(challengeRoot, languageName)
+        backLink(CHALLENGE_ROOT, languageName)
       }
     }
 
 private fun TR.funcCall(prefix: String, groupName: String, challenge: Challenge) {
   td(classes = funcItem) {
-    img { src = "/$staticRoot/check.jpg" }
+    img { src = "$STATIC_ROOT/check.jpg" }
     rawHtml(nbsp.text)
     a(classes = funcChoice) {
-      href = listOf(challengeRoot, prefix, groupName, challenge.challengeName).toRootPath()
+      href = listOf(CHALLENGE_ROOT, prefix, groupName, challenge.challengeName).join()
       +challenge.challengeName
     }
   }

@@ -23,6 +23,9 @@ import com.github.readingbat.RedisPool.redisAction
 import com.github.readingbat.misc.*
 import com.github.readingbat.misc.AuthName.FORM
 import com.github.readingbat.misc.AuthName.SESSION
+import com.github.readingbat.misc.Constants.STATIC_ROOT
+import com.github.readingbat.misc.Endpoints.CSS_NAME
+import com.github.readingbat.misc.Endpoints.FAV_ICON
 import com.google.common.util.concurrent.RateLimiter
 import io.ktor.application.Application
 import io.ktor.application.call
@@ -63,13 +66,16 @@ internal fun Application.installs() {
     configureFormAuth()
   }
 
-
-  /*
   if (production)
-    install(HttpsRedirect) {
+    install(HerokuHttpsRedirect) {
+      host = "www.readingbat.com"
       permanentRedirect = false
+
+      excludePrefix(STATIC_ROOT)
+      excludeSuffix(CSS_NAME)
+      excludeSuffix(FAV_ICON)
     }
-  */
+
 
   install(Compression) {
     gzip {
@@ -149,8 +155,8 @@ private fun Sessions.Configuration.configureAuthCookie() {
                        ) {
     cookie.path = "/"
 
-    //if (production)
-    //  cookie.secure = true
+    if (production)
+      cookie.secure = true
 
     cookie.maxAgeInSeconds = 7L * 24 * 3600 // 7 days
 
@@ -177,8 +183,10 @@ private fun Authentication.Configuration.configureFormAuth() {
     challenge {
       // I don't think form auth supports multiple errors, but we're conservatively assuming there will be at
       // most one error, which we handle here. Worst case, we just send the user to login with no context.
+
       // val errors: List<AuthenticationFailedCause> = call.authentication.allFailures
       // logger.info { "Inside challenge: $errors" }
+
       // In apps that require a valid login, you would redirect the user to a login page from here
       // However, we allow non-logged in users, so we do nothing here.
       /*

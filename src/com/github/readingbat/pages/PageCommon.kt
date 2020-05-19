@@ -17,6 +17,7 @@
 
 package com.github.readingbat.pages
 
+import com.github.pambrose.common.util.join
 import com.github.pambrose.common.util.toRootPath
 import com.github.readingbat.InvalidConfigurationException
 import com.github.readingbat.config.production
@@ -25,14 +26,14 @@ import com.github.readingbat.dsl.LanguageType.Companion.languageTypesInOrder
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.AuthRoutes.LOGOUT
 import com.github.readingbat.misc.CSSNames.selected
+import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
+import com.github.readingbat.misc.Constants.ICONS
 import com.github.readingbat.misc.Constants.RETURN_PATH
-import com.github.readingbat.misc.Constants.challengeRoot
-import com.github.readingbat.misc.Constants.cssName
-import com.github.readingbat.misc.Constants.icons
-import com.github.readingbat.misc.Constants.staticRoot
+import com.github.readingbat.misc.Constants.STATIC_ROOT
 import com.github.readingbat.misc.Constants.titleText
 import com.github.readingbat.misc.Endpoints.ABOUT
 import com.github.readingbat.misc.Endpoints.CREATE_ACCOUNT
+import com.github.readingbat.misc.Endpoints.CSS_NAME
 import com.github.readingbat.misc.Endpoints.PREFS
 import com.github.readingbat.misc.Endpoints.RESET_PASSWORD
 import com.github.readingbat.misc.FormFields.PASSWORD
@@ -43,14 +44,14 @@ import kotlinx.html.*
 import kotlinx.html.Entities.nbsp
 
 internal fun HEAD.headDefault(content: ReadingBatContent) {
-  link { rel = "stylesheet"; href = "/$cssName"; type = CSS.toString() }
+  link { rel = "stylesheet"; href = CSS_NAME; type = CSS.toString() }
 
   // From: https://favicon.io/emoji-favicons/glasses/
-  val root = "$staticRoot/$icons"
-  link { rel = "apple-touch-icon"; sizes = "180x180"; href = "/$root/apple-touch-icon.png" }
-  link { rel = "icon"; type = "image/png"; sizes = "32x32"; href = "/$root/favicon-32x32.png" }
-  link { rel = "icon"; type = "image/png"; sizes = "16x16"; href = "/$root/favicon-16x16.png" }
-  link { rel = "manifest"; href = "/$root/site.webmanifest" }
+  val root = "$STATIC_ROOT/$ICONS"
+  link { rel = "apple-touch-icon"; sizes = "180x180"; href = "$root/apple-touch-icon.png" }
+  link { rel = "icon"; type = "image/png"; sizes = "32x32"; href = "$root/favicon-32x32.png" }
+  link { rel = "icon"; type = "image/png"; sizes = "16x16"; href = "$root/favicon-16x16.png" }
+  link { rel = "manifest"; href = "$root/site.webmanifest" }
 
   title(titleText)
 
@@ -71,7 +72,7 @@ internal fun BODY.helpAndLogin(principal: UserPrincipal?, loginPath: String) {
   div {
     style = "float:right; margin:0px; border: 1px solid lightgray; margin-left: 10px; padding: 5px;"
     table {
-      val path = "/$challengeRoot/$loginPath"
+      val path = "$CHALLENGE_ROOT/$loginPath"
       if (principal != null) {
         tr {
           val elems = principal.userId.split("@")
@@ -88,7 +89,7 @@ internal fun BODY.helpAndLogin(principal: UserPrincipal?, loginPath: String) {
             /*
           a {
             href = "/doc/practice/code-badges.html"; img {
-            width = "30"; style = "vertical-align: middle"; src = "/$staticRoot/s5j.png"
+            width = "30"; style = "vertical-align: middle"; src = "$STATIC_ROOT/s5j.png"
           }
           }
            */
@@ -190,7 +191,7 @@ internal fun BODY.bodyHeader(principal: UserPrincipal?,
           if (content.hasGroups(lang))
             li(classes = "h2") {
               if (languageType == lang) id = selected
-              this@bodyHeader.addLink(lang.name, listOf(challengeRoot, lang.lowerName).toRootPath())
+              this@bodyHeader.addLink(lang.name, listOf(CHALLENGE_ROOT, lang.lowerName).join())
             }
         }
       }
@@ -202,7 +203,7 @@ internal fun defaultTab(content: ReadingBatContent) =
   languageTypesInOrder
     .asSequence()
     .filter { content.hasGroups(it) }
-    .map { "/$challengeRoot/${it.lowerName}" }
+    .map { "$CHALLENGE_ROOT/${it.lowerName}" }
     .firstOrNull()
     ?: throw InvalidConfigurationException("Missing default language")
 

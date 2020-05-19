@@ -24,6 +24,23 @@ internal fun Application.intercepts() {
   intercept(ApplicationCallPipeline.Call) {
   }
 
+  intercept(ApplicationCallPipeline.Features) {
+    /*
+    val origin = call.request.origin
+    val uri = origin.uri
+    println("uri = $uri")
+    if (origin.scheme == "http" && excludePredicates.none { predicate -> predicate(uri) }) {
+      val redirectUrl = call.url { protocol = URLProtocol.HTTPS; host = "readingbat.com" }
+      println("Redirecting to: $redirectUrl")
+      //call.respondRedirect(redirectUrl )
+      //finish()
+    }
+    else {
+      println("Ignoring: $uri")
+    }
+     */
+  }
+
   intercept(ApplicationCallPipeline.Monitoring) {
     // Set up metrics here
   }

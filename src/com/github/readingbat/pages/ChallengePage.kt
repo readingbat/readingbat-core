@@ -19,7 +19,6 @@ package com.github.readingbat.pages
 
 import com.github.pambrose.common.util.decode
 import com.github.pambrose.common.util.join
-import com.github.pambrose.common.util.toRootPath
 import com.github.readingbat.RedisPool.redisAction
 import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.ReadingBatContent
@@ -27,7 +26,7 @@ import com.github.readingbat.misc.*
 import com.github.readingbat.misc.Answers.processAnswers
 import com.github.readingbat.misc.CSSNames.arrow
 import com.github.readingbat.misc.CSSNames.challengeDesc
-import com.github.readingbat.misc.CSSNames.checkAnswers
+import com.github.readingbat.misc.CSSNames.check_answers
 import com.github.readingbat.misc.CSSNames.codeBlock
 import com.github.readingbat.misc.CSSNames.feedback
 import com.github.readingbat.misc.CSSNames.funcCol
@@ -36,9 +35,9 @@ import com.github.readingbat.misc.CSSNames.spinner
 import com.github.readingbat.misc.CSSNames.status
 import com.github.readingbat.misc.CSSNames.tabs
 import com.github.readingbat.misc.CSSNames.userResp
-import com.github.readingbat.misc.Constants.challengeRoot
-import com.github.readingbat.misc.Constants.playground
-import com.github.readingbat.misc.Constants.staticRoot
+import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
+import com.github.readingbat.misc.Constants.PLAYGROUND_ROOT
+import com.github.readingbat.misc.Constants.STATIC_ROOT
 import io.ktor.http.ContentType.Text.CSS
 import kotlinx.html.*
 import kotlinx.html.Entities.nbsp
@@ -65,7 +64,7 @@ internal fun challengePage(principal: UserPrincipal?,
 
       head {
         link { rel = "stylesheet"; href = spinnerCss }
-        link { rel = "stylesheet"; href = "/$staticRoot/$languageName-prism.css"; type = CSS.toString() }
+        link { rel = "stylesheet"; href = "$STATIC_ROOT/$languageName-prism.css"; type = CSS.toString() }
 
         script(type = ScriptType.textJavaScript) { addScript(languageName, groupName, challengeName) }
 
@@ -78,7 +77,7 @@ internal fun challengePage(principal: UserPrincipal?,
 
         div(classes = tabs) {
           h2 {
-            val groupPath = listOf(challengeRoot, languageName, groupName).toRootPath()
+            val groupPath = listOf(CHALLENGE_ROOT, languageName, groupName).join()
             this@body.addLink(groupName.decode(), groupPath)
             rawHtml("${nbsp.text}&rarr;${nbsp.text}")
             +challengeName
@@ -138,7 +137,7 @@ internal fun challengePage(principal: UserPrincipal?,
               table {
                 tr {
                   td {
-                    button(classes = checkAnswers) {
+                    button(classes = check_answers) {
                       onClick = "$processAnswers(null, ${funcInfo.answers.size})"; +"Check My Answers!"
                     }
                   }
@@ -153,7 +152,7 @@ internal fun challengePage(principal: UserPrincipal?,
               this@body.addLink("Gitpod.io", "https://gitpod.io/#${challenge.gitpodUrl}", true)
               if (languageType.isKotlin()) {
                 +" or as a "
-                this@body.addLink("Kotlin Playground", listOf(playground, groupName, challengeName).toRootPath(), false)
+                this@body.addLink("Kotlin Playground", listOf(PLAYGROUND_ROOT, groupName, challengeName).join(), false)
               }
             }
 
@@ -166,9 +165,9 @@ internal fun challengePage(principal: UserPrincipal?,
           }
         }
 
-        backLink(challengeRoot, languageName, groupName)
+        backLink(CHALLENGE_ROOT, languageName, groupName)
 
-        script { src = "/$staticRoot/$languageName-prism.js" }
+        script { src = "$STATIC_ROOT/$languageName-prism.js" }
       }
     }
 

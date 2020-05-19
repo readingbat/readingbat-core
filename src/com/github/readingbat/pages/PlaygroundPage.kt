@@ -19,14 +19,13 @@ package com.github.readingbat.pages
 
 import com.github.pambrose.common.util.decode
 import com.github.pambrose.common.util.join
-import com.github.pambrose.common.util.toRootPath
 import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.CSSNames.challengeDesc
 import com.github.readingbat.misc.CSSNames.kotlinCode
 import com.github.readingbat.misc.CSSNames.tabs
-import com.github.readingbat.misc.Constants.challengeRoot
-import com.github.readingbat.misc.Constants.staticRoot
+import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
+import com.github.readingbat.misc.Constants.STATIC_ROOT
 import com.github.readingbat.misc.UserPrincipal
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
@@ -59,7 +58,7 @@ fun playgroundPage(principal: UserPrincipal?,
 
         div(classes = tabs) {
           h2 {
-            val groupPath = listOf(challengeRoot, languageName, groupName).toRootPath()
+            val groupPath = listOf(CHALLENGE_ROOT, languageName, groupName).join()
             this@body.addLink(groupName.decode(), groupPath)
             rawHtml("${Entities.nbsp.text}&rarr;${Entities.nbsp.text}")
             this@body.addLink(challengeName.decode(), listOf(groupPath, challengeName).join())
@@ -86,10 +85,10 @@ fun playgroundPage(principal: UserPrincipal?,
         div {
           style = "margin-left: 1em;"
           +"Click on"
-          img { height = "25"; style = "vertical-align: bottom"; src = "/$staticRoot/run-button.png" }
+          img { height = "25"; style = "vertical-align: bottom"; src = "$STATIC_ROOT/run-button.png" }
           +" to run the code"
         }
 
-        backLink(challengeRoot, languageName, groupName, challengeName)
+        backLink(CHALLENGE_ROOT, languageName, groupName, challengeName)
       }
     }

@@ -24,8 +24,8 @@ import com.github.readingbat.dsl.LanguageType.Kotlin
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.AuthName.FORM
 import com.github.readingbat.misc.BrowserSession
-import com.github.readingbat.misc.Constants.challengeRoot
-import com.github.readingbat.misc.Constants.playground
+import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
+import com.github.readingbat.misc.Constants.PLAYGROUND_ROOT
 import com.github.readingbat.misc.UserPrincipal
 import com.github.readingbat.pages.challengeGroupPage
 import com.github.readingbat.pages.challengePage
@@ -102,7 +102,7 @@ suspend fun PipelineCall.playground(principal: UserPrincipal?,
   }
 
 
-@Location("/$challengeRoot/{language}")
+@Location("$CHALLENGE_ROOT/{language}")
 data class Language(val language: String) {
   val languageType get() = language.toLanguageType()
 
@@ -118,5 +118,5 @@ data class Language(val language: String) {
   }
 }
 
-@Location("/$playground/{groupName}/{challengeName}")
+@Location("$PLAYGROUND_ROOT/{groupName}/{challengeName}")
 class PlaygroundRequest(val groupName: String, val challengeName: String)

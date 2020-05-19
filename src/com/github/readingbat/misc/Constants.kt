@@ -20,12 +20,11 @@ package com.github.readingbat.misc
 internal object Constants {
   const val titleText = "ReadingBat"
   const val sessionid = "sessionid"
-  const val playground = "playground"
-  const val icons = "icons"
-  const val cssName = "styles.css"
-  const val staticRoot = "static"
-  const val challengeRoot = "content"
+  const val ICONS = "icons"
   const val RETURN_PATH = "returnPath"
+  const val STATIC_ROOT = "/static"
+  const val CHALLENGE_ROOT = "/content"
+  const val PLAYGROUND_ROOT = "/playground"
 }
 
 object Endpoints {
@@ -34,6 +33,9 @@ object Endpoints {
   const val CREATE_ACCOUNT = "/create-account"
   const val PRIVACY = "/privacy.html"
   const val RESET_PASSWORD = "/reset"
+  const val CHECK_ANSWERS_ROOT = "/check-answers"
+  const val CSS_NAME = "/styles.css"
+  const val FAV_ICON = "/favicon.ico"
 }
 
 object KeyPrefixes {

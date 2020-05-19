@@ -21,12 +21,12 @@ import com.github.readingbat.misc.Answers.challengeSrc
 import com.github.readingbat.misc.Answers.groupSrc
 import com.github.readingbat.misc.Answers.langSrc
 import com.github.readingbat.misc.Answers.processAnswers
-import com.github.readingbat.misc.CSSNames.checkAnswers
 import com.github.readingbat.misc.CSSNames.feedback
 import com.github.readingbat.misc.CSSNames.spinner
 import com.github.readingbat.misc.CSSNames.status
 import com.github.readingbat.misc.CSSNames.userResp
 import com.github.readingbat.misc.Constants.sessionid
+import com.github.readingbat.misc.Endpoints.CHECK_ANSWERS_ROOT
 import com.github.readingbat.pages.rawHtml
 import kotlinx.html.SCRIPT
 import java.util.concurrent.atomic.AtomicInteger
@@ -66,7 +66,7 @@ internal fun SCRIPT.addScript(languageName: String, groupName: String, challenge
       }
       
       re.onreadystatechange = handleDone;  
-      re.open("POST", '/$checkAnswers', true);
+      re.open("POST", '$CHECK_ANSWERS_ROOT', true);
       re.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
       re.send(data);
       return 1;

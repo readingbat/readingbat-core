@@ -19,7 +19,7 @@ package com.github.readingbat.misc
 
 import com.github.readingbat.misc.CSSNames.arrow
 import com.github.readingbat.misc.CSSNames.challengeDesc
-import com.github.readingbat.misc.CSSNames.checkAnswers
+import com.github.readingbat.misc.CSSNames.check_answers
 import com.github.readingbat.misc.CSSNames.codeBlock
 import com.github.readingbat.misc.CSSNames.feedback
 import com.github.readingbat.misc.CSSNames.funcChoice
@@ -39,7 +39,7 @@ import kotlinx.css.properties.TextDecoration
 import kotlinx.css.properties.boxShadow
 
 internal object CSSNames {
-  const val checkAnswers = "checkAnswers"
+  const val check_answers = "checkAnswers"
   const val spinner = "spinner"
   const val feedback = "feedback"
   const val funcCol = "funcCol"
@@ -174,7 +174,7 @@ internal val cssContent by lazy {
         borderCollapse = BorderCollapse.collapse
       }
       */
-      rule(".$checkAnswers") {
+      rule(".$check_answers") {
         width = 14.em
         height = 2.em
         backgroundColor = Color("#f1f1f1")

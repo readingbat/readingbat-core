@@ -20,15 +20,16 @@ package com.github.readingbat.config
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.AuthRoutes.LOGOUT
 import com.github.readingbat.misc.BrowserSession
-import com.github.readingbat.misc.CSSNames.checkAnswers
 import com.github.readingbat.misc.CheckAnswers.checkUserAnswers
+import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
+import com.github.readingbat.misc.Constants.ICONS
 import com.github.readingbat.misc.Constants.RETURN_PATH
-import com.github.readingbat.misc.Constants.challengeRoot
-import com.github.readingbat.misc.Constants.cssName
-import com.github.readingbat.misc.Constants.icons
-import com.github.readingbat.misc.Constants.staticRoot
+import com.github.readingbat.misc.Constants.STATIC_ROOT
 import com.github.readingbat.misc.Endpoints.ABOUT
+import com.github.readingbat.misc.Endpoints.CHECK_ANSWERS_ROOT
 import com.github.readingbat.misc.Endpoints.CREATE_ACCOUNT
+import com.github.readingbat.misc.Endpoints.CSS_NAME
+import com.github.readingbat.misc.Endpoints.FAV_ICON
 import com.github.readingbat.misc.Endpoints.PREFS
 import com.github.readingbat.misc.Endpoints.PRIVACY
 import com.github.readingbat.misc.Endpoints.RESET_PASSWORD
@@ -56,9 +57,9 @@ internal fun Routing.userRoutes(content: ReadingBatContent) {
 
   get("/") { redirectTo { defaultTab(content) } }
 
-  get("/$challengeRoot") { redirectTo { defaultTab(content) } }
+  get(CHALLENGE_ROOT) { redirectTo { defaultTab(content) } }
 
-  post("/$checkAnswers") { checkUserAnswers(content, retrievePrincipal(), call.sessions.get<BrowserSession>()) }
+  post(CHECK_ANSWERS_ROOT) { checkUserAnswers(content, retrievePrincipal(), call.sessions.get<BrowserSession>()) }
 
   get(CREATE_ACCOUNT) { respondWith { createAccountPage(content, "", "", queryParam(RETURN_PATH) ?: "/") } }
 
@@ -78,11 +79,11 @@ internal fun Routing.userRoutes(content: ReadingBatContent) {
     redirectTo { queryParam(RETURN_PATH) ?: "/" }
   }
 
-  get("/$cssName") { respondWith(CSS) { cssContent } }
+  get(CSS_NAME) { respondWith(CSS) { cssContent } }
 
-  get("/favicon.ico") { redirectTo { "/$staticRoot/$icons/favicon.ico" } }
+  get(FAV_ICON) { redirectTo { "$STATIC_ROOT/$ICONS/favicon.ico" } }
 
-  static("/$staticRoot") {
-    resources(staticRoot)
+  static(STATIC_ROOT) {
+    resources("static")
   }
 }

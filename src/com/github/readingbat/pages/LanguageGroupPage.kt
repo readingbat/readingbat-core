@@ -17,7 +17,7 @@
 
 package com.github.readingbat.pages
 
-import com.github.pambrose.common.util.toRootPath
+import com.github.pambrose.common.util.join
 import com.github.readingbat.dsl.ChallengeGroup
 import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.dsl.ReadingBatContent
@@ -25,7 +25,7 @@ import com.github.readingbat.misc.CSSNames.funcItem
 import com.github.readingbat.misc.CSSNames.groupChoice
 import com.github.readingbat.misc.CSSNames.groupItemSrc
 import com.github.readingbat.misc.CSSNames.tabs
-import com.github.readingbat.misc.Constants.challengeRoot
+import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
 import com.github.readingbat.misc.UserPrincipal
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
@@ -70,7 +70,7 @@ private fun TR.groupItem(prefix: String, challengeGroup: ChallengeGroup<*>) {
 
   td(classes = funcItem) {
     div(classes = groupItemSrc) {
-      a(classes = groupChoice) { href = listOf(challengeRoot, prefix, groupName).toRootPath(); +groupName }
+      a(classes = groupChoice) { href = listOf(CHALLENGE_ROOT, prefix, groupName).join(); +groupName }
       br { rawHtml(if (parsedDescription.isNotBlank()) parsedDescription else Entities.nbsp.text) }
     }
   }

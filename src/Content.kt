@@ -21,7 +21,7 @@ import com.github.readingbat.dsl.eval
 import com.github.readingbat.dsl.readingBatContent
 
 val organization = "readingbat"
-val branch = "dev"
+val branch = "master"
 
 val content by lazy {
   readingBatContent {
