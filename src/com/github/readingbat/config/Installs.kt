@@ -23,10 +23,11 @@ import com.github.readingbat.RedisPool.redisAction
 import com.github.readingbat.misc.*
 import com.github.readingbat.misc.AuthName.FORM
 import com.github.readingbat.misc.AuthName.SESSION
-import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
 import com.github.readingbat.misc.Constants.STATIC_ROOT
 import com.github.readingbat.misc.Endpoints.CSS_NAME
 import com.github.readingbat.misc.Endpoints.FAV_ICON
+import com.github.readingbat.misc.EnvVars.PRODUCTION
+import com.github.readingbat.misc.EnvVars.REDIRECT_HOST_NAME
 import com.google.common.util.concurrent.RateLimiter
 import io.ktor.application.Application
 import io.ktor.application.call
@@ -51,8 +52,8 @@ import org.slf4j.event.Level
 import kotlin.text.Charsets.UTF_8
 
 private val logger = KotlinLogging.logger {}
-private val hostname: String by lazy { System.getenv("HOST_NAME") ?: "www.readingbat.com" }
-internal val production: Boolean by lazy { System.getenv("PRODUCTION")?.toBoolean() ?: false }
+private val hostname: String by lazy { System.getenv(REDIRECT_HOST_NAME) ?: "www.readingbat.com" }
+internal val production: Boolean by lazy { System.getenv(PRODUCTION)?.toBoolean() ?: false }
 
 internal fun Application.installs() {
 
@@ -68,18 +69,16 @@ internal fun Application.installs() {
     configureFormAuth()
   }
 
-
-  if (production)
+  if (production) {
     install(HerokuHttpsRedirect) {
       host = hostname
-      // host = "testingbat.herokuapp.com"
       permanentRedirect = false
 
       excludePrefix(STATIC_ROOT + "/")
       excludeSuffix(CSS_NAME)
       excludeSuffix(FAV_ICON)
     }
-
+  }
 
   install(Compression) {
     gzip {
@@ -145,7 +144,7 @@ private fun Sessions.Configuration.configureSessionIdCookie() {
   cookie<BrowserSession>("readingbat_session_id") {
     //storage = RedisSessionStorage(redis = pool.resource)) {
     //storage = directorySessionStorage(File("server-sessions"), cached = true)) {
-    cookie.path = CHALLENGE_ROOT + "/"
+    cookie.path = "/" //CHALLENGE_ROOT + "/"
   }
 }
 
@@ -157,7 +156,7 @@ private fun Sessions.Configuration.configureAuthCookie() {
     // Stores session contents in memory...good for development only.
     //storage = SessionStorageMemory()
                        ) {
-    cookie.path = CHALLENGE_ROOT + "/"
+    cookie.path = "/" //CHALLENGE_ROOT + "/"
     cookie.httpOnly = true
 
     //if (production)

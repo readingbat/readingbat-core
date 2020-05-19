@@ -60,6 +60,9 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
 
     implementation "com.github.pambrose.common-utils:core-utils:$utils_version"
+
+    implementation "com.github.pambrose.common-utils:ktor-server-utils:$utils_version"
+
     implementation "com.github.pambrose.common-utils:script-utils-common:$utils_version"
     implementation "com.github.pambrose.common-utils:script-utils-python:$utils_version"
     implementation "com.github.pambrose.common-utils:script-utils-java:$utils_version"

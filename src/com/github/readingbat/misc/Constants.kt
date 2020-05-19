@@ -67,3 +67,9 @@ object AuthRoutes {
 object Cookies {
   const val AUTH_COOKIE = "auth"
 }
+
+object EnvVars {
+  const val REDIRECT_HOST_NAME = "REDIRECT_HOST_NAME"
+  const val PRODUCTION = "PRODUCTION"
+  const val REDISTOGO_URL = "REDISTOGO_URL"
+}

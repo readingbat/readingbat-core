@@ -20,6 +20,7 @@ package com.github.readingbat
 import com.github.pambrose.common.util.FileSource
 import com.github.readingbat.config.*
 import com.github.readingbat.dsl.readDsl
+import com.github.readingbat.misc.EnvVars.REDISTOGO_URL
 import com.github.readingbat.misc.UserPrincipal
 import com.google.gson.Gson
 import io.ktor.application.Application
@@ -48,7 +49,7 @@ import java.net.URI
 private val logger = KotlinLogging.logger {}
 
 object RedisPool {
-  private var redisURI: URI = URI(System.getenv("REDISTOGO_URL") ?: "redis://user:none@localhost:6379")
+  private var redisURI: URI = URI(System.getenv(REDISTOGO_URL) ?: "redis://user:none@localhost:6379")
   var pool: JedisPool = JedisPool(JedisPoolConfig(),
                                   redisURI.host,
                                   redisURI.port,
