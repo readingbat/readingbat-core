@@ -10,6 +10,7 @@ import io.ktor.application.ApplicationFeature
 import io.ktor.application.call
 import io.ktor.features.origin
 import io.ktor.http.URLProtocol
+import io.ktor.request.header
 import io.ktor.response.respondRedirect
 import io.ktor.util.AttributeKey
 import io.ktor.util.KtorExperimentalAPI
@@ -107,7 +108,8 @@ class HerokuHttpsRedirect(config: Configuration) {
     override fun install(pipeline: ApplicationCallPipeline, configure: Configuration.() -> Unit): HerokuHttpsRedirect {
       val feature = HerokuHttpsRedirect(Configuration().apply(configure))
       pipeline.intercept(ApplicationCallPipeline.Features) {
-        if (call.request.origin.scheme == "http" &&
+        // See https://jaketrent.com/post/https-redirect-node-heroku/
+        if (call.request.header("x-forwarded-proto") != "https" &&
           feature.excludePredicates.none { predicate -> predicate(call) }
         ) {
           val redirectUrl = call.url { protocol = URLProtocol.HTTPS; host = feature.host; port = feature.redirectPort }
