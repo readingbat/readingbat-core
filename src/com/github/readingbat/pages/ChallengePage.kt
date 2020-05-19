@@ -31,8 +31,9 @@ import com.github.readingbat.misc.CSSNames.codeBlock
 import com.github.readingbat.misc.CSSNames.feedback
 import com.github.readingbat.misc.CSSNames.funcCol
 import com.github.readingbat.misc.CSSNames.refs
-import com.github.readingbat.misc.CSSNames.spinner
+import com.github.readingbat.misc.CSSNames.spinnerId
 import com.github.readingbat.misc.CSSNames.status
+import com.github.readingbat.misc.CSSNames.statusId
 import com.github.readingbat.misc.CSSNames.tabs
 import com.github.readingbat.misc.CSSNames.userResp
 import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
@@ -66,7 +67,7 @@ internal fun challengePage(principal: UserPrincipal?,
         link { rel = "stylesheet"; href = spinnerCss }
         link { rel = "stylesheet"; href = "$STATIC_ROOT/$languageName-prism.css"; type = CSS.toString() }
 
-        script(type = ScriptType.textJavaScript) { addScript(languageName, groupName, challengeName) }
+        script(type = ScriptType.textJavaScript) { checkAnswersScript(languageName, groupName, challengeName) }
 
         removePrismShadow()
         headDefault(content)
@@ -138,11 +139,11 @@ internal fun challengePage(principal: UserPrincipal?,
                 tr {
                   td {
                     button(classes = check_answers) {
-                      onClick = "$processAnswers(null, ${funcInfo.answers.size})"; +"Check My Answers!"
+                      onClick = "$processAnswers(null, ${funcInfo.answers.size});"; +"Check My Answers!"
                     }
                   }
-                  td { span(classes = spinner) { id = spinner } }
-                  td { span(classes = status) { id = status } }
+                  td { style = "vertical-align:middle;"; span { style = "margin-left:1em;"; id = spinnerId } }
+                  td { style = "vertical-align:middle;"; span(classes = status) { id = statusId } }
                 }
               }
             }

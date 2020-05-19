@@ -30,7 +30,6 @@ import com.github.readingbat.misc.CSSNames.groupItemSrc
 import com.github.readingbat.misc.CSSNames.kotlinCode
 import com.github.readingbat.misc.CSSNames.refs
 import com.github.readingbat.misc.CSSNames.selected
-import com.github.readingbat.misc.CSSNames.spinner
 import com.github.readingbat.misc.CSSNames.status
 import com.github.readingbat.misc.CSSNames.tabs
 import com.github.readingbat.misc.CSSNames.userResp
@@ -40,7 +39,6 @@ import kotlinx.css.properties.boxShadow
 
 internal object CSSNames {
   const val check_answers = "checkAnswers"
-  const val spinner = "spinner"
   const val feedback = "feedback"
   const val funcCol = "funcCol"
   const val arrow = "arrow"
@@ -55,7 +53,9 @@ internal object CSSNames {
   const val funcItem = "funcItem"
   const val groupItemSrc = "groupItem"
   const val selected = "selected"
+  const val spinnerId = "spinnerId"
   const val status = "status"
+  const val statusId = "statusId"
 }
 
 internal val cssContent by lazy {
@@ -182,14 +182,9 @@ internal val cssContent by lazy {
         fontWeight = FontWeight.bold
         borderRadius = 6.px
       }
-      rule(".$spinner") {
-        marginLeft = 1.em
-        verticalAlign = VerticalAlign.bottom
-      }
       rule(".$status") {
         marginLeft = 5.px
         fontSize = textFs
-        verticalAlign = VerticalAlign.bottom
       }
       rule(".h2") {
         fontSize = 166.pct

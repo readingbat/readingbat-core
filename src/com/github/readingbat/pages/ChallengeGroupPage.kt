@@ -62,6 +62,7 @@ internal fun challengeGroupPage(principal: UserPrincipal?,
 
             (0 until rows).forEach { i ->
               tr {
+                style = "height:30"
                 challenges.apply {
                   elementAt(i).also { funcCall(languageName, groupName, it) }
                   elementAtOrNull(i + rows)?.also { funcCall(languageName, groupName, it) } ?: td {}
