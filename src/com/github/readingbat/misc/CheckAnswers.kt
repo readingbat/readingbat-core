@@ -22,8 +22,6 @@ import com.github.pambrose.common.script.PythonScript
 import com.github.pambrose.common.util.*
 import com.github.readingbat.InvalidConfigurationException
 import com.github.readingbat.PipelineCall
-import com.github.readingbat.RedisPool.gson
-import com.github.readingbat.RedisPool.redisAction
 import com.github.readingbat.dsl.LanguageType.Companion.toLanguageType
 import com.github.readingbat.dsl.LanguageType.Java
 import com.github.readingbat.dsl.LanguageType.Kotlin
@@ -32,6 +30,8 @@ import com.github.readingbat.misc.Answers.challengeSrc
 import com.github.readingbat.misc.Answers.groupSrc
 import com.github.readingbat.misc.Answers.langSrc
 import com.github.readingbat.misc.CSSNames.userResp
+import com.github.readingbat.misc.RedisPool.gson
+import com.github.readingbat.misc.RedisPool.redisAction
 import io.ktor.application.call
 import io.ktor.request.receiveParameters
 import io.ktor.response.respondText

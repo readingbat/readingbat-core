@@ -20,9 +20,7 @@ package com.github.readingbat
 import com.github.pambrose.common.util.FileSource
 import com.github.readingbat.config.*
 import com.github.readingbat.dsl.readDsl
-import com.github.readingbat.misc.EnvVars.REDISTOGO_URL
 import com.github.readingbat.misc.UserPrincipal
-import com.google.gson.Gson
 import io.ktor.application.Application
 import io.ktor.application.ApplicationCall
 import io.ktor.application.call
@@ -40,30 +38,8 @@ import io.ktor.sessions.sessions
 import io.ktor.sessions.set
 import io.ktor.util.pipeline.PipelineContext
 import mu.KotlinLogging
-import redis.clients.jedis.Jedis
-import redis.clients.jedis.JedisPool
-import redis.clients.jedis.JedisPoolConfig
-import redis.clients.jedis.Protocol
-import java.net.URI
 
 private val logger = KotlinLogging.logger {}
-
-object RedisPool {
-  private var redisURI: URI = URI(System.getenv(REDISTOGO_URL) ?: "redis://user:none@localhost:6379")
-  var pool: JedisPool = JedisPool(JedisPoolConfig(),
-                                  redisURI.host,
-                                  redisURI.port,
-                                  Protocol.DEFAULT_TIMEOUT,
-                                  redisURI.userInfo.split(Regex(":"), 2)[1])
-
-  fun redisAction(block: (Jedis) -> Unit) {
-    pool.resource.use {
-      block.invoke(it)
-    }
-  }
-
-  val gson = Gson()
-}
 
 object ReadingBatServer {
   fun start(args: Array<String>) {

@@ -19,7 +19,6 @@ package com.github.readingbat.config
 
 import com.github.pambrose.common.util.simpleClassName
 import com.github.readingbat.InvalidPathException
-import com.github.readingbat.RedisPool.redisAction
 import com.github.readingbat.misc.*
 import com.github.readingbat.misc.AuthName.FORM
 import com.github.readingbat.misc.AuthName.SESSION
@@ -28,6 +27,7 @@ import com.github.readingbat.misc.Endpoints.CSS_NAME
 import com.github.readingbat.misc.Endpoints.FAV_ICON
 import com.github.readingbat.misc.EnvVars.PRODUCTION
 import com.github.readingbat.misc.EnvVars.REDIRECT_HOST_NAME
+import com.github.readingbat.misc.RedisPool.redisAction
 import com.google.common.util.concurrent.RateLimiter
 import io.ktor.application.Application
 import io.ktor.application.call

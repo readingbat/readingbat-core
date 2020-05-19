@@ -19,7 +19,6 @@ package com.github.readingbat.pages
 
 import com.github.pambrose.common.util.decode
 import com.github.pambrose.common.util.join
-import com.github.readingbat.RedisPool.redisAction
 import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.*
@@ -39,6 +38,7 @@ import com.github.readingbat.misc.CSSNames.userResp
 import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
 import com.github.readingbat.misc.Constants.PLAYGROUND_ROOT
 import com.github.readingbat.misc.Constants.STATIC_ROOT
+import com.github.readingbat.misc.RedisPool.redisAction
 import io.ktor.http.ContentType.Text.CSS
 import kotlinx.html.*
 import kotlinx.html.Entities.nbsp

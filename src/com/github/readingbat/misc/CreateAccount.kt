@@ -18,7 +18,6 @@
 package com.github.readingbat.misc
 
 import com.github.readingbat.PipelineCall
-import com.github.readingbat.RedisPool
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.Messages.CLEVER_PASSWORD
