@@ -118,7 +118,7 @@ class HerokuHttpsRedirect(config: Configuration) {
           finish()
         }
         else {
-          logger.info { "Not redirecting: ${call.request.origin.scheme} ${call.request.origin.uri}" }
+          logger.info { "Not redirecting: ${call.request.header("x-forwarded-proto")} ${call.request.origin.uri}" }
         }
       }
       return feature
