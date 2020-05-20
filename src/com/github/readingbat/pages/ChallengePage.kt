@@ -94,8 +94,6 @@ internal fun challengePage(principal: UserPrincipal?,
             }
           }
 
-          //table {
-
           div {
             style = "margin-top:2em; margin-left:2em;"
             table {

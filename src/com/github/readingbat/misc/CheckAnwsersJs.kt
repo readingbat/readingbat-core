@@ -94,11 +94,11 @@ internal fun SCRIPT.checkAnswersScript(languageName: String, groupName: String, 
         
         document.getElementById('$spinnerId').innerHTML = "";
         document.getElementById('$statusId').innerHTML = "";
-        if (success)
+        if (success) 
           document.getElementById('$successId').innerHTML = "Success! Congratulations!";
-        else
+        else 
           document.getElementById('$successId').innerHTML = "";
-        }
+      }
     }
   """
          )
