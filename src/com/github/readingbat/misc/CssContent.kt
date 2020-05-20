@@ -31,6 +31,7 @@ import com.github.readingbat.misc.CSSNames.kotlinCode
 import com.github.readingbat.misc.CSSNames.refs
 import com.github.readingbat.misc.CSSNames.selected
 import com.github.readingbat.misc.CSSNames.status
+import com.github.readingbat.misc.CSSNames.success
 import com.github.readingbat.misc.CSSNames.tabs
 import com.github.readingbat.misc.CSSNames.userResp
 import kotlinx.css.*
@@ -56,6 +57,8 @@ internal object CSSNames {
   const val spinnerId = "spinnerId"
   const val status = "status"
   const val statusId = "statusId"
+  const val success = "success"
+  const val successId = "successId"
 }
 
 internal val cssContent by lazy {
@@ -185,6 +188,11 @@ internal val cssContent by lazy {
       rule(".$status") {
         marginLeft = 5.px
         fontSize = textFs
+      }
+      rule(".$success") {
+        marginLeft = 25.px
+        fontSize = textFs
+        color = Color.black
       }
       rule(".h2") {
         fontSize = 166.pct

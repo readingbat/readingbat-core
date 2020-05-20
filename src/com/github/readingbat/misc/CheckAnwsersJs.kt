@@ -24,6 +24,7 @@ import com.github.readingbat.misc.Answers.processAnswers
 import com.github.readingbat.misc.CSSNames.feedback
 import com.github.readingbat.misc.CSSNames.spinnerId
 import com.github.readingbat.misc.CSSNames.statusId
+import com.github.readingbat.misc.CSSNames.successId
 import com.github.readingbat.misc.CSSNames.userResp
 import com.github.readingbat.misc.Constants.sessionid
 import com.github.readingbat.misc.Endpoints.CHECK_ANSWERS_ROOT
@@ -76,6 +77,7 @@ internal fun SCRIPT.checkAnswersScript(languageName: String, groupName: String, 
       if(re.readyState == 1) {  // starting
         document.getElementById('$spinnerId').innerHTML = '<i class="fa fa-spinner fa-spin" style="font-size:24px"></i>';
         document.getElementById('$statusId').innerHTML = 'Checking answers...';
+        document.getElementById('$successId').innerHTML = '';
       }
       else if(re.readyState == 4) {  // done
         var success = true;
@@ -91,11 +93,12 @@ internal fun SCRIPT.checkAnswersScript(languageName: String, groupName: String, 
         }
         
         document.getElementById('$spinnerId').innerHTML = "";
+        document.getElementById('$statusId').innerHTML = "";
         if (success)
-          document.getElementById('$statusId').innerHTML = "Success! Congratulations!";
+          document.getElementById('$successId').innerHTML = "Success! Congratulations!";
         else
-          document.getElementById('$statusId').innerHTML = "";
-      }
+          document.getElementById('$successId').innerHTML = "";
+        }
     }
   """
          )

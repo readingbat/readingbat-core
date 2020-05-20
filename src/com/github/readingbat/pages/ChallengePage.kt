@@ -33,6 +33,8 @@ import com.github.readingbat.misc.CSSNames.refs
 import com.github.readingbat.misc.CSSNames.spinnerId
 import com.github.readingbat.misc.CSSNames.status
 import com.github.readingbat.misc.CSSNames.statusId
+import com.github.readingbat.misc.CSSNames.success
+import com.github.readingbat.misc.CSSNames.successId
 import com.github.readingbat.misc.CSSNames.tabs
 import com.github.readingbat.misc.CSSNames.userResp
 import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
@@ -92,6 +94,8 @@ internal fun challengePage(principal: UserPrincipal?,
             }
           }
 
+          //table {
+
           div {
             style = "margin-top:2em; margin-left:2em;"
             table {
@@ -142,7 +146,11 @@ internal fun challengePage(principal: UserPrincipal?,
                     }
                   }
                   td { style = "vertical-align:middle;"; span { style = "margin-left:1em;"; id = spinnerId } }
-                  td { style = "vertical-align:middle;"; span(classes = status) { id = statusId } }
+                  td {
+                    style = "vertical-align:middle;"
+                    span(classes = status) { id = statusId }
+                    span(classes = success) { id = successId }
+                  }
                 }
               }
             }
