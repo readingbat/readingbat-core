@@ -22,15 +22,17 @@ import com.github.pambrose.common.util.join
 import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.ChallengeGroup
 import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.misc.CSSNames.funcChoice
 import com.github.readingbat.misc.CSSNames.funcItem
 import com.github.readingbat.misc.CSSNames.tabs
 import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
 import com.github.readingbat.misc.Constants.STATIC_ROOT
+import com.github.readingbat.misc.RedisPool.redisAction
+import com.github.readingbat.misc.UserId
 import com.github.readingbat.misc.UserPrincipal
+import com.github.readingbat.misc.lookupUserId
 import kotlinx.html.*
-import kotlinx.html.Entities.nbsp
 import kotlinx.html.stream.createHTML
+import redis.clients.jedis.Jedis
 
 internal fun challengeGroupPage(principal: UserPrincipal?,
                                 loginAttempt: Boolean,
@@ -43,6 +45,23 @@ internal fun challengeGroupPage(principal: UserPrincipal?,
       val groupName = challengeGroup.groupName
       val challenges = challengeGroup.challenges
       val loginPath = listOf(languageName, groupName).join()
+
+      fun TR.funcCall(redis: Jedis, userId: UserId?, challenge: Challenge) {
+        val challengeName = challenge.challengeName
+        val correctAnswersKey = userId?.correctAnswersKey(languageName, groupName, challengeName) ?: ""
+
+        val allCorrect =
+          if (correctAnswersKey.isNotEmpty()) redis.get(correctAnswersKey)?.toBoolean() == true else false
+
+        td(classes = funcItem) {
+          img { src = "$STATIC_ROOT/${if (allCorrect) "green" else "white"}-check.jpg" }
+          a {
+            style = "font-Size:110%; padding-left:2px;"
+            href = listOf(CHALLENGE_ROOT, languageName, groupName, challengeName).join()
+            +challengeName
+          }
+        }
+      }
 
       head {
         headDefault(content)
@@ -60,13 +79,17 @@ internal fun challengeGroupPage(principal: UserPrincipal?,
             val size = challenges.size
             val rows = size.rows(cols)
 
-            (0 until rows).forEach { i ->
-              tr {
-                style = "height:30"
-                challenges.apply {
-                  elementAt(i).also { funcCall(languageName, groupName, it) }
-                  elementAtOrNull(i + rows)?.also { funcCall(languageName, groupName, it) } ?: td {}
-                  elementAtOrNull(i + (2 * rows))?.also { funcCall(languageName, groupName, it) } ?: td {}
+            redisAction { redis ->
+              val userId = lookupUserId(redis, principal)
+
+              (0 until rows).forEach { i ->
+                tr {
+                  style = "height:30"
+                  challenges.apply {
+                    elementAt(i).also { funcCall(redis, userId, it) }
+                    elementAtOrNull(i + rows)?.also { funcCall(redis, userId, it) } ?: td {}
+                    elementAtOrNull(i + (2 * rows))?.also { funcCall(redis, userId, it) } ?: td {}
+                  }
                 }
               }
             }
@@ -76,15 +99,3 @@ internal fun challengeGroupPage(principal: UserPrincipal?,
         backLink(CHALLENGE_ROOT, languageName)
       }
     }
-
-private fun TR.funcCall(prefix: String, groupName: String, challenge: Challenge) {
-  td(classes = funcItem) {
-    img { src = "$STATIC_ROOT/check.jpg" }
-    rawHtml(nbsp.text)
-    a(classes = funcChoice) {
-      href = listOf(CHALLENGE_ROOT, prefix, groupName, challenge.challengeName).join()
-      +challenge.challengeName
-    }
-  }
-}
-

@@ -70,6 +70,9 @@ private data class ChallengeHistory(var argument: String,
 
 object CheckAnswers : KLogging() {
 
+  private fun String.isJavaBoolean() = this == "true" || this == "false"
+  private fun String.isPythonBoolean() = this == "True" || this == "False"
+
   internal suspend fun PipelineCall.checkUserAnswers(content: ReadingBatContent,
                                                      principal: UserPrincipal?,
                                                      browserSession: BrowserSession?) {
@@ -87,11 +90,7 @@ object CheckAnswers : KLogging() {
 
     fun checkWithAnswer(isJvm: Boolean, userResp: String, answer: String) =
       try {
-        fun String.isJavaBoolean() = this == "true" || this == "false"
-        fun String.isPythonBoolean() = this == "True" || this == "False"
-
         logger.debug("""Comparing user response: "$userResp" with answer: "$answer"""")
-
         if (isJvm) {
           if (answer.isBracketed())
             answer.equalsAsKotlinList(userResp, kotlinScriptEngine)
@@ -127,10 +126,11 @@ object CheckAnswers : KLogging() {
         val userResponse =
           compareMap[userResp + i]?.trim() ?: throw InvalidConfigurationException("Missing user response")
         val answer = funcInfo.answers[i]
-        ChallengeResults(funcInfo.arguments[i],
-                         userResponse,
-                         userResponse.isNotEmpty(),
-                         checkWithAnswer(isJvm, userResponse, answer))
+        val answered = userResponse.isNotEmpty()
+        ChallengeResults(arguments = funcInfo.arguments[i],
+                         userResponse = userResponse,
+                         answered = answered,
+                         correct = if (answered) checkWithAnswer(isJvm, userResponse, answer) else false)
       }
 
     val answerMap = mutableMapOf<String, String>()
@@ -141,9 +141,17 @@ object CheckAnswers : KLogging() {
         answerMap[argumentKey] = userResp
     }
 
-    // Save the all the answers for the challenge
+    // Save whether all the answers for the challenge were correct
     redisAction { redis ->
       val userId = lookupUserId(redis, principal)
+
+      // Save if all answers were correct
+      val correctAnswersKey = userId?.correctAnswersKey(languageName, groupName, challengeName) ?: ""
+      if (correctAnswersKey.isNotEmpty()) {
+        val allCorrect = results.all { it.correct }
+        redis.set(correctAnswersKey, allCorrect.toString())
+      }
+
       val challengeKey =
         userId?.challengeKey(languageName, groupName, challengeName)
           ?: browserSession?.challengeKey(languageName, groupName, challengeName)

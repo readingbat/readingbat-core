@@ -19,7 +19,6 @@ package com.github.readingbat.pages
 
 import com.github.readingbat.config.production
 import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.misc.Endpoints.CLASSROOM
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 
@@ -43,7 +42,6 @@ internal fun classroomPage(content: ReadingBatContent) =
           script {
             rawHtml(
               """
-                //var ws = new WebSocket('ws://0.0.0.0:8080/$CLASSROOM');
                 var HOST = location.href.replace(${if (production) "/^https:/, 'wss:'" else "/^http:/, 'ws:'"})
                 var ws = new WebSocket(HOST);
                 var el;
@@ -57,9 +55,7 @@ internal fun classroomPage(content: ReadingBatContent) =
               """.trimIndent())
           }
 
-          p {
-            id = wsid
-          }
+          p { id = wsid }
         }
       }
     }

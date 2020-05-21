@@ -18,35 +18,42 @@
 package com.github.readingbat.misc
 
 import com.github.pambrose.common.util.randomId
+import com.github.readingbat.misc.KeyPrefixes.ANSWER_HISTORY
+import com.github.readingbat.misc.KeyPrefixes.AUTH
+import com.github.readingbat.misc.KeyPrefixes.CHALLENGE_ANSWERS
+import com.github.readingbat.misc.KeyPrefixes.CORRECT_ANSWERS
+import com.github.readingbat.misc.KeyPrefixes.NO_AUTH
+import com.github.readingbat.misc.KeyPrefixes.PASSWD
+import com.github.readingbat.misc.KeyPrefixes.SALT
+import com.github.readingbat.misc.KeyPrefixes.USER_ID
 import io.ktor.auth.Principal
 import java.time.Instant
 
-internal fun userIdKey(username: String) = "${KeyPrefixes.USER_ID}|$username"
+internal fun userIdKey(username: String) = "$USER_ID|$username"
 
 internal class UserId(val id: String = randomId(25)) {
-  fun saltKey() = "${KeyPrefixes.SALT}|$id"
+  fun saltKey() = "$SALT|$id"
 
-  fun passwordKey() = "${KeyPrefixes.PASSWD}|$id"
+  fun passwordKey() = "$PASSWD|$id"
+
+  fun correctAnswersKey(languageName: String, groupName: String, challengeName: String) =
+    listOf(CORRECT_ANSWERS, AUTH, id, languageName, groupName, challengeName).joinToString("|")
 
   fun challengeKey(languageName: String, groupName: String, challengeName: String) =
-    listOf(KeyPrefixes.CHALLENGE_ANSWERS,
-           KeyPrefixes.AUTH, id, languageName, groupName, challengeName).joinToString("|")
+    listOf(CHALLENGE_ANSWERS, AUTH, id, languageName, groupName, challengeName).joinToString("|")
 
   fun argumentKey(languageName: String, groupName: String, challengeName: String, argument: String) =
-    listOf(KeyPrefixes.ANSWER_HISTORY,
-           KeyPrefixes.AUTH, id, languageName, groupName, challengeName, argument).joinToString("|")
+    listOf(ANSWER_HISTORY, AUTH, id, languageName, groupName, challengeName, argument).joinToString("|")
 }
 
 data class UserPrincipal(val userId: String, val created: Long = Instant.now().toEpochMilli()) : Principal
 
 internal data class BrowserSession(val id: String, val created: Long = Instant.now().toEpochMilli()) {
   fun challengeKey(languageName: String, groupName: String, challengeName: String) =
-    listOf(KeyPrefixes.CHALLENGE_ANSWERS,
-           KeyPrefixes.NO_AUTH, id, languageName, groupName, challengeName).joinToString("|")
+    listOf(CHALLENGE_ANSWERS, NO_AUTH, id, languageName, groupName, challengeName).joinToString("|")
 
   fun argumentKey(languageName: String, groupName: String, challengeName: String, argument: String) =
-    listOf(KeyPrefixes.ANSWER_HISTORY,
-           KeyPrefixes.NO_AUTH, id, languageName, groupName, challengeName, argument).joinToString("|")
+    listOf(ANSWER_HISTORY, NO_AUTH, id, languageName, groupName, challengeName, argument).joinToString("|")
 }
 
 internal data class ChallengeAnswers(val id: String, val answers: MutableMap<String, String> = mutableMapOf())

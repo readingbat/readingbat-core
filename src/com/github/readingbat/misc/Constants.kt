@@ -44,6 +44,7 @@ object KeyPrefixes {
   const val USER_ID = "userId"
   const val SALT = "salt"
   const val PASSWD = "password"
+  const val CORRECT_ANSWERS = "correct-answers"
   const val CHALLENGE_ANSWERS = "challenge-answers"
   const val ANSWER_HISTORY = "answer-history"
   const val AUTH = "auth"

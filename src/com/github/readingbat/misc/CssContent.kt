@@ -22,7 +22,6 @@ import com.github.readingbat.misc.CSSNames.challengeDesc
 import com.github.readingbat.misc.CSSNames.check_answers
 import com.github.readingbat.misc.CSSNames.codeBlock
 import com.github.readingbat.misc.CSSNames.feedback
-import com.github.readingbat.misc.CSSNames.funcChoice
 import com.github.readingbat.misc.CSSNames.funcCol
 import com.github.readingbat.misc.CSSNames.funcItem
 import com.github.readingbat.misc.CSSNames.groupChoice
@@ -50,7 +49,6 @@ internal object CSSNames {
   const val userResp = "userResp"
   const val challengeDesc = "challenge-desc"
   const val groupChoice = "groupChoice"
-  const val funcChoice = "funcChoice"
   const val funcItem = "funcItem"
   const val groupItemSrc = "groupItem"
   const val selected = "selected"
@@ -135,9 +133,6 @@ internal val cssContent by lazy {
       }
       rule(".$groupChoice") {
         fontSize = 166.pct
-      }
-      rule(".$funcChoice") {
-        fontSize = 110.pct
       }
       rule("th, td") {
         padding = "1px"
