@@ -18,6 +18,8 @@
 package com.github.readingbat.config
 
 import com.github.readingbat.dsl.ReadingBatContent
+import com.github.readingbat.misc.Endpoints.CLASSROOM
+import com.github.readingbat.misc.RedisPool.redisAction
 import io.ktor.http.cio.websocket.CloseReason
 import io.ktor.http.cio.websocket.Frame
 import io.ktor.http.cio.websocket.close
@@ -25,19 +27,15 @@ import io.ktor.http.cio.websocket.readText
 import io.ktor.routing.Routing
 import io.ktor.websocket.webSocket
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.runBlocking
+import redis.clients.jedis.JedisPubSub
 
 internal fun Routing.wsEndpoints(content: ReadingBatContent) {
 
-  webSocket("/ws") {
-
-    fun foo(): Flow<Int> =
-      flow { // flow builder
-        repeat(1000) { i ->
-          delay(100)
-          emit(i)
-        }
-      }
+  webSocket(CLASSROOM) {
 
     incoming
       .receiveAsFlow()
@@ -45,8 +43,21 @@ internal fun Routing.wsEndpoints(content: ReadingBatContent) {
       .collect { frame ->
         val text = frame.readText()
 
-        foo().collect { value ->
-          outgoing.send(Frame.Text("Count $value"))
+        repeat(10) { i ->
+          delay(100)
+          outgoing.send(Frame.Text("" + i))
+        }
+
+        var i = 0
+        redisAction { redis ->
+          redis.subscribe(object : JedisPubSub() {
+            override fun onMessage(channel: String?, message: String?) {
+              runBlocking {
+                delay(100)
+                outgoing.send(Frame.Text("$channel $message ${i++}"))
+              }
+            }
+          }, "channel");
         }
 
         if (text.equals("bye", ignoreCase = true)) {

@@ -25,6 +25,7 @@ import com.github.readingbat.misc.Messages.EMPTY_EMAIL
 import com.github.readingbat.misc.Messages.EMPTY_PASWORD
 import com.github.readingbat.misc.Messages.INVALID_EMAIL
 import com.github.readingbat.misc.Messages.PASSWORD_TOO_SHORT
+import com.github.readingbat.misc.RedisPool.redisAction
 import com.github.readingbat.pages.createAccountPage
 import com.github.readingbat.redirectTo
 import com.github.readingbat.respondWith
@@ -59,7 +60,7 @@ internal suspend fun PipelineCall.createAccount(content: ReadingBatContent) {
     password.length < 6 -> respondWith { createAccountPage(content, username, PASSWORD_TOO_SHORT, returnPath) }
     password == "password" -> respondWith { createAccountPage(content, username, CLEVER_PASSWORD, returnPath) }
     else -> {
-      RedisPool.redisAction { redis ->
+      redisAction { redis ->
         runBlocking {
           // Check if username already exists
           val userIdKey = userIdKey(username)

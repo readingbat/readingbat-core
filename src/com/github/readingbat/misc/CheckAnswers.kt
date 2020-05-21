@@ -151,7 +151,10 @@ object CheckAnswers : KLogging() {
 
       if (challengeKey.isNotEmpty()) {
         logger.debug { "Storing: $challengeKey" }
-        answerMap.forEach { (args, userResp) -> redis.hset(challengeKey, args, userResp) }
+        answerMap.forEach { (args, userResp) ->
+          redis.hset(challengeKey, args, userResp)
+          redis.publish("channel", userResp)
+        }
       }
 
       // Save the history of each answer on a per-arguments basis
