@@ -82,6 +82,43 @@ object CheckAnswers : KLogging() {
     val userResps = params.entries().filter { it.key.startsWith(userResp) }
     val challenge = content.findLanguage(languageName.toLanguageType()).findChallenge(groupName, challengeName)
     val funcInfo = challenge.funcInfo(content)
+    val kotlinScriptEngine by lazy { KotlinScript() }
+    val pythonScriptEngine by lazy { PythonScript() }
+
+    fun checkWithAnswer(isJvm: Boolean, userResp: String, answer: String) =
+      try {
+        fun String.isJavaBoolean() = this == "true" || this == "false"
+        fun String.isPythonBoolean() = this == "True" || this == "False"
+
+        logger.debug("""Comparing user response: "$userResp" with answer: "$answer"""")
+
+        if (isJvm) {
+          if (answer.isBracketed())
+            answer.equalsAsKotlinList(userResp, kotlinScriptEngine)
+          else
+            when {
+              userResp.isEmpty() || answer.isEmpty() -> false
+              userResp.isDoubleQuoted() || answer.isDoubleQuoted() -> userResp == answer
+              userResp.contains(".") || answer.contains(".") -> userResp.toDouble() == answer.toDouble()
+              userResp.isJavaBoolean() && answer.isJavaBoolean() -> userResp.toBoolean() == answer.toBoolean()
+              else -> userResp.toInt() == answer.toInt()
+            }
+        }
+        else
+          if (answer.isBracketed())
+            answer.equalsAsPythonList(userResp, pythonScriptEngine)
+          else
+            when {
+              userResp.isEmpty() || answer.isEmpty() -> false
+              userResp.isDoubleQuoted() -> userResp == answer
+              userResp.isSingleQuoted() -> userResp.singleToDoubleQuoted() == answer
+              userResp.contains(".") || answer.contains(".") -> userResp.toDouble() == answer.toDouble()
+              userResp.isPythonBoolean() && answer.isPythonBoolean() -> userResp.toBoolean() == answer.toBoolean()
+              else -> userResp.toInt() == answer.toInt()
+            }
+      } catch (e: Exception) {
+        false
+      }
 
     logger.debug("Found ${userResps.size} user responses in $compareMap")
 
@@ -127,8 +164,8 @@ object CheckAnswers : KLogging() {
               ?: ""
 
           if (argumentKey.isNotEmpty()) {
-            val history = gson.fromJson(redis[argumentKey],
-                                        ChallengeHistory::class.java) ?: ChallengeHistory(result.arguments)
+            val history =
+              gson.fromJson(redis[argumentKey], ChallengeHistory::class.java) ?: ChallengeHistory(result.arguments)
             logger.debug { "Before: $history" }
             history.apply { if (result.correct) markCorrect() else markIncorrect(result.userResponse) }
             logger.debug { "After: $history" }
@@ -147,62 +184,27 @@ object CheckAnswers : KLogging() {
     call.respondText(results.map { it.correct }.toString())
   }
 
-  private infix fun String.equalsAsKotlinList(other: String): Boolean {
+  private fun String.equalsAsKotlinList(other: String, scriptEngine: KotlinScript): Boolean {
     val compareExpr = "listOf(${this.trimEnds()}) == listOf(${other.trimEnds()})"
     logger.debug { "Check answers expression: $compareExpr" }
     return try {
-      KotlinScript().eval(compareExpr) as Boolean
+      scriptEngine.eval(compareExpr) as Boolean
     } catch (e: ScriptException) {
       logger.info { "Caught exception comparing $this and $other: ${e.message} in $compareExpr" }
       false
     }
   }
 
-  private infix fun String.equalsAsPythonList(other: String): Boolean {
+  private fun String.equalsAsPythonList(other: String, scriptEngine: PythonScript): Boolean {
     val compareExpr = "${this@equalsAsPythonList.trim()} == ${other.trim()}"
     logger.debug { "Check answers expression: $compareExpr" }
     return try {
-      PythonScript().eval(compareExpr) as Boolean
+      scriptEngine.eval(compareExpr) as Boolean
     } catch (e: ScriptException) {
       logger.info { "Caught exception comparing $this and $other: ${e.message} in: $compareExpr" }
       false
     }
   }
-
-  private fun checkWithAnswer(isJvm: Boolean, userResp: String, answer: String) =
-    try {
-      fun String.isJavaBoolean() = this == "true" || this == "false"
-      fun String.isPythonBoolean() = this == "True" || this == "False"
-
-      logger.debug("""Comparing user response: "$userResp" with answer: "$answer"""")
-
-      if (isJvm) {
-        if (answer.isBracketed())
-          answer equalsAsKotlinList userResp
-        else
-          when {
-            userResp.isEmpty() || answer.isEmpty() -> false
-            userResp.isDoubleQuoted() || answer.isDoubleQuoted() -> userResp == answer
-            userResp.contains(".") || answer.contains(".") -> userResp.toDouble() == answer.toDouble()
-            userResp.isJavaBoolean() && answer.isJavaBoolean() -> userResp.toBoolean() == answer.toBoolean()
-            else -> userResp.toInt() == answer.toInt()
-          }
-      }
-      else
-        if (answer.isBracketed())
-          answer equalsAsPythonList userResp
-        else
-          when {
-            userResp.isEmpty() || answer.isEmpty() -> false
-            userResp.isDoubleQuoted() -> userResp == answer
-            userResp.isSingleQuoted() -> userResp.singleToDoubleQuoted() == answer
-            userResp.contains(".") || answer.contains(".") -> userResp.toDouble() == answer.toDouble()
-            userResp.isPythonBoolean() && answer.isPythonBoolean() -> userResp.toBoolean() == answer.toBoolean()
-            else -> userResp.toInt() == answer.toInt()
-          }
-    } catch (e: Exception) {
-      false
-    }
 }
 
 internal fun lookupUserId(redis: Jedis, principal: UserPrincipal?): UserId? {

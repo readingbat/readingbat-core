@@ -63,6 +63,7 @@ internal fun Application.module() {
   routing {
     locations(readingBatContent)
     userRoutes(readingBatContent)
+    wsEndpoints(readingBatContent)
     adminRoutes(readingBatContent)
   }
 }

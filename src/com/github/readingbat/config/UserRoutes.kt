@@ -28,6 +28,7 @@ import com.github.readingbat.misc.Constants.ROOT
 import com.github.readingbat.misc.Constants.STATIC_ROOT
 import com.github.readingbat.misc.Endpoints.ABOUT
 import com.github.readingbat.misc.Endpoints.CHECK_ANSWERS_ROOT
+import com.github.readingbat.misc.Endpoints.CLASSROOM
 import com.github.readingbat.misc.Endpoints.CREATE_ACCOUNT
 import com.github.readingbat.misc.Endpoints.CSS_NAME
 import com.github.readingbat.misc.Endpoints.FAV_ICON
@@ -68,6 +69,8 @@ internal fun Routing.userRoutes(content: ReadingBatContent) {
   get(PRIVACY) { respondWith { privacyPage(content, queryParam(RETURN_PATH) ?: "") } }
 
   get(ABOUT) { respondWith { aboutPage(content) } }
+
+  get(CLASSROOM) { respondWith { classroomPage(content) } }
 
   get(RESET_PASSWORD) { respondWith { resetPasswordPage(content) } }
 

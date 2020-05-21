@@ -77,6 +77,7 @@ dependencies {
     implementation "io.ktor:ktor-html-builder:$ktor_version"
     implementation "io.ktor:ktor-locations:$ktor_version"
     implementation "io.ktor:ktor-metrics:$ktor_version"
+    implementation "io.ktor:ktor-websockets:$ktor_version"
 
     implementation "redis.clients:jedis:$redis_version"
 
@@ -138,6 +139,7 @@ compileKotlin {
     kotlinOptions.freeCompilerArgs += ['-Xuse-experimental=kotlin.time.ExperimentalTime',
                                        '-Xuse-experimental=io.ktor.util.KtorExperimentalAPI',
                                        '-Xuse-experimental=io.ktor.locations.KtorExperimentalLocationsAPI',
+                                       '-Xuse-experimental=kotlinx.coroutines.ExperimentalCoroutinesApi',
                                        '-Xuse-experimental=kotlin.ExperimentalStdlibApi',
                                        '-XXLanguage:+InlineClasses']
 }
@@ -147,6 +149,7 @@ compileTestKotlin {
     kotlinOptions.freeCompilerArgs += ['-Xuse-experimental=kotlin.time.ExperimentalTime',
                                        '-Xuse-experimental=io.ktor.util.KtorExperimentalAPI',
                                        '-Xuse-experimental=io.ktor.locations.KtorExperimentalLocationsAPI',
+                                       '-Xuse-experimental=kotlinx.coroutines.ExperimentalCoroutinesApi',
                                        '-Xuse-experimental=kotlin.ExperimentalStdlibApi',
                                        '-XXLanguage:+InlineClasses']
 }

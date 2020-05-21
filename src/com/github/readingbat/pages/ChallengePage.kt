@@ -135,7 +135,7 @@ internal fun challengePage(principal: UserPrincipal?,
             }
 
             div {
-              style = "margin-top:1em;"
+              style = "margin-top:2em;"
               table {
                 tr {
                   td {

@@ -47,6 +47,7 @@ import io.ktor.response.respond
 import io.ktor.server.engine.ShutDownUrl
 import io.ktor.sessions.Sessions
 import io.ktor.sessions.cookie
+import io.ktor.websocket.WebSockets
 import mu.KotlinLogging
 import org.slf4j.event.Level
 import kotlin.text.Charsets.UTF_8
@@ -68,6 +69,8 @@ internal fun Application.installs() {
     //configureSessionAuth()
     configureFormAuth()
   }
+
+  install(WebSockets)
 
   if (production) {
     install(HerokuHttpsRedirect) {

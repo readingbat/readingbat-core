@@ -222,7 +222,7 @@ internal val cssContent by lazy {
         padding = "0 40px"
       }
       rule(".$refs") {
-        marginTop = 1.em
+        marginTop = 2.em
         fontSize = textFs
       }
 
