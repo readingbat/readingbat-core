@@ -60,6 +60,7 @@ sealed class Challenge(challengeGroup: ChallengeGroup<*>, val challengeName: Str
   internal val srcPath = languageGroup.srcPath
   private val packageName = challengeGroup.packageName
   internal val languageType = challengeGroup.languageType
+  internal val languageName = languageType.lowerName
   internal val groupName = challengeGroup.groupName
 
   private val fqName by lazy { packageName.ensureSuffix("/") + fileName.ensureSuffix(".${languageType.suffix}") }

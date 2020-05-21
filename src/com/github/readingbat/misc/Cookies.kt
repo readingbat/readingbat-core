@@ -49,6 +49,10 @@ internal class UserId(val id: String = randomId(25)) {
 data class UserPrincipal(val userId: String, val created: Long = Instant.now().toEpochMilli()) : Principal
 
 internal data class BrowserSession(val id: String, val created: Long = Instant.now().toEpochMilli()) {
+
+  fun correctAnswersKey(languageName: String, groupName: String, challengeName: String) =
+    listOf(CORRECT_ANSWERS, NO_AUTH, id, languageName, groupName, challengeName).joinToString("|")
+
   fun challengeKey(languageName: String, groupName: String, challengeName: String) =
     listOf(CHALLENGE_ANSWERS, NO_AUTH, id, languageName, groupName, challengeName).joinToString("|")
 

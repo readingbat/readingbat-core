@@ -22,6 +22,7 @@ import com.github.pambrose.common.util.join
 import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.ChallengeGroup
 import com.github.readingbat.dsl.ReadingBatContent
+import com.github.readingbat.misc.BrowserSession
 import com.github.readingbat.misc.CSSNames.funcItem
 import com.github.readingbat.misc.CSSNames.tabs
 import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
@@ -34,7 +35,16 @@ import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 import redis.clients.jedis.Jedis
 
+internal fun Challenge.isCorrect(redis: Jedis, userId: UserId?, browserSession: BrowserSession?): Boolean {
+  val correctAnswersKey =
+    userId?.correctAnswersKey(languageName, groupName, challengeName)
+      ?: browserSession?.correctAnswersKey(languageName, groupName, challengeName)
+      ?: ""
+  return if (correctAnswersKey.isNotEmpty()) redis.get(correctAnswersKey)?.toBoolean() == true else false
+}
+
 internal fun challengeGroupPage(principal: UserPrincipal?,
+                                browserSession: BrowserSession?,
                                 loginAttempt: Boolean,
                                 content: ReadingBatContent,
                                 challengeGroup: ChallengeGroup<*>) =
@@ -48,10 +58,7 @@ internal fun challengeGroupPage(principal: UserPrincipal?,
 
       fun TR.funcCall(redis: Jedis, userId: UserId?, challenge: Challenge) {
         val challengeName = challenge.challengeName
-        val correctAnswersKey = userId?.correctAnswersKey(languageName, groupName, challengeName) ?: ""
-
-        val allCorrect =
-          if (correctAnswersKey.isNotEmpty()) redis.get(correctAnswersKey)?.toBoolean() == true else false
+        val allCorrect = challenge.isCorrect(redis, userId, browserSession)
 
         td(classes = funcItem) {
           img { src = "$STATIC_ROOT/${if (allCorrect) "green" else "white"}-check.jpg" }

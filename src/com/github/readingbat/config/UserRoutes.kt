@@ -19,7 +19,6 @@ package com.github.readingbat.config
 
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.AuthRoutes.LOGOUT
-import com.github.readingbat.misc.BrowserSession
 import com.github.readingbat.misc.CheckAnswers.checkUserAnswers
 import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
 import com.github.readingbat.misc.Constants.ICONS
@@ -51,7 +50,6 @@ import io.ktor.routing.Routing
 import io.ktor.routing.get
 import io.ktor.routing.post
 import io.ktor.sessions.clear
-import io.ktor.sessions.get
 import io.ktor.sessions.sessions
 
 internal fun Routing.userRoutes(content: ReadingBatContent) {
@@ -60,7 +58,7 @@ internal fun Routing.userRoutes(content: ReadingBatContent) {
 
   get(CHALLENGE_ROOT) { redirectTo { defaultTab(content) } }
 
-  post(CHECK_ANSWERS_ROOT) { checkUserAnswers(content, retrievePrincipal(), call.sessions.get<BrowserSession>()) }
+  post(CHECK_ANSWERS_ROOT) { checkUserAnswers(content, retrievePrincipal()) }
 
   get(CREATE_ACCOUNT) { respondWith { createAccountPage(content, "", "", queryParam(RETURN_PATH) ?: "/") } }
 

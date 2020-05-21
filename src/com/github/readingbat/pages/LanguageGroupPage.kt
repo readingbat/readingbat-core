@@ -21,16 +21,19 @@ import com.github.pambrose.common.util.join
 import com.github.readingbat.dsl.ChallengeGroup
 import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.dsl.ReadingBatContent
+import com.github.readingbat.misc.*
 import com.github.readingbat.misc.CSSNames.funcItem
 import com.github.readingbat.misc.CSSNames.groupChoice
 import com.github.readingbat.misc.CSSNames.groupItemSrc
 import com.github.readingbat.misc.CSSNames.tabs
 import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
-import com.github.readingbat.misc.UserPrincipal
+import com.github.readingbat.misc.Constants.STATIC_ROOT
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
+import redis.clients.jedis.Jedis
 
 internal fun languageGroupPage(principal: UserPrincipal?,
+                               browserSession: BrowserSession?,
                                loginAttempt: Boolean,
                                content: ReadingBatContent,
                                languageType: LanguageType,
@@ -39,9 +42,38 @@ internal fun languageGroupPage(principal: UserPrincipal?,
     .html {
       val languageName = languageType.lowerName
 
-      head {
-        headDefault(content)
+      fun TR.groupItem(redis: Jedis, userId: UserId?, challengeGroup: ChallengeGroup<*>) {
+        val groupName = challengeGroup.groupName
+        val parsedDescription = challengeGroup.parsedDescription
+        val challenges = challengeGroup.challenges
+
+        val maxCnt = 12
+        var cnt = 0
+        var maxFound = false
+        for (challenge in challenges) {
+          if (challenge.isCorrect(redis, userId, browserSession)) cnt++
+          if (cnt == maxCnt + 1) {
+            maxFound = true
+            break
+          }
+        }
+
+        td(classes = funcItem) {
+          div(classes = groupItemSrc) {
+            a(classes = groupChoice) { href = listOf(CHALLENGE_ROOT, languageName, groupName).join(); +groupName }
+            br { rawHtml(if (parsedDescription.isNotBlank()) parsedDescription else Entities.nbsp.text) }
+            if (cnt == 0) {
+              img { src = "$STATIC_ROOT/white-check.jpg" }
+            }
+            else {
+              repeat(if (maxFound) cnt - 1 else cnt) { img { src = "$STATIC_ROOT/green-check.jpg" } }
+              if (maxFound) rawHtml("&hellip;")
+            }
+          }
+        }
       }
+
+      head { headDefault(content) }
 
       body {
         bodyHeader(principal, loginAttempt, content, languageType, languageName, "Welcome to ReadingBat.")
@@ -52,11 +84,15 @@ internal fun languageGroupPage(principal: UserPrincipal?,
             val size = groups.size
             val rows = size.rows(cols)
 
-            (0 until rows).forEach { i ->
-              tr {
-                groups[i].also { group -> groupItem(languageName, group) }
-                groups.elementAtOrNull(i + rows)?.also { groupItem(languageName, it) } ?: td {}
-                groups.elementAtOrNull(i + (2 * rows))?.also { groupItem(languageName, it) } ?: td {}
+            RedisPool.redisAction { redis ->
+              val userId = lookupUserId(redis, principal)
+
+              (0 until rows).forEach { i ->
+                tr {
+                  groups[i].also { group -> groupItem(redis, userId, group) }
+                  groups.elementAtOrNull(i + rows)?.also { groupItem(redis, userId, it) } ?: td {}
+                  groups.elementAtOrNull(i + (2 * rows))?.also { groupItem(redis, userId, it) } ?: td {}
+                }
               }
             }
           }
@@ -64,14 +100,3 @@ internal fun languageGroupPage(principal: UserPrincipal?,
       }
     }
 
-private fun TR.groupItem(prefix: String, challengeGroup: ChallengeGroup<*>) {
-  val groupName = challengeGroup.groupName
-  val parsedDescription = challengeGroup.parsedDescription
-
-  td(classes = funcItem) {
-    div(classes = groupItemSrc) {
-      a(classes = groupChoice) { href = listOf(CHALLENGE_ROOT, prefix, groupName).join(); +groupName }
-      br { rawHtml(if (parsedDescription.isNotBlank()) parsedDescription else Entities.nbsp.text) }
-    }
-  }
-}

@@ -35,6 +35,8 @@ import com.github.readingbat.misc.RedisPool.redisAction
 import io.ktor.application.call
 import io.ktor.request.receiveParameters
 import io.ktor.response.respondText
+import io.ktor.sessions.get
+import io.ktor.sessions.sessions
 import kotlinx.coroutines.delay
 import mu.KLogging
 import redis.clients.jedis.Jedis
@@ -73,9 +75,7 @@ object CheckAnswers : KLogging() {
   private fun String.isJavaBoolean() = this == "true" || this == "false"
   private fun String.isPythonBoolean() = this == "True" || this == "False"
 
-  internal suspend fun PipelineCall.checkUserAnswers(content: ReadingBatContent,
-                                                     principal: UserPrincipal?,
-                                                     browserSession: BrowserSession?) {
+  internal suspend fun PipelineCall.checkUserAnswers(content: ReadingBatContent, principal: UserPrincipal?) {
     val params = call.receiveParameters()
     val compareMap = params.entries().map { it.key to it.value[0] }.toMap()
     val languageName = compareMap[langSrc] ?: throw InvalidConfigurationException("Missing language")
@@ -87,6 +87,7 @@ object CheckAnswers : KLogging() {
     val funcInfo = challenge.funcInfo(content)
     val kotlinScriptEngine by lazy { KotlinScript() }
     val pythonScriptEngine by lazy { PythonScript() }
+    val browserSession by lazy { call.sessions.get<BrowserSession>() }
 
     fun checkWithAnswer(isJvm: Boolean, userResp: String, answer: String) =
       try {
@@ -146,7 +147,11 @@ object CheckAnswers : KLogging() {
       val userId = lookupUserId(redis, principal)
 
       // Save if all answers were correct
-      val correctAnswersKey = userId?.correctAnswersKey(languageName, groupName, challengeName) ?: ""
+      val correctAnswersKey =
+        userId?.correctAnswersKey(languageName, groupName, challengeName)
+          ?: browserSession?.correctAnswersKey(languageName, groupName, challengeName)
+          ?: ""
+
       if (correctAnswersKey.isNotEmpty()) {
         val allCorrect = results.all { it.correct }
         redis.set(correctAnswersKey, allCorrect.toString())

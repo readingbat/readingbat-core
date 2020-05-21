@@ -43,62 +43,75 @@ import io.ktor.sessions.get
 import io.ktor.sessions.sessions
 
 internal fun Routing.locations(content: ReadingBatContent) {
-  get<Language> { language -> language(retrievePrincipal(), false, content, language) }
-  get<Language.Group> { groupChallenge -> group(retrievePrincipal(), false, content, groupChallenge) }
-  get<Language.Group.Challenge> { gc -> challenge(retrievePrincipal(), false, content, gc) }
-  get<PlaygroundRequest> { request -> playground(retrievePrincipal(), false, content, request) }
+  get<Language> { language -> language(false, content, language) }
+  get<Language.Group> { groupChallenge -> group(false, content, groupChallenge) }
+  get<Language.Group.Challenge> { gc -> challenge(false, content, gc) }
+  get<PlaygroundRequest> { request -> playground(false, content, request) }
 
   authenticate(FORM) {
-    post<Language> { language -> language(assignPrincipal(), true, content, language) }
-    post<Language.Group> { languageGroup -> group(assignPrincipal(), true, content, languageGroup) }
-    post<Language.Group.Challenge> { gc -> challenge(assignPrincipal(), true, content, gc) }
-    post<PlaygroundRequest> { request -> playground(assignPrincipal(), true, content, request) }
+    post<Language> { language -> language(true, content, language) }
+    post<Language.Group> { languageGroup -> group(true, content, languageGroup) }
+    post<Language.Group.Challenge> { gc -> challenge(true, content, gc) }
+    post<PlaygroundRequest> { request -> playground(true, content, request) }
   }
 }
 
-suspend fun PipelineCall.language(principal: UserPrincipal?,
-                                  loginAttempt: Boolean,
+fun PipelineCall.fetchPrincipal(loginAttempt: Boolean): UserPrincipal? =
+  if (loginAttempt) assignPrincipal() else retrievePrincipal()
+
+suspend fun PipelineCall.language(loginAttempt: Boolean,
                                   content: ReadingBatContent,
                                   lang: Language) =
   respondWith {
     content.checkLanguage(lang.languageType)
     val languageGroup = content.findLanguage(lang.languageType)
-    languageGroupPage(principal,
+    val browserSession = call.sessions.get<BrowserSession>()
+    languageGroupPage(fetchPrincipal(loginAttempt),
+                      browserSession,
                       loginAttempt,
                       content,
                       lang.languageType,
                       languageGroup.challengeGroups)
   }
 
-suspend fun PipelineCall.group(principal: UserPrincipal?,
-                               loginAttempt: Boolean,
+suspend fun PipelineCall.group(loginAttempt: Boolean,
                                content: ReadingBatContent,
                                group: Language.Group) =
   respondWith {
     content.checkLanguage(group.languageType)
     val challengeGroup = content.findGroup(group.languageType, group.groupName)
-    challengeGroupPage(principal, loginAttempt, content, challengeGroup)
+    val browserSession = call.sessions.get<BrowserSession>()
+    challengeGroupPage(fetchPrincipal(loginAttempt),
+                       browserSession,
+                       loginAttempt,
+                       content,
+                       challengeGroup)
   }
 
-suspend fun PipelineCall.challenge(principal: UserPrincipal?,
-                                   loginAttempt: Boolean,
+suspend fun PipelineCall.challenge(loginAttempt: Boolean,
                                    content: ReadingBatContent,
                                    gc: Language.Group.Challenge) =
   respondWith {
     registerBrowserSession()
     content.checkLanguage(gc.languageType)
     val challenge = content.findChallenge(gc.languageType, gc.groupName, gc.challengeName)
-    val clientSession = call.sessions.get<BrowserSession>()
-    challengePage(principal, loginAttempt, content, challenge, clientSession)
+    val browserSession = call.sessions.get<BrowserSession>()
+    challengePage(fetchPrincipal(loginAttempt),
+                  browserSession,
+                  loginAttempt,
+                  content,
+                  challenge)
   }
 
-suspend fun PipelineCall.playground(principal: UserPrincipal?,
-                                    loginAttempt: Boolean,
+suspend fun PipelineCall.playground(loginAttempt: Boolean,
                                     content: ReadingBatContent,
                                     request: PlaygroundRequest) =
   respondWith {
     val challenge = content.findLanguage(Kotlin).findChallenge(request.groupName, request.challengeName)
-    playgroundPage(principal, loginAttempt, content, challenge)
+    playgroundPage(fetchPrincipal(loginAttempt),
+                   loginAttempt,
+                   content,
+                   challenge)
   }
 
 

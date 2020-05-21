@@ -51,10 +51,10 @@ private val logger = KotlinLogging.logger {}
 private const val spinnerCss = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
 
 internal fun challengePage(principal: UserPrincipal?,
+                           browserSession: BrowserSession?,
                            loginAttempt: Boolean,
                            content: ReadingBatContent,
-                           challenge: Challenge,
-                           browserSession: BrowserSession?) =
+                           challenge: Challenge) =
   createHTML()
     .html {
       val languageType = challenge.languageType
