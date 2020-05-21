@@ -27,7 +27,9 @@ import com.github.readingbat.misc.CSSNames.groupChoice
 import com.github.readingbat.misc.CSSNames.groupItemSrc
 import com.github.readingbat.misc.CSSNames.tabs
 import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
+import com.github.readingbat.misc.Constants.GREEN_CHECK
 import com.github.readingbat.misc.Constants.STATIC_ROOT
+import com.github.readingbat.misc.Constants.WHITE_CHECK
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 import redis.clients.jedis.Jedis
@@ -63,10 +65,10 @@ internal fun languageGroupPage(principal: UserPrincipal?,
             a(classes = groupChoice) { href = listOf(CHALLENGE_ROOT, languageName, groupName).join(); +groupName }
             br { rawHtml(if (parsedDescription.isNotBlank()) parsedDescription else Entities.nbsp.text) }
             if (cnt == 0) {
-              img { src = "$STATIC_ROOT/white-check.jpg" }
+              img { src = "$STATIC_ROOT/$WHITE_CHECK" }
             }
             else {
-              repeat(if (maxFound) cnt - 1 else cnt) { img { src = "$STATIC_ROOT/green-check.jpg" } }
+              repeat(if (maxFound) cnt - 1 else cnt) { img { src = "$STATIC_ROOT/$GREEN_CHECK" } }
               if (maxFound) rawHtml("&hellip;")
             }
           }

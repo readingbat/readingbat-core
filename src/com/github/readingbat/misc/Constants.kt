@@ -26,6 +26,8 @@ internal object Constants {
   const val STATIC_ROOT = "/static"
   const val CHALLENGE_ROOT = "/content"
   const val PLAYGROUND_ROOT = "/playground"
+  const val WHITE_CHECK = "white-check.jpg"
+  const val GREEN_CHECK = "green-check.jpg"
 }
 
 object Endpoints {

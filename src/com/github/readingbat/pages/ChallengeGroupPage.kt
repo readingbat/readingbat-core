@@ -26,7 +26,9 @@ import com.github.readingbat.misc.BrowserSession
 import com.github.readingbat.misc.CSSNames.funcItem
 import com.github.readingbat.misc.CSSNames.tabs
 import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
+import com.github.readingbat.misc.Constants.GREEN_CHECK
 import com.github.readingbat.misc.Constants.STATIC_ROOT
+import com.github.readingbat.misc.Constants.WHITE_CHECK
 import com.github.readingbat.misc.RedisPool.redisAction
 import com.github.readingbat.misc.UserId
 import com.github.readingbat.misc.UserPrincipal
@@ -61,7 +63,7 @@ internal fun challengeGroupPage(principal: UserPrincipal?,
         val allCorrect = challenge.isCorrect(redis, userId, browserSession)
 
         td(classes = funcItem) {
-          img { src = "$STATIC_ROOT/${if (allCorrect) "green" else "white"}-check.jpg" }
+          img { src = "$STATIC_ROOT/${if (allCorrect) GREEN_CHECK else WHITE_CHECK}" }
           a {
             style = "font-Size:110%; padding-left:2px;"
             href = listOf(CHALLENGE_ROOT, languageName, groupName, challengeName).join()
