@@ -17,6 +17,11 @@
 
 package com.github.readingbat.misc
 
+import com.github.pambrose.common.response.redirectTo
+import com.github.pambrose.common.response.respondWith
+import com.github.pambrose.common.util.isNotValidEmail
+import com.github.pambrose.common.util.newStringSalt
+import com.github.pambrose.common.util.sha256
 import com.github.readingbat.PipelineCall
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.Constants.RETURN_PATH
@@ -25,16 +30,13 @@ import com.github.readingbat.misc.Messages.EMPTY_EMAIL
 import com.github.readingbat.misc.Messages.EMPTY_PASWORD
 import com.github.readingbat.misc.Messages.INVALID_EMAIL
 import com.github.readingbat.misc.Messages.PASSWORD_TOO_SHORT
-import com.github.readingbat.misc.RedisPool.redisAction
+import com.github.readingbat.misc.RedisPool.withRedisPool
 import com.github.readingbat.pages.createAccountPage
-import com.github.readingbat.redirectTo
-import com.github.readingbat.respondWith
 import com.google.common.util.concurrent.RateLimiter
 import io.ktor.application.call
 import io.ktor.request.receiveParameters
 import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
-import java.util.regex.Pattern
 
 private val logger = KotlinLogging.logger {}
 
@@ -55,12 +57,12 @@ internal suspend fun PipelineCall.createAccount(content: ReadingBatContent) {
 
   when {
     username.isBlank() -> respondWith { createAccountPage(content, "", EMPTY_EMAIL, returnPath) }
-    !username.isValidEmail() -> respondWith { createAccountPage(content, username, INVALID_EMAIL, returnPath) }
+    username.isNotValidEmail() -> respondWith { createAccountPage(content, username, INVALID_EMAIL, returnPath) }
     password.isBlank() -> respondWith { createAccountPage(content, username, EMPTY_PASWORD, returnPath) }
     password.length < 6 -> respondWith { createAccountPage(content, username, PASSWORD_TOO_SHORT, returnPath) }
     password == "password" -> respondWith { createAccountPage(content, username, CLEVER_PASSWORD, returnPath) }
     else -> {
-      redisAction { redis ->
+      withRedisPool { redis ->
         runBlocking {
           // Check if username already exists
           val userIdKey = userIdKey(username)
@@ -98,15 +100,3 @@ internal suspend fun PipelineCall.createAccount(content: ReadingBatContent) {
 }
 
 private val createAccountLimiter = RateLimiter.create(2.0) // rate 2.0 is "2 permits per second"
-
-private val emailPattern by lazy {
-  Pattern.compile(
-    "^(([\\w-]+\\.)+[\\w-]+|([a-zA-Z]|[\\w-]{2,}))@"
-        + "((([0-1]?[0-9]{1,2}|25[0-5]|2[0-4][0-9])\\.([0-1]?"
-        + "[0-9]{1,2}|25[0-5]|2[0-4][0-9])\\."
-        + "([0-1]?[0-9]{1,2}|25[0-5]|2[0-4][0-9])\\.([0-1]?"
-        + "[0-9]{1,2}|25[0-5]|2[0-4][0-9]))|"
-        + "([a-zA-Z]+[\\w-]+\\.)+[a-zA-Z]{2,4})$")
-}
-
-private fun String.isValidEmail() = emailPattern.matcher(this).matches()

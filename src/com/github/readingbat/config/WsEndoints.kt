@@ -19,7 +19,7 @@ package com.github.readingbat.config
 
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.Endpoints.CLASSROOM
-import com.github.readingbat.misc.RedisPool.redisAction
+import com.github.readingbat.misc.RedisPool.withRedis
 import io.ktor.http.cio.websocket.CloseReason
 import io.ktor.http.cio.websocket.Frame
 import io.ktor.http.cio.websocket.close
@@ -49,7 +49,7 @@ internal fun Routing.wsEndpoints(content: ReadingBatContent) {
         }
 
         var i = 0
-        redisAction { redis ->
+        withRedis { redis ->
           redis.subscribe(object : JedisPubSub() {
             override fun onMessage(channel: String?, message: String?) {
               runBlocking {

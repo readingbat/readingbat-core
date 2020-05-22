@@ -26,9 +26,6 @@ import io.ktor.application.ApplicationCall
 import io.ktor.application.call
 import io.ktor.auth.principal
 import io.ktor.config.ApplicationConfigurationException
-import io.ktor.http.ContentType
-import io.ktor.response.respondRedirect
-import io.ktor.response.respondText
 import io.ktor.routing.routing
 import io.ktor.server.cio.CIO
 import io.ktor.server.engine.commandLineEnvironment
@@ -86,11 +83,6 @@ internal fun PipelineCall.assignPrincipal() =
   call.principal<UserPrincipal>().apply { if (this != null) call.sessions.set(this) }  // Set the cookie
 
 internal fun PipelineCall.queryParam(key: String): String? = call.request.queryParameters[key]
-
-internal suspend fun PipelineCall.respondWith(contentTye: ContentType = ContentType.Text.Html, block: () -> String) =
-  call.respondText(block.invoke(), contentTye)
-
-internal suspend fun PipelineCall.redirectTo(block: () -> String) = call.respondRedirect(block.invoke())
 
 internal class InvalidPathException(msg: String) : RuntimeException(msg)
 

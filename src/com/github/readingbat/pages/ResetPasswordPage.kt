@@ -36,7 +36,6 @@ internal fun resetPasswordPage(content: ReadingBatContent) =
           h2 {
             +"Reset Password"
           }
-
         }
       }
     }

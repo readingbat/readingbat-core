@@ -30,8 +30,8 @@ import com.github.readingbat.misc.Answers.challengeSrc
 import com.github.readingbat.misc.Answers.groupSrc
 import com.github.readingbat.misc.Answers.langSrc
 import com.github.readingbat.misc.CSSNames.userResp
-import com.github.readingbat.misc.RedisPool.gson
-import com.github.readingbat.misc.RedisPool.redisAction
+import com.github.readingbat.misc.RedisPool.withRedisPool
+import com.google.gson.Gson
 import io.ktor.application.call
 import io.ktor.request.receiveParameters
 import io.ktor.response.respondText
@@ -71,6 +71,8 @@ private data class ChallengeHistory(var argument: String,
 }
 
 object CheckAnswers : KLogging() {
+
+  private val gson = Gson()
 
   private fun String.isJavaBoolean() = this == "true" || this == "false"
   private fun String.isPythonBoolean() = this == "True" || this == "False"
@@ -143,7 +145,7 @@ object CheckAnswers : KLogging() {
     }
 
     // Save whether all the answers for the challenge were correct
-    redisAction { redis ->
+    withRedisPool { redis ->
       val userId = lookupUserId(redis, principal)
 
       // Save if all answers were correct
@@ -234,7 +236,7 @@ internal fun lookupUserId(redis: Jedis, principal: UserPrincipal?): UserId? {
 }
 
 fun main() {
-  redisAction { redis ->
+  withRedisPool { redis ->
     //redis.set("user|user1", "val1")
     //redis.set("user|user2", "val2")
 

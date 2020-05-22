@@ -17,6 +17,7 @@
 
 package com.github.readingbat.config
 
+import com.github.pambrose.common.response.respondWith
 import com.github.readingbat.PipelineCall
 import com.github.readingbat.assignPrincipal
 import com.github.readingbat.dsl.LanguageType.Companion.toLanguageType
@@ -30,7 +31,6 @@ import com.github.readingbat.pages.challengeGroupPage
 import com.github.readingbat.pages.challengePage
 import com.github.readingbat.pages.languageGroupPage
 import com.github.readingbat.pages.playgroundPage
-import com.github.readingbat.respondWith
 import com.github.readingbat.retrievePrincipal
 import io.ktor.auth.authenticate
 import io.ktor.locations.Location

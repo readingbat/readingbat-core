@@ -31,7 +31,7 @@ import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
 import com.github.readingbat.misc.Constants.GREEN_CHECK
 import com.github.readingbat.misc.Constants.STATIC_ROOT
 import com.github.readingbat.misc.Constants.WHITE_CHECK
-import com.github.readingbat.misc.RedisPool.redisAction
+import com.github.readingbat.misc.RedisPool.withRedisPool
 import com.github.readingbat.misc.UserId
 import com.github.readingbat.misc.lookupUserId
 import io.ktor.application.call
@@ -92,7 +92,7 @@ internal fun PipelineCall.challengeGroupPage(content: ReadingBatContent,
             val size = challenges.size
             val rows = size.rows(cols)
 
-            redisAction { redis ->
+            withRedisPool { redis ->
               val userId = lookupUserId(redis, principal)
 
               (0 until rows).forEach { i ->

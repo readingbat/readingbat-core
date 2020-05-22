@@ -17,7 +17,6 @@
 
 package com.github.readingbat.misc
 
-import com.google.gson.Gson
 import redis.clients.jedis.Jedis
 import redis.clients.jedis.JedisPool
 import redis.clients.jedis.JedisPoolConfig
@@ -25,19 +24,29 @@ import redis.clients.jedis.Protocol
 import java.net.URI
 
 object RedisPool {
-  private var redisURI: URI = URI(System.getenv(EnvVars.REDISTOGO_URL) ?: "redis://user:none@localhost:6379")
+  private val redisURI by lazy { URI(System.getenv(EnvVars.REDISTOGO_URL) ?: "redis://user:none@localhost:6379") }
+  private val colon = Regex(":")
+  private val password by lazy { redisURI.userInfo.split(colon, 2)[1] }
+
   var pool: JedisPool = JedisPool(JedisPoolConfig(),
                                   redisURI.host,
                                   redisURI.port,
                                   Protocol.DEFAULT_TIMEOUT,
-                                  redisURI.userInfo.split(Regex(":"), 2)[1])
+                                  password)
 
-  fun redisAction(block: (Jedis) -> Unit) {
-    pool.resource.use {
-      block.invoke(it)
+  fun withRedisPool(block: (Jedis) -> Unit) {
+    pool.resource.use { redis ->
+      block.invoke(redis)
     }
   }
 
-  val gson = Gson()
+  fun withRedis(block: (Jedis) -> Unit) {
+    Jedis(redisURI.host,
+          redisURI.port,
+          Protocol.DEFAULT_TIMEOUT).use { redis ->
+      redis.auth(password)
+      block.invoke(redis)
+    }
+  }
 }
 

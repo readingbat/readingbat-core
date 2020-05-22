@@ -17,6 +17,7 @@
 
 package com.github.readingbat.config
 
+import com.github.pambrose.common.util.sha256
 import com.github.pambrose.common.util.simpleClassName
 import com.github.readingbat.InvalidPathException
 import com.github.readingbat.misc.*
@@ -27,7 +28,7 @@ import com.github.readingbat.misc.Endpoints.CSS_NAME
 import com.github.readingbat.misc.Endpoints.FAV_ICON
 import com.github.readingbat.misc.EnvVars.PRODUCTION
 import com.github.readingbat.misc.EnvVars.REDIRECT_HOST_NAME
-import com.github.readingbat.misc.RedisPool.redisAction
+import com.github.readingbat.misc.RedisPool.withRedisPool
 import com.google.common.util.concurrent.RateLimiter
 import io.ktor.application.Application
 import io.ktor.application.call
@@ -153,8 +154,8 @@ private fun Sessions.Configuration.configureSessionIdCookie() {
 
 private fun Sessions.Configuration.configureAuthCookie() {
   cookie<UserPrincipal>(
-    // We set a cookie by this name upon login.
-    Cookies.AUTH_COOKIE
+    // We set a cookie by this name on login.
+    name = Cookies.AUTH_COOKIE
     //,
     // Stores session contents in memory...good for development only.
     //storage = SessionStorageMemory()
@@ -208,7 +209,7 @@ private fun Authentication.Configuration.configureFormAuth() {
     validate { cred: UserPasswordCredential ->
       var principal: UserPrincipal? = null
 
-      redisAction { redis ->
+      withRedisPool { redis ->
         val userIdKey = userIdKey(cred.name)
         val id = redis.get(userIdKey) ?: ""
         if (id.isNotEmpty()) {

@@ -84,10 +84,7 @@ internal fun createAccountPage(content: ReadingBatContent,
             method = FormMethod.post
             table {
               tr {
-                td {
-                  style = labelWidth
-                  label { +"Email (used as account id)" }
-                }
+                td { style = labelWidth; label { +"Email (used as account id)" } }
                 td {
                   input {
                     style = inputFs
@@ -99,10 +96,7 @@ internal fun createAccountPage(content: ReadingBatContent,
                 }
               }
               tr {
-                td {
-                  style = labelWidth
-                  label { +"Password" }
-                }
+                td { style = labelWidth; label { +"Password" } }
                 td {
                   input {
                     style = inputFs
