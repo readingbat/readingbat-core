@@ -42,9 +42,9 @@ fun PipelineCall.playgroundPage(content: ReadingBatContent,
   createHTML()
     .html {
       val languageType = challenge.languageType
-      val languageName = languageType.lowerName
       val groupName = challenge.groupName
       val challengeName = challenge.challengeName
+      val languageName = languageType.lowerName
       val funcInfo = challenge.funcInfo(content)
       val principal = fetchPrincipal(loginAttempt)
       val loginPath = listOf(languageName, groupName, challengeName).join()

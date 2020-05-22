@@ -15,7 +15,7 @@
  *
  */
 
-package com.github.readingbat.misc
+package com.github.readingbat.posts
 
 import com.github.pambrose.common.response.redirectTo
 import com.github.pambrose.common.response.respondWith
@@ -25,13 +25,17 @@ import com.github.pambrose.common.util.sha256
 import com.github.readingbat.PipelineCall
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.Constants.RETURN_PATH
-import com.github.readingbat.misc.Messages.CLEVER_PASSWORD
-import com.github.readingbat.misc.Messages.EMPTY_EMAIL
-import com.github.readingbat.misc.Messages.EMPTY_PASWORD
-import com.github.readingbat.misc.Messages.INVALID_EMAIL
-import com.github.readingbat.misc.Messages.PASSWORD_TOO_SHORT
+import com.github.readingbat.misc.FormFields.PASSWORD
+import com.github.readingbat.misc.FormFields.USERNAME
 import com.github.readingbat.misc.RedisUtils.withRedisPool
+import com.github.readingbat.misc.UserId
+import com.github.readingbat.misc.userIdKey
 import com.github.readingbat.pages.createAccountPage
+import com.github.readingbat.posts.Messages.CLEVER_PASSWORD
+import com.github.readingbat.posts.Messages.EMPTY_EMAIL
+import com.github.readingbat.posts.Messages.EMPTY_PASWORD
+import com.github.readingbat.posts.Messages.INVALID_EMAIL
+import com.github.readingbat.posts.Messages.PASSWORD_TOO_SHORT
 import com.google.common.util.concurrent.RateLimiter
 import io.ktor.application.call
 import io.ktor.request.receiveParameters
@@ -50,8 +54,8 @@ private object Messages {
 
 internal suspend fun PipelineCall.createAccount(content: ReadingBatContent) {
   val parameters = call.receiveParameters()
-  val username = parameters[FormFields.USERNAME] ?: ""
-  val password = parameters[FormFields.PASSWORD] ?: ""
+  val username = parameters[USERNAME] ?: ""
+  val password = parameters[PASSWORD] ?: ""
   val returnPath = parameters[RETURN_PATH] ?: "/"
   logger.debug { "Return path = $returnPath" }
 
@@ -80,17 +84,17 @@ internal suspend fun PipelineCall.createAccount(content: ReadingBatContent) {
               // userId -> salt
               // userId -> sha256-encoded password
 
-              redis.multi().apply {
+              redis.multi().also { tx ->
                 val userId = UserId()
                 val salt = newStringSalt()
                 val digest = password.sha256(salt)
 
                 logger.info { "Created user $username ${userId.id} $salt $digest" }
 
-                set(userIdKey, userId.id)
-                set(userId.saltKey(), salt)
-                set(userId.passwordKey(), digest)
-                exec()
+                tx.set(userIdKey, userId.id)
+                tx.set(userId.saltKey(), salt)
+                tx.set(userId.passwordKey(), digest)
+                tx.exec()
               }
 
               createAccountLimiter.acquire() // may wait

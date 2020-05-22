@@ -45,7 +45,7 @@ import com.github.readingbat.misc.Constants.STATIC_ROOT
 import com.github.readingbat.misc.RedisUtils.withRedisPool
 import com.github.readingbat.misc.UserId
 import com.github.readingbat.misc.checkAnswersScript
-import com.github.readingbat.misc.lookupUserId
+import com.github.readingbat.posts.lookupUserId
 import io.ktor.application.call
 import io.ktor.http.ContentType.Text.CSS
 import io.ktor.sessions.get

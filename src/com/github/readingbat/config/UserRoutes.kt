@@ -21,7 +21,6 @@ import com.github.pambrose.common.response.redirectTo
 import com.github.pambrose.common.response.respondWith
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.AuthRoutes.LOGOUT
-import com.github.readingbat.misc.CheckAnswers.checkUserAnswers
 import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
 import com.github.readingbat.misc.Constants.ICONS
 import com.github.readingbat.misc.Constants.RETURN_PATH
@@ -37,9 +36,11 @@ import com.github.readingbat.misc.Endpoints.PREFS
 import com.github.readingbat.misc.Endpoints.PRIVACY
 import com.github.readingbat.misc.Endpoints.RESET_PASSWORD
 import com.github.readingbat.misc.UserPrincipal
-import com.github.readingbat.misc.createAccount
 import com.github.readingbat.misc.cssContent
 import com.github.readingbat.pages.*
+import com.github.readingbat.posts.CheckAnswers.checkUserAnswers
+import com.github.readingbat.posts.changePrefs
+import com.github.readingbat.posts.createAccount
 import com.github.readingbat.queryParam
 import com.github.readingbat.retrievePrincipal
 import io.ktor.application.call
@@ -64,6 +65,10 @@ internal fun Routing.userRoutes(content: ReadingBatContent) {
 
   post(CREATE_ACCOUNT) { createAccount(content) }
 
+  get(PREFS) { respondWith { prefsPage(content, queryParam(RETURN_PATH) ?: "/") } }
+
+  post(PREFS) { changePrefs(content) }
+
   get(PRIVACY) { respondWith { privacyPage(content, queryParam(RETURN_PATH) ?: "") } }
 
   get(ABOUT) { respondWith { aboutPage(content) } }
@@ -71,8 +76,6 @@ internal fun Routing.userRoutes(content: ReadingBatContent) {
   get(CLASSROOM) { respondWith { classroomPage(content) } }
 
   get(RESET_PASSWORD) { respondWith { resetPasswordPage(content) } }
-
-  get(PREFS) { respondWith { prefsPage(content, queryParam(RETURN_PATH) ?: "/") } }
 
   get(LOGOUT) {
     // Purge UserPrincipal from cookie data

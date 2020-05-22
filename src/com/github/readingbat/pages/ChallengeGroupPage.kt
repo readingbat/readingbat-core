@@ -33,7 +33,7 @@ import com.github.readingbat.misc.Constants.STATIC_ROOT
 import com.github.readingbat.misc.Constants.WHITE_CHECK
 import com.github.readingbat.misc.RedisUtils.withRedisPool
 import com.github.readingbat.misc.UserId
-import com.github.readingbat.misc.lookupUserId
+import com.github.readingbat.posts.lookupUserId
 import io.ktor.application.call
 import io.ktor.sessions.get
 import io.ktor.sessions.sessions

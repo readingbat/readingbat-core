@@ -15,7 +15,7 @@
  *
  */
 
-package com.github.readingbat.misc
+package com.github.readingbat.posts
 
 import com.github.pambrose.common.script.KotlinScript
 import com.github.pambrose.common.script.PythonScript
@@ -29,8 +29,12 @@ import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.Answers.challengeSrc
 import com.github.readingbat.misc.Answers.groupSrc
 import com.github.readingbat.misc.Answers.langSrc
+import com.github.readingbat.misc.BrowserSession
 import com.github.readingbat.misc.CSSNames.userResp
 import com.github.readingbat.misc.RedisUtils.withRedisPool
+import com.github.readingbat.misc.UserId
+import com.github.readingbat.misc.UserPrincipal
+import com.github.readingbat.misc.userIdKey
 import com.google.gson.Gson
 import io.ktor.application.call
 import io.ktor.request.receiveParameters
@@ -133,7 +137,10 @@ object CheckAnswers : KLogging() {
         ChallengeResults(arguments = funcInfo.arguments[i],
                          userResponse = userResponse,
                          answered = answered,
-                         correct = if (answered) checkWithAnswer(isJvm, userResponse, answer) else false)
+                         correct = if (answered) checkWithAnswer(isJvm,
+                                                                 userResponse,
+                                                                 answer)
+                         else false)
       }
 
     val answerMap = mutableMapOf<String, String>()
@@ -183,7 +190,8 @@ object CheckAnswers : KLogging() {
 
           if (redis != null && argumentKey.isNotEmpty()) {
             val history =
-              gson.fromJson(redis[argumentKey], ChallengeHistory::class.java) ?: ChallengeHistory(result.arguments)
+              gson.fromJson(redis[argumentKey], ChallengeHistory::class.java) ?: ChallengeHistory(
+                result.arguments)
             logger.debug { "Before: $history" }
             history.apply { if (result.correct) markCorrect() else markIncorrect(result.userResponse) }
             logger.debug { "After: $history" }

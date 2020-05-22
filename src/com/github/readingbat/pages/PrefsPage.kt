@@ -22,7 +22,7 @@ import com.github.readingbat.misc.Constants.BACK_PATH
 import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.Endpoints.PREFS
 import com.github.readingbat.misc.Endpoints.PRIVACY
-import com.github.readingbat.misc.FormFields
+import com.github.readingbat.misc.PageUtils.hideShowButton
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 
@@ -39,6 +39,8 @@ internal fun prefsPage(content: ReadingBatContent, returnPath: String) =
 
         val labelWidth = "width: 250;"
         val formName = "pform"
+        val oldpw = "oldpw"
+        val newpw = "newpw"
 
         div {
           h2 { +"ReadingBat Prefs" }
@@ -47,7 +49,7 @@ internal fun prefsPage(content: ReadingBatContent, returnPath: String) =
           p { +"Password must contain at least 6 characters" }
           form {
             name = formName
-            action = "/pref"
+            action = PREFS
             method = FormMethod.post
             input {
               type = InputType.hidden
@@ -56,19 +58,14 @@ internal fun prefsPage(content: ReadingBatContent, returnPath: String) =
             }
             table {
               tr {
+                td { style = labelWidth; label { +"Current Password" } }
+                td { input { type = InputType.password; size = "42"; name = oldpw; value = "" } }
+                td { hideShowButton(formName, oldpw) }
+              }
+              tr {
                 td { style = labelWidth; label { +"New Password" } }
-                td { input { type = InputType.password; size = "42"; name = "pw1"; value = "" } }
-                td {
-                  button {
-                    style = "font-size:85%;"
-                    onClick = """
-                     var pw=document.$formName.${FormFields.PASSWORD}.type=="password"; 
-                     document.$formName.${FormFields.PASSWORD}.type=pw?"text":"password"; 
-                     return false;
-                    """.trimIndent()
-                    +"show/hide"
-                  }
-                }
+                td { input { type = InputType.password; size = "42"; name = newpw; value = "" } }
+                td { hideShowButton(formName, newpw) }
               }
               tr {
                 td {}
@@ -79,7 +76,7 @@ internal fun prefsPage(content: ReadingBatContent, returnPath: String) =
           h3 { +"Teacher Share" }
           p { +"Enter the email address of the teacher account. This will make your done page and solution code visible to that account." }
           form {
-            action = "/pref"
+            action = PREFS
             method = FormMethod.post
             input {
               type = InputType.hidden
@@ -100,7 +97,7 @@ internal fun prefsPage(content: ReadingBatContent, returnPath: String) =
           h3 { +"Memo" }
           p { +"Generally this is left blank. A teacher may ask you to fill this in." }
           form {
-            action = "/pref"
+            action = PREFS
             method = FormMethod.post
             input { type = InputType.hidden; name = "date"; value = "963892736" }
             table {
@@ -120,7 +117,7 @@ internal fun prefsPage(content: ReadingBatContent, returnPath: String) =
 
           p { +"Permanently delete account - cannot be undone" }
           form {
-            action = "/pref"
+            action = PREFS
             method = FormMethod.post
             onSubmit = "return formcheck()"
             input { type = InputType.hidden; name = "date"; value = "963892736" }

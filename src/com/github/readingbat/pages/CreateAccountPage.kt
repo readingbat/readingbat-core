@@ -22,7 +22,8 @@ import com.github.readingbat.misc.Constants.BACK_PATH
 import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.Endpoints.CREATE_ACCOUNT
 import com.github.readingbat.misc.Endpoints.PRIVACY
-import com.github.readingbat.misc.FormFields
+import com.github.readingbat.misc.FormFields.USERNAME
+import com.github.readingbat.misc.PageUtils.hideShowButton
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 
@@ -77,6 +78,7 @@ internal fun createAccountPage(content: ReadingBatContent,
           val inputFs = "font-size: 95%;"
           val labelWidth = "width: 250;"
           val formName = "pform"
+          val newpw = "newpw"
 
           form {
             name = formName
@@ -90,7 +92,7 @@ internal fun createAccountPage(content: ReadingBatContent,
                     style = inputFs
                     type = InputType.text
                     size = "42"
-                    name = FormFields.USERNAME
+                    name = USERNAME
                     value = defaultUserName
                   }
                 }
@@ -102,22 +104,15 @@ internal fun createAccountPage(content: ReadingBatContent,
                     style = inputFs
                     type = InputType.password
                     size = "42"
-                    name = FormFields.PASSWORD
+                    name = newpw
                     value = ""
                     onKeyPress = "clickCreate(event);"
                   }
                 }
                 td {
-                  button {
-                    style = "font-size:85%;"
-                    onClick = """
-                     var pw=document.$formName.${FormFields.PASSWORD}.type=="password"; 
-                     document.$formName.${FormFields.PASSWORD}.type=pw?"text":"password"; 
-                     return false;
-                    """.trimIndent()
-                    +"show/hide"
-                  }
+                  hideShowButton(formName, newpw)
                 }
+
               }
               hiddenInput { name = RETURN_PATH; value = returnPath }
               tr {
