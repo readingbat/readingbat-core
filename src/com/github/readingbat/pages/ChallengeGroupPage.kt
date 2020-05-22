@@ -19,6 +19,8 @@ package com.github.readingbat.pages
 
 import com.github.pambrose.common.util.decode
 import com.github.pambrose.common.util.join
+import com.github.readingbat.PipelineCall
+import com.github.readingbat.config.fetchPrincipal
 import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.ChallengeGroup
 import com.github.readingbat.dsl.ReadingBatContent
@@ -31,8 +33,10 @@ import com.github.readingbat.misc.Constants.STATIC_ROOT
 import com.github.readingbat.misc.Constants.WHITE_CHECK
 import com.github.readingbat.misc.RedisPool.redisAction
 import com.github.readingbat.misc.UserId
-import com.github.readingbat.misc.UserPrincipal
 import com.github.readingbat.misc.lookupUserId
+import io.ktor.application.call
+import io.ktor.sessions.get
+import io.ktor.sessions.sessions
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 import redis.clients.jedis.Jedis
@@ -45,17 +49,17 @@ internal fun Challenge.isCorrect(redis: Jedis, userId: UserId?, browserSession: 
   return if (correctAnswersKey.isNotEmpty()) redis.get(correctAnswersKey)?.toBoolean() == true else false
 }
 
-internal fun challengeGroupPage(principal: UserPrincipal?,
-                                browserSession: BrowserSession?,
-                                loginAttempt: Boolean,
-                                content: ReadingBatContent,
-                                challengeGroup: ChallengeGroup<*>) =
+internal fun PipelineCall.challengeGroupPage(content: ReadingBatContent,
+                                             challengeGroup: ChallengeGroup<*>,
+                                             loginAttempt: Boolean) =
   createHTML()
     .html {
       val languageType = challengeGroup.languageType
       val languageName = languageType.lowerName
       val groupName = challengeGroup.groupName
       val challenges = challengeGroup.challenges
+      val principal = fetchPrincipal(loginAttempt)
+      val browserSession = call.sessions.get<BrowserSession>()
       val loginPath = listOf(languageName, groupName).join()
 
       fun TR.funcCall(redis: Jedis, userId: UserId?, challenge: Challenge) {

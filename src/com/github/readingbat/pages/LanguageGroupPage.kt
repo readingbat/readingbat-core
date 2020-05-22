@@ -18,10 +18,12 @@
 package com.github.readingbat.pages
 
 import com.github.pambrose.common.util.join
+import com.github.readingbat.PipelineCall
+import com.github.readingbat.config.fetchPrincipal
 import com.github.readingbat.dsl.ChallengeGroup
 import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.misc.*
+import com.github.readingbat.misc.BrowserSession
 import com.github.readingbat.misc.CSSNames.funcItem
 import com.github.readingbat.misc.CSSNames.groupChoice
 import com.github.readingbat.misc.CSSNames.groupItemSrc
@@ -30,19 +32,25 @@ import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
 import com.github.readingbat.misc.Constants.GREEN_CHECK
 import com.github.readingbat.misc.Constants.STATIC_ROOT
 import com.github.readingbat.misc.Constants.WHITE_CHECK
+import com.github.readingbat.misc.RedisPool
+import com.github.readingbat.misc.UserId
+import com.github.readingbat.misc.lookupUserId
+import io.ktor.application.call
+import io.ktor.sessions.get
+import io.ktor.sessions.sessions
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 import redis.clients.jedis.Jedis
 
-internal fun languageGroupPage(principal: UserPrincipal?,
-                               browserSession: BrowserSession?,
-                               loginAttempt: Boolean,
-                               content: ReadingBatContent,
-                               languageType: LanguageType,
-                               groups: List<ChallengeGroup<*>>) =
+internal fun PipelineCall.languageGroupPage(content: ReadingBatContent,
+                                            languageType: LanguageType,
+                                            loginAttempt: Boolean) =
   createHTML()
     .html {
       val languageName = languageType.lowerName
+      val groups = content.findLanguage(languageType).challengeGroups
+      val principal = fetchPrincipal(loginAttempt)
+      val browserSession = call.sessions.get<BrowserSession>()
 
       fun TR.groupItem(redis: Jedis, userId: UserId?, challengeGroup: ChallengeGroup<*>) {
         val groupName = challengeGroup.groupName

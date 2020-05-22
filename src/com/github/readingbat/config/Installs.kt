@@ -77,7 +77,7 @@ internal fun Application.installs() {
       host = hostname
       permanentRedirect = false
 
-      excludePrefix(STATIC_ROOT + "/")
+      excludePrefix("$STATIC_ROOT/")
       excludeSuffix(CSS_NAME)
       excludeSuffix(FAV_ICON)
     }

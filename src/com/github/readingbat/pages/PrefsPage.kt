@@ -18,10 +18,15 @@
 package com.github.readingbat.pages
 
 import com.github.readingbat.dsl.ReadingBatContent
+import com.github.readingbat.misc.Constants.BACK_PATH
+import com.github.readingbat.misc.Constants.RETURN_PATH
+import com.github.readingbat.misc.Endpoints.PREFS
+import com.github.readingbat.misc.Endpoints.PRIVACY
+import com.github.readingbat.misc.FormFields
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 
-internal fun prefsPage(content: ReadingBatContent) =
+internal fun prefsPage(content: ReadingBatContent, returnPath: String) =
   createHTML()
     .html {
 
@@ -32,8 +37,99 @@ internal fun prefsPage(content: ReadingBatContent) =
       body {
         bodyTitle()
 
+        val labelWidth = "width: 250;"
+        val formName = "pform"
+
         div {
           h2 { +"ReadingBat Prefs" }
+
+          h3 { +"Change password" }
+          p { +"Password must contain at least 6 characters" }
+          form {
+            name = formName
+            action = "/pref"
+            method = FormMethod.post
+            input {
+              type = InputType.hidden
+              name = "date"
+              value = "963892736"
+            }
+            table {
+              tr {
+                td { style = labelWidth; label { +"New Password" } }
+                td { input { type = InputType.password; size = "42"; name = "pw1"; value = "" } }
+                td {
+                  button {
+                    style = "font-size:85%;"
+                    onClick = """
+                     var pw=document.$formName.${FormFields.PASSWORD}.type=="password"; 
+                     document.$formName.${FormFields.PASSWORD}.type=pw?"text":"password"; 
+                     return false;
+                    """.trimIndent()
+                    +"show/hide"
+                  }
+                }
+              }
+              tr {
+                td {}
+                td { input { type = InputType.submit; name = "dosavepw"; value = "Update Password" } }
+              }
+            }
+          }
+          h3 { +"Teacher Share" }
+          p { +"Enter the email address of the teacher account. This will make your done page and solution code visible to that account." }
+          form {
+            action = "/pref"
+            method = FormMethod.post
+            input {
+              type = InputType.hidden
+              name = "date"
+              value = "963892736"
+            }
+            table {
+              tr {
+                td { style = labelWidth; label { +"Share To" } }
+                td { input { type = InputType.text; size = "42"; name = "pdt"; value = "" } }
+              }
+              tr {
+                td {}
+                td { input { type = InputType.submit; name = "dosavepdt"; value = "Share" } }
+              }
+            }
+          }
+          h3 { +"Memo" }
+          p { +"Generally this is left blank. A teacher may ask you to fill this in." }
+          form {
+            action = "/pref"
+            method = FormMethod.post
+            input { type = InputType.hidden; name = "date"; value = "963892736" }
+            table {
+              tr {
+                td { style = labelWidth; label { +"Memo" } }
+                td { input { type = InputType.text; size = "42"; name = "real"; value = "" } }
+              }
+              tr {
+                td {}
+                td { input { type = InputType.submit; name = "dosavereal"; value = "Update Memo" } }
+              }
+            }
+          }
+
+          h3 { +"Delete Account" }
+          script {}
+
+          p { +"Permanently delete account - cannot be undone" }
+          form {
+            action = "/pref"
+            method = FormMethod.post
+            onSubmit = "return formcheck()"
+            input { type = InputType.hidden; name = "date"; value = "963892736" }
+            input { type = InputType.submit; name = "dodelete"; value = "Delete Account" }
+          }
+
+          p { a { href = "$PRIVACY?$BACK_PATH=$PREFS&$RETURN_PATH=$returnPath"; +"privacy statement" } }
         }
+
+        backLink(returnPath)
       }
     }

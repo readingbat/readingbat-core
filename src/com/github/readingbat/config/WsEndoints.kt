@@ -57,7 +57,7 @@ internal fun Routing.wsEndpoints(content: ReadingBatContent) {
                 outgoing.send(Frame.Text("$channel $message ${i++}"))
               }
             }
-          }, "channel");
+          }, "channel")
         }
 
         if (text.equals("bye", ignoreCase = true)) {

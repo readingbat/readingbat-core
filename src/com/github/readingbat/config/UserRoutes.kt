@@ -72,7 +72,7 @@ internal fun Routing.userRoutes(content: ReadingBatContent) {
 
   get(RESET_PASSWORD) { respondWith { resetPasswordPage(content) } }
 
-  get(PREFS) { respondWith { prefsPage(content) } }
+  get(PREFS) { respondWith { prefsPage(content, queryParam(RETURN_PATH) ?: "/") } }
 
   get(LOGOUT) {
     // Purge UserPrincipal from cookie data
