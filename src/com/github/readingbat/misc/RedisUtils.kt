@@ -21,7 +21,7 @@ import redis.clients.jedis.Jedis
 import redis.clients.jedis.JedisPool
 import redis.clients.jedis.JedisPoolConfig
 import redis.clients.jedis.Protocol
-import redis.clients.jedis.exceptions.JedisConnectionException
+import redis.clients.jedis.exceptions.JedisException
 import java.net.URI
 
 object RedisUtils {
@@ -38,7 +38,7 @@ object RedisUtils {
   fun withRedisPool(block: (Jedis?) -> Unit) {
     try {
       pool.resource.use { redis -> block.invoke(redis) }
-    } catch (e: JedisConnectionException) {
+    } catch (e: JedisException) {
       e.printStackTrace()
       block.invoke(null)
     }
@@ -52,7 +52,7 @@ object RedisUtils {
         redis.auth(password)
         block.invoke(redis)
       }
-    } catch (e: JedisConnectionException) {
+    } catch (e: JedisException) {
       e.printStackTrace()
       block.invoke(null)
     }

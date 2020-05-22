@@ -64,7 +64,6 @@ internal suspend fun PipelineCall.createAccount(content: ReadingBatContent) {
     else -> {
       withRedisPool { redis ->
         runBlocking {
-
           if (redis == null) {
             redirectTo { returnPath }
           }
