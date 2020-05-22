@@ -39,6 +39,7 @@ import io.ktor.application.call
 import io.ktor.sessions.get
 import io.ktor.sessions.sessions
 import kotlinx.html.*
+import kotlinx.html.Entities.nbsp
 import kotlinx.html.stream.createHTML
 import redis.clients.jedis.Jedis
 
@@ -71,7 +72,7 @@ internal fun PipelineCall.languageGroupPage(content: ReadingBatContent,
         td(classes = funcItem) {
           div(classes = groupItemSrc) {
             a(classes = groupChoice) { href = listOf(CHALLENGE_ROOT, languageName, groupName).join(); +groupName }
-            br { rawHtml(if (parsedDescription.isNotBlank()) parsedDescription else Entities.nbsp.text) }
+            br { rawHtml(if (parsedDescription.isNotBlank()) parsedDescription else nbsp.text) }
             if (cnt == 0) {
               img { src = "$STATIC_ROOT/$WHITE_CHECK" }
             }

@@ -51,7 +51,6 @@ import io.ktor.http.ContentType.Text.CSS
 import io.ktor.sessions.get
 import io.ktor.sessions.sessions
 import kotlinx.html.*
-import kotlinx.html.Entities.nbsp
 import kotlinx.html.stream.createHTML
 import mu.KotlinLogging
 
@@ -89,7 +88,7 @@ internal fun PipelineCall.challengePage(content: ReadingBatContent,
           h2 {
             val groupPath = listOf(CHALLENGE_ROOT, languageName, groupName).join()
             this@body.addLink(groupName.decode(), groupPath)
-            rawHtml("${nbsp.text}&rarr;${nbsp.text}")
+            span { style = "padding-left:2px; padding-right:2px;"; rawHtml("&rarr;") }
             +challengeName
           }
 

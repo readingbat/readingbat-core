@@ -41,7 +41,6 @@ import com.github.readingbat.misc.FormFields.USERNAME
 import com.github.readingbat.misc.UserPrincipal
 import io.ktor.http.ContentType.Text.CSS
 import kotlinx.html.*
-import kotlinx.html.Entities.nbsp
 
 internal fun HEAD.headDefault(content: ReadingBatContent) {
   link { rel = "stylesheet"; href = CSS_NAME; type = CSS.toString() }
@@ -69,10 +68,10 @@ internal fun HEAD.headDefault(content: ReadingBatContent) {
 }
 
 internal fun BODY.helpAndLogin(principal: UserPrincipal?, loginPath: String) {
+  val path = "$CHALLENGE_ROOT/$loginPath"
   div {
     style = "float:right; margin:0px; border: 1px solid lightgray; margin-left: 10px; padding: 5px;"
     table {
-      val path = "$CHALLENGE_ROOT/$loginPath"
       if (principal != null) {
         tr {
           val elems = principal.userId.split("@")
@@ -144,7 +143,7 @@ internal fun BODY.helpAndLogin(principal: UserPrincipal?, loginPath: String) {
             //+" | "
             //a { href = "/report"; +"report" }
             //+" | "
-            a { href = PREFS; +"prefs" }
+            a { href = "$PREFS?$RETURN_PATH=$path"; +"prefs" }
           }
         }
       }
@@ -156,8 +155,7 @@ internal fun BODY.bodyTitle() {
   div {
     style = "margin-bottom: 0em;"
     a { href = "/"; span { style = "font-size:200%;"; +titleText } }
-    rawHtml(nbsp.text)
-    span { +"code reading practice" }
+    span { style = "padding-left:5px;"; +"code reading practice" }
   }
 }
 

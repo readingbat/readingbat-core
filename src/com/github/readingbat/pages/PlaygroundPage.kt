@@ -61,7 +61,7 @@ fun PipelineCall.playgroundPage(content: ReadingBatContent,
           h2 {
             val groupPath = listOf(CHALLENGE_ROOT, languageName, groupName).join()
             this@body.addLink(groupName.decode(), groupPath)
-            rawHtml("${Entities.nbsp.text}&rarr;${Entities.nbsp.text}")
+            span { style = "padding-left:2px; padding-right:2px;"; rawHtml("&rarr;") }
             this@body.addLink(challengeName.decode(), listOf(groupPath, challengeName).join())
           }
 
