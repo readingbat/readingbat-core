@@ -19,7 +19,7 @@ package com.github.readingbat.config
 
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.Endpoints.CLASSROOM
-import com.github.readingbat.misc.RedisPool.withRedis
+import com.github.readingbat.misc.RedisUtils.withRedis
 import io.ktor.http.cio.websocket.CloseReason
 import io.ktor.http.cio.websocket.Frame
 import io.ktor.http.cio.websocket.close

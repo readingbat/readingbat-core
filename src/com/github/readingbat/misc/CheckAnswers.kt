@@ -30,7 +30,7 @@ import com.github.readingbat.misc.Answers.challengeSrc
 import com.github.readingbat.misc.Answers.groupSrc
 import com.github.readingbat.misc.Answers.langSrc
 import com.github.readingbat.misc.CSSNames.userResp
-import com.github.readingbat.misc.RedisPool.withRedisPool
+import com.github.readingbat.misc.RedisUtils.withRedisPool
 import com.google.gson.Gson
 import io.ktor.application.call
 import io.ktor.request.receiveParameters

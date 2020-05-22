@@ -28,7 +28,7 @@ import com.github.readingbat.misc.Endpoints.CSS_NAME
 import com.github.readingbat.misc.Endpoints.FAV_ICON
 import com.github.readingbat.misc.EnvVars.PRODUCTION
 import com.github.readingbat.misc.EnvVars.REDIRECT_HOST_NAME
-import com.github.readingbat.misc.RedisPool.withRedisPool
+import com.github.readingbat.misc.RedisUtils.withRedisPool
 import com.google.common.util.concurrent.RateLimiter
 import io.ktor.application.Application
 import io.ktor.application.call

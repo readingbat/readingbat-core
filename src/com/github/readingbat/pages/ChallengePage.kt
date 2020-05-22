@@ -42,7 +42,7 @@ import com.github.readingbat.misc.CSSNames.userResp
 import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
 import com.github.readingbat.misc.Constants.PLAYGROUND_ROOT
 import com.github.readingbat.misc.Constants.STATIC_ROOT
-import com.github.readingbat.misc.RedisPool.withRedisPool
+import com.github.readingbat.misc.RedisUtils.withRedisPool
 import com.github.readingbat.misc.UserId
 import com.github.readingbat.misc.checkAnswersScript
 import com.github.readingbat.misc.lookupUserId

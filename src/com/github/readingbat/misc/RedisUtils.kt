@@ -23,7 +23,7 @@ import redis.clients.jedis.JedisPoolConfig
 import redis.clients.jedis.Protocol
 import java.net.URI
 
-object RedisPool {
+object RedisUtils {
   private val redisURI by lazy { URI(System.getenv(EnvVars.REDISTOGO_URL) ?: "redis://user:none@localhost:6379") }
   private val colon = Regex(":")
   private val password by lazy { redisURI.userInfo.split(colon, 2)[1] }

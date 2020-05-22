@@ -30,7 +30,7 @@ import com.github.readingbat.misc.Messages.EMPTY_EMAIL
 import com.github.readingbat.misc.Messages.EMPTY_PASWORD
 import com.github.readingbat.misc.Messages.INVALID_EMAIL
 import com.github.readingbat.misc.Messages.PASSWORD_TOO_SHORT
-import com.github.readingbat.misc.RedisPool.withRedisPool
+import com.github.readingbat.misc.RedisUtils.withRedisPool
 import com.github.readingbat.pages.createAccountPage
 import com.google.common.util.concurrent.RateLimiter
 import io.ktor.application.call

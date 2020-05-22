@@ -32,7 +32,7 @@ import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
 import com.github.readingbat.misc.Constants.GREEN_CHECK
 import com.github.readingbat.misc.Constants.STATIC_ROOT
 import com.github.readingbat.misc.Constants.WHITE_CHECK
-import com.github.readingbat.misc.RedisPool.withRedisPool
+import com.github.readingbat.misc.RedisUtils.withRedisPool
 import com.github.readingbat.misc.UserId
 import com.github.readingbat.misc.lookupUserId
 import io.ktor.application.call
