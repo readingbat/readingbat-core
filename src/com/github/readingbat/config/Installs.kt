@@ -211,11 +211,11 @@ private fun Authentication.Configuration.configureFormAuth() {
 
       withRedisPool { redis ->
         val userIdKey = userIdKey(cred.name)
-        val id = redis.get(userIdKey) ?: ""
+        val id = redis?.get(userIdKey) ?: ""
         if (id.isNotEmpty()) {
           val userId = UserId(id)
-          val salt = redis.get(userId.saltKey()) ?: ""
-          val digest = redis.get(userId.passwordKey()) ?: ""
+          val salt = redis?.get(userId.saltKey()) ?: ""
+          val digest = redis?.get(userId.passwordKey()) ?: ""
           if (salt.isNotEmpty() && digest.isNotEmpty() && digest == cred.password.sha256(salt)) {
             logger.info { "Found user ${cred.name} $id $salt $digest" }
             principal = UserPrincipal(cred.name)

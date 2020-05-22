@@ -53,7 +53,7 @@ internal fun PipelineCall.languageGroupPage(content: ReadingBatContent,
       val principal = fetchPrincipal(loginAttempt)
       val browserSession = call.sessions.get<BrowserSession>()
 
-      fun TR.groupItem(redis: Jedis, userId: UserId?, challengeGroup: ChallengeGroup<*>) {
+      fun TR.groupItem(redis: Jedis?, userId: UserId?, challengeGroup: ChallengeGroup<*>) {
         val groupName = challengeGroup.groupName
         val parsedDescription = challengeGroup.parsedDescription
         val challenges = challengeGroup.challenges

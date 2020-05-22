@@ -115,7 +115,7 @@ internal fun PipelineCall.challengePage(content: ReadingBatContent,
                     ?: browserSession?.challengeKey(languageName, groupName, challenge.challengeName)
                     ?: ""
 
-                if (key.isNotEmpty()) {
+                if (redis != null && key.isNotEmpty()) {
                   logger.debug { "Fetching: $key" }
                   previousAnswers = redis.hgetAll(key)
                 }

@@ -21,6 +21,7 @@ import redis.clients.jedis.Jedis
 import redis.clients.jedis.JedisPool
 import redis.clients.jedis.JedisPoolConfig
 import redis.clients.jedis.Protocol
+import redis.clients.jedis.exceptions.JedisConnectionException
 import java.net.URI
 
 object RedisUtils {
@@ -28,24 +29,32 @@ object RedisUtils {
   private val colon = Regex(":")
   private val password by lazy { redisURI.userInfo.split(colon, 2)[1] }
 
-  var pool: JedisPool = JedisPool(JedisPoolConfig(),
-                                  redisURI.host,
-                                  redisURI.port,
-                                  Protocol.DEFAULT_TIMEOUT,
-                                  password)
+  private var pool: JedisPool = JedisPool(JedisPoolConfig(),
+                                          redisURI.host,
+                                          redisURI.port,
+                                          Protocol.DEFAULT_TIMEOUT,
+                                          password)
 
-  fun withRedisPool(block: (Jedis) -> Unit) {
-    pool.resource.use { redis ->
-      block.invoke(redis)
+  fun withRedisPool(block: (Jedis?) -> Unit) {
+    try {
+      pool.resource.use { redis -> block.invoke(redis) }
+    } catch (e: JedisConnectionException) {
+      e.printStackTrace()
+      block.invoke(null)
     }
   }
 
-  fun withRedis(block: (Jedis) -> Unit) {
-    Jedis(redisURI.host,
-          redisURI.port,
-          Protocol.DEFAULT_TIMEOUT).use { redis ->
-      redis.auth(password)
-      block.invoke(redis)
+  fun withRedis(block: (Jedis?) -> Unit) {
+    try {
+      Jedis(redisURI.host,
+            redisURI.port,
+            Protocol.DEFAULT_TIMEOUT).use { redis ->
+        redis.auth(password)
+        block.invoke(redis)
+      }
+    } catch (e: JedisConnectionException) {
+      e.printStackTrace()
+      block.invoke(null)
     }
   }
 }

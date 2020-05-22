@@ -64,34 +64,40 @@ internal suspend fun PipelineCall.createAccount(content: ReadingBatContent) {
     else -> {
       withRedisPool { redis ->
         runBlocking {
-          // Check if username already exists
-          val userIdKey = userIdKey(username)
-          if (redis.exists(userIdKey)) {
-            respondWith { createAccountPage(content, "", "Username already exists: $username", returnPath) }
+
+          if (redis == null) {
+            redirectTo { returnPath }
           }
           else {
-            // The userName (email) is stored in only one KV pair, enabling changes to the userName
-            // Three things are stored:
-            // username -> userId
-            // userId -> salt
-            // userId -> sha256-encoded password
-
-            redis.multi().apply {
-              val userId = UserId()
-              val salt = newStringSalt()
-              val digest = password.sha256(salt)
-
-              logger.info { "Created user $username ${userId.id} $salt $digest" }
-
-              set(userIdKey, userId.id)
-              set(userId.saltKey(), salt)
-              set(userId.passwordKey(), digest)
-              exec()
+            // Check if username already exists
+            val userIdKey = userIdKey(username)
+            if (redis.exists(userIdKey)) {
+              respondWith { createAccountPage(content, "", "Username already exists: $username", returnPath) }
             }
+            else {
+              // The userName (email) is stored in only one KV pair, enabling changes to the userName
+              // Three things are stored:
+              // username -> userId
+              // userId -> salt
+              // userId -> sha256-encoded password
 
-            createAccountLimiter.acquire() // may wait
+              redis.multi().apply {
+                val userId = UserId()
+                val salt = newStringSalt()
+                val digest = password.sha256(salt)
 
-            redirectTo { returnPath }
+                logger.info { "Created user $username ${userId.id} $salt $digest" }
+
+                set(userIdKey, userId.id)
+                set(userId.saltKey(), salt)
+                set(userId.passwordKey(), digest)
+                exec()
+              }
+
+              createAccountLimiter.acquire() // may wait
+
+              redirectTo { returnPath }
+            }
           }
         }
       }

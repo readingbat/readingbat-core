@@ -156,7 +156,7 @@ object CheckAnswers : KLogging() {
 
       if (correctAnswersKey.isNotEmpty()) {
         val allCorrect = results.all { it.correct }
-        redis.set(correctAnswersKey, allCorrect.toString())
+        redis?.set(correctAnswersKey, allCorrect.toString())
       }
 
       val challengeKey =
@@ -164,7 +164,7 @@ object CheckAnswers : KLogging() {
           ?: browserSession?.challengeKey(languageName, groupName, challengeName)
           ?: ""
 
-      if (challengeKey.isNotEmpty()) {
+      if (redis != null && challengeKey.isNotEmpty()) {
         logger.debug { "Storing: $challengeKey" }
         answerMap.forEach { (args, userResp) ->
           redis.hset(challengeKey, args, userResp)
@@ -181,7 +181,7 @@ object CheckAnswers : KLogging() {
               ?: browserSession?.argumentKey(languageName, groupName, challengeName, result.arguments)
               ?: ""
 
-          if (argumentKey.isNotEmpty()) {
+          if (redis != null && argumentKey.isNotEmpty()) {
             val history =
               gson.fromJson(redis[argumentKey], ChallengeHistory::class.java) ?: ChallengeHistory(result.arguments)
             logger.debug { "Before: $history" }
@@ -225,15 +225,15 @@ object CheckAnswers : KLogging() {
   }
 }
 
-internal fun lookupUserId(redis: Jedis, principal: UserPrincipal?): UserId? {
+internal fun lookupUserId(redis: Jedis?, principal: UserPrincipal?) =
   if (principal != null) {
     val userIdKey = userIdKey(principal.userId)
-    val id = redis.get(userIdKey) ?: ""
-    if (id.isNotEmpty())
-      return UserId(id)
+    val id = redis?.get(userIdKey) ?: ""
+    if (id.isNotEmpty()) UserId(id) else null
   }
-  return null
-}
+  else {
+    null
+  }
 
 fun main() {
   withRedisPool { redis ->
@@ -241,9 +241,8 @@ fun main() {
     //redis.set("user|user2", "val2")
 
     //println(redis.keys("*").joinToString("\n"))
-
-    redis.keys("*").forEach { redis.del(it) }
-
+    if (redis != null)
+      redis.keys("*").forEach { redis.del(it) }
   }
 
 }

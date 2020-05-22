@@ -41,12 +41,12 @@ import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 import redis.clients.jedis.Jedis
 
-internal fun Challenge.isCorrect(redis: Jedis, userId: UserId?, browserSession: BrowserSession?): Boolean {
+internal fun Challenge.isCorrect(redis: Jedis?, userId: UserId?, browserSession: BrowserSession?): Boolean {
   val correctAnswersKey =
     userId?.correctAnswersKey(languageName, groupName, challengeName)
       ?: browserSession?.correctAnswersKey(languageName, groupName, challengeName)
       ?: ""
-  return if (correctAnswersKey.isNotEmpty()) redis.get(correctAnswersKey)?.toBoolean() == true else false
+  return if (correctAnswersKey.isNotEmpty()) redis?.get(correctAnswersKey)?.toBoolean() == true else false
 }
 
 internal fun PipelineCall.challengeGroupPage(content: ReadingBatContent,
@@ -62,7 +62,7 @@ internal fun PipelineCall.challengeGroupPage(content: ReadingBatContent,
       val browserSession = call.sessions.get<BrowserSession>()
       val loginPath = listOf(languageName, groupName).join()
 
-      fun TR.funcCall(redis: Jedis, userId: UserId?, challenge: Challenge) {
+      fun TR.funcCall(redis: Jedis?, userId: UserId?, challenge: Challenge) {
         val challengeName = challenge.challengeName
         val allCorrect = challenge.isCorrect(redis, userId, browserSession)
 
