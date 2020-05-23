@@ -22,6 +22,7 @@ import com.github.readingbat.misc.Constants.BACK_PATH
 import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.Endpoints.CREATE_ACCOUNT
 import com.github.readingbat.misc.Endpoints.PRIVACY
+import com.github.readingbat.misc.FormFields.PASSWORD
 import com.github.readingbat.misc.FormFields.USERNAME
 import com.github.readingbat.misc.PageUtils.hideShowButton
 import kotlinx.html.*
@@ -78,7 +79,6 @@ internal fun createAccountPage(content: ReadingBatContent,
           val inputFs = "font-size: 95%;"
           val labelWidth = "width: 250;"
           val formName = "pform"
-          val newpw = "newpw"
 
           form {
             name = formName
@@ -104,13 +104,13 @@ internal fun createAccountPage(content: ReadingBatContent,
                     style = inputFs
                     type = InputType.password
                     size = "42"
-                    name = newpw
+                    name = PASSWORD
                     value = ""
                     onKeyPress = "clickCreate(event);"
                   }
                 }
                 td {
-                  hideShowButton(formName, newpw)
+                  hideShowButton(formName, PASSWORD)
                 }
 
               }

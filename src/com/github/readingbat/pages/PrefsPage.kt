@@ -22,6 +22,8 @@ import com.github.readingbat.misc.Constants.BACK_PATH
 import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.Endpoints.PREFS
 import com.github.readingbat.misc.Endpoints.PRIVACY
+import com.github.readingbat.misc.FormFields.CURR_PASSWORD
+import com.github.readingbat.misc.FormFields.NEW_PASSWORD
 import com.github.readingbat.misc.PageUtils.hideShowButton
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
@@ -39,8 +41,6 @@ internal fun prefsPage(content: ReadingBatContent, returnPath: String) =
 
         val labelWidth = "width: 250;"
         val formName = "pform"
-        val oldpw = "oldpw"
-        val newpw = "newpw"
 
         div {
           h2 { +"ReadingBat Prefs" }
@@ -59,13 +59,13 @@ internal fun prefsPage(content: ReadingBatContent, returnPath: String) =
             table {
               tr {
                 td { style = labelWidth; label { +"Current Password" } }
-                td { input { type = InputType.password; size = "42"; name = oldpw; value = "" } }
-                td { hideShowButton(formName, oldpw) }
+                td { input { type = InputType.password; size = "42"; name = CURR_PASSWORD; value = "" } }
+                td { hideShowButton(formName, CURR_PASSWORD) }
               }
               tr {
                 td { style = labelWidth; label { +"New Password" } }
-                td { input { type = InputType.password; size = "42"; name = newpw; value = "" } }
-                td { hideShowButton(formName, newpw) }
+                td { input { type = InputType.password; size = "42"; name = NEW_PASSWORD; value = "" } }
+                td { hideShowButton(formName, NEW_PASSWORD) }
               }
               tr {
                 td {}

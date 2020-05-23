@@ -57,6 +57,8 @@ object KeyPrefixes {
 object FormFields {
   const val USERNAME = "username"
   const val PASSWORD = "passwd"
+  const val CURR_PASSWORD = "curr_passwd"
+  const val NEW_PASSWORD = "new_passwd"
 }
 
 object AuthName {

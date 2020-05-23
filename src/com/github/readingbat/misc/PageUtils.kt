@@ -31,9 +31,9 @@ object PageUtils {
       return false;
     """.trimIndent()
 
-  fun FlowOrInteractiveOrPhrasingContent.hideShowButton(formName: String, fieldName: String) {
+  fun FlowOrInteractiveOrPhrasingContent.hideShowButton(formName: String, fieldName: String, sizePct: Int = 85) {
     button {
-      style = "font-size:85%;"
+      style = "font-size:$sizePct%;"
       onClick = hideShowJs(formName, fieldName)
       +"show/hide"
     }

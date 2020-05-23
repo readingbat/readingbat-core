@@ -18,10 +18,11 @@
 package com.github.readingbat.posts
 
 import com.github.readingbat.PipelineCall
+import com.github.readingbat.config.fetchPrincipal
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.FormFields
-import com.google.common.util.concurrent.RateLimiter
+import com.github.readingbat.misc.RedisUtils
 import io.ktor.application.call
 import io.ktor.request.receiveParameters
 import mu.KotlinLogging
@@ -36,6 +37,12 @@ internal suspend fun PipelineCall.changePrefs(content: ReadingBatContent) {
   val returnPath = parameters[RETURN_PATH] ?: "/"
   logger.debug { "Return path = $returnPath" }
 
+  RedisUtils.withRedisPool { redis ->
+    val principal = fetchPrincipal()
+    val userId = lookupUserId(redis, principal)
+
+    logger.info { "UserId: $userId" }
+
+  }
 }
 
-private val createAccountLimiter = RateLimiter.create(2.0) // rate 2.0 is "2 permits per second"

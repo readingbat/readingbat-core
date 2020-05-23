@@ -52,7 +52,7 @@ internal fun Routing.locations(content: ReadingBatContent) {
   }
 }
 
-internal fun PipelineCall.fetchPrincipal(loginAttempt: Boolean): UserPrincipal? =
+internal fun PipelineCall.fetchPrincipal(loginAttempt: Boolean = false): UserPrincipal? =
   if (loginAttempt) assignPrincipal() else retrievePrincipal()
 
 internal suspend fun PipelineCall.language(content: ReadingBatContent,
