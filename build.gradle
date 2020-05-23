@@ -49,13 +49,6 @@ description = 'ReadingBat Core'
 group 'com.github.readingbat'
 version '1.0.10'
 
-sourceSets {
-    main.kotlin.srcDirs = ['src']
-    test.kotlin.srcDirs = ['test']
-    main.resources.srcDirs = ['resources']
-    test.resources.srcDirs = ['testresources']
-}
-
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
 

@@ -4,5 +4,5 @@
 
 ## Running from *redingbat-core*
 Setup:
-* VM Options: -Dlogback.configurationFile=testresources/logback-test.xml
-* Program Arguments: -config=resources/application-dev.conf
+* VM Options: -Dlogback.configurationFile=src/test/resources/logback-test.xml
+* Program Arguments: -config=src/main/resources/application-dev.conf
