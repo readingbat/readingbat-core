@@ -67,61 +67,64 @@ internal fun HEAD.headDefault(content: ReadingBatContent) {
   }
 }
 
+private fun TABLE.logout(principal: UserPrincipal, loginPath: String) {
+  tr {
+    val elems = principal.userId.split("@")
+    td {
+      +elems[0]
+      if (elems.size > 1) {
+        br
+        +"@${elems[1]}"
+      }
+    }
+  }
+
+  tr {
+    td {
+      /*
+    a {
+      href = "/doc/practice/code-badges.html"; img {
+      width = "30"; style = "vertical-align: middle"; src = "$STATIC_ROOT/s5j.png"
+    }
+    }
+     */
+      +"["; a { href = "$LOGOUT?$RETURN_PATH=$loginPath"; +"log out" }; +"]"
+    }
+  }
+}
+
+private fun TABLE.login(loginPath: String) {
+  form(method = FormMethod.post) {
+    action = loginPath
+    this@login.tr {
+      td { +"id/email" }
+      td { textInput { name = USERNAME; size = "20"; placeholder = "username" } }
+    }
+    this@login.tr {
+      td { +"password" }
+      td { passwordInput { name = PASSWORD; size = "20"; placeholder = "password" } }
+    }
+    this@login.tr {
+      td {}
+      td { submitInput { name = "dologin"; value = "log in" } }
+    }
+    hiddenInput { name = "fromurl"; value = loginPath }
+  }
+  tr {
+    td {
+      colSpan = "2"
+      a { href = RESET_PASSWORD; +"forgot password" }
+      +" | "
+      a { href = "$CREATE_ACCOUNT?$RETURN_PATH=$loginPath"; +"create account" }
+    }
+  }
+}
+
 internal fun BODY.helpAndLogin(principal: UserPrincipal?, loginPath: String) {
-  val path = "$CHALLENGE_ROOT/$loginPath"
   div {
     style = "float:right; margin:0px; border: 1px solid lightgray; margin-left: 10px; padding: 5px;"
     table {
-      if (principal != null) {
-        tr {
-          val elems = principal.userId.split("@")
-          td {
-            +elems[0]
-            if (elems.size > 1) {
-              br
-              +"@${elems[1]}"
-            }
-          }
-        }
-        tr {
-          td {
-            /*
-          a {
-            href = "/doc/practice/code-badges.html"; img {
-            width = "30"; style = "vertical-align: middle"; src = "$STATIC_ROOT/s5j.png"
-          }
-          }
-           */
-            +"["; a { href = "$LOGOUT?$RETURN_PATH=$path"; +"log out" }; +"]"
-          }
-        }
-      }
-      else {
-        form(method = FormMethod.post) {
-          action = path
-          this@table.tr {
-            td { +"id/email" }
-            td { textInput { name = USERNAME; size = "20"; placeholder = "username" } }
-          }
-          this@table.tr {
-            td { +"password" }
-            td { passwordInput { name = PASSWORD; size = "20"; placeholder = "password" } }
-          }
-          this@table.tr {
-            td {}
-            td { submitInput { name = "dologin"; value = "log in" } }
-          }
-          hiddenInput { name = "fromurl"; value = path }
-        }
-        tr {
-          td {
-            colSpan = "2"
-            a { href = RESET_PASSWORD; +"forgot password" }
-            +" | "
-            a { href = "$CREATE_ACCOUNT?$RETURN_PATH=$path"; +"create account" }
-          }
-        }
-      }
+      if (principal != null) logout(principal, loginPath) else login(loginPath)
     }
   }
 
@@ -143,7 +146,7 @@ internal fun BODY.helpAndLogin(principal: UserPrincipal?, loginPath: String) {
             //+" | "
             //a { href = "/report"; +"report" }
             //+" | "
-            a { href = "$PREFS?$RETURN_PATH=$path"; +"prefs" }
+            a { href = "$PREFS?$RETURN_PATH=$loginPath"; +"prefs" }
           }
         }
       }
@@ -205,10 +208,12 @@ internal fun BODY.addLink(text: String, url: String, newWindow: Boolean = false)
   a { href = url; if (newWindow) target = "_blank"; +text }
 
 internal fun BODY.backLink(url: String, marginLeft: String = "1em") {
-  div {
-    style = "font-size: 120%; margin-left: $marginLeft;"
-    br
-    a { href = url; rawHtml("&larr; Back") }
+  if (url.isNotEmpty()) {
+    div {
+      style = "font-size: 120%; margin-left: $marginLeft;"
+      br
+      a { href = url; rawHtml("&larr; Back") }
+    }
   }
 }
 

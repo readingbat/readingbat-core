@@ -57,7 +57,6 @@ internal fun privacyPage(content: ReadingBatContent, returnPath: String, backPat
           }
         }
 
-        if (backPath.isNotEmpty())
-          backLink("$backPath${if (returnPath.isNotEmpty()) "?$RETURN_PATH=$returnPath" else ""}")
+        backLink("$backPath${if (returnPath.isNotEmpty()) "?$RETURN_PATH=$returnPath" else ""}")
       }
     }

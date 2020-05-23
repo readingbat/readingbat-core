@@ -19,6 +19,7 @@ package com.github.readingbat.pages
 
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.Constants.BACK_PATH
+import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
 import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.Endpoints.PREFS
 import com.github.readingbat.misc.Endpoints.PRIVACY
@@ -35,7 +36,8 @@ internal fun requestLogInPage(content: ReadingBatContent, returnPath: String, pr
       }
 
       body {
-        helpAndLogin(principal, "/")
+        val path = "$CHALLENGE_ROOT/$returnPath"
+        helpAndLogin(principal, path)
         bodyTitle()
 
         div {
@@ -48,7 +50,6 @@ internal fun requestLogInPage(content: ReadingBatContent, returnPath: String, pr
           p { a { href = "$PRIVACY?$BACK_PATH=$PREFS&$RETURN_PATH=$returnPath"; +"privacy statement" } }
         }
 
-        if (returnPath.isNotEmpty())
-          backLink(returnPath)
+        backLink(returnPath)
       }
     }
