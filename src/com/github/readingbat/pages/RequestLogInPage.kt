@@ -23,10 +23,11 @@ import com.github.readingbat.misc.Constants.BACK_PATH
 import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.Endpoints.PREFS
 import com.github.readingbat.misc.Endpoints.PRIVACY
+import com.github.readingbat.misc.UserPrincipal
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 
-internal fun PipelineCall.requestLogInPage(content: ReadingBatContent, returnPath: String) =
+internal fun PipelineCall.requestLogInPage(content: ReadingBatContent, returnPath: String, principal: UserPrincipal?) =
   createHTML()
     .html {
 
@@ -35,6 +36,7 @@ internal fun PipelineCall.requestLogInPage(content: ReadingBatContent, returnPat
       }
 
       body {
+        helpAndLogin(principal, "/")
         bodyTitle()
 
         div {
@@ -42,16 +44,12 @@ internal fun PipelineCall.requestLogInPage(content: ReadingBatContent, returnPat
             +"Log in"
           }
 
-          div {
-            //style = "margin-left: 1em;"
+          p { +"Please create an account or log in to an existing account to edit preferences." }
 
-            p { +"Please create an account or log in to an existing account to edit preferences." }
-
-            p { a { href = "$PRIVACY?$BACK_PATH=$PREFS&$RETURN_PATH=$returnPath"; +"privacy statement" } }
-          }
+          p { a { href = "$PRIVACY?$BACK_PATH=$PREFS&$RETURN_PATH=$returnPath"; +"privacy statement" } }
         }
 
         if (returnPath.isNotEmpty())
-          backLink("$returnPath")
+          backLink(returnPath)
       }
     }

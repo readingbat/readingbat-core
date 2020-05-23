@@ -28,9 +28,9 @@ import com.github.readingbat.misc.AuthRoutes.LOGOUT
 import com.github.readingbat.misc.CSSNames.selected
 import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
 import com.github.readingbat.misc.Constants.ICONS
+import com.github.readingbat.misc.Constants.READING_BAT
 import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.Constants.STATIC_ROOT
-import com.github.readingbat.misc.Constants.titleText
 import com.github.readingbat.misc.Endpoints.ABOUT
 import com.github.readingbat.misc.Endpoints.CREATE_ACCOUNT
 import com.github.readingbat.misc.Endpoints.CSS_NAME
@@ -52,7 +52,7 @@ internal fun HEAD.headDefault(content: ReadingBatContent) {
   link { rel = "icon"; type = "image/png"; sizes = "16x16"; href = "$root/favicon-16x16.png" }
   link { rel = "manifest"; href = "$root/site.webmanifest" }
 
-  title(titleText)
+  title(READING_BAT)
 
   if (production && content.googleAnalyticsId.isNotBlank()) {
     script { async = true; src = "https://www.googletagmanager.com/gtag/js?id=${content.googleAnalyticsId}" }
@@ -154,7 +154,7 @@ internal fun BODY.helpAndLogin(principal: UserPrincipal?, loginPath: String) {
 internal fun BODY.bodyTitle() {
   div {
     style = "margin-bottom: 0em;"
-    a { href = "/"; span { style = "font-size:200%;"; +titleText } }
+    a { href = "/"; span { style = "font-size:200%;"; +READING_BAT } }
     span { style = "padding-left:5px;"; +"code reading practice" }
   }
 }
@@ -175,10 +175,7 @@ internal fun BODY.bodyHeader(principal: UserPrincipal?,
 
   div {
     style = "min-height:9;"
-    p {
-      style = "max-width:800;"
-      +message
-    }
+    p { style = "max-width:800;"; +message }
   }
 
   div {
@@ -207,10 +204,10 @@ internal fun defaultTab(content: ReadingBatContent) =
 internal fun BODY.addLink(text: String, url: String, newWindow: Boolean = false) =
   a { href = url; if (newWindow) target = "_blank"; +text }
 
-internal fun BODY.backLink(url: String) {
+internal fun BODY.backLink(url: String, marginLeft: String = "1em") {
   br
   div {
-    style = "font-size: 120%; margin-left: 1em;"
+    style = "font-size: 120%; margin-left: $marginLeft;"
     a { href = url; rawHtml("&larr; Back") }
   }
 }

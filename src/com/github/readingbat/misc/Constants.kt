@@ -18,7 +18,7 @@
 package com.github.readingbat.misc
 
 internal object Constants {
-  const val titleText = "ReadingBat"
+  const val READING_BAT = "ReadingBat"
   const val sessionid = "sessionid"
   const val ICONS = "icons"
   const val RETURN_PATH = "returnPath"

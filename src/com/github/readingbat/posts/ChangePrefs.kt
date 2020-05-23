@@ -43,9 +43,10 @@ internal suspend fun PipelineCall.changePrefs(content: ReadingBatContent) {
     logger.info { "UserId: $userId" }
 
     if (userId == null) {
-      requestLogInPage(content, returnPath)
+      requestLogInPage(content, returnPath, principal)
     }
     else {
+      Unit
     }
   }
 }

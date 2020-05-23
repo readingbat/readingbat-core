@@ -42,7 +42,7 @@ internal fun PipelineCall.prefsPage(content: ReadingBatContent, returnPath: Stri
     logger.info { "UserId: $userId" }
 
     if (userId == null)
-      requestLogInPage(content, returnPath)
+      requestLogInPage(content, returnPath, principal)
     else
       prefsWithLoginPage(content, returnPath)
   }
