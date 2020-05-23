@@ -23,12 +23,12 @@ import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.FormFields
 import com.github.readingbat.misc.RedisUtils
+import com.github.readingbat.pages.requestLogInPage
 import io.ktor.application.call
 import io.ktor.request.receiveParameters
 import mu.KotlinLogging
 
 private val logger = KotlinLogging.logger {}
-
 
 internal suspend fun PipelineCall.changePrefs(content: ReadingBatContent) {
   val parameters = call.receiveParameters()
@@ -40,9 +40,13 @@ internal suspend fun PipelineCall.changePrefs(content: ReadingBatContent) {
   RedisUtils.withRedisPool { redis ->
     val principal = fetchPrincipal()
     val userId = lookupUserId(redis, principal)
-
     logger.info { "UserId: $userId" }
 
+    if (userId == null) {
+      requestLogInPage(content, returnPath)
+    }
+    else {
+    }
   }
 }
 

@@ -242,15 +242,3 @@ internal fun lookupUserId(redis: Jedis?, principal: UserPrincipal?) =
   else {
     null
   }
-
-fun main() {
-  withRedisPool { redis ->
-    //redis.set("user|user1", "val1")
-    //redis.set("user|user2", "val2")
-
-    //println(redis.keys("*").joinToString("\n"))
-    if (redis != null)
-      redis.keys("*").forEach { redis.del(it) }
-  }
-
-}

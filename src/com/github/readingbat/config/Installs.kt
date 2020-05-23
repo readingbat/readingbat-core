@@ -214,8 +214,10 @@ private fun Authentication.Configuration.configureFormAuth() {
         val id = redis?.get(userIdKey) ?: ""
         if (id.isNotEmpty()) {
           val userId = UserId(id)
-          val salt = redis?.get(userId.saltKey()) ?: ""
-          val digest = redis?.get(userId.passwordKey()) ?: ""
+          val saltKey = userId.saltKey()
+          val passwordKey = userId.passwordKey()
+          val salt = redis?.get(saltKey) ?: ""
+          val digest = redis?.get(passwordKey) ?: ""
           if (salt.isNotEmpty() && digest.isNotEmpty() && digest == cred.password.sha256(salt)) {
             logger.info { "Found user ${cred.name} $id $salt $digest" }
             principal = UserPrincipal(cred.name)

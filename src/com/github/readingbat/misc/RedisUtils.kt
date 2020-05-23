@@ -35,16 +35,15 @@ object RedisUtils {
                                           Protocol.DEFAULT_TIMEOUT,
                                           password)
 
-  fun withRedisPool(block: (Jedis?) -> Unit) {
+  fun <T> withRedisPool(block: (Jedis?) -> T): T =
     try {
       pool.resource.use { redis -> block.invoke(redis) }
     } catch (e: JedisException) {
       e.printStackTrace()
       block.invoke(null)
     }
-  }
 
-  fun withRedis(block: (Jedis?) -> Unit) {
+  fun <T> withRedis(block: (Jedis?) -> T): T =
     try {
       Jedis(redisURI.host,
             redisURI.port,
@@ -56,6 +55,5 @@ object RedisUtils {
       e.printStackTrace()
       block.invoke(null)
     }
-  }
 }
 

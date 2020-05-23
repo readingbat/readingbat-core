@@ -17,6 +17,8 @@
 
 package com.github.readingbat.pages
 
+import com.github.readingbat.PipelineCall
+import com.github.readingbat.config.fetchPrincipal
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.Constants.BACK_PATH
 import com.github.readingbat.misc.Constants.RETURN_PATH
@@ -25,10 +27,27 @@ import com.github.readingbat.misc.Endpoints.PRIVACY
 import com.github.readingbat.misc.FormFields.CURR_PASSWORD
 import com.github.readingbat.misc.FormFields.NEW_PASSWORD
 import com.github.readingbat.misc.PageUtils.hideShowButton
+import com.github.readingbat.misc.RedisUtils.withRedisPool
+import com.github.readingbat.posts.lookupUserId
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
+import mu.KotlinLogging
 
-internal fun prefsPage(content: ReadingBatContent, returnPath: String) =
+private val logger = KotlinLogging.logger {}
+
+internal fun PipelineCall.prefsPage(content: ReadingBatContent, returnPath: String): String =
+  withRedisPool { redis ->
+    val principal = fetchPrincipal()
+    val userId = lookupUserId(redis, principal)
+    logger.info { "UserId: $userId" }
+
+    if (userId == null)
+      requestLogInPage(content, returnPath)
+    else
+      prefsWithLoginPage(content, returnPath)
+  }
+
+internal fun prefsWithLoginPage(content: ReadingBatContent, returnPath: String) =
   createHTML()
     .html {
 
