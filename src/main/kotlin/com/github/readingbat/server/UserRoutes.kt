@@ -21,6 +21,7 @@ import com.github.pambrose.common.response.redirectTo
 import com.github.pambrose.common.response.respondWith
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.AuthRoutes.LOGOUT
+import com.github.readingbat.misc.Constants.BACK_PATH
 import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
 import com.github.readingbat.misc.Constants.ICONS
 import com.github.readingbat.misc.Constants.RETURN_PATH
@@ -45,6 +46,7 @@ import io.ktor.application.call
 import io.ktor.http.ContentType.Text.CSS
 import io.ktor.http.content.resources
 import io.ktor.http.content.static
+import io.ktor.request.receiveParameters
 import io.ktor.routing.Routing
 import io.ktor.routing.get
 import io.ktor.routing.post
@@ -63,11 +65,21 @@ internal fun Routing.userRoutes(content: ReadingBatContent) {
 
   post(CREATE_ACCOUNT) { createAccount(content) }
 
-  get(PREFS) { respondWith { prefsPage(content, queryParam(RETURN_PATH) ?: "/") } }
+  get(PREFS) { respondWith { prefsPage(content, queryParam(RETURN_PATH) ?: "/", fetchPrincipal()) } }
 
-  post(PREFS) { changePrefs(content) }
+  post(PREFS) {
+    changePrefs(content,
+                call.receiveParameters(),
+                fetchPrincipal())
+  }
 
-  get(PRIVACY) { respondWith { privacyPage(content, queryParam(RETURN_PATH) ?: "") } }
+  get(PRIVACY) {
+    respondWith {
+      privacyPage(content,
+                  queryParam(RETURN_PATH) ?: "",
+                  queryParam(BACK_PATH) ?: "")
+    }
+  }
 
   get(ABOUT) { respondWith { aboutPage(content) } }
 

@@ -18,14 +18,11 @@
 package com.github.readingbat.pages
 
 import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.misc.Constants.BACK_PATH
 import com.github.readingbat.misc.Constants.RETURN_PATH
-import com.github.readingbat.server.PipelineCall
-import com.github.readingbat.server.queryParam
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 
-internal fun PipelineCall.privacyPage(content: ReadingBatContent, returnPath: String) =
+internal fun privacyPage(content: ReadingBatContent, returnPath: String, backPath: String) =
   createHTML()
     .html {
 
@@ -60,7 +57,6 @@ internal fun PipelineCall.privacyPage(content: ReadingBatContent, returnPath: St
           }
         }
 
-        val backPath = queryParam(BACK_PATH) ?: ""
         if (backPath.isNotEmpty())
           backLink("$backPath${if (returnPath.isNotEmpty()) "?$RETURN_PATH=$returnPath" else ""}")
       }

@@ -23,11 +23,10 @@ import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.Endpoints.PREFS
 import com.github.readingbat.misc.Endpoints.PRIVACY
 import com.github.readingbat.misc.UserPrincipal
-import com.github.readingbat.server.PipelineCall
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 
-internal fun PipelineCall.requestLogInPage(content: ReadingBatContent, returnPath: String, principal: UserPrincipal?) =
+internal fun requestLogInPage(content: ReadingBatContent, returnPath: String, principal: UserPrincipal?) =
   createHTML()
     .html {
 

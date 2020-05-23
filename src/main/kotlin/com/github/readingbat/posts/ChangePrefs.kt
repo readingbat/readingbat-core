@@ -21,24 +21,20 @@ import com.github.pambrose.common.redis.RedisUtils.withRedisPool
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.FormFields
+import com.github.readingbat.misc.UserPrincipal
 import com.github.readingbat.pages.requestLogInPage
-import com.github.readingbat.server.PipelineCall
-import com.github.readingbat.server.fetchPrincipal
-import io.ktor.application.call
-import io.ktor.request.receiveParameters
+import io.ktor.http.Parameters
 import mu.KotlinLogging
 
 private val logger = KotlinLogging.logger {}
 
-internal suspend fun PipelineCall.changePrefs(content: ReadingBatContent) {
-  val parameters = call.receiveParameters()
+internal suspend fun changePrefs(content: ReadingBatContent, parameters: Parameters, principal: UserPrincipal?) {
   val username = parameters[FormFields.USERNAME] ?: ""
   val password = parameters[FormFields.PASSWORD] ?: ""
   val returnPath = parameters[RETURN_PATH] ?: "/"
   logger.debug { "Return path = $returnPath" }
 
   withRedisPool { redis ->
-    val principal = fetchPrincipal()
     val userId = lookupUserId(redis, principal)
     logger.info { "UserId: $userId" }
 

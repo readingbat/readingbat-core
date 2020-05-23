@@ -32,26 +32,22 @@ import com.github.readingbat.misc.Constants.GREEN_CHECK
 import com.github.readingbat.misc.Constants.STATIC_ROOT
 import com.github.readingbat.misc.Constants.WHITE_CHECK
 import com.github.readingbat.misc.UserId
+import com.github.readingbat.misc.UserPrincipal
 import com.github.readingbat.posts.lookupUserId
-import com.github.readingbat.server.PipelineCall
-import com.github.readingbat.server.fetchPrincipal
-import io.ktor.application.call
-import io.ktor.sessions.get
-import io.ktor.sessions.sessions
 import kotlinx.html.*
 import kotlinx.html.Entities.nbsp
 import kotlinx.html.stream.createHTML
 import redis.clients.jedis.Jedis
 
-internal fun PipelineCall.languageGroupPage(content: ReadingBatContent,
-                                            languageType: LanguageType,
-                                            loginAttempt: Boolean) =
+internal fun languageGroupPage(content: ReadingBatContent,
+                               languageType: LanguageType,
+                               loginAttempt: Boolean,
+                               principal: UserPrincipal?,
+                               browserSession: BrowserSession?) =
   createHTML()
     .html {
       val languageName = languageType.lowerName
       val groups = content.findLanguage(languageType).challengeGroups
-      val principal = fetchPrincipal(loginAttempt)
-      val browserSession = call.sessions.get<BrowserSession>()
 
       fun TR.groupItem(redis: Jedis?, userId: UserId?, challengeGroup: ChallengeGroup<*>) {
         val groupName = challengeGroup.groupName

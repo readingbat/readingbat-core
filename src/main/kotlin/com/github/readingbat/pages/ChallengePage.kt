@@ -42,14 +42,10 @@ import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
 import com.github.readingbat.misc.Constants.PLAYGROUND_ROOT
 import com.github.readingbat.misc.Constants.STATIC_ROOT
 import com.github.readingbat.misc.UserId
+import com.github.readingbat.misc.UserPrincipal
 import com.github.readingbat.misc.checkAnswersScript
 import com.github.readingbat.posts.lookupUserId
-import com.github.readingbat.server.PipelineCall
-import com.github.readingbat.server.fetchPrincipal
-import io.ktor.application.call
 import io.ktor.http.ContentType.Text.CSS
-import io.ktor.sessions.get
-import io.ktor.sessions.sessions
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 import mu.KotlinLogging
@@ -57,9 +53,11 @@ import mu.KotlinLogging
 private val logger = KotlinLogging.logger {}
 private const val spinnerCss = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
 
-internal fun PipelineCall.challengePage(content: ReadingBatContent,
-                                        challenge: Challenge,
-                                        loginAttempt: Boolean) =
+internal fun challengePage(content: ReadingBatContent,
+                           challenge: Challenge,
+                           loginAttempt: Boolean,
+                           principal: UserPrincipal?,
+                           browserSession: BrowserSession?) =
   createHTML()
     .html {
       val languageType = challenge.languageType
@@ -68,8 +66,6 @@ internal fun PipelineCall.challengePage(content: ReadingBatContent,
       val challengeName = challenge.challengeName
       val funcInfo = challenge.funcInfo(content)
       val loginPath = listOf(languageName, groupName, challengeName).join()
-      val principal = fetchPrincipal(loginAttempt)
-      val browserSession = call.sessions.get<BrowserSession>()
 
       head {
         link { rel = "stylesheet"; href = spinnerCss }

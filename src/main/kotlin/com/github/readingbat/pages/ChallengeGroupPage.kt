@@ -31,12 +31,8 @@ import com.github.readingbat.misc.Constants.GREEN_CHECK
 import com.github.readingbat.misc.Constants.STATIC_ROOT
 import com.github.readingbat.misc.Constants.WHITE_CHECK
 import com.github.readingbat.misc.UserId
+import com.github.readingbat.misc.UserPrincipal
 import com.github.readingbat.posts.lookupUserId
-import com.github.readingbat.server.PipelineCall
-import com.github.readingbat.server.fetchPrincipal
-import io.ktor.application.call
-import io.ktor.sessions.get
-import io.ktor.sessions.sessions
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 import redis.clients.jedis.Jedis
@@ -49,9 +45,11 @@ internal fun Challenge.isCorrect(redis: Jedis?, userId: UserId?, browserSession:
   return if (correctAnswersKey.isNotEmpty()) redis?.get(correctAnswersKey)?.toBoolean() == true else false
 }
 
-internal fun PipelineCall.challengeGroupPage(content: ReadingBatContent,
-                                             challengeGroup: ChallengeGroup<*>,
-                                             loginAttempt: Boolean) =
+internal fun challengeGroupPage(content: ReadingBatContent,
+                                challengeGroup: ChallengeGroup<*>,
+                                loginAttempt: Boolean,
+                                principal: UserPrincipal?,
+                                browserSession: BrowserSession?) =
   createHTML()
     .html {
       val languageType = challengeGroup.languageType
@@ -59,8 +57,6 @@ internal fun PipelineCall.challengeGroupPage(content: ReadingBatContent,
       val groupName = challengeGroup.groupName
       val challenges = challengeGroup.challenges
       val loginPath = listOf(languageName, groupName).join()
-      val principal = fetchPrincipal(loginAttempt)
-      val browserSession = call.sessions.get<BrowserSession>()
 
       fun TR.funcCall(redis: Jedis?, userId: UserId?, challenge: Challenge) {
         val challengeName = challenge.challengeName

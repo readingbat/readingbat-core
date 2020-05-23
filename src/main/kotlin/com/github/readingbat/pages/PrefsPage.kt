@@ -26,18 +26,18 @@ import com.github.readingbat.misc.Endpoints.PRIVACY
 import com.github.readingbat.misc.FormFields.CURR_PASSWORD
 import com.github.readingbat.misc.FormFields.NEW_PASSWORD
 import com.github.readingbat.misc.PageUtils.hideShowButton
+import com.github.readingbat.misc.UserPrincipal
 import com.github.readingbat.posts.lookupUserId
-import com.github.readingbat.server.PipelineCall
-import com.github.readingbat.server.fetchPrincipal
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 import mu.KotlinLogging
 
 private val logger = KotlinLogging.logger {}
 
-internal fun PipelineCall.prefsPage(content: ReadingBatContent, returnPath: String): String =
+internal fun prefsPage(content: ReadingBatContent,
+                       returnPath: String,
+                       principal: UserPrincipal?): String =
   withRedisPool { redis ->
-    val principal = fetchPrincipal()
     val userId = lookupUserId(redis, principal)
     logger.info { "UserId: $userId" }
 

@@ -26,8 +26,7 @@ import com.github.readingbat.misc.CSSNames.kotlinCode
 import com.github.readingbat.misc.CSSNames.tabs
 import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
 import com.github.readingbat.misc.Constants.STATIC_ROOT
-import com.github.readingbat.server.PipelineCall
-import com.github.readingbat.server.fetchPrincipal
+import com.github.readingbat.misc.UserPrincipal
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 import org.apache.commons.text.StringEscapeUtils.escapeHtml4
@@ -36,9 +35,10 @@ import org.apache.commons.text.StringEscapeUtils.escapeHtml4
 // https://jetbrains.github.io/kotlin-playground/
 // https://jetbrains.github.io/kotlin-playground/examples/
 
-fun PipelineCall.playgroundPage(content: ReadingBatContent,
-                                challenge: Challenge,
-                                loginAttempt: Boolean) =
+fun playgroundPage(content: ReadingBatContent,
+                   challenge: Challenge,
+                   loginAttempt: Boolean,
+                   principal: UserPrincipal?) =
   createHTML()
     .html {
       val languageType = challenge.languageType
@@ -46,7 +46,6 @@ fun PipelineCall.playgroundPage(content: ReadingBatContent,
       val challengeName = challenge.challengeName
       val languageName = languageType.lowerName
       val funcInfo = challenge.funcInfo(content)
-      val principal = fetchPrincipal(loginAttempt)
       val loginPath = listOf(languageName, groupName, challengeName).join()
 
       head {
