@@ -205,9 +205,9 @@ internal fun BODY.addLink(text: String, url: String, newWindow: Boolean = false)
   a { href = url; if (newWindow) target = "_blank"; +text }
 
 internal fun BODY.backLink(url: String, marginLeft: String = "1em") {
-  br
   div {
     style = "font-size: 120%; margin-left: $marginLeft;"
+    br
     a { href = url; rawHtml("&larr; Back") }
   }
 }
