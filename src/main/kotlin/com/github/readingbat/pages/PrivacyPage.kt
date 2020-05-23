@@ -17,11 +17,11 @@
 
 package com.github.readingbat.pages
 
-import com.github.readingbat.PipelineCall
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.Constants.BACK_PATH
 import com.github.readingbat.misc.Constants.RETURN_PATH
-import com.github.readingbat.queryParam
+import com.github.readingbat.server.PipelineCall
+import com.github.readingbat.server.queryParam
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 

@@ -15,28 +15,15 @@
  *
  */
 
-package com.github.readingbat
+package com.github.readingbat.server
 
 import com.github.pambrose.common.util.FileSource
-import com.github.readingbat.config.*
 import com.github.readingbat.dsl.readDsl
-import com.github.readingbat.misc.UserPrincipal
 import io.ktor.application.Application
-import io.ktor.application.ApplicationCall
-import io.ktor.application.call
-import io.ktor.auth.principal
-import io.ktor.config.ApplicationConfigurationException
 import io.ktor.routing.routing
 import io.ktor.server.cio.CIO
 import io.ktor.server.engine.commandLineEnvironment
 import io.ktor.server.engine.embeddedServer
-import io.ktor.sessions.get
-import io.ktor.sessions.sessions
-import io.ktor.sessions.set
-import io.ktor.util.pipeline.PipelineContext
-import mu.KotlinLogging
-
-private val logger = KotlinLogging.logger {}
 
 object ReadingBatServer {
   fun start(args: Array<String>) {
@@ -64,23 +51,4 @@ internal fun Application.module() {
     adminRoutes(readingBatContent)
   }
 }
-
-private fun Application.property(name: String, default: String = "", warn: Boolean = false) =
-  try {
-    environment.config.property(name).getString()
-  } catch (e: ApplicationConfigurationException) {
-    if (warn)
-      logger.warn { "Missing $name value in application.conf" }
-    default
-  }
-
-typealias PipelineCall = PipelineContext<Unit, ApplicationCall>
-
-internal fun PipelineCall.retrievePrincipal() =
-  call.sessions.get<UserPrincipal>()
-
-internal fun PipelineCall.assignPrincipal() =
-  call.principal<UserPrincipal>().apply { if (this != null) call.sessions.set(this) }  // Set the cookie
-
-internal fun PipelineCall.queryParam(key: String): String? = call.request.queryParameters[key]
 

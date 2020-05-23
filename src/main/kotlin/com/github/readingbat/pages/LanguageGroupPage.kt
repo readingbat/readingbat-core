@@ -19,8 +19,6 @@ package com.github.readingbat.pages
 
 import com.github.pambrose.common.redis.RedisUtils.withRedisPool
 import com.github.pambrose.common.util.join
-import com.github.readingbat.PipelineCall
-import com.github.readingbat.config.fetchPrincipal
 import com.github.readingbat.dsl.ChallengeGroup
 import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.dsl.ReadingBatContent
@@ -35,6 +33,8 @@ import com.github.readingbat.misc.Constants.STATIC_ROOT
 import com.github.readingbat.misc.Constants.WHITE_CHECK
 import com.github.readingbat.misc.UserId
 import com.github.readingbat.posts.lookupUserId
+import com.github.readingbat.server.PipelineCall
+import com.github.readingbat.server.fetchPrincipal
 import io.ktor.application.call
 import io.ktor.sessions.get
 import io.ktor.sessions.sessions

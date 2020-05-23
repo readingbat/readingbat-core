@@ -17,13 +17,13 @@
 
 package com.github.readingbat.pages
 
-import com.github.readingbat.PipelineCall
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.Constants.BACK_PATH
 import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.Endpoints.PREFS
 import com.github.readingbat.misc.Endpoints.PRIVACY
 import com.github.readingbat.misc.UserPrincipal
+import com.github.readingbat.server.PipelineCall
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 

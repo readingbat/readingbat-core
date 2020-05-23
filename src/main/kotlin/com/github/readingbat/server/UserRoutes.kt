@@ -15,7 +15,7 @@
  *
  */
 
-package com.github.readingbat.config
+package com.github.readingbat.server
 
 import com.github.pambrose.common.response.redirectTo
 import com.github.pambrose.common.response.respondWith
@@ -41,8 +41,6 @@ import com.github.readingbat.pages.*
 import com.github.readingbat.posts.CheckAnswers.checkUserAnswers
 import com.github.readingbat.posts.changePrefs
 import com.github.readingbat.posts.createAccount
-import com.github.readingbat.queryParam
-import com.github.readingbat.retrievePrincipal
 import io.ktor.application.call
 import io.ktor.http.ContentType.Text.CSS
 import io.ktor.http.content.resources

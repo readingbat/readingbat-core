@@ -23,7 +23,6 @@ import com.github.pambrose.common.response.respondWith
 import com.github.pambrose.common.util.isNotValidEmail
 import com.github.pambrose.common.util.newStringSalt
 import com.github.pambrose.common.util.sha256
-import com.github.readingbat.PipelineCall
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.FormFields.PASSWORD
@@ -36,6 +35,7 @@ import com.github.readingbat.posts.Messages.EMPTY_EMAIL
 import com.github.readingbat.posts.Messages.EMPTY_PASWORD
 import com.github.readingbat.posts.Messages.INVALID_EMAIL
 import com.github.readingbat.posts.Messages.PASSWORD_TOO_SHORT
+import com.github.readingbat.server.PipelineCall
 import com.google.common.util.concurrent.RateLimiter
 import io.ktor.application.call
 import io.ktor.request.receiveParameters

@@ -21,7 +21,6 @@ import com.github.pambrose.common.redis.RedisUtils.withRedisPool
 import com.github.pambrose.common.script.KotlinScript
 import com.github.pambrose.common.script.PythonScript
 import com.github.pambrose.common.util.*
-import com.github.readingbat.PipelineCall
 import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.LanguageType.Companion.toLanguageType
 import com.github.readingbat.dsl.LanguageType.Java
@@ -35,6 +34,7 @@ import com.github.readingbat.misc.CSSNames.userResp
 import com.github.readingbat.misc.UserId
 import com.github.readingbat.misc.UserPrincipal
 import com.github.readingbat.misc.userIdKey
+import com.github.readingbat.server.PipelineCall
 import com.google.gson.Gson
 import io.ktor.application.call
 import io.ktor.request.receiveParameters

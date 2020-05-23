@@ -18,12 +18,12 @@
 package com.github.readingbat.posts
 
 import com.github.pambrose.common.redis.RedisUtils.withRedisPool
-import com.github.readingbat.PipelineCall
-import com.github.readingbat.config.fetchPrincipal
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.FormFields
 import com.github.readingbat.pages.requestLogInPage
+import com.github.readingbat.server.PipelineCall
+import com.github.readingbat.server.fetchPrincipal
 import io.ktor.application.call
 import io.ktor.request.receiveParameters
 import mu.KotlinLogging

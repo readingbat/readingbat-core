@@ -15,7 +15,7 @@
  *
  */
 
-package com.github.readingbat.config
+package com.github.readingbat.server
 
 import io.ktor.application.Application
 import io.ktor.application.ApplicationCallPipeline

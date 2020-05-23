@@ -15,7 +15,7 @@
  *
  */
 
-package com.github.readingbat.config
+package com.github.readingbat.server
 
 import com.github.pambrose.common.redis.RedisUtils.withRedis
 import com.github.readingbat.dsl.ReadingBatContent

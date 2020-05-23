@@ -15,13 +15,9 @@
  *
  */
 
-package com.github.readingbat.misc
+package com.github.readingbat.dsl
 
 import com.github.pambrose.common.util.GitHubRepo
-import com.github.pambrose.common.util.asText
-import com.github.pambrose.common.util.md5
-import com.github.pambrose.common.util.sha256
-import io.ktor.util.getDigestFunction
 import mu.KLogging
 import org.kohsuke.github.GitHub
 
@@ -38,16 +34,4 @@ object GitHubUtils : KLogging() {
     elems.forEach { elem -> currRoot = currRoot.tree.asSequence().filter { it.path == elem }.first().asTree() }
     return currRoot.tree.map { it.path }
   }
-}
-
-fun main() {
-  println("test".sha256("test2"))
-  println("test".md5("test2"))
-
-  // https://docs.oracle.com/javase/6/docs/api/java/security/SecureRandom.html
-  val digester = getDigestFunction("SHA-256") { "it${it.length}" }
-  val kk = digester.invoke("test")
-  val mm = kk.asText
-
-  println(mm)
 }

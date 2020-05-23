@@ -20,8 +20,6 @@ package com.github.readingbat.pages
 import com.github.pambrose.common.redis.RedisUtils.withRedisPool
 import com.github.pambrose.common.util.decode
 import com.github.pambrose.common.util.join
-import com.github.readingbat.PipelineCall
-import com.github.readingbat.config.fetchPrincipal
 import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.ChallengeGroup
 import com.github.readingbat.dsl.ReadingBatContent
@@ -34,6 +32,8 @@ import com.github.readingbat.misc.Constants.STATIC_ROOT
 import com.github.readingbat.misc.Constants.WHITE_CHECK
 import com.github.readingbat.misc.UserId
 import com.github.readingbat.posts.lookupUserId
+import com.github.readingbat.server.PipelineCall
+import com.github.readingbat.server.fetchPrincipal
 import io.ktor.application.call
 import io.ktor.sessions.get
 import io.ktor.sessions.sessions
@@ -58,9 +58,9 @@ internal fun PipelineCall.challengeGroupPage(content: ReadingBatContent,
       val languageName = languageType.lowerName
       val groupName = challengeGroup.groupName
       val challenges = challengeGroup.challenges
+      val loginPath = listOf(languageName, groupName).join()
       val principal = fetchPrincipal(loginAttempt)
       val browserSession = call.sessions.get<BrowserSession>()
-      val loginPath = listOf(languageName, groupName).join()
 
       fun TR.funcCall(redis: Jedis?, userId: UserId?, challenge: Challenge) {
         val challengeName = challenge.challengeName

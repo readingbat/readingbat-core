@@ -21,8 +21,8 @@ import com.github.pambrose.common.script.KotlinScript
 import com.github.pambrose.common.util.ContentSource
 import com.github.pambrose.common.util.GitHubFile
 import com.github.pambrose.common.util.GitHubRepo
-import com.github.readingbat.ReadingBatServer
 import com.github.readingbat.dsl.ReadingBatContent.Companion.contentMap
+import com.github.readingbat.server.ReadingBatServer
 import mu.KotlinLogging
 import kotlin.reflect.KFunction
 import kotlin.time.measureTimedValue

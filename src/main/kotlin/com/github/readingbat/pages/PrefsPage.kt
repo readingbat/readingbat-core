@@ -18,8 +18,6 @@
 package com.github.readingbat.pages
 
 import com.github.pambrose.common.redis.RedisUtils.withRedisPool
-import com.github.readingbat.PipelineCall
-import com.github.readingbat.config.fetchPrincipal
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.Constants.BACK_PATH
 import com.github.readingbat.misc.Constants.RETURN_PATH
@@ -29,6 +27,8 @@ import com.github.readingbat.misc.FormFields.CURR_PASSWORD
 import com.github.readingbat.misc.FormFields.NEW_PASSWORD
 import com.github.readingbat.misc.PageUtils.hideShowButton
 import com.github.readingbat.posts.lookupUserId
+import com.github.readingbat.server.PipelineCall
+import com.github.readingbat.server.fetchPrincipal
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 import mu.KotlinLogging

@@ -15,11 +15,12 @@
  *
  */
 
-package com.github.readingbat.config
+package com.github.readingbat.server
 
 import com.github.pambrose.common.redis.RedisUtils.withRedisPool
 import com.github.pambrose.common.util.sha256
 import com.github.pambrose.common.util.simpleClassName
+import com.github.readingbat.config.HerokuHttpsRedirect
 import com.github.readingbat.dsl.InvalidPathException
 import com.github.readingbat.misc.*
 import com.github.readingbat.misc.AuthName.FORM

@@ -20,8 +20,6 @@ package com.github.readingbat.pages
 import com.github.pambrose.common.redis.RedisUtils.withRedisPool
 import com.github.pambrose.common.util.decode
 import com.github.pambrose.common.util.join
-import com.github.readingbat.PipelineCall
-import com.github.readingbat.config.fetchPrincipal
 import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.Answers.processAnswers
@@ -46,6 +44,8 @@ import com.github.readingbat.misc.Constants.STATIC_ROOT
 import com.github.readingbat.misc.UserId
 import com.github.readingbat.misc.checkAnswersScript
 import com.github.readingbat.posts.lookupUserId
+import com.github.readingbat.server.PipelineCall
+import com.github.readingbat.server.fetchPrincipal
 import io.ktor.application.call
 import io.ktor.http.ContentType.Text.CSS
 import io.ktor.sessions.get
@@ -67,9 +67,9 @@ internal fun PipelineCall.challengePage(content: ReadingBatContent,
       val groupName = challenge.groupName
       val challengeName = challenge.challengeName
       val funcInfo = challenge.funcInfo(content)
+      val loginPath = listOf(languageName, groupName, challengeName).join()
       val principal = fetchPrincipal(loginAttempt)
       val browserSession = call.sessions.get<BrowserSession>()
-      val loginPath = listOf(languageName, groupName, challengeName).join()
 
       head {
         link { rel = "stylesheet"; href = spinnerCss }

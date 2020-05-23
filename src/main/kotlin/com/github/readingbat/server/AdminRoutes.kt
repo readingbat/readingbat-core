@@ -15,12 +15,11 @@
  *
  */
 
-package com.github.readingbat.config
+package com.github.readingbat.server
 
 import com.codahale.metrics.jvm.ThreadDump
 import com.github.pambrose.common.response.redirectTo
 import com.github.pambrose.common.util.randomId
-import com.github.readingbat.PipelineCall
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.AuthRoutes.COOKIES
 import com.github.readingbat.misc.BrowserSession
@@ -43,7 +42,6 @@ import java.lang.management.ManagementFactory
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
-
 
 private val logger = KotlinLogging.logger {}
 
@@ -112,5 +110,5 @@ internal fun PipelineCall.registerBrowserSession() {
 }
 
 private object ThreadDumpInfo {
-  internal val threadDump by lazy { ThreadDump(ManagementFactory.getThreadMXBean()) }
+  val threadDump by lazy { ThreadDump(ManagementFactory.getThreadMXBean()) }
 }

@@ -15,7 +15,7 @@
  *
  */
 
-import com.github.readingbat.ReadingBatServer
+import com.github.readingbat.server.ReadingBatServer
 
 object TestMain {
   @JvmStatic

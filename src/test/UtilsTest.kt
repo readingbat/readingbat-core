@@ -118,7 +118,7 @@ class UtilsTest {
     val s2 = "ReadingBatServer()"
     addImports(s2, variable).trimIndent() shouldBeEqualTo
         """
-        import com.github.readingbat.ReadingBatServer
+        import com.github.readingbat.server.ReadingBatServer
 
         $s2
         $variable
@@ -150,7 +150,7 @@ class UtilsTest {
     val s6 = "ReadingBatServer() GitHubContent()"
     addImports(s6, variable).trimIndent() shouldBeEqualTo
         """
-        import com.github.readingbat.ReadingBatServer
+        import com.github.readingbat.server.ReadingBatServer
         import com.github.readingbat.dsl.GitHubContent
 
         $s6
@@ -207,7 +207,7 @@ class UtilsTest {
     //println(addImports(s6, variable))
     addImports(s6, variable).trimIndent() shouldBeEqualTo
         """
-        import com.github.readingbat.ReadingBatServer
+        import com.github.readingbat.server.ReadingBatServer
         import com.github.readingbat.dsl.GitHubContent
 
         $s6
@@ -229,7 +229,7 @@ class UtilsTest {
     val s2 = "readingBatContent() ReadingBatServer()"
     addImports(s2, variable).trimIndent() shouldBeEqualTo
         """
-        import com.github.readingbat.ReadingBatServer
+        import com.github.readingbat.server.ReadingBatServer
         import com.github.readingbat.dsl.readingBatContent
         
         $s2
@@ -246,7 +246,7 @@ class UtilsTest {
     val s4 = "oldInclude() readingBatContent() ReadingBatServer() GitHubContent()"
     addImports(s4, variable).trimIndent() shouldBeEqualTo
         """
-        import com.github.readingbat.ReadingBatServer
+        import com.github.readingbat.server.ReadingBatServer
         import com.github.readingbat.dsl.GitHubContent
         import com.github.readingbat.dsl.readingBatContent
         import com.github.readingbat.dsl.oldInclude

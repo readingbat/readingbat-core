@@ -17,8 +17,8 @@
 
 package com.github.readingbat.pages
 
-import com.github.readingbat.config.production
 import com.github.readingbat.dsl.ReadingBatContent
+import com.github.readingbat.server.production
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 

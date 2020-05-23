@@ -19,8 +19,6 @@ package com.github.readingbat.pages
 
 import com.github.pambrose.common.util.decode
 import com.github.pambrose.common.util.join
-import com.github.readingbat.PipelineCall
-import com.github.readingbat.config.fetchPrincipal
 import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.CSSNames.challengeDesc
@@ -28,6 +26,8 @@ import com.github.readingbat.misc.CSSNames.kotlinCode
 import com.github.readingbat.misc.CSSNames.tabs
 import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
 import com.github.readingbat.misc.Constants.STATIC_ROOT
+import com.github.readingbat.server.PipelineCall
+import com.github.readingbat.server.fetchPrincipal
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 import org.apache.commons.text.StringEscapeUtils.escapeHtml4

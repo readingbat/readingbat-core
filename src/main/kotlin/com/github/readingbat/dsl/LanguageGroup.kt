@@ -18,7 +18,7 @@
 package com.github.readingbat.dsl
 
 import com.github.pambrose.common.util.*
-import com.github.readingbat.misc.GitHubUtils.directoryContents
+import com.github.readingbat.dsl.GitHubUtils.directoryContents
 import java.io.File
 
 @ReadingBatDslMarker
