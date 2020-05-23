@@ -56,6 +56,8 @@ dependencies {
 
     implementation "com.github.pambrose.common-utils:ktor-server-utils:$utils_version"
 
+    implementation "com.github.pambrose.common-utils:redis-utils:$utils_version"
+
     implementation "com.github.pambrose.common-utils:script-utils-common:$utils_version"
     implementation "com.github.pambrose.common-utils:script-utils-python:$utils_version"
     implementation "com.github.pambrose.common-utils:script-utils-java:$utils_version"

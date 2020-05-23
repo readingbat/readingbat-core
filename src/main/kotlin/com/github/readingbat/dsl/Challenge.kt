@@ -21,7 +21,6 @@ import com.github.pambrose.common.script.JavaScript
 import com.github.pambrose.common.script.KotlinScript
 import com.github.pambrose.common.script.PythonScript
 import com.github.pambrose.common.util.*
-import com.github.readingbat.InvalidConfigurationException
 import com.github.readingbat.dsl.LanguageType.*
 import com.github.readingbat.dsl.parse.JavaParse
 import com.github.readingbat.dsl.parse.JavaParse.deriveJavaReturnType

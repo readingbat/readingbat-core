@@ -18,8 +18,6 @@
 package com.github.readingbat.dsl
 
 import com.github.pambrose.common.util.*
-import com.github.readingbat.InvalidConfigurationException
-import com.github.readingbat.InvalidPathException
 import com.github.readingbat.misc.GitHubUtils.directoryContents
 import java.io.File
 

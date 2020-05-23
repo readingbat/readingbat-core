@@ -84,6 +84,3 @@ internal fun PipelineCall.assignPrincipal() =
 
 internal fun PipelineCall.queryParam(key: String): String? = call.request.queryParameters[key]
 
-internal class InvalidPathException(msg: String) : RuntimeException(msg)
-
-internal class InvalidConfigurationException(msg: String) : Exception(msg)

@@ -17,8 +17,6 @@
 
 package com.github.readingbat.dsl
 
-import com.github.readingbat.InvalidConfigurationException
-import com.github.readingbat.InvalidPathException
 import com.github.readingbat.dsl.Challenge.Companion.challenge
 import com.github.readingbat.dsl.ReturnType.Runtime
 import com.vladsch.flexmark.html.HtmlRenderer

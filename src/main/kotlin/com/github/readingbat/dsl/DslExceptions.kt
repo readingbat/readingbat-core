@@ -15,23 +15,8 @@
  *
  */
 
-package com.github.readingbat.misc
+package com.github.readingbat.dsl
 
-import com.github.pambrose.common.redis.RedisUtils.withRedis
+internal class InvalidPathException(msg: String) : RuntimeException(msg)
 
-object RedisRoutines {
-
-  @JvmStatic
-  fun main(args: Array<String>) {
-    deleteAllKeys()
-  }
-
-  internal fun deleteAllKeys() {
-    withRedis { redis ->
-      //println(redis.keys("*").joinToString("\n"))
-      if (redis != null)
-        redis.keys("*").forEach { redis.del(it) }
-    }
-
-  }
-}
+internal class InvalidConfigurationException(msg: String) : Exception(msg)

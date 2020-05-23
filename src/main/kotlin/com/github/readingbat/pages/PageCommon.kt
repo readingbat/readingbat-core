@@ -19,8 +19,8 @@ package com.github.readingbat.pages
 
 import com.github.pambrose.common.util.join
 import com.github.pambrose.common.util.toRootPath
-import com.github.readingbat.InvalidConfigurationException
 import com.github.readingbat.config.production
+import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.dsl.LanguageType.Companion.languageTypesInOrder
 import com.github.readingbat.dsl.ReadingBatContent

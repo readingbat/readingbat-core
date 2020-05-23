@@ -17,7 +17,6 @@
 
 package com.github.readingbat.dsl
 
-import com.github.readingbat.InvalidPathException
 import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
 
 enum class LanguageType(val useDoubleQuotes: Boolean, val suffix: String, val srcPrefix: String) {

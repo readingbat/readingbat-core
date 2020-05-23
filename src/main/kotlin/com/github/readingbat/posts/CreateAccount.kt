@@ -17,6 +17,7 @@
 
 package com.github.readingbat.posts
 
+import com.github.pambrose.common.redis.RedisUtils.withRedisPool
 import com.github.pambrose.common.response.redirectTo
 import com.github.pambrose.common.response.respondWith
 import com.github.pambrose.common.util.isNotValidEmail
@@ -27,7 +28,6 @@ import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.FormFields.PASSWORD
 import com.github.readingbat.misc.FormFields.USERNAME
-import com.github.readingbat.misc.RedisUtils.withRedisPool
 import com.github.readingbat.misc.UserId
 import com.github.readingbat.misc.userIdKey
 import com.github.readingbat.pages.createAccountPage

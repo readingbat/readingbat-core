@@ -18,7 +18,6 @@
 package com.github.readingbat.dsl
 
 import com.github.pambrose.common.util.ContentRoot
-import com.github.readingbat.InvalidConfigurationException
 import com.github.readingbat.dsl.LanguageGroup.Companion.defaultContentRoot
 import com.github.readingbat.dsl.LanguageType.*
 

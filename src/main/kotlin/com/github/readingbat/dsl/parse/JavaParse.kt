@@ -19,7 +19,7 @@ package com.github.readingbat.dsl.parse
 
 import com.github.pambrose.common.util.linesBetween
 import com.github.pambrose.common.util.substringBetween
-import com.github.readingbat.InvalidConfigurationException
+import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.ReturnType.Companion.asReturnType
 import mu.KLogging
 import kotlin.math.max
