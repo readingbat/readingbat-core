@@ -136,7 +136,7 @@ internal fun BODY.helpAndLogin(principal: UserPrincipal?, loginPath: String) {
           //valign = "top"
           style = "text-align:right"
           colSpan = "1"
-          a { href = ABOUT; +"about" }
+          a { href = "$ABOUT?$RETURN_PATH=$loginPath"; +"about" }
           +" | "
           //a { href = "/help.html"; +"help" }
           //+" | "
