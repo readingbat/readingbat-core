@@ -17,7 +17,7 @@
 
 package com.github.readingbat.server
 
-import com.github.readingbat.misc.UserPrincipal
+import com.github.readingbat.misc.UserId.UserPrincipal
 import io.ktor.application.Application
 import io.ktor.application.ApplicationCall
 import io.ktor.application.call

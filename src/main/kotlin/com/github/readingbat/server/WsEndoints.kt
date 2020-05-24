@@ -50,16 +50,14 @@ internal fun Routing.wsEndpoints(content: ReadingBatContent) {
 
         var i = 0
         withRedis { redis ->
-          if (redis != null) {
-            redis.subscribe(object : JedisPubSub() {
-              override fun onMessage(channel: String?, message: String?) {
-                runBlocking {
-                  delay(100)
-                  outgoing.send(Frame.Text("$channel $message ${i++}"))
-                }
+          redis?.subscribe(object : JedisPubSub() {
+            override fun onMessage(channel: String?, message: String?) {
+              runBlocking {
+                delay(100)
+                outgoing.send(Frame.Text("$channel $message ${i++}"))
               }
-            }, "channel")
-          }
+            }
+          }, "channel")
         }
 
         if (text.equals("bye", ignoreCase = true)) {

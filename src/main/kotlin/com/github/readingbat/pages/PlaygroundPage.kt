@@ -26,7 +26,7 @@ import com.github.readingbat.misc.CSSNames.kotlinCode
 import com.github.readingbat.misc.CSSNames.tabs
 import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
 import com.github.readingbat.misc.Constants.STATIC_ROOT
-import com.github.readingbat.misc.UserPrincipal
+import com.github.readingbat.misc.UserId.UserPrincipal
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 import org.apache.commons.text.StringEscapeUtils.escapeHtml4
@@ -35,10 +35,10 @@ import org.apache.commons.text.StringEscapeUtils.escapeHtml4
 // https://jetbrains.github.io/kotlin-playground/
 // https://jetbrains.github.io/kotlin-playground/examples/
 
-fun playgroundPage(content: ReadingBatContent,
-                   challenge: Challenge,
-                   loginAttempt: Boolean,
-                   principal: UserPrincipal?) =
+internal fun playgroundPage(content: ReadingBatContent,
+                            challenge: Challenge,
+                            loginAttempt: Boolean,
+                            principal: UserPrincipal?) =
   createHTML()
     .html {
       val languageType = challenge.languageType

@@ -27,6 +27,7 @@ import com.github.readingbat.misc.KeyPrefixes.PASSWD
 import com.github.readingbat.misc.KeyPrefixes.SALT
 import com.github.readingbat.misc.KeyPrefixes.USER_ID
 import io.ktor.auth.Principal
+import redis.clients.jedis.Jedis
 import java.time.Instant
 
 internal fun userIdKey(username: String) = "$USER_ID|$username"
@@ -44,20 +45,43 @@ internal class UserId(val id: String = randomId(25)) {
 
   fun argumentKey(languageName: String, groupName: String, challengeName: String, argument: String) =
     listOf(ANSWER_HISTORY, AUTH, id, languageName, groupName, challengeName, argument).joinToString("|")
+
+  companion object {
+    fun lookupUserId(username: String, redis: Jedis?): UserId? {
+      val userIdKey = userIdKey(username)
+      val id = redis?.get(userIdKey) ?: ""
+      return if (id.isNotEmpty()) UserId(id) else null
+    }
+
+    fun lookupUserId(principal: UserPrincipal?, redis: Jedis?) =
+      principal?.let {
+        val userIdKey = userIdKey(it.userId)
+        val id = redis?.get(userIdKey) ?: ""
+        if (id.isNotEmpty()) UserId(id) else null
+      }
+
+    fun lookupSaltAndDigest(userId: UserId, redis: Jedis?): Pair<String, String> {
+      val saltKey = userId.saltKey()
+      val passwordKey = userId.passwordKey()
+      val salt = redis?.get(saltKey) ?: ""
+      val digest = redis?.get(passwordKey) ?: ""
+      return salt to digest
+    }
+  }
+
+  data class UserPrincipal(val userId: String, val created: Long = Instant.now().toEpochMilli()) : Principal
+
+  internal data class BrowserSession(val id: String, val created: Long = Instant.now().toEpochMilli()) {
+
+    fun correctAnswersKey(languageName: String, groupName: String, challengeName: String) =
+      listOf(CORRECT_ANSWERS, NO_AUTH, id, languageName, groupName, challengeName).joinToString("|")
+
+    fun challengeKey(languageName: String, groupName: String, challengeName: String) =
+      listOf(CHALLENGE_ANSWERS, NO_AUTH, id, languageName, groupName, challengeName).joinToString("|")
+
+    fun argumentKey(languageName: String, groupName: String, challengeName: String, argument: String) =
+      listOf(ANSWER_HISTORY, NO_AUTH, id, languageName, groupName, challengeName, argument).joinToString("|")
+  }
+
+  internal data class ChallengeAnswers(val id: String, val answers: MutableMap<String, String> = mutableMapOf())
 }
-
-data class UserPrincipal(val userId: String, val created: Long = Instant.now().toEpochMilli()) : Principal
-
-internal data class BrowserSession(val id: String, val created: Long = Instant.now().toEpochMilli()) {
-
-  fun correctAnswersKey(languageName: String, groupName: String, challengeName: String) =
-    listOf(CORRECT_ANSWERS, NO_AUTH, id, languageName, groupName, challengeName).joinToString("|")
-
-  fun challengeKey(languageName: String, groupName: String, challengeName: String) =
-    listOf(CHALLENGE_ANSWERS, NO_AUTH, id, languageName, groupName, challengeName).joinToString("|")
-
-  fun argumentKey(languageName: String, groupName: String, challengeName: String, argument: String) =
-    listOf(ANSWER_HISTORY, NO_AUTH, id, languageName, groupName, challengeName, argument).joinToString("|")
-}
-
-internal data class ChallengeAnswers(val id: String, val answers: MutableMap<String, String> = mutableMapOf())

@@ -28,8 +28,8 @@ import com.github.readingbat.misc.FormFields.NEW_PASSWORD
 import com.github.readingbat.misc.FormFields.PREF_ACTION
 import com.github.readingbat.misc.FormFields.UPDATE_PASSWORD
 import com.github.readingbat.misc.PageUtils.hideShowButton
-import com.github.readingbat.misc.UserPrincipal
-import com.github.readingbat.posts.lookupUserId
+import com.github.readingbat.misc.UserId.Companion.lookupUserId
+import com.github.readingbat.misc.UserId.UserPrincipal
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 import mu.KotlinLogging
@@ -40,7 +40,7 @@ internal fun prefsPage(content: ReadingBatContent,
                        returnPath: String,
                        principal: UserPrincipal?): String =
   withRedisPool { redis ->
-    val userId = lookupUserId(redis, principal)
+    val userId = lookupUserId(principal, redis)
     logger.info { "UserId: $userId" }
 
     if (userId == null)

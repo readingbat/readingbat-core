@@ -22,7 +22,6 @@ import com.github.pambrose.common.util.join
 import com.github.readingbat.dsl.ChallengeGroup
 import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.misc.BrowserSession
 import com.github.readingbat.misc.CSSNames.funcItem
 import com.github.readingbat.misc.CSSNames.groupChoice
 import com.github.readingbat.misc.CSSNames.groupItemSrc
@@ -32,8 +31,9 @@ import com.github.readingbat.misc.Constants.GREEN_CHECK
 import com.github.readingbat.misc.Constants.STATIC_ROOT
 import com.github.readingbat.misc.Constants.WHITE_CHECK
 import com.github.readingbat.misc.UserId
-import com.github.readingbat.misc.UserPrincipal
-import com.github.readingbat.posts.lookupUserId
+import com.github.readingbat.misc.UserId.BrowserSession
+import com.github.readingbat.misc.UserId.Companion.lookupUserId
+import com.github.readingbat.misc.UserId.UserPrincipal
 import kotlinx.html.*
 import kotlinx.html.Entities.nbsp
 import kotlinx.html.stream.createHTML
@@ -92,7 +92,7 @@ internal fun languageGroupPage(content: ReadingBatContent,
             val rows = size.rows(cols)
 
             withRedisPool { redis ->
-              val userId = lookupUserId(redis, principal)
+              val userId = lookupUserId(principal, redis)
 
               (0 until rows).forEach { i ->
                 tr {

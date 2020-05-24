@@ -43,6 +43,7 @@ import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
 
 private val logger = KotlinLogging.logger {}
+private val createAccountLimiter = RateLimiter.create(2.0) // rate 2.0 is "2 permits per second"
 
 private object Messages {
   const val EMPTY_EMAIL = "Empty email value"
@@ -65,47 +66,52 @@ internal suspend fun PipelineCall.createAccount(content: ReadingBatContent) {
     password.isBlank() -> respondWith { createAccountPage(content, username, EMPTY_PASWORD, returnPath) }
     password.length < 6 -> respondWith { createAccountPage(content, username, PASSWORD_TOO_SHORT, returnPath) }
     password == "password" -> respondWith { createAccountPage(content, username, CLEVER_PASSWORD, returnPath) }
-    else -> {
-      withRedisPool { redis ->
-        runBlocking {
-          if (redis == null) {
-            redirectTo { returnPath }
+    else ->
+      createAccount(content, username, password, returnPath)
+  }
+}
+
+internal suspend fun PipelineCall.createAccount(content: ReadingBatContent,
+                                                username: String,
+                                                password: String,
+                                                returnPath: String) {
+  withRedisPool { redis ->
+    runBlocking {
+      if (redis == null) {
+        redirectTo { returnPath }
+      }
+      else {
+        // Check if username already exists
+        val userIdKey = userIdKey(username)
+        if (redis.exists(userIdKey)) {
+          respondWith { createAccountPage(content, "", "Username already exists: $username", returnPath) }
+        }
+        else {
+          // The userName (email) is stored in only one KV pair, enabling changes to the userName
+          // Three things are stored:
+          // username -> userId
+          // userId -> salt
+          // userId -> sha256-encoded password
+
+          redis.multi().also { tx ->
+            val userId = UserId()
+            val salt = newStringSalt()
+            val digest = password.sha256(salt)
+
+            logger.info { "Created user $username ${userId.id} $salt $digest" }
+
+            tx.set(userIdKey, userId.id)
+            tx.set(userId.saltKey(), salt)
+            tx.set(userId.passwordKey(), digest)
+            tx.exec()
           }
-          else {
-            // Check if username already exists
-            val userIdKey = userIdKey(username)
-            if (redis.exists(userIdKey)) {
-              respondWith { createAccountPage(content, "", "Username already exists: $username", returnPath) }
-            }
-            else {
-              // The userName (email) is stored in only one KV pair, enabling changes to the userName
-              // Three things are stored:
-              // username -> userId
-              // userId -> salt
-              // userId -> sha256-encoded password
 
-              redis.multi().also { tx ->
-                val userId = UserId()
-                val salt = newStringSalt()
-                val digest = password.sha256(salt)
+          createAccountLimiter.acquire() // may wait
 
-                logger.info { "Created user $username ${userId.id} $salt $digest" }
-
-                tx.set(userIdKey, userId.id)
-                tx.set(userId.saltKey(), salt)
-                tx.set(userId.passwordKey(), digest)
-                tx.exec()
-              }
-
-              createAccountLimiter.acquire() // may wait
-
-              redirectTo { returnPath }
-            }
-          }
+          redirectTo { returnPath }
         }
       }
     }
   }
-}
 
-private val createAccountLimiter = RateLimiter.create(2.0) // rate 2.0 is "2 permits per second"
+}

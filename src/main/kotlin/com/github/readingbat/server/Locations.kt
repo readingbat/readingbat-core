@@ -22,10 +22,10 @@ import com.github.readingbat.dsl.LanguageType.Companion.toLanguageType
 import com.github.readingbat.dsl.LanguageType.Kotlin
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.AuthName.FORM
-import com.github.readingbat.misc.BrowserSession
 import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
 import com.github.readingbat.misc.Constants.PLAYGROUND_ROOT
-import com.github.readingbat.misc.UserPrincipal
+import com.github.readingbat.misc.UserId.BrowserSession
+import com.github.readingbat.misc.UserId.UserPrincipal
 import com.github.readingbat.pages.challengeGroupPage
 import com.github.readingbat.pages.challengePage
 import com.github.readingbat.pages.languageGroupPage

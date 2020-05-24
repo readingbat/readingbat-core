@@ -22,8 +22,8 @@ import com.github.pambrose.common.response.redirectTo
 import com.github.pambrose.common.util.randomId
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.AuthRoutes.COOKIES
-import com.github.readingbat.misc.BrowserSession
-import com.github.readingbat.misc.UserPrincipal
+import com.github.readingbat.misc.UserId.BrowserSession
+import com.github.readingbat.misc.UserId.UserPrincipal
 import io.ktor.application.call
 import io.ktor.html.respondHtml
 import io.ktor.http.ContentType

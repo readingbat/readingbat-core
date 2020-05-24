@@ -29,8 +29,7 @@ object RedisRoutines {
   internal fun deleteAllKeys() {
     withRedis { redis ->
       //println(redis.keys("*").joinToString("\n"))
-      if (redis != null)
-        redis.keys("*").forEach { redis.del(it) }
+      redis?.keys("*")?.forEach { redis.del(it) }
     }
 
   }

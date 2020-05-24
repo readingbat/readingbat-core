@@ -23,7 +23,6 @@ import com.github.pambrose.common.util.join
 import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.Answers.processAnswers
-import com.github.readingbat.misc.BrowserSession
 import com.github.readingbat.misc.CSSNames.arrow
 import com.github.readingbat.misc.CSSNames.challengeDesc
 import com.github.readingbat.misc.CSSNames.check_answers
@@ -42,9 +41,10 @@ import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
 import com.github.readingbat.misc.Constants.PLAYGROUND_ROOT
 import com.github.readingbat.misc.Constants.STATIC_ROOT
 import com.github.readingbat.misc.UserId
-import com.github.readingbat.misc.UserPrincipal
+import com.github.readingbat.misc.UserId.BrowserSession
+import com.github.readingbat.misc.UserId.Companion.lookupUserId
+import com.github.readingbat.misc.UserId.UserPrincipal
 import com.github.readingbat.misc.checkAnswersScript
-import com.github.readingbat.posts.lookupUserId
 import io.ktor.http.ContentType.Text.CSS
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
@@ -105,7 +105,7 @@ internal fun challengePage(content: ReadingBatContent,
               var previousAnswers = mutableMapOf<String, String>()
 
               withRedisPool { redis ->
-                val userId: UserId? = lookupUserId(redis, principal)
+                val userId: UserId? = lookupUserId(principal, redis)
                 val key =
                   userId?.challengeKey(languageName, groupName, challenge.challengeName)
                     ?: browserSession?.challengeKey(languageName, groupName, challenge.challengeName)

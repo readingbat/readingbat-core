@@ -29,11 +29,10 @@ import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.Answers.challengeSrc
 import com.github.readingbat.misc.Answers.groupSrc
 import com.github.readingbat.misc.Answers.langSrc
-import com.github.readingbat.misc.BrowserSession
 import com.github.readingbat.misc.CSSNames.userResp
-import com.github.readingbat.misc.UserId
-import com.github.readingbat.misc.UserPrincipal
-import com.github.readingbat.misc.userIdKey
+import com.github.readingbat.misc.UserId.BrowserSession
+import com.github.readingbat.misc.UserId.Companion.lookupUserId
+import com.github.readingbat.misc.UserId.UserPrincipal
 import com.github.readingbat.server.PipelineCall
 import com.google.gson.Gson
 import io.ktor.application.call
@@ -43,7 +42,6 @@ import io.ktor.sessions.get
 import io.ktor.sessions.sessions
 import kotlinx.coroutines.delay
 import mu.KLogging
-import redis.clients.jedis.Jedis
 import javax.script.ScriptException
 import kotlin.time.milliseconds
 
@@ -153,7 +151,7 @@ object CheckAnswers : KLogging() {
 
     // Save whether all the answers for the challenge were correct
     withRedisPool { redis ->
-      val userId = lookupUserId(redis, principal)
+      val userId = lookupUserId(principal, redis)
 
       // Save if all answers were correct
       val correctAnswersKey =
@@ -232,13 +230,3 @@ object CheckAnswers : KLogging() {
     }
   }
 }
-
-internal fun lookupUserId(redis: Jedis?, principal: UserPrincipal?) =
-  if (principal != null) {
-    val userIdKey = userIdKey(principal.userId)
-    val id = redis?.get(userIdKey) ?: ""
-    if (id.isNotEmpty()) UserId(id) else null
-  }
-  else {
-    null
-  }
