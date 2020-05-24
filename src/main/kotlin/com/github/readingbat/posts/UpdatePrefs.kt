@@ -73,7 +73,7 @@ internal suspend fun PipelineCall.changePrefs(content: ReadingBatContent): Strin
               if (salt.isNotEmpty() && digest.isNotEmpty() && digest == currPassword.sha256(salt)) {
                 val newDigest = newPassword.sha256(salt)
                 println("Setting new password to: $digest")
-                //redis.set(userId.passwordKey(), newDigest)
+                redis.set(userId.passwordKey(), newDigest)
                 "Password changed" to false
               }
               else {

@@ -47,6 +47,7 @@ internal fun languageGroupPage(content: ReadingBatContent,
   createHTML()
     .html {
       val languageName = languageType.lowerName
+      val loginPath = listOf(CHALLENGE_ROOT, languageName).join()
       val groups = content.findLanguage(languageType).challengeGroups
 
       fun TR.groupItem(redis: Jedis?, userId: UserId?, challengeGroup: ChallengeGroup<*>) {
@@ -83,7 +84,7 @@ internal fun languageGroupPage(content: ReadingBatContent,
       head { headDefault(content) }
 
       body {
-        bodyHeader(principal, loginAttempt, content, languageType, languageName, "Welcome to ReadingBat.")
+        bodyHeader(principal, loginAttempt, content, languageType, loginPath, "Welcome to ReadingBat.")
 
         div(classes = tabs) {
           table {

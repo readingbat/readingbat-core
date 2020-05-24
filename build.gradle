@@ -95,7 +95,7 @@ dependencies {
 }
 
 shadowJar {
-    //zip64 true
+    zip64 true
     mergeServiceFiles()
     exclude "META-INF/*.SF"
     exclude 'META-INF/*.DSA'
