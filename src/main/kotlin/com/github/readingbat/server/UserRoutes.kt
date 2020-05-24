@@ -52,6 +52,7 @@ import io.ktor.routing.get
 import io.ktor.routing.post
 import io.ktor.sessions.clear
 import io.ktor.sessions.sessions
+import kotlinx.coroutines.runBlocking
 
 internal fun Routing.userRoutes(content: ReadingBatContent) {
 
@@ -68,17 +69,15 @@ internal fun Routing.userRoutes(content: ReadingBatContent) {
   get(PREFS) { respondWith { prefsPage(content, queryParam(RETURN_PATH) ?: "/", fetchPrincipal()) } }
 
   post(PREFS) {
-    changePrefs(content,
-                call.receiveParameters(),
-                fetchPrincipal())
+    respondWith {
+      runBlocking {
+        changePrefs(content, call.receiveParameters(), fetchPrincipal())
+      }
+    }
   }
 
   get(PRIVACY) {
-    respondWith {
-      privacyPage(content,
-                  queryParam(RETURN_PATH) ?: "",
-                  queryParam(BACK_PATH) ?: "")
-    }
+    respondWith { privacyPage(content, queryParam(RETURN_PATH) ?: "", queryParam(BACK_PATH) ?: "") }
   }
 
   get(ABOUT) { respondWith { aboutPage(content) } }

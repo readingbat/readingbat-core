@@ -21,6 +21,8 @@ import com.github.pambrose.common.redis.RedisUtils.withRedisPool
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.FormFields
+import com.github.readingbat.misc.FormFields.PREF_ACTION
+import com.github.readingbat.misc.FormFields.UPDATE_PASSWORD
 import com.github.readingbat.misc.UserPrincipal
 import com.github.readingbat.pages.requestLogInPage
 import io.ktor.http.Parameters
@@ -28,13 +30,12 @@ import mu.KotlinLogging
 
 private val logger = KotlinLogging.logger {}
 
-internal suspend fun changePrefs(content: ReadingBatContent, parameters: Parameters, principal: UserPrincipal?) {
-  val username = parameters[FormFields.USERNAME] ?: ""
-  val password = parameters[FormFields.PASSWORD] ?: ""
+internal fun changePrefs(content: ReadingBatContent, parameters: Parameters, principal: UserPrincipal?): String {
   val returnPath = parameters[RETURN_PATH] ?: "/"
+
   logger.debug { "Return path = $returnPath" }
 
-  withRedisPool { redis ->
+  return withRedisPool { redis ->
     val userId = lookupUserId(redis, principal)
     logger.info { "UserId: $userId" }
 
@@ -42,7 +43,15 @@ internal suspend fun changePrefs(content: ReadingBatContent, parameters: Paramet
       requestLogInPage(content, returnPath, principal)
     }
     else {
-      Unit
+      val action = parameters[PREF_ACTION] ?: ""
+      if (action == UPDATE_PASSWORD) {
+
+        val currPassword = parameters[FormFields.CURR_PASSWORD] ?: ""
+        val newPassword = parameters[FormFields.NEW_PASSWORD] ?: ""
+        logger.info { "Curr: $currPassword New: $newPassword Action: $action" }
+
+      }
+      ""
     }
   }
 }

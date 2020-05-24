@@ -59,6 +59,8 @@ object FormFields {
   const val PASSWORD = "passwd"
   const val CURR_PASSWORD = "curr_passwd"
   const val NEW_PASSWORD = "new_passwd"
+  const val UPDATE_PASSWORD = "Update Password"
+  const val PREF_ACTION = "pref_action"
 }
 
 object AuthName {

@@ -56,7 +56,7 @@ internal fun challengeGroupPage(content: ReadingBatContent,
       val languageName = languageType.lowerName
       val groupName = challengeGroup.groupName
       val challenges = challengeGroup.challenges
-      val loginPath = listOf(languageName, groupName).join()
+      val loginPath = listOf(CHALLENGE_ROOT, languageName, groupName).join()
 
       fun TR.funcCall(redis: Jedis?, userId: UserId?, challenge: Challenge) {
         val challengeName = challenge.challengeName

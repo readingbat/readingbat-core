@@ -65,7 +65,7 @@ internal fun challengePage(content: ReadingBatContent,
       val groupName = challenge.groupName
       val challengeName = challenge.challengeName
       val funcInfo = challenge.funcInfo(content)
-      val loginPath = listOf(languageName, groupName, challengeName).join()
+      val loginPath = listOf(CHALLENGE_ROOT, languageName, groupName, challengeName).join()
 
       head {
         link { rel = "stylesheet"; href = spinnerCss }

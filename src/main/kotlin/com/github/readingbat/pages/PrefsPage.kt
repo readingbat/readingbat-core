@@ -25,6 +25,8 @@ import com.github.readingbat.misc.Endpoints.PREFS
 import com.github.readingbat.misc.Endpoints.PRIVACY
 import com.github.readingbat.misc.FormFields.CURR_PASSWORD
 import com.github.readingbat.misc.FormFields.NEW_PASSWORD
+import com.github.readingbat.misc.FormFields.PREF_ACTION
+import com.github.readingbat.misc.FormFields.UPDATE_PASSWORD
 import com.github.readingbat.misc.PageUtils.hideShowButton
 import com.github.readingbat.misc.UserPrincipal
 import com.github.readingbat.posts.lookupUserId
@@ -88,10 +90,11 @@ internal fun prefsWithLoginPage(content: ReadingBatContent, returnPath: String) 
               }
               tr {
                 td {}
-                td { input { type = InputType.submit; name = "dosavepw"; value = "Update Password" } }
+                td { input { type = InputType.submit; name = PREF_ACTION; value = UPDATE_PASSWORD } }
               }
             }
           }
+
           h3 { +"Teacher Share" }
           p { +"Enter the email address of the teacher account. This will make your done page and solution code visible to that account." }
           form {
@@ -113,6 +116,7 @@ internal fun prefsWithLoginPage(content: ReadingBatContent, returnPath: String) 
               }
             }
           }
+
           h3 { +"Memo" }
           p { +"Generally this is left blank. A teacher may ask you to fill this in." }
           form {

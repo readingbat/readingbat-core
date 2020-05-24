@@ -46,7 +46,7 @@ fun playgroundPage(content: ReadingBatContent,
       val challengeName = challenge.challengeName
       val languageName = languageType.lowerName
       val funcInfo = challenge.funcInfo(content)
-      val loginPath = listOf(languageName, groupName, challengeName).join()
+      val loginPath = listOf(CHALLENGE_ROOT, languageName, groupName, challengeName).join()
 
       head {
         script { src = "https://unpkg.com/kotlin-playground@1"; attributes["data-selector"] = ".$kotlinCode" }
