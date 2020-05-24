@@ -32,8 +32,8 @@ import com.github.readingbat.misc.Answers.langSrc
 import com.github.readingbat.misc.CSSNames.userResp
 import com.github.readingbat.misc.UserId.BrowserSession
 import com.github.readingbat.misc.UserId.Companion.lookupUserId
-import com.github.readingbat.misc.UserId.UserPrincipal
 import com.github.readingbat.server.PipelineCall
+import com.github.readingbat.server.fetchPrincipal
 import com.google.gson.Gson
 import io.ktor.application.call
 import io.ktor.request.receiveParameters
@@ -79,7 +79,8 @@ object CheckAnswers : KLogging() {
   private fun String.isJavaBoolean() = this == "true" || this == "false"
   private fun String.isPythonBoolean() = this == "True" || this == "False"
 
-  internal suspend fun PipelineCall.checkUserAnswers(content: ReadingBatContent, principal: UserPrincipal?) {
+  internal suspend fun PipelineCall.checkUserAnswers(content: ReadingBatContent) {
+    val principal = fetchPrincipal()
     val params = call.receiveParameters()
     val compareMap = params.entries().map { it.key to it.value[0] }.toMap()
     val languageName = compareMap[langSrc] ?: throw InvalidConfigurationException("Missing language")

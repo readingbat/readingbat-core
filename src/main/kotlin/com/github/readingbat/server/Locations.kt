@@ -25,7 +25,6 @@ import com.github.readingbat.misc.AuthName.FORM
 import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
 import com.github.readingbat.misc.Constants.PLAYGROUND_ROOT
 import com.github.readingbat.misc.UserId.BrowserSession
-import com.github.readingbat.misc.UserId.UserPrincipal
 import com.github.readingbat.pages.challengeGroupPage
 import com.github.readingbat.pages.challengePage
 import com.github.readingbat.pages.languageGroupPage
@@ -52,9 +51,6 @@ internal fun Routing.locations(content: ReadingBatContent) {
     post<PlaygroundRequest> { request -> playground(content, request, true) }
   }
 }
-
-internal fun PipelineCall.fetchPrincipal(loginAttempt: Boolean = false): UserPrincipal? =
-  if (loginAttempt) assignPrincipal() else retrievePrincipal()
 
 private suspend fun PipelineCall.language(content: ReadingBatContent,
                                           language: Language,

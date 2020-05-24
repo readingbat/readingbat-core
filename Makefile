@@ -6,6 +6,9 @@ clean:
 compile:
 	./gradlew build -xtest
 
+scan:
+	./gradlew build --scan -xtest
+
 build: compile
 
 uberjar:

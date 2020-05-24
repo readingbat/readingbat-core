@@ -102,9 +102,6 @@ internal val cssContent by lazy {
       rule(".h3") {
         fontSize = LinearDimension("120%")
       }
-      rule("span.no") {
-        color = Color.red
-      }
       rule("td.no") {
         minWidth = 22.px
         backgroundColor = Color.red

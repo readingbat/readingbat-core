@@ -29,29 +29,31 @@ import com.github.readingbat.misc.FormFields.PREF_ACTION
 import com.github.readingbat.misc.FormFields.UPDATE_PASSWORD
 import com.github.readingbat.misc.PageUtils.hideShowButton
 import com.github.readingbat.misc.UserId.Companion.lookupUserId
-import com.github.readingbat.misc.UserId.UserPrincipal
+import com.github.readingbat.server.PipelineCall
+import com.github.readingbat.server.fetchPrincipal
+import com.github.readingbat.server.queryParam
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 import mu.KotlinLogging
 
 private val logger = KotlinLogging.logger {}
 
-internal fun prefsPage(content: ReadingBatContent,
-                       returnPath: String,
-                       principal: UserPrincipal?): String =
+internal fun PipelineCall.prefsPage(content: ReadingBatContent, msg: String): String =
   withRedisPool { redis ->
+    val principal = fetchPrincipal()
     val userId = lookupUserId(principal, redis)
     logger.info { "UserId: $userId" }
 
     if (userId == null)
-      requestLogInPage(content, returnPath, principal)
+      requestLogInPage(content, principal)
     else
-      prefsWithLoginPage(content, returnPath)
+      prefsWithLoginPage(content, msg)
   }
 
-internal fun prefsWithLoginPage(content: ReadingBatContent, returnPath: String) =
+internal fun PipelineCall.prefsWithLoginPage(content: ReadingBatContent, msg: String) =
   createHTML()
     .html {
+      val returnPath = queryParam(RETURN_PATH) ?: "/"
 
       head {
         headDefault(content)
@@ -65,6 +67,9 @@ internal fun prefsWithLoginPage(content: ReadingBatContent, returnPath: String) 
 
         div {
           h2 { +"ReadingBat Prefs" }
+
+          if (msg.isNotEmpty())
+            p { span { style = "color:green;"; +msg } }
 
           h3 { +"Change password" }
           p { +"Password must contain at least 6 characters" }

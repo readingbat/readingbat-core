@@ -25,15 +25,17 @@ import com.github.readingbat.misc.Endpoints.PRIVACY
 import com.github.readingbat.misc.FormFields.PASSWORD
 import com.github.readingbat.misc.FormFields.USERNAME
 import com.github.readingbat.misc.PageUtils.hideShowButton
+import com.github.readingbat.server.PipelineCall
+import com.github.readingbat.server.queryParam
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 
-internal fun createAccountPage(content: ReadingBatContent,
-                               defaultUserName: String,
-                               msg: String,
-                               returnPath: String) =
+internal fun PipelineCall.createAccountPage(content: ReadingBatContent,
+                                            defaultUserName: String,
+                                            msg: String) =
   createHTML()
     .html {
+      val returnPath = queryParam(RETURN_PATH) ?: "/"
       val createButton = "createAccountButton"
 
       head {
@@ -69,12 +71,12 @@ internal fun createAccountPage(content: ReadingBatContent,
             """.trimIndent()
           }
 
-          p {}
+          br //p {}
 
           if (msg.isNotEmpty())
-            p { span(classes = "no") { +msg } }
+            p { span { style = "color:red;"; +msg } }
 
-          p {}
+          br //p {}
 
           val inputFs = "font-size: 95%;"
           val labelWidth = "width: 250;"

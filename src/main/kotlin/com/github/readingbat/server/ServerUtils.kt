@@ -40,8 +40,8 @@ internal fun Application.property(name: String, default: String = "", warn: Bool
     default
   }typealias PipelineCall = PipelineContext<Unit, ApplicationCall>
 
-internal fun PipelineCall.retrievePrincipal() =
-  call.sessions.get<UserPrincipal>()
+internal fun PipelineCall.fetchPrincipal(loginAttempt: Boolean = false): UserPrincipal? =
+  if (loginAttempt) assignPrincipal() else call.sessions.get<UserPrincipal>()
 
 internal fun PipelineCall.assignPrincipal() =
   call.principal<UserPrincipal>().apply { if (this != null) call.sessions.set(this) }  // Set the cookie

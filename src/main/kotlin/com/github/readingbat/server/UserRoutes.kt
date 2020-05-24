@@ -46,13 +46,11 @@ import io.ktor.application.call
 import io.ktor.http.ContentType.Text.CSS
 import io.ktor.http.content.resources
 import io.ktor.http.content.static
-import io.ktor.request.receiveParameters
 import io.ktor.routing.Routing
 import io.ktor.routing.get
 import io.ktor.routing.post
 import io.ktor.sessions.clear
 import io.ktor.sessions.sessions
-import kotlinx.coroutines.runBlocking
 
 internal fun Routing.userRoutes(content: ReadingBatContent) {
 
@@ -60,24 +58,18 @@ internal fun Routing.userRoutes(content: ReadingBatContent) {
 
   get(CHALLENGE_ROOT) { redirectTo { defaultTab(content) } }
 
-  post(CHECK_ANSWERS_ROOT) { checkUserAnswers(content, retrievePrincipal()) }
+  post(CHECK_ANSWERS_ROOT) { checkUserAnswers(content) }
 
-  get(CREATE_ACCOUNT) { respondWith { createAccountPage(content, "", "", queryParam(RETURN_PATH) ?: "/") } }
+  get(CREATE_ACCOUNT) { respondWith { createAccountPage(content, "", "") } }
 
   post(CREATE_ACCOUNT) { createAccount(content) }
 
-  get(PREFS) { respondWith { prefsPage(content, queryParam(RETURN_PATH) ?: "/", fetchPrincipal()) } }
+  get(PREFS) { respondWith { prefsPage(content, "") } }
 
-  post(PREFS) {
-    respondWith {
-      runBlocking {
-        changePrefs(content, call.receiveParameters(), fetchPrincipal())
-      }
-    }
-  }
+  post(PREFS) { respondWith { changePrefs(content) } }
 
   get(PRIVACY) {
-    respondWith { privacyPage(content, queryParam(RETURN_PATH) ?: "", queryParam(BACK_PATH) ?: "") }
+    respondWith { privacyPage(content, queryParam(BACK_PATH) ?: "") }
   }
 
   get(ABOUT) { respondWith { aboutPage(content) } }

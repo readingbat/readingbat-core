@@ -26,17 +26,21 @@ import com.github.readingbat.misc.FormFields.PREF_ACTION
 import com.github.readingbat.misc.FormFields.UPDATE_PASSWORD
 import com.github.readingbat.misc.UserId
 import com.github.readingbat.misc.UserId.Companion.lookupUserId
-import com.github.readingbat.misc.UserId.UserPrincipal
+import com.github.readingbat.pages.prefsPage
 import com.github.readingbat.pages.requestLogInPage
-import io.ktor.http.Parameters
+import com.github.readingbat.server.PipelineCall
+import com.github.readingbat.server.fetchPrincipal
+import io.ktor.application.call
+import io.ktor.request.receiveParameters
 import mu.KotlinLogging
 
 private val logger = KotlinLogging.logger {}
 
-internal fun changePrefs(content: ReadingBatContent,
-                         parameters: Parameters,
-                         principal: UserPrincipal?): String =
-  withRedisPool { redis ->
+internal suspend fun PipelineCall.changePrefs(content: ReadingBatContent): String {
+  val parameters = call.receiveParameters()
+  val principal = fetchPrincipal()
+
+  return withRedisPool { redis ->
     val returnPath = parameters[RETURN_PATH] ?: "/"
 
     logger.debug { "Return path = $returnPath" }
@@ -49,26 +53,39 @@ internal fun changePrefs(content: ReadingBatContent,
       logger.info { "UserId: $userId" }
 
       if (userId == null) {
-        requestLogInPage(content, returnPath, principal)
+        requestLogInPage(content, principal)
       }
       else {
         val action = parameters[PREF_ACTION] ?: ""
         if (action == UPDATE_PASSWORD) {
-
           val currPassword = parameters[FormFields.CURR_PASSWORD] ?: ""
           val newPassword = parameters[FormFields.NEW_PASSWORD] ?: ""
           logger.info { "Curr: $currPassword New: $newPassword Action: $action" }
 
-          val (salt, digest) = UserId.lookupSaltAndDigest(userId, redis)
-          if (salt.isNotEmpty() && digest.isNotEmpty() && digest == currPassword.sha256(salt)) {
-            val newDigest = newPassword.sha256(salt)
-            redis.set(userId.passwordKey(), newDigest)
+          val passwordError = checkPassword(newPassword)
 
-          }
-
-
+          val msg =
+            if (passwordError.isNotEmpty()) {
+              passwordError
+            }
+            else {
+              val (salt, digest) = UserId.lookupSaltAndDigest(userId, redis)
+              if (salt.isNotEmpty() && digest.isNotEmpty() && digest == currPassword.sha256(salt)) {
+                val newDigest = newPassword.sha256(salt)
+                println("Setting new password to: $digest")
+                //redis.set(userId.passwordKey(), newDigest)
+                "Password changed"
+              }
+              else {
+                "Incorrect current password"
+              }
+            }
+          prefsPage(content, msg)
         }
-        ""
+        else {
+          ""
+        }
       }
     }
   }
+}

@@ -174,7 +174,7 @@ internal fun BODY.bodyHeader(principal: UserPrincipal?,
   bodyTitle()
 
   if (loginAttempt && principal == null)
-    p { span(classes = "no") { +"Failed to login -- bad username or password." } }
+    p { span { style = "color:red;"; +"Failed to login -- bad username or password." } }
 
   div {
     style = "min-height:9;"

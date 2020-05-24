@@ -36,6 +36,7 @@ import com.github.readingbat.posts.Messages.EMPTY_PASWORD
 import com.github.readingbat.posts.Messages.INVALID_EMAIL
 import com.github.readingbat.posts.Messages.PASSWORD_TOO_SHORT
 import com.github.readingbat.server.PipelineCall
+import com.github.readingbat.server.queryParam
 import com.google.common.util.concurrent.RateLimiter
 import io.ktor.application.call
 import io.ktor.request.receiveParameters
@@ -53,30 +54,36 @@ private object Messages {
   const val CLEVER_PASSWORD = "Surely you can come up with a more clever password"
 }
 
+internal fun checkPassword(password: String) =
+  when {
+    password.isBlank() -> EMPTY_PASWORD
+    password.length < 6 -> PASSWORD_TOO_SHORT
+    password == "password" -> CLEVER_PASSWORD
+    else -> ""
+  }
+
 internal suspend fun PipelineCall.createAccount(content: ReadingBatContent) {
   val parameters = call.receiveParameters()
   val username = parameters[USERNAME] ?: ""
   val password = parameters[PASSWORD] ?: ""
-  val returnPath = parameters[RETURN_PATH] ?: "/"
-  logger.debug { "Return path = $returnPath" }
 
   when {
-    username.isBlank() -> respondWith { createAccountPage(content, "", EMPTY_EMAIL, returnPath) }
-    username.isNotValidEmail() -> respondWith { createAccountPage(content, username, INVALID_EMAIL, returnPath) }
-    password.isBlank() -> respondWith { createAccountPage(content, username, EMPTY_PASWORD, returnPath) }
-    password.length < 6 -> respondWith { createAccountPage(content, username, PASSWORD_TOO_SHORT, returnPath) }
-    password == "password" -> respondWith { createAccountPage(content, username, CLEVER_PASSWORD, returnPath) }
-    else ->
-      createAccount(content, username, password, returnPath)
+    username.isBlank() -> respondWith { createAccountPage(content, "", EMPTY_EMAIL) }
+    username.isNotValidEmail() -> respondWith { createAccountPage(content, username, INVALID_EMAIL) }
+    else -> {
+      val passwordError = checkPassword(password)
+      if (passwordError.isNotEmpty())
+        respondWith { createAccountPage(content, username, passwordError) }
+      else
+        createAccount(content, username, password)
+    }
   }
 }
 
-internal suspend fun PipelineCall.createAccount(content: ReadingBatContent,
-                                                username: String,
-                                                password: String,
-                                                returnPath: String) {
+internal suspend fun PipelineCall.createAccount(content: ReadingBatContent, username: String, password: String) {
   withRedisPool { redis ->
     runBlocking {
+      val returnPath = queryParam(RETURN_PATH) ?: "/"
       if (redis == null) {
         redirectTo { returnPath }
       }
@@ -84,7 +91,7 @@ internal suspend fun PipelineCall.createAccount(content: ReadingBatContent,
         // Check if username already exists
         val userIdKey = userIdKey(username)
         if (redis.exists(userIdKey)) {
-          respondWith { createAccountPage(content, "", "Username already exists: $username", returnPath) }
+          respondWith { createAccountPage(content, "", "Username already exists: $username") }
         }
         else {
           // The userName (email) is stored in only one KV pair, enabling changes to the userName
