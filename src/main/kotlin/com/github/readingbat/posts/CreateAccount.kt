@@ -68,7 +68,7 @@ internal suspend fun PipelineCall.createAccount(content: ReadingBatContent) {
   val password = parameters[PASSWORD] ?: ""
 
   when {
-    username.isBlank() -> respondWith { createAccountPage(content, "", EMPTY_EMAIL) }
+    username.isBlank() -> respondWith { createAccountPage(content, msg = EMPTY_EMAIL) }
     username.isNotValidEmail() -> respondWith { createAccountPage(content, username, INVALID_EMAIL) }
     else -> {
       val passwordError = checkPassword(password)
@@ -91,7 +91,7 @@ internal suspend fun PipelineCall.createAccount(content: ReadingBatContent, user
         // Check if username already exists
         val userIdKey = userIdKey(username)
         if (redis.exists(userIdKey)) {
-          respondWith { createAccountPage(content, "", "Username already exists: $username") }
+          respondWith { createAccountPage(content, msg = "Username already exists: $username") }
         }
         else {
           // The userName (email) is stored in only one KV pair, enabling changes to the userName

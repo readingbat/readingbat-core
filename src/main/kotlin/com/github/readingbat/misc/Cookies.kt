@@ -53,6 +53,8 @@ internal class UserId(val id: String = randomId(25)) {
       return if (id.isNotEmpty()) UserId(id) else null
     }
 
+    fun isValidUserId(principal: UserPrincipal?, redis: Jedis?) = lookupUserId(principal, redis) != null
+
     fun lookupUserId(principal: UserPrincipal?, redis: Jedis?) =
       principal?.let {
         val userIdKey = userIdKey(it.userId)

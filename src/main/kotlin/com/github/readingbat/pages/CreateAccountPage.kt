@@ -31,8 +31,8 @@ import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 
 internal fun PipelineCall.createAccountPage(content: ReadingBatContent,
-                                            defaultUserName: String,
-                                            msg: String) =
+                                            defaultUserName: String = "",
+                                            msg: String = "") =
   createHTML()
     .html {
       val returnPath = queryParam(RETURN_PATH) ?: "/"

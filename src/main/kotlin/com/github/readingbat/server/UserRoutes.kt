@@ -21,7 +21,6 @@ import com.github.pambrose.common.response.redirectTo
 import com.github.pambrose.common.response.respondWith
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.AuthRoutes.LOGOUT
-import com.github.readingbat.misc.Constants.BACK_PATH
 import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
 import com.github.readingbat.misc.Constants.ICONS
 import com.github.readingbat.misc.Constants.RETURN_PATH
@@ -60,7 +59,7 @@ internal fun Routing.userRoutes(content: ReadingBatContent) {
 
   post(CHECK_ANSWERS_ROOT) { checkUserAnswers(content) }
 
-  get(CREATE_ACCOUNT) { respondWith { createAccountPage(content, "", "") } }
+  get(CREATE_ACCOUNT) { respondWith { createAccountPage(content) } }
 
   post(CREATE_ACCOUNT) { createAccount(content) }
 
@@ -68,9 +67,7 @@ internal fun Routing.userRoutes(content: ReadingBatContent) {
 
   post(PREFS) { respondWith { changePrefs(content) } }
 
-  get(PRIVACY) {
-    respondWith { privacyPage(content, queryParam(BACK_PATH) ?: "") }
-  }
+  get(PRIVACY) { respondWith { privacyPage(content) } }
 
   get(ABOUT) { respondWith { aboutPage(content) } }
 

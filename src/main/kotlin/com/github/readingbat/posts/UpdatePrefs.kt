@@ -53,7 +53,7 @@ internal suspend fun PipelineCall.changePrefs(content: ReadingBatContent): Strin
       logger.info { "UserId: $userId" }
 
       if (userId == null) {
-        requestLogInPage(content, principal)
+        requestLogInPage(content)
       }
       else {
         val action = parameters[PREF_ACTION] ?: ""
@@ -66,7 +66,7 @@ internal suspend fun PipelineCall.changePrefs(content: ReadingBatContent): Strin
 
           val msg =
             if (passwordError.isNotEmpty()) {
-              passwordError
+              passwordError to true
             }
             else {
               val (salt, digest) = UserId.lookupSaltAndDigest(userId, redis)
@@ -74,13 +74,13 @@ internal suspend fun PipelineCall.changePrefs(content: ReadingBatContent): Strin
                 val newDigest = newPassword.sha256(salt)
                 println("Setting new password to: $digest")
                 //redis.set(userId.passwordKey(), newDigest)
-                "Password changed"
+                "Password changed" to false
               }
               else {
-                "Incorrect current password"
+                "Incorrect current password" to true
               }
             }
-          prefsPage(content, msg)
+          prefsPage(content, msg.first, msg.second)
         }
         else {
           ""

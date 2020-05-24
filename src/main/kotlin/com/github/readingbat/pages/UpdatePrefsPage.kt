@@ -28,7 +28,7 @@ import com.github.readingbat.misc.FormFields.NEW_PASSWORD
 import com.github.readingbat.misc.FormFields.PREF_ACTION
 import com.github.readingbat.misc.FormFields.UPDATE_PASSWORD
 import com.github.readingbat.misc.PageUtils.hideShowButton
-import com.github.readingbat.misc.UserId.Companion.lookupUserId
+import com.github.readingbat.misc.UserId.Companion.isValidUserId
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.fetchPrincipal
 import com.github.readingbat.server.queryParam
@@ -38,19 +38,21 @@ import mu.KotlinLogging
 
 private val logger = KotlinLogging.logger {}
 
-internal fun PipelineCall.prefsPage(content: ReadingBatContent, msg: String): String =
+internal fun PipelineCall.prefsPage(content: ReadingBatContent,
+                                    msg: String,
+                                    isErrorMsg: Boolean = true): String =
   withRedisPool { redis ->
     val principal = fetchPrincipal()
-    val userId = lookupUserId(principal, redis)
-    logger.info { "UserId: $userId" }
 
-    if (userId == null)
-      requestLogInPage(content, principal)
+    if (isValidUserId(principal, redis))
+      prefsWithLoginPage(content, msg, isErrorMsg)
     else
-      prefsWithLoginPage(content, msg)
+      requestLogInPage(content)
   }
 
-internal fun PipelineCall.prefsWithLoginPage(content: ReadingBatContent, msg: String) =
+private fun PipelineCall.prefsWithLoginPage(content: ReadingBatContent,
+                                            msg: String,
+                                            isErrorMsg: Boolean) =
   createHTML()
     .html {
       val returnPath = queryParam(RETURN_PATH) ?: "/"
@@ -69,7 +71,7 @@ internal fun PipelineCall.prefsWithLoginPage(content: ReadingBatContent, msg: St
           h2 { +"ReadingBat Prefs" }
 
           if (msg.isNotEmpty())
-            p { span { style = "color:green;"; +msg } }
+            p { span { style = "color:${if (isErrorMsg) "red" else "green"};"; +msg } }
 
           h3 { +"Change password" }
           p { +"Password must contain at least 6 characters" }
