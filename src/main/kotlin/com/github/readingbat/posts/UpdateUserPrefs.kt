@@ -30,8 +30,8 @@ import com.github.readingbat.misc.FormFields.UPDATE_PASSWORD
 import com.github.readingbat.misc.UserId
 import com.github.readingbat.misc.UserId.Companion.lookupUserId
 import com.github.readingbat.misc.UserPrincipal
-import com.github.readingbat.pages.UpdatePrefsPage.prefsPage
-import com.github.readingbat.pages.UpdatePrefsPage.requestLogInPage
+import com.github.readingbat.pages.UpdateUserPrefsPage.requestLogInPage
+import com.github.readingbat.pages.UpdateUserPrefsPage.updateUserPrefsPage
 import com.github.readingbat.posts.CreateAccount.checkPassword
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.fetchPrincipal
@@ -41,7 +41,7 @@ import io.ktor.sessions.clear
 import io.ktor.sessions.sessions
 import mu.KLogging
 
-internal object UpdatePrefs : KLogging() {
+internal object UpdateUserPrefs : KLogging() {
 
   suspend fun PipelineCall.updatePrefs(content: ReadingBatContent): String {
     val parameters = call.receiveParameters()
@@ -50,10 +50,8 @@ internal object UpdatePrefs : KLogging() {
     return withRedisPool { redis ->
       val returnPath = parameters[RETURN_PATH] ?: "/"
 
-      logger.debug { "Return path = $returnPath" }
-
       if (redis == null) {
-        prefsPage(content, "Database is down")
+        updateUserPrefsPage(content, "Database is down")
       }
       else {
         val userId = lookupUserId(principal, redis)
@@ -85,16 +83,15 @@ internal object UpdatePrefs : KLogging() {
                     "Incorrect current password" to true
                   }
                 }
-              prefsPage(content, msg.first, msg.second)
+              updateUserPrefsPage(content, msg.first, msg.second)
             }
 
             DELETE_ACCOUNT -> {
-              logger.info { "Deleting account" }
+              logger.info { "Deleting user ${principal.userId}" }
               userId.deleteUser(principal, redis)
-              logger.info { "Deleting $principal" }
               call.sessions.clear<UserPrincipal>()
 
-              requestLogInPage(content)
+              requestLogInPage(content, false, "User ${principal.userId} deleted")
             }
 
             else -> {

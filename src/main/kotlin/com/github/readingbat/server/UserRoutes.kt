@@ -43,10 +43,10 @@ import com.github.readingbat.pages.CreateAccountPage.createAccountPage
 import com.github.readingbat.pages.PageCommon.defaultLanguageTab
 import com.github.readingbat.pages.PrivacyPage.privacyPage
 import com.github.readingbat.pages.ResetPasswordPage.resetPasswordPage
-import com.github.readingbat.pages.UpdatePrefsPage.prefsPage
+import com.github.readingbat.pages.UpdateUserPrefsPage.updateUserPrefsPage
 import com.github.readingbat.posts.CheckAnswers.checkAnswers
 import com.github.readingbat.posts.CreateAccount.createAccount
-import com.github.readingbat.posts.UpdatePrefs.updatePrefs
+import com.github.readingbat.posts.UpdateUserPrefs.updatePrefs
 import io.ktor.application.call
 import io.ktor.http.ContentType.Text.CSS
 import io.ktor.http.content.resources
@@ -69,7 +69,7 @@ internal fun Routing.userRoutes(content: ReadingBatContent) {
 
   post(CREATE_ACCOUNT) { createAccount(content) }
 
-  get(USER_PREFS) { respondWith { prefsPage(content, "") } }
+  get(USER_PREFS) { respondWith { updateUserPrefsPage(content, "") } }
 
   post(USER_PREFS) { respondWith { updatePrefs(content) } }
 

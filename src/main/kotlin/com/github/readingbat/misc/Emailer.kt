@@ -18,10 +18,11 @@
 package com.github.readingbat.misc
 
 import com.sendgrid.*
+import mu.KLogging
 import java.io.IOException
 
 
-object Emailer {
+object Emailer : KLogging() {
 
   fun sendResetEmail(toEmail: String) {
     val from = Email("reset@readingbat.com")

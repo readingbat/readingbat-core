@@ -40,8 +40,11 @@ import com.github.readingbat.misc.FormFields.PASSWORD
 import com.github.readingbat.misc.FormFields.USERNAME
 import com.github.readingbat.misc.PageUtils.pathOf
 import com.github.readingbat.misc.UserPrincipal
+import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.production
+import io.ktor.application.call
 import io.ktor.http.ContentType.Text.CSS
+import io.ktor.http.formUrlEncode
 import kotlinx.html.*
 
 object PageCommon {
@@ -125,6 +128,7 @@ object PageCommon {
   }
 
   fun BODY.helpAndLogin(principal: UserPrincipal?, loginPath: String) {
+
     div {
       style = "float:right; margin:0px; border: 1px solid lightgray; margin-left: 10px; padding: 5px;"
       table {
@@ -209,11 +213,14 @@ object PageCommon {
     }
   }
 
-  fun defaultLanguageTab(content: ReadingBatContent) =
+  fun PipelineCall.defaultLanguageTab(content: ReadingBatContent) =
     languageTypesInOrder
       .asSequence()
       .filter { content.hasGroups(it) }
-      .map { it.contentRoot }
+      .map {
+        val params = call.parameters.formUrlEncode()
+        "${it.contentRoot}${if (params.isNotEmpty()) "?$params" else ""}"
+      }
       .firstOrNull() ?: throw InvalidConfigurationException("Missing default language")
 
   fun BODY.addLink(text: String, url: String, newWindow: Boolean = false) =

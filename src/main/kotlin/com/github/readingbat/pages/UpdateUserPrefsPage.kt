@@ -44,15 +44,15 @@ import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 import mu.KLogging
 
-internal object UpdatePrefsPage : KLogging() {
+internal object UpdateUserPrefsPage : KLogging() {
 
   const val labelWidth = "width: 250;"
   const val formName = "pform"
   const val passwordButton = "updatePasswordButton"
 
-  fun PipelineCall.prefsPage(content: ReadingBatContent,
-                             msg: String,
-                             isErrorMsg: Boolean = true): String =
+  fun PipelineCall.updateUserPrefsPage(content: ReadingBatContent,
+                                       msg: String,
+                                       isErrorMsg: Boolean = true): String =
     withRedisPool { redis ->
       val principal = fetchPrincipal()
 
@@ -192,7 +192,7 @@ internal object UpdatePrefsPage : KLogging() {
     }
   }
 
-  fun PipelineCall.requestLogInPage(content: ReadingBatContent) =
+  fun PipelineCall.requestLogInPage(content: ReadingBatContent, isErrorMsg: Boolean = false, msg: String = "") =
     createHTML()
       .html {
         head { headDefault(content) }
@@ -202,7 +202,11 @@ internal object UpdatePrefsPage : KLogging() {
           val returnPath = queryParam(RETURN_PATH) ?: "/"
 
           helpAndLogin(principal, returnPath)
+
           bodyTitle()
+
+          if (msg.isNotEmpty())
+            p { span { style = "color:${if (isErrorMsg) "red" else "green"};"; +msg } }
 
           h2 { +"Log in" }
 
