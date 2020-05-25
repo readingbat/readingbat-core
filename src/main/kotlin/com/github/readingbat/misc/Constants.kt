@@ -37,7 +37,7 @@ object Endpoints {
   const val CLASSROOM = "/classroom.html"
   const val CREATE_ACCOUNT = "/create-account"
   const val PRIVACY = "/privacy.html"
-  const val RESET_PASSWORD = "/reset"
+  const val RESET_PASSWORD = "/reset-password"
   const val CHECK_ANSWERS_ROOT = "/check-answers"
   const val CSS_NAME = "/styles.css"
   const val FAV_ICON = "/favicon.ico"

@@ -18,21 +18,71 @@
 package com.github.readingbat.pages
 
 import com.github.readingbat.dsl.ReadingBatContent
-import kotlinx.html.body
-import kotlinx.html.h2
-import kotlinx.html.head
-import kotlinx.html.html
+import com.github.readingbat.misc.Constants
+import com.github.readingbat.misc.Endpoints
+import com.github.readingbat.misc.FormFields.USERNAME
+import com.github.readingbat.pages.UpdatePrefsPage.labelWidth
+import com.github.readingbat.server.PipelineCall
+import com.github.readingbat.server.queryParam
+import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 
-internal fun resetPasswordPage(content: ReadingBatContent) =
+internal fun PipelineCall.resetPasswordPage(content: ReadingBatContent) =
   createHTML()
     .html {
 
       head { headDefault(content) }
 
       body {
+        val returnPath = queryParam(Constants.RETURN_PATH) ?: "/"
+
         bodyTitle()
 
         h2 { +"Reset Password" }
+
+        div {
+          style = "margin-left: 1em;"
+
+          form {
+            action = "/"
+            method = FormMethod.post
+            table {
+              tr {
+                td { style = labelWidth; label { +"Email (used as account id)" } }
+                td {
+                  input {
+                    name = USERNAME
+                    type = InputType.text
+                    size = "50"
+                  }
+                }
+              }
+              tr {
+                td {
+                }
+                td {
+                  style = "padding-top:10;"
+                  input {
+                    style = "font-size:25px; height:35; width:  155;"
+                    type = InputType.submit
+                    value = "Send Password Reset"
+                  }
+                }
+              }
+            }
+          }
+          p {
+            +"""
+            This will send an email with a temporary password to the account email address. 
+            When you get the email, log in with the temporary password, and go to the prefs page 
+            to enter a new password. If the email does not arrive, double-check that the email 
+            address above is entered correctly.
+          """.trimIndent()
+          }
+
+          this@body.privacyStatement(Endpoints.USER_PREFS, returnPath)
+        }
+
+        backLink(returnPath)
       }
     }

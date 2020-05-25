@@ -89,7 +89,7 @@ internal object UpdatePrefsPage : KLogging() {
 
           changePassword()
           teacherShare()
-          memo()
+          //memo()
           deleteAccount(principal)
           privacyStatement(USER_PREFS, returnPath)
           backLink(returnPath)

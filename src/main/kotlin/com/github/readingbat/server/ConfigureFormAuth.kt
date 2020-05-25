@@ -72,7 +72,7 @@ internal object ConfigureFormAuth : KLogging() {
           if (userId != null) {
             val (salt, digest) = lookupSaltAndDigest(userId, redis)
             if (salt.isNotEmpty() && digest.isNotEmpty() && digest == cred.password.sha256(salt)) {
-              logger.info { "Found user ${cred.name} ${userId.id} $salt $digest" }
+              logger.info { "Found user ${cred.name} ${userId.id}" }
               principal = UserPrincipal(cred.name)
             }
           }
@@ -105,7 +105,5 @@ internal object ConfigureFormAuth : KLogging() {
         }
       }
     }
-
   }
-
 }

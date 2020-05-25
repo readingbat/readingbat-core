@@ -34,6 +34,7 @@ import com.github.readingbat.misc.CSSNames.success
 import com.github.readingbat.misc.CSSNames.tabs
 import com.github.readingbat.misc.CSSNames.userResp
 import kotlinx.css.*
+import kotlinx.css.properties.LineHeight
 import kotlinx.css.properties.TextDecoration
 import kotlinx.css.properties.boxShadow
 
@@ -80,6 +81,7 @@ internal val cssContent by lazy {
       }
       p {
         maxWidth = 800.px
+        lineHeight = LineHeight("1.5")
       }
       rule("p.max") {
         maxWidth = 800.px

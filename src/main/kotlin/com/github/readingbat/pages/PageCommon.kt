@@ -115,7 +115,7 @@ private fun TABLE.login(loginPath: String) {
   tr {
     td {
       colSpan = "2"
-      a { href = RESET_PASSWORD; +"forgot password" }
+      a { href = "$RESET_PASSWORD?$RETURN_PATH=$loginPath"; +"forgot password" }
       +" | "
       a { href = "$CREATE_ACCOUNT?$RETURN_PATH=$loginPath"; +"create account" }
     }

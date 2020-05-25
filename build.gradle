@@ -79,6 +79,8 @@ dependencies {
     implementation "com.google.code.gson:gson:$gson_version"
     implementation "com.google.guava:guava:$guava_version"
 
+    implementation "com.sendgrid:sendgrid-java:$sendgrid_version"
+
     implementation "org.apache.commons:commons-text:$commons_version"
     implementation "com.vladsch.flexmark:flexmark:$flexmark_version"
 
