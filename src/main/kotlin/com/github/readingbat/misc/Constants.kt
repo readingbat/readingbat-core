@@ -32,7 +32,7 @@ internal object Constants {
 }
 
 object Endpoints {
-  const val PREFS = "/prefs"
+  const val USER_PREFS = "/users-prefs"
   const val ABOUT = "/about.html"
   const val CLASSROOM = "/classroom.html"
   const val CREATE_ACCOUNT = "/create-account"
@@ -57,6 +57,7 @@ object KeyPrefixes {
 object FormFields {
   const val USERNAME = "username"
   const val PASSWORD = "passwd"
+  const val CONFIRM_PASSWORD = "confirm_passwd"
   const val CURR_PASSWORD = "curr_passwd"
   const val NEW_PASSWORD = "new_passwd"
   const val PREF_ACTION = "pref_action"

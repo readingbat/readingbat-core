@@ -24,6 +24,7 @@ object RedisRoutines {
   @JvmStatic
   fun main(args: Array<String>) {
     showAllKeys()
+    //deleteAllKeys()
   }
 
   internal fun deleteAllKeys() {

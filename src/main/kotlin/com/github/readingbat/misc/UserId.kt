@@ -50,7 +50,7 @@ internal class UserId(val id: String = randomId(25)) {
   fun argumentKey(languageName: String, groupName: String, challengeName: String, argument: String) =
     listOf(ANSWER_HISTORY, AUTH, id, languageName, groupName, challengeName, argument).joinToString("|")
 
-  fun delete(principal: UserPrincipal, redis: Jedis) {
+  fun deleteUser(principal: UserPrincipal, redis: Jedis) {
     val userIdKey = userIdKey(principal.userId)
     val saltKey = saltKey()
     val passwordKey = passwordKey()
@@ -58,13 +58,14 @@ internal class UserId(val id: String = randomId(25)) {
     val challenges = redis.keys(challengeKey("*", "*", "*"))
     val arguments = redis.keys(argumentKey("*", "*", "*", "*"))
 
-    println(userIdKey)
-    println(saltKey)
-    println(passwordKey)
-    println(correctAnswers)
-    println(challenges)
-    println(arguments)
-    /*
+    logger.info { "Deleting user: ${principal.userId}" }
+    logger.info { "userIdKey: $userIdKey" }
+    logger.info { "saltKey: $saltKey" }
+    logger.info { "passwordKey: $passwordKey" }
+    logger.info { "correctAnswers: $correctAnswers" }
+    logger.info { "challenges: $challenges" }
+    logger.info { "arguments: $arguments" }
+
     redis.multi().also { tx ->
       tx.del(userIdKey)
       tx.del(saltKey)
@@ -74,8 +75,6 @@ internal class UserId(val id: String = randomId(25)) {
       arguments.forEach { tx.del(it) }
       tx.exec()
     }
-
-     */
   }
 
   companion object : KLogging() {
@@ -93,12 +92,13 @@ internal class UserId(val id: String = randomId(25)) {
 
       val userIdKey = userIdKey(username)
       val userId = UserId()
-      logger.info { "Created user $username ${userId.id} " }
+      val salt = newStringSalt()
+      logger.info { "Created user $username ${userId.id}" }
 
       redis.multi().also { tx ->
         tx.set(userIdKey, userId.id)
-        tx.set(userId.saltKey(), newStringSalt())
-        tx.set(userId.passwordKey(), password.sha256(newStringSalt()))
+        tx.set(userId.saltKey(), salt)
+        tx.set(userId.passwordKey(), password.sha256(salt))
         tx.exec()
       }
     }

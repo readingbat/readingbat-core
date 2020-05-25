@@ -20,7 +20,9 @@ package com.github.readingbat.pages
 import com.github.pambrose.common.redis.RedisUtils.withRedisPool
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.Constants.RETURN_PATH
-import com.github.readingbat.misc.Endpoints.PREFS
+import com.github.readingbat.misc.Endpoints.CREATE_ACCOUNT
+import com.github.readingbat.misc.Endpoints.USER_PREFS
+import com.github.readingbat.misc.FormFields.CONFIRM_PASSWORD
 import com.github.readingbat.misc.FormFields.CURR_PASSWORD
 import com.github.readingbat.misc.FormFields.DELETE_ACCOUNT
 import com.github.readingbat.misc.FormFields.NEW_PASSWORD
@@ -40,6 +42,7 @@ internal object UpdatePrefsPage : KLogging() {
 
   const val labelWidth = "width: 250;"
   const val formName = "pform"
+  const val passwordButton = "updatePasswordButton"
 
   fun PipelineCall.prefsPage(content: ReadingBatContent,
                              msg: String,
@@ -58,7 +61,20 @@ internal object UpdatePrefsPage : KLogging() {
                                               isErrorMsg: Boolean) =
     createHTML()
       .html {
-        head { headDefault(content) }
+        head {
+          headDefault(content)
+          script {
+            rawHtml(
+              """
+              function clickUpdatePasswordButton(event) {
+                if (event != null && event.keyCode == 13) {
+                  event.preventDefault();
+                  document.getElementById('$passwordButton').click();
+                }
+              }
+            """.trimIndent())
+          }
+        }
 
         body {
           bodyTitle()
@@ -75,7 +91,7 @@ internal object UpdatePrefsPage : KLogging() {
           teacherShare()
           memo()
           deleteAccount(principal)
-          privacyStatement(PREFS, returnPath)
+          privacyStatement(USER_PREFS, returnPath)
           backLink(returnPath)
         }
       }
@@ -85,7 +101,7 @@ internal object UpdatePrefsPage : KLogging() {
     p { +"Password must contain at least 6 characters" }
     form {
       name = formName
-      action = PREFS
+      action = USER_PREFS
       method = FormMethod.post
       table {
         tr {
@@ -99,8 +115,21 @@ internal object UpdatePrefsPage : KLogging() {
           td { hideShowButton(formName, NEW_PASSWORD) }
         }
         tr {
+          td { style = labelWidth; label { +"Confirm Password" } }
+          td {
+            input {
+              type = InputType.password
+              size = "42"
+              name = CONFIRM_PASSWORD
+              value = ""
+              onKeyPress = "clickUpdatePasswordButton(event);"
+            }
+          }
+          td { hideShowButton(formName, CONFIRM_PASSWORD) }
+        }
+        tr {
           td {}
-          td { input { type = InputType.submit; name = PREF_ACTION; value = UPDATE_PASSWORD } }
+          td { input { type = InputType.submit; id = passwordButton; name = PREF_ACTION; value = UPDATE_PASSWORD } }
         }
       }
     }
@@ -110,7 +139,7 @@ internal object UpdatePrefsPage : KLogging() {
     h3 { +"Teacher Share" }
     p { +"Enter the email address of the teacher account. This will make your done page and solution code visible to that account." }
     form {
-      action = PREFS
+      action = USER_PREFS
       method = FormMethod.post
       table {
         tr {
@@ -129,7 +158,7 @@ internal object UpdatePrefsPage : KLogging() {
     h3 { +"Memo" }
     p { +"Generally this is left blank. A teacher may ask you to fill this in." }
     form {
-      action = PREFS
+      action = USER_PREFS
       method = FormMethod.post
       input { type = InputType.hidden; name = "date"; value = "963892736" }
       table {
@@ -147,9 +176,9 @@ internal object UpdatePrefsPage : KLogging() {
 
   private fun BODY.deleteAccount(principal: UserPrincipal?) {
     h3 { +"Delete Account" }
-    p { +"Permanently delete account [${principal?.userId}] - cannot be undone" }
+    p { +"Permanently delete account [${principal?.userId}] -- cannot be undone!" }
     form {
-      action = PREFS
+      action = USER_PREFS
       method = FormMethod.post
       //onSubmit = "return formcheck()"
       onSubmit = "return confirm('Are you sure you want to permanently delete account ${principal?.userId} ?');"
@@ -171,8 +200,12 @@ internal object UpdatePrefsPage : KLogging() {
 
           h2 { +"Log in" }
 
-          p { +"Please create an account or log in to an existing account to edit preferences." }
-          privacyStatement(PREFS, returnPath)
+          p {
+            +"Please"
+            a { href = "$CREATE_ACCOUNT?$RETURN_PATH=$returnPath"; +" create an account " }
+            +"or log in to an existing account to edit preferences."
+          }
+          privacyStatement(USER_PREFS, returnPath)
 
           backLink(returnPath)
         }

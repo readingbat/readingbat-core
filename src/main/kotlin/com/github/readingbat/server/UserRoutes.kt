@@ -32,9 +32,9 @@ import com.github.readingbat.misc.Endpoints.CLASSROOM
 import com.github.readingbat.misc.Endpoints.CREATE_ACCOUNT
 import com.github.readingbat.misc.Endpoints.CSS_NAME
 import com.github.readingbat.misc.Endpoints.FAV_ICON
-import com.github.readingbat.misc.Endpoints.PREFS
 import com.github.readingbat.misc.Endpoints.PRIVACY
 import com.github.readingbat.misc.Endpoints.RESET_PASSWORD
+import com.github.readingbat.misc.Endpoints.USER_PREFS
 import com.github.readingbat.misc.UserPrincipal
 import com.github.readingbat.misc.cssContent
 import com.github.readingbat.pages.*
@@ -64,9 +64,9 @@ internal fun Routing.userRoutes(content: ReadingBatContent) {
 
   post(CREATE_ACCOUNT) { createAccount(content) }
 
-  get(PREFS) { respondWith { prefsPage(content, "") } }
+  get(USER_PREFS) { respondWith { prefsPage(content, "") } }
 
-  post(PREFS) { respondWith { changePrefs(content) } }
+  post(USER_PREFS) { respondWith { changePrefs(content) } }
 
   get(PRIVACY) { respondWith { privacyPage(content) } }
 

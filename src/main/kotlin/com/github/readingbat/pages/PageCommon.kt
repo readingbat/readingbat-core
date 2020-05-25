@@ -33,9 +33,9 @@ import com.github.readingbat.misc.Constants.STATIC_ROOT
 import com.github.readingbat.misc.Endpoints.ABOUT
 import com.github.readingbat.misc.Endpoints.CREATE_ACCOUNT
 import com.github.readingbat.misc.Endpoints.CSS_NAME
-import com.github.readingbat.misc.Endpoints.PREFS
 import com.github.readingbat.misc.Endpoints.PRIVACY
 import com.github.readingbat.misc.Endpoints.RESET_PASSWORD
+import com.github.readingbat.misc.Endpoints.USER_PREFS
 import com.github.readingbat.misc.FormFields.PASSWORD
 import com.github.readingbat.misc.FormFields.USERNAME
 import com.github.readingbat.misc.PageUtils.pathOf
@@ -148,7 +148,7 @@ internal fun BODY.helpAndLogin(principal: UserPrincipal?, loginPath: String) {
             //+" | "
             //a { href = "/report"; +"report" }
             //+" | "
-            a { href = "$PREFS?$RETURN_PATH=$loginPath"; +"prefs" }
+            a { href = "$USER_PREFS?$RETURN_PATH=$loginPath"; +"prefs" }
           }
         }
       }

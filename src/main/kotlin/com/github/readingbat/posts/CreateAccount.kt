@@ -23,6 +23,7 @@ import com.github.pambrose.common.response.respondWith
 import com.github.pambrose.common.util.isNotValidEmail
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.Constants.RETURN_PATH
+import com.github.readingbat.misc.FormFields.CONFIRM_PASSWORD
 import com.github.readingbat.misc.FormFields.PASSWORD
 import com.github.readingbat.misc.FormFields.USERNAME
 import com.github.readingbat.misc.UserId.Companion.createUser
@@ -32,6 +33,7 @@ import com.github.readingbat.posts.Messages.CLEVER_PASSWORD
 import com.github.readingbat.posts.Messages.EMPTY_EMAIL
 import com.github.readingbat.posts.Messages.EMPTY_PASWORD
 import com.github.readingbat.posts.Messages.INVALID_EMAIL
+import com.github.readingbat.posts.Messages.NO_MATCH
 import com.github.readingbat.posts.Messages.PASSWORD_TOO_SHORT
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.queryParam
@@ -47,13 +49,15 @@ private object Messages {
   const val INVALID_EMAIL = "Invalid email value"
   const val EMPTY_PASWORD = "Empty password value"
   const val PASSWORD_TOO_SHORT = "Password value too short (must have at least 6 characters)"
+  const val NO_MATCH = "Passwords do not match"
   const val CLEVER_PASSWORD = "Surely you can come up with a more clever password"
 }
 
-internal fun checkPassword(password: String) =
+internal fun checkPassword(password: String, confirmPassword: String) =
   when {
     password.isBlank() -> EMPTY_PASWORD
     password.length < 6 -> PASSWORD_TOO_SHORT
+    password != confirmPassword -> NO_MATCH
     password == "password" -> CLEVER_PASSWORD
     else -> ""
   }
@@ -62,12 +66,13 @@ internal suspend fun PipelineCall.createAccount(content: ReadingBatContent) {
   val parameters = call.receiveParameters()
   val username = parameters[USERNAME] ?: ""
   val password = parameters[PASSWORD] ?: ""
+  val confirmPassword = parameters[CONFIRM_PASSWORD] ?: ""
 
   when {
     username.isBlank() -> respondWith { createAccountPage(content, msg = EMPTY_EMAIL) }
     username.isNotValidEmail() -> respondWith { createAccountPage(content, username, INVALID_EMAIL) }
     else -> {
-      val passwordError = checkPassword(password)
+      val passwordError = checkPassword(password, confirmPassword)
       if (passwordError.isNotEmpty())
         respondWith { createAccountPage(content, username, passwordError) }
       else

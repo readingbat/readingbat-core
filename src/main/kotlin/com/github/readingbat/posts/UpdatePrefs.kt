@@ -27,12 +27,15 @@ import com.github.readingbat.misc.FormFields.PREF_ACTION
 import com.github.readingbat.misc.FormFields.UPDATE_PASSWORD
 import com.github.readingbat.misc.UserId
 import com.github.readingbat.misc.UserId.Companion.lookupUserId
+import com.github.readingbat.misc.UserPrincipal
 import com.github.readingbat.pages.UpdatePrefsPage.prefsPage
 import com.github.readingbat.pages.UpdatePrefsPage.requestLogInPage
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.fetchPrincipal
 import io.ktor.application.call
 import io.ktor.request.receiveParameters
+import io.ktor.sessions.clear
+import io.ktor.sessions.sessions
 import mu.KotlinLogging
 
 private val logger = KotlinLogging.logger {}
@@ -61,7 +64,8 @@ internal suspend fun PipelineCall.changePrefs(content: ReadingBatContent): Strin
           UPDATE_PASSWORD -> {
             val currPassword = parameters[FormFields.CURR_PASSWORD] ?: ""
             val newPassword = parameters[FormFields.NEW_PASSWORD] ?: ""
-            val passwordError = checkPassword(newPassword)
+            val confirmPassword = parameters[FormFields.CONFIRM_PASSWORD] ?: ""
+            val passwordError = checkPassword(newPassword, confirmPassword)
 
             val msg =
               if (passwordError.isNotEmpty()) {
@@ -82,7 +86,10 @@ internal suspend fun PipelineCall.changePrefs(content: ReadingBatContent): Strin
           }
           DELETE_ACCOUNT -> {
             logger.info { "Deleting account" }
-            userId.delete(principal, redis)
+            userId.deleteUser(principal, redis)
+            logger.info { "Deleting $principal" }
+            call.sessions.clear<UserPrincipal>()
+
             requestLogInPage(content)
           }
           else -> {

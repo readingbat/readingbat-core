@@ -20,12 +20,14 @@ package com.github.readingbat.pages
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.Endpoints.CREATE_ACCOUNT
+import com.github.readingbat.misc.FormFields.CONFIRM_PASSWORD
 import com.github.readingbat.misc.FormFields.PASSWORD
 import com.github.readingbat.misc.FormFields.USERNAME
 import com.github.readingbat.misc.PageUtils.hideShowButton
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.queryParam
 import kotlinx.html.*
+import kotlinx.html.Entities.nbsp
 import kotlinx.html.stream.createHTML
 
 internal fun PipelineCall.createAccountPage(content: ReadingBatContent,
@@ -42,7 +44,7 @@ internal fun PipelineCall.createAccountPage(content: ReadingBatContent,
         script {
           rawHtml(
             """
-              function clickCreate(event) {
+              function clickCreateButton(event) {
                 if (event != null && event.keyCode == 13) {
                   event.preventDefault();
                   document.getElementById('$createButton').click();
@@ -69,12 +71,9 @@ internal fun PipelineCall.createAccountPage(content: ReadingBatContent,
             """.trimIndent()
           }
 
-          br //p {}
 
-          if (msg.isNotEmpty())
-            p { span { style = "color:red;"; +msg } }
 
-          br //p {}
+          p { span { style = "color:red;"; if (msg.isNotEmpty()) +msg else rawHtml(nbsp.text) } }
 
           val inputFs = "font-size: 95%;"
           val labelWidth = "width: 250;"
@@ -97,14 +96,28 @@ internal fun PipelineCall.createAccountPage(content: ReadingBatContent,
                 td { style = labelWidth; label { +"Password" } }
                 td {
                   input {
-                    style = inputFs; type = InputType.password; size = "42"; name = PASSWORD; value = ""; onKeyPress =
-                    "clickCreate(event);"
+                    style = inputFs
+                    type = InputType.password
+                    size = "42"
+                    name = PASSWORD
+                    value = ""
                   }
                 }
+                td { hideShowButton(formName, PASSWORD) }
+              }
+              tr {
+                td { style = labelWidth; label { +"Confirm Password" } }
                 td {
-                  hideShowButton(formName, PASSWORD)
+                  input {
+                    style = inputFs
+                    type = InputType.password
+                    size = "42"
+                    name = CONFIRM_PASSWORD
+                    value = ""
+                    onKeyPress = "clickCreateButton(event);"
+                  }
                 }
-
+                td { hideShowButton(formName, CONFIRM_PASSWORD) }
               }
               hiddenInput { name = RETURN_PATH; value = returnPath }
               tr {
@@ -112,8 +125,8 @@ internal fun PipelineCall.createAccountPage(content: ReadingBatContent,
                 td {
                   input {
                     style = "font-size : 25px; height: 35; width: 115;"
-                    type = InputType.submit
                     id = createButton
+                    type = InputType.submit
                     value = "Create Account"
                   }
                 }
