@@ -17,6 +17,7 @@
 
 package com.github.readingbat.misc
 
+import com.github.pambrose.common.util.join
 import kotlinx.html.FlowOrInteractiveOrPhrasingContent
 import kotlinx.html.button
 import kotlinx.html.onClick
@@ -39,4 +40,6 @@ object PageUtils {
     }
 
   }
+
+  fun pathOf(vararg elems: String): String = elems.toList().join()
 }

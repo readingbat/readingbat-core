@@ -19,6 +19,7 @@ package com.github.readingbat.dsl
 
 import com.github.pambrose.common.util.*
 import com.github.readingbat.dsl.GitHubUtils.directoryContents
+import com.github.readingbat.misc.PageUtils.pathOf
 import java.io.File
 
 @ReadingBatDslMarker
@@ -69,8 +70,7 @@ class LanguageGroup<T : Challenge>(internal val content: ReadingBatContent,
           when {
             (root is GitHubRepo) -> root.directoryContents(branchName, srcPath.ensureSuffix("/") + group.packageName)
             (root is FileSystemSource) ->
-              File(listOf(root.pathPrefix, srcPath, group.packageName).join()).walk().map { it.name }
-                .toList()
+              File(pathOf(root.pathPrefix, srcPath, group.packageName)).walk().map { it.name }.toList()
             else -> throw InvalidConfigurationException("Invalid repo type")
           }
         }

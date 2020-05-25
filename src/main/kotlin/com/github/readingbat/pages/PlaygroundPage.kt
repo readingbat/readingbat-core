@@ -18,7 +18,6 @@
 package com.github.readingbat.pages
 
 import com.github.pambrose.common.util.decode
-import com.github.pambrose.common.util.join
 import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.CSSNames.challengeDesc
@@ -26,6 +25,7 @@ import com.github.readingbat.misc.CSSNames.kotlinCode
 import com.github.readingbat.misc.CSSNames.tabs
 import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
 import com.github.readingbat.misc.Constants.STATIC_ROOT
+import com.github.readingbat.misc.PageUtils.pathOf
 import com.github.readingbat.misc.UserPrincipal
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
@@ -46,7 +46,7 @@ internal fun playgroundPage(content: ReadingBatContent,
       val challengeName = challenge.challengeName
       val languageName = languageType.lowerName
       val funcInfo = challenge.funcInfo(content)
-      val loginPath = listOf(CHALLENGE_ROOT, languageName, groupName, challengeName).join()
+      val loginPath = pathOf(CHALLENGE_ROOT, languageName, groupName, challengeName)
 
       head {
         script { src = "https://unpkg.com/kotlin-playground@1"; attributes["data-selector"] = ".$kotlinCode" }
@@ -58,10 +58,10 @@ internal fun playgroundPage(content: ReadingBatContent,
 
         div(classes = tabs) {
           h2 {
-            val groupPath = listOf(CHALLENGE_ROOT, languageName, groupName).join()
+            val groupPath = pathOf(CHALLENGE_ROOT, languageName, groupName)
             this@body.addLink(groupName.decode(), groupPath)
             span { style = "padding-left:2px; padding-right:2px;"; rawHtml("&rarr;") }
-            this@body.addLink(challengeName.decode(), listOf(groupPath, challengeName).join())
+            this@body.addLink(challengeName.decode(), pathOf(groupPath, challengeName))
           }
 
           if (challenge.description.isNotEmpty())

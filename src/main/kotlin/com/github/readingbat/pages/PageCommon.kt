@@ -17,7 +17,6 @@
 
 package com.github.readingbat.pages
 
-import com.github.pambrose.common.util.join
 import com.github.pambrose.common.util.toRootPath
 import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.LanguageType
@@ -39,6 +38,7 @@ import com.github.readingbat.misc.Endpoints.PRIVACY
 import com.github.readingbat.misc.Endpoints.RESET_PASSWORD
 import com.github.readingbat.misc.FormFields.PASSWORD
 import com.github.readingbat.misc.FormFields.USERNAME
+import com.github.readingbat.misc.PageUtils.pathOf
 import com.github.readingbat.misc.UserPrincipal
 import com.github.readingbat.server.production
 import io.ktor.http.ContentType.Text.CSS
@@ -191,7 +191,7 @@ internal fun BODY.bodyHeader(principal: UserPrincipal?,
           if (content.hasGroups(lang))
             li(classes = "h2") {
               if (languageType == lang) id = selected
-              this@bodyHeader.addLink(lang.name, listOf(CHALLENGE_ROOT, lang.lowerName).join())
+              this@bodyHeader.addLink(lang.name, pathOf(CHALLENGE_ROOT, lang.lowerName))
             }
         }
       }

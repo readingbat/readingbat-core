@@ -39,6 +39,7 @@ import com.github.readingbat.dsl.parse.PythonParse.defMainRegex
 import com.github.readingbat.dsl.parse.PythonParse.extractPythonArguments
 import com.github.readingbat.dsl.parse.PythonParse.extractPythonFunction
 import com.github.readingbat.dsl.parse.PythonParse.ifMainEndRegex
+import com.github.readingbat.misc.PageUtils.pathOf
 import com.vladsch.flexmark.html.HtmlRenderer
 import com.vladsch.flexmark.parser.Parser
 import com.vladsch.flexmark.util.data.MutableDataSet
@@ -63,9 +64,7 @@ sealed class Challenge(challengeGroup: ChallengeGroup<*>, val challengeName: Str
   internal val groupName = challengeGroup.groupName
 
   private val fqName by lazy { packageName.ensureSuffix("/") + fileName.ensureSuffix(".${languageType.suffix}") }
-  internal val gitpodUrl by lazy {
-    listOf(repo.sourcePrefix, "blob/${branchName}", srcPath, fqName).join()
-  }
+  internal val gitpodUrl by lazy { pathOf(repo.sourcePrefix, "blob/${branchName}", srcPath, fqName) }
 
   internal val parsedDescription
       by lazy {
@@ -85,7 +84,7 @@ sealed class Challenge(challengeGroup: ChallengeGroup<*>, val challengeName: Str
 
   private val compute = {
     val fs = repo as FileSystemSource
-    val file = fs.file(listOf(fs.pathPrefix, srcPath, packageName, fileName).join())
+    val file = fs.file(pathOf(fs.pathPrefix, srcPath, packageName, fileName))
     logger.info { """Fetching "${file.fileName}"""" }
     computeFuncInfo(file.content)
   }
@@ -94,7 +93,7 @@ sealed class Challenge(challengeGroup: ChallengeGroup<*>, val challengeName: Str
     if (repo.remote) {
       sourcesMap
         .computeIfAbsent(challengeId) {
-          val path = listOf((repo as AbstractRepo).rawSourcePrefix, branchName, srcPath, fqName).join()
+          val path = pathOf((repo as AbstractRepo).rawSourcePrefix, branchName, srcPath, fqName)
           logger.info { """Fetching "$groupName/$fileName" from: $path""" }
           val (code, dur) = measureTimedValue { URL(path).readText() }
           logger.info { """Fetched "$groupName/$fileName" in: $dur""" }

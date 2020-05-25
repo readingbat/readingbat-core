@@ -18,7 +18,6 @@
 package com.github.readingbat.pages
 
 import com.github.pambrose.common.redis.RedisUtils.withRedisPool
-import com.github.pambrose.common.util.join
 import com.github.readingbat.dsl.ChallengeGroup
 import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.dsl.ReadingBatContent
@@ -31,6 +30,7 @@ import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
 import com.github.readingbat.misc.Constants.GREEN_CHECK
 import com.github.readingbat.misc.Constants.STATIC_ROOT
 import com.github.readingbat.misc.Constants.WHITE_CHECK
+import com.github.readingbat.misc.PageUtils.pathOf
 import com.github.readingbat.misc.UserId
 import com.github.readingbat.misc.UserId.Companion.lookupUserId
 import com.github.readingbat.misc.UserPrincipal
@@ -47,7 +47,7 @@ internal fun languageGroupPage(content: ReadingBatContent,
   createHTML()
     .html {
       val languageName = languageType.lowerName
-      val loginPath = listOf(CHALLENGE_ROOT, languageName).join()
+      val loginPath = pathOf(CHALLENGE_ROOT, languageName)
       val groups = content.findLanguage(languageType).challengeGroups
 
       fun TR.groupItem(redis: Jedis?, userId: UserId?, challengeGroup: ChallengeGroup<*>) {
@@ -68,7 +68,7 @@ internal fun languageGroupPage(content: ReadingBatContent,
 
         td(classes = funcItem) {
           div(classes = groupItemSrc) {
-            a(classes = groupChoice) { href = listOf(CHALLENGE_ROOT, languageName, groupName).join(); +groupName }
+            a(classes = groupChoice) { href = pathOf(CHALLENGE_ROOT, languageName, groupName); +groupName }
             br { rawHtml(if (parsedDescription.isNotBlank()) parsedDescription else nbsp.text) }
             if (cnt == 0) {
               img { src = "$STATIC_ROOT/$WHITE_CHECK" }

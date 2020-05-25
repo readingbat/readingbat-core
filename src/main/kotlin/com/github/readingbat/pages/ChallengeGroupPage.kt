@@ -19,7 +19,6 @@ package com.github.readingbat.pages
 
 import com.github.pambrose.common.redis.RedisUtils.withRedisPool
 import com.github.pambrose.common.util.decode
-import com.github.pambrose.common.util.join
 import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.ChallengeGroup
 import com.github.readingbat.dsl.ReadingBatContent
@@ -30,6 +29,7 @@ import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
 import com.github.readingbat.misc.Constants.GREEN_CHECK
 import com.github.readingbat.misc.Constants.STATIC_ROOT
 import com.github.readingbat.misc.Constants.WHITE_CHECK
+import com.github.readingbat.misc.PageUtils.pathOf
 import com.github.readingbat.misc.UserId
 import com.github.readingbat.misc.UserId.Companion.lookupUserId
 import com.github.readingbat.misc.UserPrincipal
@@ -56,7 +56,7 @@ internal fun challengeGroupPage(content: ReadingBatContent,
       val languageName = languageType.lowerName
       val groupName = challengeGroup.groupName
       val challenges = challengeGroup.challenges
-      val loginPath = listOf(CHALLENGE_ROOT, languageName, groupName).join()
+      val loginPath = pathOf(CHALLENGE_ROOT, languageName, groupName)
 
       fun TR.funcCall(redis: Jedis?, userId: UserId?, challenge: Challenge) {
         val challengeName = challenge.challengeName
@@ -66,7 +66,7 @@ internal fun challengeGroupPage(content: ReadingBatContent,
           img { src = "$STATIC_ROOT/${if (allCorrect) GREEN_CHECK else WHITE_CHECK}" }
           a {
             style = "font-Size:110%; padding-left:2px;"
-            href = listOf(CHALLENGE_ROOT, languageName, groupName, challengeName).join()
+            href = pathOf(CHALLENGE_ROOT, languageName, groupName, challengeName)
             +challengeName
           }
         }

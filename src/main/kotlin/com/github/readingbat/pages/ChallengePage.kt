@@ -19,7 +19,6 @@ package com.github.readingbat.pages
 
 import com.github.pambrose.common.redis.RedisUtils.withRedisPool
 import com.github.pambrose.common.util.decode
-import com.github.pambrose.common.util.join
 import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.Answers.processAnswers
@@ -41,6 +40,7 @@ import com.github.readingbat.misc.CSSNames.userResp
 import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
 import com.github.readingbat.misc.Constants.PLAYGROUND_ROOT
 import com.github.readingbat.misc.Constants.STATIC_ROOT
+import com.github.readingbat.misc.PageUtils.pathOf
 import com.github.readingbat.misc.UserId
 import com.github.readingbat.misc.UserId.Companion.lookupUserId
 import com.github.readingbat.misc.UserPrincipal
@@ -65,7 +65,7 @@ internal fun challengePage(content: ReadingBatContent,
       val groupName = challenge.groupName
       val challengeName = challenge.challengeName
       val funcInfo = challenge.funcInfo(content)
-      val loginPath = listOf(CHALLENGE_ROOT, languageName, groupName, challengeName).join()
+      val loginPath = pathOf(CHALLENGE_ROOT, languageName, groupName, challengeName)
 
       head {
         link { rel = "stylesheet"; href = spinnerCss }
@@ -82,7 +82,7 @@ internal fun challengePage(content: ReadingBatContent,
 
         div(classes = tabs) {
           h2 {
-            val groupPath = listOf(CHALLENGE_ROOT, languageName, groupName).join()
+            val groupPath = pathOf(CHALLENGE_ROOT, languageName, groupName)
             this@body.addLink(groupName.decode(), groupPath)
             span { style = "padding-left:2px; padding-right:2px;"; rawHtml("&rarr;") }
             +challengeName
@@ -161,7 +161,7 @@ internal fun challengePage(content: ReadingBatContent,
               this@body.addLink("Gitpod.io", "https://gitpod.io/#${challenge.gitpodUrl}", true)
               if (languageType.isKotlin()) {
                 +" or as a "
-                this@body.addLink("Kotlin Playground", listOf(PLAYGROUND_ROOT, groupName, challengeName).join(), false)
+                this@body.addLink("Kotlin Playground", pathOf(PLAYGROUND_ROOT, groupName, challengeName), false)
               }
             }
 
