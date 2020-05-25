@@ -17,7 +17,6 @@
 
 package com.github.readingbat.posts
 
-import com.github.pambrose.common.redis.RedisUtils.withRedisPool
 import com.github.pambrose.common.script.KotlinScript
 import com.github.pambrose.common.script.PythonScript
 import com.github.pambrose.common.util.*
@@ -31,10 +30,9 @@ import com.github.readingbat.misc.Answers.groupSrc
 import com.github.readingbat.misc.Answers.langSrc
 import com.github.readingbat.misc.BrowserSession
 import com.github.readingbat.misc.CSSNames.userResp
-import com.github.readingbat.misc.UserId.Companion.lookupUserId
+import com.github.readingbat.misc.UserId.Companion.saveAnswers
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.fetchPrincipal
-import com.google.gson.Gson
 import io.ktor.application.call
 import io.ktor.request.receiveParameters
 import io.ktor.response.respondText
@@ -50,15 +48,15 @@ internal data class StudentInfo(val studentId: String, val firstName: String, va
 internal data class ClassEnrollment(val sessionId: String,
                                     val students: List<StudentInfo> = mutableListOf())
 
-private data class ChallengeResults(val arguments: String,
-                                    val userResponse: String,
-                                    val answered: Boolean,
-                                    val correct: Boolean)
+internal data class ChallengeResults(val arguments: String,
+                                     val userResponse: String,
+                                     val answered: Boolean,
+                                     val correct: Boolean)
 
-private data class ChallengeHistory(var argument: String,
-                                    var correct: Boolean = false,
-                                    var attempts: Int = 0,
-                                    val answers: MutableList<String> = mutableListOf()) {
+internal data class ChallengeHistory(var argument: String,
+                                     var correct: Boolean = false,
+                                     var attempts: Int = 0,
+                                     val answers: MutableList<String> = mutableListOf()) {
   fun markCorrect() {
     correct = true
   }
@@ -74,12 +72,10 @@ private data class ChallengeHistory(var argument: String,
 
 object CheckAnswers : KLogging() {
 
-  private val gson = Gson()
-
   private fun String.isJavaBoolean() = this == "true" || this == "false"
   private fun String.isPythonBoolean() = this == "True" || this == "False"
 
-  internal suspend fun PipelineCall.checkUserAnswers(content: ReadingBatContent) {
+  internal suspend fun PipelineCall.checkAnswers(content: ReadingBatContent) {
     val principal = fetchPrincipal()
     val params = call.receiveParameters()
     val compareMap = params.entries().map { it.key to it.value[0] }.toMap()
@@ -136,74 +132,25 @@ object CheckAnswers : KLogging() {
         ChallengeResults(arguments = funcInfo.arguments[i],
                          userResponse = userResponse,
                          answered = answered,
-                         correct = if (answered) checkWithAnswer(isJvm,
-                                                                 userResponse,
-                                                                 answer)
-                         else false)
+                         correct = if (answered) checkWithAnswer(isJvm, userResponse, answer) else false)
       }
-
-    val answerMap = mutableMapOf<String, String>()
-    userResps.indices.forEach { i ->
-      val argumentKey = funcInfo.arguments[i]
-      val userResp = compareMap[userResp + i]?.trim() ?: throw InvalidConfigurationException("Missing user response")
-      if (userResp.isNotEmpty())
-        answerMap[argumentKey] = userResp
-    }
 
     // Save whether all the answers for the challenge were correct
-    withRedisPool { redis ->
-      val userId = lookupUserId(principal, redis)
+    saveAnswers(principal,
+                browserSession,
+                languageName,
+                groupName,
+                challengeName,
+                compareMap,
+                funcInfo,
+                userResps,
+                results)
 
-      // Save if all answers were correct
-      val correctAnswersKey =
-        userId?.correctAnswersKey(languageName, groupName, challengeName)
-          ?: browserSession?.correctAnswersKey(languageName, groupName, challengeName)
-          ?: ""
-
-      if (correctAnswersKey.isNotEmpty()) {
-        val allCorrect = results.all { it.correct }
-        redis?.set(correctAnswersKey, allCorrect.toString())
-      }
-
-      val challengeKey =
-        userId?.challengeKey(languageName, groupName, challengeName)
-          ?: browserSession?.challengeKey(languageName, groupName, challengeName)
-          ?: ""
-
-      if (redis != null && challengeKey.isNotEmpty()) {
-        logger.debug { "Storing: $challengeKey" }
-        answerMap.forEach { (args, userResp) ->
-          redis.hset(challengeKey, args, userResp)
-          redis.publish("channel", userResp)
-        }
-      }
-
-      // Save the history of each answer on a per-arguments basis
-      results
-        .filter { it.answered }
-        .forEach { result ->
-          val argumentKey =
-            userId?.argumentKey(languageName, groupName, challengeName, result.arguments)
-              ?: browserSession?.argumentKey(languageName, groupName, challengeName, result.arguments)
-              ?: ""
-
-          if (redis != null && argumentKey.isNotEmpty()) {
-            val history =
-              gson.fromJson(redis[argumentKey], ChallengeHistory::class.java) ?: ChallengeHistory(
-                result.arguments)
-            logger.debug { "Before: $history" }
-            history.apply { if (result.correct) markCorrect() else markIncorrect(result.userResponse) }
-            logger.debug { "After: $history" }
-            redis.set(argumentKey, gson.toJson(history))
-          }
-        }
-    }
-
+    /*
     results
       .filter { it.answered }
-      .forEach {
-        logger.debug { "Item with args; ${it.arguments} was correct: ${it.correct}" }
-      }
+      .forEach { logger.debug { "Item with args; ${it.arguments} was correct: ${it.correct}" } }
+    */
 
     delay(200.milliseconds.toLongMilliseconds())
     call.respondText(results.map { it.correct }.toString())

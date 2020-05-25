@@ -72,9 +72,7 @@ internal fun challengeGroupPage(content: ReadingBatContent,
         }
       }
 
-      head {
-        headDefault(content)
-      }
+      head { headDefault(content) }
 
       body {
         bodyHeader(principal, loginAttempt, content, languageType, loginPath)

@@ -17,9 +17,12 @@
 
 package com.github.readingbat.misc
 
+import com.github.pambrose.common.redis.RedisUtils.withRedisPool
 import com.github.pambrose.common.util.newStringSalt
 import com.github.pambrose.common.util.randomId
 import com.github.pambrose.common.util.sha256
+import com.github.readingbat.dsl.FunctionInfo
+import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.misc.KeyPrefixes.ANSWER_HISTORY
 import com.github.readingbat.misc.KeyPrefixes.AUTH
 import com.github.readingbat.misc.KeyPrefixes.CHALLENGE_ANSWERS
@@ -27,6 +30,9 @@ import com.github.readingbat.misc.KeyPrefixes.CORRECT_ANSWERS
 import com.github.readingbat.misc.KeyPrefixes.PASSWD
 import com.github.readingbat.misc.KeyPrefixes.SALT
 import com.github.readingbat.misc.KeyPrefixes.USER_ID
+import com.github.readingbat.posts.ChallengeHistory
+import com.github.readingbat.posts.ChallengeResults
+import com.google.gson.Gson
 import mu.KLogging
 import redis.clients.jedis.Jedis
 
@@ -74,6 +80,8 @@ internal class UserId(val id: String = randomId(25)) {
 
   companion object : KLogging() {
 
+    val gson = Gson()
+
     fun userIdKey(username: String) = "$USER_ID|$username"
 
     fun createUser(username: String, password: String, redis: Jedis) {
@@ -93,8 +101,73 @@ internal class UserId(val id: String = randomId(25)) {
         tx.set(userId.passwordKey(), password.sha256(newStringSalt()))
         tx.exec()
       }
-
     }
+
+    fun saveAnswers(principal: UserPrincipal?,
+                    browserSession: BrowserSession?,
+                    languageName: String,
+                    groupName: String,
+                    challengeName: String,
+                    compareMap: Map<String, String>,
+                    funcInfo: FunctionInfo,
+                    userResps: List<Map.Entry<String, List<String>>>,
+                    results: List<ChallengeResults>) =
+      withRedisPool { redis ->
+        val userId = lookupUserId(principal, redis)
+
+        // Save if all answers were correct
+        val correctAnswersKey =
+          userId?.correctAnswersKey(languageName, groupName, challengeName)
+            ?: browserSession?.correctAnswersKey(languageName, groupName, challengeName)
+            ?: ""
+
+        if (correctAnswersKey.isNotEmpty()) {
+          val allCorrect = results.all { it.correct }
+          redis?.set(correctAnswersKey, allCorrect.toString())
+        }
+
+        val challengeKey =
+          userId?.challengeKey(languageName, groupName, challengeName)
+            ?: browserSession?.challengeKey(languageName, groupName, challengeName)
+            ?: ""
+
+        if (redis != null && challengeKey.isNotEmpty()) {
+          val answerMap = mutableMapOf<String, String>()
+          userResps.indices.forEach { i ->
+            val userResp =
+              compareMap[CSSNames.userResp + i]?.trim() ?: throw InvalidConfigurationException("Missing user response")
+            if (userResp.isNotEmpty()) {
+              val argumentKey = funcInfo.arguments[i]
+              answerMap[argumentKey] = userResp
+            }
+          }
+
+          answerMap.forEach { (args, userResp) ->
+            redis.hset(challengeKey, args, userResp)
+            redis.publish("channel", userResp)
+          }
+        }
+
+        // Save the history of each answer on a per-arguments basis
+        results
+          .filter { it.answered }
+          .forEach { result ->
+            val argumentKey =
+              userId?.argumentKey(languageName, groupName, challengeName, result.arguments)
+                ?: browserSession?.argumentKey(languageName, groupName, challengeName, result.arguments)
+                ?: ""
+
+            if (redis != null && argumentKey.isNotEmpty()) {
+              val history =
+                gson.fromJson(redis[argumentKey], ChallengeHistory::class.java) ?: ChallengeHistory(
+                  result.arguments)
+              logger.debug { "Before: $history" }
+              history.apply { if (result.correct) markCorrect() else markIncorrect(result.userResponse) }
+              logger.debug { "After: $history" }
+              redis.set(argumentKey, gson.toJson(history))
+            }
+          }
+      }
 
     fun lookupUserId(username: String, redis: Jedis?): UserId? {
       val userIdKey = userIdKey(username)

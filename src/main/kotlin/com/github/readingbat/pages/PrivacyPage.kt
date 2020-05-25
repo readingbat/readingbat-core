@@ -31,9 +31,7 @@ internal fun PipelineCall.privacyPage(content: ReadingBatContent) =
       val returnPath = queryParam(RETURN_PATH) ?: ""
       val backPath = queryParam(Constants.BACK_PATH) ?: ""
 
-      head {
-        headDefault(content)
-      }
+      head { headDefault(content) }
 
       body {
         bodyTitle()

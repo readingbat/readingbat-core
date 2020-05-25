@@ -18,24 +18,21 @@
 package com.github.readingbat.pages
 
 import com.github.readingbat.dsl.ReadingBatContent
-import kotlinx.html.*
+import kotlinx.html.body
+import kotlinx.html.h2
+import kotlinx.html.head
+import kotlinx.html.html
 import kotlinx.html.stream.createHTML
 
 internal fun resetPasswordPage(content: ReadingBatContent) =
   createHTML()
     .html {
 
-      head {
-        headDefault(content)
-      }
+      head { headDefault(content) }
 
       body {
         bodyTitle()
 
-        div {
-          h2 {
-            +"Reset Password"
-          }
-        }
+        h2 { +"Reset Password" }
       }
     }

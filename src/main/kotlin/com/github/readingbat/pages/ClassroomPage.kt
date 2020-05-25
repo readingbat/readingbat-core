@@ -26,17 +26,13 @@ internal fun classroomPage(content: ReadingBatContent) =
   createHTML()
     .html {
 
-      head {
-        headDefault(content)
-      }
+      head { headDefault(content) }
 
       body {
         bodyTitle()
 
         div {
-          h2 {
-            +"About ReadingBat"
-          }
+          h2 { +"About ReadingBat" }
 
           val wsid = "ws-output"
           script {

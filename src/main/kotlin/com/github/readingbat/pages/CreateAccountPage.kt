@@ -89,11 +89,7 @@ internal fun PipelineCall.createAccountPage(content: ReadingBatContent,
                 td { style = labelWidth; label { +"Email (used as account id)" } }
                 td {
                   input {
-                    style = inputFs
-                    type = InputType.text
-                    size = "42"
-                    name = USERNAME
-                    value = defaultUserName
+                    style = inputFs; type = InputType.text; size = "42"; name = USERNAME; value = defaultUserName
                   }
                 }
               }
@@ -101,12 +97,8 @@ internal fun PipelineCall.createAccountPage(content: ReadingBatContent,
                 td { style = labelWidth; label { +"Password" } }
                 td {
                   input {
-                    style = inputFs
-                    type = InputType.password
-                    size = "42"
-                    name = PASSWORD
-                    value = ""
-                    onKeyPress = "clickCreate(event);"
+                    style = inputFs; type = InputType.password; size = "42"; name = PASSWORD; value = ""; onKeyPress =
+                    "clickCreate(event);"
                   }
                 }
                 td {
@@ -122,7 +114,6 @@ internal fun PipelineCall.createAccountPage(content: ReadingBatContent,
                     style = "font-size : 25px; height: 35; width: 115;"
                     type = InputType.submit
                     id = createButton
-                    //name = "dosavecreate"
                     value = "Create Account"
                   }
                 }

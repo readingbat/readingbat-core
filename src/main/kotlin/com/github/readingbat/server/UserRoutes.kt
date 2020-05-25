@@ -39,7 +39,7 @@ import com.github.readingbat.misc.UserPrincipal
 import com.github.readingbat.misc.cssContent
 import com.github.readingbat.pages.*
 import com.github.readingbat.pages.UpdatePrefsPage.prefsPage
-import com.github.readingbat.posts.CheckAnswers.checkUserAnswers
+import com.github.readingbat.posts.CheckAnswers.checkAnswers
 import com.github.readingbat.posts.changePrefs
 import com.github.readingbat.posts.createAccount
 import io.ktor.application.call
@@ -58,7 +58,7 @@ internal fun Routing.userRoutes(content: ReadingBatContent) {
 
   get(CHALLENGE_ROOT) { redirectTo { defaultTab(content) } }
 
-  post(CHECK_ANSWERS_ROOT) { checkUserAnswers(content) }
+  post(CHECK_ANSWERS_ROOT) { checkAnswers(content) }
 
   get(CREATE_ACCOUNT) { respondWith { createAccountPage(content) } }
 

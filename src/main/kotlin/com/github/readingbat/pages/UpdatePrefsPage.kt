@@ -38,6 +38,9 @@ import mu.KLogging
 
 internal object UpdatePrefsPage : KLogging() {
 
+  const val labelWidth = "width: 250;"
+  const val formName = "pform"
+
   fun PipelineCall.prefsPage(content: ReadingBatContent,
                              msg: String,
                              isErrorMsg: Boolean = true): String =
@@ -55,90 +58,92 @@ internal object UpdatePrefsPage : KLogging() {
                                               isErrorMsg: Boolean) =
     createHTML()
       .html {
-        val principal = fetchPrincipal()
-        val returnPath = queryParam(RETURN_PATH) ?: "/"
-
-        head {
-          headDefault(content)
-        }
+        head { headDefault(content) }
 
         body {
           bodyTitle()
-
-          val labelWidth = "width: 250;"
-          val formName = "pform"
 
           h2 { +"ReadingBat Prefs" }
 
           if (msg.isNotEmpty())
             p { span { style = "color:${if (isErrorMsg) "red" else "green"};"; +msg } }
 
-          h3 { +"Change password" }
-          p { +"Password must contain at least 6 characters" }
-          form {
-            name = formName
-            action = PREFS
-            method = FormMethod.post
-            table {
-              tr {
-                td { style = labelWidth; label { +"Current Password" } }
-                td { input { type = InputType.password; size = "42"; name = CURR_PASSWORD; value = "" } }
-                td { hideShowButton(formName, CURR_PASSWORD) }
-              }
-              tr {
-                td { style = labelWidth; label { +"New Password" } }
-                td { input { type = InputType.password; size = "42"; name = NEW_PASSWORD; value = "" } }
-                td { hideShowButton(formName, NEW_PASSWORD) }
-              }
-              tr {
-                td {}
-                td { input { type = InputType.submit; name = PREF_ACTION; value = UPDATE_PASSWORD } }
-              }
-            }
-          }
+          val principal = fetchPrincipal()
+          val returnPath = queryParam(RETURN_PATH) ?: "/"
 
-          h3 { +"Teacher Share" }
-          p { +"Enter the email address of the teacher account. This will make your done page and solution code visible to that account." }
-          form {
-            action = PREFS
-            method = FormMethod.post
-            table {
-              tr {
-                td { style = labelWidth; label { +"Share To" } }
-                td { input { type = InputType.text; size = "42"; name = "pdt"; value = "" } }
-              }
-              tr {
-                td {}
-                td { input { type = InputType.submit; name = "dosavepdt"; value = "Share" } }
-              }
-            }
-          }
-
-          h3 { +"Memo" }
-          p { +"Generally this is left blank. A teacher may ask you to fill this in." }
-          form {
-            action = PREFS
-            method = FormMethod.post
-            input { type = InputType.hidden; name = "date"; value = "963892736" }
-            table {
-              tr {
-                td { style = labelWidth; label { +"Memo" } }
-                td { input { type = InputType.text; size = "42"; name = "real"; value = "" } }
-              }
-              tr {
-                td {}
-                td { input { type = InputType.submit; name = "dosavereal"; value = "Update Memo" } }
-              }
-            }
-          }
-
+          changePassword()
+          teacherShare()
+          memo()
           deleteAccount(principal)
-
           privacyStatement(PREFS, returnPath)
-
           backLink(returnPath)
         }
       }
+
+  private fun BODY.changePassword() {
+    h3 { +"Change password" }
+    p { +"Password must contain at least 6 characters" }
+    form {
+      name = formName
+      action = PREFS
+      method = FormMethod.post
+      table {
+        tr {
+          td { style = labelWidth; label { +"Current Password" } }
+          td { input { type = InputType.password; size = "42"; name = CURR_PASSWORD; value = "" } }
+          td { hideShowButton(formName, CURR_PASSWORD) }
+        }
+        tr {
+          td { style = labelWidth; label { +"New Password" } }
+          td { input { type = InputType.password; size = "42"; name = NEW_PASSWORD; value = "" } }
+          td { hideShowButton(formName, NEW_PASSWORD) }
+        }
+        tr {
+          td {}
+          td { input { type = InputType.submit; name = PREF_ACTION; value = UPDATE_PASSWORD } }
+        }
+      }
+    }
+  }
+
+  private fun BODY.teacherShare() {
+    h3 { +"Teacher Share" }
+    p { +"Enter the email address of the teacher account. This will make your done page and solution code visible to that account." }
+    form {
+      action = PREFS
+      method = FormMethod.post
+      table {
+        tr {
+          td { style = labelWidth; label { +"Share To" } }
+          td { input { type = InputType.text; size = "42"; name = "pdt"; value = "" } }
+        }
+        tr {
+          td {}
+          td { input { type = InputType.submit; name = "dosavepdt"; value = "Share" } }
+        }
+      }
+    }
+  }
+
+  private fun BODY.memo() {
+    h3 { +"Memo" }
+    p { +"Generally this is left blank. A teacher may ask you to fill this in." }
+    form {
+      action = PREFS
+      method = FormMethod.post
+      input { type = InputType.hidden; name = "date"; value = "963892736" }
+      table {
+        tr {
+          td { style = labelWidth; label { +"Memo" } }
+          td { input { type = InputType.text; size = "42"; name = "real"; value = "" } }
+        }
+        tr {
+          td {}
+          td { input { type = InputType.submit; name = "dosavereal"; value = "Update Memo" } }
+        }
+      }
+    }
+  }
 
   private fun BODY.deleteAccount(principal: UserPrincipal?) {
     h3 { +"Delete Account" }

@@ -27,11 +27,7 @@ import kotlinx.html.stream.createHTML
 internal fun PipelineCall.aboutPage(content: ReadingBatContent) =
   createHTML()
     .html {
-      val returnPath = queryParam(RETURN_PATH) ?: ""
-
-      head {
-        headDefault(content)
-      }
+      head { headDefault(content) }
 
       body {
         bodyTitle()
@@ -73,6 +69,6 @@ internal fun PipelineCall.aboutPage(content: ReadingBatContent) =
           }
         }
 
-        backLink(returnPath)
+        backLink(queryParam(RETURN_PATH) ?: "")
       }
     }
