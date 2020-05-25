@@ -25,6 +25,7 @@ import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.BrowserSession
 import com.github.readingbat.misc.CSSNames.funcItem
 import com.github.readingbat.misc.CSSNames.tabs
+import com.github.readingbat.misc.Constants
 import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
 import com.github.readingbat.misc.Constants.GREEN_CHECK
 import com.github.readingbat.misc.Constants.STATIC_ROOT
@@ -32,77 +33,91 @@ import com.github.readingbat.misc.Constants.WHITE_CHECK
 import com.github.readingbat.misc.PageUtils.pathOf
 import com.github.readingbat.misc.UserId
 import com.github.readingbat.misc.UserId.Companion.lookupUserId
-import com.github.readingbat.misc.UserPrincipal
+import com.github.readingbat.pages.PageCommon.backLink
+import com.github.readingbat.pages.PageCommon.bodyHeader
+import com.github.readingbat.pages.PageCommon.headDefault
+import com.github.readingbat.pages.PageCommon.rows
+import com.github.readingbat.server.PipelineCall
+import com.github.readingbat.server.fetchPrincipal
+import com.github.readingbat.server.queryParam
+import io.ktor.application.call
+import io.ktor.sessions.get
+import io.ktor.sessions.sessions
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 import redis.clients.jedis.Jedis
 
-internal fun Challenge.isCorrect(redis: Jedis?, userId: UserId?, browserSession: BrowserSession?): Boolean {
-  val correctAnswersKey =
-    userId?.correctAnswersKey(languageName, groupName, challengeName)
-      ?: browserSession?.correctAnswersKey(languageName, groupName, challengeName)
-      ?: ""
-  return if (correctAnswersKey.isNotEmpty()) redis?.get(correctAnswersKey)?.toBoolean() == true else false
-}
+internal object ChallengeGroupPage {
 
-internal fun challengeGroupPage(content: ReadingBatContent,
-                                challengeGroup: ChallengeGroup<*>,
-                                loginAttempt: Boolean,
-                                principal: UserPrincipal?,
-                                browserSession: BrowserSession?) =
-  createHTML()
-    .html {
-      val languageType = challengeGroup.languageType
-      val languageName = languageType.lowerName
-      val groupName = challengeGroup.groupName
-      val challenges = challengeGroup.challenges
-      val loginPath = pathOf(CHALLENGE_ROOT, languageName, groupName)
+  fun Challenge.isCorrect(redis: Jedis?, userId: UserId?, browserSession: BrowserSession?): Boolean {
 
-      fun TR.funcCall(redis: Jedis?, userId: UserId?, challenge: Challenge) {
-        val challengeName = challenge.challengeName
-        val allCorrect = challenge.isCorrect(redis, userId, browserSession)
+    val correctAnswersKey =
+      userId?.correctAnswersKey(languageName, groupName, challengeName)
+        ?: browserSession?.correctAnswersKey(languageName, groupName, challengeName)
+        ?: ""
+    return if (correctAnswersKey.isNotEmpty()) redis?.get(correctAnswersKey)?.toBoolean() == true else false
+  }
 
-        td(classes = funcItem) {
-          img { src = "$STATIC_ROOT/${if (allCorrect) GREEN_CHECK else WHITE_CHECK}" }
-          a {
-            style = "font-Size:110%; padding-left:2px;"
-            href = pathOf(CHALLENGE_ROOT, languageName, groupName, challengeName)
-            +challengeName
+  fun PipelineCall.challengeGroupPage(content: ReadingBatContent,
+                                      challengeGroup: ChallengeGroup<*>,
+                                      loginAttempt: Boolean) =
+    createHTML()
+      .html {
+        val principal = fetchPrincipal(loginAttempt)
+        val browserSession = call.sessions.get<BrowserSession>()
+        val languageType = challengeGroup.languageType
+        val languageName = languageType.lowerName
+        val groupName = challengeGroup.groupName
+        val challenges = challengeGroup.challenges
+        val loginPath = pathOf(CHALLENGE_ROOT, languageName, groupName)
+
+        fun TR.funcCall(redis: Jedis?, userId: UserId?, challenge: Challenge) {
+          val challengeName = challenge.challengeName
+          val allCorrect = challenge.isCorrect(redis, userId, browserSession)
+
+          td(classes = funcItem) {
+            img { src = "$STATIC_ROOT/${if (allCorrect) GREEN_CHECK else WHITE_CHECK}" }
+            a {
+              style = "font-Size:110%; padding-left:2px;"
+              href = pathOf(CHALLENGE_ROOT, languageName, groupName, challengeName)
+              +challengeName
+            }
           }
         }
-      }
 
-      head { headDefault(content) }
+        head { headDefault(content) }
 
-      body {
-        bodyHeader(principal, loginAttempt, content, languageType, loginPath)
+        body {
+          val msg = queryParam(Constants.MSG) ?: ""
+          bodyHeader(principal, loginAttempt, content, languageType, loginPath, msg)
 
-        div(classes = tabs) {
+          div(classes = tabs) {
 
-          h2 { +groupName.decode() }
+            h2 { +groupName.decode() }
 
-          table {
-            val cols = 3
-            val size = challenges.size
-            val rows = size.rows(cols)
+            table {
+              val cols = 3
+              val size = challenges.size
+              val rows = size.rows(cols)
 
-            withRedisPool { redis ->
-              val userId = lookupUserId(principal, redis)
+              withRedisPool { redis ->
+                val userId = lookupUserId(principal, redis)
 
-              (0 until rows).forEach { i ->
-                tr {
-                  style = "height:30"
-                  challenges.apply {
-                    elementAt(i).also { funcCall(redis, userId, it) }
-                    elementAtOrNull(i + rows)?.also { funcCall(redis, userId, it) } ?: td {}
-                    elementAtOrNull(i + (2 * rows))?.also { funcCall(redis, userId, it) } ?: td {}
+                (0 until rows).forEach { i ->
+                  tr {
+                    style = "height:30"
+                    challenges.apply {
+                      elementAt(i).also { funcCall(redis, userId, it) }
+                      elementAtOrNull(i + rows)?.also { funcCall(redis, userId, it) } ?: td {}
+                      elementAtOrNull(i + (2 * rows))?.also { funcCall(redis, userId, it) } ?: td {}
+                    }
                   }
                 }
               }
             }
           }
-        }
 
-        backLink(CHALLENGE_ROOT, languageName)
+          backLink(CHALLENGE_ROOT, languageName)
+        }
       }
-    }
+}

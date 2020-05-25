@@ -28,7 +28,7 @@ import com.github.readingbat.misc.CSSNames.successId
 import com.github.readingbat.misc.CSSNames.userResp
 import com.github.readingbat.misc.Constants.sessionid
 import com.github.readingbat.misc.Endpoints.CHECK_ANSWERS_ROOT
-import com.github.readingbat.pages.rawHtml
+import com.github.readingbat.pages.PageCommon.rawHtml
 import kotlinx.html.SCRIPT
 import java.util.concurrent.atomic.AtomicInteger
 

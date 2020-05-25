@@ -22,6 +22,7 @@ internal object Constants {
   const val sessionid = "sessionid"
   const val ICONS = "icons"
   const val RETURN_PATH = "returnPath"
+  const val MSG = "msg"
   const val BACK_PATH = "backPath"
   const val ROOT = "/"
   const val STATIC_ROOT = "/static"

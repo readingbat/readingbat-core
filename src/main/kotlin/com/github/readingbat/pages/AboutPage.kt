@@ -19,34 +19,39 @@ package com.github.readingbat.pages
 
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.Constants.RETURN_PATH
+import com.github.readingbat.pages.PageCommon.backLink
+import com.github.readingbat.pages.PageCommon.bodyTitle
+import com.github.readingbat.pages.PageCommon.headDefault
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.queryParam
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 
-internal fun PipelineCall.aboutPage(content: ReadingBatContent) =
-  createHTML()
-    .html {
-      head { headDefault(content) }
+internal object AboutPage {
 
-      body {
-        bodyTitle()
+  fun PipelineCall.aboutPage(content: ReadingBatContent) =
+    createHTML()
+      .html {
+        head { headDefault(content) }
 
-        h2 { +"About ReadingBat" }
+        body {
+          bodyTitle()
 
-        div {
-          style = "margin-left: 1em;"
+          h2 { +"About ReadingBat" }
 
-          p {
-            +"""
+          div {
+            style = "margin-left: 1em;"
+
+            p {
+              +"""
               ReadingBat.com is a faster-son effort by Paul and Matthew Ambrose to make learning how to program 
               a little easier.
               We are big fans of 
               """.trimIndent()
 
-            a { href = "https://codingbat.com"; +"CodingBat.com " }
+              a { href = "https://codingbat.com"; +"CodingBat.com " }
 
-            +"""
+              +"""
               (so much so, that we shamelessly copied its look and feel). However, we observed
               that students often start using it to write code, prior to being equipped
               with the skill of reading code. It is difficult to write code without first learning 
@@ -55,20 +60,21 @@ internal fun PipelineCall.aboutPage(content: ReadingBatContent) =
               is comfortable with reading code, they can head straight for 
             """.trimIndent()
 
-            a { href = "https://codingbat.com"; +" CodingBat.com " }
+              a { href = "https://codingbat.com"; +" CodingBat.com " }
 
-            +"and move on to authoring their own code!"
-          }
+              +"and move on to authoring their own code!"
+            }
 
-          p {
-            +"If you have any thoughts or suggestions about ReadingBat.com, please don't hesitate to email us at: "
-            a {
-              href = "mailto:suggestions@readingbat.com?subject=ReadingBat"
-              +"suggestions@readingbat.com"
+            p {
+              +"If you have any thoughts or suggestions about ReadingBat.com, please don't hesitate to email us at: "
+              a {
+                href = "mailto:suggestions@readingbat.com?subject=ReadingBat"
+                +"suggestions@readingbat.com"
+              }
             }
           }
-        }
 
-        backLink(queryParam(RETURN_PATH) ?: "")
+          backLink(queryParam(RETURN_PATH) ?: "")
+        }
       }
-    }
+}

@@ -23,10 +23,10 @@ import java.io.IOException
 
 object Emailer {
 
-  fun sendResetEmail() {
+  fun sendResetEmail(toEmail: String) {
     val from = Email("reset@readingbat.com")
-    val subject = "ReadingBat Password Reset"
-    val to = Email("pambrose@mac.com")
+    val subject = "ReadingBat password reset"
+    val to = Email(toEmail)
     val content = Content("text/plain", "and easy to do anywhere, even with Java")
     val mail = Mail(from, subject, to, content)
     val sg = SendGrid(System.getenv("SENDGRID_API_KEY"))

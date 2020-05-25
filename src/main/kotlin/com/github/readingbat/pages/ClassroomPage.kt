@@ -18,26 +18,31 @@
 package com.github.readingbat.pages
 
 import com.github.readingbat.dsl.ReadingBatContent
+import com.github.readingbat.pages.PageCommon.bodyTitle
+import com.github.readingbat.pages.PageCommon.headDefault
+import com.github.readingbat.pages.PageCommon.rawHtml
 import com.github.readingbat.server.production
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 
-internal fun classroomPage(content: ReadingBatContent) =
-  createHTML()
-    .html {
+internal object ClassroomPage {
 
-      head { headDefault(content) }
+  fun classroomPage(content: ReadingBatContent) =
+    createHTML()
+      .html {
 
-      body {
-        bodyTitle()
+        head { headDefault(content) }
 
-        div {
-          h2 { +"About ReadingBat" }
+        body {
+          bodyTitle()
 
-          val wsid = "ws-output"
-          script {
-            rawHtml(
-              """
+          div {
+            h2 { +"About ReadingBat" }
+
+            val wsid = "ws-output"
+            script {
+              rawHtml(
+                """
                 var HOST = location.href.replace(${if (production) "/^https:/, 'wss:'" else "/^http:/, 'ws:'"})
                 var ws = new WebSocket(HOST);
                 var el;
@@ -49,9 +54,10 @@ internal fun classroomPage(content: ReadingBatContent) =
                   el.innerHTML = 'Server time: ' + event.data;
                 };
               """.trimIndent())
-          }
+            }
 
-          p { id = wsid }
+            p { id = wsid }
+          }
         }
       }
-    }
+}

@@ -28,82 +28,97 @@ import com.github.readingbat.misc.CSSNames.groupItemSrc
 import com.github.readingbat.misc.CSSNames.tabs
 import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
 import com.github.readingbat.misc.Constants.GREEN_CHECK
+import com.github.readingbat.misc.Constants.MSG
 import com.github.readingbat.misc.Constants.STATIC_ROOT
 import com.github.readingbat.misc.Constants.WHITE_CHECK
 import com.github.readingbat.misc.PageUtils.pathOf
 import com.github.readingbat.misc.UserId
 import com.github.readingbat.misc.UserId.Companion.lookupUserId
-import com.github.readingbat.misc.UserPrincipal
+import com.github.readingbat.pages.ChallengeGroupPage.isCorrect
+import com.github.readingbat.pages.PageCommon.bodyHeader
+import com.github.readingbat.pages.PageCommon.headDefault
+import com.github.readingbat.pages.PageCommon.rawHtml
+import com.github.readingbat.pages.PageCommon.rows
+import com.github.readingbat.server.PipelineCall
+import com.github.readingbat.server.fetchPrincipal
+import com.github.readingbat.server.queryParam
+import io.ktor.application.call
+import io.ktor.sessions.get
+import io.ktor.sessions.sessions
 import kotlinx.html.*
 import kotlinx.html.Entities.nbsp
 import kotlinx.html.stream.createHTML
 import redis.clients.jedis.Jedis
 
-internal fun languageGroupPage(content: ReadingBatContent,
-                               languageType: LanguageType,
-                               loginAttempt: Boolean,
-                               principal: UserPrincipal?,
-                               browserSession: BrowserSession?) =
-  createHTML()
-    .html {
-      val languageName = languageType.lowerName
-      val loginPath = pathOf(CHALLENGE_ROOT, languageName)
-      val groups = content.findLanguage(languageType).challengeGroups
+internal object LanguageGroupPage {
 
-      fun TR.groupItem(redis: Jedis?, userId: UserId?, challengeGroup: ChallengeGroup<*>) {
-        val groupName = challengeGroup.groupName
-        val parsedDescription = challengeGroup.parsedDescription
-        val challenges = challengeGroup.challenges
+  fun PipelineCall.languageGroupPage(content: ReadingBatContent,
+                                     languageType: LanguageType,
+                                     loginAttempt: Boolean) =
+    createHTML()
+      .html {
+        val principal = fetchPrincipal(loginAttempt)
+        val browserSession = call.sessions.get<BrowserSession>()
+        val languageName = languageType.lowerName
+        val loginPath = pathOf(CHALLENGE_ROOT, languageName)
+        val groups = content.findLanguage(languageType).challengeGroups
 
-        val maxCnt = 12
-        var cnt = 0
-        var maxFound = false
-        for (challenge in challenges) {
-          if (challenge.isCorrect(redis, userId, browserSession)) cnt++
-          if (cnt == maxCnt + 1) {
-            maxFound = true
-            break
+        fun TR.groupItem(redis: Jedis?, userId: UserId?, challengeGroup: ChallengeGroup<*>) {
+          val groupName = challengeGroup.groupName
+          val parsedDescription = challengeGroup.parsedDescription
+          val challenges = challengeGroup.challenges
+
+          val maxCnt = 12
+          var cnt = 0
+          var maxFound = false
+          for (challenge in challenges) {
+            if (challenge.isCorrect(redis, userId, browserSession)) cnt++
+            if (cnt == maxCnt + 1) {
+              maxFound = true
+              break
+            }
+          }
+
+          td(classes = funcItem) {
+            div(classes = groupItemSrc) {
+              a(classes = groupChoice) { href = pathOf(CHALLENGE_ROOT, languageName, groupName); +groupName }
+              br { rawHtml(if (parsedDescription.isNotBlank()) parsedDescription else nbsp.text) }
+              if (cnt == 0) {
+                img { src = "$STATIC_ROOT/$WHITE_CHECK" }
+              }
+              else {
+                repeat(if (maxFound) cnt - 1 else cnt) { img { src = "$STATIC_ROOT/$GREEN_CHECK" } }
+                if (maxFound) rawHtml("&hellip;")
+              }
+            }
           }
         }
 
-        td(classes = funcItem) {
-          div(classes = groupItemSrc) {
-            a(classes = groupChoice) { href = pathOf(CHALLENGE_ROOT, languageName, groupName); +groupName }
-            br { rawHtml(if (parsedDescription.isNotBlank()) parsedDescription else nbsp.text) }
-            if (cnt == 0) {
-              img { src = "$STATIC_ROOT/$WHITE_CHECK" }
-            }
-            else {
-              repeat(if (maxFound) cnt - 1 else cnt) { img { src = "$STATIC_ROOT/$GREEN_CHECK" } }
-              if (maxFound) rawHtml("&hellip;")
-            }
-          }
-        }
-      }
+        head { headDefault(content) }
 
-      head { headDefault(content) }
+        body {
+          val msg = queryParam(MSG) ?: ""
+          bodyHeader(principal, loginAttempt, content, languageType, loginPath, msg, "Welcome to ReadingBat.")
 
-      body {
-        bodyHeader(principal, loginAttempt, content, languageType, loginPath, "Welcome to ReadingBat.")
+          div(classes = tabs) {
+            table {
+              val cols = 3
+              val size = groups.size
+              val rows = size.rows(cols)
 
-        div(classes = tabs) {
-          table {
-            val cols = 3
-            val size = groups.size
-            val rows = size.rows(cols)
+              withRedisPool { redis ->
+                val userId = lookupUserId(principal, redis)
 
-            withRedisPool { redis ->
-              val userId = lookupUserId(principal, redis)
-
-              (0 until rows).forEach { i ->
-                tr {
-                  groups[i].also { group -> groupItem(redis, userId, group) }
-                  groups.elementAtOrNull(i + rows)?.also { groupItem(redis, userId, it) } ?: td {}
-                  groups.elementAtOrNull(i + (2 * rows))?.also { groupItem(redis, userId, it) } ?: td {}
+                (0 until rows).forEach { i ->
+                  tr {
+                    groups[i].also { group -> groupItem(redis, userId, group) }
+                    groups.elementAtOrNull(i + rows)?.also { groupItem(redis, userId, it) } ?: td {}
+                    groups.elementAtOrNull(i + (2 * rows))?.also { groupItem(redis, userId, it) } ?: td {}
+                  }
                 }
               }
             }
           }
         }
       }
-    }
+}

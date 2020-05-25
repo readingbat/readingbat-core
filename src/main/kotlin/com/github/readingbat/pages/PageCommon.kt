@@ -44,187 +44,198 @@ import com.github.readingbat.server.production
 import io.ktor.http.ContentType.Text.CSS
 import kotlinx.html.*
 
-internal fun HEAD.headDefault(content: ReadingBatContent) {
-  link { rel = "stylesheet"; href = CSS_NAME; type = CSS.toString() }
+object PageCommon {
 
-  // From: https://favicon.io/emoji-favicons/glasses/
-  val root = "$STATIC_ROOT/$ICONS"
-  link { rel = "apple-touch-icon"; sizes = "180x180"; href = "$root/apple-touch-icon.png" }
-  link { rel = "icon"; type = "image/png"; sizes = "32x32"; href = "$root/favicon-32x32.png" }
-  link { rel = "icon"; type = "image/png"; sizes = "16x16"; href = "$root/favicon-16x16.png" }
-  link { rel = "manifest"; href = "$root/site.webmanifest" }
+  internal fun HEAD.headDefault(content: ReadingBatContent) {
+    link { rel = "stylesheet"; href = CSS_NAME; type = CSS.toString() }
 
-  title(READING_BAT)
+    // From: https://favicon.io/emoji-favicons/glasses/
+    val root = "$STATIC_ROOT/$ICONS"
+    link { rel = "apple-touch-icon"; sizes = "180x180"; href = "$root/apple-touch-icon.png" }
+    link { rel = "icon"; type = "image/png"; sizes = "32x32"; href = "$root/favicon-32x32.png" }
+    link { rel = "icon"; type = "image/png"; sizes = "16x16"; href = "$root/favicon-16x16.png" }
+    link { rel = "manifest"; href = "$root/site.webmanifest" }
 
-  if (production && content.googleAnalyticsId.isNotBlank()) {
-    script { async = true; src = "https://www.googletagmanager.com/gtag/js?id=${content.googleAnalyticsId}" }
-    script {
-      rawHtml("""
+    title(READING_BAT)
+
+    if (production && content.googleAnalyticsId.isNotBlank()) {
+      script { async = true; src = "https://www.googletagmanager.com/gtag/js?id=${content.googleAnalyticsId}" }
+      script {
+        rawHtml("""
           window.dataLayer = window.dataLayer || [];
           function gtag(){dataLayer.push(arguments);}
           gtag('js', new Date());
           gtag('config', '${content.googleAnalyticsId}');
         """)
-    }
-  }
-}
-
-private fun TABLE.logout(principal: UserPrincipal, loginPath: String) {
-  tr {
-    val elems = principal.userId.split("@")
-    td {
-      +elems[0]
-      if (elems.size > 1) {
-        br
-        +"@${elems[1]}"
       }
     }
   }
 
-  tr {
-    td {
-      /*
+  private fun TABLE.logout(principal: UserPrincipal, loginPath: String) {
+    tr {
+      val elems = principal.userId.split("@")
+      td {
+        +elems[0]
+        if (elems.size > 1) {
+          br
+          +"@${elems[1]}"
+        }
+      }
+    }
+
+    tr {
+      td {
+        /*
     a {
       href = "/doc/practice/code-badges.html"; img {
       width = "30"; style = "vertical-align: middle"; src = "$STATIC_ROOT/s5j.png"
     }
     }
      */
-      +"["; a { href = "$LOGOUT?$RETURN_PATH=$loginPath"; +"log out" }; +"]"
-    }
-  }
-}
-
-private fun TABLE.login(loginPath: String) {
-  form(method = FormMethod.post) {
-    action = loginPath
-    this@login.tr {
-      td { +"id/email" }
-      td { textInput { name = USERNAME; size = "20"; placeholder = "username" } }
-    }
-    this@login.tr {
-      td { +"password" }
-      td { passwordInput { name = PASSWORD; size = "20"; placeholder = "password" } }
-    }
-    this@login.tr {
-      td {}
-      td { submitInput { name = "dologin"; value = "log in" } }
-    }
-    hiddenInput { name = "fromurl"; value = loginPath }
-  }
-  tr {
-    td {
-      colSpan = "2"
-      a { href = "$RESET_PASSWORD?$RETURN_PATH=$loginPath"; +"forgot password" }
-      +" | "
-      a { href = "$CREATE_ACCOUNT?$RETURN_PATH=$loginPath"; +"create account" }
-    }
-  }
-}
-
-internal fun BODY.helpAndLogin(principal: UserPrincipal?, loginPath: String) {
-  div {
-    style = "float:right; margin:0px; border: 1px solid lightgray; margin-left: 10px; padding: 5px;"
-    table {
-      if (principal != null) logout(principal, loginPath) else login(loginPath)
+        +"["; a { href = "$LOGOUT?$RETURN_PATH=$loginPath"; +"log out" }; +"]"
+      }
     }
   }
 
-  div {
-    style = "float:right"
-    table {
-      tr {
-        td {
-          //valign = "top"
-          style = "text-align:right"
-          colSpan = "1"
-          a { href = "$ABOUT?$RETURN_PATH=$loginPath"; +"about" }
-          +" | "
-          //a { href = "/help.html"; +"help" }
-          //+" | "
-          a {
-            //href = "/doc/code-help-videos.html"; +"code help+videos | "
-            //a { href = "/done?user=pambrose@mac.com&tag=6621428513"; +"done" }
+  private fun TABLE.login(loginPath: String) {
+    form(method = FormMethod.post) {
+      action = loginPath
+      this@login.tr {
+        td { +"id/email" }
+        td { textInput { name = USERNAME; size = "20"; placeholder = "username" } }
+      }
+      this@login.tr {
+        td { +"password" }
+        td { passwordInput { name = PASSWORD; size = "20"; placeholder = "password" } }
+      }
+      this@login.tr {
+        td {}
+        td { submitInput { name = "dologin"; value = "log in" } }
+      }
+      hiddenInput { name = "fromurl"; value = loginPath }
+    }
+    tr {
+      td {
+        colSpan = "2"
+        a { href = "$RESET_PASSWORD?$RETURN_PATH=$loginPath"; +"forgot password" }
+        +" | "
+        a { href = "$CREATE_ACCOUNT?$RETURN_PATH=$loginPath"; +"create account" }
+      }
+    }
+  }
+
+  fun BODY.helpAndLogin(principal: UserPrincipal?, loginPath: String) {
+    div {
+      style = "float:right; margin:0px; border: 1px solid lightgray; margin-left: 10px; padding: 5px;"
+      table {
+        if (principal != null) logout(principal, loginPath) else login(loginPath)
+      }
+    }
+
+    div {
+      style = "float:right"
+      table {
+        tr {
+          td {
+            //valign = "top"
+            style = "text-align:right"
+            colSpan = "1"
+            a { href = "$ABOUT?$RETURN_PATH=$loginPath"; +"about" }
+            +" | "
+            //a { href = "/help.html"; +"help" }
             //+" | "
-            //a { href = "/report"; +"report" }
-            //+" | "
-            a { href = "$USER_PREFS?$RETURN_PATH=$loginPath"; +"prefs" }
+            a {
+              //href = "/doc/code-help-videos.html"; +"code help+videos | "
+              //a { href = "/done?user=pambrose@mac.com&tag=6621428513"; +"done" }
+              //+" | "
+              //a { href = "/report"; +"report" }
+              //+" | "
+              a { href = "$USER_PREFS?$RETURN_PATH=$loginPath"; +"prefs" }
+            }
           }
         }
       }
     }
   }
-}
 
-internal fun BODY.bodyTitle() {
-  div {
-    style = "margin-bottom: 0em;"
-    a { href = "/"; span { style = "font-size:200%;"; +READING_BAT } }
-    span { style = "padding-left:5px;"; +"code reading practice" }
-  }
-}
-
-internal fun BODY.bodyHeader(principal: UserPrincipal?,
-                             loginAttempt: Boolean,
-                             content: ReadingBatContent,
-                             languageType: LanguageType,
-                             loginPath: String,
-                             message: String = "") {
-
-  helpAndLogin(principal, loginPath)
-
-  bodyTitle()
-
-  if (loginAttempt && principal == null)
-    p { span { style = "color:red;"; +"Failed to login -- bad username or password." } }
-
-  div {
-    style = "min-height:9;"
-    p { style = "max-width:800;"; +message }
+  fun BODY.bodyTitle() {
+    div {
+      style = "margin-bottom: 0em;"
+      a { href = "/"; span { style = "font-size:200%;"; +READING_BAT } }
+      span { style = "padding-left:5px;"; +"code reading practice" }
+    }
   }
 
-  div {
-    style = "padding-top:10px; min-width:100vw; clear:both;"
-    nav {
-      ul {
-        for (lang in languageTypesInOrder) {
-          if (content.hasGroups(lang))
-            li(classes = "h2") {
-              if (languageType == lang) id = selected
-              this@bodyHeader.addLink(lang.name, pathOf(CHALLENGE_ROOT, lang.lowerName))
-            }
+  fun BODY.bodyHeader(principal: UserPrincipal?,
+                      loginAttempt: Boolean,
+                      content: ReadingBatContent,
+                      languageType: LanguageType,
+                      loginPath: String,
+                      msg: String = "",
+                      subMsg: String = "") {
+
+    helpAndLogin(principal, loginPath)
+
+    bodyTitle()
+
+    if (loginAttempt && principal == null)
+      p { span { style = "color:red;"; +"Failed to login -- bad username or password." } }
+
+
+    if (msg.isNotEmpty())
+      div {
+        style = "min-height:9; color:green;"
+        p { style = "max-width:800;"; +msg }
+      }
+
+    div {
+      style = "min-height:9;"
+      p { style = "max-width:800;"; +subMsg }
+    }
+
+    div {
+      style = "padding-top:10px; min-width:100vw; clear:both;"
+      nav {
+        ul {
+          for (lang in languageTypesInOrder) {
+            if (content.hasGroups(lang))
+              li(classes = "h2") {
+                if (languageType == lang) id = selected
+                this@bodyHeader.addLink(lang.name, pathOf(CHALLENGE_ROOT, lang.lowerName))
+              }
+          }
         }
       }
     }
   }
-}
 
-internal fun defaultTab(content: ReadingBatContent) =
-  languageTypesInOrder
-    .asSequence()
-    .filter { content.hasGroups(it) }
-    .map { it.contentRoot }
-    .firstOrNull() ?: throw InvalidConfigurationException("Missing default language")
+  fun defaultLanguageTab(content: ReadingBatContent) =
+    languageTypesInOrder
+      .asSequence()
+      .filter { content.hasGroups(it) }
+      .map { it.contentRoot }
+      .firstOrNull() ?: throw InvalidConfigurationException("Missing default language")
 
-internal fun BODY.addLink(text: String, url: String, newWindow: Boolean = false) =
-  a { href = url; if (newWindow) target = "_blank"; +text }
+  fun BODY.addLink(text: String, url: String, newWindow: Boolean = false) =
+    a { href = url; if (newWindow) target = "_blank"; +text }
 
-internal fun BODY.backLink(url: String, marginLeft: String = "1em") {
-  if (url.isNotEmpty()) {
-    div {
-      style = "font-size: 120%; margin-left: $marginLeft;"
-      br
-      a { href = url; rawHtml("&larr; Back") }
+  fun BODY.backLink(url: String, marginLeft: String = "1em") {
+    if (url.isNotEmpty()) {
+      div {
+        style = "font-size: 120%; margin-left: $marginLeft;"
+        br
+        a { href = url; rawHtml("&larr; Back") }
+      }
     }
   }
+
+  fun BODY.privacyStatement(backPath: String, returnPath: String) {
+    p { a { href = "$PRIVACY?$BACK_PATH=$backPath&$RETURN_PATH=$returnPath"; +"privacy statement" } }
+  }
+
+  fun BODY.backLink(vararg pathElems: String) = backLink(pathElems.toList().toRootPath())
+
+  fun HTMLTag.rawHtml(html: String) = unsafe { raw(html) }
+
+  fun Int.rows(cols: Int) = if (this % cols == 0) this / cols else (this / cols) + 1
 }
-
-internal fun BODY.privacyStatement(backPath: String, returnPath: String) {
-  p { a { href = "$PRIVACY?$BACK_PATH=$backPath&$RETURN_PATH=$returnPath"; +"privacy statement" } }
-}
-
-internal fun BODY.backLink(vararg pathElems: String) = backLink(pathElems.toList().toRootPath())
-
-internal fun HTMLTag.rawHtml(html: String) = unsafe { raw(html) }
-
-internal fun Int.rows(cols: Int) = if (this % cols == 0) this / cols else (this / cols) + 1

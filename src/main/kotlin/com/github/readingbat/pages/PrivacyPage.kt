@@ -20,46 +20,52 @@ package com.github.readingbat.pages
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.Constants
 import com.github.readingbat.misc.Constants.RETURN_PATH
+import com.github.readingbat.pages.PageCommon.backLink
+import com.github.readingbat.pages.PageCommon.bodyTitle
+import com.github.readingbat.pages.PageCommon.headDefault
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.queryParam
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 
-internal fun PipelineCall.privacyPage(content: ReadingBatContent) =
-  createHTML()
-    .html {
-      val returnPath = queryParam(RETURN_PATH) ?: ""
-      val backPath = queryParam(Constants.BACK_PATH) ?: ""
+internal object PrivacyPage {
 
-      head { headDefault(content) }
+  fun PipelineCall.privacyPage(content: ReadingBatContent) =
+    createHTML()
+      .html {
+        val returnPath = queryParam(RETURN_PATH) ?: ""
+        val backPath = queryParam(Constants.BACK_PATH) ?: ""
 
-      body {
-        bodyTitle()
+        head { headDefault(content) }
 
-        h2 { +"ReadingBat Privacy" }
+        body {
+          bodyTitle()
 
-        div {
-          style = "margin-left: 1em;"
+          h2 { +"ReadingBat Privacy" }
 
-          p {
-            +"""
+          div {
+            style = "margin-left: 1em;"
+
+            p {
+              +"""
             ReadingBat is free -- anyone can access the site to learn and practice reading code. We will not send you any 
             marketing email (spam), and we will not sell your name or contact information to anyone for marketing. 
             We will not identify you, your name or email address (if we should know them) in anything we make public. 
             We collect regular web server logs, and may use the data and submitted answers as part of research into 
             teaching technology, but we will never make public specific names or email addresses.
               """.trimIndent()
-          }
+            }
 
-          p {
-            +"If you have any thoughts or suggestions about ReadingBat, please don't hesitate to email us at: "
-            a {
-              href = "mailto:suggestions@readingbat.com?subject=ReadingBat"
-              +"suggestions@readingbat.com"
+            p {
+              +"If you have any thoughts or suggestions about ReadingBat, please don't hesitate to email us at: "
+              a {
+                href = "mailto:suggestions@readingbat.com?subject=ReadingBat"
+                +"suggestions@readingbat.com"
+              }
             }
           }
-        }
 
-        backLink("$backPath${if (returnPath.isNotEmpty()) "?$RETURN_PATH=$returnPath" else ""}")
+          backLink("$backPath${if (returnPath.isNotEmpty()) "?$RETURN_PATH=$returnPath" else ""}")
+        }
       }
-    }
+}

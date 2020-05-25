@@ -21,68 +21,75 @@ import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.Constants
 import com.github.readingbat.misc.Endpoints
 import com.github.readingbat.misc.FormFields.USERNAME
+import com.github.readingbat.pages.PageCommon.backLink
+import com.github.readingbat.pages.PageCommon.bodyTitle
+import com.github.readingbat.pages.PageCommon.headDefault
+import com.github.readingbat.pages.PageCommon.privacyStatement
 import com.github.readingbat.pages.UpdatePrefsPage.labelWidth
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.queryParam
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 
-internal fun PipelineCall.resetPasswordPage(content: ReadingBatContent) =
-  createHTML()
-    .html {
+internal object ResetPasswordPage {
 
-      head { headDefault(content) }
+  fun PipelineCall.resetPasswordPage(content: ReadingBatContent) =
+    createHTML()
+      .html {
 
-      body {
-        val returnPath = queryParam(Constants.RETURN_PATH) ?: "/"
+        head { headDefault(content) }
 
-        bodyTitle()
+        body {
+          val returnPath = queryParam(Constants.RETURN_PATH) ?: "/"
 
-        h2 { +"Reset Password" }
+          bodyTitle()
 
-        div {
-          style = "margin-left: 1em;"
+          h2 { +"Reset Password" }
 
-          form {
-            action = "/"
-            method = FormMethod.post
-            table {
-              tr {
-                td { style = labelWidth; label { +"Email (used as account id)" } }
-                td {
-                  input {
-                    name = USERNAME
-                    type = InputType.text
-                    size = "50"
+          div {
+            style = "margin-left: 1em;"
+
+            form {
+              action = "/"
+              method = FormMethod.post
+              table {
+                tr {
+                  td { style = labelWidth; label { +"Email (used as account id)" } }
+                  td {
+                    input {
+                      name = USERNAME
+                      type = InputType.text
+                      size = "50"
+                    }
                   }
                 }
-              }
-              tr {
-                td {
-                }
-                td {
-                  style = "padding-top:10;"
-                  input {
-                    style = "font-size:25px; height:35; width:  155;"
-                    type = InputType.submit
-                    value = "Send Password Reset"
+                tr {
+                  td {
+                  }
+                  td {
+                    style = "padding-top:10;"
+                    input {
+                      style = "font-size:25px; height:35; width:  155;"
+                      type = InputType.submit
+                      value = "Send Password Reset"
+                    }
                   }
                 }
               }
             }
-          }
-          p {
-            +"""
+            p {
+              +"""
             This will send an email with a temporary password to the account email address. 
             When you get the email, log in with the temporary password, and go to the prefs page 
             to enter a new password. If the email does not arrive, double-check that the email 
             address above is entered correctly.
           """.trimIndent()
+            }
+
+            this@body.privacyStatement(Endpoints.USER_PREFS, returnPath)
           }
 
-          this@body.privacyStatement(Endpoints.USER_PREFS, returnPath)
+          backLink(returnPath)
         }
-
-        backLink(returnPath)
       }
-    }
+}

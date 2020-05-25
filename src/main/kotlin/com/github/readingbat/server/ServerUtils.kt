@@ -43,7 +43,7 @@ internal fun Application.property(name: String, default: String = "", warn: Bool
 internal fun PipelineCall.fetchPrincipal(loginAttempt: Boolean = false): UserPrincipal? =
   if (loginAttempt) assignPrincipal() else call.sessions.get<UserPrincipal>()
 
-internal fun PipelineCall.assignPrincipal() =
+private fun PipelineCall.assignPrincipal() =
   call.principal<UserPrincipal>().apply { if (this != null) call.sessions.set(this) }  // Set the cookie
 
 internal fun PipelineCall.queryParam(key: String): String? = call.request.queryParameters[key]

@@ -39,8 +39,8 @@ import kotlinx.html.div
 import mu.KotlinLogging
 import java.io.ByteArrayOutputStream
 import java.lang.management.ManagementFactory
-import java.time.Instant
-import java.time.LocalDateTime
+import java.time.Instant.ofEpochMilli
+import java.time.LocalDateTime.ofInstant
 import java.time.ZoneId
 
 private val logger = KotlinLogging.logger {}
@@ -71,12 +71,12 @@ internal fun Routing.adminRoutes(content: ReadingBatContent) {
           div { +"No cookies are present." }
         else {
           if (principal != null) {
-            val date = LocalDateTime.ofInstant(Instant.ofEpochMilli(principal.created), ZoneId.systemDefault())
+            val date = ofInstant(ofEpochMilli(principal.created), ZoneId.systemDefault())
             div { +"UserPrincipal: ${principal.userId} created on: $date" }
           }
 
           if (session != null) {
-            val date = LocalDateTime.ofInstant(Instant.ofEpochMilli(session.created), ZoneId.systemDefault())
+            val date = ofInstant(ofEpochMilli(session.created), ZoneId.systemDefault())
             div { +"BrowserSession id: [${session.id}] created on: $date" }
           }
         }

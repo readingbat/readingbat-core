@@ -37,11 +37,16 @@ import com.github.readingbat.misc.Endpoints.RESET_PASSWORD
 import com.github.readingbat.misc.Endpoints.USER_PREFS
 import com.github.readingbat.misc.UserPrincipal
 import com.github.readingbat.misc.cssContent
-import com.github.readingbat.pages.*
+import com.github.readingbat.pages.AboutPage.aboutPage
+import com.github.readingbat.pages.ClassroomPage.classroomPage
+import com.github.readingbat.pages.CreateAccountPage.createAccountPage
+import com.github.readingbat.pages.PageCommon.defaultLanguageTab
+import com.github.readingbat.pages.PrivacyPage.privacyPage
+import com.github.readingbat.pages.ResetPasswordPage.resetPasswordPage
 import com.github.readingbat.pages.UpdatePrefsPage.prefsPage
 import com.github.readingbat.posts.CheckAnswers.checkAnswers
-import com.github.readingbat.posts.changePrefs
-import com.github.readingbat.posts.createAccount
+import com.github.readingbat.posts.CreateAccount.createAccount
+import com.github.readingbat.posts.UpdatePrefs.updatePrefs
 import io.ktor.application.call
 import io.ktor.http.ContentType.Text.CSS
 import io.ktor.http.content.resources
@@ -54,9 +59,9 @@ import io.ktor.sessions.sessions
 
 internal fun Routing.userRoutes(content: ReadingBatContent) {
 
-  get(ROOT) { redirectTo { defaultTab(content) } }
+  get(ROOT) { redirectTo { defaultLanguageTab(content) } }
 
-  get(CHALLENGE_ROOT) { redirectTo { defaultTab(content) } }
+  get(CHALLENGE_ROOT) { redirectTo { defaultLanguageTab(content) } }
 
   post(CHECK_ANSWERS_ROOT) { checkAnswers(content) }
 
@@ -66,7 +71,7 @@ internal fun Routing.userRoutes(content: ReadingBatContent) {
 
   get(USER_PREFS) { respondWith { prefsPage(content, "") } }
 
-  post(USER_PREFS) { respondWith { changePrefs(content) } }
+  post(USER_PREFS) { respondWith { updatePrefs(content) } }
 
   get(PRIVACY) { respondWith { privacyPage(content) } }
 

@@ -22,21 +22,17 @@ import com.github.readingbat.dsl.LanguageType.Companion.toLanguageType
 import com.github.readingbat.dsl.LanguageType.Kotlin
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.AuthName.FORM
-import com.github.readingbat.misc.BrowserSession
 import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
 import com.github.readingbat.misc.Constants.PLAYGROUND_ROOT
-import com.github.readingbat.pages.challengeGroupPage
-import com.github.readingbat.pages.challengePage
-import com.github.readingbat.pages.languageGroupPage
-import com.github.readingbat.pages.playgroundPage
-import io.ktor.application.call
+import com.github.readingbat.pages.ChallengeGroupPage.challengeGroupPage
+import com.github.readingbat.pages.ChallengePage.challengePage
+import com.github.readingbat.pages.LanguageGroupPage.languageGroupPage
+import com.github.readingbat.pages.PlaygroundPage.playgroundPage
 import io.ktor.auth.authenticate
 import io.ktor.locations.Location
 import io.ktor.locations.get
 import io.ktor.locations.post
 import io.ktor.routing.Routing
-import io.ktor.sessions.get
-import io.ktor.sessions.sessions
 
 internal fun Routing.locations(content: ReadingBatContent) {
   get<Language> { language -> language(content, language, false) }
@@ -59,9 +55,7 @@ private suspend fun PipelineCall.language(content: ReadingBatContent,
     content.checkLanguage(language.languageType)
     languageGroupPage(content,
                       language.languageType,
-                      loginAttempt,
-                      fetchPrincipal(loginAttempt),
-                      call.sessions.get<BrowserSession>())
+                      loginAttempt)
   }
 
 private suspend fun PipelineCall.group(content: ReadingBatContent,
@@ -71,9 +65,7 @@ private suspend fun PipelineCall.group(content: ReadingBatContent,
     content.checkLanguage(group.languageType)
     challengeGroupPage(content,
                        content.findGroup(group.languageType, group.groupName),
-                       loginAttempt,
-                       fetchPrincipal(loginAttempt),
-                       call.sessions.get<BrowserSession>())
+                       loginAttempt)
   }
 
 private suspend fun PipelineCall.challenge(content: ReadingBatContent,
@@ -84,9 +76,7 @@ private suspend fun PipelineCall.challenge(content: ReadingBatContent,
     content.checkLanguage(challenge.languageType)
     challengePage(content,
                   content.findChallenge(challenge.languageType, challenge.groupName, challenge.challengeName),
-                  loginAttempt,
-                  fetchPrincipal(loginAttempt),
-                  call.sessions.get<BrowserSession>())
+                  loginAttempt)
   }
 
 private suspend fun PipelineCall.playground(content: ReadingBatContent,
@@ -95,8 +85,7 @@ private suspend fun PipelineCall.playground(content: ReadingBatContent,
   respondWith {
     playgroundPage(content,
                    content.findLanguage(Kotlin).findChallenge(request.groupName, request.challengeName),
-                   loginAttempt,
-                   fetchPrincipal(loginAttempt))
+                   loginAttempt)
   }
 
 @Location("$CHALLENGE_ROOT/{language}")

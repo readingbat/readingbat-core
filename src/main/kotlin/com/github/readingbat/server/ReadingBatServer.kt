@@ -19,6 +19,7 @@ package com.github.readingbat.server
 
 import com.github.pambrose.common.util.FileSource
 import com.github.readingbat.dsl.readDsl
+import com.github.readingbat.server.WsEndoints.wsEndpoints
 import io.ktor.application.Application
 import io.ktor.routing.routing
 import io.ktor.server.cio.CIO

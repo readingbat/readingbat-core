@@ -33,37 +33,39 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.runBlocking
 import redis.clients.jedis.JedisPubSub
 
-internal fun Routing.wsEndpoints(content: ReadingBatContent) {
+internal object WsEndoints {
 
-  webSocket(CLASSROOM) {
+  fun Routing.wsEndpoints(content: ReadingBatContent) {
 
-    incoming
-      .receiveAsFlow()
-      .mapNotNull { it as? Frame.Text }
-      .collect { frame ->
-        val text = frame.readText()
+    webSocket(CLASSROOM) {
 
-        repeat(10) { i ->
-          delay(100)
-          outgoing.send(Frame.Text("" + i))
-        }
+      incoming
+        .receiveAsFlow()
+        .mapNotNull { it as? Frame.Text }
+        .collect { frame ->
+          val text = frame.readText()
 
-        var i = 0
-        withRedis { redis ->
-          redis?.subscribe(object : JedisPubSub() {
-            override fun onMessage(channel: String?, message: String?) {
-              runBlocking {
-                delay(100)
-                outgoing.send(Frame.Text("$channel $message ${i++}"))
+          repeat(10) { i ->
+            delay(100)
+            outgoing.send(Frame.Text("" + i))
+          }
+
+          var i = 0
+          withRedis { redis ->
+            redis?.subscribe(object : JedisPubSub() {
+              override fun onMessage(channel: String?, message: String?) {
+                runBlocking {
+                  delay(100)
+                  outgoing.send(Frame.Text("$channel $message ${i++}"))
+                }
               }
-            }
-          }, "channel")
-        }
+            }, "channel")
+          }
 
-        if (text.equals("bye", ignoreCase = true)) {
-          close(CloseReason(CloseReason.Codes.NORMAL, "Client said BYE"))
+          if (text.equals("bye", ignoreCase = true)) {
+            close(CloseReason(CloseReason.Codes.NORMAL, "Client said BYE"))
+          }
         }
-      }
+    }
   }
-
 }

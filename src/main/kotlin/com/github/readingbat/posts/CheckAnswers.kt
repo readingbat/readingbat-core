@@ -70,12 +70,12 @@ internal data class ChallengeHistory(var argument: String,
   }
 }
 
-object CheckAnswers : KLogging() {
+internal object CheckAnswers : KLogging() {
 
   private fun String.isJavaBoolean() = this == "true" || this == "false"
   private fun String.isPythonBoolean() = this == "True" || this == "False"
 
-  internal suspend fun PipelineCall.checkAnswers(content: ReadingBatContent) {
+  suspend fun PipelineCall.checkAnswers(content: ReadingBatContent) {
     val principal = fetchPrincipal()
     val params = call.receiveParameters()
     val compareMap = params.entries().map { it.key to it.value[0] }.toMap()
