@@ -55,7 +55,7 @@ internal fun PipelineCall.aboutPage(content: ReadingBatContent) =
               that students often start using it to write code, prior to being equipped
               with the skill of reading code. It is difficult to write code without first learning 
               how to read and follow code! So we set out to create ReadingBat.com, which attempts 
-              to get students comfortable with code challenges and learning coding idioms. Once a student
+              to get students comfortable reading code challenges and learning coding idioms. Once a student
               is comfortable with reading code, they can head straight for 
             """.trimIndent()
 

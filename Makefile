@@ -4,7 +4,7 @@ clean:
 	./gradlew clean
 
 compile:
-	./gradlew --offline build -xtest
+	./gradlew build -xtest
 
 scan:
 	./gradlew build --scan -xtest

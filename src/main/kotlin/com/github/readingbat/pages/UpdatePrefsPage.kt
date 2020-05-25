@@ -19,10 +19,8 @@ package com.github.readingbat.pages
 
 import com.github.pambrose.common.redis.RedisUtils.withRedisPool
 import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.misc.Constants.BACK_PATH
 import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.Endpoints.PREFS
-import com.github.readingbat.misc.Endpoints.PRIVACY
 import com.github.readingbat.misc.FormFields.CURR_PASSWORD
 import com.github.readingbat.misc.FormFields.DELETE_ACCOUNT
 import com.github.readingbat.misc.FormFields.NEW_PASSWORD
@@ -30,46 +28,46 @@ import com.github.readingbat.misc.FormFields.PREF_ACTION
 import com.github.readingbat.misc.FormFields.UPDATE_PASSWORD
 import com.github.readingbat.misc.PageUtils.hideShowButton
 import com.github.readingbat.misc.UserId.Companion.isValidUserId
+import com.github.readingbat.misc.UserPrincipal
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.fetchPrincipal
 import com.github.readingbat.server.queryParam
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
-import mu.KotlinLogging
+import mu.KLogging
 
-private val logger = KotlinLogging.logger {}
+internal object UpdatePrefsPage : KLogging() {
 
-internal fun PipelineCall.prefsPage(content: ReadingBatContent,
-                                    msg: String,
-                                    isErrorMsg: Boolean = true): String =
-  withRedisPool { redis ->
-    val principal = fetchPrincipal()
-
-    if (isValidUserId(principal, redis))
-      prefsWithLoginPage(content, msg, isErrorMsg)
-    else
-      requestLogInPage(content)
-  }
-
-private fun PipelineCall.prefsWithLoginPage(content: ReadingBatContent,
-                                            msg: String,
-                                            isErrorMsg: Boolean) =
-  createHTML()
-    .html {
+  fun PipelineCall.prefsPage(content: ReadingBatContent,
+                             msg: String,
+                             isErrorMsg: Boolean = true): String =
+    withRedisPool { redis ->
       val principal = fetchPrincipal()
-      val returnPath = queryParam(RETURN_PATH) ?: "/"
 
-      head {
-        headDefault(content)
-      }
+      if (isValidUserId(principal, redis))
+        prefsWithLoginPage(content, msg, isErrorMsg)
+      else
+        requestLogInPage(content)
+    }
 
-      body {
-        bodyTitle()
+  private fun PipelineCall.prefsWithLoginPage(content: ReadingBatContent,
+                                              msg: String,
+                                              isErrorMsg: Boolean) =
+    createHTML()
+      .html {
+        val principal = fetchPrincipal()
+        val returnPath = queryParam(RETURN_PATH) ?: "/"
 
-        val labelWidth = "width: 250;"
-        val formName = "pform"
+        head {
+          headDefault(content)
+        }
 
-        div {
+        body {
+          bodyTitle()
+
+          val labelWidth = "width: 250;"
+          val formName = "pform"
+
           h2 { +"ReadingBat Prefs" }
 
           if (msg.isNotEmpty())
@@ -134,19 +132,44 @@ private fun PipelineCall.prefsWithLoginPage(content: ReadingBatContent,
             }
           }
 
-          h3 { +"Delete Account" }
-          p { +"Permanently delete account [${principal?.userId}] - cannot be undone" }
-          form {
-            action = PREFS
-            method = FormMethod.post
-            //onSubmit = "return formcheck()"
-            onSubmit = "return confirm('Are you sure you want to permanently delete account ${principal?.userId} ?');"
-            input { type = InputType.submit; name = PREF_ACTION; value = DELETE_ACCOUNT }
-          }
+          deleteAccount(principal)
 
-          p { a { href = "$PRIVACY?$BACK_PATH=$PREFS&$RETURN_PATH=$returnPath"; +"privacy statement" } }
+          privacyStatement(PREFS, returnPath)
+
+          backLink(returnPath)
         }
-
-        backLink(returnPath)
       }
+
+  private fun BODY.deleteAccount(principal: UserPrincipal?) {
+    h3 { +"Delete Account" }
+    p { +"Permanently delete account [${principal?.userId}] - cannot be undone" }
+    form {
+      action = PREFS
+      method = FormMethod.post
+      //onSubmit = "return formcheck()"
+      onSubmit = "return confirm('Are you sure you want to permanently delete account ${principal?.userId} ?');"
+      input { type = InputType.submit; name = PREF_ACTION; value = DELETE_ACCOUNT }
     }
+  }
+
+  fun PipelineCall.requestLogInPage(content: ReadingBatContent) =
+    createHTML()
+      .html {
+        head { headDefault(content) }
+
+        body {
+          val principal = fetchPrincipal()
+          val returnPath = queryParam(RETURN_PATH) ?: "/"
+
+          helpAndLogin(principal, returnPath)
+          bodyTitle()
+
+          h2 { +"Log in" }
+
+          p { +"Please create an account or log in to an existing account to edit preferences." }
+          privacyStatement(PREFS, returnPath)
+
+          backLink(returnPath)
+        }
+      }
+}

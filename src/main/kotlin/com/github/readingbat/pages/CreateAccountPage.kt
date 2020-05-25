@@ -18,10 +18,8 @@
 package com.github.readingbat.pages
 
 import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.misc.Constants.BACK_PATH
 import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.Endpoints.CREATE_ACCOUNT
-import com.github.readingbat.misc.Endpoints.PRIVACY
 import com.github.readingbat.misc.FormFields.PASSWORD
 import com.github.readingbat.misc.FormFields.USERNAME
 import com.github.readingbat.misc.PageUtils.hideShowButton
@@ -132,7 +130,7 @@ internal fun PipelineCall.createAccountPage(content: ReadingBatContent,
             }
           }
 
-          p { a { href = "$PRIVACY?$BACK_PATH=$CREATE_ACCOUNT&$RETURN_PATH=$returnPath"; +"privacy statement" } }
+          this@body.privacyStatement(CREATE_ACCOUNT, returnPath)
         }
 
         backLink(returnPath)

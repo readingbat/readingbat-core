@@ -25,6 +25,7 @@ import com.github.readingbat.dsl.LanguageType.Companion.languageTypesInOrder
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.AuthRoutes.LOGOUT
 import com.github.readingbat.misc.CSSNames.selected
+import com.github.readingbat.misc.Constants.BACK_PATH
 import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
 import com.github.readingbat.misc.Constants.ICONS
 import com.github.readingbat.misc.Constants.READING_BAT
@@ -34,6 +35,7 @@ import com.github.readingbat.misc.Endpoints.ABOUT
 import com.github.readingbat.misc.Endpoints.CREATE_ACCOUNT
 import com.github.readingbat.misc.Endpoints.CSS_NAME
 import com.github.readingbat.misc.Endpoints.PREFS
+import com.github.readingbat.misc.Endpoints.PRIVACY
 import com.github.readingbat.misc.Endpoints.RESET_PASSWORD
 import com.github.readingbat.misc.FormFields.PASSWORD
 import com.github.readingbat.misc.FormFields.USERNAME
@@ -215,6 +217,10 @@ internal fun BODY.backLink(url: String, marginLeft: String = "1em") {
       a { href = url; rawHtml("&larr; Back") }
     }
   }
+}
+
+internal fun BODY.privacyStatement(backPath: String, returnPath: String) {
+  p { a { href = "$PRIVACY?$BACK_PATH=$backPath&$RETURN_PATH=$returnPath"; +"privacy statement" } }
 }
 
 internal fun BODY.backLink(vararg pathElems: String) = backLink(pathElems.toList().toRootPath())

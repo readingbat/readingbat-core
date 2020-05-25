@@ -27,8 +27,8 @@ import com.github.readingbat.misc.FormFields.PREF_ACTION
 import com.github.readingbat.misc.FormFields.UPDATE_PASSWORD
 import com.github.readingbat.misc.UserId
 import com.github.readingbat.misc.UserId.Companion.lookupUserId
-import com.github.readingbat.pages.prefsPage
-import com.github.readingbat.pages.requestLogInPage
+import com.github.readingbat.pages.UpdatePrefsPage.prefsPage
+import com.github.readingbat.pages.UpdatePrefsPage.requestLogInPage
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.fetchPrincipal
 import io.ktor.application.call

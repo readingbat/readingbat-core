@@ -135,8 +135,8 @@ compileKotlin {
                                        '-Xuse-experimental=io.ktor.util.KtorExperimentalAPI',
                                        '-Xuse-experimental=io.ktor.locations.KtorExperimentalLocationsAPI',
                                        '-Xuse-experimental=kotlinx.coroutines.ExperimentalCoroutinesApi',
-                                       '-Xuse-experimental=kotlin.ExperimentalStdlibApi'] //,
-                                       //'-XXLanguage:+InlineClasses']
+                                       '-Xuse-experimental=kotlin.ExperimentalStdlibApi',
+                                       '-XXLanguage:+InlineClasses']
 }
 
 compileTestKotlin {
@@ -145,8 +145,8 @@ compileTestKotlin {
                                        '-Xuse-experimental=io.ktor.util.KtorExperimentalAPI',
                                        '-Xuse-experimental=io.ktor.locations.KtorExperimentalLocationsAPI',
                                        '-Xuse-experimental=kotlinx.coroutines.ExperimentalCoroutinesApi',
-                                       '-Xuse-experimental=kotlin.ExperimentalStdlibApi'] //,
-                                       //'-XXLanguage:+InlineClasses']
+                                       '-Xuse-experimental=kotlin.ExperimentalStdlibApi',
+                                       '-XXLanguage:+InlineClasses']
 }
 
 test {

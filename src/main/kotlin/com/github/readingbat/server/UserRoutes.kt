@@ -38,6 +38,7 @@ import com.github.readingbat.misc.Endpoints.RESET_PASSWORD
 import com.github.readingbat.misc.UserPrincipal
 import com.github.readingbat.misc.cssContent
 import com.github.readingbat.pages.*
+import com.github.readingbat.pages.UpdatePrefsPage.prefsPage
 import com.github.readingbat.posts.CheckAnswers.checkUserAnswers
 import com.github.readingbat.posts.changePrefs
 import com.github.readingbat.posts.createAccount
