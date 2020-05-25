@@ -17,9 +17,9 @@
 
 package com.github.readingbat.server
 
-import com.github.readingbat.misc.Cookies
-import com.github.readingbat.misc.UserId.BrowserSession
-import com.github.readingbat.misc.UserId.UserPrincipal
+import com.github.readingbat.misc.AuthName.AUTH_COOKIE
+import com.github.readingbat.misc.BrowserSession
+import com.github.readingbat.misc.UserPrincipal
 import io.ktor.sessions.Sessions
 import io.ktor.sessions.cookie
 
@@ -36,7 +36,7 @@ internal object ConfigureCookies {
   fun Sessions.Configuration.configureAuthCookie() {
     cookie<UserPrincipal>(
       // We set a cookie by this name on login.
-      name = Cookies.AUTH_COOKIE
+      name = AUTH_COOKIE
       //,
       // Stores session contents in memory...good for development only.
       //storage = SessionStorageMemory()

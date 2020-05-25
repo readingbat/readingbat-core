@@ -21,14 +21,12 @@ import com.github.pambrose.common.redis.RedisUtils.withRedisPool
 import com.github.pambrose.common.response.redirectTo
 import com.github.pambrose.common.response.respondWith
 import com.github.pambrose.common.util.isNotValidEmail
-import com.github.pambrose.common.util.newStringSalt
-import com.github.pambrose.common.util.sha256
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.FormFields.PASSWORD
 import com.github.readingbat.misc.FormFields.USERNAME
-import com.github.readingbat.misc.UserId
-import com.github.readingbat.misc.userIdKey
+import com.github.readingbat.misc.UserId.Companion.createUser
+import com.github.readingbat.misc.UserId.Companion.userIdKey
 import com.github.readingbat.pages.createAccountPage
 import com.github.readingbat.posts.Messages.CLEVER_PASSWORD
 import com.github.readingbat.posts.Messages.EMPTY_EMAIL
@@ -41,9 +39,7 @@ import com.google.common.util.concurrent.RateLimiter
 import io.ktor.application.call
 import io.ktor.request.receiveParameters
 import kotlinx.coroutines.runBlocking
-import mu.KotlinLogging
 
-private val logger = KotlinLogging.logger {}
 private val createAccountLimiter = RateLimiter.create(2.0) // rate 2.0 is "2 permits per second"
 
 private object Messages {
@@ -88,33 +84,14 @@ internal suspend fun PipelineCall.createAccount(content: ReadingBatContent, user
         redirectTo { returnPath }
       }
       else {
+        createAccountLimiter.acquire() // may wait
+
         // Check if username already exists
-        val userIdKey = userIdKey(username)
-        if (redis.exists(userIdKey)) {
+        if (redis.exists(userIdKey(username))) {
           respondWith { createAccountPage(content, msg = "Username already exists: $username") }
         }
         else {
-          // The userName (email) is stored in only one KV pair, enabling changes to the userName
-          // Three things are stored:
-          // username -> userId
-          // userId -> salt
-          // userId -> sha256-encoded password
-
-          redis.multi().also { tx ->
-            val userId = UserId()
-            val salt = newStringSalt()
-            val digest = password.sha256(salt)
-
-            logger.info { "Created user $username ${userId.id} $salt $digest" }
-
-            tx.set(userIdKey, userId.id)
-            tx.set(userId.saltKey(), salt)
-            tx.set(userId.passwordKey(), digest)
-            tx.exec()
-          }
-
-          createAccountLimiter.acquire() // may wait
-
+          createUser(username, password, redis)
           redirectTo { returnPath }
         }
       }

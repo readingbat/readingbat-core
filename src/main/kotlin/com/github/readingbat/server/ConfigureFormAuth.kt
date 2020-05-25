@@ -23,7 +23,7 @@ import com.github.readingbat.misc.AuthName
 import com.github.readingbat.misc.FormFields
 import com.github.readingbat.misc.UserId.Companion.lookupSaltAndDigest
 import com.github.readingbat.misc.UserId.Companion.lookupUserId
-import com.github.readingbat.misc.UserId.UserPrincipal
+import com.github.readingbat.misc.UserPrincipal
 import com.google.common.util.concurrent.RateLimiter
 import io.ktor.auth.Authentication
 import io.ktor.auth.UserPasswordCredential

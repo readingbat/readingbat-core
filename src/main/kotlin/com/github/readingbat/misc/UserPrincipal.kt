@@ -17,26 +17,8 @@
 
 package com.github.readingbat.misc
 
-import com.github.pambrose.common.redis.RedisUtils.withRedis
+import io.ktor.auth.Principal
+import java.time.Instant
 
-object RedisRoutines {
+data class UserPrincipal(val userId: String, val created: Long = Instant.now().toEpochMilli()) : Principal
 
-  @JvmStatic
-  fun main(args: Array<String>) {
-    showAllKeys()
-  }
-
-  internal fun deleteAllKeys() {
-    withRedis { redis ->
-      //println(redis.keys("*").joinToString("\n"))
-      redis?.keys("*")?.forEach { redis.del(it) }
-    }
-  }
-
-  internal fun showAllKeys() {
-    withRedis { redis ->
-      //println(redis.keys("*").joinToString("\n"))
-      println(redis?.keys("*")?.map { "$it - ${redis[it]}" }?.joinToString("\n"))
-    }
-  }
-}

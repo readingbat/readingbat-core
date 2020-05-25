@@ -23,6 +23,7 @@ import com.github.pambrose.common.util.join
 import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.Answers.processAnswers
+import com.github.readingbat.misc.BrowserSession
 import com.github.readingbat.misc.CSSNames.arrow
 import com.github.readingbat.misc.CSSNames.challengeDesc
 import com.github.readingbat.misc.CSSNames.check_answers
@@ -41,9 +42,8 @@ import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
 import com.github.readingbat.misc.Constants.PLAYGROUND_ROOT
 import com.github.readingbat.misc.Constants.STATIC_ROOT
 import com.github.readingbat.misc.UserId
-import com.github.readingbat.misc.UserId.BrowserSession
 import com.github.readingbat.misc.UserId.Companion.lookupUserId
-import com.github.readingbat.misc.UserId.UserPrincipal
+import com.github.readingbat.misc.UserPrincipal
 import com.github.readingbat.misc.checkAnswersScript
 import io.ktor.http.ContentType.Text.CSS
 import kotlinx.html.*

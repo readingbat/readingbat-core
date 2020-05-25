@@ -24,6 +24,7 @@ import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.Endpoints.PREFS
 import com.github.readingbat.misc.Endpoints.PRIVACY
 import com.github.readingbat.misc.FormFields.CURR_PASSWORD
+import com.github.readingbat.misc.FormFields.DELETE_ACCOUNT
 import com.github.readingbat.misc.FormFields.NEW_PASSWORD
 import com.github.readingbat.misc.FormFields.PREF_ACTION
 import com.github.readingbat.misc.FormFields.UPDATE_PASSWORD
@@ -55,6 +56,7 @@ private fun PipelineCall.prefsWithLoginPage(content: ReadingBatContent,
                                             isErrorMsg: Boolean) =
   createHTML()
     .html {
+      val principal = fetchPrincipal()
       val returnPath = queryParam(RETURN_PATH) ?: "/"
 
       head {
@@ -79,11 +81,6 @@ private fun PipelineCall.prefsWithLoginPage(content: ReadingBatContent,
             name = formName
             action = PREFS
             method = FormMethod.post
-            input {
-              type = InputType.hidden
-              name = "date"
-              value = "963892736"
-            }
             table {
               tr {
                 td { style = labelWidth; label { +"Current Password" } }
@@ -107,11 +104,6 @@ private fun PipelineCall.prefsWithLoginPage(content: ReadingBatContent,
           form {
             action = PREFS
             method = FormMethod.post
-            input {
-              type = InputType.hidden
-              name = "date"
-              value = "963892736"
-            }
             table {
               tr {
                 td { style = labelWidth; label { +"Share To" } }
@@ -143,15 +135,12 @@ private fun PipelineCall.prefsWithLoginPage(content: ReadingBatContent,
           }
 
           h3 { +"Delete Account" }
-          script {}
-
-          p { +"Permanently delete account - cannot be undone" }
+          p { +"Permanently delete account [${principal?.userId}] - cannot be undone" }
           form {
             action = PREFS
             method = FormMethod.post
-            onSubmit = "return formcheck()"
-            input { type = InputType.hidden; name = "date"; value = "963892736" }
-            input { type = InputType.submit; name = "dodelete"; value = "Delete Account" }
+            //onSubmit = "return formcheck()"
+            input { type = InputType.submit; name = PREF_ACTION; value = DELETE_ACCOUNT }
           }
 
           p { a { href = "$PRIVACY?$BACK_PATH=$PREFS&$RETURN_PATH=$returnPath"; +"privacy statement" } }

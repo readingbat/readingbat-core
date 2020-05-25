@@ -35,7 +35,7 @@ import com.github.readingbat.misc.Endpoints.FAV_ICON
 import com.github.readingbat.misc.Endpoints.PREFS
 import com.github.readingbat.misc.Endpoints.PRIVACY
 import com.github.readingbat.misc.Endpoints.RESET_PASSWORD
-import com.github.readingbat.misc.UserId.UserPrincipal
+import com.github.readingbat.misc.UserPrincipal
 import com.github.readingbat.misc.cssContent
 import com.github.readingbat.pages.*
 import com.github.readingbat.posts.CheckAnswers.checkUserAnswers

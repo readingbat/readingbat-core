@@ -17,20 +17,18 @@
 
 package com.github.readingbat.misc
 
+import com.github.pambrose.common.util.newStringSalt
 import com.github.pambrose.common.util.randomId
+import com.github.pambrose.common.util.sha256
 import com.github.readingbat.misc.KeyPrefixes.ANSWER_HISTORY
 import com.github.readingbat.misc.KeyPrefixes.AUTH
 import com.github.readingbat.misc.KeyPrefixes.CHALLENGE_ANSWERS
 import com.github.readingbat.misc.KeyPrefixes.CORRECT_ANSWERS
-import com.github.readingbat.misc.KeyPrefixes.NO_AUTH
 import com.github.readingbat.misc.KeyPrefixes.PASSWD
 import com.github.readingbat.misc.KeyPrefixes.SALT
 import com.github.readingbat.misc.KeyPrefixes.USER_ID
-import io.ktor.auth.Principal
+import mu.KLogging
 import redis.clients.jedis.Jedis
-import java.time.Instant
-
-internal fun userIdKey(username: String) = "$USER_ID|$username"
 
 internal class UserId(val id: String = randomId(25)) {
   fun saltKey() = "$SALT|$id"
@@ -46,7 +44,46 @@ internal class UserId(val id: String = randomId(25)) {
   fun argumentKey(languageName: String, groupName: String, challengeName: String, argument: String) =
     listOf(ANSWER_HISTORY, AUTH, id, languageName, groupName, challengeName, argument).joinToString("|")
 
-  companion object {
+  fun delete(principal: UserPrincipal, redis: Jedis) {
+    val correctAnswers = redis.keys(correctAnswersKey("*", "*", "*"))
+    val challenges = redis.keys(challengeKey("*", "*", "*"))
+    val arguments = redis.keys(argumentKey("*", "*", "*", "*"))
+
+    redis.multi().also { tx ->
+      tx.del(userIdKey(principal.userId))
+      tx.del(saltKey())
+      tx.del(passwordKey())
+      correctAnswers.forEach { tx.del(it) }
+      challenges.forEach { tx.del(it) }
+      arguments.forEach { tx.del(it) }
+      tx.exec()
+    }
+  }
+
+  companion object : KLogging() {
+
+    fun userIdKey(username: String) = "$USER_ID|$username"
+
+    fun createUser(username: String, password: String, redis: Jedis) {
+      // The userName (email) is stored in only one KV pair, enabling changes to the userName
+      // Three things are stored:
+      // username -> userId
+      // userId -> salt
+      // userId -> sha256-encoded password
+
+      val userIdKey = userIdKey(username)
+      val userId = UserId()
+      logger.info { "Created user $username ${userId.id} " }
+
+      redis.multi().also { tx ->
+        tx.set(userIdKey, userId.id)
+        tx.set(userId.saltKey(), newStringSalt())
+        tx.set(userId.passwordKey(), password.sha256(newStringSalt()))
+        tx.exec()
+      }
+
+    }
+
     fun lookupUserId(username: String, redis: Jedis?): UserId? {
       val userIdKey = userIdKey(username)
       val id = redis?.get(userIdKey) ?: ""
@@ -69,20 +106,6 @@ internal class UserId(val id: String = randomId(25)) {
       val digest = redis?.get(passwordKey) ?: ""
       return salt to digest
     }
-  }
-
-  data class UserPrincipal(val userId: String, val created: Long = Instant.now().toEpochMilli()) : Principal
-
-  internal data class BrowserSession(val id: String, val created: Long = Instant.now().toEpochMilli()) {
-
-    fun correctAnswersKey(languageName: String, groupName: String, challengeName: String) =
-      listOf(CORRECT_ANSWERS, NO_AUTH, id, languageName, groupName, challengeName).joinToString("|")
-
-    fun challengeKey(languageName: String, groupName: String, challengeName: String) =
-      listOf(CHALLENGE_ANSWERS, NO_AUTH, id, languageName, groupName, challengeName).joinToString("|")
-
-    fun argumentKey(languageName: String, groupName: String, challengeName: String, argument: String) =
-      listOf(ANSWER_HISTORY, NO_AUTH, id, languageName, groupName, challengeName, argument).joinToString("|")
   }
 
   internal data class ChallengeAnswers(val id: String, val answers: MutableMap<String, String> = mutableMapOf())

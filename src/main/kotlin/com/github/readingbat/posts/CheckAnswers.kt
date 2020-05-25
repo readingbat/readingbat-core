@@ -29,8 +29,8 @@ import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.Answers.challengeSrc
 import com.github.readingbat.misc.Answers.groupSrc
 import com.github.readingbat.misc.Answers.langSrc
+import com.github.readingbat.misc.BrowserSession
 import com.github.readingbat.misc.CSSNames.userResp
-import com.github.readingbat.misc.UserId.BrowserSession
 import com.github.readingbat.misc.UserId.Companion.lookupUserId
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.fetchPrincipal

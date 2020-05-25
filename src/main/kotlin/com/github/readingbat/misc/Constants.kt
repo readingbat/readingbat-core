@@ -59,22 +59,20 @@ object FormFields {
   const val PASSWORD = "passwd"
   const val CURR_PASSWORD = "curr_passwd"
   const val NEW_PASSWORD = "new_passwd"
-  const val UPDATE_PASSWORD = "Update Password"
   const val PREF_ACTION = "pref_action"
+  const val UPDATE_PASSWORD = "Update Password"
+  const val DELETE_ACCOUNT = "Delete Account"
 }
 
 object AuthName {
   const val SESSION = "session"
   const val FORM = "form"
+  const val AUTH_COOKIE = "auth"
 }
 
 object AuthRoutes {
   const val LOGOUT = "/logout"
   const val COOKIES = "/cookies"
-}
-
-object Cookies {
-  const val AUTH_COOKIE = "auth"
 }
 
 object EnvVars {

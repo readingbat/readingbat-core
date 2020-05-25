@@ -22,6 +22,7 @@ import com.github.pambrose.common.util.sha256
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.FormFields
+import com.github.readingbat.misc.FormFields.DELETE_ACCOUNT
 import com.github.readingbat.misc.FormFields.PREF_ACTION
 import com.github.readingbat.misc.FormFields.UPDATE_PASSWORD
 import com.github.readingbat.misc.UserId
@@ -51,35 +52,42 @@ internal suspend fun PipelineCall.changePrefs(content: ReadingBatContent): Strin
     else {
       val userId = lookupUserId(principal, redis)
 
-      if (userId == null) {
+      if (userId == null || principal == null) {
         requestLogInPage(content)
       }
       else {
         val action = parameters[PREF_ACTION] ?: ""
-        if (action == UPDATE_PASSWORD) {
-          val currPassword = parameters[FormFields.CURR_PASSWORD] ?: ""
-          val newPassword = parameters[FormFields.NEW_PASSWORD] ?: ""
-          val passwordError = checkPassword(newPassword)
+        when (action) {
+          UPDATE_PASSWORD -> {
+            val currPassword = parameters[FormFields.CURR_PASSWORD] ?: ""
+            val newPassword = parameters[FormFields.NEW_PASSWORD] ?: ""
+            val passwordError = checkPassword(newPassword)
 
-          val msg =
-            if (passwordError.isNotEmpty()) {
-              passwordError to true
-            }
-            else {
-              val (salt, digest) = UserId.lookupSaltAndDigest(userId, redis)
-              if (salt.isNotEmpty() && digest.isNotEmpty() && digest == currPassword.sha256(salt)) {
-                val newDigest = newPassword.sha256(salt)
-                redis.set(userId.passwordKey(), newDigest)
-                "Password changed" to false
+            val msg =
+              if (passwordError.isNotEmpty()) {
+                passwordError to true
               }
               else {
-                "Incorrect current password" to true
+                val (salt, digest) = UserId.lookupSaltAndDigest(userId, redis)
+                if (salt.isNotEmpty() && digest.isNotEmpty() && digest == currPassword.sha256(salt)) {
+                  val newDigest = newPassword.sha256(salt)
+                  redis.set(userId.passwordKey(), newDigest)
+                  "Password changed" to false
+                }
+                else {
+                  "Incorrect current password" to true
+                }
               }
-            }
-          prefsPage(content, msg.first, msg.second)
-        }
-        else {
-          ""
+            prefsPage(content, msg.first, msg.second)
+          }
+          DELETE_ACCOUNT -> {
+            logger.info { "Deleting account" }
+            userId.delete(principal, redis)
+            ""
+          }
+          else -> {
+            ""
+          }
         }
       }
     }
