@@ -45,19 +45,31 @@ internal class UserId(val id: String = randomId(25)) {
     listOf(ANSWER_HISTORY, AUTH, id, languageName, groupName, challengeName, argument).joinToString("|")
 
   fun delete(principal: UserPrincipal, redis: Jedis) {
+    val userIdKey = userIdKey(principal.userId)
+    val saltKey = saltKey()
+    val passwordKey = passwordKey()
     val correctAnswers = redis.keys(correctAnswersKey("*", "*", "*"))
     val challenges = redis.keys(challengeKey("*", "*", "*"))
     val arguments = redis.keys(argumentKey("*", "*", "*", "*"))
 
+    println(userIdKey)
+    println(saltKey)
+    println(passwordKey)
+    println(correctAnswers)
+    println(challenges)
+    println(arguments)
+    /*
     redis.multi().also { tx ->
-      tx.del(userIdKey(principal.userId))
-      tx.del(saltKey())
-      tx.del(passwordKey())
+      tx.del(userIdKey)
+      tx.del(saltKey)
+      tx.del(passwordKey)
       correctAnswers.forEach { tx.del(it) }
       challenges.forEach { tx.del(it) }
       arguments.forEach { tx.del(it) }
       tx.exec()
     }
+
+     */
   }
 
   companion object : KLogging() {

@@ -140,6 +140,7 @@ private fun PipelineCall.prefsWithLoginPage(content: ReadingBatContent,
             action = PREFS
             method = FormMethod.post
             //onSubmit = "return formcheck()"
+            onSubmit = "return confirm('Do you really want to submit the form?');"
             input { type = InputType.submit; name = PREF_ACTION; value = DELETE_ACCOUNT }
           }
 

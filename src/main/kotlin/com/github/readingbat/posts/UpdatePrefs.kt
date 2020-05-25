@@ -47,7 +47,7 @@ internal suspend fun PipelineCall.changePrefs(content: ReadingBatContent): Strin
     logger.debug { "Return path = $returnPath" }
 
     if (redis == null) {
-      ""
+      prefsPage(content, "Database is down")
     }
     else {
       val userId = lookupUserId(principal, redis)
@@ -83,7 +83,7 @@ internal suspend fun PipelineCall.changePrefs(content: ReadingBatContent): Strin
           DELETE_ACCOUNT -> {
             logger.info { "Deleting account" }
             userId.delete(principal, redis)
-            ""
+            requestLogInPage(content)
           }
           else -> {
             ""
