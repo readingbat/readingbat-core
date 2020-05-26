@@ -22,14 +22,11 @@ import mu.KLogging
 import java.io.IOException
 
 
-object Emailer : KLogging() {
+internal object Emailer : KLogging() {
 
-  fun sendResetEmail(toEmail: String) {
-    val from = Email("reset@readingbat.com")
-    val subject = "ReadingBat password reset"
-    val to = Email(toEmail)
-    val content = Content("text/plain", "and easy to do anywhere, even with Java")
-    val mail = Mail(from, subject, to, content)
+  fun sendEmail(to: String, from: String, subject: String, msg: String) {
+    val content = Content("text/plain", msg)
+    val mail = Mail(Email(from), subject, Email(to), content)
     val sg = SendGrid(System.getenv("SENDGRID_API_KEY"))
     try {
       val request =
@@ -41,9 +38,9 @@ object Emailer : KLogging() {
 
       val response: Response = sg.api(request)
 
-      System.out.println(response.getStatusCode())
-      System.out.println(response.getBody())
-      System.out.println(response.getHeaders())
+      logger.info { "Status code: ${response.getStatusCode()} for email: $to/$from" }
+      logger.info { "Body: ${response.getBody()}" }
+      logger.info { "Headers: ${response.getHeaders()}" }
 
     } catch (ex: IOException) {
       throw ex

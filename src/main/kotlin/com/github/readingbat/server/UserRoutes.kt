@@ -46,6 +46,7 @@ import com.github.readingbat.pages.ResetPasswordPage.resetPasswordPage
 import com.github.readingbat.pages.UpdateUserPrefsPage.updateUserPrefsPage
 import com.github.readingbat.posts.CheckAnswers.checkAnswers
 import com.github.readingbat.posts.CreateAccount.createAccount
+import com.github.readingbat.posts.ResetPassword.sendResetPassword
 import com.github.readingbat.posts.UpdateUserPrefs.updatePrefs
 import io.ktor.application.call
 import io.ktor.http.ContentType.Text.CSS
@@ -80,6 +81,8 @@ internal fun Routing.userRoutes(content: ReadingBatContent) {
   get(CLASSROOM) { respondWith { classroomPage(content) } }
 
   get(RESET_PASSWORD) { respondWith { resetPasswordPage(content) } }
+
+  post(RESET_PASSWORD) { sendResetPassword(content) }
 
   get(LOGOUT) {
     // Purge UserPrincipal from cookie data

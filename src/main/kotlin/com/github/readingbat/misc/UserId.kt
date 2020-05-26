@@ -169,20 +169,23 @@ internal class UserId(val id: String = randomId(25)) {
           }
       }
 
-    fun lookupUserId(username: String, redis: Jedis?): UserId? {
-      val userIdKey = userIdKey(username)
-      val id = redis?.get(userIdKey) ?: ""
-      return if (id.isNotEmpty()) UserId(id) else null
-    }
+    fun isValidUserId(userId: String): Boolean = lookupUserId(userId) != null
+
+    fun lookupUserId(userId: String): UserId? = withRedisPool { redis -> lookupUserId(userId, redis) }
+
+    fun isValidUserId(principal: UserPrincipal?): Boolean =
+      withRedisPool { redis -> isValidUserId(principal, redis) }
 
     fun isValidUserId(principal: UserPrincipal?, redis: Jedis?) = lookupUserId(principal, redis) != null
 
     fun lookupUserId(principal: UserPrincipal?, redis: Jedis?) =
-      principal?.let {
-        val userIdKey = userIdKey(it.userId)
-        val id = redis?.get(userIdKey) ?: ""
-        if (id.isNotEmpty()) UserId(id) else null
-      }
+      principal?.let { lookupUserId(it.userId, redis) }
+
+    fun lookupUserId(userId: String, redis: Jedis?): UserId? {
+      val userIdKey = userIdKey(userId)
+      val id = redis?.get(userIdKey) ?: ""
+      return if (id.isNotEmpty()) UserId(id) else null
+    }
 
     fun lookupSaltAndDigest(userId: UserId, redis: Jedis?): Pair<String, String> {
       val saltKey = userId.saltKey()

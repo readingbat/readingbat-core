@@ -18,7 +18,7 @@
 package com.github.readingbat.pages
 
 import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.misc.Constants
+import com.github.readingbat.misc.Constants.BACK_PATH
 import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.pages.PageCommon.backLink
 import com.github.readingbat.pages.PageCommon.bodyTitle
@@ -34,7 +34,7 @@ internal object PrivacyPage {
     createHTML()
       .html {
         val returnPath = queryParam(RETURN_PATH) ?: ""
-        val backPath = queryParam(Constants.BACK_PATH) ?: ""
+        val backPath = queryParam(BACK_PATH) ?: ""
 
         head { headDefault(content) }
 

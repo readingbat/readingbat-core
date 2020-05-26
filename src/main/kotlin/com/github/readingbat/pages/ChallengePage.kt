@@ -37,8 +37,8 @@ import com.github.readingbat.misc.CSSNames.success
 import com.github.readingbat.misc.CSSNames.successId
 import com.github.readingbat.misc.CSSNames.tabs
 import com.github.readingbat.misc.CSSNames.userResp
-import com.github.readingbat.misc.Constants
 import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
+import com.github.readingbat.misc.Constants.MSG
 import com.github.readingbat.misc.Constants.PLAYGROUND_ROOT
 import com.github.readingbat.misc.Constants.STATIC_ROOT
 import com.github.readingbat.misc.PageUtils.pathOf
@@ -91,7 +91,7 @@ internal object ChallengePage {
         }
 
         body {
-          val msg = queryParam(Constants.MSG) ?: ""
+          val msg = queryParam(MSG) ?: ""
           bodyHeader(principal, loginAttempt, content, languageType, loginPath, msg)
 
           div(classes = tabs) {

@@ -18,31 +18,35 @@
 package com.github.readingbat.pages
 
 import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.misc.Constants
-import com.github.readingbat.misc.Endpoints
+import com.github.readingbat.misc.Constants.RETURN_PATH
+import com.github.readingbat.misc.Endpoints.RESET_PASSWORD
 import com.github.readingbat.misc.FormFields.USERNAME
 import com.github.readingbat.pages.PageCommon.backLink
 import com.github.readingbat.pages.PageCommon.bodyTitle
 import com.github.readingbat.pages.PageCommon.headDefault
 import com.github.readingbat.pages.PageCommon.privacyStatement
+import com.github.readingbat.pages.PageCommon.rawHtml
 import com.github.readingbat.pages.UpdateUserPrefsPage.labelWidth
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.queryParam
 import kotlinx.html.*
+import kotlinx.html.Entities.nbsp
 import kotlinx.html.stream.createHTML
 
 internal object ResetPasswordPage {
 
-  fun PipelineCall.resetPasswordPage(content: ReadingBatContent) =
+  fun PipelineCall.resetPasswordPage(content: ReadingBatContent, msg: String = "") =
     createHTML()
       .html {
 
         head { headDefault(content) }
 
         body {
-          val returnPath = queryParam(Constants.RETURN_PATH) ?: "/"
+          val returnPath = queryParam(RETURN_PATH) ?: "/"
 
           bodyTitle()
+
+          p { span { style = "color:red;";if (msg.isNotEmpty()) +msg else rawHtml(nbsp.text) } }
 
           h2 { +"Reset Password" }
 
@@ -50,7 +54,7 @@ internal object ResetPasswordPage {
             style = "margin-left: 1em;"
 
             form {
-              action = "/"
+              action = "$RESET_PASSWORD?$RETURN_PATH=$returnPath"
               method = FormMethod.post
               table {
                 tr {
@@ -86,7 +90,7 @@ internal object ResetPasswordPage {
           """.trimIndent()
             }
 
-            this@body.privacyStatement(Endpoints.USER_PREFS, returnPath)
+            this@body.privacyStatement(RESET_PASSWORD, returnPath)
           }
 
           backLink(returnPath)

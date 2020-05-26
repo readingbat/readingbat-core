@@ -100,7 +100,6 @@ internal object CreateAccount : KLogging() {
             createUser(username, password, redis)
             // Assign principal cookie
             call.sessions.set(UserPrincipal(userId = username))
-            logger.info { "$returnPath?$MSG=${"User $username created".encode()}" }
             redirectTo { "$returnPath?$MSG=${"User $username created".encode()}" }
           }
         }

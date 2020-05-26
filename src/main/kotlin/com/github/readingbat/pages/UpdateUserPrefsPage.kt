@@ -17,7 +17,6 @@
 
 package com.github.readingbat.pages
 
-import com.github.pambrose.common.redis.RedisUtils.withRedisPool
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.Endpoints.CREATE_ACCOUNT
@@ -53,14 +52,10 @@ internal object UpdateUserPrefsPage : KLogging() {
   fun PipelineCall.updateUserPrefsPage(content: ReadingBatContent,
                                        msg: String,
                                        isErrorMsg: Boolean = true): String =
-    withRedisPool { redis ->
-      val principal = fetchPrincipal()
-
-      if (isValidUserId(principal, redis))
-        prefsWithLoginPage(content, msg, isErrorMsg)
-      else
-        requestLogInPage(content)
-    }
+    if (isValidUserId(fetchPrincipal()))
+      prefsWithLoginPage(content, msg, isErrorMsg)
+    else
+      requestLogInPage(content)
 
   private fun PipelineCall.prefsWithLoginPage(content: ReadingBatContent,
                                               msg: String,
