@@ -30,11 +30,11 @@ import com.github.readingbat.misc.FormFields.UPDATE_PASSWORD
 import com.github.readingbat.misc.PageUtils.hideShowButton
 import com.github.readingbat.misc.UserId.Companion.isValidPrincipal
 import com.github.readingbat.misc.UserPrincipal
+import com.github.readingbat.pages.HelpAndLogin.helpAndLogin
 import com.github.readingbat.pages.PageCommon.backLink
 import com.github.readingbat.pages.PageCommon.bodyTitle
 import com.github.readingbat.pages.PageCommon.clickButtonScript
 import com.github.readingbat.pages.PageCommon.headDefault
-import com.github.readingbat.pages.PageCommon.helpAndLogin
 import com.github.readingbat.pages.PageCommon.privacyStatement
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.fetchPrincipal

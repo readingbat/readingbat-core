@@ -22,7 +22,6 @@ import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.dsl.LanguageType.Companion.languageTypesInOrder
 import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.misc.AuthRoutes.LOGOUT
 import com.github.readingbat.misc.CSSNames.selected
 import com.github.readingbat.misc.Constants.BACK_PATH
 import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
@@ -30,16 +29,11 @@ import com.github.readingbat.misc.Constants.ICONS
 import com.github.readingbat.misc.Constants.READING_BAT
 import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.Constants.STATIC_ROOT
-import com.github.readingbat.misc.Endpoints.ABOUT
-import com.github.readingbat.misc.Endpoints.CREATE_ACCOUNT
 import com.github.readingbat.misc.Endpoints.CSS_NAME
-import com.github.readingbat.misc.Endpoints.PASSWORD_RESET
 import com.github.readingbat.misc.Endpoints.PRIVACY
-import com.github.readingbat.misc.Endpoints.USER_PREFS
-import com.github.readingbat.misc.FormFields.PASSWORD
-import com.github.readingbat.misc.FormFields.USERNAME
 import com.github.readingbat.misc.PageUtils.pathOf
 import com.github.readingbat.misc.UserPrincipal
+import com.github.readingbat.pages.HelpAndLogin.helpAndLogin
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.production
 import io.ktor.application.call
@@ -85,94 +79,6 @@ internal object PageCommon {
             }
           }
         """.trimIndent())
-    }
-  }
-
-  private fun TABLE.logout(principal: UserPrincipal, loginPath: String) {
-    tr {
-      val elems = principal.userId.split("@")
-      td {
-        +elems[0]
-        if (elems.size > 1) {
-          br
-          +"@${elems[1]}"
-        }
-      }
-    }
-
-    tr {
-      td {
-        /*
-    a {
-      href = "/doc/practice/code-badges.html"; img {
-      width = "30"; style = "vertical-align: middle"; src = "$STATIC_ROOT/s5j.png"
-    }
-    }
-     */
-        +"["; a { href = "$LOGOUT?$RETURN_PATH=$loginPath"; +"log out" }; +"]"
-      }
-    }
-  }
-
-  private fun TABLE.login(loginPath: String) {
-    form(method = FormMethod.post) {
-      action = loginPath
-      this@login.tr {
-        td { +"id/email" }
-        td { textInput { name = USERNAME; size = "20"; placeholder = "username" } }
-      }
-      this@login.tr {
-        td { +"password" }
-        td { passwordInput { name = PASSWORD; size = "20"; placeholder = "password" } }
-      }
-      this@login.tr {
-        td {}
-        td { submitInput { name = "dologin"; value = "log in" } }
-      }
-      hiddenInput { name = "fromurl"; value = loginPath }
-    }
-    tr {
-      td {
-        colSpan = "2"
-        a { href = "$PASSWORD_RESET?$RETURN_PATH=$loginPath"; +"forgot password" }
-        +" | "
-        a { href = "$CREATE_ACCOUNT?$RETURN_PATH=$loginPath"; +"create account" }
-      }
-    }
-  }
-
-  fun BODY.helpAndLogin(principal: UserPrincipal?, loginPath: String) {
-
-    div {
-      style = "float:right; margin:0px; border: 1px solid lightgray; margin-left: 10px; padding: 5px;"
-      table {
-        if (principal != null) logout(principal, loginPath) else login(loginPath)
-      }
-    }
-
-    div {
-      style = "float:right"
-      table {
-        tr {
-          td {
-            //valign = "top"
-            style = "text-align:right"
-            colSpan = "1"
-            a { href = "$ABOUT?$RETURN_PATH=$loginPath"; +"about" }
-            +" | "
-            //a { href = "/help.html"; +"help" }
-            //+" | "
-            a {
-              //href = "/doc/code-help-videos.html"; +"code help+videos | "
-              //a { href = "/done?user=pambrose@mac.com&tag=6621428513"; +"done" }
-              //+" | "
-              //a { href = "/report"; +"report" }
-              //+" | "
-              a { href = "$USER_PREFS?$RETURN_PATH=$loginPath"; +"prefs" }
-            }
-          }
-        }
-      }
     }
   }
 

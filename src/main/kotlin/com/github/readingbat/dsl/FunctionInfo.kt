@@ -22,13 +22,13 @@ import com.github.pambrose.common.util.toDoubleQuoted
 import com.github.readingbat.dsl.ReturnType.*
 import mu.KLogging
 
-class FunctionInfo(val languageType: LanguageType,
-                   val challengeName: String,
-                   val originalCode: String,
-                   val codeSnippet: String,
-                   val arguments: List<String>,
-                   val returnType: ReturnType,
-                   rawAnswers: List<*>) {
+internal class FunctionInfo(val languageType: LanguageType,
+                            val challengeName: String,
+                            val originalCode: String,
+                            val codeSnippet: String,
+                            val arguments: List<String>,
+                            val returnType: ReturnType,
+                            rawAnswers: List<*>) {
 
   val answers = mutableListOf<String>()
 
