@@ -83,13 +83,23 @@ internal object CheckAnswers : KLogging() {
   private fun String.isJavaBoolean() = this == "true" || this == "false"
   private fun String.isPythonBoolean() = this == "True" || this == "False"
 
-  private infix fun String.jvmEquals(answer: String) =
+  private infix fun String.equalsAsJvmScalar(that: String) =
     when {
-      this.isEmpty() || answer.isEmpty() -> false
-      this.isDoubleQuoted() || answer.isDoubleQuoted() -> this == answer
-      this.contains(".") || answer.contains(".") -> this.toDouble() == answer.toDouble()
-      this.isJavaBoolean() && answer.isJavaBoolean() -> this.toBoolean() == answer.toBoolean()
-      else -> this.toInt() == answer.toInt()
+      isEmpty() || that.isEmpty() -> false
+      isDoubleQuoted() || that.isDoubleQuoted() -> this == that
+      contains(".") || that.contains(".") -> toDouble() == that.toDouble()
+      isJavaBoolean() && that.isJavaBoolean() -> toBoolean() == that.toBoolean()
+      else -> toInt() == that.toInt()
+    }
+
+  private infix fun String.equalsAsPythonScalar(that: String) =
+    when {
+      isEmpty() || that.isEmpty() -> false
+      isDoubleQuoted() -> this == that
+      isSingleQuoted() -> singleToDoubleQuoted() == that
+      contains(".") || that.contains(".") -> toDouble() == that.toDouble()
+      isPythonBoolean() && that.isPythonBoolean() -> toBoolean() == that.toBoolean()
+      else -> toInt() == that.toInt()
     }
 
   suspend fun PipelineCall.checkAnswers(content: ReadingBatContent) {
@@ -113,20 +123,14 @@ internal object CheckAnswers : KLogging() {
           if (answer.isBracketed())
             answer.equalsAsKotlinList(userResp, kotlinScriptEngine)
           else
-            userResp jvmEquals answer
+            userResp equalsAsJvmScalar answer
         }
-        else
+        else {
           if (answer.isBracketed())
             answer.equalsAsPythonList(userResp, pythonScriptEngine)
           else
-            when {
-              userResp.isEmpty() || answer.isEmpty() -> false
-              userResp.isDoubleQuoted() -> userResp == answer
-              userResp.isSingleQuoted() -> userResp.singleToDoubleQuoted() == answer
-              userResp.contains(".") || answer.contains(".") -> userResp.toDouble() == answer.toDouble()
-              userResp.isPythonBoolean() && answer.isPythonBoolean() -> userResp.toBoolean() == answer.toBoolean()
-              else -> userResp.toInt() == answer.toInt()
-            }
+            userResp equalsAsPythonScalar answer
+        }
       } catch (e: Exception) {
         false
       }
