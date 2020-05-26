@@ -44,8 +44,9 @@ import com.github.readingbat.server.queryParam
 import kotlinx.html.*
 import kotlinx.html.Entities.nbsp
 import kotlinx.html.stream.createHTML
+import mu.KLogging
 
-internal object PasswordResetPage {
+internal object PasswordResetPage : KLogging() {
 
   const val formName = "pform"
   const val passwordButton = "UpdatePasswordButton"
@@ -60,12 +61,12 @@ internal object PasswordResetPage {
             if (redis == null)
               throw InvalidConfigurationException(DBMS_DOWN)
             val passwordResetKey = UserId.passwordResetKey(resetId)
-            redis.get(passwordResetKey) ?: throw InvalidConfigurationException("Invalid resetId: $resetId")
+            redis.get(passwordResetKey) ?: throw InvalidConfigurationException("Invalid resetId")
           }
         changePasswordResetPage(content, username, resetId, msg)
-      } catch (e: Exception) {
-        e.printStackTrace()
-        requestPasswordResetPage(content, "Unable to reset password")
+      } catch (e: InvalidConfigurationException) {
+        logger.info(e) { e.message }
+        requestPasswordResetPage(content, e.message ?: "Unable to reset password")
       }
     }
 

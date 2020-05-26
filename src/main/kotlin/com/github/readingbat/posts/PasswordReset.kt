@@ -47,8 +47,9 @@ import com.github.readingbat.server.queryParam
 import com.google.common.util.concurrent.RateLimiter
 import io.ktor.application.call
 import io.ktor.request.receiveParameters
+import mu.KLogging
 
-internal object PasswordReset {
+internal object PasswordReset : KLogging() {
   private val unknownUserLimiter = RateLimiter.create(0.5) // rate 2.0 is "2 permits per second"
 
   suspend fun PipelineCall.sendPasswordReset(content: ReadingBatContent) {
@@ -104,7 +105,7 @@ internal object PasswordReset {
           val returnPath = queryParam(RETURN_PATH) ?: "/"
           redirectTo { "$returnPath?$MSG=${"Password reset email sent to $username".encode()}" }
         } catch (e: Exception) {
-          e.printStackTrace()
+          logger.info(e) { e.message }
           respondWith { passwordResetPage(content, "", "Unable to send password reset email to $username") }
         }
       }
@@ -122,15 +123,14 @@ internal object PasswordReset {
       respondWith { passwordResetPage(content, resetId, passwordError) }
     }
     else {
-      val passwordResetKey = passwordResetKey(resetId)
-
       try {
         withSuspendingRedisPool { redis ->
           if (redis == null) {
             throw InvalidConfigurationException(DBMS_DOWN)
           }
           else {
-            val username = redis.get(passwordResetKey)
+            val passwordResetKey = passwordResetKey(resetId)
+            val username = redis.get(passwordResetKey) ?: throw InvalidConfigurationException("Invalid resetId")
             val userId = lookupUserId(username) ?: throw InvalidConfigurationException("Unable to find $username")
             val userIdPasswordResetKey = userId.userIdPasswordResetKey(username)
             val passwordKey = userId.passwordKey()
@@ -139,7 +139,7 @@ internal object PasswordReset {
             val oldDigest = redis.get(passwordKey)
 
             if (newDigest == oldDigest)
-              throw InvalidConfigurationException("new password is the same as the current password")
+              throw InvalidConfigurationException("New password is the same as the current password")
 
             redis.multi().also { tx ->
               tx.del(userIdPasswordResetKey)
@@ -152,8 +152,8 @@ internal object PasswordReset {
         }
 
       } catch (e: InvalidConfigurationException) {
-        e.printStackTrace()
-        respondWith { passwordResetPage(content, resetId, "Unable to reset password [${e.message}]") }
+        logger.info(e) { e.message }
+        respondWith { passwordResetPage(content, resetId, e.message ?: "Unable to reset password") }
       }
     }
   }
