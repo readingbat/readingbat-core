@@ -18,7 +18,6 @@
 package com.github.readingbat.pages
 
 import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.misc.Constants.RESET_ID
 import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.Endpoints.PASSWORD_CHANGE
 import com.github.readingbat.misc.Endpoints.PASSWORD_RESET
@@ -46,15 +45,11 @@ internal object PasswordResetPage {
   const val formName = "pform"
   const val passwordButton = "UpdatePasswordButton"
 
-  fun PipelineCall.passwordResetPage(content: ReadingBatContent, msg: String = ""): String {
-    val resetId = queryParam(RESET_ID) ?: "/"
-
-    return if (resetId.isEmpty())
+  fun PipelineCall.passwordResetPage(content: ReadingBatContent, resetId: String, msg: String): String =
+    if (resetId.isEmpty())
       requestPasswordResetPage(content, msg)
     else
-      changePasswordResetPage(content, resetId)
-  }
-
+      changePasswordResetPage(content, resetId, msg)
 
   fun PipelineCall.requestPasswordResetPage(content: ReadingBatContent, msg: String = "") =
     createHTML()
@@ -66,7 +61,7 @@ internal object PasswordResetPage {
 
           bodyTitle()
 
-          p { span { style = "color:red;";if (msg.isNotEmpty()) +msg else rawHtml(nbsp.text) } }
+          p { span { style = "color:red;"; if (msg.isNotEmpty()) +msg else rawHtml(nbsp.text) } }
 
           h2 { +"Password Reset" }
 
@@ -117,7 +112,7 @@ internal object PasswordResetPage {
         }
       }
 
-  fun PipelineCall.changePasswordResetPage(content: ReadingBatContent, resetId: String = "") =
+  fun PipelineCall.changePasswordResetPage(content: ReadingBatContent, resetId: String, msg: String) =
     createHTML()
       .html {
         head {
@@ -129,6 +124,8 @@ internal object PasswordResetPage {
           val returnPath = queryParam(RETURN_PATH) ?: "/"
 
           bodyTitle()
+
+          p { span { style = "color:red;";if (msg.isNotEmpty()) +msg else rawHtml(nbsp.text) } }
 
           h3 { +"Change password" }
           p { +"Password must contain at least 6 characters" }

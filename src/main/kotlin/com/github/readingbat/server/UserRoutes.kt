@@ -21,6 +21,7 @@ import com.github.pambrose.common.response.redirectTo
 import com.github.pambrose.common.response.respondWith
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.AuthRoutes.LOGOUT
+import com.github.readingbat.misc.Constants
 import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
 import com.github.readingbat.misc.Constants.ICONS
 import com.github.readingbat.misc.Constants.RETURN_PATH
@@ -82,11 +83,11 @@ internal fun Routing.userRoutes(content: ReadingBatContent) {
 
   get(CLASSROOM) { respondWith { classroomPage(content) } }
 
-  get(PASSWORD_RESET) { respondWith { passwordResetPage(content) } }
+  get(PASSWORD_RESET) { respondWith { passwordResetPage(content, queryParam(Constants.RESET_ID) ?: "", "") } }
 
   post(PASSWORD_RESET) { sendPasswordReset(content) }
 
-  get(PASSWORD_CHANGE) { changePassword(content) }
+  post(PASSWORD_CHANGE) { changePassword(content) }
 
   get(LOGOUT) {
     // Purge UserPrincipal from cookie data

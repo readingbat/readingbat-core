@@ -24,7 +24,6 @@ import com.github.pambrose.common.response.respondWith
 import com.github.pambrose.common.util.encode
 import com.github.pambrose.common.util.isNotValidEmail
 import com.github.pambrose.common.util.randomId
-import com.github.pambrose.common.util.sha256
 import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.Constants.DBMS_DOWN
@@ -55,14 +54,14 @@ internal object PasswordReset {
     val username = parameters[USERNAME] ?: ""
     when {
       username.isEmpty() -> {
-        respondWith { passwordResetPage(content, "Unable to send password reset email -- missing email address") }
+        respondWith { passwordResetPage(content, "", "Unable to send password reset email -- missing email address") }
       }
       username.isNotValidEmail() -> {
-        respondWith { passwordResetPage(content, "Invalid email address: $username") }
+        respondWith { passwordResetPage(content, "", "Invalid email address: $username") }
       }
       !isValidUsername(username) -> {
         unknownUserLimiter.acquire()
-        respondWith { passwordResetPage(content, "Unknown user: $username") }
+        respondWith { passwordResetPage(content, "", "Unknown user: $username") }
       }
       else -> {
 
@@ -104,7 +103,7 @@ internal object PasswordReset {
           redirectTo { "$returnPath?$MSG=${"Password reset email sent to $username".encode()}" }
         } catch (e: Exception) {
           e.printStackTrace()
-          respondWith { passwordResetPage(content, "Unable to send password reset email to $username") }
+          respondWith { passwordResetPage(content, "", "Unable to send password reset email to $username") }
         }
       }
     }
@@ -119,7 +118,7 @@ internal object PasswordReset {
     val passwordError = checkPassword(newPassword, confirmPassword)
 
     if (passwordError.isNotEmpty()) {
-      respondWith { passwordResetPage(content, passwordError) }
+      respondWith { passwordResetPage(content, resetId, passwordError) }
     }
     else {
       val passwordResetKey = passwordResetKey(resetId)
@@ -136,11 +135,11 @@ internal object PasswordReset {
             val salt = redis.get(userId.saltKey())
 
             redis.multi().also { tx ->
-              tx.del(userIdPasswordResetKey)
-              tx.del(passwordResetKey)
+              //tx.del(userIdPasswordResetKey)
+              //tx.del(passwordResetKey)
               // Set new password
-              tx.set(userId.passwordKey(), newPassword.sha256(salt))
-              tx.exec()
+              //tx.set(userId.passwordKey(), newPassword.sha256(salt))
+              //tx.exec()
             }
             redirectTo { "/?$MSG=${"Password reset for $username".encode()}" }
           }
@@ -148,7 +147,7 @@ internal object PasswordReset {
 
       } catch (e: InvalidConfigurationException) {
         e.printStackTrace()
-        respondWith { passwordResetPage(content, "Unable to reset password") }
+        respondWith { passwordResetPage(content, resetId, "Unable to reset password") }
       }
     }
   }
