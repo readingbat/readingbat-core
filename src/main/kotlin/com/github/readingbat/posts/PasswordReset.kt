@@ -112,7 +112,7 @@ internal object PasswordReset : KLogging() {
           val returnPath = queryParam(RETURN_PATH) ?: "/"
           redirectTo { "$returnPath?$MSG=${"Password reset email sent to $username".encode()}" }
         } catch (e: ResetPasswordException) {
-          logger.info(e) { e.message }
+          logger.info { e }
           respondWith { passwordResetPage(content, "", "Unable to send password reset email to $username") }
         }
       }
@@ -155,7 +155,7 @@ internal object PasswordReset : KLogging() {
         redirectTo { "/?$MSG=${"Password reset for $username".encode()}" }
       }
     } catch (e: ResetPasswordException) {
-      logger.info(e) { e.message }
+      logger.info { e }
       respondWith { passwordResetPage(content, e.resetId, e.msg) }
     }
 
