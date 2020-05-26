@@ -43,15 +43,15 @@ import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 import mu.KLogging
 
-internal object UpdateUserPrefsPage : KLogging() {
+internal object UserPrefsPage : KLogging() {
 
   const val labelWidth = "width: 250;"
   const val formName = "pform"
   const val passwordButton = "UpdatePasswordButton"
 
-  fun PipelineCall.updateUserPrefsPage(content: ReadingBatContent,
-                                       msg: String,
-                                       isErrorMsg: Boolean = true): String =
+  fun PipelineCall.userPrefsPage(content: ReadingBatContent,
+                                 msg: String,
+                                 isErrorMsg: Boolean = true): String =
     if (isValidPrincipal(fetchPrincipal()))
       prefsWithLoginPage(content, msg, isErrorMsg)
     else

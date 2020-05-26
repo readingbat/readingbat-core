@@ -38,7 +38,7 @@ import com.github.readingbat.pages.PageCommon.clickButtonScript
 import com.github.readingbat.pages.PageCommon.headDefault
 import com.github.readingbat.pages.PageCommon.privacyStatement
 import com.github.readingbat.pages.PageCommon.rawHtml
-import com.github.readingbat.pages.UpdateUserPrefsPage.labelWidth
+import com.github.readingbat.pages.UserPrefsPage.labelWidth
 import com.github.readingbat.posts.PasswordReset.ResetPasswordException
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.queryParam

@@ -30,8 +30,8 @@ import com.github.readingbat.misc.FormFields.UPDATE_PASSWORD
 import com.github.readingbat.misc.UserId
 import com.github.readingbat.misc.UserId.Companion.lookupPrincipal
 import com.github.readingbat.misc.UserPrincipal
-import com.github.readingbat.pages.UpdateUserPrefsPage.requestLogInPage
-import com.github.readingbat.pages.UpdateUserPrefsPage.updateUserPrefsPage
+import com.github.readingbat.pages.UserPrefsPage.requestLogInPage
+import com.github.readingbat.pages.UserPrefsPage.userPrefsPage
 import com.github.readingbat.posts.CreateAccount.checkPassword
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.fetchPrincipal
@@ -41,15 +41,15 @@ import io.ktor.sessions.clear
 import io.ktor.sessions.sessions
 import mu.KLogging
 
-internal object UpdateUserPrefs : KLogging() {
+internal object UserPrefs : KLogging() {
 
-  suspend fun PipelineCall.updatePrefs(content: ReadingBatContent): String {
+  suspend fun PipelineCall.userPrefs(content: ReadingBatContent): String {
     val parameters = call.receiveParameters()
     val principal = fetchPrincipal()
 
     return withRedisPool { redis ->
       if (redis == null) {
-        updateUserPrefsPage(content, DBMS_DOWN)
+        userPrefsPage(content, DBMS_DOWN)
       }
       else {
         val userId = lookupPrincipal(principal, redis)
@@ -80,7 +80,7 @@ internal object UpdateUserPrefs : KLogging() {
                     "Incorrect current password" to true
                   }
                 }
-              updateUserPrefsPage(content, msg.first, msg.second)
+              userPrefsPage(content, msg.first, msg.second)
             }
 
             DELETE_ACCOUNT -> {
