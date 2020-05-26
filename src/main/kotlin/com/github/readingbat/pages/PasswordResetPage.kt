@@ -20,6 +20,7 @@ package com.github.readingbat.pages
 import com.github.pambrose.common.redis.RedisUtils.withRedisPool
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.Constants.DBMS_DOWN
+import com.github.readingbat.misc.Constants.INVALID_RESET_ID
 import com.github.readingbat.misc.Constants.RESET_ID
 import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.Endpoints.PASSWORD_CHANGE
@@ -61,7 +62,7 @@ internal object PasswordResetPage : KLogging() {
             if (redis == null)
               throw ResetPasswordException(DBMS_DOWN)
             val passwordResetKey = UserId.passwordResetKey(resetId)
-            redis.get(passwordResetKey) ?: throw ResetPasswordException("Invalid resetId")
+            redis.get(passwordResetKey) ?: throw ResetPasswordException(INVALID_RESET_ID)
           }
         changePasswordResetPage(content, username, resetId, msg)
       } catch (e: ResetPasswordException) {

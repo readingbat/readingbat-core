@@ -28,7 +28,7 @@ import com.github.readingbat.misc.FormFields.NEW_PASSWORD
 import com.github.readingbat.misc.FormFields.PREF_ACTION
 import com.github.readingbat.misc.FormFields.UPDATE_PASSWORD
 import com.github.readingbat.misc.PageUtils.hideShowButton
-import com.github.readingbat.misc.UserId.Companion.isValidUsername
+import com.github.readingbat.misc.UserId.Companion.isValidPrincipal
 import com.github.readingbat.misc.UserPrincipal
 import com.github.readingbat.pages.PageCommon.backLink
 import com.github.readingbat.pages.PageCommon.bodyTitle
@@ -52,7 +52,7 @@ internal object UpdateUserPrefsPage : KLogging() {
   fun PipelineCall.updateUserPrefsPage(content: ReadingBatContent,
                                        msg: String,
                                        isErrorMsg: Boolean = true): String =
-    if (isValidUsername(fetchPrincipal()))
+    if (isValidPrincipal(fetchPrincipal()))
       prefsWithLoginPage(content, msg, isErrorMsg)
     else
       requestLogInPage(content)

@@ -43,7 +43,7 @@ import com.github.readingbat.misc.Constants.PLAYGROUND_ROOT
 import com.github.readingbat.misc.Constants.STATIC_ROOT
 import com.github.readingbat.misc.PageUtils.pathOf
 import com.github.readingbat.misc.UserId
-import com.github.readingbat.misc.UserId.Companion.lookupUserId
+import com.github.readingbat.misc.UserId.Companion.lookupPrincipal
 import com.github.readingbat.misc.checkAnswersScript
 import com.github.readingbat.pages.PageCommon.addLink
 import com.github.readingbat.pages.PageCommon.backLink
@@ -119,7 +119,7 @@ internal object ChallengePage {
                 var previousAnswers = mutableMapOf<String, String>()
 
                 withRedisPool { redis ->
-                  val userId: UserId? = lookupUserId(principal, redis)
+                  val userId: UserId? = lookupPrincipal(principal, redis)
                   val key =
                     userId?.challengeKey(languageName, groupName, challenge.challengeName)
                       ?: browserSession?.challengeKey(languageName, groupName, challenge.challengeName)

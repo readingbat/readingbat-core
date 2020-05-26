@@ -52,8 +52,8 @@ internal class UserId(val id: String = randomId(25)) {
   fun argumentKey(languageName: String, groupName: String, challengeName: String, argument: String) =
     listOf(ANSWER_HISTORY, AUTH, id, languageName, groupName, challengeName, argument).joinToString(sep)
 
-  fun userIdPasswordResetKey(username: String) = listOf(USERID_RESET, id).joinToString(sep)
-
+  // This key maps to a reset_id
+  fun userIdPasswordResetKey() = listOf(USERID_RESET, id).joinToString(sep)
 
   fun deleteUser(principal: UserPrincipal, redis: Jedis) {
     val userIdKey = userIdKey(principal.userId)
@@ -90,10 +90,11 @@ internal class UserId(val id: String = randomId(25)) {
 
     fun userIdKey(username: String) = "$USER_ID|$username"
 
+    // Maps resetId to username
     fun passwordResetKey(resetId: String) = listOf(RESET, resetId).joinToString(sep)
 
     fun createUser(username: String, password: String, redis: Jedis) {
-      // The userName (email) is stored in only one KV pair, enabling changes to the userName
+      // The userName (email) is stored in only a single KV pair, enabling changes to the userName
       // Three things are stored:
       // username -> userId
       // userId -> salt
@@ -122,7 +123,7 @@ internal class UserId(val id: String = randomId(25)) {
                     userResps: List<Map.Entry<String, List<String>>>,
                     results: List<ChallengeResults>) =
       withRedisPool { redis ->
-        val userId = lookupUserId(principal, redis)
+        val userId = lookupPrincipal(principal, redis)
 
         // Save if all answers were correct
         val correctAnswersKey =
@@ -178,24 +179,24 @@ internal class UserId(val id: String = randomId(25)) {
           }
       }
 
-    fun isValidUsername(username: String) = lookupUserId(username) != null
+    fun isValidUsername(username: String) = lookupUsername(username) != null
 
-    fun lookupUserId(username: String): UserId? = withRedisPool { redis -> lookupUserId(username, redis) }
+    fun isValidPrincipal(principal: UserPrincipal?) = withRedisPool { redis -> isValidPrincipal(principal, redis) }
 
-    fun isValidUsername(principal: UserPrincipal?) = withRedisPool { redis -> isValidUsername(principal, redis) }
+    fun isValidPrincipal(principal: UserPrincipal?, redis: Jedis?) = lookupPrincipal(principal, redis) != null
 
-    fun isValidUsername(principal: UserPrincipal?, redis: Jedis?) = lookupUserId(principal, redis) != null
+    fun lookupPrincipal(principal: UserPrincipal?, redis: Jedis?) =
+      principal?.let { lookupUsername(it.userId, redis) }
 
-    fun lookupUserId(principal: UserPrincipal?, redis: Jedis?) =
-      principal?.let { lookupUserId(it.userId, redis) }
+    fun lookupUsername(username: String): UserId? = withRedisPool { redis -> lookupUsername(username, redis) }
 
-    fun lookupUserId(username: String, redis: Jedis?): UserId? {
+    fun lookupUsername(username: String, redis: Jedis?): UserId? {
       val userIdKey = userIdKey(username)
       val id = redis?.get(userIdKey) ?: ""
       return if (id.isNotEmpty()) UserId(id) else null
     }
 
-    fun lookupSaltAndDigest(userId: UserId, redis: Jedis?): Pair<String, String> {
+    fun lookupUserId(userId: UserId, redis: Jedis?): Pair<String, String> {
       val saltKey = userId.saltKey()
       val passwordKey = userId.passwordKey()
       val salt = redis?.get(saltKey) ?: ""

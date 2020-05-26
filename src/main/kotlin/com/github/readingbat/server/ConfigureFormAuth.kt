@@ -21,8 +21,8 @@ import com.github.pambrose.common.redis.RedisUtils.withRedisPool
 import com.github.pambrose.common.util.sha256
 import com.github.readingbat.misc.AuthName
 import com.github.readingbat.misc.FormFields
-import com.github.readingbat.misc.UserId.Companion.lookupSaltAndDigest
 import com.github.readingbat.misc.UserId.Companion.lookupUserId
+import com.github.readingbat.misc.UserId.Companion.lookupUsername
 import com.github.readingbat.misc.UserPrincipal
 import com.google.common.util.concurrent.RateLimiter
 import io.ktor.auth.Authentication
@@ -68,9 +68,9 @@ internal object ConfigureFormAuth : KLogging() {
         var principal: UserPrincipal? = null
 
         withRedisPool { redis ->
-          val userId = lookupUserId(cred.name, redis)
+          val userId = lookupUsername(cred.name, redis)
           if (userId != null) {
-            val (salt, digest) = lookupSaltAndDigest(userId, redis)
+            val (salt, digest) = lookupUserId(userId, redis)
             if (salt.isNotEmpty() && digest.isNotEmpty() && digest == cred.password.sha256(salt)) {
               logger.info { "Found user ${cred.name} ${userId.id}" }
               principal = UserPrincipal(cred.name)

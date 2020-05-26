@@ -32,6 +32,7 @@ internal object Constants {
   const val WHITE_CHECK = "white-check.jpg"
   const val GREEN_CHECK = "green-check.jpg"
   const val DBMS_DOWN = "Database is down"
+  const val INVALID_RESET_ID = "Invalid reset_id"
 }
 
 internal object Endpoints {

@@ -197,7 +197,7 @@ internal object PageCommon {
     bodyTitle()
 
     if (loginAttempt && principal == null)
-      p { span { style = "color:red;"; +"Failed to login -- bad username or password." } }
+      p { span { style = "color:red;"; +"Failed to login -- bad username or password" } }
 
 
     if (msg.isNotEmpty())

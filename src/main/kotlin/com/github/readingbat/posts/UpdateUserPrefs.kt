@@ -28,7 +28,7 @@ import com.github.readingbat.misc.FormFields.NEW_PASSWORD
 import com.github.readingbat.misc.FormFields.PREF_ACTION
 import com.github.readingbat.misc.FormFields.UPDATE_PASSWORD
 import com.github.readingbat.misc.UserId
-import com.github.readingbat.misc.UserId.Companion.lookupUserId
+import com.github.readingbat.misc.UserId.Companion.lookupPrincipal
 import com.github.readingbat.misc.UserPrincipal
 import com.github.readingbat.pages.UpdateUserPrefsPage.requestLogInPage
 import com.github.readingbat.pages.UpdateUserPrefsPage.updateUserPrefsPage
@@ -52,7 +52,7 @@ internal object UpdateUserPrefs : KLogging() {
         updateUserPrefsPage(content, DBMS_DOWN)
       }
       else {
-        val userId = lookupUserId(principal, redis)
+        val userId = lookupPrincipal(principal, redis)
 
         if (userId == null || principal == null) {
           requestLogInPage(content)
@@ -71,7 +71,7 @@ internal object UpdateUserPrefs : KLogging() {
                   passwordError to true
                 }
                 else {
-                  val (salt, digest) = UserId.lookupSaltAndDigest(userId, redis)
+                  val (salt, digest) = UserId.lookupUserId(userId, redis)
                   if (salt.isNotEmpty() && digest.isNotEmpty() && digest == currPassword.sha256(salt)) {
                     val newDigest = newPassword.sha256(salt)
                     redis.set(userId.passwordKey(), newDigest)

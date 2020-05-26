@@ -27,6 +27,7 @@ import com.github.pambrose.common.util.randomId
 import com.github.pambrose.common.util.sha256
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.Constants.DBMS_DOWN
+import com.github.readingbat.misc.Constants.INVALID_RESET_ID
 import com.github.readingbat.misc.Constants.MSG
 import com.github.readingbat.misc.Constants.RESET_ID
 import com.github.readingbat.misc.Constants.RETURN_PATH
@@ -36,7 +37,7 @@ import com.github.readingbat.misc.FormFields.CONFIRM_PASSWORD
 import com.github.readingbat.misc.FormFields.NEW_PASSWORD
 import com.github.readingbat.misc.FormFields.USERNAME
 import com.github.readingbat.misc.UserId.Companion.isValidUsername
-import com.github.readingbat.misc.UserId.Companion.lookupUserId
+import com.github.readingbat.misc.UserId.Companion.lookupUsername
 import com.github.readingbat.misc.UserId.Companion.passwordResetKey
 import com.github.readingbat.pages.PasswordResetPage.passwordResetPage
 import com.github.readingbat.posts.CreateAccount.checkPassword
@@ -74,18 +75,24 @@ internal object PasswordReset : KLogging() {
             if (redis == null)
               throw ResetPasswordException(DBMS_DOWN)
 
-            val userId = lookupUserId(username) ?: throw ResetPasswordException("Unable to find $username")
-            val passwordResetKey = passwordResetKey(resetId)
-            val userIdPasswordResetKey = userId.userIdPasswordResetKey(username)
-
-            // Lookup previous value if it exists
+            val userId = lookupUsername(username, redis) ?: throw ResetPasswordException("Unable to find $username")
+            val userIdPasswordResetKey = userId.userIdPasswordResetKey()
+            // Lookup and remove previous value if it exists
             val previousResetId = redis.get(userIdPasswordResetKey) ?: ""
 
             redis.multi().also { tx ->
-              if (previousResetId.isNotEmpty())
+              logger.info { "Previous resetID: $previousResetId" }
+              if (previousResetId.isNotEmpty()) {
                 tx.del(userIdPasswordResetKey)
+                val previousPasswordResetKey = passwordResetKey(previousResetId)
+                tx.del(previousPasswordResetKey)
+              }
+
               tx.set(userIdPasswordResetKey, resetId)
+
+              val passwordResetKey = passwordResetKey(resetId)
               tx.set(passwordResetKey, username)
+
               tx.exec()
             }
           }
@@ -132,9 +139,9 @@ internal object PasswordReset : KLogging() {
           throw ResetPasswordException(DBMS_DOWN, resetId)
 
         val passwordResetKey = passwordResetKey(resetId)
-        val username = redis.get(passwordResetKey) ?: throw ResetPasswordException("Invalid resetId", "")
-        val userId = lookupUserId(username) ?: throw ResetPasswordException("Unable to find $username", "")
-        val userIdPasswordResetKey = userId.userIdPasswordResetKey(username)
+        val username = redis.get(passwordResetKey) ?: throw ResetPasswordException(INVALID_RESET_ID)
+        val userId = lookupUsername(username, redis) ?: throw ResetPasswordException("Unable to find $username")
+        val userIdPasswordResetKey = userId.userIdPasswordResetKey()
         val passwordKey = userId.passwordKey()
         val salt = redis.get(userId.saltKey())
         val newDigest = newPassword.sha256(salt)
