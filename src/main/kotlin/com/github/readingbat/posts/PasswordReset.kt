@@ -74,8 +74,7 @@ internal object PasswordReset : KLogging() {
             if (redis == null)
               throw ResetPasswordException(DBMS_DOWN)
 
-            val userId = lookupUserId(username) ?: throw ResetPasswordException("Unable to find $username", true)
-
+            val userId = lookupUserId(username) ?: throw ResetPasswordException("Unable to find $username")
             val passwordResetKey = passwordResetKey(resetId)
             val userIdPasswordResetKey = userId.userIdPasswordResetKey(username)
 
@@ -117,51 +116,45 @@ internal object PasswordReset : KLogging() {
     }
   }
 
-  suspend fun PipelineCall.changePassword(content: ReadingBatContent) {
-    val parameters = call.receiveParameters()
-    val resetId = parameters[RESET_ID] ?: ""
-    val newPassword = parameters[NEW_PASSWORD] ?: ""
-    val confirmPassword = parameters[CONFIRM_PASSWORD] ?: ""
+  suspend fun PipelineCall.changePassword(content: ReadingBatContent) =
+    try {
+      val parameters = call.receiveParameters()
+      val resetId = parameters[RESET_ID] ?: ""
+      val newPassword = parameters[NEW_PASSWORD] ?: ""
+      val confirmPassword = parameters[CONFIRM_PASSWORD] ?: ""
+      val passwordError = checkPassword(newPassword, confirmPassword)
 
-    val passwordError = checkPassword(newPassword, confirmPassword)
-    if (passwordError.isNotEmpty()) {
-      respondWith { passwordResetPage(content, resetId, passwordError) }
-    }
-    else {
-      try {
-        withSuspendingRedisPool { redis ->
-          if (redis == null) {
-            throw ResetPasswordException(DBMS_DOWN)
-          }
-          else {
-            val passwordResetKey = passwordResetKey(resetId)
-            val username = redis.get(passwordResetKey) ?: throw ResetPasswordException("Invalid resetId", true)
-            val userId = lookupUserId(username) ?: throw ResetPasswordException("Unable to find $username", true)
-            val userIdPasswordResetKey = userId.userIdPasswordResetKey(username)
-            val passwordKey = userId.passwordKey()
-            val salt = redis.get(userId.saltKey())
-            val newDigest = newPassword.sha256(salt)
-            val oldDigest = redis.get(passwordKey)
+      if (passwordError.isNotEmpty())
+        throw ResetPasswordException(passwordError, resetId)
 
-            if (newDigest == oldDigest)
-              throw ResetPasswordException("New password is the same as the current password")
+      withSuspendingRedisPool { redis ->
+        if (redis == null)
+          throw ResetPasswordException(DBMS_DOWN, resetId)
 
-            redis.multi().also { tx ->
-              tx.del(userIdPasswordResetKey)
-              tx.del(passwordResetKey)
-              tx.set(passwordKey, newDigest)  // Set new password
-              tx.exec()
-            }
-            redirectTo { "/?$MSG=${"Password reset for $username".encode()}" }
-          }
+        val passwordResetKey = passwordResetKey(resetId)
+        val username = redis.get(passwordResetKey) ?: throw ResetPasswordException("Invalid resetId", "")
+        val userId = lookupUserId(username) ?: throw ResetPasswordException("Unable to find $username", "")
+        val userIdPasswordResetKey = userId.userIdPasswordResetKey(username)
+        val passwordKey = userId.passwordKey()
+        val salt = redis.get(userId.saltKey())
+        val newDigest = newPassword.sha256(salt)
+        val oldDigest = redis.get(passwordKey)
+
+        if (newDigest == oldDigest)
+          throw ResetPasswordException("New password is the same as the current password", resetId)
+
+        redis.multi().also { tx ->
+          tx.del(userIdPasswordResetKey)
+          tx.del(passwordResetKey)
+          tx.set(passwordKey, newDigest)  // Set new password
+          tx.exec()
         }
-
-      } catch (e: ResetPasswordException) {
-        logger.info(e) { e.message }
-        respondWith { passwordResetPage(content, if (e.startOver) "" else resetId, e.msg) }
+        redirectTo { "/?$MSG=${"Password reset for $username".encode()}" }
       }
+    } catch (e: ResetPasswordException) {
+      logger.info(e) { e.message }
+      respondWith { passwordResetPage(content, e.resetId, e.msg) }
     }
-  }
 
-  class ResetPasswordException(val msg: String, val startOver: Boolean = false) : Exception(msg)
+  class ResetPasswordException(val msg: String, val resetId: String = "") : Exception(msg)
 }
