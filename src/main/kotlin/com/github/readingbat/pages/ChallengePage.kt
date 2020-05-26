@@ -21,7 +21,6 @@ import com.github.pambrose.common.redis.RedisUtils.withRedisPool
 import com.github.pambrose.common.util.decode
 import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.misc.Answers.processAnswers
 import com.github.readingbat.misc.BrowserSession
 import com.github.readingbat.misc.CSSNames.arrow
 import com.github.readingbat.misc.CSSNames.challengeDesc
@@ -37,6 +36,8 @@ import com.github.readingbat.misc.CSSNames.success
 import com.github.readingbat.misc.CSSNames.successId
 import com.github.readingbat.misc.CSSNames.tabs
 import com.github.readingbat.misc.CSSNames.userResp
+import com.github.readingbat.misc.CheckAnswersJs.checkAnswersScript
+import com.github.readingbat.misc.CheckAnswersJs.processAnswers
 import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
 import com.github.readingbat.misc.Constants.MSG
 import com.github.readingbat.misc.Constants.PLAYGROUND_ROOT
@@ -44,7 +45,6 @@ import com.github.readingbat.misc.Constants.STATIC_ROOT
 import com.github.readingbat.misc.PageUtils.pathOf
 import com.github.readingbat.misc.UserId
 import com.github.readingbat.misc.UserId.Companion.lookupPrincipal
-import com.github.readingbat.misc.checkAnswersScript
 import com.github.readingbat.pages.PageCommon.addLink
 import com.github.readingbat.pages.PageCommon.backLink
 import com.github.readingbat.pages.PageCommon.bodyHeader
@@ -58,6 +58,7 @@ import io.ktor.http.ContentType.Text.CSS
 import io.ktor.sessions.get
 import io.ktor.sessions.sessions
 import kotlinx.html.*
+import kotlinx.html.ScriptType.textJavaScript
 import kotlinx.html.stream.createHTML
 import mu.KotlinLogging
 
@@ -84,7 +85,7 @@ internal object ChallengePage {
           link { rel = "stylesheet"; href = spinnerCss }
           link { rel = "stylesheet"; href = "$STATIC_ROOT/$languageName-prism.css"; type = CSS.toString() }
 
-          script(type = ScriptType.textJavaScript) { checkAnswersScript(languageName, groupName, challengeName) }
+          script(type = textJavaScript) { checkAnswersScript(languageName, groupName, challengeName) }
 
           removePrismShadow()
           headDefault(content)

@@ -25,19 +25,15 @@ import com.github.readingbat.dsl.LanguageType.Companion.toLanguageType
 import com.github.readingbat.dsl.LanguageType.Java
 import com.github.readingbat.dsl.LanguageType.Kotlin
 import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.misc.Answers.challengeSrc
-import com.github.readingbat.misc.Answers.groupSrc
-import com.github.readingbat.misc.Answers.langSrc
-import com.github.readingbat.misc.BrowserSession
 import com.github.readingbat.misc.CSSNames.userResp
+import com.github.readingbat.misc.CheckAnswersJs.challengeSrc
+import com.github.readingbat.misc.CheckAnswersJs.groupSrc
+import com.github.readingbat.misc.CheckAnswersJs.langSrc
 import com.github.readingbat.misc.UserId.Companion.saveAnswers
 import com.github.readingbat.server.PipelineCall
-import com.github.readingbat.server.fetchPrincipal
 import io.ktor.application.call
 import io.ktor.request.receiveParameters
 import io.ktor.response.respondText
-import io.ktor.sessions.get
-import io.ktor.sessions.sessions
 import kotlinx.coroutines.delay
 import mu.KLogging
 import javax.script.ScriptException
@@ -70,25 +66,36 @@ internal data class ChallengeHistory(var argument: String,
   }
 }
 
+internal class ChallengeNames(compareMap: Map<String, String>) {
+  val languageName: String
+  val groupName: String
+  val challengeName: String
+
+  init {
+    languageName = compareMap[langSrc] ?: throw InvalidConfigurationException("Missing language")
+    groupName = compareMap[groupSrc] ?: throw InvalidConfigurationException("Missing group name")
+    challengeName = compareMap[challengeSrc] ?: throw InvalidConfigurationException("Missing challenge name")
+  }
+}
+
 internal object CheckAnswers : KLogging() {
 
   private fun String.isJavaBoolean() = this == "true" || this == "false"
   private fun String.isPythonBoolean() = this == "True" || this == "False"
 
   suspend fun PipelineCall.checkAnswers(content: ReadingBatContent) {
-    val principal = fetchPrincipal()
     val params = call.receiveParameters()
     val compareMap = params.entries().map { it.key to it.value[0] }.toMap()
-    val languageName = compareMap[langSrc] ?: throw InvalidConfigurationException("Missing language")
-    val groupName = compareMap[groupSrc] ?: throw InvalidConfigurationException("Missing group name")
-    val challengeName = compareMap[challengeSrc] ?: throw InvalidConfigurationException("Missing challenge name")
-    val isJvm = languageName in listOf(Java.lowerName, Kotlin.lowerName)
+    val names = ChallengeNames(compareMap)
+    val isJvm = names.languageName in listOf(Java.lowerName, Kotlin.lowerName)
     val userResps = params.entries().filter { it.key.startsWith(userResp) }
-    val challenge = content.findLanguage(languageName.toLanguageType()).findChallenge(groupName, challengeName)
+    val challenge =
+      content
+        .findLanguage(names.languageName.toLanguageType())
+        .findChallenge(names.groupName, names.challengeName)
     val funcInfo = challenge.funcInfo(content)
     val kotlinScriptEngine by lazy { KotlinScript() }
     val pythonScriptEngine by lazy { PythonScript() }
-    val browserSession by lazy { call.sessions.get<BrowserSession>() }
 
     fun checkWithAnswer(isJvm: Boolean, userResp: String, answer: String) =
       try {
@@ -136,15 +143,7 @@ internal object CheckAnswers : KLogging() {
       }
 
     // Save whether all the answers for the challenge were correct
-    saveAnswers(principal,
-                browserSession,
-                languageName,
-                groupName,
-                challengeName,
-                compareMap,
-                funcInfo,
-                userResps,
-                results)
+    saveAnswers(names, compareMap, funcInfo, userResps, results)
 
     /*
     results

@@ -33,8 +33,14 @@ import com.github.readingbat.misc.KeyPrefixes.SALT
 import com.github.readingbat.misc.KeyPrefixes.USERID_RESET
 import com.github.readingbat.misc.KeyPrefixes.USER_ID
 import com.github.readingbat.posts.ChallengeHistory
+import com.github.readingbat.posts.ChallengeNames
 import com.github.readingbat.posts.ChallengeResults
+import com.github.readingbat.server.PipelineCall
+import com.github.readingbat.server.fetchPrincipal
 import com.google.gson.Gson
+import io.ktor.application.call
+import io.ktor.sessions.get
+import io.ktor.sessions.sessions
 import mu.KLogging
 import redis.clients.jedis.Jedis
 
@@ -43,11 +49,20 @@ internal class UserId(val id: String = randomId(25)) {
 
   fun passwordKey() = "$PASSWD|$id"
 
+  fun correctAnswersKey(names: ChallengeNames) =
+    correctAnswersKey(names.languageName, names.groupName, names.challengeName)
+
   fun correctAnswersKey(languageName: String, groupName: String, challengeName: String) =
     listOf(CORRECT_ANSWERS, AUTH, id, languageName, groupName, challengeName).joinToString(sep)
 
+  fun challengeKey(names: ChallengeNames) =
+    challengeKey(names.languageName, names.groupName, names.challengeName)
+
   fun challengeKey(languageName: String, groupName: String, challengeName: String) =
     listOf(CHALLENGE_ANSWERS, AUTH, id, languageName, groupName, challengeName).joinToString(sep)
+
+  fun argumentKey(names: ChallengeNames, argument: String) =
+    argumentKey(names.languageName, names.groupName, names.challengeName, argument)
 
   fun argumentKey(languageName: String, groupName: String, challengeName: String, argument: String) =
     listOf(ANSWER_HISTORY, AUTH, id, languageName, groupName, challengeName, argument).joinToString(sep)
@@ -123,33 +138,25 @@ internal class UserId(val id: String = randomId(25)) {
       }
     }
 
-    fun saveAnswers(principal: UserPrincipal?,
-                    browserSession: BrowserSession?,
-                    languageName: String,
-                    groupName: String,
-                    challengeName: String,
-                    compareMap: Map<String, String>,
-                    funcInfo: FunctionInfo,
-                    userResps: List<Map.Entry<String, List<String>>>,
-                    results: List<ChallengeResults>) =
+    fun PipelineCall.saveAnswers(names: ChallengeNames,
+                                 compareMap: Map<String, String>,
+                                 funcInfo: FunctionInfo,
+                                 userResps: List<Map.Entry<String, List<String>>>,
+                                 results: List<ChallengeResults>) =
       withRedisPool { redis ->
+        val principal = fetchPrincipal()
+        val browserSession by lazy { call.sessions.get<BrowserSession>() }
         val userId = lookupPrincipal(principal, redis)
 
         // Save if all answers were correct
-        val correctAnswersKey =
-          userId?.correctAnswersKey(languageName, groupName, challengeName)
-            ?: browserSession?.correctAnswersKey(languageName, groupName, challengeName)
-            ?: ""
+        val correctAnswersKey = userId?.correctAnswersKey(names) ?: browserSession?.correctAnswersKey(names) ?: ""
 
         if (correctAnswersKey.isNotEmpty()) {
           val allCorrect = results.all { it.correct }
           redis?.set(correctAnswersKey, allCorrect.toString())
         }
 
-        val challengeKey =
-          userId?.challengeKey(languageName, groupName, challengeName)
-            ?: browserSession?.challengeKey(languageName, groupName, challengeName)
-            ?: ""
+        val challengeKey = userId?.challengeKey(names) ?: browserSession?.challengeKey(names) ?: ""
 
         if (redis != null && challengeKey.isNotEmpty()) {
           val answerMap = mutableMapOf<String, String>()
@@ -173,8 +180,8 @@ internal class UserId(val id: String = randomId(25)) {
           .filter { it.answered }
           .forEach { result ->
             val argumentKey =
-              userId?.argumentKey(languageName, groupName, challengeName, result.arguments)
-                ?: browserSession?.argumentKey(languageName, groupName, challengeName, result.arguments)
+              userId?.argumentKey(names, result.arguments)
+                ?: browserSession?.argumentKey(names, result.arguments)
                 ?: ""
 
             if (redis != null && argumentKey.isNotEmpty()) {

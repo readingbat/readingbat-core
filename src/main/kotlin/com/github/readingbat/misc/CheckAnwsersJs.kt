@@ -17,10 +17,6 @@
 
 package com.github.readingbat.misc
 
-import com.github.readingbat.misc.Answers.challengeSrc
-import com.github.readingbat.misc.Answers.groupSrc
-import com.github.readingbat.misc.Answers.langSrc
-import com.github.readingbat.misc.Answers.processAnswers
 import com.github.readingbat.misc.CSSNames.feedback
 import com.github.readingbat.misc.CSSNames.spinnerId
 import com.github.readingbat.misc.CSSNames.statusId
@@ -32,18 +28,17 @@ import com.github.readingbat.pages.PageCommon.rawHtml
 import kotlinx.html.SCRIPT
 import java.util.concurrent.atomic.AtomicInteger
 
-internal object Answers {
+internal object CheckAnswersJs {
   const val langSrc = "lang"
   const val groupSrc = "groupName"
   const val challengeSrc = "challengeName"
   const val processAnswers = "processAnswers"
-}
 
-private val sessionCounter = AtomicInteger(0)
+  private val sessionCounter = AtomicInteger(0)
 
-internal fun SCRIPT.checkAnswersScript(languageName: String, groupName: String, challengeName: String) =
-  rawHtml(
-    """
+  fun SCRIPT.checkAnswersScript(languageName: String, groupName: String, challengeName: String) =
+    rawHtml(
+      """
     var re = new XMLHttpRequest();
 
     function $processAnswers(event, cnt) { 
@@ -101,4 +96,5 @@ internal fun SCRIPT.checkAnswersScript(languageName: String, groupName: String, 
       }
     }
   """
-         )
+           )
+}

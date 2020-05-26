@@ -21,17 +21,27 @@ import com.github.readingbat.misc.KeyPrefixes.ANSWER_HISTORY
 import com.github.readingbat.misc.KeyPrefixes.CHALLENGE_ANSWERS
 import com.github.readingbat.misc.KeyPrefixes.CORRECT_ANSWERS
 import com.github.readingbat.misc.KeyPrefixes.NO_AUTH
+import com.github.readingbat.posts.ChallengeNames
 import java.time.Instant
 
 internal data class BrowserSession(val id: String, val created: Long = Instant.now().toEpochMilli()) {
+
+  fun correctAnswersKey(names: ChallengeNames) =
+    correctAnswersKey(names.languageName, names.groupName, names.challengeName)
 
   fun correctAnswersKey(languageName: String, groupName: String, challengeName: String) =
     listOf(CORRECT_ANSWERS,
            NO_AUTH, id, languageName, groupName, challengeName).joinToString("|")
 
+  fun challengeKey(names: ChallengeNames) =
+    challengeKey(names.languageName, names.groupName, names.challengeName)
+
   fun challengeKey(languageName: String, groupName: String, challengeName: String) =
     listOf(CHALLENGE_ANSWERS,
            NO_AUTH, id, languageName, groupName, challengeName).joinToString("|")
+
+  fun argumentKey(names: ChallengeNames, argument: String) =
+    argumentKey(names.languageName, names.groupName, names.challengeName, argument)
 
   fun argumentKey(languageName: String, groupName: String, challengeName: String, argument: String) =
     listOf(ANSWER_HISTORY,
