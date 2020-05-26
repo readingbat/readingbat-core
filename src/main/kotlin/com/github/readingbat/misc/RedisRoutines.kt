@@ -29,14 +29,12 @@ object RedisRoutines {
 
   internal fun deleteAllKeys() {
     withRedis { redis ->
-      //println(redis.keys("*").joinToString("\n"))
       redis?.keys("*")?.forEach { redis.del(it) }
     }
   }
 
   internal fun showAllKeys() {
     withRedis { redis ->
-      //println(redis.keys("*").joinToString("\n"))
       println(redis?.keys("*")?.map { "$it - ${redis[it]}" }?.joinToString("\n"))
     }
   }

@@ -119,7 +119,7 @@ internal object PasswordResetPage : KLogging() {
             p {
               +"""
                 This will send an email with a link that will allow you th set your password. 
-                When you get the email, click on the link (or enter the URL in your browser), and  
+                When you get the email, click on the link (or enter the URL in your browser) and  
                 enter a new password. If the email does not arrive, double-check that the email 
                 address above is entered correctly.
               """.trimIndent()

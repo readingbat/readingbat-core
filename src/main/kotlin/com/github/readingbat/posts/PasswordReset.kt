@@ -75,23 +75,19 @@ internal object PasswordReset : KLogging() {
             if (redis == null)
               throw ResetPasswordException(DBMS_DOWN)
 
+            // Lookup and remove previous value if it exists
             val userId = lookupUsername(username, redis) ?: throw ResetPasswordException("Unable to find $username")
             val userIdPasswordResetKey = userId.userIdPasswordResetKey()
-            // Lookup and remove previous value if it exists
             val previousResetId = redis.get(userIdPasswordResetKey) ?: ""
 
             redis.multi().also { tx ->
-              logger.info { "Previous resetID: $previousResetId" }
               if (previousResetId.isNotEmpty()) {
                 tx.del(userIdPasswordResetKey)
-                val previousPasswordResetKey = passwordResetKey(previousResetId)
-                tx.del(previousPasswordResetKey)
+                tx.del(passwordResetKey(previousResetId))
               }
 
               tx.set(userIdPasswordResetKey, resetId)
-
-              val passwordResetKey = passwordResetKey(resetId)
-              tx.set(passwordResetKey, username)
+              tx.set(passwordResetKey(resetId), username)
 
               tx.exec()
             }
