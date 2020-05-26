@@ -30,6 +30,7 @@ import com.github.readingbat.misc.FormFields.USERNAME
 import com.github.readingbat.misc.PageUtils.hideShowButton
 import com.github.readingbat.pages.PageCommon.backLink
 import com.github.readingbat.pages.PageCommon.bodyTitle
+import com.github.readingbat.pages.PageCommon.clickButtonScript
 import com.github.readingbat.pages.PageCommon.headDefault
 import com.github.readingbat.pages.PageCommon.privacyStatement
 import com.github.readingbat.pages.PageCommon.rawHtml
@@ -43,7 +44,7 @@ import kotlinx.html.stream.createHTML
 internal object PasswordResetPage {
 
   const val formName = "pform"
-  const val passwordButton = "updatePasswordButton"
+  const val passwordButton = "UpdatePasswordButton"
 
   fun PipelineCall.passwordResetPage(content: ReadingBatContent, msg: String = ""): String {
     val resetId = queryParam(RESET_ID) ?: "/"
@@ -121,17 +122,7 @@ internal object PasswordResetPage {
       .html {
         head {
           headDefault(content)
-          script {
-            rawHtml(
-              """
-              function clickUpdatePasswordButton(event) {
-                if (event != null && event.keyCode == 13) {
-                  event.preventDefault();
-                  document.getElementById('${passwordButton}').click();
-                }
-              }
-            """.trimIndent())
-          }
+          clickButtonScript(passwordButton)
         }
 
         body {
@@ -159,7 +150,7 @@ internal object PasswordResetPage {
                     size = "42"
                     name = CONFIRM_PASSWORD
                     value = ""
-                    onKeyPress = "clickUpdatePasswordButton(event);"
+                    onKeyPress = "click$passwordButton(event);"
                   }
                 }
                 td { hideShowButton(formName, CONFIRM_PASSWORD) }

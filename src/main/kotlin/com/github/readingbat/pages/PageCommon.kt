@@ -47,9 +47,9 @@ import io.ktor.http.ContentType.Text.CSS
 import io.ktor.http.formUrlEncode
 import kotlinx.html.*
 
-object PageCommon {
+internal object PageCommon {
 
-  internal fun HEAD.headDefault(content: ReadingBatContent) {
+  fun HEAD.headDefault(content: ReadingBatContent) {
     link { rel = "stylesheet"; href = CSS_NAME; type = CSS.toString() }
 
     // From: https://favicon.io/emoji-favicons/glasses/
@@ -71,6 +71,20 @@ object PageCommon {
           gtag('config', '${content.googleAnalyticsId}');
         """)
       }
+    }
+  }
+
+  fun HEAD.clickButtonScript(buttonName: String) {
+    script {
+      rawHtml(
+        """
+          function click$buttonName(event) {
+            if (event != null && event.keyCode == 13) {
+              event.preventDefault();
+              document.getElementById('$buttonName').click();
+            }
+          }
+        """.trimIndent())
     }
   }
 

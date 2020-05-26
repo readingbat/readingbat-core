@@ -28,7 +28,9 @@ import com.github.readingbat.misc.KeyPrefixes.AUTH
 import com.github.readingbat.misc.KeyPrefixes.CHALLENGE_ANSWERS
 import com.github.readingbat.misc.KeyPrefixes.CORRECT_ANSWERS
 import com.github.readingbat.misc.KeyPrefixes.PASSWD
+import com.github.readingbat.misc.KeyPrefixes.RESET
 import com.github.readingbat.misc.KeyPrefixes.SALT
+import com.github.readingbat.misc.KeyPrefixes.USERID_RESET
 import com.github.readingbat.misc.KeyPrefixes.USER_ID
 import com.github.readingbat.posts.ChallengeHistory
 import com.github.readingbat.posts.ChallengeResults
@@ -42,13 +44,16 @@ internal class UserId(val id: String = randomId(25)) {
   fun passwordKey() = "$PASSWD|$id"
 
   fun correctAnswersKey(languageName: String, groupName: String, challengeName: String) =
-    listOf(CORRECT_ANSWERS, AUTH, id, languageName, groupName, challengeName).joinToString("|")
+    listOf(CORRECT_ANSWERS, AUTH, id, languageName, groupName, challengeName).joinToString(sep)
 
   fun challengeKey(languageName: String, groupName: String, challengeName: String) =
-    listOf(CHALLENGE_ANSWERS, AUTH, id, languageName, groupName, challengeName).joinToString("|")
+    listOf(CHALLENGE_ANSWERS, AUTH, id, languageName, groupName, challengeName).joinToString(sep)
 
   fun argumentKey(languageName: String, groupName: String, challengeName: String, argument: String) =
-    listOf(ANSWER_HISTORY, AUTH, id, languageName, groupName, challengeName, argument).joinToString("|")
+    listOf(ANSWER_HISTORY, AUTH, id, languageName, groupName, challengeName, argument).joinToString(sep)
+
+  fun userIdPasswordResetKey(username: String) = listOf(USERID_RESET, id).joinToString(sep)
+
 
   fun deleteUser(principal: UserPrincipal, redis: Jedis) {
     val userIdKey = userIdKey(principal.userId)
@@ -79,9 +84,13 @@ internal class UserId(val id: String = randomId(25)) {
 
   companion object : KLogging() {
 
+    private const val sep = "|"
+
     val gson = Gson()
 
     fun userIdKey(username: String) = "$USER_ID|$username"
+
+    fun passwordResetKey(resetId: String) = listOf(RESET, resetId).joinToString(sep)
 
     fun createUser(username: String, password: String, redis: Jedis) {
       // The userName (email) is stored in only one KV pair, enabling changes to the userName
@@ -169,20 +178,19 @@ internal class UserId(val id: String = randomId(25)) {
           }
       }
 
-    fun isValidUserId(userId: String): Boolean = lookupUserId(userId) != null
+    fun isValidUsername(username: String) = lookupUserId(username) != null
 
-    fun lookupUserId(userId: String): UserId? = withRedisPool { redis -> lookupUserId(userId, redis) }
+    fun lookupUserId(username: String): UserId? = withRedisPool { redis -> lookupUserId(username, redis) }
 
-    fun isValidUserId(principal: UserPrincipal?): Boolean =
-      withRedisPool { redis -> isValidUserId(principal, redis) }
+    fun isValidUsername(principal: UserPrincipal?) = withRedisPool { redis -> isValidUsername(principal, redis) }
 
-    fun isValidUserId(principal: UserPrincipal?, redis: Jedis?) = lookupUserId(principal, redis) != null
+    fun isValidUsername(principal: UserPrincipal?, redis: Jedis?) = lookupUserId(principal, redis) != null
 
     fun lookupUserId(principal: UserPrincipal?, redis: Jedis?) =
       principal?.let { lookupUserId(it.userId, redis) }
 
-    fun lookupUserId(userId: String, redis: Jedis?): UserId? {
-      val userIdKey = userIdKey(userId)
+    fun lookupUserId(username: String, redis: Jedis?): UserId? {
+      val userIdKey = userIdKey(username)
       val id = redis?.get(userIdKey) ?: ""
       return if (id.isNotEmpty()) UserId(id) else null
     }

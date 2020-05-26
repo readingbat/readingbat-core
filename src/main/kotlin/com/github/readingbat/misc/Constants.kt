@@ -31,33 +31,36 @@ internal object Constants {
   const val PLAYGROUND_ROOT = "/playground"
   const val WHITE_CHECK = "white-check.jpg"
   const val GREEN_CHECK = "green-check.jpg"
+  const val DBMS_DOWN = "Database is down"
 }
 
-object Endpoints {
+internal object Endpoints {
   const val USER_PREFS = "/user-prefs"
-  const val PASSWORD_CHANGE = "/password-change"
   const val ABOUT = "/about.html"
   const val CLASSROOM = "/classroom.html"
   const val CREATE_ACCOUNT = "/create-account"
   const val PRIVACY = "/privacy.html"
+  const val PASSWORD_CHANGE = "/password-change"
   const val PASSWORD_RESET = "/password-reset"
   const val CHECK_ANSWERS_ROOT = "/check-answers"
   const val CSS_NAME = "/styles.css"
   const val FAV_ICON = "/favicon.ico"
 }
 
-object KeyPrefixes {
+internal object KeyPrefixes {
   const val USER_ID = "userId"
   const val SALT = "salt"
   const val PASSWD = "password"
   const val CORRECT_ANSWERS = "correct-answers"
   const val CHALLENGE_ANSWERS = "challenge-answers"
   const val ANSWER_HISTORY = "answer-history"
+  const val RESET = "password-reset"
+  const val USERID_RESET = "userid_password-reset"
   const val AUTH = "auth"
   const val NO_AUTH = "noauth"
 }
 
-object FormFields {
+internal object FormFields {
   const val USERNAME = "username"
   const val PASSWORD = "passwd"
   const val CONFIRM_PASSWORD = "confirm_passwd"
@@ -68,19 +71,18 @@ object FormFields {
   const val DELETE_ACCOUNT = "Delete Account"
 }
 
-object AuthName {
+internal object AuthName {
   const val SESSION = "session"
   const val FORM = "form"
   const val AUTH_COOKIE = "auth"
 }
 
-object AuthRoutes {
+internal object AuthRoutes {
   const val LOGOUT = "/logout"
   const val COOKIES = "/cookies"
 }
 
-object EnvVars {
+internal object EnvVars {
   const val REDIRECT_HOST_NAME = "REDIRECT_HOST_NAME"
   const val PRODUCTION = "PRODUCTION"
-  const val REDISTOGO_URL = "REDISTOGO_URL"
 }

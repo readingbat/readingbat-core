@@ -18,7 +18,6 @@
 package com.github.readingbat.server
 
 import com.github.pambrose.common.redis.RedisUtils.withRedis
-import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.Endpoints.CLASSROOM
 import io.ktor.http.cio.websocket.CloseReason
 import io.ktor.http.cio.websocket.Frame
@@ -35,7 +34,7 @@ import redis.clients.jedis.JedisPubSub
 
 internal object WsEndoints {
 
-  fun Routing.wsEndpoints(content: ReadingBatContent) {
+  fun Routing.wsEndpoints() {
 
     webSocket(CLASSROOM) {
 

@@ -20,7 +20,7 @@ package com.github.readingbat.posts
 import com.github.pambrose.common.redis.RedisUtils.withRedisPool
 import com.github.pambrose.common.util.sha256
 import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.misc.Constants.RETURN_PATH
+import com.github.readingbat.misc.Constants.DBMS_DOWN
 import com.github.readingbat.misc.FormFields.CONFIRM_PASSWORD
 import com.github.readingbat.misc.FormFields.CURR_PASSWORD
 import com.github.readingbat.misc.FormFields.DELETE_ACCOUNT
@@ -48,10 +48,8 @@ internal object UpdateUserPrefs : KLogging() {
     val principal = fetchPrincipal()
 
     return withRedisPool { redis ->
-      val returnPath = parameters[RETURN_PATH] ?: "/"
-
       if (redis == null) {
-        updateUserPrefsPage(content, "Database is down")
+        updateUserPrefsPage(content, DBMS_DOWN)
       }
       else {
         val userId = lookupUserId(principal, redis)

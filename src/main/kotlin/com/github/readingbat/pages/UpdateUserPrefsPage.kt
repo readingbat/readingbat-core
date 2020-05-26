@@ -28,14 +28,14 @@ import com.github.readingbat.misc.FormFields.NEW_PASSWORD
 import com.github.readingbat.misc.FormFields.PREF_ACTION
 import com.github.readingbat.misc.FormFields.UPDATE_PASSWORD
 import com.github.readingbat.misc.PageUtils.hideShowButton
-import com.github.readingbat.misc.UserId.Companion.isValidUserId
+import com.github.readingbat.misc.UserId.Companion.isValidUsername
 import com.github.readingbat.misc.UserPrincipal
 import com.github.readingbat.pages.PageCommon.backLink
 import com.github.readingbat.pages.PageCommon.bodyTitle
+import com.github.readingbat.pages.PageCommon.clickButtonScript
 import com.github.readingbat.pages.PageCommon.headDefault
 import com.github.readingbat.pages.PageCommon.helpAndLogin
 import com.github.readingbat.pages.PageCommon.privacyStatement
-import com.github.readingbat.pages.PageCommon.rawHtml
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.fetchPrincipal
 import com.github.readingbat.server.queryParam
@@ -47,12 +47,12 @@ internal object UpdateUserPrefsPage : KLogging() {
 
   const val labelWidth = "width: 250;"
   const val formName = "pform"
-  const val passwordButton = "updatePasswordButton"
+  const val passwordButton = "UpdatePasswordButton"
 
   fun PipelineCall.updateUserPrefsPage(content: ReadingBatContent,
                                        msg: String,
                                        isErrorMsg: Boolean = true): String =
-    if (isValidUserId(fetchPrincipal()))
+    if (isValidUsername(fetchPrincipal()))
       prefsWithLoginPage(content, msg, isErrorMsg)
     else
       requestLogInPage(content)
@@ -64,17 +64,7 @@ internal object UpdateUserPrefsPage : KLogging() {
       .html {
         head {
           headDefault(content)
-          script {
-            rawHtml(
-              """
-              function clickUpdatePasswordButton(event) {
-                if (event != null && event.keyCode == 13) {
-                  event.preventDefault();
-                  document.getElementById('$passwordButton').click();
-                }
-              }
-            """.trimIndent())
-          }
+          clickButtonScript(passwordButton)
         }
 
         body {
@@ -123,7 +113,7 @@ internal object UpdateUserPrefsPage : KLogging() {
               size = "42"
               name = CONFIRM_PASSWORD
               value = ""
-              onKeyPress = "clickUpdatePasswordButton(event);"
+              onKeyPress = "click$passwordButton(event);"
             }
           }
           td { hideShowButton(formName, CONFIRM_PASSWORD) }

@@ -17,7 +17,7 @@
 
 package com.github.readingbat.posts
 
-import com.github.pambrose.common.redis.RedisUtils.withRedisPool
+import com.github.pambrose.common.redis.RedisUtils.withSuspendingRedisPool
 import com.github.pambrose.common.response.redirectTo
 import com.github.pambrose.common.response.respondWith
 import com.github.pambrose.common.util.encode
@@ -39,7 +39,6 @@ import io.ktor.application.call
 import io.ktor.request.receiveParameters
 import io.ktor.sessions.sessions
 import io.ktor.sessions.set
-import kotlinx.coroutines.runBlocking
 import mu.KLogging
 
 internal object CreateAccount : KLogging() {
@@ -53,12 +52,12 @@ internal object CreateAccount : KLogging() {
 
   private val createAccountLimiter = RateLimiter.create(2.0) // rate 2.0 is "2 permits per second"
 
-  fun checkPassword(password: String, confirmPassword: String) =
+  fun checkPassword(newPassword: String, confirmPassword: String) =
     when {
-      password.isBlank() -> EMPTY_PASWORD
-      password.length < 6 -> PASSWORD_TOO_SHORT
-      password != confirmPassword -> NO_MATCH
-      password == "password" -> CLEVER_PASSWORD
+      newPassword.isBlank() -> EMPTY_PASWORD
+      newPassword.length < 6 -> PASSWORD_TOO_SHORT
+      newPassword != confirmPassword -> NO_MATCH
+      newPassword == "password" -> CLEVER_PASSWORD
       else -> ""
     }
 
@@ -82,26 +81,24 @@ internal object CreateAccount : KLogging() {
   }
 
   private suspend fun PipelineCall.createAccount(content: ReadingBatContent, username: String, password: String) {
-    withRedisPool { redis ->
-      runBlocking {
-        val returnPath = queryParam(RETURN_PATH) ?: "/"
-        if (redis == null) {
-          redirectTo { returnPath }
+    withSuspendingRedisPool { redis ->
+      val returnPath = queryParam(RETURN_PATH) ?: "/"
+      if (redis == null) {
+        redirectTo { returnPath }
+      }
+      else {
+        createAccountLimiter.acquire() // may wait
+
+        // Check if username already exists
+        if (redis.exists(userIdKey(username))) {
+          respondWith { createAccountPage(content, msg = "Username already exists: $username") }
         }
         else {
-          createAccountLimiter.acquire() // may wait
-
-          // Check if username already exists
-          if (redis.exists(userIdKey(username))) {
-            respondWith { createAccountPage(content, msg = "Username already exists: $username") }
-          }
-          else {
-            // Create user
-            createUser(username, password, redis)
-            // Assign principal cookie
-            call.sessions.set(UserPrincipal(userId = username))
-            redirectTo { "$returnPath?$MSG=${"User $username created".encode()}" }
-          }
+          // Create user
+          createUser(username, password, redis)
+          // Assign principal cookie
+          call.sessions.set(UserPrincipal(userId = username))
+          redirectTo { "$returnPath?$MSG=${"User $username created".encode()}" }
         }
       }
     }

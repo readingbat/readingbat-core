@@ -26,6 +26,7 @@ import com.github.readingbat.misc.FormFields.USERNAME
 import com.github.readingbat.misc.PageUtils.hideShowButton
 import com.github.readingbat.pages.PageCommon.backLink
 import com.github.readingbat.pages.PageCommon.bodyTitle
+import com.github.readingbat.pages.PageCommon.clickButtonScript
 import com.github.readingbat.pages.PageCommon.headDefault
 import com.github.readingbat.pages.PageCommon.privacyStatement
 import com.github.readingbat.pages.PageCommon.rawHtml
@@ -43,22 +44,11 @@ internal object CreateAccountPage {
     createHTML()
       .html {
         val returnPath = queryParam(RETURN_PATH) ?: "/"
-        val createButton = "createAccountButton"
+        val createButton = "CreateAccountButton"
 
         head {
           headDefault(content)
-
-          script {
-            rawHtml(
-              """
-              function clickCreateButton(event) {
-                if (event != null && event.keyCode == 13) {
-                  event.preventDefault();
-                  document.getElementById('$createButton').click();
-                }
-              }
-            """.trimIndent())
-          }
+          clickButtonScript(createButton)
         }
 
         body {
@@ -121,7 +111,7 @@ internal object CreateAccountPage {
                       size = "42"
                       name = CONFIRM_PASSWORD
                       value = ""
-                      onKeyPress = "clickCreateButton(event);"
+                      onKeyPress = "click$createButton(event);"
                     }
                   }
                   td { hideShowButton(formName, CONFIRM_PASSWORD) }

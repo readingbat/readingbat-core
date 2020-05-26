@@ -20,7 +20,6 @@ package com.github.readingbat.server
 import com.codahale.metrics.jvm.ThreadDump
 import com.github.pambrose.common.response.redirectTo
 import com.github.pambrose.common.util.randomId
-import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.AuthRoutes.COOKIES
 import com.github.readingbat.misc.BrowserSession
 import com.github.readingbat.misc.UserPrincipal
@@ -45,7 +44,7 @@ import java.time.ZoneId
 
 private val logger = KotlinLogging.logger {}
 
-internal fun Routing.adminRoutes(content: ReadingBatContent) {
+internal fun Routing.adminRoutes() {
 
   get("/ping") { call.respondText("pong", ContentType.Text.Plain) }
 

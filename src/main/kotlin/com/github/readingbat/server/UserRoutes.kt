@@ -47,7 +47,8 @@ import com.github.readingbat.pages.PrivacyPage.privacyPage
 import com.github.readingbat.pages.UpdateUserPrefsPage.updateUserPrefsPage
 import com.github.readingbat.posts.CheckAnswers.checkAnswers
 import com.github.readingbat.posts.CreateAccount.createAccount
-import com.github.readingbat.posts.PasswordReset.sendResetPassword
+import com.github.readingbat.posts.PasswordReset.changePassword
+import com.github.readingbat.posts.PasswordReset.sendPasswordReset
 import com.github.readingbat.posts.UpdateUserPrefs.updatePrefs
 import io.ktor.application.call
 import io.ktor.http.ContentType.Text.CSS
@@ -83,9 +84,9 @@ internal fun Routing.userRoutes(content: ReadingBatContent) {
 
   get(PASSWORD_RESET) { respondWith { passwordResetPage(content) } }
 
-  post(PASSWORD_RESET) { sendResetPassword(content) }
+  post(PASSWORD_RESET) { sendPasswordReset(content) }
 
-  post(PASSWORD_CHANGE) {}
+  get(PASSWORD_CHANGE) { changePassword(content) }
 
   get(LOGOUT) {
     // Purge UserPrincipal from cookie data
