@@ -41,6 +41,7 @@ import com.github.readingbat.misc.CheckAnswersJs.processAnswers
 import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
 import com.github.readingbat.misc.Constants.MSG
 import com.github.readingbat.misc.Constants.PLAYGROUND_ROOT
+import com.github.readingbat.misc.Constants.RESP
 import com.github.readingbat.misc.Constants.STATIC_ROOT
 import com.github.readingbat.misc.PageUtils.pathOf
 import com.github.readingbat.misc.UserId
@@ -139,7 +140,7 @@ internal object ChallengePage {
                     td(classes = arrow) { rawHtml("&rarr;") }
                     td {
                       textInput(classes = userResp) {
-                        id = "$userResp$i"
+                        id = "$RESP$i"
                         onKeyPress = "$processAnswers(event, ${funcInfo.answers.size})"
                         if (previousAnswers[args] != null)
                           value = previousAnswers[args] ?: ""

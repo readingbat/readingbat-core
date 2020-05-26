@@ -21,7 +21,7 @@ import com.github.readingbat.misc.CSSNames.feedback
 import com.github.readingbat.misc.CSSNames.spinnerId
 import com.github.readingbat.misc.CSSNames.statusId
 import com.github.readingbat.misc.CSSNames.successId
-import com.github.readingbat.misc.CSSNames.userResp
+import com.github.readingbat.misc.Constants.RESP
 import com.github.readingbat.misc.Constants.sessionid
 import com.github.readingbat.misc.Endpoints.CHECK_ANSWERS_ROOT
 import com.github.readingbat.pages.PageCommon.rawHtml
@@ -52,8 +52,8 @@ internal object CheckAnswersJs {
           var x = document.getElementById("$feedback"+i);
           x.style.backgroundColor = "white";
           
-          var ur = document.getElementById("$userResp"+i).value;
-          data += "&$userResp" + i + "="+encodeURIComponent(ur);
+          var ur = document.getElementById("$RESP"+i).value;
+          data += "&$RESP" + i + "="+encodeURIComponent(ur);
         }
       }
       catch(err) {

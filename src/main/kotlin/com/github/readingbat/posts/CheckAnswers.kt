@@ -25,10 +25,10 @@ import com.github.readingbat.dsl.LanguageType.Companion.toLanguageType
 import com.github.readingbat.dsl.LanguageType.Java
 import com.github.readingbat.dsl.LanguageType.Kotlin
 import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.misc.CSSNames.userResp
 import com.github.readingbat.misc.CheckAnswersJs.challengeSrc
 import com.github.readingbat.misc.CheckAnswersJs.groupSrc
 import com.github.readingbat.misc.CheckAnswersJs.langSrc
+import com.github.readingbat.misc.Constants.RESP
 import com.github.readingbat.misc.UserId.Companion.saveAnswers
 import com.github.readingbat.server.PipelineCall
 import io.ktor.application.call
@@ -83,12 +83,21 @@ internal object CheckAnswers : KLogging() {
   private fun String.isJavaBoolean() = this == "true" || this == "false"
   private fun String.isPythonBoolean() = this == "True" || this == "False"
 
+  private infix fun String.jvmEquals(answer: String) =
+    when {
+      this.isEmpty() || answer.isEmpty() -> false
+      this.isDoubleQuoted() || answer.isDoubleQuoted() -> this == answer
+      this.contains(".") || answer.contains(".") -> this.toDouble() == answer.toDouble()
+      this.isJavaBoolean() && answer.isJavaBoolean() -> this.toBoolean() == answer.toBoolean()
+      else -> this.toInt() == answer.toInt()
+    }
+
   suspend fun PipelineCall.checkAnswers(content: ReadingBatContent) {
     val params = call.receiveParameters()
     val compareMap = params.entries().map { it.key to it.value[0] }.toMap()
     val names = ChallengeNames(compareMap)
     val isJvm = names.languageName in listOf(Java.lowerName, Kotlin.lowerName)
-    val userResps = params.entries().filter { it.key.startsWith(userResp) }
+    val userResps = params.entries().filter { it.key.startsWith(RESP) }
     val challenge =
       content
         .findLanguage(names.languageName.toLanguageType())
@@ -104,13 +113,7 @@ internal object CheckAnswers : KLogging() {
           if (answer.isBracketed())
             answer.equalsAsKotlinList(userResp, kotlinScriptEngine)
           else
-            when {
-              userResp.isEmpty() || answer.isEmpty() -> false
-              userResp.isDoubleQuoted() || answer.isDoubleQuoted() -> userResp == answer
-              userResp.contains(".") || answer.contains(".") -> userResp.toDouble() == answer.toDouble()
-              userResp.isJavaBoolean() && answer.isJavaBoolean() -> userResp.toBoolean() == answer.toBoolean()
-              else -> userResp.toInt() == answer.toInt()
-            }
+            userResp jvmEquals answer
         }
         else
           if (answer.isBracketed())
@@ -133,7 +136,7 @@ internal object CheckAnswers : KLogging() {
     val results =
       userResps.indices.map { i ->
         val userResponse =
-          compareMap[userResp + i]?.trim() ?: throw InvalidConfigurationException("Missing user response")
+          compareMap[RESP + i]?.trim() ?: throw InvalidConfigurationException("Missing user response")
         val answer = funcInfo.answers[i]
         val answered = userResponse.isNotEmpty()
         ChallengeResults(arguments = funcInfo.arguments[i],

@@ -23,6 +23,7 @@ import com.github.pambrose.common.util.randomId
 import com.github.pambrose.common.util.sha256
 import com.github.readingbat.dsl.FunctionInfo
 import com.github.readingbat.dsl.InvalidConfigurationException
+import com.github.readingbat.misc.Constants.RESP
 import com.github.readingbat.misc.KeyPrefixes.ANSWER_HISTORY
 import com.github.readingbat.misc.KeyPrefixes.AUTH
 import com.github.readingbat.misc.KeyPrefixes.CHALLENGE_ANSWERS
@@ -162,7 +163,7 @@ internal class UserId(val id: String = randomId(25)) {
           val answerMap = mutableMapOf<String, String>()
           userResps.indices.forEach { i ->
             val userResp =
-              compareMap[CSSNames.userResp + i]?.trim() ?: throw InvalidConfigurationException("Missing user response")
+              compareMap[RESP + i]?.trim() ?: throw InvalidConfigurationException("Missing user response")
             if (userResp.isNotEmpty()) {
               val argumentKey = funcInfo.arguments[i]
               answerMap[argumentKey] = userResp
