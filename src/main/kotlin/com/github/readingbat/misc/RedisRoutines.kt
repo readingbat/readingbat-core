@@ -35,7 +35,7 @@ object RedisRoutines {
 
   internal fun showAllKeys() {
     withRedis { redis ->
-      println(redis?.keys("*")?.map { "$it - ${redis[it]}" }?.joinToString("\n"))
+      println(redis?.keys("*")?.joinToString("\n") { "$it - ${redis[it]}" })
     }
   }
 }

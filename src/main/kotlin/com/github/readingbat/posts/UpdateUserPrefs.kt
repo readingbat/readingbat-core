@@ -58,8 +58,7 @@ internal object UpdateUserPrefs : KLogging() {
           requestLogInPage(content)
         }
         else {
-          val action = parameters[PREF_ACTION] ?: ""
-          when (action) {
+          when (parameters[PREF_ACTION] ?: "") {
             UPDATE_PASSWORD -> {
               val currPassword = parameters[CURR_PASSWORD] ?: ""
               val newPassword = parameters[NEW_PASSWORD] ?: ""

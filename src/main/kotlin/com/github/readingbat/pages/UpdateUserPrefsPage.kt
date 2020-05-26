@@ -172,7 +172,7 @@ internal object UpdateUserPrefsPage : KLogging() {
       action = USER_PREFS
       method = FormMethod.post
       //onSubmit = "return formcheck()"
-      onSubmit = "return confirm('Are you sure you want to permanently delete account ${principal?.userId} ?');"
+      onSubmit = "return confirm('Are you sure you want to permanently delete the account for ${principal?.userId} ?');"
       input { type = InputType.submit; name = PREF_ACTION; value = DELETE_ACCOUNT }
     }
   }

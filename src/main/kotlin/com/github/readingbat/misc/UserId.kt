@@ -63,6 +63,9 @@ internal class UserId(val id: String = randomId(25)) {
     val challenges = redis.keys(challengeKey("*", "*", "*"))
     val arguments = redis.keys(argumentKey("*", "*", "*", "*"))
 
+    val userIdPasswordResetKey = userIdPasswordResetKey()
+    val previousResetId = redis.get(userIdPasswordResetKey) ?: ""
+
     logger.info { "Deleting user: ${principal.userId}" }
     logger.info { "userIdKey: $userIdKey" }
     logger.info { "saltKey: $saltKey" }
@@ -72,12 +75,19 @@ internal class UserId(val id: String = randomId(25)) {
     logger.info { "arguments: $arguments" }
 
     redis.multi().also { tx ->
+      if (previousResetId.isNotEmpty()) {
+        tx.del(userIdPasswordResetKey)
+        tx.del(passwordResetKey(previousResetId))
+      }
+
       tx.del(userIdKey)
       tx.del(saltKey)
       tx.del(passwordKey)
+
       correctAnswers.forEach { tx.del(it) }
       challenges.forEach { tx.del(it) }
       arguments.forEach { tx.del(it) }
+
       tx.exec()
     }
   }

@@ -30,15 +30,15 @@ internal object Emailer : KLogging() {
 
     val request =
       Request().apply {
-        setMethod(Method.POST)
-        setEndpoint("mail/send")
-        setBody(mail.build())
+        method = Method.POST
+        endpoint = "mail/send"
+        body = mail.build()
       }
 
     sg.api(request).also { response ->
-      logger.info { "Status code: ${response.getStatusCode()} to: $to from: $from" }
-      logger.info { "Body: ${response.getBody()}" }
-      logger.info { "Headers: ${response.getHeaders()}" }
+      logger.info { "Status code: ${response.statusCode} to: $to from: $from" }
+      logger.info { "Body: ${response.body}" }
+      logger.info { "Headers: ${response.headers}" }
     }
   }
 }
