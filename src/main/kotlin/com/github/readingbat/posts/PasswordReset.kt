@@ -25,7 +25,6 @@ import com.github.pambrose.common.util.encode
 import com.github.pambrose.common.util.isNotValidEmail
 import com.github.pambrose.common.util.randomId
 import com.github.pambrose.common.util.sha256
-import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.Constants.DBMS_DOWN
 import com.github.readingbat.misc.Constants.MSG
@@ -48,6 +47,7 @@ import com.google.common.util.concurrent.RateLimiter
 import io.ktor.application.call
 import io.ktor.request.receiveParameters
 import mu.KLogging
+import java.io.IOException
 
 internal object PasswordReset : KLogging() {
   private val unknownUserLimiter = RateLimiter.create(0.5) // rate 2.0 is "2 permits per second"
@@ -72,9 +72,9 @@ internal object PasswordReset : KLogging() {
 
           withRedisPool { redis ->
             if (redis == null)
-              throw InvalidConfigurationException(DBMS_DOWN)
+              throw ResetPasswordException(DBMS_DOWN)
 
-            val userId = lookupUserId(username) ?: throw InvalidConfigurationException("Unable to find $username")
+            val userId = lookupUserId(username) ?: throw ResetPasswordException("Unable to find $username", true)
 
             val passwordResetKey = passwordResetKey(resetId)
             val userIdPasswordResetKey = userId.userIdPasswordResetKey(username)
@@ -91,20 +91,25 @@ internal object PasswordReset : KLogging() {
             }
           }
 
-          val host = if (production) "https://readingbat.com" else "http://0.0.0.0:8080"
-          sendEmail(to = username,
-                    from = "reset@readingbat.com",
-                    subject = "ReadingBat password reset",
-                    msg =
-                    """
+          try {
+            val host = if (production) "https://readingbat.com" else "http://0.0.0.0:8080"
+            sendEmail(to = username,
+                      from = "reset@readingbat.com",
+                      subject = "ReadingBat password reset",
+                      msg =
+                      """
                       |This is a password reset message for the http://readingbat.com account for '$username'
                       |Go to this URL to set a new password: $host$PASSWORD_RESET?$RESET_ID=$resetId 
                       |If you did not request to reset your password, please ignore this message.
                     """.trimMargin())
+          } catch (e: IOException) {
+            logger.info(e) { e.message }
+            throw ResetPasswordException("Unable to send email")
+          }
 
           val returnPath = queryParam(RETURN_PATH) ?: "/"
           redirectTo { "$returnPath?$MSG=${"Password reset email sent to $username".encode()}" }
-        } catch (e: Exception) {
+        } catch (e: ResetPasswordException) {
           logger.info(e) { e.message }
           respondWith { passwordResetPage(content, "", "Unable to send password reset email to $username") }
         }
@@ -126,12 +131,12 @@ internal object PasswordReset : KLogging() {
       try {
         withSuspendingRedisPool { redis ->
           if (redis == null) {
-            throw InvalidConfigurationException(DBMS_DOWN)
+            throw ResetPasswordException(DBMS_DOWN)
           }
           else {
             val passwordResetKey = passwordResetKey(resetId)
-            val username = redis.get(passwordResetKey) ?: throw InvalidConfigurationException("Invalid resetId")
-            val userId = lookupUserId(username) ?: throw InvalidConfigurationException("Unable to find $username")
+            val username = redis.get(passwordResetKey) ?: throw ResetPasswordException("Invalid resetId", true)
+            val userId = lookupUserId(username) ?: throw ResetPasswordException("Unable to find $username", true)
             val userIdPasswordResetKey = userId.userIdPasswordResetKey(username)
             val passwordKey = userId.passwordKey()
             val salt = redis.get(userId.saltKey())
@@ -139,7 +144,7 @@ internal object PasswordReset : KLogging() {
             val oldDigest = redis.get(passwordKey)
 
             if (newDigest == oldDigest)
-              throw InvalidConfigurationException("New password is the same as the current password")
+              throw ResetPasswordException("New password is the same as the current password")
 
             redis.multi().also { tx ->
               tx.del(userIdPasswordResetKey)
@@ -151,10 +156,12 @@ internal object PasswordReset : KLogging() {
           }
         }
 
-      } catch (e: InvalidConfigurationException) {
+      } catch (e: ResetPasswordException) {
         logger.info(e) { e.message }
-        respondWith { passwordResetPage(content, resetId, e.message ?: "Unable to reset password") }
+        respondWith { passwordResetPage(content, if (e.startOver) "" else resetId, e.msg) }
       }
     }
   }
+
+  class ResetPasswordException(val msg: String, val startOver: Boolean = false) : Exception(msg)
 }

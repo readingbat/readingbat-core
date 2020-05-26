@@ -19,7 +19,6 @@ package com.github.readingbat.misc
 
 import com.sendgrid.*
 import mu.KLogging
-import java.io.IOException
 
 
 internal object Emailer : KLogging() {
@@ -28,22 +27,18 @@ internal object Emailer : KLogging() {
     val content = Content("text/plain", msg)
     val mail = Mail(Email(from), subject, Email(to), content)
     val sg = SendGrid(System.getenv("SENDGRID_API_KEY"))
-    try {
-      val request =
-        Request().apply {
-          setMethod(Method.POST)
-          setEndpoint("mail/send")
-          setBody(mail.build())
-        }
 
-      sg.api(request).also { response ->
-        logger.info { "Status code: ${response.getStatusCode()} to: $to from: $from" }
-        logger.info { "Body: ${response.getBody()}" }
-        logger.info { "Headers: ${response.getHeaders()}" }
+    val request =
+      Request().apply {
+        setMethod(Method.POST)
+        setEndpoint("mail/send")
+        setBody(mail.build())
       }
 
-    } catch (ex: IOException) {
-      throw ex
+    sg.api(request).also { response ->
+      logger.info { "Status code: ${response.getStatusCode()} to: $to from: $from" }
+      logger.info { "Body: ${response.getBody()}" }
+      logger.info { "Headers: ${response.getHeaders()}" }
     }
   }
 }

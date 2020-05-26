@@ -18,7 +18,6 @@
 package com.github.readingbat.pages
 
 import com.github.pambrose.common.redis.RedisUtils.withRedisPool
-import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.Constants.DBMS_DOWN
 import com.github.readingbat.misc.Constants.RESET_ID
@@ -39,6 +38,7 @@ import com.github.readingbat.pages.PageCommon.headDefault
 import com.github.readingbat.pages.PageCommon.privacyStatement
 import com.github.readingbat.pages.PageCommon.rawHtml
 import com.github.readingbat.pages.UpdateUserPrefsPage.labelWidth
+import com.github.readingbat.posts.PasswordReset.ResetPasswordException
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.queryParam
 import kotlinx.html.*
@@ -59,18 +59,18 @@ internal object PasswordResetPage : KLogging() {
         val username =
           withRedisPool { redis ->
             if (redis == null)
-              throw InvalidConfigurationException(DBMS_DOWN)
+              throw ResetPasswordException(DBMS_DOWN)
             val passwordResetKey = UserId.passwordResetKey(resetId)
-            redis.get(passwordResetKey) ?: throw InvalidConfigurationException("Invalid resetId")
+            redis.get(passwordResetKey) ?: throw ResetPasswordException("Invalid resetId")
           }
         changePasswordResetPage(content, username, resetId, msg)
-      } catch (e: InvalidConfigurationException) {
+      } catch (e: ResetPasswordException) {
         logger.info(e) { e.message }
         requestPasswordResetPage(content, e.message ?: "Unable to reset password")
       }
     }
 
-  fun PipelineCall.requestPasswordResetPage(content: ReadingBatContent, msg: String = "") =
+  private fun PipelineCall.requestPasswordResetPage(content: ReadingBatContent, msg: String = "") =
     createHTML()
       .html {
         head { headDefault(content) }
