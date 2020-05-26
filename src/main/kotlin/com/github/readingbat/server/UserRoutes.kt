@@ -32,8 +32,9 @@ import com.github.readingbat.misc.Endpoints.CLASSROOM
 import com.github.readingbat.misc.Endpoints.CREATE_ACCOUNT
 import com.github.readingbat.misc.Endpoints.CSS_NAME
 import com.github.readingbat.misc.Endpoints.FAV_ICON
+import com.github.readingbat.misc.Endpoints.PASSWORD_CHANGE
+import com.github.readingbat.misc.Endpoints.PASSWORD_RESET
 import com.github.readingbat.misc.Endpoints.PRIVACY
-import com.github.readingbat.misc.Endpoints.RESET_PASSWORD
 import com.github.readingbat.misc.Endpoints.USER_PREFS
 import com.github.readingbat.misc.UserPrincipal
 import com.github.readingbat.misc.cssContent
@@ -41,12 +42,12 @@ import com.github.readingbat.pages.AboutPage.aboutPage
 import com.github.readingbat.pages.ClassroomPage.classroomPage
 import com.github.readingbat.pages.CreateAccountPage.createAccountPage
 import com.github.readingbat.pages.PageCommon.defaultLanguageTab
+import com.github.readingbat.pages.PasswordResetPage.passwordResetPage
 import com.github.readingbat.pages.PrivacyPage.privacyPage
-import com.github.readingbat.pages.ResetPasswordPage.resetPasswordPage
 import com.github.readingbat.pages.UpdateUserPrefsPage.updateUserPrefsPage
 import com.github.readingbat.posts.CheckAnswers.checkAnswers
 import com.github.readingbat.posts.CreateAccount.createAccount
-import com.github.readingbat.posts.ResetPassword.sendResetPassword
+import com.github.readingbat.posts.PasswordReset.sendResetPassword
 import com.github.readingbat.posts.UpdateUserPrefs.updatePrefs
 import io.ktor.application.call
 import io.ktor.http.ContentType.Text.CSS
@@ -80,9 +81,11 @@ internal fun Routing.userRoutes(content: ReadingBatContent) {
 
   get(CLASSROOM) { respondWith { classroomPage(content) } }
 
-  get(RESET_PASSWORD) { respondWith { resetPasswordPage(content) } }
+  get(PASSWORD_RESET) { respondWith { passwordResetPage(content) } }
 
-  post(RESET_PASSWORD) { sendResetPassword(content) }
+  post(PASSWORD_RESET) { sendResetPassword(content) }
+
+  post(PASSWORD_CHANGE) {}
 
   get(LOGOUT) {
     // Purge UserPrincipal from cookie data

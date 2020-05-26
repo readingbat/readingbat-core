@@ -36,11 +36,11 @@ internal object Emailer : KLogging() {
           setBody(mail.build())
         }
 
-      val response: Response = sg.api(request)
-
-      logger.info { "Status code: ${response.getStatusCode()} for email: $to/$from" }
-      logger.info { "Body: ${response.getBody()}" }
-      logger.info { "Headers: ${response.getHeaders()}" }
+      sg.api(request).also { response ->
+        logger.info { "Status code: ${response.getStatusCode()} to: $to from: $from" }
+        logger.info { "Body: ${response.getBody()}" }
+        logger.info { "Headers: ${response.getHeaders()}" }
+      }
 
     } catch (ex: IOException) {
       throw ex

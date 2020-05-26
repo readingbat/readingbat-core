@@ -22,6 +22,7 @@ internal object Constants {
   const val sessionid = "sessionid"
   const val ICONS = "icons"
   const val RETURN_PATH = "returnPath"
+  const val RESET_ID = "reset_id"
   const val MSG = "msg"
   const val BACK_PATH = "backPath"
   const val ROOT = "/"
@@ -34,11 +35,12 @@ internal object Constants {
 
 object Endpoints {
   const val USER_PREFS = "/user-prefs"
+  const val PASSWORD_CHANGE = "/password-change"
   const val ABOUT = "/about.html"
   const val CLASSROOM = "/classroom.html"
   const val CREATE_ACCOUNT = "/create-account"
   const val PRIVACY = "/privacy.html"
-  const val RESET_PASSWORD = "/reset-password"
+  const val PASSWORD_RESET = "/password-reset"
   const val CHECK_ANSWERS_ROOT = "/check-answers"
   const val CSS_NAME = "/styles.css"
   const val FAV_ICON = "/favicon.ico"

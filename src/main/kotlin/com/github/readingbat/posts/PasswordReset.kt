@@ -27,26 +27,29 @@ import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.Emailer.sendEmail
 import com.github.readingbat.misc.FormFields.USERNAME
 import com.github.readingbat.misc.UserId.Companion.isValidUserId
-import com.github.readingbat.pages.ResetPasswordPage.resetPasswordPage
+import com.github.readingbat.pages.PasswordResetPage.passwordResetPage
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.queryParam
+import com.google.common.util.concurrent.RateLimiter
 import io.ktor.application.call
 import io.ktor.request.receiveParameters
 
-internal object ResetPassword {
+internal object PasswordReset {
+  private val unknownUserLimiter = RateLimiter.create(0.5) // rate 2.0 is "2 permits per second"
 
   suspend fun PipelineCall.sendResetPassword(content: ReadingBatContent) {
     val parameters = call.receiveParameters()
     val userId = parameters[USERNAME] ?: ""
     when {
       userId.isEmpty() -> {
-        respondWith { resetPasswordPage(content, "Unable to send password reset email -- missing email address") }
+        respondWith { passwordResetPage(content, "Unable to send password reset email -- missing email address") }
       }
       userId.isNotValidEmail() -> {
-        respondWith { resetPasswordPage(content, "Invalid email address: $userId") }
+        respondWith { passwordResetPage(content, "Invalid email address: $userId") }
       }
-      isValidUserId(userId) -> {
-        respondWith { resetPasswordPage(content, "Unknown user: $userId") }
+      !isValidUserId(userId) -> {
+        unknownUserLimiter.acquire()
+        respondWith { passwordResetPage(content, "Unknown user: $userId") }
       }
       else -> {
         try {
@@ -65,7 +68,7 @@ internal object ResetPassword {
           redirectTo { "$returnPath?$MSG=${"Password reset email sent to $userId".encode()}" }
         } catch (e: Exception) {
           e.printStackTrace()
-          respondWith { resetPasswordPage(content, "Unable to send password reset email to $userId") }
+          respondWith { passwordResetPage(content, "Unable to send password reset email to $userId") }
         }
       }
     }

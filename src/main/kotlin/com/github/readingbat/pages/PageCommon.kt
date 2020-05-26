@@ -33,8 +33,8 @@ import com.github.readingbat.misc.Constants.STATIC_ROOT
 import com.github.readingbat.misc.Endpoints.ABOUT
 import com.github.readingbat.misc.Endpoints.CREATE_ACCOUNT
 import com.github.readingbat.misc.Endpoints.CSS_NAME
+import com.github.readingbat.misc.Endpoints.PASSWORD_RESET
 import com.github.readingbat.misc.Endpoints.PRIVACY
-import com.github.readingbat.misc.Endpoints.RESET_PASSWORD
 import com.github.readingbat.misc.Endpoints.USER_PREFS
 import com.github.readingbat.misc.FormFields.PASSWORD
 import com.github.readingbat.misc.FormFields.USERNAME
@@ -120,7 +120,7 @@ object PageCommon {
     tr {
       td {
         colSpan = "2"
-        a { href = "$RESET_PASSWORD?$RETURN_PATH=$loginPath"; +"forgot password" }
+        a { href = "$PASSWORD_RESET?$RETURN_PATH=$loginPath"; +"forgot password" }
         +" | "
         a { href = "$CREATE_ACCOUNT?$RETURN_PATH=$loginPath"; +"create account" }
       }
