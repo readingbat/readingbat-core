@@ -17,7 +17,10 @@
 
 package com.github.readingbat.pages
 
+import com.github.pambrose.common.redis.RedisUtils.withRedisPool
+import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.ReadingBatContent
+import com.github.readingbat.misc.Constants.DBMS_DOWN
 import com.github.readingbat.misc.Constants.RESET_ID
 import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.Endpoints.PASSWORD_CHANGE
@@ -28,6 +31,7 @@ import com.github.readingbat.misc.FormFields.PREF_ACTION
 import com.github.readingbat.misc.FormFields.UPDATE_PASSWORD
 import com.github.readingbat.misc.FormFields.USERNAME
 import com.github.readingbat.misc.PageUtils.hideShowButton
+import com.github.readingbat.misc.UserId
 import com.github.readingbat.pages.PageCommon.backLink
 import com.github.readingbat.pages.PageCommon.bodyTitle
 import com.github.readingbat.pages.PageCommon.clickButtonScript
@@ -49,8 +53,21 @@ internal object PasswordResetPage {
   fun PipelineCall.passwordResetPage(content: ReadingBatContent, resetId: String, msg: String): String =
     if (resetId.isEmpty())
       requestPasswordResetPage(content, msg)
-    else
-      changePasswordResetPage(content, resetId, msg)
+    else {
+      try {
+        val username =
+          withRedisPool { redis ->
+            if (redis == null)
+              throw InvalidConfigurationException(DBMS_DOWN)
+            val passwordResetKey = UserId.passwordResetKey(resetId)
+            redis.get(passwordResetKey) ?: throw InvalidConfigurationException("Invalid resetId: $resetId")
+          }
+        changePasswordResetPage(content, username, resetId, msg)
+      } catch (e: Exception) {
+        e.printStackTrace()
+        requestPasswordResetPage(content, "Unable to reset password")
+      }
+    }
 
   fun PipelineCall.requestPasswordResetPage(content: ReadingBatContent, msg: String = "") =
     createHTML()
@@ -113,7 +130,10 @@ internal object PasswordResetPage {
         }
       }
 
-  fun PipelineCall.changePasswordResetPage(content: ReadingBatContent, resetId: String, msg: String) =
+  private fun PipelineCall.changePasswordResetPage(content: ReadingBatContent,
+                                                   username: String,
+                                                   resetId: String,
+                                                   msg: String) =
     createHTML()
       .html {
         head {
@@ -128,7 +148,7 @@ internal object PasswordResetPage {
 
           p { span { style = "color:red;";if (msg.isNotEmpty()) +msg else rawHtml(nbsp.text) } }
 
-          h3 { +"Change password" }
+          h3 { +"Change password for $username" }
           p { +"Password must contain at least 6 characters" }
           form {
             name = formName

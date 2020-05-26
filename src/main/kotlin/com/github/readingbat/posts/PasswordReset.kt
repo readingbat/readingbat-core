@@ -133,13 +133,18 @@ internal object PasswordReset {
             val username = redis.get(passwordResetKey)
             val userId = lookupUserId(username) ?: throw InvalidConfigurationException("Unable to find $username")
             val userIdPasswordResetKey = userId.userIdPasswordResetKey(username)
+            val passwordKey = userId.passwordKey()
             val salt = redis.get(userId.saltKey())
+            val newDigest = newPassword.sha256(salt)
+            val oldDigest = redis.get(passwordKey)
+
+            if (newDigest == oldDigest)
+              throw InvalidConfigurationException("new password is the same as the current password")
 
             redis.multi().also { tx ->
               tx.del(userIdPasswordResetKey)
               tx.del(passwordResetKey)
-              // Set new password
-              tx.set(userId.passwordKey(), newPassword.sha256(salt))
+              tx.set(passwordKey, newDigest)  // Set new password
               tx.exec()
             }
             redirectTo { "/?$MSG=${"Password reset for $username".encode()}" }
@@ -148,7 +153,7 @@ internal object PasswordReset {
 
       } catch (e: InvalidConfigurationException) {
         e.printStackTrace()
-        respondWith { passwordResetPage(content, resetId, "Unable to reset password") }
+        respondWith { passwordResetPage(content, resetId, "Unable to reset password [${e.message}]") }
       }
     }
   }
