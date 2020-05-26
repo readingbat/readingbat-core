@@ -24,6 +24,7 @@ import com.github.pambrose.common.response.respondWith
 import com.github.pambrose.common.util.encode
 import com.github.pambrose.common.util.isNotValidEmail
 import com.github.pambrose.common.util.randomId
+import com.github.pambrose.common.util.sha256
 import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.Constants.DBMS_DOWN
@@ -41,6 +42,7 @@ import com.github.readingbat.misc.UserId.Companion.passwordResetKey
 import com.github.readingbat.pages.PasswordResetPage.passwordResetPage
 import com.github.readingbat.posts.CreateAccount.checkPassword
 import com.github.readingbat.server.PipelineCall
+import com.github.readingbat.server.production
 import com.github.readingbat.server.queryParam
 import com.google.common.util.concurrent.RateLimiter
 import io.ktor.application.call
@@ -64,7 +66,6 @@ internal object PasswordReset {
         respondWith { passwordResetPage(content, "", "Unknown user: $username") }
       }
       else -> {
-
         try {
           val resetId = randomId(15)
 
@@ -89,13 +90,14 @@ internal object PasswordReset {
             }
           }
 
+          val host = if (production) "https://readingbat.com" else "http://0.0.0.0:8080"
           sendEmail(to = username,
                     from = "reset@readingbat.com",
                     subject = "ReadingBat password reset",
                     msg =
                     """
                       |This is a password reset message for the http://readingbat.com account for '$username'
-                      |Go to this URL to set a new password: http://readingbat.com$PASSWORD_RESET?$RESET_ID=$resetId 
+                      |Go to this URL to set a new password: $host$PASSWORD_RESET?$RESET_ID=$resetId 
                       |If you did not request to reset your password, please ignore this message.
                     """.trimMargin())
 
@@ -110,13 +112,12 @@ internal object PasswordReset {
   }
 
   suspend fun PipelineCall.changePassword(content: ReadingBatContent) {
-    val parameters = call.parameters
+    val parameters = call.receiveParameters()
     val resetId = parameters[RESET_ID] ?: ""
     val newPassword = parameters[NEW_PASSWORD] ?: ""
     val confirmPassword = parameters[CONFIRM_PASSWORD] ?: ""
 
     val passwordError = checkPassword(newPassword, confirmPassword)
-
     if (passwordError.isNotEmpty()) {
       respondWith { passwordResetPage(content, resetId, passwordError) }
     }
@@ -135,11 +136,11 @@ internal object PasswordReset {
             val salt = redis.get(userId.saltKey())
 
             redis.multi().also { tx ->
-              //tx.del(userIdPasswordResetKey)
-              //tx.del(passwordResetKey)
+              tx.del(userIdPasswordResetKey)
+              tx.del(passwordResetKey)
               // Set new password
-              //tx.set(userId.passwordKey(), newPassword.sha256(salt))
-              //tx.exec()
+              tx.set(userId.passwordKey(), newPassword.sha256(salt))
+              tx.exec()
             }
             redirectTo { "/?$MSG=${"Password reset for $username".encode()}" }
           }

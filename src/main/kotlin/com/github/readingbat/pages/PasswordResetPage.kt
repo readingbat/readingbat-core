@@ -18,6 +18,7 @@
 package com.github.readingbat.pages
 
 import com.github.readingbat.dsl.ReadingBatContent
+import com.github.readingbat.misc.Constants.RESET_ID
 import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.Endpoints.PASSWORD_CHANGE
 import com.github.readingbat.misc.Endpoints.PASSWORD_RESET
@@ -98,11 +99,11 @@ internal object PasswordResetPage {
             }
             p {
               +"""
-            This will send an email with a temporary password to the account email address. 
-            When you get the email, log in with the temporary password, and go to the prefs page 
-            to enter a new password. If the email does not arrive, double-check that the email 
-            address above is entered correctly.
-          """.trimIndent()
+                This will send an email with a link that will allow you th set your password. 
+                When you get the email, click on the link (or enter the URL in your browser), and  
+                enter a new password. If the email does not arrive, double-check that the email 
+                address above is entered correctly.
+              """.trimIndent()
             }
 
             this@body.privacyStatement(PASSWORD_RESET, returnPath)
@@ -153,17 +154,23 @@ internal object PasswordResetPage {
                 td { hideShowButton(formName, CONFIRM_PASSWORD) }
               }
               tr {
-                td {}
                 td {
                   input {
-                    type = InputType.submit; id = passwordButton; name = PREF_ACTION; value = UPDATE_PASSWORD
+                    type = InputType.hidden; name = RESET_ID; value = resetId
+                  }
+                }
+                td {
+                  input {
+                    style = "font-size:25px; height:35; width:  155;"
+                    type = InputType.submit
+                    id = passwordButton
+                    name = PREF_ACTION
+                    value = UPDATE_PASSWORD
                   }
                 }
               }
             }
           }
-
-
 
           backLink(returnPath)
         }

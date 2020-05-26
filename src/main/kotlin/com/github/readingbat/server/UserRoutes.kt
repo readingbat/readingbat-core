@@ -21,9 +21,9 @@ import com.github.pambrose.common.response.redirectTo
 import com.github.pambrose.common.response.respondWith
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.AuthRoutes.LOGOUT
-import com.github.readingbat.misc.Constants
 import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
 import com.github.readingbat.misc.Constants.ICONS
+import com.github.readingbat.misc.Constants.RESET_ID
 import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.Constants.ROOT
 import com.github.readingbat.misc.Constants.STATIC_ROOT
@@ -83,7 +83,8 @@ internal fun Routing.userRoutes(content: ReadingBatContent) {
 
   get(CLASSROOM) { respondWith { classroomPage(content) } }
 
-  get(PASSWORD_RESET) { respondWith { passwordResetPage(content, queryParam(Constants.RESET_ID) ?: "", "") } }
+  // RESET_ID is passed here when user clicks on email URL
+  get(PASSWORD_RESET) { respondWith { passwordResetPage(content, queryParam(RESET_ID) ?: "", "") } }
 
   post(PASSWORD_RESET) { sendPasswordReset(content) }
 
