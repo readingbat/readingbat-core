@@ -36,6 +36,7 @@ import com.github.readingbat.pages.HelpAndLogin.helpAndLogin
 import com.github.readingbat.pages.PageCommon.backLink
 import com.github.readingbat.pages.PageCommon.bodyTitle
 import com.github.readingbat.pages.PageCommon.clickButtonScript
+import com.github.readingbat.pages.PageCommon.displayMessage
 import com.github.readingbat.pages.PageCommon.headDefault
 import com.github.readingbat.pages.PageCommon.privacyStatement
 import com.github.readingbat.server.PipelineCall
@@ -77,8 +78,7 @@ internal object UserPrefsPage : KLogging() {
 
           h2 { +"ReadingBat Prefs" }
 
-          if (msg.isNotEmpty())
-            p { span { style = "color:${if (isErrorMsg) "red" else "green"};"; +msg } }
+          p { span { style = "color:${if (isErrorMsg) "red" else "green"};"; this@body.displayMessage(msg) } }
 
           val principal = fetchPrincipal()
           val returnPath = queryParam(RETURN_PATH) ?: "/"
@@ -219,15 +219,13 @@ internal object UserPrefsPage : KLogging() {
         head { headDefault(content) }
 
         body {
-          val principal = fetchPrincipal()
           val returnPath = queryParam(RETURN_PATH) ?: "/"
 
-          helpAndLogin(principal, returnPath)
+          helpAndLogin(fetchPrincipal(), returnPath)
 
           bodyTitle()
 
-          if (msg.isNotEmpty())
-            p { span { style = "color:${if (isErrorMsg) "red" else "green"};"; +msg } }
+          p { span { style = "color:${if (isErrorMsg) "red" else "green"};"; this@body.displayMessage(msg) } }
 
           h2 { +"Log in" }
 

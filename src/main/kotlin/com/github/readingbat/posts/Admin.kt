@@ -50,7 +50,7 @@ internal object Admin {
               adminDataPage(content, "$cnt items deleted", false)
             }
             else ->
-              ""
+              adminDataPage(content, "Invalid option")
           }
         }
       }
