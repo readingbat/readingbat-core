@@ -17,10 +17,10 @@
 
 package com.github.readingbat.misc
 
-import com.github.readingbat.misc.KeyPrefixes.ANSWER_HISTORY
-import com.github.readingbat.misc.KeyPrefixes.CHALLENGE_ANSWERS
-import com.github.readingbat.misc.KeyPrefixes.CORRECT_ANSWERS
-import com.github.readingbat.misc.KeyPrefixes.NO_AUTH
+import com.github.readingbat.misc.RedisConstants.ANSWER_HISTORY_KEY
+import com.github.readingbat.misc.RedisConstants.CHALLENGE_ANSWERS_KEY
+import com.github.readingbat.misc.RedisConstants.CORRECT_ANSWERS_KEY
+import com.github.readingbat.misc.RedisConstants.NO_AUTH_KEY
 import com.github.readingbat.posts.ChallengeNames
 import java.time.Instant
 
@@ -30,20 +30,20 @@ internal data class BrowserSession(val id: String, val created: Long = Instant.n
     correctAnswersKey(names.languageName, names.groupName, names.challengeName)
 
   fun correctAnswersKey(languageName: String, groupName: String, challengeName: String) =
-    listOf(CORRECT_ANSWERS,
-           NO_AUTH, id, languageName, groupName, challengeName).joinToString("|")
+    listOf(CORRECT_ANSWERS_KEY,
+           NO_AUTH_KEY, id, languageName, groupName, challengeName).joinToString("|")
 
   fun challengeKey(names: ChallengeNames) =
     challengeKey(names.languageName, names.groupName, names.challengeName)
 
   fun challengeKey(languageName: String, groupName: String, challengeName: String) =
-    listOf(CHALLENGE_ANSWERS,
-           NO_AUTH, id, languageName, groupName, challengeName).joinToString("|")
+    listOf(CHALLENGE_ANSWERS_KEY,
+           NO_AUTH_KEY, id, languageName, groupName, challengeName).joinToString("|")
 
   fun argumentKey(names: ChallengeNames, argument: String) =
     argumentKey(names.languageName, names.groupName, names.challengeName, argument)
 
   fun argumentKey(languageName: String, groupName: String, challengeName: String, argument: String) =
-    listOf(ANSWER_HISTORY,
-           NO_AUTH, id, languageName, groupName, challengeName, argument).joinToString("|")
+    listOf(ANSWER_HISTORY_KEY,
+           NO_AUTH_KEY, id, languageName, groupName, challengeName, argument).joinToString("|")
 }

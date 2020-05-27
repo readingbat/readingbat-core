@@ -55,6 +55,7 @@ internal data class ChallengeHistory(var argument: String,
                                      val answers: MutableList<String> = mutableListOf()) {
   fun markCorrect() {
     correct = true
+    attempts++
   }
 
   fun markIncorrect(userResp: String) {

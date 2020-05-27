@@ -38,7 +38,9 @@ internal fun Application.property(name: String, default: String = "", warn: Bool
     if (warn)
       logger.warn { "Missing $name value in application.conf" }
     default
-  }typealias PipelineCall = PipelineContext<Unit, ApplicationCall>
+  }
+
+typealias PipelineCall = PipelineContext<Unit, ApplicationCall>
 
 internal fun PipelineCall.fetchPrincipal(loginAttempt: Boolean = false): UserPrincipal? =
   if (loginAttempt) assignPrincipal() else call.sessions.get<UserPrincipal>()

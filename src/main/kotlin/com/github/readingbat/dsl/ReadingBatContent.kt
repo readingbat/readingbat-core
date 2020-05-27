@@ -24,6 +24,7 @@ import com.github.readingbat.dsl.LanguageType.*
 
 @ReadingBatDslMarker
 class ReadingBatContent {
+  internal var siteUrlPrefix = ""
   internal var googleAnalyticsId = ""
 
   val python by lazy { LanguageGroup<PythonChallenge>(this, Python) }

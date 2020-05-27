@@ -17,32 +17,17 @@
 
 package com.github.readingbat.misc
 
-import com.github.pambrose.common.redis.RedisUtils.withRedis
-import redis.clients.jedis.exceptions.JedisDataException
+internal object RedisConstants {
+  const val USER_ID_KEY = "userId"
+  const val DIGEST_KEY = "digest"
+  const val CORRECT_ANSWERS_KEY = "correct-answers"
+  const val CHALLENGE_ANSWERS_KEY = "challenge-answers"
+  const val ANSWER_HISTORY_KEY = "answer-history"
+  const val RESET_KEY = "password-reset"
+  const val USERID_RESET_KEY = "userid_password-reset"
+  const val AUTH_KEY = "auth"
+  const val NO_AUTH_KEY = "noauth"
 
-object RedisRoutines {
-
-  @JvmStatic
-  fun main(args: Array<String>) {
-    showAllKeys()
-    //deleteAllKeys()
-  }
-
-  internal fun deleteAllKeys() {
-    withRedis { redis ->
-      redis?.keys("*")?.forEach { redis.del(it) }
-    }
-  }
-
-  internal fun showAllKeys() {
-    withRedis { redis ->
-      println(redis?.keys("*")?.joinToString("\n") {
-        try {
-          "$it - ${redis[it]}"
-        } catch (e: JedisDataException) {
-          "$it - ${redis.hgetAll(it)}"
-        }
-      })
-    }
-  }
+  const val SALT_FIELD = "salt"
+  const val DIGEST_FIELD = "digest"
 }

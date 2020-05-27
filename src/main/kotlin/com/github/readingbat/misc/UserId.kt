@@ -24,15 +24,16 @@ import com.github.pambrose.common.util.sha256
 import com.github.readingbat.dsl.FunctionInfo
 import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.misc.Constants.RESP
-import com.github.readingbat.misc.KeyPrefixes.ANSWER_HISTORY
-import com.github.readingbat.misc.KeyPrefixes.AUTH
-import com.github.readingbat.misc.KeyPrefixes.CHALLENGE_ANSWERS
-import com.github.readingbat.misc.KeyPrefixes.CORRECT_ANSWERS
-import com.github.readingbat.misc.KeyPrefixes.PASSWD
-import com.github.readingbat.misc.KeyPrefixes.RESET
-import com.github.readingbat.misc.KeyPrefixes.SALT
-import com.github.readingbat.misc.KeyPrefixes.USERID_RESET
-import com.github.readingbat.misc.KeyPrefixes.USER_ID
+import com.github.readingbat.misc.RedisConstants.ANSWER_HISTORY_KEY
+import com.github.readingbat.misc.RedisConstants.AUTH_KEY
+import com.github.readingbat.misc.RedisConstants.CHALLENGE_ANSWERS_KEY
+import com.github.readingbat.misc.RedisConstants.CORRECT_ANSWERS_KEY
+import com.github.readingbat.misc.RedisConstants.DIGEST_FIELD
+import com.github.readingbat.misc.RedisConstants.DIGEST_KEY
+import com.github.readingbat.misc.RedisConstants.RESET_KEY
+import com.github.readingbat.misc.RedisConstants.SALT_FIELD
+import com.github.readingbat.misc.RedisConstants.USERID_RESET_KEY
+import com.github.readingbat.misc.RedisConstants.USER_ID_KEY
 import com.github.readingbat.posts.ChallengeHistory
 import com.github.readingbat.posts.ChallengeNames
 import com.github.readingbat.posts.ChallengeResults
@@ -46,35 +47,33 @@ import mu.KLogging
 import redis.clients.jedis.Jedis
 
 internal class UserId(val id: String = randomId(25)) {
-  fun saltKey() = "$SALT|$id"
 
-  fun passwordKey() = "$PASSWD|$id"
+  fun digestKey() = "$DIGEST_KEY|$id"
 
   fun correctAnswersKey(names: ChallengeNames) =
     correctAnswersKey(names.languageName, names.groupName, names.challengeName)
 
   fun correctAnswersKey(languageName: String, groupName: String, challengeName: String) =
-    listOf(CORRECT_ANSWERS, AUTH, id, languageName, groupName, challengeName).joinToString(sep)
+    listOf(CORRECT_ANSWERS_KEY, AUTH_KEY, id, languageName, groupName, challengeName).joinToString(sep)
 
   fun challengeKey(names: ChallengeNames) =
     challengeKey(names.languageName, names.groupName, names.challengeName)
 
   fun challengeKey(languageName: String, groupName: String, challengeName: String) =
-    listOf(CHALLENGE_ANSWERS, AUTH, id, languageName, groupName, challengeName).joinToString(sep)
+    listOf(CHALLENGE_ANSWERS_KEY, AUTH_KEY, id, languageName, groupName, challengeName).joinToString(sep)
 
   fun argumentKey(names: ChallengeNames, argument: String) =
     argumentKey(names.languageName, names.groupName, names.challengeName, argument)
 
   fun argumentKey(languageName: String, groupName: String, challengeName: String, argument: String) =
-    listOf(ANSWER_HISTORY, AUTH, id, languageName, groupName, challengeName, argument).joinToString(sep)
+    listOf(ANSWER_HISTORY_KEY, AUTH_KEY, id, languageName, groupName, challengeName, argument).joinToString(sep)
 
   // This key maps to a reset_id
-  fun userIdPasswordResetKey() = listOf(USERID_RESET, id).joinToString(sep)
+  fun userIdPasswordResetKey() = listOf(USERID_RESET_KEY, id).joinToString(sep)
 
   fun deleteUser(principal: UserPrincipal, redis: Jedis) {
     val userIdKey = userIdKey(principal.userId)
-    val saltKey = saltKey()
-    val passwordKey = passwordKey()
+    val digestKey = digestKey()
     val correctAnswers = redis.keys(correctAnswersKey("*", "*", "*"))
     val challenges = redis.keys(challengeKey("*", "*", "*"))
     val arguments = redis.keys(argumentKey("*", "*", "*", "*"))
@@ -84,8 +83,7 @@ internal class UserId(val id: String = randomId(25)) {
 
     logger.info { "Deleting user: ${principal.userId}" }
     logger.info { "userIdKey: $userIdKey" }
-    logger.info { "saltKey: $saltKey" }
-    logger.info { "passwordKey: $passwordKey" }
+    logger.info { "digestKey: $digestKey" }
     logger.info { "correctAnswers: $correctAnswers" }
     logger.info { "challenges: $challenges" }
     logger.info { "arguments: $arguments" }
@@ -97,8 +95,8 @@ internal class UserId(val id: String = randomId(25)) {
       }
 
       tx.del(userIdKey)
-      tx.del(saltKey)
-      tx.del(passwordKey)
+      //tx.hdel(digestKey, SALT_FIELD, DIGEST_FIELD)
+      tx.del(digestKey)
 
       correctAnswers.forEach { tx.del(it) }
       challenges.forEach { tx.del(it) }
@@ -114,17 +112,16 @@ internal class UserId(val id: String = randomId(25)) {
 
     val gson = Gson()
 
-    fun userIdKey(username: String) = "$USER_ID|$username"
+    fun userIdKey(username: String) = "$USER_ID_KEY|$username"
 
     // Maps resetId to username
-    fun passwordResetKey(resetId: String) = listOf(RESET, resetId).joinToString(sep)
+    fun passwordResetKey(resetId: String) = listOf(RESET_KEY, resetId).joinToString(sep)
 
     fun createUser(username: String, password: String, redis: Jedis) {
-      // The userName (email) is stored in only a single KV pair, enabling changes to the userName
+      // The userName (email) is stored in a single KV pair, enabling changes to the userName
       // Three things are stored:
       // username -> userId
-      // userId -> salt
-      // userId -> sha256-encoded password
+      // userId -> salt and sha256-encoded digest
 
       val userIdKey = userIdKey(username)
       val userId = UserId()
@@ -133,8 +130,7 @@ internal class UserId(val id: String = randomId(25)) {
 
       redis.multi().also { tx ->
         tx.set(userIdKey, userId.id)
-        tx.set(userId.saltKey(), salt)
-        tx.set(userId.passwordKey(), password.sha256(salt))
+        tx.hset(userId.digestKey(), mapOf(SALT_FIELD to salt, DIGEST_FIELD to password.sha256(salt)))
         tx.exec()
       }
     }
@@ -215,10 +211,9 @@ internal class UserId(val id: String = randomId(25)) {
     }
 
     fun lookupUserId(userId: UserId, redis: Jedis?): Pair<String, String> {
-      val saltKey = userId.saltKey()
-      val passwordKey = userId.passwordKey()
-      val salt = redis?.get(saltKey) ?: ""
-      val digest = redis?.get(passwordKey) ?: ""
+      val digestKey = userId.digestKey()
+      val salt = redis?.hget(digestKey, SALT_FIELD) ?: ""
+      val digest = redis?.hget(digestKey, DIGEST_FIELD) ?: ""
       return salt to digest
     }
   }

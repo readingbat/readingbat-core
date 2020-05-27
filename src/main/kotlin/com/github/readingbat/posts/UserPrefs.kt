@@ -29,6 +29,7 @@ import com.github.readingbat.misc.FormFields.JOIN_CLASS
 import com.github.readingbat.misc.FormFields.NEW_PASSWORD
 import com.github.readingbat.misc.FormFields.UPDATE_PASSWORD
 import com.github.readingbat.misc.FormFields.USER_PREFS_ACTION
+import com.github.readingbat.misc.RedisConstants.DIGEST_FIELD
 import com.github.readingbat.misc.UserId
 import com.github.readingbat.misc.UserId.Companion.lookupPrincipal
 import com.github.readingbat.misc.UserPrincipal
@@ -74,8 +75,9 @@ internal object UserPrefs : KLogging() {
                 else {
                   val (salt, digest) = UserId.lookupUserId(userId, redis)
                   if (salt.isNotEmpty() && digest.isNotEmpty() && digest == currPassword.sha256(salt)) {
+                    val digestKey = userId.digestKey()
                     val newDigest = newPassword.sha256(salt)
-                    redis.set(userId.passwordKey(), newDigest)
+                    redis.hset(digestKey, DIGEST_FIELD, newDigest)
                     "Password changed" to false
                   }
                   else {

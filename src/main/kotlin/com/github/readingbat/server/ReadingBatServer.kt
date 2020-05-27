@@ -39,6 +39,7 @@ internal fun Application.module() {
   val readingBatContent =
     readDsl(FileSource(fileName = fileName), variableName = variableName)
       .apply {
+        siteUrlPrefix = property("readingbat.site.urlPrefix", default = "https://readingbat.com")
         googleAnalyticsId = property("readingbat.site.googleAnalyticsId")
       }
 

@@ -36,13 +36,14 @@ import com.github.readingbat.misc.Endpoints.PASSWORD_RESET
 import com.github.readingbat.misc.FormFields.CONFIRM_PASSWORD
 import com.github.readingbat.misc.FormFields.NEW_PASSWORD
 import com.github.readingbat.misc.FormFields.USERNAME
+import com.github.readingbat.misc.RedisConstants.DIGEST_FIELD
+import com.github.readingbat.misc.RedisConstants.SALT_FIELD
 import com.github.readingbat.misc.UserId.Companion.isValidUsername
 import com.github.readingbat.misc.UserId.Companion.lookupUsername
 import com.github.readingbat.misc.UserId.Companion.passwordResetKey
 import com.github.readingbat.pages.PasswordResetPage.passwordResetPage
 import com.github.readingbat.posts.CreateAccount.checkPassword
 import com.github.readingbat.server.PipelineCall
-import com.github.readingbat.server.production
 import com.github.readingbat.server.queryParam
 import com.google.common.util.concurrent.RateLimiter
 import io.ktor.application.call
@@ -94,14 +95,13 @@ internal object PasswordReset : KLogging() {
           }
 
           try {
-            val host = if (production) "https://readingbat.com" else "http://0.0.0.0:8080"
             sendEmail(to = username,
                       from = "reset@readingbat.com",
                       subject = "ReadingBat password reset",
                       msg =
                       """
                       |This is a password reset message for the http://readingbat.com account for '$username'
-                      |Go to this URL to set a new password: $host$PASSWORD_RESET?$RESET_ID=$resetId 
+                      |Go to this URL to set a new password: ${content.siteUrlPrefix}$PASSWORD_RESET?$RESET_ID=$resetId 
                       |If you did not request to reset your password, please ignore this message.
                     """.trimMargin())
           } catch (e: IOException) {
@@ -138,10 +138,10 @@ internal object PasswordReset : KLogging() {
         val username = redis.get(passwordResetKey) ?: throw ResetPasswordException(INVALID_RESET_ID)
         val userId = lookupUsername(username, redis) ?: throw ResetPasswordException("Unable to find $username")
         val userIdPasswordResetKey = userId.userIdPasswordResetKey()
-        val passwordKey = userId.passwordKey()
-        val salt = redis.get(userId.saltKey())
+        val digestKey = userId.digestKey()
+        val salt = redis.hget(digestKey, SALT_FIELD)
         val newDigest = newPassword.sha256(salt)
-        val oldDigest = redis.get(passwordKey)
+        val oldDigest = redis.hget(digestKey, DIGEST_FIELD)
 
         if (newDigest == oldDigest)
           throw ResetPasswordException("New password is the same as the current password", resetId)
@@ -149,7 +149,7 @@ internal object PasswordReset : KLogging() {
         redis.multi().also { tx ->
           tx.del(userIdPasswordResetKey)
           tx.del(passwordResetKey)
-          tx.set(passwordKey, newDigest)  // Set new password
+          tx.hset(digestKey, DIGEST_FIELD, newDigest)  // Set new password
           tx.exec()
         }
         redirectTo { "/?$MSG=${"Password reset for $username".encode()}" }
