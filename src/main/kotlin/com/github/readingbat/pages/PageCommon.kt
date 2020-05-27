@@ -148,7 +148,11 @@ internal object PageCommon {
   fun BODY.addLink(text: String, url: String, newWindow: Boolean = false) =
     a { href = url; if (newWindow) target = "_blank"; +text }
 
-  fun BODY.backLink(url: String, marginLeft: String = "1em") {
+  fun BODY.privacyStatement(backPath: String, returnPath: String) {
+    p { a { href = "$PRIVACY?$BACK_PATH=$backPath&$RETURN_PATH=$returnPath"; +"privacy statement" } }
+  }
+
+  fun BODY.backLinkWithIndent(url: String, marginLeft: String = "1em") {
     if (url.isNotEmpty()) {
       div {
         style = "font-size: 120%; margin-left: $marginLeft;"
@@ -158,11 +162,7 @@ internal object PageCommon {
     }
   }
 
-  fun BODY.privacyStatement(backPath: String, returnPath: String) {
-    p { a { href = "$PRIVACY?$BACK_PATH=$backPath&$RETURN_PATH=$returnPath"; +"privacy statement" } }
-  }
-
-  fun BODY.backLink(vararg pathElems: String) = backLink(pathElems.toList().toRootPath())
+  fun BODY.backLink(vararg pathElems: String) = backLinkWithIndent(pathElems.toList().toRootPath())
 
   fun HTMLTag.rawHtml(html: String) = unsafe { raw(html) }
 

@@ -19,7 +19,6 @@ package com.github.readingbat.pages
 
 import com.github.pambrose.common.redis.RedisUtils.withRedisPool
 import com.github.pambrose.common.util.decode
-import com.github.pambrose.common.util.toPath
 import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.ChallengeGroup
 import com.github.readingbat.dsl.ReadingBatContent
@@ -118,7 +117,7 @@ internal object ChallengeGroupPage {
             }
           }
 
-          backLink(listOf(CHALLENGE_ROOT, languageName).toPath(true))
+          backLink(CHALLENGE_ROOT, languageName)
         }
       }
 }

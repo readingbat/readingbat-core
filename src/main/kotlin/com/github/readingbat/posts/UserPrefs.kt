@@ -21,7 +21,7 @@ import com.github.pambrose.common.redis.RedisUtils.withRedisPool
 import com.github.pambrose.common.util.sha256
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.Constants.DBMS_DOWN
-import com.github.readingbat.misc.Dashboards.isValidClassCode
+import com.github.readingbat.misc.Dashboards.enrollIntoClass
 import com.github.readingbat.misc.FormFields.CLASS_CODE
 import com.github.readingbat.misc.FormFields.CONFIRM_PASSWORD
 import com.github.readingbat.misc.FormFields.CURR_PASSWORD
@@ -44,6 +44,7 @@ import io.ktor.request.receiveParameters
 import io.ktor.sessions.clear
 import io.ktor.sessions.sessions
 import mu.KLogging
+import redis.clients.jedis.exceptions.JedisException
 
 internal object UserPrefs : KLogging() {
 
@@ -90,14 +91,15 @@ internal object UserPrefs : KLogging() {
 
             JOIN_CLASS -> {
               val classCode = parameters[CLASS_CODE] ?: ""
-              if (classCode.isBlank()) {
-                userPrefsPage(content, "Empty class code", true)
-              }
-              else if (!isValidClassCode(classCode)) {
-                userPrefsPage(content, "Invalid class code: $classCode", true, defaultClassCode = classCode)
-              }
-              else {
+              try {
+                userId.enrollIntoClass(classCode)
                 userPrefsPage(content, "Enrolled in class $classCode", false)
+              } catch (e: JedisException) {
+                logger.info(e) { "" }
+                userPrefsPage(content,
+                              "Unable to enroll in class [${e.message ?: ""}]",
+                              true,
+                              defaultClassCode = classCode)
               }
             }
 

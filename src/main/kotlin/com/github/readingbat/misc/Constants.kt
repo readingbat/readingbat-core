@@ -39,6 +39,7 @@ internal object Constants {
 internal object Endpoints {
   const val USER_PREFS = "/user-prefs"
   const val ABOUT = "/about.html"
+  const val CREATE_CLASS = "/create-class"
   const val CLASSROOM = "/classroom.html"
   const val CREATE_ACCOUNT = "/create-account"
   const val PRIVACY = "/privacy.html"

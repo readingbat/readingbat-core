@@ -25,6 +25,20 @@ internal object Dashboards {
 
   fun classCodeEnrollmentKey(classCode: String) = listOf(CLASS_CODE_KEY, classCode).joinToString(KEY_SEP)
 
-  fun isValidClassCode(classCode: String) =
-    withRedisPool { redis -> redis?.get(classCodeEnrollmentKey(classCode)) != null }
+  fun UserId.enrollIntoClass(classCode: String) {
+    if (classCode.isBlank()) {
+      throw DataException("Empty class code")
+    }
+    else {
+      val classCodeEnrollmentKey = classCodeEnrollmentKey(classCode)
+      withRedisPool { redis ->
+        when {
+          redis == null -> throw RedisDownException()
+          redis.smembers(classCodeEnrollmentKey) == null -> throw DataException("Invalid class code $classCode")
+          redis.sismember(classCodeEnrollmentKey, id) -> throw DataException("Already joined class $classCode")
+          else -> redis.sadd(classCodeEnrollmentKey, id)
+        }
+      }
+    }
+  }
 }

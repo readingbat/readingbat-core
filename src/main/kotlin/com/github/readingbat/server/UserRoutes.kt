@@ -31,6 +31,7 @@ import com.github.readingbat.misc.Endpoints.ABOUT
 import com.github.readingbat.misc.Endpoints.CHECK_ANSWERS_ROOT
 import com.github.readingbat.misc.Endpoints.CLASSROOM
 import com.github.readingbat.misc.Endpoints.CREATE_ACCOUNT
+import com.github.readingbat.misc.Endpoints.CREATE_CLASS
 import com.github.readingbat.misc.Endpoints.CSS_NAME
 import com.github.readingbat.misc.Endpoints.FAV_ICON
 import com.github.readingbat.misc.Endpoints.PASSWORD_CHANGE
@@ -47,6 +48,7 @@ import com.github.readingbat.pages.PasswordResetPage.passwordResetPage
 import com.github.readingbat.pages.PrivacyPage.privacyPage
 import com.github.readingbat.pages.UserPrefsPage.userPrefsPage
 import com.github.readingbat.posts.CheckAnswers.checkAnswers
+import com.github.readingbat.posts.Classroom.createClass
 import com.github.readingbat.posts.CreateAccount.createAccount
 import com.github.readingbat.posts.PasswordReset.changePassword
 import com.github.readingbat.posts.PasswordReset.sendPasswordReset
@@ -82,6 +84,8 @@ internal fun Routing.userRoutes(content: ReadingBatContent) {
   get(ABOUT) { respondWith { aboutPage(content) } }
 
   get(CLASSROOM) { respondWith { classroomPage(content) } }
+
+  get(CREATE_CLASS) { respondWith { createClass(content) } }
 
   // RESET_ID is passed here when user clicks on email URL
   get(PASSWORD_RESET) { respondWith { passwordResetPage(content, queryParam(RESET_ID) ?: "", "") } }

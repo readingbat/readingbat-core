@@ -17,6 +17,9 @@
 
 package com.github.readingbat.misc
 
+import com.github.readingbat.misc.Constants.DBMS_DOWN
+import redis.clients.jedis.exceptions.JedisException
+
 internal object RedisConstants {
   const val USER_ID_KEY = "userId"
   const val DIGEST_KEY = "digest"
@@ -34,3 +37,7 @@ internal object RedisConstants {
 
   const val KEY_SEP = "|"
 }
+
+class RedisDownException() : JedisException(DBMS_DOWN)
+
+class DataException(msg: String) : JedisException(msg)

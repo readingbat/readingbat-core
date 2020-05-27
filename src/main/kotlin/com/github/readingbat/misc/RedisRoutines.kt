@@ -40,7 +40,11 @@ object RedisRoutines {
         try {
           "$it - ${redis[it]}"
         } catch (e: JedisDataException) {
-          "$it - ${redis.hgetAll(it)}"
+          try {
+            "$it - ${redis.hgetAll(it)}"
+          } catch (e: JedisDataException) {
+            "$it - ${redis.smembers(it)}"
+          }
         }
       })
     }
