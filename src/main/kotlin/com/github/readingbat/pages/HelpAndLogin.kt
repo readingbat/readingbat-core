@@ -23,8 +23,8 @@ import com.github.readingbat.misc.Endpoints.ABOUT
 import com.github.readingbat.misc.Endpoints.CREATE_ACCOUNT
 import com.github.readingbat.misc.Endpoints.PASSWORD_RESET
 import com.github.readingbat.misc.Endpoints.USER_PREFS
+import com.github.readingbat.misc.FormFields.EMAIL
 import com.github.readingbat.misc.FormFields.PASSWORD
-import com.github.readingbat.misc.FormFields.USERNAME
 import com.github.readingbat.misc.UserPrincipal
 import kotlinx.html.*
 
@@ -96,7 +96,7 @@ internal object HelpAndLogin {
       action = loginPath
       this@login.tr {
         td { +"id/email" }
-        td { textInput { name = USERNAME; size = "20"; placeholder = "username" } }
+        td { textInput { name = EMAIL; size = "20"; placeholder = "username" } }
       }
       this@login.tr {
         td { +"password" }

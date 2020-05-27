@@ -36,17 +36,20 @@ object RedisRoutines {
 
   internal fun showAllKeys() {
     withRedis { redis ->
-      println(redis?.keys("*")?.joinToString("\n") {
-        try {
-          "$it - ${redis[it]}"
-        } catch (e: JedisDataException) {
-          try {
-            "$it - ${redis.hgetAll(it)}"
-          } catch (e: JedisDataException) {
-            "$it - ${redis.smembers(it)}"
-          }
-        }
-      })
+      if (redis != null) {
+        println(redis.keys("*")
+                  .joinToString("\n") {
+                    try {
+                      "$it - ${redis[it]}"
+                    } catch (e: JedisDataException) {
+                      try {
+                        "$it - ${redis.hgetAll(it)}"
+                      } catch (e: JedisDataException) {
+                        "$it - ${redis.smembers(it)}"
+                      }
+                    }
+                  })
+      }
     }
   }
 }

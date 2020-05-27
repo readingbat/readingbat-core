@@ -22,7 +22,7 @@ import redis.clients.jedis.exceptions.JedisException
 
 internal object RedisConstants {
   const val USER_ID_KEY = "userId"
-  const val DIGEST_KEY = "digest"
+  const val USER_INFO_KEY = "user-info"
   const val CORRECT_ANSWERS_KEY = "correct-answers"
   const val CHALLENGE_ANSWERS_KEY = "challenge-answers"
   const val ANSWER_HISTORY_KEY = "answer-history"
@@ -34,6 +34,8 @@ internal object RedisConstants {
 
   const val SALT_FIELD = "salt"
   const val DIGEST_FIELD = "digest"
+  const val NAME_FIELD = "name"
+  const val CLASS_CODE_FIELD = "class-code"
 
   const val KEY_SEP = "|"
 }

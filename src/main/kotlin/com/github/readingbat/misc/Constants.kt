@@ -58,7 +58,8 @@ internal object ParameterIds {
 }
 
 internal object FormFields {
-  const val USERNAME = "username"
+  const val NAME = "name"
+  const val EMAIL = "email"
   const val PASSWORD = "passwd"
   const val CONFIRM_PASSWORD = "confirm_passwd"
   const val CLASS_CODE = "class_code"

@@ -30,13 +30,24 @@ internal object Dashboards {
       throw DataException("Empty class code")
     }
     else {
-      val classCodeEnrollmentKey = classCodeEnrollmentKey(classCode)
       withRedisPool { redis ->
+        val classCodeEnrollmentKey = classCodeEnrollmentKey(classCode)
         when {
           redis == null -> throw RedisDownException()
-          redis.smembers(classCodeEnrollmentKey) == null -> throw DataException("Invalid class code $classCode")
+          redis.smembers(classCodeEnrollmentKey).isEmpty() -> throw DataException("Invalid class code $classCode")
           redis.sismember(classCodeEnrollmentKey, id) -> throw DataException("Already joined class $classCode")
-          else -> redis.sadd(classCodeEnrollmentKey, id)
+          else -> {
+            val previousClassCode = redis.hget(userInfoKey, CLASS_CODE_KEY) ?: ""
+            redis.multi().also { tx ->
+              // Remove if already enrolled in another class
+              if (previousClassCode.isNotEmpty()) {
+                tx.srem(classCodeEnrollmentKey(previousClassCode), id)
+              }
+              tx.hset(userInfoKey, CLASS_CODE_KEY, classCode)
+              tx.sadd(classCodeEnrollmentKey, id)
+              tx.exec()
+            }
+          }
         }
       }
     }

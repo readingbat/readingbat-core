@@ -26,8 +26,9 @@ import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.Constants.MSG
 import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.FormFields.CONFIRM_PASSWORD
+import com.github.readingbat.misc.FormFields.EMAIL
+import com.github.readingbat.misc.FormFields.NAME
 import com.github.readingbat.misc.FormFields.PASSWORD
-import com.github.readingbat.misc.FormFields.USERNAME
 import com.github.readingbat.misc.UserId.Companion.createUser
 import com.github.readingbat.misc.UserId.Companion.userIdKey
 import com.github.readingbat.misc.UserPrincipal
@@ -43,6 +44,7 @@ import mu.KLogging
 
 internal object CreateAccount : KLogging() {
 
+  private const val EMPTY_NAME = "Empty name value"
   private const val EMPTY_EMAIL = "Empty email value"
   private const val INVALID_EMAIL = "Invalid email value"
   private const val EMPTY_PASWORD = "Empty password value"
@@ -63,24 +65,39 @@ internal object CreateAccount : KLogging() {
 
   suspend fun PipelineCall.createAccount(content: ReadingBatContent) {
     val parameters = call.receiveParameters()
-    val username = parameters[USERNAME] ?: ""
+    val name = parameters[NAME] ?: ""
+    val email = parameters[EMAIL] ?: ""
     val password = parameters[PASSWORD] ?: ""
     val confirmPassword = parameters[CONFIRM_PASSWORD] ?: ""
 
     when {
-      username.isBlank() -> respondWith { createAccountPage(content, msg = EMPTY_EMAIL) }
-      username.isNotValidEmail() -> respondWith { createAccountPage(content, username, INVALID_EMAIL) }
+      name.isBlank() -> respondWith { createAccountPage(content, defaultEmail = email, msg = EMPTY_NAME) }
+      email.isBlank() -> respondWith { createAccountPage(content, defaultName = name, msg = EMPTY_EMAIL) }
+      email.isNotValidEmail() -> respondWith {
+        createAccountPage(content,
+                          defaultName = name,
+                          defaultEmail = email,
+                          msg = INVALID_EMAIL)
+      }
       else -> {
         val passwordError = checkPassword(password, confirmPassword)
         if (passwordError.isNotEmpty())
-          respondWith { createAccountPage(content, username, passwordError) }
+          respondWith {
+            createAccountPage(content,
+                              defaultName = name,
+                              defaultEmail = email,
+                              msg = passwordError)
+          }
         else
-          createAccount(content, username, password)
+          createAccount(content, name, email, password)
       }
     }
   }
 
-  private suspend fun PipelineCall.createAccount(content: ReadingBatContent, username: String, password: String) {
+  private suspend fun PipelineCall.createAccount(content: ReadingBatContent,
+                                                 name: String,
+                                                 email: String,
+                                                 password: String) {
     withSuspendingRedisPool { redis ->
       val returnPath = queryParam(RETURN_PATH) ?: "/"
       if (redis == null) {
@@ -90,15 +107,15 @@ internal object CreateAccount : KLogging() {
         createAccountLimiter.acquire() // may wait
 
         // Check if username already exists
-        if (redis.exists(userIdKey(username))) {
-          respondWith { createAccountPage(content, msg = "Username already exists: $username") }
+        if (redis.exists(userIdKey(email))) {
+          respondWith { createAccountPage(content, msg = "Username already exists: $email") }
         }
         else {
           // Create user
-          createUser(username, password, redis)
+          createUser(name, email, password, redis)
           // Assign principal cookie
-          call.sessions.set(UserPrincipal(userId = username))
-          redirectTo { "$returnPath?$MSG=${"User $username created".encode()}" }
+          call.sessions.set(UserPrincipal(userId = email))
+          redirectTo { "$returnPath?$MSG=${"User $email created".encode()}" }
         }
       }
     }

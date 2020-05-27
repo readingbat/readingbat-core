@@ -26,9 +26,9 @@ import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.Endpoints.PASSWORD_CHANGE
 import com.github.readingbat.misc.Endpoints.PASSWORD_RESET
 import com.github.readingbat.misc.FormFields.CONFIRM_PASSWORD
+import com.github.readingbat.misc.FormFields.EMAIL
 import com.github.readingbat.misc.FormFields.NEW_PASSWORD
 import com.github.readingbat.misc.FormFields.UPDATE_PASSWORD
-import com.github.readingbat.misc.FormFields.USERNAME
 import com.github.readingbat.misc.FormFields.USER_PREFS_ACTION
 import com.github.readingbat.misc.PageUtils.hideShowButton
 import com.github.readingbat.misc.UserId
@@ -96,7 +96,7 @@ internal object PasswordResetPage : KLogging() {
                   td { style = labelWidth; label { +"Email (used as account id)" } }
                   td {
                     input {
-                      name = USERNAME
+                      name = EMAIL
                       type = InputType.text
                       size = "50"
                     }

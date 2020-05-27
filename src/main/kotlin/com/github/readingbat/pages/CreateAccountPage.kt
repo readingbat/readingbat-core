@@ -21,8 +21,9 @@ import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.Endpoints.CREATE_ACCOUNT
 import com.github.readingbat.misc.FormFields.CONFIRM_PASSWORD
+import com.github.readingbat.misc.FormFields.EMAIL
+import com.github.readingbat.misc.FormFields.NAME
 import com.github.readingbat.misc.FormFields.PASSWORD
-import com.github.readingbat.misc.FormFields.USERNAME
 import com.github.readingbat.misc.PageUtils.hideShowButton
 import com.github.readingbat.pages.PageCommon.backLink
 import com.github.readingbat.pages.PageCommon.bodyTitle
@@ -39,7 +40,8 @@ import kotlinx.html.stream.createHTML
 internal object CreateAccountPage {
 
   fun PipelineCall.createAccountPage(content: ReadingBatContent,
-                                     defaultUserName: String = "",
+                                     defaultName: String = "",
+                                     defaultEmail: String = "",
                                      msg: String = "") =
     createHTML()
       .html {
@@ -79,10 +81,18 @@ internal object CreateAccountPage {
               method = FormMethod.post
               table {
                 tr {
+                  td { style = labelWidth; label { +"Name" } }
+                  td {
+                    input {
+                      style = inputFs; type = InputType.text; size = "42"; name = NAME; value = defaultName
+                    }
+                  }
+                }
+                tr {
                   td { style = labelWidth; label { +"Email (used as account id)" } }
                   td {
                     input {
-                      style = inputFs; type = InputType.text; size = "42"; name = USERNAME; value = defaultUserName
+                      style = inputFs; type = InputType.text; size = "42"; name = EMAIL; value = defaultEmail
                     }
                   }
                 }

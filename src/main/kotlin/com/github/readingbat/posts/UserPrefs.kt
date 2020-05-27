@@ -77,9 +77,8 @@ internal object UserPrefs : KLogging() {
                 else {
                   val (salt, digest) = UserId.lookupUserId(userId, redis)
                   if (salt.isNotEmpty() && digest.isNotEmpty() && digest == currPassword.sha256(salt)) {
-                    val digestKey = userId.digestKey()
                     val newDigest = newPassword.sha256(salt)
-                    redis.hset(digestKey, DIGEST_FIELD, newDigest)
+                    redis.hset(userId.userInfoKey, DIGEST_FIELD, newDigest)
                     "Password changed" to false
                   }
                   else {
@@ -95,7 +94,7 @@ internal object UserPrefs : KLogging() {
                 userId.enrollIntoClass(classCode)
                 userPrefsPage(content, "Enrolled in class $classCode", false)
               } catch (e: JedisException) {
-                logger.info(e) { "" }
+                logger.info { e }
                 userPrefsPage(content,
                               "Unable to enroll in class [${e.message ?: ""}]",
                               true,
@@ -107,7 +106,6 @@ internal object UserPrefs : KLogging() {
               logger.info { "Deleting user ${principal.userId}" }
               userId.deleteUser(principal, redis)
               call.sessions.clear<UserPrincipal>()
-
               requestLogInPage(content, false, "User ${principal.userId} deleted")
             }
 
