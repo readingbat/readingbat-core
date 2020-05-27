@@ -22,10 +22,10 @@ import com.github.readingbat.dsl.ChallengeGroup
 import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.BrowserSession
-import com.github.readingbat.misc.CSSNames.funcItem
-import com.github.readingbat.misc.CSSNames.groupChoice
-import com.github.readingbat.misc.CSSNames.groupItemSrc
-import com.github.readingbat.misc.CSSNames.tabs
+import com.github.readingbat.misc.CSSNames.FUNC_ITEM
+import com.github.readingbat.misc.CSSNames.GROUP_CHOICE
+import com.github.readingbat.misc.CSSNames.GROUP_ITEM_SRC
+import com.github.readingbat.misc.CSSNames.TABS
 import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
 import com.github.readingbat.misc.Constants.GREEN_CHECK
 import com.github.readingbat.misc.Constants.MSG
@@ -79,9 +79,9 @@ internal object LanguageGroupPage {
             }
           }
 
-          td(classes = funcItem) {
-            div(classes = groupItemSrc) {
-              a(classes = groupChoice) { href = pathOf(CHALLENGE_ROOT, languageName, groupName); +groupName }
+          td(classes = FUNC_ITEM) {
+            div(classes = GROUP_ITEM_SRC) {
+              a(classes = GROUP_CHOICE) { href = pathOf(CHALLENGE_ROOT, languageName, groupName); +groupName }
               br { rawHtml(if (parsedDescription.isNotBlank()) parsedDescription else nbsp.text) }
               if (cnt == 0) {
                 img { src = "$STATIC_ROOT/$WHITE_CHECK" }
@@ -100,7 +100,7 @@ internal object LanguageGroupPage {
           val msg = queryParam(MSG) ?: ""
           bodyHeader(principal, loginAttempt, content, languageType, loginPath, msg, "Welcome to ReadingBat.")
 
-          div(classes = tabs) {
+          div(classes = TABS) {
             table {
               val cols = 3
               val size = groups.size

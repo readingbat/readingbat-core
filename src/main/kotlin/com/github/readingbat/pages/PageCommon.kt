@@ -22,7 +22,7 @@ import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.dsl.LanguageType.Companion.languageTypesInOrder
 import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.misc.CSSNames.selected_tab
+import com.github.readingbat.misc.CSSNames.SELECTED_TAB
 import com.github.readingbat.misc.Constants.BACK_PATH
 import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
 import com.github.readingbat.misc.Constants.ICONS
@@ -126,7 +126,7 @@ internal object PageCommon {
           for (lang in languageTypesInOrder) {
             if (content.hasGroups(lang))
               li(classes = "h2") {
-                if (languageType == lang) id = selected_tab
+                if (languageType == lang) id = SELECTED_TAB
                 this@bodyHeader.addLink(lang.name, pathOf(CHALLENGE_ROOT, lang.lowerName))
               }
           }

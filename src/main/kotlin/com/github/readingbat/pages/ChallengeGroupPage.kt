@@ -24,8 +24,8 @@ import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.ChallengeGroup
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.BrowserSession
-import com.github.readingbat.misc.CSSNames.funcItem
-import com.github.readingbat.misc.CSSNames.tabs
+import com.github.readingbat.misc.CSSNames.FUNC_ITEM
+import com.github.readingbat.misc.CSSNames.TABS
 import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
 import com.github.readingbat.misc.Constants.GREEN_CHECK
 import com.github.readingbat.misc.Constants.MSG
@@ -76,7 +76,7 @@ internal object ChallengeGroupPage {
           val challengeName = challenge.challengeName
           val allCorrect = challenge.isCorrect(redis, userId, browserSession)
 
-          td(classes = funcItem) {
+          td(classes = FUNC_ITEM) {
             img { src = "$STATIC_ROOT/${if (allCorrect) GREEN_CHECK else WHITE_CHECK}" }
             a {
               style = "font-Size:110%; padding-left:2px;"
@@ -92,7 +92,7 @@ internal object ChallengeGroupPage {
           val msg = queryParam(MSG) ?: ""
           bodyHeader(principal, loginAttempt, content, languageType, loginPath, msg)
 
-          div(classes = tabs) {
+          div(classes = TABS) {
 
             h2 { +groupName.decode() }
 

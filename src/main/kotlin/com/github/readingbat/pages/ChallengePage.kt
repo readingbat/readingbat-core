@@ -22,17 +22,17 @@ import com.github.pambrose.common.util.decode
 import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.BrowserSession
-import com.github.readingbat.misc.CSSNames.arrow
-import com.github.readingbat.misc.CSSNames.challengeDesc
-import com.github.readingbat.misc.CSSNames.check_answers
-import com.github.readingbat.misc.CSSNames.codeBlock
-import com.github.readingbat.misc.CSSNames.feedback
-import com.github.readingbat.misc.CSSNames.funcCol
-import com.github.readingbat.misc.CSSNames.refs
-import com.github.readingbat.misc.CSSNames.status
-import com.github.readingbat.misc.CSSNames.success
-import com.github.readingbat.misc.CSSNames.tabs
-import com.github.readingbat.misc.CSSNames.userResp
+import com.github.readingbat.misc.CSSNames.ARROW
+import com.github.readingbat.misc.CSSNames.CHALLENGE_DESC
+import com.github.readingbat.misc.CSSNames.CHECK_ANSWERS
+import com.github.readingbat.misc.CSSNames.CODE_BLOCK
+import com.github.readingbat.misc.CSSNames.FEEDBACK
+import com.github.readingbat.misc.CSSNames.FUNC_COL
+import com.github.readingbat.misc.CSSNames.REFS
+import com.github.readingbat.misc.CSSNames.STATUS
+import com.github.readingbat.misc.CSSNames.SUCCESS
+import com.github.readingbat.misc.CSSNames.TABS
+import com.github.readingbat.misc.CSSNames.USER_RESP
 import com.github.readingbat.misc.CheckAnswersJs.checkAnswersScript
 import com.github.readingbat.misc.CheckAnswersJs.processAnswers
 import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
@@ -97,7 +97,7 @@ internal object ChallengePage {
           val msg = queryParam(MSG) ?: ""
           bodyHeader(principal, loginAttempt, content, languageType, loginPath, msg)
 
-          div(classes = tabs) {
+          div(classes = TABS) {
             h2 {
               val groupPath = pathOf(CHALLENGE_ROOT, languageName, groupName)
               this@body.addLink(groupName.decode(), groupPath)
@@ -106,9 +106,9 @@ internal object ChallengePage {
             }
 
             if (challenge.description.isNotEmpty())
-              div(classes = challengeDesc) { rawHtml(challenge.parsedDescription) }
+              div(classes = CHALLENGE_DESC) { rawHtml(challenge.parsedDescription) }
 
-            div(classes = codeBlock) {
+            div(classes = CODE_BLOCK) {
               pre(classes = "line-numbers") {
                 code(classes = "language-$languageName") { +funcInfo.codeSnippet }
               }
@@ -137,10 +137,10 @@ internal object ChallengePage {
                 funcInfo.arguments.indices.forEach { i ->
                   tr {
                     val args = funcInfo.arguments[i]
-                    td(classes = funcCol) { +args }
-                    td(classes = arrow) { rawHtml("&rarr;") }
+                    td(classes = FUNC_COL) { +args }
+                    td(classes = ARROW) { rawHtml("&rarr;") }
                     td {
-                      textInput(classes = userResp) {
+                      textInput(classes = USER_RESP) {
                         id = "$RESP$i"
                         onKeyPress = "$processAnswers(event, ${funcInfo.answers.size})"
                         if (previousAnswers[args] != null)
@@ -149,7 +149,7 @@ internal object ChallengePage {
                           placeholder = funcInfo.placeHolder()
                       }
                     }
-                    td(classes = feedback) { id = "$FEEDBACK_ID$i" }
+                    td(classes = FEEDBACK) { id = "$FEEDBACK_ID$i" }
                   }
                 }
               }
@@ -159,21 +159,21 @@ internal object ChallengePage {
                 table {
                   tr {
                     td {
-                      button(classes = check_answers) {
+                      button(classes = CHECK_ANSWERS) {
                         onClick = "$processAnswers(null, ${funcInfo.answers.size});"; +"Check My Answers!"
                       }
                     }
                     td { style = "vertical-align:middle;"; span { style = "margin-left:1em;"; id = SPINNER_ID } }
                     td {
                       style = "vertical-align:middle;"
-                      span(classes = status) { id = STATUS_ID }
-                      span(classes = success) { id = SUCCESS_ID }
+                      span(classes = STATUS) { id = STATUS_ID }
+                      span(classes = SUCCESS) { id = SUCCESS_ID }
                     }
                   }
                 }
               }
 
-              p(classes = refs) {
+              p(classes = REFS) {
                 +"Experiment with this code on "
                 this@body.addLink("Gitpod.io", "https://gitpod.io/#${challenge.gitpodUrl}", true)
                 if (languageType.isKotlin()) {
@@ -183,7 +183,7 @@ internal object ChallengePage {
               }
 
               if (challenge.codingBatEquiv.isNotEmpty() && (languageType.isJava() || languageType.isPython())) {
-                p(classes = refs) {
+                p(classes = REFS) {
                   +"Work on a similar problem on "
                   this@body.addLink("CodingBat.com", "https://codingbat.com/prob/${challenge.codingBatEquiv}", true)
                 }

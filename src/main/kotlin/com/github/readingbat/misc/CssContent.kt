@@ -17,44 +17,44 @@
 
 package com.github.readingbat.misc
 
-import com.github.readingbat.misc.CSSNames.arrow
-import com.github.readingbat.misc.CSSNames.challengeDesc
-import com.github.readingbat.misc.CSSNames.check_answers
-import com.github.readingbat.misc.CSSNames.codeBlock
-import com.github.readingbat.misc.CSSNames.feedback
-import com.github.readingbat.misc.CSSNames.funcCol
-import com.github.readingbat.misc.CSSNames.funcItem
-import com.github.readingbat.misc.CSSNames.groupChoice
-import com.github.readingbat.misc.CSSNames.groupItemSrc
-import com.github.readingbat.misc.CSSNames.kotlinCode
-import com.github.readingbat.misc.CSSNames.refs
-import com.github.readingbat.misc.CSSNames.selected_tab
-import com.github.readingbat.misc.CSSNames.status
-import com.github.readingbat.misc.CSSNames.success
-import com.github.readingbat.misc.CSSNames.tabs
-import com.github.readingbat.misc.CSSNames.userResp
+import com.github.readingbat.misc.CSSNames.ARROW
+import com.github.readingbat.misc.CSSNames.CHALLENGE_DESC
+import com.github.readingbat.misc.CSSNames.CHECK_ANSWERS
+import com.github.readingbat.misc.CSSNames.CODE_BLOCK
+import com.github.readingbat.misc.CSSNames.FEEDBACK
+import com.github.readingbat.misc.CSSNames.FUNC_COL
+import com.github.readingbat.misc.CSSNames.FUNC_ITEM
+import com.github.readingbat.misc.CSSNames.GROUP_CHOICE
+import com.github.readingbat.misc.CSSNames.GROUP_ITEM_SRC
+import com.github.readingbat.misc.CSSNames.KOTLIN_CODE
+import com.github.readingbat.misc.CSSNames.REFS
+import com.github.readingbat.misc.CSSNames.SELECTED_TAB
+import com.github.readingbat.misc.CSSNames.STATUS
+import com.github.readingbat.misc.CSSNames.SUCCESS
+import com.github.readingbat.misc.CSSNames.TABS
+import com.github.readingbat.misc.CSSNames.USER_RESP
 import kotlinx.css.*
 import kotlinx.css.properties.LineHeight
 import kotlinx.css.properties.TextDecoration
 import kotlinx.css.properties.boxShadow
 
 internal object CSSNames {
-  const val check_answers = "checkAnswers"
-  const val feedback = "feedback"
-  const val funcCol = "funcCol"
-  const val arrow = "arrow"
-  const val refs = "refs"
-  const val codeBlock = "codeBlock"
-  const val kotlinCode = "kotlin-code"
-  const val tabs = "tabs"
-  const val userResp = "userResp"
-  const val challengeDesc = "challenge-desc"
-  const val groupChoice = "groupChoice"
-  const val funcItem = "funcItem"
-  const val groupItemSrc = "groupItem"
-  const val selected_tab = "selected"
-  const val status = "status"
-  const val success = "success"
+  const val CHECK_ANSWERS = "checkAnswers"
+  const val FEEDBACK = "feedback"
+  const val FUNC_COL = "funcCol"
+  const val ARROW = "arrow"
+  const val REFS = "refs"
+  const val CODE_BLOCK = "codeBlock"
+  const val KOTLIN_CODE = "kotlin-code"
+  const val TABS = "tabs"
+  const val USER_RESP = "userResp"
+  const val CHALLENGE_DESC = "challenge-desc"
+  const val GROUP_CHOICE = "groupChoice"
+  const val FUNC_ITEM = "funcItem"
+  const val GROUP_ITEM_SRC = "groupItem"
+  const val SELECTED_TAB = "selected"
+  const val STATUS = "status"
+  const val SUCCESS = "success"
 }
 
 internal val cssContent by lazy {
@@ -118,16 +118,16 @@ internal val cssContent by lazy {
       h2 {
         fontSize = LinearDimension("150%")
       }
-      rule(".$challengeDesc") {
+      rule(".$CHALLENGE_DESC") {
         fontSize = textFs
         marginLeft = 1.em
         marginBottom = 1.em
       }
-      rule(".$funcItem") {
+      rule(".$FUNC_ITEM") {
         marginTop = 1.em
         width = 275.px
       }
-      rule(".$groupChoice") {
+      rule(".$GROUP_CHOICE") {
         fontSize = 166.pct
       }
       rule("th, td") {
@@ -137,7 +137,7 @@ internal val cssContent by lazy {
       rule("th") {
         fontSize = textFs
       }
-      rule("div.$groupItemSrc") {
+      rule("div.$GROUP_ITEM_SRC") {
         maxWidth = 300.px
         minWidth = 300.px
         margin = "15px"
@@ -145,19 +145,19 @@ internal val cssContent by lazy {
         border = "1px solid gray"
         borderRadius = LinearDimension("1em")
       }
-      rule("td.$funcCol") {
+      rule("td.$FUNC_COL") {
         fontSize = textFs
       }
-      rule("td.$arrow") {
+      rule("td.$ARROW") {
         width = 2.em
         fontSize = textFs
         textAlign = TextAlign.center
       }
-      rule(".$userResp") {
+      rule(".$USER_RESP") {
         width = 15.em
         fontSize = 90.pct
       }
-      rule("td.$feedback") {
+      rule("td.$FEEDBACK") {
         width = 10.em
         border = "7px solid white"
       }
@@ -168,7 +168,7 @@ internal val cssContent by lazy {
         borderCollapse = BorderCollapse.collapse
       }
       */
-      rule(".$check_answers") {
+      rule(".$CHECK_ANSWERS") {
         width = 14.em
         height = 2.em
         backgroundColor = Color("#f1f1f1")
@@ -176,11 +176,11 @@ internal val cssContent by lazy {
         fontWeight = FontWeight.bold
         borderRadius = 6.px
       }
-      rule(".$status") {
+      rule(".$STATUS") {
         marginLeft = 5.px
         fontSize = textFs
       }
-      rule(".$success") {
+      rule(".$SUCCESS") {
         marginLeft = 25.px
         fontSize = textFs
         color = Color.black
@@ -189,11 +189,11 @@ internal val cssContent by lazy {
         fontSize = 166.pct
         textDecoration = TextDecoration.none
       }
-      rule("div.$tabs") {
+      rule("div.$TABS") {
         borderTop = "1px solid"
         clear = Clear.both
       }
-      rule("#$selected_tab") {
+      rule("#$SELECTED_TAB") {
         position = Position.relative
         top = LinearDimension("1px")
         background = "white"
@@ -212,12 +212,12 @@ internal val cssContent by lazy {
       rule("nav li a") {
         padding = "0 40px"
       }
-      rule(".$refs") {
+      rule(".$REFS") {
         marginTop = 2.em
         fontSize = textFs
       }
 
-      rule(".$codeBlock") {
+      rule(".$CODE_BLOCK") {
         marginTop = 2.em
         marginLeft = 1.em
         marginRight = 1.em
@@ -239,7 +239,7 @@ internal val cssContent by lazy {
       rule(".language-kotlin") {
         //width = 950.px  // !important
       }
-      rule(".$kotlinCode") {
+      rule(".$KOTLIN_CODE") {
         marginLeft = 1.em
         marginRight = 1.em
       }

@@ -20,9 +20,9 @@ package com.github.readingbat.pages
 import com.github.pambrose.common.util.decode
 import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.misc.CSSNames.challengeDesc
-import com.github.readingbat.misc.CSSNames.kotlinCode
-import com.github.readingbat.misc.CSSNames.tabs
+import com.github.readingbat.misc.CSSNames.CHALLENGE_DESC
+import com.github.readingbat.misc.CSSNames.KOTLIN_CODE
+import com.github.readingbat.misc.CSSNames.TABS
 import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
 import com.github.readingbat.misc.Constants.STATIC_ROOT
 import com.github.readingbat.misc.PageUtils.pathOf
@@ -58,14 +58,14 @@ internal object PlaygroundPage {
         val loginPath = pathOf(CHALLENGE_ROOT, languageName, groupName, challengeName)
 
         head {
-          script { src = "https://unpkg.com/kotlin-playground@1"; attributes["data-selector"] = ".$kotlinCode" }
+          script { src = "https://unpkg.com/kotlin-playground@1"; attributes["data-selector"] = ".$KOTLIN_CODE" }
           headDefault(content)
         }
 
         body {
           bodyHeader(principal, loginAttempt, content, languageType, loginPath)
 
-          div(classes = tabs) {
+          div(classes = TABS) {
             h2 {
               val groupPath = pathOf(CHALLENGE_ROOT, languageName, groupName)
               this@body.addLink(groupName.decode(), groupPath)
@@ -74,7 +74,7 @@ internal object PlaygroundPage {
             }
 
             if (challenge.description.isNotEmpty())
-              div(classes = challengeDesc) { rawHtml(challenge.parsedDescription) }
+              div(classes = CHALLENGE_DESC) { rawHtml(challenge.parsedDescription) }
 
             val options =
               """
@@ -84,7 +84,7 @@ internal object PlaygroundPage {
 
             rawHtml(
               """
-              <div class=$kotlinCode $options>  
+              <div class=$KOTLIN_CODE $options>  
               ${escapeHtml4(funcInfo.originalCode)}
               </div>
             """.trimIndent())
