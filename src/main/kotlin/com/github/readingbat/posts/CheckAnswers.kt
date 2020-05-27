@@ -67,15 +67,9 @@ internal data class ChallengeHistory(var argument: String,
 }
 
 internal class ChallengeNames(compareMap: Map<String, String>) {
-  val languageName: String
-  val groupName: String
-  val challengeName: String
-
-  init {
-    languageName = compareMap[langSrc] ?: throw InvalidConfigurationException("Missing language")
-    groupName = compareMap[groupSrc] ?: throw InvalidConfigurationException("Missing group name")
-    challengeName = compareMap[challengeSrc] ?: throw InvalidConfigurationException("Missing challenge name")
-  }
+  val languageName: String = compareMap[langSrc] ?: throw InvalidConfigurationException("Missing language")
+  val groupName: String = compareMap[groupSrc] ?: throw InvalidConfigurationException("Missing group name")
+  val challengeName: String = compareMap[challengeSrc] ?: throw InvalidConfigurationException("Missing challenge name")
 }
 
 internal object CheckAnswers : KLogging() {

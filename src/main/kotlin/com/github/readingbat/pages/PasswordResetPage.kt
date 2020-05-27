@@ -27,9 +27,9 @@ import com.github.readingbat.misc.Endpoints.PASSWORD_CHANGE
 import com.github.readingbat.misc.Endpoints.PASSWORD_RESET
 import com.github.readingbat.misc.FormFields.CONFIRM_PASSWORD
 import com.github.readingbat.misc.FormFields.NEW_PASSWORD
-import com.github.readingbat.misc.FormFields.PREF_ACTION
 import com.github.readingbat.misc.FormFields.UPDATE_PASSWORD
 import com.github.readingbat.misc.FormFields.USERNAME
+import com.github.readingbat.misc.FormFields.USER_PREFS_ACTION
 import com.github.readingbat.misc.PageUtils.hideShowButton
 import com.github.readingbat.misc.UserId
 import com.github.readingbat.pages.PageCommon.backLink
@@ -118,9 +118,9 @@ internal object PasswordResetPage : KLogging() {
             }
             p {
               +"""
-                This will send an email with a link that will allow you th set your password. 
-                When you get the email, click on the link (or enter the URL in your browser) and  
-                enter a new password. If the email does not arrive, double-check that the email 
+                This will send an email with a link that will allow you to set your password. 
+                When you get the email, click on the link (or copy and paste the URL into your browser's address bar) 
+                and enter a new password. If the email does not arrive, double-check that the email 
                 address above is entered correctly.
               """.trimIndent()
             }
@@ -186,7 +186,7 @@ internal object PasswordResetPage : KLogging() {
                     style = "font-size:25px; height:35; width:  155;"
                     type = InputType.submit
                     id = passwordButton
-                    name = PREF_ACTION
+                    name = USER_PREFS_ACTION
                     value = UPDATE_PASSWORD
                   }
                 }

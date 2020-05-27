@@ -21,12 +21,14 @@ import com.github.pambrose.common.redis.RedisUtils.withRedisPool
 import com.github.pambrose.common.util.sha256
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.Constants.DBMS_DOWN
+import com.github.readingbat.misc.FormFields.CLASS_CODE
 import com.github.readingbat.misc.FormFields.CONFIRM_PASSWORD
 import com.github.readingbat.misc.FormFields.CURR_PASSWORD
 import com.github.readingbat.misc.FormFields.DELETE_ACCOUNT
+import com.github.readingbat.misc.FormFields.JOIN_CLASS
 import com.github.readingbat.misc.FormFields.NEW_PASSWORD
-import com.github.readingbat.misc.FormFields.PREF_ACTION
 import com.github.readingbat.misc.FormFields.UPDATE_PASSWORD
+import com.github.readingbat.misc.FormFields.USER_PREFS_ACTION
 import com.github.readingbat.misc.UserId
 import com.github.readingbat.misc.UserId.Companion.lookupPrincipal
 import com.github.readingbat.misc.UserPrincipal
@@ -58,7 +60,7 @@ internal object UserPrefs : KLogging() {
           requestLogInPage(content)
         }
         else {
-          when (parameters[PREF_ACTION] ?: "") {
+          when (parameters[USER_PREFS_ACTION] ?: "") {
             UPDATE_PASSWORD -> {
               val currPassword = parameters[CURR_PASSWORD] ?: ""
               val newPassword = parameters[NEW_PASSWORD] ?: ""
@@ -81,6 +83,11 @@ internal object UserPrefs : KLogging() {
                   }
                 }
               userPrefsPage(content, msg.first, msg.second)
+            }
+
+            JOIN_CLASS -> {
+              val classCode = parameters[CLASS_CODE] ?: ""
+              userPrefsPage(content, "Enrolled in class $classCode", false)
             }
 
             DELETE_ACCOUNT -> {

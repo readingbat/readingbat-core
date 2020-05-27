@@ -21,12 +21,14 @@ import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.Endpoints.CREATE_ACCOUNT
 import com.github.readingbat.misc.Endpoints.USER_PREFS
+import com.github.readingbat.misc.FormFields.CLASS_CODE
 import com.github.readingbat.misc.FormFields.CONFIRM_PASSWORD
 import com.github.readingbat.misc.FormFields.CURR_PASSWORD
 import com.github.readingbat.misc.FormFields.DELETE_ACCOUNT
+import com.github.readingbat.misc.FormFields.JOIN_CLASS
 import com.github.readingbat.misc.FormFields.NEW_PASSWORD
-import com.github.readingbat.misc.FormFields.PREF_ACTION
 import com.github.readingbat.misc.FormFields.UPDATE_PASSWORD
+import com.github.readingbat.misc.FormFields.USER_PREFS_ACTION
 import com.github.readingbat.misc.PageUtils.hideShowButton
 import com.github.readingbat.misc.UserId.Companion.isValidPrincipal
 import com.github.readingbat.misc.UserPrincipal
@@ -48,6 +50,7 @@ internal object UserPrefsPage : KLogging() {
   const val labelWidth = "width: 250;"
   const val formName = "pform"
   const val passwordButton = "UpdatePasswordButton"
+  const val joinClassButton = "JoinClassButton"
 
   fun PipelineCall.userPrefsPage(content: ReadingBatContent,
                                  msg: String,
@@ -64,7 +67,7 @@ internal object UserPrefsPage : KLogging() {
       .html {
         head {
           headDefault(content)
-          clickButtonScript(passwordButton)
+          clickButtonScript(passwordButton, joinClassButton)
         }
 
         body {
@@ -79,7 +82,8 @@ internal object UserPrefsPage : KLogging() {
           val returnPath = queryParam(RETURN_PATH) ?: "/"
 
           changePassword()
-          teacherShare()
+          joinClass()
+          //teacherShare()
           //memo()
           deleteAccount(principal)
           privacyStatement(USER_PREFS, returnPath)
@@ -120,7 +124,38 @@ internal object UserPrefsPage : KLogging() {
         }
         tr {
           td {}
-          td { input { type = InputType.submit; id = passwordButton; name = PREF_ACTION; value = UPDATE_PASSWORD } }
+          td {
+            input {
+              type = InputType.submit; id = passwordButton; name = USER_PREFS_ACTION; value = UPDATE_PASSWORD
+            }
+          }
+        }
+      }
+    }
+  }
+
+  private fun BODY.joinClass() {
+    h3 { +"Join Class" }
+    p { +"Enter the class code your teacher gave you. This will make your progress visible to your teacher." }
+    form {
+      action = USER_PREFS
+      method = FormMethod.post
+      table {
+        tr {
+          td { style = labelWidth; label { +"Class Code" } }
+          td {
+            input {
+              type = InputType.text;
+              size = "42"
+              name = CLASS_CODE
+              value = ""
+              onKeyPress = "click$joinClassButton(event);"
+            }
+          }
+        }
+        tr {
+          td {}
+          td { input { type = InputType.submit; id = joinClassButton; name = USER_PREFS_ACTION; value = JOIN_CLASS } }
         }
       }
     }
@@ -139,7 +174,7 @@ internal object UserPrefsPage : KLogging() {
         }
         tr {
           td {}
-          td { input { type = InputType.submit; name = "dosavepdt"; value = "Share" } }
+          td { input { type = InputType.submit; name = USER_PREFS_ACTION; value = "Share" } }
         }
       }
     }
@@ -159,7 +194,7 @@ internal object UserPrefsPage : KLogging() {
         }
         tr {
           td {}
-          td { input { type = InputType.submit; name = "dosavereal"; value = "Update Memo" } }
+          td { input { type = InputType.submit; name = USER_PREFS_ACTION; value = "Update Memo" } }
         }
       }
     }
@@ -171,9 +206,8 @@ internal object UserPrefsPage : KLogging() {
     form {
       action = USER_PREFS
       method = FormMethod.post
-      //onSubmit = "return formcheck()"
       onSubmit = "return confirm('Are you sure you want to permanently delete the account for ${principal?.userId} ?');"
-      input { type = InputType.submit; name = PREF_ACTION; value = DELETE_ACCOUNT }
+      input { type = InputType.submit; name = USER_PREFS_ACTION; value = DELETE_ACCOUNT }
     }
   }
 

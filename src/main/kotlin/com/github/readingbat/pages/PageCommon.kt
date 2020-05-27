@@ -68,10 +68,11 @@ internal object PageCommon {
     }
   }
 
-  fun HEAD.clickButtonScript(buttonName: String) {
-    script {
-      rawHtml(
-        """
+  fun HEAD.clickButtonScript(vararg buttonNames: String) {
+    buttonNames.forEach { buttonName ->
+      script {
+        rawHtml(
+          """
           function click$buttonName(event) {
             if (event != null && event.keyCode == 13) {
               event.preventDefault();
@@ -79,6 +80,7 @@ internal object PageCommon {
             }
           }
         """.trimIndent())
+      }
     }
   }
 
