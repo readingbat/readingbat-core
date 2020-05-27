@@ -17,13 +17,13 @@
 
 package com.github.readingbat.misc
 
-import com.github.readingbat.misc.CSSNames.feedback
-import com.github.readingbat.misc.CSSNames.spinnerId
-import com.github.readingbat.misc.CSSNames.statusId
-import com.github.readingbat.misc.CSSNames.successId
 import com.github.readingbat.misc.Constants.RESP
-import com.github.readingbat.misc.Constants.sessionid
+import com.github.readingbat.misc.Constants.SESSION_ID
 import com.github.readingbat.misc.Endpoints.CHECK_ANSWERS_ROOT
+import com.github.readingbat.misc.ParameterIds.FEEDBACK_ID
+import com.github.readingbat.misc.ParameterIds.SPINNER_ID
+import com.github.readingbat.misc.ParameterIds.STATUS_ID
+import com.github.readingbat.misc.ParameterIds.SUCCESS_ID
 import com.github.readingbat.pages.PageCommon.rawHtml
 import kotlinx.html.SCRIPT
 import java.util.concurrent.atomic.AtomicInteger
@@ -46,10 +46,10 @@ internal object CheckAnswersJs {
       if (event != null && event.keyCode != 13) 
         return;
 
-      var data = "$sessionid=${sessionCounter.incrementAndGet()}&$langSrc=$languageName&$groupSrc=$groupName&$challengeSrc=$challengeName";
+      var data = "$SESSION_ID=${sessionCounter.incrementAndGet()}&$langSrc=$languageName&$groupSrc=$groupName&$challengeSrc=$challengeName";
       try {
         for (var i = 0; i < cnt; i++) {
-          var x = document.getElementById("$feedback"+i);
+          var x = document.getElementById("$FEEDBACK_ID"+i);
           x.style.backgroundColor = "white";
           
           var ur = document.getElementById("$RESP"+i).value;
@@ -70,15 +70,15 @@ internal object CheckAnswersJs {
     
     function handleDone(){
       if(re.readyState == 1) {  // starting
-        document.getElementById('$spinnerId').innerHTML = '<i class="fa fa-spinner fa-spin" style="font-size:24px"></i>';
-        document.getElementById('$statusId').innerHTML = 'Checking answers...';
-        document.getElementById('$successId').innerHTML = '';
+        document.getElementById('$SPINNER_ID').innerHTML = '<i class="fa fa-spinner fa-spin" style="font-size:24px"></i>';
+        document.getElementById('$STATUS_ID').innerHTML = 'Checking answers...';
+        document.getElementById('$SUCCESS_ID').innerHTML = '';
       }
       else if(re.readyState == 4) {  // done
         var success = true;
         var results = eval(re.responseText);
         for (var i = 0; i < results.length; i++) {
-          var x = document.getElementById("$feedback"+i);
+          var x = document.getElementById("$FEEDBACK_ID"+i);
           if (results[i]) 
             x.style.backgroundColor = "green";
           else {
@@ -87,12 +87,12 @@ internal object CheckAnswersJs {
           }
         }
         
-        document.getElementById('$spinnerId').innerHTML = "";
-        document.getElementById('$statusId').innerHTML = "";
+        document.getElementById('$SPINNER_ID').innerHTML = "";
+        document.getElementById('$STATUS_ID').innerHTML = "";
         if (success) 
-          document.getElementById('$successId').innerHTML = "Success! Congratulations!";
+          document.getElementById('$SUCCESS_ID').innerHTML = "Success! Congratulations!";
         else 
-          document.getElementById('$successId').innerHTML = "";
+          document.getElementById('$SUCCESS_ID').innerHTML = "";
       }
     }
   """

@@ -19,7 +19,7 @@ package com.github.readingbat.misc
 
 internal object Constants {
   const val READING_BAT = "ReadingBat"
-  const val sessionid = "sessionid"
+  const val SESSION_ID = "sessionid"
   const val ICONS = "icons"
   const val RETURN_PATH = "returnPath"
   const val RESET_ID = "reset_id"
@@ -47,6 +47,13 @@ internal object Endpoints {
   const val CHECK_ANSWERS_ROOT = "/check-answers"
   const val CSS_NAME = "/styles.css"
   const val FAV_ICON = "/favicon.ico"
+}
+
+internal object ParameterIds {
+  const val STATUS_ID = "statusId"
+  const val SPINNER_ID = "spinnerId"
+  const val FEEDBACK_ID = "feedbackId"
+  const val SUCCESS_ID = "successId"
 }
 
 internal object FormFields {

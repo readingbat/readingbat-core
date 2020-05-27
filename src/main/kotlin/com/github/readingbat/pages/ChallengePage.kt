@@ -29,11 +29,8 @@ import com.github.readingbat.misc.CSSNames.codeBlock
 import com.github.readingbat.misc.CSSNames.feedback
 import com.github.readingbat.misc.CSSNames.funcCol
 import com.github.readingbat.misc.CSSNames.refs
-import com.github.readingbat.misc.CSSNames.spinnerId
 import com.github.readingbat.misc.CSSNames.status
-import com.github.readingbat.misc.CSSNames.statusId
 import com.github.readingbat.misc.CSSNames.success
-import com.github.readingbat.misc.CSSNames.successId
 import com.github.readingbat.misc.CSSNames.tabs
 import com.github.readingbat.misc.CSSNames.userResp
 import com.github.readingbat.misc.CheckAnswersJs.checkAnswersScript
@@ -44,6 +41,10 @@ import com.github.readingbat.misc.Constants.PLAYGROUND_ROOT
 import com.github.readingbat.misc.Constants.RESP
 import com.github.readingbat.misc.Constants.STATIC_ROOT
 import com.github.readingbat.misc.PageUtils.pathOf
+import com.github.readingbat.misc.ParameterIds.FEEDBACK_ID
+import com.github.readingbat.misc.ParameterIds.SPINNER_ID
+import com.github.readingbat.misc.ParameterIds.STATUS_ID
+import com.github.readingbat.misc.ParameterIds.SUCCESS_ID
 import com.github.readingbat.misc.UserId
 import com.github.readingbat.misc.UserId.Companion.lookupPrincipal
 import com.github.readingbat.pages.PageCommon.addLink
@@ -148,7 +149,7 @@ internal object ChallengePage {
                           placeholder = funcInfo.placeHolder()
                       }
                     }
-                    td(classes = feedback) { id = "$feedback$i" }
+                    td(classes = feedback) { id = "$FEEDBACK_ID$i" }
                   }
                 }
               }
@@ -162,11 +163,11 @@ internal object ChallengePage {
                         onClick = "$processAnswers(null, ${funcInfo.answers.size});"; +"Check My Answers!"
                       }
                     }
-                    td { style = "vertical-align:middle;"; span { style = "margin-left:1em;"; id = spinnerId } }
+                    td { style = "vertical-align:middle;"; span { style = "margin-left:1em;"; id = SPINNER_ID } }
                     td {
                       style = "vertical-align:middle;"
-                      span(classes = status) { id = statusId }
-                      span(classes = success) { id = successId }
+                      span(classes = status) { id = STATUS_ID }
+                      span(classes = success) { id = SUCCESS_ID }
                     }
                   }
                 }

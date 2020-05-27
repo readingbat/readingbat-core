@@ -28,7 +28,7 @@ import com.github.readingbat.misc.CSSNames.groupChoice
 import com.github.readingbat.misc.CSSNames.groupItemSrc
 import com.github.readingbat.misc.CSSNames.kotlinCode
 import com.github.readingbat.misc.CSSNames.refs
-import com.github.readingbat.misc.CSSNames.selected
+import com.github.readingbat.misc.CSSNames.selected_tab
 import com.github.readingbat.misc.CSSNames.status
 import com.github.readingbat.misc.CSSNames.success
 import com.github.readingbat.misc.CSSNames.tabs
@@ -52,12 +52,9 @@ internal object CSSNames {
   const val groupChoice = "groupChoice"
   const val funcItem = "funcItem"
   const val groupItemSrc = "groupItem"
-  const val selected = "selected"
-  const val spinnerId = "spinnerId"
+  const val selected_tab = "selected"
   const val status = "status"
-  const val statusId = "statusId"
   const val success = "success"
-  const val successId = "successId"
 }
 
 internal val cssContent by lazy {
@@ -196,7 +193,7 @@ internal val cssContent by lazy {
         borderTop = "1px solid"
         clear = Clear.both
       }
-      rule("#$selected") {
+      rule("#$selected_tab") {
         position = Position.relative
         top = LinearDimension("1px")
         background = "white"
