@@ -28,6 +28,7 @@ import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.Constants.ROOT
 import com.github.readingbat.misc.Constants.STATIC_ROOT
 import com.github.readingbat.misc.Endpoints.ABOUT
+import com.github.readingbat.misc.Endpoints.ADMIN_ACTIONS
 import com.github.readingbat.misc.Endpoints.CHECK_ANSWERS_ROOT
 import com.github.readingbat.misc.Endpoints.CLASSROOM
 import com.github.readingbat.misc.Endpoints.CREATE_ACCOUNT
@@ -41,14 +42,16 @@ import com.github.readingbat.misc.Endpoints.USER_PREFS
 import com.github.readingbat.misc.UserPrincipal
 import com.github.readingbat.misc.cssContent
 import com.github.readingbat.pages.AboutPage.aboutPage
+import com.github.readingbat.pages.AdminPage.adminDataPage
 import com.github.readingbat.pages.ClassroomPage.classroomPage
+import com.github.readingbat.pages.ClassroomPage.createClass
 import com.github.readingbat.pages.CreateAccountPage.createAccountPage
 import com.github.readingbat.pages.PageCommon.defaultLanguageTab
 import com.github.readingbat.pages.PasswordResetPage.passwordResetPage
 import com.github.readingbat.pages.PrivacyPage.privacyPage
 import com.github.readingbat.pages.UserPrefsPage.userPrefsPage
+import com.github.readingbat.posts.Admin.adminActions
 import com.github.readingbat.posts.CheckAnswers.checkAnswers
-import com.github.readingbat.posts.Classroom.createClass
 import com.github.readingbat.posts.CreateAccount.createAccount
 import com.github.readingbat.posts.PasswordReset.changePassword
 import com.github.readingbat.posts.PasswordReset.sendPasswordReset
@@ -86,6 +89,10 @@ internal fun Routing.userRoutes(content: ReadingBatContent) {
   get(CLASSROOM) { respondWith { classroomPage(content) } }
 
   get(CREATE_CLASS) { respondWith { createClass(content) } }
+
+  get(ADMIN_ACTIONS) { respondWith { adminDataPage(content) } }
+
+  post(ADMIN_ACTIONS) { respondWith { adminActions(content) } }
 
   // RESET_ID is passed here when user clicks on email URL
   get(PASSWORD_RESET) { respondWith { passwordResetPage(content, queryParam(RESET_ID) ?: "", "") } }

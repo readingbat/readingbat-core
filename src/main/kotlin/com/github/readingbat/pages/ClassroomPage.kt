@@ -17,13 +17,21 @@
 
 package com.github.readingbat.pages
 
+import com.github.pambrose.common.redis.RedisUtils
+import com.github.pambrose.common.util.randomId
 import com.github.readingbat.dsl.ReadingBatContent
+import com.github.readingbat.misc.Dashboards
+import com.github.readingbat.misc.RedisDownException
+import com.github.readingbat.pages.PageCommon.backLink
 import com.github.readingbat.pages.PageCommon.bodyTitle
 import com.github.readingbat.pages.PageCommon.headDefault
 import com.github.readingbat.pages.PageCommon.rawHtml
+import com.github.readingbat.server.PipelineCall
+import com.github.readingbat.server.fetchPrincipal
 import com.github.readingbat.server.production
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
+import redis.clients.jedis.exceptions.JedisException
 
 internal object ClassroomPage {
 
@@ -60,4 +68,46 @@ internal object ClassroomPage {
           }
         }
       }
+
+  fun PipelineCall.createClass(content: ReadingBatContent) =
+    createHTML()
+      .html {
+        head { headDefault(content) }
+        body {
+          bodyTitle()
+          h2 { +"Create Class Code" }
+
+          br
+
+          div {
+            style = "margin-left: 1em;"
+
+            val principal = fetchPrincipal()
+            if (principal == null) {
+              +"Must be logged in to create a class code"
+            }
+            else {
+              +try {
+                "The new class code is: ${createClass()}"
+              } catch (e: JedisException) {
+                "Unable to create class: ${e.message ?: ""}"
+              }
+            }
+          }
+
+          br
+          backLink("/")
+        }
+      }
+
+  private fun createClass() =
+    RedisUtils.withRedisPool { redis ->
+      if (redis == null)
+        throw RedisDownException()
+      val classCode = randomId(15)
+      val classCodeEnrollmentKey = Dashboards.classCodeEnrollmentKey(classCode)
+      redis.sadd(classCodeEnrollmentKey, "")
+      classCode
+    }
+
 }

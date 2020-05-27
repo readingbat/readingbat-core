@@ -40,6 +40,7 @@ import io.ktor.application.call
 import io.ktor.http.ContentType.Text.CSS
 import io.ktor.http.formUrlEncode
 import kotlinx.html.*
+import kotlinx.html.Entities.nbsp
 
 internal object PageCommon {
 
@@ -161,6 +162,8 @@ internal object PageCommon {
       }
     }
   }
+
+  fun BODY.displayMessage(msg: String) = if (msg.isNotEmpty()) +msg else rawHtml(nbsp.text)
 
   fun BODY.backLink(vararg pathElems: String) = backLinkWithIndent(pathElems.toList().toRootPath())
 

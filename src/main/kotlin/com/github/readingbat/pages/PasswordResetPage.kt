@@ -35,15 +35,14 @@ import com.github.readingbat.misc.UserId
 import com.github.readingbat.pages.PageCommon.backLink
 import com.github.readingbat.pages.PageCommon.bodyTitle
 import com.github.readingbat.pages.PageCommon.clickButtonScript
+import com.github.readingbat.pages.PageCommon.displayMessage
 import com.github.readingbat.pages.PageCommon.headDefault
 import com.github.readingbat.pages.PageCommon.privacyStatement
-import com.github.readingbat.pages.PageCommon.rawHtml
 import com.github.readingbat.pages.UserPrefsPage.labelWidth
 import com.github.readingbat.posts.PasswordReset.ResetPasswordException
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.queryParam
 import kotlinx.html.*
-import kotlinx.html.Entities.nbsp
 import kotlinx.html.stream.createHTML
 import mu.KLogging
 
@@ -81,7 +80,7 @@ internal object PasswordResetPage : KLogging() {
 
           bodyTitle()
 
-          p { span { style = "color:red;"; if (msg.isNotEmpty()) +msg else rawHtml(nbsp.text) } }
+          p { span { style = "color:red;"; this@body.displayMessage(msg) } }
 
           h2 { +"Password Reset" }
 
@@ -148,7 +147,7 @@ internal object PasswordResetPage : KLogging() {
 
           bodyTitle()
 
-          p { span { style = "color:red;";if (msg.isNotEmpty()) +msg else rawHtml(nbsp.text) } }
+          p { span { style = "color:red;"; this@body.displayMessage(msg) } }
 
           h3 { +"Change password for $username" }
           p { +"Password must contain at least 6 characters" }

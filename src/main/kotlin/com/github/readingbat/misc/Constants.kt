@@ -38,6 +38,7 @@ internal object Constants {
 
 internal object Endpoints {
   const val USER_PREFS = "/user-prefs"
+  const val ADMIN_ACTIONS = "/admin-actions"
   const val ABOUT = "/about.html"
   const val CREATE_CLASS = "/create-class"
   const val CLASSROOM = "/classroom.html"
@@ -66,9 +67,11 @@ internal object FormFields {
   const val CURR_PASSWORD = "curr_passwd"
   const val NEW_PASSWORD = "new_passwd"
   const val USER_PREFS_ACTION = "pref_action"
+  const val ADMIN_ACTION = "admin_action"
   const val UPDATE_PASSWORD = "Update Password"
   const val JOIN_CLASS = "Join"
   const val DELETE_ACCOUNT = "Delete Account"
+  const val DELETE_ALL_DATA = "Delete All Data"
 }
 
 internal object AuthName {

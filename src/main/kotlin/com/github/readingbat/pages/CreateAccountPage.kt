@@ -28,13 +28,12 @@ import com.github.readingbat.misc.PageUtils.hideShowButton
 import com.github.readingbat.pages.PageCommon.backLink
 import com.github.readingbat.pages.PageCommon.bodyTitle
 import com.github.readingbat.pages.PageCommon.clickButtonScript
+import com.github.readingbat.pages.PageCommon.displayMessage
 import com.github.readingbat.pages.PageCommon.headDefault
 import com.github.readingbat.pages.PageCommon.privacyStatement
-import com.github.readingbat.pages.PageCommon.rawHtml
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.queryParam
 import kotlinx.html.*
-import kotlinx.html.Entities.nbsp
 import kotlinx.html.stream.createHTML
 
 internal object CreateAccountPage {
@@ -69,7 +68,7 @@ internal object CreateAccountPage {
             """.trimIndent()
             }
 
-            p { span { style = "color:red;"; if (msg.isNotEmpty()) +msg else rawHtml(nbsp.text) } }
+            p { span { style = "color:red;"; this@body.displayMessage(msg) } }
 
             val inputFs = "font-size: 95%;"
             val labelWidth = "width: 250;"

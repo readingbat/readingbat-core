@@ -24,17 +24,17 @@ object RedisRoutines {
 
   @JvmStatic
   fun main(args: Array<String>) {
-    showAllKeys()
-    //deleteAllKeys()
+    showAll()
+    //deleteAll()
   }
 
-  internal fun deleteAllKeys() {
+  internal fun deleteAll() {
     withRedis { redis ->
       redis?.keys("*")?.forEach { redis.del(it) }
     }
   }
 
-  internal fun showAllKeys() {
+  internal fun showAll() {
     withRedis { redis ->
       if (redis != null) {
         println(redis.keys("*")
