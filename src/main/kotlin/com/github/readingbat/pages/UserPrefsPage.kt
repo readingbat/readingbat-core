@@ -54,15 +54,17 @@ internal object UserPrefsPage : KLogging() {
 
   fun PipelineCall.userPrefsPage(content: ReadingBatContent,
                                  msg: String,
-                                 isErrorMsg: Boolean = true): String =
+                                 isErrorMsg: Boolean,
+                                 defaultClassCode: String = ""): String =
     if (isValidPrincipal(fetchPrincipal()))
-      prefsWithLoginPage(content, msg, isErrorMsg)
+      prefsWithLoginPage(content, msg, isErrorMsg, defaultClassCode)
     else
       requestLogInPage(content)
 
   private fun PipelineCall.prefsWithLoginPage(content: ReadingBatContent,
                                               msg: String,
-                                              isErrorMsg: Boolean) =
+                                              isErrorMsg: Boolean,
+                                              defaultClassCode: String) =
     createHTML()
       .html {
         head {
@@ -82,7 +84,7 @@ internal object UserPrefsPage : KLogging() {
           val returnPath = queryParam(RETURN_PATH) ?: "/"
 
           changePassword()
-          joinClass()
+          joinClass(defaultClassCode)
           //teacherShare()
           //memo()
           deleteAccount(principal)
@@ -134,7 +136,7 @@ internal object UserPrefsPage : KLogging() {
     }
   }
 
-  private fun BODY.joinClass() {
+  private fun BODY.joinClass(defaultClassCode: String) {
     h3 { +"Join Class" }
     p { +"Enter the class code your teacher gave you. This will make your progress visible to your teacher." }
     form {
@@ -148,7 +150,7 @@ internal object UserPrefsPage : KLogging() {
               type = InputType.text;
               size = "42"
               name = CLASS_CODE
-              value = ""
+              value = defaultClassCode
               onKeyPress = "click$joinClassButton(event);"
             }
           }

@@ -37,9 +37,9 @@ internal object ClassroomPage {
           bodyTitle()
 
           div {
-            h2 { +"About ReadingBat" }
+            h2 { +"ReadingBat Challenge Dashboard" }
 
-            val wsid = "ws-output"
+            val WSID = "ws-output"
             script {
               rawHtml(
                 """
@@ -47,16 +47,16 @@ internal object ClassroomPage {
                 var ws = new WebSocket(HOST);
                 var el;
                 ws.onopen = function (event) {
-                  ws.send("Hello!"); 
+                  ws.send("abcde"); 
                 };
                 ws.onmessage = function (event) {
-                  el = document.getElementById('$wsid');
+                  el = document.getElementById('$WSID');
                   el.innerHTML = 'Server time: ' + event.data;
                 };
               """.trimIndent())
             }
 
-            p { id = wsid }
+            p { id = WSID }
           }
         }
       }

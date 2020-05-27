@@ -30,6 +30,7 @@ import com.github.readingbat.misc.RedisConstants.CHALLENGE_ANSWERS_KEY
 import com.github.readingbat.misc.RedisConstants.CORRECT_ANSWERS_KEY
 import com.github.readingbat.misc.RedisConstants.DIGEST_FIELD
 import com.github.readingbat.misc.RedisConstants.DIGEST_KEY
+import com.github.readingbat.misc.RedisConstants.KEY_SEP
 import com.github.readingbat.misc.RedisConstants.RESET_KEY
 import com.github.readingbat.misc.RedisConstants.SALT_FIELD
 import com.github.readingbat.misc.RedisConstants.USERID_RESET_KEY
@@ -48,28 +49,28 @@ import redis.clients.jedis.Jedis
 
 internal class UserId(val id: String = randomId(25)) {
 
-  fun digestKey() = "$DIGEST_KEY|$id"
+  fun digestKey() = listOf(DIGEST_KEY, id).joinToString(KEY_SEP)
 
   fun correctAnswersKey(names: ChallengeNames) =
     correctAnswersKey(names.languageName, names.groupName, names.challengeName)
 
   fun correctAnswersKey(languageName: String, groupName: String, challengeName: String) =
-    listOf(CORRECT_ANSWERS_KEY, AUTH_KEY, id, languageName, groupName, challengeName).joinToString(sep)
+    listOf(CORRECT_ANSWERS_KEY, AUTH_KEY, id, languageName, groupName, challengeName).joinToString(KEY_SEP)
 
   fun challengeKey(names: ChallengeNames) =
     challengeKey(names.languageName, names.groupName, names.challengeName)
 
   fun challengeKey(languageName: String, groupName: String, challengeName: String) =
-    listOf(CHALLENGE_ANSWERS_KEY, AUTH_KEY, id, languageName, groupName, challengeName).joinToString(sep)
+    listOf(CHALLENGE_ANSWERS_KEY, AUTH_KEY, id, languageName, groupName, challengeName).joinToString(KEY_SEP)
 
   fun argumentKey(names: ChallengeNames, argument: String) =
     argumentKey(names.languageName, names.groupName, names.challengeName, argument)
 
   fun argumentKey(languageName: String, groupName: String, challengeName: String, argument: String) =
-    listOf(ANSWER_HISTORY_KEY, AUTH_KEY, id, languageName, groupName, challengeName, argument).joinToString(sep)
+    listOf(ANSWER_HISTORY_KEY, AUTH_KEY, id, languageName, groupName, challengeName, argument).joinToString(KEY_SEP)
 
   // This key maps to a reset_id
-  fun userIdPasswordResetKey() = listOf(USERID_RESET_KEY, id).joinToString(sep)
+  fun userIdPasswordResetKey() = listOf(USERID_RESET_KEY, id).joinToString(KEY_SEP)
 
   fun deleteUser(principal: UserPrincipal, redis: Jedis) {
     val userIdKey = userIdKey(principal.userId)
@@ -108,14 +109,12 @@ internal class UserId(val id: String = randomId(25)) {
 
   companion object : KLogging() {
 
-    private const val sep = "|"
-
     val gson = Gson()
 
-    fun userIdKey(username: String) = "$USER_ID_KEY|$username"
+    fun userIdKey(username: String) = listOf(USER_ID_KEY, username).joinToString(KEY_SEP)
 
     // Maps resetId to username
-    fun passwordResetKey(resetId: String) = listOf(RESET_KEY, resetId).joinToString(sep)
+    fun passwordResetKey(resetId: String) = listOf(RESET_KEY, resetId).joinToString(KEY_SEP)
 
     fun createUser(username: String, password: String, redis: Jedis) {
       // The userName (email) is stored in a single KV pair, enabling changes to the userName
@@ -168,6 +167,7 @@ internal class UserId(val id: String = randomId(25)) {
 
           answerMap.forEach { (args, userResp) ->
             redis.hset(challengeKey, args, userResp)
+            // Publish to challenge dashboard
             redis.publish("channel", userResp)
           }
         }

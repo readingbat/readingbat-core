@@ -73,7 +73,7 @@ internal fun Routing.userRoutes(content: ReadingBatContent) {
 
   post(CREATE_ACCOUNT) { createAccount(content) }
 
-  get(USER_PREFS) { respondWith { userPrefsPage(content, "") } }
+  get(USER_PREFS) { respondWith { userPrefsPage(content, "", false) } }
 
   post(USER_PREFS) { respondWith { userPrefs(content) } }
 

@@ -17,20 +17,14 @@
 
 package com.github.readingbat.misc
 
-internal object RedisConstants {
-  const val USER_ID_KEY = "userId"
-  const val DIGEST_KEY = "digest"
-  const val CORRECT_ANSWERS_KEY = "correct-answers"
-  const val CHALLENGE_ANSWERS_KEY = "challenge-answers"
-  const val ANSWER_HISTORY_KEY = "answer-history"
-  const val RESET_KEY = "password-reset"
-  const val USERID_RESET_KEY = "userid_password-reset"
-  const val AUTH_KEY = "auth"
-  const val NO_AUTH_KEY = "noauth"
-  const val CLASS_CODE_KEY = "class-code"
+import com.github.pambrose.common.redis.RedisUtils.withRedisPool
+import com.github.readingbat.misc.RedisConstants.CLASS_CODE_KEY
+import com.github.readingbat.misc.RedisConstants.KEY_SEP
 
-  const val SALT_FIELD = "salt"
-  const val DIGEST_FIELD = "digest"
+internal object Dashboards {
 
-  const val KEY_SEP = "|"
+  fun classCodeEnrollmentKey(classCode: String) = listOf(CLASS_CODE_KEY, classCode).joinToString(KEY_SEP)
+
+  fun isValidClassCode(classCode: String) =
+    withRedisPool { redis -> redis?.get(classCodeEnrollmentKey(classCode)) != null }
 }

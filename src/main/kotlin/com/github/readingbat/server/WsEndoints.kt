@@ -30,9 +30,10 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.runBlocking
+import mu.KLogging
 import redis.clients.jedis.JedisPubSub
 
-internal object WsEndoints {
+internal object WsEndoints : KLogging() {
 
   fun Routing.wsEndpoints() {
 
@@ -42,7 +43,9 @@ internal object WsEndoints {
         .receiveAsFlow()
         .mapNotNull { it as? Frame.Text }
         .collect { frame ->
-          val text = frame.readText()
+          val classId = frame.readText()
+
+          logger.info { "Received class id: $classId" }
 
           repeat(10) { i ->
             delay(100)
@@ -58,10 +61,10 @@ internal object WsEndoints {
                   outgoing.send(Frame.Text("$channel $message ${i++}"))
                 }
               }
-            }, "channel")
+            }, classId)
           }
 
-          if (text.equals("bye", ignoreCase = true)) {
+          if (classId.equals("bye", ignoreCase = true)) {
             close(CloseReason(CloseReason.Codes.NORMAL, "Client said BYE"))
           }
         }

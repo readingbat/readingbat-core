@@ -21,6 +21,7 @@ import com.github.pambrose.common.redis.RedisUtils.withRedisPool
 import com.github.pambrose.common.util.sha256
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.Constants.DBMS_DOWN
+import com.github.readingbat.misc.Dashboards.isValidClassCode
 import com.github.readingbat.misc.FormFields.CLASS_CODE
 import com.github.readingbat.misc.FormFields.CONFIRM_PASSWORD
 import com.github.readingbat.misc.FormFields.CURR_PASSWORD
@@ -52,7 +53,7 @@ internal object UserPrefs : KLogging() {
 
     return withRedisPool { redis ->
       if (redis == null) {
-        userPrefsPage(content, DBMS_DOWN)
+        userPrefsPage(content, DBMS_DOWN, true)
       }
       else {
         val userId = lookupPrincipal(principal, redis)
@@ -89,7 +90,15 @@ internal object UserPrefs : KLogging() {
 
             JOIN_CLASS -> {
               val classCode = parameters[CLASS_CODE] ?: ""
-              userPrefsPage(content, "Enrolled in class $classCode", false)
+              if (classCode.isBlank()) {
+                userPrefsPage(content, "Empty class code", true)
+              }
+              else if (!isValidClassCode(classCode)) {
+                userPrefsPage(content, "Invalid class code: $classCode", true, defaultClassCode = classCode)
+              }
+              else {
+                userPrefsPage(content, "Enrolled in class $classCode", false)
+              }
             }
 
             DELETE_ACCOUNT -> {

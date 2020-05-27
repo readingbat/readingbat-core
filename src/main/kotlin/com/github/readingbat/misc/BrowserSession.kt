@@ -20,6 +20,7 @@ package com.github.readingbat.misc
 import com.github.readingbat.misc.RedisConstants.ANSWER_HISTORY_KEY
 import com.github.readingbat.misc.RedisConstants.CHALLENGE_ANSWERS_KEY
 import com.github.readingbat.misc.RedisConstants.CORRECT_ANSWERS_KEY
+import com.github.readingbat.misc.RedisConstants.KEY_SEP
 import com.github.readingbat.misc.RedisConstants.NO_AUTH_KEY
 import com.github.readingbat.posts.ChallengeNames
 import java.time.Instant
@@ -31,19 +32,19 @@ internal data class BrowserSession(val id: String, val created: Long = Instant.n
 
   fun correctAnswersKey(languageName: String, groupName: String, challengeName: String) =
     listOf(CORRECT_ANSWERS_KEY,
-           NO_AUTH_KEY, id, languageName, groupName, challengeName).joinToString("|")
+           NO_AUTH_KEY, id, languageName, groupName, challengeName).joinToString(KEY_SEP)
 
   fun challengeKey(names: ChallengeNames) =
     challengeKey(names.languageName, names.groupName, names.challengeName)
 
   fun challengeKey(languageName: String, groupName: String, challengeName: String) =
     listOf(CHALLENGE_ANSWERS_KEY,
-           NO_AUTH_KEY, id, languageName, groupName, challengeName).joinToString("|")
+           NO_AUTH_KEY, id, languageName, groupName, challengeName).joinToString(KEY_SEP)
 
   fun argumentKey(names: ChallengeNames, argument: String) =
     argumentKey(names.languageName, names.groupName, names.challengeName, argument)
 
   fun argumentKey(languageName: String, groupName: String, challengeName: String, argument: String) =
     listOf(ANSWER_HISTORY_KEY,
-           NO_AUTH_KEY, id, languageName, groupName, challengeName, argument).joinToString("|")
+           NO_AUTH_KEY, id, languageName, groupName, challengeName, argument).joinToString(KEY_SEP)
 }
