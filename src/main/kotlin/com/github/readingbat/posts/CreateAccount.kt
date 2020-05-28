@@ -30,7 +30,7 @@ import com.github.readingbat.misc.FormFields.EMAIL
 import com.github.readingbat.misc.FormFields.NAME
 import com.github.readingbat.misc.FormFields.PASSWORD
 import com.github.readingbat.misc.UserId.Companion.createUser
-import com.github.readingbat.misc.UserId.Companion.userIdKey
+import com.github.readingbat.misc.UserId.Companion.userEmailKey
 import com.github.readingbat.misc.UserPrincipal
 import com.github.readingbat.pages.CreateAccountPage.createAccountPage
 import com.github.readingbat.server.PipelineCall
@@ -107,7 +107,7 @@ internal object CreateAccount : KLogging() {
         createAccountLimiter.acquire() // may wait
 
         // Check if email already exists
-        if (redis.exists(userIdKey(email))) {
+        if (redis.exists(userEmailKey(email))) {
           respondWith { createAccountPage(content, msg = "Email already registered: $email") }
         }
         else {

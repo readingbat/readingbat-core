@@ -205,6 +205,9 @@ internal object ChallengePage : KLogging() {
               tr {
                 val userId = UserId(it)
                 val userInfoKey = userId.userInfoKey
+
+                id = userInfoKey
+
                 td { +(redis.hget(userInfoKey, NAME_FIELD) ?: "") }
                 funcInfo.arguments.indices.forEach { i ->
                   val args = funcInfo.arguments[i]

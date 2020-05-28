@@ -21,7 +21,7 @@ import com.github.readingbat.misc.Constants.DBMS_DOWN
 import redis.clients.jedis.exceptions.JedisException
 
 internal object RedisConstants {
-  const val USER_ID_KEY = "userId"
+  const val USER_EMAIL_KEY = "userId"
   const val USER_INFO_KEY = "user-info"
   const val CORRECT_ANSWERS_KEY = "correct-answers"
   const val CHALLENGE_ANSWERS_KEY = "challenge-answers"

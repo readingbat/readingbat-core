@@ -35,7 +35,7 @@ import com.github.readingbat.misc.RedisConstants.NAME_FIELD
 import com.github.readingbat.misc.RedisConstants.RESET_KEY
 import com.github.readingbat.misc.RedisConstants.SALT_FIELD
 import com.github.readingbat.misc.RedisConstants.USERID_RESET_KEY
-import com.github.readingbat.misc.RedisConstants.USER_ID_KEY
+import com.github.readingbat.misc.RedisConstants.USER_EMAIL_KEY
 import com.github.readingbat.misc.RedisConstants.USER_INFO_KEY
 import com.github.readingbat.posts.ChallengeHistory
 import com.github.readingbat.posts.ChallengeNames
@@ -75,7 +75,7 @@ internal class UserId(val id: String = randomId(25)) {
   fun userIdPasswordResetKey() = listOf(USERID_RESET_KEY, id).joinToString(KEY_SEP)
 
   fun deleteUser(principal: UserPrincipal, redis: Jedis) {
-    val userIdKey = userIdKey(principal.userId)
+    val userEmailKey = userEmailKey(principal.userId)
     val correctAnswers = redis.keys(correctAnswersKey("*", "*", "*"))
     val challenges = redis.keys(challengeKey("*", "*", "*"))
     val arguments = redis.keys(answerHistoryKey("*", "*", "*", "*"))
@@ -84,8 +84,8 @@ internal class UserId(val id: String = randomId(25)) {
     val previousResetId = redis.get(userIdPasswordResetKey) ?: ""
 
     logger.info { "Deleting user: ${principal.userId}" }
-    logger.info { "userIdKey: $userIdKey" }
-    logger.info { "digestKey: $userInfoKey" }
+    logger.info { "userEmailKey: $userEmailKey" }
+    logger.info { "userInfoKey: $userInfoKey" }
     logger.info { "correctAnswers: $correctAnswers" }
     logger.info { "challenges: $challenges" }
     logger.info { "arguments: $arguments" }
@@ -96,7 +96,7 @@ internal class UserId(val id: String = randomId(25)) {
         tx.del(passwordResetKey(previousResetId))
       }
 
-      tx.del(userIdKey)
+      tx.del(userEmailKey)
       //tx.hdel(digestKey, SALT_FIELD, DIGEST_FIELD)
       tx.del(userInfoKey)
 
@@ -112,9 +112,7 @@ internal class UserId(val id: String = randomId(25)) {
 
     val gson = Gson()
 
-    fun userIdKey(email: String) = listOf(USER_ID_KEY, email).joinToString(KEY_SEP)
-
-    fun userInfoKey(id: String) = listOf(USER_INFO_KEY, id).joinToString(KEY_SEP)
+    fun userEmailKey(email: String) = listOf(USER_EMAIL_KEY, email).joinToString(KEY_SEP)
 
     fun correctAnswersKey(userId: UserId?, browserSession: BrowserSession?, names: ChallengeNames) =
       userId?.correctAnswersKey(names) ?: browserSession?.correctAnswersKey(names) ?: ""
@@ -152,13 +150,13 @@ internal class UserId(val id: String = randomId(25)) {
       // email -> userId
       // userId -> salt and sha256-encoded digest
 
-      val userIdKey = userIdKey(email)
+      val userEmailKey = userEmailKey(email)
       val userId = UserId()
       val salt = newStringSalt()
       logger.info { "Created user $email ${userId.id}" }
 
       redis.multi().also { tx ->
-        tx.set(userIdKey, userId.id)
+        tx.set(userEmailKey, userId.id)
         tx.hset(userId.userInfoKey, mapOf(NAME_FIELD to name,
                                           SALT_FIELD to salt,
                                           DIGEST_FIELD to password.sha256(salt),
@@ -234,8 +232,8 @@ internal class UserId(val id: String = randomId(25)) {
     fun lookupUserIdByEmail(email: String): UserId? = withRedisPool { redis -> lookupUserIdByEmail(email, redis) }
 
     fun lookupUserIdByEmail(email: String, redis: Jedis?): UserId? {
-      val userIdKey = userIdKey(email)
-      val id = redis?.get(userIdKey) ?: ""
+      val userEmailKey = userEmailKey(email)
+      val id = redis?.get(userEmailKey) ?: ""
       return if (id.isNotEmpty()) UserId(id) else null
     }
 
