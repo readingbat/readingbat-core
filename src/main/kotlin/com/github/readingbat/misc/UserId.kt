@@ -65,10 +65,10 @@ internal class UserId(val id: String = randomId(25)) {
   private fun challengeKey(languageName: String, groupName: String, challengeName: String) =
     listOf(CHALLENGE_ANSWERS_KEY, AUTH_KEY, id, languageName, groupName, challengeName).joinToString(KEY_SEP)
 
-  private fun argumentKey(names: ChallengeNames, argument: String) =
-    argumentKey(names.languageName, names.groupName, names.challengeName, argument)
+  private fun answerHistoryKey(names: ChallengeNames, argument: String) =
+    answerHistoryKey(names.languageName, names.groupName, names.challengeName, argument)
 
-  fun argumentKey(languageName: String, groupName: String, challengeName: String, argument: String) =
+  fun answerHistoryKey(languageName: String, groupName: String, challengeName: String, argument: String) =
     listOf(ANSWER_HISTORY_KEY, AUTH_KEY, id, languageName, groupName, challengeName, argument).joinToString(KEY_SEP)
 
   // This key maps to a reset_id
@@ -78,7 +78,7 @@ internal class UserId(val id: String = randomId(25)) {
     val userIdKey = userIdKey(principal.userId)
     val correctAnswers = redis.keys(correctAnswersKey("*", "*", "*"))
     val challenges = redis.keys(challengeKey("*", "*", "*"))
-    val arguments = redis.keys(argumentKey("*", "*", "*", "*"))
+    val arguments = redis.keys(answerHistoryKey("*", "*", "*", "*"))
 
     val userIdPasswordResetKey = userIdPasswordResetKey()
     val previousResetId = redis.get(userIdPasswordResetKey) ?: ""
@@ -112,7 +112,9 @@ internal class UserId(val id: String = randomId(25)) {
 
     val gson = Gson()
 
-    fun userIdKey(username: String) = listOf(USER_ID_KEY, username).joinToString(KEY_SEP)
+    fun userIdKey(email: String) = listOf(USER_ID_KEY, email).joinToString(KEY_SEP)
+
+    fun userInfoKey(id: String) = listOf(USER_INFO_KEY, id).joinToString(KEY_SEP)
 
     fun correctAnswersKey(userId: UserId?, browserSession: BrowserSession?, names: ChallengeNames) =
       userId?.correctAnswersKey(names) ?: browserSession?.correctAnswersKey(names) ?: ""
@@ -122,10 +124,9 @@ internal class UserId(val id: String = randomId(25)) {
                           languageName: String,
                           groupName: String,
                           challengeName: String) =
-      userId?.correctAnswersKey(languageName, groupName, challengeName) ?: browserSession?.correctAnswersKey(
-        languageName,
-        groupName,
-        challengeName) ?: ""
+      userId?.correctAnswersKey(languageName, groupName, challengeName)
+        ?: browserSession?.correctAnswersKey(languageName, groupName, challengeName)
+        ?: ""
 
     fun challengeKey(userId: UserId?, browserSession: BrowserSession?, names: ChallengeNames) =
       userId?.challengeKey(names) ?: browserSession?.challengeKey(names) ?: ""
@@ -135,12 +136,12 @@ internal class UserId(val id: String = randomId(25)) {
                      languageName: String,
                      groupName: String,
                      challengeName: String) =
-      userId?.challengeKey(languageName, groupName, challengeName) ?: browserSession?.challengeKey(languageName,
-                                                                                                   groupName,
-                                                                                                   challengeName) ?: ""
+      userId?.challengeKey(languageName, groupName, challengeName)
+        ?: browserSession?.challengeKey(languageName, groupName, challengeName)
+        ?: ""
 
-    fun argumentKey(userId: UserId?, browserSession: BrowserSession?, names: ChallengeNames, argument: String) =
-      userId?.argumentKey(names, argument) ?: browserSession?.argumentKey(names, argument) ?: ""
+    fun answerHistoryKey(userId: UserId?, browserSession: BrowserSession?, names: ChallengeNames, argument: String) =
+      userId?.answerHistoryKey(names, argument) ?: browserSession?.answerHistoryKey(names, argument) ?: ""
 
     // Maps resetId to username
     fun passwordResetKey(resetId: String) = listOf(RESET_KEY, resetId).joinToString(KEY_SEP)
@@ -148,7 +149,7 @@ internal class UserId(val id: String = randomId(25)) {
     fun createUser(name: String, email: String, password: String, redis: Jedis) {
       // The userName (email) is stored in a single KV pair, enabling changes to the userName
       // Three things are stored:
-      // username -> userId
+      // email -> userId
       // userId -> salt and sha256-encoded digest
 
       val userIdKey = userIdKey(email)
@@ -208,37 +209,37 @@ internal class UserId(val id: String = randomId(25)) {
         results
           .filter { it.answered }
           .forEach { result ->
-            val argumentKey = argumentKey(userId, browserSession, names, result.arguments)
-            if (redis != null && argumentKey.isNotEmpty()) {
+            val answerHistoryKey = answerHistoryKey(userId, browserSession, names, result.arguments)
+            if (redis != null && answerHistoryKey.isNotEmpty()) {
               val history =
-                gson.fromJson(redis[argumentKey], ChallengeHistory::class.java) ?: ChallengeHistory(
-                  result.arguments)
+                gson.fromJson(redis[answerHistoryKey], ChallengeHistory::class.java)
+                  ?: ChallengeHistory(result.arguments)
               logger.debug { "Before: $history" }
               history.apply { if (result.correct) markCorrect() else markIncorrect(result.userResponse) }
               logger.debug { "After: $history" }
-              redis.set(argumentKey, gson.toJson(history))
+              redis.set(answerHistoryKey, gson.toJson(history))
             }
           }
       }
 
-    fun isValidEmail(email: String) = lookupEmail(email) != null
+    fun isValidEmail(email: String) = lookupUserIdByEmail(email) != null
 
     fun isValidPrincipal(principal: UserPrincipal?) = withRedisPool { redis -> isValidPrincipal(principal, redis) }
 
     fun isValidPrincipal(principal: UserPrincipal?, redis: Jedis?) = lookupPrincipal(principal, redis) != null
 
     fun lookupPrincipal(principal: UserPrincipal?, redis: Jedis?) =
-      principal?.let { lookupEmail(it.userId, redis) }
+      principal?.let { lookupUserIdByEmail(it.userId, redis) }
 
-    fun lookupEmail(username: String): UserId? = withRedisPool { redis -> lookupEmail(username, redis) }
+    fun lookupUserIdByEmail(email: String): UserId? = withRedisPool { redis -> lookupUserIdByEmail(email, redis) }
 
-    fun lookupEmail(email: String, redis: Jedis?): UserId? {
+    fun lookupUserIdByEmail(email: String, redis: Jedis?): UserId? {
       val userIdKey = userIdKey(email)
       val id = redis?.get(userIdKey) ?: ""
       return if (id.isNotEmpty()) UserId(id) else null
     }
 
-    fun lookupUserId(userId: UserId, redis: Jedis?): Pair<String, String> {
+    fun lookupDigestInfoByUserId(userId: UserId, redis: Jedis?): Pair<String, String> {
       val salt = redis?.hget(userId.userInfoKey, SALT_FIELD) ?: ""
       val digest = redis?.hget(userId.userInfoKey, DIGEST_FIELD) ?: ""
       return salt to digest

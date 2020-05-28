@@ -49,7 +49,7 @@ internal data class ChallengeResults(val arguments: String,
                                      val answered: Boolean,
                                      val correct: Boolean)
 
-internal data class ChallengeHistory(var argument: String,
+internal data class ChallengeHistory(var arguments: String,
                                      var correct: Boolean = false,
                                      var attempts: Int = 0,
                                      val answers: MutableList<String> = mutableListOf()) {

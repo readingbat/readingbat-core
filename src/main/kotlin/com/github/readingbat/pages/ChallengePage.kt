@@ -36,25 +36,30 @@ import com.github.readingbat.misc.CSSNames.USER_RESP
 import com.github.readingbat.misc.CheckAnswersJs.checkAnswersScript
 import com.github.readingbat.misc.CheckAnswersJs.processAnswers
 import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
+import com.github.readingbat.misc.Constants.DBMS_DOWN
+import com.github.readingbat.misc.Constants.GREEN_CHECK
 import com.github.readingbat.misc.Constants.MSG
 import com.github.readingbat.misc.Constants.PLAYGROUND_ROOT
 import com.github.readingbat.misc.Constants.RESP
 import com.github.readingbat.misc.Constants.STATIC_ROOT
+import com.github.readingbat.misc.Constants.WHITE_CHECK
+import com.github.readingbat.misc.Dashboards.classCodeEnrollmentKey
 import com.github.readingbat.misc.PageUtils.pathOf
 import com.github.readingbat.misc.ParameterIds.FEEDBACK_ID
 import com.github.readingbat.misc.ParameterIds.SPINNER_ID
 import com.github.readingbat.misc.ParameterIds.STATUS_ID
 import com.github.readingbat.misc.ParameterIds.SUCCESS_ID
+import com.github.readingbat.misc.RedisConstants.NAME_FIELD
 import com.github.readingbat.misc.UserId
 import com.github.readingbat.misc.UserId.Companion.challengeKey
 import com.github.readingbat.misc.UserId.Companion.lookupPrincipal
 import com.github.readingbat.misc.UserPrincipal
-import com.github.readingbat.pages.ChallengePage.otherLinks
 import com.github.readingbat.pages.PageCommon.addLink
 import com.github.readingbat.pages.PageCommon.backLink
 import com.github.readingbat.pages.PageCommon.bodyHeader
 import com.github.readingbat.pages.PageCommon.headDefault
 import com.github.readingbat.pages.PageCommon.rawHtml
+import com.github.readingbat.posts.ChallengeHistory
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.fetchPrincipal
 import com.github.readingbat.server.ServerUtils.queryParam
@@ -70,9 +75,10 @@ import mu.KLogging
 internal object ChallengePage : KLogging() {
   private const val spinnerCss = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
 
-  fun PipelineCall.challengePage(content: ReadingBatContent,
-                                 challenge: Challenge,
-                                 loginAttempt: Boolean) =
+  suspend fun PipelineCall.challengePage(content: ReadingBatContent,
+                                         challenge: Challenge,
+                                         classCode: String,
+                                         loginAttempt: Boolean) =
     createHTML()
       .html {
         val principal = fetchPrincipal(loginAttempt)
@@ -97,9 +103,12 @@ internal object ChallengePage : KLogging() {
         body {
           bodyHeader(principal, loginAttempt, content, languageType, loginPath, queryParam(MSG) ?: "")
 
-          this@body.challenge(challenge, funcInfo)
+          this@body.displayChallenge(challenge, funcInfo)
 
-          this@body.questions(principal, browserSession, challenge, funcInfo)
+          if (classCode.isEmpty())
+            this@body.displayQuestions(principal, browserSession, challenge, funcInfo)
+          else
+            this@body.displayProgress(principal, challenge, funcInfo, classCode)
 
           backLink(CHALLENGE_ROOT, languageName, groupName)
 
@@ -107,7 +116,7 @@ internal object ChallengePage : KLogging() {
         }
       }
 
-  private fun BODY.challenge(challenge: Challenge, funcInfo: FunctionInfo) {
+  private fun BODY.displayChallenge(challenge: Challenge, funcInfo: FunctionInfo) {
     val languageType = challenge.languageType
     val groupName = challenge.groupName
     val challengeName = challenge.challengeName
@@ -115,7 +124,7 @@ internal object ChallengePage : KLogging() {
 
     h2 {
       val groupPath = pathOf(CHALLENGE_ROOT, languageName, groupName)
-      this@challenge.addLink(groupName.decode(), groupPath)
+      this@displayChallenge.addLink(groupName.decode(), groupPath)
       span { style = "padding-left:2px; padding-right:2px;"; rawHtml("&rarr;") }
       +challengeName
     }
@@ -130,10 +139,10 @@ internal object ChallengePage : KLogging() {
     }
   }
 
-  private fun BODY.questions(principal: UserPrincipal?,
-                             browserSession: BrowserSession?,
-                             challenge: Challenge,
-                             funcInfo: FunctionInfo) =
+  private fun BODY.displayQuestions(principal: UserPrincipal?,
+                                    browserSession: BrowserSession?,
+                                    challenge: Challenge,
+                                    funcInfo: FunctionInfo) =
     div {
       style = "margin-top:2em; margin-left:2em;"
       table {
@@ -161,9 +170,61 @@ internal object ChallengePage : KLogging() {
         }
       }
 
-      this@questions.processAnswers(funcInfo)
+      this@displayQuestions.processAnswers(funcInfo)
 
-      this@questions.otherLinks(challenge)
+      this@displayQuestions.otherLinks(challenge)
+    }
+
+  private fun BODY.displayProgress(principal: UserPrincipal?,
+                                   challenge: Challenge,
+                                   funcInfo: FunctionInfo,
+                                   classCode: String) =
+    div {
+      style = "margin-top:2em; margin-left:2em;"
+
+      val languageType = challenge.languageType
+      val groupName = challenge.groupName
+      val challengeName = challenge.challengeName
+      val languageName = languageType.lowerName
+
+      withRedisPool { redis ->
+        if (redis == null) {
+          +DBMS_DOWN
+        }
+        else {
+          val ids = redis.smembers(classCodeEnrollmentKey(classCode)).filter { it.isNotEmpty() }
+          table {
+            tr {
+              th { +"Student" }
+              funcInfo.arguments.indices.forEach { i ->
+                val args = funcInfo.arguments[i]
+                th(classes = "rotate") { span { +args } }
+              }
+            }
+            ids.forEach {
+              tr {
+                val userId = UserId(it)
+                val userInfoKey = userId.userInfoKey
+                td { +(redis.hget(userInfoKey, NAME_FIELD) ?: "") }
+                funcInfo.arguments.indices.forEach { i ->
+                  val args = funcInfo.arguments[i]
+                  val answerHistoryKey = userId.answerHistoryKey(languageName, groupName, challengeName, args)
+                  val history =
+                    UserId.gson.fromJson(redis[answerHistoryKey], ChallengeHistory::class.java)
+                      ?: ChallengeHistory(args)
+                  td {
+                    img { src = "$STATIC_ROOT/${if (history.correct) GREEN_CHECK else WHITE_CHECK}" }
+                    rawHtml(Entities.nbsp.text)
+                    +history.attempts.toString()
+                    rawHtml(Entities.nbsp.text)
+                    +history.answers.toString()
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     }
 
   private fun previousAnswers(principal: UserPrincipal?,

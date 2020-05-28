@@ -37,15 +37,15 @@ import io.ktor.routing.Routing
 
 internal object Locations {
   fun Routing.locations(content: ReadingBatContent) {
-    get<Language> { language -> language(content, language, false) }
-    get<Language.Group> { group -> group(content, group, false) }
-    get<Language.Group.Challenge> { challenge -> challenge(content, challenge, false) }
+    get<Language> { languageLoc -> language(content, languageLoc, false) }
+    get<Language.Group> { groupLoc -> group(content, groupLoc, false) }
+    get<Language.Group.Challenge> { challengeLoc -> challenge(content, challengeLoc, false) }
     get<PlaygroundRequest> { request -> playground(content, request, false) }
 
     authenticate(FORM) {
-      post<Language> { language -> language(content, language, true) }
-      post<Language.Group> { group -> group(content, group, true) }
-      post<Language.Group.Challenge> { challenge -> challenge(content, challenge, true) }
+      post<Language> { languageLoc -> language(content, languageLoc, true) }
+      post<Language.Group> { groupLoc -> group(content, groupLoc, true) }
+      post<Language.Group.Challenge> { challengeLoc -> challenge(content, challengeLoc, true) }
       post<PlaygroundRequest> { request -> playground(content, request, true) }
     }
   }
@@ -55,30 +55,24 @@ internal object Locations {
                                             loginAttempt: Boolean) =
     respondWith {
       content.checkLanguage(language.languageType)
-      languageGroupPage(content,
-                        language.languageType,
-                        loginAttempt)
+      languageGroupPage(content, language.languageType, loginAttempt)
     }
 
   private suspend fun PipelineCall.group(content: ReadingBatContent,
-                                         group: Language.Group,
+                                         groupLoc: Language.Group,
                                          loginAttempt: Boolean) =
     respondWith {
-      content.checkLanguage(group.languageType)
-      challengeGroupPage(content,
-                         content.findGroup(group.languageType, group.groupName),
-                         loginAttempt)
+      content.checkLanguage(groupLoc.languageType)
+      challengeGroupPage(content, content.findGroup(groupLoc), loginAttempt)
     }
 
   private suspend fun PipelineCall.challenge(content: ReadingBatContent,
-                                             challenge: Language.Group.Challenge,
+                                             challengeLoc: Language.Group.Challenge,
                                              loginAttempt: Boolean) =
     respondWith {
       registerBrowserSession()
-      content.checkLanguage(challenge.languageType)
-      challengePage(content,
-                    content.findChallenge(challenge.languageType, challenge.groupName, challenge.challengeName),
-                    loginAttempt)
+      content.checkLanguage(challengeLoc.languageType)
+      challengePage(content, content.findChallenge(challengeLoc), challengeLoc.classCode, loginAttempt)
     }
 
   private suspend fun PipelineCall.playground(content: ReadingBatContent,
@@ -100,7 +94,7 @@ internal data class Language(val language: String) {
     val languageType get() = language.languageType
 
     @Location("/{challengeName}")
-    data class Challenge(val group: Group, val challengeName: String) {
+    data class Challenge(val group: Group, val challengeName: String, val classCode: String = "") {
       val languageType get() = group.languageType
       val groupName get() = group.groupName
     }

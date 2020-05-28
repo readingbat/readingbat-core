@@ -41,10 +41,10 @@ internal data class BrowserSession(val id: String, val created: Long = Instant.n
     listOf(CHALLENGE_ANSWERS_KEY,
            NO_AUTH_KEY, id, languageName, groupName, challengeName).joinToString(KEY_SEP)
 
-  fun argumentKey(names: ChallengeNames, argument: String) =
-    argumentKey(names.languageName, names.groupName, names.challengeName, argument)
+  fun answerHistoryKey(names: ChallengeNames, argument: String) =
+    answerHistoryKey(names.languageName, names.groupName, names.challengeName, argument)
 
-  fun argumentKey(languageName: String, groupName: String, challengeName: String, argument: String) =
+  private fun answerHistoryKey(languageName: String, groupName: String, challengeName: String, argument: String) =
     listOf(ANSWER_HISTORY_KEY,
            NO_AUTH_KEY, id, languageName, groupName, challengeName, argument).joinToString(KEY_SEP)
 }

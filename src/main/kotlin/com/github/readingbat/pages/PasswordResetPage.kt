@@ -56,14 +56,14 @@ internal object PasswordResetPage : KLogging() {
       requestPasswordResetPage(content, msg)
     else {
       try {
-        val username =
+        val email =
           withRedisPool { redis ->
             if (redis == null)
               throw ResetPasswordException(DBMS_DOWN)
             val passwordResetKey = UserId.passwordResetKey(resetId)
             redis.get(passwordResetKey) ?: throw ResetPasswordException(INVALID_RESET_ID)
           }
-        changePasswordPage(content, username, resetId, msg)
+        changePasswordPage(content, email, resetId, msg)
       } catch (e: ResetPasswordException) {
         logger.info { e }
         requestPasswordResetPage(content, e.message ?: "Unable to reset password")
@@ -132,7 +132,7 @@ internal object PasswordResetPage : KLogging() {
       }
 
   private fun PipelineCall.changePasswordPage(content: ReadingBatContent,
-                                              username: String,
+                                              email: String,
                                               resetId: String,
                                               msg: String) =
     createHTML()
@@ -149,7 +149,7 @@ internal object PasswordResetPage : KLogging() {
 
           p { span { style = "color:red;"; this@body.displayMessage(msg) } }
 
-          h3 { +"Change password for $username" }
+          h3 { +"Change password for $email" }
           p { +"Password must contain at least 6 characters" }
           form {
             name = formName

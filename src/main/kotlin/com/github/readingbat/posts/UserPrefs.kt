@@ -75,7 +75,7 @@ internal object UserPrefs : KLogging() {
                   passwordError to true
                 }
                 else {
-                  val (salt, digest) = UserId.lookupUserId(userId, redis)
+                  val (salt, digest) = UserId.lookupDigestInfoByUserId(userId, redis)
                   if (salt.isNotEmpty() && digest.isNotEmpty() && digest == currPassword.sha256(salt)) {
                     val newDigest = newPassword.sha256(salt)
                     redis.hset(userId.userInfoKey, DIGEST_FIELD, newDigest)

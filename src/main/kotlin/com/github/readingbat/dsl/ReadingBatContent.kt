@@ -20,6 +20,7 @@ package com.github.readingbat.dsl
 import com.github.pambrose.common.util.ContentRoot
 import com.github.readingbat.dsl.LanguageGroup.Companion.defaultContentRoot
 import com.github.readingbat.dsl.LanguageType.*
+import com.github.readingbat.server.Language
 
 
 @ReadingBatDslMarker
@@ -45,11 +46,11 @@ class ReadingBatContent {
   internal fun findLanguage(languageType: LanguageType) =
     languageMap[languageType] ?: throw InvalidConfigurationException("Invalid language $languageType")
 
-  internal fun findGroup(languageType: LanguageType, groupName: String) =
-    findLanguage(languageType).findGroup(groupName)
+  internal fun findGroup(groupLoc: Language.Group) =
+    findLanguage(groupLoc.languageType).findGroup(groupLoc.groupName)
 
-  internal fun findChallenge(languageType: LanguageType, groupName: String, challengeName: String) =
-    findGroup(languageType, groupName).findChallenge(challengeName)
+  internal fun findChallenge(challengeLoc: Language.Group.Challenge) =
+    findGroup(challengeLoc.group).findChallenge(challengeLoc.challengeName)
 
   internal fun validate() = languageList.forEach { it.validate() }
 

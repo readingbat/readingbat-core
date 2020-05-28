@@ -106,9 +106,9 @@ internal object CreateAccount : KLogging() {
       else {
         createAccountLimiter.acquire() // may wait
 
-        // Check if username already exists
+        // Check if email already exists
         if (redis.exists(userIdKey(email))) {
-          respondWith { createAccountPage(content, msg = "Username already exists: $email") }
+          respondWith { createAccountPage(content, msg = "Email already registered: $email") }
         }
         else {
           // Create user

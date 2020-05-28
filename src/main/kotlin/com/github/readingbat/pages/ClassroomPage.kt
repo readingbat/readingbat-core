@@ -20,7 +20,7 @@ package com.github.readingbat.pages
 import com.github.pambrose.common.redis.RedisUtils
 import com.github.pambrose.common.util.randomId
 import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.misc.Dashboards
+import com.github.readingbat.misc.Dashboards.classCodeEnrollmentKey
 import com.github.readingbat.misc.RedisDownException
 import com.github.readingbat.pages.PageCommon.backLink
 import com.github.readingbat.pages.PageCommon.bodyTitle
@@ -105,7 +105,7 @@ internal object ClassroomPage {
       if (redis == null)
         throw RedisDownException()
       val classCode = randomId(15)
-      val classCodeEnrollmentKey = Dashboards.classCodeEnrollmentKey(classCode)
+      val classCodeEnrollmentKey = classCodeEnrollmentKey(classCode)
       redis.sadd(classCodeEnrollmentKey, "")
       classCode
     }
