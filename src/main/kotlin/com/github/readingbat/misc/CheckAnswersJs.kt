@@ -17,6 +17,7 @@
 
 package com.github.readingbat.misc
 
+import com.github.readingbat.misc.Constants.CORRECT_COLOR
 import com.github.readingbat.misc.Constants.RESP
 import com.github.readingbat.misc.Constants.SESSION_ID
 import com.github.readingbat.misc.Endpoints.CHECK_ANSWERS_ROOT
@@ -80,7 +81,7 @@ internal object CheckAnswersJs {
         for (var i = 0; i < results.length; i++) {
           var x = document.getElementById("$FEEDBACK_ID"+i);
           if (results[i]) 
-            x.style.backgroundColor = "green";
+            x.style.backgroundColor = '$CORRECT_COLOR';
           else {
             x.style.backgroundColor = "red";
             success = false

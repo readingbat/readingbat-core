@@ -270,7 +270,7 @@ internal object ChallengePage : KLogging() {
               tr(classes = DASHBOARD) {
                 td(classes = DASHBOARD) {
                   id = "${userId.id}-name"
-                  style = "background-color: ${if (numCorrect == results.size) CORRECT_COLOR else WRONG_COLOR};"
+                  style = "background-color:${if (numCorrect == results.size) CORRECT_COLOR else WRONG_COLOR};"
 
                   span { id = "${userId.id}-numCorrect"; +numCorrect.toString() }
                   +"/${results.size}"
@@ -281,7 +281,7 @@ internal object ChallengePage : KLogging() {
                 results.forEach { (invocation, history) ->
                   td(classes = DASHBOARD) {
                     id = "${userId.id}-$invocation-answerstd"
-                    style = "background-color: ${if (history.correct) CORRECT_COLOR else WRONG_COLOR};"
+                    style = "background-color:${if (history.correct) CORRECT_COLOR else WRONG_COLOR};"
                     span {
                       id = "${userId.id}-$invocation-answers"
                       history.answers.asReversed().forEach { +it; br }
