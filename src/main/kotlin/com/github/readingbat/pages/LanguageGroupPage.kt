@@ -25,7 +25,6 @@ import com.github.readingbat.misc.BrowserSession
 import com.github.readingbat.misc.CSSNames.FUNC_ITEM
 import com.github.readingbat.misc.CSSNames.GROUP_CHOICE
 import com.github.readingbat.misc.CSSNames.GROUP_ITEM_SRC
-import com.github.readingbat.misc.CSSNames.TABS
 import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
 import com.github.readingbat.misc.Constants.GREEN_CHECK
 import com.github.readingbat.misc.Constants.MSG
@@ -100,21 +99,19 @@ internal object LanguageGroupPage {
           val msg = queryParam(MSG) ?: ""
           bodyHeader(principal, loginAttempt, content, languageType, loginPath, msg, "Welcome to ReadingBat.")
 
-          div(classes = TABS) {
-            table {
-              val cols = 3
-              val size = groups.size
-              val rows = size.rows(cols)
+          table {
+            val cols = 3
+            val size = groups.size
+            val rows = size.rows(cols)
 
-              withRedisPool { redis ->
-                val userId = lookupPrincipal(principal, redis)
+            withRedisPool { redis ->
+              val userId = lookupPrincipal(principal, redis)
 
-                (0 until rows).forEach { i ->
-                  tr {
-                    groups[i].also { group -> groupItem(redis, userId, group) }
-                    groups.elementAtOrNull(i + rows)?.also { groupItem(redis, userId, it) } ?: td {}
-                    groups.elementAtOrNull(i + (2 * rows))?.also { groupItem(redis, userId, it) } ?: td {}
-                  }
+              (0 until rows).forEach { i ->
+                tr {
+                  groups[i].also { group -> groupItem(redis, userId, group) }
+                  groups.elementAtOrNull(i + rows)?.also { groupItem(redis, userId, it) } ?: td {}
+                  groups.elementAtOrNull(i + (2 * rows))?.also { groupItem(redis, userId, it) } ?: td {}
                 }
               }
             }

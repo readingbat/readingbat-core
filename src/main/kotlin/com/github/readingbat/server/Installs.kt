@@ -96,16 +96,16 @@ internal object Installs : KLogging() {
     }
 
     /*
-  install(DropwizardMetrics) {
-    val reporter =
-      Slf4jReporter.forRegistry(registry)
-        .outputTo(log)
-        .convertRatesTo(TimeUnit.SECONDS)
-        .convertDurationsTo(TimeUnit.MILLISECONDS)
-        .build();
-    //reporter.start(1, TimeUnit.HOURS);
-  }
-  */
+    install(DropwizardMetrics) {
+      val reporter =
+        Slf4jReporter.forRegistry(registry)
+          .outputTo(log)
+          .convertRatesTo(TimeUnit.SECONDS)
+          .convertDurationsTo(TimeUnit.MILLISECONDS)
+          .build();
+      //reporter.start(1, TimeUnit.HOURS);
+    }
+    */
 
     install(StatusPages) {
       exception<InvalidPathException> { cause ->

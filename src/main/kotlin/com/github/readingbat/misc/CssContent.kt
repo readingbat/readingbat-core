@@ -31,7 +31,6 @@ import com.github.readingbat.misc.CSSNames.REFS
 import com.github.readingbat.misc.CSSNames.SELECTED_TAB
 import com.github.readingbat.misc.CSSNames.STATUS
 import com.github.readingbat.misc.CSSNames.SUCCESS
-import com.github.readingbat.misc.CSSNames.TABS
 import com.github.readingbat.misc.CSSNames.USER_RESP
 import kotlinx.css.*
 import kotlinx.css.properties.LineHeight
@@ -46,7 +45,6 @@ internal object CSSNames {
   const val REFS = "refs"
   const val CODE_BLOCK = "codeBlock"
   const val KOTLIN_CODE = "kotlin-code"
-  const val TABS = "tabs"
   const val USER_RESP = "userResp"
   const val CHALLENGE_DESC = "challenge-desc"
   const val GROUP_CHOICE = "groupChoice"
@@ -93,13 +91,14 @@ internal val cssContent by lazy {
         verticalAlign = VerticalAlign.top
       }
       rule(".h1") {
-        fontSize = LinearDimension("300%")
+        fontSize = 300.pct
       }
       rule(".h2") {
-        fontSize = LinearDimension("166%")
+        fontSize = 166.pct
+        textDecoration = TextDecoration.none
       }
       rule(".h3") {
-        fontSize = LinearDimension("120%")
+        fontSize = 120.pct
       }
       rule("td.no") {
         minWidth = 22.px
@@ -116,7 +115,7 @@ internal val cssContent by lazy {
         textDecoration = TextDecoration.none
       }
       h2 {
-        fontSize = LinearDimension("150%")
+        fontSize = 150.pct
       }
       rule(".$CHALLENGE_DESC") {
         fontSize = textFs
@@ -184,14 +183,6 @@ internal val cssContent by lazy {
         marginLeft = 25.px
         fontSize = textFs
         color = Color.black
-      }
-      rule(".h2") {
-        fontSize = 166.pct
-        textDecoration = TextDecoration.none
-      }
-      rule("div.$TABS") {
-        borderTop = "1px solid"
-        clear = Clear.both
       }
       rule("#$SELECTED_TAB") {
         position = Position.relative

@@ -127,12 +127,17 @@ internal object PageCommon {
           for (lang in languageTypesInOrder) {
             if (content.hasGroups(lang))
               li(classes = "h2") {
-                if (languageType == lang) id = SELECTED_TAB
+                if (languageType == lang)
+                  id = SELECTED_TAB
                 this@bodyHeader.addLink(lang.name, pathOf(CHALLENGE_ROOT, lang.lowerName))
               }
           }
         }
       }
+    }
+
+    div {
+      style = "border-top: 1px solid; clear: both;"
     }
   }
 

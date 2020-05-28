@@ -24,7 +24,6 @@ import com.github.readingbat.dsl.ChallengeGroup
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.BrowserSession
 import com.github.readingbat.misc.CSSNames.FUNC_ITEM
-import com.github.readingbat.misc.CSSNames.TABS
 import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
 import com.github.readingbat.misc.Constants.GREEN_CHECK
 import com.github.readingbat.misc.Constants.MSG
@@ -88,26 +87,23 @@ internal object ChallengeGroupPage {
           val msg = queryParam(MSG) ?: ""
           bodyHeader(principal, loginAttempt, content, languageType, loginPath, msg)
 
-          div(classes = TABS) {
+          h2 { +groupName.decode() }
 
-            h2 { +groupName.decode() }
+          table {
+            val cols = 3
+            val size = challenges.size
+            val rows = size.rows(cols)
 
-            table {
-              val cols = 3
-              val size = challenges.size
-              val rows = size.rows(cols)
+            withRedisPool { redis ->
+              val userId = lookupPrincipal(principal, redis)
 
-              withRedisPool { redis ->
-                val userId = lookupPrincipal(principal, redis)
-
-                (0 until rows).forEach { i ->
-                  tr {
-                    style = "height:30"
-                    challenges.apply {
-                      elementAt(i).also { funcCall(redis, userId, it) }
-                      elementAtOrNull(i + rows)?.also { funcCall(redis, userId, it) } ?: td {}
-                      elementAtOrNull(i + (2 * rows))?.also { funcCall(redis, userId, it) } ?: td {}
-                    }
+              (0 until rows).forEach { i ->
+                tr {
+                  style = "height:30"
+                  challenges.apply {
+                    elementAt(i).also { funcCall(redis, userId, it) }
+                    elementAtOrNull(i + rows)?.also { funcCall(redis, userId, it) } ?: td {}
+                    elementAtOrNull(i + (2 * rows))?.also { funcCall(redis, userId, it) } ?: td {}
                   }
                 }
               }

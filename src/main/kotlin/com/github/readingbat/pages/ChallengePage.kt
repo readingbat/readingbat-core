@@ -32,7 +32,6 @@ import com.github.readingbat.misc.CSSNames.FUNC_COL
 import com.github.readingbat.misc.CSSNames.REFS
 import com.github.readingbat.misc.CSSNames.STATUS
 import com.github.readingbat.misc.CSSNames.SUCCESS
-import com.github.readingbat.misc.CSSNames.TABS
 import com.github.readingbat.misc.CSSNames.USER_RESP
 import com.github.readingbat.misc.CheckAnswersJs.checkAnswersScript
 import com.github.readingbat.misc.CheckAnswersJs.processAnswers
@@ -68,9 +67,8 @@ import kotlinx.html.ScriptType.textJavaScript
 import kotlinx.html.stream.createHTML
 import mu.KLogging
 
-private const val spinnerCss = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
-
 internal object ChallengePage : KLogging() {
+  private const val spinnerCss = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
 
   fun PipelineCall.challengePage(content: ReadingBatContent,
                                  challenge: Challenge,
@@ -99,11 +97,9 @@ internal object ChallengePage : KLogging() {
         body {
           bodyHeader(principal, loginAttempt, content, languageType, loginPath, queryParam(MSG) ?: "")
 
-          div(classes = TABS) {
-            this@body.challenge(challenge, funcInfo)
+          this@body.challenge(challenge, funcInfo)
 
-            this@body.questions(principal, browserSession, challenge, funcInfo)
-          }
+          this@body.questions(principal, browserSession, challenge, funcInfo)
 
           backLink(CHALLENGE_ROOT, languageName, groupName)
 

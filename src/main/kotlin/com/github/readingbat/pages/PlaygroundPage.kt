@@ -22,7 +22,6 @@ import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.CSSNames.CHALLENGE_DESC
 import com.github.readingbat.misc.CSSNames.KOTLIN_CODE
-import com.github.readingbat.misc.CSSNames.TABS
 import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
 import com.github.readingbat.misc.Constants.STATIC_ROOT
 import com.github.readingbat.misc.PageUtils.pathOf
@@ -65,30 +64,28 @@ internal object PlaygroundPage {
         body {
           bodyHeader(principal, loginAttempt, content, languageType, loginPath)
 
-          div(classes = TABS) {
-            h2 {
-              val groupPath = pathOf(CHALLENGE_ROOT, languageName, groupName)
-              this@body.addLink(groupName.decode(), groupPath)
-              span { style = "padding-left:2px; padding-right:2px;"; rawHtml("&rarr;") }
-              this@body.addLink(challengeName.decode(), pathOf(groupPath, challengeName))
-            }
+          h2 {
+            val groupPath = pathOf(CHALLENGE_ROOT, languageName, groupName)
+            this@body.addLink(groupName.decode(), groupPath)
+            span { style = "padding-left:2px; padding-right:2px;"; rawHtml("&rarr;") }
+            this@body.addLink(challengeName.decode(), pathOf(groupPath, challengeName))
+          }
 
-            if (challenge.description.isNotEmpty())
-              div(classes = CHALLENGE_DESC) { rawHtml(challenge.parsedDescription) }
+          if (challenge.description.isNotEmpty())
+            div(classes = CHALLENGE_DESC) { rawHtml(challenge.parsedDescription) }
 
-            val options =
-              """
+          val options =
+            """
               theme="idea" indent="2" lines="true"  
               highlight-on-fly="true" data-autocomplete="true" match-brackets="true" 
             """.trimIndent()
 
-            rawHtml(
-              """
+          rawHtml(
+            """
               <div class=$KOTLIN_CODE $options>  
               ${escapeHtml4(funcInfo.originalCode)}
               </div>
             """.trimIndent())
-          }
 
           br
           div {
