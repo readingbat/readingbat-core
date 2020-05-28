@@ -55,13 +55,13 @@ internal class DashboardInfo(val userId: String,
                              origHistory: ChallengeHistory) {
   val history = DashboardHistory(origHistory.invocation,
                                  origHistory.correct,
-                                 origHistory.attempts,
+                                 //origHistory.attempts,
                                  origHistory.answers.asReversed().joinToString("<br>"))
 }
 
-internal class DashboardHistory(var invocation: String,
-                                var correct: Boolean = false,
-                                var attempts: Int = 0,
+internal class DashboardHistory(val invocation: String,
+                                val correct: Boolean = false,
+  //val attempts: Int = 0,
                                 val answers: String)
 
 internal data class ChallengeHistory(var invocation: String,

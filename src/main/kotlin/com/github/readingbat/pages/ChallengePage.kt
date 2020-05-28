@@ -37,13 +37,13 @@ import com.github.readingbat.misc.CSSNames.USER_RESP
 import com.github.readingbat.misc.CheckAnswersJs.checkAnswersScript
 import com.github.readingbat.misc.CheckAnswersJs.processAnswers
 import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
+import com.github.readingbat.misc.Constants.CORRECT_COLOR
 import com.github.readingbat.misc.Constants.DBMS_DOWN
-import com.github.readingbat.misc.Constants.GREEN_CHECK
 import com.github.readingbat.misc.Constants.MSG
 import com.github.readingbat.misc.Constants.PLAYGROUND_ROOT
 import com.github.readingbat.misc.Constants.RESP
 import com.github.readingbat.misc.Constants.STATIC_ROOT
-import com.github.readingbat.misc.Constants.WHITE_CHECK
+import com.github.readingbat.misc.Constants.WRONG_COLOR
 import com.github.readingbat.misc.Dashboards.classCodeEnrollmentKey
 import com.github.readingbat.misc.Endpoints.CLASS_PREFIX
 import com.github.readingbat.misc.PageUtils.pathOf
@@ -200,26 +200,22 @@ internal object ChallengePage : KLogging() {
           ws.onmessage = function (event) {
             console.log(event.data);
             var obj = JSON.parse(event.data)
-            //var el = document.getElementById('$wsid');
-            //el.innerHTML = 'Value received: ' + obj.userId + ' ' + obj.history.attempts;
             
-            var complete = document.getElementById(obj.userId + '-complete')
+            var name = document.getElementById(obj.userId + '-name');
             if (obj.complete)
-              complete.innerHTML = '<img src="$STATIC_ROOT/$GREEN_CHECK">'
+              name.style.backgroundColor = '$CORRECT_COLOR';
             else
-              complete.innerHTML = '<img src="$STATIC_ROOT/$WHITE_CHECK">'
+              name.style.backgroundColor = '$WRONG_COLOR';
 
             document.getElementById(obj.userId + '-numCorrect').innerHTML = obj.numCorrect;
 
-            
             var prefix = obj.userId + '-' + obj.history.invocation;
-            var correct = document.getElementById(prefix + '-correct')
+            var answers = document.getElementById(prefix + '-answerstd')
             if (obj.history.correct)
-              correct.innerHTML = '<img src="$STATIC_ROOT/$GREEN_CHECK">'
+              answers.style.backgroundColor = '$CORRECT_COLOR';
             else
-              correct.innerHTML = '<img src="$STATIC_ROOT/$WHITE_CHECK">'
-            
-            document.getElementById(prefix + '-attempts').innerHTML = obj.history.attempts;
+              answers.style.backgroundColor = '$WRONG_COLOR';
+
             document.getElementById(prefix + '-answers').innerHTML = obj.history.answers;
           };
         """.trimIndent())
@@ -245,11 +241,12 @@ internal object ChallengePage : KLogging() {
         else {
           val ids = redis.smembers(classCodeEnrollmentKey(classCode)).filter { it.isNotEmpty() }
           table {
+            style = "width:100%"
+
             tr {
               th { +"Student" }
               funcInfo.invocations.indices.forEach { i ->
                 th(classes = "rotate") {
-                  colSpan = "2"
                   span { +funcInfo.invocations[i] }
                 }
               }
@@ -272,11 +269,9 @@ internal object ChallengePage : KLogging() {
 
               tr(classes = DASHBOARD) {
                 td(classes = DASHBOARD) {
-                  span {
-                    id = "${userId.id}-complete"
-                    img { src = "$STATIC_ROOT/${if (numCorrect == results.size) GREEN_CHECK else WHITE_CHECK}" }
-                  }
-                  rawHtml(Entities.nbsp.text)
+                  id = "${userId.id}-name"
+                  style = "background-color: ${if (numCorrect == results.size) CORRECT_COLOR else WRONG_COLOR};"
+
                   span { id = "${userId.id}-numCorrect"; +numCorrect.toString() }
                   +"/${results.size}"
                   rawHtml(Entities.nbsp.text)
@@ -285,20 +280,11 @@ internal object ChallengePage : KLogging() {
 
                 results.forEach { (invocation, history) ->
                   td(classes = DASHBOARD) {
-                    style = "text-align:left"
-
+                    id = "${userId.id}-$invocation-answerstd"
+                    style = "background-color: ${if (history.correct) CORRECT_COLOR else WRONG_COLOR};"
                     span {
-                      id = "${userId.id}-$invocation-correct"
-                      img { src = "$STATIC_ROOT/${if (history.correct) GREEN_CHECK else WHITE_CHECK}" }
-                    }
-                    rawHtml(Entities.nbsp.text)
-                    span { id = "${userId.id}-$invocation-attempts"; +history.attempts.toString() }
-                    rawHtml(Entities.nbsp.text)
-                  }
-                  td(classes = DASHBOARD) {
-                    style = "text-align:left"
-                    span {
-                      id = "${userId.id}-$invocation-answers"; +history.answers.asReversed().joinToString("<br>")
+                      id = "${userId.id}-$invocation-answers"
+                      history.answers.asReversed().forEach { +it; br }
                     }
                   }
                 }

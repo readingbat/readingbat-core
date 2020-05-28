@@ -34,6 +34,8 @@ internal object Constants {
   const val DBMS_DOWN = "Database is down"
   const val INVALID_RESET_ID = "Invalid reset_id"
   const val RESP = "response"
+  const val CORRECT_COLOR = "#4EAA3A"
+  const val WRONG_COLOR = "#FFFFFF"
 }
 
 internal object Endpoints {
