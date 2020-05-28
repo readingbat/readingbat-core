@@ -20,6 +20,7 @@ package com.github.readingbat.pages
 import com.github.pambrose.common.redis.RedisUtils.withRedisPool
 import com.github.pambrose.common.util.decode
 import com.github.readingbat.dsl.Challenge
+import com.github.readingbat.dsl.FunctionInfo
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.BrowserSession
 import com.github.readingbat.misc.CSSNames.ARROW
@@ -47,6 +48,8 @@ import com.github.readingbat.misc.ParameterIds.STATUS_ID
 import com.github.readingbat.misc.ParameterIds.SUCCESS_ID
 import com.github.readingbat.misc.UserId
 import com.github.readingbat.misc.UserId.Companion.lookupPrincipal
+import com.github.readingbat.misc.UserPrincipal
+import com.github.readingbat.pages.ChallengePage.otherLinks
 import com.github.readingbat.pages.PageCommon.addLink
 import com.github.readingbat.pages.PageCommon.backLink
 import com.github.readingbat.pages.PageCommon.bodyHeader
@@ -77,9 +80,9 @@ internal object ChallengePage {
         val principal = fetchPrincipal(loginAttempt)
         val browserSession = call.sessions.get<BrowserSession>()
         val languageType = challenge.languageType
-        val languageName = languageType.lowerName
         val groupName = challenge.groupName
         val challengeName = challenge.challengeName
+        val languageName = languageType.lowerName
         val funcInfo = challenge.funcInfo(content)
         val loginPath = pathOf(CHALLENGE_ROOT, languageName, groupName, challengeName)
 
@@ -94,101 +97,12 @@ internal object ChallengePage {
         }
 
         body {
-          val msg = queryParam(MSG) ?: ""
-          bodyHeader(principal, loginAttempt, content, languageType, loginPath, msg)
+          bodyHeader(principal, loginAttempt, content, languageType, loginPath, queryParam(MSG) ?: "")
 
           div(classes = TABS) {
-            h2 {
-              val groupPath = pathOf(CHALLENGE_ROOT, languageName, groupName)
-              this@body.addLink(groupName.decode(), groupPath)
-              span { style = "padding-left:2px; padding-right:2px;"; rawHtml("&rarr;") }
-              +challengeName
-            }
+            this@body.challenge(challenge, funcInfo)
 
-            if (challenge.description.isNotEmpty())
-              div(classes = CHALLENGE_DESC) { rawHtml(challenge.parsedDescription) }
-
-            div(classes = CODE_BLOCK) {
-              pre(classes = "line-numbers") {
-                code(classes = "language-$languageName") { +funcInfo.codeSnippet }
-              }
-            }
-
-            div {
-              style = "margin-top:2em; margin-left:2em;"
-              table {
-                tr { th { +"Function Call" }; th { +"" }; th { +"Return Value" }; th { +"" } }
-
-                var previousAnswers = mutableMapOf<String, String>()
-
-                withRedisPool { redis ->
-                  val userId: UserId? = lookupPrincipal(principal, redis)
-                  val key =
-                    userId?.challengeKey(languageName, groupName, challenge.challengeName)
-                      ?: browserSession?.challengeKey(languageName, groupName, challenge.challengeName)
-                      ?: ""
-
-                  if (redis != null && key.isNotEmpty()) {
-                    logger.debug { "Fetching: $key" }
-                    previousAnswers = redis.hgetAll(key)
-                  }
-                }
-
-                funcInfo.arguments.indices.forEach { i ->
-                  tr {
-                    val args = funcInfo.arguments[i]
-                    td(classes = FUNC_COL) { +args }
-                    td(classes = ARROW) { rawHtml("&rarr;") }
-                    td {
-                      textInput(classes = USER_RESP) {
-                        id = "$RESP$i"
-                        onKeyPress = "$processAnswers(event, ${funcInfo.answers.size})"
-                        if (previousAnswers[args] != null)
-                          value = previousAnswers[args] ?: ""
-                        else
-                          placeholder = funcInfo.placeHolder()
-                      }
-                    }
-                    td(classes = FEEDBACK) { id = "$FEEDBACK_ID$i" }
-                  }
-                }
-              }
-
-              div {
-                style = "margin-top:2em;"
-                table {
-                  tr {
-                    td {
-                      button(classes = CHECK_ANSWERS) {
-                        onClick = "$processAnswers(null, ${funcInfo.answers.size});"; +"Check My Answers!"
-                      }
-                    }
-                    td { style = "vertical-align:middle;"; span { style = "margin-left:1em;"; id = SPINNER_ID } }
-                    td {
-                      style = "vertical-align:middle;"
-                      span(classes = STATUS) { id = STATUS_ID }
-                      span(classes = SUCCESS) { id = SUCCESS_ID }
-                    }
-                  }
-                }
-              }
-
-              p(classes = REFS) {
-                +"Experiment with this code on "
-                this@body.addLink("Gitpod.io", "https://gitpod.io/#${challenge.gitpodUrl}", true)
-                if (languageType.isKotlin()) {
-                  +" or as a "
-                  this@body.addLink("Kotlin Playground", pathOf(PLAYGROUND_ROOT, groupName, challengeName), false)
-                }
-              }
-
-              if (challenge.codingBatEquiv.isNotEmpty() && (languageType.isJava() || languageType.isPython())) {
-                p(classes = REFS) {
-                  +"Work on a similar problem on "
-                  this@body.addLink("CodingBat.com", "https://codingbat.com/prob/${challenge.codingBatEquiv}", true)
-                }
-              }
-            }
+            this@body.questions(principal, browserSession, challenge, funcInfo)
           }
 
           backLink(CHALLENGE_ROOT, languageName, groupName)
@@ -196,6 +110,127 @@ internal object ChallengePage {
           script { src = "$STATIC_ROOT/$languageName-prism.js" }
         }
       }
+
+  private fun BODY.challenge(challenge: Challenge, funcInfo: FunctionInfo) {
+    val languageType = challenge.languageType
+    val groupName = challenge.groupName
+    val challengeName = challenge.challengeName
+    val languageName = languageType.lowerName
+
+    h2 {
+      val groupPath = pathOf(CHALLENGE_ROOT, languageName, groupName)
+      this@challenge.addLink(groupName.decode(), groupPath)
+      span { style = "padding-left:2px; padding-right:2px;"; rawHtml("&rarr;") }
+      +challengeName
+    }
+
+    if (challenge.description.isNotEmpty())
+      div(classes = CHALLENGE_DESC) { rawHtml(challenge.parsedDescription) }
+
+    div(classes = CODE_BLOCK) {
+      pre(classes = "line-numbers") {
+        code(classes = "language-$languageName") { +funcInfo.codeSnippet }
+      }
+    }
+  }
+
+  private fun BODY.questions(principal: UserPrincipal?,
+                             browserSession: BrowserSession?,
+                             challenge: Challenge,
+                             funcInfo: FunctionInfo) {
+    val languageType = challenge.languageType
+    val groupName = challenge.groupName
+    val challengeName = challenge.challengeName
+    val languageName = languageType.lowerName
+
+    div {
+      style = "margin-top:2em; margin-left:2em;"
+      table {
+        tr { th { +"Function Call" }; th { +"" }; th { +"Return Value" }; th { +"" } }
+
+        var previousAnswers = mutableMapOf<String, String>()
+
+        withRedisPool { redis ->
+          val userId: UserId? = lookupPrincipal(principal, redis)
+          val key =
+            userId?.challengeKey(languageName, groupName, challengeName)
+              ?: browserSession?.challengeKey(languageName, groupName, challengeName)
+              ?: ""
+
+          if (redis != null && key.isNotEmpty()) {
+            logger.debug { "Fetching: $key" }
+            previousAnswers = redis.hgetAll(key)
+          }
+        }
+
+        funcInfo.arguments.indices.forEach { i ->
+          tr {
+            val args = funcInfo.arguments[i]
+            td(classes = FUNC_COL) { +args }
+            td(classes = ARROW) { rawHtml("&rarr;") }
+            td {
+              textInput(classes = USER_RESP) {
+                id = "$RESP$i"
+                onKeyPress = "$processAnswers(event, ${funcInfo.answers.size})"
+                if (previousAnswers[args] != null)
+                  value = previousAnswers[args] ?: ""
+                else
+                  placeholder = funcInfo.placeHolder()
+              }
+            }
+            td(classes = FEEDBACK) { id = "$FEEDBACK_ID$i" }
+          }
+        }
+      }
+
+      this@questions.processAnswers(funcInfo)
+
+      this@questions.otherLinks(challenge)
+    }
+  }
+
+  private fun BODY.processAnswers(funcInfo: FunctionInfo) {
+    div {
+      style = "margin-top:2em;"
+      table {
+        tr {
+          td {
+            button(classes = CHECK_ANSWERS) {
+              onClick = "$processAnswers(null, ${funcInfo.answers.size});"; +"Check My Answers!"
+            }
+          }
+          td { style = "vertical-align:middle;"; span { style = "margin-left:1em;"; id = SPINNER_ID } }
+          td {
+            style = "vertical-align:middle;"
+            span(classes = STATUS) { id = STATUS_ID }
+            span(classes = SUCCESS) { id = SUCCESS_ID }
+          }
+        }
+      }
+    }
+  }
+
+  private fun BODY.otherLinks(challenge: Challenge) {
+    val languageType = challenge.languageType
+    val groupName = challenge.groupName
+    val challengeName = challenge.challengeName
+
+    p(classes = REFS) {
+      +"Experiment with this code on "
+      this@otherLinks.addLink("Gitpod.io", "https://gitpod.io/#${challenge.gitpodUrl}", true)
+      if (languageType.isKotlin()) {
+        +" or as a "
+        this@otherLinks.addLink("Kotlin Playground", pathOf(PLAYGROUND_ROOT, groupName, challengeName), false)
+      }
+    }
+
+    if (challenge.codingBatEquiv.isNotEmpty() && (languageType.isJava() || languageType.isPython())) {
+      p(classes = REFS) {
+        +"Work on a similar problem on "
+        this@otherLinks.addLink("CodingBat.com", "https://codingbat.com/prob/${challenge.codingBatEquiv}", true)
+      }
+    }
+  }
 
   private fun HEAD.removePrismShadow() {
     // Remove the prism shadow

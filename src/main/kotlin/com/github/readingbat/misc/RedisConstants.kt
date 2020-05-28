@@ -40,6 +40,6 @@ internal object RedisConstants {
   const val KEY_SEP = "|"
 }
 
-class RedisDownException() : JedisException(DBMS_DOWN)
+class RedisDownException : JedisException(DBMS_DOWN)
 
 class DataException(msg: String) : JedisException(msg)

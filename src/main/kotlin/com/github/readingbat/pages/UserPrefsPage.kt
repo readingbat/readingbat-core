@@ -147,7 +147,7 @@ internal object UserPrefsPage : KLogging() {
           td { style = labelWidth; label { +"Class Code" } }
           td {
             input {
-              type = InputType.text;
+              type = InputType.text
               size = "42"
               name = CLASS_CODE
               value = defaultClassCode
