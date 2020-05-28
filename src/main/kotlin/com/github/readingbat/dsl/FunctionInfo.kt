@@ -96,7 +96,7 @@ internal class FunctionInfo(val languageType: LanguageType,
 
   private fun validate() {
     if (answers.size != invocations.size)
-      throw InvalidConfigurationException("Mismatch between ${answers.size} answers and ${invocations.size} arguments in $challengeName")
+      throw InvalidConfigurationException("Mismatch between ${answers.size} answers and ${invocations.size} invocations in $challengeName")
   }
 
   companion object : KLogging()

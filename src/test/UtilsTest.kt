@@ -49,10 +49,10 @@ class UtilsTest {
             main()
     """.trimIndent()
 
-    PythonParse.extractPythonArguments(s,
-                                       defMainRegex,
-                                       ifMainEndRegex) shouldBeEqualTo listOf("simple_choice2(True, True)",
-                                                                              "simple_choice2(True, False)")
+    PythonParse.extractPythonInvocations(s,
+                                         defMainRegex,
+                                         ifMainEndRegex) shouldBeEqualTo listOf("simple_choice2(True, True)",
+                                                                                "simple_choice2(True, False)")
   }
 
   @Test
@@ -79,8 +79,8 @@ class UtilsTest {
       }
     """.trimIndent()
 
-    JavaParse.extractJavaArguments(s, psvmRegex, javaEndRegex) shouldBeEqualTo listOf("""joinEnds("Blue zebra")""",
-                                                                                      """joinEnds("Tree")""")
+    JavaParse.extractJavaInvocations(s, psvmRegex, javaEndRegex) shouldBeEqualTo listOf("""joinEnds("Blue zebra")""",
+                                                                                        """joinEnds("Tree")""")
   }
 
   @Test
@@ -96,10 +96,10 @@ class UtilsTest {
       }
     """.trimIndent()
 
-    KotlinParse.extractKotlinArguments(s,
-                                       funMainRegex,
-                                       kotlinEndRegex) shouldBeEqualTo listOf("""listOf("a").combine2()""",
-                                                                              """listOf("a", "b", "c", "d").combine2()""")
+    KotlinParse.extractKotlinInvocations(s,
+                                         funMainRegex,
+                                         kotlinEndRegex) shouldBeEqualTo listOf("""listOf("a").combine2()""",
+                                                                                """listOf("a", "b", "c", "d").combine2()""")
   }
 
   @Test
