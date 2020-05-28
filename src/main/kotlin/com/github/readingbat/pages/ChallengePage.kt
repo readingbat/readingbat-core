@@ -27,6 +27,7 @@ import com.github.readingbat.misc.CSSNames.ARROW
 import com.github.readingbat.misc.CSSNames.CHALLENGE_DESC
 import com.github.readingbat.misc.CSSNames.CHECK_ANSWERS
 import com.github.readingbat.misc.CSSNames.CODE_BLOCK
+import com.github.readingbat.misc.CSSNames.DASHBOARD
 import com.github.readingbat.misc.CSSNames.FEEDBACK
 import com.github.readingbat.misc.CSSNames.FUNC_COL
 import com.github.readingbat.misc.CSSNames.REFS
@@ -53,6 +54,7 @@ import com.github.readingbat.misc.ParameterIds.SUCCESS_ID
 import com.github.readingbat.misc.RedisConstants.NAME_FIELD
 import com.github.readingbat.misc.UserId
 import com.github.readingbat.misc.UserId.Companion.challengeAnswersKey
+import com.github.readingbat.misc.UserId.Companion.gson
 import com.github.readingbat.misc.UserId.Companion.lookupPrincipal
 import com.github.readingbat.misc.UserPrincipal
 import com.github.readingbat.pages.PageCommon.addLink
@@ -184,6 +186,7 @@ internal object ChallengePage : KLogging() {
       this@displayQuestions.otherLinks(challenge)
     }
 
+
   private fun BODY.addWebSockets(classCode: String) {
     script {
       rawHtml(
@@ -196,9 +199,28 @@ internal object ChallengePage : KLogging() {
           };
           ws.onmessage = function (event) {
             console.log(event.data);
-            var el = document.getElementById('$wsid');
             var obj = JSON.parse(event.data)
-            el.innerHTML = 'Value received: ' + obj.attempts;
+            //var el = document.getElementById('$wsid');
+            //el.innerHTML = 'Value received: ' + obj.userId + ' ' + obj.history.attempts;
+            
+            var complete = document.getElementById(obj.userId + '-complete')
+            if (obj.complete)
+              complete.innerHTML = '<img src="$STATIC_ROOT/$GREEN_CHECK">'
+            else
+              complete.innerHTML = '<img src="$STATIC_ROOT/$WHITE_CHECK">'
+
+            document.getElementById(obj.userId + '-numCorrect').innerHTML = obj.numCorrect;
+
+            
+            var prefix = obj.userId + '-' + obj.history.invocation;
+            var correct = document.getElementById(prefix + '-correct')
+            if (obj.history.correct)
+              correct.innerHTML = '<img src="$STATIC_ROOT/$GREEN_CHECK">'
+            else
+              correct.innerHTML = '<img src="$STATIC_ROOT/$WHITE_CHECK">'
+            
+            document.getElementById(prefix + '-attempts').innerHTML = obj.history.attempts;
+            document.getElementById(prefix + '-answers').innerHTML = obj.history.answers;
           };
         """.trimIndent())
     }
@@ -226,29 +248,58 @@ internal object ChallengePage : KLogging() {
             tr {
               th { +"Student" }
               funcInfo.invocations.indices.forEach { i ->
-                val invocation = funcInfo.invocations[i]
-                th(classes = "rotate") { span { +invocation } }
+                th(classes = "rotate") {
+                  colSpan = "2"
+                  span { +funcInfo.invocations[i] }
+                }
               }
             }
             ids.forEach {
               val userId = UserId(it)
               val userInfoKey = userId.userInfoKey
+              var numCorrect = 0
 
-              tr {
-                id = userInfoKey
+              val results =
+                funcInfo.invocations
+                  .map { invocation ->
+                    val answerHistoryKey = userId.answerHistoryKey(languageName, groupName, challengeName, invocation)
+                    val history =
+                      gson.fromJson(redis[answerHistoryKey], ChallengeHistory::class.java)
+                        ?: ChallengeHistory(invocation)
+                    if (history.correct) numCorrect++
+                    invocation to history
+                  }
 
-                td { +(redis.hget(userInfoKey, NAME_FIELD) ?: "") }
-                funcInfo.invocations.forEach { invocation ->
-                  val answerHistoryKey = userId.answerHistoryKey(languageName, groupName, challengeName, invocation)
-                  val history =
-                    UserId.gson.fromJson(redis[answerHistoryKey], ChallengeHistory::class.java)
-                      ?: ChallengeHistory(invocation)
-                  td {
-                    img { src = "$STATIC_ROOT/${if (history.correct) GREEN_CHECK else WHITE_CHECK}" }
+              tr(classes = DASHBOARD) {
+                td(classes = DASHBOARD) {
+                  span {
+                    id = "${userId.id}-complete"
+                    img { src = "$STATIC_ROOT/${if (numCorrect == results.size) GREEN_CHECK else WHITE_CHECK}" }
+                  }
+                  rawHtml(Entities.nbsp.text)
+                  span { id = "${userId.id}-numCorrect"; +numCorrect.toString() }
+                  +"/${results.size}"
+                  rawHtml(Entities.nbsp.text)
+                  +(redis.hget(userInfoKey, NAME_FIELD) ?: "")
+                }
+
+                results.forEach { (invocation, history) ->
+                  td(classes = DASHBOARD) {
+                    style = "text-align:left"
+
+                    span {
+                      id = "${userId.id}-$invocation-correct"
+                      img { src = "$STATIC_ROOT/${if (history.correct) GREEN_CHECK else WHITE_CHECK}" }
+                    }
                     rawHtml(Entities.nbsp.text)
-                    +history.attempts.toString()
+                    span { id = "${userId.id}-$invocation-attempts"; +history.attempts.toString() }
                     rawHtml(Entities.nbsp.text)
-                    +history.answers.toString()
+                  }
+                  td(classes = DASHBOARD) {
+                    style = "text-align:left"
+                    span {
+                      id = "${userId.id}-$invocation-answers"; +history.answers.asReversed().joinToString("<br>")
+                    }
                   }
                 }
               }

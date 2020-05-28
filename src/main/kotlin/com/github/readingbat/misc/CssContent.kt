@@ -21,6 +21,7 @@ import com.github.readingbat.misc.CSSNames.ARROW
 import com.github.readingbat.misc.CSSNames.CHALLENGE_DESC
 import com.github.readingbat.misc.CSSNames.CHECK_ANSWERS
 import com.github.readingbat.misc.CSSNames.CODE_BLOCK
+import com.github.readingbat.misc.CSSNames.DASHBOARD
 import com.github.readingbat.misc.CSSNames.FEEDBACK
 import com.github.readingbat.misc.CSSNames.FUNC_COL
 import com.github.readingbat.misc.CSSNames.FUNC_ITEM
@@ -53,6 +54,7 @@ internal object CSSNames {
   const val SELECTED_TAB = "selected"
   const val STATUS = "status"
   const val SUCCESS = "success"
+  const val DASHBOARD = "dashboard"
 }
 
 internal val cssContent by lazy {
@@ -167,6 +169,10 @@ internal val cssContent by lazy {
         borderCollapse = BorderCollapse.collapse
       }
       */
+      rule(".$DASHBOARD") {
+        border = "1px solid black;"
+        borderCollapse = BorderCollapse.collapse
+      }
       rule(".$CHECK_ANSWERS") {
         width = 14.em
         height = 2.em

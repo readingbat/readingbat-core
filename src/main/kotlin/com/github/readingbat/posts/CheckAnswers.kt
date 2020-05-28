@@ -49,13 +49,27 @@ internal data class ChallengeResults(val invocation: String,
                                      val answered: Boolean,
                                      val correct: Boolean)
 
+internal class DashboardInfo(val userId: String,
+                             val complete: Boolean,
+                             val numCorrect: Int,
+                             origHistory: ChallengeHistory) {
+  val history = DashboardHistory(origHistory.invocation,
+                                 origHistory.correct,
+                                 origHistory.attempts,
+                                 origHistory.answers.asReversed().joinToString("<br>"))
+}
+
+internal class DashboardHistory(var invocation: String,
+                                var correct: Boolean = false,
+                                var attempts: Int = 0,
+                                val answers: String)
+
 internal data class ChallengeHistory(var invocation: String,
                                      var correct: Boolean = false,
                                      var attempts: Int = 0,
                                      val answers: MutableList<String> = mutableListOf()) {
   fun markCorrect() {
     correct = true
-    attempts++
   }
 
   fun markIncorrect(userResp: String) {

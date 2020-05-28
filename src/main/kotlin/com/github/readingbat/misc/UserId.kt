@@ -40,6 +40,7 @@ import com.github.readingbat.misc.RedisConstants.USER_INFO_KEY
 import com.github.readingbat.posts.ChallengeHistory
 import com.github.readingbat.posts.ChallengeNames
 import com.github.readingbat.posts.ChallengeResults
+import com.github.readingbat.posts.DashboardInfo
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.fetchPrincipal
 import com.google.gson.Gson
@@ -180,10 +181,12 @@ internal class UserId(val id: String = randomId(25)) {
           val challengeAnswerKey = challengeAnswersKey(userId, browserSession, names)
           val correctAnswersKey = correctAnswersKey(userId, browserSession, names)
           val classCode = userId?.classCode(redis) ?: ""
+          val complete = results.all { it.correct }
+          val numCorrect = results.count { it.correct }
 
           // Save if all answers were correct
           if (correctAnswersKey.isNotEmpty()) {
-            redis.set(correctAnswersKey, results.all { it.correct }.toString())
+            redis.set(correctAnswersKey, complete.toString())
           }
 
           if (challengeAnswerKey.isNotEmpty()) {
@@ -194,7 +197,7 @@ internal class UserId(val id: String = randomId(25)) {
                     ?: throw InvalidConfigurationException("Missing user response")
                   if (userResp.isNotEmpty()) funcInfo.invocations[i] to userResp else null
                 }
-                .requireNoNulls()
+                .filterNotNull()
                 .toMap()
 
             // Save the last answers given
@@ -216,9 +219,10 @@ internal class UserId(val id: String = randomId(25)) {
                 redis.set(answerHistoryKey, json)
 
                 // Publish to challenge dashboard
-                if (classCode.isNotEmpty()) {
+                if (classCode.isNotEmpty() && userId != null) {
+                  val browserInfo = DashboardInfo(userId.id, complete, numCorrect, history)
                   logger.info { "Publishing data $json" }
-                  redis.publish(classCode, json)
+                  redis.publish(classCode, gson.toJson(browserInfo))
                 }
               }
             }
