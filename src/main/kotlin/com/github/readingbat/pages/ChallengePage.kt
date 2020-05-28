@@ -61,6 +61,7 @@ import com.github.readingbat.pages.PageCommon.headDefault
 import com.github.readingbat.pages.PageCommon.rawHtml
 import com.github.readingbat.posts.ChallengeHistory
 import com.github.readingbat.server.PipelineCall
+import com.github.readingbat.server.ReadingBatServer.production
 import com.github.readingbat.server.ServerUtils.fetchPrincipal
 import com.github.readingbat.server.ServerUtils.queryParam
 import io.ktor.application.call
@@ -74,6 +75,8 @@ import mu.KLogging
 
 internal object ChallengePage : KLogging() {
   private const val spinnerCss = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
+
+  val wsid = "ws-output"
 
   suspend fun PipelineCall.challengePage(content: ReadingBatContent,
                                          challenge: Challenge,
@@ -107,12 +110,17 @@ internal object ChallengePage : KLogging() {
 
           if (classCode.isEmpty())
             this@body.displayQuestions(principal, browserSession, challenge, funcInfo)
-          else
+          else {
             this@body.displayProgress(principal, challenge, funcInfo, classCode)
+            p { id = wsid }
+          }
 
           backLink(CHALLENGE_ROOT, languageName, groupName)
 
           script { src = "$STATIC_ROOT/$languageName-prism.js" }
+
+          if (classCode.isNotEmpty())
+            addWebSockets(classCode)
         }
       }
 
@@ -175,6 +183,26 @@ internal object ChallengePage : KLogging() {
       this@displayQuestions.otherLinks(challenge)
     }
 
+  private fun BODY.addWebSockets(classCode: String) {
+    script {
+      rawHtml(
+        """
+          //var HOST = location.href.replace(${if (production) "/^https:/, 'wss:'" else "/^http:/, 'ws:'"})
+          var HOST = 'ws://0.0.0.0:8080/class/$classCode'
+          var ws = new WebSocket(HOST);
+          var el;
+          ws.onopen = function (event) {
+            ws.send("$classCode"); 
+          };
+          ws.onmessage = function (event) {
+            el = document.getElementById('$wsid');
+            el.innerHTML = 'Value received: ' + event.data;
+          };
+        """.trimIndent())
+    }
+
+  }
+
   private fun BODY.displayProgress(principal: UserPrincipal?,
                                    challenge: Challenge,
                                    funcInfo: FunctionInfo,
@@ -202,10 +230,10 @@ internal object ChallengePage : KLogging() {
               }
             }
             ids.forEach {
-              tr {
-                val userId = UserId(it)
-                val userInfoKey = userId.userInfoKey
+              val userId = UserId(it)
+              val userInfoKey = userId.userInfoKey
 
+              tr {
                 id = userInfoKey
 
                 td { +(redis.hget(userInfoKey, NAME_FIELD) ?: "") }

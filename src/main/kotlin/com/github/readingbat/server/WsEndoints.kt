@@ -18,7 +18,6 @@
 package com.github.readingbat.server
 
 import com.github.pambrose.common.redis.RedisUtils.withRedis
-import com.github.readingbat.misc.Endpoints.CLASSROOM
 import io.ktor.http.cio.websocket.CloseReason
 import io.ktor.http.cio.websocket.Frame
 import io.ktor.http.cio.websocket.close
@@ -36,16 +35,14 @@ import redis.clients.jedis.JedisPubSub
 internal object WsEndoints : KLogging() {
 
   fun Routing.wsEndpoints() {
-
-    webSocket(CLASSROOM) {
-
+    webSocket("/class/{classCode}") {
       incoming
         .receiveAsFlow()
         .mapNotNull { it as? Frame.Text }
         .collect { frame ->
-          val classId = frame.readText()
+          val classCode = frame.readText()
 
-          logger.info { "Received class id: $classId" }
+          logger.info { "Received class id: $classCode" }
 
           repeat(10) { i ->
             delay(100)
@@ -61,10 +58,10 @@ internal object WsEndoints : KLogging() {
                   outgoing.send(Frame.Text("$channel $message ${i++}"))
                 }
               }
-            }, classId)
+            }, classCode)
           }
 
-          if (classId.equals("bye", ignoreCase = true)) {
+          if (classCode.equals("bye", ignoreCase = true)) {
             close(CloseReason(CloseReason.Codes.NORMAL, "Client said BYE"))
           }
         }

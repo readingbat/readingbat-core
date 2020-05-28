@@ -56,10 +56,10 @@ internal fun Application.module() {
   intercepts()
 
   routing {
+    adminRoutes()
     locations(readingBatContent)
     userRoutes(readingBatContent)
     wsEndpoints()
-    adminRoutes()
   }
 }
 

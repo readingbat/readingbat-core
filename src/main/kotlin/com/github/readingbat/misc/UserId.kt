@@ -108,6 +108,8 @@ internal class UserId(val id: String = randomId(25)) {
     }
   }
 
+  fun classCode(redis: Jedis?) = redis?.hget(userInfoKey, CLASS_CODE_FIELD) ?: ""
+
   companion object : KLogging() {
 
     val gson = Gson()
@@ -186,6 +188,7 @@ internal class UserId(val id: String = randomId(25)) {
         val challengeKey = challengeKey(userId, browserSession, names)
 
         if (redis != null && challengeKey.isNotEmpty()) {
+          val classCode = userId?.classCode(redis) ?: ""
           val answerMap = mutableMapOf<String, String>()
           userResps.indices.forEach { i ->
             val userResp =
@@ -199,7 +202,10 @@ internal class UserId(val id: String = randomId(25)) {
           answerMap.forEach { (args, userResp) ->
             redis.hset(challengeKey, args, userResp)
             // Publish to challenge dashboard
-            redis.publish("channel", userResp)
+            if (classCode.isNotEmpty()) {
+              logger.info { "Publishing data $userResp" }
+              redis.publish(classCode, userResp)
+            }
           }
         }
 
