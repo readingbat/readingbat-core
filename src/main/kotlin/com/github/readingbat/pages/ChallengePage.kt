@@ -47,6 +47,7 @@ import com.github.readingbat.misc.ParameterIds.SPINNER_ID
 import com.github.readingbat.misc.ParameterIds.STATUS_ID
 import com.github.readingbat.misc.ParameterIds.SUCCESS_ID
 import com.github.readingbat.misc.UserId
+import com.github.readingbat.misc.UserId.Companion.challengeKey
 import com.github.readingbat.misc.UserId.Companion.lookupPrincipal
 import com.github.readingbat.misc.UserPrincipal
 import com.github.readingbat.pages.ChallengePage.otherLinks
@@ -137,31 +138,13 @@ internal object ChallengePage {
   private fun BODY.questions(principal: UserPrincipal?,
                              browserSession: BrowserSession?,
                              challenge: Challenge,
-                             funcInfo: FunctionInfo) {
-    val languageType = challenge.languageType
-    val groupName = challenge.groupName
-    val challengeName = challenge.challengeName
-    val languageName = languageType.lowerName
-
+                             funcInfo: FunctionInfo) =
     div {
       style = "margin-top:2em; margin-left:2em;"
       table {
         tr { th { +"Function Call" }; th { +"" }; th { +"Return Value" }; th { +"" } }
 
-        var previousAnswers = mutableMapOf<String, String>()
-
-        withRedisPool { redis ->
-          val userId: UserId? = lookupPrincipal(principal, redis)
-          val key =
-            userId?.challengeKey(languageName, groupName, challengeName)
-              ?: browserSession?.challengeKey(languageName, groupName, challengeName)
-              ?: ""
-
-          if (redis != null && key.isNotEmpty()) {
-            logger.debug { "Fetching: $key" }
-            previousAnswers = redis.hgetAll(key)
-          }
-        }
+        val previousAnswers = previousAnswers(principal, browserSession, challenge)
 
         funcInfo.arguments.indices.forEach { i ->
           tr {
@@ -187,7 +170,24 @@ internal object ChallengePage {
 
       this@questions.otherLinks(challenge)
     }
-  }
+
+  private fun previousAnswers(principal: UserPrincipal?,
+                              browserSession: BrowserSession?,
+                              challenge: Challenge) =
+    withRedisPool { redis ->
+      val languageType = challenge.languageType
+      val groupName = challenge.groupName
+      val challengeName = challenge.challengeName
+      val languageName = languageType.lowerName
+      val userId: UserId? = lookupPrincipal(principal, redis)
+      val key = challengeKey(userId, browserSession, languageName, groupName, challengeName)
+
+      if (redis != null && key.isNotEmpty())
+        redis.hgetAll(key)
+      else
+        mutableMapOf<String, String>()
+    }
+
 
   private fun BODY.processAnswers(funcInfo: FunctionInfo) {
     div {

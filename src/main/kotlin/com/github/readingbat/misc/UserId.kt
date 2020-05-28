@@ -53,19 +53,19 @@ internal class UserId(val id: String = randomId(25)) {
 
   val userInfoKey = listOf(USER_INFO_KEY, id).joinToString(KEY_SEP)
 
-  fun correctAnswersKey(names: ChallengeNames) =
+  private fun correctAnswersKey(names: ChallengeNames) =
     correctAnswersKey(names.languageName, names.groupName, names.challengeName)
 
-  fun correctAnswersKey(languageName: String, groupName: String, challengeName: String) =
+  private fun correctAnswersKey(languageName: String, groupName: String, challengeName: String) =
     listOf(CORRECT_ANSWERS_KEY, AUTH_KEY, id, languageName, groupName, challengeName).joinToString(KEY_SEP)
 
-  fun challengeKey(names: ChallengeNames) =
+  private fun challengeKey(names: ChallengeNames) =
     challengeKey(names.languageName, names.groupName, names.challengeName)
 
-  fun challengeKey(languageName: String, groupName: String, challengeName: String) =
+  private fun challengeKey(languageName: String, groupName: String, challengeName: String) =
     listOf(CHALLENGE_ANSWERS_KEY, AUTH_KEY, id, languageName, groupName, challengeName).joinToString(KEY_SEP)
 
-  fun argumentKey(names: ChallengeNames, argument: String) =
+  private fun argumentKey(names: ChallengeNames, argument: String) =
     argumentKey(names.languageName, names.groupName, names.challengeName, argument)
 
   fun argumentKey(languageName: String, groupName: String, challengeName: String, argument: String) =
@@ -114,6 +114,34 @@ internal class UserId(val id: String = randomId(25)) {
 
     fun userIdKey(username: String) = listOf(USER_ID_KEY, username).joinToString(KEY_SEP)
 
+    fun correctAnswersKey(userId: UserId?, browserSession: BrowserSession?, names: ChallengeNames) =
+      userId?.correctAnswersKey(names) ?: browserSession?.correctAnswersKey(names) ?: ""
+
+    fun correctAnswersKey(userId: UserId?,
+                          browserSession: BrowserSession?,
+                          languageName: String,
+                          groupName: String,
+                          challengeName: String) =
+      userId?.correctAnswersKey(languageName, groupName, challengeName) ?: browserSession?.correctAnswersKey(
+        languageName,
+        groupName,
+        challengeName) ?: ""
+
+    fun challengeKey(userId: UserId?, browserSession: BrowserSession?, names: ChallengeNames) =
+      userId?.challengeKey(names) ?: browserSession?.challengeKey(names) ?: ""
+
+    fun challengeKey(userId: UserId?,
+                     browserSession: BrowserSession?,
+                     languageName: String,
+                     groupName: String,
+                     challengeName: String) =
+      userId?.challengeKey(languageName, groupName, challengeName) ?: browserSession?.challengeKey(languageName,
+                                                                                                   groupName,
+                                                                                                   challengeName) ?: ""
+
+    fun argumentKey(userId: UserId?, browserSession: BrowserSession?, names: ChallengeNames, argument: String) =
+      userId?.argumentKey(names, argument) ?: browserSession?.argumentKey(names, argument) ?: ""
+
     // Maps resetId to username
     fun passwordResetKey(resetId: String) = listOf(RESET_KEY, resetId).joinToString(KEY_SEP)
 
@@ -149,14 +177,14 @@ internal class UserId(val id: String = randomId(25)) {
         val userId = lookupPrincipal(principal, redis)
 
         // Save if all answers were correct
-        val correctAnswersKey = userId?.correctAnswersKey(names) ?: browserSession?.correctAnswersKey(names) ?: ""
+        val correctAnswersKey = correctAnswersKey(userId, browserSession, names)
 
         if (correctAnswersKey.isNotEmpty()) {
           val allCorrect = results.all { it.correct }
           redis?.set(correctAnswersKey, allCorrect.toString())
         }
 
-        val challengeKey = userId?.challengeKey(names) ?: browserSession?.challengeKey(names) ?: ""
+        val challengeKey = challengeKey(userId, browserSession, names)
 
         if (redis != null && challengeKey.isNotEmpty()) {
           val answerMap = mutableMapOf<String, String>()
@@ -180,11 +208,7 @@ internal class UserId(val id: String = randomId(25)) {
         results
           .filter { it.answered }
           .forEach { result ->
-            val argumentKey =
-              userId?.argumentKey(names, result.arguments)
-                ?: browserSession?.argumentKey(names, result.arguments)
-                ?: ""
-
+            val argumentKey = argumentKey(userId, browserSession, names, result.arguments)
             if (redis != null && argumentKey.isNotEmpty()) {
               val history =
                 gson.fromJson(redis[argumentKey], ChallengeHistory::class.java) ?: ChallengeHistory(

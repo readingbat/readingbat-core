@@ -32,6 +32,7 @@ import com.github.readingbat.misc.Constants.STATIC_ROOT
 import com.github.readingbat.misc.Constants.WHITE_CHECK
 import com.github.readingbat.misc.PageUtils.pathOf
 import com.github.readingbat.misc.UserId
+import com.github.readingbat.misc.UserId.Companion.correctAnswersKey
 import com.github.readingbat.misc.UserId.Companion.lookupPrincipal
 import com.github.readingbat.pages.PageCommon.backLink
 import com.github.readingbat.pages.PageCommon.bodyHeader
@@ -50,11 +51,7 @@ import redis.clients.jedis.Jedis
 internal object ChallengeGroupPage {
 
   fun Challenge.isCorrect(redis: Jedis?, userId: UserId?, browserSession: BrowserSession?): Boolean {
-
-    val correctAnswersKey =
-      userId?.correctAnswersKey(languageName, groupName, challengeName)
-        ?: browserSession?.correctAnswersKey(languageName, groupName, challengeName)
-        ?: ""
+    val correctAnswersKey = correctAnswersKey(userId, browserSession, languageName, groupName, challengeName)
     return if (correctAnswersKey.isNotEmpty()) redis?.get(correctAnswersKey)?.toBoolean() == true else false
   }
 
