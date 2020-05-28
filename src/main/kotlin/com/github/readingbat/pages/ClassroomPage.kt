@@ -27,8 +27,8 @@ import com.github.readingbat.pages.PageCommon.bodyTitle
 import com.github.readingbat.pages.PageCommon.headDefault
 import com.github.readingbat.pages.PageCommon.rawHtml
 import com.github.readingbat.server.PipelineCall
-import com.github.readingbat.server.fetchPrincipal
-import com.github.readingbat.server.production
+import com.github.readingbat.server.ReadingBatServer.production
+import com.github.readingbat.server.ServerUtils.fetchPrincipal
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 import redis.clients.jedis.exceptions.JedisException

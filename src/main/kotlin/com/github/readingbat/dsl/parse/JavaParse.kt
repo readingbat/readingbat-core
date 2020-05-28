@@ -24,7 +24,7 @@ import com.github.readingbat.dsl.ReturnType.Companion.asReturnType
 import mu.KLogging
 import kotlin.math.max
 
-object JavaParse : KLogging() {
+internal object JavaParse : KLogging() {
 
   private val spaceRegex = Regex("""\s+""")
   private val staticRegex = Regex("""static.+\(""")
@@ -43,7 +43,7 @@ object JavaParse : KLogging() {
   private val prefixes =
     listOf("System.out.println", "ArrayUtils.arrayPrint", "ListUtils.listPrint", "arrayPrint", "listPrint")
 
-  internal fun deriveJavaReturnType(name: String, code: List<String>) =
+  fun deriveJavaReturnType(name: String, code: List<String>) =
     code.asSequence()
       .filter {
         !it.contains(svmRegex) && (it.contains(
@@ -57,16 +57,16 @@ object JavaParse : KLogging() {
       }
       .firstOrNull() ?: throw InvalidConfigurationException("In $name unable to determine return type")
 
-  internal fun extractJavaFunction(code: List<String>): String {
+  fun extractJavaFunction(code: List<String>): String {
     val lineNums =
       code.mapIndexed { i, str -> i to str }.filter { it.second.contains(staticRegex) }.map { it.first }
     return code.subList(lineNums.first(), lineNums.last() - 1).joinToString("\n").trimIndent()
   }
 
-  internal fun extractJavaArguments(code: String, start: Regex, end: Regex) =
+  fun extractJavaArguments(code: String, start: Regex, end: Regex) =
     extractJavaArguments(code.lines(), start, end)
 
-  internal fun extractJavaArguments(code: List<String>, start: Regex, end: Regex): List<String> {
+  fun extractJavaArguments(code: List<String>, start: Regex, end: Regex): List<String> {
     val lines = mutableListOf<String>()
     prefixes
       .forEach { prefix ->
@@ -79,7 +79,7 @@ object JavaParse : KLogging() {
     return lines
   }
 
-  internal fun convertToScript(code: List<String>): String {
+  fun convertToScript(code: List<String>): String {
     val scriptCode = mutableListOf<String>()
     val varName = "answers"
     var exprIndent = 0

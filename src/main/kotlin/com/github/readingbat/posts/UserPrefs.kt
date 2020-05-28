@@ -38,7 +38,7 @@ import com.github.readingbat.pages.UserPrefsPage.requestLogInPage
 import com.github.readingbat.pages.UserPrefsPage.userPrefsPage
 import com.github.readingbat.posts.CreateAccount.checkPassword
 import com.github.readingbat.server.PipelineCall
-import com.github.readingbat.server.fetchPrincipal
+import com.github.readingbat.server.ServerUtils.fetchPrincipal
 import io.ktor.application.call
 import io.ktor.request.receiveParameters
 import io.ktor.sessions.clear

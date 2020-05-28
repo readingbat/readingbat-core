@@ -35,7 +35,7 @@ import com.github.readingbat.misc.PageUtils.pathOf
 import com.github.readingbat.misc.UserPrincipal
 import com.github.readingbat.pages.HelpAndLogin.helpAndLogin
 import com.github.readingbat.server.PipelineCall
-import com.github.readingbat.server.production
+import com.github.readingbat.server.ReadingBatServer.production
 import io.ktor.application.call
 import io.ktor.http.ContentType.Text.CSS
 import io.ktor.http.formUrlEncode

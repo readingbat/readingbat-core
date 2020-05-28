@@ -24,7 +24,7 @@ import com.github.readingbat.pages.PageCommon.backLink
 import com.github.readingbat.pages.PageCommon.bodyTitle
 import com.github.readingbat.pages.PageCommon.headDefault
 import com.github.readingbat.server.PipelineCall
-import com.github.readingbat.server.queryParam
+import com.github.readingbat.server.ServerUtils.queryParam
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 

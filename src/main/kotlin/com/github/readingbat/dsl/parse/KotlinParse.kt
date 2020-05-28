@@ -21,24 +21,24 @@ import com.github.pambrose.common.util.lastLineNumberOf
 import com.github.pambrose.common.util.linesBetween
 import com.github.pambrose.common.util.substringBetween
 
-object KotlinParse {
+internal object KotlinParse {
   internal val funMainRegex = Regex("""^\s*fun\s+main.*\)""")
   internal val kotlinEndRegex = Regex("""\s*}\s*""")
   private const val printlnPrefix = "println("
   internal const val varName = "answers"
 
-  internal fun extractKotlinFunction(code: List<String>) =
+  fun extractKotlinFunction(code: List<String>) =
     code.subList(0, code.lastLineNumberOf(funMainRegex)).joinToString("\n").trimIndent()
 
-  internal fun extractKotlinArguments(code: String, start: Regex, end: Regex) =
+  fun extractKotlinArguments(code: String, start: Regex, end: Regex) =
     extractKotlinArguments(code.lines(), start, end)
 
-  internal fun extractKotlinArguments(code: List<String>, start: Regex, end: Regex) =
+  fun extractKotlinArguments(code: List<String>, start: Regex, end: Regex) =
     code.linesBetween(start, end)
       .filter { it.trimStart().startsWith(printlnPrefix) }
       .map { it.substringBetween(printlnPrefix, ")") }
 
-  internal fun convertToKotlinScript(code: List<String>): String {
+  fun convertToKotlinScript(code: List<String>): String {
     val scriptCode = mutableListOf<String>()
     var insideMain = false
 

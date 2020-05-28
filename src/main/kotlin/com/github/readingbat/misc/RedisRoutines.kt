@@ -20,7 +20,7 @@ package com.github.readingbat.misc
 import com.github.pambrose.common.redis.RedisUtils.withRedis
 import redis.clients.jedis.exceptions.JedisDataException
 
-object RedisRoutines {
+internal object RedisRoutines {
 
   @JvmStatic
   fun main(args: Array<String>) {
@@ -28,13 +28,13 @@ object RedisRoutines {
     //deleteAll()
   }
 
-  internal fun deleteAll() {
+  fun deleteAll() {
     withRedis { redis ->
       redis?.keys("*")?.forEach { redis.del(it) }
     }
   }
 
-  internal fun showAll() {
+  fun showAll() {
     withRedis { redis ->
       if (redis != null) {
         println(redis.keys("*")

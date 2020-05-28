@@ -56,6 +56,7 @@ import com.github.readingbat.posts.CreateAccount.createAccount
 import com.github.readingbat.posts.PasswordReset.changePassword
 import com.github.readingbat.posts.PasswordReset.sendPasswordReset
 import com.github.readingbat.posts.UserPrefs.userPrefs
+import com.github.readingbat.server.ServerUtils.queryParam
 import io.ktor.application.call
 import io.ktor.http.ContentType.Text.CSS
 import io.ktor.http.content.resources

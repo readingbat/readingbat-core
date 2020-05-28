@@ -41,7 +41,7 @@ import com.github.readingbat.posts.ChallengeHistory
 import com.github.readingbat.posts.ChallengeNames
 import com.github.readingbat.posts.ChallengeResults
 import com.github.readingbat.server.PipelineCall
-import com.github.readingbat.server.fetchPrincipal
+import com.github.readingbat.server.ServerUtils.fetchPrincipal
 import com.google.gson.Gson
 import io.ktor.application.call
 import io.ktor.sessions.get

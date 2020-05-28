@@ -57,8 +57,8 @@ import com.github.readingbat.pages.PageCommon.bodyHeader
 import com.github.readingbat.pages.PageCommon.headDefault
 import com.github.readingbat.pages.PageCommon.rawHtml
 import com.github.readingbat.server.PipelineCall
-import com.github.readingbat.server.fetchPrincipal
-import com.github.readingbat.server.queryParam
+import com.github.readingbat.server.ServerUtils.fetchPrincipal
+import com.github.readingbat.server.ServerUtils.queryParam
 import io.ktor.application.call
 import io.ktor.http.ContentType.Text.CSS
 import io.ktor.sessions.get
@@ -66,12 +66,11 @@ import io.ktor.sessions.sessions
 import kotlinx.html.*
 import kotlinx.html.ScriptType.textJavaScript
 import kotlinx.html.stream.createHTML
-import mu.KotlinLogging
+import mu.KLogging
 
-private val logger = KotlinLogging.logger {}
 private const val spinnerCss = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
 
-internal object ChallengePage {
+internal object ChallengePage : KLogging() {
 
   fun PipelineCall.challengePage(content: ReadingBatContent,
                                  challenge: Challenge,

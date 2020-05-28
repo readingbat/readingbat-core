@@ -35,79 +35,81 @@ import io.ktor.sessions.sessions
 import io.ktor.sessions.set
 import kotlinx.html.body
 import kotlinx.html.div
-import mu.KotlinLogging
+import mu.KLogging
 import java.io.ByteArrayOutputStream
 import java.lang.management.ManagementFactory
 import java.time.Instant.ofEpochMilli
 import java.time.LocalDateTime.ofInstant
 import java.time.ZoneId
 
-private val logger = KotlinLogging.logger {}
 
-internal fun Routing.adminRoutes() {
+internal object AdminRoutes : KLogging() {
 
-  get("/ping") { call.respondText("pong", ContentType.Text.Plain) }
+  fun Routing.adminRoutes() {
 
-  get("/threaddump") {
-    try {
-      val baos = ByteArrayOutputStream()
-      baos.use { ThreadDumpInfo.threadDump.dump(true, true, it) }
-      val output = String(baos.toByteArray(), Charsets.UTF_8)
-      call.respondText(output, ContentType.Text.Plain)
-    } catch (e: NoClassDefFoundError) {
-      call.respondText("Sorry, your runtime environment does not allow dump threads.", ContentType.Text.Plain)
+    get("/ping") { call.respondText("pong", ContentType.Text.Plain) }
+
+    get("/threaddump") {
+      try {
+        val baos = ByteArrayOutputStream()
+        baos.use { ThreadDumpInfo.threadDump.dump(true, true, it) }
+        val output = String(baos.toByteArray(), Charsets.UTF_8)
+        call.respondText(output, ContentType.Text.Plain)
+      } catch (e: NoClassDefFoundError) {
+        call.respondText("Sorry, your runtime environment does not allow dump threads.", ContentType.Text.Plain)
+      }
     }
-  }
 
-  get(COOKIES) {
-    val principal = call.sessions.get<UserPrincipal>()
-    val session = call.sessions.get<BrowserSession>()
-    logger.info { "UserPrincipal: $principal BrowserSession: $session" }
+    get(COOKIES) {
+      val principal = call.sessions.get<UserPrincipal>()
+      val session = call.sessions.get<BrowserSession>()
+      logger.info { "UserPrincipal: $principal BrowserSession: $session" }
 
-    call.respondHtml {
-      body {
-        if (principal == null && session == null)
-          div { +"No cookies are present." }
-        else {
-          if (principal != null) {
-            val date = ofInstant(ofEpochMilli(principal.created), ZoneId.systemDefault())
-            div { +"UserPrincipal: ${principal.userId} created on: $date" }
-          }
+      call.respondHtml {
+        body {
+          if (principal == null && session == null)
+            div { +"No cookies are present." }
+          else {
+            if (principal != null) {
+              val date = ofInstant(ofEpochMilli(principal.created), ZoneId.systemDefault())
+              div { +"UserPrincipal: ${principal.userId} created on: $date" }
+            }
 
-          if (session != null) {
-            val date = ofInstant(ofEpochMilli(session.created), ZoneId.systemDefault())
-            div { +"BrowserSession id: [${session.id}] created on: $date" }
+            if (session != null) {
+              val date = ofInstant(ofEpochMilli(session.created), ZoneId.systemDefault())
+              div { +"BrowserSession id: [${session.id}] created on: $date" }
+            }
           }
         }
       }
     }
+
+    get("/clear-cookies") {
+      val principal = call.sessions.get<UserPrincipal>()
+      if (principal != null) {
+        logger.info { "Clearing $principal" }
+        call.sessions.clear<UserPrincipal>()
+      }
+
+      val session = call.sessions.get<BrowserSession>()
+      if (session != null) {
+        logger.info { "Clearing $session" }
+        // @TODO Should delete session data from redis
+        call.sessions.clear<BrowserSession>()
+      }
+      redirectTo { "/" }
+    }
   }
 
-  get("/clear-cookies") {
-    val principal = call.sessions.get<UserPrincipal>()
-    if (principal != null) {
-      logger.info { "Clearing $principal" }
-      call.sessions.clear<UserPrincipal>()
-    }
-
+  fun PipelineCall.registerBrowserSession() {
     val session = call.sessions.get<BrowserSession>()
-    if (session != null) {
-      logger.info { "Clearing $session" }
-      // @TODO Should delete session data from redis
-      call.sessions.clear<BrowserSession>()
+    if (session == null) {
+      call.sessions.set(BrowserSession(id = randomId(15)))
+      logger.info { "Created: ${call.sessions.get<BrowserSession>()}" }
     }
-    redirectTo { "/" }
   }
-}
 
-internal fun PipelineCall.registerBrowserSession() {
-  val session = call.sessions.get<BrowserSession>()
-  if (session == null) {
-    call.sessions.set(BrowserSession(id = randomId(15)))
-    logger.info { "Created: ${call.sessions.get<BrowserSession>()}" }
+  private object ThreadDumpInfo {
+    val threadDump by lazy { ThreadDump(ManagementFactory.getThreadMXBean()) }
   }
-}
-
-private object ThreadDumpInfo {
-  val threadDump by lazy { ThreadDump(ManagementFactory.getThreadMXBean()) }
 }

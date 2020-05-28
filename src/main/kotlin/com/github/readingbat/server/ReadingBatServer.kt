@@ -19,6 +19,12 @@ package com.github.readingbat.server
 
 import com.github.pambrose.common.util.FileSource
 import com.github.readingbat.dsl.readDsl
+import com.github.readingbat.misc.EnvVars.PRODUCTION
+import com.github.readingbat.misc.EnvVars.REDIRECT_HOST_NAME
+import com.github.readingbat.server.AdminRoutes.adminRoutes
+import com.github.readingbat.server.Installs.installs
+import com.github.readingbat.server.Locations.locations
+import com.github.readingbat.server.ServerUtils.property
 import com.github.readingbat.server.WsEndoints.wsEndpoints
 import io.ktor.application.Application
 import io.ktor.routing.routing
@@ -27,6 +33,9 @@ import io.ktor.server.engine.commandLineEnvironment
 import io.ktor.server.engine.embeddedServer
 
 object ReadingBatServer {
+  internal val hostname: String by lazy { System.getenv(REDIRECT_HOST_NAME) ?: "www.readingbat.com" }
+  internal val production: Boolean by lazy { System.getenv(PRODUCTION)?.toBoolean() ?: false }
+
   fun start(args: Array<String>) {
     val environment = commandLineEnvironment(args)
     embeddedServer(CIO, environment).start(wait = true)

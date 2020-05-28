@@ -27,25 +27,25 @@ import io.ktor.sessions.get
 import io.ktor.sessions.sessions
 import io.ktor.sessions.set
 import io.ktor.util.pipeline.PipelineContext
-import mu.KotlinLogging
-
-private val logger = KotlinLogging.logger {}
-
-internal fun Application.property(name: String, default: String = "", warn: Boolean = false) =
-  try {
-    environment.config.property(name).getString()
-  } catch (e: ApplicationConfigurationException) {
-    if (warn)
-      logger.warn { "Missing $name value in application.conf" }
-    default
-  }
+import mu.KLogging
 
 typealias PipelineCall = PipelineContext<Unit, ApplicationCall>
 
-internal fun PipelineCall.fetchPrincipal(loginAttempt: Boolean = false): UserPrincipal? =
-  if (loginAttempt) assignPrincipal() else call.sessions.get<UserPrincipal>()
+internal object ServerUtils : KLogging() {
+  fun Application.property(name: String, default: String = "", warn: Boolean = false) =
+    try {
+      environment.config.property(name).getString()
+    } catch (e: ApplicationConfigurationException) {
+      if (warn)
+        logger.warn { "Missing $name value in application.conf" }
+      default
+    }
 
-private fun PipelineCall.assignPrincipal() =
-  call.principal<UserPrincipal>().apply { if (this != null) call.sessions.set(this) }  // Set the cookie
+  fun PipelineCall.fetchPrincipal(loginAttempt: Boolean = false): UserPrincipal? =
+    if (loginAttempt) assignPrincipal() else call.sessions.get<UserPrincipal>()
 
-internal fun PipelineCall.queryParam(key: String): String? = call.request.queryParameters[key]
+  private fun PipelineCall.assignPrincipal() =
+    call.principal<UserPrincipal>().apply { if (this != null) call.sessions.set(this) }  // Set the cookie
+
+  fun PipelineCall.queryParam(key: String): String? = call.request.queryParameters[key]
+}

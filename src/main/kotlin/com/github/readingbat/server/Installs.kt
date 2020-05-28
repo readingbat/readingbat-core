@@ -23,11 +23,11 @@ import com.github.readingbat.dsl.InvalidPathException
 import com.github.readingbat.misc.Constants.STATIC_ROOT
 import com.github.readingbat.misc.Endpoints.CSS_NAME
 import com.github.readingbat.misc.Endpoints.FAV_ICON
-import com.github.readingbat.misc.EnvVars.PRODUCTION
-import com.github.readingbat.misc.EnvVars.REDIRECT_HOST_NAME
 import com.github.readingbat.server.ConfigureCookies.configureAuthCookie
 import com.github.readingbat.server.ConfigureCookies.configureSessionIdCookie
 import com.github.readingbat.server.ConfigureFormAuth.configureFormAuth
+import com.github.readingbat.server.ReadingBatServer.hostname
+import com.github.readingbat.server.ReadingBatServer.production
 import io.ktor.application.Application
 import io.ktor.application.call
 import io.ktor.application.install
@@ -43,61 +43,59 @@ import io.ktor.response.respond
 import io.ktor.server.engine.ShutDownUrl
 import io.ktor.sessions.Sessions
 import io.ktor.websocket.WebSockets
-import mu.KotlinLogging
+import mu.KLogging
 import org.slf4j.event.Level
 import kotlin.text.Charsets.UTF_8
 
-private val logger = KotlinLogging.logger {}
-private val hostname: String by lazy { System.getenv(REDIRECT_HOST_NAME) ?: "www.readingbat.com" }
-internal val production: Boolean by lazy { System.getenv(PRODUCTION)?.toBoolean() ?: false }
+internal object Installs : KLogging() {
 
-internal fun Application.installs() {
+  fun Application.installs() {
 
-  install(Locations)
+    install(Locations)
 
-  install(Sessions) {
-    configureSessionIdCookie()
-    configureAuthCookie()
-  }
-
-  install(Authentication) {
-    //configureSessionAuth()
-    configureFormAuth()
-  }
-
-  install(WebSockets)
-
-  if (production) {
-    install(HerokuHttpsRedirect) {
-      host = hostname
-      permanentRedirect = false
-
-      excludePrefix("$STATIC_ROOT/")
-      excludeSuffix(CSS_NAME)
-      excludeSuffix(FAV_ICON)
+    install(Sessions) {
+      configureSessionIdCookie()
+      configureAuthCookie()
     }
-  }
 
-  install(Compression) {
-    gzip {
-      priority = 1.0
+    install(Authentication) {
+      //configureSessionAuth()
+      configureFormAuth()
     }
-    deflate {
-      priority = 10.0
-      minimumSize(1024) // condition
+
+    install(WebSockets)
+
+    if (production) {
+      install(HerokuHttpsRedirect) {
+        host = hostname
+        permanentRedirect = false
+
+        excludePrefix("$STATIC_ROOT/")
+        excludeSuffix(CSS_NAME)
+        excludeSuffix(FAV_ICON)
+      }
     }
-  }
 
-  install(CallLogging) {
-    level = Level.INFO
-    filter { call -> call.request.path().startsWith("/") }
-  }
+    install(Compression) {
+      gzip {
+        priority = 1.0
+      }
+      deflate {
+        priority = 10.0
+        minimumSize(1024) // condition
+      }
+    }
 
-  install(DefaultHeaders) {
-    header("X-Engine", "Ktor")
-  }
+    install(CallLogging) {
+      level = Level.INFO
+      filter { call -> call.request.path().startsWith("/") }
+    }
 
-  /*
+    install(DefaultHeaders) {
+      header("X-Engine", "Ktor")
+    }
+
+    /*
   install(DropwizardMetrics) {
     val reporter =
       Slf4jReporter.forRegistry(registry)
@@ -109,31 +107,32 @@ internal fun Application.installs() {
   }
   */
 
-  install(StatusPages) {
-    exception<InvalidPathException> { cause ->
-      call.respond(HttpStatusCode.NotFound)
-      //call.respondHtml { errorPage(cause.message?:"") }
+    install(StatusPages) {
+      exception<InvalidPathException> { cause ->
+        call.respond(HttpStatusCode.NotFound)
+        //call.respondHtml { errorPage(cause.message?:"") }
+      }
+
+      //statusFile(HttpStatusCode.NotFound, HttpStatusCode.Unauthorized, filePattern = "error#.html")
+
+      // Catch all
+      exception<Throwable> { cause ->
+        logger.info(cause) { " Throwable caught: ${cause.simpleClassName}" }
+        call.respond(HttpStatusCode.NotFound)
+      }
+
+      status(HttpStatusCode.NotFound) {
+        call.respond(TextContent("${it.value} ${it.description}", Plain.withCharset(UTF_8), it))
+      }
     }
 
-    //statusFile(HttpStatusCode.NotFound, HttpStatusCode.Unauthorized, filePattern = "error#.html")
-
-    // Catch all
-    exception<Throwable> { cause ->
-      logger.info(cause) { " Throwable caught: ${cause.simpleClassName}" }
-      call.respond(HttpStatusCode.NotFound)
-    }
-
-    status(HttpStatusCode.NotFound) {
-      call.respond(TextContent("${it.value} ${it.description}", Plain.withCharset(UTF_8), it))
-    }
-  }
-
-  if (!production) {
-    install(ShutDownUrl.ApplicationCallFeature) {
-      // The URL that will be intercepted (you can also use the application.conf's ktor.deployment.shutdown.url key)
-      shutDownUrl = "/ktor/application/shutdown"
-      // A function that will be executed to get the exit code of the process
-      exitCodeSupplier = { 0 } // ApplicationCall.() -> Int
+    if (!production) {
+      install(ShutDownUrl.ApplicationCallFeature) {
+        // The URL that will be intercepted (you can also use the application.conf's ktor.deployment.shutdown.url key)
+        shutDownUrl = "/ktor/application/shutdown"
+        // A function that will be executed to get the exit code of the process
+        exitCodeSupplier = { 0 } // ApplicationCall.() -> Int
+      }
     }
   }
 }

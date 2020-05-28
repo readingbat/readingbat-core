@@ -28,65 +28,68 @@ import com.github.readingbat.pages.ChallengeGroupPage.challengeGroupPage
 import com.github.readingbat.pages.ChallengePage.challengePage
 import com.github.readingbat.pages.LanguageGroupPage.languageGroupPage
 import com.github.readingbat.pages.PlaygroundPage.playgroundPage
+import com.github.readingbat.server.AdminRoutes.registerBrowserSession
 import io.ktor.auth.authenticate
 import io.ktor.locations.Location
 import io.ktor.locations.get
 import io.ktor.locations.post
 import io.ktor.routing.Routing
 
-internal fun Routing.locations(content: ReadingBatContent) {
-  get<Language> { language -> language(content, language, false) }
-  get<Language.Group> { group -> group(content, group, false) }
-  get<Language.Group.Challenge> { challenge -> challenge(content, challenge, false) }
-  get<PlaygroundRequest> { request -> playground(content, request, false) }
+internal object Locations {
+  fun Routing.locations(content: ReadingBatContent) {
+    get<Language> { language -> language(content, language, false) }
+    get<Language.Group> { group -> group(content, group, false) }
+    get<Language.Group.Challenge> { challenge -> challenge(content, challenge, false) }
+    get<PlaygroundRequest> { request -> playground(content, request, false) }
 
-  authenticate(FORM) {
-    post<Language> { language -> language(content, language, true) }
-    post<Language.Group> { group -> group(content, group, true) }
-    post<Language.Group.Challenge> { challenge -> challenge(content, challenge, true) }
-    post<PlaygroundRequest> { request -> playground(content, request, true) }
-  }
-}
-
-private suspend fun PipelineCall.language(content: ReadingBatContent,
-                                          language: Language,
-                                          loginAttempt: Boolean) =
-  respondWith {
-    content.checkLanguage(language.languageType)
-    languageGroupPage(content,
-                      language.languageType,
-                      loginAttempt)
+    authenticate(FORM) {
+      post<Language> { language -> language(content, language, true) }
+      post<Language.Group> { group -> group(content, group, true) }
+      post<Language.Group.Challenge> { challenge -> challenge(content, challenge, true) }
+      post<PlaygroundRequest> { request -> playground(content, request, true) }
+    }
   }
 
-private suspend fun PipelineCall.group(content: ReadingBatContent,
-                                       group: Language.Group,
-                                       loginAttempt: Boolean) =
-  respondWith {
-    content.checkLanguage(group.languageType)
-    challengeGroupPage(content,
-                       content.findGroup(group.languageType, group.groupName),
-                       loginAttempt)
-  }
-
-private suspend fun PipelineCall.challenge(content: ReadingBatContent,
-                                           challenge: Language.Group.Challenge,
-                                           loginAttempt: Boolean) =
-  respondWith {
-    registerBrowserSession()
-    content.checkLanguage(challenge.languageType)
-    challengePage(content,
-                  content.findChallenge(challenge.languageType, challenge.groupName, challenge.challengeName),
-                  loginAttempt)
-  }
-
-private suspend fun PipelineCall.playground(content: ReadingBatContent,
-                                            request: PlaygroundRequest,
+  private suspend fun PipelineCall.language(content: ReadingBatContent,
+                                            language: Language,
                                             loginAttempt: Boolean) =
-  respondWith {
-    playgroundPage(content,
-                   content.findLanguage(Kotlin).findChallenge(request.groupName, request.challengeName),
-                   loginAttempt)
-  }
+    respondWith {
+      content.checkLanguage(language.languageType)
+      languageGroupPage(content,
+                        language.languageType,
+                        loginAttempt)
+    }
+
+  private suspend fun PipelineCall.group(content: ReadingBatContent,
+                                         group: Language.Group,
+                                         loginAttempt: Boolean) =
+    respondWith {
+      content.checkLanguage(group.languageType)
+      challengeGroupPage(content,
+                         content.findGroup(group.languageType, group.groupName),
+                         loginAttempt)
+    }
+
+  private suspend fun PipelineCall.challenge(content: ReadingBatContent,
+                                             challenge: Language.Group.Challenge,
+                                             loginAttempt: Boolean) =
+    respondWith {
+      registerBrowserSession()
+      content.checkLanguage(challenge.languageType)
+      challengePage(content,
+                    content.findChallenge(challenge.languageType, challenge.groupName, challenge.challengeName),
+                    loginAttempt)
+    }
+
+  private suspend fun PipelineCall.playground(content: ReadingBatContent,
+                                              request: PlaygroundRequest,
+                                              loginAttempt: Boolean) =
+    respondWith {
+      playgroundPage(content,
+                     content.findLanguage(Kotlin).findChallenge(request.groupName, request.challengeName),
+                     loginAttempt)
+    }
+}
 
 @Location("$CHALLENGE_ROOT/{language}")
 internal data class Language(val language: String) {

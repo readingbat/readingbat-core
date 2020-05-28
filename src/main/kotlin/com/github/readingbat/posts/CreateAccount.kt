@@ -34,7 +34,7 @@ import com.github.readingbat.misc.UserId.Companion.userIdKey
 import com.github.readingbat.misc.UserPrincipal
 import com.github.readingbat.pages.CreateAccountPage.createAccountPage
 import com.github.readingbat.server.PipelineCall
-import com.github.readingbat.server.queryParam
+import com.github.readingbat.server.ServerUtils.queryParam
 import com.google.common.util.concurrent.RateLimiter
 import io.ktor.application.call
 import io.ktor.request.receiveParameters

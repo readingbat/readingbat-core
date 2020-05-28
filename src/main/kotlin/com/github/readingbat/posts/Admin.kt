@@ -25,7 +25,7 @@ import com.github.readingbat.misc.FormFields.DELETE_ALL_DATA
 import com.github.readingbat.misc.UserPrincipal
 import com.github.readingbat.pages.AdminPage.adminDataPage
 import com.github.readingbat.server.PipelineCall
-import com.github.readingbat.server.fetchPrincipal
+import com.github.readingbat.server.ServerUtils.fetchPrincipal
 import io.ktor.application.call
 import io.ktor.request.receiveParameters
 import io.ktor.sessions.clear

@@ -21,7 +21,7 @@ import com.github.pambrose.common.util.linesBetween
 import com.github.pambrose.common.util.substringBetween
 import mu.KLogging
 
-object PythonParse : KLogging() {
+internal object PythonParse : KLogging() {
 
   internal val defMainRegex = Regex("""def\s+main\(""")
   internal val ifMainEndRegex = Regex("__main__")
@@ -29,7 +29,7 @@ object PythonParse : KLogging() {
   private const val printPrefix = "print("
   private const val varName = "answers"
 
-  internal fun extractPythonFunction(code: List<String>): String {
+  fun extractPythonFunction(code: List<String>): String {
     val lineNums =
       code.mapIndexed { i, str -> i to str }
         .filter { it.second.contains(defRegex) }
@@ -37,7 +37,7 @@ object PythonParse : KLogging() {
     return code.subList(lineNums.first(), lineNums.last() - 1).joinToString("\n").trimIndent()
   }
 
-  internal fun convertToPythonScript(code: List<String>): String {
+  fun convertToPythonScript(code: List<String>): String {
     val scriptCode = mutableListOf<String>()
     var insideMain = false
 
@@ -60,10 +60,10 @@ object PythonParse : KLogging() {
     return scriptCode.joinToString("\n")
   }
 
-  internal fun extractPythonArguments(code: String, start: Regex, end: Regex) =
+  fun extractPythonArguments(code: String, start: Regex, end: Regex) =
     extractPythonArguments(code.lines(), start, end)
 
-  internal fun extractPythonArguments(code: List<String>, start: Regex, end: Regex) =
+  fun extractPythonArguments(code: List<String>, start: Regex, end: Regex) =
     code.linesBetween(start, end)
       .filter { it.contains("print(") }
       .map { it.substringBetween("print(", ")") }

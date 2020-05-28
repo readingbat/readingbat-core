@@ -40,8 +40,8 @@ import com.github.readingbat.pages.PageCommon.headDefault
 import com.github.readingbat.pages.PageCommon.rawHtml
 import com.github.readingbat.pages.PageCommon.rows
 import com.github.readingbat.server.PipelineCall
-import com.github.readingbat.server.fetchPrincipal
-import com.github.readingbat.server.queryParam
+import com.github.readingbat.server.ServerUtils.fetchPrincipal
+import com.github.readingbat.server.ServerUtils.queryParam
 import io.ktor.application.call
 import io.ktor.sessions.get
 import io.ktor.sessions.sessions
