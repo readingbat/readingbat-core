@@ -60,10 +60,10 @@ internal object PythonParse : KLogging() {
     return scriptCode.joinToString("\n")
   }
 
-  fun extractPythonArguments(code: String, start: Regex, end: Regex) =
-    extractPythonArguments(code.lines(), start, end)
+  fun extractPythonInvocations(code: String, start: Regex, end: Regex) =
+    extractPythonInvocations(code.lines(), start, end)
 
-  fun extractPythonArguments(code: List<String>, start: Regex, end: Regex) =
+  fun extractPythonInvocations(code: List<String>, start: Regex, end: Regex) =
     code.linesBetween(start, end)
       .filter { it.contains("print(") }
       .map { it.substringBetween("print(", ")") }

@@ -44,12 +44,12 @@ internal data class StudentInfo(val studentId: String, val firstName: String, va
 internal data class ClassEnrollment(val sessionId: String,
                                     val students: List<StudentInfo> = mutableListOf())
 
-internal data class ChallengeResults(val arguments: String,
+internal data class ChallengeResults(val invocation: String,
                                      val userResponse: String,
                                      val answered: Boolean,
                                      val correct: Boolean)
 
-internal data class ChallengeHistory(var arguments: String,
+internal data class ChallengeHistory(var invocation: String,
                                      var correct: Boolean = false,
                                      var attempts: Int = 0,
                                      val answers: MutableList<String> = mutableListOf()) {
@@ -138,7 +138,7 @@ internal object CheckAnswers : KLogging() {
           compareMap[RESP + i]?.trim() ?: throw InvalidConfigurationException("Missing user response")
         val answer = funcInfo.answers[i]
         val answered = userResponse.isNotEmpty()
-        ChallengeResults(arguments = funcInfo.arguments[i],
+        ChallengeResults(invocation = funcInfo.invocations[i],
                          userResponse = userResponse,
                          answered = answered,
                          correct = if (answered) checkWithAnswer(isJvm, userResponse, answer) else false)

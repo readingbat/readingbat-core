@@ -63,10 +63,10 @@ internal object JavaParse : KLogging() {
     return code.subList(lineNums.first(), lineNums.last() - 1).joinToString("\n").trimIndent()
   }
 
-  fun extractJavaArguments(code: String, start: Regex, end: Regex) =
-    extractJavaArguments(code.lines(), start, end)
+  fun extractJavaInvocations(code: String, start: Regex, end: Regex) =
+    extractJavaInvocations(code.lines(), start, end)
 
-  fun extractJavaArguments(code: List<String>, start: Regex, end: Regex): List<String> {
+  fun extractJavaInvocations(code: List<String>, start: Regex, end: Regex): List<String> {
     val lines = mutableListOf<String>()
     prefixes
       .forEach { prefix ->

@@ -24,20 +24,20 @@ import com.github.pambrose.common.util.*
 import com.github.readingbat.dsl.LanguageType.*
 import com.github.readingbat.dsl.parse.JavaParse
 import com.github.readingbat.dsl.parse.JavaParse.deriveJavaReturnType
-import com.github.readingbat.dsl.parse.JavaParse.extractJavaArguments
 import com.github.readingbat.dsl.parse.JavaParse.extractJavaFunction
+import com.github.readingbat.dsl.parse.JavaParse.extractJavaInvocations
 import com.github.readingbat.dsl.parse.JavaParse.javaEndRegex
 import com.github.readingbat.dsl.parse.JavaParse.svmRegex
 import com.github.readingbat.dsl.parse.KotlinParse.convertToKotlinScript
-import com.github.readingbat.dsl.parse.KotlinParse.extractKotlinArguments
 import com.github.readingbat.dsl.parse.KotlinParse.extractKotlinFunction
+import com.github.readingbat.dsl.parse.KotlinParse.extractKotlinInvocations
 import com.github.readingbat.dsl.parse.KotlinParse.funMainRegex
 import com.github.readingbat.dsl.parse.KotlinParse.kotlinEndRegex
 import com.github.readingbat.dsl.parse.KotlinParse.varName
 import com.github.readingbat.dsl.parse.PythonParse.convertToPythonScript
 import com.github.readingbat.dsl.parse.PythonParse.defMainRegex
-import com.github.readingbat.dsl.parse.PythonParse.extractPythonArguments
 import com.github.readingbat.dsl.parse.PythonParse.extractPythonFunction
+import com.github.readingbat.dsl.parse.PythonParse.extractPythonInvocations
 import com.github.readingbat.dsl.parse.PythonParse.ifMainEndRegex
 import com.github.readingbat.misc.PageUtils.pathOf
 import com.vladsch.flexmark.html.HtmlRenderer
@@ -150,7 +150,7 @@ class PythonChallenge(challengeGroup: ChallengeGroup<*>, challengeName: String, 
   override fun computeFuncInfo(code: String): FunctionInfo {
     val lines = code.lines()
     val funcCode = extractPythonFunction(lines)
-    val args = extractPythonArguments(lines, defMainRegex, ifMainEndRegex)
+    val invocations = extractPythonInvocations(lines, defMainRegex, ifMainEndRegex)
     val script = convertToPythonScript(lines)
     val answers = mutableListOf<Any>()
 
@@ -165,7 +165,7 @@ class PythonChallenge(challengeGroup: ChallengeGroup<*>, challengeName: String, 
 
     logger.info { "$challengeName computed answers in $duration for: $answers" }
 
-    return FunctionInfo(languageType, challengeName, code, funcCode, args, returnType, answers)
+    return FunctionInfo(languageType, challengeName, code, funcCode, invocations, returnType, answers)
   }
 }
 
@@ -175,7 +175,7 @@ class JavaChallenge(challengeGroup: ChallengeGroup<*>, challengeName: String, re
   override fun computeFuncInfo(code: String): FunctionInfo {
     val lines = code.lines().filter { !it.trimStart().startsWith("package") }
     val funcCode = extractJavaFunction(lines)
-    val args = extractJavaArguments(lines, svmRegex, javaEndRegex)
+    val invocations = extractJavaInvocations(lines, svmRegex, javaEndRegex)
     val returnType = deriveJavaReturnType(challengeName, lines)
     val script = JavaParse.convertToScript(lines)
 
@@ -195,7 +195,7 @@ class JavaChallenge(challengeGroup: ChallengeGroup<*>, challengeName: String, re
     if (answers !is List<*>)
       throw InvalidConfigurationException("Invalid type returned for $challengeName")
 
-    return FunctionInfo(languageType, challengeName, code, funcCode, args, returnType, answers)
+    return FunctionInfo(languageType, challengeName, code, funcCode, invocations, returnType, answers)
   }
 }
 
@@ -217,7 +217,7 @@ class KotlinChallenge(challengeGroup: ChallengeGroup<*>, challengeName: String, 
     val strippedCode = lines.joinToString("\n")
 
     val funcCode = "\n${extractKotlinFunction(lines)}\n\n"
-    val args = extractKotlinArguments(lines, funMainRegex, kotlinEndRegex)
+    val invocations = extractKotlinInvocations(lines, funMainRegex, kotlinEndRegex)
     val script = convertToKotlinScript(lines)
 
     logger.info { "$challengeName return type: $returnType script: \n${script.withLineNumbers()}" }
@@ -231,6 +231,6 @@ class KotlinChallenge(challengeGroup: ChallengeGroup<*>, challengeName: String, 
 
     logger.info { "$challengeName computed answers in $duration for: $answers" }
 
-    return FunctionInfo(languageType, challengeName, strippedCode, funcCode, args, returnType, answers)
+    return FunctionInfo(languageType, challengeName, strippedCode, funcCode, invocations, returnType, answers)
   }
 }

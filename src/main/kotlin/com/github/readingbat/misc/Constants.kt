@@ -49,6 +49,7 @@ internal object Endpoints {
   const val CHECK_ANSWERS_ROOT = "/check-answers"
   const val CSS_NAME = "/styles.css"
   const val FAV_ICON = "/favicon.ico"
+  const val CLASS_PREFIX = "/class"
 }
 
 internal object ParameterIds {

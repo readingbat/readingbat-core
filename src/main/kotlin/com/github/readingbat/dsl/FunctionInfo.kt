@@ -26,7 +26,7 @@ internal class FunctionInfo(val languageType: LanguageType,
                             val challengeName: String,
                             val originalCode: String,
                             val codeSnippet: String,
-                            val arguments: List<String>,
+                            val invocations: List<String>,
                             val returnType: ReturnType,
                             rawAnswers: List<*>) {
 
@@ -54,7 +54,7 @@ internal class FunctionInfo(val languageType: LanguageType,
         }
     }
 
-    logger.debug { "In $challengeName arguments: $arguments computed answers: $answers" }
+    logger.debug { "In $challengeName invocations: $invocations computed answers: $answers" }
 
     validate()
   }
@@ -95,8 +95,8 @@ internal class FunctionInfo(val languageType: LanguageType,
   }
 
   private fun validate() {
-    if (answers.size != arguments.size)
-      throw InvalidConfigurationException("Mismatch between ${answers.size} answers and ${arguments.size} arguments in $challengeName")
+    if (answers.size != invocations.size)
+      throw InvalidConfigurationException("Mismatch between ${answers.size} answers and ${invocations.size} arguments in $challengeName")
   }
 
   companion object : KLogging()

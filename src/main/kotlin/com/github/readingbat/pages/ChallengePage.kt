@@ -44,6 +44,7 @@ import com.github.readingbat.misc.Constants.RESP
 import com.github.readingbat.misc.Constants.STATIC_ROOT
 import com.github.readingbat.misc.Constants.WHITE_CHECK
 import com.github.readingbat.misc.Dashboards.classCodeEnrollmentKey
+import com.github.readingbat.misc.Endpoints.CLASS_PREFIX
 import com.github.readingbat.misc.PageUtils.pathOf
 import com.github.readingbat.misc.ParameterIds.FEEDBACK_ID
 import com.github.readingbat.misc.ParameterIds.SPINNER_ID
@@ -51,7 +52,7 @@ import com.github.readingbat.misc.ParameterIds.STATUS_ID
 import com.github.readingbat.misc.ParameterIds.SUCCESS_ID
 import com.github.readingbat.misc.RedisConstants.NAME_FIELD
 import com.github.readingbat.misc.UserId
-import com.github.readingbat.misc.UserId.Companion.challengeKey
+import com.github.readingbat.misc.UserId.Companion.challengeAnswersKey
 import com.github.readingbat.misc.UserId.Companion.lookupPrincipal
 import com.github.readingbat.misc.UserPrincipal
 import com.github.readingbat.pages.PageCommon.addLink
@@ -158,17 +159,17 @@ internal object ChallengePage : KLogging() {
 
         val previousAnswers = previousAnswers(principal, browserSession, challenge)
 
-        funcInfo.arguments.indices.forEach { i ->
+        funcInfo.invocations.indices.forEach { i ->
           tr {
-            val args = funcInfo.arguments[i]
-            td(classes = FUNC_COL) { +args }
+            val invvocation = funcInfo.invocations[i]
+            td(classes = FUNC_COL) { +invvocation }
             td(classes = ARROW) { rawHtml("&rarr;") }
             td {
               textInput(classes = USER_RESP) {
                 id = "$RESP$i"
                 onKeyPress = "$processAnswers(event, ${funcInfo.answers.size})"
-                if (previousAnswers[args] != null)
-                  value = previousAnswers[args] ?: ""
+                if (previousAnswers[invvocation] != null)
+                  value = previousAnswers[invvocation] ?: ""
                 else
                   placeholder = funcInfo.placeHolder()
               }
@@ -187,20 +188,20 @@ internal object ChallengePage : KLogging() {
     script {
       rawHtml(
         """
-          //var HOST = location.href.replace(${if (production) "/^https:/, 'wss:'" else "/^http:/, 'ws:'"})
-          var HOST = 'ws://0.0.0.0:8080/class/$classCode'
-          var ws = new WebSocket(HOST);
-          var el;
+          var wshost = location.origin.replace(${if (production) "/^https:/, 'wss:'" else "/^http:/, 'ws:'"})
+          var wsurl = wshost + '$CLASS_PREFIX/$classCode'
+          var ws = new WebSocket(wsurl);
           ws.onopen = function (event) {
             ws.send("$classCode"); 
           };
           ws.onmessage = function (event) {
-            el = document.getElementById('$wsid');
-            el.innerHTML = 'Value received: ' + event.data;
+            console.log(event.data);
+            var el = document.getElementById('$wsid');
+            var obj = JSON.parse(event.data)
+            el.innerHTML = 'Value received: ' + obj.attempts;
           };
         """.trimIndent())
     }
-
   }
 
   private fun BODY.displayProgress(principal: UserPrincipal?,
@@ -224,9 +225,9 @@ internal object ChallengePage : KLogging() {
           table {
             tr {
               th { +"Student" }
-              funcInfo.arguments.indices.forEach { i ->
-                val args = funcInfo.arguments[i]
-                th(classes = "rotate") { span { +args } }
+              funcInfo.invocations.indices.forEach { i ->
+                val invocation = funcInfo.invocations[i]
+                th(classes = "rotate") { span { +invocation } }
               }
             }
             ids.forEach {
@@ -237,12 +238,11 @@ internal object ChallengePage : KLogging() {
                 id = userInfoKey
 
                 td { +(redis.hget(userInfoKey, NAME_FIELD) ?: "") }
-                funcInfo.arguments.indices.forEach { i ->
-                  val args = funcInfo.arguments[i]
-                  val answerHistoryKey = userId.answerHistoryKey(languageName, groupName, challengeName, args)
+                funcInfo.invocations.forEach { invocation ->
+                  val answerHistoryKey = userId.answerHistoryKey(languageName, groupName, challengeName, invocation)
                   val history =
                     UserId.gson.fromJson(redis[answerHistoryKey], ChallengeHistory::class.java)
-                      ?: ChallengeHistory(args)
+                      ?: ChallengeHistory(invocation)
                   td {
                     img { src = "$STATIC_ROOT/${if (history.correct) GREEN_CHECK else WHITE_CHECK}" }
                     rawHtml(Entities.nbsp.text)
@@ -267,7 +267,7 @@ internal object ChallengePage : KLogging() {
       val challengeName = challenge.challengeName
       val languageName = languageType.lowerName
       val userId: UserId? = lookupPrincipal(principal, redis)
-      val key = challengeKey(userId, browserSession, languageName, groupName, challengeName)
+      val key = challengeAnswersKey(userId, browserSession, languageName, groupName, challengeName)
 
       if (redis != null && key.isNotEmpty())
         redis.hgetAll(key)

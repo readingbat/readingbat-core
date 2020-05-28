@@ -30,10 +30,10 @@ internal object KotlinParse {
   fun extractKotlinFunction(code: List<String>) =
     code.subList(0, code.lastLineNumberOf(funMainRegex)).joinToString("\n").trimIndent()
 
-  fun extractKotlinArguments(code: String, start: Regex, end: Regex) =
-    extractKotlinArguments(code.lines(), start, end)
+  fun extractKotlinInvocations(code: String, start: Regex, end: Regex) =
+    extractKotlinInvocations(code.lines(), start, end)
 
-  fun extractKotlinArguments(code: List<String>, start: Regex, end: Regex) =
+  fun extractKotlinInvocations(code: List<String>, start: Regex, end: Regex) =
     code.linesBetween(start, end)
       .filter { it.trimStart().startsWith(printlnPrefix) }
       .map { it.substringBetween(printlnPrefix, ")") }

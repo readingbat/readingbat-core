@@ -59,17 +59,17 @@ internal class UserId(val id: String = randomId(25)) {
   private fun correctAnswersKey(languageName: String, groupName: String, challengeName: String) =
     listOf(CORRECT_ANSWERS_KEY, AUTH_KEY, id, languageName, groupName, challengeName).joinToString(KEY_SEP)
 
-  private fun challengeKey(names: ChallengeNames) =
-    challengeKey(names.languageName, names.groupName, names.challengeName)
+  private fun challengeAnswersKey(names: ChallengeNames) =
+    challengeAnswersKey(names.languageName, names.groupName, names.challengeName)
 
-  private fun challengeKey(languageName: String, groupName: String, challengeName: String) =
+  private fun challengeAnswersKey(languageName: String, groupName: String, challengeName: String) =
     listOf(CHALLENGE_ANSWERS_KEY, AUTH_KEY, id, languageName, groupName, challengeName).joinToString(KEY_SEP)
 
-  private fun answerHistoryKey(names: ChallengeNames, argument: String) =
-    answerHistoryKey(names.languageName, names.groupName, names.challengeName, argument)
+  private fun answerHistoryKey(names: ChallengeNames, invocation: String) =
+    answerHistoryKey(names.languageName, names.groupName, names.challengeName, invocation)
 
-  fun answerHistoryKey(languageName: String, groupName: String, challengeName: String, argument: String) =
-    listOf(ANSWER_HISTORY_KEY, AUTH_KEY, id, languageName, groupName, challengeName, argument).joinToString(KEY_SEP)
+  fun answerHistoryKey(languageName: String, groupName: String, challengeName: String, invocation: String) =
+    listOf(ANSWER_HISTORY_KEY, AUTH_KEY, id, languageName, groupName, challengeName, invocation).joinToString(KEY_SEP)
 
   // This key maps to a reset_id
   fun userIdPasswordResetKey() = listOf(USERID_RESET_KEY, id).joinToString(KEY_SEP)
@@ -77,8 +77,8 @@ internal class UserId(val id: String = randomId(25)) {
   fun deleteUser(principal: UserPrincipal, redis: Jedis) {
     val userEmailKey = userEmailKey(principal.userId)
     val correctAnswers = redis.keys(correctAnswersKey("*", "*", "*"))
-    val challenges = redis.keys(challengeKey("*", "*", "*"))
-    val arguments = redis.keys(answerHistoryKey("*", "*", "*", "*"))
+    val challenges = redis.keys(challengeAnswersKey("*", "*", "*"))
+    val invocations = redis.keys(answerHistoryKey("*", "*", "*", "*"))
 
     val userIdPasswordResetKey = userIdPasswordResetKey()
     val previousResetId = redis.get(userIdPasswordResetKey) ?: ""
@@ -88,7 +88,7 @@ internal class UserId(val id: String = randomId(25)) {
     logger.info { "userInfoKey: $userInfoKey" }
     logger.info { "correctAnswers: $correctAnswers" }
     logger.info { "challenges: $challenges" }
-    logger.info { "arguments: $arguments" }
+    logger.info { "invocations: $invocations" }
 
     redis.multi().also { tx ->
       if (previousResetId.isNotEmpty()) {
@@ -102,7 +102,7 @@ internal class UserId(val id: String = randomId(25)) {
 
       correctAnswers.forEach { tx.del(it) }
       challenges.forEach { tx.del(it) }
-      arguments.forEach { tx.del(it) }
+      invocations.forEach { tx.del(it) }
 
       tx.exec()
     }
@@ -128,20 +128,20 @@ internal class UserId(val id: String = randomId(25)) {
         ?: browserSession?.correctAnswersKey(languageName, groupName, challengeName)
         ?: ""
 
-    fun challengeKey(userId: UserId?, browserSession: BrowserSession?, names: ChallengeNames) =
-      userId?.challengeKey(names) ?: browserSession?.challengeKey(names) ?: ""
+    fun challengeAnswersKey(userId: UserId?, browserSession: BrowserSession?, names: ChallengeNames) =
+      userId?.challengeAnswersKey(names) ?: browserSession?.challengeAnswerKey(names) ?: ""
 
-    fun challengeKey(userId: UserId?,
-                     browserSession: BrowserSession?,
-                     languageName: String,
-                     groupName: String,
-                     challengeName: String) =
-      userId?.challengeKey(languageName, groupName, challengeName)
-        ?: browserSession?.challengeKey(languageName, groupName, challengeName)
+    fun challengeAnswersKey(userId: UserId?,
+                            browserSession: BrowserSession?,
+                            languageName: String,
+                            groupName: String,
+                            challengeName: String) =
+      userId?.challengeAnswersKey(languageName, groupName, challengeName)
+        ?: browserSession?.challengeAnswerKey(languageName, groupName, challengeName)
         ?: ""
 
-    fun answerHistoryKey(userId: UserId?, browserSession: BrowserSession?, names: ChallengeNames, argument: String) =
-      userId?.answerHistoryKey(names, argument) ?: browserSession?.answerHistoryKey(names, argument) ?: ""
+    fun answerHistoryKey(userId: UserId?, browserSession: BrowserSession?, names: ChallengeNames, invocation: String) =
+      userId?.answerHistoryKey(names, invocation) ?: browserSession?.answerHistoryKey(names, invocation) ?: ""
 
     // Maps resetId to username
     fun passwordResetKey(resetId: String) = listOf(RESET_KEY, resetId).joinToString(KEY_SEP)
@@ -173,57 +173,56 @@ internal class UserId(val id: String = randomId(25)) {
                                  userResps: List<Map.Entry<String, List<String>>>,
                                  results: List<ChallengeResults>) =
       withRedisPool { redis ->
-        val principal = fetchPrincipal()
-        val browserSession by lazy { call.sessions.get<BrowserSession>() }
-        val userId = lookupPrincipal(principal, redis)
-
-        // Save if all answers were correct
-        val correctAnswersKey = correctAnswersKey(userId, browserSession, names)
-
-        if (correctAnswersKey.isNotEmpty()) {
-          val allCorrect = results.all { it.correct }
-          redis?.set(correctAnswersKey, allCorrect.toString())
-        }
-
-        val challengeKey = challengeKey(userId, browserSession, names)
-
-        if (redis != null && challengeKey.isNotEmpty()) {
+        if (redis != null) {
+          val principal = fetchPrincipal()
+          val browserSession by lazy { call.sessions.get<BrowserSession>() }
+          val userId = lookupPrincipal(principal, redis)
+          val challengeAnswerKey = challengeAnswersKey(userId, browserSession, names)
+          val correctAnswersKey = correctAnswersKey(userId, browserSession, names)
           val classCode = userId?.classCode(redis) ?: ""
-          val answerMap = mutableMapOf<String, String>()
-          userResps.indices.forEach { i ->
-            val userResp =
-              compareMap[RESP + i]?.trim() ?: throw InvalidConfigurationException("Missing user response")
-            if (userResp.isNotEmpty()) {
-              val argumentKey = funcInfo.arguments[i]
-              answerMap[argumentKey] = userResp
-            }
+
+          // Save if all answers were correct
+          if (correctAnswersKey.isNotEmpty()) {
+            redis.set(correctAnswersKey, results.all { it.correct }.toString())
           }
 
-          answerMap.forEach { (args, userResp) ->
-            redis.hset(challengeKey, args, userResp)
-            // Publish to challenge dashboard
-            if (classCode.isNotEmpty()) {
-              logger.info { "Publishing data $userResp" }
-              redis.publish(classCode, userResp)
+          if (challengeAnswerKey.isNotEmpty()) {
+            val answerMap =
+              userResps.indices
+                .map { i ->
+                  val userResp = compareMap[RESP + i]?.trim()
+                    ?: throw InvalidConfigurationException("Missing user response")
+                  if (userResp.isNotEmpty()) funcInfo.invocations[i] to userResp else null
+                }
+                .requireNoNulls()
+                .toMap()
+
+            // Save the last answers given
+            answerMap.forEach { (invocation, userResp) ->
+              redis.hset(challengeAnswerKey, invocation, userResp)
             }
           }
+          // Save the history of each answer on a per-invocation basis
+          results
+            .filter { it.answered }
+            .forEach { result ->
+              val answerHistoryKey = answerHistoryKey(userId, browserSession, names, result.invocation)
+              if (answerHistoryKey.isNotEmpty()) {
+                val history =
+                  gson.fromJson(redis[answerHistoryKey], ChallengeHistory::class.java)
+                    ?: ChallengeHistory(result.invocation)
+                history.apply { if (result.correct) markCorrect() else markIncorrect(result.userResponse) }
+                val json = gson.toJson(history)
+                redis.set(answerHistoryKey, json)
+
+                // Publish to challenge dashboard
+                if (classCode.isNotEmpty()) {
+                  logger.info { "Publishing data $json" }
+                  redis.publish(classCode, json)
+                }
+              }
+            }
         }
-
-        // Save the history of each answer on a per-arguments basis
-        results
-          .filter { it.answered }
-          .forEach { result ->
-            val answerHistoryKey = answerHistoryKey(userId, browserSession, names, result.arguments)
-            if (redis != null && answerHistoryKey.isNotEmpty()) {
-              val history =
-                gson.fromJson(redis[answerHistoryKey], ChallengeHistory::class.java)
-                  ?: ChallengeHistory(result.arguments)
-              logger.debug { "Before: $history" }
-              history.apply { if (result.correct) markCorrect() else markIncorrect(result.userResponse) }
-              logger.debug { "After: $history" }
-              redis.set(answerHistoryKey, gson.toJson(history))
-            }
-          }
       }
 
     fun isValidEmail(email: String) = lookupUserIdByEmail(email) != null

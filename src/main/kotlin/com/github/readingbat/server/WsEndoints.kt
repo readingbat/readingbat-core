@@ -18,7 +18,9 @@
 package com.github.readingbat.server
 
 import com.github.pambrose.common.redis.RedisUtils.withRedis
+import com.github.readingbat.misc.Endpoints.CLASS_PREFIX
 import io.ktor.http.cio.websocket.CloseReason
+import io.ktor.http.cio.websocket.CloseReason.Codes
 import io.ktor.http.cio.websocket.Frame
 import io.ktor.http.cio.websocket.close
 import io.ktor.http.cio.websocket.readText
@@ -35,34 +37,36 @@ import redis.clients.jedis.JedisPubSub
 internal object WsEndoints : KLogging() {
 
   fun Routing.wsEndpoints() {
-    webSocket("/class/{classCode}") {
+    webSocket("$CLASS_PREFIX/{classCode}") {
+      val classCode = call.parameters["classCode"]
       incoming
         .receiveAsFlow()
         .mapNotNull { it as? Frame.Text }
         .collect { frame ->
-          val classCode = frame.readText()
+          val inboundMsg = frame.readText()
 
-          logger.info { "Received class id: $classCode" }
-
+          /*
           repeat(10) { i ->
             delay(100)
             outgoing.send(Frame.Text("" + i))
           }
+           */
 
-          var i = 0
           withRedis { redis ->
             redis?.subscribe(object : JedisPubSub() {
               override fun onMessage(channel: String?, message: String?) {
-                runBlocking {
-                  delay(100)
-                  outgoing.send(Frame.Text("$channel $message ${i++}"))
-                }
+                if (message != null)
+                  runBlocking {
+                    delay(100)
+                    logger.debug { "Sending data $message to $channel" }
+                    outgoing.send(Frame.Text(message))
+                  }
               }
             }, classCode)
           }
 
-          if (classCode.equals("bye", ignoreCase = true)) {
-            close(CloseReason(CloseReason.Codes.NORMAL, "Client said BYE"))
+          if (inboundMsg.equals("bye", ignoreCase = true)) {
+            close(CloseReason(Codes.NORMAL, "Client said BYE"))
           }
         }
     }
