@@ -27,18 +27,18 @@ import com.github.readingbat.misc.Constants.RESET_ID
 import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.Constants.ROOT
 import com.github.readingbat.misc.Constants.STATIC_ROOT
-import com.github.readingbat.misc.Endpoints.ABOUT
-import com.github.readingbat.misc.Endpoints.ADMIN_ACTIONS
+import com.github.readingbat.misc.Endpoints.ABOUT_ENDPOINT
+import com.github.readingbat.misc.Endpoints.ADMIN_ENDPOINT
 import com.github.readingbat.misc.Endpoints.CHECK_ANSWERS_ROOT
-import com.github.readingbat.misc.Endpoints.CLASSROOM
-import com.github.readingbat.misc.Endpoints.CREATE_ACCOUNT
-import com.github.readingbat.misc.Endpoints.CREATE_CLASS
-import com.github.readingbat.misc.Endpoints.CSS_NAME
+import com.github.readingbat.misc.Endpoints.CLASSROOM_ENDPOINT
+import com.github.readingbat.misc.Endpoints.CREATE_ACCOUNT_ENDPOINT
+import com.github.readingbat.misc.Endpoints.CREATE_CLASS_ENDPOINT
+import com.github.readingbat.misc.Endpoints.CSS_ENDPOINT
 import com.github.readingbat.misc.Endpoints.FAV_ICON
-import com.github.readingbat.misc.Endpoints.PASSWORD_CHANGE
-import com.github.readingbat.misc.Endpoints.PASSWORD_RESET
-import com.github.readingbat.misc.Endpoints.PRIVACY
-import com.github.readingbat.misc.Endpoints.USER_PREFS
+import com.github.readingbat.misc.Endpoints.PASSWORD_CHANGE_ENDPOINT
+import com.github.readingbat.misc.Endpoints.PASSWORD_RESET_ENDPOINT
+import com.github.readingbat.misc.Endpoints.PRIVACY_ENDPOINT
+import com.github.readingbat.misc.Endpoints.USER_PREFS_ENDPOINT
 import com.github.readingbat.misc.UserPrincipal
 import com.github.readingbat.misc.cssContent
 import com.github.readingbat.pages.AboutPage.aboutPage
@@ -75,32 +75,32 @@ internal fun Routing.userRoutes(content: ReadingBatContent) {
 
   post(CHECK_ANSWERS_ROOT) { checkAnswers(content) }
 
-  get(CREATE_ACCOUNT) { respondWith { createAccountPage(content) } }
+  get(CREATE_ACCOUNT_ENDPOINT) { respondWith { createAccountPage(content) } }
 
-  post(CREATE_ACCOUNT) { createAccount(content) }
+  post(CREATE_ACCOUNT_ENDPOINT) { createAccount(content) }
 
-  get(USER_PREFS) { respondWith { userPrefsPage(content, "", false) } }
+  get(USER_PREFS_ENDPOINT) { respondWith { userPrefsPage(content, "", false) } }
 
-  post(USER_PREFS) { respondWith { userPrefs(content) } }
+  post(USER_PREFS_ENDPOINT) { respondWith { userPrefs(content) } }
 
-  get(PRIVACY) { respondWith { privacyPage(content) } }
+  get(PRIVACY_ENDPOINT) { respondWith { privacyPage(content) } }
 
-  get(ABOUT) { respondWith { aboutPage(content) } }
+  get(ABOUT_ENDPOINT) { respondWith { aboutPage(content) } }
 
-  get(CLASSROOM) { respondWith { classroomPage(content) } }
+  get(CLASSROOM_ENDPOINT) { respondWith { classroomPage(content) } }
 
-  get(CREATE_CLASS) { respondWith { createClass(content) } }
+  get(CREATE_CLASS_ENDPOINT) { respondWith { createClass(content) } }
 
-  get(ADMIN_ACTIONS) { respondWith { adminDataPage(content) } }
+  get(ADMIN_ENDPOINT) { respondWith { adminDataPage(content) } }
 
-  post(ADMIN_ACTIONS) { respondWith { adminActions(content) } }
+  post(ADMIN_ENDPOINT) { respondWith { adminActions(content) } }
 
   // RESET_ID is passed here when user clicks on email URL
-  get(PASSWORD_RESET) { respondWith { passwordResetPage(content, queryParam(RESET_ID) ?: "", "") } }
+  get(PASSWORD_RESET_ENDPOINT) { respondWith { passwordResetPage(content, queryParam(RESET_ID) ?: "", "") } }
 
-  post(PASSWORD_RESET) { sendPasswordReset(content) }
+  post(PASSWORD_RESET_ENDPOINT) { sendPasswordReset(content) }
 
-  post(PASSWORD_CHANGE) { changePassword(content) }
+  post(PASSWORD_CHANGE_ENDPOINT) { changePassword(content) }
 
   get(LOGOUT) {
     // Purge UserPrincipal from cookie data
@@ -108,7 +108,7 @@ internal fun Routing.userRoutes(content: ReadingBatContent) {
     redirectTo { queryParam(RETURN_PATH) ?: "/" }
   }
 
-  get(CSS_NAME) { respondWith(CSS) { cssContent } }
+  get(CSS_ENDPOINT) { respondWith(CSS) { cssContent } }
 
   get(FAV_ICON) { redirectTo { "$STATIC_ROOT/$ICONS/favicon.ico" } }
 

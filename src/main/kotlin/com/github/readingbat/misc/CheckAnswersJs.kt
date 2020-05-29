@@ -90,10 +90,7 @@ internal object CheckAnswersJs {
         
         document.getElementById('$SPINNER_ID').innerHTML = "";
         document.getElementById('$STATUS_ID').innerHTML = "";
-        if (success) 
-          document.getElementById('$SUCCESS_ID').innerHTML = "Success! Congratulations!";
-        else 
-          document.getElementById('$SUCCESS_ID').innerHTML = "";
+        document.getElementById('$SUCCESS_ID').innerHTML = success ? "Success! Congratulations!" : "";
       }
     }
   """

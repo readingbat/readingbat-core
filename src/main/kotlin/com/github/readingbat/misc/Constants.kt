@@ -35,21 +35,21 @@ internal object Constants {
   const val INVALID_RESET_ID = "Invalid reset_id"
   const val RESP = "response"
   const val CORRECT_COLOR = "#4EAA3A"
-  const val WRONG_COLOR = "#FFFFFF"
+  const val WRONG_COLOR = "#F1F1F1"
 }
 
 internal object Endpoints {
-  const val USER_PREFS = "/user-prefs"
-  const val ADMIN_ACTIONS = "/admin"
-  const val ABOUT = "/about.html"
-  const val CREATE_CLASS = "/create-class"
-  const val CLASSROOM = "/classroom.html"
-  const val CREATE_ACCOUNT = "/create-account"
-  const val PRIVACY = "/privacy.html"
-  const val PASSWORD_CHANGE = "/password-change"
-  const val PASSWORD_RESET = "/password-reset"
+  const val USER_PREFS_ENDPOINT = "/user-prefs"
+  const val ADMIN_ENDPOINT = "/admin"
+  const val ABOUT_ENDPOINT = "/about.html"
+  const val CREATE_CLASS_ENDPOINT = "/create-class"
+  const val CLASSROOM_ENDPOINT = "/classroom.html"
+  const val CREATE_ACCOUNT_ENDPOINT = "/create-account"
+  const val PRIVACY_ENDPOINT = "/privacy.html"
+  const val PASSWORD_CHANGE_ENDPOINT = "/password-change"
+  const val PASSWORD_RESET_ENDPOINT = "/password-reset"
+  const val CSS_ENDPOINT = "/styles.css"
   const val CHECK_ANSWERS_ROOT = "/check-answers"
-  const val CSS_NAME = "/styles.css"
   const val FAV_ICON = "/favicon.ico"
   const val CLASS_PREFIX = "/class"
 }
@@ -72,7 +72,8 @@ internal object FormFields {
   const val USER_PREFS_ACTION = "pref_action"
   const val ADMIN_ACTION = "admin_action"
   const val UPDATE_PASSWORD = "Update Password"
-  const val JOIN_CLASS = "Join"
+  const val JOIN_CLASS = "Join Class"
+  const val CREATE_CLASS = "Create Class"
   const val DELETE_ACCOUNT = "Delete Account"
   const val DELETE_ALL_DATA = "Delete All Data"
 }
@@ -86,9 +87,4 @@ internal object AuthName {
 internal object AuthRoutes {
   const val LOGOUT = "/logout"
   const val COOKIES = "/cookies"
-}
-
-internal object EnvVars {
-  const val REDIRECT_HOST_NAME = "REDIRECT_HOST_NAME"
-  const val PRODUCTION = "PRODUCTION"
 }

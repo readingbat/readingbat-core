@@ -170,7 +170,7 @@ internal val cssContent by lazy {
       }
       */
       rule(".$DASHBOARD") {
-        border = "1px solid black;"
+        border = "1px solid #DDDDDD;"
         borderCollapse = BorderCollapse.collapse
       }
       rule(".$CHECK_ANSWERS") {

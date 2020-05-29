@@ -20,14 +20,13 @@ package com.github.readingbat.server
 import com.github.pambrose.common.util.simpleClassName
 import com.github.readingbat.config.HerokuHttpsRedirect
 import com.github.readingbat.dsl.InvalidPathException
+import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.Constants.STATIC_ROOT
-import com.github.readingbat.misc.Endpoints.CSS_NAME
+import com.github.readingbat.misc.Endpoints.CSS_ENDPOINT
 import com.github.readingbat.misc.Endpoints.FAV_ICON
 import com.github.readingbat.server.ConfigureCookies.configureAuthCookie
 import com.github.readingbat.server.ConfigureCookies.configureSessionIdCookie
 import com.github.readingbat.server.ConfigureFormAuth.configureFormAuth
-import com.github.readingbat.server.ReadingBatServer.hostname
-import com.github.readingbat.server.ReadingBatServer.production
 import io.ktor.application.Application
 import io.ktor.application.call
 import io.ktor.application.install
@@ -49,7 +48,7 @@ import kotlin.text.Charsets.UTF_8
 
 internal object Installs : KLogging() {
 
-  fun Application.installs() {
+  fun Application.installs(content: ReadingBatContent) {
 
     install(Locations)
 
@@ -65,13 +64,13 @@ internal object Installs : KLogging() {
 
     install(WebSockets)
 
-    if (production) {
+    if (content.production) {
       install(HerokuHttpsRedirect) {
-        host = hostname
+        host = content.siteUrlPrefix.substringAfter("://")
         permanentRedirect = false
 
         excludePrefix("$STATIC_ROOT/")
-        excludeSuffix(CSS_NAME)
+        excludeSuffix(CSS_ENDPOINT)
         excludeSuffix(FAV_ICON)
       }
     }
@@ -126,7 +125,7 @@ internal object Installs : KLogging() {
       }
     }
 
-    if (!production) {
+    if (!content.production) {
       install(ShutDownUrl.ApplicationCallFeature) {
         // The URL that will be intercepted (you can also use the application.conf's ktor.deployment.shutdown.url key)
         shutDownUrl = "/ktor/application/shutdown"

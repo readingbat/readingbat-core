@@ -23,8 +23,8 @@ import com.github.readingbat.misc.Constants.DBMS_DOWN
 import com.github.readingbat.misc.Constants.INVALID_RESET_ID
 import com.github.readingbat.misc.Constants.RESET_ID
 import com.github.readingbat.misc.Constants.RETURN_PATH
-import com.github.readingbat.misc.Endpoints.PASSWORD_CHANGE
-import com.github.readingbat.misc.Endpoints.PASSWORD_RESET
+import com.github.readingbat.misc.Endpoints.PASSWORD_CHANGE_ENDPOINT
+import com.github.readingbat.misc.Endpoints.PASSWORD_RESET_ENDPOINT
 import com.github.readingbat.misc.FormFields.CONFIRM_PASSWORD
 import com.github.readingbat.misc.FormFields.EMAIL
 import com.github.readingbat.misc.FormFields.NEW_PASSWORD
@@ -88,7 +88,7 @@ internal object PasswordResetPage : KLogging() {
             style = "margin-left: 1em;"
 
             form {
-              action = "$PASSWORD_RESET?$RETURN_PATH=$returnPath"
+              action = "$PASSWORD_RESET_ENDPOINT?$RETURN_PATH=$returnPath"
               method = FormMethod.post
               table {
                 tr {
@@ -124,7 +124,7 @@ internal object PasswordResetPage : KLogging() {
               """.trimIndent()
             }
 
-            this@body.privacyStatement(PASSWORD_RESET, returnPath)
+            this@body.privacyStatement(PASSWORD_RESET_ENDPOINT, returnPath)
           }
 
           backLink(returnPath)
@@ -153,7 +153,7 @@ internal object PasswordResetPage : KLogging() {
           p { +"Password must contain at least 6 characters" }
           form {
             name = formName
-            action = PASSWORD_CHANGE
+            action = PASSWORD_CHANGE_ENDPOINT
             method = FormMethod.post
             table {
               tr {

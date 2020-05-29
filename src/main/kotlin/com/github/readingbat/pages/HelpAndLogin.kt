@@ -19,10 +19,10 @@ package com.github.readingbat.pages
 
 import com.github.readingbat.misc.AuthRoutes.LOGOUT
 import com.github.readingbat.misc.Constants.RETURN_PATH
-import com.github.readingbat.misc.Endpoints.ABOUT
-import com.github.readingbat.misc.Endpoints.CREATE_ACCOUNT
-import com.github.readingbat.misc.Endpoints.PASSWORD_RESET
-import com.github.readingbat.misc.Endpoints.USER_PREFS
+import com.github.readingbat.misc.Endpoints.ABOUT_ENDPOINT
+import com.github.readingbat.misc.Endpoints.CREATE_ACCOUNT_ENDPOINT
+import com.github.readingbat.misc.Endpoints.PASSWORD_RESET_ENDPOINT
+import com.github.readingbat.misc.Endpoints.USER_PREFS_ENDPOINT
 import com.github.readingbat.misc.FormFields.EMAIL
 import com.github.readingbat.misc.FormFields.PASSWORD
 import com.github.readingbat.misc.UserPrincipal
@@ -47,7 +47,7 @@ internal object HelpAndLogin {
             //valign = "top"
             style = "text-align:right"
             colSpan = "1"
-            a { href = "$ABOUT?$RETURN_PATH=$loginPath"; +"about" }
+            a { href = "$ABOUT_ENDPOINT?$RETURN_PATH=$loginPath"; +"about" }
             +" | "
             //a { href = "/help.html"; +"help" }
             //+" | "
@@ -57,7 +57,7 @@ internal object HelpAndLogin {
               //+" | "
               //a { href = "/report"; +"report" }
               //+" | "
-              a { href = "$USER_PREFS?$RETURN_PATH=$loginPath"; +"prefs" }
+              a { href = "$USER_PREFS_ENDPOINT?$RETURN_PATH=$loginPath"; +"prefs" }
             }
           }
         }
@@ -111,9 +111,9 @@ internal object HelpAndLogin {
     tr {
       td {
         colSpan = "2"
-        a { href = "$PASSWORD_RESET?$RETURN_PATH=$loginPath"; +"forgot password" }
+        a { href = "$PASSWORD_RESET_ENDPOINT?$RETURN_PATH=$loginPath"; +"forgot password" }
         +" | "
-        a { href = "$CREATE_ACCOUNT?$RETURN_PATH=$loginPath"; +"create account" }
+        a { href = "$CREATE_ACCOUNT_ENDPOINT?$RETURN_PATH=$loginPath"; +"create account" }
       }
     }
   }

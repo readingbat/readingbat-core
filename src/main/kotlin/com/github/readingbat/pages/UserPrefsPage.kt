@@ -19,10 +19,11 @@ package com.github.readingbat.pages
 
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.Constants.RETURN_PATH
-import com.github.readingbat.misc.Endpoints.CREATE_ACCOUNT
-import com.github.readingbat.misc.Endpoints.USER_PREFS
+import com.github.readingbat.misc.Endpoints.CREATE_ACCOUNT_ENDPOINT
+import com.github.readingbat.misc.Endpoints.USER_PREFS_ENDPOINT
 import com.github.readingbat.misc.FormFields.CLASS_CODE
 import com.github.readingbat.misc.FormFields.CONFIRM_PASSWORD
+import com.github.readingbat.misc.FormFields.CREATE_CLASS
 import com.github.readingbat.misc.FormFields.CURR_PASSWORD
 import com.github.readingbat.misc.FormFields.DELETE_ACCOUNT
 import com.github.readingbat.misc.FormFields.JOIN_CLASS
@@ -52,6 +53,7 @@ internal object UserPrefsPage : KLogging() {
   const val formName = "pform"
   const val passwordButton = "UpdatePasswordButton"
   const val joinClassButton = "JoinClassButton"
+  const val createClassButton = "CreateClassButton"
 
   fun PipelineCall.userPrefsPage(content: ReadingBatContent,
                                  msg: String,
@@ -70,7 +72,7 @@ internal object UserPrefsPage : KLogging() {
       .html {
         head {
           headDefault(content)
-          clickButtonScript(passwordButton, joinClassButton)
+          clickButtonScript(passwordButton, joinClassButton, createClassButton)
         }
 
         body {
@@ -85,10 +87,11 @@ internal object UserPrefsPage : KLogging() {
 
           changePassword()
           joinClass(defaultClassCode)
+          createClass()
           //teacherShare()
           //memo()
           deleteAccount(principal)
-          privacyStatement(USER_PREFS, returnPath)
+          privacyStatement(USER_PREFS_ENDPOINT, returnPath)
           backLink(returnPath)
         }
       }
@@ -98,7 +101,7 @@ internal object UserPrefsPage : KLogging() {
     p { +"Password must contain at least 6 characters" }
     form {
       name = formName
-      action = USER_PREFS
+      action = USER_PREFS_ENDPOINT
       method = FormMethod.post
       table {
         tr {
@@ -140,7 +143,7 @@ internal object UserPrefsPage : KLogging() {
     h3 { +"Join Class" }
     p { +"Enter the class code your teacher gave you. This will make your progress visible to your teacher." }
     form {
-      action = USER_PREFS
+      action = USER_PREFS_ENDPOINT
       method = FormMethod.post
       table {
         tr {
@@ -163,11 +166,42 @@ internal object UserPrefsPage : KLogging() {
     }
   }
 
+  private fun BODY.createClass() {
+    h3 { +"Create Class" }
+    p { +"Enter the class code your teacher gave you. This will make your progress visible to your teacher." }
+    form {
+      action = USER_PREFS_ENDPOINT
+      method = FormMethod.post
+      table {
+        tr {
+          td { style = labelWidth; label { +"Class Description" } }
+          td {
+            input {
+              type = InputType.text
+              size = "42"
+              name = CLASS_CODE
+              value = ""
+              onKeyPress = "click$createClassButton(event);"
+            }
+          }
+        }
+        tr {
+          td {}
+          td {
+            input {
+              type = InputType.submit; id = createClassButton; name = USER_PREFS_ACTION; value = CREATE_CLASS
+            }
+          }
+        }
+      }
+    }
+  }
+
   private fun BODY.teacherShare() {
     h3 { +"Teacher Share" }
     p { +"Enter the email address of the teacher account. This will make your done page and solution code visible to that account." }
     form {
-      action = USER_PREFS
+      action = USER_PREFS_ENDPOINT
       method = FormMethod.post
       table {
         tr {
@@ -186,7 +220,7 @@ internal object UserPrefsPage : KLogging() {
     h3 { +"Memo" }
     p { +"Generally this is left blank. A teacher may ask you to fill this in." }
     form {
-      action = USER_PREFS
+      action = USER_PREFS_ENDPOINT
       method = FormMethod.post
       input { type = InputType.hidden; name = "date"; value = "963892736" }
       table {
@@ -206,7 +240,7 @@ internal object UserPrefsPage : KLogging() {
     h3 { +"Delete Account" }
     p { +"Permanently delete account [${principal?.userId}] -- cannot be undone!" }
     form {
-      action = USER_PREFS
+      action = USER_PREFS_ENDPOINT
       method = FormMethod.post
       onSubmit = "return confirm('Are you sure you want to permanently delete the account for ${principal?.userId} ?');"
       input { type = InputType.submit; name = USER_PREFS_ACTION; value = DELETE_ACCOUNT }
@@ -231,10 +265,10 @@ internal object UserPrefsPage : KLogging() {
 
           p {
             +"Please"
-            a { href = "$CREATE_ACCOUNT?$RETURN_PATH=$returnPath"; +" create an account " }
+            a { href = "$CREATE_ACCOUNT_ENDPOINT?$RETURN_PATH=$returnPath"; +" create an account " }
             +"or log in to an existing account to edit preferences."
           }
-          privacyStatement(USER_PREFS, returnPath)
+          privacyStatement(USER_PREFS_ENDPOINT, returnPath)
 
           backLink(returnPath)
         }

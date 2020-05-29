@@ -20,7 +20,7 @@ package com.github.readingbat.pages
 import com.github.pambrose.common.redis.RedisUtils.withRedisPool
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.Constants.DBMS_DOWN
-import com.github.readingbat.misc.Endpoints.ADMIN_ACTIONS
+import com.github.readingbat.misc.Endpoints.ADMIN_ENDPOINT
 import com.github.readingbat.misc.FormFields.ADMIN_ACTION
 import com.github.readingbat.misc.FormFields.DELETE_ALL_DATA
 import com.github.readingbat.pages.PageCommon.backLink
@@ -69,7 +69,7 @@ internal object AdminPage {
       style = "margin-left: 1em;"
       p { +"Permanently delete all data -- cannot be undone!" }
       form {
-        action = ADMIN_ACTIONS
+        action = ADMIN_ENDPOINT
         method = FormMethod.post
         onSubmit = "return confirm('Are you sure you want to permanently delete all data ?');"
         input { type = InputType.submit; name = ADMIN_ACTION; value = DELETE_ALL_DATA }

@@ -32,7 +32,7 @@ import com.github.readingbat.misc.Constants.MSG
 import com.github.readingbat.misc.Constants.RESET_ID
 import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.Emailer.sendEmail
-import com.github.readingbat.misc.Endpoints.PASSWORD_RESET
+import com.github.readingbat.misc.Endpoints.PASSWORD_RESET_ENDPOINT
 import com.github.readingbat.misc.FormFields.CONFIRM_PASSWORD
 import com.github.readingbat.misc.FormFields.EMAIL
 import com.github.readingbat.misc.FormFields.NEW_PASSWORD
@@ -101,7 +101,7 @@ internal object PasswordReset : KLogging() {
                       msg =
                       """
                       |This is a password reset message for the http://readingbat.com account for '$email'
-                      |Go to this URL to set a new password: ${content.siteUrlPrefix}$PASSWORD_RESET?$RESET_ID=$resetId 
+                      |Go to this URL to set a new password: ${content.siteUrlPrefix}$PASSWORD_RESET_ENDPOINT?$RESET_ID=$resetId 
                       |If you did not request to reset your password, please ignore this message.
                     """.trimMargin())
           } catch (e: IOException) {

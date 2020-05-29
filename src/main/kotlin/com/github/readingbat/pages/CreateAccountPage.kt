@@ -19,7 +19,7 @@ package com.github.readingbat.pages
 
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.Constants.RETURN_PATH
-import com.github.readingbat.misc.Endpoints.CREATE_ACCOUNT
+import com.github.readingbat.misc.Endpoints.CREATE_ACCOUNT_ENDPOINT
 import com.github.readingbat.misc.FormFields.CONFIRM_PASSWORD
 import com.github.readingbat.misc.FormFields.EMAIL
 import com.github.readingbat.misc.FormFields.NAME
@@ -76,7 +76,7 @@ internal object CreateAccountPage {
 
             form {
               name = formName
-              action = CREATE_ACCOUNT
+              action = CREATE_ACCOUNT_ENDPOINT
               method = FormMethod.post
               table {
                 tr {
@@ -137,7 +137,7 @@ internal object CreateAccountPage {
               }
             }
 
-            this@body.privacyStatement(CREATE_ACCOUNT, returnPath)
+            this@body.privacyStatement(CREATE_ACCOUNT_ENDPOINT, returnPath)
           }
 
           backLink(returnPath)

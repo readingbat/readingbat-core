@@ -64,7 +64,6 @@ import com.github.readingbat.pages.PageCommon.headDefault
 import com.github.readingbat.pages.PageCommon.rawHtml
 import com.github.readingbat.posts.ChallengeHistory
 import com.github.readingbat.server.PipelineCall
-import com.github.readingbat.server.ReadingBatServer.production
 import com.github.readingbat.server.ServerUtils.fetchPrincipal
 import com.github.readingbat.server.ServerUtils.queryParam
 import io.ktor.application.call
@@ -114,7 +113,7 @@ internal object ChallengePage : KLogging() {
           if (classCode.isEmpty())
             this@body.displayQuestions(principal, browserSession, challenge, funcInfo)
           else {
-            this@body.displayProgress(principal, challenge, funcInfo, classCode)
+            this@body.displayProgress(content.maxHistoryLength, principal, challenge, funcInfo, classCode)
             p { id = wsid }
           }
 
@@ -123,7 +122,7 @@ internal object ChallengePage : KLogging() {
           script { src = "$STATIC_ROOT/$languageName-prism.js" }
 
           if (classCode.isNotEmpty())
-            addWebSockets(classCode)
+            addWebSockets(content, classCode)
         }
       }
 
@@ -186,34 +185,31 @@ internal object ChallengePage : KLogging() {
     }
 
 
-  private fun BODY.addWebSockets(classCode: String) {
+  private fun BODY.addWebSockets(content: ReadingBatContent, classCode: String) {
     script {
       rawHtml(
         """
-          var wshost = location.origin.replace(${if (production) "/^https:/, 'wss:'" else "/^http:/, 'ws:'"})
+          var wshost = location.origin.replace(${if (content.production) "/^https:/, 'wss:'" else "/^http:/, 'ws:'"})
           var wsurl = wshost + '$CLASS_PREFIX/$classCode'
+          
           var ws = new WebSocket(wsurl);
+          
           ws.onopen = function (event) {
             ws.send("$classCode"); 
           };
+          
           ws.onmessage = function (event) {
             console.log(event.data);
             var obj = JSON.parse(event.data)
             
             var name = document.getElementById(obj.userId + '-name');
-            if (obj.complete)
-              name.style.backgroundColor = '$CORRECT_COLOR';
-            else
-              name.style.backgroundColor = '$WRONG_COLOR';
+            name.style.backgroundColor = obj.complete ? '$CORRECT_COLOR' : '$WRONG_COLOR';
 
             document.getElementById(obj.userId + '-numCorrect').innerHTML = obj.numCorrect;
 
             var prefix = obj.userId + '-' + obj.history.invocation;
             var answers = document.getElementById(prefix + '-answerstd')
-            if (obj.history.correct)
-              answers.style.backgroundColor = '$CORRECT_COLOR';
-            else
-              answers.style.backgroundColor = '$WRONG_COLOR';
+            answers.style.backgroundColor = obj.history.correct ? '$CORRECT_COLOR' : '$WRONG_COLOR';
 
             document.getElementById(prefix + '-answers').innerHTML = obj.history.answers;
           };
@@ -221,7 +217,8 @@ internal object ChallengePage : KLogging() {
     }
   }
 
-  private fun BODY.displayProgress(principal: UserPrincipal?,
+  private fun BODY.displayProgress(maxHistoryLength: Int,
+                                   principal: UserPrincipal?,
                                    challenge: Challenge,
                                    funcInfo: FunctionInfo,
                                    classCode: String) =
@@ -242,11 +239,12 @@ internal object ChallengePage : KLogging() {
           table {
             style = "width:100%; border-spacing: 5px 10px;"
 
+            val headerColor = "#419DC1"
             tr {
-              th { style = "text-align:center; color: #551A8B"; +"Student" }
+              th { style = "text-align:center; color: $headerColor"; +"Student" }
               funcInfo.invocations.indices.forEach { i ->
                 val invocation = funcInfo.invocations[i]
-                th { style = "text-align:center; color: #551A8B"; +invocation.substring(invocation.indexOf("(")) }
+                th { style = "text-align:center; color: $headerColor"; +invocation.substring(invocation.indexOf("(")) }
               }
             }
 
@@ -283,7 +281,7 @@ internal object ChallengePage : KLogging() {
                     style = "background-color:${if (history.correct) CORRECT_COLOR else WRONG_COLOR};"
                     span {
                       id = "${userId.id}-$invocation-answers"
-                      history.answers.asReversed().forEach { +it; br }
+                      history.answers.asReversed().take(maxHistoryLength).forEach { +it; br }
                     }
                   }
                 }

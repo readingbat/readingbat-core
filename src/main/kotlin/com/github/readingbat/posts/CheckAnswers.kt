@@ -49,24 +49,23 @@ internal data class ChallengeResults(val invocation: String,
                                      val answered: Boolean,
                                      val correct: Boolean)
 
-internal class DashboardInfo(val userId: String,
+internal class DashboardInfo(maxHistoryLength: Int,
+                             val userId: String,
                              val complete: Boolean,
                              val numCorrect: Int,
                              origHistory: ChallengeHistory) {
   val history = DashboardHistory(origHistory.invocation,
                                  origHistory.correct,
-                                 //origHistory.attempts,
-                                 origHistory.answers.asReversed().joinToString("<br>"))
+                                 origHistory.answers.asReversed().take(maxHistoryLength).joinToString("<br>"))
 }
 
 internal class DashboardHistory(val invocation: String,
                                 val correct: Boolean = false,
-  //val attempts: Int = 0,
                                 val answers: String)
 
 internal data class ChallengeHistory(var invocation: String,
                                      var correct: Boolean = false,
-                                     var attempts: Int = 0,
+                                     var incorrectAttempts: Int = 0,
                                      val answers: MutableList<String> = mutableListOf()) {
   fun markCorrect() {
     correct = true
@@ -75,7 +74,7 @@ internal data class ChallengeHistory(var invocation: String,
   fun markIncorrect(userResp: String) {
     correct = false
     if (userResp.isNotEmpty() && userResp !in answers) {
-      attempts++
+      incorrectAttempts++
       answers += userResp
     }
   }
@@ -159,7 +158,7 @@ internal object CheckAnswers : KLogging() {
       }
 
     // Save whether all the answers for the challenge were correct
-    saveAnswers(names, compareMap, funcInfo, userResps, results)
+    saveAnswers(content, names, compareMap, funcInfo, userResps, results)
 
     /*
     results

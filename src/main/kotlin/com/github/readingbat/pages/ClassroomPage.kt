@@ -27,7 +27,6 @@ import com.github.readingbat.pages.PageCommon.bodyTitle
 import com.github.readingbat.pages.PageCommon.headDefault
 import com.github.readingbat.pages.PageCommon.rawHtml
 import com.github.readingbat.server.PipelineCall
-import com.github.readingbat.server.ReadingBatServer.production
 import com.github.readingbat.server.ServerUtils.fetchPrincipal
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
@@ -51,7 +50,7 @@ internal object ClassroomPage {
             script {
               rawHtml(
                 """
-                var HOST = location.href.replace(${if (production) "/^https:/, 'wss:'" else "/^http:/, 'ws:'"})
+                var HOST = location.href.replace(${if (content.production) "/^https:/, 'wss:'" else "/^http:/, 'ws:'"})
                 var ws = new WebSocket(HOST);
                 var el;
                 ws.onopen = function (event) {

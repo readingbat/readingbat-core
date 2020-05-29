@@ -19,8 +19,6 @@ package com.github.readingbat.server
 
 import com.github.pambrose.common.util.FileSource
 import com.github.readingbat.dsl.readDsl
-import com.github.readingbat.misc.EnvVars.PRODUCTION
-import com.github.readingbat.misc.EnvVars.REDIRECT_HOST_NAME
 import com.github.readingbat.server.AdminRoutes.adminRoutes
 import com.github.readingbat.server.Installs.installs
 import com.github.readingbat.server.Locations.locations
@@ -33,9 +31,6 @@ import io.ktor.server.engine.commandLineEnvironment
 import io.ktor.server.engine.embeddedServer
 
 object ReadingBatServer {
-  internal val hostname: String by lazy { System.getenv(REDIRECT_HOST_NAME) ?: "www.readingbat.com" }
-  internal val production: Boolean by lazy { System.getenv(PRODUCTION)?.toBoolean() ?: false }
-
   fun start(args: Array<String>) {
     val environment = commandLineEnvironment(args)
     embeddedServer(CIO, environment).start(wait = true)
@@ -45,20 +40,25 @@ object ReadingBatServer {
 internal fun Application.module() {
   val fileName = property("readingbat.content.fileName", "src/Content.kt")
   val variableName = property("readingbat.content.variableName", "content")
-  val readingBatContent =
+  val content =
     readDsl(FileSource(fileName = fileName), variableName = variableName)
       .apply {
-        siteUrlPrefix = property("readingbat.site.urlPrefix", default = "https://readingbat.com")
-        googleAnalyticsId = property("readingbat.site.googleAnalyticsId")
+        val readingBat = "readingbat"
+        val site = "site"
+        val challenges = "challenges"
+        siteUrlPrefix = property("$readingBat.$site.urlPrefix", default = "https://readingbat.com")
+        googleAnalyticsId = property("$readingBat.$site.googleAnalyticsId")
+        production = property("$readingBat.$site.production", default = "false").toBoolean()
+        maxHistoryLength = property("$readingBat.$challenges.maxHistoryLength", default = "10").toInt()
       }
 
-  installs()
+  installs(content)
   intercepts()
 
   routing {
     adminRoutes()
-    locations(readingBatContent)
-    userRoutes(readingBatContent)
+    locations(content)
+    userRoutes(content)
     wsEndpoints()
   }
 }

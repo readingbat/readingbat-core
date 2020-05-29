@@ -29,13 +29,12 @@ import com.github.readingbat.misc.Constants.ICONS
 import com.github.readingbat.misc.Constants.READING_BAT
 import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.Constants.STATIC_ROOT
-import com.github.readingbat.misc.Endpoints.CSS_NAME
-import com.github.readingbat.misc.Endpoints.PRIVACY
+import com.github.readingbat.misc.Endpoints.CSS_ENDPOINT
+import com.github.readingbat.misc.Endpoints.PRIVACY_ENDPOINT
 import com.github.readingbat.misc.PageUtils.pathOf
 import com.github.readingbat.misc.UserPrincipal
 import com.github.readingbat.pages.HelpAndLogin.helpAndLogin
 import com.github.readingbat.server.PipelineCall
-import com.github.readingbat.server.ReadingBatServer.production
 import io.ktor.application.call
 import io.ktor.http.ContentType.Text.CSS
 import io.ktor.http.formUrlEncode
@@ -45,7 +44,7 @@ import kotlinx.html.Entities.nbsp
 internal object PageCommon {
 
   fun HEAD.headDefault(content: ReadingBatContent) {
-    link { rel = "stylesheet"; href = CSS_NAME; type = CSS.toString() }
+    link { rel = "stylesheet"; href = CSS_ENDPOINT; type = CSS.toString() }
 
     // From: https://favicon.io/emoji-favicons/glasses/
     val root = "$STATIC_ROOT/$ICONS"
@@ -56,7 +55,7 @@ internal object PageCommon {
 
     title(READING_BAT)
 
-    if (production && content.googleAnalyticsId.isNotBlank()) {
+    if (content.production && content.googleAnalyticsId.isNotBlank()) {
       script { async = true; src = "https://www.googletagmanager.com/gtag/js?id=${content.googleAnalyticsId}" }
       script {
         rawHtml("""
@@ -155,7 +154,7 @@ internal object PageCommon {
     a { href = url; if (newWindow) target = "_blank"; +text }
 
   fun BODY.privacyStatement(backPath: String, returnPath: String) {
-    p { a { href = "$PRIVACY?$BACK_PATH=$backPath&$RETURN_PATH=$returnPath"; +"privacy statement" } }
+    p { a { href = "$PRIVACY_ENDPOINT?$BACK_PATH=$backPath&$RETURN_PATH=$returnPath"; +"privacy statement" } }
   }
 
   fun BODY.backLinkWithIndent(url: String, marginLeft: String = "1em") {

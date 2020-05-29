@@ -23,6 +23,7 @@ import com.github.pambrose.common.util.randomId
 import com.github.pambrose.common.util.sha256
 import com.github.readingbat.dsl.FunctionInfo
 import com.github.readingbat.dsl.InvalidConfigurationException
+import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.Constants.RESP
 import com.github.readingbat.misc.RedisConstants.ANSWER_HISTORY_KEY
 import com.github.readingbat.misc.RedisConstants.AUTH_KEY
@@ -168,7 +169,8 @@ internal class UserId(val id: String = randomId(25)) {
       }
     }
 
-    fun PipelineCall.saveAnswers(names: ChallengeNames,
+    fun PipelineCall.saveAnswers(content: ReadingBatContent,
+                                 names: ChallengeNames,
                                  compareMap: Map<String, String>,
                                  funcInfo: FunctionInfo,
                                  userResps: List<Map.Entry<String, List<String>>>,
@@ -220,7 +222,8 @@ internal class UserId(val id: String = randomId(25)) {
 
                 // Publish to challenge dashboard
                 if (classCode.isNotEmpty() && userId != null) {
-                  val browserInfo = DashboardInfo(userId.id, complete, numCorrect, history)
+                  val browserInfo =
+                    DashboardInfo(content.maxHistoryLength, userId.id, complete, numCorrect, history)
                   logger.info { "Publishing data $json" }
                   redis.publish(classCode, gson.toJson(browserInfo))
                 }
