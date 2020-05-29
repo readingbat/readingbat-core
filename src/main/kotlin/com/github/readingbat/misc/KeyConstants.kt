@@ -20,7 +20,7 @@ package com.github.readingbat.misc
 import com.github.readingbat.misc.Constants.DBMS_DOWN
 import redis.clients.jedis.exceptions.JedisException
 
-internal object RedisConstants {
+internal object KeyConstants {
   const val USER_EMAIL_KEY = "userId"
   const val USER_INFO_KEY = "user-info"
   const val CORRECT_ANSWERS_KEY = "correct-answers"
@@ -36,6 +36,7 @@ internal object RedisConstants {
   const val DIGEST_FIELD = "digest"
   const val NAME_FIELD = "name"
   const val CLASS_CODE_FIELD = "class-code"
+  const val CLASSES_FIELD = "classes"
 
   const val KEY_SEP = "|"
 }

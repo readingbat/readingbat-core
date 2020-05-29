@@ -33,7 +33,7 @@ import com.github.readingbat.misc.FormFields.JOIN_CLASS
 import com.github.readingbat.misc.FormFields.NEW_PASSWORD
 import com.github.readingbat.misc.FormFields.UPDATE_PASSWORD
 import com.github.readingbat.misc.FormFields.USER_PREFS_ACTION
-import com.github.readingbat.misc.RedisConstants.DIGEST_FIELD
+import com.github.readingbat.misc.KeyConstants.DIGEST_FIELD
 import com.github.readingbat.misc.RedisDownException
 import com.github.readingbat.misc.UserId
 import com.github.readingbat.misc.UserId.Companion.classCodeEnrollmentKey
@@ -73,7 +73,7 @@ internal object UserPrefs : KLogging() {
           when (action) {
             UPDATE_PASSWORD -> updatePassword(content, parameters, userId, redis)
             JOIN_CLASS -> joinClass(content, parameters, userId)
-            CREATE_CLASS -> createClass()
+            CREATE_CLASS -> createClass(content, parameters, userId)
             DELETE_ACCOUNT -> deleteAccount(content, principal, userId, redis)
             else -> throw InvalidConfigurationException("Invalid action: $action")
           }
@@ -126,7 +126,9 @@ internal object UserPrefs : KLogging() {
 
   }
 
-  private fun PipelineCall.createClass() =
+  private fun PipelineCall.createClass(content: ReadingBatContent,
+                                       parameters: Parameters,
+                                       userId: UserId) =
     withRedisPool { redis ->
       if (redis == null)
         throw RedisDownException()

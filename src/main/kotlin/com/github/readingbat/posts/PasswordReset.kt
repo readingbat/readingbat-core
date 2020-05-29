@@ -36,8 +36,8 @@ import com.github.readingbat.misc.Endpoints.PASSWORD_RESET_ENDPOINT
 import com.github.readingbat.misc.FormFields.CONFIRM_PASSWORD
 import com.github.readingbat.misc.FormFields.EMAIL
 import com.github.readingbat.misc.FormFields.NEW_PASSWORD
-import com.github.readingbat.misc.RedisConstants.DIGEST_FIELD
-import com.github.readingbat.misc.RedisConstants.SALT_FIELD
+import com.github.readingbat.misc.KeyConstants.DIGEST_FIELD
+import com.github.readingbat.misc.KeyConstants.SALT_FIELD
 import com.github.readingbat.misc.UserId.Companion.isValidEmail
 import com.github.readingbat.misc.UserId.Companion.lookupUserIdByEmail
 import com.github.readingbat.misc.UserId.Companion.passwordResetKey

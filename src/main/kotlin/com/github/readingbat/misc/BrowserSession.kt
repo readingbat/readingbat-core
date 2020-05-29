@@ -17,11 +17,11 @@
 
 package com.github.readingbat.misc
 
-import com.github.readingbat.misc.RedisConstants.ANSWER_HISTORY_KEY
-import com.github.readingbat.misc.RedisConstants.CHALLENGE_ANSWERS_KEY
-import com.github.readingbat.misc.RedisConstants.CORRECT_ANSWERS_KEY
-import com.github.readingbat.misc.RedisConstants.KEY_SEP
-import com.github.readingbat.misc.RedisConstants.NO_AUTH_KEY
+import com.github.readingbat.misc.KeyConstants.ANSWER_HISTORY_KEY
+import com.github.readingbat.misc.KeyConstants.CHALLENGE_ANSWERS_KEY
+import com.github.readingbat.misc.KeyConstants.CORRECT_ANSWERS_KEY
+import com.github.readingbat.misc.KeyConstants.KEY_SEP
+import com.github.readingbat.misc.KeyConstants.NO_AUTH_KEY
 import com.github.readingbat.posts.ChallengeNames
 import java.time.Instant
 

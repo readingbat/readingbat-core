@@ -45,12 +45,12 @@ import com.github.readingbat.misc.Constants.RESP
 import com.github.readingbat.misc.Constants.STATIC_ROOT
 import com.github.readingbat.misc.Constants.WRONG_COLOR
 import com.github.readingbat.misc.Endpoints.CLASS_PREFIX
+import com.github.readingbat.misc.KeyConstants.NAME_FIELD
 import com.github.readingbat.misc.PageUtils.pathOf
 import com.github.readingbat.misc.ParameterIds.FEEDBACK_ID
 import com.github.readingbat.misc.ParameterIds.SPINNER_ID
 import com.github.readingbat.misc.ParameterIds.STATUS_ID
 import com.github.readingbat.misc.ParameterIds.SUCCESS_ID
-import com.github.readingbat.misc.RedisConstants.NAME_FIELD
 import com.github.readingbat.misc.UserId
 import com.github.readingbat.misc.UserId.Companion.challengeAnswersKey
 import com.github.readingbat.misc.UserId.Companion.classCodeEnrollmentKey

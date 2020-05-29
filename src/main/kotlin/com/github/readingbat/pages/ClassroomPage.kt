@@ -108,5 +108,4 @@ internal object ClassroomPage {
       redis.sadd(classCodeEnrollmentKey, "")
       classCode
     }
-
 }

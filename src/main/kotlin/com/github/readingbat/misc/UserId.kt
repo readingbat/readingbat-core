@@ -25,20 +25,21 @@ import com.github.readingbat.dsl.FunctionInfo
 import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.Constants.RESP
-import com.github.readingbat.misc.RedisConstants.ANSWER_HISTORY_KEY
-import com.github.readingbat.misc.RedisConstants.AUTH_KEY
-import com.github.readingbat.misc.RedisConstants.CHALLENGE_ANSWERS_KEY
-import com.github.readingbat.misc.RedisConstants.CLASS_CODE_FIELD
-import com.github.readingbat.misc.RedisConstants.CLASS_CODE_KEY
-import com.github.readingbat.misc.RedisConstants.CORRECT_ANSWERS_KEY
-import com.github.readingbat.misc.RedisConstants.DIGEST_FIELD
-import com.github.readingbat.misc.RedisConstants.KEY_SEP
-import com.github.readingbat.misc.RedisConstants.NAME_FIELD
-import com.github.readingbat.misc.RedisConstants.RESET_KEY
-import com.github.readingbat.misc.RedisConstants.SALT_FIELD
-import com.github.readingbat.misc.RedisConstants.USERID_RESET_KEY
-import com.github.readingbat.misc.RedisConstants.USER_EMAIL_KEY
-import com.github.readingbat.misc.RedisConstants.USER_INFO_KEY
+import com.github.readingbat.misc.KeyConstants.ANSWER_HISTORY_KEY
+import com.github.readingbat.misc.KeyConstants.AUTH_KEY
+import com.github.readingbat.misc.KeyConstants.CHALLENGE_ANSWERS_KEY
+import com.github.readingbat.misc.KeyConstants.CLASSES_FIELD
+import com.github.readingbat.misc.KeyConstants.CLASS_CODE_FIELD
+import com.github.readingbat.misc.KeyConstants.CLASS_CODE_KEY
+import com.github.readingbat.misc.KeyConstants.CORRECT_ANSWERS_KEY
+import com.github.readingbat.misc.KeyConstants.DIGEST_FIELD
+import com.github.readingbat.misc.KeyConstants.KEY_SEP
+import com.github.readingbat.misc.KeyConstants.NAME_FIELD
+import com.github.readingbat.misc.KeyConstants.RESET_KEY
+import com.github.readingbat.misc.KeyConstants.SALT_FIELD
+import com.github.readingbat.misc.KeyConstants.USERID_RESET_KEY
+import com.github.readingbat.misc.KeyConstants.USER_EMAIL_KEY
+import com.github.readingbat.misc.KeyConstants.USER_INFO_KEY
 import com.github.readingbat.posts.ChallengeHistory
 import com.github.readingbat.posts.ChallengeNames
 import com.github.readingbat.posts.ChallengeResults
@@ -147,6 +148,7 @@ internal class UserId(val id: String = randomId(25)) {
 
     fun userEmailKey(email: String) = listOf(USER_EMAIL_KEY, email).joinToString(KEY_SEP)
 
+    // Value is a list of all enrolled students
     fun classCodeEnrollmentKey(classCode: String) = listOf(CLASS_CODE_KEY, classCode).joinToString(KEY_SEP)
 
     fun correctAnswersKey(userId: UserId?, browserSession: BrowserSession?, names: ChallengeNames) =
@@ -195,7 +197,8 @@ internal class UserId(val id: String = randomId(25)) {
         tx.hset(userId.userInfoKey, mapOf(NAME_FIELD to name,
                                           SALT_FIELD to salt,
                                           DIGEST_FIELD to password.sha256(salt),
-                                          CLASS_CODE_FIELD to ""))
+                                          CLASS_CODE_FIELD to "",
+                                          CLASSES_FIELD to "[]"))
         tx.exec()
       }
     }
