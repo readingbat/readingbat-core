@@ -182,7 +182,6 @@ internal object ChallengePage : KLogging() {
       }
 
       this@displayQuestions.processAnswers(funcInfo)
-
       this@displayQuestions.otherLinks(challenge)
     }
 
@@ -227,7 +226,7 @@ internal object ChallengePage : KLogging() {
                                    funcInfo: FunctionInfo,
                                    classCode: String) =
     div {
-      style = "margin-top:2em; margin-left:2em;"
+      style = "margin-top:2em;"
 
       val languageType = challenge.languageType
       val groupName = challenge.groupName
@@ -241,13 +240,13 @@ internal object ChallengePage : KLogging() {
         else {
           val ids = redis.smembers(classCodeEnrollmentKey(classCode)).filter { it.isNotEmpty() }
           table {
-            style = "width:100%"
+            style = "width:100%; border-spacing: 5px 10px;"
 
             tr {
-              th { style = "text-align:center"; +"Student" }
+              th { style = "text-align:center; color: #551A8B"; +"Student" }
               funcInfo.invocations.indices.forEach { i ->
                 val invocation = funcInfo.invocations[i]
-                th { style = "text-align:center"; +invocation.substring(invocation.indexOf("(")) }
+                th { style = "text-align:center; color: #551A8B"; +invocation.substring(invocation.indexOf("(")) }
               }
             }
 
