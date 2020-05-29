@@ -17,6 +17,7 @@
 
 package com.github.readingbat.pages
 
+import com.github.pambrose.common.redis.RedisUtils.withRedisPool
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.Endpoints.CREATE_ACCOUNT_ENDPOINT
@@ -168,7 +169,7 @@ internal object UserPrefsPage : KLogging() {
 
   private fun BODY.createClass() {
     h3 { +"Create Class" }
-    p { +"Enter the class code your teacher gave you. This will make your progress visible to your teacher." }
+    p { +"Enter a decription of your class." }
     form {
       action = USER_PREFS_ENDPOINT
       method = FormMethod.post
@@ -192,6 +193,15 @@ internal object UserPrefsPage : KLogging() {
               type = InputType.submit; id = createClassButton; name = USER_PREFS_ACTION; value = CREATE_CLASS
             }
           }
+        }
+      }
+    }
+
+    withRedisPool { redis ->
+
+      if (redis != null) {
+        table {
+
         }
       }
     }

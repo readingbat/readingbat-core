@@ -29,6 +29,7 @@ import com.github.readingbat.misc.RedisConstants.ANSWER_HISTORY_KEY
 import com.github.readingbat.misc.RedisConstants.AUTH_KEY
 import com.github.readingbat.misc.RedisConstants.CHALLENGE_ANSWERS_KEY
 import com.github.readingbat.misc.RedisConstants.CLASS_CODE_FIELD
+import com.github.readingbat.misc.RedisConstants.CLASS_CODE_KEY
 import com.github.readingbat.misc.RedisConstants.CORRECT_ANSWERS_KEY
 import com.github.readingbat.misc.RedisConstants.DIGEST_FIELD
 import com.github.readingbat.misc.RedisConstants.KEY_SEP
@@ -110,13 +111,43 @@ internal class UserId(val id: String = randomId(25)) {
     }
   }
 
-  fun classCode(redis: Jedis?) = redis?.hget(userInfoKey, CLASS_CODE_FIELD) ?: ""
+  fun fetchClassCode(redis: Jedis?) = redis?.hget(userInfoKey, CLASS_CODE_FIELD) ?: ""
+
+  fun enrollIntoClass(classCode: String) {
+    if (classCode.isBlank()) {
+      throw DataException("Empty class code")
+    }
+    else {
+      withRedisPool { redis ->
+        val classCodeEnrollmentKey = classCodeEnrollmentKey(classCode)
+        when {
+          redis == null -> throw RedisDownException()
+          redis.smembers(classCodeEnrollmentKey).isEmpty() -> throw DataException("Invalid class code $classCode")
+          redis.sismember(classCodeEnrollmentKey, id) -> throw DataException("Already joined class $classCode")
+          else -> {
+            val previousClassCode = redis.hget(userInfoKey, CLASS_CODE_KEY) ?: ""
+            redis.multi().also { tx ->
+              // Remove if already enrolled in another class
+              if (previousClassCode.isNotEmpty()) {
+                tx.srem(classCodeEnrollmentKey(previousClassCode), id)
+              }
+              tx.hset(userInfoKey, CLASS_CODE_KEY, classCode)
+              tx.sadd(classCodeEnrollmentKey, id)
+              tx.exec()
+            }
+          }
+        }
+      }
+    }
+  }
 
   companion object : KLogging() {
 
     val gson = Gson()
 
     fun userEmailKey(email: String) = listOf(USER_EMAIL_KEY, email).joinToString(KEY_SEP)
+
+    fun classCodeEnrollmentKey(classCode: String) = listOf(CLASS_CODE_KEY, classCode).joinToString(KEY_SEP)
 
     fun correctAnswersKey(userId: UserId?, browserSession: BrowserSession?, names: ChallengeNames) =
       userId?.correctAnswersKey(names) ?: browserSession?.correctAnswersKey(names) ?: ""
@@ -182,7 +213,7 @@ internal class UserId(val id: String = randomId(25)) {
           val userId = lookupPrincipal(principal, redis)
           val challengeAnswerKey = challengeAnswersKey(userId, browserSession, names)
           val correctAnswersKey = correctAnswersKey(userId, browserSession, names)
-          val classCode = userId?.classCode(redis) ?: ""
+          val classCode = userId?.fetchClassCode(redis) ?: ""
           val complete = results.all { it.correct }
           val numCorrect = results.count { it.correct }
 

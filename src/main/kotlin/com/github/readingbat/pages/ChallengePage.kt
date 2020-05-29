@@ -44,7 +44,6 @@ import com.github.readingbat.misc.Constants.PLAYGROUND_ROOT
 import com.github.readingbat.misc.Constants.RESP
 import com.github.readingbat.misc.Constants.STATIC_ROOT
 import com.github.readingbat.misc.Constants.WRONG_COLOR
-import com.github.readingbat.misc.Dashboards.classCodeEnrollmentKey
 import com.github.readingbat.misc.Endpoints.CLASS_PREFIX
 import com.github.readingbat.misc.PageUtils.pathOf
 import com.github.readingbat.misc.ParameterIds.FEEDBACK_ID
@@ -54,6 +53,7 @@ import com.github.readingbat.misc.ParameterIds.SUCCESS_ID
 import com.github.readingbat.misc.RedisConstants.NAME_FIELD
 import com.github.readingbat.misc.UserId
 import com.github.readingbat.misc.UserId.Companion.challengeAnswersKey
+import com.github.readingbat.misc.UserId.Companion.classCodeEnrollmentKey
 import com.github.readingbat.misc.UserId.Companion.gson
 import com.github.readingbat.misc.UserId.Companion.lookupPrincipal
 import com.github.readingbat.misc.UserPrincipal
@@ -317,7 +317,7 @@ internal object ChallengePage : KLogging() {
         tr {
           td {
             button(classes = CHECK_ANSWERS) {
-              onClick = "$processAnswers(null, ${funcInfo.answers.size});"; +"Check My Answers!"
+              onClick = "$processAnswers(null, ${funcInfo.answers.size});"; +"Check My Answers"
             }
           }
           td { style = "vertical-align:middle;"; span { style = "margin-left:1em;"; id = SPINNER_ID } }

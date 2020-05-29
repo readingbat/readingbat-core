@@ -17,11 +17,11 @@
 
 package com.github.readingbat.pages
 
-import com.github.pambrose.common.redis.RedisUtils
+import com.github.pambrose.common.redis.RedisUtils.withRedisPool
 import com.github.pambrose.common.util.randomId
 import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.misc.Dashboards.classCodeEnrollmentKey
 import com.github.readingbat.misc.RedisDownException
+import com.github.readingbat.misc.UserId.Companion.classCodeEnrollmentKey
 import com.github.readingbat.pages.PageCommon.backLink
 import com.github.readingbat.pages.PageCommon.bodyTitle
 import com.github.readingbat.pages.PageCommon.headDefault
@@ -100,7 +100,7 @@ internal object ClassroomPage {
       }
 
   private fun createClass() =
-    RedisUtils.withRedisPool { redis ->
+    withRedisPool { redis ->
       if (redis == null)
         throw RedisDownException()
       val classCode = randomId(15)
