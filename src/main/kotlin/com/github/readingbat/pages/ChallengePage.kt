@@ -244,13 +244,13 @@ internal object ChallengePage : KLogging() {
             style = "width:100%"
 
             tr {
-              th { +"Student" }
+              th { style = "text-align:center"; +"Student" }
               funcInfo.invocations.indices.forEach { i ->
-                th(classes = "rotate") {
-                  span { +funcInfo.invocations[i] }
-                }
+                val invocation = funcInfo.invocations[i]
+                th { style = "text-align:center"; +invocation.substring(invocation.indexOf("(")) }
               }
             }
+
             ids.forEach {
               val userId = UserId(it)
               val userInfoKey = userId.userInfoKey
