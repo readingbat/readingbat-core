@@ -28,7 +28,6 @@ import com.github.readingbat.misc.Constants.RESP
 import com.github.readingbat.misc.KeyConstants.ANSWER_HISTORY_KEY
 import com.github.readingbat.misc.KeyConstants.AUTH_KEY
 import com.github.readingbat.misc.KeyConstants.CHALLENGE_ANSWERS_KEY
-import com.github.readingbat.misc.KeyConstants.CLASSES_FIELD
 import com.github.readingbat.misc.KeyConstants.CLASS_CODE_FIELD
 import com.github.readingbat.misc.KeyConstants.CLASS_CODE_KEY
 import com.github.readingbat.misc.KeyConstants.CLASS_DESC_KEY
@@ -206,8 +205,7 @@ internal class UserId(val id: String = randomId(25)) {
                                           EMAIL_FIELD to email,
                                           SALT_FIELD to salt,
                                           DIGEST_FIELD to password.sha256(salt),
-                                          CLASS_CODE_FIELD to "",
-                                          CLASSES_FIELD to "[]"))
+                                          CLASS_CODE_FIELD to ""))
         tx.exec()
       }
 

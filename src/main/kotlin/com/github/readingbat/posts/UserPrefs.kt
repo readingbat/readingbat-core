@@ -29,6 +29,7 @@ import com.github.readingbat.misc.FormFields.CONFIRM_PASSWORD
 import com.github.readingbat.misc.FormFields.CREATE_CLASS
 import com.github.readingbat.misc.FormFields.CURR_PASSWORD
 import com.github.readingbat.misc.FormFields.DELETE_ACCOUNT
+import com.github.readingbat.misc.FormFields.DELETE_CLASS
 import com.github.readingbat.misc.FormFields.JOIN_CLASS
 import com.github.readingbat.misc.FormFields.NEW_PASSWORD
 import com.github.readingbat.misc.FormFields.UPDATE_PASSWORD
@@ -74,6 +75,7 @@ internal object UserPrefs : KLogging() {
             UPDATE_PASSWORD -> updatePassword(content, parameters, userId, redis)
             JOIN_CLASS -> joinClass(content, parameters, userId, redis)
             CREATE_CLASS -> createClass(content, principal, parameters, userId, redis, parameters[CLASS_DESC] ?: "")
+            DELETE_CLASS -> deleteClass(content, principal, parameters, userId, redis, parameters[CLASS_CODE] ?: "")
             DELETE_ACCOUNT -> deleteAccount(content, principal, userId, redis)
             else -> throw InvalidConfigurationException("Invalid action: $action")
           }
@@ -152,6 +154,35 @@ internal object UserPrefs : KLogging() {
         tx.exec()
       }
       userPrefsPage(content, "Created class code: $classCode", false)
+    }
+
+  private fun PipelineCall.deleteClass(content: ReadingBatContent,
+                                       principal: UserPrincipal,
+                                       parameters: Parameters,
+                                       userId: UserId,
+                                       redis: Jedis,
+                                       classCode: String) =
+    if (classCode.isBlank()) {
+      userPrefsPage(content, "Empty class code", true)
+    }
+    else if (!redis.exists(classCodeEnrollmentKey(classCode))) {
+      userPrefsPage(content, "Invalid class code: $classCode", true)
+    }
+    else {
+      redis.multi().also { tx ->
+        // Delete KV for class description
+        tx.del(classDescKey(classCode), classCode)
+
+        // Remove classcode from list of classes created by user
+        tx.srem(userId.userClassesKey, classCode)
+
+        // Delete enrollees
+        tx.del(classCodeEnrollmentKey(classCode))
+
+        tx.exec()
+      }
+
+      userPrefsPage(content, "Deleted class code: $classCode", false)
     }
 
   private fun PipelineCall.deleteAccount(content: ReadingBatContent,

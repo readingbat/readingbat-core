@@ -67,7 +67,7 @@ internal object AdminPage {
     h3 { +"Delete All Data" }
     div {
       style = "margin-left: 1em;"
-      p { +"Permanently delete all data -- cannot be undone!" }
+      p { +"Permanently delete all data -- this cannot be undone!" }
       form {
         action = ADMIN_ENDPOINT
         method = FormMethod.post

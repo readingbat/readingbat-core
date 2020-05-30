@@ -36,6 +36,7 @@ internal object Constants {
   const val RESP = "response"
   const val CORRECT_COLOR = "#4EAA3A"
   const val WRONG_COLOR = "#F1F1F1"
+  const val LABEL_WIDTH = "width: 250;"
 }
 
 internal object Endpoints {
@@ -75,6 +76,7 @@ internal object FormFields {
   const val UPDATE_PASSWORD = "Update Password"
   const val JOIN_CLASS = "Join Class"
   const val CREATE_CLASS = "Create Class"
+  const val DELETE_CLASS = "Delete Class"
   const val DELETE_ACCOUNT = "Delete Account"
   const val DELETE_ALL_DATA = "Delete All Data"
 }

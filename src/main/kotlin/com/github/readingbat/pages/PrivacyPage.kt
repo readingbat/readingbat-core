@@ -48,8 +48,8 @@ internal object PrivacyPage {
 
             p {
               +"""
-            ReadingBat is free -- anyone can access the site to learn and practice reading code. We will not send you any 
-            marketing email (spam), and we will not sell your name or contact information to anyone for marketing. 
+            ReadingBat.com is free -- anyone can access the site to learn and practice reading code. We will not send  
+            you any marketing email (spam), and we will not sell your name or contact information to anyone for marketing. 
             We will not identify you, your name or email address (if we should know them) in anything we make public. 
             We collect regular web server logs, and may use the data and submitted answers as part of research into 
             teaching technology, but we will never make public specific names or email addresses.
@@ -57,7 +57,7 @@ internal object PrivacyPage {
             }
 
             p {
-              +"If you have any thoughts or suggestions about ReadingBat, please don't hesitate to email us at: "
+              +"If you have any thoughts or suggestions about ReadingBat.com, please don't hesitate to email us at: "
               a {
                 href = "mailto:suggestions@readingbat.com?subject=ReadingBat"
                 +"suggestions@readingbat.com"

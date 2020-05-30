@@ -39,7 +39,6 @@ internal object KeyConstants {
   const val DIGEST_FIELD = "digest"
   const val NAME_FIELD = "name"
   const val CLASS_CODE_FIELD = "class-code"
-  const val CLASSES_FIELD = "classes"
 
   const val KEY_SEP = "|"
 }

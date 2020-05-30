@@ -21,6 +21,7 @@ import com.github.pambrose.common.redis.RedisUtils.withRedisPool
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.Constants.DBMS_DOWN
 import com.github.readingbat.misc.Constants.INVALID_RESET_ID
+import com.github.readingbat.misc.Constants.LABEL_WIDTH
 import com.github.readingbat.misc.Constants.RESET_ID
 import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.Endpoints.PASSWORD_CHANGE_ENDPOINT
@@ -38,7 +39,6 @@ import com.github.readingbat.pages.PageCommon.clickButtonScript
 import com.github.readingbat.pages.PageCommon.displayMessage
 import com.github.readingbat.pages.PageCommon.headDefault
 import com.github.readingbat.pages.PageCommon.privacyStatement
-import com.github.readingbat.pages.UserPrefsPage.labelWidth
 import com.github.readingbat.posts.PasswordReset.ResetPasswordException
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
@@ -92,7 +92,7 @@ internal object PasswordResetPage : KLogging() {
               method = FormMethod.post
               table {
                 tr {
-                  td { style = labelWidth; label { +"Email (used as account id)" } }
+                  td { style = LABEL_WIDTH; label { +"Email (used as account id)" } }
                   td {
                     input {
                       name = EMAIL
@@ -157,12 +157,12 @@ internal object PasswordResetPage : KLogging() {
             method = FormMethod.post
             table {
               tr {
-                td { style = labelWidth; label { +"New Password" } }
+                td { style = LABEL_WIDTH; label { +"New Password" } }
                 td { input { type = InputType.password; size = "42"; name = NEW_PASSWORD; value = "" } }
                 td { hideShowButton(formName, NEW_PASSWORD) }
               }
               tr {
-                td { style = labelWidth; label { +"Confirm Password" } }
+                td { style = LABEL_WIDTH; label { +"Confirm Password" } }
                 td {
                   input {
                     type = InputType.password
