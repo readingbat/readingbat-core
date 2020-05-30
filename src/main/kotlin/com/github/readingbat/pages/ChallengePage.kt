@@ -85,10 +85,10 @@ internal object ChallengePage : KLogging() {
   private const val headerColor = "#419DC1"
 
 
-  suspend fun PipelineCall.challengePage(content: ReadingBatContent,
-                                         challenge: Challenge,
-                                         classCode: String,
-                                         loginAttempt: Boolean) =
+  fun PipelineCall.challengePage(content: ReadingBatContent,
+                                 challenge: Challenge,
+                                 classCode: String,
+                                 loginAttempt: Boolean) =
     createHTML()
       .html {
         val principal = fetchPrincipal(loginAttempt)
@@ -165,12 +165,12 @@ internal object ChallengePage : KLogging() {
             colSpan = "2"
             style = "color: $headerColor"
             +"Function Call"
-          };
+          }
           th {
             colSpan = "2"
             style = "color: $headerColor"
             +"Return Value"
-          };
+          }
         }
 
         val previousAnswers = previousAnswers(principal, browserSession, challenge)
@@ -251,7 +251,7 @@ internal object ChallengePage : KLogging() {
         }
         else {
           val ids = redis.smembers(classCodeEnrollmentKey(classCode)).filter { it.isNotEmpty() }
-          if (ids.size > 0) {
+          if (ids.isNotEmpty()) {
             table {
               style = "width:100%; border-spacing: 5px 10px;"
 
@@ -297,7 +297,7 @@ internal object ChallengePage : KLogging() {
                       style = "background-color:${if (history.correct) CORRECT_COLOR else WRONG_COLOR};"
                       span {
                         id = "${userId.id}-$invocation-$answersSpan"
-                        history.answers.asReversed().take(maxHistoryLength).forEach { +it; br }
+                        history.answers.asReversed().take(maxHistoryLength).forEach { answer -> +answer; br }
                       }
                     }
                   }

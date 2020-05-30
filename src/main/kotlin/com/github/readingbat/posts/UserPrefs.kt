@@ -70,8 +70,7 @@ internal object UserPrefs : KLogging() {
           requestLogInPage(content)
         }
         else {
-          val action = parameters[USER_PREFS_ACTION] ?: ""
-          when (action) {
+          when (val action = parameters[USER_PREFS_ACTION] ?: "") {
             UPDATE_PASSWORD -> updatePassword(content, parameters, userId, redis)
             JOIN_CLASS -> joinClass(content, parameters, userId, redis)
             CREATE_CLASS -> createClass(content, principal, parameters, userId, redis, parameters[CLASS_DESC] ?: "")

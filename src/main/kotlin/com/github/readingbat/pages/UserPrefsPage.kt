@@ -146,7 +146,7 @@ internal object UserPrefsPage : KLogging() {
   }
 
   private fun BODY.joinClass(defaultClassCode: String) {
-    h3 { +"Join Class" }
+    h3 { +"Join a class" }
     p { +"Enter the class code your teacher gave you. This will make your progress visible to your teacher." }
     form {
       action = USER_PREFS_ENDPOINT
@@ -173,7 +173,7 @@ internal object UserPrefsPage : KLogging() {
   }
 
   private fun BODY.createClass(principal: UserPrincipal) {
-    h3 { +"Create Class" }
+    h3 { +"Create a class" }
     p { +"Enter a decription of your class." }
     form {
       action = USER_PREFS_ENDPOINT
@@ -285,7 +285,7 @@ internal object UserPrefsPage : KLogging() {
   }
 
   private fun BODY.deleteAccount(principal: UserPrincipal) {
-    h3 { +"Delete Account" }
+    h3 { +"Delete account" }
 
     val email = withRedisPool { redis -> principal.email(redis) }
     if (email.isNotEmpty()) {

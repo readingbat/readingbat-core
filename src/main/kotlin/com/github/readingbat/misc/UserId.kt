@@ -238,13 +238,11 @@ internal class UserId(val id: String = randomId(25)) {
 
           if (challengeAnswerKey.isNotEmpty()) {
             val answerMap =
-              userResps.indices
-                .map { i ->
+              userResps.indices.mapNotNull { i ->
                   val userResp = compareMap[RESP + i]?.trim()
                     ?: throw InvalidConfigurationException("Missing user response")
                   if (userResp.isNotEmpty()) funcInfo.invocations[i] to userResp else null
                 }
-                .filterNotNull()
                 .toMap()
 
             // Save the last answers given
