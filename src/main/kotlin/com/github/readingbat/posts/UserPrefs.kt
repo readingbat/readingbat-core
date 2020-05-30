@@ -32,7 +32,7 @@ import com.github.readingbat.misc.FormFields.DELETE_ACCOUNT
 import com.github.readingbat.misc.FormFields.DELETE_CLASS
 import com.github.readingbat.misc.FormFields.JOIN_CLASS
 import com.github.readingbat.misc.FormFields.NEW_PASSWORD
-import com.github.readingbat.misc.FormFields.UPDATE_CLASS
+import com.github.readingbat.misc.FormFields.UPDATE_CURRENT_CLASS
 import com.github.readingbat.misc.FormFields.UPDATE_PASSWORD
 import com.github.readingbat.misc.FormFields.USER_PREFS_ACTION
 import com.github.readingbat.misc.KeyConstants.ACTIVE_CLASS_CODE_FIELD
@@ -72,7 +72,7 @@ internal object UserPrefs : KLogging() {
         UPDATE_PASSWORD -> updatePassword(content, redis, parameters, userId)
         JOIN_CLASS -> joinClass(content, parameters, userId, redis)
         CREATE_CLASS -> createClass(content, redis, userId, parameters[CLASS_DESC] ?: "")
-        UPDATE_CLASS -> updateActiveClass(content, redis, userId, parameters[CLASSES_CHOICE] ?: "")
+        UPDATE_CURRENT_CLASS -> updateActiveClass(content, redis, userId, parameters[CLASSES_CHOICE] ?: "")
         DELETE_CLASS -> deleteClass(content, redis, userId, parameters[CLASS_CODE] ?: "")
         DELETE_ACCOUNT -> deleteAccount(content, principal, userId, redis)
         else -> throw InvalidConfigurationException("Invalid action: $action")
@@ -158,15 +158,20 @@ internal object UserPrefs : KLogging() {
                                              classCode: String): String {
     val activeClassCode = redis.hget(userId.userInfoKey, ACTIVE_CLASS_CODE_FIELD)
     val msg =
-      if ((activeClassCode.isEmpty() && classCode == CLASSES_DISABLED) || activeClassCode == classCode) {
-        "Same active class selected"
-      }
-      else {
-        redis.hset(userId.userInfoKey, ACTIVE_CLASS_CODE_FIELD, if (classCode == CLASSES_DISABLED) "" else classCode)
-        if (classCode == CLASSES_DISABLED)
-          "Current active class disabled"
-        else
-          "Current active class updated to: $classCode [${redis[classDescKey(classCode)] ?: "Missing Description"}]"
+      when {
+        activeClassCode.isEmpty() && classCode == CLASSES_DISABLED -> {
+          "Active class disabled"
+        }
+        activeClassCode == classCode -> {
+          "Same active class selected"
+        }
+        else -> {
+          redis.hset(userId.userInfoKey, ACTIVE_CLASS_CODE_FIELD, if (classCode == CLASSES_DISABLED) "" else classCode)
+          if (classCode == CLASSES_DISABLED)
+            "Current active class disabled"
+          else
+            "Current active class updated to: $classCode [${redis[classDescKey(classCode)] ?: "Missing Description"}]"
+        }
       }
 
     return userPrefsPage(content, redis, msg, false)
@@ -183,6 +188,7 @@ internal object UserPrefs : KLogging() {
       userPrefsPage(content, redis, "Invalid class code: $classCode", true)
     }
     else {
+      val activeClassCode = userId.fetchActiveClassCode(redis)
       redis.multi().also { tx ->
         // Delete KV for class description
         tx.del(classDescKey(classCode), classCode)
@@ -192,6 +198,10 @@ internal object UserPrefs : KLogging() {
 
         // Delete enrollees
         tx.del(classCodeEnrollmentKey(classCode))
+
+        // Disable current class if deleted class is the active class
+        if (activeClassCode == classCode)
+          tx.hset(userId.userInfoKey, ACTIVE_CLASS_CODE_FIELD, "")
 
         tx.exec()
       }

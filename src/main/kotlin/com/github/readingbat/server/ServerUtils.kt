@@ -49,3 +49,5 @@ internal object ServerUtils : KLogging() {
 
   fun PipelineCall.queryParam(key: String) = call.request.queryParameters[key]
 }
+
+class RedirectException(val redirectUrl: String) : Exception()

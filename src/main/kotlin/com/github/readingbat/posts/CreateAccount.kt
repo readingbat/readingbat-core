@@ -17,8 +17,6 @@
 
 package com.github.readingbat.posts
 
-import com.github.pambrose.common.response.redirectTo
-import com.github.pambrose.common.response.respondWith
 import com.github.pambrose.common.util.encode
 import com.github.pambrose.common.util.isNotValidEmail
 import com.github.readingbat.dsl.ReadingBatContent
@@ -33,6 +31,7 @@ import com.github.readingbat.misc.UserId.Companion.userEmailKey
 import com.github.readingbat.misc.UserPrincipal
 import com.github.readingbat.pages.CreateAccountPage.createAccountPage
 import com.github.readingbat.server.PipelineCall
+import com.github.readingbat.server.RedirectException
 import com.github.readingbat.server.ServerUtils.queryParam
 import com.google.common.util.concurrent.RateLimiter
 import io.ktor.application.call
@@ -63,31 +62,28 @@ internal object CreateAccount : KLogging() {
       else -> ""
     }
 
-  suspend fun PipelineCall.createAccount(content: ReadingBatContent, redis: Jedis) {
+  suspend fun PipelineCall.createAccount(content: ReadingBatContent, redis: Jedis): String {
     val parameters = call.receiveParameters()
     val name = parameters[NAME] ?: ""
     val email = parameters[EMAIL] ?: ""
     val password = parameters[PASSWORD] ?: ""
     val confirmPassword = parameters[CONFIRM_PASSWORD] ?: ""
 
-    when {
-      name.isBlank() -> respondWith { createAccountPage(content, defaultEmail = email, msg = EMPTY_NAME) }
-      email.isBlank() -> respondWith { createAccountPage(content, defaultName = name, msg = EMPTY_EMAIL) }
-      email.isNotValidEmail() -> respondWith {
+    return when {
+      name.isBlank() -> createAccountPage(content, defaultEmail = email, msg = EMPTY_NAME)
+      email.isBlank() -> createAccountPage(content, defaultName = name, msg = EMPTY_EMAIL)
+      email.isNotValidEmail() ->
         createAccountPage(content,
                           defaultName = name,
                           defaultEmail = email,
                           msg = INVALID_EMAIL)
-      }
       else -> {
         val passwordError = checkPassword(password, confirmPassword)
         if (passwordError.isNotEmpty())
-          respondWith {
-            createAccountPage(content,
-                              defaultName = name,
-                              defaultEmail = email,
-                              msg = passwordError)
-          }
+          createAccountPage(content,
+                            defaultName = name,
+                            defaultEmail = email,
+                            msg = passwordError)
         else
           createAccount(content, redis, name, email, password)
       }
@@ -98,20 +94,20 @@ internal object CreateAccount : KLogging() {
                                                  redis: Jedis,
                                                  name: String,
                                                  email: String,
-                                                 password: String) {
+                                                 password: String): String {
     val returnPath = queryParam(RETURN_PATH) ?: "/"
 
     createAccountLimiter.acquire() // may wait
 
     // Check if email already exists
-    if (redis.exists(userEmailKey(email))) {
-      respondWith { createAccountPage(content, msg = "Email already registered: $email") }
+    return if (redis.exists(userEmailKey(email))) {
+      createAccountPage(content, msg = "Email already registered: $email")
     }
     else {
       // Create user
       val userId = createUser(name, email, password, redis)
       call.sessions.set(UserPrincipal(userId = userId.id))
-      redirectTo { "$returnPath?$MSG=${"User $email created".encode()}" }
+      throw RedirectException("$returnPath?$MSG=${"User $email created".encode()}")
     }
   }
 }

@@ -69,23 +69,31 @@ import redis.clients.jedis.Jedis
 internal fun Routing.userRoutes(content: ReadingBatContent) {
 
   suspend fun PipelineCall.respondWithDbmsCheck(block: PipelineCall.(redis: Jedis) -> String) =
-    respondWith {
-      withRedisPool { redis ->
-        if (redis == null)
-          dbmsDownPage(content)
-        else
-          block(redis)
-      }
+    try {
+      val html =
+        withRedisPool { redis ->
+          if (redis == null)
+            dbmsDownPage(content)
+          else
+            block(redis)
+        }
+      respondWith { html }
+    } catch (e: RedirectException) {
+      redirectTo { e.redirectUrl }
     }
 
   suspend fun PipelineCall.respondWithSuspendingDbmsCheck(block: suspend PipelineCall.(redis: Jedis) -> String) =
-    respondWith {
-      withSuspendingRedisPool { redis ->
-        if (redis == null)
-          dbmsDownPage(content)
-        else
-          block(redis)
-      }
+    try {
+      val html =
+        withSuspendingRedisPool { redis ->
+          if (redis == null)
+            dbmsDownPage(content)
+          else
+            block(redis)
+        }
+      respondWith { html }
+    } catch (e: RedirectException) {
+      redirectTo { e.redirectUrl }
     }
 
   get(ROOT) { redirectTo { defaultLanguageTab(content) } }
@@ -100,14 +108,7 @@ internal fun Routing.userRoutes(content: ReadingBatContent) {
 
   get(CREATE_ACCOUNT_ENDPOINT) { respondWith { createAccountPage(content) } }
 
-  post(CREATE_ACCOUNT_ENDPOINT) {
-    withSuspendingRedisPool { redis ->
-      if (redis == null)
-        dbmsDownPage(content)
-      else
-        createAccount(content, redis)
-    }
-  }
+  post(CREATE_ACCOUNT_ENDPOINT) { respondWithSuspendingDbmsCheck { redis -> createAccount(content, redis) } }
 
   get(USER_PREFS_ENDPOINT) { respondWithDbmsCheck { redis -> userPrefsPage(content, redis, "", false) } }
 
@@ -122,23 +123,9 @@ internal fun Routing.userRoutes(content: ReadingBatContent) {
     respondWithDbmsCheck { redis -> passwordResetPage(content, redis, queryParam(RESET_ID) ?: "", "") }
   }
 
-  post(PASSWORD_RESET_ENDPOINT) {
-    withSuspendingRedisPool { redis ->
-      if (redis == null)
-        dbmsDownPage(content)
-      else
-        sendPasswordReset(content, redis)
-    }
-  }
+  post(PASSWORD_RESET_ENDPOINT) { respondWithSuspendingDbmsCheck { redis -> sendPasswordReset(content, redis) } }
 
-  post(PASSWORD_CHANGE_ENDPOINT) {
-    withSuspendingRedisPool { redis ->
-      if (redis == null)
-        dbmsDownPage(content)
-      else
-        changePassword(content, redis)
-    }
-  }
+  post(PASSWORD_CHANGE_ENDPOINT) { respondWithSuspendingDbmsCheck { redis -> changePassword(content, redis) } }
 
   get(LOGOUT) {
     // Purge UserPrincipal from cookie data

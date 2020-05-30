@@ -33,7 +33,7 @@ import com.github.readingbat.misc.FormFields.DELETE_ACCOUNT
 import com.github.readingbat.misc.FormFields.DELETE_CLASS
 import com.github.readingbat.misc.FormFields.JOIN_CLASS
 import com.github.readingbat.misc.FormFields.NEW_PASSWORD
-import com.github.readingbat.misc.FormFields.UPDATE_CLASS
+import com.github.readingbat.misc.FormFields.UPDATE_CURRENT_CLASS
 import com.github.readingbat.misc.FormFields.UPDATE_PASSWORD
 import com.github.readingbat.misc.FormFields.USER_PREFS_ACTION
 import com.github.readingbat.misc.KeyConstants.ACTIVE_CLASS_CODE_FIELD
@@ -226,53 +226,55 @@ internal object UserPrefsPage : KLogging() {
   }
 
   private fun BODY.displayClasses(redis: Jedis, principal: UserPrincipal) {
-    h3 { +"Current active class" }
     val userId = UserId(principal.userId)
     val ids = redis.smembers(userId.userClassesKey)
-    val activeClassCode = redis.hget(userId.userInfoKey, ACTIVE_CLASS_CODE_FIELD)
 
-    div {
-      style = divStyle
+    if (ids.size > 0) {
+      val activeClassCode = redis.hget(userId.userInfoKey, ACTIVE_CLASS_CODE_FIELD)
+      h3 { +"Current active class" }
+      div {
+        style = divStyle
 
-      table {
-        style = "border-spacing: 15px 5px;"
-        tr { th { +"Current" }; th { +"Class Code" }; th { +"Description" }; th { +"Enrollees" } }
-        form {
-          action = USER_PREFS_ENDPOINT
-          method = FormMethod.post
-          ids.forEach { classCode ->
+        table {
+          style = "border-spacing: 15px 5px;"
+          tr { th { +"Current" }; th { +"Class Code" }; th { +"Description" }; th { +"Enrollees" } }
+          form {
+            action = USER_PREFS_ENDPOINT
+            method = FormMethod.post
+            ids.forEach { classCode ->
+              this@table.tr {
+                td {
+                  style = "text-align:center;"
+                  input {
+                    type = InputType.radio
+                    name = CLASSES_CHOICE
+                    value = classCode
+                    checked = activeClassCode == classCode
+                  }
+                }
+                td { +classCode }
+                td { +(redis[classDescKey(classCode)] ?: "Missing Description") }
+                td {
+                  +(redis.smembers(classCodeEnrollmentKey(classCode)).filter { it.isNotEmpty() }.count().toString())
+                }
+              }
+            }
             this@table.tr {
               td {
-                style = "text-align:center;"
+                style = "text-align:center;";
                 input {
                   type = InputType.radio
                   name = CLASSES_CHOICE
-                  value = classCode
-                  checked = activeClassCode == classCode
+                  value = CLASSES_DISABLED
+                  checked = activeClassCode.isEmpty()
                 }
               }
-              td { +classCode }
-              td { +(redis[classDescKey(classCode)] ?: "Missing Description") }
-              td {
-                +(redis.smembers(classCodeEnrollmentKey(classCode)).filter { it.isNotEmpty() }.count().toString())
-              }
+              td { colSpan = "3"; +"Disable current class" }
             }
-          }
-          this@table.tr {
-            td {
-              style = "text-align:center;";
-              input {
-                type = InputType.radio
-                name = CLASSES_CHOICE
-                value = CLASSES_DISABLED
-                checked = activeClassCode.isEmpty()
-              }
+            this@table.tr {
+              td {}
+              td { input { type = InputType.submit; name = USER_PREFS_ACTION; value = UPDATE_CURRENT_CLASS } }
             }
-            td { colSpan = "3"; +"Disable current class" }
-          }
-          this@table.tr {
-            td {}
-            td { input { type = InputType.submit; name = USER_PREFS_ACTION; value = UPDATE_CLASS } }
           }
         }
       }

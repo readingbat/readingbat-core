@@ -17,8 +17,6 @@
 
 package com.github.readingbat.posts
 
-import com.github.pambrose.common.response.redirectTo
-import com.github.pambrose.common.response.respondWith
 import com.github.pambrose.common.util.encode
 import com.github.pambrose.common.util.isNotValidEmail
 import com.github.pambrose.common.util.randomId
@@ -41,6 +39,7 @@ import com.github.readingbat.misc.UserId.Companion.passwordResetKey
 import com.github.readingbat.pages.PasswordResetPage.passwordResetPage
 import com.github.readingbat.posts.CreateAccount.checkPassword
 import com.github.readingbat.server.PipelineCall
+import com.github.readingbat.server.RedirectException
 import com.github.readingbat.server.ServerUtils.queryParam
 import com.google.common.util.concurrent.RateLimiter
 import io.ktor.application.call
@@ -52,24 +51,22 @@ import java.io.IOException
 internal object PasswordReset : KLogging() {
   private val unknownUserLimiter = RateLimiter.create(0.5) // rate 2.0 is "2 permits per second"
 
-  suspend fun PipelineCall.sendPasswordReset(content: ReadingBatContent, redis: Jedis) {
+  suspend fun PipelineCall.sendPasswordReset(content: ReadingBatContent, redis: Jedis): String {
     val parameters = call.receiveParameters()
     val email = parameters[EMAIL] ?: ""
-    when {
+    return when {
       email.isEmpty() -> {
-        respondWith {
-          passwordResetPage(content,
-                            redis,
-                            "",
-                            "Unable to send password reset email -- missing email address")
-        }
+        passwordResetPage(content,
+                          redis,
+                          "",
+                          "Unable to send password reset email -- missing email address")
       }
       email.isNotValidEmail() -> {
-        respondWith { passwordResetPage(content, redis, "", "Invalid email address: $email") }
+        passwordResetPage(content, redis, "", "Invalid email address: $email")
       }
       !isValidEmail(email, redis) -> {
         unknownUserLimiter.acquire()
-        respondWith { passwordResetPage(content, redis, "", "Unknown user: $email") }
+        passwordResetPage(content, redis, "", "Unknown user: $email")
       }
       else -> {
         try {
@@ -108,16 +105,16 @@ internal object PasswordReset : KLogging() {
           }
 
           val returnPath = queryParam(RETURN_PATH) ?: "/"
-          redirectTo { "$returnPath?$MSG=${"Password reset email sent to $email".encode()}" }
+          throw RedirectException("$returnPath?$MSG=${"Password reset email sent to $email".encode()}")
         } catch (e: ResetPasswordException) {
           logger.info { e }
-          respondWith { passwordResetPage(content, redis, "", "Unable to send password reset email to $email") }
+          passwordResetPage(content, redis, "", "Unable to send password reset email to $email")
         }
       }
     }
   }
 
-  suspend fun PipelineCall.changePassword(content: ReadingBatContent, redis: Jedis) =
+  suspend fun PipelineCall.changePassword(content: ReadingBatContent, redis: Jedis): String =
     try {
       val parameters = call.receiveParameters()
       val resetId = parameters[RESET_ID] ?: ""
@@ -146,11 +143,11 @@ internal object PasswordReset : KLogging() {
         tx.hset(userInfoKey, DIGEST_FIELD, newDigest)  // Set new password
         tx.exec()
       }
-      redirectTo { "/?$MSG=${"Password reset for $email".encode()}" }
+      throw RedirectException("/?$MSG=${"Password reset for $email".encode()}")
     } catch (e: ResetPasswordException) {
       logger.info { e }
-      respondWith { passwordResetPage(content, redis, e.resetId, e.msg) }
+      passwordResetPage(content, redis, e.resetId, e.msg)
     }
 
-  private class ResetPasswordException(val msg: String, val resetId: String = "") : Exception(msg)
+  class ResetPasswordException(val msg: String, val resetId: String = "") : Exception(msg)
 }
