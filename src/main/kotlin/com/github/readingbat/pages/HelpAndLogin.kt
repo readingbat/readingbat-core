@@ -17,7 +17,6 @@
 
 package com.github.readingbat.pages
 
-import com.github.pambrose.common.redis.RedisUtils.withRedisPool
 import com.github.readingbat.misc.AuthRoutes.LOGOUT
 import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.Endpoints.ABOUT_ENDPOINT
@@ -28,15 +27,16 @@ import com.github.readingbat.misc.FormFields.EMAIL
 import com.github.readingbat.misc.FormFields.PASSWORD
 import com.github.readingbat.misc.UserPrincipal
 import kotlinx.html.*
+import redis.clients.jedis.Jedis
 
 internal object HelpAndLogin {
 
-  fun BODY.helpAndLogin(principal: UserPrincipal?, loginPath: String) {
+  fun BODY.helpAndLogin(redis: Jedis?, principal: UserPrincipal?, loginPath: String) {
 
     div {
       style = "float:right; margin:0px; border: 1px solid lightgray; margin-left: 10px; padding: 5px;"
       table {
-        if (principal != null) logout(principal, loginPath) else login(loginPath)
+        if (principal != null && redis != null) logout(redis, principal, loginPath) else login(loginPath)
       }
     }
 
@@ -66,9 +66,9 @@ internal object HelpAndLogin {
     }
   }
 
-  private fun TABLE.logout(principal: UserPrincipal, loginPath: String) {
+  private fun TABLE.logout(redis: Jedis, principal: UserPrincipal, loginPath: String) {
     tr {
-      val email = withRedisPool { redis -> principal.email(redis) }
+      val email = principal.email(redis)
       val elems = email.split("@")
       td {
         +elems[0]

@@ -19,12 +19,15 @@ package com.github.readingbat.server
 
 import com.github.pambrose.common.util.FileSource
 import com.github.readingbat.dsl.readDsl
+import com.github.readingbat.misc.Constants.STATIC_ROOT
 import com.github.readingbat.server.AdminRoutes.adminRoutes
 import com.github.readingbat.server.Installs.installs
 import com.github.readingbat.server.Locations.locations
 import com.github.readingbat.server.ServerUtils.property
 import com.github.readingbat.server.WsEndoints.wsEndpoints
 import io.ktor.application.Application
+import io.ktor.http.content.resources
+import io.ktor.http.content.static
 import io.ktor.routing.routing
 import io.ktor.server.cio.CIO
 import io.ktor.server.engine.commandLineEnvironment
@@ -60,6 +63,7 @@ internal fun Application.module() {
     locations(content)
     userRoutes(content)
     wsEndpoints()
+    static(STATIC_ROOT) { resources("static") }
   }
 }
 

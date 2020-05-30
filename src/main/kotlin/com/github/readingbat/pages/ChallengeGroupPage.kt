@@ -17,7 +17,6 @@
 
 package com.github.readingbat.pages
 
-import com.github.pambrose.common.redis.RedisUtils.withRedisPool
 import com.github.pambrose.common.util.decode
 import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.ChallengeGroup
@@ -55,6 +54,7 @@ internal object ChallengeGroupPage {
   }
 
   fun PipelineCall.challengeGroupPage(content: ReadingBatContent,
+                                      redis: Jedis?,
                                       challengeGroup: ChallengeGroup<*>,
                                       loginAttempt: Boolean) =
     createHTML()
@@ -85,7 +85,7 @@ internal object ChallengeGroupPage {
 
         body {
           val msg = queryParam(MSG) ?: ""
-          bodyHeader(principal, loginAttempt, content, languageType, loginPath, msg)
+          bodyHeader(redis, principal, loginAttempt, content, languageType, loginPath, msg)
 
           h2 { +groupName.decode() }
 
@@ -95,15 +95,13 @@ internal object ChallengeGroupPage {
             val rows = size.rows(cols)
             val userId = userIdByPrincipal(principal)
 
-            withRedisPool { redis ->
-              (0 until rows).forEach { i ->
-                tr {
-                  style = "height:30"
-                  challenges.apply {
-                    elementAt(i).also { funcCall(redis, userId, it) }
-                    elementAtOrNull(i + rows)?.also { funcCall(redis, userId, it) } ?: td {}
-                    elementAtOrNull(i + (2 * rows))?.also { funcCall(redis, userId, it) } ?: td {}
-                  }
+            (0 until rows).forEach { i ->
+              tr {
+                style = "height:30"
+                challenges.apply {
+                  elementAt(i).also { funcCall(redis, userId, it) }
+                  elementAtOrNull(i + rows)?.also { funcCall(redis, userId, it) } ?: td {}
+                  elementAtOrNull(i + (2 * rows))?.also { funcCall(redis, userId, it) } ?: td {}
                 }
               }
             }

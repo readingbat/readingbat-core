@@ -36,6 +36,7 @@ import io.ktor.request.receiveParameters
 import io.ktor.response.respondText
 import kotlinx.coroutines.delay
 import mu.KLogging
+import redis.clients.jedis.Jedis
 import javax.script.ScriptException
 import kotlin.time.milliseconds
 
@@ -110,7 +111,7 @@ internal object CheckAnswers : KLogging() {
       else -> toInt() == that.toInt()
     }
 
-  suspend fun PipelineCall.checkAnswers(content: ReadingBatContent) {
+  suspend fun PipelineCall.checkAnswers(content: ReadingBatContent, redis: Jedis?) {
     val params = call.receiveParameters()
     val compareMap = params.entries().map { it.key to it.value[0] }.toMap()
     val names = ChallengeNames(compareMap)
@@ -158,7 +159,8 @@ internal object CheckAnswers : KLogging() {
       }
 
     // Save whether all the answers for the challenge were correct
-    saveAnswers(content, names, compareMap, funcInfo, userResps, results)
+    if (redis != null)
+      saveAnswers(content, redis, names, compareMap, funcInfo, userResps, results)
 
     /*
     results

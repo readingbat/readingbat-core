@@ -43,8 +43,6 @@ internal object Endpoints {
   const val USER_PREFS_ENDPOINT = "/user-prefs"
   const val ADMIN_ENDPOINT = "/admin"
   const val ABOUT_ENDPOINT = "/about.html"
-  const val CREATE_CLASS_ENDPOINT = "/create-class"
-  const val CLASSROOM_ENDPOINT = "/classroom.html"
   const val CREATE_ACCOUNT_ENDPOINT = "/create-account"
   const val PRIVACY_ENDPOINT = "/privacy.html"
   const val PASSWORD_CHANGE_ENDPOINT = "/password-change"

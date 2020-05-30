@@ -17,6 +17,8 @@
 
 package com.github.readingbat.server
 
+import com.github.pambrose.common.redis.RedisUtils.withRedisPool
+import com.github.pambrose.common.redis.RedisUtils.withSuspendingRedisPool
 import com.github.pambrose.common.response.redirectTo
 import com.github.pambrose.common.response.respondWith
 import com.github.readingbat.dsl.ReadingBatContent
@@ -30,9 +32,7 @@ import com.github.readingbat.misc.Constants.STATIC_ROOT
 import com.github.readingbat.misc.Endpoints.ABOUT_ENDPOINT
 import com.github.readingbat.misc.Endpoints.ADMIN_ENDPOINT
 import com.github.readingbat.misc.Endpoints.CHECK_ANSWERS_ROOT
-import com.github.readingbat.misc.Endpoints.CLASSROOM_ENDPOINT
 import com.github.readingbat.misc.Endpoints.CREATE_ACCOUNT_ENDPOINT
-import com.github.readingbat.misc.Endpoints.CREATE_CLASS_ENDPOINT
 import com.github.readingbat.misc.Endpoints.CSS_ENDPOINT
 import com.github.readingbat.misc.Endpoints.FAV_ICON
 import com.github.readingbat.misc.Endpoints.PASSWORD_CHANGE_ENDPOINT
@@ -43,9 +43,8 @@ import com.github.readingbat.misc.UserPrincipal
 import com.github.readingbat.misc.cssContent
 import com.github.readingbat.pages.AboutPage.aboutPage
 import com.github.readingbat.pages.AdminPage.adminDataPage
-import com.github.readingbat.pages.ClassroomPage.classroomPage
-import com.github.readingbat.pages.ClassroomPage.createClass
 import com.github.readingbat.pages.CreateAccountPage.createAccountPage
+import com.github.readingbat.pages.DbmsDownPage.dbmsDownPage
 import com.github.readingbat.pages.PageCommon.defaultLanguageTab
 import com.github.readingbat.pages.PasswordResetPage.passwordResetPage
 import com.github.readingbat.pages.PrivacyPage.privacyPage
@@ -59,48 +58,87 @@ import com.github.readingbat.posts.UserPrefs.userPrefs
 import com.github.readingbat.server.ServerUtils.queryParam
 import io.ktor.application.call
 import io.ktor.http.ContentType.Text.CSS
-import io.ktor.http.content.resources
-import io.ktor.http.content.static
 import io.ktor.routing.Routing
 import io.ktor.routing.get
 import io.ktor.routing.post
 import io.ktor.sessions.clear
 import io.ktor.sessions.sessions
+import redis.clients.jedis.Jedis
+
 
 internal fun Routing.userRoutes(content: ReadingBatContent) {
+
+  suspend fun PipelineCall.respondWithDbmsCheck(block: PipelineCall.(redis: Jedis) -> String) =
+    respondWith {
+      withRedisPool { redis ->
+        if (redis == null)
+          dbmsDownPage(content)
+        else
+          block(redis)
+      }
+    }
+
+  suspend fun PipelineCall.respondWithSuspendingDbmsCheck(block: suspend PipelineCall.(redis: Jedis) -> String) =
+    respondWith {
+      withSuspendingRedisPool { redis ->
+        if (redis == null)
+          dbmsDownPage(content)
+        else
+          block(redis)
+      }
+    }
 
   get(ROOT) { redirectTo { defaultLanguageTab(content) } }
 
   get(CHALLENGE_ROOT) { redirectTo { defaultLanguageTab(content) } }
 
-  post(CHECK_ANSWERS_ROOT) { checkAnswers(content) }
-
-  get(CREATE_ACCOUNT_ENDPOINT) { respondWith { createAccountPage(content) } }
-
-  post(CREATE_ACCOUNT_ENDPOINT) { createAccount(content) }
-
-  get(USER_PREFS_ENDPOINT) { respondWith { userPrefsPage(content, "", false) } }
-
-  post(USER_PREFS_ENDPOINT) { respondWith { userPrefs(content) } }
-
   get(PRIVACY_ENDPOINT) { respondWith { privacyPage(content) } }
 
   get(ABOUT_ENDPOINT) { respondWith { aboutPage(content) } }
 
-  get(CLASSROOM_ENDPOINT) { respondWith { classroomPage(content) } }
+  post(CHECK_ANSWERS_ROOT) { withSuspendingRedisPool { redis -> checkAnswers(content, redis) } }
 
-  get(CREATE_CLASS_ENDPOINT) { respondWith { createClass(content) } }
+  get(CREATE_ACCOUNT_ENDPOINT) { respondWith { createAccountPage(content) } }
 
-  get(ADMIN_ENDPOINT) { respondWith { adminDataPage(content) } }
+  post(CREATE_ACCOUNT_ENDPOINT) {
+    withSuspendingRedisPool { redis ->
+      if (redis == null)
+        dbmsDownPage(content)
+      else
+        createAccount(content, redis)
+    }
+  }
 
-  post(ADMIN_ENDPOINT) { respondWith { adminActions(content) } }
+  get(USER_PREFS_ENDPOINT) { respondWithDbmsCheck { redis -> userPrefsPage(content, redis, "", false) } }
+
+  post(USER_PREFS_ENDPOINT) { respondWithSuspendingDbmsCheck { redis -> userPrefs(content, redis) } }
+
+  get(ADMIN_ENDPOINT) { respondWithDbmsCheck { redis -> adminDataPage(content, redis) } }
+
+  post(ADMIN_ENDPOINT) { respondWithSuspendingDbmsCheck { redis -> adminActions(content, redis) } }
 
   // RESET_ID is passed here when user clicks on email URL
-  get(PASSWORD_RESET_ENDPOINT) { respondWith { passwordResetPage(content, queryParam(RESET_ID) ?: "", "") } }
+  get(PASSWORD_RESET_ENDPOINT) {
+    respondWithDbmsCheck { redis -> passwordResetPage(content, redis, queryParam(RESET_ID) ?: "", "") }
+  }
 
-  post(PASSWORD_RESET_ENDPOINT) { sendPasswordReset(content) }
+  post(PASSWORD_RESET_ENDPOINT) {
+    withSuspendingRedisPool { redis ->
+      if (redis == null)
+        dbmsDownPage(content)
+      else
+        sendPasswordReset(content, redis)
+    }
+  }
 
-  post(PASSWORD_CHANGE_ENDPOINT) { changePassword(content) }
+  post(PASSWORD_CHANGE_ENDPOINT) {
+    withSuspendingRedisPool { redis ->
+      if (redis == null)
+        dbmsDownPage(content)
+      else
+        changePassword(content, redis)
+    }
+  }
 
   get(LOGOUT) {
     // Purge UserPrincipal from cookie data
@@ -111,8 +149,4 @@ internal fun Routing.userRoutes(content: ReadingBatContent) {
   get(CSS_ENDPOINT) { respondWith(CSS) { cssContent } }
 
   get(FAV_ICON) { redirectTo { "$STATIC_ROOT/$ICONS/favicon.ico" } }
-
-  static(STATIC_ROOT) {
-    resources("static")
-  }
 }

@@ -17,7 +17,6 @@
 
 package com.github.readingbat.misc
 
-import com.github.pambrose.common.redis.RedisUtils.withRedisPool
 import com.github.pambrose.common.util.newStringSalt
 import com.github.pambrose.common.util.randomId
 import com.github.pambrose.common.util.sha256
@@ -119,7 +118,7 @@ internal class UserId(val id: String = randomId(25)) {
     }
   }
 
-  fun fetchEnrolledClassCode(redis: Jedis?) = redis?.hget(userInfoKey, ENROLLED_CLASS_CODE_FIELD) ?: ""
+  fun fetchEnrolledClassCode(redis: Jedis) = redis.hget(userInfoKey, ENROLLED_CLASS_CODE_FIELD) ?: ""
 
   fun fetchActiveClassCode(redis: Jedis?) = redis?.hget(userInfoKey, ACTIVE_CLASS_CODE_FIELD) ?: ""
 
@@ -217,86 +216,80 @@ internal class UserId(val id: String = randomId(25)) {
     }
 
     fun PipelineCall.saveAnswers(content: ReadingBatContent,
+                                 redis: Jedis,
                                  names: ChallengeNames,
                                  compareMap: Map<String, String>,
                                  funcInfo: FunctionInfo,
                                  userResps: List<Map.Entry<String, List<String>>>,
-                                 results: List<ChallengeResults>) =
-      withRedisPool { redis ->
-        if (redis != null) {
-          val principal = fetchPrincipal()
-          val browserSession by lazy { call.sessions.get<BrowserSession>() }
-          val userId = userIdByPrincipal(principal)
-          val challengeAnswerKey = challengeAnswersKey(userId, browserSession, names)
-          val correctAnswersKey = correctAnswersKey(userId, browserSession, names)
-          val classCode = userId?.fetchEnrolledClassCode(redis) ?: ""
-          val complete = results.all { it.correct }
-          val numCorrect = results.count { it.correct }
+                                 results: List<ChallengeResults>) {
+      val principal = fetchPrincipal()
+      val browserSession by lazy { call.sessions.get<BrowserSession>() }
+      val userId = userIdByPrincipal(principal)
+      val challengeAnswerKey = challengeAnswersKey(userId, browserSession, names)
+      val correctAnswersKey = correctAnswersKey(userId, browserSession, names)
+      val classCode = userId?.fetchEnrolledClassCode(redis) ?: ""
+      val complete = results.all { it.correct }
+      val numCorrect = results.count { it.correct }
 
-          // Save if all answers were correct
-          if (correctAnswersKey.isNotEmpty()) {
-            redis.set(correctAnswersKey, complete.toString())
-          }
-
-          if (challengeAnswerKey.isNotEmpty()) {
-            val answerMap =
-              userResps.indices.mapNotNull { i ->
-                  val userResp = compareMap[RESP + i]?.trim()
-                    ?: throw InvalidConfigurationException("Missing user response")
-                  if (userResp.isNotEmpty()) funcInfo.invocations[i] to userResp else null
-                }
-                .toMap()
-
-            // Save the last answers given
-            answerMap.forEach { (invocation, userResp) ->
-              redis.hset(challengeAnswerKey, invocation, userResp)
-            }
-          }
-          // Save the history of each answer on a per-invocation basis
-          results
-            .filter { it.answered }
-            .forEach { result ->
-              val answerHistoryKey = answerHistoryKey(userId, browserSession, names, result.invocation)
-              if (answerHistoryKey.isNotEmpty()) {
-                val history =
-                  gson.fromJson(redis[answerHistoryKey], ChallengeHistory::class.java)
-                    ?: ChallengeHistory(result.invocation)
-                history.apply { if (result.correct) markCorrect() else markIncorrect(result.userResponse) }
-                val json = gson.toJson(history)
-                redis.set(answerHistoryKey, json)
-
-                // Publish to challenge dashboard
-                if (classCode.isNotEmpty() && userId != null) {
-                  val browserInfo =
-                    DashboardInfo(content.maxHistoryLength, userId.id, complete, numCorrect, history)
-                  logger.info { "Publishing data $json" }
-                  redis.publish(classCode, gson.toJson(browserInfo))
-                }
-              }
-            }
-        }
+      // Save if all answers were correct
+      if (correctAnswersKey.isNotEmpty()) {
+        redis.set(correctAnswersKey, complete.toString())
       }
 
-    fun isValidPrincipal(principal: UserPrincipal) = withRedisPool { redis -> isValidPrincipal(principal, redis) }
+      if (challengeAnswerKey.isNotEmpty()) {
+        val answerMap =
+          userResps.indices.mapNotNull { i ->
+              val userResp = compareMap[RESP + i]?.trim()
+                ?: throw InvalidConfigurationException("Missing user response")
+              if (userResp.isNotEmpty()) funcInfo.invocations[i] to userResp else null
+            }
+            .toMap()
 
-    fun isValidPrincipal(principal: UserPrincipal, redis: Jedis?): Boolean {
-      val userId = userIdByPrincipal(principal) ?: return false
-      return redis?.hlen(userId.userInfoKey) ?: 0 > 0
+        // Save the last answers given
+        answerMap.forEach { (invocation, userResp) ->
+          redis.hset(challengeAnswerKey, invocation, userResp)
+        }
+      }
+      // Save the history of each answer on a per-invocation basis
+      results
+        .filter { it.answered }
+        .forEach { result ->
+          val answerHistoryKey = answerHistoryKey(userId, browserSession, names, result.invocation)
+          if (answerHistoryKey.isNotEmpty()) {
+            val history =
+              gson.fromJson(redis[answerHistoryKey], ChallengeHistory::class.java)
+                ?: ChallengeHistory(result.invocation)
+            history.apply { if (result.correct) markCorrect() else markIncorrect(result.userResponse) }
+            val json = gson.toJson(history)
+            redis.set(answerHistoryKey, json)
+
+            // Publish to challenge dashboard
+            if (classCode.isNotEmpty() && userId != null) {
+              val browserInfo =
+                DashboardInfo(content.maxHistoryLength, userId.id, complete, numCorrect, history)
+              logger.info { "Publishing data $json" }
+              redis.publish(classCode, gson.toJson(browserInfo))
+            }
+          }
+        }
     }
 
-    fun isValidEmail(email: String) = lookupUserIdByEmail(email) != null
+    fun isValidPrincipal(principal: UserPrincipal, redis: Jedis): Boolean {
+      val userId = userIdByPrincipal(principal) ?: return false
+      return redis.hlen(userId.userInfoKey) > 0
+    }
 
-    fun lookupUserIdByEmail(email: String): UserId? = withRedisPool { redis -> lookupUserIdByEmail(email, redis) }
+    fun isValidEmail(email: String, redis: Jedis) = lookupUserIdByEmail(email, redis) != null
 
-    fun lookupUserIdByEmail(email: String, redis: Jedis?): UserId? {
+    fun lookupUserIdByEmail(email: String, redis: Jedis): UserId? {
       val userEmailKey = userEmailKey(email)
-      val id = redis?.get(userEmailKey) ?: ""
+      val id = redis.get(userEmailKey) ?: ""
       return if (id.isNotEmpty()) UserId(id) else null
     }
 
-    fun lookupDigestInfoByUserId(userId: UserId, redis: Jedis?): Pair<String, String> {
-      val salt = redis?.hget(userId.userInfoKey, SALT_FIELD) ?: ""
-      val digest = redis?.hget(userId.userInfoKey, DIGEST_FIELD) ?: ""
+    fun lookupDigestInfoByUserId(userId: UserId, redis: Jedis): Pair<String, String> {
+      val salt = redis.hget(userId.userInfoKey, SALT_FIELD) ?: ""
+      val digest = redis.hget(userId.userInfoKey, DIGEST_FIELD) ?: ""
       return salt to digest
     }
   }

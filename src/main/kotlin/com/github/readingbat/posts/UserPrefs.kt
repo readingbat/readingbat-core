@@ -17,12 +17,10 @@
 
 package com.github.readingbat.posts
 
-import com.github.pambrose.common.redis.RedisUtils.withSuspendingRedisPool
 import com.github.pambrose.common.util.randomId
 import com.github.pambrose.common.util.sha256
 import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.misc.Constants.DBMS_DOWN
 import com.github.readingbat.misc.FormFields.CLASSES_CHOICE
 import com.github.readingbat.misc.FormFields.CLASSES_DISABLED
 import com.github.readingbat.misc.FormFields.CLASS_CODE
@@ -61,37 +59,31 @@ import redis.clients.jedis.exceptions.JedisException
 
 internal object UserPrefs : KLogging() {
 
-  suspend fun PipelineCall.userPrefs(content: ReadingBatContent) =
-    withSuspendingRedisPool { redis ->
-      val parameters = call.receiveParameters()
+  suspend fun PipelineCall.userPrefs(content: ReadingBatContent, redis: Jedis): String {
+    val parameters = call.receiveParameters()
+    val principal = fetchPrincipal()
+    val userId = userIdByPrincipal(principal)
 
-      if (redis == null) {
-        userPrefsPage(content, DBMS_DOWN, true)
-      }
-      else {
-        val principal = fetchPrincipal()
-        val userId = userIdByPrincipal(principal)
-        if (userId == null || principal == null) {
-          requestLogInPage(content)
-        }
-        else {
-          when (val action = parameters[USER_PREFS_ACTION] ?: "") {
-            UPDATE_PASSWORD -> updatePassword(content, parameters, userId, redis)
-            JOIN_CLASS -> joinClass(content, parameters, userId, redis)
-            CREATE_CLASS -> createClass(content, userId, redis, parameters[CLASS_DESC] ?: "")
-            UPDATE_CLASS -> updateActiveClass(content, userId, redis, parameters[CLASSES_CHOICE] ?: "")
-            DELETE_CLASS -> deleteClass(content, userId, redis, parameters[CLASS_CODE] ?: "")
-            DELETE_ACCOUNT -> deleteAccount(content, principal, userId, redis)
-            else -> throw InvalidConfigurationException("Invalid action: $action")
-          }
-        }
+    return if (userId == null || principal == null) {
+      requestLogInPage(content, redis)
+    }
+    else {
+      when (val action = parameters[USER_PREFS_ACTION] ?: "") {
+        UPDATE_PASSWORD -> updatePassword(content, redis, parameters, userId)
+        JOIN_CLASS -> joinClass(content, parameters, userId, redis)
+        CREATE_CLASS -> createClass(content, redis, userId, parameters[CLASS_DESC] ?: "")
+        UPDATE_CLASS -> updateActiveClass(content, redis, userId, parameters[CLASSES_CHOICE] ?: "")
+        DELETE_CLASS -> deleteClass(content, redis, userId, parameters[CLASS_CODE] ?: "")
+        DELETE_ACCOUNT -> deleteAccount(content, principal, userId, redis)
+        else -> throw InvalidConfigurationException("Invalid action: $action")
       }
     }
+  }
 
   private fun PipelineCall.updatePassword(content: ReadingBatContent,
+                                          redis: Jedis,
                                           parameters: Parameters,
-                                          userId: UserId,
-                                          redis: Jedis): String {
+                                          userId: UserId): String {
     val currPassword = parameters[CURR_PASSWORD] ?: ""
     val newPassword = parameters[NEW_PASSWORD] ?: ""
     val confirmPassword = parameters[CONFIRM_PASSWORD] ?: ""
@@ -113,7 +105,7 @@ internal object UserPrefs : KLogging() {
         }
       }
 
-    return userPrefsPage(content, msg.first, msg.second)
+    return userPrefsPage(content, redis, msg.first, msg.second)
   }
 
   private fun PipelineCall.joinClass(content: ReadingBatContent,
@@ -123,10 +115,11 @@ internal object UserPrefs : KLogging() {
     val classCode = parameters[CLASS_CODE] ?: ""
     return try {
       userId.enrollIntoClass(classCode, redis)
-      userPrefsPage(content, "Enrolled in class $classCode", false)
+      userPrefsPage(content, redis, "Enrolled in class $classCode", false)
     } catch (e: JedisException) {
       logger.info { e }
       userPrefsPage(content,
+                    redis,
                     "Unable to enroll in class [${e.message ?: ""}]",
                     true,
                     defaultClassCode = classCode)
@@ -134,11 +127,11 @@ internal object UserPrefs : KLogging() {
   }
 
   private fun PipelineCall.createClass(content: ReadingBatContent,
-                                       userId: UserId,
                                        redis: Jedis,
+                                       userId: UserId,
                                        classDesc: String) =
     if (classDesc.isBlank()) {
-      userPrefsPage(content, "Empty class description", true)
+      userPrefsPage(content, redis, "Empty class description", true)
     }
     else {
       val classCode = randomId(15)
@@ -156,12 +149,12 @@ internal object UserPrefs : KLogging() {
 
         tx.exec()
       }
-      userPrefsPage(content, "Created class code: $classCode", false)
+      userPrefsPage(content, redis, "Created class code: $classCode", false)
     }
 
   private fun PipelineCall.updateActiveClass(content: ReadingBatContent,
-                                             userId: UserId,
                                              redis: Jedis,
+                                             userId: UserId,
                                              classCode: String): String {
     val activeClassCode = redis.hget(userId.userInfoKey, ACTIVE_CLASS_CODE_FIELD)
     val msg =
@@ -176,18 +169,18 @@ internal object UserPrefs : KLogging() {
           "Current active class updated to: $classCode [${redis[classDescKey(classCode)] ?: "Missing Description"}]"
       }
 
-    return userPrefsPage(content, msg, false)
+    return userPrefsPage(content, redis, msg, false)
   }
 
   private fun PipelineCall.deleteClass(content: ReadingBatContent,
-                                       userId: UserId,
                                        redis: Jedis,
+                                       userId: UserId,
                                        classCode: String) =
     if (classCode.isBlank()) {
-      userPrefsPage(content, "Empty class code", true)
+      userPrefsPage(content, redis, "Empty class code", true)
     }
     else if (!redis.exists(classCodeEnrollmentKey(classCode))) {
-      userPrefsPage(content, "Invalid class code: $classCode", true)
+      userPrefsPage(content, redis, "Invalid class code: $classCode", true)
     }
     else {
       redis.multi().also { tx ->
@@ -203,7 +196,7 @@ internal object UserPrefs : KLogging() {
         tx.exec()
       }
 
-      userPrefsPage(content, "Deleted class code: $classCode", false)
+      userPrefsPage(content, redis, "Deleted class code: $classCode", false)
     }
 
   private fun PipelineCall.deleteAccount(content: ReadingBatContent,
@@ -214,6 +207,6 @@ internal object UserPrefs : KLogging() {
     logger.info { "Deleting user $email" }
     userId.deleteUser(principal, redis)
     call.sessions.clear<UserPrincipal>()
-    return requestLogInPage(content, false, "User $email deleted")
+    return requestLogInPage(content, redis, false, "User $email deleted")
   }
 }

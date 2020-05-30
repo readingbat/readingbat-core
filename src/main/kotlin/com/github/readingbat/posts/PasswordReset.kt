@@ -17,8 +17,6 @@
 
 package com.github.readingbat.posts
 
-import com.github.pambrose.common.redis.RedisUtils.withRedisPool
-import com.github.pambrose.common.redis.RedisUtils.withSuspendingRedisPool
 import com.github.pambrose.common.response.redirectTo
 import com.github.pambrose.common.response.respondWith
 import com.github.pambrose.common.util.encode
@@ -26,7 +24,6 @@ import com.github.pambrose.common.util.isNotValidEmail
 import com.github.pambrose.common.util.randomId
 import com.github.pambrose.common.util.sha256
 import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.misc.Constants.DBMS_DOWN
 import com.github.readingbat.misc.Constants.INVALID_RESET_ID
 import com.github.readingbat.misc.Constants.MSG
 import com.github.readingbat.misc.Constants.RESET_ID
@@ -49,49 +46,50 @@ import com.google.common.util.concurrent.RateLimiter
 import io.ktor.application.call
 import io.ktor.request.receiveParameters
 import mu.KLogging
+import redis.clients.jedis.Jedis
 import java.io.IOException
 
 internal object PasswordReset : KLogging() {
   private val unknownUserLimiter = RateLimiter.create(0.5) // rate 2.0 is "2 permits per second"
 
-  suspend fun PipelineCall.sendPasswordReset(content: ReadingBatContent) {
+  suspend fun PipelineCall.sendPasswordReset(content: ReadingBatContent, redis: Jedis) {
     val parameters = call.receiveParameters()
     val email = parameters[EMAIL] ?: ""
     when {
       email.isEmpty() -> {
-        respondWith { passwordResetPage(content, "", "Unable to send password reset email -- missing email address") }
+        respondWith {
+          passwordResetPage(content,
+                            redis,
+                            "",
+                            "Unable to send password reset email -- missing email address")
+        }
       }
       email.isNotValidEmail() -> {
-        respondWith { passwordResetPage(content, "", "Invalid email address: $email") }
+        respondWith { passwordResetPage(content, redis, "", "Invalid email address: $email") }
       }
-      !isValidEmail(email) -> {
+      !isValidEmail(email, redis) -> {
         unknownUserLimiter.acquire()
-        respondWith { passwordResetPage(content, "", "Unknown user: $email") }
+        respondWith { passwordResetPage(content, redis, "", "Unknown user: $email") }
       }
       else -> {
         try {
           val resetId = randomId(15)
 
-          withRedisPool { redis ->
-            if (redis == null)
-              throw ResetPasswordException(DBMS_DOWN)
+          // Lookup and remove previous value if it exists
+          val userId = lookupUserIdByEmail(email, redis) ?: throw ResetPasswordException("Unable to find $email")
+          val userIdPasswordResetKey = userId.userIdPasswordResetKey()
+          val previousResetId = redis.get(userIdPasswordResetKey) ?: ""
 
-            // Lookup and remove previous value if it exists
-            val userId = lookupUserIdByEmail(email, redis) ?: throw ResetPasswordException("Unable to find $email")
-            val userIdPasswordResetKey = userId.userIdPasswordResetKey()
-            val previousResetId = redis.get(userIdPasswordResetKey) ?: ""
-
-            redis.multi().also { tx ->
-              if (previousResetId.isNotEmpty()) {
-                tx.del(userIdPasswordResetKey)
-                tx.del(passwordResetKey(previousResetId))
-              }
-
-              tx.set(userIdPasswordResetKey, resetId)
-              tx.set(passwordResetKey(resetId), email)
-
-              tx.exec()
+          redis.multi().also { tx ->
+            if (previousResetId.isNotEmpty()) {
+              tx.del(userIdPasswordResetKey)
+              tx.del(passwordResetKey(previousResetId))
             }
+
+            tx.set(userIdPasswordResetKey, resetId)
+            tx.set(passwordResetKey(resetId), email)
+
+            tx.exec()
           }
 
           try {
@@ -113,13 +111,13 @@ internal object PasswordReset : KLogging() {
           redirectTo { "$returnPath?$MSG=${"Password reset email sent to $email".encode()}" }
         } catch (e: ResetPasswordException) {
           logger.info { e }
-          respondWith { passwordResetPage(content, "", "Unable to send password reset email to $email") }
+          respondWith { passwordResetPage(content, redis, "", "Unable to send password reset email to $email") }
         }
       }
     }
   }
 
-  suspend fun PipelineCall.changePassword(content: ReadingBatContent) =
+  suspend fun PipelineCall.changePassword(content: ReadingBatContent, redis: Jedis) =
     try {
       val parameters = call.receiveParameters()
       val resetId = parameters[RESET_ID] ?: ""
@@ -130,34 +128,29 @@ internal object PasswordReset : KLogging() {
       if (passwordError.isNotEmpty())
         throw ResetPasswordException(passwordError, resetId)
 
-      withSuspendingRedisPool { redis ->
-        if (redis == null)
-          throw ResetPasswordException(DBMS_DOWN, resetId)
+      val passwordResetKey = passwordResetKey(resetId)
+      val email = redis.get(passwordResetKey) ?: throw ResetPasswordException(INVALID_RESET_ID)
+      val userId = lookupUserIdByEmail(email, redis) ?: throw ResetPasswordException("Unable to find $email")
+      val userIdPasswordResetKey = userId.userIdPasswordResetKey()
+      val userInfoKey = userId.userInfoKey
+      val salt = redis.hget(userInfoKey, SALT_FIELD)
+      val newDigest = newPassword.sha256(salt)
+      val oldDigest = redis.hget(userInfoKey, DIGEST_FIELD)
 
-        val passwordResetKey = passwordResetKey(resetId)
-        val email = redis.get(passwordResetKey) ?: throw ResetPasswordException(INVALID_RESET_ID)
-        val userId = lookupUserIdByEmail(email, redis) ?: throw ResetPasswordException("Unable to find $email")
-        val userIdPasswordResetKey = userId.userIdPasswordResetKey()
-        val userInfoKey = userId.userInfoKey
-        val salt = redis.hget(userInfoKey, SALT_FIELD)
-        val newDigest = newPassword.sha256(salt)
-        val oldDigest = redis.hget(userInfoKey, DIGEST_FIELD)
+      if (newDigest == oldDigest)
+        throw ResetPasswordException("New password is the same as the current password", resetId)
 
-        if (newDigest == oldDigest)
-          throw ResetPasswordException("New password is the same as the current password", resetId)
-
-        redis.multi().also { tx ->
-          tx.del(userIdPasswordResetKey)
-          tx.del(passwordResetKey)
-          tx.hset(userInfoKey, DIGEST_FIELD, newDigest)  // Set new password
-          tx.exec()
-        }
-        redirectTo { "/?$MSG=${"Password reset for $email".encode()}" }
+      redis.multi().also { tx ->
+        tx.del(userIdPasswordResetKey)
+        tx.del(passwordResetKey)
+        tx.hset(userInfoKey, DIGEST_FIELD, newDigest)  // Set new password
+        tx.exec()
       }
+      redirectTo { "/?$MSG=${"Password reset for $email".encode()}" }
     } catch (e: ResetPasswordException) {
       logger.info { e }
-      respondWith { passwordResetPage(content, e.resetId, e.msg) }
+      respondWith { passwordResetPage(content, redis, e.resetId, e.msg) }
     }
 
-  class ResetPasswordException(val msg: String, val resetId: String = "") : Exception(msg)
+  private class ResetPasswordException(val msg: String, val resetId: String = "") : Exception(msg)
 }

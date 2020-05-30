@@ -17,7 +17,6 @@
 
 package com.github.readingbat.pages
 
-import com.github.pambrose.common.redis.RedisUtils.withRedisPool
 import com.github.readingbat.dsl.ChallengeGroup
 import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.dsl.ReadingBatContent
@@ -52,6 +51,7 @@ import redis.clients.jedis.Jedis
 internal object LanguageGroupPage {
 
   fun PipelineCall.languageGroupPage(content: ReadingBatContent,
+                                     redis: Jedis?,
                                      languageType: LanguageType,
                                      loginAttempt: Boolean) =
     createHTML()
@@ -71,7 +71,8 @@ internal object LanguageGroupPage {
           var cnt = 0
           var maxFound = false
           for (challenge in challenges) {
-            if (challenge.isCorrect(redis, userId, browserSession)) cnt++
+            if (challenge.isCorrect(redis, userId, browserSession))
+              cnt++
             if (cnt == maxCnt + 1) {
               maxFound = true
               break
@@ -97,7 +98,7 @@ internal object LanguageGroupPage {
 
         body {
           val msg = queryParam(MSG) ?: ""
-          bodyHeader(principal, loginAttempt, content, languageType, loginPath, msg, "Welcome to ReadingBat.")
+          bodyHeader(redis, principal, loginAttempt, content, languageType, loginPath, msg, "Welcome to ReadingBat.")
 
           table {
             val cols = 3
@@ -105,13 +106,11 @@ internal object LanguageGroupPage {
             val rows = size.rows(cols)
             val userId = userIdByPrincipal(principal)
 
-            withRedisPool { redis ->
-              (0 until rows).forEach { i ->
-                tr {
-                  groups[i].also { group -> groupItem(redis, userId, group) }
-                  groups.elementAtOrNull(i + rows)?.also { groupItem(redis, userId, it) } ?: td {}
-                  groups.elementAtOrNull(i + (2 * rows))?.also { groupItem(redis, userId, it) } ?: td {}
-                }
+            (0 until rows).forEach { i ->
+              tr {
+                groups[i].also { group -> groupItem(redis, userId, group) }
+                groups.elementAtOrNull(i + rows)?.also { groupItem(redis, userId, it) } ?: td {}
+                groups.elementAtOrNull(i + (2 * rows))?.also { groupItem(redis, userId, it) } ?: td {}
               }
             }
           }

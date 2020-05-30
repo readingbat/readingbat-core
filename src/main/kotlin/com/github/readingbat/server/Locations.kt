@@ -17,6 +17,7 @@
 
 package com.github.readingbat.server
 
+import com.github.pambrose.common.redis.RedisUtils.withRedisPool
 import com.github.pambrose.common.response.respondWith
 import com.github.readingbat.dsl.LanguageType.Companion.toLanguageType
 import com.github.readingbat.dsl.LanguageType.Kotlin
@@ -55,7 +56,9 @@ internal object Locations {
                                             loginAttempt: Boolean) =
     respondWith {
       content.checkLanguage(language.languageType)
-      languageGroupPage(content, language.languageType, loginAttempt)
+      withRedisPool { redis ->
+        languageGroupPage(content, redis, language.languageType, loginAttempt)
+      }
     }
 
   private suspend fun PipelineCall.group(content: ReadingBatContent,
@@ -63,7 +66,9 @@ internal object Locations {
                                          loginAttempt: Boolean) =
     respondWith {
       content.checkLanguage(groupLoc.languageType)
-      challengeGroupPage(content, content.findGroup(groupLoc), loginAttempt)
+      withRedisPool { redis ->
+        challengeGroupPage(content, redis, content.findGroup(groupLoc), loginAttempt)
+      }
     }
 
   private suspend fun PipelineCall.challenge(content: ReadingBatContent,
@@ -72,16 +77,21 @@ internal object Locations {
     respondWith {
       registerBrowserSession()
       content.checkLanguage(challengeLoc.languageType)
-      challengePage(content, content.findChallenge(challengeLoc), loginAttempt)
+      withRedisPool { redis ->
+        challengePage(content, redis, content.findChallenge(challengeLoc), loginAttempt)
+      }
     }
 
   private suspend fun PipelineCall.playground(content: ReadingBatContent,
                                               request: PlaygroundRequest,
                                               loginAttempt: Boolean) =
     respondWith {
-      playgroundPage(content,
-                     content.findLanguage(Kotlin).findChallenge(request.groupName, request.challengeName),
-                     loginAttempt)
+      withRedisPool { redis ->
+        playgroundPage(content,
+                       redis,
+                       content.findLanguage(Kotlin).findChallenge(request.groupName, request.challengeName),
+                       loginAttempt)
+      }
     }
 }
 

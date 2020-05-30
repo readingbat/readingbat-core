@@ -17,7 +17,6 @@
 
 package com.github.readingbat.posts
 
-import com.github.pambrose.common.redis.RedisUtils.withSuspendingRedisPool
 import com.github.pambrose.common.response.redirectTo
 import com.github.pambrose.common.response.respondWith
 import com.github.pambrose.common.util.encode
@@ -41,6 +40,7 @@ import io.ktor.request.receiveParameters
 import io.ktor.sessions.sessions
 import io.ktor.sessions.set
 import mu.KLogging
+import redis.clients.jedis.Jedis
 
 internal object CreateAccount : KLogging() {
 
@@ -63,7 +63,7 @@ internal object CreateAccount : KLogging() {
       else -> ""
     }
 
-  suspend fun PipelineCall.createAccount(content: ReadingBatContent) {
+  suspend fun PipelineCall.createAccount(content: ReadingBatContent, redis: Jedis) {
     val parameters = call.receiveParameters()
     val name = parameters[NAME] ?: ""
     val email = parameters[EMAIL] ?: ""
@@ -89,34 +89,29 @@ internal object CreateAccount : KLogging() {
                               msg = passwordError)
           }
         else
-          createAccount(content, name, email, password)
+          createAccount(content, redis, name, email, password)
       }
     }
   }
 
   private suspend fun PipelineCall.createAccount(content: ReadingBatContent,
+                                                 redis: Jedis,
                                                  name: String,
                                                  email: String,
                                                  password: String) {
-    withSuspendingRedisPool { redis ->
-      val returnPath = queryParam(RETURN_PATH) ?: "/"
-      if (redis == null) {
-        redirectTo { returnPath }
-      }
-      else {
-        createAccountLimiter.acquire() // may wait
+    val returnPath = queryParam(RETURN_PATH) ?: "/"
 
-        // Check if email already exists
-        if (redis.exists(userEmailKey(email))) {
-          respondWith { createAccountPage(content, msg = "Email already registered: $email") }
-        }
-        else {
-          // Create user
-          val userId = createUser(name, email, password, redis)
-          call.sessions.set(UserPrincipal(userId = userId.id))
-          redirectTo { "$returnPath?$MSG=${"User $email created".encode()}" }
-        }
-      }
+    createAccountLimiter.acquire() // may wait
+
+    // Check if email already exists
+    if (redis.exists(userEmailKey(email))) {
+      respondWith { createAccountPage(content, msg = "Email already registered: $email") }
+    }
+    else {
+      // Create user
+      val userId = createUser(name, email, password, redis)
+      call.sessions.set(UserPrincipal(userId = userId.id))
+      redirectTo { "$returnPath?$MSG=${"User $email created".encode()}" }
     }
   }
 }

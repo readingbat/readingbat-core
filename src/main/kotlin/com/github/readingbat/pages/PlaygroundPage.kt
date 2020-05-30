@@ -35,6 +35,7 @@ import com.github.readingbat.server.ServerUtils.fetchPrincipal
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 import org.apache.commons.text.StringEscapeUtils.escapeHtml4
+import redis.clients.jedis.Jedis
 import kotlin.collections.set
 
 // Playground customization details are here:
@@ -44,6 +45,7 @@ import kotlin.collections.set
 internal object PlaygroundPage {
 
   fun PipelineCall.playgroundPage(content: ReadingBatContent,
+                                  redis: Jedis?,
                                   challenge: Challenge,
                                   loginAttempt: Boolean) =
     createHTML()
@@ -62,7 +64,7 @@ internal object PlaygroundPage {
         }
 
         body {
-          bodyHeader(principal, loginAttempt, content, languageType, loginPath)
+          bodyHeader(redis, principal, loginAttempt, content, languageType, loginPath)
 
           h2 {
             val groupPath = pathOf(CHALLENGE_ROOT, languageName, groupName)

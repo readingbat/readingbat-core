@@ -17,7 +17,6 @@
 
 package com.github.readingbat.pages
 
-import com.github.pambrose.common.redis.RedisUtils.withRedisPool
 import com.github.pambrose.common.util.decode
 import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.FunctionInfo
@@ -88,6 +87,7 @@ internal object ChallengePage : KLogging() {
 
 
   fun PipelineCall.challengePage(content: ReadingBatContent,
+                                 redis: Jedis?,
                                  challenge: Challenge,
                                  loginAttempt: Boolean) =
     createHTML()
@@ -113,24 +113,21 @@ internal object ChallengePage : KLogging() {
 
         body {
           var activeClassCode = ""
-          withRedisPool { redis ->
-            bodyHeader(principal, loginAttempt, content, languageType, loginPath, queryParam(MSG) ?: "")
+          bodyHeader(redis, principal, loginAttempt, content, languageType, loginPath, queryParam(MSG) ?: "")
 
-            this@body.displayChallenge(challenge, funcInfo)
+          this@body.displayChallenge(challenge, funcInfo)
 
-            if (redis == null) {
-              +DBMS_DOWN
-            }
-            else {
-              val userId = userIdByPrincipal(principal)
-              activeClassCode = userId?.fetchActiveClassCode(redis) ?: ""
-              if (activeClassCode.isEmpty())
-                this@body.displayQuestions(redis, principal, browserSession, challenge, funcInfo)
-              else {
-                this@body.displayStudentProgress(redis, challenge, content.maxHistoryLength, funcInfo, activeClassCode)
-              }
-            }
+          val userId = userIdByPrincipal(principal)
+          activeClassCode = userId?.fetchActiveClassCode(redis) ?: ""
+          if (activeClassCode.isEmpty())
+            this@body.displayQuestions(redis, principal, browserSession, challenge, funcInfo)
+          else {
+            if (redis == null)
+              p { +DBMS_DOWN }
+            else
+              this@body.displayStudentProgress(redis, challenge, content.maxHistoryLength, funcInfo, activeClassCode)
           }
+
           backLink(CHALLENGE_ROOT, languageName, groupName)
 
           script { src = "$STATIC_ROOT/$languageName-prism.js" }
@@ -163,7 +160,7 @@ internal object ChallengePage : KLogging() {
     }
   }
 
-  private fun BODY.displayQuestions(redis: Jedis,
+  private fun BODY.displayQuestions(redis: Jedis?,
                                     principal: UserPrincipal?,
                                     browserSession: BrowserSession?,
                                     challenge: Challenge,
@@ -184,19 +181,22 @@ internal object ChallengePage : KLogging() {
           }
         }
 
-        val previousAnswers = previousAnswers(redis, principal, browserSession, challenge)
+        val previousAnswers =
+          if (redis == null)
+            mutableMapOf()
+          else
+            previousAnswers(redis, principal, browserSession, challenge)
 
-        funcInfo.invocations.indices.forEach { i ->
+        funcInfo.invocations.withIndex().forEach { (i, invocation) ->
           tr {
-            val invvocation = funcInfo.invocations[i]
-            td(classes = FUNC_COL) { +invvocation }
+            td(classes = FUNC_COL) { +invocation }
             td(classes = ARROW) { rawHtml("&rarr;") }
             td {
               textInput(classes = USER_RESP) {
                 id = "$RESP$i"
                 onKeyPress = "$processAnswers(event, ${funcInfo.answers.size})"
-                if (previousAnswers[invvocation] != null)
-                  value = previousAnswers[invvocation] ?: ""
+                if (previousAnswers[invocation] != null)
+                  value = previousAnswers[invocation] ?: ""
                 else
                   placeholder = funcInfo.placeHolder()
               }
@@ -209,7 +209,6 @@ internal object ChallengePage : KLogging() {
       this@displayQuestions.processAnswers(funcInfo)
       this@displayQuestions.otherLinks(challenge)
     }
-
 
   private fun BODY.addWebSockets(content: ReadingBatContent, classCode: String) {
     script {

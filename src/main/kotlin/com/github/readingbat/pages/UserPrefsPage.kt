@@ -17,7 +17,6 @@
 
 package com.github.readingbat.pages
 
-import com.github.pambrose.common.redis.RedisUtils.withRedisPool
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.Constants.LABEL_WIDTH
 import com.github.readingbat.misc.Constants.RETURN_PATH
@@ -57,6 +56,7 @@ import com.github.readingbat.server.ServerUtils.queryParam
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 import mu.KLogging
+import redis.clients.jedis.Jedis
 
 internal object UserPrefsPage : KLogging() {
 
@@ -69,17 +69,19 @@ internal object UserPrefsPage : KLogging() {
 
 
   fun PipelineCall.userPrefsPage(content: ReadingBatContent,
+                                 redis: Jedis,
                                  msg: String,
                                  isErrorMsg: Boolean,
                                  defaultClassCode: String = ""): String {
     val principal = fetchPrincipal()
-    return if (principal != null && isValidPrincipal(principal))
-      prefsWithLoginPage(content, principal, msg, isErrorMsg, defaultClassCode)
+    return if (principal != null && isValidPrincipal(principal, redis))
+      prefsWithLoginPage(content, redis, principal, msg, isErrorMsg, defaultClassCode)
     else
-      requestLogInPage(content)
+      requestLogInPage(content, redis)
   }
 
   private fun PipelineCall.prefsWithLoginPage(content: ReadingBatContent,
+                                              redis: Jedis,
                                               principal: UserPrincipal,
                                               msg: String,
                                               isErrorMsg: Boolean,
@@ -103,11 +105,11 @@ internal object UserPrefsPage : KLogging() {
           changePassword()
           joinClass(defaultClassCode)
           createClass()
-          displayClasses(principal)
+          displayClasses(redis, principal)
           deleteClass()
           //teacherShare()
           //memo()
-          deleteAccount(principal)
+          deleteAccount(redis, principal)
           privacyStatement(USER_PREFS_ENDPOINT, returnPath)
           backLink(returnPath)
         }
@@ -223,58 +225,54 @@ internal object UserPrefsPage : KLogging() {
     }
   }
 
-  private fun BODY.displayClasses(principal: UserPrincipal) {
+  private fun BODY.displayClasses(redis: Jedis, principal: UserPrincipal) {
     h3 { +"Current active class" }
-    withRedisPool { redis ->
-      if (redis != null) {
-        val userId = UserId(principal.userId)
-        val ids = redis.smembers(userId.userClassesKey)
-        val activeClassCode = redis.hget(userId.userInfoKey, ACTIVE_CLASS_CODE_FIELD)
+    val userId = UserId(principal.userId)
+    val ids = redis.smembers(userId.userClassesKey)
+    val activeClassCode = redis.hget(userId.userInfoKey, ACTIVE_CLASS_CODE_FIELD)
 
-        div {
-          style = divStyle
+    div {
+      style = divStyle
 
-          table {
-            style = "border-spacing: 15px 5px;"
-            tr { th { +"Current" }; th { +"Class Code" }; th { +"Description" }; th { +"Enrollees" } }
-            form {
-              action = USER_PREFS_ENDPOINT
-              method = FormMethod.post
-              ids.forEach { classCode ->
-                this@table.tr {
-                  td {
-                    style = "text-align:center;"
-                    input {
-                      type = InputType.radio
-                      name = CLASSES_CHOICE
-                      value = classCode
-                      checked = activeClassCode == classCode
-                    }
-                  }
-                  td { +classCode }
-                  td { +(redis[classDescKey(classCode)] ?: "Missing Description") }
-                  td {
-                    +(redis.smembers(classCodeEnrollmentKey(classCode)).filter { it.isNotEmpty() }.count().toString())
-                  }
+      table {
+        style = "border-spacing: 15px 5px;"
+        tr { th { +"Current" }; th { +"Class Code" }; th { +"Description" }; th { +"Enrollees" } }
+        form {
+          action = USER_PREFS_ENDPOINT
+          method = FormMethod.post
+          ids.forEach { classCode ->
+            this@table.tr {
+              td {
+                style = "text-align:center;"
+                input {
+                  type = InputType.radio
+                  name = CLASSES_CHOICE
+                  value = classCode
+                  checked = activeClassCode == classCode
                 }
               }
-              this@table.tr {
-                td {
-                  style = "text-align:center;";
-                  input {
-                    type = InputType.radio
-                    name = CLASSES_CHOICE
-                    value = CLASSES_DISABLED
-                    checked = activeClassCode.isEmpty()
-                  }
-                }
-                td { colSpan = "3"; +"Disable classes" }
-              }
-              this@table.tr {
-                td {}
-                td { input { type = InputType.submit; name = USER_PREFS_ACTION; value = UPDATE_CLASS } }
+              td { +classCode }
+              td { +(redis[classDescKey(classCode)] ?: "Missing Description") }
+              td {
+                +(redis.smembers(classCodeEnrollmentKey(classCode)).filter { it.isNotEmpty() }.count().toString())
               }
             }
+          }
+          this@table.tr {
+            td {
+              style = "text-align:center;";
+              input {
+                type = InputType.radio
+                name = CLASSES_CHOICE
+                value = CLASSES_DISABLED
+                checked = activeClassCode.isEmpty()
+              }
+            }
+            td { colSpan = "3"; +"Disable current class" }
+          }
+          this@table.tr {
+            td {}
+            td { input { type = InputType.submit; name = USER_PREFS_ACTION; value = UPDATE_CLASS } }
           }
         }
       }
@@ -358,8 +356,8 @@ internal object UserPrefsPage : KLogging() {
     }
   }
 
-  private fun BODY.deleteAccount(principal: UserPrincipal) {
-    val email = withRedisPool { redis -> principal.email(redis) }
+  private fun BODY.deleteAccount(redis: Jedis, principal: UserPrincipal) {
+    val email = principal.email(redis)
     if (email.isNotEmpty()) {
       h3 { +"Delete account" }
       div {
@@ -375,7 +373,10 @@ internal object UserPrefsPage : KLogging() {
     }
   }
 
-  fun PipelineCall.requestLogInPage(content: ReadingBatContent, isErrorMsg: Boolean = false, msg: String = "") =
+  fun PipelineCall.requestLogInPage(content: ReadingBatContent,
+                                    redis: Jedis,
+                                    isErrorMsg: Boolean = false,
+                                    msg: String = "") =
     createHTML()
       .html {
         head { headDefault(content) }
@@ -383,7 +384,7 @@ internal object UserPrefsPage : KLogging() {
         body {
           val returnPath = queryParam(RETURN_PATH) ?: "/"
 
-          helpAndLogin(fetchPrincipal(), returnPath)
+          helpAndLogin(redis, fetchPrincipal(), returnPath)
 
           bodyTitle()
 

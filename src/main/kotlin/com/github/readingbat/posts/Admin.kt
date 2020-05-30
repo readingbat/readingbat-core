@@ -17,9 +17,7 @@
 
 package com.github.readingbat.posts
 
-import com.github.pambrose.common.redis.RedisUtils.withSuspendingRedisPool
 import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.misc.Constants.DBMS_DOWN
 import com.github.readingbat.misc.FormFields.ADMIN_ACTION
 import com.github.readingbat.misc.FormFields.DELETE_ALL_DATA
 import com.github.readingbat.misc.UserPrincipal
@@ -30,30 +28,25 @@ import io.ktor.application.call
 import io.ktor.request.receiveParameters
 import io.ktor.sessions.clear
 import io.ktor.sessions.sessions
+import redis.clients.jedis.Jedis
 
 internal object Admin {
 
-  suspend fun PipelineCall.adminActions(content: ReadingBatContent) =
+  suspend fun PipelineCall.adminActions(content: ReadingBatContent, redis: Jedis) =
     if (fetchPrincipal() == null)
-      adminDataPage(content, "Must be logged in for this function")
-    else
-      withSuspendingRedisPool { redis ->
-        if (redis == null) {
-          adminDataPage(content, DBMS_DOWN)
+      adminDataPage(content, redis, "Must be logged in for this function")
+    else {
+      val parameters = call.receiveParameters()
+      when (parameters[ADMIN_ACTION] ?: "") {
+        DELETE_ALL_DATA -> {
+          val cnt = redis.keys("*")?.onEach { redis.del(it) }?.count() ?: 0
+          call.sessions.clear<UserPrincipal>()
+          adminDataPage(content, redis, "$cnt items deleted", false)
         }
-        else {
-          val parameters = call.receiveParameters()
-          when (parameters[ADMIN_ACTION] ?: "") {
-            DELETE_ALL_DATA -> {
-              val cnt = redis.keys("*")?.onEach { redis.del(it) }?.count() ?: 0
-              call.sessions.clear<UserPrincipal>()
-              adminDataPage(content, "$cnt items deleted", false)
-            }
-            else ->
-              adminDataPage(content, "Invalid option")
-          }
-        }
+        else ->
+          adminDataPage(content, redis, "Invalid option")
       }
+    }
 }
 
 

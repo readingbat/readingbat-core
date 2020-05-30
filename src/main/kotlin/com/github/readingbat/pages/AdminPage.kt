@@ -17,9 +17,7 @@
 
 package com.github.readingbat.pages
 
-import com.github.pambrose.common.redis.RedisUtils.withRedisPool
 import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.misc.Constants.DBMS_DOWN
 import com.github.readingbat.misc.Endpoints.ADMIN_ENDPOINT
 import com.github.readingbat.misc.FormFields.ADMIN_ACTION
 import com.github.readingbat.misc.FormFields.DELETE_ALL_DATA
@@ -31,11 +29,15 @@ import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.fetchPrincipal
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
+import redis.clients.jedis.Jedis
 import redis.clients.jedis.exceptions.JedisDataException
 
 internal object AdminPage {
 
-  fun PipelineCall.adminDataPage(content: ReadingBatContent, msg: String = "", isErrorMsg: Boolean = true) =
+  fun PipelineCall.adminDataPage(content: ReadingBatContent,
+                                 redis: Jedis,
+                                 msg: String = "",
+                                 isErrorMsg: Boolean = true) =
     createHTML()
       .html {
         val principal = fetchPrincipal()
@@ -56,7 +58,7 @@ internal object AdminPage {
 
             deleteData()
             br
-            dumpData()
+            dumpData(redis)
           }
           br
           backLink("/")
@@ -77,43 +79,31 @@ internal object AdminPage {
     }
   }
 
-  private fun BODY.dumpData() {
+  private fun BODY.dumpData(redis: Jedis) {
     h3 { +"All Data" }
     br
     div {
       style = "margin-left: 1em;"
 
-      withRedisPool { redis ->
-        if (redis == null) {
-          +DBMS_DOWN
-        }
-        else {
-          val keys = redis.keys("*")
-          h4 { +"${keys.size} Items:" }
-          table {
-            keys
-              .map {
-                try {
-                  it to redis[it]
-                } catch (e: JedisDataException) {
-                  try {
-                    it to redis.hgetAll(it).toString()
-                  } catch (e: JedisDataException) {
-                    it to redis.smembers(it).toString()
-                  }
-                }
+      val keys = redis.keys("*")
+      h4 { +"${keys.size} Items:" }
+      table {
+        keys
+          .map {
+            try {
+              it to redis[it]
+            } catch (e: JedisDataException) {
+              try {
+                it to redis.hgetAll(it).toString()
+              } catch (e: JedisDataException) {
+                it to redis.smembers(it).toString()
               }
-              .forEach {
-                tr {
-                  td { +it.first }
-                  td { +it.second }
-                }
-              }
+            }
           }
-        }
+          .forEach {
+            tr { td { +it.first }; td { +it.second } }
+          }
       }
     }
-
-
   }
 }

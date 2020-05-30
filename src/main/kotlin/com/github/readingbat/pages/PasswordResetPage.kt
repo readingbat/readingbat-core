@@ -17,9 +17,7 @@
 
 package com.github.readingbat.pages
 
-import com.github.pambrose.common.redis.RedisUtils.withRedisPool
 import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.misc.Constants.DBMS_DOWN
 import com.github.readingbat.misc.Constants.INVALID_RESET_ID
 import com.github.readingbat.misc.Constants.LABEL_WIDTH
 import com.github.readingbat.misc.Constants.RESET_ID
@@ -45,24 +43,20 @@ import com.github.readingbat.server.ServerUtils.queryParam
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 import mu.KLogging
+import redis.clients.jedis.Jedis
 
 internal object PasswordResetPage : KLogging() {
 
   const val formName = "pform"
   const val passwordButton = "UpdatePasswordButton"
 
-  fun PipelineCall.passwordResetPage(content: ReadingBatContent, resetId: String, msg: String): String =
+  fun PipelineCall.passwordResetPage(content: ReadingBatContent, redis: Jedis, resetId: String, msg: String): String =
     if (resetId.isEmpty())
       requestPasswordResetPage(content, msg)
     else {
       try {
-        val email =
-          withRedisPool { redis ->
-            if (redis == null)
-              throw ResetPasswordException(DBMS_DOWN)
-            val passwordResetKey = UserId.passwordResetKey(resetId)
-            redis.get(passwordResetKey) ?: throw ResetPasswordException(INVALID_RESET_ID)
-          }
+        val passwordResetKey = UserId.passwordResetKey(resetId)
+        val email = redis.get(passwordResetKey) ?: throw ResetPasswordException(INVALID_RESET_ID)
         changePasswordPage(content, email, resetId, msg)
       } catch (e: ResetPasswordException) {
         logger.info { e }

@@ -40,6 +40,7 @@ import io.ktor.http.ContentType.Text.CSS
 import io.ktor.http.formUrlEncode
 import kotlinx.html.*
 import kotlinx.html.Entities.nbsp
+import redis.clients.jedis.Jedis
 
 internal object PageCommon {
 
@@ -92,7 +93,8 @@ internal object PageCommon {
     }
   }
 
-  fun BODY.bodyHeader(principal: UserPrincipal?,
+  fun BODY.bodyHeader(redis: Jedis?,
+                      principal: UserPrincipal?,
                       loginAttempt: Boolean,
                       content: ReadingBatContent,
                       languageType: LanguageType,
@@ -100,7 +102,7 @@ internal object PageCommon {
                       msg: String = "",
                       subMsg: String = "") {
 
-    helpAndLogin(principal, loginPath)
+    helpAndLogin(redis, principal, loginPath)
 
     bodyTitle()
 

@@ -20,6 +20,7 @@ package com.github.readingbat.server
 import com.github.pambrose.common.redis.RedisUtils.withRedisPool
 import com.github.pambrose.common.util.sha256
 import com.github.readingbat.misc.AuthName
+import com.github.readingbat.misc.Constants.DBMS_DOWN
 import com.github.readingbat.misc.FormFields
 import com.github.readingbat.misc.UserId.Companion.lookupDigestInfoByUserId
 import com.github.readingbat.misc.UserId.Companion.lookupUserIdByEmail
@@ -65,25 +66,30 @@ internal object ConfigureFormAuth : KLogging() {
       }
 
       validate { cred: UserPasswordCredential ->
-        var principal: UserPrincipal? = null
-
         withRedisPool { redis ->
-          val userId = lookupUserIdByEmail(cred.name, redis)
-          if (userId != null) {
-            val (salt, digest) = lookupDigestInfoByUserId(userId, redis)
-            if (salt.isNotEmpty() && digest.isNotEmpty() && digest == cred.password.sha256(salt)) {
-              logger.info { "Found user ${cred.name} ${userId.id}" }
-              principal = UserPrincipal(userId.id)
+          if (redis == null) {
+            logger.warn { DBMS_DOWN }
+            null
+          }
+          else {
+            var principal: UserPrincipal? = null
+            val userId = lookupUserIdByEmail(cred.name, redis)
+            if (userId != null) {
+              val (salt, digest) = lookupDigestInfoByUserId(userId, redis)
+              if (salt.isNotEmpty() && digest.isNotEmpty() && digest == cred.password.sha256(salt)) {
+                logger.info { "Found user ${cred.name} ${userId.id}" }
+                principal = UserPrincipal(userId.id)
+              }
             }
+
+            logger.info { "Login ${if (principal == null) "failure" else "success"}" }
+
+            if (principal == null)
+              failedLoginLimiter.acquire() // may wait
+
+            principal
           }
         }
-
-        logger.info { "Login ${if (principal == null) "failure" else "success"}" }
-
-        if (principal == null)
-          failedLoginLimiter.acquire() // may wait
-
-        principal
       }
     }
 
