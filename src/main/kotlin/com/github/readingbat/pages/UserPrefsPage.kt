@@ -23,6 +23,8 @@ import com.github.readingbat.misc.Constants.LABEL_WIDTH
 import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.Endpoints.CREATE_ACCOUNT_ENDPOINT
 import com.github.readingbat.misc.Endpoints.USER_PREFS_ENDPOINT
+import com.github.readingbat.misc.FormFields.CLASSES_CHOICE
+import com.github.readingbat.misc.FormFields.CLASSES_DISABLED
 import com.github.readingbat.misc.FormFields.CLASS_CODE
 import com.github.readingbat.misc.FormFields.CLASS_DESC
 import com.github.readingbat.misc.FormFields.CONFIRM_PASSWORD
@@ -32,6 +34,7 @@ import com.github.readingbat.misc.FormFields.DELETE_ACCOUNT
 import com.github.readingbat.misc.FormFields.DELETE_CLASS
 import com.github.readingbat.misc.FormFields.JOIN_CLASS
 import com.github.readingbat.misc.FormFields.NEW_PASSWORD
+import com.github.readingbat.misc.FormFields.UPDATE_CLASS
 import com.github.readingbat.misc.FormFields.UPDATE_PASSWORD
 import com.github.readingbat.misc.FormFields.USER_PREFS_ACTION
 import com.github.readingbat.misc.PageUtils.hideShowButton
@@ -219,7 +222,7 @@ internal object UserPrefsPage : KLogging() {
   }
 
   private fun BODY.displayClasses(principal: UserPrincipal) {
-    h3 { +"Classes summary" }
+    h3 { +"Current class" }
     withRedisPool { redis ->
       if (redis != null) {
         val userId = UserId(principal.userId)
@@ -238,28 +241,31 @@ internal object UserPrefsPage : KLogging() {
                 th { +"Enrollees" }
               }
               form {
+                action = USER_PREFS_ENDPOINT
+                method = FormMethod.post
                 ids.forEach { classCode ->
                   this@table.tr {
                     td {
                       style = "text-align:center;"
-                      input {
-                        type = InputType.radio
-                        //size = "42"
-                        name = CLASS_DESC
-                        value = "true"
-                      }
+                      input { type = InputType.radio; name = CLASSES_CHOICE; value = classCode }
                     }
+                    td { +classCode }
+                    td { +(redis[UserId.classDescKey(classCode)] ?: "Missing Description") }
                     td {
-                      +classCode
-                    }
-                    td {
-                      +(redis[UserId.classDescKey(classCode)] ?: "Missing Description")
-                    }
-                    td {
-                      val userClassesKey = classCodeEnrollmentKey(classCode)
-                      +(redis.smembers(userClassesKey).filter { it.isNotEmpty() }.count().toString())
+                      +(redis.smembers(classCodeEnrollmentKey(classCode)).filter { it.isNotEmpty() }.count().toString())
                     }
                   }
+                }
+                this@table.tr {
+                  td {
+                    style = "text-align:center;";
+                    input { type = InputType.radio; name = CLASSES_CHOICE; value = CLASSES_DISABLED }
+                  }
+                  td { colSpan = "3"; +"Disable classes" }
+                }
+                this@table.tr {
+                  td {}
+                  td { input { type = InputType.submit; name = USER_PREFS_ACTION; value = UPDATE_CLASS } }
                 }
               }
             }

@@ -25,15 +25,16 @@ import com.github.readingbat.dsl.FunctionInfo
 import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.Constants.RESP
+import com.github.readingbat.misc.KeyConstants.ACTIVE_CLASS_CODE_FIELD
 import com.github.readingbat.misc.KeyConstants.ANSWER_HISTORY_KEY
 import com.github.readingbat.misc.KeyConstants.AUTH_KEY
 import com.github.readingbat.misc.KeyConstants.CHALLENGE_ANSWERS_KEY
-import com.github.readingbat.misc.KeyConstants.CLASS_CODE_FIELD
 import com.github.readingbat.misc.KeyConstants.CLASS_CODE_KEY
 import com.github.readingbat.misc.KeyConstants.CLASS_DESC_KEY
 import com.github.readingbat.misc.KeyConstants.CORRECT_ANSWERS_KEY
 import com.github.readingbat.misc.KeyConstants.DIGEST_FIELD
 import com.github.readingbat.misc.KeyConstants.EMAIL_FIELD
+import com.github.readingbat.misc.KeyConstants.ENROLLED_CLASS_CODE_FIELD
 import com.github.readingbat.misc.KeyConstants.KEY_SEP
 import com.github.readingbat.misc.KeyConstants.NAME_FIELD
 import com.github.readingbat.misc.KeyConstants.RESET_KEY
@@ -118,7 +119,9 @@ internal class UserId(val id: String = randomId(25)) {
     }
   }
 
-  fun fetchClassCode(redis: Jedis?) = redis?.hget(userInfoKey, CLASS_CODE_FIELD) ?: ""
+  fun fetchEnrolledClassCode(redis: Jedis?) = redis?.hget(userInfoKey, ENROLLED_CLASS_CODE_FIELD) ?: ""
+
+  fun fetchActiveClassCode(redis: Jedis?) = redis?.hget(userInfoKey, ACTIVE_CLASS_CODE_FIELD) ?: ""
 
   fun enrollIntoClass(classCode: String, redis: Jedis) {
     if (classCode.isBlank()) {
@@ -205,7 +208,8 @@ internal class UserId(val id: String = randomId(25)) {
                                           EMAIL_FIELD to email,
                                           SALT_FIELD to salt,
                                           DIGEST_FIELD to password.sha256(salt),
-                                          CLASS_CODE_FIELD to ""))
+                                          ENROLLED_CLASS_CODE_FIELD to "",
+                                          ACTIVE_CLASS_CODE_FIELD to ""))
         tx.exec()
       }
 
@@ -225,7 +229,7 @@ internal class UserId(val id: String = randomId(25)) {
           val userId = userIdByPrincipal(principal)
           val challengeAnswerKey = challengeAnswersKey(userId, browserSession, names)
           val correctAnswersKey = correctAnswersKey(userId, browserSession, names)
-          val classCode = userId?.fetchClassCode(redis) ?: ""
+          val classCode = userId?.fetchEnrolledClassCode(redis) ?: ""
           val complete = results.all { it.correct }
           val numCorrect = results.count { it.correct }
 

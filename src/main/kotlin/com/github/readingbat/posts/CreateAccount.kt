@@ -113,7 +113,6 @@ internal object CreateAccount : KLogging() {
         else {
           // Create user
           val userId = createUser(name, email, password, redis)
-          // Assign principal cookie
           call.sessions.set(UserPrincipal(userId = userId.id))
           redirectTo { "$returnPath?$MSG=${"User $email created".encode()}" }
         }

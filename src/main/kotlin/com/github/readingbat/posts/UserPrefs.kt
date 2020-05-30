@@ -23,6 +23,8 @@ import com.github.pambrose.common.util.sha256
 import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.Constants.DBMS_DOWN
+import com.github.readingbat.misc.FormFields.CLASSES_CHOICE
+import com.github.readingbat.misc.FormFields.CLASSES_DISABLED
 import com.github.readingbat.misc.FormFields.CLASS_CODE
 import com.github.readingbat.misc.FormFields.CLASS_DESC
 import com.github.readingbat.misc.FormFields.CONFIRM_PASSWORD
@@ -32,8 +34,10 @@ import com.github.readingbat.misc.FormFields.DELETE_ACCOUNT
 import com.github.readingbat.misc.FormFields.DELETE_CLASS
 import com.github.readingbat.misc.FormFields.JOIN_CLASS
 import com.github.readingbat.misc.FormFields.NEW_PASSWORD
+import com.github.readingbat.misc.FormFields.UPDATE_CLASS
 import com.github.readingbat.misc.FormFields.UPDATE_PASSWORD
 import com.github.readingbat.misc.FormFields.USER_PREFS_ACTION
+import com.github.readingbat.misc.KeyConstants.ACTIVE_CLASS_CODE_FIELD
 import com.github.readingbat.misc.KeyConstants.DIGEST_FIELD
 import com.github.readingbat.misc.UserId
 import com.github.readingbat.misc.UserId.Companion.classCodeEnrollmentKey
@@ -74,8 +78,9 @@ internal object UserPrefs : KLogging() {
           when (val action = parameters[USER_PREFS_ACTION] ?: "") {
             UPDATE_PASSWORD -> updatePassword(content, parameters, userId, redis)
             JOIN_CLASS -> joinClass(content, parameters, userId, redis)
-            CREATE_CLASS -> createClass(content, principal, parameters, userId, redis, parameters[CLASS_DESC] ?: "")
-            DELETE_CLASS -> deleteClass(content, principal, parameters, userId, redis, parameters[CLASS_CODE] ?: "")
+            CREATE_CLASS -> createClass(content, userId, redis, parameters[CLASS_DESC] ?: "")
+            UPDATE_CLASS -> updateClass(content, userId, redis, parameters[CLASSES_CHOICE] ?: "")
+            DELETE_CLASS -> deleteClass(content, userId, redis, parameters[CLASS_CODE] ?: "")
             DELETE_ACCOUNT -> deleteAccount(content, principal, userId, redis)
             else -> throw InvalidConfigurationException("Invalid action: $action")
           }
@@ -129,8 +134,6 @@ internal object UserPrefs : KLogging() {
   }
 
   private fun PipelineCall.createClass(content: ReadingBatContent,
-                                       principal: UserPrincipal,
-                                       parameters: Parameters,
                                        userId: UserId,
                                        redis: Jedis,
                                        classDesc: String) =
@@ -156,9 +159,16 @@ internal object UserPrefs : KLogging() {
       userPrefsPage(content, "Created class code: $classCode", false)
     }
 
+  private fun PipelineCall.updateClass(content: ReadingBatContent,
+                                       userId: UserId,
+                                       redis: Jedis,
+                                       classChoice: String): String {
+    logger.info { classChoice }
+    redis.hset(userId.userInfoKey, ACTIVE_CLASS_CODE_FIELD, if (classChoice == CLASSES_DISABLED) "" else classChoice)
+    return userPrefsPage(content, "Update class ", false)
+  }
+
   private fun PipelineCall.deleteClass(content: ReadingBatContent,
-                                       principal: UserPrincipal,
-                                       parameters: Parameters,
                                        userId: UserId,
                                        redis: Jedis,
                                        classCode: String) =

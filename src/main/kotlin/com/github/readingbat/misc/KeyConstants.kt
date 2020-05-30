@@ -38,7 +38,12 @@ internal object KeyConstants {
   const val SALT_FIELD = "salt"
   const val DIGEST_FIELD = "digest"
   const val NAME_FIELD = "name"
-  const val CLASS_CODE_FIELD = "class-code"
+
+  // This is the class code you will report results to
+  const val ENROLLED_CLASS_CODE_FIELD = "enrolled-class-code"
+
+  // This is the class code you will observe update on
+  const val ACTIVE_CLASS_CODE_FIELD = "active-class-code"
 
   const val KEY_SEP = "|"
 }

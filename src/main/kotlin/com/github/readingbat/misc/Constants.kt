@@ -69,6 +69,8 @@ internal object FormFields {
   const val CONFIRM_PASSWORD = "confirm_passwd"
   const val CLASS_CODE = "class_code"
   const val CLASS_DESC = "class_desc"
+  const val CLASSES_CHOICE = "classes_choice"
+  const val CLASSES_DISABLED = "classes_disabled"
   const val CURR_PASSWORD = "curr_passwd"
   const val NEW_PASSWORD = "new_passwd"
   const val USER_PREFS_ACTION = "pref_action"
@@ -77,6 +79,7 @@ internal object FormFields {
   const val JOIN_CLASS = "Join Class"
   const val CREATE_CLASS = "Create Class"
   const val DELETE_CLASS = "Delete Class"
+  const val UPDATE_CLASS = "Update Current Class"
   const val DELETE_ACCOUNT = "Delete Account"
   const val DELETE_ALL_DATA = "Delete All Data"
 }

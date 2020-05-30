@@ -54,6 +54,7 @@ import com.github.readingbat.misc.ParameterIds.SUCCESS_ID
 import com.github.readingbat.misc.UserId
 import com.github.readingbat.misc.UserId.Companion.challengeAnswersKey
 import com.github.readingbat.misc.UserId.Companion.classCodeEnrollmentKey
+import com.github.readingbat.misc.UserId.Companion.classDescKey
 import com.github.readingbat.misc.UserId.Companion.gson
 import com.github.readingbat.misc.UserId.Companion.userIdByPrincipal
 import com.github.readingbat.misc.UserPrincipal
@@ -74,6 +75,7 @@ import kotlinx.html.*
 import kotlinx.html.ScriptType.textJavaScript
 import kotlinx.html.stream.createHTML
 import mu.KLogging
+import redis.clients.jedis.Jedis
 
 internal object ChallengePage : KLogging() {
   private const val spinnerCss = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
@@ -111,16 +113,24 @@ internal object ChallengePage : KLogging() {
         }
 
         body {
-          bodyHeader(principal, loginAttempt, content, languageType, loginPath, queryParam(MSG) ?: "")
+          withRedisPool { redis ->
+            bodyHeader(principal, loginAttempt, content, languageType, loginPath, queryParam(MSG) ?: "")
 
-          this@body.displayChallenge(challenge, funcInfo)
+            this@body.displayChallenge(challenge, funcInfo)
 
-          if (classCode.isEmpty())
-            this@body.displayQuestions(principal, browserSession, challenge, funcInfo)
-          else {
-            this@body.displayProgress(content.maxHistoryLength, principal, challenge, funcInfo, classCode)
+            if (redis == null) {
+              +DBMS_DOWN
+            }
+            else {
+              val userId = userIdByPrincipal(principal)
+              val classCode = userId?.fetchActiveClassCode(redis) ?: ""
+              if (classCode.isEmpty())
+                this@body.displayQuestions(redis, principal, browserSession, challenge, funcInfo)
+              else {
+                this@body.displayStudentProgress(redis, challenge, content.maxHistoryLength, funcInfo, classCode)
+              }
+            }
           }
-
           backLink(CHALLENGE_ROOT, languageName, groupName)
 
           script { src = "$STATIC_ROOT/$languageName-prism.js" }
@@ -153,7 +163,8 @@ internal object ChallengePage : KLogging() {
     }
   }
 
-  private fun BODY.displayQuestions(principal: UserPrincipal?,
+  private fun BODY.displayQuestions(redis: Jedis,
+                                    principal: UserPrincipal?,
                                     browserSession: BrowserSession?,
                                     challenge: Challenge,
                                     funcInfo: FunctionInfo) =
@@ -173,7 +184,7 @@ internal object ChallengePage : KLogging() {
           }
         }
 
-        val previousAnswers = previousAnswers(principal, browserSession, challenge)
+        val previousAnswers = previousAnswers(redis, principal, browserSession, challenge)
 
         funcInfo.invocations.indices.forEach { i ->
           tr {
@@ -232,11 +243,11 @@ internal object ChallengePage : KLogging() {
     }
   }
 
-  private fun BODY.displayProgress(maxHistoryLength: Int,
-                                   principal: UserPrincipal?,
-                                   challenge: Challenge,
-                                   funcInfo: FunctionInfo,
-                                   classCode: String) =
+  private fun BODY.displayStudentProgress(redis: Jedis,
+                                          challenge: Challenge,
+                                          maxHistoryLength: Int,
+                                          funcInfo: FunctionInfo,
+                                          classCode: String) =
     div {
       style = "margin-top:2em;"
 
@@ -245,61 +256,56 @@ internal object ChallengePage : KLogging() {
       val challengeName = challenge.challengeName
       val languageName = languageType.lowerName
 
-      withRedisPool { redis ->
-        if (redis == null) {
-          +DBMS_DOWN
-        }
-        else {
-          val ids = redis.smembers(classCodeEnrollmentKey(classCode)).filter { it.isNotEmpty() }
-          if (ids.isNotEmpty()) {
-            table {
-              style = "width:100%; border-spacing: 5px 10px;"
+      val ids = redis.smembers(classCodeEnrollmentKey(classCode)).filter { it.isNotEmpty() }
+      if (ids.isNotEmpty()) {
+        p { +"${redis.get(classDescKey(classCode))} student progress [$classCode]" }
 
-              tr {
-                th { style = "text-align:left; color: $headerColor"; +"Student" }
-                funcInfo.invocations.indices.forEach { i ->
-                  val invocation = funcInfo.invocations[i]
-                  th { style = "text-align:left; color: $headerColor"; +invocation.substring(invocation.indexOf("(")) }
+        table {
+          style = "width:100%; border-spacing: 5px 10px;"
+
+          tr {
+            th { style = "text-align:left; color: $headerColor"; +"Student" }
+            funcInfo.invocations.indices.forEach { i ->
+              val invocation = funcInfo.invocations[i]
+              th { style = "text-align:left; color: $headerColor"; +invocation.substring(invocation.indexOf("(")) }
+            }
+          }
+
+          ids.forEach {
+            val userId = UserId(it)
+            val userInfoKey = userId.userInfoKey
+            var numCorrect = 0
+
+            val results =
+              funcInfo.invocations
+                .map { invocation ->
+                  val answerHistoryKey = userId.answerHistoryKey(languageName, groupName, challengeName, invocation)
+                  val history =
+                    gson.fromJson(redis[answerHistoryKey], ChallengeHistory::class.java)
+                      ?: ChallengeHistory(invocation)
+                  if (history.correct)
+                    numCorrect++
+                  invocation to history
                 }
+
+            tr(classes = DASHBOARD) {
+              td(classes = DASHBOARD) {
+                id = "${userId.id}-$nameTd"
+                style = "background-color:${if (numCorrect == results.size) CORRECT_COLOR else WRONG_COLOR};"
+
+                span { id = "${userId.id}-$numCorrectSpan"; +numCorrect.toString() }
+                +"/${results.size}"
+                rawHtml(Entities.nbsp.text)
+                +(redis.hget(userInfoKey, NAME_FIELD) ?: "")
               }
 
-              ids.forEach {
-                val userId = UserId(it)
-                val userInfoKey = userId.userInfoKey
-                var numCorrect = 0
-
-                val results =
-                  funcInfo.invocations
-                    .map { invocation ->
-                      val answerHistoryKey = userId.answerHistoryKey(languageName, groupName, challengeName, invocation)
-                      val history =
-                        gson.fromJson(redis[answerHistoryKey], ChallengeHistory::class.java)
-                          ?: ChallengeHistory(invocation)
-                      if (history.correct)
-                        numCorrect++
-                      invocation to history
-                    }
-
-                tr(classes = DASHBOARD) {
-                  td(classes = DASHBOARD) {
-                    id = "${userId.id}-$nameTd"
-                    style = "background-color:${if (numCorrect == results.size) CORRECT_COLOR else WRONG_COLOR};"
-
-                    span { id = "${userId.id}-$numCorrectSpan"; +numCorrect.toString() }
-                    +"/${results.size}"
-                    rawHtml(Entities.nbsp.text)
-                    +(redis.hget(userInfoKey, NAME_FIELD) ?: "")
-                  }
-
-                  results.forEach { (invocation, history) ->
-                    td(classes = DASHBOARD) {
-                      id = "${userId.id}-$invocation-$answersTd"
-                      style = "background-color:${if (history.correct) CORRECT_COLOR else WRONG_COLOR};"
-                      span {
-                        id = "${userId.id}-$invocation-$answersSpan"
-                        history.answers.asReversed().take(maxHistoryLength).forEach { answer -> +answer; br }
-                      }
-                    }
+              results.forEach { (invocation, history) ->
+                td(classes = DASHBOARD) {
+                  id = "${userId.id}-$invocation-$answersTd"
+                  style = "background-color:${if (history.correct) CORRECT_COLOR else WRONG_COLOR};"
+                  span {
+                    id = "${userId.id}-$invocation-$answersSpan"
+                    history.answers.asReversed().take(maxHistoryLength).forEach { answer -> +answer; br }
                   }
                 }
               }
@@ -309,23 +315,19 @@ internal object ChallengePage : KLogging() {
       }
     }
 
-  private fun previousAnswers(principal: UserPrincipal?,
+  private fun previousAnswers(redis: Jedis,
+                              principal: UserPrincipal?,
                               browserSession: BrowserSession?,
-                              challenge: Challenge) =
-    withRedisPool { redis ->
-      val languageType = challenge.languageType
-      val groupName = challenge.groupName
-      val challengeName = challenge.challengeName
-      val languageName = languageType.lowerName
-      val userId: UserId? = userIdByPrincipal(principal)
-      val key = challengeAnswersKey(userId, browserSession, languageName, groupName, challengeName)
+                              challenge: Challenge): MutableMap<String, String> {
+    val languageType = challenge.languageType
+    val groupName = challenge.groupName
+    val challengeName = challenge.challengeName
+    val languageName = languageType.lowerName
+    val userId: UserId? = userIdByPrincipal(principal)
+    val key = challengeAnswersKey(userId, browserSession, languageName, groupName, challengeName)
 
-      if (redis != null && key.isNotEmpty())
-        redis.hgetAll(key)
-      else
-        mutableMapOf<String, String>()
-    }
-
+    return if (key.isNotEmpty()) redis.hgetAll(key) else mutableMapOf()
+  }
 
   private fun BODY.processAnswers(funcInfo: FunctionInfo) {
     div {
