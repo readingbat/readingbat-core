@@ -33,10 +33,10 @@ import com.github.readingbat.misc.FormFields.DELETE_ACCOUNT
 import com.github.readingbat.misc.FormFields.DELETE_CLASS
 import com.github.readingbat.misc.FormFields.JOIN_CLASS
 import com.github.readingbat.misc.FormFields.NEW_PASSWORD
-import com.github.readingbat.misc.FormFields.UPDATE_CURRENT_CLASS
+import com.github.readingbat.misc.FormFields.UPDATE_ACTIVE_CLASS
 import com.github.readingbat.misc.FormFields.UPDATE_PASSWORD
 import com.github.readingbat.misc.FormFields.USER_PREFS_ACTION
-import com.github.readingbat.misc.KeyConstants.ACTIVE_CLASS_CODE_FIELD
+import com.github.readingbat.misc.FormFields.WITHDRAW_FROM_CLASS
 import com.github.readingbat.misc.PageUtils.hideShowButton
 import com.github.readingbat.misc.UserId
 import com.github.readingbat.misc.UserId.Companion.classCodeEnrollmentKey
@@ -103,10 +103,10 @@ internal object UserPrefsPage : KLogging() {
           val returnPath = queryParam(RETURN_PATH) ?: "/"
 
           changePassword()
-          joinClass(defaultClassCode)
+          joinOrWithdrawFromClass(redis, principal, defaultClassCode)
           createClass()
           displayClasses(redis, principal)
-          deleteClass()
+          //deleteClass()
           //teacherShare()
           //memo()
           deleteAccount(redis, principal)
@@ -161,30 +161,52 @@ internal object UserPrefsPage : KLogging() {
     }
   }
 
-  private fun BODY.joinClass(defaultClassCode: String) {
-    h3 { +"Join a class" }
-    div {
-      style = divStyle
-      p { +"Enter the class code your teacher gave you. This will make your progress visible to your teacher." }
-      form {
-        action = USER_PREFS_ENDPOINT
-        method = FormMethod.post
-        table {
-          tr {
-            td { style = LABEL_WIDTH; label { +"Class Code" } }
-            td {
-              input {
-                type = InputType.text
-                size = "42"
-                name = CLASS_CODE
-                value = defaultClassCode
-                onKeyPress = "click$joinClassButton(event);"
+  private fun BODY.joinOrWithdrawFromClass(redis: Jedis, principal: UserPrincipal, defaultClassCode: String) {
+    val userId = UserId(principal.userId)
+    val enrolledClass = userId.fetchEnrolledClassCode(redis)
+
+    if (enrolledClass.isNotEmpty()) {
+      h3 { +"Enrolled class" }
+      val classDesc = redis[classDescKey(enrolledClass)] ?: "Missing Description"
+      p { +"Current enrolled in class $enrolledClass [$classDesc]." }
+      p {
+        form {
+          action = USER_PREFS_ENDPOINT
+          method = FormMethod.post
+          onSubmit = "return confirm('Are you sure you want to withdraw from class $enrolledClass [$classDesc]?');"
+          input { type = InputType.submit; name = USER_PREFS_ACTION; value = WITHDRAW_FROM_CLASS }
+        }
+      }
+    }
+    else {
+      h3 { +"Join a class" }
+      div {
+        style = divStyle
+        p { +"Enter the class code your teacher gave you. This will make your progress visible to your teacher." }
+        form {
+          action = USER_PREFS_ENDPOINT
+          method = FormMethod.post
+          table {
+            tr {
+              td { style = LABEL_WIDTH; label { +"Class Code" } }
+              td {
+                input {
+                  type = InputType.text
+                  size = "42"
+                  name = CLASS_CODE
+                  value = defaultClassCode
+                  onKeyPress = "click$joinClassButton(event);"
+                }
               }
             }
-          }
-          tr {
-            td {}
-            td { input { type = InputType.submit; id = joinClassButton; name = USER_PREFS_ACTION; value = JOIN_CLASS } }
+            tr {
+              td {}
+              td {
+                input {
+                  type = InputType.submit; id = joinClassButton; name = USER_PREFS_ACTION; value = JOIN_CLASS
+                }
+              }
+            }
           }
         }
       }
@@ -230,19 +252,21 @@ internal object UserPrefsPage : KLogging() {
     val ids = redis.smembers(userId.userClassesKey)
 
     if (ids.size > 0) {
-      val activeClassCode = redis.hget(userId.userInfoKey, ACTIVE_CLASS_CODE_FIELD)
-      h3 { +"Current active class" }
+      val activeClassCode = userId.fetchActiveClassCode(redis)
+      h3 { +"Current classes" }
       div {
         style = divStyle
 
         table {
           style = "border-spacing: 15px 5px;"
-          tr { th { +"Current" }; th { +"Class Code" }; th { +"Description" }; th { +"Enrollees" } }
+          tr { th { +"Active" }; th { +"Class Code" }; th { +"Description" }; th { +"Enrollees" }; th { +"" } }
           form {
             action = USER_PREFS_ENDPOINT
             method = FormMethod.post
             ids.forEach { classCode ->
               this@table.tr {
+                val classDesc = redis[classDescKey(classCode)] ?: "Missing Description"
+                val enrolleeCount = redis.smembers(classCodeEnrollmentKey(classCode)).filter { it.isNotEmpty() }.count()
                 td {
                   style = "text-align:center;"
                   input {
@@ -253,9 +277,17 @@ internal object UserPrefsPage : KLogging() {
                   }
                 }
                 td { +classCode }
-                td { +(redis[classDescKey(classCode)] ?: "Missing Description") }
+                td { +classDesc }
+                td { style = "text-align:center;"; +enrolleeCount.toString() }
                 td {
-                  +(redis.smembers(classCodeEnrollmentKey(classCode)).filter { it.isNotEmpty() }.count().toString())
+                  form {
+                    action = USER_PREFS_ENDPOINT
+                    method = FormMethod.post
+                    onSubmit =
+                      "return confirm('Are you sure you want to permanently delete class $classCode [$classDesc]?');"
+                    input { type = InputType.hidden; name = CLASS_CODE; value = classCode }
+                    input { type = InputType.submit; name = USER_PREFS_ACTION; value = DELETE_CLASS }
+                  }
                 }
               }
             }
@@ -269,11 +301,11 @@ internal object UserPrefsPage : KLogging() {
                   checked = activeClassCode.isEmpty()
                 }
               }
-              td { colSpan = "3"; +"Disable current class" }
+              td { colSpan = "4"; +"Disable active class" }
             }
             this@table.tr {
               td {}
-              td { input { type = InputType.submit; name = USER_PREFS_ACTION; value = UPDATE_CURRENT_CLASS } }
+              td { input { type = InputType.submit; name = USER_PREFS_ACTION; value = UPDATE_ACTIVE_CLASS } }
             }
           }
         }

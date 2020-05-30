@@ -47,4 +47,4 @@ internal object KeyConstants {
   const val KEY_SEP = "|"
 }
 
-class DataException(msg: String) : JedisException(msg)
+class DataException(val msg: String) : JedisException(msg)

@@ -21,6 +21,7 @@ import com.github.pambrose.common.util.randomId
 import com.github.pambrose.common.util.sha256
 import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.ReadingBatContent
+import com.github.readingbat.misc.DataException
 import com.github.readingbat.misc.FormFields.CLASSES_CHOICE
 import com.github.readingbat.misc.FormFields.CLASSES_DISABLED
 import com.github.readingbat.misc.FormFields.CLASS_CODE
@@ -32,9 +33,10 @@ import com.github.readingbat.misc.FormFields.DELETE_ACCOUNT
 import com.github.readingbat.misc.FormFields.DELETE_CLASS
 import com.github.readingbat.misc.FormFields.JOIN_CLASS
 import com.github.readingbat.misc.FormFields.NEW_PASSWORD
-import com.github.readingbat.misc.FormFields.UPDATE_CURRENT_CLASS
+import com.github.readingbat.misc.FormFields.UPDATE_ACTIVE_CLASS
 import com.github.readingbat.misc.FormFields.UPDATE_PASSWORD
 import com.github.readingbat.misc.FormFields.USER_PREFS_ACTION
+import com.github.readingbat.misc.FormFields.WITHDRAW_FROM_CLASS
 import com.github.readingbat.misc.KeyConstants.ACTIVE_CLASS_CODE_FIELD
 import com.github.readingbat.misc.KeyConstants.DIGEST_FIELD
 import com.github.readingbat.misc.UserId
@@ -55,7 +57,6 @@ import io.ktor.sessions.clear
 import io.ktor.sessions.sessions
 import mu.KLogging
 import redis.clients.jedis.Jedis
-import redis.clients.jedis.exceptions.JedisException
 
 internal object UserPrefs : KLogging() {
 
@@ -70,9 +71,10 @@ internal object UserPrefs : KLogging() {
     else {
       when (val action = parameters[USER_PREFS_ACTION] ?: "") {
         UPDATE_PASSWORD -> updatePassword(content, redis, parameters, userId)
-        JOIN_CLASS -> joinClass(content, parameters, userId, redis)
+        JOIN_CLASS -> enrollInClass(content, parameters, userId, redis)
         CREATE_CLASS -> createClass(content, redis, userId, parameters[CLASS_DESC] ?: "")
-        UPDATE_CURRENT_CLASS -> updateActiveClass(content, redis, userId, parameters[CLASSES_CHOICE] ?: "")
+        UPDATE_ACTIVE_CLASS -> updateActiveClass(content, redis, userId, parameters[CLASSES_CHOICE] ?: "")
+        WITHDRAW_FROM_CLASS -> withdrawFromClass(content, redis, userId)
         DELETE_CLASS -> deleteClass(content, redis, userId, parameters[CLASS_CODE] ?: "")
         DELETE_ACCOUNT -> deleteAccount(content, principal, userId, redis)
         else -> throw InvalidConfigurationException("Invalid action: $action")
@@ -108,19 +110,18 @@ internal object UserPrefs : KLogging() {
     return userPrefsPage(content, redis, msg.first, msg.second)
   }
 
-  private fun PipelineCall.joinClass(content: ReadingBatContent,
-                                     parameters: Parameters,
-                                     userId: UserId,
-                                     redis: Jedis): String {
+  private fun PipelineCall.enrollInClass(content: ReadingBatContent,
+                                         parameters: Parameters,
+                                         userId: UserId,
+                                         redis: Jedis): String {
     val classCode = parameters[CLASS_CODE] ?: ""
     return try {
-      userId.enrollIntoClass(classCode, redis)
+      userId.enrollInClass(classCode, redis)
       userPrefsPage(content, redis, "Enrolled in class $classCode", false)
-    } catch (e: JedisException) {
-      logger.info { e }
+    } catch (e: DataException) {
       userPrefsPage(content,
                     redis,
-                    "Unable to enroll in class [${e.message ?: ""}]",
+                    "Unable to enroll in class [${e.msg}]",
                     true,
                     defaultClassCode = classCode)
     }
@@ -156,7 +157,7 @@ internal object UserPrefs : KLogging() {
                                              redis: Jedis,
                                              userId: UserId,
                                              classCode: String): String {
-    val activeClassCode = redis.hget(userId.userInfoKey, ACTIVE_CLASS_CODE_FIELD)
+    val activeClassCode = userId.fetchActiveClassCode(redis)
     val msg =
       when {
         activeClassCode.isEmpty() && classCode == CLASSES_DISABLED -> {
@@ -168,13 +169,25 @@ internal object UserPrefs : KLogging() {
         else -> {
           redis.hset(userId.userInfoKey, ACTIVE_CLASS_CODE_FIELD, if (classCode == CLASSES_DISABLED) "" else classCode)
           if (classCode == CLASSES_DISABLED)
-            "Current active class disabled"
+            "Active class disabled"
           else
-            "Current active class updated to: $classCode [${redis[classDescKey(classCode)] ?: "Missing Description"}]"
+            "Active class updated to: $classCode [${redis[classDescKey(classCode)] ?: "Missing Description"}]"
         }
       }
 
     return userPrefsPage(content, redis, msg, false)
+  }
+
+  private fun PipelineCall.withdrawFromClass(content: ReadingBatContent, redis: Jedis, userId: UserId): String {
+    val enrolledClassCode = userId.fetchEnrolledClassCode(redis)
+    val classDesc = redis[classDescKey(enrolledClassCode)] ?: "Missing Description"
+
+    return try {
+      userId.withdrawFromClass(enrolledClassCode, redis)
+      userPrefsPage(content, redis, "Withdrawn from class $enrolledClassCode [$classDesc]", false)
+    } catch (e: DataException) {
+      userPrefsPage(content, redis, "Unable to withdraw from class [${e.msg}]", true)
+    }
   }
 
   private fun PipelineCall.deleteClass(content: ReadingBatContent,
@@ -190,6 +203,10 @@ internal object UserPrefs : KLogging() {
     else {
       val activeClassCode = userId.fetchActiveClassCode(redis)
       redis.multi().also { tx ->
+        // Disable current class if deleted class is the active class
+        if (activeClassCode == classCode)
+          tx.hset(userId.userInfoKey, ACTIVE_CLASS_CODE_FIELD, "")
+
         // Delete KV for class description
         tx.del(classDescKey(classCode), classCode)
 
@@ -198,10 +215,6 @@ internal object UserPrefs : KLogging() {
 
         // Delete enrollees
         tx.del(classCodeEnrollmentKey(classCode))
-
-        // Disable current class if deleted class is the active class
-        if (activeClassCode == classCode)
-          tx.hset(userId.userInfoKey, ACTIVE_CLASS_CODE_FIELD, "")
 
         tx.exec()
       }

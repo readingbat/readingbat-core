@@ -83,6 +83,55 @@ internal class UserId(val id: String = randomId(25)) {
   // This key maps to a reset_id
   fun userIdPasswordResetKey() = listOf(USERID_RESET_KEY, id).joinToString(KEY_SEP)
 
+  fun fetchEnrolledClassCode(redis: Jedis) = redis.hget(userInfoKey, ENROLLED_CLASS_CODE_FIELD) ?: ""
+
+  fun fetchActiveClassCode(redis: Jedis?) = redis?.hget(userInfoKey, ACTIVE_CLASS_CODE_FIELD) ?: ""
+
+  fun enrollInClass(classCode: String, redis: Jedis) {
+    if (classCode.isBlank()) {
+      throw DataException("Empty class code")
+    }
+    else {
+      val classCodeEnrollmentKey = classCodeEnrollmentKey(classCode)
+      when {
+        redis.smembers(classCodeEnrollmentKey).isEmpty() -> throw DataException("Invalid class code $classCode")
+        redis.sismember(classCodeEnrollmentKey, id) -> throw DataException("Already enrolled in class $classCode")
+        else -> {
+          val previousClassCode = fetchEnrolledClassCode(redis)
+          redis.multi().also { tx ->
+            // Remove if already enrolled in another class
+            if (previousClassCode.isNotEmpty()) {
+              tx.srem(classCodeEnrollmentKey(previousClassCode), id)
+            }
+            tx.hset(userInfoKey, ENROLLED_CLASS_CODE_FIELD, classCode)
+            tx.sadd(classCodeEnrollmentKey, id)
+            tx.exec()
+          }
+        }
+      }
+    }
+  }
+
+  fun withdrawFromClass(classCode: String, redis: Jedis) {
+    if (classCode.isBlank()) {
+      throw DataException("Not enrolled in class $classCode")
+    }
+    else {
+      val classCodeEnrollmentKey = classCodeEnrollmentKey(classCode)
+      when {
+        redis.smembers(classCodeEnrollmentKey).isEmpty() -> throw DataException("Invalid class code $classCode")
+        !redis.sismember(classCodeEnrollmentKey, id) -> throw DataException("Not enrolled in class $classCode")
+        else -> {
+          redis.multi().also { tx ->
+            tx.hset(userInfoKey, ENROLLED_CLASS_CODE_FIELD, "")
+            tx.srem(classCodeEnrollmentKey, id)
+            tx.exec()
+          }
+        }
+      }
+    }
+  }
+
   fun deleteUser(principal: UserPrincipal, redis: Jedis) {
     val userEmailKey = userEmailKey(principal.email(redis))
     val correctAnswers = redis.keys(correctAnswersKey("*", "*", "*"))
@@ -115,35 +164,6 @@ internal class UserId(val id: String = randomId(25)) {
       invocations.forEach { tx.del(it) }
 
       tx.exec()
-    }
-  }
-
-  fun fetchEnrolledClassCode(redis: Jedis) = redis.hget(userInfoKey, ENROLLED_CLASS_CODE_FIELD) ?: ""
-
-  fun fetchActiveClassCode(redis: Jedis?) = redis?.hget(userInfoKey, ACTIVE_CLASS_CODE_FIELD) ?: ""
-
-  fun enrollIntoClass(classCode: String, redis: Jedis) {
-    if (classCode.isBlank()) {
-      throw DataException("Empty class code")
-    }
-    else {
-      val classCodeEnrollmentKey = classCodeEnrollmentKey(classCode)
-      when {
-        redis.smembers(classCodeEnrollmentKey).isEmpty() -> throw DataException("Invalid class code $classCode")
-        redis.sismember(classCodeEnrollmentKey, id) -> throw DataException("Already joined class $classCode")
-        else -> {
-          val previousClassCode = redis.hget(userInfoKey, CLASS_CODE_KEY) ?: ""
-          redis.multi().also { tx ->
-            // Remove if already enrolled in another class
-            if (previousClassCode.isNotEmpty()) {
-              tx.srem(classCodeEnrollmentKey(previousClassCode), id)
-            }
-            tx.hset(userInfoKey, CLASS_CODE_KEY, classCode)
-            tx.sadd(classCodeEnrollmentKey, id)
-            tx.exec()
-          }
-        }
-      }
     }
   }
 
@@ -227,7 +247,7 @@ internal class UserId(val id: String = randomId(25)) {
       val userId = userIdByPrincipal(principal)
       val challengeAnswerKey = challengeAnswersKey(userId, browserSession, names)
       val correctAnswersKey = correctAnswersKey(userId, browserSession, names)
-      val classCode = userId?.fetchEnrolledClassCode(redis) ?: ""
+      val enrolledClassCode = userId?.fetchEnrolledClassCode(redis) ?: ""
       val complete = results.all { it.correct }
       val numCorrect = results.count { it.correct }
 
@@ -264,11 +284,11 @@ internal class UserId(val id: String = randomId(25)) {
             redis.set(answerHistoryKey, json)
 
             // Publish to challenge dashboard
-            if (classCode.isNotEmpty() && userId != null) {
+            if (enrolledClassCode.isNotEmpty() && userId != null) {
               val browserInfo =
                 DashboardInfo(content.maxHistoryLength, userId.id, complete, numCorrect, history)
               logger.info { "Publishing data $json" }
-              redis.publish(classCode, gson.toJson(browserInfo))
+              redis.publish(enrolledClassCode, gson.toJson(browserInfo))
             }
           }
         }
