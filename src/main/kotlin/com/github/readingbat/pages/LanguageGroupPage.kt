@@ -32,7 +32,7 @@ import com.github.readingbat.misc.Constants.STATIC_ROOT
 import com.github.readingbat.misc.Constants.WHITE_CHECK
 import com.github.readingbat.misc.PageUtils.pathOf
 import com.github.readingbat.misc.UserId
-import com.github.readingbat.misc.UserId.Companion.lookupPrincipal
+import com.github.readingbat.misc.UserId.Companion.userIdByPrincipal
 import com.github.readingbat.pages.ChallengeGroupPage.isCorrect
 import com.github.readingbat.pages.PageCommon.bodyHeader
 import com.github.readingbat.pages.PageCommon.headDefault
@@ -103,10 +103,9 @@ internal object LanguageGroupPage {
             val cols = 3
             val size = groups.size
             val rows = size.rows(cols)
+            val userId = userIdByPrincipal(principal)
 
             withRedisPool { redis ->
-              val userId = lookupPrincipal(principal, redis)
-
               (0 until rows).forEach { i ->
                 tr {
                   groups[i].also { group -> groupItem(redis, userId, group) }

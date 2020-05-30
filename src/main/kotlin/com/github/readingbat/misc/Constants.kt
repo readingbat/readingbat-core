@@ -67,6 +67,7 @@ internal object FormFields {
   const val PASSWORD = "passwd"
   const val CONFIRM_PASSWORD = "confirm_passwd"
   const val CLASS_CODE = "class_code"
+  const val CLASS_DESC = "class_desc"
   const val CURR_PASSWORD = "curr_passwd"
   const val NEW_PASSWORD = "new_passwd"
   const val USER_PREFS_ACTION = "pref_action"

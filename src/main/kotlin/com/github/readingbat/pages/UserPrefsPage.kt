@@ -23,6 +23,7 @@ import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.Endpoints.CREATE_ACCOUNT_ENDPOINT
 import com.github.readingbat.misc.Endpoints.USER_PREFS_ENDPOINT
 import com.github.readingbat.misc.FormFields.CLASS_CODE
+import com.github.readingbat.misc.FormFields.CLASS_DESC
 import com.github.readingbat.misc.FormFields.CONFIRM_PASSWORD
 import com.github.readingbat.misc.FormFields.CREATE_CLASS
 import com.github.readingbat.misc.FormFields.CURR_PASSWORD
@@ -32,6 +33,8 @@ import com.github.readingbat.misc.FormFields.NEW_PASSWORD
 import com.github.readingbat.misc.FormFields.UPDATE_PASSWORD
 import com.github.readingbat.misc.FormFields.USER_PREFS_ACTION
 import com.github.readingbat.misc.PageUtils.hideShowButton
+import com.github.readingbat.misc.UserId
+import com.github.readingbat.misc.UserId.Companion.classCodeEnrollmentKey
 import com.github.readingbat.misc.UserId.Companion.isValidPrincipal
 import com.github.readingbat.misc.UserPrincipal
 import com.github.readingbat.pages.HelpAndLogin.helpAndLogin
@@ -59,13 +62,16 @@ internal object UserPrefsPage : KLogging() {
   fun PipelineCall.userPrefsPage(content: ReadingBatContent,
                                  msg: String,
                                  isErrorMsg: Boolean,
-                                 defaultClassCode: String = ""): String =
-    if (isValidPrincipal(fetchPrincipal()))
-      prefsWithLoginPage(content, msg, isErrorMsg, defaultClassCode)
+                                 defaultClassCode: String = ""): String {
+    val principal = fetchPrincipal()
+    return if (principal != null && isValidPrincipal(principal))
+      prefsWithLoginPage(content, principal, msg, isErrorMsg, defaultClassCode)
     else
       requestLogInPage(content)
+  }
 
   private fun PipelineCall.prefsWithLoginPage(content: ReadingBatContent,
+                                              principal: UserPrincipal,
                                               msg: String,
                                               isErrorMsg: Boolean,
                                               defaultClassCode: String) =
@@ -83,12 +89,11 @@ internal object UserPrefsPage : KLogging() {
 
           p { span { style = "color:${if (isErrorMsg) "red" else "green"};"; this@body.displayMessage(msg) } }
 
-          val principal = fetchPrincipal()
           val returnPath = queryParam(RETURN_PATH) ?: "/"
 
           changePassword()
           joinClass(defaultClassCode)
-          createClass()
+          createClass(principal)
           //teacherShare()
           //memo()
           deleteAccount(principal)
@@ -167,7 +172,7 @@ internal object UserPrefsPage : KLogging() {
     }
   }
 
-  private fun BODY.createClass() {
+  private fun BODY.createClass(principal: UserPrincipal) {
     h3 { +"Create Class" }
     p { +"Enter a decription of your class." }
     form {
@@ -180,7 +185,7 @@ internal object UserPrefsPage : KLogging() {
             input {
               type = InputType.text
               size = "42"
-              name = CLASS_CODE
+              name = CLASS_DESC
               value = ""
               onKeyPress = "click$createClassButton(event);"
             }
@@ -197,11 +202,44 @@ internal object UserPrefsPage : KLogging() {
       }
     }
 
+    displayClasses(principal)
+  }
+
+  private fun BODY.displayClasses(principal: UserPrincipal) {
     withRedisPool { redis ->
-
       if (redis != null) {
-        table {
+        val userId = UserId(principal.userId)
+        logger.info { "Looking at id: ${userId.id}" }
+        logger.info { "Looking at key: ${userId.userClassesKey}" }
+        val ids = redis.smembers(userId.userClassesKey)
+        if (ids.size > 0) {
+          div {
+            style = "margin-left: 15em;"
 
+            table {
+              style = "border-spacing: 15px 5px;"
+              tr {
+                th { +"Class Code" }
+                th { +"Description" }
+                th { +"Enrollees" }
+              }
+              ids.forEach { classCode ->
+                tr {
+                  td {
+                    +classCode
+                  }
+                  td {
+                    +(redis[UserId.classDescKey(classCode)] ?: "Missing Description")
+                  }
+                  td {
+                    val userClassesKey = classCodeEnrollmentKey(classCode)
+                    +(redis.smembers(userClassesKey).filter { it.isNotEmpty() }.count().toString())
+                  }
+                }
+              }
+            }
+            br
+          }
         }
       }
     }
@@ -246,14 +284,19 @@ internal object UserPrefsPage : KLogging() {
     }
   }
 
-  private fun BODY.deleteAccount(principal: UserPrincipal?) {
+  private fun BODY.deleteAccount(principal: UserPrincipal) {
     h3 { +"Delete Account" }
-    p { +"Permanently delete account [${principal?.userId}] -- cannot be undone!" }
-    form {
-      action = USER_PREFS_ENDPOINT
-      method = FormMethod.post
-      onSubmit = "return confirm('Are you sure you want to permanently delete the account for ${principal?.userId} ?');"
-      input { type = InputType.submit; name = USER_PREFS_ACTION; value = DELETE_ACCOUNT }
+
+    val email = withRedisPool { redis -> principal.email(redis) }
+    if (email.isNotEmpty()) {
+      p { +"Permanently delete account [$email] -- cannot be undone!" }
+      form {
+        action = USER_PREFS_ENDPOINT
+        method = FormMethod.post
+        onSubmit =
+          "return confirm('Are you sure you want to permanently delete the account for $email ?');"
+        input { type = InputType.submit; name = USER_PREFS_ACTION; value = DELETE_ACCOUNT }
+      }
     }
   }
 

@@ -31,13 +31,16 @@ import com.github.readingbat.misc.KeyConstants.CHALLENGE_ANSWERS_KEY
 import com.github.readingbat.misc.KeyConstants.CLASSES_FIELD
 import com.github.readingbat.misc.KeyConstants.CLASS_CODE_FIELD
 import com.github.readingbat.misc.KeyConstants.CLASS_CODE_KEY
+import com.github.readingbat.misc.KeyConstants.CLASS_DESC_KEY
 import com.github.readingbat.misc.KeyConstants.CORRECT_ANSWERS_KEY
 import com.github.readingbat.misc.KeyConstants.DIGEST_FIELD
+import com.github.readingbat.misc.KeyConstants.EMAIL_FIELD
 import com.github.readingbat.misc.KeyConstants.KEY_SEP
 import com.github.readingbat.misc.KeyConstants.NAME_FIELD
 import com.github.readingbat.misc.KeyConstants.RESET_KEY
 import com.github.readingbat.misc.KeyConstants.SALT_FIELD
 import com.github.readingbat.misc.KeyConstants.USERID_RESET_KEY
+import com.github.readingbat.misc.KeyConstants.USER_CLASSES_KEY
 import com.github.readingbat.misc.KeyConstants.USER_EMAIL_KEY
 import com.github.readingbat.misc.KeyConstants.USER_INFO_KEY
 import com.github.readingbat.posts.ChallengeHistory
@@ -56,6 +59,9 @@ import redis.clients.jedis.Jedis
 internal class UserId(val id: String = randomId(25)) {
 
   val userInfoKey = listOf(USER_INFO_KEY, id).joinToString(KEY_SEP)
+  val userClassesKey = listOf(USER_CLASSES_KEY, id).joinToString(KEY_SEP)
+
+  fun email(redis: Jedis) = redis.hget(userInfoKey, EMAIL_FIELD) ?: ""
 
   private fun correctAnswersKey(names: ChallengeNames) =
     correctAnswersKey(names.languageName, names.groupName, names.challengeName)
@@ -79,7 +85,7 @@ internal class UserId(val id: String = randomId(25)) {
   fun userIdPasswordResetKey() = listOf(USERID_RESET_KEY, id).joinToString(KEY_SEP)
 
   fun deleteUser(principal: UserPrincipal, redis: Jedis) {
-    val userEmailKey = userEmailKey(principal.userId)
+    val userEmailKey = userEmailKey(principal.email(redis))
     val correctAnswers = redis.keys(correctAnswersKey("*", "*", "*"))
     val challenges = redis.keys(challengeAnswersKey("*", "*", "*"))
     val invocations = redis.keys(answerHistoryKey("*", "*", "*", "*"))
@@ -87,12 +93,13 @@ internal class UserId(val id: String = randomId(25)) {
     val userIdPasswordResetKey = userIdPasswordResetKey()
     val previousResetId = redis.get(userIdPasswordResetKey) ?: ""
 
-    logger.info { "Deleting user: ${principal.userId}" }
-    logger.info { "userEmailKey: $userEmailKey" }
-    logger.info { "userInfoKey: $userInfoKey" }
-    logger.info { "correctAnswers: $correctAnswers" }
-    logger.info { "challenges: $challenges" }
-    logger.info { "invocations: $invocations" }
+    logger.info { "Deleting User: ${principal.userId} ${principal.email(redis)}" }
+    logger.info { "User Email: $userEmailKey" }
+    logger.info { "User Info: $userInfoKey" }
+    logger.info { "User Classes: $userClassesKey" }
+    logger.info { "Correct Answers: $correctAnswers" }
+    logger.info { "Challenges: $challenges" }
+    logger.info { "Invocations: $invocations" }
 
     redis.multi().also { tx ->
       if (previousResetId.isNotEmpty()) {
@@ -101,8 +108,8 @@ internal class UserId(val id: String = randomId(25)) {
       }
 
       tx.del(userEmailKey)
-      //tx.hdel(digestKey, SALT_FIELD, DIGEST_FIELD)
       tx.del(userInfoKey)
+      tx.del(userClassesKey)
 
       correctAnswers.forEach { tx.del(it) }
       challenges.forEach { tx.del(it) }
@@ -114,28 +121,25 @@ internal class UserId(val id: String = randomId(25)) {
 
   fun fetchClassCode(redis: Jedis?) = redis?.hget(userInfoKey, CLASS_CODE_FIELD) ?: ""
 
-  fun enrollIntoClass(classCode: String) {
+  fun enrollIntoClass(classCode: String, redis: Jedis) {
     if (classCode.isBlank()) {
       throw DataException("Empty class code")
     }
     else {
-      withRedisPool { redis ->
-        val classCodeEnrollmentKey = classCodeEnrollmentKey(classCode)
-        when {
-          redis == null -> throw RedisDownException()
-          redis.smembers(classCodeEnrollmentKey).isEmpty() -> throw DataException("Invalid class code $classCode")
-          redis.sismember(classCodeEnrollmentKey, id) -> throw DataException("Already joined class $classCode")
-          else -> {
-            val previousClassCode = redis.hget(userInfoKey, CLASS_CODE_KEY) ?: ""
-            redis.multi().also { tx ->
-              // Remove if already enrolled in another class
-              if (previousClassCode.isNotEmpty()) {
-                tx.srem(classCodeEnrollmentKey(previousClassCode), id)
-              }
-              tx.hset(userInfoKey, CLASS_CODE_KEY, classCode)
-              tx.sadd(classCodeEnrollmentKey, id)
-              tx.exec()
+      val classCodeEnrollmentKey = classCodeEnrollmentKey(classCode)
+      when {
+        redis.smembers(classCodeEnrollmentKey).isEmpty() -> throw DataException("Invalid class code $classCode")
+        redis.sismember(classCodeEnrollmentKey, id) -> throw DataException("Already joined class $classCode")
+        else -> {
+          val previousClassCode = redis.hget(userInfoKey, CLASS_CODE_KEY) ?: ""
+          redis.multi().also { tx ->
+            // Remove if already enrolled in another class
+            if (previousClassCode.isNotEmpty()) {
+              tx.srem(classCodeEnrollmentKey(previousClassCode), id)
             }
+            tx.hset(userInfoKey, CLASS_CODE_KEY, classCode)
+            tx.sadd(classCodeEnrollmentKey, id)
+            tx.exec()
           }
         }
       }
@@ -146,7 +150,11 @@ internal class UserId(val id: String = randomId(25)) {
 
     val gson = Gson()
 
+    fun userIdByPrincipal(principal: UserPrincipal?): UserId? = principal?.let { UserId(principal.userId) }
+
     fun userEmailKey(email: String) = listOf(USER_EMAIL_KEY, email).joinToString(KEY_SEP)
+
+    fun classDescKey(classCode: String) = listOf(CLASS_DESC_KEY, classCode).joinToString(KEY_SEP)
 
     // Value is a list of all enrolled students
     fun classCodeEnrollmentKey(classCode: String) = listOf(CLASS_CODE_KEY, classCode).joinToString(KEY_SEP)
@@ -181,7 +189,7 @@ internal class UserId(val id: String = randomId(25)) {
     // Maps resetId to username
     fun passwordResetKey(resetId: String) = listOf(RESET_KEY, resetId).joinToString(KEY_SEP)
 
-    fun createUser(name: String, email: String, password: String, redis: Jedis) {
+    fun createUser(name: String, email: String, password: String, redis: Jedis): UserId {
       // The userName (email) is stored in a single KV pair, enabling changes to the userName
       // Three things are stored:
       // email -> userId
@@ -195,12 +203,15 @@ internal class UserId(val id: String = randomId(25)) {
       redis.multi().also { tx ->
         tx.set(userEmailKey, userId.id)
         tx.hset(userId.userInfoKey, mapOf(NAME_FIELD to name,
+                                          EMAIL_FIELD to email,
                                           SALT_FIELD to salt,
                                           DIGEST_FIELD to password.sha256(salt),
                                           CLASS_CODE_FIELD to "",
                                           CLASSES_FIELD to "[]"))
         tx.exec()
       }
+
+      return userId
     }
 
     fun PipelineCall.saveAnswers(content: ReadingBatContent,
@@ -213,7 +224,7 @@ internal class UserId(val id: String = randomId(25)) {
         if (redis != null) {
           val principal = fetchPrincipal()
           val browserSession by lazy { call.sessions.get<BrowserSession>() }
-          val userId = lookupPrincipal(principal, redis)
+          val userId = userIdByPrincipal(principal)
           val challengeAnswerKey = challengeAnswersKey(userId, browserSession, names)
           val correctAnswersKey = correctAnswersKey(userId, browserSession, names)
           val classCode = userId?.fetchClassCode(redis) ?: ""
@@ -266,14 +277,14 @@ internal class UserId(val id: String = randomId(25)) {
         }
       }
 
+    fun isValidPrincipal(principal: UserPrincipal) = withRedisPool { redis -> isValidPrincipal(principal, redis) }
+
+    fun isValidPrincipal(principal: UserPrincipal, redis: Jedis?): Boolean {
+      val userId = userIdByPrincipal(principal) ?: return false
+      return redis?.hlen(userId.userInfoKey) ?: 0 > 0
+    }
+
     fun isValidEmail(email: String) = lookupUserIdByEmail(email) != null
-
-    fun isValidPrincipal(principal: UserPrincipal?) = withRedisPool { redis -> isValidPrincipal(principal, redis) }
-
-    fun isValidPrincipal(principal: UserPrincipal?, redis: Jedis?) = lookupPrincipal(principal, redis) != null
-
-    fun lookupPrincipal(principal: UserPrincipal?, redis: Jedis?) =
-      principal?.let { lookupUserIdByEmail(it.userId, redis) }
 
     fun lookupUserIdByEmail(email: String): UserId? = withRedisPool { redis -> lookupUserIdByEmail(email, redis) }
 

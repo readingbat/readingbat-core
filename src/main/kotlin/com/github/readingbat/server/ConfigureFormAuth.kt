@@ -73,7 +73,7 @@ internal object ConfigureFormAuth : KLogging() {
             val (salt, digest) = lookupDigestInfoByUserId(userId, redis)
             if (salt.isNotEmpty() && digest.isNotEmpty() && digest == cred.password.sha256(salt)) {
               logger.info { "Found user ${cred.name} ${userId.id}" }
-              principal = UserPrincipal(cred.name)
+              principal = UserPrincipal(userId.id)
             }
           }
         }

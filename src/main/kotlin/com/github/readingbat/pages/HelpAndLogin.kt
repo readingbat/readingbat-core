@@ -17,6 +17,7 @@
 
 package com.github.readingbat.pages
 
+import com.github.pambrose.common.redis.RedisUtils.withRedisPool
 import com.github.readingbat.misc.AuthRoutes.LOGOUT
 import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.Endpoints.ABOUT_ENDPOINT
@@ -67,7 +68,8 @@ internal object HelpAndLogin {
 
   private fun TABLE.logout(principal: UserPrincipal, loginPath: String) {
     tr {
-      val elems = principal.userId.split("@")
+      val email = withRedisPool { redis -> principal.email(redis) }
+      val elems = email.split("@")
       td {
         +elems[0]
         if (elems.size > 1) {

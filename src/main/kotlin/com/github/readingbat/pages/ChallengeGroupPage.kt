@@ -32,7 +32,7 @@ import com.github.readingbat.misc.Constants.WHITE_CHECK
 import com.github.readingbat.misc.PageUtils.pathOf
 import com.github.readingbat.misc.UserId
 import com.github.readingbat.misc.UserId.Companion.correctAnswersKey
-import com.github.readingbat.misc.UserId.Companion.lookupPrincipal
+import com.github.readingbat.misc.UserId.Companion.userIdByPrincipal
 import com.github.readingbat.pages.PageCommon.backLink
 import com.github.readingbat.pages.PageCommon.bodyHeader
 import com.github.readingbat.pages.PageCommon.headDefault
@@ -93,10 +93,9 @@ internal object ChallengeGroupPage {
             val cols = 3
             val size = challenges.size
             val rows = size.rows(cols)
+            val userId = userIdByPrincipal(principal)
 
             withRedisPool { redis ->
-              val userId = lookupPrincipal(principal, redis)
-
               (0 until rows).forEach { i ->
                 tr {
                   style = "height:30"

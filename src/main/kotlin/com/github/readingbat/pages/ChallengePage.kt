@@ -55,7 +55,7 @@ import com.github.readingbat.misc.UserId
 import com.github.readingbat.misc.UserId.Companion.challengeAnswersKey
 import com.github.readingbat.misc.UserId.Companion.classCodeEnrollmentKey
 import com.github.readingbat.misc.UserId.Companion.gson
-import com.github.readingbat.misc.UserId.Companion.lookupPrincipal
+import com.github.readingbat.misc.UserId.Companion.userIdByPrincipal
 import com.github.readingbat.misc.UserPrincipal
 import com.github.readingbat.pages.PageCommon.addLink
 import com.github.readingbat.pages.PageCommon.backLink
@@ -78,7 +78,12 @@ import mu.KLogging
 internal object ChallengePage : KLogging() {
   private const val spinnerCss = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
 
-  val wsid = "ws-output"
+  private const val nameTd = "nameTd"
+  private const val answersTd = "answersTd"
+  private const val answersSpan = "answersSpan"
+  private const val numCorrectSpan = "numCorrectSpan"
+  private const val headerColor = "#419DC1"
+
 
   suspend fun PipelineCall.challengePage(content: ReadingBatContent,
                                          challenge: Challenge,
@@ -114,7 +119,6 @@ internal object ChallengePage : KLogging() {
             this@body.displayQuestions(principal, browserSession, challenge, funcInfo)
           else {
             this@body.displayProgress(content.maxHistoryLength, principal, challenge, funcInfo, classCode)
-            p { id = wsid }
           }
 
           backLink(CHALLENGE_ROOT, languageName, groupName)
@@ -156,7 +160,18 @@ internal object ChallengePage : KLogging() {
     div {
       style = "margin-top:2em; margin-left:2em;"
       table {
-        tr { th { +"Function Call" }; th { +"" }; th { +"Return Value" }; th { +"" } }
+        tr {
+          th {
+            colSpan = "2"
+            style = "color: $headerColor"
+            +"Function Call"
+          };
+          th {
+            colSpan = "2"
+            style = "color: $headerColor"
+            +"Return Value"
+          };
+        }
 
         val previousAnswers = previousAnswers(principal, browserSession, challenge)
 
@@ -199,19 +214,19 @@ internal object ChallengePage : KLogging() {
           };
           
           ws.onmessage = function (event) {
-            console.log(event.data);
+            //console.log(event.data);
             var obj = JSON.parse(event.data)
             
-            var name = document.getElementById(obj.userId + '-name');
+            var name = document.getElementById(obj.userId + '-$nameTd');
             name.style.backgroundColor = obj.complete ? '$CORRECT_COLOR' : '$WRONG_COLOR';
 
-            document.getElementById(obj.userId + '-numCorrect').innerHTML = obj.numCorrect;
+            document.getElementById(obj.userId + '-$numCorrectSpan').innerHTML = obj.numCorrect;
 
             var prefix = obj.userId + '-' + obj.history.invocation;
-            var answers = document.getElementById(prefix + '-answerstd')
+            var answers = document.getElementById(prefix + '-$answersTd')
             answers.style.backgroundColor = obj.history.correct ? '$CORRECT_COLOR' : '$WRONG_COLOR';
 
-            document.getElementById(prefix + '-answers').innerHTML = obj.history.answers;
+            document.getElementById(prefix + '-$answersSpan').innerHTML = obj.history.answers;
           };
         """.trimIndent())
     }
@@ -236,52 +251,54 @@ internal object ChallengePage : KLogging() {
         }
         else {
           val ids = redis.smembers(classCodeEnrollmentKey(classCode)).filter { it.isNotEmpty() }
-          table {
-            style = "width:100%; border-spacing: 5px 10px;"
+          if (ids.size > 0) {
+            table {
+              style = "width:100%; border-spacing: 5px 10px;"
 
-            val headerColor = "#419DC1"
-            tr {
-              th { style = "text-align:center; color: $headerColor"; +"Student" }
-              funcInfo.invocations.indices.forEach { i ->
-                val invocation = funcInfo.invocations[i]
-                th { style = "text-align:center; color: $headerColor"; +invocation.substring(invocation.indexOf("(")) }
+              tr {
+                th { style = "text-align:left; color: $headerColor"; +"Student" }
+                funcInfo.invocations.indices.forEach { i ->
+                  val invocation = funcInfo.invocations[i]
+                  th { style = "text-align:left; color: $headerColor"; +invocation.substring(invocation.indexOf("(")) }
+                }
               }
-            }
 
-            ids.forEach {
-              val userId = UserId(it)
-              val userInfoKey = userId.userInfoKey
-              var numCorrect = 0
+              ids.forEach {
+                val userId = UserId(it)
+                val userInfoKey = userId.userInfoKey
+                var numCorrect = 0
 
-              val results =
-                funcInfo.invocations
-                  .map { invocation ->
-                    val answerHistoryKey = userId.answerHistoryKey(languageName, groupName, challengeName, invocation)
-                    val history =
-                      gson.fromJson(redis[answerHistoryKey], ChallengeHistory::class.java)
-                        ?: ChallengeHistory(invocation)
-                    if (history.correct) numCorrect++
-                    invocation to history
+                val results =
+                  funcInfo.invocations
+                    .map { invocation ->
+                      val answerHistoryKey = userId.answerHistoryKey(languageName, groupName, challengeName, invocation)
+                      val history =
+                        gson.fromJson(redis[answerHistoryKey], ChallengeHistory::class.java)
+                          ?: ChallengeHistory(invocation)
+                      if (history.correct)
+                        numCorrect++
+                      invocation to history
+                    }
+
+                tr(classes = DASHBOARD) {
+                  td(classes = DASHBOARD) {
+                    id = "${userId.id}-$nameTd"
+                    style = "background-color:${if (numCorrect == results.size) CORRECT_COLOR else WRONG_COLOR};"
+
+                    span { id = "${userId.id}-$numCorrectSpan"; +numCorrect.toString() }
+                    +"/${results.size}"
+                    rawHtml(Entities.nbsp.text)
+                    +(redis.hget(userInfoKey, NAME_FIELD) ?: "")
                   }
 
-              tr(classes = DASHBOARD) {
-                td(classes = DASHBOARD) {
-                  id = "${userId.id}-name"
-                  style = "background-color:${if (numCorrect == results.size) CORRECT_COLOR else WRONG_COLOR};"
-
-                  span { id = "${userId.id}-numCorrect"; +numCorrect.toString() }
-                  +"/${results.size}"
-                  rawHtml(Entities.nbsp.text)
-                  +(redis.hget(userInfoKey, NAME_FIELD) ?: "")
-                }
-
-                results.forEach { (invocation, history) ->
-                  td(classes = DASHBOARD) {
-                    id = "${userId.id}-$invocation-answerstd"
-                    style = "background-color:${if (history.correct) CORRECT_COLOR else WRONG_COLOR};"
-                    span {
-                      id = "${userId.id}-$invocation-answers"
-                      history.answers.asReversed().take(maxHistoryLength).forEach { +it; br }
+                  results.forEach { (invocation, history) ->
+                    td(classes = DASHBOARD) {
+                      id = "${userId.id}-$invocation-$answersTd"
+                      style = "background-color:${if (history.correct) CORRECT_COLOR else WRONG_COLOR};"
+                      span {
+                        id = "${userId.id}-$invocation-$answersSpan"
+                        history.answers.asReversed().take(maxHistoryLength).forEach { +it; br }
+                      }
                     }
                   }
                 }
@@ -300,7 +317,7 @@ internal object ChallengePage : KLogging() {
       val groupName = challenge.groupName
       val challengeName = challenge.challengeName
       val languageName = languageType.lowerName
-      val userId: UserId? = lookupPrincipal(principal, redis)
+      val userId: UserId? = userIdByPrincipal(principal)
       val key = challengeAnswersKey(userId, browserSession, languageName, groupName, challengeName)
 
       if (redis != null && key.isNotEmpty())

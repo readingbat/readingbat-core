@@ -17,7 +17,6 @@
 
 package com.github.readingbat.posts
 
-import com.github.pambrose.common.redis.RedisUtils.withRedisPool
 import com.github.pambrose.common.redis.RedisUtils.withSuspendingRedisPool
 import com.github.pambrose.common.util.randomId
 import com.github.pambrose.common.util.sha256
@@ -25,6 +24,7 @@ import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.Constants.DBMS_DOWN
 import com.github.readingbat.misc.FormFields.CLASS_CODE
+import com.github.readingbat.misc.FormFields.CLASS_DESC
 import com.github.readingbat.misc.FormFields.CONFIRM_PASSWORD
 import com.github.readingbat.misc.FormFields.CREATE_CLASS
 import com.github.readingbat.misc.FormFields.CURR_PASSWORD
@@ -34,10 +34,11 @@ import com.github.readingbat.misc.FormFields.NEW_PASSWORD
 import com.github.readingbat.misc.FormFields.UPDATE_PASSWORD
 import com.github.readingbat.misc.FormFields.USER_PREFS_ACTION
 import com.github.readingbat.misc.KeyConstants.DIGEST_FIELD
-import com.github.readingbat.misc.RedisDownException
 import com.github.readingbat.misc.UserId
 import com.github.readingbat.misc.UserId.Companion.classCodeEnrollmentKey
-import com.github.readingbat.misc.UserId.Companion.lookupPrincipal
+import com.github.readingbat.misc.UserId.Companion.classDescKey
+import com.github.readingbat.misc.UserId.Companion.lookupDigestInfoByUserId
+import com.github.readingbat.misc.UserId.Companion.userIdByPrincipal
 import com.github.readingbat.misc.UserPrincipal
 import com.github.readingbat.pages.UserPrefsPage.requestLogInPage
 import com.github.readingbat.pages.UserPrefsPage.userPrefsPage
@@ -58,13 +59,13 @@ internal object UserPrefs : KLogging() {
   suspend fun PipelineCall.userPrefs(content: ReadingBatContent) =
     withSuspendingRedisPool { redis ->
       val parameters = call.receiveParameters()
-      val principal = fetchPrincipal()
 
       if (redis == null) {
         userPrefsPage(content, DBMS_DOWN, true)
       }
       else {
-        val userId = lookupPrincipal(principal, redis)
+        val principal = fetchPrincipal()
+        val userId = userIdByPrincipal(principal)
         if (userId == null || principal == null) {
           requestLogInPage(content)
         }
@@ -72,8 +73,8 @@ internal object UserPrefs : KLogging() {
           val action = parameters[USER_PREFS_ACTION] ?: ""
           when (action) {
             UPDATE_PASSWORD -> updatePassword(content, parameters, userId, redis)
-            JOIN_CLASS -> joinClass(content, parameters, userId)
-            CREATE_CLASS -> createClass(content, parameters, userId)
+            JOIN_CLASS -> joinClass(content, parameters, userId, redis)
+            CREATE_CLASS -> createClass(content, principal, parameters, userId, redis, parameters[CLASS_DESC] ?: "")
             DELETE_ACCOUNT -> deleteAccount(content, principal, userId, redis)
             else -> throw InvalidConfigurationException("Invalid action: $action")
           }
@@ -95,7 +96,7 @@ internal object UserPrefs : KLogging() {
         passwordError to true
       }
       else {
-        val (salt, digest) = UserId.lookupDigestInfoByUserId(userId, redis)
+        val (salt, digest) = lookupDigestInfoByUserId(userId, redis)
         if (salt.isNotEmpty() && digest.isNotEmpty() && digest == currPassword.sha256(salt)) {
           val newDigest = newPassword.sha256(salt)
           redis.hset(userId.userInfoKey, DIGEST_FIELD, newDigest)
@@ -111,10 +112,11 @@ internal object UserPrefs : KLogging() {
 
   private fun PipelineCall.joinClass(content: ReadingBatContent,
                                      parameters: Parameters,
-                                     userId: UserId): String {
+                                     userId: UserId,
+                                     redis: Jedis): String {
     val classCode = parameters[CLASS_CODE] ?: ""
     return try {
-      userId.enrollIntoClass(classCode)
+      userId.enrollIntoClass(classCode, redis)
       userPrefsPage(content, "Enrolled in class $classCode", false)
     } catch (e: JedisException) {
       logger.info { e }
@@ -123,28 +125,44 @@ internal object UserPrefs : KLogging() {
                     true,
                     defaultClassCode = classCode)
     }
-
   }
 
   private fun PipelineCall.createClass(content: ReadingBatContent,
+                                       principal: UserPrincipal,
                                        parameters: Parameters,
-                                       userId: UserId) =
-    withRedisPool { redis ->
-      if (redis == null)
-        throw RedisDownException()
+                                       userId: UserId,
+                                       redis: Jedis,
+                                       classDesc: String) =
+    if (classDesc.isBlank()) {
+      userPrefsPage(content, "Empty class description", true)
+    }
+    else {
       val classCode = randomId(15)
-      val classCodeEnrollmentKey = classCodeEnrollmentKey(classCode)
-      redis.sadd(classCodeEnrollmentKey, "")
-      classCode
+
+      redis.multi().also { tx ->
+        // Create KV for class description
+        tx.set(classDescKey(classCode), classDesc)
+
+        // Add classcode to list of classes created by user
+        tx.sadd(userId.userClassesKey, classCode)
+
+        // Create class with no one enrolled to prevent class from being created a 2nd time
+        val classCodeEnrollmentKey = classCodeEnrollmentKey(classCode)
+        tx.sadd(classCodeEnrollmentKey, "")
+
+        tx.exec()
+      }
+      userPrefsPage(content, "Created class code: $classCode", false)
     }
 
   private fun PipelineCall.deleteAccount(content: ReadingBatContent,
                                          principal: UserPrincipal,
                                          userId: UserId,
                                          redis: Jedis): String {
-    logger.info { "Deleting user ${principal.userId}" }
+    val email = principal.email(redis)
+    logger.info { "Deleting user $email" }
     userId.deleteUser(principal, redis)
     call.sessions.clear<UserPrincipal>()
-    return requestLogInPage(content, false, "User ${principal.userId} deleted")
+    return requestLogInPage(content, false, "User $email deleted")
   }
 }

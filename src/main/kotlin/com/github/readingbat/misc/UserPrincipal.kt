@@ -18,7 +18,10 @@
 package com.github.readingbat.misc
 
 import io.ktor.auth.Principal
+import redis.clients.jedis.Jedis
 import java.time.Instant
 
-data class UserPrincipal(val userId: String, val created: Long = Instant.now().toEpochMilli()) : Principal
+data class UserPrincipal(val userId: String, val created: Long = Instant.now().toEpochMilli()) : Principal {
+  fun email(redis: Jedis?) = if (redis != null) UserId(userId).email(redis) else ""
+}
 
