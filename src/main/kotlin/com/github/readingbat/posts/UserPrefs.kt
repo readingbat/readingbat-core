@@ -79,7 +79,7 @@ internal object UserPrefs : KLogging() {
             UPDATE_PASSWORD -> updatePassword(content, parameters, userId, redis)
             JOIN_CLASS -> joinClass(content, parameters, userId, redis)
             CREATE_CLASS -> createClass(content, userId, redis, parameters[CLASS_DESC] ?: "")
-            UPDATE_CLASS -> updateClass(content, userId, redis, parameters[CLASSES_CHOICE] ?: "")
+            UPDATE_CLASS -> updateActiveClass(content, userId, redis, parameters[CLASSES_CHOICE] ?: "")
             DELETE_CLASS -> deleteClass(content, userId, redis, parameters[CLASS_CODE] ?: "")
             DELETE_ACCOUNT -> deleteAccount(content, principal, userId, redis)
             else -> throw InvalidConfigurationException("Invalid action: $action")
@@ -159,13 +159,24 @@ internal object UserPrefs : KLogging() {
       userPrefsPage(content, "Created class code: $classCode", false)
     }
 
-  private fun PipelineCall.updateClass(content: ReadingBatContent,
-                                       userId: UserId,
-                                       redis: Jedis,
-                                       classChoice: String): String {
-    logger.info { classChoice }
-    redis.hset(userId.userInfoKey, ACTIVE_CLASS_CODE_FIELD, if (classChoice == CLASSES_DISABLED) "" else classChoice)
-    return userPrefsPage(content, "Update class ", false)
+  private fun PipelineCall.updateActiveClass(content: ReadingBatContent,
+                                             userId: UserId,
+                                             redis: Jedis,
+                                             classCode: String): String {
+    val activeClassCode = redis.hget(userId.userInfoKey, ACTIVE_CLASS_CODE_FIELD)
+    val msg =
+      if ((activeClassCode.isEmpty() && classCode == CLASSES_DISABLED) || activeClassCode == classCode) {
+        "Same active class selected"
+      }
+      else {
+        redis.hset(userId.userInfoKey, ACTIVE_CLASS_CODE_FIELD, if (classCode == CLASSES_DISABLED) "" else classCode)
+        if (classCode == CLASSES_DISABLED)
+          "Current active class disabled"
+        else
+          "Current active class updated to: $classCode [${redis[classDescKey(classCode)] ?: "Missing Description"}]"
+      }
+
+    return userPrefsPage(content, msg, false)
   }
 
   private fun PipelineCall.deleteClass(content: ReadingBatContent,

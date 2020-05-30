@@ -89,7 +89,6 @@ internal object ChallengePage : KLogging() {
 
   fun PipelineCall.challengePage(content: ReadingBatContent,
                                  challenge: Challenge,
-                                 classCode: String,
                                  loginAttempt: Boolean) =
     createHTML()
       .html {
@@ -113,6 +112,7 @@ internal object ChallengePage : KLogging() {
         }
 
         body {
+          var activeClassCode = ""
           withRedisPool { redis ->
             bodyHeader(principal, loginAttempt, content, languageType, loginPath, queryParam(MSG) ?: "")
 
@@ -123,11 +123,11 @@ internal object ChallengePage : KLogging() {
             }
             else {
               val userId = userIdByPrincipal(principal)
-              val classCode = userId?.fetchActiveClassCode(redis) ?: ""
-              if (classCode.isEmpty())
+              activeClassCode = userId?.fetchActiveClassCode(redis) ?: ""
+              if (activeClassCode.isEmpty())
                 this@body.displayQuestions(redis, principal, browserSession, challenge, funcInfo)
               else {
-                this@body.displayStudentProgress(redis, challenge, content.maxHistoryLength, funcInfo, classCode)
+                this@body.displayStudentProgress(redis, challenge, content.maxHistoryLength, funcInfo, activeClassCode)
               }
             }
           }
@@ -135,8 +135,8 @@ internal object ChallengePage : KLogging() {
 
           script { src = "$STATIC_ROOT/$languageName-prism.js" }
 
-          if (classCode.isNotEmpty())
-            addWebSockets(content, classCode)
+          if (activeClassCode.isNotEmpty())
+            addWebSockets(content, activeClassCode)
         }
       }
 
@@ -247,7 +247,7 @@ internal object ChallengePage : KLogging() {
                                           challenge: Challenge,
                                           maxHistoryLength: Int,
                                           funcInfo: FunctionInfo,
-                                          classCode: String) =
+                                          activeClassCode: String) =
     div {
       style = "margin-top:2em;"
 
@@ -256,9 +256,20 @@ internal object ChallengePage : KLogging() {
       val challengeName = challenge.challengeName
       val languageName = languageType.lowerName
 
-      val ids = redis.smembers(classCodeEnrollmentKey(classCode)).filter { it.isNotEmpty() }
-      if (ids.isNotEmpty()) {
-        p { +"${redis.get(classDescKey(classCode))} student progress [$classCode]" }
+      logger.info { "Looking at: $activeClassCode" }
+      val ids = redis.smembers(classCodeEnrollmentKey(activeClassCode)).filter { it.isNotEmpty() }
+      if (ids.isEmpty()) {
+        h3 {
+          style = "color: $headerColor"
+          +"No students enrolled in: ${redis.get(classDescKey(activeClassCode))} [$activeClassCode]"
+        }
+      }
+      else {
+        //br
+        h3 {
+          style = "color: $headerColor"
+          +"Student progress for: ${redis.get(classDescKey(activeClassCode))} [$activeClassCode]"
+        }
 
         table {
           style = "width:100%; border-spacing: 5px 10px;"

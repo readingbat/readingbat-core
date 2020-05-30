@@ -72,7 +72,7 @@ internal object Locations {
     respondWith {
       registerBrowserSession()
       content.checkLanguage(challengeLoc.languageType)
-      challengePage(content, content.findChallenge(challengeLoc), challengeLoc.classCode, loginAttempt)
+      challengePage(content, content.findChallenge(challengeLoc), loginAttempt)
     }
 
   private suspend fun PipelineCall.playground(content: ReadingBatContent,
@@ -94,7 +94,7 @@ internal data class Language(val language: String) {
     val languageType get() = language.languageType
 
     @Location("/{challengeName}")
-    data class Challenge(val group: Group, val challengeName: String, val classCode: String = "") {
+    data class Challenge(val group: Group, val challengeName: String) {
       val languageType get() = group.languageType
       val groupName get() = group.groupName
     }
