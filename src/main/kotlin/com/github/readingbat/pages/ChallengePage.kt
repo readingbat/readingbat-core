@@ -260,14 +260,14 @@ internal object ChallengePage : KLogging() {
       val ids = redis.smembers(classCodeEnrollmentKey(activeClassCode)).filter { it.isNotEmpty() }
       if (ids.isEmpty()) {
         h3 {
-          style = "color: $headerColor"
+          style = "margin-left: 5px; color: $headerColor"
           +"No students enrolled in: ${redis.get(classDescKey(activeClassCode))} [$activeClassCode]"
         }
       }
       else {
         //br
         h3 {
-          style = "color: $headerColor"
+          style = "margin-left: 5px; color: $headerColor"
           +"Student progress for: ${redis.get(classDescKey(activeClassCode))} [$activeClassCode]"
         }
 
