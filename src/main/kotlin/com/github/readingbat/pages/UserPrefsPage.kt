@@ -50,10 +50,12 @@ import com.github.readingbat.pages.PageCommon.clickButtonScript
 import com.github.readingbat.pages.PageCommon.displayMessage
 import com.github.readingbat.pages.PageCommon.headDefault
 import com.github.readingbat.pages.PageCommon.privacyStatement
+import com.github.readingbat.pages.PageCommon.rawHtml
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.fetchPrincipal
 import com.github.readingbat.server.ServerUtils.queryParam
 import kotlinx.html.*
+import kotlinx.html.Entities.nbsp
 import kotlinx.html.InputType.radio
 import kotlinx.html.InputType.submit
 import kotlinx.html.stream.createHTML
@@ -263,54 +265,80 @@ internal object UserPrefsPage : KLogging() {
         style = divStyle
 
         table {
-          style = "border-spacing: 15px 5px;"
-          tr { th { +"Active" }; th { +"Class Code" }; th { +"Description" }; th { +"Enrollees" } }
-          form {
-            action = USER_PREFS_ENDPOINT
-            method = FormMethod.post
-            ids.forEach { classCode ->
-              this@table.tr {
-                val classDesc = redis[classDescKey(classCode)] ?: "Missing Description"
-                val enrolleeCount = redis.smembers(classCodeEnrollmentKey(classCode)).filter { it.isNotEmpty() }.count()
-                td {
-                  style = "text-align:center;"
-                  input {
-                    type = radio; name = CLASSES_CHOICE; value = classCode; checked = activeClassCode == classCode
-                  }
-                }
-                td { +classCode }
-                td { +classDesc }
-                td { style = "text-align:center;"; +enrolleeCount.toString() }
-                /*
-                td {
-                  form {
-                    action = USER_PREFS_ENDPOINT
-                    method = FormMethod.post
-                    onSubmit =
-                      "return confirm('Are you sure you want to permanently delete class $classCode [$classDesc]?');"
-                    input { type = InputType.hidden; name = CLASS_CODE; value = classCode }
-                    input { type = submit; name = USER_PREFS_ACTION; value = DELETE_CLASS }
-                  }
-                }
-                 */
+          tr {
+            td { this@displayClasses.classList(activeClassCode, ids, redis) }
+            td { this@displayClasses.deleteClassButtons(ids, redis) }
+          }
+        }
+      }
+    }
+  }
+
+  private fun BODY.classList(activeClassCode: String, ids: Set<String>, redis: Jedis) {
+    table {
+      style = "border-spacing: 15px 5px;"
+      tr { th { +"Active" }; th { +"Class Code" }; th { +"Description" }; th { +"Enrollees" } }
+      form {
+        action = USER_PREFS_ENDPOINT
+        method = FormMethod.post
+        ids.forEach { classCode ->
+          val classDesc = redis[classDescKey(classCode)] ?: "Missing Description"
+          val enrolleeCount =
+            redis.smembers(classCodeEnrollmentKey(classCode)).filter { it.isNotEmpty() }.count()
+          this@table.tr {
+            style = "height:1.5em"
+            td {
+              style = "text-align:center;"
+              input {
+                type = radio; name = CLASSES_CHOICE; value = classCode; checked = activeClassCode == classCode
               }
             }
-            this@table.tr {
-              td {
-                style = "text-align:center;";
-                input {
-                  type = radio; name = CLASSES_CHOICE; value = CLASSES_DISABLED; checked = activeClassCode.isEmpty()
-                }
-              }
-              td { colSpan = "4"; +"Disable active class" }
+            td { +classCode }
+            td { +classDesc }
+            td { style = "text-align:center;"; +enrolleeCount.toString() }
+          }
+        }
+        this@table.tr {
+          style = "height:1.5em"
+          td {
+            style = "text-align:center;";
+            input {
+              type = radio; name = CLASSES_CHOICE; value = CLASSES_DISABLED; checked = activeClassCode.isEmpty()
             }
-            this@table.tr {
-              td {}
-              td { input { type = submit; name = USER_PREFS_ACTION; value = UPDATE_ACTIVE_CLASS } }
+          }
+          td { colSpan = "4"; +"Disable active class" }
+        }
+        this@table.tr {
+          td {}
+          td { input { type = submit; name = USER_PREFS_ACTION; value = UPDATE_ACTIVE_CLASS } }
+        }
+      }
+    }
+  }
+
+  private fun BODY.deleteClassButtons(ids: Set<String>, redis: Jedis) {
+    table {
+      style = "border-spacing: 0px 0px;"
+      tr { th { rawHtml(nbsp.text) } }
+      ids.forEach { classCode ->
+        val classDesc = redis[classDescKey(classCode)] ?: "Missing Description"
+        tr {
+          style = "height:1.5em"
+          td {
+            style = "vertical-align:center"
+            form {
+              action = USER_PREFS_ENDPOINT
+              method = FormMethod.post
+              onSubmit =
+                "return confirm('Are you sure you want to delete class $classCode [$classDesc]?');"
+              input { type = InputType.hidden; name = CLASS_CODE; value = classCode }
+              input { type = submit; name = USER_PREFS_ACTION; value = DELETE_CLASS }
             }
           }
         }
       }
+      tr { td { rawHtml(nbsp.text) } }
+      tr { td { rawHtml(nbsp.text) } }
     }
   }
 
