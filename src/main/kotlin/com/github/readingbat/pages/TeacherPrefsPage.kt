@@ -37,6 +37,7 @@ import com.github.readingbat.pages.PageCommon.displayMessage
 import com.github.readingbat.pages.PageCommon.headDefault
 import com.github.readingbat.pages.PageCommon.privacyStatement
 import com.github.readingbat.pages.PageCommon.rawHtml
+import com.github.readingbat.pages.UserPrefsPage.classDesc
 import com.github.readingbat.pages.UserPrefsPage.requestLogInPage
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.fetchPrincipal
@@ -55,10 +56,11 @@ internal object TeacherPrefsPage : KLogging() {
   fun PipelineCall.teacherPrefsPage(content: ReadingBatContent,
                                     redis: Jedis,
                                     msg: String,
-                                    isErrorMsg: Boolean): String {
+                                    isErrorMsg: Boolean,
+                                    defaultClassDesc: String = ""): String {
     val principal = fetchPrincipal()
     return if (principal != null && com.github.readingbat.misc.UserId.isValidPrincipal(principal, redis))
-      teacherPrefsWithLoginPage(content, redis, principal, msg, isErrorMsg)
+      teacherPrefsWithLoginPage(content, redis, principal, msg, isErrorMsg, defaultClassDesc)
     else
       requestLogInPage(content, redis)
   }
@@ -67,7 +69,8 @@ internal object TeacherPrefsPage : KLogging() {
                                                      redis: Jedis,
                                                      principal: UserPrincipal,
                                                      msg: String,
-                                                     isErrorMsg: Boolean) =
+                                                     isErrorMsg: Boolean,
+                                                     defaultClassDesc: String) =
     createHTML()
       .html {
         head {
@@ -84,7 +87,7 @@ internal object TeacherPrefsPage : KLogging() {
 
           val returnPath = queryParam(RETURN_PATH) ?: "/"
 
-          createClass()
+          createClass(defaultClassDesc)
           displayClasses(redis, principal)
 
           privacyStatement(TEACHER_PREFS_ENDPOINT, returnPath)
@@ -93,7 +96,7 @@ internal object TeacherPrefsPage : KLogging() {
         }
       }
 
-  private fun BODY.createClass() {
+  private fun BODY.createClass(defaultClassDesc: String) {
     h3 { +"Create a class" }
     div {
       style = UserPrefsPage.divStyle
@@ -109,7 +112,7 @@ internal object TeacherPrefsPage : KLogging() {
                 type = InputType.text
                 size = "42"
                 name = FormFields.CLASS_DESC
-                value = ""
+                value = defaultClassDesc
                 onKeyPress = "click${createClassButton}(event);"
               }
             }
@@ -130,34 +133,34 @@ internal object TeacherPrefsPage : KLogging() {
 
   private fun BODY.displayClasses(redis: Jedis, principal: UserPrincipal) {
     val userId = UserId(principal.userId)
-    val ids = redis.smembers(userId.userClassesKey)
+    val classCodes = redis.smembers(userId.userClassesKey)
 
-    if (ids.size > 0) {
+    if (classCodes.size > 0) {
       val activeClassCode = userId.fetchActiveClassCode(redis)
-      h3 { +"Current classes" }
+      h3 { +"Classes" }
       div {
         style = UserPrefsPage.divStyle
 
         table {
           //style = "border-spacing: 5px 0px;"
           tr {
-            td { style = "vertical-align:top;"; this@displayClasses.classList(activeClassCode, ids, redis) }
-            td { style = "vertical-align:top;"; this@displayClasses.deleteClassButtons(ids, redis) }
+            td { style = "vertical-align:top;"; this@displayClasses.classList(activeClassCode, classCodes, redis) }
+            td { style = "vertical-align:top;"; this@displayClasses.deleteClassButtons(classCodes, redis) }
           }
         }
       }
     }
   }
 
-  private fun BODY.classList(activeClassCode: String, ids: Set<String>, redis: Jedis) {
+  private fun BODY.classList(activeClassCode: String, classCodes: Set<String>, redis: Jedis) {
     table {
       style = "border-spacing: 15px 5px;"
       tr { th { +"Active" }; th { +"Class Code" }; th { +"Description" }; th { +"Enrollees" } }
       form {
         action = TEACHER_PREFS_ENDPOINT
         method = FormMethod.post
-        ids.forEach { classCode ->
-          val classDesc = UserPrefsPage.classDesc(classCode, redis)
+        classCodes.forEach { classCode ->
+          val classDesc = classDesc(classCode, redis)
           val enrolleeCount =
             redis.smembers(UserId.classCodeEnrollmentKey(classCode)).filter { it.isNotEmpty() }.count()
           this@table.tr {
@@ -194,12 +197,12 @@ internal object TeacherPrefsPage : KLogging() {
     }
   }
 
-  private fun BODY.deleteClassButtons(ids: Set<String>, redis: Jedis) {
+  private fun BODY.deleteClassButtons(classCodes: Set<String>, redis: Jedis) {
     table {
       style = "border-spacing: 5px 5px;"
       tr { th { rawHtml(Entities.nbsp.text) } }
-      ids.forEach { classCode ->
-        val classDesc = UserPrefsPage.classDesc(classCode, redis)
+      classCodes.forEach { classCode ->
+        val classDesc = classDesc(classCode, redis)
         tr {
           td {
             form {

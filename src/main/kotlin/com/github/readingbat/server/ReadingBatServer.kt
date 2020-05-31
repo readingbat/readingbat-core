@@ -49,10 +49,12 @@ internal fun Application.module() {
         val readingBat = "readingbat"
         val site = "site"
         val challenges = "challenges"
+        val classes = "classes"
         siteUrlPrefix = property("$readingBat.$site.urlPrefix", default = "https://readingbat.com")
         googleAnalyticsId = property("$readingBat.$site.googleAnalyticsId")
         production = property("$readingBat.$site.production", default = "false").toBoolean()
         maxHistoryLength = property("$readingBat.$challenges.maxHistoryLength", default = "10").toInt()
+        maxClassCount = property("$readingBat.$classes.maxCount", default = "25").toInt()
       }
 
   installs(content)

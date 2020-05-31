@@ -42,6 +42,7 @@ import com.github.readingbat.misc.KeyConstants.USERID_RESET_KEY
 import com.github.readingbat.misc.KeyConstants.USER_CLASSES_KEY
 import com.github.readingbat.misc.KeyConstants.USER_EMAIL_KEY
 import com.github.readingbat.misc.KeyConstants.USER_INFO_KEY
+import com.github.readingbat.pages.UserPrefsPage
 import com.github.readingbat.posts.ChallengeHistory
 import com.github.readingbat.posts.ChallengeNames
 import com.github.readingbat.posts.ChallengeResults
@@ -132,6 +133,14 @@ internal class UserId(val id: String = randomId(25)) {
       }
     }
   }
+
+  fun classCount(redis: Jedis) = redis.smembers(userClassesKey).count()
+
+  fun isUniqueClassDesc(classDesc: String, redis: Jedis) =
+    redis.smembers(userClassesKey)
+      .asSequence()
+      .filter { classCode -> classDesc == UserPrefsPage.classDesc(classCode, redis) }
+      .none()
 
   fun deleteUser(principal: UserPrincipal, redis: Jedis) {
     val userEmailKey = userEmailKey(principal.email(redis))

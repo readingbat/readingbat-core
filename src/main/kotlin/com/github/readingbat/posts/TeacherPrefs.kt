@@ -64,26 +64,34 @@ internal object TeacherPrefs {
                                        redis: Jedis,
                                        userId: UserId,
                                        classDesc: String) =
-    if (classDesc.isBlank()) {
-      teacherPrefsPage(content, redis, "Unable to create class [Empty class description]", true)
-    }
-    else {
-      val classCode = randomId(15)
-
-      redis.multi().also { tx ->
-        // Create KV for class description
-        tx.set(classDescKey(classCode), classDesc)
-
-        // Add classcode to list of classes created by user
-        tx.sadd(userId.userClassesKey, classCode)
-
-        // Create class with no one enrolled to prevent class from being created a 2nd time
-        val classCodeEnrollmentKey = classCodeEnrollmentKey(classCode)
-        tx.sadd(classCodeEnrollmentKey, "")
-
-        tx.exec()
+    when {
+      classDesc.isBlank() -> {
+        teacherPrefsPage(content, redis, "Unable to create class [Empty class description]", true)
       }
-      teacherPrefsPage(content, redis, "Created class code: $classCode", false)
+      !userId.isUniqueClassDesc(classDesc, redis) -> {
+        teacherPrefsPage(content, redis, "Class description is not unique [$classDesc]", true, classDesc)
+      }
+      userId.classCount(redis) == content.maxClassCount -> {
+        teacherPrefsPage(content, redis, "Exceeds maximum number classes [${content.maxClassCount}]", true, classDesc)
+      }
+      else -> {
+        val classCode = randomId(15)
+
+        redis.multi().also { tx ->
+          // Create KV for class description
+          tx.set(classDescKey(classCode), classDesc)
+
+          // Add classcode to list of classes created by user
+          tx.sadd(userId.userClassesKey, classCode)
+
+          // Create class with no one enrolled to prevent class from being created a 2nd time
+          val classCodeEnrollmentKey = classCodeEnrollmentKey(classCode)
+          tx.sadd(classCodeEnrollmentKey, "")
+
+          tx.exec()
+        }
+        teacherPrefsPage(content, redis, "Created class code: $classCode", false)
+      }
     }
 
   private fun PipelineCall.updateActiveClass(content: ReadingBatContent,
@@ -100,8 +108,7 @@ internal object TeacherPrefs {
           "Same active class selected"
         }
         else -> {
-          redis.hset(userId.userInfoKey,
-                     ACTIVE_CLASS_CODE_FIELD, if (classCode == CLASSES_DISABLED) "" else classCode)
+          redis.hset(userId.userInfoKey, ACTIVE_CLASS_CODE_FIELD, if (classCode == CLASSES_DISABLED) "" else classCode)
           if (classCode == CLASSES_DISABLED)
             "Active class disabled"
           else
