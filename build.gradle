@@ -20,7 +20,7 @@ plugins {
     id 'application'
     id 'maven'  // Required for jitpack.io to do: ./gradlew install
     id 'org.jetbrains.kotlin.jvm' version '1.3.72'
-    id "com.github.ben-manes.versions" version "0.28.0"
+    id "com.github.ben-manes.versions" version '0.28.0'
     id 'com.github.johnrengelman.shadow' version '5.2.0'
 }
 
@@ -47,19 +47,17 @@ targetCompatibility = 1.8
 
 description = 'ReadingBat Core'
 group 'com.github.readingbat'
-version '1.0.9'
-
-sourceSets {
-    main.kotlin.srcDirs = ['src']
-    test.kotlin.srcDirs = ['test']
-    main.resources.srcDirs = ['resources']
-    test.resources.srcDirs = ['testresources']
-}
+version '1.0.10'
 
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
 
     implementation "com.github.pambrose.common-utils:core-utils:$utils_version"
+
+    implementation "com.github.pambrose.common-utils:ktor-server-utils:$utils_version"
+
+    implementation "com.github.pambrose.common-utils:redis-utils:$utils_version"
+
     implementation "com.github.pambrose.common-utils:script-utils-common:$utils_version"
     implementation "com.github.pambrose.common-utils:script-utils-python:$utils_version"
     implementation "com.github.pambrose.common-utils:script-utils-java:$utils_version"
@@ -74,16 +72,19 @@ dependencies {
     implementation "io.ktor:ktor-html-builder:$ktor_version"
     implementation "io.ktor:ktor-locations:$ktor_version"
     implementation "io.ktor:ktor-metrics:$ktor_version"
+    implementation "io.ktor:ktor-websockets:$ktor_version"
 
     implementation "redis.clients:jedis:$redis_version"
 
     implementation "com.google.code.gson:gson:$gson_version"
     implementation "com.google.guava:guava:$guava_version"
 
-    implementation "org.apache.commons:commons-text:$commons_version"
-    implementation "com.vladsch.flexmark:flexmark-all:$flexmark_version"
+    implementation "com.sendgrid:sendgrid-java:$sendgrid_version"
 
-    implementation "org.kohsuke:github-api:1.111"
+    implementation "org.apache.commons:commons-text:$commons_version"
+    implementation "com.vladsch.flexmark:flexmark:$flexmark_version"
+
+    implementation "org.kohsuke:github-api:$github_api_version"
 
     implementation "io.github.microutils:kotlin-logging:$logging_version"
     implementation "ch.qos.logback:logback-classic:$logback_version"
@@ -94,6 +95,16 @@ dependencies {
     testImplementation "org.junit.jupiter:junit-jupiter-api:$junit_version"
     testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:$junit_version"
 }
+
+shadowJar {
+    zip64 true
+    mergeServiceFiles()
+    exclude "META-INF/*.SF"
+    exclude 'META-INF/*.DSA'
+    exclude 'META-INF/*.RSA'
+    exclude "LICENSE*"
+}
+
 
 task sourcesJar(type: Jar, dependsOn: classes) {
     archiveClassifier = 'sources'
@@ -107,10 +118,6 @@ artifacts {
 // Include build uberjars in heroku deploy
 task stage(dependsOn: ['uberjar', 'build', 'clean'])
 build.mustRunAfter clean
-
-shadowJar {
-    mergeServiceFiles()
-}
 
 task uberjar(type: Jar, dependsOn: shadowJar) {
     archiveFileName = 'server.jar'
@@ -129,6 +136,7 @@ compileKotlin {
     kotlinOptions.freeCompilerArgs += ['-Xuse-experimental=kotlin.time.ExperimentalTime',
                                        '-Xuse-experimental=io.ktor.util.KtorExperimentalAPI',
                                        '-Xuse-experimental=io.ktor.locations.KtorExperimentalLocationsAPI',
+                                       '-Xuse-experimental=kotlinx.coroutines.ExperimentalCoroutinesApi',
                                        '-Xuse-experimental=kotlin.ExperimentalStdlibApi',
                                        '-XXLanguage:+InlineClasses']
 }
@@ -138,6 +146,7 @@ compileTestKotlin {
     kotlinOptions.freeCompilerArgs += ['-Xuse-experimental=kotlin.time.ExperimentalTime',
                                        '-Xuse-experimental=io.ktor.util.KtorExperimentalAPI',
                                        '-Xuse-experimental=io.ktor.locations.KtorExperimentalLocationsAPI',
+                                       '-Xuse-experimental=kotlinx.coroutines.ExperimentalCoroutinesApi',
                                        '-Xuse-experimental=kotlin.ExperimentalStdlibApi',
                                        '-XXLanguage:+InlineClasses']
 }
