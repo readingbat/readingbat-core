@@ -54,6 +54,8 @@ import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.fetchPrincipal
 import com.github.readingbat.server.ServerUtils.queryParam
 import kotlinx.html.*
+import kotlinx.html.InputType.radio
+import kotlinx.html.InputType.submit
 import kotlinx.html.stream.createHTML
 import mu.KLogging
 import redis.clients.jedis.Jedis
@@ -106,7 +108,7 @@ internal object UserPrefsPage : KLogging() {
           joinOrWithdrawFromClass(redis, principal, defaultClassCode)
           createClass()
           displayClasses(redis, principal)
-          //deleteClass()
+          deleteClass(redis, principal)
           //teacherShare()
           //memo()
           deleteAccount(redis, principal)
@@ -152,7 +154,7 @@ internal object UserPrefsPage : KLogging() {
             td {}
             td {
               input {
-                type = InputType.submit; id = passwordButton; name = USER_PREFS_ACTION; value = UPDATE_PASSWORD
+                type = submit; id = passwordButton; name = USER_PREFS_ACTION; value = UPDATE_PASSWORD
               }
             }
           }
@@ -164,17 +166,20 @@ internal object UserPrefsPage : KLogging() {
   private fun BODY.joinOrWithdrawFromClass(redis: Jedis, principal: UserPrincipal, defaultClassCode: String) {
     val userId = UserId(principal.userId)
     val enrolledClass = userId.fetchEnrolledClassCode(redis)
-
+    logger.info { "Enrolled in $enrolledClass" }
     if (enrolledClass.isNotEmpty()) {
       h3 { +"Enrolled class" }
       val classDesc = redis[classDescKey(enrolledClass)] ?: "Missing Description"
-      p { +"Current enrolled in class $enrolledClass [$classDesc]." }
-      p {
-        form {
-          action = USER_PREFS_ENDPOINT
-          method = FormMethod.post
-          onSubmit = "return confirm('Are you sure you want to withdraw from class $enrolledClass [$classDesc]?');"
-          input { type = InputType.submit; name = USER_PREFS_ACTION; value = WITHDRAW_FROM_CLASS }
+      div {
+        style = divStyle
+        p { +"Currently enrolled in class $enrolledClass [$classDesc]." }
+        p {
+          form {
+            action = USER_PREFS_ENDPOINT
+            method = FormMethod.post
+            onSubmit = "return confirm('Are you sure you want to withdraw from class $enrolledClass [$classDesc]?');"
+            input { type = submit; name = USER_PREFS_ACTION; value = WITHDRAW_FROM_CLASS }
+          }
         }
       }
     }
@@ -203,7 +208,7 @@ internal object UserPrefsPage : KLogging() {
               td {}
               td {
                 input {
-                  type = InputType.submit; id = joinClassButton; name = USER_PREFS_ACTION; value = JOIN_CLASS
+                  type = submit; id = joinClassButton; name = USER_PREFS_ACTION; value = JOIN_CLASS
                 }
               }
             }
@@ -217,7 +222,7 @@ internal object UserPrefsPage : KLogging() {
     h3 { +"Create a class" }
     div {
       style = divStyle
-      p { +"Enter a decription of your class." }
+      p { +"Enter a decription of the class." }
       form {
         action = USER_PREFS_ENDPOINT
         method = FormMethod.post
@@ -238,7 +243,7 @@ internal object UserPrefsPage : KLogging() {
             td {}
             td {
               input {
-                type = InputType.submit; id = createClassButton; name = USER_PREFS_ACTION; value = CREATE_CLASS
+                type = submit; id = createClassButton; name = USER_PREFS_ACTION; value = CREATE_CLASS
               }
             }
           }
@@ -259,7 +264,7 @@ internal object UserPrefsPage : KLogging() {
 
         table {
           style = "border-spacing: 15px 5px;"
-          tr { th { +"Active" }; th { +"Class Code" }; th { +"Description" }; th { +"Enrollees" }; th { +"" } }
+          tr { th { +"Active" }; th { +"Class Code" }; th { +"Description" }; th { +"Enrollees" } }
           form {
             action = USER_PREFS_ENDPOINT
             method = FormMethod.post
@@ -270,15 +275,13 @@ internal object UserPrefsPage : KLogging() {
                 td {
                   style = "text-align:center;"
                   input {
-                    type = InputType.radio
-                    name = CLASSES_CHOICE
-                    value = classCode
-                    checked = activeClassCode == classCode
+                    type = radio; name = CLASSES_CHOICE; value = classCode; checked = activeClassCode == classCode
                   }
                 }
                 td { +classCode }
                 td { +classDesc }
                 td { style = "text-align:center;"; +enrolleeCount.toString() }
+                /*
                 td {
                   form {
                     action = USER_PREFS_ENDPOINT
@@ -286,26 +289,24 @@ internal object UserPrefsPage : KLogging() {
                     onSubmit =
                       "return confirm('Are you sure you want to permanently delete class $classCode [$classDesc]?');"
                     input { type = InputType.hidden; name = CLASS_CODE; value = classCode }
-                    input { type = InputType.submit; name = USER_PREFS_ACTION; value = DELETE_CLASS }
+                    input { type = submit; name = USER_PREFS_ACTION; value = DELETE_CLASS }
                   }
                 }
+                 */
               }
             }
             this@table.tr {
               td {
                 style = "text-align:center;";
                 input {
-                  type = InputType.radio
-                  name = CLASSES_CHOICE
-                  value = CLASSES_DISABLED
-                  checked = activeClassCode.isEmpty()
+                  type = radio; name = CLASSES_CHOICE; value = CLASSES_DISABLED; checked = activeClassCode.isEmpty()
                 }
               }
               td { colSpan = "4"; +"Disable active class" }
             }
             this@table.tr {
               td {}
-              td { input { type = InputType.submit; name = USER_PREFS_ACTION; value = UPDATE_ACTIVE_CLASS } }
+              td { input { type = submit; name = USER_PREFS_ACTION; value = UPDATE_ACTIVE_CLASS } }
             }
           }
         }
@@ -313,33 +314,37 @@ internal object UserPrefsPage : KLogging() {
     }
   }
 
-  private fun BODY.deleteClass() {
-    h3 { +"Delete a class" }
-    div {
-      style = divStyle
-      p { +"Enter the class code you wish to delete." }
-      form {
-        action = USER_PREFS_ENDPOINT
-        method = FormMethod.post
-        onSubmit = "return confirm('Are you sure you want to permanently delete this class code ?');"
-        table {
-          tr {
-            td { style = LABEL_WIDTH; label { +"Class code" } }
-            td {
-              input {
-                type = InputType.text
-                size = "42"
-                name = CLASS_CODE
-                value = ""
-                onKeyPress = "click$deleteClassButton(event);"
+  private fun BODY.deleteClass(redis: Jedis, principal: UserPrincipal) {
+    val userId = UserId(principal.userId)
+    val ids = redis.smembers(userId.userClassesKey)
+    if (ids.size > 0) {
+      h3 { +"Delete a class" }
+      div {
+        style = divStyle
+        p { +"Enter the class code you wish to delete." }
+        form {
+          action = USER_PREFS_ENDPOINT
+          method = FormMethod.post
+          onSubmit = "return confirm('Are you sure you want to permanently delete this class code ?');"
+          table {
+            tr {
+              td { style = LABEL_WIDTH; label { +"Class code" } }
+              td {
+                input {
+                  type = InputType.text
+                  size = "42"
+                  name = CLASS_CODE
+                  value = ""
+                  onKeyPress = "click$deleteClassButton(event);"
+                }
               }
             }
-          }
-          tr {
-            td {}
-            td {
-              input {
-                type = InputType.submit; id = deleteClassButton; name = USER_PREFS_ACTION; value = DELETE_CLASS
+            tr {
+              td {}
+              td {
+                input {
+                  type = submit; id = deleteClassButton; name = USER_PREFS_ACTION; value = DELETE_CLASS
+                }
               }
             }
           }
@@ -363,7 +368,7 @@ internal object UserPrefsPage : KLogging() {
           }
           tr {
             td {}
-            td { input { type = InputType.submit; name = USER_PREFS_ACTION; value = "Share" } }
+            td { input { type = submit; name = USER_PREFS_ACTION; value = "Share" } }
           }
         }
       }
@@ -384,7 +389,7 @@ internal object UserPrefsPage : KLogging() {
         }
         tr {
           td {}
-          td { input { type = InputType.submit; name = USER_PREFS_ACTION; value = "Update Memo" } }
+          td { input { type = submit; name = USER_PREFS_ACTION; value = "Update Memo" } }
         }
       }
     }
@@ -401,7 +406,7 @@ internal object UserPrefsPage : KLogging() {
           action = USER_PREFS_ENDPOINT
           method = FormMethod.post
           onSubmit = "return confirm('Are you sure you want to permanently delete the account for $email ?');"
-          input { type = InputType.submit; name = USER_PREFS_ACTION; value = DELETE_ACCOUNT }
+          input { type = submit; name = USER_PREFS_ACTION; value = DELETE_ACCOUNT }
         }
       }
     }

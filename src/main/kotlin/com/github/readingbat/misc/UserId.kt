@@ -54,6 +54,7 @@ import io.ktor.sessions.get
 import io.ktor.sessions.sessions
 import mu.KLogging
 import redis.clients.jedis.Jedis
+import redis.clients.jedis.Transaction
 
 internal class UserId(val id: String = randomId(25)) {
 
@@ -85,6 +86,9 @@ internal class UserId(val id: String = randomId(25)) {
 
   fun fetchEnrolledClassCode(redis: Jedis) = redis.hget(userInfoKey, ENROLLED_CLASS_CODE_FIELD) ?: ""
 
+  fun assignEnrolledClassCode(classCode: String, tx: Transaction) =
+    tx.hset(userInfoKey, ENROLLED_CLASS_CODE_FIELD, classCode)
+
   fun fetchActiveClassCode(redis: Jedis?) = redis?.hget(userInfoKey, ACTIVE_CLASS_CODE_FIELD) ?: ""
 
   fun enrollInClass(classCode: String, redis: Jedis) {
@@ -103,7 +107,7 @@ internal class UserId(val id: String = randomId(25)) {
             if (previousClassCode.isNotEmpty()) {
               tx.srem(classCodeEnrollmentKey(previousClassCode), id)
             }
-            tx.hset(userInfoKey, ENROLLED_CLASS_CODE_FIELD, classCode)
+            assignEnrolledClassCode(classCode, tx)
             tx.sadd(classCodeEnrollmentKey, id)
             tx.exec()
           }
@@ -114,20 +118,17 @@ internal class UserId(val id: String = randomId(25)) {
 
   fun withdrawFromClass(classCode: String, redis: Jedis) {
     if (classCode.isBlank()) {
-      throw DataException("Not enrolled in class $classCode")
+      throw DataException("Not enrolled in a class")
     }
     else {
       val classCodeEnrollmentKey = classCodeEnrollmentKey(classCode)
-      when {
-        redis.smembers(classCodeEnrollmentKey).isEmpty() -> throw DataException("Invalid class code $classCode")
-        !redis.sismember(classCodeEnrollmentKey, id) -> throw DataException("Not enrolled in class $classCode")
-        else -> {
-          redis.multi().also { tx ->
-            tx.hset(userInfoKey, ENROLLED_CLASS_CODE_FIELD, "")
-            tx.srem(classCodeEnrollmentKey, id)
-            tx.exec()
-          }
-        }
+      // This should always be true
+      val enrolled = redis.exists(classCodeEnrollmentKey) && redis.sismember(classCodeEnrollmentKey, id)
+      redis.multi().also { tx ->
+        assignEnrolledClassCode("", tx)
+        if (enrolled)
+          tx.srem(classCodeEnrollmentKey, id)
+        tx.exec()
       }
     }
   }

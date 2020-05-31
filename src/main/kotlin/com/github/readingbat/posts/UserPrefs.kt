@@ -72,9 +72,9 @@ internal object UserPrefs : KLogging() {
       when (val action = parameters[USER_PREFS_ACTION] ?: "") {
         UPDATE_PASSWORD -> updatePassword(content, redis, parameters, userId)
         JOIN_CLASS -> enrollInClass(content, parameters, userId, redis)
+        WITHDRAW_FROM_CLASS -> withdrawFromClass(content, redis, userId)
         CREATE_CLASS -> createClass(content, redis, userId, parameters[CLASS_DESC] ?: "")
         UPDATE_ACTIVE_CLASS -> updateActiveClass(content, redis, userId, parameters[CLASSES_CHOICE] ?: "")
-        WITHDRAW_FROM_CLASS -> withdrawFromClass(content, redis, userId)
         DELETE_CLASS -> deleteClass(content, redis, userId, parameters[CLASS_CODE] ?: "")
         DELETE_ACCOUNT -> deleteAccount(content, principal, userId, redis)
         else -> throw InvalidConfigurationException("Invalid action: $action")
@@ -117,11 +117,12 @@ internal object UserPrefs : KLogging() {
     val classCode = parameters[CLASS_CODE] ?: ""
     return try {
       userId.enrollInClass(classCode, redis)
-      userPrefsPage(content, redis, "Enrolled in class $classCode", false)
+      val classDesc = redis[classDescKey(classCode)] ?: "Missing Description"
+      userPrefsPage(content, redis, "Enrolled in class $classCode [$classDesc]", false)
     } catch (e: DataException) {
       userPrefsPage(content,
                     redis,
-                    "Unable to enroll in class [${e.msg}]",
+                    "Unable to join class [${e.msg}]",
                     true,
                     defaultClassCode = classCode)
     }
@@ -132,7 +133,7 @@ internal object UserPrefs : KLogging() {
                                        userId: UserId,
                                        classDesc: String) =
     if (classDesc.isBlank()) {
-      userPrefsPage(content, redis, "Empty class description", true)
+      userPrefsPage(content, redis, "Unable to create class [Empty class description]", true)
     }
     else {
       val classCode = randomId(15)
@@ -201,7 +202,10 @@ internal object UserPrefs : KLogging() {
       userPrefsPage(content, redis, "Invalid class code: $classCode", true)
     }
     else {
+      val classCodeEnrollmentKey = classCodeEnrollmentKey(classCode)
       val activeClassCode = userId.fetchActiveClassCode(redis)
+      val enrollees = redis.smembers(classCodeEnrollmentKey)
+
       redis.multi().also { tx ->
         // Disable current class if deleted class is the active class
         if (activeClassCode == classCode)
@@ -213,8 +217,15 @@ internal object UserPrefs : KLogging() {
         // Remove classcode from list of classes created by user
         tx.srem(userId.userClassesKey, classCode)
 
-        // Delete enrollees
-        tx.del(classCodeEnrollmentKey(classCode))
+        // Reset every enrollee's enrolled class
+        enrollees
+          .map { UserId(it) }
+          .forEach {
+            it.assignEnrolledClassCode("", tx)
+          }
+
+        // Delete enrollee list
+        tx.del(classCodeEnrollmentKey)
 
         tx.exec()
       }
