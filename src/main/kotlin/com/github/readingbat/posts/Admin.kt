@@ -20,6 +20,7 @@ package com.github.readingbat.posts
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.FormFields.ADMIN_ACTION
 import com.github.readingbat.misc.FormFields.DELETE_ALL_DATA
+import com.github.readingbat.misc.UserId
 import com.github.readingbat.misc.UserPrincipal
 import com.github.readingbat.pages.AdminPage.adminDataPage
 import com.github.readingbat.server.PipelineCall
@@ -32,21 +33,25 @@ import redis.clients.jedis.Jedis
 
 internal object Admin {
 
-  suspend fun PipelineCall.adminActions(content: ReadingBatContent, redis: Jedis) =
-    if (fetchPrincipal() == null)
-      adminDataPage(content, redis, "Must be logged in for this function")
-    else {
-      val parameters = call.receiveParameters()
-      when (parameters[ADMIN_ACTION] ?: "") {
-        DELETE_ALL_DATA -> {
-          val cnt = redis.keys("*")?.onEach { redis.del(it) }?.count() ?: 0
-          call.sessions.clear<UserPrincipal>()
-          adminDataPage(content, redis, "$cnt items deleted", false)
+  suspend fun PipelineCall.adminActions(content: ReadingBatContent, redis: Jedis): String {
+    val principal = fetchPrincipal()
+    return when {
+      content.production && principal == null -> adminDataPage(content, redis, "Must be logged in for this function")
+      content.production && UserId(principal?.userId ?: "").email(redis) != "pambrose@mac.com" -> {
+        adminDataPage(content, redis, "Must be system admin for this function")
+      }
+      else -> {
+        val parameters = call.receiveParameters()
+        when (parameters[ADMIN_ACTION] ?: "") {
+          DELETE_ALL_DATA -> {
+            val cnt = redis.keys("*")?.onEach { redis.del(it) }?.count() ?: 0
+            call.sessions.clear<UserPrincipal>()
+            adminDataPage(content, redis, "$cnt items deleted", false)
+          }
+          else ->
+            adminDataPage(content, redis, "Invalid option")
         }
-        else ->
-          adminDataPage(content, redis, "Invalid option")
       }
     }
+  }
 }
-
-

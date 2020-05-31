@@ -53,22 +53,24 @@ internal object AdminPage {
 
           bodyTitle()
 
-          if (principal == null) {
-            br { +"Must be logged in for this function" }
-          }
-          else if (UserId(principal.userId).email(redis) != "pambrose@mac.com") {
-            br { +"Must be system admin for this function" }
-          }
-          else {
-            p {
-              span {
-                style = "color:${if (isErrorMsg) "red" else "green"};"
-                this@body.displayMessage(msg)
-              }
+          when {
+            content.production && principal == null -> {
+              br { +"Must be logged in for this function" }
             }
+            content.production && UserId(principal?.userId ?: "").email(redis) != "pambrose@mac.com" -> {
+              br { +"Must be system admin for this function" }
+            }
+            else -> {
+              p {
+                span {
+                  style = "color:${if (isErrorMsg) "red" else "green"};"
+                  this@body.displayMessage(msg)
+                }
+              }
 
-            p { this@body.deleteData() }
-            p { this@body.dumpData(redis) }
+              p { this@body.deleteData() }
+              p { this@body.dumpData(redis) }
+            }
           }
 
           backLink(returnPath)

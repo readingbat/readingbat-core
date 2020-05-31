@@ -40,6 +40,7 @@ import com.github.readingbat.server.ServerUtils.fetchPrincipal
 import io.ktor.application.call
 import io.ktor.request.receiveParameters
 import redis.clients.jedis.Jedis
+import redis.clients.jedis.Transaction
 
 internal object TeacherPrefs {
   suspend fun PipelineCall.teacherPrefs(content: ReadingBatContent, redis: Jedis): String {
@@ -131,30 +132,15 @@ internal object TeacherPrefs {
         teacherPrefsPage(content, redis, "Invalid class code: $classCode", true)
       }
       else -> {
-        val classCodeEnrollmentKey = classCodeEnrollmentKey(classCode)
         val activeClassCode = userId.fetchActiveClassCode(redis)
-        val enrollees = redis.smembers(classCodeEnrollmentKey)
+        val enrollees = redis.smembers(classCodeEnrollmentKey(classCode)).filter { it.isNotEmpty() }
 
         redis.multi().also { tx ->
           // Disable current class if deleted class is the active class
           if (activeClassCode == classCode)
             tx.hset(userId.userInfoKey, ACTIVE_CLASS_CODE_FIELD, "")
 
-          // Delete KV for class description
-          tx.del(classDescKey(classCode), classCode)
-
-          // Remove classcode from list of classes created by user
-          tx.srem(userId.userClassesKey, classCode)
-
-          // Reset every enrollee's enrolled class
-          enrollees
-            .map { UserId(it) }
-            .forEach {
-              it.assignEnrolledClassCode("", tx)
-            }
-
-          // Delete enrollee list
-          tx.del(classCodeEnrollmentKey)
+          deleteClassCode(userId, classCode, enrollees, tx)
 
           tx.exec()
         }
@@ -162,4 +148,22 @@ internal object TeacherPrefs {
         teacherPrefsPage(content, redis, "Deleted class code: $classCode", false)
       }
     }
+
+  fun deleteClassCode(userId: UserId, classCode: String, enrollees: List<String>, tx: Transaction) {
+    // Delete class description
+    tx.del(classDescKey(classCode))
+
+    // Remove classcode from list of classes created by user
+    tx.srem(userId.userClassesKey, classCode)
+
+    // Reset every enrollee's enrolled class
+    enrollees
+      .map { UserId(it) }
+      .forEach {
+        it.assignEnrolledClassCode("", tx)
+      }
+
+    // Delete enrollee list
+    tx.del(classCodeEnrollmentKey(classCode))
+  }
 }

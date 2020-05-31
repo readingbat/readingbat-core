@@ -47,6 +47,7 @@ import com.github.readingbat.posts.ChallengeHistory
 import com.github.readingbat.posts.ChallengeNames
 import com.github.readingbat.posts.ChallengeResults
 import com.github.readingbat.posts.DashboardInfo
+import com.github.readingbat.posts.TeacherPrefs.deleteClassCode
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.fetchPrincipal
 import com.google.gson.Gson
@@ -147,6 +148,12 @@ internal class UserId(val id: String = randomId(25)) {
     val correctAnswers = redis.keys(correctAnswersKey("*", "*", "*"))
     val challenges = redis.keys(challengeAnswersKey("*", "*", "*"))
     val invocations = redis.keys(answerHistoryKey("*", "*", "*", "*"))
+    val classCodes = redis.smembers(userClassesKey)
+    val enrolleePairs =
+      classCodes
+        .map { classCode ->
+          classCode to redis.smembers(classCodeEnrollmentKey(classCode)).filter { it.isNotEmpty() }
+        }
 
     val userIdPasswordResetKey = userIdPasswordResetKey()
     val previousResetId = redis.get(userIdPasswordResetKey) ?: ""
@@ -158,6 +165,7 @@ internal class UserId(val id: String = randomId(25)) {
     logger.info { "Correct Answers: $correctAnswers" }
     logger.info { "Challenges: $challenges" }
     logger.info { "Invocations: $invocations" }
+    logger.info { "Classes: $classCodes" }
 
     redis.multi().also { tx ->
       if (previousResetId.isNotEmpty()) {
@@ -172,6 +180,12 @@ internal class UserId(val id: String = randomId(25)) {
       correctAnswers.forEach { tx.del(it) }
       challenges.forEach { tx.del(it) }
       invocations.forEach { tx.del(it) }
+
+      // Delete class info
+      enrolleePairs
+        .forEach { (classCode, enrollees) ->
+          deleteClassCode(this, classCode, enrollees, tx)
+        }
 
       tx.exec()
     }
