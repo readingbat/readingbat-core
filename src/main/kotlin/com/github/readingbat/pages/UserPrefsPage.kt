@@ -71,6 +71,7 @@ internal object UserPrefsPage : KLogging() {
   private const val createClassButton = "CreateClassButton"
   private const val deleteClassButton = "DeleteClassButton"
 
+  fun classDesc(classCode: String, redis: Jedis) = redis[classDescKey(classCode)] ?: "Missing Description"
 
   fun PipelineCall.userPrefsPage(content: ReadingBatContent,
                                  redis: Jedis,
@@ -171,7 +172,7 @@ internal object UserPrefsPage : KLogging() {
     logger.info { "Enrolled in $enrolledClass" }
     if (enrolledClass.isNotEmpty()) {
       h3 { +"Enrolled class" }
-      val classDesc = redis[classDescKey(enrolledClass)] ?: "Missing Description"
+      val classDesc = classDesc(enrolledClass, redis)
       div {
         style = divStyle
         p { +"Currently enrolled in class $enrolledClass [$classDesc]." }
@@ -274,19 +275,21 @@ internal object UserPrefsPage : KLogging() {
     }
   }
 
+  val rowHeight = "height:1.25em"
+
   private fun BODY.classList(activeClassCode: String, ids: Set<String>, redis: Jedis) {
     table {
       style = "border-spacing: 15px 5px;"
-      tr { th { +"Active" }; th { +"Class Code" }; th { +"Description" }; th { +"Enrollees" } }
+      tr { style = rowHeight; th { +"Active" }; th { +"Class Code" }; th { +"Description" }; th { +"Enrollees" } }
       form {
         action = USER_PREFS_ENDPOINT
         method = FormMethod.post
         ids.forEach { classCode ->
-          val classDesc = redis[classDescKey(classCode)] ?: "Missing Description"
+          val classDesc = classDesc(classCode, redis)
           val enrolleeCount =
             redis.smembers(classCodeEnrollmentKey(classCode)).filter { it.isNotEmpty() }.count()
           this@table.tr {
-            style = "height:1.5em"
+            style = rowHeight
             td {
               style = "text-align:center;"
               input {
@@ -299,7 +302,7 @@ internal object UserPrefsPage : KLogging() {
           }
         }
         this@table.tr {
-          style = "height:1.5em"
+          style = rowHeight
           td {
             style = "text-align:center;";
             input {
@@ -309,6 +312,7 @@ internal object UserPrefsPage : KLogging() {
           td { colSpan = "4"; +"Disable active class" }
         }
         this@table.tr {
+          style = rowHeight
           td {}
           td { input { type = submit; name = USER_PREFS_ACTION; value = UPDATE_ACTIVE_CLASS } }
         }
@@ -317,28 +321,41 @@ internal object UserPrefsPage : KLogging() {
   }
 
   private fun BODY.deleteClassButtons(ids: Set<String>, redis: Jedis) {
+
     table {
       style = "border-spacing: 0px 0px;"
-      tr { th { rawHtml(nbsp.text) } }
+      tr {
+        style = rowHeight;
+        th {
+          style = "vertical-align:center; padding:0; margin:0;"
+          rawHtml(nbsp.text)
+        }
+      }
       ids.forEach { classCode ->
-        val classDesc = redis[classDescKey(classCode)] ?: "Missing Description"
+        val classDesc = classDesc(classCode, redis)
         tr {
-          style = "height:1.5em"
+          style = rowHeight
           td {
-            style = "vertical-align:center"
+            style = "vertical-align:center; padding:0; margin:0;"
             form {
+              style = "vertical-align:center; padding:0; margin:0;"
               action = USER_PREFS_ENDPOINT
               method = FormMethod.post
-              onSubmit =
-                "return confirm('Are you sure you want to delete class $classCode [$classDesc]?');"
-              input { type = InputType.hidden; name = CLASS_CODE; value = classCode }
-              input { type = submit; name = USER_PREFS_ACTION; value = DELETE_CLASS }
+              onSubmit = "return confirm('Are you sure you want to delete class $classCode [$classDesc]?');"
+              input {
+                style = "vertical-align:center; padding:0; margin:0;"; type = InputType.hidden; name =
+                CLASS_CODE; value = classCode
+              }
+              input {
+                style = "vertical-align:center; padding:0; margin:0;"; type = submit; name = USER_PREFS_ACTION; value =
+                DELETE_CLASS
+              }
             }
           }
         }
       }
-      tr { td { rawHtml(nbsp.text) } }
-      tr { td { rawHtml(nbsp.text) } }
+      tr { style = rowHeight; td { rawHtml(nbsp.text) } }
+      tr { style = rowHeight; td { rawHtml(nbsp.text) } }
     }
   }
 

@@ -45,6 +45,7 @@ import com.github.readingbat.misc.UserId.Companion.classDescKey
 import com.github.readingbat.misc.UserId.Companion.lookupDigestInfoByUserId
 import com.github.readingbat.misc.UserId.Companion.userIdByPrincipal
 import com.github.readingbat.misc.UserPrincipal
+import com.github.readingbat.pages.UserPrefsPage.classDesc
 import com.github.readingbat.pages.UserPrefsPage.requestLogInPage
 import com.github.readingbat.pages.UserPrefsPage.userPrefsPage
 import com.github.readingbat.posts.CreateAccount.checkPassword
@@ -117,7 +118,7 @@ internal object UserPrefs : KLogging() {
     val classCode = parameters[CLASS_CODE] ?: ""
     return try {
       userId.enrollInClass(classCode, redis)
-      val classDesc = redis[classDescKey(classCode)] ?: "Missing Description"
+      val classDesc = classDesc(classCode, redis)
       userPrefsPage(content, redis, "Enrolled in class $classCode [$classDesc]", false)
     } catch (e: DataException) {
       userPrefsPage(content,
@@ -172,7 +173,7 @@ internal object UserPrefs : KLogging() {
           if (classCode == CLASSES_DISABLED)
             "Active class disabled"
           else
-            "Active class updated to: $classCode [${redis[classDescKey(classCode)] ?: "Missing Description"}]"
+            "Active class updated to: $classCode [${classDesc(classCode, redis)}]"
         }
       }
 
@@ -181,7 +182,7 @@ internal object UserPrefs : KLogging() {
 
   private fun PipelineCall.withdrawFromClass(content: ReadingBatContent, redis: Jedis, userId: UserId): String {
     val enrolledClassCode = userId.fetchEnrolledClassCode(redis)
-    val classDesc = redis[classDescKey(enrolledClassCode)] ?: "Missing Description"
+    val classDesc = classDesc(enrolledClassCode, redis)
 
     return try {
       userId.withdrawFromClass(enrolledClassCode, redis)
