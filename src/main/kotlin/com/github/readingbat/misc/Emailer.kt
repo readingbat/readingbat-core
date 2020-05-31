@@ -17,7 +17,12 @@
 
 package com.github.readingbat.misc
 
-import com.sendgrid.*
+import com.sendgrid.Method
+import com.sendgrid.Request
+import com.sendgrid.SendGrid
+import com.sendgrid.helpers.mail.Mail
+import com.sendgrid.helpers.mail.objects.Content
+import com.sendgrid.helpers.mail.objects.Email
 import mu.KLogging
 
 

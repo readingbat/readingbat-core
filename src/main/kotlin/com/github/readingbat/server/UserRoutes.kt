@@ -38,6 +38,7 @@ import com.github.readingbat.misc.Endpoints.FAV_ICON
 import com.github.readingbat.misc.Endpoints.PASSWORD_CHANGE_ENDPOINT
 import com.github.readingbat.misc.Endpoints.PASSWORD_RESET_ENDPOINT
 import com.github.readingbat.misc.Endpoints.PRIVACY_ENDPOINT
+import com.github.readingbat.misc.Endpoints.TEACHER_PREFS_ENDPOINT
 import com.github.readingbat.misc.Endpoints.USER_PREFS_ENDPOINT
 import com.github.readingbat.misc.UserPrincipal
 import com.github.readingbat.misc.cssContent
@@ -48,12 +49,14 @@ import com.github.readingbat.pages.DbmsDownPage.dbmsDownPage
 import com.github.readingbat.pages.PageCommon.defaultLanguageTab
 import com.github.readingbat.pages.PasswordResetPage.passwordResetPage
 import com.github.readingbat.pages.PrivacyPage.privacyPage
+import com.github.readingbat.pages.TeacherPrefsPage.teacherPrefsPage
 import com.github.readingbat.pages.UserPrefsPage.userPrefsPage
 import com.github.readingbat.posts.Admin.adminActions
 import com.github.readingbat.posts.CheckAnswers.checkAnswers
 import com.github.readingbat.posts.CreateAccount.createAccount
 import com.github.readingbat.posts.PasswordReset.changePassword
 import com.github.readingbat.posts.PasswordReset.sendPasswordReset
+import com.github.readingbat.posts.TeacherPrefs.teacherPrefs
 import com.github.readingbat.posts.UserPrefs.userPrefs
 import com.github.readingbat.server.ServerUtils.queryParam
 import io.ktor.application.call
@@ -113,6 +116,10 @@ internal fun Routing.userRoutes(content: ReadingBatContent) {
   get(USER_PREFS_ENDPOINT) { respondWithDbmsCheck { redis -> userPrefsPage(content, redis, "", false) } }
 
   post(USER_PREFS_ENDPOINT) { respondWithSuspendingDbmsCheck { redis -> userPrefs(content, redis) } }
+
+  get(TEACHER_PREFS_ENDPOINT) { respondWithDbmsCheck { redis -> teacherPrefsPage(content, redis, "", false) } }
+
+  post(TEACHER_PREFS_ENDPOINT) { respondWithSuspendingDbmsCheck { redis -> teacherPrefs(content, redis) } }
 
   get(ADMIN_ENDPOINT) { respondWithDbmsCheck { redis -> adminDataPage(content, redis) } }
 

@@ -17,31 +17,21 @@
 
 package com.github.readingbat.posts
 
-import com.github.pambrose.common.util.randomId
 import com.github.pambrose.common.util.sha256
 import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.DataException
-import com.github.readingbat.misc.FormFields.CLASSES_CHOICE
-import com.github.readingbat.misc.FormFields.CLASSES_DISABLED
 import com.github.readingbat.misc.FormFields.CLASS_CODE
-import com.github.readingbat.misc.FormFields.CLASS_DESC
 import com.github.readingbat.misc.FormFields.CONFIRM_PASSWORD
-import com.github.readingbat.misc.FormFields.CREATE_CLASS
 import com.github.readingbat.misc.FormFields.CURR_PASSWORD
 import com.github.readingbat.misc.FormFields.DELETE_ACCOUNT
-import com.github.readingbat.misc.FormFields.DELETE_CLASS
 import com.github.readingbat.misc.FormFields.JOIN_CLASS
 import com.github.readingbat.misc.FormFields.NEW_PASSWORD
-import com.github.readingbat.misc.FormFields.UPDATE_ACTIVE_CLASS
 import com.github.readingbat.misc.FormFields.UPDATE_PASSWORD
 import com.github.readingbat.misc.FormFields.USER_PREFS_ACTION
 import com.github.readingbat.misc.FormFields.WITHDRAW_FROM_CLASS
-import com.github.readingbat.misc.KeyConstants.ACTIVE_CLASS_CODE_FIELD
 import com.github.readingbat.misc.KeyConstants.DIGEST_FIELD
 import com.github.readingbat.misc.UserId
-import com.github.readingbat.misc.UserId.Companion.classCodeEnrollmentKey
-import com.github.readingbat.misc.UserId.Companion.classDescKey
 import com.github.readingbat.misc.UserId.Companion.lookupDigestInfoByUserId
 import com.github.readingbat.misc.UserId.Companion.userIdByPrincipal
 import com.github.readingbat.misc.UserPrincipal
@@ -74,9 +64,6 @@ internal object UserPrefs : KLogging() {
         UPDATE_PASSWORD -> updatePassword(content, redis, parameters, userId)
         JOIN_CLASS -> enrollInClass(content, parameters, userId, redis)
         WITHDRAW_FROM_CLASS -> withdrawFromClass(content, redis, userId)
-        CREATE_CLASS -> createClass(content, redis, userId, parameters[CLASS_DESC] ?: "")
-        UPDATE_ACTIVE_CLASS -> updateActiveClass(content, redis, userId, parameters[CLASSES_CHOICE] ?: "")
-        DELETE_CLASS -> deleteClass(content, redis, userId, parameters[CLASS_CODE] ?: "")
         DELETE_ACCOUNT -> deleteAccount(content, principal, userId, redis)
         else -> throw InvalidConfigurationException("Invalid action: $action")
       }
@@ -129,57 +116,6 @@ internal object UserPrefs : KLogging() {
     }
   }
 
-  private fun PipelineCall.createClass(content: ReadingBatContent,
-                                       redis: Jedis,
-                                       userId: UserId,
-                                       classDesc: String) =
-    if (classDesc.isBlank()) {
-      userPrefsPage(content, redis, "Unable to create class [Empty class description]", true)
-    }
-    else {
-      val classCode = randomId(15)
-
-      redis.multi().also { tx ->
-        // Create KV for class description
-        tx.set(classDescKey(classCode), classDesc)
-
-        // Add classcode to list of classes created by user
-        tx.sadd(userId.userClassesKey, classCode)
-
-        // Create class with no one enrolled to prevent class from being created a 2nd time
-        val classCodeEnrollmentKey = classCodeEnrollmentKey(classCode)
-        tx.sadd(classCodeEnrollmentKey, "")
-
-        tx.exec()
-      }
-      userPrefsPage(content, redis, "Created class code: $classCode", false)
-    }
-
-  private fun PipelineCall.updateActiveClass(content: ReadingBatContent,
-                                             redis: Jedis,
-                                             userId: UserId,
-                                             classCode: String): String {
-    val activeClassCode = userId.fetchActiveClassCode(redis)
-    val msg =
-      when {
-        activeClassCode.isEmpty() && classCode == CLASSES_DISABLED -> {
-          "Active class disabled"
-        }
-        activeClassCode == classCode -> {
-          "Same active class selected"
-        }
-        else -> {
-          redis.hset(userId.userInfoKey, ACTIVE_CLASS_CODE_FIELD, if (classCode == CLASSES_DISABLED) "" else classCode)
-          if (classCode == CLASSES_DISABLED)
-            "Active class disabled"
-          else
-            "Active class updated to: $classCode [${classDesc(classCode, redis)}]"
-        }
-      }
-
-    return userPrefsPage(content, redis, msg, false)
-  }
-
   private fun PipelineCall.withdrawFromClass(content: ReadingBatContent, redis: Jedis, userId: UserId): String {
     val enrolledClassCode = userId.fetchEnrolledClassCode(redis)
     val classDesc = classDesc(enrolledClassCode, redis)
@@ -191,48 +127,6 @@ internal object UserPrefs : KLogging() {
       userPrefsPage(content, redis, "Unable to withdraw from class [${e.msg}]", true)
     }
   }
-
-  private fun PipelineCall.deleteClass(content: ReadingBatContent,
-                                       redis: Jedis,
-                                       userId: UserId,
-                                       classCode: String) =
-    if (classCode.isBlank()) {
-      userPrefsPage(content, redis, "Empty class code", true)
-    }
-    else if (!redis.exists(classCodeEnrollmentKey(classCode))) {
-      userPrefsPage(content, redis, "Invalid class code: $classCode", true)
-    }
-    else {
-      val classCodeEnrollmentKey = classCodeEnrollmentKey(classCode)
-      val activeClassCode = userId.fetchActiveClassCode(redis)
-      val enrollees = redis.smembers(classCodeEnrollmentKey)
-
-      redis.multi().also { tx ->
-        // Disable current class if deleted class is the active class
-        if (activeClassCode == classCode)
-          tx.hset(userId.userInfoKey, ACTIVE_CLASS_CODE_FIELD, "")
-
-        // Delete KV for class description
-        tx.del(classDescKey(classCode), classCode)
-
-        // Remove classcode from list of classes created by user
-        tx.srem(userId.userClassesKey, classCode)
-
-        // Reset every enrollee's enrolled class
-        enrollees
-          .map { UserId(it) }
-          .forEach {
-            it.assignEnrolledClassCode("", tx)
-          }
-
-        // Delete enrollee list
-        tx.del(classCodeEnrollmentKey)
-
-        tx.exec()
-      }
-
-      userPrefsPage(content, redis, "Deleted class code: $classCode", false)
-    }
 
   private fun PipelineCall.deleteAccount(content: ReadingBatContent,
                                          principal: UserPrincipal,

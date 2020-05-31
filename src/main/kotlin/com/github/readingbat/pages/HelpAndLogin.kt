@@ -45,7 +45,6 @@ internal object HelpAndLogin {
       table {
         tr {
           td {
-            //valign = "top"
             style = "text-align:right"
             colSpan = "1"
             a { href = "$ABOUT_ENDPOINT?$RETURN_PATH=$loginPath"; +"about" }

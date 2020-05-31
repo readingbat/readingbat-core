@@ -90,7 +90,7 @@ internal val cssContent by lazy {
         color = Color("#551A8B;")
       }
       rule("td") {
-        verticalAlign = VerticalAlign.top
+        verticalAlign = VerticalAlign.middle
       }
       rule(".h1") {
         fontSize = 300.pct
@@ -162,13 +162,6 @@ internal val cssContent by lazy {
         width = 10.em
         border = "7px solid white"
       }
-      // This will add an outline to all the tables
-      /*
-      rule("table th td") {
-        border = "1px solid black;"
-        borderCollapse = BorderCollapse.collapse
-      }
-      */
       rule(".$DASHBOARD") {
         border = "1px solid #DDDDDD;"
         borderCollapse = BorderCollapse.collapse
@@ -248,5 +241,12 @@ internal val cssContent by lazy {
       rule(".CodeMirror-scroll") {
         height = LinearDimension.auto
       }
+      // This will add an outline to all the tables
+      /*
+      rule("table, th, td") {
+        border = "1px solid black;"
+        borderCollapse = BorderCollapse.separate
+      }
+      */
     }.toString()
 }

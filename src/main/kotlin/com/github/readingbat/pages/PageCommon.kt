@@ -155,9 +155,8 @@ internal object PageCommon {
   fun BODY.addLink(text: String, url: String, newWindow: Boolean = false) =
     a { href = url; if (newWindow) target = "_blank"; +text }
 
-  fun BODY.privacyStatement(backPath: String, returnPath: String) {
-    p { a { href = "$PRIVACY_ENDPOINT?$BACK_PATH=$backPath&$RETURN_PATH=$returnPath"; +"privacy statement" } }
-  }
+  fun BODY.privacyStatement(backPath: String, returnPath: String) =
+    p { a { href = "$PRIVACY_ENDPOINT?$BACK_PATH=$backPath&$RETURN_PATH=$returnPath"; +"Privacy Statement" } }
 
   fun BODY.backLinkWithIndent(url: String, marginLeft: String = "1em") {
     if (url.isNotEmpty()) {

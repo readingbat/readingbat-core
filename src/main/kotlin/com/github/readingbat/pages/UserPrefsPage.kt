@@ -21,25 +21,19 @@ import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.Constants.LABEL_WIDTH
 import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.Endpoints.CREATE_ACCOUNT_ENDPOINT
+import com.github.readingbat.misc.Endpoints.TEACHER_PREFS_ENDPOINT
 import com.github.readingbat.misc.Endpoints.USER_PREFS_ENDPOINT
-import com.github.readingbat.misc.FormFields.CLASSES_CHOICE
-import com.github.readingbat.misc.FormFields.CLASSES_DISABLED
 import com.github.readingbat.misc.FormFields.CLASS_CODE
-import com.github.readingbat.misc.FormFields.CLASS_DESC
 import com.github.readingbat.misc.FormFields.CONFIRM_PASSWORD
-import com.github.readingbat.misc.FormFields.CREATE_CLASS
 import com.github.readingbat.misc.FormFields.CURR_PASSWORD
 import com.github.readingbat.misc.FormFields.DELETE_ACCOUNT
-import com.github.readingbat.misc.FormFields.DELETE_CLASS
 import com.github.readingbat.misc.FormFields.JOIN_CLASS
 import com.github.readingbat.misc.FormFields.NEW_PASSWORD
-import com.github.readingbat.misc.FormFields.UPDATE_ACTIVE_CLASS
 import com.github.readingbat.misc.FormFields.UPDATE_PASSWORD
 import com.github.readingbat.misc.FormFields.USER_PREFS_ACTION
 import com.github.readingbat.misc.FormFields.WITHDRAW_FROM_CLASS
 import com.github.readingbat.misc.PageUtils.hideShowButton
 import com.github.readingbat.misc.UserId
-import com.github.readingbat.misc.UserId.Companion.classCodeEnrollmentKey
 import com.github.readingbat.misc.UserId.Companion.classDescKey
 import com.github.readingbat.misc.UserId.Companion.isValidPrincipal
 import com.github.readingbat.misc.UserPrincipal
@@ -50,13 +44,10 @@ import com.github.readingbat.pages.PageCommon.clickButtonScript
 import com.github.readingbat.pages.PageCommon.displayMessage
 import com.github.readingbat.pages.PageCommon.headDefault
 import com.github.readingbat.pages.PageCommon.privacyStatement
-import com.github.readingbat.pages.PageCommon.rawHtml
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.fetchPrincipal
 import com.github.readingbat.server.ServerUtils.queryParam
 import kotlinx.html.*
-import kotlinx.html.Entities.nbsp
-import kotlinx.html.InputType.radio
 import kotlinx.html.InputType.submit
 import kotlinx.html.stream.createHTML
 import mu.KLogging
@@ -64,12 +55,10 @@ import redis.clients.jedis.Jedis
 
 internal object UserPrefsPage : KLogging() {
 
-  private const val divStyle = "margin-left: 2em; margin-bottom: 2em;"
+  const val divStyle = "margin-left: 2em; margin-bottom: 2em;"
   private const val formName = "pform"
   private const val passwordButton = "UpdatePasswordButton"
   private const val joinClassButton = "JoinClassButton"
-  private const val createClassButton = "CreateClassButton"
-  private const val deleteClassButton = "DeleteClassButton"
 
   fun classDesc(classCode: String, redis: Jedis) = redis[classDescKey(classCode)] ?: "Missing Description"
 
@@ -80,42 +69,42 @@ internal object UserPrefsPage : KLogging() {
                                  defaultClassCode: String = ""): String {
     val principal = fetchPrincipal()
     return if (principal != null && isValidPrincipal(principal, redis))
-      prefsWithLoginPage(content, redis, principal, msg, isErrorMsg, defaultClassCode)
+      userPrefsWithLoginPage(content, redis, principal, msg, isErrorMsg, defaultClassCode)
     else
       requestLogInPage(content, redis)
   }
 
-  private fun PipelineCall.prefsWithLoginPage(content: ReadingBatContent,
-                                              redis: Jedis,
-                                              principal: UserPrincipal,
-                                              msg: String,
-                                              isErrorMsg: Boolean,
-                                              defaultClassCode: String) =
+  private fun PipelineCall.userPrefsWithLoginPage(content: ReadingBatContent,
+                                                  redis: Jedis,
+                                                  principal: UserPrincipal,
+                                                  msg: String,
+                                                  isErrorMsg: Boolean,
+                                                  defaultClassCode: String) =
     createHTML()
       .html {
         head {
           headDefault(content)
-          clickButtonScript(passwordButton, joinClassButton, createClassButton, deleteClassButton)
+          clickButtonScript(passwordButton, joinClassButton)
         }
 
         body {
+          val returnPath = queryParam(RETURN_PATH) ?: "/"
+
           bodyTitle()
 
-          h2 { +"ReadingBat Prefs" }
+          h2 { +"ReadingBat User Preferences" }
 
           p { span { style = "color:${if (isErrorMsg) "red" else "green"};"; this@body.displayMessage(msg) } }
 
-          val returnPath = queryParam(RETURN_PATH) ?: "/"
 
           changePassword()
           joinOrWithdrawFromClass(redis, principal, defaultClassCode)
-          createClass()
-          displayClasses(redis, principal)
-          deleteClass(redis, principal)
-          //teacherShare()
-          //memo()
           deleteAccount(redis, principal)
+
+          p { a { href = "$TEACHER_PREFS_ENDPOINT?$RETURN_PATH=$returnPath"; +"Teacher Preferences" } }
+
           privacyStatement(USER_PREFS_ENDPOINT, returnPath)
+
           backLink(returnPath)
         }
       }
@@ -169,7 +158,7 @@ internal object UserPrefsPage : KLogging() {
   private fun BODY.joinOrWithdrawFromClass(redis: Jedis, principal: UserPrincipal, defaultClassCode: String) {
     val userId = UserId(principal.userId)
     val enrolledClass = userId.fetchEnrolledClassCode(redis)
-    logger.info { "Enrolled in $enrolledClass" }
+
     if (enrolledClass.isNotEmpty()) {
       h3 { +"Enrolled class" }
       val classDesc = classDesc(enrolledClass, redis)
@@ -221,144 +210,7 @@ internal object UserPrefsPage : KLogging() {
     }
   }
 
-  private fun BODY.createClass() {
-    h3 { +"Create a class" }
-    div {
-      style = divStyle
-      p { +"Enter a decription of the class." }
-      form {
-        action = USER_PREFS_ENDPOINT
-        method = FormMethod.post
-        table {
-          tr {
-            td { style = LABEL_WIDTH; label { +"Class Description" } }
-            td {
-              input {
-                type = InputType.text
-                size = "42"
-                name = CLASS_DESC
-                value = ""
-                onKeyPress = "click$createClassButton(event);"
-              }
-            }
-          }
-          tr {
-            td {}
-            td {
-              input {
-                type = submit; id = createClassButton; name = USER_PREFS_ACTION; value = CREATE_CLASS
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-
-  private fun BODY.displayClasses(redis: Jedis, principal: UserPrincipal) {
-    val userId = UserId(principal.userId)
-    val ids = redis.smembers(userId.userClassesKey)
-
-    if (ids.size > 0) {
-      val activeClassCode = userId.fetchActiveClassCode(redis)
-      h3 { +"Current classes" }
-      div {
-        style = divStyle
-
-        table {
-          tr {
-            td { this@displayClasses.classList(activeClassCode, ids, redis) }
-            td { this@displayClasses.deleteClassButtons(ids, redis) }
-          }
-        }
-      }
-    }
-  }
-
-  val rowHeight = "height:1.25em"
-
-  private fun BODY.classList(activeClassCode: String, ids: Set<String>, redis: Jedis) {
-    table {
-      style = "border-spacing: 15px 5px;"
-      tr { style = rowHeight; th { +"Active" }; th { +"Class Code" }; th { +"Description" }; th { +"Enrollees" } }
-      form {
-        action = USER_PREFS_ENDPOINT
-        method = FormMethod.post
-        ids.forEach { classCode ->
-          val classDesc = classDesc(classCode, redis)
-          val enrolleeCount =
-            redis.smembers(classCodeEnrollmentKey(classCode)).filter { it.isNotEmpty() }.count()
-          this@table.tr {
-            style = rowHeight
-            td {
-              style = "text-align:center;"
-              input {
-                type = radio; name = CLASSES_CHOICE; value = classCode; checked = activeClassCode == classCode
-              }
-            }
-            td { +classCode }
-            td { +classDesc }
-            td { style = "text-align:center;"; +enrolleeCount.toString() }
-          }
-        }
-        this@table.tr {
-          style = rowHeight
-          td {
-            style = "text-align:center;";
-            input {
-              type = radio; name = CLASSES_CHOICE; value = CLASSES_DISABLED; checked = activeClassCode.isEmpty()
-            }
-          }
-          td { colSpan = "4"; +"Disable active class" }
-        }
-        this@table.tr {
-          style = rowHeight
-          td {}
-          td { input { type = submit; name = USER_PREFS_ACTION; value = UPDATE_ACTIVE_CLASS } }
-        }
-      }
-    }
-  }
-
-  private fun BODY.deleteClassButtons(ids: Set<String>, redis: Jedis) {
-
-    table {
-      style = "border-spacing: 0px 0px;"
-      tr {
-        style = rowHeight;
-        th {
-          style = "vertical-align:center; padding:0; margin:0;"
-          rawHtml(nbsp.text)
-        }
-      }
-      ids.forEach { classCode ->
-        val classDesc = classDesc(classCode, redis)
-        tr {
-          style = rowHeight
-          td {
-            style = "vertical-align:center; padding:0; margin:0;"
-            form {
-              style = "vertical-align:center; padding:0; margin:0;"
-              action = USER_PREFS_ENDPOINT
-              method = FormMethod.post
-              onSubmit = "return confirm('Are you sure you want to delete class $classCode [$classDesc]?');"
-              input {
-                style = "vertical-align:center; padding:0; margin:0;"; type = InputType.hidden; name =
-                CLASS_CODE; value = classCode
-              }
-              input {
-                style = "vertical-align:center; padding:0; margin:0;"; type = submit; name = USER_PREFS_ACTION; value =
-                DELETE_CLASS
-              }
-            }
-          }
-        }
-      }
-      tr { style = rowHeight; td { rawHtml(nbsp.text) } }
-      tr { style = rowHeight; td { rawHtml(nbsp.text) } }
-    }
-  }
-
+  /*
   private fun BODY.deleteClass(redis: Jedis, principal: UserPrincipal) {
     val userId = UserId(principal.userId)
     val ids = redis.smembers(userId.userClassesKey)
@@ -439,6 +291,7 @@ internal object UserPrefsPage : KLogging() {
       }
     }
   }
+  */
 
   private fun BODY.deleteAccount(redis: Jedis, principal: UserPrincipal) {
     val email = principal.email(redis)
