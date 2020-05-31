@@ -18,16 +18,19 @@
 package com.github.readingbat.pages
 
 import com.github.readingbat.dsl.ReadingBatContent
+import com.github.readingbat.misc.Constants
 import com.github.readingbat.misc.Endpoints.ADMIN_ENDPOINT
 import com.github.readingbat.misc.FormFields.ADMIN_ACTION
 import com.github.readingbat.misc.FormFields.DELETE_ALL_DATA
 import com.github.readingbat.misc.UserId
+import com.github.readingbat.pages.HelpAndLogin.helpAndLogin
 import com.github.readingbat.pages.PageCommon.backLink
 import com.github.readingbat.pages.PageCommon.bodyTitle
 import com.github.readingbat.pages.PageCommon.displayMessage
 import com.github.readingbat.pages.PageCommon.headDefault
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.fetchPrincipal
+import com.github.readingbat.server.ServerUtils.queryParam
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 import redis.clients.jedis.Jedis
@@ -44,14 +47,17 @@ internal object AdminPage {
         val principal = fetchPrincipal()
         head { headDefault(content) }
         body {
+          val returnPath = queryParam(Constants.RETURN_PATH) ?: "/"
+
+          helpAndLogin(redis, fetchPrincipal(), returnPath)
+
           bodyTitle()
+
           if (principal == null) {
-            br
-            +"Must be logged in for this function"
+            br { +"Must be logged in for this function" }
           }
           else if (UserId(principal.userId).email(redis) != "pambrose@mac.com") {
-            br
-            +"Must be system admin for this function"
+            br { +"Must be system admin for this function" }
           }
           else {
             p {
@@ -61,12 +67,11 @@ internal object AdminPage {
               }
             }
 
-            deleteData()
-            br
-            dumpData(redis)
+            p { this@body.deleteData() }
+            p { this@body.dumpData(redis) }
           }
-          br
-          backLink("/")
+
+          backLink(returnPath)
         }
       }
 

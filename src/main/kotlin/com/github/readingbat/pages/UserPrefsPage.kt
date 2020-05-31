@@ -90,6 +90,8 @@ internal object UserPrefsPage : KLogging() {
         body {
           val returnPath = queryParam(RETURN_PATH) ?: "/"
 
+          helpAndLogin(redis, fetchPrincipal(), returnPath)
+
           bodyTitle()
 
           h2 { +"ReadingBat User Preferences" }

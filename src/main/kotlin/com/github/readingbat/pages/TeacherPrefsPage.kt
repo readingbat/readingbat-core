@@ -30,6 +30,7 @@ import com.github.readingbat.misc.FormFields.UPDATE_ACTIVE_CLASS
 import com.github.readingbat.misc.FormFields.USER_PREFS_ACTION
 import com.github.readingbat.misc.UserId
 import com.github.readingbat.misc.UserPrincipal
+import com.github.readingbat.pages.HelpAndLogin.helpAndLogin
 import com.github.readingbat.pages.PageCommon.backLink
 import com.github.readingbat.pages.PageCommon.bodyTitle
 import com.github.readingbat.pages.PageCommon.clickButtonScript
@@ -79,13 +80,15 @@ internal object TeacherPrefsPage : KLogging() {
         }
 
         body {
+          val returnPath = queryParam(RETURN_PATH) ?: "/"
+
+          helpAndLogin(redis, fetchPrincipal(), returnPath)
+
           bodyTitle()
 
           h2 { +"ReadingBat User Preferences" }
 
           p { span { style = "color:${if (isErrorMsg) "red" else "green"};"; this@body.displayMessage(msg) } }
-
-          val returnPath = queryParam(RETURN_PATH) ?: "/"
 
           createClass(defaultClassDesc)
           displayClasses(redis, principal)
