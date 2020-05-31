@@ -21,6 +21,7 @@ import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.Endpoints.ADMIN_ENDPOINT
 import com.github.readingbat.misc.FormFields.ADMIN_ACTION
 import com.github.readingbat.misc.FormFields.DELETE_ALL_DATA
+import com.github.readingbat.misc.UserId
 import com.github.readingbat.pages.PageCommon.backLink
 import com.github.readingbat.pages.PageCommon.bodyTitle
 import com.github.readingbat.pages.PageCommon.displayMessage
@@ -47,6 +48,10 @@ internal object AdminPage {
           if (principal == null) {
             br
             +"Must be logged in for this function"
+          }
+          else if (UserId(principal.userId).email(redis) != "pambrose@mac.com") {
+            br
+            +"Must be system admin for this function"
           }
           else {
             p {
