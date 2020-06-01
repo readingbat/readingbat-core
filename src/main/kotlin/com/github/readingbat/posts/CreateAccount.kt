@@ -23,7 +23,7 @@ import com.github.readingbat.misc.Constants.MSG
 import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.FormFields.CONFIRM_PASSWORD
 import com.github.readingbat.misc.FormFields.EMAIL
-import com.github.readingbat.misc.FormFields.NAME
+import com.github.readingbat.misc.FormFields.FULLNAME
 import com.github.readingbat.misc.FormFields.PASSWORD
 import com.github.readingbat.misc.User.Companion.createUser
 import com.github.readingbat.misc.UserPrincipal
@@ -64,7 +64,7 @@ internal object CreateAccount : KLogging() {
 
   suspend fun PipelineCall.createAccount(content: ReadingBatContent, redis: Jedis): String {
     val parameters = call.receiveParameters()
-    val fullName = parameters.getFullName(NAME)
+    val fullName = parameters.getFullName(FULLNAME)
     val email = parameters.getEmail(EMAIL)
     val password = parameters.getPassword(PASSWORD)
     val confirmPassword = parameters.getPassword(CONFIRM_PASSWORD)

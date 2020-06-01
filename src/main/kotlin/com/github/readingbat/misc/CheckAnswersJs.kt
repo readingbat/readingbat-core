@@ -20,7 +20,7 @@ package com.github.readingbat.misc
 import com.github.readingbat.misc.Constants.CORRECT_COLOR
 import com.github.readingbat.misc.Constants.RESP
 import com.github.readingbat.misc.Constants.SESSION_ID
-import com.github.readingbat.misc.Endpoints.CHECK_ANSWERS_ROOT
+import com.github.readingbat.misc.Endpoints.CHECK_ANSWERS_ENDPOINT
 import com.github.readingbat.misc.ParameterIds.FEEDBACK_ID
 import com.github.readingbat.misc.ParameterIds.SPINNER_ID
 import com.github.readingbat.misc.ParameterIds.STATUS_ID
@@ -66,7 +66,7 @@ internal object CheckAnswersJs {
       }
       
       re.onreadystatechange = handleDone;  
-      re.open("POST", '$CHECK_ANSWERS_ROOT', true);
+      re.open("POST", '$CHECK_ANSWERS_ENDPOINT', true);
       re.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
       re.send(data);
       return 1;

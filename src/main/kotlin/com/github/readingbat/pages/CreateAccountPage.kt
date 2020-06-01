@@ -22,7 +22,7 @@ import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.Endpoints.CREATE_ACCOUNT_ENDPOINT
 import com.github.readingbat.misc.FormFields.CONFIRM_PASSWORD
 import com.github.readingbat.misc.FormFields.EMAIL
-import com.github.readingbat.misc.FormFields.NAME
+import com.github.readingbat.misc.FormFields.FULLNAME
 import com.github.readingbat.misc.FormFields.PASSWORD
 import com.github.readingbat.misc.PageUtils.hideShowButton
 import com.github.readingbat.pages.PageCommon.backLink
@@ -87,7 +87,8 @@ internal object CreateAccountPage {
                   td { style = labelWidth; label { +"Name" } }
                   td {
                     input {
-                      style = inputFs; type = InputType.text; size = "42"; name = NAME; value = defaultFullName.value
+                      style = inputFs; type = InputType.text; size = "42"; name = FULLNAME; value =
+                      defaultFullName.value
                     }
                   }
                 }

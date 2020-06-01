@@ -31,10 +31,10 @@ import com.github.readingbat.misc.Constants.ROOT
 import com.github.readingbat.misc.Constants.STATIC_ROOT
 import com.github.readingbat.misc.Endpoints.ABOUT_ENDPOINT
 import com.github.readingbat.misc.Endpoints.ADMIN_ENDPOINT
-import com.github.readingbat.misc.Endpoints.CHECK_ANSWERS_ROOT
+import com.github.readingbat.misc.Endpoints.CHECK_ANSWERS_ENDPOINT
 import com.github.readingbat.misc.Endpoints.CREATE_ACCOUNT_ENDPOINT
 import com.github.readingbat.misc.Endpoints.CSS_ENDPOINT
-import com.github.readingbat.misc.Endpoints.FAV_ICON
+import com.github.readingbat.misc.Endpoints.FAV_ICON_ENDPOINT
 import com.github.readingbat.misc.Endpoints.PASSWORD_CHANGE_ENDPOINT
 import com.github.readingbat.misc.Endpoints.PASSWORD_RESET_ENDPOINT
 import com.github.readingbat.misc.Endpoints.PRIVACY_ENDPOINT
@@ -108,7 +108,7 @@ internal fun Routing.userRoutes(content: ReadingBatContent) {
 
   get(ABOUT_ENDPOINT) { respondWith { aboutPage(content) } }
 
-  post(CHECK_ANSWERS_ROOT) { withSuspendingRedisPool { redis -> checkAnswers(content, redis) } }
+  post(CHECK_ANSWERS_ENDPOINT) { withSuspendingRedisPool { redis -> checkAnswers(content, redis) } }
 
   get(CREATE_ACCOUNT_ENDPOINT) { respondWith { createAccountPage(content) } }
 
@@ -148,5 +148,5 @@ internal fun Routing.userRoutes(content: ReadingBatContent) {
 
   get(CSS_ENDPOINT) { respondWith(CSS) { cssContent } }
 
-  get(FAV_ICON) { redirectTo { "$STATIC_ROOT/$ICONS/favicon.ico" } }
+  get(FAV_ICON_ENDPOINT) { redirectTo { "$STATIC_ROOT/$ICONS/favicon.ico" } }
 }

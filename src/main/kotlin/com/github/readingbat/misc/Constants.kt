@@ -49,9 +49,9 @@ internal object Endpoints {
   const val PASSWORD_CHANGE_ENDPOINT = "/password-change"
   const val PASSWORD_RESET_ENDPOINT = "/password-reset"
   const val CSS_ENDPOINT = "/styles.css"
-  const val CHECK_ANSWERS_ROOT = "/check-answers"
-  const val FAV_ICON = "/favicon.ico"
-  const val CLASS_PREFIX = "/class"
+  const val FAV_ICON_ENDPOINT = "/favicon.ico"
+  const val CLASSROOM_ENDPOINT = "/classroom"
+  const val CHECK_ANSWERS_ENDPOINT = "/check-answers"
 }
 
 internal object ParameterIds {
@@ -62,7 +62,7 @@ internal object ParameterIds {
 }
 
 internal object FormFields {
-  const val NAME = "name"
+  const val FULLNAME = "fullname"
   const val EMAIL = "email"
   const val PASSWORD = "passwd"
   const val CONFIRM_PASSWORD = "confirm_passwd"

@@ -88,7 +88,7 @@ internal object PasswordReset : KLogging() {
           logger.info { "Sending password reset email to $email" }
           try {
             val msg = """
-              |This is a password reset message for the http://readingbat.com account for '$email'
+              |This is a password reset message for the ReadingBat.com account for '$email'
               |Go to this URL to set a new password: ${content.siteUrlPrefix}$PASSWORD_RESET_ENDPOINT?$RESET_ID=$newResetId 
               |If you did not request to reset your password, please ignore this message.
             """.trimMargin()

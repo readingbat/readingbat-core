@@ -45,7 +45,7 @@ import com.github.readingbat.misc.Constants.PLAYGROUND_ROOT
 import com.github.readingbat.misc.Constants.RESP
 import com.github.readingbat.misc.Constants.STATIC_ROOT
 import com.github.readingbat.misc.Constants.WRONG_COLOR
-import com.github.readingbat.misc.Endpoints.CLASS_PREFIX
+import com.github.readingbat.misc.Endpoints.CLASSROOM_ENDPOINT
 import com.github.readingbat.misc.KeyConstants.NAME_FIELD
 import com.github.readingbat.misc.PageUtils.pathOf
 import com.github.readingbat.misc.ParameterIds.FEEDBACK_ID
@@ -212,7 +212,7 @@ internal object ChallengePage : KLogging() {
       rawHtml(
         """
           var wshost = location.origin.replace(${if (content.production) "/^https:/, 'wss:'" else "/^http:/, 'ws:'"})
-          var wsurl = wshost + '$CLASS_PREFIX/$classCode'
+          var wsurl = wshost + '$CLASSROOM_ENDPOINT/$classCode'
           
           var ws = new WebSocket(wsurl);
           
