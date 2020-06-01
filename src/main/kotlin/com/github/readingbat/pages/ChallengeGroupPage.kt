@@ -29,9 +29,9 @@ import com.github.readingbat.misc.Constants.MSG
 import com.github.readingbat.misc.Constants.STATIC_ROOT
 import com.github.readingbat.misc.Constants.WHITE_CHECK
 import com.github.readingbat.misc.PageUtils.pathOf
-import com.github.readingbat.misc.UserId
-import com.github.readingbat.misc.UserId.Companion.correctAnswersKey
-import com.github.readingbat.misc.UserId.Companion.userIdByPrincipal
+import com.github.readingbat.misc.User
+import com.github.readingbat.misc.User.Companion.correctAnswersKey
+import com.github.readingbat.misc.User.Companion.userByPrincipal
 import com.github.readingbat.pages.PageCommon.backLink
 import com.github.readingbat.pages.PageCommon.bodyHeader
 import com.github.readingbat.pages.PageCommon.headDefault
@@ -48,8 +48,8 @@ import redis.clients.jedis.Jedis
 
 internal object ChallengeGroupPage {
 
-  fun Challenge.isCorrect(redis: Jedis?, userId: UserId?, browserSession: BrowserSession?): Boolean {
-    val correctAnswersKey = correctAnswersKey(userId, browserSession, languageName, groupName, challengeName)
+  fun Challenge.isCorrect(redis: Jedis?, user: User?, browserSession: BrowserSession?): Boolean {
+    val correctAnswersKey = correctAnswersKey(user, browserSession, languageName, groupName, challengeName)
     return if (correctAnswersKey.isNotEmpty()) redis?.get(correctAnswersKey)?.toBoolean() == true else false
   }
 
@@ -67,9 +67,9 @@ internal object ChallengeGroupPage {
         val challenges = challengeGroup.challenges
         val loginPath = pathOf(CHALLENGE_ROOT, languageName, groupName)
 
-        fun TR.funcCall(redis: Jedis?, userId: UserId?, challenge: Challenge) {
+        fun TR.funcCall(redis: Jedis?, user: User?, challenge: Challenge) {
           val challengeName = challenge.challengeName
-          val allCorrect = challenge.isCorrect(redis, userId, browserSession)
+          val allCorrect = challenge.isCorrect(redis, user, browserSession)
 
           td(classes = FUNC_ITEM) {
             img { src = "$STATIC_ROOT/${if (allCorrect) GREEN_CHECK else WHITE_CHECK}" }
@@ -92,15 +92,15 @@ internal object ChallengeGroupPage {
             val cols = 3
             val size = challenges.size
             val rows = size.rows(cols)
-            val userId = userIdByPrincipal(principal)
+            val user = userByPrincipal(principal)
 
             (0 until rows).forEach { i ->
               tr {
                 style = "height:30"
                 challenges.apply {
-                  elementAt(i).also { funcCall(redis, userId, it) }
-                  elementAtOrNull(i + rows)?.also { funcCall(redis, userId, it) } ?: td {}
-                  elementAtOrNull(i + (2 * rows))?.also { funcCall(redis, userId, it) } ?: td {}
+                  elementAt(i).also { funcCall(redis, user, it) }
+                  elementAtOrNull(i + rows)?.also { funcCall(redis, user, it) } ?: td {}
+                  elementAtOrNull(i + (2 * rows))?.also { funcCall(redis, user, it) } ?: td {}
                 }
               }
             }

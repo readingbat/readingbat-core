@@ -26,8 +26,8 @@ import com.github.readingbat.misc.FormFields.CONFIRM_PASSWORD
 import com.github.readingbat.misc.FormFields.EMAIL
 import com.github.readingbat.misc.FormFields.NAME
 import com.github.readingbat.misc.FormFields.PASSWORD
-import com.github.readingbat.misc.UserId.Companion.createUser
-import com.github.readingbat.misc.UserId.Companion.userEmailKey
+import com.github.readingbat.misc.User.Companion.createUser
+import com.github.readingbat.misc.User.Companion.userEmailKey
 import com.github.readingbat.misc.UserPrincipal
 import com.github.readingbat.pages.CreateAccountPage.createAccountPage
 import com.github.readingbat.server.PipelineCall
@@ -105,8 +105,8 @@ internal object CreateAccount : KLogging() {
     }
     else {
       // Create user
-      val userId = createUser(name, email, password, redis)
-      call.sessions.set(UserPrincipal(userId = userId.id))
+      val user = createUser(name, email, password, redis)
+      call.sessions.set(UserPrincipal(userId = user.id))
       throw RedirectException("$returnPath?$MSG=${"User $email created".encode()}")
     }
   }

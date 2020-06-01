@@ -1,0 +1,77 @@
+/*
+ * Copyright © 2020 Paul Ambrose (pambrose@mac.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+
+package com.github.readingbat.misc
+
+import com.github.pambrose.common.util.randomId
+import com.github.readingbat.misc.KeyConstants.CLASS_CODE_KEY
+import com.github.readingbat.misc.KeyConstants.DESC_FIELD
+import com.github.readingbat.misc.KeyConstants.KEY_SEP
+import com.github.readingbat.misc.KeyConstants.TEACHER_FIELD
+import io.ktor.http.Parameters
+import redis.clients.jedis.Jedis
+import redis.clients.jedis.Transaction
+
+internal inline class ClassCode(val value: String) {
+  val isEmpty get() = value.isNotBlank()
+  val isNotEmpty get() = value.isBlank()
+  val isClassesDisabled get() = value == FormFields.CLASSES_DISABLED
+  val classCodeEnrollmentKey get() = listOf(CLASS_CODE_KEY, value).joinToString(KEY_SEP)
+
+  fun isValid(redis: Jedis) = redis.exists(classCodeEnrollmentKey)
+
+  fun isNotValid(redis: Jedis) = !isValid(redis)
+
+  fun fetchEnrollees(redis: Jedis) =
+    (redis.smembers(classCodeEnrollmentKey) ?: emptySet())
+      .filter { it.isNotEmpty() }
+      .map { User(it) }
+
+  fun isEnrolled(user: User, redis: Jedis) = redis.sismember(classCodeEnrollmentKey, user.id) ?: false
+
+  fun addEnrolleePlaceholder(tx: Transaction) {
+    tx.sadd(classCodeEnrollmentKey, "")
+  }
+
+  fun addEnrollee(user: User, tx: Transaction) {
+    tx.sadd(classCodeEnrollmentKey, user.id)
+  }
+
+  fun removeEnrollee(user: User, tx: Transaction) {
+    tx.srem(classCodeEnrollmentKey, user.id)
+  }
+
+  fun deleteAllEnrollees(tx: Transaction) {
+    tx.del(classCodeEnrollmentKey)
+  }
+
+  fun initializeWith(classDesc: String, user: User, tx: Transaction) {
+    tx.hset(User.classInfoKey(this), mapOf(DESC_FIELD to classDesc, TEACHER_FIELD to user.id))
+  }
+
+  override fun toString() = value
+
+  companion object {
+
+    val EMPTY_CLASS_CODE = ClassCode("")
+
+    fun newClassCode() = ClassCode(randomId(15))
+
+    fun forParameter(parameters: Parameters, parameterName: String) =
+      ClassCode(parameters[parameterName] ?: "")
+  }
+}

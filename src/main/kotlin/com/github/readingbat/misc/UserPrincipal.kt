@@ -22,6 +22,6 @@ import redis.clients.jedis.Jedis
 import java.time.Instant
 
 data class UserPrincipal(val userId: String, val created: Long = Instant.now().toEpochMilli()) : Principal {
-  fun email(redis: Jedis) = UserId(userId).email(redis)
+  fun email(redis: Jedis) = User(userId).email(redis)
 }
 

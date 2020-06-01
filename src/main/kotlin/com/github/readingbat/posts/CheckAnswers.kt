@@ -29,7 +29,7 @@ import com.github.readingbat.misc.CheckAnswersJs.challengeSrc
 import com.github.readingbat.misc.CheckAnswersJs.groupSrc
 import com.github.readingbat.misc.CheckAnswersJs.langSrc
 import com.github.readingbat.misc.Constants.RESP
-import com.github.readingbat.misc.UserId.Companion.saveAnswers
+import com.github.readingbat.misc.User.Companion.saveAnswers
 import com.github.readingbat.server.PipelineCall
 import io.ktor.application.call
 import io.ktor.request.receiveParameters

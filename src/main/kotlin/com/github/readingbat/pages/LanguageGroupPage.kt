@@ -30,8 +30,8 @@ import com.github.readingbat.misc.Constants.MSG
 import com.github.readingbat.misc.Constants.STATIC_ROOT
 import com.github.readingbat.misc.Constants.WHITE_CHECK
 import com.github.readingbat.misc.PageUtils.pathOf
-import com.github.readingbat.misc.UserId
-import com.github.readingbat.misc.UserId.Companion.userIdByPrincipal
+import com.github.readingbat.misc.User
+import com.github.readingbat.misc.User.Companion.userByPrincipal
 import com.github.readingbat.pages.ChallengeGroupPage.isCorrect
 import com.github.readingbat.pages.PageCommon.bodyHeader
 import com.github.readingbat.pages.PageCommon.headDefault
@@ -62,7 +62,7 @@ internal object LanguageGroupPage {
         val loginPath = pathOf(CHALLENGE_ROOT, languageName)
         val groups = content.findLanguage(languageType).challengeGroups
 
-        fun TR.groupItem(redis: Jedis?, userId: UserId?, challengeGroup: ChallengeGroup<*>) {
+        fun TR.groupItem(redis: Jedis?, user: User?, challengeGroup: ChallengeGroup<*>) {
           val groupName = challengeGroup.groupName
           val parsedDescription = challengeGroup.parsedDescription
           val challenges = challengeGroup.challenges
@@ -71,7 +71,7 @@ internal object LanguageGroupPage {
           var cnt = 0
           var maxFound = false
           for (challenge in challenges) {
-            if (challenge.isCorrect(redis, userId, browserSession))
+            if (challenge.isCorrect(redis, user, browserSession))
               cnt++
             if (cnt == maxCnt + 1) {
               maxFound = true
@@ -104,13 +104,13 @@ internal object LanguageGroupPage {
             val cols = 3
             val size = groups.size
             val rows = size.rows(cols)
-            val userId = userIdByPrincipal(principal)
+            val user = userByPrincipal(principal)
 
             (0 until rows).forEach { i ->
               tr {
-                groups[i].also { group -> groupItem(redis, userId, group) }
-                groups.elementAtOrNull(i + rows)?.also { groupItem(redis, userId, it) } ?: td {}
-                groups.elementAtOrNull(i + (2 * rows))?.also { groupItem(redis, userId, it) } ?: td {}
+                groups[i].also { group -> groupItem(redis, user, group) }
+                groups.elementAtOrNull(i + rows)?.also { groupItem(redis, user, it) } ?: td {}
+                groups.elementAtOrNull(i + (2 * rows))?.also { groupItem(redis, user, it) } ?: td {}
               }
             }
           }

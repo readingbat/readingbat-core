@@ -35,6 +35,8 @@ import com.github.readingbat.misc.CSSNames.SUCCESS
 import com.github.readingbat.misc.CSSNames.USER_RESP
 import com.github.readingbat.misc.CheckAnswersJs.checkAnswersScript
 import com.github.readingbat.misc.CheckAnswersJs.processAnswers
+import com.github.readingbat.misc.ClassCode
+import com.github.readingbat.misc.ClassCode.Companion.EMPTY_CLASS_CODE
 import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
 import com.github.readingbat.misc.Constants.CORRECT_COLOR
 import com.github.readingbat.misc.Constants.DBMS_DOWN
@@ -50,11 +52,10 @@ import com.github.readingbat.misc.ParameterIds.FEEDBACK_ID
 import com.github.readingbat.misc.ParameterIds.SPINNER_ID
 import com.github.readingbat.misc.ParameterIds.STATUS_ID
 import com.github.readingbat.misc.ParameterIds.SUCCESS_ID
-import com.github.readingbat.misc.UserId
-import com.github.readingbat.misc.UserId.Companion.challengeAnswersKey
-import com.github.readingbat.misc.UserId.Companion.classCodeEnrollmentKey
-import com.github.readingbat.misc.UserId.Companion.gson
-import com.github.readingbat.misc.UserId.Companion.userIdByPrincipal
+import com.github.readingbat.misc.User
+import com.github.readingbat.misc.User.Companion.challengeAnswersKey
+import com.github.readingbat.misc.User.Companion.gson
+import com.github.readingbat.misc.User.Companion.userByPrincipal
 import com.github.readingbat.misc.UserPrincipal
 import com.github.readingbat.pages.PageCommon.addLink
 import com.github.readingbat.pages.PageCommon.backLink
@@ -110,14 +111,13 @@ internal object ChallengePage : KLogging() {
         }
 
         body {
-          var activeClassCode = ""
           bodyHeader(redis, principal, loginAttempt, content, languageType, loginPath, false, queryParam(MSG) ?: "")
 
           this@body.displayChallenge(challenge, funcInfo)
 
-          val userId = userIdByPrincipal(principal)
-          activeClassCode = userId?.fetchActiveClassCode(redis) ?: ""
-          if (activeClassCode.isEmpty())
+          val user = userByPrincipal(principal)
+          val activeClassCode = user?.fetchActiveClassCode(redis) ?: EMPTY_CLASS_CODE
+          if (activeClassCode.isNotEmpty)
             this@body.displayQuestions(redis, principal, browserSession, challenge, funcInfo)
           else {
             if (redis == null)
@@ -130,7 +130,7 @@ internal object ChallengePage : KLogging() {
 
           script { src = "$STATIC_ROOT/$languageName-prism.js" }
 
-          if (activeClassCode.isNotEmpty())
+          if (activeClassCode.isEmpty)
             addWebSockets(content, activeClassCode)
         }
       }
@@ -208,7 +208,7 @@ internal object ChallengePage : KLogging() {
       this@displayQuestions.otherLinks(challenge)
     }
 
-  private fun BODY.addWebSockets(content: ReadingBatContent, classCode: String) {
+  private fun BODY.addWebSockets(content: ReadingBatContent, classCode: ClassCode) {
     script {
       rawHtml(
         """
@@ -244,7 +244,7 @@ internal object ChallengePage : KLogging() {
                                           challenge: Challenge,
                                           maxHistoryLength: Int,
                                           funcInfo: FunctionInfo,
-                                          activeClassCode: String) =
+                                          activeClassCode: ClassCode) =
     div {
       style = "margin-top:2em;"
 
@@ -253,8 +253,8 @@ internal object ChallengePage : KLogging() {
       val challengeName = challenge.challengeName
       val languageName = languageType.lowerName
 
-      val ids = redis.smembers(classCodeEnrollmentKey(activeClassCode)).filter { it.isNotEmpty() }
-      if (ids.isEmpty()) {
+      val enrollees = activeClassCode.fetchEnrollees(redis)
+      if (enrollees.isEmpty()) {
         h3 {
           style = "margin-left: 5px; color: $headerColor"
           +"No students enrolled in ${fetchClassDesc(activeClassCode, redis)} [$activeClassCode]"
@@ -278,15 +278,14 @@ internal object ChallengePage : KLogging() {
             }
           }
 
-          ids.forEach {
-            val userId = UserId(it)
-            val userInfoKey = userId.userInfoKey
+          enrollees.forEach { user ->
+            val userInfoKey = user.userInfoKey
             var numCorrect = 0
 
             val results =
               funcInfo.invocations
                 .map { invocation ->
-                  val answerHistoryKey = userId.answerHistoryKey(languageName, groupName, challengeName, invocation)
+                  val answerHistoryKey = user.answerHistoryKey(languageName, groupName, challengeName, invocation)
                   val history =
                     gson.fromJson(redis[answerHistoryKey], ChallengeHistory::class.java)
                       ?: ChallengeHistory(invocation)
@@ -297,10 +296,10 @@ internal object ChallengePage : KLogging() {
 
             tr(classes = DASHBOARD) {
               td(classes = DASHBOARD) {
-                id = "${userId.id}-$nameTd"
+                id = "${user.id}-$nameTd"
                 style = "background-color:${if (numCorrect == results.size) CORRECT_COLOR else WRONG_COLOR};"
 
-                span { id = "${userId.id}-$numCorrectSpan"; +numCorrect.toString() }
+                span { id = "${user.id}-$numCorrectSpan"; +numCorrect.toString() }
                 +"/${results.size}"
                 rawHtml(Entities.nbsp.text)
                 +(redis.hget(userInfoKey, NAME_FIELD) ?: "")
@@ -308,10 +307,10 @@ internal object ChallengePage : KLogging() {
 
               results.forEach { (invocation, history) ->
                 td(classes = DASHBOARD) {
-                  id = "${userId.id}-$invocation-$answersTd"
+                  id = "${user.id}-$invocation-$answersTd"
                   style = "background-color:${if (history.correct) CORRECT_COLOR else WRONG_COLOR};"
                   span {
-                    id = "${userId.id}-$invocation-$answersSpan"
+                    id = "${user.id}-$invocation-$answersSpan"
                     history.answers.asReversed().take(maxHistoryLength).forEach { answer -> +answer; br }
                   }
                 }
@@ -330,8 +329,8 @@ internal object ChallengePage : KLogging() {
     val groupName = challenge.groupName
     val challengeName = challenge.challengeName
     val languageName = languageType.lowerName
-    val userId: UserId? = userIdByPrincipal(principal)
-    val key = challengeAnswersKey(userId, browserSession, languageName, groupName, challengeName)
+    val user: User? = userByPrincipal(principal)
+    val key = challengeAnswersKey(user, browserSession, languageName, groupName, challengeName)
 
     return if (key.isNotEmpty()) redis.hgetAll(key) else mutableMapOf()
   }

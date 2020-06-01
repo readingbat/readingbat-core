@@ -20,14 +20,14 @@ package com.github.readingbat.misc
 import redis.clients.jedis.exceptions.JedisException
 
 internal object KeyConstants {
-  const val USER_EMAIL_KEY = "userId"
+  const val USER_EMAIL_KEY = "user-email"
   const val USER_INFO_KEY = "user-info"
   const val USER_CLASSES_KEY = "user-classes"
   const val CORRECT_ANSWERS_KEY = "correct-answers"
   const val CHALLENGE_ANSWERS_KEY = "challenge-answers"
   const val ANSWER_HISTORY_KEY = "answer-history"
   const val RESET_KEY = "password-reset"
-  const val USERID_RESET_KEY = "userid_password-reset"
+  const val USER_RESET_KEY = "user_password-reset"
   const val AUTH_KEY = "auth"
   const val NO_AUTH_KEY = "noauth"
   const val CLASS_CODE_KEY = "class-code"

@@ -20,7 +20,7 @@ package com.github.readingbat.posts
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.FormFields.ADMIN_ACTION
 import com.github.readingbat.misc.FormFields.DELETE_ALL_DATA
-import com.github.readingbat.misc.UserId
+import com.github.readingbat.misc.User
 import com.github.readingbat.misc.UserPrincipal
 import com.github.readingbat.pages.AdminPage.adminDataPage
 import com.github.readingbat.server.PipelineCall
@@ -37,7 +37,7 @@ internal object Admin {
     val principal = fetchPrincipal()
     return when {
       content.production && principal == null -> adminDataPage(content, redis, "Must be logged in for this function")
-      content.production && UserId(principal?.userId ?: "").email(redis) != "pambrose@mac.com" -> {
+      content.production && User(principal?.userId ?: "").email(redis) != "pambrose@mac.com" -> {
         adminDataPage(content, redis, "Must be system admin for this function")
       }
       else -> {

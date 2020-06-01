@@ -18,6 +18,8 @@
 package com.github.readingbat.pages
 
 import com.github.readingbat.dsl.ReadingBatContent
+import com.github.readingbat.misc.ClassCode
+import com.github.readingbat.misc.ClassCode.Companion.EMPTY_CLASS_CODE
 import com.github.readingbat.misc.Constants.LABEL_WIDTH
 import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.Endpoints.CREATE_ACCOUNT_ENDPOINT
@@ -35,9 +37,9 @@ import com.github.readingbat.misc.FormFields.WITHDRAW_FROM_CLASS
 import com.github.readingbat.misc.KeyConstants.DESC_FIELD
 import com.github.readingbat.misc.KeyConstants.TEACHER_FIELD
 import com.github.readingbat.misc.PageUtils.hideShowButton
-import com.github.readingbat.misc.UserId
-import com.github.readingbat.misc.UserId.Companion.classInfoKey
-import com.github.readingbat.misc.UserId.Companion.isValidPrincipal
+import com.github.readingbat.misc.User
+import com.github.readingbat.misc.User.Companion.classInfoKey
+import com.github.readingbat.misc.User.Companion.isValidPrincipal
 import com.github.readingbat.misc.UserPrincipal
 import com.github.readingbat.pages.HelpAndLogin.helpAndLogin
 import com.github.readingbat.pages.PageCommon.backLink
@@ -62,16 +64,16 @@ internal object UserPrefsPage : KLogging() {
   private const val passwordButton = "UpdatePasswordButton"
   private const val joinClassButton = "JoinClassButton"
 
-  fun fetchClassDesc(classCode: String, redis: Jedis) =
+  fun fetchClassDesc(classCode: ClassCode, redis: Jedis) =
     redis.hget(classInfoKey(classCode), DESC_FIELD) ?: "Missing Description"
 
-  fun fetchClassTeacher(classCode: String, redis: Jedis) = redis.hget(classInfoKey(classCode), TEACHER_FIELD) ?: ""
+  fun fetchClassTeacher(classCode: ClassCode, redis: Jedis) = redis.hget(classInfoKey(classCode), TEACHER_FIELD) ?: ""
 
   fun PipelineCall.userPrefsPage(content: ReadingBatContent,
                                  redis: Jedis,
                                  msg: String,
                                  isErrorMsg: Boolean,
-                                 defaultClassCode: String = ""): String {
+                                 defaultClassCode: ClassCode = EMPTY_CLASS_CODE): String {
     val principal = fetchPrincipal()
     return if (principal != null && isValidPrincipal(principal, redis))
       userPrefsWithLoginPage(content, redis, principal, msg, isErrorMsg, defaultClassCode)
@@ -84,7 +86,7 @@ internal object UserPrefsPage : KLogging() {
                                                   principal: UserPrincipal,
                                                   msg: String,
                                                   isErrorMsg: Boolean,
-                                                  defaultClassCode: String) =
+                                                  defaultClassCode: ClassCode) =
     createHTML()
       .html {
         head {
@@ -162,11 +164,11 @@ internal object UserPrefsPage : KLogging() {
     }
   }
 
-  private fun BODY.joinOrWithdrawFromClass(redis: Jedis, principal: UserPrincipal, defaultClassCode: String) {
-    val userId = UserId(principal.userId)
-    val enrolledClass = userId.fetchEnrolledClassCode(redis)
+  private fun BODY.joinOrWithdrawFromClass(redis: Jedis, principal: UserPrincipal, defaultClassCode: ClassCode) {
+    val user = User(principal.userId)
+    val enrolledClass = user.fetchEnrolledClassCode(redis)
 
-    if (enrolledClass.isNotEmpty()) {
+    if (enrolledClass.isEmpty) {
       h3 { +"Enrolled class" }
       val classDesc = fetchClassDesc(enrolledClass, redis)
       div {
@@ -198,7 +200,7 @@ internal object UserPrefsPage : KLogging() {
                   type = InputType.text
                   size = "42"
                   name = CLASS_CODE
-                  value = defaultClassCode
+                  value = defaultClassCode.value
                   onKeyPress = "click$joinClassButton(event);"
                 }
               }
@@ -217,46 +219,7 @@ internal object UserPrefsPage : KLogging() {
     }
   }
 
-  /*
-  private fun BODY.deleteClass(redis: Jedis, principal: UserPrincipal) {
-    val userId = UserId(principal.userId)
-    val ids = redis.smembers(userId.userClassesKey)
-    if (ids.size > 0) {
-      h3 { +"Delete a class" }
-      div {
-        style = divStyle
-        p { +"Enter the class code you wish to delete." }
-        form {
-          action = USER_PREFS_ENDPOINT
-          method = FormMethod.post
-          onSubmit = "return confirm('Are you sure you want to permanently delete this class code ?');"
-          table {
-            tr {
-              td { style = LABEL_WIDTH; label { +"Class code" } }
-              td {
-                input {
-                  type = InputType.text
-                  size = "42"
-                  name = CLASS_CODE
-                  value = ""
-                  onKeyPress = "click$deleteClassButton(event);"
-                }
-              }
-            }
-            tr {
-              td {}
-              td {
-                input {
-                  type = submit; id = deleteClassButton; name = USER_PREFS_ACTION; value = DELETE_CLASS
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-
+/*
   private fun BODY.teacherShare() {
     h3 { +"Teacher Share" }
     div {
