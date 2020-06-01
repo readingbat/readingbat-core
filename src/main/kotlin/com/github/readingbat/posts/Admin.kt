@@ -37,7 +37,7 @@ internal object Admin {
     val principal = fetchPrincipal()
     return when {
       content.production && principal == null -> adminDataPage(content, redis, "Must be logged in for this function")
-      content.production && principal?.userId?.toUser()?.email(redis) != "pambrose@mac.com" -> {
+      content.production && principal?.userId?.toUser()?.email(redis)?.value != "pambrose@mac.com" -> {
         adminDataPage(content, redis, "Must be system admin for this function")
       }
       else -> {

@@ -50,10 +50,10 @@ class ReadingBatContent {
     languageMap[languageType] ?: throw InvalidConfigurationException("Invalid language $languageType")
 
   internal fun findGroup(groupLoc: Language.Group) =
-    findLanguage(groupLoc.languageType).findGroup(groupLoc.groupName)
+    findLanguage(groupLoc.languageType).findGroup(groupLoc.groupName.value)
 
   internal fun findChallenge(challengeLoc: Language.Group.Challenge) =
-    findGroup(challengeLoc.group).findChallenge(challengeLoc.challengeName)
+    findGroup(challengeLoc.group).findChallenge(challengeLoc.challengeName.value)
 
   internal fun validate() = languageList.forEach { it.validate() }
 

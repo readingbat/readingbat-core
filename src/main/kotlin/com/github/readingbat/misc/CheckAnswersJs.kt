@@ -26,6 +26,9 @@ import com.github.readingbat.misc.ParameterIds.SPINNER_ID
 import com.github.readingbat.misc.ParameterIds.STATUS_ID
 import com.github.readingbat.misc.ParameterIds.SUCCESS_ID
 import com.github.readingbat.pages.PageCommon.rawHtml
+import com.github.readingbat.server.ChallengeName
+import com.github.readingbat.server.GroupName
+import com.github.readingbat.server.LanguageName
 import kotlinx.html.SCRIPT
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -37,7 +40,7 @@ internal object CheckAnswersJs {
 
   private val sessionCounter = AtomicInteger(0)
 
-  fun SCRIPT.checkAnswersScript(languageName: String, groupName: String, challengeName: String) =
+  fun SCRIPT.checkAnswersScript(languageName: LanguageName, groupName: GroupName, challengeName: ChallengeName) =
     rawHtml(
       """
     var re = new XMLHttpRequest();

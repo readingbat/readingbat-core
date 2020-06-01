@@ -20,6 +20,7 @@ package com.github.readingbat.dsl
 import com.github.pambrose.common.util.*
 import com.github.readingbat.dsl.GitHubUtils.directoryContents
 import com.github.readingbat.misc.PageUtils.pathOf
+import com.github.readingbat.server.GroupName
 import java.io.File
 
 @ReadingBatDslMarker
@@ -32,7 +33,7 @@ class LanguageGroup<T : Challenge>(internal val content: ReadingBatContent,
   var repo: ContentRoot = content.repo
     get() =
       if (field == defaultContentRoot)
-        throw InvalidConfigurationException("${languageType.lowerName} section is missing a repo value")
+        throw InvalidConfigurationException("${languageType.languageName} section is missing a repo value")
       else
         field
 
@@ -47,14 +48,14 @@ class LanguageGroup<T : Challenge>(internal val content: ReadingBatContent,
   internal fun addGroup(group: ChallengeGroup<T>) {
     if (languageType != group.languageType)
       throw InvalidConfigurationException("${group.groupName} language type mismatch: $languageType and ${group.languageType}")
-    if (hasGroup(group.groupName))
+    if (hasGroup(group.groupName.value))
       throw InvalidConfigurationException("Duplicate group name: ${group.groupName}")
     challengeGroups += group
   }
 
   fun hasGroups() = challengeGroups.isNotEmpty()
 
-  fun hasGroup(groupName: String) = challengeGroups.any { it.groupName == groupName }
+  fun hasGroup(groupName: String) = challengeGroups.any { it.groupName.value == groupName }
 
   private val excludes = Regex("^__.*__.*$")
 
@@ -62,7 +63,7 @@ class LanguageGroup<T : Challenge>(internal val content: ReadingBatContent,
 
   @ReadingBatDslMarker
   fun group(name: String, block: ChallengeGroup<T>.() -> Unit) {
-    val group = ChallengeGroup(this, name).apply(block)
+    val group = ChallengeGroup(this, GroupName(name)).apply(block)
 
     if (group.includeList.isNotEmpty()) {
       val fileList =
@@ -105,8 +106,8 @@ class LanguageGroup<T : Challenge>(internal val content: ReadingBatContent,
   }
 
   fun findGroup(groupName: String) =
-    groupName.decode().let { decoded -> challengeGroups.firstOrNull { it.groupName == decoded } }
-      ?: throw InvalidPathException("Group ${languageType.lowerName}/$groupName not found")
+    groupName.decode().let { decoded -> challengeGroups.firstOrNull { it.groupName.value == decoded } }
+      ?: throw InvalidPathException("Group ${languageType.languageName}/$groupName not found")
 
   fun findChallenge(groupName: String, challengeName: String) = findGroup(groupName).findChallenge(challengeName)
 

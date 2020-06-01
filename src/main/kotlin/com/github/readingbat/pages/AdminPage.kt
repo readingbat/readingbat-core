@@ -57,7 +57,7 @@ internal object AdminPage {
             content.production && principal == null -> {
               br { +"Must be logged in for this function" }
             }
-            content.production && principal?.userId?.toUser()?.email(redis) != "pambrose@mac.com" -> {
+            content.production && principal?.userId?.toUser()?.email(redis)?.value != "pambrose@mac.com" -> {
               br { +"Must be system admin for this function" }
             }
             else -> {

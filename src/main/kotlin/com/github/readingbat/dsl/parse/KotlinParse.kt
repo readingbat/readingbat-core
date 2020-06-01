@@ -20,6 +20,7 @@ package com.github.readingbat.dsl.parse
 import com.github.pambrose.common.util.lastLineNumberOf
 import com.github.pambrose.common.util.linesBetween
 import com.github.pambrose.common.util.substringBetween
+import com.github.readingbat.server.Invocation
 
 internal object KotlinParse {
   internal val funMainRegex = Regex("""^\s*fun\s+main.*\)""")
@@ -37,6 +38,7 @@ internal object KotlinParse {
     code.linesBetween(start, end)
       .filter { it.trimStart().startsWith(printlnPrefix) }
       .map { it.substringBetween(printlnPrefix, ")") }
+      .map { Invocation(it) }
 
   fun convertToKotlinScript(code: List<String>): String {
     val scriptCode = mutableListOf<String>()

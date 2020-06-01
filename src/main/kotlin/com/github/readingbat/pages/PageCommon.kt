@@ -118,14 +118,15 @@ internal object PageCommon {
       style = "padding-top:10px; min-width:100vw; clear:both;"
       nav {
         ul {
-          for (lang in languageTypesInOrder) {
-            if (content.hasGroups(lang))
+          languageTypesInOrder
+            .filter { content.hasGroups(it) }
+            .forEach { lang ->
               li(classes = "h2") {
                 if (languageType == lang)
                   id = SELECTED_TAB
-                this@bodyHeader.addLink(lang.name, pathOf(CHALLENGE_ROOT, lang.lowerName))
+                this@bodyHeader.addLink(lang.name, pathOf(CHALLENGE_ROOT, lang.languageName.value))
               }
-          }
+            }
         }
       }
     }

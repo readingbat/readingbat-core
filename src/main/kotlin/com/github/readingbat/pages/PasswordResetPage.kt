@@ -38,6 +38,7 @@ import com.github.readingbat.pages.PageCommon.displayMessage
 import com.github.readingbat.pages.PageCommon.headDefault
 import com.github.readingbat.pages.PageCommon.privacyStatement
 import com.github.readingbat.posts.PasswordReset.ResetPasswordException
+import com.github.readingbat.server.Email
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
 import kotlinx.html.*
@@ -56,7 +57,7 @@ internal object PasswordResetPage : KLogging() {
     else {
       try {
         val passwordResetKey = User.passwordResetKey(resetId)
-        val email = redis.get(passwordResetKey) ?: throw ResetPasswordException(INVALID_RESET_ID)
+        val email = Email(redis.get(passwordResetKey) ?: throw ResetPasswordException(INVALID_RESET_ID))
         changePasswordPage(content, email, resetId, msg)
       } catch (e: ResetPasswordException) {
         logger.info { e }
@@ -126,7 +127,7 @@ internal object PasswordResetPage : KLogging() {
       }
 
   private fun PipelineCall.changePasswordPage(content: ReadingBatContent,
-                                              email: String,
+                                              email: Email,
                                               resetId: String,
                                               msg: String) =
     createHTML()

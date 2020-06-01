@@ -19,12 +19,15 @@ package com.github.readingbat.server
 
 import com.github.pambrose.common.redis.RedisUtils.withRedisPool
 import com.github.pambrose.common.response.respondWith
+import com.github.pambrose.common.util.isNotValidEmail
+import com.github.pambrose.common.util.sha256
 import com.github.readingbat.dsl.LanguageType.Companion.toLanguageType
 import com.github.readingbat.dsl.LanguageType.Kotlin
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.AuthName.FORM
 import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
 import com.github.readingbat.misc.Constants.PLAYGROUND_ROOT
+import com.github.readingbat.misc.KeyConstants
 import com.github.readingbat.pages.ChallengeGroupPage.challengeGroupPage
 import com.github.readingbat.pages.ChallengePage.challengePage
 import com.github.readingbat.pages.LanguageGroupPage.languageGroupPage
@@ -95,21 +98,75 @@ internal object Locations {
     }
 }
 
-@Location("$CHALLENGE_ROOT/{language}")
-internal data class Language(val language: String) {
-  val languageType get() = language.toLanguageType()
+@Location("$CHALLENGE_ROOT/{lname}")
+internal data class Language(val lname: String) {
+  val languageType get() = languageName.toLanguageType()
+  val languageName = LanguageName(lname)
 
-  @Location("/{groupName}")
-  data class Group(val language: Language, val groupName: String) {
+  @Location("/{gname}")
+  data class Group(val language: Language, val gname: String) {
     val languageType get() = language.languageType
+    val groupName = GroupName(gname)
 
-    @Location("/{challengeName}")
-    data class Challenge(val group: Group, val challengeName: String) {
+    @Location("/{cname}")
+    data class Challenge(val group: Group, val cname: String) {
       val languageType get() = group.languageType
       val groupName get() = group.groupName
+      val challengeName = ChallengeName(cname)
     }
   }
 }
 
 @Location("$PLAYGROUND_ROOT/{groupName}/{challengeName}")
 internal class PlaygroundRequest(val groupName: String, val challengeName: String)
+
+inline class LanguageName(val value: String) {
+  override fun toString() = value
+}
+
+inline class GroupName(val value: String) {
+  override fun toString() = value
+}
+
+inline class ChallengeName(val value: String) {
+  override fun toString() = value
+}
+
+inline class Invocation(val value: String) {
+  override fun toString() = value
+}
+
+inline class FullName(val value: String) {
+  fun isBlank() = value.isBlank()
+
+  override fun toString() = value
+
+  companion object {
+    val EMPTY_FULLNAME = FullName("")
+  }
+}
+
+inline class Password(val value: String) {
+  fun isBlank() = value.isBlank()
+  fun sha256(salt: String) = value.sha256(salt)
+  val length get() = value.length
+
+  override fun toString() = value
+
+  companion object {
+    val EMPTY_PASSWORD = Password("")
+  }
+}
+
+inline class Email(val value: String) {
+  fun isBlank() = value.isBlank()
+  fun isNotBlank() = value.isNotBlank()
+  fun isNotValidEmail() = value.isNotValidEmail()
+  val userEmailKey get() = listOf(KeyConstants.USER_EMAIL_KEY, value).joinToString(KeyConstants.KEY_SEP)
+
+  override fun toString() = value
+
+  companion object {
+    val EMPTY_EMAIL = Email("")
+  }
+}

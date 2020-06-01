@@ -69,7 +69,7 @@ internal object HelpAndLogin {
   private fun TABLE.logout(redis: Jedis, user: User, loginPath: String) {
     tr {
       val email = user.email(redis)
-      val elems = email.split("@")
+      val elems = email.value.split("@")
       td {
         +elems[0]
         if (elems.size > 1) {

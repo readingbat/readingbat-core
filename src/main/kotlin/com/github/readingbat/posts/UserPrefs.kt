@@ -17,7 +17,6 @@
 
 package com.github.readingbat.posts
 
-import com.github.pambrose.common.util.sha256
 import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.ClassCode.Companion.forParameter
@@ -33,12 +32,13 @@ import com.github.readingbat.misc.FormFields.USER_PREFS_ACTION
 import com.github.readingbat.misc.FormFields.WITHDRAW_FROM_CLASS
 import com.github.readingbat.misc.KeyConstants.DIGEST_FIELD
 import com.github.readingbat.misc.User
-import com.github.readingbat.misc.User.Companion.lookupDigestInfoByUser
 import com.github.readingbat.misc.UserPrincipal
 import com.github.readingbat.pages.UserPrefsPage.fetchClassDesc
 import com.github.readingbat.pages.UserPrefsPage.requestLogInPage
 import com.github.readingbat.pages.UserPrefsPage.userPrefsPage
 import com.github.readingbat.posts.CreateAccount.checkPassword
+import com.github.readingbat.server.Password
+import com.github.readingbat.server.Password.Companion.EMPTY_PASSWORD
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.fetchPrincipal
 import io.ktor.application.call
@@ -74,9 +74,9 @@ internal object UserPrefs : KLogging() {
                                           redis: Jedis,
                                           parameters: Parameters,
                                           user: User): String {
-    val currPassword = parameters[CURR_PASSWORD] ?: ""
-    val newPassword = parameters[NEW_PASSWORD] ?: ""
-    val confirmPassword = parameters[CONFIRM_PASSWORD] ?: ""
+    val currPassword = parameters[CURR_PASSWORD]?.let { Password(it) } ?: EMPTY_PASSWORD
+    val newPassword = parameters[NEW_PASSWORD]?.let { Password(it) } ?: EMPTY_PASSWORD
+    val confirmPassword = parameters[CONFIRM_PASSWORD]?.let { Password(it) } ?: EMPTY_PASSWORD
     val passwordError = checkPassword(newPassword, confirmPassword)
 
     val msg =
@@ -84,7 +84,7 @@ internal object UserPrefs : KLogging() {
         passwordError to true
       }
       else {
-        val (salt, digest) = lookupDigestInfoByUser(user, redis)
+        val (salt, digest) = user.lookupDigestInfoByUser(redis)
         if (salt.isNotEmpty() && digest.isNotEmpty() && digest == currPassword.sha256(salt)) {
           val newDigest = newPassword.sha256(salt)
           redis.hset(user.userInfoKey, DIGEST_FIELD, newDigest)

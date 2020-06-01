@@ -17,20 +17,23 @@
 
 package com.github.readingbat.misc
 
+import com.github.readingbat.server.Email
 import com.sendgrid.Method
 import com.sendgrid.Request
 import com.sendgrid.SendGrid
 import com.sendgrid.helpers.mail.Mail
 import com.sendgrid.helpers.mail.objects.Content
-import com.sendgrid.helpers.mail.objects.Email
 import mu.KLogging
 
 
 internal object Emailer : KLogging() {
 
-  fun sendEmail(to: String, from: String, subject: String, msg: String) {
+  fun sendEmail(to: Email, from: Email, subject: String, msg: String) {
     val content = Content("text/plain", msg)
-    val mail = Mail(Email(from), subject, Email(to), content)
+    val mail = Mail(com.sendgrid.helpers.mail.objects.Email(from.value),
+                    subject,
+                    com.sendgrid.helpers.mail.objects.Email(to.value),
+                    content)
     val sg = SendGrid(System.getenv("SENDGRID_API_KEY"))
 
     val request =
@@ -40,10 +43,11 @@ internal object Emailer : KLogging() {
         body = mail.build()
       }
 
-    sg.api(request).also { response ->
-      logger.info { "Status code: ${response.statusCode} to: $to from: $from" }
-      logger.info { "Body: ${response.body}" }
-      logger.info { "Headers: ${response.headers}" }
+    sg.api(request).apply {
+      logger.info { "Response status code: $statusCode to: $to from: $from" }
+      if (body.isNotBlank())
+        logger.info { "Response body: $body" }
+      logger.info { "Response headers: $headers" }
     }
   }
 }

@@ -57,8 +57,8 @@ internal object LanguageGroupPage {
       .html {
         val principal = fetchPrincipal(loginAttempt)
         val browserSession = call.sessions.get<BrowserSession>()
-        val languageName = languageType.lowerName
-        val loginPath = pathOf(CHALLENGE_ROOT, languageName)
+        val languageName = languageType.languageName
+        val loginPath = pathOf(CHALLENGE_ROOT, languageName.value)
         val groups = content.findLanguage(languageType).challengeGroups
 
         fun TR.groupItem(redis: Jedis?, user: User?, challengeGroup: ChallengeGroup<*>) {
@@ -80,7 +80,9 @@ internal object LanguageGroupPage {
 
           td(classes = FUNC_ITEM) {
             div(classes = GROUP_ITEM_SRC) {
-              a(classes = GROUP_CHOICE) { href = pathOf(CHALLENGE_ROOT, languageName, groupName); +groupName }
+              a(classes = GROUP_CHOICE) {
+                href = pathOf(CHALLENGE_ROOT, languageName.value, groupName.value); +groupName.value
+              }
               br { rawHtml(if (parsedDescription.isNotBlank()) parsedDescription else nbsp.text) }
               if (cnt == 0) {
                 img { src = "$STATIC_ROOT/$WHITE_CHECK" }

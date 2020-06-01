@@ -19,6 +19,7 @@ package com.github.readingbat.server
 
 import com.github.pambrose.common.redis.RedisUtils.withRedis
 import com.github.readingbat.misc.ClassCode
+import com.github.readingbat.misc.ClassCode.Companion.EMPTY_CLASS_CODE
 import com.github.readingbat.misc.Endpoints.CLASS_PREFIX
 import io.ktor.http.cio.websocket.CloseReason
 import io.ktor.http.cio.websocket.CloseReason.Codes
@@ -38,7 +39,7 @@ internal object WsEndoints : KLogging() {
 
   fun Routing.wsEndpoints() {
     webSocket("$CLASS_PREFIX/{classCode}") {
-      val classCode = ClassCode(call.parameters["classCode"] ?: "")
+      val classCode = call.parameters["classCode"]?.let { ClassCode(it) } ?: EMPTY_CLASS_CODE
       incoming
         .receiveAsFlow()
         .mapNotNull { it as? Frame.Text }

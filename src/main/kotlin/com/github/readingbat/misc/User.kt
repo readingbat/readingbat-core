@@ -19,7 +19,6 @@ package com.github.readingbat.misc
 
 import com.github.pambrose.common.util.newStringSalt
 import com.github.pambrose.common.util.randomId
-import com.github.pambrose.common.util.sha256
 import com.github.readingbat.dsl.FunctionInfo
 import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.ReadingBatContent
@@ -29,7 +28,6 @@ import com.github.readingbat.misc.KeyConstants.ACTIVE_CLASS_CODE_FIELD
 import com.github.readingbat.misc.KeyConstants.ANSWER_HISTORY_KEY
 import com.github.readingbat.misc.KeyConstants.AUTH_KEY
 import com.github.readingbat.misc.KeyConstants.CHALLENGE_ANSWERS_KEY
-import com.github.readingbat.misc.KeyConstants.CLASS_INFO_KEY
 import com.github.readingbat.misc.KeyConstants.CORRECT_ANSWERS_KEY
 import com.github.readingbat.misc.KeyConstants.DIGEST_FIELD
 import com.github.readingbat.misc.KeyConstants.EMAIL_FIELD
@@ -39,21 +37,17 @@ import com.github.readingbat.misc.KeyConstants.NAME_FIELD
 import com.github.readingbat.misc.KeyConstants.RESET_KEY
 import com.github.readingbat.misc.KeyConstants.SALT_FIELD
 import com.github.readingbat.misc.KeyConstants.USER_CLASSES_KEY
-import com.github.readingbat.misc.KeyConstants.USER_EMAIL_KEY
 import com.github.readingbat.misc.KeyConstants.USER_INFO_KEY
 import com.github.readingbat.misc.KeyConstants.USER_RESET_KEY
 import com.github.readingbat.pages.UserPrefsPage
-import com.github.readingbat.pages.UserPrefsPage.fetchClassTeacher
+import com.github.readingbat.pages.UserPrefsPage.fetchClassTeacherId
 import com.github.readingbat.posts.ChallengeHistory
 import com.github.readingbat.posts.ChallengeNames
 import com.github.readingbat.posts.ChallengeResults
 import com.github.readingbat.posts.DashboardInfo
-import com.github.readingbat.server.PipelineCall
-import com.github.readingbat.server.ServerUtils.fetchPrincipal
+import com.github.readingbat.server.*
+import com.github.readingbat.server.Email.Companion.EMPTY_EMAIL
 import com.google.gson.Gson
-import io.ktor.application.call
-import io.ktor.sessions.get
-import io.ktor.sessions.sessions
 import mu.KLogging
 import redis.clients.jedis.Jedis
 import redis.clients.jedis.Transaction
@@ -63,35 +57,48 @@ internal class User private constructor(val id: String) {
   val userInfoKey = listOf(USER_INFO_KEY, id).joinToString(KEY_SEP)
   val userClassesKey = listOf(USER_CLASSES_KEY, id).joinToString(KEY_SEP)
 
-  fun email(redis: Jedis) = redis.hget(userInfoKey, EMAIL_FIELD) ?: ""
+  // This key maps to a reset_id
+  val userPasswordResetKey = listOf(USER_RESET_KEY, id).joinToString(KEY_SEP)
+
+  fun email(redis: Jedis) = redis.hget(userInfoKey, EMAIL_FIELD)?.let { Email(it) } ?: EMPTY_EMAIL
 
   private fun correctAnswersKey(names: ChallengeNames) =
     correctAnswersKey(names.languageName, names.groupName, names.challengeName)
 
-  private fun correctAnswersKey(languageName: String, groupName: String, challengeName: String) =
-    listOf(CORRECT_ANSWERS_KEY, AUTH_KEY, id, languageName, groupName, challengeName).joinToString(KEY_SEP)
+  private fun correctAnswersKey(languageName: LanguageName, groupName: GroupName, challengeName: ChallengeName) =
+    listOf(CORRECT_ANSWERS_KEY, AUTH_KEY, id, languageName.value, groupName.value, challengeName.value)
+      .joinToString(KEY_SEP)
 
   private fun challengeAnswersKey(names: ChallengeNames) =
     challengeAnswersKey(names.languageName, names.groupName, names.challengeName)
 
-  private fun challengeAnswersKey(languageName: String, groupName: String, challengeName: String) =
-    listOf(CHALLENGE_ANSWERS_KEY, AUTH_KEY, id, languageName, groupName, challengeName).joinToString(KEY_SEP)
+  private fun challengeAnswersKey(languageName: LanguageName, groupName: GroupName, challengeName: ChallengeName) =
+    listOf(CHALLENGE_ANSWERS_KEY, AUTH_KEY, id, languageName.value, groupName.value, challengeName.value)
+      .joinToString(KEY_SEP)
 
-  private fun answerHistoryKey(names: ChallengeNames, invocation: String) =
+  private fun answerHistoryKey(names: ChallengeNames, invocation: Invocation) =
     answerHistoryKey(names.languageName, names.groupName, names.challengeName, invocation)
 
-  fun answerHistoryKey(languageName: String, groupName: String, challengeName: String, invocation: String) =
-    listOf(ANSWER_HISTORY_KEY, AUTH_KEY, id, languageName, groupName, challengeName, invocation).joinToString(KEY_SEP)
+  fun answerHistoryKey(languageName: LanguageName,
+                       groupName: GroupName,
+                       challengeName: ChallengeName,
+                       invocation: Invocation) =
+    listOf(ANSWER_HISTORY_KEY,
+           AUTH_KEY,
+           id,
+           languageName.value,
+           groupName.value,
+           challengeName.value,
+           invocation.value).joinToString(KEY_SEP)
 
-  // This key maps to a reset_id
-  fun userPasswordResetKey() = listOf(USER_RESET_KEY, id).joinToString(KEY_SEP)
-
-  fun fetchEnrolledClassCode(redis: Jedis) = ClassCode(redis.hget(userInfoKey, ENROLLED_CLASS_CODE_FIELD) ?: "")
+  fun fetchEnrolledClassCode(redis: Jedis) =
+    redis.hget(userInfoKey, ENROLLED_CLASS_CODE_FIELD).let { ClassCode(it) } ?: EMPTY_CLASS_CODE
 
   fun assignEnrolledClassCode(classCode: ClassCode, tx: Transaction) =
     tx.hset(userInfoKey, ENROLLED_CLASS_CODE_FIELD, classCode.value)
 
-  fun fetchActiveClassCode(redis: Jedis?) = ClassCode(redis?.hget(userInfoKey, ACTIVE_CLASS_CODE_FIELD) ?: "")
+  fun fetchActiveClassCode(redis: Jedis?) =
+    redis?.hget(userInfoKey, ACTIVE_CLASS_CODE_FIELD)?.let { ClassCode(it) } ?: EMPTY_CLASS_CODE
 
   fun assignActiveClassCode(classCode: ClassCode, redis: Jedis) {
     redis.hset(userInfoKey, ACTIVE_CLASS_CODE_FIELD, if (classCode.isClassesDisabled) "" else classCode.value)
@@ -145,7 +152,7 @@ internal class User private constructor(val id: String) {
 
   fun deleteClassCode(classCode: ClassCode, enrollees: List<User>, tx: Transaction) {
     // Delete class description
-    tx.del(classInfoKey(classCode))
+    tx.del(classCode.classInfoKey)
 
     // Remove classcode from list of classes created by user
     tx.srem(userClassesKey, classCode.value)
@@ -170,16 +177,36 @@ internal class User private constructor(val id: String) {
       .filter { classCode -> classDesc == UserPrefsPage.fetchClassDesc(classCode, redis) }
       .none()
 
+  fun lookupDigestInfoByUser(redis: Jedis): Pair<String, String> {
+    val salt = redis.hget(userInfoKey, SALT_FIELD) ?: ""
+    val digest = redis.hget(userInfoKey, DIGEST_FIELD) ?: ""
+    return salt to digest
+  }
+
+  fun savePasswordResetKey(email: Email,
+                           previousResetId: String,
+                           newResetId: String,
+                           tx: Transaction) {
+    if (previousResetId.isNotEmpty()) {
+      tx.del(userPasswordResetKey)
+      tx.del(passwordResetKey(previousResetId))
+    }
+
+    tx.set(userPasswordResetKey, newResetId)
+    tx.set(passwordResetKey(newResetId), email.value)
+  }
+
   fun deleteUser(principal: UserPrincipal, redis: Jedis) {
     val user = principal.toUser()
-    val userEmailKey = userEmailKey(user.email(redis))
-    val correctAnswers = redis.keys(correctAnswersKey("*", "*", "*"))
-    val challenges = redis.keys(challengeAnswersKey("*", "*", "*"))
-    val invocations = redis.keys(answerHistoryKey("*", "*", "*", "*"))
+    val userEmailKey = user.email(redis).userEmailKey
+
+    val correctAnswers = redis.keys(correctAnswersKey(LanguageName("*"), GroupName("*"), ChallengeName("*")))
+    val challenges = redis.keys(challengeAnswersKey(LanguageName("*"), GroupName("*"), ChallengeName("*")))
+    val invocations =
+      redis.keys(answerHistoryKey(LanguageName("*"), GroupName("*"), ChallengeName("*"), Invocation("*")))
     val classCodes = redis.smembers(userClassesKey).map { ClassCode(it) }
     val enrolleePairs = classCodes.map { it to it.fetchEnrollees(redis) }
 
-    val userPasswordResetKey = userPasswordResetKey()
     val previousResetId = redis.get(userPasswordResetKey) ?: ""
 
     logger.info { "Deleting User: ${principal.userId} ${user.email(redis)}" }
@@ -220,18 +247,14 @@ internal class User private constructor(val id: String) {
 
     fun newUser() = User(randomId(25))
 
-    fun userEmailKey(email: String) = listOf(USER_EMAIL_KEY, email).joinToString(KEY_SEP)
-
-    fun classInfoKey(classCode: ClassCode) = listOf(CLASS_INFO_KEY, classCode.value).joinToString(KEY_SEP)
-
     fun correctAnswersKey(user: User?, browserSession: BrowserSession?, names: ChallengeNames) =
       user?.correctAnswersKey(names) ?: browserSession?.correctAnswersKey(names) ?: ""
 
     fun correctAnswersKey(user: User?,
                           browserSession: BrowserSession?,
-                          languageName: String,
-                          groupName: String,
-                          challengeName: String) =
+                          languageName: LanguageName,
+                          groupName: GroupName,
+                          challengeName: ChallengeName) =
       user?.correctAnswersKey(languageName, groupName, challengeName)
         ?: browserSession?.correctAnswersKey(languageName, groupName, challengeName)
         ?: ""
@@ -241,20 +264,20 @@ internal class User private constructor(val id: String) {
 
     fun challengeAnswersKey(user: User?,
                             browserSession: BrowserSession?,
-                            languageName: String,
-                            groupName: String,
-                            challengeName: String) =
+                            languageName: LanguageName,
+                            groupName: GroupName,
+                            challengeName: ChallengeName) =
       user?.challengeAnswersKey(languageName, groupName, challengeName)
         ?: browserSession?.challengeAnswerKey(languageName, groupName, challengeName)
         ?: ""
 
-    fun answerHistoryKey(user: User?, browserSession: BrowserSession?, names: ChallengeNames, invocation: String) =
+    fun answerHistoryKey(user: User?, browserSession: BrowserSession?, names: ChallengeNames, invocation: Invocation) =
       user?.answerHistoryKey(names, invocation) ?: browserSession?.answerHistoryKey(names, invocation) ?: ""
 
     // Maps resetId to username
     fun passwordResetKey(resetId: String) = listOf(RESET_KEY, resetId).joinToString(KEY_SEP)
 
-    fun createUser(name: String, email: String, password: String, redis: Jedis): User {
+    fun createUser(name: FullName, email: Email, password: Password, redis: Jedis): User {
       // The userName (email) is stored in a single KV pair, enabling changes to the userName
       // Three things are stored:
       // email -> userId
@@ -265,28 +288,28 @@ internal class User private constructor(val id: String) {
       logger.info { "Created user $email ${user.id}" }
 
       redis.multi().also { tx ->
-        tx.set(userEmailKey(email), user.id)
-        tx.hset(user.userInfoKey, mapOf(NAME_FIELD to name,
-                                        EMAIL_FIELD to email,
+        tx.set(email.userEmailKey, user.id)
+        tx.hset(user.userInfoKey, mapOf(NAME_FIELD to name.value,
+                                        EMAIL_FIELD to email.value,
                                         SALT_FIELD to salt,
                                         DIGEST_FIELD to password.sha256(salt),
-                                        ENROLLED_CLASS_CODE_FIELD to "",
-                                        ACTIVE_CLASS_CODE_FIELD to ""))
+                                        ENROLLED_CLASS_CODE_FIELD to EMPTY_CLASS_CODE.value,
+                                        ACTIVE_CLASS_CODE_FIELD to EMPTY_CLASS_CODE.value))
         tx.exec()
       }
 
       return user
     }
 
-    fun PipelineCall.saveAnswers(content: ReadingBatContent,
-                                 redis: Jedis,
-                                 names: ChallengeNames,
-                                 compareMap: Map<String, String>,
-                                 funcInfo: FunctionInfo,
-                                 userResps: List<Map.Entry<String, List<String>>>,
-                                 results: List<ChallengeResults>) {
-      val principal = fetchPrincipal()
-      val browserSession by lazy { call.sessions.get<BrowserSession>() }
+    fun saveAnswers(content: ReadingBatContent,
+                    principal: UserPrincipal?,
+                    browserSession: BrowserSession?,
+                    redis: Jedis,
+                    names: ChallengeNames,
+                    compareMap: Map<String, String>,
+                    funcInfo: FunctionInfo,
+                    userResps: List<Map.Entry<String, List<String>>>,
+                    results: List<ChallengeResults>) {
       val user = principal?.toUser()
       val challengeAnswerKey = challengeAnswersKey(user, browserSession, names)
       val correctAnswersKey = correctAnswersKey(user, browserSession, names)
@@ -310,7 +333,7 @@ internal class User private constructor(val id: String) {
 
         // Save the last answers given
         answerMap.forEach { (invocation, userResp) ->
-          redis.hset(challengeAnswerKey, invocation, userResp)
+          redis.hset(challengeAnswerKey, invocation.value, userResp)
         }
       }
       // Save the history of each answer on a per-invocation basis
@@ -330,7 +353,7 @@ internal class User private constructor(val id: String) {
             // First check if enrolled in a class
             if (enrolledClassCode.isEmpty && user != null) {
               // Check to see if owner of class has it set as their active class
-              val teacherId = fetchClassTeacher(enrolledClassCode, redis)
+              val teacherId = fetchClassTeacherId(enrolledClassCode, redis)
               if (teacherId.isNotEmpty() && teacherId.toUser().fetchActiveClassCode(redis) == enrolledClassCode) {
                 val browserInfo = DashboardInfo(content.maxHistoryLength, user.id, complete, numCorrect, history)
                 logger.info { "Publishing data $json" }
@@ -343,18 +366,11 @@ internal class User private constructor(val id: String) {
 
     fun isValidPrincipal(principal: UserPrincipal, redis: Jedis) = redis.hlen(principal.toUser().userInfoKey) > 0
 
-    fun isValidEmail(email: String, redis: Jedis) = lookupUserByEmail(email, redis) != null
+    fun isRegisteredEmail(email: Email, redis: Jedis) = lookupUserByEmail(email, redis) != null
 
-    fun lookupUserByEmail(email: String, redis: Jedis): User? {
-      val userEmailKey = userEmailKey(email)
-      val id = redis.get(userEmailKey) ?: ""
+    fun lookupUserByEmail(email: Email, redis: Jedis): User? {
+      val id = redis.get(email.userEmailKey) ?: ""
       return if (id.isNotEmpty()) id.toUser() else null
-    }
-
-    fun lookupDigestInfoByUser(user: User, redis: Jedis): Pair<String, String> {
-      val salt = redis.hget(user.userInfoKey, SALT_FIELD) ?: ""
-      val digest = redis.hget(user.userInfoKey, DIGEST_FIELD) ?: ""
-      return salt to digest
     }
   }
 

@@ -22,7 +22,6 @@ import com.github.pambrose.common.util.sha256
 import com.github.readingbat.misc.AuthName
 import com.github.readingbat.misc.Constants.DBMS_DOWN
 import com.github.readingbat.misc.FormFields
-import com.github.readingbat.misc.User.Companion.lookupDigestInfoByUser
 import com.github.readingbat.misc.User.Companion.lookupUserByEmail
 import com.github.readingbat.misc.UserPrincipal
 import com.google.common.util.concurrent.RateLimiter
@@ -73,9 +72,9 @@ internal object ConfigureFormAuth : KLogging() {
           }
           else {
             var principal: UserPrincipal? = null
-            val user = lookupUserByEmail(cred.name, redis)
+            val user = lookupUserByEmail(Email(cred.name), redis)
             if (user != null) {
-              val (salt, digest) = lookupDigestInfoByUser(user, redis)
+              val (salt, digest) = user.lookupDigestInfoByUser(redis)
               if (salt.isNotEmpty() && digest.isNotEmpty() && digest == cred.password.sha256(salt)) {
                 logger.info { "Found user ${cred.name} ${user.id}" }
                 principal = UserPrincipal(user.id)

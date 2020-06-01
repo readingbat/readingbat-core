@@ -25,15 +25,19 @@ import com.github.readingbat.dsl.LanguageType.Companion.toLanguageType
 import com.github.readingbat.dsl.LanguageType.Java
 import com.github.readingbat.dsl.LanguageType.Kotlin
 import com.github.readingbat.dsl.ReadingBatContent
+import com.github.readingbat.misc.BrowserSession
 import com.github.readingbat.misc.CheckAnswersJs.challengeSrc
 import com.github.readingbat.misc.CheckAnswersJs.groupSrc
 import com.github.readingbat.misc.CheckAnswersJs.langSrc
 import com.github.readingbat.misc.Constants.RESP
 import com.github.readingbat.misc.User.Companion.saveAnswers
-import com.github.readingbat.server.PipelineCall
+import com.github.readingbat.server.*
+import com.github.readingbat.server.ServerUtils.fetchPrincipal
 import io.ktor.application.call
 import io.ktor.request.receiveParameters
 import io.ktor.response.respondText
+import io.ktor.sessions.get
+import io.ktor.sessions.sessions
 import kotlinx.coroutines.delay
 import mu.KLogging
 import redis.clients.jedis.Jedis
@@ -45,7 +49,7 @@ internal data class StudentInfo(val studentId: String, val firstName: String, va
 internal data class ClassEnrollment(val sessionId: String,
                                     val students: List<StudentInfo> = mutableListOf())
 
-internal data class ChallengeResults(val invocation: String,
+internal data class ChallengeResults(val invocation: Invocation,
                                      val userResponse: String,
                                      val answered: Boolean,
                                      val correct: Boolean)
@@ -55,7 +59,7 @@ internal class DashboardInfo(maxHistoryLength: Int,
                              val complete: Boolean,
                              val numCorrect: Int,
                              origHistory: ChallengeHistory) {
-  val history = DashboardHistory(origHistory.invocation,
+  val history = DashboardHistory(origHistory.invocation.value,
                                  origHistory.correct,
                                  origHistory.answers.asReversed().take(maxHistoryLength).joinToString("<br>"))
 }
@@ -64,7 +68,7 @@ internal class DashboardHistory(val invocation: String,
                                 val correct: Boolean = false,
                                 val answers: String)
 
-internal data class ChallengeHistory(var invocation: String,
+internal data class ChallengeHistory(var invocation: Invocation,
                                      var correct: Boolean = false,
                                      var incorrectAttempts: Int = 0,
                                      val answers: MutableList<String> = mutableListOf()) {
@@ -82,9 +86,10 @@ internal data class ChallengeHistory(var invocation: String,
 }
 
 internal class ChallengeNames(compareMap: Map<String, String>) {
-  val languageName: String = compareMap[langSrc] ?: throw InvalidConfigurationException("Missing language")
-  val groupName: String = compareMap[groupSrc] ?: throw InvalidConfigurationException("Missing group name")
-  val challengeName: String = compareMap[challengeSrc] ?: throw InvalidConfigurationException("Missing challenge name")
+  val languageName = LanguageName(compareMap[langSrc] ?: throw InvalidConfigurationException("Missing language"))
+  val groupName = GroupName(compareMap[groupSrc] ?: throw InvalidConfigurationException("Missing group name"))
+  val challengeName =
+    ChallengeName(compareMap[challengeSrc] ?: throw InvalidConfigurationException("Missing challenge name"))
 }
 
 internal object CheckAnswers : KLogging() {
@@ -115,12 +120,12 @@ internal object CheckAnswers : KLogging() {
     val params = call.receiveParameters()
     val compareMap = params.entries().map { it.key to it.value[0] }.toMap()
     val names = ChallengeNames(compareMap)
-    val isJvm = names.languageName in listOf(Java.lowerName, Kotlin.lowerName)
+    val isJvm = names.languageName in listOf(Java.languageName, Kotlin.languageName)
     val userResps = params.entries().filter { it.key.startsWith(RESP) }
     val challenge =
       content
         .findLanguage(names.languageName.toLanguageType())
-        .findChallenge(names.groupName, names.challengeName)
+        .findChallenge(names.groupName.value, names.challengeName.value)
     val funcInfo = challenge.funcInfo(content)
     val kotlinScriptEngine by lazy { KotlinScript() }
     val pythonScriptEngine by lazy { PythonScript() }
@@ -159,8 +164,11 @@ internal object CheckAnswers : KLogging() {
       }
 
     // Save whether all the answers for the challenge were correct
-    if (redis != null)
-      saveAnswers(content, redis, names, compareMap, funcInfo, userResps, results)
+    if (redis != null) {
+      val principal = fetchPrincipal()
+      val browserSession = call.sessions.get<BrowserSession>()
+      saveAnswers(content, principal, browserSession, redis, names, compareMap, funcInfo, userResps, results)
+    }
 
     /*
     results

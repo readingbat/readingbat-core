@@ -61,10 +61,10 @@ internal object ChallengeGroupPage {
         val principal = fetchPrincipal(loginAttempt)
         val browserSession = call.sessions.get<BrowserSession>()
         val languageType = challengeGroup.languageType
-        val languageName = languageType.lowerName
+        val languageName = languageType.languageName
         val groupName = challengeGroup.groupName
         val challenges = challengeGroup.challenges
-        val loginPath = pathOf(CHALLENGE_ROOT, languageName, groupName)
+        val loginPath = pathOf(CHALLENGE_ROOT, languageName.value, groupName.value)
 
         fun TR.funcCall(redis: Jedis?, user: User?, challenge: Challenge) {
           val challengeName = challenge.challengeName
@@ -74,8 +74,8 @@ internal object ChallengeGroupPage {
             img { src = "$STATIC_ROOT/${if (allCorrect) GREEN_CHECK else WHITE_CHECK}" }
             a {
               style = "font-Size:110%; padding-left:2px;"
-              href = pathOf(CHALLENGE_ROOT, languageName, groupName, challengeName)
-              +challengeName
+              href = pathOf(CHALLENGE_ROOT, languageName.value, groupName.value, challengeName.value)
+              +challengeName.value
             }
           }
         }
@@ -85,7 +85,7 @@ internal object ChallengeGroupPage {
         body {
           bodyHeader(redis, principal, loginAttempt, content, languageType, loginPath, false, queryParam(MSG) ?: "")
 
-          h2 { +groupName.decode() }
+          h2 { +groupName.value.decode() }
 
           table {
             val cols = 3
@@ -105,7 +105,7 @@ internal object ChallengeGroupPage {
             }
           }
 
-          backLink(CHALLENGE_ROOT, languageName)
+          backLink(CHALLENGE_ROOT, languageName.value)
         }
       }
 }

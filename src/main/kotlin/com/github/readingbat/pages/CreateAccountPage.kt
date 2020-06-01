@@ -31,6 +31,10 @@ import com.github.readingbat.pages.PageCommon.clickButtonScript
 import com.github.readingbat.pages.PageCommon.displayMessage
 import com.github.readingbat.pages.PageCommon.headDefault
 import com.github.readingbat.pages.PageCommon.privacyStatement
+import com.github.readingbat.server.Email
+import com.github.readingbat.server.Email.Companion.EMPTY_EMAIL
+import com.github.readingbat.server.FullName
+import com.github.readingbat.server.FullName.Companion.EMPTY_FULLNAME
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
 import kotlinx.html.*
@@ -39,8 +43,8 @@ import kotlinx.html.stream.createHTML
 internal object CreateAccountPage {
 
   fun PipelineCall.createAccountPage(content: ReadingBatContent,
-                                     defaultName: String = "",
-                                     defaultEmail: String = "",
+                                     defaultName: FullName = EMPTY_FULLNAME,
+                                     defaultEmail: Email = EMPTY_EMAIL,
                                      msg: String = "") =
     createHTML()
       .html {
@@ -83,7 +87,7 @@ internal object CreateAccountPage {
                   td { style = labelWidth; label { +"Name" } }
                   td {
                     input {
-                      style = inputFs; type = InputType.text; size = "42"; name = NAME; value = defaultName
+                      style = inputFs; type = InputType.text; size = "42"; name = NAME; value = defaultName.value
                     }
                   }
                 }
@@ -91,7 +95,7 @@ internal object CreateAccountPage {
                   td { style = labelWidth; label { +"Email (used as account id)" } }
                   td {
                     input {
-                      style = inputFs; type = InputType.text; size = "42"; name = EMAIL; value = defaultEmail
+                      style = inputFs; type = InputType.text; size = "42"; name = EMAIL; value = defaultEmail.value
                     }
                   }
                 }

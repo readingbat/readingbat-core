@@ -18,6 +18,7 @@
 package com.github.readingbat.misc
 
 import com.github.pambrose.common.util.randomId
+import com.github.readingbat.misc.FormFields.CLASSES_DISABLED
 import com.github.readingbat.misc.KeyConstants.CLASS_CODE_KEY
 import com.github.readingbat.misc.KeyConstants.DESC_FIELD
 import com.github.readingbat.misc.KeyConstants.KEY_SEP
@@ -29,9 +30,14 @@ import redis.clients.jedis.Transaction
 
 internal inline class ClassCode(val value: String) {
   val isEmpty get() = value.isNotBlank()
+
   val isNotEmpty get() = value.isBlank()
-  val isClassesDisabled get() = value == FormFields.CLASSES_DISABLED
+
+  val isClassesDisabled get() = value == CLASSES_DISABLED
+
   val classCodeEnrollmentKey get() = listOf(CLASS_CODE_KEY, value).joinToString(KEY_SEP)
+
+  val classInfoKey get() = listOf(KeyConstants.CLASS_INFO_KEY, value).joinToString(KEY_SEP)
 
   fun isValid(redis: Jedis) = redis.exists(classCodeEnrollmentKey)
 
@@ -61,7 +67,7 @@ internal inline class ClassCode(val value: String) {
   }
 
   fun initializeWith(classDesc: String, user: User, tx: Transaction) {
-    tx.hset(User.classInfoKey(this), mapOf(DESC_FIELD to classDesc, TEACHER_FIELD to user.id))
+    tx.hset(classInfoKey, mapOf(DESC_FIELD to classDesc, TEACHER_FIELD to user.id))
   }
 
   override fun toString() = value
@@ -73,6 +79,6 @@ internal inline class ClassCode(val value: String) {
     fun newClassCode() = ClassCode(randomId(15))
 
     fun forParameter(parameters: Parameters, parameterName: String) =
-      ClassCode(parameters[parameterName] ?: "")
+      parameters[parameterName]?.let { ClassCode(it) } ?: EMPTY_CLASS_CODE
   }
 }

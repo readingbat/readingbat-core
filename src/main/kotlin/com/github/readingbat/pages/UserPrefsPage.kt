@@ -38,7 +38,6 @@ import com.github.readingbat.misc.KeyConstants.DESC_FIELD
 import com.github.readingbat.misc.KeyConstants.TEACHER_FIELD
 import com.github.readingbat.misc.PageUtils.hideShowButton
 import com.github.readingbat.misc.User
-import com.github.readingbat.misc.User.Companion.classInfoKey
 import com.github.readingbat.misc.User.Companion.isValidPrincipal
 import com.github.readingbat.pages.HelpAndLogin.helpAndLogin
 import com.github.readingbat.pages.PageCommon.backLink
@@ -64,9 +63,9 @@ internal object UserPrefsPage : KLogging() {
   private const val joinClassButton = "JoinClassButton"
 
   fun fetchClassDesc(classCode: ClassCode, redis: Jedis) =
-    redis.hget(classInfoKey(classCode), DESC_FIELD) ?: "Missing Description"
+    redis.hget(classCode.classInfoKey, DESC_FIELD) ?: "Missing Description"
 
-  fun fetchClassTeacher(classCode: ClassCode, redis: Jedis) = redis.hget(classInfoKey(classCode), TEACHER_FIELD) ?: ""
+  fun fetchClassTeacherId(classCode: ClassCode, redis: Jedis) = redis.hget(classCode.classInfoKey, TEACHER_FIELD) ?: ""
 
   fun PipelineCall.userPrefsPage(content: ReadingBatContent,
                                  redis: Jedis,
@@ -263,7 +262,7 @@ internal object UserPrefsPage : KLogging() {
 
   private fun BODY.deleteAccount(redis: Jedis, user: User) {
     val email = user.email(redis)
-    if (email.isNotEmpty()) {
+    if (email.isNotBlank()) {
       h3 { +"Delete account" }
       div {
         style = divStyle

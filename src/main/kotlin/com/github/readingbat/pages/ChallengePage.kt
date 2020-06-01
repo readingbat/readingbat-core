@@ -95,9 +95,9 @@ internal object ChallengePage : KLogging() {
         val languageType = challenge.languageType
         val groupName = challenge.groupName
         val challengeName = challenge.challengeName
-        val languageName = languageType.lowerName
+        val languageName = languageType.languageName
         val funcInfo = challenge.funcInfo(content)
-        val loginPath = pathOf(CHALLENGE_ROOT, languageName, groupName, challengeName)
+        val loginPath = pathOf(CHALLENGE_ROOT, languageName.value, groupName.value, challengeName.value)
 
         head {
           link { rel = "stylesheet"; href = spinnerCss }
@@ -125,7 +125,7 @@ internal object ChallengePage : KLogging() {
               this@body.displayStudentProgress(redis, challenge, content.maxHistoryLength, funcInfo, activeClassCode)
           }
 
-          backLink(CHALLENGE_ROOT, languageName, groupName)
+          backLink(CHALLENGE_ROOT, languageName.value, groupName.value)
 
           script { src = "$STATIC_ROOT/$languageName-prism.js" }
 
@@ -138,13 +138,13 @@ internal object ChallengePage : KLogging() {
     val languageType = challenge.languageType
     val groupName = challenge.groupName
     val challengeName = challenge.challengeName
-    val languageName = languageType.lowerName
+    val languageName = languageType.languageName
 
     h2 {
-      val groupPath = pathOf(CHALLENGE_ROOT, languageName, groupName)
-      this@displayChallenge.addLink(groupName.decode(), groupPath)
+      val groupPath = pathOf(CHALLENGE_ROOT, languageName.value, groupName.value)
+      this@displayChallenge.addLink(groupName.value.decode(), groupPath)
       span { style = "padding-left:2px; padding-right:2px;"; rawHtml("&rarr;") }
-      +challengeName
+      +challengeName.value
     }
 
     if (challenge.description.isNotEmpty())
@@ -186,14 +186,14 @@ internal object ChallengePage : KLogging() {
 
         funcInfo.invocations.withIndex().forEach { (i, invocation) ->
           tr {
-            td(classes = FUNC_COL) { +invocation }
+            td(classes = FUNC_COL) { +invocation.value }
             td(classes = ARROW) { rawHtml("&rarr;") }
             td {
               textInput(classes = USER_RESP) {
                 id = "$RESP$i"
                 onKeyPress = "$processAnswers(event, ${funcInfo.answers.size})"
-                if (previousAnswers[invocation] != null)
-                  value = previousAnswers[invocation] ?: ""
+                if (previousAnswers[invocation.value] != null)
+                  value = previousAnswers[invocation.value] ?: ""
                 else
                   placeholder = funcInfo.placeHolder()
               }
@@ -250,7 +250,7 @@ internal object ChallengePage : KLogging() {
       val languageType = challenge.languageType
       val groupName = challenge.groupName
       val challengeName = challenge.challengeName
-      val languageName = languageType.lowerName
+      val languageName = languageType.languageName
 
       val enrollees = activeClassCode.fetchEnrollees(redis)
       if (enrollees.isEmpty()) {
@@ -273,7 +273,7 @@ internal object ChallengePage : KLogging() {
             th { style = "text-align:left; color: $headerColor"; +"Student" }
             funcInfo.invocations.indices.forEach { i ->
               val invocation = funcInfo.invocations[i]
-              th { style = "text-align:left; color: $headerColor"; +invocation.substring(invocation.indexOf("(")) }
+              th { style = "text-align:left; color: $headerColor"; +(invocation.value.run { substring(indexOf("(")) }) }
             }
           }
 
@@ -327,7 +327,7 @@ internal object ChallengePage : KLogging() {
     val languageType = challenge.languageType
     val groupName = challenge.groupName
     val challengeName = challenge.challengeName
-    val languageName = languageType.lowerName
+    val languageName = languageType.languageName
     val user: User? = principal?.toUser()
     val key = challengeAnswersKey(user, browserSession, languageName, groupName, challengeName)
 
@@ -365,7 +365,9 @@ internal object ChallengePage : KLogging() {
       this@otherLinks.addLink("Gitpod.io", "https://gitpod.io/#${challenge.gitpodUrl}", true)
       if (languageType.isKotlin()) {
         +" or as a "
-        this@otherLinks.addLink("Kotlin Playground", pathOf(PLAYGROUND_ROOT, groupName, challengeName), false)
+        this@otherLinks.addLink("Kotlin Playground",
+                                pathOf(PLAYGROUND_ROOT, groupName.value, challengeName.value),
+                                false)
       }
     }
 

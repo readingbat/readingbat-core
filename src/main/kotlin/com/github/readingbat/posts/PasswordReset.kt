@@ -18,9 +18,7 @@
 package com.github.readingbat.posts
 
 import com.github.pambrose.common.util.encode
-import com.github.pambrose.common.util.isNotValidEmail
 import com.github.pambrose.common.util.randomId
-import com.github.pambrose.common.util.sha256
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.Constants.INVALID_RESET_ID
 import com.github.readingbat.misc.Constants.MSG
@@ -33,11 +31,15 @@ import com.github.readingbat.misc.FormFields.EMAIL
 import com.github.readingbat.misc.FormFields.NEW_PASSWORD
 import com.github.readingbat.misc.KeyConstants.DIGEST_FIELD
 import com.github.readingbat.misc.KeyConstants.SALT_FIELD
-import com.github.readingbat.misc.User.Companion.isValidEmail
+import com.github.readingbat.misc.User.Companion.isRegisteredEmail
 import com.github.readingbat.misc.User.Companion.lookupUserByEmail
 import com.github.readingbat.misc.User.Companion.passwordResetKey
 import com.github.readingbat.pages.PasswordResetPage.passwordResetPage
 import com.github.readingbat.posts.CreateAccount.checkPassword
+import com.github.readingbat.server.Email
+import com.github.readingbat.server.Email.Companion.EMPTY_EMAIL
+import com.github.readingbat.server.Password
+import com.github.readingbat.server.Password.Companion.EMPTY_PASSWORD
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.RedirectException
 import com.github.readingbat.server.ServerUtils.queryParam
@@ -53,52 +55,42 @@ internal object PasswordReset : KLogging() {
 
   suspend fun PipelineCall.sendPasswordReset(content: ReadingBatContent, redis: Jedis): String {
     val parameters = call.receiveParameters()
-    val email = parameters[EMAIL] ?: ""
+    val email = parameters[EMAIL]?.let { Email(it) } ?: EMPTY_EMAIL
     return when {
-      email.isEmpty() -> {
-        passwordResetPage(content,
-                          redis,
-                          "",
-                          "Unable to send password reset email -- missing email address")
+      email.isBlank() -> {
+        passwordResetPage(content, redis, "", "Unable to send password reset email -- missing email address")
       }
       email.isNotValidEmail() -> {
         passwordResetPage(content, redis, "", "Invalid email address: $email")
       }
-      !isValidEmail(email, redis) -> {
+      !isRegisteredEmail(email, redis) -> {
         unknownUserLimiter.acquire()
         passwordResetPage(content, redis, "", "Unknown user: $email")
       }
       else -> {
         try {
-          val resetId = randomId(15)
+          val newResetId = randomId(15)
 
           // Lookup and remove previous value if it exists
           val user = lookupUserByEmail(email, redis) ?: throw ResetPasswordException("Unable to find $email")
-          val userPasswordResetKey = user.userPasswordResetKey()
-          val previousResetId = redis.get(userPasswordResetKey) ?: ""
+          val previousResetId = redis.get(user.userPasswordResetKey) ?: ""
 
           redis.multi().also { tx ->
-            if (previousResetId.isNotEmpty()) {
-              tx.del(userPasswordResetKey)
-              tx.del(passwordResetKey(previousResetId))
-            }
-
-            tx.set(userPasswordResetKey, resetId)
-            tx.set(passwordResetKey(resetId), email)
-
+            user.savePasswordResetKey(email, previousResetId, newResetId, tx)
             tx.exec()
           }
 
+          logger.info { "Sending password reset email to $email" }
           try {
+            val msg = """
+              |This is a password reset message for the http://readingbat.com account for '$email'
+              |Go to this URL to set a new password: ${content.siteUrlPrefix}$PASSWORD_RESET_ENDPOINT?$RESET_ID=$newResetId 
+              |If you did not request to reset your password, please ignore this message.
+            """.trimMargin()
             sendEmail(to = email,
-                      from = "reset@readingbat.com",
+                      from = Email("reset@readingbat.com"),
                       subject = "ReadingBat password reset",
-                      msg =
-                      """
-                      |This is a password reset message for the http://readingbat.com account for '$email'
-                      |Go to this URL to set a new password: ${content.siteUrlPrefix}$PASSWORD_RESET_ENDPOINT?$RESET_ID=$resetId 
-                      |If you did not request to reset your password, please ignore this message.
-                    """.trimMargin())
+                      msg = msg)
           } catch (e: IOException) {
             logger.info(e) { e.message }
             throw ResetPasswordException("Unable to send email")
@@ -118,17 +110,16 @@ internal object PasswordReset : KLogging() {
     try {
       val parameters = call.receiveParameters()
       val resetId = parameters[RESET_ID] ?: ""
-      val newPassword = parameters[NEW_PASSWORD] ?: ""
-      val confirmPassword = parameters[CONFIRM_PASSWORD] ?: ""
+      val newPassword = parameters[NEW_PASSWORD]?.let { Password(it) } ?: EMPTY_PASSWORD
+      val confirmPassword = parameters[CONFIRM_PASSWORD]?.let { Password(it) } ?: EMPTY_PASSWORD
       val passwordError = checkPassword(newPassword, confirmPassword)
 
       if (passwordError.isNotEmpty())
         throw ResetPasswordException(passwordError, resetId)
 
       val passwordResetKey = passwordResetKey(resetId)
-      val email = redis.get(passwordResetKey) ?: throw ResetPasswordException(INVALID_RESET_ID)
+      val email = Email(redis.get(passwordResetKey) ?: throw ResetPasswordException(INVALID_RESET_ID))
       val user = lookupUserByEmail(email, redis) ?: throw ResetPasswordException("Unable to find $email")
-      val userPasswordResetKey = user.userPasswordResetKey()
       val userInfoKey = user.userInfoKey
       val salt = redis.hget(userInfoKey, SALT_FIELD)
       val newDigest = newPassword.sha256(salt)
@@ -138,7 +129,7 @@ internal object PasswordReset : KLogging() {
         throw ResetPasswordException("New password is the same as the current password", resetId)
 
       redis.multi().also { tx ->
-        tx.del(userPasswordResetKey)
+        tx.del(user.userPasswordResetKey)
         tx.del(passwordResetKey)
         tx.hset(userInfoKey, DIGEST_FIELD, newDigest)  // Set new password
         tx.exec()
