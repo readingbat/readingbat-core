@@ -35,10 +35,14 @@ import com.github.readingbat.misc.User.Companion.lookupUserByEmail
 import com.github.readingbat.misc.User.Companion.passwordResetKey
 import com.github.readingbat.pages.PasswordResetPage.passwordResetPage
 import com.github.readingbat.posts.CreateAccount.checkPassword
-import com.github.readingbat.server.*
-import com.github.readingbat.server.Email.Companion.EMPTY_EMAIL
-import com.github.readingbat.server.Password.Companion.EMPTY_PASSWORD
+import com.github.readingbat.server.Email
+import com.github.readingbat.server.Email.Companion.getEmail
+import com.github.readingbat.server.Password.Companion.getPassword
+import com.github.readingbat.server.PipelineCall
+import com.github.readingbat.server.RedirectException
+import com.github.readingbat.server.ResetId
 import com.github.readingbat.server.ResetId.Companion.EMPTY_RESET_ID
+import com.github.readingbat.server.ResetId.Companion.getResetId
 import com.github.readingbat.server.ResetId.Companion.newResetId
 import com.github.readingbat.server.ServerUtils.queryParam
 import com.google.common.util.concurrent.RateLimiter
@@ -53,7 +57,7 @@ internal object PasswordReset : KLogging() {
 
   suspend fun PipelineCall.sendPasswordReset(content: ReadingBatContent, redis: Jedis): String {
     val parameters = call.receiveParameters()
-    val email = parameters[EMAIL]?.let { Email(it) } ?: EMPTY_EMAIL
+    val email = parameters.getEmail(EMAIL)
     return when {
       email.isBlank() -> {
         passwordResetPage(content,
@@ -110,9 +114,9 @@ internal object PasswordReset : KLogging() {
   suspend fun PipelineCall.changePassword(content: ReadingBatContent, redis: Jedis): String =
     try {
       val parameters = call.receiveParameters()
-      val resetId = parameters[RESET_ID]?.let { ResetId(it) } ?: EMPTY_RESET_ID
-      val newPassword = parameters[NEW_PASSWORD]?.let { Password(it) } ?: EMPTY_PASSWORD
-      val confirmPassword = parameters[CONFIRM_PASSWORD]?.let { Password(it) } ?: EMPTY_PASSWORD
+      val resetId = parameters.getResetId(RESET_ID)
+      val newPassword = parameters.getPassword(NEW_PASSWORD)
+      val confirmPassword = parameters.getPassword(CONFIRM_PASSWORD)
       val passwordError = checkPassword(newPassword, confirmPassword)
 
       if (passwordError.isNotEmpty())

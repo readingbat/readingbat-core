@@ -58,6 +58,7 @@ import com.github.readingbat.posts.PasswordReset.changePassword
 import com.github.readingbat.posts.PasswordReset.sendPasswordReset
 import com.github.readingbat.posts.TeacherPrefs.teacherPrefs
 import com.github.readingbat.posts.UserPrefs.userPrefs
+import com.github.readingbat.server.ResetId.Companion.EMPTY_RESET_ID
 import com.github.readingbat.server.ServerUtils.queryParam
 import io.ktor.application.call
 import io.ktor.http.ContentType.Text.CSS
@@ -127,7 +128,12 @@ internal fun Routing.userRoutes(content: ReadingBatContent) {
 
   // RESET_ID is passed here when user clicks on email URL
   get(PASSWORD_RESET_ENDPOINT) {
-    respondWithDbmsCheck { redis -> passwordResetPage(content, redis, queryParam(RESET_ID) ?: "", "") }
+    respondWithDbmsCheck { redis ->
+      passwordResetPage(content,
+                        redis,
+                        queryParam(RESET_ID)?.let { ResetId(it) } ?: EMPTY_RESET_ID,
+                        "")
+    }
   }
 
   post(PASSWORD_RESET_ENDPOINT) { respondWithSuspendingDbmsCheck { redis -> sendPasswordReset(content, redis) } }

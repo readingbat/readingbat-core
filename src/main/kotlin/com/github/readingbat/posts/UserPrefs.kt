@@ -19,7 +19,7 @@ package com.github.readingbat.posts
 
 import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.misc.ClassCode.Companion.classCodeFromParameter
+import com.github.readingbat.misc.ClassCode.Companion.getClassCode
 import com.github.readingbat.misc.DataException
 import com.github.readingbat.misc.FormFields.CLASS_CODE
 import com.github.readingbat.misc.FormFields.CONFIRM_PASSWORD
@@ -37,8 +37,7 @@ import com.github.readingbat.pages.UserPrefsPage.fetchClassDesc
 import com.github.readingbat.pages.UserPrefsPage.requestLogInPage
 import com.github.readingbat.pages.UserPrefsPage.userPrefsPage
 import com.github.readingbat.posts.CreateAccount.checkPassword
-import com.github.readingbat.server.Password
-import com.github.readingbat.server.Password.Companion.EMPTY_PASSWORD
+import com.github.readingbat.server.Password.Companion.getPassword
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.fetchPrincipal
 import io.ktor.application.call
@@ -74,9 +73,9 @@ internal object UserPrefs : KLogging() {
                                           redis: Jedis,
                                           parameters: Parameters,
                                           user: User): String {
-    val currPassword = parameters[CURR_PASSWORD]?.let { Password(it) } ?: EMPTY_PASSWORD
-    val newPassword = parameters[NEW_PASSWORD]?.let { Password(it) } ?: EMPTY_PASSWORD
-    val confirmPassword = parameters[CONFIRM_PASSWORD]?.let { Password(it) } ?: EMPTY_PASSWORD
+    val currPassword = parameters.getPassword(CURR_PASSWORD)
+    val newPassword = parameters.getPassword(NEW_PASSWORD)
+    val confirmPassword = parameters.getPassword(CONFIRM_PASSWORD)
     val passwordError = checkPassword(newPassword, confirmPassword)
 
     val msg =
@@ -102,7 +101,7 @@ internal object UserPrefs : KLogging() {
                                          parameters: Parameters,
                                          user: User,
                                          redis: Jedis): String {
-    val classCode = classCodeFromParameter(parameters, CLASS_CODE)
+    val classCode = parameters.getClassCode(CLASS_CODE)
     return try {
       user.enrollInClass(classCode, redis)
       val classDesc = fetchClassDesc(classCode, redis)

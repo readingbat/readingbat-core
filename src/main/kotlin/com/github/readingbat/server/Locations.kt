@@ -35,6 +35,7 @@ import com.github.readingbat.pages.LanguageGroupPage.languageGroupPage
 import com.github.readingbat.pages.PlaygroundPage.playgroundPage
 import com.github.readingbat.server.AdminRoutes.registerBrowserSession
 import io.ktor.auth.authenticate
+import io.ktor.http.Parameters
 import io.ktor.locations.Location
 import io.ktor.locations.get
 import io.ktor.locations.post
@@ -144,6 +145,7 @@ inline class FullName(val value: String) {
 
   companion object {
     val EMPTY_FULLNAME = FullName("")
+    fun Parameters.getFullName(name: String) = this[name]?.let { FullName(it) } ?: EMPTY_FULLNAME
   }
 }
 
@@ -156,6 +158,7 @@ inline class Password(val value: String) {
 
   companion object {
     val EMPTY_PASSWORD = Password("")
+    fun Parameters.getPassword(name: String) = this[name]?.let { Password(it) } ?: EMPTY_PASSWORD
   }
 }
 
@@ -169,6 +172,7 @@ inline class Email(val value: String) {
 
   companion object {
     val EMPTY_EMAIL = Email("")
+    fun Parameters.getEmail(name: String) = this[name]?.let { Email(it) } ?: EMPTY_EMAIL
   }
 }
 
@@ -182,5 +186,7 @@ inline class ResetId(val value: String) {
     fun newResetId() = ResetId(randomId(15))
 
     val EMPTY_RESET_ID = ResetId("")
+    fun Parameters.getResetId(name: String) = this[name]?.let { ResetId(it) } ?: EMPTY_RESET_ID
   }
 }
+

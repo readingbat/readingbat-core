@@ -29,8 +29,9 @@ import com.github.readingbat.misc.User.Companion.createUser
 import com.github.readingbat.misc.UserPrincipal
 import com.github.readingbat.pages.CreateAccountPage.createAccountPage
 import com.github.readingbat.server.*
-import com.github.readingbat.server.FullName.Companion.EMPTY_FULLNAME
-import com.github.readingbat.server.Password.Companion.EMPTY_PASSWORD
+import com.github.readingbat.server.Email.Companion.getEmail
+import com.github.readingbat.server.FullName.Companion.getFullName
+import com.github.readingbat.server.Password.Companion.getPassword
 import com.github.readingbat.server.ServerUtils.queryParam
 import com.google.common.util.concurrent.RateLimiter
 import io.ktor.application.call
@@ -63,10 +64,10 @@ internal object CreateAccount : KLogging() {
 
   suspend fun PipelineCall.createAccount(content: ReadingBatContent, redis: Jedis): String {
     val parameters = call.receiveParameters()
-    val fullName = parameters[NAME]?.let { FullName(it) } ?: EMPTY_FULLNAME
-    val email = parameters[EMAIL]?.let { Email(it) } ?: Email.EMPTY_EMAIL
-    val password = parameters[PASSWORD]?.let { Password(it) } ?: EMPTY_PASSWORD
-    val confirmPassword = parameters[CONFIRM_PASSWORD]?.let { Password(it) } ?: EMPTY_PASSWORD
+    val fullName = parameters.getFullName(NAME)
+    val email = parameters.getEmail(EMAIL)
+    val password = parameters.getPassword(PASSWORD)
+    val confirmPassword = parameters.getPassword(CONFIRM_PASSWORD)
 
     return when {
       fullName.isBlank() -> createAccountPage(content, defaultEmail = email, msg = EMPTY_NAME_MSG)

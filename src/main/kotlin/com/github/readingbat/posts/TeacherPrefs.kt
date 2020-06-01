@@ -20,7 +20,7 @@ package com.github.readingbat.posts
 import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.ClassCode
-import com.github.readingbat.misc.ClassCode.Companion.classCodeFromParameter
+import com.github.readingbat.misc.ClassCode.Companion.getClassCode
 import com.github.readingbat.misc.ClassCode.Companion.newClassCode
 import com.github.readingbat.misc.FormFields.CLASSES_CHOICE
 import com.github.readingbat.misc.FormFields.CLASS_CODE
@@ -51,11 +51,8 @@ internal object TeacherPrefs {
     else {
       when (val action = parameters[USER_PREFS_ACTION] ?: "") {
         CREATE_CLASS -> createClass(content, redis, user, parameters[CLASS_DESC] ?: "")
-        UPDATE_ACTIVE_CLASS -> updateActiveClass(content,
-                                                 redis,
-                                                 user,
-                                                 classCodeFromParameter(parameters, CLASSES_CHOICE))
-        DELETE_CLASS -> deleteClass(content, redis, user, classCodeFromParameter(parameters, CLASS_CODE))
+        UPDATE_ACTIVE_CLASS -> updateActiveClass(content, redis, user, parameters.getClassCode(CLASSES_CHOICE))
+        DELETE_CLASS -> deleteClass(content, redis, user, parameters.getClassCode(CLASS_CODE))
         else -> throw InvalidConfigurationException("Invalid action: $action")
       }
     }

@@ -111,8 +111,8 @@ internal object PageCommon {
     if (loginAttempt && principal == null)
       p { span { style = "color:red;"; +"Failed to login -- incorrect email or password" } }
 
-    if (msg.isNotEmpty())
-      p { span { style = "color:green; max-width:800;"; +msg } }
+
+    p { span { style = "color:green; max-width:800;"; if (msg.isNotEmpty()) +msg else rawHtml(nbsp.text) } }
 
     div {
       style = "padding-top:10px; min-width:100vw; clear:both;"
