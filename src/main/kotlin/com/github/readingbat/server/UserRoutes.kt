@@ -71,28 +71,28 @@ import redis.clients.jedis.Jedis
 
 internal fun Routing.userRoutes(content: ReadingBatContent) {
 
-  suspend fun PipelineCall.respondWithDbmsCheck(block: PipelineCall.(redis: Jedis) -> String) =
+  suspend fun PipelineCall.respondWithDbmsCheck(block: (redis: Jedis) -> String) =
     try {
       val html =
         withRedisPool { redis ->
           if (redis == null)
             dbmsDownPage(content)
           else
-            block(redis)
+            block.invoke(redis)
         }
       respondWith { html }
     } catch (e: RedirectException) {
       redirectTo { e.redirectUrl }
     }
 
-  suspend fun PipelineCall.respondWithSuspendingDbmsCheck(block: suspend PipelineCall.(redis: Jedis) -> String) =
+  suspend fun PipelineCall.respondWithSuspendingDbmsCheck(block: suspend (redis: Jedis) -> String) =
     try {
       val html =
         withSuspendingRedisPool { redis ->
           if (redis == null)
             dbmsDownPage(content)
           else
-            block(redis)
+            block.invoke(redis)
         }
       respondWith { html }
     } catch (e: RedirectException) {
