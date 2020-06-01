@@ -89,17 +89,10 @@ internal object PasswordResetPage : KLogging() {
               table {
                 tr {
                   td { style = LABEL_WIDTH; label { +"Email (used as account id)" } }
-                  td {
-                    input {
-                      name = EMAIL
-                      type = InputType.text
-                      size = "50"
-                    }
-                  }
+                  td { input { name = EMAIL; type = InputType.text; size = "50" } }
                 }
                 tr {
-                  td {
-                  }
+                  td { }
                   td {
                     style = "padding-top:10;"
                     input {
@@ -171,11 +164,7 @@ internal object PasswordResetPage : KLogging() {
                 td { hideShowButton(formName, CONFIRM_PASSWORD) }
               }
               tr {
-                td {
-                  input {
-                    type = InputType.hidden; name = RESET_ID; value = resetId.value
-                  }
-                }
+                td { input { type = InputType.hidden; name = RESET_ID; value = resetId.value } }
                 td {
                   input {
                     style = "font-size:25px; height:35; width:  155;"

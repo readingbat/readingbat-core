@@ -151,11 +151,7 @@ internal object UserPrefsPage : KLogging() {
           }
           tr {
             td {}
-            td {
-              input {
-                type = submit; id = passwordButton; name = USER_PREFS_ACTION; value = UPDATE_PASSWORD
-              }
-            }
+            td { input { type = submit; id = passwordButton; name = USER_PREFS_ACTION; value = UPDATE_PASSWORD } }
           }
         }
       }
@@ -204,11 +200,7 @@ internal object UserPrefsPage : KLogging() {
             }
             tr {
               td {}
-              td {
-                input {
-                  type = submit; id = joinClassButton; name = USER_PREFS_ACTION; value = JOIN_CLASS
-                }
-              }
+              td { input { type = submit; id = joinClassButton; name = USER_PREFS_ACTION; value = JOIN_CLASS } }
             }
           }
         }

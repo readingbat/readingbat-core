@@ -26,6 +26,7 @@ import com.github.readingbat.misc.FormFields
 import com.github.readingbat.misc.FormFields.CLASSES_CHOICE
 import com.github.readingbat.misc.FormFields.CLASSES_DISABLED
 import com.github.readingbat.misc.FormFields.CLASS_CODE
+import com.github.readingbat.misc.FormFields.CREATE_CLASS
 import com.github.readingbat.misc.FormFields.DELETE_CLASS
 import com.github.readingbat.misc.FormFields.UPDATE_ACTIVE_CLASS
 import com.github.readingbat.misc.FormFields.USER_PREFS_ACTION
@@ -84,7 +85,6 @@ internal object TeacherPrefsPage : KLogging() {
           val returnPath = queryParam(RETURN_PATH) ?: "/"
 
           helpAndLogin(redis, fetchPrincipal(), returnPath)
-
           bodyTitle()
 
           h2 { +"ReadingBat User Preferences" }
@@ -123,12 +123,7 @@ internal object TeacherPrefsPage : KLogging() {
           }
           tr {
             td {}
-            td {
-              input {
-                type = submit; id = createClassButton; name = USER_PREFS_ACTION; value =
-                FormFields.CREATE_CLASS
-              }
-            }
+            td { input { type = submit; id = createClassButton; name = USER_PREFS_ACTION; value = CREATE_CLASS } }
           }
         }
       }
@@ -191,12 +186,7 @@ internal object TeacherPrefsPage : KLogging() {
         }
         this@table.tr {
           td {}
-          td {
-            input {
-              type = submit; name = USER_PREFS_ACTION; value =
-              UPDATE_ACTIVE_CLASS
-            }
-          }
+          td { input { type = submit; name = USER_PREFS_ACTION; value = UPDATE_ACTIVE_CLASS } }
         }
       }
     }
@@ -227,6 +217,4 @@ internal object TeacherPrefsPage : KLogging() {
       }
     }
   }
-
-
 }
