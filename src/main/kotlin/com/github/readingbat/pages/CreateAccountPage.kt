@@ -141,9 +141,9 @@ internal object CreateAccountPage {
                 }
               }
             }
-
-            this@body.privacyStatement(CREATE_ACCOUNT_ENDPOINT, returnPath)
           }
+
+          privacyStatement(CREATE_ACCOUNT_ENDPOINT, returnPath)
 
           backLink(returnPath)
         }

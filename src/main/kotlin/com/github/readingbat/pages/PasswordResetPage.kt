@@ -112,9 +112,9 @@ internal object PasswordResetPage : KLogging() {
                 address above is entered correctly.
               """.trimIndent()
             }
-
-            this@body.privacyStatement(PASSWORD_RESET_ENDPOINT, returnPath)
           }
+
+          privacyStatement(PASSWORD_RESET_ENDPOINT, returnPath)
 
           backLink(returnPath)
         }

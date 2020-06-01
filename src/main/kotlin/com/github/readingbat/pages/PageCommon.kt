@@ -149,14 +149,16 @@ internal object PageCommon {
     a { href = url; if (newWindow) target = "_blank"; +text }
 
   fun BODY.privacyStatement(backPath: String, returnPath: String) =
-    p { a { href = "$PRIVACY_ENDPOINT?$BACK_PATH=$backPath&$RETURN_PATH=$returnPath"; +"Privacy Statement" } }
+    p {
+      style = "margin-left: 1em"
+      a { href = "$PRIVACY_ENDPOINT?$BACK_PATH=$backPath&$RETURN_PATH=$returnPath"; +"Privacy Statement" }
+    }
 
   fun BODY.backLinkWithIndent(url: String, marginLeft: String = "1em") {
     if (url.isNotEmpty()) {
       div {
         style = "font-size: 120%; margin-left: $marginLeft;"
-        br
-        a { href = url; rawHtml("&larr; Back") }
+        p { a { href = url; rawHtml("&larr; Back") } }
       }
     }
   }

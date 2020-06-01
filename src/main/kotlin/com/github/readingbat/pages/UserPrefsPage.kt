@@ -108,7 +108,10 @@ internal object UserPrefsPage : KLogging() {
           joinOrWithdrawFromClass(redis, user, defaultClassCode)
           deleteAccount(redis, user)
 
-          p { a { href = "$TEACHER_PREFS_ENDPOINT?$RETURN_PATH=$returnPath"; +"Teacher Preferences" } }
+          p {
+            style = "margin-left: 1em"
+            a { href = "$TEACHER_PREFS_ENDPOINT?$RETURN_PATH=$returnPath"; +"Teacher Preferences" }
+          }
 
           privacyStatement(USER_PREFS_ENDPOINT, returnPath)
 
@@ -293,6 +296,7 @@ internal object UserPrefsPage : KLogging() {
             a { href = "$CREATE_ACCOUNT_ENDPOINT?$RETURN_PATH=$returnPath"; +" create an account " }
             +"or log in to an existing account to edit preferences."
           }
+
           privacyStatement(USER_PREFS_ENDPOINT, returnPath)
 
           backLink(returnPath)
