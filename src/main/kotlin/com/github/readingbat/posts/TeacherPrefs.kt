@@ -43,9 +43,9 @@ internal object TeacherPrefs {
   suspend fun PipelineCall.teacherPrefs(content: ReadingBatContent, redis: Jedis): String {
     val parameters = call.receiveParameters()
     val principal = fetchPrincipal()
-    val user = com.github.readingbat.misc.User.userByPrincipal(principal)
+    val user = principal?.toUser()
 
-    return if (user == null || principal == null) {
+    return if (user == null) {
       requestLogInPage(content, redis)
     }
     else {

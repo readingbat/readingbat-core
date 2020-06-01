@@ -58,7 +58,7 @@ import mu.KLogging
 import redis.clients.jedis.Jedis
 import redis.clients.jedis.Transaction
 
-internal class User(val id: String = randomId(25)) {
+internal class User private constructor(val id: String) {
 
   val userInfoKey = listOf(USER_INFO_KEY, id).joinToString(KEY_SEP)
   val userClassesKey = listOf(USER_CLASSES_KEY, id).joinToString(KEY_SEP)
@@ -171,7 +171,8 @@ internal class User(val id: String = randomId(25)) {
       .none()
 
   fun deleteUser(principal: UserPrincipal, redis: Jedis) {
-    val userEmailKey = userEmailKey(principal.email(redis))
+    val user = principal.toUser()
+    val userEmailKey = userEmailKey(user.email(redis))
     val correctAnswers = redis.keys(correctAnswersKey("*", "*", "*"))
     val challenges = redis.keys(challengeAnswersKey("*", "*", "*"))
     val invocations = redis.keys(answerHistoryKey("*", "*", "*", "*"))
@@ -181,7 +182,7 @@ internal class User(val id: String = randomId(25)) {
     val userPasswordResetKey = userPasswordResetKey()
     val previousResetId = redis.get(userPasswordResetKey) ?: ""
 
-    logger.info { "Deleting User: ${principal.userId} ${principal.email(redis)}" }
+    logger.info { "Deleting User: ${principal.userId} ${user.email(redis)}" }
     logger.info { "User Email: $userEmailKey" }
     logger.info { "User Info: $userInfoKey" }
     logger.info { "User Classes: $userClassesKey" }
@@ -215,7 +216,9 @@ internal class User(val id: String = randomId(25)) {
 
     val gson = Gson()
 
-    fun userByPrincipal(principal: UserPrincipal?): User? = principal?.let { User(principal.userId) }
+    fun String.toUser() = User(this)
+
+    fun newUser() = User(randomId(25))
 
     fun userEmailKey(email: String) = listOf(USER_EMAIL_KEY, email).joinToString(KEY_SEP)
 
@@ -257,13 +260,12 @@ internal class User(val id: String = randomId(25)) {
       // email -> userId
       // userId -> salt and sha256-encoded digest
 
-      val userEmailKey = userEmailKey(email)
-      val user = User()
+      val user = newUser()
       val salt = newStringSalt()
       logger.info { "Created user $email ${user.id}" }
 
       redis.multi().also { tx ->
-        tx.set(userEmailKey, user.id)
+        tx.set(userEmailKey(email), user.id)
         tx.hset(user.userInfoKey, mapOf(NAME_FIELD to name,
                                         EMAIL_FIELD to email,
                                         SALT_FIELD to salt,
@@ -285,7 +287,7 @@ internal class User(val id: String = randomId(25)) {
                                  results: List<ChallengeResults>) {
       val principal = fetchPrincipal()
       val browserSession by lazy { call.sessions.get<BrowserSession>() }
-      val user = userByPrincipal(principal)
+      val user = principal?.toUser()
       val challengeAnswerKey = challengeAnswersKey(user, browserSession, names)
       val correctAnswersKey = correctAnswersKey(user, browserSession, names)
       val enrolledClassCode = user?.fetchEnrolledClassCode(redis) ?: EMPTY_CLASS_CODE
@@ -329,7 +331,7 @@ internal class User(val id: String = randomId(25)) {
             if (enrolledClassCode.isEmpty && user != null) {
               // Check to see if owner of class has it set as their active class
               val teacherId = fetchClassTeacher(enrolledClassCode, redis)
-              if (teacherId.isNotEmpty() && User(teacherId).fetchActiveClassCode(redis) == enrolledClassCode) {
+              if (teacherId.isNotEmpty() && teacherId.toUser().fetchActiveClassCode(redis) == enrolledClassCode) {
                 val browserInfo = DashboardInfo(content.maxHistoryLength, user.id, complete, numCorrect, history)
                 logger.info { "Publishing data $json" }
                 redis.publish(enrolledClassCode.value, gson.toJson(browserInfo))
@@ -339,17 +341,14 @@ internal class User(val id: String = randomId(25)) {
         }
     }
 
-    fun isValidPrincipal(principal: UserPrincipal, redis: Jedis): Boolean {
-      val user = userByPrincipal(principal) ?: return false
-      return redis.hlen(user.userInfoKey) > 0
-    }
+    fun isValidPrincipal(principal: UserPrincipal, redis: Jedis) = redis.hlen(principal.toUser().userInfoKey) > 0
 
     fun isValidEmail(email: String, redis: Jedis) = lookupUserByEmail(email, redis) != null
 
     fun lookupUserByEmail(email: String, redis: Jedis): User? {
       val userEmailKey = userEmailKey(email)
       val id = redis.get(userEmailKey) ?: ""
-      return if (id.isNotEmpty()) User(id) else null
+      return if (id.isNotEmpty()) id.toUser() else null
     }
 
     fun lookupDigestInfoByUser(user: User, redis: Jedis): Pair<String, String> {

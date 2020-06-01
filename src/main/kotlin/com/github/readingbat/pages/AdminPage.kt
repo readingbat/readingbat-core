@@ -22,7 +22,7 @@ import com.github.readingbat.misc.Constants
 import com.github.readingbat.misc.Endpoints.ADMIN_ENDPOINT
 import com.github.readingbat.misc.FormFields.ADMIN_ACTION
 import com.github.readingbat.misc.FormFields.DELETE_ALL_DATA
-import com.github.readingbat.misc.User
+import com.github.readingbat.misc.User.Companion.toUser
 import com.github.readingbat.pages.HelpAndLogin.helpAndLogin
 import com.github.readingbat.pages.PageCommon.backLink
 import com.github.readingbat.pages.PageCommon.bodyTitle
@@ -57,7 +57,7 @@ internal object AdminPage {
             content.production && principal == null -> {
               br { +"Must be logged in for this function" }
             }
-            content.production && User(principal?.userId ?: "").email(redis) != "pambrose@mac.com" -> {
+            content.production && principal?.userId?.toUser()?.email(redis) != "pambrose@mac.com" -> {
               br { +"Must be system admin for this function" }
             }
             else -> {

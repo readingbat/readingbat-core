@@ -18,15 +18,19 @@
 package com.github.readingbat.pages
 
 import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.misc.*
+import com.github.readingbat.misc.ClassCode
+import com.github.readingbat.misc.Constants
 import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.Endpoints.TEACHER_PREFS_ENDPOINT
+import com.github.readingbat.misc.FormFields
 import com.github.readingbat.misc.FormFields.CLASSES_CHOICE
 import com.github.readingbat.misc.FormFields.CLASSES_DISABLED
 import com.github.readingbat.misc.FormFields.CLASS_CODE
 import com.github.readingbat.misc.FormFields.DELETE_CLASS
 import com.github.readingbat.misc.FormFields.UPDATE_ACTIVE_CLASS
 import com.github.readingbat.misc.FormFields.USER_PREFS_ACTION
+import com.github.readingbat.misc.User
+import com.github.readingbat.misc.User.Companion.isValidPrincipal
 import com.github.readingbat.pages.HelpAndLogin.helpAndLogin
 import com.github.readingbat.pages.PageCommon.backLink
 import com.github.readingbat.pages.PageCommon.bodyTitle
@@ -57,15 +61,15 @@ internal object TeacherPrefsPage : KLogging() {
                                     isErrorMsg: Boolean,
                                     defaultClassDesc: String = ""): String {
     val principal = fetchPrincipal()
-    return if (principal != null && com.github.readingbat.misc.User.isValidPrincipal(principal, redis))
-      teacherPrefsWithLoginPage(content, redis, principal, msg, isErrorMsg, defaultClassDesc)
+    return if (principal != null && isValidPrincipal(principal, redis))
+      teacherPrefsWithLoginPage(content, redis, principal.toUser(), msg, isErrorMsg, defaultClassDesc)
     else
       requestLogInPage(content, redis)
   }
 
   private fun PipelineCall.teacherPrefsWithLoginPage(content: ReadingBatContent,
                                                      redis: Jedis,
-                                                     principal: UserPrincipal,
+                                                     user: User,
                                                      msg: String,
                                                      isErrorMsg: Boolean,
                                                      defaultClassDesc: String) =
@@ -88,7 +92,7 @@ internal object TeacherPrefsPage : KLogging() {
           p { span { style = "color:${if (isErrorMsg) "red" else "green"};"; this@body.displayMessage(msg) } }
 
           createClass(defaultClassDesc)
-          displayClasses(redis, principal)
+          displayClasses(redis, user)
 
           privacyStatement(TEACHER_PREFS_ENDPOINT, returnPath)
 
@@ -131,8 +135,7 @@ internal object TeacherPrefsPage : KLogging() {
     }
   }
 
-  private fun BODY.displayClasses(redis: Jedis, principal: UserPrincipal) {
-    val user = User(principal.userId)
+  private fun BODY.displayClasses(redis: Jedis, user: User) {
     val classCodes = redis.smembers(user.userClassesKey).map { ClassCode(it) }
 
     if (classCodes.size > 0) {

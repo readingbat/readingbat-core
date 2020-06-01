@@ -34,7 +34,6 @@ import com.github.readingbat.misc.FormFields.WITHDRAW_FROM_CLASS
 import com.github.readingbat.misc.KeyConstants.DIGEST_FIELD
 import com.github.readingbat.misc.User
 import com.github.readingbat.misc.User.Companion.lookupDigestInfoByUser
-import com.github.readingbat.misc.User.Companion.userByPrincipal
 import com.github.readingbat.misc.UserPrincipal
 import com.github.readingbat.pages.UserPrefsPage.fetchClassDesc
 import com.github.readingbat.pages.UserPrefsPage.requestLogInPage
@@ -55,9 +54,9 @@ internal object UserPrefs : KLogging() {
   suspend fun PipelineCall.userPrefs(content: ReadingBatContent, redis: Jedis): String {
     val parameters = call.receiveParameters()
     val principal = fetchPrincipal()
-    val user = userByPrincipal(principal)
+    val user = principal?.toUser()
 
-    return if (user == null || principal == null) {
+    return if (user == null) {
       requestLogInPage(content, redis)
     }
     else {
@@ -133,7 +132,7 @@ internal object UserPrefs : KLogging() {
                                          principal: UserPrincipal,
                                          user: User,
                                          redis: Jedis): String {
-    val email = principal.email(redis)
+    val email = principal.toUser().email(redis)
     logger.info { "Deleting user $email" }
     user.deleteUser(principal, redis)
     call.sessions.clear<UserPrincipal>()

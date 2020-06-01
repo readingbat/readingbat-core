@@ -25,6 +25,7 @@ import com.github.readingbat.misc.Endpoints.PASSWORD_RESET_ENDPOINT
 import com.github.readingbat.misc.Endpoints.USER_PREFS_ENDPOINT
 import com.github.readingbat.misc.FormFields.EMAIL
 import com.github.readingbat.misc.FormFields.PASSWORD
+import com.github.readingbat.misc.User
 import com.github.readingbat.misc.UserPrincipal
 import kotlinx.html.*
 import redis.clients.jedis.Jedis
@@ -36,7 +37,7 @@ internal object HelpAndLogin {
     div {
       style = "float:right; margin:0px; border: 1px solid lightgray; margin-left: 10px; padding: 5px;"
       table {
-        if (principal != null && redis != null) logout(redis, principal, loginPath) else login(loginPath)
+        if (principal != null && redis != null) logout(redis, principal.toUser(), loginPath) else login(loginPath)
       }
     }
 
@@ -65,9 +66,9 @@ internal object HelpAndLogin {
     }
   }
 
-  private fun TABLE.logout(redis: Jedis, principal: UserPrincipal, loginPath: String) {
+  private fun TABLE.logout(redis: Jedis, user: User, loginPath: String) {
     tr {
-      val email = principal.email(redis)
+      val email = user.email(redis)
       val elems = email.split("@")
       td {
         +elems[0]

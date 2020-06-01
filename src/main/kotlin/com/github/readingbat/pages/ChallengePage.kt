@@ -55,7 +55,6 @@ import com.github.readingbat.misc.ParameterIds.SUCCESS_ID
 import com.github.readingbat.misc.User
 import com.github.readingbat.misc.User.Companion.challengeAnswersKey
 import com.github.readingbat.misc.User.Companion.gson
-import com.github.readingbat.misc.User.Companion.userByPrincipal
 import com.github.readingbat.misc.UserPrincipal
 import com.github.readingbat.pages.PageCommon.addLink
 import com.github.readingbat.pages.PageCommon.backLink
@@ -115,7 +114,7 @@ internal object ChallengePage : KLogging() {
 
           this@body.displayChallenge(challenge, funcInfo)
 
-          val user = userByPrincipal(principal)
+          val user = principal?.toUser()
           val activeClassCode = user?.fetchActiveClassCode(redis) ?: EMPTY_CLASS_CODE
           if (activeClassCode.isNotEmpty)
             this@body.displayQuestions(redis, principal, browserSession, challenge, funcInfo)
@@ -329,7 +328,7 @@ internal object ChallengePage : KLogging() {
     val groupName = challenge.groupName
     val challengeName = challenge.challengeName
     val languageName = languageType.lowerName
-    val user: User? = userByPrincipal(principal)
+    val user: User? = principal?.toUser()
     val key = challengeAnswersKey(user, browserSession, languageName, groupName, challengeName)
 
     return if (key.isNotEmpty()) redis.hgetAll(key) else mutableMapOf()

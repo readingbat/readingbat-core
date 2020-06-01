@@ -31,7 +31,6 @@ import com.github.readingbat.misc.Constants.WHITE_CHECK
 import com.github.readingbat.misc.PageUtils.pathOf
 import com.github.readingbat.misc.User
 import com.github.readingbat.misc.User.Companion.correctAnswersKey
-import com.github.readingbat.misc.User.Companion.userByPrincipal
 import com.github.readingbat.pages.PageCommon.backLink
 import com.github.readingbat.pages.PageCommon.bodyHeader
 import com.github.readingbat.pages.PageCommon.headDefault
@@ -92,7 +91,7 @@ internal object ChallengeGroupPage {
             val cols = 3
             val size = challenges.size
             val rows = size.rows(cols)
-            val user = userByPrincipal(principal)
+            val user = principal?.toUser()
 
             (0 until rows).forEach { i ->
               tr {

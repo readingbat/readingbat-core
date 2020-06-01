@@ -40,7 +40,6 @@ import com.github.readingbat.misc.PageUtils.hideShowButton
 import com.github.readingbat.misc.User
 import com.github.readingbat.misc.User.Companion.classInfoKey
 import com.github.readingbat.misc.User.Companion.isValidPrincipal
-import com.github.readingbat.misc.UserPrincipal
 import com.github.readingbat.pages.HelpAndLogin.helpAndLogin
 import com.github.readingbat.pages.PageCommon.backLink
 import com.github.readingbat.pages.PageCommon.bodyTitle
@@ -76,14 +75,14 @@ internal object UserPrefsPage : KLogging() {
                                  defaultClassCode: ClassCode = EMPTY_CLASS_CODE): String {
     val principal = fetchPrincipal()
     return if (principal != null && isValidPrincipal(principal, redis))
-      userPrefsWithLoginPage(content, redis, principal, msg, isErrorMsg, defaultClassCode)
+      userPrefsWithLoginPage(content, redis, principal.toUser(), msg, isErrorMsg, defaultClassCode)
     else
       requestLogInPage(content, redis)
   }
 
   private fun PipelineCall.userPrefsWithLoginPage(content: ReadingBatContent,
                                                   redis: Jedis,
-                                                  principal: UserPrincipal,
+                                                  user: User,
                                                   msg: String,
                                                   isErrorMsg: Boolean,
                                                   defaultClassCode: ClassCode) =
@@ -107,8 +106,8 @@ internal object UserPrefsPage : KLogging() {
 
 
           changePassword()
-          joinOrWithdrawFromClass(redis, principal, defaultClassCode)
-          deleteAccount(redis, principal)
+          joinOrWithdrawFromClass(redis, user, defaultClassCode)
+          deleteAccount(redis, user)
 
           p { a { href = "$TEACHER_PREFS_ENDPOINT?$RETURN_PATH=$returnPath"; +"Teacher Preferences" } }
 
@@ -164,8 +163,7 @@ internal object UserPrefsPage : KLogging() {
     }
   }
 
-  private fun BODY.joinOrWithdrawFromClass(redis: Jedis, principal: UserPrincipal, defaultClassCode: ClassCode) {
-    val user = User(principal.userId)
+  private fun BODY.joinOrWithdrawFromClass(redis: Jedis, user: User, defaultClassCode: ClassCode) {
     val enrolledClass = user.fetchEnrolledClassCode(redis)
 
     if (enrolledClass.isEmpty) {
@@ -263,8 +261,8 @@ internal object UserPrefsPage : KLogging() {
   }
   */
 
-  private fun BODY.deleteAccount(redis: Jedis, principal: UserPrincipal) {
-    val email = principal.email(redis)
+  private fun BODY.deleteAccount(redis: Jedis, user: User) {
+    val email = user.email(redis)
     if (email.isNotEmpty()) {
       h3 { +"Delete account" }
       div {

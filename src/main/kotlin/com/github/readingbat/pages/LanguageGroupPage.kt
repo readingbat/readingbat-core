@@ -31,7 +31,6 @@ import com.github.readingbat.misc.Constants.STATIC_ROOT
 import com.github.readingbat.misc.Constants.WHITE_CHECK
 import com.github.readingbat.misc.PageUtils.pathOf
 import com.github.readingbat.misc.User
-import com.github.readingbat.misc.User.Companion.userByPrincipal
 import com.github.readingbat.pages.ChallengeGroupPage.isCorrect
 import com.github.readingbat.pages.PageCommon.bodyHeader
 import com.github.readingbat.pages.PageCommon.headDefault
@@ -104,7 +103,7 @@ internal object LanguageGroupPage {
             val cols = 3
             val size = groups.size
             val rows = size.rows(cols)
-            val user = userByPrincipal(principal)
+            val user = principal?.toUser()
 
             (0 until rows).forEach { i ->
               tr {
