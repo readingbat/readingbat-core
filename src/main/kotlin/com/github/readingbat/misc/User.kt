@@ -184,15 +184,15 @@ internal class User private constructor(val id: String) {
   }
 
   fun savePasswordResetKey(email: Email,
-                           previousResetId: String,
-                           newResetId: String,
+                           previousResetId: ResetId,
+                           newResetId: ResetId,
                            tx: Transaction) {
-    if (previousResetId.isNotEmpty()) {
+    if (previousResetId.isNotBlank()) {
       tx.del(userPasswordResetKey)
       tx.del(passwordResetKey(previousResetId))
     }
 
-    tx.set(userPasswordResetKey, newResetId)
+    tx.set(userPasswordResetKey, newResetId.value)
     tx.set(passwordResetKey(newResetId), email.value)
   }
 
@@ -207,7 +207,7 @@ internal class User private constructor(val id: String) {
     val classCodes = redis.smembers(userClassesKey).map { ClassCode(it) }
     val enrolleePairs = classCodes.map { it to it.fetchEnrollees(redis) }
 
-    val previousResetId = redis.get(userPasswordResetKey) ?: ""
+    val previousResetId = redis.get(userPasswordResetKey)?.let { ResetId(it) } ?: ResetId.EMPTY_RESET_ID
 
     logger.info { "Deleting User: ${principal.userId} ${user.email(redis)}" }
     logger.info { "User Email: $userEmailKey" }
@@ -219,7 +219,7 @@ internal class User private constructor(val id: String) {
     logger.info { "Classes: $classCodes" }
 
     redis.multi().also { tx ->
-      if (previousResetId.isNotEmpty()) {
+      if (previousResetId.isNotBlank()) {
         tx.del(userPasswordResetKey)
         tx.del(passwordResetKey(previousResetId))
       }
@@ -275,7 +275,7 @@ internal class User private constructor(val id: String) {
       user?.answerHistoryKey(names, invocation) ?: browserSession?.answerHistoryKey(names, invocation) ?: ""
 
     // Maps resetId to username
-    fun passwordResetKey(resetId: String) = listOf(RESET_KEY, resetId).joinToString(KEY_SEP)
+    fun passwordResetKey(resetId: ResetId) = listOf(RESET_KEY, resetId.value).joinToString(KEY_SEP)
 
     fun createUser(name: FullName, email: Email, password: Password, redis: Jedis): User {
       // The userName (email) is stored in a single KV pair, enabling changes to the userName

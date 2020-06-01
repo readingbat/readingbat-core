@@ -18,7 +18,6 @@
 package com.github.readingbat.posts
 
 import com.github.pambrose.common.util.encode
-import com.github.pambrose.common.util.randomId
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.Constants.INVALID_RESET_ID
 import com.github.readingbat.misc.Constants.MSG
@@ -36,12 +35,11 @@ import com.github.readingbat.misc.User.Companion.lookupUserByEmail
 import com.github.readingbat.misc.User.Companion.passwordResetKey
 import com.github.readingbat.pages.PasswordResetPage.passwordResetPage
 import com.github.readingbat.posts.CreateAccount.checkPassword
-import com.github.readingbat.server.Email
+import com.github.readingbat.server.*
 import com.github.readingbat.server.Email.Companion.EMPTY_EMAIL
-import com.github.readingbat.server.Password
 import com.github.readingbat.server.Password.Companion.EMPTY_PASSWORD
-import com.github.readingbat.server.PipelineCall
-import com.github.readingbat.server.RedirectException
+import com.github.readingbat.server.ResetId.Companion.EMPTY_RESET_ID
+import com.github.readingbat.server.ResetId.Companion.newResetId
 import com.github.readingbat.server.ServerUtils.queryParam
 import com.google.common.util.concurrent.RateLimiter
 import io.ktor.application.call
@@ -58,22 +56,25 @@ internal object PasswordReset : KLogging() {
     val email = parameters[EMAIL]?.let { Email(it) } ?: EMPTY_EMAIL
     return when {
       email.isBlank() -> {
-        passwordResetPage(content, redis, "", "Unable to send password reset email -- missing email address")
+        passwordResetPage(content,
+                          redis,
+                          EMPTY_RESET_ID,
+                          "Unable to send password reset email -- missing email address")
       }
       email.isNotValidEmail() -> {
-        passwordResetPage(content, redis, "", "Invalid email address: $email")
+        passwordResetPage(content, redis, EMPTY_RESET_ID, "Invalid email address: $email")
       }
       !isRegisteredEmail(email, redis) -> {
         unknownUserLimiter.acquire()
-        passwordResetPage(content, redis, "", "Unknown user: $email")
+        passwordResetPage(content, redis, EMPTY_RESET_ID, "Unknown user: $email")
       }
       else -> {
         try {
-          val newResetId = randomId(15)
+          val newResetId = newResetId()
 
           // Lookup and remove previous value if it exists
           val user = lookupUserByEmail(email, redis) ?: throw ResetPasswordException("Unable to find $email")
-          val previousResetId = redis.get(user.userPasswordResetKey) ?: ""
+          val previousResetId = redis.get(user.userPasswordResetKey)?.let { ResetId(it) } ?: EMPTY_RESET_ID
 
           redis.multi().also { tx ->
             user.savePasswordResetKey(email, previousResetId, newResetId, tx)
@@ -100,7 +101,7 @@ internal object PasswordReset : KLogging() {
           throw RedirectException("$returnPath?$MSG=${"Password reset email sent to $email".encode()}")
         } catch (e: ResetPasswordException) {
           logger.info { e }
-          passwordResetPage(content, redis, "", "Unable to send password reset email to $email")
+          passwordResetPage(content, redis, EMPTY_RESET_ID, "Unable to send password reset email to $email")
         }
       }
     }
@@ -109,7 +110,7 @@ internal object PasswordReset : KLogging() {
   suspend fun PipelineCall.changePassword(content: ReadingBatContent, redis: Jedis): String =
     try {
       val parameters = call.receiveParameters()
-      val resetId = parameters[RESET_ID] ?: ""
+      val resetId = parameters[RESET_ID]?.let { ResetId(it) } ?: EMPTY_RESET_ID
       val newPassword = parameters[NEW_PASSWORD]?.let { Password(it) } ?: EMPTY_PASSWORD
       val confirmPassword = parameters[CONFIRM_PASSWORD]?.let { Password(it) } ?: EMPTY_PASSWORD
       val passwordError = checkPassword(newPassword, confirmPassword)
@@ -140,5 +141,5 @@ internal object PasswordReset : KLogging() {
       passwordResetPage(content, redis, e.resetId, e.msg)
     }
 
-  class ResetPasswordException(val msg: String, val resetId: String = "") : Exception(msg)
+  class ResetPasswordException(val msg: String, val resetId: ResetId = EMPTY_RESET_ID) : Exception(msg)
 }

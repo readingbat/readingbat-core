@@ -20,6 +20,7 @@ package com.github.readingbat.server
 import com.github.pambrose.common.redis.RedisUtils.withRedisPool
 import com.github.pambrose.common.response.respondWith
 import com.github.pambrose.common.util.isNotValidEmail
+import com.github.pambrose.common.util.randomId
 import com.github.pambrose.common.util.sha256
 import com.github.readingbat.dsl.LanguageType.Companion.toLanguageType
 import com.github.readingbat.dsl.LanguageType.Kotlin
@@ -168,5 +169,18 @@ inline class Email(val value: String) {
 
   companion object {
     val EMPTY_EMAIL = Email("")
+  }
+}
+
+inline class ResetId(val value: String) {
+  fun isBlank() = value.isBlank()
+  fun isNotBlank() = value.isNotBlank()
+
+  override fun toString() = value
+
+  companion object {
+    fun newResetId() = ResetId(randomId(15))
+
+    val EMPTY_RESET_ID = ResetId("")
   }
 }

@@ -40,6 +40,7 @@ import com.github.readingbat.pages.PageCommon.privacyStatement
 import com.github.readingbat.posts.PasswordReset.ResetPasswordException
 import com.github.readingbat.server.Email
 import com.github.readingbat.server.PipelineCall
+import com.github.readingbat.server.ResetId
 import com.github.readingbat.server.ServerUtils.queryParam
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
@@ -51,8 +52,8 @@ internal object PasswordResetPage : KLogging() {
   const val formName = "pform"
   const val passwordButton = "UpdatePasswordButton"
 
-  fun PipelineCall.passwordResetPage(content: ReadingBatContent, redis: Jedis, resetId: String, msg: String): String =
-    if (resetId.isEmpty())
+  fun PipelineCall.passwordResetPage(content: ReadingBatContent, redis: Jedis, resetId: ResetId, msg: String): String =
+    if (resetId.isBlank())
       requestPasswordResetPage(content, msg)
     else {
       try {
@@ -128,7 +129,7 @@ internal object PasswordResetPage : KLogging() {
 
   private fun PipelineCall.changePasswordPage(content: ReadingBatContent,
                                               email: Email,
-                                              resetId: String,
+                                              resetId: ResetId,
                                               msg: String) =
     createHTML()
       .html {
@@ -172,7 +173,7 @@ internal object PasswordResetPage : KLogging() {
               tr {
                 td {
                   input {
-                    type = InputType.hidden; name = RESET_ID; value = resetId
+                    type = InputType.hidden; name = RESET_ID; value = resetId.value
                   }
                 }
                 td {

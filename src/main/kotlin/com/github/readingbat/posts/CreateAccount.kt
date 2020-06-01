@@ -63,28 +63,28 @@ internal object CreateAccount : KLogging() {
 
   suspend fun PipelineCall.createAccount(content: ReadingBatContent, redis: Jedis): String {
     val parameters = call.receiveParameters()
-    val name = parameters[NAME]?.let { FullName(it) } ?: EMPTY_FULLNAME
+    val fullName = parameters[NAME]?.let { FullName(it) } ?: EMPTY_FULLNAME
     val email = parameters[EMAIL]?.let { Email(it) } ?: Email.EMPTY_EMAIL
     val password = parameters[PASSWORD]?.let { Password(it) } ?: EMPTY_PASSWORD
     val confirmPassword = parameters[CONFIRM_PASSWORD]?.let { Password(it) } ?: EMPTY_PASSWORD
 
     return when {
-      name.isBlank() -> createAccountPage(content, defaultEmail = email, msg = EMPTY_NAME_MSG)
-      email.isBlank() -> createAccountPage(content, defaultName = name, msg = EMPTY_EMAIL_MSG)
+      fullName.isBlank() -> createAccountPage(content, defaultEmail = email, msg = EMPTY_NAME_MSG)
+      email.isBlank() -> createAccountPage(content, defaultFullName = fullName, msg = EMPTY_EMAIL_MSG)
       email.isNotValidEmail() ->
         createAccountPage(content,
-                          defaultName = name,
+                          defaultFullName = fullName,
                           defaultEmail = email,
                           msg = INVALID_EMAIL_MSG)
       else -> {
         val passwordError = checkPassword(password, confirmPassword)
         if (passwordError.isNotEmpty())
           createAccountPage(content,
-                            defaultName = name,
+                            defaultFullName = fullName,
                             defaultEmail = email,
                             msg = passwordError)
         else
-          createAccount(content, redis, name, email, password)
+          createAccount(content, redis, fullName, email, password)
       }
     }
   }

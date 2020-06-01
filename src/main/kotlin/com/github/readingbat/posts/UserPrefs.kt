@@ -19,7 +19,7 @@ package com.github.readingbat.posts
 
 import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.misc.ClassCode.Companion.forParameter
+import com.github.readingbat.misc.ClassCode.Companion.classCodeFromParameter
 import com.github.readingbat.misc.DataException
 import com.github.readingbat.misc.FormFields.CLASS_CODE
 import com.github.readingbat.misc.FormFields.CONFIRM_PASSWORD
@@ -102,7 +102,7 @@ internal object UserPrefs : KLogging() {
                                          parameters: Parameters,
                                          user: User,
                                          redis: Jedis): String {
-    val classCode = forParameter(parameters, CLASS_CODE)
+    val classCode = classCodeFromParameter(parameters, CLASS_CODE)
     return try {
       user.enrollInClass(classCode, redis)
       val classDesc = fetchClassDesc(classCode, redis)

@@ -43,7 +43,7 @@ import kotlinx.html.stream.createHTML
 internal object CreateAccountPage {
 
   fun PipelineCall.createAccountPage(content: ReadingBatContent,
-                                     defaultName: FullName = EMPTY_FULLNAME,
+                                     defaultFullName: FullName = EMPTY_FULLNAME,
                                      defaultEmail: Email = EMPTY_EMAIL,
                                      msg: String = "") =
     createHTML()
@@ -87,7 +87,7 @@ internal object CreateAccountPage {
                   td { style = labelWidth; label { +"Name" } }
                   td {
                     input {
-                      style = inputFs; type = InputType.text; size = "42"; name = NAME; value = defaultName.value
+                      style = inputFs; type = InputType.text; size = "42"; name = NAME; value = defaultFullName.value
                     }
                   }
                 }

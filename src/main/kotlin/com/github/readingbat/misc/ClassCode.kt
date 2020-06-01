@@ -78,7 +78,7 @@ internal inline class ClassCode(val value: String) {
 
     fun newClassCode() = ClassCode(randomId(15))
 
-    fun forParameter(parameters: Parameters, parameterName: String) =
+    fun classCodeFromParameter(parameters: Parameters, parameterName: String) =
       parameters[parameterName]?.let { ClassCode(it) } ?: EMPTY_CLASS_CODE
   }
 }
