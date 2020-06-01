@@ -29,7 +29,7 @@ import com.github.readingbat.misc.KeyConstants.ANSWER_HISTORY_KEY
 import com.github.readingbat.misc.KeyConstants.AUTH_KEY
 import com.github.readingbat.misc.KeyConstants.CHALLENGE_ANSWERS_KEY
 import com.github.readingbat.misc.KeyConstants.CLASS_CODE_KEY
-import com.github.readingbat.misc.KeyConstants.CLASS_DESC_KEY
+import com.github.readingbat.misc.KeyConstants.CLASS_INFO_KEY
 import com.github.readingbat.misc.KeyConstants.CORRECT_ANSWERS_KEY
 import com.github.readingbat.misc.KeyConstants.DIGEST_FIELD
 import com.github.readingbat.misc.KeyConstants.EMAIL_FIELD
@@ -43,6 +43,7 @@ import com.github.readingbat.misc.KeyConstants.USER_CLASSES_KEY
 import com.github.readingbat.misc.KeyConstants.USER_EMAIL_KEY
 import com.github.readingbat.misc.KeyConstants.USER_INFO_KEY
 import com.github.readingbat.pages.UserPrefsPage
+import com.github.readingbat.pages.UserPrefsPage.fetchClassTeacher
 import com.github.readingbat.posts.ChallengeHistory
 import com.github.readingbat.posts.ChallengeNames
 import com.github.readingbat.posts.ChallengeResults
@@ -140,7 +141,7 @@ internal class UserId(val id: String = randomId(25)) {
   fun isUniqueClassDesc(classDesc: String, redis: Jedis) =
     redis.smembers(userClassesKey)
       .asSequence()
-      .filter { classCode -> classDesc == UserPrefsPage.classDesc(classCode, redis) }
+      .filter { classCode -> classDesc == UserPrefsPage.fetchClassDesc(classCode, redis) }
       .none()
 
   fun deleteUser(principal: UserPrincipal, redis: Jedis) {
@@ -199,7 +200,7 @@ internal class UserId(val id: String = randomId(25)) {
 
     fun userEmailKey(email: String) = listOf(USER_EMAIL_KEY, email).joinToString(KEY_SEP)
 
-    fun classDescKey(classCode: String) = listOf(CLASS_DESC_KEY, classCode).joinToString(KEY_SEP)
+    fun classInfoKey(classCode: String) = listOf(CLASS_INFO_KEY, classCode).joinToString(KEY_SEP)
 
     // Value is a list of all enrolled students
     fun classCodeEnrollmentKey(classCode: String) = listOf(CLASS_CODE_KEY, classCode).joinToString(KEY_SEP)
@@ -308,11 +309,15 @@ internal class UserId(val id: String = randomId(25)) {
             redis.set(answerHistoryKey, json)
 
             // Publish to challenge dashboard
+            // First check if enrolled in a class
             if (enrolledClassCode.isNotEmpty() && userId != null) {
-              val browserInfo =
-                DashboardInfo(content.maxHistoryLength, userId.id, complete, numCorrect, history)
-              logger.info { "Publishing data $json" }
-              redis.publish(enrolledClassCode, gson.toJson(browserInfo))
+              // Check to see if owner of class has it set as their active class
+              val teacherId = fetchClassTeacher(enrolledClassCode, redis)
+              if (teacherId.isNotEmpty() && UserId(teacherId).fetchActiveClassCode(redis) == enrolledClassCode) {
+                val browserInfo = DashboardInfo(content.maxHistoryLength, userId.id, complete, numCorrect, history)
+                logger.info { "Publishing data $json" }
+                redis.publish(enrolledClassCode, gson.toJson(browserInfo))
+              }
             }
           }
         }

@@ -31,12 +31,17 @@ internal object KeyConstants {
   const val AUTH_KEY = "auth"
   const val NO_AUTH_KEY = "noauth"
   const val CLASS_CODE_KEY = "class-code"
-  const val CLASS_DESC_KEY = "class-desc"
+  const val CLASS_INFO_KEY = "class-info"
 
+  // For USER_INFO_KEY
   const val EMAIL_FIELD = "email"
   const val SALT_FIELD = "salt"
   const val DIGEST_FIELD = "digest"
   const val NAME_FIELD = "name"
+
+  // For CLASS_INFO_KEY
+  const val TEACHER_FIELD = "teacher"
+  const val DESC_FIELD = "desc"
 
   // This is the class code you will report results to
   const val ENROLLED_CLASS_CODE_FIELD = "enrolled-class-code"

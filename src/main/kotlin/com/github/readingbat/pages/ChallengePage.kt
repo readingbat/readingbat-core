@@ -53,7 +53,6 @@ import com.github.readingbat.misc.ParameterIds.SUCCESS_ID
 import com.github.readingbat.misc.UserId
 import com.github.readingbat.misc.UserId.Companion.challengeAnswersKey
 import com.github.readingbat.misc.UserId.Companion.classCodeEnrollmentKey
-import com.github.readingbat.misc.UserId.Companion.classDescKey
 import com.github.readingbat.misc.UserId.Companion.gson
 import com.github.readingbat.misc.UserId.Companion.userIdByPrincipal
 import com.github.readingbat.misc.UserPrincipal
@@ -62,6 +61,7 @@ import com.github.readingbat.pages.PageCommon.backLink
 import com.github.readingbat.pages.PageCommon.bodyHeader
 import com.github.readingbat.pages.PageCommon.headDefault
 import com.github.readingbat.pages.PageCommon.rawHtml
+import com.github.readingbat.pages.UserPrefsPage.fetchClassDesc
 import com.github.readingbat.posts.ChallengeHistory
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.fetchPrincipal
@@ -78,13 +78,11 @@ import redis.clients.jedis.Jedis
 
 internal object ChallengePage : KLogging() {
   private const val spinnerCss = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
-
   private const val nameTd = "nameTd"
   private const val answersTd = "answersTd"
   private const val answersSpan = "answersSpan"
   private const val numCorrectSpan = "numCorrectSpan"
   private const val headerColor = "#419DC1"
-
 
   fun PipelineCall.challengePage(content: ReadingBatContent,
                                  redis: Jedis?,
@@ -255,19 +253,18 @@ internal object ChallengePage : KLogging() {
       val challengeName = challenge.challengeName
       val languageName = languageType.lowerName
 
-      logger.info { "Looking at: $activeClassCode" }
       val ids = redis.smembers(classCodeEnrollmentKey(activeClassCode)).filter { it.isNotEmpty() }
       if (ids.isEmpty()) {
         h3 {
           style = "margin-left: 5px; color: $headerColor"
-          +"No students enrolled in: ${redis.get(classDescKey(activeClassCode))} [$activeClassCode]"
+          +"No students enrolled in ${fetchClassDesc(activeClassCode, redis)} [$activeClassCode]"
         }
       }
       else {
         //br
         h3 {
           style = "margin-left: 5px; color: $headerColor"
-          +"Student progress for: ${redis.get(classDescKey(activeClassCode))} [$activeClassCode]"
+          +"Student progress for ${fetchClassDesc(activeClassCode, redis)} [$activeClassCode]"
         }
 
         table {

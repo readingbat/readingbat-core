@@ -32,9 +32,11 @@ import com.github.readingbat.misc.FormFields.NEW_PASSWORD
 import com.github.readingbat.misc.FormFields.UPDATE_PASSWORD
 import com.github.readingbat.misc.FormFields.USER_PREFS_ACTION
 import com.github.readingbat.misc.FormFields.WITHDRAW_FROM_CLASS
+import com.github.readingbat.misc.KeyConstants.DESC_FIELD
+import com.github.readingbat.misc.KeyConstants.TEACHER_FIELD
 import com.github.readingbat.misc.PageUtils.hideShowButton
 import com.github.readingbat.misc.UserId
-import com.github.readingbat.misc.UserId.Companion.classDescKey
+import com.github.readingbat.misc.UserId.Companion.classInfoKey
 import com.github.readingbat.misc.UserId.Companion.isValidPrincipal
 import com.github.readingbat.misc.UserPrincipal
 import com.github.readingbat.pages.HelpAndLogin.helpAndLogin
@@ -60,7 +62,10 @@ internal object UserPrefsPage : KLogging() {
   private const val passwordButton = "UpdatePasswordButton"
   private const val joinClassButton = "JoinClassButton"
 
-  fun classDesc(classCode: String, redis: Jedis) = redis[classDescKey(classCode)] ?: "Missing Description"
+  fun fetchClassDesc(classCode: String, redis: Jedis) =
+    redis.hget(classInfoKey(classCode), DESC_FIELD) ?: "Missing Description"
+
+  fun fetchClassTeacher(classCode: String, redis: Jedis) = redis.hget(classInfoKey(classCode), TEACHER_FIELD) ?: ""
 
   fun PipelineCall.userPrefsPage(content: ReadingBatContent,
                                  redis: Jedis,
@@ -163,7 +168,7 @@ internal object UserPrefsPage : KLogging() {
 
     if (enrolledClass.isNotEmpty()) {
       h3 { +"Enrolled class" }
-      val classDesc = classDesc(enrolledClass, redis)
+      val classDesc = fetchClassDesc(enrolledClass, redis)
       div {
         style = divStyle
         p { +"Currently enrolled in class $enrolledClass [$classDesc]." }

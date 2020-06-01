@@ -29,11 +29,13 @@ import com.github.readingbat.misc.FormFields.DELETE_CLASS
 import com.github.readingbat.misc.FormFields.UPDATE_ACTIVE_CLASS
 import com.github.readingbat.misc.FormFields.USER_PREFS_ACTION
 import com.github.readingbat.misc.KeyConstants.ACTIVE_CLASS_CODE_FIELD
+import com.github.readingbat.misc.KeyConstants.DESC_FIELD
+import com.github.readingbat.misc.KeyConstants.TEACHER_FIELD
 import com.github.readingbat.misc.UserId
 import com.github.readingbat.misc.UserId.Companion.classCodeEnrollmentKey
-import com.github.readingbat.misc.UserId.Companion.classDescKey
+import com.github.readingbat.misc.UserId.Companion.classInfoKey
 import com.github.readingbat.pages.TeacherPrefsPage.teacherPrefsPage
-import com.github.readingbat.pages.UserPrefsPage.classDesc
+import com.github.readingbat.pages.UserPrefsPage.fetchClassDesc
 import com.github.readingbat.pages.UserPrefsPage.requestLogInPage
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.fetchPrincipal
@@ -80,7 +82,8 @@ internal object TeacherPrefs {
 
         redis.multi().also { tx ->
           // Create KV for class description
-          tx.set(classDescKey(classCode), classDesc)
+          tx.hset(classInfoKey(classCode), mapOf(DESC_FIELD to classDesc,
+                                                 TEACHER_FIELD to userId.id))
 
           // Add classcode to list of classes created by user
           tx.sadd(userId.userClassesKey, classCode)
@@ -113,7 +116,7 @@ internal object TeacherPrefs {
           if (classCode == CLASSES_DISABLED)
             "Active class disabled"
           else
-            "Active class updated to: $classCode [${classDesc(classCode, redis)}]"
+            "Active class updated to: $classCode [${fetchClassDesc(classCode, redis)}]"
         }
       }
 
@@ -151,7 +154,7 @@ internal object TeacherPrefs {
 
   fun deleteClassCode(userId: UserId, classCode: String, enrollees: List<String>, tx: Transaction) {
     // Delete class description
-    tx.del(classDescKey(classCode))
+    tx.del(classInfoKey(classCode))
 
     // Remove classcode from list of classes created by user
     tx.srem(userId.userClassesKey, classCode)

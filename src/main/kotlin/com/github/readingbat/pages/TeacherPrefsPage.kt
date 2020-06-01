@@ -38,7 +38,7 @@ import com.github.readingbat.pages.PageCommon.displayMessage
 import com.github.readingbat.pages.PageCommon.headDefault
 import com.github.readingbat.pages.PageCommon.privacyStatement
 import com.github.readingbat.pages.PageCommon.rawHtml
-import com.github.readingbat.pages.UserPrefsPage.classDesc
+import com.github.readingbat.pages.UserPrefsPage.fetchClassDesc
 import com.github.readingbat.pages.UserPrefsPage.requestLogInPage
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.fetchPrincipal
@@ -163,7 +163,7 @@ internal object TeacherPrefsPage : KLogging() {
         action = TEACHER_PREFS_ENDPOINT
         method = FormMethod.post
         classCodes.forEach { classCode ->
-          val classDesc = classDesc(classCode, redis)
+          val classDesc = fetchClassDesc(classCode, redis)
           val enrolleeCount =
             redis.smembers(UserId.classCodeEnrollmentKey(classCode)).filter { it.isNotEmpty() }.count()
           this@table.tr {
@@ -205,7 +205,7 @@ internal object TeacherPrefsPage : KLogging() {
       style = "border-spacing: 5px 5px;"
       tr { th { rawHtml(Entities.nbsp.text) } }
       classCodes.forEach { classCode ->
-        val classDesc = classDesc(classCode, redis)
+        val classDesc = fetchClassDesc(classCode, redis)
         tr {
           td {
             form {
