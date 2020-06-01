@@ -106,11 +106,10 @@ internal object PageCommon {
 
     bodyTitle()
 
-    p { style = "max-width:800;"; if (displayWelcomeMsg) +"Welcome to ReadingBat." else rawHtml(nbsp.text) }
+    p { if (displayWelcomeMsg) +"Welcome to ReadingBat." else rawHtml(nbsp.text) }
 
     if (loginAttempt && principal == null)
       p { span { style = "color:red;"; +"Failed to login -- incorrect email or password" } }
-
 
     p { span { style = "color:green; max-width:800;"; if (msg.isNotEmpty()) +msg else rawHtml(nbsp.text) } }
 

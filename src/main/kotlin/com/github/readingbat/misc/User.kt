@@ -318,9 +318,8 @@ internal class User private constructor(val id: String) {
       val numCorrect = results.count { it.correct }
 
       // Save if all answers were correct
-      if (correctAnswersKey.isNotEmpty()) {
+      if (correctAnswersKey.isNotEmpty())
         redis.set(correctAnswersKey, complete.toString())
-      }
 
       if (challengeAnswerKey.isNotEmpty()) {
         val answerMap =
@@ -355,8 +354,8 @@ internal class User private constructor(val id: String) {
               // Check to see if owner of class has it set as their active class
               val teacherId = fetchClassTeacherId(enrolledClassCode, redis)
               if (teacherId.isNotEmpty() && teacherId.toUser().fetchActiveClassCode(redis) == enrolledClassCode) {
-                val browserInfo = DashboardInfo(content.maxHistoryLength, user.id, complete, numCorrect, history)
                 logger.info { "Publishing data $json" }
+                val browserInfo = DashboardInfo(content.maxHistoryLength, user.id, complete, numCorrect, history)
                 redis.publish(enrolledClassCode.value, gson.toJson(browserInfo))
               }
             }

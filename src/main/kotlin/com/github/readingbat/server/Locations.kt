@@ -29,6 +29,7 @@ import com.github.readingbat.misc.AuthName.FORM
 import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
 import com.github.readingbat.misc.Constants.PLAYGROUND_ROOT
 import com.github.readingbat.misc.KeyConstants
+import com.github.readingbat.misc.KeyConstants.USER_EMAIL_KEY
 import com.github.readingbat.pages.ChallengeGroupPage.challengeGroupPage
 import com.github.readingbat.pages.ChallengePage.challengePage
 import com.github.readingbat.pages.LanguageGroupPage.languageGroupPage
@@ -150,9 +151,9 @@ inline class FullName(val value: String) {
 }
 
 inline class Password(val value: String) {
+  val length get() = value.length
   fun isBlank() = value.isBlank()
   fun sha256(salt: String) = value.sha256(salt)
-  val length get() = value.length
 
   override fun toString() = value
 
@@ -163,10 +164,11 @@ inline class Password(val value: String) {
 }
 
 inline class Email(val value: String) {
+  val userEmailKey get() = listOf(USER_EMAIL_KEY, value).joinToString(KeyConstants.KEY_SEP)
+
   fun isBlank() = value.isBlank()
   fun isNotBlank() = value.isNotBlank()
   fun isNotValidEmail() = value.isNotValidEmail()
-  val userEmailKey get() = listOf(KeyConstants.USER_EMAIL_KEY, value).joinToString(KeyConstants.KEY_SEP)
 
   override fun toString() = value
 
@@ -183,10 +185,8 @@ inline class ResetId(val value: String) {
   override fun toString() = value
 
   companion object {
-    fun newResetId() = ResetId(randomId(15))
-
     val EMPTY_RESET_ID = ResetId("")
+    fun newResetId() = ResetId(randomId(15))
     fun Parameters.getResetId(name: String) = this[name]?.let { ResetId(it) } ?: EMPTY_RESET_ID
   }
 }
-
