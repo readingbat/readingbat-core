@@ -99,27 +99,20 @@ internal object PageCommon {
                       content: ReadingBatContent,
                       languageType: LanguageType,
                       loginPath: String,
-                      msg: String = "",
-                      subMsg: String = "") {
+                      displayWelcomeMsg: Boolean,
+                      msg: String = "") {
 
     helpAndLogin(redis, principal, loginPath)
 
     bodyTitle()
 
+    p { style = "max-width:800;"; if (displayWelcomeMsg) +"Welcome to ReadingBat." else rawHtml(nbsp.text) }
+
     if (loginAttempt && principal == null)
       p { span { style = "color:red;"; +"Failed to login -- incorrect email or password" } }
 
-
     if (msg.isNotEmpty())
-      div {
-        style = "min-height:9; color:green;"
-        p { style = "max-width:800;"; +msg }
-      }
-
-    div {
-      style = "min-height:9;"
-      p { style = "max-width:800;"; +subMsg }
-    }
+      p { span { style = "color:green; max-width:800;"; +msg } }
 
     div {
       style = "padding-top:10px; min-width:100vw; clear:both;"

@@ -17,8 +17,8 @@
 
 package com.github.readingbat.server
 
+import com.github.pambrose.common.features.HerokuHttpsRedirect
 import com.github.pambrose.common.util.simpleClassName
-import com.github.readingbat.config.HerokuHttpsRedirect
 import com.github.readingbat.dsl.InvalidPathException
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.Constants.STATIC_ROOT

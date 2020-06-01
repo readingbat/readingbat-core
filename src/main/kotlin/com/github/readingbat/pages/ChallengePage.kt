@@ -113,7 +113,7 @@ internal object ChallengePage : KLogging() {
 
         body {
           var activeClassCode = ""
-          bodyHeader(redis, principal, loginAttempt, content, languageType, loginPath, queryParam(MSG) ?: "")
+          bodyHeader(redis, principal, loginAttempt, content, languageType, loginPath, false, queryParam(MSG) ?: "")
 
           this@body.displayChallenge(challenge, funcInfo)
 

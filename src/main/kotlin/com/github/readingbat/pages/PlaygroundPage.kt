@@ -64,7 +64,7 @@ internal object PlaygroundPage {
         }
 
         body {
-          bodyHeader(redis, principal, loginAttempt, content, languageType, loginPath)
+          bodyHeader(redis, principal, loginAttempt, content, languageType, loginPath, false)
 
           h2 {
             val groupPath = pathOf(CHALLENGE_ROOT, languageName, groupName)

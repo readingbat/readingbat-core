@@ -84,8 +84,7 @@ internal object ChallengeGroupPage {
         head { headDefault(content) }
 
         body {
-          val msg = queryParam(MSG) ?: ""
-          bodyHeader(redis, principal, loginAttempt, content, languageType, loginPath, msg)
+          bodyHeader(redis, principal, loginAttempt, content, languageType, loginPath, false, queryParam(MSG) ?: "")
 
           h2 { +groupName.decode() }
 

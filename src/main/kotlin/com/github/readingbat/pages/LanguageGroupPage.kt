@@ -98,7 +98,7 @@ internal object LanguageGroupPage {
 
         body {
           val msg = queryParam(MSG) ?: ""
-          bodyHeader(redis, principal, loginAttempt, content, languageType, loginPath, msg, "Welcome to ReadingBat.")
+          bodyHeader(redis, principal, loginAttempt, content, languageType, loginPath, true, msg)
 
           table {
             val cols = 3
