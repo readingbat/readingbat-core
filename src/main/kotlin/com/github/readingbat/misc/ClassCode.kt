@@ -39,7 +39,7 @@ internal inline class ClassCode(val value: String) {
 
   val classInfoKey get() = listOf(KeyConstants.CLASS_INFO_KEY, value).joinToString(KEY_SEP)
 
-  fun isValid(redis: Jedis) = redis.exists(classCodeEnrollmentKey)
+  fun isValid(redis: Jedis) = redis.exists(classCodeEnrollmentKey) ?: false
 
   fun isNotValid(redis: Jedis) = !isValid(redis)
 

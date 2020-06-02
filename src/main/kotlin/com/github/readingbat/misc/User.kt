@@ -92,10 +92,11 @@ internal class User private constructor(val id: String) {
            invocation.value).joinToString(KEY_SEP)
 
   fun fetchEnrolledClassCode(redis: Jedis) =
-    redis.hget(userInfoKey, ENROLLED_CLASS_CODE_FIELD).let { ClassCode(it) } ?: EMPTY_CLASS_CODE
+    redis.hget(userInfoKey, ENROLLED_CLASS_CODE_FIELD)?.let { ClassCode(it) } ?: EMPTY_CLASS_CODE
 
-  fun assignEnrolledClassCode(classCode: ClassCode, tx: Transaction) =
+  fun assignEnrolledClassCode(classCode: ClassCode, tx: Transaction) {
     tx.hset(userInfoKey, ENROLLED_CLASS_CODE_FIELD, classCode.value)
+  }
 
   fun fetchActiveClassCode(redis: Jedis?) =
     redis?.hget(userInfoKey, ACTIVE_CLASS_CODE_FIELD)?.let { ClassCode(it) } ?: EMPTY_CLASS_CODE

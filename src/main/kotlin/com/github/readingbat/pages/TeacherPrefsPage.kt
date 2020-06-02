@@ -40,6 +40,7 @@ import com.github.readingbat.pages.PageCommon.displayMessage
 import com.github.readingbat.pages.PageCommon.headDefault
 import com.github.readingbat.pages.PageCommon.privacyStatement
 import com.github.readingbat.pages.PageCommon.rawHtml
+import com.github.readingbat.pages.UserPrefsPage.divStyle
 import com.github.readingbat.pages.UserPrefsPage.fetchClassDesc
 import com.github.readingbat.pages.UserPrefsPage.requestLogInPage
 import com.github.readingbat.server.PipelineCall
@@ -103,7 +104,7 @@ internal object TeacherPrefsPage : KLogging() {
   private fun BODY.createClass(defaultClassDesc: String) {
     h3 { +"Create a class" }
     div {
-      style = UserPrefsPage.divStyle
+      style = divStyle
       p { +"Enter a decription of the class." }
       form {
         action = TEACHER_PREFS_ENDPOINT
@@ -132,15 +133,12 @@ internal object TeacherPrefsPage : KLogging() {
 
   private fun BODY.displayClasses(redis: Jedis, user: User) {
     val classCodes = redis.smembers(user.userClassesKey).map { ClassCode(it) }
-
-    if (classCodes.size > 0) {
+    if (classCodes.isNotEmpty()) {
       val activeClassCode = user.fetchActiveClassCode(redis)
       h3 { +"Classes" }
       div {
-        style = UserPrefsPage.divStyle
-
+        style = divStyle
         table {
-          //style = "border-spacing: 5px 0px;"
           tr {
             td { style = "vertical-align:top;"; this@displayClasses.classList(activeClassCode, classCodes, redis) }
             td { style = "vertical-align:top;"; this@displayClasses.deleteClassButtons(classCodes, redis) }
@@ -177,7 +175,7 @@ internal object TeacherPrefsPage : KLogging() {
         }
         this@table.tr {
           td {
-            style = "text-align:center;";
+            style = "text-align:center;"
             input {
               type = radio; name = CLASSES_CHOICE; value = CLASSES_DISABLED; checked = activeClassCode.isNotEmpty
             }
@@ -207,7 +205,7 @@ internal object TeacherPrefsPage : KLogging() {
               onSubmit = "return confirm('Are you sure you want to delete class $classCode [$classDesc]?');"
               input { type = InputType.hidden; name = CLASS_CODE; value = classCode.value }
               input {
-                style = "vertical-align:middle; margin-top:1; margin-bottom:0;";
+                style = "vertical-align:middle; margin-top:1; margin-bottom:0;"
                 type = submit; name = USER_PREFS_ACTION; value =
                 DELETE_CLASS
               }

@@ -90,11 +90,11 @@ internal object CreateAccount : KLogging() {
     }
   }
 
-  private suspend fun PipelineCall.createAccount(content: ReadingBatContent,
-                                                 redis: Jedis,
-                                                 name: FullName,
-                                                 email: Email,
-                                                 password: Password): String {
+  private fun PipelineCall.createAccount(content: ReadingBatContent,
+                                         redis: Jedis,
+                                         name: FullName,
+                                         email: Email,
+                                         password: Password): String {
     val returnPath = queryParam(RETURN_PATH) ?: "/"
 
     createAccountLimiter.acquire() // may wait
