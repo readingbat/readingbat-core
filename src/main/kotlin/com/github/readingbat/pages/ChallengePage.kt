@@ -61,7 +61,6 @@ import com.github.readingbat.pages.PageCommon.backLink
 import com.github.readingbat.pages.PageCommon.bodyHeader
 import com.github.readingbat.pages.PageCommon.headDefault
 import com.github.readingbat.pages.PageCommon.rawHtml
-import com.github.readingbat.pages.UserPrefsPage.fetchClassDesc
 import com.github.readingbat.posts.ChallengeHistory
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.fetchPrincipal
@@ -71,6 +70,7 @@ import io.ktor.http.ContentType.Text.CSS
 import io.ktor.sessions.get
 import io.ktor.sessions.sessions
 import kotlinx.html.*
+import kotlinx.html.Entities.nbsp
 import kotlinx.html.ScriptType.textJavaScript
 import kotlinx.html.stream.createHTML
 import mu.KLogging
@@ -82,7 +82,7 @@ internal object ChallengePage : KLogging() {
   private const val answersTd = "answersTd"
   private const val answersSpan = "answersSpan"
   private const val numCorrectSpan = "numCorrectSpan"
-  private const val headerColor = "#419DC1"
+  const val headerColor = "#419DC1"
 
   fun PipelineCall.challengePage(content: ReadingBatContent,
                                  redis: Jedis?,
@@ -112,17 +112,17 @@ internal object ChallengePage : KLogging() {
         body {
           bodyHeader(redis, principal, loginAttempt, content, languageType, loginPath, false, queryParam(MSG) ?: "")
 
-          this@body.displayChallenge(challenge, funcInfo)
+          displayChallenge(challenge, funcInfo)
 
           val user = principal?.toUser()
           val activeClassCode = user?.fetchActiveClassCode(redis) ?: EMPTY_CLASS_CODE
           if (activeClassCode.isNotEmpty)
-            this@body.displayQuestions(redis, principal, browserSession, challenge, funcInfo)
+            displayQuestions(redis, principal, browserSession, challenge, funcInfo)
           else {
             if (redis == null)
               p { +DBMS_DOWN }
             else
-              this@body.displayStudentProgress(redis, challenge, content.maxHistoryLength, funcInfo, activeClassCode)
+              displayStudentProgress(redis, challenge, content.maxHistoryLength, funcInfo, activeClassCode)
           }
 
           backLink(CHALLENGE_ROOT, languageName.value, groupName.value)
@@ -251,19 +251,20 @@ internal object ChallengePage : KLogging() {
       val groupName = challenge.groupName
       val challengeName = challenge.challengeName
       val languageName = languageType.languageName
+      val classDesc = activeClassCode.fetchClassDesc(redis)
 
       val enrollees = activeClassCode.fetchEnrollees(redis)
       if (enrollees.isEmpty()) {
         h3 {
           style = "margin-left: 5px; color: $headerColor"
-          +"No students enrolled in ${fetchClassDesc(activeClassCode, redis)} [$activeClassCode]"
+          +"No students enrolled in $classDesc [$activeClassCode]"
         }
       }
       else {
         //br
         h3 {
           style = "margin-left: 5px; color: $headerColor"
-          +"Student progress for ${fetchClassDesc(activeClassCode, redis)} [$activeClassCode]"
+          +"Student progress for $classDesc [$activeClassCode]"
         }
 
         table {
@@ -271,45 +272,47 @@ internal object ChallengePage : KLogging() {
 
           tr {
             th { style = "text-align:left; color: $headerColor"; +"Student" }
-            funcInfo.invocations.indices.forEach { i ->
-              val invocation = funcInfo.invocations[i]
-              th { style = "text-align:left; color: $headerColor"; +(invocation.value.run { substring(indexOf("(")) }) }
-            }
+            funcInfo.invocations.indices
+              .forEach { i ->
+                val invocation = funcInfo.invocations[i]
+                th {
+                  style = "text-align:left; color: $headerColor"; +(invocation.value.run { substring(indexOf("(")) })
+                }
+              }
           }
 
-          enrollees.forEach { user ->
-            val userInfoKey = user.userInfoKey
+          enrollees.forEach { enrollee ->
+            val numChallenges = funcInfo.invocations.size
             var numCorrect = 0
-
             val results =
               funcInfo.invocations
                 .map { invocation ->
-                  val answerHistoryKey = user.answerHistoryKey(languageName, groupName, challengeName, invocation)
+                  val answerHistoryKey = enrollee.answerHistoryKey(languageName, groupName, challengeName, invocation)
                   val history =
-                    gson.fromJson(redis[answerHistoryKey], ChallengeHistory::class.java)
-                      ?: ChallengeHistory(invocation)
+                    gson.fromJson(redis[answerHistoryKey], ChallengeHistory::class.java) ?: ChallengeHistory(invocation)
                   if (history.correct)
                     numCorrect++
                   invocation to history
                 }
+            val allCorrect = numCorrect == numChallenges
 
             tr(classes = DASHBOARD) {
               td(classes = DASHBOARD) {
-                id = "${user.id}-$nameTd"
-                style = "background-color:${if (numCorrect == results.size) CORRECT_COLOR else WRONG_COLOR};"
+                id = "${enrollee.id}-$nameTd"
+                style = "background-color:${if (allCorrect) CORRECT_COLOR else WRONG_COLOR};"
 
-                span { id = "${user.id}-$numCorrectSpan"; +numCorrect.toString() }
-                +"/${results.size}"
-                rawHtml(Entities.nbsp.text)
-                +(redis.hget(userInfoKey, NAME_FIELD) ?: "")
+                span { id = "${enrollee.id}-$numCorrectSpan"; +numCorrect.toString() }
+                +"/$numChallenges"
+                rawHtml(nbsp.text)
+                +(redis.hget(enrollee.userInfoKey, NAME_FIELD) ?: "")
               }
 
               results.forEach { (invocation, history) ->
                 td(classes = DASHBOARD) {
-                  id = "${user.id}-$invocation-$answersTd"
+                  id = "${enrollee.id}-$invocation-$answersTd"
                   style = "background-color:${if (history.correct) CORRECT_COLOR else WRONG_COLOR};"
                   span {
-                    id = "${user.id}-$invocation-$answersSpan"
+                    id = "${enrollee.id}-$invocation-$answersSpan"
                     history.answers.asReversed().take(maxHistoryLength).forEach { answer -> +answer; br }
                   }
                 }

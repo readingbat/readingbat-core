@@ -155,7 +155,7 @@ class PythonChallenge(challengeGroup: ChallengeGroup<*>, challengeName: Challeng
     val script = convertToPythonScript(lines)
     val answers = mutableListOf<Any>()
 
-    logger.info { "$challengeName return type: $returnType script: \n${script.withLineNumbers()}" }
+    logger.debug { "$challengeName return type: $returnType script: \n${script.withLineNumbers()}" }
 
     val duration =
       PythonScript()
@@ -180,7 +180,7 @@ class JavaChallenge(challengeGroup: ChallengeGroup<*>, challengeName: ChallengeN
     val returnType = deriveJavaReturnType(challengeName, lines)
     val script = JavaParse.convertToScript(lines)
 
-    logger.info { "$challengeName return type: $returnType script: \n${script.withLineNumbers()}" }
+    logger.debug { "$challengeName return type: $returnType script: \n${script.withLineNumbers()}" }
 
     val timedValue =
       JavaScript()
@@ -221,7 +221,7 @@ class KotlinChallenge(challengeGroup: ChallengeGroup<*>, challengeName: Challeng
     val invocations = extractKotlinInvocations(lines, funMainRegex, kotlinEndRegex)
     val script = convertToKotlinScript(lines)
 
-    logger.info { "$challengeName return type: $returnType script: \n${script.withLineNumbers()}" }
+    logger.debug { "$challengeName return type: $returnType script: \n${script.withLineNumbers()}" }
 
     val answers = mutableListOf<Any>()
     val duration =

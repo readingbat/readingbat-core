@@ -20,6 +20,8 @@ package com.github.readingbat.dsl
 import com.github.pambrose.common.util.ContentRoot
 import com.github.readingbat.dsl.LanguageGroup.Companion.defaultContentRoot
 import com.github.readingbat.dsl.LanguageType.*
+import com.github.readingbat.server.ChallengeName
+import com.github.readingbat.server.GroupName
 import com.github.readingbat.server.Language
 
 
@@ -52,8 +54,14 @@ class ReadingBatContent {
   internal fun findGroup(groupLoc: Language.Group) =
     findLanguage(groupLoc.languageType).findGroup(groupLoc.groupName.value)
 
+  internal fun findGroup(languageType: LanguageType, groupName: GroupName) =
+    findLanguage(languageType).findGroup(groupName.value)
+
   internal fun findChallenge(challengeLoc: Language.Group.Challenge) =
     findGroup(challengeLoc.group).findChallenge(challengeLoc.challengeName.value)
+
+  internal fun findChallenge(languageType: LanguageType, groupName: GroupName, challengeName: ChallengeName) =
+    findGroup(languageType, groupName).findChallenge(challengeName.value)
 
   internal fun validate() = languageList.forEach { it.validate() }
 

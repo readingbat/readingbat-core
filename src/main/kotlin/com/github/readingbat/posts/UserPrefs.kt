@@ -33,7 +33,6 @@ import com.github.readingbat.misc.FormFields.WITHDRAW_FROM_CLASS
 import com.github.readingbat.misc.KeyConstants.DIGEST_FIELD
 import com.github.readingbat.misc.User
 import com.github.readingbat.misc.UserPrincipal
-import com.github.readingbat.pages.UserPrefsPage.fetchClassDesc
 import com.github.readingbat.pages.UserPrefsPage.requestLogInPage
 import com.github.readingbat.pages.UserPrefsPage.userPrefsPage
 import com.github.readingbat.posts.CreateAccount.checkPassword
@@ -104,8 +103,8 @@ internal object UserPrefs : KLogging() {
     val classCode = parameters.getClassCode(CLASS_CODE)
     return try {
       user.enrollInClass(classCode, redis)
-      val classDesc = fetchClassDesc(classCode, redis)
-      userPrefsPage(content, redis, "Enrolled in class $classCode [$classDesc]", false)
+      val classDesc = classCode.fetchClassDesc(redis)
+      userPrefsPage(content, redis, "Enrolled in class $classDesc [$classCode]", false)
     } catch (e: DataException) {
       userPrefsPage(content,
                     redis,
@@ -117,11 +116,11 @@ internal object UserPrefs : KLogging() {
 
   private fun PipelineCall.withdrawFromClass(content: ReadingBatContent, redis: Jedis, user: User): String {
     val enrolledClassCode = user.fetchEnrolledClassCode(redis)
-    val classDesc = fetchClassDesc(enrolledClassCode, redis)
+    val classDesc = enrolledClassCode.fetchClassDesc(redis)
 
     return try {
       user.withdrawFromClass(enrolledClassCode, redis)
-      userPrefsPage(content, redis, "Withdrawn from class $enrolledClassCode [$classDesc]", false)
+      userPrefsPage(content, redis, "Withdrawn from class $classDesc [$enrolledClassCode]", false)
     } catch (e: DataException) {
       userPrefsPage(content, redis, "Unable to withdraw from class [${e.msg}]", true)
     }

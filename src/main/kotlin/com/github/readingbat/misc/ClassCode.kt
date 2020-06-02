@@ -33,7 +33,9 @@ internal inline class ClassCode(val value: String) {
 
   val isNotEmpty get() = value.isBlank()
 
-  val isClassesDisabled get() = value == CLASSES_DISABLED
+  val isNotEnabled get() = value == CLASSES_DISABLED || value == ""
+
+  val isEnabled get() = !isNotEnabled
 
   val classCodeEnrollmentKey get() = listOf(CLASS_CODE_KEY, value).joinToString(KEY_SEP)
 
@@ -69,6 +71,10 @@ internal inline class ClassCode(val value: String) {
   fun initializeWith(classDesc: String, user: User, tx: Transaction) {
     tx.hset(classInfoKey, mapOf(DESC_FIELD to classDesc, TEACHER_FIELD to user.id))
   }
+
+  fun fetchClassDesc(redis: Jedis) = redis.hget(classInfoKey, DESC_FIELD) ?: "Missing Description"
+
+  fun fetchClassTeacherId(redis: Jedis) = redis.hget(classInfoKey, TEACHER_FIELD) ?: ""
 
   override fun toString() = value
 

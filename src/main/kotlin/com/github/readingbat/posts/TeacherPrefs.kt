@@ -31,7 +31,6 @@ import com.github.readingbat.misc.FormFields.UPDATE_ACTIVE_CLASS
 import com.github.readingbat.misc.FormFields.USER_PREFS_ACTION
 import com.github.readingbat.misc.User
 import com.github.readingbat.pages.TeacherPrefsPage.teacherPrefsPage
-import com.github.readingbat.pages.UserPrefsPage.fetchClassDesc
 import com.github.readingbat.pages.UserPrefsPage.requestLogInPage
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.fetchPrincipal
@@ -98,18 +97,18 @@ internal object TeacherPrefs {
     val activeClassCode = user.fetchActiveClassCode(redis)
     val msg =
       when {
-        activeClassCode.isNotEmpty && classCode.isClassesDisabled -> {
+        activeClassCode.isNotEmpty && classCode.isNotEnabled -> {
           "Active class disabled"
         }
         activeClassCode == classCode -> {
-          "Same active class selected"
+          "Same active class selected [$classCode]"
         }
         else -> {
           user.assignActiveClassCode(classCode, redis)
-          if (classCode.isClassesDisabled)
+          if (classCode.isNotEnabled)
             "Active class disabled"
           else
-            "Active class updated to: $classCode [${fetchClassDesc(classCode, redis)}]"
+            "Active class updated to ${classCode.fetchClassDesc(redis)} [$classCode]"
         }
       }
 

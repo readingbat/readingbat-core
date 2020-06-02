@@ -41,7 +41,6 @@ import com.github.readingbat.pages.PageCommon.headDefault
 import com.github.readingbat.pages.PageCommon.privacyStatement
 import com.github.readingbat.pages.PageCommon.rawHtml
 import com.github.readingbat.pages.UserPrefsPage.divStyle
-import com.github.readingbat.pages.UserPrefsPage.fetchClassDesc
 import com.github.readingbat.pages.UserPrefsPage.requestLogInPage
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.fetchPrincipal
@@ -156,7 +155,7 @@ internal object TeacherPrefsPage : KLogging() {
         action = TEACHER_PREFS_ENDPOINT
         method = FormMethod.post
         classCodes.forEach { classCode ->
-          val classDesc = fetchClassDesc(classCode, redis)
+          val classDesc = classCode.fetchClassDesc(redis)
           val enrolleeCount = classCode.fetchEnrollees(redis).count()
           this@table.tr {
             td {
@@ -195,14 +194,14 @@ internal object TeacherPrefsPage : KLogging() {
       style = "border-spacing: 5px 5px;"
       tr { th { rawHtml(Entities.nbsp.text) } }
       classCodes.forEach { classCode ->
-        val classDesc = fetchClassDesc(classCode, redis)
+        val classDesc = classCode.fetchClassDesc(redis)
         tr {
           td {
             form {
               style = "margin:0;"
               action = TEACHER_PREFS_ENDPOINT
               method = FormMethod.post
-              onSubmit = "return confirm('Are you sure you want to delete class $classCode [$classDesc]?');"
+              onSubmit = "return confirm('Are you sure you want to delete class $classDesc [$classCode]?');"
               input { type = InputType.hidden; name = CLASS_CODE; value = classCode.value }
               input {
                 style = "vertical-align:middle; margin-top:1; margin-bottom:0;"

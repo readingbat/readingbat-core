@@ -34,8 +34,6 @@ import com.github.readingbat.misc.FormFields.NEW_PASSWORD
 import com.github.readingbat.misc.FormFields.UPDATE_PASSWORD
 import com.github.readingbat.misc.FormFields.USER_PREFS_ACTION
 import com.github.readingbat.misc.FormFields.WITHDRAW_FROM_CLASS
-import com.github.readingbat.misc.KeyConstants.DESC_FIELD
-import com.github.readingbat.misc.KeyConstants.TEACHER_FIELD
 import com.github.readingbat.misc.PageUtils.hideShowButton
 import com.github.readingbat.misc.User
 import com.github.readingbat.misc.User.Companion.isValidPrincipal
@@ -61,11 +59,6 @@ internal object UserPrefsPage : KLogging() {
   private const val formName = "pform"
   private const val passwordButton = "UpdatePasswordButton"
   private const val joinClassButton = "JoinClassButton"
-
-  fun fetchClassDesc(classCode: ClassCode, redis: Jedis) =
-    redis.hget(classCode.classInfoKey, DESC_FIELD) ?: "Missing Description"
-
-  fun fetchClassTeacherId(classCode: ClassCode, redis: Jedis) = redis.hget(classCode.classInfoKey, TEACHER_FIELD) ?: ""
 
   fun PipelineCall.userPrefsPage(content: ReadingBatContent,
                                  redis: Jedis,
@@ -166,7 +159,7 @@ internal object UserPrefsPage : KLogging() {
 
     if (enrolledClass.isEmpty) {
       h3 { +"Enrolled class" }
-      val classDesc = fetchClassDesc(enrolledClass, redis)
+      val classDesc = enrolledClass.fetchClassDesc(redis)
       div {
         style = divStyle
         p { +"Currently enrolled in class $enrolledClass [$classDesc]." }
@@ -174,7 +167,7 @@ internal object UserPrefsPage : KLogging() {
           form {
             action = USER_PREFS_ENDPOINT
             method = FormMethod.post
-            onSubmit = "return confirm('Are you sure you want to withdraw from class $enrolledClass [$classDesc]?');"
+            onSubmit = "return confirm('Are you sure you want to withdraw from class $classDesc [$enrolledClass]?');"
             input { type = submit; name = USER_PREFS_ACTION; value = WITHDRAW_FROM_CLASS }
           }
         }

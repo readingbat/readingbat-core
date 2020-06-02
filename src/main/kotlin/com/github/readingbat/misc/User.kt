@@ -39,8 +39,6 @@ import com.github.readingbat.misc.KeyConstants.SALT_FIELD
 import com.github.readingbat.misc.KeyConstants.USER_CLASSES_KEY
 import com.github.readingbat.misc.KeyConstants.USER_INFO_KEY
 import com.github.readingbat.misc.KeyConstants.USER_RESET_KEY
-import com.github.readingbat.pages.UserPrefsPage
-import com.github.readingbat.pages.UserPrefsPage.fetchClassTeacherId
 import com.github.readingbat.posts.ChallengeHistory
 import com.github.readingbat.posts.ChallengeNames
 import com.github.readingbat.posts.ChallengeResults
@@ -102,7 +100,7 @@ internal class User private constructor(val id: String) {
     redis?.hget(userInfoKey, ACTIVE_CLASS_CODE_FIELD)?.let { ClassCode(it) } ?: EMPTY_CLASS_CODE
 
   fun assignActiveClassCode(classCode: ClassCode, redis: Jedis) {
-    redis.hset(userInfoKey, ACTIVE_CLASS_CODE_FIELD, if (classCode.isClassesDisabled) "" else classCode.value)
+    redis.hset(userInfoKey, ACTIVE_CLASS_CODE_FIELD, if (classCode.isNotEnabled) "" else classCode.value)
   }
 
   fun resetActiveClassCode(tx: Transaction) {
@@ -115,7 +113,7 @@ internal class User private constructor(val id: String) {
     }
     else {
       when {
-        classCode.fetchEnrollees(redis).isEmpty() -> throw DataException("Invalid class code $classCode")
+        !classCode.isValid(redis) -> throw DataException("Invalid class code $classCode")
         classCode.isEnrolled(this, redis) -> throw DataException("Already enrolled in class $classCode")
         else -> {
           val previousClassCode = fetchEnrolledClassCode(redis)
@@ -175,7 +173,7 @@ internal class User private constructor(val id: String) {
     redis.smembers(userClassesKey)
       .asSequence()
       .map { ClassCode(it) }
-      .filter { classCode -> classDesc == UserPrefsPage.fetchClassDesc(classCode, redis) }
+      .filter { classCode -> classDesc == classCode.fetchClassDesc(redis) }
       .none()
 
   fun lookupDigestInfoByUser(redis: Jedis): Pair<String, String> {
@@ -353,7 +351,7 @@ internal class User private constructor(val id: String) {
             // First check if enrolled in a class
             if (enrolledClassCode.isEmpty && user != null) {
               // Check to see if owner of class has it set as their active class
-              val teacherId = fetchClassTeacherId(enrolledClassCode, redis)
+              val teacherId = enrolledClassCode.fetchClassTeacherId(redis)
               if (teacherId.isNotEmpty() && teacherId.toUser().fetchActiveClassCode(redis) == enrolledClassCode) {
                 logger.info { "Publishing data $json" }
                 val browserInfo = DashboardInfo(content.maxHistoryLength, user.id, complete, numCorrect, history)
