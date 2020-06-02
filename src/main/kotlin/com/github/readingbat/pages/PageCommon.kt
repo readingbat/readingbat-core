@@ -123,7 +123,7 @@ internal object PageCommon {
               li(classes = "h2") {
                 if (languageType == lang)
                   id = SELECTED_TAB
-                this@bodyHeader.addLink(lang.name, pathOf(CHALLENGE_ROOT, lang.languageName.value))
+                this@bodyHeader.addLink(lang.name, pathOf(CHALLENGE_ROOT, lang.languageName))
               }
             }
         }

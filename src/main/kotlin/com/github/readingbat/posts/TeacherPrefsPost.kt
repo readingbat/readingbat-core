@@ -38,7 +38,7 @@ import io.ktor.application.call
 import io.ktor.request.receiveParameters
 import redis.clients.jedis.Jedis
 
-internal object TeacherPrefs {
+internal object TeacherPrefsPost {
   suspend fun PipelineCall.teacherPrefs(content: ReadingBatContent, redis: Jedis): String {
     val parameters = call.receiveParameters()
     val principal = fetchPrincipal()

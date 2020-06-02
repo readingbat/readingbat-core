@@ -31,7 +31,7 @@ import io.ktor.sessions.clear
 import io.ktor.sessions.sessions
 import redis.clients.jedis.Jedis
 
-internal object Admin {
+internal object AdminPost {
 
   suspend fun PipelineCall.adminActions(content: ReadingBatContent, redis: Jedis): String {
     val principal = fetchPrincipal()

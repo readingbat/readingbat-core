@@ -34,7 +34,7 @@ import com.github.readingbat.misc.User.Companion.isRegisteredEmail
 import com.github.readingbat.misc.User.Companion.lookupUserByEmail
 import com.github.readingbat.misc.User.Companion.passwordResetKey
 import com.github.readingbat.pages.PasswordResetPage.passwordResetPage
-import com.github.readingbat.posts.CreateAccount.checkPassword
+import com.github.readingbat.posts.CreateAccountPost.checkPassword
 import com.github.readingbat.server.Email
 import com.github.readingbat.server.Email.Companion.getEmail
 import com.github.readingbat.server.Password.Companion.getPassword
@@ -52,7 +52,7 @@ import mu.KLogging
 import redis.clients.jedis.Jedis
 import java.io.IOException
 
-internal object PasswordReset : KLogging() {
+internal object PasswordResetPost : KLogging() {
   private val unknownUserLimiter = RateLimiter.create(0.5) // rate 2.0 is "2 permits per second"
 
   suspend fun PipelineCall.sendPasswordReset(content: ReadingBatContent, redis: Jedis): String {

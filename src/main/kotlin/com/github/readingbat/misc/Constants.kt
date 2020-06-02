@@ -53,6 +53,7 @@ internal object Endpoints {
   const val CHALLENGE_ENDPOINT = "/challenge"
   const val CHALLENGE_GROUP_ENDPOINT = "/challenge-group"
   const val CHECK_ANSWERS_ENDPOINT = "/check-answers"
+  const val CLEAR_ANSWERS_ENDPOINT = "/clear-answers"
 }
 
 internal object ParameterIds {
@@ -83,6 +84,11 @@ internal object FormFields {
   const val WITHDRAW_FROM_CLASS = "Withdraw From Class"
   const val DELETE_ACCOUNT = "Delete Account"
   const val DELETE_ALL_DATA = "Delete All Data"
+  const val LANGUAGE_NAME_KEY = "language_name_key"
+  const val GROUP_NAME_KEY = "group_name_key"
+  const val CHALLENGE_NAME_KEY = "challenge_name_key"
+  const val CHALLENGE_ANSWERS_KEY = "challenge_answers_key"
+
 }
 
 internal object AuthName {

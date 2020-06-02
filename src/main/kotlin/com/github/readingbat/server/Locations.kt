@@ -133,14 +133,29 @@ inline class LanguageName(val value: String) {
     } catch (e: NoSuchElementException) {
       throw InvalidPathException("Invalid language request: $this")
     }
+
+  companion object {
+    val EMPTY_LANGUAGE_NAME = LanguageName("")
+    fun Parameters.getLanguageName(name: String) = this[name]?.let { LanguageName(it) } ?: EMPTY_LANGUAGE_NAME
+  }
 }
 
 inline class GroupName(val value: String) {
   override fun toString() = value
+
+  companion object {
+    val EMPTY_GROUP_NAME = GroupName("")
+    fun Parameters.getGroupName(name: String) = this[name]?.let { GroupName(it) } ?: EMPTY_GROUP_NAME
+  }
 }
 
 inline class ChallengeName(val value: String) {
   override fun toString() = value
+
+  companion object {
+    val EMPTY_CHALLENGE_NAME = ChallengeName("")
+    fun Parameters.getChallengeName(name: String) = this[name]?.let { ChallengeName(it) } ?: EMPTY_CHALLENGE_NAME
+  }
 }
 
 inline class Invocation(val value: String) {

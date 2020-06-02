@@ -305,7 +305,7 @@ internal class User private constructor(val id: String) {
                     browserSession: BrowserSession?,
                     redis: Jedis,
                     names: ChallengeNames,
-                    compareMap: Map<String, String>,
+                    paramMap: Map<String, String>,
                     funcInfo: FunctionInfo,
                     userResps: List<Map.Entry<String, List<String>>>,
                     results: List<ChallengeResults>) {
@@ -323,7 +323,7 @@ internal class User private constructor(val id: String) {
       if (challengeAnswerKey.isNotEmpty()) {
         val answerMap =
           userResps.indices.mapNotNull { i ->
-              val userResp = compareMap[RESP + i]?.trim()
+              val userResp = paramMap[RESP + i]?.trim()
                 ?: throw InvalidConfigurationException("Missing user response")
               if (userResp.isNotEmpty()) funcInfo.invocations[i] to userResp else null
             }

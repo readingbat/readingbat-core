@@ -41,7 +41,7 @@ import io.ktor.sessions.set
 import mu.KLogging
 import redis.clients.jedis.Jedis
 
-internal object CreateAccount : KLogging() {
+internal object CreateAccountPost : KLogging() {
 
   private const val EMPTY_NAME_MSG = "Empty name value"
   private const val EMPTY_EMAIL_MSG = "Empty email value"

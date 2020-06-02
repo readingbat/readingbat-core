@@ -72,7 +72,7 @@ internal object ChallengeGroupPage : KLogging() {
         val languageName = languageType.languageName
         val groupName = challengeGroup.groupName
         val challenges = challengeGroup.challenges
-        val loginPath = pathOf(CHALLENGE_ROOT, languageName.value, groupName.value)
+        val loginPath = pathOf(CHALLENGE_ROOT, languageName, groupName)
         val user = principal?.toUser()
         val activeClassCode = user?.fetchActiveClassCode(redis) ?: INACTIVE_CLASS_CODE
         val enrollees =
@@ -90,7 +90,7 @@ internal object ChallengeGroupPage : KLogging() {
               img { src = "$STATIC_ROOT/${if (allCorrect) GREEN_CHECK else WHITE_CHECK}" }
             a {
               style = "font-Size:110%; padding-left:2px;"
-              href = pathOf(CHALLENGE_ROOT, languageName.value, groupName.value, challengeName.value)
+              href = pathOf(CHALLENGE_ROOT, languageName.value, groupName, challengeName)
               +challengeName.value
             }
 

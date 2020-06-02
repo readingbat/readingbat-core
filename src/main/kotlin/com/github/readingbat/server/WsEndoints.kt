@@ -86,55 +86,56 @@ internal object WsEndoints : KLogging() {
             if (redis != null) {
               val enrollees = if (classCode.isEnabled) classCode.fetchEnrollees(redis) else emptyList()
 
-              challenges.forEach { challenge ->
-                if (classCode.isEnabled && enrollees.isNotEmpty()) {
-                  val funcInfo = challenge.funcInfo(content)
-                  val challengeName = challenge.challengeName
-                  val numCalls = funcInfo.invocations.size
-                  var totAttemptedAtLeastOne = 0
-                  var totAllCorrect = 0
-                  var totCorrect = 0
+              challenges
+                .forEach { challenge ->
+                  if (classCode.isEnabled && enrollees.isNotEmpty()) {
+                    val funcInfo = challenge.funcInfo(content)
+                    val challengeName = challenge.challengeName
+                    val numCalls = funcInfo.invocations.size
+                    var totAttemptedAtLeastOne = 0
+                    var totAllCorrect = 0
+                    var totCorrect = 0
 
-                  enrollees.forEach { enrollee ->
-                    var attempted = 0
-                    var numCorrect = 0
+                    enrollees.forEach { enrollee ->
+                      var attempted = 0
+                      var numCorrect = 0
 
-                    funcInfo.invocations
-                      .forEach { invocation ->
-                        val answerHistoryKey =
-                          enrollee.answerHistoryKey(languageName, groupName, challengeName, invocation)
-                        if (redis.exists(answerHistoryKey)) {
-                          attempted++
-                          val json = redis[answerHistoryKey] ?: ""
-                          val history =
-                            User.gson.fromJson(json, ChallengeHistory::class.java) ?: ChallengeHistory(invocation)
-                          if (history.correct)
-                            numCorrect++
+                      funcInfo.invocations
+                        .forEach { invocation ->
+                          val answerHistoryKey =
+                            enrollee.answerHistoryKey(languageName, groupName, challengeName, invocation)
+                          if (redis.exists(answerHistoryKey)) {
+                            attempted++
+                            val json = redis[answerHistoryKey] ?: ""
+                            val history =
+                              User.gson.fromJson(json, ChallengeHistory::class.java) ?: ChallengeHistory(invocation)
+                            if (history.correct)
+                              numCorrect++
+                          }
                         }
-                      }
 
-                    if (attempted > 0)
-                      totAttemptedAtLeastOne++
+                      if (attempted > 0)
+                        totAttemptedAtLeastOne++
 
-                    if (numCorrect == numCalls)
-                      totAllCorrect++
+                      if (numCorrect == numCalls)
+                        totAllCorrect++
 
-                    totCorrect += numCorrect
-                  }
+                      totCorrect += numCorrect
+                    }
 
-                  val avgCorrect =
-                    if (totAttemptedAtLeastOne > 0) totCorrect / totAttemptedAtLeastOne.toFloat() else 0.0f
+                    val avgCorrect =
+                      if (totAttemptedAtLeastOne > 0) totCorrect / totAttemptedAtLeastOne.toFloat() else 0.0f
 
-                  val msg = " ($numCalls | $totAttemptedAtLeastOne | $totAllCorrect | ${"%.1f".format(avgCorrect)})"
-                  val challengeStats = ChallengeStats(challengeName.value, msg)
-                  val json = User.gson.toJson(challengeStats)
+                    val msg = " ($numCalls | $totAttemptedAtLeastOne | $totAllCorrect | ${"%.1f".format(avgCorrect)})"
+                    val challengeStats = ChallengeStats(challengeName.value, msg)
+                    val json = User.gson.toJson(challengeStats)
 
-                  runBlocking {
-                    logger.debug { "Sending data $json" }
-                    outgoing.send(Frame.Text(json))
+                    runBlocking {
+                      logger.debug { "Sending data $json" }
+                      outgoing.send(Frame.Text(json))
+                    }
                   }
                 }
-              }
             }
           }
 

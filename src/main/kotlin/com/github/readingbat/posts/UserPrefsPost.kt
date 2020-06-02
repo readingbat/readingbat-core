@@ -35,7 +35,7 @@ import com.github.readingbat.misc.User
 import com.github.readingbat.misc.UserPrincipal
 import com.github.readingbat.pages.UserPrefsPage.requestLogInPage
 import com.github.readingbat.pages.UserPrefsPage.userPrefsPage
-import com.github.readingbat.posts.CreateAccount.checkPassword
+import com.github.readingbat.posts.CreateAccountPost.checkPassword
 import com.github.readingbat.server.Password.Companion.getPassword
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.fetchPrincipal
@@ -47,7 +47,7 @@ import io.ktor.sessions.sessions
 import mu.KLogging
 import redis.clients.jedis.Jedis
 
-internal object UserPrefs : KLogging() {
+internal object UserPrefsPost : KLogging() {
 
   suspend fun PipelineCall.userPrefs(content: ReadingBatContent, redis: Jedis): String {
     val parameters = call.receiveParameters()

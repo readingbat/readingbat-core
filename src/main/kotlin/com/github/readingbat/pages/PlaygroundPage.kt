@@ -56,7 +56,7 @@ internal object PlaygroundPage {
         val challengeName = challenge.challengeName
         val languageName = languageType.languageName
         val funcInfo = challenge.funcInfo(content)
-        val loginPath = pathOf(CHALLENGE_ROOT, languageName.value, groupName.value, challengeName.value)
+        val loginPath = pathOf(CHALLENGE_ROOT, languageName, groupName, challengeName)
 
         head {
           script { src = "https://unpkg.com/kotlin-playground@1"; attributes["data-selector"] = ".$KOTLIN_CODE" }
@@ -67,10 +67,10 @@ internal object PlaygroundPage {
           bodyHeader(redis, principal, loginAttempt, content, languageType, loginPath, false)
 
           h2 {
-            val groupPath = pathOf(CHALLENGE_ROOT, languageName.value, groupName.value)
+            val groupPath = pathOf(CHALLENGE_ROOT, languageName, groupName)
             this@body.addLink(groupName.value.decode(), groupPath)
             span { style = "padding-left:2px; padding-right:2px;"; rawHtml("&rarr;") }
-            this@body.addLink(challengeName.value.decode(), pathOf(groupPath, challengeName.value))
+            this@body.addLink(challengeName.value.decode(), pathOf(groupPath, challengeName))
           }
 
           if (challenge.description.isNotEmpty())

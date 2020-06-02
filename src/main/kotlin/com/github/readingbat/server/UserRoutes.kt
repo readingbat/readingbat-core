@@ -32,6 +32,7 @@ import com.github.readingbat.misc.Constants.STATIC_ROOT
 import com.github.readingbat.misc.Endpoints.ABOUT_ENDPOINT
 import com.github.readingbat.misc.Endpoints.ADMIN_ENDPOINT
 import com.github.readingbat.misc.Endpoints.CHECK_ANSWERS_ENDPOINT
+import com.github.readingbat.misc.Endpoints.CLEAR_ANSWERS_ENDPOINT
 import com.github.readingbat.misc.Endpoints.CREATE_ACCOUNT_ENDPOINT
 import com.github.readingbat.misc.Endpoints.CSS_ENDPOINT
 import com.github.readingbat.misc.Endpoints.FAV_ICON_ENDPOINT
@@ -51,13 +52,14 @@ import com.github.readingbat.pages.PasswordResetPage.passwordResetPage
 import com.github.readingbat.pages.PrivacyPage.privacyPage
 import com.github.readingbat.pages.TeacherPrefsPage.teacherPrefsPage
 import com.github.readingbat.pages.UserPrefsPage.userPrefsPage
-import com.github.readingbat.posts.Admin.adminActions
-import com.github.readingbat.posts.CheckAnswers.checkAnswers
-import com.github.readingbat.posts.CreateAccount.createAccount
-import com.github.readingbat.posts.PasswordReset.changePassword
-import com.github.readingbat.posts.PasswordReset.sendPasswordReset
-import com.github.readingbat.posts.TeacherPrefs.teacherPrefs
-import com.github.readingbat.posts.UserPrefs.userPrefs
+import com.github.readingbat.posts.AdminPost.adminActions
+import com.github.readingbat.posts.ChallengePost.checkAnswers
+import com.github.readingbat.posts.ChallengePost.clearAnswers
+import com.github.readingbat.posts.CreateAccountPost.createAccount
+import com.github.readingbat.posts.PasswordResetPost.changePassword
+import com.github.readingbat.posts.PasswordResetPost.sendPasswordReset
+import com.github.readingbat.posts.TeacherPrefsPost.teacherPrefs
+import com.github.readingbat.posts.UserPrefsPost.userPrefs
 import com.github.readingbat.server.ResetId.Companion.EMPTY_RESET_ID
 import com.github.readingbat.server.ServerUtils.queryParam
 import io.ktor.application.call
@@ -109,6 +111,8 @@ internal fun Routing.userRoutes(content: ReadingBatContent) {
   get(ABOUT_ENDPOINT) { respondWith { aboutPage(content) } }
 
   post(CHECK_ANSWERS_ENDPOINT) { withSuspendingRedisPool { redis -> checkAnswers(content, redis) } }
+
+  post(CLEAR_ANSWERS_ENDPOINT) { respondWithSuspendingDbmsCheck { redis -> clearAnswers(content, redis) } }
 
   get(CREATE_ACCOUNT_ENDPOINT) { respondWith { createAccountPage(content) } }
 

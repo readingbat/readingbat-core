@@ -28,9 +28,19 @@ import com.github.readingbat.misc.BrowserSession
 import com.github.readingbat.misc.CheckAnswersJs.challengeSrc
 import com.github.readingbat.misc.CheckAnswersJs.groupSrc
 import com.github.readingbat.misc.CheckAnswersJs.langSrc
+import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
+import com.github.readingbat.misc.Constants.MSG
 import com.github.readingbat.misc.Constants.RESP
+import com.github.readingbat.misc.FormFields.CHALLENGE_ANSWERS_KEY
+import com.github.readingbat.misc.FormFields.CHALLENGE_NAME_KEY
+import com.github.readingbat.misc.FormFields.GROUP_NAME_KEY
+import com.github.readingbat.misc.FormFields.LANGUAGE_NAME_KEY
+import com.github.readingbat.misc.PageUtils.pathOf
 import com.github.readingbat.misc.User.Companion.saveAnswers
 import com.github.readingbat.server.*
+import com.github.readingbat.server.ChallengeName.Companion.getChallengeName
+import com.github.readingbat.server.GroupName.Companion.getGroupName
+import com.github.readingbat.server.LanguageName.Companion.getLanguageName
 import com.github.readingbat.server.ServerUtils.fetchPrincipal
 import io.ktor.application.call
 import io.ktor.request.receiveParameters
@@ -84,14 +94,14 @@ internal data class ChallengeHistory(var invocation: Invocation,
   }
 }
 
-internal class ChallengeNames(compareMap: Map<String, String>) {
-  val languageName = LanguageName(compareMap[langSrc] ?: throw InvalidConfigurationException("Missing language name"))
-  val groupName = GroupName(compareMap[groupSrc] ?: throw InvalidConfigurationException("Missing group name"))
+internal class ChallengeNames(paramMap: Map<String, String>) {
+  val languageName = LanguageName(paramMap[langSrc] ?: throw InvalidConfigurationException("Missing language name"))
+  val groupName = GroupName(paramMap[groupSrc] ?: throw InvalidConfigurationException("Missing group name"))
   val challengeName =
-    ChallengeName(compareMap[challengeSrc] ?: throw InvalidConfigurationException("Missing challenge name"))
+    ChallengeName(paramMap[challengeSrc] ?: throw InvalidConfigurationException("Missing challenge name"))
 }
 
-internal object CheckAnswers : KLogging() {
+internal object ChallengePost : KLogging() {
 
   private fun String.isJavaBoolean() = this == "true" || this == "false"
   private fun String.isPythonBoolean() = this == "True" || this == "False"
@@ -117,8 +127,8 @@ internal object CheckAnswers : KLogging() {
 
   suspend fun PipelineCall.checkAnswers(content: ReadingBatContent, redis: Jedis?) {
     val params = call.receiveParameters()
-    val compareMap = params.entries().map { it.key to it.value[0] }.toMap()
-    val names = ChallengeNames(compareMap)
+    val paramMap = params.entries().map { it.key to it.value[0] }.toMap()
+    val names = ChallengeNames(paramMap)
     val isJvm = names.languageName in listOf(Java.languageName, Kotlin.languageName)
     val userResps = params.entries().filter { it.key.startsWith(RESP) }
     val challenge =
@@ -148,25 +158,26 @@ internal object CheckAnswers : KLogging() {
         false
       }
 
-    logger.debug("Found ${userResps.size} user responses in $compareMap")
+    logger.debug("Found ${userResps.size} user responses in $paramMap")
 
     val results =
-      userResps.indices.map { i ->
-        val userResponse =
-          compareMap[RESP + i]?.trim() ?: throw InvalidConfigurationException("Missing user response")
-        val answer = funcInfo.answers[i]
-        val answered = userResponse.isNotEmpty()
-        ChallengeResults(invocation = funcInfo.invocations[i],
-                         userResponse = userResponse,
-                         answered = answered,
-                         correct = if (answered) checkWithAnswer(isJvm, userResponse, answer) else false)
-      }
+      userResps.indices
+        .map { i ->
+          val userResponse =
+            paramMap[RESP + i]?.trim() ?: throw InvalidConfigurationException("Missing user response")
+          val answer = funcInfo.answers[i]
+          val answered = userResponse.isNotEmpty()
+          ChallengeResults(invocation = funcInfo.invocations[i],
+                           userResponse = userResponse,
+                           answered = answered,
+                           correct = if (answered) checkWithAnswer(isJvm, userResponse, answer) else false)
+        }
 
     // Save whether all the answers for the challenge were correct
     if (redis != null) {
       val principal = fetchPrincipal()
       val browserSession = call.sessions.get<BrowserSession>()
-      saveAnswers(content, principal, browserSession, redis, names, compareMap, funcInfo, userResps, results)
+      saveAnswers(content, principal, browserSession, redis, names, paramMap, funcInfo, userResps, results)
     }
 
     /*
@@ -177,6 +188,23 @@ internal object CheckAnswers : KLogging() {
 
     delay(200.milliseconds.toLongMilliseconds())
     call.respondText(results.map { it.correct }.toString())
+  }
+
+  suspend fun PipelineCall.clearAnswers(content: ReadingBatContent, redis: Jedis?): String {
+    val parameters = call.receiveParameters()
+    val languageName = parameters.getLanguageName(LANGUAGE_NAME_KEY)
+    val groupName = parameters.getGroupName(GROUP_NAME_KEY)
+    val challengeName = parameters.getChallengeName(CHALLENGE_NAME_KEY)
+    val challengeAnswersKey = parameters[CHALLENGE_ANSWERS_KEY] ?: ""
+    val challenge = content.findChallenge(languageName.toLanguageType(), groupName, challengeName)
+
+    if (redis != null && challengeAnswersKey.isNotEmpty()) {
+      logger.info { "Clearing answers for $challenge" }
+      redis.del(challengeAnswersKey)
+    }
+
+    val path = pathOf(CHALLENGE_ROOT, languageName, groupName, challengeName)
+    throw RedirectException("$path?$MSG=${"Answers cleared".encode()}")
   }
 
   private fun String.equalsAsKotlinList(other: String, scriptEngine: KotlinScript): Boolean {

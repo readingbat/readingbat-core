@@ -46,6 +46,11 @@ import com.github.readingbat.misc.Constants.RESP
 import com.github.readingbat.misc.Constants.STATIC_ROOT
 import com.github.readingbat.misc.Constants.WRONG_COLOR
 import com.github.readingbat.misc.Endpoints.CHALLENGE_ENDPOINT
+import com.github.readingbat.misc.Endpoints.CLEAR_ANSWERS_ENDPOINT
+import com.github.readingbat.misc.FormFields.CHALLENGE_ANSWERS_KEY
+import com.github.readingbat.misc.FormFields.CHALLENGE_NAME_KEY
+import com.github.readingbat.misc.FormFields.GROUP_NAME_KEY
+import com.github.readingbat.misc.FormFields.LANGUAGE_NAME_KEY
 import com.github.readingbat.misc.KeyConstants.NAME_FIELD
 import com.github.readingbat.misc.PageUtils.pathOf
 import com.github.readingbat.misc.ParameterIds.FEEDBACK_ID
@@ -55,7 +60,6 @@ import com.github.readingbat.misc.ParameterIds.SUCCESS_ID
 import com.github.readingbat.misc.User
 import com.github.readingbat.misc.User.Companion.challengeAnswersKey
 import com.github.readingbat.misc.User.Companion.gson
-import com.github.readingbat.misc.UserPrincipal
 import com.github.readingbat.pages.PageCommon.addLink
 import com.github.readingbat.pages.PageCommon.backLink
 import com.github.readingbat.pages.PageCommon.bodyHeader
@@ -97,7 +101,7 @@ internal object ChallengePage : KLogging() {
         val challengeName = challenge.challengeName
         val languageName = languageType.languageName
         val funcInfo = challenge.funcInfo(content)
-        val loginPath = pathOf(CHALLENGE_ROOT, languageName.value, groupName.value, challengeName.value)
+        val loginPath = pathOf(CHALLENGE_ROOT, languageName, groupName, challengeName)
 
         head {
           link { rel = "stylesheet"; href = spinnerCss }
@@ -117,7 +121,7 @@ internal object ChallengePage : KLogging() {
           val user = principal?.toUser()
           val activeClassCode = user?.fetchActiveClassCode(redis) ?: INACTIVE_CLASS_CODE
           if (activeClassCode.isNotEnabled)
-            displayQuestions(redis, principal, browserSession, challenge, funcInfo)
+            displayQuestions(redis, user, browserSession, challenge, funcInfo)
           else {
             if (redis == null)
               p { +DBMS_DOWN }
@@ -141,7 +145,7 @@ internal object ChallengePage : KLogging() {
     val languageName = languageType.languageName
 
     h2 {
-      val groupPath = pathOf(CHALLENGE_ROOT, languageName.value, groupName.value)
+      val groupPath = pathOf(CHALLENGE_ROOT, languageName, groupName)
       this@displayChallenge.addLink(groupName.value.decode(), groupPath)
       span { style = "padding-left:2px; padding-right:2px;"; rawHtml("&rarr;") }
       +challengeName.value
@@ -158,7 +162,7 @@ internal object ChallengePage : KLogging() {
   }
 
   private fun BODY.displayQuestions(redis: Jedis?,
-                                    principal: UserPrincipal?,
+                                    user: User?,
                                     browserSession: BrowserSession?,
                                     challenge: Challenge,
                                     funcInfo: FunctionInfo) =
@@ -178,11 +182,7 @@ internal object ChallengePage : KLogging() {
           }
         }
 
-        val previousAnswers =
-          if (redis == null)
-            mutableMapOf()
-          else
-            previousAnswers(redis, principal, browserSession, challenge)
+        val answers = if (redis != null) fetchPreviousAnswers(redis, user, browserSession, challenge) else emptyMap()
 
         funcInfo.invocations.withIndex().forEach { (i, invocation) ->
           tr {
@@ -192,8 +192,8 @@ internal object ChallengePage : KLogging() {
               textInput(classes = USER_RESP) {
                 id = "$RESP$i"
                 onKeyPress = "$processAnswers(event, ${funcInfo.answers.size})"
-                if (previousAnswers[invocation.value] != null)
-                  value = previousAnswers[invocation.value] ?: ""
+                if (answers[invocation.value] != null)
+                  value = answers[invocation.value] ?: ""
                 else
                   placeholder = funcInfo.placeHolder()
               }
@@ -205,6 +205,7 @@ internal object ChallengePage : KLogging() {
 
       this@displayQuestions.processAnswers(funcInfo)
       this@displayQuestions.otherLinks(challenge)
+      this@displayQuestions.clearPreviousAnswers(user, browserSession, challenge)
     }
 
   private fun BODY.addWebSockets(content: ReadingBatContent, classCode: ClassCode) {
@@ -252,89 +253,83 @@ internal object ChallengePage : KLogging() {
       val challengeName = challenge.challengeName
       val languageName = languageType.languageName
       val classDesc = activeClassCode.fetchClassDesc(redis)
-
       val enrollees = activeClassCode.fetchEnrollees(redis)
+
       if (enrollees.isEmpty()) {
-        h3 {
-          style = "margin-left: 5px; color: $headerColor"
-          +"No students enrolled in $classDesc [$activeClassCode]"
-        }
+        h3 { style = "margin-left: 5px; color: $headerColor"; +"No students enrolled in $classDesc [$activeClassCode]" }
       }
       else {
-        //br
-        h3 {
-          style = "margin-left: 5px; color: $headerColor"
-          +"Student progress for $classDesc [$activeClassCode]"
-        }
+        h3 { style = "margin-left: 5px; color: $headerColor"; +"Student progress for $classDesc [$activeClassCode]" }
 
         table {
           style = "width:100%; border-spacing: 5px 10px;"
 
           tr {
             th { style = "text-align:left; color: $headerColor"; +"Student" }
-            funcInfo.invocations.indices
-              .forEach { i ->
-                val invocation = funcInfo.invocations[i]
+            funcInfo.invocations
+              .forEach { invocation ->
                 th {
                   style = "text-align:left; color: $headerColor"; +(invocation.value.run { substring(indexOf("(")) })
                 }
               }
           }
 
-          enrollees.forEach { enrollee ->
-            val numChallenges = funcInfo.invocations.size
-            var numCorrect = 0
-            val results =
-              funcInfo.invocations
-                .map { invocation ->
-                  val answerHistoryKey = enrollee.answerHistoryKey(languageName, groupName, challengeName, invocation)
-                  val history =
-                    gson.fromJson(redis[answerHistoryKey], ChallengeHistory::class.java) ?: ChallengeHistory(invocation)
-                  if (history.correct)
-                    numCorrect++
-                  invocation to history
-                }
-            val allCorrect = numCorrect == numChallenges
-
-            tr(classes = DASHBOARD) {
-              td(classes = DASHBOARD) {
-                id = "${enrollee.id}-$nameTd"
-                style = "background-color:${if (allCorrect) CORRECT_COLOR else WRONG_COLOR};"
-
-                span { id = "${enrollee.id}-$numCorrectSpan"; +numCorrect.toString() }
-                +"/$numChallenges"
-                rawHtml(nbsp.text)
-                +(redis.hget(enrollee.userInfoKey, NAME_FIELD) ?: "")
-              }
-
-              results.forEach { (invocation, history) ->
-                td(classes = DASHBOARD) {
-                  id = "${enrollee.id}-$invocation-$answersTd"
-                  style = "background-color:${if (history.correct) CORRECT_COLOR else WRONG_COLOR};"
-                  span {
-                    id = "${enrollee.id}-$invocation-$answersSpan"
-                    history.answers.asReversed().take(maxHistoryLength).forEach { answer -> +answer; br }
+          enrollees
+            .forEach { enrollee ->
+              val numChallenges = funcInfo.invocations.size
+              var numCorrect = 0
+              val results =
+                funcInfo.invocations
+                  .map { invocation ->
+                    val answerHistoryKey = enrollee.answerHistoryKey(languageName, groupName, challengeName, invocation)
+                    val history =
+                      gson.fromJson(redis[answerHistoryKey], ChallengeHistory::class.java) ?: ChallengeHistory(
+                        invocation)
+                    if (history.correct)
+                      numCorrect++
+                    invocation to history
                   }
+              val allCorrect = numCorrect == numChallenges
+
+              tr(classes = DASHBOARD) {
+                td(classes = DASHBOARD) {
+                  id = "${enrollee.id}-$nameTd"
+                  style = "background-color:${if (allCorrect) CORRECT_COLOR else WRONG_COLOR};"
+
+                  span { id = "${enrollee.id}-$numCorrectSpan"; +numCorrect.toString() }
+                  +"/$numChallenges"
+                  rawHtml(nbsp.text)
+                  +(redis.hget(enrollee.userInfoKey, NAME_FIELD) ?: "")
                 }
+
+                results
+                  .forEach { (invocation, history) ->
+                    td(classes = DASHBOARD) {
+                      id = "${enrollee.id}-$invocation-$answersTd"
+                      style = "background-color:${if (history.correct) CORRECT_COLOR else WRONG_COLOR};"
+                      span {
+                        id = "${enrollee.id}-$invocation-$answersSpan"
+                        history.answers.asReversed().take(maxHistoryLength).forEach { answer -> +answer; br }
+                      }
+                    }
+                  }
               }
             }
-          }
         }
       }
     }
 
-  private fun previousAnswers(redis: Jedis,
-                              principal: UserPrincipal?,
-                              browserSession: BrowserSession?,
-                              challenge: Challenge): MutableMap<String, String> {
+  private fun fetchPreviousAnswers(redis: Jedis,
+                                   user: User?,
+                                   browserSession: BrowserSession?,
+                                   challenge: Challenge): Map<String, String> {
     val languageType = challenge.languageType
     val groupName = challenge.groupName
     val challengeName = challenge.challengeName
     val languageName = languageType.languageName
-    val user: User? = principal?.toUser()
-    val key = challengeAnswersKey(user, browserSession, languageName, groupName, challengeName)
+    val challengeAnswersKey = challengeAnswersKey(user, browserSession, languageName, groupName, challengeName)
 
-    return if (key.isNotEmpty()) redis.hgetAll(key) else mutableMapOf()
+    return if (challengeAnswersKey.isNotEmpty()) redis.hgetAll(challengeAnswersKey) else emptyMap()
   }
 
   private fun BODY.processAnswers(funcInfo: FunctionInfo) {
@@ -368,9 +363,7 @@ internal object ChallengePage : KLogging() {
       this@otherLinks.addLink("Gitpod.io", "https://gitpod.io/#${challenge.gitpodUrl}", true)
       if (languageType.isKotlin()) {
         +" or as a "
-        this@otherLinks.addLink("Kotlin Playground",
-                                pathOf(PLAYGROUND_ROOT, groupName.value, challengeName.value),
-                                false)
+        this@otherLinks.addLink("Kotlin Playground", pathOf(PLAYGROUND_ROOT, groupName, challengeName), false)
       }
     }
 
@@ -378,6 +371,31 @@ internal object ChallengePage : KLogging() {
       p(classes = REFS) {
         +"Work on a similar problem on "
         this@otherLinks.addLink("CodingBat.com", "https://codingbat.com/prob/${challenge.codingBatEquiv}", true)
+      }
+    }
+  }
+
+  private fun BODY.clearPreviousAnswers(user: User?,
+                                        browserSession: BrowserSession?,
+                                        challenge: Challenge) {
+    val languageType = challenge.languageType
+    val groupName = challenge.groupName
+    val challengeName = challenge.challengeName
+    val languageName = languageType.languageName
+    val challengeAnswersKey = challengeAnswersKey(user, browserSession, languageName, groupName, challengeName)
+
+    form {
+      style = "margin:0;"
+      action = CLEAR_ANSWERS_ENDPOINT
+      method = FormMethod.post
+      onSubmit = "return confirm('Are you sure you want to clear your previous answers?');"
+      input { type = InputType.hidden; name = LANGUAGE_NAME_KEY; value = languageName.value }
+      input { type = InputType.hidden; name = GROUP_NAME_KEY; value = groupName.value }
+      input { type = InputType.hidden; name = CHALLENGE_NAME_KEY; value = challengeName.value }
+      input { type = InputType.hidden; name = CHALLENGE_ANSWERS_KEY; value = challengeAnswersKey }
+      input {
+        style = "vertical-align:middle; margin-top:1; margin-bottom:0;"
+        type = InputType.submit; value = "Clear answer history"
       }
     }
   }

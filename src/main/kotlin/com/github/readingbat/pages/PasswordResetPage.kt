@@ -37,7 +37,7 @@ import com.github.readingbat.pages.PageCommon.clickButtonScript
 import com.github.readingbat.pages.PageCommon.displayMessage
 import com.github.readingbat.pages.PageCommon.headDefault
 import com.github.readingbat.pages.PageCommon.privacyStatement
-import com.github.readingbat.posts.PasswordReset.ResetPasswordException
+import com.github.readingbat.posts.PasswordResetPost.ResetPasswordException
 import com.github.readingbat.server.Email
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ResetId
