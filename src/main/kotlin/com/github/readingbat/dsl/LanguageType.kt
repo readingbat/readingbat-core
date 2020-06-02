@@ -34,15 +34,5 @@ enum class LanguageType(val useDoubleQuotes: Boolean, val suffix: String, val sr
 
   companion object {
     val languageTypesInOrder by lazy { listOf(Java, Python, Kotlin) }
-
-    fun LanguageName?.toLanguageType(): LanguageType =
-      if (this == null)
-        throw InvalidPathException("Missing language value")
-      else
-        try {
-          values().first { it.name.equals(this.value, ignoreCase = true) }
-        } catch (e: NoSuchElementException) {
-          throw InvalidPathException("Invalid language request: $this")
-        }
   }
 }

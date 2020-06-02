@@ -22,7 +22,8 @@ import com.github.pambrose.common.response.respondWith
 import com.github.pambrose.common.util.isNotValidEmail
 import com.github.pambrose.common.util.randomId
 import com.github.pambrose.common.util.sha256
-import com.github.readingbat.dsl.LanguageType.Companion.toLanguageType
+import com.github.readingbat.dsl.InvalidPathException
+import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.dsl.LanguageType.Kotlin
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.AuthName.FORM
@@ -103,19 +104,19 @@ internal object Locations {
 
 @Location("$CHALLENGE_ROOT/{lname}")
 internal data class Language(val lname: String) {
-  val languageType get() = languageName.toLanguageType()
   val languageName = LanguageName(lname)
+  val languageType get() = languageName.toLanguageType()
 
   @Location("/{gname}")
   data class Group(val language: Language, val gname: String) {
-    val languageType get() = language.languageType
     val groupName = GroupName(gname)
+    val languageType get() = language.languageType
 
     @Location("/{cname}")
     data class Challenge(val group: Group, val cname: String) {
+      val challengeName = ChallengeName(cname)
       val languageType get() = group.languageType
       val groupName get() = group.groupName
-      val challengeName = ChallengeName(cname)
     }
   }
 }
@@ -125,6 +126,13 @@ internal class PlaygroundRequest(val groupName: String, val challengeName: Strin
 
 inline class LanguageName(val value: String) {
   override fun toString() = value
+
+  fun toLanguageType() =
+    try {
+      LanguageType.values().first { it.name.equals(this.value, ignoreCase = true) }
+    } catch (e: NoSuchElementException) {
+      throw InvalidPathException("Invalid language request: $this")
+    }
 }
 
 inline class GroupName(val value: String) {

@@ -97,7 +97,7 @@ internal object TeacherPrefs {
     val activeClassCode = user.fetchActiveClassCode(redis)
     val msg =
       when {
-        activeClassCode.isNotEmpty && classCode.isNotEnabled -> {
+        activeClassCode.isNotEnabled && classCode.isNotEnabled -> {
           "Active class disabled"
         }
         activeClassCode == classCode -> {
@@ -120,7 +120,7 @@ internal object TeacherPrefs {
                                        user: User,
                                        classCode: ClassCode) =
     when {
-      classCode.isNotEmpty -> {
+      classCode.isNotEnabled -> {
         teacherPrefsPage(content, redis, "Empty class code", true)
       }
       classCode.isNotValid(redis) -> {

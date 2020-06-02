@@ -21,7 +21,6 @@ import com.github.pambrose.common.script.KotlinScript
 import com.github.pambrose.common.script.PythonScript
 import com.github.pambrose.common.util.*
 import com.github.readingbat.dsl.InvalidConfigurationException
-import com.github.readingbat.dsl.LanguageType.Companion.toLanguageType
 import com.github.readingbat.dsl.LanguageType.Java
 import com.github.readingbat.dsl.LanguageType.Kotlin
 import com.github.readingbat.dsl.ReadingBatContent
@@ -86,7 +85,7 @@ internal data class ChallengeHistory(var invocation: Invocation,
 }
 
 internal class ChallengeNames(compareMap: Map<String, String>) {
-  val languageName = LanguageName(compareMap[langSrc] ?: throw InvalidConfigurationException("Missing language"))
+  val languageName = LanguageName(compareMap[langSrc] ?: throw InvalidConfigurationException("Missing language name"))
   val groupName = GroupName(compareMap[groupSrc] ?: throw InvalidConfigurationException("Missing group name"))
   val challengeName =
     ChallengeName(compareMap[challengeSrc] ?: throw InvalidConfigurationException("Missing challenge name"))

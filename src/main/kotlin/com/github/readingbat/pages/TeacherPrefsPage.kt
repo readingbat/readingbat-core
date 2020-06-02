@@ -176,7 +176,7 @@ internal object TeacherPrefsPage : KLogging() {
           td {
             style = "text-align:center;"
             input {
-              type = radio; name = CLASSES_CHOICE; value = CLASSES_DISABLED; checked = activeClassCode.isNotEmpty
+              type = radio; name = CLASSES_CHOICE; value = CLASSES_DISABLED; checked = activeClassCode.isNotEnabled
             }
           }
           td { colSpan = "3"; +"Disable active class" }

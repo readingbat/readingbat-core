@@ -22,7 +22,7 @@ import com.github.pambrose.common.util.randomId
 import com.github.readingbat.dsl.FunctionInfo
 import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.misc.ClassCode.Companion.EMPTY_CLASS_CODE
+import com.github.readingbat.misc.ClassCode.Companion.INACTIVE_CLASS_CODE
 import com.github.readingbat.misc.Constants.RESP
 import com.github.readingbat.misc.KeyConstants.ACTIVE_CLASS_CODE_FIELD
 import com.github.readingbat.misc.KeyConstants.ANSWER_HISTORY_KEY
@@ -90,14 +90,14 @@ internal class User private constructor(val id: String) {
            invocation.value).joinToString(KEY_SEP)
 
   fun fetchEnrolledClassCode(redis: Jedis) =
-    redis.hget(userInfoKey, ENROLLED_CLASS_CODE_FIELD)?.let { ClassCode(it) } ?: EMPTY_CLASS_CODE
+    redis.hget(userInfoKey, ENROLLED_CLASS_CODE_FIELD)?.let { ClassCode(it) } ?: INACTIVE_CLASS_CODE
 
   fun assignEnrolledClassCode(classCode: ClassCode, tx: Transaction) {
     tx.hset(userInfoKey, ENROLLED_CLASS_CODE_FIELD, classCode.value)
   }
 
   fun fetchActiveClassCode(redis: Jedis?) =
-    redis?.hget(userInfoKey, ACTIVE_CLASS_CODE_FIELD)?.let { ClassCode(it) } ?: EMPTY_CLASS_CODE
+    redis?.hget(userInfoKey, ACTIVE_CLASS_CODE_FIELD)?.let { ClassCode(it) } ?: INACTIVE_CLASS_CODE
 
   fun assignActiveClassCode(classCode: ClassCode, redis: Jedis) {
     redis.hset(userInfoKey, ACTIVE_CLASS_CODE_FIELD, if (classCode.isNotEnabled) "" else classCode.value)
@@ -108,7 +108,7 @@ internal class User private constructor(val id: String) {
   }
 
   fun enrollInClass(classCode: ClassCode, redis: Jedis) {
-    if (classCode.isNotEmpty) {
+    if (classCode.isNotEnabled) {
       throw DataException("Empty class code")
     }
     else {
@@ -119,7 +119,7 @@ internal class User private constructor(val id: String) {
           val previousClassCode = fetchEnrolledClassCode(redis)
           redis.multi().also { tx ->
             // Remove if already enrolled in another class
-            if (previousClassCode.isEmpty)
+            if (previousClassCode.isEnabled)
               previousClassCode.removeEnrollee(this, tx)
 
             assignEnrolledClassCode(classCode, tx)
@@ -134,14 +134,14 @@ internal class User private constructor(val id: String) {
   }
 
   fun withdrawFromClass(classCode: ClassCode, redis: Jedis) {
-    if (classCode.isNotEmpty) {
+    if (classCode.isNotEnabled) {
       throw DataException("Not enrolled in a class")
     }
     else {
       // This should always be true
       val enrolled = classCode.isValid(redis) && classCode.isEnrolled(this, redis)
       redis.multi().also { tx ->
-        assignEnrolledClassCode(EMPTY_CLASS_CODE, tx)
+        assignEnrolledClassCode(INACTIVE_CLASS_CODE, tx)
         if (enrolled)
           classCode.removeEnrollee(this, tx)
         tx.exec()
@@ -157,7 +157,7 @@ internal class User private constructor(val id: String) {
     tx.srem(userClassesKey, classCode.value)
 
     // Reset every enrollee's enrolled class
-    enrollees.forEach { it.assignEnrolledClassCode(EMPTY_CLASS_CODE, tx) }
+    enrollees.forEach { it.assignEnrolledClassCode(INACTIVE_CLASS_CODE, tx) }
 
     // Delete enrollee list
     classCode.deleteAllEnrollees(tx)
@@ -292,8 +292,8 @@ internal class User private constructor(val id: String) {
                                         EMAIL_FIELD to email.value,
                                         SALT_FIELD to salt,
                                         DIGEST_FIELD to password.sha256(salt),
-                                        ENROLLED_CLASS_CODE_FIELD to EMPTY_CLASS_CODE.value,
-                                        ACTIVE_CLASS_CODE_FIELD to EMPTY_CLASS_CODE.value))
+                                        ENROLLED_CLASS_CODE_FIELD to INACTIVE_CLASS_CODE.value,
+                                        ACTIVE_CLASS_CODE_FIELD to INACTIVE_CLASS_CODE.value))
         tx.exec()
       }
 
@@ -312,7 +312,7 @@ internal class User private constructor(val id: String) {
       val user = principal?.toUser()
       val challengeAnswerKey = challengeAnswersKey(user, browserSession, names)
       val correctAnswersKey = correctAnswersKey(user, browserSession, names)
-      val enrolledClassCode = user?.fetchEnrolledClassCode(redis) ?: EMPTY_CLASS_CODE
+      val enrolledClassCode = user?.fetchEnrolledClassCode(redis) ?: INACTIVE_CLASS_CODE
       val complete = results.all { it.correct }
       val numCorrect = results.count { it.correct }
 
@@ -349,7 +349,7 @@ internal class User private constructor(val id: String) {
 
             // Publish to challenge dashboard
             // First check if enrolled in a class
-            if (enrolledClassCode.isEmpty && user != null) {
+            if (enrolledClassCode.isEnabled && user != null) {
               // Check to see if owner of class has it set as their active class
               val teacherId = enrolledClassCode.fetchClassTeacherId(redis)
               if (teacherId.isNotEmpty() && teacherId.toUser().fetchActiveClassCode(redis) == enrolledClassCode) {

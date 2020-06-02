@@ -36,7 +36,7 @@ import com.github.readingbat.misc.CSSNames.USER_RESP
 import com.github.readingbat.misc.CheckAnswersJs.checkAnswersScript
 import com.github.readingbat.misc.CheckAnswersJs.processAnswers
 import com.github.readingbat.misc.ClassCode
-import com.github.readingbat.misc.ClassCode.Companion.EMPTY_CLASS_CODE
+import com.github.readingbat.misc.ClassCode.Companion.INACTIVE_CLASS_CODE
 import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
 import com.github.readingbat.misc.Constants.CORRECT_COLOR
 import com.github.readingbat.misc.Constants.DBMS_DOWN
@@ -45,7 +45,7 @@ import com.github.readingbat.misc.Constants.PLAYGROUND_ROOT
 import com.github.readingbat.misc.Constants.RESP
 import com.github.readingbat.misc.Constants.STATIC_ROOT
 import com.github.readingbat.misc.Constants.WRONG_COLOR
-import com.github.readingbat.misc.Endpoints.CLASSROOM_ENDPOINT
+import com.github.readingbat.misc.Endpoints.CHALLENGE_ENDPOINT
 import com.github.readingbat.misc.KeyConstants.NAME_FIELD
 import com.github.readingbat.misc.PageUtils.pathOf
 import com.github.readingbat.misc.ParameterIds.FEEDBACK_ID
@@ -115,8 +115,8 @@ internal object ChallengePage : KLogging() {
           displayChallenge(challenge, funcInfo)
 
           val user = principal?.toUser()
-          val activeClassCode = user?.fetchActiveClassCode(redis) ?: EMPTY_CLASS_CODE
-          if (activeClassCode.isNotEmpty)
+          val activeClassCode = user?.fetchActiveClassCode(redis) ?: INACTIVE_CLASS_CODE
+          if (activeClassCode.isNotEnabled)
             displayQuestions(redis, principal, browserSession, challenge, funcInfo)
           else {
             if (redis == null)
@@ -129,7 +129,7 @@ internal object ChallengePage : KLogging() {
 
           script { src = "$STATIC_ROOT/$languageName-prism.js" }
 
-          if (activeClassCode.isEmpty)
+          if (activeClassCode.isEnabled)
             addWebSockets(content, activeClassCode)
         }
       }
@@ -212,7 +212,7 @@ internal object ChallengePage : KLogging() {
       rawHtml(
         """
           var wshost = location.origin.replace(${if (content.production) "/^https:/, 'wss:'" else "/^http:/, 'ws:'"})
-          var wsurl = wshost + '$CLASSROOM_ENDPOINT/$classCode'
+          var wsurl = wshost + '$CHALLENGE_ENDPOINT/$classCode'
           
           var ws = new WebSocket(wsurl);
           

@@ -50,7 +50,8 @@ internal object Endpoints {
   const val PASSWORD_RESET_ENDPOINT = "/password-reset"
   const val CSS_ENDPOINT = "/styles.css"
   const val FAV_ICON_ENDPOINT = "/favicon.ico"
-  const val CLASSROOM_ENDPOINT = "/classroom"
+  const val CHALLENGE_ENDPOINT = "/challenge"
+  const val CHALLENGE_GROUP_ENDPOINT = "/challenge-group"
   const val CHECK_ANSWERS_ENDPOINT = "/check-answers"
 }
 

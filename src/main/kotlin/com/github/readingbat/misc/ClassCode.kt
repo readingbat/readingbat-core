@@ -29,11 +29,7 @@ import redis.clients.jedis.Jedis
 import redis.clients.jedis.Transaction
 
 internal inline class ClassCode(val value: String) {
-  val isEmpty get() = value.isNotBlank()
-
-  val isNotEmpty get() = value.isBlank()
-
-  val isNotEnabled get() = value == CLASSES_DISABLED || value == ""
+  val isNotEnabled get() = value == CLASSES_DISABLED || value.isBlank()
 
   val isEnabled get() = !isNotEnabled
 
@@ -79,12 +75,11 @@ internal inline class ClassCode(val value: String) {
   override fun toString() = value
 
   companion object {
-
-    val EMPTY_CLASS_CODE = ClassCode("")
+    val INACTIVE_CLASS_CODE = ClassCode("")
 
     fun newClassCode() = ClassCode(randomId(15))
 
     fun Parameters.getClassCode(parameterName: String) =
-      this[parameterName]?.let { ClassCode(it) } ?: EMPTY_CLASS_CODE
+      this[parameterName]?.let { ClassCode(it) } ?: INACTIVE_CLASS_CODE
   }
 }

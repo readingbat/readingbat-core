@@ -64,7 +64,7 @@ internal fun Application.module() {
     adminRoutes()
     locations(content)
     userRoutes(content)
-    wsEndpoints()
+    wsEndpoints(content)
     static(STATIC_ROOT) { resources("static") }
   }
 }

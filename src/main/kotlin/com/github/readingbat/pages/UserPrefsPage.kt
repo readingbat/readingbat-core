@@ -19,7 +19,7 @@ package com.github.readingbat.pages
 
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.ClassCode
-import com.github.readingbat.misc.ClassCode.Companion.EMPTY_CLASS_CODE
+import com.github.readingbat.misc.ClassCode.Companion.INACTIVE_CLASS_CODE
 import com.github.readingbat.misc.Constants.LABEL_WIDTH
 import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.Endpoints.CREATE_ACCOUNT_ENDPOINT
@@ -64,7 +64,7 @@ internal object UserPrefsPage : KLogging() {
                                  redis: Jedis,
                                  msg: String,
                                  isErrorMsg: Boolean,
-                                 defaultClassCode: ClassCode = EMPTY_CLASS_CODE): String {
+                                 defaultClassCode: ClassCode = INACTIVE_CLASS_CODE): String {
     val principal = fetchPrincipal()
     return if (principal != null && isValidPrincipal(principal, redis))
       userPrefsWithLoginPage(content, redis, principal.toUser(), msg, isErrorMsg, defaultClassCode)
@@ -157,7 +157,7 @@ internal object UserPrefsPage : KLogging() {
   private fun BODY.joinOrWithdrawFromClass(redis: Jedis, user: User, defaultClassCode: ClassCode) {
     val enrolledClass = user.fetchEnrolledClassCode(redis)
 
-    if (enrolledClass.isEmpty) {
+    if (enrolledClass.isEnabled) {
       h3 { +"Enrolled class" }
       val classDesc = enrolledClass.fetchClassDesc(redis)
       div {

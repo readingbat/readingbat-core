@@ -24,21 +24,24 @@ import com.github.readingbat.dsl.ChallengeGroup
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.BrowserSession
 import com.github.readingbat.misc.CSSNames.FUNC_ITEM
-import com.github.readingbat.misc.ClassCode.Companion.EMPTY_CLASS_CODE
+import com.github.readingbat.misc.ClassCode
+import com.github.readingbat.misc.ClassCode.Companion.INACTIVE_CLASS_CODE
 import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
 import com.github.readingbat.misc.Constants.GREEN_CHECK
 import com.github.readingbat.misc.Constants.MSG
 import com.github.readingbat.misc.Constants.STATIC_ROOT
 import com.github.readingbat.misc.Constants.WHITE_CHECK
+import com.github.readingbat.misc.Endpoints.CHALLENGE_GROUP_ENDPOINT
 import com.github.readingbat.misc.PageUtils.pathOf
 import com.github.readingbat.misc.User
 import com.github.readingbat.misc.User.Companion.correctAnswersKey
-import com.github.readingbat.misc.User.Companion.gson
 import com.github.readingbat.pages.PageCommon.backLink
 import com.github.readingbat.pages.PageCommon.bodyHeader
 import com.github.readingbat.pages.PageCommon.headDefault
+import com.github.readingbat.pages.PageCommon.rawHtml
 import com.github.readingbat.pages.PageCommon.rows
-import com.github.readingbat.posts.ChallengeHistory
+import com.github.readingbat.server.GroupName
+import com.github.readingbat.server.LanguageName
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.fetchPrincipal
 import com.github.readingbat.server.ServerUtils.queryParam
@@ -71,7 +74,7 @@ internal object ChallengeGroupPage : KLogging() {
         val challenges = challengeGroup.challenges
         val loginPath = pathOf(CHALLENGE_ROOT, languageName.value, groupName.value)
         val user = principal?.toUser()
-        val activeClassCode = user?.fetchActiveClassCode(redis) ?: EMPTY_CLASS_CODE
+        val activeClassCode = user?.fetchActiveClassCode(redis) ?: INACTIVE_CLASS_CODE
         val enrollees =
           if (redis != null && activeClassCode.isEnabled)
             activeClassCode.fetchEnrollees(redis)
@@ -83,7 +86,7 @@ internal object ChallengeGroupPage : KLogging() {
           val allCorrect = challenge.isCorrect(redis, user, browserSession)
 
           td(classes = FUNC_ITEM) {
-            if (activeClassCode.isNotEnabled)
+            if (activeClassCode.isNotEnabled && enrollees.isNotEmpty())
               img { src = "$STATIC_ROOT/${if (allCorrect) GREEN_CHECK else WHITE_CHECK}" }
             a {
               style = "font-Size:110%; padding-left:2px;"
@@ -91,42 +94,12 @@ internal object ChallengeGroupPage : KLogging() {
               +challengeName.value
             }
 
-            if (redis != null && activeClassCode.isEnabled && enrollees.isNotEmpty()) {
-              val funcInfo = challenge.funcInfo(content)
-              val numCalls = funcInfo.invocations.size
-              var totAttemptedAtLeastOne = 0
-              var totAllCorrect = 0
-              var totCorrect = 0
-
-              enrollees.forEach { enrollee ->
-                var attempted = 0
-                var numCorrect = 0
-
-                funcInfo.invocations
-                  .forEach { invocation ->
-                    val answerHistoryKey =
-                      enrollee.answerHistoryKey(languageName, groupName, challengeName, invocation)
-                    if (redis.exists(answerHistoryKey)) {
-                      attempted++
-                      val json = redis[answerHistoryKey]
-                      val history = gson.fromJson(json, ChallengeHistory::class.java) ?: ChallengeHistory(invocation)
-                      if (history.correct)
-                        numCorrect++
-                    }
-                  }
-
-                if (attempted > 0)
-                  totAttemptedAtLeastOne++
-
-                if (numCorrect == numCalls)
-                  totAllCorrect++
-
-                totCorrect += numCorrect
+            if (activeClassCode.isEnabled && enrollees.isNotEmpty()) {
+              span {
+                id = challengeName.value
+                //+" ($numCalls | $totAttemptedAtLeastOne | $totAllCorrect | ${"%.1f".format(avgCorrect)})"
+                +" (0 | 0 | 0 | 0.0)"
               }
-
-              val avgCorrect = if (totAttemptedAtLeastOne > 0) totCorrect / totAttemptedAtLeastOne.toFloat() else 0.0f
-
-              +" ($numCalls | $totAttemptedAtLeastOne | $totAllCorrect | ${"%.1f".format(avgCorrect)})"
             }
           }
         }
@@ -166,6 +139,34 @@ internal object ChallengeGroupPage : KLogging() {
           }
 
           backLink(CHALLENGE_ROOT, languageName.value)
+
+          if (activeClassCode.isEnabled && enrollees.isNotEmpty())
+            addWebSockets(content, languageName, groupName, activeClassCode)
         }
       }
+
+  private fun BODY.addWebSockets(content: ReadingBatContent,
+                                 languageName: LanguageName,
+                                 groupName: GroupName,
+                                 classCode: ClassCode) {
+    script {
+      rawHtml(
+        """
+          var wshost = location.origin.replace(${if (content.production) "/^https:/, 'wss:'" else "/^http:/, 'ws:'"})
+          var wsurl = wshost + '$CHALLENGE_GROUP_ENDPOINT/$languageName/$groupName/$classCode'
+          
+          var ws = new WebSocket(wsurl);
+          
+          ws.onopen = function (event) {
+            ws.send("$classCode"); 
+          };
+          
+          ws.onmessage = function (event) {
+            //console.log(event.data);
+            var obj = JSON.parse(event.data)
+            document.getElementById(obj.challengeName).innerHTML = obj.msg;
+          };
+        """.trimIndent())
+    }
+  }
 }
