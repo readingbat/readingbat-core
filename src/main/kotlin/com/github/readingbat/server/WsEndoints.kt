@@ -105,7 +105,7 @@ internal object WsEndoints : KLogging() {
                           enrollee.answerHistoryKey(languageName, groupName, challengeName, invocation)
                         if (redis.exists(answerHistoryKey)) {
                           attempted++
-                          val json = redis[answerHistoryKey]
+                          val json = redis[answerHistoryKey] ?: ""
                           val history =
                             User.gson.fromJson(json, ChallengeHistory::class.java) ?: ChallengeHistory(invocation)
                           if (history.correct)
@@ -138,7 +138,7 @@ internal object WsEndoints : KLogging() {
             }
           }
 
-          logger.info { "Closing challengegroup websocket" }
+          logger.info { "Closing $languageName/$groupName/$classCode websocket" }
           close(CloseReason(Codes.NORMAL, "Client said BYE"))
         }
     }

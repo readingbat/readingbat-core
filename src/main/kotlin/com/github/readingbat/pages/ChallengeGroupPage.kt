@@ -86,8 +86,7 @@ internal object ChallengeGroupPage : KLogging() {
           val allCorrect = challenge.isCorrect(redis, user, browserSession)
 
           td(classes = FUNC_ITEM) {
-            //style = "margin-left:2em;"
-            if (activeClassCode.isNotEnabled && enrollees.isNotEmpty())
+            if (activeClassCode.isNotEnabled)
               img { src = "$STATIC_ROOT/${if (allCorrect) GREEN_CHECK else WHITE_CHECK}" }
             a {
               style = "font-Size:110%; padding-left:2px;"
@@ -95,7 +94,7 @@ internal object ChallengeGroupPage : KLogging() {
               +challengeName.value
             }
 
-            if (activeClassCode.isEnabled && enrollees.isNotEmpty())
+            if (enrollees.isNotEmpty())
               span { id = challengeName.value; +"" }
           }
         }
@@ -114,14 +113,16 @@ internal object ChallengeGroupPage : KLogging() {
               style = "margin-left: 5px; color: ${ChallengePage.headerColor}"
               +"$studentCount ${"student".pluralize(enrollees.count())} enrolled in $classDesc [$activeClassCode]"
             }
-            p { +"(# of questions | # students that started | # completed | Avg correct answers)" }
           }
+
+          if (enrollees.isNotEmpty())
+            p { +"(# of questions | # students that started | # completed | Avg correct answers)" }
 
           table {
             val cols = 3
             val size = challenges.size
             val rows = size.rows(cols)
-            val width = if (activeClassCode.isEnabled && enrollees.isNotEmpty()) 1200 else 800
+            val width = if (enrollees.isNotEmpty()) 1200 else 800
             style = "width:${width}px"
 
             (0 until rows).forEach { i ->
@@ -138,7 +139,7 @@ internal object ChallengeGroupPage : KLogging() {
 
           backLink(CHALLENGE_ROOT, languageName.value)
 
-          if (activeClassCode.isEnabled && enrollees.isNotEmpty())
+          if (enrollees.isNotEmpty())
             addWebSockets(content, languageName, groupName, activeClassCode)
         }
       }
