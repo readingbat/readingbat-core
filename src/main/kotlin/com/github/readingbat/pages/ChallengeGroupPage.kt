@@ -86,6 +86,7 @@ internal object ChallengeGroupPage : KLogging() {
           val allCorrect = challenge.isCorrect(redis, user, browserSession)
 
           td(classes = FUNC_ITEM) {
+            //style = "margin-left:2em;"
             if (activeClassCode.isNotEnabled && enrollees.isNotEmpty())
               img { src = "$STATIC_ROOT/${if (allCorrect) GREEN_CHECK else WHITE_CHECK}" }
             a {
@@ -94,13 +95,8 @@ internal object ChallengeGroupPage : KLogging() {
               +challengeName.value
             }
 
-            if (activeClassCode.isEnabled && enrollees.isNotEmpty()) {
-              span {
-                id = challengeName.value
-                //+" ($numCalls | $totAttemptedAtLeastOne | $totAllCorrect | ${"%.1f".format(avgCorrect)})"
-                +" (0 | 0 | 0 | 0.0)"
-              }
-            }
+            if (activeClassCode.isEnabled && enrollees.isNotEmpty())
+              span { id = challengeName.value; +"" }
           }
         }
 
@@ -125,6 +121,8 @@ internal object ChallengeGroupPage : KLogging() {
             val cols = 3
             val size = challenges.size
             val rows = size.rows(cols)
+            val width = if (activeClassCode.isEnabled && enrollees.isNotEmpty()) 1200 else 800
+            style = "width:${width}px"
 
             (0 until rows).forEach { i ->
               tr {
@@ -154,9 +152,8 @@ internal object ChallengeGroupPage : KLogging() {
         """
           var wshost = location.origin.replace(${if (content.production) "/^https:/, 'wss:'" else "/^http:/, 'ws:'"})
           var wsurl = wshost + '$CHALLENGE_GROUP_ENDPOINT/$languageName/$groupName/$classCode'
-          
           var ws = new WebSocket(wsurl);
-          
+
           ws.onopen = function (event) {
             ws.send("$classCode"); 
           };
