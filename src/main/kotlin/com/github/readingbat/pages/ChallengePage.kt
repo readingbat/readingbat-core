@@ -46,7 +46,7 @@ import com.github.readingbat.misc.Constants.RESP
 import com.github.readingbat.misc.Constants.STATIC_ROOT
 import com.github.readingbat.misc.Constants.WRONG_COLOR
 import com.github.readingbat.misc.Endpoints.CHALLENGE_ENDPOINT
-import com.github.readingbat.misc.Endpoints.CLEAR_ANSWERS_ENDPOINT
+import com.github.readingbat.misc.Endpoints.CLEAR_CHALLENGE_ANSWERS_ENDPOINT
 import com.github.readingbat.misc.FormFields.CHALLENGE_ANSWERS_KEY
 import com.github.readingbat.misc.FormFields.CHALLENGE_NAME_KEY
 import com.github.readingbat.misc.FormFields.GROUP_NAME_KEY
@@ -205,7 +205,7 @@ internal object ChallengePage : KLogging() {
 
       this@displayQuestions.processAnswers(funcInfo)
       this@displayQuestions.otherLinks(challenge)
-      this@displayQuestions.clearPreviousAnswers(user, browserSession, challenge)
+      this@displayQuestions.clearChallengeAnswerHistory(user, browserSession, challenge)
     }
 
   private fun BODY.addWebSockets(content: ReadingBatContent, classCode: ClassCode) {
@@ -375,9 +375,9 @@ internal object ChallengePage : KLogging() {
     }
   }
 
-  private fun BODY.clearPreviousAnswers(user: User?,
-                                        browserSession: BrowserSession?,
-                                        challenge: Challenge) {
+  private fun BODY.clearChallengeAnswerHistory(user: User?,
+                                               browserSession: BrowserSession?,
+                                               challenge: Challenge) {
     val languageType = challenge.languageType
     val groupName = challenge.groupName
     val challengeName = challenge.challengeName
@@ -386,9 +386,9 @@ internal object ChallengePage : KLogging() {
 
     form {
       style = "margin:0;"
-      action = CLEAR_ANSWERS_ENDPOINT
+      action = CLEAR_CHALLENGE_ANSWERS_ENDPOINT
       method = FormMethod.post
-      onSubmit = "return confirm('Are you sure you want to clear your previous answers?');"
+      onSubmit = """return confirm('Are you sure you want to clear your previous answers for "$challengeName"?');"""
       input { type = InputType.hidden; name = LANGUAGE_NAME_KEY; value = languageName.value }
       input { type = InputType.hidden; name = GROUP_NAME_KEY; value = groupName.value }
       input { type = InputType.hidden; name = CHALLENGE_NAME_KEY; value = challengeName.value }

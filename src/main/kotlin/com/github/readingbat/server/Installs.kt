@@ -66,7 +66,7 @@ internal object Installs : KLogging() {
 
     if (content.production) {
       install(HerokuHttpsRedirect) {
-        host = content.siteUrlPrefix.substringAfter("://")
+        host = content.urlPrefix.substringAfter("://")
         permanentRedirect = false
 
         excludePrefix("$STATIC_ROOT/")

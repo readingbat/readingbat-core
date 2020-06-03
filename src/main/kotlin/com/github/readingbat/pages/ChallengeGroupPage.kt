@@ -32,9 +32,15 @@ import com.github.readingbat.misc.Constants.MSG
 import com.github.readingbat.misc.Constants.STATIC_ROOT
 import com.github.readingbat.misc.Constants.WHITE_CHECK
 import com.github.readingbat.misc.Endpoints.CHALLENGE_GROUP_ENDPOINT
+import com.github.readingbat.misc.Endpoints.CLEAR_GROUP_ANSWERS_ENDPOINT
+import com.github.readingbat.misc.FormFields.CHALLENGE_ANSWERS_KEY
+import com.github.readingbat.misc.FormFields.GROUP_NAME_KEY
+import com.github.readingbat.misc.FormFields.LANGUAGE_NAME_KEY
 import com.github.readingbat.misc.PageUtils.pathOf
 import com.github.readingbat.misc.User
+import com.github.readingbat.misc.User.Companion.challengeAnswersKey
 import com.github.readingbat.misc.User.Companion.correctAnswersKey
+import com.github.readingbat.misc.User.Companion.gson
 import com.github.readingbat.pages.PageCommon.backLink
 import com.github.readingbat.pages.PageCommon.bodyHeader
 import com.github.readingbat.pages.PageCommon.headDefault
@@ -137,6 +143,9 @@ internal object ChallengeGroupPage : KLogging() {
             }
           }
 
+          if (activeClassCode.isNotEnabled)
+            clearGroupAnswerHistory(user, browserSession, languageName, groupName, challenges)
+
           backLink(CHALLENGE_ROOT, languageName.value)
 
           if (enrollees.isNotEmpty())
@@ -167,4 +176,40 @@ internal object ChallengeGroupPage : KLogging() {
         """.trimIndent())
     }
   }
+
+  private fun BODY.clearGroupAnswerHistory(user: User?,
+                                           browserSession: BrowserSession?,
+                                           languageName: LanguageName,
+                                           groupName: GroupName,
+                                           challenges: List<Challenge>) {
+
+    val challengeAnswerKeys =
+      challenges
+        .map { challenge ->
+          challengeAnswersKey(user,
+                              browserSession,
+                              challenge.languageType.languageName,
+                              challenge.groupName,
+                              challenge.challengeName)
+        }
+
+    val challengeAnswersKey = gson.toJson(challengeAnswerKeys)
+
+    p {
+      form {
+        style = "margin:0;"
+        action = CLEAR_GROUP_ANSWERS_ENDPOINT
+        method = FormMethod.post
+        onSubmit = """return confirm('Are you sure you want to clear your previous answers for group "$groupName"?');"""
+        input { type = InputType.hidden; name = LANGUAGE_NAME_KEY; value = languageName.value }
+        input { type = InputType.hidden; name = GROUP_NAME_KEY; value = groupName.value }
+        input { type = InputType.hidden; name = CHALLENGE_ANSWERS_KEY; value = challengeAnswersKey }
+        input {
+          style = "vertical-align:middle; margin-top:1; margin-bottom:0;"
+          type = InputType.submit; value = "Clear answer history"
+        }
+      }
+    }
+  }
+
 }

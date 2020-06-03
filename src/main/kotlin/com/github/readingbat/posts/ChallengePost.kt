@@ -36,7 +36,8 @@ import com.github.readingbat.misc.FormFields.CHALLENGE_NAME_KEY
 import com.github.readingbat.misc.FormFields.GROUP_NAME_KEY
 import com.github.readingbat.misc.FormFields.LANGUAGE_NAME_KEY
 import com.github.readingbat.misc.PageUtils.pathOf
-import com.github.readingbat.misc.User.Companion.saveAnswers
+import com.github.readingbat.misc.User.Companion.gson
+import com.github.readingbat.misc.User.Companion.saveChallengeAnswers
 import com.github.readingbat.server.*
 import com.github.readingbat.server.ChallengeName.Companion.getChallengeName
 import com.github.readingbat.server.GroupName.Companion.getGroupName
@@ -177,7 +178,7 @@ internal object ChallengePost : KLogging() {
     if (redis != null) {
       val principal = fetchPrincipal()
       val browserSession = call.sessions.get<BrowserSession>()
-      saveAnswers(content, principal, browserSession, redis, names, paramMap, funcInfo, userResps, results)
+      saveChallengeAnswers(content, principal, browserSession, redis, names, paramMap, funcInfo, userResps, results)
     }
 
     /*
@@ -190,7 +191,7 @@ internal object ChallengePost : KLogging() {
     call.respondText(results.map { it.correct }.toString())
   }
 
-  suspend fun PipelineCall.clearAnswers(content: ReadingBatContent, redis: Jedis?): String {
+  suspend fun PipelineCall.clearChallengeAnswers(content: ReadingBatContent, redis: Jedis): String {
     val parameters = call.receiveParameters()
     val languageName = parameters.getLanguageName(LANGUAGE_NAME_KEY)
     val groupName = parameters.getGroupName(GROUP_NAME_KEY)
@@ -198,12 +199,31 @@ internal object ChallengePost : KLogging() {
     val challengeAnswersKey = parameters[CHALLENGE_ANSWERS_KEY] ?: ""
     val challenge = content.findChallenge(languageName.toLanguageType(), groupName, challengeName)
 
-    if (redis != null && challengeAnswersKey.isNotEmpty()) {
+    if (challengeAnswersKey.isNotEmpty()) {
       logger.info { "Clearing answers for $challenge" }
       redis.del(challengeAnswersKey)
     }
 
     val path = pathOf(CHALLENGE_ROOT, languageName, groupName, challengeName)
+    throw RedirectException("$path?$MSG=${"Answers cleared".encode()}")
+  }
+
+  suspend fun PipelineCall.clearGroupAnswers(content: ReadingBatContent, redis: Jedis): String {
+    val parameters = call.receiveParameters()
+    val languageName = parameters.getLanguageName(LANGUAGE_NAME_KEY)
+    val groupName = parameters.getGroupName(GROUP_NAME_KEY)
+    val json = parameters[CHALLENGE_ANSWERS_KEY] ?: ""
+    val challengeAnswersKeys = gson.fromJson(json, List::class.java) as List<String>
+
+    challengeAnswersKeys
+      .forEach { challengeAnswersKey ->
+        if (challengeAnswersKey.isNotEmpty()) {
+          logger.info { "Clearing answers for $challengeAnswersKey" }
+          redis.del(challengeAnswersKey)
+        }
+      }
+
+    val path = pathOf(CHALLENGE_ROOT, languageName, groupName)
     throw RedirectException("$path?$MSG=${"Answers cleared".encode()}")
   }
 

@@ -179,7 +179,7 @@ internal object TeacherPrefsPage : KLogging() {
               type = radio; name = CLASSES_CHOICE; value = CLASSES_DISABLED; checked = activeClassCode.isNotEnabled
             }
           }
-          td { colSpan = "3"; +"Disable active class" }
+          td { colSpan = "3"; +"Student mode" }
         }
         this@table.tr {
           td {}

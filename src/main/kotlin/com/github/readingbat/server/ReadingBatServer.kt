@@ -50,7 +50,7 @@ internal fun Application.module() {
         val site = "site"
         val challenges = "challenges"
         val classes = "classes"
-        siteUrlPrefix = property("$readingBat.$site.urlPrefix", default = "https://readingbat.com")
+        urlPrefix = property("$readingBat.$site.urlPrefix", default = "https://readingbat.com")
         googleAnalyticsId = property("$readingBat.$site.googleAnalyticsId")
         production = property("$readingBat.$site.production", default = "false").toBoolean()
         maxHistoryLength = property("$readingBat.$challenges.maxHistoryLength", default = "10").toInt()

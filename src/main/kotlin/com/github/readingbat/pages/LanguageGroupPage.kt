@@ -17,6 +17,7 @@
 
 package com.github.readingbat.pages
 
+import com.github.pambrose.common.util.pluralize
 import com.github.readingbat.dsl.ChallengeGroup
 import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.dsl.ReadingBatContent
@@ -24,6 +25,7 @@ import com.github.readingbat.misc.BrowserSession
 import com.github.readingbat.misc.CSSNames.FUNC_ITEM
 import com.github.readingbat.misc.CSSNames.GROUP_CHOICE
 import com.github.readingbat.misc.CSSNames.GROUP_ITEM_SRC
+import com.github.readingbat.misc.ClassCode.Companion.INACTIVE_CLASS_CODE
 import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
 import com.github.readingbat.misc.Constants.GREEN_CHECK
 import com.github.readingbat.misc.Constants.MSG
@@ -60,36 +62,48 @@ internal object LanguageGroupPage {
         val languageName = languageType.languageName
         val loginPath = pathOf(CHALLENGE_ROOT, languageName)
         val groups = content.findLanguage(languageType).challengeGroups
+        val user = principal?.toUser()
+        val activeClassCode = user?.fetchActiveClassCode(redis) ?: INACTIVE_CLASS_CODE
+        val enrollees =
+          if (redis != null && activeClassCode.isEnabled)
+            activeClassCode.fetchEnrollees(redis)
+          else
+            emptyList()
 
         fun TR.groupItem(redis: Jedis?, user: User?, challengeGroup: ChallengeGroup<*>) {
           val groupName = challengeGroup.groupName
           val parsedDescription = challengeGroup.parsedDescription
           val challenges = challengeGroup.challenges
 
-          val maxCnt = 12
           var cnt = 0
+          val maxCnt = 12
           var maxFound = false
-          for (challenge in challenges) {
-            if (challenge.isCorrect(redis, user, browserSession))
-              cnt++
-            if (cnt == maxCnt + 1) {
-              maxFound = true
-              break
+
+          if (activeClassCode.isNotEnabled) {
+            for (challenge in challenges) {
+              if (challenge.isCorrect(redis, user, browserSession))
+                cnt++
+              if (cnt == maxCnt + 1) {
+                maxFound = true
+                break
+              }
             }
           }
 
           td(classes = FUNC_ITEM) {
             div(classes = GROUP_ITEM_SRC) {
-              a(classes = GROUP_CHOICE) {
-                href = pathOf(CHALLENGE_ROOT, languageName, groupName); +groupName.value
-              }
+              a(classes = GROUP_CHOICE) { href = pathOf(CHALLENGE_ROOT, languageName, groupName); +groupName.value }
+
               br { rawHtml(if (parsedDescription.isNotBlank()) parsedDescription else nbsp.text) }
-              if (cnt == 0) {
-                img { src = "$STATIC_ROOT/$WHITE_CHECK" }
-              }
-              else {
-                repeat(if (maxFound) cnt - 1 else cnt) { img { src = "$STATIC_ROOT/$GREEN_CHECK" } }
-                if (maxFound) rawHtml("&hellip;")
+
+              if (activeClassCode.isNotEnabled) {
+                if (cnt == 0) {
+                  img { src = "$STATIC_ROOT/$WHITE_CHECK" }
+                }
+                else {
+                  repeat(if (maxFound) cnt - 1 else cnt) { img { src = "$STATIC_ROOT/$GREEN_CHECK" } }
+                  if (maxFound) rawHtml("&hellip;")
+                }
               }
             }
           }
@@ -101,11 +115,19 @@ internal object LanguageGroupPage {
           val msg = queryParam(MSG) ?: ""
           bodyHeader(redis, principal, loginAttempt, content, languageType, loginPath, true, msg)
 
+          if (redis != null && activeClassCode.isEnabled) {
+            val classDesc = activeClassCode.fetchClassDesc(redis)
+            val studentCount = if (enrollees.isEmpty()) "No" else enrollees.count().toString()
+            h3 {
+              style = "margin-left: 1em; color: ${ChallengePage.headerColor}"
+              +"$studentCount ${"student".pluralize(enrollees.count())} enrolled in $classDesc [$activeClassCode]"
+            }
+          }
+
           table {
             val cols = 3
             val size = groups.size
             val rows = size.rows(cols)
-            val user = principal?.toUser()
 
             (0 until rows).forEach { i ->
               tr {

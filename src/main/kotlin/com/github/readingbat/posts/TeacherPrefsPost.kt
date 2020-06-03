@@ -98,7 +98,7 @@ internal object TeacherPrefsPost {
     val msg =
       when {
         activeClassCode.isNotEnabled && classCode.isNotEnabled -> {
-          "Active class disabled"
+          "Student mode enabled"
         }
         activeClassCode == classCode -> {
           "Same active class selected [$classCode]"
@@ -106,7 +106,7 @@ internal object TeacherPrefsPost {
         else -> {
           user.assignActiveClassCode(classCode, redis)
           if (classCode.isNotEnabled)
-            "Active class disabled"
+            "Student mode enabled"
           else
             "Active class updated to ${classCode.fetchClassDesc(redis)} [$classCode]"
         }

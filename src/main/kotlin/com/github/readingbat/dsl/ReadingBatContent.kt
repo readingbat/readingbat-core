@@ -27,7 +27,7 @@ import com.github.readingbat.server.Language
 
 @ReadingBatDslMarker
 class ReadingBatContent {
-  internal var siteUrlPrefix = ""
+  internal var urlPrefix = ""
   internal var googleAnalyticsId = ""
   internal var production = false
   internal var maxHistoryLength = 10

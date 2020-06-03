@@ -53,7 +53,8 @@ internal object Endpoints {
   const val CHALLENGE_ENDPOINT = "/challenge"
   const val CHALLENGE_GROUP_ENDPOINT = "/challenge-group"
   const val CHECK_ANSWERS_ENDPOINT = "/check-answers"
-  const val CLEAR_ANSWERS_ENDPOINT = "/clear-answers"
+  const val CLEAR_GROUP_ANSWERS_ENDPOINT = "/clear-group-answers"
+  const val CLEAR_CHALLENGE_ANSWERS_ENDPOINT = "/clear-challenge-answers"
 }
 
 internal object ParameterIds {

@@ -23,7 +23,7 @@ import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.ClassCode
 import com.github.readingbat.misc.Endpoints.CHALLENGE_ENDPOINT
 import com.github.readingbat.misc.Endpoints.CHALLENGE_GROUP_ENDPOINT
-import com.github.readingbat.misc.User
+import com.github.readingbat.misc.User.Companion.gson
 import com.github.readingbat.posts.ChallengeHistory
 import io.ktor.http.cio.websocket.CloseReason
 import io.ktor.http.cio.websocket.CloseReason.Codes
@@ -108,7 +108,7 @@ internal object WsEndoints : KLogging() {
                             attempted++
                             val json = redis[answerHistoryKey] ?: ""
                             val history =
-                              User.gson.fromJson(json, ChallengeHistory::class.java) ?: ChallengeHistory(invocation)
+                              gson.fromJson(json, ChallengeHistory::class.java) ?: ChallengeHistory(invocation)
                             if (history.correct)
                               numCorrect++
                           }
@@ -128,7 +128,7 @@ internal object WsEndoints : KLogging() {
 
                     val msg = " ($numCalls | $totAttemptedAtLeastOne | $totAllCorrect | ${"%.1f".format(avgCorrect)})"
                     val challengeStats = ChallengeStats(challengeName.value, msg)
-                    val json = User.gson.toJson(challengeStats)
+                    val json = gson.toJson(challengeStats)
 
                     runBlocking {
                       logger.debug { "Sending data $json" }

@@ -300,15 +300,15 @@ internal class User private constructor(val id: String) {
       return user
     }
 
-    fun saveAnswers(content: ReadingBatContent,
-                    principal: UserPrincipal?,
-                    browserSession: BrowserSession?,
-                    redis: Jedis,
-                    names: ChallengeNames,
-                    paramMap: Map<String, String>,
-                    funcInfo: FunctionInfo,
-                    userResps: List<Map.Entry<String, List<String>>>,
-                    results: List<ChallengeResults>) {
+    fun saveChallengeAnswers(content: ReadingBatContent,
+                             principal: UserPrincipal?,
+                             browserSession: BrowserSession?,
+                             redis: Jedis,
+                             names: ChallengeNames,
+                             paramMap: Map<String, String>,
+                             funcInfo: FunctionInfo,
+                             userResps: List<Map.Entry<String, List<String>>>,
+                             results: List<ChallengeResults>) {
       val user = principal?.toUser()
       val challengeAnswerKey = challengeAnswersKey(user, browserSession, names)
       val correctAnswersKey = correctAnswersKey(user, browserSession, names)

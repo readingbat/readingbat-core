@@ -32,7 +32,8 @@ import com.github.readingbat.misc.Constants.STATIC_ROOT
 import com.github.readingbat.misc.Endpoints.ABOUT_ENDPOINT
 import com.github.readingbat.misc.Endpoints.ADMIN_ENDPOINT
 import com.github.readingbat.misc.Endpoints.CHECK_ANSWERS_ENDPOINT
-import com.github.readingbat.misc.Endpoints.CLEAR_ANSWERS_ENDPOINT
+import com.github.readingbat.misc.Endpoints.CLEAR_CHALLENGE_ANSWERS_ENDPOINT
+import com.github.readingbat.misc.Endpoints.CLEAR_GROUP_ANSWERS_ENDPOINT
 import com.github.readingbat.misc.Endpoints.CREATE_ACCOUNT_ENDPOINT
 import com.github.readingbat.misc.Endpoints.CSS_ENDPOINT
 import com.github.readingbat.misc.Endpoints.FAV_ICON_ENDPOINT
@@ -54,7 +55,8 @@ import com.github.readingbat.pages.TeacherPrefsPage.teacherPrefsPage
 import com.github.readingbat.pages.UserPrefsPage.userPrefsPage
 import com.github.readingbat.posts.AdminPost.adminActions
 import com.github.readingbat.posts.ChallengePost.checkAnswers
-import com.github.readingbat.posts.ChallengePost.clearAnswers
+import com.github.readingbat.posts.ChallengePost.clearChallengeAnswers
+import com.github.readingbat.posts.ChallengePost.clearGroupAnswers
 import com.github.readingbat.posts.CreateAccountPost.createAccount
 import com.github.readingbat.posts.PasswordResetPost.changePassword
 import com.github.readingbat.posts.PasswordResetPost.sendPasswordReset
@@ -112,7 +114,14 @@ internal fun Routing.userRoutes(content: ReadingBatContent) {
 
   post(CHECK_ANSWERS_ENDPOINT) { withSuspendingRedisPool { redis -> checkAnswers(content, redis) } }
 
-  post(CLEAR_ANSWERS_ENDPOINT) { respondWithSuspendingDbmsCheck { redis -> clearAnswers(content, redis) } }
+  post(CLEAR_GROUP_ANSWERS_ENDPOINT) { respondWithSuspendingDbmsCheck { redis -> clearGroupAnswers(content, redis) } }
+
+  post(CLEAR_CHALLENGE_ANSWERS_ENDPOINT) {
+    respondWithSuspendingDbmsCheck { redis ->
+      clearChallengeAnswers(content,
+                            redis)
+    }
+  }
 
   get(CREATE_ACCOUNT_ENDPOINT) { respondWith { createAccountPage(content) } }
 
