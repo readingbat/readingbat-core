@@ -32,7 +32,7 @@ import com.github.readingbat.misc.Constants.STATIC_ROOT
 import com.github.readingbat.misc.Endpoints.CSS_ENDPOINT
 import com.github.readingbat.misc.Endpoints.PRIVACY_ENDPOINT
 import com.github.readingbat.misc.PageUtils.pathOf
-import com.github.readingbat.misc.UserPrincipal
+import com.github.readingbat.misc.User
 import com.github.readingbat.pages.HelpAndLogin.helpAndLogin
 import com.github.readingbat.server.PipelineCall
 import io.ktor.application.call
@@ -93,22 +93,22 @@ internal object PageCommon {
     }
   }
 
-  fun BODY.bodyHeader(redis: Jedis?,
-                      principal: UserPrincipal?,
+  fun BODY.bodyHeader(user: User?,
                       loginAttempt: Boolean,
                       content: ReadingBatContent,
                       languageType: LanguageType,
                       loginPath: String,
+                      redis: Jedis?,
                       displayWelcomeMsg: Boolean,
                       msg: String = "") {
 
-    helpAndLogin(redis, principal, loginPath)
+    helpAndLogin(user, loginPath, redis)
 
     bodyTitle()
 
     p { if (displayWelcomeMsg) +"Welcome to ReadingBat." else rawHtml(nbsp.text) }
 
-    if (loginAttempt && principal == null)
+    if (loginAttempt && user == null)
       p { span { style = "color:red;"; +"Failed to login -- incorrect email or password" } }
 
     p { span { style = "color:green; max-width:800;"; if (msg.isNotEmpty()) +msg else rawHtml(nbsp.text) } }

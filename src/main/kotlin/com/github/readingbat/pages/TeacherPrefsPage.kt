@@ -18,11 +18,9 @@
 package com.github.readingbat.pages
 
 import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.misc.ClassCode
-import com.github.readingbat.misc.Constants
+import com.github.readingbat.misc.*
 import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.Endpoints.TEACHER_PREFS_ENDPOINT
-import com.github.readingbat.misc.FormFields
 import com.github.readingbat.misc.FormFields.CLASSES_CHOICE
 import com.github.readingbat.misc.FormFields.CLASSES_DISABLED
 import com.github.readingbat.misc.FormFields.CLASS_CODE
@@ -30,9 +28,7 @@ import com.github.readingbat.misc.FormFields.CREATE_CLASS
 import com.github.readingbat.misc.FormFields.DELETE_CLASS
 import com.github.readingbat.misc.FormFields.UPDATE_ACTIVE_CLASS
 import com.github.readingbat.misc.FormFields.USER_PREFS_ACTION
-import com.github.readingbat.misc.User
 import com.github.readingbat.misc.User.Companion.fetchActiveClassCode
-import com.github.readingbat.misc.User.Companion.isValidPrincipal
 import com.github.readingbat.pages.HelpAndLogin.helpAndLogin
 import com.github.readingbat.pages.PageCommon.backLink
 import com.github.readingbat.pages.PageCommon.bodyTitle
@@ -44,7 +40,6 @@ import com.github.readingbat.pages.PageCommon.rawHtml
 import com.github.readingbat.pages.UserPrefsPage.divStyle
 import com.github.readingbat.pages.UserPrefsPage.requestLogInPage
 import com.github.readingbat.server.PipelineCall
-import com.github.readingbat.server.ServerUtils.fetchPrincipal
 import com.github.readingbat.server.ServerUtils.queryParam
 import kotlinx.html.*
 import kotlinx.html.InputType.radio
@@ -58,23 +53,22 @@ internal object TeacherPrefsPage : KLogging() {
   private const val createClassButton = "CreateClassButton"
 
   fun PipelineCall.teacherPrefsPage(content: ReadingBatContent,
-                                    redis: Jedis,
+                                    user: User?,
                                     msg: String,
                                     isErrorMsg: Boolean,
-                                    defaultClassDesc: String = ""): String {
-    val principal = fetchPrincipal()
-    return if (principal != null && isValidPrincipal(principal, redis))
-      teacherPrefsWithLoginPage(content, redis, principal.toUser(), msg, isErrorMsg, defaultClassDesc)
+                                    redis: Jedis,
+                                    defaultClassDesc: String = "") =
+    if (user.isValidUser(redis))
+      teacherPrefsWithLoginPage(content, user, msg, isErrorMsg, defaultClassDesc, redis)
     else
       requestLogInPage(content, redis)
-  }
 
   private fun PipelineCall.teacherPrefsWithLoginPage(content: ReadingBatContent,
-                                                     redis: Jedis,
                                                      user: User,
                                                      msg: String,
                                                      isErrorMsg: Boolean,
-                                                     defaultClassDesc: String) =
+                                                     defaultClassDesc: String,
+                                                     redis: Jedis) =
     createHTML()
       .html {
         head {
@@ -85,7 +79,7 @@ internal object TeacherPrefsPage : KLogging() {
         body {
           val returnPath = queryParam(RETURN_PATH) ?: "/"
 
-          helpAndLogin(redis, fetchPrincipal(), returnPath)
+          helpAndLogin(user, returnPath, redis)
           bodyTitle()
 
           h2 { +"ReadingBat User Preferences" }
@@ -93,7 +87,7 @@ internal object TeacherPrefsPage : KLogging() {
           p { span { style = "color:${if (isErrorMsg) "red" else "green"};"; this@body.displayMessage(msg) } }
 
           createClass(defaultClassDesc)
-          displayClasses(redis, user)
+          displayClasses(user, redis)
 
           privacyStatement(TEACHER_PREFS_ENDPOINT, returnPath)
 
@@ -131,7 +125,7 @@ internal object TeacherPrefsPage : KLogging() {
     }
   }
 
-  private fun BODY.displayClasses(redis: Jedis, user: User) {
+  private fun BODY.displayClasses(user: User, redis: Jedis) {
     val classCodes = redis.smembers(user.userClassesKey).map { ClassCode(it) }
     if (classCodes.isNotEmpty()) {
       val activeClassCode = user.fetchActiveClassCode(redis)

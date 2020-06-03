@@ -35,7 +35,6 @@ import com.github.readingbat.misc.KeyConstants.EMAIL_FIELD
 import com.github.readingbat.misc.KeyConstants.ENROLLED_CLASS_CODE_FIELD
 import com.github.readingbat.misc.KeyConstants.KEY_SEP
 import com.github.readingbat.misc.KeyConstants.NAME_FIELD
-import com.github.readingbat.misc.KeyConstants.RESET_KEY
 import com.github.readingbat.misc.KeyConstants.SALT_FIELD
 import com.github.readingbat.misc.KeyConstants.USER_CLASSES_KEY
 import com.github.readingbat.misc.KeyConstants.USER_INFO_KEY
@@ -55,6 +54,7 @@ import com.google.gson.Gson
 import mu.KLogging
 import redis.clients.jedis.Jedis
 import redis.clients.jedis.Transaction
+import kotlin.contracts.contract
 
 internal class User private constructor(val id: String) {
 
@@ -98,6 +98,7 @@ internal class User private constructor(val id: String) {
   fun assignEnrolledClassCode(classCode: ClassCode, tx: Transaction) {
     tx.hset(userInfoKey, ENROLLED_CLASS_CODE_FIELD, classCode.value)
   }
+
 
   fun assignActiveClassCode(classCode: ClassCode, redis: Jedis) {
     redis.hset(userInfoKey, ACTIVE_CLASS_CODE_FIELD, if (classCode.isStudentMode) "" else classCode.value)
@@ -188,15 +189,14 @@ internal class User private constructor(val id: String) {
                            tx: Transaction) {
     if (previousResetId.isNotBlank()) {
       tx.del(userPasswordResetKey)
-      tx.del(passwordResetKey(previousResetId))
+      tx.del(previousResetId.passwordResetKey)
     }
 
     tx.set(userPasswordResetKey, newResetId.value)
-    tx.set(passwordResetKey(newResetId), email.value)
+    tx.set(newResetId.passwordResetKey, email.value)
   }
 
-  fun deleteUser(principal: UserPrincipal, redis: Jedis) {
-    val user = principal.toUser()
+  fun deleteUser(user: User, redis: Jedis) {
     val userEmailKey = user.email(redis).userEmailKey
 
     val correctAnswers = redis.keys(correctAnswersKey(ANY_LANGUAGE, ANY_GROUP, ANY_CHALLENGE))
@@ -208,7 +208,7 @@ internal class User private constructor(val id: String) {
 
     val previousResetId = redis.get(userPasswordResetKey)?.let { ResetId(it) } ?: EMPTY_RESET_ID
 
-    logger.info { "Deleting User: ${principal.userId} ${user.email(redis)}" }
+    logger.info { "Deleting User: ${user.id} ${user.email(redis)}" }
     logger.info { "User Email: $userEmailKey" }
     logger.info { "User Info: $userInfoKey" }
     logger.info { "User Classes: $userClassesKey" }
@@ -220,7 +220,7 @@ internal class User private constructor(val id: String) {
     redis.multi().also { tx ->
       if (previousResetId.isNotBlank()) {
         tx.del(userPasswordResetKey)
-        tx.del(passwordResetKey(previousResetId))
+        tx.del(previousResetId.passwordResetKey)
       }
 
       tx.del(userEmailKey)
@@ -291,9 +291,6 @@ internal class User private constructor(val id: String) {
     fun User?.answerHistoryKey(browserSession: BrowserSession?, names: ChallengeNames, invocation: Invocation) =
       this?.answerHistoryKey(names, invocation) ?: browserSession?.answerHistoryKey(names, invocation) ?: ""
 
-    // Maps resetId to username
-    fun passwordResetKey(resetId: ResetId) = listOf(RESET_KEY, resetId.value).joinToString(KEY_SEP)
-
     fun createUser(name: FullName, email: Email, password: Password, redis: Jedis): User {
       // The userName (email) is stored in a single KV pair, enabling changes to the userName
       // Three things are stored:
@@ -318,19 +315,17 @@ internal class User private constructor(val id: String) {
       return user
     }
 
-    fun saveChallengeAnswers(content: ReadingBatContent,
-                             principal: UserPrincipal?,
-                             browserSession: BrowserSession?,
-                             redis: Jedis,
-                             names: ChallengeNames,
-                             paramMap: Map<String, String>,
-                             funcInfo: FunctionInfo,
-                             userResps: List<Map.Entry<String, List<String>>>,
-                             results: List<ChallengeResults>) {
-      val user = principal?.toUser()
-      val challengeAnswerKey = user.challengeAnswersKey(browserSession, names)
-      val correctAnswersKey = user.correctAnswersKey(browserSession, names)
-      val enrolledClassCode = user.fetchEnrolledClassCode(redis)
+    fun User?.saveChallengeAnswers(content: ReadingBatContent,
+                                   browserSession: BrowserSession?,
+                                   names: ChallengeNames,
+                                   paramMap: Map<String, String>,
+                                   funcInfo: FunctionInfo,
+                                   userResps: List<Map.Entry<String, List<String>>>,
+                                   results: List<ChallengeResults>,
+                                   redis: Jedis) {
+      val challengeAnswerKey = challengeAnswersKey(browserSession, names)
+      val correctAnswersKey = correctAnswersKey(browserSession, names)
+      val enrolledClassCode = fetchEnrolledClassCode(redis)
       val complete = results.all { it.correct }
       val numCorrect = results.count { it.correct }
 
@@ -356,7 +351,7 @@ internal class User private constructor(val id: String) {
       results
         .filter { it.answered }
         .forEach { result ->
-          val answerHistoryKey = user.answerHistoryKey(browserSession, names, result.invocation)
+          val answerHistoryKey = answerHistoryKey(browserSession, names, result.invocation)
           if (answerHistoryKey.isNotEmpty()) {
             val history =
               gson.fromJson(redis[answerHistoryKey], ChallengeHistory::class.java)
@@ -367,20 +362,18 @@ internal class User private constructor(val id: String) {
 
             // Publish to challenge dashboard
             // First check if enrolled in a class
-            if (enrolledClassCode.isTeacherMode && user != null) {
+            if (enrolledClassCode.isTeacherMode && this != null) {
               // Check to see if owner of class has it set as their active class
               val teacherId = enrolledClassCode.fetchClassTeacherId(redis)
               if (teacherId.isNotEmpty() && teacherId.toUser().fetchActiveClassCode(redis) == enrolledClassCode) {
                 logger.info { "Publishing data $json" }
-                val browserInfo = DashboardInfo(content.maxHistoryLength, user.id, complete, numCorrect, history)
+                val browserInfo = DashboardInfo(content.maxHistoryLength, id, complete, numCorrect, history)
                 redis.publish(enrolledClassCode.value, gson.toJson(browserInfo))
               }
             }
           }
         }
     }
-
-    fun isValidPrincipal(principal: UserPrincipal, redis: Jedis) = redis.hlen(principal.toUser().userInfoKey) > 0
 
     fun isRegisteredEmail(email: Email, redis: Jedis) = lookupUserByEmail(email, redis) != null
 
@@ -391,4 +384,11 @@ internal class User private constructor(val id: String) {
   }
 
   internal data class ChallengeAnswers(val id: String, val answers: MutableMap<String, String> = mutableMapOf())
+}
+
+internal fun User?.isValidUser(redis: Jedis): Boolean {
+  contract {
+    returns(true) implies (this@isValidUser is User)
+  }
+  return if (this == null) false else redis.hlen(userInfoKey) > 0
 }

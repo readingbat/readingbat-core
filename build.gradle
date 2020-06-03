@@ -138,6 +138,7 @@ compileKotlin {
                                        '-Xuse-experimental=io.ktor.locations.KtorExperimentalLocationsAPI',
                                        '-Xuse-experimental=kotlinx.coroutines.ExperimentalCoroutinesApi',
                                        '-Xuse-experimental=kotlin.ExperimentalStdlibApi',
+                                       '-Xuse-experimental=kotlin.contracts.ExperimentalContracts',
                                        '-XXLanguage:+InlineClasses']
 }
 

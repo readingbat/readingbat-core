@@ -25,13 +25,13 @@ import com.github.readingbat.misc.CSSNames.KOTLIN_CODE
 import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
 import com.github.readingbat.misc.Constants.STATIC_ROOT
 import com.github.readingbat.misc.PageUtils.pathOf
+import com.github.readingbat.misc.User
 import com.github.readingbat.pages.PageCommon.addLink
 import com.github.readingbat.pages.PageCommon.backLink
 import com.github.readingbat.pages.PageCommon.bodyHeader
 import com.github.readingbat.pages.PageCommon.headDefault
 import com.github.readingbat.pages.PageCommon.rawHtml
 import com.github.readingbat.server.PipelineCall
-import com.github.readingbat.server.ServerUtils.fetchPrincipal
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 import org.apache.commons.text.StringEscapeUtils.escapeHtml4
@@ -45,12 +45,12 @@ import kotlin.collections.set
 internal object PlaygroundPage {
 
   fun PipelineCall.playgroundPage(content: ReadingBatContent,
-                                  redis: Jedis?,
+                                  user: User?,
                                   challenge: Challenge,
-                                  loginAttempt: Boolean) =
+                                  loginAttempt: Boolean,
+                                  redis: Jedis?) =
     createHTML()
       .html {
-        val principal = fetchPrincipal(loginAttempt)
         val languageType = challenge.languageType
         val groupName = challenge.groupName
         val challengeName = challenge.challengeName
@@ -64,7 +64,7 @@ internal object PlaygroundPage {
         }
 
         body {
-          bodyHeader(redis, principal, loginAttempt, content, languageType, loginPath, false)
+          bodyHeader(user, loginAttempt, content, languageType, loginPath, redis, false)
 
           h2 {
             val groupPath = pathOf(CHALLENGE_ROOT, languageName, groupName)

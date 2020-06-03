@@ -30,7 +30,6 @@ import com.github.readingbat.misc.FormFields.NEW_PASSWORD
 import com.github.readingbat.misc.FormFields.UPDATE_PASSWORD
 import com.github.readingbat.misc.FormFields.USER_PREFS_ACTION
 import com.github.readingbat.misc.PageUtils.hideShowButton
-import com.github.readingbat.misc.User
 import com.github.readingbat.pages.PageCommon.backLink
 import com.github.readingbat.pages.PageCommon.bodyTitle
 import com.github.readingbat.pages.PageCommon.clickButtonScript
@@ -52,12 +51,15 @@ internal object PasswordResetPage : KLogging() {
   const val formName = "pform"
   const val passwordButton = "UpdatePasswordButton"
 
-  fun PipelineCall.passwordResetPage(content: ReadingBatContent, redis: Jedis, resetId: ResetId, msg: String): String =
+  fun PipelineCall.passwordResetPage(content: ReadingBatContent,
+                                     resetId: ResetId,
+                                     msg: String,
+                                     redis: Jedis): String =
     if (resetId.isBlank())
       requestPasswordResetPage(content, msg)
     else {
       try {
-        val passwordResetKey = User.passwordResetKey(resetId)
+        val passwordResetKey = resetId.passwordResetKey
         val email = Email(redis.get(passwordResetKey) ?: throw ResetPasswordException(INVALID_RESET_ID))
         changePasswordPage(content, email, resetId, msg)
       } catch (e: ResetPasswordException) {

@@ -34,43 +34,43 @@ import com.github.readingbat.misc.User.Companion.fetchActiveClassCode
 import com.github.readingbat.pages.TeacherPrefsPage.teacherPrefsPage
 import com.github.readingbat.pages.UserPrefsPage.requestLogInPage
 import com.github.readingbat.server.PipelineCall
-import com.github.readingbat.server.ServerUtils.fetchPrincipal
 import io.ktor.application.call
 import io.ktor.request.receiveParameters
 import redis.clients.jedis.Jedis
 
 internal object TeacherPrefsPost {
-  suspend fun PipelineCall.teacherPrefs(content: ReadingBatContent, redis: Jedis): String {
-    val parameters = call.receiveParameters()
-    val principal = fetchPrincipal()
-    val user = principal?.toUser()
-
-    return if (user == null) {
+  suspend fun PipelineCall.teacherPrefs(content: ReadingBatContent, user: User?, redis: Jedis) =
+    if (user == null) {
       requestLogInPage(content, redis)
     }
     else {
+      val parameters = call.receiveParameters()
       when (val action = parameters[USER_PREFS_ACTION] ?: "") {
-        CREATE_CLASS -> createClass(content, redis, user, parameters[CLASS_DESC] ?: "")
-        UPDATE_ACTIVE_CLASS -> updateActiveClass(content, redis, user, parameters.getClassCode(CLASSES_CHOICE))
-        DELETE_CLASS -> deleteClass(content, redis, user, parameters.getClassCode(CLASS_CODE))
+        CREATE_CLASS -> createClass(content, user, parameters[CLASS_DESC] ?: "", redis)
+        UPDATE_ACTIVE_CLASS -> updateActiveClass(content, user, parameters.getClassCode(CLASSES_CHOICE), redis)
+        DELETE_CLASS -> deleteClass(content, user, parameters.getClassCode(CLASS_CODE), redis)
         else -> throw InvalidConfigurationException("Invalid action: $action")
       }
     }
-  }
 
   private fun PipelineCall.createClass(content: ReadingBatContent,
-                                       redis: Jedis,
                                        user: User,
-                                       classDesc: String) =
+                                       classDesc: String,
+                                       redis: Jedis) =
     when {
       classDesc.isBlank() -> {
-        teacherPrefsPage(content, redis, "Unable to create class [Empty class description]", true)
+        teacherPrefsPage(content, user, "Unable to create class [Empty class description]", true, redis)
       }
       !user.isUniqueClassDesc(classDesc, redis) -> {
-        teacherPrefsPage(content, redis, "Class description is not unique [$classDesc]", true, classDesc)
+        teacherPrefsPage(content, user, "Class description is not unique [$classDesc]", true, redis, classDesc)
       }
       user.classCount(redis) == content.maxClassCount -> {
-        teacherPrefsPage(content, redis, "Exceeds maximum number classes [${content.maxClassCount}]", true, classDesc)
+        teacherPrefsPage(content,
+                         user,
+                         "Exceeds maximum number classes [${content.maxClassCount}]",
+                         true,
+                         redis,
+                         classDesc)
       }
       else -> {
         val classCode = newClassCode()
@@ -87,14 +87,14 @@ internal object TeacherPrefsPost {
 
           tx.exec()
         }
-        teacherPrefsPage(content, redis, "Created class code: $classCode", false)
+        teacherPrefsPage(content, user, "Created class code: $classCode", false, redis)
       }
     }
 
   private fun PipelineCall.updateActiveClass(content: ReadingBatContent,
-                                             redis: Jedis,
                                              user: User,
-                                             classCode: ClassCode): String {
+                                             classCode: ClassCode,
+                                             redis: Jedis): String {
     val activeClassCode = user.fetchActiveClassCode(redis)
     val msg =
       when {
@@ -113,19 +113,19 @@ internal object TeacherPrefsPost {
         }
       }
 
-    return teacherPrefsPage(content, redis, msg, false)
+    return teacherPrefsPage(content, user, msg, false, redis)
   }
 
   private fun PipelineCall.deleteClass(content: ReadingBatContent,
-                                       redis: Jedis,
                                        user: User,
-                                       classCode: ClassCode) =
+                                       classCode: ClassCode,
+                                       redis: Jedis) =
     when {
       classCode.isStudentMode -> {
-        teacherPrefsPage(content, redis, "Empty class code", true)
+        teacherPrefsPage(content, user, "Empty class code", true, redis)
       }
       classCode.isNotValid(redis) -> {
-        teacherPrefsPage(content, redis, "Invalid class code: $classCode", true)
+        teacherPrefsPage(content, user, "Invalid class code: $classCode", true, redis)
       }
       else -> {
         val activeClassCode = user.fetchActiveClassCode(redis)
@@ -141,7 +141,7 @@ internal object TeacherPrefsPost {
           tx.exec()
         }
 
-        teacherPrefsPage(content, redis, "Deleted class code: $classCode", false)
+        teacherPrefsPage(content, user, "Deleted class code: $classCode", false, redis)
       }
     }
 }

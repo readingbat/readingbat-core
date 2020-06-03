@@ -63,6 +63,7 @@ import com.github.readingbat.posts.PasswordResetPost.sendPasswordReset
 import com.github.readingbat.posts.TeacherPrefsPost.teacherPrefs
 import com.github.readingbat.posts.UserPrefsPost.userPrefs
 import com.github.readingbat.server.ResetId.Companion.EMPTY_RESET_ID
+import com.github.readingbat.server.ServerUtils.fetchUser
 import com.github.readingbat.server.ServerUtils.queryParam
 import io.ktor.application.call
 import io.ktor.http.ContentType.Text.CSS
@@ -72,7 +73,6 @@ import io.ktor.routing.post
 import io.ktor.sessions.clear
 import io.ktor.sessions.sessions
 import redis.clients.jedis.Jedis
-
 
 internal fun Routing.userRoutes(content: ReadingBatContent) {
 
@@ -112,14 +112,15 @@ internal fun Routing.userRoutes(content: ReadingBatContent) {
 
   get(ABOUT_ENDPOINT) { respondWith { aboutPage(content) } }
 
-  post(CHECK_ANSWERS_ENDPOINT) { withSuspendingRedisPool { redis -> checkAnswers(content, redis) } }
+  post(CHECK_ANSWERS_ENDPOINT) { withSuspendingRedisPool { redis -> checkAnswers(content, fetchUser(), redis) } }
 
-  post(CLEAR_GROUP_ANSWERS_ENDPOINT) { respondWithSuspendingDbmsCheck { redis -> clearGroupAnswers(content, redis) } }
+  post(CLEAR_GROUP_ANSWERS_ENDPOINT) {
+    respondWithSuspendingDbmsCheck { redis -> clearGroupAnswers(fetchUser(), redis) }
+  }
 
   post(CLEAR_CHALLENGE_ANSWERS_ENDPOINT) {
     respondWithSuspendingDbmsCheck { redis ->
-      clearChallengeAnswers(content,
-                            redis)
+      clearChallengeAnswers(content, fetchUser(), redis)
     }
   }
 
@@ -127,25 +128,29 @@ internal fun Routing.userRoutes(content: ReadingBatContent) {
 
   post(CREATE_ACCOUNT_ENDPOINT) { respondWithSuspendingDbmsCheck { redis -> createAccount(content, redis) } }
 
-  get(USER_PREFS_ENDPOINT) { respondWithDbmsCheck { redis -> userPrefsPage(content, redis, "", false) } }
+  get(USER_PREFS_ENDPOINT) { respondWithDbmsCheck { redis -> userPrefsPage(content, fetchUser(), "", false, redis) } }
 
-  post(USER_PREFS_ENDPOINT) { respondWithSuspendingDbmsCheck { redis -> userPrefs(content, redis) } }
+  post(USER_PREFS_ENDPOINT) { respondWithSuspendingDbmsCheck { redis -> userPrefs(content, fetchUser(), redis) } }
 
-  get(TEACHER_PREFS_ENDPOINT) { respondWithDbmsCheck { redis -> teacherPrefsPage(content, redis, "", false) } }
+  get(TEACHER_PREFS_ENDPOINT) {
+    respondWithDbmsCheck { redis ->
+      teacherPrefsPage(content, fetchUser(), "", false, redis)
+    }
+  }
 
-  post(TEACHER_PREFS_ENDPOINT) { respondWithSuspendingDbmsCheck { redis -> teacherPrefs(content, redis) } }
+  post(TEACHER_PREFS_ENDPOINT) { respondWithSuspendingDbmsCheck { redis -> teacherPrefs(content, fetchUser(), redis) } }
 
-  get(ADMIN_ENDPOINT) { respondWithDbmsCheck { redis -> adminDataPage(content, redis) } }
+  get(ADMIN_ENDPOINT) { respondWithDbmsCheck { redis -> adminDataPage(content, fetchUser(), redis = redis) } }
 
-  post(ADMIN_ENDPOINT) { respondWithSuspendingDbmsCheck { redis -> adminActions(content, redis) } }
+  post(ADMIN_ENDPOINT) { respondWithSuspendingDbmsCheck { redis -> adminActions(content, fetchUser(), redis) } }
 
   // RESET_ID is passed here when user clicks on email URL
   get(PASSWORD_RESET_ENDPOINT) {
     respondWithDbmsCheck { redis ->
       passwordResetPage(content,
-                        redis,
                         queryParam(RESET_ID)?.let { ResetId(it) } ?: EMPTY_RESET_ID,
-                        "")
+                        "",
+                        redis)
     }
   }
 

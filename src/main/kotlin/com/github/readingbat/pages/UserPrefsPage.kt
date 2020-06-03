@@ -37,7 +37,7 @@ import com.github.readingbat.misc.FormFields.WITHDRAW_FROM_CLASS
 import com.github.readingbat.misc.PageUtils.hideShowButton
 import com.github.readingbat.misc.User
 import com.github.readingbat.misc.User.Companion.fetchEnrolledClassCode
-import com.github.readingbat.misc.User.Companion.isValidPrincipal
+import com.github.readingbat.misc.isValidUser
 import com.github.readingbat.pages.HelpAndLogin.helpAndLogin
 import com.github.readingbat.pages.PageCommon.backLink
 import com.github.readingbat.pages.PageCommon.bodyTitle
@@ -46,7 +46,6 @@ import com.github.readingbat.pages.PageCommon.displayMessage
 import com.github.readingbat.pages.PageCommon.headDefault
 import com.github.readingbat.pages.PageCommon.privacyStatement
 import com.github.readingbat.server.PipelineCall
-import com.github.readingbat.server.ServerUtils.fetchPrincipal
 import com.github.readingbat.server.ServerUtils.queryParam
 import kotlinx.html.*
 import kotlinx.html.InputType.submit
@@ -62,23 +61,22 @@ internal object UserPrefsPage : KLogging() {
   private const val joinClassButton = "JoinClassButton"
 
   fun PipelineCall.userPrefsPage(content: ReadingBatContent,
-                                 redis: Jedis,
+                                 user: User?,
                                  msg: String,
                                  isErrorMsg: Boolean,
-                                 defaultClassCode: ClassCode = STUDENT_CLASS_CODE): String {
-    val principal = fetchPrincipal()
-    return if (principal != null && isValidPrincipal(principal, redis))
-      userPrefsWithLoginPage(content, redis, principal.toUser(), msg, isErrorMsg, defaultClassCode)
+                                 redis: Jedis,
+                                 defaultClassCode: ClassCode = STUDENT_CLASS_CODE) =
+    if (user.isValidUser(redis))
+      userPrefsWithLoginPage(content, user, msg, isErrorMsg, defaultClassCode, redis)
     else
       requestLogInPage(content, redis)
-  }
 
   private fun PipelineCall.userPrefsWithLoginPage(content: ReadingBatContent,
-                                                  redis: Jedis,
                                                   user: User,
                                                   msg: String,
                                                   isErrorMsg: Boolean,
-                                                  defaultClassCode: ClassCode) =
+                                                  defaultClassCode: ClassCode,
+                                                  redis: Jedis) =
     createHTML()
       .html {
         head {
@@ -89,7 +87,7 @@ internal object UserPrefsPage : KLogging() {
         body {
           val returnPath = queryParam(RETURN_PATH) ?: "/"
 
-          helpAndLogin(redis, fetchPrincipal(), returnPath)
+          helpAndLogin(user, returnPath, redis)
 
           bodyTitle()
 
@@ -99,8 +97,8 @@ internal object UserPrefsPage : KLogging() {
 
 
           changePassword()
-          joinOrWithdrawFromClass(redis, user, defaultClassCode)
-          deleteAccount(redis, user)
+          joinOrWithdrawFromClass(user, defaultClassCode, redis)
+          deleteAccount(user, redis)
 
           p {
             style = "margin-left: 1em"
@@ -155,7 +153,9 @@ internal object UserPrefsPage : KLogging() {
     }
   }
 
-  private fun BODY.joinOrWithdrawFromClass(redis: Jedis, user: User, defaultClassCode: ClassCode) {
+  private fun BODY.joinOrWithdrawFromClass(user: User,
+                                           defaultClassCode: ClassCode,
+                                           redis: Jedis) {
     val enrolledClass = user.fetchEnrolledClassCode(redis)
 
     if (enrolledClass.isTeacherMode) {
@@ -249,7 +249,7 @@ internal object UserPrefsPage : KLogging() {
   }
   */
 
-  private fun BODY.deleteAccount(redis: Jedis, user: User) {
+  private fun BODY.deleteAccount(user: User, redis: Jedis) {
     val email = user.email(redis)
     if (email.isNotBlank()) {
       h3 { +"Delete account" }
@@ -277,7 +277,7 @@ internal object UserPrefsPage : KLogging() {
         body {
           val returnPath = queryParam(RETURN_PATH) ?: "/"
 
-          helpAndLogin(redis, fetchPrincipal(), returnPath)
+          helpAndLogin(null, returnPath, redis)
 
           bodyTitle()
 

@@ -67,7 +67,6 @@ import com.github.readingbat.pages.PageCommon.headDefault
 import com.github.readingbat.pages.PageCommon.rawHtml
 import com.github.readingbat.posts.ChallengeHistory
 import com.github.readingbat.server.PipelineCall
-import com.github.readingbat.server.ServerUtils.fetchPrincipal
 import com.github.readingbat.server.ServerUtils.queryParam
 import io.ktor.application.call
 import io.ktor.http.ContentType.Text.CSS
@@ -89,12 +88,12 @@ internal object ChallengePage : KLogging() {
   const val headerColor = "#419DC1"
 
   fun PipelineCall.challengePage(content: ReadingBatContent,
-                                 redis: Jedis?,
+                                 user: User?,
                                  challenge: Challenge,
-                                 loginAttempt: Boolean) =
+                                 loginAttempt: Boolean,
+                                 redis: Jedis?) =
     createHTML()
       .html {
-        val principal = fetchPrincipal(loginAttempt)
         val browserSession = call.sessions.get<BrowserSession>()
         val languageType = challenge.languageType
         val groupName = challenge.groupName
@@ -114,19 +113,18 @@ internal object ChallengePage : KLogging() {
         }
 
         body {
-          bodyHeader(redis, principal, loginAttempt, content, languageType, loginPath, false, queryParam(MSG) ?: "")
+          bodyHeader(user, loginAttempt, content, languageType, loginPath, redis, false, queryParam(MSG) ?: "")
 
           displayChallenge(challenge, funcInfo)
 
-          val user = principal?.toUser()
           val activeClassCode = user.fetchActiveClassCode(redis)
           if (activeClassCode.isStudentMode)
-            displayQuestions(redis, user, browserSession, challenge, funcInfo)
+            displayQuestions(user, browserSession, challenge, funcInfo, redis)
           else {
             if (redis == null)
               p { +DBMS_DOWN }
             else
-              displayStudentProgress(redis, challenge, content.maxHistoryLength, funcInfo, activeClassCode)
+              displayStudentProgress(challenge, content.maxHistoryLength, funcInfo, activeClassCode, redis)
           }
 
           backLink(CHALLENGE_ROOT, languageName.value, groupName.value)
@@ -161,11 +159,11 @@ internal object ChallengePage : KLogging() {
     }
   }
 
-  private fun BODY.displayQuestions(redis: Jedis?,
-                                    user: User?,
+  private fun BODY.displayQuestions(user: User?,
                                     browserSession: BrowserSession?,
                                     challenge: Challenge,
-                                    funcInfo: FunctionInfo) =
+                                    funcInfo: FunctionInfo,
+                                    redis: Jedis?) =
     div {
       style = "margin-top:2em; margin-left:2em;"
       table {
@@ -182,7 +180,7 @@ internal object ChallengePage : KLogging() {
           }
         }
 
-        val answers = if (redis != null) fetchPreviousAnswers(redis, user, browserSession, challenge) else emptyMap()
+        val answers = fetchPreviousAnswers(user, browserSession, challenge, redis)
 
         funcInfo.invocations.withIndex().forEach { (i, invocation) ->
           tr {
@@ -192,7 +190,7 @@ internal object ChallengePage : KLogging() {
               textInput(classes = USER_RESP) {
                 id = "$RESP$i"
                 onKeyPress = "$processAnswers(event, ${funcInfo.answers.size})"
-                if (answers[invocation.value] != null)
+                if (answers.containsKey(invocation.value))
                   value = answers[invocation.value] ?: ""
                 else
                   placeholder = funcInfo.placeHolder()
@@ -240,11 +238,11 @@ internal object ChallengePage : KLogging() {
     }
   }
 
-  private fun BODY.displayStudentProgress(redis: Jedis,
-                                          challenge: Challenge,
+  private fun BODY.displayStudentProgress(challenge: Challenge,
                                           maxHistoryLength: Int,
                                           funcInfo: FunctionInfo,
-                                          activeClassCode: ClassCode) =
+                                          activeClassCode: ClassCode,
+                                          redis: Jedis) =
     div {
       style = "margin-top:2em;"
 
@@ -255,12 +253,12 @@ internal object ChallengePage : KLogging() {
       val classDesc = activeClassCode.fetchClassDesc(redis)
       val enrollees = activeClassCode.fetchEnrollees(redis)
 
-      if (enrollees.isEmpty()) {
-        h3 { style = "margin-left: 5px; color: $headerColor"; +"No students enrolled in $classDesc [$activeClassCode]" }
+      h3 {
+        style = "margin-left: 5px; color: $headerColor"
+        +"${if (enrollees.isEmpty()) "No students enrolled in " else "Student progress for "} $classDesc [$activeClassCode]"
       }
-      else {
-        h3 { style = "margin-left: 5px; color: $headerColor"; +"Student progress for $classDesc [$activeClassCode]" }
 
+      if (enrollees.isEmpty()) {
         table {
           style = "width:100%; border-spacing: 5px 10px;"
 
@@ -319,18 +317,21 @@ internal object ChallengePage : KLogging() {
       }
     }
 
-  private fun fetchPreviousAnswers(redis: Jedis,
-                                   user: User?,
+  private fun fetchPreviousAnswers(user: User?,
                                    browserSession: BrowserSession?,
-                                   challenge: Challenge): Map<String, String> {
-    val languageType = challenge.languageType
-    val groupName = challenge.groupName
-    val challengeName = challenge.challengeName
-    val languageName = languageType.languageName
-    val challengeAnswersKey = user.challengeAnswersKey(browserSession, languageName, groupName, challengeName)
+                                   challenge: Challenge,
+                                   redis: Jedis?) =
+    if (redis == null)
+      emptyMap
+    else {
+      val languageType = challenge.languageType
+      val groupName = challenge.groupName
+      val challengeName = challenge.challengeName
+      val languageName = languageType.languageName
+      val challengeAnswersKey = user.challengeAnswersKey(browserSession, languageName, groupName, challengeName)
 
-    return if (challengeAnswersKey.isNotEmpty()) redis.hgetAll(challengeAnswersKey) else emptyMap()
-  }
+      if (challengeAnswersKey.isNotEmpty()) redis.hgetAll(challengeAnswersKey) else emptyMap()
+    }
 
   private fun BODY.processAnswers(funcInfo: FunctionInfo) {
     div {

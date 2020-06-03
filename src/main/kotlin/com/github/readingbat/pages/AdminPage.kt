@@ -22,14 +22,13 @@ import com.github.readingbat.misc.Constants
 import com.github.readingbat.misc.Endpoints.ADMIN_ENDPOINT
 import com.github.readingbat.misc.FormFields.ADMIN_ACTION
 import com.github.readingbat.misc.FormFields.DELETE_ALL_DATA
-import com.github.readingbat.misc.User.Companion.toUser
+import com.github.readingbat.misc.User
 import com.github.readingbat.pages.HelpAndLogin.helpAndLogin
 import com.github.readingbat.pages.PageCommon.backLink
 import com.github.readingbat.pages.PageCommon.bodyTitle
 import com.github.readingbat.pages.PageCommon.displayMessage
 import com.github.readingbat.pages.PageCommon.headDefault
 import com.github.readingbat.server.PipelineCall
-import com.github.readingbat.server.ServerUtils.fetchPrincipal
 import com.github.readingbat.server.ServerUtils.queryParam
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
@@ -39,25 +38,26 @@ import redis.clients.jedis.exceptions.JedisDataException
 internal object AdminPage {
 
   fun PipelineCall.adminDataPage(content: ReadingBatContent,
-                                 redis: Jedis,
+                                 user: User?,
                                  msg: String = "",
-                                 isErrorMsg: Boolean = true) =
+                                 isErrorMsg: Boolean = true,
+                                 redis: Jedis) =
     createHTML()
       .html {
-        val principal = fetchPrincipal()
+
         head { headDefault(content) }
         body {
           val returnPath = queryParam(Constants.RETURN_PATH) ?: "/"
 
-          helpAndLogin(redis, fetchPrincipal(), returnPath)
+          helpAndLogin(user, returnPath, redis)
 
           bodyTitle()
 
           when {
-            content.production && principal == null -> {
+            content.production && user == null -> {
               br { +"Must be logged in for this function" }
             }
-            content.production && principal?.userId?.toUser()?.email(redis)?.value != "pambrose@mac.com" -> {
+            content.production && user?.email(redis)?.value != "pambrose@mac.com" -> {
               br { +"Must be system admin for this function" }
             }
             else -> {

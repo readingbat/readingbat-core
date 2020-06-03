@@ -32,7 +32,6 @@ import com.github.readingbat.misc.KeyConstants.DIGEST_FIELD
 import com.github.readingbat.misc.KeyConstants.SALT_FIELD
 import com.github.readingbat.misc.User.Companion.isRegisteredEmail
 import com.github.readingbat.misc.User.Companion.lookupUserByEmail
-import com.github.readingbat.misc.User.Companion.passwordResetKey
 import com.github.readingbat.pages.PasswordResetPage.passwordResetPage
 import com.github.readingbat.posts.CreateAccountPost.checkPassword
 import com.github.readingbat.server.Email
@@ -61,16 +60,16 @@ internal object PasswordResetPost : KLogging() {
     return when {
       email.isBlank() -> {
         passwordResetPage(content,
-                          redis,
                           EMPTY_RESET_ID,
-                          "Unable to send password reset email -- missing email address")
+                          "Unable to send password reset email -- missing email address",
+                          redis)
       }
       email.isNotValidEmail() -> {
-        passwordResetPage(content, redis, EMPTY_RESET_ID, "Invalid email address: $email")
+        passwordResetPage(content, EMPTY_RESET_ID, "Invalid email address: $email", redis)
       }
       !isRegisteredEmail(email, redis) -> {
         unknownUserLimiter.acquire()
-        passwordResetPage(content, redis, EMPTY_RESET_ID, "Unknown user: $email")
+        passwordResetPage(content, EMPTY_RESET_ID, "Unknown user: $email", redis)
       }
       else -> {
         try {
@@ -105,7 +104,7 @@ internal object PasswordResetPost : KLogging() {
           throw RedirectException("$returnPath?$MSG=${"Password reset email sent to $email".encode()}")
         } catch (e: ResetPasswordException) {
           logger.info { e }
-          passwordResetPage(content, redis, EMPTY_RESET_ID, "Unable to send password reset email to $email")
+          passwordResetPage(content, EMPTY_RESET_ID, "Unable to send password reset email to $email", redis)
         }
       }
     }
@@ -122,7 +121,7 @@ internal object PasswordResetPost : KLogging() {
       if (passwordError.isNotEmpty())
         throw ResetPasswordException(passwordError, resetId)
 
-      val passwordResetKey = passwordResetKey(resetId)
+      val passwordResetKey = resetId.passwordResetKey
       val email = Email(redis.get(passwordResetKey) ?: throw ResetPasswordException(INVALID_RESET_ID))
       val user = lookupUserByEmail(email, redis) ?: throw ResetPasswordException("Unable to find $email")
       val userInfoKey = user.userInfoKey
@@ -142,7 +141,7 @@ internal object PasswordResetPost : KLogging() {
       throw RedirectException("/?$MSG=${"Password reset for $email".encode()}")
     } catch (e: ResetPasswordException) {
       logger.info { e }
-      passwordResetPage(content, redis, e.resetId, e.msg)
+      passwordResetPage(content, e.resetId, e.msg, redis)
     }
 
   class ResetPasswordException(val msg: String, val resetId: ResetId = EMPTY_RESET_ID) : Exception(msg)

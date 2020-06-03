@@ -49,7 +49,6 @@ import com.github.readingbat.pages.PageCommon.rows
 import com.github.readingbat.server.GroupName
 import com.github.readingbat.server.LanguageName
 import com.github.readingbat.server.PipelineCall
-import com.github.readingbat.server.ServerUtils.fetchPrincipal
 import com.github.readingbat.server.ServerUtils.queryParam
 import io.ktor.application.call
 import io.ktor.sessions.get
@@ -61,31 +60,32 @@ import redis.clients.jedis.Jedis
 
 internal object ChallengeGroupPage : KLogging() {
 
-  fun Challenge.isCorrect(redis: Jedis?, user: User?, browserSession: BrowserSession?): Boolean {
+  fun Challenge.isCorrect(user: User?, browserSession: BrowserSession?, redis: Jedis?): Boolean {
     val correctAnswersKey = user.correctAnswersKey(browserSession, languageName, groupName, challengeName)
     return if (correctAnswersKey.isNotEmpty()) redis?.get(correctAnswersKey)?.toBoolean() == true else false
   }
 
   fun PipelineCall.challengeGroupPage(content: ReadingBatContent,
-                                      redis: Jedis?,
+                                      user: User?,
                                       challengeGroup: ChallengeGroup<*>,
-                                      loginAttempt: Boolean) =
+                                      loginAttempt: Boolean,
+                                      redis: Jedis?) =
     createHTML()
       .html {
-        val principal = fetchPrincipal(loginAttempt)
         val browserSession = call.sessions.get<BrowserSession>()
         val languageType = challengeGroup.languageType
         val languageName = languageType.languageName
         val groupName = challengeGroup.groupName
         val challenges = challengeGroup.challenges
         val loginPath = pathOf(CHALLENGE_ROOT, languageName, groupName)
-        val user = principal?.toUser()
         val activeClassCode = user.fetchActiveClassCode(redis)
         val enrollees = activeClassCode.fetchEnrollees(redis)
 
-        fun TR.funcCall(redis: Jedis?, user: User?, challenge: Challenge) {
+        fun TR.funcCall(user: User?,
+                        challenge: Challenge,
+                        redis: Jedis?) {
           val challengeName = challenge.challengeName
-          val allCorrect = challenge.isCorrect(redis, user, browserSession)
+          val allCorrect = challenge.isCorrect(user, browserSession, redis)
 
           td(classes = FUNC_ITEM) {
             if (activeClassCode.isStudentMode)
@@ -104,7 +104,7 @@ internal object ChallengeGroupPage : KLogging() {
         head { headDefault(content) }
 
         body {
-          bodyHeader(redis, principal, loginAttempt, content, languageType, loginPath, false, queryParam(MSG) ?: "")
+          bodyHeader(user, loginAttempt, content, languageType, loginPath, redis, false, queryParam(MSG) ?: "")
 
           h2 { +groupName.value.decode() }
 
@@ -125,9 +125,9 @@ internal object ChallengeGroupPage : KLogging() {
               tr {
                 style = "height:30"
                 challenges.apply {
-                  elementAt(i).also { funcCall(redis, user, it) }
-                  elementAtOrNull(i + rows)?.also { funcCall(redis, user, it) } ?: td {}
-                  elementAtOrNull(i + (2 * rows))?.also { funcCall(redis, user, it) } ?: td {}
+                  elementAt(i).also { funcCall(user, it, redis) }
+                  elementAtOrNull(i + rows)?.also { funcCall(user, it, redis) } ?: td {}
+                  elementAtOrNull(i + (2 * rows))?.also { funcCall(user, it, redis) } ?: td {}
                 }
               }
             }

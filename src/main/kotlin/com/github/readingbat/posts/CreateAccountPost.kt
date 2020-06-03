@@ -85,16 +85,16 @@ internal object CreateAccountPost : KLogging() {
                             defaultEmail = email,
                             msg = passwordError)
         else
-          createAccount(content, redis, fullName, email, password)
+          createAccount(content, fullName, email, password, redis)
       }
     }
   }
 
   private fun PipelineCall.createAccount(content: ReadingBatContent,
-                                         redis: Jedis,
                                          name: FullName,
                                          email: Email,
-                                         password: Password): String {
+                                         password: Password,
+                                         redis: Jedis): String {
     val returnPath = queryParam(RETURN_PATH) ?: "/"
 
     createAccountLimiter.acquire() // may wait

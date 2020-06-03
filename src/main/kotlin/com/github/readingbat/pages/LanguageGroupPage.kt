@@ -39,7 +39,6 @@ import com.github.readingbat.pages.PageCommon.headDefault
 import com.github.readingbat.pages.PageCommon.rawHtml
 import com.github.readingbat.pages.PageCommon.rows
 import com.github.readingbat.server.PipelineCall
-import com.github.readingbat.server.ServerUtils.fetchPrincipal
 import com.github.readingbat.server.ServerUtils.queryParam
 import io.ktor.application.call
 import io.ktor.sessions.get
@@ -52,21 +51,22 @@ import redis.clients.jedis.Jedis
 internal object LanguageGroupPage {
 
   fun PipelineCall.languageGroupPage(content: ReadingBatContent,
-                                     redis: Jedis?,
+                                     user: User?,
                                      languageType: LanguageType,
-                                     loginAttempt: Boolean) =
+                                     loginAttempt: Boolean,
+                                     redis: Jedis?) =
     createHTML()
       .html {
-        val principal = fetchPrincipal(loginAttempt)
         val browserSession = call.sessions.get<BrowserSession>()
         val languageName = languageType.languageName
         val loginPath = pathOf(CHALLENGE_ROOT, languageName)
         val groups = content.findLanguage(languageType).challengeGroups
-        val user = principal?.toUser()
         val activeClassCode = user.fetchActiveClassCode(redis)
         val enrollees = activeClassCode.fetchEnrollees(redis)
 
-        fun TR.groupItem(redis: Jedis?, user: User?, challengeGroup: ChallengeGroup<*>) {
+        fun TR.groupItem(user: User?,
+                         challengeGroup: ChallengeGroup<*>,
+                         redis: Jedis?) {
           val groupName = challengeGroup.groupName
           val parsedDescription = challengeGroup.parsedDescription
           val challenges = challengeGroup.challenges
@@ -77,7 +77,7 @@ internal object LanguageGroupPage {
 
           if (activeClassCode.isStudentMode) {
             for (challenge in challenges) {
-              if (challenge.isCorrect(redis, user, browserSession))
+              if (challenge.isCorrect(user, browserSession, redis))
                 cnt++
               if (cnt == maxCnt + 1) {
                 maxFound = true
@@ -109,7 +109,7 @@ internal object LanguageGroupPage {
 
         body {
           val msg = queryParam(MSG) ?: ""
-          bodyHeader(redis, principal, loginAttempt, content, languageType, loginPath, true, msg)
+          bodyHeader(user, loginAttempt, content, languageType, loginPath, redis, true, msg)
 
 
           if (activeClassCode.isTeacherMode)
@@ -122,9 +122,9 @@ internal object LanguageGroupPage {
 
             (0 until rows).forEach { i ->
               tr {
-                groups[i].also { group -> groupItem(redis, user, group) }
-                groups.elementAtOrNull(i + rows)?.also { groupItem(redis, user, it) } ?: td {}
-                groups.elementAtOrNull(i + (2 * rows))?.also { groupItem(redis, user, it) } ?: td {}
+                groups[i].also { group -> groupItem(user, group, redis) }
+                groups.elementAtOrNull(i + rows)?.also { groupItem(user, it, redis) } ?: td {}
+                groups.elementAtOrNull(i + (2 * rows))?.also { groupItem(user, it, redis) } ?: td {}
               }
             }
           }
