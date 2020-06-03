@@ -30,6 +30,7 @@ import com.github.readingbat.misc.FormFields.DELETE_CLASS
 import com.github.readingbat.misc.FormFields.UPDATE_ACTIVE_CLASS
 import com.github.readingbat.misc.FormFields.USER_PREFS_ACTION
 import com.github.readingbat.misc.User
+import com.github.readingbat.misc.User.Companion.fetchActiveClassCode
 import com.github.readingbat.pages.TeacherPrefsPage.teacherPrefsPage
 import com.github.readingbat.pages.UserPrefsPage.requestLogInPage
 import com.github.readingbat.server.PipelineCall
@@ -97,7 +98,7 @@ internal object TeacherPrefsPost {
     val activeClassCode = user.fetchActiveClassCode(redis)
     val msg =
       when {
-        activeClassCode.isNotEnabled && classCode.isNotEnabled -> {
+        activeClassCode.isStudentMode && classCode.isStudentMode -> {
           "Student mode enabled"
         }
         activeClassCode == classCode -> {
@@ -105,7 +106,7 @@ internal object TeacherPrefsPost {
         }
         else -> {
           user.assignActiveClassCode(classCode, redis)
-          if (classCode.isNotEnabled)
+          if (classCode.isStudentMode)
             "Student mode enabled"
           else
             "Active class updated to ${classCode.fetchClassDesc(redis)} [$classCode]"
@@ -120,7 +121,7 @@ internal object TeacherPrefsPost {
                                        user: User,
                                        classCode: ClassCode) =
     when {
-      classCode.isNotEnabled -> {
+      classCode.isStudentMode -> {
         teacherPrefsPage(content, redis, "Empty class code", true)
       }
       classCode.isNotValid(redis) -> {

@@ -36,7 +36,6 @@ import com.github.readingbat.misc.CSSNames.USER_RESP
 import com.github.readingbat.misc.CheckAnswersJs.checkAnswersScript
 import com.github.readingbat.misc.CheckAnswersJs.processAnswers
 import com.github.readingbat.misc.ClassCode
-import com.github.readingbat.misc.ClassCode.Companion.INACTIVE_CLASS_CODE
 import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
 import com.github.readingbat.misc.Constants.CORRECT_COLOR
 import com.github.readingbat.misc.Constants.DBMS_DOWN
@@ -59,6 +58,7 @@ import com.github.readingbat.misc.ParameterIds.STATUS_ID
 import com.github.readingbat.misc.ParameterIds.SUCCESS_ID
 import com.github.readingbat.misc.User
 import com.github.readingbat.misc.User.Companion.challengeAnswersKey
+import com.github.readingbat.misc.User.Companion.fetchActiveClassCode
 import com.github.readingbat.misc.User.Companion.gson
 import com.github.readingbat.pages.PageCommon.addLink
 import com.github.readingbat.pages.PageCommon.backLink
@@ -119,8 +119,8 @@ internal object ChallengePage : KLogging() {
           displayChallenge(challenge, funcInfo)
 
           val user = principal?.toUser()
-          val activeClassCode = user?.fetchActiveClassCode(redis) ?: INACTIVE_CLASS_CODE
-          if (activeClassCode.isNotEnabled)
+          val activeClassCode = user.fetchActiveClassCode(redis)
+          if (activeClassCode.isStudentMode)
             displayQuestions(redis, user, browserSession, challenge, funcInfo)
           else {
             if (redis == null)
@@ -133,7 +133,7 @@ internal object ChallengePage : KLogging() {
 
           script { src = "$STATIC_ROOT/$languageName-prism.js" }
 
-          if (activeClassCode.isEnabled)
+          if (activeClassCode.isTeacherMode)
             addWebSockets(content, activeClassCode)
         }
       }
@@ -327,7 +327,7 @@ internal object ChallengePage : KLogging() {
     val groupName = challenge.groupName
     val challengeName = challenge.challengeName
     val languageName = languageType.languageName
-    val challengeAnswersKey = challengeAnswersKey(user, browserSession, languageName, groupName, challengeName)
+    val challengeAnswersKey = user.challengeAnswersKey(browserSession, languageName, groupName, challengeName)
 
     return if (challengeAnswersKey.isNotEmpty()) redis.hgetAll(challengeAnswersKey) else emptyMap()
   }
@@ -382,7 +382,7 @@ internal object ChallengePage : KLogging() {
     val groupName = challenge.groupName
     val challengeName = challenge.challengeName
     val languageName = languageType.languageName
-    val challengeAnswersKey = challengeAnswersKey(user, browserSession, languageName, groupName, challengeName)
+    val challengeAnswersKey = user.challengeAnswersKey(browserSession, languageName, groupName, challengeName)
 
     form {
       style = "margin:0;"

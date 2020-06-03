@@ -29,9 +29,9 @@ import redis.clients.jedis.Jedis
 import redis.clients.jedis.Transaction
 
 internal inline class ClassCode(val value: String) {
-  val isNotEnabled get() = value == CLASSES_DISABLED || value.isBlank()
+  val isStudentMode get() = value == CLASSES_DISABLED || value.isBlank()
 
-  val isEnabled get() = !isNotEnabled
+  val isTeacherMode get() = !isStudentMode
 
   val classCodeEnrollmentKey get() = listOf(CLASS_CODE_KEY, value).joinToString(KEY_SEP)
 
@@ -41,10 +41,13 @@ internal inline class ClassCode(val value: String) {
 
   fun isNotValid(redis: Jedis) = !isValid(redis)
 
-  fun fetchEnrollees(redis: Jedis) =
-    (redis.smembers(classCodeEnrollmentKey) ?: emptySet())
-      .filter { it.isNotEmpty() }
-      .map { it.toUser() }
+  fun fetchEnrollees(redis: Jedis?): List<User> =
+    if (redis == null || isStudentMode)
+      emptyList()
+    else
+      (redis.smembers(classCodeEnrollmentKey) ?: emptySet())
+        .filter { it.isNotEmpty() }
+        .map { it.toUser() }
 
   fun isEnrolled(user: User, redis: Jedis) = redis.sismember(classCodeEnrollmentKey, user.id) ?: false
 
@@ -68,18 +71,18 @@ internal inline class ClassCode(val value: String) {
     tx.hset(classInfoKey, mapOf(DESC_FIELD to classDesc, TEACHER_FIELD to user.id))
   }
 
-  fun fetchClassDesc(redis: Jedis) = redis.hget(classInfoKey, DESC_FIELD) ?: "Missing Description"
+  fun fetchClassDesc(redis: Jedis) = redis.hget(classInfoKey, DESC_FIELD) ?: "Missing description"
 
   fun fetchClassTeacherId(redis: Jedis) = redis.hget(classInfoKey, TEACHER_FIELD) ?: ""
 
   override fun toString() = value
 
   companion object {
-    val INACTIVE_CLASS_CODE = ClassCode("")
+    val STUDENT_CLASS_CODE = ClassCode("")
 
     fun newClassCode() = ClassCode(randomId(15))
 
     fun Parameters.getClassCode(parameterName: String) =
-      this[parameterName]?.let { ClassCode(it) } ?: INACTIVE_CLASS_CODE
+      this[parameterName]?.let { ClassCode(it) } ?: STUDENT_CLASS_CODE
   }
 }

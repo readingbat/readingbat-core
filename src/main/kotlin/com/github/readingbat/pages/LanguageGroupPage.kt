@@ -17,7 +17,6 @@
 
 package com.github.readingbat.pages
 
-import com.github.pambrose.common.util.pluralize
 import com.github.readingbat.dsl.ChallengeGroup
 import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.dsl.ReadingBatContent
@@ -25,7 +24,6 @@ import com.github.readingbat.misc.BrowserSession
 import com.github.readingbat.misc.CSSNames.FUNC_ITEM
 import com.github.readingbat.misc.CSSNames.GROUP_CHOICE
 import com.github.readingbat.misc.CSSNames.GROUP_ITEM_SRC
-import com.github.readingbat.misc.ClassCode.Companion.INACTIVE_CLASS_CODE
 import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
 import com.github.readingbat.misc.Constants.GREEN_CHECK
 import com.github.readingbat.misc.Constants.MSG
@@ -33,6 +31,8 @@ import com.github.readingbat.misc.Constants.STATIC_ROOT
 import com.github.readingbat.misc.Constants.WHITE_CHECK
 import com.github.readingbat.misc.PageUtils.pathOf
 import com.github.readingbat.misc.User
+import com.github.readingbat.misc.User.Companion.fetchActiveClassCode
+import com.github.readingbat.pages.ChallengeGroupPage.displayClassDescription
 import com.github.readingbat.pages.ChallengeGroupPage.isCorrect
 import com.github.readingbat.pages.PageCommon.bodyHeader
 import com.github.readingbat.pages.PageCommon.headDefault
@@ -63,12 +63,8 @@ internal object LanguageGroupPage {
         val loginPath = pathOf(CHALLENGE_ROOT, languageName)
         val groups = content.findLanguage(languageType).challengeGroups
         val user = principal?.toUser()
-        val activeClassCode = user?.fetchActiveClassCode(redis) ?: INACTIVE_CLASS_CODE
-        val enrollees =
-          if (redis != null && activeClassCode.isEnabled)
-            activeClassCode.fetchEnrollees(redis)
-          else
-            emptyList()
+        val activeClassCode = user.fetchActiveClassCode(redis)
+        val enrollees = activeClassCode.fetchEnrollees(redis)
 
         fun TR.groupItem(redis: Jedis?, user: User?, challengeGroup: ChallengeGroup<*>) {
           val groupName = challengeGroup.groupName
@@ -79,7 +75,7 @@ internal object LanguageGroupPage {
           val maxCnt = 12
           var maxFound = false
 
-          if (activeClassCode.isNotEnabled) {
+          if (activeClassCode.isStudentMode) {
             for (challenge in challenges) {
               if (challenge.isCorrect(redis, user, browserSession))
                 cnt++
@@ -96,7 +92,7 @@ internal object LanguageGroupPage {
 
               br { rawHtml(if (parsedDescription.isNotBlank()) parsedDescription else nbsp.text) }
 
-              if (activeClassCode.isNotEnabled) {
+              if (activeClassCode.isStudentMode) {
                 if (cnt == 0) {
                   img { src = "$STATIC_ROOT/$WHITE_CHECK" }
                 }
@@ -115,14 +111,9 @@ internal object LanguageGroupPage {
           val msg = queryParam(MSG) ?: ""
           bodyHeader(redis, principal, loginAttempt, content, languageType, loginPath, true, msg)
 
-          if (redis != null && activeClassCode.isEnabled) {
-            val classDesc = activeClassCode.fetchClassDesc(redis)
-            val studentCount = if (enrollees.isEmpty()) "No" else enrollees.count().toString()
-            h3 {
-              style = "margin-left: 1em; color: ${ChallengePage.headerColor}"
-              +"$studentCount ${"student".pluralize(enrollees.count())} enrolled in $classDesc [$activeClassCode]"
-            }
-          }
+
+          if (activeClassCode.isTeacherMode)
+            displayClassDescription(activeClassCode, enrollees, redis)
 
           table {
             val cols = 3

@@ -25,7 +25,6 @@ import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.BrowserSession
 import com.github.readingbat.misc.CSSNames.FUNC_ITEM
 import com.github.readingbat.misc.ClassCode
-import com.github.readingbat.misc.ClassCode.Companion.INACTIVE_CLASS_CODE
 import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
 import com.github.readingbat.misc.Constants.GREEN_CHECK
 import com.github.readingbat.misc.Constants.MSG
@@ -40,6 +39,7 @@ import com.github.readingbat.misc.PageUtils.pathOf
 import com.github.readingbat.misc.User
 import com.github.readingbat.misc.User.Companion.challengeAnswersKey
 import com.github.readingbat.misc.User.Companion.correctAnswersKey
+import com.github.readingbat.misc.User.Companion.fetchActiveClassCode
 import com.github.readingbat.misc.User.Companion.gson
 import com.github.readingbat.pages.PageCommon.backLink
 import com.github.readingbat.pages.PageCommon.bodyHeader
@@ -62,7 +62,7 @@ import redis.clients.jedis.Jedis
 internal object ChallengeGroupPage : KLogging() {
 
   fun Challenge.isCorrect(redis: Jedis?, user: User?, browserSession: BrowserSession?): Boolean {
-    val correctAnswersKey = correctAnswersKey(user, browserSession, languageName, groupName, challengeName)
+    val correctAnswersKey = user.correctAnswersKey(browserSession, languageName, groupName, challengeName)
     return if (correctAnswersKey.isNotEmpty()) redis?.get(correctAnswersKey)?.toBoolean() == true else false
   }
 
@@ -80,19 +80,15 @@ internal object ChallengeGroupPage : KLogging() {
         val challenges = challengeGroup.challenges
         val loginPath = pathOf(CHALLENGE_ROOT, languageName, groupName)
         val user = principal?.toUser()
-        val activeClassCode = user?.fetchActiveClassCode(redis) ?: INACTIVE_CLASS_CODE
-        val enrollees =
-          if (redis != null && activeClassCode.isEnabled)
-            activeClassCode.fetchEnrollees(redis)
-          else
-            emptyList()
+        val activeClassCode = user.fetchActiveClassCode(redis)
+        val enrollees = activeClassCode.fetchEnrollees(redis)
 
         fun TR.funcCall(redis: Jedis?, user: User?, challenge: Challenge) {
           val challengeName = challenge.challengeName
           val allCorrect = challenge.isCorrect(redis, user, browserSession)
 
           td(classes = FUNC_ITEM) {
-            if (activeClassCode.isNotEnabled)
+            if (activeClassCode.isStudentMode)
               img { src = "$STATIC_ROOT/${if (allCorrect) GREEN_CHECK else WHITE_CHECK}" }
             a {
               style = "font-Size:110%; padding-left:2px;"
@@ -112,14 +108,8 @@ internal object ChallengeGroupPage : KLogging() {
 
           h2 { +groupName.value.decode() }
 
-          if (redis != null && activeClassCode.isEnabled) {
-            val classDesc = activeClassCode.fetchClassDesc(redis)
-            val studentCount = if (enrollees.isEmpty()) "No" else enrollees.count().toString()
-            h3 {
-              style = "margin-left: 5px; color: ${ChallengePage.headerColor}"
-              +"$studentCount ${"student".pluralize(enrollees.count())} enrolled in $classDesc [$activeClassCode]"
-            }
-          }
+          if (activeClassCode.isTeacherMode)
+            displayClassDescription(activeClassCode, enrollees, redis)
 
           if (enrollees.isNotEmpty())
             p { +"(# of questions | # students that started | # completed | Avg correct answers)" }
@@ -143,7 +133,7 @@ internal object ChallengeGroupPage : KLogging() {
             }
           }
 
-          if (activeClassCode.isNotEnabled)
+          if (activeClassCode.isStudentMode)
             clearGroupAnswerHistory(user, browserSession, languageName, groupName, challenges)
 
           backLink(CHALLENGE_ROOT, languageName.value)
@@ -152,6 +142,17 @@ internal object ChallengeGroupPage : KLogging() {
             addWebSockets(content, languageName, groupName, activeClassCode)
         }
       }
+
+  fun BODY.displayClassDescription(activeClassCode: ClassCode,
+                                   enrollees: List<User>,
+                                   redis: Jedis?) {
+    val classDesc = if (redis != null) activeClassCode.fetchClassDesc(redis) else "Description unavailable"
+    val studentCount = if (enrollees.isEmpty()) "No" else enrollees.count().toString()
+    h3 {
+      style = "margin-left: 5px; color: ${ChallengePage.headerColor}"
+      +"$studentCount ${"student".pluralize(enrollees.count())} enrolled in $classDesc [$activeClassCode]"
+    }
+  }
 
   private fun BODY.addWebSockets(content: ReadingBatContent,
                                  languageName: LanguageName,
@@ -182,17 +183,7 @@ internal object ChallengeGroupPage : KLogging() {
                                            languageName: LanguageName,
                                            groupName: GroupName,
                                            challenges: List<Challenge>) {
-
-    val challengeAnswerKeys =
-      challenges
-        .map { challenge ->
-          challengeAnswersKey(user,
-                              browserSession,
-                              challenge.languageType.languageName,
-                              challenge.groupName,
-                              challenge.challengeName)
-        }
-
+    val challengeAnswerKeys = challenges.map { user.challengeAnswersKey(browserSession, it) }
     val challengeAnswersKey = gson.toJson(challengeAnswerKeys)
 
     p {

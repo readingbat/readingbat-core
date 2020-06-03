@@ -19,7 +19,7 @@ package com.github.readingbat.pages
 
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.ClassCode
-import com.github.readingbat.misc.ClassCode.Companion.INACTIVE_CLASS_CODE
+import com.github.readingbat.misc.ClassCode.Companion.STUDENT_CLASS_CODE
 import com.github.readingbat.misc.Constants.LABEL_WIDTH
 import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.Endpoints.CREATE_ACCOUNT_ENDPOINT
@@ -36,6 +36,7 @@ import com.github.readingbat.misc.FormFields.USER_PREFS_ACTION
 import com.github.readingbat.misc.FormFields.WITHDRAW_FROM_CLASS
 import com.github.readingbat.misc.PageUtils.hideShowButton
 import com.github.readingbat.misc.User
+import com.github.readingbat.misc.User.Companion.fetchEnrolledClassCode
 import com.github.readingbat.misc.User.Companion.isValidPrincipal
 import com.github.readingbat.pages.HelpAndLogin.helpAndLogin
 import com.github.readingbat.pages.PageCommon.backLink
@@ -64,7 +65,7 @@ internal object UserPrefsPage : KLogging() {
                                  redis: Jedis,
                                  msg: String,
                                  isErrorMsg: Boolean,
-                                 defaultClassCode: ClassCode = INACTIVE_CLASS_CODE): String {
+                                 defaultClassCode: ClassCode = STUDENT_CLASS_CODE): String {
     val principal = fetchPrincipal()
     return if (principal != null && isValidPrincipal(principal, redis))
       userPrefsWithLoginPage(content, redis, principal.toUser(), msg, isErrorMsg, defaultClassCode)
@@ -157,7 +158,7 @@ internal object UserPrefsPage : KLogging() {
   private fun BODY.joinOrWithdrawFromClass(redis: Jedis, user: User, defaultClassCode: ClassCode) {
     val enrolledClass = user.fetchEnrolledClassCode(redis)
 
-    if (enrolledClass.isEnabled) {
+    if (enrolledClass.isTeacherMode) {
       h3 { +"Enrolled class" }
       val classDesc = enrolledClass.fetchClassDesc(redis)
       div {

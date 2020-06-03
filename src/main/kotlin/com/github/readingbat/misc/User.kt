@@ -19,10 +19,11 @@ package com.github.readingbat.misc
 
 import com.github.pambrose.common.util.newStringSalt
 import com.github.pambrose.common.util.randomId
+import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.FunctionInfo
 import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.misc.ClassCode.Companion.INACTIVE_CLASS_CODE
+import com.github.readingbat.misc.ClassCode.Companion.STUDENT_CLASS_CODE
 import com.github.readingbat.misc.Constants.RESP
 import com.github.readingbat.misc.KeyConstants.ACTIVE_CLASS_CODE_FIELD
 import com.github.readingbat.misc.KeyConstants.ANSWER_HISTORY_KEY
@@ -44,7 +45,12 @@ import com.github.readingbat.posts.ChallengeNames
 import com.github.readingbat.posts.ChallengeResults
 import com.github.readingbat.posts.DashboardInfo
 import com.github.readingbat.server.*
+import com.github.readingbat.server.ChallengeName.Companion.ANY_CHALLENGE
 import com.github.readingbat.server.Email.Companion.EMPTY_EMAIL
+import com.github.readingbat.server.GroupName.Companion.ANY_GROUP
+import com.github.readingbat.server.Invocation.Companion.ANY_INVOCATION
+import com.github.readingbat.server.LanguageName.Companion.ANY_LANGUAGE
+import com.github.readingbat.server.ResetId.Companion.EMPTY_RESET_ID
 import com.google.gson.Gson
 import mu.KLogging
 import redis.clients.jedis.Jedis
@@ -89,18 +95,12 @@ internal class User private constructor(val id: String) {
            challengeName.value,
            invocation.value).joinToString(KEY_SEP)
 
-  fun fetchEnrolledClassCode(redis: Jedis) =
-    redis.hget(userInfoKey, ENROLLED_CLASS_CODE_FIELD)?.let { ClassCode(it) } ?: INACTIVE_CLASS_CODE
-
   fun assignEnrolledClassCode(classCode: ClassCode, tx: Transaction) {
     tx.hset(userInfoKey, ENROLLED_CLASS_CODE_FIELD, classCode.value)
   }
 
-  fun fetchActiveClassCode(redis: Jedis?) =
-    redis?.hget(userInfoKey, ACTIVE_CLASS_CODE_FIELD)?.let { ClassCode(it) } ?: INACTIVE_CLASS_CODE
-
   fun assignActiveClassCode(classCode: ClassCode, redis: Jedis) {
-    redis.hset(userInfoKey, ACTIVE_CLASS_CODE_FIELD, if (classCode.isNotEnabled) "" else classCode.value)
+    redis.hset(userInfoKey, ACTIVE_CLASS_CODE_FIELD, if (classCode.isStudentMode) "" else classCode.value)
   }
 
   fun resetActiveClassCode(tx: Transaction) {
@@ -108,7 +108,7 @@ internal class User private constructor(val id: String) {
   }
 
   fun enrollInClass(classCode: ClassCode, redis: Jedis) {
-    if (classCode.isNotEnabled) {
+    if (classCode.isStudentMode) {
       throw DataException("Empty class code")
     }
     else {
@@ -119,7 +119,7 @@ internal class User private constructor(val id: String) {
           val previousClassCode = fetchEnrolledClassCode(redis)
           redis.multi().also { tx ->
             // Remove if already enrolled in another class
-            if (previousClassCode.isEnabled)
+            if (previousClassCode.isTeacherMode)
               previousClassCode.removeEnrollee(this, tx)
 
             assignEnrolledClassCode(classCode, tx)
@@ -134,14 +134,14 @@ internal class User private constructor(val id: String) {
   }
 
   fun withdrawFromClass(classCode: ClassCode, redis: Jedis) {
-    if (classCode.isNotEnabled) {
+    if (classCode.isStudentMode) {
       throw DataException("Not enrolled in a class")
     }
     else {
       // This should always be true
       val enrolled = classCode.isValid(redis) && classCode.isEnrolled(this, redis)
       redis.multi().also { tx ->
-        assignEnrolledClassCode(INACTIVE_CLASS_CODE, tx)
+        assignEnrolledClassCode(STUDENT_CLASS_CODE, tx)
         if (enrolled)
           classCode.removeEnrollee(this, tx)
         tx.exec()
@@ -157,7 +157,7 @@ internal class User private constructor(val id: String) {
     tx.srem(userClassesKey, classCode.value)
 
     // Reset every enrollee's enrolled class
-    enrollees.forEach { it.assignEnrolledClassCode(INACTIVE_CLASS_CODE, tx) }
+    enrollees.forEach { it.assignEnrolledClassCode(STUDENT_CLASS_CODE, tx) }
 
     // Delete enrollee list
     classCode.deleteAllEnrollees(tx)
@@ -199,14 +199,14 @@ internal class User private constructor(val id: String) {
     val user = principal.toUser()
     val userEmailKey = user.email(redis).userEmailKey
 
-    val correctAnswers = redis.keys(correctAnswersKey(LanguageName("*"), GroupName("*"), ChallengeName("*")))
-    val challenges = redis.keys(challengeAnswersKey(LanguageName("*"), GroupName("*"), ChallengeName("*")))
+    val correctAnswers = redis.keys(correctAnswersKey(ANY_LANGUAGE, ANY_GROUP, ANY_CHALLENGE))
+    val challenges = redis.keys(challengeAnswersKey(ANY_LANGUAGE, ANY_GROUP, ANY_CHALLENGE))
     val invocations =
-      redis.keys(answerHistoryKey(LanguageName("*"), GroupName("*"), ChallengeName("*"), Invocation("*")))
+      redis.keys(answerHistoryKey(ANY_LANGUAGE, ANY_GROUP, ANY_CHALLENGE, ANY_INVOCATION))
     val classCodes = redis.smembers(userClassesKey).map { ClassCode(it) }
     val enrolleePairs = classCodes.map { it to it.fetchEnrollees(redis) }
 
-    val previousResetId = redis.get(userPasswordResetKey)?.let { ResetId(it) } ?: ResetId.EMPTY_RESET_ID
+    val previousResetId = redis.get(userPasswordResetKey)?.let { ResetId(it) } ?: EMPTY_RESET_ID
 
     logger.info { "Deleting User: ${principal.userId} ${user.email(redis)}" }
     logger.info { "User Email: $userEmailKey" }
@@ -246,32 +246,50 @@ internal class User private constructor(val id: String) {
 
     fun newUser() = User(randomId(25))
 
-    fun correctAnswersKey(user: User?, browserSession: BrowserSession?, names: ChallengeNames) =
-      user?.correctAnswersKey(names) ?: browserSession?.correctAnswersKey(names) ?: ""
+    fun User?.fetchActiveClassCode(redis: Jedis?) =
+      if (this == null)
+        STUDENT_CLASS_CODE
+      else
+        redis?.hget(userInfoKey, ACTIVE_CLASS_CODE_FIELD)?.let { ClassCode(it) } ?: STUDENT_CLASS_CODE
 
-    fun correctAnswersKey(user: User?,
-                          browserSession: BrowserSession?,
-                          languageName: LanguageName,
-                          groupName: GroupName,
-                          challengeName: ChallengeName) =
-      user?.correctAnswersKey(languageName, groupName, challengeName)
+
+    fun User?.fetchEnrolledClassCode(redis: Jedis) =
+      if (this == null)
+        STUDENT_CLASS_CODE
+      else
+        redis.hget(userInfoKey, ENROLLED_CLASS_CODE_FIELD)?.let { ClassCode(it) } ?: STUDENT_CLASS_CODE
+
+
+    fun User?.correctAnswersKey(browserSession: BrowserSession?, names: ChallengeNames) =
+      this?.correctAnswersKey(names) ?: browserSession?.correctAnswersKey(names) ?: ""
+
+    fun User?.correctAnswersKey(browserSession: BrowserSession?,
+                                languageName: LanguageName,
+                                groupName: GroupName,
+                                challengeName: ChallengeName) =
+      this?.correctAnswersKey(languageName, groupName, challengeName)
         ?: browserSession?.correctAnswersKey(languageName, groupName, challengeName)
         ?: ""
 
-    fun challengeAnswersKey(user: User?, browserSession: BrowserSession?, names: ChallengeNames) =
-      user?.challengeAnswersKey(names) ?: browserSession?.challengeAnswerKey(names) ?: ""
+    fun User?.challengeAnswersKey(browserSession: BrowserSession?, names: ChallengeNames) =
+      this?.challengeAnswersKey(names) ?: browserSession?.challengeAnswerKey(names) ?: ""
 
-    fun challengeAnswersKey(user: User?,
-                            browserSession: BrowserSession?,
-                            languageName: LanguageName,
-                            groupName: GroupName,
-                            challengeName: ChallengeName) =
-      user?.challengeAnswersKey(languageName, groupName, challengeName)
+    fun User?.challengeAnswersKey(browserSession: BrowserSession?,
+                                  languageName: LanguageName,
+                                  groupName: GroupName,
+                                  challengeName: ChallengeName) =
+      this?.challengeAnswersKey(languageName, groupName, challengeName)
         ?: browserSession?.challengeAnswerKey(languageName, groupName, challengeName)
         ?: ""
 
-    fun answerHistoryKey(user: User?, browserSession: BrowserSession?, names: ChallengeNames, invocation: Invocation) =
-      user?.answerHistoryKey(names, invocation) ?: browserSession?.answerHistoryKey(names, invocation) ?: ""
+    fun User?.challengeAnswersKey(browserSession: BrowserSession?, challenge: Challenge) =
+      challengeAnswersKey(browserSession,
+                          challenge.languageType.languageName,
+                          challenge.groupName,
+                          challenge.challengeName)
+
+    fun User?.answerHistoryKey(browserSession: BrowserSession?, names: ChallengeNames, invocation: Invocation) =
+      this?.answerHistoryKey(names, invocation) ?: browserSession?.answerHistoryKey(names, invocation) ?: ""
 
     // Maps resetId to username
     fun passwordResetKey(resetId: ResetId) = listOf(RESET_KEY, resetId.value).joinToString(KEY_SEP)
@@ -292,8 +310,8 @@ internal class User private constructor(val id: String) {
                                         EMAIL_FIELD to email.value,
                                         SALT_FIELD to salt,
                                         DIGEST_FIELD to password.sha256(salt),
-                                        ENROLLED_CLASS_CODE_FIELD to INACTIVE_CLASS_CODE.value,
-                                        ACTIVE_CLASS_CODE_FIELD to INACTIVE_CLASS_CODE.value))
+                                        ENROLLED_CLASS_CODE_FIELD to STUDENT_CLASS_CODE.value,
+                                        ACTIVE_CLASS_CODE_FIELD to STUDENT_CLASS_CODE.value))
         tx.exec()
       }
 
@@ -310,9 +328,9 @@ internal class User private constructor(val id: String) {
                              userResps: List<Map.Entry<String, List<String>>>,
                              results: List<ChallengeResults>) {
       val user = principal?.toUser()
-      val challengeAnswerKey = challengeAnswersKey(user, browserSession, names)
-      val correctAnswersKey = correctAnswersKey(user, browserSession, names)
-      val enrolledClassCode = user?.fetchEnrolledClassCode(redis) ?: INACTIVE_CLASS_CODE
+      val challengeAnswerKey = user.challengeAnswersKey(browserSession, names)
+      val correctAnswersKey = user.correctAnswersKey(browserSession, names)
+      val enrolledClassCode = user.fetchEnrolledClassCode(redis)
       val complete = results.all { it.correct }
       val numCorrect = results.count { it.correct }
 
@@ -338,7 +356,7 @@ internal class User private constructor(val id: String) {
       results
         .filter { it.answered }
         .forEach { result ->
-          val answerHistoryKey = answerHistoryKey(user, browserSession, names, result.invocation)
+          val answerHistoryKey = user.answerHistoryKey(browserSession, names, result.invocation)
           if (answerHistoryKey.isNotEmpty()) {
             val history =
               gson.fromJson(redis[answerHistoryKey], ChallengeHistory::class.java)
@@ -349,7 +367,7 @@ internal class User private constructor(val id: String) {
 
             // Publish to challenge dashboard
             // First check if enrolled in a class
-            if (enrolledClassCode.isEnabled && user != null) {
+            if (enrolledClassCode.isTeacherMode && user != null) {
               // Check to see if owner of class has it set as their active class
               val teacherId = enrolledClassCode.fetchClassTeacherId(redis)
               if (teacherId.isNotEmpty() && teacherId.toUser().fetchActiveClassCode(redis) == enrolledClassCode) {

@@ -101,6 +101,7 @@ internal object AdminPage {
       h4 { +"${keys.size} Items:" }
       table {
         keys
+          .sorted()
           .map {
             try {
               it to redis[it]

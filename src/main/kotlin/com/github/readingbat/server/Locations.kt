@@ -135,8 +135,9 @@ inline class LanguageName(val value: String) {
     }
 
   companion object {
-    val EMPTY_LANGUAGE_NAME = LanguageName("")
-    fun Parameters.getLanguageName(name: String) = this[name]?.let { LanguageName(it) } ?: EMPTY_LANGUAGE_NAME
+    val EMPTY_LANGUAGE = LanguageName("")
+    val ANY_LANGUAGE = LanguageName("*")
+    fun Parameters.getLanguageName(name: String) = this[name]?.let { LanguageName(it) } ?: EMPTY_LANGUAGE
   }
 }
 
@@ -144,8 +145,9 @@ inline class GroupName(val value: String) {
   override fun toString() = value
 
   companion object {
-    val EMPTY_GROUP_NAME = GroupName("")
-    fun Parameters.getGroupName(name: String) = this[name]?.let { GroupName(it) } ?: EMPTY_GROUP_NAME
+    val EMPTY_GROUP = GroupName("")
+    val ANY_GROUP = GroupName("*")
+    fun Parameters.getGroupName(name: String) = this[name]?.let { GroupName(it) } ?: EMPTY_GROUP
   }
 }
 
@@ -153,13 +155,18 @@ inline class ChallengeName(val value: String) {
   override fun toString() = value
 
   companion object {
-    val EMPTY_CHALLENGE_NAME = ChallengeName("")
-    fun Parameters.getChallengeName(name: String) = this[name]?.let { ChallengeName(it) } ?: EMPTY_CHALLENGE_NAME
+    val EMPTY_CHALLENGE = ChallengeName("")
+    val ANY_CHALLENGE = ChallengeName("*")
+    fun Parameters.getChallengeName(name: String) = this[name]?.let { ChallengeName(it) } ?: EMPTY_CHALLENGE
   }
 }
 
 inline class Invocation(val value: String) {
   override fun toString() = value
+
+  companion object {
+    val ANY_INVOCATION = Invocation("*")
+  }
 }
 
 inline class FullName(val value: String) {

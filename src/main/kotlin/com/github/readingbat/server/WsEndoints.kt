@@ -84,11 +84,11 @@ internal object WsEndoints : KLogging() {
           val inboundMsg = frame.readText()
           withRedis { redis ->
             if (redis != null) {
-              val enrollees = if (classCode.isEnabled) classCode.fetchEnrollees(redis) else emptyList()
+              val enrollees = classCode.fetchEnrollees(redis)
 
               challenges
                 .forEach { challenge ->
-                  if (classCode.isEnabled && enrollees.isNotEmpty()) {
+                  if (classCode.isTeacherMode && enrollees.isNotEmpty()) {
                     val funcInfo = challenge.funcInfo(content)
                     val challengeName = challenge.challengeName
                     val numCalls = funcInfo.invocations.size
