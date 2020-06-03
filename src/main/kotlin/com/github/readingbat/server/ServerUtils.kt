@@ -18,6 +18,7 @@
 package com.github.readingbat.server
 
 import com.github.readingbat.misc.User
+import com.github.readingbat.misc.User.Companion.toUser
 import com.github.readingbat.misc.UserPrincipal
 import io.ktor.application.Application
 import io.ktor.application.ApplicationCall
@@ -42,11 +43,10 @@ internal object ServerUtils : KLogging() {
       default
     }
 
-  private fun PipelineCall.fetchPrincipal(loginAttempt: Boolean = false): UserPrincipal? =
+  private fun PipelineCall.fetchPrincipal(loginAttempt: Boolean): UserPrincipal? =
     if (loginAttempt) assignPrincipal() else call.sessions.get<UserPrincipal>()
 
-  fun PipelineCall.fetchUser(loginAttempt: Boolean = false): User? =
-    fetchPrincipal(loginAttempt)?.toUser()
+  fun PipelineCall.fetchUser(loginAttempt: Boolean = false): User? = fetchPrincipal(loginAttempt)?.userId?.toUser()
 
   private fun PipelineCall.assignPrincipal() =
     call.principal<UserPrincipal>().apply { if (this != null) call.sessions.set(this) }  // Set the cookie
