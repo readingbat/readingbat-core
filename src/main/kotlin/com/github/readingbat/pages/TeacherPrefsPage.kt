@@ -20,6 +20,7 @@ package com.github.readingbat.pages
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.*
 import com.github.readingbat.misc.CSSNames.INDENT_2EM
+import com.github.readingbat.misc.Constants.LABEL_WIDTH
 import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.Endpoints.TEACHER_PREFS_ENDPOINT
 import com.github.readingbat.misc.FormFields.CLASSES_CHOICE
@@ -103,7 +104,7 @@ internal object TeacherPrefsPage : KLogging() {
         method = FormMethod.post
         table {
           tr {
-            td { style = Constants.LABEL_WIDTH; label { +"Class Description" } }
+            td { style = LABEL_WIDTH; label { +"Class Description" } }
             td {
               input {
                 type = InputType.text

@@ -261,7 +261,7 @@ internal object ChallengePage : KLogging() {
         +"${if (enrollees.isEmpty()) "No students enrolled in " else "Student progress for "} $classDesc [$activeClassCode]"
       }
 
-      if (enrollees.isEmpty()) {
+      if (enrollees.isNotEmpty()) {
         table {
           style = "width:100%; border-spacing: 5px 10px;"
 

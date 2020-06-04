@@ -20,6 +20,7 @@ package com.github.readingbat.misc
 import com.github.pambrose.common.util.randomId
 import com.github.readingbat.misc.FormFields.CLASSES_DISABLED
 import com.github.readingbat.misc.KeyConstants.CLASS_CODE_KEY
+import com.github.readingbat.misc.KeyConstants.CLASS_INFO_KEY
 import com.github.readingbat.misc.KeyConstants.DESC_FIELD
 import com.github.readingbat.misc.KeyConstants.KEY_SEP
 import com.github.readingbat.misc.KeyConstants.TEACHER_FIELD
@@ -35,7 +36,7 @@ internal inline class ClassCode(val value: String) {
 
   val classCodeEnrollmentKey get() = listOf(CLASS_CODE_KEY, value).joinToString(KEY_SEP)
 
-  val classInfoKey get() = listOf(KeyConstants.CLASS_INFO_KEY, value).joinToString(KEY_SEP)
+  val classInfoKey get() = listOf(CLASS_INFO_KEY, value).joinToString(KEY_SEP)
 
   fun isValid(redis: Jedis) = redis.exists(classCodeEnrollmentKey) ?: false
 
