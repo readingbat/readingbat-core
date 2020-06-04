@@ -71,6 +71,8 @@ internal object TeacherPrefsPage : KLogging() {
                                                      redis: Jedis) =
     createHTML()
       .html {
+        val activeClassCode = user.fetchActiveClassCode(redis)
+
         head {
           headDefault(content)
           clickButtonScript(createClassButton)
@@ -79,7 +81,7 @@ internal object TeacherPrefsPage : KLogging() {
         body {
           val returnPath = queryParam(RETURN_PATH, "/")
 
-          helpAndLogin(user, returnPath, redis)
+          helpAndLogin(user, returnPath, activeClassCode.isTeacherMode, redis)
           bodyTitle()
 
           h2 { +"ReadingBat User Preferences" }
@@ -87,7 +89,7 @@ internal object TeacherPrefsPage : KLogging() {
           p { span { style = "color:${if (msg.isError) "red" else "green"};"; this@body.displayMessage(msg) } }
 
           createClass(defaultClassDesc)
-          displayClasses(user, redis)
+          displayClasses(user, activeClassCode, redis)
 
           privacyStatement(TEACHER_PREFS_ENDPOINT, returnPath)
 
@@ -124,10 +126,9 @@ internal object TeacherPrefsPage : KLogging() {
     }
   }
 
-  private fun BODY.displayClasses(user: User, redis: Jedis) {
+  private fun BODY.displayClasses(user: User, activeClassCode: ClassCode, redis: Jedis) {
     val classCodes = redis.smembers(user.userClassesKey).map { ClassCode(it) }
     if (classCodes.isNotEmpty()) {
-      val activeClassCode = user.fetchActiveClassCode(redis)
       h3 { +"Classes" }
       div(classes = INDENT_2EM) {
         table {

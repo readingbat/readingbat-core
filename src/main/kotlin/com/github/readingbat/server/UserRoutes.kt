@@ -36,6 +36,7 @@ import com.github.readingbat.misc.Endpoints.CLEAR_CHALLENGE_ANSWERS_ENDPOINT
 import com.github.readingbat.misc.Endpoints.CLEAR_GROUP_ANSWERS_ENDPOINT
 import com.github.readingbat.misc.Endpoints.CREATE_ACCOUNT_ENDPOINT
 import com.github.readingbat.misc.Endpoints.CSS_ENDPOINT
+import com.github.readingbat.misc.Endpoints.END_TEACHER_MODE_ENDPOINT
 import com.github.readingbat.misc.Endpoints.FAV_ICON_ENDPOINT
 import com.github.readingbat.misc.Endpoints.PASSWORD_CHANGE_ENDPOINT
 import com.github.readingbat.misc.Endpoints.PASSWORD_RESET_ENDPOINT
@@ -60,6 +61,7 @@ import com.github.readingbat.posts.ChallengePost.clearGroupAnswers
 import com.github.readingbat.posts.CreateAccountPost.createAccount
 import com.github.readingbat.posts.PasswordResetPost.changePassword
 import com.github.readingbat.posts.PasswordResetPost.sendPasswordReset
+import com.github.readingbat.posts.TeacherPrefsPost.endTeacherMode
 import com.github.readingbat.posts.TeacherPrefsPost.teacherPrefs
 import com.github.readingbat.posts.UserPrefsPost.userPrefs
 import com.github.readingbat.server.ServerUtils.fetchUser
@@ -133,23 +135,25 @@ internal fun Routing.userRoutes(content: ReadingBatContent) {
 
   post(TEACHER_PREFS_ENDPOINT) { respondWithSuspendingDbmsCheck { redis -> teacherPrefs(content, fetchUser(), redis) } }
 
+  get(END_TEACHER_MODE_ENDPOINT) {
+    respondWithSuspendingDbmsCheck { redis ->
+      endTeacherMode(content,
+                     fetchUser(),
+                     redis)
+    }
+  }
+
   get(ADMIN_ENDPOINT) { respondWithDbmsCheck { redis -> adminDataPage(content, fetchUser(), redis = redis) } }
 
   post(ADMIN_ENDPOINT) { respondWithSuspendingDbmsCheck { redis -> adminActions(content, fetchUser(), redis) } }
 
   // RESET_ID is passed here when user clicks on email URL
   get(PASSWORD_RESET_ENDPOINT) {
-    respondWithDbmsCheck { redis ->
-      passwordResetPage(content, queryParam(RESET_ID).let { ResetId(it) }, redis)
-    }
+    respondWithDbmsCheck { redis -> passwordResetPage(content, queryParam(RESET_ID).let { ResetId(it) }, redis) }
   }
 
   post(PASSWORD_RESET_ENDPOINT) {
-    respondWithSuspendingDbmsCheck { redis ->
-      sendPasswordReset(content,
-                        fetchUser(),
-                        redis)
-    }
+    respondWithSuspendingDbmsCheck { redis -> sendPasswordReset(content, fetchUser(), redis) }
   }
 
   post(PASSWORD_CHANGE_ENDPOINT) { respondWithSuspendingDbmsCheck { redis -> changePassword(content, redis) } }

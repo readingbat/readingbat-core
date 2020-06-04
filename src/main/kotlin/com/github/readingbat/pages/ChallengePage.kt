@@ -104,6 +104,7 @@ internal object ChallengePage : KLogging() {
         val languageName = languageType.languageName
         val funcInfo = challenge.funcInfo(content)
         val loginPath = pathOf(CHALLENGE_ROOT, languageName, groupName, challengeName)
+        val activeClassCode = user.fetchActiveClassCode(redis)
 
         head {
           link { rel = "stylesheet"; href = spinnerCss }
@@ -116,11 +117,18 @@ internal object ChallengePage : KLogging() {
         }
 
         body {
-          bodyHeader(user, loginAttempt, content, languageType, loginPath, redis, false, Message(queryParam(MSG)))
+          bodyHeader(user,
+                     loginAttempt,
+                     content,
+                     languageType,
+                     loginPath,
+                     false,
+                     activeClassCode.isTeacherMode,
+                     redis,
+                     Message(queryParam(MSG)))
 
           displayChallenge(challenge, funcInfo)
 
-          val activeClassCode = user.fetchActiveClassCode(redis)
           if (activeClassCode.isStudentMode)
             displayQuestions(user, browserSession, challenge, funcInfo, redis)
           else {

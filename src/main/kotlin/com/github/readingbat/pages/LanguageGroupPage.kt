@@ -110,7 +110,15 @@ internal object LanguageGroupPage {
 
         body {
           val msg = Message(queryParam(MSG))
-          bodyHeader(user, loginAttempt, content, languageType, loginPath, redis, true, msg)
+          bodyHeader(user,
+                     loginAttempt,
+                     content,
+                     languageType,
+                     loginPath,
+                     true,
+                     activeClassCode.isTeacherMode,
+                     redis,
+                     msg)
 
 
           if (activeClassCode.isTeacherMode)

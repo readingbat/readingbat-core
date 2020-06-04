@@ -101,11 +101,12 @@ internal object PageCommon {
                       content: ReadingBatContent,
                       languageType: LanguageType,
                       loginPath: String,
-                      redis: Jedis?,
                       displayWelcomeMsg: Boolean,
+                      teacherMode: Boolean,
+                      redis: Jedis?,
                       msg: Message = EMPTY_MESSAGE) {
 
-    helpAndLogin(user, loginPath, redis)
+    helpAndLogin(user, loginPath, teacherMode, redis)
 
     bodyTitle()
 

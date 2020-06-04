@@ -27,6 +27,7 @@ import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
 import com.github.readingbat.misc.Constants.STATIC_ROOT
 import com.github.readingbat.misc.PageUtils.pathOf
 import com.github.readingbat.misc.User
+import com.github.readingbat.misc.User.Companion.fetchActiveClassCode
 import com.github.readingbat.pages.PageCommon.addLink
 import com.github.readingbat.pages.PageCommon.backLink
 import com.github.readingbat.pages.PageCommon.bodyHeader
@@ -57,6 +58,7 @@ internal object PlaygroundPage {
         val languageName = languageType.languageName
         val funcInfo = challenge.funcInfo(content)
         val loginPath = pathOf(CHALLENGE_ROOT, languageName, groupName, challengeName)
+        val activeClassCode = user.fetchActiveClassCode(redis)
 
         head {
           script { src = "https://unpkg.com/kotlin-playground@1"; attributes["data-selector"] = ".$KOTLIN_CODE" }
@@ -64,7 +66,7 @@ internal object PlaygroundPage {
         }
 
         body {
-          bodyHeader(user, loginAttempt, content, languageType, loginPath, redis, false)
+          bodyHeader(user, loginAttempt, content, languageType, loginPath, false, activeClassCode.isTeacherMode, redis)
 
           h2 {
             val groupPath = pathOf(CHALLENGE_ROOT, languageName, groupName)

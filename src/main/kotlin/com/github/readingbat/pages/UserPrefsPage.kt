@@ -40,6 +40,7 @@ import com.github.readingbat.misc.Message
 import com.github.readingbat.misc.Message.Companion.EMPTY_MESSAGE
 import com.github.readingbat.misc.PageUtils.hideShowButton
 import com.github.readingbat.misc.User
+import com.github.readingbat.misc.User.Companion.fetchActiveClassCode
 import com.github.readingbat.misc.User.Companion.fetchEnrolledClassCode
 import com.github.readingbat.misc.isValidUser
 import com.github.readingbat.pages.HelpAndLogin.helpAndLogin
@@ -80,6 +81,8 @@ internal object UserPrefsPage : KLogging() {
                                                   redis: Jedis) =
     createHTML()
       .html {
+        val activeClassCode = user.fetchActiveClassCode(redis)
+
         head {
           headDefault(content)
           clickButtonScript(passwordButton, joinClassButton)
@@ -88,7 +91,7 @@ internal object UserPrefsPage : KLogging() {
         body {
           val returnPath = queryParam(RETURN_PATH, "/")
 
-          helpAndLogin(user, returnPath, redis)
+          helpAndLogin(user, returnPath, activeClassCode.isTeacherMode, redis)
 
           bodyTitle()
 
@@ -270,7 +273,7 @@ internal object UserPrefsPage : KLogging() {
         body {
           val returnPath = queryParam(RETURN_PATH, "/")
 
-          helpAndLogin(null, returnPath, redis)
+          helpAndLogin(null, returnPath, false, redis)
 
           bodyTitle()
 

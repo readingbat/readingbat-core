@@ -17,11 +17,14 @@
 
 package com.github.readingbat.posts
 
+import com.github.pambrose.common.util.encode
 import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.misc.ClassCode
+import com.github.readingbat.misc.*
+import com.github.readingbat.misc.ClassCode.Companion.STUDENT_CLASS_CODE
 import com.github.readingbat.misc.ClassCode.Companion.getClassCode
 import com.github.readingbat.misc.ClassCode.Companion.newClassCode
+import com.github.readingbat.misc.Constants.MSG
 import com.github.readingbat.misc.FormFields.CLASSES_CHOICE
 import com.github.readingbat.misc.FormFields.CLASS_CODE
 import com.github.readingbat.misc.FormFields.CLASS_DESC
@@ -29,18 +32,19 @@ import com.github.readingbat.misc.FormFields.CREATE_CLASS
 import com.github.readingbat.misc.FormFields.DELETE_CLASS
 import com.github.readingbat.misc.FormFields.UPDATE_ACTIVE_CLASS
 import com.github.readingbat.misc.FormFields.USER_PREFS_ACTION
-import com.github.readingbat.misc.Message
-import com.github.readingbat.misc.User
 import com.github.readingbat.misc.User.Companion.fetchActiveClassCode
-import com.github.readingbat.misc.isValidUser
 import com.github.readingbat.pages.TeacherPrefsPage.teacherPrefsPage
 import com.github.readingbat.pages.UserPrefsPage.requestLogInPage
 import com.github.readingbat.server.PipelineCall
+import com.github.readingbat.server.RedirectException
+import com.github.readingbat.server.ServerUtils.queryParam
 import io.ktor.application.call
 import io.ktor.request.receiveParameters
 import redis.clients.jedis.Jedis
 
 internal object TeacherPrefsPost {
+  private const val STUDENT_ENABLED_MSG = "Student mode enabled"
+
   suspend fun PipelineCall.teacherPrefs(content: ReadingBatContent, user: User?, redis: Jedis) =
     if (user.isValidUser(redis)) {
       val parameters = call.receiveParameters()
@@ -54,6 +58,20 @@ internal object TeacherPrefsPost {
     else {
       requestLogInPage(content, redis)
     }
+
+  fun PipelineCall.endTeacherMode(content: ReadingBatContent, user: User?, redis: Jedis): String {
+    val returnPath = queryParam(Constants.RETURN_PATH, "/")
+
+    val msg =
+      if (user.isValidUser(redis)) {
+        user.assignActiveClassCode(STUDENT_CLASS_CODE, redis)
+        STUDENT_ENABLED_MSG
+      }
+      else {
+        "Invalid user"
+      }
+    throw RedirectException("$returnPath?$MSG=${msg.encode()}")
+  }
 
   private fun PipelineCall.createClass(content: ReadingBatContent,
                                        user: User,
@@ -100,7 +118,7 @@ internal object TeacherPrefsPost {
     val msg =
       when {
         activeClassCode.isStudentMode && classCode.isStudentMode -> {
-          Message("Student mode enabled")
+          Message(STUDENT_ENABLED_MSG)
         }
         activeClassCode == classCode -> {
           Message("Same active class selected [$classCode]", true)
@@ -108,7 +126,7 @@ internal object TeacherPrefsPost {
         else -> {
           user.assignActiveClassCode(classCode, redis)
           if (classCode.isStudentMode)
-            Message("Student mode enabled")
+            Message(STUDENT_ENABLED_MSG)
           else
             Message("Active class updated to ${classCode.fetchClassDesc(redis)} [$classCode]")
         }

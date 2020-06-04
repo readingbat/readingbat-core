@@ -51,7 +51,7 @@ internal object AdminPage {
         body {
           val returnPath = queryParam(RETURN_PATH, "/")
 
-          helpAndLogin(user, returnPath, redis)
+          helpAndLogin(user, returnPath, false, redis)
 
           bodyTitle()
 

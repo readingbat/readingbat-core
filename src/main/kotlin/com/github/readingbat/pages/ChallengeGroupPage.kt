@@ -106,7 +106,15 @@ internal object ChallengeGroupPage : KLogging() {
         head { headDefault(content) }
 
         body {
-          bodyHeader(user, loginAttempt, content, languageType, loginPath, redis, false, Message(queryParam(MSG)))
+          bodyHeader(user,
+                     loginAttempt,
+                     content,
+                     languageType,
+                     loginPath,
+                     false,
+                     activeClassCode.isTeacherMode,
+                     redis,
+                     Message(queryParam(MSG)))
 
           h2 { +groupName.value.decode() }
 
