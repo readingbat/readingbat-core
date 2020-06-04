@@ -23,6 +23,7 @@ import com.github.readingbat.misc.FormFields.DELETE_ALL_DATA
 import com.github.readingbat.misc.Message
 import com.github.readingbat.misc.User
 import com.github.readingbat.misc.UserPrincipal
+import com.github.readingbat.misc.isValidUser
 import com.github.readingbat.pages.AdminPage.adminDataPage
 import com.github.readingbat.server.PipelineCall
 import io.ktor.application.call
@@ -35,10 +36,11 @@ internal object AdminPost {
 
   suspend fun PipelineCall.adminActions(content: ReadingBatContent, user: User?, redis: Jedis): String {
     return when {
-      content.production && user == null -> adminDataPage(content,
-                                                          user,
-                                                          redis = redis,
-                                                          msg = Message("Must be logged in for this function", true))
+      content.production && !user.isValidUser(redis) -> adminDataPage(content,
+                                                                      user,
+                                                                      redis = redis,
+                                                                      msg = Message("Must be logged in for this function",
+                                                                                    true))
       content.production && user?.email(redis)?.value != "pambrose@mac.com" -> {
         adminDataPage(content, user, redis = redis, msg = Message("Must be system admin for this function", true))
       }

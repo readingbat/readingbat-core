@@ -35,6 +35,7 @@ import com.github.readingbat.misc.Endpoints.CLEAR_GROUP_ANSWERS_ENDPOINT
 import com.github.readingbat.misc.FormFields.CHALLENGE_ANSWERS_KEY
 import com.github.readingbat.misc.FormFields.GROUP_NAME_KEY
 import com.github.readingbat.misc.FormFields.LANGUAGE_NAME_KEY
+import com.github.readingbat.misc.KeyConstants.CORRECT_ANSWERS_KEY
 import com.github.readingbat.misc.Message
 import com.github.readingbat.misc.PageUtils.pathOf
 import com.github.readingbat.misc.User
@@ -184,6 +185,10 @@ internal object ChallengeGroupPage : KLogging() {
                                            languageName: LanguageName,
                                            groupName: GroupName,
                                            challenges: List<Challenge>) {
+
+    val correctAnswersKeys = challenges.map { user.correctAnswersKey(browserSession, it) }
+    val correctAnswersKey = gson.toJson(correctAnswersKeys)
+
     val challengeAnswerKeys = challenges.map { user.challengeAnswersKey(browserSession, it) }
     val challengeAnswersKey = gson.toJson(challengeAnswerKeys)
 
@@ -195,6 +200,7 @@ internal object ChallengeGroupPage : KLogging() {
         onSubmit = """return confirm('Are you sure you want to clear your previous answers for group "$groupName"?');"""
         input { type = InputType.hidden; name = LANGUAGE_NAME_KEY; value = languageName.value }
         input { type = InputType.hidden; name = GROUP_NAME_KEY; value = groupName.value }
+        input { type = InputType.hidden; name = CORRECT_ANSWERS_KEY; value = correctAnswersKey }
         input { type = InputType.hidden; name = CHALLENGE_ANSWERS_KEY; value = challengeAnswersKey }
         input {
           style = "vertical-align:middle; margin-top:1; margin-bottom:0;"

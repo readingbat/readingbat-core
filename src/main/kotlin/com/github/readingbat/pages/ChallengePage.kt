@@ -50,6 +50,7 @@ import com.github.readingbat.misc.FormFields.CHALLENGE_ANSWERS_KEY
 import com.github.readingbat.misc.FormFields.CHALLENGE_NAME_KEY
 import com.github.readingbat.misc.FormFields.GROUP_NAME_KEY
 import com.github.readingbat.misc.FormFields.LANGUAGE_NAME_KEY
+import com.github.readingbat.misc.KeyConstants.CORRECT_ANSWERS_KEY
 import com.github.readingbat.misc.KeyConstants.NAME_FIELD
 import com.github.readingbat.misc.Message
 import com.github.readingbat.misc.PageUtils.pathOf
@@ -59,6 +60,7 @@ import com.github.readingbat.misc.ParameterIds.STATUS_ID
 import com.github.readingbat.misc.ParameterIds.SUCCESS_ID
 import com.github.readingbat.misc.User
 import com.github.readingbat.misc.User.Companion.challengeAnswersKey
+import com.github.readingbat.misc.User.Companion.correctAnswersKey
 import com.github.readingbat.misc.User.Companion.fetchActiveClassCode
 import com.github.readingbat.misc.User.Companion.gson
 import com.github.readingbat.pages.PageCommon.addLink
@@ -384,6 +386,7 @@ internal object ChallengePage : KLogging() {
     val groupName = challenge.groupName
     val challengeName = challenge.challengeName
     val languageName = languageType.languageName
+    val correctAnswersKey = user.correctAnswersKey(languageName, groupName, challengeName)
     val challengeAnswersKey = user.challengeAnswersKey(browserSession, languageName, groupName, challengeName)
 
     form {
@@ -394,6 +397,7 @@ internal object ChallengePage : KLogging() {
       input { type = InputType.hidden; name = LANGUAGE_NAME_KEY; value = languageName.value }
       input { type = InputType.hidden; name = GROUP_NAME_KEY; value = groupName.value }
       input { type = InputType.hidden; name = CHALLENGE_NAME_KEY; value = challengeName.value }
+      input { type = InputType.hidden; name = CORRECT_ANSWERS_KEY; value = correctAnswersKey }
       input { type = InputType.hidden; name = CHALLENGE_ANSWERS_KEY; value = challengeAnswersKey }
       input {
         style = "vertical-align:middle; margin-top:1; margin-bottom:0;"

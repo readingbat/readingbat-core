@@ -118,9 +118,7 @@ internal fun Routing.userRoutes(content: ReadingBatContent) {
   }
 
   post(CLEAR_CHALLENGE_ANSWERS_ENDPOINT) {
-    respondWithSuspendingDbmsCheck { redis ->
-      clearChallengeAnswers(content, fetchUser(), redis)
-    }
+    respondWithSuspendingDbmsCheck { redis -> clearChallengeAnswers(content, fetchUser(), redis) }
   }
 
   get(CREATE_ACCOUNT_ENDPOINT) { respondWith { createAccountPage(content) } }
@@ -146,7 +144,13 @@ internal fun Routing.userRoutes(content: ReadingBatContent) {
     }
   }
 
-  post(PASSWORD_RESET_ENDPOINT) { respondWithSuspendingDbmsCheck { redis -> sendPasswordReset(content, redis) } }
+  post(PASSWORD_RESET_ENDPOINT) {
+    respondWithSuspendingDbmsCheck { redis ->
+      sendPasswordReset(content,
+                        fetchUser(),
+                        redis)
+    }
+  }
 
   post(PASSWORD_CHANGE_ENDPOINT) { respondWithSuspendingDbmsCheck { redis -> changePassword(content, redis) } }
 

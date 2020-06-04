@@ -19,8 +19,8 @@ package com.github.readingbat.posts
 
 import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.ReadingBatContent
+import com.github.readingbat.misc.*
 import com.github.readingbat.misc.ClassCode.Companion.getClassCode
-import com.github.readingbat.misc.DataException
 import com.github.readingbat.misc.FormFields.CLASS_CODE
 import com.github.readingbat.misc.FormFields.CONFIRM_PASSWORD
 import com.github.readingbat.misc.FormFields.CURR_PASSWORD
@@ -31,10 +31,7 @@ import com.github.readingbat.misc.FormFields.UPDATE_PASSWORD
 import com.github.readingbat.misc.FormFields.USER_PREFS_ACTION
 import com.github.readingbat.misc.FormFields.WITHDRAW_FROM_CLASS
 import com.github.readingbat.misc.KeyConstants.DIGEST_FIELD
-import com.github.readingbat.misc.Message
-import com.github.readingbat.misc.User
 import com.github.readingbat.misc.User.Companion.fetchEnrolledClassCode
-import com.github.readingbat.misc.UserPrincipal
 import com.github.readingbat.pages.UserPrefsPage.requestLogInPage
 import com.github.readingbat.pages.UserPrefsPage.userPrefsPage
 import com.github.readingbat.posts.CreateAccountPost.checkPassword
@@ -53,10 +50,7 @@ internal object UserPrefsPost : KLogging() {
   suspend fun PipelineCall.userPrefs(content: ReadingBatContent, user: User?, redis: Jedis): String {
     val parameters = call.receiveParameters()
 
-    return if (user == null) {
-      requestLogInPage(content, redis)
-    }
-    else {
+    return if (user.isValidUser(redis)) {
       when (val action = parameters[USER_PREFS_ACTION] ?: "") {
         UPDATE_PASSWORD -> updatePassword(content, parameters, user, redis)
         JOIN_CLASS -> enrollInClass(content, parameters, user, redis)
@@ -64,6 +58,9 @@ internal object UserPrefsPost : KLogging() {
         DELETE_ACCOUNT -> deleteAccount(content, user, redis)
         else -> throw InvalidConfigurationException("Invalid action: $action")
       }
+    }
+    else {
+      requestLogInPage(content, redis)
     }
   }
 

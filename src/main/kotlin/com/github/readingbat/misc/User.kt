@@ -69,16 +69,11 @@ internal class User private constructor(val id: String) {
   private fun correctAnswersKey(names: ChallengeNames) =
     correctAnswersKey(names.languageName, names.groupName, names.challengeName)
 
-  private fun correctAnswersKey(languageName: LanguageName, groupName: GroupName, challengeName: ChallengeName) =
-    listOf(CORRECT_ANSWERS_KEY, AUTH_KEY, id, languageName.value, groupName.value, challengeName.value)
-      .joinToString(KEY_SEP)
-
   private fun challengeAnswersKey(names: ChallengeNames) =
     challengeAnswersKey(names.languageName, names.groupName, names.challengeName)
 
   private fun challengeAnswersKey(languageName: LanguageName, groupName: GroupName, challengeName: ChallengeName) =
-    listOf(CHALLENGE_ANSWERS_KEY, AUTH_KEY, id, languageName.value, groupName.value, challengeName.value)
-      .joinToString(KEY_SEP)
+    listOf(CHALLENGE_ANSWERS_KEY, AUTH_KEY, id, languageName, groupName, challengeName).joinToString(KEY_SEP)
 
   private fun answerHistoryKey(names: ChallengeNames, invocation: Invocation) =
     answerHistoryKey(names.languageName, names.groupName, names.challengeName, invocation)
@@ -87,13 +82,7 @@ internal class User private constructor(val id: String) {
                        groupName: GroupName,
                        challengeName: ChallengeName,
                        invocation: Invocation) =
-    listOf(ANSWER_HISTORY_KEY,
-           AUTH_KEY,
-           id,
-           languageName.value,
-           groupName.value,
-           challengeName.value,
-           invocation.value).joinToString(KEY_SEP)
+    listOf(ANSWER_HISTORY_KEY, AUTH_KEY, id, languageName, groupName, challengeName, invocation).joinToString(KEY_SEP)
 
   fun assignEnrolledClassCode(classCode: ClassCode, tx: Transaction) {
     tx.hset(userInfoKey, ENROLLED_CLASS_CODE_FIELD, classCode.value)
@@ -263,6 +252,14 @@ internal class User private constructor(val id: String) {
     fun User?.correctAnswersKey(browserSession: BrowserSession?, names: ChallengeNames) =
       this?.correctAnswersKey(names) ?: browserSession?.correctAnswersKey(names) ?: ""
 
+    fun User?.correctAnswersKey(browserSession: BrowserSession?, challenge: Challenge) =
+      this?.correctAnswersKey(challenge.languageName,
+                              challenge.groupName,
+                              challenge.challengeName)
+        ?: browserSession?.correctAnswersKey(challenge.languageName,
+                                             challenge.groupName,
+                                             challenge.challengeName) ?: ""
+
     fun User?.correctAnswersKey(browserSession: BrowserSession?,
                                 languageName: LanguageName,
                                 groupName: GroupName,
@@ -270,6 +267,13 @@ internal class User private constructor(val id: String) {
       this?.correctAnswersKey(languageName, groupName, challengeName)
         ?: browserSession?.correctAnswersKey(languageName, groupName, challengeName)
         ?: ""
+
+    fun User?.correctAnswersKey(languageName: LanguageName, groupName: GroupName, challengeName: ChallengeName) =
+      if (this == null)
+        ""
+      else
+        listOf(CORRECT_ANSWERS_KEY, AUTH_KEY, id, languageName, groupName, challengeName).joinToString(KEY_SEP)
+
 
     fun User?.challengeAnswersKey(browserSession: BrowserSession?, names: ChallengeNames) =
       this?.challengeAnswersKey(names) ?: browserSession?.challengeAnswerKey(names) ?: ""

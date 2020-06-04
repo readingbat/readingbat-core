@@ -32,6 +32,7 @@ import com.github.readingbat.misc.FormFields.USER_PREFS_ACTION
 import com.github.readingbat.misc.Message
 import com.github.readingbat.misc.User
 import com.github.readingbat.misc.User.Companion.fetchActiveClassCode
+import com.github.readingbat.misc.isValidUser
 import com.github.readingbat.pages.TeacherPrefsPage.teacherPrefsPage
 import com.github.readingbat.pages.UserPrefsPage.requestLogInPage
 import com.github.readingbat.server.PipelineCall
@@ -41,10 +42,7 @@ import redis.clients.jedis.Jedis
 
 internal object TeacherPrefsPost {
   suspend fun PipelineCall.teacherPrefs(content: ReadingBatContent, user: User?, redis: Jedis) =
-    if (user == null) {
-      requestLogInPage(content, redis)
-    }
-    else {
+    if (user.isValidUser(redis)) {
       val parameters = call.receiveParameters()
       when (val action = parameters[USER_PREFS_ACTION] ?: "") {
         CREATE_CLASS -> createClass(content, user, parameters[CLASS_DESC] ?: "", redis)
@@ -52,6 +50,9 @@ internal object TeacherPrefsPost {
         DELETE_CLASS -> deleteClass(content, user, parameters.getClassCode(CLASS_CODE), redis)
         else -> throw InvalidConfigurationException("Invalid action: $action")
       }
+    }
+    else {
+      requestLogInPage(content, redis)
     }
 
   private fun PipelineCall.createClass(content: ReadingBatContent,

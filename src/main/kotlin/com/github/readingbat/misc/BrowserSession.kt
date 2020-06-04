@@ -35,15 +35,13 @@ internal data class BrowserSession(val id: String, val created: Long = Instant.n
     correctAnswersKey(names.languageName, names.groupName, names.challengeName)
 
   fun correctAnswersKey(languageName: LanguageName, groupName: GroupName, challengeName: ChallengeName) =
-    listOf(CORRECT_ANSWERS_KEY,
-           NO_AUTH_KEY, id, languageName.value, groupName.value, challengeName.value).joinToString(KEY_SEP)
+    listOf(CORRECT_ANSWERS_KEY, NO_AUTH_KEY, id, languageName, groupName, challengeName).joinToString(KEY_SEP)
 
   fun challengeAnswerKey(names: ChallengeNames) =
     challengeAnswerKey(names.languageName, names.groupName, names.challengeName)
 
   fun challengeAnswerKey(languageName: LanguageName, groupName: GroupName, challengeName: ChallengeName) =
-    listOf(CHALLENGE_ANSWERS_KEY,
-           NO_AUTH_KEY, id, languageName.value, groupName.value, challengeName.value).joinToString(KEY_SEP)
+    listOf(CHALLENGE_ANSWERS_KEY, NO_AUTH_KEY, id, languageName, groupName, challengeName).joinToString(KEY_SEP)
 
   fun answerHistoryKey(names: ChallengeNames, invocation: Invocation) =
     answerHistoryKey(names.languageName, names.groupName, names.challengeName, invocation)

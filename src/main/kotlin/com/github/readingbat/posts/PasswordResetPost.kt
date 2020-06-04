@@ -31,8 +31,10 @@ import com.github.readingbat.misc.FormFields.NEW_PASSWORD
 import com.github.readingbat.misc.KeyConstants.DIGEST_FIELD
 import com.github.readingbat.misc.KeyConstants.SALT_FIELD
 import com.github.readingbat.misc.Message
+import com.github.readingbat.misc.User
 import com.github.readingbat.misc.User.Companion.isRegisteredEmail
 import com.github.readingbat.misc.User.Companion.lookupUserByEmail
+import com.github.readingbat.misc.isValidUser
 import com.github.readingbat.pages.PasswordResetPage.passwordResetPage
 import com.github.readingbat.posts.CreateAccountPost.checkPassword
 import com.github.readingbat.server.Email
@@ -55,10 +57,14 @@ import java.io.IOException
 internal object PasswordResetPost : KLogging() {
   private val unknownUserLimiter = RateLimiter.create(0.5) // rate 2.0 is "2 permits per second"
 
-  suspend fun PipelineCall.sendPasswordReset(content: ReadingBatContent, redis: Jedis): String {
+  suspend fun PipelineCall.sendPasswordReset(content: ReadingBatContent, user: User?, redis: Jedis): String {
     val parameters = call.receiveParameters()
     val email = parameters.getEmail(EMAIL)
     return when {
+      !user.isValidUser(redis) -> {
+        unknownUserLimiter.acquire()
+        passwordResetPage(content, EMPTY_RESET_ID, redis, Message("Invalid User", true))
+      }
       email.isBlank() -> {
         passwordResetPage(content,
                           EMPTY_RESET_ID,
@@ -132,6 +138,9 @@ internal object PasswordResetPost : KLogging() {
       val salt = redis.hget(userInfoKey, SALT_FIELD)
       val newDigest = newPassword.sha256(salt)
       val oldDigest = redis.hget(userInfoKey, DIGEST_FIELD)
+
+      if (!user.isValidUser(redis))
+        throw ResetPasswordException("Invalid user", resetId)
 
       if (newDigest == oldDigest)
         throw ResetPasswordException("New password is the same as the current password", resetId)

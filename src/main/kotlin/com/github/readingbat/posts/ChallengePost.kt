@@ -35,6 +35,7 @@ import com.github.readingbat.misc.FormFields.CHALLENGE_ANSWERS_KEY
 import com.github.readingbat.misc.FormFields.CHALLENGE_NAME_KEY
 import com.github.readingbat.misc.FormFields.GROUP_NAME_KEY
 import com.github.readingbat.misc.FormFields.LANGUAGE_NAME_KEY
+import com.github.readingbat.misc.KeyConstants.CORRECT_ANSWERS_KEY
 import com.github.readingbat.misc.PageUtils.pathOf
 import com.github.readingbat.misc.User
 import com.github.readingbat.misc.User.Companion.gson
@@ -198,20 +199,26 @@ internal object ChallengePost : KLogging() {
     val languageName = parameters.getLanguageName(LANGUAGE_NAME_KEY)
     val groupName = parameters.getGroupName(GROUP_NAME_KEY)
     val challengeName = parameters.getChallengeName(CHALLENGE_NAME_KEY)
+    val correctAnswersKey = parameters[CORRECT_ANSWERS_KEY] ?: ""
     val challengeAnswersKey = parameters[CHALLENGE_ANSWERS_KEY] ?: ""
     val challenge = content.findChallenge(languageName.toLanguageType(), groupName, challengeName)
     val path = pathOf(CHALLENGE_ROOT, languageName, groupName, challengeName)
 
     val msg =
       if (user.isValidUser(redis)) {
-        "Invalid user"
-      }
-      else {
+        logger.info { "Clearing answers for $challenge" }
+        if (correctAnswersKey.isNotEmpty()) {
+          logger.info { "Clearing answers for $correctAnswersKey" }
+          redis.del(correctAnswersKey)
+        }
         if (challengeAnswersKey.isNotEmpty()) {
-          logger.info { "Clearing answers for $challenge" }
+          logger.info { "Clearing answers for $challengeAnswersKey" }
           redis.del(challengeAnswersKey)
         }
         "Answers cleared"
+      }
+      else {
+        "Invalid user"
       }
 
     throw RedirectException("$path?$MSG=${msg.encode()}")
@@ -221,15 +228,21 @@ internal object ChallengePost : KLogging() {
     val parameters = call.receiveParameters()
     val languageName = parameters.getLanguageName(LANGUAGE_NAME_KEY)
     val groupName = parameters.getGroupName(GROUP_NAME_KEY)
-    val json = parameters[CHALLENGE_ANSWERS_KEY] ?: ""
-    val challengeAnswersKeys = gson.fromJson(json, List::class.java) as List<String>
+    val correctJson = parameters[CORRECT_ANSWERS_KEY] ?: ""
+    val challengeJson = parameters[CHALLENGE_ANSWERS_KEY] ?: ""
+    val correctAnswersKeys = gson.fromJson(correctJson, List::class.java) as List<String>
+    val challengeAnswersKeys = gson.fromJson(challengeJson, List::class.java) as List<String>
     val path = pathOf(CHALLENGE_ROOT, languageName, groupName)
 
     val msg =
       if (user.isValidUser(redis)) {
-        "Invalid user"
-      }
-      else {
+        correctAnswersKeys
+          .forEach { correctAnswersKey ->
+            if (correctAnswersKey.isNotEmpty()) {
+              logger.info { "Clearing answers for $correctAnswersKey" }
+              redis.del(correctAnswersKey)
+            }
+          }
         challengeAnswersKeys
           .forEach { challengeAnswersKey ->
             if (challengeAnswersKey.isNotEmpty()) {
@@ -238,6 +251,9 @@ internal object ChallengePost : KLogging() {
             }
           }
         "Answers cleared"
+      }
+      else {
+        "Invalid user"
       }
     throw RedirectException("$path?$MSG=${msg.encode()}")
   }
