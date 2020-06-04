@@ -74,7 +74,7 @@ internal object AboutPage {
             }
           }
 
-          backLink(queryParam(RETURN_PATH) ?: "")
+          backLink(queryParam(RETURN_PATH))
         }
       }
 }

@@ -31,7 +31,6 @@ import com.github.readingbat.pages.PageCommon.backLink
 import com.github.readingbat.pages.PageCommon.bodyHeader
 import com.github.readingbat.pages.PageCommon.headDefault
 import com.github.readingbat.pages.PageCommon.rawHtml
-import com.github.readingbat.server.PipelineCall
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 import org.apache.commons.text.StringEscapeUtils.escapeHtml4
@@ -44,11 +43,11 @@ import kotlin.collections.set
 
 internal object PlaygroundPage {
 
-  fun PipelineCall.playgroundPage(content: ReadingBatContent,
-                                  user: User?,
-                                  challenge: Challenge,
-                                  loginAttempt: Boolean,
-                                  redis: Jedis?) =
+  fun playgroundPage(content: ReadingBatContent,
+                     user: User?,
+                     challenge: Challenge,
+                     loginAttempt: Boolean,
+                     redis: Jedis?) =
     createHTML()
       .html {
         val languageType = challenge.languageType

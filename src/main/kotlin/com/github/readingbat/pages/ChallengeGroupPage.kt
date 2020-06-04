@@ -35,6 +35,7 @@ import com.github.readingbat.misc.Endpoints.CLEAR_GROUP_ANSWERS_ENDPOINT
 import com.github.readingbat.misc.FormFields.CHALLENGE_ANSWERS_KEY
 import com.github.readingbat.misc.FormFields.GROUP_NAME_KEY
 import com.github.readingbat.misc.FormFields.LANGUAGE_NAME_KEY
+import com.github.readingbat.misc.Message
 import com.github.readingbat.misc.PageUtils.pathOf
 import com.github.readingbat.misc.User
 import com.github.readingbat.misc.User.Companion.challengeAnswersKey
@@ -104,7 +105,7 @@ internal object ChallengeGroupPage : KLogging() {
         head { headDefault(content) }
 
         body {
-          bodyHeader(user, loginAttempt, content, languageType, loginPath, redis, false, queryParam(MSG) ?: "")
+          bodyHeader(user, loginAttempt, content, languageType, loginPath, redis, false, Message(queryParam(MSG)))
 
           h2 { +groupName.value.decode() }
 

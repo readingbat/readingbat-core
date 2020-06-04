@@ -29,6 +29,7 @@ import com.github.readingbat.misc.FormFields.CREATE_CLASS
 import com.github.readingbat.misc.FormFields.DELETE_CLASS
 import com.github.readingbat.misc.FormFields.UPDATE_ACTIVE_CLASS
 import com.github.readingbat.misc.FormFields.USER_PREFS_ACTION
+import com.github.readingbat.misc.Message
 import com.github.readingbat.misc.User
 import com.github.readingbat.misc.User.Companion.fetchActiveClassCode
 import com.github.readingbat.pages.TeacherPrefsPage.teacherPrefsPage
@@ -59,17 +60,16 @@ internal object TeacherPrefsPost {
                                        redis: Jedis) =
     when {
       classDesc.isBlank() -> {
-        teacherPrefsPage(content, user, "Unable to create class [Empty class description]", true, redis)
+        teacherPrefsPage(content, user, redis, Message("Unable to create class [Empty class description]", true))
       }
       !user.isUniqueClassDesc(classDesc, redis) -> {
-        teacherPrefsPage(content, user, "Class description is not unique [$classDesc]", true, redis, classDesc)
+        teacherPrefsPage(content, user, redis, Message("Class description is not unique [$classDesc]", true), classDesc)
       }
       user.classCount(redis) == content.maxClassCount -> {
         teacherPrefsPage(content,
                          user,
-                         "Exceeds maximum number classes [${content.maxClassCount}]",
-                         true,
                          redis,
+                         Message("Exceeds maximum number classes [${content.maxClassCount}]", true),
                          classDesc)
       }
       else -> {
@@ -87,7 +87,7 @@ internal object TeacherPrefsPost {
 
           tx.exec()
         }
-        teacherPrefsPage(content, user, "Created class code: $classCode", false, redis)
+        teacherPrefsPage(content, user, redis, Message("Created class code: $classCode", false))
       }
     }
 
@@ -99,21 +99,21 @@ internal object TeacherPrefsPost {
     val msg =
       when {
         activeClassCode.isStudentMode && classCode.isStudentMode -> {
-          "Student mode enabled"
+          Message("Student mode enabled")
         }
         activeClassCode == classCode -> {
-          "Same active class selected [$classCode]"
+          Message("Same active class selected [$classCode]", true)
         }
         else -> {
           user.assignActiveClassCode(classCode, redis)
           if (classCode.isStudentMode)
-            "Student mode enabled"
+            Message("Student mode enabled")
           else
-            "Active class updated to ${classCode.fetchClassDesc(redis)} [$classCode]"
+            Message("Active class updated to ${classCode.fetchClassDesc(redis)} [$classCode]")
         }
       }
 
-    return teacherPrefsPage(content, user, msg, false, redis)
+    return teacherPrefsPage(content, user, redis, msg)
   }
 
   private fun PipelineCall.deleteClass(content: ReadingBatContent,
@@ -122,10 +122,10 @@ internal object TeacherPrefsPost {
                                        redis: Jedis) =
     when {
       classCode.isStudentMode -> {
-        teacherPrefsPage(content, user, "Empty class code", true, redis)
+        teacherPrefsPage(content, user, redis, Message("Empty class code", true))
       }
       classCode.isNotValid(redis) -> {
-        teacherPrefsPage(content, user, "Invalid class code: $classCode", true, redis)
+        teacherPrefsPage(content, user, redis, Message("Invalid class code: $classCode", true))
       }
       else -> {
         val activeClassCode = user.fetchActiveClassCode(redis)
@@ -141,7 +141,7 @@ internal object TeacherPrefsPost {
           tx.exec()
         }
 
-        teacherPrefsPage(content, user, "Deleted class code: $classCode", false, redis)
+        teacherPrefsPage(content, user, redis, Message("Deleted class code: $classCode"))
       }
     }
 }

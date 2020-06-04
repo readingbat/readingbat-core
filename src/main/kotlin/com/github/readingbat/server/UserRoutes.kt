@@ -62,7 +62,6 @@ import com.github.readingbat.posts.PasswordResetPost.changePassword
 import com.github.readingbat.posts.PasswordResetPost.sendPasswordReset
 import com.github.readingbat.posts.TeacherPrefsPost.teacherPrefs
 import com.github.readingbat.posts.UserPrefsPost.userPrefs
-import com.github.readingbat.server.ResetId.Companion.EMPTY_RESET_ID
 import com.github.readingbat.server.ServerUtils.fetchUser
 import com.github.readingbat.server.ServerUtils.queryParam
 import io.ktor.application.call
@@ -128,15 +127,11 @@ internal fun Routing.userRoutes(content: ReadingBatContent) {
 
   post(CREATE_ACCOUNT_ENDPOINT) { respondWithSuspendingDbmsCheck { redis -> createAccount(content, redis) } }
 
-  get(USER_PREFS_ENDPOINT) { respondWithDbmsCheck { redis -> userPrefsPage(content, fetchUser(), "", false, redis) } }
+  get(USER_PREFS_ENDPOINT) { respondWithDbmsCheck { redis -> userPrefsPage(content, fetchUser(), redis) } }
 
   post(USER_PREFS_ENDPOINT) { respondWithSuspendingDbmsCheck { redis -> userPrefs(content, fetchUser(), redis) } }
 
-  get(TEACHER_PREFS_ENDPOINT) {
-    respondWithDbmsCheck { redis ->
-      teacherPrefsPage(content, fetchUser(), "", false, redis)
-    }
-  }
+  get(TEACHER_PREFS_ENDPOINT) { respondWithDbmsCheck { redis -> teacherPrefsPage(content, fetchUser(), redis) } }
 
   post(TEACHER_PREFS_ENDPOINT) { respondWithSuspendingDbmsCheck { redis -> teacherPrefs(content, fetchUser(), redis) } }
 
@@ -147,10 +142,7 @@ internal fun Routing.userRoutes(content: ReadingBatContent) {
   // RESET_ID is passed here when user clicks on email URL
   get(PASSWORD_RESET_ENDPOINT) {
     respondWithDbmsCheck { redis ->
-      passwordResetPage(content,
-                        queryParam(RESET_ID)?.let { ResetId(it) } ?: EMPTY_RESET_ID,
-                        "",
-                        redis)
+      passwordResetPage(content, queryParam(RESET_ID).let { ResetId(it) }, redis)
     }
   }
 
@@ -161,7 +153,7 @@ internal fun Routing.userRoutes(content: ReadingBatContent) {
   get(LOGOUT) {
     // Purge UserPrincipal from cookie data
     call.sessions.clear<UserPrincipal>()
-    redirectTo { queryParam(RETURN_PATH) ?: "/" }
+    redirectTo { queryParam(RETURN_PATH, "/") }
   }
 
   get(CSS_ENDPOINT) { respondWith(CSS) { cssContent } }

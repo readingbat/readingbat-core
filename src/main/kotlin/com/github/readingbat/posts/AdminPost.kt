@@ -20,6 +20,7 @@ package com.github.readingbat.posts
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.FormFields.ADMIN_ACTION
 import com.github.readingbat.misc.FormFields.DELETE_ALL_DATA
+import com.github.readingbat.misc.Message
 import com.github.readingbat.misc.User
 import com.github.readingbat.misc.UserPrincipal
 import com.github.readingbat.pages.AdminPage.adminDataPage
@@ -36,10 +37,10 @@ internal object AdminPost {
     return when {
       content.production && user == null -> adminDataPage(content,
                                                           user,
-                                                          "Must be logged in for this function",
-                                                          redis = redis)
+                                                          redis = redis,
+                                                          msg = Message("Must be logged in for this function", true))
       content.production && user?.email(redis)?.value != "pambrose@mac.com" -> {
-        adminDataPage(content, user, "Must be system admin for this function", redis = redis)
+        adminDataPage(content, user, redis = redis, msg = Message("Must be system admin for this function", true))
       }
       else -> {
         val parameters = call.receiveParameters()
@@ -47,10 +48,10 @@ internal object AdminPost {
           DELETE_ALL_DATA -> {
             val cnt = redis.keys("*")?.onEach { redis.del(it) }?.count() ?: 0
             call.sessions.clear<UserPrincipal>()
-            adminDataPage(content, user, "$cnt items deleted", false, redis)
+            adminDataPage(content, user, redis, Message("$cnt items deleted", false))
           }
           else ->
-            adminDataPage(content, user, "Invalid option", redis = redis)
+            adminDataPage(content, user, redis = redis, msg = Message("Invalid option", true))
         }
       }
     }

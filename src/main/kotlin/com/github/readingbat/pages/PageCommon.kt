@@ -31,6 +31,8 @@ import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.Constants.STATIC_ROOT
 import com.github.readingbat.misc.Endpoints.CSS_ENDPOINT
 import com.github.readingbat.misc.Endpoints.PRIVACY_ENDPOINT
+import com.github.readingbat.misc.Message
+import com.github.readingbat.misc.Message.Companion.EMPTY_MESSAGE
 import com.github.readingbat.misc.PageUtils.pathOf
 import com.github.readingbat.misc.User
 import com.github.readingbat.pages.HelpAndLogin.helpAndLogin
@@ -100,7 +102,7 @@ internal object PageCommon {
                       loginPath: String,
                       redis: Jedis?,
                       displayWelcomeMsg: Boolean,
-                      msg: String = "") {
+                      msg: Message = EMPTY_MESSAGE) {
 
     helpAndLogin(user, loginPath, redis)
 
@@ -111,7 +113,7 @@ internal object PageCommon {
     if (loginAttempt && user == null)
       p { span { style = "color:red;"; +"Failed to login -- incorrect email or password" } }
 
-    p { span { style = "color:green; max-width:800;"; if (msg.isNotEmpty()) +msg else rawHtml(nbsp.text) } }
+    p { span { style = "color:green; max-width:800;"; if (msg.isNotBlank) +(msg.toString()) else rawHtml(nbsp.text) } }
 
     div {
       style = "padding-top:10px; min-width:100vw; clear:both;"
@@ -163,7 +165,7 @@ internal object PageCommon {
     }
   }
 
-  fun BODY.displayMessage(msg: String) = if (msg.isNotEmpty()) +msg else rawHtml(nbsp.text)
+  fun BODY.displayMessage(msg: Message) = if (msg.isNotBlank) +(msg.toString()) else rawHtml(nbsp.text)
 
   fun BODY.backLink(vararg pathElems: String) = backLinkWithIndent(pathElems.toList().toRootPath())
 

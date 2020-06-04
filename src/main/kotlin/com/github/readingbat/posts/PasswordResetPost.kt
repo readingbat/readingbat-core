@@ -30,6 +30,7 @@ import com.github.readingbat.misc.FormFields.EMAIL
 import com.github.readingbat.misc.FormFields.NEW_PASSWORD
 import com.github.readingbat.misc.KeyConstants.DIGEST_FIELD
 import com.github.readingbat.misc.KeyConstants.SALT_FIELD
+import com.github.readingbat.misc.Message
 import com.github.readingbat.misc.User.Companion.isRegisteredEmail
 import com.github.readingbat.misc.User.Companion.lookupUserByEmail
 import com.github.readingbat.pages.PasswordResetPage.passwordResetPage
@@ -61,15 +62,15 @@ internal object PasswordResetPost : KLogging() {
       email.isBlank() -> {
         passwordResetPage(content,
                           EMPTY_RESET_ID,
-                          "Unable to send password reset email -- missing email address",
-                          redis)
+                          redis,
+                          Message("Unable to send password reset email -- missing email address", true))
       }
       email.isNotValidEmail() -> {
-        passwordResetPage(content, EMPTY_RESET_ID, "Invalid email address: $email", redis)
+        passwordResetPage(content, EMPTY_RESET_ID, redis, Message("Invalid email address: $email", true))
       }
       !isRegisteredEmail(email, redis) -> {
         unknownUserLimiter.acquire()
-        passwordResetPage(content, EMPTY_RESET_ID, "Unknown user: $email", redis)
+        passwordResetPage(content, EMPTY_RESET_ID, redis, Message("Unknown user: $email", true))
       }
       else -> {
         try {
@@ -86,11 +87,11 @@ internal object PasswordResetPost : KLogging() {
 
           logger.info { "Sending password reset email to $email" }
           try {
-            val msg = """
+            val msg = Message("""
               |This is a password reset message for the ReadingBat.com account for '$email'
               |Go to this URL to set a new password: ${content.urlPrefix}$PASSWORD_RESET_ENDPOINT?$RESET_ID=$newResetId 
               |If you did not request to reset your password, please ignore this message.
-            """.trimMargin()
+            """.trimMargin())
             sendEmail(to = email,
                       from = Email("reset@readingbat.com"),
                       subject = "ReadingBat password reset",
@@ -100,11 +101,14 @@ internal object PasswordResetPost : KLogging() {
             throw ResetPasswordException("Unable to send email")
           }
 
-          val returnPath = queryParam(RETURN_PATH) ?: "/"
+          val returnPath = queryParam(RETURN_PATH, "/")
           throw RedirectException("$returnPath?$MSG=${"Password reset email sent to $email".encode()}")
         } catch (e: ResetPasswordException) {
           logger.info { e }
-          passwordResetPage(content, EMPTY_RESET_ID, "Unable to send password reset email to $email", redis)
+          passwordResetPage(content,
+                            EMPTY_RESET_ID,
+                            redis,
+                            Message("Unable to send password reset email to $email", true))
         }
       }
     }
@@ -118,8 +122,8 @@ internal object PasswordResetPost : KLogging() {
       val confirmPassword = parameters.getPassword(CONFIRM_PASSWORD)
       val passwordError = checkPassword(newPassword, confirmPassword)
 
-      if (passwordError.isNotEmpty())
-        throw ResetPasswordException(passwordError, resetId)
+      if (passwordError.isNotBlank)
+        throw ResetPasswordException(passwordError.value, resetId)
 
       val passwordResetKey = resetId.passwordResetKey
       val email = Email(redis.get(passwordResetKey) ?: throw ResetPasswordException(INVALID_RESET_ID))
@@ -141,7 +145,7 @@ internal object PasswordResetPost : KLogging() {
       throw RedirectException("/?$MSG=${"Password reset for $email".encode()}")
     } catch (e: ResetPasswordException) {
       logger.info { e }
-      passwordResetPage(content, e.resetId, e.msg, redis)
+      passwordResetPage(content, e.resetId, redis, Message(e.msg))
     }
 
   class ResetPasswordException(val msg: String, val resetId: ResetId = EMPTY_RESET_ID) : Exception(msg)

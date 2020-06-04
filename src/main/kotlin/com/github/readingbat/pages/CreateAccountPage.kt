@@ -24,6 +24,8 @@ import com.github.readingbat.misc.FormFields.CONFIRM_PASSWORD
 import com.github.readingbat.misc.FormFields.EMAIL
 import com.github.readingbat.misc.FormFields.FULLNAME
 import com.github.readingbat.misc.FormFields.PASSWORD
+import com.github.readingbat.misc.Message
+import com.github.readingbat.misc.Message.Companion.EMPTY_MESSAGE
 import com.github.readingbat.misc.PageUtils.hideShowButton
 import com.github.readingbat.pages.PageCommon.backLink
 import com.github.readingbat.pages.PageCommon.bodyTitle
@@ -45,10 +47,10 @@ internal object CreateAccountPage {
   fun PipelineCall.createAccountPage(content: ReadingBatContent,
                                      defaultFullName: FullName = EMPTY_FULLNAME,
                                      defaultEmail: Email = EMPTY_EMAIL,
-                                     msg: String = "") =
+                                     msg: Message = EMPTY_MESSAGE) =
     createHTML()
       .html {
-        val returnPath = queryParam(RETURN_PATH) ?: "/"
+        val returnPath = queryParam(RETURN_PATH, "/")
         val createButton = "CreateAccountButton"
 
         head {

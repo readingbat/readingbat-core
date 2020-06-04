@@ -51,6 +51,7 @@ import com.github.readingbat.misc.FormFields.CHALLENGE_NAME_KEY
 import com.github.readingbat.misc.FormFields.GROUP_NAME_KEY
 import com.github.readingbat.misc.FormFields.LANGUAGE_NAME_KEY
 import com.github.readingbat.misc.KeyConstants.NAME_FIELD
+import com.github.readingbat.misc.Message
 import com.github.readingbat.misc.PageUtils.pathOf
 import com.github.readingbat.misc.ParameterIds.FEEDBACK_ID
 import com.github.readingbat.misc.ParameterIds.SPINNER_ID
@@ -85,7 +86,7 @@ internal object ChallengePage : KLogging() {
   private const val answersTd = "answersTd"
   private const val answersSpan = "answersSpan"
   private const val numCorrectSpan = "numCorrectSpan"
-  const val headerColor = "#419DC1"
+  internal const val headerColor = "#419DC1"
 
   fun PipelineCall.challengePage(content: ReadingBatContent,
                                  user: User?,
@@ -113,7 +114,7 @@ internal object ChallengePage : KLogging() {
         }
 
         body {
-          bodyHeader(user, loginAttempt, content, languageType, loginPath, redis, false, queryParam(MSG) ?: "")
+          bodyHeader(user, loginAttempt, content, languageType, loginPath, redis, false, Message(queryParam(MSG)))
 
           displayChallenge(challenge, funcInfo)
 
@@ -122,7 +123,7 @@ internal object ChallengePage : KLogging() {
             displayQuestions(user, browserSession, challenge, funcInfo, redis)
           else {
             if (redis == null)
-              p { +DBMS_DOWN }
+              p { +DBMS_DOWN.value }
             else
               displayStudentProgress(challenge, content.maxHistoryLength, funcInfo, activeClassCode, redis)
           }

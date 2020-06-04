@@ -34,6 +34,8 @@ import com.github.readingbat.misc.FormFields.NEW_PASSWORD
 import com.github.readingbat.misc.FormFields.UPDATE_PASSWORD
 import com.github.readingbat.misc.FormFields.USER_PREFS_ACTION
 import com.github.readingbat.misc.FormFields.WITHDRAW_FROM_CLASS
+import com.github.readingbat.misc.Message
+import com.github.readingbat.misc.Message.Companion.EMPTY_MESSAGE
 import com.github.readingbat.misc.PageUtils.hideShowButton
 import com.github.readingbat.misc.User
 import com.github.readingbat.misc.User.Companion.fetchEnrolledClassCode
@@ -62,19 +64,17 @@ internal object UserPrefsPage : KLogging() {
 
   fun PipelineCall.userPrefsPage(content: ReadingBatContent,
                                  user: User?,
-                                 msg: String,
-                                 isErrorMsg: Boolean,
                                  redis: Jedis,
+                                 msg: Message = EMPTY_MESSAGE,
                                  defaultClassCode: ClassCode = STUDENT_CLASS_CODE) =
     if (user.isValidUser(redis))
-      userPrefsWithLoginPage(content, user, msg, isErrorMsg, defaultClassCode, redis)
+      userPrefsWithLoginPage(content, user, msg, defaultClassCode, redis)
     else
       requestLogInPage(content, redis)
 
   private fun PipelineCall.userPrefsWithLoginPage(content: ReadingBatContent,
                                                   user: User,
-                                                  msg: String,
-                                                  isErrorMsg: Boolean,
+                                                  msg: Message,
                                                   defaultClassCode: ClassCode,
                                                   redis: Jedis) =
     createHTML()
@@ -85,7 +85,7 @@ internal object UserPrefsPage : KLogging() {
         }
 
         body {
-          val returnPath = queryParam(RETURN_PATH) ?: "/"
+          val returnPath = queryParam(RETURN_PATH, "/")
 
           helpAndLogin(user, returnPath, redis)
 
@@ -93,7 +93,7 @@ internal object UserPrefsPage : KLogging() {
 
           h2 { +"ReadingBat User Preferences" }
 
-          p { span { style = "color:${if (isErrorMsg) "red" else "green"};"; this@body.displayMessage(msg) } }
+          p { span { style = "color:${if (msg.isError) "red" else "green"};"; this@body.displayMessage(msg) } }
 
 
           changePassword()
@@ -268,20 +268,19 @@ internal object UserPrefsPage : KLogging() {
 
   fun PipelineCall.requestLogInPage(content: ReadingBatContent,
                                     redis: Jedis,
-                                    isErrorMsg: Boolean = false,
-                                    msg: String = "") =
+                                    msg: Message = EMPTY_MESSAGE) =
     createHTML()
       .html {
         head { headDefault(content) }
 
         body {
-          val returnPath = queryParam(RETURN_PATH) ?: "/"
+          val returnPath = queryParam(RETURN_PATH, "/")
 
           helpAndLogin(null, returnPath, redis)
 
           bodyTitle()
 
-          p { span { style = "color:${if (isErrorMsg) "red" else "green"};"; this@body.displayMessage(msg) } }
+          p { span { style = "color:${if (msg.isError) "red" else "green"};"; this@body.displayMessage(msg) } }
 
           h2 { +"Log in" }
 

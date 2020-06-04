@@ -18,10 +18,12 @@
 package com.github.readingbat.pages
 
 import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.misc.Constants
+import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.Endpoints.ADMIN_ENDPOINT
 import com.github.readingbat.misc.FormFields.ADMIN_ACTION
 import com.github.readingbat.misc.FormFields.DELETE_ALL_DATA
+import com.github.readingbat.misc.Message
+import com.github.readingbat.misc.Message.Companion.EMPTY_MESSAGE
 import com.github.readingbat.misc.User
 import com.github.readingbat.pages.HelpAndLogin.helpAndLogin
 import com.github.readingbat.pages.PageCommon.backLink
@@ -39,15 +41,14 @@ internal object AdminPage {
 
   fun PipelineCall.adminDataPage(content: ReadingBatContent,
                                  user: User?,
-                                 msg: String = "",
-                                 isErrorMsg: Boolean = true,
-                                 redis: Jedis) =
+                                 redis: Jedis,
+                                 msg: Message = EMPTY_MESSAGE) =
     createHTML()
       .html {
 
         head { headDefault(content) }
         body {
-          val returnPath = queryParam(Constants.RETURN_PATH) ?: "/"
+          val returnPath = queryParam(RETURN_PATH, "/")
 
           helpAndLogin(user, returnPath, redis)
 
@@ -63,7 +64,7 @@ internal object AdminPage {
             else -> {
               p {
                 span {
-                  style = "color:${if (isErrorMsg) "red" else "green"};"
+                  style = "color:${if (msg.isError) "red" else "green"};"
                   this@body.displayMessage(msg)
                 }
               }

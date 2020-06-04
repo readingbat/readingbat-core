@@ -29,6 +29,8 @@ import com.github.readingbat.misc.FormFields.EMAIL
 import com.github.readingbat.misc.FormFields.NEW_PASSWORD
 import com.github.readingbat.misc.FormFields.UPDATE_PASSWORD
 import com.github.readingbat.misc.FormFields.USER_PREFS_ACTION
+import com.github.readingbat.misc.Message
+import com.github.readingbat.misc.Message.Companion.EMPTY_MESSAGE
 import com.github.readingbat.misc.PageUtils.hideShowButton
 import com.github.readingbat.pages.PageCommon.backLink
 import com.github.readingbat.pages.PageCommon.bodyTitle
@@ -53,8 +55,8 @@ internal object PasswordResetPage : KLogging() {
 
   fun PipelineCall.passwordResetPage(content: ReadingBatContent,
                                      resetId: ResetId,
-                                     msg: String,
-                                     redis: Jedis): String =
+                                     redis: Jedis,
+                                     msg: Message = EMPTY_MESSAGE): String =
     if (resetId.isBlank())
       requestPasswordResetPage(content, msg)
     else {
@@ -64,17 +66,18 @@ internal object PasswordResetPage : KLogging() {
         changePasswordPage(content, email, resetId, msg)
       } catch (e: ResetPasswordException) {
         logger.info { e }
-        requestPasswordResetPage(content, e.message ?: "Unable to reset password")
+        requestPasswordResetPage(content, Message(e.message ?: "Unable to reset password", true))
       }
     }
 
-  private fun PipelineCall.requestPasswordResetPage(content: ReadingBatContent, msg: String = "") =
+  private fun PipelineCall.requestPasswordResetPage(content: ReadingBatContent,
+                                                    msg: Message = EMPTY_MESSAGE) =
     createHTML()
       .html {
         head { headDefault(content) }
 
         body {
-          val returnPath = queryParam(RETURN_PATH) ?: "/"
+          val returnPath = queryParam(RETURN_PATH, "/")
 
           bodyTitle()
 
@@ -125,7 +128,7 @@ internal object PasswordResetPage : KLogging() {
   private fun PipelineCall.changePasswordPage(content: ReadingBatContent,
                                               email: Email,
                                               resetId: ResetId,
-                                              msg: String) =
+                                              msg: Message) =
     createHTML()
       .html {
         head {
@@ -134,7 +137,7 @@ internal object PasswordResetPage : KLogging() {
         }
 
         body {
-          val returnPath = queryParam(RETURN_PATH) ?: "/"
+          val returnPath = queryParam(RETURN_PATH, "/")
 
           bodyTitle()
 

@@ -18,7 +18,7 @@
 package com.github.readingbat.pages
 
 import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.misc.Constants
+import com.github.readingbat.misc.Constants.DBMS_DOWN
 import com.github.readingbat.pages.PageCommon.bodyTitle
 import com.github.readingbat.pages.PageCommon.headDefault
 import kotlinx.html.body
@@ -38,7 +38,7 @@ internal object DbmsDownPage {
 
         body {
           bodyTitle()
-          h2 { +Constants.DBMS_DOWN }
+          h2 { +DBMS_DOWN.value }
         }
       }
 }

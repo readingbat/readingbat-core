@@ -29,6 +29,7 @@ import com.github.readingbat.misc.Constants.GREEN_CHECK
 import com.github.readingbat.misc.Constants.MSG
 import com.github.readingbat.misc.Constants.STATIC_ROOT
 import com.github.readingbat.misc.Constants.WHITE_CHECK
+import com.github.readingbat.misc.Message
 import com.github.readingbat.misc.PageUtils.pathOf
 import com.github.readingbat.misc.User
 import com.github.readingbat.misc.User.Companion.fetchActiveClassCode
@@ -108,7 +109,7 @@ internal object LanguageGroupPage {
         head { headDefault(content) }
 
         body {
-          val msg = queryParam(MSG) ?: ""
+          val msg = Message(queryParam(MSG))
           bodyHeader(user, loginAttempt, content, languageType, loginPath, redis, true, msg)
 
 

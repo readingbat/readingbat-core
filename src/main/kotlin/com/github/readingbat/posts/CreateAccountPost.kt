@@ -25,6 +25,8 @@ import com.github.readingbat.misc.FormFields.CONFIRM_PASSWORD
 import com.github.readingbat.misc.FormFields.EMAIL
 import com.github.readingbat.misc.FormFields.FULLNAME
 import com.github.readingbat.misc.FormFields.PASSWORD
+import com.github.readingbat.misc.Message
+import com.github.readingbat.misc.Message.Companion.EMPTY_MESSAGE
 import com.github.readingbat.misc.User.Companion.createUser
 import com.github.readingbat.misc.UserPrincipal
 import com.github.readingbat.pages.CreateAccountPage.createAccountPage
@@ -43,13 +45,13 @@ import redis.clients.jedis.Jedis
 
 internal object CreateAccountPost : KLogging() {
 
-  private const val EMPTY_NAME_MSG = "Empty name value"
-  private const val EMPTY_EMAIL_MSG = "Empty email value"
-  private const val INVALID_EMAIL_MSG = "Invalid email value"
-  private const val EMPTY_PASSWORD_MSG = "Empty password value"
-  private const val PASSWORD_TOO_SHORT_MSG = "Password value too short (must have at least 6 characters)"
-  private const val NO_MATCH_MSG = "Passwords do not match"
-  private const val CLEVER_PASSWORD_MSG = "Surely you can come up with a more clever password"
+  private val EMPTY_NAME_MSG = Message("Empty name value", true)
+  private val EMPTY_EMAIL_MSG = Message("Empty email value", true)
+  private val INVALID_EMAIL_MSG = Message("Invalid email value", true)
+  private val EMPTY_PASSWORD_MSG = Message("Empty password value", true)
+  private val PASSWORD_TOO_SHORT_MSG = Message("Password value too short (must have at least 6 characters)", true)
+  private val NO_MATCH_MSG = Message("Passwords do not match", true)
+  private val CLEVER_PASSWORD_MSG = Message("Surely you can come up with a more clever password", true)
 
   private val createAccountLimiter = RateLimiter.create(2.0) // rate 2.0 is "2 permits per second"
 
@@ -59,7 +61,7 @@ internal object CreateAccountPost : KLogging() {
       newPassword.length < 6 -> PASSWORD_TOO_SHORT_MSG
       newPassword != confirmPassword -> NO_MATCH_MSG
       newPassword.value == "password" -> CLEVER_PASSWORD_MSG
-      else -> ""
+      else -> EMPTY_MESSAGE
     }
 
   suspend fun PipelineCall.createAccount(content: ReadingBatContent, redis: Jedis): String {
@@ -79,7 +81,7 @@ internal object CreateAccountPost : KLogging() {
                           msg = INVALID_EMAIL_MSG)
       else -> {
         val passwordError = checkPassword(password, confirmPassword)
-        if (passwordError.isNotEmpty())
+        if (passwordError.isNotBlank)
           createAccountPage(content,
                             defaultFullName = fullName,
                             defaultEmail = email,
@@ -95,18 +97,17 @@ internal object CreateAccountPost : KLogging() {
                                          email: Email,
                                          password: Password,
                                          redis: Jedis): String {
-    val returnPath = queryParam(RETURN_PATH) ?: "/"
-
     createAccountLimiter.acquire() // may wait
 
     // Check if email already exists
     return if (redis.exists(email.userEmailKey)) {
-      createAccountPage(content, msg = "Email already registered: $email")
+      createAccountPage(content, msg = Message("Email already registered: $email"))
     }
     else {
       // Create user
       val user = createUser(name, email, password, redis)
       call.sessions.set(UserPrincipal(userId = user.id))
+      val returnPath = queryParam(RETURN_PATH, "/")
       throw RedirectException("$returnPath?$MSG=${"User $email created".encode()}")
     }
   }

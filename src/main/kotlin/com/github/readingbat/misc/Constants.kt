@@ -31,12 +31,13 @@ internal object Constants {
   const val PLAYGROUND_ROOT = "/playground"
   const val WHITE_CHECK = "white-check.jpg"
   const val GREEN_CHECK = "green-check.jpg"
-  const val DBMS_DOWN = "Database is down"
-  const val INVALID_RESET_ID = "Invalid reset_id"
   const val RESP = "response"
   const val CORRECT_COLOR = "#4EAA3A"
   const val WRONG_COLOR = "#F1F1F1"
   const val LABEL_WIDTH = "width: 250;"
+  const val INVALID_RESET_ID = "Invalid reset_id"
+
+  val DBMS_DOWN = Message("Database is down", true)
 }
 
 internal object Endpoints {

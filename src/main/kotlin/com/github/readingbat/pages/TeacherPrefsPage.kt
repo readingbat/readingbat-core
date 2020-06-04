@@ -28,6 +28,7 @@ import com.github.readingbat.misc.FormFields.CREATE_CLASS
 import com.github.readingbat.misc.FormFields.DELETE_CLASS
 import com.github.readingbat.misc.FormFields.UPDATE_ACTIVE_CLASS
 import com.github.readingbat.misc.FormFields.USER_PREFS_ACTION
+import com.github.readingbat.misc.Message.Companion.EMPTY_MESSAGE
 import com.github.readingbat.misc.User.Companion.fetchActiveClassCode
 import com.github.readingbat.pages.HelpAndLogin.helpAndLogin
 import com.github.readingbat.pages.PageCommon.backLink
@@ -54,19 +55,17 @@ internal object TeacherPrefsPage : KLogging() {
 
   fun PipelineCall.teacherPrefsPage(content: ReadingBatContent,
                                     user: User?,
-                                    msg: String,
-                                    isErrorMsg: Boolean,
                                     redis: Jedis,
+                                    msg: Message = EMPTY_MESSAGE,
                                     defaultClassDesc: String = "") =
     if (user.isValidUser(redis))
-      teacherPrefsWithLoginPage(content, user, msg, isErrorMsg, defaultClassDesc, redis)
+      teacherPrefsWithLoginPage(content, user, msg, defaultClassDesc, redis)
     else
       requestLogInPage(content, redis)
 
   private fun PipelineCall.teacherPrefsWithLoginPage(content: ReadingBatContent,
                                                      user: User,
-                                                     msg: String,
-                                                     isErrorMsg: Boolean,
+                                                     msg: Message,
                                                      defaultClassDesc: String,
                                                      redis: Jedis) =
     createHTML()
@@ -77,14 +76,14 @@ internal object TeacherPrefsPage : KLogging() {
         }
 
         body {
-          val returnPath = queryParam(RETURN_PATH) ?: "/"
+          val returnPath = queryParam(RETURN_PATH, "/")
 
           helpAndLogin(user, returnPath, redis)
           bodyTitle()
 
           h2 { +"ReadingBat User Preferences" }
 
-          p { span { style = "color:${if (isErrorMsg) "red" else "green"};"; this@body.displayMessage(msg) } }
+          p { span { style = "color:${if (msg.isError) "red" else "green"};"; this@body.displayMessage(msg) } }
 
           createClass(defaultClassDesc)
           displayClasses(user, redis)

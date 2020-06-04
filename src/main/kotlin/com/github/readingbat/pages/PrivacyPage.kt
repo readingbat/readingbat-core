@@ -33,9 +33,6 @@ internal object PrivacyPage {
   fun PipelineCall.privacyPage(content: ReadingBatContent) =
     createHTML()
       .html {
-        val returnPath = queryParam(RETURN_PATH) ?: ""
-        val backPath = queryParam(BACK_PATH) ?: ""
-
         head { headDefault(content) }
 
         body {
@@ -65,6 +62,8 @@ internal object PrivacyPage {
             }
           }
 
+          val backPath = queryParam(BACK_PATH)
+          val returnPath = queryParam(RETURN_PATH)
           backLink("$backPath${if (returnPath.isNotEmpty()) "?$RETURN_PATH=$returnPath" else ""}")
         }
       }

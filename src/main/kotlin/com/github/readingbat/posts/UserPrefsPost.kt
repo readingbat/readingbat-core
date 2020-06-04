@@ -31,6 +31,7 @@ import com.github.readingbat.misc.FormFields.UPDATE_PASSWORD
 import com.github.readingbat.misc.FormFields.USER_PREFS_ACTION
 import com.github.readingbat.misc.FormFields.WITHDRAW_FROM_CLASS
 import com.github.readingbat.misc.KeyConstants.DIGEST_FIELD
+import com.github.readingbat.misc.Message
 import com.github.readingbat.misc.User
 import com.github.readingbat.misc.User.Companion.fetchEnrolledClassCode
 import com.github.readingbat.misc.UserPrincipal
@@ -75,22 +76,22 @@ internal object UserPrefsPost : KLogging() {
     val confirmPassword = parameters.getPassword(CONFIRM_PASSWORD)
     val passwordError = checkPassword(newPassword, confirmPassword)
     val msg =
-      if (passwordError.isNotEmpty()) {
-        passwordError to true
+      if (passwordError.isNotBlank) {
+        passwordError
       }
       else {
         val (salt, digest) = user.lookupDigestInfoByUser(redis)
         if (salt.isNotEmpty() && digest.isNotEmpty() && digest == currPassword.sha256(salt)) {
           val newDigest = newPassword.sha256(salt)
           redis.hset(user.userInfoKey, DIGEST_FIELD, newDigest)
-          "Password changed" to false
+          Message("Password changed")
         }
         else {
-          "Incorrect current password" to true
+          Message("Incorrect current password", true)
         }
       }
 
-    return userPrefsPage(content, user, msg.first, msg.second, redis)
+    return userPrefsPage(content, user, redis, msg)
   }
 
   private fun PipelineCall.enrollInClass(content: ReadingBatContent,
@@ -101,14 +102,9 @@ internal object UserPrefsPost : KLogging() {
     return try {
       user.enrollInClass(classCode, redis)
       val classDesc = classCode.fetchClassDesc(redis)
-      userPrefsPage(content, user, "Enrolled in class $classDesc [$classCode]", false, redis)
+      userPrefsPage(content, user, redis, Message("Enrolled in class $classDesc [$classCode]"))
     } catch (e: DataException) {
-      userPrefsPage(content,
-                    user,
-                    "Unable to join class [${e.msg}]",
-                    true,
-                    redis,
-                    defaultClassCode = classCode)
+      userPrefsPage(content, user, redis, Message("Unable to join class [${e.msg}]", true), classCode)
     }
   }
 
@@ -117,9 +113,9 @@ internal object UserPrefsPost : KLogging() {
       val enrolledClassCode = user.fetchEnrolledClassCode(redis)
       val classDesc = enrolledClassCode.fetchClassDesc(redis)
       user.withdrawFromClass(enrolledClassCode, redis)
-      userPrefsPage(content, user, "Withdrawn from class $classDesc [$enrolledClassCode]", false, redis)
+      userPrefsPage(content, user, redis, Message("Withdrawn from class $classDesc [$enrolledClassCode]"))
     } catch (e: DataException) {
-      userPrefsPage(content, user, "Unable to withdraw from class [${e.msg}]", true, redis)
+      userPrefsPage(content, user, redis, Message("Unable to withdraw from class [${e.msg}]", true))
     }
 
   private fun PipelineCall.deleteAccount(content: ReadingBatContent, user: User, redis: Jedis): String {
@@ -127,6 +123,6 @@ internal object UserPrefsPost : KLogging() {
     logger.info { "Deleting user $email" }
     user.deleteUser(user, redis)
     call.sessions.clear<UserPrincipal>()
-    return requestLogInPage(content, redis, false, "User $email deleted")
+    return requestLogInPage(content, redis, Message("User $email deleted"))
   }
 }
