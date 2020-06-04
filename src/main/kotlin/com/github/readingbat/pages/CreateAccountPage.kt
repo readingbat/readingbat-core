@@ -18,6 +18,7 @@
 package com.github.readingbat.pages
 
 import com.github.readingbat.dsl.ReadingBatContent
+import com.github.readingbat.misc.CSSNames.INDENT_1EM
 import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.Endpoints.CREATE_ACCOUNT_ENDPOINT
 import com.github.readingbat.misc.FormFields.CONFIRM_PASSWORD
@@ -63,9 +64,7 @@ internal object CreateAccountPage {
 
           h2 { +"Create Account" }
 
-          div {
-            style = "margin-left: 1em;"
-
+          div(classes = INDENT_1EM) {
             p {
               +"""
               Please enter information to create a new account. We use your email address as your account id 

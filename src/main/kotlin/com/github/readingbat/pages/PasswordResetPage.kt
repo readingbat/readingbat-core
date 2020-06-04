@@ -18,6 +18,7 @@
 package com.github.readingbat.pages
 
 import com.github.readingbat.dsl.ReadingBatContent
+import com.github.readingbat.misc.CSSNames.INDENT_1EM
 import com.github.readingbat.misc.Constants.INVALID_RESET_ID
 import com.github.readingbat.misc.Constants.LABEL_WIDTH
 import com.github.readingbat.misc.Constants.RESET_ID
@@ -85,9 +86,7 @@ internal object PasswordResetPage : KLogging() {
 
           h2 { +"Password Reset" }
 
-          div {
-            style = "margin-left: 1em;"
-
+          div(classes = INDENT_1EM) {
             form {
               action = "$PASSWORD_RESET_ENDPOINT?$RETURN_PATH=$returnPath"
               method = FormMethod.post

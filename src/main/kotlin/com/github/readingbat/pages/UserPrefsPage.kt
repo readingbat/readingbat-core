@@ -18,6 +18,8 @@
 package com.github.readingbat.pages
 
 import com.github.readingbat.dsl.ReadingBatContent
+import com.github.readingbat.misc.CSSNames.INDENT_1EM
+import com.github.readingbat.misc.CSSNames.INDENT_2EM
 import com.github.readingbat.misc.ClassCode
 import com.github.readingbat.misc.ClassCode.Companion.STUDENT_CLASS_CODE
 import com.github.readingbat.misc.Constants.LABEL_WIDTH
@@ -57,7 +59,6 @@ import redis.clients.jedis.Jedis
 
 internal object UserPrefsPage : KLogging() {
 
-  const val divStyle = "margin-left: 2em; margin-bottom: 2em;"
   private const val formName = "pform"
   private const val passwordButton = "UpdatePasswordButton"
   private const val joinClassButton = "JoinClassButton"
@@ -95,13 +96,11 @@ internal object UserPrefsPage : KLogging() {
 
           p { span { style = "color:${if (msg.isError) "red" else "green"};"; this@body.displayMessage(msg) } }
 
-
           changePassword()
           joinOrWithdrawFromClass(user, defaultClassCode, redis)
           deleteAccount(user, redis)
 
-          p {
-            style = "margin-left: 1em"
+          p(classes = INDENT_1EM) {
             a { href = "$TEACHER_PREFS_ENDPOINT?$RETURN_PATH=$returnPath"; +"Teacher Preferences" }
           }
 
@@ -113,8 +112,7 @@ internal object UserPrefsPage : KLogging() {
 
   private fun BODY.changePassword() {
     h3 { +"Change password" }
-    div {
-      style = divStyle
+    div(classes = INDENT_2EM) {
       p { +"Password must contain at least 6 characters" }
       form {
         name = formName
@@ -157,12 +155,10 @@ internal object UserPrefsPage : KLogging() {
                                            defaultClassCode: ClassCode,
                                            redis: Jedis) {
     val enrolledClass = user.fetchEnrolledClassCode(redis)
-
     if (enrolledClass.isTeacherMode) {
       h3 { +"Enrolled class" }
       val classDesc = enrolledClass.fetchClassDesc(redis)
-      div {
-        style = divStyle
+      div(classes = INDENT_2EM) {
         p { +"Currently enrolled in class $enrolledClass [$classDesc]." }
         p {
           form {
@@ -176,8 +172,7 @@ internal object UserPrefsPage : KLogging() {
     }
     else {
       h3 { +"Join a class" }
-      div {
-        style = divStyle
+      div(classes = INDENT_2EM) {
         p { +"Enter the class code your teacher gave you. This will make your progress visible to your teacher." }
         form {
           action = USER_PREFS_ENDPOINT
@@ -253,8 +248,7 @@ internal object UserPrefsPage : KLogging() {
     val email = user.email(redis)
     if (email.isNotBlank()) {
       h3 { +"Delete account" }
-      div {
-        style = divStyle
+      div(classes = INDENT_2EM) {
         p { +"Permanently delete account [$email] -- this cannot be undone!" }
         form {
           action = USER_PREFS_ENDPOINT

@@ -27,6 +27,8 @@ import com.github.readingbat.misc.CSSNames.FUNC_COL
 import com.github.readingbat.misc.CSSNames.FUNC_ITEM
 import com.github.readingbat.misc.CSSNames.GROUP_CHOICE
 import com.github.readingbat.misc.CSSNames.GROUP_ITEM_SRC
+import com.github.readingbat.misc.CSSNames.INDENT_1EM
+import com.github.readingbat.misc.CSSNames.INDENT_2EM
 import com.github.readingbat.misc.CSSNames.KOTLIN_CODE
 import com.github.readingbat.misc.CSSNames.REFS
 import com.github.readingbat.misc.CSSNames.SELECTED_TAB
@@ -55,6 +57,8 @@ internal object CSSNames {
   const val STATUS = "status"
   const val SUCCESS = "success"
   const val DASHBOARD = "dashboard"
+  const val INDENT_1EM = "indent-1em"
+  const val INDENT_2EM = "indent-2em"
 }
 
 internal val cssContent by lazy {
@@ -182,6 +186,13 @@ internal val cssContent by lazy {
         marginLeft = 25.px
         fontSize = textFs
         color = Color.black
+      }
+      rule(".$INDENT_1EM") {
+        marginLeft = 1.em
+      }
+      rule(".$INDENT_2EM") {
+        marginLeft = 2.em
+        marginBottom = 2.em
       }
       rule("#$SELECTED_TAB") {
         position = Position.relative

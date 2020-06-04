@@ -18,6 +18,7 @@
 package com.github.readingbat.pages
 
 import com.github.readingbat.dsl.ReadingBatContent
+import com.github.readingbat.misc.CSSNames.INDENT_1EM
 import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.pages.PageCommon.backLink
 import com.github.readingbat.pages.PageCommon.bodyTitle
@@ -39,9 +40,7 @@ internal object AboutPage {
 
           h2 { +"About ReadingBat" }
 
-          div {
-            style = "margin-left: 1em;"
-
+          div(classes = INDENT_1EM) {
             p {
               +"""
               ReadingBat.com is a faster-son effort by Paul and Matthew Ambrose to make learning how to program 

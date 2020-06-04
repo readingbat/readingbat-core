@@ -22,6 +22,7 @@ import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.dsl.LanguageType.Companion.languageTypesInOrder
 import com.github.readingbat.dsl.ReadingBatContent
+import com.github.readingbat.misc.CSSNames.INDENT_1EM
 import com.github.readingbat.misc.CSSNames.SELECTED_TAB
 import com.github.readingbat.misc.Constants.BACK_PATH
 import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
@@ -151,8 +152,7 @@ internal object PageCommon {
     a { href = url; if (newWindow) target = "_blank"; +text }
 
   fun BODY.privacyStatement(backPath: String, returnPath: String) =
-    p {
-      style = "margin-left: 1em"
+    p(classes = INDENT_1EM) {
       a { href = "$PRIVACY_ENDPOINT?$BACK_PATH=$backPath&$RETURN_PATH=$returnPath"; +"Privacy Statement" }
     }
 

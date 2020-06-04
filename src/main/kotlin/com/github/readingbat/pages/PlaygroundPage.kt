@@ -21,6 +21,7 @@ import com.github.pambrose.common.util.decode
 import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.CSSNames.CHALLENGE_DESC
+import com.github.readingbat.misc.CSSNames.INDENT_1EM
 import com.github.readingbat.misc.CSSNames.KOTLIN_CODE
 import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
 import com.github.readingbat.misc.Constants.STATIC_ROOT
@@ -89,8 +90,7 @@ internal object PlaygroundPage {
             """.trimIndent())
 
           br
-          div {
-            style = "margin-left: 1em;"
+          div(classes = INDENT_1EM) {
             +"Click on"
             img { height = "25"; style = "vertical-align: bottom"; src = "$STATIC_ROOT/run-button.png" }
             +" to run the code"

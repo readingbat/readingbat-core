@@ -145,9 +145,7 @@ internal object ChallengeGroupPage : KLogging() {
         }
       }
 
-  fun BODY.displayClassDescription(activeClassCode: ClassCode,
-                                   enrollees: List<User>,
-                                   redis: Jedis?) {
+  fun BODY.displayClassDescription(activeClassCode: ClassCode, enrollees: List<User>, redis: Jedis?) {
     val classDesc = if (redis != null) activeClassCode.fetchClassDesc(redis) else "Description unavailable"
     val studentCount = if (enrollees.isEmpty()) "No" else enrollees.count().toString()
     h3 {
@@ -187,9 +185,8 @@ internal object ChallengeGroupPage : KLogging() {
                                            challenges: List<Challenge>) {
 
     val correctAnswersKeys = challenges.map { user.correctAnswersKey(browserSession, it) }
-    val correctAnswersKey = gson.toJson(correctAnswersKeys)
-
     val challengeAnswerKeys = challenges.map { user.challengeAnswersKey(browserSession, it) }
+    val correctAnswersKey = gson.toJson(correctAnswersKeys)
     val challengeAnswersKey = gson.toJson(challengeAnswerKeys)
 
     p {
@@ -209,5 +206,4 @@ internal object ChallengeGroupPage : KLogging() {
       }
     }
   }
-
 }

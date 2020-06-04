@@ -19,6 +19,7 @@ package com.github.readingbat.pages
 
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.*
+import com.github.readingbat.misc.CSSNames.INDENT_2EM
 import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.Endpoints.TEACHER_PREFS_ENDPOINT
 import com.github.readingbat.misc.FormFields.CLASSES_CHOICE
@@ -38,7 +39,6 @@ import com.github.readingbat.pages.PageCommon.displayMessage
 import com.github.readingbat.pages.PageCommon.headDefault
 import com.github.readingbat.pages.PageCommon.privacyStatement
 import com.github.readingbat.pages.PageCommon.rawHtml
-import com.github.readingbat.pages.UserPrefsPage.divStyle
 import com.github.readingbat.pages.UserPrefsPage.requestLogInPage
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
@@ -96,8 +96,7 @@ internal object TeacherPrefsPage : KLogging() {
 
   private fun BODY.createClass(defaultClassDesc: String) {
     h3 { +"Create a class" }
-    div {
-      style = divStyle
+    div(classes = INDENT_2EM) {
       p { +"Enter a decription of the class." }
       form {
         action = TEACHER_PREFS_ENDPOINT
@@ -129,8 +128,7 @@ internal object TeacherPrefsPage : KLogging() {
     if (classCodes.isNotEmpty()) {
       val activeClassCode = user.fetchActiveClassCode(redis)
       h3 { +"Classes" }
-      div {
-        style = divStyle
+      div(classes = INDENT_2EM) {
         table {
           tr {
             td { style = "vertical-align:top;"; this@displayClasses.classList(activeClassCode, classCodes, redis) }

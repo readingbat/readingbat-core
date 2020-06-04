@@ -18,6 +18,7 @@
 package com.github.readingbat.pages
 
 import com.github.readingbat.dsl.ReadingBatContent
+import com.github.readingbat.misc.CSSNames.INDENT_1EM
 import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.Endpoints.ADMIN_ENDPOINT
 import com.github.readingbat.misc.FormFields.ADMIN_ACTION
@@ -80,8 +81,7 @@ internal object AdminPage {
 
   private fun BODY.deleteData() {
     h3 { +"Delete All Data" }
-    div {
-      style = "margin-left: 1em;"
+    div(classes = INDENT_1EM) {
       p { +"Permanently delete all data -- this cannot be undone!" }
       form {
         action = ADMIN_ENDPOINT
@@ -95,9 +95,7 @@ internal object AdminPage {
   private fun BODY.dumpData(redis: Jedis) {
     h3 { +"All Data" }
     br
-    div {
-      style = "margin-left: 1em;"
-
+    div(classes = INDENT_1EM) {
       val keys = redis.keys("*")
       h4 { +"${keys.size} Items:" }
       table {

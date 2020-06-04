@@ -18,6 +18,7 @@
 package com.github.readingbat.pages
 
 import com.github.readingbat.dsl.ReadingBatContent
+import com.github.readingbat.misc.CSSNames.INDENT_1EM
 import com.github.readingbat.misc.Constants.BACK_PATH
 import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.pages.PageCommon.backLink
@@ -40,9 +41,7 @@ internal object PrivacyPage {
 
           h2 { +"ReadingBat Privacy" }
 
-          div {
-            style = "margin-left: 1em;"
-
+          div(classes = INDENT_1EM) {
             p {
               +"""
             ReadingBat.com is free -- anyone can access the site to learn and practice reading code. We will not send  
