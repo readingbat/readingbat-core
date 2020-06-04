@@ -40,7 +40,6 @@ import com.github.readingbat.misc.PageUtils.pathOf
 import com.github.readingbat.misc.User
 import com.github.readingbat.misc.User.Companion.gson
 import com.github.readingbat.misc.User.Companion.saveChallengeAnswers
-import com.github.readingbat.misc.isValidUser
 import com.github.readingbat.server.*
 import com.github.readingbat.server.ChallengeName.Companion.getChallengeName
 import com.github.readingbat.server.GroupName.Companion.getGroupName
@@ -204,24 +203,17 @@ internal object ChallengePost : KLogging() {
     val challenge = content.findChallenge(languageName.toLanguageType(), groupName, challengeName)
     val path = pathOf(CHALLENGE_ROOT, languageName, groupName, challengeName)
 
-    val msg =
-      if (user.isValidUser(redis)) {
-        logger.info { "Clearing answers for $challenge" }
-        if (correctAnswersKey.isNotEmpty()) {
-          logger.info { "Clearing answers for $correctAnswersKey" }
-          redis.del(correctAnswersKey)
-        }
-        if (challengeAnswersKey.isNotEmpty()) {
-          logger.info { "Clearing answers for $challengeAnswersKey" }
-          redis.del(challengeAnswersKey)
-        }
-        "Answers cleared"
-      }
-      else {
-        "Invalid user"
-      }
+    if (correctAnswersKey.isNotEmpty()) {
+      logger.info { "Clearing answers for $challenge $correctAnswersKey" }
+      redis.del(correctAnswersKey)
+    }
 
-    throw RedirectException("$path?$MSG=${msg.encode()}")
+    if (challengeAnswersKey.isNotEmpty()) {
+      logger.info { "Clearing answers for $challenge $challengeAnswersKey" }
+      redis.del(challengeAnswersKey)
+    }
+
+    throw RedirectException("$path?$MSG=${"Answers cleared".encode()}")
   }
 
   suspend fun PipelineCall.clearGroupAnswers(user: User?, redis: Jedis): String {
@@ -234,28 +226,23 @@ internal object ChallengePost : KLogging() {
     val challengeAnswersKeys = gson.fromJson(challengeJson, List::class.java) as List<String>
     val path = pathOf(CHALLENGE_ROOT, languageName, groupName)
 
-    val msg =
-      if (user.isValidUser(redis)) {
-        correctAnswersKeys
-          .forEach { correctAnswersKey ->
-            if (correctAnswersKey.isNotEmpty()) {
-              logger.info { "Clearing answers for $correctAnswersKey" }
-              redis.del(correctAnswersKey)
-            }
-          }
-        challengeAnswersKeys
-          .forEach { challengeAnswersKey ->
-            if (challengeAnswersKey.isNotEmpty()) {
-              logger.info { "Clearing answers for $challengeAnswersKey" }
-              redis.del(challengeAnswersKey)
-            }
-          }
-        "Answers cleared"
+    correctAnswersKeys
+      .forEach { correctAnswersKey ->
+        if (correctAnswersKey.isNotEmpty()) {
+          logger.info { "Clearing answers for $correctAnswersKey" }
+          redis.del(correctAnswersKey)
+        }
       }
-      else {
-        "Invalid user"
+
+    challengeAnswersKeys
+      .forEach { challengeAnswersKey ->
+        if (challengeAnswersKey.isNotEmpty()) {
+          logger.info { "Clearing answers for $challengeAnswersKey" }
+          redis.del(challengeAnswersKey)
+        }
       }
-    throw RedirectException("$path?$MSG=${msg.encode()}")
+
+    throw RedirectException("$path?$MSG=${"Answers cleared".encode()}")
   }
 
   private fun String.equalsAsKotlinList(other: String, scriptEngine: KotlinScript): Boolean {

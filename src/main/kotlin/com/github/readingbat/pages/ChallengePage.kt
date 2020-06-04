@@ -386,7 +386,7 @@ internal object ChallengePage : KLogging() {
     val groupName = challenge.groupName
     val challengeName = challenge.challengeName
     val languageName = languageType.languageName
-    val correctAnswersKey = user.correctAnswersKey(languageName, groupName, challengeName)
+    val correctAnswersKey = user.correctAnswersKey(browserSession, languageName, groupName, challengeName)
     val challengeAnswersKey = user.challengeAnswersKey(browserSession, languageName, groupName, challengeName)
 
     form {

@@ -69,6 +69,9 @@ internal class User private constructor(val id: String) {
   private fun correctAnswersKey(names: ChallengeNames) =
     correctAnswersKey(names.languageName, names.groupName, names.challengeName)
 
+  fun correctAnswersKey(languageName: LanguageName, groupName: GroupName, challengeName: ChallengeName) =
+    listOf(CORRECT_ANSWERS_KEY, AUTH_KEY, id, languageName, groupName, challengeName).joinToString(KEY_SEP)
+
   private fun challengeAnswersKey(names: ChallengeNames) =
     challengeAnswersKey(names.languageName, names.groupName, names.challengeName)
 
@@ -172,10 +175,7 @@ internal class User private constructor(val id: String) {
     return salt to digest
   }
 
-  fun savePasswordResetKey(email: Email,
-                           previousResetId: ResetId,
-                           newResetId: ResetId,
-                           tx: Transaction) {
+  fun savePasswordResetKey(email: Email, previousResetId: ResetId, newResetId: ResetId, tx: Transaction) {
     if (previousResetId.isNotBlank()) {
       tx.del(userPasswordResetKey)
       tx.del(previousResetId.passwordResetKey)
@@ -248,17 +248,12 @@ internal class User private constructor(val id: String) {
       else
         redis.hget(userInfoKey, ENROLLED_CLASS_CODE_FIELD)?.let { ClassCode(it) } ?: STUDENT_CLASS_CODE
 
-
     fun User?.correctAnswersKey(browserSession: BrowserSession?, names: ChallengeNames) =
       this?.correctAnswersKey(names) ?: browserSession?.correctAnswersKey(names) ?: ""
 
     fun User?.correctAnswersKey(browserSession: BrowserSession?, challenge: Challenge) =
-      this?.correctAnswersKey(challenge.languageName,
-                              challenge.groupName,
-                              challenge.challengeName)
-        ?: browserSession?.correctAnswersKey(challenge.languageName,
-                                             challenge.groupName,
-                                             challenge.challengeName) ?: ""
+      this?.correctAnswersKey(challenge.languageName, challenge.groupName, challenge.challengeName)
+        ?: browserSession?.correctAnswersKey(challenge.languageName, challenge.groupName, challenge.challengeName) ?: ""
 
     fun User?.correctAnswersKey(browserSession: BrowserSession?,
                                 languageName: LanguageName,
@@ -267,12 +262,6 @@ internal class User private constructor(val id: String) {
       this?.correctAnswersKey(languageName, groupName, challengeName)
         ?: browserSession?.correctAnswersKey(languageName, groupName, challengeName)
         ?: ""
-
-    fun User?.correctAnswersKey(languageName: LanguageName, groupName: GroupName, challengeName: ChallengeName) =
-      if (this == null)
-        ""
-      else
-        listOf(CORRECT_ANSWERS_KEY, AUTH_KEY, id, languageName, groupName, challengeName).joinToString(KEY_SEP)
 
 
     fun User?.challengeAnswersKey(browserSession: BrowserSession?, names: ChallengeNames) =
