@@ -21,7 +21,7 @@ import com.github.readingbat.misc.AuthRoutes.LOGOUT
 import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.Endpoints.ABOUT_ENDPOINT
 import com.github.readingbat.misc.Endpoints.CREATE_ACCOUNT_ENDPOINT
-import com.github.readingbat.misc.Endpoints.END_TEACHER_MODE_ENDPOINT
+import com.github.readingbat.misc.Endpoints.ENABLE_STUDENT_MODE_ENDPOINT
 import com.github.readingbat.misc.Endpoints.PASSWORD_RESET_ENDPOINT
 import com.github.readingbat.misc.Endpoints.USER_PREFS_ENDPOINT
 import com.github.readingbat.misc.FormFields.EMAIL
@@ -49,7 +49,7 @@ internal object HelpAndLogin {
             style = "text-align:right"
             colSpan = "1"
             if (teacherMode) {
-              a { href = "$END_TEACHER_MODE_ENDPOINT?$RETURN_PATH=$loginPath"; +"student mode" }
+              a { href = "$ENABLE_STUDENT_MODE_ENDPOINT?$RETURN_PATH=$loginPath"; +"student mode" }
               +" | "
             }
             a { href = "$ABOUT_ENDPOINT?$RETURN_PATH=$loginPath"; +"about" }

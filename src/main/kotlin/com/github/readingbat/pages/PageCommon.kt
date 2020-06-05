@@ -24,6 +24,7 @@ import com.github.readingbat.dsl.LanguageType.Companion.languageTypesInOrder
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.CSSNames.INDENT_1EM
 import com.github.readingbat.misc.CSSNames.SELECTED_TAB
+import com.github.readingbat.misc.ClassCode
 import com.github.readingbat.misc.Constants.BACK_PATH
 import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
 import com.github.readingbat.misc.Constants.ICONS
@@ -102,11 +103,11 @@ internal object PageCommon {
                       languageType: LanguageType,
                       loginPath: String,
                       displayWelcomeMsg: Boolean,
-                      teacherMode: Boolean,
+                      activeClassCode: ClassCode,
                       redis: Jedis?,
                       msg: Message = EMPTY_MESSAGE) {
 
-    helpAndLogin(user, loginPath, teacherMode, redis)
+    helpAndLogin(user, loginPath, activeClassCode.isTeacherMode, redis)
 
     bodyTitle()
 

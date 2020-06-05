@@ -43,7 +43,8 @@ import io.ktor.request.receiveParameters
 import redis.clients.jedis.Jedis
 
 internal object TeacherPrefsPost {
-  private const val STUDENT_ENABLED_MSG = "Student mode enabled"
+  private const val STUDENT_MODE_ENABLED_MSG = "Student mode enabled"
+  private const val TEACHER_MODE_ENABLED_MSG = "Teacher mode enabled"
 
   suspend fun PipelineCall.teacherPrefs(content: ReadingBatContent, user: User?, redis: Jedis) =
     if (user.isValidUser(redis)) {
@@ -59,13 +60,28 @@ internal object TeacherPrefsPost {
       requestLogInPage(content, redis)
     }
 
-  fun PipelineCall.endTeacherMode(content: ReadingBatContent, user: User?, redis: Jedis): String {
+  fun PipelineCall.enableStudentMode(content: ReadingBatContent, user: User?, redis: Jedis): String {
     val returnPath = queryParam(Constants.RETURN_PATH, "/")
 
     val msg =
       if (user.isValidUser(redis)) {
-        user.assignActiveClassCode(STUDENT_CLASS_CODE, redis)
-        STUDENT_ENABLED_MSG
+        user.assignActiveClassCode(STUDENT_CLASS_CODE, false, redis)
+        STUDENT_MODE_ENABLED_MSG
+      }
+      else {
+        "Invalid user"
+      }
+    throw RedirectException("$returnPath?$MSG=${msg.encode()}")
+  }
+
+  fun PipelineCall.enableTeacherMode(content: ReadingBatContent, user: User?, redis: Jedis): String {
+    val returnPath = queryParam(Constants.RETURN_PATH, "/")
+
+    val msg =
+      if (user.isValidUser(redis)) {
+        val lastTeacherClassCode = user.fetchLastTeacherClassCode(redis)
+        user.assignActiveClassCode(lastTeacherClassCode, false, redis)
+        TEACHER_MODE_ENABLED_MSG
       }
       else {
         "Invalid user"
@@ -118,17 +134,18 @@ internal object TeacherPrefsPost {
     val msg =
       when {
         activeClassCode.isStudentMode && classCode.isStudentMode -> {
-          Message(STUDENT_ENABLED_MSG)
+          Message(STUDENT_MODE_ENABLED_MSG)
         }
         activeClassCode == classCode -> {
           Message("Same active class selected [$classCode]", true)
         }
         else -> {
-          user.assignActiveClassCode(classCode, redis)
+          user.assignActiveClassCode(classCode, true, redis)
           if (classCode.isStudentMode)
-            Message(STUDENT_ENABLED_MSG)
-          else
+            Message(STUDENT_MODE_ENABLED_MSG)
+          else {
             Message("Active class updated to ${classCode.fetchClassDesc(redis)} [$classCode]")
+          }
         }
       }
 

@@ -123,7 +123,7 @@ internal object ChallengePage : KLogging() {
                      languageType,
                      loginPath,
                      false,
-                     activeClassCode.isTeacherMode,
+                     activeClassCode,
                      redis,
                      Message(queryParam(MSG)))
 

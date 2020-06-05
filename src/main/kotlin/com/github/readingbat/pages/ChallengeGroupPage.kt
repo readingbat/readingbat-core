@@ -112,7 +112,7 @@ internal object ChallengeGroupPage : KLogging() {
                      languageType,
                      loginPath,
                      false,
-                     activeClassCode.isTeacherMode,
+                     activeClassCode,
                      redis,
                      Message(queryParam(MSG)))
 

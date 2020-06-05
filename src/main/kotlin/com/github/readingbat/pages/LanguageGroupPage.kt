@@ -116,7 +116,7 @@ internal object LanguageGroupPage {
                      languageType,
                      loginPath,
                      true,
-                     activeClassCode.isTeacherMode,
+                     activeClassCode,
                      redis,
                      msg)
 

@@ -36,7 +36,8 @@ import com.github.readingbat.misc.Endpoints.CLEAR_CHALLENGE_ANSWERS_ENDPOINT
 import com.github.readingbat.misc.Endpoints.CLEAR_GROUP_ANSWERS_ENDPOINT
 import com.github.readingbat.misc.Endpoints.CREATE_ACCOUNT_ENDPOINT
 import com.github.readingbat.misc.Endpoints.CSS_ENDPOINT
-import com.github.readingbat.misc.Endpoints.END_TEACHER_MODE_ENDPOINT
+import com.github.readingbat.misc.Endpoints.ENABLE_STUDENT_MODE_ENDPOINT
+import com.github.readingbat.misc.Endpoints.ENABLE_TEACHER_MODE_ENDPOINT
 import com.github.readingbat.misc.Endpoints.FAV_ICON_ENDPOINT
 import com.github.readingbat.misc.Endpoints.PASSWORD_CHANGE_ENDPOINT
 import com.github.readingbat.misc.Endpoints.PASSWORD_RESET_ENDPOINT
@@ -61,7 +62,8 @@ import com.github.readingbat.posts.ChallengePost.clearGroupAnswers
 import com.github.readingbat.posts.CreateAccountPost.createAccount
 import com.github.readingbat.posts.PasswordResetPost.changePassword
 import com.github.readingbat.posts.PasswordResetPost.sendPasswordReset
-import com.github.readingbat.posts.TeacherPrefsPost.endTeacherMode
+import com.github.readingbat.posts.TeacherPrefsPost.enableStudentMode
+import com.github.readingbat.posts.TeacherPrefsPost.enableTeacherMode
 import com.github.readingbat.posts.TeacherPrefsPost.teacherPrefs
 import com.github.readingbat.posts.UserPrefsPost.userPrefs
 import com.github.readingbat.server.ServerUtils.fetchUser
@@ -135,12 +137,12 @@ internal fun Routing.userRoutes(content: ReadingBatContent) {
 
   post(TEACHER_PREFS_ENDPOINT) { respondWithSuspendingDbmsCheck { redis -> teacherPrefs(content, fetchUser(), redis) } }
 
-  get(END_TEACHER_MODE_ENDPOINT) {
-    respondWithSuspendingDbmsCheck { redis ->
-      endTeacherMode(content,
-                     fetchUser(),
-                     redis)
-    }
+  get(ENABLE_STUDENT_MODE_ENDPOINT) {
+    respondWithSuspendingDbmsCheck { redis -> enableStudentMode(content, fetchUser(), redis) }
+  }
+
+  get(ENABLE_TEACHER_MODE_ENDPOINT) {
+    respondWithSuspendingDbmsCheck { redis -> enableTeacherMode(content, fetchUser(), redis) }
   }
 
   get(ADMIN_ENDPOINT) { respondWithDbmsCheck { redis -> adminDataPage(content, fetchUser(), redis = redis) } }

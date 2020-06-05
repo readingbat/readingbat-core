@@ -46,8 +46,11 @@ internal object KeyConstants {
   // This is the class code you will report results to
   const val ENROLLED_CLASS_CODE_FIELD = "enrolled-class-code"
 
-  // This is the class code you will observe update on
+  // This is the class code you will observe updates on
   const val ACTIVE_CLASS_CODE_FIELD = "active-class-code"
+
+  // This is the last teacher class code a user had
+  const val PREVIOUS_TEACHER_CLASS_CODE_FIELD = "previous-teacher-class-code"
 
   const val KEY_SEP = "|"
 }

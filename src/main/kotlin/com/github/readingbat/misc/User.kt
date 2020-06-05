@@ -35,6 +35,7 @@ import com.github.readingbat.misc.KeyConstants.EMAIL_FIELD
 import com.github.readingbat.misc.KeyConstants.ENROLLED_CLASS_CODE_FIELD
 import com.github.readingbat.misc.KeyConstants.KEY_SEP
 import com.github.readingbat.misc.KeyConstants.NAME_FIELD
+import com.github.readingbat.misc.KeyConstants.PREVIOUS_TEACHER_CLASS_CODE_FIELD
 import com.github.readingbat.misc.KeyConstants.SALT_FIELD
 import com.github.readingbat.misc.KeyConstants.USER_CLASSES_KEY
 import com.github.readingbat.misc.KeyConstants.USER_INFO_KEY
@@ -92,13 +93,18 @@ internal class User private constructor(val id: String) {
   }
 
 
-  fun assignActiveClassCode(classCode: ClassCode, redis: Jedis) {
+  fun assignActiveClassCode(classCode: ClassCode, resetPreviousClassCode: Boolean, redis: Jedis) {
     redis.hset(userInfoKey, ACTIVE_CLASS_CODE_FIELD, if (classCode.isStudentMode) "" else classCode.value)
+    if (resetPreviousClassCode)
+      redis.hset(userInfoKey, PREVIOUS_TEACHER_CLASS_CODE_FIELD, if (classCode.isStudentMode) "" else classCode.value)
   }
 
   fun resetActiveClassCode(tx: Transaction) {
     tx.hset(userInfoKey, ACTIVE_CLASS_CODE_FIELD, "")
   }
+
+  fun fetchLastTeacherClassCode(redis: Jedis?) =
+    redis?.hget(userInfoKey, PREVIOUS_TEACHER_CLASS_CODE_FIELD)?.let { ClassCode(it) } ?: STUDENT_CLASS_CODE
 
   fun enrollInClass(classCode: ClassCode, redis: Jedis) {
     if (classCode.isStudentMode) {
@@ -240,7 +246,6 @@ internal class User private constructor(val id: String) {
         STUDENT_CLASS_CODE
       else
         redis?.hget(userInfoKey, ACTIVE_CLASS_CODE_FIELD)?.let { ClassCode(it) } ?: STUDENT_CLASS_CODE
-
 
     fun User?.fetchEnrolledClassCode(redis: Jedis) =
       if (this == null)
