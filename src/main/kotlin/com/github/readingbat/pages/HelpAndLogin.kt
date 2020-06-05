@@ -22,17 +22,21 @@ import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.Endpoints.ABOUT_ENDPOINT
 import com.github.readingbat.misc.Endpoints.CREATE_ACCOUNT_ENDPOINT
 import com.github.readingbat.misc.Endpoints.ENABLE_STUDENT_MODE_ENDPOINT
+import com.github.readingbat.misc.Endpoints.ENABLE_TEACHER_MODE_ENDPOINT
 import com.github.readingbat.misc.Endpoints.PASSWORD_RESET_ENDPOINT
 import com.github.readingbat.misc.Endpoints.USER_PREFS_ENDPOINT
 import com.github.readingbat.misc.FormFields.EMAIL
 import com.github.readingbat.misc.FormFields.PASSWORD
 import com.github.readingbat.misc.User
+import com.github.readingbat.misc.User.Companion.fetchPreviousTeacherClassCode
 import kotlinx.html.*
 import redis.clients.jedis.Jedis
 
 internal object HelpAndLogin {
 
   fun BODY.helpAndLogin(user: User?, loginPath: String, teacherMode: Boolean, redis: Jedis?) {
+
+    val previousClassCode = user.fetchPreviousTeacherClassCode(redis)
 
     div {
       style = "float:right; margin:0px; border: 1px solid lightgray; margin-left: 10px; padding: 5px;"
@@ -48,8 +52,13 @@ internal object HelpAndLogin {
           td {
             style = "text-align:right"
             colSpan = "1"
-            if (teacherMode) {
-              a { href = "$ENABLE_STUDENT_MODE_ENDPOINT?$RETURN_PATH=$loginPath"; +"student mode" }
+            if (previousClassCode.isTeacherMode) {
+              val (endpoint, msg) =
+                if (teacherMode)
+                  ENABLE_STUDENT_MODE_ENDPOINT to "student mode"
+                else
+                  ENABLE_TEACHER_MODE_ENDPOINT to "teacher mode"
+              a { href = "$endpoint?$RETURN_PATH=$loginPath"; +msg }
               +" | "
             }
             a { href = "$ABOUT_ENDPOINT?$RETURN_PATH=$loginPath"; +"about" }

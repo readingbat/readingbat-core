@@ -33,6 +33,7 @@ import com.github.readingbat.misc.FormFields.DELETE_CLASS
 import com.github.readingbat.misc.FormFields.UPDATE_ACTIVE_CLASS
 import com.github.readingbat.misc.FormFields.USER_PREFS_ACTION
 import com.github.readingbat.misc.User.Companion.fetchActiveClassCode
+import com.github.readingbat.misc.User.Companion.fetchPreviousTeacherClassCode
 import com.github.readingbat.pages.TeacherPrefsPage.teacherPrefsPage
 import com.github.readingbat.pages.UserPrefsPage.requestLogInPage
 import com.github.readingbat.server.PipelineCall
@@ -60,7 +61,7 @@ internal object TeacherPrefsPost {
       requestLogInPage(content, redis)
     }
 
-  fun PipelineCall.enableStudentMode(content: ReadingBatContent, user: User?, redis: Jedis): String {
+  fun PipelineCall.enableStudentMode(user: User?, redis: Jedis): String {
     val returnPath = queryParam(Constants.RETURN_PATH, "/")
 
     val msg =
@@ -74,12 +75,12 @@ internal object TeacherPrefsPost {
     throw RedirectException("$returnPath?$MSG=${msg.encode()}")
   }
 
-  fun PipelineCall.enableTeacherMode(content: ReadingBatContent, user: User?, redis: Jedis): String {
+  fun PipelineCall.enableTeacherMode(user: User?, redis: Jedis): String {
     val returnPath = queryParam(Constants.RETURN_PATH, "/")
 
     val msg =
       if (user.isValidUser(redis)) {
-        val lastTeacherClassCode = user.fetchLastTeacherClassCode(redis)
+        val lastTeacherClassCode = user.fetchPreviousTeacherClassCode(redis)
         user.assignActiveClassCode(lastTeacherClassCode, false, redis)
         TEACHER_MODE_ENABLED_MSG
       }
@@ -133,10 +134,10 @@ internal object TeacherPrefsPost {
     val activeClassCode = user.fetchActiveClassCode(redis)
     val msg =
       when {
-        activeClassCode.isStudentMode && classCode.isStudentMode -> {
-          Message(STUDENT_MODE_ENABLED_MSG)
-        }
-        activeClassCode == classCode -> {
+        //activeClassCode.isStudentMode && classCode.isStudentMode -> {
+        //  Message(STUDENT_MODE_ENABLED_MSG)
+        //}
+        activeClassCode == classCode && classCode.isTeacherMode -> {
           Message("Same active class selected [$classCode]", true)
         }
         else -> {

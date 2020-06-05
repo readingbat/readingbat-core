@@ -103,9 +103,6 @@ internal class User private constructor(val id: String) {
     tx.hset(userInfoKey, ACTIVE_CLASS_CODE_FIELD, "")
   }
 
-  fun fetchLastTeacherClassCode(redis: Jedis?) =
-    redis?.hget(userInfoKey, PREVIOUS_TEACHER_CLASS_CODE_FIELD)?.let { ClassCode(it) } ?: STUDENT_CLASS_CODE
-
   fun enrollInClass(classCode: ClassCode, redis: Jedis) {
     if (classCode.isStudentMode) {
       throw DataException("Empty class code")
@@ -246,6 +243,13 @@ internal class User private constructor(val id: String) {
         STUDENT_CLASS_CODE
       else
         redis?.hget(userInfoKey, ACTIVE_CLASS_CODE_FIELD)?.let { ClassCode(it) } ?: STUDENT_CLASS_CODE
+
+    fun User?.fetchPreviousTeacherClassCode(redis: Jedis?) =
+      if (this == null)
+        STUDENT_CLASS_CODE
+      else
+        redis?.hget(userInfoKey, PREVIOUS_TEACHER_CLASS_CODE_FIELD)?.let { ClassCode(it) } ?: STUDENT_CLASS_CODE
+
 
     fun User?.fetchEnrolledClassCode(redis: Jedis) =
       if (this == null)

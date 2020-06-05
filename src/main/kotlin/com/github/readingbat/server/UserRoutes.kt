@@ -138,11 +138,11 @@ internal fun Routing.userRoutes(content: ReadingBatContent) {
   post(TEACHER_PREFS_ENDPOINT) { respondWithSuspendingDbmsCheck { redis -> teacherPrefs(content, fetchUser(), redis) } }
 
   get(ENABLE_STUDENT_MODE_ENDPOINT) {
-    respondWithSuspendingDbmsCheck { redis -> enableStudentMode(content, fetchUser(), redis) }
+    respondWithSuspendingDbmsCheck { redis -> enableStudentMode(fetchUser(), redis) }
   }
 
   get(ENABLE_TEACHER_MODE_ENDPOINT) {
-    respondWithSuspendingDbmsCheck { redis -> enableTeacherMode(content, fetchUser(), redis) }
+    respondWithSuspendingDbmsCheck { redis -> enableTeacherMode(fetchUser(), redis) }
   }
 
   get(ADMIN_ENDPOINT) { respondWithDbmsCheck { redis -> adminDataPage(content, fetchUser(), redis = redis) } }
