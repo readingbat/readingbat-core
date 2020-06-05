@@ -134,9 +134,8 @@ internal object TeacherPrefsPost {
     val activeClassCode = user.fetchActiveClassCode(redis)
     val msg =
       when {
-        //activeClassCode.isStudentMode && classCode.isStudentMode -> {
-        //  Message(STUDENT_MODE_ENABLED_MSG)
-        //}
+        // Do not allow this for classCode.isStudentMode because turns off the
+        // student/teacher toggle mode
         activeClassCode == classCode && classCode.isTeacherMode -> {
           Message("Same active class selected [$classCode]", true)
         }

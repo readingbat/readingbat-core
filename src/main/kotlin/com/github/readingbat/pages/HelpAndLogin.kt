@@ -52,6 +52,7 @@ internal object HelpAndLogin {
           td {
             style = "text-align:right"
             colSpan = "1"
+
             if (previousClassCode.isTeacherMode) {
               val (endpoint, msg) =
                 if (teacherMode)
@@ -61,6 +62,7 @@ internal object HelpAndLogin {
               a { href = "$endpoint?$RETURN_PATH=$loginPath"; +msg }
               +" | "
             }
+
             a { href = "$ABOUT_ENDPOINT?$RETURN_PATH=$loginPath"; +"about" }
             +" | "
             //a { href = "/help.html"; +"help" }
