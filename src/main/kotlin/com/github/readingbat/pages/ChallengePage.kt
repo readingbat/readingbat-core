@@ -34,7 +34,7 @@ import com.github.readingbat.misc.CSSNames.STATUS
 import com.github.readingbat.misc.CSSNames.SUCCESS
 import com.github.readingbat.misc.CSSNames.USER_RESP
 import com.github.readingbat.misc.CheckAnswersJs.checkAnswersScript
-import com.github.readingbat.misc.CheckAnswersJs.processAnswers
+import com.github.readingbat.misc.CheckAnswersJs.processUserAnswers
 import com.github.readingbat.misc.ClassCode
 import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
 import com.github.readingbat.misc.Constants.CORRECT_COLOR
@@ -200,7 +200,7 @@ internal object ChallengePage : KLogging() {
             td {
               textInput(classes = USER_RESP) {
                 id = "$RESP$i"
-                onKeyPress = "$processAnswers(event, ${funcInfo.answers.size})"
+                onKeyDown = "$processUserAnswers(event, ${funcInfo.answers.size})"
                 if (answers.containsKey(invocation.value))
                   value = answers[invocation.value] ?: ""
                 else
@@ -351,7 +351,7 @@ internal object ChallengePage : KLogging() {
         tr {
           td {
             button(classes = CHECK_ANSWERS) {
-              onClick = "$processAnswers(null, ${funcInfo.answers.size});"; +"Check My Answers"
+              onClick = "$processUserAnswers(null, ${funcInfo.answers.size});"; +"Check My Answers"
             }
           }
           td { style = "vertical-align:middle;"; span { style = "margin-left:1em;"; id = SPINNER_ID } }

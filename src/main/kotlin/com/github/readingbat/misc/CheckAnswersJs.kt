@@ -36,7 +36,7 @@ internal object CheckAnswersJs {
   const val langSrc = "lang"
   const val groupSrc = "groupName"
   const val challengeSrc = "challengeName"
-  const val processAnswers = "processAnswers"
+  const val processUserAnswers = "processUserAnswers"
 
   private val sessionCounter = AtomicInteger(0)
 
@@ -45,10 +45,14 @@ internal object CheckAnswersJs {
       """
     var re = new XMLHttpRequest();
 
-    function $processAnswers(event, cnt) { 
+    function $processUserAnswers(event, cnt) { 
     
-      if (event == null || (event.keyCode != 13 && event.keyCode != 9)) 
-        return;
+      //if (event != null)
+      //  console.log(event.keyCode);
+      
+      // event will equal null on button press
+      if (event != null && (event.keyCode != 13 && event.keyCode != 9)) 
+        return 1;
 
       var data = "$SESSION_ID=${sessionCounter.incrementAndGet()}&$langSrc=$languageName&$groupSrc=$groupName&$challengeSrc=$challengeName";
       try {
