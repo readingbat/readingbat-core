@@ -47,7 +47,7 @@ internal object CheckAnswersJs {
 
     function $processAnswers(event, cnt) { 
     
-      if (event != null && event.keyCode != 13) 
+      if (event == null || (event.keyCode != 13 && event.keyCode != 9)) 
         return;
 
       var data = "$SESSION_ID=${sessionCounter.incrementAndGet()}&$langSrc=$languageName&$groupSrc=$groupName&$challengeSrc=$challengeName";
