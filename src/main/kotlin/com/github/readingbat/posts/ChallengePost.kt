@@ -187,7 +187,7 @@ internal object ChallengePost : KLogging() {
     delay(200.milliseconds.toLongMilliseconds())
 
     // Return values: 0 = not answered, 1 = correct, 2 = incorrect
-    val answer_mapping =
+    val answerMapping =
       results
         .map {
           when {
@@ -196,7 +196,7 @@ internal object ChallengePost : KLogging() {
             else -> 2
           }
         }
-    call.respondText(answer_mapping.toString())
+    call.respondText(answerMapping.toString())
   }
 
   suspend fun PipelineCall.clearChallengeAnswers(content: ReadingBatContent,
@@ -225,8 +225,7 @@ internal object ChallengePost : KLogging() {
       redis.del(challengeAnswersKey)
     }
 
-    if (user != null)
-      user.resetHistory(content.maxHistoryLength, funcInfo, languageName, groupName, challengeName, redis)
+    user?.resetHistory(content.maxHistoryLength, funcInfo, languageName, groupName, challengeName, redis)
 
     throw RedirectException("$path?$MSG=${"Answers cleared".encode()}")
   }

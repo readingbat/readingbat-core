@@ -151,7 +151,7 @@ internal fun Routing.userRoutes(content: ReadingBatContent) {
 
   // RESET_ID is passed here when user clicks on email URL
   get(PASSWORD_RESET_ENDPOINT) {
-    respondWithDbmsCheck { redis -> passwordResetPage(content, queryParam(RESET_ID).let { ResetId(it) }, redis) }
+    respondWithDbmsCheck { redis -> passwordResetPage(content, ResetId(queryParam(RESET_ID)), redis) }
   }
 
   post(PASSWORD_RESET_ENDPOINT) {

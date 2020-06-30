@@ -34,7 +34,7 @@ internal inline class ClassCode(val value: String) {
 
   val isTeacherMode get() = !isStudentMode
 
-  val classCodeEnrollmentKey get() = listOf(CLASS_CODE_KEY, value).joinToString(KEY_SEP)
+  private val classCodeEnrollmentKey get() = listOf(CLASS_CODE_KEY, value).joinToString(KEY_SEP)
 
   val classInfoKey get() = listOf(CLASS_INFO_KEY, value).joinToString(KEY_SEP)
 

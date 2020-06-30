@@ -40,7 +40,10 @@ import com.github.readingbat.misc.KeyConstants.SALT_FIELD
 import com.github.readingbat.misc.KeyConstants.USER_CLASSES_KEY
 import com.github.readingbat.misc.KeyConstants.USER_INFO_KEY
 import com.github.readingbat.misc.KeyConstants.USER_RESET_KEY
-import com.github.readingbat.posts.*
+import com.github.readingbat.posts.ChallengeHistory
+import com.github.readingbat.posts.ChallengeNames
+import com.github.readingbat.posts.ChallengeResults
+import com.github.readingbat.posts.DashboardInfo
 import com.github.readingbat.server.*
 import com.github.readingbat.server.ChallengeName.Companion.ANY_CHALLENGE
 import com.github.readingbat.server.Email.Companion.EMPTY_EMAIL
@@ -258,7 +261,7 @@ internal class User private constructor(val id: String) {
         val answerHistoryKey = answerHistoryKey(languageName, groupName, challengeName, result.invocation)
         if (answerHistoryKey.isNotEmpty()) {
           val history = ChallengeHistory(result.invocation).apply { markUnanswered() }
-          ChallengePost.logger.info { "Resetting $answerHistoryKey" }
+          logger.info { "Resetting $answerHistoryKey" }
           redis.set(answerHistoryKey, gson.toJson(history))
           publishAnswers(maxHistoryLength, false, 0, history, redis)
         }
@@ -285,7 +288,6 @@ internal class User private constructor(val id: String) {
       else
         redis?.hget(userInfoKey, PREVIOUS_TEACHER_CLASS_CODE_FIELD)?.let { ClassCode(it) } ?: STUDENT_CLASS_CODE
 
-
     fun User?.fetchEnrolledClassCode(redis: Jedis) =
       if (this == null)
         STUDENT_CLASS_CODE
@@ -306,7 +308,6 @@ internal class User private constructor(val id: String) {
       this?.correctAnswersKey(languageName, groupName, challengeName)
         ?: browserSession?.correctAnswersKey(languageName, groupName, challengeName)
         ?: ""
-
 
     fun User?.challengeAnswersKey(browserSession: BrowserSession?, names: ChallengeNames) =
       this?.challengeAnswersKey(names) ?: browserSession?.challengeAnswerKey(names) ?: ""
@@ -399,11 +400,10 @@ internal class User private constructor(val id: String) {
           }
 
           val json = gson.toJson(history)
-          logger.info { "Saving: $json to $answerHistoryKey" }
+          logger.debug { "Saving: $json to $answerHistoryKey" }
           redis.set(answerHistoryKey, json)
 
-          if (this != null)
-            publishAnswers(content.maxHistoryLength, complete, numCorrect, history, redis)
+          this?.publishAnswers(content.maxHistoryLength, complete, numCorrect, history, redis)
         }
       }
     }

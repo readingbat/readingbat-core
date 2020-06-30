@@ -191,7 +191,7 @@ class JavaChallenge(challengeGroup: ChallengeGroup<*>, challengeName: ChallengeN
         }
 
     val answers = timedValue.value
-    logger.info { "$challengeName computed answers in ${timedValue.duration} for: $answers" }
+    logger.info { "$challengeName computed answers in ${timedValue.duration}" }
 
     if (answers !is List<*>)
       throw InvalidConfigurationException("Invalid type returned for $challengeName")
