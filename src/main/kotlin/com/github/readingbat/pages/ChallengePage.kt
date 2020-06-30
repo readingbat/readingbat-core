@@ -193,23 +193,25 @@ internal object ChallengePage : KLogging() {
 
         val answers = fetchPreviousAnswers(user, browserSession, challenge, redis)
 
-        funcInfo.invocations.withIndex().forEach { (i, invocation) ->
-          tr {
-            td(classes = FUNC_COL) { +invocation.value }
-            td(classes = ARROW) { rawHtml("&rarr;") }
-            td {
-              textInput(classes = USER_RESP) {
-                id = "$RESP$i"
-                onKeyDown = "$processUserAnswers(event, ${funcInfo.answers.size})"
-                if (answers.containsKey(invocation.value))
-                  value = answers[invocation.value] ?: ""
-                else
-                  placeholder = funcInfo.placeHolder()
+        funcInfo.invocations.withIndex()
+          .forEach { (i, invocation) ->
+            tr {
+              td(classes = FUNC_COL) { +invocation.value }
+              td(classes = ARROW) { rawHtml("&rarr;") }
+              td {
+                textInput(classes = USER_RESP) {
+                  id = "$RESP$i"
+                  onKeyDown = "$processUserAnswers(event, ${funcInfo.answers.size})"
+                  val answer = answers[invocation.value] ?: ""
+                  if (answer.isNotBlank())
+                    value = answer
+                  else
+                    placeholder = funcInfo.placeHolder()
+                }
               }
+              td(classes = FEEDBACK) { id = "$FEEDBACK_ID$i" }
             }
-            td(classes = FEEDBACK) { id = "$FEEDBACK_ID$i" }
           }
-        }
       }
 
       this@displayQuestions.processAnswers(funcInfo)
@@ -221,8 +223,8 @@ internal object ChallengePage : KLogging() {
     script {
       rawHtml(
         """
-          var wshost = location.origin.replace(${if (content.production) "/^https:/, 'wss:'" else "/^http:/, 'ws:'"})
-          var wsurl = wshost + '$CHALLENGE_ENDPOINT/$classCode'
+          var wshost = location.origin.replace(${if (content.production) "/^https:/, 'wss:'" else "/^http:/, 'ws:'"});
+          var wsurl = wshost + '$CHALLENGE_ENDPOINT/$classCode';
           
           var ws = new WebSocket(wsurl);
           
@@ -231,8 +233,7 @@ internal object ChallengePage : KLogging() {
           };
           
           ws.onmessage = function (event) {
-            //console.log(event.data);
-            var obj = JSON.parse(event.data)
+            var obj = JSON.parse(event.data);
             
             var name = document.getElementById(obj.userId + '-$nameTd');
             name.style.backgroundColor = obj.complete ? '$CORRECT_COLOR' : '$WRONG_COLOR';
@@ -240,6 +241,7 @@ internal object ChallengePage : KLogging() {
             document.getElementById(obj.userId + '-$numCorrectSpan').innerHTML = obj.numCorrect;
 
             var prefix = obj.userId + '-' + obj.history.invocation;
+            
             var answers = document.getElementById(prefix + '-$answersTd')
             answers.style.backgroundColor = obj.history.correct ? '$CORRECT_COLOR' : '$WRONG_COLOR';
 
@@ -419,9 +421,9 @@ internal object ChallengePage : KLogging() {
     style {
       rawHtml(
         """
-        pre[class*="language-"]:before,
-        pre[class*="language-"]:after { display: none; }
-      """)
+          pre[class*="language-"]:before,
+          pre[class*="language-"]:after { display: none; }
+        """.trimIndent())
     }
   }
 }

@@ -18,6 +18,7 @@
 package com.github.readingbat.misc
 
 import com.github.readingbat.misc.Constants.CORRECT_COLOR
+import com.github.readingbat.misc.Constants.NO_ANSWER_COLOR
 import com.github.readingbat.misc.Constants.RESP
 import com.github.readingbat.misc.Constants.SESSION_ID
 import com.github.readingbat.misc.Endpoints.CHECK_ANSWERS_ENDPOINT
@@ -46,10 +47,7 @@ internal object CheckAnswersJs {
     var re = new XMLHttpRequest();
 
     function $processUserAnswers(event, cnt) { 
-    
-      //if (event != null)
-      //  console.log(event.keyCode);
-      
+     
       // event will equal null on button press
       if (event != null && (event.keyCode != 13 && event.keyCode != 9)) 
         return 1;
@@ -61,7 +59,7 @@ internal object CheckAnswersJs {
           x.style.backgroundColor = "white";
           
           var ur = document.getElementById("$RESP"+i).value;
-          data += "&$RESP" + i + "="+encodeURIComponent(ur);
+          data += "&$RESP" + i + "=" + encodeURIComponent(ur);
         }
       }
       catch(err) {
@@ -87,11 +85,16 @@ internal object CheckAnswersJs {
         var results = eval(re.responseText);
         for (var i = 0; i < results.length; i++) {
           var x = document.getElementById("$FEEDBACK_ID"+i);
-          if (results[i]) 
+          if (results[i] == 0) {
+            x.style.backgroundColor = '$NO_ANSWER_COLOR';
+            success = false;
+          }
+          else if (results[i] == 1) {
             x.style.backgroundColor = '$CORRECT_COLOR';
+          }
           else {
             x.style.backgroundColor = "red";
-            success = false
+            success = false;
           }
         }
         
@@ -100,6 +103,5 @@ internal object CheckAnswersJs {
         document.getElementById('$SUCCESS_ID').innerHTML = success ? "Success! Congratulations!" : "";
       }
     }
-  """
-           )
+  """)
 }

@@ -38,6 +38,7 @@ import com.github.readingbat.misc.FormFields.LANGUAGE_NAME_KEY
 import com.github.readingbat.misc.KeyConstants.CORRECT_ANSWERS_KEY
 import com.github.readingbat.misc.PageUtils.pathOf
 import com.github.readingbat.misc.User
+import com.github.readingbat.misc.User.Companion.fetchEnrolledClassCode
 import com.github.readingbat.misc.User.Companion.gson
 import com.github.readingbat.misc.User.Companion.saveChallengeAnswers
 import com.github.readingbat.server.*
@@ -65,10 +66,10 @@ internal data class ChallengeResults(val invocation: Invocation,
                                      val answered: Boolean,
                                      val correct: Boolean)
 
-internal class DashboardInfo(maxHistoryLength: Int,
-                             val userId: String,
+internal class DashboardInfo(val userId: String,
                              val complete: Boolean,
                              val numCorrect: Int,
+                             maxHistoryLength: Int,
                              origHistory: ChallengeHistory) {
   val history = DashboardHistory(origHistory.invocation.value,
                                  origHistory.correct,
@@ -87,12 +88,16 @@ internal data class ChallengeHistory(var invocation: Invocation,
     correct = true
   }
 
-  fun markIncorrect(userResp: String) {
+  fun markIncorrect(userResponse: String) {
     correct = false
-    if (userResp.isNotEmpty() && userResp !in answers) {
+    if (userResponse.isNotBlank() && userResponse !in answers) {
       incorrectAttempts++
-      answers += userResp
+      answers += userResponse
     }
+  }
+
+  fun markUnanswered() {
+    correct = false
   }
 }
 
@@ -132,7 +137,7 @@ internal object ChallengePost : KLogging() {
     val paramMap = params.entries().map { it.key to it.value[0] }.toMap()
     val names = ChallengeNames(paramMap)
     val isJvm = names.languageName in listOf(Java.languageName, Kotlin.languageName)
-    val userResps = params.entries().filter { it.key.startsWith(RESP) }
+    val userResponses = params.entries().filter { it.key.startsWith(RESP) }
     val challenge =
       content
         .findLanguage(names.languageName.toLanguageType())
@@ -141,34 +146,33 @@ internal object ChallengePost : KLogging() {
     val kotlinScriptEngine by lazy { KotlinScript() }
     val pythonScriptEngine by lazy { PythonScript() }
 
-    fun checkWithAnswer(isJvm: Boolean, userResp: String, answer: String) =
+    fun checkWithAnswer(isJvm: Boolean, userResponse: String, answer: String) =
       try {
-        logger.debug("""Comparing user response: "$userResp" with answer: "$answer"""")
+        logger.debug("""Comparing user response: "$userResponse" with answer: "$answer"""")
         if (isJvm) {
           if (answer.isBracketed())
-            answer.equalsAsKotlinList(userResp, kotlinScriptEngine)
+            answer.equalsAsKotlinList(userResponse, kotlinScriptEngine)
           else
-            userResp equalsAsJvmScalar answer
+            userResponse equalsAsJvmScalar answer
         }
         else {
           if (answer.isBracketed())
-            answer.equalsAsPythonList(userResp, pythonScriptEngine)
+            answer.equalsAsPythonList(userResponse, pythonScriptEngine)
           else
-            userResp equalsAsPythonScalar answer
+            userResponse equalsAsPythonScalar answer
         }
       } catch (e: Exception) {
         false
       }
 
-    logger.debug("Found ${userResps.size} user responses in $paramMap")
+    logger.debug("Found ${userResponses.size} user responses in $paramMap")
 
     val results =
-      userResps.indices
+      userResponses.indices
         .map { i ->
-          val userResponse =
-            paramMap[RESP + i]?.trim() ?: throw InvalidConfigurationException("Missing user response")
+          val userResponse = paramMap[RESP + i]?.trim() ?: throw InvalidConfigurationException("Missing user response")
           val answer = funcInfo.answers[i]
-          val answered = userResponse.isNotEmpty()
+          val answered = userResponse.isNotBlank()
           ChallengeResults(invocation = funcInfo.invocations[i],
                            userResponse = userResponse,
                            answered = answered,
@@ -178,29 +182,38 @@ internal object ChallengePost : KLogging() {
     // Save whether all the answers for the challenge were correct
     if (redis != null) {
       val browserSession = call.sessions.get<BrowserSession>()
-      user.saveChallengeAnswers(content, browserSession, names, paramMap, funcInfo, userResps, results, redis)
+      user.saveChallengeAnswers(content, browserSession, names, paramMap, funcInfo, userResponses, results, redis)
     }
 
-    /*
-    results
-      .filter { it.answered }
-      .forEach { logger.debug { "Item with args; ${it.arguments} was correct: ${it.correct}" } }
-    */
-
     delay(200.milliseconds.toLongMilliseconds())
-    call.respondText(results.map { it.correct }.toString())
+
+    // Return values: 0 = not answered, 1 = correct, 2 = incorrect
+    val answer_mapping =
+      results
+        .map {
+          when {
+            !it.answered -> 0
+            it.correct -> 1
+            else -> 2
+          }
+        }
+    call.respondText(answer_mapping.toString())
   }
 
   suspend fun PipelineCall.clearChallengeAnswers(content: ReadingBatContent,
                                                  user: User?,
                                                  redis: Jedis): String {
-    val parameters = call.receiveParameters()
-    val languageName = parameters.getLanguageName(LANGUAGE_NAME_KEY)
-    val groupName = parameters.getGroupName(GROUP_NAME_KEY)
-    val challengeName = parameters.getChallengeName(CHALLENGE_NAME_KEY)
-    val correctAnswersKey = parameters[CORRECT_ANSWERS_KEY] ?: ""
-    val challengeAnswersKey = parameters[CHALLENGE_ANSWERS_KEY] ?: ""
+    val params = call.receiveParameters()
+
+    val languageName = params.getLanguageName(LANGUAGE_NAME_KEY)
+    val groupName = params.getGroupName(GROUP_NAME_KEY)
+    val challengeName = params.getChallengeName(CHALLENGE_NAME_KEY)
+
+    val correctAnswersKey = params[CORRECT_ANSWERS_KEY] ?: ""
+    val challengeAnswersKey = params[CHALLENGE_ANSWERS_KEY] ?: ""
+
     val challenge = content.findChallenge(languageName.toLanguageType(), groupName, challengeName)
+    val funcInfo = challenge.funcInfo(content)
     val path = pathOf(CHALLENGE_ROOT, languageName, groupName, challengeName)
 
     if (correctAnswersKey.isNotEmpty()) {
@@ -213,17 +226,49 @@ internal object ChallengePost : KLogging() {
       redis.del(challengeAnswersKey)
     }
 
+    if (user != null) {
+      val enrolledClassCode = user.fetchEnrolledClassCode(redis)
+
+      val results =
+        funcInfo.invocations
+          .map {
+            ChallengeResults(invocation = it,
+                             userResponse = "",
+                             answered = false,
+                             correct = false)
+          }
+
+      // Reset the history of each answer on a per-invocation basis
+      for (result in results) {
+        val answerHistoryKey = user.answerHistoryKey(languageName, groupName, challengeName, result.invocation)
+        if (answerHistoryKey.isNotEmpty()) {
+          val history = ChallengeHistory(result.invocation)
+          history.markUnanswered()
+
+          val json = gson.toJson(history)
+          User.logger.info { "Saving: $json to $answerHistoryKey" }
+          redis.set(answerHistoryKey, json)
+
+          user.publishAnswers(content, false, 0, history, redis)
+        }
+      }
+    }
+
     throw RedirectException("$path?$MSG=${"Answers cleared".encode()}")
   }
 
   suspend fun PipelineCall.clearGroupAnswers(user: User?, redis: Jedis): String {
     val parameters = call.receiveParameters()
+
     val languageName = parameters.getLanguageName(LANGUAGE_NAME_KEY)
     val groupName = parameters.getGroupName(GROUP_NAME_KEY)
+
     val correctJson = parameters[CORRECT_ANSWERS_KEY] ?: ""
     val challengeJson = parameters[CHALLENGE_ANSWERS_KEY] ?: ""
+
     val correctAnswersKeys = gson.fromJson(correctJson, List::class.java) as List<String>
     val challengeAnswersKeys = gson.fromJson(challengeJson, List::class.java) as List<String>
+
     val path = pathOf(CHALLENGE_ROOT, languageName, groupName)
 
     correctAnswersKeys

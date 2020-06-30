@@ -32,6 +32,7 @@ internal object Constants {
   const val WHITE_CHECK = "white-check.jpg"
   const val GREEN_CHECK = "green-check.jpg"
   const val RESP = "response"
+  const val NO_ANSWER_COLOR = "white"
   const val CORRECT_COLOR = "#4EAA3A"
   const val WRONG_COLOR = "#F1F1F1"
   const val LABEL_WIDTH = "width: 250;"

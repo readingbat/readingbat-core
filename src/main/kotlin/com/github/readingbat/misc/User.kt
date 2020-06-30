@@ -230,6 +230,24 @@ internal class User private constructor(val id: String) {
     }
   }
 
+  fun publishAnswers(content: ReadingBatContent,
+                     complete: Boolean,
+                     numCorrect: Int,
+                     history: ChallengeHistory,
+                     redis: Jedis) {
+    // Publish to challenge dashboard
+    // First check if enrolled in a class
+    val enrolledClassCode = fetchEnrolledClassCode(redis)
+    if (enrolledClassCode.isTeacherMode) {
+      // Check to see if owner of class has it set as their active class
+      val teacherId = enrolledClassCode.fetchClassTeacherId(redis)
+      if (teacherId.isNotEmpty() && teacherId.toUser().fetchActiveClassCode(redis) == enrolledClassCode) {
+        val dashboardInfo = DashboardInfo(id, complete, numCorrect, content.maxHistoryLength, history)
+        redis.publish(enrolledClassCode.value, gson.toJson(dashboardInfo))
+      }
+    }
+  }
+
   companion object : KLogging() {
 
     val gson = Gson()
@@ -322,59 +340,55 @@ internal class User private constructor(val id: String) {
                                    names: ChallengeNames,
                                    paramMap: Map<String, String>,
                                    funcInfo: FunctionInfo,
-                                   userResps: List<Map.Entry<String, List<String>>>,
+                                   userResponses: List<Map.Entry<String, List<String>>>,
                                    results: List<ChallengeResults>,
                                    redis: Jedis) {
       val challengeAnswerKey = challengeAnswersKey(browserSession, names)
       val correctAnswersKey = correctAnswersKey(browserSession, names)
-      val enrolledClassCode = fetchEnrolledClassCode(redis)
+
       val complete = results.all { it.correct }
       val numCorrect = results.count { it.correct }
 
-      // Save if all answers were correct
+      // Record if all answers were correct
       if (correctAnswersKey.isNotEmpty())
         redis.set(correctAnswersKey, complete.toString())
 
       if (challengeAnswerKey.isNotEmpty()) {
-        val answerMap =
-          userResps.indices.mapNotNull { i ->
-              val userResp = paramMap[RESP + i]?.trim()
-                ?: throw InvalidConfigurationException("Missing user response")
-              if (userResp.isNotEmpty()) funcInfo.invocations[i] to userResp else null
-            }
-            .toMap()
-
         // Save the last answers given
-        answerMap.forEach { (invocation, userResp) ->
-          redis.hset(challengeAnswerKey, invocation.value, userResp)
+        userResponses.indices
+          .map { i ->
+            val userResponse =
+              paramMap[RESP + i]?.trim() ?: throw InvalidConfigurationException("Missing user response")
+            //if (userResponses.isNotEmpty()) funcInfo.invocations[i] to userResp else null
+            funcInfo.invocations[i] to userResponse
+          }
+          .toMap()
+          .forEach { (invocation, userResponse) ->
+            redis.hset(challengeAnswerKey, invocation.value, userResponse)
+          }
+      }
+
+      // Save the history of each answer on a per-invocation basis
+      for (result in results) {
+        val answerHistoryKey = answerHistoryKey(browserSession, names, result.invocation)
+        if (answerHistoryKey.isNotEmpty()) {
+          val history =
+            gson.fromJson(redis[answerHistoryKey], ChallengeHistory::class.java) ?: ChallengeHistory(result.invocation)
+
+          when {
+            !result.answered -> history.markUnanswered()
+            result.correct -> history.markCorrect()
+            else -> history.markIncorrect(result.userResponse)
+          }
+
+          val json = gson.toJson(history)
+          logger.info { "Saving: $json to $answerHistoryKey" }
+          redis.set(answerHistoryKey, json)
+
+          if (this != null)
+            publishAnswers(content, complete, numCorrect, history, redis)
         }
       }
-      // Save the history of each answer on a per-invocation basis
-      results
-        .filter { it.answered }
-        .forEach { result ->
-          val answerHistoryKey = answerHistoryKey(browserSession, names, result.invocation)
-          if (answerHistoryKey.isNotEmpty()) {
-            val history =
-              gson.fromJson(redis[answerHistoryKey], ChallengeHistory::class.java)
-                ?: ChallengeHistory(result.invocation)
-            history.apply { if (result.correct) markCorrect() else markIncorrect(result.userResponse) }
-            val json = gson.toJson(history)
-            redis.set(answerHistoryKey, json)
-
-            // Publish to challenge dashboard
-            // First check if enrolled in a class
-            if (enrolledClassCode.isTeacherMode && this != null) {
-              // Check to see if owner of class has it set as their active class
-              val teacherId = enrolledClassCode.fetchClassTeacherId(redis)
-              if (teacherId.isNotEmpty() && teacherId.toUser().fetchActiveClassCode(redis) == enrolledClassCode) {
-                logger.info { "Publishing data $json" }
-                val browserInfo = DashboardInfo(content.maxHistoryLength, id, complete, numCorrect, history)
-                redis.publish(enrolledClassCode.value, gson.toJson(browserInfo))
-              }
-            }
-          }
-        }
     }
 
     fun isRegisteredEmail(email: Email, redis: Jedis) = lookupUserByEmail(email, redis) != null

@@ -48,7 +48,7 @@ internal object CSSNames {
   const val REFS = "refs"
   const val CODE_BLOCK = "codeBlock"
   const val KOTLIN_CODE = "kotlin-code"
-  const val USER_RESP = "userResp"
+  const val USER_RESP = "userResponse"
   const val CHALLENGE_DESC = "challenge-desc"
   const val GROUP_CHOICE = "groupChoice"
   const val FUNC_ITEM = "funcItem"
