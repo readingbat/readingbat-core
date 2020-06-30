@@ -18,6 +18,7 @@
 package com.github.readingbat.pages
 
 import com.github.pambrose.common.util.decode
+import com.github.pambrose.common.util.random
 import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.FunctionInfo
 import com.github.readingbat.dsl.ReadingBatContent
@@ -99,9 +100,9 @@ internal object ChallengePage : KLogging() {
       .html {
         val browserSession = call.sessions.get<BrowserSession>()
         val languageType = challenge.languageType
+        val languageName = languageType.languageName
         val groupName = challenge.groupName
         val challengeName = challenge.challengeName
-        val languageName = languageType.languageName
         val funcInfo = challenge.funcInfo(content)
         val loginPath = pathOf(CHALLENGE_ROOT, languageName, groupName, challengeName)
         val activeClassCode = user.fetchActiveClassCode(redis)
@@ -151,12 +152,25 @@ internal object ChallengePage : KLogging() {
     val languageName = challenge.languageType.languageName
     val groupName = challenge.groupName
     val challengeName = challenge.challengeName
+    val challengeGroup = challenge.challengeGroup
+    val challenges = challenge.challengeGroup.challenges
 
     h2 {
+      style = "margin-bottom:5px;"
       val groupPath = pathOf(CHALLENGE_ROOT, languageName, groupName)
       this@displayChallenge.addLink(groupName.value.decode(), groupPath)
       span { style = "padding-left:2px; padding-right:2px;"; rawHtml("&rarr;") }
       +challengeName.value
+    }
+
+    span {
+      style = "padding-left:20px;"
+      val pos = challengeGroup.challengeIndex(challengeName)
+      if (pos == 0) +"prev" else a { href = "./${challenges[pos - 1].challengeName.value}"; +"prev" }
+      rawHtml("${nbsp.text} | ${nbsp.text}")
+      if (pos == challenges.size - 1) +"next" else a { href = "./${challenges[pos + 1].challengeName.value}"; +"next" }
+      rawHtml("${nbsp.text} | ${nbsp.text}")
+      a { href = "./${challenges[challenges.size.random()].challengeName.value}"; +"chance" }
     }
 
     if (challenge.description.isNotEmpty())

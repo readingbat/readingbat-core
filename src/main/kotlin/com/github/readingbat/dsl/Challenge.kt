@@ -53,7 +53,9 @@ import kotlin.time.measureTime
 import kotlin.time.measureTimedValue
 
 @ReadingBatDslMarker
-sealed class Challenge(challengeGroup: ChallengeGroup<*>, val challengeName: ChallengeName, val replaceable: Boolean) {
+sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
+                       val challengeName: ChallengeName,
+                       val replaceable: Boolean) {
   private val challengeId = counter.incrementAndGet()
   private val languageGroup = challengeGroup.languageGroup
   private val repo = languageGroup.repo

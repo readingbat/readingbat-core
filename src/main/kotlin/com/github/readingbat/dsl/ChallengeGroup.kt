@@ -86,6 +86,13 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
     challenges.firstOrNull { it.challengeName.value == challengeName }
       ?: throw InvalidPathException("Challenge $prefix/$challengeName not found.")
 
+  fun challengeIndex(challengeName: ChallengeName): Int {
+    val pos = challenges.indexOfFirst { it.challengeName == challengeName }
+    if (pos == -1)
+      throw InvalidPathException("Challenge $prefix/$challengeName not found.")
+    return pos
+  }
+
   @ReadingBatDslMarker
   fun T.unaryPlus() {
     this@ChallengeGroup.checkChallengeName(challengeName)
