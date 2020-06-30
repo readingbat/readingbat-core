@@ -23,6 +23,7 @@ import com.github.readingbat.dsl.LanguageType.*
 import com.github.readingbat.server.ChallengeName
 import com.github.readingbat.server.GroupName
 import com.github.readingbat.server.Language
+import com.github.readingbat.server.LanguageName
 
 
 @ReadingBatDslMarker
@@ -60,8 +61,8 @@ class ReadingBatContent {
   internal fun findChallenge(challengeLoc: Language.Group.Challenge) =
     findGroup(challengeLoc.group).findChallenge(challengeLoc.challengeName.value)
 
-  internal fun findChallenge(languageType: LanguageType, groupName: GroupName, challengeName: ChallengeName) =
-    findGroup(languageType, groupName).findChallenge(challengeName.value)
+  internal fun findChallenge(languageName: LanguageName, groupName: GroupName, challengeName: ChallengeName) =
+    findGroup(languageName.toLanguageType(), groupName).findChallenge(challengeName.value)
 
   internal fun validate() = languageList.forEach { it.validate() }
 

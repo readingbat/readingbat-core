@@ -38,7 +38,6 @@ import com.github.readingbat.misc.FormFields.LANGUAGE_NAME_KEY
 import com.github.readingbat.misc.KeyConstants.CORRECT_ANSWERS_KEY
 import com.github.readingbat.misc.PageUtils.pathOf
 import com.github.readingbat.misc.User
-import com.github.readingbat.misc.User.Companion.fetchEnrolledClassCode
 import com.github.readingbat.misc.User.Companion.gson
 import com.github.readingbat.misc.User.Companion.saveChallengeAnswers
 import com.github.readingbat.server.*
@@ -62,9 +61,9 @@ internal data class ClassEnrollment(val sessionId: String,
                                     val students: List<StudentInfo> = mutableListOf())
 
 internal data class ChallengeResults(val invocation: Invocation,
-                                     val userResponse: String,
-                                     val answered: Boolean,
-                                     val correct: Boolean)
+                                     val userResponse: String = "",
+                                     val answered: Boolean = false,
+                                     val correct: Boolean = false)
 
 internal class DashboardInfo(val userId: String,
                              val complete: Boolean,
@@ -212,7 +211,7 @@ internal object ChallengePost : KLogging() {
     val correctAnswersKey = params[CORRECT_ANSWERS_KEY] ?: ""
     val challengeAnswersKey = params[CHALLENGE_ANSWERS_KEY] ?: ""
 
-    val challenge = content.findChallenge(languageName.toLanguageType(), groupName, challengeName)
+    val challenge = content.findChallenge(languageName, groupName, challengeName)
     val funcInfo = challenge.funcInfo(content)
     val path = pathOf(CHALLENGE_ROOT, languageName, groupName, challengeName)
 
@@ -226,38 +225,13 @@ internal object ChallengePost : KLogging() {
       redis.del(challengeAnswersKey)
     }
 
-    if (user != null) {
-      val enrolledClassCode = user.fetchEnrolledClassCode(redis)
-
-      val results =
-        funcInfo.invocations
-          .map {
-            ChallengeResults(invocation = it,
-                             userResponse = "",
-                             answered = false,
-                             correct = false)
-          }
-
-      // Reset the history of each answer on a per-invocation basis
-      for (result in results) {
-        val answerHistoryKey = user.answerHistoryKey(languageName, groupName, challengeName, result.invocation)
-        if (answerHistoryKey.isNotEmpty()) {
-          val history = ChallengeHistory(result.invocation)
-          history.markUnanswered()
-
-          val json = gson.toJson(history)
-          User.logger.info { "Saving: $json to $answerHistoryKey" }
-          redis.set(answerHistoryKey, json)
-
-          user.publishAnswers(content, false, 0, history, redis)
-        }
-      }
-    }
+    if (user != null)
+      user.resetHistory(content.maxHistoryLength, funcInfo, languageName, groupName, challengeName, redis)
 
     throw RedirectException("$path?$MSG=${"Answers cleared".encode()}")
   }
 
-  suspend fun PipelineCall.clearGroupAnswers(user: User?, redis: Jedis): String {
+  suspend fun PipelineCall.clearGroupAnswers(content: ReadingBatContent, user: User?, redis: Jedis): String {
     val parameters = call.receiveParameters()
 
     val languageName = parameters.getLanguageName(LANGUAGE_NAME_KEY)
@@ -286,6 +260,14 @@ internal object ChallengePost : KLogging() {
           redis.del(challengeAnswersKey)
         }
       }
+
+    if (user != null) {
+      for (challenge in content.findGroup(languageName.toLanguageType(), groupName).challenges) {
+        logger.info { "Clearing answers for ${challenge.challengeName}" }
+        val funcInfo = challenge.funcInfo(content)
+        user.resetHistory(content.maxHistoryLength, funcInfo, languageName, groupName, challenge.challengeName, redis)
+      }
+    }
 
     throw RedirectException("$path?$MSG=${"Answers cleared".encode()}")
   }

@@ -40,10 +40,7 @@ import com.github.readingbat.misc.KeyConstants.SALT_FIELD
 import com.github.readingbat.misc.KeyConstants.USER_CLASSES_KEY
 import com.github.readingbat.misc.KeyConstants.USER_INFO_KEY
 import com.github.readingbat.misc.KeyConstants.USER_RESET_KEY
-import com.github.readingbat.posts.ChallengeHistory
-import com.github.readingbat.posts.ChallengeNames
-import com.github.readingbat.posts.ChallengeResults
-import com.github.readingbat.posts.DashboardInfo
+import com.github.readingbat.posts.*
 import com.github.readingbat.server.*
 import com.github.readingbat.server.ChallengeName.Companion.ANY_CHALLENGE
 import com.github.readingbat.server.Email.Companion.EMPTY_EMAIL
@@ -230,7 +227,7 @@ internal class User private constructor(val id: String) {
     }
   }
 
-  fun publishAnswers(content: ReadingBatContent,
+  fun publishAnswers(maxHistoryLength: Int,
                      complete: Boolean,
                      numCorrect: Int,
                      history: ChallengeHistory,
@@ -242,10 +239,30 @@ internal class User private constructor(val id: String) {
       // Check to see if owner of class has it set as their active class
       val teacherId = enrolledClassCode.fetchClassTeacherId(redis)
       if (teacherId.isNotEmpty() && teacherId.toUser().fetchActiveClassCode(redis) == enrolledClassCode) {
-        val dashboardInfo = DashboardInfo(id, complete, numCorrect, content.maxHistoryLength, history)
+        val dashboardInfo = DashboardInfo(id, complete, numCorrect, maxHistoryLength, history)
         redis.publish(enrolledClassCode.value, gson.toJson(dashboardInfo))
       }
     }
+  }
+
+  fun resetHistory(maxHistoryLength: Int,
+                   funcInfo: FunctionInfo,
+                   languageName: LanguageName,
+                   groupName: GroupName,
+                   challengeName: ChallengeName,
+                   redis: Jedis) {
+    funcInfo.invocations
+      .map { ChallengeResults(invocation = it) }
+      .forEach { result ->
+        // Reset the history of each answer on a per-invocation basis
+        val answerHistoryKey = answerHistoryKey(languageName, groupName, challengeName, result.invocation)
+        if (answerHistoryKey.isNotEmpty()) {
+          val history = ChallengeHistory(result.invocation).apply { markUnanswered() }
+          ChallengePost.logger.info { "Resetting $answerHistoryKey" }
+          redis.set(answerHistoryKey, gson.toJson(history))
+          publishAnswers(maxHistoryLength, false, 0, history, redis)
+        }
+      }
   }
 
   companion object : KLogging() {
@@ -386,7 +403,7 @@ internal class User private constructor(val id: String) {
           redis.set(answerHistoryKey, json)
 
           if (this != null)
-            publishAnswers(content, complete, numCorrect, history, redis)
+            publishAnswers(content.maxHistoryLength, complete, numCorrect, history, redis)
         }
       }
     }

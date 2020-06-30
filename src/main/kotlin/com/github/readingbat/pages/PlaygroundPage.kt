@@ -53,9 +53,9 @@ internal object PlaygroundPage {
     createHTML()
       .html {
         val languageType = challenge.languageType
+        val languageName = languageType.languageName
         val groupName = challenge.groupName
         val challengeName = challenge.challengeName
-        val languageName = languageType.languageName
         val funcInfo = challenge.funcInfo(content)
         val loginPath = pathOf(CHALLENGE_ROOT, languageName, groupName, challengeName)
         val activeClassCode = user.fetchActiveClassCode(redis)

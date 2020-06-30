@@ -148,10 +148,9 @@ internal object ChallengePage : KLogging() {
       }
 
   private fun BODY.displayChallenge(challenge: Challenge, funcInfo: FunctionInfo) {
-    val languageType = challenge.languageType
+    val languageName = challenge.languageType.languageName
     val groupName = challenge.groupName
     val challengeName = challenge.challengeName
-    val languageName = languageType.languageName
 
     h2 {
       val groupPath = pathOf(CHALLENGE_ROOT, languageName, groupName)
@@ -259,10 +258,9 @@ internal object ChallengePage : KLogging() {
     div {
       style = "margin-top:2em;"
 
-      val languageType = challenge.languageType
+      val languageName = challenge.languageType.languageName
       val groupName = challenge.groupName
       val challengeName = challenge.challengeName
-      val languageName = languageType.languageName
       val classDesc = activeClassCode.fetchClassDesc(redis)
       val enrollees = activeClassCode.fetchEnrollees(redis)
 
@@ -337,10 +335,9 @@ internal object ChallengePage : KLogging() {
     if (redis == null)
       emptyMap
     else {
-      val languageType = challenge.languageType
+      val languageName = challenge.languageType.languageName
       val groupName = challenge.groupName
       val challengeName = challenge.challengeName
-      val languageName = languageType.languageName
       val challengeAnswersKey = user.challengeAnswersKey(browserSession, languageName, groupName, challengeName)
 
       if (challengeAnswersKey.isNotEmpty()) redis.hgetAll(challengeAnswersKey) else emptyMap()
@@ -392,10 +389,9 @@ internal object ChallengePage : KLogging() {
   private fun BODY.clearChallengeAnswerHistory(user: User?,
                                                browserSession: BrowserSession?,
                                                challenge: Challenge) {
-    val languageType = challenge.languageType
+    val languageName = challenge.languageType.languageName
     val groupName = challenge.groupName
     val challengeName = challenge.challengeName
-    val languageName = languageType.languageName
     val correctAnswersKey = user.correctAnswersKey(browserSession, languageName, groupName, challengeName)
     val challengeAnswersKey = user.challengeAnswersKey(browserSession, languageName, groupName, challengeName)
 

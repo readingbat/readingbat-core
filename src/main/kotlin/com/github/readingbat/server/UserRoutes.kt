@@ -118,7 +118,7 @@ internal fun Routing.userRoutes(content: ReadingBatContent) {
   post(CHECK_ANSWERS_ENDPOINT) { withSuspendingRedisPool { redis -> checkAnswers(content, fetchUser(), redis) } }
 
   post(CLEAR_GROUP_ANSWERS_ENDPOINT) {
-    respondWithSuspendingDbmsCheck { redis -> clearGroupAnswers(fetchUser(), redis) }
+    respondWithSuspendingDbmsCheck { redis -> clearGroupAnswers(content, fetchUser(), redis) }
   }
 
   post(CLEAR_CHALLENGE_ANSWERS_ENDPOINT) {
