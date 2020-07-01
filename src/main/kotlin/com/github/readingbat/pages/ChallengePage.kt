@@ -170,7 +170,7 @@ internal object ChallengePage : KLogging() {
       rawHtml("${nbsp.text} | ${nbsp.text}")
       if (pos == challenges.size - 1) +"next" else a { href = "./${challenges[pos + 1].challengeName.value}"; +"next" }
       rawHtml("${nbsp.text} | ${nbsp.text}")
-      a { href = "./${challenges[challenges.size.random()].challengeName.value}"; +"chance" }
+      a { href = "./${challenges[challenges.size.chance(pos)].challengeName.value}"; +"chance" }
     }
 
     if (challenge.description.isNotEmpty())
@@ -180,6 +180,18 @@ internal object ChallengePage : KLogging() {
       pre(classes = "line-numbers") {
         code(classes = "language-$languageName") { +funcInfo.codeSnippet }
       }
+    }
+  }
+
+  // Make sure we do not return the same challenge on a chance click
+  private fun Int.chance(current: Int): Int {
+    if (this == 1)
+      return random()
+
+    while (true) {
+      val v = random()
+      if (v != current)
+        return v
     }
   }
 
