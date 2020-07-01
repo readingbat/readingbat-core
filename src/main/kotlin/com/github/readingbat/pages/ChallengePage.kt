@@ -186,7 +186,7 @@ internal object ChallengePage : KLogging() {
   // Make sure we do not return the same challenge on a chance click
   private fun Int.chance(current: Int): Int {
     if (this == 1)
-      return random()
+      return 0
 
     while (true) {
       val v = random()
