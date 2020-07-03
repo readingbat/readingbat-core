@@ -30,9 +30,10 @@ import com.github.readingbat.server.LanguageName
 class ReadingBatContent {
   internal var urlPrefix = ""
   internal var googleAnalyticsId = ""
-  internal var production = false
   internal var maxHistoryLength = 10
   internal var maxClassCount = 25
+  var production = false
+    internal set
 
   val python by lazy { LanguageGroup<PythonChallenge>(this, Python) }
   val java by lazy { LanguageGroup<JavaChallenge>(this, Java) }
