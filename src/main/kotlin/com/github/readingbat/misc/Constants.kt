@@ -18,7 +18,6 @@
 package com.github.readingbat.misc
 
 internal object Constants {
-  const val READING_BAT = "ReadingBat"
   const val SESSION_ID = "sessionid"
   const val ICONS = "icons"
   const val RETURN_PATH = "returnPath"
@@ -37,6 +36,9 @@ internal object Constants {
   const val WRONG_COLOR = "#F1F1F1"
   const val LABEL_WIDTH = "width: 250;"
   const val INVALID_RESET_ID = "Invalid reset_id"
+  const val READING_BAT = "readingbat"
+  const val SITE = "site"
+  const val IS_PRODUCTION = "$READING_BAT.$SITE.production"
 
   val DBMS_DOWN = Message("Database is down", true)
 }

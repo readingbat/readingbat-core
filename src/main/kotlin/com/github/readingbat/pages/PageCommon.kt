@@ -28,7 +28,6 @@ import com.github.readingbat.misc.ClassCode
 import com.github.readingbat.misc.Constants.BACK_PATH
 import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
 import com.github.readingbat.misc.Constants.ICONS
-import com.github.readingbat.misc.Constants.READING_BAT
 import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.Constants.STATIC_ROOT
 import com.github.readingbat.misc.Endpoints.CSS_ENDPOINT
@@ -47,6 +46,7 @@ import kotlinx.html.Entities.nbsp
 import redis.clients.jedis.Jedis
 
 internal object PageCommon {
+  const val READING_BAT = "ReadingBat"
 
   fun HEAD.headDefault(content: ReadingBatContent) {
     link { rel = "stylesheet"; href = CSS_ENDPOINT; type = CSS.toString() }

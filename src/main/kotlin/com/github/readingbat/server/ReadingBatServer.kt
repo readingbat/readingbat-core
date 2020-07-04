@@ -19,6 +19,9 @@ package com.github.readingbat.server
 
 import com.github.pambrose.common.util.FileSource
 import com.github.readingbat.dsl.readDsl
+import com.github.readingbat.misc.Constants.IS_PRODUCTION
+import com.github.readingbat.misc.Constants.READING_BAT
+import com.github.readingbat.misc.Constants.SITE
 import com.github.readingbat.misc.Constants.STATIC_ROOT
 import com.github.readingbat.server.AdminRoutes.adminRoutes
 import com.github.readingbat.server.Installs.installs
@@ -46,18 +49,16 @@ internal fun Application.module() {
   val content =
     readDsl(FileSource(fileName = fileName), variableName = variableName)
       .apply {
-        val readingBat = "readingbat"
-        val site = "site"
         val challenges = "challenges"
         val classes = "classes"
-        urlPrefix = property("$readingBat.$site.urlPrefix", default = "https://readingbat.com")
-        googleAnalyticsId = property("$readingBat.$site.googleAnalyticsId")
-        production = property("$readingBat.$site.production", default = "false").toBoolean()
-        maxHistoryLength = property("$readingBat.$challenges.maxHistoryLength", default = "10").toInt()
-        maxClassCount = property("$readingBat.$classes.maxCount", default = "25").toInt()
+        urlPrefix = property("$READING_BAT.$SITE.urlPrefix", default = "https://readingbat.com")
+        googleAnalyticsId = property("$READING_BAT.$SITE.googleAnalyticsId")
+        production = property("$READING_BAT.$SITE.production", default = "false").toBoolean()
+        maxHistoryLength = property("$READING_BAT.$challenges.maxHistoryLength", default = "10").toInt()
+        maxClassCount = property("$READING_BAT.$classes.maxCount", default = "25").toInt()
       }
 
-  System.setProperty("isProduction", content.production.toString())
+  System.setProperty(IS_PRODUCTION, content.production.toString())
 
   installs(content)
   intercepts()
