@@ -22,6 +22,7 @@ import com.github.pambrose.common.util.ContentSource
 import com.github.pambrose.common.util.GitHubFile
 import com.github.pambrose.common.util.GitHubRepo
 import com.github.readingbat.dsl.ReadingBatContent.Companion.contentMap
+import com.github.readingbat.misc.Constants.IS_PRODUCTION
 import com.github.readingbat.server.ReadingBatServer
 import mu.KotlinLogging
 import kotlin.reflect.KFunction
@@ -44,6 +45,8 @@ fun readingBatContent(block: ReadingBatContent.() -> Unit) =
   ReadingBatContent().apply(block).apply { validate() }
 
 private val logger = KotlinLogging.logger {}
+
+fun isProduction() = System.getProperty(IS_PRODUCTION)?.toBoolean() ?: false
 
 fun ContentSource.eval(variableName: String = "content"): ReadingBatContent =
   contentMap.computeIfAbsent(this.source) { readDsl(this, variableName) }
