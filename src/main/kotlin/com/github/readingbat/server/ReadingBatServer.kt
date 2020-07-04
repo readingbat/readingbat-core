@@ -46,6 +46,10 @@ object ReadingBatServer {
 internal fun Application.module() {
   val fileName = property("readingbat.content.fileName", "src/Content.kt")
   val variableName = property("readingbat.content.variableName", "content")
+  val isProduction = property("$READING_BAT.$SITE.production", default = "false").toBoolean()
+
+  System.setProperty(IS_PRODUCTION, isProduction.toString())
+
   val content =
     readDsl(FileSource(fileName = fileName), variableName = variableName)
       .apply {
@@ -53,12 +57,10 @@ internal fun Application.module() {
         val classes = "classes"
         urlPrefix = property("$READING_BAT.$SITE.urlPrefix", default = "https://readingbat.com")
         googleAnalyticsId = property("$READING_BAT.$SITE.googleAnalyticsId")
-        production = property("$READING_BAT.$SITE.production", default = "false").toBoolean()
+        production = isProduction
         maxHistoryLength = property("$READING_BAT.$challenges.maxHistoryLength", default = "10").toInt()
         maxClassCount = property("$READING_BAT.$classes.maxCount", default = "25").toInt()
       }
-
-  System.setProperty(IS_PRODUCTION, content.production.toString())
 
   installs(content)
   intercepts()
