@@ -57,6 +57,8 @@ internal fun Application.module() {
         maxClassCount = property("$readingBat.$classes.maxCount", default = "25").toInt()
       }
 
+  System.setProperty("isProduction", content.production.toString())
+
   installs(content)
   intercepts()
 

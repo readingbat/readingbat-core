@@ -32,8 +32,7 @@ class ReadingBatContent {
   internal var googleAnalyticsId = ""
   internal var maxHistoryLength = 10
   internal var maxClassCount = 25
-  var production = false
-    internal set
+  internal var production = false
 
   val python by lazy { LanguageGroup<PythonChallenge>(this, Python) }
   val java by lazy { LanguageGroup<JavaChallenge>(this, Java) }
