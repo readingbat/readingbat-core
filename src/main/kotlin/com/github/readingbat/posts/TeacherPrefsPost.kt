@@ -105,7 +105,7 @@ internal object TeacherPrefsPost {
         teacherPrefsPage(content,
                          user,
                          redis,
-                         Message("Exceeds maximum number classes [${content.maxClassCount}]", true),
+                         Message("Maximum number of classes is: [${content.maxClassCount}]", true),
                          classDesc)
       }
       else -> {
