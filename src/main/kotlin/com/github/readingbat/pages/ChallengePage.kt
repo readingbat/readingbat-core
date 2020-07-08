@@ -166,11 +166,31 @@ internal object ChallengePage : KLogging() {
     span {
       style = "padding-left:20px;"
       val pos = challengeGroup.challengeIndex(challengeName)
-      if (pos == 0) +"prev" else a { href = "./${challenges[pos - 1].challengeName.value}"; +"prev" }
+
+      "prev".also {
+        if (pos == 0)
+          +it
+        else
+          a { href = "./${challenges[pos - 1].challengeName.value}"; +it }
+      }
+
       rawHtml("${nbsp.text} | ${nbsp.text}")
-      if (pos == challenges.size - 1) +"next" else a { href = "./${challenges[pos + 1].challengeName.value}"; +"next" }
+
+      "next".also {
+        if (pos == challenges.size - 1)
+          +it
+        else
+          a { href = "./${challenges[pos + 1].challengeName.value}"; +it }
+      }
+
       rawHtml("${nbsp.text} | ${nbsp.text}")
-      a { href = "./${challenges[challenges.size.chance(pos)].challengeName.value}"; +"chance" }
+
+      "chance".also {
+        if (challenges.size == 1)
+          +it
+        else
+          a { href = "./${challenges[challenges.size.chance(pos)].challengeName.value}"; +it }
+      }
     }
 
     if (challenge.description.isNotEmpty())
