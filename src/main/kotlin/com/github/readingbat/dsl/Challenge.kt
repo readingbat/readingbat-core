@@ -44,10 +44,10 @@ import com.github.readingbat.server.ChallengeName
 import com.vladsch.flexmark.html.HtmlRenderer
 import com.vladsch.flexmark.parser.Parser
 import com.vladsch.flexmark.util.data.MutableDataSet
+import kotlinx.atomicfu.atomic
 import mu.KLogging
 import java.net.URL
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.atomic.AtomicInteger
 import kotlin.reflect.typeOf
 import kotlin.time.measureTime
 import kotlin.time.measureTimedValue
@@ -125,7 +125,7 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
   override fun toString() = "AbstractChallenge(packageName='$packageName', fileName='$fileName')"
 
   companion object : KLogging() {
-    internal val counter = AtomicInteger(0)
+    internal val counter = atomic(0)
     internal val sourcesMap = ConcurrentHashMap<Int, FunctionInfo>()
 
     internal fun challenge(challengeGroup: ChallengeGroup<*>, challengeName: ChallengeName, replaceable: Boolean) =

@@ -30,8 +30,8 @@ import com.github.readingbat.pages.PageCommon.rawHtml
 import com.github.readingbat.server.ChallengeName
 import com.github.readingbat.server.GroupName
 import com.github.readingbat.server.LanguageName
+import kotlinx.atomicfu.atomic
 import kotlinx.html.SCRIPT
-import java.util.concurrent.atomic.AtomicInteger
 
 internal object CheckAnswersJs {
   const val langSrc = "lang"
@@ -39,7 +39,7 @@ internal object CheckAnswersJs {
   const val challengeSrc = "challengeName"
   const val processUserAnswers = "processUserAnswers"
 
-  private val sessionCounter = AtomicInteger(0)
+  private val sessionCounter = atomic(0)
 
   fun SCRIPT.checkAnswersScript(languageName: LanguageName, groupName: GroupName, challengeName: ChallengeName) =
     rawHtml(
