@@ -46,7 +46,7 @@ object ReadingBatServer {
 internal fun Application.module() {
   val fileName = property("readingbat.content.fileName", "src/Content.kt")
   val variableName = property("readingbat.content.variableName", "content")
-  val isProduction = property("$READING_BAT.$SITE.production", default = "false").toBoolean()
+  val isProduction = property(IS_PRODUCTION, default = "false").toBoolean()
 
   System.setProperty(IS_PRODUCTION, isProduction.toString())
 

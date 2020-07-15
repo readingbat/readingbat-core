@@ -40,7 +40,7 @@ class ReadingBatContent {
 
   // User properties
   var repo: ContentRoot = defaultContentRoot
-  var cacheChallenges = true
+  var cacheChallenges = !isProduction()
 
   private val languageList by lazy { listOf(java, python, kotlin) }
   private val languageMap by lazy { languageList.map { it.languageType to it }.toMap() }

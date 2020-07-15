@@ -46,6 +46,7 @@ fun readingBatContent(block: ReadingBatContent.() -> Unit) =
 
 private val logger = KotlinLogging.logger {}
 
+// This is accessible from the Content.kt descriptions
 fun isProduction() = System.getProperty(IS_PRODUCTION)?.toBoolean() ?: false
 
 fun ContentSource.eval(variableName: String = "content"): ReadingBatContent =
