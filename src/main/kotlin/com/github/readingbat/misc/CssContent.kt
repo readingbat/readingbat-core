@@ -199,6 +199,9 @@ internal val cssContent by lazy {
         top = LinearDimension("1px")
         background = "white"
       }
+      rule("a:hover") {
+        color = Color.red
+      }
       rule("nav ul") {
         listStyleType = ListStyleType.none
         padding = "0"
