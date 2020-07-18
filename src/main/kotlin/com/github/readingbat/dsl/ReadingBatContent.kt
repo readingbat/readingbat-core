@@ -18,7 +18,7 @@
 package com.github.readingbat.dsl
 
 import com.github.pambrose.common.util.ContentRoot
-import com.github.readingbat.dsl.LanguageGroup.Companion.defaultContentRoot
+import com.github.pambrose.common.util.FileSystemSource
 import com.github.readingbat.dsl.LanguageType.*
 import com.github.readingbat.server.ChallengeName
 import com.github.readingbat.server.GroupName
@@ -39,7 +39,8 @@ class ReadingBatContent {
   val kotlin by lazy { LanguageGroup<KotlinChallenge>(this, Kotlin) }
 
   // User properties
-  var repo: ContentRoot = defaultContentRoot
+  //var repo: ContentRoot = defaultContentRoot # This will require a value
+  var repo: ContentRoot = FileSystemSource("./")
   var cacheChallenges = !isProduction()
 
   private val languageList by lazy { listOf(java, python, kotlin) }

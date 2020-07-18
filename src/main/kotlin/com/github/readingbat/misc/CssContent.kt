@@ -199,6 +199,7 @@ internal val cssContent by lazy {
         top = LinearDimension("1px")
         background = "white"
       }
+      // Turn links red on mouse hovers.
       rule("a:hover") {
         color = Color.red
       }
