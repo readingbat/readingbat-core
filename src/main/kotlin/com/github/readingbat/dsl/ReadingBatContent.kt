@@ -50,20 +50,34 @@ class ReadingBatContent {
 
   internal fun hasLanguage(languageType: LanguageType) = languageMap.containsKey(languageType)
 
-  internal fun findLanguage(languageType: LanguageType) =
+  internal fun findLanguage(languageType: LanguageType): LanguageGroup<out Challenge> =
     languageMap[languageType] ?: throw InvalidConfigurationException("Invalid language $languageType")
 
-  internal fun findGroup(groupLoc: Language.Group) =
+  internal fun findGroup(groupLoc: Language.Group): ChallengeGroup<out Challenge> =
     findLanguage(groupLoc.languageType).findGroup(groupLoc.groupName.value)
 
-  internal fun findGroup(languageType: LanguageType, groupName: GroupName) =
+  internal fun findGroup(languageType: LanguageType, groupName: GroupName): ChallengeGroup<out Challenge> =
     findLanguage(languageType).findGroup(groupName.value)
 
-  internal fun findChallenge(challengeLoc: Language.Group.Challenge) =
+  internal fun findChallenge(challengeLoc: Language.Group.Challenge): Challenge =
     findGroup(challengeLoc.group).findChallenge(challengeLoc.challengeName.value)
 
-  internal fun findChallenge(languageName: LanguageName, groupName: GroupName, challengeName: ChallengeName) =
+  internal fun findChallenge(languageName: LanguageName,
+                             groupName: GroupName,
+                             challengeName: ChallengeName): Challenge =
     findGroup(languageName.toLanguageType(), groupName).findChallenge(challengeName.value)
+
+  internal operator fun get(languageType: LanguageType): LanguageGroup<out Challenge> = findLanguage(languageType)
+
+  internal operator fun get(groupLoc: Language.Group): ChallengeGroup<out Challenge> = findGroup(groupLoc)
+
+  internal operator fun get(languageType: LanguageType, groupName: GroupName): ChallengeGroup<out Challenge> =
+    findGroup(languageType, groupName)
+
+  internal operator fun get(challengeLoc: Language.Group.Challenge): Challenge = findChallenge(challengeLoc)
+
+  internal operator fun get(languageName: LanguageName, groupName: GroupName, challengeName: ChallengeName): Challenge =
+    findChallenge(languageName, groupName, challengeName)
 
   internal fun validate() = languageList.forEach { it.validate() }
 
