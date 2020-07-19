@@ -36,9 +36,7 @@ class LanguageGroup<T : Challenge>(internal val content: ReadingBatContent,
         throw InvalidConfigurationException("${languageType.languageName} section is missing a repo value")
       else
         field
-
-  // User properties
-  var branchName = "master"
+  var branchName = content.branchName
   var srcPath = languageType.srcPrefix
 
   internal fun validate() {

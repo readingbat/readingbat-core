@@ -39,8 +39,9 @@ class ReadingBatContent {
   val kotlin by lazy { LanguageGroup<KotlinChallenge>(this, Kotlin) }
 
   // User properties
-  //var repo: ContentRoot = defaultContentRoot # This will require a value
+  //var repo: ContentRoot = defaultContentRoot # Makes repo a required value
   var repo: ContentRoot = FileSystemSource("./")
+  var branchName = "master"
   var cacheChallenges = !isProduction()
 
   private val languageList by lazy { listOf(java, python, kotlin) }
