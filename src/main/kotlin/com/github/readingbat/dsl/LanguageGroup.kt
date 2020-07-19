@@ -53,7 +53,9 @@ class LanguageGroup<T : Challenge>(internal val content: ReadingBatContent,
     challengeGroups += group
   }
 
-  fun hasGroups() = challengeGroups.isNotEmpty()
+  fun isEmpty() = challengeGroups.isEmpty()
+
+  fun isNotEmpty() = challengeGroups.isNotEmpty()
 
   fun hasGroup(groupName: String) = challengeGroups.any { it.groupName.value == groupName }
 
@@ -105,11 +107,15 @@ class LanguageGroup<T : Challenge>(internal val content: ReadingBatContent,
     addGroup(challengeGroup)
   }
 
-  fun findGroup(groupName: String) =
+  fun findGroup(groupName: String): ChallengeGroup<T> =
     groupName.decode().let { decoded -> challengeGroups.firstOrNull { it.groupName.value == decoded } }
       ?: throw InvalidPathException("Group ${languageType.languageName}/$groupName not found")
 
   fun findChallenge(groupName: String, challengeName: String) = findGroup(groupName).findChallenge(challengeName)
+
+  operator fun get(groupName: String): ChallengeGroup<T> = findGroup(groupName)
+
+  operator fun get(groupName: String, challengeName: String): T = findChallenge(groupName, challengeName)
 
   override fun toString() =
     "LanguageGroup(languageType=$languageType, srcPrefix='$srcPath', challengeGroups=$challengeGroups)"

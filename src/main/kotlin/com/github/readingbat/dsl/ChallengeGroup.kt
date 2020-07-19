@@ -72,21 +72,17 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
 
   fun hasChallenge(challengeName: String) = challenges.any { it.challengeName.value == challengeName }
 
-  fun removeChallenge(challengeName: String) {
-    val pos =
-      challenges
-        .asSequence()
-        .mapIndexed { i, challenge -> i to challenge }
-        .first { it.second.challengeName.value == challengeName }
-        .first
-    challenges.removeAt(pos)
-  }
+  operator fun contains(challengeName: String) = hasChallenge(challengeName)
+
+  internal fun removeChallenge(challengeName: ChallengeName) = challenges.removeAt(indexOf(challengeName))
 
   fun findChallenge(challengeName: String): T =
     challenges.firstOrNull { it.challengeName.value == challengeName }
       ?: throw InvalidPathException("Challenge $prefix/$challengeName not found.")
 
-  fun challengeIndex(challengeName: ChallengeName): Int {
+  operator fun get(challengeName: String): T = findChallenge(challengeName)
+
+  internal fun indexOf(challengeName: ChallengeName): Int {
     val pos = challenges.indexOfFirst { it.challengeName == challengeName }
     if (pos == -1)
       throw InvalidPathException("Challenge $prefix/$challengeName not found.")
@@ -133,10 +129,10 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
   }
 
   private fun checkChallengeName(challengeName: ChallengeName, throwExceptionIfPresent: Boolean = true): Boolean {
-    if (hasChallenge(challengeName.value)) {
-      val challenge = findChallenge(challengeName.value)
+    if (challengeName.value in this) {
+      val challenge = this[challengeName.value]
       if (challenge.replaceable) {
-        removeChallenge(challengeName.value)
+        removeChallenge(challengeName)
       }
       else {
         if (throwExceptionIfPresent)

@@ -123,7 +123,7 @@ internal object PageCommon {
       nav {
         ul {
           languageTypesInOrder
-            .filter { content.hasGroups(it) }
+            .filter { content[it].isNotEmpty() }
             .forEach { lang ->
               li(classes = "h2") {
                 if (languageType == lang)
@@ -143,7 +143,7 @@ internal object PageCommon {
   fun PipelineCall.defaultLanguageTab(content: ReadingBatContent) =
     languageTypesInOrder
       .asSequence()
-      .filter { content.hasGroups(it) }
+      .filter { content[it].isNotEmpty() }
       .map {
         val params = call.parameters.formUrlEncode()
         "${it.contentRoot}${if (params.isNotEmpty()) "?$params" else ""}"

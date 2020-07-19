@@ -46,9 +46,9 @@ class ReadingBatContent {
   private val languageList by lazy { listOf(java, python, kotlin) }
   private val languageMap by lazy { languageList.map { it.languageType to it }.toMap() }
 
-  internal fun hasGroups(languageType: LanguageType) = findLanguage(languageType).hasGroups()
-
   internal fun hasLanguage(languageType: LanguageType) = languageMap.containsKey(languageType)
+
+  internal operator fun contains(languageType: LanguageType) = this[languageType].isNotEmpty()
 
   internal fun findLanguage(languageType: LanguageType): LanguageGroup<out Challenge> =
     languageMap[languageType] ?: throw InvalidConfigurationException("Invalid language $languageType")
@@ -103,7 +103,7 @@ class ReadingBatContent {
   }
 
   internal fun checkLanguage(languageType: LanguageType) {
-    if (!hasLanguage(languageType) || !hasGroups(languageType))
+    if (languageType !in this || this[languageType].isEmpty())
       throw InvalidConfigurationException("Invalid language: $languageType")
   }
 

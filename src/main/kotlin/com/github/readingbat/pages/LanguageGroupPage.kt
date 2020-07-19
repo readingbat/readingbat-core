@@ -61,7 +61,7 @@ internal object LanguageGroupPage {
         val browserSession = call.sessions.get<BrowserSession>()
         val languageName = languageType.languageName
         val loginPath = pathOf(CHALLENGE_ROOT, languageName)
-        val groups = content.findLanguage(languageType).challengeGroups
+        val groups = content[languageType].challengeGroups
         val activeClassCode = user.fetchActiveClassCode(redis)
         val enrollees = activeClassCode.fetchEnrollees(redis)
 

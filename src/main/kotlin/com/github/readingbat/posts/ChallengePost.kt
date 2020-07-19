@@ -137,10 +137,7 @@ internal object ChallengePost : KLogging() {
     val names = ChallengeNames(paramMap)
     val isJvm = names.languageName in listOf(Java.languageName, Kotlin.languageName)
     val userResponses = params.entries().filter { it.key.startsWith(RESP) }
-    val challenge =
-      content
-        .findLanguage(names.languageName.toLanguageType())
-        .findChallenge(names.groupName.value, names.challengeName.value)
+    val challenge = content.findChallenge(names.languageName, names.groupName, names.challengeName)
     val funcInfo = challenge.funcInfo(content)
     val kotlinScriptEngine by lazy { KotlinScript() }
     val pythonScriptEngine by lazy { PythonScript() }
@@ -211,7 +208,7 @@ internal object ChallengePost : KLogging() {
     val correctAnswersKey = params[CORRECT_ANSWERS_KEY] ?: ""
     val challengeAnswersKey = params[CHALLENGE_ANSWERS_KEY] ?: ""
 
-    val challenge = content.findChallenge(languageName, groupName, challengeName)
+    val challenge = content[languageName, groupName, challengeName]
     val funcInfo = challenge.funcInfo(content)
     val path = pathOf(CHALLENGE_ROOT, languageName, groupName, challengeName)
 
