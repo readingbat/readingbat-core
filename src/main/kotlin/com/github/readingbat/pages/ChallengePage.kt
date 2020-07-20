@@ -261,7 +261,8 @@ internal object ChallengePage : KLogging() {
 
       this@displayQuestions.processAnswers(funcInfo)
       this@displayQuestions.otherLinks(challenge)
-      this@displayQuestions.clearChallengeAnswerHistory(user, browserSession, challenge)
+      if (redis != null)
+        this@displayQuestions.clearChallengeAnswerHistory(user, browserSession, challenge)
     }
 
   private fun BODY.addWebSockets(content: ReadingBatContent, classCode: ClassCode) {

@@ -143,7 +143,7 @@ internal object ChallengeGroupPage : KLogging() {
             }
           }
 
-          if (activeClassCode.isStudentMode && challenges.isNotEmpty())
+          if (redis != null && activeClassCode.isStudentMode && challenges.isNotEmpty())
             clearGroupAnswerHistory(user, browserSession, languageName, groupName, challenges)
 
           backLink(CHALLENGE_ROOT, languageName.value)

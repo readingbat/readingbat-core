@@ -55,7 +55,7 @@ internal fun Application.module() {
       .apply {
         val challenges = "challenges"
         val classes = "classes"
-        urlPrefix = property("$READING_BAT.$SITE.urlPrefix", default = "https://readingbat.com")
+        urlPrefix = property("$READING_BAT.$SITE.urlPrefix", default = "https://www.readingbat.com")
         googleAnalyticsId = property("$READING_BAT.$SITE.googleAnalyticsId")
         production = isProduction
         maxHistoryLength = property("$READING_BAT.$challenges.maxHistoryLength", default = "10").toInt()

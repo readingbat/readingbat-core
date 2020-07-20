@@ -125,7 +125,7 @@ internal fun Routing.userRoutes(content: ReadingBatContent) {
     respondWithSuspendingDbmsCheck { redis -> clearChallengeAnswers(content, fetchUser(), redis) }
   }
 
-  get(CREATE_ACCOUNT_ENDPOINT) { respondWith { createAccountPage(content) } }
+  get(CREATE_ACCOUNT_ENDPOINT) { respondWithDbmsCheck { createAccountPage(content) } }
 
   post(CREATE_ACCOUNT_ENDPOINT) { respondWithSuspendingDbmsCheck { redis -> createAccount(content, redis) } }
 

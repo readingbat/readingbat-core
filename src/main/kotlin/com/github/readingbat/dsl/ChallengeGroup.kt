@@ -29,10 +29,11 @@ import kotlin.reflect.KProperty
 
 @ReadingBatDslMarker
 class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>, internal val groupName: GroupName) {
+  private val prefix by lazy { "${languageType.languageName}/$groupName" }
+
   internal val languageType = languageGroup.languageType
   internal val challenges = mutableListOf<T>()
-
-  private val prefix by lazy { "${languageType.languageName}/$groupName" }
+  internal val includeList = mutableListOf<PatternReturnType>()
   internal val parsedDescription
       by lazy {
         val options = MutableDataSet().apply { set(HtmlRenderer.SOFT_BREAK, "<br />\n") }
@@ -41,6 +42,12 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
         val document = parser.parse(description.trimIndent())
         renderer.render(document)
       }
+
+  // User properties
+  var packageName = ""
+  var description = ""
+  var includeFiles by IncludeFiles(languageType, includeList)
+  var includeFilesWithType by IncludeFilesWithType(languageType, includeList)
 
   private class IncludeFiles(val languageType: LanguageType, val includeList: MutableList<PatternReturnType>) {
     operator fun getValue(thisRef: Any?, property: KProperty<*>) = includeList.toString()
@@ -61,14 +68,6 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
         throw InvalidConfigurationException("Use includeFiles instead of includeFilesWithType for ${languageType.languageName} challenges")
     }
   }
-
-  internal val includeList = mutableListOf<PatternReturnType>()
-
-  // User properties
-  var packageName = ""
-  var description = ""
-  var includeFiles by IncludeFiles(languageType, includeList)
-  var includeFilesWithType by IncludeFilesWithType(languageType, includeList)
 
   fun hasChallenge(challengeName: String) = challenges.any { it.challengeName.value == challengeName }
 
@@ -101,7 +100,6 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
     challenges += challenge
   }
 
-
   //@ReadingBatDslMarker
   //fun includeFiles(vararg patterns: String) = import(patterns.toList())
 
@@ -109,7 +107,6 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
 
   @ReadingBatDslMarker
   infix fun String.returns(returnType: ReturnType) = PatternReturnType(this, returnType)
-
 
   internal fun addChallenge(challengeNames: List<LanguageGroup.ChallengeFile>) {
     challengeNames

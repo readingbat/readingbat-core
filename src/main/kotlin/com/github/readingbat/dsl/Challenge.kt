@@ -60,13 +60,13 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
   private val languageGroup = challengeGroup.languageGroup
   private val repo = languageGroup.repo
   private val branchName = languageGroup.branchName
-  internal val srcPath = languageGroup.srcPath
   private val packageName = challengeGroup.packageName
+  private val fqName by lazy { packageName.ensureSuffix("/") + fileName.ensureSuffix(".${languageType.suffix}") }
+
+  internal val srcPath = languageGroup.srcPath
   internal val languageType = challengeGroup.languageType
   internal val languageName = languageType.languageName
   internal val groupName = challengeGroup.groupName
-
-  private val fqName by lazy { packageName.ensureSuffix("/") + fileName.ensureSuffix(".${languageType.suffix}") }
   internal val gitpodUrl by lazy { pathOf(repo.sourcePrefix, "blob/${branchName}", srcPath, fqName) }
 
   internal val parsedDescription
