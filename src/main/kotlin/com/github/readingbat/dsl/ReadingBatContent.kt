@@ -24,6 +24,7 @@ import com.github.readingbat.server.ChallengeName
 import com.github.readingbat.server.GroupName
 import com.github.readingbat.server.Language
 import com.github.readingbat.server.LanguageName
+import mu.KLogging
 
 
 @ReadingBatDslMarker
@@ -98,10 +99,14 @@ class ReadingBatContent {
   }
 
   @ReadingBatDslMarker
-  fun <T : Challenge> include(languageGroup: LanguageGroup<T>) {
-    val group = findLanguage(languageGroup.languageType) as LanguageGroup<T>
-    languageGroup.challengeGroups.forEach { group.addGroup(it) }
-  }
+  fun <T : Challenge> include(languageGroup: LanguageGroup<T>) =
+    try {
+      // Catch exceptions so that remote code does not bring down the server
+      val group = findLanguage(languageGroup.languageType) as LanguageGroup<T>
+      languageGroup.challengeGroups.forEach { group.addGroup(it) }
+    } catch (e: Throwable) {
+      logger.error(e) { "While including: $languageGroup" }
+    }
 
   internal fun checkLanguage(languageType: LanguageType) {
     if (languageType !in this || this[languageType].isEmpty())
@@ -110,7 +115,7 @@ class ReadingBatContent {
 
   override fun toString() = "Content(languageList=$languageList)"
 
-  companion object {
+  companion object : KLogging() {
     internal val contentMap = mutableMapOf<String, ReadingBatContent>()
   }
 }
