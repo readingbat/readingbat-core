@@ -22,6 +22,7 @@ import com.github.pambrose.common.util.ContentSource
 import com.github.pambrose.common.util.GitHubFile
 import com.github.pambrose.common.util.GitHubRepo
 import com.github.readingbat.dsl.ReadingBatContent.Companion.contentMap
+import com.github.readingbat.dsl.ReadingBatContent.Companion.emptyReadingBatContent
 import com.github.readingbat.misc.Constants.IS_PRODUCTION
 import com.github.readingbat.server.ReadingBatServer
 import mu.KotlinLogging
@@ -50,7 +51,13 @@ private val logger = KotlinLogging.logger {}
 fun isProduction() = System.getProperty(IS_PRODUCTION)?.toBoolean() ?: false
 
 fun ContentSource.eval(variableName: String = "content"): ReadingBatContent =
-  contentMap.computeIfAbsent(this.source) { readDsl(this, variableName) }
+  try {
+    // Catch exceptions so that remote code does not bring down the server
+    contentMap.computeIfAbsent(this.source) { readDsl(this, variableName) }
+  } catch (e: Throwable) {
+    logger.error(e) { "While evaluating: $this" }
+    emptyReadingBatContent
+  }
 
 internal fun oldInclude(contentSource: ContentSource, variableName: String = "content") =
   contentMap.computeIfAbsent(contentSource.source) { readDsl(contentSource, variableName) }

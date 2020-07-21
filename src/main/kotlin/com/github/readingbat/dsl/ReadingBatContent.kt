@@ -99,14 +99,10 @@ class ReadingBatContent {
   }
 
   @ReadingBatDslMarker
-  fun <T : Challenge> include(languageGroup: LanguageGroup<T>) =
-    try {
-      // Catch exceptions so that remote code does not bring down the server
-      val group = findLanguage(languageGroup.languageType) as LanguageGroup<T>
-      languageGroup.challengeGroups.forEach { group.addGroup(it) }
-    } catch (e: Throwable) {
-      logger.error(e) { "While including: $languageGroup" }
-    }
+  fun <T : Challenge> include(languageGroup: LanguageGroup<T>) {
+    val group = findLanguage(languageGroup.languageType) as LanguageGroup<T>
+    languageGroup.challengeGroups.forEach { group.addGroup(it) }
+  }
 
   internal fun checkLanguage(languageType: LanguageType) {
     if (languageType !in this || this[languageType].isEmpty())
@@ -117,6 +113,7 @@ class ReadingBatContent {
 
   companion object : KLogging() {
     internal val contentMap = mutableMapOf<String, ReadingBatContent>()
+    internal val emptyReadingBatContent = ReadingBatContent()
   }
 }
 
