@@ -63,15 +63,15 @@ internal object ConfigPage {
                 td { +"${content.production}" }
               }
               tr {
-                td { +"python repo:" }
+                td { +"Python repo:" }
                 td { +"${content.python.repo}" }
               }
               tr {
-                td { +"java repo:" }
+                td { +"Java repo:" }
                 td { +"${content.java.repo}" }
               }
               tr {
-                td { +"kotlin repo:" }
+                td { +"Kotlin repo:" }
                 td { +"${content.kotlin.repo}" }
               }
               tr {
