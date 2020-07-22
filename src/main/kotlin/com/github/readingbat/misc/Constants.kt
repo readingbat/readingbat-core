@@ -50,6 +50,7 @@ internal object Endpoints {
   const val ENABLE_TEACHER_MODE_ENDPOINT = "/enable-teacher-mode"
   const val ADMIN_ENDPOINT = "/admin"
   const val ABOUT_ENDPOINT = "/about.html"
+  const val CONFIG_ENDPOINT = "/config"
   const val CREATE_ACCOUNT_ENDPOINT = "/create-account"
   const val PRIVACY_ENDPOINT = "/privacy.html"
   const val PASSWORD_CHANGE_ENDPOINT = "/password-change"

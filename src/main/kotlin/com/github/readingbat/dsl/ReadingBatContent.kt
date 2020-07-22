@@ -34,6 +34,10 @@ class ReadingBatContent {
   internal var maxHistoryLength = 10
   internal var maxClassCount = 25
   internal var production = false
+  internal var dslFileName = ""
+  internal var dslVariableName = ""
+  internal var ktorPort = 0
+  internal var ktorWatch = ""
 
   val python by lazy { LanguageGroup<PythonChallenge>(this, Python) }
   val java by lazy { LanguageGroup<JavaChallenge>(this, Java) }

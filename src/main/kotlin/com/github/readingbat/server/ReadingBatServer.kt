@@ -55,9 +55,14 @@ internal fun Application.module() {
       .apply {
         val challenges = "challenges"
         val classes = "classes"
+        ktorPort = property("ktor.deployment.port", "0").toInt()
+        val watchVal = environment.config.propertyOrNull("ktor.deployment.watch")?.getList() ?: emptyList()
+        ktorWatch = if (watchVal.size > 0) watchVal.toString() else "unassigned"
         urlPrefix = property("$READING_BAT.$SITE.urlPrefix", default = "https://www.readingbat.com")
         googleAnalyticsId = property("$READING_BAT.$SITE.googleAnalyticsId")
         production = isProduction
+        dslFileName = fileName
+        dslVariableName = variableName
         maxHistoryLength = property("$READING_BAT.$challenges.maxHistoryLength", default = "10").toInt()
         maxClassCount = property("$READING_BAT.$classes.maxCount", default = "25").toInt()
       }

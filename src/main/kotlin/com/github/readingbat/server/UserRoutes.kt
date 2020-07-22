@@ -34,6 +34,7 @@ import com.github.readingbat.misc.Endpoints.ADMIN_ENDPOINT
 import com.github.readingbat.misc.Endpoints.CHECK_ANSWERS_ENDPOINT
 import com.github.readingbat.misc.Endpoints.CLEAR_CHALLENGE_ANSWERS_ENDPOINT
 import com.github.readingbat.misc.Endpoints.CLEAR_GROUP_ANSWERS_ENDPOINT
+import com.github.readingbat.misc.Endpoints.CONFIG_ENDPOINT
 import com.github.readingbat.misc.Endpoints.CREATE_ACCOUNT_ENDPOINT
 import com.github.readingbat.misc.Endpoints.CSS_ENDPOINT
 import com.github.readingbat.misc.Endpoints.ENABLE_STUDENT_MODE_ENDPOINT
@@ -48,6 +49,7 @@ import com.github.readingbat.misc.UserPrincipal
 import com.github.readingbat.misc.cssContent
 import com.github.readingbat.pages.AboutPage.aboutPage
 import com.github.readingbat.pages.AdminPage.adminDataPage
+import com.github.readingbat.pages.ConfigPage.configPage
 import com.github.readingbat.pages.CreateAccountPage.createAccountPage
 import com.github.readingbat.pages.DbmsDownPage.dbmsDownPage
 import com.github.readingbat.pages.PageCommon.defaultLanguageTab
@@ -114,6 +116,8 @@ internal fun Routing.userRoutes(content: ReadingBatContent) {
   get(PRIVACY_ENDPOINT) { respondWith { privacyPage(content) } }
 
   get(ABOUT_ENDPOINT) { respondWith { aboutPage(content) } }
+
+  get(CONFIG_ENDPOINT) { respondWith { configPage(content) } }
 
   post(CHECK_ANSWERS_ENDPOINT) { withSuspendingRedisPool { redis -> checkAnswers(content, fetchUser(), redis) } }
 
