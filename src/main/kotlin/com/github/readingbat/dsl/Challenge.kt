@@ -60,8 +60,9 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
   private val languageGroup = challengeGroup.languageGroup
   private val repo = languageGroup.repo
   private val branchName = languageGroup.branchName
-  private val packageName = challengeGroup.packageName
   private val fqName by lazy { packageName.ensureSuffix("/") + fileName.ensureSuffix(".${languageType.suffix}") }
+
+  protected val packageName = challengeGroup.packageName
 
   internal val srcPath = languageGroup.srcPath
   internal val languageType = challengeGroup.languageType
@@ -122,8 +123,6 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
       else -> toString()
     }
 
-  override fun toString() = "AbstractChallenge(packageName='$packageName', fileName='$fileName')"
-
   companion object : KLogging() {
     internal val counter = atomic(0)
     internal val sourcesMap = ConcurrentHashMap<Int, FunctionInfo>()
@@ -170,6 +169,8 @@ class PythonChallenge(challengeGroup: ChallengeGroup<*>, challengeName: Challeng
 
     return FunctionInfo(languageType, challengeName, code, funcCode, invocations, returnType, answers)
   }
+
+  override fun toString() = "PythonChallenge(packageName='$packageName', fileName='$fileName', returnType=$returnType)"
 }
 
 class JavaChallenge(challengeGroup: ChallengeGroup<*>, challengeName: ChallengeName, replaceable: Boolean) :
@@ -200,6 +201,8 @@ class JavaChallenge(challengeGroup: ChallengeGroup<*>, challengeName: ChallengeN
 
     return FunctionInfo(languageType, challengeName, code, funcCode, invocations, returnType, answers)
   }
+
+  override fun toString() = "JavaChallenge(packageName='$packageName', fileName='$fileName')"
 }
 
 class KotlinChallenge(challengeGroup: ChallengeGroup<*>, challengeName: ChallengeName, replaceable: Boolean) :
@@ -236,4 +239,6 @@ class KotlinChallenge(challengeGroup: ChallengeGroup<*>, challengeName: Challeng
 
     return FunctionInfo(languageType, challengeName, strippedCode, funcCode, invocations, returnType, answers)
   }
+
+  override fun toString() = "KotlinChallenge(packageName='$packageName', fileName='$fileName', returnType=$returnType)"
 }

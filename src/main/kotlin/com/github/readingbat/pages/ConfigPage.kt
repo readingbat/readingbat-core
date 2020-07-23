@@ -38,8 +38,9 @@ internal object ConfigPage {
         body {
           bodyTitle()
 
-          h2 { +"ReadingBat Server Config" }
+          h2 { +"ReadingBat Configuration" }
 
+          h3 { +"Server Configuration" }
           div(classes = INDENT_1EM) {
             table {
               tr {
@@ -63,16 +64,8 @@ internal object ConfigPage {
                 td { +"${content.production}" }
               }
               tr {
-                td { +"Python repo:" }
-                td { +"${content.python.repo}" }
-              }
-              tr {
-                td { +"Java repo:" }
-                td { +"${content.java.repo}" }
-              }
-              tr {
-                td { +"Kotlin repo:" }
-                td { +"${content.kotlin.repo}" }
+                td { +"Cache challenges:" }
+                td { +"${content.cacheChallenges}" }
               }
               tr {
                 td { +"Max history length:" }
@@ -81,6 +74,48 @@ internal object ConfigPage {
               tr {
                 td { +"Max class count" }
                 td { +"${content.maxClassCount}" }
+              }
+            }
+          }
+
+          h3 { +"Python Configuration" }
+          div(classes = INDENT_1EM) {
+            table {
+              tr {
+                td { +"Repo:" }
+                td { +"${content.python.repo}" }
+              }
+              tr {
+                td { +"Source path:" }
+                td { +content.python.srcPath }
+              }
+            }
+          }
+
+          h3 { +"Java Configuration" }
+          div(classes = INDENT_1EM) {
+            table {
+              tr {
+                td { +"Repo:" }
+                td { +"${content.java.repo}" }
+              }
+              tr {
+                td { +"Source path:" }
+                td { +content.java.srcPath }
+              }
+            }
+          }
+
+          h3 { +"Kotlin Configuration" }
+          div(classes = INDENT_1EM) {
+            table {
+              tr {
+                td { +"Repo:" }
+                td { +"${content.kotlin.repo}" }
+              }
+              tr {
+                td { +"Source path:" }
+                td { +content.kotlin.srcPath }
               }
             }
           }
