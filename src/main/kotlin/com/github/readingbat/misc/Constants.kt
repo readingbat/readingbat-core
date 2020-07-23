@@ -69,6 +69,7 @@ internal object ParameterIds {
   const val SPINNER_ID = "spinnerId"
   const val FEEDBACK_ID = "feedbackId"
   const val SUCCESS_ID = "successId"
+  const val NEXTCHANCE_ID = "nextChanceId"
 }
 
 internal object FormFields {

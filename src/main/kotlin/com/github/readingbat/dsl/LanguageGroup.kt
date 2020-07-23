@@ -30,13 +30,13 @@ class LanguageGroup<T : Challenge>(internal val content: ReadingBatContent,
   internal val challengeGroups = mutableListOf<ChallengeGroup<T>>()
 
   // User properties
-  var repo: ContentRoot = content.repo
+  var repo: ContentRoot = content.repo           // Defaults to outer-level value
     get() =
       if (field == defaultContentRoot)
         throw InvalidConfigurationException("${languageType.languageName} section is missing a repo value")
       else
         field
-  var branchName = content.branchName
+  var branchName = content.branchName    // Defaults to outer-level value
   var srcPath = languageType.srcPrefix
 
   internal fun validate() {

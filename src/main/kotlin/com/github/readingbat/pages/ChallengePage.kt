@@ -56,6 +56,7 @@ import com.github.readingbat.misc.KeyConstants.NAME_FIELD
 import com.github.readingbat.misc.Message
 import com.github.readingbat.misc.PageUtils.pathOf
 import com.github.readingbat.misc.ParameterIds.FEEDBACK_ID
+import com.github.readingbat.misc.ParameterIds.NEXTCHANCE_ID
 import com.github.readingbat.misc.ParameterIds.SPINNER_ID
 import com.github.readingbat.misc.ParameterIds.STATUS_ID
 import com.github.readingbat.misc.ParameterIds.SUCCESS_ID
@@ -64,6 +65,7 @@ import com.github.readingbat.misc.User.Companion.challengeAnswersKey
 import com.github.readingbat.misc.User.Companion.correctAnswersKey
 import com.github.readingbat.misc.User.Companion.fetchActiveClassCode
 import com.github.readingbat.misc.User.Companion.gson
+import com.github.readingbat.pages.ChallengePage.processAnswers
 import com.github.readingbat.pages.PageCommon.addLink
 import com.github.readingbat.pages.PageCommon.backLink
 import com.github.readingbat.pages.PageCommon.bodyHeader
@@ -166,31 +168,7 @@ internal object ChallengePage : KLogging() {
     span {
       style = "padding-left:20px;"
       val pos = challengeGroup.indexOf(challengeName)
-
-      "prev".also {
-        if (pos == 0)
-          +it
-        else
-          a { href = "./${challenges[pos - 1].challengeName.value}"; +it }
-      }
-
-      rawHtml("${nbsp.text} | ${nbsp.text}")
-
-      "next".also {
-        if (pos == challenges.size - 1)
-          +it
-        else
-          a { href = "./${challenges[pos + 1].challengeName.value}"; +it }
-      }
-
-      rawHtml("${nbsp.text} | ${nbsp.text}")
-
-      "chance".also {
-        if (challenges.size == 1)
-          +it
-        else
-          a { href = "./${challenges[challenges.size.chance(pos)].challengeName.value}"; +it }
-      }
+      this@displayChallenge.nextChance(pos, challenges, true)
     }
 
     if (challenge.description.isNotEmpty())
@@ -259,7 +237,7 @@ internal object ChallengePage : KLogging() {
           }
       }
 
-      this@displayQuestions.processAnswers(funcInfo)
+      this@displayQuestions.processAnswers(funcInfo, challenge)
       this@displayQuestions.otherLinks(challenge)
       if (redis != null)
         this@displayQuestions.clearChallengeAnswerHistory(user, browserSession, challenge)
@@ -390,7 +368,7 @@ internal object ChallengePage : KLogging() {
       if (challengeAnswersKey.isNotEmpty()) redis.hgetAll(challengeAnswersKey) else emptyMap()
     }
 
-  private fun BODY.processAnswers(funcInfo: FunctionInfo) {
+  private fun BODY.processAnswers(funcInfo: FunctionInfo, challenge: Challenge) {
     div {
       style = "margin-top:2em;"
       table {
@@ -402,12 +380,54 @@ internal object ChallengePage : KLogging() {
           }
           td { style = "vertical-align:middle;"; span { style = "margin-left:1em;"; id = SPINNER_ID } }
           td {
+            val challengeName = challenge.challengeName
+            val challengeGroup = challenge.challengeGroup
+            val challenges = challenge.challengeGroup.challenges
+            val pos = challengeGroup.indexOf(challengeName)
+
+            span {
+              id = NEXTCHANCE_ID
+              style = "visibility: hidden;"
+              this@processAnswers.nextChance(pos, challenges, false)
+            }
+          }
+
+          td {
             style = "vertical-align:middle;"
             span(classes = STATUS) { id = STATUS_ID }
             span(classes = SUCCESS) { id = SUCCESS_ID }
           }
         }
       }
+    }
+  }
+
+  private fun BODY.nextChance(pos: Int, challenges: List<Challenge>, includePrev: Boolean) {
+    if (includePrev) {
+      "prev".also {
+        if (pos == 0)
+          +it
+        else
+          a { href = "./${challenges[pos - 1].challengeName.value}"; +it }
+      }
+
+      rawHtml("${nbsp.text} | ${nbsp.text}")
+    }
+
+    "next".also {
+      if (pos == challenges.size - 1)
+        +it
+      else
+        a { href = "./${challenges[pos + 1].challengeName.value}"; +it }
+    }
+
+    rawHtml("${nbsp.text} | ${nbsp.text}")
+
+    "chance".also {
+      if (challenges.size == 1)
+        +it
+      else
+        a { href = "./${challenges[challenges.size.chance(pos)].challengeName.value}"; +it }
     }
   }
 

@@ -183,7 +183,7 @@ internal val cssContent by lazy {
         fontSize = textFs
       }
       rule(".$SUCCESS") {
-        marginLeft = 25.px
+        marginLeft = 14.px
         fontSize = textFs
         color = Color.black
       }
