@@ -21,22 +21,27 @@ import com.github.readingbat.misc.AuthRoutes.LOGOUT
 import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.Endpoints.ABOUT_ENDPOINT
 import com.github.readingbat.misc.Endpoints.CREATE_ACCOUNT_ENDPOINT
+import com.github.readingbat.misc.Endpoints.ENABLE_STUDENT_MODE_ENDPOINT
+import com.github.readingbat.misc.Endpoints.ENABLE_TEACHER_MODE_ENDPOINT
 import com.github.readingbat.misc.Endpoints.PASSWORD_RESET_ENDPOINT
 import com.github.readingbat.misc.Endpoints.USER_PREFS_ENDPOINT
 import com.github.readingbat.misc.FormFields.EMAIL
 import com.github.readingbat.misc.FormFields.PASSWORD
-import com.github.readingbat.misc.UserPrincipal
+import com.github.readingbat.misc.User
+import com.github.readingbat.misc.User.Companion.fetchPreviousTeacherClassCode
 import kotlinx.html.*
 import redis.clients.jedis.Jedis
 
 internal object HelpAndLogin {
 
-  fun BODY.helpAndLogin(redis: Jedis?, principal: UserPrincipal?, loginPath: String) {
+  fun BODY.helpAndLogin(user: User?, loginPath: String, teacherMode: Boolean, redis: Jedis?) {
+
+    val previousClassCode = user.fetchPreviousTeacherClassCode(redis)
 
     div {
       style = "float:right; margin:0px; border: 1px solid lightgray; margin-left: 10px; padding: 5px;"
       table {
-        if (principal != null && redis != null) logout(redis, principal, loginPath) else login(loginPath)
+        if (user != null && redis != null) logout(user, loginPath, redis) else login(loginPath)
       }
     }
 
@@ -47,6 +52,17 @@ internal object HelpAndLogin {
           td {
             style = "text-align:right"
             colSpan = "1"
+
+            if (previousClassCode.isTeacherMode) {
+              val (endpoint, msg) =
+                if (teacherMode)
+                  ENABLE_STUDENT_MODE_ENDPOINT to "student mode"
+                else
+                  ENABLE_TEACHER_MODE_ENDPOINT to "teacher mode"
+              a { href = "$endpoint?$RETURN_PATH=$loginPath"; +msg }
+              +" | "
+            }
+
             a { href = "$ABOUT_ENDPOINT?$RETURN_PATH=$loginPath"; +"about" }
             +" | "
             //a { href = "/help.html"; +"help" }
@@ -65,10 +81,10 @@ internal object HelpAndLogin {
     }
   }
 
-  private fun TABLE.logout(redis: Jedis, principal: UserPrincipal, loginPath: String) {
+  private fun TABLE.logout(user: User, loginPath: String, redis: Jedis) {
     tr {
-      val email = principal.email(redis)
-      val elems = email.split("@")
+      val email = user.email(redis)
+      val elems = email.value.split("@")
       td {
         +elems[0]
         if (elems.size > 1) {

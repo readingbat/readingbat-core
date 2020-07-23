@@ -21,17 +21,18 @@ import com.github.pambrose.common.util.decode
 import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.CSSNames.CHALLENGE_DESC
+import com.github.readingbat.misc.CSSNames.INDENT_1EM
 import com.github.readingbat.misc.CSSNames.KOTLIN_CODE
 import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
 import com.github.readingbat.misc.Constants.STATIC_ROOT
 import com.github.readingbat.misc.PageUtils.pathOf
+import com.github.readingbat.misc.User
+import com.github.readingbat.misc.User.Companion.fetchActiveClassCode
 import com.github.readingbat.pages.PageCommon.addLink
 import com.github.readingbat.pages.PageCommon.backLink
 import com.github.readingbat.pages.PageCommon.bodyHeader
 import com.github.readingbat.pages.PageCommon.headDefault
 import com.github.readingbat.pages.PageCommon.rawHtml
-import com.github.readingbat.server.PipelineCall
-import com.github.readingbat.server.ServerUtils.fetchPrincipal
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 import org.apache.commons.text.StringEscapeUtils.escapeHtml4
@@ -44,19 +45,20 @@ import kotlin.collections.set
 
 internal object PlaygroundPage {
 
-  fun PipelineCall.playgroundPage(content: ReadingBatContent,
-                                  redis: Jedis?,
-                                  challenge: Challenge,
-                                  loginAttempt: Boolean) =
+  fun playgroundPage(content: ReadingBatContent,
+                     user: User?,
+                     challenge: Challenge,
+                     loginAttempt: Boolean,
+                     redis: Jedis?) =
     createHTML()
       .html {
-        val principal = fetchPrincipal(loginAttempt)
         val languageType = challenge.languageType
+        val languageName = languageType.languageName
         val groupName = challenge.groupName
         val challengeName = challenge.challengeName
-        val languageName = languageType.lowerName
         val funcInfo = challenge.funcInfo(content)
         val loginPath = pathOf(CHALLENGE_ROOT, languageName, groupName, challengeName)
+        val activeClassCode = user.fetchActiveClassCode(redis)
 
         head {
           script { src = "https://unpkg.com/kotlin-playground@1"; attributes["data-selector"] = ".$KOTLIN_CODE" }
@@ -64,13 +66,13 @@ internal object PlaygroundPage {
         }
 
         body {
-          bodyHeader(redis, principal, loginAttempt, content, languageType, loginPath)
+          bodyHeader(user, loginAttempt, content, languageType, loginPath, false, activeClassCode, redis)
 
           h2 {
             val groupPath = pathOf(CHALLENGE_ROOT, languageName, groupName)
-            this@body.addLink(groupName.decode(), groupPath)
+            this@body.addLink(groupName.value.decode(), groupPath)
             span { style = "padding-left:2px; padding-right:2px;"; rawHtml("&rarr;") }
-            this@body.addLink(challengeName.decode(), pathOf(groupPath, challengeName))
+            this@body.addLink(challengeName.value.decode(), pathOf(groupPath, challengeName))
           }
 
           if (challenge.description.isNotEmpty())
@@ -90,14 +92,13 @@ internal object PlaygroundPage {
             """.trimIndent())
 
           br
-          div {
-            style = "margin-left: 1em;"
+          div(classes = INDENT_1EM) {
             +"Click on"
             img { height = "25"; style = "vertical-align: bottom"; src = "$STATIC_ROOT/run-button.png" }
             +" to run the code"
           }
 
-          backLink(CHALLENGE_ROOT, languageName, groupName, challengeName)
+          backLink(CHALLENGE_ROOT, languageName.value, groupName.value, challengeName.value)
         }
       }
 }

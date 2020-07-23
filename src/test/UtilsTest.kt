@@ -45,7 +45,7 @@ class UtilsTest {
             print(simple_choice2(True, False))
         
         
-        if __name__ == "__main__":
+        if __name__ == '__main__':
             main()
     """.trimIndent()
 

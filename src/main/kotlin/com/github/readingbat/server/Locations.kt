@@ -19,18 +19,26 @@ package com.github.readingbat.server
 
 import com.github.pambrose.common.redis.RedisUtils.withRedisPool
 import com.github.pambrose.common.response.respondWith
-import com.github.readingbat.dsl.LanguageType.Companion.toLanguageType
+import com.github.pambrose.common.util.isNotValidEmail
+import com.github.pambrose.common.util.randomId
+import com.github.pambrose.common.util.sha256
+import com.github.readingbat.dsl.InvalidPathException
+import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.dsl.LanguageType.Kotlin
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.AuthName.FORM
 import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
 import com.github.readingbat.misc.Constants.PLAYGROUND_ROOT
+import com.github.readingbat.misc.KeyConstants
+import com.github.readingbat.misc.KeyConstants.USER_EMAIL_KEY
 import com.github.readingbat.pages.ChallengeGroupPage.challengeGroupPage
 import com.github.readingbat.pages.ChallengePage.challengePage
 import com.github.readingbat.pages.LanguageGroupPage.languageGroupPage
 import com.github.readingbat.pages.PlaygroundPage.playgroundPage
 import com.github.readingbat.server.AdminRoutes.registerBrowserSession
+import com.github.readingbat.server.ServerUtils.fetchUser
 import io.ktor.auth.authenticate
+import io.ktor.http.Parameters
 import io.ktor.locations.Location
 import io.ktor.locations.get
 import io.ktor.locations.post
@@ -57,7 +65,8 @@ internal object Locations {
     respondWith {
       content.checkLanguage(language.languageType)
       withRedisPool { redis ->
-        languageGroupPage(content, redis, language.languageType, loginAttempt)
+        val user = fetchUser(loginAttempt)
+        languageGroupPage(content, user, language.languageType, loginAttempt, redis)
       }
     }
 
@@ -67,7 +76,8 @@ internal object Locations {
     respondWith {
       content.checkLanguage(groupLoc.languageType)
       withRedisPool { redis ->
-        challengeGroupPage(content, redis, content.findGroup(groupLoc), loginAttempt)
+        val user = fetchUser(loginAttempt)
+        challengeGroupPage(content, user, content.findGroup(groupLoc), loginAttempt, redis)
       }
     }
 
@@ -78,7 +88,8 @@ internal object Locations {
       registerBrowserSession()
       content.checkLanguage(challengeLoc.languageType)
       withRedisPool { redis ->
-        challengePage(content, redis, content.findChallenge(challengeLoc), loginAttempt)
+        val user = fetchUser(loginAttempt)
+        challengePage(content, user, content.findChallenge(challengeLoc), loginAttempt, redis)
       }
     }
 
@@ -87,24 +98,29 @@ internal object Locations {
                                               loginAttempt: Boolean) =
     respondWith {
       withRedisPool { redis ->
+        val user = fetchUser(loginAttempt)
         playgroundPage(content,
-                       redis,
+                       user,
                        content.findLanguage(Kotlin).findChallenge(request.groupName, request.challengeName),
-                       loginAttempt)
+                       loginAttempt,
+                       redis)
       }
     }
 }
 
-@Location("$CHALLENGE_ROOT/{language}")
-internal data class Language(val language: String) {
-  val languageType get() = language.toLanguageType()
+@Location("$CHALLENGE_ROOT/{lname}")
+internal data class Language(val lname: String) {
+  val languageName = LanguageName(lname)
+  val languageType get() = languageName.toLanguageType()
 
-  @Location("/{groupName}")
-  data class Group(val language: Language, val groupName: String) {
+  @Location("/{gname}")
+  data class Group(val language: Language, val gname: String) {
+    val groupName = GroupName(gname)
     val languageType get() = language.languageType
 
-    @Location("/{challengeName}")
-    data class Challenge(val group: Group, val challengeName: String) {
+    @Location("/{cname}")
+    data class Challenge(val group: Group, val cname: String) {
+      val challengeName = ChallengeName(cname)
       val languageType get() = group.languageType
       val groupName get() = group.groupName
     }
@@ -113,3 +129,103 @@ internal data class Language(val language: String) {
 
 @Location("$PLAYGROUND_ROOT/{groupName}/{challengeName}")
 internal class PlaygroundRequest(val groupName: String, val challengeName: String)
+
+inline class LanguageName(val value: String) {
+  override fun toString() = value
+
+  fun toLanguageType() =
+    try {
+      LanguageType.values().first { it.name.equals(this.value, ignoreCase = true) }
+    } catch (e: NoSuchElementException) {
+      throw InvalidPathException("Invalid language request: $this")
+    }
+
+  companion object {
+    val EMPTY_LANGUAGE = LanguageName("")
+    val ANY_LANGUAGE = LanguageName("*")
+    fun Parameters.getLanguageName(name: String) = this[name]?.let { LanguageName(it) } ?: EMPTY_LANGUAGE
+  }
+}
+
+inline class GroupName(val value: String) {
+  override fun toString() = value
+
+  companion object {
+    val EMPTY_GROUP = GroupName("")
+    val ANY_GROUP = GroupName("*")
+    fun Parameters.getGroupName(name: String) = this[name]?.let { GroupName(it) } ?: EMPTY_GROUP
+  }
+}
+
+inline class ChallengeName(val value: String) {
+  override fun toString() = value
+
+  companion object {
+    val EMPTY_CHALLENGE = ChallengeName("")
+    val ANY_CHALLENGE = ChallengeName("*")
+    fun Parameters.getChallengeName(name: String) = this[name]?.let { ChallengeName(it) } ?: EMPTY_CHALLENGE
+  }
+}
+
+inline class Invocation(val value: String) {
+  override fun toString() = value
+
+  companion object {
+    val ANY_INVOCATION = Invocation("*")
+  }
+}
+
+inline class FullName(val value: String) {
+  fun isBlank() = value.isBlank()
+
+  override fun toString() = value
+
+  companion object {
+    val EMPTY_FULLNAME = FullName("")
+    fun Parameters.getFullName(name: String) = this[name]?.let { FullName(it) } ?: EMPTY_FULLNAME
+  }
+}
+
+inline class Password(val value: String) {
+  val length get() = value.length
+  fun isBlank() = value.isBlank()
+  fun sha256(salt: String) = value.sha256(salt)
+
+  override fun toString() = value
+
+  companion object {
+    val EMPTY_PASSWORD = Password("")
+    fun Parameters.getPassword(name: String) = this[name]?.let { Password(it) } ?: EMPTY_PASSWORD
+  }
+}
+
+inline class Email(val value: String) {
+  val userEmailKey get() = listOf(USER_EMAIL_KEY, value).joinToString(KeyConstants.KEY_SEP)
+
+  fun isBlank() = value.isBlank()
+  fun isNotBlank() = value.isNotBlank()
+  fun isNotValidEmail() = value.isNotValidEmail()
+
+  override fun toString() = value
+
+  companion object {
+    val EMPTY_EMAIL = Email("")
+    fun Parameters.getEmail(name: String) = this[name]?.let { Email(it) } ?: EMPTY_EMAIL
+  }
+}
+
+inline class ResetId(val value: String) {
+  fun isBlank() = value.isBlank()
+  fun isNotBlank() = value.isNotBlank()
+
+  // Maps resetId to username
+  val passwordResetKey get() = listOf(KeyConstants.RESET_KEY, value).joinToString(KeyConstants.KEY_SEP)
+
+  override fun toString() = value
+
+  companion object {
+    val EMPTY_RESET_ID = ResetId("")
+    fun newResetId() = ResetId(randomId(15))
+    fun Parameters.getResetId(name: String) = this[name]?.let { ResetId(it) } ?: EMPTY_RESET_ID
+  }
+}

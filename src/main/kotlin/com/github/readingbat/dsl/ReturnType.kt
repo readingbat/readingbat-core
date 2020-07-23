@@ -31,7 +31,7 @@ enum class ReturnType(val typeStr: String) {
 
   BooleanListType("List<Boolean>"),
   IntListType("List<Integer>"),
-  StringListType("List<Strixng>");
+  StringListType("List<String>");
 
   companion object {
     val String.asReturnType: ReturnType?

@@ -18,6 +18,7 @@
 package com.github.readingbat.pages
 
 import com.github.readingbat.dsl.ReadingBatContent
+import com.github.readingbat.misc.CSSNames.INDENT_1EM
 import com.github.readingbat.misc.Constants.INVALID_RESET_ID
 import com.github.readingbat.misc.Constants.LABEL_WIDTH
 import com.github.readingbat.misc.Constants.RESET_ID
@@ -29,16 +30,19 @@ import com.github.readingbat.misc.FormFields.EMAIL
 import com.github.readingbat.misc.FormFields.NEW_PASSWORD
 import com.github.readingbat.misc.FormFields.UPDATE_PASSWORD
 import com.github.readingbat.misc.FormFields.USER_PREFS_ACTION
+import com.github.readingbat.misc.Message
+import com.github.readingbat.misc.Message.Companion.EMPTY_MESSAGE
 import com.github.readingbat.misc.PageUtils.hideShowButton
-import com.github.readingbat.misc.UserId
 import com.github.readingbat.pages.PageCommon.backLink
 import com.github.readingbat.pages.PageCommon.bodyTitle
 import com.github.readingbat.pages.PageCommon.clickButtonScript
 import com.github.readingbat.pages.PageCommon.displayMessage
 import com.github.readingbat.pages.PageCommon.headDefault
 import com.github.readingbat.pages.PageCommon.privacyStatement
-import com.github.readingbat.posts.PasswordReset.ResetPasswordException
+import com.github.readingbat.posts.PasswordResetPost.ResetPasswordException
+import com.github.readingbat.server.Email
 import com.github.readingbat.server.PipelineCall
+import com.github.readingbat.server.ResetId
 import com.github.readingbat.server.ServerUtils.queryParam
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
@@ -50,27 +54,31 @@ internal object PasswordResetPage : KLogging() {
   const val formName = "pform"
   const val passwordButton = "UpdatePasswordButton"
 
-  fun PipelineCall.passwordResetPage(content: ReadingBatContent, redis: Jedis, resetId: String, msg: String): String =
-    if (resetId.isEmpty())
+  fun PipelineCall.passwordResetPage(content: ReadingBatContent,
+                                     resetId: ResetId,
+                                     redis: Jedis,
+                                     msg: Message = EMPTY_MESSAGE): String =
+    if (resetId.isBlank())
       requestPasswordResetPage(content, msg)
     else {
       try {
-        val passwordResetKey = UserId.passwordResetKey(resetId)
-        val email = redis.get(passwordResetKey) ?: throw ResetPasswordException(INVALID_RESET_ID)
+        val passwordResetKey = resetId.passwordResetKey
+        val email = Email(redis.get(passwordResetKey) ?: throw ResetPasswordException(INVALID_RESET_ID))
         changePasswordPage(content, email, resetId, msg)
       } catch (e: ResetPasswordException) {
         logger.info { e }
-        requestPasswordResetPage(content, e.message ?: "Unable to reset password")
+        requestPasswordResetPage(content, Message(e.message ?: "Unable to reset password", true))
       }
     }
 
-  private fun PipelineCall.requestPasswordResetPage(content: ReadingBatContent, msg: String = "") =
+  private fun PipelineCall.requestPasswordResetPage(content: ReadingBatContent,
+                                                    msg: Message = EMPTY_MESSAGE) =
     createHTML()
       .html {
         head { headDefault(content) }
 
         body {
-          val returnPath = queryParam(RETURN_PATH) ?: "/"
+          val returnPath = queryParam(RETURN_PATH, "/")
 
           bodyTitle()
 
@@ -78,26 +86,17 @@ internal object PasswordResetPage : KLogging() {
 
           h2 { +"Password Reset" }
 
-          div {
-            style = "margin-left: 1em;"
-
+          div(classes = INDENT_1EM) {
             form {
               action = "$PASSWORD_RESET_ENDPOINT?$RETURN_PATH=$returnPath"
               method = FormMethod.post
               table {
                 tr {
                   td { style = LABEL_WIDTH; label { +"Email (used as account id)" } }
-                  td {
-                    input {
-                      name = EMAIL
-                      type = InputType.text
-                      size = "50"
-                    }
-                  }
+                  td { input { name = EMAIL; type = InputType.text; size = "50" } }
                 }
                 tr {
-                  td {
-                  }
+                  td { }
                   td {
                     style = "padding-top:10;"
                     input {
@@ -117,18 +116,18 @@ internal object PasswordResetPage : KLogging() {
                 address above is entered correctly.
               """.trimIndent()
             }
-
-            this@body.privacyStatement(PASSWORD_RESET_ENDPOINT, returnPath)
           }
+
+          privacyStatement(PASSWORD_RESET_ENDPOINT, returnPath)
 
           backLink(returnPath)
         }
       }
 
   private fun PipelineCall.changePasswordPage(content: ReadingBatContent,
-                                              email: String,
-                                              resetId: String,
-                                              msg: String) =
+                                              email: Email,
+                                              resetId: ResetId,
+                                              msg: Message) =
     createHTML()
       .html {
         head {
@@ -137,7 +136,7 @@ internal object PasswordResetPage : KLogging() {
         }
 
         body {
-          val returnPath = queryParam(RETURN_PATH) ?: "/"
+          val returnPath = queryParam(RETURN_PATH, "/")
 
           bodyTitle()
 
@@ -169,11 +168,7 @@ internal object PasswordResetPage : KLogging() {
                 td { hideShowButton(formName, CONFIRM_PASSWORD) }
               }
               tr {
-                td {
-                  input {
-                    type = InputType.hidden; name = RESET_ID; value = resetId
-                  }
-                }
+                td { input { type = InputType.hidden; name = RESET_ID; value = resetId.value } }
                 td {
                   input {
                     style = "font-size:25px; height:35; width:  155;"

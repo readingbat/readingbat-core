@@ -20,25 +20,29 @@ package com.github.readingbat.posts
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.FormFields.ADMIN_ACTION
 import com.github.readingbat.misc.FormFields.DELETE_ALL_DATA
-import com.github.readingbat.misc.UserId
+import com.github.readingbat.misc.Message
+import com.github.readingbat.misc.User
 import com.github.readingbat.misc.UserPrincipal
+import com.github.readingbat.misc.isValidUser
 import com.github.readingbat.pages.AdminPage.adminDataPage
 import com.github.readingbat.server.PipelineCall
-import com.github.readingbat.server.ServerUtils.fetchPrincipal
 import io.ktor.application.call
 import io.ktor.request.receiveParameters
 import io.ktor.sessions.clear
 import io.ktor.sessions.sessions
 import redis.clients.jedis.Jedis
 
-internal object Admin {
+internal object AdminPost {
 
-  suspend fun PipelineCall.adminActions(content: ReadingBatContent, redis: Jedis): String {
-    val principal = fetchPrincipal()
+  suspend fun PipelineCall.adminActions(content: ReadingBatContent, user: User?, redis: Jedis): String {
     return when {
-      content.production && principal == null -> adminDataPage(content, redis, "Must be logged in for this function")
-      content.production && UserId(principal?.userId ?: "").email(redis) != "pambrose@mac.com" -> {
-        adminDataPage(content, redis, "Must be system admin for this function")
+      content.production && !user.isValidUser(redis) -> adminDataPage(content,
+                                                                      user,
+                                                                      redis = redis,
+                                                                      msg = Message("Must be logged in for this function",
+                                                                                    true))
+      content.production && user?.email(redis)?.value != "pambrose@mac.com" -> {
+        adminDataPage(content, user, redis = redis, msg = Message("Must be system admin for this function", true))
       }
       else -> {
         val parameters = call.receiveParameters()
@@ -46,10 +50,10 @@ internal object Admin {
           DELETE_ALL_DATA -> {
             val cnt = redis.keys("*")?.onEach { redis.del(it) }?.count() ?: 0
             call.sessions.clear<UserPrincipal>()
-            adminDataPage(content, redis, "$cnt items deleted", false)
+            adminDataPage(content, user, redis, Message("$cnt items deleted", false))
           }
           else ->
-            adminDataPage(content, redis, "Invalid option")
+            adminDataPage(content, user, redis = redis, msg = Message("Invalid option", true))
         }
       }
     }

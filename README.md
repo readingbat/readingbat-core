@@ -5,3 +5,9 @@
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/8a5c67f5892042559490559142af30ec)](https://www.codacy.com/gh/readingbat/readingbat-core?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=readingbat/readingbat-core&amp;utm_campaign=Badge_Grade)
 [![Kotlin](https://img.shields.io/badge/%20language-Kotlin-red.svg)](https://kotlinlang.org/)
 
+The framework used to render ReadingBat content. 
+
+The content for the [www.readingbat.com](https://www.readingbat.com) website is 
+[here](https://github.com/readingbat/readingbat-site).
+
+The template repo for authoring your own content is [here](https://github.com/readingbat/readingbat-template).

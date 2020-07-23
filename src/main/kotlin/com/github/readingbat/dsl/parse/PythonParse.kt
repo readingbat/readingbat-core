@@ -19,6 +19,7 @@ package com.github.readingbat.dsl.parse
 
 import com.github.pambrose.common.util.linesBetween
 import com.github.pambrose.common.util.substringBetween
+import com.github.readingbat.server.Invocation
 import mu.KLogging
 
 internal object PythonParse : KLogging() {
@@ -67,4 +68,5 @@ internal object PythonParse : KLogging() {
     code.linesBetween(start, end)
       .filter { it.contains("print(") }
       .map { it.substringBetween("print(", ")") }
+      .map { Invocation(it) }
 }

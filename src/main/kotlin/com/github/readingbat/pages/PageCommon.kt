@@ -22,17 +22,20 @@ import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.dsl.LanguageType.Companion.languageTypesInOrder
 import com.github.readingbat.dsl.ReadingBatContent
+import com.github.readingbat.misc.CSSNames.INDENT_1EM
 import com.github.readingbat.misc.CSSNames.SELECTED_TAB
+import com.github.readingbat.misc.ClassCode
 import com.github.readingbat.misc.Constants.BACK_PATH
 import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
 import com.github.readingbat.misc.Constants.ICONS
-import com.github.readingbat.misc.Constants.READING_BAT
 import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.Constants.STATIC_ROOT
 import com.github.readingbat.misc.Endpoints.CSS_ENDPOINT
 import com.github.readingbat.misc.Endpoints.PRIVACY_ENDPOINT
+import com.github.readingbat.misc.Message
+import com.github.readingbat.misc.Message.Companion.EMPTY_MESSAGE
 import com.github.readingbat.misc.PageUtils.pathOf
-import com.github.readingbat.misc.UserPrincipal
+import com.github.readingbat.misc.User
 import com.github.readingbat.pages.HelpAndLogin.helpAndLogin
 import com.github.readingbat.server.PipelineCall
 import io.ktor.application.call
@@ -43,6 +46,7 @@ import kotlinx.html.Entities.nbsp
 import redis.clients.jedis.Jedis
 
 internal object PageCommon {
+  const val READING_BAT = "ReadingBat"
 
   fun HEAD.headDefault(content: ReadingBatContent) {
     link { rel = "stylesheet"; href = CSS_ENDPOINT; type = CSS.toString() }
@@ -93,46 +97,40 @@ internal object PageCommon {
     }
   }
 
-  fun BODY.bodyHeader(redis: Jedis?,
-                      principal: UserPrincipal?,
+  fun BODY.bodyHeader(user: User?,
                       loginAttempt: Boolean,
                       content: ReadingBatContent,
                       languageType: LanguageType,
                       loginPath: String,
-                      msg: String = "",
-                      subMsg: String = "") {
+                      displayWelcomeMsg: Boolean,
+                      activeClassCode: ClassCode,
+                      redis: Jedis?,
+                      msg: Message = EMPTY_MESSAGE) {
 
-    helpAndLogin(redis, principal, loginPath)
+    helpAndLogin(user, loginPath, activeClassCode.isTeacherMode, redis)
 
     bodyTitle()
 
-    if (loginAttempt && principal == null)
+    p { if (displayWelcomeMsg) +"Welcome to ReadingBat." else rawHtml(nbsp.text) }
+
+    if (loginAttempt && user == null)
       p { span { style = "color:red;"; +"Failed to login -- incorrect email or password" } }
 
-
-    if (msg.isNotEmpty())
-      div {
-        style = "min-height:9; color:green;"
-        p { style = "max-width:800;"; +msg }
-      }
-
-    div {
-      style = "min-height:9;"
-      p { style = "max-width:800;"; +subMsg }
-    }
+    p { span { style = "color:green; max-width:800;"; if (msg.isNotBlank) +(msg.toString()) else rawHtml(nbsp.text) } }
 
     div {
       style = "padding-top:10px; min-width:100vw; clear:both;"
       nav {
         ul {
-          for (lang in languageTypesInOrder) {
-            if (content.hasGroups(lang))
+          languageTypesInOrder
+            .filter { content[it].isNotEmpty() }
+            .forEach { lang ->
               li(classes = "h2") {
                 if (languageType == lang)
                   id = SELECTED_TAB
-                this@bodyHeader.addLink(lang.name, pathOf(CHALLENGE_ROOT, lang.lowerName))
+                this@bodyHeader.addLink(lang.name, pathOf(CHALLENGE_ROOT, lang.languageName))
               }
-          }
+            }
         }
       }
     }
@@ -145,7 +143,7 @@ internal object PageCommon {
   fun PipelineCall.defaultLanguageTab(content: ReadingBatContent) =
     languageTypesInOrder
       .asSequence()
-      .filter { content.hasGroups(it) }
+      .filter { content[it].isNotEmpty() }
       .map {
         val params = call.parameters.formUrlEncode()
         "${it.contentRoot}${if (params.isNotEmpty()) "?$params" else ""}"
@@ -156,19 +154,20 @@ internal object PageCommon {
     a { href = url; if (newWindow) target = "_blank"; +text }
 
   fun BODY.privacyStatement(backPath: String, returnPath: String) =
-    p { a { href = "$PRIVACY_ENDPOINT?$BACK_PATH=$backPath&$RETURN_PATH=$returnPath"; +"Privacy Statement" } }
+    p(classes = INDENT_1EM) {
+      a { href = "$PRIVACY_ENDPOINT?$BACK_PATH=$backPath&$RETURN_PATH=$returnPath"; +"Privacy Statement" }
+    }
 
   fun BODY.backLinkWithIndent(url: String, marginLeft: String = "1em") {
     if (url.isNotEmpty()) {
       div {
         style = "font-size: 120%; margin-left: $marginLeft;"
-        br
-        a { href = url; rawHtml("&larr; Back") }
+        p { a { href = url; rawHtml("&larr; Back") } }
       }
     }
   }
 
-  fun BODY.displayMessage(msg: String) = if (msg.isNotEmpty()) +msg else rawHtml(nbsp.text)
+  fun BODY.displayMessage(msg: Message) = if (msg.isNotBlank) +(msg.toString()) else rawHtml(nbsp.text)
 
   fun BODY.backLink(vararg pathElems: String) = backLinkWithIndent(pathElems.toList().toRootPath())
 

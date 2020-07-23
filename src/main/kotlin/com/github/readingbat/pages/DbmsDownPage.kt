@@ -19,8 +19,12 @@ package com.github.readingbat.pages
 
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.Constants
+import com.github.readingbat.misc.Constants.DBMS_DOWN
+import com.github.readingbat.pages.PageCommon.backLink
 import com.github.readingbat.pages.PageCommon.bodyTitle
 import com.github.readingbat.pages.PageCommon.headDefault
+import com.github.readingbat.server.PipelineCall
+import com.github.readingbat.server.ServerUtils.queryParam
 import kotlinx.html.body
 import kotlinx.html.h2
 import kotlinx.html.head
@@ -29,7 +33,7 @@ import kotlinx.html.stream.createHTML
 
 internal object DbmsDownPage {
 
-  fun dbmsDownPage(content: ReadingBatContent) =
+  fun PipelineCall.dbmsDownPage(content: ReadingBatContent) =
     createHTML()
       .html {
         head {
@@ -38,7 +42,10 @@ internal object DbmsDownPage {
 
         body {
           bodyTitle()
-          h2 { +Constants.DBMS_DOWN }
+          h2 { +DBMS_DOWN.value }
+
+
+          backLink(queryParam(Constants.RETURN_PATH))
         }
       }
 }

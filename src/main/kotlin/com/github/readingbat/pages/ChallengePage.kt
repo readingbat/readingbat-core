@@ -18,6 +18,7 @@
 package com.github.readingbat.pages
 
 import com.github.pambrose.common.util.decode
+import com.github.pambrose.common.util.random
 import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.FunctionInfo
 import com.github.readingbat.dsl.ReadingBatContent
@@ -34,7 +35,8 @@ import com.github.readingbat.misc.CSSNames.STATUS
 import com.github.readingbat.misc.CSSNames.SUCCESS
 import com.github.readingbat.misc.CSSNames.USER_RESP
 import com.github.readingbat.misc.CheckAnswersJs.checkAnswersScript
-import com.github.readingbat.misc.CheckAnswersJs.processAnswers
+import com.github.readingbat.misc.CheckAnswersJs.processUserAnswers
+import com.github.readingbat.misc.ClassCode
 import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
 import com.github.readingbat.misc.Constants.CORRECT_COLOR
 import com.github.readingbat.misc.Constants.DBMS_DOWN
@@ -43,20 +45,27 @@ import com.github.readingbat.misc.Constants.PLAYGROUND_ROOT
 import com.github.readingbat.misc.Constants.RESP
 import com.github.readingbat.misc.Constants.STATIC_ROOT
 import com.github.readingbat.misc.Constants.WRONG_COLOR
-import com.github.readingbat.misc.Endpoints.CLASS_PREFIX
+import com.github.readingbat.misc.Endpoints.CHALLENGE_ENDPOINT
+import com.github.readingbat.misc.Endpoints.CLEAR_CHALLENGE_ANSWERS_ENDPOINT
+import com.github.readingbat.misc.FormFields.CHALLENGE_ANSWERS_KEY
+import com.github.readingbat.misc.FormFields.CHALLENGE_NAME_KEY
+import com.github.readingbat.misc.FormFields.GROUP_NAME_KEY
+import com.github.readingbat.misc.FormFields.LANGUAGE_NAME_KEY
+import com.github.readingbat.misc.KeyConstants.CORRECT_ANSWERS_KEY
 import com.github.readingbat.misc.KeyConstants.NAME_FIELD
+import com.github.readingbat.misc.Message
 import com.github.readingbat.misc.PageUtils.pathOf
 import com.github.readingbat.misc.ParameterIds.FEEDBACK_ID
+import com.github.readingbat.misc.ParameterIds.NEXTCHANCE_ID
 import com.github.readingbat.misc.ParameterIds.SPINNER_ID
 import com.github.readingbat.misc.ParameterIds.STATUS_ID
 import com.github.readingbat.misc.ParameterIds.SUCCESS_ID
-import com.github.readingbat.misc.UserId
-import com.github.readingbat.misc.UserId.Companion.challengeAnswersKey
-import com.github.readingbat.misc.UserId.Companion.classCodeEnrollmentKey
-import com.github.readingbat.misc.UserId.Companion.classDescKey
-import com.github.readingbat.misc.UserId.Companion.gson
-import com.github.readingbat.misc.UserId.Companion.userIdByPrincipal
-import com.github.readingbat.misc.UserPrincipal
+import com.github.readingbat.misc.User
+import com.github.readingbat.misc.User.Companion.challengeAnswersKey
+import com.github.readingbat.misc.User.Companion.correctAnswersKey
+import com.github.readingbat.misc.User.Companion.fetchActiveClassCode
+import com.github.readingbat.misc.User.Companion.gson
+import com.github.readingbat.pages.ChallengePage.processAnswers
 import com.github.readingbat.pages.PageCommon.addLink
 import com.github.readingbat.pages.PageCommon.backLink
 import com.github.readingbat.pages.PageCommon.bodyHeader
@@ -64,13 +73,13 @@ import com.github.readingbat.pages.PageCommon.headDefault
 import com.github.readingbat.pages.PageCommon.rawHtml
 import com.github.readingbat.posts.ChallengeHistory
 import com.github.readingbat.server.PipelineCall
-import com.github.readingbat.server.ServerUtils.fetchPrincipal
 import com.github.readingbat.server.ServerUtils.queryParam
 import io.ktor.application.call
 import io.ktor.http.ContentType.Text.CSS
 import io.ktor.sessions.get
 import io.ktor.sessions.sessions
 import kotlinx.html.*
+import kotlinx.html.Entities.nbsp
 import kotlinx.html.ScriptType.textJavaScript
 import kotlinx.html.stream.createHTML
 import mu.KLogging
@@ -78,28 +87,27 @@ import redis.clients.jedis.Jedis
 
 internal object ChallengePage : KLogging() {
   private const val spinnerCss = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
-
   private const val nameTd = "nameTd"
   private const val answersTd = "answersTd"
   private const val answersSpan = "answersSpan"
   private const val numCorrectSpan = "numCorrectSpan"
-  private const val headerColor = "#419DC1"
-
+  internal const val headerColor = "#419DC1"
 
   fun PipelineCall.challengePage(content: ReadingBatContent,
-                                 redis: Jedis?,
+                                 user: User?,
                                  challenge: Challenge,
-                                 loginAttempt: Boolean) =
+                                 loginAttempt: Boolean,
+                                 redis: Jedis?) =
     createHTML()
       .html {
-        val principal = fetchPrincipal(loginAttempt)
         val browserSession = call.sessions.get<BrowserSession>()
         val languageType = challenge.languageType
+        val languageName = languageType.languageName
         val groupName = challenge.groupName
         val challengeName = challenge.challengeName
-        val languageName = languageType.lowerName
         val funcInfo = challenge.funcInfo(content)
         val loginPath = pathOf(CHALLENGE_ROOT, languageName, groupName, challengeName)
+        val activeClassCode = user.fetchActiveClassCode(redis)
 
         head {
           link { rel = "stylesheet"; href = spinnerCss }
@@ -112,42 +120,55 @@ internal object ChallengePage : KLogging() {
         }
 
         body {
-          var activeClassCode = ""
-          bodyHeader(redis, principal, loginAttempt, content, languageType, loginPath, queryParam(MSG) ?: "")
+          bodyHeader(user,
+                     loginAttempt,
+                     content,
+                     languageType,
+                     loginPath,
+                     false,
+                     activeClassCode,
+                     redis,
+                     Message(queryParam(MSG)))
 
-          this@body.displayChallenge(challenge, funcInfo)
+          displayChallenge(challenge, funcInfo)
 
-          val userId = userIdByPrincipal(principal)
-          activeClassCode = userId?.fetchActiveClassCode(redis) ?: ""
-          if (activeClassCode.isEmpty())
-            this@body.displayQuestions(redis, principal, browserSession, challenge, funcInfo)
+          if (activeClassCode.isStudentMode)
+            displayQuestions(user, browserSession, challenge, funcInfo, redis)
           else {
             if (redis == null)
-              p { +DBMS_DOWN }
+              p { +DBMS_DOWN.value }
             else
-              this@body.displayStudentProgress(redis, challenge, content.maxHistoryLength, funcInfo, activeClassCode)
+              displayStudentProgress(challenge, content.maxHistoryLength, funcInfo, activeClassCode, redis)
           }
 
-          backLink(CHALLENGE_ROOT, languageName, groupName)
+          backLink(CHALLENGE_ROOT, languageName.value, groupName.value)
 
           script { src = "$STATIC_ROOT/$languageName-prism.js" }
 
-          if (activeClassCode.isNotEmpty())
+          if (activeClassCode.isTeacherMode)
             addWebSockets(content, activeClassCode)
         }
       }
 
   private fun BODY.displayChallenge(challenge: Challenge, funcInfo: FunctionInfo) {
-    val languageType = challenge.languageType
+    val languageName = challenge.languageType.languageName
     val groupName = challenge.groupName
     val challengeName = challenge.challengeName
-    val languageName = languageType.lowerName
+    val challengeGroup = challenge.challengeGroup
+    val challenges = challenge.challengeGroup.challenges
 
     h2 {
+      style = "margin-bottom:5px;"
       val groupPath = pathOf(CHALLENGE_ROOT, languageName, groupName)
-      this@displayChallenge.addLink(groupName.decode(), groupPath)
+      this@displayChallenge.addLink(groupName.value.decode(), groupPath)
       span { style = "padding-left:2px; padding-right:2px;"; rawHtml("&rarr;") }
-      +challengeName
+      +challengeName.value
+    }
+
+    span {
+      style = "padding-left:20px;"
+      val pos = challengeGroup.indexOf(challengeName)
+      this@displayChallenge.nextChance(pos, challenges, true)
     }
 
     if (challenge.description.isNotEmpty())
@@ -160,11 +181,23 @@ internal object ChallengePage : KLogging() {
     }
   }
 
-  private fun BODY.displayQuestions(redis: Jedis?,
-                                    principal: UserPrincipal?,
+  // Make sure we do not return the same challenge on a chance click
+  private fun Int.chance(current: Int): Int {
+    if (this == 1)
+      return 0
+
+    while (true) {
+      val v = random()
+      if (v != current)
+        return v
+    }
+  }
+
+  private fun BODY.displayQuestions(user: User?,
                                     browserSession: BrowserSession?,
                                     challenge: Challenge,
-                                    funcInfo: FunctionInfo) =
+                                    funcInfo: FunctionInfo,
+                                    redis: Jedis?) =
     div {
       style = "margin-top:2em; margin-left:2em;"
       table {
@@ -181,41 +214,41 @@ internal object ChallengePage : KLogging() {
           }
         }
 
-        val previousAnswers =
-          if (redis == null)
-            mutableMapOf()
-          else
-            previousAnswers(redis, principal, browserSession, challenge)
+        val answers = fetchPreviousAnswers(user, browserSession, challenge, redis)
 
-        funcInfo.invocations.withIndex().forEach { (i, invocation) ->
-          tr {
-            td(classes = FUNC_COL) { +invocation }
-            td(classes = ARROW) { rawHtml("&rarr;") }
-            td {
-              textInput(classes = USER_RESP) {
-                id = "$RESP$i"
-                onKeyPress = "$processAnswers(event, ${funcInfo.answers.size})"
-                if (previousAnswers[invocation] != null)
-                  value = previousAnswers[invocation] ?: ""
-                else
-                  placeholder = funcInfo.placeHolder()
+        funcInfo.invocations.withIndex()
+          .forEach { (i, invocation) ->
+            tr {
+              td(classes = FUNC_COL) { +invocation.value }
+              td(classes = ARROW) { rawHtml("&rarr;") }
+              td {
+                textInput(classes = USER_RESP) {
+                  id = "$RESP$i"
+                  onKeyDown = "$processUserAnswers(event, ${funcInfo.answers.size})"
+                  val answer = answers[invocation.value] ?: ""
+                  if (answer.isNotBlank())
+                    value = answer
+                  else
+                    placeholder = funcInfo.placeHolder()
+                }
               }
+              td(classes = FEEDBACK) { id = "$FEEDBACK_ID$i" }
             }
-            td(classes = FEEDBACK) { id = "$FEEDBACK_ID$i" }
           }
-        }
       }
 
-      this@displayQuestions.processAnswers(funcInfo)
+      this@displayQuestions.processAnswers(funcInfo, challenge)
       this@displayQuestions.otherLinks(challenge)
+      if (redis != null)
+        this@displayQuestions.clearChallengeAnswerHistory(user, browserSession, challenge)
     }
 
-  private fun BODY.addWebSockets(content: ReadingBatContent, classCode: String) {
+  private fun BODY.addWebSockets(content: ReadingBatContent, classCode: ClassCode) {
     script {
       rawHtml(
         """
-          var wshost = location.origin.replace(${if (content.production) "/^https:/, 'wss:'" else "/^http:/, 'ws:'"})
-          var wsurl = wshost + '$CLASS_PREFIX/$classCode'
+          var wshost = location.origin.replace(${if (content.production) "/^https:/, 'wss:'" else "/^http:/, 'ws:'"});
+          var wsurl = wshost + '$CHALLENGE_ENDPOINT/$classCode';
           
           var ws = new WebSocket(wsurl);
           
@@ -224,8 +257,7 @@ internal object ChallengePage : KLogging() {
           };
           
           ws.onmessage = function (event) {
-            //console.log(event.data);
-            var obj = JSON.parse(event.data)
+            var obj = JSON.parse(event.data);
             
             var name = document.getElementById(obj.userId + '-$nameTd');
             name.style.backgroundColor = obj.complete ? '$CORRECT_COLOR' : '$WRONG_COLOR';
@@ -233,6 +265,7 @@ internal object ChallengePage : KLogging() {
             document.getElementById(obj.userId + '-$numCorrectSpan').innerHTML = obj.numCorrect;
 
             var prefix = obj.userId + '-' + obj.history.invocation;
+            
             var answers = document.getElementById(prefix + '-$answersTd')
             answers.style.backgroundColor = obj.history.correct ? '$CORRECT_COLOR' : '$WRONG_COLOR';
 
@@ -242,114 +275,123 @@ internal object ChallengePage : KLogging() {
     }
   }
 
-  private fun BODY.displayStudentProgress(redis: Jedis,
-                                          challenge: Challenge,
+  private fun BODY.displayStudentProgress(challenge: Challenge,
                                           maxHistoryLength: Int,
                                           funcInfo: FunctionInfo,
-                                          activeClassCode: String) =
+                                          activeClassCode: ClassCode,
+                                          redis: Jedis) =
     div {
       style = "margin-top:2em;"
 
-      val languageType = challenge.languageType
+      val languageName = challenge.languageType.languageName
       val groupName = challenge.groupName
       val challengeName = challenge.challengeName
-      val languageName = languageType.lowerName
+      val classDesc = activeClassCode.fetchClassDesc(redis)
+      val enrollees = activeClassCode.fetchEnrollees(redis)
 
-      logger.info { "Looking at: $activeClassCode" }
-      val ids = redis.smembers(classCodeEnrollmentKey(activeClassCode)).filter { it.isNotEmpty() }
-      if (ids.isEmpty()) {
-        h3 {
-          style = "margin-left: 5px; color: $headerColor"
-          +"No students enrolled in: ${redis.get(classDescKey(activeClassCode))} [$activeClassCode]"
-        }
+      h3 {
+        style = "margin-left: 5px; color: $headerColor"
+        +"${if (enrollees.isEmpty()) "No students enrolled in " else "Student progress for "} $classDesc [$activeClassCode]"
       }
-      else {
-        //br
-        h3 {
-          style = "margin-left: 5px; color: $headerColor"
-          +"Student progress for: ${redis.get(classDescKey(activeClassCode))} [$activeClassCode]"
-        }
 
+      if (enrollees.isNotEmpty()) {
         table {
           style = "width:100%; border-spacing: 5px 10px;"
 
           tr {
             th { style = "text-align:left; color: $headerColor"; +"Student" }
-            funcInfo.invocations.indices.forEach { i ->
-              val invocation = funcInfo.invocations[i]
-              th { style = "text-align:left; color: $headerColor"; +invocation.substring(invocation.indexOf("(")) }
-            }
+            funcInfo.invocations
+              .forEach { invocation ->
+                th {
+                  style = "text-align:left; color: $headerColor"; +(invocation.value.run { substring(indexOf("(")) })
+                }
+              }
           }
 
-          ids.forEach {
-            val userId = UserId(it)
-            val userInfoKey = userId.userInfoKey
-            var numCorrect = 0
-
-            val results =
-              funcInfo.invocations
-                .map { invocation ->
-                  val answerHistoryKey = userId.answerHistoryKey(languageName, groupName, challengeName, invocation)
-                  val history =
-                    gson.fromJson(redis[answerHistoryKey], ChallengeHistory::class.java)
-                      ?: ChallengeHistory(invocation)
-                  if (history.correct)
-                    numCorrect++
-                  invocation to history
-                }
-
-            tr(classes = DASHBOARD) {
-              td(classes = DASHBOARD) {
-                id = "${userId.id}-$nameTd"
-                style = "background-color:${if (numCorrect == results.size) CORRECT_COLOR else WRONG_COLOR};"
-
-                span { id = "${userId.id}-$numCorrectSpan"; +numCorrect.toString() }
-                +"/${results.size}"
-                rawHtml(Entities.nbsp.text)
-                +(redis.hget(userInfoKey, NAME_FIELD) ?: "")
-              }
-
-              results.forEach { (invocation, history) ->
-                td(classes = DASHBOARD) {
-                  id = "${userId.id}-$invocation-$answersTd"
-                  style = "background-color:${if (history.correct) CORRECT_COLOR else WRONG_COLOR};"
-                  span {
-                    id = "${userId.id}-$invocation-$answersSpan"
-                    history.answers.asReversed().take(maxHistoryLength).forEach { answer -> +answer; br }
+          enrollees
+            .forEach { enrollee ->
+              val numChallenges = funcInfo.invocations.size
+              var numCorrect = 0
+              val results =
+                funcInfo.invocations
+                  .map { invocation ->
+                    val answerHistoryKey = enrollee.answerHistoryKey(languageName, groupName, challengeName, invocation)
+                    val history =
+                      gson.fromJson(redis[answerHistoryKey], ChallengeHistory::class.java) ?: ChallengeHistory(
+                        invocation)
+                    if (history.correct)
+                      numCorrect++
+                    invocation to history
                   }
+              val allCorrect = numCorrect == numChallenges
+
+              tr(classes = DASHBOARD) {
+                td(classes = DASHBOARD) {
+                  id = "${enrollee.id}-$nameTd"
+                  style = "background-color:${if (allCorrect) CORRECT_COLOR else WRONG_COLOR};"
+
+                  span { id = "${enrollee.id}-$numCorrectSpan"; +numCorrect.toString() }
+                  +"/$numChallenges"
+                  rawHtml(nbsp.text)
+                  +(redis.hget(enrollee.userInfoKey, NAME_FIELD) ?: "")
                 }
+
+                results
+                  .forEach { (invocation, history) ->
+                    td(classes = DASHBOARD) {
+                      id = "${enrollee.id}-$invocation-$answersTd"
+                      style = "background-color:${if (history.correct) CORRECT_COLOR else WRONG_COLOR};"
+                      span {
+                        id = "${enrollee.id}-$invocation-$answersSpan"
+                        history.answers.asReversed().take(maxHistoryLength).forEach { answer -> +answer; br }
+                      }
+                    }
+                  }
               }
             }
-          }
         }
       }
     }
 
-  private fun previousAnswers(redis: Jedis,
-                              principal: UserPrincipal?,
-                              browserSession: BrowserSession?,
-                              challenge: Challenge): MutableMap<String, String> {
-    val languageType = challenge.languageType
-    val groupName = challenge.groupName
-    val challengeName = challenge.challengeName
-    val languageName = languageType.lowerName
-    val userId: UserId? = userIdByPrincipal(principal)
-    val key = challengeAnswersKey(userId, browserSession, languageName, groupName, challengeName)
+  private fun fetchPreviousAnswers(user: User?,
+                                   browserSession: BrowserSession?,
+                                   challenge: Challenge,
+                                   redis: Jedis?) =
+    if (redis == null)
+      emptyMap
+    else {
+      val languageName = challenge.languageType.languageName
+      val groupName = challenge.groupName
+      val challengeName = challenge.challengeName
+      val challengeAnswersKey = user.challengeAnswersKey(browserSession, languageName, groupName, challengeName)
 
-    return if (key.isNotEmpty()) redis.hgetAll(key) else mutableMapOf()
-  }
+      if (challengeAnswersKey.isNotEmpty()) redis.hgetAll(challengeAnswersKey) else emptyMap()
+    }
 
-  private fun BODY.processAnswers(funcInfo: FunctionInfo) {
+  private fun BODY.processAnswers(funcInfo: FunctionInfo, challenge: Challenge) {
     div {
       style = "margin-top:2em;"
       table {
         tr {
           td {
             button(classes = CHECK_ANSWERS) {
-              onClick = "$processAnswers(null, ${funcInfo.answers.size});"; +"Check My Answers"
+              onClick = "$processUserAnswers(null, ${funcInfo.answers.size});"; +"Check My Answers"
             }
           }
           td { style = "vertical-align:middle;"; span { style = "margin-left:1em;"; id = SPINNER_ID } }
+          td {
+            val challengeName = challenge.challengeName
+            val challengeGroup = challenge.challengeGroup
+            val challenges = challenge.challengeGroup.challenges
+            val pos = challengeGroup.indexOf(challengeName)
+
+            span {
+              id = NEXTCHANCE_ID
+              style = "visibility: hidden;"
+              this@processAnswers.nextChance(pos, challenges, false)
+            }
+          }
+
           td {
             style = "vertical-align:middle;"
             span(classes = STATUS) { id = STATUS_ID }
@@ -357,6 +399,35 @@ internal object ChallengePage : KLogging() {
           }
         }
       }
+    }
+  }
+
+  private fun BODY.nextChance(pos: Int, challenges: List<Challenge>, includePrev: Boolean) {
+    if (includePrev) {
+      "prev".also {
+        if (pos == 0)
+          +it
+        else
+          a { href = "./${challenges[pos - 1].challengeName.value}"; +it }
+      }
+
+      rawHtml("${nbsp.text} | ${nbsp.text}")
+    }
+
+    "next".also {
+      if (pos == challenges.size - 1)
+        +it
+      else
+        a { href = "./${challenges[pos + 1].challengeName.value}"; +it }
+    }
+
+    rawHtml("${nbsp.text} | ${nbsp.text}")
+
+    "chance".also {
+      if (challenges.size == 1)
+        +it
+      else
+        a { href = "./${challenges[challenges.size.chance(pos)].challengeName.value}"; +it }
     }
   }
 
@@ -382,14 +453,40 @@ internal object ChallengePage : KLogging() {
     }
   }
 
+  private fun BODY.clearChallengeAnswerHistory(user: User?,
+                                               browserSession: BrowserSession?,
+                                               challenge: Challenge) {
+    val languageName = challenge.languageType.languageName
+    val groupName = challenge.groupName
+    val challengeName = challenge.challengeName
+    val correctAnswersKey = user.correctAnswersKey(browserSession, languageName, groupName, challengeName)
+    val challengeAnswersKey = user.challengeAnswersKey(browserSession, languageName, groupName, challengeName)
+
+    form {
+      style = "margin:0;"
+      action = CLEAR_CHALLENGE_ANSWERS_ENDPOINT
+      method = FormMethod.post
+      onSubmit = """return confirm('Are you sure you want to clear your previous answers for "$challengeName"?');"""
+      input { type = InputType.hidden; name = LANGUAGE_NAME_KEY; value = languageName.value }
+      input { type = InputType.hidden; name = GROUP_NAME_KEY; value = groupName.value }
+      input { type = InputType.hidden; name = CHALLENGE_NAME_KEY; value = challengeName.value }
+      input { type = InputType.hidden; name = CORRECT_ANSWERS_KEY; value = correctAnswersKey }
+      input { type = InputType.hidden; name = CHALLENGE_ANSWERS_KEY; value = challengeAnswersKey }
+      input {
+        style = "vertical-align:middle; margin-top:1; margin-bottom:0;"
+        type = InputType.submit; value = "Clear answer history"
+      }
+    }
+  }
+
   private fun HEAD.removePrismShadow() {
     // Remove the prism shadow
     style {
       rawHtml(
         """
-        pre[class*="language-"]:before,
-        pre[class*="language-"]:after { display: none; }
-      """)
+          pre[class*="language-"]:before,
+          pre[class*="language-"]:after { display: none; }
+        """.trimIndent())
     }
   }
 }

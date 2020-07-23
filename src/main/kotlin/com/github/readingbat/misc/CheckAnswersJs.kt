@@ -18,34 +18,40 @@
 package com.github.readingbat.misc
 
 import com.github.readingbat.misc.Constants.CORRECT_COLOR
+import com.github.readingbat.misc.Constants.NO_ANSWER_COLOR
 import com.github.readingbat.misc.Constants.RESP
 import com.github.readingbat.misc.Constants.SESSION_ID
-import com.github.readingbat.misc.Endpoints.CHECK_ANSWERS_ROOT
+import com.github.readingbat.misc.Endpoints.CHECK_ANSWERS_ENDPOINT
 import com.github.readingbat.misc.ParameterIds.FEEDBACK_ID
+import com.github.readingbat.misc.ParameterIds.NEXTCHANCE_ID
 import com.github.readingbat.misc.ParameterIds.SPINNER_ID
 import com.github.readingbat.misc.ParameterIds.STATUS_ID
 import com.github.readingbat.misc.ParameterIds.SUCCESS_ID
 import com.github.readingbat.pages.PageCommon.rawHtml
+import com.github.readingbat.server.ChallengeName
+import com.github.readingbat.server.GroupName
+import com.github.readingbat.server.LanguageName
+import kotlinx.atomicfu.atomic
 import kotlinx.html.SCRIPT
-import java.util.concurrent.atomic.AtomicInteger
 
 internal object CheckAnswersJs {
   const val langSrc = "lang"
   const val groupSrc = "groupName"
   const val challengeSrc = "challengeName"
-  const val processAnswers = "processAnswers"
+  const val processUserAnswers = "processUserAnswers"
 
-  private val sessionCounter = AtomicInteger(0)
+  private val sessionCounter = atomic(0)
 
-  fun SCRIPT.checkAnswersScript(languageName: String, groupName: String, challengeName: String) =
+  fun SCRIPT.checkAnswersScript(languageName: LanguageName, groupName: GroupName, challengeName: ChallengeName) =
     rawHtml(
       """
     var re = new XMLHttpRequest();
 
-    function $processAnswers(event, cnt) { 
-    
-      if (event != null && event.keyCode != 13) 
-        return;
+    function $processUserAnswers(event, cnt) { 
+     
+      // event will equal null on button press
+      if (event != null && (event.keyCode != 13 && event.keyCode != 9)) 
+        return 1;
 
       var data = "$SESSION_ID=${sessionCounter.incrementAndGet()}&$langSrc=$languageName&$groupSrc=$groupName&$challengeSrc=$challengeName";
       try {
@@ -54,7 +60,7 @@ internal object CheckAnswersJs {
           x.style.backgroundColor = "white";
           
           var ur = document.getElementById("$RESP"+i).value;
-          data += "&$RESP" + i + "="+encodeURIComponent(ur);
+          data += "&$RESP" + i + "=" + encodeURIComponent(ur);
         }
       }
       catch(err) {
@@ -63,7 +69,7 @@ internal object CheckAnswersJs {
       }
       
       re.onreadystatechange = handleDone;  
-      re.open("POST", '$CHECK_ANSWERS_ROOT', true);
+      re.open("POST", '$CHECK_ANSWERS_ENDPOINT', true);
       re.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
       re.send(data);
       return 1;
@@ -74,25 +80,31 @@ internal object CheckAnswersJs {
         document.getElementById('$SPINNER_ID').innerHTML = '<i class="fa fa-spinner fa-spin" style="font-size:24px"></i>';
         document.getElementById('$STATUS_ID').innerHTML = 'Checking answers...';
         document.getElementById('$SUCCESS_ID').innerHTML = '';
+        document.getElementById('$NEXTCHANCE_ID').style.visibility = "hidden";
       }
       else if(re.readyState == 4) {  // done
         var success = true;
         var results = eval(re.responseText);
         for (var i = 0; i < results.length; i++) {
           var x = document.getElementById("$FEEDBACK_ID"+i);
-          if (results[i]) 
+          if (results[i] == 0) {
+            x.style.backgroundColor = '$NO_ANSWER_COLOR';
+            success = false;
+          }
+          else if (results[i] == 1) {
             x.style.backgroundColor = '$CORRECT_COLOR';
+          }
           else {
             x.style.backgroundColor = "red";
-            success = false
+            success = false;
           }
         }
         
         document.getElementById('$SPINNER_ID').innerHTML = "";
         document.getElementById('$STATUS_ID').innerHTML = "";
         document.getElementById('$SUCCESS_ID').innerHTML = success ? "Success! Congratulations!" : "";
+        document.getElementById('$NEXTCHANCE_ID').style.visibility = success ? "visible" : "hidden";
       }
     }
-  """
-           )
+  """)
 }

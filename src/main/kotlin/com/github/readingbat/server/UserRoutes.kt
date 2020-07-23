@@ -31,10 +31,15 @@ import com.github.readingbat.misc.Constants.ROOT
 import com.github.readingbat.misc.Constants.STATIC_ROOT
 import com.github.readingbat.misc.Endpoints.ABOUT_ENDPOINT
 import com.github.readingbat.misc.Endpoints.ADMIN_ENDPOINT
-import com.github.readingbat.misc.Endpoints.CHECK_ANSWERS_ROOT
+import com.github.readingbat.misc.Endpoints.CHECK_ANSWERS_ENDPOINT
+import com.github.readingbat.misc.Endpoints.CLEAR_CHALLENGE_ANSWERS_ENDPOINT
+import com.github.readingbat.misc.Endpoints.CLEAR_GROUP_ANSWERS_ENDPOINT
+import com.github.readingbat.misc.Endpoints.CONFIG_ENDPOINT
 import com.github.readingbat.misc.Endpoints.CREATE_ACCOUNT_ENDPOINT
 import com.github.readingbat.misc.Endpoints.CSS_ENDPOINT
-import com.github.readingbat.misc.Endpoints.FAV_ICON
+import com.github.readingbat.misc.Endpoints.ENABLE_STUDENT_MODE_ENDPOINT
+import com.github.readingbat.misc.Endpoints.ENABLE_TEACHER_MODE_ENDPOINT
+import com.github.readingbat.misc.Endpoints.FAV_ICON_ENDPOINT
 import com.github.readingbat.misc.Endpoints.PASSWORD_CHANGE_ENDPOINT
 import com.github.readingbat.misc.Endpoints.PASSWORD_RESET_ENDPOINT
 import com.github.readingbat.misc.Endpoints.PRIVACY_ENDPOINT
@@ -44,6 +49,7 @@ import com.github.readingbat.misc.UserPrincipal
 import com.github.readingbat.misc.cssContent
 import com.github.readingbat.pages.AboutPage.aboutPage
 import com.github.readingbat.pages.AdminPage.adminDataPage
+import com.github.readingbat.pages.ConfigPage.configPage
 import com.github.readingbat.pages.CreateAccountPage.createAccountPage
 import com.github.readingbat.pages.DbmsDownPage.dbmsDownPage
 import com.github.readingbat.pages.PageCommon.defaultLanguageTab
@@ -51,13 +57,18 @@ import com.github.readingbat.pages.PasswordResetPage.passwordResetPage
 import com.github.readingbat.pages.PrivacyPage.privacyPage
 import com.github.readingbat.pages.TeacherPrefsPage.teacherPrefsPage
 import com.github.readingbat.pages.UserPrefsPage.userPrefsPage
-import com.github.readingbat.posts.Admin.adminActions
-import com.github.readingbat.posts.CheckAnswers.checkAnswers
-import com.github.readingbat.posts.CreateAccount.createAccount
-import com.github.readingbat.posts.PasswordReset.changePassword
-import com.github.readingbat.posts.PasswordReset.sendPasswordReset
-import com.github.readingbat.posts.TeacherPrefs.teacherPrefs
-import com.github.readingbat.posts.UserPrefs.userPrefs
+import com.github.readingbat.posts.AdminPost.adminActions
+import com.github.readingbat.posts.ChallengePost.checkAnswers
+import com.github.readingbat.posts.ChallengePost.clearChallengeAnswers
+import com.github.readingbat.posts.ChallengePost.clearGroupAnswers
+import com.github.readingbat.posts.CreateAccountPost.createAccount
+import com.github.readingbat.posts.PasswordResetPost.changePassword
+import com.github.readingbat.posts.PasswordResetPost.sendPasswordReset
+import com.github.readingbat.posts.TeacherPrefsPost.enableStudentMode
+import com.github.readingbat.posts.TeacherPrefsPost.enableTeacherMode
+import com.github.readingbat.posts.TeacherPrefsPost.teacherPrefs
+import com.github.readingbat.posts.UserPrefsPost.userPrefs
+import com.github.readingbat.server.ServerUtils.fetchUser
 import com.github.readingbat.server.ServerUtils.queryParam
 import io.ktor.application.call
 import io.ktor.http.ContentType.Text.CSS
@@ -68,31 +79,30 @@ import io.ktor.sessions.clear
 import io.ktor.sessions.sessions
 import redis.clients.jedis.Jedis
 
-
 internal fun Routing.userRoutes(content: ReadingBatContent) {
 
-  suspend fun PipelineCall.respondWithDbmsCheck(block: PipelineCall.(redis: Jedis) -> String) =
+  suspend fun PipelineCall.respondWithDbmsCheck(block: (redis: Jedis) -> String) =
     try {
       val html =
         withRedisPool { redis ->
           if (redis == null)
             dbmsDownPage(content)
           else
-            block(redis)
+            block.invoke(redis)
         }
       respondWith { html }
     } catch (e: RedirectException) {
       redirectTo { e.redirectUrl }
     }
 
-  suspend fun PipelineCall.respondWithSuspendingDbmsCheck(block: suspend PipelineCall.(redis: Jedis) -> String) =
+  suspend fun PipelineCall.respondWithSuspendingDbmsCheck(block: suspend (redis: Jedis) -> String) =
     try {
       val html =
         withSuspendingRedisPool { redis ->
           if (redis == null)
             dbmsDownPage(content)
           else
-            block(redis)
+            block.invoke(redis)
         }
       respondWith { html }
     } catch (e: RedirectException) {
@@ -107,40 +117,60 @@ internal fun Routing.userRoutes(content: ReadingBatContent) {
 
   get(ABOUT_ENDPOINT) { respondWith { aboutPage(content) } }
 
-  post(CHECK_ANSWERS_ROOT) { withSuspendingRedisPool { redis -> checkAnswers(content, redis) } }
+  get(CONFIG_ENDPOINT) { respondWith { configPage(content) } }
 
-  get(CREATE_ACCOUNT_ENDPOINT) { respondWith { createAccountPage(content) } }
+  post(CHECK_ANSWERS_ENDPOINT) { withSuspendingRedisPool { redis -> checkAnswers(content, fetchUser(), redis) } }
+
+  post(CLEAR_GROUP_ANSWERS_ENDPOINT) {
+    respondWithSuspendingDbmsCheck { redis -> clearGroupAnswers(content, fetchUser(), redis) }
+  }
+
+  post(CLEAR_CHALLENGE_ANSWERS_ENDPOINT) {
+    respondWithSuspendingDbmsCheck { redis -> clearChallengeAnswers(content, fetchUser(), redis) }
+  }
+
+  get(CREATE_ACCOUNT_ENDPOINT) { respondWithDbmsCheck { createAccountPage(content) } }
 
   post(CREATE_ACCOUNT_ENDPOINT) { respondWithSuspendingDbmsCheck { redis -> createAccount(content, redis) } }
 
-  get(USER_PREFS_ENDPOINT) { respondWithDbmsCheck { redis -> userPrefsPage(content, redis, "", false) } }
+  get(USER_PREFS_ENDPOINT) { respondWithDbmsCheck { redis -> userPrefsPage(content, fetchUser(), redis) } }
 
-  post(USER_PREFS_ENDPOINT) { respondWithSuspendingDbmsCheck { redis -> userPrefs(content, redis) } }
+  post(USER_PREFS_ENDPOINT) { respondWithSuspendingDbmsCheck { redis -> userPrefs(content, fetchUser(), redis) } }
 
-  get(TEACHER_PREFS_ENDPOINT) { respondWithDbmsCheck { redis -> teacherPrefsPage(content, redis, "", false) } }
+  get(TEACHER_PREFS_ENDPOINT) { respondWithDbmsCheck { redis -> teacherPrefsPage(content, fetchUser(), redis) } }
 
-  post(TEACHER_PREFS_ENDPOINT) { respondWithSuspendingDbmsCheck { redis -> teacherPrefs(content, redis) } }
+  post(TEACHER_PREFS_ENDPOINT) { respondWithSuspendingDbmsCheck { redis -> teacherPrefs(content, fetchUser(), redis) } }
 
-  get(ADMIN_ENDPOINT) { respondWithDbmsCheck { redis -> adminDataPage(content, redis) } }
+  get(ENABLE_STUDENT_MODE_ENDPOINT) {
+    respondWithSuspendingDbmsCheck { redis -> enableStudentMode(fetchUser(), redis) }
+  }
 
-  post(ADMIN_ENDPOINT) { respondWithSuspendingDbmsCheck { redis -> adminActions(content, redis) } }
+  get(ENABLE_TEACHER_MODE_ENDPOINT) {
+    respondWithSuspendingDbmsCheck { redis -> enableTeacherMode(fetchUser(), redis) }
+  }
+
+  get(ADMIN_ENDPOINT) { respondWithDbmsCheck { redis -> adminDataPage(content, fetchUser(), redis = redis) } }
+
+  post(ADMIN_ENDPOINT) { respondWithSuspendingDbmsCheck { redis -> adminActions(content, fetchUser(), redis) } }
 
   // RESET_ID is passed here when user clicks on email URL
   get(PASSWORD_RESET_ENDPOINT) {
-    respondWithDbmsCheck { redis -> passwordResetPage(content, redis, queryParam(RESET_ID) ?: "", "") }
+    respondWithDbmsCheck { redis -> passwordResetPage(content, ResetId(queryParam(RESET_ID)), redis) }
   }
 
-  post(PASSWORD_RESET_ENDPOINT) { respondWithSuspendingDbmsCheck { redis -> sendPasswordReset(content, redis) } }
+  post(PASSWORD_RESET_ENDPOINT) {
+    respondWithSuspendingDbmsCheck { redis -> sendPasswordReset(content, fetchUser(), redis) }
+  }
 
   post(PASSWORD_CHANGE_ENDPOINT) { respondWithSuspendingDbmsCheck { redis -> changePassword(content, redis) } }
 
   get(LOGOUT) {
     // Purge UserPrincipal from cookie data
     call.sessions.clear<UserPrincipal>()
-    redirectTo { queryParam(RETURN_PATH) ?: "/" }
+    redirectTo { queryParam(RETURN_PATH, "/") }
   }
 
   get(CSS_ENDPOINT) { respondWith(CSS) { cssContent } }
 
-  get(FAV_ICON) { redirectTo { "$STATIC_ROOT/$ICONS/favicon.ico" } }
+  get(FAV_ICON_ENDPOINT) { redirectTo { "$STATIC_ROOT/$ICONS/favicon.ico" } }
 }

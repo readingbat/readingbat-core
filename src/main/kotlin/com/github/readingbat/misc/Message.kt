@@ -17,7 +17,12 @@
 
 package com.github.readingbat.misc
 
-import io.ktor.auth.Principal
-import java.time.Instant
+data class Message(val value: String, val isError: Boolean = false) {
+  val isBlank get() = value.isBlank()
+  val isNotBlank get() = value.isNotBlank()
+  override fun toString() = value
 
-internal data class UserPrincipal(val userId: String, val created: Long = Instant.now().toEpochMilli()) : Principal
+  companion object {
+    val EMPTY_MESSAGE = Message("")
+  }
+}

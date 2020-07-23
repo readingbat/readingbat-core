@@ -27,6 +27,8 @@ import com.github.readingbat.misc.CSSNames.FUNC_COL
 import com.github.readingbat.misc.CSSNames.FUNC_ITEM
 import com.github.readingbat.misc.CSSNames.GROUP_CHOICE
 import com.github.readingbat.misc.CSSNames.GROUP_ITEM_SRC
+import com.github.readingbat.misc.CSSNames.INDENT_1EM
+import com.github.readingbat.misc.CSSNames.INDENT_2EM
 import com.github.readingbat.misc.CSSNames.KOTLIN_CODE
 import com.github.readingbat.misc.CSSNames.REFS
 import com.github.readingbat.misc.CSSNames.SELECTED_TAB
@@ -46,7 +48,7 @@ internal object CSSNames {
   const val REFS = "refs"
   const val CODE_BLOCK = "codeBlock"
   const val KOTLIN_CODE = "kotlin-code"
-  const val USER_RESP = "userResp"
+  const val USER_RESP = "userResponse"
   const val CHALLENGE_DESC = "challenge-desc"
   const val GROUP_CHOICE = "groupChoice"
   const val FUNC_ITEM = "funcItem"
@@ -55,6 +57,8 @@ internal object CSSNames {
   const val STATUS = "status"
   const val SUCCESS = "success"
   const val DASHBOARD = "dashboard"
+  const val INDENT_1EM = "indent-1em"
+  const val INDENT_2EM = "indent-2em"
 }
 
 internal val cssContent by lazy {
@@ -179,14 +183,25 @@ internal val cssContent by lazy {
         fontSize = textFs
       }
       rule(".$SUCCESS") {
-        marginLeft = 25.px
+        marginLeft = 14.px
         fontSize = textFs
         color = Color.black
+      }
+      rule(".$INDENT_1EM") {
+        marginLeft = 1.em
+      }
+      rule(".$INDENT_2EM") {
+        marginLeft = 2.em
+        marginBottom = 2.em
       }
       rule("#$SELECTED_TAB") {
         position = Position.relative
         top = LinearDimension("1px")
         background = "white"
+      }
+      // Turn links red on mouse hovers.
+      rule("a:hover") {
+        color = Color.red
       }
       rule("nav ul") {
         listStyleType = ListStyleType.none

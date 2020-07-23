@@ -17,13 +17,13 @@
 
 package com.github.readingbat.server
 
+import com.github.pambrose.common.features.HerokuHttpsRedirect
 import com.github.pambrose.common.util.simpleClassName
-import com.github.readingbat.config.HerokuHttpsRedirect
 import com.github.readingbat.dsl.InvalidPathException
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.Constants.STATIC_ROOT
 import com.github.readingbat.misc.Endpoints.CSS_ENDPOINT
-import com.github.readingbat.misc.Endpoints.FAV_ICON
+import com.github.readingbat.misc.Endpoints.FAV_ICON_ENDPOINT
 import com.github.readingbat.server.ConfigureCookies.configureAuthCookie
 import com.github.readingbat.server.ConfigureCookies.configureSessionIdCookie
 import com.github.readingbat.server.ConfigureFormAuth.configureFormAuth
@@ -66,12 +66,12 @@ internal object Installs : KLogging() {
 
     if (content.production) {
       install(HerokuHttpsRedirect) {
-        host = content.siteUrlPrefix.substringAfter("://")
+        host = content.urlPrefix.substringAfter("://")
         permanentRedirect = false
 
         excludePrefix("$STATIC_ROOT/")
         excludeSuffix(CSS_ENDPOINT)
-        excludeSuffix(FAV_ICON)
+        excludeSuffix(FAV_ICON_ENDPOINT)
       }
     }
 

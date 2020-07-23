@@ -29,16 +29,17 @@ import com.github.readingbat.misc.Constants.GREEN_CHECK
 import com.github.readingbat.misc.Constants.MSG
 import com.github.readingbat.misc.Constants.STATIC_ROOT
 import com.github.readingbat.misc.Constants.WHITE_CHECK
+import com.github.readingbat.misc.Message
 import com.github.readingbat.misc.PageUtils.pathOf
-import com.github.readingbat.misc.UserId
-import com.github.readingbat.misc.UserId.Companion.userIdByPrincipal
+import com.github.readingbat.misc.User
+import com.github.readingbat.misc.User.Companion.fetchActiveClassCode
+import com.github.readingbat.pages.ChallengeGroupPage.displayClassDescription
 import com.github.readingbat.pages.ChallengeGroupPage.isCorrect
 import com.github.readingbat.pages.PageCommon.bodyHeader
 import com.github.readingbat.pages.PageCommon.headDefault
 import com.github.readingbat.pages.PageCommon.rawHtml
 import com.github.readingbat.pages.PageCommon.rows
 import com.github.readingbat.server.PipelineCall
-import com.github.readingbat.server.ServerUtils.fetchPrincipal
 import com.github.readingbat.server.ServerUtils.queryParam
 import io.ktor.application.call
 import io.ktor.sessions.get
@@ -51,44 +52,55 @@ import redis.clients.jedis.Jedis
 internal object LanguageGroupPage {
 
   fun PipelineCall.languageGroupPage(content: ReadingBatContent,
-                                     redis: Jedis?,
+                                     user: User?,
                                      languageType: LanguageType,
-                                     loginAttempt: Boolean) =
+                                     loginAttempt: Boolean,
+                                     redis: Jedis?) =
     createHTML()
       .html {
-        val principal = fetchPrincipal(loginAttempt)
         val browserSession = call.sessions.get<BrowserSession>()
-        val languageName = languageType.lowerName
+        val languageName = languageType.languageName
         val loginPath = pathOf(CHALLENGE_ROOT, languageName)
-        val groups = content.findLanguage(languageType).challengeGroups
+        val groups = content[languageType].challengeGroups
+        val activeClassCode = user.fetchActiveClassCode(redis)
+        val enrollees = activeClassCode.fetchEnrollees(redis)
 
-        fun TR.groupItem(redis: Jedis?, userId: UserId?, challengeGroup: ChallengeGroup<*>) {
+        fun TR.groupItem(user: User?,
+                         challengeGroup: ChallengeGroup<*>,
+                         redis: Jedis?) {
           val groupName = challengeGroup.groupName
           val parsedDescription = challengeGroup.parsedDescription
           val challenges = challengeGroup.challenges
 
-          val maxCnt = 12
           var cnt = 0
+          val maxCnt = 12
           var maxFound = false
-          for (challenge in challenges) {
-            if (challenge.isCorrect(redis, userId, browserSession))
-              cnt++
-            if (cnt == maxCnt + 1) {
-              maxFound = true
-              break
+
+          if (activeClassCode.isStudentMode) {
+            for (challenge in challenges) {
+              if (challenge.isCorrect(user, browserSession, redis))
+                cnt++
+              if (cnt == maxCnt + 1) {
+                maxFound = true
+                break
+              }
             }
           }
 
           td(classes = FUNC_ITEM) {
             div(classes = GROUP_ITEM_SRC) {
-              a(classes = GROUP_CHOICE) { href = pathOf(CHALLENGE_ROOT, languageName, groupName); +groupName }
+              a(classes = GROUP_CHOICE) { href = pathOf(CHALLENGE_ROOT, languageName, groupName); +groupName.value }
+
               br { rawHtml(if (parsedDescription.isNotBlank()) parsedDescription else nbsp.text) }
-              if (cnt == 0) {
-                img { src = "$STATIC_ROOT/$WHITE_CHECK" }
-              }
-              else {
-                repeat(if (maxFound) cnt - 1 else cnt) { img { src = "$STATIC_ROOT/$GREEN_CHECK" } }
-                if (maxFound) rawHtml("&hellip;")
+
+              if (activeClassCode.isStudentMode) {
+                if (cnt == 0) {
+                  img { src = "$STATIC_ROOT/$WHITE_CHECK" }
+                }
+                else {
+                  repeat(if (maxFound) cnt - 1 else cnt) { img { src = "$STATIC_ROOT/$GREEN_CHECK" } }
+                  if (maxFound) rawHtml("&hellip;")
+                }
               }
             }
           }
@@ -97,20 +109,31 @@ internal object LanguageGroupPage {
         head { headDefault(content) }
 
         body {
-          val msg = queryParam(MSG) ?: ""
-          bodyHeader(redis, principal, loginAttempt, content, languageType, loginPath, msg, "Welcome to ReadingBat.")
+          val msg = Message(queryParam(MSG))
+          bodyHeader(user,
+                     loginAttempt,
+                     content,
+                     languageType,
+                     loginPath,
+                     true,
+                     activeClassCode,
+                     redis,
+                     msg)
+
+
+          if (activeClassCode.isTeacherMode)
+            displayClassDescription(activeClassCode, enrollees, redis)
 
           table {
             val cols = 3
             val size = groups.size
             val rows = size.rows(cols)
-            val userId = userIdByPrincipal(principal)
 
             (0 until rows).forEach { i ->
               tr {
-                groups[i].also { group -> groupItem(redis, userId, group) }
-                groups.elementAtOrNull(i + rows)?.also { groupItem(redis, userId, it) } ?: td {}
-                groups.elementAtOrNull(i + (2 * rows))?.also { groupItem(redis, userId, it) } ?: td {}
+                groups[i].also { group -> groupItem(user, group, redis) }
+                groups.elementAtOrNull(i + rows)?.also { groupItem(user, it, redis) } ?: td {}
+                groups.elementAtOrNull(i + (2 * rows))?.also { groupItem(user, it, redis) } ?: td {}
               }
             }
           }

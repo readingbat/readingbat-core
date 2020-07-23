@@ -21,6 +21,8 @@ import com.github.pambrose.common.util.linesBetween
 import com.github.pambrose.common.util.substringBetween
 import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.ReturnType.Companion.asReturnType
+import com.github.readingbat.server.ChallengeName
+import com.github.readingbat.server.Invocation
 import mu.KLogging
 import kotlin.math.max
 
@@ -43,7 +45,7 @@ internal object JavaParse : KLogging() {
   private val prefixes =
     listOf("System.out.println", "ArrayUtils.arrayPrint", "ListUtils.listPrint", "arrayPrint", "listPrint")
 
-  fun deriveJavaReturnType(name: String, code: List<String>) =
+  fun deriveJavaReturnType(challengeName: ChallengeName, code: List<String>) =
     code.asSequence()
       .filter {
         !it.contains(svmRegex) && (it.contains(
@@ -53,9 +55,9 @@ internal object JavaParse : KLogging() {
         val words = str.trim().split(spaceRegex).filter { it.isNotBlank() }
         val staticPos = words.indices.first { words[it] == "static" }
         val typeStr = words[staticPos + 1]
-        typeStr.asReturnType ?: throw InvalidConfigurationException("In $name invalid type $typeStr")
+        typeStr.asReturnType ?: throw InvalidConfigurationException("In $challengeName invalid type $typeStr")
       }
-      .firstOrNull() ?: throw InvalidConfigurationException("In $name unable to determine return type")
+      .firstOrNull() ?: throw InvalidConfigurationException("In $challengeName unable to determine return type")
 
   fun extractJavaFunction(code: List<String>): String {
     val lineNums =
@@ -66,15 +68,16 @@ internal object JavaParse : KLogging() {
   fun extractJavaInvocations(code: String, start: Regex, end: Regex) =
     extractJavaInvocations(code.lines(), start, end)
 
-  fun extractJavaInvocations(code: List<String>, start: Regex, end: Regex): List<String> {
-    val lines = mutableListOf<String>()
+  fun extractJavaInvocations(code: List<String>, start: Regex, end: Regex): List<Invocation> {
+    val lines = mutableListOf<Invocation>()
     prefixes
       .forEach { prefix ->
         lines.addAll(
           code.linesBetween(start, end)
             .map { it.trimStart() }
             .filter { it.startsWith("$prefix(") }
-            .map { it.substringBetween("$prefix(", ")") })
+            .map { it.substringBetween("$prefix(", ")") }
+            .map { Invocation((it)) })
       }
     return lines
   }

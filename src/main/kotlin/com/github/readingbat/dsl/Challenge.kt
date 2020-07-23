@@ -40,30 +40,34 @@ import com.github.readingbat.dsl.parse.PythonParse.extractPythonFunction
 import com.github.readingbat.dsl.parse.PythonParse.extractPythonInvocations
 import com.github.readingbat.dsl.parse.PythonParse.ifMainEndRegex
 import com.github.readingbat.misc.PageUtils.pathOf
+import com.github.readingbat.server.ChallengeName
 import com.vladsch.flexmark.html.HtmlRenderer
 import com.vladsch.flexmark.parser.Parser
 import com.vladsch.flexmark.util.data.MutableDataSet
+import kotlinx.atomicfu.atomic
 import mu.KLogging
 import java.net.URL
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.atomic.AtomicInteger
 import kotlin.reflect.typeOf
 import kotlin.time.measureTime
 import kotlin.time.measureTimedValue
 
 @ReadingBatDslMarker
-sealed class Challenge(challengeGroup: ChallengeGroup<*>, val challengeName: String, val replaceable: Boolean) {
+sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
+                       val challengeName: ChallengeName,
+                       val replaceable: Boolean) {
   private val challengeId = counter.incrementAndGet()
   private val languageGroup = challengeGroup.languageGroup
   private val repo = languageGroup.repo
   private val branchName = languageGroup.branchName
-  internal val srcPath = languageGroup.srcPath
-  private val packageName = challengeGroup.packageName
-  internal val languageType = challengeGroup.languageType
-  internal val languageName = languageType.lowerName
-  internal val groupName = challengeGroup.groupName
-
   private val fqName by lazy { packageName.ensureSuffix("/") + fileName.ensureSuffix(".${languageType.suffix}") }
+
+  protected val packageName = challengeGroup.packageName
+
+  internal val srcPath = languageGroup.srcPath
+  internal val languageType = challengeGroup.languageType
+  internal val languageName = languageType.languageName
+  internal val groupName = challengeGroup.groupName
   internal val gitpodUrl by lazy { pathOf(repo.sourcePrefix, "blob/${branchName}", srcPath, fqName) }
 
   internal val parsedDescription
@@ -108,7 +112,7 @@ sealed class Challenge(challengeGroup: ChallengeGroup<*>, val challengeName: Str
     }
 
   internal open fun validate() {
-    if (challengeName.isEmpty())
+    if (challengeName.value.isEmpty())
       throw InvalidConfigurationException(""""$challengeName" is empty""")
   }
 
@@ -119,13 +123,11 @@ sealed class Challenge(challengeGroup: ChallengeGroup<*>, val challengeName: Str
       else -> toString()
     }
 
-  override fun toString() = "AbstractChallenge(packageName='$packageName', fileName='$fileName')"
-
   companion object : KLogging() {
-    internal val counter = AtomicInteger(0)
+    internal val counter = atomic(0)
     internal val sourcesMap = ConcurrentHashMap<Int, FunctionInfo>()
 
-    internal fun challenge(challengeGroup: ChallengeGroup<*>, challengeName: String, replaceable: Boolean) =
+    internal fun challenge(challengeGroup: ChallengeGroup<*>, challengeName: ChallengeName, replaceable: Boolean) =
       when (challengeGroup.languageType) {
         Python -> PythonChallenge(challengeGroup, challengeName, replaceable)
         Java -> JavaChallenge(challengeGroup, challengeName, replaceable)
@@ -134,7 +136,7 @@ sealed class Challenge(challengeGroup: ChallengeGroup<*>, val challengeName: Str
   }
 }
 
-class PythonChallenge(challengeGroup: ChallengeGroup<*>, challengeName: String, replaceable: Boolean) :
+class PythonChallenge(challengeGroup: ChallengeGroup<*>, challengeName: ChallengeName, replaceable: Boolean) :
   Challenge(challengeGroup, challengeName, replaceable) {
 
   // User properties
@@ -154,7 +156,7 @@ class PythonChallenge(challengeGroup: ChallengeGroup<*>, challengeName: String, 
     val script = convertToPythonScript(lines)
     val answers = mutableListOf<Any>()
 
-    logger.info { "$challengeName return type: $returnType script: \n${script.withLineNumbers()}" }
+    logger.debug { "$challengeName return type: $returnType script: \n${script.withLineNumbers()}" }
 
     val duration =
       PythonScript()
@@ -167,9 +169,11 @@ class PythonChallenge(challengeGroup: ChallengeGroup<*>, challengeName: String, 
 
     return FunctionInfo(languageType, challengeName, code, funcCode, invocations, returnType, answers)
   }
+
+  override fun toString() = "PythonChallenge(packageName='$packageName', fileName='$fileName', returnType=$returnType)"
 }
 
-class JavaChallenge(challengeGroup: ChallengeGroup<*>, challengeName: String, replaceable: Boolean) :
+class JavaChallenge(challengeGroup: ChallengeGroup<*>, challengeName: ChallengeName, replaceable: Boolean) :
   Challenge(challengeGroup, challengeName, replaceable) {
 
   override fun computeFuncInfo(code: String): FunctionInfo {
@@ -179,7 +183,7 @@ class JavaChallenge(challengeGroup: ChallengeGroup<*>, challengeName: String, re
     val returnType = deriveJavaReturnType(challengeName, lines)
     val script = JavaParse.convertToScript(lines)
 
-    logger.info { "$challengeName return type: $returnType script: \n${script.withLineNumbers()}" }
+    logger.debug { "$challengeName return type: $returnType script: \n${script.withLineNumbers()}" }
 
     val timedValue =
       JavaScript()
@@ -190,16 +194,18 @@ class JavaChallenge(challengeGroup: ChallengeGroup<*>, challengeName: String, re
         }
 
     val answers = timedValue.value
-    logger.info { "$challengeName computed answers in ${timedValue.duration} for: $answers" }
+    logger.info { "$challengeName computed answers in ${timedValue.duration}" }
 
     if (answers !is List<*>)
       throw InvalidConfigurationException("Invalid type returned for $challengeName")
 
     return FunctionInfo(languageType, challengeName, code, funcCode, invocations, returnType, answers)
   }
+
+  override fun toString() = "JavaChallenge(packageName='$packageName', fileName='$fileName')"
 }
 
-class KotlinChallenge(challengeGroup: ChallengeGroup<*>, challengeName: String, replaceable: Boolean) :
+class KotlinChallenge(challengeGroup: ChallengeGroup<*>, challengeName: ChallengeName, replaceable: Boolean) :
   Challenge(challengeGroup, challengeName, replaceable) {
 
   // User properties
@@ -220,7 +226,7 @@ class KotlinChallenge(challengeGroup: ChallengeGroup<*>, challengeName: String, 
     val invocations = extractKotlinInvocations(lines, funMainRegex, kotlinEndRegex)
     val script = convertToKotlinScript(lines)
 
-    logger.info { "$challengeName return type: $returnType script: \n${script.withLineNumbers()}" }
+    logger.debug { "$challengeName return type: $returnType script: \n${script.withLineNumbers()}" }
 
     val answers = mutableListOf<Any>()
     val duration =
@@ -233,4 +239,6 @@ class KotlinChallenge(challengeGroup: ChallengeGroup<*>, challengeName: String, 
 
     return FunctionInfo(languageType, challengeName, strippedCode, funcCode, invocations, returnType, answers)
   }
+
+  override fun toString() = "KotlinChallenge(packageName='$packageName', fileName='$fileName', returnType=$returnType)"
 }

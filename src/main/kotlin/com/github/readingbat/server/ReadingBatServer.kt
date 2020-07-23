@@ -19,6 +19,9 @@ package com.github.readingbat.server
 
 import com.github.pambrose.common.util.FileSource
 import com.github.readingbat.dsl.readDsl
+import com.github.readingbat.misc.Constants.IS_PRODUCTION
+import com.github.readingbat.misc.Constants.READING_BAT
+import com.github.readingbat.misc.Constants.SITE
 import com.github.readingbat.misc.Constants.STATIC_ROOT
 import com.github.readingbat.server.AdminRoutes.adminRoutes
 import com.github.readingbat.server.Installs.installs
@@ -43,18 +46,25 @@ object ReadingBatServer {
 internal fun Application.module() {
   val fileName = property("readingbat.content.fileName", "src/Content.kt")
   val variableName = property("readingbat.content.variableName", "content")
+  val isProduction = property(IS_PRODUCTION, default = "false").toBoolean()
+
+  System.setProperty(IS_PRODUCTION, isProduction.toString())
+
   val content =
     readDsl(FileSource(fileName = fileName), variableName = variableName)
       .apply {
-        val readingBat = "readingbat"
-        val site = "site"
         val challenges = "challenges"
         val classes = "classes"
-        siteUrlPrefix = property("$readingBat.$site.urlPrefix", default = "https://readingbat.com")
-        googleAnalyticsId = property("$readingBat.$site.googleAnalyticsId")
-        production = property("$readingBat.$site.production", default = "false").toBoolean()
-        maxHistoryLength = property("$readingBat.$challenges.maxHistoryLength", default = "10").toInt()
-        maxClassCount = property("$readingBat.$classes.maxCount", default = "25").toInt()
+        ktorPort = property("ktor.deployment.port", "0").toInt()
+        val watchVal = environment.config.propertyOrNull("ktor.deployment.watch")?.getList() ?: emptyList()
+        ktorWatch = if (watchVal.size > 0) watchVal.toString() else "unassigned"
+        urlPrefix = property("$READING_BAT.$SITE.urlPrefix", default = "https://www.readingbat.com")
+        googleAnalyticsId = property("$READING_BAT.$SITE.googleAnalyticsId")
+        production = isProduction
+        dslFileName = fileName
+        dslVariableName = variableName
+        maxHistoryLength = property("$READING_BAT.$challenges.maxHistoryLength", default = "10").toInt()
+        maxClassCount = property("$READING_BAT.$classes.maxCount", default = "25").toInt()
       }
 
   installs(content)
@@ -64,7 +74,7 @@ internal fun Application.module() {
     adminRoutes()
     locations(content)
     userRoutes(content)
-    wsEndpoints()
+    wsEndpoints(content)
     static(STATIC_ROOT) { resources("static") }
   }
 }

@@ -18,18 +18,20 @@
 package com.github.readingbat.pages
 
 import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.misc.Constants
+import com.github.readingbat.misc.CSSNames.INDENT_1EM
+import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.Endpoints.ADMIN_ENDPOINT
 import com.github.readingbat.misc.FormFields.ADMIN_ACTION
 import com.github.readingbat.misc.FormFields.DELETE_ALL_DATA
-import com.github.readingbat.misc.UserId
+import com.github.readingbat.misc.Message
+import com.github.readingbat.misc.Message.Companion.EMPTY_MESSAGE
+import com.github.readingbat.misc.User
 import com.github.readingbat.pages.HelpAndLogin.helpAndLogin
 import com.github.readingbat.pages.PageCommon.backLink
 import com.github.readingbat.pages.PageCommon.bodyTitle
 import com.github.readingbat.pages.PageCommon.displayMessage
 import com.github.readingbat.pages.PageCommon.headDefault
 import com.github.readingbat.server.PipelineCall
-import com.github.readingbat.server.ServerUtils.fetchPrincipal
 import com.github.readingbat.server.ServerUtils.queryParam
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
@@ -39,31 +41,31 @@ import redis.clients.jedis.exceptions.JedisDataException
 internal object AdminPage {
 
   fun PipelineCall.adminDataPage(content: ReadingBatContent,
+                                 user: User?,
                                  redis: Jedis,
-                                 msg: String = "",
-                                 isErrorMsg: Boolean = true) =
+                                 msg: Message = EMPTY_MESSAGE) =
     createHTML()
       .html {
-        val principal = fetchPrincipal()
+
         head { headDefault(content) }
         body {
-          val returnPath = queryParam(Constants.RETURN_PATH) ?: "/"
+          val returnPath = queryParam(RETURN_PATH, "/")
 
-          helpAndLogin(redis, fetchPrincipal(), returnPath)
+          helpAndLogin(user, returnPath, false, redis)
 
           bodyTitle()
 
           when {
-            content.production && principal == null -> {
+            content.production && user == null -> {
               br { +"Must be logged in for this function" }
             }
-            content.production && UserId(principal?.userId ?: "").email(redis) != "pambrose@mac.com" -> {
+            content.production && user?.email(redis)?.value != "pambrose@mac.com" -> {
               br { +"Must be system admin for this function" }
             }
             else -> {
               p {
                 span {
-                  style = "color:${if (isErrorMsg) "red" else "green"};"
+                  style = "color:${if (msg.isError) "red" else "green"};"
                   this@body.displayMessage(msg)
                 }
               }
@@ -79,8 +81,7 @@ internal object AdminPage {
 
   private fun BODY.deleteData() {
     h3 { +"Delete All Data" }
-    div {
-      style = "margin-left: 1em;"
+    div(classes = INDENT_1EM) {
       p { +"Permanently delete all data -- this cannot be undone!" }
       form {
         action = ADMIN_ENDPOINT
@@ -94,13 +95,12 @@ internal object AdminPage {
   private fun BODY.dumpData(redis: Jedis) {
     h3 { +"All Data" }
     br
-    div {
-      style = "margin-left: 1em;"
-
+    div(classes = INDENT_1EM) {
       val keys = redis.keys("*")
       h4 { +"${keys.size} Items:" }
       table {
         keys
+          .sorted()
           .map {
             try {
               it to redis[it]

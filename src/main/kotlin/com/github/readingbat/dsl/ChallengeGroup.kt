@@ -19,6 +19,8 @@ package com.github.readingbat.dsl
 
 import com.github.readingbat.dsl.Challenge.Companion.challenge
 import com.github.readingbat.dsl.ReturnType.Runtime
+import com.github.readingbat.server.ChallengeName
+import com.github.readingbat.server.GroupName
 import com.vladsch.flexmark.html.HtmlRenderer
 import com.vladsch.flexmark.parser.Parser
 import com.vladsch.flexmark.util.data.MutableDataSet
@@ -26,11 +28,12 @@ import mu.KLogging
 import kotlin.reflect.KProperty
 
 @ReadingBatDslMarker
-class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>, internal val groupName: String) {
+class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>, internal val groupName: GroupName) {
+  private val prefix by lazy { "${languageType.languageName}/$groupName" }
+
   internal val languageType = languageGroup.languageType
   internal val challenges = mutableListOf<T>()
-
-  private val prefix by lazy { "${languageType.lowerName}/$groupName" }
+  internal val includeList = mutableListOf<PatternReturnType>()
   internal val parsedDescription
       by lazy {
         val options = MutableDataSet().apply { set(HtmlRenderer.SOFT_BREAK, "<br />\n") }
@@ -40,13 +43,19 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
         renderer.render(document)
       }
 
+  // User properties
+  var packageName = ""
+  var description = ""
+  var includeFiles by IncludeFiles(languageType, includeList)
+  var includeFilesWithType by IncludeFilesWithType(languageType, includeList)
+
   private class IncludeFiles(val languageType: LanguageType, val includeList: MutableList<PatternReturnType>) {
     operator fun getValue(thisRef: Any?, property: KProperty<*>) = includeList.toString()
     operator fun setValue(thisRef: Any?, property: KProperty<*>, value: String) {
       if (languageType.isJava())
         includeList += PatternReturnType(value, Runtime)
       else
-        throw InvalidConfigurationException("Use includeFilesWithType instead of includeFiles for ${languageType.lowerName} challenges")
+        throw InvalidConfigurationException("Use includeFilesWithType instead of includeFiles for ${languageType.languageName} challenges")
     }
   }
 
@@ -56,33 +65,28 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
       if (!languageType.isJava())
         includeList += value
       else
-        throw InvalidConfigurationException("Use includeFiles instead of includeFilesWithType for ${languageType.lowerName} challenges")
+        throw InvalidConfigurationException("Use includeFiles instead of includeFilesWithType for ${languageType.languageName} challenges")
     }
   }
 
-  internal val includeList = mutableListOf<PatternReturnType>()
+  fun hasChallenge(challengeName: String) = challenges.any { it.challengeName.value == challengeName }
 
-  // User properties
-  var packageName = ""
-  var description = ""
-  var includeFiles by IncludeFiles(languageType, includeList)
-  var includeFilesWithType by IncludeFilesWithType(languageType, includeList)
+  operator fun contains(challengeName: String) = hasChallenge(challengeName)
 
-  fun hasChallenge(challengeName: String) = challenges.any { it.challengeName == challengeName }
-
-  fun removeChallenge(challengeName: String) {
-    val pos =
-      challenges
-        .asSequence()
-        .mapIndexed { i, challenge -> i to challenge }
-        .first { it.second.challengeName == challengeName }
-        .first
-    challenges.removeAt(pos)
-  }
+  internal fun removeChallenge(challengeName: ChallengeName) = challenges.removeAt(indexOf(challengeName))
 
   fun findChallenge(challengeName: String): T =
-    challenges.firstOrNull { it.challengeName == challengeName }
+    challenges.firstOrNull { it.challengeName.value == challengeName }
       ?: throw InvalidPathException("Challenge $prefix/$challengeName not found.")
+
+  operator fun get(challengeName: String): T = findChallenge(challengeName)
+
+  internal fun indexOf(challengeName: ChallengeName): Int {
+    val pos = challenges.indexOfFirst { it.challengeName == challengeName }
+    if (pos == -1)
+      throw InvalidPathException("Challenge $prefix/$challengeName not found.")
+    return pos
+  }
 
   @ReadingBatDslMarker
   fun T.unaryPlus() {
@@ -96,7 +100,6 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
     challenges += challenge
   }
 
-
   //@ReadingBatDslMarker
   //fun includeFiles(vararg patterns: String) = import(patterns.toList())
 
@@ -105,11 +108,10 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
   @ReadingBatDslMarker
   infix fun String.returns(returnType: ReturnType) = PatternReturnType(this, returnType)
 
-
   internal fun addChallenge(challengeNames: List<LanguageGroup.ChallengeFile>) {
     challengeNames
       .forEach { challengeFile ->
-        val challengeName = challengeFile.fileName.split(".").first()
+        val challengeName = ChallengeName(challengeFile.fileName.split(".").first())
         if (checkChallengeName(challengeName, false)) {
           logger.debug { "Adding $challengeName" }
           val challenge = challenge(this, challengeName, true)
@@ -123,9 +125,9 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
       }
   }
 
-  private fun checkChallengeName(challengeName: String, throwExceptionIfPresent: Boolean = true): Boolean {
-    if (hasChallenge(challengeName)) {
-      val challenge = findChallenge(challengeName)
+  private fun checkChallengeName(challengeName: ChallengeName, throwExceptionIfPresent: Boolean = true): Boolean {
+    if (challengeName.value in this) {
+      val challenge = this[challengeName.value]
       if (challenge.replaceable) {
         removeChallenge(challengeName)
       }
@@ -140,7 +142,8 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
   }
 
   @ReadingBatDslMarker
-  fun challenge(challengeName: String, block: T.() -> Unit) {
+  fun challenge(name: String, block: T.() -> Unit) {
+    val challengeName = ChallengeName(name)
     checkChallengeName(challengeName)
     val challenge = challenge(this, challengeName, false) as T
     challenges += challenge.apply(block).apply { validate() }

@@ -18,14 +18,15 @@
 package com.github.readingbat.dsl
 
 import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
+import com.github.readingbat.server.LanguageName
 
 enum class LanguageType(val useDoubleQuotes: Boolean, val suffix: String, val srcPrefix: String) {
   Java(true, "java", "src/main/java"),
   Python(false, "py", "python"),
   Kotlin(true, "kt", "src/main/kotlin");
 
-  internal val lowerName = name.toLowerCase()
-  internal val contentRoot = "$CHALLENGE_ROOT/$lowerName"
+  internal val languageName = LanguageName(name.toLowerCase())
+  internal val contentRoot = "$CHALLENGE_ROOT/$languageName"
 
   fun isJava() = this == Java
   fun isPython() = this == Python
@@ -33,15 +34,5 @@ enum class LanguageType(val useDoubleQuotes: Boolean, val suffix: String, val sr
 
   companion object {
     val languageTypesInOrder by lazy { listOf(Java, Python, Kotlin) }
-
-    fun String?.toLanguageType(): LanguageType =
-      if (this == null)
-        throw InvalidPathException("Missing language value")
-      else
-        try {
-          values().first { it.name.equals(this, ignoreCase = true) }
-        } catch (e: NoSuchElementException) {
-          throw InvalidPathException("Invalid language request: $this")
-        }
   }
 }

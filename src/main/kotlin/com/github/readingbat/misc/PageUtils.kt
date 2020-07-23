@@ -41,5 +41,5 @@ object PageUtils {
 
   }
 
-  fun pathOf(vararg elems: String): String = elems.toList().join()
+  fun pathOf(vararg elems: Any): String = elems.toList().map { it.toString() }.join()
 }

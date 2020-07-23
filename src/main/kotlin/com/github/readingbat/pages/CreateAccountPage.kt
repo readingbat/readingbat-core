@@ -18,12 +18,15 @@
 package com.github.readingbat.pages
 
 import com.github.readingbat.dsl.ReadingBatContent
+import com.github.readingbat.misc.CSSNames.INDENT_1EM
 import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.Endpoints.CREATE_ACCOUNT_ENDPOINT
 import com.github.readingbat.misc.FormFields.CONFIRM_PASSWORD
 import com.github.readingbat.misc.FormFields.EMAIL
-import com.github.readingbat.misc.FormFields.NAME
+import com.github.readingbat.misc.FormFields.FULLNAME
 import com.github.readingbat.misc.FormFields.PASSWORD
+import com.github.readingbat.misc.Message
+import com.github.readingbat.misc.Message.Companion.EMPTY_MESSAGE
 import com.github.readingbat.misc.PageUtils.hideShowButton
 import com.github.readingbat.pages.PageCommon.backLink
 import com.github.readingbat.pages.PageCommon.bodyTitle
@@ -31,6 +34,10 @@ import com.github.readingbat.pages.PageCommon.clickButtonScript
 import com.github.readingbat.pages.PageCommon.displayMessage
 import com.github.readingbat.pages.PageCommon.headDefault
 import com.github.readingbat.pages.PageCommon.privacyStatement
+import com.github.readingbat.server.Email
+import com.github.readingbat.server.Email.Companion.EMPTY_EMAIL
+import com.github.readingbat.server.FullName
+import com.github.readingbat.server.FullName.Companion.EMPTY_FULLNAME
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
 import kotlinx.html.*
@@ -39,12 +46,12 @@ import kotlinx.html.stream.createHTML
 internal object CreateAccountPage {
 
   fun PipelineCall.createAccountPage(content: ReadingBatContent,
-                                     defaultName: String = "",
-                                     defaultEmail: String = "",
-                                     msg: String = "") =
+                                     defaultFullName: FullName = EMPTY_FULLNAME,
+                                     defaultEmail: Email = EMPTY_EMAIL,
+                                     msg: Message = EMPTY_MESSAGE) =
     createHTML()
       .html {
-        val returnPath = queryParam(RETURN_PATH) ?: "/"
+        val returnPath = queryParam(RETURN_PATH, "/")
         val createButton = "CreateAccountButton"
 
         head {
@@ -57,9 +64,7 @@ internal object CreateAccountPage {
 
           h2 { +"Create Account" }
 
-          div {
-            style = "margin-left: 1em;"
-
+          div(classes = INDENT_1EM) {
             p {
               +"""
               Please enter information to create a new account. We use your email address as your account id 
@@ -83,7 +88,8 @@ internal object CreateAccountPage {
                   td { style = labelWidth; label { +"Name" } }
                   td {
                     input {
-                      style = inputFs; type = InputType.text; size = "42"; name = NAME; value = defaultName
+                      style = inputFs; type = InputType.text; size = "42"; name = FULLNAME; value =
+                      defaultFullName.value
                     }
                   }
                 }
@@ -91,7 +97,7 @@ internal object CreateAccountPage {
                   td { style = labelWidth; label { +"Email (used as account id)" } }
                   td {
                     input {
-                      style = inputFs; type = InputType.text; size = "42"; name = EMAIL; value = defaultEmail
+                      style = inputFs; type = InputType.text; size = "42"; name = EMAIL; value = defaultEmail.value
                     }
                   }
                 }
@@ -136,9 +142,9 @@ internal object CreateAccountPage {
                 }
               }
             }
-
-            this@body.privacyStatement(CREATE_ACCOUNT_ENDPOINT, returnPath)
           }
+
+          privacyStatement(CREATE_ACCOUNT_ENDPOINT, returnPath)
 
           backLink(returnPath)
         }

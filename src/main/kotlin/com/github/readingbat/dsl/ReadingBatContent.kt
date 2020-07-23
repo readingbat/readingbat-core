@@ -18,42 +18,74 @@
 package com.github.readingbat.dsl
 
 import com.github.pambrose.common.util.ContentRoot
-import com.github.readingbat.dsl.LanguageGroup.Companion.defaultContentRoot
+import com.github.pambrose.common.util.FileSystemSource
 import com.github.readingbat.dsl.LanguageType.*
+import com.github.readingbat.server.ChallengeName
+import com.github.readingbat.server.GroupName
 import com.github.readingbat.server.Language
+import com.github.readingbat.server.LanguageName
+import mu.KLogging
 
 
 @ReadingBatDslMarker
 class ReadingBatContent {
-  internal var siteUrlPrefix = ""
+  internal var urlPrefix = ""
   internal var googleAnalyticsId = ""
-  internal var production = false
   internal var maxHistoryLength = 10
   internal var maxClassCount = 25
+  internal var production = false
+  internal var dslFileName = ""
+  internal var dslVariableName = ""
+  internal var ktorPort = 0
+  internal var ktorWatch = ""
 
   val python by lazy { LanguageGroup<PythonChallenge>(this, Python) }
   val java by lazy { LanguageGroup<JavaChallenge>(this, Java) }
   val kotlin by lazy { LanguageGroup<KotlinChallenge>(this, Kotlin) }
 
   // User properties
-  var repo: ContentRoot = defaultContentRoot
-  var cacheChallenges = true
+  var cacheChallenges = isProduction()
+
+  // These are defaults and can be overridden in language specific section
+  //var repo: ContentRoot = defaultContentRoot # Makes repo a required value
+  var repo: ContentRoot = FileSystemSource("./")
+  var branchName = "master"
 
   private val languageList by lazy { listOf(java, python, kotlin) }
   private val languageMap by lazy { languageList.map { it.languageType to it }.toMap() }
 
-  internal fun hasGroups(languageType: LanguageType) = findLanguage(languageType).hasGroups()
-
   internal fun hasLanguage(languageType: LanguageType) = languageMap.containsKey(languageType)
 
-  internal fun findLanguage(languageType: LanguageType) =
+  internal operator fun contains(languageType: LanguageType) = this[languageType].isNotEmpty()
+
+  internal fun findLanguage(languageType: LanguageType): LanguageGroup<out Challenge> =
     languageMap[languageType] ?: throw InvalidConfigurationException("Invalid language $languageType")
 
-  internal fun findGroup(groupLoc: Language.Group) =
-    findLanguage(groupLoc.languageType).findGroup(groupLoc.groupName)
+  internal fun findGroup(groupLoc: Language.Group): ChallengeGroup<out Challenge> =
+    findLanguage(groupLoc.languageType).findGroup(groupLoc.groupName.value)
 
-  internal fun findChallenge(challengeLoc: Language.Group.Challenge) =
-    findGroup(challengeLoc.group).findChallenge(challengeLoc.challengeName)
+  internal fun findGroup(languageType: LanguageType, groupName: GroupName): ChallengeGroup<out Challenge> =
+    findLanguage(languageType).findGroup(groupName.value)
+
+  internal fun findChallenge(challengeLoc: Language.Group.Challenge): Challenge =
+    findGroup(challengeLoc.group).findChallenge(challengeLoc.challengeName.value)
+
+  internal fun findChallenge(languageName: LanguageName,
+                             groupName: GroupName,
+                             challengeName: ChallengeName): Challenge =
+    findGroup(languageName.toLanguageType(), groupName).findChallenge(challengeName.value)
+
+  internal operator fun get(languageType: LanguageType): LanguageGroup<out Challenge> = findLanguage(languageType)
+
+  internal operator fun get(groupLoc: Language.Group): ChallengeGroup<out Challenge> = findGroup(groupLoc)
+
+  internal operator fun get(languageType: LanguageType, groupName: GroupName): ChallengeGroup<out Challenge> =
+    findGroup(languageType, groupName)
+
+  internal operator fun get(challengeLoc: Language.Group.Challenge): Challenge = findChallenge(challengeLoc)
+
+  internal operator fun get(languageName: LanguageName, groupName: GroupName, challengeName: ChallengeName): Challenge =
+    findChallenge(languageName, groupName, challengeName)
 
   internal fun validate() = languageList.forEach { it.validate() }
 
@@ -79,14 +111,15 @@ class ReadingBatContent {
   }
 
   internal fun checkLanguage(languageType: LanguageType) {
-    if (!hasLanguage(languageType) || !hasGroups(languageType))
+    if (languageType !in this || this[languageType].isEmpty())
       throw InvalidConfigurationException("Invalid language: $languageType")
   }
 
   override fun toString() = "Content(languageList=$languageList)"
 
-  companion object {
+  companion object : KLogging() {
     internal val contentMap = mutableMapOf<String, ReadingBatContent>()
+    internal val emptyReadingBatContent = ReadingBatContent()
   }
 }
 

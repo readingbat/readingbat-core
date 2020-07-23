@@ -20,6 +20,7 @@ package com.github.readingbat.dsl
 import com.github.pambrose.common.util.*
 import com.github.readingbat.dsl.GitHubUtils.directoryContents
 import com.github.readingbat.misc.PageUtils.pathOf
+import com.github.readingbat.server.GroupName
 import java.io.File
 
 @ReadingBatDslMarker
@@ -29,15 +30,13 @@ class LanguageGroup<T : Challenge>(internal val content: ReadingBatContent,
   internal val challengeGroups = mutableListOf<ChallengeGroup<T>>()
 
   // User properties
-  var repo: ContentRoot = content.repo
+  var repo: ContentRoot = content.repo           // Defaults to outer-level value
     get() =
       if (field == defaultContentRoot)
-        throw InvalidConfigurationException("${languageType.lowerName} section is missing a repo value")
+        throw InvalidConfigurationException("${languageType.languageName} section is missing a repo value")
       else
         field
-
-  // User properties
-  var branchName = "master"
+  var branchName = content.branchName    // Defaults to outer-level value
   var srcPath = languageType.srcPrefix
 
   internal fun validate() {
@@ -47,14 +46,16 @@ class LanguageGroup<T : Challenge>(internal val content: ReadingBatContent,
   internal fun addGroup(group: ChallengeGroup<T>) {
     if (languageType != group.languageType)
       throw InvalidConfigurationException("${group.groupName} language type mismatch: $languageType and ${group.languageType}")
-    if (hasGroup(group.groupName))
+    if (hasGroup(group.groupName.value))
       throw InvalidConfigurationException("Duplicate group name: ${group.groupName}")
     challengeGroups += group
   }
 
-  fun hasGroups() = challengeGroups.isNotEmpty()
+  fun isEmpty() = challengeGroups.isEmpty()
 
-  fun hasGroup(groupName: String) = challengeGroups.any { it.groupName == groupName }
+  fun isNotEmpty() = challengeGroups.isNotEmpty()
+
+  fun hasGroup(groupName: String) = challengeGroups.any { it.groupName.value == groupName }
 
   private val excludes = Regex("^__.*__.*$")
 
@@ -62,7 +63,7 @@ class LanguageGroup<T : Challenge>(internal val content: ReadingBatContent,
 
   @ReadingBatDslMarker
   fun group(name: String, block: ChallengeGroup<T>.() -> Unit) {
-    val group = ChallengeGroup(this, name).apply(block)
+    val group = ChallengeGroup(this, GroupName(name)).apply(block)
 
     if (group.includeList.isNotEmpty()) {
       val fileList =
@@ -104,11 +105,15 @@ class LanguageGroup<T : Challenge>(internal val content: ReadingBatContent,
     addGroup(challengeGroup)
   }
 
-  fun findGroup(groupName: String) =
-    groupName.decode().let { decoded -> challengeGroups.firstOrNull { it.groupName == decoded } }
-      ?: throw InvalidPathException("Group ${languageType.lowerName}/$groupName not found")
+  fun findGroup(groupName: String): ChallengeGroup<T> =
+    groupName.decode().let { decoded -> challengeGroups.firstOrNull { it.groupName.value == decoded } }
+      ?: throw InvalidPathException("Group ${languageType.languageName}/$groupName not found")
 
   fun findChallenge(groupName: String, challengeName: String) = findGroup(groupName).findChallenge(challengeName)
+
+  operator fun get(groupName: String): ChallengeGroup<T> = findGroup(groupName)
+
+  operator fun get(groupName: String, challengeName: String): T = findChallenge(groupName, challengeName)
 
   override fun toString() =
     "LanguageGroup(languageType=$languageType, srcPrefix='$srcPath', challengeGroups=$challengeGroups)"
