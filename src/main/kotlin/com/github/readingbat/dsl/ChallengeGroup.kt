@@ -30,18 +30,18 @@ import kotlin.reflect.KProperty
 @ReadingBatDslMarker
 class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>, internal val groupName: GroupName) {
   private val prefix by lazy { "${languageType.languageName}/$groupName" }
+  private val options = MutableDataSet().apply { set(HtmlRenderer.SOFT_BREAK, "<br />\n") }
+  private val parser = Parser.builder(options).build()
+  private val renderer = HtmlRenderer.builder(options).build()
 
   internal val languageType = languageGroup.languageType
   internal val challenges = mutableListOf<T>()
   internal val includeList = mutableListOf<PatternReturnType>()
-  internal val parsedDescription
-      by lazy {
-        val options = MutableDataSet().apply { set(HtmlRenderer.SOFT_BREAK, "<br />\n") }
-        val parser = Parser.builder(options).build()
-        val renderer = HtmlRenderer.builder(options).build()
-        val document = parser.parse(description.trimIndent())
-        renderer.render(document)
-      }
+  internal val parsedDescription: String
+    get() {
+      val document = parser.parse(description.trimIndent())
+      return renderer.render(document)
+    }
 
   // User properties
   var packageName = ""

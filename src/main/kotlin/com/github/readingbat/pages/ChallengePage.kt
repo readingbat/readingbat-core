@@ -173,7 +173,7 @@ internal object ChallengePage : KLogging() {
       this@displayChallenge.nextChance(pos, challenges, true)
     }
 
-    if (challenge.description.isNotEmpty())
+    if (challenge.description.isNotBlank())
       div(classes = CHALLENGE_DESC) { rawHtml(challenge.parsedDescription) }
 
     div(classes = CODE_BLOCK) {
