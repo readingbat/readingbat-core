@@ -132,7 +132,8 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
         .map { it.replaceFirst(commentPrefix, "") }    // Remove comment prefix
         .map { it.replaceFirst(DESC, "") }          // Remove @desc
         .map { it.trim() }                          // Strip leading and trailing spaces
-        .joinToString("\n").also { logger.debug { """Assigning $challengeName description = "$it"""" } }
+        .joinToString("\n")
+        .also { logger.info { """Assigning $challengeName description = "$it"""" } }
     }
     else {
       description
