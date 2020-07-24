@@ -142,7 +142,7 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
   }
 
   @ReadingBatDslMarker
-  fun challenge(name: String, block: T.() -> Unit) {
+  fun challenge(name: String, block: T.() -> Unit = {}) {
     val challengeName = ChallengeName(name)
     checkChallengeName(challengeName)
     val challenge = challenge(this, challengeName, false) as T
