@@ -176,7 +176,7 @@ internal object ChallengePost : KLogging() {
         }
 
     // Save whether all the answers for the challenge were correct
-    if (redis != null) {
+    if (redis.isNotNull()) {
       val browserSession = call.sessions.get<BrowserSession>()
       user.saveChallengeAnswers(content, browserSession, names, paramMap, funcInfo, userResponses, results, redis)
     }
@@ -257,7 +257,7 @@ internal object ChallengePost : KLogging() {
         }
       }
 
-    if (user != null) {
+    if (user.isNotNull()) {
       for (challenge in content.findGroup(languageName.toLanguageType(), groupName).challenges) {
         logger.info { "Clearing answers for ${challenge.challengeName}" }
         val funcInfo = challenge.funcInfo(content)

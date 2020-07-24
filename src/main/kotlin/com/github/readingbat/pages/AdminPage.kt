@@ -17,6 +17,7 @@
 
 package com.github.readingbat.pages
 
+import com.github.pambrose.common.util.isNull
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.CSSNames.INDENT_1EM
 import com.github.readingbat.misc.Constants.RETURN_PATH
@@ -56,7 +57,7 @@ internal object AdminPage {
           bodyTitle()
 
           when {
-            content.production && user == null -> {
+            content.production && user.isNull() -> {
               br { +"Must be logged in for this function" }
             }
             content.production && user?.email(redis)?.value != "pambrose@mac.com" -> {

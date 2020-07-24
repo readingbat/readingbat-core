@@ -17,6 +17,7 @@
 
 package com.github.readingbat.pages
 
+import com.github.pambrose.common.util.isNull
 import com.github.pambrose.common.util.toRootPath
 import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.LanguageType
@@ -113,7 +114,7 @@ internal object PageCommon {
 
     p { if (displayWelcomeMsg) +"Welcome to ReadingBat." else rawHtml(nbsp.text) }
 
-    if (loginAttempt && user == null)
+    if (loginAttempt && user.isNull())
       p { span { style = "color:red;"; +"Failed to login -- incorrect email or password" } }
 
     p { span { style = "color:green; max-width:800;"; if (msg.isNotBlank) +(msg.toString()) else rawHtml(nbsp.text) } }

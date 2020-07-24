@@ -17,6 +17,7 @@
 
 package com.github.readingbat.misc
 
+import com.github.pambrose.common.util.isNull
 import redis.clients.jedis.Jedis
 import kotlin.time.Duration
 import kotlin.time.seconds
@@ -42,7 +43,7 @@ class RedisSessionStorage(val redis: Jedis,
 
   override suspend fun write(id: String, data: ByteArray?) {
     val key = buildKey(id)
-    if (data == null) {
+    if (data.isNull()) {
       redis.del(buildKey(id))
     }
     else {

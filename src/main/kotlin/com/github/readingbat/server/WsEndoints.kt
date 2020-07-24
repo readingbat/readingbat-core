@@ -18,6 +18,7 @@
 package com.github.readingbat.server
 
 import com.github.pambrose.common.redis.RedisUtils.withRedis
+import com.github.pambrose.common.util.isNotNull
 import com.github.readingbat.dsl.InvalidPathException
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.ClassCode
@@ -53,7 +54,7 @@ internal object WsEndoints : KLogging() {
           withRedis { redis ->
             redis?.subscribe(object : JedisPubSub() {
               override fun onMessage(channel: String?, message: String?) {
-                if (message != null)
+                if (message.isNotNull())
                   runBlocking {
                     logger.debug { "Sending data $message from $channel" }
                     outgoing.send(Frame.Text(message))
@@ -83,7 +84,7 @@ internal object WsEndoints : KLogging() {
         .collect { frame ->
           val inboundMsg = frame.readText()
           withRedis { redis ->
-            if (redis != null) {
+            if (redis.isNotNull()) {
               val enrollees = classCode.fetchEnrollees(redis)
 
               challenges

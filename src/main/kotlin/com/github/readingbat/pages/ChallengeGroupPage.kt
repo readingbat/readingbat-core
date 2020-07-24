@@ -18,6 +18,7 @@
 package com.github.readingbat.pages
 
 import com.github.pambrose.common.util.decode
+import com.github.pambrose.common.util.isNotNull
 import com.github.pambrose.common.util.pluralize
 import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.ChallengeGroup
@@ -143,7 +144,7 @@ internal object ChallengeGroupPage : KLogging() {
             }
           }
 
-          if (redis != null && activeClassCode.isStudentMode && challenges.isNotEmpty())
+          if (redis.isNotNull() && activeClassCode.isStudentMode && challenges.isNotEmpty())
             clearGroupAnswerHistory(user, browserSession, languageName, groupName, challenges)
 
           backLink(CHALLENGE_ROOT, languageName.value)
@@ -154,7 +155,7 @@ internal object ChallengeGroupPage : KLogging() {
       }
 
   fun BODY.displayClassDescription(activeClassCode: ClassCode, enrollees: List<User>, redis: Jedis?) {
-    val classDesc = if (redis != null) activeClassCode.fetchClassDesc(redis) else "Description unavailable"
+    val classDesc = if (redis.isNotNull()) activeClassCode.fetchClassDesc(redis) else "Description unavailable"
     val studentCount = if (enrollees.isEmpty()) "No" else enrollees.count().toString()
     h3 {
       style = "margin-left: 5px; color: ${ChallengePage.headerColor}"

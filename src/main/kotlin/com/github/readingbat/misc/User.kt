@@ -17,6 +17,8 @@
 
 package com.github.readingbat.misc
 
+import com.github.pambrose.common.util.isNotNull
+import com.github.pambrose.common.util.isNull
 import com.github.pambrose.common.util.newStringSalt
 import com.github.pambrose.common.util.randomId
 import com.github.readingbat.dsl.Challenge
@@ -277,19 +279,19 @@ internal class User private constructor(val id: String) {
     fun newUser() = User(randomId(25))
 
     fun User?.fetchActiveClassCode(redis: Jedis?) =
-      if (this == null)
+      if (this.isNull())
         STUDENT_CLASS_CODE
       else
         redis?.hget(userInfoKey, ACTIVE_CLASS_CODE_FIELD)?.let { ClassCode(it) } ?: STUDENT_CLASS_CODE
 
     fun User?.fetchPreviousTeacherClassCode(redis: Jedis?) =
-      if (this == null)
+      if (this.isNull())
         STUDENT_CLASS_CODE
       else
         redis?.hget(userInfoKey, PREVIOUS_TEACHER_CLASS_CODE_FIELD)?.let { ClassCode(it) } ?: STUDENT_CLASS_CODE
 
     fun User?.fetchEnrolledClassCode(redis: Jedis) =
-      if (this == null)
+      if (this.isNull())
         STUDENT_CLASS_CODE
       else
         redis.hget(userInfoKey, ENROLLED_CLASS_CODE_FIELD)?.let { ClassCode(it) } ?: STUDENT_CLASS_CODE
@@ -408,7 +410,7 @@ internal class User private constructor(val id: String) {
       }
     }
 
-    fun isRegisteredEmail(email: Email, redis: Jedis) = lookupUserByEmail(email, redis) != null
+    fun isRegisteredEmail(email: Email, redis: Jedis) = lookupUserByEmail(email, redis).isNotNull()
 
     fun lookupUserByEmail(email: Email, redis: Jedis): User? {
       val id = redis.get(email.userEmailKey) ?: ""
@@ -423,5 +425,5 @@ internal fun User?.isValidUser(redis: Jedis): Boolean {
   contract {
     returns(true) implies (this@isValidUser is User)
   }
-  return if (this == null) false else redis.hlen(userInfoKey) > 0
+  return if (this.isNull()) false else redis.hlen(userInfoKey) > 0
 }

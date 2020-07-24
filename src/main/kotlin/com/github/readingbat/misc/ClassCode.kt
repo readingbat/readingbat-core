@@ -17,6 +17,7 @@
 
 package com.github.readingbat.misc
 
+import com.github.pambrose.common.util.isNull
 import com.github.pambrose.common.util.randomId
 import com.github.readingbat.misc.FormFields.CLASSES_DISABLED
 import com.github.readingbat.misc.KeyConstants.CLASS_CODE_KEY
@@ -43,7 +44,7 @@ internal inline class ClassCode(val value: String) {
   fun isNotValid(redis: Jedis) = !isValid(redis)
 
   fun fetchEnrollees(redis: Jedis?): List<User> =
-    if (redis == null || isStudentMode)
+    if (redis.isNull() || isStudentMode)
       emptyList()
     else
       (redis.smembers(classCodeEnrollmentKey) ?: emptySet())

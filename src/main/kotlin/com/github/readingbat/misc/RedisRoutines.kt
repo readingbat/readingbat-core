@@ -18,6 +18,7 @@
 package com.github.readingbat.misc
 
 import com.github.pambrose.common.redis.RedisUtils.withRedis
+import com.github.pambrose.common.util.isNotNull
 import redis.clients.jedis.exceptions.JedisDataException
 
 internal object RedisRoutines {
@@ -36,7 +37,7 @@ internal object RedisRoutines {
 
   fun showAll() {
     withRedis { redis ->
-      if (redis != null) {
+      if (redis.isNotNull()) {
         println(redis.keys("*")
                   .joinToString("\n") {
                     try {

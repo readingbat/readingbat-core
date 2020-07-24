@@ -18,6 +18,8 @@
 package com.github.readingbat.pages
 
 import com.github.pambrose.common.util.decode
+import com.github.pambrose.common.util.isNotNull
+import com.github.pambrose.common.util.isNull
 import com.github.pambrose.common.util.random
 import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.FunctionInfo
@@ -135,7 +137,7 @@ internal object ChallengePage : KLogging() {
           if (activeClassCode.isStudentMode)
             displayQuestions(user, browserSession, challenge, funcInfo, redis)
           else {
-            if (redis == null)
+            if (redis.isNull())
               p { +DBMS_DOWN.value }
             else
               displayStudentProgress(challenge, content.maxHistoryLength, funcInfo, activeClassCode, redis)
@@ -239,7 +241,7 @@ internal object ChallengePage : KLogging() {
 
       this@displayQuestions.processAnswers(funcInfo, challenge)
       this@displayQuestions.otherLinks(challenge)
-      if (redis != null)
+      if (redis.isNotNull())
         this@displayQuestions.clearChallengeAnswerHistory(user, browserSession, challenge)
     }
 
@@ -357,7 +359,7 @@ internal object ChallengePage : KLogging() {
                                    browserSession: BrowserSession?,
                                    challenge: Challenge,
                                    redis: Jedis?) =
-    if (redis == null)
+    if (redis.isNull())
       emptyMap
     else {
       val languageName = challenge.languageType.languageName

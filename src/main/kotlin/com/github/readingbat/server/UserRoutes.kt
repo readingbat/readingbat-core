@@ -21,6 +21,7 @@ import com.github.pambrose.common.redis.RedisUtils.withRedisPool
 import com.github.pambrose.common.redis.RedisUtils.withSuspendingRedisPool
 import com.github.pambrose.common.response.redirectTo
 import com.github.pambrose.common.response.respondWith
+import com.github.pambrose.common.util.isNull
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.AuthRoutes.LOGOUT
 import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
@@ -85,7 +86,7 @@ internal fun Routing.userRoutes(content: ReadingBatContent) {
     try {
       val html =
         withRedisPool { redis ->
-          if (redis == null)
+          if (redis.isNull())
             dbmsDownPage(content)
           else
             block.invoke(redis)
@@ -99,7 +100,7 @@ internal fun Routing.userRoutes(content: ReadingBatContent) {
     try {
       val html =
         withSuspendingRedisPool { redis ->
-          if (redis == null)
+          if (redis.isNull())
             dbmsDownPage(content)
           else
             block.invoke(redis)
