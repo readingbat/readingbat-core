@@ -90,7 +90,7 @@ internal object LanguageGroupPage {
             div(classes = GROUP_ITEM_SRC) {
               a(classes = GROUP_CHOICE) { href = pathOf(CHALLENGE_ROOT, languageName, groupName); +groupName.value }
 
-              br { rawHtml(if (challengeGroup.description.isNotBlank()) challengeGroup.parsedDescription else nbsp.text) }
+              p { rawHtml(if (challengeGroup.description.isNotBlank()) challengeGroup.parsedDescription else nbsp.text) }
 
               if (activeClassCode.isStudentMode) {
                 if (cnt == 0) {

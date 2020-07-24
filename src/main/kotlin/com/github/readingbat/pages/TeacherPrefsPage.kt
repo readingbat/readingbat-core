@@ -44,6 +44,7 @@ import com.github.readingbat.pages.UserPrefsPage.requestLogInPage
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
 import kotlinx.html.*
+import kotlinx.html.Entities.nbsp
 import kotlinx.html.InputType.radio
 import kotlinx.html.InputType.submit
 import kotlinx.html.stream.createHTML
@@ -186,7 +187,7 @@ internal object TeacherPrefsPage : KLogging() {
   private fun BODY.deleteClassButtons(classCodes: List<ClassCode>, redis: Jedis) {
     table {
       style = "border-spacing: 5px 5px;"
-      tr { th { rawHtml(Entities.nbsp.text) } }
+      tr { th { rawHtml(nbsp.text) } }
       classCodes.forEach { classCode ->
         val classDesc = classCode.fetchClassDesc(redis)
         tr {

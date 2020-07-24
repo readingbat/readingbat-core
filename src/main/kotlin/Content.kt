@@ -16,8 +16,6 @@
  */
 
 import com.github.pambrose.common.util.FileSystemSource
-import com.github.readingbat.dsl.GitHubContent
-import com.github.readingbat.dsl.eval
 import com.github.readingbat.dsl.readingBatContent
 
 val organization = "readingbat"
@@ -62,12 +60,26 @@ val content by lazy {
       }
     }
 */
+    /*
     include(GitHubContent(organization, "readingbat-java-content", branch = branch).eval().java)
     include(GitHubContent(organization, "readingbat-python-content", branch = branch, srcPath = "src").eval().python)
     include(GitHubContent(organization, "readingbat-java-content", branch = branch).eval().kotlin)
-
+    */
     java {
-      //include(GitHubContent(organization, "readingbat-java-content").parse().java.findGroup("dd"))
+      group("test1") {
+        packageName = "kgroup1"
+
+      }
+      group("test2") {
+        packageName = "kgroup2"
+        description = "A description"
+      }
+      group("test3") {
+        packageName = "kgroup2"
+        description = """A description
+          |and more.
+        """.trimMargin()
+      }
     }
   }
 }
