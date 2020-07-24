@@ -61,6 +61,9 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
   private val repo = languageGroup.repo
   private val branchName = languageGroup.branchName
   private val fqName by lazy { packageName.ensureSuffix("/") + fileName.ensureSuffix(".${languageType.suffix}") }
+  private val options = MutableDataSet().apply { set(HtmlRenderer.SOFT_BREAK, "<br />\n") }
+  private val parser = Parser.builder(options).build()
+  private val renderer = HtmlRenderer.builder(options).build()
 
   protected val packageName = challengeGroup.packageName
 
@@ -73,14 +76,11 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
   // Allow description updates only if not found in the Content.kt decl
   internal val descriptionEditable by lazy { description.isEmpty() }
 
-  internal val parsedDescription
-      by lazy {
-        val options = MutableDataSet().apply { set(HtmlRenderer.SOFT_BREAK, "<br />\n") }
-        val parser = Parser.builder(options).build()
-        val renderer = HtmlRenderer.builder(options).build()
-        val document = parser.parse(description.trimIndent())
-        renderer.render(document)
-      }
+  internal val parsedDescription: String
+    get() {
+      val document = parser.parse(description.trimIndent())
+      return renderer.render(document)
+    }
 
   // User properties
   var fileName = "$challengeName.${languageType.suffix}"
@@ -129,9 +129,9 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
   protected fun deriveDescription(code: String, commentPrefix: String) =
     if (descriptionEditable) {
       code.lines().filter { it.startsWith(commentPrefix) && it.contains(DESC) }
-        .map { it.replaceFirst(commentPrefix, "") }    // Remove comment prefix
-        .map { it.replaceFirst(DESC, "") }          // Remove @desc
-        .map { it.trim() }                          // Strip leading and trailing spaces
+        .map { it.replaceFirst(commentPrefix, "") }   // Remove comment prefix
+        .map { it.replaceFirst(DESC, "") }            // Remove @desc
+        .map { it.trim() }                            // Strip leading and trailing spaces
         .joinToString("\n")
         .also { logger.info { """Assigning $challengeName description = "$it"""" } }
     }
