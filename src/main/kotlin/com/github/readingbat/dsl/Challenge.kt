@@ -70,6 +70,9 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
   internal val groupName = challengeGroup.groupName
   internal val gitpodUrl by lazy { pathOf(repo.sourcePrefix, "blob/${branchName}", srcPath, fqName) }
 
+  // Allow description updates only if not found in the Content.kt decl
+  internal val descriptionEditable by lazy { description.isEmpty() }
+
   internal val parsedDescription
       by lazy {
         val options = MutableDataSet().apply { set(HtmlRenderer.SOFT_BREAK, "<br />\n") }
@@ -123,19 +126,17 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
       else -> toString()
     }
 
-  protected fun deriveDescription(code: String, commentStr: String): String {
-    val descLines = code.lines().filter { it.startsWith(commentStr) && it.contains(DESC) }
-    return if (descLines.isNotEmpty())
-      descLines
-        .map { it.replaceFirst(commentStr, "") }      // Remove //
-        .map { it.replaceFirst(DESC, "") }      // Remove @desc
-        .map { it.trim() }                      // Strip leading and trailing spaces
-        .joinToString("\n").also {
-          logger.debug { "Assigning $challengeName description = $it" }
-        }
-    else
-      ""
-  }
+  protected fun deriveDescription(code: String, commentPrefix: String) =
+    if (descriptionEditable) {
+      code.lines().filter { it.startsWith(commentPrefix) && it.contains(DESC) }
+        .map { it.replaceFirst(commentPrefix, "") }    // Remove comment prefix
+        .map { it.replaceFirst(DESC, "") }          // Remove @desc
+        .map { it.trim() }                          // Strip leading and trailing spaces
+        .joinToString("\n").also { logger.debug { """Assigning $challengeName description = "$it"""" } }
+    }
+    else {
+      description
+    }
 
   companion object : KLogging() {
     internal val counter = atomic(0)
@@ -173,8 +174,7 @@ class PythonChallenge(challengeGroup: ChallengeGroup<*>, challengeName: Challeng
 
     logger.debug { "$challengeName return type: $returnType script: \n${script.withLineNumbers()}" }
 
-    if (description.isEmpty())
-      description = deriveDescription(code, "#")
+    description = deriveDescription(code, "#")
 
     val duration =
       PythonScript()
@@ -206,8 +206,7 @@ class JavaChallenge(challengeGroup: ChallengeGroup<*>, challengeName: ChallengeN
 
     logger.debug { "$challengeName return type: $returnType script: \n${script.withLineNumbers()}" }
 
-    if (description.isEmpty())
-      description = deriveDescription(code, "//")
+    description = deriveDescription(code, "//")
 
     val timedValue =
       JavaScript()
@@ -254,8 +253,7 @@ class KotlinChallenge(challengeGroup: ChallengeGroup<*>, challengeName: Challeng
 
     logger.debug { "$challengeName return type: $returnType script: \n${script.withLineNumbers()}" }
 
-    if (description.isEmpty())
-      description = deriveDescription(code, "//")
+    description = deriveDescription(code, "//")
 
     val answers = mutableListOf<Any>()
     val duration =
