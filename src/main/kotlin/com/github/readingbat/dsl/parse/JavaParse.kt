@@ -47,10 +47,7 @@ internal object JavaParse : KLogging() {
 
   fun deriveJavaReturnType(challengeName: ChallengeName, code: List<String>) =
     code.asSequence()
-      .filter {
-        !it.contains(svmRegex) && (it.contains(
-          staticStartRegex) || it.contains(psRegex))
-      }
+      .filter { !it.contains(svmRegex) && (it.contains(staticStartRegex) || it.contains(psRegex)) }
       .map { str ->
         val words = str.trim().split(spaceRegex).filter { it.isNotBlank() }
         val staticPos = words.indices.first { words[it] == "static" }

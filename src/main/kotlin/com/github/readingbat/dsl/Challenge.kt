@@ -123,9 +123,24 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
       else -> toString()
     }
 
+  protected fun deriveDescription(code: String, commentStr: String): String {
+    val descLines = code.lines().filter { it.startsWith(commentStr) && it.contains(DESC) }
+    return if (descLines.isNotEmpty())
+      descLines
+        .map { it.replaceFirst(commentStr, "") }      // Remove //
+        .map { it.replaceFirst(DESC, "") }      // Remove @desc
+        .map { it.trim() }                      // Strip leading and trailing spaces
+        .joinToString("\n").also {
+          logger.debug { "Assigning $challengeName description = $it" }
+        }
+    else
+      ""
+  }
+
   companion object : KLogging() {
     internal val counter = atomic(0)
     internal val sourcesMap = ConcurrentHashMap<Int, FunctionInfo>()
+    internal const val DESC = "@desc "
 
     internal fun challenge(challengeGroup: ChallengeGroup<*>, challengeName: ChallengeName, replaceable: Boolean) =
       when (challengeGroup.languageType) {
@@ -150,13 +165,16 @@ class PythonChallenge(challengeGroup: ChallengeGroup<*>, challengeName: Challeng
   }
 
   override fun computeFuncInfo(code: String): FunctionInfo {
-    val lines = code.lines()
+    val lines = code.lines().filterNot { it.startsWith("#") && it.contains(DESC) }
     val funcCode = extractPythonFunction(lines)
     val invocations = extractPythonInvocations(lines, defMainRegex, ifMainEndRegex)
     val script = convertToPythonScript(lines)
     val answers = mutableListOf<Any>()
 
     logger.debug { "$challengeName return type: $returnType script: \n${script.withLineNumbers()}" }
+
+    if (description.isEmpty())
+      description = deriveDescription(code, "#")
 
     val duration =
       PythonScript()
@@ -177,13 +195,19 @@ class JavaChallenge(challengeGroup: ChallengeGroup<*>, challengeName: ChallengeN
   Challenge(challengeGroup, challengeName, replaceable) {
 
   override fun computeFuncInfo(code: String): FunctionInfo {
-    val lines = code.lines().filter { !it.trimStart().startsWith("package") }
+    val lines =
+      code.lines()
+        .filterNot { it.startsWith("//") && it.contains(DESC) }
+        .filterNot { it.trimStart().startsWith("package") }
     val funcCode = extractJavaFunction(lines)
     val invocations = extractJavaInvocations(lines, svmRegex, javaEndRegex)
     val returnType = deriveJavaReturnType(challengeName, lines)
     val script = JavaParse.convertToScript(lines)
 
     logger.debug { "$challengeName return type: $returnType script: \n${script.withLineNumbers()}" }
+
+    if (description.isEmpty())
+      description = deriveDescription(code, "//")
 
     val timedValue =
       JavaScript()
@@ -219,14 +243,19 @@ class KotlinChallenge(challengeGroup: ChallengeGroup<*>, challengeName: Challeng
   }
 
   override fun computeFuncInfo(code: String): FunctionInfo {
-    val lines = code.lines().filter { !it.trimStart().startsWith("package") }
+    val lines =
+      code.lines()
+        .filterNot { it.startsWith("//") && it.contains(DESC) }
+        .filterNot { it.trimStart().startsWith("package") }
     val strippedCode = lines.joinToString("\n")
-
     val funcCode = "\n${extractKotlinFunction(lines)}\n\n"
     val invocations = extractKotlinInvocations(lines, funMainRegex, kotlinEndRegex)
     val script = convertToKotlinScript(lines)
 
     logger.debug { "$challengeName return type: $returnType script: \n${script.withLineNumbers()}" }
+
+    if (description.isEmpty())
+      description = deriveDescription(code, "//")
 
     val answers = mutableListOf<Any>()
     val duration =
