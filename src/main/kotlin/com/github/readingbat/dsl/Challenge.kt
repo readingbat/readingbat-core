@@ -65,6 +65,9 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
   private val parser = Parser.builder(options).build()
   private val renderer = HtmlRenderer.builder(options).build()
 
+  // Allow description updates only if not found in the Content.kt decl
+  private val descriptionSetInDsl by lazy { description.isNotEmpty() }
+
   protected val packageName = challengeGroup.packageName
 
   internal val srcPath = languageGroup.srcPath
@@ -73,8 +76,6 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
   internal val groupName = challengeGroup.groupName
   internal val gitpodUrl by lazy { pathOf(repo.sourcePrefix, "blob/${branchName}", srcPath, fqName) }
 
-  // Allow description updates only if not found in the Content.kt decl
-  internal val descriptionEditable by lazy { description.isEmpty() }
 
   internal val parsedDescription: String
     get() {
@@ -127,16 +128,16 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
     }
 
   protected fun deriveDescription(code: String, commentPrefix: String) =
-    if (descriptionEditable) {
+    if (descriptionSetInDsl) {
+      description
+    }
+    else {
       code.lines().filter { it.startsWith(commentPrefix) && it.contains(DESC) }
         .map { it.replaceFirst(commentPrefix, "") }   // Remove comment prefix
         .map { it.replaceFirst(DESC, "") }            // Remove @desc
         .map { it.trim() }                            // Strip leading and trailing spaces
         .joinToString("\n")
-        .also { logger.info { """Assigning $challengeName description = "$it"""" } }
-    }
-    else {
-      description
+        .also { logger.debug { """Assigning $challengeName description = "$it"""" } }
     }
 
   companion object : KLogging() {
