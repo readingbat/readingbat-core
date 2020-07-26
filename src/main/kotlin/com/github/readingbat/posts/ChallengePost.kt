@@ -174,30 +174,44 @@ internal object ChallengePost : KLogging() {
     }
   }
 
-  private fun String.equalsAsKotlinList(other: String, scriptEngine: KotlinScript): Pair<Boolean, String> {
-    val compareExpr = "listOf(${this.trimEnds()}) == listOf(${other.trimEnds()})"
+  private fun String.equalsAsKotlinList(that: String, scriptEngine: KotlinScript): Pair<Boolean, String> {
+    fun deriveHint() =
+      when {
+        this.isNotBracketed() -> "Answer should be bracketed"
+        else -> ""
+      }
+
+    val compareExpr = "listOf(${this.trimEnds()}) == listOf(${that.trimEnds()})"
     logger.debug { "Check answers expression: $compareExpr" }
     return try {
-      scriptEngine.eval(compareExpr) as Boolean
+      val result = scriptEngine.eval(compareExpr) as Boolean
+      result to (if (result) "" else deriveHint())
     } catch (e: ScriptException) {
-      logger.info { "Caught exception comparing $this and $other: ${e.message} in $compareExpr" }
-      false
+      logger.info { "Caught exception comparing $this and $that: ${e.message} in $compareExpr" }
+      false to deriveHint()
     } catch (e: Exception) {
-      false
-    } to ""
+      false to deriveHint()
+    }
   }
 
-  private fun String.equalsAsPythonList(other: String, scriptEngine: PythonScript): Pair<Boolean, String> {
-    val compareExpr = "${this@equalsAsPythonList.trim()} == ${other.trim()}"
+  private fun String.equalsAsPythonList(that: String, scriptEngine: PythonScript): Pair<Boolean, String> {
+    fun deriveHint() =
+      when {
+        this.isNotBracketed() -> "Answer should be bracketed"
+        else -> ""
+      }
+
+    val compareExpr = "${this.trim()} == ${that.trim()}"
     logger.debug { "Check answers expression: $compareExpr" }
     return try {
-      scriptEngine.eval(compareExpr) as Boolean
+      val result = scriptEngine.eval(compareExpr) as Boolean
+      result to (if (result) "" else deriveHint())
     } catch (e: ScriptException) {
-      logger.info { "Caught exception comparing $this and $other: ${e.message} in: $compareExpr" }
-      false
+      logger.info { "Caught exception comparing $this and $that: ${e.message} in: $compareExpr" }
+      false to deriveHint()
     } catch (e: Exception) {
-      false
-    } to ""
+      false to deriveHint()
+    }
   }
 
   suspend fun PipelineCall.checkAnswers(content: ReadingBatContent, user: User?, redis: Jedis?) {
