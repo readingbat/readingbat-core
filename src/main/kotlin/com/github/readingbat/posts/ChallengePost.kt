@@ -26,8 +26,7 @@ import com.github.readingbat.dsl.LanguageType.Java
 import com.github.readingbat.dsl.LanguageType.Kotlin
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.ReturnType
-import com.github.readingbat.dsl.ReturnType.BooleanType
-import com.github.readingbat.dsl.ReturnType.StringType
+import com.github.readingbat.dsl.ReturnType.*
 import com.github.readingbat.misc.BrowserSession
 import com.github.readingbat.misc.CheckAnswersJs.challengeSrc
 import com.github.readingbat.misc.CheckAnswersJs.groupSrc
@@ -128,6 +127,7 @@ internal object ChallengePost : KLogging() {
           else
             "Answer should be either true or false"
         returnType == StringType && this.isNotDoubleQuoted() -> "$languageType strings are double quoted"
+        returnType == IntType && this.isNotInt() -> "Answer should be an int"
         else -> ""
       }
 
@@ -155,6 +155,7 @@ internal object ChallengePost : KLogging() {
           else
             "Answer should be either True or False"
         returnType == StringType && this.isNotQuoted() -> "Python strings are either single or double quoted"
+        returnType == IntType && this.isNotInt() -> "Answer should be an int"
         else -> ""
       }
 
