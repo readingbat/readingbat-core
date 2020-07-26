@@ -119,7 +119,6 @@ internal object LanguageGroupPage {
                      redis,
                      msg)
 
-
           if (activeClassCode.isTeacherMode)
             displayClassDescription(activeClassCode, enrollees, redis)
 

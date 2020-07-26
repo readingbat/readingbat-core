@@ -27,6 +27,7 @@ import com.github.readingbat.misc.CSSNames.FUNC_COL
 import com.github.readingbat.misc.CSSNames.FUNC_ITEM
 import com.github.readingbat.misc.CSSNames.GROUP_CHOICE
 import com.github.readingbat.misc.CSSNames.GROUP_ITEM_SRC
+import com.github.readingbat.misc.CSSNames.HINT
 import com.github.readingbat.misc.CSSNames.INDENT_1EM
 import com.github.readingbat.misc.CSSNames.INDENT_2EM
 import com.github.readingbat.misc.CSSNames.KOTLIN_CODE
@@ -42,7 +43,8 @@ import kotlinx.css.properties.boxShadow
 
 internal object CSSNames {
   const val CHECK_ANSWERS = "checkAnswers"
-  const val FEEDBACK = "feedback"
+  const val FEEDBACK = "hint"
+  const val HINT = "feedback"
   const val FUNC_COL = "funcCol"
   const val ARROW = "arrow"
   const val REFS = "refs"
@@ -165,6 +167,10 @@ internal val cssContent by lazy {
       rule("td.$FEEDBACK") {
         width = 10.em
         border = "7px solid white"
+      }
+      rule("td.$HINT") {
+        //width = 10.em
+        //border = "7px solid white"
       }
       rule(".$DASHBOARD") {
         border = "1px solid #DDDDDD;"

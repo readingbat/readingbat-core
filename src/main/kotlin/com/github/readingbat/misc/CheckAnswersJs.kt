@@ -23,6 +23,7 @@ import com.github.readingbat.misc.Constants.RESP
 import com.github.readingbat.misc.Constants.SESSION_ID
 import com.github.readingbat.misc.Endpoints.CHECK_ANSWERS_ENDPOINT
 import com.github.readingbat.misc.ParameterIds.FEEDBACK_ID
+import com.github.readingbat.misc.ParameterIds.HINT_ID
 import com.github.readingbat.misc.ParameterIds.NEXTCHANCE_ID
 import com.github.readingbat.misc.ParameterIds.SPINNER_ID
 import com.github.readingbat.misc.ParameterIds.STATUS_ID
@@ -59,6 +60,8 @@ internal object CheckAnswersJs {
           var x = document.getElementById("$FEEDBACK_ID"+i);
           x.style.backgroundColor = "white";
           
+          document.getElementById("$HINT_ID"+i).innerHTML = '';
+          
           var ur = document.getElementById("$RESP"+i).value;
           data += "&$RESP" + i + "=" + encodeURIComponent(ur);
         }
@@ -87,16 +90,17 @@ internal object CheckAnswersJs {
         var results = eval(re.responseText);
         for (var i = 0; i < results.length; i++) {
           var x = document.getElementById("$FEEDBACK_ID"+i);
-          if (results[i] == 0) {
+          if (results[i][0] == 0) {
             x.style.backgroundColor = '$NO_ANSWER_COLOR';
             success = false;
           }
-          else if (results[i] == 1) {
+          else if (results[i][0] == 1) {
             x.style.backgroundColor = '$CORRECT_COLOR';
           }
           else {
             x.style.backgroundColor = "red";
             success = false;
+            document.getElementById("$HINT_ID"+i).innerHTML = results[i][1];
           }
         }
         

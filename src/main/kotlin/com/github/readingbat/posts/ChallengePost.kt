@@ -63,7 +63,8 @@ internal data class ClassEnrollment(val sessionId: String,
 internal data class ChallengeResults(val invocation: Invocation,
                                      val userResponse: String = "",
                                      val answered: Boolean = false,
-                                     val correct: Boolean = false)
+                                     val correct: Boolean = false,
+                                     val hint: String = "")
 
 internal class DashboardInfo(val userId: String,
                              val complete: Boolean,
@@ -114,21 +115,35 @@ internal object ChallengePost : KLogging() {
 
   private infix fun String.equalsAsJvmScalar(that: String) =
     when {
-      isEmpty() || that.isEmpty() -> false
-      isDoubleQuoted() || that.isDoubleQuoted() -> this == that
-      contains(".") || that.contains(".") -> toDouble() == that.toDouble()
-      isJavaBoolean() && that.isJavaBoolean() -> toBoolean() == that.toBoolean()
-      else -> toInt() == that.toInt()
+      this.isEmpty() || that.isEmpty() -> false
+      this.isDoubleQuoted() || that.isDoubleQuoted() -> this == that
+      this.contains(".") || that.contains(".") -> this.toDouble() == that.toDouble()
+      this.isJavaBoolean() && that.isJavaBoolean() -> this.toBoolean() == that.toBoolean()
+      else -> this.toInt() == that.toInt()
     }
 
-  private infix fun String.equalsAsPythonScalar(that: String) =
-    when {
-      isEmpty() || that.isEmpty() -> false
-      isDoubleQuoted() -> this == that
-      isSingleQuoted() -> singleToDoubleQuoted() == that
-      contains(".") || that.contains(".") -> toDouble() == that.toDouble()
-      isPythonBoolean() && that.isPythonBoolean() -> toBoolean() == that.toBoolean()
-      else -> toInt() == that.toInt()
+  private infix fun String.equalsAsPythonScalar(that: String): Pair<Boolean, String> =
+    try {
+      when {
+        isEmpty() || that.isEmpty() -> false
+        isDoubleQuoted() -> this == that
+        isSingleQuoted() -> singleToDoubleQuoted() == that
+        contains(".") || that.contains(".") -> toDouble() == that.toDouble()
+        isPythonBoolean() && that.isPythonBoolean() -> toBoolean() == that.toBoolean()
+        else -> toInt() == that.toInt()
+      } to ""
+    } catch (e: Exception) {
+      val hint =
+        when {
+          that.isPythonBoolean() ->
+            if (this.isJavaBoolean())
+              "Python booleans are either True or False"
+            else
+              "Answer should be either True or False"
+          this.isNotQuoted() && that.isQuoted() -> "Python strings are either single or double quoted"
+          else -> ""
+        }
+      false to hint
     }
 
   suspend fun PipelineCall.checkAnswers(content: ReadingBatContent, user: User?, redis: Jedis?) {
@@ -142,23 +157,23 @@ internal object ChallengePost : KLogging() {
     val kotlinScriptEngine by lazy { KotlinScript() }
     val pythonScriptEngine by lazy { PythonScript() }
 
-    fun checkWithAnswer(isJvm: Boolean, userResponse: String, answer: String) =
+    fun checkWithAnswer(isJvm: Boolean, userResponse: String, answer: String): Pair<Boolean, String> =
       try {
         logger.debug("""Comparing user response: "$userResponse" with answer: "$answer"""")
         if (isJvm) {
           if (answer.isBracketed())
-            answer.equalsAsKotlinList(userResponse, kotlinScriptEngine)
+            answer.equalsAsKotlinList(userResponse, kotlinScriptEngine) to ""
           else
-            userResponse equalsAsJvmScalar answer
+            (userResponse equalsAsJvmScalar answer) to ""
         }
         else {
           if (answer.isBracketed())
-            answer.equalsAsPythonList(userResponse, pythonScriptEngine)
+            answer.equalsAsPythonList(userResponse, pythonScriptEngine) to ""
           else
             userResponse equalsAsPythonScalar answer
         }
       } catch (e: Exception) {
-        false
+        false to "python error msg"
       }
 
     logger.debug("Found ${userResponses.size} user responses in $paramMap")
@@ -169,10 +184,12 @@ internal object ChallengePost : KLogging() {
           val userResponse = paramMap[RESP + i]?.trim() ?: throw InvalidConfigurationException("Missing user response")
           val answer = funcInfo.answers[i]
           val answered = userResponse.isNotBlank()
+          val correctAndHint = if (answered) checkWithAnswer(isJvm, userResponse, answer) else false to ""
           ChallengeResults(invocation = funcInfo.invocations[i],
                            userResponse = userResponse,
                            answered = answered,
-                           correct = if (answered) checkWithAnswer(isJvm, userResponse, answer) else false)
+                           correct = correctAndHint.first,
+                           hint = correctAndHint.second)
         }
 
     // Save whether all the answers for the challenge were correct
@@ -188,11 +205,12 @@ internal object ChallengePost : KLogging() {
       results
         .map {
           when {
-            !it.answered -> 0
-            it.correct -> 1
-            else -> 2
+            !it.answered -> listOf(0, "".toDoubleQuoted())
+            it.correct -> listOf(1, "".toDoubleQuoted())
+            else -> listOf(2, it.hint.toDoubleQuoted())
           }
         }
+    logger.debug { "Answers: $answerMapping" }
     call.respondText(answerMapping.toString())
   }
 

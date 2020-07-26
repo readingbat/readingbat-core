@@ -68,6 +68,7 @@ internal object ParameterIds {
   const val STATUS_ID = "statusId"
   const val SPINNER_ID = "spinnerId"
   const val FEEDBACK_ID = "feedbackId"
+  const val HINT_ID = "hintId"
   const val SUCCESS_ID = "successId"
   const val NEXTCHANCE_ID = "nextChanceId"
 }

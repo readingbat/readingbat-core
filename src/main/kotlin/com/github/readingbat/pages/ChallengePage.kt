@@ -32,6 +32,7 @@ import com.github.readingbat.misc.CSSNames.CODE_BLOCK
 import com.github.readingbat.misc.CSSNames.DASHBOARD
 import com.github.readingbat.misc.CSSNames.FEEDBACK
 import com.github.readingbat.misc.CSSNames.FUNC_COL
+import com.github.readingbat.misc.CSSNames.HINT
 import com.github.readingbat.misc.CSSNames.REFS
 import com.github.readingbat.misc.CSSNames.STATUS
 import com.github.readingbat.misc.CSSNames.SUCCESS
@@ -58,6 +59,7 @@ import com.github.readingbat.misc.KeyConstants.NAME_FIELD
 import com.github.readingbat.misc.Message
 import com.github.readingbat.misc.PageUtils.pathOf
 import com.github.readingbat.misc.ParameterIds.FEEDBACK_ID
+import com.github.readingbat.misc.ParameterIds.HINT_ID
 import com.github.readingbat.misc.ParameterIds.NEXTCHANCE_ID
 import com.github.readingbat.misc.ParameterIds.SPINNER_ID
 import com.github.readingbat.misc.ParameterIds.STATUS_ID
@@ -235,6 +237,7 @@ internal object ChallengePage : KLogging() {
                 }
               }
               td(classes = FEEDBACK) { id = "$FEEDBACK_ID$i" }
+              td(classes = HINT) { id = "$HINT_ID$i" }
             }
           }
       }
