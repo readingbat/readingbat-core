@@ -63,35 +63,12 @@ internal class FunctionInfo(val languageType: LanguageType,
 
   fun placeHolder(): String {
     return when (returnType) {
-      BooleanType -> {
-        if (languageType.isPython())
-          "True"
-        else
-          "true"
-      }
+      BooleanType -> if (languageType.isPython()) "True" else "true"
       IntType -> "0"
-      StringType -> {
-        if (languageType.isPython())
-          "''"
-        else
-          """"""""
-      }
-      BooleanListType,
-      BooleanArrayType -> {
-        if (languageType.isPython())
-          "[True, False]"
-        else
-          "[true, false]"
-      }
-      IntListType,
-      IntArrayType -> "[0, 1]"
-      StringListType,
-      StringArrayType -> {
-        if (languageType.isPython())
-          "['', '']"
-        else
-          """["", ""]"""
-      }
+      StringType -> if (languageType.isPython()) "''" else """"""""
+      BooleanListType, BooleanArrayType -> if (languageType.isPython()) "[True, False]" else "[true, false]"
+      IntListType, IntArrayType -> "[0, 1]"
+      StringListType, StringArrayType -> if (languageType.isPython()) "['', '']" else """["", ""]"""
       Runtime -> throw InvalidConfigurationException("Invalid return type")
     }
   }
