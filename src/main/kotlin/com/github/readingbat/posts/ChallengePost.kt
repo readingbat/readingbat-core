@@ -123,11 +123,11 @@ internal object ChallengePost : KLogging() {
       when {
         returnType == BooleanType ->
           if (this.isPythonBoolean())
-            "$languageType booleans are either true or false"
+            "$languageType boolean values are either true or false"
           else
             "Answer should be either true or false"
         returnType == StringType && this.isNotDoubleQuoted() -> "$languageType strings are double quoted"
-        returnType == IntType && this.isNotInt() -> "Answer should be an int"
+        returnType == IntType && this.isNotInt() -> "Answer should be an int value"
         else -> ""
       }
 
@@ -151,11 +151,11 @@ internal object ChallengePost : KLogging() {
       when {
         returnType == BooleanType ->
           if (this.isJavaBoolean())
-            "Python booleans are either True or False"
+            "Python boolean values are either True or False"
           else
             "Answer should be either True or False"
         returnType == StringType && this.isNotQuoted() -> "Python strings are either single or double quoted"
-        returnType == IntType && this.isNotInt() -> "Answer should be an int"
+        returnType == IntType && this.isNotInt() -> "Answer should be an int value"
         else -> ""
       }
 
