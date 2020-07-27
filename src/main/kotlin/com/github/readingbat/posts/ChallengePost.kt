@@ -146,28 +146,28 @@ internal object ChallengePost : KLogging() {
     }
   }
 
-  private fun String.equalsAsPythonScalar(that: String, returnType: ReturnType): Pair<Boolean, String> {
+  private fun String.equalsAsPythonScalar(answer: String, returnType: ReturnType): Pair<Boolean, String> {
     fun deriveHint() =
       when {
         returnType == BooleanType ->
-          if (this.isJavaBoolean())
+          if (isJavaBoolean())
             "Python boolean values are either True or False"
           else
             "Answer should be either True or False"
-        returnType == StringType && this.isNotQuoted() -> "Python strings are either single or double quoted"
-        returnType == IntType && this.isNotInt() -> "Answer should be an int value"
+        returnType == StringType && isNotQuoted() -> "Python strings are either single or double quoted"
+        returnType == IntType && isNotInt() -> "Answer should be an int value"
         else -> ""
       }
 
     return try {
       val result =
         when {
-          isEmpty() || that.isEmpty() -> false
-          this.isDoubleQuoted() -> this == that
-          isSingleQuoted() -> singleToDoubleQuoted() == that
-          contains(".") || that.contains(".") -> toDouble() == that.toDouble()
-          isPythonBoolean() && that.isPythonBoolean() -> toBoolean() == that.toBoolean()
-          else -> toInt() == that.toInt()
+          isEmpty() || answer.isEmpty() -> false
+          this.isDoubleQuoted() -> this == answer
+          isSingleQuoted() -> singleToDoubleQuoted() == answer
+          contains(".") || answer.contains(".") -> toDouble() == answer.toDouble()
+          isPythonBoolean() && answer.isPythonBoolean() -> toBoolean() == answer.toBoolean()
+          else -> toInt() == answer.toInt()
         }
       result to (if (result) "" else deriveHint())
     } catch (e: Exception) {
@@ -175,40 +175,40 @@ internal object ChallengePost : KLogging() {
     }
   }
 
-  private fun String.equalsAsKotlinList(that: String, scriptEngine: KotlinScript): Pair<Boolean, String> {
+  private fun String.equalsAsJvmList(answer: String, scriptEngine: KotlinScript): Pair<Boolean, String> {
     fun deriveHint() =
       when {
-        this.isNotBracketed() -> "Answer should be bracketed"
+        isNotBracketed() -> "Answer should be bracketed"
         else -> ""
       }
 
-    val compareExpr = "listOf(${this.trimEnds()}) == listOf(${that.trimEnds()})"
+    val compareExpr = "listOf(${trimEnds()}) == listOf(${answer.trimEnds()})"
     logger.debug { "Check answers expression: $compareExpr" }
     return try {
       val result = scriptEngine.eval(compareExpr) as Boolean
       result to (if (result) "" else deriveHint())
     } catch (e: ScriptException) {
-      logger.info { "Caught exception comparing $this and $that: ${e.message} in $compareExpr" }
+      logger.info { "Caught exception comparing $this and $answer: ${e.message} in $compareExpr" }
       false to deriveHint()
     } catch (e: Exception) {
       false to deriveHint()
     }
   }
 
-  private fun String.equalsAsPythonList(that: String, scriptEngine: PythonScript): Pair<Boolean, String> {
+  private fun String.equalsAsPythonList(answer: String, scriptEngine: PythonScript): Pair<Boolean, String> {
     fun deriveHint() =
       when {
-        this.isNotBracketed() -> "Answer should be bracketed"
+        isNotBracketed() -> "Answer should be bracketed"
         else -> ""
       }
 
-    val compareExpr = "${this.trim()} == ${that.trim()}"
+    val compareExpr = "${trim()} == ${answer.trim()}"
     logger.debug { "Check answers expression: $compareExpr" }
     return try {
       val result = scriptEngine.eval(compareExpr) as Boolean
       result to (if (result) "" else deriveHint())
     } catch (e: ScriptException) {
-      logger.info { "Caught exception comparing $this and $that: ${e.message} in: $compareExpr" }
+      logger.info { "Caught exception comparing $this and $answer: ${e.message} in: $compareExpr" }
       false to deriveHint()
     } catch (e: Exception) {
       false to deriveHint()
@@ -230,13 +230,13 @@ internal object ChallengePost : KLogging() {
       val isJvm = languageName in listOf(Java.languageName, Kotlin.languageName)
       return if (isJvm) {
         if (answer.isBracketed())
-          answer.equalsAsKotlinList(userResponse, kotlinScriptEngine)
+          userResponse.equalsAsJvmList(answer, kotlinScriptEngine)
         else
           userResponse.equalsAsJvmScalar(answer, funcInfo.returnType, languageName.toLanguageType())
       }
       else {
         if (answer.isBracketed())
-          answer.equalsAsPythonList(userResponse, pythonScriptEngine)
+          userResponse.equalsAsPythonList(answer, pythonScriptEngine)
         else
           userResponse.equalsAsPythonScalar(answer, funcInfo.returnType)
       }
