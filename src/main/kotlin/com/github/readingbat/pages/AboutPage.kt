@@ -65,6 +65,12 @@ internal object AboutPage {
             }
 
             p {
+              +"If you are interested in creating your own challenges, have a look at how to create your own repo"
+              a { href = "https://github.com/readingbat/readingbat-template/blob/master/README.md"; +" here" }
+              +"."
+            }
+
+            p {
               +"If you have any thoughts or suggestions about ReadingBat.com, please don't hesitate to email us at: "
               a {
                 href = "mailto:suggestions@readingbat.com?subject=ReadingBat"
