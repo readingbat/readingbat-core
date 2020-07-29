@@ -39,11 +39,11 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
   private val options = MutableDataSet().apply { set(HtmlRenderer.SOFT_BREAK, "<br />\n") }
   private val parser = Parser.builder(options).build()
   private val renderer = HtmlRenderer.builder(options).build()
+  private val srcPath = languageGroup.srcPath
 
   internal val languageType = languageGroup.languageType
   internal val repo = languageGroup.repo
   internal val branchName = languageGroup.branchName
-  internal val srcPath = languageGroup.srcPath
   internal val challenges = mutableListOf<T>()
   internal val parsedDescription: String
     get() {
@@ -66,8 +66,8 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
   // User properties
   var packageName = ""
   var description = ""
-  var includeFiles by IncludeFiles<T>(this, languageType)
-  var includeFilesWithType by IncludeFilesWithType<T>(this, languageType)
+  var includeFiles by IncludeFiles(this, languageType)
+  var includeFilesWithType by IncludeFilesWithType(this, languageType)
 
   private class IncludeFiles<T : Challenge>(val group: ChallengeGroup<T>, val languageType: LanguageType) {
     val includeList = mutableListOf<PatternReturnType>()
@@ -104,7 +104,7 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
 
   operator fun contains(challengeName: String) = hasChallenge(challengeName)
 
-  internal fun removeChallenge(challengeName: ChallengeName) = challenges.removeAt(indexOf(challengeName))
+  private fun removeChallenge(challengeName: ChallengeName) = challenges.removeAt(indexOf(challengeName))
 
   fun findChallenge(challengeName: String): T =
     challenges.firstOrNull { it.challengeName.value == challengeName }

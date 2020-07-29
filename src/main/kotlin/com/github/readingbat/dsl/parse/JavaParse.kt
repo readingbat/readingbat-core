@@ -32,9 +32,9 @@ internal object JavaParse : KLogging() {
   private val staticRegex = Regex("""static.+\(""")
   private val staticStartRegex = Regex("""\sstatic.+\(""")
   private val psRegex = Regex("""^\s+public\s+static.+\(""")
+  private val psvmRegex = Regex("""^\s*public\s+static\s+void\s+main.+\)""")
   internal val javaEndRegex = Regex("""\s*}\s*""")
   internal val svmRegex = Regex("""\s*static\s+void\s+main\(""")
-  internal val psvmRegex = Regex("""^\s*public\s+static\s+void\s+main.+\)""")
 
   private val prefixRegex =
     listOf(Regex("""System\.out\.println\("""),

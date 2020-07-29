@@ -64,13 +64,13 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
   private val options = MutableDataSet().apply { set(HtmlRenderer.SOFT_BREAK, "<br />\n") }
   private val parser = Parser.builder(options).build()
   private val renderer = HtmlRenderer.builder(options).build()
+  private val srcPath = languageGroup.srcPath
 
   // Allow description updates only if not found in the Content.kt decl
   private val descriptionSetInDsl by lazy { description.isNotEmpty() }
 
   protected val packageName = challengeGroup.packageName
 
-  internal val srcPath = languageGroup.srcPath
   internal val languageType = challengeGroup.languageType
   internal val languageName = languageType.languageName
   internal val groupName = challengeGroup.groupName
@@ -132,7 +132,8 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
       description
     }
     else {
-      code.lines().filter { it.startsWith(commentPrefix) && it.contains(DESC) }
+      code.lines().asSequence()
+        .filter { it.startsWith(commentPrefix) && it.contains(DESC) }
         .map { it.replaceFirst(commentPrefix, "") }   // Remove comment prefix
         .map { it.replaceFirst(DESC, "") }            // Remove @desc
         .map { it.trim() }                            // Strip leading and trailing spaces

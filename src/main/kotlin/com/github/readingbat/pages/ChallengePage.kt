@@ -69,7 +69,6 @@ import com.github.readingbat.misc.User.Companion.challengeAnswersKey
 import com.github.readingbat.misc.User.Companion.correctAnswersKey
 import com.github.readingbat.misc.User.Companion.fetchActiveClassCode
 import com.github.readingbat.misc.User.Companion.gson
-import com.github.readingbat.pages.ChallengePage.processAnswers
 import com.github.readingbat.pages.PageCommon.addLink
 import com.github.readingbat.pages.PageCommon.backLink
 import com.github.readingbat.pages.PageCommon.bodyHeader
@@ -210,6 +209,7 @@ internal object ChallengePage : KLogging() {
             colSpan = "2"
             style = "color: $headerColor"
             +"Function Call"
+            rawHtml(nbsp.text)
           }
           th {
             colSpan = "2"
