@@ -228,7 +228,7 @@ internal object ChallengePage : KLogging() {
                 // Pad short invocation calls
                 val minLength = 10
                 if (invocation.value.length < minLength)
-                  rawHtml(" " + List(minLength - invocation.value.length, { nbsp.text }).joinToString(" "))
+                  rawHtml(" " + List(minLength - invocation.value.length) { nbsp.text }.joinToString(" "))
               }
               td(classes = ARROW) { rawHtml("&rarr;") }
               td {
