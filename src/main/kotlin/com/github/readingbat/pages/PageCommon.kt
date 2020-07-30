@@ -23,6 +23,7 @@ import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.dsl.LanguageType.Companion.languageTypesInOrder
 import com.github.readingbat.dsl.ReadingBatContent
+import com.github.readingbat.dsl.isProduction
 import com.github.readingbat.misc.CSSNames.INDENT_1EM
 import com.github.readingbat.misc.CSSNames.SELECTED_TAB
 import com.github.readingbat.misc.ClassCode
@@ -61,7 +62,7 @@ internal object PageCommon {
 
     title(READING_BAT)
 
-    if (content.production && content.googleAnalyticsId.isNotBlank()) {
+    if (isProduction() && content.googleAnalyticsId.isNotBlank()) {
       script { async = true; src = "https://www.googletagmanager.com/gtag/js?id=${content.googleAnalyticsId}" }
       script {
         rawHtml("""

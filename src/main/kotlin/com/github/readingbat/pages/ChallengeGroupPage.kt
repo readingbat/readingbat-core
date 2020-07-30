@@ -23,6 +23,7 @@ import com.github.pambrose.common.util.pluralize
 import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.ChallengeGroup
 import com.github.readingbat.dsl.ReadingBatContent
+import com.github.readingbat.dsl.isProduction
 import com.github.readingbat.misc.BrowserSession
 import com.github.readingbat.misc.CSSNames.FUNC_ITEM
 import com.github.readingbat.misc.ClassCode
@@ -170,7 +171,7 @@ internal object ChallengeGroupPage : KLogging() {
     script {
       rawHtml(
         """
-          var wshost = location.origin.replace(${if (content.production) "/^https:/, 'wss:'" else "/^http:/, 'ws:'"})
+          var wshost = location.origin.replace(${if (isProduction()) "/^https:/, 'wss:'" else "/^http:/, 'ws:'"})
           var wsurl = wshost + '$CHALLENGE_GROUP_ENDPOINT/$languageName/$groupName/$classCode'
           var ws = new WebSocket(wsurl);
 

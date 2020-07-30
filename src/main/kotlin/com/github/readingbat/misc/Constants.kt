@@ -25,6 +25,7 @@ internal object Constants {
   const val MSG = "msg"
   const val BACK_PATH = "backPath"
   const val ROOT = "/"
+  const val RESET = "/reset"
   const val STATIC_ROOT = "/static"
   const val CHALLENGE_ROOT = "/content"
   const val PLAYGROUND_ROOT = "/playground"
@@ -38,7 +39,16 @@ internal object Constants {
   const val INVALID_RESET_ID = "Invalid reset_id"
   const val READING_BAT = "readingbat"
   const val SITE = "site"
+  const val CHALLENGES = "challenges"
+  const val CLASSES = "classes"
+  const val CONTENT = "content"
   const val IS_PRODUCTION = "$READING_BAT.$SITE.production"
+  const val URL_PREFIX = "$READING_BAT.$SITE.urlPrefix"
+  const val MAX_HISTORY_LENGTH = "$READING_BAT.$CHALLENGES.maxHistoryLength"
+  const val MAX_CLASS_COUNT = "$READING_BAT.$CLASSES.maxCount"
+  const val ANALYTICS_ID = "$READING_BAT.$SITE.googleAnalyticsId"
+  const val FILE_NAME = "$READING_BAT.$CONTENT.fileName"
+  const val VARIABLE_NAME = "$READING_BAT.$CONTENT.variableName"
 
   val DBMS_DOWN = Message("Database is down", true)
 }

@@ -45,17 +45,17 @@ import io.ktor.locations.post
 import io.ktor.routing.Routing
 
 internal object Locations {
-  fun Routing.locations(content: ReadingBatContent) {
-    get<Language> { languageLoc -> language(content, languageLoc, false) }
-    get<Language.Group> { groupLoc -> group(content, groupLoc, false) }
-    get<Language.Group.Challenge> { challengeLoc -> challenge(content, challengeLoc, false) }
-    get<PlaygroundRequest> { request -> playground(content, request, false) }
+  fun Routing.locations(content: () -> ReadingBatContent) {
+    get<Language> { languageLoc -> language(content.invoke(), languageLoc, false) }
+    get<Language.Group> { groupLoc -> group(content.invoke(), groupLoc, false) }
+    get<Language.Group.Challenge> { challengeLoc -> challenge(content.invoke(), challengeLoc, false) }
+    get<PlaygroundRequest> { request -> playground(content.invoke(), request, false) }
 
     authenticate(FORM) {
-      post<Language> { languageLoc -> language(content, languageLoc, true) }
-      post<Language.Group> { groupLoc -> group(content, groupLoc, true) }
-      post<Language.Group.Challenge> { challengeLoc -> challenge(content, challengeLoc, true) }
-      post<PlaygroundRequest> { request -> playground(content, request, true) }
+      post<Language> { languageLoc -> language(content.invoke(), languageLoc, true) }
+      post<Language.Group> { groupLoc -> group(content.invoke(), groupLoc, true) }
+      post<Language.Group.Challenge> { challengeLoc -> challenge(content.invoke(), challengeLoc, true) }
+      post<PlaygroundRequest> { request -> playground(content.invoke(), request, true) }
     }
   }
 

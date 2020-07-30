@@ -26,6 +26,7 @@ import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.AuthRoutes.LOGOUT
 import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
 import com.github.readingbat.misc.Constants.ICONS
+import com.github.readingbat.misc.Constants.RESET
 import com.github.readingbat.misc.Constants.RESET_ID
 import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.Constants.ROOT
@@ -80,14 +81,14 @@ import io.ktor.sessions.clear
 import io.ktor.sessions.sessions
 import redis.clients.jedis.Jedis
 
-internal fun Routing.userRoutes(content: ReadingBatContent) {
+internal fun Routing.userRoutes(content: () -> ReadingBatContent, resetFunc: () -> Unit) {
 
   suspend fun PipelineCall.respondWithDbmsCheck(block: (redis: Jedis) -> String) =
     try {
       val html =
         withRedisPool { redis ->
           if (redis.isNull())
-            dbmsDownPage(content)
+            dbmsDownPage(content.invoke())
           else
             block.invoke(redis)
         }
@@ -101,7 +102,7 @@ internal fun Routing.userRoutes(content: ReadingBatContent) {
       val html =
         withSuspendingRedisPool { redis ->
           if (redis.isNull())
-            dbmsDownPage(content)
+            dbmsDownPage(content.invoke())
           else
             block.invoke(redis)
         }
@@ -110,37 +111,66 @@ internal fun Routing.userRoutes(content: ReadingBatContent) {
       redirectTo { e.redirectUrl }
     }
 
-  get(ROOT) { redirectTo { defaultLanguageTab(content) } }
+  get(ROOT) { redirectTo { defaultLanguageTab(content.invoke()) } }
 
-  get(CHALLENGE_ROOT) { redirectTo { defaultLanguageTab(content) } }
+  get(RESET) {
+    resetFunc.invoke()
+    redirectTo { defaultLanguageTab(content.invoke()) }
+  }
 
-  get(PRIVACY_ENDPOINT) { respondWith { privacyPage(content) } }
+  get(CHALLENGE_ROOT) { redirectTo { defaultLanguageTab(content.invoke()) } }
 
-  get(ABOUT_ENDPOINT) { respondWith { aboutPage(content) } }
+  get(PRIVACY_ENDPOINT) { respondWith { privacyPage(content.invoke()) } }
 
-  get(CONFIG_ENDPOINT) { respondWith { configPage(content) } }
+  get(ABOUT_ENDPOINT) { respondWith { aboutPage(content.invoke()) } }
 
-  post(CHECK_ANSWERS_ENDPOINT) { withSuspendingRedisPool { redis -> checkAnswers(content, fetchUser(), redis) } }
+  get(CONFIG_ENDPOINT) { respondWith { configPage(content.invoke()) } }
+
+  post(CHECK_ANSWERS_ENDPOINT) {
+    withSuspendingRedisPool { redis ->
+      checkAnswers(content.invoke(),
+                   fetchUser(),
+                   redis)
+    }
+  }
 
   post(CLEAR_GROUP_ANSWERS_ENDPOINT) {
-    respondWithSuspendingDbmsCheck { redis -> clearGroupAnswers(content, fetchUser(), redis) }
+    respondWithSuspendingDbmsCheck { redis -> clearGroupAnswers(content.invoke(), fetchUser(), redis) }
   }
 
   post(CLEAR_CHALLENGE_ANSWERS_ENDPOINT) {
-    respondWithSuspendingDbmsCheck { redis -> clearChallengeAnswers(content, fetchUser(), redis) }
+    respondWithSuspendingDbmsCheck { redis -> clearChallengeAnswers(content.invoke(), fetchUser(), redis) }
   }
 
-  get(CREATE_ACCOUNT_ENDPOINT) { respondWithDbmsCheck { createAccountPage(content) } }
+  get(CREATE_ACCOUNT_ENDPOINT) { respondWithDbmsCheck { createAccountPage(content.invoke()) } }
 
-  post(CREATE_ACCOUNT_ENDPOINT) { respondWithSuspendingDbmsCheck { redis -> createAccount(content, redis) } }
+  post(CREATE_ACCOUNT_ENDPOINT) { respondWithSuspendingDbmsCheck { redis -> createAccount(content.invoke(), redis) } }
 
-  get(USER_PREFS_ENDPOINT) { respondWithDbmsCheck { redis -> userPrefsPage(content, fetchUser(), redis) } }
+  get(USER_PREFS_ENDPOINT) { respondWithDbmsCheck { redis -> userPrefsPage(content.invoke(), fetchUser(), redis) } }
 
-  post(USER_PREFS_ENDPOINT) { respondWithSuspendingDbmsCheck { redis -> userPrefs(content, fetchUser(), redis) } }
+  post(USER_PREFS_ENDPOINT) {
+    respondWithSuspendingDbmsCheck { redis ->
+      userPrefs(content.invoke(),
+                fetchUser(),
+                redis)
+    }
+  }
 
-  get(TEACHER_PREFS_ENDPOINT) { respondWithDbmsCheck { redis -> teacherPrefsPage(content, fetchUser(), redis) } }
+  get(TEACHER_PREFS_ENDPOINT) {
+    respondWithDbmsCheck { redis ->
+      teacherPrefsPage(content.invoke(),
+                       fetchUser(),
+                       redis)
+    }
+  }
 
-  post(TEACHER_PREFS_ENDPOINT) { respondWithSuspendingDbmsCheck { redis -> teacherPrefs(content, fetchUser(), redis) } }
+  post(TEACHER_PREFS_ENDPOINT) {
+    respondWithSuspendingDbmsCheck { redis ->
+      teacherPrefs(content.invoke(),
+                   fetchUser(),
+                   redis)
+    }
+  }
 
   get(ENABLE_STUDENT_MODE_ENDPOINT) {
     respondWithSuspendingDbmsCheck { redis -> enableStudentMode(fetchUser(), redis) }
@@ -150,20 +180,26 @@ internal fun Routing.userRoutes(content: ReadingBatContent) {
     respondWithSuspendingDbmsCheck { redis -> enableTeacherMode(fetchUser(), redis) }
   }
 
-  get(ADMIN_ENDPOINT) { respondWithDbmsCheck { redis -> adminDataPage(content, fetchUser(), redis = redis) } }
+  get(ADMIN_ENDPOINT) { respondWithDbmsCheck { redis -> adminDataPage(content.invoke(), fetchUser(), redis = redis) } }
 
-  post(ADMIN_ENDPOINT) { respondWithSuspendingDbmsCheck { redis -> adminActions(content, fetchUser(), redis) } }
+  post(ADMIN_ENDPOINT) {
+    respondWithSuspendingDbmsCheck { redis ->
+      adminActions(content.invoke(),
+                   fetchUser(),
+                   redis)
+    }
+  }
 
   // RESET_ID is passed here when user clicks on email URL
   get(PASSWORD_RESET_ENDPOINT) {
-    respondWithDbmsCheck { redis -> passwordResetPage(content, ResetId(queryParam(RESET_ID)), redis) }
+    respondWithDbmsCheck { redis -> passwordResetPage(content.invoke(), ResetId(queryParam(RESET_ID)), redis) }
   }
 
   post(PASSWORD_RESET_ENDPOINT) {
-    respondWithSuspendingDbmsCheck { redis -> sendPasswordReset(content, fetchUser(), redis) }
+    respondWithSuspendingDbmsCheck { redis -> sendPasswordReset(content.invoke(), fetchUser(), redis) }
   }
 
-  post(PASSWORD_CHANGE_ENDPOINT) { respondWithSuspendingDbmsCheck { redis -> changePassword(content, redis) } }
+  post(PASSWORD_CHANGE_ENDPOINT) { respondWithSuspendingDbmsCheck { redis -> changePassword(content.invoke(), redis) } }
 
   get(LOGOUT) {
     // Purge UserPrincipal from cookie data

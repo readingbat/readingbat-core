@@ -24,6 +24,7 @@ import com.github.pambrose.common.util.random
 import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.FunctionInfo
 import com.github.readingbat.dsl.ReadingBatContent
+import com.github.readingbat.dsl.isProduction
 import com.github.readingbat.misc.BrowserSession
 import com.github.readingbat.misc.CSSNames.ARROW
 import com.github.readingbat.misc.CSSNames.CHALLENGE_DESC
@@ -258,7 +259,7 @@ internal object ChallengePage : KLogging() {
     script {
       rawHtml(
         """
-          var wshost = location.origin.replace(${if (content.production) "/^https:/, 'wss:'" else "/^http:/, 'ws:'"});
+          var wshost = location.origin.replace(${if (isProduction()) "/^https:/, 'wss:'" else "/^http:/, 'ws:'"});
           var wsurl = wshost + '$CHALLENGE_ENDPOINT/$classCode';
           
           var ws = new WebSocket(wsurl);

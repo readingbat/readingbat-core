@@ -42,7 +42,7 @@ import redis.clients.jedis.JedisPubSub
 
 internal object WsEndoints : KLogging() {
 
-  fun Routing.wsEndpoints(content: ReadingBatContent) {
+  fun Routing.wsEndpoints(content: () -> ReadingBatContent) {
     webSocket("$CHALLENGE_ENDPOINT/{classCode}") {
       val classCode =
         call.parameters["classCode"]?.let { ClassCode(it) } ?: throw InvalidPathException("Missing class code")
@@ -76,7 +76,7 @@ internal object WsEndoints : KLogging() {
         call.parameters["groupName"]?.let { GroupName(it) } ?: throw InvalidPathException("Missing group name")
       val classCode =
         call.parameters["classCode"]?.let { ClassCode(it) } ?: throw InvalidPathException("Missing class code")
-      val challenges = content.findGroup(languageName.toLanguageType(), groupName).challenges
+      val challenges = content.invoke().findGroup(languageName.toLanguageType(), groupName).challenges
 
       incoming
         .receiveAsFlow()
@@ -90,7 +90,7 @@ internal object WsEndoints : KLogging() {
               challenges
                 .forEach { challenge ->
                   if (classCode.isTeacherMode && enrollees.isNotEmpty()) {
-                    val funcInfo = challenge.funcInfo(content)
+                    val funcInfo = challenge.funcInfo(content.invoke())
                     val challengeName = challenge.challengeName
                     val numCalls = funcInfo.invocations.size
                     var totAttemptedAtLeastOne = 0

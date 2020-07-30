@@ -47,7 +47,6 @@ import com.vladsch.flexmark.util.data.MutableDataSet
 import kotlinx.atomicfu.atomic
 import mu.KLogging
 import java.net.URL
-import java.util.concurrent.ConcurrentHashMap
 import kotlin.reflect.typeOf
 import kotlin.time.measureTime
 import kotlin.time.measureTimedValue
@@ -99,7 +98,7 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
 
   internal fun funcInfo(content: ReadingBatContent): FunctionInfo =
     if (repo.remote) {
-      sourcesMap
+      content.sourcesMap
         .computeIfAbsent(challengeId) {
           val path = pathOf((repo as AbstractRepo).rawSourcePrefix, branchName, srcPath, fqName)
           logger.info { """Fetching "$groupName/$fileName" from: $path""" }
@@ -110,7 +109,7 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
     }
     else {
       if (content.cacheChallenges)
-        sourcesMap.computeIfAbsent(challengeId) { compute.invoke() }
+        content.sourcesMap.computeIfAbsent(challengeId) { compute.invoke() }
       else
         compute.invoke()
     }
@@ -143,7 +142,6 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
 
   companion object : KLogging() {
     internal val counter = atomic(0)
-    internal val sourcesMap = ConcurrentHashMap<Int, FunctionInfo>()
     internal const val DESC = "@desc "
 
     internal fun challenge(challengeGroup: ChallengeGroup<*>, challengeName: ChallengeName, replaceable: Boolean) =

@@ -21,8 +21,6 @@ import com.github.pambrose.common.script.KotlinScript
 import com.github.pambrose.common.util.ContentSource
 import com.github.pambrose.common.util.GitHubFile
 import com.github.pambrose.common.util.GitHubRepo
-import com.github.readingbat.dsl.ReadingBatContent.Companion.contentMap
-import com.github.readingbat.dsl.ReadingBatContent.Companion.emptyReadingBatContent
 import com.github.readingbat.misc.Constants.IS_PRODUCTION
 import com.github.readingbat.server.ReadingBatServer
 import mu.KotlinLogging
@@ -50,19 +48,10 @@ private val logger = KotlinLogging.logger {}
 // This is accessible from the Content.kt descriptions
 fun isProduction() = System.getProperty(IS_PRODUCTION)?.toBoolean() ?: false
 
-fun ContentSource.eval(variableName: String = "content"): ReadingBatContent =
-  try {
-    // Catch exceptions so that remote code does not bring down the server
-    contentMap.computeIfAbsent(this.source) { readDsl(this, variableName) }
-  } catch (e: Throwable) {
-    logger.error(e) { "While evaluating: $this" }
-    emptyReadingBatContent
-  }
+fun ContentSource.eval(enclosingContent: ReadingBatContent, variableName: String = "content"): ReadingBatContent =
+  enclosingContent.evalContent(this, variableName)
 
-internal fun oldInclude(contentSource: ContentSource, variableName: String = "content") =
-  contentMap.computeIfAbsent(contentSource.source) { readDsl(contentSource, variableName) }
-
-internal fun readDsl(contentSource: ContentSource, variableName: String = "content"): ReadingBatContent {
+internal fun readContentDsl(contentSource: ContentSource, variableName: String = "content"): ReadingBatContent {
   val (code, dur) = measureTimedValue { contentSource.content }
   logger.info { """Read content from "${contentSource.source}" in $dur""" }
   val withImports = addImports(code, variableName)
@@ -79,7 +68,7 @@ internal fun addImports(code: String, variableName: String): String {
       .joinToString("\n")                                             // Turn into String
 
   val funcImports =
-    listOf(::readingBatContent, ::oldInclude)
+    listOf(::readingBatContent)
       .filter { code.contains("${it.name}(") }  // See if the function is referenced
       .map { "import ${it.fqMethodName}" }      // Convert to import stmt
       .filterNot { code.contains(it) }          // Do not include is import already present
