@@ -38,7 +38,7 @@ import kotlin.reflect.KProperty
 class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>,
                                     internal val groupNameSuffix: GroupName) {
   internal val groupName by lazy {
-    GroupName("${if (namePrefix.isNotBlank()) "$namePrefix: " else ""}${groupNameSuffix.value}")
+    GroupName("${if (namePrefix.isNotBlank()) "$namePrefix" else ""}${groupNameSuffix.value}")
   }
   private val groupPrefix by lazy { "${languageType.languageName}/$groupName" }
   private val options = MutableDataSet().apply { set(HtmlRenderer.SOFT_BREAK, "<br />\n") }
