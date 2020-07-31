@@ -33,7 +33,6 @@ import com.vladsch.flexmark.util.data.MutableDataSet
 import mu.KLogging
 import java.io.File
 import kotlin.reflect.KProperty
-import kotlin.time.measureTimedValue
 
 @ReadingBatDslMarker
 class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>, internal val groupName: GroupName) {
@@ -47,6 +46,7 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
   internal val repo = languageGroup.repo
   internal val branchName = languageGroup.branchName
   internal val challenges = mutableListOf<T>()
+  internal var namePrefix = ""
   internal val parsedDescription: String
     get() {
       val document = parser.parse(description.trimIndent())
@@ -54,26 +54,21 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
     }
 
   internal val fileList by lazy {
-    val timedValue =
-      measureTimedValue {
-        repo.let { root ->
-          when {
-            (root is GitHubRepo) -> {
-              val path = srcPath.ensureSuffix("/") + packageName
-              if (root.ownerType.isUser())
-                root.userDirectoryContents(branchName, path)
-              else
-                root.organizationDirectoryContents(branchName, path)
-            }
-            (root is FileSystemSource) ->
-              File(PageUtils.pathOf(root.pathPrefix, srcPath, packageName)).walk().map { it.name }.toList()
-            else -> throw InvalidConfigurationException("Invalid repo type")
-          }
+    repo.let { root ->
+      when {
+        root is GitHubRepo -> {
+          val path = srcPath.ensureSuffix("/") + packageName
+          if (root.ownerType.isUser())
+            root.userDirectoryContents(branchName, path)
+          else
+            root.organizationDirectoryContents(branchName, path)
         }
+        root is FileSystemSource ->
+          File(PageUtils.pathOf(root.pathPrefix, srcPath, packageName)).walk().map { it.name }.toList()
+        else -> throw InvalidConfigurationException("Invalid repo type")
       }
-    timedValue.value
+    }
   }
-
 
   // User properties
   var packageName = ""
@@ -151,10 +146,10 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
   @ReadingBatDslMarker
   infix fun String.returns(returnType: ReturnType) = PatternReturnType(this, returnType)
 
-  internal fun addChallenge(challengeFile: LanguageGroup.ChallengeFile) {
+  internal fun addChallenge(challengeFile: LanguageGroup.ChallengeFile, pattern: String) {
     val challengeName = ChallengeName(challengeFile.fileName.split(".").first())
     if (checkChallengeName(challengeName, false)) {
-      logger.debug { "Adding $challengeName by pattern" }
+      logger.debug { """Adding $challengeName by pattern "$pattern"""" }
       val challenge = challenge(this, challengeName, true)
       // Skip this next step for Java because returnType is calculated
       when {

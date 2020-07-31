@@ -18,7 +18,7 @@
 package com.github.readingbat.server
 
 import com.github.pambrose.common.util.FileSource
-import com.github.readingbat.dsl.ReadingBatContent.Companion.content
+import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.isProduction
 import com.github.readingbat.dsl.readContentDsl
 import com.github.readingbat.misc.Constants.ANALYTICS_ID
@@ -32,6 +32,7 @@ import com.github.readingbat.misc.Constants.VARIABLE_NAME
 import com.github.readingbat.server.AdminRoutes.adminRoutes
 import com.github.readingbat.server.Installs.installs
 import com.github.readingbat.server.Locations.locations
+import com.github.readingbat.server.ReadingBatServer.content
 import com.github.readingbat.server.ServerUtils.property
 import com.github.readingbat.server.WsEndoints.wsEndpoints
 import io.ktor.application.Application
@@ -41,6 +42,7 @@ import io.ktor.routing.routing
 import io.ktor.server.cio.CIO
 import io.ktor.server.engine.commandLineEnvironment
 import io.ktor.server.engine.embeddedServer
+import kotlinx.atomicfu.atomic
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import kotlin.time.milliseconds
@@ -48,6 +50,7 @@ import kotlin.time.milliseconds
 object ReadingBatServer {
   internal val timeStamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("M/d/y H:m:ss"))
   internal val startTimeMillis = System.currentTimeMillis().milliseconds
+  internal var content = atomic(ReadingBatContent())
 
   fun start(args: Array<String>) {
     val environment = commandLineEnvironment(args)

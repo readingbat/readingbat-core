@@ -21,6 +21,7 @@ import com.github.pambrose.common.util.GitHubRepo
 import mu.KLogging
 import org.kohsuke.github.GHRepository
 import org.kohsuke.github.GitHub
+import kotlin.time.measureTimedValue
 
 // https://github-api.kohsuke.org
 
@@ -39,9 +40,16 @@ object GitHubUtils : KLogging() {
   }
 
   private fun GitHubRepo.directoryContents(repo: GHRepository, branchName: String, path: String): List<String> {
-    val elems = path.split("/").filter { it.isNotEmpty() }
-    var currRoot = repo.getTree(branchName)
-    elems.forEach { elem -> currRoot = currRoot.tree.asSequence().filter { it.path == elem }.firstOrNull()?.asTree() }
-    return currRoot?.tree?.map { it.path } ?: emptyList()
+    val timedValue =
+      measureTimedValue {
+        val elems = path.split("/").filter { it.isNotEmpty() }
+        var currRoot = repo.getTree(branchName)
+        elems.forEach { elem ->
+          currRoot = currRoot.tree.asSequence().filter { it.path == elem }.firstOrNull()?.asTree()
+        }
+        currRoot?.tree?.map { it.path } ?: emptyList()
+      }
+    logger.info { "Fetched ${timedValue.value.size} files from $path in ${timedValue.duration}" }
+    return timedValue.value
   }
 }

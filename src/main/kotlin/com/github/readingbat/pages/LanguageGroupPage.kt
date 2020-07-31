@@ -68,6 +68,7 @@ internal object LanguageGroupPage {
         fun TR.groupItem(user: User?,
                          challengeGroup: ChallengeGroup<*>,
                          redis: Jedis?) {
+          val prefix = challengeGroup.namePrefix
           val groupName = challengeGroup.groupName
           val challenges = challengeGroup.challenges
 
@@ -88,7 +89,8 @@ internal object LanguageGroupPage {
 
           td(classes = FUNC_ITEM) {
             div(classes = GROUP_ITEM_SRC) {
-              a(classes = GROUP_CHOICE) { href = pathOf(CHALLENGE_ROOT, languageName, groupName); +groupName.value }
+              val name = "${if (prefix.isNotBlank()) "$prefix: " else ""}${groupName.value}"
+              a(classes = GROUP_CHOICE) { href = pathOf(CHALLENGE_ROOT, languageName, groupName); +name }
 
               p { rawHtml(if (challengeGroup.description.isNotBlank()) challengeGroup.parsedDescription else nbsp.text) }
 

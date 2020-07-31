@@ -66,7 +66,7 @@ val content by lazy {
     include(GitHubContent(Organization, "readingbat", "readingbat-python-content", srcPath = "src").eval(this).python)
     include(GitHubContent(Organization, "readingbat", "readingbat-java-content").eval(this).kotlin)
 
-    include(GitHubContent(User, "maleich", "ReadingBat-content").eval(this).python)
+    include(GitHubContent(User, "pambrose", "ReadingBat-content").eval(this).python, "Athenian")
 
     java {
       group("test1") {

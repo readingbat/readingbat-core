@@ -25,7 +25,6 @@ import com.github.readingbat.server.ChallengeName
 import com.github.readingbat.server.GroupName
 import com.github.readingbat.server.Language
 import com.github.readingbat.server.LanguageName
-import kotlinx.atomicfu.atomic
 import mu.KLogging
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -115,9 +114,14 @@ class ReadingBatContent {
   }
 
   @ReadingBatDslMarker
-  fun <T : Challenge> include(languageGroup: LanguageGroup<T>) {
+  fun <T : Challenge> include(languageGroup: LanguageGroup<T>, namePrefix: String = "") {
     val group = findLanguage(languageGroup.languageType) as LanguageGroup<T>
-    languageGroup.challengeGroups.forEach { group.addGroup(it) }
+    languageGroup.challengeGroups
+      .forEach {
+        if (namePrefix.isNotBlank())
+          it.namePrefix = namePrefix
+        group.addGroup(it)
+      }
   }
 
   internal fun checkLanguage(languageType: LanguageType) {
@@ -136,7 +140,5 @@ class ReadingBatContent {
 
   override fun toString() = "Content(languageList=$languageList)"
 
-  companion object : KLogging() {
-    internal var content = atomic(ReadingBatContent())
-  }
+  companion object : KLogging()
 }

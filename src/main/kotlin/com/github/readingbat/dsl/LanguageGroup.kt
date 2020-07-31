@@ -74,7 +74,7 @@ class LanguageGroup<T : Challenge>(internal val content: ReadingBatContent,
         .filter { !it.contains(excludes) && it.contains(regex) }
         .map { ChallengeFile(it, prt.returnType) }
         .sortedWith(compareBy { it.fileName })
-        .forEach { group.addChallenge(it) }
+        .forEach { group.addChallenge(it, prt.pattern) }
     }
   }
 
