@@ -19,6 +19,7 @@ package com.github.readingbat.dsl
 
 import com.github.pambrose.common.util.GitHubRepo
 import mu.KLogging
+import org.kohsuke.github.GHRepository
 import org.kohsuke.github.GitHub
 
 // https://github-api.kohsuke.org
@@ -27,11 +28,20 @@ object GitHubUtils : KLogging() {
 
   private val github by lazy { GitHub.connect() }
 
-  fun GitHubRepo.directoryContents(branchName: String, path: String): List<String> {
-    val repo = github.getOrganization(organizationName).getRepository(repoName)
+  fun GitHubRepo.userDirectoryContents(branchName: String, path: String): List<String> {
+    val repo = github.getUser(ownerName).getRepository(repoName)
+    return directoryContents(repo, branchName, path)
+  }
+
+  fun GitHubRepo.organizationDirectoryContents(branchName: String, path: String): List<String> {
+    val repo: GHRepository = github.getOrganization(ownerName).getRepository(repoName)
+    return directoryContents(repo, branchName, path)
+  }
+
+  private fun GitHubRepo.directoryContents(repo: GHRepository, branchName: String, path: String): List<String> {
     val elems = path.split("/").filter { it.isNotEmpty() }
     var currRoot = repo.getTree(branchName)
-    elems.forEach { elem -> currRoot = currRoot.tree.asSequence().filter { it.path == elem }.first().asTree() }
-    return currRoot.tree.map { it.path }
+    elems.forEach { elem -> currRoot = currRoot.tree.asSequence().filter { it.path == elem }.firstOrNull()?.asTree() }
+    return currRoot?.tree?.map { it.path } ?: emptyList()
   }
 }

@@ -21,6 +21,7 @@ import com.github.pambrose.common.script.KotlinScript
 import com.github.pambrose.common.util.ContentSource
 import com.github.pambrose.common.util.GitHubFile
 import com.github.pambrose.common.util.GitHubRepo
+import com.github.pambrose.common.util.OwnerType
 import com.github.readingbat.misc.Constants.IS_PRODUCTION
 import com.github.readingbat.server.ReadingBatServer
 import mu.KotlinLogging
@@ -30,12 +31,13 @@ import kotlin.time.measureTimedValue
 @DslMarker
 annotation class ReadingBatDslMarker
 
-class GitHubContent(organization: String,
+class GitHubContent(ownerType: OwnerType,
+                    ownerName: String,
                     repo: String,
                     branch: String = "master",
                     srcPath: String = "src/main/kotlin",
                     fileName: String = "Content.kt") :
-  GitHubFile(GitHubRepo(organization, repo),
+  GitHubFile(GitHubRepo(ownerType, ownerName, repo),
              branchName = branch,
              srcPath = srcPath,
              fileName = fileName)

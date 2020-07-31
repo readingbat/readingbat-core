@@ -21,7 +21,8 @@ import com.github.pambrose.common.util.FileSystemSource
 import com.github.pambrose.common.util.GitHubRepo
 import com.github.pambrose.common.util.ensureSuffix
 import com.github.readingbat.dsl.Challenge.Companion.challenge
-import com.github.readingbat.dsl.GitHubUtils.directoryContents
+import com.github.readingbat.dsl.GitHubUtils.organizationDirectoryContents
+import com.github.readingbat.dsl.GitHubUtils.userDirectoryContents
 import com.github.readingbat.dsl.ReturnType.Runtime
 import com.github.readingbat.misc.PageUtils
 import com.github.readingbat.server.ChallengeName
@@ -32,6 +33,7 @@ import com.vladsch.flexmark.util.data.MutableDataSet
 import mu.KLogging
 import java.io.File
 import kotlin.reflect.KProperty
+import kotlin.time.measureTimedValue
 
 @ReadingBatDslMarker
 class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>, internal val groupName: GroupName) {
@@ -52,14 +54,24 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
     }
 
   internal val fileList by lazy {
-    repo.let { root ->
-      when {
-        (root is GitHubRepo) -> root.directoryContents(branchName, srcPath.ensureSuffix("/") + packageName)
-        (root is FileSystemSource) ->
-          File(PageUtils.pathOf(root.pathPrefix, srcPath, packageName)).walk().map { it.name }.toList()
-        else -> throw InvalidConfigurationException("Invalid repo type")
+    val timedValue =
+      measureTimedValue {
+        repo.let { root ->
+          when {
+            (root is GitHubRepo) -> {
+              val path = srcPath.ensureSuffix("/") + packageName
+              if (root.ownerType.isUser())
+                root.userDirectoryContents(branchName, path)
+              else
+                root.organizationDirectoryContents(branchName, path)
+            }
+            (root is FileSystemSource) ->
+              File(PageUtils.pathOf(root.pathPrefix, srcPath, packageName)).walk().map { it.name }.toList()
+            else -> throw InvalidConfigurationException("Invalid repo type")
+          }
+        }
       }
-    }
+    timedValue.value
   }
 
 
