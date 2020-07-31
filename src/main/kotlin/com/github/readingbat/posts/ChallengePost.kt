@@ -122,10 +122,11 @@ internal object ChallengePost : KLogging() {
     fun deriveHint() =
       when {
         returnType == BooleanType ->
-          if (this.isPythonBoolean())
-            "$languageType boolean values are either true or false"
-          else
-            "Answer should be either true or false"
+          when {
+            this.isPythonBoolean() -> "$languageType boolean values are either true or false"
+            !isJavaBoolean() -> "Answer should be either true or false"
+            else -> ""
+          }
         returnType == StringType && this.isNotDoubleQuoted() -> "$languageType strings are double quoted"
         returnType == IntType && this.isNotInt() -> "Answer should be an int value"
         else -> ""
@@ -150,10 +151,11 @@ internal object ChallengePost : KLogging() {
     fun deriveHint() =
       when {
         returnType == BooleanType ->
-          if (isJavaBoolean())
-            "Python boolean values are either True or False"
-          else
-            "Answer should be either True or False"
+          when {
+            isJavaBoolean() -> "Python boolean values are either True or False"
+            !isPythonBoolean() -> "Answer should be either True or False"
+            else -> ""
+          }
         returnType == StringType && isNotQuoted() -> "Python strings are either single or double quoted"
         returnType == IntType && isNotInt() -> "Answer should be an int value"
         else -> ""

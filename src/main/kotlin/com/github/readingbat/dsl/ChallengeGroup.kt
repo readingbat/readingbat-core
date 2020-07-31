@@ -35,8 +35,12 @@ import java.io.File
 import kotlin.reflect.KProperty
 
 @ReadingBatDslMarker
-class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>, internal val groupName: GroupName) {
-  private val prefix by lazy { "${languageType.languageName}/$groupName" }
+class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>,
+                                    internal val groupNameSuffix: GroupName) {
+  internal val groupName by lazy {
+    GroupName("${if (namePrefix.isNotBlank()) "$namePrefix: " else ""}${groupNameSuffix.value}")
+  }
+  private val groupPrefix by lazy { "${languageType.languageName}/$groupName" }
   private val options = MutableDataSet().apply { set(HtmlRenderer.SOFT_BREAK, "<br />\n") }
   private val parser = Parser.builder(options).build()
   private val renderer = HtmlRenderer.builder(options).build()
@@ -115,14 +119,14 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
 
   fun findChallenge(challengeName: String): T =
     challenges.firstOrNull { it.challengeName.value == challengeName }
-      ?: throw InvalidPathException("Challenge $prefix/$challengeName not found.")
+      ?: throw InvalidPathException("Challenge $groupPrefix/$challengeName not found.")
 
   operator fun get(challengeName: String): T = findChallenge(challengeName)
 
   internal fun indexOf(challengeName: ChallengeName): Int {
     val pos = challenges.indexOfFirst { it.challengeName == challengeName }
     if (pos == -1)
-      throw InvalidPathException("Challenge $prefix/$challengeName not found.")
+      throw InvalidPathException("Challenge $groupPrefix/$challengeName not found.")
     return pos
   }
 
@@ -168,7 +172,7 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
       }
       else {
         if (throwExceptionIfPresent)
-          throw InvalidConfigurationException("Challenge $prefix/$challengeName already exists")
+          throw InvalidConfigurationException("Challenge $groupPrefix/$challengeName already exists")
         else
           return false
       }

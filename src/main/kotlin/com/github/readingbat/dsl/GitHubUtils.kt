@@ -49,7 +49,7 @@ object GitHubUtils : KLogging() {
         }
         currRoot?.tree?.map { it.path } ?: emptyList()
       }
-    logger.info { "Fetched ${timedValue.value.size} files from $path in ${timedValue.duration}" }
+    logger.info { "Found ${timedValue.value.size} files in $path in ${timedValue.duration}" }
     return timedValue.value
   }
 }

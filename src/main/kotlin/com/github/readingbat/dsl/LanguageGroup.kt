@@ -46,8 +46,8 @@ class LanguageGroup<T : Challenge>(internal val content: ReadingBatContent,
   internal fun addGroup(group: ChallengeGroup<T>) {
     if (languageType != group.languageType)
       throw InvalidConfigurationException("${group.groupName} language type mismatch: $languageType and ${group.languageType}")
-    if (hasGroup(group.groupName.value))
-      throw InvalidConfigurationException("Duplicate group name: ${group.groupName}")
+    if (hasGroupNameSuffix(group.groupNameSuffix))
+      throw InvalidConfigurationException("Duplicate group name: ${group.groupNameSuffix}")
     challengeGroups += group
   }
 
@@ -56,6 +56,9 @@ class LanguageGroup<T : Challenge>(internal val content: ReadingBatContent,
   fun isNotEmpty() = challengeGroups.isNotEmpty()
 
   fun hasGroup(groupName: String) = challengeGroups.any { it.groupName.value == groupName }
+
+  private fun hasGroupNameSuffix(groupNameSuffix: GroupName) =
+    challengeGroups.any { it.groupNameSuffix.value == groupNameSuffix.value }
 
   private val excludes = Regex("^__.*__.*$")
 

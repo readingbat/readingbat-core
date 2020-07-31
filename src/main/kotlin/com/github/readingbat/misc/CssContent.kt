@@ -135,7 +135,7 @@ internal val cssContent by lazy {
         width = 275.px
       }
       rule(".$GROUP_CHOICE") {
-        fontSize = 166.pct
+        fontSize = 155.pct
       }
       rule("th, td") {
         padding = "1px"

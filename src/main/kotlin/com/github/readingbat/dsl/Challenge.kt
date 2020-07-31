@@ -72,7 +72,7 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
 
   internal val languageType = challengeGroup.languageType
   internal val languageName = languageType.languageName
-  internal val groupName = challengeGroup.groupName
+  internal val groupName by lazy { challengeGroup.groupName }
   internal val gitpodUrl by lazy { pathOf(repo.sourcePrefix, "blob/${branchName}", srcPath, fqName) }
 
 
