@@ -41,12 +41,14 @@ import com.github.readingbat.misc.FormFields.GROUP_NAME_KEY
 import com.github.readingbat.misc.FormFields.LANGUAGE_NAME_KEY
 import com.github.readingbat.misc.KeyConstants.CORRECT_ANSWERS_KEY
 import com.github.readingbat.misc.PageUtils.pathOf
+import com.github.readingbat.misc.ParameterIds.DISLIKE_CLEAR
 import com.github.readingbat.misc.ParameterIds.DISLIKE_COLOR
 import com.github.readingbat.misc.ParameterIds.LIKE_CLEAR
 import com.github.readingbat.misc.ParameterIds.LIKE_COLOR
 import com.github.readingbat.misc.User
 import com.github.readingbat.misc.User.Companion.gson
 import com.github.readingbat.misc.User.Companion.saveChallengeAnswers
+import com.github.readingbat.misc.User.Companion.saveLikeDislike
 import com.github.readingbat.server.*
 import com.github.readingbat.server.ChallengeName.Companion.getChallengeName
 import com.github.readingbat.server.GroupName.Companion.getGroupName
@@ -363,27 +365,25 @@ internal object ChallengePost : KLogging() {
     val names = ChallengeNames(paramMap)
     val challenge = content.findChallenge(names.languageName, names.groupName, names.challengeName)
 
-    val likeArg = paramMap[LIKE_DESC]?.trim() ?: throw InvalidConfigurationException("Missing likedislike argument")
-
-    logger.debug { "Like/Dislike arg: $likeArg" }
-
-    // Save whether all the answers for the challenge were correct
-    if (redis.isNotNull()) {
-      val browserSession = call.sessions.get<BrowserSession>()
-      //user.saveChallengeAnswers(content, browserSession, names, paramMap, funcInfo, userResponses, results, redis)
-    }
-
-    //delay(200.milliseconds.toLongMilliseconds())
+    val likeArg = paramMap[LIKE_DESC]?.trim() ?: throw InvalidConfigurationException("Missing like/dislike argument")
 
     // Return values: 0 = not answered, 1 = like, 2 = dislike
-    val likeResp =
+    val likeVal =
       when (likeArg) {
         LIKE_CLEAR -> 1
         LIKE_COLOR,
         DISLIKE_COLOR -> 0
-        else -> 2
+        DISLIKE_CLEAR -> 2
+        else -> throw InvalidConfigurationException("Invalid like/dislike argument: $likeArg")
       }
-    logger.debug { "Like/Dislike response: $likeResp" }
-    call.respondText(likeResp.toString())
+
+    logger.debug { "Like/dislike arg -- response: $likeArg -- $likeVal" }
+
+    if (redis.isNotNull()) {
+      val browserSession = call.sessions.get<BrowserSession>()
+      user.saveLikeDislike(content, browserSession, names, paramMap, likeVal, redis)
+    }
+
+    call.respondText(likeVal.toString())
   }
 }

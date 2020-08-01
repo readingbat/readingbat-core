@@ -17,10 +17,7 @@
 
 package com.github.readingbat.pages
 
-import com.github.pambrose.common.util.decode
-import com.github.pambrose.common.util.isNotNull
-import com.github.pambrose.common.util.isNull
-import com.github.pambrose.common.util.random
+import com.github.pambrose.common.util.*
 import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.FunctionInfo
 import com.github.readingbat.dsl.ReadingBatContent
@@ -40,8 +37,8 @@ import com.github.readingbat.misc.CSSNames.LIKE_BUTTONS
 import com.github.readingbat.misc.CSSNames.STATUS
 import com.github.readingbat.misc.CSSNames.SUCCESS
 import com.github.readingbat.misc.CSSNames.USER_RESP
+import com.github.readingbat.misc.CheckAnswersJs.PROCESS_USER_ANSWERS_JS_FUNC
 import com.github.readingbat.misc.CheckAnswersJs.checkAnswersScript
-import com.github.readingbat.misc.CheckAnswersJs.processUserAnswers
 import com.github.readingbat.misc.ClassCode
 import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
 import com.github.readingbat.misc.Constants.CORRECT_COLOR
@@ -59,7 +56,7 @@ import com.github.readingbat.misc.FormFields.GROUP_NAME_KEY
 import com.github.readingbat.misc.FormFields.LANGUAGE_NAME_KEY
 import com.github.readingbat.misc.KeyConstants.CORRECT_ANSWERS_KEY
 import com.github.readingbat.misc.KeyConstants.NAME_FIELD
-import com.github.readingbat.misc.LikeDislikeJs.likeDislike
+import com.github.readingbat.misc.LikeDislikeJs.LIKE_DISLIKE_JS_FUNC
 import com.github.readingbat.misc.LikeDislikeJs.likeDislikeScript
 import com.github.readingbat.misc.Message
 import com.github.readingbat.misc.PageUtils.pathOf
@@ -80,6 +77,7 @@ import com.github.readingbat.misc.User.Companion.challengeAnswersKey
 import com.github.readingbat.misc.User.Companion.correctAnswersKey
 import com.github.readingbat.misc.User.Companion.fetchActiveClassCode
 import com.github.readingbat.misc.User.Companion.gson
+import com.github.readingbat.misc.User.Companion.likeDislikeKey
 import com.github.readingbat.pages.PageCommon.addLink
 import com.github.readingbat.pages.PageCommon.backLink
 import com.github.readingbat.pages.PageCommon.bodyHeader
@@ -246,7 +244,7 @@ internal object ChallengePage : KLogging() {
               td {
                 textInput(classes = USER_RESP) {
                   id = "$RESP$i"
-                  onKeyDown = "$processUserAnswers(event, ${funcInfo.answers.size})"
+                  onKeyDown = "$PROCESS_USER_ANSWERS_JS_FUNC(event, ${funcInfo.answers.size})"
                   val answer = answers[invocation.value] ?: ""
                   if (answer.isNotBlank())
                     value = answer
@@ -261,7 +259,8 @@ internal object ChallengePage : KLogging() {
       }
 
       this@displayQuestions.processAnswers(funcInfo, challenge)
-      this@displayQuestions.likeDislike()
+      if (redis.isNotNull())
+        this@displayQuestions.likeDislike(user, browserSession, challenge, redis)
       this@displayQuestions.otherLinks(challenge)
       if (redis.isNotNull())
         this@displayQuestions.clearChallengeAnswerHistory(user, browserSession, challenge)
@@ -388,7 +387,6 @@ internal object ChallengePage : KLogging() {
       val groupName = challenge.groupName
       val challengeName = challenge.challengeName
       val challengeAnswersKey = user.challengeAnswersKey(browserSession, languageName, groupName, challengeName)
-
       if (challengeAnswersKey.isNotEmpty()) redis.hgetAll(challengeAnswersKey) else emptyMap()
     }
 
@@ -399,7 +397,7 @@ internal object ChallengePage : KLogging() {
         tr {
           td {
             button(classes = CHECK_ANSWERS) {
-              onClick = "$processUserAnswers(null, ${funcInfo.answers.size});"; +"Check My Answers"
+              onClick = "$PROCESS_USER_ANSWERS_JS_FUNC(null, ${funcInfo.answers.size});"; +"Check My Answers"
             }
           }
 
@@ -457,38 +455,47 @@ internal object ChallengePage : KLogging() {
     }
   }
 
-  private fun BODY.likeDislike() {
+  private fun BODY.likeDislike(user: User?, browserSession: BrowserSession?, challenge: Challenge, redis: Jedis) {
+    val languageName = challenge.languageType.languageName
+    val groupName = challenge.groupName
+    val challengeName = challenge.challengeName
+
+    val likeDislikeKey = user.likeDislikeKey(browserSession, languageName, groupName, challengeName)
+    val likeDislikeVal = if (likeDislikeKey.isNotEmpty()) redis[likeDislikeKey]?.toInt() ?: 0 else 0
+
     p {
       table {
         val imgSize = "40"
         tr {
           td {
             id = LIKE_CLEAR
+            style = "display:${if (likeDislikeVal == 0 || likeDislikeVal == 2) "inline" else "none" + ";"}"
             button(classes = LIKE_BUTTONS) {
-              onClick = """$likeDislike(null, "$LIKE_CLEAR" );""";
+              onClick = "$LIKE_DISLIKE_JS_FUNC(${LIKE_CLEAR.toDoubleQuoted()});"
               img { height = imgSize; src = "$STATIC_ROOT/like-clear.png" }
             }
           }
           td {
             id = LIKE_COLOR
-            style = "display:none;"
+            style = "display:${if (likeDislikeVal == 1) "inline" else "none" + ";"}"
             button(classes = LIKE_BUTTONS) {
-              onClick = """$likeDislike(null, "$LIKE_COLOR" );""";
+              onClick = "$LIKE_DISLIKE_JS_FUNC(${LIKE_COLOR.toDoubleQuoted()});"
               img { height = imgSize; src = "$STATIC_ROOT/like-color.png" }
             }
           }
           td {
             id = DISLIKE_CLEAR
+            style = "display:${if (likeDislikeVal == 0 || likeDislikeVal == 1) "inline" else "none" + ";"}"
             button(classes = LIKE_BUTTONS) {
-              onClick = """$likeDislike(null, "$DISLIKE_CLEAR" );""";
+              onClick = "$LIKE_DISLIKE_JS_FUNC(${DISLIKE_CLEAR.toDoubleQuoted()});"
               img { height = imgSize; src = "$STATIC_ROOT/dislike-clear.png" }
             }
           }
           td {
             id = DISLIKE_COLOR
-            style = "display:none;"
+            style = "display:${if (likeDislikeVal == 2) "inline" else "none" + ";"}"
             button(classes = LIKE_BUTTONS) {
-              onClick = """$likeDislike(null, "$DISLIKE_COLOR" );""";
+              onClick = "$LIKE_DISLIKE_JS_FUNC(${DISLIKE_COLOR.toDoubleQuoted()});"
               img { height = imgSize; src = "$STATIC_ROOT/dislike-color.png" }
             }
           }

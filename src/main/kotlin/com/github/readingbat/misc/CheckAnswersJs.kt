@@ -39,7 +39,7 @@ internal object CheckAnswersJs {
   const val langSrc = "lang"
   const val groupSrc = "groupName"
   const val challengeSrc = "challengeName"
-  const val processUserAnswers = "processUserAnswers"
+  const val PROCESS_USER_ANSWERS_JS_FUNC = "processUserAnswers"
 
   private val sessionCounter = atomic(0)
 
@@ -48,7 +48,7 @@ internal object CheckAnswersJs {
       """
     var re = new XMLHttpRequest();
 
-    function $processUserAnswers(event, cnt) { 
+    function $PROCESS_USER_ANSWERS_JS_FUNC(event, cnt) { 
      
       // event will equal null on button press
       if (event != null && (event.keyCode != 13 && event.keyCode != 9)) 

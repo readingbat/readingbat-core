@@ -37,7 +37,7 @@ internal object LikeDislikeJs {
   const val langSrc = "lang"
   const val groupSrc = "groupName"
   const val challengeSrc = "challengeName"
-  const val likeDislike = "likeDislike"
+  const val LIKE_DISLIKE_JS_FUNC = "likeDislike"
 
   private val sessionCounter = atomic(0)
 
@@ -46,11 +46,7 @@ internal object LikeDislikeJs {
       """
     var re = new XMLHttpRequest();
 
-    function $likeDislike(event, desc) { 
-     
-      // event will equal null on button press
-      if (event != null && (event.keyCode != 13 && event.keyCode != 9)) 
-        return 1;
+    function $LIKE_DISLIKE_JS_FUNC(desc) { 
 
       var data = "$SESSION_ID=${sessionCounter.incrementAndGet()}&$langSrc=$languageName&$groupSrc=$groupName&$challengeSrc=$challengeName";
       data += "&$LIKE_DESC=" + encodeURIComponent(desc);
