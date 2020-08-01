@@ -51,14 +51,14 @@ internal object LikeDislikeJs {
       var data = "$SESSION_ID=${sessionCounter.incrementAndGet()}&$langSrc=$languageName&$groupSrc=$groupName&$challengeSrc=$challengeName";
       data += "&$LIKE_DESC=" + encodeURIComponent(desc);
       
-      re.onreadystatechange = handleDone;  
+      re.onreadystatechange = likeDislikeHandleDone;  
       re.open("POST", '$LIKE_DISLIKE_ENDPOINT', true);
       re.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
       re.send(data);
       return 1;
     }
     
-    function handleDone(){
+    function likeDislikeHandleDone(){
       if(re.readyState == 1) {  // starting
         document.getElementById('$LIKE_SPINNER_ID').innerHTML = '<i class="fa fa-spinner fa-spin" style="font-size:24px"></i>';
         document.getElementById('$LIKE_STATUS_ID').innerHTML = 'Setting like/dislike...';
