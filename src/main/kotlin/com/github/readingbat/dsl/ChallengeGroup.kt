@@ -38,7 +38,7 @@ import kotlin.reflect.KProperty
 class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>,
                                     internal val groupNameSuffix: GroupName) {
   internal val groupName by lazy {
-    GroupName("${if (namePrefix.isNotBlank()) "$namePrefix" else ""}${groupNameSuffix.value}")
+    GroupName("${if (namePrefix.isNotBlank()) namePrefix else ""}${groupNameSuffix.value}")
   }
   private val groupPrefix by lazy { "${languageType.languageName}/$groupName" }
   private val options = MutableDataSet().apply { set(HtmlRenderer.SOFT_BREAK, "<br />\n") }
@@ -59,16 +59,16 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
 
   internal val fileList by lazy {
     repo.let { root ->
-      when {
-        root is GitHubRepo -> {
+      when (root) {
+        is GitHubRepo -> {
           val path = srcPath.ensureSuffix("/") + packageName
           if (root.ownerType.isUser())
             root.userDirectoryContents(branchName, path)
           else
             root.organizationDirectoryContents(branchName, path)
         }
-        root is FileSystemSource ->
-          File(PageUtils.pathOf(root.pathPrefix, srcPath, packageName)).walk().map { it.name }.toList()
+        is FileSystemSource -> File(PageUtils.pathOf(root.pathPrefix, srcPath, packageName)).walk().map { it.name }
+          .toList()
         else -> throw InvalidConfigurationException("Invalid repo type")
       }
     }

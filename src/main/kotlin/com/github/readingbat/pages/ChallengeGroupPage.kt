@@ -23,7 +23,6 @@ import com.github.pambrose.common.util.pluralize
 import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.ChallengeGroup
 import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.dsl.isProduction
 import com.github.readingbat.misc.BrowserSession
 import com.github.readingbat.misc.CSSNames.FUNC_ITEM
 import com.github.readingbat.misc.ClassCode
@@ -39,6 +38,7 @@ import com.github.readingbat.misc.FormFields.GROUP_NAME_KEY
 import com.github.readingbat.misc.FormFields.LANGUAGE_NAME_KEY
 import com.github.readingbat.misc.KeyConstants.CORRECT_ANSWERS_KEY
 import com.github.readingbat.misc.Message
+import com.github.readingbat.misc.PageUtils.encodeUriElems
 import com.github.readingbat.misc.PageUtils.pathOf
 import com.github.readingbat.misc.User
 import com.github.readingbat.misc.User.Companion.challengeAnswersKey
@@ -96,7 +96,7 @@ internal object ChallengeGroupPage : KLogging() {
               img { src = "$STATIC_ROOT/${if (allCorrect) GREEN_CHECK else WHITE_CHECK}" }
             a {
               style = "font-Size:110%; padding-left:2px;"
-              href = pathOf(CHALLENGE_ROOT, languageName.value, groupName, challengeName)
+              href = pathOf(CHALLENGE_ROOT, languageName, groupName, challengeName)
               +challengeName.value
             }
 
@@ -124,7 +124,7 @@ internal object ChallengeGroupPage : KLogging() {
             displayClassDescription(activeClassCode, enrollees, redis)
 
           if (enrollees.isNotEmpty())
-            p { +"(# of questions | # students that started | # completed | Avg correct answers)" }
+            p { +"(# of questions | # students that started | # completed | Avg correct answers | Likes | Dislikes)" }
 
           table {
             val cols = 3
@@ -151,7 +151,7 @@ internal object ChallengeGroupPage : KLogging() {
           backLink(CHALLENGE_ROOT, languageName.value)
 
           if (enrollees.isNotEmpty())
-            addWebSockets(content, languageName, groupName, activeClassCode)
+            enableWebSockets(languageName, groupName, activeClassCode)
         }
       }
 
@@ -164,15 +164,18 @@ internal object ChallengeGroupPage : KLogging() {
     }
   }
 
-  private fun BODY.addWebSockets(content: ReadingBatContent,
-                                 languageName: LanguageName,
-                                 groupName: GroupName,
-                                 classCode: ClassCode) {
+  private fun BODY.enableWebSockets(languageName: LanguageName, groupName: GroupName, classCode: ClassCode) {
     script {
       rawHtml(
         """
-          var wshost = location.origin.replace(${if (isProduction()) "/^https:/, 'wss:'" else "/^http:/, 'ws:'"})
-          var wsurl = wshost + '$CHALLENGE_GROUP_ENDPOINT/$languageName/$groupName/$classCode'
+          
+          var wshost = location.origin;
+          if (wshost.startsWith('https:'))
+            wshost = wshost.replace(/^https:/, 'wss:');
+          else
+            wshost = wshost.replace(/^http:/, 'ws:');
+
+          var wsurl = wshost + '${CHALLENGE_GROUP_ENDPOINT}/' + ${encodeUriElems(languageName, groupName, classCode)};
           var ws = new WebSocket(wsurl);
 
           ws.onopen = function (event) {

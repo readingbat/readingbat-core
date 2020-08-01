@@ -65,7 +65,7 @@ internal fun Application.readContentDsl(fileName: String, variableName: String) 
         dslFileName = fileName
         dslVariableName = variableName
         val watchVal = environment.config.propertyOrNull("ktor.deployment.watch")?.getList() ?: emptyList()
-        ktorWatch = if (watchVal.size > 0) watchVal.toString() else "unassigned"
+        ktorWatch = if (watchVal.isNotEmpty()) watchVal.toString() else "unassigned"
         ktorPort = property("ktor.deployment.port", "0").toInt()
         urlPrefix = property(URL_PREFIX, default = "https://www.readingbat.com")
         googleAnalyticsId = property(ANALYTICS_ID)

@@ -184,11 +184,7 @@ internal object ChallengePost : KLogging() {
   }
 
   private fun String.equalsAsJvmList(answer: String, scriptEngine: KotlinScript): Pair<Boolean, String> {
-    fun deriveHint() =
-      when {
-        isNotBracketed() -> "Answer should be bracketed"
-        else -> ""
-      }
+    fun deriveHint() = if (isNotBracketed()) "Answer should be bracketed" else ""
 
     val compareExpr = "listOf(${trimEnds()}) == listOf(${answer.trimEnds()})"
     logger.debug { "Check answers expression: $compareExpr" }
@@ -204,11 +200,7 @@ internal object ChallengePost : KLogging() {
   }
 
   private fun String.equalsAsPythonList(answer: String, scriptEngine: PythonScript): Pair<Boolean, String> {
-    fun deriveHint() =
-      when {
-        isNotBracketed() -> "Answer should be bracketed"
-        else -> ""
-      }
+    fun deriveHint() = if (isNotBracketed()) "Answer should be bracketed" else ""
 
     val compareExpr = "${trim()} == ${answer.trim()}"
     logger.debug { "Check answers expression: $compareExpr" }
@@ -367,7 +359,7 @@ internal object ChallengePost : KLogging() {
 
     val likeArg = paramMap[LIKE_DESC]?.trim() ?: throw InvalidConfigurationException("Missing like/dislike argument")
 
-    // Return values: 0 = not answered, 1 = like, 2 = dislike
+    // Return values: 0 = not answered, 1 = like selected, 2 = dislike selected
     val likeVal =
       when (likeArg) {
         LIKE_CLEAR -> 1

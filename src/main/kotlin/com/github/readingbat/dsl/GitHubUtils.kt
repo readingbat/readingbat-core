@@ -39,7 +39,7 @@ object GitHubUtils : KLogging() {
     return directoryContents(repo, branchName, path)
   }
 
-  private fun GitHubRepo.directoryContents(repo: GHRepository, branchName: String, path: String): List<String> {
+  private fun directoryContents(repo: GHRepository, branchName: String, path: String): List<String> {
     val timedValue =
       measureTimedValue {
         val elems = path.split("/").filter { it.isNotEmpty() }

@@ -42,4 +42,8 @@ object PageUtils {
   }
 
   fun pathOf(vararg elems: Any): String = elems.toList().map { it.toString() }.join()
+
+  fun encodeUriElems(vararg elems: Any) =
+    elems.map { "encodeURIComponent('${it.toString()}')" }.joinToString("+'/'+")
+
 }

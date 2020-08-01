@@ -96,6 +96,8 @@ internal object WsEndoints : KLogging() {
                     var totAttemptedAtLeastOne = 0
                     var totAllCorrect = 0
                     var totCorrect = 0
+                    var likes = 0
+                    var dislikes = 0
 
                     enrollees.forEach { enrollee ->
                       var attempted = 0
@@ -105,6 +107,7 @@ internal object WsEndoints : KLogging() {
                         .forEach { invocation ->
                           val answerHistoryKey =
                             enrollee.answerHistoryKey(languageName, groupName, challengeName, invocation)
+
                           if (redis.exists(answerHistoryKey)) {
                             attempted++
                             val json = redis[answerHistoryKey] ?: ""
@@ -114,6 +117,13 @@ internal object WsEndoints : KLogging() {
                               numCorrect++
                           }
                         }
+
+                      val likeDislikeKey = enrollee.likeDislikeKey(languageName, groupName, challengeName)
+                      val likeDislike = redis[likeDislikeKey]?.toInt() ?: 0
+                      if (likeDislike == 1)
+                        likes++
+                      else if (likeDislike == 2)
+                        dislikes++
 
                       if (attempted > 0)
                         totAttemptedAtLeastOne++
@@ -126,8 +136,11 @@ internal object WsEndoints : KLogging() {
 
                     val avgCorrect =
                       if (totAttemptedAtLeastOne > 0) totCorrect / totAttemptedAtLeastOne.toFloat() else 0.0f
+                    val avgCorrectFmt = "%.1f".format(avgCorrect)
 
-                    val msg = " ($numCalls | $totAttemptedAtLeastOne | $totAllCorrect | ${"%.1f".format(avgCorrect)})"
+                    val msg =
+                      " ($numCalls | $totAttemptedAtLeastOne | $totAllCorrect | $avgCorrectFmt | $likes | $dislikes)"
+
                     val challengeStats = ChallengeStats(challengeName.value, msg)
                     val json = gson.toJson(challengeStats)
 

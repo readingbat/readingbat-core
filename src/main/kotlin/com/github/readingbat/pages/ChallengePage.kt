@@ -21,7 +21,6 @@ import com.github.pambrose.common.util.*
 import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.FunctionInfo
 import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.dsl.isProduction
 import com.github.readingbat.misc.BrowserSession
 import com.github.readingbat.misc.CSSNames.ARROW
 import com.github.readingbat.misc.CSSNames.CHALLENGE_DESC
@@ -159,7 +158,7 @@ internal object ChallengePage : KLogging() {
           script { src = "$STATIC_ROOT/$languageName-prism.js" }
 
           if (activeClassCode.isTeacherMode)
-            addWebSockets(content, activeClassCode)
+            enableWebSockets(activeClassCode)
         }
       }
 
@@ -266,13 +265,19 @@ internal object ChallengePage : KLogging() {
         this@displayQuestions.clearChallengeAnswerHistory(user, browserSession, challenge)
     }
 
-  private fun BODY.addWebSockets(content: ReadingBatContent, classCode: ClassCode) {
+  private fun BODY.enableWebSockets(classCode: ClassCode) {
     script {
       rawHtml(
         """
-          var wshost = location.origin.replace(${if (isProduction()) "/^https:/, 'wss:'" else "/^http:/, 'ws:'"});
-          var wsurl = wshost + '$CHALLENGE_ENDPOINT/$classCode';
           
+          var wshost = location.origin;
+          if (wshost.startsWith('https:'))
+            wshost = wshost.replace(/^https:/, 'wss:');
+          else
+            wshost = wshost.replace(/^http:/, 'ws:');
+
+          var wsurl = wshost + '$CHALLENGE_ENDPOINT/' + encodeURIComponent('$classCode');
+
           var ws = new WebSocket(wsurl);
           
           ws.onopen = function (event) {
