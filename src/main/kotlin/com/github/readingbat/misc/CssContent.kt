@@ -21,7 +21,9 @@ import com.github.readingbat.misc.CSSNames.ARROW
 import com.github.readingbat.misc.CSSNames.CHALLENGE_DESC
 import com.github.readingbat.misc.CSSNames.CHECK_ANSWERS
 import com.github.readingbat.misc.CSSNames.CODE_BLOCK
+import com.github.readingbat.misc.CSSNames.CODINGBAT
 import com.github.readingbat.misc.CSSNames.DASHBOARD
+import com.github.readingbat.misc.CSSNames.EXPERIMENT
 import com.github.readingbat.misc.CSSNames.FEEDBACK
 import com.github.readingbat.misc.CSSNames.FUNC_COL
 import com.github.readingbat.misc.CSSNames.FUNC_ITEM
@@ -31,7 +33,7 @@ import com.github.readingbat.misc.CSSNames.HINT
 import com.github.readingbat.misc.CSSNames.INDENT_1EM
 import com.github.readingbat.misc.CSSNames.INDENT_2EM
 import com.github.readingbat.misc.CSSNames.KOTLIN_CODE
-import com.github.readingbat.misc.CSSNames.REFS
+import com.github.readingbat.misc.CSSNames.LIKE_BUTTONS
 import com.github.readingbat.misc.CSSNames.SELECTED_TAB
 import com.github.readingbat.misc.CSSNames.STATUS
 import com.github.readingbat.misc.CSSNames.SUCCESS
@@ -43,11 +45,13 @@ import kotlinx.css.properties.boxShadow
 
 internal object CSSNames {
   const val CHECK_ANSWERS = "checkAnswers"
+  const val LIKE_BUTTONS = "likeButtons"
   const val FEEDBACK = "hint"
   const val HINT = "feedback"
   const val FUNC_COL = "funcCol"
   const val ARROW = "arrow"
-  const val REFS = "refs"
+  const val EXPERIMENT = "experiment"
+  const val CODINGBAT = "codingbat"
   const val CODE_BLOCK = "codeBlock"
   const val KOTLIN_CODE = "kotlin-code"
   const val USER_RESP = "userResponse"
@@ -184,6 +188,12 @@ internal val cssContent by lazy {
         fontWeight = FontWeight.bold
         borderRadius = 6.px
       }
+      rule(".$LIKE_BUTTONS") {
+        backgroundColor = Color("#f1f1f1")
+        width = 5.em
+        height = 5.em
+        borderRadius = 6.px
+      }
       rule(".$STATUS") {
         marginLeft = 5.px
         fontSize = textFs
@@ -223,7 +233,11 @@ internal val cssContent by lazy {
       rule("nav li a") {
         padding = "0 40px"
       }
-      rule(".$REFS") {
+      rule(".$EXPERIMENT") {
+        marginTop = 1.em
+        fontSize = textFs
+      }
+      rule(".$CODINGBAT") {
         marginTop = 2.em
         fontSize = textFs
       }

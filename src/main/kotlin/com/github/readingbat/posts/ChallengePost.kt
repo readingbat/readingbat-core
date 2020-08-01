@@ -32,6 +32,7 @@ import com.github.readingbat.misc.CheckAnswersJs.challengeSrc
 import com.github.readingbat.misc.CheckAnswersJs.groupSrc
 import com.github.readingbat.misc.CheckAnswersJs.langSrc
 import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
+import com.github.readingbat.misc.Constants.LIKE_DESC
 import com.github.readingbat.misc.Constants.MSG
 import com.github.readingbat.misc.Constants.RESP
 import com.github.readingbat.misc.FormFields.CHALLENGE_ANSWERS_KEY
@@ -40,6 +41,9 @@ import com.github.readingbat.misc.FormFields.GROUP_NAME_KEY
 import com.github.readingbat.misc.FormFields.LANGUAGE_NAME_KEY
 import com.github.readingbat.misc.KeyConstants.CORRECT_ANSWERS_KEY
 import com.github.readingbat.misc.PageUtils.pathOf
+import com.github.readingbat.misc.ParameterIds.DISLIKE_COLOR
+import com.github.readingbat.misc.ParameterIds.LIKE_CLEAR
+import com.github.readingbat.misc.ParameterIds.LIKE_COLOR
 import com.github.readingbat.misc.User
 import com.github.readingbat.misc.User.Companion.gson
 import com.github.readingbat.misc.User.Companion.saveChallengeAnswers
@@ -351,5 +355,35 @@ internal object ChallengePost : KLogging() {
     }
 
     throw RedirectException("$path?$MSG=${"Answers cleared".encode()}")
+  }
+
+  suspend fun PipelineCall.likeDislike(content: ReadingBatContent, user: User?, redis: Jedis?) {
+    val params = call.receiveParameters()
+    val paramMap = params.entries().map { it.key to it.value[0] }.toMap()
+    val names = ChallengeNames(paramMap)
+    val challenge = content.findChallenge(names.languageName, names.groupName, names.challengeName)
+
+    val likeArg = paramMap[LIKE_DESC]?.trim() ?: throw InvalidConfigurationException("Missing likedislike argument")
+
+    logger.debug { "Like/Dislike arg: $likeArg" }
+
+    // Save whether all the answers for the challenge were correct
+    if (redis.isNotNull()) {
+      val browserSession = call.sessions.get<BrowserSession>()
+      //user.saveChallengeAnswers(content, browserSession, names, paramMap, funcInfo, userResponses, results, redis)
+    }
+
+    //delay(200.milliseconds.toLongMilliseconds())
+
+    // Return values: 0 = not answered, 1 = like, 2 = dislike
+    val likeResp =
+      when (likeArg) {
+        LIKE_CLEAR -> 1
+        LIKE_COLOR,
+        DISLIKE_COLOR -> 0
+        else -> 2
+      }
+    logger.debug { "Like/Dislike response: $likeResp" }
+    call.respondText(likeResp.toString())
   }
 }

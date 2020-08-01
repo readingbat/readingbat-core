@@ -32,6 +32,7 @@ internal object Constants {
   const val WHITE_CHECK = "white-check.jpg"
   const val GREEN_CHECK = "green-check.jpg"
   const val RESP = "response"
+  const val LIKE_DESC = "likeDesc"
   const val NO_ANSWER_COLOR = "white"
   const val CORRECT_COLOR = "#4EAA3A"
   const val WRONG_COLOR = "#F1F1F1"
@@ -70,6 +71,7 @@ internal object Endpoints {
   const val CHALLENGE_ENDPOINT = "/challenge"
   const val CHALLENGE_GROUP_ENDPOINT = "/challenge-group"
   const val CHECK_ANSWERS_ENDPOINT = "/check-answers"
+  const val LIKE_DISLIKE_ENDPOINT = "/like-dislike"
   const val CLEAR_GROUP_ANSWERS_ENDPOINT = "/clear-group-answers"
   const val CLEAR_CHALLENGE_ANSWERS_ENDPOINT = "/clear-challenge-answers"
 }
@@ -77,10 +79,16 @@ internal object Endpoints {
 internal object ParameterIds {
   const val STATUS_ID = "statusId"
   const val SPINNER_ID = "spinnerId"
+  const val LIKE_STATUS_ID = "likeStatusId"
+  const val LIKE_SPINNER_ID = "likeSpinnerId"
   const val FEEDBACK_ID = "feedbackId"
   const val HINT_ID = "hintId"
   const val SUCCESS_ID = "successId"
   const val NEXTCHANCE_ID = "nextChanceId"
+  const val LIKE_CLEAR = "likeClear"
+  const val LIKE_COLOR = "likeColor"
+  const val DISLIKE_CLEAR = "dislikeClear"
+  const val DISLIKE_COLOR = "dislikeColor"
 }
 
 internal object FormFields {

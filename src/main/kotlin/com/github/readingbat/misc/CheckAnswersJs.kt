@@ -83,7 +83,7 @@ internal object CheckAnswersJs {
         document.getElementById('$SPINNER_ID').innerHTML = '<i class="fa fa-spinner fa-spin" style="font-size:24px"></i>';
         document.getElementById('$STATUS_ID').innerHTML = 'Checking answers...';
         document.getElementById('$SUCCESS_ID').innerHTML = '';
-        document.getElementById('$NEXTCHANCE_ID').style.visibility = "hidden";
+        document.getElementById('$NEXTCHANCE_ID').style.display = "none";
       }
       else if(re.readyState == 4) {  // done
         var success = true;
@@ -107,7 +107,7 @@ internal object CheckAnswersJs {
         document.getElementById('$SPINNER_ID').innerHTML = "";
         document.getElementById('$STATUS_ID').innerHTML = "";
         document.getElementById('$SUCCESS_ID').innerHTML = success ? "Success! Congratulations!" : "";
-        document.getElementById('$NEXTCHANCE_ID').style.visibility = success ? "visible" : "hidden";
+        document.getElementById('$NEXTCHANCE_ID').style.display = success ? "inline" : "none";
       }
     }
   """)

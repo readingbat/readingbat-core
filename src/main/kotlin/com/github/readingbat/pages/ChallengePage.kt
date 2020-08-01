@@ -30,11 +30,13 @@ import com.github.readingbat.misc.CSSNames.ARROW
 import com.github.readingbat.misc.CSSNames.CHALLENGE_DESC
 import com.github.readingbat.misc.CSSNames.CHECK_ANSWERS
 import com.github.readingbat.misc.CSSNames.CODE_BLOCK
+import com.github.readingbat.misc.CSSNames.CODINGBAT
 import com.github.readingbat.misc.CSSNames.DASHBOARD
+import com.github.readingbat.misc.CSSNames.EXPERIMENT
 import com.github.readingbat.misc.CSSNames.FEEDBACK
 import com.github.readingbat.misc.CSSNames.FUNC_COL
 import com.github.readingbat.misc.CSSNames.HINT
-import com.github.readingbat.misc.CSSNames.REFS
+import com.github.readingbat.misc.CSSNames.LIKE_BUTTONS
 import com.github.readingbat.misc.CSSNames.STATUS
 import com.github.readingbat.misc.CSSNames.SUCCESS
 import com.github.readingbat.misc.CSSNames.USER_RESP
@@ -57,10 +59,18 @@ import com.github.readingbat.misc.FormFields.GROUP_NAME_KEY
 import com.github.readingbat.misc.FormFields.LANGUAGE_NAME_KEY
 import com.github.readingbat.misc.KeyConstants.CORRECT_ANSWERS_KEY
 import com.github.readingbat.misc.KeyConstants.NAME_FIELD
+import com.github.readingbat.misc.LikeDislikeJs.likeDislike
+import com.github.readingbat.misc.LikeDislikeJs.likeDislikeScript
 import com.github.readingbat.misc.Message
 import com.github.readingbat.misc.PageUtils.pathOf
+import com.github.readingbat.misc.ParameterIds.DISLIKE_CLEAR
+import com.github.readingbat.misc.ParameterIds.DISLIKE_COLOR
 import com.github.readingbat.misc.ParameterIds.FEEDBACK_ID
 import com.github.readingbat.misc.ParameterIds.HINT_ID
+import com.github.readingbat.misc.ParameterIds.LIKE_CLEAR
+import com.github.readingbat.misc.ParameterIds.LIKE_COLOR
+import com.github.readingbat.misc.ParameterIds.LIKE_SPINNER_ID
+import com.github.readingbat.misc.ParameterIds.LIKE_STATUS_ID
 import com.github.readingbat.misc.ParameterIds.NEXTCHANCE_ID
 import com.github.readingbat.misc.ParameterIds.SPINNER_ID
 import com.github.readingbat.misc.ParameterIds.STATUS_ID
@@ -118,6 +128,7 @@ internal object ChallengePage : KLogging() {
           link { rel = "stylesheet"; href = "$STATIC_ROOT/$languageName-prism.css"; type = CSS.toString() }
 
           script(type = textJavaScript) { checkAnswersScript(languageName, groupName, challengeName) }
+          script(type = textJavaScript) { likeDislikeScript(languageName, groupName, challengeName) }
 
           removePrismShadow()
           headDefault(content)
@@ -250,6 +261,7 @@ internal object ChallengePage : KLogging() {
       }
 
       this@displayQuestions.processAnswers(funcInfo, challenge)
+      this@displayQuestions.likeDislike()
       this@displayQuestions.otherLinks(challenge)
       if (redis.isNotNull())
         this@displayQuestions.clearChallengeAnswerHistory(user, browserSession, challenge)
@@ -390,7 +402,9 @@ internal object ChallengePage : KLogging() {
               onClick = "$processUserAnswers(null, ${funcInfo.answers.size});"; +"Check My Answers"
             }
           }
+
           td { style = "vertical-align:middle;"; span { style = "margin-left:1em;"; id = SPINNER_ID } }
+
           td {
             val challengeName = challenge.challengeName
             val challengeGroup = challenge.challengeGroup
@@ -399,7 +413,7 @@ internal object ChallengePage : KLogging() {
 
             span {
               id = NEXTCHANCE_ID
-              style = "visibility: hidden;"
+              style = "display:none;"
               this@processAnswers.nextChance(pos, challenges, false)
             }
           }
@@ -443,12 +457,56 @@ internal object ChallengePage : KLogging() {
     }
   }
 
+  private fun BODY.likeDislike() {
+    p {
+      table {
+        val imgSize = "40"
+        tr {
+          td {
+            id = LIKE_CLEAR
+            button(classes = LIKE_BUTTONS) {
+              onClick = """$likeDislike(null, "$LIKE_CLEAR" );""";
+              img { height = imgSize; src = "$STATIC_ROOT/like-clear.png" }
+            }
+          }
+          td {
+            id = LIKE_COLOR
+            style = "display:none;"
+            button(classes = LIKE_BUTTONS) {
+              onClick = """$likeDislike(null, "$LIKE_COLOR" );""";
+              img { height = imgSize; src = "$STATIC_ROOT/like-color.png" }
+            }
+          }
+          td {
+            id = DISLIKE_CLEAR
+            button(classes = LIKE_BUTTONS) {
+              onClick = """$likeDislike(null, "$DISLIKE_CLEAR" );""";
+              img { height = imgSize; src = "$STATIC_ROOT/dislike-clear.png" }
+            }
+          }
+          td {
+            id = DISLIKE_COLOR
+            style = "display:none;"
+            button(classes = LIKE_BUTTONS) {
+              onClick = """$likeDislike(null, "$DISLIKE_COLOR" );""";
+              img { height = imgSize; src = "$STATIC_ROOT/dislike-color.png" }
+            }
+          }
+
+          td { style = "vertical-align:middle;"; span { style = "margin-left:1em;"; id = LIKE_SPINNER_ID } }
+
+          td { style = "vertical-align:middle;"; span(classes = STATUS) { id = LIKE_STATUS_ID } }
+        }
+      }
+    }
+  }
+
   private fun BODY.otherLinks(challenge: Challenge) {
     val languageType = challenge.languageType
     val groupName = challenge.groupName
     val challengeName = challenge.challengeName
 
-    p(classes = REFS) {
+    p(classes = EXPERIMENT) {
       +"Experiment with this code on "
       this@otherLinks.addLink("Gitpod.io", "https://gitpod.io/#${challenge.gitpodUrl}", true)
       if (languageType.isKotlin()) {
@@ -458,7 +516,7 @@ internal object ChallengePage : KLogging() {
     }
 
     if (challenge.codingBatEquiv.isNotEmpty() && (languageType.isJava() || languageType.isPython())) {
-      p(classes = REFS) {
+      p(classes = CODINGBAT) {
         +"Work on a similar problem on "
         this@otherLinks.addLink("CodingBat.com", "https://codingbat.com/prob/${challenge.codingBatEquiv}", true)
       }
@@ -497,7 +555,7 @@ internal object ChallengePage : KLogging() {
       rawHtml(
         """
           pre[class*="language-"]:before,
-          pre[class*="language-"]:after { display: none; }
+          pre[class*="language-"]:after { display:none; }
         """.trimIndent())
     }
   }

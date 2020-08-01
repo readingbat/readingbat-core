@@ -42,6 +42,7 @@ import com.github.readingbat.misc.Endpoints.CSS_ENDPOINT
 import com.github.readingbat.misc.Endpoints.ENABLE_STUDENT_MODE_ENDPOINT
 import com.github.readingbat.misc.Endpoints.ENABLE_TEACHER_MODE_ENDPOINT
 import com.github.readingbat.misc.Endpoints.FAV_ICON_ENDPOINT
+import com.github.readingbat.misc.Endpoints.LIKE_DISLIKE_ENDPOINT
 import com.github.readingbat.misc.Endpoints.PASSWORD_CHANGE_ENDPOINT
 import com.github.readingbat.misc.Endpoints.PASSWORD_RESET_ENDPOINT
 import com.github.readingbat.misc.Endpoints.PRIVACY_ENDPOINT
@@ -63,6 +64,7 @@ import com.github.readingbat.posts.AdminPost.adminActions
 import com.github.readingbat.posts.ChallengePost.checkAnswers
 import com.github.readingbat.posts.ChallengePost.clearChallengeAnswers
 import com.github.readingbat.posts.ChallengePost.clearGroupAnswers
+import com.github.readingbat.posts.ChallengePost.likeDislike
 import com.github.readingbat.posts.CreateAccountPost.createAccount
 import com.github.readingbat.posts.PasswordResetPost.changePassword
 import com.github.readingbat.posts.PasswordResetPost.sendPasswordReset
@@ -127,11 +129,11 @@ internal fun Routing.userRoutes(content: () -> ReadingBatContent, resetFunc: () 
   get(CONFIG_ENDPOINT) { respondWith { configPage(content.invoke()) } }
 
   post(CHECK_ANSWERS_ENDPOINT) {
-    withSuspendingRedisPool { redis ->
-      checkAnswers(content.invoke(),
-                   fetchUser(),
-                   redis)
-    }
+    withSuspendingRedisPool { redis -> checkAnswers(content.invoke(), fetchUser(), redis) }
+  }
+
+  post(LIKE_DISLIKE_ENDPOINT) {
+    withSuspendingRedisPool { redis -> likeDislike(content.invoke(), fetchUser(), redis) }
   }
 
   post(CLEAR_GROUP_ANSWERS_ENDPOINT) {
