@@ -71,14 +71,14 @@ internal object CheckAnswersJs {
         return 0;
       }
       
-      re.onreadystatechange = handleDone;  
+      re.onreadystatechange = checkAnswerHandleDone;  
       re.open("POST", '$CHECK_ANSWERS_ENDPOINT', true);
       re.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
       re.send(data);
       return 1;
     }
     
-    function handleDone(){
+    function checkAnswerHandleDone(){
       if(re.readyState == 1) {  // starting
         document.getElementById('$SPINNER_ID').innerHTML = '<i class="fa fa-spinner fa-spin" style="font-size:24px"></i>';
         document.getElementById('$STATUS_ID').innerHTML = 'Checking answers...';
