@@ -44,8 +44,11 @@ internal object WsEndoints : KLogging() {
 
   fun Routing.wsEndpoints(content: () -> ReadingBatContent) {
     webSocket("$CHALLENGE_ENDPOINT/{classCode}") {
-      val classCode =
-        call.parameters["classCode"]?.let { ClassCode(it) } ?: throw InvalidPathException("Missing class code")
+      val classCode = call.parameters["classCode"]?.let { ClassCode(it) }
+        ?: throw InvalidPathException("Missing class code")
+
+      logger.info { "Opening websocket for class code: $CHALLENGE_ENDPOINT/$classCode" }
+
       incoming
         .receiveAsFlow()
         .mapNotNull { it as? Frame.Text }
@@ -77,6 +80,8 @@ internal object WsEndoints : KLogging() {
       val classCode =
         call.parameters["classCode"]?.let { ClassCode(it) } ?: throw InvalidPathException("Missing class code")
       val challenges = content.invoke().findGroup(languageName.toLanguageType(), groupName).challenges
+
+      logger.info { "Opening websocket for class code $CHALLENGE_ENDPOINT/$languageName/$groupName/$classCode" }
 
       incoming
         .receiveAsFlow()
