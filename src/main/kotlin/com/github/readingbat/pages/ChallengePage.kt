@@ -470,7 +470,7 @@ internal object ChallengePage : KLogging() {
 
     p {
       table {
-        val imgSize = "40"
+        val imgSize = "30"
         tr {
           td {
             id = LIKE_CLEAR

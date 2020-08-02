@@ -190,8 +190,8 @@ internal val cssContent by lazy {
       }
       rule(".$LIKE_BUTTONS") {
         backgroundColor = Color("#f1f1f1")
-        width = 5.em
-        height = 5.em
+        width = 4.em
+        height = 4.em
         borderRadius = 6.px
       }
       rule(".$STATUS") {
