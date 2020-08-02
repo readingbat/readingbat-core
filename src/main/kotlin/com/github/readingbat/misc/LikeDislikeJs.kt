@@ -59,16 +59,16 @@ internal object LikeDislikeJs {
     }
     
     function likeDislikeHandleDone(){
-      if(re.readyState == 1) {  // starting
+      if(re.readyState == 1) {       // starting
         document.getElementById('$LIKE_SPINNER_ID').innerHTML = '<i class="fa fa-spinner fa-spin" style="font-size:24px"></i>';
         document.getElementById('$LIKE_STATUS_ID').innerHTML = 'Setting like/dislike...';
       }
       else if(re.readyState == 4) {  // done
         var results = eval(re.responseText);
-        //console.log("Found " + results)
         
         document.getElementById('$LIKE_SPINNER_ID').innerHTML = "";
         document.getElementById('$LIKE_STATUS_ID').innerHTML = "";
+        
         if (results == 0) {
           document.getElementById('$LIKE_CLEAR').style.display = "inline";
           document.getElementById('$LIKE_COLOR').style.display = "none";

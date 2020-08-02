@@ -25,25 +25,20 @@ import kotlinx.html.style
 
 object PageUtils {
 
-  fun hideShowJs(formName: String, fieldName: String) =
+  internal fun hideShowJs(formName: String, fieldName: String) =
     """
       var pw=document.$formName.$fieldName.type=="password"; 
       document.$formName.$fieldName.type=pw?"text":"password"; 
       return false;
     """.trimIndent()
 
-  fun FlowOrInteractiveOrPhrasingContent.hideShowButton(formName: String, fieldName: String, sizePct: Int = 85) {
-    button {
-      style = "font-size:$sizePct%;"
-      onClick = hideShowJs(formName, fieldName)
-      +"show/hide"
-    }
-
+  internal fun FlowOrInteractiveOrPhrasingContent.hideShowButton(formName: String,
+                                                                 fieldName: String,
+                                                                 sizePct: Int = 85) {
+    button { style = "font-size:$sizePct%;"; onClick = hideShowJs(formName, fieldName); +"show/hide" }
   }
 
-  fun pathOf(vararg elems: Any): String = elems.toList().map { it.toString() }.join()
+  internal fun pathOf(vararg elems: Any): String = elems.toList().map { it.toString() }.join()
 
-  fun encodeUriElems(vararg elems: Any) =
-    elems.map { "encodeURIComponent('${it.toString()}')" }.joinToString("+'/'+")
-
+  internal fun encodeUriElems(vararg elems: Any) = elems.joinToString("+'/'+") { "encodeURIComponent('$it')" }
 }
