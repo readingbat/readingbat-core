@@ -50,7 +50,7 @@ internal object PythonParse : KLogging() {
           if (line.contains(printPrefix)) {
             val expr = line.substringBetween(printPrefix, ")")
             val str = "$varName.add($expr)"
-            logger.info { "Transformed: ${line.trim()} to: $str" }
+            logger.debug { "Transformed: ${line.trim()} to: $str" }
             scriptCode += str
           }
         }
