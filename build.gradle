@@ -63,6 +63,10 @@ dependencies {
     implementation "com.github.pambrose.common-utils:script-utils-java:$utils_version"
     implementation "com.github.pambrose.common-utils:script-utils-kotlin:$utils_version"
 
+    implementation "com.github.pambrose.common-utils:guava-utils:$utils_version"
+    implementation "com.github.pambrose.common-utils:service-utils:$utils_version"
+    implementation "com.github.pambrose:prometheus-proxy:$proxy_version"
+
     implementation "org.jetbrains:kotlin-css:$css_version"
     implementation "org.jetbrains:kotlin-css-jvm:$css_version"
 

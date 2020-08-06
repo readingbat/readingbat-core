@@ -39,17 +39,23 @@ internal object Constants {
   const val LABEL_WIDTH = "width: 250;"
   const val INVALID_RESET_ID = "Invalid reset_id"
   const val READING_BAT = "readingbat"
+  const val AGENT = "agent"
   const val SITE = "site"
   const val CHALLENGES = "challenges"
   const val CLASSES = "classes"
   const val CONTENT = "content"
-  const val IS_PRODUCTION = "$READING_BAT.$SITE.production"
+  const val CONFIG_FILENAME = "$READING_BAT.configFilename"
+  const val IS_PRODUCTION = "$READING_BAT.production"
   const val URL_PREFIX = "$READING_BAT.$SITE.urlPrefix"
   const val MAX_HISTORY_LENGTH = "$READING_BAT.$CHALLENGES.maxHistoryLength"
   const val MAX_CLASS_COUNT = "$READING_BAT.$CLASSES.maxCount"
   const val ANALYTICS_ID = "$READING_BAT.$SITE.googleAnalyticsId"
   const val FILE_NAME = "$READING_BAT.$CONTENT.fileName"
   const val VARIABLE_NAME = "$READING_BAT.$CONTENT.variableName"
+
+  const val AGENT_ENABLED = "$AGENT.enabled"
+  const val AGENT_HOSTNAME = "$AGENT.proxy.hostname"
+
 
   val DBMS_DOWN = Message("Database is down", true)
 }

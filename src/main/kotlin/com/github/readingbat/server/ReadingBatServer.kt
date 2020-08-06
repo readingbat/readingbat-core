@@ -18,10 +18,17 @@
 package com.github.readingbat.server
 
 import com.github.pambrose.common.util.FileSource
+import com.github.pambrose.common.util.Version
+import com.github.pambrose.common.util.Version.Companion.versionDesc
+import com.github.pambrose.common.util.getBanner
+import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.isProduction
 import com.github.readingbat.dsl.readContentDsl
+import com.github.readingbat.misc.Constants.AGENT_ENABLED
+import com.github.readingbat.misc.Constants.AGENT_HOSTNAME
 import com.github.readingbat.misc.Constants.ANALYTICS_ID
+import com.github.readingbat.misc.Constants.CONFIG_FILENAME
 import com.github.readingbat.misc.Constants.FILE_NAME
 import com.github.readingbat.misc.Constants.IS_PRODUCTION
 import com.github.readingbat.misc.Constants.MAX_CLASS_COUNT
@@ -42,23 +49,36 @@ import io.ktor.routing.routing
 import io.ktor.server.cio.CIO
 import io.ktor.server.engine.commandLineEnvironment
 import io.ktor.server.engine.embeddedServer
+import io.prometheus.Agent
+import io.prometheus.Agent.Companion.startAsyncAgent
 import kotlinx.atomicfu.atomic
+import mu.KLogging
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import kotlin.time.milliseconds
 
-object ReadingBatServer {
+@Version(version = "1.2.0", date = "8/5/20")
+object ReadingBatServer : KLogging() {
   internal val timeStamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("M/d/y H:m:ss"))
   internal val startTimeMillis = System.currentTimeMillis().milliseconds
   internal var content = atomic(ReadingBatContent())
 
   fun start(args: Array<String>) {
+    val configFilename =
+      args
+        .asSequence()
+        .filter { it.startsWith("-config=") }
+        .map { it.replaceFirst("-config=", "") }
+        .firstOrNull() ?: throw InvalidConfigurationException("Missing -config option")
+
+    System.setProperty(CONFIG_FILENAME, configFilename)
+
     val environment = commandLineEnvironment(args)
     embeddedServer(CIO, environment).start(wait = true)
   }
 }
 
-internal fun Application.readContentDsl(fileName: String, variableName: String) {
+internal fun Application.assignContentDsl(fileName: String, variableName: String) {
   content.getAndSet(
     readContentDsl(FileSource(fileName = fileName), variableName = variableName)
       .apply {
@@ -78,10 +98,22 @@ internal fun Application.module() {
   val fileName = property(FILE_NAME, "src/Content.kt")
   val variableName = property(VARIABLE_NAME, "content")
   val isProduction = property(IS_PRODUCTION, default = "false").toBoolean()
+  val agentEnabled = property(AGENT_ENABLED, default = "true").toBoolean()
+  val agentHostname = property(AGENT_HOSTNAME, default = "")
 
   System.setProperty(IS_PRODUCTION, isProduction.toString())
 
-  readContentDsl(fileName, variableName)
+  Agent.logger.apply {
+    info { getBanner("banners/readingbat.txt", this) }
+    info { ReadingBatServer::class.versionDesc() }
+  }
+
+  if (agentEnabled && agentHostname.isNotEmpty()) {
+    val configFilename = System.getProperty(CONFIG_FILENAME) ?: ""
+    startAsyncAgent(configFilename, true)
+  }
+
+  assignContentDsl(fileName, variableName)
 
   installs(isProduction(), content.value.urlPrefix)
   intercepts()
@@ -89,7 +121,7 @@ internal fun Application.module() {
   routing {
     adminRoutes()
     locations { content.value }
-    userRoutes({ content.value }, { readContentDsl(fileName, variableName) })
+    userRoutes({ content.value }, { assignContentDsl(fileName, variableName) })
     wsEndpoints { content.value }
     static(STATIC_ROOT) { resources("static") }
   }

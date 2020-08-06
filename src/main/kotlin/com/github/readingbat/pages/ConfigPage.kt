@@ -18,6 +18,7 @@
 package com.github.readingbat.pages
 
 import com.github.pambrose.common.time.format
+import com.github.pambrose.common.util.Version.Companion.versionDesc
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.isProduction
 import com.github.readingbat.misc.CSSNames.INDENT_1EM
@@ -48,6 +49,10 @@ internal object ConfigPage {
           h3 { +"Content Configuration" }
           div(classes = INDENT_1EM) {
             table {
+              tr {
+                td { +"Version: " }
+                td { +ReadingBatServer::class.versionDesc() }
+              }
               tr {
                 td { +"Server uptime: " }
                 td { +(currentTimeMillis().milliseconds - ReadingBatServer.startTimeMillis).format(true) }
