@@ -21,9 +21,10 @@ import com.github.readingbat.dsl.GitHubContent
 import com.github.readingbat.dsl.eval
 import com.github.readingbat.dsl.readingBatContent
 
-val content by lazy {
+val content =
   readingBatContent {
     //repo = GitHubRepo(organization, "readingbat-java-content")
+
     repo = FileSystemSource("./")
 /*
     java {
@@ -66,6 +67,7 @@ val content by lazy {
     include(GitHubContent(Organization, "readingbat", "readingbat-python-content", srcPath = "src").eval(this).python)
     include(GitHubContent(Organization, "readingbat", "readingbat-java-content").eval(this).kotlin)
 */
+
     include(GitHubContent(User, "pambrose", "ReadingBat-content").eval(this).python, "Athenian: ")
 
     java {
@@ -85,4 +87,3 @@ val content by lazy {
       }
     }
   }
-}

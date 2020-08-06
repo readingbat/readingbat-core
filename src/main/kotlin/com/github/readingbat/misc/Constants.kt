@@ -45,7 +45,7 @@ internal object Constants {
   const val CLASSES = "classes"
   const val CONTENT = "content"
   const val CONFIG_FILENAME = "$READING_BAT.configFilename"
-  const val IS_PRODUCTION = "$READING_BAT.production"
+  const val IS_PRODUCTION = "$READING_BAT.$SITE.production"
   const val URL_PREFIX = "$READING_BAT.$SITE.urlPrefix"
   const val MAX_HISTORY_LENGTH = "$READING_BAT.$CHALLENGES.maxHistoryLength"
   const val MAX_CLASS_COUNT = "$READING_BAT.$CLASSES.maxCount"
@@ -55,7 +55,6 @@ internal object Constants {
 
   const val AGENT_ENABLED = "$AGENT.enabled"
   const val AGENT_HOSTNAME = "$AGENT.proxy.hostname"
-
 
   val DBMS_DOWN = Message("Database is down", true)
 }
