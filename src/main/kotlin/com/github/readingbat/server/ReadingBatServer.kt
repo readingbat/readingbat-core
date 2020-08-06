@@ -21,7 +21,6 @@ import com.github.pambrose.common.util.FileSource
 import com.github.pambrose.common.util.Version
 import com.github.pambrose.common.util.Version.Companion.versionDesc
 import com.github.pambrose.common.util.getBanner
-import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.isProduction
 import com.github.readingbat.dsl.readContentDsl
@@ -69,7 +68,7 @@ object ReadingBatServer : KLogging() {
         .asSequence()
         .filter { it.startsWith("-config=") }
         .map { it.replaceFirst("-config=", "") }
-        .firstOrNull() ?: throw InvalidConfigurationException("Missing -config option")
+        .firstOrNull() ?: "src/main/resources/application.conf"
 
     System.setProperty(CONFIG_FILENAME, configFilename)
 
