@@ -127,6 +127,9 @@ internal fun Application.module() {
     System.setProperty(AGENT_LAUNCH_ID, agentInfo.launchId)
   }
 
+  // This is done after AGENT_LAUNCH_ID is assigned
+  metrics.init()
+
   assignContentDsl(fileName, variableName)
 
   installs(isProduction(), content.value.urlPrefix)

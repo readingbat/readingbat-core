@@ -24,7 +24,7 @@ import com.github.pambrose.common.metrics.SamplerGaugeCollector
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.agentLaunchId
 
-internal class Metrics(contentSource: () -> ReadingBatContent) {
+internal class Metrics(val contentSource: () -> ReadingBatContent) {
 
   val contentLoadedCount =
     counter {
@@ -82,7 +82,7 @@ internal class Metrics(contentSource: () -> ReadingBatContent) {
       labelNames(AGENT_ID)
     }
 
-  init {
+  fun init() {
     gauge {
       name("server_start_time_seconds")
       labelNames(AGENT_ID)
@@ -92,13 +92,13 @@ internal class Metrics(contentSource: () -> ReadingBatContent) {
     SamplerGaugeCollector("sources_cache_size",
                           "Sources cache size",
                           labelNames = listOf(AGENT_ID),
-                          labelValues = { listOf(agentLaunchId()) },
+                          labelValues = listOf(agentLaunchId()),
                           data = { contentSource().sourcesMap.size.toDouble() })
 
     SamplerGaugeCollector("content_cache_size",
                           "Content cache size",
                           labelNames = listOf(AGENT_ID),
-                          labelValues = { listOf(agentLaunchId()) },
+                          labelValues = listOf(agentLaunchId()),
                           data = { contentSource().contentMap.size.toDouble() })
   }
 
