@@ -55,7 +55,7 @@ internal object Constants {
 
   const val AGENT_LAUNCH_ID = "agentLaunchId"
   const val AGENT_ENABLED = "$AGENT.enabled"
-  const val AGENT_HOSTNAME = "$AGENT.proxy.hostname"
+  const val PROXY_HOSTNAME = "$AGENT.proxy.hostname"
 
   val DBMS_DOWN = Message("Database is down", true)
 }

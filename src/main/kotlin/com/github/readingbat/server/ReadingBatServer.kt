@@ -26,7 +26,6 @@ import com.github.readingbat.dsl.agentLaunchId
 import com.github.readingbat.dsl.isProduction
 import com.github.readingbat.dsl.readContentDsl
 import com.github.readingbat.misc.Constants.AGENT_ENABLED
-import com.github.readingbat.misc.Constants.AGENT_HOSTNAME
 import com.github.readingbat.misc.Constants.AGENT_LAUNCH_ID
 import com.github.readingbat.misc.Constants.ANALYTICS_ID
 import com.github.readingbat.misc.Constants.CONFIG_FILENAME
@@ -34,6 +33,7 @@ import com.github.readingbat.misc.Constants.FILE_NAME
 import com.github.readingbat.misc.Constants.IS_PRODUCTION
 import com.github.readingbat.misc.Constants.MAX_CLASS_COUNT
 import com.github.readingbat.misc.Constants.MAX_HISTORY_LENGTH
+import com.github.readingbat.misc.Constants.PROXY_HOSTNAME
 import com.github.readingbat.misc.Constants.STATIC_ROOT
 import com.github.readingbat.misc.Constants.URL_PREFIX
 import com.github.readingbat.misc.Constants.VARIABLE_NAME
@@ -111,7 +111,7 @@ internal fun Application.module() {
   val variableName = property(VARIABLE_NAME, "content")
   val isProduction = property(IS_PRODUCTION, default = "false").toBoolean()
   val agentEnabled = property(AGENT_ENABLED, default = "true").toBoolean()
-  val agentHostname = property(AGENT_HOSTNAME, default = "")
+  val proxyHostname = property(PROXY_HOSTNAME, default = "")
   val metrics = ReadingBatServer.metrics
 
   System.setProperty(IS_PRODUCTION, isProduction.toString())
@@ -121,7 +121,7 @@ internal fun Application.module() {
     info { ReadingBatServer::class.versionDesc() }
   }
 
-  if (agentEnabled && agentHostname.isNotEmpty()) {
+  if (agentEnabled && proxyHostname.isNotEmpty()) {
     val configFilename = System.getProperty(CONFIG_FILENAME) ?: ""
     val agentInfo = startAsyncAgent(configFilename, true)
     System.setProperty(AGENT_LAUNCH_ID, agentInfo.launchId)
