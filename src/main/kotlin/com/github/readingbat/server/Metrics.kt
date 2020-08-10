@@ -37,28 +37,28 @@ internal class Metrics(contentSource: () -> ReadingBatContent) {
     counter {
       name("challenge_request_count")
       help("Challenge request count")
-      labelNames(AGENT_ID, LANG_TYPE)
+      labelNames(AGENT_ID, LANG_TYPE, AUTHENTICATED)
     }
 
   val challengeGroupRequestCount =
     counter {
       name("challenge_group_request_count")
       help("Challenge group request count")
-      labelNames(AGENT_ID, LANG_TYPE)
+      labelNames(AGENT_ID, LANG_TYPE, AUTHENTICATED)
     }
 
   val languageGroupRequestCount =
     counter {
       name("language_group_request_count")
       help("Language group request count")
-      labelNames(AGENT_ID, LANG_TYPE)
+      labelNames(AGENT_ID, LANG_TYPE, AUTHENTICATED)
     }
 
   val playgroundRequestCount =
     counter {
       name("playground_request_count")
       help("Playground group request count")
-      labelNames(AGENT_ID)
+      labelNames(AGENT_ID, AUTHENTICATED)
     }
 
   val endpointRequestLatency =
@@ -115,5 +115,6 @@ internal class Metrics(contentSource: () -> ReadingBatContent) {
     private const val AGENT_ID = "agent_id"
     private const val LANG_TYPE = "lang_type"
     private const val ENDPOINT_NAME = "endpoint_name"
+    private const val AUTHENTICATED = "authenticated"
   }
 }
