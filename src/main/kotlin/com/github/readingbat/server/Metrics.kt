@@ -92,13 +92,13 @@ internal class Metrics(contentSource: () -> ReadingBatContent) {
     SamplerGaugeCollector("sources_cache_size",
                           "Sources cache size",
                           labelNames = listOf(AGENT_ID),
-                          labelValues = listOf(agentLaunchId()),
+                          labelValues = { listOf(agentLaunchId()) },
                           data = { contentSource().sourcesMap.size.toDouble() })
 
     SamplerGaugeCollector("content_cache_size",
                           "Content cache size",
                           labelNames = listOf(AGENT_ID),
-                          labelValues = listOf(agentLaunchId()),
+                          labelValues = { listOf(agentLaunchId()) },
                           data = { contentSource().contentMap.size.toDouble() })
   }
 
