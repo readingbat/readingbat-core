@@ -53,8 +53,6 @@ import io.ktor.server.engine.embeddedServer
 import io.prometheus.Agent
 import io.prometheus.Agent.Companion.startAsyncAgent
 import kotlinx.atomicfu.atomic
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.runBlocking
 import mu.KLogging
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -69,23 +67,26 @@ object ReadingBatServer : KLogging() {
 
   fun start(args: Array<String>) {
     val configFilename =
-      args
-        .asSequence()
-        .filter { it.startsWith("-config=") }
-        .map { it.replaceFirst("-config=", "") }
-        .firstOrNull() ?: "src/main/resources/application.conf"
+      System.getenv("AGENT_CONFIG")
+        ?: args
+          .asSequence()
+          .filter { it.startsWith("-config=") }
+          .map { it.replaceFirst("-config=", "") }
+          .firstOrNull()
+        ?: "src/main/resources/application.conf"
+
+    logger.info { "Prometheus agent using configuration file: $configFilename" }
 
     System.setProperty(CONFIG_FILENAME, configFilename)
 
-    val environment = commandLineEnvironment(args)
+    val hasConfigArg = args.filter { it.startsWith("-config=") }.isNotEmpty()
+    val newargs =
+      if (hasConfigArg)
+        args
+      else
+        args.toMutableList().apply { add("-config=$configFilename") }.toTypedArray()
+    val environment = commandLineEnvironment(newargs)
     embeddedServer(CIO, environment).start(wait = true)
-
-    // Invoke this after initiation has taken place -- otherwise you will be missing agentIds in metrics
-    //metrics
-
-    runBlocking {
-      delay(Long.MAX_VALUE)
-    }
   }
 }
 
