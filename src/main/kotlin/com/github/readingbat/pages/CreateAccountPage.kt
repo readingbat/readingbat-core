@@ -21,6 +21,7 @@ import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.CSSNames.INDENT_1EM
 import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.Endpoints.CREATE_ACCOUNT_ENDPOINT
+import com.github.readingbat.misc.Endpoints.CREATE_ACCOUNT_POST_ENDPOINT
 import com.github.readingbat.misc.FormFields.CONFIRM_PASSWORD
 import com.github.readingbat.misc.FormFields.EMAIL
 import com.github.readingbat.misc.FormFields.FULLNAME
@@ -81,7 +82,7 @@ internal object CreateAccountPage {
 
             form {
               name = formName
-              action = CREATE_ACCOUNT_ENDPOINT
+              action = CREATE_ACCOUNT_POST_ENDPOINT
               method = FormMethod.post
               table {
                 tr {

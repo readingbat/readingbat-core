@@ -23,7 +23,6 @@ import com.github.pambrose.common.response.redirectTo
 import com.github.pambrose.common.response.respondWith
 import com.github.pambrose.common.util.isNull
 import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.misc.AuthRoutes.LOGOUT
 import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
 import com.github.readingbat.misc.Constants.ICONS
 import com.github.readingbat.misc.Constants.RESET
@@ -33,21 +32,27 @@ import com.github.readingbat.misc.Constants.ROOT
 import com.github.readingbat.misc.Constants.STATIC_ROOT
 import com.github.readingbat.misc.Endpoints.ABOUT_ENDPOINT
 import com.github.readingbat.misc.Endpoints.ADMIN_ENDPOINT
+import com.github.readingbat.misc.Endpoints.ADMIN_POST_ENDPOINT
 import com.github.readingbat.misc.Endpoints.CHECK_ANSWERS_ENDPOINT
 import com.github.readingbat.misc.Endpoints.CLEAR_CHALLENGE_ANSWERS_ENDPOINT
 import com.github.readingbat.misc.Endpoints.CLEAR_GROUP_ANSWERS_ENDPOINT
 import com.github.readingbat.misc.Endpoints.CONFIG_ENDPOINT
 import com.github.readingbat.misc.Endpoints.CREATE_ACCOUNT_ENDPOINT
+import com.github.readingbat.misc.Endpoints.CREATE_ACCOUNT_POST_ENDPOINT
 import com.github.readingbat.misc.Endpoints.CSS_ENDPOINT
 import com.github.readingbat.misc.Endpoints.ENABLE_STUDENT_MODE_ENDPOINT
 import com.github.readingbat.misc.Endpoints.ENABLE_TEACHER_MODE_ENDPOINT
 import com.github.readingbat.misc.Endpoints.FAV_ICON_ENDPOINT
 import com.github.readingbat.misc.Endpoints.LIKE_DISLIKE_ENDPOINT
-import com.github.readingbat.misc.Endpoints.PASSWORD_CHANGE_ENDPOINT
+import com.github.readingbat.misc.Endpoints.LOGOUT_ENDPOINT
+import com.github.readingbat.misc.Endpoints.PASSWORD_CHANGE_POST_ENDPOINT
 import com.github.readingbat.misc.Endpoints.PASSWORD_RESET_ENDPOINT
+import com.github.readingbat.misc.Endpoints.PASSWORD_RESET_POST_ENDPOINT
 import com.github.readingbat.misc.Endpoints.PRIVACY_ENDPOINT
 import com.github.readingbat.misc.Endpoints.TEACHER_PREFS_ENDPOINT
+import com.github.readingbat.misc.Endpoints.TEACHER_PREFS_POST_ENDPOINT
 import com.github.readingbat.misc.Endpoints.USER_PREFS_ENDPOINT
+import com.github.readingbat.misc.Endpoints.USER_PREFS_POST_ENDPOINT
 import com.github.readingbat.misc.UserPrincipal
 import com.github.readingbat.misc.cssContent
 import com.github.readingbat.pages.AboutPage.aboutPage
@@ -83,7 +88,7 @@ import io.ktor.sessions.clear
 import io.ktor.sessions.sessions
 import redis.clients.jedis.Jedis
 
-internal fun Routing.userRoutes(content: () -> ReadingBatContent, resetFunc: () -> Unit) {
+internal fun Routing.userRoutes(metrics: Metrics, content: () -> ReadingBatContent, resetFunc: () -> Unit) {
 
   suspend fun PipelineCall.respondWithDbmsCheck(block: (redis: Jedis) -> String) =
     try {
@@ -113,103 +118,163 @@ internal fun Routing.userRoutes(content: () -> ReadingBatContent, resetFunc: () 
       redirectTo { e.redirectUrl }
     }
 
-  get(ROOT) { redirectTo { defaultLanguageTab(content.invoke()) } }
-
-  get(RESET) {
-    resetFunc.invoke()
-    redirectTo { defaultLanguageTab(content.invoke()) }
+  get(ROOT) {
+    metrics.measureEndpointRequest(ROOT) {
+      redirectTo { defaultLanguageTab(content.invoke()) }
+    }
   }
 
-  get(CHALLENGE_ROOT) { redirectTo { defaultLanguageTab(content.invoke()) } }
+  get(RESET) {
+    metrics.measureEndpointRequest(RESET) {
+      resetFunc.invoke()
+      redirectTo { defaultLanguageTab(content.invoke()) }
+    }
+  }
 
-  get(PRIVACY_ENDPOINT) { respondWith { privacyPage(content.invoke()) } }
+  get(CHALLENGE_ROOT) {
+    metrics.measureEndpointRequest(CHALLENGE_ROOT) {
+      redirectTo { defaultLanguageTab(content.invoke()) }
+    }
+  }
 
-  get(ABOUT_ENDPOINT) { respondWith { aboutPage(content.invoke()) } }
+  get(PRIVACY_ENDPOINT) {
+    metrics.measureEndpointRequest(PRIVACY_ENDPOINT) {
+      respondWith { privacyPage(content.invoke()) }
+    }
+  }
 
-  get(CONFIG_ENDPOINT) { respondWith { configPage(content.invoke()) } }
+  get(ABOUT_ENDPOINT) {
+    metrics.measureEndpointRequest(ABOUT_ENDPOINT) {
+      respondWith { aboutPage(content.invoke()) }
+    }
+  }
+
+  get(CONFIG_ENDPOINT) {
+    metrics.measureEndpointRequest(CONFIG_ENDPOINT) {
+      respondWith { configPage(content.invoke()) }
+    }
+  }
 
   post(CHECK_ANSWERS_ENDPOINT) {
-    withSuspendingRedisPool { redis -> checkAnswers(content.invoke(), fetchUser(), redis) }
+    metrics.measureEndpointRequest(CHECK_ANSWERS_ENDPOINT) {
+      withSuspendingRedisPool { redis -> checkAnswers(content.invoke(), fetchUser(), redis) }
+    }
   }
 
   post(LIKE_DISLIKE_ENDPOINT) {
-    withSuspendingRedisPool { redis -> likeDislike(content.invoke(), fetchUser(), redis) }
+    metrics.measureEndpointRequest(LIKE_DISLIKE_ENDPOINT) {
+      withSuspendingRedisPool { redis -> likeDislike(content.invoke(), fetchUser(), redis) }
+    }
   }
 
   post(CLEAR_GROUP_ANSWERS_ENDPOINT) {
-    respondWithSuspendingDbmsCheck { redis -> clearGroupAnswers(content.invoke(), fetchUser(), redis) }
+    metrics.measureEndpointRequest(CLEAR_GROUP_ANSWERS_ENDPOINT) {
+      respondWithSuspendingDbmsCheck { redis -> clearGroupAnswers(content.invoke(), fetchUser(), redis) }
+    }
   }
 
   post(CLEAR_CHALLENGE_ANSWERS_ENDPOINT) {
-    respondWithSuspendingDbmsCheck { redis -> clearChallengeAnswers(content.invoke(), fetchUser(), redis) }
+    metrics.measureEndpointRequest(CLEAR_CHALLENGE_ANSWERS_ENDPOINT) {
+      respondWithSuspendingDbmsCheck { redis -> clearChallengeAnswers(content.invoke(), fetchUser(), redis) }
+    }
   }
 
-  get(CREATE_ACCOUNT_ENDPOINT) { respondWithDbmsCheck { createAccountPage(content.invoke()) } }
+  get(CREATE_ACCOUNT_ENDPOINT) {
+    metrics.measureEndpointRequest(CREATE_ACCOUNT_ENDPOINT) {
+      respondWithDbmsCheck { createAccountPage(content.invoke()) }
+    }
+  }
 
-  post(CREATE_ACCOUNT_ENDPOINT) { respondWithSuspendingDbmsCheck { redis -> createAccount(content.invoke(), redis) } }
+  post(CREATE_ACCOUNT_POST_ENDPOINT) {
+    metrics.measureEndpointRequest(CREATE_ACCOUNT_POST_ENDPOINT) {
+      respondWithSuspendingDbmsCheck { redis -> createAccount(content.invoke(), redis) }
+    }
+  }
 
-  get(USER_PREFS_ENDPOINT) { respondWithDbmsCheck { redis -> userPrefsPage(content.invoke(), fetchUser(), redis) } }
+  get(USER_PREFS_ENDPOINT) {
+    metrics.measureEndpointRequest(USER_PREFS_ENDPOINT) {
+      respondWithDbmsCheck { redis -> userPrefsPage(content.invoke(), fetchUser(), redis) }
+    }
+  }
 
-  post(USER_PREFS_ENDPOINT) {
-    respondWithSuspendingDbmsCheck { redis ->
-      userPrefs(content.invoke(),
-                fetchUser(),
-                redis)
+  post(USER_PREFS_POST_ENDPOINT) {
+    metrics.measureEndpointRequest(USER_PREFS_POST_ENDPOINT) {
+      respondWithSuspendingDbmsCheck { redis -> userPrefs(content.invoke(), fetchUser(), redis) }
     }
   }
 
   get(TEACHER_PREFS_ENDPOINT) {
-    respondWithDbmsCheck { redis ->
-      teacherPrefsPage(content.invoke(),
-                       fetchUser(),
-                       redis)
+    metrics.measureEndpointRequest(TEACHER_PREFS_ENDPOINT) {
+      respondWithDbmsCheck { redis -> teacherPrefsPage(content.invoke(), fetchUser(), redis) }
     }
   }
 
-  post(TEACHER_PREFS_ENDPOINT) {
-    respondWithSuspendingDbmsCheck { redis ->
-      teacherPrefs(content.invoke(),
-                   fetchUser(),
-                   redis)
+  post(TEACHER_PREFS_POST_ENDPOINT) {
+    metrics.measureEndpointRequest(TEACHER_PREFS_POST_ENDPOINT) {
+      respondWithSuspendingDbmsCheck { redis -> teacherPrefs(content.invoke(), fetchUser(), redis) }
     }
   }
 
   get(ENABLE_STUDENT_MODE_ENDPOINT) {
-    respondWithSuspendingDbmsCheck { redis -> enableStudentMode(fetchUser(), redis) }
+    metrics.measureEndpointRequest(ENABLE_STUDENT_MODE_ENDPOINT) {
+      respondWithSuspendingDbmsCheck { redis -> enableStudentMode(fetchUser(), redis) }
+    }
   }
 
   get(ENABLE_TEACHER_MODE_ENDPOINT) {
-    respondWithSuspendingDbmsCheck { redis -> enableTeacherMode(fetchUser(), redis) }
+    metrics.measureEndpointRequest(ENABLE_TEACHER_MODE_ENDPOINT) {
+      respondWithSuspendingDbmsCheck { redis -> enableTeacherMode(fetchUser(), redis) }
+    }
   }
 
-  get(ADMIN_ENDPOINT) { respondWithDbmsCheck { redis -> adminDataPage(content.invoke(), fetchUser(), redis = redis) } }
+  get(ADMIN_ENDPOINT) {
+    metrics.measureEndpointRequest(ADMIN_ENDPOINT) {
+      respondWithDbmsCheck { redis -> adminDataPage(content.invoke(), fetchUser(), redis = redis) }
+    }
+  }
 
-  post(ADMIN_ENDPOINT) {
-    respondWithSuspendingDbmsCheck { redis ->
-      adminActions(content.invoke(),
-                   fetchUser(),
-                   redis)
+  post(ADMIN_POST_ENDPOINT) {
+    metrics.measureEndpointRequest(ADMIN_POST_ENDPOINT) {
+      respondWithSuspendingDbmsCheck { redis -> adminActions(content.invoke(), fetchUser(), redis) }
     }
   }
 
   // RESET_ID is passed here when user clicks on email URL
   get(PASSWORD_RESET_ENDPOINT) {
-    respondWithDbmsCheck { redis -> passwordResetPage(content.invoke(), ResetId(queryParam(RESET_ID)), redis) }
+    metrics.measureEndpointRequest(PASSWORD_RESET_ENDPOINT) {
+      respondWithDbmsCheck { redis -> passwordResetPage(content.invoke(), ResetId(queryParam(RESET_ID)), redis) }
+    }
   }
 
-  post(PASSWORD_RESET_ENDPOINT) {
-    respondWithSuspendingDbmsCheck { redis -> sendPasswordReset(content.invoke(), fetchUser(), redis) }
+  post(PASSWORD_RESET_POST_ENDPOINT) {
+    metrics.measureEndpointRequest(PASSWORD_RESET_POST_ENDPOINT) {
+      respondWithSuspendingDbmsCheck { redis -> sendPasswordReset(content.invoke(), fetchUser(), redis) }
+    }
   }
 
-  post(PASSWORD_CHANGE_ENDPOINT) { respondWithSuspendingDbmsCheck { redis -> changePassword(content.invoke(), redis) } }
-
-  get(LOGOUT) {
-    // Purge UserPrincipal from cookie data
-    call.sessions.clear<UserPrincipal>()
-    redirectTo { queryParam(RETURN_PATH, "/") }
+  post(PASSWORD_CHANGE_POST_ENDPOINT) {
+    metrics.measureEndpointRequest(PASSWORD_CHANGE_POST_ENDPOINT) {
+      respondWithSuspendingDbmsCheck { redis -> changePassword(content.invoke(), redis) }
+    }
   }
 
-  get(CSS_ENDPOINT) { respondWith(CSS) { cssContent } }
+  get(LOGOUT_ENDPOINT) {
+    metrics.measureEndpointRequest(LOGOUT_ENDPOINT) {
+      // Purge UserPrincipal from cookie data
+      call.sessions.clear<UserPrincipal>()
+      redirectTo { queryParam(RETURN_PATH, "/") }
+    }
+  }
 
-  get(FAV_ICON_ENDPOINT) { redirectTo { "$STATIC_ROOT/$ICONS/favicon.ico" } }
+  get(CSS_ENDPOINT) {
+    metrics.measureEndpointRequest(CSS_ENDPOINT) {
+      respondWith(CSS) { cssContent }
+    }
+  }
+
+  get(FAV_ICON_ENDPOINT) {
+    metrics.measureEndpointRequest(FAV_ICON_ENDPOINT) {
+      redirectTo { "$STATIC_ROOT/$ICONS/favicon.ico" }
+    }
+  }
 }

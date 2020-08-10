@@ -26,6 +26,7 @@ import com.github.readingbat.dsl.InvalidPathException
 import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.dsl.LanguageType.Kotlin
 import com.github.readingbat.dsl.ReadingBatContent
+import com.github.readingbat.dsl.agentLaunchId
 import com.github.readingbat.misc.AuthName.FORM
 import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
 import com.github.readingbat.misc.Constants.PLAYGROUND_ROOT
@@ -45,17 +46,29 @@ import io.ktor.locations.post
 import io.ktor.routing.Routing
 
 internal object Locations {
-  fun Routing.locations(content: () -> ReadingBatContent) {
+  fun Routing.locations(metrics: Metrics, content: () -> ReadingBatContent) {
     get<Language> { languageLoc -> language(content.invoke(), languageLoc, false) }
     get<Language.Group> { groupLoc -> group(content.invoke(), groupLoc, false) }
     get<Language.Group.Challenge> { challengeLoc -> challenge(content.invoke(), challengeLoc, false) }
     get<PlaygroundRequest> { request -> playground(content.invoke(), request, false) }
 
     authenticate(FORM) {
-      post<Language> { languageLoc -> language(content.invoke(), languageLoc, true) }
-      post<Language.Group> { groupLoc -> group(content.invoke(), groupLoc, true) }
-      post<Language.Group.Challenge> { challengeLoc -> challenge(content.invoke(), challengeLoc, true) }
-      post<PlaygroundRequest> { request -> playground(content.invoke(), request, true) }
+      post<Language> { languageLoc ->
+        metrics.languageGroupRequestCount.labels(agentLaunchId(), languageLoc.languageType.toString()).inc()
+        language(content.invoke(), languageLoc, true)
+      }
+      post<Language.Group> { groupLoc ->
+        metrics.challengeGroupRequestCount.labels(agentLaunchId(), groupLoc.languageType.toString()).inc()
+        group(content.invoke(), groupLoc, true)
+      }
+      post<Language.Group.Challenge> { challengeLoc ->
+        metrics.challengeRequestCount.labels(agentLaunchId(), challengeLoc.languageType.toString()).inc()
+        challenge(content.invoke(), challengeLoc, true)
+      }
+      post<PlaygroundRequest> { request ->
+        metrics.playgroundRequestCount.labels(agentLaunchId()).inc()
+        playground(content.invoke(), request, true)
+      }
     }
   }
 

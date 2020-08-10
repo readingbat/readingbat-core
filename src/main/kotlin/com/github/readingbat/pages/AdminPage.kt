@@ -22,7 +22,7 @@ import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.isProduction
 import com.github.readingbat.misc.CSSNames.INDENT_1EM
 import com.github.readingbat.misc.Constants.RETURN_PATH
-import com.github.readingbat.misc.Endpoints.ADMIN_ENDPOINT
+import com.github.readingbat.misc.Endpoints.ADMIN_POST_ENDPOINT
 import com.github.readingbat.misc.FormFields.ADMIN_ACTION
 import com.github.readingbat.misc.FormFields.DELETE_ALL_DATA
 import com.github.readingbat.misc.Message
@@ -86,7 +86,7 @@ internal object AdminPage {
     div(classes = INDENT_1EM) {
       p { +"Permanently delete all data -- this cannot be undone!" }
       form {
-        action = ADMIN_ENDPOINT
+        action = ADMIN_POST_ENDPOINT
         method = FormMethod.post
         onSubmit = "return confirm('Are you sure you want to permanently delete all data ?');"
         input { type = InputType.submit; name = ADMIN_ACTION; value = DELETE_ALL_DATA }

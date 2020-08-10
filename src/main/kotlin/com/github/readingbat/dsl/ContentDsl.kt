@@ -22,6 +22,7 @@ import com.github.pambrose.common.util.ContentSource
 import com.github.pambrose.common.util.GitHubFile
 import com.github.pambrose.common.util.GitHubRepo
 import com.github.pambrose.common.util.OwnerType
+import com.github.readingbat.misc.Constants.AGENT_LAUNCH_ID
 import com.github.readingbat.misc.Constants.IS_PRODUCTION
 import com.github.readingbat.server.ReadingBatServer
 import mu.KotlinLogging
@@ -49,6 +50,8 @@ private val logger = KotlinLogging.logger {}
 
 // This is accessible from the Content.kt descriptions
 fun isProduction() = System.getProperty(IS_PRODUCTION)?.toBoolean() ?: false
+
+fun agentLaunchId() = System.getProperty(AGENT_LAUNCH_ID) ?: "unassigned"
 
 fun ContentSource.eval(enclosingContent: ReadingBatContent, variableName: String = "content"): ReadingBatContent =
   enclosingContent.evalContent(this, variableName)

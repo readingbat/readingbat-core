@@ -23,6 +23,7 @@ import com.github.readingbat.misc.CSSNames.INDENT_2EM
 import com.github.readingbat.misc.Constants.LABEL_WIDTH
 import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.Endpoints.TEACHER_PREFS_ENDPOINT
+import com.github.readingbat.misc.Endpoints.TEACHER_PREFS_POST_ENDPOINT
 import com.github.readingbat.misc.FormFields.CLASSES_CHOICE
 import com.github.readingbat.misc.FormFields.CLASSES_DISABLED
 import com.github.readingbat.misc.FormFields.CLASS_CODE
@@ -103,7 +104,7 @@ internal object TeacherPrefsPage : KLogging() {
     div(classes = INDENT_2EM) {
       p { +"Enter a decription of the class." }
       form {
-        action = TEACHER_PREFS_ENDPOINT
+        action = TEACHER_PREFS_POST_ENDPOINT
         method = FormMethod.post
         table {
           tr {
@@ -147,7 +148,7 @@ internal object TeacherPrefsPage : KLogging() {
       style = "border-spacing: 15px 5px;"
       tr { th { +"Active" }; th { +"Class Code" }; th { +"Description" }; th { +"Enrollees" } }
       form {
-        action = TEACHER_PREFS_ENDPOINT
+        action = TEACHER_PREFS_POST_ENDPOINT
         method = FormMethod.post
         classCodes.forEach { classCode ->
           val classDesc = classCode.fetchClassDesc(redis)
@@ -194,7 +195,7 @@ internal object TeacherPrefsPage : KLogging() {
           td {
             form {
               style = "margin:0;"
-              action = TEACHER_PREFS_ENDPOINT
+              action = TEACHER_PREFS_POST_ENDPOINT
               method = FormMethod.post
               onSubmit = "return confirm('Are you sure you want to delete class $classDesc [$classCode]?');"
               input { type = InputType.hidden; name = CLASS_CODE; value = classCode.value }

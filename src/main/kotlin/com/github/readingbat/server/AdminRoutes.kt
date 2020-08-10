@@ -24,6 +24,8 @@ import com.github.pambrose.common.util.isNull
 import com.github.pambrose.common.util.randomId
 import com.github.readingbat.misc.AuthRoutes.COOKIES
 import com.github.readingbat.misc.BrowserSession
+import com.github.readingbat.misc.Endpoints.PING
+import com.github.readingbat.misc.Endpoints.THREAD_DUMP
 import com.github.readingbat.misc.UserPrincipal
 import io.ktor.application.call
 import io.ktor.html.respondHtml
@@ -47,18 +49,24 @@ import java.time.ZoneId
 
 internal object AdminRoutes : KLogging() {
 
-  fun Routing.adminRoutes() {
+  fun Routing.adminRoutes(metrics: Metrics) {
 
-    get("/ping") { call.respondText("pong", ContentType.Text.Plain) }
+    get(PING) {
+      metrics.measureEndpointRequest(PING) {
+        call.respondText("pong", ContentType.Text.Plain)
+      }
+    }
 
-    get("/threaddump") {
-      try {
-        val baos = ByteArrayOutputStream()
-        baos.use { ThreadDumpInfo.threadDump.dump(true, true, it) }
-        val output = String(baos.toByteArray(), Charsets.UTF_8)
-        call.respondText(output, ContentType.Text.Plain)
-      } catch (e: NoClassDefFoundError) {
-        call.respondText("Sorry, your runtime environment does not allow dump threads.", ContentType.Text.Plain)
+    get(THREAD_DUMP) {
+      metrics.measureEndpointRequest(THREAD_DUMP) {
+        try {
+          val baos = ByteArrayOutputStream()
+          baos.use { ThreadDumpInfo.threadDump.dump(true, true, it) }
+          val output = String(baos.toByteArray(), Charsets.UTF_8)
+          call.respondText(output, ContentType.Text.Plain)
+        } catch (e: NoClassDefFoundError) {
+          call.respondText("Sorry, your runtime environment does not allow dump threads.", ContentType.Text.Plain)
+        }
       }
     }
 

@@ -41,6 +41,7 @@ import com.github.readingbat.dsl.parse.PythonParse.extractPythonInvocations
 import com.github.readingbat.dsl.parse.PythonParse.ifMainEndRegex
 import com.github.readingbat.misc.PageUtils.pathOf
 import com.github.readingbat.server.ChallengeName
+import com.github.readingbat.server.ReadingBatServer
 import com.vladsch.flexmark.html.HtmlRenderer
 import com.vladsch.flexmark.parser.Parser
 import com.vladsch.flexmark.util.data.MutableDataSet
@@ -89,30 +90,51 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
 
   internal abstract fun computeFuncInfo(code: String): FunctionInfo
 
-  private val compute = {
-    val fs = repo as FileSystemSource
-    val file = fs.file(pathOf(fs.pathPrefix, srcPath, packageName, fileName))
-    logger.info { """Fetching "${file.fileName}"""" }
-    computeFuncInfo(file.content)
+  private fun measureParsing(code: String): FunctionInfo {
+    val timer =
+      ReadingBatServer.metrics.challengeParseLatency.labels(agentLaunchId(), languageType.toString()).startTimer()
+    try {
+      return computeFuncInfo(code)
+    } finally {
+      timer.observeDuration()
+    }
   }
 
-  internal fun funcInfo(content: ReadingBatContent): FunctionInfo =
-    if (repo.remote) {
+  internal fun funcInfo(content: ReadingBatContent): FunctionInfo {
+    val parseCode = {
+      val fs = repo as FileSystemSource
+      val file = fs.file(pathOf(fs.pathPrefix, srcPath, packageName, fileName))
+      logger.info { """Fetching "${file.fileName}"""" }
+      measureParsing(file.content)
+    }
+
+    return if (repo.remote) {
       content.sourcesMap
         .computeIfAbsent(challengeId) {
-          val path = pathOf((repo as AbstractRepo).rawSourcePrefix, branchName, srcPath, fqName)
-          logger.info { """Fetching "$groupName/$fileName" from: $path""" }
-          val (code, dur) = measureTimedValue { URL(path).readText() }
-          logger.info { """Fetched "$groupName/$fileName" in: $dur""" }
-          computeFuncInfo(code)
+          fun fetchCode(): String {
+            val path = pathOf((repo as AbstractRepo).rawSourcePrefix, branchName, srcPath, fqName)
+            val timer = ReadingBatServer.metrics.challengeRemoteReadLatency.labels(agentLaunchId()).startTimer()
+            try {
+              logger.info { """Fetching "$groupName/$fileName" from: $path""" }
+              val (code, dur) = measureTimedValue { URL(path).readText() }
+              logger.info { """Fetched "$groupName/$fileName" in: $dur""" }
+              return code
+            } finally {
+              timer.observeDuration()
+            }
+          }
+
+          val code = fetchCode()
+          measureParsing(code)
         }
     }
     else {
       if (content.cacheChallenges)
-        content.sourcesMap.computeIfAbsent(challengeId) { compute.invoke() }
+        content.sourcesMap.computeIfAbsent(challengeId) { parseCode.invoke() }
       else
-        compute.invoke()
+        parseCode.invoke()
     }
+  }
 
   internal open fun validate() {
     if (challengeName.value.isEmpty())

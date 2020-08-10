@@ -53,6 +53,7 @@ internal object Constants {
   const val FILE_NAME = "$READING_BAT.$CONTENT.fileName"
   const val VARIABLE_NAME = "$READING_BAT.$CONTENT.variableName"
 
+  const val AGENT_LAUNCH_ID = "agentLaunchId"
   const val AGENT_ENABLED = "$AGENT.enabled"
   const val AGENT_HOSTNAME = "$AGENT.proxy.hostname"
 
@@ -61,16 +62,21 @@ internal object Constants {
 
 internal object Endpoints {
   const val USER_PREFS_ENDPOINT = "/user-prefs"
+  const val USER_PREFS_POST_ENDPOINT = "/user-prefs-post"
   const val TEACHER_PREFS_ENDPOINT = "/teacher-prefs"
+  const val TEACHER_PREFS_POST_ENDPOINT = "/teacher-prefs-post"
   const val ENABLE_STUDENT_MODE_ENDPOINT = "/enable-student-mode"
   const val ENABLE_TEACHER_MODE_ENDPOINT = "/enable-teacher-mode"
   const val ADMIN_ENDPOINT = "/admin"
+  const val ADMIN_POST_ENDPOINT = "/admin-post"
   const val ABOUT_ENDPOINT = "/about.html"
   const val CONFIG_ENDPOINT = "/config"
   const val CREATE_ACCOUNT_ENDPOINT = "/create-account"
+  const val CREATE_ACCOUNT_POST_ENDPOINT = "/create-account-post"
   const val PRIVACY_ENDPOINT = "/privacy.html"
-  const val PASSWORD_CHANGE_ENDPOINT = "/password-change"
+  const val PASSWORD_CHANGE_POST_ENDPOINT = "/password-change-post"
   const val PASSWORD_RESET_ENDPOINT = "/password-reset"
+  const val PASSWORD_RESET_POST_ENDPOINT = "/password-reset-post"
   const val CSS_ENDPOINT = "/styles.css"
   const val FAV_ICON_ENDPOINT = "/favicon.ico"
   const val CHALLENGE_ENDPOINT = "/challenge"
@@ -79,6 +85,12 @@ internal object Endpoints {
   const val LIKE_DISLIKE_ENDPOINT = "/like-dislike"
   const val CLEAR_GROUP_ANSWERS_ENDPOINT = "/clear-group-answers"
   const val CLEAR_CHALLENGE_ANSWERS_ENDPOINT = "/clear-challenge-answers"
+
+  const val PING = "/ping"
+  const val THREAD_DUMP = "/threaddump"
+
+  const val LOGOUT_ENDPOINT = "/logout"
+
 }
 
 internal object ParameterIds {

@@ -22,10 +22,12 @@ import com.github.pambrose.common.util.Version
 import com.github.pambrose.common.util.Version.Companion.versionDesc
 import com.github.pambrose.common.util.getBanner
 import com.github.readingbat.dsl.ReadingBatContent
+import com.github.readingbat.dsl.agentLaunchId
 import com.github.readingbat.dsl.isProduction
 import com.github.readingbat.dsl.readContentDsl
 import com.github.readingbat.misc.Constants.AGENT_ENABLED
 import com.github.readingbat.misc.Constants.AGENT_HOSTNAME
+import com.github.readingbat.misc.Constants.AGENT_LAUNCH_ID
 import com.github.readingbat.misc.Constants.ANALYTICS_ID
 import com.github.readingbat.misc.Constants.CONFIG_FILENAME
 import com.github.readingbat.misc.Constants.FILE_NAME
@@ -51,6 +53,8 @@ import io.ktor.server.engine.embeddedServer
 import io.prometheus.Agent
 import io.prometheus.Agent.Companion.startAsyncAgent
 import kotlinx.atomicfu.atomic
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
 import mu.KLogging
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -61,6 +65,7 @@ object ReadingBatServer : KLogging() {
   internal val timeStamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("M/d/y H:m:ss"))
   internal val startTimeMillis = System.currentTimeMillis().milliseconds
   internal var content = atomic(ReadingBatContent())
+  internal val metrics by lazy { Metrics({ content.value }) }
 
   fun start(args: Array<String>) {
     val configFilename =
@@ -74,6 +79,13 @@ object ReadingBatServer : KLogging() {
 
     val environment = commandLineEnvironment(args)
     embeddedServer(CIO, environment).start(wait = true)
+
+    // Invoke this after initiation has taken place -- otherwise you will be missing agentIds in metrics
+    //metrics
+
+    runBlocking {
+      delay(Long.MAX_VALUE)
+    }
   }
 }
 
@@ -83,14 +95,15 @@ internal fun Application.assignContentDsl(fileName: String, variableName: String
       .apply {
         dslFileName = fileName
         dslVariableName = variableName
-        val watchVal = environment.config.propertyOrNull("ktor.deployment.watch")?.getList() ?: emptyList()
-        ktorWatch = if (watchVal.isNotEmpty()) watchVal.toString() else "unassigned"
-        ktorPort = property("ktor.deployment.port", "0").toInt()
         urlPrefix = property(URL_PREFIX, default = "https://www.readingbat.com")
         googleAnalyticsId = property(ANALYTICS_ID)
         maxHistoryLength = property(MAX_HISTORY_LENGTH, default = "10").toInt()
         maxClassCount = property(MAX_CLASS_COUNT, default = "25").toInt()
+        ktorPort = property("ktor.deployment.port", "0").toInt()
+        val watchVal = environment.config.propertyOrNull("ktor.deployment.watch")?.getList() ?: emptyList()
+        ktorWatch = if (watchVal.isNotEmpty()) watchVal.toString() else "unassigned"
       })
+  ReadingBatServer.metrics.contentLoadedCount.labels(agentLaunchId()).inc()
 }
 
 internal fun Application.module() {
@@ -99,6 +112,7 @@ internal fun Application.module() {
   val isProduction = property(IS_PRODUCTION, default = "false").toBoolean()
   val agentEnabled = property(AGENT_ENABLED, default = "true").toBoolean()
   val agentHostname = property(AGENT_HOSTNAME, default = "")
+  val metrics = ReadingBatServer.metrics
 
   System.setProperty(IS_PRODUCTION, isProduction.toString())
 
@@ -109,7 +123,8 @@ internal fun Application.module() {
 
   if (agentEnabled && agentHostname.isNotEmpty()) {
     val configFilename = System.getProperty(CONFIG_FILENAME) ?: ""
-    startAsyncAgent(configFilename, true)
+    val agentInfo = startAsyncAgent(configFilename, true)
+    System.setProperty(AGENT_LAUNCH_ID, agentInfo.launchId)
   }
 
   assignContentDsl(fileName, variableName)
@@ -118,10 +133,10 @@ internal fun Application.module() {
   intercepts()
 
   routing {
-    adminRoutes()
-    locations { content.value }
-    userRoutes({ content.value }, { assignContentDsl(fileName, variableName) })
-    wsEndpoints { content.value }
+    adminRoutes(metrics)
+    locations(metrics) { content.value }
+    userRoutes(metrics, { content.value }, { assignContentDsl(fileName, variableName) })
+    wsEndpoints(metrics) { content.value }
     static(STATIC_ROOT) { resources("static") }
   }
 }
