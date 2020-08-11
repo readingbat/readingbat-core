@@ -58,7 +58,7 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import kotlin.time.milliseconds
 
-@Version(version = "1.2.0", date = "8/5/20")
+@Version(version = "1.2.0", date = "8/11/20")
 object ReadingBatServer : KLogging() {
   internal val timeStamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("M/d/y H:m:ss"))
   internal val startTimeMillis = System.currentTimeMillis().milliseconds
@@ -66,25 +66,25 @@ object ReadingBatServer : KLogging() {
   internal val metrics by lazy { Metrics({ content.value }) }
 
   fun start(args: Array<String>) {
+    // grab config filename from CLI args and then try ENV var
     val configFilename =
-      System.getenv("AGENT_CONFIG")
-        ?: args
-          .asSequence()
-          .filter { it.startsWith("-config=") }
-          .map { it.replaceFirst("-config=", "") }
-          .firstOrNull()
+      args.asSequence()
+        .filter { it.startsWith("-config=") }
+        .map { it.replaceFirst("-config=", "") }
+        .firstOrNull()
+        ?: System.getenv("AGENT_CONFIG")
         ?: "src/main/resources/application.conf"
 
     logger.info { "Prometheus agent using configuration file: $configFilename" }
 
     System.setProperty(CONFIG_FILENAME, configFilename)
 
-    val hasConfigArg = args.filter { it.startsWith("-config=") }.isNotEmpty()
     val newargs =
-      if (hasConfigArg)
+      if (args.any { it.startsWith("-config=") })
         args
       else
         args.toMutableList().apply { add("-config=$configFilename") }.toTypedArray()
+
     val environment = commandLineEnvironment(newargs)
     embeddedServer(CIO, environment).start(wait = true)
   }
