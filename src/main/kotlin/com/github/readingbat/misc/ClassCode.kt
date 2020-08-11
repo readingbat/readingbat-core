@@ -31,9 +31,8 @@ import redis.clients.jedis.Jedis
 import redis.clients.jedis.Transaction
 
 internal inline class ClassCode(val value: String) {
-  val isStudentMode get() = value == CLASSES_DISABLED || value.isBlank()
-
   val isTeacherMode get() = !isStudentMode
+  val isStudentMode get() = value == CLASSES_DISABLED || value.isBlank()
 
   private val classCodeEnrollmentKey get() = listOf(CLASS_CODE_KEY, value).joinToString(KEY_SEP)
 
@@ -80,11 +79,11 @@ internal inline class ClassCode(val value: String) {
   override fun toString() = value
 
   companion object {
-    val STUDENT_CLASS_CODE = ClassCode("")
+    internal val STUDENT_CLASS_CODE = ClassCode("")
 
-    fun newClassCode() = ClassCode(randomId(15))
+    internal fun newClassCode() = ClassCode(randomId(15))
 
-    fun Parameters.getClassCode(parameterName: String) =
+    internal fun Parameters.getClassCode(parameterName: String) =
       this[parameterName]?.let { ClassCode(it) } ?: STUDENT_CLASS_CODE
   }
 }

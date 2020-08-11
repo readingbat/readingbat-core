@@ -77,7 +77,6 @@ internal object TeacherPrefsPost {
 
   fun PipelineCall.enableTeacherMode(user: User?, redis: Jedis): String {
     val returnPath = queryParam(Constants.RETURN_PATH, "/")
-
     val msg =
       if (user.isValidUser(redis)) {
         val lastTeacherClassCode = user.fetchPreviousTeacherClassCode(redis)
@@ -136,9 +135,8 @@ internal object TeacherPrefsPost {
       when {
         // Do not allow this for classCode.isStudentMode because turns off the
         // student/teacher toggle mode
-        activeClassCode == classCode && classCode.isTeacherMode -> {
-          Message("Same active class selected [$classCode]", true)
-        }
+        activeClassCode == classCode && classCode.isTeacherMode -> Message("Same active class selected [$classCode]",
+                                                                           true)
         else -> {
           user.assignActiveClassCode(classCode, true, redis)
           if (classCode.isStudentMode)

@@ -21,17 +21,23 @@ import io.ktor.application.Application
 import io.ktor.application.ApplicationCallPipeline
 
 internal fun Application.intercepts() {
-  intercept(ApplicationCallPipeline.Call) {
+  intercept(ApplicationCallPipeline.Setup) {
+    // Phase for preparing call and it's attributes for processing
   }
 
   intercept(ApplicationCallPipeline.Features) {
+    // Phase for features. Most features should intercept this phase
   }
 
   intercept(ApplicationCallPipeline.Monitoring) {
-    // Set up metrics here
+    // Phase for tracing calls, useful for logging, metrics, error handling and so on
+  }
+
+  intercept(ApplicationCallPipeline.Call) {
+    // Phase for processing a call and sending a response
   }
 
   intercept(ApplicationCallPipeline.Fallback) {
-    // Count not found pages here
+    // Phase for handling unprocessed calls
   }
 }

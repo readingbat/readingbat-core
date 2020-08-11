@@ -89,8 +89,7 @@ internal object HelpAndLogin {
       td {
         +elems[0]
         if (elems.size > 1) {
-          br
-          +"@${elems[1]}"
+          br; +"@${elems[1]}"
         }
       }
     }

@@ -20,6 +20,7 @@ package com.github.readingbat.misc
 data class Message(val value: String, val isError: Boolean = false) {
   val isBlank get() = value.isBlank()
   val isNotBlank get() = value.isNotBlank()
+
   override fun toString() = value
 
   companion object {
