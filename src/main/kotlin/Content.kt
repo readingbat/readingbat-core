@@ -16,7 +16,7 @@
  */
 
 import com.github.pambrose.common.util.FileSystemSource
-import com.github.pambrose.common.util.OwnerType.User
+import com.github.pambrose.common.util.OwnerType.Organization
 import com.github.readingbat.dsl.GitHubContent
 import com.github.readingbat.dsl.eval
 import com.github.readingbat.dsl.readingBatContent
@@ -68,7 +68,7 @@ val content =
     include(GitHubContent(Organization, "readingbat", "readingbat-java-content").eval(this).kotlin)
 */
 
-    include(GitHubContent(User, "pambrose", "ReadingBat-content").eval(this).python, "Athenian: ")
+    include(GitHubContent(Organization, "readingbat", "readingbat-java-content").eval(this).kotlin, "Athenian: ")
 
     java {
       group("test1") {

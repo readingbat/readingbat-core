@@ -193,7 +193,7 @@ class PythonChallenge(challengeGroup: ChallengeGroup<*>, challengeName: Challeng
     val funcCode = extractPythonFunction(lines)
     val invocations = extractPythonInvocations(lines, defMainRegex, ifMainEndRegex)
     val script = convertToPythonScript(lines)
-    val answers = mutableListOf<Any>()
+    val correctAnswers = mutableListOf<Any>()
 
     logger.debug { "$challengeName return type: $returnType script: \n${script.withLineNumbers()}" }
 
@@ -202,13 +202,13 @@ class PythonChallenge(challengeGroup: ChallengeGroup<*>, challengeName: Challeng
     val duration =
       PythonScript()
         .run {
-          add(varName, answers)
+          add(varName, correctAnswers)
           measureTime { eval(script) }
         }
 
-    logger.info { "$challengeName computed answers in $duration for: $answers" }
+    logger.info { "$challengeName computed answers in $duration for: $correctAnswers" }
 
-    return FunctionInfo(languageType, challengeName, code, funcCode, invocations, returnType, answers)
+    return FunctionInfo(languageType, challengeName, code, funcCode, invocations, returnType, correctAnswers)
   }
 
   override fun toString() = "PythonChallenge(packageName='$packageName', fileName='$fileName', returnType=$returnType)"
@@ -239,13 +239,13 @@ class JavaChallenge(challengeGroup: ChallengeGroup<*>, challengeName: ChallengeN
           measureTimedValue { evalScript(script) }
         }
 
-    val answers = timedValue.value
+    val correctAnswers = timedValue.value
     logger.info { "$challengeName computed answers in ${timedValue.duration}" }
 
-    if (answers !is List<*>)
+    if (correctAnswers !is List<*>)
       throw InvalidConfigurationException("Invalid type returned for $challengeName")
 
-    return FunctionInfo(languageType, challengeName, code, funcCode, invocations, returnType, answers)
+    return FunctionInfo(languageType, challengeName, code, funcCode, invocations, returnType, correctAnswers)
   }
 
   override fun toString() = "JavaChallenge(packageName='$packageName', fileName='$fileName')"
@@ -278,16 +278,16 @@ class KotlinChallenge(challengeGroup: ChallengeGroup<*>, challengeName: Challeng
 
     description = deriveDescription(code, "//")
 
-    val answers = mutableListOf<Any>()
+    val correctAnswers = mutableListOf<Any>()
     val duration =
       KotlinScript().run {
-        add(varName, answers, typeOf<Any>())
+        add(varName, correctAnswers, typeOf<Any>())
         measureTime { eval(script) }
       }
 
-    logger.info { "$challengeName computed answers in $duration for: $answers" }
+    logger.info { "$challengeName computed answers in $duration for: $correctAnswers" }
 
-    return FunctionInfo(languageType, challengeName, strippedCode, funcCode, invocations, returnType, answers)
+    return FunctionInfo(languageType, challengeName, strippedCode, funcCode, invocations, returnType, correctAnswers)
   }
 
   override fun toString() = "KotlinChallenge(packageName='$packageName', fileName='$fileName', returnType=$returnType)"

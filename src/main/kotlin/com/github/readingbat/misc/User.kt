@@ -454,7 +454,7 @@ internal class User private constructor(val id: String) {
     }
   }
 
-  internal data class ChallengeAnswers(val id: String, val answers: MutableMap<String, String> = mutableMapOf())
+  internal data class ChallengeAnswers(val id: String, val correctAnswers: MutableMap<String, String> = mutableMapOf())
 }
 
 internal fun User?.isValidUser(redis: Jedis): Boolean {

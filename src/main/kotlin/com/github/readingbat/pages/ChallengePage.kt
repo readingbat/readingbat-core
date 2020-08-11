@@ -227,7 +227,7 @@ internal object ChallengePage : KLogging() {
           }
         }
 
-        val answers = fetchPreviousAnswers(user, browserSession, challenge, redis)
+        val correctAnswers = fetchPreviousAnswers(user, browserSession, challenge, redis)
 
         funcInfo.invocations.withIndex()
           .forEach { (i, invocation) ->
@@ -243,8 +243,8 @@ internal object ChallengePage : KLogging() {
               td {
                 textInput(classes = USER_RESP) {
                   id = "$RESP$i"
-                  onKeyDown = "$PROCESS_USER_ANSWERS_JS_FUNC(event, ${funcInfo.answers.size})"
-                  val answer = answers[invocation.value] ?: ""
+                  onKeyDown = "$PROCESS_USER_ANSWERS_JS_FUNC(event, ${funcInfo.correctAnswers.size})"
+                  val answer = correctAnswers[invocation.value] ?: ""
                   if (answer.isNotBlank())
                     value = answer
                   else
@@ -343,10 +343,9 @@ internal object ChallengePage : KLogging() {
               val results =
                 funcInfo.invocations
                   .map { invocation ->
-                    val answerHistoryKey = enrollee.answerHistoryKey(languageName, groupName, challengeName, invocation)
+                    val historyKey = enrollee.answerHistoryKey(languageName, groupName, challengeName, invocation)
                     val history =
-                      gson.fromJson(redis[answerHistoryKey], ChallengeHistory::class.java) ?: ChallengeHistory(
-                        invocation)
+                      gson.fromJson(redis[historyKey], ChallengeHistory::class.java) ?: ChallengeHistory(invocation)
                     if (history.correct)
                       numCorrect++
                     invocation to history
@@ -402,7 +401,7 @@ internal object ChallengePage : KLogging() {
         tr {
           td {
             button(classes = CHECK_ANSWERS) {
-              onClick = "$PROCESS_USER_ANSWERS_JS_FUNC(null, ${funcInfo.answers.size});"; +"Check My Answers"
+              onClick = "$PROCESS_USER_ANSWERS_JS_FUNC(null, ${funcInfo.correctAnswers.size});"; +"Check My Answers"
             }
           }
 
