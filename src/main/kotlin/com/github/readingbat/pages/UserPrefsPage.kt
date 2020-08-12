@@ -28,7 +28,7 @@ import com.github.readingbat.misc.Endpoints.CREATE_ACCOUNT_ENDPOINT
 import com.github.readingbat.misc.Endpoints.TEACHER_PREFS_ENDPOINT
 import com.github.readingbat.misc.Endpoints.USER_PREFS_ENDPOINT
 import com.github.readingbat.misc.Endpoints.USER_PREFS_POST_ENDPOINT
-import com.github.readingbat.misc.FormFields.CLASS_CODE
+import com.github.readingbat.misc.FormFields.CLASS_CODE_NAME
 import com.github.readingbat.misc.FormFields.CONFIRM_PASSWORD
 import com.github.readingbat.misc.FormFields.CURR_PASSWORD
 import com.github.readingbat.misc.FormFields.DELETE_ACCOUNT
@@ -188,7 +188,7 @@ internal object UserPrefsPage : KLogging() {
                 input {
                   type = InputType.text
                   size = "42"
-                  name = CLASS_CODE
+                  name = CLASS_CODE_NAME
                   value = defaultClassCode.value
                   onKeyPress = "click$joinClassButton(event);"
                 }

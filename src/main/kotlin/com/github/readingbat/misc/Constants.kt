@@ -113,7 +113,7 @@ internal object FormFields {
   const val EMAIL = "email"
   const val PASSWORD = "passwd"
   const val CONFIRM_PASSWORD = "confirm_passwd"
-  const val CLASS_CODE = "class_code"
+  const val CLASS_CODE_NAME = "class_code"
   const val CLASS_DESC = "class_desc"
   const val CLASSES_CHOICE = "classes_choice"
   const val CLASSES_DISABLED = "classes_disabled"

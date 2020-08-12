@@ -82,6 +82,35 @@ internal class Metrics(val contentSource: () -> ReadingBatContent) {
       labelNames(AGENT_ID)
     }
 
+  val wsStudentAnswerStartCount =
+    counter {
+      name("ws_student_answer_start_count")
+      help("WS Student answer start count")
+      labelNames(AGENT_ID)
+    }
+
+  val wsClassStatisticsStartCount =
+    counter {
+      name("ws_class_statistics_start_count")
+      help("WS Class statistics start count")
+      labelNames(AGENT_ID)
+    }
+
+  val wsStudentAnswerResponseCount =
+    counter {
+      name("ws_student_answer_response_count")
+      help("WS Student answer response count")
+      labelNames(AGENT_ID)
+    }
+
+  val wsClassStatisticsResponseCount =
+    counter {
+      name("ws_class_statistics_response_count")
+      help("WS Class statistics response count")
+      labelNames(AGENT_ID)
+    }
+
+
   fun init() {
     gauge {
       name("server_start_time_seconds")

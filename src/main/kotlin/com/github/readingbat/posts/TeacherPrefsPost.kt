@@ -26,7 +26,7 @@ import com.github.readingbat.misc.ClassCode.Companion.getClassCode
 import com.github.readingbat.misc.ClassCode.Companion.newClassCode
 import com.github.readingbat.misc.Constants.MSG
 import com.github.readingbat.misc.FormFields.CLASSES_CHOICE
-import com.github.readingbat.misc.FormFields.CLASS_CODE
+import com.github.readingbat.misc.FormFields.CLASS_CODE_NAME
 import com.github.readingbat.misc.FormFields.CLASS_DESC
 import com.github.readingbat.misc.FormFields.CREATE_CLASS
 import com.github.readingbat.misc.FormFields.DELETE_CLASS
@@ -55,7 +55,7 @@ internal object TeacherPrefsPost {
       when (val action = parameters[USER_PREFS_ACTION] ?: "") {
         CREATE_CLASS -> createClass(content, user, parameters[CLASS_DESC] ?: "", redis)
         UPDATE_ACTIVE_CLASS -> updateActiveClass(content, user, parameters.getClassCode(CLASSES_CHOICE), redis)
-        DELETE_CLASS -> deleteClass(content, user, parameters.getClassCode(CLASS_CODE), redis)
+        DELETE_CLASS -> deleteClass(content, user, parameters.getClassCode(CLASS_CODE_NAME), redis)
         else -> throw InvalidConfigurationException("Invalid action: $action")
       }
     }

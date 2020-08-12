@@ -26,7 +26,7 @@ import com.github.readingbat.misc.Endpoints.TEACHER_PREFS_ENDPOINT
 import com.github.readingbat.misc.Endpoints.TEACHER_PREFS_POST_ENDPOINT
 import com.github.readingbat.misc.FormFields.CLASSES_CHOICE
 import com.github.readingbat.misc.FormFields.CLASSES_DISABLED
-import com.github.readingbat.misc.FormFields.CLASS_CODE
+import com.github.readingbat.misc.FormFields.CLASS_CODE_NAME
 import com.github.readingbat.misc.FormFields.CREATE_CLASS
 import com.github.readingbat.misc.FormFields.DELETE_CLASS
 import com.github.readingbat.misc.FormFields.UPDATE_ACTIVE_CLASS
@@ -198,7 +198,7 @@ internal object TeacherPrefsPage : KLogging() {
               action = TEACHER_PREFS_POST_ENDPOINT
               method = FormMethod.post
               onSubmit = "return confirm('Are you sure you want to delete class $classDesc [$classCode]?');"
-              input { type = InputType.hidden; name = CLASS_CODE; value = classCode.value }
+              input { type = InputType.hidden; name = CLASS_CODE_NAME; value = classCode.value }
               input {
                 style = "vertical-align:middle; margin-top:1; margin-bottom:0;"
                 type = submit; name = USER_PREFS_ACTION; value =
