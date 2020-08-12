@@ -24,7 +24,7 @@ import com.github.pambrose.common.metrics.SamplerGaugeCollector
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.agentLaunchId
 
-internal class Metrics(val contentSource: () -> ReadingBatContent) {
+class Metrics {
 
   val contentLoadedCount =
     counter {
@@ -61,24 +61,31 @@ internal class Metrics(val contentSource: () -> ReadingBatContent) {
       labelNames(AGENT_ID, AUTHENTICATED)
     }
 
-  val endpointRequestLatency =
+  val endpointRequestDuration =
     summary {
-      name("endpoint_request_latency")
-      help("Endpoint request latency")
+      name("endpoint_request_duration")
+      help("Endpoint request duration")
       labelNames(AGENT_ID, ENDPOINT_NAME)
     }
 
-  val challengeParseLatency =
+  val challengeRemoteReadDuration =
     summary {
-      name("challenge_parse_latency_seconds")
-      help("Challenge parse latency in seconds")
+      name("challenge_remote_read_duration_seconds")
+      help("Challenge remote read duration in seconds")
+      labelNames(AGENT_ID)
+    }
+
+  val challengeParseDuration =
+    summary {
+      name("challenge_parse_duration_seconds")
+      help("Challenge parse duration in seconds")
       labelNames(AGENT_ID, LANG_TYPE)
     }
 
-  val challengeRemoteReadLatency =
+  val githubDirectoryReadDuration =
     summary {
-      name("challenge_remote_read_latency_seconds")
-      help("Challenge remote read latency in seconds")
+      name("github_directory_read_duration_seconds")
+      help("GitHub directory read duration in seconds")
       labelNames(AGENT_ID)
     }
 
@@ -110,8 +117,7 @@ internal class Metrics(val contentSource: () -> ReadingBatContent) {
       labelNames(AGENT_ID)
     }
 
-
-  fun init() {
+  fun init(contentSource: () -> ReadingBatContent) {
     gauge {
       name("server_start_time_seconds")
       labelNames(AGENT_ID)
@@ -132,7 +138,7 @@ internal class Metrics(val contentSource: () -> ReadingBatContent) {
   }
 
   suspend fun measureEndpointRequest(endpoint: String, func: suspend () -> Unit) {
-    val timer = endpointRequestLatency.labels(agentLaunchId(), endpoint).startTimer()
+    val timer = endpointRequestDuration.labels(agentLaunchId(), endpoint).startTimer()
     try {
       func.invoke()
     } finally {

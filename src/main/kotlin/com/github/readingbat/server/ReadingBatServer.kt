@@ -63,7 +63,7 @@ object ReadingBatServer : KLogging() {
   internal val timeStamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("M/d/y H:m:ss"))
   internal val startTimeMillis = System.currentTimeMillis().milliseconds
   internal var content = atomic(ReadingBatContent())
-  internal val metrics by lazy { Metrics({ content.value }) }
+  internal val metrics by lazy { Metrics() }
 
   fun start(args: Array<String>) {
     // grab config filename from CLI args and then try ENV var
@@ -129,7 +129,7 @@ internal fun Application.module() {
   }
 
   // This is done after AGENT_LAUNCH_ID is assigned
-  metrics.init()
+  metrics.init({ content.value })
 
   assignContentDsl(fileName, variableName)
 

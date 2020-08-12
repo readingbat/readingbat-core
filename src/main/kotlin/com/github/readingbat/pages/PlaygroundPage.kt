@@ -75,7 +75,7 @@ internal object PlaygroundPage {
             this@body.addLink(challengeName.value.decode(), pathOf(groupPath, challengeName))
           }
 
-          if (challenge.description.isNotEmpty())
+          if (challenge.description.isNotBlank())
             div(classes = CHALLENGE_DESC) { rawHtml(challenge.parsedDescription) }
 
           val options =

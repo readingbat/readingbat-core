@@ -22,12 +22,14 @@ import com.github.pambrose.common.util.ContentSource
 import com.github.pambrose.common.util.asRegex
 import com.github.pambrose.common.util.decode
 import com.github.readingbat.server.GroupName
+import com.github.readingbat.server.ReadingBatServer
 
 @ReadingBatDslMarker
 class LanguageGroup<T : Challenge>(internal val content: ReadingBatContent,
                                    internal val languageType: LanguageType) {
 
   internal val challengeGroups = mutableListOf<ChallengeGroup<T>>()
+  internal val metrics get() = ReadingBatServer.metrics
 
   // User properties
   var repo: ContentRoot = content.repo           // Defaults to outer-level value

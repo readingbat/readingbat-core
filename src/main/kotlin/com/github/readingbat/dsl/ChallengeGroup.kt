@@ -27,6 +27,7 @@ import com.github.readingbat.dsl.ReturnType.Runtime
 import com.github.readingbat.misc.PageUtils
 import com.github.readingbat.server.ChallengeName
 import com.github.readingbat.server.GroupName
+import com.github.readingbat.server.ReadingBatServer
 import com.vladsch.flexmark.html.HtmlRenderer
 import com.vladsch.flexmark.parser.Parser
 import com.vladsch.flexmark.util.data.MutableDataSet
@@ -37,25 +38,26 @@ import kotlin.reflect.KProperty
 @ReadingBatDslMarker
 class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>,
                                     internal val groupNameSuffix: GroupName) {
-  internal val groupName by lazy {
-    GroupName("${if (namePrefix.isNotBlank()) namePrefix else ""}${groupNameSuffix.value}")
-  }
-  private val groupPrefix by lazy { "${languageType.languageName}/$groupName" }
   private val options = MutableDataSet().apply { set(HtmlRenderer.SOFT_BREAK, "<br />\n") }
-  private val parser = Parser.builder(options).build()
-  private val renderer = HtmlRenderer.builder(options).build()
-  private val srcPath = languageGroup.srcPath
-
-  internal val languageType = languageGroup.languageType
-  internal val repo = languageGroup.repo
-  internal val branchName = languageGroup.branchName
   internal val challenges = mutableListOf<T>()
   internal var namePrefix = ""
+
+  internal val groupName by lazy { GroupName("${if (namePrefix.isNotBlank()) namePrefix else ""}${groupNameSuffix.value}") }
+  private val groupPrefix by lazy { "$languageName/$groupName" }
+  private val parser by lazy { Parser.builder(options).build() }
+  private val renderer by lazy { HtmlRenderer.builder(options).build() }
   internal val parsedDescription: String
     get() {
       val document = parser.parse(description.trimIndent())
       return renderer.render(document)
     }
+
+  private val srcPath get() = languageGroup.srcPath
+  internal val languageType get() = languageGroup.languageType
+  internal val languageName get() = languageType.languageName
+  internal val repo get() = languageGroup.repo
+  internal val branchName get() = languageGroup.branchName
+  internal val metrics get() = languageGroup.metrics
 
   internal val fileList by lazy {
     repo.let { root ->
@@ -63,9 +65,9 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
         is GitHubRepo -> {
           val path = srcPath.ensureSuffix("/") + packageName
           if (root.ownerType.isUser())
-            root.userDirectoryContents(branchName, path)
+            root.userDirectoryContents(branchName, path, metrics)
           else
-            root.organizationDirectoryContents(branchName, path)
+            root.organizationDirectoryContents(branchName, path, metrics)
         }
         is FileSystemSource -> File(PageUtils.pathOf(root.pathPrefix, srcPath, packageName)).walk().map { it.name }
           .toList()
@@ -154,7 +156,7 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
     val challengeName = ChallengeName(challengeFile.fileName.split(".").first())
     if (checkChallengeName(challengeName, false)) {
       logger.debug { """Adding $challengeName by pattern "$pattern"""" }
-      val challenge = challenge(this, challengeName, true)
+      val challenge = challenge(this, challengeName, true, ReadingBatServer.metrics)
       // Skip this next step for Java because returnType is calculated
       when {
         languageType.isPython() -> (challenge as PythonChallenge).apply { returnType = challengeFile.returnType }
@@ -185,7 +187,7 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
     val challengeName = ChallengeName(name)
     logger.debug { "Adding $challengeName" }
     checkChallengeName(challengeName)
-    val challenge = challenge(this, challengeName, false) as T
+    val challenge = challenge(this, challengeName, false, ReadingBatServer.metrics) as T
     challenges += challenge.apply(block).apply { validate() }
   }
 
