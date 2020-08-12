@@ -200,11 +200,12 @@ class PythonChallenge(challengeGroup: ChallengeGroup<*>, challengeName: Challeng
     description = deriveDescription(code, "#")
 
     val duration =
-      PythonScript()
-        .run {
+      PythonScript().use {
+        it.run {
           add(varName, correctAnswers)
           measureTime { eval(script) }
         }
+      }
 
     logger.info { "$challengeName computed answers in $duration for: $correctAnswers" }
 
@@ -232,12 +233,13 @@ class JavaChallenge(challengeGroup: ChallengeGroup<*>, challengeName: ChallengeN
     description = deriveDescription(code, "//")
 
     val timedValue =
-      JavaScript()
-        .run {
+      JavaScript().use {
+        it.run {
           import(List::class.java)
           import(ArrayList::class.java)
           measureTimedValue { evalScript(script) }
         }
+      }
 
     val correctAnswers = timedValue.value
     logger.info { "$challengeName computed answers in ${timedValue.duration}" }
@@ -280,9 +282,11 @@ class KotlinChallenge(challengeGroup: ChallengeGroup<*>, challengeName: Challeng
 
     val correctAnswers = mutableListOf<Any>()
     val duration =
-      KotlinScript().run {
-        add(varName, correctAnswers, typeOf<Any>())
-        measureTime { eval(script) }
+      KotlinScript().use {
+        it.run {
+          add(varName, correctAnswers, typeOf<Any>())
+          measureTime { eval(script) }
+        }
       }
 
     logger.info { "$challengeName computed answers in $duration for: $correctAnswers" }

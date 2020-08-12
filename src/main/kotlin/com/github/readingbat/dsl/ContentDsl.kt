@@ -90,12 +90,13 @@ private val <T> KFunction<T>.fqMethodName get() = "${javaClass.packageName}.$nam
 
 private fun evalDsl(code: String, sourceName: String) =
   try {
-    KotlinScript()
-      .run {
+    KotlinScript().use {
+      it.run {
         eval(code) as ReadingBatContent
       }.apply {
         validate()
       }
+    }
   } catch (e: Throwable) {
     logger.info { "Error in $sourceName:\n$code" }
     throw e

@@ -31,8 +31,8 @@ import redis.clients.jedis.Jedis
 import redis.clients.jedis.Transaction
 
 internal inline class ClassCode(val value: String) {
-  val isTeacherMode get() = !isStudentMode
   val isStudentMode get() = value == CLASSES_DISABLED || value.isBlank()
+  val isTeacherMode get() = !isStudentMode
 
   private val classCodeEnrollmentKey get() = listOf(CLASS_CODE_KEY, value).joinToString(KEY_SEP)
 

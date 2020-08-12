@@ -183,13 +183,13 @@ internal object ChallengePost : KLogging() {
     }
   }
 
-  private fun String.equalsAsJvmList(correctAnswer: String, scriptEngine: KotlinScript): Pair<Boolean, String> {
+  private fun String.equalsAsJvmList(correctAnswer: String): Pair<Boolean, String> {
     fun deriveHint() = if (isNotBracketed()) "Answer should be bracketed" else ""
 
     val compareExpr = "listOf(${trimEnds()}) == listOf(${correctAnswer.trimEnds()})"
     logger.debug { "Check answers expression: $compareExpr" }
     return try {
-      val result = scriptEngine.eval(compareExpr) as Boolean
+      val result = KotlinScript().use { it.eval(compareExpr) as Boolean }
       result to (if (result) "" else deriveHint())
     } catch (e: ScriptException) {
       logger.info { "Caught exception comparing $this and $correctAnswer: ${e.message} in $compareExpr" }
@@ -199,13 +199,13 @@ internal object ChallengePost : KLogging() {
     }
   }
 
-  private fun String.equalsAsPythonList(correctAnswer: String, scriptEngine: PythonScript): Pair<Boolean, String> {
+  private fun String.equalsAsPythonList(correctAnswer: String): Pair<Boolean, String> {
     fun deriveHint() = if (isNotBracketed()) "Answer should be bracketed" else ""
 
     val compareExpr = "${trim()} == ${correctAnswer.trim()}"
     logger.debug { "Check answers expression: $compareExpr" }
     return try {
-      val result = scriptEngine.eval(compareExpr) as Boolean
+      val result = PythonScript().use { it.eval(compareExpr) as Boolean }
       result to (if (result) "" else deriveHint())
     } catch (e: ScriptException) {
       logger.info { "Caught exception comparing $this and $correctAnswer: ${e.message} in: $compareExpr" }
@@ -222,8 +222,6 @@ internal object ChallengePost : KLogging() {
     val userResponses = params.entries().filter { it.key.startsWith(RESP) }
     val challenge = content.findChallenge(names.languageName, names.groupName, names.challengeName)
     val funcInfo = challenge.funcInfo(content)
-    val kotlinScriptEngine by lazy { KotlinScript() }
-    val pythonScriptEngine by lazy { PythonScript() }
 
     fun checkWithAnswer(languageName: LanguageName,
                         userResponse: String,
@@ -232,13 +230,13 @@ internal object ChallengePost : KLogging() {
       val isJvm = languageName in listOf(Java.languageName, Kotlin.languageName)
       return if (isJvm) {
         if (correctAnswer.isBracketed())
-          userResponse.equalsAsJvmList(correctAnswer, kotlinScriptEngine)
+          userResponse.equalsAsJvmList(correctAnswer)
         else
           userResponse.equalsAsJvmScalar(correctAnswer, funcInfo.returnType, languageName.toLanguageType())
       }
       else {
         if (correctAnswer.isBracketed())
-          userResponse.equalsAsPythonList(correctAnswer, pythonScriptEngine)
+          userResponse.equalsAsPythonList(correctAnswer)
         else
           userResponse.equalsAsPythonScalar(correctAnswer, funcInfo.returnType)
       }

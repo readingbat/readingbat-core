@@ -25,12 +25,13 @@ internal fun Application.intercepts() {
     // Phase for preparing call and it's attributes for processing
   }
 
-  intercept(ApplicationCallPipeline.Features) {
-    // Phase for features. Most features should intercept this phase
-  }
-
   intercept(ApplicationCallPipeline.Monitoring) {
     // Phase for tracing calls, useful for logging, metrics, error handling and so on
+    //println(this.context.request.origin.remoteHost)
+  }
+
+  intercept(ApplicationCallPipeline.Features) {
+    // Phase for features. Most features should intercept this phase
   }
 
   intercept(ApplicationCallPipeline.Call) {

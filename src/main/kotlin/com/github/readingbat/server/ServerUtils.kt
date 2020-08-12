@@ -53,7 +53,6 @@ internal object ServerUtils : KLogging() {
     call.principal<UserPrincipal>().apply { if (this.isNotNull()) call.sessions.set(this) }  // Set the cookie
 
   fun PipelineCall.queryParam(key: String, default: String = "") = call.request.queryParameters[key] ?: default
-
 }
 
 class RedirectException(val redirectUrl: String) : Exception()

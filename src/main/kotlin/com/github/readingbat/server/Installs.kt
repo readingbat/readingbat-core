@@ -32,6 +32,7 @@ import io.ktor.application.install
 import io.ktor.auth.Authentication
 import io.ktor.features.*
 import io.ktor.http.ContentType.Text.Plain
+import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.TextContent
 import io.ktor.http.withCharset
@@ -87,6 +88,14 @@ internal object Installs : KLogging() {
     install(CallLogging) {
       level = Level.INFO
       filter { call -> call.request.path().startsWith("/") }
+      format { call ->
+        when (val status = call.response.status() ?: "Unhandled") {
+          HttpStatusCode.Found -> {
+            "$status: ${call.request.toLogString()} -> ${call.response.headers[HttpHeaders.Location]} - ${call.request.origin.remoteHost}"
+          }
+          else -> "$status: ${call.request.toLogString()} - ${call.request.origin.remoteHost}"
+        }
+      }
     }
 
     install(DefaultHeaders) {

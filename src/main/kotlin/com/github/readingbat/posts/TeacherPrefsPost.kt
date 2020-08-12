@@ -41,6 +41,8 @@ import com.github.readingbat.server.RedirectException
 import com.github.readingbat.server.ServerUtils.queryParam
 import io.ktor.application.call
 import io.ktor.request.receiveParameters
+import io.ktor.sessions.get
+import io.ktor.sessions.sessions
 import redis.clients.jedis.Jedis
 
 internal object TeacherPrefsPost {
@@ -63,10 +65,11 @@ internal object TeacherPrefsPost {
 
   fun PipelineCall.enableStudentMode(user: User?, redis: Jedis): String {
     val returnPath = queryParam(Constants.RETURN_PATH, "/")
-
+    val browserSession = call.sessions.get<BrowserSession>()
     val msg =
       if (user.isValidUser(redis)) {
         user.assignActiveClassCode(STUDENT_CLASS_CODE, false, redis)
+        println("**** ${browserSession?.id}")
         STUDENT_MODE_ENABLED_MSG
       }
       else {

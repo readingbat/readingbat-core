@@ -111,11 +111,11 @@ internal object AdminRoutes : KLogging() {
     }
   }
 
-  fun PipelineCall.registerBrowserSession() {
+  fun PipelineCall.assignBrowserSession() {
     val session = call.sessions.get<BrowserSession>()
     if (session.isNull()) {
       call.sessions.set(BrowserSession(id = randomId(15)))
-      logger.info { "Created: ${call.sessions.get<BrowserSession>()}" }
+      logger.info { "Assign browser session: ${call.sessions.get<BrowserSession>()}" }
     }
   }
 
