@@ -34,6 +34,7 @@ import io.ktor.http.cio.websocket.close
 import io.ktor.http.cio.websocket.readText
 import io.ktor.routing.Routing
 import io.ktor.websocket.webSocket
+import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -86,6 +87,7 @@ internal object WsEndoints : KLogging() {
     }
 
     webSocket("$CHALLENGE_GROUP_ENDPOINT/{$LANGUAGE_NAME}/{$GROUP_NAME}/{$CLASS_CODE}") {
+      var closed = atomic(false)
       var desc = "unassigned"
       metrics.measureEndpointRequest("/websocket_group") {
         try {
@@ -111,7 +113,6 @@ internal object WsEndoints : KLogging() {
               withRedis { redis ->
                 if (redis.isNotNull()) {
                   val enrollees = classCode.fetchEnrollees(redis)
-
                   challenges
                     .forEach { challenge ->
                       if (classCode.isTeacherMode && enrollees.isNotEmpty()) {
@@ -176,10 +177,17 @@ internal object WsEndoints : KLogging() {
                     }
                 }
               }
+              // This will close it if the results run to completion
+              logger.info { "Closing class statistics websocket for $desc" }
+              close(CloseReason(Codes.NORMAL, "Client disconnected"))
+              closed.value = true
             }
         } finally {
-          logger.info { "Closing class statistics websocket for $desc" }
-          close(CloseReason(Codes.NORMAL, "Client disconnected"))
+          // This will close it if the user exits the page early
+          if (!closed.value) {
+            logger.info { "Closing class statistics websocket for $desc" }
+            close(CloseReason(Codes.NORMAL, "Client disconnected"))
+          }
         }
       }
     }
