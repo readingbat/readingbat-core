@@ -84,7 +84,7 @@ dependencies {
     implementation "io.github.microutils:kotlin-logging:$logging_version"
     implementation "ch.qos.logback:logback-classic:$logback_version"
 
-    testImplementation "org.seleniumhq.selenium:selenium-java:$selenium_version"
+    //testImplementation "org.seleniumhq.selenium:selenium-java:$selenium_version"
     testImplementation "io.ktor:ktor-server-tests:$ktor_version"
     testImplementation "org.amshove.kluent:kluent:$kluent_version"
     testImplementation "org.junit.jupiter:junit-jupiter-api:$junit_version"
