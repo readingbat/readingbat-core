@@ -52,6 +52,7 @@ internal object WsEndoints : KLogging() {
 
     webSocket("$CHALLENGE_ENDPOINT/{$CLASS_CODE}") {
       var desc = "unassigned"
+      logger.info { "Called student answer websocket" }
       metrics.measureEndpointRequest("/websocket_class") {
         try {
           val classCode = call.parameters[CLASS_CODE]?.let { ClassCode(it) }
@@ -87,8 +88,9 @@ internal object WsEndoints : KLogging() {
     }
 
     webSocket("$CHALLENGE_GROUP_ENDPOINT/{$LANGUAGE_NAME}/{$GROUP_NAME}/{$CLASS_CODE}") {
-      var closed = atomic(false)
+      val closed = atomic(false)
       var desc = "unassigned"
+      logger.info { "Called class statistics websocket" }
       metrics.measureEndpointRequest("/websocket_group") {
         try {
           val languageName =
