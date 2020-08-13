@@ -35,10 +35,6 @@ version '1.2.0'
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
 
-    //implementation 'org.jetbrains.kotlin:kotlin-scripting-jsr223'
-    //implementation 'org.jetbrains.kotlin:kotlin-script-runtime'
-    //implementation 'org.jetbrains.kotlin:kotlin-script-util'
-
     implementation "com.github.pambrose.common-utils:core-utils:$utils_version"
 
     implementation "com.github.pambrose.common-utils:ktor-server-utils:$utils_version"
@@ -54,7 +50,7 @@ dependencies {
     implementation "com.github.pambrose.common-utils:service-utils:$utils_version"
     implementation "com.github.pambrose.common-utils:prometheus-utils:$utils_version"
 
-    implementation "com.github.pambrose:prometheus-proxy:$proxy_version"
+    //implementation "com.github.pambrose:prometheus-proxy:$proxy_version"
 
     implementation "io.prometheus:simpleclient:$prometheus_version"
 

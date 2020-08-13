@@ -19,8 +19,6 @@ package com.github.readingbat.server
 
 import com.github.pambrose.common.util.FileSource
 import com.github.pambrose.common.util.Version
-import com.github.pambrose.common.util.Version.Companion.versionDesc
-import com.github.pambrose.common.util.getBanner
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.agentLaunchId
 import com.github.readingbat.dsl.isProduction
@@ -48,8 +46,6 @@ import io.ktor.http.content.*
 import io.ktor.routing.*
 import io.ktor.server.cio.*
 import io.ktor.server.engine.*
-import io.prometheus.Agent
-import io.prometheus.Agent.Companion.startAsyncAgent
 import mu.KLogging
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -115,15 +111,18 @@ internal fun Application.module() {
 
   System.setProperty(IS_PRODUCTION, isProduction.toString())
 
+  /*
   Agent.logger.apply {
     info { getBanner("banners/readingbat.txt", this) }
     info { ReadingBatServer::class.versionDesc() }
   }
+  */
 
   if (agentEnabled && proxyHostname.isNotEmpty()) {
     val configFilename = System.getProperty(CONFIG_FILENAME) ?: ""
-    val agentInfo = startAsyncAgent(configFilename, true)
-    System.setProperty(AGENT_LAUNCH_ID, agentInfo.launchId)
+    //val agentInfo = startAsyncAgent(configFilename, true)
+    //System.setProperty(AGENT_LAUNCH_ID, agentInfo.launchId)
+    System.setProperty(AGENT_LAUNCH_ID, "unassigned")
   }
 
   // This is done after AGENT_LAUNCH_ID is assigned
