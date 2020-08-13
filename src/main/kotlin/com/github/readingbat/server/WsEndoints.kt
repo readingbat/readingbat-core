@@ -27,20 +27,17 @@ import com.github.readingbat.misc.Endpoints.CHALLENGE_ENDPOINT
 import com.github.readingbat.misc.Endpoints.CHALLENGE_GROUP_ENDPOINT
 import com.github.readingbat.misc.User.Companion.gson
 import com.github.readingbat.posts.ChallengeHistory
-import io.ktor.http.cio.websocket.CloseReason
-import io.ktor.http.cio.websocket.CloseReason.Codes
-import io.ktor.http.cio.websocket.Frame
-import io.ktor.http.cio.websocket.close
-import io.ktor.http.cio.websocket.readText
-import io.ktor.routing.Routing
-import io.ktor.websocket.webSocket
-import kotlinx.atomicfu.atomic
+import io.ktor.http.cio.websocket.*
+import io.ktor.http.cio.websocket.CloseReason.*
+import io.ktor.routing.*
+import io.ktor.websocket.*
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.runBlocking
 import mu.KLogging
 import redis.clients.jedis.JedisPubSub
+import java.util.concurrent.atomic.AtomicBoolean
 
 internal object WsEndoints : KLogging() {
 
@@ -82,13 +79,13 @@ internal object WsEndoints : KLogging() {
             }
         } finally {
           logger.info { "Closing student answer websocket for $desc" }
-          close(CloseReason(Codes.NORMAL, "Client disconnected"))
+          close(CloseReason(Codes.GOING_AWAY, "Client disconnected"))
         }
       }
     }
 
     webSocket("$CHALLENGE_GROUP_ENDPOINT/{$LANGUAGE_NAME}/{$GROUP_NAME}/{$CLASS_CODE}") {
-      val closed = atomic(false)
+      val closed = AtomicBoolean(false)
       var desc = "unassigned"
       logger.info { "Called class statistics websocket" }
       metrics.measureEndpointRequest("/websocket_group") {
@@ -182,13 +179,13 @@ internal object WsEndoints : KLogging() {
               // This will close it if the results run to completion
               logger.info { "Closing class statistics websocket for $desc" }
               close(CloseReason(Codes.NORMAL, "Client disconnected"))
-              closed.value = true
+              closed.set(true)
             }
         } finally {
           // This will close it if the user exits the page early
-          if (!closed.value) {
+          if (!closed.get()) {
             logger.info { "Closing class statistics websocket for $desc" }
-            close(CloseReason(Codes.NORMAL, "Client disconnected"))
+            close(CloseReason(Codes.GOING_AWAY, "Client disconnected"))
           }
         }
       }

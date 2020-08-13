@@ -41,14 +41,13 @@ import com.github.readingbat.dsl.parse.PythonParse.extractPythonInvocations
 import com.github.readingbat.dsl.parse.PythonParse.ifMainEndRegex
 import com.github.readingbat.misc.PageUtils.pathOf
 import com.github.readingbat.server.ChallengeName
-import com.github.readingbat.server.Metrics
 import com.github.readingbat.server.ReadingBatServer
 import com.vladsch.flexmark.html.HtmlRenderer
 import com.vladsch.flexmark.parser.Parser
 import com.vladsch.flexmark.util.data.MutableDataSet
-import kotlinx.atomicfu.atomic
 import mu.KLogging
 import java.net.URL
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.reflect.typeOf
 import kotlin.time.measureTime
 import kotlin.time.measureTimedValue
@@ -163,13 +162,12 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
     }
 
   companion object : KLogging() {
-    internal val counter = atomic(0)
+    internal val counter = AtomicInteger(0)
     internal const val DESC = "@desc "
 
     internal fun challenge(challengeGroup: ChallengeGroup<*>,
                            challengeName: ChallengeName,
-                           replaceable: Boolean,
-                           metrics: Metrics) =
+                           replaceable: Boolean) =
       when (challengeGroup.languageType) {
         Python -> PythonChallenge(challengeGroup, challengeName, replaceable)
         Java -> JavaChallenge(challengeGroup, challengeName, replaceable)

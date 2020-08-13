@@ -43,26 +43,24 @@ import com.github.readingbat.server.Locations.locations
 import com.github.readingbat.server.ReadingBatServer.content
 import com.github.readingbat.server.ServerUtils.property
 import com.github.readingbat.server.WsEndoints.wsEndpoints
-import io.ktor.application.Application
-import io.ktor.http.content.resources
-import io.ktor.http.content.static
-import io.ktor.routing.routing
-import io.ktor.server.cio.CIO
-import io.ktor.server.engine.commandLineEnvironment
-import io.ktor.server.engine.embeddedServer
+import io.ktor.application.*
+import io.ktor.http.content.*
+import io.ktor.routing.*
+import io.ktor.server.cio.*
+import io.ktor.server.engine.*
 import io.prometheus.Agent
 import io.prometheus.Agent.Companion.startAsyncAgent
-import kotlinx.atomicfu.atomic
 import mu.KLogging
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.milliseconds
 
 @Version(version = "1.2.0", date = "8/11/20")
 object ReadingBatServer : KLogging() {
   internal val timeStamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("M/d/y H:m:ss"))
   internal val startTimeMillis = System.currentTimeMillis().milliseconds
-  internal var content = atomic(ReadingBatContent())
+  internal val content = AtomicReference(ReadingBatContent())
   internal val metrics by lazy { Metrics() }
 
   fun start(args: Array<String>) {
@@ -91,7 +89,7 @@ object ReadingBatServer : KLogging() {
 }
 
 internal fun Application.assignContentDsl(fileName: String, variableName: String) {
-  content.getAndSet(
+  content.set(
     readContentDsl(FileSource(fileName = fileName), variableName = variableName)
       .apply {
         dslFileName = fileName
@@ -129,18 +127,18 @@ internal fun Application.module() {
   }
 
   // This is done after AGENT_LAUNCH_ID is assigned
-  metrics.init({ content.value })
+  metrics.init({ content.get() })
 
   assignContentDsl(fileName, variableName)
 
-  installs(isProduction(), content.value.urlPrefix)
+  installs(isProduction(), content.get().urlPrefix)
   intercepts()
 
   routing {
     adminRoutes(metrics)
-    locations(metrics) { content.value }
-    userRoutes(metrics, { content.value }, { assignContentDsl(fileName, variableName) })
-    wsEndpoints(metrics) { content.value }
+    locations(metrics) { content.get() }
+    userRoutes(metrics, { content.get() }, { assignContentDsl(fileName, variableName) })
+    wsEndpoints(metrics) { content.get() }
     static(STATIC_ROOT) { resources("static") }
   }
 }

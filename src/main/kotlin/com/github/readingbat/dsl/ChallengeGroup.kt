@@ -27,7 +27,6 @@ import com.github.readingbat.dsl.ReturnType.Runtime
 import com.github.readingbat.misc.PageUtils
 import com.github.readingbat.server.ChallengeName
 import com.github.readingbat.server.GroupName
-import com.github.readingbat.server.ReadingBatServer
 import com.vladsch.flexmark.html.HtmlRenderer
 import com.vladsch.flexmark.parser.Parser
 import com.vladsch.flexmark.util.data.MutableDataSet
@@ -156,7 +155,7 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
     val challengeName = ChallengeName(challengeFile.fileName.split(".").first())
     if (checkChallengeName(challengeName, false)) {
       logger.debug { """Adding $challengeName by pattern "$pattern"""" }
-      val challenge = challenge(this, challengeName, true, ReadingBatServer.metrics)
+      val challenge = challenge(this, challengeName, true)
       // Skip this next step for Java because returnType is calculated
       when {
         languageType.isPython() -> (challenge as PythonChallenge).apply { returnType = challengeFile.returnType }
@@ -187,7 +186,7 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
     val challengeName = ChallengeName(name)
     logger.debug { "Adding $challengeName" }
     checkChallengeName(challengeName)
-    val challenge = challenge(this, challengeName, false, ReadingBatServer.metrics) as T
+    val challenge = challenge(this, challengeName, false) as T
     challenges += challenge.apply(block).apply { validate() }
   }
 
