@@ -32,8 +32,8 @@ import io.ktor.http.cio.websocket.CloseReason.*
 import io.ktor.routing.*
 import io.ktor.websocket.*
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.mapNotNull
-import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.runBlocking
 import mu.KLogging
 import redis.clients.jedis.JedisPubSub
@@ -60,8 +60,9 @@ internal object WsEndoints : KLogging() {
 
           metrics.wsStudentAnswerStartCount.labels(agentLaunchId()).inc()
 
-          incoming
-            .receiveAsFlow()
+          incoming.consumeAsFlow()
+            // TODO
+            //.receiveAsFlow()
             .mapNotNull { it as? Frame.Text }
             .collect { frame ->
               val inboundMsg = frame.readText()
@@ -104,8 +105,9 @@ internal object WsEndoints : KLogging() {
 
           metrics.wsClassStatisticsStartCount.labels(agentLaunchId()).inc()
 
-          incoming
-            .receiveAsFlow()
+          incoming.consumeAsFlow()
+            // TODO
+            //.receiveAsFlow()
             .mapNotNull { it as? Frame.Text }
             .collect { frame ->
               val inboundMsg = frame.readText()
