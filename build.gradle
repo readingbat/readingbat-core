@@ -1,25 +1,8 @@
-/*
- * Copyright © 2020 Paul Ambrose (pambrose@mac.com)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *       http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- */
-
 plugins {
     id 'java'
     id 'application'
-    id 'maven'  // Required for jitpack.io to do: ./gradlew install
-    id 'org.jetbrains.kotlin.jvm' version '1.3.72'
+    id 'maven'  // Required for jitpack.io to do a ./gradlew install
+    id 'org.jetbrains.kotlin.jvm' version '1.4.0-rc'
     id "com.github.ben-manes.versions" version '0.29.0'
     id 'com.github.johnrengelman.shadow' version '6.0.0'
 }
@@ -47,7 +30,7 @@ targetCompatibility = 1.8
 
 description = 'ReadingBat Core'
 group 'com.github.readingbat'
-version '1.1.0'
+version '1.2.0'
 
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
@@ -62,6 +45,14 @@ dependencies {
     implementation "com.github.pambrose.common-utils:script-utils-python:$utils_version"
     implementation "com.github.pambrose.common-utils:script-utils-java:$utils_version"
     implementation "com.github.pambrose.common-utils:script-utils-kotlin:$utils_version"
+
+    implementation "com.github.pambrose.common-utils:guava-utils:$utils_version"
+    implementation "com.github.pambrose.common-utils:service-utils:$utils_version"
+    implementation "com.github.pambrose.common-utils:prometheus-utils:$utils_version"
+
+    implementation "com.github.pambrose:prometheus-proxy:$proxy_version"
+
+    implementation "io.prometheus:simpleclient:$prometheus_version"
 
     implementation "org.jetbrains:kotlin-css:$css_version"
     implementation "org.jetbrains:kotlin-css-jvm:$css_version"
@@ -89,7 +80,7 @@ dependencies {
     implementation "io.github.microutils:kotlin-logging:$logging_version"
     implementation "ch.qos.logback:logback-classic:$logback_version"
 
-    testImplementation "org.seleniumhq.selenium:selenium-java:$selenium_version"
+    //testImplementation "org.seleniumhq.selenium:selenium-java:$selenium_version"
     testImplementation "io.ktor:ktor-server-tests:$ktor_version"
     testImplementation "org.amshove.kluent:kluent:$kluent_version"
     testImplementation "org.junit.jupiter:junit-jupiter-api:$junit_version"
@@ -120,6 +111,7 @@ task stage(dependsOn: ['uberjar', 'build', 'clean'])
 build.mustRunAfter clean
 
 task uberjar(type: Jar, dependsOn: shadowJar) {
+    zip64 true
     archiveFileName = 'server.jar'
     manifest {
         attributes('Implementation-Title': appName)

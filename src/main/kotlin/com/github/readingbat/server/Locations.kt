@@ -26,6 +26,7 @@ import com.github.readingbat.dsl.InvalidPathException
 import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.dsl.LanguageType.Kotlin
 import com.github.readingbat.dsl.ReadingBatContent
+import com.github.readingbat.dsl.agentLaunchId
 import com.github.readingbat.misc.AuthName.FORM
 import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
 import com.github.readingbat.misc.Constants.PLAYGROUND_ROOT
@@ -35,7 +36,7 @@ import com.github.readingbat.pages.ChallengeGroupPage.challengeGroupPage
 import com.github.readingbat.pages.ChallengePage.challengePage
 import com.github.readingbat.pages.LanguageGroupPage.languageGroupPage
 import com.github.readingbat.pages.PlaygroundPage.playgroundPage
-import com.github.readingbat.server.AdminRoutes.registerBrowserSession
+import com.github.readingbat.server.AdminRoutes.assignBrowserSession
 import com.github.readingbat.server.ServerUtils.fetchUser
 import io.ktor.auth.authenticate
 import io.ktor.http.Parameters
@@ -45,17 +46,47 @@ import io.ktor.locations.post
 import io.ktor.routing.Routing
 
 internal object Locations {
-  fun Routing.locations(content: ReadingBatContent) {
-    get<Language> { languageLoc -> language(content, languageLoc, false) }
-    get<Language.Group> { groupLoc -> group(content, groupLoc, false) }
-    get<Language.Group.Challenge> { challengeLoc -> challenge(content, challengeLoc, false) }
-    get<PlaygroundRequest> { request -> playground(content, request, false) }
+  fun Routing.locations(metrics: Metrics, content: () -> ReadingBatContent) {
+    get<Language> { languageLoc ->
+      metrics.languageGroupRequestCount.labels(agentLaunchId(), languageLoc.languageType.toString(), false.toString())
+        .inc()
+      language(content.invoke(), languageLoc, false)
+    }
+    get<Language.Group> { groupLoc ->
+      metrics.challengeGroupRequestCount.labels(agentLaunchId(), groupLoc.languageType.toString(), false.toString())
+        .inc()
+      group(content.invoke(), groupLoc, false)
+    }
+    get<Language.Group.Challenge> { challengeLoc ->
+      metrics.challengeRequestCount.labels(agentLaunchId(), challengeLoc.languageType.toString(), false.toString())
+        .inc()
+      challenge(content.invoke(), challengeLoc, false)
+    }
+    get<PlaygroundRequest> { request ->
+      metrics.playgroundRequestCount.labels(agentLaunchId(), false.toString()).inc()
+      playground(content.invoke(), request, false)
+    }
 
     authenticate(FORM) {
-      post<Language> { languageLoc -> language(content, languageLoc, true) }
-      post<Language.Group> { groupLoc -> group(content, groupLoc, true) }
-      post<Language.Group.Challenge> { challengeLoc -> challenge(content, challengeLoc, true) }
-      post<PlaygroundRequest> { request -> playground(content, request, true) }
+      post<Language> { languageLoc ->
+        metrics.languageGroupRequestCount.labels(agentLaunchId(), languageLoc.languageType.toString(), true.toString())
+          .inc()
+        language(content.invoke(), languageLoc, true)
+      }
+      post<Language.Group> { groupLoc ->
+        metrics.challengeGroupRequestCount.labels(agentLaunchId(), groupLoc.languageType.toString(), true.toString())
+          .inc()
+        group(content.invoke(), groupLoc, true)
+      }
+      post<Language.Group.Challenge> { challengeLoc ->
+        metrics.challengeRequestCount.labels(agentLaunchId(), challengeLoc.languageType.toString(), true.toString())
+          .inc()
+        challenge(content.invoke(), challengeLoc, true)
+      }
+      post<PlaygroundRequest> { request ->
+        metrics.playgroundRequestCount.labels(agentLaunchId(), true.toString()).inc()
+        playground(content.invoke(), request, true)
+      }
     }
   }
 
@@ -85,7 +116,7 @@ internal object Locations {
                                              challengeLoc: Language.Group.Challenge,
                                              loginAttempt: Boolean) =
     respondWith {
-      registerBrowserSession()
+      assignBrowserSession()
       content.checkLanguage(challengeLoc.languageType)
       withRedisPool { redis ->
         val user = fetchUser(loginAttempt)
@@ -141,9 +172,9 @@ inline class LanguageName(val value: String) {
     }
 
   companion object {
-    val EMPTY_LANGUAGE = LanguageName("")
-    val ANY_LANGUAGE = LanguageName("*")
-    fun Parameters.getLanguageName(name: String) = this[name]?.let { LanguageName(it) } ?: EMPTY_LANGUAGE
+    internal val EMPTY_LANGUAGE = LanguageName("")
+    internal val ANY_LANGUAGE = LanguageName("*")
+    internal fun Parameters.getLanguageName(name: String) = this[name]?.let { LanguageName(it) } ?: EMPTY_LANGUAGE
   }
 }
 
@@ -151,9 +182,9 @@ inline class GroupName(val value: String) {
   override fun toString() = value
 
   companion object {
-    val EMPTY_GROUP = GroupName("")
-    val ANY_GROUP = GroupName("*")
-    fun Parameters.getGroupName(name: String) = this[name]?.let { GroupName(it) } ?: EMPTY_GROUP
+    internal val EMPTY_GROUP = GroupName("")
+    internal val ANY_GROUP = GroupName("*")
+    internal fun Parameters.getGroupName(name: String) = this[name]?.let { GroupName(it) } ?: EMPTY_GROUP
   }
 }
 
@@ -161,9 +192,9 @@ inline class ChallengeName(val value: String) {
   override fun toString() = value
 
   companion object {
-    val EMPTY_CHALLENGE = ChallengeName("")
-    val ANY_CHALLENGE = ChallengeName("*")
-    fun Parameters.getChallengeName(name: String) = this[name]?.let { ChallengeName(it) } ?: EMPTY_CHALLENGE
+    internal val EMPTY_CHALLENGE = ChallengeName("")
+    internal val ANY_CHALLENGE = ChallengeName("*")
+    internal fun Parameters.getChallengeName(name: String) = this[name]?.let { ChallengeName(it) } ?: EMPTY_CHALLENGE
   }
 }
 
@@ -171,7 +202,7 @@ inline class Invocation(val value: String) {
   override fun toString() = value
 
   companion object {
-    val ANY_INVOCATION = Invocation("*")
+    internal val ANY_INVOCATION = Invocation("*")
   }
 }
 

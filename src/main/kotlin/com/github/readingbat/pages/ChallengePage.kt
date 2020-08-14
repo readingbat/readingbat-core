@@ -17,8 +17,7 @@
 
 package com.github.readingbat.pages
 
-import com.github.pambrose.common.util.decode
-import com.github.pambrose.common.util.random
+import com.github.pambrose.common.util.*
 import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.FunctionInfo
 import com.github.readingbat.dsl.ReadingBatContent
@@ -27,15 +26,18 @@ import com.github.readingbat.misc.CSSNames.ARROW
 import com.github.readingbat.misc.CSSNames.CHALLENGE_DESC
 import com.github.readingbat.misc.CSSNames.CHECK_ANSWERS
 import com.github.readingbat.misc.CSSNames.CODE_BLOCK
+import com.github.readingbat.misc.CSSNames.CODINGBAT
 import com.github.readingbat.misc.CSSNames.DASHBOARD
+import com.github.readingbat.misc.CSSNames.EXPERIMENT
 import com.github.readingbat.misc.CSSNames.FEEDBACK
 import com.github.readingbat.misc.CSSNames.FUNC_COL
-import com.github.readingbat.misc.CSSNames.REFS
+import com.github.readingbat.misc.CSSNames.HINT
+import com.github.readingbat.misc.CSSNames.LIKE_BUTTONS
 import com.github.readingbat.misc.CSSNames.STATUS
 import com.github.readingbat.misc.CSSNames.SUCCESS
 import com.github.readingbat.misc.CSSNames.USER_RESP
+import com.github.readingbat.misc.CheckAnswersJs.PROCESS_USER_ANSWERS_JS_FUNC
 import com.github.readingbat.misc.CheckAnswersJs.checkAnswersScript
-import com.github.readingbat.misc.CheckAnswersJs.processUserAnswers
 import com.github.readingbat.misc.ClassCode
 import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
 import com.github.readingbat.misc.Constants.CORRECT_COLOR
@@ -53,9 +55,18 @@ import com.github.readingbat.misc.FormFields.GROUP_NAME_KEY
 import com.github.readingbat.misc.FormFields.LANGUAGE_NAME_KEY
 import com.github.readingbat.misc.KeyConstants.CORRECT_ANSWERS_KEY
 import com.github.readingbat.misc.KeyConstants.NAME_FIELD
+import com.github.readingbat.misc.LikeDislikeJs.LIKE_DISLIKE_JS_FUNC
+import com.github.readingbat.misc.LikeDislikeJs.likeDislikeScript
 import com.github.readingbat.misc.Message
 import com.github.readingbat.misc.PageUtils.pathOf
+import com.github.readingbat.misc.ParameterIds.DISLIKE_CLEAR
+import com.github.readingbat.misc.ParameterIds.DISLIKE_COLOR
 import com.github.readingbat.misc.ParameterIds.FEEDBACK_ID
+import com.github.readingbat.misc.ParameterIds.HINT_ID
+import com.github.readingbat.misc.ParameterIds.LIKE_CLEAR
+import com.github.readingbat.misc.ParameterIds.LIKE_COLOR
+import com.github.readingbat.misc.ParameterIds.LIKE_SPINNER_ID
+import com.github.readingbat.misc.ParameterIds.LIKE_STATUS_ID
 import com.github.readingbat.misc.ParameterIds.NEXTCHANCE_ID
 import com.github.readingbat.misc.ParameterIds.SPINNER_ID
 import com.github.readingbat.misc.ParameterIds.STATUS_ID
@@ -65,7 +76,7 @@ import com.github.readingbat.misc.User.Companion.challengeAnswersKey
 import com.github.readingbat.misc.User.Companion.correctAnswersKey
 import com.github.readingbat.misc.User.Companion.fetchActiveClassCode
 import com.github.readingbat.misc.User.Companion.gson
-import com.github.readingbat.pages.ChallengePage.processAnswers
+import com.github.readingbat.misc.User.Companion.likeDislikeKey
 import com.github.readingbat.pages.PageCommon.addLink
 import com.github.readingbat.pages.PageCommon.backLink
 import com.github.readingbat.pages.PageCommon.bodyHeader
@@ -114,6 +125,7 @@ internal object ChallengePage : KLogging() {
           link { rel = "stylesheet"; href = "$STATIC_ROOT/$languageName-prism.css"; type = CSS.toString() }
 
           script(type = textJavaScript) { checkAnswersScript(languageName, groupName, challengeName) }
+          script(type = textJavaScript) { likeDislikeScript(languageName, groupName, challengeName) }
 
           removePrismShadow()
           headDefault(content)
@@ -135,7 +147,7 @@ internal object ChallengePage : KLogging() {
           if (activeClassCode.isStudentMode)
             displayQuestions(user, browserSession, challenge, funcInfo, redis)
           else {
-            if (redis == null)
+            if (redis.isNull())
               p { +DBMS_DOWN.value }
             else
               displayStudentProgress(challenge, content.maxHistoryLength, funcInfo, activeClassCode, redis)
@@ -146,7 +158,7 @@ internal object ChallengePage : KLogging() {
           script { src = "$STATIC_ROOT/$languageName-prism.js" }
 
           if (activeClassCode.isTeacherMode)
-            addWebSockets(content, activeClassCode)
+            enableWebSockets(activeClassCode)
         }
       }
 
@@ -171,7 +183,7 @@ internal object ChallengePage : KLogging() {
       this@displayChallenge.nextChance(pos, challenges, true)
     }
 
-    if (challenge.description.isNotEmpty())
+    if (challenge.description.isNotBlank())
       div(classes = CHALLENGE_DESC) { rawHtml(challenge.parsedDescription) }
 
     div(classes = CODE_BLOCK) {
@@ -206,6 +218,7 @@ internal object ChallengePage : KLogging() {
             colSpan = "2"
             style = "color: $headerColor"
             +"Function Call"
+            rawHtml(nbsp.text)
           }
           th {
             colSpan = "2"
@@ -214,18 +227,24 @@ internal object ChallengePage : KLogging() {
           }
         }
 
-        val answers = fetchPreviousAnswers(user, browserSession, challenge, redis)
+        val correctAnswers = fetchPreviousAnswers(user, browserSession, challenge, redis)
 
         funcInfo.invocations.withIndex()
           .forEach { (i, invocation) ->
             tr {
-              td(classes = FUNC_COL) { +invocation.value }
+              td(classes = FUNC_COL) {
+                +invocation.value
+                // Pad short invocation calls
+                val minLength = 10
+                if (invocation.value.length < minLength)
+                  rawHtml(" " + List(minLength - invocation.value.length) { nbsp.text }.joinToString(" "))
+              }
               td(classes = ARROW) { rawHtml("&rarr;") }
               td {
                 textInput(classes = USER_RESP) {
                   id = "$RESP$i"
-                  onKeyDown = "$processUserAnswers(event, ${funcInfo.answers.size})"
-                  val answer = answers[invocation.value] ?: ""
+                  onKeyDown = "$PROCESS_USER_ANSWERS_JS_FUNC(event, ${funcInfo.correctAnswers.size})"
+                  val answer = correctAnswers[invocation.value] ?: ""
                   if (answer.isNotBlank())
                     value = answer
                   else
@@ -233,23 +252,32 @@ internal object ChallengePage : KLogging() {
                 }
               }
               td(classes = FEEDBACK) { id = "$FEEDBACK_ID$i" }
+              td(classes = HINT) { id = "$HINT_ID$i" }
             }
           }
       }
 
       this@displayQuestions.processAnswers(funcInfo, challenge)
+      if (redis.isNotNull())
+        this@displayQuestions.likeDislike(user, browserSession, challenge, redis)
       this@displayQuestions.otherLinks(challenge)
-      if (redis != null)
+      if (redis.isNotNull())
         this@displayQuestions.clearChallengeAnswerHistory(user, browserSession, challenge)
     }
 
-  private fun BODY.addWebSockets(content: ReadingBatContent, classCode: ClassCode) {
+  private fun BODY.enableWebSockets(classCode: ClassCode) {
     script {
       rawHtml(
         """
-          var wshost = location.origin.replace(${if (content.production) "/^https:/, 'wss:'" else "/^http:/, 'ws:'"});
-          var wsurl = wshost + '$CHALLENGE_ENDPOINT/$classCode';
           
+          var wshost = location.origin;
+          if (wshost.startsWith('https:'))
+            wshost = wshost.replace(/^https:/, 'wss:');
+          else
+            wshost = wshost.replace(/^http:/, 'ws:');
+
+          var wsurl = wshost + '$CHALLENGE_ENDPOINT/' + encodeURIComponent('$classCode');
+
           var ws = new WebSocket(wsurl);
           
           ws.onopen = function (event) {
@@ -315,10 +343,9 @@ internal object ChallengePage : KLogging() {
               val results =
                 funcInfo.invocations
                   .map { invocation ->
-                    val answerHistoryKey = enrollee.answerHistoryKey(languageName, groupName, challengeName, invocation)
+                    val historyKey = enrollee.answerHistoryKey(languageName, groupName, challengeName, invocation)
                     val history =
-                      gson.fromJson(redis[answerHistoryKey], ChallengeHistory::class.java) ?: ChallengeHistory(
-                        invocation)
+                      gson.fromJson(redis[historyKey], ChallengeHistory::class.java) ?: ChallengeHistory(invocation)
                     if (history.correct)
                       numCorrect++
                     invocation to history
@@ -357,14 +384,13 @@ internal object ChallengePage : KLogging() {
                                    browserSession: BrowserSession?,
                                    challenge: Challenge,
                                    redis: Jedis?) =
-    if (redis == null)
+    if (redis.isNull())
       emptyMap
     else {
       val languageName = challenge.languageType.languageName
       val groupName = challenge.groupName
       val challengeName = challenge.challengeName
       val challengeAnswersKey = user.challengeAnswersKey(browserSession, languageName, groupName, challengeName)
-
       if (challengeAnswersKey.isNotEmpty()) redis.hgetAll(challengeAnswersKey) else emptyMap()
     }
 
@@ -375,10 +401,12 @@ internal object ChallengePage : KLogging() {
         tr {
           td {
             button(classes = CHECK_ANSWERS) {
-              onClick = "$processUserAnswers(null, ${funcInfo.answers.size});"; +"Check My Answers"
+              onClick = "$PROCESS_USER_ANSWERS_JS_FUNC(null, ${funcInfo.correctAnswers.size});"; +"Check My Answers"
             }
           }
+
           td { style = "vertical-align:middle;"; span { style = "margin-left:1em;"; id = SPINNER_ID } }
+
           td {
             val challengeName = challenge.challengeName
             val challengeGroup = challenge.challengeGroup
@@ -387,7 +415,7 @@ internal object ChallengePage : KLogging() {
 
             span {
               id = NEXTCHANCE_ID
-              style = "visibility: hidden;"
+              style = "display:none;"
               this@processAnswers.nextChance(pos, challenges, false)
             }
           }
@@ -431,12 +459,65 @@ internal object ChallengePage : KLogging() {
     }
   }
 
+  private fun BODY.likeDislike(user: User?, browserSession: BrowserSession?, challenge: Challenge, redis: Jedis) {
+    val languageName = challenge.languageType.languageName
+    val groupName = challenge.groupName
+    val challengeName = challenge.challengeName
+
+    val likeDislikeKey = user.likeDislikeKey(browserSession, languageName, groupName, challengeName)
+    val likeDislikeVal = if (likeDislikeKey.isNotEmpty()) redis[likeDislikeKey]?.toInt() ?: 0 else 0
+
+    p {
+      table {
+        val imgSize = "30"
+        tr {
+          td {
+            id = LIKE_CLEAR
+            style = "display:${if (likeDislikeVal == 0 || likeDislikeVal == 2) "inline" else "none" + ";"}"
+            button(classes = LIKE_BUTTONS) {
+              onClick = "$LIKE_DISLIKE_JS_FUNC(${LIKE_CLEAR.toDoubleQuoted()});"
+              img { height = imgSize; src = "$STATIC_ROOT/like-clear.png" }
+            }
+          }
+          td {
+            id = LIKE_COLOR
+            style = "display:${if (likeDislikeVal == 1) "inline" else "none" + ";"}"
+            button(classes = LIKE_BUTTONS) {
+              onClick = "$LIKE_DISLIKE_JS_FUNC(${LIKE_COLOR.toDoubleQuoted()});"
+              img { height = imgSize; src = "$STATIC_ROOT/like-color.png" }
+            }
+          }
+          td {
+            id = DISLIKE_CLEAR
+            style = "display:${if (likeDislikeVal == 0 || likeDislikeVal == 1) "inline" else "none" + ";"}"
+            button(classes = LIKE_BUTTONS) {
+              onClick = "$LIKE_DISLIKE_JS_FUNC(${DISLIKE_CLEAR.toDoubleQuoted()});"
+              img { height = imgSize; src = "$STATIC_ROOT/dislike-clear.png" }
+            }
+          }
+          td {
+            id = DISLIKE_COLOR
+            style = "display:${if (likeDislikeVal == 2) "inline" else "none" + ";"}"
+            button(classes = LIKE_BUTTONS) {
+              onClick = "$LIKE_DISLIKE_JS_FUNC(${DISLIKE_COLOR.toDoubleQuoted()});"
+              img { height = imgSize; src = "$STATIC_ROOT/dislike-color.png" }
+            }
+          }
+
+          td { style = "vertical-align:middle;"; span { style = "margin-left:1em;"; id = LIKE_SPINNER_ID } }
+
+          td { style = "vertical-align:middle;"; span(classes = STATUS) { id = LIKE_STATUS_ID } }
+        }
+      }
+    }
+  }
+
   private fun BODY.otherLinks(challenge: Challenge) {
     val languageType = challenge.languageType
     val groupName = challenge.groupName
     val challengeName = challenge.challengeName
 
-    p(classes = REFS) {
+    p(classes = EXPERIMENT) {
       +"Experiment with this code on "
       this@otherLinks.addLink("Gitpod.io", "https://gitpod.io/#${challenge.gitpodUrl}", true)
       if (languageType.isKotlin()) {
@@ -446,7 +527,7 @@ internal object ChallengePage : KLogging() {
     }
 
     if (challenge.codingBatEquiv.isNotEmpty() && (languageType.isJava() || languageType.isPython())) {
-      p(classes = REFS) {
+      p(classes = CODINGBAT) {
         +"Work on a similar problem on "
         this@otherLinks.addLink("CodingBat.com", "https://codingbat.com/prob/${challenge.codingBatEquiv}", true)
       }
@@ -485,7 +566,7 @@ internal object ChallengePage : KLogging() {
       rawHtml(
         """
           pre[class*="language-"]:before,
-          pre[class*="language-"]:after { display: none; }
+          pre[class*="language-"]:after { display:none; }
         """.trimIndent())
     }
   }

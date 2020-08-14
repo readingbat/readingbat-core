@@ -32,11 +32,11 @@ internal class FunctionInfo(val languageType: LanguageType,
                             val returnType: ReturnType,
                             rawAnswers: List<*>) {
 
-  val answers = mutableListOf<String>()
+  val correctAnswers = mutableListOf<String>()
 
   init {
     rawAnswers.forEach { raw ->
-      answers +=
+      correctAnswers +=
         when (returnType) {
           BooleanType -> {
             if (languageType.isPython())
@@ -56,49 +56,26 @@ internal class FunctionInfo(val languageType: LanguageType,
         }
     }
 
-    logger.debug { "In $challengeName invocations: $invocations computed answers: $answers" }
+    logger.info { "In $challengeName return type: $returnType invocations: $invocations computed answers: $correctAnswers" }
 
     validate()
   }
 
   fun placeHolder(): String {
     return when (returnType) {
-      BooleanType -> {
-        if (languageType.isPython())
-          "True"
-        else
-          "true"
-      }
+      BooleanType -> if (languageType.isPython()) "True" else "true"
       IntType -> "0"
-      StringType -> {
-        if (languageType.isPython())
-          "''"
-        else
-          """"""""
-      }
-      BooleanListType,
-      BooleanArrayType -> {
-        if (languageType.isPython())
-          "[True, False]"
-        else
-          "[true, false]"
-      }
-      IntListType,
-      IntArrayType -> "[0, 1]"
-      StringListType,
-      StringArrayType -> {
-        if (languageType.isPython())
-          "['', '']"
-        else
-          """["", ""]"""
-      }
+      StringType -> if (languageType.isPython()) "''" else """"""""
+      BooleanListType, BooleanArrayType -> if (languageType.isPython()) "[True, False]" else "[true, false]"
+      IntListType, IntArrayType -> "[0, 1]"
+      StringListType, StringArrayType -> if (languageType.isPython()) "['', '']" else """["", ""]"""
       Runtime -> throw InvalidConfigurationException("Invalid return type")
     }
   }
 
   private fun validate() {
-    if (answers.size != invocations.size)
-      throw InvalidConfigurationException("Mismatch between ${answers.size} answers and ${invocations.size} invocations in $challengeName")
+    if (correctAnswers.size != invocations.size)
+      throw InvalidConfigurationException("Mismatch between ${correctAnswers.size} answers and ${invocations.size} invocations in $challengeName")
   }
 
   companion object : KLogging()

@@ -23,9 +23,10 @@ import com.github.readingbat.misc.CSSNames.INDENT_2EM
 import com.github.readingbat.misc.Constants.LABEL_WIDTH
 import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.Endpoints.TEACHER_PREFS_ENDPOINT
+import com.github.readingbat.misc.Endpoints.TEACHER_PREFS_POST_ENDPOINT
 import com.github.readingbat.misc.FormFields.CLASSES_CHOICE
 import com.github.readingbat.misc.FormFields.CLASSES_DISABLED
-import com.github.readingbat.misc.FormFields.CLASS_CODE
+import com.github.readingbat.misc.FormFields.CLASS_CODE_NAME
 import com.github.readingbat.misc.FormFields.CREATE_CLASS
 import com.github.readingbat.misc.FormFields.DELETE_CLASS
 import com.github.readingbat.misc.FormFields.UPDATE_ACTIVE_CLASS
@@ -44,6 +45,7 @@ import com.github.readingbat.pages.UserPrefsPage.requestLogInPage
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
 import kotlinx.html.*
+import kotlinx.html.Entities.nbsp
 import kotlinx.html.InputType.radio
 import kotlinx.html.InputType.submit
 import kotlinx.html.stream.createHTML
@@ -102,7 +104,7 @@ internal object TeacherPrefsPage : KLogging() {
     div(classes = INDENT_2EM) {
       p { +"Enter a decription of the class." }
       form {
-        action = TEACHER_PREFS_ENDPOINT
+        action = TEACHER_PREFS_POST_ENDPOINT
         method = FormMethod.post
         table {
           tr {
@@ -146,7 +148,7 @@ internal object TeacherPrefsPage : KLogging() {
       style = "border-spacing: 15px 5px;"
       tr { th { +"Active" }; th { +"Class Code" }; th { +"Description" }; th { +"Enrollees" } }
       form {
-        action = TEACHER_PREFS_ENDPOINT
+        action = TEACHER_PREFS_POST_ENDPOINT
         method = FormMethod.post
         classCodes.forEach { classCode ->
           val classDesc = classCode.fetchClassDesc(redis)
@@ -186,17 +188,17 @@ internal object TeacherPrefsPage : KLogging() {
   private fun BODY.deleteClassButtons(classCodes: List<ClassCode>, redis: Jedis) {
     table {
       style = "border-spacing: 5px 5px;"
-      tr { th { rawHtml(Entities.nbsp.text) } }
+      tr { th { rawHtml(nbsp.text) } }
       classCodes.forEach { classCode ->
         val classDesc = classCode.fetchClassDesc(redis)
         tr {
           td {
             form {
               style = "margin:0;"
-              action = TEACHER_PREFS_ENDPOINT
+              action = TEACHER_PREFS_POST_ENDPOINT
               method = FormMethod.post
               onSubmit = "return confirm('Are you sure you want to delete class $classDesc [$classCode]?');"
-              input { type = InputType.hidden; name = CLASS_CODE; value = classCode.value }
+              input { type = InputType.hidden; name = CLASS_CODE_NAME; value = classCode.value }
               input {
                 style = "vertical-align:middle; margin-top:1; margin-bottom:0;"
                 type = submit; name = USER_PREFS_ACTION; value =

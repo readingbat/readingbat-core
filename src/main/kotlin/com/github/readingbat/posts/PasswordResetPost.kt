@@ -48,8 +48,8 @@ import com.github.readingbat.server.ResetId.Companion.getResetId
 import com.github.readingbat.server.ResetId.Companion.newResetId
 import com.github.readingbat.server.ServerUtils.queryParam
 import com.google.common.util.concurrent.RateLimiter
-import io.ktor.application.call
-import io.ktor.request.receiveParameters
+import io.ktor.application.*
+import io.ktor.request.*
 import mu.KLogging
 import redis.clients.jedis.Jedis
 import java.io.IOException
@@ -83,11 +83,11 @@ internal object PasswordResetPost : KLogging() {
           val newResetId = newResetId()
 
           // Lookup and remove previous value if it exists
-          val user = lookupUserByEmail(email, redis) ?: throw ResetPasswordException("Unable to find $email")
-          val previousResetId = redis.get(user.userPasswordResetKey)?.let { ResetId(it) } ?: EMPTY_RESET_ID
+          val user2 = lookupUserByEmail(email, redis) ?: throw ResetPasswordException("Unable to find $email")
+          val previousResetId = redis.get(user2.userPasswordResetKey)?.let { ResetId(it) } ?: EMPTY_RESET_ID
 
           redis.multi().also { tx ->
-            user.savePasswordResetKey(email, previousResetId, newResetId, tx)
+            user2.savePasswordResetKey(email, previousResetId, newResetId, tx)
             tx.exec()
           }
 

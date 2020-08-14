@@ -26,6 +26,7 @@ internal object KeyConstants {
   const val USER_INFO_KEY = "user-info"
   const val USER_CLASSES_KEY = "user-classes"
   const val CORRECT_ANSWERS_KEY = "correct-answers"
+  const val LIKE_DISLIKE_KEY = "like-dislike"
   const val CHALLENGE_ANSWERS_KEY = "challenge-answers"
   const val ANSWER_HISTORY_KEY = "answer-history"
   const val RESET_KEY = "password-reset"

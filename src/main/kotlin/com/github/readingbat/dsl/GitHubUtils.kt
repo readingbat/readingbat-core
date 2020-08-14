@@ -18,20 +18,51 @@
 package com.github.readingbat.dsl
 
 import com.github.pambrose.common.util.GitHubRepo
+import com.github.readingbat.server.Metrics
 import mu.KLogging
+import org.kohsuke.github.GHRepository
 import org.kohsuke.github.GitHub
+import kotlin.time.measureTimedValue
 
-// https://github-api.kohsuke.org
+// See https://github-api.kohsuke.org for usage details
 
-object GitHubUtils : KLogging() {
+internal object GitHubUtils : KLogging() {
 
   private val github by lazy { GitHub.connect() }
 
-  fun GitHubRepo.directoryContents(branchName: String, path: String): List<String> {
-    val repo = github.getOrganization(organizationName).getRepository(repoName)
-    val elems = path.split("/").filter { it.isNotEmpty() }
-    var currRoot = repo.getTree(branchName)
-    elems.forEach { elem -> currRoot = currRoot.tree.asSequence().filter { it.path == elem }.first().asTree() }
-    return currRoot.tree.map { it.path }
+  fun GitHubRepo.userDirectoryContents(branchName: String,
+                                       path: String,
+                                       metrics: Metrics): List<String> {
+    val repo = github.getUser(ownerName).getRepository(repoName)
+    return directoryContents(repo, branchName, path, metrics)
+  }
+
+  fun GitHubRepo.organizationDirectoryContents(branchName: String,
+                                               path: String,
+                                               metrics: Metrics): List<String> {
+    val repo: GHRepository = github.getOrganization(ownerName).getRepository(repoName)
+    return directoryContents(repo, branchName, path, metrics)
+  }
+
+  private fun directoryContents(repo: GHRepository,
+                                branchName: String,
+                                path: String,
+                                metrics: Metrics): List<String> {
+    val timer = metrics.githubDirectoryReadDuration.labels(agentLaunchId()).startTimer()
+    try {
+      val timedValue =
+        measureTimedValue {
+          val elems = path.split("/").filter { it.isNotEmpty() }
+          var currRoot = repo.getTree(branchName)
+          elems.forEach { elem ->
+            currRoot = currRoot.tree.asSequence().filter { it.path == elem }.firstOrNull()?.asTree()
+          }
+          currRoot?.tree?.map { it.path } ?: emptyList()
+        }
+      logger.info { "Found ${timedValue.value.size} files in $path in ${timedValue.duration}" }
+      return timedValue.value
+    } finally {
+      timer.observeDuration()
+    }
   }
 }

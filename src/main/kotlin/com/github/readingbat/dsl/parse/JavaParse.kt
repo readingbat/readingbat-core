@@ -32,9 +32,9 @@ internal object JavaParse : KLogging() {
   private val staticRegex = Regex("""static.+\(""")
   private val staticStartRegex = Regex("""\sstatic.+\(""")
   private val psRegex = Regex("""^\s+public\s+static.+\(""")
+  private val psvmRegex = Regex("""^\s*public\s+static\s+void\s+main.+\)""")
   internal val javaEndRegex = Regex("""\s*}\s*""")
   internal val svmRegex = Regex("""\s*static\s+void\s+main\(""")
-  internal val psvmRegex = Regex("""^\s*public\s+static\s+void\s+main.+\)""")
 
   private val prefixRegex =
     listOf(Regex("""System\.out\.println\("""),
@@ -47,10 +47,7 @@ internal object JavaParse : KLogging() {
 
   fun deriveJavaReturnType(challengeName: ChallengeName, code: List<String>) =
     code.asSequence()
-      .filter {
-        !it.contains(svmRegex) && (it.contains(
-          staticStartRegex) || it.contains(psRegex))
-      }
+      .filter { !it.contains(svmRegex) && (it.contains(staticStartRegex) || it.contains(psRegex)) }
       .map { str ->
         val words = str.trim().split(spaceRegex).filter { it.isNotBlank() }
         val staticPos = words.indices.first { words[it] == "static" }
@@ -100,7 +97,7 @@ internal object JavaParse : KLogging() {
         }
         insideMain && prefixRegex.any { line.contains(it) } -> {
           val expr = line.substringBetween("(", ")")
-          exprIndent = max(0, prefixRegex.map { line.indexOf(it.pattern.substring(0, 6)) }.max()!!)
+          exprIndent = max(0, prefixRegex.map { line.indexOf(it.pattern.substring(0, 6)) }.maxOrNull() ?: 0)
           val str = "".padStart(exprIndent) + "$varName.add($expr);"
           logger.debug { "Transformed:\n$line\nto:\n$str" }
           scriptCode += str

@@ -18,6 +18,8 @@
 package com.github.readingbat.server
 
 import com.github.pambrose.common.redis.RedisUtils.withRedisPool
+import com.github.pambrose.common.util.isNotNull
+import com.github.pambrose.common.util.isNull
 import com.github.pambrose.common.util.sha256
 import com.github.readingbat.misc.AuthName
 import com.github.readingbat.misc.Constants.DBMS_DOWN
@@ -66,14 +68,14 @@ internal object ConfigureFormAuth : KLogging() {
 
       validate { cred: UserPasswordCredential ->
         withRedisPool { redis ->
-          if (redis == null) {
+          if (redis.isNull()) {
             logger.warn { DBMS_DOWN }
             null
           }
           else {
             var principal: UserPrincipal? = null
             val user = lookupUserByEmail(Email(cred.name), redis)
-            if (user != null) {
+            if (user.isNotNull()) {
               val (salt, digest) = user.lookupDigestInfoByUser(redis)
               if (salt.isNotEmpty() && digest.isNotEmpty() && digest == cred.password.sha256(salt)) {
                 logger.info { "Found user ${cred.name} ${user.id}" }
@@ -81,9 +83,9 @@ internal object ConfigureFormAuth : KLogging() {
               }
             }
 
-            logger.info { "Login ${if (principal == null) "failure" else "success"}" }
+            logger.info { "Login ${if (principal.isNull()) "failure" else "success"}" }
 
-            if (principal == null)
+            if (principal.isNull())
               failedLoginLimiter.acquire() // may wait
 
             principal

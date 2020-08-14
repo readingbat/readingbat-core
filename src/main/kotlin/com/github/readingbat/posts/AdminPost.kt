@@ -18,6 +18,7 @@
 package com.github.readingbat.posts
 
 import com.github.readingbat.dsl.ReadingBatContent
+import com.github.readingbat.dsl.isProduction
 import com.github.readingbat.misc.FormFields.ADMIN_ACTION
 import com.github.readingbat.misc.FormFields.DELETE_ALL_DATA
 import com.github.readingbat.misc.Message
@@ -36,12 +37,12 @@ internal object AdminPost {
 
   suspend fun PipelineCall.adminActions(content: ReadingBatContent, user: User?, redis: Jedis): String {
     return when {
-      content.production && !user.isValidUser(redis) -> adminDataPage(content,
-                                                                      user,
-                                                                      redis = redis,
-                                                                      msg = Message("Must be logged in for this function",
-                                                                                    true))
-      content.production && user?.email(redis)?.value != "pambrose@mac.com" -> {
+      isProduction() && !user.isValidUser(redis) -> adminDataPage(content,
+                                                                  user,
+                                                                  redis = redis,
+                                                                  msg = Message("Must be logged in for this function",
+                                                                                true))
+      isProduction() && user?.email(redis)?.value != "pambrose@mac.com" -> {
         adminDataPage(content, user, redis = redis, msg = Message("Must be system admin for this function", true))
       }
       else -> {

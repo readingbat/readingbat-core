@@ -18,130 +18,177 @@
 package com.github.readingbat.server
 
 import com.github.pambrose.common.redis.RedisUtils.withRedis
+import com.github.pambrose.common.util.isNotNull
 import com.github.readingbat.dsl.InvalidPathException
 import com.github.readingbat.dsl.ReadingBatContent
+import com.github.readingbat.dsl.agentLaunchId
 import com.github.readingbat.misc.ClassCode
 import com.github.readingbat.misc.Endpoints.CHALLENGE_ENDPOINT
 import com.github.readingbat.misc.Endpoints.CHALLENGE_GROUP_ENDPOINT
 import com.github.readingbat.misc.User.Companion.gson
 import com.github.readingbat.posts.ChallengeHistory
-import io.ktor.http.cio.websocket.CloseReason
-import io.ktor.http.cio.websocket.CloseReason.Codes
-import io.ktor.http.cio.websocket.Frame
-import io.ktor.http.cio.websocket.close
-import io.ktor.http.cio.websocket.readText
-import io.ktor.routing.Routing
-import io.ktor.websocket.webSocket
+import io.ktor.http.cio.websocket.*
+import io.ktor.http.cio.websocket.CloseReason.*
+import io.ktor.routing.*
+import io.ktor.websocket.*
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.runBlocking
 import mu.KLogging
 import redis.clients.jedis.JedisPubSub
+import java.util.concurrent.atomic.AtomicBoolean
 
 internal object WsEndoints : KLogging() {
 
-  fun Routing.wsEndpoints(content: ReadingBatContent) {
-    webSocket("$CHALLENGE_ENDPOINT/{classCode}") {
-      val classCode =
-        call.parameters["classCode"]?.let { ClassCode(it) } ?: throw InvalidPathException("Missing class code")
-      incoming
-        .receiveAsFlow()
-        .mapNotNull { it as? Frame.Text }
-        .collect { frame ->
-          val inboundMsg = frame.readText()
-          withRedis { redis ->
-            redis?.subscribe(object : JedisPubSub() {
-              override fun onMessage(channel: String?, message: String?) {
-                if (message != null)
-                  runBlocking {
-                    logger.debug { "Sending data $message from $channel" }
-                    outgoing.send(Frame.Text(message))
-                  }
-              }
-            }, classCode.value)
-          }
+  private const val LANGUAGE_NAME = "languageName"
+  private const val GROUP_NAME = "groupName"
+  private const val CLASS_CODE = "classCode"
 
-          if (inboundMsg.equals("bye", ignoreCase = true)) {
-            close(CloseReason(Codes.NORMAL, "Client said BYE"))
-          }
+  fun Routing.wsEndpoints(metrics: Metrics, content: () -> ReadingBatContent) {
+
+    webSocket("$CHALLENGE_ENDPOINT/{$CLASS_CODE}") {
+      var desc = "unassigned"
+      logger.info { "Called student answer websocket" }
+      metrics.measureEndpointRequest("/websocket_class") {
+        try {
+          val classCode = call.parameters[CLASS_CODE]?.let { ClassCode(it) }
+            ?: throw InvalidPathException("Missing class code")
+
+          desc = "$CHALLENGE_ENDPOINT/$classCode"
+          logger.info { "Opening student answer websocket for $desc" }
+
+          metrics.wsStudentAnswerStartCount.labels(agentLaunchId()).inc()
+
+          incoming
+            .receiveAsFlow()
+            .mapNotNull { it as? Frame.Text }
+            .collect { frame ->
+              val inboundMsg = frame.readText()
+              withRedis { redis ->
+                redis?.subscribe(object : JedisPubSub() {
+                  override fun onMessage(channel: String?, message: String?) {
+                    if (message.isNotNull()) {
+                      metrics.wsStudentAnswerResponseCount.labels(agentLaunchId()).inc()
+                      logger.debug { "Sending data $message from $channel" }
+                      runBlocking { outgoing.send(Frame.Text(message)) }
+                    }
+                  }
+                }, classCode.value)
+              }
+            }
+        } finally {
+          logger.info { "Closing student answer websocket for $desc" }
+          close(CloseReason(Codes.GOING_AWAY, "Client disconnected"))
         }
+      }
     }
 
-    webSocket("$CHALLENGE_GROUP_ENDPOINT/{languageName}/{groupName}/{classCode}") {
-      val languageName =
-        call.parameters["languageName"]?.let { LanguageName(it) } ?: throw InvalidPathException("Missing language name")
-      val groupName =
-        call.parameters["groupName"]?.let { GroupName(it) } ?: throw InvalidPathException("Missing group name")
-      val classCode =
-        call.parameters["classCode"]?.let { ClassCode(it) } ?: throw InvalidPathException("Missing class code")
-      val challenges = content.findGroup(languageName.toLanguageType(), groupName).challenges
+    webSocket("$CHALLENGE_GROUP_ENDPOINT/{$LANGUAGE_NAME}/{$GROUP_NAME}/{$CLASS_CODE}") {
+      val closed = AtomicBoolean(false)
+      var desc = "unassigned"
+      logger.info { "Called class statistics websocket" }
+      metrics.measureEndpointRequest("/websocket_group") {
+        try {
+          val languageName =
+            call.parameters[LANGUAGE_NAME]?.let { LanguageName(it) }
+              ?: throw InvalidPathException("Missing language name")
+          val groupName =
+            call.parameters[GROUP_NAME]?.let { GroupName(it) } ?: throw InvalidPathException("Missing group name")
+          val classCode =
+            call.parameters[CLASS_CODE]?.let { ClassCode(it) } ?: throw InvalidPathException("Missing class code")
+          val challenges = content.invoke().findGroup(languageName.toLanguageType(), groupName).challenges
 
-      incoming
-        .receiveAsFlow()
-        .mapNotNull { it as? Frame.Text }
-        .collect { frame ->
-          val inboundMsg = frame.readText()
-          withRedis { redis ->
-            if (redis != null) {
-              val enrollees = classCode.fetchEnrollees(redis)
+          desc = "$CHALLENGE_ENDPOINT/$languageName/$groupName/$classCode"
+          logger.info { "Opening class statistics websocket for $desc" }
 
-              challenges
-                .forEach { challenge ->
-                  if (classCode.isTeacherMode && enrollees.isNotEmpty()) {
-                    val funcInfo = challenge.funcInfo(content)
-                    val challengeName = challenge.challengeName
-                    val numCalls = funcInfo.invocations.size
-                    var totAttemptedAtLeastOne = 0
-                    var totAllCorrect = 0
-                    var totCorrect = 0
+          metrics.wsClassStatisticsStartCount.labels(agentLaunchId()).inc()
 
-                    enrollees.forEach { enrollee ->
-                      var attempted = 0
-                      var numCorrect = 0
+          incoming
+            .receiveAsFlow()
+            .mapNotNull { it as? Frame.Text }
+            .collect { frame ->
+              val inboundMsg = frame.readText()
+              withRedis { redis ->
+                if (redis.isNotNull()) {
+                  val enrollees = classCode.fetchEnrollees(redis)
+                  challenges
+                    .forEach { challenge ->
+                      if (classCode.isTeacherMode && enrollees.isNotEmpty()) {
+                        val funcInfo = challenge.funcInfo(content.invoke())
+                        val challengeName = challenge.challengeName
+                        val numCalls = funcInfo.invocations.size
+                        var totAttemptedAtLeastOne = 0
+                        var totAllCorrect = 0
+                        var totCorrect = 0
+                        var likes = 0
+                        var dislikes = 0
 
-                      funcInfo.invocations
-                        .forEach { invocation ->
-                          val answerHistoryKey =
-                            enrollee.answerHistoryKey(languageName, groupName, challengeName, invocation)
-                          if (redis.exists(answerHistoryKey)) {
-                            attempted++
-                            val json = redis[answerHistoryKey] ?: ""
-                            val history =
-                              gson.fromJson(json, ChallengeHistory::class.java) ?: ChallengeHistory(invocation)
-                            if (history.correct)
-                              numCorrect++
-                          }
+                        enrollees.forEach { enrollee ->
+                          var attempted = 0
+                          var numCorrect = 0
+
+                          funcInfo.invocations
+                            .forEach { invocation ->
+                              val answerHistoryKey =
+                                enrollee.answerHistoryKey(languageName, groupName, challengeName, invocation)
+
+                              if (redis.exists(answerHistoryKey)) {
+                                attempted++
+                                val json = redis[answerHistoryKey] ?: ""
+                                val history =
+                                  gson.fromJson(json, ChallengeHistory::class.java) ?: ChallengeHistory(invocation)
+                                if (history.correct)
+                                  numCorrect++
+                              }
+                            }
+
+                          val likeDislikeKey = enrollee.likeDislikeKey(languageName, groupName, challengeName)
+                          val likeDislike = redis[likeDislikeKey]?.toInt() ?: 0
+                          if (likeDislike == 1)
+                            likes++
+                          else if (likeDislike == 2)
+                            dislikes++
+
+                          if (attempted > 0)
+                            totAttemptedAtLeastOne++
+
+                          if (numCorrect == numCalls)
+                            totAllCorrect++
+
+                          totCorrect += numCorrect
                         }
 
-                      if (attempted > 0)
-                        totAttemptedAtLeastOne++
+                        val avgCorrect =
+                          if (totAttemptedAtLeastOne > 0) totCorrect / totAttemptedAtLeastOne.toFloat() else 0.0f
+                        val avgCorrectFmt = "%.1f".format(avgCorrect)
 
-                      if (numCorrect == numCalls)
-                        totAllCorrect++
+                        val msg =
+                          " ($numCalls | $totAttemptedAtLeastOne | $totAllCorrect | $avgCorrectFmt | $likes | $dislikes)"
 
-                      totCorrect += numCorrect
+                        val challengeStats = ChallengeStats(challengeName.value, msg)
+                        val json = gson.toJson(challengeStats)
+
+                        metrics.wsClassStatisticsResponseCount.labels(agentLaunchId()).inc()
+                        logger.debug { "Sending data $json" }
+                        runBlocking { outgoing.send(Frame.Text(json)) }
+                      }
                     }
-
-                    val avgCorrect =
-                      if (totAttemptedAtLeastOne > 0) totCorrect / totAttemptedAtLeastOne.toFloat() else 0.0f
-
-                    val msg = " ($numCalls | $totAttemptedAtLeastOne | $totAllCorrect | ${"%.1f".format(avgCorrect)})"
-                    val challengeStats = ChallengeStats(challengeName.value, msg)
-                    val json = gson.toJson(challengeStats)
-
-                    runBlocking {
-                      logger.debug { "Sending data $json" }
-                      outgoing.send(Frame.Text(json))
-                    }
-                  }
                 }
+              }
+              // This will close it if the results run to completion
+              logger.info { "Closing class statistics websocket for $desc" }
+              close(CloseReason(Codes.NORMAL, "Client disconnected"))
+              closed.set(true)
             }
+        } finally {
+          // This will close it if the user exits the page early
+          if (!closed.get()) {
+            logger.info { "Closing class statistics websocket for $desc" }
+            close(CloseReason(Codes.GOING_AWAY, "Client disconnected"))
           }
-
-          logger.info { "Closing $languageName/$groupName/$classCode websocket" }
-          close(CloseReason(Codes.NORMAL, "Client said BYE"))
         }
+      }
     }
   }
 }

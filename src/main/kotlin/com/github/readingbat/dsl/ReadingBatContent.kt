@@ -18,6 +18,7 @@
 package com.github.readingbat.dsl
 
 import com.github.pambrose.common.util.ContentRoot
+import com.github.pambrose.common.util.ContentSource
 import com.github.pambrose.common.util.FileSystemSource
 import com.github.readingbat.dsl.LanguageType.*
 import com.github.readingbat.server.ChallengeName
@@ -25,15 +26,23 @@ import com.github.readingbat.server.GroupName
 import com.github.readingbat.server.Language
 import com.github.readingbat.server.LanguageName
 import mu.KLogging
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+import java.util.concurrent.ConcurrentHashMap
 
 
 @ReadingBatDslMarker
 class ReadingBatContent {
+  // contentMap will prevent reading the same content multiple times
+  internal val contentMap = mutableMapOf<String, ReadingBatContent>()
+  internal val sourcesMap = ConcurrentHashMap<Int, FunctionInfo>()
+
+  internal val timeStamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("M/d/y H:m:ss"))
+
   internal var urlPrefix = ""
   internal var googleAnalyticsId = ""
   internal var maxHistoryLength = 10
   internal var maxClassCount = 25
-  internal var production = false
   internal var dslFileName = ""
   internal var dslVariableName = ""
   internal var ktorPort = 0
@@ -105,9 +114,14 @@ class ReadingBatContent {
   }
 
   @ReadingBatDslMarker
-  fun <T : Challenge> include(languageGroup: LanguageGroup<T>) {
+  fun <T : Challenge> include(languageGroup: LanguageGroup<T>, namePrefix: String = "") {
     val group = findLanguage(languageGroup.languageType) as LanguageGroup<T>
-    languageGroup.challengeGroups.forEach { group.addGroup(it) }
+    languageGroup.challengeGroups
+      .forEach {
+        if (namePrefix.isNotBlank())
+          it.namePrefix = namePrefix
+        group.addGroup(it)
+      }
   }
 
   internal fun checkLanguage(languageType: LanguageType) {
@@ -115,11 +129,16 @@ class ReadingBatContent {
       throw InvalidConfigurationException("Invalid language: $languageType")
   }
 
+  fun evalContent(contentSource: ContentSource, variableName: String): ReadingBatContent =
+    try {
+      // Catch exceptions so that remote code does not bring down the server
+      contentMap.computeIfAbsent(contentSource.source) { readContentDsl(contentSource, variableName) }
+    } catch (e: Throwable) {
+      logger.error(e) { "While evaluating: $this" }
+      ReadingBatContent()
+    }
+
   override fun toString() = "Content(languageList=$languageList)"
 
-  companion object : KLogging() {
-    internal val contentMap = mutableMapOf<String, ReadingBatContent>()
-    internal val emptyReadingBatContent = ReadingBatContent()
-  }
+  companion object : KLogging()
 }
-

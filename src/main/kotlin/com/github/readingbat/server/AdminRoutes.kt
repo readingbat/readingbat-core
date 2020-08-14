@@ -19,9 +19,13 @@ package com.github.readingbat.server
 
 import com.codahale.metrics.jvm.ThreadDump
 import com.github.pambrose.common.response.redirectTo
+import com.github.pambrose.common.util.isNotNull
+import com.github.pambrose.common.util.isNull
 import com.github.pambrose.common.util.randomId
 import com.github.readingbat.misc.AuthRoutes.COOKIES
 import com.github.readingbat.misc.BrowserSession
+import com.github.readingbat.misc.Endpoints.PING
+import com.github.readingbat.misc.Endpoints.THREAD_DUMP
 import com.github.readingbat.misc.UserPrincipal
 import io.ktor.application.call
 import io.ktor.html.respondHtml
@@ -45,18 +49,24 @@ import java.time.ZoneId
 
 internal object AdminRoutes : KLogging() {
 
-  fun Routing.adminRoutes() {
+  fun Routing.adminRoutes(metrics: Metrics) {
 
-    get("/ping") { call.respondText("pong", ContentType.Text.Plain) }
+    get(PING) {
+      metrics.measureEndpointRequest(PING) {
+        call.respondText("pong", ContentType.Text.Plain)
+      }
+    }
 
-    get("/threaddump") {
-      try {
-        val baos = ByteArrayOutputStream()
-        baos.use { ThreadDumpInfo.threadDump.dump(true, true, it) }
-        val output = String(baos.toByteArray(), Charsets.UTF_8)
-        call.respondText(output, ContentType.Text.Plain)
-      } catch (e: NoClassDefFoundError) {
-        call.respondText("Sorry, your runtime environment does not allow dump threads.", ContentType.Text.Plain)
+    get(THREAD_DUMP) {
+      metrics.measureEndpointRequest(THREAD_DUMP) {
+        try {
+          val baos = ByteArrayOutputStream()
+          baos.use { ThreadDumpInfo.threadDump.dump(true, true, it) }
+          val output = String(baos.toByteArray(), Charsets.UTF_8)
+          call.respondText(output, ContentType.Text.Plain)
+        } catch (e: NoClassDefFoundError) {
+          call.respondText("Sorry, your runtime environment does not allow dump threads.", ContentType.Text.Plain)
+        }
       }
     }
 
@@ -67,15 +77,15 @@ internal object AdminRoutes : KLogging() {
 
       call.respondHtml {
         body {
-          if (principal == null && session == null)
+          if (principal.isNull() && session.isNull())
             div { +"No cookies are present." }
           else {
-            if (principal != null) {
+            if (principal.isNotNull()) {
               val date = ofInstant(ofEpochMilli(principal.created), ZoneId.systemDefault())
               div { +"UserPrincipal: ${principal.userId} created on: $date" }
             }
 
-            if (session != null) {
+            if (session.isNotNull()) {
               val date = ofInstant(ofEpochMilli(session.created), ZoneId.systemDefault())
               div { +"BrowserSession id: [${session.id}] created on: $date" }
             }
@@ -86,13 +96,13 @@ internal object AdminRoutes : KLogging() {
 
     get("/clear-cookies") {
       val principal = call.sessions.get<UserPrincipal>()
-      if (principal != null) {
+      if (principal.isNotNull()) {
         logger.info { "Clearing $principal" }
         call.sessions.clear<UserPrincipal>()
       }
 
       val session = call.sessions.get<BrowserSession>()
-      if (session != null) {
+      if (session.isNotNull()) {
         logger.info { "Clearing $session" }
         // @TODO Should delete session data from redis
         call.sessions.clear<BrowserSession>()
@@ -101,11 +111,11 @@ internal object AdminRoutes : KLogging() {
     }
   }
 
-  fun PipelineCall.registerBrowserSession() {
+  fun PipelineCall.assignBrowserSession() {
     val session = call.sessions.get<BrowserSession>()
-    if (session == null) {
+    if (session.isNull()) {
       call.sessions.set(BrowserSession(id = randomId(15)))
-      logger.info { "Created: ${call.sessions.get<BrowserSession>()}" }
+      logger.info { "Assign browser session: ${call.sessions.get<BrowserSession>()}" }
     }
   }
 

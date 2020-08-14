@@ -17,16 +17,22 @@
 
 package com.github.readingbat.pages
 
+import com.github.pambrose.common.time.format
+import com.github.pambrose.common.util.Version.Companion.versionDesc
 import com.github.readingbat.dsl.ReadingBatContent
+import com.github.readingbat.dsl.isProduction
 import com.github.readingbat.misc.CSSNames.INDENT_1EM
 import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.pages.PageCommon.backLink
 import com.github.readingbat.pages.PageCommon.bodyTitle
 import com.github.readingbat.pages.PageCommon.headDefault
 import com.github.readingbat.server.PipelineCall
+import com.github.readingbat.server.ReadingBatServer
 import com.github.readingbat.server.ServerUtils.queryParam
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
+import java.lang.System.currentTimeMillis
+import kotlin.time.milliseconds
 
 internal object ConfigPage {
 
@@ -39,6 +45,28 @@ internal object ConfigPage {
           bodyTitle()
 
           h2 { +"ReadingBat Configuration" }
+
+          h3 { +"Content Configuration" }
+          div(classes = INDENT_1EM) {
+            table {
+              tr {
+                td { +"Version: " }
+                td { +ReadingBatServer::class.versionDesc() }
+              }
+              tr {
+                td { +"Server uptime: " }
+                td { +(currentTimeMillis().milliseconds - ReadingBatServer.startTimeMillis).format(true) }
+              }
+              tr {
+                td { +"Server started: " }
+                td { +ReadingBatServer.timeStamp }
+              }
+              tr {
+                td { +"Content read: " }
+                td { +content.timeStamp }
+              }
+            }
+          }
 
           h3 { +"Server Configuration" }
           div(classes = INDENT_1EM) {
@@ -61,7 +89,7 @@ internal object ConfigPage {
               }
               tr {
                 td { +"Production:" }
-                td { +"${content.production}" }
+                td { +"${isProduction()}" }
               }
               tr {
                 td { +"Cache challenges:" }

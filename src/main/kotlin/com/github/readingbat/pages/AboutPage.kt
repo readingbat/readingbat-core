@@ -43,7 +43,7 @@ internal object AboutPage {
           div(classes = INDENT_1EM) {
             p {
               +"""
-              ReadingBat.com is a faster-son effort by Paul and Matthew Ambrose to make learning how to program 
+              ReadingBat.com is a father-son effort by Paul and Matthew Ambrose to make learning how to program 
               a little easier.
               We are big fans of 
               """.trimIndent()
@@ -62,6 +62,12 @@ internal object AboutPage {
               a { href = "https://codingbat.com"; +" CodingBat.com " }
 
               +"and move on to authoring their own code!"
+            }
+
+            p {
+              +"If you are interested in creating your own challenges, have a look at how to create your own repo"
+              a { href = "https://github.com/readingbat/readingbat-template/blob/master/README.md"; +" here" }
+              +"."
             }
 
             p {

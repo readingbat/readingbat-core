@@ -21,7 +21,7 @@ import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.*
 import com.github.readingbat.misc.ClassCode.Companion.getClassCode
-import com.github.readingbat.misc.FormFields.CLASS_CODE
+import com.github.readingbat.misc.FormFields.CLASS_CODE_NAME
 import com.github.readingbat.misc.FormFields.CONFIRM_PASSWORD
 import com.github.readingbat.misc.FormFields.CURR_PASSWORD
 import com.github.readingbat.misc.FormFields.DELETE_ACCOUNT
@@ -95,7 +95,7 @@ internal object UserPrefsPost : KLogging() {
                                          parameters: Parameters,
                                          user: User,
                                          redis: Jedis): String {
-    val classCode = parameters.getClassCode(CLASS_CODE)
+    val classCode = parameters.getClassCode(CLASS_CODE_NAME)
     return try {
       user.enrollInClass(classCode, redis)
       val classDesc = classCode.fetchClassDesc(redis)

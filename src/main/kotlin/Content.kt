@@ -16,16 +16,15 @@
  */
 
 import com.github.pambrose.common.util.FileSystemSource
+import com.github.pambrose.common.util.OwnerType.Organization
 import com.github.readingbat.dsl.GitHubContent
 import com.github.readingbat.dsl.eval
 import com.github.readingbat.dsl.readingBatContent
 
-val organization = "readingbat"
-val branch = "master"
-
-val content by lazy {
+val content =
   readingBatContent {
     //repo = GitHubRepo(organization, "readingbat-java-content")
+
     repo = FileSystemSource("./")
 /*
     java {
@@ -62,12 +61,29 @@ val content by lazy {
       }
     }
 */
-    include(GitHubContent(organization, "readingbat-java-content", branch = branch).eval().java)
-    include(GitHubContent(organization, "readingbat-python-content", branch = branch, srcPath = "src").eval().python)
-    include(GitHubContent(organization, "readingbat-java-content", branch = branch).eval().kotlin)
+
+    /*
+    include(GitHubContent(Organization, "readingbat", "readingbat-java-content").eval(this).java)
+    include(GitHubContent(Organization, "readingbat", "readingbat-python-content", srcPath = "src").eval(this).python)
+    include(GitHubContent(Organization, "readingbat", "readingbat-java-content").eval(this).kotlin)
+*/
+
+    include(GitHubContent(Organization, "readingbat", "readingbat-java-content").eval(this).kotlin, "Athenian: ")
 
     java {
-      //include(GitHubContent(organization, "readingbat-java-content").parse().java.findGroup("dd"))
+      group("test1") {
+        packageName = "kgroup1"
+
+      }
+      group("test2") {
+        packageName = "kgroup2"
+        description = "A description"
+      }
+      group("test3") {
+        packageName = "kgroup2"
+        description = """A description
+          |and more.
+        """.trimMargin()
+      }
     }
   }
-}

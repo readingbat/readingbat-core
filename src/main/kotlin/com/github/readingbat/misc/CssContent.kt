@@ -21,16 +21,19 @@ import com.github.readingbat.misc.CSSNames.ARROW
 import com.github.readingbat.misc.CSSNames.CHALLENGE_DESC
 import com.github.readingbat.misc.CSSNames.CHECK_ANSWERS
 import com.github.readingbat.misc.CSSNames.CODE_BLOCK
+import com.github.readingbat.misc.CSSNames.CODINGBAT
 import com.github.readingbat.misc.CSSNames.DASHBOARD
+import com.github.readingbat.misc.CSSNames.EXPERIMENT
 import com.github.readingbat.misc.CSSNames.FEEDBACK
 import com.github.readingbat.misc.CSSNames.FUNC_COL
 import com.github.readingbat.misc.CSSNames.FUNC_ITEM
 import com.github.readingbat.misc.CSSNames.GROUP_CHOICE
 import com.github.readingbat.misc.CSSNames.GROUP_ITEM_SRC
+import com.github.readingbat.misc.CSSNames.HINT
 import com.github.readingbat.misc.CSSNames.INDENT_1EM
 import com.github.readingbat.misc.CSSNames.INDENT_2EM
 import com.github.readingbat.misc.CSSNames.KOTLIN_CODE
-import com.github.readingbat.misc.CSSNames.REFS
+import com.github.readingbat.misc.CSSNames.LIKE_BUTTONS
 import com.github.readingbat.misc.CSSNames.SELECTED_TAB
 import com.github.readingbat.misc.CSSNames.STATUS
 import com.github.readingbat.misc.CSSNames.SUCCESS
@@ -42,10 +45,13 @@ import kotlinx.css.properties.boxShadow
 
 internal object CSSNames {
   const val CHECK_ANSWERS = "checkAnswers"
-  const val FEEDBACK = "feedback"
+  const val LIKE_BUTTONS = "likeButtons"
+  const val FEEDBACK = "hint"
+  const val HINT = "feedback"
   const val FUNC_COL = "funcCol"
   const val ARROW = "arrow"
-  const val REFS = "refs"
+  const val EXPERIMENT = "experiment"
+  const val CODINGBAT = "codingbat"
   const val CODE_BLOCK = "codeBlock"
   const val KOTLIN_CODE = "kotlin-code"
   const val USER_RESP = "userResponse"
@@ -133,7 +139,7 @@ internal val cssContent by lazy {
         width = 275.px
       }
       rule(".$GROUP_CHOICE") {
-        fontSize = 166.pct
+        fontSize = 155.pct
       }
       rule("th, td") {
         padding = "1px"
@@ -166,6 +172,10 @@ internal val cssContent by lazy {
         width = 10.em
         border = "7px solid white"
       }
+      rule("td.$HINT") {
+        //width = 10.em
+        //border = "7px solid white"
+      }
       rule(".$DASHBOARD") {
         border = "1px solid #DDDDDD;"
         borderCollapse = BorderCollapse.collapse
@@ -176,6 +186,12 @@ internal val cssContent by lazy {
         backgroundColor = Color("#f1f1f1")
         fontSize = textFs
         fontWeight = FontWeight.bold
+        borderRadius = 6.px
+      }
+      rule(".$LIKE_BUTTONS") {
+        backgroundColor = Color("#f1f1f1")
+        width = 4.em
+        height = 4.em
         borderRadius = 6.px
       }
       rule(".$STATUS") {
@@ -217,7 +233,11 @@ internal val cssContent by lazy {
       rule("nav li a") {
         padding = "0 40px"
       }
-      rule(".$REFS") {
+      rule(".$EXPERIMENT") {
+        marginTop = 1.em
+        fontSize = textFs
+      }
+      rule(".$CODINGBAT") {
         marginTop = 2.em
         fontSize = textFs
       }

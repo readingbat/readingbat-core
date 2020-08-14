@@ -17,6 +17,8 @@
 
 package com.github.readingbat.misc
 
+import com.github.pambrose.common.util.isNotNull
+import com.github.pambrose.common.util.isNull
 import com.github.pambrose.common.util.newStringSalt
 import com.github.pambrose.common.util.randomId
 import com.github.readingbat.dsl.Challenge
@@ -34,6 +36,7 @@ import com.github.readingbat.misc.KeyConstants.DIGEST_FIELD
 import com.github.readingbat.misc.KeyConstants.EMAIL_FIELD
 import com.github.readingbat.misc.KeyConstants.ENROLLED_CLASS_CODE_FIELD
 import com.github.readingbat.misc.KeyConstants.KEY_SEP
+import com.github.readingbat.misc.KeyConstants.LIKE_DISLIKE_KEY
 import com.github.readingbat.misc.KeyConstants.NAME_FIELD
 import com.github.readingbat.misc.KeyConstants.PREVIOUS_TEACHER_CLASS_CODE_FIELD
 import com.github.readingbat.misc.KeyConstants.SALT_FIELD
@@ -73,6 +76,12 @@ internal class User private constructor(val id: String) {
   fun correctAnswersKey(languageName: LanguageName, groupName: GroupName, challengeName: ChallengeName) =
     listOf(CORRECT_ANSWERS_KEY, AUTH_KEY, id, languageName, groupName, challengeName).joinToString(KEY_SEP)
 
+  private fun likeDislikeKey(names: ChallengeNames) =
+    likeDislikeKey(names.languageName, names.groupName, names.challengeName)
+
+  fun likeDislikeKey(languageName: LanguageName, groupName: GroupName, challengeName: ChallengeName) =
+    listOf(LIKE_DISLIKE_KEY, AUTH_KEY, id, languageName, groupName, challengeName).joinToString(KEY_SEP)
+
   private fun challengeAnswersKey(names: ChallengeNames) =
     challengeAnswersKey(names.languageName, names.groupName, names.challengeName)
 
@@ -91,7 +100,6 @@ internal class User private constructor(val id: String) {
   fun assignEnrolledClassCode(classCode: ClassCode, tx: Transaction) {
     tx.hset(userInfoKey, ENROLLED_CLASS_CODE_FIELD, classCode.value)
   }
-
 
   fun assignActiveClassCode(classCode: ClassCode, resetPreviousClassCode: Boolean, redis: Jedis) {
     redis.hset(userInfoKey, ACTIVE_CLASS_CODE_FIELD, if (classCode.isStudentMode) "" else classCode.value)
@@ -192,6 +200,7 @@ internal class User private constructor(val id: String) {
     val userEmailKey = user.email(redis).userEmailKey
 
     val correctAnswers = redis.keys(correctAnswersKey(ANY_LANGUAGE, ANY_GROUP, ANY_CHALLENGE))
+    val likeDislike = redis.keys(likeDislikeKey(ANY_LANGUAGE, ANY_GROUP, ANY_CHALLENGE))
     val challenges = redis.keys(challengeAnswersKey(ANY_LANGUAGE, ANY_GROUP, ANY_CHALLENGE))
     val invocations =
       redis.keys(answerHistoryKey(ANY_LANGUAGE, ANY_GROUP, ANY_CHALLENGE, ANY_INVOCATION))
@@ -205,6 +214,7 @@ internal class User private constructor(val id: String) {
     logger.info { "User Info: $userInfoKey" }
     logger.info { "User Classes: $userClassesKey" }
     logger.info { "Correct Answers: $correctAnswers" }
+    logger.info { "Likes/Dislikes: $likeDislike" }
     logger.info { "Challenges: $challenges" }
     logger.info { "Invocations: $invocations" }
     logger.info { "Classes: $classCodes" }
@@ -277,22 +287,33 @@ internal class User private constructor(val id: String) {
     fun newUser() = User(randomId(25))
 
     fun User?.fetchActiveClassCode(redis: Jedis?) =
-      if (this == null)
+      if (this.isNull())
         STUDENT_CLASS_CODE
       else
         redis?.hget(userInfoKey, ACTIVE_CLASS_CODE_FIELD)?.let { ClassCode(it) } ?: STUDENT_CLASS_CODE
 
     fun User?.fetchPreviousTeacherClassCode(redis: Jedis?) =
-      if (this == null)
+      if (this.isNull())
         STUDENT_CLASS_CODE
       else
         redis?.hget(userInfoKey, PREVIOUS_TEACHER_CLASS_CODE_FIELD)?.let { ClassCode(it) } ?: STUDENT_CLASS_CODE
 
     fun User?.fetchEnrolledClassCode(redis: Jedis) =
-      if (this == null)
+      if (this.isNull())
         STUDENT_CLASS_CODE
       else
         redis.hget(userInfoKey, ENROLLED_CLASS_CODE_FIELD)?.let { ClassCode(it) } ?: STUDENT_CLASS_CODE
+
+    fun User?.likeDislikeKey(browserSession: BrowserSession?, names: ChallengeNames) =
+      this?.likeDislikeKey(names) ?: browserSession?.likeDislikeKey(names) ?: ""
+
+    fun User?.likeDislikeKey(browserSession: BrowserSession?,
+                             languageName: LanguageName,
+                             groupName: GroupName,
+                             challengeName: ChallengeName) =
+      this?.likeDislikeKey(languageName, groupName, challengeName)
+        ?: browserSession?.likeDislikeKey(languageName, groupName, challengeName)
+        ?: ""
 
     fun User?.correctAnswersKey(browserSession: BrowserSession?, names: ChallengeNames) =
       this?.correctAnswersKey(names) ?: browserSession?.correctAnswersKey(names) ?: ""
@@ -361,8 +382,8 @@ internal class User private constructor(val id: String) {
                                    userResponses: List<Map.Entry<String, List<String>>>,
                                    results: List<ChallengeResults>,
                                    redis: Jedis) {
-      val challengeAnswerKey = challengeAnswersKey(browserSession, names)
       val correctAnswersKey = correctAnswersKey(browserSession, names)
+      val challengeAnswerKey = challengeAnswersKey(browserSession, names)
 
       val complete = results.all { it.correct }
       val numCorrect = results.count { it.correct }
@@ -408,7 +429,24 @@ internal class User private constructor(val id: String) {
       }
     }
 
-    fun isRegisteredEmail(email: Email, redis: Jedis) = lookupUserByEmail(email, redis) != null
+    fun User?.saveLikeDislike(content: ReadingBatContent,
+                              browserSession: BrowserSession?,
+                              names: ChallengeNames,
+                              paramMap: Map<String, String>,
+                              likeVal: Int,
+                              redis: Jedis) {
+      val likeDislikeKey = likeDislikeKey(browserSession, names)
+
+      // Record like/dislike
+      if (likeDislikeKey.isNotEmpty()) {
+        if (likeVal == 0)
+          redis.del(likeDislikeKey)
+        else
+          redis.set(likeDislikeKey, likeVal.toString())
+      }
+    }
+
+    fun isRegisteredEmail(email: Email, redis: Jedis) = lookupUserByEmail(email, redis).isNotNull()
 
     fun lookupUserByEmail(email: Email, redis: Jedis): User? {
       val id = redis.get(email.userEmailKey) ?: ""
@@ -416,12 +454,12 @@ internal class User private constructor(val id: String) {
     }
   }
 
-  internal data class ChallengeAnswers(val id: String, val answers: MutableMap<String, String> = mutableMapOf())
+  internal data class ChallengeAnswers(val id: String, val correctAnswers: MutableMap<String, String> = mutableMapOf())
 }
 
 internal fun User?.isValidUser(redis: Jedis): Boolean {
   contract {
     returns(true) implies (this@isValidUser is User)
   }
-  return if (this == null) false else redis.hlen(userInfoKey) > 0
+  return if (this.isNull()) false else redis.hlen(userInfoKey) > 0
 }

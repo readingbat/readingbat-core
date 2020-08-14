@@ -21,6 +21,7 @@ import com.github.readingbat.misc.KeyConstants.ANSWER_HISTORY_KEY
 import com.github.readingbat.misc.KeyConstants.CHALLENGE_ANSWERS_KEY
 import com.github.readingbat.misc.KeyConstants.CORRECT_ANSWERS_KEY
 import com.github.readingbat.misc.KeyConstants.KEY_SEP
+import com.github.readingbat.misc.KeyConstants.LIKE_DISLIKE_KEY
 import com.github.readingbat.misc.KeyConstants.NO_AUTH_KEY
 import com.github.readingbat.posts.ChallengeNames
 import com.github.readingbat.server.ChallengeName
@@ -36,6 +37,12 @@ internal data class BrowserSession(val id: String, val created: Long = Instant.n
 
   fun correctAnswersKey(languageName: LanguageName, groupName: GroupName, challengeName: ChallengeName) =
     listOf(CORRECT_ANSWERS_KEY, NO_AUTH_KEY, id, languageName, groupName, challengeName).joinToString(KEY_SEP)
+
+  fun likeDislikeKey(names: ChallengeNames) =
+    likeDislikeKey(names.languageName, names.groupName, names.challengeName)
+
+  fun likeDislikeKey(languageName: LanguageName, groupName: GroupName, challengeName: ChallengeName) =
+    listOf(LIKE_DISLIKE_KEY, NO_AUTH_KEY, id, languageName, groupName, challengeName).joinToString(KEY_SEP)
 
   fun challengeAnswerKey(names: ChallengeNames) =
     challengeAnswerKey(names.languageName, names.groupName, names.challengeName)

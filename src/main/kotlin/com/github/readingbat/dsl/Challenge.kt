@@ -41,13 +41,13 @@ import com.github.readingbat.dsl.parse.PythonParse.extractPythonInvocations
 import com.github.readingbat.dsl.parse.PythonParse.ifMainEndRegex
 import com.github.readingbat.misc.PageUtils.pathOf
 import com.github.readingbat.server.ChallengeName
+import com.github.readingbat.server.ReadingBatServer
 import com.vladsch.flexmark.html.HtmlRenderer
 import com.vladsch.flexmark.parser.Parser
 import com.vladsch.flexmark.util.data.MutableDataSet
-import kotlinx.atomicfu.atomic
 import mu.KLogging
 import java.net.URL
-import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.reflect.typeOf
 import kotlin.time.measureTime
 import kotlin.time.measureTimedValue
@@ -57,27 +57,30 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
                        val challengeName: ChallengeName,
                        val replaceable: Boolean) {
   private val challengeId = counter.incrementAndGet()
-  private val languageGroup = challengeGroup.languageGroup
-  private val repo = languageGroup.repo
-  private val branchName = languageGroup.branchName
   private val fqName by lazy { packageName.ensureSuffix("/") + fileName.ensureSuffix(".${languageType.suffix}") }
+  private val options = MutableDataSet().apply { set(HtmlRenderer.SOFT_BREAK, "<br />\n") }
+  private val parser = Parser.builder(options).build()
+  private val renderer = HtmlRenderer.builder(options).build()
 
-  protected val packageName = challengeGroup.packageName
+  private val languageGroup get() = challengeGroup.languageGroup
+  private val metrics get() = challengeGroup.languageGroup.metrics
+  private val repo get() = languageGroup.repo
+  private val branchName get() = languageGroup.branchName
+  private val srcPath get() = languageGroup.srcPath
+  internal val languageType get() = challengeGroup.languageType
+  internal val languageName get() = languageType.languageName
+  internal val groupName get() = challengeGroup.groupName
+  protected val packageName get() = challengeGroup.packageName
 
-  internal val srcPath = languageGroup.srcPath
-  internal val languageType = challengeGroup.languageType
-  internal val languageName = languageType.languageName
-  internal val groupName = challengeGroup.groupName
+  // Allow description updates only if not found in the Content.kt decl
+  private val descriptionSetInDsl by lazy { description.isNotBlank() }
+
   internal val gitpodUrl by lazy { pathOf(repo.sourcePrefix, "blob/${branchName}", srcPath, fqName) }
-
-  internal val parsedDescription
-      by lazy {
-        val options = MutableDataSet().apply { set(HtmlRenderer.SOFT_BREAK, "<br />\n") }
-        val parser = Parser.builder(options).build()
-        val renderer = HtmlRenderer.builder(options).build()
-        val document = parser.parse(description.trimIndent())
-        renderer.render(document)
-      }
+  internal val parsedDescription: String
+    get() {
+      val document = parser.parse(description.trimIndent())
+      return renderer.render(document)
+    }
 
   // User properties
   var fileName = "$challengeName.${languageType.suffix}"
@@ -86,30 +89,51 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
 
   internal abstract fun computeFuncInfo(code: String): FunctionInfo
 
-  private val compute = {
-    val fs = repo as FileSystemSource
-    val file = fs.file(pathOf(fs.pathPrefix, srcPath, packageName, fileName))
-    logger.info { """Fetching "${file.fileName}"""" }
-    computeFuncInfo(file.content)
+  private fun measureParsing(code: String): FunctionInfo {
+    val timer = metrics.challengeParseDuration.labels(agentLaunchId(), languageType.toString()).startTimer()
+    try {
+      return computeFuncInfo(code)
+    } finally {
+      timer.observeDuration()
+    }
   }
 
-  internal fun funcInfo(content: ReadingBatContent): FunctionInfo =
-    if (repo.remote) {
-      sourcesMap
+  internal fun funcInfo(content: ReadingBatContent): FunctionInfo {
+
+    return if (repo.remote) {
+      content.sourcesMap
         .computeIfAbsent(challengeId) {
-          val path = pathOf((repo as AbstractRepo).rawSourcePrefix, branchName, srcPath, fqName)
-          logger.info { """Fetching "$groupName/$fileName" from: $path""" }
-          val (code, dur) = measureTimedValue { URL(path).readText() }
-          logger.info { """Fetched "$groupName/$fileName" in: $dur""" }
-          computeFuncInfo(code)
+          fun fetchCode(): String {
+            val path = pathOf((repo as AbstractRepo).rawSourcePrefix, branchName, srcPath, fqName)
+            val timer = ReadingBatServer.metrics.challengeRemoteReadDuration.labels(agentLaunchId()).startTimer()
+            try {
+              logger.info { """Fetching "$groupName/$fileName" from: $path""" }
+              val (code, dur) = measureTimedValue { URL(path).readText() }
+              logger.info { """Fetched "$groupName/$fileName" in: $dur""" }
+              return code
+            } finally {
+              timer.observeDuration()
+            }
+          }
+
+          val code = fetchCode()
+          measureParsing(code)
         }
     }
     else {
+      val parseCodeFunc = {
+        val fs = repo as FileSystemSource
+        val file = fs.file(pathOf(fs.pathPrefix, srcPath, packageName, fileName))
+        logger.info { """Fetching "${file.fileName}" from filesystem""" }
+        measureParsing(file.content)
+      }
+
       if (content.cacheChallenges)
-        sourcesMap.computeIfAbsent(challengeId) { compute.invoke() }
+        content.sourcesMap.computeIfAbsent(challengeId) { parseCodeFunc.invoke() }
       else
-        compute.invoke()
+        parseCodeFunc.invoke()
     }
+  }
 
   internal open fun validate() {
     if (challengeName.value.isEmpty())
@@ -123,11 +147,27 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
       else -> toString()
     }
 
-  companion object : KLogging() {
-    internal val counter = atomic(0)
-    internal val sourcesMap = ConcurrentHashMap<Int, FunctionInfo>()
+  protected fun deriveDescription(code: String, commentPrefix: String) =
+    if (descriptionSetInDsl) {
+      description
+    }
+    else {
+      code.lines().asSequence()
+        .filter { it.startsWith(commentPrefix) && it.contains(DESC) }
+        .map { it.replaceFirst(commentPrefix, "") }   // Remove comment prefix
+        .map { it.replaceFirst(DESC, "") }            // Remove @desc
+        .map { it.trim() }                            // Strip leading and trailing spaces
+        .joinToString("\n")
+        .also { logger.debug { """Assigning $challengeName description = "$it"""" } }
+    }
 
-    internal fun challenge(challengeGroup: ChallengeGroup<*>, challengeName: ChallengeName, replaceable: Boolean) =
+  companion object : KLogging() {
+    internal val counter = AtomicInteger(0)
+    internal const val DESC = "@desc "
+
+    internal fun challenge(challengeGroup: ChallengeGroup<*>,
+                           challengeName: ChallengeName,
+                           replaceable: Boolean) =
       when (challengeGroup.languageType) {
         Python -> PythonChallenge(challengeGroup, challengeName, replaceable)
         Java -> JavaChallenge(challengeGroup, challengeName, replaceable)
@@ -136,7 +176,9 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
   }
 }
 
-class PythonChallenge(challengeGroup: ChallengeGroup<*>, challengeName: ChallengeName, replaceable: Boolean) :
+class PythonChallenge(challengeGroup: ChallengeGroup<*>,
+                      challengeName: ChallengeName,
+                      replaceable: Boolean) :
   Challenge(challengeGroup, challengeName, replaceable) {
 
   // User properties
@@ -150,34 +192,42 @@ class PythonChallenge(challengeGroup: ChallengeGroup<*>, challengeName: Challeng
   }
 
   override fun computeFuncInfo(code: String): FunctionInfo {
-    val lines = code.lines()
+    val lines = code.lines().filterNot { it.startsWith("#") && it.contains(DESC) }
     val funcCode = extractPythonFunction(lines)
     val invocations = extractPythonInvocations(lines, defMainRegex, ifMainEndRegex)
     val script = convertToPythonScript(lines)
-    val answers = mutableListOf<Any>()
+    val correctAnswers = mutableListOf<Any>()
 
     logger.debug { "$challengeName return type: $returnType script: \n${script.withLineNumbers()}" }
 
+    description = deriveDescription(code, "#")
+
     val duration =
-      PythonScript()
-        .run {
-          add(varName, answers)
+      PythonScript().use {
+        it.run {
+          add(varName, correctAnswers)
           measureTime { eval(script) }
         }
+      }
 
-    logger.info { "$challengeName computed answers in $duration for: $answers" }
+    logger.info { "$challengeName computed answers in $duration for: $correctAnswers" }
 
-    return FunctionInfo(languageType, challengeName, code, funcCode, invocations, returnType, answers)
+    return FunctionInfo(languageType, challengeName, code, funcCode, invocations, returnType, correctAnswers)
   }
 
   override fun toString() = "PythonChallenge(packageName='$packageName', fileName='$fileName', returnType=$returnType)"
 }
 
-class JavaChallenge(challengeGroup: ChallengeGroup<*>, challengeName: ChallengeName, replaceable: Boolean) :
+class JavaChallenge(challengeGroup: ChallengeGroup<*>,
+                    challengeName: ChallengeName,
+                    replaceable: Boolean) :
   Challenge(challengeGroup, challengeName, replaceable) {
 
   override fun computeFuncInfo(code: String): FunctionInfo {
-    val lines = code.lines().filter { !it.trimStart().startsWith("package") }
+    val lines =
+      code.lines()
+        .filterNot { it.startsWith("//") && it.contains(DESC) }
+        .filterNot { it.trimStart().startsWith("package") }
     val funcCode = extractJavaFunction(lines)
     val invocations = extractJavaInvocations(lines, svmRegex, javaEndRegex)
     val returnType = deriveJavaReturnType(challengeName, lines)
@@ -185,27 +235,32 @@ class JavaChallenge(challengeGroup: ChallengeGroup<*>, challengeName: ChallengeN
 
     logger.debug { "$challengeName return type: $returnType script: \n${script.withLineNumbers()}" }
 
+    description = deriveDescription(code, "//")
+
     val timedValue =
-      JavaScript()
-        .run {
+      JavaScript().use {
+        it.run {
           import(List::class.java)
           import(ArrayList::class.java)
           measureTimedValue { evalScript(script) }
         }
+      }
 
-    val answers = timedValue.value
+    val correctAnswers = timedValue.value
     logger.info { "$challengeName computed answers in ${timedValue.duration}" }
 
-    if (answers !is List<*>)
+    if (correctAnswers !is List<*>)
       throw InvalidConfigurationException("Invalid type returned for $challengeName")
 
-    return FunctionInfo(languageType, challengeName, code, funcCode, invocations, returnType, answers)
+    return FunctionInfo(languageType, challengeName, code, funcCode, invocations, returnType, correctAnswers)
   }
 
   override fun toString() = "JavaChallenge(packageName='$packageName', fileName='$fileName')"
 }
 
-class KotlinChallenge(challengeGroup: ChallengeGroup<*>, challengeName: ChallengeName, replaceable: Boolean) :
+class KotlinChallenge(challengeGroup: ChallengeGroup<*>,
+                      challengeName: ChallengeName,
+                      replaceable: Boolean) :
   Challenge(challengeGroup, challengeName, replaceable) {
 
   // User properties
@@ -219,25 +274,31 @@ class KotlinChallenge(challengeGroup: ChallengeGroup<*>, challengeName: Challeng
   }
 
   override fun computeFuncInfo(code: String): FunctionInfo {
-    val lines = code.lines().filter { !it.trimStart().startsWith("package") }
+    val lines =
+      code.lines()
+        .filterNot { it.startsWith("//") && it.contains(DESC) }
+        .filterNot { it.trimStart().startsWith("package") }
     val strippedCode = lines.joinToString("\n")
-
     val funcCode = "\n${extractKotlinFunction(lines)}\n\n"
     val invocations = extractKotlinInvocations(lines, funMainRegex, kotlinEndRegex)
     val script = convertToKotlinScript(lines)
 
     logger.debug { "$challengeName return type: $returnType script: \n${script.withLineNumbers()}" }
 
-    val answers = mutableListOf<Any>()
+    description = deriveDescription(code, "//")
+
+    val correctAnswers = mutableListOf<Any>()
     val duration =
-      KotlinScript().run {
-        add(varName, answers, typeOf<Any>())
-        measureTime { eval(script) }
+      KotlinScript().use {
+        it.run {
+          add(varName, correctAnswers, typeOf<Any>())
+          measureTime { eval(script) }
+        }
       }
 
-    logger.info { "$challengeName computed answers in $duration for: $answers" }
+    logger.info { "$challengeName computed answers in $duration for: $correctAnswers" }
 
-    return FunctionInfo(languageType, challengeName, strippedCode, funcCode, invocations, returnType, answers)
+    return FunctionInfo(languageType, challengeName, strippedCode, funcCode, invocations, returnType, correctAnswers)
   }
 
   override fun toString() = "KotlinChallenge(packageName='$packageName', fileName='$fileName', returnType=$returnType)"

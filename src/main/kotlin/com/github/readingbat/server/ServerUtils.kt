@@ -17,6 +17,7 @@
 
 package com.github.readingbat.server
 
+import com.github.pambrose.common.util.isNotNull
 import com.github.readingbat.misc.User
 import com.github.readingbat.misc.User.Companion.toUser
 import com.github.readingbat.misc.UserPrincipal
@@ -49,10 +50,9 @@ internal object ServerUtils : KLogging() {
   fun PipelineCall.fetchUser(loginAttempt: Boolean = false): User? = fetchPrincipal(loginAttempt)?.userId?.toUser()
 
   private fun PipelineCall.assignPrincipal() =
-    call.principal<UserPrincipal>().apply { if (this != null) call.sessions.set(this) }  // Set the cookie
+    call.principal<UserPrincipal>().apply { if (this.isNotNull()) call.sessions.set(this) }  // Set the cookie
 
   fun PipelineCall.queryParam(key: String, default: String = "") = call.request.queryParameters[key] ?: default
-
 }
 
 class RedirectException(val redirectUrl: String) : Exception()

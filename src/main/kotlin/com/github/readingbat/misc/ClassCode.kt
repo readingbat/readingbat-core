@@ -17,6 +17,7 @@
 
 package com.github.readingbat.misc
 
+import com.github.pambrose.common.util.isNull
 import com.github.pambrose.common.util.randomId
 import com.github.readingbat.misc.FormFields.CLASSES_DISABLED
 import com.github.readingbat.misc.KeyConstants.CLASS_CODE_KEY
@@ -31,7 +32,6 @@ import redis.clients.jedis.Transaction
 
 internal inline class ClassCode(val value: String) {
   val isStudentMode get() = value == CLASSES_DISABLED || value.isBlank()
-
   val isTeacherMode get() = !isStudentMode
 
   private val classCodeEnrollmentKey get() = listOf(CLASS_CODE_KEY, value).joinToString(KEY_SEP)
@@ -43,7 +43,7 @@ internal inline class ClassCode(val value: String) {
   fun isNotValid(redis: Jedis) = !isValid(redis)
 
   fun fetchEnrollees(redis: Jedis?): List<User> =
-    if (redis == null || isStudentMode)
+    if (redis.isNull() || isStudentMode)
       emptyList()
     else
       (redis.smembers(classCodeEnrollmentKey) ?: emptySet())
@@ -79,11 +79,11 @@ internal inline class ClassCode(val value: String) {
   override fun toString() = value
 
   companion object {
-    val STUDENT_CLASS_CODE = ClassCode("")
+    internal val STUDENT_CLASS_CODE = ClassCode("")
 
-    fun newClassCode() = ClassCode(randomId(15))
+    internal fun newClassCode() = ClassCode(randomId(15))
 
-    fun Parameters.getClassCode(parameterName: String) =
+    internal fun Parameters.getClassCode(parameterName: String) =
       this[parameterName]?.let { ClassCode(it) } ?: STUDENT_CLASS_CODE
   }
 }

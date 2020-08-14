@@ -17,17 +17,19 @@
 
 package com.github.readingbat.dsl
 
-import com.github.pambrose.common.util.*
-import com.github.readingbat.dsl.GitHubUtils.directoryContents
-import com.github.readingbat.misc.PageUtils.pathOf
+import com.github.pambrose.common.util.ContentRoot
+import com.github.pambrose.common.util.ContentSource
+import com.github.pambrose.common.util.asRegex
+import com.github.pambrose.common.util.decode
 import com.github.readingbat.server.GroupName
-import java.io.File
+import com.github.readingbat.server.ReadingBatServer
 
 @ReadingBatDslMarker
 class LanguageGroup<T : Challenge>(internal val content: ReadingBatContent,
                                    internal val languageType: LanguageType) {
 
   internal val challengeGroups = mutableListOf<ChallengeGroup<T>>()
+  internal val metrics get() = ReadingBatServer.metrics
 
   // User properties
   var repo: ContentRoot = content.repo           // Defaults to outer-level value
@@ -46,8 +48,8 @@ class LanguageGroup<T : Challenge>(internal val content: ReadingBatContent,
   internal fun addGroup(group: ChallengeGroup<T>) {
     if (languageType != group.languageType)
       throw InvalidConfigurationException("${group.groupName} language type mismatch: $languageType and ${group.languageType}")
-    if (hasGroup(group.groupName.value))
-      throw InvalidConfigurationException("Duplicate group name: ${group.groupName}")
+    if (hasGroupNameSuffix(group.groupNameSuffix))
+      throw InvalidConfigurationException("Duplicate group name: ${group.groupNameSuffix}")
     challengeGroups += group
   }
 
@@ -57,6 +59,9 @@ class LanguageGroup<T : Challenge>(internal val content: ReadingBatContent,
 
   fun hasGroup(groupName: String) = challengeGroups.any { it.groupName.value == groupName }
 
+  private fun hasGroupNameSuffix(groupNameSuffix: GroupName) =
+    challengeGroups.any { it.groupNameSuffix.value == groupNameSuffix.value }
+
   private val excludes = Regex("^__.*__.*$")
 
   internal data class ChallengeFile(val fileName: String, val returnType: ReturnType)
@@ -64,35 +69,18 @@ class LanguageGroup<T : Challenge>(internal val content: ReadingBatContent,
   @ReadingBatDslMarker
   fun group(name: String, block: ChallengeGroup<T>.() -> Unit) {
     val group = ChallengeGroup(this, GroupName(name)).apply(block)
-
-    if (group.includeList.isNotEmpty()) {
-      val fileList =
-        repo.let { root ->
-          when {
-            (root is GitHubRepo) -> root.directoryContents(branchName, srcPath.ensureSuffix("/") + group.packageName)
-            (root is FileSystemSource) ->
-              File(pathOf(root.pathPrefix, srcPath, group.packageName)).walk().map { it.name }.toList()
-            else -> throw InvalidConfigurationException("Invalid repo type")
-          }
-        }
-
-      val uniqueVals = mutableSetOf<ChallengeFile>()
-      group.includeList
-        .forEach { prt ->
-          if (prt.pattern.isNotBlank()) {
-            val regex = prt.pattern.asRegex()
-            val filter: (String) -> Boolean = { it.contains(regex) }
-            uniqueVals +=
-              fileList
-                .filter { !it.contains(excludes) && filter.invoke(it) }
-                .map { ChallengeFile(it, prt.returnType) }
-          }
-        }
-
-      group.addChallenge(uniqueVals.toList().sortedWith(compareBy { it.fileName }))
-    }
-
     addGroup(group)
+  }
+
+  internal fun addIncludedFiles(group: ChallengeGroup<T>, prt: ChallengeGroup.PatternReturnType) {
+    if (prt.pattern.isNotBlank()) {
+      val regex = prt.pattern.asRegex()
+      group.fileList
+        .filter { !it.contains(excludes) && it.contains(regex) }
+        .map { ChallengeFile(it, prt.returnType) }
+        .sortedWith(compareBy { it.fileName })
+        .forEach { group.addChallenge(it, prt.pattern) }
+    }
   }
 
   @ReadingBatDslMarker

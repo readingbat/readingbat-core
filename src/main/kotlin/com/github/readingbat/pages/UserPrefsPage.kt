@@ -27,7 +27,8 @@ import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.Endpoints.CREATE_ACCOUNT_ENDPOINT
 import com.github.readingbat.misc.Endpoints.TEACHER_PREFS_ENDPOINT
 import com.github.readingbat.misc.Endpoints.USER_PREFS_ENDPOINT
-import com.github.readingbat.misc.FormFields.CLASS_CODE
+import com.github.readingbat.misc.Endpoints.USER_PREFS_POST_ENDPOINT
+import com.github.readingbat.misc.FormFields.CLASS_CODE_NAME
 import com.github.readingbat.misc.FormFields.CONFIRM_PASSWORD
 import com.github.readingbat.misc.FormFields.CURR_PASSWORD
 import com.github.readingbat.misc.FormFields.DELETE_ACCOUNT
@@ -119,7 +120,7 @@ internal object UserPrefsPage : KLogging() {
       p { +"Password must contain at least 6 characters" }
       form {
         name = formName
-        action = USER_PREFS_ENDPOINT
+        action = USER_PREFS_POST_ENDPOINT
         method = FormMethod.post
         table {
           tr {
@@ -165,7 +166,7 @@ internal object UserPrefsPage : KLogging() {
         p { +"Currently enrolled in class $enrolledClass [$classDesc]." }
         p {
           form {
-            action = USER_PREFS_ENDPOINT
+            action = USER_PREFS_POST_ENDPOINT
             method = FormMethod.post
             onSubmit = "return confirm('Are you sure you want to withdraw from class $classDesc [$enrolledClass]?');"
             input { type = submit; name = USER_PREFS_ACTION; value = WITHDRAW_FROM_CLASS }
@@ -178,7 +179,7 @@ internal object UserPrefsPage : KLogging() {
       div(classes = INDENT_2EM) {
         p { +"Enter the class code your teacher gave you. This will make your progress visible to your teacher." }
         form {
-          action = USER_PREFS_ENDPOINT
+          action = USER_PREFS_POST_ENDPOINT
           method = FormMethod.post
           table {
             tr {
@@ -187,7 +188,7 @@ internal object UserPrefsPage : KLogging() {
                 input {
                   type = InputType.text
                   size = "42"
-                  name = CLASS_CODE
+                  name = CLASS_CODE_NAME
                   value = defaultClassCode.value
                   onKeyPress = "click$joinClassButton(event);"
                 }
@@ -254,7 +255,7 @@ internal object UserPrefsPage : KLogging() {
       div(classes = INDENT_2EM) {
         p { +"Permanently delete account [$email] -- this cannot be undone!" }
         form {
-          action = USER_PREFS_ENDPOINT
+          action = USER_PREFS_POST_ENDPOINT
           method = FormMethod.post
           onSubmit = "return confirm('Are you sure you want to permanently delete the account for $email ?');"
           input { type = submit; name = USER_PREFS_ACTION; value = DELETE_ACCOUNT }

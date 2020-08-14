@@ -17,11 +17,13 @@
 
 package com.github.readingbat.pages
 
+import com.github.pambrose.common.util.isNull
 import com.github.pambrose.common.util.toRootPath
 import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.dsl.LanguageType.Companion.languageTypesInOrder
 import com.github.readingbat.dsl.ReadingBatContent
+import com.github.readingbat.dsl.isProduction
 import com.github.readingbat.misc.CSSNames.INDENT_1EM
 import com.github.readingbat.misc.CSSNames.SELECTED_TAB
 import com.github.readingbat.misc.ClassCode
@@ -60,7 +62,7 @@ internal object PageCommon {
 
     title(READING_BAT)
 
-    if (content.production && content.googleAnalyticsId.isNotBlank()) {
+    if (isProduction() && content.googleAnalyticsId.isNotBlank()) {
       script { async = true; src = "https://www.googletagmanager.com/gtag/js?id=${content.googleAnalyticsId}" }
       script {
         rawHtml("""
@@ -113,7 +115,7 @@ internal object PageCommon {
 
     p { if (displayWelcomeMsg) +"Welcome to ReadingBat." else rawHtml(nbsp.text) }
 
-    if (loginAttempt && user == null)
+    if (loginAttempt && user.isNull())
       p { span { style = "color:red;"; +"Failed to login -- incorrect email or password" } }
 
     p { span { style = "color:green; max-width:800;"; if (msg.isNotBlank) +(msg.toString()) else rawHtml(nbsp.text) } }

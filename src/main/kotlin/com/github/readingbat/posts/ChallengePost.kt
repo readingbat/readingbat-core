@@ -21,14 +21,18 @@ import com.github.pambrose.common.script.KotlinScript
 import com.github.pambrose.common.script.PythonScript
 import com.github.pambrose.common.util.*
 import com.github.readingbat.dsl.InvalidConfigurationException
+import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.dsl.LanguageType.Java
 import com.github.readingbat.dsl.LanguageType.Kotlin
 import com.github.readingbat.dsl.ReadingBatContent
+import com.github.readingbat.dsl.ReturnType
+import com.github.readingbat.dsl.ReturnType.*
 import com.github.readingbat.misc.BrowserSession
 import com.github.readingbat.misc.CheckAnswersJs.challengeSrc
 import com.github.readingbat.misc.CheckAnswersJs.groupSrc
 import com.github.readingbat.misc.CheckAnswersJs.langSrc
 import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
+import com.github.readingbat.misc.Constants.LIKE_DESC
 import com.github.readingbat.misc.Constants.MSG
 import com.github.readingbat.misc.Constants.RESP
 import com.github.readingbat.misc.FormFields.CHALLENGE_ANSWERS_KEY
@@ -37,23 +41,25 @@ import com.github.readingbat.misc.FormFields.GROUP_NAME_KEY
 import com.github.readingbat.misc.FormFields.LANGUAGE_NAME_KEY
 import com.github.readingbat.misc.KeyConstants.CORRECT_ANSWERS_KEY
 import com.github.readingbat.misc.PageUtils.pathOf
+import com.github.readingbat.misc.ParameterIds.DISLIKE_CLEAR
+import com.github.readingbat.misc.ParameterIds.DISLIKE_COLOR
+import com.github.readingbat.misc.ParameterIds.LIKE_CLEAR
+import com.github.readingbat.misc.ParameterIds.LIKE_COLOR
 import com.github.readingbat.misc.User
 import com.github.readingbat.misc.User.Companion.gson
 import com.github.readingbat.misc.User.Companion.saveChallengeAnswers
+import com.github.readingbat.misc.User.Companion.saveLikeDislike
 import com.github.readingbat.server.*
 import com.github.readingbat.server.ChallengeName.Companion.getChallengeName
 import com.github.readingbat.server.GroupName.Companion.getGroupName
 import com.github.readingbat.server.LanguageName.Companion.getLanguageName
-import io.ktor.application.call
-import io.ktor.request.receiveParameters
-import io.ktor.response.respondText
-import io.ktor.sessions.get
-import io.ktor.sessions.sessions
-import kotlinx.coroutines.delay
+import io.ktor.application.*
+import io.ktor.request.*
+import io.ktor.response.*
+import io.ktor.sessions.*
 import mu.KLogging
 import redis.clients.jedis.Jedis
 import javax.script.ScriptException
-import kotlin.time.milliseconds
 
 internal data class StudentInfo(val studentId: String, val firstName: String, val lastName: String)
 
@@ -63,7 +69,8 @@ internal data class ClassEnrollment(val sessionId: String,
 internal data class ChallengeResults(val invocation: Invocation,
                                      val userResponse: String = "",
                                      val answered: Boolean = false,
-                                     val correct: Boolean = false)
+                                     val correct: Boolean = false,
+                                     val hint: String = "")
 
 internal class DashboardInfo(val userId: String,
                              val complete: Boolean,
@@ -112,54 +119,126 @@ internal object ChallengePost : KLogging() {
   private fun String.isJavaBoolean() = this == "true" || this == "false"
   private fun String.isPythonBoolean() = this == "True" || this == "False"
 
-  private infix fun String.equalsAsJvmScalar(that: String) =
-    when {
-      isEmpty() || that.isEmpty() -> false
-      isDoubleQuoted() || that.isDoubleQuoted() -> this == that
-      contains(".") || that.contains(".") -> toDouble() == that.toDouble()
-      isJavaBoolean() && that.isJavaBoolean() -> toBoolean() == that.toBoolean()
-      else -> toInt() == that.toInt()
-    }
+  private fun String.equalsAsJvmScalar(that: String,
+                                       returnType: ReturnType,
+                                       languageType: LanguageType): Pair<Boolean, String> {
+    fun deriveHint() =
+      when {
+        returnType == BooleanType ->
+          when {
+            this.isPythonBoolean() -> "$languageType boolean values are either true or false"
+            !isJavaBoolean() -> "Answer should be either true or false"
+            else -> ""
+          }
+        returnType == StringType && this.isNotDoubleQuoted() -> "$languageType strings are double quoted"
+        returnType == IntType && this.isNotInt() -> "Answer should be an int value"
+        else -> ""
+      }
 
-  private infix fun String.equalsAsPythonScalar(that: String) =
-    when {
-      isEmpty() || that.isEmpty() -> false
-      isDoubleQuoted() -> this == that
-      isSingleQuoted() -> singleToDoubleQuoted() == that
-      contains(".") || that.contains(".") -> toDouble() == that.toDouble()
-      isPythonBoolean() && that.isPythonBoolean() -> toBoolean() == that.toBoolean()
-      else -> toInt() == that.toInt()
+    return try {
+      val result =
+        when {
+          this.isEmpty() || that.isEmpty() -> false
+          returnType == StringType -> this == that
+          this.contains(".") || that.contains(".") -> this.toDouble() == that.toDouble()
+          this.isJavaBoolean() && that.isJavaBoolean() -> this.toBoolean() == that.toBoolean()
+          else -> this.toInt() == that.toInt()
+        }
+      result to (if (result) "" else deriveHint())
+    } catch (e: Exception) {
+      false to deriveHint()
     }
+  }
+
+  private fun String.equalsAsPythonScalar(correctAnswer: String, returnType: ReturnType): Pair<Boolean, String> {
+    fun deriveHint() =
+      when {
+        returnType == BooleanType ->
+          when {
+            isJavaBoolean() -> "Python boolean values are either True or False"
+            !isPythonBoolean() -> "Answer should be either True or False"
+            else -> ""
+          }
+        returnType == StringType && isNotQuoted() -> "Python strings are either single or double quoted"
+        returnType == IntType && isNotInt() -> "Answer should be an int value"
+        else -> ""
+      }
+
+    return try {
+      val result =
+        when {
+          isEmpty() || correctAnswer.isEmpty() -> false
+          this.isDoubleQuoted() -> this == correctAnswer
+          isSingleQuoted() -> singleToDoubleQuoted() == correctAnswer
+          contains(".") || correctAnswer.contains(".") -> toDouble() == correctAnswer.toDouble()
+          isPythonBoolean() && correctAnswer.isPythonBoolean() -> toBoolean() == correctAnswer.toBoolean()
+          else -> toInt() == correctAnswer.toInt()
+        }
+      result to (if (result) "" else deriveHint())
+    } catch (e: Exception) {
+      false to deriveHint()
+    }
+  }
+
+  private fun String.equalsAsJvmList(correctAnswer: String): Pair<Boolean, String> {
+    fun deriveHint() = if (isNotBracketed()) "Answer should be bracketed" else ""
+
+    val compareExpr =
+      "listOf(${if (isBracketed()) trimEnds() else this}) == listOf(${if (correctAnswer.isBracketed()) correctAnswer.trimEnds() else correctAnswer})"
+    logger.debug { "Check answers expression: $compareExpr" }
+    return try {
+      val result = KotlinScript().use { it.eval(compareExpr) as Boolean }
+      result to (if (result) "" else deriveHint())
+    } catch (e: ScriptException) {
+      logger.info { "Caught exception comparing $this and $correctAnswer: ${e.message} in $compareExpr" }
+      false to deriveHint()
+    } catch (e: Exception) {
+      false to deriveHint()
+    }
+  }
+
+  private fun String.equalsAsPythonList(correctAnswer: String): Pair<Boolean, String> {
+    fun deriveHint() = if (isNotBracketed()) "Answer should be bracketed" else ""
+
+    val compareExpr = "${trim()} == ${correctAnswer.trim()}"
+    logger.debug { "Check answers expression: $compareExpr" }
+    return try {
+      val result = PythonScript().use { it.eval(compareExpr) as Boolean }
+      result to (if (result) "" else deriveHint())
+    } catch (e: ScriptException) {
+      logger.info { "Caught exception comparing $this and $correctAnswer: ${e.message} in: $compareExpr" }
+      false to deriveHint()
+    } catch (e: Exception) {
+      false to deriveHint()
+    }
+  }
 
   suspend fun PipelineCall.checkAnswers(content: ReadingBatContent, user: User?, redis: Jedis?) {
     val params = call.receiveParameters()
     val paramMap = params.entries().map { it.key to it.value[0] }.toMap()
     val names = ChallengeNames(paramMap)
-    val isJvm = names.languageName in listOf(Java.languageName, Kotlin.languageName)
     val userResponses = params.entries().filter { it.key.startsWith(RESP) }
     val challenge = content.findChallenge(names.languageName, names.groupName, names.challengeName)
     val funcInfo = challenge.funcInfo(content)
-    val kotlinScriptEngine by lazy { KotlinScript() }
-    val pythonScriptEngine by lazy { PythonScript() }
 
-    fun checkWithAnswer(isJvm: Boolean, userResponse: String, answer: String) =
-      try {
-        logger.debug("""Comparing user response: "$userResponse" with answer: "$answer"""")
-        if (isJvm) {
-          if (answer.isBracketed())
-            answer.equalsAsKotlinList(userResponse, kotlinScriptEngine)
-          else
-            userResponse equalsAsJvmScalar answer
-        }
-        else {
-          if (answer.isBracketed())
-            answer.equalsAsPythonList(userResponse, pythonScriptEngine)
-          else
-            userResponse equalsAsPythonScalar answer
-        }
-      } catch (e: Exception) {
-        false
+    fun checkWithAnswer(languageName: LanguageName,
+                        userResponse: String,
+                        correctAnswer: String): Pair<Boolean, String> {
+      logger.debug("""Comparing user response: "$userResponse" with answer: "$correctAnswer"""")
+      val isJvm = languageName in listOf(Java.languageName, Kotlin.languageName)
+      return if (isJvm) {
+        if (correctAnswer.isBracketed())
+          userResponse.equalsAsJvmList(correctAnswer)
+        else
+          userResponse.equalsAsJvmScalar(correctAnswer, funcInfo.returnType, languageName.toLanguageType())
       }
+      else {
+        if (correctAnswer.isBracketed())
+          userResponse.equalsAsPythonList(correctAnswer)
+        else
+          userResponse.equalsAsPythonScalar(correctAnswer, funcInfo.returnType)
+      }
+    }
 
     logger.debug("Found ${userResponses.size} user responses in $paramMap")
 
@@ -167,38 +246,40 @@ internal object ChallengePost : KLogging() {
       userResponses.indices
         .map { i ->
           val userResponse = paramMap[RESP + i]?.trim() ?: throw InvalidConfigurationException("Missing user response")
-          val answer = funcInfo.answers[i]
+          val answer = funcInfo.correctAnswers[i]
           val answered = userResponse.isNotBlank()
+          val correctAndHint =
+            if (answered) checkWithAnswer(names.languageName, userResponse, answer) else false to ""
           ChallengeResults(invocation = funcInfo.invocations[i],
                            userResponse = userResponse,
                            answered = answered,
-                           correct = if (answered) checkWithAnswer(isJvm, userResponse, answer) else false)
+                           correct = correctAndHint.first,
+                           hint = correctAndHint.second)
         }
 
     // Save whether all the answers for the challenge were correct
-    if (redis != null) {
+    if (redis.isNotNull()) {
       val browserSession = call.sessions.get<BrowserSession>()
       user.saveChallengeAnswers(content, browserSession, names, paramMap, funcInfo, userResponses, results, redis)
     }
 
-    delay(200.milliseconds.toLongMilliseconds())
+    //delay(200.milliseconds.toLongMilliseconds())
 
     // Return values: 0 = not answered, 1 = correct, 2 = incorrect
     val answerMapping =
       results
         .map {
           when {
-            !it.answered -> 0
-            it.correct -> 1
-            else -> 2
+            !it.answered -> listOf(0, "".toDoubleQuoted())
+            it.correct -> listOf(1, "".toDoubleQuoted())
+            else -> listOf(2, it.hint.toDoubleQuoted())
           }
         }
+    logger.debug { "Answers: $answerMapping" }
     call.respondText(answerMapping.toString())
   }
 
-  suspend fun PipelineCall.clearChallengeAnswers(content: ReadingBatContent,
-                                                 user: User?,
-                                                 redis: Jedis): String {
+  suspend fun PipelineCall.clearChallengeAnswers(content: ReadingBatContent, user: User?, redis: Jedis): String {
     val params = call.receiveParameters()
 
     val languageName = params.getLanguageName(LANGUAGE_NAME_KEY)
@@ -257,7 +338,7 @@ internal object ChallengePost : KLogging() {
         }
       }
 
-    if (user != null) {
+    if (user.isNotNull()) {
       for (challenge in content.findGroup(languageName.toLanguageType(), groupName).challenges) {
         logger.info { "Clearing answers for ${challenge.challengeName}" }
         val funcInfo = challenge.funcInfo(content)
@@ -268,25 +349,31 @@ internal object ChallengePost : KLogging() {
     throw RedirectException("$path?$MSG=${"Answers cleared".encode()}")
   }
 
-  private fun String.equalsAsKotlinList(other: String, scriptEngine: KotlinScript): Boolean {
-    val compareExpr = "listOf(${this.trimEnds()}) == listOf(${other.trimEnds()})"
-    logger.debug { "Check answers expression: $compareExpr" }
-    return try {
-      scriptEngine.eval(compareExpr) as Boolean
-    } catch (e: ScriptException) {
-      logger.info { "Caught exception comparing $this and $other: ${e.message} in $compareExpr" }
-      false
-    }
-  }
+  suspend fun PipelineCall.likeDislike(content: ReadingBatContent, user: User?, redis: Jedis?) {
+    val params = call.receiveParameters()
+    val paramMap = params.entries().map { it.key to it.value[0] }.toMap()
+    val names = ChallengeNames(paramMap)
+    val challenge = content.findChallenge(names.languageName, names.groupName, names.challengeName)
 
-  private fun String.equalsAsPythonList(other: String, scriptEngine: PythonScript): Boolean {
-    val compareExpr = "${this@equalsAsPythonList.trim()} == ${other.trim()}"
-    logger.debug { "Check answers expression: $compareExpr" }
-    return try {
-      scriptEngine.eval(compareExpr) as Boolean
-    } catch (e: ScriptException) {
-      logger.info { "Caught exception comparing $this and $other: ${e.message} in: $compareExpr" }
-      false
+    val likeArg = paramMap[LIKE_DESC]?.trim() ?: throw InvalidConfigurationException("Missing like/dislike argument")
+
+    // Return values: 0 = not answered, 1 = like selected, 2 = dislike selected
+    val likeVal =
+      when (likeArg) {
+        LIKE_CLEAR -> 1
+        LIKE_COLOR,
+        DISLIKE_COLOR -> 0
+        DISLIKE_CLEAR -> 2
+        else -> throw InvalidConfigurationException("Invalid like/dislike argument: $likeArg")
+      }
+
+    logger.debug { "Like/dislike arg -- response: $likeArg -- $likeVal" }
+
+    if (redis.isNotNull()) {
+      val browserSession = call.sessions.get<BrowserSession>()
+      user.saveLikeDislike(content, browserSession, names, paramMap, likeVal, redis)
     }
+
+    call.respondText(likeVal.toString())
   }
 }

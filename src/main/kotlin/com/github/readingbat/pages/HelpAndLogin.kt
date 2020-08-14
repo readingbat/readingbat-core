@@ -17,6 +17,7 @@
 
 package com.github.readingbat.pages
 
+import com.github.pambrose.common.util.isNotNull
 import com.github.readingbat.misc.AuthRoutes.LOGOUT
 import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.Endpoints.ABOUT_ENDPOINT
@@ -41,7 +42,7 @@ internal object HelpAndLogin {
     div {
       style = "float:right; margin:0px; border: 1px solid lightgray; margin-left: 10px; padding: 5px;"
       table {
-        if (user != null && redis != null) logout(user, loginPath, redis) else login(loginPath)
+        if (user.isNotNull() && redis.isNotNull()) logout(user, loginPath, redis) else login(loginPath)
       }
     }
 
@@ -88,8 +89,7 @@ internal object HelpAndLogin {
       td {
         +elems[0]
         if (elems.size > 1) {
-          br
-          +"@${elems[1]}"
+          br; +"@${elems[1]}"
         }
       }
     }
