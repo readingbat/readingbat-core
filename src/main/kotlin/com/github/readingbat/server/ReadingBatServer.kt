@@ -67,9 +67,10 @@ object ReadingBatServer : KLogging() {
         .map { it.replaceFirst("-config=", "") }
         .firstOrNull()
         ?: System.getenv("AGENT_CONFIG")
+        ?: System.getProperty("agent.config")
         ?: "src/main/resources/application.conf"
 
-    logger.info { "Prometheus agent using configuration file: $configFilename" }
+    logger.info { "Using configuration file: $configFilename" }
 
     System.setProperty(CONFIG_FILENAME, configFilename)
 

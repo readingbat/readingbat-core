@@ -111,6 +111,7 @@ task stage(dependsOn: ['uberjar', 'build', 'clean'])
 build.mustRunAfter clean
 
 task uberjar(type: Jar, dependsOn: shadowJar) {
+    zip64 true
     archiveFileName = 'server.jar'
     manifest {
         attributes('Implementation-Title': appName)
