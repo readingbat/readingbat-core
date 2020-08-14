@@ -57,11 +57,9 @@ import io.ktor.application.*
 import io.ktor.request.*
 import io.ktor.response.*
 import io.ktor.sessions.*
-import kotlinx.coroutines.delay
 import mu.KLogging
 import redis.clients.jedis.Jedis
 import javax.script.ScriptException
-import kotlin.time.milliseconds
 
 internal data class StudentInfo(val studentId: String, val firstName: String, val lastName: String)
 
@@ -265,7 +263,7 @@ internal object ChallengePost : KLogging() {
       user.saveChallengeAnswers(content, browserSession, names, paramMap, funcInfo, userResponses, results, redis)
     }
 
-    delay(200.milliseconds.toLongMilliseconds())
+    //delay(200.milliseconds.toLongMilliseconds())
 
     // Return values: 0 = not answered, 1 = correct, 2 = incorrect
     val answerMapping =
