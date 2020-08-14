@@ -26,22 +26,18 @@ import com.github.readingbat.misc.Endpoints.FAV_ICON_ENDPOINT
 import com.github.readingbat.server.ConfigureCookies.configureAuthCookie
 import com.github.readingbat.server.ConfigureCookies.configureSessionIdCookie
 import com.github.readingbat.server.ConfigureFormAuth.configureFormAuth
-import io.ktor.application.Application
-import io.ktor.application.call
-import io.ktor.application.install
-import io.ktor.auth.Authentication
+import io.ktor.application.*
+import io.ktor.auth.*
 import io.ktor.features.*
+import io.ktor.http.*
 import io.ktor.http.ContentType.Text.Plain
-import io.ktor.http.HttpHeaders
-import io.ktor.http.HttpStatusCode
-import io.ktor.http.content.TextContent
-import io.ktor.http.withCharset
+import io.ktor.http.content.*
 import io.ktor.locations.Locations
-import io.ktor.request.path
-import io.ktor.response.respond
-import io.ktor.server.engine.ShutDownUrl
-import io.ktor.sessions.Sessions
-import io.ktor.websocket.WebSockets
+import io.ktor.request.*
+import io.ktor.response.*
+import io.ktor.server.engine.*
+import io.ktor.sessions.*
+import io.ktor.websocket.*
 import mu.KLogging
 import org.slf4j.event.Level
 import kotlin.text.Charsets.UTF_8
@@ -63,6 +59,9 @@ internal object Installs : KLogging() {
     }
 
     install(WebSockets)
+    {
+      pingPeriodMillis = 5000L   // Duration between pings or `0` to disable pings
+    }
 
     if (production) {
       install(HerokuHttpsRedirect) {
