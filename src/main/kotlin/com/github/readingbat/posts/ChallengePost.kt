@@ -53,11 +53,10 @@ import com.github.readingbat.server.*
 import com.github.readingbat.server.ChallengeName.Companion.getChallengeName
 import com.github.readingbat.server.GroupName.Companion.getGroupName
 import com.github.readingbat.server.LanguageName.Companion.getLanguageName
-import io.ktor.application.call
-import io.ktor.request.receiveParameters
-import io.ktor.response.respondText
-import io.ktor.sessions.get
-import io.ktor.sessions.sessions
+import io.ktor.application.*
+import io.ktor.request.*
+import io.ktor.response.*
+import io.ktor.sessions.*
 import kotlinx.coroutines.delay
 import mu.KLogging
 import redis.clients.jedis.Jedis
@@ -186,7 +185,8 @@ internal object ChallengePost : KLogging() {
   private fun String.equalsAsJvmList(correctAnswer: String): Pair<Boolean, String> {
     fun deriveHint() = if (isNotBracketed()) "Answer should be bracketed" else ""
 
-    val compareExpr = "listOf(${trimEnds()}) == listOf(${correctAnswer.trimEnds()})"
+    val compareExpr =
+      "listOf(${if (isBracketed()) trimEnds() else this}) == listOf(${if (correctAnswer.isBracketed()) correctAnswer.trimEnds() else correctAnswer})"
     logger.debug { "Check answers expression: $compareExpr" }
     return try {
       val result = KotlinScript().use { it.eval(compareExpr) as Boolean }
