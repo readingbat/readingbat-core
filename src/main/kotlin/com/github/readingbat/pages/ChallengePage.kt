@@ -269,7 +269,6 @@ internal object ChallengePage : KLogging() {
     script {
       rawHtml(
         """
-          
           var wshost = location.origin;
           if (wshost.startsWith('https:'))
             wshost = wshost.replace(/^https:/, 'wss:');

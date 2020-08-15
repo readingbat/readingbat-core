@@ -17,7 +17,7 @@
 
 package com.github.readingbat.server
 
-import com.github.pambrose.common.redis.RedisUtils.withRedis
+import com.github.pambrose.common.redis.RedisUtils.withRedisPool
 import com.github.pambrose.common.util.isNotNull
 import com.github.readingbat.dsl.InvalidPathException
 import com.github.readingbat.dsl.ReadingBatContent
@@ -65,7 +65,7 @@ internal object WsEndoints : KLogging() {
             .mapNotNull { it as? Frame.Text }
             .collect { frame ->
               val inboundMsg = frame.readText()
-              withRedis { redis ->
+              withRedisPool { redis ->
                 redis?.subscribe(object : JedisPubSub() {
                   override fun onMessage(channel: String?, message: String?) {
                     if (message.isNotNull()) {
@@ -109,12 +109,12 @@ internal object WsEndoints : KLogging() {
             .mapNotNull { it as? Frame.Text }
             .collect { frame ->
               val inboundMsg = frame.readText()
-              withRedis { redis ->
-                if (redis.isNotNull()) {
+              withRedisPool { redis ->
+                if (redis.isNotNull() && classCode.isTeacherMode) {
                   val enrollees = classCode.fetchEnrollees(redis)
-                  challenges
-                    .forEach { challenge ->
-                      if (classCode.isTeacherMode && enrollees.isNotEmpty()) {
+                  if (enrollees.isNotEmpty()) {
+                    challenges
+                      .forEach { challenge ->
                         val funcInfo = challenge.funcInfo(content.invoke())
                         val challengeName = challenge.challengeName
                         val numCalls = funcInfo.invocations.size
@@ -173,7 +173,7 @@ internal object WsEndoints : KLogging() {
                         logger.debug { "Sending data $json" }
                         runBlocking { outgoing.send(Frame.Text(json)) }
                       }
-                    }
+                  }
                 }
               }
               // This will close it if the results run to completion
