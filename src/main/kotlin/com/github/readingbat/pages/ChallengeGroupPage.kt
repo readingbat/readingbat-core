@@ -54,9 +54,8 @@ import com.github.readingbat.server.GroupName
 import com.github.readingbat.server.LanguageName
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
-import io.ktor.application.call
-import io.ktor.sessions.get
-import io.ktor.sessions.sessions
+import io.ktor.application.*
+import io.ktor.sessions.*
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 import mu.KLogging
@@ -156,7 +155,7 @@ internal object ChallengeGroupPage : KLogging() {
       }
 
   fun BODY.displayClassDescription(activeClassCode: ClassCode, enrollees: List<User>, redis: Jedis?) {
-    val classDesc = if (redis.isNotNull()) activeClassCode.fetchClassDesc(redis) else "Description unavailable"
+    val classDesc = if (redis.isNotNull()) activeClassCode.fetchClassDesc(redis, true) else "Description unavailable"
     val studentCount = if (enrollees.isEmpty()) "No" else enrollees.count().toString()
     h3 {
       style = "margin-left: 5px; color: ${ChallengePage.headerColor}"

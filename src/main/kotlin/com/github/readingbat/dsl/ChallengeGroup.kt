@@ -68,9 +68,10 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
           else
             root.organizationDirectoryContents(branchName, path, metrics)
         }
-        is FileSystemSource -> File(PageUtils.pathOf(root.pathPrefix, srcPath, packageName)).walk().map { it.name }
-          .toList()
-        else -> throw InvalidConfigurationException("Invalid repo type")
+        is FileSystemSource -> {
+          File(PageUtils.pathOf(root.pathPrefix, srcPath, packageName)).walk().map { it.name }.toList()
+        }
+        else -> throw InvalidConfigurationException("Invalid repo type: $root")
       }
     }
   }

@@ -85,10 +85,9 @@ import com.github.readingbat.pages.PageCommon.rawHtml
 import com.github.readingbat.posts.ChallengeHistory
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
-import io.ktor.application.call
+import io.ktor.application.*
 import io.ktor.http.ContentType.Text.CSS
-import io.ktor.sessions.get
-import io.ktor.sessions.sessions
+import io.ktor.sessions.*
 import kotlinx.html.*
 import kotlinx.html.Entities.nbsp
 import kotlinx.html.ScriptType.textJavaScript
@@ -119,6 +118,7 @@ internal object ChallengePage : KLogging() {
         val funcInfo = challenge.funcInfo(content)
         val loginPath = pathOf(CHALLENGE_ROOT, languageName, groupName, challengeName)
         val activeClassCode = user.fetchActiveClassCode(redis)
+        val enrollees = activeClassCode.fetchEnrollees(redis)
 
         head {
           link { rel = "stylesheet"; href = spinnerCss }
@@ -150,14 +150,14 @@ internal object ChallengePage : KLogging() {
             if (redis.isNull())
               p { +DBMS_DOWN.value }
             else
-              displayStudentProgress(challenge, content.maxHistoryLength, funcInfo, activeClassCode, redis)
+              displayStudentProgress(challenge, content.maxHistoryLength, funcInfo, activeClassCode, enrollees, redis)
           }
 
           backLink(CHALLENGE_ROOT, languageName.value, groupName.value)
 
           script { src = "$STATIC_ROOT/$languageName-prism.js" }
 
-          if (activeClassCode.isTeacherMode)
+          if (activeClassCode.isTeacherMode && enrollees.isNotEmpty())
             enableWebSockets(activeClassCode)
         }
       }
@@ -307,6 +307,7 @@ internal object ChallengePage : KLogging() {
                                           maxHistoryLength: Int,
                                           funcInfo: FunctionInfo,
                                           activeClassCode: ClassCode,
+                                          enrollees: List<User>,
                                           redis: Jedis) =
     div {
       style = "margin-top:2em;"
@@ -314,8 +315,7 @@ internal object ChallengePage : KLogging() {
       val languageName = challenge.languageType.languageName
       val groupName = challenge.groupName
       val challengeName = challenge.challengeName
-      val classDesc = activeClassCode.fetchClassDesc(redis)
-      val enrollees = activeClassCode.fetchEnrollees(redis)
+      val classDesc = activeClassCode.fetchClassDesc(redis, true)
 
       h3 {
         style = "margin-left: 5px; color: $headerColor"

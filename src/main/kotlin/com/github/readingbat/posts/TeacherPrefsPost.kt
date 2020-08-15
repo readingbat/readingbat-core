@@ -39,10 +39,9 @@ import com.github.readingbat.pages.UserPrefsPage.requestLogInPage
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.RedirectException
 import com.github.readingbat.server.ServerUtils.queryParam
-import io.ktor.application.call
-import io.ktor.request.receiveParameters
-import io.ktor.sessions.get
-import io.ktor.sessions.sessions
+import io.ktor.application.*
+import io.ktor.request.*
+import io.ktor.sessions.*
 import redis.clients.jedis.Jedis
 
 internal object TeacherPrefsPost {
@@ -145,7 +144,7 @@ internal object TeacherPrefsPost {
           if (classCode.isStudentMode)
             Message(STUDENT_MODE_ENABLED_MSG)
           else {
-            Message("Active class updated to ${classCode.fetchClassDesc(redis)} [$classCode]")
+            Message("Active class updated to ${classCode.fetchClassDesc(redis, true)} [$classCode]")
           }
         }
       }

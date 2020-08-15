@@ -161,7 +161,7 @@ internal object UserPrefsPage : KLogging() {
     val enrolledClass = user.fetchEnrolledClassCode(redis)
     if (enrolledClass.isTeacherMode) {
       h3 { +"Enrolled class" }
-      val classDesc = enrolledClass.fetchClassDesc(redis)
+      val classDesc = enrolledClass.fetchClassDesc(redis, true)
       div(classes = INDENT_2EM) {
         p { +"Currently enrolled in class $enrolledClass [$classDesc]." }
         p {

@@ -37,11 +37,10 @@ import com.github.readingbat.pages.UserPrefsPage.userPrefsPage
 import com.github.readingbat.posts.CreateAccountPost.checkPassword
 import com.github.readingbat.server.Password.Companion.getPassword
 import com.github.readingbat.server.PipelineCall
-import io.ktor.application.call
-import io.ktor.http.Parameters
-import io.ktor.request.receiveParameters
-import io.ktor.sessions.clear
-import io.ktor.sessions.sessions
+import io.ktor.application.*
+import io.ktor.http.*
+import io.ktor.request.*
+import io.ktor.sessions.*
 import mu.KLogging
 import redis.clients.jedis.Jedis
 
@@ -98,7 +97,7 @@ internal object UserPrefsPost : KLogging() {
     val classCode = parameters.getClassCode(CLASS_CODE_NAME)
     return try {
       user.enrollInClass(classCode, redis)
-      val classDesc = classCode.fetchClassDesc(redis)
+      val classDesc = classCode.fetchClassDesc(redis, true)
       userPrefsPage(content, user, redis, Message("Enrolled in class $classDesc [$classCode]"))
     } catch (e: DataException) {
       userPrefsPage(content, user, redis, Message("Unable to join class [${e.msg}]", true), classCode)
@@ -108,7 +107,7 @@ internal object UserPrefsPost : KLogging() {
   private fun PipelineCall.withdrawFromClass(content: ReadingBatContent, user: User, redis: Jedis) =
     try {
       val enrolledClassCode = user.fetchEnrolledClassCode(redis)
-      val classDesc = enrolledClassCode.fetchClassDesc(redis)
+      val classDesc = enrolledClassCode.fetchClassDesc(redis, true)
       user.withdrawFromClass(enrolledClassCode, redis)
       userPrefsPage(content, user, redis, Message("Withdrawn from class $classDesc [$enrolledClassCode]"))
     } catch (e: DataException) {

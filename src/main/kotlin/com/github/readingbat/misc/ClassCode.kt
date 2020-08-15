@@ -19,6 +19,7 @@ package com.github.readingbat.misc
 
 import com.github.pambrose.common.util.isNull
 import com.github.pambrose.common.util.randomId
+import com.github.pambrose.common.util.toDoubleQuoted
 import com.github.readingbat.misc.FormFields.CLASSES_DISABLED
 import com.github.readingbat.misc.KeyConstants.CLASS_CODE_KEY
 import com.github.readingbat.misc.KeyConstants.CLASS_INFO_KEY
@@ -26,7 +27,7 @@ import com.github.readingbat.misc.KeyConstants.DESC_FIELD
 import com.github.readingbat.misc.KeyConstants.KEY_SEP
 import com.github.readingbat.misc.KeyConstants.TEACHER_FIELD
 import com.github.readingbat.misc.User.Companion.toUser
-import io.ktor.http.Parameters
+import io.ktor.http.*
 import redis.clients.jedis.Jedis
 import redis.clients.jedis.Transaction
 
@@ -72,7 +73,8 @@ internal inline class ClassCode(val value: String) {
     tx.hset(classInfoKey, mapOf(DESC_FIELD to classDesc, TEACHER_FIELD to user.id))
   }
 
-  fun fetchClassDesc(redis: Jedis) = redis.hget(classInfoKey, DESC_FIELD) ?: "Missing description"
+  fun fetchClassDesc(redis: Jedis, quoted: Boolean = false) =
+    (redis.hget(classInfoKey, DESC_FIELD) ?: "Missing description").let { if (quoted) it.toDoubleQuoted() else it }
 
   fun fetchClassTeacherId(redis: Jedis) = redis.hget(classInfoKey, TEACHER_FIELD) ?: ""
 

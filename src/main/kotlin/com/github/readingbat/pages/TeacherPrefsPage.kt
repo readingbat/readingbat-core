@@ -190,14 +190,15 @@ internal object TeacherPrefsPage : KLogging() {
       style = "border-spacing: 5px 5px;"
       tr { th { rawHtml(nbsp.text) } }
       classCodes.forEach { classCode ->
-        val classDesc = classCode.fetchClassDesc(redis)
+        val classDesc = classCode.fetchClassDesc(redis, true)
         tr {
           td {
             form {
               style = "margin:0;"
               action = TEACHER_PREFS_POST_ENDPOINT
               method = FormMethod.post
-              onSubmit = "return confirm('Are you sure you want to delete class $classDesc [$classCode]?');"
+              onSubmit =
+                "return confirm('Are you sure you want to delete class $classDesc [$classCode]?');"
               input { type = InputType.hidden; name = CLASS_CODE_NAME; value = classCode.value }
               input {
                 style = "vertical-align:middle; margin-top:1; margin-bottom:0;"
