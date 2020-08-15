@@ -18,43 +18,12 @@
 package com.github.readingbat.server
 
 import com.github.pambrose.common.script.PythonScript
-import io.ktor.utils.io.pool.*
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
-class ScriptPool {
-
-}
-
-class PythonPool(size: Int) : DefaultPool<PythonScript>(size) {
-  override fun produceInstance(): PythonScript = PythonScript()
-
-  override fun clearInstance(instance: PythonScript): PythonScript =
-    instance.apply {
-      println("Resetting script")
-      reset()
-    }
-}
-
-fun main() {
-
-  val pool = PythonPool(1)
-
-  runBlocking {
-    for (i in (1..10)) {
-      launch {
-        print("Launching $i\n")
-        val s = pool.borrow()
-        print("Executing $i\n")
-        try {
-          s.eval("print(5)")
-          delay(5000)
-        } finally {
-          pool.recycle(s)
-        }
-      }
+class PythonScriptPool(size: Int) : AbstractScriptPool<PythonScript>(size) {
+  init {
+    runBlocking {
+      repeat(size) { channel.send(PythonScript()) }
     }
   }
-
 }

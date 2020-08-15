@@ -18,7 +18,6 @@
 package com.github.readingbat.posts
 
 import com.github.pambrose.common.script.KotlinScript
-import com.github.pambrose.common.script.PythonScript
 import com.github.pambrose.common.util.*
 import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.LanguageType
@@ -114,6 +113,8 @@ internal class ChallengeNames(paramMap: Map<String, String>) {
 
 internal object ChallengePost : KLogging() {
 
+  private val pythonScriptPool = PythonScriptPool(5)
+
   private fun String.isJavaBoolean() = this == "true" || this == "false"
   private fun String.isPythonBoolean() = this == "True" || this == "False"
 
@@ -195,12 +196,12 @@ internal object ChallengePost : KLogging() {
     }
   }
 
-  private fun String.equalsAsPythonList(correctAnswer: String, pythonScript: PythonScript): Pair<Boolean, String> {
+  private suspend fun String.equalsAsPythonList(correctAnswer: String): Pair<Boolean, String> {
     fun deriveHint() = if (isNotBracketed()) "Answer should be bracketed" else ""
-
     val compareExpr = "${trim()} == ${correctAnswer.trim()}"
-    logger.debug { "Check answers expression: $compareExpr" }
+    val pythonScript = pythonScriptPool.borrow()
     return try {
+      logger.debug { "Check answers expression: $compareExpr" }
       val result = pythonScript.eval(compareExpr) as Boolean
       result to (if (result) "" else deriveHint())
     } catch (e: ScriptException) {
@@ -208,6 +209,8 @@ internal object ChallengePost : KLogging() {
       false to deriveHint()
     } catch (e: Exception) {
       false to deriveHint()
+    } finally {
+      pythonScriptPool.recycle(pythonScript)
     }
   }
 
@@ -219,7 +222,7 @@ internal object ChallengePost : KLogging() {
     val challenge = content.findChallenge(names.languageName, names.groupName, names.challengeName)
     val funcInfo = challenge.funcInfo(content)
 
-    fun computeResults(func: (String, String) -> Pair<Boolean, String>): List<ChallengeResults> {
+    suspend fun computeResults(func: suspend (String, String) -> Pair<Boolean, String>): List<ChallengeResults> {
       return userResponses.indices
         .map { i ->
           val userResponse = paramMap[RESP + i]?.trim() ?: throw InvalidConfigurationException("Missing user response")
@@ -254,14 +257,12 @@ internal object ChallengePost : KLogging() {
           }
         }
       else
-        PythonScript().use {
           computeResults { userResponse: String, correctAnswer: String ->
             if (correctAnswer.isBracketed())
-              userResponse.equalsAsPythonList(correctAnswer, it)
+              userResponse.equalsAsPythonList(correctAnswer)
             else
               userResponse.equalsAsPythonScalar(correctAnswer, funcInfo.returnType)
           }
-        }
 
     // Save whether all the answers for the challenge were correct
     if (redis.isNotNull()) {
