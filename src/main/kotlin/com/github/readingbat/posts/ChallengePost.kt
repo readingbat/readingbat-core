@@ -17,11 +17,10 @@
 
 package com.github.readingbat.posts
 
-import com.github.pambrose.common.script.KotlinScript
+import com.github.pambrose.common.script.KotlinScriptPool
 import com.github.pambrose.common.script.PythonScriptPool
 import com.github.pambrose.common.util.*
 import com.github.readingbat.dsl.InvalidConfigurationException
-import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.ReturnType
 import com.github.readingbat.dsl.ReturnType.*
@@ -33,6 +32,7 @@ import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
 import com.github.readingbat.misc.Constants.LIKE_DESC
 import com.github.readingbat.misc.Constants.MSG
 import com.github.readingbat.misc.Constants.RESP
+import com.github.readingbat.misc.Constants.SCRIPTS_COMPARE_POOL_SIZE
 import com.github.readingbat.misc.FormFields.CHALLENGE_ANSWERS_KEY
 import com.github.readingbat.misc.FormFields.CHALLENGE_NAME_KEY
 import com.github.readingbat.misc.FormFields.GROUP_NAME_KEY
@@ -114,14 +114,24 @@ internal class ChallengeNames(paramMap: Map<String, String>) {
 
 internal object ChallengePost : KLogging() {
 
-  private val pythonScriptPool = PythonScriptPool(5)
+  private val pythonScriptPool: PythonScriptPool
+  private val kotlinScriptPool: KotlinScriptPool
+
+  init {
+    val poolSize = System.getProperty(SCRIPTS_COMPARE_POOL_SIZE).toInt()
+    logger.info { "Creating script pools with size $poolSize" }
+    pythonScriptPool = PythonScriptPool(poolSize)
+    kotlinScriptPool = KotlinScriptPool(poolSize)
+  }
 
   private fun String.isJavaBoolean() = this == "true" || this == "false"
   private fun String.isPythonBoolean() = this == "True" || this == "False"
 
   private fun String.equalsAsJvmScalar(that: String,
                                        returnType: ReturnType,
-                                       languageType: LanguageType): Pair<Boolean, String> {
+                                       languageName: LanguageName): Pair<Boolean, String> {
+    val languageType = languageName.toLanguageType()
+
     fun deriveHint() =
       when {
         returnType == BooleanType ->
@@ -180,12 +190,13 @@ internal object ChallengePost : KLogging() {
     }
   }
 
-  private fun String.equalsAsJvmList(correctAnswer: String, kotlinScript: KotlinScript): Pair<Boolean, String> {
+  private suspend fun String.equalsAsJvmList(correctAnswer: String): Pair<Boolean, String> {
     fun deriveHint() = if (isNotBracketed()) "Answer should be bracketed" else ""
 
     val compareExpr =
       "listOf(${if (isBracketed()) trimEnds() else this}) == listOf(${if (correctAnswer.isBracketed()) correctAnswer.trimEnds() else correctAnswer})"
     logger.debug { "Check answers expression: $compareExpr" }
+    val kotlinScript = kotlinScriptPool.borrow()
     return try {
       val result = kotlinScript.eval(compareExpr) as Boolean
       result to (if (result) "" else deriveHint())
@@ -194,6 +205,8 @@ internal object ChallengePost : KLogging() {
       false to deriveHint()
     } catch (e: Exception) {
       false to deriveHint()
+    } finally {
+      kotlinScriptPool.recycle(kotlinScript)
     }
   }
 
@@ -223,47 +236,43 @@ internal object ChallengePost : KLogging() {
     val challenge = content.findChallenge(names.languageName, names.groupName, names.challengeName)
     val funcInfo = challenge.funcInfo(content)
 
-    suspend fun computeResults(func: suspend (String, String) -> Pair<Boolean, String>): List<ChallengeResults> {
-      return userResponses.indices
+
+    logger.debug("Found ${userResponses.size} user responses in $paramMap")
+
+    val results =
+      userResponses.indices
         .map { i ->
+          val languageName = names.languageName
           val userResponse = paramMap[RESP + i]?.trim() ?: throw InvalidConfigurationException("Missing user response")
           val correctAnswer = funcInfo.correctAnswers[i]
           val answered = userResponse.isNotBlank()
           val correctAndHint =
             if (answered) {
               logger.debug("""Comparing user response: "$userResponse" with correct answer: "$correctAnswer"""")
-              func.invoke(userResponse, correctAnswer)
+              if (languageName.isJvm) {
+                if (correctAnswer.isBracketed())
+                  userResponse.equalsAsJvmList(correctAnswer)
+                else
+                  userResponse.equalsAsJvmScalar(correctAnswer, funcInfo.returnType, languageName)
+              }
+              else {
+                if (correctAnswer.isBracketed())
+                  userResponse.equalsAsPythonList(correctAnswer)
+                else
+                  userResponse.equalsAsPythonScalar(correctAnswer, funcInfo.returnType)
+              }
             }
             else {
               false to ""
             }
+
           ChallengeResults(invocation = funcInfo.invocations[i],
                            userResponse = userResponse,
                            answered = answered,
                            correct = correctAndHint.first,
                            hint = correctAndHint.second)
         }
-    }
 
-    logger.debug("Found ${userResponses.size} user responses in $paramMap")
-
-    val results =
-      if (names.languageName.isJvm)
-        KotlinScript().use {
-          computeResults { userResponse: String, correctAnswer: String ->
-            if (correctAnswer.isBracketed())
-              userResponse.equalsAsJvmList(correctAnswer, it)
-            else
-              userResponse.equalsAsJvmScalar(correctAnswer, funcInfo.returnType, names.languageName.toLanguageType())
-          }
-        }
-      else
-          computeResults { userResponse: String, correctAnswer: String ->
-            if (correctAnswer.isBracketed())
-              userResponse.equalsAsPythonList(correctAnswer)
-            else
-              userResponse.equalsAsPythonScalar(correctAnswer, funcInfo.returnType)
-          }
 
     // Save whether all the answers for the challenge were correct
     if (redis.isNotNull()) {

@@ -52,6 +52,7 @@ internal object Constants {
   const val ANALYTICS_ID = "$READING_BAT.$SITE.googleAnalyticsId"
   const val FILE_NAME = "$READING_BAT.$CONTENT.fileName"
   const val VARIABLE_NAME = "$READING_BAT.$CONTENT.variableName"
+  const val SCRIPTS_COMPARE_POOL_SIZE = "$READING_BAT.scripts.comparePoolSize"
 
   const val AGENT_LAUNCH_ID = "agentLaunchId"
   const val AGENT_ENABLED = "$AGENT.enabled"

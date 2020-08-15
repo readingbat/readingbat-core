@@ -34,6 +34,7 @@ import com.github.readingbat.misc.Constants.IS_PRODUCTION
 import com.github.readingbat.misc.Constants.MAX_CLASS_COUNT
 import com.github.readingbat.misc.Constants.MAX_HISTORY_LENGTH
 import com.github.readingbat.misc.Constants.PROXY_HOSTNAME
+import com.github.readingbat.misc.Constants.SCRIPTS_COMPARE_POOL_SIZE
 import com.github.readingbat.misc.Constants.STATIC_ROOT
 import com.github.readingbat.misc.Constants.URL_PREFIX
 import com.github.readingbat.misc.Constants.VARIABLE_NAME
@@ -111,9 +112,11 @@ internal fun Application.module() {
   val isProduction = property(IS_PRODUCTION, default = "false").toBoolean()
   val agentEnabled = property(AGENT_ENABLED, default = "true").toBoolean()
   val proxyHostname = property(PROXY_HOSTNAME, default = "")
+  val comparePoolSize = property(SCRIPTS_COMPARE_POOL_SIZE, default = "5")
   val metrics = ReadingBatServer.metrics
 
   System.setProperty(IS_PRODUCTION, isProduction.toString())
+  System.setProperty(SCRIPTS_COMPARE_POOL_SIZE, comparePoolSize)
 
   ReadingBatServer.logger.apply {
     info { getBanner("banners/readingbat.txt", this) }
