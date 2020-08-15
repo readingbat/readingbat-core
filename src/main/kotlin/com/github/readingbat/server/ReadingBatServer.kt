@@ -48,7 +48,6 @@ import io.ktor.http.content.*
 import io.ktor.routing.*
 import io.ktor.server.cio.*
 import io.ktor.server.engine.*
-import io.prometheus.Agent
 import io.prometheus.Agent.Companion.startAsyncAgent
 import mu.KLogging
 import java.time.LocalDateTime
@@ -116,7 +115,7 @@ internal fun Application.module() {
 
   System.setProperty(IS_PRODUCTION, isProduction.toString())
 
-  Agent.logger.apply {
+  ReadingBatServer.logger.apply {
     info { getBanner("banners/readingbat.txt", this) }
     info { ReadingBatServer::class.versionDesc() }
   }

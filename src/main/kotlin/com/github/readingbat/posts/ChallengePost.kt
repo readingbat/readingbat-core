@@ -18,6 +18,7 @@
 package com.github.readingbat.posts
 
 import com.github.pambrose.common.script.KotlinScript
+import com.github.pambrose.common.script.PythonScriptPool
 import com.github.pambrose.common.util.*
 import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.LanguageType

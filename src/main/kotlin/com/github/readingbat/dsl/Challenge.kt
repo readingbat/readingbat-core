@@ -107,9 +107,8 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
             val path = pathOf((repo as AbstractRepo).rawSourcePrefix, branchName, srcPath, fqName)
             val timer = ReadingBatServer.metrics.challengeRemoteReadDuration.labels(agentLaunchId()).startTimer()
             try {
-              logger.info { """Fetching "$groupName/$fileName" from: $path""" }
               val (code, dur) = measureTimedValue { URL(path).readText() }
-              logger.info { """Fetched "$groupName/$fileName" in: $dur""" }
+              logger.info { """Fetched "$groupName/$fileName" in: $dur from: $path""" }
               return code
             } finally {
               timer.observeDuration()
