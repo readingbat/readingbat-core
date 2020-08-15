@@ -22,8 +22,6 @@ import com.github.pambrose.common.script.PythonScript
 import com.github.pambrose.common.util.*
 import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.LanguageType
-import com.github.readingbat.dsl.LanguageType.Java
-import com.github.readingbat.dsl.LanguageType.Kotlin
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.ReturnType
 import com.github.readingbat.dsl.ReturnType.*
@@ -180,14 +178,14 @@ internal object ChallengePost : KLogging() {
     }
   }
 
-  private fun String.equalsAsJvmList(correctAnswer: String): Pair<Boolean, String> {
+  private fun String.equalsAsJvmList(correctAnswer: String, kotlinScript: KotlinScript): Pair<Boolean, String> {
     fun deriveHint() = if (isNotBracketed()) "Answer should be bracketed" else ""
 
     val compareExpr =
       "listOf(${if (isBracketed()) trimEnds() else this}) == listOf(${if (correctAnswer.isBracketed()) correctAnswer.trimEnds() else correctAnswer})"
     logger.debug { "Check answers expression: $compareExpr" }
     return try {
-      val result = KotlinScript().use { it.eval(compareExpr) as Boolean }
+      val result = kotlinScript.eval(compareExpr) as Boolean
       result to (if (result) "" else deriveHint())
     } catch (e: ScriptException) {
       logger.info { "Caught exception comparing $this and $correctAnswer: ${e.message} in $compareExpr" }
@@ -197,13 +195,13 @@ internal object ChallengePost : KLogging() {
     }
   }
 
-  private fun String.equalsAsPythonList(correctAnswer: String): Pair<Boolean, String> {
+  private fun String.equalsAsPythonList(correctAnswer: String, pythonScript: PythonScript): Pair<Boolean, String> {
     fun deriveHint() = if (isNotBracketed()) "Answer should be bracketed" else ""
 
     val compareExpr = "${trim()} == ${correctAnswer.trim()}"
     logger.debug { "Check answers expression: $compareExpr" }
     return try {
-      val result = PythonScript().use { it.eval(compareExpr) as Boolean }
+      val result = pythonScript.eval(compareExpr) as Boolean
       result to (if (result) "" else deriveHint())
     } catch (e: ScriptException) {
       logger.info { "Caught exception comparing $this and $correctAnswer: ${e.message} in: $compareExpr" }
@@ -221,40 +219,48 @@ internal object ChallengePost : KLogging() {
     val challenge = content.findChallenge(names.languageName, names.groupName, names.challengeName)
     val funcInfo = challenge.funcInfo(content)
 
-    fun checkWithAnswer(languageName: LanguageName,
-                        userResponse: String,
-                        correctAnswer: String): Pair<Boolean, String> {
-      logger.debug("""Comparing user response: "$userResponse" with answer: "$correctAnswer"""")
-      val isJvm = languageName in listOf(Java.languageName, Kotlin.languageName)
-      return if (isJvm) {
-        if (correctAnswer.isBracketed())
-          userResponse.equalsAsJvmList(correctAnswer)
-        else
-          userResponse.equalsAsJvmScalar(correctAnswer, funcInfo.returnType, languageName.toLanguageType())
-      }
-      else {
-        if (correctAnswer.isBracketed())
-          userResponse.equalsAsPythonList(correctAnswer)
-        else
-          userResponse.equalsAsPythonScalar(correctAnswer, funcInfo.returnType)
-      }
-    }
-
-    logger.debug("Found ${userResponses.size} user responses in $paramMap")
-
-    val results =
-      userResponses.indices
+    fun computeResults(func: (String, String) -> Pair<Boolean, String>): List<ChallengeResults> {
+      return userResponses.indices
         .map { i ->
           val userResponse = paramMap[RESP + i]?.trim() ?: throw InvalidConfigurationException("Missing user response")
-          val answer = funcInfo.correctAnswers[i]
+          val correctAnswer = funcInfo.correctAnswers[i]
           val answered = userResponse.isNotBlank()
           val correctAndHint =
-            if (answered) checkWithAnswer(names.languageName, userResponse, answer) else false to ""
+            if (answered) {
+              logger.debug("""Comparing user response: "$userResponse" with correct answer: "$correctAnswer"""")
+              func.invoke(userResponse, correctAnswer)
+            }
+            else {
+              false to ""
+            }
           ChallengeResults(invocation = funcInfo.invocations[i],
                            userResponse = userResponse,
                            answered = answered,
                            correct = correctAndHint.first,
                            hint = correctAndHint.second)
+        }
+    }
+
+    logger.debug("Found ${userResponses.size} user responses in $paramMap")
+
+    val results =
+      if (names.languageName.isJvm)
+        KotlinScript().use {
+          computeResults { userResponse: String, correctAnswer: String ->
+            if (correctAnswer.isBracketed())
+              userResponse.equalsAsJvmList(correctAnswer, it)
+            else
+              userResponse.equalsAsJvmScalar(correctAnswer, funcInfo.returnType, names.languageName.toLanguageType())
+          }
+        }
+      else
+        PythonScript().use {
+          computeResults { userResponse: String, correctAnswer: String ->
+            if (correctAnswer.isBracketed())
+              userResponse.equalsAsPythonList(correctAnswer, it)
+            else
+              userResponse.equalsAsPythonScalar(correctAnswer, funcInfo.returnType)
+          }
         }
 
     // Save whether all the answers for the challenge were correct

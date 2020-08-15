@@ -10,13 +10,19 @@ Setup:
 * Environment Variables: SENDGRID_API_KEY=**value**
 
 ## Heroku Notes
-* Switch shell to Java8 
+* Switch shell to Java8 to get jvisualvm to work
 * Create connection with: `heroku java:visualvm --app readingbat`
 * Connect to shell with: `heroku ps:exec --app readingbat`
 * hprof files are put in */tmp*
 * Copy hprof file with: `heroku ps:copy /tmp/filename --app readingbat`
 * Open in jvisualvm with file: File->Load... 
 * https://devcenter.heroku.com/articles/exec#using-java-debugging-tools
+
+## Prometheus Note
+* Edit /etc/prometheus/prometheus.yml
+* Reset with: sudo systemctl reload prometheus.service
+* Digital Ocean notes: https://marketplace.digitalocean.com/apps/prometheus?ipAddress=167.172.200.129#getting-started
+* Prometheus admin: http://metrics.readingbat.com:9090/graph
 
 
 

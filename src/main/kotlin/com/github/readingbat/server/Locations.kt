@@ -24,6 +24,7 @@ import com.github.pambrose.common.util.randomId
 import com.github.pambrose.common.util.sha256
 import com.github.readingbat.dsl.InvalidPathException
 import com.github.readingbat.dsl.LanguageType
+import com.github.readingbat.dsl.LanguageType.Java
 import com.github.readingbat.dsl.LanguageType.Kotlin
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.agentLaunchId
@@ -38,12 +39,10 @@ import com.github.readingbat.pages.LanguageGroupPage.languageGroupPage
 import com.github.readingbat.pages.PlaygroundPage.playgroundPage
 import com.github.readingbat.server.AdminRoutes.assignBrowserSession
 import com.github.readingbat.server.ServerUtils.fetchUser
-import io.ktor.auth.authenticate
-import io.ktor.http.Parameters
-import io.ktor.locations.Location
-import io.ktor.locations.get
-import io.ktor.locations.post
-import io.ktor.routing.Routing
+import io.ktor.auth.*
+import io.ktor.http.*
+import io.ktor.locations.*
+import io.ktor.routing.*
 
 internal object Locations {
   fun Routing.locations(metrics: Metrics, content: () -> ReadingBatContent) {
@@ -171,9 +170,13 @@ inline class LanguageName(val value: String) {
       throw InvalidPathException("Invalid language request: $this")
     }
 
+  val isJvm get() = this in jmvLanguages
+
   companion object {
     internal val EMPTY_LANGUAGE = LanguageName("")
     internal val ANY_LANGUAGE = LanguageName("*")
+    private val jmvLanguages by lazy { listOf(Java.languageName, Kotlin.languageName) }
+
     internal fun Parameters.getLanguageName(name: String) = this[name]?.let { LanguageName(it) } ?: EMPTY_LANGUAGE
   }
 }

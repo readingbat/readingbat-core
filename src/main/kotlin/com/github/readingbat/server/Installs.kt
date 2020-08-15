@@ -58,8 +58,7 @@ internal object Installs : KLogging() {
       configureFormAuth()
     }
 
-    install(WebSockets)
-    {
+    install(WebSockets) {
       pingPeriodMillis = 5000L   // Duration between pings or `0` to disable pings
     }
 
@@ -88,7 +87,7 @@ internal object Installs : KLogging() {
       level = Level.INFO
       filter { call -> call.request.path().startsWith("/") }
       format { call ->
-        when (val status = call.response.status() ?: "Unhandled") {
+        when (val status = call.response.status()) {
           HttpStatusCode.Found -> {
             "$status: ${call.request.toLogString()} -> ${call.response.headers[HttpHeaders.Location]} - ${call.request.origin.remoteHost}"
           }
