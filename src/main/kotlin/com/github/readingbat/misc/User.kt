@@ -278,27 +278,16 @@ internal class User private constructor(val id: String, val browserSession: Brow
     }
   }
 
-  fun publishAnswers(maxHistoryLength: Int,
+  fun publishAnswers(classCode: ClassCode,
+                     maxHistoryLength: Int,
                      complete: Boolean,
                      numCorrect: Int,
                      history: ChallengeHistory,
                      redis: Jedis) {
     // Publish to challenge dashboard
-    // First check if enrolled in a class
-    val classCode = fetchEnrolledClassCode(redis)
-    if (classCode.isEnabled) {
-      // Check to see if owner of class has it set as their active class
-      val teacherId = classCode.fetchClassTeacherId(redis)
-      logger.debug { "Publishing teacherId: $teacherId for $classCode" }
-      if (teacherId.isNotEmpty() && teacherId.toUser(null).interestedInActiveClassCode(classCode, redis)) {
-        logger.info { "Publishing user answers to $classCode for $this" }
-        val dashboardInfo = DashboardInfo(id, complete, numCorrect, maxHistoryLength, history)
-        redis.publish(classCode.value, gson.toJson(dashboardInfo))
-      }
-    }
-    else {
-      logger.debug { "Did not publish answers to: $classCode for $this" }
-    }
+    logger.info { "Publishing user answers to $classCode for $this" }
+    val dashboardInfo = DashboardInfo(id, complete, numCorrect, maxHistoryLength, history)
+    redis.publish(classCode.value, gson.toJson(dashboardInfo))
   }
 
   fun resetHistory(maxHistoryLength: Int,
@@ -307,6 +296,9 @@ internal class User private constructor(val id: String, val browserSession: Brow
                    groupName: GroupName,
                    challengeName: ChallengeName,
                    redis: Jedis) {
+    val classCode = fetchEnrolledClassCode(redis)
+    val shouldPublish = shouldPublish(classCode, redis)
+
     funcInfo.invocations
       .map { ChallengeResults(invocation = it) }
       .forEach { result ->
@@ -316,7 +308,9 @@ internal class User private constructor(val id: String, val browserSession: Brow
           val history = ChallengeHistory(result.invocation).apply { markUnanswered() }
           logger.info { "Resetting $answerHistoryKey" }
           redis.set(answerHistoryKey, gson.toJson(history))
-          publishAnswers(maxHistoryLength, false, 0, history, redis)
+
+          if (shouldPublish)
+            publishAnswers(classCode, maxHistoryLength, false, 0, history, redis)
         }
       }
   }
@@ -478,6 +472,9 @@ internal class User private constructor(val id: String, val browserSession: Brow
           }
       }
 
+      val classCode = fetchEnrolledClassCode(redis)
+      val shouldPublish = shouldPublish(classCode, redis)
+
       // Save the history of each answer on a per-invocation basis
       for (result in results) {
         val answerHistoryKey = answerHistoryKey(this?.browserSession, names, result.invocation)
@@ -495,10 +492,24 @@ internal class User private constructor(val id: String, val browserSession: Brow
           logger.debug { "Saving: $json to $answerHistoryKey" }
           redis.set(answerHistoryKey, json)
 
-          this?.publishAnswers(content.maxHistoryLength, complete, numCorrect, history, redis)
+          if (shouldPublish)
+            this?.publishAnswers(classCode, content.maxHistoryLength, complete, numCorrect, history, redis)
         }
       }
     }
+
+    private fun User?.shouldPublish(classCode: ClassCode, redis: Jedis) =
+      when {
+        isNull() -> false
+        classCode.isEnabled -> {
+          // Check to see if the teacher that owns class has it set as their active class in one of the sessions
+          val teacherId = classCode.fetchClassTeacherId(redis)
+          val publish = teacherId.isNotEmpty() && teacherId.toUser(null).interestedInActiveClassCode(classCode, redis)
+          logger.debug { "Publishing teacherId: $teacherId for $classCode" }
+          publish
+        }
+        else -> false
+      }
 
     fun User?.saveLikeDislike(browserSession: BrowserSession?, names: ChallengeNames, likeVal: Int, redis: Jedis) {
       val likeDislikeKey = likeDislikeKey(browserSession, names)
