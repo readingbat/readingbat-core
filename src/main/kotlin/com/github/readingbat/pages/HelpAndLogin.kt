@@ -54,7 +54,7 @@ internal object HelpAndLogin {
             style = "text-align:right"
             colSpan = "1"
 
-            if (previousClassCode.isTeacherMode) {
+            if (previousClassCode.isEnabled) {
               val (endpoint, msg) =
                 if (teacherMode)
                   ENABLE_STUDENT_MODE_ENDPOINT to "student mode"

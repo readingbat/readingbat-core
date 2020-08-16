@@ -165,7 +165,7 @@ inline class LanguageName(val value: String) {
 
   fun toLanguageType() =
     try {
-      LanguageType.values().first { it.name.equals(this.value, ignoreCase = true) }
+      LanguageType.values().first { it.name.equals(value, ignoreCase = true) }
     } catch (e: NoSuchElementException) {
       throw InvalidPathException("Invalid language request: $this")
     }

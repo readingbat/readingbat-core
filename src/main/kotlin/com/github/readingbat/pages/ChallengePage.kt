@@ -54,7 +54,6 @@ import com.github.readingbat.misc.FormFields.CHALLENGE_NAME_KEY
 import com.github.readingbat.misc.FormFields.GROUP_NAME_KEY
 import com.github.readingbat.misc.FormFields.LANGUAGE_NAME_KEY
 import com.github.readingbat.misc.KeyConstants.CORRECT_ANSWERS_KEY
-import com.github.readingbat.misc.KeyConstants.NAME_FIELD
 import com.github.readingbat.misc.LikeDislikeJs.LIKE_DISLIKE_JS_FUNC
 import com.github.readingbat.misc.LikeDislikeJs.likeDislikeScript
 import com.github.readingbat.misc.Message
@@ -144,7 +143,7 @@ internal object ChallengePage : KLogging() {
 
           displayChallenge(challenge, funcInfo)
 
-          if (activeClassCode.isStudentMode)
+          if (activeClassCode.isNotEnabled)
             displayQuestions(user, browserSession, challenge, funcInfo, redis)
           else {
             if (redis.isNull())
@@ -157,7 +156,7 @@ internal object ChallengePage : KLogging() {
 
           script { src = "$STATIC_ROOT/$languageName-prism.js" }
 
-          if (activeClassCode.isTeacherMode && enrollees.isNotEmpty())
+          if (activeClassCode.isEnabled && enrollees.isNotEmpty())
             enableWebSockets(activeClassCode)
         }
       }
@@ -359,7 +358,7 @@ internal object ChallengePage : KLogging() {
                   span { id = "${enrollee.id}-$numCorrectSpan"; +numCorrect.toString() }
                   +"/$numChallenges"
                   rawHtml(nbsp.text)
-                  +(redis.hget(enrollee.userInfoKey, NAME_FIELD) ?: "")
+                  +enrollee.name(redis)
                 }
 
                 results

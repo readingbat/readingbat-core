@@ -136,12 +136,12 @@ internal object ChallengePost : KLogging() {
       when {
         returnType == BooleanType ->
           when {
-            this.isPythonBoolean() -> "$languageType boolean values are either true or false"
+            isPythonBoolean() -> "$languageType boolean values are either true or false"
             !isJavaBoolean() -> "Answer should be either true or false"
             else -> ""
           }
-        returnType == StringType && this.isNotDoubleQuoted() -> "$languageType strings are double quoted"
-        returnType == IntType && this.isNotInt() -> "Answer should be an int value"
+        returnType == StringType && isNotDoubleQuoted() -> "$languageType strings are double quoted"
+        returnType == IntType && isNotInt() -> "Answer should be an int value"
         else -> ""
       }
 
@@ -178,7 +178,7 @@ internal object ChallengePost : KLogging() {
       val result =
         when {
           isEmpty() || correctAnswer.isEmpty() -> false
-          this.isDoubleQuoted() -> this == correctAnswer
+          isDoubleQuoted() -> this == correctAnswer
           isSingleQuoted() -> singleToDoubleQuoted() == correctAnswer
           contains(".") || correctAnswer.contains(".") -> toDouble() == correctAnswer.toDouble()
           isPythonBoolean() && correctAnswer.isPythonBoolean() -> toBoolean() == correctAnswer.toBoolean()
@@ -236,7 +236,6 @@ internal object ChallengePost : KLogging() {
     val challenge = content.findChallenge(names.languageName, names.groupName, names.challengeName)
     val funcInfo = challenge.funcInfo(content)
 
-
     logger.debug("Found ${userResponses.size} user responses in $paramMap")
 
     val results =
@@ -275,12 +274,8 @@ internal object ChallengePost : KLogging() {
 
 
     // Save whether all the answers for the challenge were correct
-    if (redis.isNotNull()) {
-      val browserSession = call.sessions.get<BrowserSession>()
-      user.saveChallengeAnswers(content, browserSession, names, paramMap, funcInfo, userResponses, results, redis)
-    }
-
-    //delay(200.milliseconds.toLongMilliseconds())
+    if (redis.isNotNull())
+      user.saveChallengeAnswers(content, names, paramMap, funcInfo, userResponses, results, redis)
 
     // Return values: 0 = not answered, 1 = correct, 2 = incorrect
     val answerMapping =
@@ -388,7 +383,7 @@ internal object ChallengePost : KLogging() {
 
     if (redis.isNotNull()) {
       val browserSession = call.sessions.get<BrowserSession>()
-      user.saveLikeDislike(content, browserSession, names, paramMap, likeVal, redis)
+      user.saveLikeDislike(browserSession, names, likeVal, redis)
     }
 
     call.respondText(likeVal.toString())

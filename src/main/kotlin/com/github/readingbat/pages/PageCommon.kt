@@ -40,9 +40,9 @@ import com.github.readingbat.misc.PageUtils.pathOf
 import com.github.readingbat.misc.User
 import com.github.readingbat.pages.HelpAndLogin.helpAndLogin
 import com.github.readingbat.server.PipelineCall
-import io.ktor.application.call
+import io.ktor.application.*
+import io.ktor.http.*
 import io.ktor.http.ContentType.Text.CSS
-import io.ktor.http.formUrlEncode
 import kotlinx.html.*
 import kotlinx.html.Entities.nbsp
 import redis.clients.jedis.Jedis
@@ -109,7 +109,7 @@ internal object PageCommon {
                       redis: Jedis?,
                       msg: Message = EMPTY_MESSAGE) {
 
-    helpAndLogin(user, loginPath, activeClassCode.isTeacherMode, redis)
+    helpAndLogin(user, loginPath, activeClassCode.isEnabled, redis)
 
     bodyTitle()
 

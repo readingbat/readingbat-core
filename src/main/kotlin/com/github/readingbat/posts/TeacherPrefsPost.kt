@@ -137,11 +137,11 @@ internal object TeacherPrefsPost {
       when {
         // Do not allow this for classCode.isStudentMode because turns off the
         // student/teacher toggle mode
-        activeClassCode == classCode && classCode.isTeacherMode -> Message("Same active class selected [$classCode]",
-                                                                           true)
+        activeClassCode == classCode && classCode.isEnabled -> Message("Same active class selected [$classCode]",
+                                                                       true)
         else -> {
           user.assignActiveClassCode(classCode, true, redis)
-          if (classCode.isStudentMode)
+          if (classCode.isNotEnabled)
             Message(STUDENT_MODE_ENABLED_MSG)
           else {
             Message("Active class updated to ${classCode.fetchClassDesc(redis, true)} [$classCode]")
@@ -157,7 +157,7 @@ internal object TeacherPrefsPost {
                                        classCode: ClassCode,
                                        redis: Jedis) =
     when {
-      classCode.isStudentMode -> teacherPrefsPage(content, user, redis, Message("Empty class code", true))
+      classCode.isNotEnabled -> teacherPrefsPage(content, user, redis, Message("Empty class code", true))
       classCode.isNotValid(redis) -> teacherPrefsPage(content,
                                                       user,
                                                       redis,

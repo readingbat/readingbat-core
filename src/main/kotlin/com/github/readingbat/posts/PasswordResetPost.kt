@@ -29,8 +29,6 @@ import com.github.readingbat.misc.Endpoints.PASSWORD_RESET_ENDPOINT
 import com.github.readingbat.misc.FormFields.CONFIRM_PASSWORD
 import com.github.readingbat.misc.FormFields.EMAIL
 import com.github.readingbat.misc.FormFields.NEW_PASSWORD
-import com.github.readingbat.misc.KeyConstants.DIGEST_FIELD
-import com.github.readingbat.misc.KeyConstants.SALT_FIELD
 import com.github.readingbat.misc.Message
 import com.github.readingbat.misc.User
 import com.github.readingbat.misc.User.Companion.isRegisteredEmail
@@ -86,9 +84,8 @@ internal object PasswordResetPost : KLogging() {
           val browserSession = call.sessions.get<BrowserSession>()
 
           // Lookup and remove previous value if it exists
-          val user2 =
-            lookupUserByEmail(email, browserSession, redis) ?: throw ResetPasswordException("Unable to find $email")
-          val previousResetId = redis.get(user2.userPasswordResetKey)?.let { ResetId(it) } ?: EMPTY_RESET_ID
+          val user2 = lookupUserByEmail(email, redis) ?: throw ResetPasswordException("Unable to find $email")
+          val previousResetId = user2.passwordResetKey(redis)?.let { ResetId(it) } ?: EMPTY_RESET_ID
 
           redis.multi().also { tx ->
             user2.savePasswordResetKey(email, previousResetId, newResetId, tx)
@@ -137,13 +134,10 @@ internal object PasswordResetPost : KLogging() {
 
       val passwordResetKey = resetId.passwordResetKey
       val email = Email(redis.get(passwordResetKey) ?: throw ResetPasswordException(INVALID_RESET_ID))
-      val browserSession = call.sessions.get<BrowserSession>()
-      val user =
-        lookupUserByEmail(email, browserSession, redis) ?: throw ResetPasswordException("Unable to find $email")
-      val userInfoKey = user.userInfoKey
-      val salt = redis.hget(userInfoKey, SALT_FIELD)
+      val user = lookupUserByEmail(email, redis) ?: throw ResetPasswordException("Unable to find $email")
+      val salt = user.salt(redis)
       val newDigest = newPassword.sha256(salt)
-      val oldDigest = redis.hget(userInfoKey, DIGEST_FIELD)
+      val oldDigest = user.digest(redis)
 
       if (!user.isValidUser(redis))
         throw ResetPasswordException("Invalid user", resetId)
@@ -152,9 +146,9 @@ internal object PasswordResetPost : KLogging() {
         throw ResetPasswordException("New password is the same as the current password", resetId)
 
       redis.multi().also { tx ->
-        tx.del(user.userPasswordResetKey)
+        user.deletePasswordResetKey(tx)
         tx.del(passwordResetKey)
-        tx.hset(userInfoKey, DIGEST_FIELD, newDigest)  // Set new password
+        user.assignDigest(tx, newDigest)  // Set new password
         tx.exec()
       }
       throw RedirectException("/?$MSG=${"Password reset for $email".encode()}")

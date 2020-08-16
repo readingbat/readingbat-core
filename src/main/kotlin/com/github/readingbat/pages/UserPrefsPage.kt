@@ -92,7 +92,7 @@ internal object UserPrefsPage : KLogging() {
         body {
           val returnPath = queryParam(RETURN_PATH, "/")
 
-          helpAndLogin(user, returnPath, activeClassCode.isTeacherMode, redis)
+          helpAndLogin(user, returnPath, activeClassCode.isEnabled, redis)
 
           bodyTitle()
 
@@ -157,7 +157,7 @@ internal object UserPrefsPage : KLogging() {
 
   private fun BODY.joinOrWithdrawFromClass(user: User, defaultClassCode: ClassCode, redis: Jedis) {
     val enrolledClass = user.fetchEnrolledClassCode(redis)
-    if (enrolledClass.isTeacherMode) {
+    if (enrolledClass.isEnabled) {
       h3 { +"Enrolled class" }
       val classDesc = enrolledClass.fetchClassDesc(redis, true)
       div(classes = INDENT_2EM) {

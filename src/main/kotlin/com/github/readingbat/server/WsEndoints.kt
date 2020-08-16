@@ -49,14 +49,14 @@ internal object WsEndoints : KLogging() {
 
     webSocket("$CHALLENGE_ENDPOINT/{$CLASS_CODE}") {
       var desc = "unassigned"
-      logger.info { "Called student answer websocket" }
+      logger.info { "Called student answers websocket" }
       metrics.measureEndpointRequest("/websocket_class") {
         try {
           val classCode = call.parameters[CLASS_CODE]?.let { ClassCode(it) }
             ?: throw InvalidPathException("Missing class code")
 
           desc = "$CHALLENGE_ENDPOINT/$classCode"
-          logger.info { "Opening student answer websocket for $desc" }
+          logger.info { "Opening student answers websocket for $desc" }
 
           metrics.wsStudentAnswerStartCount.labels(agentLaunchId()).inc()
 
@@ -78,7 +78,7 @@ internal object WsEndoints : KLogging() {
               }
             }
         } finally {
-          logger.info { "Closing student answer websocket for $desc" }
+          logger.info { "Closing student answers websocket for $desc" }
           close(CloseReason(Codes.GOING_AWAY, "Client disconnected"))
         }
       }
@@ -110,7 +110,7 @@ internal object WsEndoints : KLogging() {
             .collect { frame ->
               val inboundMsg = frame.readText()
               withRedisPool { redis ->
-                if (redis.isNotNull() && classCode.isTeacherMode) {
+                if (redis.isNotNull() && classCode.isEnabled) {
                   val enrollees = classCode.fetchEnrollees(redis)
                   if (enrollees.isNotEmpty()) {
                     challenges

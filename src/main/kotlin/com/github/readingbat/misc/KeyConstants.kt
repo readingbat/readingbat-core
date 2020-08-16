@@ -24,6 +24,7 @@ internal object KeyConstants {
   const val NO_AUTH_KEY = "noauth"
   const val USER_EMAIL_KEY = "user-email"
   const val USER_INFO_KEY = "user-info"
+  const val USER_INFO_BROWSER_KEY = "user-info-browser"
   const val USER_CLASSES_KEY = "user-classes"
   const val CORRECT_ANSWERS_KEY = "correct-answers"
   const val LIKE_DISLIKE_KEY = "like-dislike"
@@ -34,24 +35,9 @@ internal object KeyConstants {
   const val CLASS_CODE_KEY = "class-code"
   const val CLASS_INFO_KEY = "class-info"
 
-  // For USER_INFO_KEY
-  const val EMAIL_FIELD = "email"
-  const val SALT_FIELD = "salt"
-  const val DIGEST_FIELD = "digest"
-  const val NAME_FIELD = "name"
-
   // For CLASS_INFO_KEY
   const val TEACHER_FIELD = "teacher"
   const val DESC_FIELD = "desc"
-
-  // Class code you will report answers to when in student mode
-  const val ENROLLED_CLASS_CODE_FIELD = "enrolled-class-code"
-
-  // Class code you will observe updates on when in teacher mode
-  const val ACTIVE_CLASS_CODE_FIELD = "active-class-code"
-
-  // Previous teacher class code that a user had
-  const val PREVIOUS_TEACHER_CLASS_CODE_FIELD = "previous-teacher-class-code"
 
   const val KEY_SEP = "|"
 }

@@ -32,8 +32,8 @@ import redis.clients.jedis.Jedis
 import redis.clients.jedis.Transaction
 
 internal data class ClassCode(val value: String) {
-  val isStudentMode by lazy { value == DISABLED_MODE || value.isBlank() }
-  val isTeacherMode by lazy { !isStudentMode }
+  val isNotEnabled by lazy { value == DISABLED_MODE || value.isBlank() }
+  val isEnabled by lazy { !isNotEnabled }
   val classCodeEnrollmentKey by lazy { listOf(CLASS_CODE_KEY, value).joinToString(KEY_SEP) }
   val classInfoKey by lazy { listOf(CLASS_INFO_KEY, value).joinToString(KEY_SEP) }
   val displayedValue get() = if (value == DISABLED_MODE) "" else value
@@ -43,7 +43,7 @@ internal data class ClassCode(val value: String) {
   fun isNotValid(redis: Jedis) = !isValid(redis)
 
   fun fetchEnrollees(redis: Jedis?): List<User> =
-    if (redis.isNull() || isStudentMode)
+    if (redis.isNull() || isNotEnabled)
       emptyList()
     else
       (redis.smembers(classCodeEnrollmentKey) ?: emptySet())

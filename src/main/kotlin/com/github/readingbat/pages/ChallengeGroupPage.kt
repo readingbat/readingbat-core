@@ -91,7 +91,7 @@ internal object ChallengeGroupPage : KLogging() {
           val allCorrect = challenge.isCorrect(user, browserSession, redis)
 
           td(classes = FUNC_ITEM) {
-            if (activeClassCode.isStudentMode)
+            if (activeClassCode.isNotEnabled)
               img { src = "$STATIC_ROOT/${if (allCorrect) GREEN_CHECK else WHITE_CHECK}" }
             a {
               style = "font-Size:110%; padding-left:2px;"
@@ -119,7 +119,7 @@ internal object ChallengeGroupPage : KLogging() {
 
           h2 { +groupName.value.decode() }
 
-          if (activeClassCode.isTeacherMode)
+          if (activeClassCode.isEnabled)
             displayClassDescription(activeClassCode, enrollees, redis)
 
           if (enrollees.isNotEmpty())
@@ -144,7 +144,7 @@ internal object ChallengeGroupPage : KLogging() {
             }
           }
 
-          if (redis.isNotNull() && activeClassCode.isStudentMode && challenges.isNotEmpty())
+          if (redis.isNotNull() && activeClassCode.isNotEnabled && challenges.isNotEmpty())
             clearGroupAnswerHistoryOption(user, browserSession, languageName, groupName, challenges)
 
           backLink(CHALLENGE_ROOT, languageName.value)

@@ -41,20 +41,16 @@ internal object ServerUtils : KLogging() {
       default
     }
 
+  fun PipelineCall.queryParam(key: String, default: String = "") = call.request.queryParameters[key] ?: default
+
+  fun PipelineCall.fetchUser(loginAttempt: Boolean = false): User? =
+    fetchPrincipal(loginAttempt)?.userId?.toUser(call.sessions.get<BrowserSession>())
+
   private fun PipelineCall.fetchPrincipal(loginAttempt: Boolean): UserPrincipal? =
     if (loginAttempt) assignPrincipal() else call.sessions.get<UserPrincipal>()
 
-  fun PipelineCall.fetchUser(loginAttempt: Boolean = false): User? {
-    val browserSession = call.sessions.get<BrowserSession>()
-    // TODO
-    println("BrowserSession = $browserSession")
-    return fetchPrincipal(loginAttempt)?.userId?.toUser(browserSession)
-  }
-
-  private fun PipelineCall.assignPrincipal() =
-    call.principal<UserPrincipal>().apply { if (this.isNotNull()) call.sessions.set(this) }  // Set the cookie
-
-  fun PipelineCall.queryParam(key: String, default: String = "") = call.request.queryParameters[key] ?: default
+  private fun PipelineCall.assignPrincipal(): UserPrincipal? =
+    call.principal<UserPrincipal>().apply { if (isNotNull()) call.sessions.set(this) }  // Set the cookie
 }
 
 class RedirectException(val redirectUrl: String) : Exception()

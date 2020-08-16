@@ -38,7 +38,9 @@ import com.github.readingbat.server.ServerUtils.queryParam
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 import redis.clients.jedis.Jedis
+import redis.clients.jedis.ScanParams
 import redis.clients.jedis.exceptions.JedisDataException
+
 
 internal object AdminPage {
 
@@ -99,6 +101,20 @@ internal object AdminPage {
     br
     div(classes = INDENT_1EM) {
       val keys = redis.keys("*")
+
+      val scanParams = ScanParams().match("*")
+      var cursor = "0"
+      while (true) {
+        val scanResult = redis.scan(cursor, scanParams)
+        val results = scanResult.result
+
+        println(results)
+
+        cursor = scanResult.cursor
+        if (cursor != "0")
+          break
+      }
+
       h4 { +"${keys.size} Items:" }
       table {
         keys

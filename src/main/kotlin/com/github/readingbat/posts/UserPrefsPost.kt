@@ -30,7 +30,6 @@ import com.github.readingbat.misc.FormFields.NEW_PASSWORD
 import com.github.readingbat.misc.FormFields.UPDATE_PASSWORD
 import com.github.readingbat.misc.FormFields.USER_PREFS_ACTION
 import com.github.readingbat.misc.FormFields.WITHDRAW_FROM_CLASS
-import com.github.readingbat.misc.KeyConstants.DIGEST_FIELD
 import com.github.readingbat.misc.User.Companion.fetchEnrolledClassCode
 import com.github.readingbat.pages.UserPrefsPage.requestLogInPage
 import com.github.readingbat.pages.UserPrefsPage.userPrefsPage
@@ -79,7 +78,7 @@ internal object UserPrefsPost : KLogging() {
         val (salt, digest) = user.lookupDigestInfoByUser(redis)
         if (salt.isNotEmpty() && digest.isNotEmpty() && digest == currPassword.sha256(salt)) {
           val newDigest = newPassword.sha256(salt)
-          redis.hset(user.userInfoKey, DIGEST_FIELD, newDigest)
+          user.assignDigest(redis, newDigest)
           Message("Password changed")
         }
         else {

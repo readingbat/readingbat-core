@@ -41,9 +41,8 @@ import com.github.readingbat.pages.PageCommon.rawHtml
 import com.github.readingbat.pages.PageCommon.rows
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
-import io.ktor.application.call
-import io.ktor.sessions.get
-import io.ktor.sessions.sessions
+import io.ktor.application.*
+import io.ktor.sessions.*
 import kotlinx.html.*
 import kotlinx.html.Entities.nbsp
 import kotlinx.html.stream.createHTML
@@ -75,7 +74,7 @@ internal object LanguageGroupPage {
           val maxCnt = 12
           var maxFound = false
 
-          if (activeClassCode.isStudentMode) {
+          if (activeClassCode.isNotEnabled) {
             for (challenge in challenges) {
               if (challenge.isCorrect(user, browserSession, redis))
                 cnt++
@@ -92,7 +91,7 @@ internal object LanguageGroupPage {
 
               p { rawHtml(if (challengeGroup.description.isNotBlank()) challengeGroup.parsedDescription else nbsp.text) }
 
-              if (activeClassCode.isStudentMode) {
+              if (activeClassCode.isNotEnabled) {
                 if (cnt == 0) {
                   img { src = "$STATIC_ROOT/$WHITE_CHECK" }
                 }
@@ -119,7 +118,7 @@ internal object LanguageGroupPage {
                      redis,
                      msg)
 
-          if (activeClassCode.isTeacherMode)
+          if (activeClassCode.isEnabled)
             displayClassDescription(activeClassCode, enrollees, redis)
 
           table {

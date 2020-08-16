@@ -83,7 +83,7 @@ internal object TeacherPrefsPage : KLogging() {
         body {
           val returnPath = queryParam(RETURN_PATH, "/")
 
-          helpAndLogin(user, returnPath, activeClassCode.isTeacherMode, redis)
+          helpAndLogin(user, returnPath, activeClassCode.isEnabled, redis)
           bodyTitle()
 
           h2 { +"ReadingBat User Preferences" }
@@ -129,7 +129,7 @@ internal object TeacherPrefsPage : KLogging() {
   }
 
   private fun BODY.displayClasses(user: User, activeClassCode: ClassCode, redis: Jedis) {
-    val classCodes = redis.smembers(user.userClassesKey).map { ClassCode(it) }
+    val classCodes = user.classCodes(redis)
     if (classCodes.isNotEmpty()) {
       h3 { +"Classes" }
       div(classes = INDENT_2EM) {
@@ -172,7 +172,7 @@ internal object TeacherPrefsPage : KLogging() {
           td {
             style = "text-align:center;"
             input {
-              type = radio; name = CLASSES_CHOICE; value = DISABLED_MODE; checked = activeClassCode.isStudentMode
+              type = radio; name = CLASSES_CHOICE; value = DISABLED_MODE; checked = activeClassCode.isNotEnabled
             }
           }
           td { colSpan = "3"; +"Student mode" }
