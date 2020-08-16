@@ -21,7 +21,7 @@ import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.CSSNames.INDENT_1EM
 import com.github.readingbat.misc.CSSNames.INDENT_2EM
 import com.github.readingbat.misc.ClassCode
-import com.github.readingbat.misc.ClassCode.Companion.STUDENT_CLASS_CODE
+import com.github.readingbat.misc.ClassCode.Companion.DISABLED_CLASS_CODE
 import com.github.readingbat.misc.Constants.LABEL_WIDTH
 import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.Endpoints.CREATE_ACCOUNT_ENDPOINT
@@ -69,7 +69,7 @@ internal object UserPrefsPage : KLogging() {
                                  user: User?,
                                  redis: Jedis,
                                  msg: Message = EMPTY_MESSAGE,
-                                 defaultClassCode: ClassCode = STUDENT_CLASS_CODE) =
+                                 defaultClassCode: ClassCode = DISABLED_CLASS_CODE) =
     if (user.isValidUser(redis))
       userPrefsWithLoginPage(content, user, msg, defaultClassCode, redis)
     else
@@ -155,9 +155,7 @@ internal object UserPrefsPage : KLogging() {
     }
   }
 
-  private fun BODY.joinOrWithdrawFromClass(user: User,
-                                           defaultClassCode: ClassCode,
-                                           redis: Jedis) {
+  private fun BODY.joinOrWithdrawFromClass(user: User, defaultClassCode: ClassCode, redis: Jedis) {
     val enrolledClass = user.fetchEnrolledClassCode(redis)
     if (enrolledClass.isTeacherMode) {
       h3 { +"Enrolled class" }
@@ -189,7 +187,7 @@ internal object UserPrefsPage : KLogging() {
                   type = InputType.text
                   size = "42"
                   name = CLASS_CODE_NAME
-                  value = defaultClassCode.value
+                  value = defaultClassCode.displayedValue
                   onKeyPress = "click$joinClassButton(event);"
                 }
               }

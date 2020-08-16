@@ -19,6 +19,7 @@ package com.github.readingbat.posts
 
 import com.github.pambrose.common.util.encode
 import com.github.readingbat.dsl.ReadingBatContent
+import com.github.readingbat.misc.BrowserSession
 import com.github.readingbat.misc.Constants.MSG
 import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.FormFields.CONFIRM_PASSWORD
@@ -36,10 +37,9 @@ import com.github.readingbat.server.FullName.Companion.getFullName
 import com.github.readingbat.server.Password.Companion.getPassword
 import com.github.readingbat.server.ServerUtils.queryParam
 import com.google.common.util.concurrent.RateLimiter
-import io.ktor.application.call
-import io.ktor.request.receiveParameters
-import io.ktor.sessions.sessions
-import io.ktor.sessions.set
+import io.ktor.application.*
+import io.ktor.request.*
+import io.ktor.sessions.*
 import mu.KLogging
 import redis.clients.jedis.Jedis
 
@@ -105,7 +105,8 @@ internal object CreateAccountPost : KLogging() {
     }
     else {
       // Create user
-      val user = createUser(name, email, password, redis)
+      val browserSession = call.sessions.get<BrowserSession>()
+      val user = createUser(name, email, password, browserSession, redis)
       call.sessions.set(UserPrincipal(userId = user.id))
       val returnPath = queryParam(RETURN_PATH, "/")
       throw RedirectException("$returnPath?$MSG=${"User $email created".encode()}")

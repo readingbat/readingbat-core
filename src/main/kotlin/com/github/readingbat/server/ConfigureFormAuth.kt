@@ -27,10 +27,7 @@ import com.github.readingbat.misc.FormFields
 import com.github.readingbat.misc.User.Companion.lookupUserByEmail
 import com.github.readingbat.misc.UserPrincipal
 import com.google.common.util.concurrent.RateLimiter
-import io.ktor.auth.Authentication
-import io.ktor.auth.UserPasswordCredential
-import io.ktor.auth.form
-import io.ktor.auth.session
+import io.ktor.auth.*
 import mu.KLogging
 
 internal object ConfigureFormAuth : KLogging() {
@@ -74,7 +71,8 @@ internal object ConfigureFormAuth : KLogging() {
           }
           else {
             var principal: UserPrincipal? = null
-            val user = lookupUserByEmail(Email(cred.name), redis)
+
+            val user = lookupUserByEmail(Email(cred.name), null, redis)
             if (user.isNotNull()) {
               val (salt, digest) = user.lookupDigestInfoByUser(redis)
               if (salt.isNotEmpty() && digest.isNotEmpty() && digest == cred.password.sha256(salt)) {

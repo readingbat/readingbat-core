@@ -18,18 +18,15 @@
 package com.github.readingbat.server
 
 import com.github.pambrose.common.util.isNotNull
+import com.github.readingbat.misc.BrowserSession
 import com.github.readingbat.misc.User
 import com.github.readingbat.misc.User.Companion.toUser
 import com.github.readingbat.misc.UserPrincipal
-import io.ktor.application.Application
-import io.ktor.application.ApplicationCall
-import io.ktor.application.call
-import io.ktor.auth.principal
-import io.ktor.config.ApplicationConfigurationException
-import io.ktor.sessions.get
-import io.ktor.sessions.sessions
-import io.ktor.sessions.set
-import io.ktor.util.pipeline.PipelineContext
+import io.ktor.application.*
+import io.ktor.auth.*
+import io.ktor.config.*
+import io.ktor.sessions.*
+import io.ktor.util.pipeline.*
 import mu.KLogging
 
 typealias PipelineCall = PipelineContext<Unit, ApplicationCall>
@@ -47,7 +44,12 @@ internal object ServerUtils : KLogging() {
   private fun PipelineCall.fetchPrincipal(loginAttempt: Boolean): UserPrincipal? =
     if (loginAttempt) assignPrincipal() else call.sessions.get<UserPrincipal>()
 
-  fun PipelineCall.fetchUser(loginAttempt: Boolean = false): User? = fetchPrincipal(loginAttempt)?.userId?.toUser()
+  fun PipelineCall.fetchUser(loginAttempt: Boolean = false): User? {
+    val browserSession = call.sessions.get<BrowserSession>()
+    // TODO
+    println("BrowserSession = $browserSession")
+    return fetchPrincipal(loginAttempt)?.userId?.toUser(browserSession)
+  }
 
   private fun PipelineCall.assignPrincipal() =
     call.principal<UserPrincipal>().apply { if (this.isNotNull()) call.sessions.set(this) }  // Set the cookie

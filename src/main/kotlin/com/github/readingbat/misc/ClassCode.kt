@@ -20,7 +20,7 @@ package com.github.readingbat.misc
 import com.github.pambrose.common.util.isNull
 import com.github.pambrose.common.util.randomId
 import com.github.pambrose.common.util.toDoubleQuoted
-import com.github.readingbat.misc.FormFields.CLASSES_DISABLED
+import com.github.readingbat.misc.FormFields.DISABLED_MODE
 import com.github.readingbat.misc.KeyConstants.CLASS_CODE_KEY
 import com.github.readingbat.misc.KeyConstants.CLASS_INFO_KEY
 import com.github.readingbat.misc.KeyConstants.DESC_FIELD
@@ -31,13 +31,12 @@ import io.ktor.http.*
 import redis.clients.jedis.Jedis
 import redis.clients.jedis.Transaction
 
-internal inline class ClassCode(val value: String) {
-  val isStudentMode get() = value == CLASSES_DISABLED || value.isBlank()
-  val isTeacherMode get() = !isStudentMode
-
-  private val classCodeEnrollmentKey get() = listOf(CLASS_CODE_KEY, value).joinToString(KEY_SEP)
-
-  val classInfoKey get() = listOf(CLASS_INFO_KEY, value).joinToString(KEY_SEP)
+internal data class ClassCode(val value: String) {
+  val isStudentMode by lazy { value == DISABLED_MODE || value.isBlank() }
+  val isTeacherMode by lazy { !isStudentMode }
+  val classCodeEnrollmentKey by lazy { listOf(CLASS_CODE_KEY, value).joinToString(KEY_SEP) }
+  val classInfoKey by lazy { listOf(CLASS_INFO_KEY, value).joinToString(KEY_SEP) }
+  val displayedValue get() = if (value == DISABLED_MODE) "" else value
 
   fun isValid(redis: Jedis) = redis.exists(classCodeEnrollmentKey) ?: false
 
@@ -49,9 +48,7 @@ internal inline class ClassCode(val value: String) {
     else
       (redis.smembers(classCodeEnrollmentKey) ?: emptySet())
         .filter { it.isNotEmpty() }
-        .map { it.toUser() }
-
-  fun isEnrolled(user: User, redis: Jedis) = redis.sismember(classCodeEnrollmentKey, user.id) ?: false
+        .map { it.toUser(null) }
 
   fun addEnrolleePlaceholder(tx: Transaction) {
     tx.sadd(classCodeEnrollmentKey, "")
@@ -81,11 +78,11 @@ internal inline class ClassCode(val value: String) {
   override fun toString() = value
 
   companion object {
-    internal val STUDENT_CLASS_CODE = ClassCode("")
+    internal val DISABLED_CLASS_CODE = ClassCode(DISABLED_MODE)
 
     internal fun newClassCode() = ClassCode(randomId(15))
 
     internal fun Parameters.getClassCode(parameterName: String) =
-      this[parameterName]?.let { ClassCode(it) } ?: STUDENT_CLASS_CODE
+      this[parameterName]?.let { ClassCode(it) } ?: DISABLED_CLASS_CODE
   }
 }

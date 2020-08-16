@@ -47,18 +47,15 @@ import io.ktor.routing.*
 internal object Locations {
   fun Routing.locations(metrics: Metrics, content: () -> ReadingBatContent) {
     get<Language> { languageLoc ->
-      metrics.languageGroupRequestCount.labels(agentLaunchId(), languageLoc.languageType.toString(), false.toString())
-        .inc()
+      metrics.languageGroupRequestCount.labels(agentLaunchId(), languageLoc.languageTypeStr, false.toString()).inc()
       language(content.invoke(), languageLoc, false)
     }
     get<Language.Group> { groupLoc ->
-      metrics.challengeGroupRequestCount.labels(agentLaunchId(), groupLoc.languageType.toString(), false.toString())
-        .inc()
+      metrics.challengeGroupRequestCount.labels(agentLaunchId(), groupLoc.languageTypeStr, false.toString()).inc()
       group(content.invoke(), groupLoc, false)
     }
     get<Language.Group.Challenge> { challengeLoc ->
-      metrics.challengeRequestCount.labels(agentLaunchId(), challengeLoc.languageType.toString(), false.toString())
-        .inc()
+      metrics.challengeRequestCount.labels(agentLaunchId(), challengeLoc.languageTypeStr, false.toString()).inc()
       challenge(content.invoke(), challengeLoc, false)
     }
     get<PlaygroundRequest> { request ->
@@ -68,18 +65,15 @@ internal object Locations {
 
     authenticate(FORM) {
       post<Language> { languageLoc ->
-        metrics.languageGroupRequestCount.labels(agentLaunchId(), languageLoc.languageType.toString(), true.toString())
-          .inc()
+        metrics.languageGroupRequestCount.labels(agentLaunchId(), languageLoc.languageTypeStr, true.toString()).inc()
         language(content.invoke(), languageLoc, true)
       }
       post<Language.Group> { groupLoc ->
-        metrics.challengeGroupRequestCount.labels(agentLaunchId(), groupLoc.languageType.toString(), true.toString())
-          .inc()
+        metrics.challengeGroupRequestCount.labels(agentLaunchId(), groupLoc.languageTypeStr, true.toString()).inc()
         group(content.invoke(), groupLoc, true)
       }
       post<Language.Group.Challenge> { challengeLoc ->
-        metrics.challengeRequestCount.labels(agentLaunchId(), challengeLoc.languageType.toString(), true.toString())
-          .inc()
+        metrics.challengeRequestCount.labels(agentLaunchId(), challengeLoc.languageTypeStr, true.toString()).inc()
         challenge(content.invoke(), challengeLoc, true)
       }
       post<PlaygroundRequest> { request ->
@@ -93,6 +87,7 @@ internal object Locations {
                                             language: Language,
                                             loginAttempt: Boolean) =
     respondWith {
+      assignBrowserSession()
       content.checkLanguage(language.languageType)
       withRedisPool { redis ->
         val user = fetchUser(loginAttempt)
@@ -104,6 +99,7 @@ internal object Locations {
                                          groupLoc: Language.Group,
                                          loginAttempt: Boolean) =
     respondWith {
+      assignBrowserSession()
       content.checkLanguage(groupLoc.languageType)
       withRedisPool { redis ->
         val user = fetchUser(loginAttempt)
@@ -127,6 +123,7 @@ internal object Locations {
                                               request: PlaygroundRequest,
                                               loginAttempt: Boolean) =
     respondWith {
+      assignBrowserSession()
       withRedisPool { redis ->
         val user = fetchUser(loginAttempt)
         playgroundPage(content,
@@ -142,16 +139,19 @@ internal object Locations {
 internal data class Language(val lname: String) {
   val languageName = LanguageName(lname)
   val languageType get() = languageName.toLanguageType()
+  val languageTypeStr get() = languageType.toString()
 
   @Location("/{gname}")
   data class Group(val language: Language, val gname: String) {
     val groupName = GroupName(gname)
     val languageType get() = language.languageType
+    val languageTypeStr get() = languageType.toString()
 
     @Location("/{cname}")
     data class Challenge(val group: Group, val cname: String) {
       val challengeName = ChallengeName(cname)
       val languageType get() = group.languageType
+      val languageTypeStr get() = languageType.toString()
       val groupName get() = group.groupName
     }
   }

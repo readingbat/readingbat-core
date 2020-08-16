@@ -145,7 +145,7 @@ internal object ChallengeGroupPage : KLogging() {
           }
 
           if (redis.isNotNull() && activeClassCode.isStudentMode && challenges.isNotEmpty())
-            clearGroupAnswerHistory(user, browserSession, languageName, groupName, challenges)
+            clearGroupAnswerHistoryOption(user, browserSession, languageName, groupName, challenges)
 
           backLink(CHALLENGE_ROOT, languageName.value)
 
@@ -190,11 +190,11 @@ internal object ChallengeGroupPage : KLogging() {
     }
   }
 
-  private fun BODY.clearGroupAnswerHistory(user: User?,
-                                           browserSession: BrowserSession?,
-                                           languageName: LanguageName,
-                                           groupName: GroupName,
-                                           challenges: List<Challenge>) {
+  private fun BODY.clearGroupAnswerHistoryOption(user: User?,
+                                                 browserSession: BrowserSession?,
+                                                 languageName: LanguageName,
+                                                 groupName: GroupName,
+                                                 challenges: List<Challenge>) {
 
     val correctAnswersKeys = challenges.map { user.correctAnswersKey(browserSession, it) }
     val challengeAnswerKeys = challenges.map { user.challengeAnswersKey(browserSession, it) }

@@ -117,7 +117,7 @@ internal object FormFields {
   const val CLASS_CODE_NAME = "class_code"
   const val CLASS_DESC = "class_desc"
   const val CLASSES_CHOICE = "classes_choice"
-  const val CLASSES_DISABLED = "classes_disabled"
+  const val DISABLED_MODE = "classes_disabled"
   const val CURR_PASSWORD = "curr_passwd"
   const val NEW_PASSWORD = "new_passwd"
   const val USER_PREFS_ACTION = "pref_action"

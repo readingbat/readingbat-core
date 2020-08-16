@@ -25,7 +25,7 @@ import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.FunctionInfo
 import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.misc.ClassCode.Companion.STUDENT_CLASS_CODE
+import com.github.readingbat.misc.ClassCode.Companion.DISABLED_CLASS_CODE
 import com.github.readingbat.misc.Constants.RESP
 import com.github.readingbat.misc.KeyConstants.ACTIVE_CLASS_CODE_FIELD
 import com.github.readingbat.misc.KeyConstants.ANSWER_HISTORY_KEY
@@ -60,13 +60,13 @@ import redis.clients.jedis.Jedis
 import redis.clients.jedis.Transaction
 import kotlin.contracts.contract
 
-internal class User private constructor(val id: String) {
+internal class User private constructor(val id: String, val browserSession: BrowserSession?) {
 
-  val userInfoKey = listOf(USER_INFO_KEY, id).joinToString(KEY_SEP)
-  val userClassesKey = listOf(USER_CLASSES_KEY, id).joinToString(KEY_SEP)
+  val userInfoKey by lazy { listOf(USER_INFO_KEY, id).joinToString(KEY_SEP) }
+  val userClassesKey by lazy { listOf(USER_CLASSES_KEY, id).joinToString(KEY_SEP) }
 
   // This key maps to a reset_id
-  val userPasswordResetKey = listOf(USER_RESET_KEY, id).joinToString(KEY_SEP)
+  val userPasswordResetKey by lazy { listOf(USER_RESET_KEY, id).joinToString(KEY_SEP) }
 
   fun email(redis: Jedis) = redis.hget(userInfoKey, EMAIL_FIELD)?.let { Email(it) } ?: EMPTY_EMAIL
 
@@ -102,36 +102,34 @@ internal class User private constructor(val id: String) {
   }
 
   fun assignActiveClassCode(classCode: ClassCode, resetPreviousClassCode: Boolean, redis: Jedis) {
-    redis.hset(userInfoKey, ACTIVE_CLASS_CODE_FIELD, if (classCode.isStudentMode) "" else classCode.value)
+    redis.hset(userInfoKey, ACTIVE_CLASS_CODE_FIELD, classCode.value)
     if (resetPreviousClassCode)
-      redis.hset(userInfoKey, PREVIOUS_TEACHER_CLASS_CODE_FIELD, if (classCode.isStudentMode) "" else classCode.value)
+      redis.hset(userInfoKey, PREVIOUS_TEACHER_CLASS_CODE_FIELD, classCode.value)
   }
 
   fun resetActiveClassCode(tx: Transaction) {
     tx.hset(userInfoKey, ACTIVE_CLASS_CODE_FIELD, "")
   }
 
+  fun isEnrolled(classCode: ClassCode, redis: Jedis) = redis.sismember(classCode.classCodeEnrollmentKey, id) ?: false
+
   fun enrollInClass(classCode: ClassCode, redis: Jedis) {
-    if (classCode.isStudentMode) {
-      throw DataException("Empty class code")
-    }
-    else {
-      when {
-        !classCode.isValid(redis) -> throw DataException("Invalid class code $classCode")
-        classCode.isEnrolled(this, redis) -> throw DataException("Already enrolled in class $classCode")
-        else -> {
-          val previousClassCode = fetchEnrolledClassCode(redis)
-          redis.multi().also { tx ->
-            // Remove if already enrolled in another class
-            if (previousClassCode.isTeacherMode)
-              previousClassCode.removeEnrollee(this, tx)
+    when {
+      classCode.isStudentMode -> throw DataException("Disabled class code")
+      classCode.isNotValid(redis) -> throw DataException("Invalid class code: $classCode")
+      isEnrolled(classCode, redis) -> throw DataException("Already enrolled in class $classCode")
+      else -> {
+        val previousClassCode = fetchEnrolledClassCode(redis)
+        redis.multi().also { tx ->
+          // Remove if already enrolled in another class
+          if (previousClassCode.isTeacherMode)
+            previousClassCode.removeEnrollee(this, tx)
 
-            assignEnrolledClassCode(classCode, tx)
+          assignEnrolledClassCode(classCode, tx)
 
-            classCode.addEnrollee(this, tx)
+          classCode.addEnrollee(this, tx)
 
-            tx.exec()
-          }
+          tx.exec()
         }
       }
     }
@@ -143,9 +141,9 @@ internal class User private constructor(val id: String) {
     }
     else {
       // This should always be true
-      val enrolled = classCode.isValid(redis) && classCode.isEnrolled(this, redis)
+      val enrolled = classCode.isValid(redis) && isEnrolled(classCode, redis)
       redis.multi().also { tx ->
-        assignEnrolledClassCode(STUDENT_CLASS_CODE, tx)
+        assignEnrolledClassCode(DISABLED_CLASS_CODE, tx)
         if (enrolled)
           classCode.removeEnrollee(this, tx)
         tx.exec()
@@ -161,7 +159,7 @@ internal class User private constructor(val id: String) {
     tx.srem(userClassesKey, classCode.value)
 
     // Reset every enrollee's enrolled class
-    enrollees.forEach { it.assignEnrolledClassCode(STUDENT_CLASS_CODE, tx) }
+    enrollees.forEach { it.assignEnrolledClassCode(DISABLED_CLASS_CODE, tx) }
 
     // Delete enrollee list
     classCode.deleteAllEnrollees(tx)
@@ -251,7 +249,7 @@ internal class User private constructor(val id: String) {
     if (enrolledClassCode.isTeacherMode) {
       // Check to see if owner of class has it set as their active class
       val teacherId = enrolledClassCode.fetchClassTeacherId(redis)
-      if (teacherId.isNotEmpty() && teacherId.toUser().fetchActiveClassCode(redis) == enrolledClassCode) {
+      if (teacherId.isNotEmpty() && teacherId.toUser(browserSession).fetchActiveClassCode(redis) == enrolledClassCode) {
         val dashboardInfo = DashboardInfo(id, complete, numCorrect, maxHistoryLength, history)
         redis.publish(enrolledClassCode.value, gson.toJson(dashboardInfo))
       }
@@ -282,27 +280,28 @@ internal class User private constructor(val id: String) {
 
     val gson = Gson()
 
-    fun String.toUser() = User(this)
+    fun String.toUser(browserSession: BrowserSession?) = User(this, browserSession)
 
-    fun newUser() = User(randomId(25))
+    fun newUser(browserSession: BrowserSession?) = User(randomId(25), browserSession)
 
     fun User?.fetchActiveClassCode(redis: Jedis?) =
-      if (this.isNull())
-        STUDENT_CLASS_CODE
-      else
-        redis?.hget(userInfoKey, ACTIVE_CLASS_CODE_FIELD)?.let { ClassCode(it) } ?: STUDENT_CLASS_CODE
+      when {
+        isNull() -> DISABLED_CLASS_CODE
+        else -> redis?.hget(userInfoKey, ACTIVE_CLASS_CODE_FIELD)?.let { ClassCode(it) } ?: DISABLED_CLASS_CODE
+      }
 
     fun User?.fetchPreviousTeacherClassCode(redis: Jedis?) =
-      if (this.isNull())
-        STUDENT_CLASS_CODE
-      else
-        redis?.hget(userInfoKey, PREVIOUS_TEACHER_CLASS_CODE_FIELD)?.let { ClassCode(it) } ?: STUDENT_CLASS_CODE
+      when {
+        isNull() -> DISABLED_CLASS_CODE
+        else -> redis?.hget(userInfoKey, PREVIOUS_TEACHER_CLASS_CODE_FIELD)?.let { ClassCode(it) }
+          ?: DISABLED_CLASS_CODE
+      }
 
     fun User?.fetchEnrolledClassCode(redis: Jedis) =
-      if (this.isNull())
-        STUDENT_CLASS_CODE
-      else
-        redis.hget(userInfoKey, ENROLLED_CLASS_CODE_FIELD)?.let { ClassCode(it) } ?: STUDENT_CLASS_CODE
+      when {
+        isNull() -> DISABLED_CLASS_CODE
+        else -> redis.hget(userInfoKey, ENROLLED_CLASS_CODE_FIELD)?.let { ClassCode(it) } ?: DISABLED_CLASS_CODE
+      }
 
     fun User?.likeDislikeKey(browserSession: BrowserSession?, names: ChallengeNames) =
       this?.likeDislikeKey(names) ?: browserSession?.likeDislikeKey(names) ?: ""
@@ -350,13 +349,17 @@ internal class User private constructor(val id: String) {
     fun User?.answerHistoryKey(browserSession: BrowserSession?, names: ChallengeNames, invocation: Invocation) =
       this?.answerHistoryKey(names, invocation) ?: browserSession?.answerHistoryKey(names, invocation) ?: ""
 
-    fun createUser(name: FullName, email: Email, password: Password, redis: Jedis): User {
+    fun createUser(name: FullName,
+                   email: Email,
+                   password: Password,
+                   browserSession: BrowserSession?,
+                   redis: Jedis): User {
       // The userName (email) is stored in a single KV pair, enabling changes to the userName
       // Three things are stored:
       // email -> userId
       // userId -> salt and sha256-encoded digest
 
-      val user = newUser()
+      val user = newUser(browserSession)
       val salt = newStringSalt()
       logger.info { "Created user $email ${user.id}" }
 
@@ -366,8 +369,8 @@ internal class User private constructor(val id: String) {
                                         EMAIL_FIELD to email.value,
                                         SALT_FIELD to salt,
                                         DIGEST_FIELD to password.sha256(salt),
-                                        ENROLLED_CLASS_CODE_FIELD to STUDENT_CLASS_CODE.value,
-                                        ACTIVE_CLASS_CODE_FIELD to STUDENT_CLASS_CODE.value))
+                                        ENROLLED_CLASS_CODE_FIELD to DISABLED_CLASS_CODE.value,
+                                        ACTIVE_CLASS_CODE_FIELD to DISABLED_CLASS_CODE.value))
         tx.exec()
       }
 
@@ -446,11 +449,11 @@ internal class User private constructor(val id: String) {
       }
     }
 
-    fun isRegisteredEmail(email: Email, redis: Jedis) = lookupUserByEmail(email, redis).isNotNull()
+    fun isRegisteredEmail(email: Email, redis: Jedis) = lookupUserByEmail(email, null, redis).isNotNull()
 
-    fun lookupUserByEmail(email: Email, redis: Jedis): User? {
+    fun lookupUserByEmail(email: Email, browserSession: BrowserSession?, redis: Jedis): User? {
       val id = redis.get(email.userEmailKey) ?: ""
-      return if (id.isNotEmpty()) id.toUser() else null
+      return if (id.isNotEmpty()) id.toUser(browserSession) else null
     }
   }
 

@@ -19,6 +19,7 @@ package com.github.readingbat.posts
 
 import com.github.pambrose.common.util.encode
 import com.github.readingbat.dsl.ReadingBatContent
+import com.github.readingbat.misc.BrowserSession
 import com.github.readingbat.misc.Constants.INVALID_RESET_ID
 import com.github.readingbat.misc.Constants.MSG
 import com.github.readingbat.misc.Constants.RESET_ID
@@ -50,6 +51,7 @@ import com.github.readingbat.server.ServerUtils.queryParam
 import com.google.common.util.concurrent.RateLimiter
 import io.ktor.application.*
 import io.ktor.request.*
+import io.ktor.sessions.*
 import mu.KLogging
 import redis.clients.jedis.Jedis
 import java.io.IOException
@@ -81,9 +83,11 @@ internal object PasswordResetPost : KLogging() {
       else -> {
         try {
           val newResetId = newResetId()
+          val browserSession = call.sessions.get<BrowserSession>()
 
           // Lookup and remove previous value if it exists
-          val user2 = lookupUserByEmail(email, redis) ?: throw ResetPasswordException("Unable to find $email")
+          val user2 =
+            lookupUserByEmail(email, browserSession, redis) ?: throw ResetPasswordException("Unable to find $email")
           val previousResetId = redis.get(user2.userPasswordResetKey)?.let { ResetId(it) } ?: EMPTY_RESET_ID
 
           redis.multi().also { tx ->
@@ -133,7 +137,9 @@ internal object PasswordResetPost : KLogging() {
 
       val passwordResetKey = resetId.passwordResetKey
       val email = Email(redis.get(passwordResetKey) ?: throw ResetPasswordException(INVALID_RESET_ID))
-      val user = lookupUserByEmail(email, redis) ?: throw ResetPasswordException("Unable to find $email")
+      val browserSession = call.sessions.get<BrowserSession>()
+      val user =
+        lookupUserByEmail(email, browserSession, redis) ?: throw ResetPasswordException("Unable to find $email")
       val userInfoKey = user.userInfoKey
       val salt = redis.hget(userInfoKey, SALT_FIELD)
       val newDigest = newPassword.sha256(salt)

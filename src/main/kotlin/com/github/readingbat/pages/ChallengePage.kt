@@ -262,7 +262,7 @@ internal object ChallengePage : KLogging() {
         this@displayQuestions.likeDislike(user, browserSession, challenge, redis)
       this@displayQuestions.otherLinks(challenge)
       if (redis.isNotNull())
-        this@displayQuestions.clearChallengeAnswerHistory(user, browserSession, challenge)
+        this@displayQuestions.clearChallengeAnswerHistoryOption(user, browserSession, challenge)
     }
 
   private fun BODY.enableWebSockets(classCode: ClassCode) {
@@ -533,9 +533,9 @@ internal object ChallengePage : KLogging() {
     }
   }
 
-  private fun BODY.clearChallengeAnswerHistory(user: User?,
-                                               browserSession: BrowserSession?,
-                                               challenge: Challenge) {
+  private fun BODY.clearChallengeAnswerHistoryOption(user: User?,
+                                                     browserSession: BrowserSession?,
+                                                     challenge: Challenge) {
     val languageName = challenge.languageType.languageName
     val groupName = challenge.groupName
     val challengeName = challenge.challengeName

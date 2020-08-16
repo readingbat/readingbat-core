@@ -44,13 +44,13 @@ internal object KeyConstants {
   const val TEACHER_FIELD = "teacher"
   const val DESC_FIELD = "desc"
 
-  // This is the class code you will report results to
+  // Class code you will report answers to when in student mode
   const val ENROLLED_CLASS_CODE_FIELD = "enrolled-class-code"
 
-  // This is the class code you will observe updates on
+  // Class code you will observe updates on when in teacher mode
   const val ACTIVE_CLASS_CODE_FIELD = "active-class-code"
 
-  // This is the last teacher class code a user had
+  // Previous teacher class code that a user had
   const val PREVIOUS_TEACHER_CLASS_CODE_FIELD = "previous-teacher-class-code"
 
   const val KEY_SEP = "|"

@@ -25,10 +25,10 @@ import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.Endpoints.TEACHER_PREFS_ENDPOINT
 import com.github.readingbat.misc.Endpoints.TEACHER_PREFS_POST_ENDPOINT
 import com.github.readingbat.misc.FormFields.CLASSES_CHOICE
-import com.github.readingbat.misc.FormFields.CLASSES_DISABLED
 import com.github.readingbat.misc.FormFields.CLASS_CODE_NAME
 import com.github.readingbat.misc.FormFields.CREATE_CLASS
 import com.github.readingbat.misc.FormFields.DELETE_CLASS
+import com.github.readingbat.misc.FormFields.DISABLED_MODE
 import com.github.readingbat.misc.FormFields.UPDATE_ACTIVE_CLASS
 import com.github.readingbat.misc.FormFields.USER_PREFS_ACTION
 import com.github.readingbat.misc.Message.Companion.EMPTY_MESSAGE
@@ -163,7 +163,7 @@ internal object TeacherPrefsPage : KLogging() {
                 checked = activeClassCode == classCode
               }
             }
-            td { +classCode.value }
+            td { +classCode.displayedValue }
             td { +classDesc }
             td { style = "text-align:center;"; +enrolleeCount.toString() }
           }
@@ -172,7 +172,7 @@ internal object TeacherPrefsPage : KLogging() {
           td {
             style = "text-align:center;"
             input {
-              type = radio; name = CLASSES_CHOICE; value = CLASSES_DISABLED; checked = activeClassCode.isStudentMode
+              type = radio; name = CLASSES_CHOICE; value = DISABLED_MODE; checked = activeClassCode.isStudentMode
             }
           }
           td { colSpan = "3"; +"Student mode" }
@@ -199,7 +199,7 @@ internal object TeacherPrefsPage : KLogging() {
               method = FormMethod.post
               onSubmit =
                 "return confirm('Are you sure you want to delete class $classDesc [$classCode]?');"
-              input { type = InputType.hidden; name = CLASS_CODE_NAME; value = classCode.value }
+              input { type = InputType.hidden; name = CLASS_CODE_NAME; value = classCode.displayedValue }
               input {
                 style = "vertical-align:middle; margin-top:1; margin-bottom:0;"
                 type = submit; name = USER_PREFS_ACTION; value =

@@ -20,8 +20,8 @@ package com.github.readingbat.server
 import com.github.readingbat.misc.AuthName.AUTH_COOKIE
 import com.github.readingbat.misc.BrowserSession
 import com.github.readingbat.misc.UserPrincipal
-import io.ktor.sessions.Sessions
-import io.ktor.sessions.cookie
+import io.ktor.sessions.*
+import kotlin.collections.set
 
 internal object ConfigureCookies {
 
@@ -55,5 +55,4 @@ internal object ConfigureCookies {
       cookie.extensions["SameSite"] = "lax"
     }
   }
-
 }

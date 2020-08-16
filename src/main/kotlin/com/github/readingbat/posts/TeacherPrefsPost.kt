@@ -21,7 +21,7 @@ import com.github.pambrose.common.util.encode
 import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.*
-import com.github.readingbat.misc.ClassCode.Companion.STUDENT_CLASS_CODE
+import com.github.readingbat.misc.ClassCode.Companion.DISABLED_CLASS_CODE
 import com.github.readingbat.misc.ClassCode.Companion.getClassCode
 import com.github.readingbat.misc.ClassCode.Companion.newClassCode
 import com.github.readingbat.misc.Constants.MSG
@@ -67,7 +67,7 @@ internal object TeacherPrefsPost {
     val browserSession = call.sessions.get<BrowserSession>()
     val msg =
       if (user.isValidUser(redis)) {
-        user.assignActiveClassCode(STUDENT_CLASS_CODE, false, redis)
+        user.assignActiveClassCode(DISABLED_CLASS_CODE, false, redis)
         println("**** ${browserSession?.id}")
         STUDENT_MODE_ENABLED_MSG
       }
@@ -81,8 +81,8 @@ internal object TeacherPrefsPost {
     val returnPath = queryParam(Constants.RETURN_PATH, "/")
     val msg =
       if (user.isValidUser(redis)) {
-        val lastTeacherClassCode = user.fetchPreviousTeacherClassCode(redis)
-        user.assignActiveClassCode(lastTeacherClassCode, false, redis)
+        val previousTeacherClassCode = user.fetchPreviousTeacherClassCode(redis)
+        user.assignActiveClassCode(previousTeacherClassCode, false, redis)
         TEACHER_MODE_ENABLED_MSG
       }
       else {
@@ -157,12 +157,11 @@ internal object TeacherPrefsPost {
                                        classCode: ClassCode,
                                        redis: Jedis) =
     when {
-      classCode.isStudentMode -> {
-        teacherPrefsPage(content, user, redis, Message("Empty class code", true))
-      }
-      classCode.isNotValid(redis) -> {
-        teacherPrefsPage(content, user, redis, Message("Invalid class code: $classCode", true))
-      }
+      classCode.isStudentMode -> teacherPrefsPage(content, user, redis, Message("Empty class code", true))
+      classCode.isNotValid(redis) -> teacherPrefsPage(content,
+                                                      user,
+                                                      redis,
+                                                      Message("Invalid class code: $classCode", true))
       else -> {
         val activeClassCode = user.fetchActiveClassCode(redis)
         val enrollees = classCode.fetchEnrollees(redis)
