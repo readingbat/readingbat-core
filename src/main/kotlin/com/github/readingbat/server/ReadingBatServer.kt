@@ -17,6 +17,9 @@
 
 package com.github.readingbat.server
 
+import com.github.pambrose.common.redis.RedisUtils.REDIS_MAX_IDLE_SIZE
+import com.github.pambrose.common.redis.RedisUtils.REDIS_MAX_POOL_SIZE
+import com.github.pambrose.common.redis.RedisUtils.REDIS_MIN_IDLE_SIZE
 import com.github.pambrose.common.util.FileSource
 import com.github.pambrose.common.util.Version
 import com.github.pambrose.common.util.Version.Companion.versionDesc
@@ -109,14 +112,15 @@ internal fun Application.assignContentDsl(fileName: String, variableName: String
 internal fun Application.module() {
   val fileName = property(FILE_NAME, "src/Content.kt")
   val variableName = property(VARIABLE_NAME, "content")
-  val isProduction = property(IS_PRODUCTION, default = "false").toBoolean()
   val agentEnabled = property(AGENT_ENABLED, default = "true").toBoolean()
   val proxyHostname = property(PROXY_HOSTNAME, default = "")
-  val comparePoolSize = property(SCRIPTS_COMPARE_POOL_SIZE, default = "5")
   val metrics = ReadingBatServer.metrics
 
-  System.setProperty(IS_PRODUCTION, isProduction.toString())
-  System.setProperty(SCRIPTS_COMPARE_POOL_SIZE, comparePoolSize)
+  System.setProperty(IS_PRODUCTION, property(IS_PRODUCTION, default = "false").toBoolean().toString())
+  System.setProperty(SCRIPTS_COMPARE_POOL_SIZE, property(SCRIPTS_COMPARE_POOL_SIZE, default = "5"))
+  System.setProperty(REDIS_MAX_POOL_SIZE, property(REDIS_MAX_POOL_SIZE, default = "10"))
+  System.setProperty(REDIS_MAX_IDLE_SIZE, property(REDIS_MAX_IDLE_SIZE, default = "5"))
+  System.setProperty(REDIS_MIN_IDLE_SIZE, property(REDIS_MIN_IDLE_SIZE, default = "1"))
 
   ReadingBatServer.logger.apply {
     info { getBanner("banners/readingbat.txt", this) }
