@@ -149,16 +149,12 @@ internal object ChallengePage : KLogging() {
           if (activeClassCode.isNotEnabled)
             displayQuestions(user, browserSession, challenge, funcInfo, redis)
           else {
-            if (redis.isNull())
+            if (redis.isNull()) {
               p { +DBMS_DOWN.value }
-            else
+            }
+            else {
               displayStudentProgress(challenge, content.maxHistoryLength, funcInfo, activeClassCode, enrollees, redis)
-          }
-
-          div {
-            +"Connection time: "
-            span {
-              id = pingMsg
+              p { +"Connection time: "; span { id = pingMsg } }
             }
           }
 
