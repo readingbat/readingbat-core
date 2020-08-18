@@ -58,6 +58,8 @@ internal object Constants {
   const val AGENT_ENABLED = "$AGENT.enabled"
   const val PROXY_HOSTNAME = "$AGENT.proxy.hostname"
 
+  const val PING_CODE = "P"
+
   val DBMS_DOWN = Message("Database is down", true)
 }
 

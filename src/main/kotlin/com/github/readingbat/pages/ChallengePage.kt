@@ -43,6 +43,7 @@ import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
 import com.github.readingbat.misc.Constants.CORRECT_COLOR
 import com.github.readingbat.misc.Constants.DBMS_DOWN
 import com.github.readingbat.misc.Constants.MSG
+import com.github.readingbat.misc.Constants.PING_CODE
 import com.github.readingbat.misc.Constants.PLAYGROUND_ROOT
 import com.github.readingbat.misc.Constants.RESP
 import com.github.readingbat.misc.Constants.STATIC_ROOT
@@ -294,8 +295,7 @@ internal object ChallengePage : KLogging() {
           ws.onmessage = function (event) {
             var obj = JSON.parse(event.data);
 
-            if (obj.hasOwnProperty("type") && obj.type == "PING") {
-              //console.log(obj.msg);
+            if (obj.hasOwnProperty("type") && obj.type == "$PING_CODE") {
               document.getElementById('$pingMsg').innerHTML = obj.msg;
             }
             else {

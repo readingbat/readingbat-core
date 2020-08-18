@@ -24,6 +24,7 @@ import com.github.readingbat.dsl.InvalidPathException
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.agentLaunchId
 import com.github.readingbat.misc.ClassCode
+import com.github.readingbat.misc.Constants.PING_CODE
 import com.github.readingbat.misc.Endpoints.CHALLENGE_ENDPOINT
 import com.github.readingbat.misc.Endpoints.CHALLENGE_GROUP_ENDPOINT
 import com.github.readingbat.misc.User.Companion.gson
@@ -43,11 +44,6 @@ import redis.clients.jedis.JedisPubSub
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.TimeSource
 import kotlin.time.seconds
-
-
-class PingMessage(val msg: String) {
-  val type = "PING"
-}
 
 internal object WsEndoints : KLogging() {
 
@@ -222,3 +218,8 @@ internal object WsEndoints : KLogging() {
 }
 
 internal class ChallengeStats(val challengeName: String, val msg: String)
+
+internal class PingMessage(val msg: String) {
+  val type = PING_CODE
+}
+
