@@ -156,7 +156,7 @@ internal object ChallengePage : KLogging() {
           }
 
           div {
-            +"Connected "
+            +"Connection time: "
             span {
               id = pingMsg
             }

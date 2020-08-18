@@ -18,11 +18,14 @@
 package com.github.readingbat.pages
 
 import com.github.pambrose.common.util.isNull
+import com.github.pambrose.common.util.pluralize
 import com.github.readingbat.dsl.ReadingBatContent
+import com.github.readingbat.misc.BrowserSession
 import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.Message
 import com.github.readingbat.misc.Message.Companion.EMPTY_MESSAGE
 import com.github.readingbat.misc.User
+import com.github.readingbat.misc.UserPrincipal
 import com.github.readingbat.pages.HelpAndLogin.helpAndLogin
 import com.github.readingbat.pages.PageCommon.backLink
 import com.github.readingbat.pages.PageCommon.bodyTitle
@@ -30,6 +33,8 @@ import com.github.readingbat.pages.PageCommon.displayMessage
 import com.github.readingbat.pages.PageCommon.headDefault
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
+import io.ktor.application.*
+import io.ktor.sessions.*
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 import redis.clients.jedis.Jedis
@@ -59,12 +64,13 @@ internal object UserInfoPage {
             else -> {
               val name = user.name(redis)
               val email = user.email(redis)
-              val classCodes = user.classCodes(redis)
-              val browserSessions = user.browserSessions(redis)
-              val correctAnswers = user.correctAnswers(redis)
-              val likeDislikes = user.likeDislikes(redis)
+              val browserSessions = user.browserSessions(redis).map { it.split("|").last() }
+              val idCnt = browserSessions.size
               val challenges = user.challenges(redis)
               val invocations = user.invocations(redis)
+              val correctAnswers = user.correctAnswers(redis)
+              val likeDislikes = user.likeDislikes(redis)
+              val classCodes = user.classCodes(redis)
 
               p {
                 span {
@@ -73,17 +79,25 @@ internal object UserInfoPage {
                 }
               }
 
+              val principal = call.sessions.get<UserPrincipal>()
+              val sessionId = call.sessions.get<BrowserSession>()
+
+              println("Browser Sessions: $browserSessions")
+              println("Class codes: $classCodes")
+
               p {
                 table {
+                  tr { td { +"User Principal" }; td { +principal.toString() } }
+                  tr { td { +"Session Id" }; td { +sessionId.toString() } }
                   tr { td { +"Name" }; td { +name } }
                   tr { td { +"Id" }; td { +user.id } }
                   tr { td { +"Email" }; td { +email.value } }
-                  tr { td { +"User Info browser sessions" }; td { +browserSessions.size.toString() } }
-                  tr { td { +"Correct Answers" }; td { +correctAnswers.size.toString() } }
-                  tr { td { +"Likes/Dislikes" }; td { +likeDislikes.size.toString() } }
                   tr { td { +"Challenges" }; td { +challenges.size.toString() } }
                   tr { td { +"Invocations" }; td { +invocations.size.toString() } }
-                  tr { td { +"User Classes" }; td { +classCodes.size.toString() } }
+                  tr { td { +"Correct answers" }; td { +correctAnswers.size.toString() } }
+                  tr { td { +"Likes/Dislikes" }; td { +likeDislikes.size.toString() } }
+                  tr { td { +"Class Codes" }; td { +classCodes.joinToString(", ") } }
+                  tr { td { +"${idCnt} Session ${"Id".pluralize(idCnt)}" }; td { +browserSessions.joinToString(", ") } }
                 }
               }
             }
