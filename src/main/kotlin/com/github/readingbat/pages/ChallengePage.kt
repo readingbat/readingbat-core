@@ -101,6 +101,7 @@ internal object ChallengePage : KLogging() {
   private const val answersTd = "answersTd"
   private const val answersSpan = "answersSpan"
   private const val numCorrectSpan = "numCorrectSpan"
+  private const val pingMsg = "pingMsg"
   internal const val headerColor = "#419DC1"
 
   fun PipelineCall.challengePage(content: ReadingBatContent,
@@ -151,6 +152,13 @@ internal object ChallengePage : KLogging() {
               p { +DBMS_DOWN.value }
             else
               displayStudentProgress(challenge, content.maxHistoryLength, funcInfo, activeClassCode, enrollees, redis)
+          }
+
+          div {
+            +"Connected "
+            span {
+              id = pingMsg
+            }
           }
 
           backLink(CHALLENGE_ROOT, languageName.value, groupName.value)
@@ -285,18 +293,24 @@ internal object ChallengePage : KLogging() {
           
           ws.onmessage = function (event) {
             var obj = JSON.parse(event.data);
-            
-            var name = document.getElementById(obj.userId + '-$nameTd');
-            name.style.backgroundColor = obj.complete ? '$CORRECT_COLOR' : '$WRONG_COLOR';
 
-            document.getElementById(obj.userId + '-$numCorrectSpan').innerHTML = obj.numCorrect;
-
-            var prefix = obj.userId + '-' + obj.history.invocation;
-            
-            var answers = document.getElementById(prefix + '-$answersTd')
-            answers.style.backgroundColor = obj.history.correct ? '$CORRECT_COLOR' : '$WRONG_COLOR';
-
-            document.getElementById(prefix + '-$answersSpan').innerHTML = obj.history.answers;
+            if (obj.hasOwnProperty("type") && obj.type == "PING") {
+              //console.log(obj.msg);
+              document.getElementById('$pingMsg').innerHTML = obj.msg;
+            }
+            else {
+              var name = document.getElementById(obj.userId + '-$nameTd');
+              name.style.backgroundColor = obj.complete ? '$CORRECT_COLOR' : '$WRONG_COLOR';
+  
+              document.getElementById(obj.userId + '-$numCorrectSpan').innerHTML = obj.numCorrect;
+  
+              var prefix = obj.userId + '-' + obj.history.invocation;
+              
+              var answers = document.getElementById(prefix + '-$answersTd')
+              answers.style.backgroundColor = obj.history.correct ? '$CORRECT_COLOR' : '$WRONG_COLOR';
+  
+              document.getElementById(prefix + '-$answersSpan').innerHTML = obj.history.answers;
+            }
           };
         """.trimIndent())
     }

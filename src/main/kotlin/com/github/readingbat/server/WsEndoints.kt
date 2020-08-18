@@ -18,6 +18,7 @@
 package com.github.readingbat.server
 
 import com.github.pambrose.common.redis.RedisUtils.withRedisPool
+import com.github.pambrose.common.time.format
 import com.github.pambrose.common.util.isNotNull
 import com.github.readingbat.dsl.InvalidPathException
 import com.github.readingbat.dsl.ReadingBatContent
@@ -31,13 +32,22 @@ import io.ktor.http.cio.websocket.*
 import io.ktor.http.cio.websocket.CloseReason.*
 import io.ktor.routing.*
 import io.ktor.websocket.*
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import mu.KLogging
 import redis.clients.jedis.JedisPubSub
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.time.TimeSource
+import kotlin.time.seconds
+
+
+class PingMessage(val msg: String) {
+  val type = "PING"
+}
 
 internal object WsEndoints : KLogging() {
 
@@ -66,6 +76,24 @@ internal object WsEndoints : KLogging() {
             .collect { frame ->
               val inboundMsg = frame.readText()
               withRedisPool { redis ->
+                if (redis.isNotNull()) {
+                  val clock = TimeSource.Monotonic
+                  val start = clock.markNow()
+
+                  launch {
+                    var secs = 0
+                    while (true) {
+                      val duration = start.elapsedNow()
+                      val message = PingMessage(duration.format())
+                      val json = gson.toJson(message)
+                      logger.debug { "Sending $json" }
+                      outgoing.send(Frame.Text(json))
+                      delay(1.seconds)
+                      secs += 1
+                    }
+                  }
+                }
+
                 redis?.subscribe(object : JedisPubSub() {
                   override fun onMessage(channel: String?, message: String?) {
                     if (message.isNotNull()) {
