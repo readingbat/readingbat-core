@@ -52,7 +52,7 @@ internal object RedisRoutines {
     }
   }
 
-  fun showAll() {
+  private fun showAll() {
     withRedis { redis ->
       if (redis.isNotNull()) {
         println(redis.scanKeys("*")

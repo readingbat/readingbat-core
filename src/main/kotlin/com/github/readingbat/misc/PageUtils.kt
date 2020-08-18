@@ -25,7 +25,7 @@ import kotlinx.html.style
 
 object PageUtils {
 
-  internal fun hideShowJs(formName: String, fieldName: String) =
+  private fun hideShowJs(formName: String, fieldName: String) =
     """
       var pw=document.$formName.$fieldName.type=="password"; 
       document.$formName.$fieldName.type=pw?"text":"password"; 

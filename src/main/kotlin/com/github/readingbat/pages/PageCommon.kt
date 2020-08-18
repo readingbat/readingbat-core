@@ -48,7 +48,7 @@ import kotlinx.html.Entities.nbsp
 import redis.clients.jedis.Jedis
 
 internal object PageCommon {
-  const val READING_BAT = "ReadingBat"
+  private const val READING_BAT = "ReadingBat"
 
   fun HEAD.headDefault(content: ReadingBatContent) {
     link { rel = "stylesheet"; href = CSS_ENDPOINT; type = CSS.toString() }
@@ -160,7 +160,7 @@ internal object PageCommon {
       a { href = "$PRIVACY_ENDPOINT?$BACK_PATH=$backPath&$RETURN_PATH=$returnPath"; +"Privacy Statement" }
     }
 
-  fun BODY.backLinkWithIndent(url: String, marginLeft: String = "1em") {
+  private fun BODY.backLinkWithIndent(url: String, marginLeft: String = "1em") {
     if (url.isNotEmpty()) {
       div {
         style = "font-size: 120%; margin-left: $marginLeft;"

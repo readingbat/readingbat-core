@@ -134,7 +134,7 @@ internal fun Application.module() {
   }
 
   // This is done after AGENT_LAUNCH_ID is assigned
-  metrics.init({ content.get() })
+  metrics.init { content.get() }
 
   assignContentDsl(fileName, variableName)
 

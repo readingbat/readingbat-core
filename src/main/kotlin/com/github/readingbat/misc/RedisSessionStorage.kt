@@ -24,8 +24,8 @@ import kotlin.time.seconds
 
 
 class RedisSessionStorage(val redis: Jedis,
-                          val prefix: String = "session_",
-                          val ttl: Duration = 3600.seconds) : SimplifiedSessionStorage() {
+                          private val prefix: String = "session_",
+                          private val ttl: Duration = 3600.seconds) : SimplifiedSessionStorage() {
   private fun buildKey(id: String) = "$prefix$id"
 
   override suspend fun read(id: String): ByteArray? {

@@ -417,7 +417,9 @@ internal class User private constructor(val id: String, val browserSession: Brow
     private fun User?.answerHistoryKey(browserSession: BrowserSession?, names: ChallengeNames, invocation: Invocation) =
       this?.answerHistoryKey(names, invocation) ?: browserSession?.answerHistoryKey(names, invocation) ?: ""
 
-    fun User?.fetchPreviousAnswers(challenge: Challenge, browserSession: BrowserSession?, redis: Jedis?) =
+    fun User?.fetchPreviousAnswers(challenge: Challenge,
+                                   browserSession: BrowserSession?,
+                                   redis: Jedis?): Map<String, String> =
       if (redis.isNull())
         kotlinx.html.emptyMap
       else {

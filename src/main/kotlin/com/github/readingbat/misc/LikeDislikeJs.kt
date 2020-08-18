@@ -34,9 +34,9 @@ import kotlinx.html.SCRIPT
 import java.util.concurrent.atomic.AtomicInteger
 
 internal object LikeDislikeJs {
-  const val langSrc = "lang"
-  const val groupSrc = "groupName"
-  const val challengeSrc = "challengeName"
+  private const val langSrc = "lang"
+  private const val groupSrc = "groupName"
+  private const val challengeSrc = "challengeName"
   const val LIKE_DISLIKE_JS_FUNC = "likeDislike"
 
   private val sessionCounter = AtomicInteger(0)

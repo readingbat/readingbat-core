@@ -53,10 +53,10 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
 
   private val srcPath get() = languageGroup.srcPath
   internal val languageType get() = languageGroup.languageType
-  internal val languageName get() = languageType.languageName
-  internal val repo get() = languageGroup.repo
-  internal val branchName get() = languageGroup.branchName
-  internal val metrics get() = languageGroup.metrics
+  private val languageName get() = languageType.languageName
+  private val repo get() = languageGroup.repo
+  private val branchName get() = languageGroup.branchName
+  private val metrics get() = languageGroup.metrics
 
   internal val fileList by lazy {
     repo.let { root ->
@@ -113,7 +113,7 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
     }
   }
 
-  fun hasChallenge(challengeName: String) = challenges.any { it.challengeName.value == challengeName }
+  private fun hasChallenge(challengeName: String) = challenges.any { it.challengeName.value == challengeName }
 
   operator fun contains(challengeName: String) = hasChallenge(challengeName)
 
