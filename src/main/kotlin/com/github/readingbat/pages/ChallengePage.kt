@@ -340,7 +340,7 @@ internal object ChallengePage : KLogging() {
           style = "width:100%; border-spacing: 5px 10px;"
 
           tr {
-            th { style = "text-align:left; color: $headerColor"; +"Student" }
+            th { style = "width:15%; white-space:nowrap; text-align:left; color: $headerColor"; +"Student" }
             funcInfo.invocations
               .forEach { invocation ->
                 th {
@@ -368,7 +368,8 @@ internal object ChallengePage : KLogging() {
               tr(classes = DASHBOARD) {
                 td(classes = DASHBOARD) {
                   id = "${enrollee.id}-$nameTd"
-                  style = "background-color:${if (allCorrect) CORRECT_COLOR else WRONG_COLOR};"
+                  style =
+                    "width:15%;white-space:nowrap; background-color:${if (allCorrect) CORRECT_COLOR else WRONG_COLOR};"
 
                   span { id = "${enrollee.id}-$numCorrectSpan"; +numCorrect.toString() }
                   +"/$numChallenges"
