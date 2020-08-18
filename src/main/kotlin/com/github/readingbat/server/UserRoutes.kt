@@ -51,6 +51,7 @@ import com.github.readingbat.misc.Endpoints.PASSWORD_RESET_POST_ENDPOINT
 import com.github.readingbat.misc.Endpoints.PRIVACY_ENDPOINT
 import com.github.readingbat.misc.Endpoints.TEACHER_PREFS_ENDPOINT
 import com.github.readingbat.misc.Endpoints.TEACHER_PREFS_POST_ENDPOINT
+import com.github.readingbat.misc.Endpoints.USER_INFO_ENDPOINT
 import com.github.readingbat.misc.Endpoints.USER_PREFS_ENDPOINT
 import com.github.readingbat.misc.Endpoints.USER_PREFS_POST_ENDPOINT
 import com.github.readingbat.misc.UserPrincipal
@@ -64,6 +65,7 @@ import com.github.readingbat.pages.PageCommon.defaultLanguageTab
 import com.github.readingbat.pages.PasswordResetPage.passwordResetPage
 import com.github.readingbat.pages.PrivacyPage.privacyPage
 import com.github.readingbat.pages.TeacherPrefsPage.teacherPrefsPage
+import com.github.readingbat.pages.UserInfoPage.userInfoPage
 import com.github.readingbat.pages.UserPrefsPage.userPrefsPage
 import com.github.readingbat.posts.AdminPost.adminActions
 import com.github.readingbat.posts.ChallengePost.checkAnswers
@@ -79,13 +81,10 @@ import com.github.readingbat.posts.TeacherPrefsPost.teacherPrefs
 import com.github.readingbat.posts.UserPrefsPost.userPrefs
 import com.github.readingbat.server.ServerUtils.fetchUser
 import com.github.readingbat.server.ServerUtils.queryParam
-import io.ktor.application.call
+import io.ktor.application.*
 import io.ktor.http.ContentType.Text.CSS
-import io.ktor.routing.Routing
-import io.ktor.routing.get
-import io.ktor.routing.post
-import io.ktor.sessions.clear
-import io.ktor.sessions.sessions
+import io.ktor.routing.*
+import io.ktor.sessions.*
 import redis.clients.jedis.Jedis
 
 internal fun Routing.userRoutes(metrics: Metrics, content: () -> ReadingBatContent, resetFunc: () -> Unit) {
@@ -230,6 +229,12 @@ internal fun Routing.userRoutes(metrics: Metrics, content: () -> ReadingBatConte
   get(ADMIN_ENDPOINT) {
     metrics.measureEndpointRequest(ADMIN_ENDPOINT) {
       respondWithDbmsCheck { redis -> adminDataPage(content.invoke(), fetchUser(), redis = redis) }
+    }
+  }
+
+  get(USER_INFO_ENDPOINT) {
+    metrics.measureEndpointRequest(USER_INFO_ENDPOINT) {
+      respondWithDbmsCheck { redis -> userInfoPage(content.invoke(), fetchUser(), redis = redis) }
     }
   }
 

@@ -19,6 +19,8 @@ package com.github.readingbat.misc
 
 import com.github.pambrose.common.redis.RedisUtils.withRedis
 import com.github.pambrose.common.util.isNotNull
+import redis.clients.jedis.Jedis
+import redis.clients.jedis.ScanParams
 import redis.clients.jedis.exceptions.JedisDataException
 
 internal object RedisRoutines {
@@ -29,16 +31,31 @@ internal object RedisRoutines {
     //deleteAll()
   }
 
+  fun Jedis.scanKeys(pattern: String, count: Int = 100): Sequence<String> =
+    sequence {
+      val scanParams = ScanParams().match(pattern).count(count)
+      var cursorVal = "0"
+      while (true) {
+        cursorVal =
+          scan(cursorVal, scanParams).run {
+            result.forEach { yield(it) }
+            cursor
+          }
+        if (cursorVal == "0")
+          break
+      }
+    }
+
   fun deleteAll() {
     withRedis { redis ->
-      redis?.keys("*")?.forEach { redis.del(it) }
+      redis?.scanKeys("*")?.forEach { redis.del(it) }
     }
   }
 
   fun showAll() {
     withRedis { redis ->
       if (redis.isNotNull()) {
-        println(redis.keys("*")
+        println(redis.scanKeys("*")
                   .joinToString("\n") {
                     try {
                       "$it - ${redis[it]}"

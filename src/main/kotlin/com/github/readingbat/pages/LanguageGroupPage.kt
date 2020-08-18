@@ -64,9 +64,7 @@ internal object LanguageGroupPage {
         val activeClassCode = user.fetchActiveClassCode(redis)
         val enrollees = activeClassCode.fetchEnrollees(redis)
 
-        fun TR.groupItem(user: User?,
-                         challengeGroup: ChallengeGroup<*>,
-                         redis: Jedis?) {
+        fun TR.groupItem(user: User?, challengeGroup: ChallengeGroup<*>, redis: Jedis?) {
           val groupName = challengeGroup.groupName
           val challenges = challengeGroup.challenges
 
@@ -108,15 +106,7 @@ internal object LanguageGroupPage {
 
         body {
           val msg = Message(queryParam(MSG))
-          bodyHeader(user,
-                     loginAttempt,
-                     content,
-                     languageType,
-                     loginPath,
-                     true,
-                     activeClassCode,
-                     redis,
-                     msg)
+          bodyHeader(user, loginAttempt, content, languageType, loginPath, true, activeClassCode, redis, msg)
 
           if (activeClassCode.isEnabled)
             displayClassDescription(activeClassCode, enrollees, redis)

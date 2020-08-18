@@ -19,15 +19,9 @@ package com.github.readingbat.pages
 
 import com.github.pambrose.common.util.isNull
 import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.dsl.isProduction
-import com.github.readingbat.misc.CSSNames.INDENT_1EM
 import com.github.readingbat.misc.Constants.RETURN_PATH
-import com.github.readingbat.misc.Endpoints.ADMIN_POST_ENDPOINT
-import com.github.readingbat.misc.FormFields.ADMIN_ACTION
-import com.github.readingbat.misc.FormFields.DELETE_ALL_DATA
 import com.github.readingbat.misc.Message
 import com.github.readingbat.misc.Message.Companion.EMPTY_MESSAGE
-import com.github.readingbat.misc.RedisRoutines.scanKeys
 import com.github.readingbat.misc.User
 import com.github.readingbat.pages.HelpAndLogin.helpAndLogin
 import com.github.readingbat.pages.PageCommon.backLink
@@ -39,15 +33,14 @@ import com.github.readingbat.server.ServerUtils.queryParam
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 import redis.clients.jedis.Jedis
-import redis.clients.jedis.exceptions.JedisDataException
 
 
-internal object AdminPage {
+internal object UserInfoPage {
 
-  fun PipelineCall.adminDataPage(content: ReadingBatContent,
-                                 user: User?,
-                                 redis: Jedis,
-                                 msg: Message = EMPTY_MESSAGE) =
+  fun PipelineCall.userInfoPage(content: ReadingBatContent,
+                                user: User?,
+                                redis: Jedis,
+                                msg: Message = EMPTY_MESSAGE) =
     createHTML()
       .html {
 
@@ -60,13 +53,19 @@ internal object AdminPage {
           bodyTitle()
 
           when {
-            isProduction() && user.isNull() -> {
+            user.isNull() -> {
               br { +"Must be logged in for this function" }
             }
-            isProduction() && user?.email(redis)?.value != "pambrose@mac.com" -> {
-              br { +"Must be system admin for this function" }
-            }
             else -> {
+              val name = user.name(redis)
+              val email = user.email(redis)
+              val classCodes = user.classCodes(redis)
+              val browserSessions = user.browserSessions(redis)
+              val correctAnswers = user.correctAnswers(redis)
+              val likeDislikes = user.likeDislikes(redis)
+              val challenges = user.challenges(redis)
+              val invocations = user.invocations(redis)
+
               p {
                 span {
                   style = "color:${if (msg.isError) "red" else "green"};"
@@ -74,51 +73,23 @@ internal object AdminPage {
                 }
               }
 
-              p { this@body.deleteData() }
-              p { this@body.dumpData(redis) }
+              p {
+                table {
+                  tr { td { +"Name" }; td { +name } }
+                  tr { td { +"Id" }; td { +user.id } }
+                  tr { td { +"Email" }; td { +email.value } }
+                  tr { td { +"User Info browser sessions" }; td { +browserSessions.size.toString() } }
+                  tr { td { +"Correct Answers" }; td { +correctAnswers.size.toString() } }
+                  tr { td { +"Likes/Dislikes" }; td { +likeDislikes.size.toString() } }
+                  tr { td { +"Challenges" }; td { +challenges.size.toString() } }
+                  tr { td { +"Invocations" }; td { +invocations.size.toString() } }
+                  tr { td { +"User Classes" }; td { +classCodes.size.toString() } }
+                }
+              }
             }
           }
 
           backLink(returnPath)
         }
       }
-
-  private fun BODY.deleteData() {
-    h3 { +"Delete All Data" }
-    div(classes = INDENT_1EM) {
-      p { +"Permanently delete all data -- this cannot be undone!" }
-      form {
-        action = ADMIN_POST_ENDPOINT
-        method = FormMethod.post
-        onSubmit = "return confirm('Are you sure you want to permanently delete all data ?');"
-        input { type = InputType.submit; name = ADMIN_ACTION; value = DELETE_ALL_DATA }
-      }
-    }
-  }
-
-  private fun BODY.dumpData(redis: Jedis) {
-    h3 { +"All Data" }
-    br
-    div(classes = INDENT_1EM) {
-      h4 { +"${redis.scanKeys("*").count()} items:" }
-      table {
-        redis.scanKeys("*")
-          .sorted()
-          .map {
-            try {
-              it to redis[it]
-            } catch (e: JedisDataException) {
-              try {
-                it to redis.hgetAll(it).toString()
-              } catch (e: JedisDataException) {
-                it to redis.smembers(it).toString()
-              }
-            }
-          }
-          .forEach {
-            tr { td { +it.first }; td { +it.second } }
-          }
-      }
-    }
-  }
 }

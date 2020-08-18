@@ -37,6 +37,7 @@ import com.github.readingbat.misc.KeyConstants.USER_CLASSES_KEY
 import com.github.readingbat.misc.KeyConstants.USER_INFO_BROWSER_KEY
 import com.github.readingbat.misc.KeyConstants.USER_INFO_KEY
 import com.github.readingbat.misc.KeyConstants.USER_RESET_KEY
+import com.github.readingbat.misc.RedisRoutines.scanKeys
 import com.github.readingbat.posts.ChallengeHistory
 import com.github.readingbat.posts.ChallengeNames
 import com.github.readingbat.posts.ChallengeResults
@@ -61,6 +62,7 @@ internal class User private constructor(val id: String, val browserSession: Brow
   private val userInfoBrowserKey by lazy {
     listOf(USER_INFO_BROWSER_KEY, id, browserSession?.id ?: "unassigned").joinToString(KEY_SEP)
   }
+  private val userInfoBrowserQueryKey by lazy { listOf(USER_INFO_BROWSER_KEY, id, "*").joinToString(KEY_SEP) }
   private val browserSpecificUserInfoKey by lazy {
     if (browserSession.isNull())
       logger.error { "NULL BROWSER SESSION VALUE" }
@@ -71,6 +73,19 @@ internal class User private constructor(val id: String, val browserSession: Brow
 
   // This key maps to a reset_id
   private val userPasswordResetKey by lazy { listOf(USER_RESET_KEY, id).joinToString(KEY_SEP) }
+
+  fun browserSessions(redis: Jedis) = redis.scanKeys(userInfoBrowserQueryKey).toList()
+
+  fun correctAnswers(redis: Jedis) = redis.scanKeys(correctAnswersKey(ANY_LANGUAGE, ANY_GROUP, ANY_CHALLENGE)).toList()
+
+  fun likeDislikes(redis: Jedis) = redis.scanKeys(likeDislikeKey(ANY_LANGUAGE, ANY_GROUP, ANY_CHALLENGE)).toList()
+
+  fun challenges(redis: Jedis) = redis.scanKeys(challengeAnswersKey(ANY_LANGUAGE, ANY_GROUP, ANY_CHALLENGE)).toList()
+
+  fun invocations(redis: Jedis) =
+    redis.scanKeys(answerHistoryKey(ANY_LANGUAGE, ANY_GROUP, ANY_CHALLENGE, ANY_INVOCATION)).toList()
+
+  fun classCodes(redis: Jedis) = redis.smembers(userClassesKey).map { ClassCode(it) }
 
   fun email(redis: Jedis) = redis.hget(userInfoKey, EMAIL_FIELD)?.let { Email(it) } ?: EMPTY_EMAIL
 
@@ -96,8 +111,6 @@ internal class User private constructor(val id: String, val browserSession: Brow
 
   private fun correctAnswersKey(names: ChallengeNames) =
     correctAnswersKey(names.languageName, names.groupName, names.challengeName)
-
-  fun classCodes(redis: Jedis) = redis.smembers(userClassesKey).map { ClassCode(it) }
 
   fun deletePasswordResetKey(tx: Transaction): Response<Long> = tx.del(userPasswordResetKey)
 
@@ -142,10 +155,8 @@ internal class User private constructor(val id: String, val browserSession: Brow
     return when {
       isNull() || redis.isNull() -> false
       else -> {
-        val pattern = listOf(USER_INFO_BROWSER_KEY, id, "*").joinToString(KEY_SEP)
-        redis.keys(pattern)
-          .filter { redis.hget(it, ACTIVE_CLASS_CODE_FIELD) == classCode.value }
-          .any()
+        val pattern = userInfoBrowserQueryKey
+        redis.scanKeys(pattern).filter { redis.hget(it, ACTIVE_CLASS_CODE_FIELD) == classCode.value }.any()
       }
     }
   }
@@ -228,54 +239,51 @@ internal class User private constructor(val id: String, val browserSession: Brow
     tx.set(newResetId.passwordResetKey, email.value)
   }
 
-  fun deleteUser(user: User, redis: Jedis) {
-    val userEmailKey = user.email(redis).userEmailKey
-
-    val correctAnswers = redis.keys(correctAnswersKey(ANY_LANGUAGE, ANY_GROUP, ANY_CHALLENGE))
-    val likeDislike = redis.keys(likeDislikeKey(ANY_LANGUAGE, ANY_GROUP, ANY_CHALLENGE))
-    val challenges = redis.keys(challengeAnswersKey(ANY_LANGUAGE, ANY_GROUP, ANY_CHALLENGE))
-    val invocations =
-      redis.keys(answerHistoryKey(ANY_LANGUAGE, ANY_GROUP, ANY_CHALLENGE, ANY_INVOCATION))
-    val classCodes = redis.smembers(userClassesKey).map { ClassCode(it) }
-    val enrolleePairs = classCodes.map { it to it.fetchEnrollees(redis) }
+  fun deleteUser(redis: Jedis) {
+    val name = name(redis)
+    val email = email(redis)
+    val classCodes = classCodes(redis)
+    val browserSessions = browserSessions(redis)
+    val correctAnswers = correctAnswers(redis)
+    val likeDislikes = likeDislikes(redis)
+    val challenges = challenges(redis)
+    val invocations = invocations(redis)
 
     val previousResetId = redis.get(userPasswordResetKey)?.let { ResetId(it) } ?: EMPTY_RESET_ID
+    val enrolleePairs = classCodes.map { it to it.fetchEnrollees(redis) }
 
-    logger.info { "Deleting User: ${user.id} ${user.email(redis)}" }
-    logger.info { "User Email: $userEmailKey" }
-    logger.info { "User Info: $userInfoKey" }
-    // TODO show all of them
-    logger.info { "User Info with Browser: $userInfoBrowserKey" }
-    logger.info { "User Classes: $userClassesKey" }
-    logger.info { "Correct Answers: $correctAnswers" }
-    logger.info { "Likes/Dislikes: $likeDislike" }
-    logger.info { "Challenges: $challenges" }
-    logger.info { "Invocations: $invocations" }
-    logger.info { "Classes: $classCodes" }
+    logger.info { "Deleting User: $id $name" }
+    logger.info { "User Email: $email" }
+    logger.info { "User Info Key: $userInfoKey" }
+    logger.info { "User Info browser sessions: ${browserSessions.size}" }
+    logger.info { "Correct Answers: ${correctAnswers.size}" }
+    logger.info { "Likes/Dislikes: ${likeDislikes.size}" }
+    logger.info { "Challenges: ${challenges.size}" }
+    logger.info { "Invocations: ${invocations.size}" }
+    logger.info { "User Classes: $classCodes" }
 
-    redis.multi().also { tx ->
-      if (previousResetId.isNotBlank()) {
-        tx.del(userPasswordResetKey)
-        tx.del(previousResetId.passwordResetKey)
+    redis.multi()
+      .also { tx ->
+        if (previousResetId.isNotBlank()) {
+          tx.del(userPasswordResetKey)
+          tx.del(previousResetId.passwordResetKey)
+        }
+
+        tx.del(email(redis).userEmailKey)
+        tx.del(userInfoKey)
+        tx.del(userClassesKey)
+
+        browserSessions.forEach { tx.del(it) }
+        correctAnswers.forEach { tx.del(it) }
+        likeDislikes.forEach { tx.del(it) }
+        challenges.forEach { tx.del(it) }
+        invocations.forEach { tx.del(it) }
+
+        // Delete class info
+        enrolleePairs.forEach { (classCode, enrollees) -> deleteClassCode(classCode, enrollees, tx) }
+
+        tx.exec()
       }
-
-      tx.del(userEmailKey)
-      tx.del(userInfoKey)
-      tx.del(userClassesKey)
-
-      // TODO Need to delete all the userInfoBrowserKeys
-      tx.del(userInfoBrowserKey)
-
-
-      correctAnswers.forEach { tx.del(it) }
-      challenges.forEach { tx.del(it) }
-      invocations.forEach { tx.del(it) }
-
-      // Delete class info
-      enrolleePairs.forEach { (classCode, enrollees) -> deleteClassCode(classCode, enrollees, tx) }
-
-      tx.exec()
-    }
   }
 
   fun publishAnswers(classCode: ClassCode,
@@ -285,7 +293,7 @@ internal class User private constructor(val id: String, val browserSession: Brow
                      history: ChallengeHistory,
                      redis: Jedis) {
     // Publish to challenge dashboard
-    logger.info { "Publishing user answers to $classCode for $this" }
+    logger.debug { "Publishing user answers to $classCode for $this" }
     val dashboardInfo = DashboardInfo(id, complete, numCorrect, maxHistoryLength, history)
     redis.publish(classCode.value, gson.toJson(dashboardInfo))
   }
@@ -344,16 +352,16 @@ internal class User private constructor(val id: String, val browserSession: Brow
 
     fun User?.fetchActiveClassCode(redis: Jedis?): ClassCode {
       return when {
-        isNull() -> DISABLED_CLASS_CODE
-        else -> redis?.hget(browserSpecificUserInfoKey, ACTIVE_CLASS_CODE_FIELD)?.let { ClassCode(it) }
+        isNull() || redis.isNull() -> DISABLED_CLASS_CODE
+        else -> redis.hget(browserSpecificUserInfoKey, ACTIVE_CLASS_CODE_FIELD)?.let { ClassCode(it) }
           ?: DISABLED_CLASS_CODE
       }
     }
 
     fun User?.fetchPreviousTeacherClassCode(redis: Jedis?) =
       when {
-        isNull() -> DISABLED_CLASS_CODE
-        else -> redis?.hget(browserSpecificUserInfoKey, PREVIOUS_TEACHER_CLASS_CODE_FIELD)?.let { ClassCode(it) }
+        isNull() || redis.isNull() -> DISABLED_CLASS_CODE
+        else -> redis.hget(browserSpecificUserInfoKey, PREVIOUS_TEACHER_CLASS_CODE_FIELD)?.let { ClassCode(it) }
           ?: DISABLED_CLASS_CODE
       }
 
@@ -408,6 +416,17 @@ internal class User private constructor(val id: String, val browserSession: Brow
 
     private fun User?.answerHistoryKey(browserSession: BrowserSession?, names: ChallengeNames, invocation: Invocation) =
       this?.answerHistoryKey(names, invocation) ?: browserSession?.answerHistoryKey(names, invocation) ?: ""
+
+    fun User?.fetchPreviousAnswers(challenge: Challenge, browserSession: BrowserSession?, redis: Jedis?) =
+      if (redis.isNull())
+        kotlinx.html.emptyMap
+      else {
+        val languageName = challenge.languageType.languageName
+        val groupName = challenge.groupName
+        val challengeName = challenge.challengeName
+        val challengeAnswersKey = challengeAnswersKey(browserSession, languageName, groupName, challengeName)
+        if (challengeAnswersKey.isNotEmpty()) redis.hgetAll(challengeAnswersKey) else emptyMap()
+      }
 
     fun createUser(name: FullName,
                    email: Email,

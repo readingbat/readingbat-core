@@ -116,7 +116,7 @@ internal object UserPrefsPost : KLogging() {
   private fun PipelineCall.deleteAccount(content: ReadingBatContent, user: User, redis: Jedis): String {
     val email = user.email(redis)
     logger.info { "Deleting user $email" }
-    user.deleteUser(user, redis)
+    user.deleteUser(redis)
     call.sessions.clear<UserPrincipal>()
     return requestLogInPage(content, redis, Message("User $email deleted"))
   }

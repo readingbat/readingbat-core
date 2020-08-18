@@ -74,6 +74,7 @@ import com.github.readingbat.misc.User
 import com.github.readingbat.misc.User.Companion.challengeAnswersKey
 import com.github.readingbat.misc.User.Companion.correctAnswersKey
 import com.github.readingbat.misc.User.Companion.fetchActiveClassCode
+import com.github.readingbat.misc.User.Companion.fetchPreviousAnswers
 import com.github.readingbat.misc.User.Companion.gson
 import com.github.readingbat.misc.User.Companion.likeDislikeKey
 import com.github.readingbat.pages.PageCommon.addLink
@@ -226,7 +227,7 @@ internal object ChallengePage : KLogging() {
           }
         }
 
-        val correctAnswers = fetchPreviousAnswers(user, browserSession, challenge, redis)
+        val correctAnswers = user.fetchPreviousAnswers(challenge, browserSession, redis)
 
         funcInfo.invocations.withIndex()
           .forEach { (i, invocation) ->
@@ -376,20 +377,6 @@ internal object ChallengePage : KLogging() {
             }
         }
       }
-    }
-
-  private fun fetchPreviousAnswers(user: User?,
-                                   browserSession: BrowserSession?,
-                                   challenge: Challenge,
-                                   redis: Jedis?) =
-    if (redis.isNull())
-      emptyMap
-    else {
-      val languageName = challenge.languageType.languageName
-      val groupName = challenge.groupName
-      val challengeName = challenge.challengeName
-      val challengeAnswersKey = user.challengeAnswersKey(browserSession, languageName, groupName, challengeName)
-      if (challengeAnswersKey.isNotEmpty()) redis.hgetAll(challengeAnswersKey) else emptyMap()
     }
 
   private fun BODY.processAnswers(funcInfo: FunctionInfo, challenge: Challenge) {
