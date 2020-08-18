@@ -89,17 +89,31 @@ class Metrics {
       labelNames(AGENT_ID)
     }
 
-  val wsStudentAnswerStartCount =
+  val wsStudentAnswerCount =
     counter {
-      name("ws_student_answer_start_count")
-      help("WS Student answer start count")
+      name("ws_student_answer_count")
+      help("WS Student answer count")
       labelNames(AGENT_ID)
     }
 
-  val wsClassStatisticsStartCount =
+  val wsClassStatisticsCount =
     counter {
-      name("ws_class_statistics_start_count")
-      help("WS Class statistics start count")
+      name("ws_class_statistics_count")
+      help("WS Class statistics count")
+      labelNames(AGENT_ID)
+    }
+
+  val wsStudentAnswerGauge =
+    gauge {
+      name("ws_student_answer_gauge")
+      help("WS Student answer gauge")
+      labelNames(AGENT_ID)
+    }
+
+  val wsClassStatisticsGauge =
+    gauge {
+      name("ws_class_statistics_gauge")
+      help("WS Class statistics gauge")
       labelNames(AGENT_ID)
     }
 

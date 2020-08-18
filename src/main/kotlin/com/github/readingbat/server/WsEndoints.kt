@@ -56,15 +56,17 @@ internal object WsEndoints : KLogging() {
     webSocket("$CHALLENGE_ENDPOINT/{$CLASS_CODE}") {
       var desc = "unassigned"
       logger.info { "Called student answers websocket" }
-      metrics.measureEndpointRequest("/websocket_class") {
+
+      metrics.measureEndpointRequest("/websocket_student_answers") {
+        metrics.wsStudentAnswerCount.labels(agentLaunchId()).inc()
+        metrics.wsStudentAnswerGauge.labels(agentLaunchId()).inc()
+
         try {
           val classCode = call.parameters[CLASS_CODE]?.let { ClassCode(it) }
             ?: throw InvalidPathException("Missing class code")
 
           desc = "$CHALLENGE_ENDPOINT/$classCode"
           logger.info { "Opening student answers websocket for $desc" }
-
-          metrics.wsStudentAnswerStartCount.labels(agentLaunchId()).inc()
 
           incoming
             .receiveAsFlow()
@@ -104,6 +106,7 @@ internal object WsEndoints : KLogging() {
         } finally {
           logger.info { "Closing student answers websocket for $desc" }
           close(CloseReason(Codes.GOING_AWAY, "Client disconnected"))
+          metrics.wsStudentAnswerGauge.labels(agentLaunchId()).dec()
         }
       }
     }
@@ -112,7 +115,11 @@ internal object WsEndoints : KLogging() {
       val closed = AtomicBoolean(false)
       var desc = "unassigned"
       logger.info { "Called class statistics websocket" }
-      metrics.measureEndpointRequest("/websocket_group") {
+
+      metrics.measureEndpointRequest("/websocket_class_statistics") {
+        metrics.wsClassStatisticsCount.labels(agentLaunchId()).inc()
+        metrics.wsClassStatisticsGauge.labels(agentLaunchId()).inc()
+
         try {
           val languageName =
             call.parameters[LANGUAGE_NAME]?.let { LanguageName(it) }
@@ -125,8 +132,6 @@ internal object WsEndoints : KLogging() {
 
           desc = "$CHALLENGE_ENDPOINT/$languageName/$groupName/$classCode"
           logger.info { "Opening class statistics websocket for $desc" }
-
-          metrics.wsClassStatisticsStartCount.labels(agentLaunchId()).inc()
 
           incoming
             .receiveAsFlow()
@@ -211,6 +216,7 @@ internal object WsEndoints : KLogging() {
             logger.info { "Closing class statistics websocket for $desc" }
             close(CloseReason(Codes.GOING_AWAY, "Client disconnected"))
           }
+          metrics.wsClassStatisticsGauge.labels(agentLaunchId()).dec()
         }
       }
     }
