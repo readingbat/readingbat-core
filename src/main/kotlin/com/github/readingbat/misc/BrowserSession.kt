@@ -20,14 +20,10 @@ package com.github.readingbat.misc
 import com.github.readingbat.misc.KeyConstants.ANSWER_HISTORY_KEY
 import com.github.readingbat.misc.KeyConstants.CHALLENGE_ANSWERS_KEY
 import com.github.readingbat.misc.KeyConstants.CORRECT_ANSWERS_KEY
-import com.github.readingbat.misc.KeyConstants.KEY_SEP
 import com.github.readingbat.misc.KeyConstants.LIKE_DISLIKE_KEY
 import com.github.readingbat.misc.KeyConstants.NO_AUTH_KEY
 import com.github.readingbat.posts.ChallengeNames
-import com.github.readingbat.server.ChallengeName
-import com.github.readingbat.server.GroupName
-import com.github.readingbat.server.Invocation
-import com.github.readingbat.server.LanguageName
+import com.github.readingbat.server.*
 import java.time.Instant
 
 internal data class BrowserSession(val id: String, val created: Long = Instant.now().toEpochMilli()) {
@@ -36,19 +32,19 @@ internal data class BrowserSession(val id: String, val created: Long = Instant.n
     correctAnswersKey(names.languageName, names.groupName, names.challengeName)
 
   fun correctAnswersKey(languageName: LanguageName, groupName: GroupName, challengeName: ChallengeName) =
-    listOf(CORRECT_ANSWERS_KEY, NO_AUTH_KEY, id, languageName, groupName, challengeName).joinToString(KEY_SEP)
+    makeKey(CORRECT_ANSWERS_KEY, NO_AUTH_KEY, id, languageName, groupName, challengeName)
 
   fun likeDislikeKey(names: ChallengeNames) =
     likeDislikeKey(names.languageName, names.groupName, names.challengeName)
 
   fun likeDislikeKey(languageName: LanguageName, groupName: GroupName, challengeName: ChallengeName) =
-    listOf(LIKE_DISLIKE_KEY, NO_AUTH_KEY, id, languageName, groupName, challengeName).joinToString(KEY_SEP)
+    makeKey(LIKE_DISLIKE_KEY, NO_AUTH_KEY, id, languageName, groupName, challengeName)
 
   fun challengeAnswerKey(names: ChallengeNames) =
     challengeAnswerKey(names.languageName, names.groupName, names.challengeName)
 
   fun challengeAnswerKey(languageName: LanguageName, groupName: GroupName, challengeName: ChallengeName) =
-    listOf(CHALLENGE_ANSWERS_KEY, NO_AUTH_KEY, id, languageName, groupName, challengeName).joinToString(KEY_SEP)
+    makeKey(CHALLENGE_ANSWERS_KEY, NO_AUTH_KEY, id, languageName, groupName, challengeName)
 
   fun answerHistoryKey(names: ChallengeNames, invocation: Invocation) =
     answerHistoryKey(names.languageName, names.groupName, names.challengeName, invocation)
@@ -57,12 +53,5 @@ internal data class BrowserSession(val id: String, val created: Long = Instant.n
                                groupName: GroupName,
                                challengeName: ChallengeName,
                                invocation: Invocation) =
-    listOf(ANSWER_HISTORY_KEY,
-           NO_AUTH_KEY,
-           id,
-           languageName.value,
-           groupName.value,
-           challengeName.value,
-           invocation.value)
-      .joinToString(KEY_SEP)
+    makeKey(ANSWER_HISTORY_KEY, NO_AUTH_KEY, id, languageName, groupName, challengeName, invocation)
 }

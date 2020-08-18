@@ -22,6 +22,7 @@ import com.github.pambrose.common.util.pluralize
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.BrowserSession
 import com.github.readingbat.misc.Constants.RETURN_PATH
+import com.github.readingbat.misc.KeyConstants.KEY_SEP
 import com.github.readingbat.misc.Message
 import com.github.readingbat.misc.Message.Companion.EMPTY_MESSAGE
 import com.github.readingbat.misc.User
@@ -64,7 +65,7 @@ internal object UserInfoPage {
             else -> {
               val name = user.name(redis)
               val email = user.email(redis)
-              val browserSessions = user.browserSessions(redis).map { it.split("|").last() }
+              val browserSessions = user.browserSessions(redis).map { it.split(KEY_SEP).last() }
               val idCnt = browserSessions.size
               val challenges = user.challenges(redis)
               val invocations = user.invocations(redis)

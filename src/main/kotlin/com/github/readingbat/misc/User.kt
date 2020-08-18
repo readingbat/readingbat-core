@@ -31,7 +31,6 @@ import com.github.readingbat.misc.KeyConstants.ANSWER_HISTORY_KEY
 import com.github.readingbat.misc.KeyConstants.AUTH_KEY
 import com.github.readingbat.misc.KeyConstants.CHALLENGE_ANSWERS_KEY
 import com.github.readingbat.misc.KeyConstants.CORRECT_ANSWERS_KEY
-import com.github.readingbat.misc.KeyConstants.KEY_SEP
 import com.github.readingbat.misc.KeyConstants.LIKE_DISLIKE_KEY
 import com.github.readingbat.misc.KeyConstants.USER_CLASSES_KEY
 import com.github.readingbat.misc.KeyConstants.USER_INFO_BROWSER_KEY
@@ -59,21 +58,19 @@ import kotlin.contracts.contract
 
 internal class User private constructor(val id: String, val browserSession: BrowserSession?) {
 
-  private val userInfoKey by lazy { listOf(USER_INFO_KEY, id).joinToString(KEY_SEP) }
-  private val userInfoBrowserKey by lazy {
-    listOf(USER_INFO_BROWSER_KEY, id, browserSession?.id ?: "unassigned").joinToString(KEY_SEP)
-  }
-  private val userInfoBrowserQueryKey by lazy { listOf(USER_INFO_BROWSER_KEY, id, "*").joinToString(KEY_SEP) }
+  private val userInfoKey by lazy { makeKey(USER_INFO_KEY, id) }
+  private val userInfoBrowserKey by lazy { makeKey(USER_INFO_BROWSER_KEY, id, browserSession?.id ?: "unassigned") }
+  private val userInfoBrowserQueryKey by lazy { makeKey(USER_INFO_BROWSER_KEY, id, "*") }
   private val browserSpecificUserInfoKey by lazy {
     if (browserSession.isNull())
       logger.error { "NULL BROWSER SESSION VALUE" }
     if (browserSession.isNotNull()) userInfoBrowserKey else throw InvalidConfigurationException("Null browser session for $this")
   }
 
-  private val userClassesKey by lazy { listOf(USER_CLASSES_KEY, id).joinToString(KEY_SEP) }
+  private val userClassesKey by lazy { makeKey(USER_CLASSES_KEY, id) }
 
   // This key maps to a reset_id
-  private val userPasswordResetKey by lazy { listOf(USER_RESET_KEY, id).joinToString(KEY_SEP) }
+  private val userPasswordResetKey by lazy { makeKey(USER_RESET_KEY, id) }
 
   fun browserSessions(redis: Jedis) = redis.scanKeys(userInfoBrowserQueryKey).toList()
 
@@ -116,19 +113,19 @@ internal class User private constructor(val id: String, val browserSession: Brow
   fun deletePasswordResetKey(tx: Transaction): Response<Long> = tx.del(userPasswordResetKey)
 
   fun correctAnswersKey(languageName: LanguageName, groupName: GroupName, challengeName: ChallengeName) =
-    listOf(CORRECT_ANSWERS_KEY, AUTH_KEY, id, languageName, groupName, challengeName).joinToString(KEY_SEP)
+    makeKey(CORRECT_ANSWERS_KEY, AUTH_KEY, id, languageName, groupName, challengeName)
 
   private fun likeDislikeKey(names: ChallengeNames) =
     likeDislikeKey(names.languageName, names.groupName, names.challengeName)
 
   fun likeDislikeKey(languageName: LanguageName, groupName: GroupName, challengeName: ChallengeName) =
-    listOf(LIKE_DISLIKE_KEY, AUTH_KEY, id, languageName, groupName, challengeName).joinToString(KEY_SEP)
+    makeKey(LIKE_DISLIKE_KEY, AUTH_KEY, id, languageName, groupName, challengeName)
 
   private fun challengeAnswersKey(names: ChallengeNames) =
     challengeAnswersKey(names.languageName, names.groupName, names.challengeName)
 
   private fun challengeAnswersKey(languageName: LanguageName, groupName: GroupName, challengeName: ChallengeName) =
-    listOf(CHALLENGE_ANSWERS_KEY, AUTH_KEY, id, languageName, groupName, challengeName).joinToString(KEY_SEP)
+    makeKey(CHALLENGE_ANSWERS_KEY, AUTH_KEY, id, languageName, groupName, challengeName)
 
   private fun answerHistoryKey(names: ChallengeNames, invocation: Invocation) =
     answerHistoryKey(names.languageName, names.groupName, names.challengeName, invocation)
@@ -137,7 +134,7 @@ internal class User private constructor(val id: String, val browserSession: Brow
                        groupName: GroupName,
                        challengeName: ChallengeName,
                        invocation: Invocation) =
-    listOf(ANSWER_HISTORY_KEY, AUTH_KEY, id, languageName, groupName, challengeName, invocation).joinToString(KEY_SEP)
+    makeKey(ANSWER_HISTORY_KEY, AUTH_KEY, id, languageName, groupName, challengeName, invocation)
 
   private fun assignEnrolledClassCode(classCode: ClassCode, tx: Transaction): Response<Long> =
     tx.hset(userInfoKey, ENROLLED_CLASS_CODE_FIELD, classCode.value)

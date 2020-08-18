@@ -19,6 +19,7 @@ package com.github.readingbat.server
 
 import com.github.pambrose.common.util.isNotNull
 import com.github.readingbat.misc.BrowserSession
+import com.github.readingbat.misc.KeyConstants.KEY_SEP
 import com.github.readingbat.misc.User
 import com.github.readingbat.misc.User.Companion.toUser
 import com.github.readingbat.misc.UserPrincipal
@@ -30,6 +31,8 @@ import io.ktor.util.pipeline.*
 import mu.KLogging
 
 typealias PipelineCall = PipelineContext<Unit, ApplicationCall>
+
+internal fun makeKey(vararg keys: Any) = keys.map { it.toString() }.joinToString(KEY_SEP)
 
 internal object ServerUtils : KLogging() {
   fun Application.property(name: String, default: String = "", warn: Boolean = false) =

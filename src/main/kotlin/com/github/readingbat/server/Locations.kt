@@ -33,7 +33,6 @@ import com.github.readingbat.misc.AuthName.FORM
 import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
 import com.github.readingbat.misc.Constants.PLAYGROUND_ROOT
 import com.github.readingbat.misc.KeyConstants
-import com.github.readingbat.misc.KeyConstants.KEY_SEP
 import com.github.readingbat.misc.KeyConstants.USER_EMAIL_KEY
 import com.github.readingbat.pages.ChallengeGroupPage.challengeGroupPage
 import com.github.readingbat.pages.ChallengePage.challengePage
@@ -204,7 +203,7 @@ inline class ChallengeName(val value: String) {
 }
 
 class ChallengeMd5(languageName: LanguageName, groupName: GroupName, challengeName: ChallengeName) {
-  val value = listOf(languageName, groupName, challengeName).joinToString(KEY_SEP).md5()
+  val value = makeKey(languageName, groupName, challengeName).md5()
   override fun toString() = value
 }
 
@@ -241,7 +240,7 @@ inline class Password(val value: String) {
 }
 
 inline class Email(val value: String) {
-  val userEmailKey get() = listOf(USER_EMAIL_KEY, value).joinToString(KeyConstants.KEY_SEP)
+  val userEmailKey get() = makeKey(USER_EMAIL_KEY, value)
 
   fun isBlank() = value.isBlank()
   fun isNotBlank() = value.isNotBlank()
@@ -260,7 +259,7 @@ inline class ResetId(val value: String) {
   fun isNotBlank() = value.isNotBlank()
 
   // Maps resetId to username
-  val passwordResetKey get() = listOf(KeyConstants.RESET_KEY, value).joinToString(KeyConstants.KEY_SEP)
+  val passwordResetKey get() = makeKey(KeyConstants.RESET_KEY, value)
 
   override fun toString() = value
 

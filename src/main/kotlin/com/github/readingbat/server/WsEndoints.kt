@@ -27,7 +27,6 @@ import com.github.readingbat.misc.ClassCode
 import com.github.readingbat.misc.Constants.PING_CODE
 import com.github.readingbat.misc.Endpoints.CHALLENGE_ENDPOINT
 import com.github.readingbat.misc.Endpoints.CHALLENGE_GROUP_ENDPOINT
-import com.github.readingbat.misc.KeyConstants
 import com.github.readingbat.misc.User.Companion.gson
 import com.github.readingbat.posts.ChallengeHistory
 import io.ktor.http.cio.websocket.*
@@ -53,8 +52,7 @@ internal object WsEndoints : KLogging() {
   private const val CLASS_CODE = "classCode"
   private const val CHALLENGE_MD5 = "challengeMd5"
 
-  fun classTopicName(classCode: ClassCode, challengeMd5: String) =
-    listOf(classCode, challengeMd5).joinToString(KeyConstants.KEY_SEP)
+  fun classTopicName(classCode: ClassCode, challengeMd5: String) = makeKey(classCode, challengeMd5)
 
   fun Routing.wsEndpoints(metrics: Metrics, content: () -> ReadingBatContent) {
 

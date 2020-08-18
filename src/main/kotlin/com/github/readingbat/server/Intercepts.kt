@@ -17,8 +17,9 @@
 
 package com.github.readingbat.server
 
-import io.ktor.application.Application
-import io.ktor.application.ApplicationCallPipeline
+import com.github.readingbat.misc.BrowserSession
+import io.ktor.application.*
+import io.ktor.sessions.*
 
 internal fun Application.intercepts() {
   intercept(ApplicationCallPipeline.Setup) {
@@ -27,11 +28,12 @@ internal fun Application.intercepts() {
 
   intercept(ApplicationCallPipeline.Monitoring) {
     // Phase for tracing calls, useful for logging, metrics, error handling and so on
-    //println(this.context.request.origin.remoteHost)
   }
 
   intercept(ApplicationCallPipeline.Features) {
     // Phase for features. Most features should intercept this phase
+    val sessionId = call.sessions.get<BrowserSession>()
+    println("${context.request.local.remoteHost} $sessionId")
   }
 
   intercept(ApplicationCallPipeline.Call) {
