@@ -84,7 +84,7 @@ import com.github.readingbat.pages.PageCommon.bodyHeader
 import com.github.readingbat.pages.PageCommon.headDefault
 import com.github.readingbat.pages.PageCommon.rawHtml
 import com.github.readingbat.posts.ChallengeHistory
-import com.github.readingbat.server.ChallengeId
+import com.github.readingbat.server.ChallengeMd5
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
 import io.ktor.application.*
@@ -164,7 +164,7 @@ internal object ChallengePage : KLogging() {
           script { src = "$STATIC_ROOT/$languageName-prism.js" }
 
           if (activeClassCode.isEnabled && enrollees.isNotEmpty())
-            enableWebSockets(activeClassCode, funcInfo.challengeId)
+            enableWebSockets(activeClassCode, funcInfo.challengeMd5)
         }
       }
 
@@ -271,7 +271,7 @@ internal object ChallengePage : KLogging() {
         this@displayQuestions.clearChallengeAnswerHistoryOption(user, browserSession, challenge)
     }
 
-  private fun BODY.enableWebSockets(classCode: ClassCode, challengeId: ChallengeId) {
+  private fun BODY.enableWebSockets(classCode: ClassCode, challengeMd5: ChallengeMd5) {
     script {
       rawHtml(
         """
@@ -281,7 +281,7 @@ internal object ChallengePage : KLogging() {
           else
             wshost = wshost.replace(/^http:/, 'ws:');
 
-          var wsurl = wshost + '$CHALLENGE_ENDPOINT/'+encodeURIComponent('$classCode')+'/'+encodeURIComponent('$challengeId');
+          var wsurl = wshost + '$CHALLENGE_ENDPOINT/'+encodeURIComponent('$classCode')+'/'+encodeURIComponent('$challengeMd5');
  
           var ws = new WebSocket(wsurl);
           

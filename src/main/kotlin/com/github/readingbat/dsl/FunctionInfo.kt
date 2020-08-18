@@ -20,7 +20,7 @@ package com.github.readingbat.dsl
 import com.github.pambrose.common.util.asBracketed
 import com.github.pambrose.common.util.toDoubleQuoted
 import com.github.readingbat.dsl.ReturnType.*
-import com.github.readingbat.server.ChallengeId
+import com.github.readingbat.server.ChallengeMd5
 import com.github.readingbat.server.ChallengeName
 import com.github.readingbat.server.Invocation
 import mu.KLogging
@@ -63,8 +63,8 @@ internal class FunctionInfo(val languageType: LanguageType,
     validate()
   }
 
-  val challengeId: ChallengeId by lazy {
-    ChallengeId(languageType.languageName, challengeGroup.groupName, challengeName)
+  val challengeMd5: ChallengeMd5 by lazy {
+    ChallengeMd5(languageType.languageName, challengeGroup.groupName, challengeName)
   }
 
   fun placeHolder(): String {

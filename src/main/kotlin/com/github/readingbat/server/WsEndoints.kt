@@ -51,14 +51,14 @@ internal object WsEndoints : KLogging() {
   private const val LANGUAGE_NAME = "languageName"
   private const val GROUP_NAME = "groupName"
   private const val CLASS_CODE = "classCode"
-  private const val CHALLENGE_ID = "challengeId"
+  private const val CHALLENGE_MD5 = "challengeMd5"
 
-  fun classTopicName(classCode: ClassCode, challengeId: String) =
-    listOf(classCode.value, challengeId).joinToString(KeyConstants.KEY_SEP)
+  fun classTopicName(classCode: ClassCode, challengeMd5: String) =
+    listOf(classCode, challengeMd5).joinToString(KeyConstants.KEY_SEP)
 
   fun Routing.wsEndpoints(metrics: Metrics, content: () -> ReadingBatContent) {
 
-    webSocket("$CHALLENGE_ENDPOINT/{$CLASS_CODE}/{$CHALLENGE_ID}") {
+    webSocket("$CHALLENGE_ENDPOINT/{$CLASS_CODE}/{$CHALLENGE_MD5}") {
       var desc = "unassigned"
       logger.info { "Called student answers websocket" }
 
@@ -69,9 +69,9 @@ internal object WsEndoints : KLogging() {
         try {
           val classCode = call.parameters[CLASS_CODE]?.let { ClassCode(it) }
             ?: throw InvalidPathException("Missing class code")
-          val challengeId = call.parameters[CHALLENGE_ID] ?: throw InvalidPathException("Missing challenge id")
+          val challengeMd5 = call.parameters[CHALLENGE_MD5] ?: throw InvalidPathException("Missing challenge md5")
 
-          desc = "$CHALLENGE_ENDPOINT/$classCode/$challengeId"
+          desc = "$CHALLENGE_ENDPOINT/$classCode/$challengeMd5"
           logger.info { "Opening student answers websocket for $desc" }
 
           incoming
@@ -101,12 +101,12 @@ internal object WsEndoints : KLogging() {
                 redis?.subscribe(object : JedisPubSub() {
                   override fun onMessage(channel: String?, message: String?) {
                     if (message.isNotNull()) {
-                      logger.info { "Sending data $message from $channel to $challengeId" }
+                      logger.info { "Sending data $message from $channel to $challengeMd5" }
                       metrics.wsStudentAnswerResponseCount.labels(agentLaunchId()).inc()
                       runBlocking { outgoing.send(Frame.Text(message)) }
                     }
                   }
-                }, classTopicName(classCode, challengeId))
+                }, classTopicName(classCode, challengeMd5))
               }
             }
         } finally {

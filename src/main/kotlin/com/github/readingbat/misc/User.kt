@@ -288,16 +288,16 @@ internal class User private constructor(val id: String, val browserSession: Brow
   }
 
   fun publishAnswers(classCode: ClassCode,
-                     challengeId: ChallengeId,
+                     challengeMd5: ChallengeMd5,
                      maxHistoryLength: Int,
                      complete: Boolean,
                      numCorrect: Int,
                      history: ChallengeHistory,
                      redis: Jedis) {
     // Publish to challenge dashboard
-    logger.debug { "Publishing user answers to $classCode on $challengeId for $this" }
+    logger.debug { "Publishing user answers to $classCode on $challengeMd5 for $this" }
     val dashboardInfo = DashboardInfo(id, complete, numCorrect, maxHistoryLength, history)
-    redis.publish(classTopicName(classCode, challengeId.value), gson.toJson(dashboardInfo))
+    redis.publish(classTopicName(classCode, challengeMd5.value), gson.toJson(dashboardInfo))
   }
 
   fun resetHistory(funcInfo: FunctionInfo,
@@ -320,7 +320,7 @@ internal class User private constructor(val id: String, val browserSession: Brow
           redis.set(answerHistoryKey, gson.toJson(history))
 
           if (shouldPublish)
-            publishAnswers(classCode, funcInfo.challengeId, maxHistoryLength, false, 0, history, redis)
+            publishAnswers(classCode, funcInfo.challengeMd5, maxHistoryLength, false, 0, history, redis)
         }
       }
   }
@@ -517,7 +517,7 @@ internal class User private constructor(val id: String, val browserSession: Brow
 
           if (shouldPublish)
             this?.publishAnswers(classCode,
-                                 funcInfo.challengeId,
+                                 funcInfo.challengeMd5,
                                  content.maxHistoryLength,
                                  complete,
                                  numCorrect,

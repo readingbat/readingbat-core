@@ -203,7 +203,7 @@ inline class ChallengeName(val value: String) {
   }
 }
 
-class ChallengeId(languageName: LanguageName, groupName: GroupName, challengeName: ChallengeName) {
+class ChallengeMd5(languageName: LanguageName, groupName: GroupName, challengeName: ChallengeName) {
   val value = listOf(languageName, groupName, challengeName).joinToString(KEY_SEP).md5()
   override fun toString() = value
 }
