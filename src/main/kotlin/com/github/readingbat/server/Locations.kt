@@ -20,6 +20,7 @@ package com.github.readingbat.server
 import com.github.pambrose.common.redis.RedisUtils.withRedisPool
 import com.github.pambrose.common.response.respondWith
 import com.github.pambrose.common.util.isNotValidEmail
+import com.github.pambrose.common.util.md5
 import com.github.pambrose.common.util.randomId
 import com.github.pambrose.common.util.sha256
 import com.github.readingbat.dsl.InvalidPathException
@@ -32,6 +33,7 @@ import com.github.readingbat.misc.AuthName.FORM
 import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
 import com.github.readingbat.misc.Constants.PLAYGROUND_ROOT
 import com.github.readingbat.misc.KeyConstants
+import com.github.readingbat.misc.KeyConstants.KEY_SEP
 import com.github.readingbat.misc.KeyConstants.USER_EMAIL_KEY
 import com.github.readingbat.pages.ChallengeGroupPage.challengeGroupPage
 import com.github.readingbat.pages.ChallengePage.challengePage
@@ -199,6 +201,11 @@ inline class ChallengeName(val value: String) {
     internal val ANY_CHALLENGE = ChallengeName("*")
     internal fun Parameters.getChallengeName(name: String) = this[name]?.let { ChallengeName(it) } ?: EMPTY_CHALLENGE
   }
+}
+
+class ChallengeId(languageName: LanguageName, groupName: GroupName, challengeName: ChallengeName) {
+  val value = listOf(languageName, groupName, challengeName).joinToString(KEY_SEP).md5()
+  override fun toString() = value
 }
 
 inline class Invocation(val value: String) {

@@ -20,11 +20,13 @@ package com.github.readingbat.dsl
 import com.github.pambrose.common.util.asBracketed
 import com.github.pambrose.common.util.toDoubleQuoted
 import com.github.readingbat.dsl.ReturnType.*
+import com.github.readingbat.server.ChallengeId
 import com.github.readingbat.server.ChallengeName
 import com.github.readingbat.server.Invocation
 import mu.KLogging
 
 internal class FunctionInfo(val languageType: LanguageType,
+                            val challengeGroup: ChallengeGroup<*>,
                             val challengeName: ChallengeName,
                             val originalCode: String,
                             val codeSnippet: String,
@@ -59,6 +61,10 @@ internal class FunctionInfo(val languageType: LanguageType,
     logger.info { "In $challengeName return type: $returnType invocations: $invocations computed answers: $correctAnswers" }
 
     validate()
+  }
+
+  val challengeId: ChallengeId by lazy {
+    ChallengeId(languageType.languageName, challengeGroup.groupName, challengeName)
   }
 
   fun placeHolder(): String {

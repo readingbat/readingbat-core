@@ -315,7 +315,7 @@ internal object ChallengePost : KLogging() {
       redis.del(challengeAnswersKey)
     }
 
-    user?.resetHistory(content.maxHistoryLength, funcInfo, languageName, groupName, challengeName, redis)
+    user?.resetHistory(funcInfo, languageName, groupName, challengeName, content.maxHistoryLength, redis)
 
     throw RedirectException("$path?$MSG=${"Answers cleared".encode()}")
   }
@@ -354,7 +354,7 @@ internal object ChallengePost : KLogging() {
       for (challenge in content.findGroup(languageName.toLanguageType(), groupName).challenges) {
         logger.info { "Clearing answers for ${challenge.challengeName}" }
         val funcInfo = challenge.funcInfo(content)
-        user.resetHistory(content.maxHistoryLength, funcInfo, languageName, groupName, challenge.challengeName, redis)
+        user.resetHistory(funcInfo, languageName, groupName, challenge.challengeName, content.maxHistoryLength, redis)
       }
     }
 

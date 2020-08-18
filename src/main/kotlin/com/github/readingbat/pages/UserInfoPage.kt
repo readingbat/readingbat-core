@@ -97,7 +97,7 @@ internal object UserInfoPage {
                   tr { td { +"Correct answers" }; td { +correctAnswers.size.toString() } }
                   tr { td { +"Likes/Dislikes" }; td { +likeDislikes.size.toString() } }
                   tr { td { +"Class Codes" }; td { +classCodes.joinToString(", ") } }
-                  tr { td { +"${idCnt} Session ${"Id".pluralize(idCnt)}" }; td { +browserSessions.joinToString(", ") } }
+                  tr { td { +"$idCnt Session ${"Id".pluralize(idCnt)}" }; td { +browserSessions.joinToString(", ") } }
                 }
               }
             }

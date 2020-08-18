@@ -211,7 +211,14 @@ class PythonChallenge(challengeGroup: ChallengeGroup<*>,
 
     logger.info { "$challengeName computed answers in $duration for: $correctAnswers" }
 
-    return FunctionInfo(languageType, challengeName, code, funcCode, invocations, returnType, correctAnswers)
+    return FunctionInfo(languageType,
+                        challengeGroup,
+                        challengeName,
+                        code,
+                        funcCode,
+                        invocations,
+                        returnType,
+                        correctAnswers)
   }
 
   override fun toString() = "PythonChallenge(packageName='$packageName', fileName='$fileName', returnType=$returnType)"
@@ -251,7 +258,14 @@ class JavaChallenge(challengeGroup: ChallengeGroup<*>,
     if (correctAnswers !is List<*>)
       throw InvalidConfigurationException("Invalid type returned for $challengeName")
 
-    return FunctionInfo(languageType, challengeName, code, funcCode, invocations, returnType, correctAnswers)
+    return FunctionInfo(languageType,
+                        challengeGroup,
+                        challengeName,
+                        code,
+                        funcCode,
+                        invocations,
+                        returnType,
+                        correctAnswers)
   }
 
   override fun toString() = "JavaChallenge(packageName='$packageName', fileName='$fileName')"
@@ -297,7 +311,14 @@ class KotlinChallenge(challengeGroup: ChallengeGroup<*>,
 
     logger.info { "$challengeName computed answers in $duration for: $correctAnswers" }
 
-    return FunctionInfo(languageType, challengeName, strippedCode, funcCode, invocations, returnType, correctAnswers)
+    return FunctionInfo(languageType,
+                        challengeGroup,
+                        challengeName,
+                        strippedCode,
+                        funcCode,
+                        invocations,
+                        returnType,
+                        correctAnswers)
   }
 
   override fun toString() = "KotlinChallenge(packageName='$packageName', fileName='$fileName', returnType=$returnType)"

@@ -49,6 +49,7 @@ import com.github.readingbat.server.GroupName.Companion.ANY_GROUP
 import com.github.readingbat.server.Invocation.Companion.ANY_INVOCATION
 import com.github.readingbat.server.LanguageName.Companion.ANY_LANGUAGE
 import com.github.readingbat.server.ResetId.Companion.EMPTY_RESET_ID
+import com.github.readingbat.server.WsEndoints.classTopicName
 import com.google.gson.Gson
 import mu.KLogging
 import redis.clients.jedis.Jedis
@@ -287,22 +288,23 @@ internal class User private constructor(val id: String, val browserSession: Brow
   }
 
   fun publishAnswers(classCode: ClassCode,
+                     challengeId: ChallengeId,
                      maxHistoryLength: Int,
                      complete: Boolean,
                      numCorrect: Int,
                      history: ChallengeHistory,
                      redis: Jedis) {
     // Publish to challenge dashboard
-    logger.debug { "Publishing user answers to $classCode for $this" }
+    logger.debug { "Publishing user answers to $classCode on $challengeId for $this" }
     val dashboardInfo = DashboardInfo(id, complete, numCorrect, maxHistoryLength, history)
-    redis.publish(classCode.value, gson.toJson(dashboardInfo))
+    redis.publish(classTopicName(classCode, challengeId.value), gson.toJson(dashboardInfo))
   }
 
-  fun resetHistory(maxHistoryLength: Int,
-                   funcInfo: FunctionInfo,
+  fun resetHistory(funcInfo: FunctionInfo,
                    languageName: LanguageName,
                    groupName: GroupName,
                    challengeName: ChallengeName,
+                   maxHistoryLength: Int,
                    redis: Jedis) {
     val classCode = fetchEnrolledClassCode(redis)
     val shouldPublish = shouldPublish(classCode, redis)
@@ -318,7 +320,7 @@ internal class User private constructor(val id: String, val browserSession: Brow
           redis.set(answerHistoryKey, gson.toJson(history))
 
           if (shouldPublish)
-            publishAnswers(classCode, maxHistoryLength, false, 0, history, redis)
+            publishAnswers(classCode, funcInfo.challengeId, maxHistoryLength, false, 0, history, redis)
         }
       }
   }
@@ -344,7 +346,7 @@ internal class User private constructor(val id: String, val browserSession: Brow
     // This is browser-id specific
     private const val PREVIOUS_TEACHER_CLASS_CODE_FIELD = "previous-teacher-class-code"
 
-    val gson = Gson()
+    internal val gson = Gson()
 
     fun String.toUser(browserSession: BrowserSession?) = User(this, browserSession)
 
@@ -514,7 +516,13 @@ internal class User private constructor(val id: String, val browserSession: Brow
           redis.set(answerHistoryKey, json)
 
           if (shouldPublish)
-            this?.publishAnswers(classCode, content.maxHistoryLength, complete, numCorrect, history, redis)
+            this?.publishAnswers(classCode,
+                                 funcInfo.challengeId,
+                                 content.maxHistoryLength,
+                                 complete,
+                                 numCorrect,
+                                 history,
+                                 redis)
         }
       }
     }

@@ -84,6 +84,7 @@ import com.github.readingbat.pages.PageCommon.bodyHeader
 import com.github.readingbat.pages.PageCommon.headDefault
 import com.github.readingbat.pages.PageCommon.rawHtml
 import com.github.readingbat.posts.ChallengeHistory
+import com.github.readingbat.server.ChallengeId
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
 import io.ktor.application.*
@@ -163,7 +164,7 @@ internal object ChallengePage : KLogging() {
           script { src = "$STATIC_ROOT/$languageName-prism.js" }
 
           if (activeClassCode.isEnabled && enrollees.isNotEmpty())
-            enableWebSockets(activeClassCode)
+            enableWebSockets(activeClassCode, funcInfo.challengeId)
         }
       }
 
@@ -270,7 +271,7 @@ internal object ChallengePage : KLogging() {
         this@displayQuestions.clearChallengeAnswerHistoryOption(user, browserSession, challenge)
     }
 
-  private fun BODY.enableWebSockets(classCode: ClassCode) {
+  private fun BODY.enableWebSockets(classCode: ClassCode, challengeId: ChallengeId) {
     script {
       rawHtml(
         """
@@ -280,8 +281,8 @@ internal object ChallengePage : KLogging() {
           else
             wshost = wshost.replace(/^http:/, 'ws:');
 
-          var wsurl = wshost + '$CHALLENGE_ENDPOINT/' + encodeURIComponent('$classCode');
-
+          var wsurl = wshost + '$CHALLENGE_ENDPOINT/'+encodeURIComponent('$classCode')+'/'+encodeURIComponent('$challengeId');
+ 
           var ws = new WebSocket(wsurl);
           
           ws.onopen = function (event) {

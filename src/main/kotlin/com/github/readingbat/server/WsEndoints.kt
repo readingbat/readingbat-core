@@ -27,6 +27,7 @@ import com.github.readingbat.misc.ClassCode
 import com.github.readingbat.misc.Constants.PING_CODE
 import com.github.readingbat.misc.Endpoints.CHALLENGE_ENDPOINT
 import com.github.readingbat.misc.Endpoints.CHALLENGE_GROUP_ENDPOINT
+import com.github.readingbat.misc.KeyConstants
 import com.github.readingbat.misc.User.Companion.gson
 import com.github.readingbat.posts.ChallengeHistory
 import io.ktor.http.cio.websocket.*
@@ -50,10 +51,14 @@ internal object WsEndoints : KLogging() {
   private const val LANGUAGE_NAME = "languageName"
   private const val GROUP_NAME = "groupName"
   private const val CLASS_CODE = "classCode"
+  private const val CHALLENGE_ID = "challengeId"
+
+  fun classTopicName(classCode: ClassCode, challengeId: String) =
+    listOf(classCode.value, challengeId).joinToString(KeyConstants.KEY_SEP)
 
   fun Routing.wsEndpoints(metrics: Metrics, content: () -> ReadingBatContent) {
 
-    webSocket("$CHALLENGE_ENDPOINT/{$CLASS_CODE}") {
+    webSocket("$CHALLENGE_ENDPOINT/{$CLASS_CODE}/{$CHALLENGE_ID}") {
       var desc = "unassigned"
       logger.info { "Called student answers websocket" }
 
@@ -64,8 +69,9 @@ internal object WsEndoints : KLogging() {
         try {
           val classCode = call.parameters[CLASS_CODE]?.let { ClassCode(it) }
             ?: throw InvalidPathException("Missing class code")
+          val challengeId = call.parameters[CHALLENGE_ID] ?: throw InvalidPathException("Missing challenge id")
 
-          desc = "$CHALLENGE_ENDPOINT/$classCode"
+          desc = "$CHALLENGE_ENDPOINT/$classCode/$challengeId"
           logger.info { "Opening student answers websocket for $desc" }
 
           incoming
@@ -95,12 +101,12 @@ internal object WsEndoints : KLogging() {
                 redis?.subscribe(object : JedisPubSub() {
                   override fun onMessage(channel: String?, message: String?) {
                     if (message.isNotNull()) {
+                      logger.info { "Sending data $message from $channel to $challengeId" }
                       metrics.wsStudentAnswerResponseCount.labels(agentLaunchId()).inc()
-                      logger.debug { "Sending data $message from $channel" }
                       runBlocking { outgoing.send(Frame.Text(message)) }
                     }
                   }
-                }, classCode.value)
+                }, classTopicName(classCode, challengeId))
               }
             }
         } finally {
