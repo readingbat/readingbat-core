@@ -29,6 +29,7 @@ import kotlin.time.milliseconds
 
 internal object SessionActivity : KLogging() {
 
+  // Activity is overkill, but we might want to eventually do something with browserSession value
   internal class Activity(val browserSession: BrowserSession) {
     val timestamp = AtomicReference(System.currentTimeMillis())
     val age get() = (System.currentTimeMillis() - timestamp.get()).milliseconds
