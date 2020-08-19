@@ -23,7 +23,8 @@ import com.github.pambrose.common.dsl.PrometheusDsl.summary
 import com.github.pambrose.common.metrics.SamplerGaugeCollector
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.agentLaunchId
-import kotlin.time.seconds
+import kotlin.time.hours
+import kotlin.time.minutes
 
 class Metrics {
 
@@ -143,19 +144,31 @@ class Metrics {
                           "Sources cache size",
                           labelNames = listOf(AGENT_ID),
                           labelValues = listOf(agentLaunchId()),
-                          data = { contentSource().sourcesMap.size.toDouble() })
+                          data = { contentSource().sourcesMapSize.toDouble() })
 
     SamplerGaugeCollector("content_cache_size",
                           "Content cache size",
                           labelNames = listOf(AGENT_ID),
                           labelValues = listOf(agentLaunchId()),
-                          data = { contentSource().contentMap.size.toDouble() })
+                          data = { contentSource().contentMapSize.toDouble() })
 
-    SamplerGaugeCollector("active_users_count",
-                          "Active users count",
+    SamplerGaugeCollector("active_users_60mins_count",
+                          "Active users in last 60 mins count",
                           labelNames = listOf(AGENT_ID),
                           labelValues = listOf(agentLaunchId()),
-                          data = { SessionActivity.activeSessions(10.seconds).toDouble() })
+                          data = { SessionActivity.activeSessions(1.hours).toDouble() })
+
+    SamplerGaugeCollector("active_users_15mins_count",
+                          "Active users in last 15 mins count",
+                          labelNames = listOf(AGENT_ID),
+                          labelValues = listOf(agentLaunchId()),
+                          data = { SessionActivity.activeSessions(15.minutes).toDouble() })
+
+    SamplerGaugeCollector("active_users_1min_count",
+                          "Active users in last 1 min count",
+                          labelNames = listOf(AGENT_ID),
+                          labelValues = listOf(agentLaunchId()),
+                          data = { SessionActivity.activeSessions(1.minutes).toDouble() })
   }
 
   suspend fun measureEndpointRequest(endpoint: String, func: suspend () -> Unit) {

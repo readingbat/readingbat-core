@@ -79,39 +79,38 @@ internal object JavaParse : KLogging() {
     return lines
   }
 
-  fun convertToScript(code: List<String>): String {
-    val scriptCode = mutableListOf<String>()
-    val varName = "answers"
-    var exprIndent = 0
-    var insideMain = false
+  fun convertToScript(code: List<String>) =
+    buildString {
+      val varName = "answers"
+      var exprIndent = 0
+      var insideMain = false
 
-    code.forEach { line ->
-      when {
-        line.contains(psvmRegex) -> {
-          insideMain = true
-          val publicIndent = line.indexOf("public ")
-          val indent = "".padStart(publicIndent)
-          scriptCode += indent + "public List<Object> $varName = new ArrayList<Object>();"
-          scriptCode += ""
-          scriptCode += indent + line.replace(psvmRegex, "public List<Object> getValue()")
+      code.forEach { line ->
+        when {
+          line.contains(psvmRegex) -> {
+            insideMain = true
+            val publicIndent = line.indexOf("public ")
+            val indent = "".padStart(publicIndent)
+            appendLine(indent + "public List<Object> $varName = new ArrayList<Object>();")
+            appendLine("")
+            appendLine(indent + line.replace(psvmRegex, "public List<Object> getValue()"))
+          }
+          insideMain && prefixRegex.any { line.contains(it) } -> {
+            val expr = line.substringBetween("(", ")")
+            exprIndent = max(0, prefixRegex.map { line.indexOf(it.pattern.substring(0, 6)) }.maxOrNull() ?: 0)
+            val str = "".padStart(exprIndent) + "$varName.add($expr);"
+            logger.debug { "Transformed:\n$line\nto:\n$str" }
+            appendLine(str)
+          }
+          insideMain && line.trimStart().startsWith("}") -> {
+            insideMain = false
+            appendLine("")
+            appendLine("".padStart(exprIndent) + "return $varName;")
+            appendLine(line)
+          }
+          else -> appendLine(line)
         }
-        insideMain && prefixRegex.any { line.contains(it) } -> {
-          val expr = line.substringBetween("(", ")")
-          exprIndent = max(0, prefixRegex.map { line.indexOf(it.pattern.substring(0, 6)) }.maxOrNull() ?: 0)
-          val str = "".padStart(exprIndent) + "$varName.add($expr);"
-          logger.debug { "Transformed:\n$line\nto:\n$str" }
-          scriptCode += str
-        }
-        insideMain && line.trimStart().startsWith("}") -> {
-          insideMain = false
-          scriptCode += ""
-          scriptCode += "".padStart(exprIndent) + "return $varName;"
-          scriptCode += line
-        }
-        else -> scriptCode += line
       }
+      appendLine("")
     }
-    scriptCode += ""
-    return scriptCode.joinToString("\n")
-  }
 }

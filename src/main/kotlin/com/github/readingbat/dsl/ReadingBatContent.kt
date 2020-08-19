@@ -34,7 +34,7 @@ import java.util.concurrent.ConcurrentHashMap
 @ReadingBatDslMarker
 class ReadingBatContent {
   // contentMap will prevent reading the same content multiple times
-  internal val contentMap = mutableMapOf<String, ReadingBatContent>()
+  private val contentMap = mutableMapOf<String, ReadingBatContent>()
   internal val sourcesMap = ConcurrentHashMap<Int, FunctionInfo>()
 
   internal val timeStamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("M/d/y H:m:ss"))
@@ -62,6 +62,9 @@ class ReadingBatContent {
 
   private val languageList by lazy { listOf(java, python, kotlin) }
   private val languageMap by lazy { languageList.map { it.languageType to it }.toMap() }
+
+  internal val sourcesMapSize get() = sourcesMap.size
+  internal val contentMapSize get() = contentMap.size
 
   internal fun hasLanguage(languageType: LanguageType) = languageMap.containsKey(languageType)
 

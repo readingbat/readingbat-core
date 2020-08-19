@@ -38,28 +38,26 @@ internal object PythonParse : KLogging() {
     return code.subList(lineNums.first(), lineNums.last() - 1).joinToString("\n").trimIndent()
   }
 
-  fun convertToPythonScript(code: List<String>): String {
-    val scriptCode = mutableListOf<String>()
-    var insideMain = false
-
-    code.forEach { line ->
-      when {
-        line.contains(defMainRegex) -> insideMain = true
-        insideMain -> {
-          // Skip everything after def main(): that does not have a print
-          if (line.contains(printPrefix)) {
-            val expr = line.substringBetween(printPrefix, ")")
-            val str = "$varName.add($expr)"
-            logger.debug { "Transformed: ${line.trim()} to: $str" }
-            scriptCode += str
+  fun convertToPythonScript(code: List<String>) =
+    buildString {
+      var insideMain = false
+      code.forEach { line ->
+        when {
+          line.contains(defMainRegex) -> insideMain = true
+          insideMain -> {
+            // Skip everything after def main(): that does not have a print
+            if (line.contains(printPrefix)) {
+              val expr = line.substringBetween(printPrefix, ")")
+              val str = "$varName.add($expr)"
+              logger.debug { "Transformed: ${line.trim()} to: $str" }
+              appendLine(str)
+            }
           }
+          else -> appendLine(line)
         }
-        else -> scriptCode += line
       }
+      appendLine("")
     }
-    scriptCode += ""
-    return scriptCode.joinToString("\n")
-  }
 
   fun extractPythonInvocations(code: String, start: Regex, end: Regex) =
     extractPythonInvocations(code.lines(), start, end)
