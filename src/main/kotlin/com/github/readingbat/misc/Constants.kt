@@ -17,6 +17,8 @@
 
 package com.github.readingbat.misc
 
+import com.github.readingbat.misc.Constants.STATIC
+
 internal object Constants {
   const val SESSION_ID = "sessionid"
   const val ICONS = "icons"
@@ -26,7 +28,8 @@ internal object Constants {
   const val BACK_PATH = "backPath"
   const val ROOT = "/"
   const val RESET = "/reset"
-  const val STATIC_ROOT = "/static"
+  const val STATIC = "static"
+  const val STATIC_ROOT = "/$STATIC"
   const val CHALLENGE_ROOT = "/content"
   const val PLAYGROUND_ROOT = "/playground"
   const val WHITE_CHECK = "white-check.jpg"
@@ -81,7 +84,7 @@ internal object Endpoints {
   const val PASSWORD_CHANGE_POST_ENDPOINT = "/password-change-post"
   const val PASSWORD_RESET_ENDPOINT = "/password-reset"
   const val PASSWORD_RESET_POST_ENDPOINT = "/password-reset-post"
-  const val CSS_ENDPOINT = "/styles.css"
+  const val CSS_ENDPOINT = "/$STATIC/styles.css"
   const val FAV_ICON_ENDPOINT = "/favicon.ico"
   const val CHALLENGE_ENDPOINT = "/challenge"
   const val CHALLENGE_GROUP_ENDPOINT = "/challenge-group"

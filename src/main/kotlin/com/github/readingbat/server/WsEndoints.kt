@@ -52,7 +52,7 @@ internal object WsEndoints : KLogging() {
   private const val CLASS_CODE = "classCode"
   private const val CHALLENGE_MD5 = "challengeMd5"
 
-  fun classTopicName(classCode: ClassCode, challengeMd5: String) = makeKey(classCode, challengeMd5)
+  fun classTopicName(classCode: ClassCode, challengeMd5: String) = keyOf(classCode, challengeMd5)
 
   fun Routing.wsEndpoints(metrics: Metrics, content: () -> ReadingBatContent) {
 

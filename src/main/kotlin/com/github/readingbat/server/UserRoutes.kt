@@ -272,14 +272,10 @@ internal fun Routing.userRoutes(metrics: Metrics, content: () -> ReadingBatConte
   }
 
   get(CSS_ENDPOINT) {
-    metrics.measureEndpointRequest(CSS_ENDPOINT) {
-      respondWith(CSS) { cssContent }
-    }
+    respondWith(CSS) { cssContent }
   }
 
   get(FAV_ICON_ENDPOINT) {
-    metrics.measureEndpointRequest(FAV_ICON_ENDPOINT) {
-      redirectTo { "$STATIC_ROOT/$ICONS/favicon.ico" }
-    }
+    redirectTo { "$STATIC_ROOT/$ICONS/favicon.ico" }
   }
 }

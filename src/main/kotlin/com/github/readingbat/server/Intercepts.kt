@@ -17,8 +17,11 @@
 
 package com.github.readingbat.server
 
+import com.github.pambrose.common.util.isNotNull
 import com.github.readingbat.misc.BrowserSession
+import com.github.readingbat.misc.Constants.STATIC
 import io.ktor.application.*
+import io.ktor.request.*
 import io.ktor.sessions.*
 
 internal fun Application.intercepts() {
@@ -32,8 +35,12 @@ internal fun Application.intercepts() {
 
   intercept(ApplicationCallPipeline.Features) {
     // Phase for features. Most features should intercept this phase
-    val sessionId = call.sessions.get<BrowserSession>()
-    println("${context.request.local.remoteHost} $sessionId")
+    if (!context.request.path().startsWith("/$STATIC/")) {
+      val sessionId = call.sessions.get<BrowserSession>()
+      ReadingBatServer.logger.info { "${context.request.local.remoteHost} $sessionId ${context.request.path()}" }
+      if (sessionId.isNotNull())
+        SessionActivity.markActivity(sessionId)
+    }
   }
 
   intercept(ApplicationCallPipeline.Call) {

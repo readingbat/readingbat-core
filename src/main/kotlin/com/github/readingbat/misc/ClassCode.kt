@@ -26,7 +26,7 @@ import com.github.readingbat.misc.KeyConstants.CLASS_INFO_KEY
 import com.github.readingbat.misc.KeyConstants.DESC_FIELD
 import com.github.readingbat.misc.KeyConstants.TEACHER_FIELD
 import com.github.readingbat.misc.User.Companion.toUser
-import com.github.readingbat.server.makeKey
+import com.github.readingbat.server.keyOf
 import io.ktor.http.*
 import redis.clients.jedis.Jedis
 import redis.clients.jedis.Transaction
@@ -34,8 +34,8 @@ import redis.clients.jedis.Transaction
 internal data class ClassCode(val value: String) {
   val isNotEnabled by lazy { value == DISABLED_MODE || value.isBlank() }
   val isEnabled by lazy { !isNotEnabled }
-  val classCodeEnrollmentKey by lazy { makeKey(CLASS_CODE_KEY, value) }
-  val classInfoKey by lazy { makeKey(CLASS_INFO_KEY, value) }
+  val classCodeEnrollmentKey by lazy { keyOf(CLASS_CODE_KEY, value) }
+  val classInfoKey by lazy { keyOf(CLASS_INFO_KEY, value) }
   val displayedValue get() = if (value == DISABLED_MODE) "" else value
 
   fun isValid(redis: Jedis) = redis.exists(classCodeEnrollmentKey) ?: false

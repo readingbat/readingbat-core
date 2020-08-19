@@ -203,7 +203,7 @@ inline class ChallengeName(val value: String) {
 }
 
 class ChallengeMd5(languageName: LanguageName, groupName: GroupName, challengeName: ChallengeName) {
-  val value = makeKey(languageName, groupName, challengeName).md5()
+  val value = keyOf(languageName, groupName, challengeName).md5()
   override fun toString() = value
 }
 
@@ -240,7 +240,7 @@ inline class Password(val value: String) {
 }
 
 inline class Email(val value: String) {
-  val userEmailKey get() = makeKey(USER_EMAIL_KEY, value)
+  val userEmailKey get() = keyOf(USER_EMAIL_KEY, value)
 
   fun isBlank() = value.isBlank()
   fun isNotBlank() = value.isNotBlank()
@@ -259,7 +259,7 @@ inline class ResetId(val value: String) {
   fun isNotBlank() = value.isNotBlank()
 
   // Maps resetId to username
-  val passwordResetKey get() = makeKey(KeyConstants.RESET_KEY, value)
+  val passwordResetKey get() = keyOf(KeyConstants.RESET_KEY, value)
 
   override fun toString() = value
 

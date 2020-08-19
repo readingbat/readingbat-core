@@ -23,6 +23,7 @@ import com.github.pambrose.common.dsl.PrometheusDsl.summary
 import com.github.pambrose.common.metrics.SamplerGaugeCollector
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.agentLaunchId
+import kotlin.time.seconds
 
 class Metrics {
 
@@ -149,6 +150,12 @@ class Metrics {
                           labelNames = listOf(AGENT_ID),
                           labelValues = listOf(agentLaunchId()),
                           data = { contentSource().contentMap.size.toDouble() })
+
+    SamplerGaugeCollector("active_users_count",
+                          "Active users count",
+                          labelNames = listOf(AGENT_ID),
+                          labelValues = listOf(agentLaunchId()),
+                          data = { SessionActivity.activeSessions(10.seconds).toDouble() })
   }
 
   suspend fun measureEndpointRequest(endpoint: String, func: suspend () -> Unit) {

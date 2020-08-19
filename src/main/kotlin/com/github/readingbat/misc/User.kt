@@ -58,19 +58,19 @@ import kotlin.contracts.contract
 
 internal class User private constructor(val id: String, val browserSession: BrowserSession?) {
 
-  private val userInfoKey by lazy { makeKey(USER_INFO_KEY, id) }
-  private val userInfoBrowserKey by lazy { makeKey(USER_INFO_BROWSER_KEY, id, browserSession?.id ?: "unassigned") }
-  private val userInfoBrowserQueryKey by lazy { makeKey(USER_INFO_BROWSER_KEY, id, "*") }
+  private val userInfoKey by lazy { keyOf(USER_INFO_KEY, id) }
+  private val userInfoBrowserKey by lazy { keyOf(USER_INFO_BROWSER_KEY, id, browserSession?.id ?: "unassigned") }
+  private val userInfoBrowserQueryKey by lazy { keyOf(USER_INFO_BROWSER_KEY, id, "*") }
   private val browserSpecificUserInfoKey by lazy {
     if (browserSession.isNull())
       logger.error { "NULL BROWSER SESSION VALUE" }
     if (browserSession.isNotNull()) userInfoBrowserKey else throw InvalidConfigurationException("Null browser session for $this")
   }
 
-  private val userClassesKey by lazy { makeKey(USER_CLASSES_KEY, id) }
+  private val userClassesKey by lazy { keyOf(USER_CLASSES_KEY, id) }
 
   // This key maps to a reset_id
-  private val userPasswordResetKey by lazy { makeKey(USER_RESET_KEY, id) }
+  private val userPasswordResetKey by lazy { keyOf(USER_RESET_KEY, id) }
 
   fun browserSessions(redis: Jedis) = redis.scanKeys(userInfoBrowserQueryKey).toList()
 
@@ -113,19 +113,19 @@ internal class User private constructor(val id: String, val browserSession: Brow
   fun deletePasswordResetKey(tx: Transaction): Response<Long> = tx.del(userPasswordResetKey)
 
   fun correctAnswersKey(languageName: LanguageName, groupName: GroupName, challengeName: ChallengeName) =
-    makeKey(CORRECT_ANSWERS_KEY, AUTH_KEY, id, languageName, groupName, challengeName)
+    keyOf(CORRECT_ANSWERS_KEY, AUTH_KEY, id, languageName, groupName, challengeName)
 
   private fun likeDislikeKey(names: ChallengeNames) =
     likeDislikeKey(names.languageName, names.groupName, names.challengeName)
 
   fun likeDislikeKey(languageName: LanguageName, groupName: GroupName, challengeName: ChallengeName) =
-    makeKey(LIKE_DISLIKE_KEY, AUTH_KEY, id, languageName, groupName, challengeName)
+    keyOf(LIKE_DISLIKE_KEY, AUTH_KEY, id, languageName, groupName, challengeName)
 
   private fun challengeAnswersKey(names: ChallengeNames) =
     challengeAnswersKey(names.languageName, names.groupName, names.challengeName)
 
   private fun challengeAnswersKey(languageName: LanguageName, groupName: GroupName, challengeName: ChallengeName) =
-    makeKey(CHALLENGE_ANSWERS_KEY, AUTH_KEY, id, languageName, groupName, challengeName)
+    keyOf(CHALLENGE_ANSWERS_KEY, AUTH_KEY, id, languageName, groupName, challengeName)
 
   private fun answerHistoryKey(names: ChallengeNames, invocation: Invocation) =
     answerHistoryKey(names.languageName, names.groupName, names.challengeName, invocation)
@@ -134,7 +134,7 @@ internal class User private constructor(val id: String, val browserSession: Brow
                        groupName: GroupName,
                        challengeName: ChallengeName,
                        invocation: Invocation) =
-    makeKey(ANSWER_HISTORY_KEY, AUTH_KEY, id, languageName, groupName, challengeName, invocation)
+    keyOf(ANSWER_HISTORY_KEY, AUTH_KEY, id, languageName, groupName, challengeName, invocation)
 
   private fun assignEnrolledClassCode(classCode: ClassCode, tx: Transaction): Response<Long> =
     tx.hset(userInfoKey, ENROLLED_CLASS_CODE_FIELD, classCode.value)

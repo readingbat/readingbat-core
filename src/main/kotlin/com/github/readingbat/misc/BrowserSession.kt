@@ -32,19 +32,19 @@ internal data class BrowserSession(val id: String, val created: Long = Instant.n
     correctAnswersKey(names.languageName, names.groupName, names.challengeName)
 
   fun correctAnswersKey(languageName: LanguageName, groupName: GroupName, challengeName: ChallengeName) =
-    makeKey(CORRECT_ANSWERS_KEY, NO_AUTH_KEY, id, languageName, groupName, challengeName)
+    keyOf(CORRECT_ANSWERS_KEY, NO_AUTH_KEY, id, languageName, groupName, challengeName)
 
   fun likeDislikeKey(names: ChallengeNames) =
     likeDislikeKey(names.languageName, names.groupName, names.challengeName)
 
   fun likeDislikeKey(languageName: LanguageName, groupName: GroupName, challengeName: ChallengeName) =
-    makeKey(LIKE_DISLIKE_KEY, NO_AUTH_KEY, id, languageName, groupName, challengeName)
+    keyOf(LIKE_DISLIKE_KEY, NO_AUTH_KEY, id, languageName, groupName, challengeName)
 
   fun challengeAnswerKey(names: ChallengeNames) =
     challengeAnswerKey(names.languageName, names.groupName, names.challengeName)
 
   fun challengeAnswerKey(languageName: LanguageName, groupName: GroupName, challengeName: ChallengeName) =
-    makeKey(CHALLENGE_ANSWERS_KEY, NO_AUTH_KEY, id, languageName, groupName, challengeName)
+    keyOf(CHALLENGE_ANSWERS_KEY, NO_AUTH_KEY, id, languageName, groupName, challengeName)
 
   fun answerHistoryKey(names: ChallengeNames, invocation: Invocation) =
     answerHistoryKey(names.languageName, names.groupName, names.challengeName, invocation)
@@ -53,5 +53,5 @@ internal data class BrowserSession(val id: String, val created: Long = Instant.n
                                groupName: GroupName,
                                challengeName: ChallengeName,
                                invocation: Invocation) =
-    makeKey(ANSWER_HISTORY_KEY, NO_AUTH_KEY, id, languageName, groupName, challengeName, invocation)
+    keyOf(ANSWER_HISTORY_KEY, NO_AUTH_KEY, id, languageName, groupName, challengeName, invocation)
 }
