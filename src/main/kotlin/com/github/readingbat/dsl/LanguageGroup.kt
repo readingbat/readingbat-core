@@ -104,7 +104,7 @@ class LanguageGroup<T : Challenge>(internal val content: ReadingBatContent,
   operator fun get(groupName: String, challengeName: String): T = findChallenge(groupName, challengeName)
 
   override fun toString() =
-    "LanguageGroup(languageType=$languageType, srcPrefix='$srcPath', challengeGroups=$challengeGroups)"
+    "LanguageGroup(languageType=$languageType, srcPath='$srcPath', challengeGroups=$challengeGroups)"
 
   companion object {
     internal val defaultContentRoot =
