@@ -37,7 +37,7 @@ internal fun Application.intercepts() {
     // Phase for features. Most features should intercept this phase
     if (!context.request.path().startsWith("/$STATIC/")) {
       val sessionId = call.sessions.get<BrowserSession>()
-      ReadingBatServer.logger.info { "${context.request.local.remoteHost} $sessionId ${context.request.path()}" }
+      //ReadingBatServer.logger.info { "${context.request.local.remoteHost} $sessionId ${context.request.path()}" }
       if (sessionId.isNotNull())
         SessionActivity.markActivity(sessionId)
     }

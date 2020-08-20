@@ -97,9 +97,8 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
     }
   }
 
-  internal fun funcInfo(content: ReadingBatContent): FunctionInfo {
-
-    return if (repo.remote) {
+  internal fun funcInfo(content: ReadingBatContent) =
+    if (repo.remote) {
       content.sourcesMap
         .computeIfAbsent(challengeId) {
           fun fetchCode(): String {
@@ -131,7 +130,6 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
       else
         parseCodeFunc.invoke()
     }
-  }
 
   internal open fun validate() {
     if (challengeName.value.isEmpty())
