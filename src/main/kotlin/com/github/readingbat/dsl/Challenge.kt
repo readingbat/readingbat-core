@@ -41,7 +41,6 @@ import com.github.readingbat.dsl.parse.PythonParse.extractPythonInvocations
 import com.github.readingbat.dsl.parse.PythonParse.ifMainEndRegex
 import com.github.readingbat.misc.PageUtils.pathOf
 import com.github.readingbat.server.ChallengeName
-import com.github.readingbat.server.ReadingBatServer
 import com.vladsch.flexmark.html.HtmlRenderer
 import com.vladsch.flexmark.parser.Parser
 import com.vladsch.flexmark.util.data.MutableDataSet
@@ -105,7 +104,7 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
         .computeIfAbsent(challengeId) {
           fun fetchCode(): String {
             val path = pathOf((repo as AbstractRepo).rawSourcePrefix, branchName, srcPath, fqName)
-            val timer = ReadingBatServer.metrics.challengeRemoteReadDuration.labels(agentLaunchId()).startTimer()
+            val timer = metrics.challengeRemoteReadDuration.labels(agentLaunchId()).startTimer()
             try {
               val (code, dur) = measureTimedValue { URL(path).readText() }
               logger.info { """Fetched "$groupName/$fileName" in: $dur from: $path""" }

@@ -39,6 +39,8 @@ import com.github.readingbat.pages.ChallengePage.challengePage
 import com.github.readingbat.pages.LanguageGroupPage.languageGroupPage
 import com.github.readingbat.pages.PlaygroundPage.playgroundPage
 import com.github.readingbat.server.AdminRoutes.assignBrowserSession
+import com.github.readingbat.server.Metrics.Companion.GET
+import com.github.readingbat.server.Metrics.Companion.POST
 import com.github.readingbat.server.ServerUtils.fetchUser
 import io.ktor.auth.*
 import io.ktor.http.*
@@ -46,39 +48,42 @@ import io.ktor.locations.*
 import io.ktor.routing.*
 
 internal object Locations {
+  private const val trueStr = true.toString()
+  private const val falseStr = false.toString()
+
   fun Routing.locations(metrics: Metrics, content: () -> ReadingBatContent) {
     get<Language> { languageLoc ->
-      metrics.languageGroupRequestCount.labels(agentLaunchId(), languageLoc.languageTypeStr, false.toString()).inc()
+      metrics.languageGroupRequestCount.labels(agentLaunchId(), GET, languageLoc.languageTypeStr, falseStr).inc()
       language(content.invoke(), languageLoc, false)
     }
     get<Language.Group> { groupLoc ->
-      metrics.challengeGroupRequestCount.labels(agentLaunchId(), groupLoc.languageTypeStr, false.toString()).inc()
+      metrics.challengeGroupRequestCount.labels(agentLaunchId(), GET, groupLoc.languageTypeStr, falseStr).inc()
       group(content.invoke(), groupLoc, false)
     }
     get<Language.Group.Challenge> { challengeLoc ->
-      metrics.challengeRequestCount.labels(agentLaunchId(), challengeLoc.languageTypeStr, false.toString()).inc()
+      metrics.challengeRequestCount.labels(agentLaunchId(), GET, challengeLoc.languageTypeStr, falseStr).inc()
       challenge(content.invoke(), challengeLoc, false)
     }
     get<PlaygroundRequest> { request ->
-      metrics.playgroundRequestCount.labels(agentLaunchId(), false.toString()).inc()
+      metrics.playgroundRequestCount.labels(agentLaunchId(), GET, falseStr).inc()
       playground(content.invoke(), request, false)
     }
 
     authenticate(FORM) {
       post<Language> { languageLoc ->
-        metrics.languageGroupRequestCount.labels(agentLaunchId(), languageLoc.languageTypeStr, true.toString()).inc()
+        metrics.languageGroupRequestCount.labels(agentLaunchId(), POST, languageLoc.languageTypeStr, trueStr).inc()
         language(content.invoke(), languageLoc, true)
       }
       post<Language.Group> { groupLoc ->
-        metrics.challengeGroupRequestCount.labels(agentLaunchId(), groupLoc.languageTypeStr, true.toString()).inc()
+        metrics.challengeGroupRequestCount.labels(agentLaunchId(), POST, groupLoc.languageTypeStr, trueStr).inc()
         group(content.invoke(), groupLoc, true)
       }
       post<Language.Group.Challenge> { challengeLoc ->
-        metrics.challengeRequestCount.labels(agentLaunchId(), challengeLoc.languageTypeStr, true.toString()).inc()
+        metrics.challengeRequestCount.labels(agentLaunchId(), POST, challengeLoc.languageTypeStr, trueStr).inc()
         challenge(content.invoke(), challengeLoc, true)
       }
       post<PlaygroundRequest> { request ->
-        metrics.playgroundRequestCount.labels(agentLaunchId(), true.toString()).inc()
+        metrics.playgroundRequestCount.labels(agentLaunchId(), POST, trueStr).inc()
         playground(content.invoke(), request, true)
       }
     }

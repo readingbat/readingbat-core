@@ -34,7 +34,7 @@ import java.util.concurrent.ConcurrentHashMap
 @ReadingBatDslMarker
 class ReadingBatContent {
   // contentMap will prevent reading the same content multiple times
-  private val contentMap = mutableMapOf<String, ReadingBatContent>()
+  private val contentMap = ConcurrentHashMap<String, ReadingBatContent>()
   internal val sourcesMap = ConcurrentHashMap<Int, FunctionInfo>()
 
   internal val timeStamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("M/d/y H:m:ss"))

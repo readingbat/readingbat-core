@@ -28,6 +28,7 @@ import kotlin.time.minutes
 
 class Metrics {
 
+  //  /reset call count
   val contentLoadedCount =
     counter {
       name("content_loaded_count")
@@ -35,34 +36,39 @@ class Metrics {
       labelNames(AGENT_ID)
     }
 
-  val challengeRequestCount =
-    counter {
-      name("challenge_request_count")
-      help("Challenge request count")
-      labelNames(AGENT_ID, LANG_TYPE, AUTHENTICATED)
-    }
-
-  val challengeGroupRequestCount =
-    counter {
-      name("challenge_group_request_count")
-      help("Challenge group request count")
-      labelNames(AGENT_ID, LANG_TYPE, AUTHENTICATED)
-    }
-
+  // Language page count
   val languageGroupRequestCount =
     counter {
       name("language_group_request_count")
       help("Language group request count")
-      labelNames(AGENT_ID, LANG_TYPE, AUTHENTICATED)
+      labelNames(AGENT_ID, HTTP_METHOD, LANG_TYPE, AUTHENTICATED)
     }
 
+  // Challenge group page count
+  val challengeGroupRequestCount =
+    counter {
+      name("challenge_group_request_count")
+      help("Challenge group request count")
+      labelNames(AGENT_ID, HTTP_METHOD, LANG_TYPE, AUTHENTICATED)
+    }
+
+  // Challenge page count
+  val challengeRequestCount =
+    counter {
+      name("challenge_request_count")
+      help("Challenge request count")
+      labelNames(AGENT_ID, HTTP_METHOD, LANG_TYPE, AUTHENTICATED)
+    }
+
+  // Playground page count
   val playgroundRequestCount =
     counter {
       name("playground_request_count")
       help("Playground group request count")
-      labelNames(AGENT_ID, AUTHENTICATED)
+      labelNames(AGENT_ID, HTTP_METHOD, AUTHENTICATED)
     }
 
+  // Page generation time
   private val endpointRequestDuration =
     summary {
       name("endpoint_request_duration")
@@ -70,6 +76,7 @@ class Metrics {
       labelNames(AGENT_ID, ENDPOINT_NAME)
     }
 
+  //
   val challengeRemoteReadDuration =
     summary {
       name("challenge_remote_read_duration_seconds")
@@ -152,6 +159,12 @@ class Metrics {
                           labelValues = listOf(agentLaunchId()),
                           data = { contentSource().contentMapSize.toDouble() })
 
+    SamplerGaugeCollector("active_users_map_size",
+                          "Active users map size",
+                          labelNames = listOf(AGENT_ID),
+                          labelValues = listOf(agentLaunchId()),
+                          data = { SessionActivity.activityMapSize.toDouble() })
+
     SamplerGaugeCollector("active_users_60mins_count",
                           "Active users in last 60 mins count",
                           labelNames = listOf(AGENT_ID),
@@ -169,12 +182,6 @@ class Metrics {
                           labelNames = listOf(AGENT_ID),
                           labelValues = listOf(agentLaunchId()),
                           data = { SessionActivity.activeSessions(1.minutes).toDouble() })
-
-    SamplerGaugeCollector("active_users_map_size",
-                          "Active users map size",
-                          labelNames = listOf(AGENT_ID),
-                          labelValues = listOf(agentLaunchId()),
-                          data = { SessionActivity.activityMapSize.toDouble() })
   }
 
   suspend fun measureEndpointRequest(endpoint: String, func: suspend () -> Unit) {
@@ -188,8 +195,12 @@ class Metrics {
 
   companion object {
     private const val AGENT_ID = "agent_id"
+    private const val HTTP_METHOD = "http_method"
     private const val LANG_TYPE = "lang_type"
     private const val ENDPOINT_NAME = "endpoint_name"
     private const val AUTHENTICATED = "authenticated"
+
+    const val GET = "get"
+    const val POST = "post"
   }
 }
