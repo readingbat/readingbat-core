@@ -63,7 +63,7 @@ class Metrics {
       labelNames(AGENT_ID, AUTHENTICATED)
     }
 
-  val endpointRequestDuration =
+  private val endpointRequestDuration =
     summary {
       name("endpoint_request_duration")
       help("Endpoint request duration")
@@ -169,6 +169,12 @@ class Metrics {
                           labelNames = listOf(AGENT_ID),
                           labelValues = listOf(agentLaunchId()),
                           data = { SessionActivity.activeSessions(1.minutes).toDouble() })
+
+    SamplerGaugeCollector("active_users_map_size",
+                          "Active users map size",
+                          labelNames = listOf(AGENT_ID),
+                          labelValues = listOf(agentLaunchId()),
+                          data = { SessionActivity.activityMapSize.toDouble() })
   }
 
   suspend fun measureEndpointRequest(endpoint: String, func: suspend () -> Unit) {

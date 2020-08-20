@@ -32,7 +32,7 @@ import mu.KLogging
 
 typealias PipelineCall = PipelineContext<Unit, ApplicationCall>
 
-internal fun keyOf(vararg keys: Any) = keys.map { it.toString() }.joinToString(KEY_SEP)
+internal fun keyOf(vararg keys: Any) = keys.joinToString(KEY_SEP) { it.toString() }
 
 internal object ServerUtils : KLogging() {
   fun Application.property(name: String, default: String = "", warn: Boolean = false) =

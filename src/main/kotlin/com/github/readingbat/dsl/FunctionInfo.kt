@@ -26,7 +26,7 @@ import com.github.readingbat.server.Invocation
 import mu.KLogging
 
 internal class FunctionInfo(val languageType: LanguageType,
-                            val challengeGroup: ChallengeGroup<*>,
+                            private val challengeGroup: ChallengeGroup<*>,
                             val challengeName: ChallengeName,
                             val originalCode: String,
                             val codeSnippet: String,

@@ -31,7 +31,7 @@ internal object SessionActivity : KLogging() {
 
   // Activity is overkill, but we might want to eventually do something with browserSession value
   internal class Activity(val browserSession: BrowserSession) {
-    val timestamp = AtomicReference(System.currentTimeMillis())
+    private val timestamp = AtomicReference(System.currentTimeMillis())
     val age get() = (System.currentTimeMillis() - timestamp.get()).milliseconds
 
     fun update() {
@@ -45,6 +45,8 @@ internal object SessionActivity : KLogging() {
 
   private val activityMap = ConcurrentHashMap<String, Activity>()
   private val timer = Timer()
+
+  val activityMapSize get() = activityMap.size
 
   init {
     timer.schedule(delay.toLongMilliseconds(), period.toLongMilliseconds()) {
