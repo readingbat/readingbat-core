@@ -43,6 +43,8 @@ import kotlinx.html.stream.createHTML
 import kotlinx.html.table
 import kotlinx.html.td
 import kotlinx.html.tr
+import kotlin.time.hours
+import kotlin.time.minutes
 
 internal object ConfigPage {
 
@@ -128,6 +130,24 @@ internal object ConfigPage {
               tr {
                 td { +"Agent Version: " }
                 td { +if (isAgentEnabled()) Agent::class.versionDesc() else "disabled" }
+              }
+            }
+          }
+
+          h3 { +"Active Users" }
+          div(classes = INDENT_1EM) {
+            table {
+              tr {
+                td { +"Active users in the last minute: " }
+                td { +SessionActivity.activeSessions(1.minutes).toString() }
+              }
+              tr {
+                td { +"Active users in the last 15 minutes: " }
+                td { +SessionActivity.activeSessions(15.minutes).toString() }
+              }
+              tr {
+                td { +"Active users in the last hour: " }
+                td { +SessionActivity.activeSessions(1.hours).toString() }
               }
             }
           }
