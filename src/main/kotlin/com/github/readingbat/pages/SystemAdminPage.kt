@@ -20,8 +20,8 @@ package com.github.readingbat.pages
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.isProduction
 import com.github.readingbat.misc.Constants.RETURN_PATH
+import com.github.readingbat.misc.Endpoints.RESET_CACHE_ENDPOINT
 import com.github.readingbat.misc.Endpoints.RESET_CONTENT_ENDPOINT
-import com.github.readingbat.misc.Endpoints.RESET_MAPS_ENDPOINT
 import com.github.readingbat.misc.Message
 import com.github.readingbat.misc.Message.Companion.EMPTY_MESSAGE
 import com.github.readingbat.misc.User
@@ -87,9 +87,9 @@ internal object SystemAdminPage : KLogging() {
             }
 
             p {
-              this@body.button("Reset ReadingBat Maps",
-                               RESET_MAPS_ENDPOINT,
-                               "Are you sure you want to reset the maps?")
+              this@body.button("Reset ReadingBat Challenge Cache",
+                               RESET_CACHE_ENDPOINT,
+                               "Are you sure you want to reset the challenge cache?")
             }
           }
 

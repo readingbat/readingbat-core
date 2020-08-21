@@ -53,8 +53,8 @@ import com.github.readingbat.misc.Endpoints.PASSWORD_CHANGE_POST_ENDPOINT
 import com.github.readingbat.misc.Endpoints.PASSWORD_RESET_ENDPOINT
 import com.github.readingbat.misc.Endpoints.PASSWORD_RESET_POST_ENDPOINT
 import com.github.readingbat.misc.Endpoints.PRIVACY_ENDPOINT
+import com.github.readingbat.misc.Endpoints.RESET_CACHE_ENDPOINT
 import com.github.readingbat.misc.Endpoints.RESET_CONTENT_ENDPOINT
-import com.github.readingbat.misc.Endpoints.RESET_MAPS_ENDPOINT
 import com.github.readingbat.misc.Endpoints.SYSTEM_ADMIN_ENDPOINT
 import com.github.readingbat.misc.Endpoints.TEACHER_PREFS_ENDPOINT
 import com.github.readingbat.misc.Endpoints.TEACHER_PREFS_POST_ENDPOINT
@@ -163,9 +163,9 @@ internal fun Routing.userRoutes(metrics: Metrics,
     redirectTo { "$MESSAGE_ENDPOINT?$MSG=$msg" }
   }
 
-  get(RESET_MAPS_ENDPOINT, metrics) {
+  get(RESET_CACHE_ENDPOINT, metrics) {
     val msg =
-      authenticatedAction(RESET_MAPS_ENDPOINT) {
+      authenticatedAction(RESET_CACHE_ENDPOINT) {
         content.invoke().clearSourcesMap().let {
           "Content maps reset".also { ReadingBatServer.logger.info { it } }
         }
