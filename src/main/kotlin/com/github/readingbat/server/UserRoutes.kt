@@ -27,6 +27,7 @@ import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
 import com.github.readingbat.misc.Constants.ICONS
 import com.github.readingbat.misc.Constants.RESET
 import com.github.readingbat.misc.Constants.RESET_ID
+import com.github.readingbat.misc.Constants.RESET_MAPS
 import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.Constants.ROOT
 import com.github.readingbat.misc.Constants.STATIC_ROOT
@@ -87,7 +88,9 @@ import io.ktor.routing.*
 import io.ktor.sessions.*
 import redis.clients.jedis.Jedis
 
-internal fun Routing.userRoutes(metrics: Metrics, content: () -> ReadingBatContent, resetFunc: () -> Unit) {
+internal fun Routing.userRoutes(metrics: Metrics,
+                                content: () -> ReadingBatContent,
+                                resetContentFunc: () -> Unit) {
 
   suspend fun PipelineCall.respondWithDbmsCheck(block: (redis: Jedis) -> String) =
     try {
@@ -125,7 +128,14 @@ internal fun Routing.userRoutes(metrics: Metrics, content: () -> ReadingBatConte
 
   get(RESET) {
     metrics.measureEndpointRequest(RESET) {
-      resetFunc.invoke()
+      resetContentFunc.invoke()
+      redirectTo { defaultLanguageTab(content.invoke()) }
+    }
+  }
+
+  get(RESET_MAPS) {
+    metrics.measureEndpointRequest(RESET_MAPS) {
+      content.invoke().clearSourcesMap()
       redirectTo { defaultLanguageTab(content.invoke()) }
     }
   }

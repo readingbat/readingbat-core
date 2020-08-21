@@ -102,12 +102,12 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
       content.sourcesMap
         .computeIfAbsent(challengeId) {
           fun fetchCode(): String {
-            val path = pathOf((repo as AbstractRepo).rawSourcePrefix, branchName, srcPath, fqName)
             val timer = metrics.challengeRemoteReadDuration.labels(agentLaunchId()).startTimer()
-            try {
+            return try {
+              val path = pathOf((repo as AbstractRepo).rawSourcePrefix, branchName, srcPath, fqName)
               val (code, dur) = measureTimedValue { URL(path).readText() }
               logger.info { """Fetched "$groupName/$fileName" in: $dur from: $path""" }
-              return code
+              code
             } finally {
               timer.observeDuration()
             }
@@ -118,17 +118,17 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
         }
     }
     else {
-      val parseCodeFunc = {
+      fun parseCodeFunc(): FunctionInfo {
         val fs = repo as FileSystemSource
         val file = fs.file(pathOf(fs.pathPrefix, srcPath, packageName, fileName))
         logger.info { """Fetching "${file.fileName}" from filesystem""" }
-        measureParsing(file.content)
+        return measureParsing(file.content)
       }
 
       if (content.cacheChallenges)
-        content.sourcesMap.computeIfAbsent(challengeId) { parseCodeFunc.invoke() }
+        content.sourcesMap.computeIfAbsent(challengeId) { parseCodeFunc() }
       else
-        parseCodeFunc.invoke()
+        parseCodeFunc()
     }
 
   internal open fun validate() {

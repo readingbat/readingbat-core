@@ -28,6 +28,7 @@ internal object Constants {
   const val BACK_PATH = "backPath"
   const val ROOT = "/"
   const val RESET = "/reset"
+  const val RESET_MAPS = "/reset-maps"
   const val STATIC = "static"
   const val STATIC_ROOT = "/$STATIC"
   const val CHALLENGE_ROOT = "/content"

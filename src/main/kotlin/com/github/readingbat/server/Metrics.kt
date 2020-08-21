@@ -76,7 +76,15 @@ class Metrics {
       labelNames(AGENT_ID, ENDPOINT_NAME)
     }
 
-  //
+  // Time spent reading github directory contents
+  val githubDirectoryReadDuration =
+    summary {
+      name("github_directory_read_duration_seconds")
+      help("GitHub directory read duration in seconds")
+      labelNames(AGENT_ID)
+    }
+
+  // Time to read file from github
   val challengeRemoteReadDuration =
     summary {
       name("challenge_remote_read_duration_seconds")
@@ -84,18 +92,12 @@ class Metrics {
       labelNames(AGENT_ID)
     }
 
+  // Time to parse a program by language
   val challengeParseDuration =
     summary {
       name("challenge_parse_duration_seconds")
       help("Challenge parse duration in seconds")
       labelNames(AGENT_ID, LANG_TYPE)
-    }
-
-  val githubDirectoryReadDuration =
-    summary {
-      name("github_directory_read_duration_seconds")
-      help("GitHub directory read duration in seconds")
-      labelNames(AGENT_ID)
     }
 
   val wsStudentAnswerCount =

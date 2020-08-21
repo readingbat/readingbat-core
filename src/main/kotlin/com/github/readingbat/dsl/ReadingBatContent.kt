@@ -37,6 +37,22 @@ class ReadingBatContent {
   private val contentMap = ConcurrentHashMap<String, ReadingBatContent>()
   internal val sourcesMap = ConcurrentHashMap<Int, FunctionInfo>()
 
+  /*
+  fun main() {
+    val graphs =
+      CacheBuilder.newBuilder()
+        .maximumSize(1000)
+        .expireAfterWrite(10, TimeUnit.MINUTES)
+        .removalListener(RemovalListener<Int, FunctionInfo>())
+        .build(
+          object : CacheLoader<Int?, FunctionInfo?>() {
+            override fun load(key: Int?): FunctionInfo? {
+              return null//createExpensiveGraph(key)
+            }
+          })
+  }
+*/
+
   internal val timeStamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("M/d/y H:m:ss"))
 
   internal var urlPrefix = ""
@@ -65,6 +81,10 @@ class ReadingBatContent {
 
   internal val sourcesMapSize get() = sourcesMap.size
   internal val contentMapSize get() = contentMap.size
+
+  internal fun clearContentMap() = contentMap.clear()
+
+  internal fun clearSourcesMap() = sourcesMap.clear()
 
   internal fun hasLanguage(languageType: LanguageType) = languageMap.containsKey(languageType)
 

@@ -105,7 +105,7 @@ internal fun Application.assignContentDsl(fileName: String, variableName: String
         ktorPort = property("ktor.deployment.port", "0").toInt()
         val watchVal = environment.config.propertyOrNull("ktor.deployment.watch")?.getList() ?: emptyList()
         ktorWatch = if (watchVal.isNotEmpty()) watchVal.toString() else "unassigned"
-      })
+      }.apply { clearContentMap() })
   ReadingBatServer.metrics.contentLoadedCount.labels(agentLaunchId()).inc()
 }
 
