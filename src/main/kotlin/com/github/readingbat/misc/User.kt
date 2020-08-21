@@ -474,15 +474,16 @@ internal class User private constructor(val id: String, val browserSession: Brow
       return user
     }
 
-    fun User?.saveChallengeAnswers(content: ReadingBatContent,
+    fun User?.saveChallengeAnswers(browserSession: BrowserSession?,
+                                   content: ReadingBatContent,
                                    names: ChallengeNames,
                                    paramMap: Map<String, String>,
                                    funcInfo: FunctionInfo,
                                    userResponses: List<Map.Entry<String, List<String>>>,
                                    results: List<ChallengeResults>,
                                    redis: Jedis) {
-      val correctAnswersKey = correctAnswersKey(this?.browserSession, names)
-      val challengeAnswerKey = challengeAnswersKey(this?.browserSession, names)
+      val correctAnswersKey = correctAnswersKey(browserSession, names)
+      val challengeAnswerKey = challengeAnswersKey(browserSession, names)
 
       val complete = results.all { it.correct }
       val numCorrect = results.count { it.correct }
@@ -511,7 +512,8 @@ internal class User private constructor(val id: String, val browserSession: Brow
 
       // Save the history of each answer on a per-invocation basis
       for (result in results) {
-        val answerHistoryKey = answerHistoryKey(this?.browserSession, names, result.invocation)
+        val answerHistoryKey = answerHistoryKey(browserSession, names, result.invocation)
+        println("Answer key: $answerHistoryKey")
         if (answerHistoryKey.isNotEmpty()) {
           val history =
             gson.fromJson(redis[answerHistoryKey], ChallengeHistory::class.java) ?: ChallengeHistory(result.invocation)
