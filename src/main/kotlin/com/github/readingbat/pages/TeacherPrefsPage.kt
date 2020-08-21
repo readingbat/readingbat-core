@@ -18,14 +18,10 @@
 package com.github.readingbat.pages
 
 import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.dsl.isProduction
 import com.github.readingbat.misc.CSSNames.INDENT_2EM
 import com.github.readingbat.misc.ClassCode
-import com.github.readingbat.misc.Constants.ADMIN_USERS
 import com.github.readingbat.misc.Constants.LABEL_WIDTH
 import com.github.readingbat.misc.Constants.RETURN_PATH
-import com.github.readingbat.misc.Endpoints.RESET_CONTENT_ENDPOINT
-import com.github.readingbat.misc.Endpoints.RESET_MAPS_ENDPOINT
 import com.github.readingbat.misc.Endpoints.TEACHER_PREFS_ENDPOINT
 import com.github.readingbat.misc.Endpoints.TEACHER_PREFS_POST_ENDPOINT
 import com.github.readingbat.misc.FormFields
@@ -44,7 +40,6 @@ import com.github.readingbat.misc.isValidUser
 import com.github.readingbat.pages.HelpAndLogin.helpAndLogin
 import com.github.readingbat.pages.PageCommon.backLink
 import com.github.readingbat.pages.PageCommon.bodyTitle
-import com.github.readingbat.pages.PageCommon.button
 import com.github.readingbat.pages.PageCommon.clickButtonScript
 import com.github.readingbat.pages.PageCommon.displayMessage
 import com.github.readingbat.pages.PageCommon.headDefault
@@ -122,22 +117,6 @@ internal object TeacherPrefsPage : KLogging() {
 
           createClass(defaultClassDesc)
           displayClasses(user, activeClassCode, redis)
-
-          if (!isProduction() || user.email(redis).value in ADMIN_USERS) {
-            h2 { +"ReadingBat System Admin" }
-
-            p {
-              this@body.button("Reset ReadingBat Content",
-                               RESET_CONTENT_ENDPOINT,
-                               "Are you sure you want to reset the content? (This can take a while)")
-            }
-
-            p {
-              this@body.button("Reset ReadingBat Maps",
-                               RESET_MAPS_ENDPOINT,
-                               "Are you sure you want to reset the maps?")
-            }
-          }
 
           privacyStatement(TEACHER_PREFS_ENDPOINT, returnPath)
 

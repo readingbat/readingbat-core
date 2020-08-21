@@ -39,10 +39,14 @@ import com.github.readingbat.misc.Message.Companion.EMPTY_MESSAGE
 import com.github.readingbat.misc.PageUtils.pathOf
 import com.github.readingbat.misc.User
 import com.github.readingbat.pages.HelpAndLogin.helpAndLogin
+import com.github.readingbat.server.Metrics
 import com.github.readingbat.server.PipelineCall
 import io.ktor.application.*
 import io.ktor.http.*
 import io.ktor.http.ContentType.Text.CSS
+import io.ktor.routing.*
+import io.ktor.util.pipeline.*
+import kotlinx.coroutines.runBlocking
 import kotlinx.html.BODY
 import kotlinx.html.Entities.nbsp
 import kotlinx.html.FormMethod
@@ -209,4 +213,17 @@ internal object PageCommon {
   fun HTMLTag.rawHtml(html: String) = unsafe { raw(html) }
 
   fun Int.rows(cols: Int) = if (this % cols == 0) this / cols else (this / cols) + 1
+
+  fun Route.getAndPost(path: String, body: PipelineInterceptor<Unit, ApplicationCall>) {
+    get(path, body)
+    post(path, body)
+  }
+
+  @ContextDsl
+  fun Route.get(path: String, metrics: Metrics, body: PipelineInterceptor<Unit, ApplicationCall>) =
+    route(path, HttpMethod.Get) {
+      runBlocking {
+        metrics.measureEndpointRequest(path) { handle(body) }
+      }
+    }
 }

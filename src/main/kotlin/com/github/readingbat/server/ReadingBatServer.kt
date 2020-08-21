@@ -61,7 +61,7 @@ import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.measureTime
 import kotlin.time.milliseconds
 
-@Version(version = "1.3.0", date = "8/14/20")
+@Version(version = "1.3.0", date = "8/21/20")
 object ReadingBatServer : KLogging() {
   internal val timeStamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("M/d/y H:m:ss"))
   internal val startTimeMillis = System.currentTimeMillis().milliseconds

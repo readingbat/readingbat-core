@@ -71,6 +71,7 @@ internal object Endpoints {
   const val USER_PREFS_ENDPOINT = "/user-prefs"
   const val USER_PREFS_POST_ENDPOINT = "/user-prefs-post"
   const val TEACHER_PREFS_ENDPOINT = "/teacher-prefs"
+  const val SYSTEM_ADMIN_ENDPOINT = "/system-admin"
   const val TEACHER_PREFS_POST_ENDPOINT = "/teacher-prefs-post"
   const val ENABLE_STUDENT_MODE_ENDPOINT = "/enable-student-mode"
   const val ENABLE_TEACHER_MODE_ENDPOINT = "/enable-teacher-mode"

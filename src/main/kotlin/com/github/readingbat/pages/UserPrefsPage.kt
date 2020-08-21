@@ -18,6 +18,7 @@
 package com.github.readingbat.pages
 
 import com.github.readingbat.dsl.ReadingBatContent
+import com.github.readingbat.dsl.isProduction
 import com.github.readingbat.misc.CSSNames.INDENT_1EM
 import com.github.readingbat.misc.CSSNames.INDENT_2EM
 import com.github.readingbat.misc.ClassCode
@@ -25,6 +26,7 @@ import com.github.readingbat.misc.ClassCode.Companion.DISABLED_CLASS_CODE
 import com.github.readingbat.misc.Constants.LABEL_WIDTH
 import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.Endpoints.CREATE_ACCOUNT_ENDPOINT
+import com.github.readingbat.misc.Endpoints.SYSTEM_ADMIN_ENDPOINT
 import com.github.readingbat.misc.Endpoints.TEACHER_PREFS_ENDPOINT
 import com.github.readingbat.misc.Endpoints.USER_PREFS_ENDPOINT
 import com.github.readingbat.misc.Endpoints.USER_PREFS_POST_ENDPOINT
@@ -127,6 +129,12 @@ internal object UserPrefsPage : KLogging() {
 
           p(classes = INDENT_1EM) {
             a { href = "$TEACHER_PREFS_ENDPOINT?$RETURN_PATH=$returnPath"; +"Teacher Preferences" }
+          }
+
+          if (!isProduction() || user.isAdmin(redis)) {
+            p(classes = INDENT_1EM) {
+              a { href = "$SYSTEM_ADMIN_ENDPOINT?$RETURN_PATH=$returnPath"; +"System Admin" }
+            }
           }
 
           privacyStatement(USER_PREFS_ENDPOINT, returnPath)

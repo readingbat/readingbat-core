@@ -186,10 +186,10 @@ class Metrics {
                           data = { SessionActivity.activeSessions(1.minutes).toDouble() })
   }
 
-  suspend fun measureEndpointRequest(endpoint: String, func: suspend () -> Unit) {
+  suspend fun measureEndpointRequest(endpoint: String, body: suspend () -> Unit): Unit {
     val timer = endpointRequestDuration.labels(agentLaunchId(), endpoint).startTimer()
     try {
-      func.invoke()
+      body.invoke()
     } finally {
       timer.observeDuration()
     }

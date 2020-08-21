@@ -25,7 +25,6 @@ import com.github.pambrose.common.time.format
 import com.github.pambrose.common.util.isNull
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.isProduction
-import com.github.readingbat.misc.Constants.ADMIN_USERS
 import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
 import com.github.readingbat.misc.Constants.DBMS_DOWN
 import com.github.readingbat.misc.Constants.ICONS
@@ -56,6 +55,7 @@ import com.github.readingbat.misc.Endpoints.PASSWORD_RESET_POST_ENDPOINT
 import com.github.readingbat.misc.Endpoints.PRIVACY_ENDPOINT
 import com.github.readingbat.misc.Endpoints.RESET_CONTENT_ENDPOINT
 import com.github.readingbat.misc.Endpoints.RESET_MAPS_ENDPOINT
+import com.github.readingbat.misc.Endpoints.SYSTEM_ADMIN_ENDPOINT
 import com.github.readingbat.misc.Endpoints.TEACHER_PREFS_ENDPOINT
 import com.github.readingbat.misc.Endpoints.TEACHER_PREFS_POST_ENDPOINT
 import com.github.readingbat.misc.Endpoints.USER_INFO_ENDPOINT
@@ -70,8 +70,10 @@ import com.github.readingbat.pages.CreateAccountPage.createAccountPage
 import com.github.readingbat.pages.DbmsDownPage.dbmsDownPage
 import com.github.readingbat.pages.MessagePage.messagePage
 import com.github.readingbat.pages.PageCommon.defaultLanguageTab
+import com.github.readingbat.pages.PageCommon.get
 import com.github.readingbat.pages.PasswordResetPage.passwordResetPage
 import com.github.readingbat.pages.PrivacyPage.privacyPage
+import com.github.readingbat.pages.SystemAdminPage.systemAdminPage
 import com.github.readingbat.pages.TeacherPrefsPage.teacherPrefsPage
 import com.github.readingbat.pages.UserInfoPage.userInfoPage
 import com.github.readingbat.pages.UserPrefsPage.userPrefsPage
@@ -93,7 +95,6 @@ import io.ktor.application.*
 import io.ktor.http.ContentType.Text.CSS
 import io.ktor.routing.*
 import io.ktor.sessions.*
-import io.ktor.util.pipeline.*
 import redis.clients.jedis.Jedis
 import kotlin.time.measureTime
 
@@ -129,15 +130,7 @@ internal fun Routing.userRoutes(metrics: Metrics,
       redirectTo { e.redirectUrl }
     }
 
-  get(ROOT) {
-    metrics.measureEndpointRequest(ROOT) { redirectTo { defaultLanguageTab(content.invoke()) } }
-  }
-
-  get(MESSAGE_ENDPOINT) {
-    metrics.measureEndpointRequest(MESSAGE_ENDPOINT) { respondWith { messagePage(content.invoke()) } }
-  }
-
-  suspend fun PipelineCall.protectedAction(msg: String, block: () -> String) =
+  suspend fun PipelineCall.authenticatedAction(msg: String, block: () -> String) =
     when {
       isProduction() ->
         withSuspendingRedisPool { redis ->
@@ -145,64 +138,55 @@ internal fun Routing.userRoutes(metrics: Metrics,
           when {
             redis.isNull() -> DBMS_DOWN.value
             user.isNull() -> "Must be logged in to call $msg"
-            user.email(redis).value !in ADMIN_USERS -> "Not authorized to call $msg"
+            user.isNotAdmin(redis) -> "Not authorized to call $msg"
             else -> block.invoke()
           }
         }
       else -> block.invoke()
     }
 
-  fun Route.getAndPost(path: String, body: PipelineInterceptor<Unit, ApplicationCall>) {
-    get(path, body)
-    post(path, body)
+  get(ROOT, metrics) {
+    redirectTo { defaultLanguageTab(content.invoke()) }
   }
 
-  get(RESET_CONTENT_ENDPOINT) {
-    metrics.measureEndpointRequest(RESET_CONTENT_ENDPOINT) {
-      val msg =
-        protectedAction(RESET_CONTENT_ENDPOINT) {
-          measureTime { resetContentFunc.invoke() }.let {
-            "Content reset in ${it.format()}".also { ReadingBatServer.logger.info { it } }
-          }
+  get(MESSAGE_ENDPOINT, metrics) {
+    respondWith { messagePage(content.invoke()) }
+  }
+
+  get(RESET_CONTENT_ENDPOINT, metrics) {
+    val msg =
+      authenticatedAction(RESET_CONTENT_ENDPOINT) {
+        measureTime { resetContentFunc.invoke() }.let {
+          "Content reset in ${it.format()}".also { ReadingBatServer.logger.info { it } }
         }
-      redirectTo { "$MESSAGE_ENDPOINT?$MSG=$msg" }
-    }
+      }
+    redirectTo { "$MESSAGE_ENDPOINT?$MSG=$msg" }
   }
 
-  get(RESET_MAPS_ENDPOINT) {
-    metrics.measureEndpointRequest(RESET_MAPS_ENDPOINT) {
-      val msg =
-        protectedAction(RESET_MAPS_ENDPOINT) {
-          content.invoke().clearSourcesMap().let {
-            "Content maps reset".also { ReadingBatServer.logger.info { it } }
-          }
+  get(RESET_MAPS_ENDPOINT, metrics) {
+    val msg =
+      authenticatedAction(RESET_MAPS_ENDPOINT) {
+        content.invoke().clearSourcesMap().let {
+          "Content maps reset".also { ReadingBatServer.logger.info { it } }
         }
-      redirectTo { "$MESSAGE_ENDPOINT?$MSG=$msg" }
-    }
+      }
+    redirectTo { "$MESSAGE_ENDPOINT?$MSG=$msg" }
   }
 
-  get(CHALLENGE_ROOT) {
-    metrics.measureEndpointRequest(CHALLENGE_ROOT) {
-      redirectTo { defaultLanguageTab(content.invoke()) }
-    }
+  get(CHALLENGE_ROOT, metrics) {
+    redirectTo { defaultLanguageTab(content.invoke()) }
   }
 
-  get(PRIVACY_ENDPOINT) {
-    metrics.measureEndpointRequest(PRIVACY_ENDPOINT) {
-      respondWith { privacyPage(content.invoke()) }
-    }
+  get(PRIVACY_ENDPOINT, metrics) {
+    respondWith { privacyPage(content.invoke()) }
   }
 
-  get(ABOUT_ENDPOINT) {
-    metrics.measureEndpointRequest(ABOUT_ENDPOINT) {
-      respondWith { aboutPage(content.invoke()) }
-    }
+  get(ABOUT_ENDPOINT, metrics) {
+    respondWith { aboutPage(content.invoke()) }
   }
 
-  get(CONFIG_ENDPOINT) {
-    metrics.measureEndpointRequest(CONFIG_ENDPOINT) {
-      respondWith { configPage(content.invoke()) }
-    }
+  get(CONFIG_ENDPOINT, metrics) {
+    respondWith { configPage(content.invoke()) }
   }
 
   post(CHECK_ANSWERS_ENDPOINT) {
@@ -229,8 +213,8 @@ internal fun Routing.userRoutes(metrics: Metrics,
     }
   }
 
-  get(CREATE_ACCOUNT_ENDPOINT) {
-    metrics.measureEndpointRequest(CREATE_ACCOUNT_ENDPOINT) { respondWithDbmsCheck { createAccountPage(content.invoke()) } }
+  get(CREATE_ACCOUNT_ENDPOINT, metrics) {
+    respondWithDbmsCheck { createAccountPage(content.invoke()) }
   }
 
   post(CREATE_ACCOUNT_POST_ENDPOINT) {
@@ -239,10 +223,8 @@ internal fun Routing.userRoutes(metrics: Metrics,
     }
   }
 
-  get(USER_PREFS_ENDPOINT) {
-    metrics.measureEndpointRequest(USER_PREFS_ENDPOINT) {
-      respondWithDbmsCheck { redis -> userPrefsPage(content.invoke(), fetchUser(), redis) }
-    }
+  get(USER_PREFS_ENDPOINT, metrics) {
+    respondWithDbmsCheck { redis -> userPrefsPage(content.invoke(), fetchUser(), redis) }
   }
 
   post(USER_PREFS_POST_ENDPOINT) {
@@ -251,10 +233,12 @@ internal fun Routing.userRoutes(metrics: Metrics,
     }
   }
 
-  get(TEACHER_PREFS_ENDPOINT) {
-    metrics.measureEndpointRequest(TEACHER_PREFS_ENDPOINT) {
-      respondWithDbmsCheck { redis -> teacherPrefsPage(content.invoke(), fetchUser(), redis) }
-    }
+  get(SYSTEM_ADMIN_ENDPOINT, metrics) {
+    respondWithDbmsCheck { redis -> systemAdminPage(content.invoke(), fetchUser(), redis) }
+  }
+
+  get(TEACHER_PREFS_ENDPOINT, metrics) {
+    respondWithDbmsCheck { redis -> teacherPrefsPage(content.invoke(), fetchUser(), redis) }
   }
 
   post(TEACHER_PREFS_POST_ENDPOINT) {
@@ -263,28 +247,20 @@ internal fun Routing.userRoutes(metrics: Metrics,
     }
   }
 
-  get(ENABLE_STUDENT_MODE_ENDPOINT) {
-    metrics.measureEndpointRequest(ENABLE_STUDENT_MODE_ENDPOINT) {
-      respondWithSuspendingDbmsCheck { redis -> enableStudentMode(fetchUser(), redis) }
-    }
+  get(ENABLE_STUDENT_MODE_ENDPOINT, metrics) {
+    respondWithSuspendingDbmsCheck { redis -> enableStudentMode(fetchUser(), redis) }
   }
 
-  get(ENABLE_TEACHER_MODE_ENDPOINT) {
-    metrics.measureEndpointRequest(ENABLE_TEACHER_MODE_ENDPOINT) {
-      respondWithSuspendingDbmsCheck { redis -> enableTeacherMode(fetchUser(), redis) }
-    }
+  get(ENABLE_TEACHER_MODE_ENDPOINT, metrics) {
+    respondWithSuspendingDbmsCheck { redis -> enableTeacherMode(fetchUser(), redis) }
   }
 
-  get(ADMIN_ENDPOINT) {
-    metrics.measureEndpointRequest(ADMIN_ENDPOINT) {
-      respondWithDbmsCheck { redis -> adminDataPage(content.invoke(), fetchUser(), redis = redis) }
-    }
+  get(ADMIN_ENDPOINT, metrics) {
+    respondWithDbmsCheck { redis -> adminDataPage(content.invoke(), fetchUser(), redis = redis) }
   }
 
-  get(USER_INFO_ENDPOINT) {
-    metrics.measureEndpointRequest(USER_INFO_ENDPOINT) {
-      respondWithDbmsCheck { redis -> userInfoPage(content.invoke(), fetchUser(), redis = redis) }
-    }
+  get(USER_INFO_ENDPOINT, metrics) {
+    respondWithDbmsCheck { redis -> userInfoPage(content.invoke(), fetchUser(), redis = redis) }
   }
 
   post(ADMIN_POST_ENDPOINT) {
@@ -294,10 +270,8 @@ internal fun Routing.userRoutes(metrics: Metrics,
   }
 
   // RESET_ID is passed here when user clicks on email URL
-  get(PASSWORD_RESET_ENDPOINT) {
-    metrics.measureEndpointRequest(PASSWORD_RESET_ENDPOINT) {
-      respondWithDbmsCheck { redis -> passwordResetPage(content.invoke(), ResetId(queryParam(RESET_ID)), redis) }
-    }
+  get(PASSWORD_RESET_ENDPOINT, metrics) {
+    respondWithDbmsCheck { redis -> passwordResetPage(content.invoke(), ResetId(queryParam(RESET_ID)), redis) }
   }
 
   post(PASSWORD_RESET_POST_ENDPOINT) {
@@ -312,12 +286,10 @@ internal fun Routing.userRoutes(metrics: Metrics,
     }
   }
 
-  get(LOGOUT_ENDPOINT) {
-    metrics.measureEndpointRequest(LOGOUT_ENDPOINT) {
-      // Purge UserPrincipal from cookie data
-      call.sessions.clear<UserPrincipal>()
-      redirectTo { queryParam(RETURN_PATH, "/") }
-    }
+  get(LOGOUT_ENDPOINT, metrics) {
+    // Purge UserPrincipal from cookie data
+    call.sessions.clear<UserPrincipal>()
+    redirectTo { queryParam(RETURN_PATH, "/") }
   }
 
   get(CSS_ENDPOINT) {

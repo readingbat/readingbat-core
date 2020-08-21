@@ -26,6 +26,7 @@ import com.github.readingbat.dsl.FunctionInfo
 import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.ClassCode.Companion.DISABLED_CLASS_CODE
+import com.github.readingbat.misc.Constants.ADMIN_USERS
 import com.github.readingbat.misc.Constants.RESP
 import com.github.readingbat.misc.KeyConstants.ANSWER_HISTORY_KEY
 import com.github.readingbat.misc.KeyConstants.AUTH_KEY
@@ -95,6 +96,10 @@ internal class User private constructor(val id: String, val browserSession: Brow
   fun classCodes(redis: Jedis) = redis.smembers(userClassesKey).map { ClassCode(it) }
 
   fun email(redis: Jedis) = redis.hget(userInfoKey, EMAIL_FIELD)?.let { Email(it) } ?: EMPTY_EMAIL
+
+  fun isAdmin(redis: Jedis) = email(redis).value in ADMIN_USERS
+
+  fun isNotAdmin(redis: Jedis) = !isAdmin(redis)
 
   fun name(redis: Jedis) = redis.hget(userInfoKey, NAME_FIELD) ?: ""
 
