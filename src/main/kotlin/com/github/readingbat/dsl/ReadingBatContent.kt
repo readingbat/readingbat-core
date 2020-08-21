@@ -67,6 +67,7 @@ class ReadingBatContent {
   internal var ktorPort = 0
   internal var ktorWatch = ""
   internal var grafanaUrl = ""
+  internal var prometheusUrl = ""
 
   val python by lazy { LanguageGroup<PythonChallenge>(this, Python) }
   val java by lazy { LanguageGroup<JavaChallenge>(this, Java) }

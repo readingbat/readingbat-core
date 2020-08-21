@@ -116,6 +116,7 @@ internal fun Application.assignContentDsl(fileName: String, variableName: String
           val watchVal = environment.config.propertyOrNull("ktor.deployment.watch")?.getList() ?: emptyList()
           ktorWatch = if (watchVal.isNotEmpty()) watchVal.toString() else "unassigned"
           grafanaUrl = property("$READING_BAT.grafana.url")
+          prometheusUrl = property("$READING_BAT.prometheus.url")
         }.apply { clearContentMap() })
     ReadingBatServer.metrics.contentLoadedCount.labels(agentLaunchId()).inc()
   }.also {

@@ -85,6 +85,11 @@ internal object SystemAdminPage : KLogging() {
                 a { href = content.grafanaUrl; target = "_blank"; +" Grafana Dashboard" }
               }
 
+            if (content.prometheusUrl.isNotBlank())
+              p {
+                a { href = content.prometheusUrl; target = "_blank"; +" Prometheus Dashboard" }
+              }
+
             p {
               this@body.button("Reset ReadingBat Content",
                                RESET_CONTENT_ENDPOINT,
