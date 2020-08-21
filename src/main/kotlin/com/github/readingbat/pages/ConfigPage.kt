@@ -29,8 +29,16 @@ import com.github.readingbat.pages.PageCommon.headDefault
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ReadingBatServer
 import com.github.readingbat.server.ServerUtils.queryParam
-import kotlinx.html.*
+import kotlinx.html.body
+import kotlinx.html.div
+import kotlinx.html.h2
+import kotlinx.html.h3
+import kotlinx.html.head
+import kotlinx.html.html
 import kotlinx.html.stream.createHTML
+import kotlinx.html.table
+import kotlinx.html.td
+import kotlinx.html.tr
 import java.lang.System.currentTimeMillis
 import kotlin.time.milliseconds
 

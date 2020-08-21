@@ -36,8 +36,26 @@ import com.github.readingbat.pages.PageCommon.displayMessage
 import com.github.readingbat.pages.PageCommon.headDefault
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
-import kotlinx.html.*
+import kotlinx.html.BODY
+import kotlinx.html.FormMethod
+import kotlinx.html.InputType
+import kotlinx.html.body
+import kotlinx.html.br
+import kotlinx.html.div
+import kotlinx.html.form
+import kotlinx.html.h3
+import kotlinx.html.h4
+import kotlinx.html.head
+import kotlinx.html.html
+import kotlinx.html.input
+import kotlinx.html.onSubmit
+import kotlinx.html.p
+import kotlinx.html.span
 import kotlinx.html.stream.createHTML
+import kotlinx.html.style
+import kotlinx.html.table
+import kotlinx.html.td
+import kotlinx.html.tr
 import redis.clients.jedis.Jedis
 import redis.clients.jedis.exceptions.JedisDataException
 

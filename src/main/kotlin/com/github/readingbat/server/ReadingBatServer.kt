@@ -20,6 +20,7 @@ package com.github.readingbat.server
 import com.github.pambrose.common.redis.RedisUtils.REDIS_MAX_IDLE_SIZE
 import com.github.pambrose.common.redis.RedisUtils.REDIS_MAX_POOL_SIZE
 import com.github.pambrose.common.redis.RedisUtils.REDIS_MIN_IDLE_SIZE
+import com.github.pambrose.common.time.format
 import com.github.pambrose.common.util.FileSource
 import com.github.pambrose.common.util.Version
 import com.github.pambrose.common.util.Version.Companion.versionDesc
@@ -57,6 +58,7 @@ import mu.KLogging
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.time.measureTime
 import kotlin.time.milliseconds
 
 @Version(version = "1.3.0", date = "8/14/20")
@@ -93,20 +95,25 @@ object ReadingBatServer : KLogging() {
 }
 
 internal fun Application.assignContentDsl(fileName: String, variableName: String) {
-  content.set(
-    readContentDsl(FileSource(fileName = fileName), variableName = variableName)
-      .apply {
-        dslFileName = fileName
-        dslVariableName = variableName
-        urlPrefix = property(URL_PREFIX, default = "https://www.readingbat.com")
-        googleAnalyticsId = property(ANALYTICS_ID)
-        maxHistoryLength = property(MAX_HISTORY_LENGTH, default = "10").toInt()
-        maxClassCount = property(MAX_CLASS_COUNT, default = "25").toInt()
-        ktorPort = property("ktor.deployment.port", "0").toInt()
-        val watchVal = environment.config.propertyOrNull("ktor.deployment.watch")?.getList() ?: emptyList()
-        ktorWatch = if (watchVal.isNotEmpty()) watchVal.toString() else "unassigned"
-      }.apply { clearContentMap() })
-  ReadingBatServer.metrics.contentLoadedCount.labels(agentLaunchId()).inc()
+  ReadingBatServer.logger.info { "Loading content content using $variableName in $fileName" }
+  measureTime {
+    content.set(
+      readContentDsl(FileSource(fileName = fileName), variableName = variableName)
+        .apply {
+          dslFileName = fileName
+          dslVariableName = variableName
+          urlPrefix = property(URL_PREFIX, default = "https://www.readingbat.com")
+          googleAnalyticsId = property(ANALYTICS_ID)
+          maxHistoryLength = property(MAX_HISTORY_LENGTH, default = "10").toInt()
+          maxClassCount = property(MAX_CLASS_COUNT, default = "25").toInt()
+          ktorPort = property("ktor.deployment.port", "0").toInt()
+          val watchVal = environment.config.propertyOrNull("ktor.deployment.watch")?.getList() ?: emptyList()
+          ktorWatch = if (watchVal.isNotEmpty()) watchVal.toString() else "unassigned"
+        }.apply { clearContentMap() })
+    ReadingBatServer.metrics.contentLoadedCount.labels(agentLaunchId()).inc()
+  }.also {
+    ReadingBatServer.logger.info { "Loaded content in ${it.format()} using $variableName in $fileName" }
+  }
 }
 
 internal fun Application.module() {

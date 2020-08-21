@@ -17,7 +17,7 @@
 
 package com.github.readingbat.misc
 
-import io.ktor.auth.Principal
+import io.ktor.auth.*
 import java.time.Instant
 
 internal data class UserPrincipal(val userId: String, val created: Long = Instant.now().toEpochMilli()) : Principal

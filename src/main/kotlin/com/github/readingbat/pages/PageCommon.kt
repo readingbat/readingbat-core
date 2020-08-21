@@ -43,8 +43,28 @@ import com.github.readingbat.server.PipelineCall
 import io.ktor.application.*
 import io.ktor.http.*
 import io.ktor.http.ContentType.Text.CSS
-import kotlinx.html.*
+import kotlinx.html.BODY
 import kotlinx.html.Entities.nbsp
+import kotlinx.html.FormMethod
+import kotlinx.html.HEAD
+import kotlinx.html.HTMLTag
+import kotlinx.html.InputType
+import kotlinx.html.a
+import kotlinx.html.div
+import kotlinx.html.form
+import kotlinx.html.id
+import kotlinx.html.input
+import kotlinx.html.li
+import kotlinx.html.link
+import kotlinx.html.nav
+import kotlinx.html.onSubmit
+import kotlinx.html.p
+import kotlinx.html.script
+import kotlinx.html.span
+import kotlinx.html.style
+import kotlinx.html.title
+import kotlinx.html.ul
+import kotlinx.html.unsafe
 import redis.clients.jedis.Jedis
 
 internal object PageCommon {
@@ -165,6 +185,19 @@ internal object PageCommon {
       div {
         style = "font-size: 120%; margin-left: $marginLeft;"
         p { a { href = url; rawHtml("&larr; Back") } }
+      }
+    }
+  }
+
+  internal fun BODY.button(text: String, endpoint: String, msg: String) {
+    form {
+      style = "margin:0;"
+      action = endpoint
+      method = FormMethod.get
+      onSubmit = "return confirm('$msg');"
+      input {
+        style = "vertical-align:middle; margin-top:1; margin-bottom:0;"
+        type = InputType.submit; value = text
       }
     }
   }

@@ -17,7 +17,11 @@
 
 package com.github.readingbat.pages
 
-import com.github.pambrose.common.util.*
+import com.github.pambrose.common.util.decode
+import com.github.pambrose.common.util.isNotNull
+import com.github.pambrose.common.util.isNull
+import com.github.pambrose.common.util.random
+import com.github.pambrose.common.util.toDoubleQuoted
 import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.FunctionInfo
 import com.github.readingbat.dsl.ReadingBatContent
@@ -90,10 +94,41 @@ import com.github.readingbat.server.ServerUtils.queryParam
 import io.ktor.application.*
 import io.ktor.http.ContentType.Text.CSS
 import io.ktor.sessions.*
-import kotlinx.html.*
+import kotlinx.html.BODY
 import kotlinx.html.Entities.nbsp
+import kotlinx.html.FormMethod
+import kotlinx.html.HEAD
+import kotlinx.html.InputType
 import kotlinx.html.ScriptType.textJavaScript
+import kotlinx.html.a
+import kotlinx.html.body
+import kotlinx.html.br
+import kotlinx.html.button
+import kotlinx.html.code
+import kotlinx.html.div
+import kotlinx.html.form
+import kotlinx.html.h2
+import kotlinx.html.h3
+import kotlinx.html.head
+import kotlinx.html.html
+import kotlinx.html.id
+import kotlinx.html.img
+import kotlinx.html.input
+import kotlinx.html.link
+import kotlinx.html.onClick
+import kotlinx.html.onKeyDown
+import kotlinx.html.onSubmit
+import kotlinx.html.p
+import kotlinx.html.pre
+import kotlinx.html.script
+import kotlinx.html.span
 import kotlinx.html.stream.createHTML
+import kotlinx.html.style
+import kotlinx.html.table
+import kotlinx.html.td
+import kotlinx.html.textInput
+import kotlinx.html.th
+import kotlinx.html.tr
 import mu.KLogging
 import redis.clients.jedis.Jedis
 

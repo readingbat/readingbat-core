@@ -36,8 +36,17 @@ import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
 import io.ktor.application.*
 import io.ktor.sessions.*
-import kotlinx.html.*
+import kotlinx.html.body
+import kotlinx.html.br
+import kotlinx.html.head
+import kotlinx.html.html
+import kotlinx.html.p
+import kotlinx.html.span
 import kotlinx.html.stream.createHTML
+import kotlinx.html.style
+import kotlinx.html.table
+import kotlinx.html.td
+import kotlinx.html.tr
 import redis.clients.jedis.Jedis
 
 

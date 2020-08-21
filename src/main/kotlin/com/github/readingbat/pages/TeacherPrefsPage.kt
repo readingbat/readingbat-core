@@ -18,12 +18,17 @@
 package com.github.readingbat.pages
 
 import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.misc.*
+import com.github.readingbat.dsl.isProduction
 import com.github.readingbat.misc.CSSNames.INDENT_2EM
+import com.github.readingbat.misc.ClassCode
+import com.github.readingbat.misc.Constants.ADMIN_USERS
 import com.github.readingbat.misc.Constants.LABEL_WIDTH
 import com.github.readingbat.misc.Constants.RETURN_PATH
+import com.github.readingbat.misc.Endpoints.RESET_CONTENT_ENDPOINT
+import com.github.readingbat.misc.Endpoints.RESET_MAPS_ENDPOINT
 import com.github.readingbat.misc.Endpoints.TEACHER_PREFS_ENDPOINT
 import com.github.readingbat.misc.Endpoints.TEACHER_PREFS_POST_ENDPOINT
+import com.github.readingbat.misc.FormFields
 import com.github.readingbat.misc.FormFields.CLASSES_CHOICE
 import com.github.readingbat.misc.FormFields.CLASS_CODE_NAME
 import com.github.readingbat.misc.FormFields.CREATE_CLASS
@@ -31,11 +36,15 @@ import com.github.readingbat.misc.FormFields.DELETE_CLASS
 import com.github.readingbat.misc.FormFields.DISABLED_MODE
 import com.github.readingbat.misc.FormFields.UPDATE_ACTIVE_CLASS
 import com.github.readingbat.misc.FormFields.USER_PREFS_ACTION
+import com.github.readingbat.misc.Message
 import com.github.readingbat.misc.Message.Companion.EMPTY_MESSAGE
+import com.github.readingbat.misc.User
 import com.github.readingbat.misc.User.Companion.fetchActiveClassCode
+import com.github.readingbat.misc.isValidUser
 import com.github.readingbat.pages.HelpAndLogin.helpAndLogin
 import com.github.readingbat.pages.PageCommon.backLink
 import com.github.readingbat.pages.PageCommon.bodyTitle
+import com.github.readingbat.pages.PageCommon.button
 import com.github.readingbat.pages.PageCommon.clickButtonScript
 import com.github.readingbat.pages.PageCommon.displayMessage
 import com.github.readingbat.pages.PageCommon.headDefault
@@ -44,11 +53,32 @@ import com.github.readingbat.pages.PageCommon.rawHtml
 import com.github.readingbat.pages.UserPrefsPage.requestLogInPage
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
-import kotlinx.html.*
+import kotlinx.html.BODY
 import kotlinx.html.Entities.nbsp
+import kotlinx.html.FormMethod
+import kotlinx.html.InputType
 import kotlinx.html.InputType.radio
 import kotlinx.html.InputType.submit
+import kotlinx.html.body
+import kotlinx.html.div
+import kotlinx.html.form
+import kotlinx.html.h2
+import kotlinx.html.h3
+import kotlinx.html.head
+import kotlinx.html.html
+import kotlinx.html.id
+import kotlinx.html.input
+import kotlinx.html.label
+import kotlinx.html.onKeyPress
+import kotlinx.html.onSubmit
+import kotlinx.html.p
+import kotlinx.html.span
 import kotlinx.html.stream.createHTML
+import kotlinx.html.style
+import kotlinx.html.table
+import kotlinx.html.td
+import kotlinx.html.th
+import kotlinx.html.tr
 import mu.KLogging
 import redis.clients.jedis.Jedis
 
@@ -92,6 +122,22 @@ internal object TeacherPrefsPage : KLogging() {
 
           createClass(defaultClassDesc)
           displayClasses(user, activeClassCode, redis)
+
+          if (!isProduction() || user.email(redis).value in ADMIN_USERS) {
+            h2 { +"ReadingBat System Admin" }
+
+            p {
+              this@body.button("Reset ReadingBat Content",
+                               RESET_CONTENT_ENDPOINT,
+                               "Are you sure you want to reset the content? (This can take a while)")
+            }
+
+            p {
+              this@body.button("Reset ReadingBat Maps",
+                               RESET_MAPS_ENDPOINT,
+                               "Are you sure you want to reset the maps?")
+            }
+          }
 
           privacyStatement(TEACHER_PREFS_ENDPOINT, returnPath)
 

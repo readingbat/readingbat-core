@@ -20,7 +20,9 @@ package com.github.readingbat.dsl
 import com.github.pambrose.common.util.ContentRoot
 import com.github.pambrose.common.util.ContentSource
 import com.github.pambrose.common.util.FileSystemSource
-import com.github.readingbat.dsl.LanguageType.*
+import com.github.readingbat.dsl.LanguageType.Java
+import com.github.readingbat.dsl.LanguageType.Kotlin
+import com.github.readingbat.dsl.LanguageType.Python
 import com.github.readingbat.server.ChallengeName
 import com.github.readingbat.server.GroupName
 import com.github.readingbat.server.Language
@@ -36,6 +38,8 @@ class ReadingBatContent {
   // contentMap will prevent reading the same content multiple times
   private val contentMap = ConcurrentHashMap<String, ReadingBatContent>()
   internal val sourcesMap = ConcurrentHashMap<Int, FunctionInfo>()
+  internal val sourcesMapSize get() = sourcesMap.size
+  internal val contentMapSize get() = contentMap.size
 
   /*
   fun main() {
@@ -54,7 +58,6 @@ class ReadingBatContent {
 */
 
   internal val timeStamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("M/d/y H:m:ss"))
-
   internal var urlPrefix = ""
   internal var googleAnalyticsId = ""
   internal var maxHistoryLength = 10
@@ -68,6 +71,10 @@ class ReadingBatContent {
   val java by lazy { LanguageGroup<JavaChallenge>(this, Java) }
   val kotlin by lazy { LanguageGroup<KotlinChallenge>(this, Kotlin) }
 
+  private val languageList by lazy { listOf(java, python, kotlin) }
+  private val languageMap by lazy { languageList.map { it.languageType to it }.toMap() }
+
+
   // User properties
   var cacheChallenges = isProduction()
 
@@ -76,15 +83,16 @@ class ReadingBatContent {
   var repo: ContentRoot = FileSystemSource("./")
   var branchName = "master"
 
-  private val languageList by lazy { listOf(java, python, kotlin) }
-  private val languageMap by lazy { languageList.map { it.languageType to it }.toMap() }
 
-  internal val sourcesMapSize get() = sourcesMap.size
-  internal val contentMapSize get() = contentMap.size
+  internal fun clearContentMap() {
+    logger.info { "Clearing content map" }
+    contentMap.clear()
+  }
 
-  internal fun clearContentMap() = contentMap.clear()
-
-  internal fun clearSourcesMap() = sourcesMap.clear()
+  internal fun clearSourcesMap() {
+    logger.info { "Clearing sources map" }
+    sourcesMap.clear()
+  }
 
   internal fun hasLanguage(languageType: LanguageType) = languageMap.containsKey(languageType)
 

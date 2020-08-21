@@ -23,7 +23,11 @@ import com.github.readingbat.misc.KeyConstants.CORRECT_ANSWERS_KEY
 import com.github.readingbat.misc.KeyConstants.LIKE_DISLIKE_KEY
 import com.github.readingbat.misc.KeyConstants.NO_AUTH_KEY
 import com.github.readingbat.posts.ChallengeNames
-import com.github.readingbat.server.*
+import com.github.readingbat.server.ChallengeName
+import com.github.readingbat.server.GroupName
+import com.github.readingbat.server.Invocation
+import com.github.readingbat.server.LanguageName
+import com.github.readingbat.server.keyOf
 import java.time.Instant
 
 internal data class BrowserSession(val id: String, val created: Long = Instant.now().toEpochMilli()) {

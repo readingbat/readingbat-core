@@ -20,10 +20,12 @@ package com.github.readingbat.posts
 import com.github.pambrose.common.util.encode
 import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.misc.*
+import com.github.readingbat.misc.BrowserSession
+import com.github.readingbat.misc.ClassCode
 import com.github.readingbat.misc.ClassCode.Companion.DISABLED_CLASS_CODE
 import com.github.readingbat.misc.ClassCode.Companion.getClassCode
 import com.github.readingbat.misc.ClassCode.Companion.newClassCode
+import com.github.readingbat.misc.Constants
 import com.github.readingbat.misc.Constants.MSG
 import com.github.readingbat.misc.FormFields.CLASSES_CHOICE
 import com.github.readingbat.misc.FormFields.CLASS_CODE_NAME
@@ -32,8 +34,11 @@ import com.github.readingbat.misc.FormFields.CREATE_CLASS
 import com.github.readingbat.misc.FormFields.DELETE_CLASS
 import com.github.readingbat.misc.FormFields.UPDATE_ACTIVE_CLASS
 import com.github.readingbat.misc.FormFields.USER_PREFS_ACTION
+import com.github.readingbat.misc.Message
+import com.github.readingbat.misc.User
 import com.github.readingbat.misc.User.Companion.fetchActiveClassCode
 import com.github.readingbat.misc.User.Companion.fetchPreviousTeacherClassCode
+import com.github.readingbat.misc.isValidUser
 import com.github.readingbat.pages.TeacherPrefsPage.teacherPrefsPage
 import com.github.readingbat.pages.UserPrefsPage.requestLogInPage
 import com.github.readingbat.server.PipelineCall

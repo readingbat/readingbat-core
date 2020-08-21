@@ -19,7 +19,16 @@ package com.github.readingbat.dsl
 
 import com.github.pambrose.common.util.asBracketed
 import com.github.pambrose.common.util.toDoubleQuoted
-import com.github.readingbat.dsl.ReturnType.*
+import com.github.readingbat.dsl.ReturnType.BooleanArrayType
+import com.github.readingbat.dsl.ReturnType.BooleanListType
+import com.github.readingbat.dsl.ReturnType.BooleanType
+import com.github.readingbat.dsl.ReturnType.IntArrayType
+import com.github.readingbat.dsl.ReturnType.IntListType
+import com.github.readingbat.dsl.ReturnType.IntType
+import com.github.readingbat.dsl.ReturnType.Runtime
+import com.github.readingbat.dsl.ReturnType.StringArrayType
+import com.github.readingbat.dsl.ReturnType.StringListType
+import com.github.readingbat.dsl.ReturnType.StringType
 import com.github.readingbat.server.ChallengeMd5
 import com.github.readingbat.server.ChallengeName
 import com.github.readingbat.server.Invocation

@@ -18,8 +18,8 @@
 package com.github.readingbat.pages
 
 import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.misc.Constants
-import com.github.readingbat.misc.Constants.DBMS_DOWN
+import com.github.readingbat.misc.Constants.MSG
+import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.pages.PageCommon.backLink
 import com.github.readingbat.pages.PageCommon.bodyTitle
 import com.github.readingbat.pages.PageCommon.headDefault
@@ -31,9 +31,9 @@ import kotlinx.html.head
 import kotlinx.html.html
 import kotlinx.html.stream.createHTML
 
-internal object DbmsDownPage {
+internal object MessagePage {
 
-  fun PipelineCall.dbmsDownPage(content: ReadingBatContent) =
+  fun PipelineCall.messagePage(content: ReadingBatContent) =
     createHTML()
       .html {
         head {
@@ -42,9 +42,9 @@ internal object DbmsDownPage {
 
         body {
           bodyTitle()
-          h2 { +DBMS_DOWN.value }
+          h2 { +queryParam(MSG, "Missing msg parameter") }
 
-          backLink(queryParam(Constants.RETURN_PATH))
+          backLink(queryParam(RETURN_PATH))
         }
       }
 }

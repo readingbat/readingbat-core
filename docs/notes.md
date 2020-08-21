@@ -10,7 +10,7 @@ Setup:
 * Environment Variables: SENDGRID_API_KEY=**value**
 
 ## Heroku Notes
-* Switch shell to Java8 to get jvisualvm to work
+* Switch shell to Java8 to get jvisualvm to work on an OSX client
 * Create connection with: `heroku java:visualvm --app readingbat`
 * Connect to shell with: `heroku ps:exec --app readingbat`
 * hprof files are put in */tmp*

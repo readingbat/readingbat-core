@@ -27,8 +27,6 @@ internal object Constants {
   const val MSG = "msg"
   const val BACK_PATH = "backPath"
   const val ROOT = "/"
-  const val RESET = "/reset"
-  const val RESET_MAPS = "/reset-maps"
   const val STATIC = "static"
   const val STATIC_ROOT = "/$STATIC"
   const val CHALLENGE_ROOT = "/content"
@@ -65,6 +63,8 @@ internal object Constants {
   const val PING_CODE = "P"
 
   val DBMS_DOWN = Message("Database is down", true)
+
+  val ADMIN_USERS = listOf("pambrose@mac.com", "mleich@athenian.org")
 }
 
 internal object Endpoints {
@@ -93,12 +93,12 @@ internal object Endpoints {
   const val LIKE_DISLIKE_ENDPOINT = "/like-dislike"
   const val CLEAR_GROUP_ANSWERS_ENDPOINT = "/clear-group-answers"
   const val CLEAR_CHALLENGE_ANSWERS_ENDPOINT = "/clear-challenge-answers"
-
+  const val MESSAGE_ENDPOINT = "/message"
+  const val RESET_CONTENT_ENDPOINT = "/reset-content"
+  const val RESET_MAPS_ENDPOINT = "/reset-maps"
   const val PING = "/ping"
   const val THREAD_DUMP = "/threaddump"
-
   const val LOGOUT_ENDPOINT = "/logout"
-
 }
 
 internal object ParameterIds {

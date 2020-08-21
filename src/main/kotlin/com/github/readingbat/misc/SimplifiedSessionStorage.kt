@@ -17,10 +17,8 @@
 
 package com.github.readingbat.misc
 
-import io.ktor.sessions.SessionStorage
-import io.ktor.utils.io.ByteReadChannel
-import io.ktor.utils.io.ByteWriteChannel
-import io.ktor.utils.io.reader
+import io.ktor.sessions.*
+import io.ktor.utils.io.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import java.io.ByteArrayOutputStream

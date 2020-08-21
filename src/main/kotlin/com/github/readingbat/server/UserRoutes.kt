@@ -21,13 +21,16 @@ import com.github.pambrose.common.redis.RedisUtils.withRedisPool
 import com.github.pambrose.common.redis.RedisUtils.withSuspendingRedisPool
 import com.github.pambrose.common.response.redirectTo
 import com.github.pambrose.common.response.respondWith
+import com.github.pambrose.common.time.format
 import com.github.pambrose.common.util.isNull
 import com.github.readingbat.dsl.ReadingBatContent
+import com.github.readingbat.dsl.isProduction
+import com.github.readingbat.misc.Constants.ADMIN_USERS
 import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
+import com.github.readingbat.misc.Constants.DBMS_DOWN
 import com.github.readingbat.misc.Constants.ICONS
-import com.github.readingbat.misc.Constants.RESET
+import com.github.readingbat.misc.Constants.MSG
 import com.github.readingbat.misc.Constants.RESET_ID
-import com.github.readingbat.misc.Constants.RESET_MAPS
 import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.Constants.ROOT
 import com.github.readingbat.misc.Constants.STATIC_ROOT
@@ -46,10 +49,13 @@ import com.github.readingbat.misc.Endpoints.ENABLE_TEACHER_MODE_ENDPOINT
 import com.github.readingbat.misc.Endpoints.FAV_ICON_ENDPOINT
 import com.github.readingbat.misc.Endpoints.LIKE_DISLIKE_ENDPOINT
 import com.github.readingbat.misc.Endpoints.LOGOUT_ENDPOINT
+import com.github.readingbat.misc.Endpoints.MESSAGE_ENDPOINT
 import com.github.readingbat.misc.Endpoints.PASSWORD_CHANGE_POST_ENDPOINT
 import com.github.readingbat.misc.Endpoints.PASSWORD_RESET_ENDPOINT
 import com.github.readingbat.misc.Endpoints.PASSWORD_RESET_POST_ENDPOINT
 import com.github.readingbat.misc.Endpoints.PRIVACY_ENDPOINT
+import com.github.readingbat.misc.Endpoints.RESET_CONTENT_ENDPOINT
+import com.github.readingbat.misc.Endpoints.RESET_MAPS_ENDPOINT
 import com.github.readingbat.misc.Endpoints.TEACHER_PREFS_ENDPOINT
 import com.github.readingbat.misc.Endpoints.TEACHER_PREFS_POST_ENDPOINT
 import com.github.readingbat.misc.Endpoints.USER_INFO_ENDPOINT
@@ -62,6 +68,7 @@ import com.github.readingbat.pages.AdminPage.adminDataPage
 import com.github.readingbat.pages.ConfigPage.configPage
 import com.github.readingbat.pages.CreateAccountPage.createAccountPage
 import com.github.readingbat.pages.DbmsDownPage.dbmsDownPage
+import com.github.readingbat.pages.MessagePage.messagePage
 import com.github.readingbat.pages.PageCommon.defaultLanguageTab
 import com.github.readingbat.pages.PasswordResetPage.passwordResetPage
 import com.github.readingbat.pages.PrivacyPage.privacyPage
@@ -86,7 +93,9 @@ import io.ktor.application.*
 import io.ktor.http.ContentType.Text.CSS
 import io.ktor.routing.*
 import io.ktor.sessions.*
+import io.ktor.util.pipeline.*
 import redis.clients.jedis.Jedis
+import kotlin.time.measureTime
 
 internal fun Routing.userRoutes(metrics: Metrics,
                                 content: () -> ReadingBatContent,
@@ -121,22 +130,54 @@ internal fun Routing.userRoutes(metrics: Metrics,
     }
 
   get(ROOT) {
-    metrics.measureEndpointRequest(ROOT) {
-      redirectTo { defaultLanguageTab(content.invoke()) }
+    metrics.measureEndpointRequest(ROOT) { redirectTo { defaultLanguageTab(content.invoke()) } }
+  }
+
+  get(MESSAGE_ENDPOINT) {
+    metrics.measureEndpointRequest(MESSAGE_ENDPOINT) { respondWith { messagePage(content.invoke()) } }
+  }
+
+  suspend fun PipelineCall.protectedAction(msg: String, block: () -> String) =
+    when {
+      isProduction() ->
+        withSuspendingRedisPool { redis ->
+          val user = fetchUser()
+          when {
+            redis.isNull() -> DBMS_DOWN.value
+            user.isNull() -> "Must be logged in to call $msg"
+            user.email(redis).value !in ADMIN_USERS -> "Not authorized to call $msg"
+            else -> block.invoke()
+          }
+        }
+      else -> block.invoke()
+    }
+
+  fun Route.getAndPost(path: String, body: PipelineInterceptor<Unit, ApplicationCall>) {
+    get(path, body)
+    post(path, body)
+  }
+
+  get(RESET_CONTENT_ENDPOINT) {
+    metrics.measureEndpointRequest(RESET_CONTENT_ENDPOINT) {
+      val msg =
+        protectedAction(RESET_CONTENT_ENDPOINT) {
+          measureTime { resetContentFunc.invoke() }.let {
+            "Content reset in ${it.format()}".also { ReadingBatServer.logger.info { it } }
+          }
+        }
+      redirectTo { "$MESSAGE_ENDPOINT?$MSG=$msg" }
     }
   }
 
-  get(RESET) {
-    metrics.measureEndpointRequest(RESET) {
-      resetContentFunc.invoke()
-      redirectTo { defaultLanguageTab(content.invoke()) }
-    }
-  }
-
-  get(RESET_MAPS) {
-    metrics.measureEndpointRequest(RESET_MAPS) {
-      content.invoke().clearSourcesMap()
-      redirectTo { defaultLanguageTab(content.invoke()) }
+  get(RESET_MAPS_ENDPOINT) {
+    metrics.measureEndpointRequest(RESET_MAPS_ENDPOINT) {
+      val msg =
+        protectedAction(RESET_MAPS_ENDPOINT) {
+          content.invoke().clearSourcesMap().let {
+            "Content maps reset".also { ReadingBatServer.logger.info { it } }
+          }
+        }
+      redirectTo { "$MESSAGE_ENDPOINT?$MSG=$msg" }
     }
   }
 
@@ -189,9 +230,7 @@ internal fun Routing.userRoutes(metrics: Metrics,
   }
 
   get(CREATE_ACCOUNT_ENDPOINT) {
-    metrics.measureEndpointRequest(CREATE_ACCOUNT_ENDPOINT) {
-      respondWithDbmsCheck { createAccountPage(content.invoke()) }
-    }
+    metrics.measureEndpointRequest(CREATE_ACCOUNT_ENDPOINT) { respondWithDbmsCheck { createAccountPage(content.invoke()) } }
   }
 
   post(CREATE_ACCOUNT_POST_ENDPOINT) {
