@@ -36,7 +36,7 @@ typealias PipelineCall = PipelineContext<Unit, ApplicationCall>
 
 internal fun keyOf(vararg keys: Any) = keys.joinToString(KEY_SEP) { it.toString() }
 
-internal fun md5Of(vararg keys: Any) = keyOf(keys).md5()
+internal fun md5Of(vararg keys: Any) = keys.joinToString(KEY_SEP) { it.toString() }.md5()
 
 internal object ServerUtils : KLogging() {
 

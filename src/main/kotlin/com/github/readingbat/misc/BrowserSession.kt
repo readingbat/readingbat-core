@@ -17,7 +17,6 @@
 
 package com.github.readingbat.misc
 
-import com.github.pambrose.common.util.md5
 import com.github.readingbat.misc.KeyConstants.ANSWER_HISTORY_KEY
 import com.github.readingbat.misc.KeyConstants.CHALLENGE_ANSWERS_KEY
 import com.github.readingbat.misc.KeyConstants.CORRECT_ANSWERS_KEY
@@ -59,5 +58,5 @@ internal data class BrowserSession(val id: String, val created: Long = Instant.n
                                groupName: GroupName,
                                challengeName: ChallengeName,
                                invocation: Invocation) =
-    keyOf(ANSWER_HISTORY_KEY, NO_AUTH_KEY, id, keyOf(languageName, groupName, challengeName, invocation).md5())
+    keyOf(ANSWER_HISTORY_KEY, NO_AUTH_KEY, id, md5Of(languageName, groupName, challengeName, invocation))
 }
