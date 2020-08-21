@@ -66,6 +66,7 @@ class ReadingBatContent {
   internal var dslVariableName = ""
   internal var ktorPort = 0
   internal var ktorWatch = ""
+  internal var grafanaUrl = ""
 
   val python by lazy { LanguageGroup<PythonChallenge>(this, Python) }
   val java by lazy { LanguageGroup<JavaChallenge>(this, Java) }

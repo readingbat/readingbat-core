@@ -35,6 +35,7 @@ import com.github.readingbat.pages.PageCommon.headDefault
 import com.github.readingbat.pages.UserPrefsPage.requestLogInPage
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
+import kotlinx.html.a
 import kotlinx.html.body
 import kotlinx.html.h2
 import kotlinx.html.head
@@ -78,6 +79,12 @@ internal object SystemAdminPage : KLogging() {
           h2 { +"ReadingBat System Admin" }
 
           if (!isProduction() || user.isAdmin(redis)) {
+
+            if (content.grafanaUrl.isNotBlank())
+              p {
+                a { href = content.grafanaUrl; target = "_blank"; +" Grafana Dashboard" }
+              }
+
             p {
               this@body.button("Reset ReadingBat Content",
                                RESET_CONTENT_ENDPOINT,

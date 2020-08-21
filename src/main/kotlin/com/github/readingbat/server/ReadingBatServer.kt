@@ -39,6 +39,7 @@ import com.github.readingbat.misc.Constants.IS_PRODUCTION
 import com.github.readingbat.misc.Constants.MAX_CLASS_COUNT
 import com.github.readingbat.misc.Constants.MAX_HISTORY_LENGTH
 import com.github.readingbat.misc.Constants.PROXY_HOSTNAME
+import com.github.readingbat.misc.Constants.READING_BAT
 import com.github.readingbat.misc.Constants.SCRIPTS_COMPARE_POOL_SIZE
 import com.github.readingbat.misc.Constants.STATIC_ROOT
 import com.github.readingbat.misc.Constants.URL_PREFIX
@@ -114,6 +115,7 @@ internal fun Application.assignContentDsl(fileName: String, variableName: String
           ktorPort = property("ktor.deployment.port", "0").toInt()
           val watchVal = environment.config.propertyOrNull("ktor.deployment.watch")?.getList() ?: emptyList()
           ktorWatch = if (watchVal.isNotEmpty()) watchVal.toString() else "unassigned"
+          grafanaUrl = property("$READING_BAT.grafana.url")
         }.apply { clearContentMap() })
     ReadingBatServer.metrics.contentLoadedCount.labels(agentLaunchId()).inc()
   }.also {

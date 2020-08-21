@@ -40,7 +40,7 @@ internal object Constants {
   const val WRONG_COLOR = "#F1F1F1"
   const val LABEL_WIDTH = "width: 250;"
   const val INVALID_RESET_ID = "Invalid reset_id"
-  private const val READING_BAT = "readingbat"
+  internal const val READING_BAT = "readingbat"
   private const val AGENT = "agent"
   private const val SITE = "site"
   const val CHALLENGES = "challenges"
