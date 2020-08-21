@@ -24,7 +24,7 @@ import com.github.readingbat.misc.Constants.SESSION_ID
 import com.github.readingbat.misc.Endpoints.CHECK_ANSWERS_ENDPOINT
 import com.github.readingbat.misc.ParameterIds.FEEDBACK_ID
 import com.github.readingbat.misc.ParameterIds.HINT_ID
-import com.github.readingbat.misc.ParameterIds.NEXTCHANCE_ID
+import com.github.readingbat.misc.ParameterIds.NEXTPREVCHANCE_ID
 import com.github.readingbat.misc.ParameterIds.SPINNER_ID
 import com.github.readingbat.misc.ParameterIds.STATUS_ID
 import com.github.readingbat.misc.ParameterIds.SUCCESS_ID
@@ -83,7 +83,7 @@ internal object CheckAnswersJs {
         document.getElementById('$SPINNER_ID').innerHTML = '<i class="fa fa-spinner fa-spin" style="font-size:24px"></i>';
         document.getElementById('$STATUS_ID').innerHTML = 'Checking answers...';
         document.getElementById('$SUCCESS_ID').innerHTML = '';
-        document.getElementById('$NEXTCHANCE_ID').style.display = "none";
+        document.getElementById('$NEXTPREVCHANCE_ID').style.display = "none";
       }
       else if(re.readyState == 4) {  // done
         var success = true;
@@ -107,7 +107,7 @@ internal object CheckAnswersJs {
         document.getElementById('$SPINNER_ID').innerHTML = "";
         document.getElementById('$STATUS_ID').innerHTML = "";
         document.getElementById('$SUCCESS_ID').innerHTML = success ? "Success! Congratulations!" : "";
-        document.getElementById('$NEXTCHANCE_ID').style.display = success ? "inline" : "none";
+        document.getElementById('$NEXTPREVCHANCE_ID').style.display = success ? "inline" : "none";
       }
     }
   """)

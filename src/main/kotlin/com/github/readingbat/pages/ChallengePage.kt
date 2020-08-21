@@ -71,7 +71,7 @@ import com.github.readingbat.misc.ParameterIds.LIKE_CLEAR
 import com.github.readingbat.misc.ParameterIds.LIKE_COLOR
 import com.github.readingbat.misc.ParameterIds.LIKE_SPINNER_ID
 import com.github.readingbat.misc.ParameterIds.LIKE_STATUS_ID
-import com.github.readingbat.misc.ParameterIds.NEXTCHANCE_ID
+import com.github.readingbat.misc.ParameterIds.NEXTPREVCHANCE_ID
 import com.github.readingbat.misc.ParameterIds.SPINNER_ID
 import com.github.readingbat.misc.ParameterIds.STATUS_ID
 import com.github.readingbat.misc.ParameterIds.SUCCESS_ID
@@ -221,7 +221,7 @@ internal object ChallengePage : KLogging() {
     span {
       style = "padding-left:20px;"
       val pos = challengeGroup.indexOf(challengeName)
-      this@displayChallenge.nextChance(pos, challenges, true)
+      this@displayChallenge.nextPrevChance(pos, challenges, true)
     }
 
     if (challenge.description.isNotBlank())
@@ -442,13 +442,12 @@ internal object ChallengePage : KLogging() {
           td {
             val challengeName = challenge.challengeName
             val challengeGroup = challenge.challengeGroup
-            val challenges = challenge.challengeGroup.challenges
             val pos = challengeGroup.indexOf(challengeName)
 
             span {
-              id = NEXTCHANCE_ID
+              id = NEXTPREVCHANCE_ID
               style = "display:none;"
-              this@processAnswers.nextChance(pos, challenges, false)
+              this@processAnswers.nextPrevChance(pos, challengeGroup.challenges, false)
             }
           }
 
@@ -462,7 +461,7 @@ internal object ChallengePage : KLogging() {
     }
   }
 
-  private fun BODY.nextChance(pos: Int, challenges: List<Challenge>, includePrev: Boolean) {
+  private fun BODY.nextPrevChance(pos: Int, challenges: List<Challenge>, includePrev: Boolean) {
     if (includePrev) {
       "prev".also {
         if (pos == 0)
