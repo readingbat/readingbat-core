@@ -87,7 +87,7 @@ internal object SystemAdminPage : KLogging() {
             }
 
             p {
-              this@body.button("Reset ReadingBat Challenge Cache",
+              this@body.button("Reset Challenge Cache",
                                RESET_CACHE_ENDPOINT,
                                "Are you sure you want to reset the challenge cache?")
             }
