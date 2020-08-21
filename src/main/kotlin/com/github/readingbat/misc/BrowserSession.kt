@@ -17,6 +17,7 @@
 
 package com.github.readingbat.misc
 
+import com.github.pambrose.common.util.md5
 import com.github.readingbat.misc.KeyConstants.ANSWER_HISTORY_KEY
 import com.github.readingbat.misc.KeyConstants.CHALLENGE_ANSWERS_KEY
 import com.github.readingbat.misc.KeyConstants.CORRECT_ANSWERS_KEY
@@ -28,6 +29,7 @@ import com.github.readingbat.server.GroupName
 import com.github.readingbat.server.Invocation
 import com.github.readingbat.server.LanguageName
 import com.github.readingbat.server.keyOf
+import com.github.readingbat.server.md5Of
 import java.time.Instant
 
 internal data class BrowserSession(val id: String, val created: Long = Instant.now().toEpochMilli()) {
@@ -36,19 +38,19 @@ internal data class BrowserSession(val id: String, val created: Long = Instant.n
     correctAnswersKey(names.languageName, names.groupName, names.challengeName)
 
   fun correctAnswersKey(languageName: LanguageName, groupName: GroupName, challengeName: ChallengeName) =
-    keyOf(CORRECT_ANSWERS_KEY, NO_AUTH_KEY, id, languageName, groupName, challengeName)
+    keyOf(CORRECT_ANSWERS_KEY, NO_AUTH_KEY, id, md5Of(languageName, groupName, challengeName))
 
   fun likeDislikeKey(names: ChallengeNames) =
     likeDislikeKey(names.languageName, names.groupName, names.challengeName)
 
   fun likeDislikeKey(languageName: LanguageName, groupName: GroupName, challengeName: ChallengeName) =
-    keyOf(LIKE_DISLIKE_KEY, NO_AUTH_KEY, id, languageName, groupName, challengeName)
+    keyOf(LIKE_DISLIKE_KEY, NO_AUTH_KEY, id, md5Of(languageName, groupName, challengeName))
 
   fun challengeAnswerKey(names: ChallengeNames) =
     challengeAnswerKey(names.languageName, names.groupName, names.challengeName)
 
   fun challengeAnswerKey(languageName: LanguageName, groupName: GroupName, challengeName: ChallengeName) =
-    keyOf(CHALLENGE_ANSWERS_KEY, NO_AUTH_KEY, id, languageName, groupName, challengeName)
+    keyOf(CHALLENGE_ANSWERS_KEY, NO_AUTH_KEY, id, md5Of(languageName, groupName, challengeName))
 
   fun answerHistoryKey(names: ChallengeNames, invocation: Invocation) =
     answerHistoryKey(names.languageName, names.groupName, names.challengeName, invocation)
@@ -57,5 +59,5 @@ internal data class BrowserSession(val id: String, val created: Long = Instant.n
                                groupName: GroupName,
                                challengeName: ChallengeName,
                                invocation: Invocation) =
-    keyOf(ANSWER_HISTORY_KEY, NO_AUTH_KEY, id, languageName, groupName, challengeName, invocation)
+    keyOf(ANSWER_HISTORY_KEY, NO_AUTH_KEY, id, keyOf(languageName, groupName, challengeName, invocation).md5())
 }

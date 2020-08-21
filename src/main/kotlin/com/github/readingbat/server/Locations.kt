@@ -20,7 +20,6 @@ package com.github.readingbat.server
 import com.github.pambrose.common.redis.RedisUtils.withRedisPool
 import com.github.pambrose.common.response.respondWith
 import com.github.pambrose.common.util.isNotValidEmail
-import com.github.pambrose.common.util.md5
 import com.github.pambrose.common.util.randomId
 import com.github.pambrose.common.util.sha256
 import com.github.readingbat.dsl.InvalidPathException
@@ -208,7 +207,7 @@ inline class ChallengeName(val value: String) {
 }
 
 class ChallengeMd5(languageName: LanguageName, groupName: GroupName, challengeName: ChallengeName) {
-  val value = keyOf(languageName, groupName, challengeName).md5()
+  val value = md5Of(languageName, groupName, challengeName)
   override fun toString() = value
 }
 

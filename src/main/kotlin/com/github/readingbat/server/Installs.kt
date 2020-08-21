@@ -85,7 +85,7 @@ internal object Installs : KLogging() {
 
     install(CallLogging) {
       level = Level.INFO
-      filter { call -> call.request.path().startsWith("/") }
+      filter { call -> call.request.path().let { it.startsWith("/") && !it.startsWith("/static/") } }
       format { call ->
         when (val status = call.response.status()) {
           HttpStatusCode.Found -> {
