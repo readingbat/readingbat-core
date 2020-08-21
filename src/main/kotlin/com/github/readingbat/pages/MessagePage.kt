@@ -33,7 +33,7 @@ import kotlinx.html.stream.createHTML
 
 internal object MessagePage {
 
-  fun PipelineCall.messagePage(content: ReadingBatContent) =
+  fun PipelineCall.messagePage(content: ReadingBatContent, msg: String = "") =
     createHTML()
       .html {
         head {
@@ -42,7 +42,7 @@ internal object MessagePage {
 
         body {
           bodyTitle()
-          h2 { +queryParam(MSG, "Missing msg parameter") }
+          h2 { +queryParam(MSG, if (msg.isNotBlank()) msg else "Missing msg parameter") }
 
           backLink(queryParam(RETURN_PATH))
         }

@@ -46,8 +46,6 @@ import redis.clients.jedis.Jedis
 
 internal object SystemAdminPage : KLogging() {
 
-  private const val createClassButton = "CreateClassButton"
-
   fun PipelineCall.systemAdminPage(content: ReadingBatContent,
                                    user: User?,
                                    redis: Jedis,
@@ -77,9 +75,9 @@ internal object SystemAdminPage : KLogging() {
           helpAndLogin(user, returnPath, activeClassCode.isEnabled, redis)
           bodyTitle()
 
-          if (!isProduction() || user.isAdmin(redis)) {
-            h2 { +"ReadingBat System Admin" }
+          h2 { +"ReadingBat System Admin" }
 
+          if (!isProduction() || user.isAdmin(redis)) {
             p {
               this@body.button("Reset ReadingBat Content",
                                RESET_CONTENT_ENDPOINT,
@@ -90,6 +88,11 @@ internal object SystemAdminPage : KLogging() {
               this@body.button("Reset Challenge Cache",
                                RESET_CACHE_ENDPOINT,
                                "Are you sure you want to reset the challenge cache?")
+            }
+          }
+          else {
+            p {
+              +"Not authorized"
             }
           }
 

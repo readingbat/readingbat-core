@@ -130,15 +130,15 @@ internal fun Routing.userRoutes(metrics: Metrics,
       redirectTo { e.redirectUrl }
     }
 
-  suspend fun PipelineCall.authenticatedAction(msg: String, block: () -> String) =
+  suspend fun PipelineCall.authenticatedAction(block: () -> String) =
     when {
       isProduction() ->
         withSuspendingRedisPool { redis ->
           val user = fetchUser()
           when {
             redis.isNull() -> DBMS_DOWN.value
-            user.isNull() -> "Must be logged in to call $msg"
-            user.isNotAdmin(redis) -> "Not authorized to call $msg"
+            user.isNull() -> "Must be logged in"
+            user.isNotAdmin(redis) -> "Not authorized"
             else -> block.invoke()
           }
         }
@@ -155,7 +155,7 @@ internal fun Routing.userRoutes(metrics: Metrics,
 
   get(RESET_CONTENT_ENDPOINT, metrics) {
     val msg =
-      authenticatedAction(RESET_CONTENT_ENDPOINT) {
+      authenticatedAction {
         measureTime { resetContentFunc.invoke() }.let {
           "Content reset in ${it.format()}".also { ReadingBatServer.logger.info { it } }
         }
@@ -165,9 +165,9 @@ internal fun Routing.userRoutes(metrics: Metrics,
 
   get(RESET_CACHE_ENDPOINT, metrics) {
     val msg =
-      authenticatedAction(RESET_CACHE_ENDPOINT) {
+      authenticatedAction {
         content.invoke().clearSourcesMap().let {
-          "Content maps reset".also { ReadingBatServer.logger.info { it } }
+          "Challenge map reset".also { ReadingBatServer.logger.info { it } }
         }
       }
     redirectTo { "$MESSAGE_ENDPOINT?$MSG=$msg" }

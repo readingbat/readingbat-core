@@ -165,7 +165,7 @@ class Metrics {
                           "Active users map size",
                           labelNames = listOf(AGENT_ID),
                           labelValues = listOf(agentLaunchId()),
-                          data = { SessionActivity.activityMapSize.toDouble() })
+                          data = { SessionActivity.sessionsMapSize.toDouble() })
 
     SamplerGaugeCollector("active_users_60mins_count",
                           "Active users in last 60 mins count",

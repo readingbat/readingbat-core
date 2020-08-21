@@ -17,6 +17,7 @@
 
 package com.github.readingbat.server
 
+import com.github.pambrose.common.util.Version.Companion.versionDesc
 import com.github.pambrose.common.util.isNotNull
 import com.github.readingbat.misc.BrowserSession
 import com.github.readingbat.misc.KeyConstants.KEY_SEP
@@ -35,6 +36,9 @@ typealias PipelineCall = PipelineContext<Unit, ApplicationCall>
 internal fun keyOf(vararg keys: Any) = keys.joinToString(KEY_SEP) { it.toString() }
 
 internal object ServerUtils : KLogging() {
+
+  internal fun getVersionDesc(asJson: Boolean = false): String = ReadingBatServer::class.versionDesc(asJson)
+
   fun Application.property(name: String, default: String = "", warn: Boolean = false) =
     try {
       environment.config.property(name).getString()

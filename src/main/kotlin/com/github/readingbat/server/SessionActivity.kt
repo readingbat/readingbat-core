@@ -21,21 +21,22 @@ import com.github.readingbat.misc.BrowserSession
 import mu.KLogging
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.atomic.AtomicReference
 import kotlin.concurrent.schedule
 import kotlin.time.Duration
+import kotlin.time.TimeSource
 import kotlin.time.hours
-import kotlin.time.milliseconds
 
 internal object SessionActivity : KLogging() {
 
   // Activity is overkill, but we might want to eventually do something with browserSession value
-  internal class Activity(val browserSession: BrowserSession) {
-    private val timestamp = AtomicReference(System.currentTimeMillis())
-    val age get() = (System.currentTimeMillis() - timestamp.get()).milliseconds
+  internal class Session(val browserSession: BrowserSession) {
+    private val startTime = TimeSource.Monotonic.markNow()
+    private var lastUpdate = startTime.elapsedNow()
+
+    val age get() = lastUpdate
 
     fun update() {
-      timestamp.set(System.currentTimeMillis())
+      lastUpdate = startTime.elapsedNow()
     }
   }
 
@@ -43,20 +44,20 @@ internal object SessionActivity : KLogging() {
   private val period = 1.hours
   private val timeOutAge = 2.hours
 
-  private val activityMap = ConcurrentHashMap<String, Activity>()
+  private val sessionsMap = ConcurrentHashMap<String, Session>()
   private val timer = Timer()
 
-  val activityMapSize get() = activityMap.size
+  val sessionsMapSize get() = sessionsMap.size
 
   init {
     timer.schedule(delay.toLongMilliseconds(), period.toLongMilliseconds()) {
       logger.info { "Running session activity cleanup for sessions over $timeOutAge" }
       try {
-        activityMap.entries
+        sessionsMap.entries
           .filter { it.value.age > timeOutAge }
           .forEach {
             logger.info { "Removing stale browser session ${it.key} after ${it.value.age}" }
-            activityMap.remove(it.key)
+            sessionsMap.remove(it.key)
           }
       } catch (e: Throwable) {
         logger.error(e) { "Exception when removing stale brwoser sessions" }
@@ -65,8 +66,8 @@ internal object SessionActivity : KLogging() {
   }
 
   fun markActivity(browserSession: BrowserSession) {
-    activityMap.getOrPut(browserSession.id, { Activity((browserSession)) }).update()
+    sessionsMap.getOrPut(browserSession.id, { Session((browserSession)) }).update()
   }
 
-  fun activeSessions(maxAge: Duration) = activityMap.filter { it.value.age <= maxAge }.size
+  fun activeSessions(maxAge: Duration) = sessionsMap.filter { it.value.age <= maxAge }.size
 }

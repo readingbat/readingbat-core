@@ -27,6 +27,7 @@ import com.github.pambrose.common.util.Version.Companion.versionDesc
 import com.github.pambrose.common.util.getBanner
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.agentLaunchId
+import com.github.readingbat.dsl.isAgentEnabled
 import com.github.readingbat.dsl.isProduction
 import com.github.readingbat.dsl.readContentDsl
 import com.github.readingbat.misc.Constants.AGENT_ENABLED
@@ -46,6 +47,7 @@ import com.github.readingbat.server.AdminRoutes.adminRoutes
 import com.github.readingbat.server.Installs.installs
 import com.github.readingbat.server.Locations.locations
 import com.github.readingbat.server.ReadingBatServer.content
+import com.github.readingbat.server.ReadingBatServer.contentReadCount
 import com.github.readingbat.server.ServerUtils.property
 import com.github.readingbat.server.WsEndoints.wsEndpoints
 import io.ktor.application.*
@@ -57,15 +59,18 @@ import io.prometheus.Agent.Companion.startAsyncAgent
 import mu.KLogging
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.time.TimeSource
 import kotlin.time.measureTime
-import kotlin.time.milliseconds
 
 @Version(version = "1.3.0", date = "8/21/20")
 object ReadingBatServer : KLogging() {
   internal val timeStamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("M/d/y H:m:ss"))
-  internal val startTimeMillis = System.currentTimeMillis().milliseconds
+  internal val startTime = TimeSource.Monotonic.markNow()
+  internal val upTime get() = startTime.elapsedNow()
   internal val content = AtomicReference(ReadingBatContent())
+  internal val contentReadCount = AtomicInteger(0)
   internal val metrics by lazy { Metrics() }
 
   fun start(args: Array<String>) {
@@ -114,6 +119,7 @@ internal fun Application.assignContentDsl(fileName: String, variableName: String
   }.also {
     ReadingBatServer.logger.info { "Loaded content in ${it.format()} using $variableName in $fileName" }
   }
+  contentReadCount.incrementAndGet()
 }
 
 internal fun Application.module() {
@@ -134,10 +140,17 @@ internal fun Application.module() {
     info { ReadingBatServer::class.versionDesc() }
   }
 
-  if (agentEnabled && proxyHostname.isNotEmpty()) {
-    val configFilename = System.getProperty(CONFIG_FILENAME) ?: ""
-    val agentInfo = startAsyncAgent(configFilename, true)
-    System.setProperty(AGENT_LAUNCH_ID, agentInfo.launchId)
+  System.setProperty(AGENT_ENABLED, agentEnabled.toString())
+
+  if (isAgentEnabled()) {
+    if (proxyHostname.isNotEmpty()) {
+      val configFilename = System.getProperty(CONFIG_FILENAME) ?: ""
+      val agentInfo = startAsyncAgent(configFilename, true)
+      System.setProperty(AGENT_LAUNCH_ID, agentInfo.launchId)
+    }
+    else {
+      ReadingBatServer.logger.error { "Prometheus agent is enabled by the proxy hostname is not assigned" }
+    }
   }
 
   // This is done after AGENT_LAUNCH_ID is assigned

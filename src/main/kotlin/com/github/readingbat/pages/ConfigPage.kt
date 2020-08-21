@@ -20,6 +20,8 @@ package com.github.readingbat.pages
 import com.github.pambrose.common.time.format
 import com.github.pambrose.common.util.Version.Companion.versionDesc
 import com.github.readingbat.dsl.ReadingBatContent
+import com.github.readingbat.dsl.agentLaunchId
+import com.github.readingbat.dsl.isAgentEnabled
 import com.github.readingbat.dsl.isProduction
 import com.github.readingbat.misc.CSSNames.INDENT_1EM
 import com.github.readingbat.misc.Constants.RETURN_PATH
@@ -29,6 +31,8 @@ import com.github.readingbat.pages.PageCommon.headDefault
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ReadingBatServer
 import com.github.readingbat.server.ServerUtils.queryParam
+import com.github.readingbat.server.SessionActivity
+import io.prometheus.Agent
 import kotlinx.html.body
 import kotlinx.html.div
 import kotlinx.html.h2
@@ -39,8 +43,6 @@ import kotlinx.html.stream.createHTML
 import kotlinx.html.table
 import kotlinx.html.td
 import kotlinx.html.tr
-import java.lang.System.currentTimeMillis
-import kotlin.time.milliseconds
 
 internal object ConfigPage {
 
@@ -54,7 +56,7 @@ internal object ConfigPage {
 
           h2 { +"ReadingBat Configuration" }
 
-          h3 { +"Content Configuration" }
+          h3 { +"Server Configuration" }
           div(classes = INDENT_1EM) {
             table {
               tr {
@@ -62,23 +64,13 @@ internal object ConfigPage {
                 td { +ReadingBatServer::class.versionDesc() }
               }
               tr {
-                td { +"Server uptime: " }
-                td { +(currentTimeMillis().milliseconds - ReadingBatServer.startTimeMillis).format(true) }
-              }
-              tr {
                 td { +"Server started: " }
                 td { +ReadingBatServer.timeStamp }
               }
               tr {
-                td { +"Content read: " }
-                td { +content.timeStamp }
+                td { +"Server uptime: " }
+                td { +ReadingBatServer.upTime.format(true) }
               }
-            }
-          }
-
-          h3 { +"Server Configuration" }
-          div(classes = INDENT_1EM) {
-            table {
               tr {
                 td { +"Ktor port:" }
                 td { +"${content.ktorPort}" }
@@ -110,6 +102,46 @@ internal object ConfigPage {
               tr {
                 td { +"Max class count" }
                 td { +"${content.maxClassCount}" }
+              }
+              tr {
+                td { +"Sources map size" }
+                td { +"${content.sourcesMapSize}" }
+              }
+              tr {
+                td { +"Content map size" }
+                td { +"${content.contentMapSize}" }
+              }
+              tr {
+                td { +"Session map size" }
+                td { +"${SessionActivity.sessionsMapSize}" }
+              }
+            }
+          }
+
+          h3 { +"Prometheus Agent Configuration" }
+          div(classes = INDENT_1EM) {
+            table {
+              tr {
+                td { +"Agent Id: " }
+                td { +if (isAgentEnabled()) agentLaunchId() else "disabled" }
+              }
+              tr {
+                td { +"Agent Version: " }
+                td { +if (isAgentEnabled()) Agent::class.versionDesc() else "disabled" }
+              }
+            }
+          }
+
+          h3 { +"Content Configuration" }
+          div(classes = INDENT_1EM) {
+            table {
+              tr {
+                td { +"Content last read: " }
+                td { +content.timeStamp }
+              }
+              tr {
+                td { +"Content read count: " }
+                td { +ReadingBatServer.contentReadCount.get().toString() }
               }
             }
           }
