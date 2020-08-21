@@ -110,10 +110,6 @@ internal object ConfigPage {
                 td { +"${content.sourcesMapSize}" }
               }
               tr {
-                td { +"Content map size" }
-                td { +"${content.contentMapSize}" }
-              }
-              tr {
                 td { +"Session map size" }
                 td { +"${SessionActivity.sessionsMapSize}" }
               }

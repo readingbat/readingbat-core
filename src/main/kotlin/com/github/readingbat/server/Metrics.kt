@@ -155,12 +155,6 @@ class Metrics {
                           labelValues = listOf(agentLaunchId()),
                           data = { contentSource().sourcesMapSize.toDouble() })
 
-    SamplerGaugeCollector("content_cache_size",
-                          "Content cache size",
-                          labelNames = listOf(AGENT_ID),
-                          labelValues = listOf(agentLaunchId()),
-                          data = { contentSource().contentMapSize.toDouble() })
-
     SamplerGaugeCollector("active_users_map_size",
                           "Active users map size",
                           labelNames = listOf(AGENT_ID),

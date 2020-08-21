@@ -37,9 +37,9 @@ import java.util.concurrent.ConcurrentHashMap
 class ReadingBatContent {
   // contentMap will prevent reading the same content multiple times
   private val contentMap = ConcurrentHashMap<String, ReadingBatContent>()
+
   internal val sourcesMap = ConcurrentHashMap<Int, FunctionInfo>()
   internal val sourcesMapSize get() = sourcesMap.size
-  internal val contentMapSize get() = contentMap.size
 
   /*
   fun main() {
