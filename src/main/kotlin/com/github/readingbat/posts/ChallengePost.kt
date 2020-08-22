@@ -110,17 +110,18 @@ internal data class ChallengeHistory(var invocation: Invocation,
   fun markCorrect(userResponse: String) {
     correct = true
     if (userResponse.isNotBlank()) {
-      if (userResponse in answers) answers.remove(userResponse)
-      answers += userResponse
+      if (answers.isEmpty() || answers.last() != userResponse)
+        answers += userResponse
     }
   }
 
   fun markIncorrect(userResponse: String) {
     correct = false
     if (userResponse.isNotBlank()) {
-      incorrectAttempts++
-      if (userResponse in answers) answers.remove(userResponse)
-      answers += userResponse
+      if (answers.isEmpty() || answers.last() != userResponse) {
+        incorrectAttempts++
+        answers += userResponse
+      }
     }
   }
 

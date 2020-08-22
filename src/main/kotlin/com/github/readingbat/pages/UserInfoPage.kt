@@ -92,8 +92,8 @@ internal object UserInfoPage {
               val principal = call.sessions.get<UserPrincipal>()
               val sessionId = call.sessions.get<BrowserSession>()
 
-              println("Browser Sessions: $browserSessions")
-              println("Class codes: $classCodes")
+              //println("Browser Sessions: $browserSessions")
+              //println("Class codes: $classCodes")
 
               p {
                 table {
