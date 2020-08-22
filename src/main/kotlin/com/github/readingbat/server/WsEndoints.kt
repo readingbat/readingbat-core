@@ -48,7 +48,7 @@ import kotlin.time.seconds
 
 internal object WsEndoints : KLogging() {
 
-  private const val LANGUAGE_NAME = "languageName"
+  private const val LANG_NAME = "languageName"
   private const val GROUP_NAME = "groupName"
   private const val CLASS_CODE = "classCode"
   private const val CHALLENGE_MD5 = "challengeMd5"
@@ -58,27 +58,24 @@ internal object WsEndoints : KLogging() {
   fun Routing.wsEndpoints(metrics: Metrics, content: () -> ReadingBatContent) {
 
     webSocket("$CHALLENGE_ENDPOINT/{$CLASS_CODE}/{$CHALLENGE_MD5}") {
-      val finished = BooleanMonitor(false)
-      val metricsCounted = AtomicBoolean(true)
-      val classCode = call.parameters[CLASS_CODE]?.let { ClassCode(it) }
-        ?: throw InvalidPathException("Missing class code")
+      val classCode =
+        call.parameters[CLASS_CODE]?.let { ClassCode(it) } ?: throw InvalidPathException("Missing class code")
       val challengeMd5 = call.parameters[CHALLENGE_MD5] ?: throw InvalidPathException("Missing challenge md5")
       val desc = "$CHALLENGE_ENDPOINT/$classCode/$challengeMd5"
+      val finished = BooleanMonitor(false)
 
       logger.info { "Opening student answers websocket for $desc" }
 
       outgoing.invokeOnClose { e ->
-        logger.info { "Closure received for tudent answers websocket for $desc" }
+        logger.info { "Closure received for student answers websocket for $desc" }
         finished.set(true)
       }
 
       metrics.measureEndpointRequest("/websocket_student_answers") {
-
-        metrics.wsStudentAnswerCount.labels(agentLaunchId()).inc()
-        metrics.wsStudentAnswerGauge.labels(agentLaunchId()).inc()
-        metricsCounted.set(true)
-
         try {
+          metrics.wsStudentAnswerCount.labels(agentLaunchId()).inc()
+          metrics.wsStudentAnswerGauge.labels(agentLaunchId()).inc()
+
           incoming
             .consumeAsFlow()
             .mapNotNull { it as? Frame.Text }
@@ -136,36 +133,34 @@ internal object WsEndoints : KLogging() {
               }
             }
         } finally {
+          metrics.wsStudentAnswerGauge.labels(agentLaunchId()).dec()
           close(CloseReason(Codes.GOING_AWAY, "Client disconnected"))
           logger.info { "Closed student answers websocket for $desc" }
-
-          if (metricsCounted.get())
-            metrics.wsStudentAnswerGauge.labels(agentLaunchId()).dec()
         }
       }
     }
 
-    webSocket("$CHALLENGE_GROUP_ENDPOINT/{$LANGUAGE_NAME}/{$GROUP_NAME}/{$CLASS_CODE}") {
-      val closed = AtomicBoolean(false)
-      var desc = "unassigned"
-      logger.info { "Called class statistics websocket" }
+    webSocket("$CHALLENGE_GROUP_ENDPOINT/{$LANG_NAME}/{$GROUP_NAME}/{$CLASS_CODE}") {
+      val (languageName, groupName, classCode) =
+        Triple(
+          call.parameters[LANG_NAME]?.let { LanguageName(it) } ?: throw InvalidPathException("Missing language name"),
+          call.parameters[GROUP_NAME]?.let { GroupName(it) } ?: throw InvalidPathException("Missing group name"),
+          call.parameters[CLASS_CODE]?.let { ClassCode(it) } ?: throw InvalidPathException("Missing class code"))
+      val challenges = content.invoke().findGroup(languageName.toLanguageType(), groupName).challenges
+      val desc = "$CHALLENGE_ENDPOINT/$languageName/$groupName/$classCode"
+      val finished = AtomicBoolean(false)
+
+      logger.info { "Opening class statistics websocket for $desc" }
+
+      outgoing.invokeOnClose { e ->
+        logger.info { "Closure received for class statistics websocket for $desc" }
+        finished.set(true)
+      }
 
       metrics.measureEndpointRequest("/websocket_class_statistics") {
-        metrics.wsClassStatisticsCount.labels(agentLaunchId()).inc()
-        metrics.wsClassStatisticsGauge.labels(agentLaunchId()).inc()
-
         try {
-          val languageName =
-            call.parameters[LANGUAGE_NAME]?.let { LanguageName(it) }
-              ?: throw InvalidPathException("Missing language name")
-          val groupName =
-            call.parameters[GROUP_NAME]?.let { GroupName(it) } ?: throw InvalidPathException("Missing group name")
-          val classCode =
-            call.parameters[CLASS_CODE]?.let { ClassCode(it) } ?: throw InvalidPathException("Missing class code")
-          val challenges = content.invoke().findGroup(languageName.toLanguageType(), groupName).challenges
-
-          desc = "$CHALLENGE_ENDPOINT/$languageName/$groupName/$classCode"
-          logger.info { "Opening class statistics websocket for $desc" }
+          metrics.wsClassStatisticsCount.labels(agentLaunchId()).inc()
+          metrics.wsClassStatisticsGauge.labels(agentLaunchId()).inc()
 
           incoming
             .consumeAsFlow()
@@ -176,84 +171,83 @@ internal object WsEndoints : KLogging() {
                 if (redis.isNotNull() && classCode.isEnabled) {
                   val enrollees = classCode.fetchEnrollees(redis)
                   if (enrollees.isNotEmpty()) {
-                    challenges
-                      .forEach { challenge ->
-                        val funcInfo = challenge.funcInfo(content.invoke())
-                        val challengeName = challenge.challengeName
-                        val numCalls = funcInfo.invocations.size
-                        var totAttemptedAtLeastOne = 0
-                        var totAllCorrect = 0
-                        var totCorrect = 0
-                        var incorrectAttempts = 0
-                        var likes = 0
-                        var dislikes = 0
+                    for (challenge in challenges) {
+                      val funcInfo = challenge.funcInfo(content.invoke())
+                      val challengeName = challenge.challengeName
+                      val numCalls = funcInfo.invocations.size
+                      var totAttemptedAtLeastOne = 0
+                      var totAllCorrect = 0
+                      var totCorrect = 0
+                      var incorrectAttempts = 0
+                      var likes = 0
+                      var dislikes = 0
 
-                        enrollees.forEach { enrollee ->
-                          var attempted = 0
-                          var numCorrect = 0
+                      for (enrollee in enrollees) {
+                        var attempted = 0
+                        var numCorrect = 0
 
-                          funcInfo.invocations
-                            .forEach { invocation ->
-                              val answerHistoryKey =
-                                enrollee.answerHistoryKey(languageName, groupName, challengeName, invocation)
+                        for (invocation in funcInfo.invocations) {
+                          val historyKey = enrollee.answerHistoryKey(languageName, groupName, challengeName, invocation)
 
-                              if (redis.exists(answerHistoryKey)) {
-                                attempted++
-                                val json = redis[answerHistoryKey] ?: ""
-                                val history =
-                                  gson.fromJson(json, ChallengeHistory::class.java) ?: ChallengeHistory(invocation)
-                                if (history.correct)
-                                  numCorrect++
+                          if (redis.exists(historyKey)) {
+                            attempted++
+                            val json = redis[historyKey] ?: ""
+                            val history =
+                              gson.fromJson(json, ChallengeHistory::class.java) ?: ChallengeHistory(invocation)
+                            if (history.correct)
+                              numCorrect++
 
-                                incorrectAttempts += history.incorrectAttempts
-                              }
-                            }
+                            incorrectAttempts += history.incorrectAttempts
+                          }
 
-                          val likeDislikeKey = enrollee.likeDislikeKey(languageName, groupName, challengeName)
-                          val likeDislike = redis[likeDislikeKey]?.toInt() ?: 0
-                          if (likeDislike == 1)
-                            likes++
-                          else if (likeDislike == 2)
-                            dislikes++
-
-                          if (attempted > 0)
-                            totAttemptedAtLeastOne++
-
-                          if (numCorrect == numCalls)
-                            totAllCorrect++
-
-                          totCorrect += numCorrect
+                          if (finished.get())
+                            break
                         }
 
-                        val avgCorrect =
-                          if (totAttemptedAtLeastOne > 0) totCorrect / totAttemptedAtLeastOne.toFloat() else 0.0f
-                        val avgCorrectFmt = "%.1f".format(avgCorrect)
+                        val likeDislikeKey = enrollee.likeDislikeKey(languageName, groupName, challengeName)
+                        val likeDislike = redis[likeDislikeKey]?.toInt() ?: 0
+                        if (likeDislike == 1)
+                          likes++
+                        else if (likeDislike == 2)
+                          dislikes++
 
-                        val msg =
-                          " ($numCalls | $totAttemptedAtLeastOne | $totAllCorrect | $avgCorrectFmt | $incorrectAttempts | $likes/$dislikes)"
+                        if (attempted > 0)
+                          totAttemptedAtLeastOne++
 
-                        val challengeStats = ChallengeStats(challengeName.value, msg)
-                        val json = gson.toJson(challengeStats)
+                        if (numCorrect == numCalls)
+                          totAllCorrect++
 
-                        metrics.wsClassStatisticsResponseCount.labels(agentLaunchId()).inc()
-                        logger.debug { "Sending data $json" }
-                        runBlocking { outgoing.send(Frame.Text(json)) }
+                        totCorrect += numCorrect
+
+                        if (finished.get())
+                          break
                       }
+
+                      val avgCorrect =
+                        if (totAttemptedAtLeastOne > 0) totCorrect / totAttemptedAtLeastOne.toFloat() else 0.0f
+                      val avgCorrectFmt = "%.1f".format(avgCorrect)
+
+                      val msg =
+                        " ($numCalls | $totAttemptedAtLeastOne | $totAllCorrect | $avgCorrectFmt | $incorrectAttempts | $likes/$dislikes)"
+
+                      val challengeStats = ChallengeStats(challengeName.value, msg)
+                      val json = gson.toJson(challengeStats)
+
+                      metrics.wsClassStatisticsResponseCount.labels(agentLaunchId()).inc()
+                      logger.debug { "Sending data $json" }
+                      runBlocking { outgoing.send(Frame.Text(json)) }
+
+                      if (finished.get())
+                        break
+                    }
                   }
                 }
               }
-              // This will close it if the results run to completion
-              logger.info { "Closing class statistics websocket for $desc" }
-              close(CloseReason(Codes.NORMAL, "Client disconnected"))
-              closed.set(true)
             }
         } finally {
-          // This will close it if the user exits the page early
-          if (!closed.get()) {
-            logger.info { "Closing class statistics websocket for $desc" }
-            close(CloseReason(Codes.GOING_AWAY, "Client disconnected"))
-          }
           metrics.wsClassStatisticsGauge.labels(agentLaunchId()).dec()
+          close(CloseReason(Codes.GOING_AWAY, "Client disconnected"))
+          logger.info { "Closed class statistics websocket for $desc" }
         }
       }
     }
