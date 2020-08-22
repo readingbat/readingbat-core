@@ -25,7 +25,6 @@ import com.sendgrid.helpers.mail.Mail
 import com.sendgrid.helpers.mail.objects.Content
 import mu.KLogging
 
-
 internal object Emailer : KLogging() {
 
   fun sendEmail(to: Email, from: Email, subject: String, msg: Message) {
@@ -37,11 +36,12 @@ internal object Emailer : KLogging() {
     val sg = SendGrid(System.getenv("SENDGRID_API_KEY"))
 
     val request =
-      Request().apply {
-        method = Method.POST
-        endpoint = "mail/send"
-        body = mail.build()
-      }
+      Request()
+        .apply {
+          method = Method.POST
+          endpoint = "mail/send"
+          body = mail.build()
+        }
 
     sg.api(request).apply {
       logger.info { "Response status code: $statusCode to: $to from: $from" }

@@ -37,7 +37,8 @@ internal object Constants {
   const val LIKE_DESC = "likeDesc"
   const val NO_ANSWER_COLOR = "white"
   const val CORRECT_COLOR = "#4EAA3A"
-  const val WRONG_COLOR = "#F1F1F1"
+  const val WRONG_COLOR = "#FF0000" //red
+  const val INCOMPLETE_COLOR = "#F1F1F1"
   const val LABEL_WIDTH = "width: 250;"
   const val INVALID_RESET_ID = "Invalid reset_id"
   internal const val READING_BAT = "readingbat"

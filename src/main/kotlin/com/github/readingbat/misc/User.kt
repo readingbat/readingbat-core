@@ -520,7 +520,7 @@ internal class User private constructor(val id: String, val browserSession: Brow
 
           when {
             !result.answered -> history.markUnanswered()
-            result.correct -> history.markCorrect()
+            result.correct -> history.markCorrect(result.userResponse)
             else -> history.markIncorrect(result.userResponse)
           }
 

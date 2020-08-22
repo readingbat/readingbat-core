@@ -106,14 +106,20 @@ internal data class ChallengeHistory(var invocation: Invocation,
                                      var correct: Boolean = false,
                                      var incorrectAttempts: Int = 0,
                                      val answers: MutableList<String> = mutableListOf()) {
-  fun markCorrect() {
+
+  fun markCorrect(userResponse: String) {
     correct = true
+    if (userResponse.isNotBlank()) {
+      if (userResponse in answers) answers.remove(userResponse)
+      answers += userResponse
+    }
   }
 
   fun markIncorrect(userResponse: String) {
     correct = false
-    if (userResponse.isNotBlank() && userResponse !in answers) {
+    if (userResponse.isNotBlank()) {
       incorrectAttempts++
+      if (userResponse in answers) answers.remove(userResponse)
       answers += userResponse
     }
   }
@@ -262,6 +268,7 @@ internal object ChallengePost : KLogging() {
           val languageName = names.languageName
           val userResponse = paramMap[RESP + i]?.trim() ?: throw InvalidConfigurationException("Missing user response")
           val correctAnswer = funcInfo.correctAnswers[i]
+          val returnType = funcInfo.returnType
           val answered = userResponse.isNotBlank()
           val correctAndHint =
             if (answered) {
@@ -270,13 +277,13 @@ internal object ChallengePost : KLogging() {
                 if (correctAnswer.isBracketed())
                   userResponse.equalsAsJvmList(correctAnswer)
                 else
-                  userResponse.equalsAsJvmScalar(correctAnswer, funcInfo.returnType, languageName)
+                  userResponse.equalsAsJvmScalar(correctAnswer, returnType, languageName)
               }
               else {
                 if (correctAnswer.isBracketed())
                   userResponse.equalsAsPythonList(correctAnswer)
                 else
-                  userResponse.equalsAsPythonScalar(correctAnswer, funcInfo.returnType)
+                  userResponse.equalsAsPythonScalar(correctAnswer, returnType)
               }
             }
             else {

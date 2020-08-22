@@ -113,7 +113,7 @@ internal object TeacherPrefsPage : KLogging() {
 
           h2 { +"ReadingBat User Preferences" }
 
-          p { span { style = "color:${if (msg.isError) "red" else "green"};"; this@body.displayMessage(msg) } }
+          p { span { style = "color:${msg.color};"; this@body.displayMessage(msg) } }
 
           createClass(defaultClassDesc)
           displayClasses(user, activeClassCode, redis)

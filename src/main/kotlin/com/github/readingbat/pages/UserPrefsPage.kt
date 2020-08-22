@@ -122,7 +122,7 @@ internal object UserPrefsPage : KLogging() {
 
           h2 { +"ReadingBat User Preferences" }
 
-          p { span { style = "color:${if (msg.isError) "red" else "green"};"; this@body.displayMessage(msg) } }
+          p { span { style = "color:${msg.color};"; this@body.displayMessage(msg) } }
 
           changePassword()
           joinOrWithdrawFromClass(user, defaultClassCode, redis)
@@ -310,7 +310,7 @@ internal object UserPrefsPage : KLogging() {
 
           bodyTitle()
 
-          p { span { style = "color:${if (msg.isError) "red" else "green"};"; this@body.displayMessage(msg) } }
+          p { span { style = "color:${msg.color};"; this@body.displayMessage(msg) } }
 
           h2 { +"Log in" }
 

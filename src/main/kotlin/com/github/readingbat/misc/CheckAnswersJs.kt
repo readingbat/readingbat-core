@@ -21,6 +21,7 @@ import com.github.readingbat.misc.Constants.CORRECT_COLOR
 import com.github.readingbat.misc.Constants.NO_ANSWER_COLOR
 import com.github.readingbat.misc.Constants.RESP
 import com.github.readingbat.misc.Constants.SESSION_ID
+import com.github.readingbat.misc.Constants.WRONG_COLOR
 import com.github.readingbat.misc.Endpoints.CHECK_ANSWERS_ENDPOINT
 import com.github.readingbat.misc.ParameterIds.FEEDBACK_ID
 import com.github.readingbat.misc.ParameterIds.HINT_ID
@@ -98,7 +99,7 @@ internal object CheckAnswersJs {
             x.style.backgroundColor = '$CORRECT_COLOR';
           }
           else {
-            x.style.backgroundColor = "red";
+            x.style.backgroundColor = '$WRONG_COLOR';
             success = false;
             document.getElementById("$HINT_ID"+i).innerHTML = results[i][1];
           }

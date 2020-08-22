@@ -17,9 +17,14 @@
 
 package com.github.readingbat.misc
 
+import com.github.readingbat.misc.Constants.CORRECT_COLOR
+import com.github.readingbat.misc.Constants.WRONG_COLOR
+
 data class Message(val value: String, val isError: Boolean = false) {
   val isBlank get() = value.isBlank()
   val isNotBlank get() = value.isNotBlank()
+
+  val color get() = if (isError) WRONG_COLOR else CORRECT_COLOR
 
   override fun toString() = value
 

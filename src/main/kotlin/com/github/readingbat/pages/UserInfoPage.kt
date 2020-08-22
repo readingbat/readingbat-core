@@ -84,7 +84,7 @@ internal object UserInfoPage {
 
               p {
                 span {
-                  style = "color:${if (msg.isError) "red" else "green"};"
+                  style = "color:${msg.color};"
                   this@body.displayMessage(msg)
                 }
               }

@@ -46,6 +46,7 @@ import com.github.readingbat.misc.ClassCode
 import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
 import com.github.readingbat.misc.Constants.CORRECT_COLOR
 import com.github.readingbat.misc.Constants.DBMS_DOWN
+import com.github.readingbat.misc.Constants.INCOMPLETE_COLOR
 import com.github.readingbat.misc.Constants.MSG
 import com.github.readingbat.misc.Constants.PING_CODE
 import com.github.readingbat.misc.Constants.PLAYGROUND_ROOT
@@ -332,14 +333,14 @@ internal object ChallengePage : KLogging() {
             }
             else {
               var name = document.getElementById(obj.userId + '-$nameTd');
-              name.style.backgroundColor = obj.complete ? '$CORRECT_COLOR' : '$WRONG_COLOR';
+              name.style.backgroundColor = obj.complete ? '$CORRECT_COLOR' : '$INCOMPLETE_COLOR';
   
               document.getElementById(obj.userId + '-$numCorrectSpan').innerHTML = obj.numCorrect;
   
               var prefix = obj.userId + '-' + obj.history.invocation;
               
               var answers = document.getElementById(prefix + '-$answersTd')
-              answers.style.backgroundColor = obj.history.correct ? '$CORRECT_COLOR' : '$WRONG_COLOR';
+              answers.style.backgroundColor = obj.history.correct ? '$CORRECT_COLOR' : (obj.history.answers.length > 0 ? '$WRONG_COLOR' : '$INCOMPLETE_COLOR');
   
               document.getElementById(prefix + '-$answersSpan').innerHTML = obj.history.answers;
             }
@@ -401,7 +402,7 @@ internal object ChallengePage : KLogging() {
                 td(classes = DASHBOARD) {
                   id = "${enrollee.id}-$nameTd"
                   style =
-                    "width:15%;white-space:nowrap; background-color:${if (allCorrect) CORRECT_COLOR else WRONG_COLOR};"
+                    "width:15%;white-space:nowrap; background-color:${if (allCorrect) CORRECT_COLOR else INCOMPLETE_COLOR};"
 
                   span { id = "${enrollee.id}-$numCorrectSpan"; +numCorrect.toString() }
                   +"/$numChallenges"
@@ -413,7 +414,8 @@ internal object ChallengePage : KLogging() {
                   .forEach { (invocation, history) ->
                     td(classes = DASHBOARD) {
                       id = "${enrollee.id}-$invocation-$answersTd"
-                      style = "background-color:${if (history.correct) CORRECT_COLOR else WRONG_COLOR};"
+                      style =
+                        "background-color:${if (history.correct) CORRECT_COLOR else (if (history.answers.isNotEmpty()) WRONG_COLOR else INCOMPLETE_COLOR)};"
                       span {
                         id = "${enrollee.id}-$invocation-$answersSpan"
                         history.answers.asReversed().take(maxHistoryLength).forEach { answer -> +answer; br }
