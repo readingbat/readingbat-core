@@ -20,7 +20,6 @@ package com.github.readingbat.server
 import com.github.pambrose.common.redis.RedisUtils.REDIS_MAX_IDLE_SIZE
 import com.github.pambrose.common.redis.RedisUtils.REDIS_MAX_POOL_SIZE
 import com.github.pambrose.common.redis.RedisUtils.REDIS_MIN_IDLE_SIZE
-import com.github.pambrose.common.time.format
 import com.github.pambrose.common.util.FileSource
 import com.github.pambrose.common.util.Version
 import com.github.pambrose.common.util.Version.Companion.versionDesc
@@ -120,7 +119,7 @@ internal fun Application.assignContentDsl(fileName: String, variableName: String
         }.apply { clearContentMap() })
     ReadingBatServer.metrics.contentLoadedCount.labels(agentLaunchId()).inc()
   }.also {
-    ReadingBatServer.logger.info { "Loaded content in ${it.format()} using $variableName in $fileName" }
+    ReadingBatServer.logger.info { "Loaded content in $it using $variableName in $fileName" }
   }
   contentReadCount.incrementAndGet()
 }

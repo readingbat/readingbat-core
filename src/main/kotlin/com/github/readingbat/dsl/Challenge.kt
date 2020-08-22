@@ -113,7 +113,7 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
             return try {
               val path = pathOf((repo as AbstractRepo).rawSourcePrefix, branchName, srcPath, fqName)
               val (code, dur) = measureTimedValue { URL(path).readText() }
-              logger.info { """Fetched "$groupName/$fileName" in: $dur from: $path""" }
+              logger.debug { """Fetched "$groupName/$fileName" in: $dur from: $path""" }
               code
             } finally {
               timer.observeDuration()
