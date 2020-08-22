@@ -105,21 +105,21 @@ internal object ChallengeGroupPage : KLogging() {
         val activeClassCode = user.fetchActiveClassCode(redis)
         val enrollees = activeClassCode.fetchEnrollees(redis)
 
-        fun TR.funcCall(user: User?,
-                        challenge: Challenge,
-                        redis: Jedis?) {
+        fun TR.funcCall(user: User?, challenge: Challenge, redis: Jedis?) {
           val challengeName = challenge.challengeName
           val allCorrect = challenge.isCorrect(user, browserSession, redis)
 
           td(classes = FUNC_ITEM) {
             if (activeClassCode.isNotEnabled)
               img { src = "$STATIC_ROOT/${if (allCorrect) GREEN_CHECK else WHITE_CHECK}" }
+
             a {
               style = "font-Size:110%; padding-left:2px;"
               href = pathOf(CHALLENGE_ROOT, languageName, groupName, challengeName)
               +challengeName.value
             }
 
+            // This element is dynamically populated by the websocket data
             if (enrollees.isNotEmpty())
               span { id = challengeName.value; +"" }
           }
@@ -144,7 +144,7 @@ internal object ChallengeGroupPage : KLogging() {
             displayClassDescription(activeClassCode, enrollees, redis)
 
           if (enrollees.isNotEmpty())
-            p { +"(# of questions | # students that started | # completed | Avg correct answers | Likes | Dislikes)" }
+            p { +"(# of questions | # that started | # completed | Avg correct | Incorrect attempts | Likes/Dislikes)" }
 
           table {
             val cols = 3

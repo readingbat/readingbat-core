@@ -17,6 +17,7 @@
 
 package com.github.readingbat.server
 
+import com.github.pambrose.common.concurrent.BooleanMonitor
 import com.github.pambrose.common.redis.RedisUtils.withRedisPool
 import com.github.pambrose.common.time.format
 import com.github.pambrose.common.util.isNotNull
@@ -35,8 +36,8 @@ import io.ktor.routing.*
 import io.ktor.websocket.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.mapNotNull
-import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import mu.KLogging
@@ -57,23 +58,29 @@ internal object WsEndoints : KLogging() {
   fun Routing.wsEndpoints(metrics: Metrics, content: () -> ReadingBatContent) {
 
     webSocket("$CHALLENGE_ENDPOINT/{$CLASS_CODE}/{$CHALLENGE_MD5}") {
-      var desc = "unassigned"
-      logger.info { "Called student answers websocket" }
+      val finished = BooleanMonitor(false)
+      val metricsCounted = AtomicBoolean(true)
+      val classCode = call.parameters[CLASS_CODE]?.let { ClassCode(it) }
+        ?: throw InvalidPathException("Missing class code")
+      val challengeMd5 = call.parameters[CHALLENGE_MD5] ?: throw InvalidPathException("Missing challenge md5")
+      val desc = "$CHALLENGE_ENDPOINT/$classCode/$challengeMd5"
+
+      logger.info { "Opening student answers websocket for $desc" }
+
+      outgoing.invokeOnClose { e ->
+        logger.info { "Closure received for tudent answers websocket for $desc" }
+        finished.set(true)
+      }
 
       metrics.measureEndpointRequest("/websocket_student_answers") {
+
         metrics.wsStudentAnswerCount.labels(agentLaunchId()).inc()
         metrics.wsStudentAnswerGauge.labels(agentLaunchId()).inc()
+        metricsCounted.set(true)
 
         try {
-          val classCode = call.parameters[CLASS_CODE]?.let { ClassCode(it) }
-            ?: throw InvalidPathException("Missing class code")
-          val challengeMd5 = call.parameters[CHALLENGE_MD5] ?: throw InvalidPathException("Missing challenge md5")
-
-          desc = "$CHALLENGE_ENDPOINT/$classCode/$challengeMd5"
-          logger.info { "Opening student answers websocket for $desc" }
-
           incoming
-            .receiveAsFlow()
+            .consumeAsFlow()
             .mapNotNull { it as? Frame.Text }
             .collect { frame ->
               val inboundMsg = frame.readText()
@@ -84,7 +91,7 @@ internal object WsEndoints : KLogging() {
 
                   launch {
                     var secs = 0
-                    while (true) {
+                    while (!finished.get()) {
                       val duration = start.elapsedNow()
                       val message = PingMessage(duration.format())
                       val json = gson.toJson(message)
@@ -96,21 +103,44 @@ internal object WsEndoints : KLogging() {
                   }
                 }
 
-                redis?.subscribe(object : JedisPubSub() {
-                  override fun onMessage(channel: String?, message: String?) {
-                    if (message.isNotNull()) {
-                      logger.info { "Sending data $message from $channel to $challengeMd5" }
-                      metrics.wsStudentAnswerResponseCount.labels(agentLaunchId()).inc()
-                      runBlocking { outgoing.send(Frame.Text(message)) }
+                val pubsub =
+                  object : JedisPubSub() {
+                    override fun onMessage(channel: String?, message: String?) {
+                      if (message.isNotNull()) {
+                        logger.info { "Sending data $message from $channel to $challengeMd5" }
+                        metrics.wsStudentAnswerResponseCount.labels(agentLaunchId()).inc()
+                        runBlocking {
+                          outgoing.send(Frame.Text(message))
+                        }
+                      }
+                    }
+
+                    override fun onSubscribe(channel: String?, subscribedChannels: Int) {
+                      logger.info { "Subscribed to $channel to $challengeMd5" }
+                    }
+
+                    override fun onUnsubscribe(channel: String?, subscribedChannels: Int) {
+                      logger.info { "Unsubscribed from $channel to $challengeMd5" }
                     }
                   }
-                }, classTopicName(classCode, challengeMd5))
+
+                val subscriber = launch {
+                  redis?.subscribe(pubsub, classTopicName(classCode, challengeMd5))
+                }
+
+                // Wait for closure to happen
+                finished.waitUntilTrue()
+
+                pubsub.unsubscribe()
+                runBlocking { subscriber.join() }
               }
             }
         } finally {
-          logger.info { "Closing student answers websocket for $desc" }
           close(CloseReason(Codes.GOING_AWAY, "Client disconnected"))
-          metrics.wsStudentAnswerGauge.labels(agentLaunchId()).dec()
+          logger.info { "Closed student answers websocket for $desc" }
+
+          if (metricsCounted.get())
+            metrics.wsStudentAnswerGauge.labels(agentLaunchId()).dec()
         }
       }
     }
@@ -138,7 +168,7 @@ internal object WsEndoints : KLogging() {
           logger.info { "Opening class statistics websocket for $desc" }
 
           incoming
-            .receiveAsFlow()
+            .consumeAsFlow()
             .mapNotNull { it as? Frame.Text }
             .collect { frame ->
               val inboundMsg = frame.readText()
@@ -154,6 +184,7 @@ internal object WsEndoints : KLogging() {
                         var totAttemptedAtLeastOne = 0
                         var totAllCorrect = 0
                         var totCorrect = 0
+                        var incorrectAttempts = 0
                         var likes = 0
                         var dislikes = 0
 
@@ -173,6 +204,8 @@ internal object WsEndoints : KLogging() {
                                   gson.fromJson(json, ChallengeHistory::class.java) ?: ChallengeHistory(invocation)
                                 if (history.correct)
                                   numCorrect++
+
+                                incorrectAttempts += history.incorrectAttempts
                               }
                             }
 
@@ -197,7 +230,7 @@ internal object WsEndoints : KLogging() {
                         val avgCorrectFmt = "%.1f".format(avgCorrect)
 
                         val msg =
-                          " ($numCalls | $totAttemptedAtLeastOne | $totAllCorrect | $avgCorrectFmt | $likes | $dislikes)"
+                          " ($numCalls | $totAttemptedAtLeastOne | $totAllCorrect | $avgCorrectFmt | $incorrectAttempts | $likes/$dislikes)"
 
                         val challengeStats = ChallengeStats(challengeName.value, msg)
                         val json = gson.toJson(challengeStats)

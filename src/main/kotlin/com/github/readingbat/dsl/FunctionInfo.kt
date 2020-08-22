@@ -67,7 +67,7 @@ internal class FunctionInfo(val languageType: LanguageType,
         }
     }
 
-    logger.info { "In $challengeName return type: $returnType invocations: $invocations computed answers: $correctAnswers" }
+    logger.debug { "In $challengeName return type: $returnType invocations: $invocations computed answers: $correctAnswers" }
 
     validate()
   }

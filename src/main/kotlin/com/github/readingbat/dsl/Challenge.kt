@@ -213,7 +213,7 @@ class PythonChallenge(challengeGroup: ChallengeGroup<*>,
         }
       }
 
-    logger.info { "$challengeName computed answers in $duration for: $correctAnswers" }
+    logger.debug { "$challengeName computed answers in $duration for: $correctAnswers" }
 
     return FunctionInfo(languageType,
                         challengeGroup,
@@ -257,7 +257,7 @@ class JavaChallenge(challengeGroup: ChallengeGroup<*>,
       }
 
     val correctAnswers = timedValue.value
-    logger.info { "$challengeName computed answers in ${timedValue.duration}" }
+    logger.debug { "$challengeName computed answers in ${timedValue.duration}" }
 
     if (correctAnswers !is List<*>)
       throw InvalidConfigurationException("Invalid type returned for $challengeName")
@@ -313,7 +313,7 @@ class KotlinChallenge(challengeGroup: ChallengeGroup<*>,
         }
       }
 
-    logger.info { "$challengeName computed answers in $duration for: $correctAnswers" }
+    logger.debug { "$challengeName computed answers in $duration for: $correctAnswers" }
 
     return FunctionInfo(languageType,
                         challengeGroup,
