@@ -113,6 +113,10 @@ internal object ConfigPage {
                 td { +"Session map size" }
                 td { +"${SessionActivity.sessionsMapSize}" }
               }
+              tr {
+                td { +"JAVA_TOOL_OPTIONS" }
+                td { +(System.getenv("JAVA_TOOL_OPTIONS") ?: "unassigned") }
+              }
             }
           }
 
