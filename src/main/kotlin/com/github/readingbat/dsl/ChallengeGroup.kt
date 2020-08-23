@@ -27,9 +27,7 @@ import com.github.readingbat.dsl.ReturnType.Runtime
 import com.github.readingbat.misc.PageUtils
 import com.github.readingbat.server.ChallengeName
 import com.github.readingbat.server.GroupName
-import com.vladsch.flexmark.html.HtmlRenderer
-import com.vladsch.flexmark.parser.Parser
-import com.vladsch.flexmark.util.data.MutableDataSet
+import com.github.readingbat.server.TextFormatter
 import mu.KLogging
 import java.io.File
 import kotlin.reflect.KProperty
@@ -37,19 +35,12 @@ import kotlin.reflect.KProperty
 @ReadingBatDslMarker
 class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>,
                                     internal val groupNameSuffix: GroupName) {
-  private val options = MutableDataSet().apply { set(HtmlRenderer.SOFT_BREAK, "<br />\n") }
   internal val challenges = mutableListOf<T>()
   internal var namePrefix = ""
 
   internal val groupName by lazy { GroupName("${if (namePrefix.isNotBlank()) namePrefix else ""}${groupNameSuffix.value}") }
   private val groupPrefix by lazy { "$languageName/$groupName" }
-  private val parser by lazy { Parser.builder(options).build() }
-  private val renderer by lazy { HtmlRenderer.builder(options).build() }
-  internal val parsedDescription: String
-    get() {
-      val document = parser.parse(description.trimIndent())
-      return renderer.render(document)
-    }
+  internal val parsedDescription by lazy { TextFormatter.renderText(description) }
 
   private val srcPath get() = languageGroup.srcPath
   internal val languageType get() = languageGroup.languageType

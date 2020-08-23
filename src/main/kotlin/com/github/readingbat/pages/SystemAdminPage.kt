@@ -81,16 +81,6 @@ internal object SystemAdminPage : KLogging() {
 
           if (!isProduction() || user.isAdmin(redis)) {
 
-            if (content.grafanaUrl.isNotBlank())
-              p {
-                a { href = content.grafanaUrl; target = "_blank"; +" Grafana Dashboard" }
-              }
-
-            if (content.prometheusUrl.isNotBlank())
-              p {
-                a { href = content.prometheusUrl; target = "_blank"; +" Prometheus Dashboard" }
-              }
-
             p {
               this@body.button("Reset ReadingBat Content",
                                RESET_CONTENT_ENDPOINT,
@@ -108,6 +98,18 @@ internal object SystemAdminPage : KLogging() {
                                GARBAGE_COLLECTOR_ENDPOINT,
                                "Are you sure you want to run the garbage collector?")
             }
+
+            if (content.grafanaUrl.isNotBlank())
+              p {
+                +"Grafana Dashboard is "
+                a { href = content.grafanaUrl; target = "_blank"; +"here" }
+              }
+
+            if (content.prometheusUrl.isNotBlank())
+              p {
+                +"Prometheus Dashboard is "
+                a { href = content.prometheusUrl; target = "_blank"; +"here" }
+              }
           }
           else {
             p {

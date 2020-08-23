@@ -69,5 +69,5 @@ internal object SessionActivity : KLogging() {
     sessionsMap.getOrPut(browserSession.id, { Session((browserSession)) }).update()
   }
 
-  fun activeSessions(maxAge: Duration) = sessionsMap.filter { it.value.age <= maxAge }.size
+  fun activeSessions(duration: Duration) = sessionsMap.filter { it.value.age <= duration }.size
 }
