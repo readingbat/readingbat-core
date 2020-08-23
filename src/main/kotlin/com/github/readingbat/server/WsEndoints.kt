@@ -67,7 +67,7 @@ internal object WsEndoints : KLogging() {
       logger.info { "Opening student answers websocket for $desc" }
 
       outgoing.invokeOnClose { e ->
-        logger.info { "Closure received for student answers websocket for $desc" }
+        logger.info { "Close received for student answers websocket for $desc" }
         finished.set(true)
       }
 
@@ -153,7 +153,7 @@ internal object WsEndoints : KLogging() {
       logger.info { "Opening class statistics websocket for $desc" }
 
       outgoing.invokeOnClose { e ->
-        logger.info { "Closure received for class statistics websocket for $desc" }
+        logger.info { "Close received for class statistics websocket for $desc" }
         finished.set(true)
       }
 

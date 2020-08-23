@@ -17,8 +17,6 @@
 
 package com.github.readingbat.posts
 
-import com.github.pambrose.common.script.KotlinScriptPool
-import com.github.pambrose.common.script.PythonScriptPool
 import com.github.pambrose.common.util.encode
 import com.github.pambrose.common.util.isBracketed
 import com.github.pambrose.common.util.isDoubleQuoted
@@ -45,7 +43,6 @@ import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
 import com.github.readingbat.misc.Constants.LIKE_DESC
 import com.github.readingbat.misc.Constants.MSG
 import com.github.readingbat.misc.Constants.RESP
-import com.github.readingbat.misc.Constants.SCRIPTS_COMPARE_POOL_SIZE
 import com.github.readingbat.misc.FormFields.CHALLENGE_ANSWERS_KEY
 import com.github.readingbat.misc.FormFields.CHALLENGE_NAME_KEY
 import com.github.readingbat.misc.FormFields.GROUP_NAME_KEY
@@ -69,6 +66,8 @@ import com.github.readingbat.server.LanguageName
 import com.github.readingbat.server.LanguageName.Companion.getLanguageName
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.RedirectException
+import com.github.readingbat.server.ScriptPools.kotlinScriptPool
+import com.github.readingbat.server.ScriptPools.pythonScriptPool
 import io.ktor.application.*
 import io.ktor.request.*
 import io.ktor.response.*
@@ -138,16 +137,6 @@ internal class ChallengeNames(paramMap: Map<String, String>) {
 }
 
 internal object ChallengePost : KLogging() {
-
-  private val pythonScriptPool: PythonScriptPool
-  private val kotlinScriptPool: KotlinScriptPool
-
-  init {
-    val poolSize = System.getProperty(SCRIPTS_COMPARE_POOL_SIZE).toInt()
-    logger.info { "Creating script pools with size $poolSize" }
-    pythonScriptPool = PythonScriptPool(poolSize)
-    kotlinScriptPool = KotlinScriptPool(poolSize)
-  }
 
   private fun String.isJavaBoolean() = this == "true" || this == "false"
   private fun String.isPythonBoolean() = this == "True" || this == "False"
@@ -231,7 +220,7 @@ internal object ChallengePost : KLogging() {
     } catch (e: Exception) {
       false to deriveHint()
     } finally {
-      kotlinScriptPool.recycle(kotlinScript)
+      val kotlinScript = kotlinScriptPool.borrow()
     }
   }
 

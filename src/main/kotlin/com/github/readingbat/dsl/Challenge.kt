@@ -212,7 +212,7 @@ class PythonChallenge(challengeGroup: ChallengeGroup<*>,
                         funcCode,
                         invocations,
                         returnType,
-                        List(correctAnswers.size) { correctAnswers[it] })
+                        correctAnswers)
   }
 
   override fun toString() = "PythonChallenge(packageName='$packageName', fileName='$fileName', returnType=$returnType)"
@@ -259,7 +259,7 @@ class JavaChallenge(challengeGroup: ChallengeGroup<*>,
                         funcCode,
                         invocations,
                         returnType,
-                        List(correctAnswers.size) { correctAnswers[it] })
+                        correctAnswers)
   }
 
   override fun toString() = "JavaChallenge(packageName='$packageName', fileName='$fileName')"
@@ -289,12 +289,12 @@ class KotlinChallenge(challengeGroup: ChallengeGroup<*>,
     val funcCode = "\n${extractKotlinFunction(lines)}\n\n"
     val invocations = extractKotlinInvocations(lines, funMainRegex, kotlinEndRegex)
     val script = convertToKotlinScript(lines)
+    val correctAnswers = mutableListOf<Any>()
 
     logger.debug { "$challengeName return type: $returnType script: \n${script.withLineNumbers()}" }
 
     description = deriveDescription(code, "//")
 
-    val correctAnswers = mutableListOf<Any>()
     val duration =
       KotlinScript().use {
         it.run {
@@ -312,7 +312,7 @@ class KotlinChallenge(challengeGroup: ChallengeGroup<*>,
                         funcCode,
                         invocations,
                         returnType,
-                        List(correctAnswers.size) { correctAnswers[it] })
+                        correctAnswers)
   }
 
   override fun toString() = "KotlinChallenge(packageName='$packageName', fileName='$fileName', returnType=$returnType)"
