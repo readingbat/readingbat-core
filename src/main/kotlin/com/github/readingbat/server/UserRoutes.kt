@@ -55,6 +55,7 @@ import com.github.readingbat.misc.Endpoints.PASSWORD_RESET_POST_ENDPOINT
 import com.github.readingbat.misc.Endpoints.PRIVACY_ENDPOINT
 import com.github.readingbat.misc.Endpoints.RESET_CACHE_ENDPOINT
 import com.github.readingbat.misc.Endpoints.RESET_CONTENT_ENDPOINT
+import com.github.readingbat.misc.Endpoints.SESSIONS_ENDPOINT
 import com.github.readingbat.misc.Endpoints.SYSTEM_ADMIN_ENDPOINT
 import com.github.readingbat.misc.Endpoints.TEACHER_PREFS_ENDPOINT
 import com.github.readingbat.misc.Endpoints.TEACHER_PREFS_POST_ENDPOINT
@@ -73,6 +74,7 @@ import com.github.readingbat.pages.PageCommon.defaultLanguageTab
 import com.github.readingbat.pages.PageCommon.get
 import com.github.readingbat.pages.PasswordResetPage.passwordResetPage
 import com.github.readingbat.pages.PrivacyPage.privacyPage
+import com.github.readingbat.pages.SessionsPage.sessionsPage
 import com.github.readingbat.pages.SystemAdminPage.systemAdminPage
 import com.github.readingbat.pages.TeacherPrefsPage.teacherPrefsPage
 import com.github.readingbat.pages.UserInfoPage.userInfoPage
@@ -137,7 +139,7 @@ internal fun Routing.userRoutes(metrics: Metrics,
           val user = fetchUser()
           when {
             redis.isNull() -> DBMS_DOWN.value
-            user.isNull() -> "Must be logged in"
+            user.isNull() -> "Must be logged in for this function"
             user.isNotAdmin(redis) -> "Not authorized"
             else -> block.invoke()
           }
@@ -183,6 +185,14 @@ internal fun Routing.userRoutes(metrics: Metrics,
     redirectTo { "$MESSAGE_ENDPOINT?$MSG=$msg" }
   }
 
+  get(CONFIG_ENDPOINT, metrics) {
+    respondWith { authenticatedAction { configPage(content.invoke()) } }
+  }
+
+  get(SESSIONS_ENDPOINT, metrics) {
+    respondWithSuspendingDbmsCheck { redis -> authenticatedAction { sessionsPage(content.invoke(), redis) } }
+  }
+
   get(CHALLENGE_ROOT, metrics) {
     redirectTo { defaultLanguageTab(content.invoke()) }
   }
@@ -193,10 +203,6 @@ internal fun Routing.userRoutes(metrics: Metrics,
 
   get(ABOUT_ENDPOINT, metrics) {
     respondWith { aboutPage(content.invoke()) }
-  }
-
-  get(CONFIG_ENDPOINT, metrics) {
-    respondWith { configPage(content.invoke()) }
   }
 
   post(CHECK_ANSWERS_ENDPOINT) {

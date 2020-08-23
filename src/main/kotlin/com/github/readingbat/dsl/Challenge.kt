@@ -65,6 +65,9 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
   private val challengeId = counter.incrementAndGet()
   private val fqName by lazy { packageName.ensureSuffix("/") + fileName.ensureSuffix(".${languageType.suffix}") }
 
+  // Allow description updates only if not found in the Content.kt decl
+  private val isDescriptionSetInDsl by lazy { description.isNotBlank() }
+
   private val languageGroup get() = challengeGroup.languageGroup
   private val metrics get() = challengeGroup.languageGroup.metrics
   private val repo get() = languageGroup.repo
@@ -77,20 +80,17 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
   internal val gitpodUrl by lazy { pathOf(repo.sourcePrefix, "blob/${branchName}", srcPath, fqName) }
   internal val parsedDescription by lazy { TextFormatter.renderText(description) }
 
-  // Allow description updates only if not found in the Content.kt decl
-  private val isDescriptionSetInDsl by lazy { description.isNotBlank() }
-
   // User properties
   var fileName = "$challengeName.${languageType.suffix}"
   var codingBatEquiv = ""
   var description = ""
 
-  suspend internal abstract fun computeFuncInfo(code: String): FunctionInfo
+  suspend internal abstract fun computeFunctionInfo(code: String): FunctionInfo
 
   private fun measureParsing(code: String): FunctionInfo {
     val timer = metrics.challengeParseDuration.labels(agentLaunchId(), languageType.toString()).startTimer()
     try {
-      return runBlocking { computeFuncInfo(code) }
+      return runBlocking { computeFunctionInfo(code) }
     } finally {
       timer.observeDuration()
     }
@@ -186,7 +186,7 @@ class PythonChallenge(challengeGroup: ChallengeGroup<*>,
       throw InvalidConfigurationException("$challengeName missing returnType value")
   }
 
-  suspend override fun computeFuncInfo(code: String): FunctionInfo {
+  suspend override fun computeFunctionInfo(code: String): FunctionInfo {
     val lines = code.lines().filterNot { it.startsWith("#") && it.contains(DESC) }
     val funcCode = extractPythonFunction(lines)
     val invocations = extractPythonInvocations(lines, defMainRegex, ifMainEndRegex)
@@ -219,7 +219,7 @@ class JavaChallenge(challengeGroup: ChallengeGroup<*>,
                     replaceable: Boolean) :
   Challenge(challengeGroup, challengeName, replaceable) {
 
-  suspend override fun computeFuncInfo(code: String): FunctionInfo {
+  suspend override fun computeFunctionInfo(code: String): FunctionInfo {
     val lines =
       code.lines()
         .filterNot { it.startsWith("//") && it.contains(DESC) }
@@ -248,7 +248,7 @@ class JavaChallenge(challengeGroup: ChallengeGroup<*>,
     logger.debug { "$challengeName computed answers in ${timedValue.duration}" }
 
     if (correctAnswers !is List<*>)
-      throw InvalidConfigurationException("Invalid type returned for $challengeName")
+      throw InvalidConfigurationException("Invalid type returned for $challengeName [${correctAnswers::class.java.simpleName}]")
 
     return FunctionInfo(this, code, funcCode, invocations, returnType, correctAnswers)
   }
@@ -271,7 +271,7 @@ class KotlinChallenge(challengeGroup: ChallengeGroup<*>,
       throw InvalidConfigurationException("$challengeName missing returnType value")
   }
 
-  suspend override fun computeFuncInfo(code: String): FunctionInfo {
+  suspend override fun computeFunctionInfo(code: String): FunctionInfo {
     val lines =
       code.lines()
         .filterNot { it.startsWith("//") && it.contains(DESC) }

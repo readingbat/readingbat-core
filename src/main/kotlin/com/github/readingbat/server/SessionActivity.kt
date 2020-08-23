@@ -18,6 +18,8 @@
 package com.github.readingbat.server
 
 import com.github.readingbat.misc.BrowserSession
+import com.github.readingbat.misc.User.Companion.toUser
+import com.github.readingbat.misc.UserPrincipal
 import mu.KLogging
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
@@ -29,14 +31,16 @@ import kotlin.time.hours
 internal object SessionActivity : KLogging() {
 
   // Activity is overkill, but we might want to eventually do something with browserSession value
-  internal class Session(val browserSession: BrowserSession) {
-    private val startTime = TimeSource.Monotonic.markNow()
-    private var lastUpdate = startTime.elapsedNow()
+  class Session(val browserSession: BrowserSession) {
+    private var lastUpdate = TimeSource.Monotonic.markNow()
 
-    val age get() = lastUpdate
+    var principal: UserPrincipal? = null
+    val age get() = lastUpdate.elapsedNow()
+    val user by lazy { principal?.userId?.toUser(browserSession) }
 
-    fun update() {
-      lastUpdate = startTime.elapsedNow()
+    fun update(recentPrincipal: UserPrincipal?) {
+      principal = recentPrincipal
+      lastUpdate = TimeSource.Monotonic.markNow()
     }
   }
 
@@ -60,14 +64,16 @@ internal object SessionActivity : KLogging() {
             sessionsMap.remove(it.key)
           }
       } catch (e: Throwable) {
-        logger.error(e) { "Exception when removing stale brwoser sessions" }
+        logger.error(e) { "Exception when removing stale browser sessions" }
       }
     }
   }
 
-  fun markActivity(browserSession: BrowserSession) {
-    sessionsMap.getOrPut(browserSession.id, { Session((browserSession)) }).update()
+  fun markActivity(browserSession: BrowserSession, principal: UserPrincipal?) {
+    sessionsMap.getOrPut(browserSession.id, { Session(browserSession) }).update(principal)
   }
 
   fun activeSessions(duration: Duration) = sessionsMap.filter { it.value.age <= duration }.size
+
+  fun allSessions(): List<Session> = sessionsMap.map { it.value }.toList()
 }

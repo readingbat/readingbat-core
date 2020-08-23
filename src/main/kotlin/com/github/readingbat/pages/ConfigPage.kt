@@ -114,7 +114,7 @@ internal object ConfigPage {
                 val javaCnt = map.filter { it.value.languageType == Java }.count()
                 val pythonCnt = map.filter { it.value.languageType == Python }.count()
                 val kotlinCnt = map.filter { it.value.languageType == Kotlin }.count()
-                td { +"${map.size} (Java: $javaCnt Python: $pythonCnt Kotlin: $kotlinCnt)" }
+                td { +"Total: ${map.size} (Java: $javaCnt Python: $pythonCnt Kotlin: $kotlinCnt)" }
               }
               tr {
                 td { +"Session map size" }

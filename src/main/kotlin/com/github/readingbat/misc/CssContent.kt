@@ -37,6 +37,7 @@ import com.github.readingbat.misc.CSSNames.LIKE_BUTTONS
 import com.github.readingbat.misc.CSSNames.SELECTED_TAB
 import com.github.readingbat.misc.CSSNames.STATUS
 import com.github.readingbat.misc.CSSNames.SUCCESS
+import com.github.readingbat.misc.CSSNames.USER_ITEM
 import com.github.readingbat.misc.CSSNames.USER_RESP
 import kotlinx.css.BorderCollapse
 import kotlinx.css.CSSBuilder
@@ -103,6 +104,7 @@ internal object CSSNames {
   const val CHALLENGE_DESC = "challenge-desc"
   const val GROUP_CHOICE = "groupChoice"
   const val FUNC_ITEM = "funcItem"
+  const val USER_ITEM = "userItem"
   const val GROUP_ITEM_SRC = "groupItem"
   const val SELECTED_TAB = "selected"
   const val STATUS = "status"
@@ -182,6 +184,10 @@ internal val cssContent by lazy {
       rule(".$FUNC_ITEM") {
         marginTop = 1.em
         width = 300.px
+      }
+      rule(".$USER_ITEM") {
+        marginTop = 1.em
+        width = 200.px
       }
       rule(".$GROUP_CHOICE") {
         fontSize = 155.pct

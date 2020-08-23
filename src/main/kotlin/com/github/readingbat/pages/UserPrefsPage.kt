@@ -27,6 +27,7 @@ import com.github.readingbat.misc.Constants.LABEL_WIDTH
 import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.Endpoints.CONFIG_ENDPOINT
 import com.github.readingbat.misc.Endpoints.CREATE_ACCOUNT_ENDPOINT
+import com.github.readingbat.misc.Endpoints.SESSIONS_ENDPOINT
 import com.github.readingbat.misc.Endpoints.SYSTEM_ADMIN_ENDPOINT
 import com.github.readingbat.misc.Endpoints.TEACHER_PREFS_ENDPOINT
 import com.github.readingbat.misc.Endpoints.USER_PREFS_ENDPOINT
@@ -135,6 +136,10 @@ internal object UserPrefsPage : KLogging() {
           if (!isProduction() || user.isAdmin(redis)) {
             p(classes = INDENT_1EM) {
               a { href = "$CONFIG_ENDPOINT?$RETURN_PATH=$returnPath"; +"System Configuration" }
+            }
+
+            p(classes = INDENT_1EM) {
+              a { href = "$SESSIONS_ENDPOINT?$RETURN_PATH=$returnPath"; +"Current Sessions" }
             }
 
             p(classes = INDENT_1EM) {

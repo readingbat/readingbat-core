@@ -84,6 +84,7 @@ internal object Endpoints {
   const val USER_INFO_ENDPOINT = "/userinfo"
   const val ABOUT_ENDPOINT = "/about.html"
   const val CONFIG_ENDPOINT = "/config"
+  const val SESSIONS_ENDPOINT = "/sessions"
   const val CREATE_ACCOUNT_ENDPOINT = "/create-account"
   const val CREATE_ACCOUNT_POST_ENDPOINT = "/create-account-post"
   const val PRIVACY_ENDPOINT = "/privacy.html"

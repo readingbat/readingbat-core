@@ -161,11 +161,11 @@ class Metrics {
                           labelValues = listOf(agentLaunchId()),
                           data = { SessionActivity.sessionsMapSize.toDouble() })
 
-    SamplerGaugeCollector("active_users_60mins_count",
-                          "Active users in last 60 mins count",
+    SamplerGaugeCollector("active_users_1min_count",
+                          "Active users in last 1 min count",
                           labelNames = listOf(AGENT_ID),
                           labelValues = listOf(agentLaunchId()),
-                          data = { SessionActivity.activeSessions(1.hours).toDouble() })
+                          data = { SessionActivity.activeSessions(1.minutes).toDouble() })
 
     SamplerGaugeCollector("active_users_15mins_count",
                           "Active users in last 15 mins count",
@@ -173,11 +173,11 @@ class Metrics {
                           labelValues = listOf(agentLaunchId()),
                           data = { SessionActivity.activeSessions(15.minutes).toDouble() })
 
-    SamplerGaugeCollector("active_users_1min_count",
-                          "Active users in last 1 min count",
+    SamplerGaugeCollector("active_users_60mins_count",
+                          "Active users in last 60 mins count",
                           labelNames = listOf(AGENT_ID),
                           labelValues = listOf(agentLaunchId()),
-                          data = { SessionActivity.activeSessions(1.minutes).toDouble() })
+                          data = { SessionActivity.activeSessions(1.hours).toDouble() })
   }
 
   suspend fun measureEndpointRequest(endpoint: String, body: suspend () -> Unit): Unit {
