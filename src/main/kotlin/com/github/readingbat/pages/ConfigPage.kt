@@ -106,16 +106,30 @@ internal object ConfigPage {
                 td { +"${content.maxClassCount}" }
               }
               tr {
-                td { +"Sources map size" }
+                td { +"Challenge cache size" }
                 td { +"${content.sourcesMapSize}" }
               }
               tr {
                 td { +"Session map size" }
                 td { +"${SessionActivity.sessionsMapSize}" }
               }
+            }
+          }
+
+          h3 { +"Env Vars" }
+          div(classes = INDENT_1EM) {
+            table {
               tr {
                 td { +"JAVA_TOOL_OPTIONS" }
                 td { +(System.getenv("JAVA_TOOL_OPTIONS") ?: "unassigned") }
+              }
+              tr {
+                td { +"AGENT_CONFIG" }
+                td { +(System.getenv("AGENT_CONFIG") ?: "unassigned") }
+              }
+              tr {
+                td { +"REDIS_URL" }
+                td { +(System.getenv("REDIS_URL") ?: "unassigned") }
               }
             }
           }

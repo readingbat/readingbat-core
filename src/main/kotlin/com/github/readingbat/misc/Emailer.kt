@@ -17,6 +17,7 @@
 
 package com.github.readingbat.misc
 
+import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.server.Email
 import com.sendgrid.Method
 import com.sendgrid.Request
@@ -33,7 +34,8 @@ internal object Emailer : KLogging() {
                     subject,
                     com.sendgrid.helpers.mail.objects.Email(to.value),
                     content)
-    val sg = SendGrid(System.getenv("SENDGRID_API_KEY"))
+    val sg =
+      SendGrid(System.getenv("SENDGRID_API_KEY") ?: throw InvalidConfigurationException("SENDGRID_API_KEY unassigned"))
 
     val request =
       Request()
