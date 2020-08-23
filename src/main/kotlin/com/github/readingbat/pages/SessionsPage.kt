@@ -20,7 +20,7 @@ package com.github.readingbat.pages
 import com.github.pambrose.common.util.pluralize
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.CSSNames.INDENT_1EM
-import com.github.readingbat.misc.CSSNames.TD_ITEM
+import com.github.readingbat.misc.CSSNames.TD_PADDING
 import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.User.Companion.toUser
 import com.github.readingbat.pages.PageCommon.backLink
@@ -77,20 +77,27 @@ internal object SessionsPage {
           val sessions = SessionActivity.allSessions().sortedBy { it.age }
 
           h3 { +"${sessions.size} User Session".pluralize(sessions.size) }
-          div(classes = INDENT_1EM) {
-            table {
-              tr {
-                th(classes = TD_ITEM) { +"Session Id" }
-                th(classes = TD_ITEM) { +"User" }
-                th(classes = TD_ITEM) { +"Last activity" }
-              }
-              sessions.forEach {
+
+          div(classes = TD_PADDING) {
+            div(classes = INDENT_1EM) {
+              table {
                 tr {
-                  val user = it.principal?.userId?.toUser(it.browserSession)
-                  val userDesc = user?.let { "${it.name(redis)} (${it.email(redis)})" } ?: "Not logged in"
-                  td(classes = TD_ITEM) { +it.browserSession.id }
-                  td(classes = TD_ITEM) { +userDesc }
-                  td(classes = TD_ITEM) { +(it.age.toString()) }
+                  th { +"Session Id" }
+                  th { +"User" }
+                  th { +"Last activity" }
+                  th { +"Remote Host" }
+                  th { +"User Agent" }
+                }
+                sessions.forEach {
+                  tr {
+                    val user = it.principal?.userId?.toUser(it.browserSession)
+                    val userDesc = user?.let { "${it.name(redis)} (${it.email(redis)})" } ?: "Not logged in"
+                    td { +it.browserSession.id }
+                    td { +userDesc }
+                    td { +(it.age.toString()) }
+                    td { +(it.remoteHost) }
+                    td { +(it.userAgent) }
+                  }
                 }
               }
             }

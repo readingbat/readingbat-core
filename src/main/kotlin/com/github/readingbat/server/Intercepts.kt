@@ -22,6 +22,7 @@ import com.github.readingbat.misc.BrowserSession
 import com.github.readingbat.misc.Constants.STATIC
 import com.github.readingbat.misc.UserPrincipal
 import io.ktor.application.*
+import io.ktor.http.*
 import io.ktor.request.*
 import io.ktor.sessions.*
 
@@ -41,7 +42,10 @@ internal fun Application.intercepts() {
       val principal = call.sessions.get<UserPrincipal>()
       //ReadingBatServer.logger.info { "${context.request.local.remoteHost} $sessionId ${context.request.path()}" }
       if (sessionId.isNotNull())
-        SessionActivity.markActivity(sessionId, principal)
+        SessionActivity.markActivity(sessionId,
+                                     principal,
+                                     call.request.local.remoteHost ?: "unknown",
+                                     call.request.headers[HttpHeaders.UserAgent] ?: "unknown")
     }
   }
 

@@ -37,7 +37,7 @@ import com.github.readingbat.misc.CSSNames.LIKE_BUTTONS
 import com.github.readingbat.misc.CSSNames.SELECTED_TAB
 import com.github.readingbat.misc.CSSNames.STATUS
 import com.github.readingbat.misc.CSSNames.SUCCESS
-import com.github.readingbat.misc.CSSNames.TD_ITEM
+import com.github.readingbat.misc.CSSNames.TD_PADDING
 import com.github.readingbat.misc.CSSNames.USER_RESP
 import kotlinx.css.*
 import kotlinx.css.properties.LineHeight
@@ -59,7 +59,7 @@ internal object CSSNames {
   const val CHALLENGE_DESC = "challenge-desc"
   const val GROUP_CHOICE = "groupChoice"
   const val FUNC_ITEM = "funcItem"
-  const val TD_ITEM = "userItem1"
+  const val TD_PADDING = "tdPadding"
   const val GROUP_ITEM_SRC = "groupItem"
   const val SELECTED_TAB = "selected"
   const val STATUS = "status"
@@ -140,7 +140,7 @@ internal val cssContent by lazy {
         marginTop = 1.em
         width = 300.px
       }
-      rule(".$TD_ITEM") {
+      rule("div.$TD_PADDING td") {
         marginTop = 1.em
         paddingRight = 1.em
       }

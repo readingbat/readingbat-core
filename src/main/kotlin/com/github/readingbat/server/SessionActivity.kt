@@ -33,14 +33,17 @@ internal object SessionActivity : KLogging() {
   // Activity is overkill, but we might want to eventually do something with browserSession value
   class Session(val browserSession: BrowserSession) {
     private var lastUpdate = TimeSource.Monotonic.markNow()
-
+    var remoteHost: String = "unknown"
+    var userAgent: String = "unknown"
     var principal: UserPrincipal? = null
     val age get() = lastUpdate.elapsedNow()
     val user by lazy { principal?.userId?.toUser(browserSession) }
 
-    fun update(recentPrincipal: UserPrincipal?) {
+    fun update(recentPrincipal: UserPrincipal?, remote: String, agent: String) {
       principal = recentPrincipal
       lastUpdate = TimeSource.Monotonic.markNow()
+      remoteHost = remote
+      userAgent = agent
     }
   }
 
@@ -69,8 +72,8 @@ internal object SessionActivity : KLogging() {
     }
   }
 
-  fun markActivity(browserSession: BrowserSession, principal: UserPrincipal?) {
-    sessionsMap.getOrPut(browserSession.id, { Session(browserSession) }).update(principal)
+  fun markActivity(browserSession: BrowserSession, principal: UserPrincipal?, remoteHost: String, userAgent: String) {
+    sessionsMap.getOrPut(browserSession.id, { Session(browserSession) }).update(principal, remoteHost, userAgent)
   }
 
   fun activeSessions(duration: Duration) = sessionsMap.filter { it.value.age <= duration }.size
