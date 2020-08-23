@@ -19,6 +19,9 @@ package com.github.readingbat.pages
 
 import com.github.pambrose.common.time.format
 import com.github.pambrose.common.util.Version.Companion.versionDesc
+import com.github.readingbat.dsl.LanguageType.Java
+import com.github.readingbat.dsl.LanguageType.Kotlin
+import com.github.readingbat.dsl.LanguageType.Python
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.agentLaunchId
 import com.github.readingbat.dsl.isAgentEnabled
@@ -107,7 +110,11 @@ internal object ConfigPage {
               }
               tr {
                 td { +"Challenge cache size" }
-                td { +"${content.sourcesMapSize}" }
+                val map = content.sourcesMap
+                val javaCnt = map.filter { it.value.languageType == Java }.count()
+                val pythonCnt = map.filter { it.value.languageType == Python }.count()
+                val kotlinCnt = map.filter { it.value.languageType == Kotlin }.count()
+                td { +"${map.size} (Java: $javaCnt Python: $pythonCnt Kotlin: $kotlinCnt)" }
               }
               tr {
                 td { +"Session map size" }

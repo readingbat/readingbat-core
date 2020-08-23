@@ -54,6 +54,8 @@ dependencies {
 
     implementation "io.prometheus:simpleclient:$prometheus_version"
 
+    implementation "ch.obermuhlner:java-scriptengine:$java_script_version"
+
     implementation "org.jetbrains:kotlin-css:$css_version"
     implementation "org.jetbrains:kotlin-css-jvm:$css_version"
 

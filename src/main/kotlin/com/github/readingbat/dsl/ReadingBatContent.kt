@@ -41,7 +41,6 @@ class ReadingBatContent {
   private val languageMap by lazy { languageList.map { it.languageType to it }.toMap() }
 
   internal val sourcesMap = ConcurrentHashMap<Int, FunctionInfo>()
-  internal val sourcesMapSize get() = sourcesMap.size
 
   /*
   fun main() {

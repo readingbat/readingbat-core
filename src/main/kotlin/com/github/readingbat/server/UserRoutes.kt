@@ -166,7 +166,7 @@ internal fun Routing.userRoutes(metrics: Metrics,
   get(RESET_CACHE_ENDPOINT, metrics) {
     val msg =
       authenticatedAction {
-        val cnt = content.invoke().sourcesMapSize
+        val cnt = content.invoke().sourcesMap.size
         content.invoke().clearSourcesMap().let {
           "Challenge cache reset -- $cnt challenges removed".also { ReadingBatServer.logger.info { it } }
         }

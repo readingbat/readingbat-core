@@ -17,6 +17,7 @@
 
 package com.github.readingbat.dsl
 
+import ch.obermuhlner.scriptengine.java.Isolation.IsolatedClassLoader
 import com.github.pambrose.common.script.JavaScript
 import com.github.pambrose.common.script.KotlinScript
 import com.github.pambrose.common.script.PythonScript
@@ -239,6 +240,7 @@ class JavaChallenge(challengeGroup: ChallengeGroup<*>,
 
     val timedValue =
       JavaScript().use {
+        it.assignIsolation(IsolatedClassLoader)   // https://github.com/eobermuhlner/java-scriptengine
         it.run {
           import(List::class.java)
           import(ArrayList::class.java)
