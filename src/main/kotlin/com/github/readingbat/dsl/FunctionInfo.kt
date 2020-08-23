@@ -43,37 +43,27 @@ internal class FunctionInfo(val languageType: LanguageType,
                             val returnType: ReturnType,
                             rawAnswers: List<*>) {
 
-  val correctAnswers = mutableListOf<String>()
-
-  init {
-    rawAnswers.forEach { raw ->
-      correctAnswers +=
-        when (returnType) {
-          BooleanType -> {
-            if (languageType.isPython())
-              raw.toString().capitalize()
-            else
-              raw.toString()
-          }
-          IntType -> raw.toString()
-          StringType -> raw.toString().toDoubleQuoted()
-          BooleanArrayType -> (raw as BooleanArray).map { it }.joinToString().asBracketed()
-          IntArrayType -> (raw as IntArray).map { it }.joinToString().asBracketed()
-          StringArrayType -> (raw as Array<String>).joinToString { it.toDoubleQuoted() }.asBracketed()
-          BooleanListType -> (raw as List<Boolean>).toString()
-          IntListType -> (raw as List<Int>).toString()
-          StringListType -> "[${(raw as List<String>).joinToString { it.toDoubleQuoted() }}]"
-          Runtime -> throw InvalidConfigurationException("Invalid return type")
-        }
+  val challengeMd5 by lazy { ChallengeMd5(languageType.languageName, challengeGroup.groupName, challengeName) }
+  val correctAnswers =
+    List(rawAnswers.size) {
+      val raw = rawAnswers[it]
+      when (returnType) {
+        BooleanType -> if (languageType.isPython()) raw.toString().capitalize() else raw.toString()
+        IntType -> raw.toString()
+        StringType -> raw.toString().toDoubleQuoted()
+        BooleanArrayType -> (raw as BooleanArray).map { it }.joinToString().asBracketed()
+        IntArrayType -> (raw as IntArray).map { it }.joinToString().asBracketed()
+        StringArrayType -> (raw as Array<String>).joinToString { it.toDoubleQuoted() }.asBracketed()
+        BooleanListType -> (raw as List<Boolean>).toString()
+        IntListType -> (raw as List<Int>).toString()
+        StringListType -> "[${(raw as List<String>).joinToString { it.toDoubleQuoted() }}]"
+        Runtime -> throw InvalidConfigurationException("Invalid return type")
+      }
     }
 
+  init {
     logger.debug { "In $challengeName return type: $returnType invocations: $invocations computed answers: $correctAnswers" }
-
     validate()
-  }
-
-  val challengeMd5: ChallengeMd5 by lazy {
-    ChallengeMd5(languageType.languageName, challengeGroup.groupName, challengeName)
   }
 
   fun placeHolder(): String {

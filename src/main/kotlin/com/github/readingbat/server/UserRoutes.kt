@@ -21,7 +21,6 @@ import com.github.pambrose.common.redis.RedisUtils.withRedisPool
 import com.github.pambrose.common.redis.RedisUtils.withSuspendingRedisPool
 import com.github.pambrose.common.response.redirectTo
 import com.github.pambrose.common.response.respondWith
-import com.github.pambrose.common.time.format
 import com.github.pambrose.common.util.isNull
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.isProduction
@@ -157,7 +156,7 @@ internal fun Routing.userRoutes(metrics: Metrics,
     val msg =
       authenticatedAction {
         measureTime { resetContentFunc.invoke() }.let {
-          "Content reset in ${it.format()}".also { ReadingBatServer.logger.info { it } }
+          "Content reset in $it".also { ReadingBatServer.logger.info { it } }
         }
       }
     redirectTo { "$MESSAGE_ENDPOINT?$MSG=$msg" }
@@ -166,8 +165,9 @@ internal fun Routing.userRoutes(metrics: Metrics,
   get(RESET_CACHE_ENDPOINT, metrics) {
     val msg =
       authenticatedAction {
+        val cnt = content.invoke().sourcesMapSize
         content.invoke().clearSourcesMap().let {
-          "Challenge map reset".also { ReadingBatServer.logger.info { it } }
+          "Challenge cache reset -- $cnt challenges removed".also { ReadingBatServer.logger.info { it } }
         }
       }
     redirectTo { "$MESSAGE_ENDPOINT?$MSG=$msg" }

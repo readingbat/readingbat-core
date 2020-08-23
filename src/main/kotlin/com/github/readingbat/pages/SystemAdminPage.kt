@@ -97,9 +97,9 @@ internal object SystemAdminPage : KLogging() {
             }
 
             p {
-              this@body.button("Reset Challenge Cache",
+              this@body.button("Reset Challenges Cache",
                                RESET_CACHE_ENDPOINT,
-                               "Are you sure you want to reset the challenge cache?")
+                               "Are you sure you want to reset the challenges cache?")
             }
           }
           else {
