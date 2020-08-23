@@ -17,7 +17,6 @@
 
 package com.github.readingbat.dsl
 
-import com.github.pambrose.common.script.KotlinScript
 import com.github.pambrose.common.util.ContentSource
 import com.github.pambrose.common.util.GitHubFile
 import com.github.pambrose.common.util.GitHubRepo
@@ -26,6 +25,8 @@ import com.github.readingbat.misc.Constants.AGENT_ENABLED
 import com.github.readingbat.misc.Constants.AGENT_LAUNCH_ID
 import com.github.readingbat.misc.Constants.IS_PRODUCTION
 import com.github.readingbat.server.ReadingBatServer
+import com.github.readingbat.server.ScriptPools.kotlinScriptPool
+import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
 import kotlin.reflect.KFunction
 import kotlin.time.measureTimedValue
@@ -63,7 +64,7 @@ internal fun readContentDsl(contentSource: ContentSource, variableName: String =
   val (code, dur) = measureTimedValue { contentSource.content }
   logger.info { """Read content from "${contentSource.source}" in $dur""" }
   val withImports = addImports(code, variableName)
-  return evalDsl(withImports, contentSource.source)
+  return runBlocking { evalDsl(withImports, contentSource.source) }
 }
 
 internal fun addImports(code: String, variableName: String): String {
@@ -91,15 +92,14 @@ internal fun addImports(code: String, variableName: String): String {
 
 private val <T> KFunction<T>.fqMethodName get() = "${javaClass.packageName}.$name"
 
-private fun evalDsl(code: String, sourceName: String) =
+suspend private fun evalDsl(code: String, sourceName: String) =
   try {
-    KotlinScript().use {
-      it.run {
+    kotlinScriptPool
+      .eval {
         eval(code) as ReadingBatContent
       }.apply {
         validate()
       }
-    }
   } catch (e: Throwable) {
     logger.info { "Error in $sourceName:\n$code" }
     throw e

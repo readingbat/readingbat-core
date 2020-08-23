@@ -210,35 +210,29 @@ internal object ChallengePost : KLogging() {
     val compareExpr =
       "listOf(${if (isBracketed()) trimEnds() else this}) == listOf(${if (correctAnswer.isBracketed()) correctAnswer.trimEnds() else correctAnswer})"
     logger.debug { "Check answers expression: $compareExpr" }
-    val kotlinScript = kotlinScriptPool.borrow()
     return try {
-      val result = kotlinScript.eval(compareExpr) as Boolean
+      val result = kotlinScriptPool.eval { eval(compareExpr) } as Boolean
       result to (if (result) "" else deriveHint())
     } catch (e: ScriptException) {
       logger.info { "Caught exception comparing $this and $correctAnswer: ${e.message} in $compareExpr" }
       false to deriveHint()
     } catch (e: Exception) {
       false to deriveHint()
-    } finally {
-      val kotlinScript = kotlinScriptPool.borrow()
     }
   }
 
   private suspend fun String.equalsAsPythonList(correctAnswer: String): Pair<Boolean, String> {
     fun deriveHint() = if (isNotBracketed()) "Answer should be bracketed" else ""
     val compareExpr = "${trim()} == ${correctAnswer.trim()}"
-    val pythonScript = pythonScriptPool.borrow()
     return try {
       logger.debug { "Check answers expression: $compareExpr" }
-      val result = pythonScript.eval(compareExpr) as Boolean
+      val result = pythonScriptPool.eval { eval(compareExpr) } as Boolean
       result to (if (result) "" else deriveHint())
     } catch (e: ScriptException) {
       logger.info { "Caught exception comparing $this and $correctAnswer: ${e.message} in: $compareExpr" }
       false to deriveHint()
     } catch (e: Exception) {
       false to deriveHint()
-    } finally {
-      pythonScriptPool.recycle(pythonScript)
     }
   }
 

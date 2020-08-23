@@ -35,11 +35,13 @@ import com.github.readingbat.misc.Constants.ANALYTICS_ID
 import com.github.readingbat.misc.Constants.CONFIG_FILENAME
 import com.github.readingbat.misc.Constants.FILE_NAME
 import com.github.readingbat.misc.Constants.IS_PRODUCTION
+import com.github.readingbat.misc.Constants.JAVA_SCRIPTS_POOL_SIZE
+import com.github.readingbat.misc.Constants.KOTLIN_SCRIPTS_POOL_SIZE
 import com.github.readingbat.misc.Constants.MAX_CLASS_COUNT
 import com.github.readingbat.misc.Constants.MAX_HISTORY_LENGTH
 import com.github.readingbat.misc.Constants.PROXY_HOSTNAME
+import com.github.readingbat.misc.Constants.PYTHON_SCRIPTS_POOL_SIZE
 import com.github.readingbat.misc.Constants.READING_BAT
-import com.github.readingbat.misc.Constants.SCRIPTS_COMPARE_POOL_SIZE
 import com.github.readingbat.misc.Constants.STATIC_ROOT
 import com.github.readingbat.misc.Constants.URL_PREFIX
 import com.github.readingbat.misc.Constants.VARIABLE_NAME
@@ -132,7 +134,9 @@ internal fun Application.module() {
   val metrics = ReadingBatServer.metrics
 
   System.setProperty(IS_PRODUCTION, property(IS_PRODUCTION, default = "false").toBoolean().toString())
-  System.setProperty(SCRIPTS_COMPARE_POOL_SIZE, property(SCRIPTS_COMPARE_POOL_SIZE, default = "5"))
+  System.setProperty(JAVA_SCRIPTS_POOL_SIZE, property(JAVA_SCRIPTS_POOL_SIZE, default = "5"))
+  System.setProperty(KOTLIN_SCRIPTS_POOL_SIZE, property(KOTLIN_SCRIPTS_POOL_SIZE, default = "5"))
+  System.setProperty(PYTHON_SCRIPTS_POOL_SIZE, property(PYTHON_SCRIPTS_POOL_SIZE, default = "5"))
   System.setProperty(REDIS_MAX_POOL_SIZE, property(REDIS_MAX_POOL_SIZE, default = "10"))
   System.setProperty(REDIS_MAX_IDLE_SIZE, property(REDIS_MAX_IDLE_SIZE, default = "5"))
   System.setProperty(REDIS_MIN_IDLE_SIZE, property(REDIS_MIN_IDLE_SIZE, default = "1"))

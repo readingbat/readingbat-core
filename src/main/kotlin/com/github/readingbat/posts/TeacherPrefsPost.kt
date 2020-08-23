@@ -73,7 +73,6 @@ internal object TeacherPrefsPost {
     val msg =
       if (user.isValidUser(redis)) {
         user.assignActiveClassCode(DISABLED_CLASS_CODE, false, redis)
-        println("**** ${browserSession?.id}")
         STUDENT_MODE_ENABLED_MSG
       }
       else {

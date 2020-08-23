@@ -18,9 +18,6 @@
 package com.github.readingbat.dsl
 
 import ch.obermuhlner.scriptengine.java.Isolation.IsolatedClassLoader
-import com.github.pambrose.common.script.JavaScript
-import com.github.pambrose.common.script.KotlinScript
-import com.github.pambrose.common.script.PythonScript
 import com.github.pambrose.common.util.AbstractRepo
 import com.github.pambrose.common.util.FileSystemSource
 import com.github.pambrose.common.util.ensureSuffix
@@ -49,7 +46,11 @@ import com.github.readingbat.dsl.parse.PythonParse.extractPythonInvocations
 import com.github.readingbat.dsl.parse.PythonParse.ifMainEndRegex
 import com.github.readingbat.misc.PageUtils.pathOf
 import com.github.readingbat.server.ChallengeName
+import com.github.readingbat.server.ScriptPools.javaScriptPool
+import com.github.readingbat.server.ScriptPools.kotlinScriptPool
+import com.github.readingbat.server.ScriptPools.pythonScriptPool
 import com.github.readingbat.server.TextFormatter
+import kotlinx.coroutines.runBlocking
 import mu.KLogging
 import java.net.URL
 import java.util.concurrent.atomic.AtomicInteger
@@ -84,12 +85,12 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
   var codingBatEquiv = ""
   var description = ""
 
-  internal abstract fun computeFuncInfo(code: String): FunctionInfo
+  suspend internal abstract fun computeFuncInfo(code: String): FunctionInfo
 
   private fun measureParsing(code: String): FunctionInfo {
     val timer = metrics.challengeParseDuration.labels(agentLaunchId(), languageType.toString()).startTimer()
     try {
-      return computeFuncInfo(code)
+      return runBlocking { computeFuncInfo(code) }
     } finally {
       timer.observeDuration()
     }
@@ -185,7 +186,7 @@ class PythonChallenge(challengeGroup: ChallengeGroup<*>,
       throw InvalidConfigurationException("$challengeName missing returnType value")
   }
 
-  override fun computeFuncInfo(code: String): FunctionInfo {
+  suspend override fun computeFuncInfo(code: String): FunctionInfo {
     val lines = code.lines().filterNot { it.startsWith("#") && it.contains(DESC) }
     val funcCode = extractPythonFunction(lines)
     val invocations = extractPythonInvocations(lines, defMainRegex, ifMainEndRegex)
@@ -197,11 +198,12 @@ class PythonChallenge(challengeGroup: ChallengeGroup<*>,
     description = deriveDescription(code, "#")
 
     val duration =
-      PythonScript().use {
-        it.run {
-          add(varName, correctAnswers)
-          measureTime { eval(script) }
-        }
+      measureTime {
+        pythonScriptPool
+          .eval {
+            add(varName, correctAnswers)
+            eval(script)
+          }
       }
 
     logger.debug { "$challengeName computed answers in $duration for: $correctAnswers" }
@@ -224,7 +226,7 @@ class JavaChallenge(challengeGroup: ChallengeGroup<*>,
                     replaceable: Boolean) :
   Challenge(challengeGroup, challengeName, replaceable) {
 
-  override fun computeFuncInfo(code: String): FunctionInfo {
+  suspend override fun computeFuncInfo(code: String): FunctionInfo {
     val lines =
       code.lines()
         .filterNot { it.startsWith("//") && it.contains(DESC) }
@@ -239,13 +241,14 @@ class JavaChallenge(challengeGroup: ChallengeGroup<*>,
     description = deriveDescription(code, "//")
 
     val timedValue =
-      JavaScript().use {
-        it.assignIsolation(IsolatedClassLoader)   // https://github.com/eobermuhlner/java-scriptengine
-        it.run {
-          import(List::class.java)
-          import(ArrayList::class.java)
-          measureTimedValue { evalScript(script) }
-        }
+      measureTimedValue {
+        javaScriptPool
+          .eval {
+            assignIsolation(IsolatedClassLoader)   // https://github.com/eobermuhlner/java-scriptengine
+            import(List::class.java)
+            import(ArrayList::class.java)
+            evalScript(script)
+          }
       }
 
     val correctAnswers = timedValue.value
@@ -282,7 +285,7 @@ class KotlinChallenge(challengeGroup: ChallengeGroup<*>,
       throw InvalidConfigurationException("$challengeName missing returnType value")
   }
 
-  override fun computeFuncInfo(code: String): FunctionInfo {
+  suspend override fun computeFuncInfo(code: String): FunctionInfo {
     val lines =
       code.lines()
         .filterNot { it.startsWith("//") && it.contains(DESC) }
@@ -298,11 +301,12 @@ class KotlinChallenge(challengeGroup: ChallengeGroup<*>,
     description = deriveDescription(code, "//")
 
     val duration =
-      KotlinScript().use {
-        it.run {
-          add(varName, correctAnswers, typeOf<Any>())
-          measureTime { eval(script) }
-        }
+      measureTime {
+        kotlinScriptPool
+          .eval {
+            add(varName, correctAnswers, typeOf<Any>())
+            eval(script)
+          }
       }
 
     logger.debug { "$challengeName computed answers in $duration for: $correctAnswers" }

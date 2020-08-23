@@ -20,8 +20,12 @@ package com.github.readingbat
 import com.github.pambrose.common.script.JavaScript
 import com.github.pambrose.common.script.PythonScript
 import com.github.readingbat.dsl.parse.KotlinParse
+import javax.script.ScriptContext
+import javax.script.ScriptEngine
+import javax.script.ScriptEngineManager
+import javax.script.SimpleScriptContext
+import kotlin.reflect.typeOf
 import kotlin.time.measureTime
-import kotlin.time.measureTimedValue
 
 fun main() {
   javaTest()
@@ -51,20 +55,24 @@ fun javaTest() {
   }
 """.trimIndent()
 
-  repeat(100000) {
-    val timedValue =
-      JavaScript().use {
-        it.run {
+  val engine = JavaScript()
+  val timedValue =
+    measureTime {
+      repeat(100) {
+        //JavaScript().use {
+        engine.apply {
           import(List::class.java)
           import(ArrayList::class.java)
-          measureTimedValue { evalScript(script) }
+          add(KotlinParse.varName, correctAnswers, typeOf<Any>())
+          evalScript(script)
+          println(it)
+          // }
         }
+        engine.resetContext()
       }
+    }
+  println(timedValue)
 
-    println("Interation: $it ${timedValue.duration} for values: ${timedValue.value}")
-  }
-
-  Thread.sleep(100000000000000000)
 
 }
 
@@ -85,17 +93,54 @@ answers.add(less_than(19, 19))
 answers.add(less_than(12, 8))
 answers.add(less_than(11, 28))
   """.trimIndent()
-  repeat(100000) {
-    PythonScript().use {
-      it.run {
-        add(KotlinParse.varName, correctAnswers)
-        measureTime { eval(script) }
+  val engine = PythonScript()
+  val duration =
+    measureTime {
+      repeat(1000) {
+        //engine.use {
+        engine.run {
+          add(KotlinParse.varName, correctAnswers)
+          measureTime { eval(script) }
+        }
+        correctAnswers.clear()
+        //  }
+        engine.resetContext()
+        println(it)
       }
     }
-    println(it)
-  }
 
-  Thread.sleep(100000000000000000)
+  println(duration)
+  //Thread.sleep(100000000000000000)
 
   println(correctAnswers)
+}
+
+
+val ScriptEngine.bindings get() = getBindings(ScriptContext.ENGINE_SCOPE)
+val ScriptContext.bindings get() = getBindings(ScriptContext.ENGINE_SCOPE)
+
+fun ScriptEngine.reset(scope: Int = ScriptContext.ENGINE_SCOPE) {
+  context = SimpleScriptContext().apply { setBindings(createBindings(), scope) }
+}
+
+object MultipleScopes {
+  @JvmStatic
+  fun main(args: Array<String>) {
+    val manager = ScriptEngineManager()
+    val engine = manager.getEngineByName("jython")
+
+    engine.reset()
+    engine.eval("y = 44")
+    engine.bindings["x"] = "hello"
+    engine.eval("print(x)")
+    engine.eval("print(y)")
+    engine.eval("x = \"really\"")
+    engine.eval("print(x)")
+
+    engine.reset()
+    engine.bindings["x"] = "world"
+    engine.eval("print(x)")
+    //engine.eval("print(y)")
+    engine.eval("print(x)")
+  }
 }
