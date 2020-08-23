@@ -36,12 +36,7 @@ import com.github.readingbat.pages.PageCommon.headDefault
 import com.github.readingbat.pages.UserPrefsPage.requestLogInPage
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
-import kotlinx.html.a
-import kotlinx.html.body
-import kotlinx.html.h2
-import kotlinx.html.head
-import kotlinx.html.html
-import kotlinx.html.p
+import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 import mu.KLogging
 import redis.clients.jedis.Jedis

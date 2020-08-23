@@ -31,14 +31,10 @@ import com.github.readingbat.misc.Message.Companion.EMPTY_MESSAGE
 import com.github.readingbat.misc.User.Companion.createUser
 import com.github.readingbat.misc.UserPrincipal
 import com.github.readingbat.pages.CreateAccountPage.createAccountPage
-import com.github.readingbat.server.Email
+import com.github.readingbat.server.*
 import com.github.readingbat.server.Email.Companion.getEmail
-import com.github.readingbat.server.FullName
 import com.github.readingbat.server.FullName.Companion.getFullName
-import com.github.readingbat.server.Password
 import com.github.readingbat.server.Password.Companion.getPassword
-import com.github.readingbat.server.PipelineCall
-import com.github.readingbat.server.RedirectException
 import com.github.readingbat.server.ServerUtils.queryParam
 import com.google.common.util.concurrent.RateLimiter
 import io.ktor.application.*

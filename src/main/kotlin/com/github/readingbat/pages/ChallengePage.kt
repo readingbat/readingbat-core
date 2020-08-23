@@ -17,11 +17,7 @@
 
 package com.github.readingbat.pages
 
-import com.github.pambrose.common.util.decode
-import com.github.pambrose.common.util.isNotNull
-import com.github.pambrose.common.util.isNull
-import com.github.pambrose.common.util.random
-import com.github.pambrose.common.util.toDoubleQuoted
+import com.github.pambrose.common.util.*
 import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.FunctionInfo
 import com.github.readingbat.dsl.ReadingBatContent

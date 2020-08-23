@@ -30,21 +30,7 @@ import com.github.readingbat.misc.FormFields.EMAIL
 import com.github.readingbat.misc.FormFields.PASSWORD
 import com.github.readingbat.misc.User
 import com.github.readingbat.misc.User.Companion.fetchPreviousTeacherClassCode
-import kotlinx.html.BODY
-import kotlinx.html.FormMethod
-import kotlinx.html.TABLE
-import kotlinx.html.a
-import kotlinx.html.br
-import kotlinx.html.div
-import kotlinx.html.form
-import kotlinx.html.hiddenInput
-import kotlinx.html.passwordInput
-import kotlinx.html.style
-import kotlinx.html.submitInput
-import kotlinx.html.table
-import kotlinx.html.td
-import kotlinx.html.textInput
-import kotlinx.html.tr
+import kotlinx.html.*
 import redis.clients.jedis.Jedis
 
 internal object HelpAndLogin {
