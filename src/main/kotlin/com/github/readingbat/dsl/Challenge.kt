@@ -73,10 +73,10 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
   protected val packageName get() = challengeGroup.packageName
 
   // Allow description updates only if not found in the Content.kt decl
-  private val descriptionSetInDsl by lazy { description.isNotBlank() }
+  private val isDescriptionSetInDsl by lazy { description.isNotBlank() }
 
   internal val gitpodUrl by lazy { pathOf(repo.sourcePrefix, "blob/${branchName}", srcPath, fqName) }
-  internal val parsedDescription get() = TextFormatter.renderText(description)
+  internal val parsedDescription by lazy { TextFormatter.renderText(description) }
 
   // User properties
   var fileName = "$challengeName.${languageType.suffix}"
@@ -141,7 +141,7 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
     }
 
   protected fun deriveDescription(code: String, commentPrefix: String) =
-    if (descriptionSetInDsl) {
+    if (isDescriptionSetInDsl) {
       description
     }
     else {

@@ -37,6 +37,8 @@ import java.util.concurrent.ConcurrentHashMap
 class ReadingBatContent {
   // contentMap will prevent reading the same content multiple times
   private val contentMap = ConcurrentHashMap<String, ReadingBatContent>()
+  private val languageList by lazy { listOf(java, python, kotlin) }
+  private val languageMap by lazy { languageList.map { it.languageType to it }.toMap() }
 
   internal val sourcesMap = ConcurrentHashMap<Int, FunctionInfo>()
   internal val sourcesMapSize get() = sourcesMap.size
@@ -69,12 +71,10 @@ class ReadingBatContent {
   internal var grafanaUrl = ""
   internal var prometheusUrl = ""
 
+  // Accessible from Content.kt DSL
   val python by lazy { LanguageGroup<PythonChallenge>(this, Python) }
   val java by lazy { LanguageGroup<JavaChallenge>(this, Java) }
   val kotlin by lazy { LanguageGroup<KotlinChallenge>(this, Kotlin) }
-
-  private val languageList by lazy { listOf(java, python, kotlin) }
-  private val languageMap by lazy { languageList.map { it.languageType to it }.toMap() }
 
   // User properties
   var cacheChallenges = isProduction()
@@ -83,7 +83,6 @@ class ReadingBatContent {
   //var repo: ContentRoot = defaultContentRoot # Makes repo a required value
   var repo: ContentRoot = FileSystemSource("./")
   var branchName = "master"
-
 
   internal fun clearContentMap() {
     logger.info { "Clearing content map" }
