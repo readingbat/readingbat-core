@@ -28,9 +28,9 @@ enum class LanguageType(val useDoubleQuotes: Boolean, val suffix: String, val sr
   internal val languageName = LanguageName(name.toLowerCase())
   internal val contentRoot = "$CHALLENGE_ROOT/$languageName"
 
-  fun isJava() = this == Java
-  fun isPython() = this == Python
-  fun isKotlin() = this == Kotlin
+  val isJava by lazy { this == Java }
+  val isPython by lazy { this == Python }
+  val isKotlin by lazy { this == Kotlin }
 
   companion object {
     val languageTypesInOrder by lazy { listOf(Java, Python, Kotlin) }

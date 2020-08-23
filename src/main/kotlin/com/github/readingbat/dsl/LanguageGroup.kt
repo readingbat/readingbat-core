@@ -62,8 +62,6 @@ class LanguageGroup<T : Challenge>(internal val content: ReadingBatContent,
   private fun hasGroupNameSuffix(groupNameSuffix: GroupName) =
     challengeGroups.any { it.groupNameSuffix.value == groupNameSuffix.value }
 
-  private val excludes = Regex("^__.*__.*$")
-
   internal data class ChallengeFile(val fileName: String, val returnType: ReturnType)
 
   @ReadingBatDslMarker
@@ -107,6 +105,8 @@ class LanguageGroup<T : Challenge>(internal val content: ReadingBatContent,
     "LanguageGroup(languageType=$languageType, srcPath='$srcPath', challengeGroups=$challengeGroups)"
 
   companion object {
+    private val excludes = Regex("^__.*__.*$")
+
     internal val defaultContentRoot =
       object : ContentRoot {
         override val sourcePrefix = ""

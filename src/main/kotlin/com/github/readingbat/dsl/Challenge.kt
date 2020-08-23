@@ -64,6 +64,7 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
                        val replaceable: Boolean) {
   private val challengeId = counter.incrementAndGet()
   private val fqName by lazy { packageName.ensureSuffix("/") + fileName.ensureSuffix(".${languageType.suffix}") }
+
   private val languageGroup get() = challengeGroup.languageGroup
   private val metrics get() = challengeGroup.languageGroup.metrics
   private val repo get() = languageGroup.repo
@@ -73,12 +74,11 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
   internal val languageName get() = languageType.languageName
   internal val groupName get() = challengeGroup.groupName
   protected val packageName get() = challengeGroup.packageName
+  internal val gitpodUrl by lazy { pathOf(repo.sourcePrefix, "blob/${branchName}", srcPath, fqName) }
+  internal val parsedDescription by lazy { TextFormatter.renderText(description) }
 
   // Allow description updates only if not found in the Content.kt decl
   private val isDescriptionSetInDsl by lazy { description.isNotBlank() }
-
-  internal val gitpodUrl by lazy { pathOf(repo.sourcePrefix, "blob/${branchName}", srcPath, fqName) }
-  internal val parsedDescription by lazy { TextFormatter.renderText(description) }
 
   // User properties
   var fileName = "$challengeName.${languageType.suffix}"
@@ -138,7 +138,7 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
   private fun Any?.prettyQuote(capitalizePythonBooleans: Boolean = true, useDoubleQuotes: Boolean = false) =
     when {
       this is String -> if (languageType.useDoubleQuotes || useDoubleQuotes) toDoubleQuoted() else toSingleQuoted()
-      capitalizePythonBooleans && this is Boolean && languageType.isPython() -> toString().capitalize()
+      capitalizePythonBooleans && this is Boolean && languageType.isPython -> toString().capitalize()
       else -> toString()
     }
 
@@ -208,14 +208,7 @@ class PythonChallenge(challengeGroup: ChallengeGroup<*>,
 
     logger.debug { "$challengeName computed answers in $duration for: $correctAnswers" }
 
-    return FunctionInfo(languageType,
-                        challengeGroup,
-                        challengeName,
-                        code,
-                        funcCode,
-                        invocations,
-                        returnType,
-                        correctAnswers)
+    return FunctionInfo(this, code, funcCode, invocations, returnType, correctAnswers)
   }
 
   override fun toString() = "PythonChallenge(packageName='$packageName', fileName='$fileName', returnType=$returnType)"
@@ -257,14 +250,7 @@ class JavaChallenge(challengeGroup: ChallengeGroup<*>,
     if (correctAnswers !is List<*>)
       throw InvalidConfigurationException("Invalid type returned for $challengeName")
 
-    return FunctionInfo(languageType,
-                        challengeGroup,
-                        challengeName,
-                        code,
-                        funcCode,
-                        invocations,
-                        returnType,
-                        correctAnswers)
+    return FunctionInfo(this, code, funcCode, invocations, returnType, correctAnswers)
   }
 
   override fun toString() = "JavaChallenge(packageName='$packageName', fileName='$fileName')"
@@ -311,14 +297,7 @@ class KotlinChallenge(challengeGroup: ChallengeGroup<*>,
 
     logger.debug { "$challengeName computed answers in $duration for: $correctAnswers" }
 
-    return FunctionInfo(languageType,
-                        challengeGroup,
-                        challengeName,
-                        strippedCode,
-                        funcCode,
-                        invocations,
-                        returnType,
-                        correctAnswers)
+    return FunctionInfo(this, strippedCode, funcCode, invocations, returnType, correctAnswers)
   }
 
   override fun toString() = "KotlinChallenge(packageName='$packageName', fileName='$fileName', returnType=$returnType)"

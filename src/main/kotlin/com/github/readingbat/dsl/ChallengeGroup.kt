@@ -77,7 +77,7 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
     val includeList = mutableListOf<PatternReturnType>()
     operator fun getValue(thisRef: Any?, property: KProperty<*>) = includeList.toString()
     operator fun setValue(thisRef: Any?, property: KProperty<*>, value: String) {
-      if (languageType.isJava()) {
+      if (languageType.isJava) {
         val prt = PatternReturnType(value, Runtime)
         includeList += prt
         group.languageGroup.addIncludedFiles(group, prt)
@@ -93,7 +93,7 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
     val includeList = mutableListOf<PatternReturnType>()
     operator fun getValue(thisRef: Any?, property: KProperty<*>): PatternReturnType = PatternReturnType("", Runtime)
     operator fun setValue(thisRef: Any?, property: KProperty<*>, value: PatternReturnType) {
-      if (!languageType.isJava()) {
+      if (!languageType.isJava) {
         includeList += value
         group.languageGroup.addIncludedFiles(group, value)
       }
@@ -150,8 +150,8 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
       val challenge = challenge(this, challengeName, true)
       // Skip this next step for Java because returnType is calculated
       when {
-        languageType.isPython() -> (challenge as PythonChallenge).apply { returnType = challengeFile.returnType }
-        languageType.isKotlin() -> (challenge as KotlinChallenge).apply { returnType = challengeFile.returnType }
+        languageType.isPython -> (challenge as PythonChallenge).apply { returnType = challengeFile.returnType }
+        languageType.isKotlin -> (challenge as KotlinChallenge).apply { returnType = challengeFile.returnType }
       }
       challenges += challenge as T
     }

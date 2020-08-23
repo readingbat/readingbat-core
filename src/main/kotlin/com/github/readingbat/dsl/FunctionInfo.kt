@@ -30,25 +30,21 @@ import com.github.readingbat.dsl.ReturnType.StringArrayType
 import com.github.readingbat.dsl.ReturnType.StringListType
 import com.github.readingbat.dsl.ReturnType.StringType
 import com.github.readingbat.server.ChallengeMd5
-import com.github.readingbat.server.ChallengeName
 import com.github.readingbat.server.Invocation
 import mu.KLogging
 
-internal class FunctionInfo(val languageType: LanguageType,
-                            private val challengeGroup: ChallengeGroup<*>,
-                            val challengeName: ChallengeName,
+internal class FunctionInfo(private val challenge: Challenge,
                             val originalCode: String,
                             val codeSnippet: String,
                             val invocations: List<Invocation>,
                             val returnType: ReturnType,
                             rawAnswers: List<*>) {
-
-  val challengeMd5 by lazy { ChallengeMd5(languageType.languageName, challengeGroup.groupName, challengeName) }
+  val challengeMd5 by lazy { ChallengeMd5(languageType.languageName, groupName, challengeName) }
   val correctAnswers =
     List(rawAnswers.size) {
       val raw = rawAnswers[it]
       when (returnType) {
-        BooleanType -> if (languageType.isPython()) raw.toString().capitalize() else raw.toString()
+        BooleanType -> if (languageType.isPython) raw.toString().capitalize() else raw.toString()
         IntType -> raw.toString()
         StringType -> raw.toString().toDoubleQuoted()
         BooleanArrayType -> (raw as BooleanArray).map { it }.joinToString().asBracketed()
@@ -61,21 +57,25 @@ internal class FunctionInfo(val languageType: LanguageType,
       }
     }
 
+  val challengeName get() = challenge.challengeName
+  val groupName get() = challenge.challengeGroup.groupName
+  val languageType get() = challenge.challengeGroup.languageType
+
+  val placeHolder by lazy {
+    when (returnType) {
+      BooleanType -> if (languageType.isPython) "True" else "true"
+      IntType -> "0"
+      StringType -> if (languageType.isPython) "''" else """"""""
+      BooleanListType, BooleanArrayType -> if (languageType.isPython) "[True, False]" else "[true, false]"
+      IntListType, IntArrayType -> "[0, 1]"
+      StringListType, StringArrayType -> if (languageType.isPython) "['', '']" else """["", ""]"""
+      Runtime -> throw InvalidConfigurationException("Invalid return type")
+    }
+  }
+
   init {
     logger.debug { "In $challengeName return type: $returnType invocations: $invocations computed answers: $correctAnswers" }
     validate()
-  }
-
-  fun placeHolder(): String {
-    return when (returnType) {
-      BooleanType -> if (languageType.isPython()) "True" else "true"
-      IntType -> "0"
-      StringType -> if (languageType.isPython()) "''" else """"""""
-      BooleanListType, BooleanArrayType -> if (languageType.isPython()) "[True, False]" else "[true, false]"
-      IntListType, IntArrayType -> "[0, 1]"
-      StringListType, StringArrayType -> if (languageType.isPython()) "['', '']" else """["", ""]"""
-      Runtime -> throw InvalidConfigurationException("Invalid return type")
-    }
   }
 
   private fun validate() {

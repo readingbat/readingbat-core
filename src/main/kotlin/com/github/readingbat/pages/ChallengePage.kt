@@ -290,7 +290,7 @@ internal object ChallengePage : KLogging() {
                   if (answer.isNotBlank())
                     value = answer
                   else
-                    placeholder = funcInfo.placeHolder()
+                    placeholder = funcInfo.placeHolder
                 }
               }
               td(classes = FEEDBACK) { id = "$FEEDBACK_ID$i" }
@@ -553,13 +553,13 @@ internal object ChallengePage : KLogging() {
     p(classes = EXPERIMENT) {
       +"Experiment with this code on "
       this@otherLinks.addLink("Gitpod.io", "https://gitpod.io/#${challenge.gitpodUrl}", true)
-      if (languageType.isKotlin()) {
+      if (languageType.isKotlin) {
         +" or as a "
         this@otherLinks.addLink("Kotlin Playground", pathOf(PLAYGROUND_ROOT, groupName, challengeName), false)
       }
     }
 
-    if (challenge.codingBatEquiv.isNotEmpty() && (languageType.isJava() || languageType.isPython())) {
+    if (challenge.codingBatEquiv.isNotEmpty() && (languageType.isJava || languageType.isPython)) {
       p(classes = CODINGBAT) {
         +"Work on a similar problem on "
         this@otherLinks.addLink("CodingBat.com", "https://codingbat.com/prob/${challenge.codingBatEquiv}", true)
