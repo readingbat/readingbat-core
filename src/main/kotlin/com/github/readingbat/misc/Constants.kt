@@ -98,6 +98,7 @@ internal object Endpoints {
   const val MESSAGE_ENDPOINT = "/message"
   const val RESET_CONTENT_ENDPOINT = "/reset-content"
   const val RESET_CACHE_ENDPOINT = "/reset-cache"
+  const val GARBAGE_COLLECTOR_ENDPOINT = "/garbage-collector"
   const val PING = "/ping"
   const val THREAD_DUMP = "/threaddump"
   const val LOGOUT_ENDPOINT = "/logout"

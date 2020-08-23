@@ -20,6 +20,7 @@ package com.github.readingbat.pages
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.isProduction
 import com.github.readingbat.misc.Constants.RETURN_PATH
+import com.github.readingbat.misc.Endpoints.GARBAGE_COLLECTOR_ENDPOINT
 import com.github.readingbat.misc.Endpoints.RESET_CACHE_ENDPOINT
 import com.github.readingbat.misc.Endpoints.RESET_CONTENT_ENDPOINT
 import com.github.readingbat.misc.Message
@@ -100,6 +101,12 @@ internal object SystemAdminPage : KLogging() {
               this@body.button("Reset Challenges Cache",
                                RESET_CACHE_ENDPOINT,
                                "Are you sure you want to reset the challenges cache?")
+            }
+
+            p {
+              this@body.button("Run Garbage Collector",
+                               GARBAGE_COLLECTOR_ENDPOINT,
+                               "Are you sure you want to run the garbage collector?")
             }
           }
           else {

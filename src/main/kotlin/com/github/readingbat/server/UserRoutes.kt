@@ -45,6 +45,7 @@ import com.github.readingbat.misc.Endpoints.CSS_ENDPOINT
 import com.github.readingbat.misc.Endpoints.ENABLE_STUDENT_MODE_ENDPOINT
 import com.github.readingbat.misc.Endpoints.ENABLE_TEACHER_MODE_ENDPOINT
 import com.github.readingbat.misc.Endpoints.FAV_ICON_ENDPOINT
+import com.github.readingbat.misc.Endpoints.GARBAGE_COLLECTOR_ENDPOINT
 import com.github.readingbat.misc.Endpoints.LIKE_DISLIKE_ENDPOINT
 import com.github.readingbat.misc.Endpoints.LOGOUT_ENDPOINT
 import com.github.readingbat.misc.Endpoints.MESSAGE_ENDPOINT
@@ -169,6 +170,15 @@ internal fun Routing.userRoutes(metrics: Metrics,
         content.invoke().clearSourcesMap().let {
           "Challenge cache reset -- $cnt challenges removed".also { ReadingBatServer.logger.info { it } }
         }
+      }
+    redirectTo { "$MESSAGE_ENDPOINT?$MSG=$msg" }
+  }
+
+  get(GARBAGE_COLLECTOR_ENDPOINT, metrics) {
+    val msg =
+      authenticatedAction {
+        System.gc()
+        "Garbage collector invoked".also { ReadingBatServer.logger.info { it } }
       }
     redirectTo { "$MESSAGE_ENDPOINT?$MSG=$msg" }
   }

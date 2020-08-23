@@ -90,7 +90,7 @@ class ReadingBatContent {
   }
 
   internal fun clearSourcesMap() {
-    logger.info { "Clearing sources map" }
+    logger.info { "Clearing Challenge cache" }
     sourcesMap.clear()
   }
 
