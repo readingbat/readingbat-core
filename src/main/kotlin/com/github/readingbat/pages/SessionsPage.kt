@@ -20,7 +20,7 @@ package com.github.readingbat.pages
 import com.github.pambrose.common.util.pluralize
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.CSSNames.INDENT_1EM
-import com.github.readingbat.misc.CSSNames.USER_ITEM
+import com.github.readingbat.misc.CSSNames.TD_ITEM
 import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.User.Companion.toUser
 import com.github.readingbat.pages.PageCommon.backLink
@@ -80,16 +80,17 @@ internal object SessionsPage {
           div(classes = INDENT_1EM) {
             table {
               tr {
-                th(classes = USER_ITEM) { +"Session Id" }
-                th(classes = USER_ITEM) { +"User" }
-                th(classes = USER_ITEM) { +"Last activity" }
+                th(classes = TD_ITEM) { +"Session Id" }
+                th(classes = TD_ITEM) { +"User" }
+                th(classes = TD_ITEM) { +"Last activity" }
               }
               sessions.forEach {
                 tr {
                   val user = it.principal?.userId?.toUser(it.browserSession)
-                  td(classes = USER_ITEM) { +it.browserSession.id }
-                  td(classes = USER_ITEM) { +(user?.name(redis) ?: "Not logged in") }
-                  td(classes = USER_ITEM) { +(it.age.toString()) }
+                  val userDesc = user?.let { "${it.name(redis)} (${it.email(redis)})" } ?: "Not logged in"
+                  td(classes = TD_ITEM) { +it.browserSession.id }
+                  td(classes = TD_ITEM) { +userDesc }
+                  td(classes = TD_ITEM) { +(it.age.toString()) }
                 }
               }
             }

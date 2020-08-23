@@ -27,6 +27,7 @@ import com.github.readingbat.dsl.agentLaunchId
 import com.github.readingbat.dsl.isAgentEnabled
 import com.github.readingbat.dsl.isProduction
 import com.github.readingbat.misc.CSSNames.INDENT_1EM
+import com.github.readingbat.misc.CSSNames.TD_ITEM
 import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.pages.PageCommon.backLink
 import com.github.readingbat.pages.PageCommon.bodyTitle
@@ -65,51 +66,51 @@ internal object ConfigPage {
           div(classes = INDENT_1EM) {
             table {
               tr {
-                td { +"Version: " }
-                td { +ReadingBatServer::class.versionDesc() }
+                td(classes = TD_ITEM) { +"Version:" }
+                td(classes = TD_ITEM) { +ReadingBatServer::class.versionDesc() }
               }
               tr {
-                td { +"Server started: " }
-                td { +ReadingBatServer.timeStamp }
+                td(classes = TD_ITEM) { +"Server started:" }
+                td(classes = TD_ITEM) { +ReadingBatServer.timeStamp }
               }
               tr {
-                td { +"Server uptime: " }
-                td { +ReadingBatServer.upTime.format(true) }
+                td(classes = TD_ITEM) { +"Server uptime:" }
+                td(classes = TD_ITEM) { +ReadingBatServer.upTime.format(true) }
               }
               tr {
-                td { +"Ktor port:" }
-                td { +"${content.ktorPort}" }
+                td(classes = TD_ITEM) { +"Ktor port:" }
+                td(classes = TD_ITEM) { +"${content.ktorPort}" }
               }
               tr {
-                td { +"Ktor watch:" }
-                td { +content.ktorWatch }
+                td(classes = TD_ITEM) { +"Ktor watch:" }
+                td(classes = TD_ITEM) { +content.ktorWatch }
               }
               tr {
-                td { +"DSL filename:" }
-                td { +content.dslFileName }
+                td(classes = TD_ITEM) { +"DSL filename:" }
+                td(classes = TD_ITEM) { +content.dslFileName }
               }
               tr {
-                td { +"DSL variable name:" }
-                td { +content.dslVariableName }
+                td(classes = TD_ITEM) { +"DSL variable name:" }
+                td(classes = TD_ITEM) { +content.dslVariableName }
               }
               tr {
-                td { +"Production:" }
-                td { +"${isProduction()}" }
+                td(classes = TD_ITEM) { +"Production:" }
+                td(classes = TD_ITEM) { +"${isProduction()}" }
               }
               tr {
-                td { +"Cache challenges:" }
-                td { +"${content.cacheChallenges}" }
+                td(classes = TD_ITEM) { +"Cache challenges:" }
+                td(classes = TD_ITEM) { +"${content.cacheChallenges}" }
               }
               tr {
-                td { +"Max history length:" }
-                td { +"${content.maxHistoryLength}" }
+                td(classes = TD_ITEM) { +"Max history length:" }
+                td(classes = TD_ITEM) { +"${content.maxHistoryLength}" }
               }
               tr {
-                td { +"Max class count" }
-                td { +"${content.maxClassCount}" }
+                td(classes = TD_ITEM) { +"Max class count" }
+                td(classes = TD_ITEM) { +"${content.maxClassCount}" }
               }
               tr {
-                td { +"Challenge cache size" }
+                td(classes = TD_ITEM) { +"Challenge cache size" }
                 val map = content.sourcesMap
                 val javaCnt = map.filter { it.value.languageType == Java }.count()
                 val pythonCnt = map.filter { it.value.languageType == Python }.count()
@@ -117,8 +118,8 @@ internal object ConfigPage {
                 td { +"Total: ${map.size} (Java: $javaCnt Python: $pythonCnt Kotlin: $kotlinCnt)" }
               }
               tr {
-                td { +"Session map size" }
-                td { +"${SessionActivity.sessionsMapSize}" }
+                td(classes = TD_ITEM) { +"Session map size" }
+                td(classes = TD_ITEM) { +"${SessionActivity.sessionsMapSize}" }
               }
             }
           }
@@ -127,16 +128,16 @@ internal object ConfigPage {
           div(classes = INDENT_1EM) {
             table {
               tr {
-                td { +"JAVA_TOOL_OPTIONS" }
-                td { +(System.getenv("JAVA_TOOL_OPTIONS") ?: "unassigned") }
+                td(classes = TD_ITEM) { +"JAVA_TOOL_OPTIONS" }
+                td(classes = TD_ITEM) { +(System.getenv("JAVA_TOOL_OPTIONS") ?: "unassigned") }
               }
               tr {
-                td { +"AGENT_CONFIG" }
-                td { +(System.getenv("AGENT_CONFIG") ?: "unassigned") }
+                td(classes = TD_ITEM) { +"AGENT_CONFIG" }
+                td(classes = TD_ITEM) { +(System.getenv("AGENT_CONFIG") ?: "unassigned") }
               }
               tr {
-                td { +"REDIS_URL" }
-                td { +(System.getenv("REDIS_URL") ?: "unassigned") }
+                td(classes = TD_ITEM) { +"REDIS_URL" }
+                td(classes = TD_ITEM) { +(System.getenv("REDIS_URL") ?: "unassigned") }
               }
             }
           }
@@ -145,12 +146,12 @@ internal object ConfigPage {
           div(classes = INDENT_1EM) {
             table {
               tr {
-                td { +"Agent Id: " }
-                td { +if (isAgentEnabled()) agentLaunchId() else "disabled" }
+                td(classes = TD_ITEM) { +"Agent Id:" }
+                td(classes = TD_ITEM) { +if (isAgentEnabled()) agentLaunchId() else "disabled" }
               }
               tr {
-                td { +"Agent Version: " }
-                td { +if (isAgentEnabled()) Agent::class.versionDesc() else "disabled" }
+                td(classes = TD_ITEM) { +"Agent Version:" }
+                td(classes = TD_ITEM) { +if (isAgentEnabled()) Agent::class.versionDesc() else "disabled" }
               }
             }
           }
@@ -159,16 +160,16 @@ internal object ConfigPage {
           div(classes = INDENT_1EM) {
             table {
               tr {
-                td { +"Active users in the last minute: " }
-                td { +SessionActivity.activeSessions(1.minutes).toString() }
+                td(classes = TD_ITEM) { +"Active users in the last minute:" }
+                td(classes = TD_ITEM) { +SessionActivity.activeSessions(1.minutes).toString() }
               }
               tr {
-                td { +"Active users in the last 15 minutes: " }
-                td { +SessionActivity.activeSessions(15.minutes).toString() }
+                td(classes = TD_ITEM) { +"Active users in the last 15 minutes:" }
+                td(classes = TD_ITEM) { +SessionActivity.activeSessions(15.minutes).toString() }
               }
               tr {
-                td { +"Active users in the last hour: " }
-                td { +SessionActivity.activeSessions(1.hours).toString() }
+                td(classes = TD_ITEM) { +"Active users in the last hour:" }
+                td(classes = TD_ITEM) { +SessionActivity.activeSessions(1.hours).toString() }
               }
             }
           }
@@ -177,12 +178,12 @@ internal object ConfigPage {
           div(classes = INDENT_1EM) {
             table {
               tr {
-                td { +"Content last read: " }
-                td { +content.timeStamp }
+                td(classes = TD_ITEM) { +"Content last read:" }
+                td(classes = TD_ITEM) { +content.timeStamp }
               }
               tr {
-                td { +"Content read count: " }
-                td { +ReadingBatServer.contentReadCount.get().toString() }
+                td(classes = TD_ITEM) { +"Content read count:" }
+                td(classes = TD_ITEM) { +ReadingBatServer.contentReadCount.get().toString() }
               }
             }
           }
@@ -191,12 +192,12 @@ internal object ConfigPage {
           div(classes = INDENT_1EM) {
             table {
               tr {
-                td { +"Repo:" }
-                td { +"${content.python.repo}" }
+                td(classes = TD_ITEM) { +"Repo:" }
+                td(classes = TD_ITEM) { +"${content.python.repo}" }
               }
               tr {
-                td { +"Source path:" }
-                td { +content.python.srcPath }
+                td(classes = TD_ITEM) { +"Source path:" }
+                td(classes = TD_ITEM) { +content.python.srcPath }
               }
             }
           }
@@ -205,12 +206,12 @@ internal object ConfigPage {
           div(classes = INDENT_1EM) {
             table {
               tr {
-                td { +"Repo:" }
-                td { +"${content.java.repo}" }
+                td(classes = TD_ITEM) { +"Repo:" }
+                td(classes = TD_ITEM) { +"${content.java.repo}" }
               }
               tr {
-                td { +"Source path:" }
-                td { +content.java.srcPath }
+                td(classes = TD_ITEM) { +"Source path:" }
+                td(classes = TD_ITEM) { +content.java.srcPath }
               }
             }
           }
@@ -219,12 +220,12 @@ internal object ConfigPage {
           div(classes = INDENT_1EM) {
             table {
               tr {
-                td { +"Repo:" }
-                td { +"${content.kotlin.repo}" }
+                td(classes = TD_ITEM) { +"Repo:" }
+                td(classes = TD_ITEM) { +"${content.kotlin.repo}" }
               }
               tr {
-                td { +"Source path:" }
-                td { +content.kotlin.srcPath }
+                td(classes = TD_ITEM) { +"Source path:" }
+                td(classes = TD_ITEM) { +content.kotlin.srcPath }
               }
             }
           }
