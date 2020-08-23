@@ -212,7 +212,7 @@ class PythonChallenge(challengeGroup: ChallengeGroup<*>,
                         funcCode,
                         invocations,
                         returnType,
-                        correctAnswers)
+                        List(correctAnswers.size) { correctAnswers[it] })
   }
 
   override fun toString() = "PythonChallenge(packageName='$packageName', fileName='$fileName', returnType=$returnType)"
@@ -259,7 +259,7 @@ class JavaChallenge(challengeGroup: ChallengeGroup<*>,
                         funcCode,
                         invocations,
                         returnType,
-                        correctAnswers)
+                        List(correctAnswers.size) { correctAnswers[it] })
   }
 
   override fun toString() = "JavaChallenge(packageName='$packageName', fileName='$fileName')"
@@ -312,7 +312,7 @@ class KotlinChallenge(challengeGroup: ChallengeGroup<*>,
                         funcCode,
                         invocations,
                         returnType,
-                        correctAnswers)
+                        List(correctAnswers.size) { correctAnswers[it] })
   }
 
   override fun toString() = "KotlinChallenge(packageName='$packageName', fileName='$fileName', returnType=$returnType)"
