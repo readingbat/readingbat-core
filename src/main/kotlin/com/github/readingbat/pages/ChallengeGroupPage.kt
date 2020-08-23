@@ -150,17 +150,19 @@ internal object ChallengeGroupPage : KLogging() {
             val cols = 3
             val size = challenges.size
             val rows = size.rows(cols)
-            val width = if (enrollees.isNotEmpty()) 1200 else 800
-            style = "width:${width}px"
+            //val width = if (enrollees.isNotEmpty()) 1200 else 800
+            //style = "width:${width}px"
+            style = "width:100%"
 
             (0 until rows).forEach { i ->
               tr {
                 style = "height:30"
-                challenges.apply {
-                  elementAt(i).also { funcCall(user, it, redis) }
-                  elementAtOrNull(i + rows)?.also { funcCall(user, it, redis) } ?: td {}
-                  elementAtOrNull(i + (2 * rows))?.also { funcCall(user, it, redis) } ?: td {}
-                }
+                challenges
+                  .apply {
+                    elementAt(i).also { funcCall(user, it, redis) }
+                    elementAtOrNull(i + rows)?.also { funcCall(user, it, redis) } ?: td {}
+                    elementAtOrNull(i + (2 * rows))?.also { funcCall(user, it, redis) } ?: td {}
+                  }
               }
             }
           }

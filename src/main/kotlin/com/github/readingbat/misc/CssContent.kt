@@ -181,7 +181,7 @@ internal val cssContent by lazy {
       }
       rule(".$FUNC_ITEM") {
         marginTop = 1.em
-        width = 275.px
+        width = 300.px
       }
       rule(".$GROUP_CHOICE") {
         fontSize = 155.pct
