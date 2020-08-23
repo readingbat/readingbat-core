@@ -68,7 +68,9 @@ val content =
     include(GitHubContent(Organization, "readingbat", "readingbat-java-content").eval(this).kotlin)
 */
 
-    include(GitHubContent(Organization, "readingbat", "readingbat-java-content").eval(this).kotlin, "Athenian: ")
+    //include(GitHubContent(Organization, "readingbat", "readingbat-java-content").eval(this).kotlin, "Athenian: ")
+
+    include(GitHubContent(Organization, "readingbat", "readingbat-python-content", srcPath = "src").eval(this).python)
 
     java {
       group("test1") {

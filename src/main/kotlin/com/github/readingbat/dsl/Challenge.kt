@@ -48,9 +48,7 @@ import com.github.readingbat.dsl.parse.PythonParse.extractPythonInvocations
 import com.github.readingbat.dsl.parse.PythonParse.ifMainEndRegex
 import com.github.readingbat.misc.PageUtils.pathOf
 import com.github.readingbat.server.ChallengeName
-import com.vladsch.flexmark.html.HtmlRenderer
-import com.vladsch.flexmark.parser.Parser
-import com.vladsch.flexmark.util.data.MutableDataSet
+import com.github.readingbat.server.TextFormatter
 import mu.KLogging
 import java.net.URL
 import java.util.concurrent.atomic.AtomicInteger
@@ -64,10 +62,6 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
                        val replaceable: Boolean) {
   private val challengeId = counter.incrementAndGet()
   private val fqName by lazy { packageName.ensureSuffix("/") + fileName.ensureSuffix(".${languageType.suffix}") }
-  private val options = MutableDataSet().apply { set(HtmlRenderer.SOFT_BREAK, "<br />\n") }
-  private val parser = Parser.builder(options).build()
-  private val renderer = HtmlRenderer.builder(options).build()
-
   private val languageGroup get() = challengeGroup.languageGroup
   private val metrics get() = challengeGroup.languageGroup.metrics
   private val repo get() = languageGroup.repo
@@ -82,11 +76,7 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
   private val descriptionSetInDsl by lazy { description.isNotBlank() }
 
   internal val gitpodUrl by lazy { pathOf(repo.sourcePrefix, "blob/${branchName}", srcPath, fqName) }
-  internal val parsedDescription: String
-    get() {
-      val document = parser.parse(description.trimIndent())
-      return renderer.render(document)
-    }
+  internal val parsedDescription get() = TextFormatter.renderText(description)
 
   // User properties
   var fileName = "$challengeName.${languageType.suffix}"

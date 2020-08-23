@@ -76,7 +76,6 @@ class ReadingBatContent {
   private val languageList by lazy { listOf(java, python, kotlin) }
   private val languageMap by lazy { languageList.map { it.languageType to it }.toMap() }
 
-
   // User properties
   var cacheChallenges = isProduction()
 
