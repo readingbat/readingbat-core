@@ -24,6 +24,8 @@ import com.github.pambrose.common.util.Version.Companion.versionDesc
 import com.github.pambrose.common.util.isNotNull
 import com.github.pambrose.common.util.isNull
 import com.github.pambrose.common.util.md5
+import com.github.readingbat.dsl.InvalidConfigurationException
+import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.isProduction
 import com.github.readingbat.misc.BrowserSession
@@ -126,6 +128,17 @@ internal object ServerUtils : KLogging() {
       }
     }
 
+  fun PipelineCall.defaultLanguageTab(content: ReadingBatContent) =
+    LanguageType.languageTypesInOrder
+      .asSequence()
+      .filter { content[it].isNotEmpty() }
+      .map {
+        val params = call.parameters.formUrlEncode()
+        "${it.contentRoot}${if (params.isNotEmpty()) "?$params" else ""}"
+      }
+      .firstOrNull() ?: throw InvalidConfigurationException("Missing default language")
+
+  fun Int.rows(cols: Int) = if (this % cols == 0) this / cols else (this / cols) + 1
 }
 
 class RedirectException(val redirectUrl: String) : Exception()

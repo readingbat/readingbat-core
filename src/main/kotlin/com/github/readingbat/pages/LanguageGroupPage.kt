@@ -38,9 +38,9 @@ import com.github.readingbat.pages.ChallengeGroupPage.isCorrect
 import com.github.readingbat.pages.PageUtils.bodyHeader
 import com.github.readingbat.pages.PageUtils.headDefault
 import com.github.readingbat.pages.PageUtils.rawHtml
-import com.github.readingbat.pages.PageUtils.rows
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
+import com.github.readingbat.server.ServerUtils.rows
 import io.ktor.application.*
 import io.ktor.sessions.*
 import kotlinx.html.Entities.nbsp
