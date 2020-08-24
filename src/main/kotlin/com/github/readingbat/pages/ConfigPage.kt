@@ -37,16 +37,8 @@ import com.github.readingbat.server.ReadingBatServer
 import com.github.readingbat.server.ServerUtils.queryParam
 import com.github.readingbat.server.SessionActivity
 import io.prometheus.Agent
-import kotlinx.html.body
-import kotlinx.html.div
-import kotlinx.html.h2
-import kotlinx.html.h3
-import kotlinx.html.head
-import kotlinx.html.html
+import kotlinx.html.*
 import kotlinx.html.stream.createHTML
-import kotlinx.html.table
-import kotlinx.html.td
-import kotlinx.html.tr
 import kotlin.time.hours
 import kotlin.time.minutes
 
@@ -158,10 +150,6 @@ internal object ConfigPage {
                   td { +"java.vm.vendor" }
                   td { +(System.getProperty("java.vm.vendor", "unassigned")) }
                 }
-                tr {
-                  td { +"java.vm.version" }
-                  td { +(System.getProperty("java.vm.version", "unassigned")) }
-                }
               }
             }
 
@@ -211,44 +199,28 @@ internal object ConfigPage {
               }
             }
 
-            h3 { +"Python Configuration" }
+            h3 { +"Script Configuration" }
             div(classes = INDENT_1EM) {
               table {
                 tr {
-                  td { +"Repo:" }
-                  td { +"${content.python.repo}" }
+                  th { +"Language" }
+                  th { +"Source path" }
+                  th { +"Repo" }
                 }
                 tr {
-                  td { +"Source path:" }
+                  td { +"Python" }
                   td { +content.python.srcPath }
-                }
-              }
-            }
-
-            h3 { +"Java Configuration" }
-            div(classes = INDENT_1EM) {
-              table {
-                tr {
-                  td { +"Repo:" }
-                  td { +"${content.java.repo}" }
+                  td { +content.python.repo.toString() }
                 }
                 tr {
-                  td { +"Source path:" }
+                  td { +"Java" }
                   td { +content.java.srcPath }
-                }
-              }
-            }
-
-            h3 { +"Kotlin Configuration" }
-            div(classes = INDENT_1EM) {
-              table {
-                tr {
-                  td { +"Repo:" }
-                  td { +"${content.kotlin.repo}" }
+                  td { +content.java.repo.toString() }
                 }
                 tr {
-                  td { +"Source path:" }
+                  td { +"Kotlin" }
                   td { +content.kotlin.srcPath }
+                  td { +content.kotlin.repo.toString() }
                 }
               }
             }

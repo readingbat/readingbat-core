@@ -146,8 +146,9 @@ internal object UserPrefsPage : KLogging() {
               a { href = "$SYSTEM_ADMIN_ENDPOINT?$RETURN_PATH=$returnPath"; +"System Admin" }
             }
           }
-
-          privacyStatement(USER_PREFS_ENDPOINT, returnPath)
+          else {
+            privacyStatement(USER_PREFS_ENDPOINT, returnPath)
+          }
 
           backLink(returnPath)
         }

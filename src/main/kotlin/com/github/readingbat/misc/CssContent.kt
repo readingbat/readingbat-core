@@ -140,6 +140,10 @@ internal val cssContent by lazy {
         marginTop = 1.em
         //width = 300.px
       }
+      rule("div.$TD_PADDING th") {
+        marginTop = 1.em
+        paddingRight = 1.em
+      }
       rule("div.$TD_PADDING td") {
         marginTop = 1.em
         paddingRight = 1.em
