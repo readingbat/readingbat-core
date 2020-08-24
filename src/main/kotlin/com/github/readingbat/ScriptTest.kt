@@ -28,7 +28,8 @@ import kotlin.reflect.typeOf
 import kotlin.time.measureTime
 
 fun main() {
-  javaTest()
+  (0 until 5).forEach { println(it) }
+  repeat(5) { println(it) }
 }
 
 fun javaTest() {

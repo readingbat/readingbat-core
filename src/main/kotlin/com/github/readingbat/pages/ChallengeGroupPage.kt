@@ -156,7 +156,7 @@ internal object ChallengeGroupPage : KLogging() {
             //style = "width:${width}px"
             style = "width:100%"
 
-            (0 until rows).forEach { i ->
+            repeat(rows) { i ->
               tr {
                 style = "height:30"
                 challenges.apply {

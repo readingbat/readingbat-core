@@ -177,12 +177,13 @@ internal object WsEndoints : KLogging() {
                     // Reorder challenges to return values left to right
                     val ltor = mutableListOf<Challenge>()
                     val rows = challenges.size.rows(cols)
-                    (0 until rows).forEach { i ->
-                      challenges.apply {
-                        ltor += elementAt(i)
-                        elementAtOrNull(i + rows)?.also { ltor += it }
-                        elementAtOrNull(i + (2 * rows))?.also { ltor += it }
-                      }
+                    repeat(rows) { i ->
+                      challenges
+                        .apply {
+                          ltor += elementAt(i)
+                          elementAtOrNull(i + rows)?.also { ltor += it }
+                          elementAtOrNull(i + (2 * rows))?.also { ltor += it }
+                        }
                     }
 
                     for (challenge in ltor) {

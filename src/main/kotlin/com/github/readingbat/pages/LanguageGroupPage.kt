@@ -126,7 +126,7 @@ internal object LanguageGroupPage {
             val size = groups.size
             val rows = size.rows(cols)
 
-            (0 until rows).forEach { i ->
+            repeat(rows) { i ->
               tr {
                 groups[i].also { group -> groupItem(user, group, redis) }
                 groups.elementAtOrNull(i + rows)?.also { groupItem(user, it, redis) } ?: td {}
