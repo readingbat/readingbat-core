@@ -187,7 +187,7 @@ internal object WsEndoints : KLogging() {
                         }
                     }
 
-                    for (challenge in ltor) {
+                    ltor.forEach challenge@{ challenge ->
                       val funcInfo = challenge.funcInfo(content.invoke())
                       val challengeName = challenge.challengeName
                       val numCalls = funcInfo.invocations.size
@@ -198,11 +198,11 @@ internal object WsEndoints : KLogging() {
                       var likes = 0
                       var dislikes = 0
 
-                      for (enrollee in enrollees) {
+                      enrollees.forEach { enrollee ->
                         var attempted = 0
                         var numCorrect = 0
 
-                        for (invocation in funcInfo.invocations) {
+                        funcInfo.invocations.forEach { invocation ->
                           val historyKey = enrollee.answerHistoryKey(languageName, groupName, challengeName, invocation)
 
                           if (redis.exists(historyKey)) {
@@ -217,7 +217,7 @@ internal object WsEndoints : KLogging() {
                           }
 
                           if (finished.get())
-                            break
+                            return@challenge
                         }
 
                         val likeDislikeKey = enrollee.likeDislikeKey(languageName, groupName, challengeName)
@@ -236,7 +236,7 @@ internal object WsEndoints : KLogging() {
                         totCorrect += numCorrect
 
                         if (finished.get())
-                          break
+                          return@challenge
                       }
 
                       val avgCorrect =
@@ -254,11 +254,15 @@ internal object WsEndoints : KLogging() {
                       runBlocking { outgoing.send(Frame.Text(json)) }
 
                       if (finished.get())
-                        break
+                        return@challenge
                     }
                   }
                 }
               }
+
+              // Shut things down to exit collect
+              outgoing.close()
+              incoming.cancel()
             }
         } finally {
           metrics.wsClassStatisticsGauge.labels(agentLaunchId()).dec()
