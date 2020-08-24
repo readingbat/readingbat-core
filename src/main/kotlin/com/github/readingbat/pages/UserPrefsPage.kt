@@ -133,7 +133,11 @@ internal object UserPrefsPage : KLogging() {
             a { href = "$TEACHER_PREFS_ENDPOINT?$RETURN_PATH=$returnPath"; +"Teacher Preferences" }
           }
 
+          privacyStatement(USER_PREFS_ENDPOINT, returnPath)
+
           if (!isProduction() || user.isAdmin(redis)) {
+            h3 { +"Administrator Options" }
+
             p(classes = INDENT_1EM) {
               a { href = "$CONFIG_ENDPOINT?$RETURN_PATH=$returnPath"; +"System Configuration" }
             }
@@ -145,9 +149,6 @@ internal object UserPrefsPage : KLogging() {
             p(classes = INDENT_1EM) {
               a { href = "$SYSTEM_ADMIN_ENDPOINT?$RETURN_PATH=$returnPath"; +"System Admin" }
             }
-          }
-          else {
-            privacyStatement(USER_PREFS_ENDPOINT, returnPath)
           }
 
           backLink(returnPath)
