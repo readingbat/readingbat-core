@@ -23,6 +23,7 @@ import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.Endpoints.GARBAGE_COLLECTOR_ENDPOINT
 import com.github.readingbat.misc.Endpoints.RESET_CACHE_ENDPOINT
 import com.github.readingbat.misc.Endpoints.RESET_CONTENT_ENDPOINT
+import com.github.readingbat.misc.Endpoints.USER_PREFS_ENDPOINT
 import com.github.readingbat.misc.Message
 import com.github.readingbat.misc.Message.Companion.EMPTY_MESSAGE
 import com.github.readingbat.misc.User
@@ -112,7 +113,7 @@ internal object SystemAdminPage : KLogging() {
             }
           }
 
-          backLink(returnPath)
+          backLink("$USER_PREFS_ENDPOINT?$RETURN_PATH=${queryParam(RETURN_PATH, "/")}")
         }
       }
 }

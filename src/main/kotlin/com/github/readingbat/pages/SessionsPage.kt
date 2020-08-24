@@ -22,6 +22,7 @@ import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.CSSNames.INDENT_1EM
 import com.github.readingbat.misc.CSSNames.TD_PADDING
 import com.github.readingbat.misc.Constants.RETURN_PATH
+import com.github.readingbat.misc.Endpoints.USER_PREFS_ENDPOINT
 import com.github.readingbat.misc.User.Companion.toUser
 import com.github.readingbat.pages.PageCommon.backLink
 import com.github.readingbat.pages.PageCommon.bodyTitle
@@ -103,7 +104,7 @@ internal object SessionsPage {
             }
           }
 
-          backLink(queryParam(RETURN_PATH))
+          backLink("$USER_PREFS_ENDPOINT?$RETURN_PATH=${queryParam(RETURN_PATH, "/")}")
         }
       }
 }

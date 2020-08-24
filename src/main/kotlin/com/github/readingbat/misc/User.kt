@@ -26,7 +26,6 @@ import com.github.readingbat.dsl.FunctionInfo
 import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.misc.ClassCode.Companion.DISABLED_CLASS_CODE
-import com.github.readingbat.misc.Constants.ADMIN_USERS
 import com.github.readingbat.misc.Constants.RESP
 import com.github.readingbat.misc.KeyConstants.ANSWER_HISTORY_KEY
 import com.github.readingbat.misc.KeyConstants.AUTH_KEY
@@ -48,6 +47,7 @@ import com.github.readingbat.server.Email.Companion.EMPTY_EMAIL
 import com.github.readingbat.server.GroupName.Companion.ANY_GROUP
 import com.github.readingbat.server.Invocation.Companion.ANY_INVOCATION
 import com.github.readingbat.server.LanguageName.Companion.ANY_LANGUAGE
+import com.github.readingbat.server.ReadingBatServer.adminUsers
 import com.github.readingbat.server.ResetId.Companion.EMPTY_RESET_ID
 import com.github.readingbat.server.WsEndoints.classTopicName
 import com.google.gson.Gson
@@ -86,7 +86,7 @@ internal class User private constructor(val id: String, val browserSession: Brow
 
   fun email(redis: Jedis) = redis.hget(userInfoKey, EMAIL_FIELD)?.let { Email(it) } ?: EMPTY_EMAIL
 
-  fun isAdmin(redis: Jedis) = email(redis).value in ADMIN_USERS
+  fun isAdmin(redis: Jedis) = email(redis).value in adminUsers
 
   fun isNotAdmin(redis: Jedis) = !isAdmin(redis)
 

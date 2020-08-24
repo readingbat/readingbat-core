@@ -67,8 +67,6 @@ internal object Constants {
   const val PING_CODE = "P"
 
   val DBMS_DOWN = Message("Database is down", true)
-
-  val ADMIN_USERS = listOf("pambrose@mac.com", "mleich@athenian.org")
 }
 
 internal object Endpoints {

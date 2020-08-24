@@ -29,6 +29,7 @@ import com.github.readingbat.dsl.isProduction
 import com.github.readingbat.misc.CSSNames.INDENT_1EM
 import com.github.readingbat.misc.CSSNames.TD_PADDING
 import com.github.readingbat.misc.Constants.RETURN_PATH
+import com.github.readingbat.misc.Endpoints.USER_PREFS_ENDPOINT
 import com.github.readingbat.pages.PageCommon.backLink
 import com.github.readingbat.pages.PageCommon.bodyTitle
 import com.github.readingbat.pages.PageCommon.headDefault
@@ -99,11 +100,11 @@ internal object ConfigPage {
                   td { +"${content.maxHistoryLength}" }
                 }
                 tr {
-                  td { +"Max class count" }
+                  td { +"Max class count:" }
                   td { +"${content.maxClassCount}" }
                 }
                 tr {
-                  td { +"Challenge cache size" }
+                  td { +"Challenge cache size:" }
                   val map = content.sourcesMap
                   val javaCnt = map.filter { it.value.languageType == Java }.count()
                   val pythonCnt = map.filter { it.value.languageType == Python }.count()
@@ -111,7 +112,7 @@ internal object ConfigPage {
                   td { +"Total: ${map.size} (Java: $javaCnt Python: $pythonCnt Kotlin: $kotlinCnt)" }
                 }
                 tr {
-                  td { +"Session map size" }
+                  td { +"Session map size:" }
                   td { +"${SessionActivity.sessionsMapSize}" }
                 }
               }
@@ -153,7 +154,7 @@ internal object ConfigPage {
               }
             }
 
-            h3 { +"Prometheus Agent Configuration" }
+            h3 { +"Prometheus Agent" }
             div(classes = INDENT_1EM) {
               table {
                 tr {
@@ -226,7 +227,7 @@ internal object ConfigPage {
             }
           }
 
-          backLink(queryParam(RETURN_PATH))
+          backLink("$USER_PREFS_ENDPOINT?$RETURN_PATH=${queryParam(RETURN_PATH, "/")}")
         }
       }
 }

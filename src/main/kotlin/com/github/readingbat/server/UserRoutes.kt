@@ -162,7 +162,7 @@ internal fun Routing.userRoutes(metrics: Metrics,
           "Content reset in $it".also { ReadingBatServer.logger.info { it } }
         }
       }
-    redirectTo { "$MESSAGE_ENDPOINT?$MSG=$msg" }
+    redirectTo { "$MESSAGE_ENDPOINT?$MSG=$msg&$RETURN_PATH=$SYSTEM_ADMIN_ENDPOINT" }
   }
 
   get(RESET_CACHE_ENDPOINT, metrics) {
@@ -173,7 +173,7 @@ internal fun Routing.userRoutes(metrics: Metrics,
           "Challenge cache reset -- $cnt challenges removed".also { ReadingBatServer.logger.info { it } }
         }
       }
-    redirectTo { "$MESSAGE_ENDPOINT?$MSG=$msg" }
+    redirectTo { "$MESSAGE_ENDPOINT?$MSG=$msg&$RETURN_PATH=$SYSTEM_ADMIN_ENDPOINT" }
   }
 
   get(GARBAGE_COLLECTOR_ENDPOINT, metrics) {
@@ -182,7 +182,7 @@ internal fun Routing.userRoutes(metrics: Metrics,
         System.gc()
         "Garbage collector invoked".also { ReadingBatServer.logger.info { it } }
       }
-    redirectTo { "$MESSAGE_ENDPOINT?$MSG=$msg" }
+    redirectTo { "$MESSAGE_ENDPOINT?$MSG=$msg&$RETURN_PATH=$SYSTEM_ADMIN_ENDPOINT" }
   }
 
   get(CONFIG_ENDPOINT, metrics) {

@@ -44,7 +44,7 @@ internal object MessagePage {
           bodyTitle()
           h2 { +queryParam(MSG, if (msg.isNotBlank()) msg else "Missing msg parameter") }
 
-          backLink(queryParam(RETURN_PATH))
+          backLink("${queryParam(RETURN_PATH, "/")}?$RETURN_PATH=${"/"}")
         }
       }
 }

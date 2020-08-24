@@ -44,6 +44,7 @@ import com.github.readingbat.misc.Constants.VARIABLE_NAME
 import com.github.readingbat.server.AdminRoutes.adminRoutes
 import com.github.readingbat.server.Installs.installs
 import com.github.readingbat.server.Locations.locations
+import com.github.readingbat.server.ReadingBatServer.adminUsers
 import com.github.readingbat.server.ReadingBatServer.content
 import com.github.readingbat.server.ReadingBatServer.contentReadCount
 import com.github.readingbat.server.ServerUtils.property
@@ -68,6 +69,7 @@ object ReadingBatServer : KLogging() {
   private val startTime = TimeSource.Monotonic.markNow()
   internal val upTime get() = startTime.elapsedNow()
   internal val content = AtomicReference(ReadingBatContent())
+  internal val adminUsers = mutableListOf<String>()
   internal val contentReadCount = AtomicInteger(0)
   internal val metrics by lazy { Metrics() }
 
@@ -128,6 +130,9 @@ internal fun Application.module() {
   val agentEnabled = property(AGENT_ENABLED, default = "true").toBoolean()
   val proxyHostname = property(PROXY_HOSTNAME, default = "")
   val metrics = ReadingBatServer.metrics
+
+  val admins = environment.config.propertyOrNull("$READING_BAT.adminUsers")?.getList() ?: emptyList()
+  adminUsers.addAll(admins)
 
   System.setProperty(IS_PRODUCTION, property(IS_PRODUCTION, default = "false").toBoolean().toString())
   System.setProperty(JAVA_SCRIPTS_POOL_SIZE, property(JAVA_SCRIPTS_POOL_SIZE, default = "5"))
