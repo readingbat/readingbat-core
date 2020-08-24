@@ -17,20 +17,29 @@
 
 package com.github.readingbat.server
 
+import com.github.pambrose.common.redis.RedisUtils
+import com.github.pambrose.common.response.redirectTo
+import com.github.pambrose.common.response.respondWith
 import com.github.pambrose.common.util.Version.Companion.versionDesc
 import com.github.pambrose.common.util.isNotNull
+import com.github.pambrose.common.util.isNull
 import com.github.pambrose.common.util.md5
+import com.github.readingbat.dsl.ReadingBatContent
+import com.github.readingbat.dsl.isProduction
 import com.github.readingbat.misc.BrowserSession
+import com.github.readingbat.misc.Constants
 import com.github.readingbat.misc.KeyConstants.KEY_SEP
 import com.github.readingbat.misc.User
 import com.github.readingbat.misc.User.Companion.toUser
 import com.github.readingbat.misc.UserPrincipal
+import com.github.readingbat.pages.DbmsDownPage.dbmsDownPage
 import io.ktor.application.*
 import io.ktor.auth.*
 import io.ktor.config.*
 import io.ktor.sessions.*
 import io.ktor.util.pipeline.*
 import mu.KLogging
+import redis.clients.jedis.Jedis
 
 typealias PipelineCall = PipelineContext<Unit, ApplicationCall>
 
@@ -61,6 +70,51 @@ internal object ServerUtils : KLogging() {
 
   private fun PipelineCall.assignPrincipal(): UserPrincipal? =
     call.principal<UserPrincipal>().apply { if (isNotNull()) call.sessions.set(this) }  // Set the cookie
+
+  suspend fun PipelineCall.respondWithDbmsCheck(content: ReadingBatContent, block: (redis: Jedis) -> String) =
+    try {
+      val html =
+        RedisUtils.withRedisPool { redis ->
+          if (redis.isNull())
+            dbmsDownPage(content)
+          else
+            block.invoke(redis)
+        }
+      respondWith { html }
+    } catch (e: RedirectException) {
+      redirectTo { e.redirectUrl }
+    }
+
+  suspend fun PipelineCall.respondWithSuspendingDbmsCheck(content: ReadingBatContent,
+                                                          block: suspend (redis: Jedis) -> String) =
+    try {
+      val html =
+        RedisUtils.withSuspendingRedisPool { redis ->
+          if (redis.isNull())
+            dbmsDownPage(content)
+          else
+            block.invoke(redis)
+        }
+      respondWith { html }
+    } catch (e: RedirectException) {
+      redirectTo { e.redirectUrl }
+    }
+
+  suspend fun PipelineCall.authenticatedAction(block: () -> String) =
+    when {
+      isProduction() ->
+        RedisUtils.withSuspendingRedisPool { redis ->
+          val user = fetchUser()
+          when {
+            redis.isNull() -> Constants.DBMS_DOWN.value
+            user.isNull() -> "Must be logged in for this function"
+            user.isNotAdmin(redis) -> "Not authorized"
+            else -> block.invoke()
+          }
+        }
+      else -> block.invoke()
+    }
+
 }
 
 class RedirectException(val redirectUrl: String) : Exception()
