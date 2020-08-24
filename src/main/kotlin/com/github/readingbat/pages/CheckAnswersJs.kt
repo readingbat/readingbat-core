@@ -15,10 +15,14 @@
  *
  */
 
-package com.github.readingbat.misc
+package com.github.readingbat.pages
 
+import com.github.readingbat.misc.Constants.CHALLENGE_SRC
 import com.github.readingbat.misc.Constants.CORRECT_COLOR
+import com.github.readingbat.misc.Constants.GROUP_SRC
+import com.github.readingbat.misc.Constants.LANG_SRC
 import com.github.readingbat.misc.Constants.NO_ANSWER_COLOR
+import com.github.readingbat.misc.Constants.PROCESS_USER_ANSWERS_JS_FUNC
 import com.github.readingbat.misc.Constants.RESP
 import com.github.readingbat.misc.Constants.SESSION_ID
 import com.github.readingbat.misc.Constants.WRONG_COLOR
@@ -37,11 +41,6 @@ import kotlinx.html.SCRIPT
 import java.util.concurrent.atomic.AtomicInteger
 
 internal object CheckAnswersJs {
-  const val langSrc = "lang"
-  const val groupSrc = "groupName"
-  const val challengeSrc = "challengeName"
-  const val PROCESS_USER_ANSWERS_JS_FUNC = "processUserAnswers"
-
   private val sessionCounter = AtomicInteger(0)
 
   fun SCRIPT.checkAnswersScript(languageName: LanguageName, groupName: GroupName, challengeName: ChallengeName) =
@@ -55,7 +54,7 @@ internal object CheckAnswersJs {
       if (event != null && (event.keyCode != 13 && event.keyCode != 9)) 
         return 1;
 
-      var data = "$SESSION_ID=${sessionCounter.incrementAndGet()}&$langSrc=$languageName&$groupSrc=$groupName&$challengeSrc=$challengeName";
+      var data = "$SESSION_ID=${sessionCounter.incrementAndGet()}&$LANG_SRC=$languageName&$GROUP_SRC=$groupName&$CHALLENGE_SRC=$challengeName";
       try {
         for (var i = 0; i < cnt; i++) {
           var x = document.getElementById("$FEEDBACK_ID"+i);

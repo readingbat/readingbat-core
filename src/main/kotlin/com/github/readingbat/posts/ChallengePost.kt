@@ -25,10 +25,10 @@ import com.github.readingbat.dsl.ReturnType.BooleanType
 import com.github.readingbat.dsl.ReturnType.IntType
 import com.github.readingbat.dsl.ReturnType.StringType
 import com.github.readingbat.misc.BrowserSession
-import com.github.readingbat.misc.CheckAnswersJs.challengeSrc
-import com.github.readingbat.misc.CheckAnswersJs.groupSrc
-import com.github.readingbat.misc.CheckAnswersJs.langSrc
 import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
+import com.github.readingbat.misc.Constants.CHALLENGE_SRC
+import com.github.readingbat.misc.Constants.GROUP_SRC
+import com.github.readingbat.misc.Constants.LANG_SRC
 import com.github.readingbat.misc.Constants.LIKE_DESC
 import com.github.readingbat.misc.Constants.MSG
 import com.github.readingbat.misc.Constants.RESP
@@ -114,10 +114,10 @@ internal data class ChallengeHistory(var invocation: Invocation,
 }
 
 internal class ChallengeNames(paramMap: Map<String, String>) {
-  val languageName = LanguageName(paramMap[langSrc] ?: throw InvalidConfigurationException("Missing language name"))
-  val groupName = GroupName(paramMap[groupSrc] ?: throw InvalidConfigurationException("Missing group name"))
+  val languageName = LanguageName(paramMap[LANG_SRC] ?: throw InvalidConfigurationException("Missing language name"))
+  val groupName = GroupName(paramMap[GROUP_SRC] ?: throw InvalidConfigurationException("Missing group name"))
   val challengeName =
-    ChallengeName(paramMap[challengeSrc] ?: throw InvalidConfigurationException("Missing challenge name"))
+    ChallengeName(paramMap[CHALLENGE_SRC] ?: throw InvalidConfigurationException("Missing challenge name"))
 }
 
 internal object ChallengePost : KLogging() {

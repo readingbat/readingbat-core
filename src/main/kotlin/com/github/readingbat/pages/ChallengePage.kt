@@ -36,16 +36,16 @@ import com.github.readingbat.misc.CSSNames.LIKE_BUTTONS
 import com.github.readingbat.misc.CSSNames.STATUS
 import com.github.readingbat.misc.CSSNames.SUCCESS
 import com.github.readingbat.misc.CSSNames.USER_RESP
-import com.github.readingbat.misc.CheckAnswersJs.PROCESS_USER_ANSWERS_JS_FUNC
-import com.github.readingbat.misc.CheckAnswersJs.checkAnswersScript
 import com.github.readingbat.misc.ClassCode
 import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
 import com.github.readingbat.misc.Constants.CORRECT_COLOR
 import com.github.readingbat.misc.Constants.DBMS_DOWN
 import com.github.readingbat.misc.Constants.INCOMPLETE_COLOR
+import com.github.readingbat.misc.Constants.LIKE_DISLIKE_JS_FUNC
 import com.github.readingbat.misc.Constants.MSG
 import com.github.readingbat.misc.Constants.PING_CODE
 import com.github.readingbat.misc.Constants.PLAYGROUND_ROOT
+import com.github.readingbat.misc.Constants.PROCESS_USER_ANSWERS_JS_FUNC
 import com.github.readingbat.misc.Constants.RESP
 import com.github.readingbat.misc.Constants.STATIC_ROOT
 import com.github.readingbat.misc.Constants.WRONG_COLOR
@@ -56,8 +56,6 @@ import com.github.readingbat.misc.FormFields.CHALLENGE_NAME_KEY
 import com.github.readingbat.misc.FormFields.GROUP_NAME_KEY
 import com.github.readingbat.misc.FormFields.LANGUAGE_NAME_KEY
 import com.github.readingbat.misc.KeyConstants.CORRECT_ANSWERS_KEY
-import com.github.readingbat.misc.LikeDislikeJs.LIKE_DISLIKE_JS_FUNC
-import com.github.readingbat.misc.LikeDislikeJs.likeDislikeScript
 import com.github.readingbat.misc.Message
 import com.github.readingbat.misc.PageUtils.pathOf
 import com.github.readingbat.misc.ParameterIds.DISLIKE_CLEAR
@@ -79,6 +77,8 @@ import com.github.readingbat.misc.User.Companion.fetchActiveClassCode
 import com.github.readingbat.misc.User.Companion.fetchPreviousAnswers
 import com.github.readingbat.misc.User.Companion.gson
 import com.github.readingbat.misc.User.Companion.likeDislikeKey
+import com.github.readingbat.pages.CheckAnswersJs.checkAnswersScript
+import com.github.readingbat.pages.LikeDislikeJs.likeDislikeScript
 import com.github.readingbat.pages.PageUtils.addLink
 import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyHeader

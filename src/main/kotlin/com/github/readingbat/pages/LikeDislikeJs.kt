@@ -15,9 +15,13 @@
  *
  */
 
-package com.github.readingbat.misc
+package com.github.readingbat.pages
 
+import com.github.readingbat.misc.Constants.CHALLENGE_SRC
+import com.github.readingbat.misc.Constants.GROUP_SRC
+import com.github.readingbat.misc.Constants.LANG_SRC
 import com.github.readingbat.misc.Constants.LIKE_DESC
+import com.github.readingbat.misc.Constants.LIKE_DISLIKE_JS_FUNC
 import com.github.readingbat.misc.Constants.SESSION_ID
 import com.github.readingbat.misc.Endpoints.LIKE_DISLIKE_ENDPOINT
 import com.github.readingbat.misc.ParameterIds.DISLIKE_CLEAR
@@ -34,11 +38,6 @@ import kotlinx.html.SCRIPT
 import java.util.concurrent.atomic.AtomicInteger
 
 internal object LikeDislikeJs {
-  private const val langSrc = "lang"
-  private const val groupSrc = "groupName"
-  private const val challengeSrc = "challengeName"
-  const val LIKE_DISLIKE_JS_FUNC = "likeDislike"
-
   private val sessionCounter = AtomicInteger(0)
 
   fun SCRIPT.likeDislikeScript(languageName: LanguageName, groupName: GroupName, challengeName: ChallengeName) =
@@ -48,7 +47,7 @@ internal object LikeDislikeJs {
 
     function $LIKE_DISLIKE_JS_FUNC(desc) { 
 
-      var data = "$SESSION_ID=${sessionCounter.incrementAndGet()}&$langSrc=$languageName&$groupSrc=$groupName&$challengeSrc=$challengeName";
+      var data = "$SESSION_ID=${sessionCounter.incrementAndGet()}&$LANG_SRC=$languageName&$GROUP_SRC=$groupName&$CHALLENGE_SRC=$challengeName";
       data += "&$LIKE_DESC=" + encodeURIComponent(desc);
       
       re.onreadystatechange = likeDislikeHandleDone;  
