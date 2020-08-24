@@ -26,7 +26,7 @@ import com.github.readingbat.misc.ParameterIds.LIKE_CLEAR
 import com.github.readingbat.misc.ParameterIds.LIKE_COLOR
 import com.github.readingbat.misc.ParameterIds.LIKE_SPINNER_ID
 import com.github.readingbat.misc.ParameterIds.LIKE_STATUS_ID
-import com.github.readingbat.pages.PageCommon.rawHtml
+import com.github.readingbat.pages.PageUtils.rawHtml
 import com.github.readingbat.server.ChallengeName
 import com.github.readingbat.server.GroupName
 import com.github.readingbat.server.LanguageName

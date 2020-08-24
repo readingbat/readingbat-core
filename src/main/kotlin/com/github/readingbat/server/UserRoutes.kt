@@ -59,8 +59,7 @@ import com.github.readingbat.pages.AboutPage.aboutPage
 import com.github.readingbat.pages.AdminPage.adminDataPage
 import com.github.readingbat.pages.ConfigPage.configPage
 import com.github.readingbat.pages.CreateAccountPage.createAccountPage
-import com.github.readingbat.pages.PageCommon.defaultLanguageTab
-import com.github.readingbat.pages.PageCommon.get
+import com.github.readingbat.pages.PageUtils.defaultLanguageTab
 import com.github.readingbat.pages.PasswordResetPage.passwordResetPage
 import com.github.readingbat.pages.PrivacyPage.privacyPage
 import com.github.readingbat.pages.SessionsPage.sessionsPage
@@ -82,6 +81,7 @@ import com.github.readingbat.posts.TeacherPrefsPost.teacherPrefs
 import com.github.readingbat.posts.UserPrefsPost.userPrefs
 import com.github.readingbat.server.ServerUtils.authenticatedAction
 import com.github.readingbat.server.ServerUtils.fetchUser
+import com.github.readingbat.server.ServerUtils.get
 import com.github.readingbat.server.ServerUtils.queryParam
 import com.github.readingbat.server.ServerUtils.respondWithDbmsCheck
 import com.github.readingbat.server.ServerUtils.respondWithSuspendingDbmsCheck

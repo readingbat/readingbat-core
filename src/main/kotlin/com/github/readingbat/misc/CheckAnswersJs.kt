@@ -29,7 +29,7 @@ import com.github.readingbat.misc.ParameterIds.NEXTPREVCHANCE_ID
 import com.github.readingbat.misc.ParameterIds.SPINNER_ID
 import com.github.readingbat.misc.ParameterIds.STATUS_ID
 import com.github.readingbat.misc.ParameterIds.SUCCESS_ID
-import com.github.readingbat.pages.PageCommon.rawHtml
+import com.github.readingbat.pages.PageUtils.rawHtml
 import com.github.readingbat.server.ChallengeName
 import com.github.readingbat.server.GroupName
 import com.github.readingbat.server.LanguageName

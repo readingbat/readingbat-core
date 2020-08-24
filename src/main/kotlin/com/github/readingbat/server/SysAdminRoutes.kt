@@ -28,8 +28,8 @@ import com.github.readingbat.misc.Endpoints.RESET_CACHE_ENDPOINT
 import com.github.readingbat.misc.Endpoints.RESET_CONTENT_ENDPOINT
 import com.github.readingbat.misc.Endpoints.SYSTEM_ADMIN_ENDPOINT
 import com.github.readingbat.pages.MessagePage.messagePage
-import com.github.readingbat.pages.PageCommon.get
 import com.github.readingbat.server.ServerUtils.authenticatedAction
+import com.github.readingbat.server.ServerUtils.get
 import io.ktor.routing.*
 import kotlin.time.measureTime
 

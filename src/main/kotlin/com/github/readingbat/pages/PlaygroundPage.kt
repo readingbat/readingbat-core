@@ -28,11 +28,11 @@ import com.github.readingbat.misc.Constants.STATIC_ROOT
 import com.github.readingbat.misc.PageUtils.pathOf
 import com.github.readingbat.misc.User
 import com.github.readingbat.misc.User.Companion.fetchActiveClassCode
-import com.github.readingbat.pages.PageCommon.addLink
-import com.github.readingbat.pages.PageCommon.backLink
-import com.github.readingbat.pages.PageCommon.bodyHeader
-import com.github.readingbat.pages.PageCommon.headDefault
-import com.github.readingbat.pages.PageCommon.rawHtml
+import com.github.readingbat.pages.PageUtils.addLink
+import com.github.readingbat.pages.PageUtils.backLink
+import com.github.readingbat.pages.PageUtils.bodyHeader
+import com.github.readingbat.pages.PageUtils.headDefault
+import com.github.readingbat.pages.PageUtils.rawHtml
 import kotlinx.html.body
 import kotlinx.html.br
 import kotlinx.html.div

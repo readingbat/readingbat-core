@@ -35,10 +35,10 @@ import com.github.readingbat.misc.User
 import com.github.readingbat.misc.User.Companion.fetchActiveClassCode
 import com.github.readingbat.pages.ChallengeGroupPage.displayClassDescription
 import com.github.readingbat.pages.ChallengeGroupPage.isCorrect
-import com.github.readingbat.pages.PageCommon.bodyHeader
-import com.github.readingbat.pages.PageCommon.headDefault
-import com.github.readingbat.pages.PageCommon.rawHtml
-import com.github.readingbat.pages.PageCommon.rows
+import com.github.readingbat.pages.PageUtils.bodyHeader
+import com.github.readingbat.pages.PageUtils.headDefault
+import com.github.readingbat.pages.PageUtils.rawHtml
+import com.github.readingbat.pages.PageUtils.rows
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
 import io.ktor.application.*

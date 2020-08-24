@@ -31,7 +31,7 @@ import com.github.readingbat.misc.Endpoints.CHALLENGE_ENDPOINT
 import com.github.readingbat.misc.Endpoints.CHALLENGE_GROUP_ENDPOINT
 import com.github.readingbat.misc.User.Companion.gson
 import com.github.readingbat.pages.ChallengeGroupPage.cols
-import com.github.readingbat.pages.PageCommon.rows
+import com.github.readingbat.pages.PageUtils.rows
 import com.github.readingbat.posts.ChallengeHistory
 import io.ktor.http.cio.websocket.*
 import io.ktor.http.cio.websocket.CloseReason.*

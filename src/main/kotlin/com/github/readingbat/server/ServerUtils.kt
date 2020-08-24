@@ -36,8 +36,11 @@ import com.github.readingbat.pages.DbmsDownPage.dbmsDownPage
 import io.ktor.application.*
 import io.ktor.auth.*
 import io.ktor.config.*
+import io.ktor.http.*
+import io.ktor.routing.*
 import io.ktor.sessions.*
 import io.ktor.util.pipeline.*
+import kotlinx.coroutines.runBlocking
 import mu.KLogging
 import redis.clients.jedis.Jedis
 
@@ -113,6 +116,14 @@ internal object ServerUtils : KLogging() {
           }
         }
       else -> block.invoke()
+    }
+
+  @ContextDsl
+  fun Route.get(path: String, metrics: Metrics, body: PipelineInterceptor<Unit, ApplicationCall>) =
+    route(path, HttpMethod.Get) {
+      runBlocking {
+        metrics.measureEndpointRequest(path) { handle(body) }
+      }
     }
 
 }

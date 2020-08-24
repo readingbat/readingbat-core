@@ -30,9 +30,9 @@ import com.github.readingbat.misc.CSSNames.INDENT_1EM
 import com.github.readingbat.misc.CSSNames.TD_PADDING
 import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.misc.Endpoints.USER_PREFS_ENDPOINT
-import com.github.readingbat.pages.PageCommon.backLink
-import com.github.readingbat.pages.PageCommon.bodyTitle
-import com.github.readingbat.pages.PageCommon.headDefault
+import com.github.readingbat.pages.PageUtils.backLink
+import com.github.readingbat.pages.PageUtils.bodyTitle
+import com.github.readingbat.pages.PageUtils.headDefault
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ReadingBatServer
 import com.github.readingbat.server.ServerUtils.queryParam

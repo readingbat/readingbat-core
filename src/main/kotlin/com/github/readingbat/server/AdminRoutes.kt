@@ -27,7 +27,7 @@ import com.github.readingbat.misc.BrowserSession
 import com.github.readingbat.misc.Endpoints.PING
 import com.github.readingbat.misc.Endpoints.THREAD_DUMP
 import com.github.readingbat.misc.UserPrincipal
-import com.github.readingbat.pages.PageCommon.get
+import com.github.readingbat.server.ServerUtils.get
 import io.ktor.application.*
 import io.ktor.html.*
 import io.ktor.http.*

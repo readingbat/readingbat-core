@@ -39,14 +39,12 @@ import com.github.readingbat.misc.Message.Companion.EMPTY_MESSAGE
 import com.github.readingbat.misc.PageUtils.pathOf
 import com.github.readingbat.misc.User
 import com.github.readingbat.pages.HelpAndLogin.helpAndLogin
-import com.github.readingbat.server.Metrics
 import com.github.readingbat.server.PipelineCall
 import io.ktor.application.*
 import io.ktor.http.*
 import io.ktor.http.ContentType.Text.CSS
 import io.ktor.routing.*
 import io.ktor.util.pipeline.*
-import kotlinx.coroutines.runBlocking
 import kotlinx.html.BODY
 import kotlinx.html.Entities.nbsp
 import kotlinx.html.FormMethod
@@ -71,7 +69,7 @@ import kotlinx.html.ul
 import kotlinx.html.unsafe
 import redis.clients.jedis.Jedis
 
-internal object PageCommon {
+internal object PageUtils {
   private const val READING_BAT = "ReadingBat"
 
   fun HEAD.headDefault(content: ReadingBatContent) {
@@ -218,12 +216,4 @@ internal object PageCommon {
     get(path, body)
     post(path, body)
   }
-
-  @ContextDsl
-  fun Route.get(path: String, metrics: Metrics, body: PipelineInterceptor<Unit, ApplicationCall>) =
-    route(path, HttpMethod.Get) {
-      runBlocking {
-        metrics.measureEndpointRequest(path) { handle(body) }
-      }
-    }
 }

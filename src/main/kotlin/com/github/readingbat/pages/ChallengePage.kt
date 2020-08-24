@@ -79,11 +79,11 @@ import com.github.readingbat.misc.User.Companion.fetchActiveClassCode
 import com.github.readingbat.misc.User.Companion.fetchPreviousAnswers
 import com.github.readingbat.misc.User.Companion.gson
 import com.github.readingbat.misc.User.Companion.likeDislikeKey
-import com.github.readingbat.pages.PageCommon.addLink
-import com.github.readingbat.pages.PageCommon.backLink
-import com.github.readingbat.pages.PageCommon.bodyHeader
-import com.github.readingbat.pages.PageCommon.headDefault
-import com.github.readingbat.pages.PageCommon.rawHtml
+import com.github.readingbat.pages.PageUtils.addLink
+import com.github.readingbat.pages.PageUtils.backLink
+import com.github.readingbat.pages.PageUtils.bodyHeader
+import com.github.readingbat.pages.PageUtils.headDefault
+import com.github.readingbat.pages.PageUtils.rawHtml
 import com.github.readingbat.posts.ChallengeHistory
 import com.github.readingbat.server.ChallengeMd5
 import com.github.readingbat.server.PipelineCall

@@ -45,11 +45,11 @@ import com.github.readingbat.misc.User.Companion.challengeAnswersKey
 import com.github.readingbat.misc.User.Companion.correctAnswersKey
 import com.github.readingbat.misc.User.Companion.fetchActiveClassCode
 import com.github.readingbat.misc.User.Companion.gson
-import com.github.readingbat.pages.PageCommon.backLink
-import com.github.readingbat.pages.PageCommon.bodyHeader
-import com.github.readingbat.pages.PageCommon.headDefault
-import com.github.readingbat.pages.PageCommon.rawHtml
-import com.github.readingbat.pages.PageCommon.rows
+import com.github.readingbat.pages.PageUtils.backLink
+import com.github.readingbat.pages.PageUtils.bodyHeader
+import com.github.readingbat.pages.PageUtils.headDefault
+import com.github.readingbat.pages.PageUtils.rawHtml
+import com.github.readingbat.pages.PageUtils.rows
 import com.github.readingbat.server.GroupName
 import com.github.readingbat.server.LanguageName
 import com.github.readingbat.server.PipelineCall

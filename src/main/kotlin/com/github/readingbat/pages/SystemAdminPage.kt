@@ -30,10 +30,10 @@ import com.github.readingbat.misc.User
 import com.github.readingbat.misc.User.Companion.fetchActiveClassCode
 import com.github.readingbat.misc.isValidUser
 import com.github.readingbat.pages.HelpAndLogin.helpAndLogin
-import com.github.readingbat.pages.PageCommon.backLink
-import com.github.readingbat.pages.PageCommon.bodyTitle
-import com.github.readingbat.pages.PageCommon.button
-import com.github.readingbat.pages.PageCommon.headDefault
+import com.github.readingbat.pages.PageUtils.backLink
+import com.github.readingbat.pages.PageUtils.bodyTitle
+import com.github.readingbat.pages.PageUtils.button
+import com.github.readingbat.pages.PageUtils.headDefault
 import com.github.readingbat.pages.UserPrefsPage.requestLogInPage
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
