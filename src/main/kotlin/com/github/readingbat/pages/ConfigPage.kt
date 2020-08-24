@@ -136,9 +136,31 @@ internal object ConfigPage {
                   td { +"AGENT_CONFIG" }
                   td { +(System.getenv("AGENT_CONFIG") ?: "unassigned") }
                 }
+              }
+            }
+
+            h3 { +"System Properties" }
+            div(classes = INDENT_1EM) {
+              table {
                 tr {
-                  td { +"REDIS_URL" }
-                  td { +(System.getenv("REDIS_URL") ?: "unassigned") }
+                  td { +"java.runtime.name" }
+                  td { +(System.getProperty("java.runtime.name", "unassigned")) }
+                }
+                tr {
+                  td { +"java.runtime.version" }
+                  td { +(System.getProperty("java.runtime.version", "unassigned")) }
+                }
+                tr {
+                  td { +"java.vm.name" }
+                  td { +(System.getProperty("java.vm.name", "unassigned")) }
+                }
+                tr {
+                  td { +"java.vm.vendor" }
+                  td { +(System.getProperty("java.vm.vendor", "unassigned")) }
+                }
+                tr {
+                  td { +"java.vm.version" }
+                  td { +(System.getProperty("java.vm.version", "unassigned")) }
                 }
               }
             }
