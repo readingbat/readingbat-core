@@ -20,10 +20,7 @@ package com.github.readingbat
 import com.github.pambrose.common.script.JavaScript
 import com.github.pambrose.common.script.PythonScript
 import com.github.readingbat.dsl.parse.KotlinParse
-import javax.script.ScriptContext
-import javax.script.ScriptEngine
-import javax.script.ScriptEngineManager
-import javax.script.SimpleScriptContext
+import javax.script.*
 import kotlin.reflect.typeOf
 import kotlin.time.measureTime
 
@@ -117,8 +114,8 @@ answers.add(less_than(11, 28))
 }
 
 
-val ScriptEngine.bindings get() = getBindings(ScriptContext.ENGINE_SCOPE)
-val ScriptContext.bindings get() = getBindings(ScriptContext.ENGINE_SCOPE)
+val ScriptEngine.bindings: Bindings get() = getBindings(ScriptContext.ENGINE_SCOPE)
+val ScriptContext.bindings: Bindings get() = getBindings(ScriptContext.ENGINE_SCOPE)
 
 fun ScriptEngine.reset(scope: Int = ScriptContext.ENGINE_SCOPE) {
   context = SimpleScriptContext().apply { setBindings(createBindings(), scope) }

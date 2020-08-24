@@ -65,7 +65,7 @@ import kotlin.time.measureTime
 @Version(version = "1.3.0", date = "8/22/20")
 object ReadingBatServer : KLogging() {
   internal val timeStamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("M/d/y H:m:ss"))
-  internal val startTime = TimeSource.Monotonic.markNow()
+  private val startTime = TimeSource.Monotonic.markNow()
   internal val upTime get() = startTime.elapsedNow()
   internal val content = AtomicReference(ReadingBatContent())
   internal val contentReadCount = AtomicInteger(0)

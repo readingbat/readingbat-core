@@ -32,8 +32,8 @@ internal class FunctionInfo(private val challenge: Challenge,
                             rawAnswers: List<*>) {
   val challengeMd5 by lazy { ChallengeMd5(languageType.languageName, groupName, challengeName) }
   val correctAnswers =
-    List(rawAnswers.size) {
-      val raw = rawAnswers[it]
+    List(rawAnswers.size) { i ->
+      val raw = rawAnswers[i]
       when (returnType) {
         BooleanType -> if (languageType.isPython) raw.toString().capitalize() else raw.toString()
         IntType -> raw.toString()

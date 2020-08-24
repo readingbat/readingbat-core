@@ -44,7 +44,7 @@ internal fun Application.intercepts() {
       if (sessionId.isNotNull())
         SessionActivity.markActivity(sessionId,
                                      principal,
-                                     call.request.local.remoteHost ?: "unknown",
+                                     call.request.local.remoteHost,
                                      call.request.headers[HttpHeaders.UserAgent] ?: "unknown")
     }
   }

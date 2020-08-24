@@ -23,6 +23,7 @@ import com.github.pambrose.common.util.substringBetween
 import com.github.readingbat.server.Invocation
 
 internal object KotlinParse {
+
   internal val funMainRegex = Regex("""^\s*fun\s+main.*\)""")
   internal val kotlinEndRegex = Regex("""\s*}\s*""")
   private const val printlnPrefix = "println("

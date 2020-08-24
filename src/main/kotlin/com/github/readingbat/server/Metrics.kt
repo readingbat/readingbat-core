@@ -180,7 +180,7 @@ class Metrics {
                           data = { SessionActivity.activeSessions(1.hours).toDouble() })
   }
 
-  suspend fun measureEndpointRequest(endpoint: String, body: suspend () -> Unit): Unit {
+  suspend fun measureEndpointRequest(endpoint: String, body: suspend () -> Unit) {
     val timer = endpointRequestDuration.labels(agentLaunchId(), endpoint).startTimer()
     try {
       body.invoke()

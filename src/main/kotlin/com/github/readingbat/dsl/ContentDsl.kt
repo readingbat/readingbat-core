@@ -92,7 +92,7 @@ internal fun addImports(code: String, variableName: String): String {
 
 private val <T> KFunction<T>.fqMethodName get() = "${javaClass.packageName}.$name"
 
-suspend private fun evalDsl(code: String, sourceName: String) =
+private suspend fun evalDsl(code: String, sourceName: String) =
   try {
     kotlinScriptPool
       .eval {

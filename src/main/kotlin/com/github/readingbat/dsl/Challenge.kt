@@ -62,6 +62,8 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
 
   // Allow description updates only if not found in the Content.kt decl
   private val isDescriptionSetInDsl by lazy { description.isNotBlank() }
+  internal val gitpodUrl by lazy { pathOf(repo.sourcePrefix, "blob/${branchName}", srcPath, fqName) }
+  internal val parsedDescription by lazy { TextFormatter.renderText(description) }
 
   private val languageGroup get() = challengeGroup.languageGroup
   private val metrics get() = challengeGroup.languageGroup.metrics
@@ -72,15 +74,13 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
   internal val languageName get() = languageType.languageName
   internal val groupName get() = challengeGroup.groupName
   protected val packageName get() = challengeGroup.packageName
-  internal val gitpodUrl by lazy { pathOf(repo.sourcePrefix, "blob/${branchName}", srcPath, fqName) }
-  internal val parsedDescription by lazy { TextFormatter.renderText(description) }
 
   // User properties
   var fileName = "$challengeName.${languageType.suffix}"
   var codingBatEquiv = ""
   var description = ""
 
-  suspend internal abstract fun computeFunctionInfo(code: String): FunctionInfo
+  internal abstract suspend fun computeFunctionInfo(code: String): FunctionInfo
 
   private fun measureParsing(code: String): FunctionInfo {
     val timer = metrics.challengeParseDuration.labels(agentLaunchId(), languageType.toString()).startTimer()
@@ -181,7 +181,7 @@ class PythonChallenge(challengeGroup: ChallengeGroup<*>,
       throw InvalidConfigurationException("$challengeName missing returnType value")
   }
 
-  suspend override fun computeFunctionInfo(code: String): FunctionInfo {
+  override suspend fun computeFunctionInfo(code: String): FunctionInfo {
     val lines = code.lines().filterNot { it.startsWith("#") && it.contains(DESC) }
     val funcCode = extractPythonFunction(lines)
     val invocations = extractPythonInvocations(lines, defMainRegex, ifMainEndRegex)
@@ -214,7 +214,7 @@ class JavaChallenge(challengeGroup: ChallengeGroup<*>,
                     replaceable: Boolean) :
   Challenge(challengeGroup, challengeName, replaceable) {
 
-  suspend override fun computeFunctionInfo(code: String): FunctionInfo {
+  override suspend fun computeFunctionInfo(code: String): FunctionInfo {
     val lines =
       code.lines()
         .filterNot { it.startsWith("//") && it.contains(DESC) }
@@ -266,7 +266,7 @@ class KotlinChallenge(challengeGroup: ChallengeGroup<*>,
       throw InvalidConfigurationException("$challengeName missing returnType value")
   }
 
-  suspend override fun computeFunctionInfo(code: String): FunctionInfo {
+  override suspend fun computeFunctionInfo(code: String): FunctionInfo {
     val lines =
       code.lines()
         .filterNot { it.startsWith("//") && it.contains(DESC) }

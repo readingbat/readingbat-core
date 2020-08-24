@@ -30,12 +30,13 @@ class LanguageGroup<T : Challenge>(internal val content: ReadingBatContent,
 
   internal val challengeGroups = mutableListOf<ChallengeGroup<T>>()
   internal val metrics get() = ReadingBatServer.metrics
+  internal val languageName get() = languageType.languageName
 
   // User properties
   var repo: ContentRoot = content.repo           // Defaults to outer-level value
     get() =
       if (field == defaultContentRoot)
-        throw InvalidConfigurationException("${languageType.languageName} section is missing a repo value")
+        throw InvalidConfigurationException("$languageName section is missing a repo value")
       else
         field
   var branchName = content.branchName    // Defaults to outer-level value
@@ -93,7 +94,7 @@ class LanguageGroup<T : Challenge>(internal val content: ReadingBatContent,
 
   fun findGroup(groupName: String): ChallengeGroup<T> =
     groupName.decode().let { decoded -> challengeGroups.firstOrNull { it.groupName.value == decoded } }
-      ?: throw InvalidPathException("Group ${languageType.languageName}/$groupName not found")
+      ?: throw InvalidPathException("Group $languageName/$groupName not found")
 
   fun findChallenge(groupName: String, challengeName: String) = findGroup(groupName).findChallenge(challengeName)
 

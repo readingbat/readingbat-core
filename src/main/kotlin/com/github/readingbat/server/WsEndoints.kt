@@ -84,6 +84,7 @@ internal object WsEndoints : KLogging() {
             .mapNotNull { it as? Frame.Text }
             .collect { frame ->
               val inboundMsg = frame.readText()
+              // Check redis early to see if it is available
               withRedisPool { redis ->
                 if (redis.isNotNull()) {
                   val clock = TimeSource.Monotonic

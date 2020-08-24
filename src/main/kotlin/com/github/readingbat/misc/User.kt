@@ -67,9 +67,7 @@ internal class User private constructor(val id: String, val browserSession: Brow
       logger.error { "NULL BROWSER SESSION VALUE" }
     if (browserSession.isNotNull()) userInfoBrowserKey else throw InvalidConfigurationException("Null browser session for $this")
   }
-
   private val userClassesKey by lazy { keyOf(USER_CLASSES_KEY, id) }
-
   // This key maps to a reset_id
   private val userPasswordResetKey by lazy { keyOf(USER_RESET_KEY, id) }
 
