@@ -138,7 +138,7 @@ internal val cssContent by lazy {
       }
       rule(".$FUNC_ITEM") {
         marginTop = 1.em
-        width = 300.px
+        //width = 300.px
       }
       rule("div.$TD_PADDING td") {
         marginTop = 1.em

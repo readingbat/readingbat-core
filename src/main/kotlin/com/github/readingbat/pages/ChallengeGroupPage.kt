@@ -84,6 +84,8 @@ import redis.clients.jedis.Jedis
 
 internal object ChallengeGroupPage : KLogging() {
 
+  const val cols = 3
+
   fun Challenge.isCorrect(user: User?, browserSession: BrowserSession?, redis: Jedis?): Boolean {
     val correctAnswersKey = user.correctAnswersKey(browserSession, languageName, groupName, challengeName)
     return if (correctAnswersKey.isNotEmpty()) redis?.get(correctAnswersKey)?.toBoolean() == true else false
@@ -105,7 +107,7 @@ internal object ChallengeGroupPage : KLogging() {
         val activeClassCode = user.fetchActiveClassCode(redis)
         val enrollees = activeClassCode.fetchEnrollees(redis)
 
-        fun TR.funcCall(user: User?, challenge: Challenge, redis: Jedis?) {
+        fun TR.displayFunctionCall(user: User?, challenge: Challenge, redis: Jedis?) {
           val challengeName = challenge.challengeName
           val allCorrect = challenge.isCorrect(user, browserSession, redis)
 
@@ -147,9 +149,9 @@ internal object ChallengeGroupPage : KLogging() {
             p { +"(# of questions | # that started | # completed | Avg correct | Incorrect attempts | Likes/Dislikes)" }
 
           table {
-            val cols = 3
             val size = challenges.size
             val rows = size.rows(cols)
+
             //val width = if (enrollees.isNotEmpty()) 1200 else 800
             //style = "width:${width}px"
             style = "width:100%"
@@ -157,12 +159,11 @@ internal object ChallengeGroupPage : KLogging() {
             (0 until rows).forEach { i ->
               tr {
                 style = "height:30"
-                challenges
-                  .apply {
-                    elementAt(i).also { funcCall(user, it, redis) }
-                    elementAtOrNull(i + rows)?.also { funcCall(user, it, redis) } ?: td {}
-                    elementAtOrNull(i + (2 * rows))?.also { funcCall(user, it, redis) } ?: td {}
-                  }
+                challenges.apply {
+                  displayFunctionCall(user, elementAt(i), redis)
+                  elementAtOrNull(i + rows)?.also { displayFunctionCall(user, it, redis) } ?: td {}
+                  elementAtOrNull(i + (2 * rows))?.also { displayFunctionCall(user, it, redis) } ?: td {}
+                }
               }
             }
           }

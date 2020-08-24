@@ -21,6 +21,7 @@ import com.github.pambrose.common.concurrent.BooleanMonitor
 import com.github.pambrose.common.redis.RedisUtils.withRedisPool
 import com.github.pambrose.common.time.format
 import com.github.pambrose.common.util.isNotNull
+import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.InvalidPathException
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.agentLaunchId
@@ -29,6 +30,8 @@ import com.github.readingbat.misc.Constants.PING_CODE
 import com.github.readingbat.misc.Endpoints.CHALLENGE_ENDPOINT
 import com.github.readingbat.misc.Endpoints.CHALLENGE_GROUP_ENDPOINT
 import com.github.readingbat.misc.User.Companion.gson
+import com.github.readingbat.pages.ChallengeGroupPage.cols
+import com.github.readingbat.pages.PageCommon.rows
 import com.github.readingbat.posts.ChallengeHistory
 import io.ktor.http.cio.websocket.*
 import io.ktor.http.cio.websocket.CloseReason.*
@@ -171,7 +174,18 @@ internal object WsEndoints : KLogging() {
                 if (redis.isNotNull() && classCode.isEnabled) {
                   val enrollees = classCode.fetchEnrollees(redis)
                   if (enrollees.isNotEmpty()) {
-                    for (challenge in challenges) {
+                    // Reorder challenges to return values left to right
+                    val ltor = mutableListOf<Challenge>()
+                    val rows = challenges.size.rows(cols)
+                    (0 until rows).forEach { i ->
+                      challenges.apply {
+                        ltor += elementAt(i)
+                        elementAtOrNull(i + rows)?.also { ltor += it }
+                        elementAtOrNull(i + (2 * rows))?.also { ltor += it }
+                      }
+                    }
+
+                    for (challenge in ltor) {
                       val funcInfo = challenge.funcInfo(content.invoke())
                       val challengeName = challenge.challengeName
                       val numCalls = funcInfo.invocations.size
