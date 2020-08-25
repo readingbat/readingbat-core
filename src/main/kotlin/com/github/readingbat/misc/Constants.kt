@@ -43,7 +43,7 @@ internal object Constants {
   const val INVALID_RESET_ID = "Invalid reset_id"
   internal const val READING_BAT = "readingbat"
   private const val AGENT = "agent"
-  private const val SITE = "site"
+  internal const val SITE = "site"
   const val CHALLENGES = "challenges"
   private const val CLASSES = "classes"
   private const val CONTENT = "content"

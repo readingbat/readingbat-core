@@ -96,6 +96,10 @@ internal fun Routing.userRoutes(metrics: Metrics, contentSrc: () -> ReadingBatCo
     redirectTo { defaultLanguageTab(contentSrc()) }
   }
 
+  get(CHALLENGE_ROOT, metrics) {
+    redirectTo { defaultLanguageTab(contentSrc()) }
+  }
+
   get(CONFIG_ENDPOINT, metrics) {
     respondWith { authenticatedAction { configPage(contentSrc()) } }
   }
@@ -104,10 +108,6 @@ internal fun Routing.userRoutes(metrics: Metrics, contentSrc: () -> ReadingBatCo
     respondWithSuspendingDbmsCheck(contentSrc()) { redis ->
       authenticatedAction { sessionsPage(contentSrc(), redis) }
     }
-  }
-
-  get(CHALLENGE_ROOT, metrics) {
-    redirectTo { defaultLanguageTab(contentSrc()) }
   }
 
   get(PRIVACY_ENDPOINT, metrics) {

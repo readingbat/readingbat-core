@@ -38,6 +38,7 @@ import com.github.readingbat.misc.Constants.MAX_HISTORY_LENGTH
 import com.github.readingbat.misc.Constants.PROXY_HOSTNAME
 import com.github.readingbat.misc.Constants.PYTHON_SCRIPTS_POOL_SIZE
 import com.github.readingbat.misc.Constants.READING_BAT
+import com.github.readingbat.misc.Constants.SITE
 import com.github.readingbat.misc.Constants.STATIC_ROOT
 import com.github.readingbat.misc.Constants.URL_PREFIX
 import com.github.readingbat.misc.Constants.VARIABLE_NAME
@@ -55,6 +56,9 @@ import io.ktor.routing.*
 import io.ktor.server.cio.*
 import io.ktor.server.engine.*
 import io.prometheus.Agent.Companion.startAsyncAgent
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeoutOrNull
 import mu.KLogging
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -62,6 +66,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.TimeSource
 import kotlin.time.measureTime
+import kotlin.time.seconds
 
 @Version(version = "1.3.0", date = "8/22/20")
 object ReadingBatServer : KLogging() {
@@ -129,6 +134,7 @@ internal fun Application.module() {
   val variableName = property(VARIABLE_NAME, "content")
   val agentEnabled = property(AGENT_ENABLED, default = "true").toBoolean()
   val proxyHostname = property(PROXY_HOSTNAME, default = "")
+  val startupMaxDelaySecs = property("$READING_BAT.$SITE.startupMaxDelaySecs", default = "30").toInt()
   val metrics = ReadingBatServer.metrics
 
   val admins = environment.config.propertyOrNull("$READING_BAT.adminUsers")?.getList() ?: emptyList()
@@ -163,7 +169,18 @@ internal fun Application.module() {
   // This is done after AGENT_LAUNCH_ID is assigned
   metrics.init { content.get() }
 
-  assignContentDsl(fileName, variableName)
+  val job = launch {
+    assignContentDsl(fileName, variableName)
+  }
+
+  runBlocking {
+    ReadingBatServer.logger.info { "Delaying start-up by $startupMaxDelaySecs seconds" }
+    val dur =
+      measureTime {
+        withTimeoutOrNull(startupMaxDelaySecs.seconds) { job.join() }
+      }
+    ReadingBatServer.logger.info { "Continued start-up after delaying $dur" }
+  }
 
   installs(isProduction(), content.get().urlPrefix)
   intercepts()
