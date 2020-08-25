@@ -226,7 +226,7 @@ internal object ChallengePost : KLogging() {
     val names = ChallengeNames(paramMap)
     val userResponses = params.entries().filter { it.key.startsWith(RESP) }
     val challenge = content.findChallenge(names.languageName, names.groupName, names.challengeName)
-    val funcInfo = challenge.funcInfo(content)
+    val funcInfo = challenge.functionInfo(content)
 
     logger.debug("Found ${userResponses.size} user responses in $paramMap")
 
@@ -297,7 +297,7 @@ internal object ChallengePost : KLogging() {
     val challengeAnswersKey = params[CHALLENGE_ANSWERS_KEY] ?: ""
 
     val challenge = content[languageName, groupName, challengeName]
-    val funcInfo = challenge.funcInfo(content)
+    val funcInfo = challenge.functionInfo(content)
     val path = pathOf(CHALLENGE_ROOT, languageName, groupName, challengeName)
 
     if (correctAnswersKey.isNotEmpty()) {
@@ -348,7 +348,7 @@ internal object ChallengePost : KLogging() {
     if (user.isNotNull()) {
       for (challenge in content.findGroup(languageName.toLanguageType(), groupName).challenges) {
         logger.info { "Clearing answers for ${challenge.challengeName}" }
-        val funcInfo = challenge.funcInfo(content)
+        val funcInfo = challenge.functionInfo(content)
         user.resetHistory(funcInfo, languageName, groupName, challenge.challengeName, content.maxHistoryLength, redis)
       }
     }

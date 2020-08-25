@@ -189,7 +189,7 @@ internal object WsEndoints : KLogging() {
                     }
 
                     ltor.forEach challenge@{ challenge ->
-                      val funcInfo = challenge.funcInfo(content.invoke())
+                      val funcInfo = challenge.functionInfo(content.invoke())
                       val challengeName = challenge.challengeName
                       val numCalls = funcInfo.invocations.size
                       var totAttemptedAtLeastOne = 0

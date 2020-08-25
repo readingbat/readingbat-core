@@ -146,7 +146,7 @@ internal object ChallengePage : KLogging() {
         val languageName = languageType.languageName
         val groupName = challenge.groupName
         val challengeName = challenge.challengeName
-        val funcInfo = challenge.funcInfo(content)
+        val funcInfo = challenge.functionInfo(content)
         val loginPath = pathOf(CHALLENGE_ROOT, languageName, groupName, challengeName)
         val activeClassCode = user.fetchActiveClassCode(redis)
         val enrollees = activeClassCode.fetchEnrollees(redis)
@@ -163,10 +163,10 @@ internal object ChallengePage : KLogging() {
         }
 
         body {
-          bodyHeader(user,
-                     loginAttempt,
-                     content,
+          bodyHeader(content,
+                     user,
                      languageType,
+                     loginAttempt,
                      loginPath,
                      false,
                      activeClassCode,

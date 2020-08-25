@@ -65,7 +65,7 @@ internal object PlaygroundPage {
         val languageName = languageType.languageName
         val groupName = challenge.groupName
         val challengeName = challenge.challengeName
-        val funcInfo = challenge.funcInfo(content)
+        val funcInfo = challenge.functionInfo(content)
         val loginPath = pathOf(CHALLENGE_ROOT, languageName, groupName, challengeName)
         val activeClassCode = user.fetchActiveClassCode(redis)
 
@@ -75,7 +75,7 @@ internal object PlaygroundPage {
         }
 
         body {
-          bodyHeader(user, loginAttempt, content, languageType, loginPath, false, activeClassCode, redis)
+          bodyHeader(content, user, languageType, loginAttempt, loginPath, false, activeClassCode, redis)
 
           h2 {
             val groupPath = pathOf(CHALLENGE_ROOT, languageName, groupName)

@@ -25,11 +25,11 @@ import com.github.readingbat.common.CSSNames.FUNC_ITEM
 import com.github.readingbat.common.ClassCode
 import com.github.readingbat.common.CommonUtils.pathOf
 import com.github.readingbat.common.Constants.CHALLENGE_ROOT
+import com.github.readingbat.common.Constants.COLUMN_CNT
 import com.github.readingbat.common.Constants.GREEN_CHECK
 import com.github.readingbat.common.Constants.MSG
 import com.github.readingbat.common.Constants.STATIC_ROOT
 import com.github.readingbat.common.Constants.WHITE_CHECK
-import com.github.readingbat.common.Constants.COLUMN_CNT
 import com.github.readingbat.common.Endpoints.CHALLENGE_GROUP_ENDPOINT
 import com.github.readingbat.common.Endpoints.CLEAR_GROUP_ANSWERS_ENDPOINT
 import com.github.readingbat.common.FormFields.CHALLENGE_ANSWERS_KEY
@@ -129,10 +129,10 @@ internal object ChallengeGroupPage : KLogging() {
         head { headDefault(content) }
 
         body {
-          bodyHeader(user,
-                     loginAttempt,
-                     content,
+          bodyHeader(content,
+                     user,
                      languageType,
+                     loginAttempt,
                      loginPath,
                      false,
                      activeClassCode,

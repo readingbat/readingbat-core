@@ -98,10 +98,10 @@ internal object PageUtils {
     }
   }
 
-  fun BODY.bodyHeader(user: User?,
-                      loginAttempt: Boolean,
-                      content: ReadingBatContent,
+  fun BODY.bodyHeader(content: ReadingBatContent,
+                      user: User?,
                       languageType: LanguageType,
+                      loginAttempt: Boolean,
                       loginPath: String,
                       displayWelcomeMsg: Boolean,
                       activeClassCode: ClassCode,
