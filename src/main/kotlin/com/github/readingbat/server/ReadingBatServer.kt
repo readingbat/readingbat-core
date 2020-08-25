@@ -130,11 +130,12 @@ internal fun Application.assignContentDsl(fileName: String, variableName: String
 }
 
 internal fun Application.module() {
+  val logger = ReadingBatServer.logger
   val fileName = property(FILE_NAME, "src/Content.kt")
   val variableName = property(VARIABLE_NAME, "content")
   val agentEnabled = property(AGENT_ENABLED, default = "true").toBoolean()
   val proxyHostname = property(PROXY_HOSTNAME, default = "")
-  val startupMaxDelaySecs = property("$READING_BAT.$SITE.startupMaxDelaySecs", default = "30").toInt()
+  val maxDelay = property("$READING_BAT.$SITE.startupMaxDelaySecs", default = "30").toInt()
   val metrics = ReadingBatServer.metrics
 
   val admins = environment.config.propertyOrNull("$READING_BAT.adminUsers")?.getList() ?: emptyList()
@@ -148,7 +149,7 @@ internal fun Application.module() {
   System.setProperty(REDIS_MAX_IDLE_SIZE, property(REDIS_MAX_IDLE_SIZE, default = "5"))
   System.setProperty(REDIS_MIN_IDLE_SIZE, property(REDIS_MIN_IDLE_SIZE, default = "1"))
 
-  ReadingBatServer.logger.apply {
+  logger.apply {
     info { getBanner("banners/readingbat.txt", this) }
     info { ReadingBatServer::class.versionDesc() }
   }
@@ -162,24 +163,27 @@ internal fun Application.module() {
       System.setProperty(AGENT_LAUNCH_ID, agentInfo.launchId)
     }
     else {
-      ReadingBatServer.logger.error { "Prometheus agent is enabled by the proxy hostname is not assigned" }
+      logger.error { "Prometheus agent is enabled but the proxy hostname is not assigned" }
     }
   }
 
   // This is done after AGENT_LAUNCH_ID is assigned
   metrics.init { content.get() }
 
-  val job = launch {
-    assignContentDsl(fileName, variableName)
-  }
+  val job =
+    launch {
+      assignContentDsl(fileName, variableName)
+    }
 
   runBlocking {
-    ReadingBatServer.logger.info { "Delaying start-up by $startupMaxDelaySecs seconds" }
+    logger.info { "Delaying start-up by $maxDelay seconds" }
     val dur =
       measureTime {
-        withTimeoutOrNull(startupMaxDelaySecs.seconds) { job.join() }
+        withTimeoutOrNull(maxDelay.seconds) {
+          job.join()
+        }
       }
-    ReadingBatServer.logger.info { "Continued start-up after delaying $dur" }
+    logger.info { "Continued start-up after delaying $dur" }
   }
 
   installs(isProduction(), content.get().urlPrefix)
