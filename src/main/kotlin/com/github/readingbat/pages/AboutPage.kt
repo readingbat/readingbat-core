@@ -17,9 +17,9 @@
 
 package com.github.readingbat.pages
 
+import com.github.readingbat.common.CSSNames.INDENT_1EM
+import com.github.readingbat.common.Constants.RETURN_PATH
 import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.misc.CSSNames.INDENT_1EM
-import com.github.readingbat.misc.Constants.RETURN_PATH
 import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyTitle
 import com.github.readingbat.pages.PageUtils.headDefault

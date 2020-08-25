@@ -15,30 +15,30 @@
  *
  */
 
-package com.github.readingbat.misc
+package com.github.readingbat.common
 
-import com.github.readingbat.misc.CSSNames.ARROW
-import com.github.readingbat.misc.CSSNames.CHALLENGE_DESC
-import com.github.readingbat.misc.CSSNames.CHECK_ANSWERS
-import com.github.readingbat.misc.CSSNames.CODE_BLOCK
-import com.github.readingbat.misc.CSSNames.CODINGBAT
-import com.github.readingbat.misc.CSSNames.DASHBOARD
-import com.github.readingbat.misc.CSSNames.EXPERIMENT
-import com.github.readingbat.misc.CSSNames.FEEDBACK
-import com.github.readingbat.misc.CSSNames.FUNC_COL
-import com.github.readingbat.misc.CSSNames.FUNC_ITEM
-import com.github.readingbat.misc.CSSNames.GROUP_CHOICE
-import com.github.readingbat.misc.CSSNames.GROUP_ITEM_SRC
-import com.github.readingbat.misc.CSSNames.HINT
-import com.github.readingbat.misc.CSSNames.INDENT_1EM
-import com.github.readingbat.misc.CSSNames.INDENT_2EM
-import com.github.readingbat.misc.CSSNames.KOTLIN_CODE
-import com.github.readingbat.misc.CSSNames.LIKE_BUTTONS
-import com.github.readingbat.misc.CSSNames.SELECTED_TAB
-import com.github.readingbat.misc.CSSNames.STATUS
-import com.github.readingbat.misc.CSSNames.SUCCESS
-import com.github.readingbat.misc.CSSNames.TD_PADDING
-import com.github.readingbat.misc.CSSNames.USER_RESP
+import com.github.readingbat.common.CSSNames.ARROW
+import com.github.readingbat.common.CSSNames.CHALLENGE_DESC
+import com.github.readingbat.common.CSSNames.CHECK_ANSWERS
+import com.github.readingbat.common.CSSNames.CODE_BLOCK
+import com.github.readingbat.common.CSSNames.CODINGBAT
+import com.github.readingbat.common.CSSNames.DASHBOARD
+import com.github.readingbat.common.CSSNames.EXPERIMENT
+import com.github.readingbat.common.CSSNames.FEEDBACK
+import com.github.readingbat.common.CSSNames.FUNC_COL
+import com.github.readingbat.common.CSSNames.FUNC_ITEM
+import com.github.readingbat.common.CSSNames.GROUP_CHOICE
+import com.github.readingbat.common.CSSNames.GROUP_ITEM_SRC
+import com.github.readingbat.common.CSSNames.HINT
+import com.github.readingbat.common.CSSNames.INDENT_1EM
+import com.github.readingbat.common.CSSNames.INDENT_2EM
+import com.github.readingbat.common.CSSNames.KOTLIN_CODE
+import com.github.readingbat.common.CSSNames.LIKE_BUTTONS
+import com.github.readingbat.common.CSSNames.SELECTED_TAB
+import com.github.readingbat.common.CSSNames.STATUS
+import com.github.readingbat.common.CSSNames.SUCCESS
+import com.github.readingbat.common.CSSNames.TD_PADDING
+import com.github.readingbat.common.CSSNames.USER_RESP
 import kotlinx.css.*
 import kotlinx.css.properties.LineHeight
 import kotlinx.css.properties.TextDecoration

@@ -17,9 +17,9 @@
 
 package com.github.readingbat.server
 
-import com.github.readingbat.misc.BrowserSession
-import com.github.readingbat.misc.User.Companion.toUser
-import com.github.readingbat.misc.UserPrincipal
+import com.github.readingbat.common.BrowserSession
+import com.github.readingbat.common.User.Companion.toUser
+import com.github.readingbat.common.UserPrincipal
 import mu.KLogging
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap

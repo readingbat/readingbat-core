@@ -17,9 +17,9 @@
 
 package com.github.readingbat.pages
 
+import com.github.readingbat.common.Constants
+import com.github.readingbat.common.Constants.DBMS_DOWN
 import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.misc.Constants
-import com.github.readingbat.misc.Constants.DBMS_DOWN
 import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyTitle
 import com.github.readingbat.pages.PageUtils.headDefault

@@ -19,51 +19,31 @@ package com.github.readingbat.pages
 
 import com.github.pambrose.common.util.isNull
 import com.github.pambrose.common.util.toRootPath
+import com.github.readingbat.common.CSSNames.INDENT_1EM
+import com.github.readingbat.common.CSSNames.SELECTED_TAB
+import com.github.readingbat.common.ClassCode
+import com.github.readingbat.common.CommonUtils.pathOf
+import com.github.readingbat.common.Constants.BACK_PATH
+import com.github.readingbat.common.Constants.CHALLENGE_ROOT
+import com.github.readingbat.common.Constants.ICONS
+import com.github.readingbat.common.Constants.RETURN_PATH
+import com.github.readingbat.common.Constants.STATIC_ROOT
+import com.github.readingbat.common.Endpoints.CSS_ENDPOINT
+import com.github.readingbat.common.Endpoints.PRIVACY_ENDPOINT
+import com.github.readingbat.common.Message
+import com.github.readingbat.common.Message.Companion.EMPTY_MESSAGE
+import com.github.readingbat.common.User
 import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.dsl.LanguageType.Companion.languageTypesInOrder
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.isProduction
-import com.github.readingbat.misc.CSSNames.INDENT_1EM
-import com.github.readingbat.misc.CSSNames.SELECTED_TAB
-import com.github.readingbat.misc.ClassCode
-import com.github.readingbat.misc.Constants.BACK_PATH
-import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
-import com.github.readingbat.misc.Constants.ICONS
-import com.github.readingbat.misc.Constants.RETURN_PATH
-import com.github.readingbat.misc.Constants.STATIC_ROOT
-import com.github.readingbat.misc.Endpoints.CSS_ENDPOINT
-import com.github.readingbat.misc.Endpoints.PRIVACY_ENDPOINT
-import com.github.readingbat.misc.Message
-import com.github.readingbat.misc.Message.Companion.EMPTY_MESSAGE
-import com.github.readingbat.misc.PageUtils.pathOf
-import com.github.readingbat.misc.User
 import com.github.readingbat.pages.HelpAndLogin.helpAndLogin
 import io.ktor.application.*
 import io.ktor.http.ContentType.Text.CSS
 import io.ktor.routing.*
 import io.ktor.util.pipeline.*
-import kotlinx.html.BODY
+import kotlinx.html.*
 import kotlinx.html.Entities.nbsp
-import kotlinx.html.FormMethod
-import kotlinx.html.HEAD
-import kotlinx.html.HTMLTag
-import kotlinx.html.InputType
-import kotlinx.html.a
-import kotlinx.html.div
-import kotlinx.html.form
-import kotlinx.html.id
-import kotlinx.html.input
-import kotlinx.html.li
-import kotlinx.html.link
-import kotlinx.html.nav
-import kotlinx.html.onSubmit
-import kotlinx.html.p
-import kotlinx.html.script
-import kotlinx.html.span
-import kotlinx.html.style
-import kotlinx.html.title
-import kotlinx.html.ul
-import kotlinx.html.unsafe
 import redis.clients.jedis.Jedis
 
 internal object PageUtils {
@@ -201,4 +181,19 @@ internal object PageUtils {
     get(path, body)
     post(path, body)
   }
+
+  private fun hideShowJs(formName: String, fieldName: String) =
+    """
+      var pw=document.$formName.$fieldName.type=="password"; 
+      document.$formName.$fieldName.type=pw?"text":"password"; 
+      return false;
+    """.trimIndent()
+
+  internal fun FlowOrInteractiveOrPhrasingContent.hideShowButton(formName: String,
+                                                                 fieldName: String,
+                                                                 sizePct: Int = 85) {
+    button { style = "font-size:$sizePct%;"; onClick = hideShowJs(formName, fieldName); +"show/hide" }
+  }
+
+  internal fun encodeUriElems(vararg elems: Any) = elems.joinToString("+'/'+") { "encodeURIComponent('$it')" }
 }

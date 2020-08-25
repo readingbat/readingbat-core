@@ -17,18 +17,18 @@
 
 package com.github.readingbat.pages
 
+import com.github.readingbat.common.Constants.RETURN_PATH
+import com.github.readingbat.common.Endpoints.GARBAGE_COLLECTOR_ENDPOINT
+import com.github.readingbat.common.Endpoints.RESET_CACHE_ENDPOINT
+import com.github.readingbat.common.Endpoints.RESET_CONTENT_ENDPOINT
+import com.github.readingbat.common.Endpoints.USER_PREFS_ENDPOINT
+import com.github.readingbat.common.Message
+import com.github.readingbat.common.Message.Companion.EMPTY_MESSAGE
+import com.github.readingbat.common.User
+import com.github.readingbat.common.User.Companion.fetchActiveClassCode
+import com.github.readingbat.common.isValidUser
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.isProduction
-import com.github.readingbat.misc.Constants.RETURN_PATH
-import com.github.readingbat.misc.Endpoints.GARBAGE_COLLECTOR_ENDPOINT
-import com.github.readingbat.misc.Endpoints.RESET_CACHE_ENDPOINT
-import com.github.readingbat.misc.Endpoints.RESET_CONTENT_ENDPOINT
-import com.github.readingbat.misc.Endpoints.USER_PREFS_ENDPOINT
-import com.github.readingbat.misc.Message
-import com.github.readingbat.misc.Message.Companion.EMPTY_MESSAGE
-import com.github.readingbat.misc.User
-import com.github.readingbat.misc.User.Companion.fetchActiveClassCode
-import com.github.readingbat.misc.isValidUser
 import com.github.readingbat.pages.HelpAndLogin.helpAndLogin
 import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyTitle

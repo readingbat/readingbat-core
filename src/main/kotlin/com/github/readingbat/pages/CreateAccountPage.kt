@@ -17,23 +17,23 @@
 
 package com.github.readingbat.pages
 
+import com.github.readingbat.common.CSSNames.INDENT_1EM
+import com.github.readingbat.common.Constants.RETURN_PATH
+import com.github.readingbat.common.Endpoints.CREATE_ACCOUNT_ENDPOINT
+import com.github.readingbat.common.Endpoints.CREATE_ACCOUNT_POST_ENDPOINT
+import com.github.readingbat.common.FormFields.CONFIRM_PASSWORD
+import com.github.readingbat.common.FormFields.EMAIL
+import com.github.readingbat.common.FormFields.FULLNAME
+import com.github.readingbat.common.FormFields.PASSWORD
+import com.github.readingbat.common.Message
+import com.github.readingbat.common.Message.Companion.EMPTY_MESSAGE
 import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.misc.CSSNames.INDENT_1EM
-import com.github.readingbat.misc.Constants.RETURN_PATH
-import com.github.readingbat.misc.Endpoints.CREATE_ACCOUNT_ENDPOINT
-import com.github.readingbat.misc.Endpoints.CREATE_ACCOUNT_POST_ENDPOINT
-import com.github.readingbat.misc.FormFields.CONFIRM_PASSWORD
-import com.github.readingbat.misc.FormFields.EMAIL
-import com.github.readingbat.misc.FormFields.FULLNAME
-import com.github.readingbat.misc.FormFields.PASSWORD
-import com.github.readingbat.misc.Message
-import com.github.readingbat.misc.Message.Companion.EMPTY_MESSAGE
-import com.github.readingbat.misc.PageUtils.hideShowButton
 import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyTitle
 import com.github.readingbat.pages.PageUtils.clickButtonScript
 import com.github.readingbat.pages.PageUtils.displayMessage
 import com.github.readingbat.pages.PageUtils.headDefault
+import com.github.readingbat.pages.PageUtils.hideShowButton
 import com.github.readingbat.pages.PageUtils.privacyStatement
 import com.github.readingbat.server.Email
 import com.github.readingbat.server.Email.Companion.EMPTY_EMAIL

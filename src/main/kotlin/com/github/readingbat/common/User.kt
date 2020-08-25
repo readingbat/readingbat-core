@@ -15,28 +15,28 @@
  *
  */
 
-package com.github.readingbat.misc
+package com.github.readingbat.common
 
 import com.github.pambrose.common.util.isNotNull
 import com.github.pambrose.common.util.isNull
 import com.github.pambrose.common.util.newStringSalt
 import com.github.pambrose.common.util.randomId
+import com.github.readingbat.common.ClassCode.Companion.DISABLED_CLASS_CODE
+import com.github.readingbat.common.Constants.RESP
+import com.github.readingbat.common.KeyConstants.ANSWER_HISTORY_KEY
+import com.github.readingbat.common.KeyConstants.AUTH_KEY
+import com.github.readingbat.common.KeyConstants.CHALLENGE_ANSWERS_KEY
+import com.github.readingbat.common.KeyConstants.CORRECT_ANSWERS_KEY
+import com.github.readingbat.common.KeyConstants.LIKE_DISLIKE_KEY
+import com.github.readingbat.common.KeyConstants.USER_CLASSES_KEY
+import com.github.readingbat.common.KeyConstants.USER_INFO_BROWSER_KEY
+import com.github.readingbat.common.KeyConstants.USER_INFO_KEY
+import com.github.readingbat.common.KeyConstants.USER_RESET_KEY
+import com.github.readingbat.common.RedisRoutines.scanKeys
 import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.FunctionInfo
 import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.misc.ClassCode.Companion.DISABLED_CLASS_CODE
-import com.github.readingbat.misc.Constants.RESP
-import com.github.readingbat.misc.KeyConstants.ANSWER_HISTORY_KEY
-import com.github.readingbat.misc.KeyConstants.AUTH_KEY
-import com.github.readingbat.misc.KeyConstants.CHALLENGE_ANSWERS_KEY
-import com.github.readingbat.misc.KeyConstants.CORRECT_ANSWERS_KEY
-import com.github.readingbat.misc.KeyConstants.LIKE_DISLIKE_KEY
-import com.github.readingbat.misc.KeyConstants.USER_CLASSES_KEY
-import com.github.readingbat.misc.KeyConstants.USER_INFO_BROWSER_KEY
-import com.github.readingbat.misc.KeyConstants.USER_INFO_KEY
-import com.github.readingbat.misc.KeyConstants.USER_RESET_KEY
-import com.github.readingbat.misc.RedisRoutines.scanKeys
 import com.github.readingbat.posts.ChallengeHistory
 import com.github.readingbat.posts.ChallengeNames
 import com.github.readingbat.posts.ChallengeResults

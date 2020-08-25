@@ -18,16 +18,16 @@
 package com.github.readingbat.pages
 
 import com.github.pambrose.common.util.decode
+import com.github.readingbat.common.CSSNames.CHALLENGE_DESC
+import com.github.readingbat.common.CSSNames.INDENT_1EM
+import com.github.readingbat.common.CSSNames.KOTLIN_CODE
+import com.github.readingbat.common.CommonUtils.pathOf
+import com.github.readingbat.common.Constants.CHALLENGE_ROOT
+import com.github.readingbat.common.Constants.STATIC_ROOT
+import com.github.readingbat.common.User
+import com.github.readingbat.common.User.Companion.fetchActiveClassCode
 import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.misc.CSSNames.CHALLENGE_DESC
-import com.github.readingbat.misc.CSSNames.INDENT_1EM
-import com.github.readingbat.misc.CSSNames.KOTLIN_CODE
-import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
-import com.github.readingbat.misc.Constants.STATIC_ROOT
-import com.github.readingbat.misc.PageUtils.pathOf
-import com.github.readingbat.misc.User
-import com.github.readingbat.misc.User.Companion.fetchActiveClassCode
 import com.github.readingbat.pages.PageUtils.addLink
 import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyHeader

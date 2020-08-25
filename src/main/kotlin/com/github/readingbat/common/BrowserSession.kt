@@ -15,13 +15,13 @@
  *
  */
 
-package com.github.readingbat.misc
+package com.github.readingbat.common
 
-import com.github.readingbat.misc.KeyConstants.ANSWER_HISTORY_KEY
-import com.github.readingbat.misc.KeyConstants.CHALLENGE_ANSWERS_KEY
-import com.github.readingbat.misc.KeyConstants.CORRECT_ANSWERS_KEY
-import com.github.readingbat.misc.KeyConstants.LIKE_DISLIKE_KEY
-import com.github.readingbat.misc.KeyConstants.NO_AUTH_KEY
+import com.github.readingbat.common.KeyConstants.ANSWER_HISTORY_KEY
+import com.github.readingbat.common.KeyConstants.CHALLENGE_ANSWERS_KEY
+import com.github.readingbat.common.KeyConstants.CORRECT_ANSWERS_KEY
+import com.github.readingbat.common.KeyConstants.LIKE_DISLIKE_KEY
+import com.github.readingbat.common.KeyConstants.NO_AUTH_KEY
 import com.github.readingbat.posts.ChallengeNames
 import com.github.readingbat.server.*
 import java.time.Instant

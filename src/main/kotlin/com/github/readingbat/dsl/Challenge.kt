@@ -19,6 +19,7 @@ package com.github.readingbat.dsl
 
 import ch.obermuhlner.scriptengine.java.Isolation.IsolatedClassLoader
 import com.github.pambrose.common.util.*
+import com.github.readingbat.common.CommonUtils.pathOf
 import com.github.readingbat.dsl.LanguageType.Java
 import com.github.readingbat.dsl.LanguageType.Kotlin
 import com.github.readingbat.dsl.LanguageType.Python
@@ -39,7 +40,6 @@ import com.github.readingbat.dsl.parse.PythonParse.defMainRegex
 import com.github.readingbat.dsl.parse.PythonParse.extractPythonFunction
 import com.github.readingbat.dsl.parse.PythonParse.extractPythonInvocations
 import com.github.readingbat.dsl.parse.PythonParse.ifMainEndRegex
-import com.github.readingbat.misc.PageUtils.pathOf
 import com.github.readingbat.server.ChallengeName
 import com.github.readingbat.server.ScriptPools.javaScriptPool
 import com.github.readingbat.server.ScriptPools.kotlinScriptPool

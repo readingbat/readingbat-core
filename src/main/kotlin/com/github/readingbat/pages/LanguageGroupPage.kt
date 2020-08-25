@@ -17,22 +17,22 @@
 
 package com.github.readingbat.pages
 
+import com.github.readingbat.common.BrowserSession
+import com.github.readingbat.common.CSSNames.FUNC_ITEM
+import com.github.readingbat.common.CSSNames.GROUP_CHOICE
+import com.github.readingbat.common.CSSNames.GROUP_ITEM_SRC
+import com.github.readingbat.common.CommonUtils.pathOf
+import com.github.readingbat.common.Constants.CHALLENGE_ROOT
+import com.github.readingbat.common.Constants.GREEN_CHECK
+import com.github.readingbat.common.Constants.MSG
+import com.github.readingbat.common.Constants.STATIC_ROOT
+import com.github.readingbat.common.Constants.WHITE_CHECK
+import com.github.readingbat.common.Message
+import com.github.readingbat.common.User
+import com.github.readingbat.common.User.Companion.fetchActiveClassCode
 import com.github.readingbat.dsl.ChallengeGroup
 import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.misc.BrowserSession
-import com.github.readingbat.misc.CSSNames.FUNC_ITEM
-import com.github.readingbat.misc.CSSNames.GROUP_CHOICE
-import com.github.readingbat.misc.CSSNames.GROUP_ITEM_SRC
-import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
-import com.github.readingbat.misc.Constants.GREEN_CHECK
-import com.github.readingbat.misc.Constants.MSG
-import com.github.readingbat.misc.Constants.STATIC_ROOT
-import com.github.readingbat.misc.Constants.WHITE_CHECK
-import com.github.readingbat.misc.Message
-import com.github.readingbat.misc.PageUtils.pathOf
-import com.github.readingbat.misc.User
-import com.github.readingbat.misc.User.Companion.fetchActiveClassCode
 import com.github.readingbat.pages.ChallengeGroupPage.displayClassDescription
 import com.github.readingbat.pages.ChallengeGroupPage.isCorrect
 import com.github.readingbat.pages.PageUtils.bodyHeader

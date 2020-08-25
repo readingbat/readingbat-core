@@ -15,7 +15,7 @@
  *
  */
 
-package com.github.readingbat.misc
+package com.github.readingbat.common
 
 import com.github.pambrose.common.redis.RedisUtils.withRedis
 import com.github.pambrose.common.util.isNotNull

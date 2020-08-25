@@ -19,10 +19,10 @@ package com.github.readingbat.server
 
 import com.github.pambrose.common.features.HerokuHttpsRedirect
 import com.github.pambrose.common.util.simpleClassName
+import com.github.readingbat.common.Constants.STATIC_ROOT
+import com.github.readingbat.common.Endpoints.CSS_ENDPOINT
+import com.github.readingbat.common.Endpoints.FAV_ICON_ENDPOINT
 import com.github.readingbat.dsl.InvalidPathException
-import com.github.readingbat.misc.Constants.STATIC_ROOT
-import com.github.readingbat.misc.Endpoints.CSS_ENDPOINT
-import com.github.readingbat.misc.Endpoints.FAV_ICON_ENDPOINT
 import com.github.readingbat.server.ConfigureCookies.configureAuthCookie
 import com.github.readingbat.server.ConfigureCookies.configureSessionIdCookie
 import com.github.readingbat.server.ConfigureFormAuth.configureFormAuth

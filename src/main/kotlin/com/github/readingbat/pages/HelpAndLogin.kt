@@ -18,18 +18,18 @@
 package com.github.readingbat.pages
 
 import com.github.pambrose.common.util.isNotNull
-import com.github.readingbat.misc.AuthRoutes.LOGOUT
-import com.github.readingbat.misc.Constants.RETURN_PATH
-import com.github.readingbat.misc.Endpoints.ABOUT_ENDPOINT
-import com.github.readingbat.misc.Endpoints.CREATE_ACCOUNT_ENDPOINT
-import com.github.readingbat.misc.Endpoints.ENABLE_STUDENT_MODE_ENDPOINT
-import com.github.readingbat.misc.Endpoints.ENABLE_TEACHER_MODE_ENDPOINT
-import com.github.readingbat.misc.Endpoints.PASSWORD_RESET_ENDPOINT
-import com.github.readingbat.misc.Endpoints.USER_PREFS_ENDPOINT
-import com.github.readingbat.misc.FormFields.EMAIL
-import com.github.readingbat.misc.FormFields.PASSWORD
-import com.github.readingbat.misc.User
-import com.github.readingbat.misc.User.Companion.fetchPreviousTeacherClassCode
+import com.github.readingbat.common.AuthRoutes.LOGOUT
+import com.github.readingbat.common.Constants.RETURN_PATH
+import com.github.readingbat.common.Endpoints.ABOUT_ENDPOINT
+import com.github.readingbat.common.Endpoints.CREATE_ACCOUNT_ENDPOINT
+import com.github.readingbat.common.Endpoints.ENABLE_STUDENT_MODE_ENDPOINT
+import com.github.readingbat.common.Endpoints.ENABLE_TEACHER_MODE_ENDPOINT
+import com.github.readingbat.common.Endpoints.PASSWORD_RESET_ENDPOINT
+import com.github.readingbat.common.Endpoints.USER_PREFS_ENDPOINT
+import com.github.readingbat.common.FormFields.EMAIL
+import com.github.readingbat.common.FormFields.PASSWORD
+import com.github.readingbat.common.User
+import com.github.readingbat.common.User.Companion.fetchPreviousTeacherClassCode
 import kotlinx.html.*
 import redis.clients.jedis.Jedis
 

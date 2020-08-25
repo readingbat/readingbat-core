@@ -20,11 +20,11 @@ package com.github.readingbat.dsl
 import com.github.pambrose.common.util.FileSystemSource
 import com.github.pambrose.common.util.GitHubRepo
 import com.github.pambrose.common.util.ensureSuffix
+import com.github.readingbat.common.CommonUtils.pathOf
 import com.github.readingbat.dsl.Challenge.Companion.challenge
 import com.github.readingbat.dsl.GitHubUtils.organizationDirectoryContents
 import com.github.readingbat.dsl.GitHubUtils.userDirectoryContents
 import com.github.readingbat.dsl.ReturnType.Runtime
-import com.github.readingbat.misc.PageUtils
 import com.github.readingbat.server.ChallengeName
 import com.github.readingbat.server.GroupName
 import com.github.readingbat.server.TextFormatter
@@ -60,7 +60,7 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
             root.organizationDirectoryContents(branchName, path, metrics)
         }
         is FileSystemSource -> {
-          File(PageUtils.pathOf(root.pathPrefix, srcPath, packageName)).walk().map { it.name }.toList()
+          File(pathOf(root.pathPrefix, srcPath, packageName)).walk().map { it.name }.toList()
         }
         else -> throw InvalidConfigurationException("Invalid repo type: $root")
       }

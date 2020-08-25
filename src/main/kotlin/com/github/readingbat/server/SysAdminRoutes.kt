@@ -19,14 +19,14 @@ package com.github.readingbat.server
 
 import com.github.pambrose.common.response.redirectTo
 import com.github.pambrose.common.response.respondWith
+import com.github.readingbat.common.Constants.MSG
+import com.github.readingbat.common.Constants.RETURN_PATH
+import com.github.readingbat.common.Endpoints.GARBAGE_COLLECTOR_ENDPOINT
+import com.github.readingbat.common.Endpoints.MESSAGE_ENDPOINT
+import com.github.readingbat.common.Endpoints.RESET_CACHE_ENDPOINT
+import com.github.readingbat.common.Endpoints.RESET_CONTENT_ENDPOINT
+import com.github.readingbat.common.Endpoints.SYSTEM_ADMIN_ENDPOINT
 import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.misc.Constants.MSG
-import com.github.readingbat.misc.Constants.RETURN_PATH
-import com.github.readingbat.misc.Endpoints.GARBAGE_COLLECTOR_ENDPOINT
-import com.github.readingbat.misc.Endpoints.MESSAGE_ENDPOINT
-import com.github.readingbat.misc.Endpoints.RESET_CACHE_ENDPOINT
-import com.github.readingbat.misc.Endpoints.RESET_CONTENT_ENDPOINT
-import com.github.readingbat.misc.Endpoints.SYSTEM_ADMIN_ENDPOINT
 import com.github.readingbat.pages.MessagePage.messagePage
 import com.github.readingbat.server.ServerUtils.authenticatedAction
 import com.github.readingbat.server.ServerUtils.get

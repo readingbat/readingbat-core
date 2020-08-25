@@ -18,12 +18,12 @@
 package com.github.readingbat.pages
 
 import com.github.pambrose.common.util.pluralize
+import com.github.readingbat.common.CSSNames.INDENT_1EM
+import com.github.readingbat.common.CSSNames.TD_PADDING
+import com.github.readingbat.common.Constants.RETURN_PATH
+import com.github.readingbat.common.Endpoints.USER_PREFS_ENDPOINT
+import com.github.readingbat.common.User.Companion.toUser
 import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.misc.CSSNames.INDENT_1EM
-import com.github.readingbat.misc.CSSNames.TD_PADDING
-import com.github.readingbat.misc.Constants.RETURN_PATH
-import com.github.readingbat.misc.Endpoints.USER_PREFS_ENDPOINT
-import com.github.readingbat.misc.User.Companion.toUser
 import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyTitle
 import com.github.readingbat.pages.PageUtils.headDefault

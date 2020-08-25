@@ -18,9 +18,9 @@
 package com.github.readingbat.server
 
 import com.github.pambrose.common.util.isNotNull
-import com.github.readingbat.misc.BrowserSession
-import com.github.readingbat.misc.Constants.STATIC
-import com.github.readingbat.misc.UserPrincipal
+import com.github.readingbat.common.BrowserSession
+import com.github.readingbat.common.Constants.STATIC
+import com.github.readingbat.common.UserPrincipal
 import io.ktor.application.*
 import io.ktor.http.*
 import io.ktor.request.*

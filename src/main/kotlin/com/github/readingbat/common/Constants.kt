@@ -15,9 +15,9 @@
  *
  */
 
-package com.github.readingbat.misc
+package com.github.readingbat.common
 
-import com.github.readingbat.misc.Constants.STATIC
+import com.github.readingbat.common.Constants.STATIC
 
 internal object Constants {
   const val SESSION_ID = "sessionid"

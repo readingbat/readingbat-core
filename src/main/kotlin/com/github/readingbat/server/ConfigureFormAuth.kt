@@ -21,11 +21,11 @@ import com.github.pambrose.common.redis.RedisUtils.withRedisPool
 import com.github.pambrose.common.util.isNotNull
 import com.github.pambrose.common.util.isNull
 import com.github.pambrose.common.util.sha256
-import com.github.readingbat.misc.AuthName
-import com.github.readingbat.misc.Constants.DBMS_DOWN
-import com.github.readingbat.misc.FormFields
-import com.github.readingbat.misc.User.Companion.lookupUserByEmail
-import com.github.readingbat.misc.UserPrincipal
+import com.github.readingbat.common.AuthName
+import com.github.readingbat.common.Constants.DBMS_DOWN
+import com.github.readingbat.common.FormFields
+import com.github.readingbat.common.User.Companion.lookupUserByEmail
+import com.github.readingbat.common.UserPrincipal
 import com.google.common.util.concurrent.RateLimiter
 import io.ktor.auth.*
 import mu.KLogging

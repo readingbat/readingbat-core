@@ -15,7 +15,7 @@
  *
  */
 
-package com.github.readingbat.misc
+package com.github.readingbat.common
 
 import redis.clients.jedis.exceptions.JedisException
 

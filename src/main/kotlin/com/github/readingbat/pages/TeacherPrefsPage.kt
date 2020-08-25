@@ -17,22 +17,22 @@
 
 package com.github.readingbat.pages
 
+import com.github.readingbat.common.*
+import com.github.readingbat.common.CSSNames.INDENT_2EM
+import com.github.readingbat.common.Constants.LABEL_WIDTH
+import com.github.readingbat.common.Constants.RETURN_PATH
+import com.github.readingbat.common.Endpoints.TEACHER_PREFS_ENDPOINT
+import com.github.readingbat.common.Endpoints.TEACHER_PREFS_POST_ENDPOINT
+import com.github.readingbat.common.FormFields.CLASSES_CHOICE
+import com.github.readingbat.common.FormFields.CLASS_CODE_NAME
+import com.github.readingbat.common.FormFields.CREATE_CLASS
+import com.github.readingbat.common.FormFields.DELETE_CLASS
+import com.github.readingbat.common.FormFields.DISABLED_MODE
+import com.github.readingbat.common.FormFields.UPDATE_ACTIVE_CLASS
+import com.github.readingbat.common.FormFields.USER_PREFS_ACTION
+import com.github.readingbat.common.Message.Companion.EMPTY_MESSAGE
+import com.github.readingbat.common.User.Companion.fetchActiveClassCode
 import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.misc.*
-import com.github.readingbat.misc.CSSNames.INDENT_2EM
-import com.github.readingbat.misc.Constants.LABEL_WIDTH
-import com.github.readingbat.misc.Constants.RETURN_PATH
-import com.github.readingbat.misc.Endpoints.TEACHER_PREFS_ENDPOINT
-import com.github.readingbat.misc.Endpoints.TEACHER_PREFS_POST_ENDPOINT
-import com.github.readingbat.misc.FormFields.CLASSES_CHOICE
-import com.github.readingbat.misc.FormFields.CLASS_CODE_NAME
-import com.github.readingbat.misc.FormFields.CREATE_CLASS
-import com.github.readingbat.misc.FormFields.DELETE_CLASS
-import com.github.readingbat.misc.FormFields.DISABLED_MODE
-import com.github.readingbat.misc.FormFields.UPDATE_ACTIVE_CLASS
-import com.github.readingbat.misc.FormFields.USER_PREFS_ACTION
-import com.github.readingbat.misc.Message.Companion.EMPTY_MESSAGE
-import com.github.readingbat.misc.User.Companion.fetchActiveClassCode
 import com.github.readingbat.pages.HelpAndLogin.helpAndLogin
 import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyTitle

@@ -15,17 +15,17 @@
  *
  */
 
-package com.github.readingbat.misc
+package com.github.readingbat.common
 
 import com.github.pambrose.common.util.isNull
 import com.github.pambrose.common.util.randomId
 import com.github.pambrose.common.util.toDoubleQuoted
-import com.github.readingbat.misc.FormFields.DISABLED_MODE
-import com.github.readingbat.misc.KeyConstants.CLASS_CODE_KEY
-import com.github.readingbat.misc.KeyConstants.CLASS_INFO_KEY
-import com.github.readingbat.misc.KeyConstants.DESC_FIELD
-import com.github.readingbat.misc.KeyConstants.TEACHER_FIELD
-import com.github.readingbat.misc.User.Companion.toUser
+import com.github.readingbat.common.FormFields.DISABLED_MODE
+import com.github.readingbat.common.KeyConstants.CLASS_CODE_KEY
+import com.github.readingbat.common.KeyConstants.CLASS_INFO_KEY
+import com.github.readingbat.common.KeyConstants.DESC_FIELD
+import com.github.readingbat.common.KeyConstants.TEACHER_FIELD
+import com.github.readingbat.common.User.Companion.toUser
 import com.github.readingbat.server.keyOf
 import io.ktor.http.*
 import redis.clients.jedis.Jedis

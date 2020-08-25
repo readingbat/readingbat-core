@@ -15,9 +15,11 @@
  *
  */
 
-package com.github.readingbat.misc
+package com.github.readingbat.common
 
-import io.ktor.auth.*
-import java.time.Instant
+import com.github.pambrose.common.util.join
 
-internal data class UserPrincipal(val userId: String, val created: Long = Instant.now().toEpochMilli()) : Principal
+object CommonUtils {
+
+  internal fun pathOf(vararg elems: Any): String = elems.toList().map { it.toString() }.join()
+}

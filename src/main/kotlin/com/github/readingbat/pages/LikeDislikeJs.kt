@@ -17,19 +17,19 @@
 
 package com.github.readingbat.pages
 
-import com.github.readingbat.misc.Constants.CHALLENGE_SRC
-import com.github.readingbat.misc.Constants.GROUP_SRC
-import com.github.readingbat.misc.Constants.LANG_SRC
-import com.github.readingbat.misc.Constants.LIKE_DESC
-import com.github.readingbat.misc.Constants.LIKE_DISLIKE_JS_FUNC
-import com.github.readingbat.misc.Constants.SESSION_ID
-import com.github.readingbat.misc.Endpoints.LIKE_DISLIKE_ENDPOINT
-import com.github.readingbat.misc.ParameterIds.DISLIKE_CLEAR
-import com.github.readingbat.misc.ParameterIds.DISLIKE_COLOR
-import com.github.readingbat.misc.ParameterIds.LIKE_CLEAR
-import com.github.readingbat.misc.ParameterIds.LIKE_COLOR
-import com.github.readingbat.misc.ParameterIds.LIKE_SPINNER_ID
-import com.github.readingbat.misc.ParameterIds.LIKE_STATUS_ID
+import com.github.readingbat.common.Constants.CHALLENGE_SRC
+import com.github.readingbat.common.Constants.GROUP_SRC
+import com.github.readingbat.common.Constants.LANG_SRC
+import com.github.readingbat.common.Constants.LIKE_DESC
+import com.github.readingbat.common.Constants.LIKE_DISLIKE_JS_FUNC
+import com.github.readingbat.common.Constants.SESSION_ID
+import com.github.readingbat.common.Endpoints.LIKE_DISLIKE_ENDPOINT
+import com.github.readingbat.common.ParameterIds.DISLIKE_CLEAR
+import com.github.readingbat.common.ParameterIds.DISLIKE_COLOR
+import com.github.readingbat.common.ParameterIds.LIKE_CLEAR
+import com.github.readingbat.common.ParameterIds.LIKE_COLOR
+import com.github.readingbat.common.ParameterIds.LIKE_SPINNER_ID
+import com.github.readingbat.common.ParameterIds.LIKE_STATUS_ID
 import com.github.readingbat.pages.PageUtils.rawHtml
 import com.github.readingbat.server.ChallengeName
 import com.github.readingbat.server.GroupName

@@ -15,7 +15,7 @@
  *
  */
 
-package com.github.readingbat.misc
+package com.github.readingbat.common
 
 import com.github.pambrose.common.util.isNull
 import redis.clients.jedis.Jedis

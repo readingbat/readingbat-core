@@ -15,7 +15,7 @@
  *
  */
 
-package com.github.readingbat.misc
+package com.github.readingbat.common
 
 import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.server.Email
