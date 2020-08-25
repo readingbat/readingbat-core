@@ -24,6 +24,7 @@ import com.github.pambrose.common.util.FileSource
 import com.github.pambrose.common.util.Version
 import com.github.pambrose.common.util.Version.Companion.versionDesc
 import com.github.pambrose.common.util.getBanner
+import com.github.pambrose.common.util.isNull
 import com.github.readingbat.common.Endpoints.STATIC_ROOT
 import com.github.readingbat.common.Metrics
 import com.github.readingbat.common.PropertyNames.AGENT_ENABLED
@@ -80,6 +81,14 @@ object ReadingBatServer : KLogging() {
   internal val metrics by lazy { Metrics() }
 
   fun start(args: Array<String>) {
+
+    // If kotlin.script.classpath property is missing, set it based on env var SCRIPT_CLASSPATH
+    if (System.getProperty("kotlin.script.classpath").isNull()) {
+      val scriptClasspath = System.getenv("SCRIPT_CLASSPATH")
+        ?: throw InvalidConfigurationException("Missing kotlin.script.classpath or SCRIPT_CLASSPATH value")
+      System.setProperty("kotlin.script.classpath", scriptClasspath)
+    }
+
     // grab config filename from CLI args and then try ENV var
     val configFilename =
       args.asSequence()
@@ -90,8 +99,8 @@ object ReadingBatServer : KLogging() {
         ?: System.getProperty("agent.config")
         ?: "src/main/resources/application.conf"
 
-    logger.info { "Using configuration file: $configFilename" }
 
+    logger.info { "Using configuration file: $configFilename" }
     System.setProperty(CONFIG_FILENAME, configFilename)
 
     val newargs =
