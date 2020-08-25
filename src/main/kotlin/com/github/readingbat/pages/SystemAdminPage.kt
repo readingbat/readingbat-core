@@ -24,10 +24,6 @@ import com.github.readingbat.common.Endpoints.RESET_CONTENT_ENDPOINT
 import com.github.readingbat.common.Endpoints.USER_PREFS_ENDPOINT
 import com.github.readingbat.common.Message
 import com.github.readingbat.common.Message.Companion.EMPTY_MESSAGE
-import com.github.readingbat.common.User
-import com.github.readingbat.common.User.Companion.fetchActiveClassCode
-import com.github.readingbat.common.isValidUser
-import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.isProduction
 import com.github.readingbat.pages.HelpAndLogin.helpAndLogin
 import com.github.readingbat.pages.PageUtils.backLink
@@ -36,7 +32,11 @@ import com.github.readingbat.pages.PageUtils.button
 import com.github.readingbat.pages.PageUtils.headDefault
 import com.github.readingbat.pages.UserPrefsPage.requestLogInPage
 import com.github.readingbat.server.PipelineCall
+import com.github.readingbat.server.ReadingBatContent
 import com.github.readingbat.server.ServerUtils.queryParam
+import com.github.readingbat.server.User
+import com.github.readingbat.server.User.Companion.fetchActiveClassCode
+import com.github.readingbat.server.isValidUser
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 import mu.KLogging

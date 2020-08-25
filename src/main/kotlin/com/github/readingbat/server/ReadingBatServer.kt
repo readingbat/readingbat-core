@@ -41,7 +41,11 @@ import com.github.readingbat.common.Constants.SITE
 import com.github.readingbat.common.Constants.STATIC_ROOT
 import com.github.readingbat.common.Constants.URL_PREFIX
 import com.github.readingbat.common.Constants.VARIABLE_NAME
-import com.github.readingbat.dsl.*
+import com.github.readingbat.common.Metrics
+import com.github.readingbat.dsl.agentLaunchId
+import com.github.readingbat.dsl.isAgentEnabled
+import com.github.readingbat.dsl.isProduction
+import com.github.readingbat.dsl.readContentDsl
 import com.github.readingbat.server.AdminRoutes.adminRoutes
 import com.github.readingbat.server.Installs.installs
 import com.github.readingbat.server.Locations.locations

@@ -15,13 +15,14 @@
  *
  */
 
-package com.github.readingbat.dsl
+package com.github.readingbat.server
 
 import com.github.pambrose.common.util.asBracketed
 import com.github.pambrose.common.util.toDoubleQuoted
+import com.github.readingbat.dsl.Challenge
+import com.github.readingbat.dsl.InvalidConfigurationException
+import com.github.readingbat.dsl.ReturnType
 import com.github.readingbat.dsl.ReturnType.*
-import com.github.readingbat.server.ChallengeMd5
-import com.github.readingbat.server.Invocation
 import mu.KLogging
 
 internal class FunctionInfo(private val challenge: Challenge,

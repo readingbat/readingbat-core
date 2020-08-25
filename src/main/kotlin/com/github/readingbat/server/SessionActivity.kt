@@ -18,8 +18,8 @@
 package com.github.readingbat.server
 
 import com.github.readingbat.common.BrowserSession
-import com.github.readingbat.common.User.Companion.toUser
 import com.github.readingbat.common.UserPrincipal
+import com.github.readingbat.server.User.Companion.toUser
 import mu.KLogging
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap

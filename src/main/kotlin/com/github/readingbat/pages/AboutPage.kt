@@ -19,11 +19,11 @@ package com.github.readingbat.pages
 
 import com.github.readingbat.common.CSSNames.INDENT_1EM
 import com.github.readingbat.common.Constants.RETURN_PATH
-import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyTitle
 import com.github.readingbat.pages.PageUtils.headDefault
 import com.github.readingbat.server.PipelineCall
+import com.github.readingbat.server.ReadingBatContent
 import com.github.readingbat.server.ServerUtils.queryParam
 import kotlinx.html.a
 import kotlinx.html.body

@@ -36,12 +36,7 @@ import com.github.readingbat.common.ParameterIds.DISLIKE_CLEAR
 import com.github.readingbat.common.ParameterIds.DISLIKE_COLOR
 import com.github.readingbat.common.ParameterIds.LIKE_CLEAR
 import com.github.readingbat.common.ParameterIds.LIKE_COLOR
-import com.github.readingbat.common.User
-import com.github.readingbat.common.User.Companion.gson
-import com.github.readingbat.common.User.Companion.saveChallengeAnswers
-import com.github.readingbat.common.User.Companion.saveLikeDislike
 import com.github.readingbat.dsl.InvalidConfigurationException
-import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.ReturnType
 import com.github.readingbat.dsl.ReturnType.BooleanType
 import com.github.readingbat.dsl.ReturnType.IntType
@@ -52,6 +47,9 @@ import com.github.readingbat.server.GroupName.Companion.getGroupName
 import com.github.readingbat.server.LanguageName.Companion.getLanguageName
 import com.github.readingbat.server.ScriptPools.kotlinScriptPool
 import com.github.readingbat.server.ScriptPools.pythonScriptPool
+import com.github.readingbat.server.User.Companion.gson
+import com.github.readingbat.server.User.Companion.saveChallengeAnswers
+import com.github.readingbat.server.User.Companion.saveLikeDislike
 import io.ktor.application.*
 import io.ktor.request.*
 import io.ktor.response.*

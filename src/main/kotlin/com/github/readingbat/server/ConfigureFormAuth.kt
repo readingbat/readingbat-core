@@ -24,8 +24,8 @@ import com.github.pambrose.common.util.sha256
 import com.github.readingbat.common.AuthName
 import com.github.readingbat.common.Constants.DBMS_DOWN
 import com.github.readingbat.common.FormFields
-import com.github.readingbat.common.User.Companion.lookupUserByEmail
 import com.github.readingbat.common.UserPrincipal
+import com.github.readingbat.server.User.Companion.lookupUserByEmail
 import com.google.common.util.concurrent.RateLimiter
 import io.ktor.auth.*
 import mu.KLogging

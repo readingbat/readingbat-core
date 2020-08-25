@@ -27,15 +27,14 @@ import com.github.readingbat.common.FormFields.FULLNAME
 import com.github.readingbat.common.FormFields.PASSWORD
 import com.github.readingbat.common.Message
 import com.github.readingbat.common.Message.Companion.EMPTY_MESSAGE
-import com.github.readingbat.common.User.Companion.createUser
 import com.github.readingbat.common.UserPrincipal
-import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.pages.CreateAccountPage.createAccountPage
 import com.github.readingbat.server.*
 import com.github.readingbat.server.Email.Companion.getEmail
 import com.github.readingbat.server.FullName.Companion.getFullName
 import com.github.readingbat.server.Password.Companion.getPassword
 import com.github.readingbat.server.ServerUtils.queryParam
+import com.github.readingbat.server.User.Companion.createUser
 import com.google.common.util.concurrent.RateLimiter
 import io.ktor.application.*
 import io.ktor.request.*

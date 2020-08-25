@@ -25,14 +25,14 @@ import com.github.readingbat.common.ClassCode
 import com.github.readingbat.common.Constants.PING_CODE
 import com.github.readingbat.common.Endpoints.CHALLENGE_ENDPOINT
 import com.github.readingbat.common.Endpoints.CHALLENGE_GROUP_ENDPOINT
-import com.github.readingbat.common.User.Companion.gson
+import com.github.readingbat.common.Metrics
 import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.InvalidPathException
-import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.agentLaunchId
 import com.github.readingbat.pages.ChallengeGroupPage.cols
 import com.github.readingbat.posts.ChallengeHistory
 import com.github.readingbat.server.ServerUtils.rows
+import com.github.readingbat.server.User.Companion.gson
 import io.ktor.http.cio.websocket.*
 import io.ktor.http.cio.websocket.CloseReason.*
 import io.ktor.routing.*

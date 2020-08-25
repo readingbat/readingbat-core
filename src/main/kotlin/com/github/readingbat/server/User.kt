@@ -15,14 +15,17 @@
  *
  */
 
-package com.github.readingbat.common
+package com.github.readingbat.server
 
 import com.github.pambrose.common.util.isNotNull
 import com.github.pambrose.common.util.isNull
 import com.github.pambrose.common.util.newStringSalt
 import com.github.pambrose.common.util.randomId
+import com.github.readingbat.common.BrowserSession
+import com.github.readingbat.common.ClassCode
 import com.github.readingbat.common.ClassCode.Companion.DISABLED_CLASS_CODE
 import com.github.readingbat.common.Constants.RESP
+import com.github.readingbat.common.DataException
 import com.github.readingbat.common.KeyConstants.ANSWER_HISTORY_KEY
 import com.github.readingbat.common.KeyConstants.AUTH_KEY
 import com.github.readingbat.common.KeyConstants.CHALLENGE_ANSWERS_KEY
@@ -34,14 +37,11 @@ import com.github.readingbat.common.KeyConstants.USER_INFO_KEY
 import com.github.readingbat.common.KeyConstants.USER_RESET_KEY
 import com.github.readingbat.common.RedisRoutines.scanKeys
 import com.github.readingbat.dsl.Challenge
-import com.github.readingbat.dsl.FunctionInfo
 import com.github.readingbat.dsl.InvalidConfigurationException
-import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.posts.ChallengeHistory
 import com.github.readingbat.posts.ChallengeNames
 import com.github.readingbat.posts.ChallengeResults
 import com.github.readingbat.posts.DashboardInfo
-import com.github.readingbat.server.*
 import com.github.readingbat.server.ChallengeName.Companion.ANY_CHALLENGE
 import com.github.readingbat.server.Email.Companion.EMPTY_EMAIL
 import com.github.readingbat.server.GroupName.Companion.ANY_GROUP

@@ -15,18 +15,15 @@
  *
  */
 
-package com.github.readingbat.dsl
+package com.github.readingbat.server
 
 import com.github.pambrose.common.util.ContentRoot
 import com.github.pambrose.common.util.ContentSource
 import com.github.pambrose.common.util.FileSystemSource
+import com.github.readingbat.dsl.*
 import com.github.readingbat.dsl.LanguageType.Java
 import com.github.readingbat.dsl.LanguageType.Kotlin
 import com.github.readingbat.dsl.LanguageType.Python
-import com.github.readingbat.server.ChallengeName
-import com.github.readingbat.server.GroupName
-import com.github.readingbat.server.Language
-import com.github.readingbat.server.LanguageName
 import mu.KLogging
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter

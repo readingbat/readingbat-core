@@ -27,14 +27,13 @@ import com.github.pambrose.common.util.md5
 import com.github.readingbat.common.BrowserSession
 import com.github.readingbat.common.Constants
 import com.github.readingbat.common.KeyConstants.KEY_SEP
-import com.github.readingbat.common.User
-import com.github.readingbat.common.User.Companion.toUser
+import com.github.readingbat.common.Metrics
 import com.github.readingbat.common.UserPrincipal
 import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.LanguageType
-import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.isProduction
 import com.github.readingbat.pages.DbmsDownPage.dbmsDownPage
+import com.github.readingbat.server.User.Companion.toUser
 import io.ktor.application.*
 import io.ktor.auth.*
 import io.ktor.config.*

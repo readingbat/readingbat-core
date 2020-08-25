@@ -18,7 +18,7 @@
 package com.github.readingbat.dsl
 
 import com.github.pambrose.common.util.GitHubRepo
-import com.github.readingbat.server.Metrics
+import com.github.readingbat.common.Metrics
 import mu.KLogging
 import org.kohsuke.github.GHRepository
 import org.kohsuke.github.GitHub

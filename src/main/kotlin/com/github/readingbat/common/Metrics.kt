@@ -15,14 +15,15 @@
  *
  */
 
-package com.github.readingbat.server
+package com.github.readingbat.common
 
 import com.github.pambrose.common.dsl.PrometheusDsl.counter
 import com.github.pambrose.common.dsl.PrometheusDsl.gauge
 import com.github.pambrose.common.dsl.PrometheusDsl.summary
 import com.github.pambrose.common.metrics.SamplerGaugeCollector
-import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.agentLaunchId
+import com.github.readingbat.server.ReadingBatContent
+import com.github.readingbat.server.SessionActivity
 import kotlin.time.hours
 import kotlin.time.minutes
 

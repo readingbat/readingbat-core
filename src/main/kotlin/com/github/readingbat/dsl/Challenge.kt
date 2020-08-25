@@ -41,6 +41,8 @@ import com.github.readingbat.dsl.parse.PythonParse.extractPythonFunction
 import com.github.readingbat.dsl.parse.PythonParse.extractPythonInvocations
 import com.github.readingbat.dsl.parse.PythonParse.ifMainEndRegex
 import com.github.readingbat.server.ChallengeName
+import com.github.readingbat.server.FunctionInfo
+import com.github.readingbat.server.ReadingBatContent
 import com.github.readingbat.server.ScriptPools.javaScriptPool
 import com.github.readingbat.server.ScriptPools.kotlinScriptPool
 import com.github.readingbat.server.ScriptPools.pythonScriptPool

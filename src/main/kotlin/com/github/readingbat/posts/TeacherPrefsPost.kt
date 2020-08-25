@@ -18,10 +18,12 @@
 package com.github.readingbat.posts
 
 import com.github.pambrose.common.util.encode
-import com.github.readingbat.common.*
+import com.github.readingbat.common.BrowserSession
+import com.github.readingbat.common.ClassCode
 import com.github.readingbat.common.ClassCode.Companion.DISABLED_CLASS_CODE
 import com.github.readingbat.common.ClassCode.Companion.getClassCode
 import com.github.readingbat.common.ClassCode.Companion.newClassCode
+import com.github.readingbat.common.Constants
 import com.github.readingbat.common.Constants.MSG
 import com.github.readingbat.common.FormFields.CLASSES_CHOICE
 import com.github.readingbat.common.FormFields.CLASS_CODE_NAME
@@ -30,15 +32,14 @@ import com.github.readingbat.common.FormFields.CREATE_CLASS
 import com.github.readingbat.common.FormFields.DELETE_CLASS
 import com.github.readingbat.common.FormFields.UPDATE_ACTIVE_CLASS
 import com.github.readingbat.common.FormFields.USER_PREFS_ACTION
-import com.github.readingbat.common.User.Companion.fetchActiveClassCode
-import com.github.readingbat.common.User.Companion.fetchPreviousTeacherClassCode
+import com.github.readingbat.common.Message
 import com.github.readingbat.dsl.InvalidConfigurationException
-import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.pages.TeacherPrefsPage.teacherPrefsPage
 import com.github.readingbat.pages.UserPrefsPage.requestLogInPage
-import com.github.readingbat.server.PipelineCall
-import com.github.readingbat.server.RedirectException
+import com.github.readingbat.server.*
 import com.github.readingbat.server.ServerUtils.queryParam
+import com.github.readingbat.server.User.Companion.fetchActiveClassCode
+import com.github.readingbat.server.User.Companion.fetchPreviousTeacherClassCode
 import io.ktor.application.*
 import io.ktor.request.*
 import io.ktor.sessions.*

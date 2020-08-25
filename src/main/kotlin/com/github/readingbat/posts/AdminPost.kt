@@ -21,13 +21,13 @@ import com.github.readingbat.common.FormFields.ADMIN_ACTION
 import com.github.readingbat.common.FormFields.DELETE_ALL_DATA
 import com.github.readingbat.common.Message
 import com.github.readingbat.common.RedisRoutines.scanKeys
-import com.github.readingbat.common.User
 import com.github.readingbat.common.UserPrincipal
-import com.github.readingbat.common.isValidUser
-import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.isProduction
 import com.github.readingbat.pages.AdminPage.adminDataPage
 import com.github.readingbat.server.PipelineCall
+import com.github.readingbat.server.ReadingBatContent
+import com.github.readingbat.server.User
+import com.github.readingbat.server.isValidUser
 import io.ktor.application.*
 import io.ktor.request.*
 import io.ktor.sessions.*
