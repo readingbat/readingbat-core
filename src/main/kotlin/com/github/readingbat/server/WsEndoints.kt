@@ -22,8 +22,8 @@ import com.github.pambrose.common.redis.RedisUtils.withRedisPool
 import com.github.pambrose.common.time.format
 import com.github.pambrose.common.util.isNotNull
 import com.github.readingbat.common.ClassCode
-import com.github.readingbat.common.Constants.PING_CODE
 import com.github.readingbat.common.Constants.COLUMN_CNT
+import com.github.readingbat.common.Constants.PING_CODE
 import com.github.readingbat.common.Endpoints.CHALLENGE_ENDPOINT
 import com.github.readingbat.common.Endpoints.CHALLENGE_GROUP_ENDPOINT
 import com.github.readingbat.common.Metrics
@@ -70,7 +70,7 @@ internal object WsEndoints : KLogging() {
 
       logger.info { "Opening student answers websocket for $desc" }
 
-      outgoing.invokeOnClose { e ->
+      outgoing.invokeOnClose {
         logger.info { "Close received for student answers websocket for $desc" }
         finished.set(true)
       }
@@ -157,7 +157,7 @@ internal object WsEndoints : KLogging() {
 
       logger.info { "Opening class statistics websocket for $desc" }
 
-      outgoing.invokeOnClose { e ->
+      outgoing.invokeOnClose {
         logger.info { "Close received for class statistics websocket for $desc" }
         finished.set(true)
       }
