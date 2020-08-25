@@ -29,6 +29,7 @@ import com.github.readingbat.common.Constants.GREEN_CHECK
 import com.github.readingbat.common.Constants.MSG
 import com.github.readingbat.common.Constants.STATIC_ROOT
 import com.github.readingbat.common.Constants.WHITE_CHECK
+import com.github.readingbat.common.Constants.COLUMN_CNT
 import com.github.readingbat.common.Endpoints.CHALLENGE_GROUP_ENDPOINT
 import com.github.readingbat.common.Endpoints.CLEAR_GROUP_ANSWERS_ENDPOINT
 import com.github.readingbat.common.FormFields.CHALLENGE_ANSWERS_KEY
@@ -83,8 +84,6 @@ import mu.KLogging
 import redis.clients.jedis.Jedis
 
 internal object ChallengeGroupPage : KLogging() {
-
-  const val cols = 3
 
   fun Challenge.isCorrect(user: User?, browserSession: BrowserSession?, redis: Jedis?): Boolean {
     val correctAnswersKey = user.correctAnswersKey(browserSession, languageName, groupName, challengeName)
@@ -150,7 +149,7 @@ internal object ChallengeGroupPage : KLogging() {
 
           table {
             val size = challenges.size
-            val rows = size.rows(cols)
+            val rows = size.rows(COLUMN_CNT)
 
             //val width = if (enrollees.isNotEmpty()) 1200 else 800
             //style = "width:${width}px"

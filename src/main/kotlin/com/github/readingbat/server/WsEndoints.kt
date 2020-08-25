@@ -23,6 +23,7 @@ import com.github.pambrose.common.time.format
 import com.github.pambrose.common.util.isNotNull
 import com.github.readingbat.common.ClassCode
 import com.github.readingbat.common.Constants.PING_CODE
+import com.github.readingbat.common.Constants.COLUMN_CNT
 import com.github.readingbat.common.Endpoints.CHALLENGE_ENDPOINT
 import com.github.readingbat.common.Endpoints.CHALLENGE_GROUP_ENDPOINT
 import com.github.readingbat.common.Metrics
@@ -31,7 +32,6 @@ import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.InvalidPathException
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.agentLaunchId
-import com.github.readingbat.pages.ChallengeGroupPage.cols
 import com.github.readingbat.posts.ChallengeHistory
 import com.github.readingbat.server.ServerUtils.rows
 import io.ktor.http.cio.websocket.*
@@ -178,7 +178,7 @@ internal object WsEndoints : KLogging() {
                   if (enrollees.isNotEmpty()) {
                     // Reorder challenges to return values left to right
                     val ltor = mutableListOf<Challenge>()
-                    val rows = challenges.size.rows(cols)
+                    val rows = challenges.size.rows(COLUMN_CNT)
                     repeat(rows) { i ->
                       challenges
                         .apply {

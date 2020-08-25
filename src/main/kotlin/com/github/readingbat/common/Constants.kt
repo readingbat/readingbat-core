@@ -68,6 +68,8 @@ internal object Constants {
 
   val DBMS_DOWN = Message("Database is down", true)
 
+  const val COLUMN_CNT = 3
+
   const val LANG_SRC = "lang"
   const val GROUP_SRC = "groupName"
   const val CHALLENGE_SRC = "challengeName"

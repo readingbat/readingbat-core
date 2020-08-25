@@ -70,7 +70,7 @@ import redis.clients.jedis.Jedis
 
 internal object PasswordResetPage : KLogging() {
 
-  const val formName = "pform"
+  private const val formName = "pform"
   private const val passwordButton = "UpdatePasswordButton"
 
   fun PipelineCall.passwordResetPage(content: ReadingBatContent,
