@@ -22,8 +22,8 @@ import com.github.readingbat.common.CSSNames.CHALLENGE_DESC
 import com.github.readingbat.common.CSSNames.INDENT_1EM
 import com.github.readingbat.common.CSSNames.KOTLIN_CODE
 import com.github.readingbat.common.CommonUtils.pathOf
-import com.github.readingbat.common.Constants.CHALLENGE_ROOT
-import com.github.readingbat.common.Constants.STATIC_ROOT
+import com.github.readingbat.common.Endpoints.CHALLENGE_ROOT
+import com.github.readingbat.common.Endpoints.STATIC_ROOT
 import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.fetchActiveClassCode
 import com.github.readingbat.dsl.Challenge

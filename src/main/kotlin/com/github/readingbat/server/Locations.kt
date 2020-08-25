@@ -23,8 +23,8 @@ import com.github.pambrose.common.util.isNotValidEmail
 import com.github.pambrose.common.util.randomId
 import com.github.pambrose.common.util.sha256
 import com.github.readingbat.common.AuthName.FORM
-import com.github.readingbat.common.Constants.CHALLENGE_ROOT
-import com.github.readingbat.common.Constants.PLAYGROUND_ROOT
+import com.github.readingbat.common.Endpoints.CHALLENGE_ROOT
+import com.github.readingbat.common.Endpoints.PLAYGROUND_ROOT
 import com.github.readingbat.common.KeyConstants
 import com.github.readingbat.common.KeyConstants.USER_EMAIL_KEY
 import com.github.readingbat.common.Metrics

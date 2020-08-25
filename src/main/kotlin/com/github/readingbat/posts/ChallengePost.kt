@@ -20,13 +20,13 @@ package com.github.readingbat.posts
 import com.github.pambrose.common.util.*
 import com.github.readingbat.common.BrowserSession
 import com.github.readingbat.common.CommonUtils.pathOf
-import com.github.readingbat.common.Constants.CHALLENGE_ROOT
 import com.github.readingbat.common.Constants.CHALLENGE_SRC
 import com.github.readingbat.common.Constants.GROUP_SRC
 import com.github.readingbat.common.Constants.LANG_SRC
 import com.github.readingbat.common.Constants.LIKE_DESC
 import com.github.readingbat.common.Constants.MSG
 import com.github.readingbat.common.Constants.RESP
+import com.github.readingbat.common.Endpoints.CHALLENGE_ROOT
 import com.github.readingbat.common.FormFields.CHALLENGE_ANSWERS_KEY
 import com.github.readingbat.common.FormFields.CHALLENGE_NAME_KEY
 import com.github.readingbat.common.FormFields.GROUP_NAME_KEY

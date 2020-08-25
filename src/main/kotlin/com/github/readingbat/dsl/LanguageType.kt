@@ -17,7 +17,7 @@
 
 package com.github.readingbat.dsl
 
-import com.github.readingbat.common.Constants.CHALLENGE_ROOT
+import com.github.readingbat.common.Endpoints.CHALLENGE_ROOT
 import com.github.readingbat.server.LanguageName
 
 enum class LanguageType(val useDoubleQuotes: Boolean, val suffix: String, val srcPrefix: String) {

@@ -20,15 +20,13 @@ package com.github.readingbat.server
 import com.github.pambrose.common.redis.RedisUtils.withSuspendingRedisPool
 import com.github.pambrose.common.response.redirectTo
 import com.github.pambrose.common.response.respondWith
-import com.github.readingbat.common.Constants.CHALLENGE_ROOT
 import com.github.readingbat.common.Constants.ICONS
 import com.github.readingbat.common.Constants.RESET_ID
 import com.github.readingbat.common.Constants.RETURN_PATH
-import com.github.readingbat.common.Constants.ROOT
-import com.github.readingbat.common.Constants.STATIC_ROOT
 import com.github.readingbat.common.Endpoints.ABOUT_ENDPOINT
 import com.github.readingbat.common.Endpoints.ADMIN_ENDPOINT
 import com.github.readingbat.common.Endpoints.ADMIN_POST_ENDPOINT
+import com.github.readingbat.common.Endpoints.CHALLENGE_ROOT
 import com.github.readingbat.common.Endpoints.CHECK_ANSWERS_ENDPOINT
 import com.github.readingbat.common.Endpoints.CLEAR_CHALLENGE_ANSWERS_ENDPOINT
 import com.github.readingbat.common.Endpoints.CLEAR_GROUP_ANSWERS_ENDPOINT
@@ -45,7 +43,9 @@ import com.github.readingbat.common.Endpoints.PASSWORD_CHANGE_POST_ENDPOINT
 import com.github.readingbat.common.Endpoints.PASSWORD_RESET_ENDPOINT
 import com.github.readingbat.common.Endpoints.PASSWORD_RESET_POST_ENDPOINT
 import com.github.readingbat.common.Endpoints.PRIVACY_ENDPOINT
+import com.github.readingbat.common.Endpoints.ROOT
 import com.github.readingbat.common.Endpoints.SESSIONS_ENDPOINT
+import com.github.readingbat.common.Endpoints.STATIC_ROOT
 import com.github.readingbat.common.Endpoints.SYSTEM_ADMIN_ENDPOINT
 import com.github.readingbat.common.Endpoints.TEACHER_PREFS_ENDPOINT
 import com.github.readingbat.common.Endpoints.TEACHER_PREFS_POST_ENDPOINT

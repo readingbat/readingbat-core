@@ -22,11 +22,11 @@ import com.github.readingbat.common.CSSNames.FUNC_ITEM
 import com.github.readingbat.common.CSSNames.GROUP_CHOICE
 import com.github.readingbat.common.CSSNames.GROUP_ITEM_SRC
 import com.github.readingbat.common.CommonUtils.pathOf
-import com.github.readingbat.common.Constants.CHALLENGE_ROOT
-import com.github.readingbat.common.Constants.GREEN_CHECK
 import com.github.readingbat.common.Constants.MSG
-import com.github.readingbat.common.Constants.STATIC_ROOT
-import com.github.readingbat.common.Constants.WHITE_CHECK
+import com.github.readingbat.common.Endpoints.CHALLENGE_ROOT
+import com.github.readingbat.common.Endpoints.GREEN_CHECK
+import com.github.readingbat.common.Endpoints.STATIC_ROOT
+import com.github.readingbat.common.Endpoints.WHITE_CHECK
 import com.github.readingbat.common.Message
 import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.fetchActiveClassCode

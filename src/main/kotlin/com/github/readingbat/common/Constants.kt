@@ -26,13 +26,7 @@ internal object Constants {
   const val RESET_ID = "reset_id"
   const val MSG = "msg"
   const val BACK_PATH = "backPath"
-  const val ROOT = "/"
   const val STATIC = "static"
-  const val STATIC_ROOT = "/$STATIC"
-  const val CHALLENGE_ROOT = "/content"
-  const val PLAYGROUND_ROOT = "/playground"
-  const val WHITE_CHECK = "white-check.jpg"
-  const val GREEN_CHECK = "green-check.jpg"
   const val RESP = "response"
   const val LIKE_DESC = "likeDesc"
   const val NO_ANSWER_COLOR = "white"
@@ -41,21 +35,33 @@ internal object Constants {
   const val INCOMPLETE_COLOR = "#F1F1F1"
   const val LABEL_WIDTH = "width: 250;"
   const val INVALID_RESET_ID = "Invalid reset_id"
+  const val PING_CODE = "P"
+  const val COLUMN_CNT = 3
+  const val LANG_SRC = "lang"
+  const val GROUP_SRC = "groupName"
+  const val CHALLENGE_SRC = "challengeName"
+  const val PROCESS_USER_ANSWERS_JS_FUNC = "processUserAnswers"
+  const val LIKE_DISLIKE_JS_FUNC = "likeDislike"
+
+  val DBMS_DOWN = Message("Database is down", true)
+}
+
+internal object PropertyNames {
   internal const val READING_BAT = "readingbat"
-  private const val AGENT = "agent"
   internal const val SITE = "site"
-  const val CHALLENGES = "challenges"
+  private const val AGENT = "agent"
   private const val CLASSES = "classes"
   private const val CONTENT = "content"
+  internal const val CHALLENGES = "challenges"
+
   const val CONFIG_FILENAME = "$READING_BAT.configFilename"
   const val IS_PRODUCTION = "$READING_BAT.$SITE.production"
-  const val URL_PREFIX = "$READING_BAT.$SITE.urlPrefix"
+  const val URL_PREFIX = "${READING_BAT}.$SITE.urlPrefix"
   const val MAX_HISTORY_LENGTH = "$READING_BAT.$CHALLENGES.maxHistoryLength"
   const val MAX_CLASS_COUNT = "$READING_BAT.$CLASSES.maxCount"
   const val ANALYTICS_ID = "$READING_BAT.$SITE.googleAnalyticsId"
   const val FILE_NAME = "$READING_BAT.$CONTENT.fileName"
   const val VARIABLE_NAME = "$READING_BAT.$CONTENT.variableName"
-
   const val JAVA_SCRIPTS_POOL_SIZE = "$READING_BAT.scripts.javaPoolSize"
   const val KOTLIN_SCRIPTS_POOL_SIZE = "$READING_BAT.scripts.kotlinPoolSize"
   const val PYTHON_SCRIPTS_POOL_SIZE = "$READING_BAT.scripts.pythonPoolSize"
@@ -63,21 +69,13 @@ internal object Constants {
   const val AGENT_LAUNCH_ID = "agentLaunchId"
   const val AGENT_ENABLED = "$AGENT.enabled"
   const val PROXY_HOSTNAME = "$AGENT.proxy.hostname"
-
-  const val PING_CODE = "P"
-
-  val DBMS_DOWN = Message("Database is down", true)
-
-  const val COLUMN_CNT = 3
-
-  const val LANG_SRC = "lang"
-  const val GROUP_SRC = "groupName"
-  const val CHALLENGE_SRC = "challengeName"
-  const val PROCESS_USER_ANSWERS_JS_FUNC = "processUserAnswers"
-  const val LIKE_DISLIKE_JS_FUNC = "likeDislike"
 }
 
 internal object Endpoints {
+  const val ROOT = "/"
+  const val STATIC_ROOT = "/$STATIC"
+  const val CHALLENGE_ROOT = "/content"
+  const val PLAYGROUND_ROOT = "/playground"
   const val USER_PREFS_ENDPOINT = "/user-prefs"
   const val USER_PREFS_POST_ENDPOINT = "/user-prefs-post"
   const val TEACHER_PREFS_ENDPOINT = "/teacher-prefs"
@@ -112,6 +110,8 @@ internal object Endpoints {
   const val PING = "/ping"
   const val THREAD_DUMP = "/threaddump"
   const val LOGOUT_ENDPOINT = "/logout"
+  const val WHITE_CHECK = "white-check.jpg"
+  const val GREEN_CHECK = "green-check.jpg"
 }
 
 internal object ParameterIds {
