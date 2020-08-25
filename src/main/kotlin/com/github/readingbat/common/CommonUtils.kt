@@ -19,7 +19,7 @@ package com.github.readingbat.common
 
 import com.github.pambrose.common.util.join
 
-object CommonUtils {
+internal object CommonUtils {
 
   internal fun pathOf(vararg elems: Any): String = elems.toList().map { it.toString() }.join()
 }

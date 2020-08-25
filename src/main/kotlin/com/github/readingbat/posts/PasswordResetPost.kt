@@ -18,7 +18,7 @@
 package com.github.readingbat.posts
 
 import com.github.pambrose.common.util.encode
-import com.github.readingbat.common.*
+import com.github.readingbat.common.BrowserSession
 import com.github.readingbat.common.Constants.INVALID_RESET_ID
 import com.github.readingbat.common.Constants.MSG
 import com.github.readingbat.common.Constants.RESET_ID
@@ -28,8 +28,12 @@ import com.github.readingbat.common.Endpoints.PASSWORD_RESET_ENDPOINT
 import com.github.readingbat.common.FormFields.CONFIRM_PASSWORD
 import com.github.readingbat.common.FormFields.EMAIL
 import com.github.readingbat.common.FormFields.NEW_PASSWORD
+import com.github.readingbat.common.Message
+import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.isRegisteredEmail
 import com.github.readingbat.common.User.Companion.lookupUserByEmail
+import com.github.readingbat.common.isValidUser
+import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.pages.PasswordResetPage.passwordResetPage
 import com.github.readingbat.posts.CreateAccountPost.checkPassword
 import com.github.readingbat.server.Email

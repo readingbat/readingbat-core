@@ -30,6 +30,7 @@ import com.github.readingbat.common.FormFields.USER_PREFS_ACTION
 import com.github.readingbat.common.FormFields.WITHDRAW_FROM_CLASS
 import com.github.readingbat.common.User.Companion.fetchEnrolledClassCode
 import com.github.readingbat.dsl.InvalidConfigurationException
+import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.pages.UserPrefsPage.requestLogInPage
 import com.github.readingbat.pages.UserPrefsPage.userPrefsPage
 import com.github.readingbat.posts.CreateAccountPost.checkPassword

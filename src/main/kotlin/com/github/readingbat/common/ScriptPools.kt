@@ -25,7 +25,7 @@ import com.github.readingbat.common.Constants.KOTLIN_SCRIPTS_POOL_SIZE
 import com.github.readingbat.common.Constants.PYTHON_SCRIPTS_POOL_SIZE
 import mu.KLogging
 
-object ScriptPools : KLogging() {
+internal object ScriptPools : KLogging() {
 
   internal val pythonScriptPool by lazy {
     PythonScriptPool(System.getProperty(PYTHON_SCRIPTS_POOL_SIZE).toInt()

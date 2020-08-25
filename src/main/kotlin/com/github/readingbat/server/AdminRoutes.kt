@@ -45,7 +45,6 @@ import java.time.Instant.ofEpochMilli
 import java.time.LocalDateTime.ofInstant
 import java.time.ZoneId
 
-
 internal object AdminRoutes : KLogging() {
 
   fun Routing.adminRoutes(metrics: Metrics) {

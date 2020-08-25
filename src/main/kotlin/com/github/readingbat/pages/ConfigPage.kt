@@ -23,11 +23,11 @@ import com.github.readingbat.common.CSSNames.INDENT_1EM
 import com.github.readingbat.common.CSSNames.TD_PADDING
 import com.github.readingbat.common.Constants.RETURN_PATH
 import com.github.readingbat.common.Endpoints.USER_PREFS_ENDPOINT
-import com.github.readingbat.common.ReadingBatContent
 import com.github.readingbat.common.SessionActivity
 import com.github.readingbat.dsl.LanguageType.Java
 import com.github.readingbat.dsl.LanguageType.Kotlin
 import com.github.readingbat.dsl.LanguageType.Python
+import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.agentLaunchId
 import com.github.readingbat.dsl.isAgentEnabled
 import com.github.readingbat.dsl.isProduction

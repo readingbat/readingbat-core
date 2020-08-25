@@ -20,7 +20,7 @@ package com.github.readingbat.common
 import com.github.readingbat.common.Constants.CORRECT_COLOR
 import com.github.readingbat.common.Constants.WRONG_COLOR
 
-data class Message(val value: String, val isError: Boolean = false) {
+internal data class Message(val value: String, val isError: Boolean = false) {
   val isBlank get() = value.isBlank()
   val isNotBlank get() = value.isNotBlank()
 

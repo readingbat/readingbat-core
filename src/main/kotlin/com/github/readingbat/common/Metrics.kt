@@ -21,11 +21,12 @@ import com.github.pambrose.common.dsl.PrometheusDsl.counter
 import com.github.pambrose.common.dsl.PrometheusDsl.gauge
 import com.github.pambrose.common.dsl.PrometheusDsl.summary
 import com.github.pambrose.common.metrics.SamplerGaugeCollector
+import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.agentLaunchId
 import kotlin.time.hours
 import kotlin.time.minutes
 
-class Metrics {
+internal class Metrics {
 
   //  /reset call count
   val contentLoadedCount =

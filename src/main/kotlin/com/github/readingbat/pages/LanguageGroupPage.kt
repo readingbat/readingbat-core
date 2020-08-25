@@ -28,11 +28,11 @@ import com.github.readingbat.common.Constants.MSG
 import com.github.readingbat.common.Constants.STATIC_ROOT
 import com.github.readingbat.common.Constants.WHITE_CHECK
 import com.github.readingbat.common.Message
-import com.github.readingbat.common.ReadingBatContent
 import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.fetchActiveClassCode
 import com.github.readingbat.dsl.ChallengeGroup
 import com.github.readingbat.dsl.LanguageType
+import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.pages.ChallengeGroupPage.displayClassDescription
 import com.github.readingbat.pages.ChallengeGroupPage.isCorrect
 import com.github.readingbat.pages.PageUtils.bodyHeader

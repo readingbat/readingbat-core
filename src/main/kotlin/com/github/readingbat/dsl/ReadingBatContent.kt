@@ -15,12 +15,12 @@
  *
  */
 
-package com.github.readingbat.common
+package com.github.readingbat.dsl
 
 import com.github.pambrose.common.util.ContentRoot
 import com.github.pambrose.common.util.ContentSource
 import com.github.pambrose.common.util.FileSystemSource
-import com.github.readingbat.dsl.*
+import com.github.readingbat.common.FunctionInfo
 import com.github.readingbat.dsl.LanguageType.Java
 import com.github.readingbat.dsl.LanguageType.Kotlin
 import com.github.readingbat.dsl.LanguageType.Python

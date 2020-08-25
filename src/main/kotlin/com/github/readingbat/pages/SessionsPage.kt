@@ -22,9 +22,9 @@ import com.github.readingbat.common.CSSNames.INDENT_1EM
 import com.github.readingbat.common.CSSNames.TD_PADDING
 import com.github.readingbat.common.Constants.RETURN_PATH
 import com.github.readingbat.common.Endpoints.USER_PREFS_ENDPOINT
-import com.github.readingbat.common.ReadingBatContent
 import com.github.readingbat.common.SessionActivity
 import com.github.readingbat.common.User.Companion.toUser
+import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyTitle
 import com.github.readingbat.pages.PageUtils.headDefault

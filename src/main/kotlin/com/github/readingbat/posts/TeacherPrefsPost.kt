@@ -33,6 +33,7 @@ import com.github.readingbat.common.FormFields.USER_PREFS_ACTION
 import com.github.readingbat.common.User.Companion.fetchActiveClassCode
 import com.github.readingbat.common.User.Companion.fetchPreviousTeacherClassCode
 import com.github.readingbat.dsl.InvalidConfigurationException
+import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.pages.TeacherPrefsPage.teacherPrefsPage
 import com.github.readingbat.pages.UserPrefsPage.requestLogInPage
 import com.github.readingbat.server.PipelineCall

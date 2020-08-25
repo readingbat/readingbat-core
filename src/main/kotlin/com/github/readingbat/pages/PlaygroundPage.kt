@@ -24,10 +24,10 @@ import com.github.readingbat.common.CSSNames.KOTLIN_CODE
 import com.github.readingbat.common.CommonUtils.pathOf
 import com.github.readingbat.common.Constants.CHALLENGE_ROOT
 import com.github.readingbat.common.Constants.STATIC_ROOT
-import com.github.readingbat.common.ReadingBatContent
 import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.fetchActiveClassCode
 import com.github.readingbat.dsl.Challenge
+import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.pages.PageUtils.addLink
 import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyHeader

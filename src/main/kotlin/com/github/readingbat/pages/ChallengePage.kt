@@ -72,6 +72,7 @@ import com.github.readingbat.common.User.Companion.fetchPreviousAnswers
 import com.github.readingbat.common.User.Companion.gson
 import com.github.readingbat.common.User.Companion.likeDislikeKey
 import com.github.readingbat.dsl.Challenge
+import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.pages.CheckAnswersJs.checkAnswersScript
 import com.github.readingbat.pages.LikeDislikeJs.likeDislikeScript
 import com.github.readingbat.pages.PageUtils.addLink

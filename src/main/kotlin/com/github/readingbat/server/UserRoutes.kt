@@ -53,9 +53,9 @@ import com.github.readingbat.common.Endpoints.USER_INFO_ENDPOINT
 import com.github.readingbat.common.Endpoints.USER_PREFS_ENDPOINT
 import com.github.readingbat.common.Endpoints.USER_PREFS_POST_ENDPOINT
 import com.github.readingbat.common.Metrics
-import com.github.readingbat.common.ReadingBatContent
 import com.github.readingbat.common.UserPrincipal
 import com.github.readingbat.common.cssContent
+import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.pages.AboutPage.aboutPage
 import com.github.readingbat.pages.AdminPage.adminDataPage
 import com.github.readingbat.pages.ConfigPage.configPage

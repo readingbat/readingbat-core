@@ -21,7 +21,6 @@ import ch.obermuhlner.scriptengine.java.Isolation.IsolatedClassLoader
 import com.github.pambrose.common.util.*
 import com.github.readingbat.common.CommonUtils.pathOf
 import com.github.readingbat.common.FunctionInfo
-import com.github.readingbat.common.ReadingBatContent
 import com.github.readingbat.common.ScriptPools.javaScriptPool
 import com.github.readingbat.common.ScriptPools.kotlinScriptPool
 import com.github.readingbat.common.ScriptPools.pythonScriptPool
