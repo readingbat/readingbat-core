@@ -15,13 +15,13 @@
  *
  */
 
-package com.github.readingbat.server
+package com.github.readingbat.dsl
 
 import com.vladsch.flexmark.html.HtmlRenderer
 import com.vladsch.flexmark.parser.Parser
 import com.vladsch.flexmark.util.data.MutableDataSet
 
-object TextFormatter {
+internal object TextFormatter {
   private val options by lazy { MutableDataSet().apply { set(HtmlRenderer.SOFT_BREAK, "<br />\n") } }
   private val parser by lazy { Parser.builder(options).build() }
   private val renderer by lazy { HtmlRenderer.builder(options).build() }

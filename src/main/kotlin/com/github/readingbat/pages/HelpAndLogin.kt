@@ -28,8 +28,8 @@ import com.github.readingbat.common.Endpoints.PASSWORD_RESET_ENDPOINT
 import com.github.readingbat.common.Endpoints.USER_PREFS_ENDPOINT
 import com.github.readingbat.common.FormFields.EMAIL
 import com.github.readingbat.common.FormFields.PASSWORD
-import com.github.readingbat.server.User
-import com.github.readingbat.server.User.Companion.fetchPreviousTeacherClassCode
+import com.github.readingbat.common.User
+import com.github.readingbat.common.User.Companion.fetchPreviousTeacherClassCode
 import kotlinx.html.*
 import redis.clients.jedis.Jedis
 

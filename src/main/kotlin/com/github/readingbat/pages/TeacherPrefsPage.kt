@@ -17,13 +17,12 @@
 
 package com.github.readingbat.pages
 
+import com.github.readingbat.common.*
 import com.github.readingbat.common.CSSNames.INDENT_2EM
-import com.github.readingbat.common.ClassCode
 import com.github.readingbat.common.Constants.LABEL_WIDTH
 import com.github.readingbat.common.Constants.RETURN_PATH
 import com.github.readingbat.common.Endpoints.TEACHER_PREFS_ENDPOINT
 import com.github.readingbat.common.Endpoints.TEACHER_PREFS_POST_ENDPOINT
-import com.github.readingbat.common.FormFields
 import com.github.readingbat.common.FormFields.CLASSES_CHOICE
 import com.github.readingbat.common.FormFields.CLASS_CODE_NAME
 import com.github.readingbat.common.FormFields.CREATE_CLASS
@@ -31,8 +30,8 @@ import com.github.readingbat.common.FormFields.DELETE_CLASS
 import com.github.readingbat.common.FormFields.DISABLED_MODE
 import com.github.readingbat.common.FormFields.UPDATE_ACTIVE_CLASS
 import com.github.readingbat.common.FormFields.USER_PREFS_ACTION
-import com.github.readingbat.common.Message
 import com.github.readingbat.common.Message.Companion.EMPTY_MESSAGE
+import com.github.readingbat.common.User.Companion.fetchActiveClassCode
 import com.github.readingbat.pages.HelpAndLogin.helpAndLogin
 import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyTitle
@@ -43,11 +42,7 @@ import com.github.readingbat.pages.PageUtils.privacyStatement
 import com.github.readingbat.pages.PageUtils.rawHtml
 import com.github.readingbat.pages.UserPrefsPage.requestLogInPage
 import com.github.readingbat.server.PipelineCall
-import com.github.readingbat.server.ReadingBatContent
 import com.github.readingbat.server.ServerUtils.queryParam
-import com.github.readingbat.server.User
-import com.github.readingbat.server.User.Companion.fetchActiveClassCode
-import com.github.readingbat.server.isValidUser
 import kotlinx.html.BODY
 import kotlinx.html.Entities.nbsp
 import kotlinx.html.FormMethod

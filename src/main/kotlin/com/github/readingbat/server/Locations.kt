@@ -30,6 +30,7 @@ import com.github.readingbat.common.KeyConstants.USER_EMAIL_KEY
 import com.github.readingbat.common.Metrics
 import com.github.readingbat.common.Metrics.Companion.GET
 import com.github.readingbat.common.Metrics.Companion.POST
+import com.github.readingbat.common.ReadingBatContent
 import com.github.readingbat.dsl.InvalidPathException
 import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.dsl.LanguageType.Java

@@ -28,6 +28,9 @@ import com.github.readingbat.common.Constants.MSG
 import com.github.readingbat.common.Constants.STATIC_ROOT
 import com.github.readingbat.common.Constants.WHITE_CHECK
 import com.github.readingbat.common.Message
+import com.github.readingbat.common.ReadingBatContent
+import com.github.readingbat.common.User
+import com.github.readingbat.common.User.Companion.fetchActiveClassCode
 import com.github.readingbat.dsl.ChallengeGroup
 import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.pages.ChallengeGroupPage.displayClassDescription
@@ -36,11 +39,8 @@ import com.github.readingbat.pages.PageUtils.bodyHeader
 import com.github.readingbat.pages.PageUtils.headDefault
 import com.github.readingbat.pages.PageUtils.rawHtml
 import com.github.readingbat.server.PipelineCall
-import com.github.readingbat.server.ReadingBatContent
 import com.github.readingbat.server.ServerUtils.queryParam
 import com.github.readingbat.server.ServerUtils.rows
-import com.github.readingbat.server.User
-import com.github.readingbat.server.User.Companion.fetchActiveClassCode
 import io.ktor.application.*
 import io.ktor.sessions.*
 import kotlinx.html.Entities.nbsp

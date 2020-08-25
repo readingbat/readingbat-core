@@ -17,9 +17,9 @@
 
 package com.github.readingbat.pages
 
+import com.github.readingbat.common.*
 import com.github.readingbat.common.CSSNames.INDENT_1EM
 import com.github.readingbat.common.CSSNames.INDENT_2EM
-import com.github.readingbat.common.ClassCode
 import com.github.readingbat.common.ClassCode.Companion.DISABLED_CLASS_CODE
 import com.github.readingbat.common.Constants.LABEL_WIDTH
 import com.github.readingbat.common.Constants.RETURN_PATH
@@ -39,8 +39,9 @@ import com.github.readingbat.common.FormFields.NEW_PASSWORD
 import com.github.readingbat.common.FormFields.UPDATE_PASSWORD
 import com.github.readingbat.common.FormFields.USER_PREFS_ACTION
 import com.github.readingbat.common.FormFields.WITHDRAW_FROM_CLASS
-import com.github.readingbat.common.Message
 import com.github.readingbat.common.Message.Companion.EMPTY_MESSAGE
+import com.github.readingbat.common.User.Companion.fetchActiveClassCode
+import com.github.readingbat.common.User.Companion.fetchEnrolledClassCode
 import com.github.readingbat.dsl.isProduction
 import com.github.readingbat.pages.HelpAndLogin.helpAndLogin
 import com.github.readingbat.pages.PageUtils.backLink
@@ -51,12 +52,7 @@ import com.github.readingbat.pages.PageUtils.headDefault
 import com.github.readingbat.pages.PageUtils.hideShowButton
 import com.github.readingbat.pages.PageUtils.privacyStatement
 import com.github.readingbat.server.PipelineCall
-import com.github.readingbat.server.ReadingBatContent
 import com.github.readingbat.server.ServerUtils.queryParam
-import com.github.readingbat.server.User
-import com.github.readingbat.server.User.Companion.fetchActiveClassCode
-import com.github.readingbat.server.User.Companion.fetchEnrolledClassCode
-import com.github.readingbat.server.isValidUser
 import kotlinx.html.BODY
 import kotlinx.html.FormMethod
 import kotlinx.html.InputType

@@ -18,7 +18,7 @@
 package com.github.readingbat.posts
 
 import com.github.pambrose.common.util.encode
-import com.github.readingbat.common.BrowserSession
+import com.github.readingbat.common.*
 import com.github.readingbat.common.Constants.INVALID_RESET_ID
 import com.github.readingbat.common.Constants.MSG
 import com.github.readingbat.common.Constants.RESET_ID
@@ -28,18 +28,20 @@ import com.github.readingbat.common.Endpoints.PASSWORD_RESET_ENDPOINT
 import com.github.readingbat.common.FormFields.CONFIRM_PASSWORD
 import com.github.readingbat.common.FormFields.EMAIL
 import com.github.readingbat.common.FormFields.NEW_PASSWORD
-import com.github.readingbat.common.Message
+import com.github.readingbat.common.User.Companion.isRegisteredEmail
+import com.github.readingbat.common.User.Companion.lookupUserByEmail
 import com.github.readingbat.pages.PasswordResetPage.passwordResetPage
 import com.github.readingbat.posts.CreateAccountPost.checkPassword
-import com.github.readingbat.server.*
+import com.github.readingbat.server.Email
 import com.github.readingbat.server.Email.Companion.getEmail
 import com.github.readingbat.server.Password.Companion.getPassword
+import com.github.readingbat.server.PipelineCall
+import com.github.readingbat.server.RedirectException
+import com.github.readingbat.server.ResetId
 import com.github.readingbat.server.ResetId.Companion.EMPTY_RESET_ID
 import com.github.readingbat.server.ResetId.Companion.getResetId
 import com.github.readingbat.server.ResetId.Companion.newResetId
 import com.github.readingbat.server.ServerUtils.queryParam
-import com.github.readingbat.server.User.Companion.isRegisteredEmail
-import com.github.readingbat.server.User.Companion.lookupUserByEmail
 import com.google.common.util.concurrent.RateLimiter
 import io.ktor.application.*
 import io.ktor.request.*

@@ -19,11 +19,11 @@ package com.github.readingbat.pages
 
 import com.github.readingbat.common.Constants
 import com.github.readingbat.common.Constants.DBMS_DOWN
+import com.github.readingbat.common.ReadingBatContent
 import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyTitle
 import com.github.readingbat.pages.PageUtils.headDefault
 import com.github.readingbat.server.PipelineCall
-import com.github.readingbat.server.ReadingBatContent
 import com.github.readingbat.server.ServerUtils.queryParam
 import kotlinx.html.body
 import kotlinx.html.h2

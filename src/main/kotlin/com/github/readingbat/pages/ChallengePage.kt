@@ -18,7 +18,7 @@
 package com.github.readingbat.pages
 
 import com.github.pambrose.common.util.*
-import com.github.readingbat.common.BrowserSession
+import com.github.readingbat.common.*
 import com.github.readingbat.common.CSSNames.ARROW
 import com.github.readingbat.common.CSSNames.CHALLENGE_DESC
 import com.github.readingbat.common.CSSNames.CHECK_ANSWERS
@@ -33,7 +33,6 @@ import com.github.readingbat.common.CSSNames.LIKE_BUTTONS
 import com.github.readingbat.common.CSSNames.STATUS
 import com.github.readingbat.common.CSSNames.SUCCESS
 import com.github.readingbat.common.CSSNames.USER_RESP
-import com.github.readingbat.common.ClassCode
 import com.github.readingbat.common.CommonUtils.pathOf
 import com.github.readingbat.common.Constants.CHALLENGE_ROOT
 import com.github.readingbat.common.Constants.CORRECT_COLOR
@@ -54,7 +53,6 @@ import com.github.readingbat.common.FormFields.CHALLENGE_NAME_KEY
 import com.github.readingbat.common.FormFields.GROUP_NAME_KEY
 import com.github.readingbat.common.FormFields.LANGUAGE_NAME_KEY
 import com.github.readingbat.common.KeyConstants.CORRECT_ANSWERS_KEY
-import com.github.readingbat.common.Message
 import com.github.readingbat.common.ParameterIds.DISLIKE_CLEAR
 import com.github.readingbat.common.ParameterIds.DISLIKE_COLOR
 import com.github.readingbat.common.ParameterIds.FEEDBACK_ID
@@ -67,6 +65,12 @@ import com.github.readingbat.common.ParameterIds.NEXTPREVCHANCE_ID
 import com.github.readingbat.common.ParameterIds.SPINNER_ID
 import com.github.readingbat.common.ParameterIds.STATUS_ID
 import com.github.readingbat.common.ParameterIds.SUCCESS_ID
+import com.github.readingbat.common.User.Companion.challengeAnswersKey
+import com.github.readingbat.common.User.Companion.correctAnswersKey
+import com.github.readingbat.common.User.Companion.fetchActiveClassCode
+import com.github.readingbat.common.User.Companion.fetchPreviousAnswers
+import com.github.readingbat.common.User.Companion.gson
+import com.github.readingbat.common.User.Companion.likeDislikeKey
 import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.pages.CheckAnswersJs.checkAnswersScript
 import com.github.readingbat.pages.LikeDislikeJs.likeDislikeScript
@@ -76,14 +80,9 @@ import com.github.readingbat.pages.PageUtils.bodyHeader
 import com.github.readingbat.pages.PageUtils.headDefault
 import com.github.readingbat.pages.PageUtils.rawHtml
 import com.github.readingbat.posts.ChallengeHistory
-import com.github.readingbat.server.*
+import com.github.readingbat.server.ChallengeMd5
+import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
-import com.github.readingbat.server.User.Companion.challengeAnswersKey
-import com.github.readingbat.server.User.Companion.correctAnswersKey
-import com.github.readingbat.server.User.Companion.fetchActiveClassCode
-import com.github.readingbat.server.User.Companion.fetchPreviousAnswers
-import com.github.readingbat.server.User.Companion.gson
-import com.github.readingbat.server.User.Companion.likeDislikeKey
 import io.ktor.application.*
 import io.ktor.http.ContentType.Text.CSS
 import io.ktor.sessions.*

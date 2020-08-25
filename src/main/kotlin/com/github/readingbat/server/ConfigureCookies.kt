@@ -23,7 +23,7 @@ import com.github.readingbat.common.UserPrincipal
 import io.ktor.sessions.*
 import kotlin.collections.set
 
-private object ConfigureCookies {
+internal object ConfigureCookies {
 
   fun Sessions.Configuration.configureSessionIdCookie() {
     cookie<BrowserSession>("readingbat_session_id") {

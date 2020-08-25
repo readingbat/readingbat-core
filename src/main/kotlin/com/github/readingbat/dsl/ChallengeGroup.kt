@@ -27,7 +27,6 @@ import com.github.readingbat.dsl.GitHubUtils.userDirectoryContents
 import com.github.readingbat.dsl.ReturnType.Runtime
 import com.github.readingbat.server.ChallengeName
 import com.github.readingbat.server.GroupName
-import com.github.readingbat.server.TextFormatter
 import mu.KLogging
 import java.io.File
 import kotlin.reflect.KProperty

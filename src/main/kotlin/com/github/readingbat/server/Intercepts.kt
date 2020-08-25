@@ -20,6 +20,7 @@ package com.github.readingbat.server
 import com.github.pambrose.common.util.isNotNull
 import com.github.readingbat.common.BrowserSession
 import com.github.readingbat.common.Constants.STATIC
+import com.github.readingbat.common.SessionActivity
 import com.github.readingbat.common.UserPrincipal
 import io.ktor.application.*
 import io.ktor.http.*

@@ -32,6 +32,7 @@ import com.github.readingbat.common.FormFields.UPDATE_PASSWORD
 import com.github.readingbat.common.FormFields.USER_PREFS_ACTION
 import com.github.readingbat.common.Message
 import com.github.readingbat.common.Message.Companion.EMPTY_MESSAGE
+import com.github.readingbat.common.ReadingBatContent
 import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyTitle
 import com.github.readingbat.pages.PageUtils.clickButtonScript
@@ -42,7 +43,6 @@ import com.github.readingbat.pages.PageUtils.privacyStatement
 import com.github.readingbat.posts.PasswordResetPost.ResetPasswordException
 import com.github.readingbat.server.Email
 import com.github.readingbat.server.PipelineCall
-import com.github.readingbat.server.ReadingBatContent
 import com.github.readingbat.server.ResetId
 import com.github.readingbat.server.ServerUtils.queryParam
 import kotlinx.html.FormMethod

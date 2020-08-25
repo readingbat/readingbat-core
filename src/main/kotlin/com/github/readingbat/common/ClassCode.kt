@@ -25,8 +25,7 @@ import com.github.readingbat.common.KeyConstants.CLASS_CODE_KEY
 import com.github.readingbat.common.KeyConstants.CLASS_INFO_KEY
 import com.github.readingbat.common.KeyConstants.DESC_FIELD
 import com.github.readingbat.common.KeyConstants.TEACHER_FIELD
-import com.github.readingbat.server.User
-import com.github.readingbat.server.User.Companion.toUser
+import com.github.readingbat.common.User.Companion.toUser
 import com.github.readingbat.server.keyOf
 import io.ktor.http.*
 import redis.clients.jedis.Jedis

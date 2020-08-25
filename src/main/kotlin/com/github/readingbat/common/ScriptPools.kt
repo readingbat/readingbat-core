@@ -15,7 +15,7 @@
  *
  */
 
-package com.github.readingbat.server
+package com.github.readingbat.common
 
 import com.github.pambrose.common.script.JavaScriptPool
 import com.github.pambrose.common.script.KotlinScriptPool

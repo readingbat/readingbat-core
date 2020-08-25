@@ -17,8 +17,8 @@
 
 package com.github.readingbat.posts
 
+import com.github.readingbat.common.*
 import com.github.readingbat.common.ClassCode.Companion.getClassCode
-import com.github.readingbat.common.DataException
 import com.github.readingbat.common.FormFields.CLASS_CODE_NAME
 import com.github.readingbat.common.FormFields.CONFIRM_PASSWORD
 import com.github.readingbat.common.FormFields.CURR_PASSWORD
@@ -28,18 +28,13 @@ import com.github.readingbat.common.FormFields.NEW_PASSWORD
 import com.github.readingbat.common.FormFields.UPDATE_PASSWORD
 import com.github.readingbat.common.FormFields.USER_PREFS_ACTION
 import com.github.readingbat.common.FormFields.WITHDRAW_FROM_CLASS
-import com.github.readingbat.common.Message
-import com.github.readingbat.common.UserPrincipal
+import com.github.readingbat.common.User.Companion.fetchEnrolledClassCode
 import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.pages.UserPrefsPage.requestLogInPage
 import com.github.readingbat.pages.UserPrefsPage.userPrefsPage
 import com.github.readingbat.posts.CreateAccountPost.checkPassword
 import com.github.readingbat.server.Password.Companion.getPassword
 import com.github.readingbat.server.PipelineCall
-import com.github.readingbat.server.ReadingBatContent
-import com.github.readingbat.server.User
-import com.github.readingbat.server.User.Companion.fetchEnrolledClassCode
-import com.github.readingbat.server.isValidUser
 import io.ktor.application.*
 import io.ktor.http.*
 import io.ktor.request.*

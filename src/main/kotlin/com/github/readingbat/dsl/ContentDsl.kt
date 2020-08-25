@@ -24,9 +24,9 @@ import com.github.pambrose.common.util.OwnerType
 import com.github.readingbat.common.Constants.AGENT_ENABLED
 import com.github.readingbat.common.Constants.AGENT_LAUNCH_ID
 import com.github.readingbat.common.Constants.IS_PRODUCTION
-import com.github.readingbat.server.ReadingBatContent
+import com.github.readingbat.common.ReadingBatContent
+import com.github.readingbat.common.ScriptPools.kotlinScriptPool
 import com.github.readingbat.server.ReadingBatServer
-import com.github.readingbat.server.ScriptPools.kotlinScriptPool
 import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
 import kotlin.reflect.KFunction

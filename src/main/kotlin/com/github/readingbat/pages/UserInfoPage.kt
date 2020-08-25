@@ -19,21 +19,17 @@ package com.github.readingbat.pages
 
 import com.github.pambrose.common.util.isNull
 import com.github.pambrose.common.util.pluralize
-import com.github.readingbat.common.BrowserSession
+import com.github.readingbat.common.*
 import com.github.readingbat.common.Constants.RETURN_PATH
 import com.github.readingbat.common.KeyConstants.KEY_SEP
-import com.github.readingbat.common.Message
 import com.github.readingbat.common.Message.Companion.EMPTY_MESSAGE
-import com.github.readingbat.common.UserPrincipal
 import com.github.readingbat.pages.HelpAndLogin.helpAndLogin
 import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyTitle
 import com.github.readingbat.pages.PageUtils.displayMessage
 import com.github.readingbat.pages.PageUtils.headDefault
 import com.github.readingbat.server.PipelineCall
-import com.github.readingbat.server.ReadingBatContent
 import com.github.readingbat.server.ServerUtils.queryParam
-import com.github.readingbat.server.User
 import io.ktor.application.*
 import io.ktor.sessions.*
 import kotlinx.html.*
