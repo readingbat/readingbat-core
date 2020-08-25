@@ -193,7 +193,7 @@ internal fun Application.module() {
   routing {
     adminRoutes(metrics)
     locations(metrics) { content.get() }
-    userRoutes(metrics, { content.get() })
+    userRoutes(metrics) { content.get() }
     sysAdminRoutes(metrics, { content.get() }, { assignContentDsl(fileName, variableName) })
     wsEndpoints(metrics) { content.get() }
     static(STATIC_ROOT) { resources("static") }
