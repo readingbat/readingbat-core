@@ -23,7 +23,7 @@ import redis.clients.jedis.Jedis
 import redis.clients.jedis.ScanParams
 import redis.clients.jedis.exceptions.JedisDataException
 
-internal object RedisRoutines {
+internal object RedisUtils {
 
   @JvmStatic
   fun main(args: Array<String>) {
@@ -55,18 +55,19 @@ internal object RedisRoutines {
   private fun showAll() {
     withRedis { redis ->
       if (redis.isNotNull()) {
-        println(redis.scanKeys("*")
-                  .joinToString("\n") {
-                    try {
-                      "$it - ${redis[it]}"
-                    } catch (e: JedisDataException) {
-                      try {
-                        "$it - ${redis.hgetAll(it)}"
-                      } catch (e: JedisDataException) {
-                        "$it - ${redis.smembers(it)}"
-                      }
-                    }
-                  })
+        println(
+          redis.scanKeys("*")
+            .joinToString("\n") {
+              try {
+                "$it - ${redis[it]}"
+              } catch (e: JedisDataException) {
+                try {
+                  "$it - ${redis.hgetAll(it)}"
+                } catch (e: JedisDataException) {
+                  "$it - ${redis.smembers(it)}"
+                }
+              }
+            })
       }
     }
   }

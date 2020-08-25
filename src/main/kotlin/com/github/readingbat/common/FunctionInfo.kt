@@ -51,10 +51,6 @@ internal class FunctionInfo(private val challenge: Challenge,
       }
     }
 
-  val challengeName get() = challenge.challengeName
-  val groupName get() = challenge.challengeGroup.groupName
-  val languageType get() = challenge.challengeGroup.languageType
-
   val placeHolder by lazy {
     when (returnType) {
       BooleanType -> if (languageType.isPython) "True" else "true"
@@ -66,6 +62,10 @@ internal class FunctionInfo(private val challenge: Challenge,
       Runtime -> throw InvalidConfigurationException("Invalid return type")
     }
   }
+
+  val challengeName get() = challenge.challengeName
+  val groupName get() = challenge.challengeGroup.groupName
+  val languageType get() = challenge.challengeGroup.languageType
 
   init {
     logger.debug { "In $challengeName return type: $returnType invocations: $invocations computed answers: $correctAnswers" }

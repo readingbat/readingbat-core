@@ -32,7 +32,7 @@ import com.github.readingbat.common.KeyConstants.USER_CLASSES_KEY
 import com.github.readingbat.common.KeyConstants.USER_INFO_BROWSER_KEY
 import com.github.readingbat.common.KeyConstants.USER_INFO_KEY
 import com.github.readingbat.common.KeyConstants.USER_RESET_KEY
-import com.github.readingbat.common.RedisRoutines.scanKeys
+import com.github.readingbat.common.RedisUtils.scanKeys
 import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.ReadingBatContent
