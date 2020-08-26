@@ -25,7 +25,7 @@ import com.github.readingbat.common.FormFields.ADMIN_ACTION
 import com.github.readingbat.common.FormFields.DELETE_ALL_DATA
 import com.github.readingbat.common.Message
 import com.github.readingbat.common.Message.Companion.EMPTY_MESSAGE
-import com.github.readingbat.common.RedisUtils.scanKeys
+import com.github.readingbat.common.RedisAdmin.scanKeys
 import com.github.readingbat.common.User
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.isProduction

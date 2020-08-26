@@ -17,14 +17,13 @@
 
 package com.github.readingbat.server
 
+import com.github.pambrose.common.redis.RedisUtils
 import com.github.pambrose.common.redis.RedisUtils.REDIS_MAX_IDLE_SIZE
 import com.github.pambrose.common.redis.RedisUtils.REDIS_MAX_POOL_SIZE
 import com.github.pambrose.common.redis.RedisUtils.REDIS_MIN_IDLE_SIZE
-import com.github.pambrose.common.util.FileSource
+import com.github.pambrose.common.util.*
 import com.github.pambrose.common.util.Version
 import com.github.pambrose.common.util.Version.Companion.versionDesc
-import com.github.pambrose.common.util.getBanner
-import com.github.pambrose.common.util.isNull
 import com.github.readingbat.common.Endpoints.STATIC_ROOT
 import com.github.readingbat.common.Metrics
 import com.github.readingbat.common.PropertyNames.AGENT_ENABLED
@@ -79,14 +78,25 @@ object ReadingBatServer : KLogging() {
   internal val adminUsers = mutableListOf<String>()
   internal val contentReadCount = AtomicInteger(0)
   internal val metrics by lazy { Metrics() }
+  internal val pool by lazy { RedisUtils.newJedisPool() }
 
   fun start(args: Array<String>) {
 
+    logger.apply {
+      info { getBanner("banners/readingbat.txt", this) }
+      info { ReadingBatServer::class.versionDesc() }
+    }
+
     // If kotlin.script.classpath property is missing, set it based on env var SCRIPT_CLASSPATH
+    // This has to take place before reading DSL
     if (System.getProperty("kotlin.script.classpath").isNull()) {
       val scriptClasspath = System.getenv("SCRIPT_CLASSPATH")
-        ?: throw InvalidConfigurationException("Missing kotlin.script.classpath or SCRIPT_CLASSPATH value")
-      System.setProperty("kotlin.script.classpath", scriptClasspath)
+      if (scriptClasspath.isNotNull()) {
+        logger.info { "Assigning kotlin.script.classpath = $scriptClasspath" }
+        System.setProperty("kotlin.script.classpath", scriptClasspath)
+      }
+      else
+        logger.warn { "Missing kotlin.script.classpath or SCRIPT_CLASSPATH value" }
     }
 
     // grab config filename from CLI args and then try ENV var
@@ -98,7 +108,6 @@ object ReadingBatServer : KLogging() {
         ?: System.getenv("AGENT_CONFIG")
         ?: System.getProperty("agent.config")
         ?: "src/main/resources/application.conf"
-
 
     logger.info { "Using configuration file: $configFilename" }
     System.setProperty(CONFIG_FILENAME, configFilename)
@@ -158,12 +167,6 @@ internal fun Application.module() {
   System.setProperty(REDIS_MAX_POOL_SIZE, property(REDIS_MAX_POOL_SIZE, default = "10"))
   System.setProperty(REDIS_MAX_IDLE_SIZE, property(REDIS_MAX_IDLE_SIZE, default = "5"))
   System.setProperty(REDIS_MIN_IDLE_SIZE, property(REDIS_MIN_IDLE_SIZE, default = "1"))
-
-  logger.apply {
-    info { getBanner("banners/readingbat.txt", this) }
-    info { ReadingBatServer::class.versionDesc() }
-  }
-
   System.setProperty(AGENT_ENABLED, agentEnabled.toString())
 
   if (isAgentEnabled()) {

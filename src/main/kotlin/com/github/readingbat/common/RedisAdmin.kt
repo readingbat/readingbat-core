@@ -23,7 +23,7 @@ import redis.clients.jedis.Jedis
 import redis.clients.jedis.ScanParams
 import redis.clients.jedis.exceptions.JedisDataException
 
-internal object RedisUtils {
+internal object RedisAdmin {
 
   @JvmStatic
   fun main(args: Array<String>) {

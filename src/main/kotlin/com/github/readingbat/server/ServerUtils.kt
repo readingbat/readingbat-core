@@ -17,7 +17,8 @@
 
 package com.github.readingbat.server
 
-import com.github.pambrose.common.redis.RedisUtils
+import com.github.pambrose.common.redis.RedisUtils.withRedisPool
+import com.github.pambrose.common.redis.RedisUtils.withSuspendingRedisPool
 import com.github.pambrose.common.response.redirectTo
 import com.github.pambrose.common.response.respondWith
 import com.github.pambrose.common.util.Version.Companion.versionDesc
@@ -32,6 +33,7 @@ import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.isProduction
 import com.github.readingbat.pages.DbmsDownPage.dbmsDownPage
+import com.github.readingbat.server.ReadingBatServer.pool
 import io.ktor.application.*
 import io.ktor.auth.*
 import io.ktor.config.*
@@ -76,7 +78,7 @@ internal object ServerUtils : KLogging() {
   suspend fun PipelineCall.respondWithDbmsCheck(content: ReadingBatContent, block: (redis: Jedis) -> String) =
     try {
       val html =
-        RedisUtils.withRedisPool { redis ->
+        pool.withRedisPool { redis ->
           if (redis.isNull())
             dbmsDownPage(content)
           else
@@ -91,7 +93,7 @@ internal object ServerUtils : KLogging() {
                                                           block: suspend (redis: Jedis) -> String) =
     try {
       val html =
-        RedisUtils.withSuspendingRedisPool { redis ->
+        pool.withSuspendingRedisPool { redis ->
           if (redis.isNull())
             dbmsDownPage(content)
           else
@@ -105,7 +107,7 @@ internal object ServerUtils : KLogging() {
   suspend fun PipelineCall.authenticatedAction(block: () -> String) =
     when {
       isProduction() ->
-        RedisUtils.withSuspendingRedisPool { redis ->
+        pool.withSuspendingRedisPool { redis ->
           val user = fetchUser()
           when {
             redis.isNull() -> Constants.DBMS_DOWN.value

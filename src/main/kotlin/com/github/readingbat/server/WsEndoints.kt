@@ -33,6 +33,7 @@ import com.github.readingbat.dsl.InvalidPathException
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.agentLaunchId
 import com.github.readingbat.posts.ChallengeHistory
+import com.github.readingbat.server.ReadingBatServer.pool
 import com.github.readingbat.server.ServerUtils.rows
 import io.ktor.http.cio.websocket.*
 import io.ktor.http.cio.websocket.CloseReason.*
@@ -86,7 +87,7 @@ internal object WsEndoints : KLogging() {
             .collect { frame ->
               val inboundMsg = frame.readText()
               // Check redis early to see if it is available
-              withRedisPool { redis ->
+              pool.withRedisPool { redis ->
                 if (redis.isNotNull()) {
                   val clock = TimeSource.Monotonic
                   val start = clock.markNow()
@@ -172,7 +173,7 @@ internal object WsEndoints : KLogging() {
             .mapNotNull { it as? Frame.Text }
             .collect { frame ->
               val inboundMsg = frame.readText()
-              withRedisPool { redis ->
+              pool.withRedisPool { redis ->
                 if (redis.isNotNull() && classCode.isEnabled) {
                   val enrollees = classCode.fetchEnrollees(redis)
                   if (enrollees.isNotEmpty()) {
