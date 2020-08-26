@@ -23,6 +23,7 @@ import com.github.readingbat.common.CSSNames.INDENT_1EM
 import com.github.readingbat.common.CSSNames.TD_PADDING
 import com.github.readingbat.common.Constants.RETURN_PATH
 import com.github.readingbat.common.Endpoints.USER_PREFS_ENDPOINT
+import com.github.readingbat.common.EnvVars.AGENT_CONFIG
 import com.github.readingbat.common.SessionActivity
 import com.github.readingbat.dsl.LanguageType.Java
 import com.github.readingbat.dsl.LanguageType.Kotlin
@@ -126,8 +127,8 @@ internal object ConfigPage {
                   td { +(System.getenv("JAVA_TOOL_OPTIONS") ?: "unassigned") }
                 }
                 tr {
-                  td { +"AGENT_CONFIG" }
-                  td { +(System.getenv("AGENT_CONFIG") ?: "unassigned") }
+                  td { +AGENT_CONFIG }
+                  td { +(System.getenv(AGENT_CONFIG) ?: "unassigned") }
                 }
               }
             }

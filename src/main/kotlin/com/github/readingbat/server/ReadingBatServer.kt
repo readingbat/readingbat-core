@@ -25,6 +25,8 @@ import com.github.pambrose.common.util.*
 import com.github.pambrose.common.util.Version
 import com.github.pambrose.common.util.Version.Companion.versionDesc
 import com.github.readingbat.common.Endpoints.STATIC_ROOT
+import com.github.readingbat.common.EnvVars.AGENT_CONFIG
+import com.github.readingbat.common.EnvVars.SCRIPT_CLASSPATH
 import com.github.readingbat.common.Metrics
 import com.github.readingbat.common.PropertyNames.AGENT_ENABLED
 import com.github.readingbat.common.PropertyNames.AGENT_LAUNCH_ID
@@ -91,29 +93,31 @@ object ReadingBatServer : KLogging() {
     // This has to take place before reading DSL
     val scriptClasspathProp = System.getProperty("kotlin.script.classpath")
     if (scriptClasspathProp.isNull()) {
-      val scriptClasspathEnvVar = System.getenv("SCRIPT_CLASSPATH")
+      val scriptClasspathEnvVar = System.getenv(SCRIPT_CLASSPATH)
       if (scriptClasspathEnvVar.isNotNull()) {
         logger.info { "Assigning kotlin.script.classpath = $scriptClasspathEnvVar" }
         System.setProperty("kotlin.script.classpath", scriptClasspathEnvVar)
       }
       else
-        logger.warn { "Missing kotlin.script.classpath or SCRIPT_CLASSPATH value" }
+        logger.warn { "Missing kotlin.script.classpath or $SCRIPT_CLASSPATH value" }
     }
     else {
-      logger.info { "kotlin.script.classpath = $scriptClasspathProp" }
+      logger.info { "kotlin.script.classpath: $scriptClasspathProp" }
     }
 
-    // grab config filename from CLI args and then try ENV var
+    logger.info { "REDIS_URL: ${System.getenv("REDIS_URL")}" }
+
+    // Grab config filename from CLI args and then try ENV var
     val configFilename =
       args.asSequence()
         .filter { it.startsWith("-config=") }
         .map { it.replaceFirst("-config=", "") }
         .firstOrNull()
-        ?: System.getenv("AGENT_CONFIG")
+        ?: System.getenv(AGENT_CONFIG)
         ?: System.getProperty("agent.config")
         ?: "src/main/resources/application.conf"
 
-    logger.info { "Using configuration file: $configFilename" }
+    logger.info { "Configuration file: $configFilename" }
     System.setProperty(CONFIG_FILENAME, configFilename)
 
     val newargs =
