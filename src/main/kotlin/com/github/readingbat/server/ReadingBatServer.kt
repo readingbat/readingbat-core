@@ -89,14 +89,18 @@ object ReadingBatServer : KLogging() {
 
     // If kotlin.script.classpath property is missing, set it based on env var SCRIPT_CLASSPATH
     // This has to take place before reading DSL
-    if (System.getProperty("kotlin.script.classpath").isNull()) {
-      val scriptClasspath = System.getenv("SCRIPT_CLASSPATH")
-      if (scriptClasspath.isNotNull()) {
-        logger.info { "Assigning kotlin.script.classpath = $scriptClasspath" }
-        System.setProperty("kotlin.script.classpath", scriptClasspath)
+    val scriptClasspathProp = System.getProperty("kotlin.script.classpath")
+    if (scriptClasspathProp.isNull()) {
+      val scriptClasspathEnvVar = System.getenv("SCRIPT_CLASSPATH")
+      if (scriptClasspathEnvVar.isNotNull()) {
+        logger.info { "Assigning kotlin.script.classpath = $scriptClasspathEnvVar" }
+        System.setProperty("kotlin.script.classpath", scriptClasspathEnvVar)
       }
       else
         logger.warn { "Missing kotlin.script.classpath or SCRIPT_CLASSPATH value" }
+    }
+    else {
+      logger.info { "kotlin.script.classpath = $scriptClasspathProp" }
     }
 
     // grab config filename from CLI args and then try ENV var
