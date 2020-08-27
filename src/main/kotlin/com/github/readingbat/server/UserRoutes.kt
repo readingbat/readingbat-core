@@ -43,6 +43,7 @@ import com.github.readingbat.common.Endpoints.PASSWORD_CHANGE_POST_ENDPOINT
 import com.github.readingbat.common.Endpoints.PASSWORD_RESET_ENDPOINT
 import com.github.readingbat.common.Endpoints.PASSWORD_RESET_POST_ENDPOINT
 import com.github.readingbat.common.Endpoints.PRIVACY_ENDPOINT
+import com.github.readingbat.common.Endpoints.ROBOTS_ENDPOINT
 import com.github.readingbat.common.Endpoints.ROOT
 import com.github.readingbat.common.Endpoints.SESSIONS_ENDPOINT
 import com.github.readingbat.common.Endpoints.STATIC_ROOT
@@ -80,6 +81,7 @@ import com.github.readingbat.posts.TeacherPrefsPost.enableTeacherMode
 import com.github.readingbat.posts.TeacherPrefsPost.teacherPrefs
 import com.github.readingbat.posts.UserPrefsPost.userPrefs
 import com.github.readingbat.server.ReadingBatServer.pool
+import com.github.readingbat.server.ResourceContent.getResourceAsText
 import com.github.readingbat.server.ServerUtils.authenticatedAction
 import com.github.readingbat.server.ServerUtils.defaultLanguageTab
 import com.github.readingbat.server.ServerUtils.fetchUser
@@ -87,7 +89,9 @@ import com.github.readingbat.server.ServerUtils.get
 import com.github.readingbat.server.ServerUtils.queryParam
 import com.github.readingbat.server.ServerUtils.respondWithDbmsCheck
 import com.github.readingbat.server.ServerUtils.respondWithSuspendingDbmsCheck
+import com.github.readingbat.server.StaticVals.robotsTxt
 import io.ktor.application.*
+import io.ktor.http.*
 import io.ktor.http.ContentType.Text.CSS
 import io.ktor.routing.*
 import io.ktor.sessions.*
@@ -240,4 +244,17 @@ internal fun Routing.userRoutes(metrics: Metrics, contentSrc: () -> ReadingBatCo
   get(FAV_ICON_ENDPOINT) {
     redirectTo { "$STATIC_ROOT/$ICONS/favicon.ico" }
   }
+
+  get(ROBOTS_ENDPOINT) {
+    respondWith(ContentType.Text.Plain) { robotsTxt }
+  }
 }
+
+private object StaticVals {
+  val robotsTxt by lazy { getResourceAsText("$STATIC_ROOT$ROBOTS_ENDPOINT") }
+}
+
+object ResourceContent {
+  fun getResourceAsText(path: String) = ResourceContent::class.java.getResource(path).readText()
+}
+

@@ -103,6 +103,7 @@ internal object Endpoints {
   const val PASSWORD_RESET_POST_ENDPOINT = "/password-reset-post"
   const val CSS_ENDPOINT = "/$STATIC/styles.css"
   const val FAV_ICON_ENDPOINT = "/favicon.ico"
+  const val ROBOTS_ENDPOINT = "/robots.txt"
   const val CHALLENGE_ENDPOINT = "/challenge"
   const val CHALLENGE_GROUP_ENDPOINT = "/challenge-group"
   const val CHECK_ANSWERS_ENDPOINT = "/check-answers"
