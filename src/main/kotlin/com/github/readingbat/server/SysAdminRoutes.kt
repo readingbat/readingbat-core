@@ -22,15 +22,21 @@ import com.github.pambrose.common.response.respondWith
 import com.github.readingbat.common.Constants.MSG
 import com.github.readingbat.common.Constants.RETURN_PATH
 import com.github.readingbat.common.Endpoints.GARBAGE_COLLECTOR_ENDPOINT
+import com.github.readingbat.common.Endpoints.LOAD_JAVA_ENDPOINT
+import com.github.readingbat.common.Endpoints.LOAD_KOTLIN_ENDPOINT
+import com.github.readingbat.common.Endpoints.LOAD_PYTHON_ENDPOINT
 import com.github.readingbat.common.Endpoints.MESSAGE_ENDPOINT
 import com.github.readingbat.common.Endpoints.RESET_CACHE_ENDPOINT
 import com.github.readingbat.common.Endpoints.RESET_CONTENT_ENDPOINT
 import com.github.readingbat.common.Endpoints.SYSTEM_ADMIN_ENDPOINT
 import com.github.readingbat.common.Metrics
+import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.pages.MessagePage.messagePage
 import com.github.readingbat.server.ServerUtils.authenticatedAction
 import com.github.readingbat.server.ServerUtils.get
+import io.ktor.application.*
+import io.ktor.http.*
 import io.ktor.routing.*
 import kotlin.time.measureTime
 
@@ -69,7 +75,23 @@ internal fun Routing.sysAdminRoutes(metrics: Metrics,
     redirectTo { "$MESSAGE_ENDPOINT?$MSG=$msg&$RETURN_PATH=$SYSTEM_ADMIN_ENDPOINT" }
   }
 
+  listOf(LOAD_JAVA_ENDPOINT to LanguageType.Java,
+         LOAD_PYTHON_ENDPOINT to LanguageType.Python,
+         LOAD_KOTLIN_ENDPOINT to LanguageType.Kotlin)
+    .forEach { pair ->
+      get(pair.first) {
+        val msg =
+          authenticatedAction {
+            contentSrc().loadChallenges(call.request.local.preUri, pair.second)
+          }
+        redirectTo { "$MESSAGE_ENDPOINT?$MSG=$msg&$RETURN_PATH=$SYSTEM_ADMIN_ENDPOINT" }
+      }
+    }
+
   get(MESSAGE_ENDPOINT, metrics) {
     respondWith { messagePage(contentSrc()) }
   }
 }
+
+// TODO Move this to utils
+private val RequestConnectionPoint.preUri get() = "$scheme://$host:$port"

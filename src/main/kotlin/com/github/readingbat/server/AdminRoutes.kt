@@ -24,6 +24,7 @@ import com.github.pambrose.common.util.isNull
 import com.github.pambrose.common.util.randomId
 import com.github.readingbat.common.AuthRoutes.COOKIES
 import com.github.readingbat.common.BrowserSession
+import com.github.readingbat.common.Constants.NO_TRACK
 import com.github.readingbat.common.Endpoints.PING
 import com.github.readingbat.common.Endpoints.THREAD_DUMP
 import com.github.readingbat.common.Metrics
@@ -133,6 +134,9 @@ internal object AdminRoutes : KLogging() {
   }
 
   fun PipelineCall.assignBrowserSession() {
+    if (call.request.headers.contains(NO_TRACK))
+      return
+
     val session = call.sessions.get<BrowserSession>()
     if (session.isNull()) {
       call.sessions.set(BrowserSession(id = randomId(15)))

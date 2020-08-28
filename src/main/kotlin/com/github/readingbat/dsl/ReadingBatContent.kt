@@ -17,10 +17,15 @@
 
 package com.github.readingbat.dsl
 
+import com.github.pambrose.common.dsl.KtorDsl.get
+import com.github.pambrose.common.dsl.KtorDsl.withHttpClient
 import com.github.pambrose.common.util.ContentRoot
 import com.github.pambrose.common.util.ContentSource
 import com.github.pambrose.common.util.FileSystemSource
+import com.github.pambrose.common.util.pluralize
+import com.github.readingbat.common.Constants.NO_TRACK
 import com.github.readingbat.common.FunctionInfo
+import com.github.readingbat.common.PropertyNames.CONTENT
 import com.github.readingbat.dsl.LanguageType.Java
 import com.github.readingbat.dsl.LanguageType.Kotlin
 import com.github.readingbat.dsl.LanguageType.Python
@@ -28,10 +33,16 @@ import com.github.readingbat.server.ChallengeName
 import com.github.readingbat.server.GroupName
 import com.github.readingbat.server.Language
 import com.github.readingbat.server.LanguageName
+import io.ktor.client.*
+import io.ktor.client.engine.cio.*
+import io.ktor.client.request.*
+import io.ktor.client.statement.*
+import kotlinx.coroutines.runBlocking
 import mu.KLogging
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.time.measureTime
 
 
 @ReadingBatDslMarker
@@ -158,6 +169,35 @@ class ReadingBatContent {
   internal fun checkLanguage(languageType: LanguageType) {
     if (languageType !in this || this[languageType].isEmpty())
       throw InvalidConfigurationException("Invalid language: $languageType")
+  }
+
+  internal fun loadChallenges(prefix: String, languageType: LanguageType): String {
+    var cnt = 0
+    val dur =
+      measureTime {
+        findLanguage(languageType).challengeGroups.forEach { challengeGroup ->
+          challengeGroup.challenges.forEach { challenge ->
+            HttpClient(CIO)
+              .use {
+                runBlocking {
+                  withHttpClient(it) {
+                    val lang = languageType.languageName.value
+                    val group = challengeGroup.groupName.value
+                    val ch = challenge.challengeName.value
+                    val url = "$prefix/$CONTENT/$lang/$group/$ch"
+                    logger.info { "Fetching: $url" }
+                    get(url, setUp = { header(NO_TRACK, "") }) { response ->
+                      val body = response.readText()
+                      logger.info { "Response: ${response.status} ${body.length} chars" }
+                      cnt++
+                    }
+                  }
+                }
+              }
+          }
+        }
+      }
+    return "$cnt $languageType ${"exercise".pluralize(cnt)} loaded in $dur"
   }
 
   fun evalContent(contentSource: ContentSource, variableName: String): ReadingBatContent =

@@ -43,6 +43,8 @@ internal object Constants {
   const val PROCESS_USER_ANSWERS_JS_FUNC = "processUserAnswers"
   const val LIKE_DISLIKE_JS_FUNC = "likeDislike"
 
+  const val NO_TRACK = "NO_TRACK"
+
   val DBMS_DOWN = Message("Database is down", true)
 }
 
@@ -57,7 +59,7 @@ internal object PropertyNames {
   internal const val SITE = "site"
   private const val AGENT = "agent"
   private const val CLASSES = "classes"
-  private const val CONTENT = "content"
+  internal const val CONTENT = "content"
   internal const val CHALLENGES = "challenges"
 
   const val CONFIG_FILENAME = "$READING_BAT.configFilename"
@@ -114,6 +116,9 @@ internal object Endpoints {
   const val RESET_CONTENT_ENDPOINT = "/reset-content"
   const val RESET_CACHE_ENDPOINT = "/reset-cache"
   const val GARBAGE_COLLECTOR_ENDPOINT = "/garbage-collector"
+  const val LOAD_JAVA_ENDPOINT = "/load-java"
+  const val LOAD_PYTHON_ENDPOINT = "/load-python"
+  const val LOAD_KOTLIN_ENDPOINT = "/load-kotlin"
   const val PING = "/ping"
   const val THREAD_DUMP = "/threaddump"
   const val LOGOUT_ENDPOINT = "/logout"

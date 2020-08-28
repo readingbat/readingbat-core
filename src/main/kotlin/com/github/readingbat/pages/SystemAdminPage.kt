@@ -19,6 +19,9 @@ package com.github.readingbat.pages
 
 import com.github.readingbat.common.Constants.RETURN_PATH
 import com.github.readingbat.common.Endpoints.GARBAGE_COLLECTOR_ENDPOINT
+import com.github.readingbat.common.Endpoints.LOAD_JAVA_ENDPOINT
+import com.github.readingbat.common.Endpoints.LOAD_KOTLIN_ENDPOINT
+import com.github.readingbat.common.Endpoints.LOAD_PYTHON_ENDPOINT
 import com.github.readingbat.common.Endpoints.RESET_CACHE_ENDPOINT
 import com.github.readingbat.common.Endpoints.RESET_CONTENT_ENDPOINT
 import com.github.readingbat.common.Endpoints.USER_PREFS_ENDPOINT
@@ -32,7 +35,7 @@ import com.github.readingbat.dsl.isProduction
 import com.github.readingbat.pages.HelpAndLogin.helpAndLogin
 import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyTitle
-import com.github.readingbat.pages.PageUtils.button
+import com.github.readingbat.pages.PageUtils.confirmingButton
 import com.github.readingbat.pages.PageUtils.headDefault
 import com.github.readingbat.pages.UserPrefsPage.requestLogInPage
 import com.github.readingbat.server.PipelineCall
@@ -78,21 +81,39 @@ internal object SystemAdminPage : KLogging() {
           if (!isProduction() || user.isAdmin(redis)) {
 
             p {
-              this@body.button("Reset ReadingBat Content",
-                               RESET_CONTENT_ENDPOINT,
-                               "Are you sure you want to reset the content? (This can take a while)")
+              this@body.confirmingButton("Reset ReadingBat Content",
+                                         RESET_CONTENT_ENDPOINT,
+                                         "Are you sure you want to reset the content? (This can take a while)")
             }
 
             p {
-              this@body.button("Reset Challenges Cache",
-                               RESET_CACHE_ENDPOINT,
-                               "Are you sure you want to reset the challenges cache?")
+              this@body.confirmingButton("Reset Challenges Cache",
+                                         RESET_CACHE_ENDPOINT,
+                                         "Are you sure you want to reset the challenges cache?")
             }
 
             p {
-              this@body.button("Run Garbage Collector",
-                               GARBAGE_COLLECTOR_ENDPOINT,
-                               "Are you sure you want to run the garbage collector?")
+              this@body.confirmingButton("Load all the Java Challenges",
+                                         LOAD_JAVA_ENDPOINT,
+                                         "Are you sure you want to load all the java challenges? (This can take a while)")
+            }
+
+            p {
+              this@body.confirmingButton("Load all the Python Challenges",
+                                         LOAD_PYTHON_ENDPOINT,
+                                         "Are you sure you want to load all the python challenges? (This can take a while)")
+            }
+
+            p {
+              this@body.confirmingButton("Load all the Kotlin Challenges",
+                                         LOAD_KOTLIN_ENDPOINT,
+                                         "Are you sure you want to load all the kotlin challenges? (This can take a while)")
+            }
+
+            p {
+              this@body.confirmingButton("Run Garbage Collector",
+                                         GARBAGE_COLLECTOR_ENDPOINT,
+                                         "Are you sure you want to run the garbage collector?")
             }
 
             if (content.grafanaUrl.isNotBlank())

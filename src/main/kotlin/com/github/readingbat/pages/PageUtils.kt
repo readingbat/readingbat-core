@@ -158,7 +158,7 @@ internal object PageUtils {
     }
   }
 
-  internal fun BODY.button(text: String, endpoint: String, msg: String) {
+  internal fun BODY.confirmingButton(text: String, endpoint: String, msg: String) {
     form {
       style = "margin:0;"
       action = endpoint

@@ -18,11 +18,12 @@ Setup:
 * Open in jvisualvm with file: File->Load... 
 * https://devcenter.heroku.com/articles/exec#using-java-debugging-tools
 
-## Prometheus Note
+## Prometheus Notes
 * Edit /etc/prometheus/prometheus.yml
 * Reset with: sudo systemctl reload prometheus.service
 * Digital Ocean notes: https://marketplace.digitalocean.com/apps/prometheus?ipAddress=167.172.200.129#getting-started
 * Prometheus admin: http://metrics.readingbat.com:9090/graph
 
 
-
+## Grafana Notes
+* JVM dashboard is here: https://grafana.com/grafana/dashboards/8563
