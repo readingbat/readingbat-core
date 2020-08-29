@@ -62,7 +62,7 @@ internal object Installs : KLogging() {
       pingPeriodMillis = 5000L   // Duration between pings or `0` to disable pings
     }
 
-    if (production) {
+    if (production && urlPrefix.isNotBlank()) {
       install(HerokuHttpsRedirect) {
         host = urlPrefix.substringAfter("://")
         permanentRedirect = false
