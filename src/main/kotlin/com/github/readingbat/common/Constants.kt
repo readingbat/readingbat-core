@@ -48,12 +48,6 @@ internal object Constants {
   val DBMS_DOWN = Message("Database is down", true)
 }
 
-internal object EnvVars {
-  internal const val AGENT_CONFIG = "AGENT_CONFIG"
-  internal const val SCRIPT_CLASSPATH = "SCRIPT_CLASSPATH"
-  internal const val SENDGRID_API_KEY = "SENDGRID_API_KEY"
-}
-
 internal object PropertyNames {
   internal const val READING_BAT = "readingbat"
   internal const val SITE = "site"

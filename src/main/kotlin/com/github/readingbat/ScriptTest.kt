@@ -19,14 +19,31 @@ package com.github.readingbat
 
 import com.github.pambrose.common.script.JavaScript
 import com.github.pambrose.common.script.PythonScript
+import com.github.readingbat.common.Limiter
 import com.github.readingbat.dsl.parse.KotlinParse
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import javax.script.*
 import kotlin.reflect.typeOf
 import kotlin.time.measureTime
+import kotlin.time.seconds
 
 fun main() {
-  (0 until 5).forEach { println(it) }
-  repeat(5) { println(it) }
+  val limiter = Limiter(3)
+
+  runBlocking {
+    repeat(100) {
+      println("Firing off $it")
+      launch {
+        limiter.request {
+          println("I am here $it")
+          delay(5.seconds)
+        }
+      }
+    }
+  }
+
 }
 
 fun javaTest() {

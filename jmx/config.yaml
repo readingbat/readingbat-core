@@ -1,0 +1,12 @@
+jmx:
+  default_beans:
+    - query: "java.lang:type=Memory"
+      attributes:
+        - HeapMemoryUsage
+        - NonHeapMemoryUsage
+    - query: "java.lang:type=GarbageCollector,*"
+      attributes:
+        - name: "CollectionCount"
+          type: "counter"
+        - name: "CollectionTime"
+          type: "counter"

@@ -42,6 +42,7 @@ import mu.KLogging
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.measureTime
 
 
@@ -171,33 +172,37 @@ class ReadingBatContent {
       throw InvalidConfigurationException("Invalid language: $languageType")
   }
 
-  internal fun loadChallenges(prefix: String, languageType: LanguageType): String {
-    var cnt = 0
+  internal fun loadChallenges(prefix: String, languageType: LanguageType, useWebApi: Boolean = true): String {
+    val cnt = AtomicInteger(0)
     val dur =
       measureTime {
-        findLanguage(languageType).challengeGroups.forEach { challengeGroup ->
-          challengeGroup.challenges.forEach { challenge ->
-            HttpClient(CIO)
-              .use {
-                runBlocking {
-                  withHttpClient(it) {
-                    val lang = languageType.languageName.value
-                    val group = challengeGroup.groupName.value
-                    val ch = challenge.challengeName.value
-                    val url = "$prefix/$CONTENT/$lang/$group/$ch"
-                    logger.info { "Fetching: $url" }
-                    get(url, setUp = { header(NO_TRACK, "") }) { response ->
-                      val body = response.readText()
-                      logger.info { "Response: ${response.status} ${body.length} chars" }
-                      cnt++
+        runBlocking {
+          findLanguage(languageType).challengeGroups.forEach { challengeGroup ->
+            challengeGroup.challenges.forEach { challenge ->
+              if (useWebApi) {
+                HttpClient(CIO)
+                  .use { httpClient ->
+                    withHttpClient(httpClient) {
+                      val url = "$prefix/$CONTENT/${challenge.path}"
+                      logger.info { "Fetching: $url" }
+                      get(url, setUp = { header(NO_TRACK, "") }) { response ->
+                        val body = response.readText()
+                        logger.info { "Response: ${response.status} ${body.length} chars" }
+                        cnt.incrementAndGet()
+                      }
                     }
                   }
-                }
               }
+              else {
+                logger.info { "Loading: ${challenge.path}" }
+                challenge.functionInfo(this@ReadingBatContent)
+                cnt.incrementAndGet()
+              }
+            }
           }
         }
       }
-    return "$cnt $languageType ${"exercise".pluralize(cnt)} loaded in $dur"
+    return "${cnt.get()} $languageType ${"exercise".pluralize(cnt.get())} loaded in $dur"
   }
 
   fun evalContent(contentSource: ContentSource, variableName: String): ReadingBatContent =

@@ -26,6 +26,7 @@ import com.github.pambrose.common.util.Version
 import com.github.pambrose.common.util.Version.Companion.versionDesc
 import com.github.readingbat.common.Endpoints.STATIC_ROOT
 import com.github.readingbat.common.EnvVars.AGENT_CONFIG
+import com.github.readingbat.common.EnvVars.REDIS_URL
 import com.github.readingbat.common.EnvVars.SCRIPT_CLASSPATH
 import com.github.readingbat.common.Metrics
 import com.github.readingbat.common.PropertyNames.AGENT_ENABLED
@@ -44,6 +45,7 @@ import com.github.readingbat.common.PropertyNames.READING_BAT
 import com.github.readingbat.common.PropertyNames.SITE
 import com.github.readingbat.common.PropertyNames.URL_PREFIX
 import com.github.readingbat.common.PropertyNames.VARIABLE_NAME
+import com.github.readingbat.common.ScriptPools
 import com.github.readingbat.dsl.*
 import com.github.readingbat.server.AdminRoutes.adminRoutes
 import com.github.readingbat.server.Installs.installs
@@ -93,19 +95,31 @@ object ReadingBatServer : KLogging() {
     // This has to take place before reading DSL
     val scriptClasspathProp = System.getProperty("kotlin.script.classpath")
     if (scriptClasspathProp.isNull()) {
-      val scriptClasspathEnvVar = System.getenv(SCRIPT_CLASSPATH)
+      val scriptClasspathEnvVar = SCRIPT_CLASSPATH.getEnvOrNull()
       if (scriptClasspathEnvVar.isNotNull()) {
         logger.info { "Assigning kotlin.script.classpath = $scriptClasspathEnvVar" }
         System.setProperty("kotlin.script.classpath", scriptClasspathEnvVar)
       }
       else
-        logger.warn { "Missing kotlin.script.classpath or $SCRIPT_CLASSPATH value" }
+        logger.warn { "Missing kotlin.script.classpath and $SCRIPT_CLASSPATH values" }
     }
     else {
       logger.info { "kotlin.script.classpath: $scriptClasspathProp" }
     }
 
-    logger.info { "REDIS_URL: ${System.getenv("REDIS_URL")}" }
+    val redisUrl =
+      REDIS_URL.getEnv("unassigned")
+        .let {
+          if ("://" in it && "@" in it) {
+            val scheme = it.split("://")
+            val uri = it.split("@")
+            "${scheme[0]}://*****:*****@${uri[1]}"
+          }
+          else {
+            it
+          }
+        }
+    logger.info { "$REDIS_URL: $redisUrl" }
 
     // Grab config filename from CLI args and then try ENV var
     val configFilename =
@@ -113,7 +127,7 @@ object ReadingBatServer : KLogging() {
         .filter { it.startsWith("-config=") }
         .map { it.replaceFirst("-config=", "") }
         .firstOrNull()
-        ?: System.getenv(AGENT_CONFIG)
+        ?: AGENT_CONFIG.getEnvOrNull()
         ?: System.getProperty("agent.config")
         ?: "src/main/resources/application.conf"
 
@@ -188,8 +202,13 @@ internal fun Application.module() {
     }
   }
 
-  // This is done after AGENT_LAUNCH_ID is assigned
+  // This is done *after* AGENT_LAUNCH_ID is assigned because metrics depend on it
   metrics.init { content.get() }
+
+  // Reference these to load them
+  ScriptPools.javaScriptPool
+  ScriptPools.pythonScriptPool
+  ScriptPools.kotlinScriptPool
 
   val job =
     launch {
@@ -218,4 +237,5 @@ internal fun Application.module() {
     wsEndpoints(metrics) { content.get() }
     static(STATIC_ROOT) { resources("static") }
   }
+
 }

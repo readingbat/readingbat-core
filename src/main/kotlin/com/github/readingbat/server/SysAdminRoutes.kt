@@ -82,7 +82,7 @@ internal fun Routing.sysAdminRoutes(metrics: Metrics,
       get(pair.first) {
         val msg =
           authenticatedAction {
-            contentSrc().loadChallenges(call.request.local.preUri, pair.second)
+            contentSrc().loadChallenges(call.request.local.preUri, pair.second, false)
           }
         redirectTo { "$MESSAGE_ENDPOINT?$MSG=$msg&$RETURN_PATH=$SYSTEM_ADMIN_ENDPOINT" }
       }

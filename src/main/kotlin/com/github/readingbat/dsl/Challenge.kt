@@ -64,6 +64,7 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
   private val isDescriptionSetInDsl by lazy { description.isNotBlank() }
   internal val gitpodUrl by lazy { pathOf(repo.sourcePrefix, "blob/${branchName}", srcPath, fqName) }
   internal val parsedDescription by lazy { TextFormatter.renderText(description) }
+  internal val path by lazy { "$languageName/$groupName/$challengeName" }
 
   private val languageGroup get() = challengeGroup.languageGroup
   private val metrics get() = challengeGroup.languageGroup.metrics
