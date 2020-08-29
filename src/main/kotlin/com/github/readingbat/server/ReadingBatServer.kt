@@ -154,7 +154,7 @@ internal fun Application.assignContentDsl(fileName: String, variableName: String
         .apply {
           dslFileName = fileName
           dslVariableName = variableName
-          urlPrefix = property(URL_PREFIX, default = "https://www.readingbat.com")
+          urlPrefix = REDIRECT_URL_PREFIX.getEnvOrNull() ?: property(URL_PREFIX, default = "https://www.readingbat.com")
           googleAnalyticsId = property(ANALYTICS_ID)
           maxHistoryLength = property(MAX_HISTORY_LENGTH, default = "10").toInt()
           maxClassCount = property(MAX_CLASS_COUNT, default = "25").toInt()
@@ -191,10 +191,6 @@ internal fun Application.module() {
   System.setProperty(REDIS_MAX_IDLE_SIZE, property(REDIS_MAX_IDLE_SIZE, default = "5"))
   System.setProperty(REDIS_MIN_IDLE_SIZE, property(REDIS_MIN_IDLE_SIZE, default = "1"))
   System.setProperty(AGENT_ENABLED, agentEnabled.toString())
-
-  // Override property setting for urlPrefix
-  if (REDIRECT_URL_PREFIX.getEnvOrNull().isNotNull())
-    System.setProperty("$READING_BAT.$SITE.urlPrefix", REDIRECT_URL_PREFIX.getEnv())
 
   if (isAgentEnabled()) {
     if (proxyHostname.isNotEmpty()) {

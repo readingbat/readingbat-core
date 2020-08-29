@@ -44,7 +44,7 @@ import kotlin.text.Charsets.UTF_8
 
 internal object Installs : KLogging() {
 
-  fun Application.installs(production: Boolean, urlPrefix: String) {
+  fun Application.installs(production: Boolean, redirectUrlPrefix: String) {
 
     install(Locations)
 
@@ -62,16 +62,19 @@ internal object Installs : KLogging() {
       pingPeriodMillis = 5000L   // Duration between pings or `0` to disable pings
     }
 
-    if (production && urlPrefix.contains("://")) {
-      logger.info { "Installing HerokuHttpsRedirect using: $urlPrefix" }
+    if (production && redirectUrlPrefix.contains("://")) {
+      logger.info { "Installing HerokuHttpsRedirect using: $redirectUrlPrefix" }
       install(HerokuHttpsRedirect) {
-        host = urlPrefix.substringAfter("://")
+        host = redirectUrlPrefix.substringAfter("://")
         permanentRedirect = false
 
         excludePrefix("$STATIC_ROOT/")
         excludeSuffix(CSS_ENDPOINT)
         excludeSuffix(FAV_ICON_ENDPOINT)
       }
+    }
+    else {
+      logger.info { "Not installing HerokuHttpsRedirect ($redirectUrlPrefix)" }
     }
 
     install(Compression) {
