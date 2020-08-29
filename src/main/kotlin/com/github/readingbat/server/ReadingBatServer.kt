@@ -26,6 +26,7 @@ import com.github.pambrose.common.util.Version
 import com.github.pambrose.common.util.Version.Companion.versionDesc
 import com.github.readingbat.common.Endpoints.STATIC_ROOT
 import com.github.readingbat.common.EnvVars.AGENT_CONFIG
+import com.github.readingbat.common.EnvVars.REDIRECT_URL_PREFIX
 import com.github.readingbat.common.EnvVars.REDIS_URL
 import com.github.readingbat.common.EnvVars.SCRIPT_CLASSPATH
 import com.github.readingbat.common.Metrics
@@ -190,6 +191,10 @@ internal fun Application.module() {
   System.setProperty(REDIS_MAX_IDLE_SIZE, property(REDIS_MAX_IDLE_SIZE, default = "5"))
   System.setProperty(REDIS_MIN_IDLE_SIZE, property(REDIS_MIN_IDLE_SIZE, default = "1"))
   System.setProperty(AGENT_ENABLED, agentEnabled.toString())
+
+  // Override property setting for urlPrefix
+  if (REDIRECT_URL_PREFIX.getEnvOrNull().isNotNull())
+    System.setProperty("$READING_BAT.$SITE.urlPrefix", REDIRECT_URL_PREFIX.getEnv())
 
   if (isAgentEnabled()) {
     if (proxyHostname.isNotEmpty()) {

@@ -26,6 +26,7 @@ enum class EnvVars {
   GITHUB_OAUTH,
   SENDGRID_API_KEY,
   REDIS_URL,
+  REDIRECT_URL_PREFIX,
   JAVA_TOOL_OPTIONS;
 
   fun getEnvOrNull(): String? = System.getenv(name)
