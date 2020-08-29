@@ -62,7 +62,8 @@ internal object Installs : KLogging() {
       pingPeriodMillis = 5000L   // Duration between pings or `0` to disable pings
     }
 
-    if (production && urlPrefix.isNotBlank()) {
+    if (production && urlPrefix.contains("://")) {
+      logger.info { "Installing HerokuHttpsRedirect using: $urlPrefix" }
       install(HerokuHttpsRedirect) {
         host = urlPrefix.substringAfter("://")
         permanentRedirect = false
