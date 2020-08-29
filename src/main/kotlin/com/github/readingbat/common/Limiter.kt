@@ -17,17 +17,12 @@
 
 package com.github.readingbat.common
 
-import io.ktor.utils.io.core.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.runBlocking
 
-class Token(private val limiter: Limiter) : Closeable {
-
-  override fun close() {
-  }
-}
-
 class Limiter(val maxConcurrencySize: Int = 1) {
+
+  class Token(private val limiter: Limiter)
 
   protected val channel = Channel<Token>(maxConcurrencySize)
 
