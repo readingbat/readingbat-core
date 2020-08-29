@@ -27,6 +27,7 @@ enum class EnvVars {
   SENDGRID_API_KEY,
   REDIS_URL,
   REDIRECT_URL_PREFIX,
+  AGENT_ENABLED,
   JAVA_TOOL_OPTIONS;
 
   fun getEnvOrNull(): String? = System.getenv(name)

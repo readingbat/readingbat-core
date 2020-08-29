@@ -25,12 +25,9 @@ import com.github.pambrose.common.util.*
 import com.github.pambrose.common.util.Version
 import com.github.pambrose.common.util.Version.Companion.versionDesc
 import com.github.readingbat.common.Endpoints.STATIC_ROOT
-import com.github.readingbat.common.EnvVars.AGENT_CONFIG
-import com.github.readingbat.common.EnvVars.REDIRECT_URL_PREFIX
-import com.github.readingbat.common.EnvVars.REDIS_URL
-import com.github.readingbat.common.EnvVars.SCRIPT_CLASSPATH
+import com.github.readingbat.common.EnvVars.*
 import com.github.readingbat.common.Metrics
-import com.github.readingbat.common.PropertyNames.AGENT_ENABLED
+import com.github.readingbat.common.PropertyNames.AGENT_ENABLED_PROPERTY
 import com.github.readingbat.common.PropertyNames.AGENT_LAUNCH_ID
 import com.github.readingbat.common.PropertyNames.ANALYTICS_ID
 import com.github.readingbat.common.PropertyNames.CONFIG_FILENAME
@@ -146,6 +143,12 @@ object ReadingBatServer : KLogging() {
   }
 }
 
+private fun Application.urlPrefix() =
+  REDIRECT_URL_PREFIX.getEnvOrNull() ?: property(URL_PREFIX, default = "https://www.readingbat.com")
+
+private fun Application.agentEnabled() =
+  AGENT_ENABLED.getEnvOrNull() ?: property(AGENT_ENABLED_PROPERTY, default = "false").toBoolean()
+
 internal fun Application.assignContentDsl(fileName: String, variableName: String) {
   ReadingBatServer.logger.info { "Loading content content using $variableName in $fileName" }
   measureTime {
@@ -154,7 +157,7 @@ internal fun Application.assignContentDsl(fileName: String, variableName: String
         .apply {
           dslFileName = fileName
           dslVariableName = variableName
-          urlPrefix = REDIRECT_URL_PREFIX.getEnvOrNull() ?: property(URL_PREFIX, default = "https://www.readingbat.com")
+          urlPrefix = urlPrefix()
           googleAnalyticsId = property(ANALYTICS_ID)
           maxHistoryLength = property(MAX_HISTORY_LENGTH, default = "10").toInt()
           maxClassCount = property(MAX_CLASS_COUNT, default = "25").toInt()
@@ -175,7 +178,6 @@ internal fun Application.module() {
   val logger = ReadingBatServer.logger
   val fileName = property(FILE_NAME, "src/Content.kt")
   val variableName = property(VARIABLE_NAME, "content")
-  val agentEnabled = property(AGENT_ENABLED, default = "true").toBoolean()
   val proxyHostname = property(PROXY_HOSTNAME, default = "")
   val maxDelay = property("$READING_BAT.$SITE.startupMaxDelaySecs", default = "30").toInt()
   val metrics = ReadingBatServer.metrics
@@ -184,13 +186,13 @@ internal fun Application.module() {
   adminUsers.addAll(admins)
 
   System.setProperty(IS_PRODUCTION, property(IS_PRODUCTION, default = "false").toBoolean().toString())
+  System.setProperty(AGENT_ENABLED_PROPERTY, agentEnabled().toString())
   System.setProperty(JAVA_SCRIPTS_POOL_SIZE, property(JAVA_SCRIPTS_POOL_SIZE, default = "5"))
   System.setProperty(KOTLIN_SCRIPTS_POOL_SIZE, property(KOTLIN_SCRIPTS_POOL_SIZE, default = "5"))
   System.setProperty(PYTHON_SCRIPTS_POOL_SIZE, property(PYTHON_SCRIPTS_POOL_SIZE, default = "5"))
   System.setProperty(REDIS_MAX_POOL_SIZE, property(REDIS_MAX_POOL_SIZE, default = "10"))
   System.setProperty(REDIS_MAX_IDLE_SIZE, property(REDIS_MAX_IDLE_SIZE, default = "5"))
   System.setProperty(REDIS_MIN_IDLE_SIZE, property(REDIS_MIN_IDLE_SIZE, default = "1"))
-  System.setProperty(AGENT_ENABLED, agentEnabled.toString())
 
   if (isAgentEnabled()) {
     if (proxyHostname.isNotEmpty()) {
@@ -227,7 +229,7 @@ internal fun Application.module() {
     logger.info { "Continued start-up after delaying $dur" }
   }
 
-  installs(isProduction(), content.get().urlPrefix)
+  installs(isProduction(), urlPrefix())
   intercepts()
 
   routing {

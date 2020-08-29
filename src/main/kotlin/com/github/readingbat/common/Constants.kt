@@ -69,7 +69,7 @@ internal object PropertyNames {
   const val PYTHON_SCRIPTS_POOL_SIZE = "$READING_BAT.scripts.pythonPoolSize"
 
   const val AGENT_LAUNCH_ID = "agentLaunchId"
-  const val AGENT_ENABLED = "$AGENT.enabled"
+  const val AGENT_ENABLED_PROPERTY = "$AGENT.enabled"
   const val PROXY_HOSTNAME = "$AGENT.proxy.hostname"
 }
 
