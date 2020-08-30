@@ -93,7 +93,7 @@ internal object Installs : KLogging() {
       }
     }
     else {
-      logger.info { "Not installing HerokuHttpsRedirect ($redirectUrlPrefix)" }
+      logger.info { "Not installing HerokuHttpsRedirect [$redirectUrlPrefix]" }
     }
 
     install(Compression) {

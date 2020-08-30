@@ -130,7 +130,7 @@ object ReadingBatServer : KLogging() {
 }
 
 private fun Application.redirectUrlPrefix() =
-  REDIRECT_URL_PREFIX.getEnv(REDIRECT_URL_PREFIX_PROPERTY.configProperty(this, default = "https://www.readingbat.com"))
+  REDIRECT_URL_PREFIX.getEnv(REDIRECT_URL_PREFIX_PROPERTY.configProperty(this, default = ""))
 
 private fun Application.sendGridPrefix() =
   SENDGRID_PREFIX.getEnv(SENDGRID_PREFIX_PROPERTY.configProperty(this, default = "https://www.readingbat.com"))

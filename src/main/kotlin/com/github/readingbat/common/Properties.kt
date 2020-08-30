@@ -38,7 +38,7 @@ enum class Properties(val propertyValue: String) {
   CONFIG_FILENAME("$READINGBAT.configFilename"),
 
   IS_PRODUCTION("$READINGBAT.$SITE.production"),
-  REDIRECT_URL_PREFIX_PROPERTY("$READINGBAT.$SITE.urlPrefix"),
+  REDIRECT_URL_PREFIX_PROPERTY("$READINGBAT.$SITE.redirectUrlPrefix"),
   SENDGRID_PREFIX_PROPERTY("$READINGBAT.$SITE.sendGridPrefix"),
   FORWARDED_ENABLED_PROPERTY("$READINGBAT.$SITE.forwardedHeaderSupportEnabled"),
   XFORWARDED_ENABLED_PROPERTY("$READINGBAT.$SITE.xforwardedHeaderSupportEnabled"),
