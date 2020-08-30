@@ -21,9 +21,9 @@ import com.github.pambrose.common.util.ContentSource
 import com.github.pambrose.common.util.GitHubFile
 import com.github.pambrose.common.util.GitHubRepo
 import com.github.pambrose.common.util.OwnerType
-import com.github.readingbat.common.PropertyNames.AGENT_ENABLED_PROPERTY
-import com.github.readingbat.common.PropertyNames.AGENT_LAUNCH_ID
-import com.github.readingbat.common.PropertyNames.IS_PRODUCTION
+import com.github.readingbat.common.Properties.AGENT_ENABLED_PROPERTY
+import com.github.readingbat.common.Properties.AGENT_LAUNCH_ID
+import com.github.readingbat.common.Properties.IS_PRODUCTION
 import com.github.readingbat.common.ScriptPools.kotlinScriptPool
 import com.github.readingbat.server.ReadingBatServer
 import kotlinx.coroutines.runBlocking
@@ -51,11 +51,11 @@ fun readingBatContent(block: ReadingBatContent.() -> Unit) =
 private val logger = KotlinLogging.logger {}
 
 // This is accessible from the Content.kt descriptions
-fun isProduction() = System.getProperty(IS_PRODUCTION)?.toBoolean() ?: false
+fun isProduction() = IS_PRODUCTION.getProperty(false)
 
-fun isAgentEnabled() = System.getProperty(AGENT_ENABLED_PROPERTY)?.toBoolean() ?: false
+fun isAgentEnabled() = AGENT_ENABLED_PROPERTY.getProperty(false)
 
-fun agentLaunchId() = System.getProperty(AGENT_LAUNCH_ID) ?: "unassigned"
+fun agentLaunchId() = AGENT_LAUNCH_ID.getProperty("unassigned")
 
 fun ContentSource.eval(enclosingContent: ReadingBatContent, variableName: String = "content"): ReadingBatContent =
   enclosingContent.evalContent(this, variableName)

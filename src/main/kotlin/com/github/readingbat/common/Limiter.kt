@@ -20,11 +20,11 @@ package com.github.readingbat.common
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.runBlocking
 
-class Limiter(val maxConcurrencySize: Int = 1) {
+class Limiter(private val maxConcurrencySize: Int = 1) {
 
   class Token(private val limiter: Limiter)
 
-  protected val channel = Channel<Token>(maxConcurrencySize)
+  private val channel = Channel<Token>(maxConcurrencySize)
 
   init {
     runBlocking {

@@ -40,7 +40,6 @@ import com.github.readingbat.pages.DbmsDownPage.dbmsDownPage
 import com.github.readingbat.server.ReadingBatServer.pool
 import io.ktor.application.*
 import io.ktor.auth.*
-import io.ktor.config.*
 import io.ktor.http.*
 import io.ktor.routing.*
 import io.ktor.sessions.*
@@ -58,15 +57,6 @@ internal fun md5Of(vararg keys: Any) = keys.joinToString(KEY_SEP) { it.toString(
 internal object ServerUtils : KLogging() {
 
   internal fun getVersionDesc(asJson: Boolean = false): String = ReadingBatServer::class.versionDesc(asJson)
-
-  fun Application.configProperty(name: String, default: String = "", warn: Boolean = false) =
-    try {
-      environment.config.property(name).getString()
-    } catch (e: ApplicationConfigurationException) {
-      if (warn)
-        logger.warn { "Missing $name value in application.conf" }
-      default
-    }
 
   fun PipelineCall.queryParam(key: String, default: String = "") = call.request.queryParameters[key] ?: default
 

@@ -20,25 +20,25 @@ package com.github.readingbat.common
 import com.github.pambrose.common.script.JavaScriptPool
 import com.github.pambrose.common.script.KotlinScriptPool
 import com.github.pambrose.common.script.PythonScriptPool
-import com.github.readingbat.common.PropertyNames.JAVA_SCRIPTS_POOL_SIZE
-import com.github.readingbat.common.PropertyNames.KOTLIN_SCRIPTS_POOL_SIZE
-import com.github.readingbat.common.PropertyNames.PYTHON_SCRIPTS_POOL_SIZE
+import com.github.readingbat.common.Properties.JAVA_SCRIPTS_POOL_SIZE
+import com.github.readingbat.common.Properties.KOTLIN_SCRIPTS_POOL_SIZE
+import com.github.readingbat.common.Properties.PYTHON_SCRIPTS_POOL_SIZE
 import mu.KLogging
 
 internal object ScriptPools : KLogging() {
 
   internal val javaScriptPool by lazy {
-    JavaScriptPool(System.getProperty(JAVA_SCRIPTS_POOL_SIZE).toInt())
+    JavaScriptPool(JAVA_SCRIPTS_POOL_SIZE.getProperty(5))
       .also { logger.info { "Created Java script pool with size ${it.size}" } }
   }
 
   internal val pythonScriptPool by lazy {
-    PythonScriptPool(System.getProperty(PYTHON_SCRIPTS_POOL_SIZE).toInt())
+    PythonScriptPool(PYTHON_SCRIPTS_POOL_SIZE.getProperty(5))
       .also { logger.info { "Created Python script pool with size ${it.size}" } }
   }
 
   internal val kotlinScriptPool by lazy {
-    KotlinScriptPool(System.getProperty(KOTLIN_SCRIPTS_POOL_SIZE).toInt())
+    KotlinScriptPool(KOTLIN_SCRIPTS_POOL_SIZE.getProperty(5))
       .also { logger.info { "Created Kotlin script pool with size ${it.size}" } }
   }
 }

@@ -18,34 +18,13 @@
 package com.github.readingbat.server
 
 import com.github.pambrose.common.redis.RedisUtils
-import com.github.pambrose.common.redis.RedisUtils.REDIS_MAX_IDLE_SIZE
-import com.github.pambrose.common.redis.RedisUtils.REDIS_MAX_POOL_SIZE
-import com.github.pambrose.common.redis.RedisUtils.REDIS_MIN_IDLE_SIZE
 import com.github.pambrose.common.util.*
 import com.github.pambrose.common.util.Version
 import com.github.pambrose.common.util.Version.Companion.versionDesc
 import com.github.readingbat.common.Endpoints.STATIC_ROOT
 import com.github.readingbat.common.EnvVars.*
 import com.github.readingbat.common.Metrics
-import com.github.readingbat.common.PropertyNames.AGENT_ENABLED_PROPERTY
-import com.github.readingbat.common.PropertyNames.AGENT_LAUNCH_ID
-import com.github.readingbat.common.PropertyNames.ANALYTICS_ID
-import com.github.readingbat.common.PropertyNames.CONFIG_FILENAME
-import com.github.readingbat.common.PropertyNames.FILE_NAME
-import com.github.readingbat.common.PropertyNames.FORWARDED_ENABLED_PROPERTY
-import com.github.readingbat.common.PropertyNames.IS_PRODUCTION
-import com.github.readingbat.common.PropertyNames.JAVA_SCRIPTS_POOL_SIZE
-import com.github.readingbat.common.PropertyNames.KOTLIN_SCRIPTS_POOL_SIZE
-import com.github.readingbat.common.PropertyNames.MAX_CLASS_COUNT
-import com.github.readingbat.common.PropertyNames.MAX_HISTORY_LENGTH
-import com.github.readingbat.common.PropertyNames.PROXY_HOSTNAME
-import com.github.readingbat.common.PropertyNames.PYTHON_SCRIPTS_POOL_SIZE
-import com.github.readingbat.common.PropertyNames.READINGBAT
-import com.github.readingbat.common.PropertyNames.REDIRECT_URL_PREFIX_PROPERTY
-import com.github.readingbat.common.PropertyNames.SENDGRID_PREFIX_PROPERTY
-import com.github.readingbat.common.PropertyNames.SITE
-import com.github.readingbat.common.PropertyNames.VARIABLE_NAME
-import com.github.readingbat.common.PropertyNames.XFORWARDED_ENABLED_PROPERTY
+import com.github.readingbat.common.Properties.*
 import com.github.readingbat.common.ScriptPools
 import com.github.readingbat.dsl.*
 import com.github.readingbat.server.AdminRoutes.adminRoutes
@@ -54,7 +33,6 @@ import com.github.readingbat.server.Locations.locations
 import com.github.readingbat.server.ReadingBatServer.adminUsers
 import com.github.readingbat.server.ReadingBatServer.content
 import com.github.readingbat.server.ReadingBatServer.contentReadCount
-import com.github.readingbat.server.ServerUtils.configProperty
 import com.github.readingbat.server.WsEndoints.wsEndpoints
 import io.ktor.application.*
 import io.ktor.http.content.*
@@ -94,18 +72,18 @@ object ReadingBatServer : KLogging() {
 
     // If kotlin.script.classpath property is missing, set it based on env var SCRIPT_CLASSPATH
     // This has to take place before reading DSL
-    val scriptClasspathProp = System.getProperty("kotlin.script.classpath")
+    val scriptClasspathProp = KOTLIN_SCRIPT_CLASSPATH.getPropertyOrNull()
     if (scriptClasspathProp.isNull()) {
       val scriptClasspathEnvVar = SCRIPT_CLASSPATH.getEnvOrNull()
       if (scriptClasspathEnvVar.isNotNull()) {
-        logger.info { "Assigning kotlin.script.classpath = $scriptClasspathEnvVar" }
-        System.setProperty("kotlin.script.classpath", scriptClasspathEnvVar)
+        logger.info { "Assigning ${KOTLIN_SCRIPT_CLASSPATH.propertyValue} = $scriptClasspathEnvVar" }
+        KOTLIN_SCRIPT_CLASSPATH.setProperty(scriptClasspathEnvVar)
       }
       else
-        logger.warn { "Missing kotlin.script.classpath and $SCRIPT_CLASSPATH values" }
+        logger.warn { "Missing ${KOTLIN_SCRIPT_CLASSPATH.propertyValue} and $SCRIPT_CLASSPATH values" }
     }
     else {
-      logger.info { "kotlin.script.classpath: $scriptClasspathProp" }
+      logger.info { "${KOTLIN_SCRIPT_CLASSPATH.propertyValue}: $scriptClasspathProp" }
     }
 
     val redisUrl =
@@ -129,11 +107,11 @@ object ReadingBatServer : KLogging() {
         .map { it.replaceFirst("-config=", "") }
         .firstOrNull()
         ?: AGENT_CONFIG.getEnvOrNull()
-        ?: System.getProperty("agent.config")
+        ?: AGENT_CONFIG_PROPERTY.getPropertyOrNull()
         ?: "src/main/resources/application.conf"
 
     logger.info { "Configuration file: $configFilename" }
-    System.setProperty(CONFIG_FILENAME, configFilename)
+    CONFIG_FILENAME.setProperty(configFilename)
 
     val newargs =
       if (args.any { it.startsWith("-config=") })
@@ -152,19 +130,19 @@ object ReadingBatServer : KLogging() {
 }
 
 private fun Application.redirectUrlPrefix() =
-  REDIRECT_URL_PREFIX.getEnv(configProperty(REDIRECT_URL_PREFIX_PROPERTY, default = "https://www.readingbat.com"))
+  REDIRECT_URL_PREFIX.getEnv(REDIRECT_URL_PREFIX_PROPERTY.configProperty(this, default = "https://www.readingbat.com"))
 
 private fun Application.sendGridPrefix() =
-  SENDGRID_PREFIX.getEnv(configProperty(SENDGRID_PREFIX_PROPERTY, default = "https://www.readingbat.com"))
+  SENDGRID_PREFIX.getEnv(SENDGRID_PREFIX_PROPERTY.configProperty(this, default = "https://www.readingbat.com"))
 
 private fun Application.agentEnabled() =
-  AGENT_ENABLED.getEnv(configProperty(AGENT_ENABLED_PROPERTY, default = "false").toBoolean())
+  AGENT_ENABLED.getEnv(AGENT_ENABLED_PROPERTY.configProperty(this, default = "false").toBoolean())
 
 private fun Application.forwardedHeaderSupportEnabled() =
-  FORWARDED_ENABLED.getEnv(configProperty(FORWARDED_ENABLED_PROPERTY, default = "false").toBoolean())
+  FORWARDED_ENABLED.getEnv(FORWARDED_ENABLED_PROPERTY.configProperty(this, default = "false").toBoolean())
 
 private fun Application.xforwardedHeaderSupportEnabled() =
-  XFORWARDED_ENABLED.getEnv(configProperty(XFORWARDED_ENABLED_PROPERTY, default = "false").toBoolean())
+  XFORWARDED_ENABLED.getEnv(XFORWARDED_ENABLED_PROPERTY.configProperty(this, default = "false").toBoolean())
 
 internal fun Application.assignContentDsl(fileName: String, variableName: String) {
   ReadingBatServer.logger.info { "Loading content content using $variableName in $fileName" }
@@ -175,14 +153,14 @@ internal fun Application.assignContentDsl(fileName: String, variableName: String
           dslFileName = fileName
           dslVariableName = variableName
           sendGridPrefix = sendGridPrefix()
-          googleAnalyticsId = configProperty(ANALYTICS_ID)
-          maxHistoryLength = configProperty(MAX_HISTORY_LENGTH, default = "10").toInt()
-          maxClassCount = configProperty(MAX_CLASS_COUNT, default = "25").toInt()
-          ktorPort = configProperty("ktor.deployment.port", "0").toInt()
+          googleAnalyticsId = ANALYTICS_ID.configProperty(this@assignContentDsl)
+          maxHistoryLength = MAX_HISTORY_LENGTH.configProperty(this@assignContentDsl, default = "10").toInt()
+          maxClassCount = MAX_CLASS_COUNT.configProperty(this@assignContentDsl, default = "25").toInt()
+          ktorPort = KTOR_PORT.configProperty(this@assignContentDsl, "0").toInt()
           val watchVal = environment.config.propertyOrNull("ktor.deployment.watch")?.getList() ?: emptyList()
           ktorWatch = if (watchVal.isNotEmpty()) watchVal.toString() else "unassigned"
-          grafanaUrl = configProperty("$READINGBAT.grafana.url")
-          prometheusUrl = configProperty("$READINGBAT.prometheus.url")
+          grafanaUrl = GRAFANA_URL.configProperty(this@assignContentDsl)
+          prometheusUrl = PROMETHEUS_URL.configProperty(this@assignContentDsl)
         }.apply { clearContentMap() })
     ReadingBatServer.metrics.contentLoadedCount.labels(agentLaunchId()).inc()
   }.also {
@@ -193,29 +171,28 @@ internal fun Application.assignContentDsl(fileName: String, variableName: String
 
 internal fun Application.module() {
   val logger = ReadingBatServer.logger
-  val fileName = configProperty(FILE_NAME, "src/Content.kt")
-  val variableName = configProperty(VARIABLE_NAME, "content")
-  val proxyHostname = configProperty(PROXY_HOSTNAME, default = "")
-  val maxDelay = configProperty("$READINGBAT.$SITE.startupMaxDelaySecs", default = "30").toInt()
+  val fileName = FILE_NAME.configProperty(this, "src/Content.kt")
+  val variableName = VARIABLE_NAME.configProperty(this, "content")
+  val proxyHostname = PROXY_HOSTNAME.configProperty(this, default = "")
+  val maxDelay = STARTUP_DELAY_SECS.configProperty(this, default = "30").toInt()
   val metrics = ReadingBatServer.metrics
 
-  val admins = environment.config.propertyOrNull("$READINGBAT.adminUsers")?.getList() ?: emptyList()
-  adminUsers.addAll(admins)
+  adminUsers.addAll(ADMIN_USERS.configPropertyOrNull(this)?.getList() ?: emptyList())
 
-  System.setProperty(IS_PRODUCTION, configProperty(IS_PRODUCTION, default = "false").toBoolean().toString())
-  System.setProperty(AGENT_ENABLED_PROPERTY, agentEnabled().toString())
-  System.setProperty(JAVA_SCRIPTS_POOL_SIZE, configProperty(JAVA_SCRIPTS_POOL_SIZE, default = "5"))
-  System.setProperty(KOTLIN_SCRIPTS_POOL_SIZE, configProperty(KOTLIN_SCRIPTS_POOL_SIZE, default = "5"))
-  System.setProperty(PYTHON_SCRIPTS_POOL_SIZE, configProperty(PYTHON_SCRIPTS_POOL_SIZE, default = "5"))
-  System.setProperty(REDIS_MAX_POOL_SIZE, configProperty(REDIS_MAX_POOL_SIZE, default = "10"))
-  System.setProperty(REDIS_MAX_IDLE_SIZE, configProperty(REDIS_MAX_IDLE_SIZE, default = "5"))
-  System.setProperty(REDIS_MIN_IDLE_SIZE, configProperty(REDIS_MIN_IDLE_SIZE, default = "1"))
+  IS_PRODUCTION.setProperty(IS_PRODUCTION.configProperty(this, default = "false").toBoolean().toString())
+  AGENT_ENABLED_PROPERTY.setProperty(agentEnabled().toString())
+  JAVA_SCRIPTS_POOL_SIZE.setProperty(JAVA_SCRIPTS_POOL_SIZE.configProperty(this, default = "5"))
+  KOTLIN_SCRIPTS_POOL_SIZE.setProperty(KOTLIN_SCRIPTS_POOL_SIZE.configProperty(this, default = "5"))
+  PYTHON_SCRIPTS_POOL_SIZE.setProperty(PYTHON_SCRIPTS_POOL_SIZE.configProperty(this, default = "5"))
+  REDIS_MAX_POOL_SIZE.setProperty(REDIS_MAX_POOL_SIZE.configProperty(this, default = "10"))
+  REDIS_MAX_IDLE_SIZE.setProperty(REDIS_MAX_IDLE_SIZE.configProperty(this, default = "5"))
+  REDIS_MIN_IDLE_SIZE.setProperty(REDIS_MIN_IDLE_SIZE.configProperty(this, default = "1"))
 
   if (isAgentEnabled()) {
     if (proxyHostname.isNotEmpty()) {
-      val configFilename = System.getProperty(CONFIG_FILENAME) ?: ""
+      val configFilename = CONFIG_FILENAME.getProperty("")
       val agentInfo = startAsyncAgent(configFilename, true)
-      System.setProperty(AGENT_LAUNCH_ID, agentInfo.launchId)
+      AGENT_LAUNCH_ID.setProperty(agentInfo.launchId)
     }
     else {
       logger.error { "Prometheus agent is enabled but the proxy hostname is not assigned" }

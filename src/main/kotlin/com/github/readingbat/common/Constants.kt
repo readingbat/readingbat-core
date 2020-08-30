@@ -51,29 +51,10 @@ internal object Constants {
 internal object PropertyNames {
   internal const val READINGBAT = "readingbat"
   internal const val SITE = "site"
-  private const val AGENT = "agent"
-  private const val CLASSES = "classes"
+  internal const val AGENT = "agent"
+  internal const val CLASSES = "classes"
   internal const val CONTENT = "content"
   internal const val CHALLENGES = "challenges"
-
-  const val CONFIG_FILENAME = "$READINGBAT.configFilename"
-  const val IS_PRODUCTION = "$READINGBAT.$SITE.production"
-  const val REDIRECT_URL_PREFIX_PROPERTY = "${READINGBAT}.$SITE.urlPrefix"
-  const val SENDGRID_PREFIX_PROPERTY = "${READINGBAT}.$SITE.sendGridPrefix"
-  const val FORWARDED_ENABLED_PROPERTY = "${READINGBAT}.$SITE.forwardedHeaderSupportEnabled"
-  const val XFORWARDED_ENABLED_PROPERTY = "${READINGBAT}.$SITE.xforwardedHeaderSupportEnabled"
-  const val MAX_HISTORY_LENGTH = "$READINGBAT.$CHALLENGES.maxHistoryLength"
-  const val MAX_CLASS_COUNT = "$READINGBAT.$CLASSES.maxCount"
-  const val ANALYTICS_ID = "$READINGBAT.$SITE.googleAnalyticsId"
-  const val FILE_NAME = "$READINGBAT.$CONTENT.fileName"
-  const val VARIABLE_NAME = "$READINGBAT.$CONTENT.variableName"
-  const val JAVA_SCRIPTS_POOL_SIZE = "$READINGBAT.scripts.javaPoolSize"
-  const val KOTLIN_SCRIPTS_POOL_SIZE = "$READINGBAT.scripts.kotlinPoolSize"
-  const val PYTHON_SCRIPTS_POOL_SIZE = "$READINGBAT.scripts.pythonPoolSize"
-
-  const val AGENT_LAUNCH_ID = "agentLaunchId"
-  const val AGENT_ENABLED_PROPERTY = "$AGENT.enabled"
-  const val PROXY_HOSTNAME = "$AGENT.proxy.hostname"
 }
 
 internal object Endpoints {

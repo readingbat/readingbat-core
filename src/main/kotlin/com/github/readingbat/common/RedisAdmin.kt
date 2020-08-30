@@ -26,9 +26,9 @@ import redis.clients.jedis.exceptions.JedisDataException
 
 internal object RedisAdmin {
 
-  val docean = ""
-  val heroku = ""
-  val local = "redis://user:none@localhost:6379"
+  private const val docean = ""
+  private const val heroku = ""
+  private const val local = "redis://user:none@localhost:6379"
 
   @JvmStatic
   fun main(args: Array<String>) {
