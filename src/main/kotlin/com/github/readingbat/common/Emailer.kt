@@ -34,8 +34,7 @@ internal object Emailer : KLogging() {
                     subject,
                     com.sendgrid.helpers.mail.objects.Email(to.value),
                     content)
-    val sg =
-      SendGrid(SENDGRID_API_KEY.getEnv())
+    val sendGrid = SendGrid(SENDGRID_API_KEY.getRequiredEnv())
 
     val request =
       Request()
@@ -45,11 +44,12 @@ internal object Emailer : KLogging() {
           body = mail.build()
         }
 
-    sg.api(request).apply {
-      logger.info { "Response status code: $statusCode to: $to from: $from" }
-      if (body.isNotBlank())
-        logger.info { "Response body: $body" }
-      logger.info { "Response headers: $headers" }
-    }
+    sendGrid.api(request)
+      .apply {
+        logger.info { "Response status code: $statusCode to: $to from: $from" }
+        if (body.isNotBlank())
+          logger.info { "Response body: $body" }
+        logger.info { "Response headers: $headers" }
+      }
   }
 }

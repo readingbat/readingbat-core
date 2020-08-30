@@ -27,7 +27,7 @@ enum class EnvVars {
   SENDGRID_API_KEY,
   SENDGRID_PREFIX,
   REDIS_URL,
-  REDIRECT_URL_PREFIX,
+  REDIRECT_HOSTNAME,
   AGENT_ENABLED,
   FORWARDED_ENABLED,
   XFORWARDED_ENABLED,
@@ -42,5 +42,7 @@ enum class EnvVars {
   fun getEnv(default: Boolean) = System.getenv(name)?.toBoolean() ?: default
 
   fun getEnv(default: Int) = System.getenv(name)?.toInt() ?: default
+
+  fun getRequiredEnv() = getEnvOrNull() ?: throw InvalidConfigurationException("Missing $name value")
 }
 

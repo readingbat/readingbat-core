@@ -110,7 +110,6 @@ object ReadingBatServer : KLogging() {
         ?: AGENT_CONFIG_PROPERTY.getPropertyOrNull()
         ?: "src/main/resources/application.conf"
 
-    logger.info { "Configuration file: $configFilename" }
     CONFIG_FILENAME.setProperty(configFilename)
 
     val newargs =
@@ -129,8 +128,8 @@ object ReadingBatServer : KLogging() {
   }
 }
 
-private fun Application.redirectUrlPrefix() =
-  REDIRECT_URL_PREFIX.getEnv(REDIRECT_URL_PREFIX_PROPERTY.configProperty(this, default = ""))
+private fun Application.redirectHostname() =
+  REDIRECT_HOSTNAME.getEnv(REDIRECT_HOSTNAME_PROPERTY.configProperty(this, default = ""))
 
 private fun Application.sendGridPrefix() =
   SENDGRID_PREFIX.getEnv(SENDGRID_PREFIX_PROPERTY.configProperty(this, default = "https://www.readingbat.com"))
@@ -190,7 +189,7 @@ internal fun Application.module() {
 
   if (isAgentEnabled()) {
     if (proxyHostname.isNotEmpty()) {
-      val configFilename = CONFIG_FILENAME.getProperty("")
+      val configFilename = CONFIG_FILENAME.getRequiredProperty()
       val agentInfo = startAsyncAgent(configFilename, true)
       AGENT_LAUNCH_ID.setProperty(agentInfo.launchId)
     }
@@ -219,7 +218,7 @@ internal fun Application.module() {
   }
 
   installs(isProduction(),
-           redirectUrlPrefix(),
+           redirectHostname(),
            forwardedHeaderSupportEnabled(),
            xforwardedHeaderSupportEnabled())
   intercepts()

@@ -23,6 +23,7 @@ import com.github.readingbat.common.PropertyNames.CLASSES
 import com.github.readingbat.common.PropertyNames.CONTENT
 import com.github.readingbat.common.PropertyNames.READINGBAT
 import com.github.readingbat.common.PropertyNames.SITE
+import com.github.readingbat.dsl.InvalidConfigurationException
 import io.ktor.application.*
 import io.ktor.config.*
 import mu.KLogging
@@ -38,7 +39,7 @@ enum class Properties(val propertyValue: String) {
   CONFIG_FILENAME("$READINGBAT.configFilename"),
 
   IS_PRODUCTION("$READINGBAT.$SITE.production"),
-  REDIRECT_URL_PREFIX_PROPERTY("$READINGBAT.$SITE.redirectUrlPrefix"),
+  REDIRECT_HOSTNAME_PROPERTY("$READINGBAT.$SITE.redirectHostname"),
   SENDGRID_PREFIX_PROPERTY("$READINGBAT.$SITE.sendGridPrefix"),
   FORWARDED_ENABLED_PROPERTY("$READINGBAT.$SITE.forwardedHeaderSupportEnabled"),
   XFORWARDED_ENABLED_PROPERTY("$READINGBAT.$SITE.xforwardedHeaderSupportEnabled"),
@@ -88,7 +89,10 @@ enum class Properties(val propertyValue: String) {
 
   fun getPropertyOrNull(): String? = System.getProperty(propertyValue)
 
+  fun getRequiredProperty() = getPropertyOrNull() ?: throw InvalidConfigurationException("Missing $propertyValue value")
+
   fun setProperty(value: String) {
+    logger.info { "Using $propertyValue: $value" }
     System.setProperty(propertyValue, value)
   }
 

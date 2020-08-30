@@ -45,7 +45,7 @@ import kotlin.text.Charsets.UTF_8
 internal object Installs : KLogging() {
 
   fun Application.installs(production: Boolean,
-                           redirectUrlPrefix: String,
+                           redirectHostname: String,
                            forwardedHeaderSupportEnabled: Boolean,
                            xforwardedHeaderSupportEnabled: Boolean) {
 
@@ -81,10 +81,10 @@ internal object Installs : KLogging() {
       logger.info { "Not enabling XForwardedHeaderSupport" }
     }
 
-    if (production && redirectUrlPrefix.contains("://")) {
-      logger.info { "Installing HerokuHttpsRedirect using: $redirectUrlPrefix" }
+    if (production && redirectHostname.isNotBlank()) {
+      logger.info { "Installing HerokuHttpsRedirect using: $redirectHostname" }
       install(HerokuHttpsRedirect) {
-        host = redirectUrlPrefix.substringAfter("://")
+        host = redirectHostname
         permanentRedirect = false
 
         excludePrefix("$STATIC_ROOT/")
@@ -93,7 +93,7 @@ internal object Installs : KLogging() {
       }
     }
     else {
-      logger.info { "Not installing HerokuHttpsRedirect [$redirectUrlPrefix]" }
+      logger.info { "Not installing HerokuHttpsRedirect" }
     }
 
     install(Compression) {
