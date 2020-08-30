@@ -29,8 +29,8 @@ enum class EnvVars {
   REDIS_URL,
   REDIRECT_URL_PREFIX,
   AGENT_ENABLED,
-  XFORWARDED_ENABLED,
   FORWARDED_ENABLED,
+  XFORWARDED_ENABLED,
   JAVA_TOOL_OPTIONS;
 
   fun getEnvOrNull(): String? = System.getenv(name)

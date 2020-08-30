@@ -60,6 +60,8 @@ internal object PropertyNames {
   const val IS_PRODUCTION = "$READING_BAT.$SITE.production"
   const val REDIRECT_URL_PREFIX_PROPERTY = "${READING_BAT}.$SITE.urlPrefix"
   const val SENDGRID_PREFIX_PROPERTY = "${READING_BAT}.$SITE.sendGridPrefix"
+  const val FORWARDED_ENABLED_PROPERTY = "${READING_BAT}.$SITE.forwardedHeaderSupportEnabled"
+  const val XFORWARDED_ENABLED_PROPERTY = "${READING_BAT}.$SITE.xforwardedHeaderSupportEnabled"
   const val MAX_HISTORY_LENGTH = "$READING_BAT.$CHALLENGES.maxHistoryLength"
   const val MAX_CLASS_COUNT = "$READING_BAT.$CLASSES.maxCount"
   const val ANALYTICS_ID = "$READING_BAT.$SITE.googleAnalyticsId"

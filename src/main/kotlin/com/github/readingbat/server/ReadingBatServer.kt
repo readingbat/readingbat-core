@@ -32,6 +32,7 @@ import com.github.readingbat.common.PropertyNames.AGENT_LAUNCH_ID
 import com.github.readingbat.common.PropertyNames.ANALYTICS_ID
 import com.github.readingbat.common.PropertyNames.CONFIG_FILENAME
 import com.github.readingbat.common.PropertyNames.FILE_NAME
+import com.github.readingbat.common.PropertyNames.FORWARDED_ENABLED_PROPERTY
 import com.github.readingbat.common.PropertyNames.IS_PRODUCTION
 import com.github.readingbat.common.PropertyNames.JAVA_SCRIPTS_POOL_SIZE
 import com.github.readingbat.common.PropertyNames.KOTLIN_SCRIPTS_POOL_SIZE
@@ -44,6 +45,7 @@ import com.github.readingbat.common.PropertyNames.REDIRECT_URL_PREFIX_PROPERTY
 import com.github.readingbat.common.PropertyNames.SENDGRID_PREFIX_PROPERTY
 import com.github.readingbat.common.PropertyNames.SITE
 import com.github.readingbat.common.PropertyNames.VARIABLE_NAME
+import com.github.readingbat.common.PropertyNames.XFORWARDED_ENABLED_PROPERTY
 import com.github.readingbat.common.ScriptPools
 import com.github.readingbat.dsl.*
 import com.github.readingbat.server.AdminRoutes.adminRoutes
@@ -151,7 +153,13 @@ private fun Application.sendGridPrefix() =
   SENDGRID_PREFIX.getEnvOrNull() ?: property(SENDGRID_PREFIX_PROPERTY, default = "https://www.readingbat.com")
 
 private fun Application.agentEnabled() =
-  AGENT_ENABLED.getEnvOrNull() ?: property(AGENT_ENABLED_PROPERTY, default = "false").toBoolean()
+  AGENT_ENABLED.getEnvOrNull()?.toBoolean() ?: property(AGENT_ENABLED_PROPERTY, default = "false").toBoolean()
+
+private fun Application.forwardedHeaderSupportEnabled() =
+  FORWARDED_ENABLED.getEnvOrNull()?.toBoolean() ?: property(FORWARDED_ENABLED_PROPERTY, default = "false").toBoolean()
+
+private fun Application.xforwardedHeaderSupportEnabled() =
+  XFORWARDED_ENABLED.getEnvOrNull()?.toBoolean() ?: property(XFORWARDED_ENABLED_PROPERTY, default = "false").toBoolean()
 
 internal fun Application.assignContentDsl(fileName: String, variableName: String) {
   ReadingBatServer.logger.info { "Loading content content using $variableName in $fileName" }
@@ -233,7 +241,10 @@ internal fun Application.module() {
     logger.info { "Continued start-up after delaying $dur" }
   }
 
-  installs(isProduction(), redirectUrlPrefix())
+  installs(isProduction(),
+           redirectUrlPrefix(),
+           forwardedHeaderSupportEnabled(),
+           xforwardedHeaderSupportEnabled())
   intercepts()
 
   routing {
@@ -244,5 +255,4 @@ internal fun Application.module() {
     wsEndpoints(metrics) { content.get() }
     static(STATIC_ROOT) { resources("static") }
   }
-
 }
