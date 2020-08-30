@@ -72,7 +72,7 @@ class ReadingBatContent {
 */
 
   internal val timeStamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("M/d/y H:m:ss"))
-  internal var urlPrefix = ""
+  internal var sendGridPrefix = ""
   internal var googleAnalyticsId = ""
   internal var maxHistoryLength = 10
   internal var maxClassCount = 25

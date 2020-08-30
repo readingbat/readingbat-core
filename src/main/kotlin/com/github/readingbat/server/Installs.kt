@@ -22,6 +22,8 @@ import com.github.pambrose.common.util.simpleClassName
 import com.github.readingbat.common.Endpoints.CSS_ENDPOINT
 import com.github.readingbat.common.Endpoints.FAV_ICON_ENDPOINT
 import com.github.readingbat.common.Endpoints.STATIC_ROOT
+import com.github.readingbat.common.EnvVars.FORWARDED_ENABLED
+import com.github.readingbat.common.EnvVars.XFORWARDED_ENABLED
 import com.github.readingbat.dsl.InvalidPathException
 import com.github.readingbat.server.ConfigureCookies.configureAuthCookie
 import com.github.readingbat.server.ConfigureCookies.configureSessionIdCookie
@@ -61,6 +63,12 @@ internal object Installs : KLogging() {
     install(WebSockets) {
       pingPeriodMillis = 5000L   // Duration between pings or `0` to disable pings
     }
+
+    if (FORWARDED_ENABLED.getEnv(false))
+      install(ForwardedHeaderSupport)
+
+    if (XFORWARDED_ENABLED.getEnv(false))
+      install(XForwardedHeaderSupport)
 
     if (production && redirectUrlPrefix.contains("://")) {
       logger.info { "Installing HerokuHttpsRedirect using: $redirectUrlPrefix" }

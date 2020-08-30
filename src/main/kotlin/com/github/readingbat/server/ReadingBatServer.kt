@@ -40,8 +40,9 @@ import com.github.readingbat.common.PropertyNames.MAX_HISTORY_LENGTH
 import com.github.readingbat.common.PropertyNames.PROXY_HOSTNAME
 import com.github.readingbat.common.PropertyNames.PYTHON_SCRIPTS_POOL_SIZE
 import com.github.readingbat.common.PropertyNames.READING_BAT
+import com.github.readingbat.common.PropertyNames.REDIRECT_URL_PREFIX_PROPERTY
+import com.github.readingbat.common.PropertyNames.SENDGRID_PREFIX_PROPERTY
 import com.github.readingbat.common.PropertyNames.SITE
-import com.github.readingbat.common.PropertyNames.URL_PREFIX
 import com.github.readingbat.common.PropertyNames.VARIABLE_NAME
 import com.github.readingbat.common.ScriptPools
 import com.github.readingbat.dsl.*
@@ -143,8 +144,11 @@ object ReadingBatServer : KLogging() {
   }
 }
 
-private fun Application.urlPrefix() =
-  REDIRECT_URL_PREFIX.getEnvOrNull() ?: property(URL_PREFIX, default = "https://www.readingbat.com")
+private fun Application.redirectUrlPrefix() =
+  REDIRECT_URL_PREFIX.getEnvOrNull() ?: property(REDIRECT_URL_PREFIX_PROPERTY, default = "https://www.readingbat.com")
+
+private fun Application.sendGridPrefix() =
+  SENDGRID_PREFIX.getEnvOrNull() ?: property(SENDGRID_PREFIX_PROPERTY, default = "https://www.readingbat.com")
 
 private fun Application.agentEnabled() =
   AGENT_ENABLED.getEnvOrNull() ?: property(AGENT_ENABLED_PROPERTY, default = "false").toBoolean()
@@ -157,7 +161,7 @@ internal fun Application.assignContentDsl(fileName: String, variableName: String
         .apply {
           dslFileName = fileName
           dslVariableName = variableName
-          urlPrefix = urlPrefix()
+          sendGridPrefix = sendGridPrefix()
           googleAnalyticsId = property(ANALYTICS_ID)
           maxHistoryLength = property(MAX_HISTORY_LENGTH, default = "10").toInt()
           maxClassCount = property(MAX_CLASS_COUNT, default = "25").toInt()
@@ -229,7 +233,7 @@ internal fun Application.module() {
     logger.info { "Continued start-up after delaying $dur" }
   }
 
-  installs(isProduction(), urlPrefix())
+  installs(isProduction(), redirectUrlPrefix())
   intercepts()
 
   routing {

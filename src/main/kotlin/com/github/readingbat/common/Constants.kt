@@ -58,7 +58,8 @@ internal object PropertyNames {
 
   const val CONFIG_FILENAME = "$READING_BAT.configFilename"
   const val IS_PRODUCTION = "$READING_BAT.$SITE.production"
-  const val URL_PREFIX = "${READING_BAT}.$SITE.urlPrefix"
+  const val REDIRECT_URL_PREFIX_PROPERTY = "${READING_BAT}.$SITE.urlPrefix"
+  const val SENDGRID_PREFIX_PROPERTY = "${READING_BAT}.$SITE.sendGridPrefix"
   const val MAX_HISTORY_LENGTH = "$READING_BAT.$CHALLENGES.maxHistoryLength"
   const val MAX_CLASS_COUNT = "$READING_BAT.$CLASSES.maxCount"
   const val ANALYTICS_ID = "$READING_BAT.$SITE.googleAnalyticsId"

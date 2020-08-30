@@ -84,6 +84,7 @@ internal object PasswordResetPost : KLogging() {
           val browserSession = call.sessions.get<BrowserSession>()
 
           // Lookup and remove previous value if it exists
+          logger.info { "Looking up $email for password change" }
           val user2 = lookupUserByEmail(email, redis) ?: throw ResetPasswordException("Unable to find $email")
           val previousResetId = user2.passwordResetKey(redis)?.let { ResetId(it) } ?: EMPTY_RESET_ID
 
@@ -96,7 +97,7 @@ internal object PasswordResetPost : KLogging() {
           try {
             val msg = Message("""
               |This is a password reset message for the ReadingBat.com account for '$email'
-              |Go to this URL to set a new password: ${content.urlPrefix}$PASSWORD_RESET_ENDPOINT?$RESET_ID=$newResetId 
+              |Go to this URL to set a new password: ${content.sendGridPrefix}$PASSWORD_RESET_ENDPOINT?$RESET_ID=$newResetId 
               |If you did not request to reset your password, please ignore this message.
             """.trimMargin())
             sendEmail(to = email,
