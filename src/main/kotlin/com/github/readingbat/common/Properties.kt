@@ -92,7 +92,7 @@ enum class Properties(val propertyValue: String) {
   fun getRequiredProperty() = getPropertyOrNull() ?: throw InvalidConfigurationException("Missing $propertyValue value")
 
   fun setProperty(value: String) {
-    logger.info { "Using $propertyValue: $value" }
+    logger.info { "$propertyValue: $value" }
     System.setProperty(propertyValue, value)
   }
 

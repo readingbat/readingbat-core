@@ -18,7 +18,6 @@
 package com.github.readingbat.pages
 
 import com.github.readingbat.common.BrowserSession
-import com.github.readingbat.common.CSSNames.FUNC_ITEM
 import com.github.readingbat.common.CSSNames.GROUP_CHOICE
 import com.github.readingbat.common.CSSNames.GROUP_ITEM_SRC
 import com.github.readingbat.common.CommonUtils.pathOf
@@ -93,7 +92,7 @@ internal object LanguageGroupPage {
             }
           }
 
-          td(classes = FUNC_ITEM) {
+          td {
             div(classes = GROUP_ITEM_SRC) {
               a(classes = GROUP_CHOICE) { href = pathOf(CHALLENGE_ROOT, languageName, groupName); +groupName.value }
 

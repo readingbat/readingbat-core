@@ -21,7 +21,8 @@ import com.github.pambrose.common.util.decode
 import com.github.pambrose.common.util.isNotNull
 import com.github.pambrose.common.util.pluralize
 import com.github.readingbat.common.BrowserSession
-import com.github.readingbat.common.CSSNames.FUNC_ITEM
+import com.github.readingbat.common.CSSNames.FUNC_ITEM1
+import com.github.readingbat.common.CSSNames.FUNC_ITEM2
 import com.github.readingbat.common.ClassCode
 import com.github.readingbat.common.CommonUtils.pathOf
 import com.github.readingbat.common.Constants.COLUMN_CNT
@@ -110,7 +111,7 @@ internal object ChallengeGroupPage : KLogging() {
           val challengeName = challenge.challengeName
           val allCorrect = challenge.isCorrect(user, browserSession, redis)
 
-          td(classes = FUNC_ITEM) {
+          td(classes = if (activeClassCode.isEnabled) FUNC_ITEM1 else FUNC_ITEM2) {
             if (activeClassCode.isNotEnabled)
               img { src = "$STATIC_ROOT/${if (allCorrect) GREEN_CHECK else WHITE_CHECK}" }
 

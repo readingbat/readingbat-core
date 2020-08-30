@@ -26,7 +26,8 @@ import com.github.readingbat.common.CSSNames.DASHBOARD
 import com.github.readingbat.common.CSSNames.EXPERIMENT
 import com.github.readingbat.common.CSSNames.FEEDBACK
 import com.github.readingbat.common.CSSNames.FUNC_COL
-import com.github.readingbat.common.CSSNames.FUNC_ITEM
+import com.github.readingbat.common.CSSNames.FUNC_ITEM1
+import com.github.readingbat.common.CSSNames.FUNC_ITEM2
 import com.github.readingbat.common.CSSNames.GROUP_CHOICE
 import com.github.readingbat.common.CSSNames.GROUP_ITEM_SRC
 import com.github.readingbat.common.CSSNames.HINT
@@ -58,7 +59,8 @@ internal object CSSNames {
   const val USER_RESP = "userResponse"
   const val CHALLENGE_DESC = "challenge-desc"
   const val GROUP_CHOICE = "groupChoice"
-  const val FUNC_ITEM = "funcItem"
+  const val FUNC_ITEM1 = "funcItem1"
+  const val FUNC_ITEM2 = "funcItem2"
   const val TD_PADDING = "tdPadding"
   const val GROUP_ITEM_SRC = "groupItem"
   const val SELECTED_TAB = "selected"
@@ -136,9 +138,12 @@ internal val cssContent by lazy {
         marginLeft = 1.em
         marginBottom = 1.em
       }
-      rule(".$FUNC_ITEM") {
+      rule(".$FUNC_ITEM1") {
         marginTop = 1.em
-        //width = 300.px
+      }
+      rule(".$FUNC_ITEM2") {
+        marginTop = 1.em
+        width = 300.px
       }
       rule("div.$TD_PADDING th") {
         marginTop = 1.em
