@@ -65,11 +65,21 @@ internal object Installs : KLogging() {
       pingPeriodMillis = 5000L   // Duration between pings or `0` to disable pings
     }
 
-    if (forwardedHeaderSupportEnabled)
+    if (forwardedHeaderSupportEnabled) {
+      logger.info { "Enabling ForwardedHeaderSupport" }
       install(ForwardedHeaderSupport)
+    }
+    else {
+      logger.info { "Not enabling ForwardedHeaderSupport" }
+    }
 
-    if (xforwardedHeaderSupportEnabled)
+    if (xforwardedHeaderSupportEnabled) {
+      logger.info { "Enabling XForwardedHeaderSupport" }
       install(XForwardedHeaderSupport)
+    }
+    else {
+      logger.info { "Not enabling XForwardedHeaderSupport" }
+    }
 
     if (production && redirectUrlPrefix.contains("://")) {
       logger.info { "Installing HerokuHttpsRedirect using: $redirectUrlPrefix" }

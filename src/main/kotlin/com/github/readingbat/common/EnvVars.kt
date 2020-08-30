@@ -37,10 +37,10 @@ enum class EnvVars {
 
   fun getEnv() = System.getenv(name) ?: throw InvalidConfigurationException("$this unassigned")
 
-  fun getEnv(defaultVal: String) = System.getenv(name) ?: defaultVal
+  fun getEnv(default: String) = System.getenv(name) ?: default
 
-  fun getEnv(defaultVal: Boolean) = System.getenv(name)?.toBoolean() ?: defaultVal
+  fun getEnv(default: Boolean) = System.getenv(name)?.toBoolean() ?: default
 
-  fun getEnv(defaultVal: Int) = System.getenv(name)?.toInt() ?: defaultVal
+  fun getEnv(default: Int) = System.getenv(name)?.toInt() ?: default
 }
 

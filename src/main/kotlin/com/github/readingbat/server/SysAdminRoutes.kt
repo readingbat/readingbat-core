@@ -36,6 +36,7 @@ import com.github.readingbat.pages.MessagePage.messagePage
 import com.github.readingbat.server.ServerUtils.authenticatedAction
 import com.github.readingbat.server.ServerUtils.get
 import io.ktor.application.*
+import io.ktor.features.*
 import io.ktor.http.*
 import io.ktor.routing.*
 import kotlin.time.measureTime
@@ -82,7 +83,7 @@ internal fun Routing.sysAdminRoutes(metrics: Metrics,
       get(pair.first) {
         val msg =
           authenticatedAction {
-            contentSrc().loadChallenges(call.request.local.preUri, pair.second, false)
+            contentSrc().loadChallenges(call.request.origin.preUri, pair.second, false)
           }
         redirectTo { "$MESSAGE_ENDPOINT?$MSG=$msg&$RETURN_PATH=$SYSTEM_ADMIN_ENDPOINT" }
       }

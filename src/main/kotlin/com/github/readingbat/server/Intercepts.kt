@@ -23,6 +23,7 @@ import com.github.readingbat.common.Constants.STATIC
 import com.github.readingbat.common.SessionActivity
 import com.github.readingbat.common.UserPrincipal
 import io.ktor.application.*
+import io.ktor.features.*
 import io.ktor.http.*
 import io.ktor.request.*
 import io.ktor.sessions.*
@@ -41,11 +42,11 @@ internal fun Application.intercepts() {
     if (!context.request.path().startsWith("/$STATIC/")) {
       val sessionId = call.sessions.get<BrowserSession>()
       val principal = call.sessions.get<UserPrincipal>()
-      //ReadingBatServer.logger.info { "${context.request.local.remoteHost} $sessionId ${context.request.path()}" }
+      //ReadingBatServer.logger.info { "${context.request.origin.remoteHost} $sessionId ${context.request.path()}" }
       if (sessionId.isNotNull())
         SessionActivity.markActivity(sessionId,
                                      principal,
-                                     call.request.local.remoteHost,
+                                     call.request.origin.remoteHost,
                                      call.request.headers[HttpHeaders.UserAgent] ?: "unknown")
     }
   }

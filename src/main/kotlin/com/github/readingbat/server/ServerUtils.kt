@@ -25,9 +25,13 @@ import com.github.pambrose.common.util.Version.Companion.versionDesc
 import com.github.pambrose.common.util.isNotNull
 import com.github.pambrose.common.util.isNull
 import com.github.pambrose.common.util.md5
-import com.github.readingbat.common.*
+import com.github.readingbat.common.BrowserSession
+import com.github.readingbat.common.Constants.DBMS_DOWN
 import com.github.readingbat.common.KeyConstants.KEY_SEP
+import com.github.readingbat.common.Metrics
+import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.toUser
+import com.github.readingbat.common.UserPrincipal
 import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.dsl.ReadingBatContent
@@ -55,7 +59,7 @@ internal object ServerUtils : KLogging() {
 
   internal fun getVersionDesc(asJson: Boolean = false): String = ReadingBatServer::class.versionDesc(asJson)
 
-  fun Application.property(name: String, default: String = "", warn: Boolean = false) =
+  fun Application.configProperty(name: String, default: String = "", warn: Boolean = false) =
     try {
       environment.config.property(name).getString()
     } catch (e: ApplicationConfigurationException) {
@@ -110,7 +114,7 @@ internal object ServerUtils : KLogging() {
         pool.withSuspendingRedisPool { redis ->
           val user = fetchUser()
           when {
-            redis.isNull() -> Constants.DBMS_DOWN.value
+            redis.isNull() -> DBMS_DOWN.value
             user.isNull() -> "Must be logged in for this function"
             user.isNotAdmin(redis) -> "Not authorized"
             else -> block.invoke()
