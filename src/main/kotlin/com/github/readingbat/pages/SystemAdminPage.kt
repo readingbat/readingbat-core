@@ -29,6 +29,7 @@ import com.github.readingbat.common.Message
 import com.github.readingbat.common.Message.Companion.EMPTY_MESSAGE
 import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.fetchActiveClassCode
+import com.github.readingbat.common.isAdminUser
 import com.github.readingbat.common.isValidUser
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.isProduction
@@ -78,8 +79,7 @@ internal object SystemAdminPage : KLogging() {
 
           h2 { +"ReadingBat System Admin" }
 
-          if (!isProduction() || user.isAdmin(redis)) {
-
+          if (!isProduction() || user.isAdminUser(redis)) {
             p {
               this@body.confirmingButton("Reset ReadingBat Content",
                                          RESET_CONTENT_ENDPOINT,

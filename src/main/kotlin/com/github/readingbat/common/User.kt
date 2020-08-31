@@ -85,10 +85,6 @@ internal class User private constructor(val id: String, val browserSession: Brow
 
   fun email(redis: Jedis) = redis.hget(userInfoKey, EMAIL_FIELD)?.let { Email(it) } ?: EMPTY_EMAIL
 
-  fun isAdmin(redis: Jedis) = email(redis).value in adminUsers
-
-  fun isNotAdmin(redis: Jedis) = !isAdmin(redis)
-
   fun name(redis: Jedis) = redis.hget(userInfoKey, NAME_FIELD) ?: ""
 
   fun salt(redis: Jedis) = redis.hget(userInfoKey, SALT_FIELD) ?: throw DataException("Missing salt field: $this")
@@ -561,6 +557,17 @@ internal class User private constructor(val id: String, val browserSession: Brow
   }
 
   internal data class ChallengeAnswers(val id: String, val correctAnswers: MutableMap<String, String> = mutableMapOf())
+}
+
+internal fun User?.isAdminUser(redis: Jedis) = isValidUser(redis) && email(redis).value in adminUsers
+
+internal fun User?.isNotAdminUser(redis: Jedis) = !isAdminUser(redis)
+
+internal fun User?.isNotValidUser(redis: Jedis): Boolean {
+  contract {
+    returns(false) implies (this@isNotValidUser is User)
+  }
+  return !isValidUser(redis)
 }
 
 internal fun User?.isValidUser(redis: Jedis): Boolean {

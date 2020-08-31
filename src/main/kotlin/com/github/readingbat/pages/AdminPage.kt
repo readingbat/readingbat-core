@@ -17,7 +17,6 @@
 
 package com.github.readingbat.pages
 
-import com.github.pambrose.common.util.isNull
 import com.github.readingbat.common.CSSNames.INDENT_1EM
 import com.github.readingbat.common.Constants.RETURN_PATH
 import com.github.readingbat.common.Endpoints.ADMIN_POST_ENDPOINT
@@ -27,6 +26,8 @@ import com.github.readingbat.common.Message
 import com.github.readingbat.common.Message.Companion.EMPTY_MESSAGE
 import com.github.readingbat.common.RedisAdmin.scanKeys
 import com.github.readingbat.common.User
+import com.github.readingbat.common.isNotAdminUser
+import com.github.readingbat.common.isNotValidUser
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.isProduction
 import com.github.readingbat.pages.HelpAndLogin.helpAndLogin
@@ -78,11 +79,11 @@ internal object AdminPage {
           bodyTitle()
 
           when {
-            isProduction() && user.isNull() -> {
+            isProduction() && user.isNotValidUser(redis) -> {
               br { +"Must be logged in for this function" }
             }
-            isProduction() && user?.email(redis)?.value != "pambrose@mac.com" -> {
-              br { +"Must be system admin for this function" }
+            isProduction() && user.isNotAdminUser(redis) -> {
+              br { +"Must be a system admin for this function" }
             }
             else -> {
               p {

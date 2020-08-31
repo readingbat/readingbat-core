@@ -25,13 +25,10 @@ import com.github.pambrose.common.util.Version.Companion.versionDesc
 import com.github.pambrose.common.util.isNotNull
 import com.github.pambrose.common.util.isNull
 import com.github.pambrose.common.util.md5
-import com.github.readingbat.common.BrowserSession
+import com.github.readingbat.common.*
 import com.github.readingbat.common.Constants.DBMS_DOWN
 import com.github.readingbat.common.KeyConstants.KEY_SEP
-import com.github.readingbat.common.Metrics
-import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.toUser
-import com.github.readingbat.common.UserPrincipal
 import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.dsl.ReadingBatContent
@@ -105,8 +102,8 @@ internal object ServerUtils : KLogging() {
           val user = fetchUser()
           when {
             redis.isNull() -> DBMS_DOWN.value
-            user.isNull() -> "Must be logged in for this function"
-            user.isNotAdmin(redis) -> "Not authorized"
+            user.isNotValidUser(redis) -> "Must be logged in for this function"
+            user.isNotAdminUser(redis) -> "Must be system admin for this function"
             else -> block.invoke()
           }
         }

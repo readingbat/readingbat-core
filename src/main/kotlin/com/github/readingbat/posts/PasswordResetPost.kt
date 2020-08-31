@@ -18,7 +18,7 @@
 package com.github.readingbat.posts
 
 import com.github.pambrose.common.util.encode
-import com.github.readingbat.common.BrowserSession
+import com.github.readingbat.common.*
 import com.github.readingbat.common.Constants.INVALID_RESET_ID
 import com.github.readingbat.common.Constants.MSG
 import com.github.readingbat.common.Constants.RESET_ID
@@ -28,11 +28,8 @@ import com.github.readingbat.common.Endpoints.PASSWORD_RESET_ENDPOINT
 import com.github.readingbat.common.FormFields.CONFIRM_PASSWORD
 import com.github.readingbat.common.FormFields.EMAIL
 import com.github.readingbat.common.FormFields.NEW_PASSWORD
-import com.github.readingbat.common.Message
-import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.isRegisteredEmail
 import com.github.readingbat.common.User.Companion.lookupUserByEmail
-import com.github.readingbat.common.isValidUser
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.pages.PasswordResetPage.passwordResetPage
 import com.github.readingbat.posts.CreateAccountPost.checkPassword
@@ -60,8 +57,9 @@ internal object PasswordResetPost : KLogging() {
   suspend fun PipelineCall.sendPasswordReset(content: ReadingBatContent, user: User?, redis: Jedis): String {
     val parameters = call.receiveParameters()
     val email = parameters.getEmail(EMAIL)
+    logger.info { "Considering $email for password change" }
     return when {
-      !user.isValidUser(redis) -> {
+      user.isNotValidUser(redis) -> {
         unknownUserLimiter.acquire()
         passwordResetPage(content, EMPTY_RESET_ID, redis, Message("Invalid User", true))
       }
@@ -84,7 +82,6 @@ internal object PasswordResetPost : KLogging() {
           val browserSession = call.sessions.get<BrowserSession>()
 
           // Lookup and remove previous value if it exists
-          logger.info { "Looking up $email for password change" }
           val user2 = lookupUserByEmail(email, redis) ?: throw ResetPasswordException("Unable to find $email")
           val previousResetId = user2.passwordResetKey(redis)?.let { ResetId(it) } ?: EMPTY_RESET_ID
 
