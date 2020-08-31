@@ -61,7 +61,7 @@ internal object Endpoints {
   const val ROOT = "/"
 
   //const val STATIC_ROOT = "/$STATIC"
-  const val STATIC_ROOT = "https://readingbat-static.sfo2.digitaloceanspaces.com"
+  const val STATIC_ROOT = "https://static.readingbat.com"
   const val CHALLENGE_ROOT = "/content"
   const val PLAYGROUND_ROOT = "/playground"
   const val USER_PREFS_ENDPOINT = "/user-prefs"
@@ -83,7 +83,6 @@ internal object Endpoints {
   const val PASSWORD_CHANGE_POST_ENDPOINT = "/password-change-post"
   const val PASSWORD_RESET_ENDPOINT = "/password-reset"
   const val PASSWORD_RESET_POST_ENDPOINT = "/password-reset-post"
-  const val CSS_ENDPOINT = "/$STATIC/styles.css"
   const val FAV_ICON_ENDPOINT = "/favicon.ico"
   const val ROBOTS_ENDPOINT = "/robots.txt"
   const val CHALLENGE_ENDPOINT = "/challenge"
@@ -102,6 +101,9 @@ internal object Endpoints {
   const val PING = "/ping"
   const val THREAD_DUMP = "/threaddump"
   const val LOGOUT_ENDPOINT = "/logout"
+
+  // This is a dynamic page
+  const val CSS_ENDPOINT = "/$STATIC/styles.css"
 }
 
 internal object StaticFileNames {
