@@ -24,6 +24,7 @@ import com.github.readingbat.common.CSSNames.KOTLIN_CODE
 import com.github.readingbat.common.CommonUtils.pathOf
 import com.github.readingbat.common.Endpoints.CHALLENGE_ROOT
 import com.github.readingbat.common.Endpoints.STATIC_ROOT
+import com.github.readingbat.common.StaticFileNames.RUN_BUTTON
 import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.fetchActiveClassCode
 import com.github.readingbat.dsl.Challenge
@@ -103,7 +104,7 @@ internal object PlaygroundPage {
           br
           div(classes = INDENT_1EM) {
             +"Click on"
-            img { height = "25"; style = "vertical-align: bottom"; src = "$STATIC_ROOT/run-button.png" }
+            img { height = "25"; style = "vertical-align: bottom"; src = "$STATIC_ROOT/$RUN_BUTTON" }
             +" to run the code"
           }
 

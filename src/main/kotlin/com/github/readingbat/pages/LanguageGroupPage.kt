@@ -23,10 +23,10 @@ import com.github.readingbat.common.CSSNames.GROUP_ITEM_SRC
 import com.github.readingbat.common.CommonUtils.pathOf
 import com.github.readingbat.common.Constants.MSG
 import com.github.readingbat.common.Endpoints.CHALLENGE_ROOT
-import com.github.readingbat.common.Endpoints.GREEN_CHECK
 import com.github.readingbat.common.Endpoints.STATIC_ROOT
-import com.github.readingbat.common.Endpoints.WHITE_CHECK
 import com.github.readingbat.common.Message
+import com.github.readingbat.common.StaticFileNames.GREEN_CHECK
+import com.github.readingbat.common.StaticFileNames.WHITE_CHECK
 import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.fetchActiveClassCode
 import com.github.readingbat.dsl.ChallengeGroup

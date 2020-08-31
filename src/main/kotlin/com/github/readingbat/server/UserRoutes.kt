@@ -251,7 +251,7 @@ internal fun Routing.userRoutes(metrics: Metrics, contentSrc: () -> ReadingBatCo
 }
 
 private object StaticVals {
-  val robotsTxt by lazy { getResourceAsText("$STATIC_ROOT$ROBOTS_ENDPOINT") }
+  val robotsTxt by lazy { getResourceAsText("/static/$ROBOTS_ENDPOINT") }
 }
 
 object ResourceContent {

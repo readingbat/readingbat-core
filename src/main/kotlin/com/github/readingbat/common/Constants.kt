@@ -59,7 +59,9 @@ internal object PropertyNames {
 
 internal object Endpoints {
   const val ROOT = "/"
-  const val STATIC_ROOT = "/$STATIC"
+
+  //const val STATIC_ROOT = "/$STATIC"
+  const val STATIC_ROOT = "https://readingbat-static.sfo2.digitaloceanspaces.com"
   const val CHALLENGE_ROOT = "/content"
   const val PLAYGROUND_ROOT = "/playground"
   const val USER_PREFS_ENDPOINT = "/user-prefs"
@@ -100,8 +102,16 @@ internal object Endpoints {
   const val PING = "/ping"
   const val THREAD_DUMP = "/threaddump"
   const val LOGOUT_ENDPOINT = "/logout"
+}
+
+internal object StaticFileNames {
   const val WHITE_CHECK = "white-check.jpg"
   const val GREEN_CHECK = "green-check.jpg"
+  const val LIKE_CLEAR_FILE = "like-clear.png"
+  const val DISLIKE_CLEAR_FILE = "dislike-clear.png"
+  const val LIKE_COLOR_FILE = "like-color.png"
+  const val DISLIKE_COLOR_FILE = "dislike-color.png"
+  const val RUN_BUTTON = "run-button.png"
 }
 
 internal object ParameterIds {

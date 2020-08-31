@@ -30,14 +30,14 @@ import com.github.readingbat.common.Constants.MSG
 import com.github.readingbat.common.Endpoints.CHALLENGE_GROUP_ENDPOINT
 import com.github.readingbat.common.Endpoints.CHALLENGE_ROOT
 import com.github.readingbat.common.Endpoints.CLEAR_GROUP_ANSWERS_ENDPOINT
-import com.github.readingbat.common.Endpoints.GREEN_CHECK
 import com.github.readingbat.common.Endpoints.STATIC_ROOT
-import com.github.readingbat.common.Endpoints.WHITE_CHECK
 import com.github.readingbat.common.FormFields.CHALLENGE_ANSWERS_KEY
 import com.github.readingbat.common.FormFields.GROUP_NAME_KEY
 import com.github.readingbat.common.FormFields.LANGUAGE_NAME_KEY
 import com.github.readingbat.common.KeyConstants.CORRECT_ANSWERS_KEY
 import com.github.readingbat.common.Message
+import com.github.readingbat.common.StaticFileNames.GREEN_CHECK
+import com.github.readingbat.common.StaticFileNames.WHITE_CHECK
 import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.challengeAnswersKey
 import com.github.readingbat.common.User.Companion.correctAnswersKey

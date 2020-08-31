@@ -65,6 +65,10 @@ import com.github.readingbat.common.ParameterIds.NEXTPREVCHANCE_ID
 import com.github.readingbat.common.ParameterIds.SPINNER_ID
 import com.github.readingbat.common.ParameterIds.STATUS_ID
 import com.github.readingbat.common.ParameterIds.SUCCESS_ID
+import com.github.readingbat.common.StaticFileNames.DISLIKE_CLEAR_FILE
+import com.github.readingbat.common.StaticFileNames.DISLIKE_COLOR_FILE
+import com.github.readingbat.common.StaticFileNames.LIKE_CLEAR_FILE
+import com.github.readingbat.common.StaticFileNames.LIKE_COLOR_FILE
 import com.github.readingbat.common.User.Companion.challengeAnswersKey
 import com.github.readingbat.common.User.Companion.correctAnswersKey
 import com.github.readingbat.common.User.Companion.fetchActiveClassCode
@@ -501,7 +505,7 @@ internal object ChallengePage : KLogging() {
             style = "display:${if (likeDislikeVal == 0 || likeDislikeVal == 2) "inline" else "none" + ";"}"
             button(classes = LIKE_BUTTONS) {
               onClick = "$LIKE_DISLIKE_JS_FUNC(${LIKE_CLEAR.toDoubleQuoted()});"
-              img { height = imgSize; src = "$STATIC_ROOT/like-clear.png" }
+              img { height = imgSize; src = "$STATIC_ROOT/$LIKE_CLEAR_FILE" }
             }
           }
           td {
@@ -509,7 +513,7 @@ internal object ChallengePage : KLogging() {
             style = "display:${if (likeDislikeVal == 1) "inline" else "none" + ";"}"
             button(classes = LIKE_BUTTONS) {
               onClick = "$LIKE_DISLIKE_JS_FUNC(${LIKE_COLOR.toDoubleQuoted()});"
-              img { height = imgSize; src = "$STATIC_ROOT/like-color.png" }
+              img { height = imgSize; src = "$STATIC_ROOT/$LIKE_COLOR_FILE" }
             }
           }
           td {
@@ -517,7 +521,7 @@ internal object ChallengePage : KLogging() {
             style = "display:${if (likeDislikeVal == 0 || likeDislikeVal == 1) "inline" else "none" + ";"}"
             button(classes = LIKE_BUTTONS) {
               onClick = "$LIKE_DISLIKE_JS_FUNC(${DISLIKE_CLEAR.toDoubleQuoted()});"
-              img { height = imgSize; src = "$STATIC_ROOT/dislike-clear.png" }
+              img { height = imgSize; src = "$STATIC_ROOT/$DISLIKE_CLEAR_FILE" }
             }
           }
           td {
@@ -525,7 +529,7 @@ internal object ChallengePage : KLogging() {
             style = "display:${if (likeDislikeVal == 2) "inline" else "none" + ";"}"
             button(classes = LIKE_BUTTONS) {
               onClick = "$LIKE_DISLIKE_JS_FUNC(${DISLIKE_COLOR.toDoubleQuoted()});"
-              img { height = imgSize; src = "$STATIC_ROOT/dislike-color.png" }
+              img { height = imgSize; src = "$STATIC_ROOT/$DISLIKE_COLOR_FILE" }
             }
           }
 
