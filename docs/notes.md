@@ -27,3 +27,6 @@ Setup:
 
 ## Grafana Notes
 * JVM dashboard is here: https://grafana.com/grafana/dashboards/8563
+
+## PrismJs Notes
+* Look in .js files to find URLs to load css and js files
