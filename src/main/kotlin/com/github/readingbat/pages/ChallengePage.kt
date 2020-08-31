@@ -157,7 +157,7 @@ internal object ChallengePage : KLogging() {
 
         head {
           link { rel = "stylesheet"; href = spinnerCss }
-          link { rel = "stylesheet"; href = "$STATIC_ROOT/$languageName-prism.css"; type = CSS.toString() }
+          link { rel = "stylesheet"; href = "$STATIC_ROOT/prism/$languageName-prism.css"; type = CSS.toString() }
 
           script(type = textJavaScript) { checkAnswersScript(languageName, groupName, challengeName) }
           script(type = textJavaScript) { likeDislikeScript(languageName, groupName, challengeName) }
@@ -193,7 +193,7 @@ internal object ChallengePage : KLogging() {
 
           backLink(CHALLENGE_ROOT, languageName.value, groupName.value)
 
-          script { src = "$STATIC_ROOT/$languageName-prism.js" }
+          script { src = "$STATIC_ROOT/prism/$languageName-prism.js" }
 
           if (activeClassCode.isEnabled && enrollees.isNotEmpty())
             enableWebSockets(activeClassCode, funcInfo.challengeMd5)
