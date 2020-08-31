@@ -27,6 +27,7 @@ internal object Constants {
   const val MSG = "msg"
   const val BACK_PATH = "backPath"
   const val STATIC = "static"
+  const val PRISM = "prism"
   const val RESP = "response"
   const val LIKE_DESC = "likeDesc"
   const val NO_ANSWER_COLOR = "white"

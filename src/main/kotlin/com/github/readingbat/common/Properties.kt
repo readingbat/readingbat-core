@@ -17,6 +17,8 @@
 
 package com.github.readingbat.common
 
+import com.github.pambrose.common.util.isNotNull
+import com.github.readingbat.common.CommonUtils.obfuscate
 import com.github.readingbat.common.PropertyNames.AGENT
 import com.github.readingbat.common.PropertyNames.CHALLENGES
 import com.github.readingbat.common.PropertyNames.CLASSES
@@ -28,42 +30,44 @@ import io.ktor.application.*
 import io.ktor.config.*
 import mu.KLogging
 
-enum class Properties(val propertyValue: String) {
-
-  AGENT_CONFIG_PROPERTY("agent.config"),
-  ADMIN_USERS("$READINGBAT.adminUsers"),
-  PROMETHEUS_URL("$READINGBAT.prometheus.url"),
-  AGENT_LAUNCH_ID("agentLaunchId"),
-  GRAFANA_URL("$READINGBAT.grafana.url"),
-  KTOR_PORT("ktor.deployment.port"),
-  CONFIG_FILENAME("$READINGBAT.configFilename"),
+enum class Properties(val propertyValue: String,
+                      val maskFunc: Properties.() -> String = { getProperty("unassigned") }) {
 
   IS_PRODUCTION("$READINGBAT.$SITE.production"),
+  STARTUP_DELAY_SECS("$READINGBAT.$SITE.startupMaxDelaySecs"),
   REDIRECT_HOSTNAME_PROPERTY("$READINGBAT.$SITE.redirectHostname"),
   SENDGRID_PREFIX_PROPERTY("$READINGBAT.$SITE.sendGridPrefix"),
   FORWARDED_ENABLED_PROPERTY("$READINGBAT.$SITE.forwardedHeaderSupportEnabled"),
   XFORWARDED_ENABLED_PROPERTY("$READINGBAT.$SITE.xforwardedHeaderSupportEnabled"),
-  STARTUP_DELAY_SECS("$READINGBAT.$SITE.startupMaxDelaySecs"),
-  ANALYTICS_ID("$READINGBAT.$SITE.googleAnalyticsId"),
+  ANALYTICS_ID("$READINGBAT.$SITE.googleAnalyticsId", { getPropertyOrNull()?.obfuscate(2) ?: "unassigned" }),
 
   JAVA_SCRIPTS_POOL_SIZE("$READINGBAT.scripts.javaPoolSize"),
   KOTLIN_SCRIPTS_POOL_SIZE("$READINGBAT.scripts.kotlinPoolSize"),
   PYTHON_SCRIPTS_POOL_SIZE("$READINGBAT.scripts.pythonPoolSize"),
 
-  AGENT_ENABLED_PROPERTY("$AGENT.enabled"),
-  PROXY_HOSTNAME("$AGENT.proxy.hostname"),
-
   FILE_NAME("$READINGBAT.$CONTENT.fileName"),
   VARIABLE_NAME("$READINGBAT.$CONTENT.variableName"),
 
+  PROMETHEUS_URL("$READINGBAT.prometheus.url"),
+  GRAFANA_URL("$READINGBAT.grafana.url"),
+  CONFIG_FILENAME("$READINGBAT.configFilename"),
+
   MAX_HISTORY_LENGTH("$READINGBAT.$CHALLENGES.maxHistoryLength"),
   MAX_CLASS_COUNT("$READINGBAT.$CLASSES.maxCount"),
+
+  ADMIN_USERS("$READINGBAT.adminUsers"),
+
+  AGENT_CONFIG_PROPERTY("agent.config"),
+  AGENT_ENABLED_PROPERTY("$AGENT.enabled"),
+  PROXY_HOSTNAME("$AGENT.proxy.hostname"),
+  AGENT_LAUNCH_ID("$AGENT.launchId"),
 
   REDIS_MAX_POOL_SIZE("redis.maxPoolSize"),
   REDIS_MAX_IDLE_SIZE("redis.maxIdleSize"),
   REDIS_MIN_IDLE_SIZE("redis.minIdleSize"),
 
   KOTLIN_SCRIPT_CLASSPATH("kotlin.script.classpath"),
+  KTOR_PORT("ktor.deployment.port"),
   ;
 
   private fun Application.configProperty(name: String, default: String = "", warn: Boolean = false) =
@@ -95,6 +99,8 @@ enum class Properties(val propertyValue: String) {
     logger.info { "$propertyValue: $value" }
     System.setProperty(propertyValue, value)
   }
+
+  fun isDefined() = getPropertyOrNull().isNotNull()
 
   companion object : KLogging()
 }

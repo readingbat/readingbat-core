@@ -17,21 +17,23 @@
 
 package com.github.readingbat.common
 
+import com.github.readingbat.common.CommonUtils.maskUrl
+import com.github.readingbat.common.CommonUtils.obfuscate
 import com.github.readingbat.dsl.InvalidConfigurationException
 
-enum class EnvVars {
+enum class EnvVars(val maskFunc: EnvVars.() -> String = { getEnv("unassigned") }) {
 
-  AGENT_CONFIG,
-  SCRIPT_CLASSPATH,
-  GITHUB_OAUTH,
-  SENDGRID_API_KEY,
-  SENDGRID_PREFIX,
-  REDIS_URL,
-  REDIRECT_HOSTNAME,
   AGENT_ENABLED,
+  AGENT_CONFIG,
+  REDIS_URL({ getEnv("unassigned").maskUrl() }),
+  GITHUB_OAUTH({ getEnvOrNull()?.obfuscate(4) ?: "unassigned" }),
+  SCRIPT_CLASSPATH,
+  SENDGRID_API_KEY({ getEnvOrNull()?.obfuscate(4) ?: "unassigned" }),
+  SENDGRID_PREFIX,
+  FILTER_LOG,
+  REDIRECT_HOSTNAME,
   FORWARDED_ENABLED,
   XFORWARDED_ENABLED,
-  FILTER_LOG,
   JAVA_TOOL_OPTIONS;
 
   fun getEnvOrNull(): String? = System.getenv(name)

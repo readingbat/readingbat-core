@@ -22,4 +22,17 @@ import com.github.pambrose.common.util.join
 internal object CommonUtils {
 
   internal fun pathOf(vararg elems: Any): String = elems.toList().map { it.toString() }.join()
+
+  internal fun String.maskUrl() =
+    if ("://" in this && "@" in this) {
+      val scheme = split("://")
+      val uri = split("@")
+      "${scheme[0]}://*****:*****@${uri[1]}"
+    }
+    else {
+      this
+    }
+
+  internal fun String.obfuscate(freq: Int = 2) =
+    mapIndexed { i, v -> if (i % freq == 0) '*' else v }.joinToString("")
 }

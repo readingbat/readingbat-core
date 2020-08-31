@@ -21,6 +21,7 @@ import com.github.pambrose.common.redis.RedisUtils
 import com.github.pambrose.common.util.*
 import com.github.pambrose.common.util.Version
 import com.github.pambrose.common.util.Version.Companion.versionDesc
+import com.github.readingbat.common.CommonUtils.maskUrl
 import com.github.readingbat.common.Endpoints.STATIC_ROOT
 import com.github.readingbat.common.EnvVars.*
 import com.github.readingbat.common.Metrics
@@ -86,19 +87,7 @@ object ReadingBatServer : KLogging() {
       logger.info { "${KOTLIN_SCRIPT_CLASSPATH.propertyValue}: $scriptClasspathProp" }
     }
 
-    val redisUrl =
-      REDIS_URL.getEnv("unassigned")
-        .let {
-          if ("://" in it && "@" in it) {
-            val scheme = it.split("://")
-            val uri = it.split("@")
-            "${scheme[0]}://*****:*****@${uri[1]}"
-          }
-          else {
-            it
-          }
-        }
-    logger.info { "$REDIS_URL: $redisUrl" }
+    logger.info { "$REDIS_URL: ${REDIS_URL.getEnv("unassigned").maskUrl()}" }
 
     // Grab config filename from CLI args and then try ENV var
     val configFilename =

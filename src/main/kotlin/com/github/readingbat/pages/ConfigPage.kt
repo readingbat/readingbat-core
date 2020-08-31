@@ -23,8 +23,8 @@ import com.github.readingbat.common.CSSNames.INDENT_1EM
 import com.github.readingbat.common.CSSNames.TD_PADDING
 import com.github.readingbat.common.Constants.RETURN_PATH
 import com.github.readingbat.common.Endpoints.USER_PREFS_ENDPOINT
-import com.github.readingbat.common.EnvVars.AGENT_CONFIG
-import com.github.readingbat.common.EnvVars.JAVA_TOOL_OPTIONS
+import com.github.readingbat.common.EnvVars
+import com.github.readingbat.common.Properties
 import com.github.readingbat.common.SessionActivity
 import com.github.readingbat.dsl.LanguageType.Java
 import com.github.readingbat.dsl.LanguageType.Kotlin
@@ -117,20 +117,37 @@ internal object ConfigPage {
                   td { +"Session map size:" }
                   td { +"${SessionActivity.sessionsMapSize}" }
                 }
+                tr {
+                  td { +"Admin Users:" }
+                  td { +ReadingBatServer.adminUsers.joinToString(", ") }
+                }
               }
             }
 
             h3 { +"Env Vars" }
             div(classes = INDENT_1EM) {
               table {
-                tr {
-                  td { +JAVA_TOOL_OPTIONS.name }
-                  td { +(JAVA_TOOL_OPTIONS.getEnv("unassigned")) }
-                }
-                tr {
-                  td { +AGENT_CONFIG.name }
-                  td { +(AGENT_CONFIG.getEnv("unassigned")) }
-                }
+                EnvVars.values()
+                  .forEach {
+                    tr {
+                      td { +it.name }
+                      td { +it.maskFunc.invoke(it) }
+                    }
+                  }
+              }
+            }
+
+            h3 { +"Application Properties" }
+            div(classes = INDENT_1EM) {
+              table {
+                Properties.values()
+                  .filter { it.isDefined() }
+                  .forEach {
+                    tr {
+                      td { +it.propertyValue }
+                      td { +it.maskFunc.invoke(it) }
+                    }
+                  }
               }
             }
 

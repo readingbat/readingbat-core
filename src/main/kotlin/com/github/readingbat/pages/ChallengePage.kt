@@ -40,6 +40,7 @@ import com.github.readingbat.common.Constants.INCOMPLETE_COLOR
 import com.github.readingbat.common.Constants.LIKE_DISLIKE_JS_FUNC
 import com.github.readingbat.common.Constants.MSG
 import com.github.readingbat.common.Constants.PING_CODE
+import com.github.readingbat.common.Constants.PRISM
 import com.github.readingbat.common.Constants.PROCESS_USER_ANSWERS_JS_FUNC
 import com.github.readingbat.common.Constants.RESP
 import com.github.readingbat.common.Constants.WRONG_COLOR
@@ -157,7 +158,7 @@ internal object ChallengePage : KLogging() {
 
         head {
           link { rel = "stylesheet"; href = spinnerCss }
-          link { rel = "stylesheet"; href = "$STATIC_ROOT/prism/$languageName-prism.css"; type = CSS.toString() }
+          link { rel = "stylesheet"; href = "$STATIC_ROOT/$PRISM/$languageName-prism.css"; type = CSS.toString() }
 
           script(type = textJavaScript) { checkAnswersScript(languageName, groupName, challengeName) }
           script(type = textJavaScript) { likeDislikeScript(languageName, groupName, challengeName) }
@@ -193,7 +194,7 @@ internal object ChallengePage : KLogging() {
 
           backLink(CHALLENGE_ROOT, languageName.value, groupName.value)
 
-          script { src = "$STATIC_ROOT/prism/$languageName-prism.js" }
+          script { src = "$STATIC_ROOT/$PRISM/$languageName-prism.js" }
 
           if (activeClassCode.isEnabled && enrollees.isNotEmpty())
             enableWebSockets(activeClassCode, funcInfo.challengeMd5)
