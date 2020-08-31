@@ -32,11 +32,11 @@ internal object RedisAdmin {
 
   @JvmStatic
   fun main(args: Array<String>) {
-    //showAll(docean)
+    showAll(local)
     //deleteAll(docean)
     //copy(heroku, docean)
-    println("Heroku count: ${count(heroku)}")
-    println("DO count: ${count(docean)}")
+    //println("Heroku count: ${count(heroku)}")
+    //println("DO count: ${count(docean)}")
     //count(docean)
   }
 

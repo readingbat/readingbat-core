@@ -18,7 +18,6 @@
 package com.github.readingbat.posts
 
 import com.github.pambrose.common.util.encode
-import com.github.readingbat.common.*
 import com.github.readingbat.common.Constants.INVALID_RESET_ID
 import com.github.readingbat.common.Constants.MSG
 import com.github.readingbat.common.Constants.RESET_ID
@@ -28,8 +27,11 @@ import com.github.readingbat.common.Endpoints.PASSWORD_RESET_ENDPOINT
 import com.github.readingbat.common.FormFields.CONFIRM_PASSWORD
 import com.github.readingbat.common.FormFields.EMAIL
 import com.github.readingbat.common.FormFields.NEW_PASSWORD
-import com.github.readingbat.common.User.Companion.isRegisteredEmail
+import com.github.readingbat.common.Message
+import com.github.readingbat.common.User.Companion.isNotRegisteredEmail
 import com.github.readingbat.common.User.Companion.lookupUserByEmail
+import com.github.readingbat.common.isNotValidUser
+import com.github.readingbat.common.isValidUser
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.pages.PasswordResetPage.passwordResetPage
 import com.github.readingbat.posts.CreateAccountPost.checkPassword
@@ -46,40 +48,36 @@ import com.github.readingbat.server.ServerUtils.queryParam
 import com.google.common.util.concurrent.RateLimiter
 import io.ktor.application.*
 import io.ktor.request.*
-import io.ktor.sessions.*
 import mu.KLogging
 import redis.clients.jedis.Jedis
 import java.io.IOException
 
 internal object PasswordResetPost : KLogging() {
   private val unknownUserLimiter = RateLimiter.create(0.5) // rate 2.0 is "2 permits per second"
+  private val invalidUser = Message("Invalid User", true)
+  private val unableToSend = Message("Unable to send password reset email -- missing email address", true)
 
-  suspend fun PipelineCall.sendPasswordReset(content: ReadingBatContent, user: User?, redis: Jedis): String {
+  suspend fun PipelineCall.sendPasswordReset(content: ReadingBatContent, redis: Jedis): String {
     val parameters = call.receiveParameters()
     val email = parameters.getEmail(EMAIL)
     logger.info { "Considering $email for password change" }
+    val user = lookupUserByEmail(email, redis)
     return when {
       user.isNotValidUser(redis) -> {
         unknownUserLimiter.acquire()
-        passwordResetPage(content, EMPTY_RESET_ID, redis, Message("Invalid User", true))
+        passwordResetPage(content, EMPTY_RESET_ID, redis, invalidUser)
       }
-      email.isBlank() -> {
-        passwordResetPage(content,
-                          EMPTY_RESET_ID,
-                          redis,
-                          Message("Unable to send password reset email -- missing email address", true))
-      }
+      email.isBlank() -> passwordResetPage(content, EMPTY_RESET_ID, redis, unableToSend)
       email.isNotValidEmail() -> {
         passwordResetPage(content, EMPTY_RESET_ID, redis, Message("Invalid email address: $email", true))
       }
-      !isRegisteredEmail(email, redis) -> {
+      isNotRegisteredEmail(email, redis) -> {
         unknownUserLimiter.acquire()
         passwordResetPage(content, EMPTY_RESET_ID, redis, Message("Unknown user: $email", true))
       }
       else -> {
         try {
           val newResetId = newResetId()
-          val browserSession = call.sessions.get<BrowserSession>()
 
           // Lookup and remove previous value if it exists
           val user2 = lookupUserByEmail(email, redis) ?: throw ResetPasswordException("Unable to find $email")

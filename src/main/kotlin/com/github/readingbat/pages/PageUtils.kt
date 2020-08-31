@@ -115,7 +115,12 @@ internal object PageUtils {
     p { if (displayWelcomeMsg) +"Welcome to ReadingBat." else rawHtml(nbsp.text) }
 
     if (loginAttempt && user.isNull())
-      p { span { style = "color:red;"; +"Failed to login -- incorrect email or password" } }
+      p {
+        span {
+          style =
+            "color:red;"; +"Failed to login -- ${if (redis.isNull()) "database is down" else "incorrect email or password"}"
+        }
+      }
 
     p { span { style = "color:green; max-width:800;"; if (msg.isNotBlank) +(msg.toString()) else rawHtml(nbsp.text) } }
 

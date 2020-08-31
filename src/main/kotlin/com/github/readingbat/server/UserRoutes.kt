@@ -218,7 +218,7 @@ internal fun Routing.userRoutes(metrics: Metrics, contentSrc: () -> ReadingBatCo
   post(PASSWORD_RESET_POST_ENDPOINT) {
     metrics.measureEndpointRequest(PASSWORD_RESET_POST_ENDPOINT) {
       respondWithSuspendingDbmsCheck(contentSrc()) { redis ->
-        sendPasswordReset(contentSrc(), fetchUser(), redis)
+        sendPasswordReset(contentSrc(), redis)
       }
     }
   }

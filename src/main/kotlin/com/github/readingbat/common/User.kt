@@ -63,7 +63,7 @@ internal class User private constructor(val id: String, val browserSession: Brow
   private val userInfoBrowserQueryKey by lazy { keyOf(USER_INFO_BROWSER_KEY, id, "*") }
   private val browserSpecificUserInfoKey by lazy {
     if (browserSession.isNull())
-      logger.error { "NULL BROWSER SESSION VALUE" }
+      logger.error { "Null browser session value" }
     if (browserSession.isNotNull()) userInfoBrowserKey else throw InvalidConfigurationException("Null browser session for $this")
   }
   private val userClassesKey by lazy { keyOf(USER_CLASSES_KEY, id) }
@@ -549,6 +549,8 @@ internal class User private constructor(val id: String, val browserSession: Brow
     }
 
     fun isRegisteredEmail(email: Email, redis: Jedis) = lookupUserByEmail(email, redis).isNotNull()
+
+    fun isNotRegisteredEmail(email: Email, redis: Jedis) = !isRegisteredEmail(email, redis)
 
     fun lookupUserByEmail(email: Email, redis: Jedis): User? {
       val id = redis.get(email.userEmailKey) ?: ""
