@@ -22,6 +22,7 @@ import com.github.pambrose.common.util.simpleClassName
 import com.github.readingbat.common.Endpoints.CSS_ENDPOINT
 import com.github.readingbat.common.Endpoints.FAV_ICON_ENDPOINT
 import com.github.readingbat.common.Endpoints.STATIC_ROOT
+import com.github.readingbat.common.EnvVars.FILTER_LOG
 import com.github.readingbat.dsl.InvalidPathException
 import com.github.readingbat.server.ConfigureCookies.configureAuthCookie
 import com.github.readingbat.server.ConfigureCookies.configureSessionIdCookie
@@ -108,7 +109,8 @@ internal object Installs : KLogging() {
 
     install(CallLogging) {
       level = Level.INFO
-      filter { call -> call.request.path().let { it.startsWith("/") && !it.startsWith("/static/") } }
+      if (FILTER_LOG.getEnv(true))
+        filter { call -> call.request.path().let { it.startsWith("/") && !it.startsWith("/static/") && it != "/ping" } }
       format { call ->
         when (val status = call.response.status()) {
           HttpStatusCode.Found -> {

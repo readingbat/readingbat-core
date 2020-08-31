@@ -32,7 +32,7 @@ import com.github.readingbat.common.UserPrincipal
 import com.github.readingbat.server.ServerUtils.get
 import io.ktor.application.*
 import io.ktor.html.*
-import io.ktor.http.*
+import io.ktor.http.ContentType.Text.Plain
 import io.ktor.response.*
 import io.ktor.routing.*
 import io.ktor.sessions.*
@@ -51,7 +51,7 @@ internal object AdminRoutes : KLogging() {
   fun Routing.adminRoutes(metrics: Metrics) {
 
     get(PING, metrics) {
-      call.respondText("pong", ContentType.Text.Plain)
+      call.respondText("pong", Plain)
     }
 
     get(THREAD_DUMP, metrics) {
@@ -59,9 +59,9 @@ internal object AdminRoutes : KLogging() {
         val baos = ByteArrayOutputStream()
         baos.use { ThreadDumpInfo.threadDump.dump(true, true, it) }
         val output = String(baos.toByteArray(), Charsets.UTF_8)
-        call.respondText(output, ContentType.Text.Plain)
+        call.respondText(output, Plain)
       } catch (e: NoClassDefFoundError) {
-        call.respondText("Sorry, your runtime environment does not allow dump threads.", ContentType.Text.Plain)
+        call.respondText("Sorry, your runtime environment does not allow dump threads.", Plain)
       }
     }
 
@@ -140,7 +140,7 @@ internal object AdminRoutes : KLogging() {
     val session = call.sessions.get<BrowserSession>()
     if (session.isNull()) {
       call.sessions.set(BrowserSession(id = randomId(15)))
-      logger.info { "Assign browser session: ${call.sessions.get<BrowserSession>()}" }
+      logger.info { "Created browser session: ${call.sessions.get<BrowserSession>()}" }
     }
   }
 

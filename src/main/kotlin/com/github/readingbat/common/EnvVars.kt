@@ -31,6 +31,7 @@ enum class EnvVars {
   AGENT_ENABLED,
   FORWARDED_ENABLED,
   XFORWARDED_ENABLED,
+  FILTER_LOG,
   JAVA_TOOL_OPTIONS;
 
   fun getEnvOrNull(): String? = System.getenv(name)
