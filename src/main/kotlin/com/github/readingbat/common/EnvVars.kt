@@ -27,6 +27,7 @@ enum class EnvVars(val maskFunc: EnvVars.() -> String = { getEnv("unassigned") }
   AGENT_CONFIG,
   REDIS_URL({ getEnv("unassigned").maskUrl() }),
   GITHUB_OAUTH({ getEnvOrNull()?.obfuscate(4) ?: "unassigned" }),
+  PAPERTRAIL_PORT,
   SCRIPT_CLASSPATH,
   SENDGRID_API_KEY({ getEnvOrNull()?.obfuscate(4) ?: "unassigned" }),
   SENDGRID_PREFIX,

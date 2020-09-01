@@ -35,6 +35,7 @@ import com.github.readingbat.dsl.agentLaunchId
 import com.github.readingbat.posts.ChallengeHistory
 import com.github.readingbat.server.ReadingBatServer.pool
 import com.github.readingbat.server.ServerUtils.rows
+import io.ktor.features.*
 import io.ktor.http.cio.websocket.*
 import io.ktor.http.cio.websocket.CloseReason.*
 import io.ktor.routing.*
@@ -68,11 +69,12 @@ internal object WsEndoints : KLogging() {
       val challengeMd5 = call.parameters[CHALLENGE_MD5] ?: throw InvalidPathException("Missing challenge md5")
       val desc = "$CHALLENGE_ENDPOINT/$classCode/$challengeMd5"
       val finished = BooleanMonitor(false)
+      val remote = call.request.origin.remoteHost
 
-      logger.info { "Opening student answers websocket for $desc" }
+      logger.info { "Opened student answers websocket for $desc - $remote" }
 
       outgoing.invokeOnClose {
-        logger.info { "Close received for student answers websocket for $desc" }
+        logger.debug { "Close received for student answers websocket for $desc - $remote" }
         finished.set(true)
       }
 
@@ -141,7 +143,7 @@ internal object WsEndoints : KLogging() {
         } finally {
           metrics.wsStudentAnswerGauge.labels(agentLaunchId()).dec()
           close(CloseReason(Codes.GOING_AWAY, "Client disconnected"))
-          logger.info { "Closed student answers websocket for $desc" }
+          logger.info { "Closed student answers websocket for $desc - $remote" }
         }
       }
     }
@@ -155,11 +157,12 @@ internal object WsEndoints : KLogging() {
       val challenges = content.invoke().findGroup(languageName.toLanguageType(), groupName).challenges
       val desc = "$CHALLENGE_ENDPOINT/$languageName/$groupName/$classCode"
       val finished = AtomicBoolean(false)
+      val remote = call.request.origin.remoteHost
 
-      logger.info { "Opening class statistics websocket for $desc" }
+      logger.info { "Opened class statistics websocket for $desc - $remote" }
 
       outgoing.invokeOnClose {
-        logger.info { "Close received for class statistics websocket for $desc" }
+        logger.debug { "Close received for class statistics websocket for $desc - $remote" }
         finished.set(true)
       }
 
@@ -269,7 +272,7 @@ internal object WsEndoints : KLogging() {
         } finally {
           metrics.wsClassStatisticsGauge.labels(agentLaunchId()).dec()
           close(CloseReason(Codes.GOING_AWAY, "Client disconnected"))
-          logger.info { "Closed class statistics websocket for $desc" }
+          logger.info { "Closed class statistics websocket for $desc - $remote" }
         }
       }
     }

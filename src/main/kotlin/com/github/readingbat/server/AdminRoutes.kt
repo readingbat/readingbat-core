@@ -31,6 +31,7 @@ import com.github.readingbat.common.Metrics
 import com.github.readingbat.common.UserPrincipal
 import com.github.readingbat.server.ServerUtils.get
 import io.ktor.application.*
+import io.ktor.features.*
 import io.ktor.html.*
 import io.ktor.http.ContentType.Text.Plain
 import io.ktor.response.*
@@ -140,7 +141,7 @@ internal object AdminRoutes : KLogging() {
     val session = call.sessions.get<BrowserSession>()
     if (session.isNull()) {
       call.sessions.set(BrowserSession(id = randomId(15)))
-      logger.info { "Created browser session: ${call.sessions.get<BrowserSession>()?.id ?: "Unassigned"} - call.request.origin.remoteHost" }
+      logger.info { "Created browser session: ${call.sessions.get<BrowserSession>()?.id ?: "Unassigned"} - ${call.request.origin.remoteHost}" }
     }
   }
 
