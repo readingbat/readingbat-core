@@ -47,6 +47,7 @@ import com.github.readingbat.server.ResetId.Companion.newResetId
 import com.github.readingbat.server.ServerUtils.queryParam
 import com.google.common.util.concurrent.RateLimiter
 import io.ktor.application.*
+import io.ktor.features.*
 import io.ktor.request.*
 import mu.KLogging
 import redis.clients.jedis.Jedis
@@ -60,7 +61,8 @@ internal object PasswordResetPost : KLogging() {
   suspend fun PipelineCall.sendPasswordReset(content: ReadingBatContent, redis: Jedis): String {
     val parameters = call.receiveParameters()
     val email = parameters.getEmail(EMAIL)
-    logger.info { "Considering $email for password change" }
+    val remoteStr = call.request.origin.remoteHost
+    logger.info { "Password change request for $email - $remoteStr" }
     val user = lookupUserByEmail(email, redis)
     return when {
       user.isNotValidUser(redis) -> {
@@ -88,7 +90,7 @@ internal object PasswordResetPost : KLogging() {
             tx.exec()
           }
 
-          logger.info { "Sending password reset email to $email" }
+          logger.info { "Sending password reset email to $email - $remoteStr" }
           try {
             val msg = Message("""
               |This is a password reset message for the ReadingBat.com account for '$email'

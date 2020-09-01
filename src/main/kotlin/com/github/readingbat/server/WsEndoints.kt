@@ -110,7 +110,7 @@ internal object WsEndoints : KLogging() {
                   object : JedisPubSub() {
                     override fun onMessage(channel: String?, message: String?) {
                       if (message.isNotNull()) {
-                        logger.info { "Sending data $message from $channel to $challengeMd5" }
+                        logger.debug { "Sending data $message from $channel to $challengeMd5" }
                         metrics.wsStudentAnswerResponseCount.labels(agentLaunchId()).inc()
                         runBlocking {
                           outgoing.send(Frame.Text(message))
