@@ -32,6 +32,8 @@ import io.ktor.auth.*
 import io.ktor.features.*
 import io.ktor.http.*
 import io.ktor.http.ContentType.Text.Plain
+import io.ktor.http.HttpHeaders.Location
+import io.ktor.http.HttpStatusCode.Companion.Found
 import io.ktor.http.content.*
 import io.ktor.locations.Locations
 import io.ktor.request.*
@@ -112,11 +114,12 @@ internal object Installs : KLogging() {
       if (FILTER_LOG.getEnv(true))
         filter { call -> call.request.path().let { it.startsWith("/") && !it.startsWith("/static/") && it != "/ping" } }
       format { call ->
-        when (val status = call.response.status()) {
-          HttpStatusCode.Found -> {
-            "$status: ${call.request.toLogString()} -> ${call.response.headers[HttpHeaders.Location]} - ${call.request.origin.remoteHost}"
-          }
-          else -> "$status: ${call.request.toLogString()} - ${call.request.origin.remoteHost}"
+        val logStr = call.request.toLogString()
+        val remote = call.request.origin.remoteHost
+        when (val status = call.response.status() ?: "Unknown") {
+          // Show redirections
+          Found -> "$status: $logStr -> ${call.response.headers[Location]} - $remote"
+          else -> "$status: $logStr - $remote"
         }
       }
     }

@@ -140,7 +140,7 @@ internal object AdminRoutes : KLogging() {
     val session = call.sessions.get<BrowserSession>()
     if (session.isNull()) {
       call.sessions.set(BrowserSession(id = randomId(15)))
-      logger.info { "Created browser session: ${call.sessions.get<BrowserSession>()}" }
+      logger.info { "Created browser session: ${call.sessions.get<BrowserSession>()?.id ?: "Unassigned"} - call.request.origin.remoteHost" }
     }
   }
 
