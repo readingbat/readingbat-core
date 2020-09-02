@@ -46,10 +46,10 @@ internal object SessionActivity : KLogging() {
 
     val requests get() = pages.get()
 
-    val city get() = geoInfoMap[remoteHost]?.city.toString() ?: "Unknown"
-    val country get() = geoInfoMap[remoteHost]?.country_name.toString() ?: "Unknown"
-    val organization get() = geoInfoMap[remoteHost]?.organization.toString() ?: "Unknown"
-    val flagUrl get() = geoInfoMap[remoteHost]?.country_flag.toString() ?: "Unknown"
+    val city get() = geoInfoMap[remoteHost]?.city?.toString() ?: "Unknown"
+    val country get() = geoInfoMap[remoteHost]?.country_name?.toString() ?: "Unknown"
+    val organization get() = geoInfoMap[remoteHost]?.organization?.toString() ?: "Unknown"
+    val flagUrl get() = geoInfoMap[remoteHost]?.country_flag?.toString() ?: "Unknown"
 
     fun update(recentPrincipal: UserPrincipal?, remote: String, agent: String) {
       principal = recentPrincipal
