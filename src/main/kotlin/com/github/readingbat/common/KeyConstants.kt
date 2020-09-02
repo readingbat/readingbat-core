@@ -34,6 +34,7 @@ internal object KeyConstants {
   const val USER_RESET_KEY = "user-password-reset"
   const val CLASS_CODE_KEY = "class-code"
   const val CLASS_INFO_KEY = "class-info"
+  const val IPGEO_KEY = "ip-geo"
 
   // For CLASS_INFO_KEY
   const val TEACHER_FIELD = "teacher"

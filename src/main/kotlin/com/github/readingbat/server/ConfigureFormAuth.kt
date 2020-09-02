@@ -76,16 +76,16 @@ internal object ConfigureFormAuth : KLogging() {
             val user = lookupUserByEmail(Email(cred.name), redis)
             if (user.isNotNull()) {
               val (salt, digest) = user.lookupDigestInfoByUser(redis)
-              if (salt.isNotEmpty() && digest.isNotEmpty() && digest == cred.password.sha256(salt)) {
-                logger.info { "Found user ${cred.name} ${user.id}" }
+              if (salt.isNotBlank() && digest.isNotBlank() && digest == cred.password.sha256(salt)) {
+                logger.debug { "Found user ${cred.name} ${user.id}" }
                 principal = UserPrincipal(user.id)
               }
             }
 
-            logger.info { "Login ${if (principal.isNull()) "failure" else "success"}" }
+            logger.info { "Login ${if (principal.isNull()) "failure" else "success for $user"}" }
 
             if (principal.isNull())
-              failedLoginLimiter.acquire() // may wait
+              failedLoginLimiter.acquire() // may block
 
             principal
           }

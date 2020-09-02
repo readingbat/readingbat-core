@@ -54,7 +54,9 @@ import mu.KLogging
 import redis.clients.jedis.Jedis
 import redis.clients.jedis.Response
 import redis.clients.jedis.Transaction
+import redis.clients.jedis.params.SetParams
 import kotlin.contracts.contract
+import kotlin.time.minutes
 
 internal class User private constructor(val id: String, val browserSession: BrowserSession?) {
 
@@ -231,8 +233,9 @@ internal class User private constructor(val id: String, val browserSession: Brow
       tx.del(previousResetId.passwordResetKey)
     }
 
-    tx.set(userPasswordResetKey, newResetId.value)
-    tx.set(newResetId.passwordResetKey, email.value)
+    val expiration = SetParams().ex(15.minutes.inSeconds.toInt())
+    tx.set(userPasswordResetKey, newResetId.value, expiration)
+    tx.set(newResetId.passwordResetKey, email.value, expiration)
   }
 
   fun deleteUser(redis: Jedis) {

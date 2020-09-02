@@ -143,12 +143,13 @@ internal object PasswordResetPost : KLogging() {
       if (newDigest == oldDigest)
         throw ResetPasswordException("New password is the same as the current password", resetId)
 
-      redis.multi().also { tx ->
-        user.deletePasswordResetKey(tx)
-        tx.del(passwordResetKey)
-        user.assignDigest(tx, newDigest)  // Set new password
-        tx.exec()
-      }
+      redis.multi()
+        .also { tx ->
+          user.deletePasswordResetKey(tx)
+          tx.del(passwordResetKey)
+          user.assignDigest(tx, newDigest)  // Set new password
+          tx.exec()
+        }
       throw RedirectException("/?$MSG=${"Password reset for $email".encode()}")
     } catch (e: ResetPasswordException) {
       logger.info { e }
