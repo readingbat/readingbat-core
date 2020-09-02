@@ -190,16 +190,15 @@ class PythonChallenge(challengeGroup: ChallengeGroup<*>,
 
     description = deriveDescription(code, "#")
 
-    val duration =
-      measureTime {
-        pythonScriptPool
-          .eval {
-            add(varName, correctAnswers)
-            eval(script)
-          }
-      }
-
-    logger.debug { "$challengeName computed answers in $duration for: $correctAnswers" }
+    measureTime {
+      pythonScriptPool
+        .eval {
+          add(varName, correctAnswers)
+          eval(script)
+        }
+    }.also {
+      logger.debug { "$challengeName computed answers in $it for: $correctAnswers" }
+    }
 
     return FunctionInfo(this, code, funcCode, invocations, returnType, correctAnswers)
   }
@@ -279,16 +278,15 @@ class KotlinChallenge(challengeGroup: ChallengeGroup<*>,
 
     description = deriveDescription(code, "//")
 
-    val duration =
-      measureTime {
-        kotlinScriptPool
-          .eval {
-            add(varName, correctAnswers, typeOf<Any>())
-            eval(script)
-          }
-      }
-
-    logger.debug { "$challengeName computed answers in $duration for: $correctAnswers" }
+    measureTime {
+      kotlinScriptPool
+        .eval {
+          add(varName, correctAnswers, typeOf<Any>())
+          eval(script)
+        }
+    }.also {
+      logger.debug { "$challengeName computed answers in $it for: $correctAnswers" }
+    }
 
     return FunctionInfo(this, strippedCode, funcCode, invocations, returnType, correctAnswers)
   }

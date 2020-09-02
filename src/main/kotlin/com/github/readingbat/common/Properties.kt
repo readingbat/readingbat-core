@@ -56,6 +56,8 @@ enum class Properties(val propertyValue: String,
   MAX_CLASS_COUNT("$READINGBAT.$CLASSES.maxCount"),
 
   ADMIN_USERS("$READINGBAT.adminUsers"),
+  KTOR_WATCH("ktor.deployment.watch"),
+  LOGBACK_CONFIG_FILE("logback.configurationFile"),
 
   AGENT_CONFIG_PROPERTY("agent.config"),
   AGENT_ENABLED_PROPERTY("$AGENT.enabled"),

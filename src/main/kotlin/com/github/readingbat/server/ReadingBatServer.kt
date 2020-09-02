@@ -34,6 +34,7 @@ import com.github.readingbat.server.Locations.locations
 import com.github.readingbat.server.ReadingBatServer.adminUsers
 import com.github.readingbat.server.ReadingBatServer.content
 import com.github.readingbat.server.ReadingBatServer.contentReadCount
+import com.github.readingbat.server.ReadingBatServer.logger
 import com.github.readingbat.server.WsEndoints.wsEndpoints
 import io.ktor.application.*
 import io.ktor.http.content.*
@@ -133,7 +134,7 @@ private fun Application.xforwardedHeaderSupportEnabled() =
   XFORWARDED_ENABLED.getEnv(XFORWARDED_ENABLED_PROPERTY.configProperty(this, default = "false").toBoolean())
 
 internal fun Application.assignContentDsl(fileName: String, variableName: String) {
-  ReadingBatServer.logger.info { "Loading content content using $variableName in $fileName" }
+  logger.info { "Loading content using $variableName in $fileName" }
   measureTime {
     content.set(
       readContentDsl(FileSource(fileName = fileName), variableName = variableName)
@@ -145,20 +146,19 @@ internal fun Application.assignContentDsl(fileName: String, variableName: String
           maxHistoryLength = MAX_HISTORY_LENGTH.configProperty(this@assignContentDsl, default = "10").toInt()
           maxClassCount = MAX_CLASS_COUNT.configProperty(this@assignContentDsl, default = "25").toInt()
           ktorPort = KTOR_PORT.configProperty(this@assignContentDsl, "0").toInt()
-          val watchVal = environment.config.propertyOrNull("ktor.deployment.watch")?.getList() ?: emptyList()
+          val watchVal = KTOR_WATCH.configPropertyOrNull(this@assignContentDsl)?.getList() ?: emptyList()
           ktorWatch = if (watchVal.isNotEmpty()) watchVal.toString() else "unassigned"
           grafanaUrl = GRAFANA_URL.configProperty(this@assignContentDsl)
           prometheusUrl = PROMETHEUS_URL.configProperty(this@assignContentDsl)
         }.apply { clearContentMap() })
     ReadingBatServer.metrics.contentLoadedCount.labels(agentLaunchId()).inc()
   }.also {
-    ReadingBatServer.logger.info { "Loaded content in $it using $variableName in $fileName" }
+    logger.info { "Loaded content using $variableName in $fileName in $it" }
   }
   contentReadCount.incrementAndGet()
 }
 
 internal fun Application.module() {
-  val logger = ReadingBatServer.logger
   val fileName = FILE_NAME.configProperty(this, "src/Content.kt")
   val variableName = VARIABLE_NAME.configProperty(this, "content")
   val proxyHostname = PROXY_HOSTNAME.configProperty(this, default = "")
@@ -175,6 +175,9 @@ internal fun Application.module() {
   REDIS_MAX_POOL_SIZE.setProperty(REDIS_MAX_POOL_SIZE.configProperty(this, default = "10"))
   REDIS_MAX_IDLE_SIZE.setProperty(REDIS_MAX_IDLE_SIZE.configProperty(this, default = "5"))
   REDIS_MIN_IDLE_SIZE.setProperty(REDIS_MIN_IDLE_SIZE.configProperty(this, default = "1"))
+
+  // Reference to load it
+  ReadingBatServer.pool.isClosed
 
   if (isAgentEnabled()) {
     if (proxyHostname.isNotEmpty()) {
@@ -196,14 +199,14 @@ internal fun Application.module() {
     }
 
   runBlocking {
-    logger.info { "Delaying start-up by $maxDelay seconds" }
-    val dur =
-      measureTime {
-        withTimeoutOrNull(maxDelay.seconds) {
-          job.join()
-        }
+    logger.info { "Delaying start-up by max of $maxDelay seconds" }
+    measureTime {
+      withTimeoutOrNull(maxDelay.seconds) {
+        job.join()
       }
-    logger.info { "Continued start-up after delaying $dur" }
+    }.also {
+      logger.info { "Continued start-up after delaying $it" }
+    }
   }
 
   installs(isProduction(),

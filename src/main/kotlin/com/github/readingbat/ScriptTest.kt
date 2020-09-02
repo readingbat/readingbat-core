@@ -71,24 +71,22 @@ fun javaTest() {
 """.trimIndent()
 
   val engine = JavaScript()
-  val timedValue =
-    measureTime {
-      repeat(100) {
-        //JavaScript().use {
-        engine.apply {
-          import(List::class.java)
-          import(ArrayList::class.java)
-          add(KotlinParse.varName, correctAnswers, typeOf<Any>())
-          evalScript(script)
-          println(it)
-          // }
-        }
-        engine.resetContext()
+  measureTime {
+    repeat(100) {
+      //JavaScript().use {
+      engine.apply {
+        import(List::class.java)
+        import(ArrayList::class.java)
+        add(KotlinParse.varName, correctAnswers, typeOf<Any>())
+        evalScript(script)
+        println(it)
+        // }
       }
+      engine.resetContext()
     }
-  println(timedValue)
-
-
+  }.also {
+    println(it)
+  }
 }
 
 
@@ -109,22 +107,22 @@ answers.add(less_than(12, 8))
 answers.add(less_than(11, 28))
   """.trimIndent()
   val engine = PythonScript()
-  val duration =
-    measureTime {
-      repeat(1000) {
-        //engine.use {
-        engine.run {
-          add(KotlinParse.varName, correctAnswers)
-          measureTime { eval(script) }
-        }
-        correctAnswers.clear()
-        //  }
-        engine.resetContext()
-        println(it)
+  measureTime {
+    repeat(1000) {
+      //engine.use {
+      engine.run {
+        add(KotlinParse.varName, correctAnswers)
+        measureTime { eval(script) }
       }
+      correctAnswers.clear()
+      //  }
+      engine.resetContext()
+      println(it)
     }
+  }.also {
+    println(it)
+  }
 
-  println(duration)
   //Thread.sleep(100000000000000000)
 
   println(correctAnswers)

@@ -43,7 +43,7 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
-import kotlin.time.measureTime
+import kotlin.time.measureTimedValue
 
 
 @ReadingBatDslMarker
@@ -54,23 +54,6 @@ class ReadingBatContent {
   private val languageMap by lazy { languageList.map { it.languageType to it }.toMap() }
 
   internal val sourcesMap = ConcurrentHashMap<Int, FunctionInfo>()
-
-  /*
-  fun main() {
-    val graphs =
-      CacheBuilder.newBuilder()
-        .maximumSize(1000)
-        .expireAfterWrite(10, TimeUnit.MINUTES)
-        .removalListener(RemovalListener<Int, FunctionInfo>())
-        .build(
-          object : CacheLoader<Int?, FunctionInfo?>() {
-            override fun load(key: Int?): FunctionInfo? {
-              return null//createExpensiveGraph(key)
-            }
-          })
-  }
-*/
-
   internal val timeStamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("M/d/y H:m:ss"))
   internal var sendGridPrefix = ""
   internal var googleAnalyticsId = ""
@@ -172,40 +155,40 @@ class ReadingBatContent {
       throw InvalidConfigurationException("Invalid language: $languageType")
   }
 
-  internal fun loadChallenges(prefix: String, languageType: LanguageType, useWebApi: Boolean = true): String {
-    val cnt = AtomicInteger(0)
-    val dur =
-      measureTime {
-        runBlocking {
-          findLanguage(languageType).challengeGroups.forEach { challengeGroup ->
-            challengeGroup.challenges.forEach { challenge ->
-              if (useWebApi) {
-                HttpClient(CIO)
-                  .use { httpClient ->
-                    withHttpClient(httpClient) {
-                      val url = "$prefix/$CONTENT/${challenge.path}"
-                      logger.info { "Fetching: $url" }
-                      get(url, setUp = { header(NO_TRACK, "") }) { response ->
-                        val body = response.readText()
-                        logger.info { "Response: ${response.status} ${body.length} chars" }
-                        cnt.incrementAndGet()
-                      }
+  internal fun loadChallenges(prefix: String, languageType: LanguageType, useWebApi: Boolean = true) =
+    measureTimedValue {
+      val cnt = AtomicInteger(0)
+      runBlocking {
+        findLanguage(languageType).challengeGroups.forEach { challengeGroup ->
+          challengeGroup.challenges.forEach { challenge ->
+            if (useWebApi) {
+              HttpClient(CIO)
+                .use { httpClient ->
+                  withHttpClient(httpClient) {
+                    val url = "$prefix/$CONTENT/${challenge.path}"
+                    logger.info { "Fetching: $url" }
+                    get(url, setUp = { header(NO_TRACK, "") }) { response ->
+                      val body = response.readText()
+                      logger.info { "Response: ${response.status} ${body.length} chars" }
+                      cnt.incrementAndGet()
                     }
                   }
-              }
-              else {
-                logger.info { "Loading: ${challenge.path}" }
-                challenge.functionInfo(this@ReadingBatContent)
-                cnt.incrementAndGet()
-              }
+                }
+            }
+            else {
+              logger.info { "Loading: ${challenge.path}" }
+              challenge.functionInfo(this@ReadingBatContent)
+              cnt.incrementAndGet()
             }
           }
         }
       }
-    return "${cnt.get()} $languageType ${"exercise".pluralize(cnt.get())} loaded in $dur"
-  }
+      cnt.get()
+    }.let {
+      "${it.value} $languageType ${"exercise".pluralize(it.value)} loaded in ${it.duration}"
+    }
 
-  fun evalContent(contentSource: ContentSource, variableName: String): ReadingBatContent =
+  internal fun evalContent(contentSource: ContentSource, variableName: String): ReadingBatContent =
     try {
       // Catch exceptions so that remote code does not bring down the server
       contentMap.computeIfAbsent(contentSource.source) { readContentDsl(contentSource, variableName) }

@@ -94,12 +94,7 @@ private val <T> KFunction<T>.fqMethodName get() = "${javaClass.packageName}.$nam
 
 private suspend fun evalDsl(code: String, sourceName: String) =
   try {
-    kotlinScriptPool
-      .eval {
-        eval(code) as ReadingBatContent
-      }.apply {
-        validate()
-      }
+    kotlinScriptPool.eval { eval(code) as ReadingBatContent }.apply { validate() }
   } catch (e: Throwable) {
     logger.info { "Error in $sourceName:\n$code" }
     throw e

@@ -33,6 +33,7 @@ import com.github.readingbat.common.Metrics
 import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.pages.MessagePage.messagePage
+import com.github.readingbat.server.ReadingBatServer.logger
 import com.github.readingbat.server.ServerUtils.authenticatedAction
 import com.github.readingbat.server.ServerUtils.get
 import io.ktor.application.*
@@ -44,13 +45,13 @@ import kotlin.time.measureTime
 internal fun Routing.sysAdminRoutes(metrics: Metrics,
                                     contentSrc: () -> ReadingBatContent,
                                     resetContentFunc: () -> Unit) {
-
   get(RESET_CONTENT_ENDPOINT, metrics) {
     val msg =
       authenticatedAction {
-        measureTime { resetContentFunc.invoke() }.let {
-          "Content reset in $it".also { ReadingBatServer.logger.info { it } }
-        }
+        measureTime { resetContentFunc.invoke() }
+          .let {
+            "Content reset in $it".also { logger.info { it } }
+          }
       }
     redirectTo { "$MESSAGE_ENDPOINT?$MSG=$msg&$RETURN_PATH=$SYSTEM_ADMIN_ENDPOINT" }
   }
@@ -60,9 +61,10 @@ internal fun Routing.sysAdminRoutes(metrics: Metrics,
       authenticatedAction {
         val content = contentSrc()
         val cnt = content.sourcesMap.size
-        content.clearSourcesMap().let {
-          "Challenge cache reset -- $cnt challenges removed".also { ReadingBatServer.logger.info { it } }
-        }
+        content.clearSourcesMap()
+          .let {
+            "Challenge cache reset -- $cnt challenges removed".also { logger.info { it } }
+          }
       }
     redirectTo { "$MESSAGE_ENDPOINT?$MSG=$msg&$RETURN_PATH=$SYSTEM_ADMIN_ENDPOINT" }
   }
@@ -71,7 +73,7 @@ internal fun Routing.sysAdminRoutes(metrics: Metrics,
     val msg =
       authenticatedAction {
         System.gc()
-        "Garbage collector invoked".also { ReadingBatServer.logger.info { it } }
+        "Garbage collector invoked".also { logger.info { it } }
       }
     redirectTo { "$MESSAGE_ENDPOINT?$MSG=$msg&$RETURN_PATH=$SYSTEM_ADMIN_ENDPOINT" }
   }
