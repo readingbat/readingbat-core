@@ -59,20 +59,20 @@ internal object ServerUtils : KLogging() {
   fun PipelineCall.queryParam(key: String, default: String = "") = call.request.queryParameters[key] ?: default
 
   fun WebSocketServerSession.fetchUser(loginAttempt: Boolean = false): User? =
-    fetchPrincipal(loginAttempt)?.userId?.toUser(call.sessions.get<BrowserSession>())
+    fetchPrincipal(loginAttempt)?.userId?.toUser(call.browserSession)
 
   private fun WebSocketServerSession.fetchPrincipal(loginAttempt: Boolean): UserPrincipal? =
-    if (loginAttempt) assignPrincipal() else call.sessions.get<UserPrincipal>()
+    if (loginAttempt) assignPrincipal() else call.userPrincipal
 
   private fun WebSocketServerSession.assignPrincipal(): UserPrincipal? =
     call.principal<UserPrincipal>().apply { if (isNotNull()) call.sessions.set(this) }  // Set the cookie
 
 
   fun PipelineCall.fetchUser(loginAttempt: Boolean = false): User? =
-    fetchPrincipal(loginAttempt)?.userId?.toUser(call.sessions.get<BrowserSession>())
+    fetchPrincipal(loginAttempt)?.userId?.toUser(call.browserSession)
 
   private fun PipelineCall.fetchPrincipal(loginAttempt: Boolean): UserPrincipal? =
-    if (loginAttempt) assignPrincipal() else call.sessions.get<UserPrincipal>()
+    if (loginAttempt) assignPrincipal() else call.userPrincipal
 
   private fun PipelineCall.assignPrincipal(): UserPrincipal? =
     call.principal<UserPrincipal>().apply { if (isNotNull()) call.sessions.set(this) }  // Set the cookie

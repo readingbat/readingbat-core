@@ -18,7 +18,6 @@
 package com.github.readingbat.posts
 
 import com.github.pambrose.common.util.encode
-import com.github.readingbat.common.BrowserSession
 import com.github.readingbat.common.Constants.MSG
 import com.github.readingbat.common.Constants.RETURN_PATH
 import com.github.readingbat.common.FormFields.CONFIRM_PASSWORD
@@ -29,6 +28,7 @@ import com.github.readingbat.common.Message
 import com.github.readingbat.common.Message.Companion.EMPTY_MESSAGE
 import com.github.readingbat.common.User.Companion.createUser
 import com.github.readingbat.common.UserPrincipal
+import com.github.readingbat.common.browserSession
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.pages.CreateAccountPage.createAccountPage
 import com.github.readingbat.server.*
@@ -105,7 +105,7 @@ internal object CreateAccountPost : KLogging() {
     }
     else {
       // Create user
-      val browserSession = call.sessions.get<BrowserSession>()
+      val browserSession = call.browserSession
       val user = createUser(name, email, password, browserSession, redis)
       call.sessions.set(UserPrincipal(userId = user.id))
       val returnPath = queryParam(RETURN_PATH, "/")

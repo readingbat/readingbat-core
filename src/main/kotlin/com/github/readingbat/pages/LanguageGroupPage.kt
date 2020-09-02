@@ -17,7 +17,6 @@
 
 package com.github.readingbat.pages
 
-import com.github.readingbat.common.BrowserSession
 import com.github.readingbat.common.CSSNames.GROUP_CHOICE
 import com.github.readingbat.common.CSSNames.GROUP_ITEM_SRC
 import com.github.readingbat.common.CommonUtils.pathOf
@@ -29,6 +28,7 @@ import com.github.readingbat.common.StaticFileNames.GREEN_CHECK
 import com.github.readingbat.common.StaticFileNames.WHITE_CHECK
 import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.fetchActiveClassCode
+import com.github.readingbat.common.browserSession
 import com.github.readingbat.dsl.ChallengeGroup
 import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.dsl.ReadingBatContent
@@ -41,7 +41,6 @@ import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
 import com.github.readingbat.server.ServerUtils.rows
 import io.ktor.application.*
-import io.ktor.sessions.*
 import kotlinx.html.Entities.nbsp
 import kotlinx.html.TR
 import kotlinx.html.a
@@ -66,7 +65,7 @@ internal object LanguageGroupPage {
                                      redis: Jedis?) =
     createHTML()
       .html {
-        val browserSession = call.sessions.get<BrowserSession>()
+        val browserSession = call.browserSession
         val languageName = languageType.languageName
         val loginPath = pathOf(CHALLENGE_ROOT, languageName)
         val groups = content[languageType].challengeGroups

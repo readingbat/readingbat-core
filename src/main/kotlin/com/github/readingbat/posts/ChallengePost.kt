@@ -18,7 +18,6 @@
 package com.github.readingbat.posts
 
 import com.github.pambrose.common.util.*
-import com.github.readingbat.common.BrowserSession
 import com.github.readingbat.common.CommonUtils.pathOf
 import com.github.readingbat.common.Constants.CHALLENGE_SRC
 import com.github.readingbat.common.Constants.GROUP_SRC
@@ -42,6 +41,7 @@ import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.gson
 import com.github.readingbat.common.User.Companion.saveChallengeAnswers
 import com.github.readingbat.common.User.Companion.saveLikeDislike
+import com.github.readingbat.common.browserSession
 import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.ReturnType
@@ -55,7 +55,6 @@ import com.github.readingbat.server.LanguageName.Companion.getLanguageName
 import io.ktor.application.*
 import io.ktor.request.*
 import io.ktor.response.*
-import io.ktor.sessions.*
 import mu.KLogging
 import redis.clients.jedis.Jedis
 import javax.script.ScriptException
@@ -268,7 +267,7 @@ internal object ChallengePost : KLogging() {
 
     // Save whether all the answers for the challenge were correct
     if (redis.isNotNull()) {
-      val browserSession = call.sessions.get<BrowserSession>()
+      val browserSession = call.browserSession
       user.saveChallengeAnswers(browserSession, content, names, paramMap, funcInfo, userResponses, results, redis)
     }
 
@@ -377,7 +376,7 @@ internal object ChallengePost : KLogging() {
     logger.debug { "Like/dislike arg -- response: $likeArg -- $likeVal" }
 
     if (redis.isNotNull()) {
-      val browserSession = call.sessions.get<BrowserSession>()
+      val browserSession = call.browserSession
       user.saveLikeDislike(browserSession, names, likeVal, redis)
     }
 

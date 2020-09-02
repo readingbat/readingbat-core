@@ -22,13 +22,12 @@ import com.github.pambrose.common.response.redirectTo
 import com.github.pambrose.common.util.isNotNull
 import com.github.pambrose.common.util.isNull
 import com.github.pambrose.common.util.randomId
+import com.github.readingbat.common.*
 import com.github.readingbat.common.AuthRoutes.COOKIES
-import com.github.readingbat.common.BrowserSession
 import com.github.readingbat.common.Constants.NO_TRACK
 import com.github.readingbat.common.Endpoints.PING
 import com.github.readingbat.common.Endpoints.THREAD_DUMP
-import com.github.readingbat.common.Metrics
-import com.github.readingbat.common.UserPrincipal
+import com.github.readingbat.common.SessionActivites.markActivity
 import com.github.readingbat.server.ServerUtils.get
 import io.ktor.application.*
 import io.ktor.features.*
@@ -67,8 +66,8 @@ internal object AdminRoutes : KLogging() {
     }
 
     get(COOKIES) {
-      val principal = call.sessions.get<UserPrincipal>()
-      val session = call.sessions.get<BrowserSession>()
+      val principal = call.userPrincipal
+      val session = call.browserSession
       logger.info { "UserPrincipal: $principal BrowserSession: $session" }
 
       call.respondHtml {
@@ -91,7 +90,7 @@ internal object AdminRoutes : KLogging() {
     }
 
     fun PipelineContext<Unit, ApplicationCall>.clearPrincipal() {
-      call.sessions.get<UserPrincipal>()
+      call.userPrincipal
         .also {
           if (it.isNotNull()) {
             logger.info { "Clearing principal $it" }
@@ -104,7 +103,7 @@ internal object AdminRoutes : KLogging() {
     }
 
     fun PipelineContext<Unit, ApplicationCall>.clearSessionId() {
-      call.sessions.get<BrowserSession>()
+      call.browserSession
         .also {
           if (it.isNotNull()) {
             logger.info { "Clearing browser session id $it" }
@@ -138,10 +137,11 @@ internal object AdminRoutes : KLogging() {
     if (call.request.headers.contains(NO_TRACK))
       return
 
-    val session = call.sessions.get<BrowserSession>()
-    if (session.isNull()) {
-      call.sessions.set(BrowserSession(id = randomId(15)))
-      logger.info { "Created browser session: ${call.sessions.get<BrowserSession>()?.id ?: "Unassigned"} - ${call.request.origin.remoteHost}" }
+    if (call.browserSession.isNull()) {
+      val browserSession = BrowserSession(id = randomId(15))
+      call.sessions.set(browserSession)
+      browserSession.markActivity(call)
+      logger.info { "Created browser session: ${browserSession.id} - ${call.request.origin.remoteHost}" }
     }
   }
 

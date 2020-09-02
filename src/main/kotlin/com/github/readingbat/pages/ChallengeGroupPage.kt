@@ -20,10 +20,9 @@ package com.github.readingbat.pages
 import com.github.pambrose.common.util.decode
 import com.github.pambrose.common.util.isNotNull
 import com.github.pambrose.common.util.pluralize
-import com.github.readingbat.common.BrowserSession
+import com.github.readingbat.common.*
 import com.github.readingbat.common.CSSNames.FUNC_ITEM1
 import com.github.readingbat.common.CSSNames.FUNC_ITEM2
-import com.github.readingbat.common.ClassCode
 import com.github.readingbat.common.CommonUtils.pathOf
 import com.github.readingbat.common.Constants.COLUMN_CNT
 import com.github.readingbat.common.Constants.MSG
@@ -35,10 +34,8 @@ import com.github.readingbat.common.FormFields.CHALLENGE_ANSWERS_KEY
 import com.github.readingbat.common.FormFields.GROUP_NAME_KEY
 import com.github.readingbat.common.FormFields.LANGUAGE_NAME_KEY
 import com.github.readingbat.common.KeyConstants.CORRECT_ANSWERS_KEY
-import com.github.readingbat.common.Message
 import com.github.readingbat.common.StaticFileNames.GREEN_CHECK
 import com.github.readingbat.common.StaticFileNames.WHITE_CHECK
-import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.challengeAnswersKey
 import com.github.readingbat.common.User.Companion.correctAnswersKey
 import com.github.readingbat.common.User.Companion.fetchActiveClassCode
@@ -57,7 +54,6 @@ import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
 import com.github.readingbat.server.ServerUtils.rows
 import io.ktor.application.*
-import io.ktor.sessions.*
 import kotlinx.html.BODY
 import kotlinx.html.FormMethod
 import kotlinx.html.InputType
@@ -98,7 +94,7 @@ internal object ChallengeGroupPage : KLogging() {
                                       redis: Jedis?) =
     createHTML()
       .html {
-        val browserSession = call.sessions.get<BrowserSession>()
+        val browserSession = call.browserSession
         val languageType = challengeGroup.languageType
         val languageName = languageType.languageName
         val groupName = challengeGroup.groupName

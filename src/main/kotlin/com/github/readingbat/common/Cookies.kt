@@ -19,7 +19,9 @@ package com.github.readingbat.common
 
 import com.github.readingbat.posts.ChallengeNames
 import com.github.readingbat.server.*
+import io.ktor.application.*
 import io.ktor.auth.*
+import io.ktor.sessions.*
 import java.time.Instant
 
 internal data class UserPrincipal(val userId: String, val created: Long = Instant.now().toEpochMilli()) : Principal
@@ -58,4 +60,9 @@ internal data class BrowserSession(val id: String, val created: Long = Instant.n
           KeyConstants.NO_AUTH_KEY,
           id,
           md5Of(languageName, groupName, challengeName, invocation))
+
 }
+
+internal val ApplicationCall.browserSession get() = sessions.get<BrowserSession>()
+
+internal val ApplicationCall.userPrincipal get() = sessions.get<UserPrincipal>()

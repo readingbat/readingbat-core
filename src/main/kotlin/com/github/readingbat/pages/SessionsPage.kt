@@ -22,7 +22,7 @@ import com.github.readingbat.common.CSSNames.INDENT_1EM
 import com.github.readingbat.common.CSSNames.TD_PADDING
 import com.github.readingbat.common.Constants.RETURN_PATH
 import com.github.readingbat.common.Endpoints.USER_PREFS_ENDPOINT
-import com.github.readingbat.common.SessionActivity
+import com.github.readingbat.common.SessionActivites
 import com.github.readingbat.common.User.Companion.toUser
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.pages.PageUtils.backLink
@@ -53,20 +53,20 @@ internal object SessionsPage {
             table {
               tr {
                 td { +"Active users in the last minute: " }
-                td { +SessionActivity.activeSessions(1.minutes).toString() }
+                td { +SessionActivites.activeSessions(1.minutes).toString() }
               }
               tr {
                 td { +"Active users in the last 15 minutes: " }
-                td { +SessionActivity.activeSessions(15.minutes).toString() }
+                td { +SessionActivites.activeSessions(15.minutes).toString() }
               }
               tr {
                 td { +"Active users in the last hour: " }
-                td { +SessionActivity.activeSessions(1.hours).toString() }
+                td { +SessionActivites.activeSessions(1.hours).toString() }
               }
             }
           }
 
-          val sessions = SessionActivity.allSessions().sortedBy { it.age }
+          val sessions = SessionActivites.allSessions().sortedBy { it.age }
 
           h3 { +"${sessions.size} User Session".pluralize(sessions.size) }
 
@@ -77,13 +77,14 @@ internal object SessionsPage {
                   th { +"Session Id" }
                   th { +"User" }
                   th { +"Last activity" }
-                  th { +"User Agent" }
                   th { +"Remote Host" }
                   th { +"City" }
                   th { +"State" }
                   th { +"Country" }
                   th { +"Organization" }
                   th { +"Requests" }
+                  th { +"" }
+                  th { +"User Agent" }
                 }
                 sessions.forEach {
                   tr {
@@ -92,7 +93,6 @@ internal object SessionsPage {
                     td { +it.browserSession.id }
                     td { +userDesc }
                     td { +it.age.toString() }
-                    td { +it.userAgent }
                     td { +it.remoteHost }
                     td { +it.city }
                     td { +it.state }
@@ -100,6 +100,7 @@ internal object SessionsPage {
                     td { +it.organization }
                     td { +it.requests.toString() }
                     td { if ("://" in it.flagUrl) img { src = it.flagUrl } else +"" }
+                    td { +it.userAgent }
                   }
                 }
               }

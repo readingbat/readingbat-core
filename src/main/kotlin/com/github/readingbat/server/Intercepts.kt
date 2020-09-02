@@ -17,16 +17,11 @@
 
 package com.github.readingbat.server
 
-import com.github.pambrose.common.util.isNotNull
-import com.github.readingbat.common.BrowserSession
 import com.github.readingbat.common.Constants.STATIC
-import com.github.readingbat.common.SessionActivity
-import com.github.readingbat.common.UserPrincipal
+import com.github.readingbat.common.SessionActivites.markActivity
+import com.github.readingbat.common.browserSession
 import io.ktor.application.*
-import io.ktor.features.*
-import io.ktor.http.*
 import io.ktor.request.*
-import io.ktor.sessions.*
 
 internal fun Application.intercepts() {
   intercept(ApplicationCallPipeline.Setup) {
@@ -40,13 +35,9 @@ internal fun Application.intercepts() {
   intercept(ApplicationCallPipeline.Features) {
     // Phase for features. Most features should intercept this phase
     if (!context.request.path().startsWith("/$STATIC/")) {
-      val sessionId = call.sessions.get<BrowserSession>()
+      val browserSession = call.browserSession
       //ReadingBatServer.logger.info { "${context.request.origin.remoteHost} $sessionId ${context.request.path()}" }
-      if (sessionId.isNotNull())
-        SessionActivity.markActivity(sessionId,
-                                     call.sessions.get<UserPrincipal>(),
-                                     call.request.origin.remoteHost,
-                                     call.request.headers[HttpHeaders.UserAgent] ?: "unknown")
+      browserSession.markActivity(call)
     }
   }
 

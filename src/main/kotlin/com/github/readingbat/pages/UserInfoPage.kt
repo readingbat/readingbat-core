@@ -31,7 +31,6 @@ import com.github.readingbat.pages.PageUtils.headDefault
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
 import io.ktor.application.*
-import io.ktor.sessions.*
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 import redis.clients.jedis.Jedis
@@ -76,8 +75,8 @@ internal object UserInfoPage {
                 }
               }
 
-              val principal = call.sessions.get<UserPrincipal>()
-              val sessionId = call.sessions.get<BrowserSession>()
+              val principal = call.userPrincipal
+              val sessionId = call.browserSession
 
               //println("Browser Sessions: $browserSessions")
               //println("Class codes: $classCodes")

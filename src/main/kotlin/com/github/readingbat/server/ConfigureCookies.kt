@@ -30,6 +30,12 @@ internal object ConfigureCookies {
       //storage = RedisSessionStorage(redis = pool.resource)) {
       //storage = directorySessionStorage(File("server-sessions"), cached = true)) {
       cookie.path = "/" //CHALLENGE_ROOT + "/"
+      cookie.httpOnly = true
+
+      // CSRF protection in modern browsers. Make sure your important side-effect-y operations, like ordering,
+      // uploads, and changing settings, use "unsafe" HTTP verbs like POST and PUT, not GET or HEAD.
+      // https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies#SameSite_cookies
+      cookie.extensions["SameSite"] = "lax"
     }
   }
 
@@ -47,7 +53,7 @@ internal object ConfigureCookies {
       //if (production)
       //  cookie.secure = true
 
-      cookie.maxAgeInSeconds = 7L * 24 * 3600 // 7 days
+      cookie.maxAgeInSeconds = 14L * 24 * 3600 // 14 days
 
       // CSRF protection in modern browsers. Make sure your important side-effect-y operations, like ordering,
       // uploads, and changing settings, use "unsafe" HTTP verbs like POST and PUT, not GET or HEAD.

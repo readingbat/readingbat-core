@@ -25,7 +25,7 @@ import com.github.readingbat.common.Constants.RETURN_PATH
 import com.github.readingbat.common.Endpoints.USER_PREFS_ENDPOINT
 import com.github.readingbat.common.EnvVars
 import com.github.readingbat.common.Properties
-import com.github.readingbat.common.SessionActivity
+import com.github.readingbat.common.SessionActivites
 import com.github.readingbat.dsl.LanguageType.Java
 import com.github.readingbat.dsl.LanguageType.Kotlin
 import com.github.readingbat.dsl.LanguageType.Python
@@ -115,7 +115,7 @@ internal object ConfigPage {
                 }
                 tr {
                   td { +"Session map size:" }
-                  td { +"${SessionActivity.sessionsMapSize}" }
+                  td { +"${SessionActivites.sessionsMapSize}" }
                 }
                 tr {
                   td { +"Admin Users:" }
@@ -192,15 +192,15 @@ internal object ConfigPage {
               table {
                 tr {
                   td { +"Active users in the last minute:" }
-                  td { +SessionActivity.activeSessions(1.minutes).toString() }
+                  td { +SessionActivites.activeSessions(1.minutes).toString() }
                 }
                 tr {
                   td { +"Active users in the last 15 minutes:" }
-                  td { +SessionActivity.activeSessions(15.minutes).toString() }
+                  td { +SessionActivites.activeSessions(15.minutes).toString() }
                 }
                 tr {
                   td { +"Active users in the last hour:" }
-                  td { +SessionActivity.activeSessions(1.hours).toString() }
+                  td { +SessionActivites.activeSessions(1.hours).toString() }
                 }
               }
             }

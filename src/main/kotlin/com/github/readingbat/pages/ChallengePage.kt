@@ -91,7 +91,6 @@ import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
 import io.ktor.application.*
 import io.ktor.http.ContentType.Text.CSS
-import io.ktor.sessions.*
 import kotlinx.html.BODY
 import kotlinx.html.Entities.nbsp
 import kotlinx.html.FormMethod
@@ -146,7 +145,7 @@ internal object ChallengePage : KLogging() {
                                  redis: Jedis?) =
     createHTML()
       .html {
-        val browserSession = call.sessions.get<BrowserSession>()
+        val browserSession = call.browserSession
         val languageType = challenge.languageType
         val languageName = languageType.languageName
         val groupName = challenge.groupName
