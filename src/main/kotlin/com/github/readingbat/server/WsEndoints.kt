@@ -21,6 +21,7 @@ import com.github.pambrose.common.concurrent.BooleanMonitor
 import com.github.pambrose.common.redis.RedisUtils.withRedisPool
 import com.github.pambrose.common.time.format
 import com.github.pambrose.common.util.isNotNull
+import com.github.pambrose.common.util.isNull
 import com.github.readingbat.common.ClassCode
 import com.github.readingbat.common.Constants.COLUMN_CNT
 import com.github.readingbat.common.Constants.PING_CODE
@@ -34,6 +35,7 @@ import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.agentLaunchId
 import com.github.readingbat.posts.ChallengeHistory
 import com.github.readingbat.server.ReadingBatServer.pool
+import com.github.readingbat.server.ServerUtils.fetchUser
 import com.github.readingbat.server.ServerUtils.rows
 import io.ktor.features.*
 import io.ktor.http.cio.websocket.*
@@ -61,20 +63,29 @@ internal object WsEndoints : KLogging() {
 
   fun classTopicName(classCode: ClassCode, challengeMd5: String) = keyOf(classCode, challengeMd5)
 
+  private fun WebSocketServerSession.fetchEmail() =
+    pool.withRedisPool { redis ->
+      if (redis.isNull())
+        "Unknown"
+      else
+        fetchUser()?.email(redis)?.value ?: "Unknown"
+    }
+
   fun Routing.wsEndpoints(metrics: Metrics, content: () -> ReadingBatContent) {
 
     webSocket("$CHALLENGE_ENDPOINT/{$CLASS_CODE}/{$CHALLENGE_MD5}") {
       val classCode =
         call.parameters[CLASS_CODE]?.let { ClassCode(it) } ?: throw InvalidPathException("Missing class code")
       val challengeMd5 = call.parameters[CHALLENGE_MD5] ?: throw InvalidPathException("Missing challenge md5")
-      val desc = "$CHALLENGE_ENDPOINT/$classCode/$challengeMd5"
       val finished = BooleanMonitor(false)
       val remote = call.request.origin.remoteHost
+      val email = fetchEmail()
+      val desc = "$CHALLENGE_ENDPOINT/$classCode/$challengeMd5 - $remote - $email"
 
-      logger.info { "Opened student answers websocket for $desc - $remote" }
+      logger.info { "Opened student answers websocket for $desc" }
 
       outgoing.invokeOnClose {
-        logger.debug { "Close received for student answers websocket for $desc - $remote" }
+        logger.debug { "Close received for student answers websocket for $desc" }
         finished.set(true)
       }
 
@@ -121,11 +132,11 @@ internal object WsEndoints : KLogging() {
                     }
 
                     override fun onSubscribe(channel: String?, subscribedChannels: Int) {
-                      logger.info { "Subscribed to $channel to $challengeMd5" }
+                      logger.debug { "Subscribed to $channel for $challengeMd5" }
                     }
 
                     override fun onUnsubscribe(channel: String?, subscribedChannels: Int) {
-                      logger.info { "Unsubscribed from $channel to $challengeMd5" }
+                      logger.debug { "Unsubscribed from $channel for $challengeMd5" }
                     }
                   }
 
@@ -143,7 +154,7 @@ internal object WsEndoints : KLogging() {
         } finally {
           metrics.wsStudentAnswerGauge.labels(agentLaunchId()).dec()
           close(CloseReason(Codes.GOING_AWAY, "Client disconnected"))
-          logger.info { "Closed student answers websocket for $desc - $remote" }
+          logger.info { "Closed student answers websocket for $desc" }
         }
       }
     }
@@ -155,14 +166,15 @@ internal object WsEndoints : KLogging() {
           call.parameters[GROUP_NAME]?.let { GroupName(it) } ?: throw InvalidPathException("Missing group name"),
           call.parameters[CLASS_CODE]?.let { ClassCode(it) } ?: throw InvalidPathException("Missing class code"))
       val challenges = content.invoke().findGroup(languageName.toLanguageType(), groupName).challenges
-      val desc = "$CHALLENGE_ENDPOINT/$languageName/$groupName/$classCode"
       val finished = AtomicBoolean(false)
       val remote = call.request.origin.remoteHost
+      val email = fetchEmail()
+      val desc = "$CHALLENGE_ENDPOINT/$languageName/$groupName/$classCode - $remote - $email"
 
-      logger.info { "Opened class statistics websocket for $desc - $remote" }
+      logger.info { "Opened class statistics websocket for $desc" }
 
       outgoing.invokeOnClose {
-        logger.debug { "Close received for class statistics websocket for $desc - $remote" }
+        logger.debug { "Close received for class statistics websocket for $desc" }
         finished.set(true)
       }
 
@@ -272,7 +284,7 @@ internal object WsEndoints : KLogging() {
         } finally {
           metrics.wsClassStatisticsGauge.labels(agentLaunchId()).dec()
           close(CloseReason(Codes.GOING_AWAY, "Client disconnected"))
-          logger.info { "Closed class statistics websocket for $desc - $remote" }
+          logger.info { "Closed class statistics websocket for $desc" }
         }
       }
     }

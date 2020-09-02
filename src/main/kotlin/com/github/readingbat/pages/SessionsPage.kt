@@ -30,17 +30,8 @@ import com.github.readingbat.pages.PageUtils.bodyTitle
 import com.github.readingbat.pages.PageUtils.headDefault
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
-import kotlinx.html.body
-import kotlinx.html.div
-import kotlinx.html.h2
-import kotlinx.html.h3
-import kotlinx.html.head
-import kotlinx.html.html
+import kotlinx.html.*
 import kotlinx.html.stream.createHTML
-import kotlinx.html.table
-import kotlinx.html.td
-import kotlinx.html.th
-import kotlinx.html.tr
 import redis.clients.jedis.Jedis
 import kotlin.time.hours
 import kotlin.time.minutes
@@ -86,8 +77,12 @@ internal object SessionsPage {
                   th { +"Session Id" }
                   th { +"User" }
                   th { +"Last activity" }
-                  th { +"Remote Host" }
                   th { +"User Agent" }
+                  th { +"Remote Host" }
+                  th { +"City" }
+                  th { +"Country" }
+                  th { +"Organization" }
+                  th { +"Requests" }
                 }
                 sessions.forEach {
                   tr {
@@ -95,9 +90,14 @@ internal object SessionsPage {
                     val userDesc = user?.let { "${it.name(redis)} (${it.email(redis)})" } ?: "Not logged in"
                     td { +it.browserSession.id }
                     td { +userDesc }
-                    td { +(it.age.toString()) }
-                    td { +(it.remoteHost) }
-                    td { +(it.userAgent) }
+                    td { +it.age.toString() }
+                    td { +it.userAgent }
+                    td { +it.remoteHost }
+                    td { +it.city }
+                    td { +it.country }
+                    td { +it.organization }
+                    td { +it.requests.toString() }
+                    td { if ("://" in it.flagUrl) img { src = it.flagUrl } else +"" }
                   }
                 }
               }

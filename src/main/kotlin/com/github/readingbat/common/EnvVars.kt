@@ -17,6 +17,7 @@
 
 package com.github.readingbat.common
 
+import com.github.pambrose.common.util.isNotNull
 import com.github.readingbat.common.CommonUtils.maskUrl
 import com.github.readingbat.common.CommonUtils.obfuscate
 import com.github.readingbat.dsl.InvalidConfigurationException
@@ -28,6 +29,7 @@ enum class EnvVars(val maskFunc: EnvVars.() -> String = { getEnv("unassigned") }
   REDIS_URL({ getEnv("unassigned").maskUrl() }),
   GITHUB_OAUTH({ getEnvOrNull()?.obfuscate(4) ?: "unassigned" }),
   PAPERTRAIL_PORT,
+  IPGEOLOCATION_KEY({ getEnvOrNull()?.obfuscate(4) ?: "unassigned" }),
   SCRIPT_CLASSPATH,
   SENDGRID_API_KEY({ getEnvOrNull()?.obfuscate(4) ?: "unassigned" }),
   SENDGRID_PREFIX,
@@ -37,9 +39,9 @@ enum class EnvVars(val maskFunc: EnvVars.() -> String = { getEnv("unassigned") }
   XFORWARDED_ENABLED,
   JAVA_TOOL_OPTIONS;
 
-  fun getEnvOrNull(): String? = System.getenv(name)
+  fun isDefined(): Boolean = getEnvOrNull().isNotNull()
 
-  fun getEnv() = System.getenv(name) ?: throw InvalidConfigurationException("$this unassigned")
+  fun getEnvOrNull(): String? = System.getenv(name)
 
   fun getEnv(default: String) = System.getenv(name) ?: default
 

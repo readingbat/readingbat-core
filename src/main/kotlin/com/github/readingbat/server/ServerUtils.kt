@@ -41,6 +41,7 @@ import io.ktor.http.*
 import io.ktor.routing.*
 import io.ktor.sessions.*
 import io.ktor.util.pipeline.*
+import io.ktor.websocket.*
 import kotlinx.coroutines.runBlocking
 import mu.KLogging
 import redis.clients.jedis.Jedis
@@ -56,6 +57,16 @@ internal object ServerUtils : KLogging() {
   internal fun getVersionDesc(asJson: Boolean = false): String = ReadingBatServer::class.versionDesc(asJson)
 
   fun PipelineCall.queryParam(key: String, default: String = "") = call.request.queryParameters[key] ?: default
+
+  fun WebSocketServerSession.fetchUser(loginAttempt: Boolean = false): User? =
+    fetchPrincipal(loginAttempt)?.userId?.toUser(call.sessions.get<BrowserSession>())
+
+  private fun WebSocketServerSession.fetchPrincipal(loginAttempt: Boolean): UserPrincipal? =
+    if (loginAttempt) assignPrincipal() else call.sessions.get<UserPrincipal>()
+
+  private fun WebSocketServerSession.assignPrincipal(): UserPrincipal? =
+    call.principal<UserPrincipal>().apply { if (isNotNull()) call.sessions.set(this) }  // Set the cookie
+
 
   fun PipelineCall.fetchUser(loginAttempt: Boolean = false): User? =
     fetchPrincipal(loginAttempt)?.userId?.toUser(call.sessions.get<BrowserSession>())
