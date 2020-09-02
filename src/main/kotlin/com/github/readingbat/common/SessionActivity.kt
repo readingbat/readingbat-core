@@ -85,7 +85,7 @@ internal object SessionActivity : KLogging() {
     val organization by map
     val time_zone by map
 
-    fun summary() = listOf(ip, city, state_prov, country_name, organization).joinToString(", ")
+    fun summary() = listOf(city, state_prov, country_name, organization).joinToString(", ")
 
     override fun toString() = map.toString()
   }
@@ -129,8 +129,7 @@ internal object SessionActivity : KLogging() {
             httpClient { client ->
               val geoKey = IPGEOLOCATION_KEY.getRequiredEnv()
               client.get("https://api.ipgeolocation.io/ipgeo?apiKey=$geoKey&ip=$ipAddress") { response ->
-                val body = response.readText()
-                val map = gson.fromJson(body, Map::class.java) as Map<String, Any>
+                val map = gson.fromJson(response.readText(), Map::class.java) as Map<String, Any?>
                 GeoInfo(map).apply {
                   logger.info { "IP info for $ipAddress: ${summary()}" }
                 }
