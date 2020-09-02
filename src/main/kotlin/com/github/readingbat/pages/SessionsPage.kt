@@ -76,13 +76,13 @@ internal object SessionsPage {
                 tr {
                   th { +"Session Id" }
                   th { +"User" }
-                  th { +"Last activity" }
+                  th { +"Last Activity" }
+                  th { +"Requests" }
                   th { +"Remote Host" }
                   th { +"City" }
                   th { +"State" }
                   th { +"Country" }
                   th { +"Organization" }
-                  th { +"Requests" }
                   th { +"" }
                   th { +"User Agent" }
                 }
@@ -93,12 +93,12 @@ internal object SessionsPage {
                     td { +it.browserSession.id }
                     td { +userDesc }
                     td { +it.age.toString() }
+                    td { +it.requests.toString() }
                     td { +it.remoteHost }
                     td { +it.city }
                     td { +it.state }
                     td { +it.country }
                     td { +it.organization }
-                    td { +it.requests.toString() }
                     td { if ("://" in it.flagUrl) img { src = it.flagUrl } else +"" }
                     td { +it.userAgent }
                   }
