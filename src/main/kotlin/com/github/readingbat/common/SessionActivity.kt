@@ -47,6 +47,7 @@ internal object SessionActivity : KLogging() {
     val requests get() = pages.get()
 
     val city get() = geoInfoMap[remoteHost]?.city?.toString() ?: "Unknown"
+    val state get() = geoInfoMap[remoteHost]?.state_prov?.toString() ?: "Unknown"
     val country get() = geoInfoMap[remoteHost]?.country_name?.toString() ?: "Unknown"
     val organization get() = geoInfoMap[remoteHost]?.organization?.toString() ?: "Unknown"
     val flagUrl get() = geoInfoMap[remoteHost]?.country_flag?.toString() ?: "Unknown"
@@ -63,16 +64,15 @@ internal object SessionActivity : KLogging() {
   class GeoInfo(private val map: Map<String, Any?>) {
 
     val ip by map
-    val hostname by map
     val continent_code by map
     val continent_name by map
     val country_code2 by map
     val country_code3 by map
     val country_name by map
     val country_capital by map
-    val state_prov by map
     val district by map
     val city by map
+    val state_prov by map
     val zipcode by map
     val latitude by map
     val longitude by map
@@ -85,7 +85,7 @@ internal object SessionActivity : KLogging() {
     val organization by map
     val time_zone by map
 
-    fun summary() = listOf(ip, hostname, city, country_name, organization).joinToString(", ")
+    fun summary() = listOf(ip, city, state_prov, country_name, organization).joinToString(", ")
 
     override fun toString() = map.toString()
   }

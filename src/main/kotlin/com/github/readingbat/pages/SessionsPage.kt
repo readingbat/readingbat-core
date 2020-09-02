@@ -80,6 +80,7 @@ internal object SessionsPage {
                   th { +"User Agent" }
                   th { +"Remote Host" }
                   th { +"City" }
+                  th { +"State" }
                   th { +"Country" }
                   th { +"Organization" }
                   th { +"Requests" }
@@ -94,6 +95,7 @@ internal object SessionsPage {
                     td { +it.userAgent }
                     td { +it.remoteHost }
                     td { +it.city }
+                    td { +it.state }
                     td { +it.country }
                     td { +it.organization }
                     td { +it.requests.toString() }
