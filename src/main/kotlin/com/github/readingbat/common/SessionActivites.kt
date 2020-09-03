@@ -155,7 +155,10 @@ internal object SessionActivites : KLogging() {
                 GeoInfo(json).apply { logger.info { "Redis GEO info for $remoteHost: ${summary()}" } }
               else
                 lookUpGeoInfo(ipAddress)
-                  .also { redis.set(geoKey, json, SetParams().ex(7.days.inSeconds.toInt())) }
+                  .let {
+                    redis.set(geoKey, it.first, SetParams().ex(7.days.inSeconds.toInt()))
+                    it.second
+                  }
             }
           }
         }
@@ -172,7 +175,7 @@ internal object SessionActivites : KLogging() {
         val apiKey = IPGEOLOCATION_KEY.getRequiredEnv()
         client.get("https://api.ipgeolocation.io/ipgeo?apiKey=$apiKey&ip=$ipAddress") { response ->
           val json = response.readText()
-          GeoInfo(json).apply {
+          json to GeoInfo(json).apply {
             logger.info { "API GEO info for $ipAddress: ${summary()}" }
           }
         }

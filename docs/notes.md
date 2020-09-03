@@ -20,6 +20,7 @@ Setup:
 
 ## Prometheus Notes
 * Edit /etc/prometheus/prometheus.yml
+* Resart with: `systemctl restart prometheus`
 * Reset with: sudo systemctl reload prometheus.service
 * Digital Ocean notes: https://marketplace.digitalocean.com/apps/prometheus?ipAddress=167.172.200.129#getting-started
 * Prometheus admin: http://metrics.readingbat.com:9090/graph
@@ -27,6 +28,7 @@ Setup:
 
 ## Grafana Notes
 * JVM dashboard is here: https://grafana.com/grafana/dashboards/8563
+* World map: https://grafana.com/grafana/plugins/grafana-worldmap-panel
 
 ## PrismJs Notes
 * Look in .js files to find URLs to load css and js files
