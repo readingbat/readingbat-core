@@ -185,7 +185,7 @@ class ReadingBatContent {
       }
       cnt.get()
     }.let {
-      "${it.value} $languageType ${"exercise".pluralize(it.value)} loaded in ${it.duration}"
+      "${it.value} $languageType ${"exercise".pluralize(it.value)} loaded in ${it.duration}".also { logger.info { it } }
     }
 
   internal fun evalContent(contentSource: ContentSource, variableName: String): ReadingBatContent =

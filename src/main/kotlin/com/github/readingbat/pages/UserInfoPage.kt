@@ -78,9 +78,6 @@ internal object UserInfoPage {
               val principal = call.userPrincipal
               val sessionId = call.browserSession
 
-              //println("Browser Sessions: $browserSessions")
-              //println("Class codes: $classCodes")
-
               p {
                 table {
                   tr { td { +"User Principal" }; td { +principal.toString() } }
