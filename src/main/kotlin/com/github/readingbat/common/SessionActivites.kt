@@ -127,6 +127,13 @@ internal object SessionActivites : KLogging() {
             logger.info { "Removing stale browser session ${it.key} after ${it.value.age}" }
             sessionsMap.remove(it.key)
           }
+
+        sessionsMap.entries
+          .filter { it.value.requests == 1 }
+          .forEach {
+            logger.info { "Removing probe browser session ${it.key}" }
+            sessionsMap.remove(it.key)
+          }
       } catch (e: Throwable) {
         logger.error(e) { "Exception when removing stale browser sessions" }
       }
@@ -153,6 +160,19 @@ internal object SessionActivites : KLogging() {
       else
         nums.all { it.isInt() }
     }
+
+    fun lookUpGeoInfo(ipAddress: String) =
+      runBlocking {
+        httpClient { client ->
+          val apiKey = IPGEOLOCATION_KEY.getRequiredEnv()
+          client.get("https://api.ipgeolocation.io/ipgeo?apiKey=$apiKey&ip=$ipAddress") { response ->
+            val json = response.readText()
+            json to GeoInfo(json).apply {
+              logger.info { "API GEO info for $ipAddress: ${summary()}" }
+            }
+          }
+        }
+      }
 
     if (!remoteHost.isIpAddress()) {
       logger.info { "Skipped looking up $remoteHost" }
@@ -183,19 +203,6 @@ internal object SessionActivites : KLogging() {
       ignoreHosts += remoteHost
     }
   }
-
-  fun lookUpGeoInfo(ipAddress: String) =
-    runBlocking {
-      httpClient { client ->
-        val apiKey = IPGEOLOCATION_KEY.getRequiredEnv()
-        client.get("https://api.ipgeolocation.io/ipgeo?apiKey=$apiKey&ip=$ipAddress") { response ->
-          val json = response.readText()
-          json to GeoInfo(json).apply {
-            logger.info { "API GEO info for $ipAddress: ${summary()}" }
-          }
-        }
-      }
-    }
 
   fun activeSessions(duration: Duration) = sessionsMap.filter { it.value.requests > 1 && it.value.age <= duration }.size
 

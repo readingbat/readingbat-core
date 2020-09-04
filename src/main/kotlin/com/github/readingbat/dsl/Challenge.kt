@@ -95,7 +95,7 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
 
   internal fun functionInfo(content: ReadingBatContent) =
     if (repo.remote) {
-      content.sourcesMap
+      content.functionInfoMap
         .computeIfAbsent(challengeId) {
           val timer = metrics.challengeRemoteReadDuration.labels(agentLaunchId()).startTimer()
           val code =
@@ -119,7 +119,7 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
       }
 
       if (content.cacheChallenges)
-        content.sourcesMap.computeIfAbsent(challengeId) { parseCode() }
+        content.functionInfoMap.computeIfAbsent(challengeId) { parseCode() }
       else
         parseCode()
     }

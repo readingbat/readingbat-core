@@ -71,16 +71,19 @@ internal object WsEndoints : KLogging() {
         fetchUser()?.email(redis)?.value ?: "Unknown"
     }
 
-  fun Routing.wsEndpoints(metrics: Metrics, content: () -> ReadingBatContent) {
+  fun Routing.wsEndpoints(metrics: Metrics, contentSrc: () -> ReadingBatContent) {
+
 
     webSocket("$CHALLENGE_ENDPOINT/{$CLASS_CODE}/{$CHALLENGE_MD5}") {
+      val content = contentSrc.invoke()
       val classCode =
         call.parameters[CLASS_CODE]?.let { ClassCode(it) } ?: throw InvalidPathException("Missing class code")
       val challengeMd5 = call.parameters[CHALLENGE_MD5] ?: throw InvalidPathException("Missing challenge md5")
       val finished = BooleanMonitor(false)
       val remote = call.request.origin.remoteHost
       val email = fetchEmail()
-      val desc = "$CHALLENGE_ENDPOINT/$classCode/$challengeMd5 - $remote - $email"
+      val path = content.functionInfoByMd5(challengeMd5)?.challenge?.path ?: "Unknown"
+      val desc = "$CHALLENGE_ENDPOINT/$classCode/$challengeMd5 ($path) - $remote - $email"
 
       logger.info { "Opened student answers websocket for $desc" }
 
@@ -160,12 +163,13 @@ internal object WsEndoints : KLogging() {
     }
 
     webSocket("$CHALLENGE_GROUP_ENDPOINT/{$LANG_NAME}/{$GROUP_NAME}/{$CLASS_CODE}") {
+      val content = contentSrc.invoke()
       val (languageName, groupName, classCode) =
         Triple(
           call.parameters[LANG_NAME]?.let { LanguageName(it) } ?: throw InvalidPathException("Missing language name"),
           call.parameters[GROUP_NAME]?.let { GroupName(it) } ?: throw InvalidPathException("Missing group name"),
           call.parameters[CLASS_CODE]?.let { ClassCode(it) } ?: throw InvalidPathException("Missing class code"))
-      val challenges = content.invoke().findGroup(languageName.toLanguageType(), groupName).challenges
+      val challenges = content.findGroup(languageName.toLanguageType(), groupName).challenges
       val finished = AtomicBoolean(false)
       val remote = call.request.origin.remoteHost
       val email = fetchEmail()
@@ -205,7 +209,7 @@ internal object WsEndoints : KLogging() {
                     }
 
                     ltor.forEach challenge@{ challenge ->
-                      val funcInfo = challenge.functionInfo(content.invoke())
+                      val funcInfo = challenge.functionInfo(content)
                       val challengeName = challenge.challengeName
                       val numCalls = funcInfo.invocations.size
                       var totAttemptedAtLeastOne = 0

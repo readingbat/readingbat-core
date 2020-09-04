@@ -27,7 +27,7 @@ import com.github.readingbat.server.ChallengeMd5
 import com.github.readingbat.server.Invocation
 import mu.KLogging
 
-internal class FunctionInfo(private val challenge: Challenge,
+internal class FunctionInfo(val challenge: Challenge,
                             val originalCode: String,
                             val codeSnippet: String,
                             val invocations: List<Invocation>,

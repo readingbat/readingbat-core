@@ -107,7 +107,7 @@ internal object ConfigPage {
                 }
                 tr {
                   td { +"Challenge cache size:" }
-                  val map = content.sourcesMap
+                  val map = content.functionInfoMap
                   val javaCnt = map.filter { it.value.languageType == Java }.count()
                   val pythonCnt = map.filter { it.value.languageType == Python }.count()
                   val kotlinCnt = map.filter { it.value.languageType == Kotlin }.count()

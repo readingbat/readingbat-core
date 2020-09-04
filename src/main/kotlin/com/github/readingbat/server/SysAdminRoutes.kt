@@ -60,7 +60,7 @@ internal fun Routing.sysAdminRoutes(metrics: Metrics,
     val msg =
       authenticatedAction {
         val content = contentSrc()
-        val cnt = content.sourcesMap.size
+        val cnt = content.functionInfoMap.size
         content.clearSourcesMap()
           .let {
             "Challenge cache reset -- $cnt challenges removed".also { logger.info { it } }

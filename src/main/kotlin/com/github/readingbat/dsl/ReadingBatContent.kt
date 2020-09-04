@@ -53,7 +53,7 @@ class ReadingBatContent {
   private val languageList by lazy { listOf(java, python, kotlin) }
   private val languageMap by lazy { languageList.map { it.languageType to it }.toMap() }
 
-  internal val sourcesMap = ConcurrentHashMap<Int, FunctionInfo>()
+  internal val functionInfoMap = ConcurrentHashMap<Int, FunctionInfo>()
   internal val timeStamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("M/d/y H:m:ss"))
   internal var sendGridPrefix = ""
   internal var googleAnalyticsId = ""
@@ -86,7 +86,7 @@ class ReadingBatContent {
 
   internal fun clearSourcesMap() {
     logger.info { "Clearing Challenge cache" }
-    sourcesMap.clear()
+    functionInfoMap.clear()
   }
 
   internal fun hasLanguage(languageType: LanguageType) = languageMap.containsKey(languageType)
@@ -123,6 +123,9 @@ class ReadingBatContent {
     findChallenge(languageName, groupName, challengeName)
 
   internal fun validate() = languageList.forEach { it.validate() }
+
+  internal fun functionInfoByMd5(md5: String) =
+    functionInfoMap.asSequence().firstOrNull { it.component2().challengeMd5.value == md5 }?.value
 
   @ReadingBatDslMarker
   fun java(block: LanguageGroup<JavaChallenge>.() -> Unit) = java.run(block)

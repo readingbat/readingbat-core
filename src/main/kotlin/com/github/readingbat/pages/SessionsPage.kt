@@ -67,7 +67,7 @@ internal object SessionsPage {
             }
           }
 
-          val sessions = SessionActivites.allSessions().sortedBy { it.age }
+          val sessions = SessionActivites.allSessions().filter { it.requests > 1 }.sortedBy { it.age }
 
           h3 { +"${sessions.size} User Session".pluralize(sessions.size) }
 
@@ -88,7 +88,6 @@ internal object SessionsPage {
                   th { +"User Agent" }
                 }
                 sessions
-                  .filter { it.requests > 1 }
                   .forEach {
                     tr {
                       val user = it.principal?.userId?.toUser(it.browserSession)
