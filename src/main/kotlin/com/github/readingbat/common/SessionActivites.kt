@@ -197,7 +197,7 @@ internal object SessionActivites : KLogging() {
       }
     }
 
-  fun activeSessions(duration: Duration) = sessionsMap.filter { it.value.age <= duration }.size
+  fun activeSessions(duration: Duration) = sessionsMap.filter { it.value.requests > 1 && it.value.age <= duration }.size
 
   fun allSessions(): List<Session> = sessionsMap.map { it.value }.toList()
 }
