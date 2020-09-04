@@ -44,7 +44,7 @@ import io.ktor.server.engine.*
 import io.prometheus.Agent.Companion.startAsyncAgent
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.coroutines.withTimeout
 import mu.KLogging
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -201,7 +201,7 @@ internal fun Application.module() {
   runBlocking {
     logger.info { "Delaying start-up by max of $maxDelay seconds" }
     measureTime {
-      withTimeoutOrNull(maxDelay.seconds) {
+      withTimeout(maxDelay.seconds) {
         job.join()
       }
     }.also {

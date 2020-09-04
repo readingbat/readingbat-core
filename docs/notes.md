@@ -9,7 +9,7 @@ Setup:
 * Program Arguments: -config=src/main/resources/application-dev.conf
 * Environment Variables: SENDGRID_API_KEY=**value**
 
-## Heroku Notes
+## Heroku
 * Switch shell to Java8 to get jvisualvm to work on an OSX client
 * Create connection with: `heroku java:visualvm --app readingbat`
 * Connect to shell with: `heroku ps:exec --app readingbat`
@@ -18,7 +18,7 @@ Setup:
 * Open in jvisualvm with file: File->Load... 
 * https://devcenter.heroku.com/articles/exec#using-java-debugging-tools
 
-## Prometheus Notes
+## Prometheus
 * Edit /etc/prometheus/prometheus.yml
 * Resart with: `systemctl restart prometheus`
 * Reset with: sudo systemctl reload prometheus.service
@@ -26,9 +26,12 @@ Setup:
 * Prometheus admin: http://metrics.readingbat.com:9090/graph
 
 
-## Grafana Notes
+## Grafana
 * JVM dashboard is here: https://grafana.com/grafana/dashboards/8563
 * World map: https://grafana.com/grafana/plugins/grafana-worldmap-panel
 
-## PrismJs Notes
+## PrismJs
 * Look in .js files to find URLs to load css and js files
+
+## JMX Exporter
+* https://github.com/prometheus/jmx_exporter

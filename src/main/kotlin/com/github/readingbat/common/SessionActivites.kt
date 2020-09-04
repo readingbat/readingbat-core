@@ -20,6 +20,7 @@ package com.github.readingbat.common
 import com.github.pambrose.common.dsl.KtorDsl.get
 import com.github.pambrose.common.dsl.KtorDsl.httpClient
 import com.github.pambrose.common.redis.RedisUtils.withRedisPool
+import com.github.pambrose.common.util.isInt
 import com.github.pambrose.common.util.isNotNull
 import com.github.pambrose.common.util.isNull
 import com.github.readingbat.common.EnvVars.IPGEOLOCATION_KEY
@@ -132,6 +133,7 @@ internal object SessionActivites : KLogging() {
     }
   }
 
+
   fun BrowserSession?.markActivity(call: ApplicationCall) {
 
     if (isNull())
@@ -143,6 +145,19 @@ internal object SessionActivites : KLogging() {
 
     // Update session
     sessionsMap.getOrPut(id, { Session(this, userAgent) }).update(principal, remoteHost)
+
+    fun String.isIpAddress(): Boolean {
+      val nums = split(".")
+      return if (nums.size != 4)
+        false
+      else
+        nums.all { it.isInt() }
+    }
+
+    if (!remoteHost.isIpAddress()) {
+      logger.info { "Skipped looking up $remoteHost" }
+      return
+    }
 
     try {
       if (IPGEOLOCATION_KEY.isDefined() && remoteHost !in ignoreHosts && !geoInfoMap.containsKey(remoteHost)) {
@@ -164,7 +179,7 @@ internal object SessionActivites : KLogging() {
         }
       }
     } catch (e: Throwable) {
-      logger.warn(e) { "Unable to determine IP geolocation data for $remoteHost" }
+      logger.warn { "Unable to determine IP geolocation data for $remoteHost (${e.message})" }
       ignoreHosts += remoteHost
     }
   }

@@ -17,6 +17,7 @@
 
 package com.github.readingbat.pages
 
+import com.github.pambrose.common.time.format
 import com.github.pambrose.common.util.pluralize
 import com.github.readingbat.common.CSSNames.INDENT_1EM
 import com.github.readingbat.common.CSSNames.TD_PADDING
@@ -86,23 +87,25 @@ internal object SessionsPage {
                   th { +"" }
                   th { +"User Agent" }
                 }
-                sessions.forEach {
-                  tr {
-                    val user = it.principal?.userId?.toUser(it.browserSession)
-                    val userDesc = user?.let { "${it.name(redis)} (${it.email(redis)})" } ?: "Not logged in"
-                    td { +it.browserSession.id }
-                    td { +userDesc }
-                    td { +it.age.toString() }
-                    td { +it.requests.toString() }
-                    td { +it.remoteHost }
-                    td { +it.city }
-                    td { +it.state }
-                    td { +it.country }
-                    td { +it.organization }
-                    td { if ("://" in it.flagUrl) img { src = it.flagUrl } else +"" }
-                    td { +it.userAgent }
+                sessions
+                  .filter { it.requests > 1 }
+                  .forEach {
+                    tr {
+                      val user = it.principal?.userId?.toUser(it.browserSession)
+                      val userDesc = user?.let { "${it.name(redis)} (${it.email(redis)})" } ?: "Not logged in"
+                      td { +it.browserSession.id }
+                      td { +userDesc }
+                      td { +it.age.format(false) }
+                      td { +it.requests.toString() }
+                      td { +it.remoteHost }
+                      td { +it.city }
+                      td { +it.state }
+                      td { +it.country }
+                      td { +it.organization }
+                      td { if ("://" in it.flagUrl) img { src = it.flagUrl } else +"" }
+                      td { +it.userAgent }
+                    }
                   }
-                }
               }
             }
           }

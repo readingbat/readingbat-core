@@ -47,19 +47,20 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
   private val repo get() = languageGroup.repo
   private val branchName get() = languageGroup.branchName
   private val metrics get() = languageGroup.metrics
+  internal val packageNameAsPath get() = packageName.replace(".", "/")
 
   internal val fileList by lazy {
     repo.let { root ->
       when (root) {
         is GitHubRepo -> {
-          val path = srcPath.ensureSuffix("/") + packageName
+          val path = srcPath.ensureSuffix("/") + packageNameAsPath
           if (root.ownerType.isUser())
             root.userDirectoryContents(branchName, path, metrics)
           else
             root.organizationDirectoryContents(branchName, path, metrics)
         }
         is FileSystemSource -> {
-          File(pathOf(root.pathPrefix, srcPath, packageName)).walk().map { it.name }.toList()
+          File(pathOf(root.pathPrefix, srcPath, packageNameAsPath)).walk().map { it.name }.toList()
         }
         else -> throw InvalidConfigurationException("Invalid repo type: $root")
       }

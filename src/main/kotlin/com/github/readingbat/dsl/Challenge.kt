@@ -58,7 +58,7 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
                        val challengeName: ChallengeName,
                        val replaceable: Boolean) {
   private val challengeId = counter.incrementAndGet()
-  private val fqName by lazy { packageName.ensureSuffix("/") + fileName.ensureSuffix(".${languageType.suffix}") }
+  private val fqName by lazy { packageNameAsPath.ensureSuffix("/") + fileName.ensureSuffix(".${languageType.suffix}") }
 
   // Allow description updates only if not found in the Content.kt decl
   private val isDescriptionSetInDsl by lazy { description.isNotBlank() }
@@ -74,7 +74,7 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
   internal val languageType get() = challengeGroup.languageType
   internal val languageName get() = languageType.languageName
   internal val groupName get() = challengeGroup.groupName
-  protected val packageName get() = challengeGroup.packageName
+  protected val packageNameAsPath get() = challengeGroup.packageNameAsPath
 
   // User properties
   var fileName = "$challengeName.${languageType.suffix}"
@@ -83,14 +83,15 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
 
   internal abstract suspend fun computeFunctionInfo(code: String): FunctionInfo
 
-  private fun measureParsing(code: String): FunctionInfo {
-    val timer = metrics.challengeParseDuration.labels(agentLaunchId(), languageType.toString()).startTimer()
-    try {
-      return runBlocking { computeFunctionInfo(code) }
-    } finally {
-      timer.observeDuration()
-    }
-  }
+  private fun measureParsing(code: String) =
+    metrics.challengeParseDuration.labels(agentLaunchId(), languageType.toString()).startTimer()
+      .let {
+        try {
+          runBlocking { computeFunctionInfo(code) }
+        } finally {
+          it.observeDuration()
+        }
+      }
 
   internal fun functionInfo(content: ReadingBatContent) =
     if (repo.remote) {
@@ -112,7 +113,7 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
     else {
       fun parseCode(): FunctionInfo {
         val fs = repo as FileSystemSource
-        val file = fs.file(pathOf(fs.pathPrefix, srcPath, packageName, fileName))
+        val file = fs.file(pathOf(fs.pathPrefix, srcPath, packageNameAsPath, fileName))
         logger.info { """Fetching "${file.fileName}" from filesystem""" }
         return measureParsing(file.content)
       }
@@ -203,7 +204,8 @@ class PythonChallenge(challengeGroup: ChallengeGroup<*>,
     return FunctionInfo(this, code, funcCode, invocations, returnType, correctAnswers)
   }
 
-  override fun toString() = "PythonChallenge(packageName='$packageName', fileName='$fileName', returnType=$returnType)"
+  override fun toString() =
+    "PythonChallenge(packageName='$packageNameAsPath', fileName='$fileName', returnType=$returnType)"
 }
 
 class JavaChallenge(challengeGroup: ChallengeGroup<*>,
@@ -245,7 +247,7 @@ class JavaChallenge(challengeGroup: ChallengeGroup<*>,
     return FunctionInfo(this, code, funcCode, invocations, returnType, correctAnswers)
   }
 
-  override fun toString() = "JavaChallenge(packageName='$packageName', fileName='$fileName')"
+  override fun toString() = "JavaChallenge(packageName='$packageNameAsPath', fileName='$fileName')"
 }
 
 class KotlinChallenge(challengeGroup: ChallengeGroup<*>,
@@ -291,5 +293,6 @@ class KotlinChallenge(challengeGroup: ChallengeGroup<*>,
     return FunctionInfo(this, strippedCode, funcCode, invocations, returnType, correctAnswers)
   }
 
-  override fun toString() = "KotlinChallenge(packageName='$packageName', fileName='$fileName', returnType=$returnType)"
+  override fun toString() =
+    "KotlinChallenge(packageName='$packageNameAsPath', fileName='$fileName', returnType=$returnType)"
 }
