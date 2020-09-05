@@ -88,7 +88,7 @@ internal object AdminPage {
             else -> {
               p {
                 span {
-                  style = "color:${msg.color};"
+                  style = "color:${msg.color}"
                   this@body.displayMessage(msg)
                 }
               }
@@ -109,7 +109,7 @@ internal object AdminPage {
       form {
         action = ADMIN_POST_ENDPOINT
         method = FormMethod.post
-        onSubmit = "return confirm('Are you sure you want to permanently delete all data ?');"
+        onSubmit = "return confirm('Are you sure you want to permanently delete all data ?')"
         input { type = InputType.submit; name = ADMIN_ACTION_PARAM; value = DELETE_ALL_DATA }
       }
     }

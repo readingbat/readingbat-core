@@ -98,10 +98,10 @@ internal val cssContent by lazy {
         maxWidth = 800.px
       }
       rule(":link") {
-        color = Color("#0000DD;")
+        color = Color("#0000DD")
       }
       rule(":visited") {
-        color = Color("#551A8B;")
+        color = Color("#551A8B")
       }
       rule("td") {
         verticalAlign = VerticalAlign.middle
@@ -192,7 +192,7 @@ internal val cssContent by lazy {
         //border = "7px solid white"
       }
       rule(".$DASHBOARD") {
-        border = "1px solid #DDDDDD;"
+        border = "1px solid #DDDDDD"
         borderCollapse = BorderCollapse.collapse
       }
       rule(".$CHECK_ANSWERS") {

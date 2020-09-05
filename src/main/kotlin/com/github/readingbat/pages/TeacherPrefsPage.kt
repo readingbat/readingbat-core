@@ -62,21 +62,25 @@ internal object TeacherPrefsPage : KLogging() {
 
   private const val createClassButton = "CreateClassButton"
 
-  fun PipelineCall.teacherPrefsPage(content: ReadingBatContent,
-                                    user: User?,
-                                    redis: Jedis,
-                                    msg: Message = EMPTY_MESSAGE,
-                                    defaultClassDesc: String = "") =
+  fun PipelineCall.teacherPrefsPage(
+    content: ReadingBatContent,
+    user: User?,
+    redis: Jedis,
+    msg: Message = EMPTY_MESSAGE,
+    defaultClassDesc: String = "",
+                                   ) =
     if (user.isValidUser(redis))
       teacherPrefsWithLoginPage(content, user, msg, defaultClassDesc, redis)
     else
       requestLogInPage(content, redis)
 
-  private fun PipelineCall.teacherPrefsWithLoginPage(content: ReadingBatContent,
-                                                     user: User,
-                                                     msg: Message,
-                                                     defaultClassDesc: String,
-                                                     redis: Jedis) =
+  private fun PipelineCall.teacherPrefsWithLoginPage(
+    content: ReadingBatContent,
+    user: User,
+    msg: Message,
+    defaultClassDesc: String,
+    redis: Jedis,
+                                                    ) =
     createHTML()
       .html {
         val activeClassCode = user.fetchActiveClassCode(redis)
@@ -94,7 +98,7 @@ internal object TeacherPrefsPage : KLogging() {
 
           h2 { +"ReadingBat Teacher Preferences" }
 
-          p { span { style = "color:${msg.color};"; this@body.displayMessage(msg) } }
+          p { span { style = "color:${msg.color}"; this@body.displayMessage(msg) } }
 
           createClass(defaultClassDesc)
 
@@ -122,7 +126,7 @@ internal object TeacherPrefsPage : KLogging() {
                 size = "42"
                 name = CLASS_DESC_PARAM
                 value = defaultClassDesc
-                onKeyPress = "click${createClassButton}(event);"
+                onKeyPress = "click${createClassButton}(event)"
               }
             }
           }
@@ -142,8 +146,8 @@ internal object TeacherPrefsPage : KLogging() {
       div(classes = INDENT_2EM) {
         table {
           tr {
-            td { style = "vertical-align:top;"; this@displayClasses.classList(activeClassCode, classCodes, redis) }
-            td { style = "vertical-align:top;"; this@displayClasses.deleteClassButtons(classCodes, redis) }
+            td { style = "vertical-align:top"; this@displayClasses.classList(activeClassCode, classCodes, redis) }
+            td { style = "vertical-align:top"; this@displayClasses.deleteClassButtons(classCodes, redis) }
           }
         }
       }
@@ -152,7 +156,7 @@ internal object TeacherPrefsPage : KLogging() {
 
   private fun BODY.classList(activeClassCode: ClassCode, classCodes: List<ClassCode>, redis: Jedis) {
     table {
-      style = "border-spacing: 15px 5px;"
+      style = "border-spacing: 15px 5px"
       tr { th { +"Active" }; th { +"Class Code" }; th { +"Description" }; th { +"Enrollees" } }
       form {
         action = TEACHER_PREFS_POST_ENDPOINT
@@ -162,7 +166,7 @@ internal object TeacherPrefsPage : KLogging() {
           val enrolleeCount = code.fetchEnrollees(redis).count()
           this@table.tr {
             td {
-              style = "text-align:center;"
+              style = "text-align:center"
               input { type = radio; name = CLASSES_CHOICE_PARAM; value = code.value; checked = activeClassCode == code }
             }
             td {
@@ -171,17 +175,20 @@ internal object TeacherPrefsPage : KLogging() {
                   if (enrolleeCount == 0)
                     +it
                   else
-                    a { href = "$CLASS_SUMMARY_ENDPOINT?$CLASS_CODE_QP=${code.displayedValue}"; +it }
+                    a {
+                      style = "text-decoration:underline"
+                      href = "$CLASS_SUMMARY_ENDPOINT?$CLASS_CODE_QP=${code.displayedValue}"; +it
+                    }
                 }
             }
             td { +code.fetchClassDesc(redis) }
-            td { style = "text-align:center;"; +enrolleeCount.toString() }
+            td { style = "text-align:center"; +enrolleeCount.toString() }
           }
         }
 
         this@table.tr {
           td {
-            style = "text-align:center;"
+            style = "text-align:center"
             input {
               type = radio; name = CLASSES_CHOICE_PARAM; value = DISABLED_MODE; checked = activeClassCode.isNotEnabled
             }
@@ -198,19 +205,19 @@ internal object TeacherPrefsPage : KLogging() {
 
   private fun BODY.deleteClassButtons(classCodes: List<ClassCode>, redis: Jedis) {
     table {
-      style = "border-spacing: 5px 5px;"
+      style = "border-spacing: 5px 5px"
       tr { th { rawHtml(nbsp.text) } }
       classCodes.forEach { classCode ->
         tr {
           td {
             form {
-              style = "margin:0;"
+              style = "margin:0"
               action = TEACHER_PREFS_POST_ENDPOINT
               method = FormMethod.post
-              onSubmit = "return confirm('Are you sure you want to delete class ${classCode.toDisplayString(redis)}?');"
+              onSubmit = "return confirm('Are you sure you want to delete class ${classCode.toDisplayString(redis)}?')"
               input { type = InputType.hidden; name = CLASS_CODE_NAME_PARAM; value = classCode.displayedValue }
               input {
-                style = "vertical-align:middle; margin-top:1; margin-bottom:0;"
+                style = "vertical-align:middle; margin-top:1; margin-bottom:0"
                 type = submit; name = USER_PREFS_ACTION_PARAM; value =
                 DELETE_CLASS
               }

@@ -41,7 +41,7 @@ internal object HelpAndLogin {
     val previousClassCode = user.fetchPreviousTeacherClassCode(redis)
 
     div {
-      style = "float:right; margin:0px; border: 1px solid lightgray; margin-left: 10px; padding: 5px;"
+      style = "float:right; margin:0px; border: 1px solid lightgray; margin-left: 10px; padding: 5px"
       table {
         if (user.isNotNull() && redis.isNotNull()) logout(user, loginPath, redis) else login(loginPath)
       }
@@ -110,25 +110,44 @@ internal object HelpAndLogin {
   }
 
   private fun TABLE.login(loginPath: String) {
+    val topFocus = "loginTpFocus"
+    val bottomFocus = "loginBottomFocus"
+
     form(method = FormMethod.post) {
       action = loginPath
+
+      span { tabIndex = "1"; onFocus = "document.querySelector('.$bottomFocus').focus()" }
+
       this@login.tr {
         td { +"id/email" }
-        td { textInput { id = EMAIL_PARAM; name = EMAIL_PARAM; size = "20"; placeholder = "username" } }
+        td {
+          textInput(classes = topFocus) {
+            id = EMAIL_PARAM; name = EMAIL_PARAM; size = "20"; placeholder = "username"; tabIndex = "2"
+          }
+        }
       }
+
       this@login.tr {
         td { +"password" }
-        td { passwordInput { name = PASSWORD_PARAM; size = "20"; placeholder = "password" } }
+        td {
+          passwordInput(classes = bottomFocus) {
+            name = PASSWORD_PARAM; size = "20"; placeholder = "password"; tabIndex = "3"
+          }
+        }
       }
+
       this@login.tr {
         td {}
         td { submitInput { name = "dologin"; value = "log in" } }
       }
+
+      span { tabIndex = "4"; onFocus = "document.querySelector('.$topFocus').focus()" }
+
       hiddenInput { name = "fromurl"; value = loginPath }
     }
 
     // Set focus to email field
-    script { rawHtml("""document.getElementById("$EMAIL_PARAM").focus();""") }
+    script { rawHtml("""document.getElementById("$EMAIL_PARAM").focus()""") }
 
     tr {
       td {

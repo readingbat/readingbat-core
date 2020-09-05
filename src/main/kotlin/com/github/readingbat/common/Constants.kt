@@ -32,7 +32,7 @@ internal object Constants {
   const val CORRECT_COLOR = "#4EAA3A"
   const val WRONG_COLOR = "#FF0000" //red
   const val INCOMPLETE_COLOR = "#F1F1F1"
-  const val LABEL_WIDTH = "width: 250;"
+  const val LABEL_WIDTH = "width:250"
   const val INVALID_RESET_ID = "Invalid reset_id"
   const val PING_CODE = "P"
   const val COLUMN_CNT = 3

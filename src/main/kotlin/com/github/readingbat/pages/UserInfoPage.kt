@@ -70,7 +70,7 @@ internal object UserInfoPage {
 
               p {
                 span {
-                  style = "color:${msg.color};"
+                  style = "color:${msg.color}"
                   this@body.displayMessage(msg)
                 }
               }

@@ -101,7 +101,7 @@ internal object PasswordResetPage : KLogging() {
 
           bodyTitle()
 
-          p { span { style = "color:red;"; this@body.displayMessage(msg) } }
+          p { span { style = "color:red"; this@body.displayMessage(msg) } }
 
           h2 { +"Password Reset" }
 
@@ -117,9 +117,9 @@ internal object PasswordResetPage : KLogging() {
                 tr {
                   td { }
                   td {
-                    style = "padding-top:10;"
+                    style = "padding-top:10"
                     input {
-                      style = "font-size:25px; height:35; width:  155;"
+                      style = "font-size:25px; height:35; width:  155"
                       type = InputType.submit
                       value = "Send Password Reset"
                     }
@@ -159,7 +159,7 @@ internal object PasswordResetPage : KLogging() {
 
           bodyTitle()
 
-          p { span { style = "color:red;"; this@body.displayMessage(msg) } }
+          p { span { style = "color:red"; this@body.displayMessage(msg) } }
 
           h3 { +"Change password for $email" }
           p { +"Password must contain at least 6 characters" }
@@ -181,7 +181,7 @@ internal object PasswordResetPage : KLogging() {
                     size = "42"
                     name = CONFIRM_PASSWORD_PARAM
                     value = ""
-                    onKeyPress = "click$passwordButton(event);"
+                    onKeyPress = "click$passwordButton(event)"
                   }
                 }
                 td { hideShowButton(formName, CONFIRM_PASSWORD_PARAM) }
@@ -190,7 +190,7 @@ internal object PasswordResetPage : KLogging() {
                 td { input { type = InputType.hidden; name = RESET_ID_PARAM; value = resetId.value } }
                 td {
                   input {
-                    style = "font-size:25px; height:35; width:  155;"
+                    style = "font-size:25px; height:35; width:155"
                     type = InputType.submit
                     id = passwordButton
                     name = USER_PREFS_ACTION_PARAM

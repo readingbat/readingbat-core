@@ -115,12 +115,12 @@ internal object ClassSummaryPage : KLogging() {
 
     div(classes = INDENT_2EM) {
       table {
-        style = "border-spacing: 15px 5px;"
+        style = "border-spacing: 15px 5px"
         enrollees
           .forEach { student ->
             tr {
-              td { a { href = "./"; +student.name(redis) } }
-              td { a { href = "./"; +student.email(redis).toString() } }
+              td { a { style = "text-decoration:underline"; href = "./"; +student.name(redis) } }
+              td { a { style = "text-decoration:underline"; href = "./"; +student.email(redis).toString() } }
             }
           }
       }
@@ -129,7 +129,7 @@ internal object ClassSummaryPage : KLogging() {
 
   private fun BODY.classList(activeClassCode: ClassCode, classCodes: List<ClassCode>, redis: Jedis) {
     table {
-      style = "border-spacing: 15px 5px;"
+      style = "border-spacing: 15px 5px"
       tr { th { +"Active" }; th { +"Class Code" }; th { +"Description" }; th { +"Enrollees" } }
       form {
         action = TEACHER_PREFS_POST_ENDPOINT
@@ -140,7 +140,7 @@ internal object ClassSummaryPage : KLogging() {
           val enrolleeCount = code.fetchEnrollees(redis).count()
           this@table.tr {
             td {
-              style = "text-align:center;"
+              style = "text-align:center"
               input { type = radio; name = CLASSES_CHOICE_PARAM; value = code.value; checked = activeClassCode == code }
             }
             td {
@@ -153,13 +153,13 @@ internal object ClassSummaryPage : KLogging() {
                 }
             }
             td { +classDesc }
-            td { style = "text-align:center;"; +enrolleeCount.toString() }
+            td { style = "text-align:center"; +enrolleeCount.toString() }
           }
         }
 
         this@table.tr {
           td {
-            style = "text-align:center;"
+            style = "text-align:center"
             input {
               type = radio; name = CLASSES_CHOICE_PARAM; value = DISABLED_MODE; checked = activeClassCode.isNotEnabled
             }
@@ -176,21 +176,21 @@ internal object ClassSummaryPage : KLogging() {
 
   private fun BODY.deleteClassButtons(classCodes: List<ClassCode>, redis: Jedis) {
     table {
-      style = "border-spacing: 5px 5px;"
+      style = "border-spacing: 5px 5px"
       tr { th { rawHtml(nbsp.text) } }
       classCodes.forEach { classCode ->
         val classDesc = classCode.fetchClassDesc(redis, true)
         tr {
           td {
             form {
-              style = "margin:0;"
+              style = "margin:0"
               action = TEACHER_PREFS_POST_ENDPOINT
               method = FormMethod.post
               onSubmit =
-                "return confirm('Are you sure you want to delete class $classDesc [$classCode]?');"
+                "return confirm('Are you sure you want to delete class $classDesc [$classCode]?')"
               input { type = InputType.hidden; name = CLASS_CODE_NAME_PARAM; value = classCode.displayedValue }
               input {
-                style = "vertical-align:middle; margin-top:1; margin-bottom:0;"
+                style = "vertical-align:middle; margin-top:1; margin-bottom:0"
                 type = submit; name = USER_PREFS_ACTION_PARAM; value =
                 DELETE_CLASS
               }

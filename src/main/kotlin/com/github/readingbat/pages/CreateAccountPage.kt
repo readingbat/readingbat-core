@@ -92,10 +92,10 @@ internal object CreateAccountPage {
             """.trimIndent()
             }
 
-            p { span { style = "color:red;"; this@body.displayMessage(msg) } }
+            p { span { style = "color:red"; this@body.displayMessage(msg) } }
 
-            val inputFs = "font-size: 95%;"
-            val labelWidth = "width: 250;"
+            val inputFs = "font-size: 95%"
+            val labelWidth = "width: 250"
             val formName = "pform"
 
             form {
@@ -143,7 +143,7 @@ internal object CreateAccountPage {
                       size = "42"
                       name = CONFIRM_PASSWORD_PARAM
                       value = ""
-                      onKeyPress = "click$createButton(event);"
+                      onKeyPress = "click$createButton(event)"
                     }
                   }
                   td { hideShowButton(formName, CONFIRM_PASSWORD_PARAM) }
@@ -153,7 +153,7 @@ internal object CreateAccountPage {
                   td { }
                   td {
                     input {
-                      style = "font-size : 25px; height: 35; width: 115;"
+                      style = "font-size : 25px; height: 35; width: 115"
                       id = createButton
                       type = InputType.submit
                       value = "Create Account"

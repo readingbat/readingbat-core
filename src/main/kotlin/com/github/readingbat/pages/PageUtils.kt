@@ -92,9 +92,9 @@ internal object PageUtils {
 
   fun BODY.bodyTitle() {
     div {
-      style = "margin-bottom: 0em;"
-      a { href = "/"; span { style = "font-size:200%;"; +READING_BAT } }
-      span { style = "padding-left:5px;"; +"code reading practice" }
+      style = "margin-bottom:0em"
+      a { href = "/"; span { style = "font-size:200%"; +READING_BAT } }
+      span { style = "padding-left:5px"; +"code reading practice" }
     }
   }
 
@@ -118,14 +118,14 @@ internal object PageUtils {
       p {
         span {
           style =
-            "color:red;"; +"Failed to login -- ${if (redis.isNull()) "database is down" else "incorrect email or password"}"
+            "color:red"; +"Failed to login -- ${if (redis.isNull()) "database is down" else "incorrect email or password"}"
         }
       }
 
-    p { span { style = "color:green; max-width:800;"; if (msg.isNotBlank) +(msg.toString()) else rawHtml(nbsp.text) } }
+    p { span { style = "color:green; max-width:800"; if (msg.isNotBlank) +(msg.toString()) else rawHtml(nbsp.text) } }
 
     div {
-      style = "padding-top:10px; min-width:100vw; clear:both;"
+      style = "padding-top:10px; min-width:100vw; clear:both"
       nav {
         ul {
           languageTypesInOrder
@@ -142,7 +142,7 @@ internal object PageUtils {
     }
 
     div {
-      style = "border-top: 1px solid; clear: both;"
+      style = "border-top: 1px solid; clear: both"
     }
   }
 
@@ -157,7 +157,7 @@ internal object PageUtils {
   private fun BODY.backLinkWithIndent(url: String, marginLeft: String = "1em") {
     if (url.isNotEmpty()) {
       div {
-        style = "font-size: 120%; margin-left: $marginLeft;"
+        style = "font-size:120%; margin-left:$marginLeft"
         p { a { href = url; rawHtml("&larr; Back") } }
       }
     }
@@ -165,12 +165,12 @@ internal object PageUtils {
 
   internal fun BODY.confirmingButton(text: String, endpoint: String, msg: String) {
     form {
-      style = "margin:0;"
+      style = "margin:0"
       action = endpoint
       method = FormMethod.get
-      onSubmit = "return confirm('$msg');"
+      onSubmit = "return confirm('$msg')"
       input {
-        style = "vertical-align:middle; margin-top:1; margin-bottom:0;"
+        style = "vertical-align:middle; margin-top:1; margin-bottom:0"
         type = InputType.submit; value = text
       }
     }
@@ -197,7 +197,7 @@ internal object PageUtils {
   internal fun FlowOrInteractiveOrPhrasingContent.hideShowButton(formName: String,
                                                                  fieldName: String,
                                                                  sizePct: Int = 85) {
-    button { style = "font-size:$sizePct%;"; onClick = hideShowJs(formName, fieldName); +"show/hide" }
+    button { style = "font-size:$sizePct%"; onClick = hideShowJs(formName, fieldName); +"show/hide" }
   }
 
   internal fun encodeUriElems(vararg elems: Any) = elems.joinToString("+'/'+") { "encodeURIComponent('$it')" }

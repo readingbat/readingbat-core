@@ -106,14 +106,14 @@ internal object ChallengePage : KLogging() {
   private const val numCorrectSpan = "numCorrectSpan"
   private const val pingMsg = "pingMsg"
   internal const val headerColor = "#419DC1"
-  private const val topFocus = "topFocus"
-  private const val bottomFocus = "bottomFocus"
 
-  fun PipelineCall.challengePage(content: ReadingBatContent,
-                                 user: User?,
-                                 challenge: Challenge,
-                                 loginAttempt: Boolean,
-                                 redis: Jedis?) =
+  fun PipelineCall.challengePage(
+    content: ReadingBatContent,
+    user: User?,
+    challenge: Challenge,
+    loginAttempt: Boolean,
+    redis: Jedis?,
+                                ) =
     createHTML()
       .html {
         val browserSession = call.browserSession
@@ -179,15 +179,15 @@ internal object ChallengePage : KLogging() {
     val challenges = challenge.challengeGroup.challenges
 
     h2 {
-      style = "margin-bottom:5px;"
+      style = "margin-bottom:5px"
       val groupPath = pathOf(CHALLENGE_ROOT, languageName, groupName)
       this@displayChallenge.addLink(groupName.value.decode(), groupPath)
-      span { style = "padding-left:2px; padding-right:2px;"; rawHtml("&rarr;") }
+      span { style = "padding-left:2px; padding-right:2px"; rawHtml("&rarr;") }
       +challengeName.value
     }
 
     span {
-      style = "padding-left:20px;"
+      style = "padding-left:20px"
       val pos = challengeGroup.indexOf(challengeName)
       this@displayChallenge.nextPrevChance(pos, challenges, true)
     }
@@ -214,13 +214,15 @@ internal object ChallengePage : KLogging() {
     }
   }
 
-  private fun BODY.displayQuestions(user: User?,
-                                    browserSession: BrowserSession?,
-                                    challenge: Challenge,
-                                    funcInfo: FunctionInfo,
-                                    redis: Jedis?) =
+  private fun BODY.displayQuestions(
+    user: User?,
+    browserSession: BrowserSession?,
+    challenge: Challenge,
+    funcInfo: FunctionInfo,
+    redis: Jedis?,
+                                   ) =
     div {
-      style = "margin-top:2em; margin-left:2em;"
+      style = "margin-top:2em; margin-left:2em"
 
       table {
         tr {
@@ -237,10 +239,13 @@ internal object ChallengePage : KLogging() {
           }
         }
 
+        val topFocus = "topFocus"
+        val bottomFocus = "bottomFocus"
+        val offset = 5 // The login dialog takes tabIndex values 1-4
         val correctAnswers = user.fetchPreviousAnswers(challenge, browserSession, redis)
 
         // This will cause shift tab to go to bottom input element
-        span { tabIndex = "1"; onFocus = "document.querySelector('.$bottomFocus').focus()" }
+        span { tabIndex = "5"; onFocus = "document.querySelector('.$bottomFocus').focus()" }
 
         val cnt = funcInfo.invocations.size
 
@@ -274,7 +279,7 @@ internal object ChallengePage : KLogging() {
 
                   /// See: http://bluegalaxy.info/codewalk/2018/08/04/javascript-how-to-create-looping-tabindex-cycle/
                   // We want the first input element to be 2
-                  tabIndex = (i + 2).toString()
+                  tabIndex = (i + offset).toString()
                   if (i == 0)
                     autoFocus = true
                 }
@@ -284,7 +289,7 @@ internal object ChallengePage : KLogging() {
             }
           }
         // This will cause tab to circle back to top input element
-        span { tabIndex = (cnt + 2).toString(); onFocus = "document.querySelector('.$topFocus').focus()" }
+        span { tabIndex = (cnt + offset).toString(); onFocus = "document.querySelector('.$topFocus').focus()" }
       }
 
       this@displayQuestions.processAnswers(funcInfo, challenge)
@@ -346,7 +351,7 @@ internal object ChallengePage : KLogging() {
     redis: Jedis,
                                          ) =
     div {
-      style = "margin-top:2em;"
+      style = "margin-top:2em"
 
       val languageName = challenge.languageType.languageName
       val groupName = challenge.groupName
@@ -360,7 +365,7 @@ internal object ChallengePage : KLogging() {
 
       if (enrollees.isNotEmpty()) {
         table {
-          style = "width:100%; border-spacing: 5px 10px;"
+          style = "width:100%; border-spacing: 5px 10px"
 
           tr {
             th { style = "width:15%; white-space:nowrap; text-align:left; color: $headerColor"; +"Student" }
@@ -392,7 +397,7 @@ internal object ChallengePage : KLogging() {
                 td(classes = DASHBOARD) {
                   id = "${enrollee.id}-$nameTd"
                   style =
-                    "width:15%;white-space:nowrap; background-color:${if (allCorrect) CORRECT_COLOR else INCOMPLETE_COLOR};"
+                    "width:15%;white-space:nowrap; background-color:${if (allCorrect) CORRECT_COLOR else INCOMPLETE_COLOR}"
 
                   span { id = "${enrollee.id}-$numCorrectSpan"; +numCorrect.toString() }
                   +"/$numChallenges"
@@ -405,7 +410,7 @@ internal object ChallengePage : KLogging() {
                     td(classes = DASHBOARD) {
                       id = "${enrollee.id}-$invocation-$answersTd"
                       style =
-                        "background-color:${if (history.correct) CORRECT_COLOR else (if (history.answers.isNotEmpty()) WRONG_COLOR else INCOMPLETE_COLOR)};"
+                        "background-color:${if (history.correct) CORRECT_COLOR else (if (history.answers.isNotEmpty()) WRONG_COLOR else INCOMPLETE_COLOR)}"
                       span {
                         id = "${enrollee.id}-$invocation-$answersSpan"
                         history.answers.asReversed().take(maxHistoryLength).forEach { answer -> +answer; br }
@@ -420,16 +425,16 @@ internal object ChallengePage : KLogging() {
 
   private fun BODY.processAnswers(funcInfo: FunctionInfo, challenge: Challenge) {
     div {
-      style = "margin-top:2em;"
+      style = "margin-top:2em"
       table {
         tr {
           td {
             button(classes = CHECK_ANSWERS) {
-              onClick = "$PROCESS_USER_ANSWERS_JS_FUNC(null, ${funcInfo.correctAnswers.size});"; +"Check My Answers"
+              onClick = "$PROCESS_USER_ANSWERS_JS_FUNC(null, ${funcInfo.correctAnswers.size})"; +"Check My Answers"
             }
           }
 
-          td { style = "vertical-align:middle;"; span { style = "margin-left:1em;"; id = SPINNER_ID } }
+          td { style = "vertical-align:middle"; span { style = "margin-left:1em"; id = SPINNER_ID } }
 
           td {
             val challengeName = challenge.challengeName
@@ -438,13 +443,13 @@ internal object ChallengePage : KLogging() {
 
             span {
               id = NEXTPREVCHANCE_ID
-              style = "display:none;"
+              style = "display:none"
               this@processAnswers.nextPrevChance(pos, challengeGroup.challenges, false)
             }
           }
 
           td {
-            style = "vertical-align:middle;"
+            style = "vertical-align:middle"
             span(classes = STATUS) { id = STATUS_ID }
             span(classes = SUCCESS) { id = SUCCESS_ID }
           }
@@ -496,40 +501,40 @@ internal object ChallengePage : KLogging() {
         tr {
           td {
             id = LIKE_CLEAR
-            style = "display:${if (likeDislikeVal == 0 || likeDislikeVal == 2) "inline" else "none" + ";"}"
+            style = "display:${if (likeDislikeVal == 0 || likeDislikeVal == 2) "inline" else "none"}"
             button(classes = LIKE_BUTTONS) {
-              onClick = "$LIKE_DISLIKE_JS_FUNC(${LIKE_CLEAR.toDoubleQuoted()});"
+              onClick = "$LIKE_DISLIKE_JS_FUNC(${LIKE_CLEAR.toDoubleQuoted()})"
               img { height = imgSize; src = "$STATIC_ROOT/$LIKE_CLEAR_FILE" }
             }
           }
           td {
             id = LIKE_COLOR
-            style = "display:${if (likeDislikeVal == 1) "inline" else "none" + ";"}"
+            style = "display:${if (likeDislikeVal == 1) "inline" else "none"}"
             button(classes = LIKE_BUTTONS) {
-              onClick = "$LIKE_DISLIKE_JS_FUNC(${LIKE_COLOR.toDoubleQuoted()});"
+              onClick = "$LIKE_DISLIKE_JS_FUNC(${LIKE_COLOR.toDoubleQuoted()})"
               img { height = imgSize; src = "$STATIC_ROOT/$LIKE_COLOR_FILE" }
             }
           }
           td {
             id = DISLIKE_CLEAR
-            style = "display:${if (likeDislikeVal == 0 || likeDislikeVal == 1) "inline" else "none" + ";"}"
+            style = "display:${if (likeDislikeVal == 0 || likeDislikeVal == 1) "inline" else "none"}"
             button(classes = LIKE_BUTTONS) {
-              onClick = "$LIKE_DISLIKE_JS_FUNC(${DISLIKE_CLEAR.toDoubleQuoted()});"
+              onClick = "$LIKE_DISLIKE_JS_FUNC(${DISLIKE_CLEAR.toDoubleQuoted()})"
               img { height = imgSize; src = "$STATIC_ROOT/$DISLIKE_CLEAR_FILE" }
             }
           }
           td {
             id = DISLIKE_COLOR
-            style = "display:${if (likeDislikeVal == 2) "inline" else "none" + ";"}"
+            style = "display:${if (likeDislikeVal == 2) "inline" else "none"}"
             button(classes = LIKE_BUTTONS) {
-              onClick = "$LIKE_DISLIKE_JS_FUNC(${DISLIKE_COLOR.toDoubleQuoted()});"
+              onClick = "$LIKE_DISLIKE_JS_FUNC(${DISLIKE_COLOR.toDoubleQuoted()})"
               img { height = imgSize; src = "$STATIC_ROOT/$DISLIKE_COLOR_FILE" }
             }
           }
 
-          td { style = "vertical-align:middle;"; span { style = "margin-left:1em;"; id = LIKE_SPINNER_ID } }
+          td { style = "vertical-align:middle"; span { style = "margin-left:1em"; id = LIKE_SPINNER_ID } }
 
-          td { style = "vertical-align:middle;"; span(classes = STATUS) { id = LIKE_STATUS_ID } }
+          td { style = "vertical-align:middle"; span(classes = STATUS) { id = LIKE_STATUS_ID } }
         }
       }
     }
@@ -557,9 +562,11 @@ internal object ChallengePage : KLogging() {
     }
   }
 
-  private fun BODY.clearChallengeAnswerHistoryOption(user: User?,
-                                                     browserSession: BrowserSession?,
-                                                     challenge: Challenge) {
+  private fun BODY.clearChallengeAnswerHistoryOption(
+    user: User?,
+    browserSession: BrowserSession?,
+    challenge: Challenge,
+                                                    ) {
     val languageName = challenge.languageType.languageName
     val groupName = challenge.groupName
     val challengeName = challenge.challengeName
@@ -567,17 +574,17 @@ internal object ChallengePage : KLogging() {
     val challengeAnswersKey = user.challengeAnswersKey(browserSession, languageName, groupName, challengeName)
 
     form {
-      style = "margin:0;"
+      style = "margin:0"
       action = CLEAR_CHALLENGE_ANSWERS_ENDPOINT
       method = FormMethod.post
-      onSubmit = """return confirm('Are you sure you want to clear your previous answers for "$challengeName"?');"""
+      onSubmit = """return confirm('Are you sure you want to clear your previous answers for "$challengeName"?')"""
       input { type = InputType.hidden; name = LANGUAGE_NAME_PARAM; value = languageName.value }
       input { type = InputType.hidden; name = GROUP_NAME_PARAM; value = groupName.value }
       input { type = InputType.hidden; name = CHALLENGE_NAME_PARAM; value = challengeName.value }
       input { type = InputType.hidden; name = CORRECT_ANSWERS_PARAM; value = correctAnswersKey }
       input { type = InputType.hidden; name = CHALLENGE_ANSWERS_PARAM; value = challengeAnswersKey }
       input {
-        style = "vertical-align:middle; margin-top:1; margin-bottom:0;"
+        style = "vertical-align:middle; margin-top:1; margin-bottom:0"
         type = InputType.submit; value = "Clear answer history"
       }
     }

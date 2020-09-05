@@ -114,7 +114,7 @@ internal object ChallengeGroupPage : KLogging() {
               img { src = "$STATIC_ROOT/${if (allCorrect) GREEN_CHECK else WHITE_CHECK}" }
 
             a {
-              style = "font-Size:110%; padding-left:2px;"
+              style = "font-Size:110%; padding-left:2px"
               href = pathOf(CHALLENGE_ROOT, languageName, groupName, challengeName)
               +challengeName.value
             }
@@ -227,16 +227,16 @@ internal object ChallengeGroupPage : KLogging() {
 
     p {
       form {
-        style = "margin:0;"
+        style = "margin:0"
         action = CLEAR_GROUP_ANSWERS_ENDPOINT
         method = FormMethod.post
-        onSubmit = """return confirm('Are you sure you want to clear your previous answers for group "$groupName"?');"""
+        onSubmit = """return confirm('Are you sure you want to clear your previous answers for group "$groupName"?')"""
         input { type = InputType.hidden; name = LANGUAGE_NAME_PARAM; value = languageName.value }
         input { type = InputType.hidden; name = GROUP_NAME_PARAM; value = groupName.value }
         input { type = InputType.hidden; name = CORRECT_ANSWERS_PARAM; value = correctAnswersKey }
         input { type = InputType.hidden; name = CHALLENGE_ANSWERS_PARAM; value = challengeAnswersKey }
         input {
-          style = "vertical-align:middle; margin-top:1; margin-bottom:0;"
+          style = "vertical-align:middle; margin-top:1; margin-bottom:0"
           type = InputType.submit; value = "Clear answer history"
         }
       }

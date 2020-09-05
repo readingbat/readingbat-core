@@ -120,7 +120,7 @@ internal object UserPrefsPage : KLogging() {
 
           h2 { +"ReadingBat User Preferences" }
 
-          p { span { style = "color:${msg.color};"; this@body.displayMessage(msg) } }
+          p { span { style = "color:${msg.color}"; this@body.displayMessage(msg) } }
 
           changePassword()
           joinOrWithdrawFromClass(user, defaultClassCode, redis)
@@ -180,7 +180,7 @@ internal object UserPrefsPage : KLogging() {
                 size = "42"
                 name = CONFIRM_PASSWORD_PARAM
                 value = ""
-                onKeyPress = "click$passwordButton(event);"
+                onKeyPress = "click$passwordButton(event)"
               }
             }
             td { hideShowButton(formName, CONFIRM_PASSWORD_PARAM) }
@@ -205,7 +205,7 @@ internal object UserPrefsPage : KLogging() {
           form {
             action = USER_PREFS_POST_ENDPOINT
             method = FormMethod.post
-            onSubmit = "return confirm('Are you sure you want to withdraw from class $displayStr?');"
+            onSubmit = "return confirm('Are you sure you want to withdraw from class $displayStr?')"
             input { type = submit; name = USER_PREFS_ACTION_PARAM; value = WITHDRAW_FROM_CLASS }
           }
         }
@@ -227,7 +227,7 @@ internal object UserPrefsPage : KLogging() {
                   size = "42"
                   name = CLASS_CODE_NAME_PARAM
                   value = defaultClassCode.displayedValue
-                  onKeyPress = "click$joinClassButton(event);"
+                  onKeyPress = "click$joinClassButton(event)"
                 }
               }
             }
@@ -294,7 +294,7 @@ internal object UserPrefsPage : KLogging() {
         form {
           action = USER_PREFS_POST_ENDPOINT
           method = FormMethod.post
-          onSubmit = "return confirm('Are you sure you want to permanently delete the account for $email ?');"
+          onSubmit = "return confirm('Are you sure you want to permanently delete the account for $email ?')"
           input { type = submit; name = USER_PREFS_ACTION_PARAM; value = DELETE_ACCOUNT }
         }
       }
@@ -315,7 +315,7 @@ internal object UserPrefsPage : KLogging() {
 
           bodyTitle()
 
-          p { span { style = "color:${msg.color};"; this@body.displayMessage(msg) } }
+          p { span { style = "color:${msg.color}"; this@body.displayMessage(msg) } }
 
           h2 { +"Log in" }
 

@@ -81,7 +81,7 @@ internal object PlaygroundPage {
           h2 {
             val groupPath = pathOf(CHALLENGE_ROOT, languageName, groupName)
             this@body.addLink(groupName.value.decode(), groupPath)
-            span { style = "padding-left:2px; padding-right:2px;"; rawHtml("&rarr;") }
+            span { style = "padding-left:2px; padding-right:2px"; rawHtml("&rarr;") }
             this@body.addLink(challengeName.value.decode(), pathOf(groupPath, challengeName))
           }
 
