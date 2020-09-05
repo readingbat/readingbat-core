@@ -91,41 +91,10 @@ import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
 import io.ktor.application.*
 import io.ktor.http.ContentType.Text.CSS
-import kotlinx.html.BODY
+import kotlinx.html.*
 import kotlinx.html.Entities.nbsp
-import kotlinx.html.FormMethod
-import kotlinx.html.HEAD
-import kotlinx.html.InputType
 import kotlinx.html.ScriptType.textJavaScript
-import kotlinx.html.a
-import kotlinx.html.body
-import kotlinx.html.br
-import kotlinx.html.button
-import kotlinx.html.code
-import kotlinx.html.div
-import kotlinx.html.form
-import kotlinx.html.h2
-import kotlinx.html.h3
-import kotlinx.html.head
-import kotlinx.html.html
-import kotlinx.html.id
-import kotlinx.html.img
-import kotlinx.html.input
-import kotlinx.html.link
-import kotlinx.html.onClick
-import kotlinx.html.onKeyDown
-import kotlinx.html.onSubmit
-import kotlinx.html.p
-import kotlinx.html.pre
-import kotlinx.html.script
-import kotlinx.html.span
 import kotlinx.html.stream.createHTML
-import kotlinx.html.style
-import kotlinx.html.table
-import kotlinx.html.td
-import kotlinx.html.textInput
-import kotlinx.html.th
-import kotlinx.html.tr
 import mu.KLogging
 import redis.clients.jedis.Jedis
 
@@ -137,6 +106,8 @@ internal object ChallengePage : KLogging() {
   private const val numCorrectSpan = "numCorrectSpan"
   private const val pingMsg = "pingMsg"
   internal const val headerColor = "#419DC1"
+  private const val topFocus = "topFocus"
+  private const val bottomFocus = "bottomFocus"
 
   fun PipelineCall.challengePage(content: ReadingBatContent,
                                  user: User?,
@@ -250,6 +221,7 @@ internal object ChallengePage : KLogging() {
                                     redis: Jedis?) =
     div {
       style = "margin-top:2em; margin-left:2em;"
+
       table {
         tr {
           th {
@@ -267,6 +239,11 @@ internal object ChallengePage : KLogging() {
 
         val correctAnswers = user.fetchPreviousAnswers(challenge, browserSession, redis)
 
+        // This will cause shift tab to go to bottom input element
+        span { tabIndex = "1"; onFocus = "document.querySelector('.$bottomFocus').focus()" }
+
+        val cnt = funcInfo.invocations.size
+
         funcInfo.invocations.withIndex()
           .forEach { (i, invocation) ->
             tr {
@@ -279,26 +256,36 @@ internal object ChallengePage : KLogging() {
               }
               td(classes = ARROW) { rawHtml("&rarr;") }
               td {
-                textInput(classes = USER_RESP) {
+                val cls =
+                  when (i) {
+                    cnt - 1 -> " $bottomFocus"
+                    0 -> " $topFocus"
+                    else -> ""
+                  }
+                textInput(classes = USER_RESP + cls) {
                   id = "$RESP$i"
                   onKeyDown = "$PROCESS_USER_ANSWERS_JS_FUNC(event, ${funcInfo.correctAnswers.size})"
+
                   val answer = correctAnswers[invocation.value] ?: ""
                   if (answer.isNotBlank())
                     value = answer
                   else
                     placeholder = funcInfo.placeHolder
+
+                  /// See: http://bluegalaxy.info/codewalk/2018/08/04/javascript-how-to-create-looping-tabindex-cycle/
+                  // We want the first input element to be 2
+                  tabIndex = (i + 2).toString()
+                  if (i == 0)
+                    autoFocus = true
                 }
               }
               td(classes = FEEDBACK) { id = "$FEEDBACK_ID$i" }
               td(classes = HINT) { id = "$HINT_ID$i" }
             }
           }
+        // This will cause tab to circle back to top input element
+        span { tabIndex = (cnt + 2).toString(); onFocus = "document.querySelector('.$topFocus').focus()" }
       }
-
-      // Set focus to email field
-      if (funcInfo.invocations.isNotEmpty())
-        script { rawHtml("""document.getElementById("${RESP}0").focus();""") }
-
 
       this@displayQuestions.processAnswers(funcInfo, challenge)
       if (redis.isNotNull())
