@@ -20,7 +20,6 @@ package com.github.readingbat.server
 import com.github.pambrose.common.response.redirectTo
 import com.github.pambrose.common.response.respondWith
 import com.github.readingbat.common.Constants.MSG
-import com.github.readingbat.common.Constants.RETURN_PATH
 import com.github.readingbat.common.Endpoints.GARBAGE_COLLECTOR_ENDPOINT
 import com.github.readingbat.common.Endpoints.LOAD_JAVA_ENDPOINT
 import com.github.readingbat.common.Endpoints.LOAD_KOTLIN_ENDPOINT
@@ -29,6 +28,7 @@ import com.github.readingbat.common.Endpoints.MESSAGE_ENDPOINT
 import com.github.readingbat.common.Endpoints.RESET_CACHE_ENDPOINT
 import com.github.readingbat.common.Endpoints.RESET_CONTENT_ENDPOINT
 import com.github.readingbat.common.Endpoints.SYSTEM_ADMIN_ENDPOINT
+import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.Metrics
 import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.dsl.ReadingBatContent
@@ -53,7 +53,7 @@ internal fun Routing.sysAdminRoutes(metrics: Metrics,
             "Content reset in $it".also { logger.info { it } }
           }
       }
-    redirectTo { "$MESSAGE_ENDPOINT?$MSG=$msg&$RETURN_PATH=$SYSTEM_ADMIN_ENDPOINT" }
+    redirectTo { "$MESSAGE_ENDPOINT?$MSG=$msg&$RETURN_PARAM=$SYSTEM_ADMIN_ENDPOINT" }
   }
 
   get(RESET_CACHE_ENDPOINT, metrics) {
@@ -66,7 +66,7 @@ internal fun Routing.sysAdminRoutes(metrics: Metrics,
             "Challenge cache reset -- $cnt challenges removed".also { logger.info { it } }
           }
       }
-    redirectTo { "$MESSAGE_ENDPOINT?$MSG=$msg&$RETURN_PATH=$SYSTEM_ADMIN_ENDPOINT" }
+    redirectTo { "$MESSAGE_ENDPOINT?$MSG=$msg&$RETURN_PARAM=$SYSTEM_ADMIN_ENDPOINT" }
   }
 
   get(GARBAGE_COLLECTOR_ENDPOINT, metrics) {
@@ -75,7 +75,7 @@ internal fun Routing.sysAdminRoutes(metrics: Metrics,
         System.gc()
         "Garbage collector invoked".also { logger.info { it } }
       }
-    redirectTo { "$MESSAGE_ENDPOINT?$MSG=$msg&$RETURN_PATH=$SYSTEM_ADMIN_ENDPOINT" }
+    redirectTo { "$MESSAGE_ENDPOINT?$MSG=$msg&$RETURN_PARAM=$SYSTEM_ADMIN_ENDPOINT" }
   }
 
   listOf(LOAD_JAVA_ENDPOINT to LanguageType.Java,
@@ -87,7 +87,7 @@ internal fun Routing.sysAdminRoutes(metrics: Metrics,
           authenticatedAction {
             contentSrc().loadChallenges(call.request.origin.preUri, pair.second, false)
           }
-        redirectTo { "$MESSAGE_ENDPOINT?$MSG=$msg&$RETURN_PATH=$SYSTEM_ADMIN_ENDPOINT" }
+        redirectTo { "$MESSAGE_ENDPOINT?$MSG=$msg&$RETURN_PARAM=$SYSTEM_ADMIN_ENDPOINT" }
       }
     }
 

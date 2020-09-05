@@ -20,13 +20,13 @@ package com.github.readingbat.posts
 import com.github.pambrose.common.util.encode
 import com.github.readingbat.common.Constants.INVALID_RESET_ID
 import com.github.readingbat.common.Constants.MSG
-import com.github.readingbat.common.Constants.RESET_ID
-import com.github.readingbat.common.Constants.RETURN_PATH
 import com.github.readingbat.common.Emailer.sendEmail
 import com.github.readingbat.common.Endpoints.PASSWORD_RESET_ENDPOINT
-import com.github.readingbat.common.FormFields.CONFIRM_PASSWORD
-import com.github.readingbat.common.FormFields.EMAIL
-import com.github.readingbat.common.FormFields.NEW_PASSWORD
+import com.github.readingbat.common.FormFields.CONFIRM_PASSWORD_PARAM
+import com.github.readingbat.common.FormFields.EMAIL_PARAM
+import com.github.readingbat.common.FormFields.NEW_PASSWORD_PARAM
+import com.github.readingbat.common.FormFields.RESET_ID_PARAM
+import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.Message
 import com.github.readingbat.common.User.Companion.isNotRegisteredEmail
 import com.github.readingbat.common.User.Companion.lookupUserByEmail
@@ -60,7 +60,7 @@ internal object PasswordResetPost : KLogging() {
 
   suspend fun PipelineCall.sendPasswordReset(content: ReadingBatContent, redis: Jedis): String {
     val parameters = call.receiveParameters()
-    val email = parameters.getEmail(EMAIL)
+    val email = parameters.getEmail(EMAIL_PARAM)
     val remoteStr = call.request.origin.remoteHost
     logger.info { "Password change request for $email - $remoteStr" }
     val user = lookupUserByEmail(email, redis)
@@ -94,7 +94,7 @@ internal object PasswordResetPost : KLogging() {
           try {
             val msg = Message("""
               |This is a password reset message for the ReadingBat.com account for '$email'
-              |Go to this URL to set a new password: ${content.sendGridPrefix}$PASSWORD_RESET_ENDPOINT?$RESET_ID=$newResetId 
+              |Go to this URL to set a new password: ${content.sendGridPrefix}$PASSWORD_RESET_ENDPOINT?$RESET_ID_PARAM=$newResetId 
               |If you did not request to reset your password, please ignore this message.
             """.trimMargin())
             sendEmail(to = email,
@@ -106,7 +106,7 @@ internal object PasswordResetPost : KLogging() {
             throw ResetPasswordException("Unable to send email")
           }
 
-          val returnPath = queryParam(RETURN_PATH, "/")
+          val returnPath = queryParam(RETURN_PARAM, "/")
           throw RedirectException("$returnPath?$MSG=${"Password reset email sent to $email".encode()}")
         } catch (e: ResetPasswordException) {
           logger.info { e }
@@ -122,9 +122,9 @@ internal object PasswordResetPost : KLogging() {
   suspend fun PipelineCall.changePassword(content: ReadingBatContent, redis: Jedis): String =
     try {
       val parameters = call.receiveParameters()
-      val resetId = parameters.getResetId(RESET_ID)
-      val newPassword = parameters.getPassword(NEW_PASSWORD)
-      val confirmPassword = parameters.getPassword(CONFIRM_PASSWORD)
+      val resetId = parameters.getResetId(RESET_ID_PARAM)
+      val newPassword = parameters.getPassword(NEW_PASSWORD_PARAM)
+      val confirmPassword = parameters.getPassword(CONFIRM_PASSWORD_PARAM)
       val passwordError = checkPassword(newPassword, confirmPassword)
 
       if (passwordError.isNotBlank)

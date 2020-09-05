@@ -18,13 +18,13 @@
 package com.github.readingbat.pages
 
 import com.github.readingbat.common.CSSNames.INDENT_1EM
-import com.github.readingbat.common.Constants.RETURN_PATH
 import com.github.readingbat.common.Endpoints.CREATE_ACCOUNT_ENDPOINT
 import com.github.readingbat.common.Endpoints.CREATE_ACCOUNT_POST_ENDPOINT
-import com.github.readingbat.common.FormFields.CONFIRM_PASSWORD
-import com.github.readingbat.common.FormFields.EMAIL
-import com.github.readingbat.common.FormFields.FULLNAME
-import com.github.readingbat.common.FormFields.PASSWORD
+import com.github.readingbat.common.FormFields.CONFIRM_PASSWORD_PARAM
+import com.github.readingbat.common.FormFields.EMAIL_PARAM
+import com.github.readingbat.common.FormFields.FULLNAME_PARAM
+import com.github.readingbat.common.FormFields.PASSWORD_PARAM
+import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.Message
 import com.github.readingbat.common.Message.Companion.EMPTY_MESSAGE
 import com.github.readingbat.dsl.ReadingBatContent
@@ -70,7 +70,7 @@ internal object CreateAccountPage {
                                      msg: Message = EMPTY_MESSAGE) =
     createHTML()
       .html {
-        val returnPath = queryParam(RETURN_PATH, "/")
+        val returnPath = queryParam(RETURN_PARAM, "/")
         val createButton = "CreateAccountButton"
 
         head {
@@ -107,7 +107,7 @@ internal object CreateAccountPage {
                   td { style = labelWidth; label { +"Name" } }
                   td {
                     input {
-                      style = inputFs; type = InputType.text; size = "42"; name = FULLNAME; value =
+                      style = inputFs; type = InputType.text; size = "42"; name = FULLNAME_PARAM; value =
                       defaultFullName.value
                     }
                   }
@@ -116,7 +116,8 @@ internal object CreateAccountPage {
                   td { style = labelWidth; label { +"Email (used as account id)" } }
                   td {
                     input {
-                      style = inputFs; type = InputType.text; size = "42"; name = EMAIL; value = defaultEmail.value
+                      style = inputFs; type = InputType.text; size = "42"; name = EMAIL_PARAM; value =
+                      defaultEmail.value
                     }
                   }
                 }
@@ -127,11 +128,11 @@ internal object CreateAccountPage {
                       style = inputFs
                       type = InputType.password
                       size = "42"
-                      name = PASSWORD
+                      name = PASSWORD_PARAM
                       value = ""
                     }
                   }
-                  td { hideShowButton(formName, PASSWORD) }
+                  td { hideShowButton(formName, PASSWORD_PARAM) }
                 }
                 tr {
                   td { style = labelWidth; label { +"Confirm Password" } }
@@ -140,14 +141,14 @@ internal object CreateAccountPage {
                       style = inputFs
                       type = InputType.password
                       size = "42"
-                      name = CONFIRM_PASSWORD
+                      name = CONFIRM_PASSWORD_PARAM
                       value = ""
                       onKeyPress = "click$createButton(event);"
                     }
                   }
-                  td { hideShowButton(formName, CONFIRM_PASSWORD) }
+                  td { hideShowButton(formName, CONFIRM_PASSWORD_PARAM) }
                 }
-                hiddenInput { name = RETURN_PATH; value = returnPath }
+                hiddenInput { name = RETURN_PARAM; value = returnPath }
                 tr {
                   td { }
                   td {

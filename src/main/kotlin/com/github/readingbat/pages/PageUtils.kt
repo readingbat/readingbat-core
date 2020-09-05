@@ -25,11 +25,11 @@ import com.github.readingbat.common.ClassCode
 import com.github.readingbat.common.CommonUtils.pathOf
 import com.github.readingbat.common.Constants.BACK_PATH
 import com.github.readingbat.common.Constants.ICONS
-import com.github.readingbat.common.Constants.RETURN_PATH
 import com.github.readingbat.common.Endpoints.CHALLENGE_ROOT
 import com.github.readingbat.common.Endpoints.CSS_ENDPOINT
 import com.github.readingbat.common.Endpoints.PRIVACY_ENDPOINT
 import com.github.readingbat.common.Endpoints.STATIC_ROOT
+import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.Message
 import com.github.readingbat.common.Message.Companion.EMPTY_MESSAGE
 import com.github.readingbat.common.User
@@ -151,7 +151,7 @@ internal object PageUtils {
 
   fun BODY.privacyStatement(backPath: String, returnPath: String) =
     p(classes = INDENT_1EM) {
-      a { href = "$PRIVACY_ENDPOINT?$BACK_PATH=$backPath&$RETURN_PATH=$returnPath"; +"Privacy Statement" }
+      a { href = "$PRIVACY_ENDPOINT?$BACK_PATH=$backPath&$RETURN_PARAM=$returnPath"; +"Privacy Statement" }
     }
 
   private fun BODY.backLinkWithIndent(url: String, marginLeft: String = "1em") {

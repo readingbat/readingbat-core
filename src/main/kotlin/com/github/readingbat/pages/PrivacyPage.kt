@@ -19,7 +19,7 @@ package com.github.readingbat.pages
 
 import com.github.readingbat.common.CSSNames.INDENT_1EM
 import com.github.readingbat.common.Constants.BACK_PATH
-import com.github.readingbat.common.Constants.RETURN_PATH
+import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyTitle
@@ -68,8 +68,8 @@ internal object PrivacyPage {
           }
 
           val backPath = queryParam(BACK_PATH)
-          val returnPath = queryParam(RETURN_PATH)
-          backLink("$backPath${if (returnPath.isNotEmpty()) "?$RETURN_PATH=$returnPath" else ""}")
+          val returnPath = queryParam(RETURN_PARAM)
+          backLink("$backPath${if (returnPath.isNotEmpty()) "?$RETURN_PARAM=$returnPath" else ""}")
         }
       }
 }

@@ -22,8 +22,6 @@ import com.github.readingbat.common.Constants.STATIC
 internal object Constants {
   const val SESSION_ID = "sessionid"
   const val ICONS = "icons"
-  const val RETURN_PATH = "returnPath"
-  const val RESET_ID = "reset_id"
   const val MSG = "msg"
   const val BACK_PATH = "backPath"
   const val STATIC = "static"
@@ -43,7 +41,7 @@ internal object Constants {
   const val CHALLENGE_SRC = "challengeName"
   const val PROCESS_USER_ANSWERS_JS_FUNC = "processUserAnswers"
   const val LIKE_DISLIKE_JS_FUNC = "likeDislike"
-
+  const val CLASS_CODE_QP = "class-code"
   const val NO_TRACK = "NO_TRACK"
 
   val DBMS_DOWN = Message("Database is down", true)
@@ -68,6 +66,7 @@ internal object Endpoints {
   const val USER_PREFS_ENDPOINT = "/user-prefs"
   const val USER_PREFS_POST_ENDPOINT = "/user-prefs-post"
   const val TEACHER_PREFS_ENDPOINT = "/teacher-prefs"
+  const val CLASS_SUMMARY_ENDPOINT = "/class-summary"
   const val SYSTEM_ADMIN_ENDPOINT = "/system-admin"
   const val TEACHER_PREFS_POST_ENDPOINT = "/teacher-prefs-post"
   const val ENABLE_STUDENT_MODE_ENDPOINT = "/enable-student-mode"
@@ -133,18 +132,28 @@ internal object ParameterIds {
 }
 
 internal object FormFields {
-  const val FULLNAME = "fullname"
-  const val EMAIL = "email"
-  const val PASSWORD = "passwd"
-  const val CONFIRM_PASSWORD = "confirm_passwd"
-  const val CLASS_CODE_NAME = "class_code"
-  const val CLASS_DESC = "class_desc"
-  const val CLASSES_CHOICE = "classes_choice"
+  const val RETURN_PARAM = "returnPath"
+
+  const val FULLNAME_PARAM = "fullname"
+  const val EMAIL_PARAM = "email"
+  const val PASSWORD_PARAM = "passwd"
+  const val CONFIRM_PASSWORD_PARAM = "confirm_passwd"
+  const val CLASS_CODE_NAME_PARAM = "class_code"
+  const val CLASS_DESC_PARAM = "class_desc"
+  const val CLASSES_CHOICE_PARAM = "classes_choice"
   const val DISABLED_MODE = "classes_disabled"
-  const val CURR_PASSWORD = "curr_passwd"
-  const val NEW_PASSWORD = "new_passwd"
-  const val USER_PREFS_ACTION = "pref_action"
-  const val ADMIN_ACTION = "admin_action"
+  const val CURR_PASSWORD_PARAM = "curr_passwd"
+  const val NEW_PASSWORD_PARAM = "new_passwd"
+  const val USER_PREFS_ACTION_PARAM = "pref_action"
+  const val RESET_ID_PARAM = "reset_id"
+  const val ADMIN_ACTION_PARAM = "admin_action"
+
+  const val LANGUAGE_NAME_PARAM = "language_name_key"
+  const val GROUP_NAME_PARAM = "group_name_key"
+  const val CHALLENGE_NAME_PARAM = "challenge_name_key"
+  const val CORRECT_ANSWERS_PARAM = "challenge_answers_key"
+  const val CHALLENGE_ANSWERS_PARAM = "challenge_answers_key"
+
   const val UPDATE_PASSWORD = "Update Password"
   const val JOIN_CLASS = "Join Class"
   const val CREATE_CLASS = "Create Class"
@@ -153,11 +162,6 @@ internal object FormFields {
   const val WITHDRAW_FROM_CLASS = "Withdraw From Class"
   const val DELETE_ACCOUNT = "Delete Account"
   const val DELETE_ALL_DATA = "Delete All Data"
-  const val LANGUAGE_NAME_KEY = "language_name_key"
-  const val GROUP_NAME_KEY = "group_name_key"
-  const val CHALLENGE_NAME_KEY = "challenge_name_key"
-  const val CHALLENGE_ANSWERS_KEY = "challenge_answers_key"
-
 }
 
 internal object AuthName {

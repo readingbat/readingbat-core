@@ -49,11 +49,11 @@ import com.github.readingbat.common.Endpoints.CHALLENGE_ROOT
 import com.github.readingbat.common.Endpoints.CLEAR_CHALLENGE_ANSWERS_ENDPOINT
 import com.github.readingbat.common.Endpoints.PLAYGROUND_ROOT
 import com.github.readingbat.common.Endpoints.STATIC_ROOT
-import com.github.readingbat.common.FormFields.CHALLENGE_ANSWERS_KEY
-import com.github.readingbat.common.FormFields.CHALLENGE_NAME_KEY
-import com.github.readingbat.common.FormFields.GROUP_NAME_KEY
-import com.github.readingbat.common.FormFields.LANGUAGE_NAME_KEY
-import com.github.readingbat.common.KeyConstants.CORRECT_ANSWERS_KEY
+import com.github.readingbat.common.FormFields.CHALLENGE_ANSWERS_PARAM
+import com.github.readingbat.common.FormFields.CHALLENGE_NAME_PARAM
+import com.github.readingbat.common.FormFields.CORRECT_ANSWERS_PARAM
+import com.github.readingbat.common.FormFields.GROUP_NAME_PARAM
+import com.github.readingbat.common.FormFields.LANGUAGE_NAME_PARAM
 import com.github.readingbat.common.ParameterIds.DISLIKE_CLEAR
 import com.github.readingbat.common.ParameterIds.DISLIKE_COLOR
 import com.github.readingbat.common.ParameterIds.FEEDBACK_ID
@@ -337,23 +337,25 @@ internal object ChallengePage : KLogging() {
     }
   }
 
-  private fun BODY.displayStudentProgress(challenge: Challenge,
-                                          maxHistoryLength: Int,
-                                          funcInfo: FunctionInfo,
-                                          activeClassCode: ClassCode,
-                                          enrollees: List<User>,
-                                          redis: Jedis) =
+  private fun BODY.displayStudentProgress(
+    challenge: Challenge,
+    maxHistoryLength: Int,
+    funcInfo: FunctionInfo,
+    classCode: ClassCode,
+    enrollees: List<User>,
+    redis: Jedis,
+                                         ) =
     div {
       style = "margin-top:2em;"
 
       val languageName = challenge.languageType.languageName
       val groupName = challenge.groupName
       val challengeName = challenge.challengeName
-      val classDesc = activeClassCode.fetchClassDesc(redis, true)
+      val displayStr = classCode.toDisplayString(redis)
 
       h3 {
         style = "margin-left: 5px; color: $headerColor"
-        +"${if (enrollees.isEmpty()) "No students enrolled in " else "Student progress for "} $classDesc [$activeClassCode]"
+        +"${if (enrollees.isEmpty()) "No students enrolled in " else "Student progress for "} $displayStr"
       }
 
       if (enrollees.isNotEmpty()) {
@@ -569,11 +571,11 @@ internal object ChallengePage : KLogging() {
       action = CLEAR_CHALLENGE_ANSWERS_ENDPOINT
       method = FormMethod.post
       onSubmit = """return confirm('Are you sure you want to clear your previous answers for "$challengeName"?');"""
-      input { type = InputType.hidden; name = LANGUAGE_NAME_KEY; value = languageName.value }
-      input { type = InputType.hidden; name = GROUP_NAME_KEY; value = groupName.value }
-      input { type = InputType.hidden; name = CHALLENGE_NAME_KEY; value = challengeName.value }
-      input { type = InputType.hidden; name = CORRECT_ANSWERS_KEY; value = correctAnswersKey }
-      input { type = InputType.hidden; name = CHALLENGE_ANSWERS_KEY; value = challengeAnswersKey }
+      input { type = InputType.hidden; name = LANGUAGE_NAME_PARAM; value = languageName.value }
+      input { type = InputType.hidden; name = GROUP_NAME_PARAM; value = groupName.value }
+      input { type = InputType.hidden; name = CHALLENGE_NAME_PARAM; value = challengeName.value }
+      input { type = InputType.hidden; name = CORRECT_ANSWERS_PARAM; value = correctAnswersKey }
+      input { type = InputType.hidden; name = CHALLENGE_ANSWERS_PARAM; value = challengeAnswersKey }
       input {
         style = "vertical-align:middle; margin-top:1; margin-bottom:0;"
         type = InputType.submit; value = "Clear answer history"

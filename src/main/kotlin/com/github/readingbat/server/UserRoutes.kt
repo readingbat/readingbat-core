@@ -21,13 +21,12 @@ import com.github.pambrose.common.redis.RedisUtils.withSuspendingRedisPool
 import com.github.pambrose.common.response.redirectTo
 import com.github.pambrose.common.response.respondWith
 import com.github.readingbat.common.Constants.ICONS
-import com.github.readingbat.common.Constants.RESET_ID
-import com.github.readingbat.common.Constants.RETURN_PATH
 import com.github.readingbat.common.Endpoints.ABOUT_ENDPOINT
 import com.github.readingbat.common.Endpoints.ADMIN_ENDPOINT
 import com.github.readingbat.common.Endpoints.ADMIN_POST_ENDPOINT
 import com.github.readingbat.common.Endpoints.CHALLENGE_ROOT
 import com.github.readingbat.common.Endpoints.CHECK_ANSWERS_ENDPOINT
+import com.github.readingbat.common.Endpoints.CLASS_SUMMARY_ENDPOINT
 import com.github.readingbat.common.Endpoints.CLEAR_CHALLENGE_ANSWERS_ENDPOINT
 import com.github.readingbat.common.Endpoints.CLEAR_GROUP_ANSWERS_ENDPOINT
 import com.github.readingbat.common.Endpoints.CONFIG_ENDPOINT
@@ -53,12 +52,15 @@ import com.github.readingbat.common.Endpoints.TEACHER_PREFS_POST_ENDPOINT
 import com.github.readingbat.common.Endpoints.USER_INFO_ENDPOINT
 import com.github.readingbat.common.Endpoints.USER_PREFS_ENDPOINT
 import com.github.readingbat.common.Endpoints.USER_PREFS_POST_ENDPOINT
+import com.github.readingbat.common.FormFields.RESET_ID_PARAM
+import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.Metrics
 import com.github.readingbat.common.UserPrincipal
 import com.github.readingbat.common.cssContent
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.pages.AboutPage.aboutPage
 import com.github.readingbat.pages.AdminPage.adminDataPage
+import com.github.readingbat.pages.ClassSummaryPage.classSummaryPage
 import com.github.readingbat.pages.ConfigPage.configPage
 import com.github.readingbat.pages.CreateAccountPage.createAccountPage
 import com.github.readingbat.pages.PasswordResetPage.passwordResetPage
@@ -68,7 +70,7 @@ import com.github.readingbat.pages.SystemAdminPage.systemAdminPage
 import com.github.readingbat.pages.TeacherPrefsPage.teacherPrefsPage
 import com.github.readingbat.pages.UserInfoPage.userInfoPage
 import com.github.readingbat.pages.UserPrefsPage.userPrefsPage
-import com.github.readingbat.posts.AdminPost.adminActions
+import com.github.readingbat.posts.AdminPost.adminActionsPost
 import com.github.readingbat.posts.ChallengePost.checkAnswers
 import com.github.readingbat.posts.ChallengePost.clearChallengeAnswers
 import com.github.readingbat.posts.ChallengePost.clearGroupAnswers
@@ -76,9 +78,9 @@ import com.github.readingbat.posts.ChallengePost.likeDislike
 import com.github.readingbat.posts.CreateAccountPost.createAccount
 import com.github.readingbat.posts.PasswordResetPost.changePassword
 import com.github.readingbat.posts.PasswordResetPost.sendPasswordReset
-import com.github.readingbat.posts.TeacherPrefsPost.enableStudentMode
-import com.github.readingbat.posts.TeacherPrefsPost.enableTeacherMode
-import com.github.readingbat.posts.TeacherPrefsPost.teacherPrefs
+import com.github.readingbat.posts.TeacherPrefsPost.enableStudentModePost
+import com.github.readingbat.posts.TeacherPrefsPost.enableTeacherModePost
+import com.github.readingbat.posts.TeacherPrefsPost.teacherPrefsPost
 import com.github.readingbat.posts.UserPrefsPost.userPrefs
 import com.github.readingbat.server.ReadingBatServer.pool
 import com.github.readingbat.server.ResourceContent.getResourceAsText
@@ -182,16 +184,20 @@ internal fun Routing.userRoutes(metrics: Metrics, contentSrc: () -> ReadingBatCo
 
   post(TEACHER_PREFS_POST_ENDPOINT) {
     metrics.measureEndpointRequest(TEACHER_PREFS_POST_ENDPOINT) {
-      respondWithSuspendingDbmsCheck(contentSrc()) { redis -> teacherPrefs(contentSrc(), fetchUser(), redis) }
+      respondWithSuspendingDbmsCheck(contentSrc()) { redis -> teacherPrefsPost(contentSrc(), fetchUser(), redis) }
     }
   }
 
+  get(CLASS_SUMMARY_ENDPOINT, metrics) {
+    respondWithDbmsCheck(contentSrc()) { redis -> classSummaryPage(contentSrc(), fetchUser(), redis) }
+  }
+
   get(ENABLE_STUDENT_MODE_ENDPOINT, metrics) {
-    respondWithSuspendingDbmsCheck(contentSrc()) { redis -> enableStudentMode(fetchUser(), redis) }
+    respondWithSuspendingDbmsCheck(contentSrc()) { redis -> enableStudentModePost(fetchUser(), redis) }
   }
 
   get(ENABLE_TEACHER_MODE_ENDPOINT, metrics) {
-    respondWithSuspendingDbmsCheck(contentSrc()) { redis -> enableTeacherMode(fetchUser(), redis) }
+    respondWithSuspendingDbmsCheck(contentSrc()) { redis -> enableTeacherModePost(fetchUser(), redis) }
   }
 
   get(ADMIN_ENDPOINT, metrics) {
@@ -204,14 +210,14 @@ internal fun Routing.userRoutes(metrics: Metrics, contentSrc: () -> ReadingBatCo
 
   post(ADMIN_POST_ENDPOINT) {
     metrics.measureEndpointRequest(ADMIN_POST_ENDPOINT) {
-      respondWithSuspendingDbmsCheck(contentSrc()) { redis -> adminActions(contentSrc(), fetchUser(), redis) }
+      respondWithSuspendingDbmsCheck(contentSrc()) { redis -> adminActionsPost(contentSrc(), fetchUser(), redis) }
     }
   }
 
   // RESET_ID is passed here when user clicks on email URL
   get(PASSWORD_RESET_ENDPOINT, metrics) {
     respondWithDbmsCheck(contentSrc()) { redis ->
-      passwordResetPage(contentSrc(), ResetId(queryParam(RESET_ID)), redis)
+      passwordResetPage(contentSrc(), ResetId(queryParam(RESET_ID_PARAM)), redis)
     }
   }
 
@@ -234,7 +240,7 @@ internal fun Routing.userRoutes(metrics: Metrics, contentSrc: () -> ReadingBatCo
   get(LOGOUT_ENDPOINT, metrics) {
     // Purge UserPrincipal from cookie data
     call.sessions.clear<UserPrincipal>()
-    redirectTo { queryParam(RETURN_PATH, "/") }
+    redirectTo { queryParam(RETURN_PARAM, "/") }
   }
 
   get(CSS_ENDPOINT) {

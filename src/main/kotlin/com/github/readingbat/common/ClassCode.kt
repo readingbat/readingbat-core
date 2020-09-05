@@ -17,6 +17,7 @@
 
 package com.github.readingbat.common
 
+import com.github.pambrose.common.util.isNotNull
 import com.github.pambrose.common.util.isNull
 import com.github.pambrose.common.util.randomId
 import com.github.pambrose.common.util.toDoubleQuoted
@@ -72,6 +73,11 @@ internal data class ClassCode(val value: String) {
 
   fun fetchClassDesc(redis: Jedis, quoted: Boolean = false) =
     (redis.hget(classInfoKey, DESC_FIELD) ?: "Missing description").let { if (quoted) it.toDoubleQuoted() else it }
+
+  fun toDisplayString(redis: Jedis?): String {
+    val classDesc = if (redis.isNotNull()) fetchClassDesc(redis, true) else "Description unavailable"
+    return "$classDesc [$value]"
+  }
 
   fun fetchClassTeacherId(redis: Jedis) = redis.hget(classInfoKey, TEACHER_FIELD) ?: ""
 

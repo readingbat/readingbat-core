@@ -30,10 +30,10 @@ import com.github.readingbat.common.Endpoints.CHALLENGE_GROUP_ENDPOINT
 import com.github.readingbat.common.Endpoints.CHALLENGE_ROOT
 import com.github.readingbat.common.Endpoints.CLEAR_GROUP_ANSWERS_ENDPOINT
 import com.github.readingbat.common.Endpoints.STATIC_ROOT
-import com.github.readingbat.common.FormFields.CHALLENGE_ANSWERS_KEY
-import com.github.readingbat.common.FormFields.GROUP_NAME_KEY
-import com.github.readingbat.common.FormFields.LANGUAGE_NAME_KEY
-import com.github.readingbat.common.KeyConstants.CORRECT_ANSWERS_KEY
+import com.github.readingbat.common.FormFields.CHALLENGE_ANSWERS_PARAM
+import com.github.readingbat.common.FormFields.CORRECT_ANSWERS_PARAM
+import com.github.readingbat.common.FormFields.GROUP_NAME_PARAM
+import com.github.readingbat.common.FormFields.LANGUAGE_NAME_PARAM
 import com.github.readingbat.common.StaticFileNames.GREEN_CHECK
 import com.github.readingbat.common.StaticFileNames.WHITE_CHECK
 import com.github.readingbat.common.User.Companion.challengeAnswersKey
@@ -87,11 +87,13 @@ internal object ChallengeGroupPage : KLogging() {
     return if (correctAnswersKey.isNotEmpty()) redis?.get(correctAnswersKey)?.toBoolean() == true else false
   }
 
-  fun PipelineCall.challengeGroupPage(content: ReadingBatContent,
-                                      user: User?,
-                                      challengeGroup: ChallengeGroup<*>,
-                                      loginAttempt: Boolean,
-                                      redis: Jedis?) =
+  fun PipelineCall.challengeGroupPage(
+    content: ReadingBatContent,
+    user: User?,
+    challengeGroup: ChallengeGroup<*>,
+    loginAttempt: Boolean,
+    redis: Jedis?,
+                                     ) =
     createHTML()
       .html {
         val browserSession = call.browserSession
@@ -174,12 +176,12 @@ internal object ChallengeGroupPage : KLogging() {
         }
       }
 
-  fun BODY.displayClassDescription(activeClassCode: ClassCode, enrollees: List<User>, redis: Jedis?) {
-    val classDesc = if (redis.isNotNull()) activeClassCode.fetchClassDesc(redis, true) else "Description unavailable"
+  fun BODY.displayClassDescription(classCode: ClassCode, enrollees: List<User>, redis: Jedis?) {
+    val displayStr = classCode.toDisplayString(redis)
     val studentCount = if (enrollees.isEmpty()) "No" else enrollees.count().toString()
     h3 {
       style = "margin-left: 5px; color: ${ChallengePage.headerColor}"
-      +"$studentCount ${"student".pluralize(enrollees.count())} enrolled in $classDesc [$activeClassCode]"
+      +"$studentCount ${"student".pluralize(enrollees.count())} enrolled in $displayStr"
     }
   }
 
@@ -210,11 +212,13 @@ internal object ChallengeGroupPage : KLogging() {
     }
   }
 
-  private fun BODY.clearGroupAnswerHistoryOption(user: User?,
-                                                 browserSession: BrowserSession?,
-                                                 languageName: LanguageName,
-                                                 groupName: GroupName,
-                                                 challenges: List<Challenge>) {
+  private fun BODY.clearGroupAnswerHistoryOption(
+    user: User?,
+    browserSession: BrowserSession?,
+    languageName: LanguageName,
+    groupName: GroupName,
+    challenges: List<Challenge>,
+                                                ) {
 
     val correctAnswersKeys = challenges.map { user.correctAnswersKey(browserSession, it) }
     val challengeAnswerKeys = challenges.map { user.challengeAnswersKey(browserSession, it) }
@@ -227,10 +231,10 @@ internal object ChallengeGroupPage : KLogging() {
         action = CLEAR_GROUP_ANSWERS_ENDPOINT
         method = FormMethod.post
         onSubmit = """return confirm('Are you sure you want to clear your previous answers for group "$groupName"?');"""
-        input { type = InputType.hidden; name = LANGUAGE_NAME_KEY; value = languageName.value }
-        input { type = InputType.hidden; name = GROUP_NAME_KEY; value = groupName.value }
-        input { type = InputType.hidden; name = CORRECT_ANSWERS_KEY; value = correctAnswersKey }
-        input { type = InputType.hidden; name = CHALLENGE_ANSWERS_KEY; value = challengeAnswersKey }
+        input { type = InputType.hidden; name = LANGUAGE_NAME_PARAM; value = languageName.value }
+        input { type = InputType.hidden; name = GROUP_NAME_PARAM; value = groupName.value }
+        input { type = InputType.hidden; name = CORRECT_ANSWERS_PARAM; value = correctAnswersKey }
+        input { type = InputType.hidden; name = CHALLENGE_ANSWERS_PARAM; value = challengeAnswersKey }
         input {
           style = "vertical-align:middle; margin-top:1; margin-bottom:0;"
           type = InputType.submit; value = "Clear answer history"

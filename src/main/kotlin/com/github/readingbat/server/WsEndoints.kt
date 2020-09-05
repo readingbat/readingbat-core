@@ -19,22 +19,24 @@ package com.github.readingbat.server
 
 import com.github.pambrose.common.concurrent.BooleanMonitor
 import com.github.pambrose.common.redis.RedisUtils.withRedisPool
+import com.github.pambrose.common.redis.RedisUtils.withSuspendingRedisPool
 import com.github.pambrose.common.time.format
 import com.github.pambrose.common.util.isNotNull
+import com.github.pambrose.common.util.isNull
 import com.github.readingbat.common.ClassCode
 import com.github.readingbat.common.Constants.COLUMN_CNT
 import com.github.readingbat.common.Constants.PING_CODE
 import com.github.readingbat.common.Endpoints.CHALLENGE_ENDPOINT
 import com.github.readingbat.common.Endpoints.CHALLENGE_GROUP_ENDPOINT
 import com.github.readingbat.common.Metrics
+import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.gson
-import com.github.readingbat.dsl.Challenge
-import com.github.readingbat.dsl.InvalidPathException
-import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.dsl.agentLaunchId
+import com.github.readingbat.common.isNotValidUser
+import com.github.readingbat.dsl.*
 import com.github.readingbat.posts.ChallengeHistory
 import com.github.readingbat.server.ReadingBatServer.pool
 import com.github.readingbat.server.ServerUtils.fetchEmail
+import com.github.readingbat.server.ServerUtils.fetchUser
 import com.github.readingbat.server.ServerUtils.rows
 import io.ktor.features.*
 import io.ktor.http.cio.websocket.*
@@ -64,6 +66,32 @@ internal object WsEndoints : KLogging() {
 
   fun Routing.wsEndpoints(metrics: Metrics, contentSrc: () -> ReadingBatContent) {
 
+    suspend fun WebSocketSession.validateContext(classCode: ClassCode, user: User, context: String) {
+      pool.withSuspendingRedisPool { redis ->
+        when {
+          redis.isNull() -> {
+            close(CloseReason(Codes.GOING_AWAY, "Client disconnected"))
+            throw RedisUnavailableException(context)
+          }
+          classCode.isNotValid(redis) -> {
+            close(CloseReason(Codes.GOING_AWAY, "Client disconnected"))
+            throw InvalidRequestException("Invalid classCode $classCode")
+          }
+          user.isNotValidUser(redis) -> {
+            close(CloseReason(Codes.GOING_AWAY, "Client disconnected"))
+            throw InvalidRequestException("Invalid user")
+          }
+          classCode.fetchClassTeacherId(redis) != user.id -> {
+            close(CloseReason(Codes.GOING_AWAY, "Client disconnected"))
+            val teacherId = classCode.fetchClassTeacherId(redis)
+            throw InvalidRequestException("User id ${user.id} does not match classCode teacher Id $teacherId")
+          }
+          else -> {
+          }
+        }
+      }
+    }
+
     webSocket("$CHALLENGE_ENDPOINT/{$CLASS_CODE}/{$CHALLENGE_MD5}") {
       val content = contentSrc.invoke()
       val classCode =
@@ -71,9 +99,12 @@ internal object WsEndoints : KLogging() {
       val challengeMd5 = call.parameters[CHALLENGE_MD5] ?: throw InvalidPathException("Missing challenge md5")
       val finished = BooleanMonitor(false)
       val remote = call.request.origin.remoteHost
+      val user = fetchUser() ?: throw InvalidRequestException("Null user")
       val email = fetchEmail()
       val path = content.functionInfoByMd5(challengeMd5)?.challenge?.path ?: "Unknown"
       val desc = "$CHALLENGE_ENDPOINT/$classCode/$challengeMd5 ($path) - $remote - $email"
+
+      validateContext(classCode, user, "Student answers")
 
       logger.info { "Opened student answers websocket for $desc" }
 
@@ -162,8 +193,11 @@ internal object WsEndoints : KLogging() {
       val challenges = content.findGroup(languageName.toLanguageType(), groupName).challenges
       val finished = AtomicBoolean(false)
       val remote = call.request.origin.remoteHost
+      val user = fetchUser() ?: throw InvalidRequestException("Null user")
       val email = fetchEmail()
       val desc = "$CHALLENGE_ENDPOINT/$languageName/$groupName/$classCode - $remote - $email"
+
+      validateContext(classCode, user, "Class statistics")
 
       logger.info { "Opened class statistics websocket for $desc" }
 

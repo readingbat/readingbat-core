@@ -23,13 +23,13 @@ import com.github.readingbat.common.ClassCode.Companion.DISABLED_CLASS_CODE
 import com.github.readingbat.common.ClassCode.Companion.getClassCode
 import com.github.readingbat.common.ClassCode.Companion.newClassCode
 import com.github.readingbat.common.Constants.MSG
-import com.github.readingbat.common.FormFields.CLASSES_CHOICE
-import com.github.readingbat.common.FormFields.CLASS_CODE_NAME
-import com.github.readingbat.common.FormFields.CLASS_DESC
+import com.github.readingbat.common.FormFields.CLASSES_CHOICE_PARAM
+import com.github.readingbat.common.FormFields.CLASS_CODE_NAME_PARAM
+import com.github.readingbat.common.FormFields.CLASS_DESC_PARAM
 import com.github.readingbat.common.FormFields.CREATE_CLASS
 import com.github.readingbat.common.FormFields.DELETE_CLASS
 import com.github.readingbat.common.FormFields.UPDATE_ACTIVE_CLASS
-import com.github.readingbat.common.FormFields.USER_PREFS_ACTION
+import com.github.readingbat.common.FormFields.USER_PREFS_ACTION_PARAM
 import com.github.readingbat.common.User.Companion.fetchActiveClassCode
 import com.github.readingbat.common.User.Companion.fetchPreviousTeacherClassCode
 import com.github.readingbat.dsl.InvalidConfigurationException
@@ -47,13 +47,16 @@ internal object TeacherPrefsPost {
   private const val STUDENT_MODE_ENABLED_MSG = "Student mode enabled"
   private const val TEACHER_MODE_ENABLED_MSG = "Teacher mode enabled"
 
-  suspend fun PipelineCall.teacherPrefs(content: ReadingBatContent, user: User?, redis: Jedis) =
+  suspend fun PipelineCall.teacherPrefsPost(content: ReadingBatContent, user: User?, redis: Jedis) =
     if (user.isValidUser(redis)) {
       val parameters = call.receiveParameters()
-      when (val action = parameters[USER_PREFS_ACTION] ?: "") {
-        CREATE_CLASS -> createClass(content, user, parameters[CLASS_DESC] ?: "", redis)
-        UPDATE_ACTIVE_CLASS -> updateActiveClass(content, user, parameters.getClassCode(CLASSES_CHOICE), redis)
-        DELETE_CLASS -> deleteClass(content, user, parameters.getClassCode(CLASS_CODE_NAME), redis)
+      when (val action = parameters[USER_PREFS_ACTION_PARAM] ?: "") {
+        CREATE_CLASS -> createClassPost(content, user, parameters[CLASS_DESC_PARAM] ?: "", redis)
+        UPDATE_ACTIVE_CLASS -> updateActiveClassPost(content,
+                                                     user,
+                                                     parameters.getClassCode(CLASSES_CHOICE_PARAM),
+                                                     redis)
+        DELETE_CLASS -> deleteClassPost(content, user, parameters.getClassCode(CLASS_CODE_NAME_PARAM), redis)
         else -> throw InvalidConfigurationException("Invalid action: $action")
       }
     }
@@ -61,8 +64,8 @@ internal object TeacherPrefsPost {
       requestLogInPage(content, redis)
     }
 
-  fun PipelineCall.enableStudentMode(user: User?, redis: Jedis): String {
-    val returnPath = queryParam(Constants.RETURN_PATH, "/")
+  fun PipelineCall.enableStudentModePost(user: User?, redis: Jedis): String {
+    val returnPath = queryParam(FormFields.RETURN_PARAM, "/")
     val browserSession = call.browserSession
     val msg =
       if (user.isValidUser(redis)) {
@@ -75,8 +78,8 @@ internal object TeacherPrefsPost {
     throw RedirectException("$returnPath?$MSG=${msg.encode()}")
   }
 
-  fun PipelineCall.enableTeacherMode(user: User?, redis: Jedis): String {
-    val returnPath = queryParam(Constants.RETURN_PATH, "/")
+  fun PipelineCall.enableTeacherModePost(user: User?, redis: Jedis): String {
+    val returnPath = queryParam(FormFields.RETURN_PARAM, "/")
     val msg =
       if (user.isValidUser(redis)) {
         val previousTeacherClassCode = user.fetchPreviousTeacherClassCode(redis)
@@ -89,10 +92,12 @@ internal object TeacherPrefsPost {
     throw RedirectException("$returnPath?$MSG=${msg.encode()}")
   }
 
-  private fun PipelineCall.createClass(content: ReadingBatContent,
-                                       user: User,
-                                       classDesc: String,
-                                       redis: Jedis) =
+  private fun PipelineCall.createClassPost(
+    content: ReadingBatContent,
+    user: User,
+    classDesc: String,
+    redis: Jedis,
+                                          ) =
     when {
       classDesc.isBlank() -> {
         teacherPrefsPage(content, user, redis, Message("Unable to create class [Empty class description]", true))
@@ -126,23 +131,24 @@ internal object TeacherPrefsPost {
       }
     }
 
-  private fun PipelineCall.updateActiveClass(content: ReadingBatContent,
-                                             user: User,
-                                             classCode: ClassCode,
-                                             redis: Jedis): String {
+  private fun PipelineCall.updateActiveClassPost(
+    content: ReadingBatContent,
+    user: User,
+    classCode: ClassCode,
+    redis: Jedis,
+                                                ): String {
     val activeClassCode = user.fetchActiveClassCode(redis)
     val msg =
       when {
         // Do not allow this for classCode.isStudentMode because turns off the
         // student/teacher toggle mode
-        activeClassCode == classCode && classCode.isEnabled -> Message("Same active class selected [$classCode]",
-                                                                       true)
+        activeClassCode == classCode && classCode.isEnabled -> Message("Same active class selected [$classCode]", true)
         else -> {
           user.assignActiveClassCode(classCode, true, redis)
           if (classCode.isNotEnabled)
             Message(STUDENT_MODE_ENABLED_MSG)
           else {
-            Message("Active class updated to ${classCode.fetchClassDesc(redis, true)} [$classCode]")
+            Message("Active class updated to ${classCode.toDisplayString(redis)}")
           }
         }
       }
@@ -150,10 +156,12 @@ internal object TeacherPrefsPost {
     return teacherPrefsPage(content, user, redis, msg)
   }
 
-  private fun PipelineCall.deleteClass(content: ReadingBatContent,
-                                       user: User,
-                                       classCode: ClassCode,
-                                       redis: Jedis) =
+  private fun PipelineCall.deleteClassPost(
+    content: ReadingBatContent,
+    user: User,
+    classCode: ClassCode,
+    redis: Jedis,
+                                          ) =
     when {
       classCode.isNotEnabled -> teacherPrefsPage(content, user, redis, Message("Empty class code", true))
       classCode.isNotValid(redis) -> teacherPrefsPage(content,

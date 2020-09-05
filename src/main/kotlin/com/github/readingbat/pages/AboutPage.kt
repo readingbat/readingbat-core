@@ -18,7 +18,7 @@
 package com.github.readingbat.pages
 
 import com.github.readingbat.common.CSSNames.INDENT_1EM
-import com.github.readingbat.common.Constants.RETURN_PATH
+import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyTitle
@@ -85,7 +85,7 @@ internal object AboutPage {
             }
           }
 
-          backLink(queryParam(RETURN_PATH))
+          backLink(queryParam(RETURN_PARAM))
         }
       }
 }

@@ -20,16 +20,16 @@ package com.github.readingbat.pages
 import com.github.readingbat.common.CSSNames.INDENT_1EM
 import com.github.readingbat.common.Constants.INVALID_RESET_ID
 import com.github.readingbat.common.Constants.LABEL_WIDTH
-import com.github.readingbat.common.Constants.RESET_ID
-import com.github.readingbat.common.Constants.RETURN_PATH
 import com.github.readingbat.common.Endpoints.PASSWORD_CHANGE_POST_ENDPOINT
 import com.github.readingbat.common.Endpoints.PASSWORD_RESET_ENDPOINT
 import com.github.readingbat.common.Endpoints.PASSWORD_RESET_POST_ENDPOINT
-import com.github.readingbat.common.FormFields.CONFIRM_PASSWORD
-import com.github.readingbat.common.FormFields.EMAIL
-import com.github.readingbat.common.FormFields.NEW_PASSWORD
+import com.github.readingbat.common.FormFields.CONFIRM_PASSWORD_PARAM
+import com.github.readingbat.common.FormFields.EMAIL_PARAM
+import com.github.readingbat.common.FormFields.NEW_PASSWORD_PARAM
+import com.github.readingbat.common.FormFields.RESET_ID_PARAM
+import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.FormFields.UPDATE_PASSWORD
-import com.github.readingbat.common.FormFields.USER_PREFS_ACTION
+import com.github.readingbat.common.FormFields.USER_PREFS_ACTION_PARAM
 import com.github.readingbat.common.Message
 import com.github.readingbat.common.Message.Companion.EMPTY_MESSAGE
 import com.github.readingbat.dsl.ReadingBatContent
@@ -97,7 +97,7 @@ internal object PasswordResetPage : KLogging() {
         head { headDefault(content) }
 
         body {
-          val returnPath = queryParam(RETURN_PATH, "/")
+          val returnPath = queryParam(RETURN_PARAM, "/")
 
           bodyTitle()
 
@@ -107,12 +107,12 @@ internal object PasswordResetPage : KLogging() {
 
           div(classes = INDENT_1EM) {
             form {
-              action = "$PASSWORD_RESET_POST_ENDPOINT?$RETURN_PATH=$returnPath"
+              action = "$PASSWORD_RESET_POST_ENDPOINT?$RETURN_PARAM=$returnPath"
               method = FormMethod.post
               table {
                 tr {
                   td { style = LABEL_WIDTH; label { +"Email (used as account id)" } }
-                  td { input { name = EMAIL; type = InputType.text; size = "50" } }
+                  td { input { name = EMAIL_PARAM; type = InputType.text; size = "50" } }
                 }
                 tr {
                   td { }
@@ -155,7 +155,7 @@ internal object PasswordResetPage : KLogging() {
         }
 
         body {
-          val returnPath = queryParam(RETURN_PATH, "/")
+          val returnPath = queryParam(RETURN_PARAM, "/")
 
           bodyTitle()
 
@@ -170,8 +170,8 @@ internal object PasswordResetPage : KLogging() {
             table {
               tr {
                 td { style = LABEL_WIDTH; label { +"New Password" } }
-                td { input { type = InputType.password; size = "42"; name = NEW_PASSWORD; value = "" } }
-                td { hideShowButton(formName, NEW_PASSWORD) }
+                td { input { type = InputType.password; size = "42"; name = NEW_PASSWORD_PARAM; value = "" } }
+                td { hideShowButton(formName, NEW_PASSWORD_PARAM) }
               }
               tr {
                 td { style = LABEL_WIDTH; label { +"Confirm Password" } }
@@ -179,21 +179,21 @@ internal object PasswordResetPage : KLogging() {
                   input {
                     type = InputType.password
                     size = "42"
-                    name = CONFIRM_PASSWORD
+                    name = CONFIRM_PASSWORD_PARAM
                     value = ""
                     onKeyPress = "click$passwordButton(event);"
                   }
                 }
-                td { hideShowButton(formName, CONFIRM_PASSWORD) }
+                td { hideShowButton(formName, CONFIRM_PASSWORD_PARAM) }
               }
               tr {
-                td { input { type = InputType.hidden; name = RESET_ID; value = resetId.value } }
+                td { input { type = InputType.hidden; name = RESET_ID_PARAM; value = resetId.value } }
                 td {
                   input {
                     style = "font-size:25px; height:35; width:  155;"
                     type = InputType.submit
                     id = passwordButton
-                    name = USER_PREFS_ACTION
+                    name = USER_PREFS_ACTION_PARAM
                     value = UPDATE_PASSWORD
                   }
                 }

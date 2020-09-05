@@ -18,10 +18,10 @@
 package com.github.readingbat.pages
 
 import com.github.readingbat.common.CSSNames.INDENT_1EM
-import com.github.readingbat.common.Constants.RETURN_PATH
 import com.github.readingbat.common.Endpoints.ADMIN_POST_ENDPOINT
-import com.github.readingbat.common.FormFields.ADMIN_ACTION
+import com.github.readingbat.common.FormFields.ADMIN_ACTION_PARAM
 import com.github.readingbat.common.FormFields.DELETE_ALL_DATA
+import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.Message
 import com.github.readingbat.common.Message.Companion.EMPTY_MESSAGE
 import com.github.readingbat.common.RedisAdmin.scanKeys
@@ -72,7 +72,7 @@ internal object AdminPage {
 
         head { headDefault(content) }
         body {
-          val returnPath = queryParam(RETURN_PATH, "/")
+          val returnPath = queryParam(RETURN_PARAM, "/")
 
           helpAndLogin(user, returnPath, false, redis)
 
@@ -110,7 +110,7 @@ internal object AdminPage {
         action = ADMIN_POST_ENDPOINT
         method = FormMethod.post
         onSubmit = "return confirm('Are you sure you want to permanently delete all data ?');"
-        input { type = InputType.submit; name = ADMIN_ACTION; value = DELETE_ALL_DATA }
+        input { type = InputType.submit; name = ADMIN_ACTION_PARAM; value = DELETE_ALL_DATA }
       }
     }
   }

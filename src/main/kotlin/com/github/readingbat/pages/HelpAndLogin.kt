@@ -19,15 +19,15 @@ package com.github.readingbat.pages
 
 import com.github.pambrose.common.util.isNotNull
 import com.github.readingbat.common.AuthRoutes.LOGOUT
-import com.github.readingbat.common.Constants.RETURN_PATH
 import com.github.readingbat.common.Endpoints.ABOUT_ENDPOINT
 import com.github.readingbat.common.Endpoints.CREATE_ACCOUNT_ENDPOINT
 import com.github.readingbat.common.Endpoints.ENABLE_STUDENT_MODE_ENDPOINT
 import com.github.readingbat.common.Endpoints.ENABLE_TEACHER_MODE_ENDPOINT
 import com.github.readingbat.common.Endpoints.PASSWORD_RESET_ENDPOINT
 import com.github.readingbat.common.Endpoints.USER_PREFS_ENDPOINT
-import com.github.readingbat.common.FormFields.EMAIL
-import com.github.readingbat.common.FormFields.PASSWORD
+import com.github.readingbat.common.FormFields.EMAIL_PARAM
+import com.github.readingbat.common.FormFields.PASSWORD_PARAM
+import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.fetchPreviousTeacherClassCode
 import com.github.readingbat.pages.PageUtils.rawHtml
@@ -61,11 +61,11 @@ internal object HelpAndLogin {
                   ENABLE_STUDENT_MODE_ENDPOINT to "student mode"
                 else
                   ENABLE_TEACHER_MODE_ENDPOINT to "teacher mode"
-              a { href = "$endpoint?$RETURN_PATH=$loginPath"; +msg }
+              a { href = "$endpoint?$RETURN_PARAM=$loginPath"; +msg }
               +" | "
             }
 
-            a { href = "$ABOUT_ENDPOINT?$RETURN_PATH=$loginPath"; +"about" }
+            a { href = "$ABOUT_ENDPOINT?$RETURN_PARAM=$loginPath"; +"about" }
             +" | "
             //a { href = "/help.html"; +"help" }
             //+" | "
@@ -75,7 +75,7 @@ internal object HelpAndLogin {
               //+" | "
               //a { href = "/report"; +"report" }
               //+" | "
-              a { href = "$USER_PREFS_ENDPOINT?$RETURN_PATH=$loginPath"; +"prefs" }
+              a { href = "$USER_PREFS_ENDPOINT?$RETURN_PARAM=$loginPath"; +"prefs" }
             }
           }
         }
@@ -104,7 +104,7 @@ internal object HelpAndLogin {
     }
     }
      */
-        +"["; a { href = "$LOGOUT?$RETURN_PATH=$loginPath"; +"log out" }; +"]"
+        +"["; a { href = "$LOGOUT?$RETURN_PARAM=$loginPath"; +"log out" }; +"]"
       }
     }
   }
@@ -114,11 +114,11 @@ internal object HelpAndLogin {
       action = loginPath
       this@login.tr {
         td { +"id/email" }
-        td { textInput { id = EMAIL; name = EMAIL; size = "20"; placeholder = "username" } }
+        td { textInput { id = EMAIL_PARAM; name = EMAIL_PARAM; size = "20"; placeholder = "username" } }
       }
       this@login.tr {
         td { +"password" }
-        td { passwordInput { name = PASSWORD; size = "20"; placeholder = "password" } }
+        td { passwordInput { name = PASSWORD_PARAM; size = "20"; placeholder = "password" } }
       }
       this@login.tr {
         td {}
@@ -128,14 +128,14 @@ internal object HelpAndLogin {
     }
 
     // Set focus to email field
-    script { rawHtml("""document.getElementById("$EMAIL").focus();""") }
+    script { rawHtml("""document.getElementById("$EMAIL_PARAM").focus();""") }
 
     tr {
       td {
         colSpan = "2"
-        a { href = "$PASSWORD_RESET_ENDPOINT?$RETURN_PATH=$loginPath"; +"forgot password" }
+        a { href = "$PASSWORD_RESET_ENDPOINT?$RETURN_PARAM=$loginPath"; +"forgot password" }
         +" | "
-        a { href = "$CREATE_ACCOUNT_ENDPOINT?$RETURN_PATH=$loginPath"; +"create account" }
+        a { href = "$CREATE_ACCOUNT_ENDPOINT?$RETURN_PARAM=$loginPath"; +"create account" }
       }
     }
   }

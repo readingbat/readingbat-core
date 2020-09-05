@@ -26,11 +26,11 @@ import com.github.readingbat.common.Constants.LIKE_DESC
 import com.github.readingbat.common.Constants.MSG
 import com.github.readingbat.common.Constants.RESP
 import com.github.readingbat.common.Endpoints.CHALLENGE_ROOT
-import com.github.readingbat.common.FormFields.CHALLENGE_ANSWERS_KEY
-import com.github.readingbat.common.FormFields.CHALLENGE_NAME_KEY
-import com.github.readingbat.common.FormFields.GROUP_NAME_KEY
-import com.github.readingbat.common.FormFields.LANGUAGE_NAME_KEY
-import com.github.readingbat.common.KeyConstants.CORRECT_ANSWERS_KEY
+import com.github.readingbat.common.FormFields.CHALLENGE_ANSWERS_PARAM
+import com.github.readingbat.common.FormFields.CHALLENGE_NAME_PARAM
+import com.github.readingbat.common.FormFields.CORRECT_ANSWERS_PARAM
+import com.github.readingbat.common.FormFields.GROUP_NAME_PARAM
+import com.github.readingbat.common.FormFields.LANGUAGE_NAME_PARAM
 import com.github.readingbat.common.ParameterIds.DISLIKE_CLEAR
 import com.github.readingbat.common.ParameterIds.DISLIKE_COLOR
 import com.github.readingbat.common.ParameterIds.LIKE_CLEAR
@@ -288,12 +288,12 @@ internal object ChallengePost : KLogging() {
   suspend fun PipelineCall.clearChallengeAnswers(content: ReadingBatContent, user: User?, redis: Jedis): String {
     val params = call.receiveParameters()
 
-    val languageName = params.getLanguageName(LANGUAGE_NAME_KEY)
-    val groupName = params.getGroupName(GROUP_NAME_KEY)
-    val challengeName = params.getChallengeName(CHALLENGE_NAME_KEY)
+    val languageName = params.getLanguageName(LANGUAGE_NAME_PARAM)
+    val groupName = params.getGroupName(GROUP_NAME_PARAM)
+    val challengeName = params.getChallengeName(CHALLENGE_NAME_PARAM)
 
-    val correctAnswersKey = params[CORRECT_ANSWERS_KEY] ?: ""
-    val challengeAnswersKey = params[CHALLENGE_ANSWERS_KEY] ?: ""
+    val correctAnswersKey = params[CORRECT_ANSWERS_PARAM] ?: ""
+    val challengeAnswersKey = params[CHALLENGE_ANSWERS_PARAM] ?: ""
 
     val challenge = content[languageName, groupName, challengeName]
     val funcInfo = challenge.functionInfo(content)
@@ -317,11 +317,11 @@ internal object ChallengePost : KLogging() {
   suspend fun PipelineCall.clearGroupAnswers(content: ReadingBatContent, user: User?, redis: Jedis): String {
     val parameters = call.receiveParameters()
 
-    val languageName = parameters.getLanguageName(LANGUAGE_NAME_KEY)
-    val groupName = parameters.getGroupName(GROUP_NAME_KEY)
+    val languageName = parameters.getLanguageName(LANGUAGE_NAME_PARAM)
+    val groupName = parameters.getGroupName(GROUP_NAME_PARAM)
 
-    val correctJson = parameters[CORRECT_ANSWERS_KEY] ?: ""
-    val challengeJson = parameters[CHALLENGE_ANSWERS_KEY] ?: ""
+    val correctJson = parameters[CORRECT_ANSWERS_PARAM] ?: ""
+    val challengeJson = parameters[CHALLENGE_ANSWERS_PARAM] ?: ""
 
     val correctAnswersKeys = gson.fromJson(correctJson, List::class.java) as List<String>
     val challengeAnswersKeys = gson.fromJson(challengeJson, List::class.java) as List<String>

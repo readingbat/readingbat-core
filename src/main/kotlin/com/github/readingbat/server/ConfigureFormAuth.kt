@@ -43,8 +43,8 @@ internal object ConfigureFormAuth : KLogging() {
    */
   fun Authentication.Configuration.configureFormAuth() {
     form(AuthName.FORM) {
-      userParamName = FormFields.EMAIL
-      passwordParamName = FormFields.PASSWORD
+      userParamName = FormFields.EMAIL_PARAM
+      passwordParamName = FormFields.PASSWORD_PARAM
 
       challenge {
         // I don't think form auth supports multiple errors, but we're conservatively assuming there will be at

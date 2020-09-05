@@ -19,11 +19,11 @@ package com.github.readingbat.posts
 
 import com.github.pambrose.common.util.encode
 import com.github.readingbat.common.Constants.MSG
-import com.github.readingbat.common.Constants.RETURN_PATH
-import com.github.readingbat.common.FormFields.CONFIRM_PASSWORD
-import com.github.readingbat.common.FormFields.EMAIL
-import com.github.readingbat.common.FormFields.FULLNAME
-import com.github.readingbat.common.FormFields.PASSWORD
+import com.github.readingbat.common.FormFields.CONFIRM_PASSWORD_PARAM
+import com.github.readingbat.common.FormFields.EMAIL_PARAM
+import com.github.readingbat.common.FormFields.FULLNAME_PARAM
+import com.github.readingbat.common.FormFields.PASSWORD_PARAM
+import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.Message
 import com.github.readingbat.common.Message.Companion.EMPTY_MESSAGE
 import com.github.readingbat.common.User.Companion.createUser
@@ -66,10 +66,10 @@ internal object CreateAccountPost : KLogging() {
 
   suspend fun PipelineCall.createAccount(content: ReadingBatContent, redis: Jedis): String {
     val parameters = call.receiveParameters()
-    val fullName = parameters.getFullName(FULLNAME)
-    val email = parameters.getEmail(EMAIL)
-    val password = parameters.getPassword(PASSWORD)
-    val confirmPassword = parameters.getPassword(CONFIRM_PASSWORD)
+    val fullName = parameters.getFullName(FULLNAME_PARAM)
+    val email = parameters.getEmail(EMAIL_PARAM)
+    val password = parameters.getPassword(PASSWORD_PARAM)
+    val confirmPassword = parameters.getPassword(CONFIRM_PASSWORD_PARAM)
 
     return when {
       fullName.isBlank() -> createAccountPage(content, defaultEmail = email, msg = EMPTY_NAME_MSG)
@@ -108,7 +108,7 @@ internal object CreateAccountPost : KLogging() {
       val browserSession = call.browserSession
       val user = createUser(name, email, password, browserSession, redis)
       call.sessions.set(UserPrincipal(userId = user.id))
-      val returnPath = queryParam(RETURN_PATH, "/")
+      val returnPath = queryParam(RETURN_PARAM, "/")
       throw RedirectException("$returnPath?$MSG=${"User $email created".encode()}")
     }
   }

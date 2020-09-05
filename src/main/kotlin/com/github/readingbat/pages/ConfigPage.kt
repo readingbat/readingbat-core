@@ -21,9 +21,9 @@ import com.github.pambrose.common.time.format
 import com.github.pambrose.common.util.Version.Companion.versionDesc
 import com.github.readingbat.common.CSSNames.INDENT_1EM
 import com.github.readingbat.common.CSSNames.TD_PADDING
-import com.github.readingbat.common.Constants.RETURN_PATH
 import com.github.readingbat.common.Endpoints.USER_PREFS_ENDPOINT
 import com.github.readingbat.common.EnvVars
+import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.Properties
 import com.github.readingbat.common.SessionActivites
 import com.github.readingbat.dsl.LanguageType.Java
@@ -246,7 +246,7 @@ internal object ConfigPage {
             }
           }
 
-          backLink("$USER_PREFS_ENDPOINT?$RETURN_PATH=${queryParam(RETURN_PATH, "/")}")
+          backLink("$USER_PREFS_ENDPOINT?$RETURN_PARAM=${queryParam(RETURN_PARAM, "/")}")
         }
       }
 }

@@ -22,7 +22,6 @@ import com.github.readingbat.common.CSSNames.INDENT_1EM
 import com.github.readingbat.common.CSSNames.INDENT_2EM
 import com.github.readingbat.common.ClassCode.Companion.DISABLED_CLASS_CODE
 import com.github.readingbat.common.Constants.LABEL_WIDTH
-import com.github.readingbat.common.Constants.RETURN_PATH
 import com.github.readingbat.common.Endpoints.CONFIG_ENDPOINT
 import com.github.readingbat.common.Endpoints.CREATE_ACCOUNT_ENDPOINT
 import com.github.readingbat.common.Endpoints.SESSIONS_ENDPOINT
@@ -30,14 +29,15 @@ import com.github.readingbat.common.Endpoints.SYSTEM_ADMIN_ENDPOINT
 import com.github.readingbat.common.Endpoints.TEACHER_PREFS_ENDPOINT
 import com.github.readingbat.common.Endpoints.USER_PREFS_ENDPOINT
 import com.github.readingbat.common.Endpoints.USER_PREFS_POST_ENDPOINT
-import com.github.readingbat.common.FormFields.CLASS_CODE_NAME
-import com.github.readingbat.common.FormFields.CONFIRM_PASSWORD
-import com.github.readingbat.common.FormFields.CURR_PASSWORD
+import com.github.readingbat.common.FormFields.CLASS_CODE_NAME_PARAM
+import com.github.readingbat.common.FormFields.CONFIRM_PASSWORD_PARAM
+import com.github.readingbat.common.FormFields.CURR_PASSWORD_PARAM
 import com.github.readingbat.common.FormFields.DELETE_ACCOUNT
 import com.github.readingbat.common.FormFields.JOIN_CLASS
-import com.github.readingbat.common.FormFields.NEW_PASSWORD
+import com.github.readingbat.common.FormFields.NEW_PASSWORD_PARAM
+import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.FormFields.UPDATE_PASSWORD
-import com.github.readingbat.common.FormFields.USER_PREFS_ACTION
+import com.github.readingbat.common.FormFields.USER_PREFS_ACTION_PARAM
 import com.github.readingbat.common.FormFields.WITHDRAW_FROM_CLASS
 import com.github.readingbat.common.Message.Companion.EMPTY_MESSAGE
 import com.github.readingbat.common.User.Companion.fetchActiveClassCode
@@ -112,7 +112,7 @@ internal object UserPrefsPage : KLogging() {
         }
 
         body {
-          val returnPath = queryParam(RETURN_PATH, "/")
+          val returnPath = queryParam(RETURN_PARAM, "/")
 
           helpAndLogin(user, returnPath, activeClassCode.isEnabled, redis)
 
@@ -127,25 +127,26 @@ internal object UserPrefsPage : KLogging() {
           deleteAccount(user, redis)
 
           p(classes = INDENT_1EM) {
-            a { href = "$TEACHER_PREFS_ENDPOINT?$RETURN_PATH=$returnPath"; +"Teacher Preferences" }
+            a { href = "$TEACHER_PREFS_ENDPOINT?$RETURN_PARAM=$returnPath"; +"Teacher Preferences" }
           }
-
-          privacyStatement(USER_PREFS_ENDPOINT, returnPath)
 
           if (!isProduction() || user.isAdminUser(redis)) {
             h3 { +"Administrator Options" }
 
             p(classes = INDENT_1EM) {
-              a { href = "$CONFIG_ENDPOINT?$RETURN_PATH=$returnPath"; +"System Configuration" }
+              a { href = "$CONFIG_ENDPOINT?$RETURN_PARAM=$returnPath"; +"System Configuration" }
             }
 
             p(classes = INDENT_1EM) {
-              a { href = "$SESSIONS_ENDPOINT?$RETURN_PATH=$returnPath"; +"Current Sessions" }
+              a { href = "$SESSIONS_ENDPOINT?$RETURN_PARAM=$returnPath"; +"Current Sessions" }
             }
 
             p(classes = INDENT_1EM) {
-              a { href = "$SYSTEM_ADMIN_ENDPOINT?$RETURN_PATH=$returnPath"; +"System Admin" }
+              a { href = "$SYSTEM_ADMIN_ENDPOINT?$RETURN_PARAM=$returnPath"; +"System Admin" }
             }
+          }
+          else {
+            privacyStatement(USER_PREFS_ENDPOINT, returnPath)
           }
 
           backLink(returnPath)
@@ -163,13 +164,13 @@ internal object UserPrefsPage : KLogging() {
         table {
           tr {
             td { style = LABEL_WIDTH; label { +"Current Password" } }
-            td { input { type = InputType.password; size = "42"; name = CURR_PASSWORD; value = "" } }
-            td { hideShowButton(formName, CURR_PASSWORD) }
+            td { input { type = InputType.password; size = "42"; name = CURR_PASSWORD_PARAM; value = "" } }
+            td { hideShowButton(formName, CURR_PASSWORD_PARAM) }
           }
           tr {
             td { style = LABEL_WIDTH; label { +"New Password" } }
-            td { input { type = InputType.password; size = "42"; name = NEW_PASSWORD; value = "" } }
-            td { hideShowButton(formName, NEW_PASSWORD) }
+            td { input { type = InputType.password; size = "42"; name = NEW_PASSWORD_PARAM; value = "" } }
+            td { hideShowButton(formName, NEW_PASSWORD_PARAM) }
           }
           tr {
             td { style = LABEL_WIDTH; label { +"Confirm Password" } }
@@ -177,16 +178,16 @@ internal object UserPrefsPage : KLogging() {
               input {
                 type = InputType.password
                 size = "42"
-                name = CONFIRM_PASSWORD
+                name = CONFIRM_PASSWORD_PARAM
                 value = ""
                 onKeyPress = "click$passwordButton(event);"
               }
             }
-            td { hideShowButton(formName, CONFIRM_PASSWORD) }
+            td { hideShowButton(formName, CONFIRM_PASSWORD_PARAM) }
           }
           tr {
             td {}
-            td { input { type = submit; id = passwordButton; name = USER_PREFS_ACTION; value = UPDATE_PASSWORD } }
+            td { input { type = submit; id = passwordButton; name = USER_PREFS_ACTION_PARAM; value = UPDATE_PASSWORD } }
           }
         }
       }
@@ -197,15 +198,15 @@ internal object UserPrefsPage : KLogging() {
     val enrolledClass = user.fetchEnrolledClassCode(redis)
     if (enrolledClass.isEnabled) {
       h3 { +"Enrolled class" }
-      val classDesc = enrolledClass.fetchClassDesc(redis, true)
+      val displayStr = enrolledClass.toDisplayString(redis)
       div(classes = INDENT_2EM) {
-        p { +"Currently enrolled in class $enrolledClass [$classDesc]." }
+        p { +"Currently enrolled in class $enrolledClass." }
         p {
           form {
             action = USER_PREFS_POST_ENDPOINT
             method = FormMethod.post
-            onSubmit = "return confirm('Are you sure you want to withdraw from class $classDesc [$enrolledClass]?');"
-            input { type = submit; name = USER_PREFS_ACTION; value = WITHDRAW_FROM_CLASS }
+            onSubmit = "return confirm('Are you sure you want to withdraw from class $displayStr?');"
+            input { type = submit; name = USER_PREFS_ACTION_PARAM; value = WITHDRAW_FROM_CLASS }
           }
         }
       }
@@ -224,7 +225,7 @@ internal object UserPrefsPage : KLogging() {
                 input {
                   type = InputType.text
                   size = "42"
-                  name = CLASS_CODE_NAME
+                  name = CLASS_CODE_NAME_PARAM
                   value = defaultClassCode.displayedValue
                   onKeyPress = "click$joinClassButton(event);"
                 }
@@ -232,7 +233,7 @@ internal object UserPrefsPage : KLogging() {
             }
             tr {
               td {}
-              td { input { type = submit; id = joinClassButton; name = USER_PREFS_ACTION; value = JOIN_CLASS } }
+              td { input { type = submit; id = joinClassButton; name = USER_PREFS_ACTION_PARAM; value = JOIN_CLASS } }
             }
           }
         }
@@ -294,7 +295,7 @@ internal object UserPrefsPage : KLogging() {
           action = USER_PREFS_POST_ENDPOINT
           method = FormMethod.post
           onSubmit = "return confirm('Are you sure you want to permanently delete the account for $email ?');"
-          input { type = submit; name = USER_PREFS_ACTION; value = DELETE_ACCOUNT }
+          input { type = submit; name = USER_PREFS_ACTION_PARAM; value = DELETE_ACCOUNT }
         }
       }
     }
@@ -308,7 +309,7 @@ internal object UserPrefsPage : KLogging() {
         head { headDefault(content) }
 
         body {
-          val returnPath = queryParam(RETURN_PATH, "/")
+          val returnPath = queryParam(RETURN_PARAM, "/")
 
           helpAndLogin(null, returnPath, false, redis)
 
@@ -320,7 +321,7 @@ internal object UserPrefsPage : KLogging() {
 
           p {
             +"Please"
-            a { href = "$CREATE_ACCOUNT_ENDPOINT?$RETURN_PATH=$returnPath"; +" create an account " }
+            a { href = "$CREATE_ACCOUNT_ENDPOINT?$RETURN_PARAM=$returnPath"; +" create an account " }
             +"or log in to an existing account to edit preferences."
           }
 

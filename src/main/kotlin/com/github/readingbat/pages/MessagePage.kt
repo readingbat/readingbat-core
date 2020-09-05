@@ -18,7 +18,7 @@
 package com.github.readingbat.pages
 
 import com.github.readingbat.common.Constants.MSG
-import com.github.readingbat.common.Constants.RETURN_PATH
+import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyTitle
@@ -44,7 +44,7 @@ internal object MessagePage {
           bodyTitle()
           h2 { +queryParam(MSG, if (msg.isNotBlank()) msg else "Missing msg parameter") }
 
-          backLink("${queryParam(RETURN_PATH, "/")}?$RETURN_PATH=${"/"}")
+          backLink("${queryParam(RETURN_PARAM, "/")}?$RETURN_PARAM=${"/"}")
         }
       }
 }

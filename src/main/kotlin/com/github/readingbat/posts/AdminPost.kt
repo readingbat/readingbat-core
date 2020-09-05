@@ -18,7 +18,7 @@
 package com.github.readingbat.posts
 
 import com.github.readingbat.common.*
-import com.github.readingbat.common.FormFields.ADMIN_ACTION
+import com.github.readingbat.common.FormFields.ADMIN_ACTION_PARAM
 import com.github.readingbat.common.FormFields.DELETE_ALL_DATA
 import com.github.readingbat.common.RedisAdmin.scanKeys
 import com.github.readingbat.dsl.ReadingBatContent
@@ -36,12 +36,12 @@ internal object AdminPost {
   private val mustBeSysAdmin = Message("Must be system admin for this function", true)
   private val invalidOption = Message("Invalid option", true)
 
-  suspend fun PipelineCall.adminActions(content: ReadingBatContent, user: User?, redis: Jedis): String {
+  suspend fun PipelineCall.adminActionsPost(content: ReadingBatContent, user: User?, redis: Jedis): String {
     return when {
       isProduction() && user.isNotValidUser(redis) -> adminDataPage(content, user, redis = redis, msg = mustBeLoggedIn)
       isProduction() && user.isNotAdminUser((redis)) -> adminDataPage(content, user, redis, mustBeSysAdmin)
       else -> {
-        when (call.receiveParameters()[ADMIN_ACTION] ?: "") {
+        when (call.receiveParameters()[ADMIN_ACTION_PARAM] ?: "") {
           DELETE_ALL_DATA -> {
             val cnt = redis.scanKeys("*").onEach { redis.del(it) }.count()
             call.sessions.clear<UserPrincipal>()

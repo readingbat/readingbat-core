@@ -17,8 +17,8 @@
 
 package com.github.readingbat.pages
 
-import com.github.readingbat.common.Constants
 import com.github.readingbat.common.Constants.DBMS_DOWN
+import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyTitle
@@ -44,7 +44,7 @@ internal object DbmsDownPage {
           bodyTitle()
           h2 { +DBMS_DOWN.value }
 
-          backLink(queryParam(Constants.RETURN_PATH))
+          backLink(queryParam(RETURN_PARAM))
         }
       }
 }
