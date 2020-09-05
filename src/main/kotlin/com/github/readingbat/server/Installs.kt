@@ -27,6 +27,7 @@ import com.github.readingbat.dsl.InvalidPathException
 import com.github.readingbat.server.ConfigureCookies.configureAuthCookie
 import com.github.readingbat.server.ConfigureCookies.configureSessionIdCookie
 import com.github.readingbat.server.ConfigureFormAuth.configureFormAuth
+import com.github.readingbat.server.ServerUtils.fetchEmail
 import io.ktor.application.*
 import io.ktor.auth.*
 import io.ktor.features.*
@@ -116,10 +117,13 @@ internal object Installs : KLogging() {
       format { call ->
         val logStr = call.request.toLogString()
         val remote = call.request.origin.remoteHost
+        val email = call.fetchEmail()
         when (val status = call.response.status() ?: "Unknown") {
           // Show redirections
-          Found -> "$status: $logStr -> ${call.response.headers[Location]} - $remote"
-          else -> "$status: $logStr - $remote"
+          Found -> "$status: $logStr -> ${call.response.headers[Location]} - $remote - $email"
+          else -> {
+            "$status: $logStr - $remote - $email"
+          }
         }
       }
     }

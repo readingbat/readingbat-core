@@ -58,15 +58,14 @@ internal object ServerUtils : KLogging() {
 
   fun PipelineCall.queryParam(key: String, default: String = "") = call.request.queryParameters[key] ?: default
 
-  fun WebSocketServerSession.fetchUser(loginAttempt: Boolean = false): User? =
-    fetchPrincipal(loginAttempt)?.userId?.toUser(call.browserSession)
-
-  private fun WebSocketServerSession.fetchPrincipal(loginAttempt: Boolean): UserPrincipal? =
-    if (loginAttempt) assignPrincipal() else call.userPrincipal
-
-  private fun WebSocketServerSession.assignPrincipal(): UserPrincipal? =
-    call.principal<UserPrincipal>().apply { if (isNotNull()) call.sessions.set(this) }  // Set the cookie
-
+  // Calls for PipelineCall
+  fun PipelineCall.fetchEmail() =
+    pool.withRedisPool { redis ->
+      if (redis.isNull())
+        "Unknown"
+      else
+        fetchUser()?.email(redis)?.value ?: "Unknown"
+    }
 
   fun PipelineCall.fetchUser(loginAttempt: Boolean = false): User? =
     fetchPrincipal(loginAttempt)?.userId?.toUser(call.browserSession)
@@ -76,6 +75,28 @@ internal object ServerUtils : KLogging() {
 
   private fun PipelineCall.assignPrincipal(): UserPrincipal? =
     call.principal<UserPrincipal>().apply { if (isNotNull()) call.sessions.set(this) }  // Set the cookie
+
+  // Calls for WebSocketServerSession
+  fun WebSocketServerSession.fetchEmail() =
+    pool.withRedisPool { redis ->
+      if (redis.isNull())
+        "Unknown"
+      else
+        fetchUser()?.email(redis)?.value ?: "Unknown"
+    }
+
+  fun WebSocketServerSession.fetchUser(): User? = call.userPrincipal?.userId?.toUser(call.browserSession)
+
+  // Calls for ApplicationCall
+  fun ApplicationCall.fetchEmail() =
+    pool.withRedisPool { redis ->
+      if (redis.isNull())
+        "Unknown"
+      else
+        fetchUser()?.email(redis)?.value ?: "Unknown"
+    }
+
+  fun ApplicationCall.fetchUser(): User? = userPrincipal?.userId?.toUser(browserSession)
 
   suspend fun PipelineCall.respondWithDbmsCheck(content: ReadingBatContent, block: (redis: Jedis) -> String) =
     try {

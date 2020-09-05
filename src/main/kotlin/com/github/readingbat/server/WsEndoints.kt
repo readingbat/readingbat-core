@@ -21,7 +21,6 @@ import com.github.pambrose.common.concurrent.BooleanMonitor
 import com.github.pambrose.common.redis.RedisUtils.withRedisPool
 import com.github.pambrose.common.time.format
 import com.github.pambrose.common.util.isNotNull
-import com.github.pambrose.common.util.isNull
 import com.github.readingbat.common.ClassCode
 import com.github.readingbat.common.Constants.COLUMN_CNT
 import com.github.readingbat.common.Constants.PING_CODE
@@ -35,7 +34,7 @@ import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.agentLaunchId
 import com.github.readingbat.posts.ChallengeHistory
 import com.github.readingbat.server.ReadingBatServer.pool
-import com.github.readingbat.server.ServerUtils.fetchUser
+import com.github.readingbat.server.ServerUtils.fetchEmail
 import com.github.readingbat.server.ServerUtils.rows
 import io.ktor.features.*
 import io.ktor.http.cio.websocket.*
@@ -63,16 +62,7 @@ internal object WsEndoints : KLogging() {
 
   fun classTopicName(classCode: ClassCode, challengeMd5: String) = keyOf(classCode, challengeMd5)
 
-  private fun WebSocketServerSession.fetchEmail() =
-    pool.withRedisPool { redis ->
-      if (redis.isNull())
-        "Unknown"
-      else
-        fetchUser()?.email(redis)?.value ?: "Unknown"
-    }
-
   fun Routing.wsEndpoints(metrics: Metrics, contentSrc: () -> ReadingBatContent) {
-
 
     webSocket("$CHALLENGE_ENDPOINT/{$CLASS_CODE}/{$CHALLENGE_MD5}") {
       val content = contentSrc.invoke()
