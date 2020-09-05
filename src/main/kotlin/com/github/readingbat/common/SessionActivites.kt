@@ -22,9 +22,9 @@ import com.github.pambrose.common.dsl.KtorDsl.httpClient
 import com.github.pambrose.common.redis.RedisUtils.withRedisPool
 import com.github.pambrose.common.util.isInt
 import com.github.pambrose.common.util.isNotNull
-import com.github.pambrose.common.util.isNull
 import com.github.readingbat.common.EnvVars.IPGEOLOCATION_KEY
 import com.github.readingbat.common.KeyConstants.IPGEO_KEY
+import com.github.readingbat.common.SessionActivites.RemoteHost.Companion.unknown
 import com.github.readingbat.common.User.Companion.gson
 import com.github.readingbat.common.User.Companion.toUser
 import com.github.readingbat.server.ReadingBatServer.pool
@@ -47,28 +47,37 @@ import kotlin.time.hours
 
 internal object SessionActivites : KLogging() {
 
-  // Use https://ipgeolocation.io/documentation/user-agent-api.html to parse userAgent data
+  class RemoteHost(val value: String) {
+    val city get() = geoInfoMap[value]?.city?.toString() ?: "Unknown"
+    val state get() = geoInfoMap[value]?.state_prov?.toString() ?: "Unknown"
+    val country get() = geoInfoMap[value]?.country_name?.toString() ?: "Unknown"
+    val organization get() = geoInfoMap[value]?.organization?.toString() ?: "Unknown"
+    val flagUrl get() = geoInfoMap[value]?.country_flag?.toString() ?: "Unknown"
 
-  class Session(val browserSession: BrowserSession, val userAgent: String) {
+    fun isIpAddress() = value.split(".").run { size == 4 && all { it.isInt() } }
+
+    override fun toString() = value
+
+    internal companion object {
+      val unknown = RemoteHost("unknown")
+    }
+  }
+
+  internal class Session(val browserSession: BrowserSession, val userAgent: String) {
     private var lastUpdate = TimeSource.Monotonic.markNow()
     private val pages = AtomicInteger(0)
-    var remoteHost: String = "unknown"
-    var principal: UserPrincipal? = null
-    val age get() = lastUpdate.elapsedNow()
-    val user by lazy { principal?.userId?.toUser(browserSession) }
 
+    var remoteHost: RemoteHost = unknown
+    var principal: UserPrincipal? = null
+
+    val user by lazy { principal?.userId?.toUser(browserSession) }
+    val age get() = lastUpdate.elapsedNow()
     val requests get() = pages.get()
 
-    val city get() = geoInfoMap[remoteHost]?.city?.toString() ?: "Unknown"
-    val state get() = geoInfoMap[remoteHost]?.state_prov?.toString() ?: "Unknown"
-    val country get() = geoInfoMap[remoteHost]?.country_name?.toString() ?: "Unknown"
-    val organization get() = geoInfoMap[remoteHost]?.organization?.toString() ?: "Unknown"
-    val flagUrl get() = geoInfoMap[remoteHost]?.country_flag?.toString() ?: "Unknown"
-
-    fun update(recentPrincipal: UserPrincipal?, remote: String) {
+    fun update(recentPrincipal: UserPrincipal?, recentRemoteHost: RemoteHost) {
       principal = recentPrincipal
+      remoteHost = recentRemoteHost
       lastUpdate = TimeSource.Monotonic.markNow()
-      remoteHost = remote
       pages.incrementAndGet()
     }
   }
@@ -140,26 +149,16 @@ internal object SessionActivites : KLogging() {
     }
   }
 
-
-  fun BrowserSession?.markActivity(call: ApplicationCall) {
-
-    if (isNull())
-      return
+  fun BrowserSession.markActivity(call: ApplicationCall) {
 
     val principal = call.userPrincipal
-    val remoteHost = call.request.origin.remoteHost
+    val remoteHost = RemoteHost(call.request.origin.remoteHost)
+
+    // Use https://ipgeolocation.io/documentation/user-agent-api.html to parse userAgent data
     val userAgent = call.request.headers[HttpHeaders.UserAgent] ?: "unknown"
 
     // Update session
     sessionsMap.getOrPut(id, { Session(this, userAgent) }).update(principal, remoteHost)
-
-    fun String.isIpAddress(): Boolean {
-      val nums = split(".")
-      return if (nums.size != 4)
-        false
-      else
-        nums.all { it.isInt() }
-    }
 
     fun lookUpGeoInfo(ipAddress: String) =
       runBlocking {
@@ -175,7 +174,7 @@ internal object SessionActivites : KLogging() {
       }
 
     if (!remoteHost.isIpAddress()) {
-      logger.info { "Skipped looking up $remoteHost" }
+      logger.debug { "Skipped looking up $remoteHost" }
       return
     }
 
@@ -183,7 +182,7 @@ internal object SessionActivites : KLogging() {
       if (IPGEOLOCATION_KEY.isDefined() && remoteHost !in ignoreHosts && !geoInfoMap.containsKey(remoteHost)) {
         pool.withRedisPool { redis ->
           if (redis.isNotNull()) {
-            geoInfoMap.computeIfAbsent(remoteHost) { ipAddress ->
+            geoInfoMap.computeIfAbsent(remoteHost.value) { ipAddress ->
               val geoKey = keyOf(IPGEO_KEY, remoteHost)
               val json = redis.get(geoKey) ?: ""
               if (json.isNotBlank())
@@ -200,7 +199,7 @@ internal object SessionActivites : KLogging() {
       }
     } catch (e: Throwable) {
       logger.warn { "Unable to determine IP geolocation data for $remoteHost (${e.message})" }
-      ignoreHosts += remoteHost
+      ignoreHosts += remoteHost.value
     }
   }
 

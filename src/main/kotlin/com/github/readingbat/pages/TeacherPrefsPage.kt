@@ -107,7 +107,7 @@ internal object TeacherPrefsPage : KLogging() {
           helpAndLogin(user, returnPath, activeClassCode.isEnabled, redis)
           bodyTitle()
 
-          h2 { +"ReadingBat User Preferences" }
+          h2 { +"ReadingBat Teacher Preferences" }
 
           p { span { style = "color:${msg.color};"; this@body.displayMessage(msg) } }
 

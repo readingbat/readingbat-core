@@ -30,6 +30,7 @@ import com.github.readingbat.common.FormFields.EMAIL
 import com.github.readingbat.common.FormFields.PASSWORD
 import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.fetchPreviousTeacherClassCode
+import com.github.readingbat.pages.PageUtils.rawHtml
 import kotlinx.html.*
 import redis.clients.jedis.Jedis
 
@@ -113,7 +114,7 @@ internal object HelpAndLogin {
       action = loginPath
       this@login.tr {
         td { +"id/email" }
-        td { textInput { name = EMAIL; size = "20"; placeholder = "username" } }
+        td { textInput { id = EMAIL; name = EMAIL; size = "20"; placeholder = "username" } }
       }
       this@login.tr {
         td { +"password" }
@@ -125,6 +126,9 @@ internal object HelpAndLogin {
       }
       hiddenInput { name = "fromurl"; value = loginPath }
     }
+
+    // Set focus to email field
+    script { rawHtml("""document.getElementById("$EMAIL").focus();""") }
 
     tr {
       td {

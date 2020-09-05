@@ -295,6 +295,11 @@ internal object ChallengePage : KLogging() {
           }
       }
 
+      // Set focus to email field
+      if (funcInfo.invocations.isNotEmpty())
+        script { rawHtml("""document.getElementById("${RESP}0").focus();""") }
+
+
       this@displayQuestions.processAnswers(funcInfo, challenge)
       if (redis.isNotNull())
         this@displayQuestions.likeDislike(user, browserSession, challenge, redis)

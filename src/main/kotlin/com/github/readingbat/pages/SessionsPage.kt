@@ -96,12 +96,12 @@ internal object SessionsPage {
                       td { +userDesc }
                       td { +it.age.format(false) }
                       td { +it.requests.toString() }
-                      td { +it.remoteHost }
-                      td { +it.city }
-                      td { +it.state }
-                      td { +it.country }
-                      td { +it.organization }
-                      td { if ("://" in it.flagUrl) img { src = it.flagUrl } else +"" }
+                      td { +it.remoteHost.value }
+                      td { +it.remoteHost.city }
+                      td { +it.remoteHost.state }
+                      td { +it.remoteHost.country }
+                      td { +it.remoteHost.organization }
+                      td { if ("://" in it.remoteHost.flagUrl) img { src = it.remoteHost.flagUrl } else +"" }
                       td { +it.userAgent }
                     }
                   }

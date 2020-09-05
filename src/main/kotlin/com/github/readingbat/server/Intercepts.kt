@@ -17,10 +17,12 @@
 
 package com.github.readingbat.server
 
+import com.github.pambrose.common.util.isNotNull
 import com.github.readingbat.common.Constants.STATIC
 import com.github.readingbat.common.SessionActivites.markActivity
 import com.github.readingbat.common.browserSession
 import io.ktor.application.*
+import io.ktor.features.*
 import io.ktor.request.*
 
 internal fun Application.intercepts() {
@@ -37,7 +39,10 @@ internal fun Application.intercepts() {
     if (!context.request.path().startsWith("/$STATIC/")) {
       val browserSession = call.browserSession
       //ReadingBatServer.logger.info { "${context.request.origin.remoteHost} $sessionId ${context.request.path()}" }
-      browserSession.markActivity(call)
+      if (browserSession.isNotNull())
+        browserSession.markActivity(call)
+      else
+        ReadingBatServer.logger.info { "Null browser sessions for ${call.request.origin.remoteHost}" }
     }
   }
 
