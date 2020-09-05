@@ -46,7 +46,7 @@ internal object Emailer : KLogging() {
 
     sendGrid.api(request)
       .apply {
-        logger.info { "Response status code: $statusCode to: $to from: $from" }
+        logger.info { "SendGrid response status code: $statusCode to: $to from: $from" }
         if (body.isNotBlank())
           logger.info { "Response body: $body" }
         logger.info { "Response headers: $headers" }

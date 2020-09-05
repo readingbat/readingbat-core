@@ -83,7 +83,9 @@ internal object PasswordResetPage : KLogging() {
       try {
         val passwordResetKey = resetId.passwordResetKey
         val email = Email(redis.get(passwordResetKey) ?: throw ResetPasswordException(INVALID_RESET_ID))
+
         changePasswordPage(content, email, resetId, msg)
+
       } catch (e: ResetPasswordException) {
         logger.info { e }
         requestPasswordResetPage(content, Message(e.message ?: "Unable to reset password", true))
@@ -173,6 +175,7 @@ internal object PasswordResetPage : KLogging() {
                 td { input { type = InputType.password; size = "42"; name = NEW_PASSWORD_PARAM; value = "" } }
                 td { hideShowButton(formName, NEW_PASSWORD_PARAM) }
               }
+
               tr {
                 td { style = LABEL_WIDTH; label { +"Confirm Password" } }
                 td {
@@ -186,6 +189,7 @@ internal object PasswordResetPage : KLogging() {
                 }
                 td { hideShowButton(formName, CONFIRM_PASSWORD_PARAM) }
               }
+
               tr {
                 td { input { type = InputType.hidden; name = RESET_ID_PARAM; value = resetId.value } }
                 td {

@@ -40,7 +40,6 @@ import com.github.readingbat.pages.ChallengePage.headerColor
 import com.github.readingbat.pages.HelpAndLogin.helpAndLogin
 import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyTitle
-import com.github.readingbat.pages.PageUtils.clickButtonScript
 import com.github.readingbat.pages.PageUtils.headDefault
 import com.github.readingbat.pages.PageUtils.rawHtml
 import com.github.readingbat.server.PipelineCall
@@ -56,15 +55,11 @@ import redis.clients.jedis.Jedis
 
 internal object ClassSummaryPage : KLogging() {
 
-  private const val createClassButton = "CreateClassButton"
-
-  fun PipelineCall.classSummaryPage(
-    content: ReadingBatContent,
-    user: User?,
-    redis: Jedis,
-    msg: Message = EMPTY_MESSAGE,
-    defaultClassDesc: String = "",
-                                   ): String {
+  fun PipelineCall.classSummaryPage(content: ReadingBatContent,
+                                    user: User?,
+                                    redis: Jedis,
+                                    msg: Message = EMPTY_MESSAGE,
+                                    defaultClassDesc: String = ""): String {
 
     val classCode =
       call.parameters[CLASS_CODE_QP]?.let { ClassCode(it) } ?: throw InvalidRequestException("Missing class code")
@@ -86,7 +81,23 @@ internal object ClassSummaryPage : KLogging() {
 
         head {
           headDefault(content)
-          clickButtonScript(createClassButton)
+
+          link { rel = "stylesheet"; href = "https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css" }
+          script { src = "https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js" }
+          script { src = "https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js" }
+          style {
+            rawHtml("""
+                .dropdown-submenu {
+                  position: relative;
+                }
+
+                .dropdown-submenu .dropdown-menu {
+                  top: 0;
+                  left: 100%;
+                  margin-top: -1px;
+                }
+            """)
+          }
         }
 
         body {
@@ -98,19 +109,65 @@ internal object ClassSummaryPage : KLogging() {
 
           h2 { +"ReadingBat Class Summary" }
 
-          displayStudents(user, activeClassCode, redis)
+          displayStudents(user, classCode, redis)
 
           backLink(returnPath)
         }
       }
   }
 
+  fun UL.dropdown(block: LI.() -> Unit) {
+    li("dropdown") {
+      block()
+    }
+  }
+
+  fun LI.dropdownToggle(block: A.() -> Unit) {
+    a("#", null, "dropdown-toggle") {
+      attributes["data-toggle"] = "dropdown"
+      role = "button"
+      attributes["aria-expanded"] = "false"
+
+      block()
+
+      span {
+        classes = setOf("caret")
+      }
+    }
+  }
+
+  fun LI.dropdownMenu(block: UL.() -> Unit): Unit = ul("dropdown-menu") {
+    role = "menu"
+
+    block()
+  }
+
+  fun UL.dropdownHeader(text: String): Unit = li { classes = setOf("dropdown-header"); +text }
+  fun UL.divider(): Unit = li { classes = setOf("divider") }
+
+
   private fun BODY.displayStudents(user: User, classCode: ClassCode, redis: Jedis) {
     val classDesc = classCode.fetchClassDesc(redis, true)
     val enrollees = classCode.fetchEnrollees(redis)
-    h3 {
-      style = "margin-left: 5px; color: $headerColor"
-      +"$classDesc [$classCode]"
+
+    h3 { style = "margin-left: 5px; color: $headerColor"; +"$classDesc [$classCode]" }
+
+    ul {
+      dropdown {
+        dropdownToggle { +"Challenge Group" }
+        dropdownMenu {
+          dropdownHeader("Java")
+          li { a("#") { +"Action" } }
+          divider()
+          dropdownHeader("Python")
+          li { a("#") { +"Another action" } }
+          li { a("#") { +"Something else here" } }
+          divider()
+          dropdownHeader("Kotlin")
+          li { a("#") { +"Separated link" } }
+          li { a("#") { +"One more separated link" } }
+        }
+      }
     }
 
     div(classes = INDENT_2EM) {
@@ -141,7 +198,9 @@ internal object ClassSummaryPage : KLogging() {
           this@table.tr {
             td {
               style = "text-align:center"
-              input { type = radio; name = CLASSES_CHOICE_PARAM; value = code.value; checked = activeClassCode == code }
+              input {
+                type = radio; name = CLASSES_CHOICE_PARAM; value = code.value; checked = activeClassCode == code
+              }
             }
             td {
               code.displayedValue

@@ -69,6 +69,7 @@ internal class User private constructor(val id: String, val browserSession: Brow
     if (browserSession.isNotNull()) userInfoBrowserKey else throw InvalidConfigurationException("Null browser session for $this")
   }
   private val userClassesKey by lazy { keyOf(USER_CLASSES_KEY, id) }
+
   // This key maps to a reset_id
   private val userPasswordResetKey by lazy { keyOf(USER_RESET_KEY, id) }
 
@@ -539,17 +540,11 @@ internal class User private constructor(val id: String, val browserSession: Brow
         else -> false
       }
 
-    fun User?.saveLikeDislike(browserSession: BrowserSession?, names: ChallengeNames, likeVal: Int, redis: Jedis) {
-      val likeDislikeKey = likeDislikeKey(browserSession, names)
-
-      // Record like/dislike
-      if (likeDislikeKey.isNotEmpty()) {
-        if (likeVal == 0)
-          redis.del(likeDislikeKey)
-        else
-          redis.set(likeDislikeKey, likeVal.toString())
+    fun User?.saveLikeDislike(browserSession: BrowserSession?, names: ChallengeNames, likeVal: Int, redis: Jedis) =
+      likeDislikeKey(browserSession, names).let {
+        if (it.isNotEmpty())
+          redis.apply { if (likeVal == 0) del(it) else set(it, likeVal.toString()) }
       }
-    }
 
     fun isRegisteredEmail(email: Email, redis: Jedis) = lookupUserByEmail(email, redis).isNotNull()
 

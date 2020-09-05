@@ -55,7 +55,6 @@ import java.io.IOException
 
 internal object PasswordResetPost : KLogging() {
   private val unknownUserLimiter = RateLimiter.create(0.5) // rate 2.0 is "2 permits per second"
-  private val invalidUser = Message("Invalid User", true)
   private val unableToSend = Message("Unable to send password reset email -- missing email address", true)
 
   suspend fun PipelineCall.sendPasswordReset(content: ReadingBatContent, redis: Jedis): String {
@@ -67,7 +66,7 @@ internal object PasswordResetPost : KLogging() {
     return when {
       user.isNotValidUser(redis) -> {
         unknownUserLimiter.acquire()
-        passwordResetPage(content, EMPTY_RESET_ID, redis, invalidUser)
+        passwordResetPage(content, EMPTY_RESET_ID, redis, Message("Invalid user: $email", true))
       }
       email.isBlank() -> passwordResetPage(content, EMPTY_RESET_ID, redis, unableToSend)
       email.isNotValidEmail() -> {

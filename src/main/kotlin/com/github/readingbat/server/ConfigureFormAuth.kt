@@ -82,7 +82,7 @@ internal object ConfigureFormAuth : KLogging() {
               }
             }
 
-            logger.info { "Login ${if (principal.isNull()) "failure" else "success for $user"}" }
+            logger.info { "Login ${if (principal.isNull()) "failure" else "success for $user ${user?.email(redis) ?: "Unknown"}"}" }
 
             if (principal.isNull())
               failedLoginLimiter.acquire() // may block
