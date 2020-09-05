@@ -17,7 +17,6 @@
 
 package com.github.readingbat.server
 
-import com.github.pambrose.common.util.isNotNull
 import com.github.readingbat.common.Constants.STATIC
 import com.github.readingbat.common.SessionActivites.markActivity
 import com.github.readingbat.common.browserSession
@@ -39,10 +38,8 @@ internal fun Application.intercepts() {
     if (!context.request.path().startsWith("/$STATIC/")) {
       val browserSession = call.browserSession
       //ReadingBatServer.logger.info { "${context.request.origin.remoteHost} $sessionId ${context.request.path()}" }
-      if (browserSession.isNotNull())
-        browserSession.markActivity(call)
-      else
-        ReadingBatServer.logger.info { "Null browser sessions for ${call.request.origin.remoteHost}" }
+      browserSession?.markActivity(call)
+        ?: ReadingBatServer.logger.debug { "Null browser sessions for ${call.request.origin.remoteHost}" }
     }
   }
 
