@@ -85,30 +85,18 @@ internal object ClassSummaryPage : KLogging() {
           link { rel = "stylesheet"; href = "https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css" }
           script { src = "https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js" }
           script { src = "https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js" }
-          style {
-            rawHtml("""
-                .dropdown-submenu {
-                  position: relative;
-                }
-
-                .dropdown-submenu .dropdown-menu {
-                  top: 0;
-                  left: 100%;
-                  margin-top: -1px;
-                }
-            """)
-          }
         }
 
         body {
           val returnPath = queryParam(RETURN_PARAM, "/")
-
           helpAndLogin(user, returnPath, activeClassCode.isEnabled, redis)
-
           bodyTitle()
-
           h2 { +"ReadingBat Class Summary" }
 
+          val classDesc = classCode.fetchClassDesc(redis, true)
+          h3 { style = "margin-left: 5px; color: $headerColor"; +"$classDesc [$classCode]" }
+
+          displayClassChoices(content, redis)
           displayStudents(user, classCode, redis)
 
           backLink(returnPath)
@@ -117,58 +105,63 @@ internal object ClassSummaryPage : KLogging() {
   }
 
   fun UL.dropdown(block: LI.() -> Unit) {
-    li("dropdown") {
-      block()
-    }
+    li("dropdown") { block() }
   }
 
   fun LI.dropdownToggle(block: A.() -> Unit) {
     a("#", null, "dropdown-toggle") {
+      style = "font-size:120%;"
       attributes["data-toggle"] = "dropdown"
       role = "button"
       attributes["aria-expanded"] = "false"
-
       block()
 
-      span {
-        classes = setOf("caret")
-      }
+      span { classes = setOf("caret") }
     }
   }
 
   fun LI.dropdownMenu(block: UL.() -> Unit): Unit = ul("dropdown-menu") {
     role = "menu"
-
     block()
   }
 
-  fun UL.dropdownHeader(text: String): Unit = li { classes = setOf("dropdown-header"); +text }
+  fun UL.dropdownHeader(text: String): Unit =
+    li { style = "font-size:120%;"; classes = setOf("dropdown-header"); +text }
+
   fun UL.divider(): Unit = li { classes = setOf("divider") }
 
+  private fun BODY.displayClassChoices(content: ReadingBatContent, redis: Jedis) {
+    span {
+      ul {
+        style = "list-style-type:none"
+        dropdown {
+          dropdownToggle { +"Challenge Groups" }
+          dropdownMenu {
+            if (content.java.challengeGroups.isNotEmpty())
+              dropdownHeader("Java")
+            content.java.challengeGroups.forEach { li { a("#") { +it.groupName.value } } }
 
-  private fun BODY.displayStudents(user: User, classCode: ClassCode, redis: Jedis) {
-    val classDesc = classCode.fetchClassDesc(redis, true)
-    val enrollees = classCode.fetchEnrollees(redis)
+            if (content.python.challengeGroups.isNotEmpty()) {
+              divider()
+              dropdownHeader("Python")
+            }
+            content.python.challengeGroups.forEach { li { a("#") { +it.groupName.value } } }
 
-    h3 { style = "margin-left: 5px; color: $headerColor"; +"$classDesc [$classCode]" }
-
-    ul {
-      dropdown {
-        dropdownToggle { +"Challenge Group" }
-        dropdownMenu {
-          dropdownHeader("Java")
-          li { a("#") { +"Action" } }
-          divider()
-          dropdownHeader("Python")
-          li { a("#") { +"Another action" } }
-          li { a("#") { +"Something else here" } }
-          divider()
-          dropdownHeader("Kotlin")
-          li { a("#") { +"Separated link" } }
-          li { a("#") { +"One more separated link" } }
+            if (content.kotlin.challengeGroups.isNotEmpty()) {
+              divider()
+              dropdownHeader("Kotlin")
+            }
+            content.kotlin.challengeGroups.forEach { li { a("#") { +it.groupName.value } } }
+          }
         }
       }
     }
+
+
+  }
+
+  private fun BODY.displayStudents(user: User, classCode: ClassCode, redis: Jedis) {
+    val enrollees = classCode.fetchEnrollees(redis)
 
     div(classes = INDENT_2EM) {
       table {
