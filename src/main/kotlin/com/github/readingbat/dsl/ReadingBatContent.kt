@@ -23,7 +23,7 @@ import com.github.pambrose.common.util.ContentRoot
 import com.github.pambrose.common.util.ContentSource
 import com.github.pambrose.common.util.FileSystemSource
 import com.github.pambrose.common.util.pluralize
-import com.github.readingbat.common.Constants.NO_TRACK
+import com.github.readingbat.common.Constants.NO_TRACK_HEADER
 import com.github.readingbat.common.FunctionInfo
 import com.github.readingbat.common.PropertyNames.CONTENT
 import com.github.readingbat.dsl.LanguageType.Java
@@ -170,7 +170,7 @@ class ReadingBatContent {
                   withHttpClient(httpClient) {
                     val url = "$prefix/$CONTENT/${challenge.path}"
                     logger.info { "Fetching: $url" }
-                    get(url, setUp = { header(NO_TRACK, "") }) { response ->
+                    get(url, setUp = { header(NO_TRACK_HEADER, "") }) { response ->
                       val body = response.readText()
                       logger.info { "Response: ${response.status} ${body.length} chars" }
                       cnt.incrementAndGet()

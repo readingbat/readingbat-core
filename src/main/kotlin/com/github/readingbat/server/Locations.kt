@@ -180,7 +180,7 @@ inline class LanguageName(val value: String) {
   val isJvm get() = this in jmvLanguages
 
   companion object {
-    private val EMPTY_LANGUAGE = LanguageName("")
+    internal val EMPTY_LANGUAGE = LanguageName("")
     internal val ANY_LANGUAGE = LanguageName("*")
     private val jmvLanguages by lazy { listOf(Java.languageName, Kotlin.languageName) }
 
@@ -192,7 +192,7 @@ inline class GroupName(val value: String) {
   override fun toString() = value
 
   companion object {
-    private val EMPTY_GROUP = GroupName("")
+    internal val EMPTY_GROUP = GroupName("")
     internal val ANY_GROUP = GroupName("*")
     internal fun Parameters.getGroupName(name: String) = this[name]?.let { GroupName(it) } ?: EMPTY_GROUP
   }

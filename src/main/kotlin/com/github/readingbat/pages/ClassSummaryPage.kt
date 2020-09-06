@@ -20,6 +20,9 @@ package com.github.readingbat.pages
 import com.github.readingbat.common.CSSNames.INDENT_2EM
 import com.github.readingbat.common.ClassCode
 import com.github.readingbat.common.Constants.CLASS_CODE_QP
+import com.github.readingbat.common.Constants.GROUP_NAME_QP
+import com.github.readingbat.common.Constants.LANG_TYPE_QP
+import com.github.readingbat.common.Endpoints.CLASS_SUMMARY_ENDPOINT
 import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.Message
 import com.github.readingbat.common.Message.Companion.EMPTY_MESSAGE
@@ -33,6 +36,10 @@ import com.github.readingbat.pages.HelpAndLogin.helpAndLogin
 import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyTitle
 import com.github.readingbat.pages.PageUtils.headDefault
+import com.github.readingbat.server.GroupName
+import com.github.readingbat.server.GroupName.Companion.EMPTY_GROUP
+import com.github.readingbat.server.LanguageName
+import com.github.readingbat.server.LanguageName.Companion.EMPTY_LANGUAGE
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
 import io.ktor.application.*
@@ -51,6 +58,12 @@ internal object ClassSummaryPage : KLogging() {
 
     val classCode =
       call.parameters[CLASS_CODE_QP]?.let { ClassCode(it) } ?: throw InvalidRequestException("Missing class code")
+
+    val langName = call.parameters[LANG_TYPE_QP]?.let { LanguageName(it) } ?: EMPTY_LANGUAGE
+    val groupName = call.parameters[GROUP_NAME_QP]?.let { GroupName(it) } ?: EMPTY_GROUP
+
+    logger.info { "Lang = $langName" }
+    logger.info { "Group = $groupName" }
 
     when {
       classCode.isNotValid(redis) -> throw InvalidRequestException("Invalid classCode $classCode")
@@ -79,12 +92,12 @@ internal object ClassSummaryPage : KLogging() {
           val returnPath = queryParam(RETURN_PARAM, "/")
           helpAndLogin(user, returnPath, activeClassCode.isEnabled, redis)
           bodyTitle()
+
           h2 { +"ReadingBat Class Summary" }
 
-          val classDesc = classCode.fetchClassDesc(redis, true)
-          h3 { style = "margin-left: 5px; color: $headerColor"; +"$classDesc [$classCode]" }
+          h3 { style = "margin-left: 5px; color: $headerColor"; +classCode.toDisplayString(redis) }
 
-          displayClassChoices(content, redis)
+          displayClassChoices(content, classCode, redis)
 
           displayStudents(user, classCode, redis)
 
@@ -93,25 +106,31 @@ internal object ClassSummaryPage : KLogging() {
       }
   }
 
-  private fun BODY.displayClassChoices(content: ReadingBatContent, redis: Jedis) {
+  private fun BODY.displayClassChoices(content: ReadingBatContent, classCode: ClassCode, redis: Jedis) {
     table {
       style = "border-collapse: separate; border-spacing: 15px"
       tr {
         td { style = "font-size:120%"; +"Challenge Groups: " }
         listOf(content.java, content.python, content.kotlin)
-          .forEach {
-            if (it.challengeGroups.isNotEmpty()) {
+          .forEach { langGroup ->
+            if (langGroup.challengeGroups.isNotEmpty()) {
               td {
-                //style = "text-align:center; vertical-align:middle"
                 ul {
                   style =
                     "padding-left:0; margin-bottom:0; text-align:center; vertical-align:middle; list-style-type:none"
                   dropdown {
-                    dropdownToggle { +it.languageName.toLanguageType().name }
+                    val lang = langGroup.languageName.toLanguageType().name
+                    dropdownToggle { +lang }
                     dropdownMenu {
-                      dropdownHeader(it.languageName.toLanguageType().name)
+                      dropdownHeader(lang)
                       //divider()
-                      it.challengeGroups.forEach { li { a("#") { +it.groupName.value } } }
+                      langGroup.challengeGroups
+                        .forEach {
+                          li {
+                            a("$CLASS_SUMMARY_ENDPOINT?$CLASS_CODE_QP=$classCode&$LANG_TYPE_QP=${langGroup.languageName.value}&$GROUP_NAME_QP=${it.groupName.value}")
+                            { +it.groupName.value }
+                          }
+                        }
                     }
                   }
                 }

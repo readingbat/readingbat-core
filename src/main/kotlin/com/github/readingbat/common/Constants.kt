@@ -41,8 +41,11 @@ internal object Constants {
   const val CHALLENGE_SRC = "challengeName"
   const val PROCESS_USER_ANSWERS_JS_FUNC = "processUserAnswers"
   const val LIKE_DISLIKE_JS_FUNC = "likeDislike"
+  const val NO_TRACK_HEADER = "NO_TRACK"
+
   const val CLASS_CODE_QP = "class-code"
-  const val NO_TRACK = "NO_TRACK"
+  const val LANG_TYPE_QP = "lang-type"
+  const val GROUP_NAME_QP = "group-name"
 
   val DBMS_DOWN = Message("Database is down", true)
 }
