@@ -18,15 +18,19 @@
 package com.github.readingbat.pages
 
 import com.github.pambrose.common.util.encode
-import com.github.readingbat.common.*
 import com.github.readingbat.common.CSSNames.INDENT_2EM
+import com.github.readingbat.common.ClassCode
 import com.github.readingbat.common.Constants.CLASS_CODE_QP
 import com.github.readingbat.common.Constants.GROUP_NAME_QP
+import com.github.readingbat.common.Constants.INCOMPLETE_COLOR
 import com.github.readingbat.common.Constants.LANG_TYPE_QP
 import com.github.readingbat.common.Endpoints.CLASS_SUMMARY_ENDPOINT
 import com.github.readingbat.common.FormFields.RETURN_PARAM
+import com.github.readingbat.common.Message
 import com.github.readingbat.common.Message.Companion.EMPTY_MESSAGE
+import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.fetchActiveClassCode
+import com.github.readingbat.common.isNotValidUser
 import com.github.readingbat.dsl.InvalidRequestException
 import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.dsl.ReadingBatContent
@@ -185,13 +189,10 @@ internal object ClassSummaryPage : KLogging() {
                           challenge.functionInfo(content).invocations
                             .forEach { invocation ->
                               td {
-                                //style = "border-collapse: separate; border: 1px solid black;"
                                 style =
-                                  "border-collapse: separate; border: 1px solid black; width: 7px; height: 15px; background-color: ${Constants.INCOMPLETE_COLOR}"
+                                  "border-collapse: separate; border: 1px solid black; width: 7px; height: 15px; background-color: $INCOMPLETE_COLOR"
                                 id = "${student.id}-${invocation.value.encode()}"
                                 +""
-                                //a { style = "text-decoration:underline"; href = "./"; +invocation.value }
-                                //span { style = "background-color: $CORRECT_COLOR"; id = "${student.id}-${invocation.value.encode()}"; +"" }
                               }
                             }
                         }
