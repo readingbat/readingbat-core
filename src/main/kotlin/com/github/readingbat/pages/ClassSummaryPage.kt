@@ -21,9 +21,11 @@ import com.github.pambrose.common.util.encode
 import com.github.readingbat.common.CSSNames.INDENT_2EM
 import com.github.readingbat.common.ClassCode
 import com.github.readingbat.common.Constants.CLASS_CODE_QP
+import com.github.readingbat.common.Constants.CORRECT_COLOR
 import com.github.readingbat.common.Constants.GROUP_NAME_QP
 import com.github.readingbat.common.Constants.INCOMPLETE_COLOR
 import com.github.readingbat.common.Constants.LANG_TYPE_QP
+import com.github.readingbat.common.Constants.WRONG_COLOR
 import com.github.readingbat.common.Endpoints.CLASS_SUMMARY_ENDPOINT
 import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.Message
@@ -38,6 +40,7 @@ import com.github.readingbat.pages.ChallengePage.headerColor
 import com.github.readingbat.pages.HelpAndLogin.helpAndLogin
 import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyTitle
+import com.github.readingbat.pages.PageUtils.encodeUriElems
 import com.github.readingbat.pages.PageUtils.headDefault
 import com.github.readingbat.pages.PageUtils.rawHtml
 import com.github.readingbat.server.GroupName
@@ -60,11 +63,14 @@ internal object ClassSummaryPage : KLogging() {
                                     msg: Message = EMPTY_MESSAGE,
                                     defaultClassDesc: String = ""): String {
 
-    val classCode =
-      call.parameters[CLASS_CODE_QP]?.let { ClassCode(it) } ?: throw InvalidRequestException("Missing class code")
-    val langName = call.parameters[LANG_TYPE_QP]?.let { LanguageName(it) } ?: EMPTY_LANGUAGE
-    val groupName = call.parameters[GROUP_NAME_QP]?.let { GroupName(it) } ?: EMPTY_GROUP
-    val isValidGroupName = groupName.isDefined(content, langName)
+    val (languageName, groupName, classCode) =
+      Triple(
+        call.parameters[LANG_TYPE_QP]?.let { LanguageName(it) } ?: EMPTY_LANGUAGE,
+        call.parameters[GROUP_NAME_QP]?.let { GroupName(it) } ?: EMPTY_GROUP,
+        call.parameters[CLASS_CODE_QP]?.let { ClassCode(it) } ?: throw InvalidRequestException("Missing class code"))
+    val isValidGroupName = groupName.isDefined(content, languageName)
+    val activeClassCode = user.fetchActiveClassCode(redis)
+    val enrollees = classCode.fetchEnrollees(redis)
 
     when {
       classCode.isNotValid(redis) -> throw InvalidRequestException("Invalid classCode $classCode")
@@ -79,7 +85,6 @@ internal object ClassSummaryPage : KLogging() {
 
     return createHTML()
       .html {
-        val activeClassCode = user.fetchActiveClassCode(redis)
 
         head {
           headDefault(content)
@@ -103,13 +108,16 @@ internal object ClassSummaryPage : KLogging() {
             +classCode.toDisplayString(redis)
             if (isValidGroupName) {
               +" "
-              +langName.toLanguageType().name
+              +languageName.toLanguageType().name
               span { style = "padding-left:2px; padding-right:2px"; rawHtml("&rarr;") }
               +groupName.value
             }
           }
 
-          displayStudents(content, user, classCode, isValidGroupName, langName, groupName, redis)
+          displayStudents(content, enrollees, classCode, isValidGroupName, languageName, groupName, redis)
+
+          if (enrollees.isNotEmpty())
+            enableWebSockets(languageName, groupName, activeClassCode)
 
           backLink(returnPath)
         }
@@ -152,14 +160,13 @@ internal object ClassSummaryPage : KLogging() {
   }
 
   private fun BODY.displayStudents(content: ReadingBatContent,
-                                   user: User,
+                                   enrollees: List<User>,
                                    classCode: ClassCode,
                                    isValidGroupName: Boolean,
                                    langName: LanguageName,
                                    groupName: GroupName,
                                    redis: Jedis) =
     div(classes = INDENT_2EM) {
-      val enrollees = classCode.fetchEnrollees(redis)
       table {
         style = "border-collapse: separate; border-spacing: 15px 5px"
 
@@ -187,14 +194,18 @@ internal object ClassSummaryPage : KLogging() {
                       table {
                         tr {
                           challenge.functionInfo(content).invocations
-                            .forEach { invocation ->
+                            .forEachIndexed() { i, invocation ->
                               td {
                                 style =
                                   "border-collapse: separate; border: 1px solid black; width: 7px; height: 15px; background-color: $INCOMPLETE_COLOR"
-                                id = "${student.id}-${invocation.value.encode()}"
+                                id = "${student.id}-${challenge.challengeName.value.encode()}-$i"
                                 +""
                               }
                             }
+                          td {
+                            id = "${student.id}-${challenge.challengeName.value.encode()}-stats"
+                            +""
+                          }
                         }
                       }
                     }
@@ -204,6 +215,42 @@ internal object ClassSummaryPage : KLogging() {
           }
       }
     }
+
+  private fun BODY.enableWebSockets(languageName: LanguageName, groupName: GroupName, classCode: ClassCode) {
+    script {
+      rawHtml(
+        """
+          var wshost = location.origin;
+          if (wshost.startsWith('https:'))
+            wshost = wshost.replace(/^https:/, 'wss:');
+          else
+            wshost = wshost.replace(/^http:/, 'ws:');
+
+          var wsurl = wshost + '$CLASS_SUMMARY_ENDPOINT/' + ${encodeUriElems(languageName, groupName, classCode)};
+          var ws = new WebSocket(wsurl);
+
+          ws.onopen = function (event) {
+            ws.send("$classCode"); 
+          };
+          
+          ws.onmessage = function (event) {
+            console.log(event.data);
+            var obj = JSON.parse(event.data)
+            var results = obj.results
+            var i;
+            for (i = 0; i < results.length; i++) {
+              var prefix = obj.userId + '-' + obj.challengeName
+              var answers = document.getElementById(prefix + '-' + i)
+              answers.style.backgroundColor = obj.results[i] == 'Y' ? '$CORRECT_COLOR' 
+                                                                    : (obj.results[i] == 'N' ? '$WRONG_COLOR' 
+                                                                                             : '$INCOMPLETE_COLOR');
+
+              document.getElementById(prefix + '-stats').innerHTML = obj.msg;
+            }
+          };
+        """.trimIndent())
+    }
+  }
 
   // See: https://github.com/Kotlin/kotlinx.html/wiki/Micro-templating-and-DSL-customizing
   fun UL.dropdown(block: LI.() -> Unit) {

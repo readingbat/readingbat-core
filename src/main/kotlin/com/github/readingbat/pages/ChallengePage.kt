@@ -73,7 +73,7 @@ import com.github.readingbat.common.StaticFileNames.LIKE_COLOR_FILE
 import com.github.readingbat.common.User.Companion.challengeAnswersKey
 import com.github.readingbat.common.User.Companion.correctAnswersKey
 import com.github.readingbat.common.User.Companion.fetchActiveClassCode
-import com.github.readingbat.common.User.Companion.fetchPreviousAnswers
+import com.github.readingbat.common.User.Companion.fetchPreviousResponses
 import com.github.readingbat.common.User.Companion.gson
 import com.github.readingbat.common.User.Companion.likeDislikeKey
 import com.github.readingbat.dsl.Challenge
@@ -238,7 +238,7 @@ internal object ChallengePage : KLogging() {
         val topFocus = "topFocus"
         val bottomFocus = "bottomFocus"
         val offset = 5 // The login dialog takes tabIndex values 1-4
-        val correctAnswers = user.fetchPreviousAnswers(challenge, browserSession, redis)
+        val previousResponses = user.fetchPreviousResponses(challenge, browserSession, redis)
 
         // This will cause shift tab to go to bottom input element
         span { tabIndex = "5"; onFocus = "document.querySelector('.$bottomFocus').focus()" }
@@ -267,9 +267,9 @@ internal object ChallengePage : KLogging() {
                   id = "$RESP$i"
                   onKeyDown = "$PROCESS_USER_ANSWERS_JS_FUNC(event, ${funcInfo.correctAnswers.size})"
 
-                  val answer = correctAnswers[invocation.value] ?: ""
-                  if (answer.isNotBlank())
-                    value = answer
+                  val response = previousResponses[invocation.value] ?: ""
+                  if (response.isNotBlank())
+                    value = response
                   else
                     placeholder = funcInfo.placeHolder
 

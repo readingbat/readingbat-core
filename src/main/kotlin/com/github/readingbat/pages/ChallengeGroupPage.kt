@@ -102,6 +102,7 @@ internal object ChallengeGroupPage : KLogging() {
         val loginPath = pathOf(CHALLENGE_ROOT, languageName, groupName)
         val activeClassCode = user.fetchActiveClassCode(redis)
         val enrollees = activeClassCode.fetchEnrollees(redis)
+        val msg = Message(queryParam(MSG))
 
         fun TR.displayFunctionCall(user: User?, challenge: Challenge, redis: Jedis?) {
           val challengeName = challenge.challengeName
@@ -126,15 +127,7 @@ internal object ChallengeGroupPage : KLogging() {
         head { headDefault(content) }
 
         body {
-          bodyHeader(content,
-                     user,
-                     languageType,
-                     loginAttempt,
-                     loginPath,
-                     false,
-                     activeClassCode,
-                     redis,
-                     Message(queryParam(MSG)))
+          bodyHeader(content, user, languageType, loginAttempt, loginPath, false, activeClassCode, redis, msg)
 
           h2 { +groupName.value.decode() }
 

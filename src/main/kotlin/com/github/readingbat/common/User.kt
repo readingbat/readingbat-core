@@ -315,7 +315,7 @@ internal class User private constructor(val id: String, val browserSession: Brow
         val answerHistoryKey = answerHistoryKey(languageName, groupName, challengeName, result.invocation)
         if (answerHistoryKey.isNotEmpty()) {
           val history = ChallengeHistory(result.invocation).apply { markUnanswered() }
-          logger.info { "Resetting $answerHistoryKey" }
+          logger.debug { "Resetting $answerHistoryKey" }
           redis.set(answerHistoryKey, gson.toJson(history))
 
           if (shouldPublish)
@@ -418,9 +418,9 @@ internal class User private constructor(val id: String, val browserSession: Brow
     private fun User?.answerHistoryKey(browserSession: BrowserSession?, names: ChallengeNames, invocation: Invocation) =
       this?.answerHistoryKey(names, invocation) ?: browserSession?.answerHistoryKey(names, invocation) ?: ""
 
-    fun User?.fetchPreviousAnswers(challenge: Challenge,
-                                   browserSession: BrowserSession?,
-                                   redis: Jedis?): Map<String, String> =
+    fun User?.fetchPreviousResponses(challenge: Challenge,
+                                     browserSession: BrowserSession?,
+                                     redis: Jedis?): Map<String, String> =
       if (redis.isNull())
         kotlinx.html.emptyMap
       else {

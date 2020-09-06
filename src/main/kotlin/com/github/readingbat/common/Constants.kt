@@ -154,7 +154,7 @@ internal object FormFields {
   const val LANGUAGE_NAME_PARAM = "language_name_key"
   const val GROUP_NAME_PARAM = "group_name_key"
   const val CHALLENGE_NAME_PARAM = "challenge_name_key"
-  const val CORRECT_ANSWERS_PARAM = "challenge_answers_key"
+  const val CORRECT_ANSWERS_PARAM = "correct_answers_key"
   const val CHALLENGE_ANSWERS_PARAM = "challenge_answers_key"
 
   const val UPDATE_PASSWORD = "Update Password"

@@ -114,6 +114,13 @@ internal class Metrics {
       labelNames(AGENT_ID)
     }
 
+  val wsClassOverviewCount =
+    counter {
+      name("ws_class_overview_count")
+      help("WS Class overview count")
+      labelNames(AGENT_ID)
+    }
+
   val wsStudentAnswerGauge =
     gauge {
       name("ws_student_answer_gauge")
@@ -128,10 +135,24 @@ internal class Metrics {
       labelNames(AGENT_ID)
     }
 
+  val wsClassOverviewGauge =
+    gauge {
+      name("ws_class_overview_gauge")
+      help("WS Class overview gauge")
+      labelNames(AGENT_ID)
+    }
+
   val wsStudentAnswerResponseCount =
     counter {
       name("ws_student_answer_response_count")
       help("WS Student answer response count")
+      labelNames(AGENT_ID)
+    }
+
+  val wsClassOverviewResponseCount =
+    counter {
+      name("ws_class_overview_response_count")
+      help("WS Class overview response count")
       labelNames(AGENT_ID)
     }
 

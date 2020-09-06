@@ -300,12 +300,12 @@ internal object ChallengePost : KLogging() {
     val path = pathOf(CHALLENGE_ROOT, languageName, groupName, challengeName)
 
     if (correctAnswersKey.isNotEmpty()) {
-      logger.info { "Clearing answers for $challenge $correctAnswersKey" }
+      logger.info { "Clearing correctAnswersKey for ${challenge.challengeName} $correctAnswersKey" }
       redis.del(correctAnswersKey)
     }
 
     if (challengeAnswersKey.isNotEmpty()) {
-      logger.info { "Clearing answers for $challenge $challengeAnswersKey" }
+      logger.info { "Clearing challengeAnswersKey for ${challenge.challengeName} $challengeAnswersKey" }
       redis.del(challengeAnswersKey)
     }
 
@@ -331,7 +331,7 @@ internal object ChallengePost : KLogging() {
     correctAnswersKeys
       .forEach { correctAnswersKey ->
         if (correctAnswersKey.isNotEmpty()) {
-          logger.info { "Clearing answers for $correctAnswersKey" }
+          logger.info { "Clearing correctAnswersKey for $correctAnswersKey" }
           redis.del(correctAnswersKey)
         }
       }
@@ -339,14 +339,14 @@ internal object ChallengePost : KLogging() {
     challengeAnswersKeys
       .forEach { challengeAnswersKey ->
         if (challengeAnswersKey.isNotEmpty()) {
-          logger.info { "Clearing answers for $challengeAnswersKey" }
+          logger.info { "Clearing challengeAnswersKey answers for $challengeAnswersKey" }
           redis.del(challengeAnswersKey)
         }
       }
 
     if (user.isNotNull()) {
       for (challenge in content.findGroup(languageName.toLanguageType(), groupName).challenges) {
-        logger.info { "Clearing answers for ${challenge.challengeName}" }
+        logger.info { "Clearing answers for challengeName ${challenge.challengeName}" }
         val funcInfo = challenge.functionInfo(content)
         user.resetHistory(funcInfo, languageName, groupName, challenge.challengeName, content.maxHistoryLength, redis)
       }

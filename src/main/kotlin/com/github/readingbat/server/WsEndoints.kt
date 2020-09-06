@@ -21,6 +21,7 @@ import com.github.pambrose.common.concurrent.BooleanMonitor
 import com.github.pambrose.common.redis.RedisUtils.withRedisPool
 import com.github.pambrose.common.redis.RedisUtils.withSuspendingRedisPool
 import com.github.pambrose.common.time.format
+import com.github.pambrose.common.util.encode
 import com.github.pambrose.common.util.isNotNull
 import com.github.pambrose.common.util.isNull
 import com.github.readingbat.common.ClassCode
@@ -28,6 +29,7 @@ import com.github.readingbat.common.Constants.COLUMN_CNT
 import com.github.readingbat.common.Constants.PING_CODE
 import com.github.readingbat.common.Endpoints.CHALLENGE_ENDPOINT
 import com.github.readingbat.common.Endpoints.CHALLENGE_GROUP_ENDPOINT
+import com.github.readingbat.common.Endpoints.CLASS_SUMMARY_ENDPOINT
 import com.github.readingbat.common.Metrics
 import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.gson
@@ -133,8 +135,7 @@ internal object WsEndoints : KLogging() {
                     var secs = 0
                     while (!finished.get()) {
                       val duration = start.elapsedNow()
-                      val message = PingMessage(duration.format())
-                      val json = gson.toJson(message)
+                      val json = gson.toJson(PingMessage(duration.format()))
                       logger.debug { "Sending $json" }
                       outgoing.send(Frame.Text(json))
                       delay(1.seconds)
@@ -291,8 +292,7 @@ internal object WsEndoints : KLogging() {
                       val msg =
                         " ($numCalls | $totAttemptedAtLeastOne | $totAllCorrect | $avgCorrectFmt | $incorrectAttempts | $likes/$dislikes)"
 
-                      val challengeStats = ChallengeStats(challengeName.value, msg)
-                      val json = gson.toJson(challengeStats)
+                      val json = gson.toJson(ChallengeStats(challengeName.value, msg))
 
                       metrics.wsClassStatisticsResponseCount.labels(agentLaunchId()).inc()
                       logger.debug { "Sending data $json" }
@@ -316,10 +316,112 @@ internal object WsEndoints : KLogging() {
         }
       }
     }
+
+    webSocket("$CLASS_SUMMARY_ENDPOINT/{$LANG_NAME}/{$GROUP_NAME}/{$CLASS_CODE}") {
+      val content = contentSrc.invoke()
+      val (languageName, groupName, classCode) =
+        Triple(
+          call.parameters[LANG_NAME]?.let { LanguageName(it) } ?: throw InvalidPathException("Missing language name"),
+          call.parameters[GROUP_NAME]?.let { GroupName(it) } ?: throw InvalidPathException("Missing group name"),
+          call.parameters[CLASS_CODE]?.let { ClassCode(it) } ?: throw InvalidPathException("Missing class code"))
+      val challenges = content.findGroup(languageName.toLanguageType(), groupName).challenges
+      val finished = AtomicBoolean(false)
+      val remote = call.request.origin.remoteHost
+      val user = fetchUser() ?: throw InvalidRequestException("Null user")
+      val email = fetchEmail()
+      val desc = "$CLASS_SUMMARY_ENDPOINT/$languageName/$groupName/$classCode - $remote - $email"
+
+      validateContext(classCode, user, "Class overview")
+
+      logger.info { "Opened class overview websocket for $desc" }
+
+      outgoing.invokeOnClose {
+        logger.debug { "Close received for class overview websocket for $desc" }
+        finished.set(true)
+      }
+
+      metrics.measureEndpointRequest("/websocket_class_overview") {
+        try {
+          metrics.wsClassOverviewCount.labels(agentLaunchId()).inc()
+          metrics.wsClassOverviewGauge.labels(agentLaunchId()).inc()
+
+          incoming
+            .consumeAsFlow()
+            .mapNotNull { it as? Frame.Text }
+            .collect { frame ->
+              val inboundMsg = frame.readText()
+              pool.withRedisPool { redis ->
+                if (redis.isNotNull() && classCode.isEnabled) {
+                  val enrollees = classCode.fetchEnrollees(redis)
+                  if (enrollees.isNotEmpty()) {
+                    for (challenge in challenges) {
+                      val funcInfo = challenge.functionInfo(content)
+                      val challengeName = challenge.challengeName
+                      val numCalls = funcInfo.invocations.size
+                      var likes = 0
+                      var dislikes = 0
+
+                      for (enrollee in enrollees) {
+                        var incorrectAttempts = 0
+                        var attempted = 0
+
+                        val results = mutableListOf<String>()
+                        for (invocation in funcInfo.invocations) {
+                          val historyKey = enrollee.answerHistoryKey(languageName, groupName, challengeName, invocation)
+
+                          if (redis.exists(historyKey)) {
+                            attempted++
+                            val json = redis[historyKey] ?: ""
+                            val ch = gson.fromJson(json, ChallengeHistory::class.java) ?: ChallengeHistory(invocation)
+
+                            results +=
+                              if (ch.correct)
+                                "Y"
+                              else
+                                if (ch.incorrectAttempts > 0) "N" else "U"
+
+                            incorrectAttempts += ch.incorrectAttempts
+                          }
+                          else {
+                            results += "U"
+                          }
+
+                          if (finished.get())
+                            break
+                        }
+
+                        val msg = " $incorrectAttempts"
+                        val json = gson.toJson(ClassOverview(enrollee.id, challengeName.value.encode(), results, msg))
+
+                        metrics.wsClassOverviewResponseCount.labels(agentLaunchId()).inc()
+                        logger.debug { "Sending data $json" }
+                        runBlocking { outgoing.send(Frame.Text(json)) }
+
+                        if (finished.get())
+                          break
+                      }
+                    }
+                  }
+                }
+              }
+
+              // Shut things down to exit collect
+              outgoing.close()
+              incoming.cancel()
+            }
+        } finally {
+          metrics.wsClassOverviewGauge.labels(agentLaunchId()).dec()
+          close(CloseReason(Codes.GOING_AWAY, "Client disconnected"))
+          logger.info { "Closed class overview websocket for $desc" }
+        }
+      }
+    }
   }
 }
 
 internal class ChallengeStats(val challengeName: String, val msg: String)
+
+internal class ClassOverview(val userId: String, val challengeName: String, val results: List<String>, val msg: String)
 
 internal class PingMessage(val msg: String) {
   val type = PING_CODE
