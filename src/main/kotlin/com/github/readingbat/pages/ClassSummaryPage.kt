@@ -113,9 +113,13 @@ internal object ClassSummaryPage : KLogging() {
               +" "
               a {
                 style = "text-decoration:underline"
-                href = "$CHALLENGE_ROOT/${languageName.value}/${groupName.value}"
+                href = "$CHALLENGE_ROOT/${languageName.value}"
                 +languageName.toLanguageType().name
-                span { style = "padding-left:2px; padding-right:2px"; rawHtml("&rarr;") }
+              }
+              span { style = "padding-left:2px; padding-right:2px"; rawHtml("&rarr;") }
+              a {
+                style = "text-decoration:underline"
+                href = "$CHALLENGE_ROOT/${languageName.value}/${groupName.value}"
                 +groupName.value
               }
             }
@@ -170,7 +174,7 @@ internal object ClassSummaryPage : KLogging() {
                                    enrollees: List<User>,
                                    classCode: ClassCode,
                                    isValidGroupName: Boolean,
-                                   langName: LanguageName,
+                                   languageName: LanguageName,
                                    groupName: GroupName,
                                    redis: Jedis) =
     div(classes = INDENT_2EM) {
@@ -181,7 +185,7 @@ internal object ClassSummaryPage : KLogging() {
           th { +"Name" }
           th { +"Email" }
           if (isValidGroupName) {
-            content.findLanguage(langName.toLanguageType()).findGroup(groupName.value).challenges
+            content.findLanguage(languageName.toLanguageType()).findGroup(groupName.value).challenges
               .forEach { challenge ->
                 th { +challenge.challengeName.value }
               }
@@ -195,7 +199,7 @@ internal object ClassSummaryPage : KLogging() {
               td { +student.email(redis).toString() }
 
               if (isValidGroupName) {
-                content.findLanguage(langName.toLanguageType()).findGroup(groupName.value).challenges
+                content.findLanguage(languageName.toLanguageType()).findGroup(groupName.value).challenges
                   .forEach { challenge ->
                     td {
                       table {

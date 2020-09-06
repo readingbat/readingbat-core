@@ -34,9 +34,12 @@ import com.github.readingbat.common.CSSNames.STATUS
 import com.github.readingbat.common.CSSNames.SUCCESS
 import com.github.readingbat.common.CSSNames.USER_RESP
 import com.github.readingbat.common.CommonUtils.pathOf
+import com.github.readingbat.common.Constants.CLASS_CODE_QP
 import com.github.readingbat.common.Constants.CORRECT_COLOR
 import com.github.readingbat.common.Constants.DBMS_DOWN
+import com.github.readingbat.common.Constants.GROUP_NAME_QP
 import com.github.readingbat.common.Constants.INCOMPLETE_COLOR
+import com.github.readingbat.common.Constants.LANG_TYPE_QP
 import com.github.readingbat.common.Constants.LIKE_DISLIKE_JS_FUNC
 import com.github.readingbat.common.Constants.MSG
 import com.github.readingbat.common.Constants.PING_CODE
@@ -46,6 +49,7 @@ import com.github.readingbat.common.Constants.RESP
 import com.github.readingbat.common.Constants.WRONG_COLOR
 import com.github.readingbat.common.Endpoints.CHALLENGE_ENDPOINT
 import com.github.readingbat.common.Endpoints.CHALLENGE_ROOT
+import com.github.readingbat.common.Endpoints.CLASS_SUMMARY_ENDPOINT
 import com.github.readingbat.common.Endpoints.CLEAR_CHALLENGE_ANSWERS_ENDPOINT
 import com.github.readingbat.common.Endpoints.PLAYGROUND_ROOT
 import com.github.readingbat.common.Endpoints.STATIC_ROOT
@@ -123,6 +127,7 @@ internal object ChallengePage : KLogging() {
         val loginPath = pathOf(CHALLENGE_ROOT, languageName, groupName, challengeName)
         val activeClassCode = user.fetchActiveClassCode(redis)
         val enrollees = activeClassCode.fetchEnrollees(redis)
+        val msg = Message(queryParam(MSG))
 
         head {
           link { rel = "stylesheet"; href = spinnerCss }
@@ -136,15 +141,7 @@ internal object ChallengePage : KLogging() {
         }
 
         body {
-          bodyHeader(content,
-                     user,
-                     languageType,
-                     loginAttempt,
-                     loginPath,
-                     false,
-                     activeClassCode,
-                     redis,
-                     Message(queryParam(MSG)))
+          bodyHeader(content, user, languageType, loginAttempt, loginPath, false, activeClassCode, redis, msg)
 
           displayChallenge(challenge, funcInfo)
 
@@ -356,7 +353,13 @@ internal object ChallengePage : KLogging() {
 
       h3 {
         style = "margin-left: 5px; color: $headerColor"
-        +"${if (enrollees.isEmpty()) "No students enrolled in " else "Student progress for "} $displayStr"
+        +if (enrollees.isEmpty()) "No students enrolled in " else "Student progress for "
+        a {
+          style = "text-decoration:underline";
+          href =
+            "$CLASS_SUMMARY_ENDPOINT?$CLASS_CODE_QP=$classCode&$LANG_TYPE_QP=$languageName&$GROUP_NAME_QP=$groupName"
+          +displayStr
+        }
       }
 
       if (enrollees.isNotEmpty()) {

@@ -52,6 +52,7 @@ import com.github.readingbat.pages.PageUtils.encodeUriElems
 import com.github.readingbat.pages.PageUtils.headDefault
 import com.github.readingbat.pages.PageUtils.rawHtml
 import com.github.readingbat.server.GroupName
+import com.github.readingbat.server.GroupName.Companion.EMPTY_GROUP
 import com.github.readingbat.server.LanguageName
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
@@ -171,7 +172,7 @@ internal object ChallengeGroupPage : KLogging() {
       }
 
   fun BODY.displayClassDescription(classCode: ClassCode,
-                                   langName: LanguageName,
+                                   languageName: LanguageName,
                                    groupName: GroupName,
                                    enrollees: List<User>,
                                    redis: Jedis?) {
@@ -182,7 +183,8 @@ internal object ChallengeGroupPage : KLogging() {
       +"$studentCount ${"student".pluralize(enrollees.count())} enrolled in "
       a {
         style = "text-decoration:underline";
-        href = "$CLASS_SUMMARY_ENDPOINT?$CLASS_CODE_QP=$classCode&$LANG_TYPE_QP=$langName&$GROUP_NAME_QP=$groupName"
+        href =
+          "$CLASS_SUMMARY_ENDPOINT?$CLASS_CODE_QP=$classCode" + (if (groupName != EMPTY_GROUP) "&$LANG_TYPE_QP=$languageName&$GROUP_NAME_QP=$groupName" else "")
         +displayStr
       }
     }
