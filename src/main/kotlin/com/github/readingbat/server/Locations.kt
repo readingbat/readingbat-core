@@ -179,6 +179,16 @@ inline class LanguageName(val value: String) {
 
   val isJvm get() = this in jmvLanguages
 
+  internal fun isValid() =
+    try {
+      LanguageType.values().first { it.name.equals(value, ignoreCase = true) }
+      true
+    } catch (e: NoSuchElementException) {
+      false
+    }
+
+  internal fun isDefined(content: ReadingBatContent) = isValid() && content.hasLanguage(toLanguageType())
+
   companion object {
     internal val EMPTY_LANGUAGE = LanguageName("")
     internal val ANY_LANGUAGE = LanguageName("*")
@@ -190,6 +200,9 @@ inline class LanguageName(val value: String) {
 
 inline class GroupName(val value: String) {
   override fun toString() = value
+
+  internal fun isDefined(content: ReadingBatContent, languageName: LanguageName) =
+    languageName.isDefined(content) && content.findLanguage(languageName.toLanguageType()).hasGroup(value)
 
   companion object {
     internal val EMPTY_GROUP = GroupName("")

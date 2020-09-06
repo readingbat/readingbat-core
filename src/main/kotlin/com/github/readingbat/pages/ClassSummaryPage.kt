@@ -30,12 +30,14 @@ import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.fetchActiveClassCode
 import com.github.readingbat.common.isNotValidUser
 import com.github.readingbat.dsl.InvalidRequestException
+import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.pages.ChallengePage.headerColor
 import com.github.readingbat.pages.HelpAndLogin.helpAndLogin
 import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyTitle
 import com.github.readingbat.pages.PageUtils.headDefault
+import com.github.readingbat.pages.PageUtils.rawHtml
 import com.github.readingbat.server.GroupName
 import com.github.readingbat.server.GroupName.Companion.EMPTY_GROUP
 import com.github.readingbat.server.LanguageName
@@ -58,12 +60,8 @@ internal object ClassSummaryPage : KLogging() {
 
     val classCode =
       call.parameters[CLASS_CODE_QP]?.let { ClassCode(it) } ?: throw InvalidRequestException("Missing class code")
-
     val langName = call.parameters[LANG_TYPE_QP]?.let { LanguageName(it) } ?: EMPTY_LANGUAGE
     val groupName = call.parameters[GROUP_NAME_QP]?.let { GroupName(it) } ?: EMPTY_GROUP
-
-    logger.info { "Lang = $langName" }
-    logger.info { "Group = $groupName" }
 
     when {
       classCode.isNotValid(redis) -> throw InvalidRequestException("Invalid classCode $classCode")
@@ -95,9 +93,18 @@ internal object ClassSummaryPage : KLogging() {
 
           h2 { +"ReadingBat Class Summary" }
 
-          h3 { style = "margin-left: 5px; color: $headerColor"; +classCode.toDisplayString(redis) }
-
           displayClassChoices(content, classCode, redis)
+
+          h3 {
+            style = "margin-left: 15px; color: $headerColor";
+            +classCode.toDisplayString(redis)
+            if (groupName.isDefined(content, langName)) {
+              +" "
+              +langName.toLanguageType().name
+              span { style = "padding-left:2px; padding-right:2px"; rawHtml("&rarr;") }
+              +groupName.value
+            }
+          }
 
           displayStudents(user, classCode, redis)
 
@@ -111,13 +118,14 @@ internal object ClassSummaryPage : KLogging() {
       style = "border-collapse: separate; border-spacing: 15px"
       tr {
         td { style = "font-size:120%"; +"Challenge Groups: " }
-        listOf(content.java, content.python, content.kotlin)
+        LanguageType.values()
+          .map { content.findLanguage(it) }
           .forEach { langGroup ->
             if (langGroup.challengeGroups.isNotEmpty()) {
               td {
                 ul {
                   style =
-                    "padding-left:0; margin-bottom:0; text-align:center; vertical-align:middle; list-style-type:none"
+                    "padding-left:0; margin-bottom:0; list-style-type:none"
                   dropdown {
                     val lang = langGroup.languageName.toLanguageType().name
                     dropdownToggle { +lang }
@@ -164,7 +172,7 @@ internal object ClassSummaryPage : KLogging() {
 
   fun LI.dropdownToggle(block: A.() -> Unit) {
     a("#", null, "dropdown-toggle") {
-      style = "font-size:120%"
+      style = "font-size:120%; text-decoration:none"
       attributes["data-toggle"] = "dropdown"
       role = "button"
       attributes["aria-expanded"] = "false"
