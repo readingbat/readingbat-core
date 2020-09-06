@@ -107,12 +107,12 @@ internal object ClassSummaryPage : KLogging() {
           displayClassChoices(content, classCode, redis)
 
           h3 {
-            style = "margin-left: 15px; color: $headerColor";
+            style = "margin-left: 15px; color: $headerColor"
             +classCode.toDisplayString(redis)
             if (isValidGroupName) {
               +" "
               a {
-                style = "text-decoration:underline";
+                style = "text-decoration:underline"
                 href = "$CHALLENGE_ROOT/${languageName.value}/${groupName.value}"
                 +languageName.toLanguageType().name
                 span { style = "padding-left:2px; padding-right:2px"; rawHtml("&rarr;") }
@@ -201,7 +201,7 @@ internal object ClassSummaryPage : KLogging() {
                       table {
                         tr {
                           challenge.functionInfo(content).invocations
-                            .forEachIndexed() { i, invocation ->
+                            .forEachIndexed { i, invocation ->
                               td {
                                 style =
                                   "border-collapse: separate; border: 1px solid black; width: 7px; width: 7px; height: 15px; background-color: $INCOMPLETE_COLOR"
@@ -261,11 +261,11 @@ internal object ClassSummaryPage : KLogging() {
   }
 
   // See: https://github.com/Kotlin/kotlinx.html/wiki/Micro-templating-and-DSL-customizing
-  fun UL.dropdown(block: LI.() -> Unit) {
+  private fun UL.dropdown(block: LI.() -> Unit) {
     li("dropdown") { block() }
   }
 
-  fun LI.dropdownToggle(block: A.() -> Unit) {
+  private fun LI.dropdownToggle(block: A.() -> Unit) {
     a("#", null, "dropdown-toggle") {
       style = "font-size:120%; text-decoration:none"
       attributes["data-toggle"] = "dropdown"
@@ -277,14 +277,14 @@ internal object ClassSummaryPage : KLogging() {
     }
   }
 
-  fun LI.dropdownMenu(block: UL.() -> Unit): Unit = ul("dropdown-menu") {
+  private fun LI.dropdownMenu(block: UL.() -> Unit): Unit = ul("dropdown-menu") {
     role = "menu"
     block()
   }
 
-  fun UL.dropdownHeader(text: String): Unit =
+  private fun UL.dropdownHeader(text: String) =
     li { style = "font-size:120%"; classes = setOf("dropdown-header"); +text }
 
-  fun UL.divider(): Unit = li { classes = setOf("divider") }
+  private fun UL.divider() = li { classes = setOf("divider") }
 
 }
