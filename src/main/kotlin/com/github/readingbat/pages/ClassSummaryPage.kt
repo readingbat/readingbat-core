@@ -26,6 +26,7 @@ import com.github.readingbat.common.Constants.GROUP_NAME_QP
 import com.github.readingbat.common.Constants.INCOMPLETE_COLOR
 import com.github.readingbat.common.Constants.LANG_TYPE_QP
 import com.github.readingbat.common.Constants.WRONG_COLOR
+import com.github.readingbat.common.Endpoints.CHALLENGE_ROOT
 import com.github.readingbat.common.Endpoints.CLASS_SUMMARY_ENDPOINT
 import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.Message
@@ -56,6 +57,8 @@ import mu.KLogging
 import redis.clients.jedis.Jedis
 
 internal object ClassSummaryPage : KLogging() {
+
+  private const val STATS = "-stats"
 
   fun PipelineCall.classSummaryPage(content: ReadingBatContent,
                                     user: User?,
@@ -108,9 +111,13 @@ internal object ClassSummaryPage : KLogging() {
             +classCode.toDisplayString(redis)
             if (isValidGroupName) {
               +" "
-              +languageName.toLanguageType().name
-              span { style = "padding-left:2px; padding-right:2px"; rawHtml("&rarr;") }
-              +groupName.value
+              a {
+                style = "text-decoration:underline";
+                href = "$CHALLENGE_ROOT/${languageName.value}/${groupName.value}"
+                +languageName.toLanguageType().name
+                span { style = "padding-left:2px; padding-right:2px"; rawHtml("&rarr;") }
+                +groupName.value
+              }
             }
           }
 
@@ -184,8 +191,8 @@ internal object ClassSummaryPage : KLogging() {
         enrollees
           .forEach { student ->
             tr {
-              td { a { style = "text-decoration:underline"; href = "./"; +student.name(redis) } }
-              td { a { style = "text-decoration:underline"; href = "./"; +student.email(redis).toString() } }
+              td { +student.name(redis) }
+              td { +student.email(redis).toString() }
 
               if (isValidGroupName) {
                 content.findLanguage(langName.toLanguageType()).findGroup(groupName.value).challenges
@@ -197,13 +204,14 @@ internal object ClassSummaryPage : KLogging() {
                             .forEachIndexed() { i, invocation ->
                               td {
                                 style =
-                                  "border-collapse: separate; border: 1px solid black; width: 7px; height: 15px; background-color: $INCOMPLETE_COLOR"
+                                  "border-collapse: separate; border: 1px solid black; width: 7px; width: 7px; height: 15px; background-color: $INCOMPLETE_COLOR"
                                 id = "${student.id}-${challenge.challengeName.value.encode()}-$i"
                                 +""
                               }
                             }
                           td {
-                            id = "${student.id}-${challenge.challengeName.value.encode()}-stats"
+                            style = "padding-left:5px; width: 20px;"
+                            id = "${student.id}-${challenge.challengeName.value.encode()}$STATS"
                             +""
                           }
                         }
@@ -245,7 +253,7 @@ internal object ClassSummaryPage : KLogging() {
                                                                     : (obj.results[i] == 'N' ? '$WRONG_COLOR' 
                                                                                              : '$INCOMPLETE_COLOR');
 
-              document.getElementById(prefix + '-stats').innerHTML = obj.msg;
+              document.getElementById(prefix + '$STATS').innerHTML = obj.msg;
             }
           };
         """.trimIndent())

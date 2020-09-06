@@ -37,6 +37,7 @@ import com.github.readingbat.pages.ChallengeGroupPage.isCorrect
 import com.github.readingbat.pages.PageUtils.bodyHeader
 import com.github.readingbat.pages.PageUtils.headDefault
 import com.github.readingbat.pages.PageUtils.rawHtml
+import com.github.readingbat.server.GroupName.Companion.EMPTY_GROUP
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
 import com.github.readingbat.server.ServerUtils.rows
@@ -117,7 +118,7 @@ internal object LanguageGroupPage {
           bodyHeader(content, user, languageType, loginAttempt, loginPath, true, activeClassCode, redis, msg)
 
           if (activeClassCode.isEnabled)
-            displayClassDescription(activeClassCode, enrollees, redis)
+            displayClassDescription(activeClassCode, languageName, EMPTY_GROUP, enrollees, redis)
 
           table {
             val cols = 3

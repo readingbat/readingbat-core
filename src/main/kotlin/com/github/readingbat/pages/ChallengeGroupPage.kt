@@ -17,17 +17,20 @@
 
 package com.github.readingbat.pages
 
-import com.github.pambrose.common.util.decode
 import com.github.pambrose.common.util.isNotNull
 import com.github.pambrose.common.util.pluralize
 import com.github.readingbat.common.*
 import com.github.readingbat.common.CSSNames.FUNC_ITEM1
 import com.github.readingbat.common.CSSNames.FUNC_ITEM2
 import com.github.readingbat.common.CommonUtils.pathOf
+import com.github.readingbat.common.Constants.CLASS_CODE_QP
 import com.github.readingbat.common.Constants.COLUMN_CNT
+import com.github.readingbat.common.Constants.GROUP_NAME_QP
+import com.github.readingbat.common.Constants.LANG_TYPE_QP
 import com.github.readingbat.common.Constants.MSG
 import com.github.readingbat.common.Endpoints.CHALLENGE_GROUP_ENDPOINT
 import com.github.readingbat.common.Endpoints.CHALLENGE_ROOT
+import com.github.readingbat.common.Endpoints.CLASS_SUMMARY_ENDPOINT
 import com.github.readingbat.common.Endpoints.CLEAR_GROUP_ANSWERS_ENDPOINT
 import com.github.readingbat.common.Endpoints.STATIC_ROOT
 import com.github.readingbat.common.FormFields.CHALLENGE_ANSWERS_PARAM
@@ -129,10 +132,10 @@ internal object ChallengeGroupPage : KLogging() {
         body {
           bodyHeader(content, user, languageType, loginAttempt, loginPath, false, activeClassCode, redis, msg)
 
-          h2 { +groupName.value.decode() }
+          h2 { +groupName.value }
 
           if (activeClassCode.isEnabled)
-            displayClassDescription(activeClassCode, enrollees, redis)
+            displayClassDescription(activeClassCode, languageName, groupName, enrollees, redis)
 
           if (enrollees.isNotEmpty())
             p { +"(# of questions | # that started | # completed | Avg correct | Incorrect attempts | Likes/Dislikes)" }
@@ -167,12 +170,21 @@ internal object ChallengeGroupPage : KLogging() {
         }
       }
 
-  fun BODY.displayClassDescription(classCode: ClassCode, enrollees: List<User>, redis: Jedis?) {
+  fun BODY.displayClassDescription(classCode: ClassCode,
+                                   langName: LanguageName,
+                                   groupName: GroupName,
+                                   enrollees: List<User>,
+                                   redis: Jedis?) {
     val displayStr = classCode.toDisplayString(redis)
     val studentCount = if (enrollees.isEmpty()) "No" else enrollees.count().toString()
     h3 {
       style = "margin-left: 5px; color: ${ChallengePage.headerColor}"
-      +"$studentCount ${"student".pluralize(enrollees.count())} enrolled in $displayStr"
+      +"$studentCount ${"student".pluralize(enrollees.count())} enrolled in "
+      a {
+        style = "text-decoration:underline";
+        href = "$CLASS_SUMMARY_ENDPOINT?$CLASS_CODE_QP=$classCode&$LANG_TYPE_QP=$langName&$GROUP_NAME_QP=$groupName"
+        +displayStr
+      }
     }
   }
 

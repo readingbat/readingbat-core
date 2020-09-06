@@ -390,7 +390,7 @@ internal object WsEndoints : KLogging() {
                             break
                         }
 
-                        val msg = " $incorrectAttempts"
+                        val msg = "$incorrectAttempts"
                         val json = gson.toJson(ClassOverview(enrollee.id, challengeName.value.encode(), results, msg))
 
                         metrics.wsClassOverviewResponseCount.labels(agentLaunchId()).inc()
