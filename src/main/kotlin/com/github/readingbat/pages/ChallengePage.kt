@@ -307,7 +307,7 @@ internal object ChallengePage : KLogging() {
             wshost = wshost.replace(/^http:/, 'ws:');
 
           var wsurl = wshost + '$CHALLENGE_ENDPOINT/'+encodeURIComponent('$classCode')+'/'+encodeURIComponent('$challengeMd5');
- 
+
           var ws = new WebSocket(wsurl);
           
           ws.onopen = function (event) {
@@ -329,7 +329,9 @@ internal object ChallengePage : KLogging() {
               var prefix = obj.userId + '-' + obj.history.invocation;
               
               var answers = document.getElementById(prefix + '-$answersTd')
-              answers.style.backgroundColor = obj.history.correct ? '$CORRECT_COLOR' : (obj.history.answers.length > 0 ? '$WRONG_COLOR' : '$INCOMPLETE_COLOR');
+              answers.style.backgroundColor = obj.history.correct ? '$CORRECT_COLOR' 
+                                                                  : (obj.history.answers.length > 0 ? '$WRONG_COLOR' 
+                                                                                                    : '$INCOMPLETE_COLOR');
   
               document.getElementById(prefix + '-$answersSpan').innerHTML = obj.history.answers;
             }

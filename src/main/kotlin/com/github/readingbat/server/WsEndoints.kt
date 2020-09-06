@@ -232,7 +232,7 @@ internal object WsEndoints : KLogging() {
                         }
                     }
 
-                    ltor.forEach challenge@{ challenge ->
+                    for (challenge in ltor) {
                       val funcInfo = challenge.functionInfo(content)
                       val challengeName = challenge.challengeName
                       val numCalls = funcInfo.invocations.size
@@ -243,11 +243,11 @@ internal object WsEndoints : KLogging() {
                       var likes = 0
                       var dislikes = 0
 
-                      enrollees.forEach { enrollee ->
+                      for (enrollee in enrollees) {
                         var attempted = 0
                         var numCorrect = 0
 
-                        funcInfo.invocations.forEach { invocation ->
+                        for (invocation in funcInfo.invocations) {
                           val historyKey = enrollee.answerHistoryKey(languageName, groupName, challengeName, invocation)
 
                           if (redis.exists(historyKey)) {
@@ -262,7 +262,7 @@ internal object WsEndoints : KLogging() {
                           }
 
                           if (finished.get())
-                            return@challenge
+                            break
                         }
 
                         val likeDislikeKey = enrollee.likeDislikeKey(languageName, groupName, challengeName)
@@ -281,7 +281,7 @@ internal object WsEndoints : KLogging() {
                         totCorrect += numCorrect
 
                         if (finished.get())
-                          return@challenge
+                          break
                       }
 
                       val avgCorrect =
@@ -299,7 +299,7 @@ internal object WsEndoints : KLogging() {
                       runBlocking { outgoing.send(Frame.Text(json)) }
 
                       if (finished.get())
-                        return@challenge
+                        break
                     }
                   }
                 }
