@@ -20,15 +20,7 @@ package com.github.readingbat.pages
 import com.github.readingbat.common.CSSNames.INDENT_2EM
 import com.github.readingbat.common.ClassCode
 import com.github.readingbat.common.Constants.CLASS_CODE_QP
-import com.github.readingbat.common.Endpoints.CLASS_SUMMARY_ENDPOINT
-import com.github.readingbat.common.Endpoints.TEACHER_PREFS_POST_ENDPOINT
-import com.github.readingbat.common.FormFields.CLASSES_CHOICE_PARAM
-import com.github.readingbat.common.FormFields.CLASS_CODE_NAME_PARAM
-import com.github.readingbat.common.FormFields.DELETE_CLASS
-import com.github.readingbat.common.FormFields.DISABLED_MODE
 import com.github.readingbat.common.FormFields.RETURN_PARAM
-import com.github.readingbat.common.FormFields.UPDATE_ACTIVE_CLASS
-import com.github.readingbat.common.FormFields.USER_PREFS_ACTION_PARAM
 import com.github.readingbat.common.Message
 import com.github.readingbat.common.Message.Companion.EMPTY_MESSAGE
 import com.github.readingbat.common.User
@@ -41,14 +33,10 @@ import com.github.readingbat.pages.HelpAndLogin.helpAndLogin
 import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyTitle
 import com.github.readingbat.pages.PageUtils.headDefault
-import com.github.readingbat.pages.PageUtils.rawHtml
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
 import io.ktor.application.*
 import kotlinx.html.*
-import kotlinx.html.Entities.nbsp
-import kotlinx.html.InputType.radio
-import kotlinx.html.InputType.submit
 import kotlinx.html.stream.createHTML
 import mu.KLogging
 import redis.clients.jedis.Jedis
@@ -97,11 +85,58 @@ internal object ClassSummaryPage : KLogging() {
           h3 { style = "margin-left: 5px; color: $headerColor"; +"$classDesc [$classCode]" }
 
           displayClassChoices(content, redis)
+
           displayStudents(user, classCode, redis)
 
           backLink(returnPath)
         }
       }
+  }
+
+  private fun BODY.displayClassChoices(content: ReadingBatContent, redis: Jedis) {
+    table {
+      style = "border-collapse: separate; border-spacing: 15px"
+      tr {
+        td { style = "font-size:120%"; +"Challenge Groups: " }
+        listOf(content.java, content.python, content.kotlin)
+          .forEach {
+            if (it.challengeGroups.isNotEmpty()) {
+              td {
+                //style = "text-align:center; vertical-align:middle"
+                ul {
+                  style =
+                    "padding-left:0; margin-bottom:0; text-align:center; vertical-align:middle; list-style-type:none"
+                  dropdown {
+                    dropdownToggle { +it.languageName.toLanguageType().name }
+                    dropdownMenu {
+                      dropdownHeader(it.languageName.toLanguageType().name)
+                      //divider()
+                      it.challengeGroups.forEach { li { a("#") { +it.groupName.value } } }
+                    }
+                  }
+                }
+              }
+            }
+          }
+      }
+    }
+  }
+
+  private fun BODY.displayStudents(user: User, classCode: ClassCode, redis: Jedis) {
+    val enrollees = classCode.fetchEnrollees(redis)
+
+    div(classes = INDENT_2EM) {
+      table {
+        style = "border-collapse: separate; border-spacing: 15px 5px"
+        enrollees
+          .forEach { student ->
+            tr {
+              td { a { style = "text-decoration:underline"; href = "./"; +student.name(redis) } }
+              td { a { style = "text-decoration:underline"; href = "./"; +student.email(redis).toString() } }
+            }
+          }
+      }
+    }
   }
 
   fun UL.dropdown(block: LI.() -> Unit) {
@@ -110,7 +145,7 @@ internal object ClassSummaryPage : KLogging() {
 
   fun LI.dropdownToggle(block: A.() -> Unit) {
     a("#", null, "dropdown-toggle") {
-      style = "font-size:120%;"
+      style = "font-size:120%"
       attributes["data-toggle"] = "dropdown"
       role = "button"
       attributes["aria-expanded"] = "false"
@@ -126,130 +161,8 @@ internal object ClassSummaryPage : KLogging() {
   }
 
   fun UL.dropdownHeader(text: String): Unit =
-    li { style = "font-size:120%;"; classes = setOf("dropdown-header"); +text }
+    li { style = "font-size:120%"; classes = setOf("dropdown-header"); +text }
 
   fun UL.divider(): Unit = li { classes = setOf("divider") }
 
-  private fun BODY.displayClassChoices(content: ReadingBatContent, redis: Jedis) {
-    span {
-      ul {
-        style = "list-style-type:none"
-        dropdown {
-          dropdownToggle { +"Challenge Groups" }
-          dropdownMenu {
-            if (content.java.challengeGroups.isNotEmpty())
-              dropdownHeader("Java")
-            content.java.challengeGroups.forEach { li { a("#") { +it.groupName.value } } }
-
-            if (content.python.challengeGroups.isNotEmpty()) {
-              divider()
-              dropdownHeader("Python")
-            }
-            content.python.challengeGroups.forEach { li { a("#") { +it.groupName.value } } }
-
-            if (content.kotlin.challengeGroups.isNotEmpty()) {
-              divider()
-              dropdownHeader("Kotlin")
-            }
-            content.kotlin.challengeGroups.forEach { li { a("#") { +it.groupName.value } } }
-          }
-        }
-      }
-    }
-
-
-  }
-
-  private fun BODY.displayStudents(user: User, classCode: ClassCode, redis: Jedis) {
-    val enrollees = classCode.fetchEnrollees(redis)
-
-    div(classes = INDENT_2EM) {
-      table {
-        style = "border-spacing: 15px 5px"
-        enrollees
-          .forEach { student ->
-            tr {
-              td { a { style = "text-decoration:underline"; href = "./"; +student.name(redis) } }
-              td { a { style = "text-decoration:underline"; href = "./"; +student.email(redis).toString() } }
-            }
-          }
-      }
-    }
-  }
-
-  private fun BODY.classList(activeClassCode: ClassCode, classCodes: List<ClassCode>, redis: Jedis) {
-    table {
-      style = "border-spacing: 15px 5px"
-      tr { th { +"Active" }; th { +"Class Code" }; th { +"Description" }; th { +"Enrollees" } }
-      form {
-        action = TEACHER_PREFS_POST_ENDPOINT
-        method = FormMethod.post
-
-        classCodes.forEach { code ->
-          val classDesc = code.fetchClassDesc(redis)
-          val enrolleeCount = code.fetchEnrollees(redis).count()
-          this@table.tr {
-            td {
-              style = "text-align:center"
-              input {
-                type = radio; name = CLASSES_CHOICE_PARAM; value = code.value; checked = activeClassCode == code
-              }
-            }
-            td {
-              code.displayedValue
-                .also {
-                  if (enrolleeCount == 0)
-                    +it
-                  else
-                    a { href = "$CLASS_SUMMARY_ENDPOINT?$CLASS_CODE_QP=${code.displayedValue}"; +it }
-                }
-            }
-            td { +classDesc }
-            td { style = "text-align:center"; +enrolleeCount.toString() }
-          }
-        }
-
-        this@table.tr {
-          td {
-            style = "text-align:center"
-            input {
-              type = radio; name = CLASSES_CHOICE_PARAM; value = DISABLED_MODE; checked = activeClassCode.isNotEnabled
-            }
-          }
-          td { colSpan = "3"; +"Student mode" }
-        }
-        this@table.tr {
-          td {}
-          td { input { type = submit; name = USER_PREFS_ACTION_PARAM; value = UPDATE_ACTIVE_CLASS } }
-        }
-      }
-    }
-  }
-
-  private fun BODY.deleteClassButtons(classCodes: List<ClassCode>, redis: Jedis) {
-    table {
-      style = "border-spacing: 5px 5px"
-      tr { th { rawHtml(nbsp.text) } }
-      classCodes.forEach { classCode ->
-        val classDesc = classCode.fetchClassDesc(redis, true)
-        tr {
-          td {
-            form {
-              style = "margin:0"
-              action = TEACHER_PREFS_POST_ENDPOINT
-              method = FormMethod.post
-              onSubmit =
-                "return confirm('Are you sure you want to delete class $classDesc [$classCode]?')"
-              input { type = InputType.hidden; name = CLASS_CODE_NAME_PARAM; value = classCode.displayedValue }
-              input {
-                style = "vertical-align:middle; margin-top:1; margin-bottom:0"
-                type = submit; name = USER_PREFS_ACTION_PARAM; value =
-                DELETE_CLASS
-              }
-            }
-          }
-        }
-      }
-    }
-  }
 }
