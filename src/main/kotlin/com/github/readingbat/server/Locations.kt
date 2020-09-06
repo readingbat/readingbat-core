@@ -168,26 +168,24 @@ internal data class Language(val lname: String) {
 internal class PlaygroundRequest(val groupName: String, val challengeName: String)
 
 inline class LanguageName(val value: String) {
-  override fun toString() = value
+  val isJvm get() = this in jmvLanguages
 
   fun toLanguageType() =
     try {
       LanguageType.values().first { it.name.equals(value, ignoreCase = true) }
     } catch (e: NoSuchElementException) {
-      throw InvalidPathException("Invalid language request: $this")
+      throw InvalidPathException("Invalid language name: $this")
     }
 
-  val isJvm get() = this in jmvLanguages
-
-  internal fun isValid() =
-    try {
-      LanguageType.values().first { it.name.equals(value, ignoreCase = true) }
-      true
-    } catch (e: NoSuchElementException) {
-      false
-    }
+  internal fun isValid() = try {
+    toLanguageType(); true
+  } catch (e: InvalidPathException) {
+    false
+  }
 
   internal fun isDefined(content: ReadingBatContent) = isValid() && content.hasLanguage(toLanguageType())
+
+  override fun toString() = value
 
   companion object {
     internal val EMPTY_LANGUAGE = LanguageName("")
@@ -199,10 +197,10 @@ inline class LanguageName(val value: String) {
 }
 
 inline class GroupName(val value: String) {
-  override fun toString() = value
-
   internal fun isDefined(content: ReadingBatContent, languageName: LanguageName) =
     languageName.isDefined(content) && content.findLanguage(languageName.toLanguageType()).hasGroup(value)
+
+  override fun toString() = value
 
   companion object {
     internal val EMPTY_GROUP = GroupName("")

@@ -107,13 +107,11 @@ internal object ChallengePage : KLogging() {
   private const val pingMsg = "pingMsg"
   internal const val headerColor = "#419DC1"
 
-  fun PipelineCall.challengePage(
-    content: ReadingBatContent,
-    user: User?,
-    challenge: Challenge,
-    loginAttempt: Boolean,
-    redis: Jedis?,
-                                ) =
+  fun PipelineCall.challengePage(content: ReadingBatContent,
+                                 user: User?,
+                                 challenge: Challenge,
+                                 loginAttempt: Boolean,
+                                 redis: Jedis?) =
     createHTML()
       .html {
         val browserSession = call.browserSession
@@ -214,13 +212,11 @@ internal object ChallengePage : KLogging() {
     }
   }
 
-  private fun BODY.displayQuestions(
-    user: User?,
-    browserSession: BrowserSession?,
-    challenge: Challenge,
-    funcInfo: FunctionInfo,
-    redis: Jedis?,
-                                   ) =
+  private fun BODY.displayQuestions(user: User?,
+                                    browserSession: BrowserSession?,
+                                    challenge: Challenge,
+                                    funcInfo: FunctionInfo,
+                                    redis: Jedis?) =
     div {
       style = "margin-top:2em; margin-left:2em"
 
@@ -342,14 +338,12 @@ internal object ChallengePage : KLogging() {
     }
   }
 
-  private fun BODY.displayStudentProgress(
-    challenge: Challenge,
-    maxHistoryLength: Int,
-    funcInfo: FunctionInfo,
-    classCode: ClassCode,
-    enrollees: List<User>,
-    redis: Jedis,
-                                         ) =
+  private fun BODY.displayStudentProgress(challenge: Challenge,
+                                          maxHistoryLength: Int,
+                                          funcInfo: FunctionInfo,
+                                          classCode: ClassCode,
+                                          enrollees: List<User>,
+                                          redis: Jedis) =
     div {
       style = "margin-top:2em"
 
@@ -562,11 +556,9 @@ internal object ChallengePage : KLogging() {
     }
   }
 
-  private fun BODY.clearChallengeAnswerHistoryOption(
-    user: User?,
-    browserSession: BrowserSession?,
-    challenge: Challenge,
-                                                    ) {
+  private fun BODY.clearChallengeAnswerHistoryOption(user: User?,
+                                                     browserSession: BrowserSession?,
+                                                     challenge: Challenge) {
     val languageName = challenge.languageType.languageName
     val groupName = challenge.groupName
     val challengeName = challenge.challengeName

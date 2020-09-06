@@ -17,18 +17,16 @@
 
 package com.github.readingbat.pages
 
+import com.github.pambrose.common.util.encode
+import com.github.readingbat.common.*
 import com.github.readingbat.common.CSSNames.INDENT_2EM
-import com.github.readingbat.common.ClassCode
 import com.github.readingbat.common.Constants.CLASS_CODE_QP
 import com.github.readingbat.common.Constants.GROUP_NAME_QP
 import com.github.readingbat.common.Constants.LANG_TYPE_QP
 import com.github.readingbat.common.Endpoints.CLASS_SUMMARY_ENDPOINT
 import com.github.readingbat.common.FormFields.RETURN_PARAM
-import com.github.readingbat.common.Message
 import com.github.readingbat.common.Message.Companion.EMPTY_MESSAGE
-import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.fetchActiveClassCode
-import com.github.readingbat.common.isNotValidUser
 import com.github.readingbat.dsl.InvalidRequestException
 import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.dsl.ReadingBatContent
@@ -62,6 +60,7 @@ internal object ClassSummaryPage : KLogging() {
       call.parameters[CLASS_CODE_QP]?.let { ClassCode(it) } ?: throw InvalidRequestException("Missing class code")
     val langName = call.parameters[LANG_TYPE_QP]?.let { LanguageName(it) } ?: EMPTY_LANGUAGE
     val groupName = call.parameters[GROUP_NAME_QP]?.let { GroupName(it) } ?: EMPTY_GROUP
+    val isValidGroupName = groupName.isDefined(content, langName)
 
     when {
       classCode.isNotValid(redis) -> throw InvalidRequestException("Invalid classCode $classCode")
@@ -98,7 +97,7 @@ internal object ClassSummaryPage : KLogging() {
           h3 {
             style = "margin-left: 15px; color: $headerColor";
             +classCode.toDisplayString(redis)
-            if (groupName.isDefined(content, langName)) {
+            if (isValidGroupName) {
               +" "
               +langName.toLanguageType().name
               span { style = "padding-left:2px; padding-right:2px"; rawHtml("&rarr;") }
@@ -106,7 +105,7 @@ internal object ClassSummaryPage : KLogging() {
             }
           }
 
-          displayStudents(user, classCode, redis)
+          displayStudents(content, user, classCode, isValidGroupName, langName, groupName, redis)
 
           backLink(returnPath)
         }
@@ -115,7 +114,7 @@ internal object ClassSummaryPage : KLogging() {
 
   private fun BODY.displayClassChoices(content: ReadingBatContent, classCode: ClassCode, redis: Jedis) {
     table {
-      style = "border-collapse: separate; border-spacing: 15px"
+      style = "border-collapse: separate; border-spacing: 15px 5px" // 5px is vertical
       tr {
         td { style = "font-size:120%"; +"Challenge Groups: " }
         LanguageType.values()
@@ -124,8 +123,7 @@ internal object ClassSummaryPage : KLogging() {
             if (langGroup.challengeGroups.isNotEmpty()) {
               td {
                 ul {
-                  style =
-                    "padding-left:0; margin-bottom:0; list-style-type:none"
+                  style = "padding-left:0; margin-bottom:0; list-style-type:none"
                   dropdown {
                     val lang = langGroup.languageName.toLanguageType().name
                     dropdownToggle { +lang }
@@ -149,23 +147,64 @@ internal object ClassSummaryPage : KLogging() {
     }
   }
 
-  private fun BODY.displayStudents(user: User, classCode: ClassCode, redis: Jedis) {
-    val enrollees = classCode.fetchEnrollees(redis)
-
+  private fun BODY.displayStudents(content: ReadingBatContent,
+                                   user: User,
+                                   classCode: ClassCode,
+                                   isValidGroupName: Boolean,
+                                   langName: LanguageName,
+                                   groupName: GroupName,
+                                   redis: Jedis) =
     div(classes = INDENT_2EM) {
+      val enrollees = classCode.fetchEnrollees(redis)
       table {
         style = "border-collapse: separate; border-spacing: 15px 5px"
+
+        tr {
+          th { +"Name" }
+          th { +"Email" }
+          if (isValidGroupName) {
+            content.findLanguage(langName.toLanguageType()).findGroup(groupName.value).challenges
+              .forEach { challenge ->
+                th { +challenge.challengeName.value }
+              }
+          }
+        }
+
         enrollees
           .forEach { student ->
             tr {
               td { a { style = "text-decoration:underline"; href = "./"; +student.name(redis) } }
               td { a { style = "text-decoration:underline"; href = "./"; +student.email(redis).toString() } }
+
+              if (isValidGroupName) {
+                content.findLanguage(langName.toLanguageType()).findGroup(groupName.value).challenges
+                  .forEach { challenge ->
+                    td {
+                      table {
+                        tr {
+                          challenge.functionInfo(content).invocations
+                            .forEach { invocation ->
+                              td {
+                                //style = "border-collapse: separate; border: 1px solid black;"
+                                style =
+                                  "border-collapse: separate; border: 1px solid black; width: 7px; height: 15px; background-color: ${Constants.INCOMPLETE_COLOR}"
+                                id = "${student.id}-${invocation.value.encode()}"
+                                +""
+                                //a { style = "text-decoration:underline"; href = "./"; +invocation.value }
+                                //span { style = "background-color: $CORRECT_COLOR"; id = "${student.id}-${invocation.value.encode()}"; +"" }
+                              }
+                            }
+                        }
+                      }
+                    }
+                  }
+              }
             }
           }
       }
     }
-  }
 
+  // See: https://github.com/Kotlin/kotlinx.html/wiki/Micro-templating-and-DSL-customizing
   fun UL.dropdown(block: LI.() -> Unit) {
     li("dropdown") { block() }
   }

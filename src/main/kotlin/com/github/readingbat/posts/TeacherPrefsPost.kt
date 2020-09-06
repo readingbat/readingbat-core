@@ -92,12 +92,10 @@ internal object TeacherPrefsPost {
     throw RedirectException("$returnPath?$MSG=${msg.encode()}")
   }
 
-  private fun PipelineCall.createClassPost(
-    content: ReadingBatContent,
-    user: User,
-    classDesc: String,
-    redis: Jedis,
-                                          ) =
+  private fun PipelineCall.createClassPost(content: ReadingBatContent,
+                                           user: User,
+                                           classDesc: String,
+                                           redis: Jedis) =
     when {
       classDesc.isBlank() -> {
         teacherPrefsPage(content, user, redis, Message("Unable to create class [Empty class description]", true))
@@ -131,12 +129,10 @@ internal object TeacherPrefsPost {
       }
     }
 
-  private fun PipelineCall.updateActiveClassPost(
-    content: ReadingBatContent,
-    user: User,
-    classCode: ClassCode,
-    redis: Jedis,
-                                                ): String {
+  private fun PipelineCall.updateActiveClassPost(content: ReadingBatContent,
+                                                 user: User,
+                                                 classCode: ClassCode,
+                                                 redis: Jedis): String {
     val activeClassCode = user.fetchActiveClassCode(redis)
     val msg =
       when {
@@ -156,12 +152,10 @@ internal object TeacherPrefsPost {
     return teacherPrefsPage(content, user, redis, msg)
   }
 
-  private fun PipelineCall.deleteClassPost(
-    content: ReadingBatContent,
-    user: User,
-    classCode: ClassCode,
-    redis: Jedis,
-                                          ) =
+  private fun PipelineCall.deleteClassPost(content: ReadingBatContent,
+                                           user: User,
+                                           classCode: ClassCode,
+                                           redis: Jedis) =
     when {
       classCode.isNotEnabled -> teacherPrefsPage(content, user, redis, Message("Empty class code", true))
       classCode.isNotValid(redis) -> teacherPrefsPage(content,

@@ -62,25 +62,21 @@ internal object TeacherPrefsPage : KLogging() {
 
   private const val createClassButton = "CreateClassButton"
 
-  fun PipelineCall.teacherPrefsPage(
-    content: ReadingBatContent,
-    user: User?,
-    redis: Jedis,
-    msg: Message = EMPTY_MESSAGE,
-    defaultClassDesc: String = "",
-                                   ) =
+  fun PipelineCall.teacherPrefsPage(content: ReadingBatContent,
+                                    user: User?,
+                                    redis: Jedis,
+                                    msg: Message = EMPTY_MESSAGE,
+                                    defaultClassDesc: String = "") =
     if (user.isValidUser(redis))
       teacherPrefsWithLoginPage(content, user, msg, defaultClassDesc, redis)
     else
       requestLogInPage(content, redis)
 
-  private fun PipelineCall.teacherPrefsWithLoginPage(
-    content: ReadingBatContent,
-    user: User,
-    msg: Message,
-    defaultClassDesc: String,
-    redis: Jedis,
-                                                    ) =
+  private fun PipelineCall.teacherPrefsWithLoginPage(content: ReadingBatContent,
+                                                     user: User,
+                                                     msg: Message,
+                                                     defaultClassDesc: String,
+                                                     redis: Jedis) =
     createHTML()
       .html {
         val activeClassCode = user.fetchActiveClassCode(redis)

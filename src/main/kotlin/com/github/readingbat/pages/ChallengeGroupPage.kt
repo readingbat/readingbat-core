@@ -87,13 +87,11 @@ internal object ChallengeGroupPage : KLogging() {
     return if (correctAnswersKey.isNotEmpty()) redis?.get(correctAnswersKey)?.toBoolean() == true else false
   }
 
-  fun PipelineCall.challengeGroupPage(
-    content: ReadingBatContent,
-    user: User?,
-    challengeGroup: ChallengeGroup<*>,
-    loginAttempt: Boolean,
-    redis: Jedis?,
-                                     ) =
+  fun PipelineCall.challengeGroupPage(content: ReadingBatContent,
+                                      user: User?,
+                                      challengeGroup: ChallengeGroup<*>,
+                                      loginAttempt: Boolean,
+                                      redis: Jedis?) =
     createHTML()
       .html {
         val browserSession = call.browserSession
@@ -212,13 +210,11 @@ internal object ChallengeGroupPage : KLogging() {
     }
   }
 
-  private fun BODY.clearGroupAnswerHistoryOption(
-    user: User?,
-    browserSession: BrowserSession?,
-    languageName: LanguageName,
-    groupName: GroupName,
-    challenges: List<Challenge>,
-                                                ) {
+  private fun BODY.clearGroupAnswerHistoryOption(user: User?,
+                                                 browserSession: BrowserSession?,
+                                                 languageName: LanguageName,
+                                                 groupName: GroupName,
+                                                 challenges: List<Challenge>) {
 
     val correctAnswersKeys = challenges.map { user.correctAnswersKey(browserSession, it) }
     val challengeAnswerKeys = challenges.map { user.challengeAnswersKey(browserSession, it) }
