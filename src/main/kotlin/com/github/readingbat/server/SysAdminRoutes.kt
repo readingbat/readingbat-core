@@ -54,9 +54,24 @@ import kotlin.time.measureTime
 internal fun Routing.sysAdminRoutes(metrics: Metrics,
                                     contentSrc: () -> ReadingBatContent,
                                     resetContentFunc: () -> Unit) {
+
+  fun clearSourceCodeCache() =
+    redisPool.withRedisPool { redis ->
+      if (redis.isNull())
+        "Redis is down"
+      else {
+        val pattern = keyOf(SOURCE_CODE_KEY, "*")
+        val keys = redis.scanKeys(pattern).toList()
+        val cnt = keys.count()
+        keys.forEach { redis.del(it) }
+        "$cnt source code ${"file".pluralize(cnt)} removed from Redis".also { logger.info { it } }
+      }
+    }
+
   get(RESET_CONTENT_ENDPOINT, metrics) {
     val msg =
       authenticatedAction {
+        clearSourceCodeCache()
         measureTime { resetContentFunc.invoke() }
           .let {
             "Content reset in $it".also { logger.info { it } }
@@ -68,6 +83,7 @@ internal fun Routing.sysAdminRoutes(metrics: Metrics,
   get(RESET_CACHE_ENDPOINT, metrics) {
     val msg =
       authenticatedAction {
+        clearSourceCodeCache()
         val content = contentSrc()
         val cnt = content.functionInfoMap.size
         content.clearSourcesMap()
@@ -75,6 +91,11 @@ internal fun Routing.sysAdminRoutes(metrics: Metrics,
             "Challenge cache reset -- $cnt challenges removed".also { logger.info { it } }
           }
       }
+    redirectTo { "$MESSAGE_ENDPOINT?$MSG=$msg&$RETURN_PARAM=$SYSTEM_ADMIN_ENDPOINT" }
+  }
+
+  get(CLEAR_REDIS_SOURCE_ENDPOINT, metrics) {
+    val msg = authenticatedAction { clearSourceCodeCache() }
     redirectTo { "$MESSAGE_ENDPOINT?$MSG=$msg&$RETURN_PARAM=$SYSTEM_ADMIN_ENDPOINT" }
   }
 
@@ -90,24 +111,6 @@ internal fun Routing.sysAdminRoutes(metrics: Metrics,
         redirectTo { "$MESSAGE_ENDPOINT?$MSG=$msg&$RETURN_PARAM=$SYSTEM_ADMIN_ENDPOINT" }
       }
     }
-
-  get(CLEAR_REDIS_SOURCE_ENDPOINT, metrics) {
-    val msg =
-      authenticatedAction {
-        redisPool.withRedisPool { redis ->
-          if (redis.isNull())
-            "Redis is down"
-          else {
-            val pattern = keyOf(SOURCE_CODE_KEY, "*")
-            val keys = redis.scanKeys(pattern).toList()
-            val cnt = keys.count()
-            keys.forEach { redis.del(it) }
-            "$cnt source code ${"file".pluralize(cnt)} removed from Redis".also { logger.info { it } }
-          }
-        }
-      }
-    redirectTo { "$MESSAGE_ENDPOINT?$MSG=$msg&$RETURN_PARAM=$SYSTEM_ADMIN_ENDPOINT" }
-  }
 
   get(GARBAGE_COLLECTOR_ENDPOINT, metrics) {
     val msg =
