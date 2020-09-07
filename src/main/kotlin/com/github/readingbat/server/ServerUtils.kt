@@ -34,7 +34,7 @@ import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.isProduction
 import com.github.readingbat.pages.DbmsDownPage.dbmsDownPage
-import com.github.readingbat.server.ReadingBatServer.pool
+import com.github.readingbat.server.ReadingBatServer.redisPool
 import io.ktor.application.*
 import io.ktor.auth.*
 import io.ktor.http.*
@@ -60,7 +60,7 @@ internal object ServerUtils : KLogging() {
 
   // Calls for PipelineCall
   fun PipelineCall.fetchEmail() =
-    pool.withRedisPool { redis ->
+    redisPool.withRedisPool { redis ->
       if (redis.isNull())
         "Unknown"
       else
@@ -78,7 +78,7 @@ internal object ServerUtils : KLogging() {
 
   // Calls for WebSocketServerSession
   fun WebSocketServerSession.fetchEmail() =
-    pool.withRedisPool { redis ->
+    redisPool.withRedisPool { redis ->
       if (redis.isNull())
         "Unknown"
       else
@@ -89,7 +89,7 @@ internal object ServerUtils : KLogging() {
 
   // Calls for ApplicationCall
   fun ApplicationCall.fetchEmail() =
-    pool.withRedisPool { redis ->
+    redisPool.withRedisPool { redis ->
       if (redis.isNull())
         "Unknown"
       else
@@ -101,7 +101,7 @@ internal object ServerUtils : KLogging() {
   suspend fun PipelineCall.respondWithDbmsCheck(content: ReadingBatContent, block: (redis: Jedis) -> String) =
     try {
       val html =
-        pool.withRedisPool { redis ->
+        redisPool.withRedisPool { redis ->
           if (redis.isNull())
             dbmsDownPage(content)
           else
@@ -116,7 +116,7 @@ internal object ServerUtils : KLogging() {
                                                           block: suspend (redis: Jedis) -> String) =
     try {
       val html =
-        pool.withSuspendingRedisPool { redis ->
+        redisPool.withSuspendingRedisPool { redis ->
           if (redis.isNull())
             dbmsDownPage(content)
           else
@@ -130,7 +130,7 @@ internal object ServerUtils : KLogging() {
   suspend fun PipelineCall.authenticatedAction(block: () -> String) =
     when {
       isProduction() ->
-        pool.withSuspendingRedisPool { redis ->
+        redisPool.withSuspendingRedisPool { redis ->
           val user = fetchUser()
           when {
             redis.isNull() -> DBMS_DOWN.value

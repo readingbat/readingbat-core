@@ -36,7 +36,7 @@ import com.github.readingbat.common.User.Companion.gson
 import com.github.readingbat.common.isNotValidUser
 import com.github.readingbat.dsl.*
 import com.github.readingbat.posts.ChallengeHistory
-import com.github.readingbat.server.ReadingBatServer.pool
+import com.github.readingbat.server.ReadingBatServer.redisPool
 import com.github.readingbat.server.ServerUtils.fetchEmail
 import com.github.readingbat.server.ServerUtils.fetchUser
 import com.github.readingbat.server.ServerUtils.rows
@@ -69,7 +69,7 @@ internal object WsEndoints : KLogging() {
   fun Routing.wsEndpoints(metrics: Metrics, contentSrc: () -> ReadingBatContent) {
 
     suspend fun WebSocketSession.validateContext(classCode: ClassCode, user: User, context: String) {
-      pool.withSuspendingRedisPool { redis ->
+      redisPool.withSuspendingRedisPool { redis ->
         when {
           redis.isNull() -> {
             close(CloseReason(Codes.GOING_AWAY, "Client disconnected"))
@@ -126,7 +126,7 @@ internal object WsEndoints : KLogging() {
             .collect { frame ->
               val inboundMsg = frame.readText()
               // Check redis early to see if it is available
-              pool.withRedisPool { redis ->
+              redisPool.withRedisPool { redis ->
                 if (redis.isNotNull()) {
                   val clock = TimeSource.Monotonic
                   val start = clock.markNow()
@@ -217,7 +217,7 @@ internal object WsEndoints : KLogging() {
             .mapNotNull { it as? Frame.Text }
             .collect { frame ->
               val inboundMsg = frame.readText()
-              pool.withRedisPool { redis ->
+              redisPool.withRedisPool { redis ->
                 if (redis.isNotNull() && classCode.isEnabled) {
                   val enrollees = classCode.fetchEnrollees(redis)
                   if (enrollees.isNotEmpty()) {
@@ -350,7 +350,7 @@ internal object WsEndoints : KLogging() {
             .mapNotNull { it as? Frame.Text }
             .collect { frame ->
               val inboundMsg = frame.readText()
-              pool.withRedisPool { redis ->
+              redisPool.withRedisPool { redis ->
                 if (redis.isNotNull() && classCode.isEnabled) {
                   val enrollees = classCode.fetchEnrollees(redis)
                   if (enrollees.isNotEmpty()) {

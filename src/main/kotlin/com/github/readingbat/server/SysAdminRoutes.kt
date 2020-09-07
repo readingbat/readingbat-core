@@ -17,9 +17,13 @@
 
 package com.github.readingbat.server
 
+import com.github.pambrose.common.redis.RedisUtils.withRedisPool
 import com.github.pambrose.common.response.redirectTo
 import com.github.pambrose.common.response.respondWith
+import com.github.pambrose.common.util.isNull
+import com.github.pambrose.common.util.pluralize
 import com.github.readingbat.common.Constants.MSG
+import com.github.readingbat.common.Endpoints.CLEAR_REDIS_SOURCE_ENDPOINT
 import com.github.readingbat.common.Endpoints.GARBAGE_COLLECTOR_ENDPOINT
 import com.github.readingbat.common.Endpoints.LOAD_JAVA_ENDPOINT
 import com.github.readingbat.common.Endpoints.LOAD_KOTLIN_ENDPOINT
@@ -29,11 +33,16 @@ import com.github.readingbat.common.Endpoints.RESET_CACHE_ENDPOINT
 import com.github.readingbat.common.Endpoints.RESET_CONTENT_ENDPOINT
 import com.github.readingbat.common.Endpoints.SYSTEM_ADMIN_ENDPOINT
 import com.github.readingbat.common.FormFields.RETURN_PARAM
+import com.github.readingbat.common.KeyConstants.SOURCE_CODE_KEY
 import com.github.readingbat.common.Metrics
-import com.github.readingbat.dsl.LanguageType
+import com.github.readingbat.common.RedisAdmin.scanKeys
+import com.github.readingbat.dsl.LanguageType.Java
+import com.github.readingbat.dsl.LanguageType.Kotlin
+import com.github.readingbat.dsl.LanguageType.Python
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.pages.MessagePage.messagePage
 import com.github.readingbat.server.ReadingBatServer.logger
+import com.github.readingbat.server.ReadingBatServer.redisPool
 import com.github.readingbat.server.ServerUtils.authenticatedAction
 import com.github.readingbat.server.ServerUtils.get
 import io.ktor.application.*
@@ -69,18 +78,9 @@ internal fun Routing.sysAdminRoutes(metrics: Metrics,
     redirectTo { "$MESSAGE_ENDPOINT?$MSG=$msg&$RETURN_PARAM=$SYSTEM_ADMIN_ENDPOINT" }
   }
 
-  get(GARBAGE_COLLECTOR_ENDPOINT, metrics) {
-    val msg =
-      authenticatedAction {
-        System.gc()
-        "Garbage collector invoked".also { logger.info { it } }
-      }
-    redirectTo { "$MESSAGE_ENDPOINT?$MSG=$msg&$RETURN_PARAM=$SYSTEM_ADMIN_ENDPOINT" }
-  }
-
-  listOf(LOAD_JAVA_ENDPOINT to LanguageType.Java,
-         LOAD_PYTHON_ENDPOINT to LanguageType.Python,
-         LOAD_KOTLIN_ENDPOINT to LanguageType.Kotlin)
+  listOf(LOAD_JAVA_ENDPOINT to Java,
+         LOAD_PYTHON_ENDPOINT to Python,
+         LOAD_KOTLIN_ENDPOINT to Kotlin)
     .forEach { pair ->
       get(pair.first) {
         val msg =
@@ -90,6 +90,33 @@ internal fun Routing.sysAdminRoutes(metrics: Metrics,
         redirectTo { "$MESSAGE_ENDPOINT?$MSG=$msg&$RETURN_PARAM=$SYSTEM_ADMIN_ENDPOINT" }
       }
     }
+
+  get(CLEAR_REDIS_SOURCE_ENDPOINT, metrics) {
+    val msg =
+      authenticatedAction {
+        redisPool.withRedisPool { redis ->
+          if (redis.isNull())
+            "Redis is down"
+          else {
+            val pattern = keyOf(SOURCE_CODE_KEY, "*")
+            val keys = redis.scanKeys(pattern).toList()
+            val cnt = keys.count()
+            keys.forEach { redis.del(it) }
+            "$cnt source code ${"file".pluralize(cnt)} removed from Redis".also { logger.info { it } }
+          }
+        }
+      }
+    redirectTo { "$MESSAGE_ENDPOINT?$MSG=$msg&$RETURN_PARAM=$SYSTEM_ADMIN_ENDPOINT" }
+  }
+
+  get(GARBAGE_COLLECTOR_ENDPOINT, metrics) {
+    val msg =
+      authenticatedAction {
+        System.gc()
+        "Garbage collector invoked".also { logger.info { it } }
+      }
+    redirectTo { "$MESSAGE_ENDPOINT?$MSG=$msg&$RETURN_PARAM=$SYSTEM_ADMIN_ENDPOINT" }
+  }
 
   get(MESSAGE_ENDPOINT, metrics) {
     respondWith { messagePage(contentSrc()) }

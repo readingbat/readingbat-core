@@ -17,6 +17,7 @@
 
 package com.github.readingbat.pages
 
+import com.github.readingbat.common.Endpoints.CLEAR_REDIS_SOURCE_ENDPOINT
 import com.github.readingbat.common.Endpoints.GARBAGE_COLLECTOR_ENDPOINT
 import com.github.readingbat.common.Endpoints.LOAD_JAVA_ENDPOINT
 import com.github.readingbat.common.Endpoints.LOAD_KOTLIN_ENDPOINT
@@ -108,6 +109,12 @@ internal object SystemAdminPage : KLogging() {
               this@body.confirmingButton("Load all the Kotlin Challenges",
                                          LOAD_KOTLIN_ENDPOINT,
                                          "Are you sure you want to load all the kotlin challenges? (This can take a while)")
+            }
+
+            p {
+              this@body.confirmingButton("Clear Redis Source Code Cache",
+                                         CLEAR_REDIS_SOURCE_ENDPOINT,
+                                         "Are you sure you want to clear the redis source code cache? (This can take a while)")
             }
 
             p {

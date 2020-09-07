@@ -82,7 +82,7 @@ import com.github.readingbat.posts.TeacherPrefsPost.enableStudentModePost
 import com.github.readingbat.posts.TeacherPrefsPost.enableTeacherModePost
 import com.github.readingbat.posts.TeacherPrefsPost.teacherPrefsPost
 import com.github.readingbat.posts.UserPrefsPost.userPrefs
-import com.github.readingbat.server.ReadingBatServer.pool
+import com.github.readingbat.server.ReadingBatServer.redisPool
 import com.github.readingbat.server.ResourceContent.getResourceAsText
 import com.github.readingbat.server.ServerUtils.authenticatedAction
 import com.github.readingbat.server.ServerUtils.defaultLanguageTab
@@ -128,13 +128,13 @@ internal fun Routing.userRoutes(metrics: Metrics, contentSrc: () -> ReadingBatCo
 
   post(CHECK_ANSWERS_ENDPOINT) {
     metrics.measureEndpointRequest(CHECK_ANSWERS_ENDPOINT) {
-      pool.withSuspendingRedisPool { redis -> checkAnswers(contentSrc(), fetchUser(), redis) }
+      redisPool.withSuspendingRedisPool { redis -> checkAnswers(contentSrc(), fetchUser(), redis) }
     }
   }
 
   post(LIKE_DISLIKE_ENDPOINT) {
     metrics.measureEndpointRequest(LIKE_DISLIKE_ENDPOINT) {
-      pool.withSuspendingRedisPool { redis -> likeDislike(contentSrc(), fetchUser(), redis) }
+      redisPool.withSuspendingRedisPool { redis -> likeDislike(contentSrc(), fetchUser(), redis) }
     }
   }
 

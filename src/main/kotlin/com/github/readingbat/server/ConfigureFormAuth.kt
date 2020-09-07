@@ -26,7 +26,7 @@ import com.github.readingbat.common.Constants.DBMS_DOWN
 import com.github.readingbat.common.FormFields
 import com.github.readingbat.common.User.Companion.lookupUserByEmail
 import com.github.readingbat.common.UserPrincipal
-import com.github.readingbat.server.ReadingBatServer.pool
+import com.github.readingbat.server.ReadingBatServer.redisPool
 import com.google.common.util.concurrent.RateLimiter
 import io.ktor.auth.*
 import mu.KLogging
@@ -65,7 +65,7 @@ internal object ConfigureFormAuth : KLogging() {
       }
 
       validate { cred: UserPasswordCredential ->
-        pool.withRedisPool { redis ->
+        redisPool.withRedisPool { redis ->
           if (redis.isNull()) {
             logger.warn { DBMS_DOWN }
             null

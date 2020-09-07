@@ -101,6 +101,7 @@ internal object Endpoints {
   const val LOAD_JAVA_ENDPOINT = "/load-java"
   const val LOAD_PYTHON_ENDPOINT = "/load-python"
   const val LOAD_KOTLIN_ENDPOINT = "/load-kotlin"
+  const val CLEAR_REDIS_SOURCE_ENDPOINT = "/clear-redis-code"
   const val PING = "/ping"
   const val THREAD_DUMP = "/threaddump"
   const val LOGOUT_ENDPOINT = "/logout"

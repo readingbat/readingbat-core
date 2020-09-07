@@ -27,7 +27,7 @@ import com.github.readingbat.common.KeyConstants.IPGEO_KEY
 import com.github.readingbat.common.SessionActivites.RemoteHost.Companion.unknown
 import com.github.readingbat.common.User.Companion.gson
 import com.github.readingbat.common.User.Companion.toUser
-import com.github.readingbat.server.ReadingBatServer.pool
+import com.github.readingbat.server.ReadingBatServer.redisPool
 import com.github.readingbat.server.keyOf
 import io.ktor.application.*
 import io.ktor.client.statement.*
@@ -180,7 +180,7 @@ internal object SessionActivites : KLogging() {
 
     try {
       if (IPGEOLOCATION_KEY.isDefined() && remoteHost !in ignoreHosts && !geoInfoMap.containsKey(remoteHost)) {
-        pool.withRedisPool { redis ->
+        redisPool.withRedisPool { redis ->
           if (redis.isNotNull()) {
             geoInfoMap.computeIfAbsent(remoteHost.value) { ipAddress ->
               val geoKey = keyOf(IPGEO_KEY, remoteHost)

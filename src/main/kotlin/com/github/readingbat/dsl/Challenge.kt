@@ -18,9 +18,11 @@
 package com.github.readingbat.dsl
 
 import ch.obermuhlner.scriptengine.java.Isolation.IsolatedClassLoader
+import com.github.pambrose.common.redis.RedisUtils.withRedisPool
 import com.github.pambrose.common.util.*
 import com.github.readingbat.common.CommonUtils.pathOf
 import com.github.readingbat.common.FunctionInfo
+import com.github.readingbat.common.KeyConstants.SOURCE_CODE_KEY
 import com.github.readingbat.common.ScriptPools.javaScriptPool
 import com.github.readingbat.common.ScriptPools.kotlinScriptPool
 import com.github.readingbat.common.ScriptPools.pythonScriptPool
@@ -45,6 +47,9 @@ import com.github.readingbat.dsl.parse.PythonParse.extractPythonFunction
 import com.github.readingbat.dsl.parse.PythonParse.extractPythonInvocations
 import com.github.readingbat.dsl.parse.PythonParse.ifMainEndRegex
 import com.github.readingbat.server.ChallengeName
+import com.github.readingbat.server.ReadingBatServer.redisPool
+import com.github.readingbat.server.keyOf
+import com.github.readingbat.server.md5Of
 import kotlinx.coroutines.runBlocking
 import mu.KLogging
 import java.net.URL
@@ -93,16 +98,28 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
         }
       }
 
+  private val sourceCodeKey by lazy {
+    keyOf(SOURCE_CODE_KEY, languageType.name, md5Of(languageName, groupName, challengeName))
+  }
+
+  private fun fetchCodeFromRedis() = redisPool.withRedisPool { redis -> redis?.get(sourceCodeKey) }
+
   internal fun functionInfo(content: ReadingBatContent) =
     if (repo.remote) {
       content.functionInfoMap
         .computeIfAbsent(challengeId) {
           val timer = metrics.challengeRemoteReadDuration.labels(agentLaunchId()).startTimer()
           val code =
-            try {
+            fetchCodeFromRedis() ?: try {
               val path = pathOf((repo as AbstractRepo).rawSourcePrefix, branchName, srcPath, fqName)
               val (text, dur) = measureTimedValue { URL(path).readText() }
-              logger.debug { """Fetched "$groupName/$fileName" in: $dur from: $path""" }
+              logger.info { """Fetched "$groupName/$fileName" in: $dur from: $path""" }
+              redisPool.withRedisPool { redis ->
+                if (redis.isNotNull()) {
+                  redis.set(sourceCodeKey, text)
+                  logger.info { """Saved "$groupName/$fileName" to redis""" }
+                }
+              }
               text
             } finally {
               timer.observeDuration()

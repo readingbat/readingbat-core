@@ -41,7 +41,7 @@ import com.github.readingbat.pages.ChallengePage.challengePage
 import com.github.readingbat.pages.LanguageGroupPage.languageGroupPage
 import com.github.readingbat.pages.PlaygroundPage.playgroundPage
 import com.github.readingbat.server.AdminRoutes.assignBrowserSession
-import com.github.readingbat.server.ReadingBatServer.pool
+import com.github.readingbat.server.ReadingBatServer.redisPool
 import com.github.readingbat.server.ServerUtils.fetchUser
 import io.ktor.auth.*
 import io.ktor.http.*
@@ -96,7 +96,7 @@ internal object Locations {
     respondWith {
       assignBrowserSession()
       content.checkLanguage(language.languageType)
-      pool.withRedisPool { redis ->
+      redisPool.withRedisPool { redis ->
         val user = fetchUser(loginAttempt)
         languageGroupPage(content, user, language.languageType, loginAttempt, redis)
       }
@@ -108,7 +108,7 @@ internal object Locations {
     respondWith {
       assignBrowserSession()
       content.checkLanguage(groupLoc.languageType)
-      pool.withRedisPool { redis ->
+      redisPool.withRedisPool { redis ->
         val user = fetchUser(loginAttempt)
         challengeGroupPage(content, user, content.findGroup(groupLoc), loginAttempt, redis)
       }
@@ -120,7 +120,7 @@ internal object Locations {
     respondWith {
       assignBrowserSession()
       content.checkLanguage(challengeLoc.languageType)
-      pool.withRedisPool { redis ->
+      redisPool.withRedisPool { redis ->
         val user = fetchUser(loginAttempt)
         challengePage(content, user, content.findChallenge(challengeLoc), loginAttempt, redis)
       }
@@ -131,7 +131,7 @@ internal object Locations {
                                               loginAttempt: Boolean) =
     respondWith {
       assignBrowserSession()
-      pool.withRedisPool { redis ->
+      redisPool.withRedisPool { redis ->
         val user = fetchUser(loginAttempt)
         playgroundPage(content,
                        user,

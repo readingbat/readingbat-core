@@ -63,7 +63,7 @@ object ReadingBatServer : KLogging() {
   internal val adminUsers = mutableListOf<String>()
   internal val contentReadCount = AtomicInteger(0)
   internal val metrics by lazy { Metrics() }
-  internal val pool by lazy { RedisUtils.newJedisPool() }
+  internal val redisPool by lazy { RedisUtils.newJedisPool() }
 
   fun start(args: Array<String>) {
 
@@ -177,7 +177,7 @@ internal fun Application.module() {
   REDIS_MIN_IDLE_SIZE.setProperty(REDIS_MIN_IDLE_SIZE.configProperty(this, default = "1"))
 
   // Reference to load it
-  ReadingBatServer.pool.isClosed
+  ReadingBatServer.redisPool.isClosed
 
   if (isAgentEnabled()) {
     if (proxyHostname.isNotEmpty()) {
