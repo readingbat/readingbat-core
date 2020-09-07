@@ -94,6 +94,9 @@ class ReadingBatContent {
 
   internal operator fun contains(languageType: LanguageType) = this[languageType].isNotEmpty()
 
+  internal fun findLanguage(languageName: LanguageName): LanguageGroup<out Challenge> =
+    findLanguage(languageName.toLanguageType())
+
   internal fun findLanguage(languageType: LanguageType): LanguageGroup<out Challenge> =
     languageMap[languageType] ?: throw InvalidConfigurationException("Invalid language $languageType")
 

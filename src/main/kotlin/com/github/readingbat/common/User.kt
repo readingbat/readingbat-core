@@ -160,8 +160,10 @@ internal class User private constructor(val id: String, val browserSession: Brow
     }
   }
 
-  private fun isEnrolled(classCode: ClassCode, redis: Jedis) =
+  internal fun isEnrolled(classCode: ClassCode, redis: Jedis) =
     redis.sismember(classCode.classCodeEnrollmentKey, id) ?: false
+
+  internal fun isNotEnrolled(classCode: ClassCode, redis: Jedis) = !isEnrolled(classCode, redis)
 
   fun enrollInClass(classCode: ClassCode, redis: Jedis) {
     when {

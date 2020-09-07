@@ -26,8 +26,10 @@ import com.github.readingbat.common.Constants.CORRECT_COLOR
 import com.github.readingbat.common.Constants.GROUP_NAME_QP
 import com.github.readingbat.common.Constants.INCOMPLETE_COLOR
 import com.github.readingbat.common.Constants.LANG_TYPE_QP
+import com.github.readingbat.common.Constants.NO
 import com.github.readingbat.common.Constants.USER_ID_QP
 import com.github.readingbat.common.Constants.WRONG_COLOR
+import com.github.readingbat.common.Constants.YES
 import com.github.readingbat.common.Endpoints.CHALLENGE_ROOT
 import com.github.readingbat.common.Endpoints.CLASS_SUMMARY_ENDPOINT
 import com.github.readingbat.common.Endpoints.STUDENT_SUMMARY_ENDPOINT
@@ -189,7 +191,7 @@ internal object ClassSummaryPage : KLogging() {
           th { +"Name" }
           th { +"Email" }
           if (isValidGroupName) {
-            content.findLanguage(languageName.toLanguageType()).findGroup(groupName.value).challenges
+            content.findLanguage(languageName).findGroup(groupName.value).challenges
               .forEach { challenge ->
                 th {
                   a {
@@ -217,7 +219,7 @@ internal object ClassSummaryPage : KLogging() {
               }
 
               if (isValidGroupName) {
-                content.findLanguage(languageName.toLanguageType()).findGroup(groupName.value).challenges
+                content.findLanguage(languageName).findGroup(groupName.value).challenges
                   .forEach { challenge ->
                     td {
                       table {
@@ -271,8 +273,8 @@ internal object ClassSummaryPage : KLogging() {
             for (i = 0; i < results.length; i++) {
               var prefix = obj.userId + '-' + obj.challengeName
               var answers = document.getElementById(prefix + '-' + i)
-              answers.style.backgroundColor = obj.results[i] == 'Y' ? '$CORRECT_COLOR' 
-                                                                    : (obj.results[i] == 'N' ? '$WRONG_COLOR' 
+              answers.style.backgroundColor = obj.results[i] == '$YES' ? '$CORRECT_COLOR' 
+                                                                    : (obj.results[i] == '$NO' ? '$WRONG_COLOR' 
                                                                                              : '$INCOMPLETE_COLOR');
 
               document.getElementById(prefix + '$STATS').innerHTML = obj.msg;

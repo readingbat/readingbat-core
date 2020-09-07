@@ -26,13 +26,18 @@ import com.github.pambrose.common.util.isNull
 import com.github.readingbat.common.ClassCode
 import com.github.readingbat.common.CommonUtils.pathOf
 import com.github.readingbat.common.Constants.COLUMN_CNT
+import com.github.readingbat.common.Constants.NO
 import com.github.readingbat.common.Constants.PING_CODE
+import com.github.readingbat.common.Constants.UNANSWERED
+import com.github.readingbat.common.Constants.YES
 import com.github.readingbat.common.Endpoints.CHALLENGE_ENDPOINT
 import com.github.readingbat.common.Endpoints.CHALLENGE_GROUP_ENDPOINT
 import com.github.readingbat.common.Endpoints.CLASS_SUMMARY_ENDPOINT
+import com.github.readingbat.common.Endpoints.STUDENT_SUMMARY_ENDPOINT
 import com.github.readingbat.common.Metrics
 import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.gson
+import com.github.readingbat.common.User.Companion.toUser
 import com.github.readingbat.common.isNotValidUser
 import com.github.readingbat.dsl.*
 import com.github.readingbat.posts.ChallengeHistory
@@ -59,8 +64,9 @@ import kotlin.time.seconds
 
 internal object WsEndoints : KLogging() {
 
-  private const val LANG_NAME = "languageName"
+  private const val LANGUAGE_NAME = "languageName"
   private const val GROUP_NAME = "groupName"
+  private const val STUDENT_ID = "studentId"
   private const val CLASS_CODE = "classCode"
   private const val CHALLENGE_MD5 = "challengeMd5"
 
@@ -71,6 +77,7 @@ internal object WsEndoints : KLogging() {
     fun validateContext(languageName: LanguageName?,
                         groupName: GroupName?,
                         classCode: ClassCode,
+                        student: User?,
                         user: User,
                         context: String) =
       redisPool.withRedisPool { redis ->
@@ -79,7 +86,9 @@ internal object WsEndoints : KLogging() {
           languageName.isNotNull() && languageName.isNotValid() -> false to "Invalid language name $languageName"
           groupName.isNotNull() && groupName.isNotValid() -> false to "Invalid group name $groupName"
           classCode.isNotValid(redis) -> false to "Invalid classCode $classCode"
-          user.isNotValidUser(redis) -> false to "Invalid user"
+          student.isNotNull() && student.isNotValidUser(redis) -> false to "Invalid student id"
+          student.isNotNull() && student.isNotEnrolled(classCode, redis) -> false to "Student not enrolled in class"
+          user.isNotValidUser(redis) -> false to "Invalid user id"
           classCode.fetchClassTeacherId(redis) != user.id -> {
             val teacherId = classCode.fetchClassTeacherId(redis)
             false to "User id ${user.id} does not match classCode teacher Id $teacherId"
@@ -100,7 +109,7 @@ internal object WsEndoints : KLogging() {
       val path = content.functionInfoByMd5(challengeMd5)?.challenge?.path ?: "Unknown"
       val desc = "${pathOf(CHALLENGE_ENDPOINT, classCode, challengeMd5)} ($path) - $remote - $email"
 
-      validateContext(null, null, classCode, user, "Student answers")
+      validateContext(null, null, classCode, null, user, "Student answers")
         .also {
           if (!it.first) {
             close(CloseReason(Codes.GOING_AWAY, "Client disconnected"))
@@ -185,11 +194,11 @@ internal object WsEndoints : KLogging() {
       }
     }
 
-    webSocket("$CHALLENGE_GROUP_ENDPOINT/{$LANG_NAME}/{$GROUP_NAME}/{$CLASS_CODE}") {
+    webSocket("$CHALLENGE_GROUP_ENDPOINT/{$LANGUAGE_NAME}/{$GROUP_NAME}/{$CLASS_CODE}") {
       val content = contentSrc.invoke()
       val (languageName, groupName, classCode) =
         Triple(
-          call.parameters[LANG_NAME]?.let { LanguageName(it) } ?: throw InvalidPathException("Missing language"),
+          call.parameters[LANGUAGE_NAME]?.let { LanguageName(it) } ?: throw InvalidPathException("Missing language"),
           call.parameters[GROUP_NAME]?.let { GroupName(it) } ?: throw InvalidPathException("Missing group name"),
           call.parameters[CLASS_CODE]?.let { ClassCode(it) } ?: throw InvalidPathException("Missing class code"))
       val challenges = content.findGroup(languageName.toLanguageType(), groupName).challenges
@@ -199,7 +208,7 @@ internal object WsEndoints : KLogging() {
       val email = fetchEmail()
       val desc = "${pathOf(CHALLENGE_ENDPOINT, languageName, groupName, classCode)} - $remote - $email"
 
-      validateContext(languageName, groupName, classCode, user, "Class statistics")
+      validateContext(languageName, groupName, classCode, null, user, "Class statistics")
         .also {
           if (!it.first) {
             close(CloseReason(Codes.GOING_AWAY, "Client disconnected"))
@@ -324,11 +333,11 @@ internal object WsEndoints : KLogging() {
       }
     }
 
-    webSocket("$CLASS_SUMMARY_ENDPOINT/{$LANG_NAME}/{$GROUP_NAME}/{$CLASS_CODE}") {
+    webSocket("$CLASS_SUMMARY_ENDPOINT/{$LANGUAGE_NAME}/{$GROUP_NAME}/{$CLASS_CODE}") {
       val content = contentSrc.invoke()
       val (languageName, groupName, classCode) =
         Triple(
-          call.parameters[LANG_NAME]?.let { LanguageName(it) } ?: throw InvalidPathException("Missing language"),
+          call.parameters[LANGUAGE_NAME]?.let { LanguageName(it) } ?: throw InvalidPathException("Missing language"),
           call.parameters[GROUP_NAME]?.let { GroupName(it) } ?: throw InvalidPathException("Missing group name"),
           call.parameters[CLASS_CODE]?.let { ClassCode(it) } ?: throw InvalidPathException("Missing class code"))
       val challenges = content.findGroup(languageName.toLanguageType(), groupName).challenges
@@ -338,7 +347,7 @@ internal object WsEndoints : KLogging() {
       val email = fetchEmail()
       val desc = "${pathOf(CLASS_SUMMARY_ENDPOINT, languageName, groupName, classCode)} - $remote - $email"
 
-      validateContext(languageName, groupName, classCode, user, "Class overview")
+      validateContext(languageName, groupName, classCode, null, user, "Class summary")
         .also {
           if (!it.first) {
             close(CloseReason(Codes.GOING_AWAY, "Client disconnected"))
@@ -346,17 +355,17 @@ internal object WsEndoints : KLogging() {
           }
         }
 
-      logger.info { "Opened class overview websocket for $desc" }
+      logger.info { "Opened class summary websocket for $desc" }
 
       outgoing.invokeOnClose {
-        logger.debug { "Close received for class overview websocket for $desc" }
+        logger.debug { "Close received for class summary websocket for $desc" }
         finished.set(true)
       }
 
-      metrics.measureEndpointRequest("/websocket_class_overview") {
+      metrics.measureEndpointRequest("/websocket_class_summary") {
         try {
-          metrics.wsClassOverviewCount.labels(agentLaunchId()).inc()
-          metrics.wsClassOverviewGauge.labels(agentLaunchId()).inc()
+          metrics.wsClassSummaryCount.labels(agentLaunchId()).inc()
+          metrics.wsClassSummaryGauge.labels(agentLaunchId()).inc()
 
           incoming
             .consumeAsFlow()
@@ -389,24 +398,28 @@ internal object WsEndoints : KLogging() {
 
                             results +=
                               if (ch.correct)
-                                "Y"
+                                YES
                               else
-                                if (ch.incorrectAttempts > 0) "N" else "U"
+                                if (ch.incorrectAttempts > 0) NO else UNANSWERED
 
                             incorrectAttempts += ch.incorrectAttempts
                           }
                           else {
-                            results += "U"
+                            results += UNANSWERED
                           }
 
                           if (finished.get())
                             break
                         }
 
-                        val msg = "$incorrectAttempts"
-                        val json = gson.toJson(ClassOverview(enrollee.id, challengeName.value.encode(), results, msg))
+                        val json =
+                          gson.toJson(
+                            ClassSummary(enrollee.id,
+                                         challengeName.value.encode(),
+                                         results,
+                                         if (incorrectAttempts == 0 && results.all { it == UNANSWERED }) "" else incorrectAttempts.toString()))
 
-                        metrics.wsClassOverviewResponseCount.labels(agentLaunchId()).inc()
+                        metrics.wsClassSummaryResponseCount.labels(agentLaunchId()).inc()
                         logger.debug { "Sending data $json" }
                         runBlocking { outgoing.send(Frame.Text(json)) }
 
@@ -423,9 +436,115 @@ internal object WsEndoints : KLogging() {
               incoming.cancel()
             }
         } finally {
-          metrics.wsClassOverviewGauge.labels(agentLaunchId()).dec()
+          metrics.wsClassSummaryGauge.labels(agentLaunchId()).dec()
           close(CloseReason(Codes.GOING_AWAY, "Client disconnected"))
-          logger.info { "Closed class overview websocket for $desc" }
+          logger.info { "Closed class summary websocket for $desc" }
+        }
+      }
+    }
+
+    webSocket("$STUDENT_SUMMARY_ENDPOINT/{$LANGUAGE_NAME}/{$STUDENT_ID}/{$CLASS_CODE}") {
+      val content = contentSrc.invoke()
+      val (languageName, student, classCode) =
+        Triple(
+          call.parameters[LANGUAGE_NAME]?.let { LanguageName(it) } ?: throw InvalidPathException("Missing language"),
+          call.parameters[STUDENT_ID]?.toUser(null) ?: throw InvalidPathException("Missing student id"),
+          call.parameters[CLASS_CODE]?.let { ClassCode(it) } ?: throw InvalidPathException("Missing class code"))
+      val finished = AtomicBoolean(false)
+      val remote = call.request.origin.remoteHost
+      val user = fetchUser() ?: throw InvalidRequestException("Null user")
+      val email = fetchEmail()
+      val desc = "${pathOf(CLASS_SUMMARY_ENDPOINT, languageName, student.id, classCode)} - $remote - $email"
+
+      validateContext(languageName, null, classCode, student, user, "Student sumary")
+        .also {
+          if (!it.first) {
+            close(CloseReason(Codes.GOING_AWAY, "Client disconnected"))
+            throw InvalidRequestException(it.second)
+          }
+        }
+
+      logger.info { "Opened student summary websocket for $desc" }
+
+      outgoing.invokeOnClose {
+        logger.debug { "Close received for student summary websocket for $desc" }
+        finished.set(true)
+      }
+
+      metrics.measureEndpointRequest("/websocket_student_summary") {
+        try {
+          metrics.wsStudentSummaryCount.labels(agentLaunchId()).inc()
+          metrics.wsStudentSummaryGauge.labels(agentLaunchId()).inc()
+
+          incoming
+            .consumeAsFlow()
+            .mapNotNull { it as? Frame.Text }
+            .collect { frame ->
+              val inboundMsg = frame.readText()
+              redisPool.withRedisPool { redis ->
+                if (redis.isNotNull()) {
+                  for (challengeGroup in content.findLanguage(languageName).challengeGroups) {
+                    for (challenge in challengeGroup.challenges) {
+                      val funcInfo = challenge.functionInfo(content)
+                      val challengeName = challenge.challengeName
+                      val numCalls = funcInfo.invocations.size
+                      var likes = 0
+                      var dislikes = 0
+                      var incorrectAttempts = 0
+                      var attempted = 0
+
+                      val results = mutableListOf<String>()
+                      for (invocation in funcInfo.invocations) {
+                        val historyKey =
+                          student.answerHistoryKey(languageName, challengeGroup.groupName, challengeName, invocation)
+
+                        if (redis.exists(historyKey)) {
+                          attempted++
+                          val json = redis[historyKey] ?: ""
+                          val ch = gson.fromJson(json, ChallengeHistory::class.java) ?: ChallengeHistory(invocation)
+
+                          results +=
+                            if (ch.correct)
+                              YES
+                            else
+                              if (ch.incorrectAttempts > 0) NO else UNANSWERED
+
+                          incorrectAttempts += ch.incorrectAttempts
+                        }
+                        else {
+                          results += UNANSWERED
+                        }
+
+                        if (finished.get())
+                          break
+                      }
+
+                      val json =
+                        gson.toJson(
+                          StudentSummary(challengeGroup.groupName.value.encode(),
+                                         challengeName.value.encode(),
+                                         results,
+                                         if (incorrectAttempts == 0 && results.all { it == UNANSWERED }) "" else incorrectAttempts.toString()))
+
+                      metrics.wsClassSummaryResponseCount.labels(agentLaunchId()).inc()
+                      logger.debug { "Sending data $json" }
+                      runBlocking { outgoing.send(Frame.Text(json)) }
+
+                      if (finished.get())
+                        break
+                    }
+                  }
+                }
+              }
+
+              // Shut things down to exit collect
+              outgoing.close()
+              incoming.cancel()
+            }
+        } finally {
+          metrics.wsStudentSummaryGauge.labels(agentLaunchId()).dec()
+          close(CloseReason(Codes.GOING_AWAY, "Client disconnected"))
+          logger.info { "Closed student summary websocket for $desc" }
         }
       }
     }
@@ -434,7 +553,12 @@ internal object WsEndoints : KLogging() {
 
 internal class ChallengeStats(val challengeName: String, val msg: String)
 
-internal class ClassOverview(val userId: String, val challengeName: String, val results: List<String>, val msg: String)
+internal class ClassSummary(val userId: String, val challengeName: String, val results: List<String>, val msg: String)
+
+internal class StudentSummary(val groupName: String,
+                              val challengeName: String,
+                              val results: List<String>,
+                              val msg: String)
 
 internal class PingMessage(val msg: String) {
   val type = PING_CODE

@@ -205,7 +205,7 @@ inline class GroupName(val value: String) {
   internal fun isNotValid() = !isValid()
 
   internal fun isDefined(content: ReadingBatContent, languageName: LanguageName) =
-    languageName.isDefined(content) && isValid() && content.findLanguage(languageName.toLanguageType()).hasGroup(value)
+    languageName.isDefined(content) && isValid() && content.findLanguage(languageName).hasGroup(value)
 
   override fun toString() = value
 

@@ -25,8 +25,10 @@ import com.github.readingbat.common.Constants.CLASS_CODE_QP
 import com.github.readingbat.common.Constants.CORRECT_COLOR
 import com.github.readingbat.common.Constants.INCOMPLETE_COLOR
 import com.github.readingbat.common.Constants.LANG_TYPE_QP
+import com.github.readingbat.common.Constants.NO
 import com.github.readingbat.common.Constants.USER_ID_QP
 import com.github.readingbat.common.Constants.WRONG_COLOR
+import com.github.readingbat.common.Constants.YES
 import com.github.readingbat.common.Endpoints
 import com.github.readingbat.common.Endpoints.CHALLENGE_ROOT
 import com.github.readingbat.common.Endpoints.STUDENT_SUMMARY_ENDPOINT
@@ -171,7 +173,7 @@ internal object StudentSummaryPage : KLogging() {
       table {
         style = "border-collapse: separate; border-spacing: 10px 5px"
 
-        content.findLanguage(languageName.toLanguageType()).challengeGroups
+        content.findLanguage(languageName).challengeGroups
           .forEach { group ->
             tr {
               td {
@@ -210,13 +212,14 @@ internal object StudentSummaryPage : KLogging() {
                                   td {
                                     style =
                                       "border-collapse: separate; border: 1px solid black; width: 7px; width: 7px; height: 15px; background-color: $INCOMPLETE_COLOR"
-                                    id = "${group.groupName}-${challenge.challengeName.value.encode()}-$i"
+                                    id =
+                                      "${group.groupName.value.encode()}-${challenge.challengeName.value.encode()}-$i"
                                     +""
                                   }
                                 }
                               td {
                                 style = "padding-left:5px; width: 20px;"
-                                id = "${group.groupName}-${challenge.challengeName.value.encode()}$STATS"
+                                id = "${group.groupName.value.encode()}-${challenge.challengeName.value.encode()}$STATS"
                                 +""
                               }
                             }
@@ -254,10 +257,10 @@ internal object StudentSummaryPage : KLogging() {
             var results = obj.results
             var i;
             for (i = 0; i < results.length; i++) {
-              var prefix = obj.userId + '-' + obj.challengeName
+              var prefix = obj.groupName + '-' + obj.challengeName
               var answers = document.getElementById(prefix + '-' + i)
-              answers.style.backgroundColor = obj.results[i] == 'Y' ? '$CORRECT_COLOR' 
-                                                                    : (obj.results[i] == 'N' ? '$WRONG_COLOR' 
+              answers.style.backgroundColor = obj.results[i] == '$YES' ? '$CORRECT_COLOR' 
+                                                                    : (obj.results[i] == '$NO' ? '$WRONG_COLOR' 
                                                                                              : '$INCOMPLETE_COLOR');
 
               document.getElementById(prefix + '$STATS').innerHTML = obj.msg;

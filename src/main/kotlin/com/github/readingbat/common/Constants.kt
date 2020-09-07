@@ -53,6 +53,10 @@ internal object Constants {
   const val LANG_TYPE_QP = "lang-type"
   const val GROUP_NAME_QP = "group-name"
 
+  const val YES = "Y"
+  const val NO = "N"
+  const val UNANSWERED = "U"
+
   val DBMS_DOWN = Message("Database is down", true)
 }
 
