@@ -172,7 +172,6 @@ internal object ChallengeGroupPage : KLogging() {
                                    groupName: GroupName,
                                    enrollees: List<User>,
                                    redis: Jedis?) {
-    val displayStr = classCode.toDisplayString(redis)
     val studentCount = if (enrollees.isEmpty()) "No" else enrollees.count().toString()
     h3 {
       style = "margin-left: 5px; color: ${ChallengePage.headerColor}"
@@ -184,7 +183,7 @@ internal object ChallengeGroupPage : KLogging() {
             classSummaryEndpoint(classCode)
           else
             classSummaryEndpoint(classCode, languageName, groupName)
-        +displayStr
+        +classCode.toDisplayString(redis)
       }
     }
   }

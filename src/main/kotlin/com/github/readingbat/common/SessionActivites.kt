@@ -140,7 +140,7 @@ internal object SessionActivites : KLogging() {
         sessionsMap.entries
           .filter { it.value.requests == 1 }
           .forEach {
-            logger.info { "Removing probe browser session ${it.key}" }
+            logger.debug { "Removing probe browser session ${it.key}" }
             sessionsMap.remove(it.key)
           }
       } catch (e: Throwable) {

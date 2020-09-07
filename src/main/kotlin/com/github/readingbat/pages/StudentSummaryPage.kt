@@ -18,20 +18,22 @@
 package com.github.readingbat.pages
 
 import com.github.pambrose.common.util.encode
-import com.github.readingbat.common.*
 import com.github.readingbat.common.CSSNames.INDENT_2EM
+import com.github.readingbat.common.ClassCode
 import com.github.readingbat.common.Constants.CLASS_CODE_QP
 import com.github.readingbat.common.Constants.CORRECT_COLOR
 import com.github.readingbat.common.Constants.INCOMPLETE_COLOR
 import com.github.readingbat.common.Constants.LANG_TYPE_QP
 import com.github.readingbat.common.Constants.USER_ID_QP
 import com.github.readingbat.common.Constants.WRONG_COLOR
+import com.github.readingbat.common.Endpoints
 import com.github.readingbat.common.Endpoints.CHALLENGE_ROOT
 import com.github.readingbat.common.Endpoints.STUDENT_SUMMARY_ENDPOINT
 import com.github.readingbat.common.FormFields.RETURN_PARAM
-import com.github.readingbat.common.Message.Companion.EMPTY_MESSAGE
+import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.fetchActiveClassCode
 import com.github.readingbat.common.User.Companion.toUser
+import com.github.readingbat.common.isNotValidUser
 import com.github.readingbat.dsl.InvalidRequestException
 import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.dsl.ReadingBatContent
@@ -54,11 +56,7 @@ import redis.clients.jedis.Jedis
 
 internal object StudentSummaryPage : KLogging() {
 
-  fun PipelineCall.studentSummaryPage(content: ReadingBatContent,
-                                      user: User?,
-                                      redis: Jedis,
-                                      msg: Message = EMPTY_MESSAGE,
-                                      defaultClassDesc: String = ""): String {
+  fun PipelineCall.studentSummaryPage(content: ReadingBatContent, user: User?, redis: Jedis): String {
 
     val (languageName, student, classCode) =
       Triple(
@@ -99,13 +97,24 @@ internal object StudentSummaryPage : KLogging() {
 
           h3 {
             style = "margin-left: 15px; color: $headerColor"
-            +classCode.toDisplayString(redis)
+            a {
+              style = "text-decoration:underline";
+              href = Endpoints.classSummaryEndpoint(classCode)
+              +classCode.toDisplayString(redis)
+            }
             +" "
+            a {
+              style = "text-decoration:underline"
+              href = "$CHALLENGE_ROOT/${languageName}"
+              +languageName.toLanguageType().toString()
+            }
+          }
+
+          h3 {
+            style = "margin-left: 15px; color: $headerColor"
             +student.name(redis)
             +" "
             +student.email(redis).toString()
-            +" "
-            +languageName.toLanguageType().name
           }
 
           displayClasses(content, classCode, languageName, redis)
@@ -162,30 +171,29 @@ internal object StudentSummaryPage : KLogging() {
         style = "border-collapse: separate; border-spacing: 10px 5px"
 
         content.findLanguage(languageName.toLanguageType()).challengeGroups
-          .forEach { challengeGroup ->
+          .forEach { group ->
             tr {
-              td { +challengeGroup.groupName.value }
+              td { +group.groupName.toString() }
 
               td {
                 table {
                   style = "border-collapse: separate; border-spacing: 10px 5px"
                   tr {
                     //th { }
-                    challengeGroup.challenges
+                    group.challenges
                       .forEach { challenge ->
                         th {
                           a {
                             style = "text-decoration:underline"
-                            href =
-                              "$CHALLENGE_ROOT/$languageName/${challengeGroup.groupName}/${challenge.challengeName}"
-                            +challenge.challengeName.value
+                            href = "$CHALLENGE_ROOT/$languageName/${group.groupName}/${challenge.challengeName}"
+                            +challenge.challengeName.toString()
                           }
                         }
                       }
                   }
 
                   tr {
-                    challengeGroup.challenges
+                    group.challenges
                       .forEach { challenge ->
                         td {
                           table {
@@ -195,13 +203,13 @@ internal object StudentSummaryPage : KLogging() {
                                   td {
                                     style =
                                       "border-collapse: separate; border: 1px solid black; width: 7px; width: 7px; height: 15px; background-color: $INCOMPLETE_COLOR"
-                                    id = "${challengeGroup.groupName}-${challenge.challengeName.value.encode()}-$i"
+                                    id = "${group.groupName}-${challenge.challengeName.value.encode()}-$i"
                                     +""
                                   }
                                 }
                               td {
                                 style = "padding-left:5px; width: 20px;"
-                                id = "${challengeGroup.groupName}-${challenge.challengeName.value.encode()}$STATS"
+                                id = "${group.groupName}-${challenge.challengeName.value.encode()}$STATS"
                                 +""
                               }
                             }

@@ -19,7 +19,6 @@ package com.github.readingbat.server
 
 import com.github.pambrose.common.concurrent.BooleanMonitor
 import com.github.pambrose.common.redis.RedisUtils.withRedisPool
-import com.github.pambrose.common.redis.RedisUtils.withSuspendingRedisPool
 import com.github.pambrose.common.time.format
 import com.github.pambrose.common.util.encode
 import com.github.pambrose.common.util.isNotNull
@@ -68,43 +67,25 @@ internal object WsEndoints : KLogging() {
 
   fun Routing.wsEndpoints(metrics: Metrics, contentSrc: () -> ReadingBatContent) {
 
-    suspend fun WebSocketSession.validateContext(languageName: LanguageName?,
-                                                 groupName: GroupName?,
-                                                 classCode: ClassCode,
-                                                 user: User,
-                                                 context: String) {
-      redisPool.withSuspendingRedisPool { redis ->
+    fun validateContext(languageName: LanguageName?,
+                        groupName: GroupName?,
+                        classCode: ClassCode,
+                        user: User,
+                        context: String) =
+      redisPool.withRedisPool { redis ->
         when {
-          languageName.isNotNull() && languageName.isNotValid() -> {
-            close(CloseReason(Codes.GOING_AWAY, "Client disconnected"))
-            throw InvalidRequestException("Invalid language name $languageName")
-          }
-          groupName.isNotNull() && groupName.isNotValid() -> {
-            close(CloseReason(Codes.GOING_AWAY, "Client disconnected"))
-            throw InvalidRequestException("Invalid group name $groupName")
-          }
-          redis.isNull() -> {
-            close(CloseReason(Codes.GOING_AWAY, "Client disconnected"))
-            throw RedisUnavailableException(context)
-          }
-          classCode.isNotValid(redis) -> {
-            close(CloseReason(Codes.GOING_AWAY, "Client disconnected"))
-            throw InvalidRequestException("Invalid classCode $classCode")
-          }
-          user.isNotValidUser(redis) -> {
-            close(CloseReason(Codes.GOING_AWAY, "Client disconnected"))
-            throw InvalidRequestException("Invalid user")
-          }
+          redis.isNull() -> false to context
+          languageName.isNotNull() && languageName.isNotValid() -> false to "Invalid language name $languageName"
+          groupName.isNotNull() && groupName.isNotValid() -> false to "Invalid group name $groupName"
+          classCode.isNotValid(redis) -> false to "Invalid classCode $classCode"
+          user.isNotValidUser(redis) -> false to "Invalid user"
           classCode.fetchClassTeacherId(redis) != user.id -> {
-            close(CloseReason(Codes.GOING_AWAY, "Client disconnected"))
             val teacherId = classCode.fetchClassTeacherId(redis)
-            throw InvalidRequestException("User id ${user.id} does not match classCode teacher Id $teacherId")
+            false to "User id ${user.id} does not match classCode teacher Id $teacherId"
           }
-          else -> {
-          }
+          else -> true to ""
         }
       }
-    }
 
     webSocket("$CHALLENGE_ENDPOINT/{$CLASS_CODE}/{$CHALLENGE_MD5}") {
       val content = contentSrc.invoke()
@@ -119,6 +100,13 @@ internal object WsEndoints : KLogging() {
       val desc = "$CHALLENGE_ENDPOINT/$classCode/$challengeMd5 ($path) - $remote - $email"
 
       validateContext(null, null, classCode, user, "Student answers")
+        .also {
+          if (!it.first) {
+            close(CloseReason(Codes.GOING_AWAY, "Client disconnected"))
+            throw InvalidRequestException(it.second)
+          }
+        }
+
 
       logger.info { "Opened student answers websocket for $desc" }
 
@@ -211,6 +199,12 @@ internal object WsEndoints : KLogging() {
       val desc = "$CHALLENGE_ENDPOINT/$languageName/$groupName/$classCode - $remote - $email"
 
       validateContext(languageName, groupName, classCode, user, "Class statistics")
+        .also {
+          if (!it.first) {
+            close(CloseReason(Codes.GOING_AWAY, "Client disconnected"))
+            throw InvalidRequestException(it.second)
+          }
+        }
 
       logger.info { "Opened class statistics websocket for $desc" }
 
@@ -344,6 +338,12 @@ internal object WsEndoints : KLogging() {
       val desc = "$CLASS_SUMMARY_ENDPOINT/$languageName/$groupName/$classCode - $remote - $email"
 
       validateContext(languageName, groupName, classCode, user, "Class overview")
+        .also {
+          if (!it.first) {
+            close(CloseReason(Codes.GOING_AWAY, "Client disconnected"))
+            throw InvalidRequestException(it.second)
+          }
+        }
 
       logger.info { "Opened class overview websocket for $desc" }
 
