@@ -139,7 +139,7 @@ internal object ClassSummaryPage : KLogging() {
     table {
       style = "border-collapse: separate; border-spacing: 15px 5px" // 5px is vertical
       tr {
-        td { style = "font-size:120%"; +"Challenge Groups: " }
+        td { style = "font-size:130%"; +"Challenge Groups: " }
         LanguageType.values()
           .map { content.findLanguage(it) }
           .forEach { langGroup ->
@@ -156,6 +156,7 @@ internal object ClassSummaryPage : KLogging() {
                       langGroup.challengeGroups
                         .forEach {
                           li {
+                            style = "font-size:110%"
                             a("$CLASS_SUMMARY_ENDPOINT?$CLASS_CODE_QP=$classCode&$LANG_TYPE_QP=${langGroup.languageName.value}&$GROUP_NAME_QP=${it.groupName.value}")
                             { +it.groupName.value }
                           }
@@ -187,7 +188,13 @@ internal object ClassSummaryPage : KLogging() {
           if (isValidGroupName) {
             content.findLanguage(languageName.toLanguageType()).findGroup(groupName.value).challenges
               .forEach { challenge ->
-                th { +challenge.challengeName.value }
+                th {
+                  a {
+                    style = "text-decoration:underline"
+                    href = "$CHALLENGE_ROOT/$languageName/$groupName/${challenge.challengeName}"
+                    +challenge.challengeName.value
+                  }
+                }
               }
           }
         }
@@ -271,7 +278,7 @@ internal object ClassSummaryPage : KLogging() {
 
   private fun LI.dropdownToggle(block: A.() -> Unit) {
     a("#", null, "dropdown-toggle") {
-      style = "font-size:120%; text-decoration:none"
+      style = "font-size:130%; text-decoration:none"
       attributes["data-toggle"] = "dropdown"
       role = "button"
       attributes["aria-expanded"] = "false"
