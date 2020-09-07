@@ -74,7 +74,7 @@ internal object ClassSummaryPage : KLogging() {
         call.parameters[LANG_TYPE_QP]?.let { LanguageName(it) } ?: EMPTY_LANGUAGE,
         call.parameters[GROUP_NAME_QP]?.let { GroupName(it) } ?: EMPTY_GROUP,
         call.parameters[CLASS_CODE_QP]?.let { ClassCode(it) } ?: throw InvalidRequestException("Missing class code"))
-    val isValidGroupName = groupName.isDefined(content, languageName)
+    val isGroupNameValid = groupName.isDefined(content, languageName)
     val activeClassCode = user.fetchActiveClassCode(redis)
     val enrollees = classCode.fetchEnrollees(redis)
 
@@ -113,7 +113,7 @@ internal object ClassSummaryPage : KLogging() {
           h3 {
             style = "margin-left: 15px; color: $headerColor"
             +classCode.toDisplayString(redis)
-            if (isValidGroupName) {
+            if (isGroupNameValid) {
               +" "
               a {
                 style = "text-decoration:underline"
@@ -129,9 +129,9 @@ internal object ClassSummaryPage : KLogging() {
             }
           }
 
-          displayStudents(content, enrollees, classCode, isValidGroupName, languageName, groupName, redis)
+          displayStudents(content, enrollees, classCode, isGroupNameValid, languageName, groupName, redis)
 
-          if (enrollees.isNotEmpty())
+          if (enrollees.isNotEmpty() && languageName.isValid() && groupName.isValid())
             enableWebSockets(languageName, groupName, classCode)
 
           backLink(returnPath)
@@ -209,8 +209,8 @@ internal object ClassSummaryPage : KLogging() {
               if (isValidGroupName)
                 "$STUDENT_SUMMARY_ENDPOINT?$LANG_TYPE_QP=$languageName&$CLASS_CODE_QP=$classCode&$USER_ID_QP=${student.id}"
                   .also {
-                    td { a { href = it; +student.name(redis) } }
-                    td { a { href = it; +student.email(redis).toString() } }
+                    td { a { style = "text-decoration:underline"; href = it; +student.name(redis) } }
+                    td { a { style = "text-decoration:underline"; href = it; +student.email(redis).toString() } }
                   }
               else {
                 td { +student.name(redis) }

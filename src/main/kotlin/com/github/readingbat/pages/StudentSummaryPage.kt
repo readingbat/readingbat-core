@@ -44,7 +44,6 @@ import com.github.readingbat.pages.PageUtils.encodeUriElems
 import com.github.readingbat.pages.PageUtils.headDefault
 import com.github.readingbat.pages.PageUtils.rawHtml
 import com.github.readingbat.server.LanguageName
-import com.github.readingbat.server.LanguageName.Companion.EMPTY_LANGUAGE
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
 import io.ktor.application.*
@@ -63,7 +62,7 @@ internal object StudentSummaryPage : KLogging() {
 
     val (languageName, student, classCode) =
       Triple(
-        call.parameters[LANG_TYPE_QP]?.let { LanguageName(it) } ?: EMPTY_LANGUAGE,
+        call.parameters[LANG_TYPE_QP]?.let { LanguageName(it) } ?: throw InvalidRequestException("Missing language"),
         call.parameters[USER_ID_QP]?.toUser(null) ?: throw InvalidRequestException("Missing user id"),
         call.parameters[CLASS_CODE_QP]?.let { ClassCode(it) } ?: throw InvalidRequestException("Missing class code"))
     val activeClassCode = user.fetchActiveClassCode(redis)

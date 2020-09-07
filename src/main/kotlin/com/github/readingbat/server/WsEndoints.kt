@@ -68,9 +68,21 @@ internal object WsEndoints : KLogging() {
 
   fun Routing.wsEndpoints(metrics: Metrics, contentSrc: () -> ReadingBatContent) {
 
-    suspend fun WebSocketSession.validateContext(classCode: ClassCode, user: User, context: String) {
+    suspend fun WebSocketSession.validateContext(languageName: LanguageName?,
+                                                 groupName: GroupName?,
+                                                 classCode: ClassCode,
+                                                 user: User,
+                                                 context: String) {
       redisPool.withSuspendingRedisPool { redis ->
         when {
+          languageName.isNotNull() && languageName.isNotValid() -> {
+            close(CloseReason(Codes.GOING_AWAY, "Client disconnected"))
+            throw InvalidRequestException("Invalid language name $languageName")
+          }
+          groupName.isNotNull() && groupName.isNotValid() -> {
+            close(CloseReason(Codes.GOING_AWAY, "Client disconnected"))
+            throw InvalidRequestException("Invalid group name $groupName")
+          }
           redis.isNull() -> {
             close(CloseReason(Codes.GOING_AWAY, "Client disconnected"))
             throw RedisUnavailableException(context)
@@ -106,7 +118,7 @@ internal object WsEndoints : KLogging() {
       val path = content.functionInfoByMd5(challengeMd5)?.challenge?.path ?: "Unknown"
       val desc = "$CHALLENGE_ENDPOINT/$classCode/$challengeMd5 ($path) - $remote - $email"
 
-      validateContext(classCode, user, "Student answers")
+      validateContext(null, null, classCode, user, "Student answers")
 
       logger.info { "Opened student answers websocket for $desc" }
 
@@ -188,7 +200,7 @@ internal object WsEndoints : KLogging() {
       val content = contentSrc.invoke()
       val (languageName, groupName, classCode) =
         Triple(
-          call.parameters[LANG_NAME]?.let { LanguageName(it) } ?: throw InvalidPathException("Missing language name"),
+          call.parameters[LANG_NAME]?.let { LanguageName(it) } ?: throw InvalidPathException("Missing language"),
           call.parameters[GROUP_NAME]?.let { GroupName(it) } ?: throw InvalidPathException("Missing group name"),
           call.parameters[CLASS_CODE]?.let { ClassCode(it) } ?: throw InvalidPathException("Missing class code"))
       val challenges = content.findGroup(languageName.toLanguageType(), groupName).challenges
@@ -198,7 +210,7 @@ internal object WsEndoints : KLogging() {
       val email = fetchEmail()
       val desc = "$CHALLENGE_ENDPOINT/$languageName/$groupName/$classCode - $remote - $email"
 
-      validateContext(classCode, user, "Class statistics")
+      validateContext(languageName, groupName, classCode, user, "Class statistics")
 
       logger.info { "Opened class statistics websocket for $desc" }
 
@@ -321,7 +333,7 @@ internal object WsEndoints : KLogging() {
       val content = contentSrc.invoke()
       val (languageName, groupName, classCode) =
         Triple(
-          call.parameters[LANG_NAME]?.let { LanguageName(it) } ?: throw InvalidPathException("Missing language name"),
+          call.parameters[LANG_NAME]?.let { LanguageName(it) } ?: throw InvalidPathException("Missing language"),
           call.parameters[GROUP_NAME]?.let { GroupName(it) } ?: throw InvalidPathException("Missing group name"),
           call.parameters[CLASS_CODE]?.let { ClassCode(it) } ?: throw InvalidPathException("Missing class code"))
       val challenges = content.findGroup(languageName.toLanguageType(), groupName).challenges
@@ -331,7 +343,7 @@ internal object WsEndoints : KLogging() {
       val email = fetchEmail()
       val desc = "$CLASS_SUMMARY_ENDPOINT/$languageName/$groupName/$classCode - $remote - $email"
 
-      validateContext(classCode, user, "Class overview")
+      validateContext(languageName, groupName, classCode, user, "Class overview")
 
       logger.info { "Opened class overview websocket for $desc" }
 

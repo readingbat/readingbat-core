@@ -113,7 +113,7 @@ internal data class ChallengeHistory(var invocation: Invocation,
 }
 
 internal class ChallengeNames(paramMap: Map<String, String>) {
-  val languageName = LanguageName(paramMap[LANG_SRC] ?: throw InvalidConfigurationException("Missing language name"))
+  val languageName = LanguageName(paramMap[LANG_SRC] ?: throw InvalidConfigurationException("Missing language"))
   val groupName = GroupName(paramMap[GROUP_SRC] ?: throw InvalidConfigurationException("Missing group name"))
   val challengeName =
     ChallengeName(paramMap[CHALLENGE_SRC] ?: throw InvalidConfigurationException("Missing challenge name"))

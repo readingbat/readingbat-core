@@ -49,7 +49,6 @@ import com.github.readingbat.pages.PageUtils.encodeUriElems
 import com.github.readingbat.pages.PageUtils.headDefault
 import com.github.readingbat.pages.PageUtils.rawHtml
 import com.github.readingbat.server.GroupName
-import com.github.readingbat.server.GroupName.Companion.EMPTY_GROUP
 import com.github.readingbat.server.LanguageName
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
@@ -181,7 +180,7 @@ internal object ChallengeGroupPage : KLogging() {
       a {
         style = "text-decoration:underline";
         href =
-          if (groupName == EMPTY_GROUP)
+          if (groupName.isNotValid())
             classSummaryEndpoint(classCode)
           else
             classSummaryEndpoint(classCode, languageName, groupName)

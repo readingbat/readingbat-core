@@ -183,6 +183,8 @@ inline class LanguageName(val value: String) {
     false
   }
 
+  internal fun isNotValid() = !isValid()
+
   internal fun isDefined(content: ReadingBatContent) = isValid() && content.hasLanguage(toLanguageType())
 
   override fun toString() = value
@@ -197,8 +199,13 @@ inline class LanguageName(val value: String) {
 }
 
 inline class GroupName(val value: String) {
+
+  internal fun isValid() = this != EMPTY_GROUP
+
+  internal fun isNotValid() = !isValid()
+
   internal fun isDefined(content: ReadingBatContent, languageName: LanguageName) =
-    languageName.isDefined(content) && content.findLanguage(languageName.toLanguageType()).hasGroup(value)
+    languageName.isDefined(content) && isValid() && content.findLanguage(languageName.toLanguageType()).hasGroup(value)
 
   override fun toString() = value
 
@@ -210,6 +217,10 @@ inline class GroupName(val value: String) {
 }
 
 inline class ChallengeName(val value: String) {
+  internal fun isValid() = this != EMPTY_CHALLENGE
+
+  internal fun isNotValid() = !isValid()
+
   override fun toString() = value
 
   companion object {
