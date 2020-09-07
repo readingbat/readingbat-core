@@ -102,14 +102,14 @@ internal object Endpoints {
   const val CLEAR_GROUP_ANSWERS_ENDPOINT = "/clear-group-answers"
   const val CLEAR_CHALLENGE_ANSWERS_ENDPOINT = "/clear-challenge-answers"
   const val MESSAGE_ENDPOINT = "/message"
-  const val RESET_CONTENT_ENDPOINT = "/reset-content"
+  const val RESET_CONTENT_DSL_ENDPOINT = "/reset-content"
   const val RESET_CACHE_ENDPOINT = "/reset-cache"
   const val GARBAGE_COLLECTOR_ENDPOINT = "/garbage-collector"
   const val LOAD_JAVA_ENDPOINT = "/load-java"
   const val LOAD_PYTHON_ENDPOINT = "/load-python"
   const val LOAD_KOTLIN_ENDPOINT = "/load-kotlin"
 
-  const val CLEAR_REDIS_CACHES_ENDPOINT = "/clear-caches"
+  const val DELETE_CONTENT_IN_REDIS_ENDPOINT = "/clear-caches"
 
   const val PING = "/ping"
   const val THREAD_DUMP = "/threaddump"

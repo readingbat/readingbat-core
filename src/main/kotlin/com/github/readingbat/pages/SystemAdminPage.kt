@@ -17,13 +17,13 @@
 
 package com.github.readingbat.pages
 
-import com.github.readingbat.common.Endpoints.CLEAR_REDIS_CACHES_ENDPOINT
+import com.github.readingbat.common.Endpoints.DELETE_CONTENT_IN_REDIS_ENDPOINT
 import com.github.readingbat.common.Endpoints.GARBAGE_COLLECTOR_ENDPOINT
 import com.github.readingbat.common.Endpoints.LOAD_JAVA_ENDPOINT
 import com.github.readingbat.common.Endpoints.LOAD_KOTLIN_ENDPOINT
 import com.github.readingbat.common.Endpoints.LOAD_PYTHON_ENDPOINT
 import com.github.readingbat.common.Endpoints.RESET_CACHE_ENDPOINT
-import com.github.readingbat.common.Endpoints.RESET_CONTENT_ENDPOINT
+import com.github.readingbat.common.Endpoints.RESET_CONTENT_DSL_ENDPOINT
 import com.github.readingbat.common.Endpoints.USER_PREFS_ENDPOINT
 import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.Message
@@ -34,7 +34,6 @@ import com.github.readingbat.common.isAdminUser
 import com.github.readingbat.common.isValidUser
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.isProduction
-import com.github.readingbat.dsl.useRedisContentCaches
 import com.github.readingbat.pages.HelpAndLogin.helpAndLogin
 import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyTitle
@@ -84,7 +83,7 @@ internal object SystemAdminPage : KLogging() {
           if (!isProduction() || user.isAdminUser(redis)) {
             p {
               this@body.confirmingButton("Reset ReadingBat Content",
-                                         RESET_CONTENT_ENDPOINT,
+                                         RESET_CONTENT_DSL_ENDPOINT,
                                          "Are you sure you want to reset the content? (This can take a while)")
             }
 
@@ -94,12 +93,11 @@ internal object SystemAdminPage : KLogging() {
                                          "Are you sure you want to reset the challenges cache?")
             }
 
-            if (useRedisContentCaches())
-              p {
-                this@body.confirmingButton("Clear all Redis Content Caches",
-                                           CLEAR_REDIS_CACHES_ENDPOINT,
-                                           "Are you sure you want to clear the redis content caches?")
-              }
+            p {
+              this@body.confirmingButton("Delete all content cached in Redis",
+                                         DELETE_CONTENT_IN_REDIS_ENDPOINT,
+                                         "Are you sure you want to delete all content cached in Redis?")
+            }
 
             p {
               this@body.confirmingButton("Load all Java Challenges",

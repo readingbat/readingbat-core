@@ -58,7 +58,7 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
   private fun dirContentsKey(path: String) = keyOf(DIR_CONTENTS_KEY, md5Of(path))
 
   private fun fetchDirContentsFromRedis(path: String) =
-    if (useRedisContentCaches())
+    if (cacheContentInRedis())
       redisPool.withRedisPool { redis -> redis?.lrange(dirContentsKey(path), 0, -1) }
     else
       null
@@ -81,7 +81,7 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
                 root.organizationDirectoryContents(branchName, path, metrics)
 
             redisPool.withRedisPool { redis ->
-              if (redis.isNotNull() && useRedisContentCaches()) {
+              if (redis.isNotNull() && cacheContentInRedis()) {
                 val dirContentsKey = dirContentsKey(path)
                 remoteFiles.forEach { redis.rpush(dirContentsKey, it) }
                 logger.info { """Saved "$path" to redis""" }

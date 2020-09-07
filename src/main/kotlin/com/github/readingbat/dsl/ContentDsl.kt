@@ -22,8 +22,8 @@ import com.github.pambrose.common.util.*
 import com.github.readingbat.common.KeyConstants.CONTENT_DSL_KEY
 import com.github.readingbat.common.Properties.AGENT_ENABLED_PROPERTY
 import com.github.readingbat.common.Properties.AGENT_LAUNCH_ID
+import com.github.readingbat.common.Properties.CACHE_CONTENT_IN_REDIS
 import com.github.readingbat.common.Properties.IS_PRODUCTION
-import com.github.readingbat.common.Properties.USE_REDIS_CONTENT_CACHES
 import com.github.readingbat.common.ScriptPools.kotlinScriptPool
 import com.github.readingbat.server.ReadingBatServer
 import com.github.readingbat.server.ReadingBatServer.redisPool
@@ -56,7 +56,7 @@ private val logger = KotlinLogging.logger {}
 // This is accessible from the Content.kt descriptions
 fun isProduction() = IS_PRODUCTION.getProperty(false)
 
-fun useRedisContentCaches() = USE_REDIS_CONTENT_CACHES.getProperty(false)
+fun cacheContentInRedis() = CACHE_CONTENT_IN_REDIS.getProperty(false)
 
 fun isAgentEnabled() = AGENT_ENABLED_PROPERTY.getProperty(false)
 
@@ -68,7 +68,7 @@ fun ContentSource.eval(enclosingContent: ReadingBatContent, variableName: String
 private fun contentDslKey(source: String) = keyOf(CONTENT_DSL_KEY, md5Of(source))
 
 private fun fetchContentDslFromRedis(source: String) =
-  if (useRedisContentCaches()) redisPool.withRedisPool { redis -> redis?.get(contentDslKey(source)) } else null
+  if (cacheContentInRedis()) redisPool.withRedisPool { redis -> redis?.get(contentDslKey(source)) } else null
 
 internal fun readContentDsl(contentSource: ContentSource, variableName: String = "content"): ReadingBatContent {
   val (code, dur) =
@@ -83,7 +83,7 @@ internal fun readContentDsl(contentSource: ContentSource, variableName: String =
         else {
           dsl = contentSource.content
           redisPool.withRedisPool { redis ->
-            if (redis.isNotNull() && useRedisContentCaches()) {
+            if (redis.isNotNull() && cacheContentInRedis()) {
               redis.set(contentDslKey(contentSource.source), dsl)
               Challenge.logger.debug { """Saved "${contentSource.source}" to redis""" }
             }

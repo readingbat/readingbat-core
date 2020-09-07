@@ -26,13 +26,10 @@ import com.github.readingbat.common.EnvVars
 import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.Properties
 import com.github.readingbat.common.SessionActivites
+import com.github.readingbat.dsl.*
 import com.github.readingbat.dsl.LanguageType.Java
 import com.github.readingbat.dsl.LanguageType.Kotlin
 import com.github.readingbat.dsl.LanguageType.Python
-import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.dsl.agentLaunchId
-import com.github.readingbat.dsl.isAgentEnabled
-import com.github.readingbat.dsl.isProduction
 import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyTitle
 import com.github.readingbat.pages.PageUtils.headDefault
@@ -91,7 +88,11 @@ internal object ConfigPage {
                 }
                 tr {
                   td { +"Production:" }
-                  td { +"${isProduction()}" }
+                  td { +isProduction().toString() }
+                }
+                tr {
+                  td { +"Cache content in Redis:" }
+                  td { +cacheContentInRedis().toString() }
                 }
                 tr {
                   td { +"Cache challenges:" }
@@ -99,11 +100,11 @@ internal object ConfigPage {
                 }
                 tr {
                   td { +"Max history length:" }
-                  td { +"${content.maxHistoryLength}" }
+                  td { +content.maxHistoryLength.toString() }
                 }
                 tr {
                   td { +"Max class count:" }
-                  td { +"${content.maxClassCount}" }
+                  td { +content.maxClassCount.toString() }
                 }
                 tr {
                   td { +"Challenge cache size:" }
@@ -115,7 +116,7 @@ internal object ConfigPage {
                 }
                 tr {
                   td { +"Session map size:" }
-                  td { +"${SessionActivites.sessionsMapSize}" }
+                  td { +SessionActivites.sessionsMapSize.toString() }
                 }
                 tr {
                   td { +"Admin Users:" }

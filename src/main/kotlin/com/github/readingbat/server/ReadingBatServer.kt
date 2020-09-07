@@ -168,7 +168,7 @@ internal fun Application.module() {
   adminUsers.addAll(ADMIN_USERS.configPropertyOrNull(this)?.getList() ?: emptyList())
 
   IS_PRODUCTION.setProperty(IS_PRODUCTION.configProperty(this, "false").toBoolean().toString())
-  USE_REDIS_CONTENT_CACHES.setProperty(USE_REDIS_CONTENT_CACHES.configProperty(this, "false").toBoolean().toString())
+  CACHE_CONTENT_IN_REDIS.setProperty(CACHE_CONTENT_IN_REDIS.configProperty(this, "false").toBoolean().toString())
   AGENT_ENABLED_PROPERTY.setProperty(agentEnabled().toString())
   JAVA_SCRIPTS_POOL_SIZE.setProperty(JAVA_SCRIPTS_POOL_SIZE.configProperty(this, "5"))
   KOTLIN_SCRIPTS_POOL_SIZE.setProperty(KOTLIN_SCRIPTS_POOL_SIZE.configProperty(this, "5"))

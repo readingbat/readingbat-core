@@ -34,7 +34,7 @@ enum class Properties(val propertyValue: String,
                       val maskFunc: Properties.() -> String = { getProperty("unassigned") }) {
 
   IS_PRODUCTION("$READINGBAT.$SITE.production"),
-  USE_REDIS_CONTENT_CACHES("$READINGBAT.$SITE.useRedisContentCaches"),
+  CACHE_CONTENT_IN_REDIS("$READINGBAT.$SITE.cacheContentInRedis"),
   STARTUP_DELAY_SECS("$READINGBAT.$SITE.startupMaxDelaySecs"),
   REDIRECT_HOSTNAME_PROPERTY("$READINGBAT.$SITE.redirectHostname"),
   SENDGRID_PREFIX_PROPERTY("$READINGBAT.$SITE.sendGridPrefix"),
