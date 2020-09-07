@@ -43,10 +43,11 @@ import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.pages.ChallengePage.headerColor
 import com.github.readingbat.pages.HelpAndLogin.helpAndLogin
-import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyTitle
 import com.github.readingbat.pages.PageUtils.encodeUriElems
 import com.github.readingbat.pages.PageUtils.headDefault
+import com.github.readingbat.pages.PageUtils.homeLink
+import com.github.readingbat.pages.PageUtils.loadBootstrap
 import com.github.readingbat.pages.PageUtils.rawHtml
 import com.github.readingbat.server.GroupName
 import com.github.readingbat.server.GroupName.Companion.EMPTY_GROUP
@@ -92,10 +93,7 @@ internal object ClassSummaryPage : KLogging() {
 
         head {
           headDefault(content)
-
-          link { rel = "stylesheet"; href = "https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css" }
-          script { src = "https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js" }
-          script { src = "https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js" }
+          loadBootstrap()
         }
 
         body {
@@ -135,7 +133,7 @@ internal object ClassSummaryPage : KLogging() {
           if (enrollees.isNotEmpty() && languageName.isValid() && groupName.isValid())
             enableWebSockets(languageName, groupName, classCode)
 
-          backLink(returnPath)
+          homeLink(if (languageName.isValid()) pathOf(CHALLENGE_ROOT, languageName) else "")
         }
       }
   }

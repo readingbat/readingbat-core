@@ -184,7 +184,7 @@ internal object ChallengeGroupPage : KLogging() {
             classSummaryEndpoint(classCode, languageName, groupName)
         +classCode.toDisplayString(redis)
       }
-      +"($studentCount ${"student".pluralize(enrollees.count())} enrolled)"
+      +" - $studentCount ${"student".pluralize(enrollees.count())} enrolled"
     }
   }
 

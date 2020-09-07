@@ -74,6 +74,12 @@ internal object PageUtils {
     }
   }
 
+  fun HEAD.loadBootstrap() {
+    link { rel = "stylesheet"; href = "https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css" }
+    script { src = "https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js" }
+    script { src = "https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js" }
+  }
+
   fun HEAD.clickButtonScript(vararg buttonNames: String) {
     buttonNames.forEach { buttonName ->
       script {
@@ -154,11 +160,11 @@ internal object PageUtils {
       a { href = "$PRIVACY_ENDPOINT?$BACK_PATH=$backPath&$RETURN_PARAM=$returnPath"; +"Privacy Statement" }
     }
 
-  private fun BODY.backLinkWithIndent(url: String, marginLeft: String = "1em") {
+  private fun BODY.linkWithIndent(url: String, text: String, marginLeft: String = "1em") {
     if (url.isNotEmpty()) {
       div {
         style = "font-size:120%; margin-left:$marginLeft"
-        p { a { href = url; rawHtml("&larr; Back") } }
+        p { a { href = url; rawHtml("&larr; $text") } }
       }
     }
   }
@@ -178,7 +184,9 @@ internal object PageUtils {
 
   fun BODY.displayMessage(msg: Message) = if (msg.isNotBlank) +(msg.toString()) else rawHtml(nbsp.text)
 
-  fun BODY.backLink(vararg pathElems: String) = backLinkWithIndent(pathElems.toList().toRootPath())
+  fun BODY.backLink(vararg pathElems: String) = linkWithIndent(pathElems.toList().toRootPath(), "Back")
+
+  fun BODY.homeLink(vararg pathElems: String) = linkWithIndent(pathElems.toList().toRootPath(), "Home")
 
   fun HTMLTag.rawHtml(html: String) = unsafe { raw(html) }
 

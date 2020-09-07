@@ -29,9 +29,9 @@ import com.github.readingbat.common.Constants.NO
 import com.github.readingbat.common.Constants.USER_ID_QP
 import com.github.readingbat.common.Constants.WRONG_COLOR
 import com.github.readingbat.common.Constants.YES
-import com.github.readingbat.common.Endpoints
 import com.github.readingbat.common.Endpoints.CHALLENGE_ROOT
 import com.github.readingbat.common.Endpoints.STUDENT_SUMMARY_ENDPOINT
+import com.github.readingbat.common.Endpoints.classSummaryEndpoint
 import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.fetchActiveClassCode
@@ -47,6 +47,7 @@ import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyTitle
 import com.github.readingbat.pages.PageUtils.encodeUriElems
 import com.github.readingbat.pages.PageUtils.headDefault
+import com.github.readingbat.pages.PageUtils.loadBootstrap
 import com.github.readingbat.pages.PageUtils.rawHtml
 import com.github.readingbat.server.LanguageName
 import com.github.readingbat.server.PipelineCall
@@ -85,10 +86,7 @@ internal object StudentSummaryPage : KLogging() {
 
         head {
           headDefault(content)
-
-          link { rel = "stylesheet"; href = "https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css" }
-          script { src = "https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js" }
-          script { src = "https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js" }
+          loadBootstrap()
         }
 
         body {
@@ -102,10 +100,13 @@ internal object StudentSummaryPage : KLogging() {
             style = "margin-left: 15px; color: $headerColor"
             a {
               style = "text-decoration:underline";
-              href = Endpoints.classSummaryEndpoint(classCode)
+              href = classSummaryEndpoint(classCode)
               +classCode.toDisplayString(redis)
             }
-            +" "
+          }
+
+          h3 {
+            style = "margin-left: 15px; color: $headerColor"
             a {
               style = "text-decoration:underline"
               href = pathOf(CHALLENGE_ROOT, languageName)
@@ -124,7 +125,7 @@ internal object StudentSummaryPage : KLogging() {
 
           enableWebSockets(languageName, student, classCode)
 
-          backLink(returnPath)
+          backLink(classSummaryEndpoint(classCode))
         }
       }
   }
@@ -151,7 +152,7 @@ internal object StudentSummaryPage : KLogging() {
                         .forEach {
                           li {
                             style = "font-size:110%"
-                            a(Endpoints.classSummaryEndpoint(classCode, langGroup.languageName, it.groupName))
+                            a(classSummaryEndpoint(classCode, langGroup.languageName, it.groupName))
                             { +it.groupName.toString() }
                           }
                         }

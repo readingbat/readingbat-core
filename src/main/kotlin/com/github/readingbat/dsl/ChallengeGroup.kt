@@ -70,7 +70,7 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
           val path = "${srcPath.ensureSuffix("/")}$packageNameAsPath"
           val files = fetchDirContentsFromRedis(path)
           if (files.isNotNull() && files.isNotEmpty()) {
-            logger.info { """Retrieved "$path" from redis""" }
+            logger.debug { """Retrieved "$path" from redis""" }
             files
           }
           else {
