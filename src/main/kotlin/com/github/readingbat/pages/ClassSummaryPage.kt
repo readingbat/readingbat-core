@@ -20,6 +20,7 @@ package com.github.readingbat.pages
 import com.github.pambrose.common.util.encode
 import com.github.readingbat.common.CSSNames.INDENT_2EM
 import com.github.readingbat.common.ClassCode
+import com.github.readingbat.common.CommonUtils.pathOf
 import com.github.readingbat.common.Constants.CLASS_CODE_QP
 import com.github.readingbat.common.Constants.CORRECT_COLOR
 import com.github.readingbat.common.Constants.GROUP_NAME_QP
@@ -107,17 +108,21 @@ internal object ClassSummaryPage : KLogging() {
           h3 {
             style = "margin-left: 15px; color: $headerColor"
             +classCode.toDisplayString(redis)
-            if (isGroupNameValid) {
+          }
+
+          if (isGroupNameValid) {
+            h3 {
+              style = "margin-left: 15px; color: $headerColor"
               +" "
               a {
                 style = "text-decoration:underline"
-                href = "$CHALLENGE_ROOT/${languageName}"
+                href = pathOf(CHALLENGE_ROOT, languageName)
                 +languageName.toLanguageType().toString()
               }
               span { style = "padding-left:2px; padding-right:2px"; rawHtml("&rarr;") }
               a {
                 style = "text-decoration:underline"
-                href = "$CHALLENGE_ROOT/${languageName}/${groupName}"
+                href = pathOf(CHALLENGE_ROOT, languageName, groupName)
                 +groupName.toString()
               }
             }
@@ -137,7 +142,7 @@ internal object ClassSummaryPage : KLogging() {
     table {
       style = "border-collapse: separate; border-spacing: 15px 5px" // 5px is vertical
       tr {
-        td { style = "font-size:130%"; +"Challenge Groups: " }
+        td { style = "font-size:140%"; +"Challenge Groups: " }
         LanguageType.values()
           .map { content.findLanguage(it) }
           .forEach { langGroup ->
@@ -189,7 +194,7 @@ internal object ClassSummaryPage : KLogging() {
                 th {
                   a {
                     style = "text-decoration:underline"
-                    href = "$CHALLENGE_ROOT/$languageName/$groupName/${challenge.challengeName}"
+                    href = pathOf(CHALLENGE_ROOT, languageName, groupName, challenge.challengeName)
                     +challenge.challengeName.toString()
                   }
                 }
@@ -284,7 +289,7 @@ internal object ClassSummaryPage : KLogging() {
 
   private fun LI.dropdownToggle(block: A.() -> Unit) {
     a("#", null, "dropdown-toggle") {
-      style = "font-size:130%; text-decoration:none"
+      style = "font-size:140%; text-decoration:none"
       attributes["data-toggle"] = "dropdown"
       role = "button"
       attributes["aria-expanded"] = "false"

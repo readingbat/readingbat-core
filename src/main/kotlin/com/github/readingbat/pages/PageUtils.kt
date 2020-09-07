@@ -53,7 +53,7 @@ internal object PageUtils {
     link { rel = "stylesheet"; href = CSS_ENDPOINT; type = CSS.toString() }
 
     // From: https://favicon.io/emoji-favicons/glasses/
-    val prefix = "$STATIC_ROOT/$ICONS"
+    val prefix = pathOf(STATIC_ROOT, ICONS)
     link { rel = "apple-touch-icon"; sizes = "180x180"; href = "$prefix/apple-touch-icon.png" }
     link { rel = "icon"; type = "image/png"; sizes = "32x32"; href = "$prefix/favicon-32x32.png" }
     link { rel = "icon"; type = "image/png"; sizes = "16x16"; href = "$prefix/favicon-16x16.png" }

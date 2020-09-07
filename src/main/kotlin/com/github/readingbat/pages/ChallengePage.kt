@@ -127,7 +127,9 @@ internal object ChallengePage : KLogging() {
 
         head {
           link { rel = "stylesheet"; href = spinnerCss }
-          link { rel = "stylesheet"; href = "$STATIC_ROOT/$PRISM/$languageName-prism.css"; type = CSS.toString() }
+          link {
+            rel = "stylesheet"; href = pathOf(STATIC_ROOT, PRISM, "languageName-prism.css"); type = CSS.toString()
+          }
 
           script(type = textJavaScript) { checkAnswersScript(languageName, groupName, challengeName) }
           script(type = textJavaScript) { likeDislikeScript(languageName, groupName, challengeName) }
@@ -145,7 +147,7 @@ internal object ChallengePage : KLogging() {
             displayQuestions(user, browserSession, challenge, funcInfo, redis)
           else {
             if (redis.isNull()) {
-              p { +DBMS_DOWN.value }
+              p { +DBMS_DOWN.toString() }
             }
             else {
               displayStudentProgress(challenge, content.maxHistoryLength, funcInfo, activeClassCode, enrollees, redis)
@@ -155,7 +157,7 @@ internal object ChallengePage : KLogging() {
 
           backLink(CHALLENGE_ROOT, languageName.value, groupName.value)
 
-          script { src = "$STATIC_ROOT/$PRISM/$languageName-prism.js" }
+          script { src = pathOf(STATIC_ROOT, PRISM, "languageName-prism.js") }
 
           if (activeClassCode.isEnabled && enrollees.isNotEmpty())
             enableWebSockets(activeClassCode, funcInfo.challengeMd5)
@@ -498,7 +500,7 @@ internal object ChallengePage : KLogging() {
             style = "display:${if (likeDislikeVal == 0 || likeDislikeVal == 2) "inline" else "none"}"
             button(classes = LIKE_BUTTONS) {
               onClick = "$LIKE_DISLIKE_JS_FUNC(${LIKE_CLEAR.toDoubleQuoted()})"
-              img { height = imgSize; src = "$STATIC_ROOT/$LIKE_CLEAR_FILE" }
+              img { height = imgSize; src = pathOf(STATIC_ROOT, LIKE_CLEAR_FILE) }
             }
           }
           td {
@@ -506,7 +508,7 @@ internal object ChallengePage : KLogging() {
             style = "display:${if (likeDislikeVal == 1) "inline" else "none"}"
             button(classes = LIKE_BUTTONS) {
               onClick = "$LIKE_DISLIKE_JS_FUNC(${LIKE_COLOR.toDoubleQuoted()})"
-              img { height = imgSize; src = "$STATIC_ROOT/$LIKE_COLOR_FILE" }
+              img { height = imgSize; src = pathOf(STATIC_ROOT, LIKE_COLOR_FILE) }
             }
           }
           td {
@@ -514,7 +516,7 @@ internal object ChallengePage : KLogging() {
             style = "display:${if (likeDislikeVal == 0 || likeDislikeVal == 1) "inline" else "none"}"
             button(classes = LIKE_BUTTONS) {
               onClick = "$LIKE_DISLIKE_JS_FUNC(${DISLIKE_CLEAR.toDoubleQuoted()})"
-              img { height = imgSize; src = "$STATIC_ROOT/$DISLIKE_CLEAR_FILE" }
+              img { height = imgSize; src = pathOf(STATIC_ROOT, DISLIKE_CLEAR_FILE) }
             }
           }
           td {
@@ -522,7 +524,7 @@ internal object ChallengePage : KLogging() {
             style = "display:${if (likeDislikeVal == 2) "inline" else "none"}"
             button(classes = LIKE_BUTTONS) {
               onClick = "$LIKE_DISLIKE_JS_FUNC(${DISLIKE_COLOR.toDoubleQuoted()})"
-              img { height = imgSize; src = "$STATIC_ROOT/$DISLIKE_COLOR_FILE" }
+              img { height = imgSize; src = pathOf(STATIC_ROOT, DISLIKE_COLOR_FILE) }
             }
           }
 

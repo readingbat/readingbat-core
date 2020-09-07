@@ -21,6 +21,7 @@ import com.github.pambrose.common.util.ContentRoot
 import com.github.pambrose.common.util.ContentSource
 import com.github.pambrose.common.util.asRegex
 import com.github.pambrose.common.util.decode
+import com.github.readingbat.common.CommonUtils.pathOf
 import com.github.readingbat.server.GroupName
 import com.github.readingbat.server.ReadingBatServer
 
@@ -94,7 +95,7 @@ class LanguageGroup<T : Challenge>(internal val content: ReadingBatContent,
 
   fun findGroup(groupName: String): ChallengeGroup<T> =
     groupName.decode().let { decoded -> challengeGroups.firstOrNull { it.groupName.value == decoded } }
-      ?: throw InvalidPathException("Group $languageName/$groupName not found")
+      ?: throw InvalidPathException("Group ${pathOf(languageName, groupName)} not found")
 
   fun findChallenge(groupName: String, challengeName: String) = findGroup(groupName).findChallenge(challengeName)
 

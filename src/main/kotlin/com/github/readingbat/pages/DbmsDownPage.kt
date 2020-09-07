@@ -42,7 +42,7 @@ internal object DbmsDownPage {
 
         body {
           bodyTitle()
-          h2 { +DBMS_DOWN.value }
+          h2 { +DBMS_DOWN.toString() }
 
           backLink(queryParam(RETURN_PARAM))
         }

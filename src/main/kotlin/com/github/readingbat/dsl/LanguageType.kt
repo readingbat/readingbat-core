@@ -17,6 +17,7 @@
 
 package com.github.readingbat.dsl
 
+import com.github.readingbat.common.CommonUtils.pathOf
 import com.github.readingbat.common.Endpoints.CHALLENGE_ROOT
 import com.github.readingbat.server.LanguageName
 
@@ -26,7 +27,7 @@ enum class LanguageType(val useDoubleQuotes: Boolean, val suffix: String, val sr
   Kotlin(true, "kt", "src/main/kotlin");
 
   internal val languageName = LanguageName(name.toLowerCase())
-  internal val contentRoot = "$CHALLENGE_ROOT/$languageName"
+  internal val contentRoot = pathOf(CHALLENGE_ROOT, languageName)
 
   val isJava by lazy { this == Java }
   val isPython by lazy { this == Python }

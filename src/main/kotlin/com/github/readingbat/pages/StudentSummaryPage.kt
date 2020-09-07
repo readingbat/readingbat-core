@@ -20,6 +20,7 @@ package com.github.readingbat.pages
 import com.github.pambrose.common.util.encode
 import com.github.readingbat.common.CSSNames.INDENT_2EM
 import com.github.readingbat.common.ClassCode
+import com.github.readingbat.common.CommonUtils.pathOf
 import com.github.readingbat.common.Constants.CLASS_CODE_QP
 import com.github.readingbat.common.Constants.CORRECT_COLOR
 import com.github.readingbat.common.Constants.INCOMPLETE_COLOR
@@ -105,7 +106,7 @@ internal object StudentSummaryPage : KLogging() {
             +" "
             a {
               style = "text-decoration:underline"
-              href = "$CHALLENGE_ROOT/${languageName}"
+              href = pathOf(CHALLENGE_ROOT, languageName)
               +languageName.toLanguageType().toString()
             }
           }
@@ -117,7 +118,7 @@ internal object StudentSummaryPage : KLogging() {
             +student.email(redis).toString()
           }
 
-          displayClasses(content, classCode, languageName, redis)
+          displayChallengeGroups(content, classCode, languageName, redis)
 
           enableWebSockets(languageName, student, classCode)
 
@@ -149,7 +150,7 @@ internal object StudentSummaryPage : KLogging() {
                           li {
                             style = "font-size:110%"
                             a(Endpoints.classSummaryEndpoint(classCode, langGroup.languageName, it.groupName))
-                            { +it.groupName.value }
+                            { +it.groupName.toString() }
                           }
                         }
                     }
@@ -162,10 +163,10 @@ internal object StudentSummaryPage : KLogging() {
     }
   }
 
-  private fun BODY.displayClasses(content: ReadingBatContent,
-                                  classCode: ClassCode,
-                                  languageName: LanguageName,
-                                  redis: Jedis) =
+  private fun BODY.displayChallengeGroups(content: ReadingBatContent,
+                                          classCode: ClassCode,
+                                          languageName: LanguageName,
+                                          redis: Jedis) =
     div(classes = INDENT_2EM) {
       table {
         style = "border-collapse: separate; border-spacing: 10px 5px"
@@ -173,7 +174,13 @@ internal object StudentSummaryPage : KLogging() {
         content.findLanguage(languageName.toLanguageType()).challengeGroups
           .forEach { group ->
             tr {
-              td { +group.groupName.toString() }
+              td {
+                a {
+                  style = "text-decoration:underline"
+                  href = pathOf(CHALLENGE_ROOT, languageName, group.groupName)
+                  +group.groupName.toString()
+                }
+              }
 
               td {
                 table {
@@ -185,7 +192,7 @@ internal object StudentSummaryPage : KLogging() {
                         th {
                           a {
                             style = "text-decoration:underline"
-                            href = "$CHALLENGE_ROOT/$languageName/${group.groupName}/${challenge.challengeName}"
+                            href = pathOf(CHALLENGE_ROOT, languageName, group.groupName, challenge.challengeName)
                             +challenge.challengeName.toString()
                           }
                         }

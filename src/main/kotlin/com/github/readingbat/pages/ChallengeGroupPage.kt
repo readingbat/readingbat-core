@@ -110,7 +110,7 @@ internal object ChallengeGroupPage : KLogging() {
 
           td(classes = if (activeClassCode.isEnabled) FUNC_ITEM1 else FUNC_ITEM2) {
             if (activeClassCode.isNotEnabled)
-              img { src = "$STATIC_ROOT/${if (allCorrect) GREEN_CHECK else WHITE_CHECK}" }
+              img { src = pathOf(STATIC_ROOT, if (allCorrect) GREEN_CHECK else WHITE_CHECK) }
 
             a {
               style = "font-Size:110%; padding-left:2px"
@@ -129,7 +129,7 @@ internal object ChallengeGroupPage : KLogging() {
         body {
           bodyHeader(content, user, languageType, loginAttempt, loginPath, false, activeClassCode, redis, msg)
 
-          h2 { +groupName.value }
+          h2 { +groupName.toString() }
 
           if (activeClassCode.isEnabled)
             displayClassDescription(activeClassCode, languageName, groupName, enrollees, redis)
@@ -175,7 +175,6 @@ internal object ChallengeGroupPage : KLogging() {
     val studentCount = if (enrollees.isEmpty()) "No" else enrollees.count().toString()
     h3 {
       style = "margin-left: 5px; color: ${ChallengePage.headerColor}"
-      +"$studentCount ${"student".pluralize(enrollees.count())} enrolled in "
       a {
         style = "text-decoration:underline";
         href =
@@ -185,6 +184,7 @@ internal object ChallengeGroupPage : KLogging() {
             classSummaryEndpoint(classCode, languageName, groupName)
         +classCode.toDisplayString(redis)
       }
+      +"($studentCount ${"student".pluralize(enrollees.count())} enrolled)"
     }
   }
 

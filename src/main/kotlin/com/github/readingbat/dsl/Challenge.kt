@@ -67,9 +67,9 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
 
   // Allow description updates only if not found in the Content.kt decl
   private val isDescriptionSetInDsl by lazy { description.isNotBlank() }
-  internal val gitpodUrl by lazy { pathOf(repo.sourcePrefix, "blob/${branchName}", srcPath, fqName) }
+  internal val gitpodUrl by lazy { pathOf(repo.sourcePrefix, "blob/$branchName", srcPath, fqName) }
   internal val parsedDescription by lazy { TextFormatter.renderText(description) }
-  internal val path by lazy { "$languageName/$groupName/$challengeName" }
+  internal val path by lazy { pathOf(languageName, groupName, challengeName) }
 
   private val languageGroup get() = challengeGroup.languageGroup
   private val metrics get() = challengeGroup.languageGroup.metrics
@@ -114,11 +114,11 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
             fetchCodeFromRedis() ?: try {
               val path = pathOf((repo as AbstractRepo).rawSourcePrefix, branchName, srcPath, fqName)
               val (text, dur) = measureTimedValue { URL(path).readText() }
-              logger.debug { """Fetched "$groupName/$fileName" in: $dur from: $path""" }
+              logger.debug { """Fetched "${pathOf(groupName, fileName)}" in: $dur from: $path""" }
               redisPool.withRedisPool { redis ->
                 if (redis.isNotNull() && cacheContentInRedis()) {
                   redis.set(sourceCodeKey, text)
-                  logger.debug { """Saved "$groupName/$fileName" to redis""" }
+                  logger.debug { """Saved "${pathOf(groupName, fileName)}" to redis""" }
                 }
               }
               text

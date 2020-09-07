@@ -84,7 +84,7 @@ internal object UserInfoPage {
                   tr { td { +"Session Id" }; td { +sessionId.toString() } }
                   tr { td { +"Name" }; td { +name } }
                   tr { td { +"Id" }; td { +user.id } }
-                  tr { td { +"Email" }; td { +email.value } }
+                  tr { td { +"Email" }; td { +email.toString() } }
                   tr { td { +"Challenges" }; td { +challenges.size.toString() } }
                   tr { td { +"Invocations" }; td { +invocations.size.toString() } }
                   tr { td { +"Correct answers" }; td { +correctAnswers.size.toString() } }

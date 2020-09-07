@@ -24,6 +24,7 @@ import com.github.pambrose.common.util.encode
 import com.github.pambrose.common.util.isNotNull
 import com.github.pambrose.common.util.isNull
 import com.github.readingbat.common.ClassCode
+import com.github.readingbat.common.CommonUtils.pathOf
 import com.github.readingbat.common.Constants.COLUMN_CNT
 import com.github.readingbat.common.Constants.PING_CODE
 import com.github.readingbat.common.Endpoints.CHALLENGE_ENDPOINT
@@ -97,7 +98,7 @@ internal object WsEndoints : KLogging() {
       val user = fetchUser() ?: throw InvalidRequestException("Null user")
       val email = fetchEmail()
       val path = content.functionInfoByMd5(challengeMd5)?.challenge?.path ?: "Unknown"
-      val desc = "$CHALLENGE_ENDPOINT/$classCode/$challengeMd5 ($path) - $remote - $email"
+      val desc = "${pathOf(CHALLENGE_ENDPOINT, classCode, challengeMd5)} ($path) - $remote - $email"
 
       validateContext(null, null, classCode, user, "Student answers")
         .also {
@@ -196,7 +197,7 @@ internal object WsEndoints : KLogging() {
       val remote = call.request.origin.remoteHost
       val user = fetchUser() ?: throw InvalidRequestException("Null user")
       val email = fetchEmail()
-      val desc = "$CHALLENGE_ENDPOINT/$languageName/$groupName/$classCode - $remote - $email"
+      val desc = "${pathOf(CHALLENGE_ENDPOINT, languageName, groupName, classCode)} - $remote - $email"
 
       validateContext(languageName, groupName, classCode, user, "Class statistics")
         .also {
@@ -335,7 +336,7 @@ internal object WsEndoints : KLogging() {
       val remote = call.request.origin.remoteHost
       val user = fetchUser() ?: throw InvalidRequestException("Null user")
       val email = fetchEmail()
-      val desc = "$CLASS_SUMMARY_ENDPOINT/$languageName/$groupName/$classCode - $remote - $email"
+      val desc = "${pathOf(CLASS_SUMMARY_ENDPOINT, languageName, groupName, classCode)} - $remote - $email"
 
       validateContext(languageName, groupName, classCode, user, "Class overview")
         .also {

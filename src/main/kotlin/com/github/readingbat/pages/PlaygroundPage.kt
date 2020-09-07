@@ -104,7 +104,7 @@ internal object PlaygroundPage {
           br
           div(classes = INDENT_1EM) {
             +"Click on"
-            img { height = "25"; style = "vertical-align: bottom"; src = "$STATIC_ROOT/$RUN_BUTTON" }
+            img { height = "25"; style = "vertical-align: bottom"; src = pathOf(STATIC_ROOT, RUN_BUTTON) }
             +" to run the code"
           }
 

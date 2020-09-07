@@ -44,7 +44,7 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
   internal var namePrefix = ""
 
   internal val groupName by lazy { GroupName("${if (namePrefix.isNotBlank()) namePrefix else ""}${groupNameSuffix.value}") }
-  private val groupPrefix by lazy { "$languageName/$groupName" }
+  private val groupPrefix by lazy { pathOf(languageName, groupName) }
   internal val parsedDescription by lazy { TextFormatter.renderText(description) }
 
   private val srcPath get() = languageGroup.srcPath
@@ -143,14 +143,14 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
 
   fun findChallenge(challengeName: String): T =
     challenges.firstOrNull { it.challengeName.value == challengeName }
-      ?: throw InvalidPathException("Challenge $groupPrefix/$challengeName not found.")
+      ?: throw InvalidPathException("Challenge ${pathOf(groupPrefix, challengeName)} not found.")
 
   operator fun get(challengeName: String): T = findChallenge(challengeName)
 
   internal fun indexOf(challengeName: ChallengeName): Int {
     val pos = challenges.indexOfFirst { it.challengeName == challengeName }
     if (pos == -1)
-      throw InvalidPathException("Challenge $groupPrefix/$challengeName not found.")
+      throw InvalidPathException("Challenge ${pathOf(groupPrefix, challengeName)} not found.")
     return pos
   }
 
@@ -196,7 +196,7 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
       }
       else {
         if (throwExceptionIfPresent)
-          throw InvalidConfigurationException("Challenge $groupPrefix/$challengeName already exists")
+          throw InvalidConfigurationException("Challenge ${pathOf(groupPrefix, challengeName)} already exists")
         else
           return false
       }

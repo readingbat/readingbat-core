@@ -21,7 +21,7 @@ import com.github.pambrose.common.util.join
 
 internal object CommonUtils {
 
-  internal fun pathOf(vararg elems: Any): String = elems.toList().map { it.toString() }.join()
+  internal fun pathOf(vararg elems: Any): String = elems.toList().map { it.toString() }.join("/")
 
   internal fun String.maskUrl() =
     if ("://" in this && "@" in this) {

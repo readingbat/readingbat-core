@@ -94,16 +94,18 @@ internal object LanguageGroupPage {
 
           td {
             div(classes = GROUP_ITEM_SRC) {
-              a(classes = GROUP_CHOICE) { href = pathOf(CHALLENGE_ROOT, languageName, groupName); +groupName.value }
+              a(classes = GROUP_CHOICE) {
+                href = pathOf(CHALLENGE_ROOT, languageName, groupName); +groupName.toString()
+              }
 
               p { rawHtml(if (challengeGroup.description.isNotBlank()) challengeGroup.parsedDescription else nbsp.text) }
 
               if (activeClassCode.isNotEnabled) {
                 if (cnt == 0) {
-                  img { src = "$STATIC_ROOT/$WHITE_CHECK" }
+                  img { src = pathOf(STATIC_ROOT, WHITE_CHECK) }
                 }
                 else {
-                  repeat(if (maxFound) cnt - 1 else cnt) { img { src = "$STATIC_ROOT/$GREEN_CHECK" } }
+                  repeat(if (maxFound) cnt - 1 else cnt) { img { src = pathOf(STATIC_ROOT, GREEN_CHECK) } }
                   if (maxFound) rawHtml("&hellip;")
                 }
               }
