@@ -35,7 +35,10 @@ internal object KeyConstants {
   const val CLASS_CODE_KEY = "class-code"
   const val CLASS_INFO_KEY = "class-info"
   const val IPGEO_KEY = "ip-geo"
+
   const val SOURCE_CODE_KEY = "source-code"
+  const val CONTENT_DSL_KEY = "content-dsl"
+  const val DIR_CONTENTS_KEY = "dir-contents"
 
   // For CLASS_INFO_KEY
   const val TEACHER_FIELD = "teacher"

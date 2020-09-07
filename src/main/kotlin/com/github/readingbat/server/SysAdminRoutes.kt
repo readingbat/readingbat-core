@@ -23,7 +23,7 @@ import com.github.pambrose.common.response.respondWith
 import com.github.pambrose.common.util.isNull
 import com.github.pambrose.common.util.pluralize
 import com.github.readingbat.common.Constants.MSG
-import com.github.readingbat.common.Endpoints.CLEAR_REDIS_SOURCE_ENDPOINT
+import com.github.readingbat.common.Endpoints.CLEAR_REDIS_CACHES_ENDPOINT
 import com.github.readingbat.common.Endpoints.GARBAGE_COLLECTOR_ENDPOINT
 import com.github.readingbat.common.Endpoints.LOAD_JAVA_ENDPOINT
 import com.github.readingbat.common.Endpoints.LOAD_KOTLIN_ENDPOINT
@@ -33,6 +33,8 @@ import com.github.readingbat.common.Endpoints.RESET_CACHE_ENDPOINT
 import com.github.readingbat.common.Endpoints.RESET_CONTENT_ENDPOINT
 import com.github.readingbat.common.Endpoints.SYSTEM_ADMIN_ENDPOINT
 import com.github.readingbat.common.FormFields.RETURN_PARAM
+import com.github.readingbat.common.KeyConstants.CONTENT_DSL_KEY
+import com.github.readingbat.common.KeyConstants.DIR_CONTENTS_KEY
 import com.github.readingbat.common.KeyConstants.SOURCE_CODE_KEY
 import com.github.readingbat.common.Metrics
 import com.github.readingbat.common.RedisAdmin.scanKeys
@@ -55,6 +57,32 @@ internal fun Routing.sysAdminRoutes(metrics: Metrics,
                                     contentSrc: () -> ReadingBatContent,
                                     resetContentFunc: () -> Unit) {
 
+  fun clearContentDslCache() =
+    redisPool.withRedisPool { redis ->
+      if (redis.isNull())
+        "Redis is down"
+      else {
+        val pattern = keyOf(CONTENT_DSL_KEY, "*")
+        val keys = redis.scanKeys(pattern).toList()
+        val cnt = keys.count()
+        keys.forEach { redis.del(it) }
+        "$cnt content DSLs ${"file".pluralize(cnt)} removed from Redis".also { logger.info { it } }
+      }
+    }
+
+  fun clearDirContentsCache() =
+    redisPool.withRedisPool { redis ->
+      if (redis.isNull())
+        "Redis is down"
+      else {
+        val pattern = keyOf(DIR_CONTENTS_KEY, "*")
+        val keys = redis.scanKeys(pattern).toList()
+        val cnt = keys.count()
+        keys.forEach { redis.del(it) }
+        "$cnt directory ${"content".pluralize(cnt)} removed from Redis".also { logger.info { it } }
+      }
+    }
+
   fun clearSourceCodeCache() =
     redisPool.withRedisPool { redis ->
       if (redis.isNull())
@@ -68,11 +96,20 @@ internal fun Routing.sysAdminRoutes(metrics: Metrics,
       }
     }
 
+  fun clearAllRedisCaches() =
+    listOf(clearContentDslCache(),
+           clearDirContentsCache(),
+           clearSourceCodeCache())
+      .joinToString(", ")
+      .also { logger.info { "clearAllRedisCaches(): $it" } }
+
   get(RESET_CONTENT_ENDPOINT, metrics) {
     val msg =
       authenticatedAction {
-        clearSourceCodeCache()
-        measureTime { resetContentFunc.invoke() }
+        measureTime {
+          clearAllRedisCaches()
+          resetContentFunc.invoke()
+        }
           .let {
             "Content reset in $it".also { logger.info { it } }
           }
@@ -83,7 +120,7 @@ internal fun Routing.sysAdminRoutes(metrics: Metrics,
   get(RESET_CACHE_ENDPOINT, metrics) {
     val msg =
       authenticatedAction {
-        clearSourceCodeCache()
+        clearAllRedisCaches()
         val content = contentSrc()
         val cnt = content.functionInfoMap.size
         content.clearSourcesMap()
@@ -94,8 +131,8 @@ internal fun Routing.sysAdminRoutes(metrics: Metrics,
     redirectTo { "$MESSAGE_ENDPOINT?$MSG=$msg&$RETURN_PARAM=$SYSTEM_ADMIN_ENDPOINT" }
   }
 
-  get(CLEAR_REDIS_SOURCE_ENDPOINT, metrics) {
-    val msg = authenticatedAction { clearSourceCodeCache() }
+  get(CLEAR_REDIS_CACHES_ENDPOINT, metrics) {
+    val msg = authenticatedAction { clearAllRedisCaches() }
     redirectTo { "$MESSAGE_ENDPOINT?$MSG=$msg&$RETURN_PARAM=$SYSTEM_ADMIN_ENDPOINT" }
   }
 

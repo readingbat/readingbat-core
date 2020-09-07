@@ -17,7 +17,12 @@
 
 package com.github.readingbat.common
 
+import com.github.readingbat.common.Constants.CLASS_CODE_QP
+import com.github.readingbat.common.Constants.GROUP_NAME_QP
+import com.github.readingbat.common.Constants.LANG_TYPE_QP
 import com.github.readingbat.common.Constants.STATIC
+import com.github.readingbat.server.GroupName
+import com.github.readingbat.server.LanguageName
 
 internal object Constants {
   const val SESSION_ID = "sessionid"
@@ -44,6 +49,7 @@ internal object Constants {
   const val NO_TRACK_HEADER = "NO_TRACK"
 
   const val CLASS_CODE_QP = "class-code"
+  const val USER_ID_QP = "user-id"
   const val LANG_TYPE_QP = "lang-type"
   const val GROUP_NAME_QP = "group-name"
 
@@ -70,6 +76,7 @@ internal object Endpoints {
   const val USER_PREFS_POST_ENDPOINT = "/user-prefs-post"
   const val TEACHER_PREFS_ENDPOINT = "/teacher-prefs"
   const val CLASS_SUMMARY_ENDPOINT = "/class-summary"
+  const val STUDENT_SUMMARY_ENDPOINT = "/student-summary"
   const val SYSTEM_ADMIN_ENDPOINT = "/system-admin"
   const val TEACHER_PREFS_POST_ENDPOINT = "/teacher-prefs-post"
   const val ENABLE_STUDENT_MODE_ENDPOINT = "/enable-student-mode"
@@ -101,13 +108,21 @@ internal object Endpoints {
   const val LOAD_JAVA_ENDPOINT = "/load-java"
   const val LOAD_PYTHON_ENDPOINT = "/load-python"
   const val LOAD_KOTLIN_ENDPOINT = "/load-kotlin"
-  const val CLEAR_REDIS_SOURCE_ENDPOINT = "/clear-redis-code"
+
+  const val CLEAR_REDIS_CACHES_ENDPOINT = "/clear-caches"
+
   const val PING = "/ping"
   const val THREAD_DUMP = "/threaddump"
   const val LOGOUT_ENDPOINT = "/logout"
 
   // This is a dynamic page
   const val CSS_ENDPOINT = "/$STATIC/styles.css"
+
+  fun classSummaryEndpoint(classCode: ClassCode) =
+    "$CLASS_SUMMARY_ENDPOINT?$CLASS_CODE_QP=$classCode"
+
+  fun classSummaryEndpoint(classCode: ClassCode, languageName: LanguageName, groupName: GroupName) =
+    "${classSummaryEndpoint(classCode)}&$LANG_TYPE_QP=$languageName&$GROUP_NAME_QP=$groupName"
 }
 
 internal object StaticFileNames {

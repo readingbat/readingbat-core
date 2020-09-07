@@ -102,7 +102,8 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
     keyOf(SOURCE_CODE_KEY, languageType.name, md5Of(languageName, groupName, challengeName))
   }
 
-  private fun fetchCodeFromRedis() = redisPool.withRedisPool { redis -> redis?.get(sourceCodeKey) }
+  private fun fetchCodeFromRedis(): String? =
+    if (useRedisContentCaches()) redisPool.withRedisPool { redis -> redis?.get(sourceCodeKey) } else null
 
   internal fun functionInfo(content: ReadingBatContent) =
     if (repo.remote) {
@@ -113,11 +114,11 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
             fetchCodeFromRedis() ?: try {
               val path = pathOf((repo as AbstractRepo).rawSourcePrefix, branchName, srcPath, fqName)
               val (text, dur) = measureTimedValue { URL(path).readText() }
-              logger.info { """Fetched "$groupName/$fileName" in: $dur from: $path""" }
+              logger.debug { """Fetched "$groupName/$fileName" in: $dur from: $path""" }
               redisPool.withRedisPool { redis ->
-                if (redis.isNotNull()) {
+                if (redis.isNotNull() && useRedisContentCaches()) {
                   redis.set(sourceCodeKey, text)
-                  logger.info { """Saved "$groupName/$fileName" to redis""" }
+                  logger.debug { """Saved "$groupName/$fileName" to redis""" }
                 }
               }
               text

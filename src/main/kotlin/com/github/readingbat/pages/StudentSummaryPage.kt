@@ -18,37 +18,31 @@
 package com.github.readingbat.pages
 
 import com.github.pambrose.common.util.encode
+import com.github.readingbat.common.*
 import com.github.readingbat.common.CSSNames.INDENT_2EM
-import com.github.readingbat.common.ClassCode
 import com.github.readingbat.common.Constants.CLASS_CODE_QP
 import com.github.readingbat.common.Constants.CORRECT_COLOR
-import com.github.readingbat.common.Constants.GROUP_NAME_QP
 import com.github.readingbat.common.Constants.INCOMPLETE_COLOR
 import com.github.readingbat.common.Constants.LANG_TYPE_QP
 import com.github.readingbat.common.Constants.USER_ID_QP
 import com.github.readingbat.common.Constants.WRONG_COLOR
 import com.github.readingbat.common.Endpoints.CHALLENGE_ROOT
-import com.github.readingbat.common.Endpoints.CLASS_SUMMARY_ENDPOINT
 import com.github.readingbat.common.Endpoints.STUDENT_SUMMARY_ENDPOINT
-import com.github.readingbat.common.Endpoints.classSummaryEndpoint
 import com.github.readingbat.common.FormFields.RETURN_PARAM
-import com.github.readingbat.common.Message
 import com.github.readingbat.common.Message.Companion.EMPTY_MESSAGE
-import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.fetchActiveClassCode
-import com.github.readingbat.common.isNotValidUser
+import com.github.readingbat.common.User.Companion.toUser
 import com.github.readingbat.dsl.InvalidRequestException
 import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.pages.ChallengePage.headerColor
+import com.github.readingbat.pages.ClassSummaryPage.STATS
 import com.github.readingbat.pages.HelpAndLogin.helpAndLogin
 import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyTitle
 import com.github.readingbat.pages.PageUtils.encodeUriElems
 import com.github.readingbat.pages.PageUtils.headDefault
 import com.github.readingbat.pages.PageUtils.rawHtml
-import com.github.readingbat.server.GroupName
-import com.github.readingbat.server.GroupName.Companion.EMPTY_GROUP
 import com.github.readingbat.server.LanguageName
 import com.github.readingbat.server.LanguageName.Companion.EMPTY_LANGUAGE
 import com.github.readingbat.server.PipelineCall
@@ -59,24 +53,20 @@ import kotlinx.html.stream.createHTML
 import mu.KLogging
 import redis.clients.jedis.Jedis
 
-internal object ClassSummaryPage : KLogging() {
+internal object StudentSummaryPage : KLogging() {
 
-  internal const val STATS = "-stats"
+  fun PipelineCall.studentSummaryPage(content: ReadingBatContent,
+                                      user: User?,
+                                      redis: Jedis,
+                                      msg: Message = EMPTY_MESSAGE,
+                                      defaultClassDesc: String = ""): String {
 
-  fun PipelineCall.classSummaryPage(content: ReadingBatContent,
-                                    user: User?,
-                                    redis: Jedis,
-                                    msg: Message = EMPTY_MESSAGE,
-                                    defaultClassDesc: String = ""): String {
-
-    val (languageName, groupName, classCode) =
+    val (languageName, student, classCode) =
       Triple(
         call.parameters[LANG_TYPE_QP]?.let { LanguageName(it) } ?: EMPTY_LANGUAGE,
-        call.parameters[GROUP_NAME_QP]?.let { GroupName(it) } ?: EMPTY_GROUP,
+        call.parameters[USER_ID_QP]?.toUser(null) ?: throw InvalidRequestException("Missing user id"),
         call.parameters[CLASS_CODE_QP]?.let { ClassCode(it) } ?: throw InvalidRequestException("Missing class code"))
-    val isValidGroupName = groupName.isDefined(content, languageName)
     val activeClassCode = user.fetchActiveClassCode(redis)
-    val enrollees = classCode.fetchEnrollees(redis)
 
     when {
       classCode.isNotValid(redis) -> throw InvalidRequestException("Invalid classCode $classCode")
@@ -106,33 +96,22 @@ internal object ClassSummaryPage : KLogging() {
           helpAndLogin(user, returnPath, activeClassCode.isEnabled, redis)
           bodyTitle()
 
-          h2 { +"ReadingBat Class Summary" }
-
-          displayClassChoices(content, classCode, redis)
+          h2 { +"ReadingBat Student Summary" }
 
           h3 {
             style = "margin-left: 15px; color: $headerColor"
             +classCode.toDisplayString(redis)
-            if (isValidGroupName) {
-              +" "
-              a {
-                style = "text-decoration:underline"
-                href = "$CHALLENGE_ROOT/${languageName.value}"
-                +languageName.toLanguageType().name
-              }
-              span { style = "padding-left:2px; padding-right:2px"; rawHtml("&rarr;") }
-              a {
-                style = "text-decoration:underline"
-                href = "$CHALLENGE_ROOT/${languageName.value}/${groupName.value}"
-                +groupName.value
-              }
-            }
+            +" "
+            +student.name(redis)
+            +" "
+            +student.email(redis).toString()
+            +" "
+            +languageName.toLanguageType().name
           }
 
-          displayStudents(content, enrollees, classCode, isValidGroupName, languageName, groupName, redis)
+          displayClasses(content, classCode, languageName, redis)
 
-          if (enrollees.isNotEmpty())
-            enableWebSockets(languageName, groupName, classCode)
+          enableWebSockets(languageName, student, classCode)
 
           backLink(returnPath)
         }
@@ -161,7 +140,7 @@ internal object ClassSummaryPage : KLogging() {
                         .forEach {
                           li {
                             style = "font-size:110%"
-                            a(classSummaryEndpoint(classCode, langGroup.languageName, it.groupName))
+                            a(Endpoints.classSummaryEndpoint(classCode, langGroup.languageName, it.groupName))
                             { +it.groupName.value }
                           }
                         }
@@ -175,79 +154,70 @@ internal object ClassSummaryPage : KLogging() {
     }
   }
 
-  private fun BODY.displayStudents(content: ReadingBatContent,
-                                   enrollees: List<User>,
-                                   classCode: ClassCode,
-                                   isValidGroupName: Boolean,
-                                   languageName: LanguageName,
-                                   groupName: GroupName,
-                                   redis: Jedis) =
+  private fun BODY.displayClasses(content: ReadingBatContent,
+                                  classCode: ClassCode,
+                                  languageName: LanguageName,
+                                  redis: Jedis) =
     div(classes = INDENT_2EM) {
       table {
-        style = "border-collapse: separate; border-spacing: 15px 5px"
+        style = "border-collapse: separate; border-spacing: 10px 5px"
 
-        tr {
-          th { +"Name" }
-          th { +"Email" }
-          if (isValidGroupName) {
-            content.findLanguage(languageName.toLanguageType()).findGroup(groupName.value).challenges
-              .forEach { challenge ->
-                th {
-                  a {
-                    style = "text-decoration:underline"
-                    href = "$CHALLENGE_ROOT/$languageName/$groupName/${challenge.challengeName}"
-                    +challenge.challengeName.value
-                  }
-                }
-              }
-          }
-        }
-
-        enrollees
-          .forEach { student ->
+        content.findLanguage(languageName.toLanguageType()).challengeGroups
+          .forEach { challengeGroup ->
             tr {
-              if (isValidGroupName)
-                "$STUDENT_SUMMARY_ENDPOINT?$LANG_TYPE_QP=$languageName&$CLASS_CODE_QP=$classCode&$USER_ID_QP=${student.id}"
-                  .also {
-                    td { a { href = it; +student.name(redis) } }
-                    td { a { href = it; +student.email(redis).toString() } }
-                  }
-              else {
-                td { +student.name(redis) }
-                td { +student.email(redis).toString() }
-              }
+              td { +challengeGroup.groupName.value }
 
-              if (isValidGroupName) {
-                content.findLanguage(languageName.toLanguageType()).findGroup(groupName.value).challenges
-                  .forEach { challenge ->
-                    td {
-                      table {
-                        tr {
-                          challenge.functionInfo(content).invocations
-                            .forEachIndexed { i, invocation ->
-                              td {
-                                style =
-                                  "border-collapse: separate; border: 1px solid black; width: 7px; width: 7px; height: 15px; background-color: $INCOMPLETE_COLOR"
-                                id = "${student.id}-${challenge.challengeName.value.encode()}-$i"
-                                +""
-                              }
-                            }
-                          td {
-                            style = "padding-left:5px; width: 20px;"
-                            id = "${student.id}-${challenge.challengeName.value.encode()}$STATS"
-                            +""
+              td {
+                table {
+                  style = "border-collapse: separate; border-spacing: 10px 5px"
+                  tr {
+                    //th { }
+                    challengeGroup.challenges
+                      .forEach { challenge ->
+                        th {
+                          a {
+                            style = "text-decoration:underline"
+                            href =
+                              "$CHALLENGE_ROOT/$languageName/${challengeGroup.groupName}/${challenge.challengeName}"
+                            +challenge.challengeName.value
                           }
                         }
                       }
-                    }
                   }
+
+                  tr {
+                    challengeGroup.challenges
+                      .forEach { challenge ->
+                        td {
+                          table {
+                            tr {
+                              challenge.functionInfo(content).invocations
+                                .forEachIndexed { i, invocation ->
+                                  td {
+                                    style =
+                                      "border-collapse: separate; border: 1px solid black; width: 7px; width: 7px; height: 15px; background-color: $INCOMPLETE_COLOR"
+                                    id = "${challengeGroup.groupName}-${challenge.challengeName.value.encode()}-$i"
+                                    +""
+                                  }
+                                }
+                              td {
+                                style = "padding-left:5px; width: 20px;"
+                                id = "${challengeGroup.groupName}-${challenge.challengeName.value.encode()}$STATS"
+                                +""
+                              }
+                            }
+                          }
+                        }
+                      }
+                  }
+                }
               }
             }
           }
       }
     }
 
-  private fun BODY.enableWebSockets(languageName: LanguageName, groupName: GroupName, classCode: ClassCode) {
+  private fun BODY.enableWebSockets(languageName: LanguageName, student: User, classCode: ClassCode) {
     script {
       rawHtml(
         """
@@ -257,7 +227,7 @@ internal object ClassSummaryPage : KLogging() {
           else
             wshost = wshost.replace(/^http:/, 'ws:');
 
-          var wsurl = wshost + '$CLASS_SUMMARY_ENDPOINT/' + ${encodeUriElems(languageName, groupName, classCode)};
+          var wsurl = wshost + '$STUDENT_SUMMARY_ENDPOINT/' + ${encodeUriElems(languageName, student.id, classCode)};
           var ws = new WebSocket(wsurl);
 
           ws.onopen = function (event) {

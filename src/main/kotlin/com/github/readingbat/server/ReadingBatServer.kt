@@ -44,7 +44,7 @@ import io.ktor.server.engine.*
 import io.prometheus.Agent.Companion.startAsyncAgent
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.withTimeoutOrNull
 import mu.KLogging
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -161,20 +161,21 @@ internal fun Application.assignContentDsl(fileName: String, variableName: String
 internal fun Application.module() {
   val fileName = FILE_NAME.configProperty(this, "src/Content.kt")
   val variableName = VARIABLE_NAME.configProperty(this, "content")
-  val proxyHostname = PROXY_HOSTNAME.configProperty(this, default = "")
-  val maxDelay = STARTUP_DELAY_SECS.configProperty(this, default = "30").toInt()
+  val proxyHostname = PROXY_HOSTNAME.configProperty(this, "")
+  val maxDelay = STARTUP_DELAY_SECS.configProperty(this, "30").toInt()
   val metrics = ReadingBatServer.metrics
 
   adminUsers.addAll(ADMIN_USERS.configPropertyOrNull(this)?.getList() ?: emptyList())
 
-  IS_PRODUCTION.setProperty(IS_PRODUCTION.configProperty(this, default = "false").toBoolean().toString())
+  IS_PRODUCTION.setProperty(IS_PRODUCTION.configProperty(this, "false").toBoolean().toString())
+  USE_REDIS_CONTENT_CACHES.setProperty(USE_REDIS_CONTENT_CACHES.configProperty(this, "false").toBoolean().toString())
   AGENT_ENABLED_PROPERTY.setProperty(agentEnabled().toString())
-  JAVA_SCRIPTS_POOL_SIZE.setProperty(JAVA_SCRIPTS_POOL_SIZE.configProperty(this, default = "5"))
-  KOTLIN_SCRIPTS_POOL_SIZE.setProperty(KOTLIN_SCRIPTS_POOL_SIZE.configProperty(this, default = "5"))
-  PYTHON_SCRIPTS_POOL_SIZE.setProperty(PYTHON_SCRIPTS_POOL_SIZE.configProperty(this, default = "5"))
-  REDIS_MAX_POOL_SIZE.setProperty(REDIS_MAX_POOL_SIZE.configProperty(this, default = "10"))
-  REDIS_MAX_IDLE_SIZE.setProperty(REDIS_MAX_IDLE_SIZE.configProperty(this, default = "5"))
-  REDIS_MIN_IDLE_SIZE.setProperty(REDIS_MIN_IDLE_SIZE.configProperty(this, default = "1"))
+  JAVA_SCRIPTS_POOL_SIZE.setProperty(JAVA_SCRIPTS_POOL_SIZE.configProperty(this, "5"))
+  KOTLIN_SCRIPTS_POOL_SIZE.setProperty(KOTLIN_SCRIPTS_POOL_SIZE.configProperty(this, "5"))
+  PYTHON_SCRIPTS_POOL_SIZE.setProperty(PYTHON_SCRIPTS_POOL_SIZE.configProperty(this, "5"))
+  REDIS_MAX_POOL_SIZE.setProperty(REDIS_MAX_POOL_SIZE.configProperty(this, "10"))
+  REDIS_MAX_IDLE_SIZE.setProperty(REDIS_MAX_IDLE_SIZE.configProperty(this, "5"))
+  REDIS_MIN_IDLE_SIZE.setProperty(REDIS_MIN_IDLE_SIZE.configProperty(this, "1"))
 
   // Reference to load it
   ReadingBatServer.redisPool.isClosed
@@ -201,7 +202,7 @@ internal fun Application.module() {
   runBlocking {
     logger.info { "Delaying start-up by max of $maxDelay seconds" }
     measureTime {
-      withTimeout(maxDelay.seconds) {
+      withTimeoutOrNull(maxDelay.seconds) {
         job.join()
       }
     }.also {

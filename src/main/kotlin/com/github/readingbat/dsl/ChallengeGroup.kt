@@ -17,16 +17,22 @@
 
 package com.github.readingbat.dsl
 
+import com.github.pambrose.common.redis.RedisUtils.withRedisPool
 import com.github.pambrose.common.util.FileSystemSource
 import com.github.pambrose.common.util.GitHubRepo
 import com.github.pambrose.common.util.ensureSuffix
+import com.github.pambrose.common.util.isNotNull
 import com.github.readingbat.common.CommonUtils.pathOf
+import com.github.readingbat.common.KeyConstants.DIR_CONTENTS_KEY
 import com.github.readingbat.dsl.Challenge.Companion.challenge
 import com.github.readingbat.dsl.GitHubUtils.organizationDirectoryContents
 import com.github.readingbat.dsl.GitHubUtils.userDirectoryContents
 import com.github.readingbat.dsl.ReturnType.Runtime
 import com.github.readingbat.server.ChallengeName
 import com.github.readingbat.server.GroupName
+import com.github.readingbat.server.ReadingBatServer.redisPool
+import com.github.readingbat.server.keyOf
+import com.github.readingbat.server.md5Of
 import mu.KLogging
 import java.io.File
 import kotlin.reflect.KProperty
@@ -49,15 +55,40 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
   private val metrics get() = languageGroup.metrics
   internal val packageNameAsPath get() = packageName.replace(".", "/")
 
+  private fun dirContentsKey(path: String) = keyOf(DIR_CONTENTS_KEY, md5Of(path))
+
+  private fun fetchDirContentsFromRedis(path: String) =
+    if (useRedisContentCaches())
+      redisPool.withRedisPool { redis -> redis?.lrange(dirContentsKey(path), 0, -1) }
+    else
+      null
+
   internal val fileList by lazy {
     repo.let { root ->
       when (root) {
         is GitHubRepo -> {
-          val path = srcPath.ensureSuffix("/") + packageNameAsPath
-          if (root.ownerType.isUser())
-            root.userDirectoryContents(branchName, path, metrics)
-          else
-            root.organizationDirectoryContents(branchName, path, metrics)
+          val path = "${srcPath.ensureSuffix("/")}$packageNameAsPath"
+          val files = fetchDirContentsFromRedis(path)
+          if (files.isNotNull() && files.isNotEmpty()) {
+            logger.info { """Retrieved "$path" from redis""" }
+            files
+          }
+          else {
+            val remoteFiles =
+              if (root.ownerType.isUser())
+                root.userDirectoryContents(branchName, path, metrics)
+              else
+                root.organizationDirectoryContents(branchName, path, metrics)
+
+            redisPool.withRedisPool { redis ->
+              if (redis.isNotNull() && useRedisContentCaches()) {
+                val dirContentsKey = dirContentsKey(path)
+                remoteFiles.forEach { redis.rpush(dirContentsKey, it) }
+                logger.info { """Saved "$path" to redis""" }
+              }
+            }
+            remoteFiles
+          }
         }
         is FileSystemSource -> {
           File(pathOf(root.pathPrefix, srcPath, packageNameAsPath)).walk().map { it.name }.toList()

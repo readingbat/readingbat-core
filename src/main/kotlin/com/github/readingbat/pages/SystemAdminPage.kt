@@ -17,7 +17,7 @@
 
 package com.github.readingbat.pages
 
-import com.github.readingbat.common.Endpoints.CLEAR_REDIS_SOURCE_ENDPOINT
+import com.github.readingbat.common.Endpoints.CLEAR_REDIS_CACHES_ENDPOINT
 import com.github.readingbat.common.Endpoints.GARBAGE_COLLECTOR_ENDPOINT
 import com.github.readingbat.common.Endpoints.LOAD_JAVA_ENDPOINT
 import com.github.readingbat.common.Endpoints.LOAD_KOTLIN_ENDPOINT
@@ -34,6 +34,7 @@ import com.github.readingbat.common.isAdminUser
 import com.github.readingbat.common.isValidUser
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.isProduction
+import com.github.readingbat.dsl.useRedisContentCaches
 import com.github.readingbat.pages.HelpAndLogin.helpAndLogin
 import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyTitle
@@ -93,26 +94,27 @@ internal object SystemAdminPage : KLogging() {
                                          "Are you sure you want to reset the challenges cache?")
             }
 
-            p {
-              this@body.confirmingButton("Clear Redis Source Code Cache",
-                                         CLEAR_REDIS_SOURCE_ENDPOINT,
-                                         "Are you sure you want to clear the redis source code cache?")
-            }
+            if (useRedisContentCaches())
+              p {
+                this@body.confirmingButton("Clear all Redis Content Caches",
+                                           CLEAR_REDIS_CACHES_ENDPOINT,
+                                           "Are you sure you want to clear the redis content caches?")
+              }
 
             p {
-              this@body.confirmingButton("Load all the Java Challenges",
+              this@body.confirmingButton("Load all Java Challenges",
                                          LOAD_JAVA_ENDPOINT,
                                          "Are you sure you want to load all the java challenges? (This can take a while)")
             }
 
             p {
-              this@body.confirmingButton("Load all the Python Challenges",
+              this@body.confirmingButton("Load all Python Challenges",
                                          LOAD_PYTHON_ENDPOINT,
                                          "Are you sure you want to load all the python challenges? (This can take a while)")
             }
 
             p {
-              this@body.confirmingButton("Load all the Kotlin Challenges",
+              this@body.confirmingButton("Load all Kotlin Challenges",
                                          LOAD_KOTLIN_ENDPOINT,
                                          "Are you sure you want to load all the kotlin challenges? (This can take a while)")
             }

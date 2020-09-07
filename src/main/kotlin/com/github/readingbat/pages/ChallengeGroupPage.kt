@@ -23,16 +23,13 @@ import com.github.readingbat.common.*
 import com.github.readingbat.common.CSSNames.FUNC_ITEM1
 import com.github.readingbat.common.CSSNames.FUNC_ITEM2
 import com.github.readingbat.common.CommonUtils.pathOf
-import com.github.readingbat.common.Constants.CLASS_CODE_QP
 import com.github.readingbat.common.Constants.COLUMN_CNT
-import com.github.readingbat.common.Constants.GROUP_NAME_QP
-import com.github.readingbat.common.Constants.LANG_TYPE_QP
 import com.github.readingbat.common.Constants.MSG
 import com.github.readingbat.common.Endpoints.CHALLENGE_GROUP_ENDPOINT
 import com.github.readingbat.common.Endpoints.CHALLENGE_ROOT
-import com.github.readingbat.common.Endpoints.CLASS_SUMMARY_ENDPOINT
 import com.github.readingbat.common.Endpoints.CLEAR_GROUP_ANSWERS_ENDPOINT
 import com.github.readingbat.common.Endpoints.STATIC_ROOT
+import com.github.readingbat.common.Endpoints.classSummaryEndpoint
 import com.github.readingbat.common.FormFields.CHALLENGE_ANSWERS_PARAM
 import com.github.readingbat.common.FormFields.CORRECT_ANSWERS_PARAM
 import com.github.readingbat.common.FormFields.GROUP_NAME_PARAM
@@ -184,7 +181,10 @@ internal object ChallengeGroupPage : KLogging() {
       a {
         style = "text-decoration:underline";
         href =
-          "$CLASS_SUMMARY_ENDPOINT?$CLASS_CODE_QP=$classCode" + (if (groupName != EMPTY_GROUP) "&$LANG_TYPE_QP=$languageName&$GROUP_NAME_QP=$groupName" else "")
+          if (groupName == EMPTY_GROUP)
+            classSummaryEndpoint(classCode)
+          else
+            classSummaryEndpoint(classCode, languageName, groupName)
         +displayStr
       }
     }

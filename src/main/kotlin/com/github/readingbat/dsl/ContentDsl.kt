@@ -17,15 +17,18 @@
 
 package com.github.readingbat.dsl
 
-import com.github.pambrose.common.util.ContentSource
-import com.github.pambrose.common.util.GitHubFile
-import com.github.pambrose.common.util.GitHubRepo
-import com.github.pambrose.common.util.OwnerType
+import com.github.pambrose.common.redis.RedisUtils.withRedisPool
+import com.github.pambrose.common.util.*
+import com.github.readingbat.common.KeyConstants.CONTENT_DSL_KEY
 import com.github.readingbat.common.Properties.AGENT_ENABLED_PROPERTY
 import com.github.readingbat.common.Properties.AGENT_LAUNCH_ID
 import com.github.readingbat.common.Properties.IS_PRODUCTION
+import com.github.readingbat.common.Properties.USE_REDIS_CONTENT_CACHES
 import com.github.readingbat.common.ScriptPools.kotlinScriptPool
 import com.github.readingbat.server.ReadingBatServer
+import com.github.readingbat.server.ReadingBatServer.redisPool
+import com.github.readingbat.server.keyOf
+import com.github.readingbat.server.md5Of
 import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
 import kotlin.reflect.KFunction
@@ -53,6 +56,8 @@ private val logger = KotlinLogging.logger {}
 // This is accessible from the Content.kt descriptions
 fun isProduction() = IS_PRODUCTION.getProperty(false)
 
+fun useRedisContentCaches() = USE_REDIS_CONTENT_CACHES.getProperty(false)
+
 fun isAgentEnabled() = AGENT_ENABLED_PROPERTY.getProperty(false)
 
 fun agentLaunchId() = AGENT_LAUNCH_ID.getProperty("unassigned")
@@ -60,9 +65,35 @@ fun agentLaunchId() = AGENT_LAUNCH_ID.getProperty("unassigned")
 fun ContentSource.eval(enclosingContent: ReadingBatContent, variableName: String = "content"): ReadingBatContent =
   enclosingContent.evalContent(this, variableName)
 
+private fun contentDslKey(source: String) = keyOf(CONTENT_DSL_KEY, md5Of(source))
+
+private fun fetchContentDslFromRedis(source: String) =
+  if (useRedisContentCaches()) redisPool.withRedisPool { redis -> redis?.get(contentDslKey(source)) } else null
+
 internal fun readContentDsl(contentSource: ContentSource, variableName: String = "content"): ReadingBatContent {
-  val (code, dur) = measureTimedValue { contentSource.content }
-  logger.info { """Read content from "${contentSource.source}" in $dur""" }
+  val (code, dur) =
+    measureTimedValue {
+      if (!contentSource.remote)
+        contentSource.content
+      else {
+        var dsl = fetchContentDslFromRedis(contentSource.source)
+        if (dsl.isNotNull()) {
+          logger.debug { "Fetched ${contentSource.source} from redis cache" }
+        }
+        else {
+          dsl = contentSource.content
+          redisPool.withRedisPool { redis ->
+            if (redis.isNotNull() && useRedisContentCaches()) {
+              redis.set(contentDslKey(contentSource.source), dsl)
+              Challenge.logger.debug { """Saved "${contentSource.source}" to redis""" }
+            }
+          }
+        }
+        dsl
+      }
+    }
+
+  logger.info { """Read content for "${contentSource.source}" in $dur""" }
   val withImports = addImports(code, variableName)
   return runBlocking { evalDsl(withImports, contentSource.source) }
 }

@@ -19,11 +19,10 @@ package com.github.readingbat.pages
 
 import com.github.readingbat.common.CSSNames.INDENT_2EM
 import com.github.readingbat.common.ClassCode
-import com.github.readingbat.common.Constants.CLASS_CODE_QP
 import com.github.readingbat.common.Constants.LABEL_WIDTH
-import com.github.readingbat.common.Endpoints.CLASS_SUMMARY_ENDPOINT
 import com.github.readingbat.common.Endpoints.TEACHER_PREFS_ENDPOINT
 import com.github.readingbat.common.Endpoints.TEACHER_PREFS_POST_ENDPOINT
+import com.github.readingbat.common.Endpoints.classSummaryEndpoint
 import com.github.readingbat.common.FormFields.CLASSES_CHOICE_PARAM
 import com.github.readingbat.common.FormFields.CLASS_CODE_NAME_PARAM
 import com.github.readingbat.common.FormFields.CLASS_DESC_PARAM
@@ -158,29 +157,36 @@ internal object TeacherPrefsPage : KLogging() {
         action = TEACHER_PREFS_POST_ENDPOINT
         method = FormMethod.post
 
-        classCodes.forEach { code ->
-          val enrolleeCount = code.fetchEnrollees(redis).count()
-          this@table.tr {
-            td {
-              style = "text-align:center"
-              input { type = radio; name = CLASSES_CHOICE_PARAM; value = code.value; checked = activeClassCode == code }
-            }
-            td {
-              code.displayedValue
-                .also {
-                  if (enrolleeCount == 0)
-                    +it
-                  else
-                    a {
-                      style = "text-decoration:underline"
-                      href = "$CLASS_SUMMARY_ENDPOINT?$CLASS_CODE_QP=${code.displayedValue}"; +it
-                    }
+        classCodes
+          .forEach { classCode ->
+            val enrolleeCount = classCode.fetchEnrollees(redis).count()
+            this@table.tr {
+              td {
+                style = "text-align:center"
+                input {
+                  type = radio;
+                  name = CLASSES_CHOICE_PARAM;
+                  value = classCode.value;
+                  checked = activeClassCode == classCode
                 }
+              }
+              td {
+                classCode.displayedValue
+                  .also {
+                    if (enrolleeCount == 0)
+                      +it
+                    else
+                      a {
+                        style = "text-decoration:underline"
+                        href = classSummaryEndpoint(classCode)
+                        +it
+                      }
+                  }
+              }
+              td { +classCode.fetchClassDesc(redis) }
+              td { style = "text-align:center"; +enrolleeCount.toString() }
             }
-            td { +code.fetchClassDesc(redis) }
-            td { style = "text-align:center"; +enrolleeCount.toString() }
           }
-        }
 
         this@table.tr {
           td {

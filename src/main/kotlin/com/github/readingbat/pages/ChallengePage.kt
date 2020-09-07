@@ -34,12 +34,9 @@ import com.github.readingbat.common.CSSNames.STATUS
 import com.github.readingbat.common.CSSNames.SUCCESS
 import com.github.readingbat.common.CSSNames.USER_RESP
 import com.github.readingbat.common.CommonUtils.pathOf
-import com.github.readingbat.common.Constants.CLASS_CODE_QP
 import com.github.readingbat.common.Constants.CORRECT_COLOR
 import com.github.readingbat.common.Constants.DBMS_DOWN
-import com.github.readingbat.common.Constants.GROUP_NAME_QP
 import com.github.readingbat.common.Constants.INCOMPLETE_COLOR
-import com.github.readingbat.common.Constants.LANG_TYPE_QP
 import com.github.readingbat.common.Constants.LIKE_DISLIKE_JS_FUNC
 import com.github.readingbat.common.Constants.MSG
 import com.github.readingbat.common.Constants.PING_CODE
@@ -49,7 +46,6 @@ import com.github.readingbat.common.Constants.RESP
 import com.github.readingbat.common.Constants.WRONG_COLOR
 import com.github.readingbat.common.Endpoints.CHALLENGE_ENDPOINT
 import com.github.readingbat.common.Endpoints.CHALLENGE_ROOT
-import com.github.readingbat.common.Endpoints.CLASS_SUMMARY_ENDPOINT
 import com.github.readingbat.common.Endpoints.CLEAR_CHALLENGE_ANSWERS_ENDPOINT
 import com.github.readingbat.common.Endpoints.PLAYGROUND_ROOT
 import com.github.readingbat.common.Endpoints.STATIC_ROOT
@@ -356,8 +352,7 @@ internal object ChallengePage : KLogging() {
         +if (enrollees.isEmpty()) "No students enrolled in " else "Student progress for "
         a {
           style = "text-decoration:underline";
-          href =
-            "$CLASS_SUMMARY_ENDPOINT?$CLASS_CODE_QP=$classCode&$LANG_TYPE_QP=$languageName&$GROUP_NAME_QP=$groupName"
+          href = Endpoints.classSummaryEndpoint(classCode, languageName, groupName)
           +displayStr
         }
       }

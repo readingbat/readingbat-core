@@ -46,6 +46,7 @@ import com.github.readingbat.common.Endpoints.ROBOTS_ENDPOINT
 import com.github.readingbat.common.Endpoints.ROOT
 import com.github.readingbat.common.Endpoints.SESSIONS_ENDPOINT
 import com.github.readingbat.common.Endpoints.STATIC_ROOT
+import com.github.readingbat.common.Endpoints.STUDENT_SUMMARY_ENDPOINT
 import com.github.readingbat.common.Endpoints.SYSTEM_ADMIN_ENDPOINT
 import com.github.readingbat.common.Endpoints.TEACHER_PREFS_ENDPOINT
 import com.github.readingbat.common.Endpoints.TEACHER_PREFS_POST_ENDPOINT
@@ -66,6 +67,7 @@ import com.github.readingbat.pages.CreateAccountPage.createAccountPage
 import com.github.readingbat.pages.PasswordResetPage.passwordResetPage
 import com.github.readingbat.pages.PrivacyPage.privacyPage
 import com.github.readingbat.pages.SessionsPage.sessionsPage
+import com.github.readingbat.pages.StudentSummaryPage.studentSummaryPage
 import com.github.readingbat.pages.SystemAdminPage.systemAdminPage
 import com.github.readingbat.pages.TeacherPrefsPage.teacherPrefsPage
 import com.github.readingbat.pages.UserInfoPage.userInfoPage
@@ -190,6 +192,10 @@ internal fun Routing.userRoutes(metrics: Metrics, contentSrc: () -> ReadingBatCo
 
   get(CLASS_SUMMARY_ENDPOINT, metrics) {
     respondWithDbmsCheck(contentSrc()) { redis -> classSummaryPage(contentSrc(), fetchUser(), redis) }
+  }
+
+  get(STUDENT_SUMMARY_ENDPOINT, metrics) {
+    respondWithDbmsCheck(contentSrc()) { redis -> studentSummaryPage(contentSrc(), fetchUser(), redis) }
   }
 
   get(ENABLE_STUDENT_MODE_ENDPOINT, metrics) {
