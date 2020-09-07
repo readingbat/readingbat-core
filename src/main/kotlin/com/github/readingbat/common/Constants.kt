@@ -122,8 +122,7 @@ internal object Endpoints {
   // This is a dynamic page
   const val CSS_ENDPOINT = "/$STATIC/styles.css"
 
-  fun classSummaryEndpoint(classCode: ClassCode) =
-    "$CLASS_SUMMARY_ENDPOINT?$CLASS_CODE_QP=$classCode"
+  fun classSummaryEndpoint(classCode: ClassCode) = "$CLASS_SUMMARY_ENDPOINT?$CLASS_CODE_QP=$classCode"
 
   fun classSummaryEndpoint(classCode: ClassCode, languageName: LanguageName, groupName: GroupName) =
     "${classSummaryEndpoint(classCode)}&$LANG_TYPE_QP=$languageName&$GROUP_NAME_QP=$groupName"

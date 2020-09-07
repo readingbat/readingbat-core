@@ -205,12 +205,15 @@ internal object ClassSummaryPage : KLogging() {
         enrollees
           .forEach { student ->
             tr {
-              if (isValidGroupName)
-                "$STUDENT_SUMMARY_ENDPOINT?$LANG_TYPE_QP=$languageName&$CLASS_CODE_QP=$classCode&$USER_ID_QP=${student.id}"
+              if (isValidGroupName) {
+                val url =
+                  "$STUDENT_SUMMARY_ENDPOINT?$LANG_TYPE_QP=$languageName&$CLASS_CODE_QP=$classCode&$USER_ID_QP=${student.id}"
+                "$url&$RETURN_PARAM=${classSummaryEndpoint(classCode, languageName, groupName).encode()}"
                   .also {
                     td { a { style = "text-decoration:underline"; href = it; +student.name(redis) } }
                     td { a { style = "text-decoration:underline"; href = it; +student.email(redis).toString() } }
                   }
+              }
               else {
                 td { +student.name(redis) }
                 td { +student.email(redis).toString() }

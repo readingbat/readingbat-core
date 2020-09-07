@@ -125,7 +125,7 @@ internal object StudentSummaryPage : KLogging() {
 
           enableWebSockets(languageName, student, classCode)
 
-          backLink(classSummaryEndpoint(classCode))
+          backLink(returnPath)
         }
       }
   }
