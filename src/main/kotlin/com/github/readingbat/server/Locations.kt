@@ -19,6 +19,7 @@ package com.github.readingbat.server
 
 import com.github.pambrose.common.redis.RedisUtils.withRedisPool
 import com.github.pambrose.common.response.respondWith
+import com.github.pambrose.common.util.encode
 import com.github.pambrose.common.util.isNotValidEmail
 import com.github.pambrose.common.util.randomId
 import com.github.pambrose.common.util.sha256
@@ -204,6 +205,8 @@ inline class GroupName(val value: String) {
 
   internal fun isNotValid() = !isValid()
 
+  internal fun encode() = value.encode()
+
   internal fun isDefined(content: ReadingBatContent, languageName: LanguageName) =
     languageName.isDefined(content) && isValid() && content.findLanguage(languageName).hasGroup(value)
 
@@ -220,6 +223,8 @@ inline class ChallengeName(val value: String) {
   internal fun isValid() = this != EMPTY_CHALLENGE
 
   internal fun isNotValid() = !isValid()
+
+  internal fun encode() = value.encode()
 
   override fun toString() = value
 

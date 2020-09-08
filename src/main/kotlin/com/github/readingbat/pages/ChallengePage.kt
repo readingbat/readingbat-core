@@ -32,6 +32,7 @@ import com.github.readingbat.common.CSSNames.HINT
 import com.github.readingbat.common.CSSNames.LIKE_BUTTONS
 import com.github.readingbat.common.CSSNames.STATUS
 import com.github.readingbat.common.CSSNames.SUCCESS
+import com.github.readingbat.common.CSSNames.UNDERLINE
 import com.github.readingbat.common.CSSNames.USER_RESP
 import com.github.readingbat.common.CommonUtils.pathOf
 import com.github.readingbat.common.Constants.CORRECT_COLOR
@@ -352,8 +353,7 @@ internal object ChallengePage : KLogging() {
       h3 {
         style = "margin-left: 5px; color: $headerColor"
         +if (enrollees.isEmpty()) "No students enrolled in " else "Student progress for "
-        a {
-          style = "text-decoration:underline";
+        a(classes = UNDERLINE) {
           href = Endpoints.classSummaryEndpoint(classCode, languageName, groupName)
           +displayStr
         }

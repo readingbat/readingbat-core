@@ -19,6 +19,8 @@ package com.github.readingbat.pages
 
 import com.github.pambrose.common.util.encode
 import com.github.readingbat.common.CSSNames.INDENT_2EM
+import com.github.readingbat.common.CSSNames.INVOC_TD
+import com.github.readingbat.common.CSSNames.UNDERLINE
 import com.github.readingbat.common.ClassCode
 import com.github.readingbat.common.CommonUtils.pathOf
 import com.github.readingbat.common.Constants.CLASS_CODE_QP
@@ -27,13 +29,12 @@ import com.github.readingbat.common.Constants.GROUP_NAME_QP
 import com.github.readingbat.common.Constants.INCOMPLETE_COLOR
 import com.github.readingbat.common.Constants.LANG_TYPE_QP
 import com.github.readingbat.common.Constants.NO
-import com.github.readingbat.common.Constants.USER_ID_QP
 import com.github.readingbat.common.Constants.WRONG_COLOR
 import com.github.readingbat.common.Constants.YES
 import com.github.readingbat.common.Endpoints.CHALLENGE_ROOT
 import com.github.readingbat.common.Endpoints.CLASS_SUMMARY_ENDPOINT
-import com.github.readingbat.common.Endpoints.STUDENT_SUMMARY_ENDPOINT
 import com.github.readingbat.common.Endpoints.classSummaryEndpoint
+import com.github.readingbat.common.Endpoints.studentSummaryEndpoint
 import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.fetchActiveClassCode
@@ -114,14 +115,12 @@ internal object ClassSummaryPage : KLogging() {
             h3 {
               style = "margin-left: 15px; color: $headerColor"
               +" "
-              a {
-                style = "text-decoration:underline"
+              a(classes = UNDERLINE) {
                 href = pathOf(CHALLENGE_ROOT, languageName)
                 +languageName.toLanguageType().toString()
               }
               span { style = "padding-left:2px; padding-right:2px"; rawHtml("&rarr;") }
-              a {
-                style = "text-decoration:underline"
+              a(classes = UNDERLINE) {
                 href = pathOf(CHALLENGE_ROOT, languageName, groupName)
                 +groupName.toString()
               }
@@ -192,8 +191,7 @@ internal object ClassSummaryPage : KLogging() {
             content.findLanguage(languageName).findGroup(groupName.value).challenges
               .forEach { challenge ->
                 th {
-                  a {
-                    style = "text-decoration:underline"
+                  a(classes = UNDERLINE) {
                     href = pathOf(CHALLENGE_ROOT, languageName, groupName, challenge.challengeName)
                     +challenge.challengeName.toString()
                   }
@@ -206,12 +204,11 @@ internal object ClassSummaryPage : KLogging() {
           .forEach { student ->
             tr {
               if (isValidGroupName) {
-                val url =
-                  "$STUDENT_SUMMARY_ENDPOINT?$LANG_TYPE_QP=$languageName&$CLASS_CODE_QP=$classCode&$USER_ID_QP=${student.id}"
-                "$url&$RETURN_PARAM=${classSummaryEndpoint(classCode, languageName, groupName).encode()}"
+                val return_param = classSummaryEndpoint(classCode, languageName, groupName)
+                "${studentSummaryEndpoint(classCode, languageName, student)}&$RETURN_PARAM=${return_param.encode()}"
                   .also {
-                    td { a { style = "text-decoration:underline"; href = it; +student.name(redis) } }
-                    td { a { style = "text-decoration:underline"; href = it; +student.email(redis).toString() } }
+                    td { a(classes = UNDERLINE) { href = it; +student.name(redis) } }
+                    td { a(classes = UNDERLINE) { href = it; +student.email(redis).toString() } }
                   }
               }
               else {
@@ -227,16 +224,14 @@ internal object ClassSummaryPage : KLogging() {
                         tr {
                           challenge.functionInfo(content).invocations
                             .forEachIndexed { i, invocation ->
-                              td {
-                                style =
-                                  "border-collapse: separate; border: 1px solid black; width: 7px; width: 7px; height: 15px; background-color: $INCOMPLETE_COLOR"
-                                id = "${student.id}-${challenge.challengeName.value.encode()}-$i"
+                              td(classes = INVOC_TD) {
+                                id = "${student.id}-${challenge.challengeName.encode()}-$i"
                                 +""
                               }
                             }
                           td {
                             style = "padding-left:5px; width: 20px;"
-                            id = "${student.id}-${challenge.challengeName.value.encode()}$STATS"
+                            id = "${student.id}-${challenge.challengeName.encode()}$STATS"
                             +""
                           }
                         }

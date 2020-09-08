@@ -22,6 +22,7 @@ import com.github.pambrose.common.util.pluralize
 import com.github.readingbat.common.*
 import com.github.readingbat.common.CSSNames.FUNC_ITEM1
 import com.github.readingbat.common.CSSNames.FUNC_ITEM2
+import com.github.readingbat.common.CSSNames.UNDERLINE
 import com.github.readingbat.common.CommonUtils.pathOf
 import com.github.readingbat.common.Constants.COLUMN_CNT
 import com.github.readingbat.common.Constants.MSG
@@ -175,8 +176,7 @@ internal object ChallengeGroupPage : KLogging() {
     val studentCount = if (enrollees.isEmpty()) "No" else enrollees.count().toString()
     h3 {
       style = "margin-left: 5px; color: ${ChallengePage.headerColor}"
-      a {
-        style = "text-decoration:underline";
+      a(classes = UNDERLINE) {
         href =
           if (groupName.isNotValid())
             classSummaryEndpoint(classCode)

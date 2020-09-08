@@ -18,6 +18,7 @@
 package com.github.readingbat.pages
 
 import com.github.readingbat.common.CSSNames.INDENT_2EM
+import com.github.readingbat.common.CSSNames.UNDERLINE
 import com.github.readingbat.common.ClassCode
 import com.github.readingbat.common.Constants.LABEL_WIDTH
 import com.github.readingbat.common.Endpoints.TEACHER_PREFS_ENDPOINT
@@ -176,11 +177,7 @@ internal object TeacherPrefsPage : KLogging() {
                     if (enrolleeCount == 0)
                       +it
                     else
-                      a {
-                        style = "text-decoration:underline"
-                        href = classSummaryEndpoint(classCode)
-                        +it
-                      }
+                      a(classes = UNDERLINE) { href = classSummaryEndpoint(classCode); +it }
                   }
               }
               td { +classCode.fetchClassDesc(redis) }

@@ -17,8 +17,9 @@
 
 package com.github.readingbat.pages
 
-import com.github.pambrose.common.util.encode
 import com.github.readingbat.common.CSSNames.INDENT_2EM
+import com.github.readingbat.common.CSSNames.INVOC_TD
+import com.github.readingbat.common.CSSNames.UNDERLINE
 import com.github.readingbat.common.ClassCode
 import com.github.readingbat.common.CommonUtils.pathOf
 import com.github.readingbat.common.Constants.CLASS_CODE_QP
@@ -98,8 +99,7 @@ internal object StudentSummaryPage : KLogging() {
 
           h3 {
             style = "margin-left: 15px; color: $headerColor"
-            a {
-              style = "text-decoration:underline";
+            a(classes = UNDERLINE) {
               href = classSummaryEndpoint(classCode)
               +classCode.toDisplayString(redis)
             }
@@ -107,8 +107,7 @@ internal object StudentSummaryPage : KLogging() {
 
           h3 {
             style = "margin-left: 15px; color: $headerColor"
-            a {
-              style = "text-decoration:underline"
+            a(classes = UNDERLINE) {
               href = pathOf(CHALLENGE_ROOT, languageName)
               +languageName.toLanguageType().toString()
             }
@@ -178,8 +177,7 @@ internal object StudentSummaryPage : KLogging() {
           .forEach { group ->
             tr {
               td {
-                a {
-                  style = "text-decoration:underline"
+                a(classes = UNDERLINE) {
                   href = pathOf(CHALLENGE_ROOT, languageName, group.groupName)
                   +group.groupName.toString()
                 }
@@ -193,8 +191,7 @@ internal object StudentSummaryPage : KLogging() {
                     group.challenges
                       .forEach { challenge ->
                         th {
-                          a {
-                            style = "text-decoration:underline"
+                          a(classes = UNDERLINE) {
                             href = pathOf(CHALLENGE_ROOT, languageName, group.groupName, challenge.challengeName)
                             +challenge.challengeName.toString()
                           }
@@ -210,17 +207,14 @@ internal object StudentSummaryPage : KLogging() {
                             tr {
                               challenge.functionInfo(content).invocations
                                 .forEachIndexed { i, invocation ->
-                                  td {
-                                    style =
-                                      "border-collapse: separate; border: 1px solid black; width: 7px; width: 7px; height: 15px; background-color: $INCOMPLETE_COLOR"
-                                    id =
-                                      "${group.groupName.value.encode()}-${challenge.challengeName.value.encode()}-$i"
+                                  td(classes = INVOC_TD) {
+                                    id = "${group.groupName.encode()}-${challenge.challengeName.encode()}-$i"
                                     +""
                                   }
                                 }
                               td {
                                 style = "padding-left:5px; width: 20px;"
-                                id = "${group.groupName.value.encode()}-${challenge.challengeName.value.encode()}$STATS"
+                                id = "${group.groupName.encode()}-${challenge.challengeName.encode()}$STATS"
                                 +""
                               }
                             }

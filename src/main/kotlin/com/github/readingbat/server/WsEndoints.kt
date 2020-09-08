@@ -20,7 +20,6 @@ package com.github.readingbat.server
 import com.github.pambrose.common.concurrent.BooleanMonitor
 import com.github.pambrose.common.redis.RedisUtils.withRedisPool
 import com.github.pambrose.common.time.format
-import com.github.pambrose.common.util.encode
 import com.github.pambrose.common.util.isNotNull
 import com.github.pambrose.common.util.isNull
 import com.github.readingbat.common.ClassCode
@@ -412,16 +411,18 @@ internal object WsEndoints : KLogging() {
                             break
                         }
 
-                        val json =
-                          gson.toJson(
-                            ClassSummary(enrollee.id,
-                                         challengeName.value.encode(),
-                                         results,
-                                         if (incorrectAttempts == 0 && results.all { it == UNANSWERED }) "" else incorrectAttempts.toString()))
+                        if (incorrectAttempts > 0 || results.any { it != UNANSWERED }) {
+                          val json =
+                            gson.toJson(
+                              ClassSummary(enrollee.id,
+                                           challengeName.encode(),
+                                           results,
+                                           if (incorrectAttempts == 0 && results.all { it == UNANSWERED }) "" else incorrectAttempts.toString()))
 
-                        metrics.wsClassSummaryResponseCount.labels(agentLaunchId()).inc()
-                        logger.debug { "Sending data $json" }
-                        runBlocking { outgoing.send(Frame.Text(json)) }
+                          metrics.wsClassSummaryResponseCount.labels(agentLaunchId()).inc()
+                          logger.debug { "Sending data $json" }
+                          runBlocking { outgoing.send(Frame.Text(json)) }
+                        }
 
                         if (finished.get())
                           break
@@ -519,16 +520,18 @@ internal object WsEndoints : KLogging() {
                           break
                       }
 
-                      val json =
-                        gson.toJson(
-                          StudentSummary(challengeGroup.groupName.value.encode(),
-                                         challengeName.value.encode(),
-                                         results,
-                                         if (incorrectAttempts == 0 && results.all { it == UNANSWERED }) "" else incorrectAttempts.toString()))
+                      if (incorrectAttempts > 0 || results.any { it != UNANSWERED }) {
+                        val json =
+                          gson.toJson(
+                            StudentSummary(challengeGroup.groupName.encode(),
+                                           challengeName.encode(),
+                                           results,
+                                           if (incorrectAttempts == 0 && results.all { it == UNANSWERED }) "" else incorrectAttempts.toString()))
 
-                      metrics.wsClassSummaryResponseCount.labels(agentLaunchId()).inc()
-                      logger.debug { "Sending data $json" }
-                      runBlocking { outgoing.send(Frame.Text(json)) }
+                        metrics.wsClassSummaryResponseCount.labels(agentLaunchId()).inc()
+                        logger.debug { "Sending data $json" }
+                        runBlocking { outgoing.send(Frame.Text(json)) }
+                      }
 
                       if (finished.get())
                         break

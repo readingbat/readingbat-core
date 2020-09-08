@@ -33,16 +33,21 @@ import com.github.readingbat.common.CSSNames.GROUP_ITEM_SRC
 import com.github.readingbat.common.CSSNames.HINT
 import com.github.readingbat.common.CSSNames.INDENT_1EM
 import com.github.readingbat.common.CSSNames.INDENT_2EM
+import com.github.readingbat.common.CSSNames.INVOC_TD
 import com.github.readingbat.common.CSSNames.KOTLIN_CODE
 import com.github.readingbat.common.CSSNames.LIKE_BUTTONS
 import com.github.readingbat.common.CSSNames.SELECTED_TAB
 import com.github.readingbat.common.CSSNames.STATUS
 import com.github.readingbat.common.CSSNames.SUCCESS
 import com.github.readingbat.common.CSSNames.TD_PADDING
+import com.github.readingbat.common.CSSNames.UNDERLINE
 import com.github.readingbat.common.CSSNames.USER_RESP
+import com.github.readingbat.common.Constants.INCOMPLETE_COLOR
 import kotlinx.css.*
+import kotlinx.css.BorderCollapse.separate
 import kotlinx.css.properties.LineHeight
 import kotlinx.css.properties.TextDecoration
+import kotlinx.css.properties.TextDecorationLine.underline
 import kotlinx.css.properties.boxShadow
 
 internal object CSSNames {
@@ -69,6 +74,8 @@ internal object CSSNames {
   const val DASHBOARD = "dashboard"
   const val INDENT_1EM = "indent-1em"
   const val INDENT_2EM = "indent-2em"
+  const val UNDERLINE = "underline"
+  const val INVOC_TD = "invoc_td"
 }
 
 internal val cssContent by lazy {
@@ -229,6 +236,16 @@ internal val cssContent by lazy {
         position = Position.relative
         top = LinearDimension("1px")
         background = "white"
+      }
+      rule(".$UNDERLINE") {
+        textDecoration = TextDecoration(setOf(underline))
+      }
+      rule(".$INVOC_TD") {
+        borderCollapse = separate
+        border = "1px solid black"
+        width = 7.px;
+        height = 15.px;
+        backgroundColor = Color(INCOMPLETE_COLOR)
       }
       // Turn links red on mouse hovers.
       rule("a:hover") {
