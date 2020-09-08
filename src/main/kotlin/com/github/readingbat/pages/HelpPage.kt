@@ -29,19 +29,13 @@ import com.github.readingbat.pages.PageUtils.bodyTitle
 import com.github.readingbat.pages.PageUtils.headDefault
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
-import kotlinx.html.a
-import kotlinx.html.body
-import kotlinx.html.div
-import kotlinx.html.h2
-import kotlinx.html.head
-import kotlinx.html.html
-import kotlinx.html.p
+import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 import redis.clients.jedis.Jedis
 
-internal object AboutPage {
+internal object HelpPage {
 
-  fun PipelineCall.aboutPage(content: ReadingBatContent, user: User?, redis: Jedis) =
+  fun PipelineCall.helpPage(content: ReadingBatContent, user: User?, redis: Jedis) =
     createHTML()
       .html {
         head {
@@ -53,9 +47,13 @@ internal object AboutPage {
 
           bodyTitle()
 
-          h2 { +"About ReadingBat" }
+          h2 { +"ReadingBat Help" }
 
           div(classes = INDENT_1EM) {
+            h3 {
+              +"Student Tips"
+            }
+
             p {
               +"""
               ReadingBat.com is a father-son effort by Paul and Matthew Ambrose to make learning how to program 
@@ -63,7 +61,9 @@ internal object AboutPage {
               We are big fans of 
               """.trimIndent()
 
-              a { href = "https://codingbat.com"; +"CodingBat.com " }
+              h3 {
+                +"Teacher Tips"
+              }
 
               +"""
               (so much so, that we shamelessly copied its look and feel). However, we observed
@@ -74,23 +74,6 @@ internal object AboutPage {
               is comfortable with reading code, they can head straight for 
             """.trimIndent()
 
-              a { href = "https://codingbat.com"; +" CodingBat.com " }
-
-              +"and move on to authoring their own code!"
-            }
-
-            p {
-              +"If you are interested in creating your own challenges, have a look at how to create your own repo"
-              a { href = "https://github.com/readingbat/readingbat-template/blob/master/README.md"; +" here" }
-              +"."
-            }
-
-            p {
-              +"If you have any thoughts or suggestions about ReadingBat.com, please don't hesitate to email us at: "
-              a {
-                href = "mailto:suggestions@readingbat.com?subject=ReadingBat"
-                +"suggestions@readingbat.com"
-              }
             }
           }
 

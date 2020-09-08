@@ -23,6 +23,7 @@ import com.github.readingbat.common.Endpoints.ABOUT_ENDPOINT
 import com.github.readingbat.common.Endpoints.CREATE_ACCOUNT_ENDPOINT
 import com.github.readingbat.common.Endpoints.ENABLE_STUDENT_MODE_ENDPOINT
 import com.github.readingbat.common.Endpoints.ENABLE_TEACHER_MODE_ENDPOINT
+import com.github.readingbat.common.Endpoints.HELP_ENDPOINT
 import com.github.readingbat.common.Endpoints.PASSWORD_RESET_ENDPOINT
 import com.github.readingbat.common.Endpoints.USER_PREFS_ENDPOINT
 import com.github.readingbat.common.FormFields.EMAIL_PARAM
@@ -67,16 +68,9 @@ internal object HelpAndLogin {
 
             a { href = "$ABOUT_ENDPOINT?$RETURN_PARAM=$loginPath"; +"about" }
             +" | "
-            //a { href = "/help.html"; +"help" }
-            //+" | "
-            a {
-              //href = "/doc/code-help-videos.html"; +"code help+videos | "
-              //a { href = "/done?user=pambrose@mac.com&tag=6621428513"; +"done" }
-              //+" | "
-              //a { href = "/report"; +"report" }
-              //+" | "
-              a { href = "$USER_PREFS_ENDPOINT?$RETURN_PARAM=$loginPath"; +"prefs" }
-            }
+            a { href = "$HELP_ENDPOINT?$RETURN_PARAM=$loginPath"; +"help" }
+            +" | "
+            a { href = "$USER_PREFS_ENDPOINT?$RETURN_PARAM=$loginPath"; +"prefs" }
           }
         }
       }

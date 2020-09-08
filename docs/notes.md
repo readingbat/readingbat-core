@@ -35,3 +35,12 @@ Setup:
 
 ## JMX Exporter
 * https://github.com/prometheus/jmx_exporter
+
+## Setting up builds on Linux
+* https://sdkman.io/install
+* apt-get install unzip zip make
+* curl -s "https://get.sdkman.io" | bash
+* sdk install java 
+* sdk install kotlin
+* sdk install gradle
+* docker login

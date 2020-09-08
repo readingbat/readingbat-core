@@ -37,6 +37,7 @@ import com.github.readingbat.common.Endpoints.CSS_ENDPOINT
 import com.github.readingbat.common.Endpoints.ENABLE_STUDENT_MODE_ENDPOINT
 import com.github.readingbat.common.Endpoints.ENABLE_TEACHER_MODE_ENDPOINT
 import com.github.readingbat.common.Endpoints.FAV_ICON_ENDPOINT
+import com.github.readingbat.common.Endpoints.HELP_ENDPOINT
 import com.github.readingbat.common.Endpoints.LIKE_DISLIKE_ENDPOINT
 import com.github.readingbat.common.Endpoints.LOGOUT_ENDPOINT
 import com.github.readingbat.common.Endpoints.PASSWORD_CHANGE_POST_ENDPOINT
@@ -65,6 +66,7 @@ import com.github.readingbat.pages.AdminPage.adminDataPage
 import com.github.readingbat.pages.ClassSummaryPage.classSummaryPage
 import com.github.readingbat.pages.ConfigPage.configPage
 import com.github.readingbat.pages.CreateAccountPage.createAccountPage
+import com.github.readingbat.pages.HelpPage.helpPage
 import com.github.readingbat.pages.PasswordResetPage.passwordResetPage
 import com.github.readingbat.pages.PrivacyPage.privacyPage
 import com.github.readingbat.pages.SessionsPage.sessionsPage
@@ -126,7 +128,15 @@ internal fun Routing.userRoutes(metrics: Metrics, contentSrc: () -> ReadingBatCo
   }
 
   get(ABOUT_ENDPOINT, metrics) {
-    respondWith { aboutPage(contentSrc()) }
+    respondWithDbmsCheck(contentSrc()) { redis ->
+      aboutPage(contentSrc(), fetchUser(), redis)
+    }
+  }
+
+  get(HELP_ENDPOINT, metrics) {
+    respondWithDbmsCheck(contentSrc()) { redis ->
+      helpPage(contentSrc(), fetchUser(), redis)
+    }
   }
 
   post(CHECK_ANSWERS_ENDPOINT) {

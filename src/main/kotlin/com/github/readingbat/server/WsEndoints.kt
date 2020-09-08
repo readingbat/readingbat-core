@@ -159,9 +159,7 @@ internal object WsEndoints : KLogging() {
                       if (message.isNotNull()) {
                         logger.debug { "Sending data $message from $channel to $challengeMd5" }
                         metrics.wsStudentAnswerResponseCount.labels(agentLaunchId()).inc()
-                        runBlocking {
-                          outgoing.send(Frame.Text(message))
-                        }
+                        runBlocking { outgoing.send(Frame.Text(message)) }
                       }
                     }
 
@@ -174,14 +172,16 @@ internal object WsEndoints : KLogging() {
                     }
                   }
 
-                val subscriber = launch {
-                  redis?.subscribe(pubsub, classTopicName(classCode, challengeMd5))
-                }
+                val subscriber =
+                  launch {
+                    redis?.subscribe(pubsub, classTopicName(classCode, challengeMd5))
+                  }
 
                 // Wait for closure to happen
                 finished.waitUntilTrue()
 
                 pubsub.unsubscribe()
+
                 runBlocking { subscriber.join() }
               }
             }

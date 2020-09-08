@@ -128,21 +128,27 @@ internal object SessionActivites : KLogging() {
 
   init {
     timer.schedule(delay.toLongMilliseconds(), period.toLongMilliseconds()) {
-      logger.info { "Running session activity cleanup for sessions over $timeOutAge" }
       try {
-        sessionsMap.entries
-          .filter { it.value.age > timeOutAge }
-          .forEach {
-            logger.info { "Removing stale browser session ${it.key} after ${it.value.age}" }
-            sessionsMap.remove(it.key)
-          }
+        val staleCnt =
+          sessionsMap.entries
+            .filter { it.value.age > timeOutAge }
+            .onEach {
+              logger.info { "Removing stale browser session ${it.key} after ${it.value.age}" }
+              sessionsMap.remove(it.key)
+            }
+            .count()
 
-        sessionsMap.entries
-          .filter { it.value.requests == 1 }
-          .forEach {
-            logger.debug { "Removing probe browser session ${it.key}" }
-            sessionsMap.remove(it.key)
-          }
+        val probeCnt =
+          sessionsMap.entries
+            .filter { it.value.requests == 1 }
+            .onEach {
+              logger.debug { "Removing probe browser session ${it.key}" }
+              sessionsMap.remove(it.key)
+            }
+            .count()
+
+        logger.info { "Running session activity cleanup for sessions over $timeOutAge - stales: $staleCnt probes: $probeCnt" }
+
       } catch (e: Throwable) {
         logger.error(e) { "Exception when removing stale browser sessions" }
       }
