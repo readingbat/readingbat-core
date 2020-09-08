@@ -33,6 +33,8 @@ import com.github.readingbat.common.CSSNames.GROUP_ITEM_SRC
 import com.github.readingbat.common.CSSNames.HINT
 import com.github.readingbat.common.CSSNames.INDENT_1EM
 import com.github.readingbat.common.CSSNames.INDENT_2EM
+import com.github.readingbat.common.CSSNames.INVOC_STAT
+import com.github.readingbat.common.CSSNames.INVOC_TABLE
 import com.github.readingbat.common.CSSNames.INVOC_TD
 import com.github.readingbat.common.CSSNames.KOTLIN_CODE
 import com.github.readingbat.common.CSSNames.LIKE_BUTTONS
@@ -75,7 +77,9 @@ internal object CSSNames {
   const val INDENT_1EM = "indent-1em"
   const val INDENT_2EM = "indent-2em"
   const val UNDERLINE = "underline"
+  const val INVOC_TABLE = "invoc_table"
   const val INVOC_TD = "invoc_td"
+  const val INVOC_STAT = "invoc_stat"
 }
 
 internal val cssContent by lazy {
@@ -240,12 +244,21 @@ internal val cssContent by lazy {
       rule(".$UNDERLINE") {
         textDecoration = TextDecoration(setOf(underline))
       }
+
+      rule(".$INVOC_TABLE") {
+        borderCollapse = separate
+        borderSpacing = LinearDimension("10px 5px")
+      }
       rule(".$INVOC_TD") {
         borderCollapse = separate
         border = "1px solid black"
         width = 7.px;
         height = 15.px;
         backgroundColor = Color(INCOMPLETE_COLOR)
+      }
+      rule(".$INVOC_STAT") {
+        paddingLeft = 5.px
+        width = 20.px
       }
       // Turn links red on mouse hovers.
       rule("a:hover") {

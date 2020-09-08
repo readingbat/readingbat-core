@@ -19,6 +19,7 @@ package com.github.readingbat.pages
 
 import com.github.pambrose.common.util.encode
 import com.github.readingbat.common.CSSNames.INDENT_2EM
+import com.github.readingbat.common.CSSNames.INVOC_STAT
 import com.github.readingbat.common.CSSNames.INVOC_TD
 import com.github.readingbat.common.CSSNames.UNDERLINE
 import com.github.readingbat.common.ClassCode
@@ -217,7 +218,7 @@ internal object ClassSummaryPage : KLogging() {
               }
 
               if (isValidGroupName) {
-                content.findLanguage(languageName).findGroup(groupName.value).challenges
+                content.findGroup(languageName, groupName).challenges
                   .forEach { challenge ->
                     td {
                       table {
@@ -229,8 +230,7 @@ internal object ClassSummaryPage : KLogging() {
                                 +""
                               }
                             }
-                          td {
-                            style = "padding-left:5px; width: 20px;"
+                          td(classes = INVOC_STAT) {
                             id = "${student.id}-${challenge.challengeName.encode()}$STATS"
                             +""
                           }

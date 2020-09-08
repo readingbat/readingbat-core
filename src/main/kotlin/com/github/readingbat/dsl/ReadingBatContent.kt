@@ -100,11 +100,14 @@ class ReadingBatContent {
   internal fun findLanguage(languageType: LanguageType): LanguageGroup<out Challenge> =
     languageMap[languageType] ?: throw InvalidConfigurationException("Invalid language $languageType")
 
-  internal fun findGroup(groupLoc: Language.Group): ChallengeGroup<out Challenge> =
-    findLanguage(groupLoc.languageType).findGroup(groupLoc.groupName.value)
+  internal fun findGroup(languageName: LanguageName, groupName: GroupName): ChallengeGroup<out Challenge> =
+    findLanguage(languageName.toLanguageType()).findGroup(groupName.value)
 
   internal fun findGroup(languageType: LanguageType, groupName: GroupName): ChallengeGroup<out Challenge> =
     findLanguage(languageType).findGroup(groupName.value)
+
+  internal fun findGroup(groupLoc: Language.Group): ChallengeGroup<out Challenge> =
+    findLanguage(groupLoc.languageType).findGroup(groupLoc.groupName.value)
 
   internal fun findChallenge(challengeLoc: Language.Group.Challenge): Challenge =
     findGroup(challengeLoc.group).findChallenge(challengeLoc.challengeName.value)
@@ -112,7 +115,7 @@ class ReadingBatContent {
   internal fun findChallenge(languageName: LanguageName,
                              groupName: GroupName,
                              challengeName: ChallengeName): Challenge =
-    findGroup(languageName.toLanguageType(), groupName).findChallenge(challengeName.value)
+    findGroup(languageName, groupName).findChallenge(challengeName.value)
 
   internal operator fun get(languageType: LanguageType): LanguageGroup<out Challenge> = findLanguage(languageType)
 

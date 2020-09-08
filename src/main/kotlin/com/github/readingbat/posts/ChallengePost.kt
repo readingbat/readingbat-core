@@ -345,11 +345,12 @@ internal object ChallengePost : KLogging() {
       }
 
     if (user.isNotNull()) {
-      for (challenge in content.findGroup(languageName.toLanguageType(), groupName).challenges) {
-        logger.info { "Clearing answers for challengeName ${challenge.challengeName}" }
-        val funcInfo = challenge.functionInfo(content)
-        user.resetHistory(funcInfo, languageName, groupName, challenge.challengeName, content.maxHistoryLength, redis)
-      }
+      content.findGroup(languageName, groupName).challenges
+        .forEach { challenge ->
+          logger.info { "Clearing answers for challengeName ${challenge.challengeName}" }
+          val funcInfo = challenge.functionInfo(content)
+          user.resetHistory(funcInfo, languageName, groupName, challenge.challengeName, content.maxHistoryLength, redis)
+        }
     }
 
     throw RedirectException("$path?$MSG=${"Answers cleared".encode()}")

@@ -200,7 +200,7 @@ internal object WsEndoints : KLogging() {
           call.parameters[LANGUAGE_NAME]?.let { LanguageName(it) } ?: throw InvalidPathException("Missing language"),
           call.parameters[GROUP_NAME]?.let { GroupName(it) } ?: throw InvalidPathException("Missing group name"),
           call.parameters[CLASS_CODE]?.let { ClassCode(it) } ?: throw InvalidPathException("Missing class code"))
-      val challenges = content.findGroup(languageName.toLanguageType(), groupName).challenges
+      val challenges = content.findGroup(languageName, groupName).challenges
       val finished = AtomicBoolean(false)
       val remote = call.request.origin.remoteHost
       val user = fetchUser() ?: throw InvalidRequestException("Null user")
@@ -339,7 +339,7 @@ internal object WsEndoints : KLogging() {
           call.parameters[LANGUAGE_NAME]?.let { LanguageName(it) } ?: throw InvalidPathException("Missing language"),
           call.parameters[GROUP_NAME]?.let { GroupName(it) } ?: throw InvalidPathException("Missing group name"),
           call.parameters[CLASS_CODE]?.let { ClassCode(it) } ?: throw InvalidPathException("Missing class code"))
-      val challenges = content.findGroup(languageName.toLanguageType(), groupName).challenges
+      val challenges = content.findGroup(languageName, groupName).challenges
       val finished = AtomicBoolean(false)
       val remote = call.request.origin.remoteHost
       val user = fetchUser() ?: throw InvalidRequestException("Null user")
@@ -384,24 +384,19 @@ internal object WsEndoints : KLogging() {
 
                       for (enrollee in enrollees) {
                         var incorrectAttempts = 0
-                        var attempted = 0
 
                         val results = mutableListOf<String>()
                         for (invocation in funcInfo.invocations) {
                           val historyKey = enrollee.answerHistoryKey(languageName, groupName, challengeName, invocation)
 
                           if (redis.exists(historyKey)) {
-                            attempted++
                             val json = redis[historyKey] ?: ""
-                            val ch = gson.fromJson(json, ChallengeHistory::class.java) ?: ChallengeHistory(invocation)
-
                             results +=
-                              if (ch.correct)
-                                YES
-                              else
-                                if (ch.incorrectAttempts > 0) NO else UNANSWERED
-
-                            incorrectAttempts += ch.incorrectAttempts
+                              (gson.fromJson(json, ChallengeHistory::class.java) ?: ChallengeHistory(invocation))
+                                .let {
+                                  incorrectAttempts += it.incorrectAttempts
+                                  if (it.correct) YES else if (it.incorrectAttempts > 0) NO else UNANSWERED
+                                }
                           }
                           else {
                             results += UNANSWERED
@@ -502,15 +497,12 @@ internal object WsEndoints : KLogging() {
                         if (redis.exists(historyKey)) {
                           attempted++
                           val json = redis[historyKey] ?: ""
-                          val ch = gson.fromJson(json, ChallengeHistory::class.java) ?: ChallengeHistory(invocation)
-
                           results +=
-                            if (ch.correct)
-                              YES
-                            else
-                              if (ch.incorrectAttempts > 0) NO else UNANSWERED
-
-                          incorrectAttempts += ch.incorrectAttempts
+                            (gson.fromJson(json, ChallengeHistory::class.java) ?: ChallengeHistory(invocation))
+                              .let {
+                                incorrectAttempts += it.incorrectAttempts
+                                if (it.correct) YES else if (it.incorrectAttempts > 0) NO else UNANSWERED
+                              }
                         }
                         else {
                           results += UNANSWERED

@@ -18,6 +18,8 @@
 package com.github.readingbat.pages
 
 import com.github.readingbat.common.CSSNames.INDENT_2EM
+import com.github.readingbat.common.CSSNames.INVOC_STAT
+import com.github.readingbat.common.CSSNames.INVOC_TABLE
 import com.github.readingbat.common.CSSNames.INVOC_TD
 import com.github.readingbat.common.CSSNames.UNDERLINE
 import com.github.readingbat.common.ClassCode
@@ -170,9 +172,7 @@ internal object StudentSummaryPage : KLogging() {
                                           languageName: LanguageName,
                                           redis: Jedis) =
     div(classes = INDENT_2EM) {
-      table {
-        style = "border-collapse: separate; border-spacing: 10px 5px"
-
+      table(classes = INVOC_TABLE) {
         content.findLanguage(languageName).challengeGroups
           .forEach { group ->
             tr {
@@ -184,8 +184,7 @@ internal object StudentSummaryPage : KLogging() {
               }
 
               td {
-                table {
-                  style = "border-collapse: separate; border-spacing: 10px 5px"
+                table(classes = INVOC_TABLE) {
                   tr {
                     //th { }
                     group.challenges
@@ -212,8 +211,7 @@ internal object StudentSummaryPage : KLogging() {
                                     +""
                                   }
                                 }
-                              td {
-                                style = "padding-left:5px; width: 20px;"
+                              td(classes = INVOC_STAT) {
                                 id = "${group.groupName.encode()}-${challenge.challengeName.encode()}$STATS"
                                 +""
                               }
