@@ -41,7 +41,6 @@ import com.github.readingbat.common.User.Companion.fetchActiveClassCode
 import com.github.readingbat.common.User.Companion.toUser
 import com.github.readingbat.common.isNotValidUser
 import com.github.readingbat.dsl.InvalidRequestException
-import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.pages.ChallengePage.headerColor
 import com.github.readingbat.pages.ClassSummaryPage.STATS
@@ -102,69 +101,27 @@ internal object StudentSummaryPage : KLogging() {
           h3 {
             style = "margin-left: 15px; color: $headerColor"
             a(classes = UNDERLINE) {
-              href = classSummaryEndpoint(classCode)
-              +classCode.toDisplayString(redis)
+              href = classSummaryEndpoint(classCode); +classCode.toDisplayString(redis)
             }
           }
 
           h3 {
             style = "margin-left: 15px; color: $headerColor"
             a(classes = UNDERLINE) {
-              href = pathOf(CHALLENGE_ROOT, languageName)
-              +languageName.toLanguageType().toString()
+              href = pathOf(CHALLENGE_ROOT, languageName); +languageName.toLanguageType().toString()
             }
           }
 
           h3 {
             style = "margin-left: 15px; color: $headerColor"
-            +student.name(redis)
-            +" "
-            +student.email(redis).toString()
+            +"${student.name(redis)} ${student.email(redis)}"
           }
 
           displayChallengeGroups(content, classCode, languageName, redis)
-
           enableWebSockets(languageName, student, classCode)
-
           backLink(returnPath)
         }
       }
-  }
-
-  private fun BODY.displayClassChoices(content: ReadingBatContent, classCode: ClassCode, redis: Jedis) {
-    table {
-      style = "border-collapse: separate; border-spacing: 15px 5px" // 5px is vertical
-      tr {
-        td { style = "font-size:130%"; +"Challenge Groups: " }
-        LanguageType.values()
-          .map { content.findLanguage(it) }
-          .forEach { langGroup ->
-            if (langGroup.challengeGroups.isNotEmpty()) {
-              td {
-                ul {
-                  style = "padding-left:0; margin-bottom:0; list-style-type:none"
-                  dropdown {
-                    val lang = langGroup.languageName.toLanguageType().name
-                    dropdownToggle { +lang }
-                    dropdownMenu {
-                      dropdownHeader(lang)
-                      //divider()
-                      langGroup.challengeGroups
-                        .forEach {
-                          li {
-                            style = "font-size:110%"
-                            a(classSummaryEndpoint(classCode, langGroup.languageName, it.groupName))
-                            { +it.groupName.toString() }
-                          }
-                        }
-                    }
-                  }
-                }
-              }
-            }
-          }
-      }
-    }
   }
 
   private fun BODY.displayChallengeGroups(content: ReadingBatContent,
@@ -207,13 +164,11 @@ internal object StudentSummaryPage : KLogging() {
                               challenge.functionInfo(content).invocations
                                 .forEachIndexed { i, invocation ->
                                   td(classes = INVOC_TD) {
-                                    id = "${group.groupName.encode()}-${challenge.challengeName.encode()}-$i"
-                                    +""
+                                    id = "${group.groupName.encode()}-${challenge.challengeName.encode()}-$i"; +""
                                   }
                                 }
                               td(classes = INVOC_STAT) {
-                                id = "${group.groupName.encode()}-${challenge.challengeName.encode()}$STATS"
-                                +""
+                                id = "${group.groupName.encode()}-${challenge.challengeName.encode()}$STATS"; +""
                               }
                             }
                           }
@@ -262,32 +217,4 @@ internal object StudentSummaryPage : KLogging() {
         """.trimIndent())
     }
   }
-
-  // See: https://github.com/Kotlin/kotlinx.html/wiki/Micro-templating-and-DSL-customizing
-  private fun UL.dropdown(block: LI.() -> Unit) {
-    li("dropdown") { block() }
-  }
-
-  private fun LI.dropdownToggle(block: A.() -> Unit) {
-    a("#", null, "dropdown-toggle") {
-      style = "font-size:130%; text-decoration:none"
-      attributes["data-toggle"] = "dropdown"
-      role = "button"
-      attributes["aria-expanded"] = "false"
-      block()
-
-      span { classes = setOf("caret") }
-    }
-  }
-
-  private fun LI.dropdownMenu(block: UL.() -> Unit): Unit = ul("dropdown-menu") {
-    role = "menu"
-    block()
-  }
-
-  private fun UL.dropdownHeader(text: String) =
-    li { style = "font-size:120%"; classes = setOf("dropdown-header"); +text }
-
-  private fun UL.divider() = li { classes = setOf("divider") }
-
 }

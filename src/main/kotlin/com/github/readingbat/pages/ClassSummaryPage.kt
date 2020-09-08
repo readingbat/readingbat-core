@@ -205,8 +205,8 @@ internal object ClassSummaryPage : KLogging() {
           .forEach { student ->
             tr {
               if (isValidGroupName) {
-                val return_param = classSummaryEndpoint(classCode, languageName, groupName)
-                "${studentSummaryEndpoint(classCode, languageName, student)}&$RETURN_PARAM=${return_param.encode()}"
+                val returnUrl = classSummaryEndpoint(classCode, languageName, groupName)
+                "${studentSummaryEndpoint(classCode, languageName, student)}&$RETURN_PARAM=${returnUrl.encode()}"
                   .also {
                     td { a(classes = UNDERLINE) { href = it; +student.name(redis) } }
                     td { a(classes = UNDERLINE) { href = it; +student.email(redis).toString() } }
@@ -226,13 +226,11 @@ internal object ClassSummaryPage : KLogging() {
                           challenge.functionInfo(content).invocations
                             .forEachIndexed { i, invocation ->
                               td(classes = INVOC_TD) {
-                                id = "${student.id}-${challenge.challengeName.encode()}-$i"
-                                +""
+                                id = "${student.id}-${challenge.challengeName.encode()}-$i"; +""
                               }
                             }
                           td(classes = INVOC_STAT) {
-                            id = "${student.id}-${challenge.challengeName.encode()}$STATS"
-                            +""
+                            id = "${student.id}-${challenge.challengeName.encode()}$STATS"; +""
                           }
                         }
                       }

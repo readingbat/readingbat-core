@@ -165,9 +165,9 @@ internal object TeacherPrefsPage : KLogging() {
               td {
                 style = "text-align:center"
                 input {
-                  type = radio;
-                  name = CLASSES_CHOICE_PARAM;
-                  value = classCode.value;
+                  type = radio
+                  name = CLASSES_CHOICE_PARAM
+                  value = classCode.value
                   checked = activeClassCode == classCode
                 }
               }

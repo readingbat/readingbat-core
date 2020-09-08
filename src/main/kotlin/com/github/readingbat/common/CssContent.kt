@@ -252,8 +252,8 @@ internal val cssContent by lazy {
       rule(".$INVOC_TD") {
         borderCollapse = separate
         border = "1px solid black"
-        width = 7.px;
-        height = 15.px;
+        width = 7.px
+        height = 15.px
         backgroundColor = Color(INCOMPLETE_COLOR)
       }
       rule(".$INVOC_STAT") {
