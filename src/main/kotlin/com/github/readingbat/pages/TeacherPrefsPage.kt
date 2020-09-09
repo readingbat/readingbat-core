@@ -176,12 +176,12 @@ internal object TeacherPrefsPage : KLogging() {
 
               td {
                 classCode.fetchClassDesc(redis)
-                  .also { if (enrolleeCount == 0) +it else a(classes = UNDERLINE) { href = summary; +it } }
+                  .also { a(classes = UNDERLINE) { href = summary; +it } }
               }
 
               td {
                 classCode.displayedValue
-                  .also { if (enrolleeCount == 0) +it else a(classes = UNDERLINE) { href = summary; +it } }
+                  .also { a(classes = UNDERLINE) { href = summary; +it } }
               }
 
               td { style = "text-align:center"; +enrolleeCount.toString() }

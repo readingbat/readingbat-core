@@ -105,12 +105,12 @@ internal object ClassSummaryPage : KLogging() {
 
           h2 { +"ReadingBat Class Summary" }
 
-          displayClassChoices(content, classCode, redis)
-
           h3 {
             style = "margin-left: 15px; color: $headerColor"
             +classCode.toDisplayString(redis)
           }
+
+          displayClassChoices(content, classCode, redis)
 
           if (isGroupNameValid) {
             h3 {
@@ -240,6 +240,10 @@ internal object ClassSummaryPage : KLogging() {
             }
           }
       }
+
+      if (enrollees.isEmpty()) {
+        h4 { style = "padding-left:15px"; +"No students enrolled." }
+      }
     }
 
   private fun BODY.enableWebSockets(languageName: LanguageName, groupName: GroupName, classCode: ClassCode) {
@@ -304,5 +308,4 @@ internal object ClassSummaryPage : KLogging() {
     li { style = "font-size:120%"; classes = setOf("dropdown-header"); +text }
 
   private fun UL.divider() = li { classes = setOf("divider") }
-
 }

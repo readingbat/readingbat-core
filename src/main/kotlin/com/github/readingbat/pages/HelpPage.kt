@@ -21,17 +21,15 @@ import com.github.readingbat.common.CSSNames.INDENT_1EM
 import com.github.readingbat.common.Endpoints.ABOUT_ENDPOINT
 import com.github.readingbat.common.Endpoints.TEACHER_PREFS_ENDPOINT
 import com.github.readingbat.common.Endpoints.USER_PREFS_ENDPOINT
-import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.fetchActiveClassCode
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.pages.HelpAndLogin.helpAndLogin
-import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyTitle
 import com.github.readingbat.pages.PageUtils.headDefault
+import com.github.readingbat.pages.PageUtils.homeLink
 import com.github.readingbat.pages.PageUtils.rawHtml
 import com.github.readingbat.server.PipelineCall
-import com.github.readingbat.server.ServerUtils.queryParam
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 import redis.clients.jedis.Jedis
@@ -104,14 +102,17 @@ internal object HelpPage {
               p {
                 +"Enter a class description and click on the"
                 i { +" Create Class " }
-                +"button. Each class will have a unique class code. "
+                +"button on the"
+                a { href = TEACHER_PREFS_ENDPOINT; b { +" Teacher Preferences " } }
+                +"page. Each class will have a unique class code. "
                 +"To enroll students in a class, send them the class code and ask them to follow the"
                 i { +" Join a Class " }
                 +"instructions above."
               }
 
               p {
-                +"After the first student has enrolled, the class code and description will "
+                +"The class code and description will be linked to a class summary page "
+                +"after the first student has enrolled."
               }
 
               h4 { rawHtml("&bull;"); +" Select Active Class" }
@@ -133,7 +134,7 @@ internal object HelpPage {
             }
           }
 
-          backLink(queryParam(RETURN_PARAM))
+          homeLink()
         }
       }
 }
