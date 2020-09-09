@@ -35,9 +35,13 @@ import com.github.readingbat.common.Constants.WRONG_COLOR
 import com.github.readingbat.common.Constants.YES
 import com.github.readingbat.common.Endpoints.CHALLENGE_ROOT
 import com.github.readingbat.common.Endpoints.CLASS_SUMMARY_ENDPOINT
+import com.github.readingbat.common.Endpoints.TEACHER_PREFS_POST_ENDPOINT
 import com.github.readingbat.common.Endpoints.classSummaryEndpoint
 import com.github.readingbat.common.Endpoints.studentSummaryEndpoint
+import com.github.readingbat.common.FormFields.CLASS_CODE_NAME_PARAM
 import com.github.readingbat.common.FormFields.RETURN_PARAM
+import com.github.readingbat.common.FormFields.UPDATE_ACTIVE_CLASS
+import com.github.readingbat.common.FormFields.USER_PREFS_ACTION_PARAM
 import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.fetchActiveClassCode
 import com.github.readingbat.common.isNotValidUser
@@ -75,14 +79,10 @@ internal object ClassSummaryPage : KLogging() {
         call.parameters[LANG_TYPE_QP]?.let { LanguageName(it) } ?: EMPTY_LANGUAGE,
         call.parameters[GROUP_NAME_QP]?.let { GroupName(it) } ?: EMPTY_GROUP,
         call.parameters[CLASS_CODE_QP]?.let { ClassCode(it) } ?: throw InvalidRequestException("Missing class code"))
-    val isGroupNameValid = groupName.isDefined(content, languageName)
-    val activeClassCode = user.fetchActiveClassCode(redis)
-    val enrollees = classCode.fetchEnrollees(redis)
 
     when {
       classCode.isNotValid(redis) -> throw InvalidRequestException("Invalid classCode $classCode")
       user.isNotValidUser(redis) -> throw InvalidRequestException("Invalid user")
-      //classCode != activeClassCode -> throw InvalidRequestException("Class code mismatch")
       classCode.fetchClassTeacherId(redis) != user.id -> {
         val teacherId = classCode.fetchClassTeacherId(redis)
         throw InvalidRequestException("User id ${user.id} does not match classCode teacher Id $teacherId")
@@ -91,8 +91,13 @@ internal object ClassSummaryPage : KLogging() {
       }
     }
 
+
     return createHTML()
       .html {
+
+        val hasGroup = groupName.isDefined(content, languageName)
+        val activeClassCode = user.fetchActiveClassCode(redis)
+        val enrollees = classCode.fetchEnrollees(redis)
 
         head {
           headDefault(content)
@@ -106,30 +111,39 @@ internal object ClassSummaryPage : KLogging() {
 
           h2 { +"ReadingBat Class Summary" }
 
-          h3 {
-            style = "margin-left: 15px; color: $headerColor"
-            +classCode.toDisplayString(redis)
-          }
-
-          displayClassChoices(content, classCode, redis)
-
-          if (isGroupNameValid) {
-            h3 {
-              style = "margin-left: 15px; color: $headerColor"
-              +" "
-              a(classes = UNDERLINE) {
-                href = pathOf(CHALLENGE_ROOT, languageName)
-                +languageName.toLanguageType().toString()
+          table {
+            tr {
+              td {
+                h3 {
+                  style = "margin-left: 15px; color: $headerColor"
+                  +classCode.toDisplayString(redis)
+                }
               }
-              span { style = "padding-left:2px; padding-right:2px"; rawHtml("&rarr;") }
-              a(classes = UNDERLINE) {
-                href = pathOf(CHALLENGE_ROOT, languageName, groupName)
-                +groupName.toString()
+              if (classCode != activeClassCode) {
+                td {
+                  form {
+                    style = "margin:0"
+                    action = TEACHER_PREFS_POST_ENDPOINT
+                    method = FormMethod.post
+                    input { type = InputType.hidden; name = CLASS_CODE_NAME_PARAM; value = classCode.displayedValue }
+                    input {
+                      style = "vertical-align:middle; margin-left:10; margin-top:1; margin-bottom:0"
+                      type = InputType.submit
+                      name = USER_PREFS_ACTION_PARAM
+                      value = UPDATE_ACTIVE_CLASS
+                    }
+                  }
+                }
               }
             }
           }
 
-          displayStudents(content, enrollees, classCode, isGroupNameValid, languageName, groupName, redis)
+          displayClassChoices(content, classCode, redis)
+
+          if (hasGroup)
+            displayGroupInfo(classCode, activeClassCode, languageName, groupName)
+
+          displayStudents(content, enrollees, classCode, activeClassCode, hasGroup, languageName, groupName, redis)
 
           if (enrollees.isNotEmpty() && languageName.isValid() && groupName.isValid())
             enableWebSockets(languageName, groupName, classCode)
@@ -141,7 +155,7 @@ internal object ClassSummaryPage : KLogging() {
 
   private fun BODY.displayClassChoices(content: ReadingBatContent, classCode: ClassCode, redis: Jedis) {
     table {
-      style = "border-collapse: separate; border-spacing: 15px 5px" // 5px is vertical
+      style = "border-collapse: separate; border-spacing: 15px 15px"
       tr {
         td { style = "font-size:140%"; +"Challenge Group: " }
         LanguageType.values()
@@ -178,75 +192,110 @@ internal object ClassSummaryPage : KLogging() {
     }
   }
 
+  private fun BODY.displayGroupInfo(classCode: ClassCode,
+                                    activeClassCode: ClassCode,
+                                    languageName: LanguageName,
+                                    groupName: GroupName) {
+    h3 {
+      style = "margin-left: 15px; color: $headerColor"
+      +" "
+
+      languageName.toLanguageType().toString()
+        .also {
+          if (classCode == activeClassCode)
+            a(classes = UNDERLINE) { href = pathOf(CHALLENGE_ROOT, languageName); +it }
+          else
+            +it
+        }
+
+      span { style = "padding-left:2px; padding-right:2px"; rawHtml("&rarr;") }
+
+      groupName.toString()
+        .also {
+          if (classCode == activeClassCode)
+            a(classes = UNDERLINE) { href = pathOf(CHALLENGE_ROOT, languageName, groupName); +it }
+          else
+            +it
+        }
+    }
+  }
+
   private fun BODY.displayStudents(content: ReadingBatContent,
                                    enrollees: List<User>,
                                    classCode: ClassCode,
-                                   isValidGroupName: Boolean,
+                                   activeClassCode: ClassCode,
+                                   hasGroup: Boolean,
                                    languageName: LanguageName,
                                    groupName: GroupName,
                                    redis: Jedis) =
     div(classes = INDENT_2EM) {
-      table {
-        style = "border-collapse: separate; border-spacing: 15px 5px"
-
-        tr {
-          th { +"Name" }
-          th { +"Email" }
-          if (isValidGroupName) {
-            content.findLanguage(languageName).findGroup(groupName.value).challenges
-              .forEach { challenge ->
-                th {
-                  a(classes = UNDERLINE) {
-                    href = pathOf(CHALLENGE_ROOT, languageName, groupName, challenge.challengeName)
-                    +challenge.challengeName.toString()
+      if (enrollees.isNotEmpty())
+        table {
+          style = "border-collapse: separate; border-spacing: 15px 5px"
+          tr {
+            th { +"Name" }
+            th { +"Email" }
+            if (hasGroup) {
+              content.findLanguage(languageName).findGroup(groupName.value).challenges
+                .forEach { challenge ->
+                  th {
+                    challenge.challengeName.toString()
+                      .also {
+                        if (classCode == activeClassCode)
+                          a(classes = UNDERLINE) {
+                            href = pathOf(CHALLENGE_ROOT, languageName, groupName, challenge.challengeName)
+                            +it
+                          }
+                        else
+                          +it
+                      }
                   }
                 }
-              }
+            }
           }
-        }
 
-        enrollees
-          .forEach { student ->
-            tr {
-              if (isValidGroupName) {
-                val returnUrl = classSummaryEndpoint(classCode, languageName, groupName)
-                "${studentSummaryEndpoint(classCode, languageName, student)}&$RETURN_PARAM=${returnUrl.encode()}"
-                  .also {
-                    td { a(classes = UNDERLINE) { href = it; +student.name(redis) } }
-                    td { a(classes = UNDERLINE) { href = it; +student.email(redis).toString() } }
-                  }
-              }
-              else {
-                td { +student.name(redis) }
-                td { +student.email(redis).toString() }
-              }
+          enrollees
+            .forEach { student ->
+              tr {
+                if (hasGroup && classCode == activeClassCode) {
+                  val returnUrl = classSummaryEndpoint(classCode, languageName, groupName)
+                  "${studentSummaryEndpoint(classCode, languageName, student)}&$RETURN_PARAM=${returnUrl.encode()}"
+                    .also {
+                      td { a(classes = UNDERLINE) { href = it; +student.name(redis) } }
+                      td { a(classes = UNDERLINE) { href = it; +student.email(redis).toString() } }
+                    }
+                }
+                else {
+                  td { +student.name(redis) }
+                  td { +student.email(redis).toString() }
+                }
 
-              if (isValidGroupName) {
-                content.findGroup(languageName, groupName).challenges
-                  .forEach { challenge ->
-                    td {
-                      table {
-                        tr {
-                          challenge.functionInfo(content).invocations
-                            .forEachIndexed { i, invocation ->
-                              td(classes = INVOC_TD) {
-                                id = "${student.id}-${challenge.challengeName.encode()}-$i"; +""
+                if (hasGroup) {
+                  content.findGroup(languageName, groupName).challenges
+                    .forEach { challenge ->
+                      td {
+                        table {
+                          tr {
+                            challenge.functionInfo(content).invocations
+                              .forEachIndexed { i, invocation ->
+                                td(classes = INVOC_TD) {
+                                  id = "${student.id}-${challenge.challengeName.encode()}-$i"; +""
+                                }
                               }
+                            td(classes = INVOC_STAT) {
+                              id = "${student.id}-${challenge.challengeName.encode()}$STATS"; +""
                             }
-                          td(classes = INVOC_STAT) {
-                            id = "${student.id}-${challenge.challengeName.encode()}$STATS"; +""
                           }
                         }
                       }
                     }
-                  }
+                }
               }
             }
-          }
-      }
-
-      if (enrollees.isEmpty())
+        }
+      else {
         h4 { style = "padding-left:15px"; +"No students enrolled." }
+      }
     }
 
   private fun BODY.enableWebSockets(languageName: LanguageName, groupName: GroupName, classCode: ClassCode) {

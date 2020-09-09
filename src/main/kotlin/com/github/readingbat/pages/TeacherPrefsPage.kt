@@ -188,6 +188,7 @@ internal object TeacherPrefsPage : KLogging() {
           }
           td { colSpan = "3"; +"Student mode" }
         }
+
         this@table.tr {
           td {}
           td { input { type = submit; name = USER_PREFS_ACTION_PARAM; value = UPDATE_ACTIVE_CLASS } }
@@ -211,8 +212,9 @@ internal object TeacherPrefsPage : KLogging() {
               input { type = InputType.hidden; name = CLASS_CODE_NAME_PARAM; value = classCode.displayedValue }
               input {
                 style = "vertical-align:middle; margin-top:1; margin-bottom:0"
-                type = submit; name = USER_PREFS_ACTION_PARAM; value =
-                DELETE_CLASS
+                type = submit
+                name = USER_PREFS_ACTION_PARAM
+                value = DELETE_CLASS
               }
             }
           }

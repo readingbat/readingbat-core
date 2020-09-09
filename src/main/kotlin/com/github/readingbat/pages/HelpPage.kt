@@ -110,11 +110,6 @@ internal object HelpPage {
                 +"instructions above."
               }
 
-              p {
-                +"The class code and description will be linked to a class summary page "
-                +"after the first student has enrolled."
-              }
-
               h4 { rawHtml("&bull;"); +" Select Active Class" }
 
               p {

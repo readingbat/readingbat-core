@@ -128,15 +128,11 @@ internal fun Routing.userRoutes(metrics: Metrics, contentSrc: () -> ReadingBatCo
   }
 
   get(ABOUT_ENDPOINT, metrics) {
-    respondWithDbmsCheck(contentSrc()) { redis ->
-      aboutPage(contentSrc(), fetchUser(), redis)
-    }
+    respondWithDbmsCheck(contentSrc()) { redis -> aboutPage(contentSrc(), fetchUser(), redis) }
   }
 
   get(HELP_ENDPOINT, metrics) {
-    respondWithDbmsCheck(contentSrc()) { redis ->
-      helpPage(contentSrc(), fetchUser(), redis)
-    }
+    respondWithDbmsCheck(contentSrc()) { redis -> helpPage(contentSrc(), fetchUser(), redis) }
   }
 
   post(CHECK_ANSWERS_ENDPOINT) {
@@ -182,13 +178,7 @@ internal fun Routing.userRoutes(metrics: Metrics, contentSrc: () -> ReadingBatCo
   }
 
   post(USER_PREFS_POST_ENDPOINT) {
-    metrics.measureEndpointRequest(USER_PREFS_POST_ENDPOINT) {
-      respondWithSuspendingDbmsCheck(contentSrc()) { redis -> userPrefs(contentSrc(), fetchUser(), redis) }
-    }
-  }
-
-  get(SYSTEM_ADMIN_ENDPOINT, metrics) {
-    respondWithDbmsCheck(contentSrc()) { redis -> systemAdminPage(contentSrc(), fetchUser(), redis) }
+    respondWithSuspendingDbmsCheck(contentSrc()) { redis -> userPrefs(contentSrc(), fetchUser(), redis) }
   }
 
   get(TEACHER_PREFS_ENDPOINT, metrics) {
@@ -196,17 +186,23 @@ internal fun Routing.userRoutes(metrics: Metrics, contentSrc: () -> ReadingBatCo
   }
 
   post(TEACHER_PREFS_POST_ENDPOINT) {
-    metrics.measureEndpointRequest(TEACHER_PREFS_POST_ENDPOINT) {
-      respondWithSuspendingDbmsCheck(contentSrc()) { redis -> teacherPrefsPost(contentSrc(), fetchUser(), redis) }
-    }
+    respondWithSuspendingDbmsCheck(contentSrc()) { redis -> teacherPrefsPost(contentSrc(), fetchUser(), redis) }
+  }
+
+  get(SYSTEM_ADMIN_ENDPOINT, metrics) {
+    respondWithDbmsCheck(contentSrc()) { redis -> systemAdminPage(contentSrc(), fetchUser(), redis) }
   }
 
   get(CLASS_SUMMARY_ENDPOINT, metrics) {
-    respondWithDbmsCheck(contentSrc()) { redis -> classSummaryPage(contentSrc(), fetchUser(), redis) }
+    metrics.measureEndpointRequest(CLASS_SUMMARY_ENDPOINT) {
+      respondWithDbmsCheck(contentSrc()) { redis -> classSummaryPage(contentSrc(), fetchUser(), redis) }
+    }
   }
 
   get(STUDENT_SUMMARY_ENDPOINT, metrics) {
-    respondWithDbmsCheck(contentSrc()) { redis -> studentSummaryPage(contentSrc(), fetchUser(), redis) }
+    metrics.measureEndpointRequest(STUDENT_SUMMARY_ENDPOINT) {
+      respondWithDbmsCheck(contentSrc()) { redis -> studentSummaryPage(contentSrc(), fetchUser(), redis) }
+    }
   }
 
   get(ENABLE_STUDENT_MODE_ENDPOINT, metrics) {

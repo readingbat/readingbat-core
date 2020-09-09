@@ -49,7 +49,6 @@ import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyTitle
 import com.github.readingbat.pages.PageUtils.encodeUriElems
 import com.github.readingbat.pages.PageUtils.headDefault
-import com.github.readingbat.pages.PageUtils.loadBootstrap
 import com.github.readingbat.pages.PageUtils.rawHtml
 import com.github.readingbat.server.LanguageName
 import com.github.readingbat.server.PipelineCall
@@ -88,7 +87,6 @@ internal object StudentSummaryPage : KLogging() {
 
         head {
           headDefault(content)
-          loadBootstrap()
         }
 
         body {
@@ -114,7 +112,7 @@ internal object StudentSummaryPage : KLogging() {
 
           h3 {
             style = "margin-left: 15px; color: $headerColor"
-            +"${student.name(redis)} ${student.email(redis)}"
+            +"Student: ${student.name(redis)} ${student.email(redis)}"
           }
 
           displayChallengeGroups(content, classCode, languageName, redis)
