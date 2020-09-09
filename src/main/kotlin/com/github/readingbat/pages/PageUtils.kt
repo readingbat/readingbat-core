@@ -184,9 +184,9 @@ internal object PageUtils {
 
   fun BODY.displayMessage(msg: Message) = if (msg.isNotBlank) +(msg.toString()) else rawHtml(nbsp.text)
 
-  fun BODY.backLink(vararg pathElems: String) = linkWithIndent(pathElems.toList().toRootPath(), "Back")
+  fun BODY.backLink(vararg pathElems: String = arrayOf("")) = linkWithIndent(pathElems.toList().toRootPath(), "Back")
 
-  fun BODY.homeLink(vararg pathElems: String) = linkWithIndent(pathElems.toList().toRootPath(), "Home")
+  fun BODY.homeLink(vararg pathElems: String = arrayOf("")) = linkWithIndent(pathElems.toList().toRootPath(), "Home")
 
   fun HTMLTag.rawHtml(html: String) = unsafe { raw(html) }
 

@@ -95,7 +95,7 @@ internal object Endpoints {
   const val SESSIONS_ENDPOINT = "/sessions"
   const val CREATE_ACCOUNT_ENDPOINT = "/create-account"
   const val CREATE_ACCOUNT_POST_ENDPOINT = "/create-account-post"
-  const val PRIVACY_ENDPOINT = "/privacy.html"
+  const val PRIVACY_ENDPOINT = "/privacy"
   const val PASSWORD_CHANGE_POST_ENDPOINT = "/password-change-post"
   const val PASSWORD_RESET_ENDPOINT = "/password-reset"
   const val PASSWORD_RESET_POST_ENDPOINT = "/password-reset-post"

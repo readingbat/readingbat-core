@@ -19,6 +19,8 @@ package com.github.readingbat.pages
 
 import com.github.readingbat.common.CSSNames.INDENT_1EM
 import com.github.readingbat.common.Endpoints.ABOUT_ENDPOINT
+import com.github.readingbat.common.Endpoints.TEACHER_PREFS_ENDPOINT
+import com.github.readingbat.common.Endpoints.USER_PREFS_ENDPOINT
 import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.fetchActiveClassCode
@@ -27,6 +29,7 @@ import com.github.readingbat.pages.HelpAndLogin.helpAndLogin
 import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyTitle
 import com.github.readingbat.pages.PageUtils.headDefault
+import com.github.readingbat.pages.PageUtils.rawHtml
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
 import kotlinx.html.*
@@ -50,30 +53,83 @@ internal object HelpPage {
           h2 { +"ReadingBat Help" }
 
           div(classes = INDENT_1EM) {
-            h3 {
-              +"Student Tips"
-            }
+            h3 { +"Student Tips" }
 
-            p {
-              +"""
-              ReadingBat.com is a father-son effort by Paul and Matthew Ambrose to make learning how to program 
-              a little easier.
-              We are big fans of 
-              """.trimIndent()
+            div(classes = INDENT_1EM) {
+              h4 { rawHtml("&bull;"); +" Join a Class" }
 
-              h3 {
-                +"Teacher Tips"
+              p {
+                +"Your teacher will give you a class code required to join a class. Click on "
+                a { href = USER_PREFS_ENDPOINT; b { +" prefs " } }
+                +"and paste the value into the"
+                i { +" Class Code " }
+                +"text entry and then click on the "
+                i { +" Join Class " }
+                +"button."
               }
 
-              +"""
-              (so much so, that we shamelessly copied its look and feel). However, we observed
-              that students often start using it to write code, prior to being equipped
-              with the skill of reading code. It is difficult to write code without first learning 
-              how to read and follow code! So we set out to create ReadingBat.com, which attempts 
-              to make students comfortable reading code challenges and learning code idioms. Once a student
-              is comfortable with reading code, they can head straight for 
-            """.trimIndent()
+              h4 { rawHtml("&bull;"); +" Withdraw from a Class" }
 
+              p {
+                +"Click on"
+                a { href = USER_PREFS_ENDPOINT; b { +" prefs " } }
+                +"and then click on the"
+                i { +" Withdraw From Class " }
+                +"button."
+              }
+
+              h4 { rawHtml("&bull;"); +" Check Answers" }
+
+              p {
+                +"Check your challenge answers by clicking on the"
+                i { +" Check My Answers " }
+                +"button or press the tab key."
+              }
+            }
+
+            h3 { +"Teacher Tips" }
+
+            p {
+              +"The link for the"
+              a { href = TEACHER_PREFS_ENDPOINT; b { +" Teacher Preferences " } }
+              +"is at the bottom of the "
+              a { href = USER_PREFS_ENDPOINT; b { +" prefs " } }
+              +"page."
+            }
+
+
+            div(classes = INDENT_1EM) {
+              h4 { rawHtml("&bull;"); +" Create a Class" }
+
+              p {
+                +"Enter a class description and click on the"
+                i { +" Create Class " }
+                +"button. Each class will have a unique class code. "
+                +"To enroll students in a class, send them the class code and ask them to follow the"
+                i { +" Join a Class " }
+                +"instructions above."
+              }
+
+              p {
+                +"After the first student has enrolled, the class code and description will "
+              }
+
+              h4 { rawHtml("&bull;"); +" Select Active Class" }
+
+              p {
+                +"Select an active class to enter teacher mode, which will allow you to see "
+                +"student answers in real-time and class results. "
+              }
+
+              h4 { rawHtml("&bull;"); +" Student/Teacher Mode" }
+
+              p {
+                +"Click on"
+                a { href = USER_PREFS_ENDPOINT; b { +" prefs " } }
+                +" and then "
+                a { href = USER_PREFS_ENDPOINT; b { +" Teacher Preferences " } }
+
+              }
             }
           }
 

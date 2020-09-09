@@ -63,7 +63,7 @@ internal object SessionActivites : KLogging() {
     }
   }
 
-  internal class Session(val browserSession: BrowserSession, val userAgent: String) {
+  class Session(val browserSession: BrowserSession, val userAgent: String) {
     private var lastUpdate = TimeSource.Monotonic.markNow()
     private val pages = AtomicInteger(0)
 
@@ -116,12 +116,9 @@ internal object SessionActivites : KLogging() {
   private val delay = 1.hours
   private val period = 1.hours
   private val timeOutAge = 24.hours
-
   private val sessionsMap = ConcurrentHashMap<String, Session>()
   private val geoInfoMap = ConcurrentHashMap<String, GeoInfo>()
-
   private val timer = Timer()
-
   private val ignoreHosts = mutableListOf("localhost", "0.0.0.0", "127.0.0.1")
 
   val sessionsMapSize get() = sessionsMap.size
@@ -147,8 +144,7 @@ internal object SessionActivites : KLogging() {
             }
             .count()
 
-        logger.info { "Running session activity cleanup for sessions over $timeOutAge - stales: $staleCnt probes: $probeCnt" }
-
+        logger.info { "Running session cleanup - sessions over $timeOutAge: $staleCnt, probe sessionss: $probeCnt" }
       } catch (e: Throwable) {
         logger.error(e) { "Exception when removing stale browser sessions" }
       }
@@ -185,7 +181,7 @@ internal object SessionActivites : KLogging() {
     }
 
     try {
-      if (IPGEOLOCATION_KEY.isDefined() && remoteHost !in ignoreHosts && !geoInfoMap.containsKey(remoteHost)) {
+      if (IPGEOLOCATION_KEY.isDefined() && remoteHost.value !in ignoreHosts && !geoInfoMap.containsKey(remoteHost.value)) {
         redisPool.withRedisPool { redis ->
           if (redis.isNotNull()) {
             geoInfoMap.computeIfAbsent(remoteHost.value) { ipAddress ->

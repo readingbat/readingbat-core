@@ -40,11 +40,11 @@ import com.github.readingbat.common.User.Companion.fetchActiveClassCode
 import com.github.readingbat.common.isValidUser
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.pages.HelpAndLogin.helpAndLogin
-import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyTitle
 import com.github.readingbat.pages.PageUtils.clickButtonScript
 import com.github.readingbat.pages.PageUtils.displayMessage
 import com.github.readingbat.pages.PageUtils.headDefault
+import com.github.readingbat.pages.PageUtils.homeLink
 import com.github.readingbat.pages.PageUtils.privacyStatement
 import com.github.readingbat.pages.PageUtils.rawHtml
 import com.github.readingbat.pages.UserPrefsPage.requestLogInPage
@@ -100,9 +100,9 @@ internal object TeacherPrefsPage : KLogging() {
 
           displayClasses(user, activeClassCode, redis)
 
-          privacyStatement(TEACHER_PREFS_ENDPOINT, returnPath)
+          privacyStatement(TEACHER_PREFS_ENDPOINT, TEACHER_PREFS_ENDPOINT)
 
-          backLink(returnPath)
+          homeLink()
         }
       }
 
@@ -153,7 +153,7 @@ internal object TeacherPrefsPage : KLogging() {
   private fun BODY.classList(activeClassCode: ClassCode, classCodes: List<ClassCode>, redis: Jedis) {
     table {
       style = "border-spacing: 15px 5px"
-      tr { th { +"Active" }; th { +"Class Code" }; th { +"Description" }; th { +"Enrollees" } }
+      tr { th { +"Active" }; th { +"Description" }; th { +"Class Code" }; th { +"Enrollees" } }
       form {
         action = TEACHER_PREFS_POST_ENDPOINT
         method = FormMethod.post
@@ -171,16 +171,19 @@ internal object TeacherPrefsPage : KLogging() {
                   checked = activeClassCode == classCode
                 }
               }
+
+              val summary = classSummaryEndpoint(classCode)
+
+              td {
+                classCode.fetchClassDesc(redis)
+                  .also { if (enrolleeCount == 0) +it else a(classes = UNDERLINE) { href = summary; +it } }
+              }
+
               td {
                 classCode.displayedValue
-                  .also {
-                    if (enrolleeCount == 0)
-                      +it
-                    else
-                      a(classes = UNDERLINE) { href = classSummaryEndpoint(classCode); +it }
-                  }
+                  .also { if (enrolleeCount == 0) +it else a(classes = UNDERLINE) { href = summary; +it } }
               }
-              td { +classCode.fetchClassDesc(redis) }
+
               td { style = "text-align:center"; +enrolleeCount.toString() }
             }
           }

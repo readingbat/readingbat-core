@@ -29,6 +29,8 @@ Setup:
 ## Grafana
 * JVM dashboard is here: https://grafana.com/grafana/dashboards/8563
 * World map: https://grafana.com/grafana/plugins/grafana-worldmap-panel
+* Config file is: `/etc/grafana/grafana.ini`
+* Log file is: `/var/log/grafana/grafana.log`
 
 ## PrismJs
 * Look in .js files to find URLs to load css and js files
