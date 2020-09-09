@@ -18,6 +18,7 @@
 package com.github.readingbat.pages
 
 import com.github.pambrose.common.util.encode
+import com.github.readingbat.common.CSSNames.BTN
 import com.github.readingbat.common.CSSNames.INDENT_2EM
 import com.github.readingbat.common.CSSNames.INVOC_STAT
 import com.github.readingbat.common.CSSNames.INVOC_TD
@@ -142,7 +143,7 @@ internal object ClassSummaryPage : KLogging() {
     table {
       style = "border-collapse: separate; border-spacing: 15px 5px" // 5px is vertical
       tr {
-        td { style = "font-size:140%"; +"Challenge Groups: " }
+        td { style = "font-size:140%"; +"Challenge Group: " }
         LanguageType.values()
           .map { content.findLanguage(it) }
           .forEach { langGroup ->
@@ -151,8 +152,11 @@ internal object ClassSummaryPage : KLogging() {
                 ul {
                   style = "padding-left:0; margin-bottom:0; list-style-type:none"
                   dropdown {
-                    val lang = langGroup.languageName.toLanguageType().name
-                    dropdownToggle { +lang }
+                    val lang = langGroup.languageType.name
+                    dropdownToggle {
+                      classes = setOf(BTN)
+                      +"$lang "
+                    }
                     dropdownMenu {
                       dropdownHeader(lang)
                       //divider()
@@ -241,9 +245,8 @@ internal object ClassSummaryPage : KLogging() {
           }
       }
 
-      if (enrollees.isEmpty()) {
+      if (enrollees.isEmpty())
         h4 { style = "padding-left:15px"; +"No students enrolled." }
-      }
     }
 
   private fun BODY.enableWebSockets(languageName: LanguageName, groupName: GroupName, classCode: ClassCode) {
@@ -289,7 +292,8 @@ internal object ClassSummaryPage : KLogging() {
 
   private fun LI.dropdownToggle(block: A.() -> Unit) {
     a("#", null, "dropdown-toggle") {
-      style = "font-size:140%; text-decoration:none"
+      style =
+        "font-size:140%; text-decoration:none; border-radius: 5px; padding: 1px 7px; cursor: pointer; color: black; border:1px solid black;"
       attributes["data-toggle"] = "dropdown"
       role = "button"
       attributes["aria-expanded"] = "false"

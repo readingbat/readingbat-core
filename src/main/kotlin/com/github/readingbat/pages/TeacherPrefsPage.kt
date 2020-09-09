@@ -173,17 +173,8 @@ internal object TeacherPrefsPage : KLogging() {
               }
 
               val summary = classSummaryEndpoint(classCode)
-
-              td {
-                classCode.fetchClassDesc(redis)
-                  .also { a(classes = UNDERLINE) { href = summary; +it } }
-              }
-
-              td {
-                classCode.displayedValue
-                  .also { a(classes = UNDERLINE) { href = summary; +it } }
-              }
-
+              td { a(classes = UNDERLINE) { href = summary; +classCode.fetchClassDesc(redis) } }
+              td { a(classes = UNDERLINE) { href = summary; +classCode.displayedValue } }
               td { style = "text-align:center"; +enrolleeCount.toString() }
             }
           }

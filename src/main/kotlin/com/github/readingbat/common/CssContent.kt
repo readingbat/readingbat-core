@@ -18,6 +18,7 @@
 package com.github.readingbat.common
 
 import com.github.readingbat.common.CSSNames.ARROW
+import com.github.readingbat.common.CSSNames.BTN
 import com.github.readingbat.common.CSSNames.CHALLENGE_DESC
 import com.github.readingbat.common.CSSNames.CHECK_ANSWERS
 import com.github.readingbat.common.CSSNames.CODE_BLOCK
@@ -80,6 +81,7 @@ internal object CSSNames {
   const val INVOC_TABLE = "invoc_table"
   const val INVOC_TD = "invoc_td"
   const val INVOC_STAT = "invoc_stat"
+  const val BTN = "btn"
 }
 
 internal val cssContent by lazy {
@@ -293,6 +295,11 @@ internal val cssContent by lazy {
         marginRight = 1.em
         fontSize = codeFs
       }
+
+      rule(".$BTN:hover") {
+        background = "#e7e7e7"
+      }
+
       // This takes care of the blue vertical stripe to the left of the code
       rule("pre[class*=\"language-\"] > code") {
         val color = "#0600EE"
