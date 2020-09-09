@@ -22,6 +22,7 @@ import com.github.readingbat.common.Constants.GROUP_NAME_QP
 import com.github.readingbat.common.Constants.LANG_TYPE_QP
 import com.github.readingbat.common.Constants.STATIC
 import com.github.readingbat.common.Constants.USER_ID_QP
+import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.server.GroupName
 import com.github.readingbat.server.LanguageName
 
@@ -123,7 +124,8 @@ internal object Endpoints {
   // This is a dynamic page
   const val CSS_ENDPOINT = "/$STATIC/styles.css"
 
-  fun classSummaryEndpoint(classCode: ClassCode) = "$CLASS_SUMMARY_ENDPOINT?$CLASS_CODE_QP=$classCode"
+  fun classSummaryEndpoint(classCode: ClassCode, returnPath: String = "") =
+    "$CLASS_SUMMARY_ENDPOINT?$CLASS_CODE_QP=$classCode${if (returnPath.isNotBlank()) "&$RETURN_PARAM=$returnPath" else ""}"
 
   fun classSummaryEndpoint(classCode: ClassCode, languageName: LanguageName, groupName: GroupName) =
     "${classSummaryEndpoint(classCode)}&$LANG_TYPE_QP=$languageName&$GROUP_NAME_QP=$groupName"

@@ -46,7 +46,6 @@ import com.github.readingbat.pages.PageUtils.clickButtonScript
 import com.github.readingbat.pages.PageUtils.displayMessage
 import com.github.readingbat.pages.PageUtils.headDefault
 import com.github.readingbat.pages.PageUtils.homeLink
-import com.github.readingbat.pages.PageUtils.privacyStatement
 import com.github.readingbat.pages.PageUtils.rawHtml
 import com.github.readingbat.pages.UserPrefsPage.requestLogInPage
 import com.github.readingbat.server.PipelineCall
@@ -101,7 +100,7 @@ internal object TeacherPrefsPage : KLogging() {
 
           displayClasses(user, activeClassCode, redis)
 
-          privacyStatement(TEACHER_PREFS_ENDPOINT, TEACHER_PREFS_ENDPOINT)
+          //privacyStatement(TEACHER_PREFS_ENDPOINT, TEACHER_PREFS_ENDPOINT)
 
           homeLink()
         }
@@ -110,7 +109,7 @@ internal object TeacherPrefsPage : KLogging() {
   private fun BODY.createClass(defaultClassDesc: String) {
     h3 { +"Create a class" }
     div(classes = INDENT_2EM) {
-      p { +"Enter a decription of the class." }
+      p { +"Enter a description of the class." }
       form {
         action = TEACHER_PREFS_ENDPOINT
         method = FormMethod.post
@@ -173,7 +172,7 @@ internal object TeacherPrefsPage : KLogging() {
                 }
               }
 
-              val summary = classSummaryEndpoint(classCode)
+              val summary = classSummaryEndpoint(classCode, TEACHER_PREFS_ENDPOINT)
               td { a(classes = UNDERLINE) { href = summary; +classCode.fetchClassDesc(redis) } }
               td { a(classes = UNDERLINE) { href = summary; +classCode.displayedValue } }
               td { style = "text-align:center"; +enrolleeCount.toString() }

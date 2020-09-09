@@ -27,6 +27,7 @@ import com.github.readingbat.common.FormFields.CHOICE_SOURCE_PARAM
 import com.github.readingbat.common.FormFields.CLASS_CODE_CHOICE_PARAM
 import com.github.readingbat.common.FormFields.CLASS_CODE_NAME_PARAM
 import com.github.readingbat.common.FormFields.CLASS_DESC_PARAM
+import com.github.readingbat.common.FormFields.CLASS_SUMMARY
 import com.github.readingbat.common.FormFields.CREATE_CLASS
 import com.github.readingbat.common.FormFields.DELETE_CLASS
 import com.github.readingbat.common.FormFields.TEACHER_PREF
@@ -59,10 +60,11 @@ internal object TeacherPrefsPost {
           val source = parameters[CHOICE_SOURCE_PARAM] ?: ""
           val classCode = parameters.getClassCode(CLASS_CODE_CHOICE_PARAM)
           val msg = updateActiveClass(content, user, classCode, redis)
-          if (source == TEACHER_PREF)
-            teacherPrefsPage(content, user, redis, msg)
-          else
-            classSummaryPage(content, user, redis, classCode)
+          when (source) {
+            TEACHER_PREF -> teacherPrefsPage(content, user, redis, msg)
+            CLASS_SUMMARY -> classSummaryPage(content, user, redis, classCode, msg = msg)
+            else -> throw InvalidConfigurationException("Invalid source: $source")
+          }
         }
         DELETE_CLASS -> deleteClass(content, user, parameters.getClassCode(CLASS_CODE_NAME_PARAM), redis)
         else -> throw InvalidConfigurationException("Invalid action: $action")

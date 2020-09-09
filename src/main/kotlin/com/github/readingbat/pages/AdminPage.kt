@@ -86,13 +86,7 @@ internal object AdminPage {
               br { +"Must be a system admin for this function" }
             }
             else -> {
-              p {
-                span {
-                  style = "color:${msg.color}"
-                  this@body.displayMessage(msg)
-                }
-              }
-
+              p { span { style = "color:${msg.color}"; this@body.displayMessage(msg) } }
               p { this@body.deleteData() }
               p { this@body.dumpData(redis) }
             }

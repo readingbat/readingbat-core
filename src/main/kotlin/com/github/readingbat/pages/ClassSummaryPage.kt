@@ -43,6 +43,7 @@ import com.github.readingbat.common.FormFields.CLASS_SUMMARY
 import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.FormFields.UPDATE_ACTIVE_CLASS
 import com.github.readingbat.common.FormFields.USER_PREFS_ACTION_PARAM
+import com.github.readingbat.common.Message
 import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.fetchActiveClassCode
 import com.github.readingbat.common.isNotValidUser
@@ -51,10 +52,11 @@ import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.pages.ChallengePage.headerColor
 import com.github.readingbat.pages.HelpAndLogin.helpAndLogin
+import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyTitle
+import com.github.readingbat.pages.PageUtils.displayMessage
 import com.github.readingbat.pages.PageUtils.encodeUriElems
 import com.github.readingbat.pages.PageUtils.headDefault
-import com.github.readingbat.pages.PageUtils.homeLink
 import com.github.readingbat.pages.PageUtils.loadBootstrap
 import com.github.readingbat.pages.PageUtils.rawHtml
 import com.github.readingbat.server.GroupName
@@ -89,7 +91,8 @@ internal object ClassSummaryPage : KLogging() {
                                     redis: Jedis,
                                     classCode: ClassCode,
                                     languageName: LanguageName = EMPTY_LANGUAGE,
-                                    groupName: GroupName = EMPTY_GROUP): String {
+                                    groupName: GroupName = EMPTY_GROUP,
+                                    msg: Message = Message.EMPTY_MESSAGE): String {
     when {
       classCode.isNotValid(redis) -> throw InvalidRequestException("Invalid class code $classCode")
       user.isNotValidUser(redis) -> throw InvalidRequestException("Invalid user")
@@ -114,11 +117,14 @@ internal object ClassSummaryPage : KLogging() {
         }
 
         body {
-          val returnPath = queryParam(RETURN_PARAM, "/")
+          val returnPath =
+            queryParam(RETURN_PARAM, if (languageName.isValid()) pathOf(CHALLENGE_ROOT, languageName) else "/")
           helpAndLogin(user, returnPath, activeClassCode.isEnabled, redis)
           bodyTitle()
 
           h2 { +"ReadingBat Class Summary" }
+
+          p { span { style = "color:${msg.color}"; this@body.displayMessage(msg) } }
 
           displayClassInfo(classCode, activeClassCode, redis)
 
@@ -133,7 +139,7 @@ internal object ClassSummaryPage : KLogging() {
           if (enrollees.isNotEmpty() && languageName.isValid() && groupName.isValid())
             enableWebSockets(languageName, groupName, classCode)
 
-          homeLink(if (languageName.isValid()) pathOf(CHALLENGE_ROOT, languageName) else "")
+          backLink(returnPath)
         }
       }
   }
@@ -148,12 +154,11 @@ internal object ClassSummaryPage : KLogging() {
               style = "margin:0"
               action = CLASS_SUMMARY_ENDPOINT
               method = FormMethod.post
-              input { type = InputType.hidden; name = CLASS_CODE_CHOICE_PARAM; value = classCode.value }
               input { type = InputType.hidden; name = CHOICE_SOURCE_PARAM; value = CLASS_SUMMARY }
+              input { type = InputType.hidden; name = CLASS_CODE_CHOICE_PARAM; value = classCode.value }
               input(classes = BTN) {
-                //style = " margin-top:1; margin-bottom:0;   color: black; "
                 style =
-                  "padding: 2px 5px; margin-top:15; margin-left:20; border-radius: 5px; cursor: pointer;  border:1px solid black;"
+                  "padding: 2px 5px; margin-top:15; margin-left:20; border-radius: 5px; cursor: pointer; border:1px solid black;"
                 type = InputType.submit
                 name = USER_PREFS_ACTION_PARAM
                 value = UPDATE_ACTIVE_CLASS

@@ -15,6 +15,8 @@
  *
  */
 
+@file:Suppress("UnstableApiUsage")
+
 package com.github.readingbat.server
 
 import com.github.pambrose.common.redis.RedisUtils.withRedisPool
