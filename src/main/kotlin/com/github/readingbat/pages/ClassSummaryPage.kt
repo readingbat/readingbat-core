@@ -35,6 +35,7 @@ import com.github.readingbat.common.Constants.WRONG_COLOR
 import com.github.readingbat.common.Constants.YES
 import com.github.readingbat.common.Endpoints.CHALLENGE_ROOT
 import com.github.readingbat.common.Endpoints.CLASS_SUMMARY_ENDPOINT
+import com.github.readingbat.common.Endpoints.TEACHER_PREFS_ENDPOINT
 import com.github.readingbat.common.Endpoints.classSummaryEndpoint
 import com.github.readingbat.common.Endpoints.studentSummaryEndpoint
 import com.github.readingbat.common.FormFields.CHOICE_SOURCE_PARAM
@@ -44,6 +45,7 @@ import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.FormFields.UPDATE_ACTIVE_CLASS
 import com.github.readingbat.common.FormFields.USER_PREFS_ACTION_PARAM
 import com.github.readingbat.common.Message
+import com.github.readingbat.common.Message.Companion.EMPTY_MESSAGE
 import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.fetchActiveClassCode
 import com.github.readingbat.common.isNotValidUser
@@ -92,13 +94,13 @@ internal object ClassSummaryPage : KLogging() {
                                     classCode: ClassCode,
                                     languageName: LanguageName = EMPTY_LANGUAGE,
                                     groupName: GroupName = EMPTY_GROUP,
-                                    msg: Message = Message.EMPTY_MESSAGE): String {
+                                    msg: Message = EMPTY_MESSAGE): String {
     when {
       classCode.isNotValid(redis) -> throw InvalidRequestException("Invalid class code $classCode")
       user.isNotValidUser(redis) -> throw InvalidRequestException("Invalid user")
       classCode.fetchClassTeacherId(redis) != user.id -> {
         val teacherId = classCode.fetchClassTeacherId(redis)
-        throw InvalidRequestException("User id ${user.id} does not match classCode teacher Id $teacherId")
+        throw InvalidRequestException("User id ${user.id} does not match class code teacher id $teacherId")
       }
       else -> {
       }
@@ -118,7 +120,11 @@ internal object ClassSummaryPage : KLogging() {
 
         body {
           val returnPath =
-            queryParam(RETURN_PARAM, if (languageName.isValid()) pathOf(CHALLENGE_ROOT, languageName) else "/")
+            if (msg != EMPTY_MESSAGE)
+              TEACHER_PREFS_ENDPOINT
+            else
+              queryParam(RETURN_PARAM, if (languageName.isValid()) pathOf(CHALLENGE_ROOT, languageName) else "/")
+
           helpAndLogin(user, returnPath, activeClassCode.isEnabled, redis)
           bodyTitle()
 
