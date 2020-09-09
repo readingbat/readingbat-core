@@ -36,7 +36,7 @@ internal object AdminPost {
   private val mustBeSysAdmin = Message("Must be system admin for this function", true)
   private val invalidOption = Message("Invalid option", true)
 
-  suspend fun PipelineCall.adminActionsPost(content: ReadingBatContent, user: User?, redis: Jedis): String {
+  suspend fun PipelineCall.adminActions(content: ReadingBatContent, user: User?, redis: Jedis): String {
     return when {
       isProduction() && user.isNotValidUser(redis) -> adminDataPage(content, user, redis = redis, msg = mustBeLoggedIn)
       isProduction() && user.isNotAdminUser((redis)) -> adminDataPage(content, user, redis, mustBeSysAdmin)

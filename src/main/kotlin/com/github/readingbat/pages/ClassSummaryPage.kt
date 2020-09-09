@@ -35,10 +35,11 @@ import com.github.readingbat.common.Constants.WRONG_COLOR
 import com.github.readingbat.common.Constants.YES
 import com.github.readingbat.common.Endpoints.CHALLENGE_ROOT
 import com.github.readingbat.common.Endpoints.CLASS_SUMMARY_ENDPOINT
-import com.github.readingbat.common.Endpoints.TEACHER_PREFS_POST_ENDPOINT
 import com.github.readingbat.common.Endpoints.classSummaryEndpoint
 import com.github.readingbat.common.Endpoints.studentSummaryEndpoint
-import com.github.readingbat.common.FormFields.CLASS_CODE_NAME_PARAM
+import com.github.readingbat.common.FormFields.CHOICE_SOURCE_PARAM
+import com.github.readingbat.common.FormFields.CLASS_CODE_CHOICE_PARAM
+import com.github.readingbat.common.FormFields.CLASS_SUMMARY
 import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.FormFields.UPDATE_ACTIVE_CLASS
 import com.github.readingbat.common.FormFields.USER_PREFS_ACTION_PARAM
@@ -80,8 +81,17 @@ internal object ClassSummaryPage : KLogging() {
         call.parameters[GROUP_NAME_QP]?.let { GroupName(it) } ?: EMPTY_GROUP,
         call.parameters[CLASS_CODE_QP]?.let { ClassCode(it) } ?: throw InvalidRequestException("Missing class code"))
 
+    return classSummaryPage(content, user, redis, classCode, languageName, groupName)
+  }
+
+  fun PipelineCall.classSummaryPage(content: ReadingBatContent,
+                                    user: User?,
+                                    redis: Jedis,
+                                    classCode: ClassCode,
+                                    languageName: LanguageName = EMPTY_LANGUAGE,
+                                    groupName: GroupName = EMPTY_GROUP): String {
     when {
-      classCode.isNotValid(redis) -> throw InvalidRequestException("Invalid classCode $classCode")
+      classCode.isNotValid(redis) -> throw InvalidRequestException("Invalid class code $classCode")
       user.isNotValidUser(redis) -> throw InvalidRequestException("Invalid user")
       classCode.fetchClassTeacherId(redis) != user.id -> {
         val teacherId = classCode.fetchClassTeacherId(redis)
@@ -91,11 +101,10 @@ internal object ClassSummaryPage : KLogging() {
       }
     }
 
-
     return createHTML()
       .html {
 
-        val hasGroup = groupName.isDefined(content, languageName)
+        val hasGroupName = groupName.isDefined(content, languageName)
         val activeClassCode = user.fetchActiveClassCode(redis)
         val enrollees = classCode.fetchEnrollees(redis)
 
@@ -111,39 +120,15 @@ internal object ClassSummaryPage : KLogging() {
 
           h2 { +"ReadingBat Class Summary" }
 
-          table {
-            tr {
-              td {
-                h3 {
-                  style = "margin-left: 15px; color: $headerColor"
-                  +classCode.toDisplayString(redis)
-                }
-              }
-              if (classCode != activeClassCode) {
-                td {
-                  form {
-                    style = "margin:0"
-                    action = TEACHER_PREFS_POST_ENDPOINT
-                    method = FormMethod.post
-                    input { type = InputType.hidden; name = CLASS_CODE_NAME_PARAM; value = classCode.displayedValue }
-                    input {
-                      style = "vertical-align:middle; margin-left:10; margin-top:1; margin-bottom:0"
-                      type = InputType.submit
-                      name = USER_PREFS_ACTION_PARAM
-                      value = UPDATE_ACTIVE_CLASS
-                    }
-                  }
-                }
-              }
-            }
-          }
+          displayClassInfo(classCode, activeClassCode, redis)
 
-          displayClassChoices(content, classCode, redis)
+          if (classCode == activeClassCode)
+            displayClassChoices(content, classCode, redis)
 
-          if (hasGroup)
+          if (hasGroupName)
             displayGroupInfo(classCode, activeClassCode, languageName, groupName)
 
-          displayStudents(content, enrollees, classCode, activeClassCode, hasGroup, languageName, groupName, redis)
+          displayStudents(content, enrollees, classCode, activeClassCode, hasGroupName, languageName, groupName, redis)
 
           if (enrollees.isNotEmpty() && languageName.isValid() && groupName.isValid())
             enableWebSockets(languageName, groupName, classCode)
@@ -151,6 +136,33 @@ internal object ClassSummaryPage : KLogging() {
           homeLink(if (languageName.isValid()) pathOf(CHALLENGE_ROOT, languageName) else "")
         }
       }
+  }
+
+  private fun BODY.displayClassInfo(classCode: ClassCode, activeClassCode: ClassCode, redis: Jedis) {
+    table {
+      tr {
+        td { h3 { style = "margin-left: 15px; color: $headerColor"; +classCode.toDisplayString(redis) } }
+        if (classCode != activeClassCode) {
+          td {
+            form {
+              style = "margin:0"
+              action = CLASS_SUMMARY_ENDPOINT
+              method = FormMethod.post
+              input { type = InputType.hidden; name = CLASS_CODE_CHOICE_PARAM; value = classCode.value }
+              input { type = InputType.hidden; name = CHOICE_SOURCE_PARAM; value = CLASS_SUMMARY }
+              input(classes = BTN) {
+                //style = " margin-top:1; margin-bottom:0;   color: black; "
+                style =
+                  "padding: 2px 5px; margin-top:15; margin-left:20; border-radius: 5px; cursor: pointer;  border:1px solid black;"
+                type = InputType.submit
+                name = USER_PREFS_ACTION_PARAM
+                value = UPDATE_ACTIVE_CLASS
+              }
+            }
+          }
+        }
+      }
+    }
   }
 
   private fun BODY.displayClassChoices(content: ReadingBatContent, classCode: ClassCode, redis: Jedis) {
@@ -294,7 +306,7 @@ internal object ClassSummaryPage : KLogging() {
             }
         }
       else {
-        h4 { style = "padding-left:15px"; +"No students enrolled." }
+        h4 { style = "padding-left:15px; padding-top:15px"; +"No students enrolled." }
       }
     }
 

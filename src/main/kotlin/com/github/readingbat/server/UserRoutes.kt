@@ -51,7 +51,6 @@ import com.github.readingbat.common.Endpoints.STATIC_ROOT
 import com.github.readingbat.common.Endpoints.STUDENT_SUMMARY_ENDPOINT
 import com.github.readingbat.common.Endpoints.SYSTEM_ADMIN_ENDPOINT
 import com.github.readingbat.common.Endpoints.TEACHER_PREFS_ENDPOINT
-import com.github.readingbat.common.Endpoints.TEACHER_PREFS_POST_ENDPOINT
 import com.github.readingbat.common.Endpoints.USER_INFO_ENDPOINT
 import com.github.readingbat.common.Endpoints.USER_PREFS_ENDPOINT
 import com.github.readingbat.common.Endpoints.USER_PREFS_POST_ENDPOINT
@@ -75,7 +74,7 @@ import com.github.readingbat.pages.SystemAdminPage.systemAdminPage
 import com.github.readingbat.pages.TeacherPrefsPage.teacherPrefsPage
 import com.github.readingbat.pages.UserInfoPage.userInfoPage
 import com.github.readingbat.pages.UserPrefsPage.userPrefsPage
-import com.github.readingbat.posts.AdminPost.adminActionsPost
+import com.github.readingbat.posts.AdminPost.adminActions
 import com.github.readingbat.posts.ChallengePost.checkAnswers
 import com.github.readingbat.posts.ChallengePost.clearChallengeAnswers
 import com.github.readingbat.posts.ChallengePost.clearGroupAnswers
@@ -83,9 +82,9 @@ import com.github.readingbat.posts.ChallengePost.likeDislike
 import com.github.readingbat.posts.CreateAccountPost.createAccount
 import com.github.readingbat.posts.PasswordResetPost.changePassword
 import com.github.readingbat.posts.PasswordResetPost.sendPasswordReset
-import com.github.readingbat.posts.TeacherPrefsPost.enableStudentModePost
-import com.github.readingbat.posts.TeacherPrefsPost.enableTeacherModePost
-import com.github.readingbat.posts.TeacherPrefsPost.teacherPrefsPost
+import com.github.readingbat.posts.TeacherPrefsPost.enableStudentMode
+import com.github.readingbat.posts.TeacherPrefsPost.enableTeacherMode
+import com.github.readingbat.posts.TeacherPrefsPost.teacherPrefs
 import com.github.readingbat.posts.UserPrefsPost.userPrefs
 import com.github.readingbat.server.ReadingBatServer.redisPool
 import com.github.readingbat.server.ResourceContent.getResourceAsText
@@ -148,18 +147,14 @@ internal fun Routing.userRoutes(metrics: Metrics, contentSrc: () -> ReadingBatCo
   }
 
   post(CLEAR_GROUP_ANSWERS_ENDPOINT) {
-    metrics.measureEndpointRequest(CLEAR_GROUP_ANSWERS_ENDPOINT) {
-      respondWithSuspendingDbmsCheck(contentSrc()) { redis ->
-        clearGroupAnswers(contentSrc(), fetchUser(), redis)
-      }
+    respondWithSuspendingDbmsCheck(contentSrc()) { redis ->
+      clearGroupAnswers(contentSrc(), fetchUser(), redis)
     }
   }
 
   post(CLEAR_CHALLENGE_ANSWERS_ENDPOINT) {
-    metrics.measureEndpointRequest(CLEAR_CHALLENGE_ANSWERS_ENDPOINT) {
-      respondWithSuspendingDbmsCheck(contentSrc()) { redis ->
-        clearChallengeAnswers(contentSrc(), fetchUser(), redis)
-      }
+    respondWithSuspendingDbmsCheck(contentSrc()) { redis ->
+      clearChallengeAnswers(contentSrc(), fetchUser(), redis)
     }
   }
 
@@ -185,8 +180,8 @@ internal fun Routing.userRoutes(metrics: Metrics, contentSrc: () -> ReadingBatCo
     respondWithDbmsCheck(contentSrc()) { redis -> teacherPrefsPage(contentSrc(), fetchUser(), redis) }
   }
 
-  post(TEACHER_PREFS_POST_ENDPOINT) {
-    respondWithSuspendingDbmsCheck(contentSrc()) { redis -> teacherPrefsPost(contentSrc(), fetchUser(), redis) }
+  post(TEACHER_PREFS_ENDPOINT) {
+    respondWithSuspendingDbmsCheck(contentSrc()) { redis -> teacherPrefs(contentSrc(), fetchUser(), redis) }
   }
 
   get(SYSTEM_ADMIN_ENDPOINT, metrics) {
@@ -199,6 +194,10 @@ internal fun Routing.userRoutes(metrics: Metrics, contentSrc: () -> ReadingBatCo
     }
   }
 
+  post(CLASS_SUMMARY_ENDPOINT) {
+    respondWithSuspendingDbmsCheck(contentSrc()) { redis -> teacherPrefs(contentSrc(), fetchUser(), redis) }
+  }
+
   get(STUDENT_SUMMARY_ENDPOINT, metrics) {
     metrics.measureEndpointRequest(STUDENT_SUMMARY_ENDPOINT) {
       respondWithDbmsCheck(contentSrc()) { redis -> studentSummaryPage(contentSrc(), fetchUser(), redis) }
@@ -206,11 +205,11 @@ internal fun Routing.userRoutes(metrics: Metrics, contentSrc: () -> ReadingBatCo
   }
 
   get(ENABLE_STUDENT_MODE_ENDPOINT, metrics) {
-    respondWithSuspendingDbmsCheck(contentSrc()) { redis -> enableStudentModePost(fetchUser(), redis) }
+    respondWithSuspendingDbmsCheck(contentSrc()) { redis -> enableStudentMode(fetchUser(), redis) }
   }
 
   get(ENABLE_TEACHER_MODE_ENDPOINT, metrics) {
-    respondWithSuspendingDbmsCheck(contentSrc()) { redis -> enableTeacherModePost(fetchUser(), redis) }
+    respondWithSuspendingDbmsCheck(contentSrc()) { redis -> enableTeacherMode(fetchUser(), redis) }
   }
 
   get(ADMIN_ENDPOINT, metrics) {
@@ -223,7 +222,7 @@ internal fun Routing.userRoutes(metrics: Metrics, contentSrc: () -> ReadingBatCo
 
   post(ADMIN_POST_ENDPOINT) {
     metrics.measureEndpointRequest(ADMIN_POST_ENDPOINT) {
-      respondWithSuspendingDbmsCheck(contentSrc()) { redis -> adminActionsPost(contentSrc(), fetchUser(), redis) }
+      respondWithSuspendingDbmsCheck(contentSrc()) { redis -> adminActions(contentSrc(), fetchUser(), redis) }
     }
   }
 
@@ -235,18 +234,14 @@ internal fun Routing.userRoutes(metrics: Metrics, contentSrc: () -> ReadingBatCo
   }
 
   post(PASSWORD_RESET_POST_ENDPOINT) {
-    metrics.measureEndpointRequest(PASSWORD_RESET_POST_ENDPOINT) {
-      respondWithSuspendingDbmsCheck(contentSrc()) { redis ->
-        sendPasswordReset(contentSrc(), redis)
-      }
+    respondWithSuspendingDbmsCheck(contentSrc()) { redis ->
+      sendPasswordReset(contentSrc(), redis)
     }
   }
 
   post(PASSWORD_CHANGE_POST_ENDPOINT) {
-    metrics.measureEndpointRequest(PASSWORD_CHANGE_POST_ENDPOINT) {
-      respondWithSuspendingDbmsCheck(contentSrc()) { redis ->
-        changePassword(contentSrc(), redis)
-      }
+    respondWithSuspendingDbmsCheck(contentSrc()) { redis ->
+      changePassword(contentSrc(), redis)
     }
   }
 

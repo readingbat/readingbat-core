@@ -22,15 +22,16 @@ import com.github.readingbat.common.CSSNames.UNDERLINE
 import com.github.readingbat.common.ClassCode
 import com.github.readingbat.common.Constants.LABEL_WIDTH
 import com.github.readingbat.common.Endpoints.TEACHER_PREFS_ENDPOINT
-import com.github.readingbat.common.Endpoints.TEACHER_PREFS_POST_ENDPOINT
 import com.github.readingbat.common.Endpoints.classSummaryEndpoint
-import com.github.readingbat.common.FormFields.CLASSES_CHOICE_PARAM
+import com.github.readingbat.common.FormFields.CHOICE_SOURCE_PARAM
+import com.github.readingbat.common.FormFields.CLASS_CODE_CHOICE_PARAM
 import com.github.readingbat.common.FormFields.CLASS_CODE_NAME_PARAM
 import com.github.readingbat.common.FormFields.CLASS_DESC_PARAM
 import com.github.readingbat.common.FormFields.CREATE_CLASS
 import com.github.readingbat.common.FormFields.DELETE_CLASS
 import com.github.readingbat.common.FormFields.DISABLED_MODE
 import com.github.readingbat.common.FormFields.RETURN_PARAM
+import com.github.readingbat.common.FormFields.TEACHER_PREF
 import com.github.readingbat.common.FormFields.UPDATE_ACTIVE_CLASS
 import com.github.readingbat.common.FormFields.USER_PREFS_ACTION_PARAM
 import com.github.readingbat.common.Message
@@ -111,7 +112,7 @@ internal object TeacherPrefsPage : KLogging() {
     div(classes = INDENT_2EM) {
       p { +"Enter a decription of the class." }
       form {
-        action = TEACHER_PREFS_POST_ENDPOINT
+        action = TEACHER_PREFS_ENDPOINT
         method = FormMethod.post
         table {
           tr {
@@ -155,7 +156,7 @@ internal object TeacherPrefsPage : KLogging() {
       style = "border-spacing: 15px 5px"
       tr { th { +"Active" }; th { +"Description" }; th { +"Class Code" }; th { +"Enrollees" } }
       form {
-        action = TEACHER_PREFS_POST_ENDPOINT
+        action = TEACHER_PREFS_ENDPOINT
         method = FormMethod.post
 
         classCodes
@@ -166,7 +167,7 @@ internal object TeacherPrefsPage : KLogging() {
                 style = "text-align:center"
                 input {
                   type = radio
-                  name = CLASSES_CHOICE_PARAM
+                  name = CLASS_CODE_CHOICE_PARAM
                   value = classCode.value
                   checked = activeClassCode == classCode
                 }
@@ -183,11 +184,14 @@ internal object TeacherPrefsPage : KLogging() {
           td {
             style = "text-align:center"
             input {
-              type = radio; name = CLASSES_CHOICE_PARAM; value = DISABLED_MODE; checked = activeClassCode.isNotEnabled
+              type = radio; name = CLASS_CODE_CHOICE_PARAM; value = DISABLED_MODE; checked =
+              activeClassCode.isNotEnabled
             }
           }
           td { colSpan = "3"; +"Student mode" }
         }
+
+        input { type = InputType.hidden; name = CHOICE_SOURCE_PARAM; value = TEACHER_PREF }
 
         this@table.tr {
           td {}
@@ -206,7 +210,7 @@ internal object TeacherPrefsPage : KLogging() {
           td {
             form {
               style = "margin:0"
-              action = TEACHER_PREFS_POST_ENDPOINT
+              action = TEACHER_PREFS_ENDPOINT
               method = FormMethod.post
               onSubmit = "return confirm('Are you sure you want to delete class ${classCode.toDisplayString(redis)}?')"
               input { type = InputType.hidden; name = CLASS_CODE_NAME_PARAM; value = classCode.displayedValue }

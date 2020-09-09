@@ -296,6 +296,9 @@ internal val cssContent by lazy {
         fontSize = codeFs
       }
 
+      rule(".$BTN") {
+        background = "white"
+      }
       rule(".$BTN:hover") {
         background = "#e7e7e7"
       }
