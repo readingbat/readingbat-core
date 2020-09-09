@@ -94,7 +94,8 @@ internal object TeacherPrefsPage : KLogging() {
 
           h2 { +"ReadingBat Teacher Preferences" }
 
-          p { span { style = "color:${msg.color}"; this@body.displayMessage(msg) } }
+          if (msg.isAssigned())
+            p { span { style = "color:${msg.color}"; this@body.displayMessage(msg) } }
 
           createClass(defaultClassDesc)
 

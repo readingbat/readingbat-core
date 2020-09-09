@@ -68,7 +68,8 @@ internal object UserInfoPage {
               val likeDislikes = user.likeDislikes(redis)
               val classCodes = user.classCodes(redis)
 
-              p { span { style = "color:${msg.color}"; this@body.displayMessage(msg) } }
+              if (msg.isAssigned())
+                p { span { style = "color:${msg.color}"; this@body.displayMessage(msg) } }
 
               val principal = call.userPrincipal
               val sessionId = call.browserSession

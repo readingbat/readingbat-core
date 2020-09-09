@@ -26,6 +26,9 @@ internal data class Message(val value: String, val isError: Boolean = false) {
 
   val color get() = if (isError) WRONG_COLOR else CORRECT_COLOR
 
+  fun isAssigned() = this != EMPTY_MESSAGE
+  fun isUnassigned() = this == EMPTY_MESSAGE
+
   override fun toString() = value
 
   companion object {

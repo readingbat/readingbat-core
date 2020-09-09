@@ -114,13 +114,13 @@ internal object ClassSummaryPage : KLogging() {
         val enrollees = classCode.fetchEnrollees(redis)
 
         head {
-          headDefault(content)
           loadBootstrap()
+          headDefault(content)
         }
 
         body {
           val returnPath =
-            if (msg != EMPTY_MESSAGE)
+            if (msg.isAssigned())
               TEACHER_PREFS_ENDPOINT
             else
               queryParam(RETURN_PARAM, if (languageName.isValid()) pathOf(CHALLENGE_ROOT, languageName) else "/")
@@ -130,7 +130,8 @@ internal object ClassSummaryPage : KLogging() {
 
           h2 { +"ReadingBat Class Summary" }
 
-          p { span { style = "color:${msg.color}"; this@body.displayMessage(msg) } }
+          if (msg.isAssigned())
+            p { span { style = "color:${msg.color}"; this@body.displayMessage(msg) } }
 
           displayClassInfo(classCode, activeClassCode, redis)
 
@@ -153,7 +154,11 @@ internal object ClassSummaryPage : KLogging() {
   private fun BODY.displayClassInfo(classCode: ClassCode, activeClassCode: ClassCode, redis: Jedis) {
     table {
       tr {
-        td { h3 { style = "margin-left: 15px; color: $headerColor"; +classCode.toDisplayString(redis) } }
+        td {
+          h3 {
+            style = "margin-left: 15px; margin-bottom: 15px; color: $headerColor"; +classCode.toDisplayString(redis)
+          }
+        }
         if (classCode != activeClassCode) {
           td {
             form {
@@ -178,7 +183,7 @@ internal object ClassSummaryPage : KLogging() {
 
   private fun BODY.displayClassChoices(content: ReadingBatContent, classCode: ClassCode, redis: Jedis) {
     table {
-      style = "border-collapse: separate; border-spacing: 15px 15px"
+      style = "border-collapse: separate; border-spacing: 15px 10px"
       tr {
         td { style = "font-size:140%"; +"Challenge Group: " }
         LanguageType.values()

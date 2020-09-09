@@ -98,7 +98,15 @@ internal val cssContent by lazy {
         /* MOBILE-CSS prevents crazy shrinking of font in table e.g. on section page */
         //"-webkit-text-size-adjust:none; text-size-adjust:none;"
       }
-      //rule("body, a, p, td, h1, h2, h3") {
+      rule("h1, h2, h3, h4") {
+        fontWeight = FontWeight.bold
+      }
+      rule("body") {
+        display = Display.block
+        marginTop = 8.px
+        marginLeft = 8.px
+        marginRight = 8.px
+      }
       rule("html, body") {
         fontSize = LinearDimension.auto
         fontFamily = "verdana, arial, helvetica, sans-serif"

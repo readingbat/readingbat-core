@@ -104,15 +104,20 @@ internal object HelpPage {
                 i { +" Create Class " }
                 +"button on the"
                 a { href = TEACHER_PREFS_ENDPOINT; b { +" Teacher Preferences " } }
-                +"page. Each class will have a unique class code. "
+                +"page. Each class will be assigned a unique class code. "
                 +"To enroll students in a class, send them the class code and ask them to follow the"
                 i { +" Join a Class " }
                 +"instructions above."
               }
 
-              h4 { rawHtml("&bull;"); +" Select Active Class" }
+              h4 { rawHtml("&bull;"); +" Select an Active Class" }
 
               p {
+                +"Click on the radio button of the class you are interested in and then click on the"
+                b { +" Update Active Class " }
+                +"button. You will now be in"
+                i { +" teacher mode, " }
+                +"which will allow you see student progress."
                 +"Select an active class to enter teacher mode, which will allow you to see "
                 +"student answers in real-time and class results. "
               }
