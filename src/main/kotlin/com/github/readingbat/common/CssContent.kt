@@ -48,6 +48,8 @@ import com.github.readingbat.common.CSSNames.USER_RESP
 import com.github.readingbat.common.Constants.INCOMPLETE_COLOR
 import kotlinx.css.*
 import kotlinx.css.BorderCollapse.separate
+import kotlinx.css.Display.block
+import kotlinx.css.FontWeight.Companion.bold
 import kotlinx.css.properties.LineHeight
 import kotlinx.css.properties.TextDecoration
 import kotlinx.css.properties.TextDecorationLine.underline
@@ -92,22 +94,18 @@ internal val cssContent by lazy {
     .apply {
 
       rule("html, body") {
-        /* MOBILE-CSS prevents crazy shrinking of font in table e.g. on section page */
-        //"-webkit-text-size-adjust:none; text-size-adjust:none;"
-      }
-      rule("h1, h2, h3, h4") {
-        fontWeight = FontWeight.bold
+        fontSize = 16.px
+        fontFamily = "verdana, arial, helvetica, sans-serif"
       }
       rule("body") {
-        display = Display.block
+        display = block
         marginTop = 8.px
         marginLeft = 8.px
         marginRight = 8.px
+        lineHeight = LineHeight.normal
       }
-      rule("html, body") {
-        //fontSize = LinearDimension.auto
-        fontSize = 16.px
-        fontFamily = "verdana, arial, helvetica, sans-serif"
+      rule("h1, h2, h3, h4") {
+        fontWeight = bold
       }
       p {
         maxWidth = 800.px
@@ -219,7 +217,7 @@ internal val cssContent by lazy {
         height = 2.em
         backgroundColor = Color("#f1f1f1")
         fontSize = textFs
-        fontWeight = FontWeight.bold
+        fontWeight = bold
         borderRadius = 6.px
       }
       rule(".$LIKE_BUTTONS") {
