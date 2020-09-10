@@ -50,9 +50,7 @@ import io.ktor.http.*
 import io.ktor.routing.*
 import kotlin.time.measureTime
 
-internal fun Routing.sysAdminRoutes(metrics: Metrics,
-                                    contentSrc: () -> ReadingBatContent,
-                                    resetContentFunc: () -> Unit) {
+internal fun Routing.sysAdminRoutes(metrics: Metrics, contentSrc: () -> ReadingBatContent, resetFunc: () -> Unit) {
 
   fun deleteContentDslInRedis() =
     redisPool.withRedisPool { redis ->
@@ -105,7 +103,7 @@ internal fun Routing.sysAdminRoutes(metrics: Metrics,
       authenticatedAction {
         measureTime {
           deleteContentInRedis()
-          resetContentFunc.invoke()
+          resetFunc.invoke()
         }
           .let {
             Message("DSL content reset in $it".also { logger.info { it } })

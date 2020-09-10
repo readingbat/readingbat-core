@@ -126,6 +126,7 @@ internal object ClassSummaryPage : KLogging() {
               queryParam(RETURN_PARAM, if (languageName.isValid()) pathOf(CHALLENGE_ROOT, languageName) else "/")
 
           helpAndLogin(content, user, returnPath, activeClassCode.isEnabled, redis)
+
           bodyTitle()
 
           h2 { +"ReadingBat Class Summary" }
