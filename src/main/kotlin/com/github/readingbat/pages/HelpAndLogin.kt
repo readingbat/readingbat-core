@@ -31,20 +31,31 @@ import com.github.readingbat.common.FormFields.PASSWORD_PARAM
 import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.fetchPreviousTeacherClassCode
+import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.pages.PageUtils.rawHtml
 import kotlinx.html.*
 import redis.clients.jedis.Jedis
 
 internal object HelpAndLogin {
 
-  fun BODY.helpAndLogin(user: User?, loginPath: String, teacherMode: Boolean, redis: Jedis?) {
+  private val rootVals = listOf("", "/")
+
+  fun BODY.helpAndLogin(content: ReadingBatContent,
+                        user: User?,
+                        loginPath: String,
+                        teacherMode: Boolean,
+                        redis: Jedis?) {
 
     val previousClassCode = user.fetchPreviousTeacherClassCode(redis)
+    val path = if (loginPath in rootVals) content.defaultLanguageType().contentRoot else loginPath
 
     div {
       style = "float:right; margin:0px; border: 1px solid lightgray; margin-left: 10px; padding: 5px"
       table {
-        if (user.isNotNull() && redis.isNotNull()) logout(user, loginPath, redis) else login(loginPath)
+        if (user.isNotNull() && redis.isNotNull())
+          logout(user, path, redis)
+        else
+          login(path)
       }
     }
 
@@ -103,11 +114,13 @@ internal object HelpAndLogin {
     }
   }
 
+
   private fun TABLE.login(loginPath: String) {
     val topFocus = "loginTpFocus"
     val bottomFocus = "loginBottomFocus"
 
-    form(method = FormMethod.post) {
+    form {
+      method = FormMethod.post
       action = loginPath
 
       span { tabIndex = "1"; onFocus = "document.querySelector('.$bottomFocus').focus()" }

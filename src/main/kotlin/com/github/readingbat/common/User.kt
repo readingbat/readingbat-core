@@ -264,6 +264,9 @@ internal class User private constructor(val id: String, val browserSession: Brow
     logger.info { "Invocations: ${invocations.size}" }
     logger.info { "User Classes: $classCodes" }
 
+    val classCode = fetchEnrolledClassCode(redis)
+    val enrolled = classCode.isEnabled && classCode.isValid(redis) && isEnrolled(classCode, redis)
+
     redis.multi()
       .also { tx ->
         if (previousResetId.isNotBlank()) {
@@ -271,9 +274,15 @@ internal class User private constructor(val id: String, val browserSession: Brow
           tx.del(previousResetId.passwordResetKey)
         }
 
-        tx.del(email(redis).userEmailKey)
+        tx.del(email.userEmailKey)
         tx.del(userInfoKey)
         tx.del(userClassesKey)
+
+        // Withdraw from class
+        if (enrolled) {
+          logger.info { "Withdrawing from $classCode" }
+          classCode.removeEnrollee(this, tx)
+        }
 
         browserSessions.forEach { tx.del(it) }
         correctAnswers.forEach { tx.del(it) }

@@ -38,6 +38,7 @@ import com.github.readingbat.pages.HelpAndLogin.helpAndLogin
 import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyTitle
 import com.github.readingbat.pages.PageUtils.confirmingButton
+import com.github.readingbat.pages.PageUtils.displayMessage
 import com.github.readingbat.pages.PageUtils.headDefault
 import com.github.readingbat.pages.UserPrefsPage.requestLogInPage
 import com.github.readingbat.server.PipelineCall
@@ -52,17 +53,15 @@ internal object SystemAdminPage : KLogging() {
   fun PipelineCall.systemAdminPage(content: ReadingBatContent,
                                    user: User?,
                                    redis: Jedis,
-                                   msg: Message = EMPTY_MESSAGE,
-                                   defaultClassDesc: String = "") =
+                                   msg: Message = EMPTY_MESSAGE) =
     if (user.isValidUser(redis))
-      systemAdminLoginPage(content, user, msg, defaultClassDesc, redis)
+      systemAdminLoginPage(content, user, msg, redis)
     else
       requestLogInPage(content, redis)
 
   private fun PipelineCall.systemAdminLoginPage(content: ReadingBatContent,
                                                 user: User,
                                                 msg: Message,
-                                                defaultClassDesc: String,
                                                 redis: Jedis) =
     createHTML()
       .html {
@@ -75,10 +74,13 @@ internal object SystemAdminPage : KLogging() {
         body {
           val returnPath = queryParam(RETURN_PARAM, "/")
 
-          helpAndLogin(user, returnPath, activeClassCode.isEnabled, redis)
+          helpAndLogin(content, user, returnPath, activeClassCode.isEnabled, redis)
           bodyTitle()
 
           h2 { +"ReadingBat System Admin" }
+
+          if (msg.isAssigned())
+            p { span { style = "color:${msg.color}"; this@body.displayMessage(msg) } }
 
           if (!isProduction() || user.isAdminUser(redis)) {
             p {

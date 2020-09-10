@@ -28,7 +28,6 @@ import com.github.readingbat.common.Endpoints.SESSIONS_ENDPOINT
 import com.github.readingbat.common.Endpoints.SYSTEM_ADMIN_ENDPOINT
 import com.github.readingbat.common.Endpoints.TEACHER_PREFS_ENDPOINT
 import com.github.readingbat.common.Endpoints.USER_PREFS_ENDPOINT
-import com.github.readingbat.common.Endpoints.USER_PREFS_POST_ENDPOINT
 import com.github.readingbat.common.FormFields.CLASS_CODE_NAME_PARAM
 import com.github.readingbat.common.FormFields.CONFIRM_PASSWORD_PARAM
 import com.github.readingbat.common.FormFields.CURR_PASSWORD_PARAM
@@ -51,7 +50,6 @@ import com.github.readingbat.pages.PageUtils.clickButtonScript
 import com.github.readingbat.pages.PageUtils.displayMessage
 import com.github.readingbat.pages.PageUtils.headDefault
 import com.github.readingbat.pages.PageUtils.hideShowButton
-import com.github.readingbat.pages.PageUtils.homeLink
 import com.github.readingbat.pages.PageUtils.privacyStatement
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
@@ -115,7 +113,7 @@ internal object UserPrefsPage : KLogging() {
         body {
           val returnPath = queryParam(RETURN_PARAM, "/")
 
-          helpAndLogin(user, returnPath, activeClassCode.isEnabled, redis)
+          helpAndLogin(content, user, returnPath, activeClassCode.isEnabled, redis)
 
           bodyTitle()
 
@@ -129,7 +127,7 @@ internal object UserPrefsPage : KLogging() {
           deleteAccount(user, redis)
 
           p(classes = INDENT_1EM) {
-            a { href = "$TEACHER_PREFS_ENDPOINT?$RETURN_PARAM=$returnPath"; +"Teacher Preferences" }
+            a { href = "$TEACHER_PREFS_ENDPOINT?$RETURN_PARAM=$USER_PREFS_ENDPOINT"; +"Teacher Preferences" }
           }
 
           if (!isProduction() || user.isAdminUser(redis)) {
@@ -151,7 +149,7 @@ internal object UserPrefsPage : KLogging() {
             privacyStatement(USER_PREFS_ENDPOINT, returnPath)
           }
 
-          homeLink()
+          backLink()
         }
       }
 
@@ -161,7 +159,7 @@ internal object UserPrefsPage : KLogging() {
       p { +"Password must contain at least 6 characters" }
       form {
         name = formName
-        action = USER_PREFS_POST_ENDPOINT
+        action = USER_PREFS_ENDPOINT
         method = FormMethod.post
         table {
           tr {
@@ -205,7 +203,7 @@ internal object UserPrefsPage : KLogging() {
         p { +"Currently enrolled in class $enrolledClass." }
         p {
           form {
-            action = USER_PREFS_POST_ENDPOINT
+            action = USER_PREFS_ENDPOINT
             method = FormMethod.post
             onSubmit = "return confirm('Are you sure you want to withdraw from class $displayStr?')"
             input { type = submit; name = USER_PREFS_ACTION_PARAM; value = WITHDRAW_FROM_CLASS }
@@ -218,7 +216,7 @@ internal object UserPrefsPage : KLogging() {
       div(classes = INDENT_2EM) {
         p { +"Enter the class code your teacher gave you. This will make your progress visible to your teacher." }
         form {
-          action = USER_PREFS_POST_ENDPOINT
+          action = USER_PREFS_ENDPOINT
           method = FormMethod.post
           table {
             tr {
@@ -294,7 +292,7 @@ internal object UserPrefsPage : KLogging() {
       div(classes = INDENT_2EM) {
         p { +"Permanently delete account [$email] -- this cannot be undone!" }
         form {
-          action = USER_PREFS_POST_ENDPOINT
+          action = USER_PREFS_ENDPOINT
           method = FormMethod.post
           onSubmit = "return confirm('Are you sure you want to permanently delete the account for $email ?')"
           input { type = submit; name = USER_PREFS_ACTION_PARAM; value = DELETE_ACCOUNT }
@@ -313,7 +311,7 @@ internal object UserPrefsPage : KLogging() {
         body {
           val returnPath = queryParam(RETURN_PARAM, "/")
 
-          helpAndLogin(null, returnPath, false, redis)
+          helpAndLogin(content, null, returnPath, false, redis)
 
           bodyTitle()
 

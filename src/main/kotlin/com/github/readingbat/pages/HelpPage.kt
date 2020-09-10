@@ -25,9 +25,9 @@ import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.fetchActiveClassCode
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.pages.HelpAndLogin.helpAndLogin
+import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyTitle
 import com.github.readingbat.pages.PageUtils.headDefault
-import com.github.readingbat.pages.PageUtils.homeLink
 import com.github.readingbat.pages.PageUtils.rawHtml
 import com.github.readingbat.server.PipelineCall
 import kotlinx.html.*
@@ -44,7 +44,7 @@ internal object HelpPage {
         }
 
         body {
-          helpAndLogin(user, ABOUT_ENDPOINT, user.fetchActiveClassCode(redis).isEnabled, redis)
+          helpAndLogin(content, user, ABOUT_ENDPOINT, user.fetchActiveClassCode(redis).isEnabled, redis)
 
           bodyTitle()
 
@@ -134,7 +134,7 @@ internal object HelpPage {
             }
           }
 
-          homeLink()
+          backLink()
         }
       }
 }

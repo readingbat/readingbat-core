@@ -18,7 +18,7 @@
 package com.github.readingbat.pages
 
 import com.github.readingbat.common.CSSNames.INDENT_1EM
-import com.github.readingbat.common.Endpoints.ADMIN_POST_ENDPOINT
+import com.github.readingbat.common.Endpoints.ADMIN_ENDPOINT
 import com.github.readingbat.common.FormFields.ADMIN_ACTION_PARAM
 import com.github.readingbat.common.FormFields.DELETE_ALL_DATA
 import com.github.readingbat.common.FormFields.RETURN_PARAM
@@ -74,7 +74,7 @@ internal object AdminPage {
         body {
           val returnPath = queryParam(RETURN_PARAM, "/")
 
-          helpAndLogin(user, returnPath, false, redis)
+          helpAndLogin(content, user, returnPath, false, redis)
 
           bodyTitle()
 
@@ -102,7 +102,7 @@ internal object AdminPage {
     div(classes = INDENT_1EM) {
       p { +"Permanently delete all data -- this cannot be undone!" }
       form {
-        action = ADMIN_POST_ENDPOINT
+        action = ADMIN_ENDPOINT
         method = FormMethod.post
         onSubmit = "return confirm('Are you sure you want to permanently delete all data ?')"
         input { type = InputType.submit; name = ADMIN_ACTION_PARAM; value = DELETE_ALL_DATA }

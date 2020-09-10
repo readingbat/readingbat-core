@@ -91,7 +91,7 @@ internal object StudentSummaryPage : KLogging() {
 
         body {
           val returnPath = queryParam(RETURN_PARAM, "/")
-          helpAndLogin(user, returnPath, activeClassCode.isEnabled, redis)
+          helpAndLogin(content, user, returnPath, activeClassCode.isEnabled, redis)
           bodyTitle()
 
           h2 { +"ReadingBat Student Summary" }

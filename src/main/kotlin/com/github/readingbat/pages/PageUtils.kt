@@ -114,7 +114,7 @@ internal object PageUtils {
                       redis: Jedis?,
                       msg: Message = EMPTY_MESSAGE) {
 
-    helpAndLogin(user, loginPath, activeClassCode.isEnabled, redis)
+    helpAndLogin(content, user, loginPath, activeClassCode.isEnabled, redis)
 
     bodyTitle()
 
@@ -184,9 +184,13 @@ internal object PageUtils {
 
   fun BODY.displayMessage(msg: Message) = if (msg.isNotBlank) +(msg.toString()) else rawHtml(nbsp.text)
 
-  fun BODY.backLink(vararg pathElems: String = arrayOf("")) = linkWithIndent(pathElems.toList().toRootPath(), "Back")
-
-  fun BODY.homeLink(vararg pathElems: String = arrayOf("")) = linkWithIndent(pathElems.toList().toRootPath(), "Home")
+  private val rootVals = listOf("", "/", "/content/java", "/content/python", "/content/kotlin")
+  fun BODY.backLink(vararg pathElems: String = arrayOf("")) {
+    if (pathElems.size == 1 && pathElems[0] in rootVals)
+      linkWithIndent(pathElems.toList().toRootPath(), "Home")
+    else
+      linkWithIndent(pathElems.toList().toRootPath(), "Back")
+  }
 
   fun HTMLTag.rawHtml(html: String) = unsafe { raw(html) }
 

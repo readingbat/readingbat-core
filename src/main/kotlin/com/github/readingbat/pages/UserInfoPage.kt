@@ -49,7 +49,7 @@ internal object UserInfoPage {
         body {
           val returnPath = queryParam(RETURN_PARAM, "/")
 
-          helpAndLogin(user, returnPath, false, redis)
+          helpAndLogin(content, user, returnPath, false, redis)
 
           bodyTitle()
 

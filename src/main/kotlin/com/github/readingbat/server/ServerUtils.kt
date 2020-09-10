@@ -29,8 +29,6 @@ import com.github.readingbat.common.*
 import com.github.readingbat.common.Constants.DBMS_DOWN
 import com.github.readingbat.common.KeyConstants.KEY_SEP
 import com.github.readingbat.common.User.Companion.toUser
-import com.github.readingbat.dsl.InvalidConfigurationException
-import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.isProduction
 import com.github.readingbat.pages.DbmsDownPage.dbmsDownPage
@@ -98,7 +96,7 @@ internal object ServerUtils : KLogging() {
 
   fun ApplicationCall.fetchUser(): User? = userPrincipal?.userId?.toUser(browserSession)
 
-  suspend fun PipelineCall.respondWithDbmsCheck(content: ReadingBatContent, block: (redis: Jedis) -> String) =
+  suspend fun PipelineCall.respondWithRedisCheck(content: ReadingBatContent, block: (redis: Jedis) -> String) =
     try {
       val html =
         redisPool.withRedisPool { redis ->
@@ -112,8 +110,8 @@ internal object ServerUtils : KLogging() {
       redirectTo { e.redirectUrl }
     }
 
-  suspend fun PipelineCall.respondWithSuspendingDbmsCheck(content: ReadingBatContent,
-                                                          block: suspend (redis: Jedis) -> String) =
+  suspend fun PipelineCall.respondWithSuspendingRedisCheck(content: ReadingBatContent,
+                                                           block: suspend (redis: Jedis) -> String) =
     try {
       val html =
         redisPool.withSuspendingRedisPool { redis ->
@@ -127,7 +125,22 @@ internal object ServerUtils : KLogging() {
       redirectTo { e.redirectUrl }
     }
 
-  suspend fun PipelineCall.authenticatedAction(block: () -> String) =
+  suspend fun PipelineCall.authenticatedAction(block: () -> Message): Message =
+    when {
+      isProduction() ->
+        redisPool.withSuspendingRedisPool { redis ->
+          val user = fetchUser()
+          when {
+            redis.isNull() -> Message(DBMS_DOWN.value, true)
+            user.isNotValidUser(redis) -> Message("Must be logged in for this function", true)
+            user.isNotAdminUser(redis) -> Message("Must be system admin for this function", true)
+            else -> block.invoke()
+          }
+        }
+      else -> block.invoke()
+    }
+
+  suspend fun PipelineCall.authenticatedPage(block: () -> String): String =
     when {
       isProduction() ->
         redisPool.withSuspendingRedisPool { redis ->
@@ -150,15 +163,11 @@ internal object ServerUtils : KLogging() {
       }
     }
 
-  fun PipelineCall.defaultLanguageTab(content: ReadingBatContent) =
-    LanguageType.languageTypesInOrder
-      .asSequence()
-      .filter { content[it].isNotEmpty() }
-      .map {
-        val params = call.parameters.formUrlEncode()
-        "${it.contentRoot}${if (params.isNotEmpty()) "?$params" else ""}"
-      }
-      .firstOrNull() ?: throw InvalidConfigurationException("Missing default language")
+  fun PipelineCall.defaultLanguageTab(content: ReadingBatContent): String {
+    val langRoot = content.defaultLanguageType().contentRoot
+    val params = call.parameters.formUrlEncode()
+    return "$langRoot${if (params.isNotEmpty()) "?$params" else ""}"
+  }
 
   fun Int.rows(cols: Int) = if (this % cols == 0) this / cols else (this / cols) + 1
 }

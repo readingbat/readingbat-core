@@ -41,11 +41,11 @@ import com.github.readingbat.common.User.Companion.fetchActiveClassCode
 import com.github.readingbat.common.isValidUser
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.pages.HelpAndLogin.helpAndLogin
+import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyTitle
 import com.github.readingbat.pages.PageUtils.clickButtonScript
 import com.github.readingbat.pages.PageUtils.displayMessage
 import com.github.readingbat.pages.PageUtils.headDefault
-import com.github.readingbat.pages.PageUtils.homeLink
 import com.github.readingbat.pages.PageUtils.rawHtml
 import com.github.readingbat.pages.UserPrefsPage.requestLogInPage
 import com.github.readingbat.server.PipelineCall
@@ -89,7 +89,7 @@ internal object TeacherPrefsPage : KLogging() {
         body {
           val returnPath = queryParam(RETURN_PARAM, "/")
 
-          helpAndLogin(user, returnPath, activeClassCode.isEnabled, redis)
+          helpAndLogin(content, user, returnPath, activeClassCode.isEnabled, redis)
           bodyTitle()
 
           h2 { +"ReadingBat Teacher Preferences" }
@@ -101,9 +101,7 @@ internal object TeacherPrefsPage : KLogging() {
 
           displayClasses(user, activeClassCode, redis)
 
-          //privacyStatement(TEACHER_PREFS_ENDPOINT, TEACHER_PREFS_ENDPOINT)
-
-          homeLink()
+          backLink(returnPath)
         }
       }
 

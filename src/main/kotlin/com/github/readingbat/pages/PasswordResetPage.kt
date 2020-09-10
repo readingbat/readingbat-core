@@ -20,9 +20,8 @@ package com.github.readingbat.pages
 import com.github.readingbat.common.CSSNames.INDENT_1EM
 import com.github.readingbat.common.Constants.INVALID_RESET_ID
 import com.github.readingbat.common.Constants.LABEL_WIDTH
-import com.github.readingbat.common.Endpoints.PASSWORD_CHANGE_POST_ENDPOINT
+import com.github.readingbat.common.Endpoints.PASSWORD_CHANGE_ENDPOINT
 import com.github.readingbat.common.Endpoints.PASSWORD_RESET_ENDPOINT
-import com.github.readingbat.common.Endpoints.PASSWORD_RESET_POST_ENDPOINT
 import com.github.readingbat.common.FormFields.CONFIRM_PASSWORD_PARAM
 import com.github.readingbat.common.FormFields.EMAIL_PARAM
 import com.github.readingbat.common.FormFields.NEW_PASSWORD_PARAM
@@ -109,7 +108,7 @@ internal object PasswordResetPage : KLogging() {
 
           div(classes = INDENT_1EM) {
             form {
-              action = "$PASSWORD_RESET_POST_ENDPOINT?$RETURN_PARAM=$returnPath"
+              action = "$PASSWORD_RESET_ENDPOINT?$RETURN_PARAM=$returnPath"
               method = FormMethod.post
               table {
                 tr {
@@ -167,7 +166,7 @@ internal object PasswordResetPage : KLogging() {
           p { +"Password must contain at least 6 characters" }
           form {
             name = formName
-            action = PASSWORD_CHANGE_POST_ENDPOINT
+            action = PASSWORD_CHANGE_ENDPOINT
             method = FormMethod.post
             table {
               tr {

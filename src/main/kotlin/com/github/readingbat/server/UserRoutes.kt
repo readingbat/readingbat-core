@@ -24,7 +24,6 @@ import com.github.readingbat.common.CommonUtils.pathOf
 import com.github.readingbat.common.Constants.ICONS
 import com.github.readingbat.common.Endpoints.ABOUT_ENDPOINT
 import com.github.readingbat.common.Endpoints.ADMIN_ENDPOINT
-import com.github.readingbat.common.Endpoints.ADMIN_POST_ENDPOINT
 import com.github.readingbat.common.Endpoints.CHALLENGE_ROOT
 import com.github.readingbat.common.Endpoints.CHECK_ANSWERS_ENDPOINT
 import com.github.readingbat.common.Endpoints.CLASS_SUMMARY_ENDPOINT
@@ -32,7 +31,6 @@ import com.github.readingbat.common.Endpoints.CLEAR_CHALLENGE_ANSWERS_ENDPOINT
 import com.github.readingbat.common.Endpoints.CLEAR_GROUP_ANSWERS_ENDPOINT
 import com.github.readingbat.common.Endpoints.CONFIG_ENDPOINT
 import com.github.readingbat.common.Endpoints.CREATE_ACCOUNT_ENDPOINT
-import com.github.readingbat.common.Endpoints.CREATE_ACCOUNT_POST_ENDPOINT
 import com.github.readingbat.common.Endpoints.CSS_ENDPOINT
 import com.github.readingbat.common.Endpoints.ENABLE_STUDENT_MODE_ENDPOINT
 import com.github.readingbat.common.Endpoints.ENABLE_TEACHER_MODE_ENDPOINT
@@ -40,9 +38,8 @@ import com.github.readingbat.common.Endpoints.FAV_ICON_ENDPOINT
 import com.github.readingbat.common.Endpoints.HELP_ENDPOINT
 import com.github.readingbat.common.Endpoints.LIKE_DISLIKE_ENDPOINT
 import com.github.readingbat.common.Endpoints.LOGOUT_ENDPOINT
-import com.github.readingbat.common.Endpoints.PASSWORD_CHANGE_POST_ENDPOINT
+import com.github.readingbat.common.Endpoints.PASSWORD_CHANGE_ENDPOINT
 import com.github.readingbat.common.Endpoints.PASSWORD_RESET_ENDPOINT
-import com.github.readingbat.common.Endpoints.PASSWORD_RESET_POST_ENDPOINT
 import com.github.readingbat.common.Endpoints.PRIVACY_ENDPOINT
 import com.github.readingbat.common.Endpoints.ROBOTS_ENDPOINT
 import com.github.readingbat.common.Endpoints.ROOT
@@ -53,7 +50,6 @@ import com.github.readingbat.common.Endpoints.SYSTEM_ADMIN_ENDPOINT
 import com.github.readingbat.common.Endpoints.TEACHER_PREFS_ENDPOINT
 import com.github.readingbat.common.Endpoints.USER_INFO_ENDPOINT
 import com.github.readingbat.common.Endpoints.USER_PREFS_ENDPOINT
-import com.github.readingbat.common.Endpoints.USER_PREFS_POST_ENDPOINT
 import com.github.readingbat.common.FormFields.RESET_ID_PARAM
 import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.Metrics
@@ -88,13 +84,13 @@ import com.github.readingbat.posts.TeacherPrefsPost.teacherPrefs
 import com.github.readingbat.posts.UserPrefsPost.userPrefs
 import com.github.readingbat.server.ReadingBatServer.redisPool
 import com.github.readingbat.server.ResourceContent.getResourceAsText
-import com.github.readingbat.server.ServerUtils.authenticatedAction
+import com.github.readingbat.server.ServerUtils.authenticatedPage
 import com.github.readingbat.server.ServerUtils.defaultLanguageTab
 import com.github.readingbat.server.ServerUtils.fetchUser
 import com.github.readingbat.server.ServerUtils.get
 import com.github.readingbat.server.ServerUtils.queryParam
-import com.github.readingbat.server.ServerUtils.respondWithDbmsCheck
-import com.github.readingbat.server.ServerUtils.respondWithSuspendingDbmsCheck
+import com.github.readingbat.server.ServerUtils.respondWithRedisCheck
+import com.github.readingbat.server.ServerUtils.respondWithSuspendingRedisCheck
 import com.github.readingbat.server.StaticVals.robotsTxt
 import io.ktor.application.*
 import io.ktor.http.*
@@ -104,34 +100,42 @@ import io.ktor.sessions.*
 
 internal fun Routing.userRoutes(metrics: Metrics, contentSrc: () -> ReadingBatContent) {
 
-  get(ROOT, metrics) {
+  get(ROOT) {
     redirectTo { defaultLanguageTab(contentSrc()) }
   }
 
-  get(CHALLENGE_ROOT, metrics) {
+  post(ROOT) {
     redirectTo { defaultLanguageTab(contentSrc()) }
   }
 
-  get(CONFIG_ENDPOINT, metrics) {
-    respondWith { authenticatedAction { configPage(contentSrc()) } }
+  get(CHALLENGE_ROOT) {
+    redirectTo { defaultLanguageTab(contentSrc()) }
   }
 
-  get(SESSIONS_ENDPOINT, metrics) {
-    respondWithSuspendingDbmsCheck(contentSrc()) { redis ->
-      authenticatedAction { sessionsPage(contentSrc(), redis) }
+  post(CHALLENGE_ROOT) {
+    redirectTo { defaultLanguageTab(contentSrc()) }
+  }
+
+  get(CONFIG_ENDPOINT) {
+    respondWith { authenticatedPage { configPage(contentSrc()) } }
+  }
+
+  get(SESSIONS_ENDPOINT) {
+    respondWithSuspendingRedisCheck(contentSrc()) { redis ->
+      authenticatedPage { sessionsPage(contentSrc(), redis) }
     }
   }
 
-  get(PRIVACY_ENDPOINT, metrics) {
+  get(PRIVACY_ENDPOINT) {
     respondWith { privacyPage(contentSrc()) }
   }
 
-  get(ABOUT_ENDPOINT, metrics) {
-    respondWithDbmsCheck(contentSrc()) { redis -> aboutPage(contentSrc(), fetchUser(), redis) }
+  get(ABOUT_ENDPOINT) {
+    respondWithRedisCheck(contentSrc()) { redis -> aboutPage(contentSrc(), fetchUser(), redis) }
   }
 
-  get(HELP_ENDPOINT, metrics) {
-    respondWithDbmsCheck(contentSrc()) { redis -> helpPage(contentSrc(), fetchUser(), redis) }
+  get(HELP_ENDPOINT) {
+    respondWithRedisCheck(contentSrc()) { redis -> helpPage(contentSrc(), fetchUser(), redis) }
   }
 
   post(CHECK_ANSWERS_ENDPOINT) {
@@ -147,100 +151,98 @@ internal fun Routing.userRoutes(metrics: Metrics, contentSrc: () -> ReadingBatCo
   }
 
   post(CLEAR_GROUP_ANSWERS_ENDPOINT) {
-    respondWithSuspendingDbmsCheck(contentSrc()) { redis ->
+    respondWithSuspendingRedisCheck(contentSrc()) { redis ->
       clearGroupAnswers(contentSrc(), fetchUser(), redis)
     }
   }
 
   post(CLEAR_CHALLENGE_ANSWERS_ENDPOINT) {
-    respondWithSuspendingDbmsCheck(contentSrc()) { redis ->
+    respondWithSuspendingRedisCheck(contentSrc()) { redis ->
       clearChallengeAnswers(contentSrc(), fetchUser(), redis)
     }
   }
 
   get(CREATE_ACCOUNT_ENDPOINT, metrics) {
-    respondWithDbmsCheck(contentSrc()) { createAccountPage(contentSrc()) }
+    respondWithRedisCheck(contentSrc()) { createAccountPage(contentSrc()) }
   }
 
-  post(CREATE_ACCOUNT_POST_ENDPOINT) {
-    metrics.measureEndpointRequest(CREATE_ACCOUNT_POST_ENDPOINT) {
-      respondWithSuspendingDbmsCheck(contentSrc()) { redis -> createAccount(contentSrc(), redis) }
-    }
+  post(CREATE_ACCOUNT_ENDPOINT) {
+    respondWithSuspendingRedisCheck(contentSrc()) { redis -> createAccount(contentSrc(), redis) }
   }
 
   get(USER_PREFS_ENDPOINT, metrics) {
-    respondWithDbmsCheck(contentSrc()) { redis -> userPrefsPage(contentSrc(), fetchUser(), redis) }
+    respondWithRedisCheck(contentSrc()) { redis -> userPrefsPage(contentSrc(), fetchUser(), redis) }
   }
 
-  post(USER_PREFS_POST_ENDPOINT) {
-    respondWithSuspendingDbmsCheck(contentSrc()) { redis -> userPrefs(contentSrc(), fetchUser(), redis) }
+  post(USER_PREFS_ENDPOINT) {
+    respondWithSuspendingRedisCheck(contentSrc()) { redis -> userPrefs(contentSrc(), fetchUser(), redis) }
   }
 
   get(TEACHER_PREFS_ENDPOINT, metrics) {
-    respondWithDbmsCheck(contentSrc()) { redis -> teacherPrefsPage(contentSrc(), fetchUser(), redis) }
+    respondWithRedisCheck(contentSrc()) { redis -> teacherPrefsPage(contentSrc(), fetchUser(), redis) }
   }
 
   post(TEACHER_PREFS_ENDPOINT) {
-    respondWithSuspendingDbmsCheck(contentSrc()) { redis -> teacherPrefs(contentSrc(), fetchUser(), redis) }
+    respondWithSuspendingRedisCheck(contentSrc()) { redis -> teacherPrefs(contentSrc(), fetchUser(), redis) }
   }
 
   get(SYSTEM_ADMIN_ENDPOINT, metrics) {
-    respondWithDbmsCheck(contentSrc()) { redis -> systemAdminPage(contentSrc(), fetchUser(), redis) }
+    respondWithRedisCheck(contentSrc()) { redis -> systemAdminPage(contentSrc(), fetchUser(), redis) }
   }
 
   get(CLASS_SUMMARY_ENDPOINT, metrics) {
     metrics.measureEndpointRequest(CLASS_SUMMARY_ENDPOINT) {
-      respondWithDbmsCheck(contentSrc()) { redis -> classSummaryPage(contentSrc(), fetchUser(), redis) }
+      respondWithRedisCheck(contentSrc()) { redis -> classSummaryPage(contentSrc(), fetchUser(), redis) }
     }
   }
 
   post(CLASS_SUMMARY_ENDPOINT) {
-    respondWithSuspendingDbmsCheck(contentSrc()) { redis -> teacherPrefs(contentSrc(), fetchUser(), redis) }
+    respondWithSuspendingRedisCheck(contentSrc()) { redis -> teacherPrefs(contentSrc(), fetchUser(), redis) }
   }
 
   get(STUDENT_SUMMARY_ENDPOINT, metrics) {
     metrics.measureEndpointRequest(STUDENT_SUMMARY_ENDPOINT) {
-      respondWithDbmsCheck(contentSrc()) { redis -> studentSummaryPage(contentSrc(), fetchUser(), redis) }
+      respondWithRedisCheck(contentSrc()) { redis -> studentSummaryPage(contentSrc(), fetchUser(), redis) }
     }
   }
 
   get(ENABLE_STUDENT_MODE_ENDPOINT, metrics) {
-    respondWithSuspendingDbmsCheck(contentSrc()) { redis -> enableStudentMode(fetchUser(), redis) }
+    respondWithSuspendingRedisCheck(contentSrc()) { redis -> enableStudentMode(fetchUser(), redis) }
   }
 
   get(ENABLE_TEACHER_MODE_ENDPOINT, metrics) {
-    respondWithSuspendingDbmsCheck(contentSrc()) { redis -> enableTeacherMode(fetchUser(), redis) }
-  }
-
-  get(ADMIN_ENDPOINT, metrics) {
-    respondWithDbmsCheck(contentSrc()) { redis -> adminDataPage(contentSrc(), fetchUser(), redis = redis) }
+    respondWithSuspendingRedisCheck(contentSrc()) { redis -> enableTeacherMode(fetchUser(), redis) }
   }
 
   get(USER_INFO_ENDPOINT, metrics) {
-    respondWithDbmsCheck(contentSrc()) { redis -> userInfoPage(contentSrc(), fetchUser(), redis = redis) }
+    respondWithRedisCheck(contentSrc()) { redis -> userInfoPage(contentSrc(), fetchUser(), redis = redis) }
   }
 
-  post(ADMIN_POST_ENDPOINT) {
-    metrics.measureEndpointRequest(ADMIN_POST_ENDPOINT) {
-      respondWithSuspendingDbmsCheck(contentSrc()) { redis -> adminActions(contentSrc(), fetchUser(), redis) }
+  get(ADMIN_ENDPOINT, metrics) {
+    respondWithRedisCheck(contentSrc()) { redis -> adminDataPage(contentSrc(), fetchUser(), redis = redis) }
+  }
+
+  post(ADMIN_ENDPOINT) {
+    metrics.measureEndpointRequest(ADMIN_ENDPOINT) {
+      respondWithSuspendingRedisCheck(contentSrc()) { redis -> adminActions(contentSrc(), fetchUser(), redis) }
     }
   }
 
   // RESET_ID is passed here when user clicks on email URL
   get(PASSWORD_RESET_ENDPOINT, metrics) {
-    respondWithDbmsCheck(contentSrc()) { redis ->
+    respondWithRedisCheck(contentSrc()) { redis ->
       passwordResetPage(contentSrc(), ResetId(queryParam(RESET_ID_PARAM)), redis)
     }
   }
 
-  post(PASSWORD_RESET_POST_ENDPOINT) {
-    respondWithSuspendingDbmsCheck(contentSrc()) { redis ->
+  post(PASSWORD_RESET_ENDPOINT) {
+    respondWithSuspendingRedisCheck(contentSrc()) { redis ->
       sendPasswordReset(contentSrc(), redis)
     }
   }
 
-  post(PASSWORD_CHANGE_POST_ENDPOINT) {
-    respondWithSuspendingDbmsCheck(contentSrc()) { redis ->
+  post(PASSWORD_CHANGE_ENDPOINT) {
+    respondWithSuspendingRedisCheck(contentSrc()) { redis ->
       changePassword(contentSrc(), redis)
     }
   }

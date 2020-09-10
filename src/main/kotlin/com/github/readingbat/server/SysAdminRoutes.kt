@@ -18,35 +18,32 @@
 package com.github.readingbat.server
 
 import com.github.pambrose.common.redis.RedisUtils.withRedisPool
-import com.github.pambrose.common.response.redirectTo
-import com.github.pambrose.common.response.respondWith
 import com.github.pambrose.common.util.isNull
 import com.github.pambrose.common.util.pluralize
-import com.github.readingbat.common.Constants.MSG
 import com.github.readingbat.common.Endpoints.DELETE_CONTENT_IN_REDIS_ENDPOINT
 import com.github.readingbat.common.Endpoints.GARBAGE_COLLECTOR_ENDPOINT
 import com.github.readingbat.common.Endpoints.LOAD_JAVA_ENDPOINT
 import com.github.readingbat.common.Endpoints.LOAD_KOTLIN_ENDPOINT
 import com.github.readingbat.common.Endpoints.LOAD_PYTHON_ENDPOINT
-import com.github.readingbat.common.Endpoints.MESSAGE_ENDPOINT
 import com.github.readingbat.common.Endpoints.RESET_CACHE_ENDPOINT
 import com.github.readingbat.common.Endpoints.RESET_CONTENT_DSL_ENDPOINT
-import com.github.readingbat.common.Endpoints.SYSTEM_ADMIN_ENDPOINT
-import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.KeyConstants.CONTENT_DSL_KEY
 import com.github.readingbat.common.KeyConstants.DIR_CONTENTS_KEY
 import com.github.readingbat.common.KeyConstants.SOURCE_CODE_KEY
+import com.github.readingbat.common.Message
 import com.github.readingbat.common.Metrics
 import com.github.readingbat.common.RedisAdmin.scanKeys
 import com.github.readingbat.dsl.LanguageType.Java
 import com.github.readingbat.dsl.LanguageType.Kotlin
 import com.github.readingbat.dsl.LanguageType.Python
 import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.pages.MessagePage.messagePage
+import com.github.readingbat.pages.SystemAdminPage.systemAdminPage
 import com.github.readingbat.server.ReadingBatServer.logger
 import com.github.readingbat.server.ReadingBatServer.redisPool
 import com.github.readingbat.server.ServerUtils.authenticatedAction
+import com.github.readingbat.server.ServerUtils.fetchUser
 import com.github.readingbat.server.ServerUtils.get
+import com.github.readingbat.server.ServerUtils.respondWithRedisCheck
 import io.ktor.application.*
 import io.ktor.features.*
 import io.ktor.http.*
@@ -111,10 +108,10 @@ internal fun Routing.sysAdminRoutes(metrics: Metrics,
           resetContentFunc.invoke()
         }
           .let {
-            "DSL content reset in $it".also { logger.info { it } }
+            Message("DSL content reset in $it".also { logger.info { it } })
           }
       }
-    redirectTo { "$MESSAGE_ENDPOINT?$MSG=$msg&$RETURN_PARAM=$SYSTEM_ADMIN_ENDPOINT" }
+    respondWithRedisCheck(contentSrc()) { redis -> systemAdminPage(contentSrc(), fetchUser(), redis, msg) }
   }
 
   get(RESET_CACHE_ENDPOINT, metrics) {
@@ -125,15 +122,15 @@ internal fun Routing.sysAdminRoutes(metrics: Metrics,
         val cnt = content.functionInfoMap.size
         content.clearSourcesMap()
           .let {
-            "Challenge cache reset -- $cnt challenges removed".also { logger.info { it } }
+            Message("Challenge cache reset -- $cnt challenges removed".also { logger.info { it } })
           }
       }
-    redirectTo { "$MESSAGE_ENDPOINT?$MSG=$msg&$RETURN_PARAM=$SYSTEM_ADMIN_ENDPOINT" }
+    respondWithRedisCheck(contentSrc()) { redis -> systemAdminPage(contentSrc(), fetchUser(), redis, msg) }
   }
 
   get(DELETE_CONTENT_IN_REDIS_ENDPOINT, metrics) {
-    val msg = authenticatedAction { deleteContentInRedis() }
-    redirectTo { "$MESSAGE_ENDPOINT?$MSG=$msg&$RETURN_PARAM=$SYSTEM_ADMIN_ENDPOINT" }
+    val msg = authenticatedAction { Message(deleteContentInRedis()) }
+    respondWithRedisCheck(contentSrc()) { redis -> systemAdminPage(contentSrc(), fetchUser(), redis, msg) }
   }
 
   listOf(LOAD_JAVA_ENDPOINT to Java,
@@ -143,9 +140,9 @@ internal fun Routing.sysAdminRoutes(metrics: Metrics,
       get(pair.first) {
         val msg =
           authenticatedAction {
-            contentSrc().loadChallenges(call.request.origin.preUri, pair.second, false)
+            Message(contentSrc().loadChallenges(call.request.origin.preUri, pair.second, false))
           }
-        redirectTo { "$MESSAGE_ENDPOINT?$MSG=$msg&$RETURN_PARAM=$SYSTEM_ADMIN_ENDPOINT" }
+        respondWithRedisCheck(contentSrc()) { redis -> systemAdminPage(contentSrc(), fetchUser(), redis, msg) }
       }
     }
 
@@ -153,13 +150,9 @@ internal fun Routing.sysAdminRoutes(metrics: Metrics,
     val msg =
       authenticatedAction {
         System.gc()
-        "Garbage collector invoked".also { logger.info { it } }
+        Message("Garbage collector invoked.".also { logger.info { it } })
       }
-    redirectTo { "$MESSAGE_ENDPOINT?$MSG=$msg&$RETURN_PARAM=$SYSTEM_ADMIN_ENDPOINT" }
-  }
-
-  get(MESSAGE_ENDPOINT, metrics) {
-    respondWith { messagePage(contentSrc()) }
+    respondWithRedisCheck(contentSrc()) { redis -> systemAdminPage(contentSrc(), fetchUser(), redis, msg) }
   }
 }
 

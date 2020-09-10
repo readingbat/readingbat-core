@@ -125,7 +125,7 @@ internal object ClassSummaryPage : KLogging() {
             else
               queryParam(RETURN_PARAM, if (languageName.isValid()) pathOf(CHALLENGE_ROOT, languageName) else "/")
 
-          helpAndLogin(user, returnPath, activeClassCode.isEnabled, redis)
+          helpAndLogin(content, user, returnPath, activeClassCode.isEnabled, redis)
           bodyTitle()
 
           h2 { +"ReadingBat Class Summary" }
@@ -169,7 +169,7 @@ internal object ClassSummaryPage : KLogging() {
               input { type = InputType.hidden; name = CLASS_CODE_CHOICE_PARAM; value = classCode.value }
               input(classes = BTN) {
                 style =
-                  "padding: 2px 5px; margin-top:15; margin-left:20; border-radius: 5px; cursor: pointer; border:1px solid black;"
+                  "padding: 2px 5px; margin-top:9; margin-left:20; border-radius: 5px; cursor: pointer; border:1px solid black;"
                 type = InputType.submit
                 name = USER_PREFS_ACTION_PARAM
                 value = UPDATE_ACTIVE_CLASS
