@@ -149,7 +149,7 @@ internal object UserPrefsPage : KLogging() {
             privacyStatement(USER_PREFS_ENDPOINT, returnPath)
           }
 
-          backLink()
+          backLink(returnPath)
         }
       }
 

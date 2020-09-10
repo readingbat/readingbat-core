@@ -21,6 +21,7 @@ import com.github.readingbat.common.CSSNames.INDENT_1EM
 import com.github.readingbat.common.Endpoints.ABOUT_ENDPOINT
 import com.github.readingbat.common.Endpoints.TEACHER_PREFS_ENDPOINT
 import com.github.readingbat.common.Endpoints.USER_PREFS_ENDPOINT
+import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.fetchActiveClassCode
 import com.github.readingbat.dsl.ReadingBatContent
@@ -30,6 +31,7 @@ import com.github.readingbat.pages.PageUtils.bodyTitle
 import com.github.readingbat.pages.PageUtils.headDefault
 import com.github.readingbat.pages.PageUtils.rawHtml
 import com.github.readingbat.server.PipelineCall
+import com.github.readingbat.server.ServerUtils.queryParam
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 import redis.clients.jedis.Jedis
@@ -136,7 +138,7 @@ internal object HelpPage {
               }
 
               p {
-                +"Sometimes it is desirable to monitor students in teacher mode and also work with challenges in student mode. "
+                +"It is sometimes desirable to monitor students in teacher mode and also work with challenges in student mode. "
                 +"This is possible, but it requires that you login from a second browser on the same machine (not two windows of the same browser). "
                 +"One browser would be in teacher mode while the other would be in student mode."
               }
@@ -146,7 +148,7 @@ internal object HelpPage {
             }
           }
 
-          backLink()
+          backLink(queryParam(RETURN_PARAM, "/"))
         }
       }
 }

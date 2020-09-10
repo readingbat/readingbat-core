@@ -181,7 +181,7 @@ internal object ChallengePage : KLogging() {
     }
 
     span {
-      style = "padding-left:20px"
+      style = "padding-left: 20px"
       val pos = challengeGroup.indexOf(challengeName)
       this@displayChallenge.nextPrevChance(pos, challenges, true)
     }
