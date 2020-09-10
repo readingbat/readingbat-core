@@ -76,16 +76,14 @@ import redis.clients.jedis.Jedis
 internal object ClassSummaryPage : KLogging() {
 
   internal const val STATS = "-stats"
-  private const val SIZE = "130%"
+  private const val BTN_SIZE = "130%"
 
   fun PipelineCall.classSummaryPage(content: ReadingBatContent, user: User?, redis: Jedis): String {
-
     val (languageName, groupName, classCode) =
       Triple(
         call.parameters[LANG_TYPE_QP]?.let { LanguageName(it) } ?: EMPTY_LANGUAGE,
         call.parameters[GROUP_NAME_QP]?.let { GroupName(it) } ?: EMPTY_GROUP,
         call.parameters[CLASS_CODE_QP]?.let { ClassCode(it) } ?: throw InvalidRequestException("Missing class code"))
-
     return classSummaryPage(content, user, redis, classCode, languageName, groupName)
   }
 
@@ -109,7 +107,6 @@ internal object ClassSummaryPage : KLogging() {
 
     return createHTML()
       .html {
-
         val hasGroupName = groupName.isDefined(content, languageName)
         val activeClassCode = user.fetchActiveClassCode(redis)
         val enrollees = classCode.fetchEnrollees(redis)
@@ -187,7 +184,7 @@ internal object ClassSummaryPage : KLogging() {
     table {
       style = "border-collapse: separate; border-spacing: 15px 10px"
       tr {
-        td { style = "font-size:$SIZE"; +"Challenge Group: " }
+        td { style = "font-size:$BTN_SIZE"; +"Challenge Group: " }
         LanguageType.values()
           .map { content.findLanguage(it) }
           .forEach { langGroup ->
@@ -372,7 +369,7 @@ internal object ClassSummaryPage : KLogging() {
   private fun LI.dropdownToggle(block: A.() -> Unit) {
     a("#", null, "dropdown-toggle") {
       style =
-        "font-size:$SIZE; text-decoration:none; border-radius: 5px; padding: 0px 7px; cursor: pointer; color: black; border:1px solid black;"
+        "font-size:$BTN_SIZE; text-decoration:none; border-radius: 5px; padding: 0px 7px; cursor: pointer; color: black; border:1px solid black;"
       attributes["data-toggle"] = "dropdown"
       role = "button"
       attributes["aria-expanded"] = "false"

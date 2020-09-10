@@ -84,6 +84,7 @@ import com.github.readingbat.pages.LikeDislikeJs.likeDislikeScript
 import com.github.readingbat.pages.PageUtils.addLink
 import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyHeader
+import com.github.readingbat.pages.PageUtils.enrolleesDesc
 import com.github.readingbat.pages.PageUtils.headDefault
 import com.github.readingbat.pages.PageUtils.rawHtml
 import com.github.readingbat.posts.ChallengeHistory
@@ -354,11 +355,11 @@ internal object ChallengePage : KLogging() {
 
       h3 {
         style = "margin-left: 5px; color: $headerColor"
-        +if (enrollees.isEmpty()) "No students enrolled in " else "Student progress for "
         a(classes = UNDERLINE) {
           href = Endpoints.classSummaryEndpoint(classCode, languageName, groupName)
           +displayStr
         }
+        +enrolleesDesc(enrollees)
       }
 
       if (enrollees.isNotEmpty()) {

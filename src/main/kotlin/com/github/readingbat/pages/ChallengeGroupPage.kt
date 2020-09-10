@@ -18,7 +18,6 @@
 package com.github.readingbat.pages
 
 import com.github.pambrose.common.util.isNotNull
-import com.github.pambrose.common.util.pluralize
 import com.github.readingbat.common.*
 import com.github.readingbat.common.CSSNames.FUNC_ITEM1
 import com.github.readingbat.common.CSSNames.FUNC_ITEM2
@@ -47,6 +46,7 @@ import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyHeader
 import com.github.readingbat.pages.PageUtils.encodeUriElems
+import com.github.readingbat.pages.PageUtils.enrolleesDesc
 import com.github.readingbat.pages.PageUtils.headDefault
 import com.github.readingbat.pages.PageUtils.rawHtml
 import com.github.readingbat.server.GroupName
@@ -109,7 +109,7 @@ internal object ChallengeGroupPage : KLogging() {
           val challengeName = challenge.challengeName
           val allCorrect = challenge.isCorrect(user, browserSession, redis)
 
-          td(classes = if (activeClassCode.isEnabled) FUNC_ITEM1 else FUNC_ITEM2) {
+          td(classes = if (activeClassCode.isEnabled && enrollees.isNotEmpty()) FUNC_ITEM1 else FUNC_ITEM2) {
             if (activeClassCode.isNotEnabled)
               img { src = pathOf(STATIC_ROOT, if (allCorrect) GREEN_CHECK else WHITE_CHECK) }
 
@@ -173,7 +173,6 @@ internal object ChallengeGroupPage : KLogging() {
                                    groupName: GroupName,
                                    enrollees: List<User>,
                                    redis: Jedis?) {
-    val studentCount = if (enrollees.isEmpty()) "No" else enrollees.count().toString()
     h3 {
       style = "margin-left: 5px; color: ${ChallengePage.headerColor}"
       a(classes = UNDERLINE) {
@@ -184,7 +183,7 @@ internal object ChallengeGroupPage : KLogging() {
             classSummaryEndpoint(classCode, languageName, groupName)
         +classCode.toDisplayString(redis)
       }
-      +" - $studentCount ${"student".pluralize(enrollees.count())} enrolled"
+      +enrolleesDesc(enrollees)
     }
   }
 

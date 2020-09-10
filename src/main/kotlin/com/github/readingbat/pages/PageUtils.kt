@@ -18,6 +18,7 @@
 package com.github.readingbat.pages
 
 import com.github.pambrose.common.util.isNull
+import com.github.pambrose.common.util.pluralize
 import com.github.pambrose.common.util.toRootPath
 import com.github.readingbat.common.CSSNames.INDENT_1EM
 import com.github.readingbat.common.CSSNames.SELECTED_TAB
@@ -170,6 +171,11 @@ internal object PageUtils {
         p { a { href = url; rawHtml("&larr; $text") } }
       }
     }
+  }
+
+  internal fun enrolleesDesc(enrollees: List<User>): String {
+    val studentCount = if (enrollees.isEmpty()) "No" else enrollees.count().toString()
+    return " - $studentCount ${"student".pluralize(enrollees.count())} enrolled"
   }
 
   internal fun BODY.confirmingButton(text: String, endpoint: String, msg: String) {
