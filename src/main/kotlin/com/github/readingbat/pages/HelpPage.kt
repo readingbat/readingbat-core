@@ -107,29 +107,41 @@ internal object HelpPage {
                 +"page. Each class will be assigned a unique class code. "
                 +"To enroll students in a class, send them the class code and ask them to follow the"
                 i { +" Join a Class " }
-                +"instructions above."
+                +"instructions above. For testing purposes, it is fine to enroll in the class you created."
               }
 
               h4 { rawHtml("&bull;"); +" Select an Active Class" }
 
               p {
-                +"Click on the radio button of the class you are interested in and then click on the"
+                +"Select the radio button of the class you are interested in monitoring and then click the"
                 b { +" Update Active Class " }
-                +"button. You will now be in"
+                +"button. You will then be in"
                 i { +" teacher mode, " }
-                +"which will allow you see student progress."
-                +"Select an active class to enter teacher mode, which will allow you to see "
-                +"student answers in real-time and class results. "
+                +"which will allow you see student progress. Select the"
+                b { +" No active class " }
+                +"option and then click the"
+                b { +" Update Active Class " }
+                +"button to exit"
+                i { +" teacher mode." }
               }
 
               h4 { rawHtml("&bull;"); +" Student/Teacher Mode" }
 
               p {
-                +"Click on"
-                a { href = USER_PREFS_ENDPOINT; b { +" prefs " } }
-                +" and then "
-                a { href = USER_PREFS_ENDPOINT; b { +" Teacher Preferences " } }
+                +"While an active class is selected, you can toggle back and forth between"
+                i { +" teacher " }
+                +"and"
+                i { +" student mode " }
+                +"by clicking the desired mode at the top of the screen. "
+              }
 
+              p {
+                +"Sometimes it is desirable to monitor students in teacher mode and also work with challenges in student mode. "
+                +"This is possible, but it requires that you login from a second browser on the same machine (not two windows of the same browser). "
+                +"One browser would be in teacher mode while the other would be in student mode."
+              }
+              p {
+                +"You can monitor student inputs on multiple challenges by opening multiple windows in a single browser."
               }
             }
           }

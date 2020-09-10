@@ -52,10 +52,7 @@ internal object HelpAndLogin {
     div {
       style = "float:right; margin:0px; border: 1px solid lightgray; margin-left: 10px; padding: 5px"
       table {
-        if (user.isNotNull() && redis.isNotNull())
-          logout(user, path, redis)
-        else
-          login(path)
+        if (user.isNotNull() && redis.isNotNull()) logout(user, path, redis) else login(path)
       }
     }
 

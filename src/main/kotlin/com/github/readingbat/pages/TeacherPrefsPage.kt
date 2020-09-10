@@ -186,7 +186,7 @@ internal object TeacherPrefsPage : KLogging() {
               activeClassCode.isNotEnabled
             }
           }
-          td { colSpan = "3"; +"Student mode" }
+          td { colSpan = "3"; +"No active class" }
         }
 
         input { type = InputType.hidden; name = CHOICE_SOURCE_PARAM; value = TEACHER_PREF }
