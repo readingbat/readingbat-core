@@ -17,16 +17,22 @@
 
 package com.github.readingbat.pages
 
+import com.github.readingbat.common.CSSNames.INDENT_1EM
+import com.github.readingbat.common.Constants.BACK_PATH
+import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.misc.CSSNames.INDENT_1EM
-import com.github.readingbat.misc.Constants.BACK_PATH
-import com.github.readingbat.misc.Constants.RETURN_PATH
-import com.github.readingbat.pages.PageCommon.backLink
-import com.github.readingbat.pages.PageCommon.bodyTitle
-import com.github.readingbat.pages.PageCommon.headDefault
+import com.github.readingbat.pages.PageUtils.backLink
+import com.github.readingbat.pages.PageUtils.bodyTitle
+import com.github.readingbat.pages.PageUtils.headDefault
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
-import kotlinx.html.*
+import kotlinx.html.a
+import kotlinx.html.body
+import kotlinx.html.div
+import kotlinx.html.h2
+import kotlinx.html.head
+import kotlinx.html.html
+import kotlinx.html.p
 import kotlinx.html.stream.createHTML
 
 internal object PrivacyPage {
@@ -62,8 +68,8 @@ internal object PrivacyPage {
           }
 
           val backPath = queryParam(BACK_PATH)
-          val returnPath = queryParam(RETURN_PATH)
-          backLink("$backPath${if (returnPath.isNotEmpty()) "?$RETURN_PATH=$returnPath" else ""}")
+          val returnPath = queryParam(RETURN_PARAM)
+          backLink("$backPath${if (returnPath.isNotEmpty()) "?$RETURN_PARAM=$returnPath" else ""}")
         }
       }
 }

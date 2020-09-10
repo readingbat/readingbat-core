@@ -19,36 +19,39 @@ package com.github.readingbat.server
 
 import com.github.pambrose.common.features.HerokuHttpsRedirect
 import com.github.pambrose.common.util.simpleClassName
+import com.github.readingbat.common.Endpoints.CSS_ENDPOINT
+import com.github.readingbat.common.Endpoints.FAV_ICON_ENDPOINT
+import com.github.readingbat.common.Endpoints.STATIC_ROOT
+import com.github.readingbat.common.EnvVars.FILTER_LOG
 import com.github.readingbat.dsl.InvalidPathException
-import com.github.readingbat.misc.Constants.STATIC_ROOT
-import com.github.readingbat.misc.Endpoints.CSS_ENDPOINT
-import com.github.readingbat.misc.Endpoints.FAV_ICON_ENDPOINT
 import com.github.readingbat.server.ConfigureCookies.configureAuthCookie
 import com.github.readingbat.server.ConfigureCookies.configureSessionIdCookie
 import com.github.readingbat.server.ConfigureFormAuth.configureFormAuth
-import io.ktor.application.Application
-import io.ktor.application.call
-import io.ktor.application.install
-import io.ktor.auth.Authentication
+import com.github.readingbat.server.ServerUtils.fetchEmail
+import io.ktor.application.*
+import io.ktor.auth.*
 import io.ktor.features.*
+import io.ktor.http.*
 import io.ktor.http.ContentType.Text.Plain
-import io.ktor.http.HttpHeaders
-import io.ktor.http.HttpStatusCode
-import io.ktor.http.content.TextContent
-import io.ktor.http.withCharset
+import io.ktor.http.HttpHeaders.Location
+import io.ktor.http.HttpStatusCode.Companion.Found
+import io.ktor.http.content.*
 import io.ktor.locations.Locations
-import io.ktor.request.path
-import io.ktor.response.respond
-import io.ktor.server.engine.ShutDownUrl
-import io.ktor.sessions.Sessions
-import io.ktor.websocket.WebSockets
+import io.ktor.request.*
+import io.ktor.response.*
+import io.ktor.server.engine.*
+import io.ktor.sessions.*
+import io.ktor.websocket.*
 import mu.KLogging
 import org.slf4j.event.Level
 import kotlin.text.Charsets.UTF_8
 
 internal object Installs : KLogging() {
 
-  fun Application.installs(production: Boolean, urlPrefix: String) {
+  fun Application.installs(production: Boolean,
+                           redirectHostname: String,
+                           forwardedHeaderSupportEnabled: Boolean,
+                           xforwardedHeaderSupportEnabled: Boolean) {
 
     install(Locations)
 
@@ -62,17 +65,39 @@ internal object Installs : KLogging() {
       configureFormAuth()
     }
 
-    install(WebSockets)
+    install(WebSockets) {
+      pingPeriodMillis = 5000L   // Duration between pings or `0` to disable pings
+    }
 
-    if (production) {
+    if (forwardedHeaderSupportEnabled) {
+      logger.info { "Enabling ForwardedHeaderSupport" }
+      install(ForwardedHeaderSupport)
+    }
+    else {
+      logger.info { "Not enabling ForwardedHeaderSupport" }
+    }
+
+    if (xforwardedHeaderSupportEnabled) {
+      logger.info { "Enabling XForwardedHeaderSupport" }
+      install(XForwardedHeaderSupport)
+    }
+    else {
+      logger.info { "Not enabling XForwardedHeaderSupport" }
+    }
+
+    if (production && redirectHostname.isNotBlank()) {
+      logger.info { "Installing HerokuHttpsRedirect using: $redirectHostname" }
       install(HerokuHttpsRedirect) {
-        host = urlPrefix.substringAfter("://")
+        host = redirectHostname
         permanentRedirect = false
 
         excludePrefix("$STATIC_ROOT/")
         excludeSuffix(CSS_ENDPOINT)
         excludeSuffix(FAV_ICON_ENDPOINT)
       }
+    }
+    else {
+      logger.info { "Not installing HerokuHttpsRedirect" }
     }
 
     install(Compression) {
@@ -87,13 +112,18 @@ internal object Installs : KLogging() {
 
     install(CallLogging) {
       level = Level.INFO
-      filter { call -> call.request.path().startsWith("/") }
+      if (FILTER_LOG.getEnv(true))
+        filter { call -> call.request.path().let { it.startsWith("/") && !it.startsWith("/static/") && it != "/ping" } }
       format { call ->
-        when (val status = call.response.status() ?: "Unhandled") {
-          HttpStatusCode.Found -> {
-            "$status: ${call.request.toLogString()} -> ${call.response.headers[HttpHeaders.Location]} - ${call.request.origin.remoteHost}"
+        val logStr = call.request.toLogString()
+        val remote = call.request.origin.remoteHost
+        val email = call.fetchEmail()
+        when (val status = call.response.status() ?: "Unknown") {
+          // Show redirections
+          Found -> "$status: $logStr -> ${call.response.headers[Location]} - $remote - $email"
+          else -> {
+            "$status: $logStr - $remote - $email"
           }
-          else -> "$status: ${call.request.toLogString()} - ${call.request.origin.remoteHost}"
         }
       }
     }
@@ -118,6 +148,7 @@ internal object Installs : KLogging() {
       exception<InvalidPathException> { cause ->
         call.respond(HttpStatusCode.NotFound)
         //call.respondHtml { errorPage(cause.message?:"") }
+        logger.info(cause) { " Throwable caught: ${cause.simpleClassName}" }
       }
 
       //statusFile(HttpStatusCode.NotFound, HttpStatusCode.Unauthorized, filePattern = "error#.html")

@@ -19,20 +19,28 @@ package com.github.readingbat.pages
 
 import com.github.pambrose.common.time.format
 import com.github.pambrose.common.util.Version.Companion.versionDesc
-import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.dsl.isProduction
-import com.github.readingbat.misc.CSSNames.INDENT_1EM
-import com.github.readingbat.misc.Constants.RETURN_PATH
-import com.github.readingbat.pages.PageCommon.backLink
-import com.github.readingbat.pages.PageCommon.bodyTitle
-import com.github.readingbat.pages.PageCommon.headDefault
+import com.github.readingbat.common.CSSNames.INDENT_1EM
+import com.github.readingbat.common.CSSNames.TD_PADDING
+import com.github.readingbat.common.Endpoints.USER_PREFS_ENDPOINT
+import com.github.readingbat.common.EnvVars
+import com.github.readingbat.common.FormFields.RETURN_PARAM
+import com.github.readingbat.common.Properties
+import com.github.readingbat.common.SessionActivites
+import com.github.readingbat.dsl.*
+import com.github.readingbat.dsl.LanguageType.Java
+import com.github.readingbat.dsl.LanguageType.Kotlin
+import com.github.readingbat.dsl.LanguageType.Python
+import com.github.readingbat.pages.PageUtils.backLink
+import com.github.readingbat.pages.PageUtils.bodyTitle
+import com.github.readingbat.pages.PageUtils.headDefault
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ReadingBatServer
 import com.github.readingbat.server.ServerUtils.queryParam
+import io.prometheus.Agent
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
-import java.lang.System.currentTimeMillis
-import kotlin.time.milliseconds
+import kotlin.time.hours
+import kotlin.time.minutes
 
 internal object ConfigPage {
 
@@ -46,109 +54,200 @@ internal object ConfigPage {
 
           h2 { +"ReadingBat Configuration" }
 
-          h3 { +"Content Configuration" }
-          div(classes = INDENT_1EM) {
-            table {
-              tr {
-                td { +"Version: " }
-                td { +ReadingBatServer::class.versionDesc() }
+          div(classes = TD_PADDING) {
+            h3 { +"Server Configuration" }
+            div(classes = INDENT_1EM) {
+              table {
+                tr {
+                  td { +"Version:" }
+                  td { +ReadingBatServer::class.versionDesc() }
+                }
+                tr {
+                  td { +"Server started:" }
+                  td { +ReadingBatServer.timeStamp }
+                }
+                tr {
+                  td { +"Server uptime:" }
+                  td { +ReadingBatServer.upTime.format(true) }
+                }
+                tr {
+                  td { +"Ktor port:" }
+                  td { +"${content.ktorPort}" }
+                }
+                tr {
+                  td { +"Ktor watch:" }
+                  td { +content.ktorWatch }
+                }
+                tr {
+                  td { +"DSL filename:" }
+                  td { +content.dslFileName }
+                }
+                tr {
+                  td { +"DSL variable name:" }
+                  td { +content.dslVariableName }
+                }
+                tr {
+                  td { +"Production:" }
+                  td { +isProduction().toString() }
+                }
+                tr {
+                  td { +"Cache content in Redis:" }
+                  td { +cacheContentInRedis().toString() }
+                }
+                tr {
+                  td { +"Cache challenges:" }
+                  td { +"${content.cacheChallenges}" }
+                }
+                tr {
+                  td { +"Max history length:" }
+                  td { +content.maxHistoryLength.toString() }
+                }
+                tr {
+                  td { +"Max class count:" }
+                  td { +content.maxClassCount.toString() }
+                }
+                tr {
+                  td { +"Challenge cache size:" }
+                  val map = content.functionInfoMap
+                  val javaCnt = map.filter { it.value.languageType == Java }.count()
+                  val pythonCnt = map.filter { it.value.languageType == Python }.count()
+                  val kotlinCnt = map.filter { it.value.languageType == Kotlin }.count()
+                  td { +"Total: ${map.size} (Java: $javaCnt Python: $pythonCnt Kotlin: $kotlinCnt)" }
+                }
+                tr {
+                  td { +"Session map size:" }
+                  td { +SessionActivites.sessionsMapSize.toString() }
+                }
+                tr {
+                  td { +"Admin Users:" }
+                  td { +ReadingBatServer.adminUsers.joinToString(", ") }
+                }
               }
-              tr {
-                td { +"Server uptime: " }
-                td { +(currentTimeMillis().milliseconds - ReadingBatServer.startTimeMillis).format(true) }
+            }
+
+            h3 { +"Env Vars" }
+            div(classes = INDENT_1EM) {
+              table {
+                EnvVars.values()
+                  .forEach {
+                    tr {
+                      td { +it.name }
+                      td { +it.maskFunc.invoke(it) }
+                    }
+                  }
               }
-              tr {
-                td { +"Server started: " }
-                td { +ReadingBatServer.timeStamp }
+            }
+
+            h3 { +"Application Properties" }
+            div(classes = INDENT_1EM) {
+              table {
+                Properties.values()
+                  .filter { it.isDefined() }
+                  .forEach {
+                    tr {
+                      td { +it.propertyValue }
+                      td { +it.maskFunc.invoke(it) }
+                    }
+                  }
               }
-              tr {
-                td { +"Content read: " }
-                td { +content.timeStamp }
+            }
+
+            h3 { +"System Properties" }
+            div(classes = INDENT_1EM) {
+              table {
+                tr {
+                  td { +"java.runtime.name" }
+                  td { +(System.getProperty("java.runtime.name", "unassigned")) }
+                }
+                tr {
+                  td { +"java.runtime.version" }
+                  td { +(System.getProperty("java.runtime.version", "unassigned")) }
+                }
+                tr {
+                  td { +"java.vm.name" }
+                  td { +(System.getProperty("java.vm.name", "unassigned")) }
+                }
+                tr {
+                  td { +"java.vm.vendor" }
+                  td { +(System.getProperty("java.vm.vendor", "unassigned")) }
+                }
+              }
+            }
+
+            h3 { +"Prometheus Agent" }
+            div(classes = INDENT_1EM) {
+              table {
+                tr {
+                  td { +"Agent Id:" }
+                  td { +if (isAgentEnabled()) agentLaunchId() else "disabled" }
+                }
+                tr {
+                  td { +"Agent Version:" }
+                  td { +if (isAgentEnabled()) Agent::class.versionDesc() else "disabled" }
+                }
+              }
+            }
+
+            h3 { +"Active Users" }
+            div(classes = INDENT_1EM) {
+              table {
+                tr {
+                  td { +"Active users in the last minute:" }
+                  td { +SessionActivites.activeSessions(1.minutes).toString() }
+                }
+                tr {
+                  td { +"Active users in the last 15 minutes:" }
+                  td { +SessionActivites.activeSessions(15.minutes).toString() }
+                }
+                tr {
+                  td { +"Active users in the last hour:" }
+                  td { +SessionActivites.activeSessions(1.hours).toString() }
+                }
+              }
+            }
+
+            h3 { +"Content Configuration" }
+            div(classes = INDENT_1EM) {
+              table {
+                tr {
+                  td { +"Content last read:" }
+                  td { +content.timeStamp }
+                }
+                tr {
+                  td { +"Content read count:" }
+                  td { +ReadingBatServer.contentReadCount.get().toString() }
+                }
+              }
+            }
+
+            h3 { +"Script Configuration" }
+            div(classes = INDENT_1EM) {
+              table {
+                tr {
+                  th { +"Language" }
+                  th { +"Source path" }
+                  th { +"Repo" }
+                }
+                tr {
+                  td { +"Python" }
+                  td { +content.python.srcPath }
+                  td { +content.python.repo.toString() }
+                }
+                tr {
+                  td { +"Java" }
+                  td { +content.java.srcPath }
+                  td { +content.java.repo.toString() }
+                }
+                tr {
+                  td { +"Kotlin" }
+                  td { +content.kotlin.srcPath }
+                  td { +content.kotlin.repo.toString() }
+                }
               }
             }
           }
 
-          h3 { +"Server Configuration" }
-          div(classes = INDENT_1EM) {
-            table {
-              tr {
-                td { +"Ktor port:" }
-                td { +"${content.ktorPort}" }
-              }
-              tr {
-                td { +"Ktor watch:" }
-                td { +content.ktorWatch }
-              }
-              tr {
-                td { +"DSL filename:" }
-                td { +content.dslFileName }
-              }
-              tr {
-                td { +"DSL variable name:" }
-                td { +content.dslVariableName }
-              }
-              tr {
-                td { +"Production:" }
-                td { +"${isProduction()}" }
-              }
-              tr {
-                td { +"Cache challenges:" }
-                td { +"${content.cacheChallenges}" }
-              }
-              tr {
-                td { +"Max history length:" }
-                td { +"${content.maxHistoryLength}" }
-              }
-              tr {
-                td { +"Max class count" }
-                td { +"${content.maxClassCount}" }
-              }
-            }
-          }
-
-          h3 { +"Python Configuration" }
-          div(classes = INDENT_1EM) {
-            table {
-              tr {
-                td { +"Repo:" }
-                td { +"${content.python.repo}" }
-              }
-              tr {
-                td { +"Source path:" }
-                td { +content.python.srcPath }
-              }
-            }
-          }
-
-          h3 { +"Java Configuration" }
-          div(classes = INDENT_1EM) {
-            table {
-              tr {
-                td { +"Repo:" }
-                td { +"${content.java.repo}" }
-              }
-              tr {
-                td { +"Source path:" }
-                td { +content.java.srcPath }
-              }
-            }
-          }
-
-          h3 { +"Kotlin Configuration" }
-          div(classes = INDENT_1EM) {
-            table {
-              tr {
-                td { +"Repo:" }
-                td { +"${content.kotlin.repo}" }
-              }
-              tr {
-                td { +"Source path:" }
-                td { +content.kotlin.srcPath }
-              }
-            }
-          }
-
-          backLink(queryParam(RETURN_PATH))
+          backLink("$USER_PREFS_ENDPOINT?$RETURN_PARAM=${queryParam(RETURN_PARAM, "/")}")
         }
       }
 }

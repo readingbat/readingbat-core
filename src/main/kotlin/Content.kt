@@ -17,6 +17,7 @@
 
 import com.github.pambrose.common.util.FileSystemSource
 import com.github.pambrose.common.util.OwnerType.Organization
+import com.github.pambrose.common.util.OwnerType.User
 import com.github.readingbat.dsl.GitHubContent
 import com.github.readingbat.dsl.eval
 import com.github.readingbat.dsl.readingBatContent
@@ -67,9 +68,27 @@ val content =
     include(GitHubContent(Organization, "readingbat", "readingbat-python-content", srcPath = "src").eval(this).python)
     include(GitHubContent(Organization, "readingbat", "readingbat-java-content").eval(this).kotlin)
 */
+/*
+    kotlin {
+      group("Infinite Loop") {
+        packageName = "com.github.readingbat.test_content"
+
+        challenge("InfiniteLoop") {
+          returnType = ReturnType.BooleanType
+        }
+
+      }
+    }
+*/
+
+    include(GitHubContent(Organization, "readingbat", "readingbat-java-content").eval(this).java)
 
     include(GitHubContent(Organization, "readingbat", "readingbat-java-content").eval(this).kotlin, "Athenian: ")
 
+    include(GitHubContent(Organization, "readingbat", "readingbat-python-content", srcPath = "src").eval(this).python)
+    include(GitHubContent(User, "maleich", "ReadingBat-content").eval(this).python, "Athenian: ")
+
+    /*
     java {
       group("test1") {
         packageName = "kgroup1"
@@ -86,4 +105,5 @@ val content =
         """.trimMargin()
       }
     }
+     */
   }

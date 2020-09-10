@@ -1,0 +1,10 @@
+#tasks:
+#  - init: ./gradlew build
+#  - init: echo 'init script'
+#    command: echo 'start script'
+image:
+  file: .gitpod.Dockerfile
+vscode:
+  extensions:
+    - mathiasfrohlich.Kotlin@1.7.1:2Uw0hH38NcpgInldjuwF3g==
+    - fwcd.kotlin@0.2.11:moh8IDanzsIlhtK2IeiLmQ==

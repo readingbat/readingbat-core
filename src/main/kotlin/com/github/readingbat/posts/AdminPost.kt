@@ -17,44 +17,37 @@
 
 package com.github.readingbat.posts
 
+import com.github.readingbat.common.*
+import com.github.readingbat.common.FormFields.ADMIN_ACTION_PARAM
+import com.github.readingbat.common.FormFields.DELETE_ALL_DATA
+import com.github.readingbat.common.RedisAdmin.scanKeys
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.isProduction
-import com.github.readingbat.misc.FormFields.ADMIN_ACTION
-import com.github.readingbat.misc.FormFields.DELETE_ALL_DATA
-import com.github.readingbat.misc.Message
-import com.github.readingbat.misc.User
-import com.github.readingbat.misc.UserPrincipal
-import com.github.readingbat.misc.isValidUser
 import com.github.readingbat.pages.AdminPage.adminDataPage
 import com.github.readingbat.server.PipelineCall
-import io.ktor.application.call
-import io.ktor.request.receiveParameters
-import io.ktor.sessions.clear
-import io.ktor.sessions.sessions
+import io.ktor.application.*
+import io.ktor.request.*
+import io.ktor.sessions.*
 import redis.clients.jedis.Jedis
 
 internal object AdminPost {
 
+  private val mustBeLoggedIn = Message("Must be logged in for this function", true)
+  private val mustBeSysAdmin = Message("Must be system admin for this function", true)
+  private val invalidOption = Message("Invalid option", true)
+
   suspend fun PipelineCall.adminActions(content: ReadingBatContent, user: User?, redis: Jedis): String {
     return when {
-      isProduction() && !user.isValidUser(redis) -> adminDataPage(content,
-                                                                  user,
-                                                                  redis = redis,
-                                                                  msg = Message("Must be logged in for this function",
-                                                                                true))
-      isProduction() && user?.email(redis)?.value != "pambrose@mac.com" -> {
-        adminDataPage(content, user, redis = redis, msg = Message("Must be system admin for this function", true))
-      }
+      isProduction() && user.isNotValidUser(redis) -> adminDataPage(content, user, redis = redis, msg = mustBeLoggedIn)
+      isProduction() && user.isNotAdminUser((redis)) -> adminDataPage(content, user, redis, mustBeSysAdmin)
       else -> {
-        val parameters = call.receiveParameters()
-        when (parameters[ADMIN_ACTION] ?: "") {
+        when (call.receiveParameters()[ADMIN_ACTION_PARAM] ?: "") {
           DELETE_ALL_DATA -> {
-            val cnt = redis.keys("*")?.onEach { redis.del(it) }?.count() ?: 0
+            val cnt = redis.scanKeys("*").onEach { redis.del(it) }.count()
             call.sessions.clear<UserPrincipal>()
             adminDataPage(content, user, redis, Message("$cnt items deleted", false))
           }
-          else ->
-            adminDataPage(content, user, redis = redis, msg = Message("Invalid option", true))
+          else -> adminDataPage(content, user, redis = redis, msg = invalidOption)
         }
       }
     }

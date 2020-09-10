@@ -17,14 +17,19 @@
 
 package com.github.readingbat.dsl
 
-import com.github.pambrose.common.script.KotlinScript
-import com.github.pambrose.common.util.ContentSource
-import com.github.pambrose.common.util.GitHubFile
-import com.github.pambrose.common.util.GitHubRepo
-import com.github.pambrose.common.util.OwnerType
-import com.github.readingbat.misc.Constants.AGENT_LAUNCH_ID
-import com.github.readingbat.misc.Constants.IS_PRODUCTION
+import com.github.pambrose.common.redis.RedisUtils.withRedisPool
+import com.github.pambrose.common.util.*
+import com.github.readingbat.common.KeyConstants.CONTENT_DSL_KEY
+import com.github.readingbat.common.Properties.AGENT_ENABLED_PROPERTY
+import com.github.readingbat.common.Properties.AGENT_LAUNCH_ID
+import com.github.readingbat.common.Properties.CACHE_CONTENT_IN_REDIS
+import com.github.readingbat.common.Properties.IS_PRODUCTION
+import com.github.readingbat.common.ScriptPools.kotlinScriptPool
 import com.github.readingbat.server.ReadingBatServer
+import com.github.readingbat.server.ReadingBatServer.redisPool
+import com.github.readingbat.server.keyOf
+import com.github.readingbat.server.md5Of
+import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
 import kotlin.reflect.KFunction
 import kotlin.time.measureTimedValue
@@ -49,18 +54,48 @@ fun readingBatContent(block: ReadingBatContent.() -> Unit) =
 private val logger = KotlinLogging.logger {}
 
 // This is accessible from the Content.kt descriptions
-fun isProduction() = System.getProperty(IS_PRODUCTION)?.toBoolean() ?: false
+fun isProduction() = IS_PRODUCTION.getProperty(false)
 
-fun agentLaunchId() = System.getProperty(AGENT_LAUNCH_ID) ?: "unassigned"
+fun cacheContentInRedis() = CACHE_CONTENT_IN_REDIS.getProperty(false)
+
+fun isAgentEnabled() = AGENT_ENABLED_PROPERTY.getProperty(false)
+
+fun agentLaunchId() = AGENT_LAUNCH_ID.getProperty("unassigned")
 
 fun ContentSource.eval(enclosingContent: ReadingBatContent, variableName: String = "content"): ReadingBatContent =
   enclosingContent.evalContent(this, variableName)
 
+private fun contentDslKey(source: String) = keyOf(CONTENT_DSL_KEY, md5Of(source))
+
+private fun fetchContentDslFromRedis(source: String) =
+  if (cacheContentInRedis()) redisPool.withRedisPool { redis -> redis?.get(contentDslKey(source)) } else null
+
 internal fun readContentDsl(contentSource: ContentSource, variableName: String = "content"): ReadingBatContent {
-  val (code, dur) = measureTimedValue { contentSource.content }
-  logger.info { """Read content from "${contentSource.source}" in $dur""" }
+  val (code, dur) =
+    measureTimedValue {
+      if (!contentSource.remote)
+        contentSource.content
+      else {
+        var dsl = fetchContentDslFromRedis(contentSource.source)
+        if (dsl.isNotNull()) {
+          logger.debug { "Fetched ${contentSource.source} from redis cache" }
+        }
+        else {
+          dsl = contentSource.content
+          redisPool.withRedisPool { redis ->
+            if (redis.isNotNull() && cacheContentInRedis()) {
+              redis.set(contentDslKey(contentSource.source), dsl)
+              Challenge.logger.debug { """Saved "${contentSource.source}" to redis""" }
+            }
+          }
+        }
+        dsl
+      }
+    }
+
+  logger.info { """Read content for "${contentSource.source}" in $dur""" }
   val withImports = addImports(code, variableName)
-  return evalDsl(withImports, contentSource.source)
+  return runBlocking { evalDsl(withImports, contentSource.source) }
 }
 
 internal fun addImports(code: String, variableName: String): String {
@@ -88,15 +123,9 @@ internal fun addImports(code: String, variableName: String): String {
 
 private val <T> KFunction<T>.fqMethodName get() = "${javaClass.packageName}.$name"
 
-private fun evalDsl(code: String, sourceName: String) =
+private suspend fun evalDsl(code: String, sourceName: String) =
   try {
-    KotlinScript().use {
-      it.run {
-        eval(code) as ReadingBatContent
-      }.apply {
-        validate()
-      }
-    }
+    kotlinScriptPool.eval { eval(code) as ReadingBatContent }.apply { validate() }
   } catch (e: Throwable) {
     logger.info { "Error in $sourceName:\n$code" }
     throw e

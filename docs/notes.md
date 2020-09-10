@@ -9,8 +9,8 @@ Setup:
 * Program Arguments: -config=src/main/resources/application-dev.conf
 * Environment Variables: SENDGRID_API_KEY=**value**
 
-## Heroku Notes
-* Switch shell to Java8 
+## Heroku
+* Switch shell to Java8 to get jvisualvm to work on an OSX client
 * Create connection with: `heroku java:visualvm --app readingbat`
 * Connect to shell with: `heroku ps:exec --app readingbat`
 * hprof files are put in */tmp*
@@ -18,5 +18,31 @@ Setup:
 * Open in jvisualvm with file: File->Load... 
 * https://devcenter.heroku.com/articles/exec#using-java-debugging-tools
 
+## Prometheus
+* Edit /etc/prometheus/prometheus.yml
+* Resart with: `systemctl restart prometheus`
+* Reset with: sudo systemctl reload prometheus.service
+* Digital Ocean notes: https://marketplace.digitalocean.com/apps/prometheus?ipAddress=167.172.200.129#getting-started
+* Prometheus admin: http://metrics.readingbat.com:9090/graph
 
 
+## Grafana
+* JVM dashboard is here: https://grafana.com/grafana/dashboards/8563
+* World map: https://grafana.com/grafana/plugins/grafana-worldmap-panel
+* Config file is: `/etc/grafana/grafana.ini`
+* Log file is: `/var/log/grafana/grafana.log`
+
+## PrismJs
+* Look in .js files to find URLs to load css and js files
+
+## JMX Exporter
+* https://github.com/prometheus/jmx_exporter
+
+## Setting up builds on Linux
+* https://sdkman.io/install
+* apt-get install unzip zip make
+* curl -s "https://get.sdkman.io" | bash
+* sdk install java 
+* sdk install kotlin
+* sdk install gradle
+* docker login

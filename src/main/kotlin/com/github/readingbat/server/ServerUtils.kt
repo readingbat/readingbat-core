@@ -17,42 +17,159 @@
 
 package com.github.readingbat.server
 
+import com.github.pambrose.common.redis.RedisUtils.withRedisPool
+import com.github.pambrose.common.redis.RedisUtils.withSuspendingRedisPool
+import com.github.pambrose.common.response.redirectTo
+import com.github.pambrose.common.response.respondWith
+import com.github.pambrose.common.util.Version.Companion.versionDesc
 import com.github.pambrose.common.util.isNotNull
-import com.github.readingbat.misc.User
-import com.github.readingbat.misc.User.Companion.toUser
-import com.github.readingbat.misc.UserPrincipal
-import io.ktor.application.Application
-import io.ktor.application.ApplicationCall
-import io.ktor.application.call
-import io.ktor.auth.principal
-import io.ktor.config.ApplicationConfigurationException
-import io.ktor.sessions.get
-import io.ktor.sessions.sessions
-import io.ktor.sessions.set
-import io.ktor.util.pipeline.PipelineContext
+import com.github.pambrose.common.util.isNull
+import com.github.pambrose.common.util.md5
+import com.github.readingbat.common.*
+import com.github.readingbat.common.Constants.DBMS_DOWN
+import com.github.readingbat.common.KeyConstants.KEY_SEP
+import com.github.readingbat.common.User.Companion.toUser
+import com.github.readingbat.dsl.ReadingBatContent
+import com.github.readingbat.dsl.isProduction
+import com.github.readingbat.pages.DbmsDownPage.dbmsDownPage
+import com.github.readingbat.server.ReadingBatServer.redisPool
+import io.ktor.application.*
+import io.ktor.auth.*
+import io.ktor.http.*
+import io.ktor.routing.*
+import io.ktor.sessions.*
+import io.ktor.util.pipeline.*
+import io.ktor.websocket.*
+import kotlinx.coroutines.runBlocking
 import mu.KLogging
+import redis.clients.jedis.Jedis
 
 typealias PipelineCall = PipelineContext<Unit, ApplicationCall>
 
+internal fun keyOf(vararg keys: Any) = keys.joinToString(KEY_SEP) { it.toString() }
+
+internal fun md5Of(vararg keys: Any) = keys.joinToString(KEY_SEP) { it.toString() }.md5()
+
 internal object ServerUtils : KLogging() {
-  fun Application.property(name: String, default: String = "", warn: Boolean = false) =
-    try {
-      environment.config.property(name).getString()
-    } catch (e: ApplicationConfigurationException) {
-      if (warn)
-        logger.warn { "Missing $name value in application.conf" }
-      default
-    }
 
-  private fun PipelineCall.fetchPrincipal(loginAttempt: Boolean): UserPrincipal? =
-    if (loginAttempt) assignPrincipal() else call.sessions.get<UserPrincipal>()
-
-  fun PipelineCall.fetchUser(loginAttempt: Boolean = false): User? = fetchPrincipal(loginAttempt)?.userId?.toUser()
-
-  private fun PipelineCall.assignPrincipal() =
-    call.principal<UserPrincipal>().apply { if (this.isNotNull()) call.sessions.set(this) }  // Set the cookie
+  internal fun getVersionDesc(asJson: Boolean = false): String = ReadingBatServer::class.versionDesc(asJson)
 
   fun PipelineCall.queryParam(key: String, default: String = "") = call.request.queryParameters[key] ?: default
+
+  // Calls for PipelineCall
+  fun PipelineCall.fetchEmail() =
+    redisPool.withRedisPool { redis ->
+      if (redis.isNull())
+        "Unknown"
+      else
+        fetchUser()?.email(redis)?.value ?: "Unknown"
+    }
+
+  fun PipelineCall.fetchUser(loginAttempt: Boolean = false): User? =
+    fetchPrincipal(loginAttempt)?.userId?.toUser(call.browserSession)
+
+  private fun PipelineCall.fetchPrincipal(loginAttempt: Boolean): UserPrincipal? =
+    if (loginAttempt) assignPrincipal() else call.userPrincipal
+
+  private fun PipelineCall.assignPrincipal(): UserPrincipal? =
+    call.principal<UserPrincipal>().apply { if (isNotNull()) call.sessions.set(this) }  // Set the cookie
+
+  // Calls for WebSocketServerSession
+  fun WebSocketServerSession.fetchEmail() =
+    redisPool.withRedisPool { redis ->
+      if (redis.isNull())
+        "Unknown"
+      else
+        fetchUser()?.email(redis)?.value ?: "Unknown"
+    }
+
+  fun WebSocketServerSession.fetchUser(): User? = call.userPrincipal?.userId?.toUser(call.browserSession)
+
+  // Calls for ApplicationCall
+  fun ApplicationCall.fetchEmail() =
+    redisPool.withRedisPool { redis ->
+      if (redis.isNull())
+        "Unknown"
+      else
+        fetchUser()?.email(redis)?.value ?: "Unknown"
+    }
+
+  fun ApplicationCall.fetchUser(): User? = userPrincipal?.userId?.toUser(browserSession)
+
+  suspend fun PipelineCall.respondWithRedisCheck(content: ReadingBatContent, block: (redis: Jedis) -> String) =
+    try {
+      val html =
+        redisPool.withRedisPool { redis ->
+          if (redis.isNull())
+            dbmsDownPage(content)
+          else
+            block.invoke(redis)
+        }
+      respondWith { html }
+    } catch (e: RedirectException) {
+      redirectTo { e.redirectUrl }
+    }
+
+  suspend fun PipelineCall.respondWithSuspendingRedisCheck(content: ReadingBatContent,
+                                                           block: suspend (redis: Jedis) -> String) =
+    try {
+      val html =
+        redisPool.withSuspendingRedisPool { redis ->
+          if (redis.isNull())
+            dbmsDownPage(content)
+          else
+            block.invoke(redis)
+        }
+      respondWith { html }
+    } catch (e: RedirectException) {
+      redirectTo { e.redirectUrl }
+    }
+
+  suspend fun PipelineCall.authenticatedAction(block: () -> Message): Message =
+    when {
+      isProduction() ->
+        redisPool.withSuspendingRedisPool { redis ->
+          val user = fetchUser()
+          when {
+            redis.isNull() -> Message(DBMS_DOWN.value, true)
+            user.isNotValidUser(redis) -> Message("Must be logged in for this function", true)
+            user.isNotAdminUser(redis) -> Message("Must be system admin for this function", true)
+            else -> block.invoke()
+          }
+        }
+      else -> block.invoke()
+    }
+
+  suspend fun PipelineCall.authenticatedPage(block: () -> String): String =
+    when {
+      isProduction() ->
+        redisPool.withSuspendingRedisPool { redis ->
+          val user = fetchUser()
+          when {
+            redis.isNull() -> DBMS_DOWN.value
+            user.isNotValidUser(redis) -> "Must be logged in for this function"
+            user.isNotAdminUser(redis) -> "Must be system admin for this function"
+            else -> block.invoke()
+          }
+        }
+      else -> block.invoke()
+    }
+
+  @ContextDsl
+  fun Route.get(path: String, metrics: Metrics, body: PipelineInterceptor<Unit, ApplicationCall>) =
+    route(path, HttpMethod.Get) {
+      runBlocking {
+        metrics.measureEndpointRequest(path) { handle(body) }
+      }
+    }
+
+  fun PipelineCall.defaultLanguageTab(content: ReadingBatContent): String {
+    val langRoot = content.defaultLanguageType().contentRoot
+    val params = call.parameters.formUrlEncode()
+    return "$langRoot${if (params.isNotEmpty()) "?$params" else ""}"
+  }
+
+  fun Int.rows(cols: Int) = if (this % cols == 0) this / cols else (this / cols) + 1
 }
 
 class RedirectException(val redirectUrl: String) : Exception()

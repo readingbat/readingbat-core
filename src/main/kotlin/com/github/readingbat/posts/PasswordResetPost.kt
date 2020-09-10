@@ -18,23 +18,21 @@
 package com.github.readingbat.posts
 
 import com.github.pambrose.common.util.encode
+import com.github.readingbat.common.Constants.INVALID_RESET_ID
+import com.github.readingbat.common.Constants.MSG
+import com.github.readingbat.common.Emailer.sendEmail
+import com.github.readingbat.common.Endpoints.PASSWORD_RESET_ENDPOINT
+import com.github.readingbat.common.FormFields.CONFIRM_PASSWORD_PARAM
+import com.github.readingbat.common.FormFields.EMAIL_PARAM
+import com.github.readingbat.common.FormFields.NEW_PASSWORD_PARAM
+import com.github.readingbat.common.FormFields.RESET_ID_PARAM
+import com.github.readingbat.common.FormFields.RETURN_PARAM
+import com.github.readingbat.common.Message
+import com.github.readingbat.common.User.Companion.isNotRegisteredEmail
+import com.github.readingbat.common.User.Companion.lookupUserByEmail
+import com.github.readingbat.common.isNotValidUser
+import com.github.readingbat.common.isValidUser
 import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.misc.Constants.INVALID_RESET_ID
-import com.github.readingbat.misc.Constants.MSG
-import com.github.readingbat.misc.Constants.RESET_ID
-import com.github.readingbat.misc.Constants.RETURN_PATH
-import com.github.readingbat.misc.Emailer.sendEmail
-import com.github.readingbat.misc.Endpoints.PASSWORD_RESET_ENDPOINT
-import com.github.readingbat.misc.FormFields.CONFIRM_PASSWORD
-import com.github.readingbat.misc.FormFields.EMAIL
-import com.github.readingbat.misc.FormFields.NEW_PASSWORD
-import com.github.readingbat.misc.KeyConstants.DIGEST_FIELD
-import com.github.readingbat.misc.KeyConstants.SALT_FIELD
-import com.github.readingbat.misc.Message
-import com.github.readingbat.misc.User
-import com.github.readingbat.misc.User.Companion.isRegisteredEmail
-import com.github.readingbat.misc.User.Companion.lookupUserByEmail
-import com.github.readingbat.misc.isValidUser
 import com.github.readingbat.pages.PasswordResetPage.passwordResetPage
 import com.github.readingbat.posts.CreateAccountPost.checkPassword
 import com.github.readingbat.server.Email
@@ -49,6 +47,7 @@ import com.github.readingbat.server.ResetId.Companion.newResetId
 import com.github.readingbat.server.ServerUtils.queryParam
 import com.google.common.util.concurrent.RateLimiter
 import io.ktor.application.*
+import io.ktor.features.*
 import io.ktor.request.*
 import mu.KLogging
 import redis.clients.jedis.Jedis
@@ -56,25 +55,24 @@ import java.io.IOException
 
 internal object PasswordResetPost : KLogging() {
   private val unknownUserLimiter = RateLimiter.create(0.5) // rate 2.0 is "2 permits per second"
+  private val unableToSend = Message("Unable to send password reset email -- missing email address", true)
 
-  suspend fun PipelineCall.sendPasswordReset(content: ReadingBatContent, user: User?, redis: Jedis): String {
+  suspend fun PipelineCall.sendPasswordReset(content: ReadingBatContent, redis: Jedis): String {
     val parameters = call.receiveParameters()
-    val email = parameters.getEmail(EMAIL)
+    val email = parameters.getEmail(EMAIL_PARAM)
+    val remoteStr = call.request.origin.remoteHost
+    logger.info { "Password change request for $email - $remoteStr" }
+    val user = lookupUserByEmail(email, redis)
     return when {
-      !user.isValidUser(redis) -> {
+      user.isNotValidUser(redis) -> {
         unknownUserLimiter.acquire()
-        passwordResetPage(content, EMPTY_RESET_ID, redis, Message("Invalid User", true))
+        passwordResetPage(content, EMPTY_RESET_ID, redis, Message("Invalid user: $email", true))
       }
-      email.isBlank() -> {
-        passwordResetPage(content,
-                          EMPTY_RESET_ID,
-                          redis,
-                          Message("Unable to send password reset email -- missing email address", true))
-      }
+      email.isBlank() -> passwordResetPage(content, EMPTY_RESET_ID, redis, unableToSend)
       email.isNotValidEmail() -> {
         passwordResetPage(content, EMPTY_RESET_ID, redis, Message("Invalid email address: $email", true))
       }
-      !isRegisteredEmail(email, redis) -> {
+      isNotRegisteredEmail(email, redis) -> {
         unknownUserLimiter.acquire()
         passwordResetPage(content, EMPTY_RESET_ID, redis, Message("Unknown user: $email", true))
       }
@@ -84,18 +82,18 @@ internal object PasswordResetPost : KLogging() {
 
           // Lookup and remove previous value if it exists
           val user2 = lookupUserByEmail(email, redis) ?: throw ResetPasswordException("Unable to find $email")
-          val previousResetId = redis.get(user2.userPasswordResetKey)?.let { ResetId(it) } ?: EMPTY_RESET_ID
+          val previousResetId = user2.passwordResetKey(redis)?.let { ResetId(it) } ?: EMPTY_RESET_ID
 
           redis.multi().also { tx ->
             user2.savePasswordResetKey(email, previousResetId, newResetId, tx)
             tx.exec()
           }
 
-          logger.info { "Sending password reset email to $email" }
+          logger.info { "Sending password reset email to $email - $remoteStr" }
           try {
             val msg = Message("""
               |This is a password reset message for the ReadingBat.com account for '$email'
-              |Go to this URL to set a new password: ${content.urlPrefix}$PASSWORD_RESET_ENDPOINT?$RESET_ID=$newResetId 
+              |Go to this URL to set a new password: ${content.sendGridPrefix}$PASSWORD_RESET_ENDPOINT?$RESET_ID_PARAM=$newResetId 
               |If you did not request to reset your password, please ignore this message.
             """.trimMargin())
             sendEmail(to = email,
@@ -107,7 +105,7 @@ internal object PasswordResetPost : KLogging() {
             throw ResetPasswordException("Unable to send email")
           }
 
-          val returnPath = queryParam(RETURN_PATH, "/")
+          val returnPath = queryParam(RETURN_PARAM, "/")
           throw RedirectException("$returnPath?$MSG=${"Password reset email sent to $email".encode()}")
         } catch (e: ResetPasswordException) {
           logger.info { e }
@@ -123,9 +121,9 @@ internal object PasswordResetPost : KLogging() {
   suspend fun PipelineCall.changePassword(content: ReadingBatContent, redis: Jedis): String =
     try {
       val parameters = call.receiveParameters()
-      val resetId = parameters.getResetId(RESET_ID)
-      val newPassword = parameters.getPassword(NEW_PASSWORD)
-      val confirmPassword = parameters.getPassword(CONFIRM_PASSWORD)
+      val resetId = parameters.getResetId(RESET_ID_PARAM)
+      val newPassword = parameters.getPassword(NEW_PASSWORD_PARAM)
+      val confirmPassword = parameters.getPassword(CONFIRM_PASSWORD_PARAM)
       val passwordError = checkPassword(newPassword, confirmPassword)
 
       if (passwordError.isNotBlank)
@@ -134,10 +132,9 @@ internal object PasswordResetPost : KLogging() {
       val passwordResetKey = resetId.passwordResetKey
       val email = Email(redis.get(passwordResetKey) ?: throw ResetPasswordException(INVALID_RESET_ID))
       val user = lookupUserByEmail(email, redis) ?: throw ResetPasswordException("Unable to find $email")
-      val userInfoKey = user.userInfoKey
-      val salt = redis.hget(userInfoKey, SALT_FIELD)
+      val salt = user.salt(redis)
       val newDigest = newPassword.sha256(salt)
-      val oldDigest = redis.hget(userInfoKey, DIGEST_FIELD)
+      val oldDigest = user.digest(redis)
 
       if (!user.isValidUser(redis))
         throw ResetPasswordException("Invalid user", resetId)
@@ -145,12 +142,13 @@ internal object PasswordResetPost : KLogging() {
       if (newDigest == oldDigest)
         throw ResetPasswordException("New password is the same as the current password", resetId)
 
-      redis.multi().also { tx ->
-        tx.del(user.userPasswordResetKey)
-        tx.del(passwordResetKey)
-        tx.hset(userInfoKey, DIGEST_FIELD, newDigest)  // Set new password
-        tx.exec()
-      }
+      redis.multi()
+        .also { tx ->
+          user.deletePasswordResetKey(tx)
+          tx.del(passwordResetKey)
+          user.assignDigest(tx, newDigest)  // Set new password
+          tx.exec()
+        }
       throw RedirectException("/?$MSG=${"Password reset for $email".encode()}")
     } catch (e: ResetPasswordException) {
       logger.info { e }

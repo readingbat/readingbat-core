@@ -23,6 +23,7 @@ import com.github.pambrose.common.util.substringBetween
 import com.github.readingbat.server.Invocation
 
 internal object KotlinParse {
+
   internal val funMainRegex = Regex("""^\s*fun\s+main.*\)""")
   internal val kotlinEndRegex = Regex("""\s*}\s*""")
   private const val printlnPrefix = "println("
@@ -40,22 +41,21 @@ internal object KotlinParse {
       .map { it.substringBetween(printlnPrefix, ")") }
       .map { Invocation(it) }
 
-  fun convertToKotlinScript(code: List<String>): String {
-    val scriptCode = mutableListOf<String>()
-    var insideMain = false
+  fun convertToKotlinScript(code: List<String>) =
+    buildString {
+      var insideMain = false
 
-    code.forEach { line ->
-      when {
-        line.contains(funMainRegex) -> insideMain = true
-        insideMain && line.trimStart().startsWith(printlnPrefix) -> {
-          val expr = line.substringBetween(printlnPrefix, ")")
-          scriptCode += "$varName.add($expr)"
+      code.forEach { line ->
+        when {
+          line.contains(funMainRegex) -> insideMain = true
+          insideMain && line.trimStart().startsWith(printlnPrefix) -> {
+            val expr = line.substringBetween(printlnPrefix, ")")
+            appendLine("$varName.add($expr)")
+          }
+          insideMain && line.trimStart().startsWith("}") -> insideMain = false
+          else -> appendLine(line)
         }
-        insideMain && line.trimStart().startsWith("}") -> insideMain = false
-        else -> scriptCode += line
       }
+      appendLine("")
     }
-    scriptCode += ""
-    return scriptCode.joinToString("\n")
-  }
 }

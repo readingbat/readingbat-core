@@ -17,32 +17,49 @@
 
 package com.github.readingbat.pages
 
+import com.github.readingbat.common.CSSNames.INDENT_1EM
+import com.github.readingbat.common.Endpoints.CREATE_ACCOUNT_ENDPOINT
+import com.github.readingbat.common.FormFields.CONFIRM_PASSWORD_PARAM
+import com.github.readingbat.common.FormFields.EMAIL_PARAM
+import com.github.readingbat.common.FormFields.FULLNAME_PARAM
+import com.github.readingbat.common.FormFields.PASSWORD_PARAM
+import com.github.readingbat.common.FormFields.RETURN_PARAM
+import com.github.readingbat.common.Message
+import com.github.readingbat.common.Message.Companion.EMPTY_MESSAGE
 import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.misc.CSSNames.INDENT_1EM
-import com.github.readingbat.misc.Constants.RETURN_PATH
-import com.github.readingbat.misc.Endpoints.CREATE_ACCOUNT_ENDPOINT
-import com.github.readingbat.misc.Endpoints.CREATE_ACCOUNT_POST_ENDPOINT
-import com.github.readingbat.misc.FormFields.CONFIRM_PASSWORD
-import com.github.readingbat.misc.FormFields.EMAIL
-import com.github.readingbat.misc.FormFields.FULLNAME
-import com.github.readingbat.misc.FormFields.PASSWORD
-import com.github.readingbat.misc.Message
-import com.github.readingbat.misc.Message.Companion.EMPTY_MESSAGE
-import com.github.readingbat.misc.PageUtils.hideShowButton
-import com.github.readingbat.pages.PageCommon.backLink
-import com.github.readingbat.pages.PageCommon.bodyTitle
-import com.github.readingbat.pages.PageCommon.clickButtonScript
-import com.github.readingbat.pages.PageCommon.displayMessage
-import com.github.readingbat.pages.PageCommon.headDefault
-import com.github.readingbat.pages.PageCommon.privacyStatement
+import com.github.readingbat.pages.PageUtils.backLink
+import com.github.readingbat.pages.PageUtils.bodyTitle
+import com.github.readingbat.pages.PageUtils.clickButtonScript
+import com.github.readingbat.pages.PageUtils.displayMessage
+import com.github.readingbat.pages.PageUtils.headDefault
+import com.github.readingbat.pages.PageUtils.hideShowButton
+import com.github.readingbat.pages.PageUtils.privacyStatement
 import com.github.readingbat.server.Email
 import com.github.readingbat.server.Email.Companion.EMPTY_EMAIL
 import com.github.readingbat.server.FullName
 import com.github.readingbat.server.FullName.Companion.EMPTY_FULLNAME
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
-import kotlinx.html.*
+import kotlinx.html.FormMethod
+import kotlinx.html.InputType
+import kotlinx.html.body
+import kotlinx.html.div
+import kotlinx.html.form
+import kotlinx.html.h2
+import kotlinx.html.head
+import kotlinx.html.hiddenInput
+import kotlinx.html.html
+import kotlinx.html.id
+import kotlinx.html.input
+import kotlinx.html.label
+import kotlinx.html.onKeyPress
+import kotlinx.html.p
+import kotlinx.html.span
 import kotlinx.html.stream.createHTML
+import kotlinx.html.style
+import kotlinx.html.table
+import kotlinx.html.td
+import kotlinx.html.tr
 
 internal object CreateAccountPage {
 
@@ -52,7 +69,7 @@ internal object CreateAccountPage {
                                      msg: Message = EMPTY_MESSAGE) =
     createHTML()
       .html {
-        val returnPath = queryParam(RETURN_PATH, "/")
+        val returnPath = queryParam(RETURN_PARAM, "/")
         val createButton = "CreateAccountButton"
 
         head {
@@ -74,22 +91,22 @@ internal object CreateAccountPage {
             """.trimIndent()
             }
 
-            p { span { style = "color:red;"; this@body.displayMessage(msg) } }
+            p { span { style = "color:red"; this@body.displayMessage(msg) } }
 
-            val inputFs = "font-size: 95%;"
-            val labelWidth = "width: 250;"
+            val inputFs = "font-size: 95%"
+            val labelWidth = "width: 250"
             val formName = "pform"
 
             form {
               name = formName
-              action = CREATE_ACCOUNT_POST_ENDPOINT
+              action = CREATE_ACCOUNT_ENDPOINT
               method = FormMethod.post
               table {
                 tr {
                   td { style = labelWidth; label { +"Name" } }
                   td {
                     input {
-                      style = inputFs; type = InputType.text; size = "42"; name = FULLNAME; value =
+                      style = inputFs; type = InputType.text; size = "42"; name = FULLNAME_PARAM; value =
                       defaultFullName.value
                     }
                   }
@@ -98,7 +115,8 @@ internal object CreateAccountPage {
                   td { style = labelWidth; label { +"Email (used as account id)" } }
                   td {
                     input {
-                      style = inputFs; type = InputType.text; size = "42"; name = EMAIL; value = defaultEmail.value
+                      style = inputFs; type = InputType.text; size = "42"; name = EMAIL_PARAM; value =
+                      defaultEmail.value
                     }
                   }
                 }
@@ -109,11 +127,11 @@ internal object CreateAccountPage {
                       style = inputFs
                       type = InputType.password
                       size = "42"
-                      name = PASSWORD
+                      name = PASSWORD_PARAM
                       value = ""
                     }
                   }
-                  td { hideShowButton(formName, PASSWORD) }
+                  td { hideShowButton(formName, PASSWORD_PARAM) }
                 }
                 tr {
                   td { style = labelWidth; label { +"Confirm Password" } }
@@ -122,19 +140,19 @@ internal object CreateAccountPage {
                       style = inputFs
                       type = InputType.password
                       size = "42"
-                      name = CONFIRM_PASSWORD
+                      name = CONFIRM_PASSWORD_PARAM
                       value = ""
-                      onKeyPress = "click$createButton(event);"
+                      onKeyPress = "click$createButton(event)"
                     }
                   }
-                  td { hideShowButton(formName, CONFIRM_PASSWORD) }
+                  td { hideShowButton(formName, CONFIRM_PASSWORD_PARAM) }
                 }
-                hiddenInput { name = RETURN_PATH; value = returnPath }
+                hiddenInput { name = RETURN_PARAM; value = returnPath }
                 tr {
                   td { }
                   td {
                     input {
-                      style = "font-size : 25px; height: 35; width: 115;"
+                      style = "font-size : 25px; height: 35; width: 115"
                       id = createButton
                       type = InputType.submit
                       value = "Create Account"

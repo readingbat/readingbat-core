@@ -17,31 +17,29 @@
 
 package com.github.readingbat.posts
 
+import com.github.readingbat.common.*
+import com.github.readingbat.common.ClassCode.Companion.getClassCode
+import com.github.readingbat.common.FormFields.CLASS_CODE_NAME_PARAM
+import com.github.readingbat.common.FormFields.CONFIRM_PASSWORD_PARAM
+import com.github.readingbat.common.FormFields.CURR_PASSWORD_PARAM
+import com.github.readingbat.common.FormFields.DELETE_ACCOUNT
+import com.github.readingbat.common.FormFields.JOIN_CLASS
+import com.github.readingbat.common.FormFields.NEW_PASSWORD_PARAM
+import com.github.readingbat.common.FormFields.UPDATE_PASSWORD
+import com.github.readingbat.common.FormFields.USER_PREFS_ACTION_PARAM
+import com.github.readingbat.common.FormFields.WITHDRAW_FROM_CLASS
+import com.github.readingbat.common.User.Companion.fetchEnrolledClassCode
 import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.misc.*
-import com.github.readingbat.misc.ClassCode.Companion.getClassCode
-import com.github.readingbat.misc.FormFields.CLASS_CODE_NAME
-import com.github.readingbat.misc.FormFields.CONFIRM_PASSWORD
-import com.github.readingbat.misc.FormFields.CURR_PASSWORD
-import com.github.readingbat.misc.FormFields.DELETE_ACCOUNT
-import com.github.readingbat.misc.FormFields.JOIN_CLASS
-import com.github.readingbat.misc.FormFields.NEW_PASSWORD
-import com.github.readingbat.misc.FormFields.UPDATE_PASSWORD
-import com.github.readingbat.misc.FormFields.USER_PREFS_ACTION
-import com.github.readingbat.misc.FormFields.WITHDRAW_FROM_CLASS
-import com.github.readingbat.misc.KeyConstants.DIGEST_FIELD
-import com.github.readingbat.misc.User.Companion.fetchEnrolledClassCode
 import com.github.readingbat.pages.UserPrefsPage.requestLogInPage
 import com.github.readingbat.pages.UserPrefsPage.userPrefsPage
 import com.github.readingbat.posts.CreateAccountPost.checkPassword
 import com.github.readingbat.server.Password.Companion.getPassword
 import com.github.readingbat.server.PipelineCall
-import io.ktor.application.call
-import io.ktor.http.Parameters
-import io.ktor.request.receiveParameters
-import io.ktor.sessions.clear
-import io.ktor.sessions.sessions
+import io.ktor.application.*
+import io.ktor.http.*
+import io.ktor.request.*
+import io.ktor.sessions.*
 import mu.KLogging
 import redis.clients.jedis.Jedis
 
@@ -51,7 +49,7 @@ internal object UserPrefsPost : KLogging() {
     val parameters = call.receiveParameters()
 
     return if (user.isValidUser(redis)) {
-      when (val action = parameters[USER_PREFS_ACTION] ?: "") {
+      when (val action = parameters[USER_PREFS_ACTION_PARAM] ?: "") {
         UPDATE_PASSWORD -> updatePassword(content, parameters, user, redis)
         JOIN_CLASS -> enrollInClass(content, parameters, user, redis)
         WITHDRAW_FROM_CLASS -> withdrawFromClass(content, user, redis)
@@ -68,9 +66,9 @@ internal object UserPrefsPost : KLogging() {
                                           parameters: Parameters,
                                           user: User,
                                           redis: Jedis): String {
-    val currPassword = parameters.getPassword(CURR_PASSWORD)
-    val newPassword = parameters.getPassword(NEW_PASSWORD)
-    val confirmPassword = parameters.getPassword(CONFIRM_PASSWORD)
+    val currPassword = parameters.getPassword(CURR_PASSWORD_PARAM)
+    val newPassword = parameters.getPassword(NEW_PASSWORD_PARAM)
+    val confirmPassword = parameters.getPassword(CONFIRM_PASSWORD_PARAM)
     val passwordError = checkPassword(newPassword, confirmPassword)
     val msg =
       if (passwordError.isNotBlank) {
@@ -80,7 +78,7 @@ internal object UserPrefsPost : KLogging() {
         val (salt, digest) = user.lookupDigestInfoByUser(redis)
         if (salt.isNotEmpty() && digest.isNotEmpty() && digest == currPassword.sha256(salt)) {
           val newDigest = newPassword.sha256(salt)
-          redis.hset(user.userInfoKey, DIGEST_FIELD, newDigest)
+          user.assignDigest(redis, newDigest)
           Message("Password changed")
         }
         else {
@@ -95,11 +93,10 @@ internal object UserPrefsPost : KLogging() {
                                          parameters: Parameters,
                                          user: User,
                                          redis: Jedis): String {
-    val classCode = parameters.getClassCode(CLASS_CODE_NAME)
+    val classCode = parameters.getClassCode(CLASS_CODE_NAME_PARAM)
     return try {
       user.enrollInClass(classCode, redis)
-      val classDesc = classCode.fetchClassDesc(redis)
-      userPrefsPage(content, user, redis, Message("Enrolled in class $classDesc [$classCode]"))
+      userPrefsPage(content, user, redis, Message("Enrolled in class ${classCode.toDisplayString(redis)}"))
     } catch (e: DataException) {
       userPrefsPage(content, user, redis, Message("Unable to join class [${e.msg}]", true), classCode)
     }
@@ -108,9 +105,8 @@ internal object UserPrefsPost : KLogging() {
   private fun PipelineCall.withdrawFromClass(content: ReadingBatContent, user: User, redis: Jedis) =
     try {
       val enrolledClassCode = user.fetchEnrolledClassCode(redis)
-      val classDesc = enrolledClassCode.fetchClassDesc(redis)
       user.withdrawFromClass(enrolledClassCode, redis)
-      userPrefsPage(content, user, redis, Message("Withdrawn from class $classDesc [$enrolledClassCode]"))
+      userPrefsPage(content, user, redis, Message("Withdrawn from class ${enrolledClassCode.toDisplayString(redis)}"))
     } catch (e: DataException) {
       userPrefsPage(content, user, redis, Message("Unable to withdraw from class [${e.msg}]", true))
     }
@@ -118,7 +114,7 @@ internal object UserPrefsPost : KLogging() {
   private fun PipelineCall.deleteAccount(content: ReadingBatContent, user: User, redis: Jedis): String {
     val email = user.email(redis)
     logger.info { "Deleting user $email" }
-    user.deleteUser(user, redis)
+    user.deleteUser(redis)
     call.sessions.clear<UserPrincipal>()
     return requestLogInPage(content, redis, Message("User $email deleted"))
   }

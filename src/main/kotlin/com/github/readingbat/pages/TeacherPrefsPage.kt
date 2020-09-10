@@ -17,30 +17,37 @@
 
 package com.github.readingbat.pages
 
+import com.github.readingbat.common.CSSNames.INDENT_2EM
+import com.github.readingbat.common.CSSNames.UNDERLINE
+import com.github.readingbat.common.ClassCode
+import com.github.readingbat.common.Constants.LABEL_WIDTH
+import com.github.readingbat.common.Endpoints.TEACHER_PREFS_ENDPOINT
+import com.github.readingbat.common.Endpoints.classSummaryEndpoint
+import com.github.readingbat.common.FormFields.CHOICE_SOURCE_PARAM
+import com.github.readingbat.common.FormFields.CLASS_CODE_CHOICE_PARAM
+import com.github.readingbat.common.FormFields.CLASS_CODE_NAME_PARAM
+import com.github.readingbat.common.FormFields.CLASS_DESC_PARAM
+import com.github.readingbat.common.FormFields.CREATE_CLASS
+import com.github.readingbat.common.FormFields.DELETE_CLASS
+import com.github.readingbat.common.FormFields.DISABLED_MODE
+import com.github.readingbat.common.FormFields.NO_ACTIVE_CLASS
+import com.github.readingbat.common.FormFields.RETURN_PARAM
+import com.github.readingbat.common.FormFields.TEACHER_PREF
+import com.github.readingbat.common.FormFields.UPDATE_ACTIVE_CLASS
+import com.github.readingbat.common.FormFields.USER_PREFS_ACTION_PARAM
+import com.github.readingbat.common.Message
+import com.github.readingbat.common.Message.Companion.EMPTY_MESSAGE
+import com.github.readingbat.common.User
+import com.github.readingbat.common.User.Companion.fetchActiveClassCode
+import com.github.readingbat.common.isValidUser
 import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.misc.*
-import com.github.readingbat.misc.CSSNames.INDENT_2EM
-import com.github.readingbat.misc.Constants.LABEL_WIDTH
-import com.github.readingbat.misc.Constants.RETURN_PATH
-import com.github.readingbat.misc.Endpoints.TEACHER_PREFS_ENDPOINT
-import com.github.readingbat.misc.Endpoints.TEACHER_PREFS_POST_ENDPOINT
-import com.github.readingbat.misc.FormFields.CLASSES_CHOICE
-import com.github.readingbat.misc.FormFields.CLASSES_DISABLED
-import com.github.readingbat.misc.FormFields.CLASS_CODE_NAME
-import com.github.readingbat.misc.FormFields.CREATE_CLASS
-import com.github.readingbat.misc.FormFields.DELETE_CLASS
-import com.github.readingbat.misc.FormFields.UPDATE_ACTIVE_CLASS
-import com.github.readingbat.misc.FormFields.USER_PREFS_ACTION
-import com.github.readingbat.misc.Message.Companion.EMPTY_MESSAGE
-import com.github.readingbat.misc.User.Companion.fetchActiveClassCode
 import com.github.readingbat.pages.HelpAndLogin.helpAndLogin
-import com.github.readingbat.pages.PageCommon.backLink
-import com.github.readingbat.pages.PageCommon.bodyTitle
-import com.github.readingbat.pages.PageCommon.clickButtonScript
-import com.github.readingbat.pages.PageCommon.displayMessage
-import com.github.readingbat.pages.PageCommon.headDefault
-import com.github.readingbat.pages.PageCommon.privacyStatement
-import com.github.readingbat.pages.PageCommon.rawHtml
+import com.github.readingbat.pages.PageUtils.backLink
+import com.github.readingbat.pages.PageUtils.bodyTitle
+import com.github.readingbat.pages.PageUtils.clickButtonScript
+import com.github.readingbat.pages.PageUtils.displayMessage
+import com.github.readingbat.pages.PageUtils.headDefault
+import com.github.readingbat.pages.PageUtils.rawHtml
 import com.github.readingbat.pages.UserPrefsPage.requestLogInPage
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
@@ -81,19 +88,19 @@ internal object TeacherPrefsPage : KLogging() {
         }
 
         body {
-          val returnPath = queryParam(RETURN_PATH, "/")
+          val returnPath = queryParam(RETURN_PARAM, "/")
 
-          helpAndLogin(user, returnPath, activeClassCode.isTeacherMode, redis)
+          helpAndLogin(content, user, returnPath, activeClassCode.isEnabled, redis)
           bodyTitle()
 
-          h2 { +"ReadingBat User Preferences" }
+          h2 { +"ReadingBat Teacher Preferences" }
 
-          p { span { style = "color:${if (msg.isError) "red" else "green"};"; this@body.displayMessage(msg) } }
+          if (msg.isAssigned())
+            p { span { style = "color:${msg.color}"; this@body.displayMessage(msg) } }
 
           createClass(defaultClassDesc)
-          displayClasses(user, activeClassCode, redis)
 
-          privacyStatement(TEACHER_PREFS_ENDPOINT, returnPath)
+          displayClasses(user, activeClassCode, redis)
 
           backLink(returnPath)
         }
@@ -102,9 +109,9 @@ internal object TeacherPrefsPage : KLogging() {
   private fun BODY.createClass(defaultClassDesc: String) {
     h3 { +"Create a class" }
     div(classes = INDENT_2EM) {
-      p { +"Enter a decription of the class." }
+      p { +"Enter a description of the class." }
       form {
-        action = TEACHER_PREFS_POST_ENDPOINT
+        action = TEACHER_PREFS_ENDPOINT
         method = FormMethod.post
         table {
           tr {
@@ -113,15 +120,15 @@ internal object TeacherPrefsPage : KLogging() {
               input {
                 type = InputType.text
                 size = "42"
-                name = FormFields.CLASS_DESC
+                name = CLASS_DESC_PARAM
                 value = defaultClassDesc
-                onKeyPress = "click${createClassButton}(event);"
+                onKeyPress = "click${createClassButton}(event)"
               }
             }
           }
           tr {
             td {}
-            td { input { type = submit; id = createClassButton; name = USER_PREFS_ACTION; value = CREATE_CLASS } }
+            td { input { type = submit; id = createClassButton; name = USER_PREFS_ACTION_PARAM; value = CREATE_CLASS } }
           }
         }
       }
@@ -129,14 +136,14 @@ internal object TeacherPrefsPage : KLogging() {
   }
 
   private fun BODY.displayClasses(user: User, activeClassCode: ClassCode, redis: Jedis) {
-    val classCodes = redis.smembers(user.userClassesKey).map { ClassCode(it) }
+    val classCodes = user.classCodes(redis)
     if (classCodes.isNotEmpty()) {
       h3 { +"Classes" }
       div(classes = INDENT_2EM) {
         table {
           tr {
-            td { style = "vertical-align:top;"; this@displayClasses.classList(activeClassCode, classCodes, redis) }
-            td { style = "vertical-align:top;"; this@displayClasses.deleteClassButtons(classCodes, redis) }
+            td { style = "vertical-align:top"; this@displayClasses.classList(activeClassCode, classCodes, redis) }
+            td { style = "vertical-align:top"; this@displayClasses.deleteClassButtons(classCodes, redis) }
           }
         }
       }
@@ -145,41 +152,49 @@ internal object TeacherPrefsPage : KLogging() {
 
   private fun BODY.classList(activeClassCode: ClassCode, classCodes: List<ClassCode>, redis: Jedis) {
     table {
-      style = "border-spacing: 15px 5px;"
-      tr { th { +"Active" }; th { +"Class Code" }; th { +"Description" }; th { +"Enrollees" } }
+      style = "border-spacing: 15px 5px"
+      tr { th { +"Active" }; th { +"Description" }; th { +"Class Code" }; th { +"Enrollees" } }
       form {
-        action = TEACHER_PREFS_POST_ENDPOINT
+        action = TEACHER_PREFS_ENDPOINT
         method = FormMethod.post
-        classCodes.forEach { classCode ->
-          val classDesc = classCode.fetchClassDesc(redis)
-          val enrolleeCount = classCode.fetchEnrollees(redis).count()
-          this@table.tr {
-            td {
-              style = "text-align:center;"
-              input {
-                type = radio
-                name = CLASSES_CHOICE
-                value = classCode.value
-                checked = activeClassCode == classCode
+
+        classCodes
+          .forEach { classCode ->
+            val enrolleeCount = classCode.fetchEnrollees(redis).count()
+            this@table.tr {
+              td {
+                style = "text-align:center"
+                input {
+                  type = radio
+                  name = CLASS_CODE_CHOICE_PARAM
+                  value = classCode.value
+                  checked = activeClassCode == classCode
+                }
               }
+
+              val summary = classSummaryEndpoint(classCode, TEACHER_PREFS_ENDPOINT)
+              td { a(classes = UNDERLINE) { href = summary; +classCode.fetchClassDesc(redis) } }
+              td { a(classes = UNDERLINE) { href = summary; +classCode.displayedValue } }
+              td { style = "text-align:center"; +enrolleeCount.toString() }
             }
-            td { +classCode.value }
-            td { +classDesc }
-            td { style = "text-align:center;"; +enrolleeCount.toString() }
           }
-        }
+
         this@table.tr {
           td {
-            style = "text-align:center;"
+            style = "text-align:center"
             input {
-              type = radio; name = CLASSES_CHOICE; value = CLASSES_DISABLED; checked = activeClassCode.isStudentMode
+              type = radio; name = CLASS_CODE_CHOICE_PARAM; value = DISABLED_MODE; checked =
+              activeClassCode.isNotEnabled
             }
           }
-          td { colSpan = "3"; +"Student mode" }
+          td { colSpan = "3"; +NO_ACTIVE_CLASS }
         }
+
+        input { type = InputType.hidden; name = CHOICE_SOURCE_PARAM; value = TEACHER_PREF }
+
         this@table.tr {
           td {}
-          td { input { type = submit; name = USER_PREFS_ACTION; value = UPDATE_ACTIVE_CLASS } }
+          td { input { type = submit; name = USER_PREFS_ACTION_PARAM; value = UPDATE_ACTIVE_CLASS } }
         }
       }
     }
@@ -187,22 +202,22 @@ internal object TeacherPrefsPage : KLogging() {
 
   private fun BODY.deleteClassButtons(classCodes: List<ClassCode>, redis: Jedis) {
     table {
-      style = "border-spacing: 5px 5px;"
+      style = "border-spacing: 5px 5px"
       tr { th { rawHtml(nbsp.text) } }
       classCodes.forEach { classCode ->
-        val classDesc = classCode.fetchClassDesc(redis)
         tr {
           td {
             form {
-              style = "margin:0;"
-              action = TEACHER_PREFS_POST_ENDPOINT
+              style = "margin:0"
+              action = TEACHER_PREFS_ENDPOINT
               method = FormMethod.post
-              onSubmit = "return confirm('Are you sure you want to delete class $classDesc [$classCode]?');"
-              input { type = InputType.hidden; name = CLASS_CODE_NAME; value = classCode.value }
+              onSubmit = "return confirm('Are you sure you want to delete class ${classCode.toDisplayString(redis)}?')"
+              input { type = InputType.hidden; name = CLASS_CODE_NAME_PARAM; value = classCode.displayedValue }
               input {
-                style = "vertical-align:middle; margin-top:1; margin-bottom:0;"
-                type = submit; name = USER_PREFS_ACTION; value =
-                DELETE_CLASS
+                style = "vertical-align:middle; margin-top:1; margin-bottom:0"
+                type = submit
+                name = USER_PREFS_ACTION_PARAM
+                value = DELETE_CLASS
               }
             }
           }

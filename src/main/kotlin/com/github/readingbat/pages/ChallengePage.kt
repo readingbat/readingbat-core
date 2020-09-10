@@ -18,77 +18,80 @@
 package com.github.readingbat.pages
 
 import com.github.pambrose.common.util.*
+import com.github.readingbat.common.*
+import com.github.readingbat.common.CSSNames.ARROW
+import com.github.readingbat.common.CSSNames.CHALLENGE_DESC
+import com.github.readingbat.common.CSSNames.CHECK_ANSWERS
+import com.github.readingbat.common.CSSNames.CODE_BLOCK
+import com.github.readingbat.common.CSSNames.CODINGBAT
+import com.github.readingbat.common.CSSNames.DASHBOARD
+import com.github.readingbat.common.CSSNames.EXPERIMENT
+import com.github.readingbat.common.CSSNames.FEEDBACK
+import com.github.readingbat.common.CSSNames.FUNC_COL
+import com.github.readingbat.common.CSSNames.HINT
+import com.github.readingbat.common.CSSNames.LIKE_BUTTONS
+import com.github.readingbat.common.CSSNames.STATUS
+import com.github.readingbat.common.CSSNames.SUCCESS
+import com.github.readingbat.common.CSSNames.UNDERLINE
+import com.github.readingbat.common.CSSNames.USER_RESP
+import com.github.readingbat.common.CommonUtils.pathOf
+import com.github.readingbat.common.Constants.CORRECT_COLOR
+import com.github.readingbat.common.Constants.DBMS_DOWN
+import com.github.readingbat.common.Constants.INCOMPLETE_COLOR
+import com.github.readingbat.common.Constants.LIKE_DISLIKE_JS_FUNC
+import com.github.readingbat.common.Constants.MSG
+import com.github.readingbat.common.Constants.PING_CODE
+import com.github.readingbat.common.Constants.PRISM
+import com.github.readingbat.common.Constants.PROCESS_USER_ANSWERS_JS_FUNC
+import com.github.readingbat.common.Constants.RESP
+import com.github.readingbat.common.Constants.WRONG_COLOR
+import com.github.readingbat.common.Endpoints.CHALLENGE_ENDPOINT
+import com.github.readingbat.common.Endpoints.CHALLENGE_ROOT
+import com.github.readingbat.common.Endpoints.CLEAR_CHALLENGE_ANSWERS_ENDPOINT
+import com.github.readingbat.common.Endpoints.PLAYGROUND_ROOT
+import com.github.readingbat.common.Endpoints.STATIC_ROOT
+import com.github.readingbat.common.FormFields.CHALLENGE_ANSWERS_PARAM
+import com.github.readingbat.common.FormFields.CHALLENGE_NAME_PARAM
+import com.github.readingbat.common.FormFields.CORRECT_ANSWERS_PARAM
+import com.github.readingbat.common.FormFields.GROUP_NAME_PARAM
+import com.github.readingbat.common.FormFields.LANGUAGE_NAME_PARAM
+import com.github.readingbat.common.ParameterIds.DISLIKE_CLEAR
+import com.github.readingbat.common.ParameterIds.DISLIKE_COLOR
+import com.github.readingbat.common.ParameterIds.FEEDBACK_ID
+import com.github.readingbat.common.ParameterIds.HINT_ID
+import com.github.readingbat.common.ParameterIds.LIKE_CLEAR
+import com.github.readingbat.common.ParameterIds.LIKE_COLOR
+import com.github.readingbat.common.ParameterIds.LIKE_SPINNER_ID
+import com.github.readingbat.common.ParameterIds.LIKE_STATUS_ID
+import com.github.readingbat.common.ParameterIds.NEXTPREVCHANCE_ID
+import com.github.readingbat.common.ParameterIds.SPINNER_ID
+import com.github.readingbat.common.ParameterIds.STATUS_ID
+import com.github.readingbat.common.ParameterIds.SUCCESS_ID
+import com.github.readingbat.common.StaticFileNames.DISLIKE_CLEAR_FILE
+import com.github.readingbat.common.StaticFileNames.DISLIKE_COLOR_FILE
+import com.github.readingbat.common.StaticFileNames.LIKE_CLEAR_FILE
+import com.github.readingbat.common.StaticFileNames.LIKE_COLOR_FILE
+import com.github.readingbat.common.User.Companion.challengeAnswersKey
+import com.github.readingbat.common.User.Companion.correctAnswersKey
+import com.github.readingbat.common.User.Companion.fetchActiveClassCode
+import com.github.readingbat.common.User.Companion.fetchPreviousResponses
+import com.github.readingbat.common.User.Companion.gson
+import com.github.readingbat.common.User.Companion.likeDislikeKey
 import com.github.readingbat.dsl.Challenge
-import com.github.readingbat.dsl.FunctionInfo
 import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.misc.BrowserSession
-import com.github.readingbat.misc.CSSNames.ARROW
-import com.github.readingbat.misc.CSSNames.CHALLENGE_DESC
-import com.github.readingbat.misc.CSSNames.CHECK_ANSWERS
-import com.github.readingbat.misc.CSSNames.CODE_BLOCK
-import com.github.readingbat.misc.CSSNames.CODINGBAT
-import com.github.readingbat.misc.CSSNames.DASHBOARD
-import com.github.readingbat.misc.CSSNames.EXPERIMENT
-import com.github.readingbat.misc.CSSNames.FEEDBACK
-import com.github.readingbat.misc.CSSNames.FUNC_COL
-import com.github.readingbat.misc.CSSNames.HINT
-import com.github.readingbat.misc.CSSNames.LIKE_BUTTONS
-import com.github.readingbat.misc.CSSNames.STATUS
-import com.github.readingbat.misc.CSSNames.SUCCESS
-import com.github.readingbat.misc.CSSNames.USER_RESP
-import com.github.readingbat.misc.CheckAnswersJs.PROCESS_USER_ANSWERS_JS_FUNC
-import com.github.readingbat.misc.CheckAnswersJs.checkAnswersScript
-import com.github.readingbat.misc.ClassCode
-import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
-import com.github.readingbat.misc.Constants.CORRECT_COLOR
-import com.github.readingbat.misc.Constants.DBMS_DOWN
-import com.github.readingbat.misc.Constants.MSG
-import com.github.readingbat.misc.Constants.PLAYGROUND_ROOT
-import com.github.readingbat.misc.Constants.RESP
-import com.github.readingbat.misc.Constants.STATIC_ROOT
-import com.github.readingbat.misc.Constants.WRONG_COLOR
-import com.github.readingbat.misc.Endpoints.CHALLENGE_ENDPOINT
-import com.github.readingbat.misc.Endpoints.CLEAR_CHALLENGE_ANSWERS_ENDPOINT
-import com.github.readingbat.misc.FormFields.CHALLENGE_ANSWERS_KEY
-import com.github.readingbat.misc.FormFields.CHALLENGE_NAME_KEY
-import com.github.readingbat.misc.FormFields.GROUP_NAME_KEY
-import com.github.readingbat.misc.FormFields.LANGUAGE_NAME_KEY
-import com.github.readingbat.misc.KeyConstants.CORRECT_ANSWERS_KEY
-import com.github.readingbat.misc.KeyConstants.NAME_FIELD
-import com.github.readingbat.misc.LikeDislikeJs.LIKE_DISLIKE_JS_FUNC
-import com.github.readingbat.misc.LikeDislikeJs.likeDislikeScript
-import com.github.readingbat.misc.Message
-import com.github.readingbat.misc.PageUtils.pathOf
-import com.github.readingbat.misc.ParameterIds.DISLIKE_CLEAR
-import com.github.readingbat.misc.ParameterIds.DISLIKE_COLOR
-import com.github.readingbat.misc.ParameterIds.FEEDBACK_ID
-import com.github.readingbat.misc.ParameterIds.HINT_ID
-import com.github.readingbat.misc.ParameterIds.LIKE_CLEAR
-import com.github.readingbat.misc.ParameterIds.LIKE_COLOR
-import com.github.readingbat.misc.ParameterIds.LIKE_SPINNER_ID
-import com.github.readingbat.misc.ParameterIds.LIKE_STATUS_ID
-import com.github.readingbat.misc.ParameterIds.NEXTCHANCE_ID
-import com.github.readingbat.misc.ParameterIds.SPINNER_ID
-import com.github.readingbat.misc.ParameterIds.STATUS_ID
-import com.github.readingbat.misc.ParameterIds.SUCCESS_ID
-import com.github.readingbat.misc.User
-import com.github.readingbat.misc.User.Companion.challengeAnswersKey
-import com.github.readingbat.misc.User.Companion.correctAnswersKey
-import com.github.readingbat.misc.User.Companion.fetchActiveClassCode
-import com.github.readingbat.misc.User.Companion.gson
-import com.github.readingbat.misc.User.Companion.likeDislikeKey
-import com.github.readingbat.pages.PageCommon.addLink
-import com.github.readingbat.pages.PageCommon.backLink
-import com.github.readingbat.pages.PageCommon.bodyHeader
-import com.github.readingbat.pages.PageCommon.headDefault
-import com.github.readingbat.pages.PageCommon.rawHtml
+import com.github.readingbat.pages.CheckAnswersJs.checkAnswersScript
+import com.github.readingbat.pages.LikeDislikeJs.likeDislikeScript
+import com.github.readingbat.pages.PageUtils.addLink
+import com.github.readingbat.pages.PageUtils.backLink
+import com.github.readingbat.pages.PageUtils.bodyHeader
+import com.github.readingbat.pages.PageUtils.headDefault
+import com.github.readingbat.pages.PageUtils.rawHtml
 import com.github.readingbat.posts.ChallengeHistory
+import com.github.readingbat.server.ChallengeMd5
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
-import io.ktor.application.call
+import io.ktor.application.*
 import io.ktor.http.ContentType.Text.CSS
-import io.ktor.sessions.get
-import io.ktor.sessions.sessions
 import kotlinx.html.*
 import kotlinx.html.Entities.nbsp
 import kotlinx.html.ScriptType.textJavaScript
@@ -102,6 +105,7 @@ internal object ChallengePage : KLogging() {
   private const val answersTd = "answersTd"
   private const val answersSpan = "answersSpan"
   private const val numCorrectSpan = "numCorrectSpan"
+  private const val pingMsg = "pingMsg"
   internal const val headerColor = "#419DC1"
 
   fun PipelineCall.challengePage(content: ReadingBatContent,
@@ -111,18 +115,22 @@ internal object ChallengePage : KLogging() {
                                  redis: Jedis?) =
     createHTML()
       .html {
-        val browserSession = call.sessions.get<BrowserSession>()
+        val browserSession = call.browserSession
         val languageType = challenge.languageType
         val languageName = languageType.languageName
         val groupName = challenge.groupName
         val challengeName = challenge.challengeName
-        val funcInfo = challenge.funcInfo(content)
+        val funcInfo = challenge.functionInfo(content)
         val loginPath = pathOf(CHALLENGE_ROOT, languageName, groupName, challengeName)
         val activeClassCode = user.fetchActiveClassCode(redis)
+        val enrollees = activeClassCode.fetchEnrollees(redis)
+        val msg = Message(queryParam(MSG))
 
         head {
           link { rel = "stylesheet"; href = spinnerCss }
-          link { rel = "stylesheet"; href = "$STATIC_ROOT/$languageName-prism.css"; type = CSS.toString() }
+          link {
+            rel = "stylesheet"; href = pathOf(STATIC_ROOT, PRISM, "${languageName}-prism.css"); type = CSS.toString()
+          }
 
           script(type = textJavaScript) { checkAnswersScript(languageName, groupName, challengeName) }
           script(type = textJavaScript) { likeDislikeScript(languageName, groupName, challengeName) }
@@ -132,33 +140,28 @@ internal object ChallengePage : KLogging() {
         }
 
         body {
-          bodyHeader(user,
-                     loginAttempt,
-                     content,
-                     languageType,
-                     loginPath,
-                     false,
-                     activeClassCode,
-                     redis,
-                     Message(queryParam(MSG)))
+          bodyHeader(content, user, languageType, loginAttempt, loginPath, false, activeClassCode, redis, msg)
 
           displayChallenge(challenge, funcInfo)
 
-          if (activeClassCode.isStudentMode)
+          if (activeClassCode.isNotEnabled)
             displayQuestions(user, browserSession, challenge, funcInfo, redis)
           else {
-            if (redis.isNull())
-              p { +DBMS_DOWN.value }
-            else
-              displayStudentProgress(challenge, content.maxHistoryLength, funcInfo, activeClassCode, redis)
+            if (redis.isNull()) {
+              p { +DBMS_DOWN.toString() }
+            }
+            else {
+              displayStudentProgress(challenge, content.maxHistoryLength, funcInfo, activeClassCode, enrollees, redis)
+              p { +"Connection time: "; span { id = pingMsg } }
+            }
           }
 
           backLink(CHALLENGE_ROOT, languageName.value, groupName.value)
 
-          script { src = "$STATIC_ROOT/$languageName-prism.js" }
+          script { src = pathOf(STATIC_ROOT, PRISM, "${languageName}-prism.js") }
 
-          if (activeClassCode.isTeacherMode)
-            enableWebSockets(activeClassCode)
+          if (activeClassCode.isEnabled && enrollees.isNotEmpty())
+            enableWebSockets(activeClassCode, funcInfo.challengeMd5)
         }
       }
 
@@ -170,17 +173,17 @@ internal object ChallengePage : KLogging() {
     val challenges = challenge.challengeGroup.challenges
 
     h2 {
-      style = "margin-bottom:5px;"
+      style = "margin-bottom:5px"
       val groupPath = pathOf(CHALLENGE_ROOT, languageName, groupName)
       this@displayChallenge.addLink(groupName.value.decode(), groupPath)
-      span { style = "padding-left:2px; padding-right:2px;"; rawHtml("&rarr;") }
+      span { style = "padding-left:2px; padding-right:2px"; rawHtml("&rarr;") }
       +challengeName.value
     }
 
     span {
-      style = "padding-left:20px;"
+      style = "padding-left: 20px"
       val pos = challengeGroup.indexOf(challengeName)
-      this@displayChallenge.nextChance(pos, challenges, true)
+      this@displayChallenge.nextPrevChance(pos, challenges, true)
     }
 
     if (challenge.description.isNotBlank())
@@ -211,7 +214,8 @@ internal object ChallengePage : KLogging() {
                                     funcInfo: FunctionInfo,
                                     redis: Jedis?) =
     div {
-      style = "margin-top:2em; margin-left:2em;"
+      style = "margin-top:2em; margin-left:2em"
+
       table {
         tr {
           th {
@@ -227,7 +231,15 @@ internal object ChallengePage : KLogging() {
           }
         }
 
-        val correctAnswers = fetchPreviousAnswers(user, browserSession, challenge, redis)
+        val topFocus = "topFocus"
+        val bottomFocus = "bottomFocus"
+        val offset = 5 // The login dialog takes tabIndex values 1-4
+        val previousResponses = user.fetchPreviousResponses(challenge, browserSession, redis)
+
+        // This will cause shift tab to go to bottom input element
+        span { tabIndex = "5"; onFocus = "document.querySelector('.$bottomFocus').focus()" }
+
+        val cnt = funcInfo.invocations.size
 
         funcInfo.invocations.withIndex()
           .forEach { (i, invocation) ->
@@ -241,20 +253,35 @@ internal object ChallengePage : KLogging() {
               }
               td(classes = ARROW) { rawHtml("&rarr;") }
               td {
-                textInput(classes = USER_RESP) {
+                val cls =
+                  when (i) {
+                    cnt - 1 -> " $bottomFocus"
+                    0 -> " $topFocus"
+                    else -> ""
+                  }
+                textInput(classes = USER_RESP + cls) {
                   id = "$RESP$i"
                   onKeyDown = "$PROCESS_USER_ANSWERS_JS_FUNC(event, ${funcInfo.correctAnswers.size})"
-                  val answer = correctAnswers[invocation.value] ?: ""
-                  if (answer.isNotBlank())
-                    value = answer
+
+                  val response = previousResponses[invocation.value] ?: ""
+                  if (response.isNotBlank())
+                    value = response
                   else
-                    placeholder = funcInfo.placeHolder()
+                    placeholder = funcInfo.placeHolder
+
+                  /// See: http://bluegalaxy.info/codewalk/2018/08/04/javascript-how-to-create-looping-tabindex-cycle/
+                  // We want the first input element to be 2
+                  tabIndex = (i + offset).toString()
+                  if (i == 0)
+                    autoFocus = true
                 }
               }
               td(classes = FEEDBACK) { id = "$FEEDBACK_ID$i" }
               td(classes = HINT) { id = "$HINT_ID$i" }
             }
           }
+        // This will cause tab to circle back to top input element
+        span { tabIndex = (cnt + offset).toString(); onFocus = "document.querySelector('.$topFocus').focus()" }
       }
 
       this@displayQuestions.processAnswers(funcInfo, challenge)
@@ -262,21 +289,20 @@ internal object ChallengePage : KLogging() {
         this@displayQuestions.likeDislike(user, browserSession, challenge, redis)
       this@displayQuestions.otherLinks(challenge)
       if (redis.isNotNull())
-        this@displayQuestions.clearChallengeAnswerHistory(user, browserSession, challenge)
+        this@displayQuestions.clearChallengeAnswerHistoryOption(user, browserSession, challenge)
     }
 
-  private fun BODY.enableWebSockets(classCode: ClassCode) {
+  private fun BODY.enableWebSockets(classCode: ClassCode, challengeMd5: ChallengeMd5) {
     script {
       rawHtml(
         """
-          
           var wshost = location.origin;
           if (wshost.startsWith('https:'))
             wshost = wshost.replace(/^https:/, 'wss:');
           else
             wshost = wshost.replace(/^http:/, 'ws:');
 
-          var wsurl = wshost + '$CHALLENGE_ENDPOINT/' + encodeURIComponent('$classCode');
+          var wsurl = wshost + '$CHALLENGE_ENDPOINT/'+encodeURIComponent('$classCode')+'/'+encodeURIComponent('$challengeMd5');
 
           var ws = new WebSocket(wsurl);
           
@@ -286,18 +312,25 @@ internal object ChallengePage : KLogging() {
           
           ws.onmessage = function (event) {
             var obj = JSON.parse(event.data);
-            
-            var name = document.getElementById(obj.userId + '-$nameTd');
-            name.style.backgroundColor = obj.complete ? '$CORRECT_COLOR' : '$WRONG_COLOR';
 
-            document.getElementById(obj.userId + '-$numCorrectSpan').innerHTML = obj.numCorrect;
-
-            var prefix = obj.userId + '-' + obj.history.invocation;
-            
-            var answers = document.getElementById(prefix + '-$answersTd')
-            answers.style.backgroundColor = obj.history.correct ? '$CORRECT_COLOR' : '$WRONG_COLOR';
-
-            document.getElementById(prefix + '-$answersSpan').innerHTML = obj.history.answers;
+            if (obj.hasOwnProperty("type") && obj.type == "$PING_CODE") {
+              document.getElementById('$pingMsg').innerHTML = obj.msg;
+            }
+            else {
+              var name = document.getElementById(obj.userId + '-$nameTd');
+              name.style.backgroundColor = obj.complete ? '$CORRECT_COLOR' : '$INCOMPLETE_COLOR';
+  
+              document.getElementById(obj.userId + '-$numCorrectSpan').innerHTML = obj.numCorrect;
+  
+              var prefix = obj.userId + '-' + obj.history.invocation;
+              
+              var answers = document.getElementById(prefix + '-$answersTd')
+              answers.style.backgroundColor = obj.history.correct ? '$CORRECT_COLOR' 
+                                                                  : (obj.history.answers.length > 0 ? '$WRONG_COLOR' 
+                                                                                                    : '$INCOMPLETE_COLOR');
+  
+              document.getElementById(prefix + '-$answersSpan').innerHTML = obj.history.answers;
+            }
           };
         """.trimIndent())
     }
@@ -306,28 +339,32 @@ internal object ChallengePage : KLogging() {
   private fun BODY.displayStudentProgress(challenge: Challenge,
                                           maxHistoryLength: Int,
                                           funcInfo: FunctionInfo,
-                                          activeClassCode: ClassCode,
+                                          classCode: ClassCode,
+                                          enrollees: List<User>,
                                           redis: Jedis) =
     div {
-      style = "margin-top:2em;"
+      style = "margin-top:2em"
 
       val languageName = challenge.languageType.languageName
       val groupName = challenge.groupName
       val challengeName = challenge.challengeName
-      val classDesc = activeClassCode.fetchClassDesc(redis)
-      val enrollees = activeClassCode.fetchEnrollees(redis)
+      val displayStr = classCode.toDisplayString(redis)
 
       h3 {
         style = "margin-left: 5px; color: $headerColor"
-        +"${if (enrollees.isEmpty()) "No students enrolled in " else "Student progress for "} $classDesc [$activeClassCode]"
+        +if (enrollees.isEmpty()) "No students enrolled in " else "Student progress for "
+        a(classes = UNDERLINE) {
+          href = Endpoints.classSummaryEndpoint(classCode, languageName, groupName)
+          +displayStr
+        }
       }
 
       if (enrollees.isNotEmpty()) {
         table {
-          style = "width:100%; border-spacing: 5px 10px;"
+          style = "width:100%; border-spacing: 5px 10px"
 
           tr {
-            th { style = "text-align:left; color: $headerColor"; +"Student" }
+            th { style = "width:15%; white-space:nowrap; text-align:left; color: $headerColor"; +"Student" }
             funcInfo.invocations
               .forEach { invocation ->
                 th {
@@ -355,19 +392,21 @@ internal object ChallengePage : KLogging() {
               tr(classes = DASHBOARD) {
                 td(classes = DASHBOARD) {
                   id = "${enrollee.id}-$nameTd"
-                  style = "background-color:${if (allCorrect) CORRECT_COLOR else WRONG_COLOR};"
+                  style =
+                    "width:15%;white-space:nowrap; background-color:${if (allCorrect) CORRECT_COLOR else INCOMPLETE_COLOR}"
 
                   span { id = "${enrollee.id}-$numCorrectSpan"; +numCorrect.toString() }
                   +"/$numChallenges"
                   rawHtml(nbsp.text)
-                  +(redis.hget(enrollee.userInfoKey, NAME_FIELD) ?: "")
+                  +enrollee.name(redis)
                 }
 
                 results
                   .forEach { (invocation, history) ->
                     td(classes = DASHBOARD) {
                       id = "${enrollee.id}-$invocation-$answersTd"
-                      style = "background-color:${if (history.correct) CORRECT_COLOR else WRONG_COLOR};"
+                      style =
+                        "background-color:${if (history.correct) CORRECT_COLOR else (if (history.answers.isNotEmpty()) WRONG_COLOR else INCOMPLETE_COLOR)}"
                       span {
                         id = "${enrollee.id}-$invocation-$answersSpan"
                         history.answers.asReversed().take(maxHistoryLength).forEach { answer -> +answer; br }
@@ -380,48 +419,33 @@ internal object ChallengePage : KLogging() {
       }
     }
 
-  private fun fetchPreviousAnswers(user: User?,
-                                   browserSession: BrowserSession?,
-                                   challenge: Challenge,
-                                   redis: Jedis?) =
-    if (redis.isNull())
-      emptyMap
-    else {
-      val languageName = challenge.languageType.languageName
-      val groupName = challenge.groupName
-      val challengeName = challenge.challengeName
-      val challengeAnswersKey = user.challengeAnswersKey(browserSession, languageName, groupName, challengeName)
-      if (challengeAnswersKey.isNotEmpty()) redis.hgetAll(challengeAnswersKey) else emptyMap()
-    }
-
   private fun BODY.processAnswers(funcInfo: FunctionInfo, challenge: Challenge) {
     div {
-      style = "margin-top:2em;"
+      style = "margin-top:2em"
       table {
         tr {
           td {
             button(classes = CHECK_ANSWERS) {
-              onClick = "$PROCESS_USER_ANSWERS_JS_FUNC(null, ${funcInfo.correctAnswers.size});"; +"Check My Answers"
+              onClick = "$PROCESS_USER_ANSWERS_JS_FUNC(null, ${funcInfo.correctAnswers.size})"; +"Check My Answers"
             }
           }
 
-          td { style = "vertical-align:middle;"; span { style = "margin-left:1em;"; id = SPINNER_ID } }
+          td { style = "vertical-align:middle"; span { style = "margin-left:1em"; id = SPINNER_ID } }
 
           td {
             val challengeName = challenge.challengeName
             val challengeGroup = challenge.challengeGroup
-            val challenges = challenge.challengeGroup.challenges
             val pos = challengeGroup.indexOf(challengeName)
 
             span {
-              id = NEXTCHANCE_ID
-              style = "display:none;"
-              this@processAnswers.nextChance(pos, challenges, false)
+              id = NEXTPREVCHANCE_ID
+              style = "display:none"
+              this@processAnswers.nextPrevChance(pos, challengeGroup.challenges, false)
             }
           }
 
           td {
-            style = "vertical-align:middle;"
+            style = "vertical-align:middle"
             span(classes = STATUS) { id = STATUS_ID }
             span(classes = SUCCESS) { id = SUCCESS_ID }
           }
@@ -430,7 +454,7 @@ internal object ChallengePage : KLogging() {
     }
   }
 
-  private fun BODY.nextChance(pos: Int, challenges: List<Challenge>, includePrev: Boolean) {
+  private fun BODY.nextPrevChance(pos: Int, challenges: List<Challenge>, includePrev: Boolean) {
     if (includePrev) {
       "prev".also {
         if (pos == 0)
@@ -473,40 +497,40 @@ internal object ChallengePage : KLogging() {
         tr {
           td {
             id = LIKE_CLEAR
-            style = "display:${if (likeDislikeVal == 0 || likeDislikeVal == 2) "inline" else "none" + ";"}"
+            style = "display:${if (likeDislikeVal == 0 || likeDislikeVal == 2) "inline" else "none"}"
             button(classes = LIKE_BUTTONS) {
-              onClick = "$LIKE_DISLIKE_JS_FUNC(${LIKE_CLEAR.toDoubleQuoted()});"
-              img { height = imgSize; src = "$STATIC_ROOT/like-clear.png" }
+              onClick = "$LIKE_DISLIKE_JS_FUNC(${LIKE_CLEAR.toDoubleQuoted()})"
+              img { height = imgSize; src = pathOf(STATIC_ROOT, LIKE_CLEAR_FILE) }
             }
           }
           td {
             id = LIKE_COLOR
-            style = "display:${if (likeDislikeVal == 1) "inline" else "none" + ";"}"
+            style = "display:${if (likeDislikeVal == 1) "inline" else "none"}"
             button(classes = LIKE_BUTTONS) {
-              onClick = "$LIKE_DISLIKE_JS_FUNC(${LIKE_COLOR.toDoubleQuoted()});"
-              img { height = imgSize; src = "$STATIC_ROOT/like-color.png" }
+              onClick = "$LIKE_DISLIKE_JS_FUNC(${LIKE_COLOR.toDoubleQuoted()})"
+              img { height = imgSize; src = pathOf(STATIC_ROOT, LIKE_COLOR_FILE) }
             }
           }
           td {
             id = DISLIKE_CLEAR
-            style = "display:${if (likeDislikeVal == 0 || likeDislikeVal == 1) "inline" else "none" + ";"}"
+            style = "display:${if (likeDislikeVal == 0 || likeDislikeVal == 1) "inline" else "none"}"
             button(classes = LIKE_BUTTONS) {
-              onClick = "$LIKE_DISLIKE_JS_FUNC(${DISLIKE_CLEAR.toDoubleQuoted()});"
-              img { height = imgSize; src = "$STATIC_ROOT/dislike-clear.png" }
+              onClick = "$LIKE_DISLIKE_JS_FUNC(${DISLIKE_CLEAR.toDoubleQuoted()})"
+              img { height = imgSize; src = pathOf(STATIC_ROOT, DISLIKE_CLEAR_FILE) }
             }
           }
           td {
             id = DISLIKE_COLOR
-            style = "display:${if (likeDislikeVal == 2) "inline" else "none" + ";"}"
+            style = "display:${if (likeDislikeVal == 2) "inline" else "none"}"
             button(classes = LIKE_BUTTONS) {
-              onClick = "$LIKE_DISLIKE_JS_FUNC(${DISLIKE_COLOR.toDoubleQuoted()});"
-              img { height = imgSize; src = "$STATIC_ROOT/dislike-color.png" }
+              onClick = "$LIKE_DISLIKE_JS_FUNC(${DISLIKE_COLOR.toDoubleQuoted()})"
+              img { height = imgSize; src = pathOf(STATIC_ROOT, DISLIKE_COLOR_FILE) }
             }
           }
 
-          td { style = "vertical-align:middle;"; span { style = "margin-left:1em;"; id = LIKE_SPINNER_ID } }
+          td { style = "vertical-align:middle"; span { style = "margin-left:1em"; id = LIKE_SPINNER_ID } }
 
-          td { style = "vertical-align:middle;"; span(classes = STATUS) { id = LIKE_STATUS_ID } }
+          td { style = "vertical-align:middle"; span(classes = STATUS) { id = LIKE_STATUS_ID } }
         }
       }
     }
@@ -520,13 +544,13 @@ internal object ChallengePage : KLogging() {
     p(classes = EXPERIMENT) {
       +"Experiment with this code on "
       this@otherLinks.addLink("Gitpod.io", "https://gitpod.io/#${challenge.gitpodUrl}", true)
-      if (languageType.isKotlin()) {
+      if (languageType.isKotlin) {
         +" or as a "
         this@otherLinks.addLink("Kotlin Playground", pathOf(PLAYGROUND_ROOT, groupName, challengeName), false)
       }
     }
 
-    if (challenge.codingBatEquiv.isNotEmpty() && (languageType.isJava() || languageType.isPython())) {
+    if (challenge.codingBatEquiv.isNotEmpty() && (languageType.isJava || languageType.isPython)) {
       p(classes = CODINGBAT) {
         +"Work on a similar problem on "
         this@otherLinks.addLink("CodingBat.com", "https://codingbat.com/prob/${challenge.codingBatEquiv}", true)
@@ -534,9 +558,9 @@ internal object ChallengePage : KLogging() {
     }
   }
 
-  private fun BODY.clearChallengeAnswerHistory(user: User?,
-                                               browserSession: BrowserSession?,
-                                               challenge: Challenge) {
+  private fun BODY.clearChallengeAnswerHistoryOption(user: User?,
+                                                     browserSession: BrowserSession?,
+                                                     challenge: Challenge) {
     val languageName = challenge.languageType.languageName
     val groupName = challenge.groupName
     val challengeName = challenge.challengeName
@@ -544,17 +568,17 @@ internal object ChallengePage : KLogging() {
     val challengeAnswersKey = user.challengeAnswersKey(browserSession, languageName, groupName, challengeName)
 
     form {
-      style = "margin:0;"
+      style = "margin:0"
       action = CLEAR_CHALLENGE_ANSWERS_ENDPOINT
       method = FormMethod.post
-      onSubmit = """return confirm('Are you sure you want to clear your previous answers for "$challengeName"?');"""
-      input { type = InputType.hidden; name = LANGUAGE_NAME_KEY; value = languageName.value }
-      input { type = InputType.hidden; name = GROUP_NAME_KEY; value = groupName.value }
-      input { type = InputType.hidden; name = CHALLENGE_NAME_KEY; value = challengeName.value }
-      input { type = InputType.hidden; name = CORRECT_ANSWERS_KEY; value = correctAnswersKey }
-      input { type = InputType.hidden; name = CHALLENGE_ANSWERS_KEY; value = challengeAnswersKey }
+      onSubmit = """return confirm('Are you sure you want to clear your previous answers for "$challengeName"?')"""
+      input { type = InputType.hidden; name = LANGUAGE_NAME_PARAM; value = languageName.value }
+      input { type = InputType.hidden; name = GROUP_NAME_PARAM; value = groupName.value }
+      input { type = InputType.hidden; name = CHALLENGE_NAME_PARAM; value = challengeName.value }
+      input { type = InputType.hidden; name = CORRECT_ANSWERS_PARAM; value = correctAnswersKey }
+      input { type = InputType.hidden; name = CHALLENGE_ANSWERS_PARAM; value = challengeAnswersKey }
       input {
-        style = "vertical-align:middle; margin-top:1; margin-bottom:0;"
+        style = "vertical-align:middle; margin-top:1; margin-bottom:0"
         type = InputType.submit; value = "Clear answer history"
       }
     }

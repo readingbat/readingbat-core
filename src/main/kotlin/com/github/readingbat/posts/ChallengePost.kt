@@ -17,38 +17,37 @@
 
 package com.github.readingbat.posts
 
-import com.github.pambrose.common.script.KotlinScript
-import com.github.pambrose.common.script.PythonScript
 import com.github.pambrose.common.util.*
+import com.github.readingbat.common.CommonUtils.pathOf
+import com.github.readingbat.common.Constants.CHALLENGE_SRC
+import com.github.readingbat.common.Constants.GROUP_SRC
+import com.github.readingbat.common.Constants.LANG_SRC
+import com.github.readingbat.common.Constants.LIKE_DESC
+import com.github.readingbat.common.Constants.MSG
+import com.github.readingbat.common.Constants.RESP
+import com.github.readingbat.common.Endpoints.CHALLENGE_ROOT
+import com.github.readingbat.common.FormFields.CHALLENGE_ANSWERS_PARAM
+import com.github.readingbat.common.FormFields.CHALLENGE_NAME_PARAM
+import com.github.readingbat.common.FormFields.CORRECT_ANSWERS_PARAM
+import com.github.readingbat.common.FormFields.GROUP_NAME_PARAM
+import com.github.readingbat.common.FormFields.LANGUAGE_NAME_PARAM
+import com.github.readingbat.common.ParameterIds.DISLIKE_CLEAR
+import com.github.readingbat.common.ParameterIds.DISLIKE_COLOR
+import com.github.readingbat.common.ParameterIds.LIKE_CLEAR
+import com.github.readingbat.common.ParameterIds.LIKE_COLOR
+import com.github.readingbat.common.ScriptPools.kotlinScriptPool
+import com.github.readingbat.common.ScriptPools.pythonScriptPool
+import com.github.readingbat.common.User
+import com.github.readingbat.common.User.Companion.gson
+import com.github.readingbat.common.User.Companion.saveChallengeAnswers
+import com.github.readingbat.common.User.Companion.saveLikeDislike
+import com.github.readingbat.common.browserSession
 import com.github.readingbat.dsl.InvalidConfigurationException
-import com.github.readingbat.dsl.LanguageType
-import com.github.readingbat.dsl.LanguageType.Java
-import com.github.readingbat.dsl.LanguageType.Kotlin
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.ReturnType
-import com.github.readingbat.dsl.ReturnType.*
-import com.github.readingbat.misc.BrowserSession
-import com.github.readingbat.misc.CheckAnswersJs.challengeSrc
-import com.github.readingbat.misc.CheckAnswersJs.groupSrc
-import com.github.readingbat.misc.CheckAnswersJs.langSrc
-import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
-import com.github.readingbat.misc.Constants.LIKE_DESC
-import com.github.readingbat.misc.Constants.MSG
-import com.github.readingbat.misc.Constants.RESP
-import com.github.readingbat.misc.FormFields.CHALLENGE_ANSWERS_KEY
-import com.github.readingbat.misc.FormFields.CHALLENGE_NAME_KEY
-import com.github.readingbat.misc.FormFields.GROUP_NAME_KEY
-import com.github.readingbat.misc.FormFields.LANGUAGE_NAME_KEY
-import com.github.readingbat.misc.KeyConstants.CORRECT_ANSWERS_KEY
-import com.github.readingbat.misc.PageUtils.pathOf
-import com.github.readingbat.misc.ParameterIds.DISLIKE_CLEAR
-import com.github.readingbat.misc.ParameterIds.DISLIKE_COLOR
-import com.github.readingbat.misc.ParameterIds.LIKE_CLEAR
-import com.github.readingbat.misc.ParameterIds.LIKE_COLOR
-import com.github.readingbat.misc.User
-import com.github.readingbat.misc.User.Companion.gson
-import com.github.readingbat.misc.User.Companion.saveChallengeAnswers
-import com.github.readingbat.misc.User.Companion.saveLikeDislike
+import com.github.readingbat.dsl.ReturnType.BooleanType
+import com.github.readingbat.dsl.ReturnType.IntType
+import com.github.readingbat.dsl.ReturnType.StringType
 import com.github.readingbat.server.*
 import com.github.readingbat.server.ChallengeName.Companion.getChallengeName
 import com.github.readingbat.server.GroupName.Companion.getGroupName
@@ -56,7 +55,6 @@ import com.github.readingbat.server.LanguageName.Companion.getLanguageName
 import io.ktor.application.*
 import io.ktor.request.*
 import io.ktor.response.*
-import io.ktor.sessions.*
 import mu.KLogging
 import redis.clients.jedis.Jedis
 import javax.script.ScriptException
@@ -90,15 +88,22 @@ internal data class ChallengeHistory(var invocation: Invocation,
                                      var correct: Boolean = false,
                                      var incorrectAttempts: Int = 0,
                                      val answers: MutableList<String> = mutableListOf()) {
-  fun markCorrect() {
+
+  fun markCorrect(userResponse: String) {
     correct = true
+    if (userResponse.isNotBlank()) {
+      if (answers.isEmpty() || answers.last() != userResponse)
+        answers += userResponse
+    }
   }
 
   fun markIncorrect(userResponse: String) {
     correct = false
-    if (userResponse.isNotBlank() && userResponse !in answers) {
-      incorrectAttempts++
-      answers += userResponse
+    if (userResponse.isNotBlank()) {
+      if (answers.isEmpty() || answers.last() != userResponse) {
+        incorrectAttempts++
+        answers += userResponse
+      }
     }
   }
 
@@ -108,10 +113,10 @@ internal data class ChallengeHistory(var invocation: Invocation,
 }
 
 internal class ChallengeNames(paramMap: Map<String, String>) {
-  val languageName = LanguageName(paramMap[langSrc] ?: throw InvalidConfigurationException("Missing language name"))
-  val groupName = GroupName(paramMap[groupSrc] ?: throw InvalidConfigurationException("Missing group name"))
+  val languageName = LanguageName(paramMap[LANG_SRC] ?: throw InvalidConfigurationException("Missing language"))
+  val groupName = GroupName(paramMap[GROUP_SRC] ?: throw InvalidConfigurationException("Missing group name"))
   val challengeName =
-    ChallengeName(paramMap[challengeSrc] ?: throw InvalidConfigurationException("Missing challenge name"))
+    ChallengeName(paramMap[CHALLENGE_SRC] ?: throw InvalidConfigurationException("Missing challenge name"))
 }
 
 internal object ChallengePost : KLogging() {
@@ -121,17 +126,19 @@ internal object ChallengePost : KLogging() {
 
   private fun String.equalsAsJvmScalar(that: String,
                                        returnType: ReturnType,
-                                       languageType: LanguageType): Pair<Boolean, String> {
+                                       languageName: LanguageName): Pair<Boolean, String> {
+    val languageType = languageName.toLanguageType()
+
     fun deriveHint() =
       when {
         returnType == BooleanType ->
           when {
-            this.isPythonBoolean() -> "$languageType boolean values are either true or false"
+            isPythonBoolean() -> "$languageType boolean values are either true or false"
             !isJavaBoolean() -> "Answer should be either true or false"
             else -> ""
           }
-        returnType == StringType && this.isNotDoubleQuoted() -> "$languageType strings are double quoted"
-        returnType == IntType && this.isNotInt() -> "Answer should be an int value"
+        returnType == StringType && isNotDoubleQuoted() -> "$languageType strings are double quoted"
+        returnType == IntType && isNotInt() -> "Answer should be an int value"
         else -> ""
       }
 
@@ -168,7 +175,7 @@ internal object ChallengePost : KLogging() {
       val result =
         when {
           isEmpty() || correctAnswer.isEmpty() -> false
-          this.isDoubleQuoted() -> this == correctAnswer
+          isDoubleQuoted() -> this == correctAnswer
           isSingleQuoted() -> singleToDoubleQuoted() == correctAnswer
           contains(".") || correctAnswer.contains(".") -> toDouble() == correctAnswer.toDouble()
           isPythonBoolean() && correctAnswer.isPythonBoolean() -> toBoolean() == correctAnswer.toBoolean()
@@ -180,14 +187,14 @@ internal object ChallengePost : KLogging() {
     }
   }
 
-  private fun String.equalsAsJvmList(correctAnswer: String): Pair<Boolean, String> {
+  private suspend fun String.equalsAsJvmList(correctAnswer: String): Pair<Boolean, String> {
     fun deriveHint() = if (isNotBracketed()) "Answer should be bracketed" else ""
 
     val compareExpr =
       "listOf(${if (isBracketed()) trimEnds() else this}) == listOf(${if (correctAnswer.isBracketed()) correctAnswer.trimEnds() else correctAnswer})"
     logger.debug { "Check answers expression: $compareExpr" }
     return try {
-      val result = KotlinScript().use { it.eval(compareExpr) as Boolean }
+      val result = kotlinScriptPool.eval { eval(compareExpr) } as Boolean
       result to (if (result) "" else deriveHint())
     } catch (e: ScriptException) {
       logger.info { "Caught exception comparing $this and $correctAnswer: ${e.message} in $compareExpr" }
@@ -197,13 +204,12 @@ internal object ChallengePost : KLogging() {
     }
   }
 
-  private fun String.equalsAsPythonList(correctAnswer: String): Pair<Boolean, String> {
+  private suspend fun String.equalsAsPythonList(correctAnswer: String): Pair<Boolean, String> {
     fun deriveHint() = if (isNotBracketed()) "Answer should be bracketed" else ""
-
     val compareExpr = "${trim()} == ${correctAnswer.trim()}"
-    logger.debug { "Check answers expression: $compareExpr" }
     return try {
-      val result = PythonScript().use { it.eval(compareExpr) as Boolean }
+      logger.debug { "Check answers expression: $compareExpr" }
+      val result = pythonScriptPool.eval { eval(compareExpr) } as Boolean
       result to (if (result) "" else deriveHint())
     } catch (e: ScriptException) {
       logger.info { "Caught exception comparing $this and $correctAnswer: ${e.message} in: $compareExpr" }
@@ -219,37 +225,38 @@ internal object ChallengePost : KLogging() {
     val names = ChallengeNames(paramMap)
     val userResponses = params.entries().filter { it.key.startsWith(RESP) }
     val challenge = content.findChallenge(names.languageName, names.groupName, names.challengeName)
-    val funcInfo = challenge.funcInfo(content)
-
-    fun checkWithAnswer(languageName: LanguageName,
-                        userResponse: String,
-                        correctAnswer: String): Pair<Boolean, String> {
-      logger.debug("""Comparing user response: "$userResponse" with answer: "$correctAnswer"""")
-      val isJvm = languageName in listOf(Java.languageName, Kotlin.languageName)
-      return if (isJvm) {
-        if (correctAnswer.isBracketed())
-          userResponse.equalsAsJvmList(correctAnswer)
-        else
-          userResponse.equalsAsJvmScalar(correctAnswer, funcInfo.returnType, languageName.toLanguageType())
-      }
-      else {
-        if (correctAnswer.isBracketed())
-          userResponse.equalsAsPythonList(correctAnswer)
-        else
-          userResponse.equalsAsPythonScalar(correctAnswer, funcInfo.returnType)
-      }
-    }
+    val funcInfo = challenge.functionInfo(content)
 
     logger.debug("Found ${userResponses.size} user responses in $paramMap")
 
     val results =
       userResponses.indices
         .map { i ->
+          val languageName = names.languageName
           val userResponse = paramMap[RESP + i]?.trim() ?: throw InvalidConfigurationException("Missing user response")
-          val answer = funcInfo.correctAnswers[i]
+          val correctAnswer = funcInfo.correctAnswers[i]
+          val returnType = funcInfo.returnType
           val answered = userResponse.isNotBlank()
           val correctAndHint =
-            if (answered) checkWithAnswer(names.languageName, userResponse, answer) else false to ""
+            if (answered) {
+              logger.debug("""Comparing user response: "$userResponse" with correct answer: "$correctAnswer"""")
+              if (languageName.isJvm) {
+                if (correctAnswer.isBracketed())
+                  userResponse.equalsAsJvmList(correctAnswer)
+                else
+                  userResponse.equalsAsJvmScalar(correctAnswer, returnType, languageName)
+              }
+              else {
+                if (correctAnswer.isBracketed())
+                  userResponse.equalsAsPythonList(correctAnswer)
+                else
+                  userResponse.equalsAsPythonScalar(correctAnswer, returnType)
+              }
+            }
+            else {
+              false to ""
+            }
+
           ChallengeResults(invocation = funcInfo.invocations[i],
                            userResponse = userResponse,
                            answered = answered,
@@ -257,13 +264,12 @@ internal object ChallengePost : KLogging() {
                            hint = correctAndHint.second)
         }
 
+
     // Save whether all the answers for the challenge were correct
     if (redis.isNotNull()) {
-      val browserSession = call.sessions.get<BrowserSession>()
-      user.saveChallengeAnswers(content, browserSession, names, paramMap, funcInfo, userResponses, results, redis)
+      val browserSession = call.browserSession
+      user.saveChallengeAnswers(browserSession, content, names, paramMap, funcInfo, userResponses, results, redis)
     }
-
-    //delay(200.milliseconds.toLongMilliseconds())
 
     // Return values: 0 = not answered, 1 = correct, 2 = incorrect
     val answerMapping =
@@ -282,28 +288,28 @@ internal object ChallengePost : KLogging() {
   suspend fun PipelineCall.clearChallengeAnswers(content: ReadingBatContent, user: User?, redis: Jedis): String {
     val params = call.receiveParameters()
 
-    val languageName = params.getLanguageName(LANGUAGE_NAME_KEY)
-    val groupName = params.getGroupName(GROUP_NAME_KEY)
-    val challengeName = params.getChallengeName(CHALLENGE_NAME_KEY)
+    val languageName = params.getLanguageName(LANGUAGE_NAME_PARAM)
+    val groupName = params.getGroupName(GROUP_NAME_PARAM)
+    val challengeName = params.getChallengeName(CHALLENGE_NAME_PARAM)
 
-    val correctAnswersKey = params[CORRECT_ANSWERS_KEY] ?: ""
-    val challengeAnswersKey = params[CHALLENGE_ANSWERS_KEY] ?: ""
+    val correctAnswersKey = params[CORRECT_ANSWERS_PARAM] ?: ""
+    val challengeAnswersKey = params[CHALLENGE_ANSWERS_PARAM] ?: ""
 
     val challenge = content[languageName, groupName, challengeName]
-    val funcInfo = challenge.funcInfo(content)
+    val funcInfo = challenge.functionInfo(content)
     val path = pathOf(CHALLENGE_ROOT, languageName, groupName, challengeName)
 
     if (correctAnswersKey.isNotEmpty()) {
-      logger.info { "Clearing answers for $challenge $correctAnswersKey" }
+      logger.info { "Clearing correctAnswersKey for ${challenge.challengeName} $correctAnswersKey" }
       redis.del(correctAnswersKey)
     }
 
     if (challengeAnswersKey.isNotEmpty()) {
-      logger.info { "Clearing answers for $challenge $challengeAnswersKey" }
+      logger.info { "Clearing challengeAnswersKey for ${challenge.challengeName} $challengeAnswersKey" }
       redis.del(challengeAnswersKey)
     }
 
-    user?.resetHistory(content.maxHistoryLength, funcInfo, languageName, groupName, challengeName, redis)
+    user?.resetHistory(funcInfo, languageName, groupName, challengeName, content.maxHistoryLength, redis)
 
     throw RedirectException("$path?$MSG=${"Answers cleared".encode()}")
   }
@@ -311,11 +317,11 @@ internal object ChallengePost : KLogging() {
   suspend fun PipelineCall.clearGroupAnswers(content: ReadingBatContent, user: User?, redis: Jedis): String {
     val parameters = call.receiveParameters()
 
-    val languageName = parameters.getLanguageName(LANGUAGE_NAME_KEY)
-    val groupName = parameters.getGroupName(GROUP_NAME_KEY)
+    val languageName = parameters.getLanguageName(LANGUAGE_NAME_PARAM)
+    val groupName = parameters.getGroupName(GROUP_NAME_PARAM)
 
-    val correctJson = parameters[CORRECT_ANSWERS_KEY] ?: ""
-    val challengeJson = parameters[CHALLENGE_ANSWERS_KEY] ?: ""
+    val correctJson = parameters[CORRECT_ANSWERS_PARAM] ?: ""
+    val challengeJson = parameters[CHALLENGE_ANSWERS_PARAM] ?: ""
 
     val correctAnswersKeys = gson.fromJson(correctJson, List::class.java) as List<String>
     val challengeAnswersKeys = gson.fromJson(challengeJson, List::class.java) as List<String>
@@ -325,7 +331,7 @@ internal object ChallengePost : KLogging() {
     correctAnswersKeys
       .forEach { correctAnswersKey ->
         if (correctAnswersKey.isNotEmpty()) {
-          logger.info { "Clearing answers for $correctAnswersKey" }
+          logger.info { "Clearing correctAnswersKey for $correctAnswersKey" }
           redis.del(correctAnswersKey)
         }
       }
@@ -333,17 +339,18 @@ internal object ChallengePost : KLogging() {
     challengeAnswersKeys
       .forEach { challengeAnswersKey ->
         if (challengeAnswersKey.isNotEmpty()) {
-          logger.info { "Clearing answers for $challengeAnswersKey" }
+          logger.info { "Clearing challengeAnswersKey answers for $challengeAnswersKey" }
           redis.del(challengeAnswersKey)
         }
       }
 
     if (user.isNotNull()) {
-      for (challenge in content.findGroup(languageName.toLanguageType(), groupName).challenges) {
-        logger.info { "Clearing answers for ${challenge.challengeName}" }
-        val funcInfo = challenge.funcInfo(content)
-        user.resetHistory(content.maxHistoryLength, funcInfo, languageName, groupName, challenge.challengeName, redis)
-      }
+      content.findGroup(languageName, groupName).challenges
+        .forEach { challenge ->
+          logger.info { "Clearing answers for challengeName ${challenge.challengeName}" }
+          val funcInfo = challenge.functionInfo(content)
+          user.resetHistory(funcInfo, languageName, groupName, challenge.challengeName, content.maxHistoryLength, redis)
+        }
     }
 
     throw RedirectException("$path?$MSG=${"Answers cleared".encode()}")
@@ -370,8 +377,8 @@ internal object ChallengePost : KLogging() {
     logger.debug { "Like/dislike arg -- response: $likeArg -- $likeVal" }
 
     if (redis.isNotNull()) {
-      val browserSession = call.sessions.get<BrowserSession>()
-      user.saveLikeDislike(content, browserSession, names, paramMap, likeVal, redis)
+      val browserSession = call.browserSession
+      user.saveLikeDislike(browserSession, names, likeVal, redis)
     }
 
     call.respondText(likeVal.toString())

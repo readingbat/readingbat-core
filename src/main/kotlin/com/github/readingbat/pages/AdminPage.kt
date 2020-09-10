@@ -17,28 +17,49 @@
 
 package com.github.readingbat.pages
 
-import com.github.pambrose.common.util.isNull
+import com.github.readingbat.common.CSSNames.INDENT_1EM
+import com.github.readingbat.common.Endpoints.ADMIN_ENDPOINT
+import com.github.readingbat.common.FormFields.ADMIN_ACTION_PARAM
+import com.github.readingbat.common.FormFields.DELETE_ALL_DATA
+import com.github.readingbat.common.FormFields.RETURN_PARAM
+import com.github.readingbat.common.Message
+import com.github.readingbat.common.Message.Companion.EMPTY_MESSAGE
+import com.github.readingbat.common.RedisAdmin.scanKeys
+import com.github.readingbat.common.User
+import com.github.readingbat.common.isNotAdminUser
+import com.github.readingbat.common.isNotValidUser
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.isProduction
-import com.github.readingbat.misc.CSSNames.INDENT_1EM
-import com.github.readingbat.misc.Constants.RETURN_PATH
-import com.github.readingbat.misc.Endpoints.ADMIN_POST_ENDPOINT
-import com.github.readingbat.misc.FormFields.ADMIN_ACTION
-import com.github.readingbat.misc.FormFields.DELETE_ALL_DATA
-import com.github.readingbat.misc.Message
-import com.github.readingbat.misc.Message.Companion.EMPTY_MESSAGE
-import com.github.readingbat.misc.User
 import com.github.readingbat.pages.HelpAndLogin.helpAndLogin
-import com.github.readingbat.pages.PageCommon.backLink
-import com.github.readingbat.pages.PageCommon.bodyTitle
-import com.github.readingbat.pages.PageCommon.displayMessage
-import com.github.readingbat.pages.PageCommon.headDefault
+import com.github.readingbat.pages.PageUtils.backLink
+import com.github.readingbat.pages.PageUtils.bodyTitle
+import com.github.readingbat.pages.PageUtils.displayMessage
+import com.github.readingbat.pages.PageUtils.headDefault
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
-import kotlinx.html.*
+import kotlinx.html.BODY
+import kotlinx.html.FormMethod
+import kotlinx.html.InputType
+import kotlinx.html.body
+import kotlinx.html.br
+import kotlinx.html.div
+import kotlinx.html.form
+import kotlinx.html.h3
+import kotlinx.html.h4
+import kotlinx.html.head
+import kotlinx.html.html
+import kotlinx.html.input
+import kotlinx.html.onSubmit
+import kotlinx.html.p
+import kotlinx.html.span
 import kotlinx.html.stream.createHTML
+import kotlinx.html.style
+import kotlinx.html.table
+import kotlinx.html.td
+import kotlinx.html.tr
 import redis.clients.jedis.Jedis
 import redis.clients.jedis.exceptions.JedisDataException
+
 
 internal object AdminPage {
 
@@ -51,27 +72,22 @@ internal object AdminPage {
 
         head { headDefault(content) }
         body {
-          val returnPath = queryParam(RETURN_PATH, "/")
+          val returnPath = queryParam(RETURN_PARAM, "/")
 
-          helpAndLogin(user, returnPath, false, redis)
+          helpAndLogin(content, user, returnPath, false, redis)
 
           bodyTitle()
 
           when {
-            isProduction() && user.isNull() -> {
+            isProduction() && user.isNotValidUser(redis) -> {
               br { +"Must be logged in for this function" }
             }
-            isProduction() && user?.email(redis)?.value != "pambrose@mac.com" -> {
-              br { +"Must be system admin for this function" }
+            isProduction() && user.isNotAdminUser(redis) -> {
+              br { +"Must be a system admin for this function" }
             }
             else -> {
-              p {
-                span {
-                  style = "color:${if (msg.isError) "red" else "green"};"
-                  this@body.displayMessage(msg)
-                }
-              }
-
+              if (msg.isAssigned())
+                p { span { style = "color:${msg.color}"; this@body.displayMessage(msg) } }
               p { this@body.deleteData() }
               p { this@body.dumpData(redis) }
             }
@@ -86,10 +102,10 @@ internal object AdminPage {
     div(classes = INDENT_1EM) {
       p { +"Permanently delete all data -- this cannot be undone!" }
       form {
-        action = ADMIN_POST_ENDPOINT
+        action = ADMIN_ENDPOINT
         method = FormMethod.post
-        onSubmit = "return confirm('Are you sure you want to permanently delete all data ?');"
-        input { type = InputType.submit; name = ADMIN_ACTION; value = DELETE_ALL_DATA }
+        onSubmit = "return confirm('Are you sure you want to permanently delete all data ?')"
+        input { type = InputType.submit; name = ADMIN_ACTION_PARAM; value = DELETE_ALL_DATA }
       }
     }
   }
@@ -98,10 +114,9 @@ internal object AdminPage {
     h3 { +"All Data" }
     br
     div(classes = INDENT_1EM) {
-      val keys = redis.keys("*")
-      h4 { +"${keys.size} Items:" }
+      h4 { +"${redis.scanKeys("*").count()} items:" }
       table {
-        keys
+        redis.scanKeys("*")
           .sorted()
           .map {
             try {

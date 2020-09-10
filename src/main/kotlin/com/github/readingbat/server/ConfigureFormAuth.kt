@@ -15,22 +15,22 @@
  *
  */
 
+@file:Suppress("UnstableApiUsage")
+
 package com.github.readingbat.server
 
 import com.github.pambrose.common.redis.RedisUtils.withRedisPool
 import com.github.pambrose.common.util.isNotNull
 import com.github.pambrose.common.util.isNull
 import com.github.pambrose.common.util.sha256
-import com.github.readingbat.misc.AuthName
-import com.github.readingbat.misc.Constants.DBMS_DOWN
-import com.github.readingbat.misc.FormFields
-import com.github.readingbat.misc.User.Companion.lookupUserByEmail
-import com.github.readingbat.misc.UserPrincipal
+import com.github.readingbat.common.AuthName
+import com.github.readingbat.common.Constants.DBMS_DOWN
+import com.github.readingbat.common.FormFields
+import com.github.readingbat.common.User.Companion.lookupUserByEmail
+import com.github.readingbat.common.UserPrincipal
+import com.github.readingbat.server.ReadingBatServer.redisPool
 import com.google.common.util.concurrent.RateLimiter
-import io.ktor.auth.Authentication
-import io.ktor.auth.UserPasswordCredential
-import io.ktor.auth.form
-import io.ktor.auth.session
+import io.ktor.auth.*
 import mu.KLogging
 
 internal object ConfigureFormAuth : KLogging() {
@@ -45,8 +45,8 @@ internal object ConfigureFormAuth : KLogging() {
    */
   fun Authentication.Configuration.configureFormAuth() {
     form(AuthName.FORM) {
-      userParamName = FormFields.EMAIL
-      passwordParamName = FormFields.PASSWORD
+      userParamName = FormFields.EMAIL_PARAM
+      passwordParamName = FormFields.PASSWORD_PARAM
 
       challenge {
         // I don't think form auth supports multiple errors, but we're conservatively assuming there will be at
@@ -67,26 +67,27 @@ internal object ConfigureFormAuth : KLogging() {
       }
 
       validate { cred: UserPasswordCredential ->
-        withRedisPool { redis ->
+        redisPool.withRedisPool { redis ->
           if (redis.isNull()) {
             logger.warn { DBMS_DOWN }
             null
           }
           else {
             var principal: UserPrincipal? = null
+
             val user = lookupUserByEmail(Email(cred.name), redis)
             if (user.isNotNull()) {
               val (salt, digest) = user.lookupDigestInfoByUser(redis)
-              if (salt.isNotEmpty() && digest.isNotEmpty() && digest == cred.password.sha256(salt)) {
-                logger.info { "Found user ${cred.name} ${user.id}" }
+              if (salt.isNotBlank() && digest.isNotBlank() && digest == cred.password.sha256(salt)) {
+                logger.debug { "Found user ${cred.name} ${user.id}" }
                 principal = UserPrincipal(user.id)
               }
             }
 
-            logger.info { "Login ${if (principal.isNull()) "failure" else "success"}" }
+            logger.info { "Login ${if (principal.isNull()) "failure" else "success for $user ${user?.email(redis) ?: "Unknown"}"}" }
 
             if (principal.isNull())
-              failedLoginLimiter.acquire() // may wait
+              failedLoginLimiter.acquire() // may block
 
             principal
           }

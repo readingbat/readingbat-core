@@ -17,66 +17,90 @@
 
 package com.github.readingbat.server
 
-import com.github.pambrose.common.util.FileSource
+import com.github.pambrose.common.redis.RedisUtils
+import com.github.pambrose.common.util.*
 import com.github.pambrose.common.util.Version
 import com.github.pambrose.common.util.Version.Companion.versionDesc
-import com.github.pambrose.common.util.getBanner
-import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.dsl.agentLaunchId
-import com.github.readingbat.dsl.isProduction
-import com.github.readingbat.dsl.readContentDsl
-import com.github.readingbat.misc.Constants.AGENT_ENABLED
-import com.github.readingbat.misc.Constants.AGENT_LAUNCH_ID
-import com.github.readingbat.misc.Constants.ANALYTICS_ID
-import com.github.readingbat.misc.Constants.CONFIG_FILENAME
-import com.github.readingbat.misc.Constants.FILE_NAME
-import com.github.readingbat.misc.Constants.IS_PRODUCTION
-import com.github.readingbat.misc.Constants.MAX_CLASS_COUNT
-import com.github.readingbat.misc.Constants.MAX_HISTORY_LENGTH
-import com.github.readingbat.misc.Constants.PROXY_HOSTNAME
-import com.github.readingbat.misc.Constants.STATIC_ROOT
-import com.github.readingbat.misc.Constants.URL_PREFIX
-import com.github.readingbat.misc.Constants.VARIABLE_NAME
+import com.github.readingbat.common.CommonUtils.maskUrl
+import com.github.readingbat.common.Endpoints.STATIC_ROOT
+import com.github.readingbat.common.EnvVars.*
+import com.github.readingbat.common.Metrics
+import com.github.readingbat.common.Properties.*
+import com.github.readingbat.common.ScriptPools
+import com.github.readingbat.dsl.*
 import com.github.readingbat.server.AdminRoutes.adminRoutes
 import com.github.readingbat.server.Installs.installs
 import com.github.readingbat.server.Locations.locations
+import com.github.readingbat.server.ReadingBatServer.adminUsers
 import com.github.readingbat.server.ReadingBatServer.content
-import com.github.readingbat.server.ServerUtils.property
+import com.github.readingbat.server.ReadingBatServer.contentReadCount
+import com.github.readingbat.server.ReadingBatServer.logger
 import com.github.readingbat.server.WsEndoints.wsEndpoints
 import io.ktor.application.*
 import io.ktor.http.content.*
 import io.ktor.routing.*
 import io.ktor.server.cio.*
 import io.ktor.server.engine.*
-import io.prometheus.Agent
 import io.prometheus.Agent.Companion.startAsyncAgent
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeoutOrNull
 import mu.KLogging
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
-import kotlin.time.milliseconds
+import kotlin.time.TimeSource
+import kotlin.time.measureTime
+import kotlin.time.seconds
 
-@Version(version = "1.2.0", date = "8/14/20")
+@Version(version = "1.3.0", date = "8/22/20")
 object ReadingBatServer : KLogging() {
   internal val timeStamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("M/d/y H:m:ss"))
-  internal val startTimeMillis = System.currentTimeMillis().milliseconds
+  private val startTime = TimeSource.Monotonic.markNow()
+  internal val upTime get() = startTime.elapsedNow()
   internal val content = AtomicReference(ReadingBatContent())
+  internal val adminUsers = mutableListOf<String>()
+  internal val contentReadCount = AtomicInteger(0)
   internal val metrics by lazy { Metrics() }
+  internal val redisPool by lazy { RedisUtils.newJedisPool() }
 
   fun start(args: Array<String>) {
-    // grab config filename from CLI args and then try ENV var
+
+    logger.apply {
+      info { getBanner("banners/readingbat.txt", this) }
+      info { ReadingBatServer::class.versionDesc() }
+    }
+
+    // If kotlin.script.classpath property is missing, set it based on env var SCRIPT_CLASSPATH
+    // This has to take place before reading DSL
+    val scriptClasspathProp = KOTLIN_SCRIPT_CLASSPATH.getPropertyOrNull()
+    if (scriptClasspathProp.isNull()) {
+      val scriptClasspathEnvVar = SCRIPT_CLASSPATH.getEnvOrNull()
+      if (scriptClasspathEnvVar.isNotNull()) {
+        logger.info { "Assigning ${KOTLIN_SCRIPT_CLASSPATH.propertyValue} = $scriptClasspathEnvVar" }
+        KOTLIN_SCRIPT_CLASSPATH.setProperty(scriptClasspathEnvVar)
+      }
+      else
+        logger.warn { "Missing ${KOTLIN_SCRIPT_CLASSPATH.propertyValue} and $SCRIPT_CLASSPATH values" }
+    }
+    else {
+      logger.info { "${KOTLIN_SCRIPT_CLASSPATH.propertyValue}: $scriptClasspathProp" }
+    }
+
+    logger.info { "$REDIS_URL: ${REDIS_URL.getEnv("unassigned").maskUrl()}" }
+
+    // Grab config filename from CLI args and then try ENV var
     val configFilename =
       args.asSequence()
         .filter { it.startsWith("-config=") }
         .map { it.replaceFirst("-config=", "") }
         .firstOrNull()
-        ?: System.getenv("AGENT_CONFIG")
-        ?: System.getProperty("agent.config")
+        ?: AGENT_CONFIG.getEnvOrNull()
+        ?: AGENT_CONFIG_PROPERTY.getPropertyOrNull()
         ?: "src/main/resources/application.conf"
 
-    logger.info { "Using configuration file: $configFilename" }
-
-    System.setProperty(CONFIG_FILENAME, configFilename)
+    CONFIG_FILENAME.setProperty(configFilename)
 
     val newargs =
       if (args.any { it.startsWith("-config=") })
@@ -84,61 +108,119 @@ object ReadingBatServer : KLogging() {
       else
         args.toMutableList().apply { add("-config=$configFilename") }.toTypedArray()
 
+    // Reference these to load them
+    ScriptPools.javaScriptPool
+    ScriptPools.pythonScriptPool
+    ScriptPools.kotlinScriptPool
+
     val environment = commandLineEnvironment(newargs)
     embeddedServer(CIO, environment).start(wait = true)
   }
 }
 
+private fun Application.redirectHostname() =
+  REDIRECT_HOSTNAME.getEnv(REDIRECT_HOSTNAME_PROPERTY.configProperty(this, default = ""))
+
+private fun Application.sendGridPrefix() =
+  SENDGRID_PREFIX.getEnv(SENDGRID_PREFIX_PROPERTY.configProperty(this, default = "https://www.readingbat.com"))
+
+private fun Application.agentEnabled() =
+  AGENT_ENABLED.getEnv(AGENT_ENABLED_PROPERTY.configProperty(this, default = "false").toBoolean())
+
+private fun Application.forwardedHeaderSupportEnabled() =
+  FORWARDED_ENABLED.getEnv(FORWARDED_ENABLED_PROPERTY.configProperty(this, default = "false").toBoolean())
+
+private fun Application.xforwardedHeaderSupportEnabled() =
+  XFORWARDED_ENABLED.getEnv(XFORWARDED_ENABLED_PROPERTY.configProperty(this, default = "false").toBoolean())
+
 internal fun Application.assignContentDsl(fileName: String, variableName: String) {
-  content.set(
-    readContentDsl(FileSource(fileName = fileName), variableName = variableName)
-      .apply {
-        dslFileName = fileName
-        dslVariableName = variableName
-        urlPrefix = property(URL_PREFIX, default = "https://www.readingbat.com")
-        googleAnalyticsId = property(ANALYTICS_ID)
-        maxHistoryLength = property(MAX_HISTORY_LENGTH, default = "10").toInt()
-        maxClassCount = property(MAX_CLASS_COUNT, default = "25").toInt()
-        ktorPort = property("ktor.deployment.port", "0").toInt()
-        val watchVal = environment.config.propertyOrNull("ktor.deployment.watch")?.getList() ?: emptyList()
-        ktorWatch = if (watchVal.isNotEmpty()) watchVal.toString() else "unassigned"
-      })
-  ReadingBatServer.metrics.contentLoadedCount.labels(agentLaunchId()).inc()
+  logger.info { "Loading content using $variableName in $fileName" }
+  measureTime {
+    content.set(
+      readContentDsl(FileSource(fileName = fileName), variableName = variableName)
+        .apply {
+          dslFileName = fileName
+          dslVariableName = variableName
+          sendGridPrefix = sendGridPrefix()
+          googleAnalyticsId = ANALYTICS_ID.configProperty(this@assignContentDsl)
+          maxHistoryLength = MAX_HISTORY_LENGTH.configProperty(this@assignContentDsl, default = "10").toInt()
+          maxClassCount = MAX_CLASS_COUNT.configProperty(this@assignContentDsl, default = "25").toInt()
+          ktorPort = KTOR_PORT.configProperty(this@assignContentDsl, "0").toInt()
+          val watchVal = KTOR_WATCH.configPropertyOrNull(this@assignContentDsl)?.getList() ?: emptyList()
+          ktorWatch = if (watchVal.isNotEmpty()) watchVal.toString() else "unassigned"
+          grafanaUrl = GRAFANA_URL.configProperty(this@assignContentDsl)
+          prometheusUrl = PROMETHEUS_URL.configProperty(this@assignContentDsl)
+        }.apply { clearContentMap() })
+    ReadingBatServer.metrics.contentLoadedCount.labels(agentLaunchId()).inc()
+  }.also {
+    logger.info { "Loaded content using $variableName in $fileName in $it" }
+  }
+  contentReadCount.incrementAndGet()
 }
 
 internal fun Application.module() {
-  val fileName = property(FILE_NAME, "src/Content.kt")
-  val variableName = property(VARIABLE_NAME, "content")
-  val isProduction = property(IS_PRODUCTION, default = "false").toBoolean()
-  val agentEnabled = property(AGENT_ENABLED, default = "true").toBoolean()
-  val proxyHostname = property(PROXY_HOSTNAME, default = "")
+  val fileName = FILE_NAME.configProperty(this, "src/Content.kt")
+  val variableName = VARIABLE_NAME.configProperty(this, "content")
+  val proxyHostname = PROXY_HOSTNAME.configProperty(this, "")
+  val maxDelay = STARTUP_DELAY_SECS.configProperty(this, "30").toInt()
   val metrics = ReadingBatServer.metrics
 
-  System.setProperty(IS_PRODUCTION, isProduction.toString())
+  adminUsers.addAll(ADMIN_USERS.configPropertyOrNull(this)?.getList() ?: emptyList())
 
-  Agent.logger.apply {
-    info { getBanner("banners/readingbat.txt", this) }
-    info { ReadingBatServer::class.versionDesc() }
+  IS_PRODUCTION.setProperty(IS_PRODUCTION.configProperty(this, "false").toBoolean().toString())
+  CACHE_CONTENT_IN_REDIS.setProperty(CACHE_CONTENT_IN_REDIS.configProperty(this, "false").toBoolean().toString())
+  AGENT_ENABLED_PROPERTY.setProperty(agentEnabled().toString())
+  JAVA_SCRIPTS_POOL_SIZE.setProperty(JAVA_SCRIPTS_POOL_SIZE.configProperty(this, "5"))
+  KOTLIN_SCRIPTS_POOL_SIZE.setProperty(KOTLIN_SCRIPTS_POOL_SIZE.configProperty(this, "5"))
+  PYTHON_SCRIPTS_POOL_SIZE.setProperty(PYTHON_SCRIPTS_POOL_SIZE.configProperty(this, "5"))
+  REDIS_MAX_POOL_SIZE.setProperty(REDIS_MAX_POOL_SIZE.configProperty(this, "10"))
+  REDIS_MAX_IDLE_SIZE.setProperty(REDIS_MAX_IDLE_SIZE.configProperty(this, "5"))
+  REDIS_MIN_IDLE_SIZE.setProperty(REDIS_MIN_IDLE_SIZE.configProperty(this, "1"))
+
+  // Reference to load it
+  ReadingBatServer.redisPool.isClosed
+
+  if (isAgentEnabled()) {
+    if (proxyHostname.isNotEmpty()) {
+      val configFilename = CONFIG_FILENAME.getRequiredProperty()
+      val agentInfo = startAsyncAgent(configFilename, true)
+      AGENT_LAUNCH_ID.setProperty(agentInfo.launchId)
+    }
+    else {
+      logger.error { "Prometheus agent is enabled but the proxy hostname is not assigned" }
+    }
   }
 
-  if (agentEnabled && proxyHostname.isNotEmpty()) {
-    val configFilename = System.getProperty(CONFIG_FILENAME) ?: ""
-    val agentInfo = startAsyncAgent(configFilename, true)
-    System.setProperty(AGENT_LAUNCH_ID, agentInfo.launchId)
+  // This is done *after* AGENT_LAUNCH_ID is assigned because metrics depend on it
+  metrics.init { content.get() }
+
+  val job =
+    launch {
+      assignContentDsl(fileName, variableName)
+    }
+
+  runBlocking {
+    logger.info { "Delaying start-up by max of $maxDelay seconds" }
+    measureTime {
+      withTimeoutOrNull(maxDelay.seconds) {
+        job.join()
+      }
+    }.also {
+      logger.info { "Continued start-up after delaying $it" }
+    }
   }
 
-  // This is done after AGENT_LAUNCH_ID is assigned
-  metrics.init({ content.get() })
-
-  assignContentDsl(fileName, variableName)
-
-  installs(isProduction(), content.get().urlPrefix)
+  installs(isProduction(),
+           redirectHostname(),
+           forwardedHeaderSupportEnabled(),
+           xforwardedHeaderSupportEnabled())
   intercepts()
 
   routing {
     adminRoutes(metrics)
     locations(metrics) { content.get() }
-    userRoutes(metrics, { content.get() }, { assignContentDsl(fileName, variableName) })
+    userRoutes(metrics) { content.get() }
+    sysAdminRoutes(metrics, { content.get() }, { assignContentDsl(fileName, variableName) })
     wsEndpoints(metrics) { content.get() }
     static(STATIC_ROOT) { resources("static") }
   }

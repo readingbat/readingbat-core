@@ -18,31 +18,41 @@
 package com.github.readingbat.pages
 
 import com.github.pambrose.common.util.isNotNull
-import com.github.readingbat.misc.AuthRoutes.LOGOUT
-import com.github.readingbat.misc.Constants.RETURN_PATH
-import com.github.readingbat.misc.Endpoints.ABOUT_ENDPOINT
-import com.github.readingbat.misc.Endpoints.CREATE_ACCOUNT_ENDPOINT
-import com.github.readingbat.misc.Endpoints.ENABLE_STUDENT_MODE_ENDPOINT
-import com.github.readingbat.misc.Endpoints.ENABLE_TEACHER_MODE_ENDPOINT
-import com.github.readingbat.misc.Endpoints.PASSWORD_RESET_ENDPOINT
-import com.github.readingbat.misc.Endpoints.USER_PREFS_ENDPOINT
-import com.github.readingbat.misc.FormFields.EMAIL
-import com.github.readingbat.misc.FormFields.PASSWORD
-import com.github.readingbat.misc.User
-import com.github.readingbat.misc.User.Companion.fetchPreviousTeacherClassCode
+import com.github.readingbat.common.AuthRoutes.LOGOUT
+import com.github.readingbat.common.Endpoints.ABOUT_ENDPOINT
+import com.github.readingbat.common.Endpoints.CREATE_ACCOUNT_ENDPOINT
+import com.github.readingbat.common.Endpoints.ENABLE_STUDENT_MODE_ENDPOINT
+import com.github.readingbat.common.Endpoints.ENABLE_TEACHER_MODE_ENDPOINT
+import com.github.readingbat.common.Endpoints.HELP_ENDPOINT
+import com.github.readingbat.common.Endpoints.PASSWORD_RESET_ENDPOINT
+import com.github.readingbat.common.Endpoints.USER_PREFS_ENDPOINT
+import com.github.readingbat.common.FormFields.EMAIL_PARAM
+import com.github.readingbat.common.FormFields.PASSWORD_PARAM
+import com.github.readingbat.common.FormFields.RETURN_PARAM
+import com.github.readingbat.common.User
+import com.github.readingbat.common.User.Companion.fetchPreviousTeacherClassCode
+import com.github.readingbat.dsl.ReadingBatContent
+import com.github.readingbat.pages.PageUtils.rawHtml
 import kotlinx.html.*
 import redis.clients.jedis.Jedis
 
 internal object HelpAndLogin {
 
-  fun BODY.helpAndLogin(user: User?, loginPath: String, teacherMode: Boolean, redis: Jedis?) {
+  private val rootVals = listOf("", "/")
+
+  fun BODY.helpAndLogin(content: ReadingBatContent,
+                        user: User?,
+                        loginPath: String,
+                        teacherMode: Boolean,
+                        redis: Jedis?) {
 
     val previousClassCode = user.fetchPreviousTeacherClassCode(redis)
+    val path = if (loginPath in rootVals) content.defaultLanguageType().contentRoot else loginPath
 
     div {
-      style = "float:right; margin:0px; border: 1px solid lightgray; margin-left: 10px; padding: 5px;"
+      style = "float:right; margin:0px; border: 1px solid lightgray; margin-left: 10px; padding: 5px"
       table {
-        if (user.isNotNull() && redis.isNotNull()) logout(user, loginPath, redis) else login(loginPath)
+        if (user.isNotNull() && redis.isNotNull()) logout(user, path, redis) else login(path)
       }
     }
 
@@ -54,28 +64,21 @@ internal object HelpAndLogin {
             style = "text-align:right"
             colSpan = "1"
 
-            if (previousClassCode.isTeacherMode) {
+            if (previousClassCode.isEnabled) {
               val (endpoint, msg) =
                 if (teacherMode)
                   ENABLE_STUDENT_MODE_ENDPOINT to "student mode"
                 else
                   ENABLE_TEACHER_MODE_ENDPOINT to "teacher mode"
-              a { href = "$endpoint?$RETURN_PATH=$loginPath"; +msg }
+              a { href = "$endpoint?$RETURN_PARAM=$loginPath"; +msg }
               +" | "
             }
 
-            a { href = "$ABOUT_ENDPOINT?$RETURN_PATH=$loginPath"; +"about" }
+            a { href = "$ABOUT_ENDPOINT?$RETURN_PARAM=$loginPath"; +"about" }
             +" | "
-            //a { href = "/help.html"; +"help" }
-            //+" | "
-            a {
-              //href = "/doc/code-help-videos.html"; +"code help+videos | "
-              //a { href = "/done?user=pambrose@mac.com&tag=6621428513"; +"done" }
-              //+" | "
-              //a { href = "/report"; +"report" }
-              //+" | "
-              a { href = "$USER_PREFS_ENDPOINT?$RETURN_PATH=$loginPath"; +"prefs" }
-            }
+            a { href = "$HELP_ENDPOINT?$RETURN_PARAM=$loginPath"; +"help" }
+            +" | "
+            a { href = "$USER_PREFS_ENDPOINT?$RETURN_PARAM=$loginPath"; +"prefs" }
           }
         }
       }
@@ -103,34 +106,59 @@ internal object HelpAndLogin {
     }
     }
      */
-        +"["; a { href = "$LOGOUT?$RETURN_PATH=$loginPath"; +"log out" }; +"]"
+        +"["; a { href = "$LOGOUT?$RETURN_PARAM=$loginPath"; +"log out" }; +"]"
       }
     }
   }
 
+
   private fun TABLE.login(loginPath: String) {
-    form(method = FormMethod.post) {
+    val topFocus = "loginTpFocus"
+    val bottomFocus = "loginBottomFocus"
+
+    form {
+      method = FormMethod.post
       action = loginPath
+
+      span { tabIndex = "1"; onFocus = "document.querySelector('.$bottomFocus').focus()" }
+
       this@login.tr {
         td { +"id/email" }
-        td { textInput { name = EMAIL; size = "20"; placeholder = "username" } }
+        td {
+          textInput(classes = topFocus) {
+            id = EMAIL_PARAM; name = EMAIL_PARAM; size = "20"; placeholder = "username"; tabIndex = "2"
+          }
+        }
       }
+
       this@login.tr {
         td { +"password" }
-        td { passwordInput { name = PASSWORD; size = "20"; placeholder = "password" } }
+        td {
+          passwordInput(classes = bottomFocus) {
+            name = PASSWORD_PARAM; size = "20"; placeholder = "password"; tabIndex = "3"
+          }
+        }
       }
+
       this@login.tr {
         td {}
         td { submitInput { name = "dologin"; value = "log in" } }
       }
+
+      span { tabIndex = "4"; onFocus = "document.querySelector('.$topFocus').focus()" }
+
       hiddenInput { name = "fromurl"; value = loginPath }
     }
+
+    // Set focus to email field
+    script { rawHtml("""document.getElementById("$EMAIL_PARAM").focus()""") }
+
     tr {
       td {
         colSpan = "2"
-        a { href = "$PASSWORD_RESET_ENDPOINT?$RETURN_PATH=$loginPath"; +"forgot password" }
+        a { href = "$PASSWORD_RESET_ENDPOINT?$RETURN_PARAM=$loginPath"; +"forgot password" }
         +" | "
-        a { href = "$CREATE_ACCOUNT_ENDPOINT?$RETURN_PATH=$loginPath"; +"create account" }
+        a { href = "$CREATE_ACCOUNT_ENDPOINT?$RETURN_PARAM=$loginPath"; +"create account" }
       }
     }
   }

@@ -21,6 +21,7 @@ import com.github.pambrose.common.util.ContentRoot
 import com.github.pambrose.common.util.ContentSource
 import com.github.pambrose.common.util.asRegex
 import com.github.pambrose.common.util.decode
+import com.github.readingbat.common.CommonUtils.pathOf
 import com.github.readingbat.server.GroupName
 import com.github.readingbat.server.ReadingBatServer
 
@@ -30,12 +31,13 @@ class LanguageGroup<T : Challenge>(internal val content: ReadingBatContent,
 
   internal val challengeGroups = mutableListOf<ChallengeGroup<T>>()
   internal val metrics get() = ReadingBatServer.metrics
+  internal val languageName get() = languageType.languageName
 
   // User properties
   var repo: ContentRoot = content.repo           // Defaults to outer-level value
     get() =
       if (field == defaultContentRoot)
-        throw InvalidConfigurationException("${languageType.languageName} section is missing a repo value")
+        throw InvalidConfigurationException("$languageName section is missing a repo value")
       else
         field
   var branchName = content.branchName    // Defaults to outer-level value
@@ -61,8 +63,6 @@ class LanguageGroup<T : Challenge>(internal val content: ReadingBatContent,
 
   private fun hasGroupNameSuffix(groupNameSuffix: GroupName) =
     challengeGroups.any { it.groupNameSuffix.value == groupNameSuffix.value }
-
-  private val excludes = Regex("^__.*__.*$")
 
   internal data class ChallengeFile(val fileName: String, val returnType: ReturnType)
 
@@ -95,7 +95,7 @@ class LanguageGroup<T : Challenge>(internal val content: ReadingBatContent,
 
   fun findGroup(groupName: String): ChallengeGroup<T> =
     groupName.decode().let { decoded -> challengeGroups.firstOrNull { it.groupName.value == decoded } }
-      ?: throw InvalidPathException("Group ${languageType.languageName}/$groupName not found")
+      ?: throw InvalidPathException("Group ${pathOf(languageName, groupName)} not found")
 
   fun findChallenge(groupName: String, challengeName: String) = findGroup(groupName).findChallenge(challengeName)
 
@@ -104,9 +104,11 @@ class LanguageGroup<T : Challenge>(internal val content: ReadingBatContent,
   operator fun get(groupName: String, challengeName: String): T = findChallenge(groupName, challengeName)
 
   override fun toString() =
-    "LanguageGroup(languageType=$languageType, srcPrefix='$srcPath', challengeGroups=$challengeGroups)"
+    "LanguageGroup(languageType=$languageType, srcPath='$srcPath', challengeGroups=$challengeGroups)"
 
   companion object {
+    private val excludes = Regex("^__.*__.*$")
+
     internal val defaultContentRoot =
       object : ContentRoot {
         override val sourcePrefix = ""

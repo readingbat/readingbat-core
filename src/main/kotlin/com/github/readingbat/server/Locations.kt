@@ -19,72 +19,73 @@ package com.github.readingbat.server
 
 import com.github.pambrose.common.redis.RedisUtils.withRedisPool
 import com.github.pambrose.common.response.respondWith
+import com.github.pambrose.common.util.encode
 import com.github.pambrose.common.util.isNotValidEmail
 import com.github.pambrose.common.util.randomId
 import com.github.pambrose.common.util.sha256
+import com.github.readingbat.common.AuthName.FORM
+import com.github.readingbat.common.Endpoints.CHALLENGE_ROOT
+import com.github.readingbat.common.Endpoints.PLAYGROUND_ROOT
+import com.github.readingbat.common.KeyConstants
+import com.github.readingbat.common.KeyConstants.USER_EMAIL_KEY
+import com.github.readingbat.common.Metrics
+import com.github.readingbat.common.Metrics.Companion.GET
+import com.github.readingbat.common.Metrics.Companion.POST
 import com.github.readingbat.dsl.InvalidPathException
 import com.github.readingbat.dsl.LanguageType
+import com.github.readingbat.dsl.LanguageType.Java
 import com.github.readingbat.dsl.LanguageType.Kotlin
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.agentLaunchId
-import com.github.readingbat.misc.AuthName.FORM
-import com.github.readingbat.misc.Constants.CHALLENGE_ROOT
-import com.github.readingbat.misc.Constants.PLAYGROUND_ROOT
-import com.github.readingbat.misc.KeyConstants
-import com.github.readingbat.misc.KeyConstants.USER_EMAIL_KEY
 import com.github.readingbat.pages.ChallengeGroupPage.challengeGroupPage
 import com.github.readingbat.pages.ChallengePage.challengePage
 import com.github.readingbat.pages.LanguageGroupPage.languageGroupPage
 import com.github.readingbat.pages.PlaygroundPage.playgroundPage
 import com.github.readingbat.server.AdminRoutes.assignBrowserSession
+import com.github.readingbat.server.ReadingBatServer.redisPool
 import com.github.readingbat.server.ServerUtils.fetchUser
-import io.ktor.auth.authenticate
-import io.ktor.http.Parameters
-import io.ktor.locations.Location
-import io.ktor.locations.get
-import io.ktor.locations.post
-import io.ktor.routing.Routing
+import io.ktor.auth.*
+import io.ktor.http.*
+import io.ktor.locations.*
+import io.ktor.routing.*
 
 internal object Locations {
+  private const val trueStr = true.toString()
+  private const val falseStr = false.toString()
+
   fun Routing.locations(metrics: Metrics, content: () -> ReadingBatContent) {
     get<Language> { languageLoc ->
-      metrics.languageGroupRequestCount.labels(agentLaunchId(), languageLoc.languageType.toString(), false.toString())
-        .inc()
+      metrics.languageGroupRequestCount.labels(agentLaunchId(), GET, languageLoc.languageTypeStr, falseStr).inc()
       language(content.invoke(), languageLoc, false)
     }
     get<Language.Group> { groupLoc ->
-      metrics.challengeGroupRequestCount.labels(agentLaunchId(), groupLoc.languageType.toString(), false.toString())
-        .inc()
+      metrics.challengeGroupRequestCount.labels(agentLaunchId(), GET, groupLoc.languageTypeStr, falseStr).inc()
       group(content.invoke(), groupLoc, false)
     }
     get<Language.Group.Challenge> { challengeLoc ->
-      metrics.challengeRequestCount.labels(agentLaunchId(), challengeLoc.languageType.toString(), false.toString())
-        .inc()
+      metrics.challengeRequestCount.labels(agentLaunchId(), GET, challengeLoc.languageTypeStr, falseStr).inc()
       challenge(content.invoke(), challengeLoc, false)
     }
     get<PlaygroundRequest> { request ->
-      metrics.playgroundRequestCount.labels(agentLaunchId(), false.toString()).inc()
+      metrics.playgroundRequestCount.labels(agentLaunchId(), GET, falseStr).inc()
       playground(content.invoke(), request, false)
     }
 
     authenticate(FORM) {
       post<Language> { languageLoc ->
-        metrics.languageGroupRequestCount.labels(agentLaunchId(), languageLoc.languageType.toString(), true.toString())
-          .inc()
+        metrics.languageGroupRequestCount.labels(agentLaunchId(), POST, languageLoc.languageTypeStr, trueStr).inc()
         language(content.invoke(), languageLoc, true)
       }
       post<Language.Group> { groupLoc ->
-        metrics.challengeGroupRequestCount.labels(agentLaunchId(), groupLoc.languageType.toString(), true.toString())
-          .inc()
+        metrics.challengeGroupRequestCount.labels(agentLaunchId(), POST, groupLoc.languageTypeStr, trueStr).inc()
         group(content.invoke(), groupLoc, true)
       }
       post<Language.Group.Challenge> { challengeLoc ->
-        metrics.challengeRequestCount.labels(agentLaunchId(), challengeLoc.languageType.toString(), true.toString())
-          .inc()
+        metrics.challengeRequestCount.labels(agentLaunchId(), POST, challengeLoc.languageTypeStr, trueStr).inc()
         challenge(content.invoke(), challengeLoc, true)
       }
       post<PlaygroundRequest> { request ->
-        metrics.playgroundRequestCount.labels(agentLaunchId(), true.toString()).inc()
+        metrics.playgroundRequestCount.labels(agentLaunchId(), POST, trueStr).inc()
         playground(content.invoke(), request, true)
       }
     }
@@ -94,8 +95,9 @@ internal object Locations {
                                             language: Language,
                                             loginAttempt: Boolean) =
     respondWith {
+      assignBrowserSession()
       content.checkLanguage(language.languageType)
-      withRedisPool { redis ->
+      redisPool.withRedisPool { redis ->
         val user = fetchUser(loginAttempt)
         languageGroupPage(content, user, language.languageType, loginAttempt, redis)
       }
@@ -105,8 +107,9 @@ internal object Locations {
                                          groupLoc: Language.Group,
                                          loginAttempt: Boolean) =
     respondWith {
+      assignBrowserSession()
       content.checkLanguage(groupLoc.languageType)
-      withRedisPool { redis ->
+      redisPool.withRedisPool { redis ->
         val user = fetchUser(loginAttempt)
         challengeGroupPage(content, user, content.findGroup(groupLoc), loginAttempt, redis)
       }
@@ -118,7 +121,7 @@ internal object Locations {
     respondWith {
       assignBrowserSession()
       content.checkLanguage(challengeLoc.languageType)
-      withRedisPool { redis ->
+      redisPool.withRedisPool { redis ->
         val user = fetchUser(loginAttempt)
         challengePage(content, user, content.findChallenge(challengeLoc), loginAttempt, redis)
       }
@@ -128,7 +131,8 @@ internal object Locations {
                                               request: PlaygroundRequest,
                                               loginAttempt: Boolean) =
     respondWith {
-      withRedisPool { redis ->
+      assignBrowserSession()
+      redisPool.withRedisPool { redis ->
         val user = fetchUser(loginAttempt)
         playgroundPage(content,
                        user,
@@ -143,16 +147,19 @@ internal object Locations {
 internal data class Language(val lname: String) {
   val languageName = LanguageName(lname)
   val languageType get() = languageName.toLanguageType()
+  val languageTypeStr get() = languageType.toString()
 
   @Location("/{gname}")
   data class Group(val language: Language, val gname: String) {
     val groupName = GroupName(gname)
     val languageType get() = language.languageType
+    val languageTypeStr get() = languageType.toString()
 
     @Location("/{cname}")
     data class Challenge(val group: Group, val cname: String) {
       val challengeName = ChallengeName(cname)
       val languageType get() = group.languageType
+      val languageTypeStr get() = languageType.toString()
       val groupName get() = group.groupName
     }
   }
@@ -162,23 +169,47 @@ internal data class Language(val lname: String) {
 internal class PlaygroundRequest(val groupName: String, val challengeName: String)
 
 inline class LanguageName(val value: String) {
-  override fun toString() = value
+  val isJvm get() = this in jmvLanguages
 
   fun toLanguageType() =
     try {
-      LanguageType.values().first { it.name.equals(this.value, ignoreCase = true) }
+      LanguageType.values().first { it.name.equals(value, ignoreCase = true) }
     } catch (e: NoSuchElementException) {
-      throw InvalidPathException("Invalid language request: $this")
+      throw InvalidPathException("Invalid language name: $this")
     }
+
+  internal fun isValid() = try {
+    toLanguageType(); true
+  } catch (e: InvalidPathException) {
+    false
+  }
+
+  internal fun isNotValid() = !isValid()
+
+  internal fun isDefined(content: ReadingBatContent) = isValid() && content.hasLanguage(toLanguageType())
+
+  override fun toString() = value
 
   companion object {
     internal val EMPTY_LANGUAGE = LanguageName("")
     internal val ANY_LANGUAGE = LanguageName("*")
+    private val jmvLanguages by lazy { listOf(Java.languageName, Kotlin.languageName) }
+
     internal fun Parameters.getLanguageName(name: String) = this[name]?.let { LanguageName(it) } ?: EMPTY_LANGUAGE
   }
 }
 
 inline class GroupName(val value: String) {
+
+  internal fun isValid() = this != EMPTY_GROUP
+
+  internal fun isNotValid() = !isValid()
+
+  internal fun encode() = value.encode()
+
+  internal fun isDefined(content: ReadingBatContent, languageName: LanguageName) =
+    languageName.isDefined(content) && isValid() && content.findLanguage(languageName).hasGroup(value)
+
   override fun toString() = value
 
   companion object {
@@ -189,13 +220,24 @@ inline class GroupName(val value: String) {
 }
 
 inline class ChallengeName(val value: String) {
+  internal fun isValid() = this != EMPTY_CHALLENGE
+
+  internal fun isNotValid() = !isValid()
+
+  internal fun encode() = value.encode()
+
   override fun toString() = value
 
   companion object {
-    internal val EMPTY_CHALLENGE = ChallengeName("")
+    private val EMPTY_CHALLENGE = ChallengeName("")
     internal val ANY_CHALLENGE = ChallengeName("*")
     internal fun Parameters.getChallengeName(name: String) = this[name]?.let { ChallengeName(it) } ?: EMPTY_CHALLENGE
   }
+}
+
+class ChallengeMd5(languageName: LanguageName, groupName: GroupName, challengeName: ChallengeName) {
+  val value = md5Of(languageName, groupName, challengeName)
+  override fun toString() = value
 }
 
 inline class Invocation(val value: String) {
@@ -225,13 +267,13 @@ inline class Password(val value: String) {
   override fun toString() = value
 
   companion object {
-    val EMPTY_PASSWORD = Password("")
+    private val EMPTY_PASSWORD = Password("")
     fun Parameters.getPassword(name: String) = this[name]?.let { Password(it) } ?: EMPTY_PASSWORD
   }
 }
 
 inline class Email(val value: String) {
-  val userEmailKey get() = listOf(USER_EMAIL_KEY, value).joinToString(KeyConstants.KEY_SEP)
+  val userEmailKey get() = keyOf(USER_EMAIL_KEY, value)
 
   fun isBlank() = value.isBlank()
   fun isNotBlank() = value.isNotBlank()
@@ -250,7 +292,7 @@ inline class ResetId(val value: String) {
   fun isNotBlank() = value.isNotBlank()
 
   // Maps resetId to username
-  val passwordResetKey get() = listOf(KeyConstants.RESET_KEY, value).joinToString(KeyConstants.KEY_SEP)
+  val passwordResetKey get() = keyOf(KeyConstants.RESET_KEY, value)
 
   override fun toString() = value
 

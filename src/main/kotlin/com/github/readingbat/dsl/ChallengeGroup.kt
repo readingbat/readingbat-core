@@ -17,19 +17,22 @@
 
 package com.github.readingbat.dsl
 
+import com.github.pambrose.common.redis.RedisUtils.withRedisPool
 import com.github.pambrose.common.util.FileSystemSource
 import com.github.pambrose.common.util.GitHubRepo
 import com.github.pambrose.common.util.ensureSuffix
+import com.github.pambrose.common.util.isNotNull
+import com.github.readingbat.common.CommonUtils.pathOf
+import com.github.readingbat.common.KeyConstants.DIR_CONTENTS_KEY
 import com.github.readingbat.dsl.Challenge.Companion.challenge
 import com.github.readingbat.dsl.GitHubUtils.organizationDirectoryContents
 import com.github.readingbat.dsl.GitHubUtils.userDirectoryContents
 import com.github.readingbat.dsl.ReturnType.Runtime
-import com.github.readingbat.misc.PageUtils
 import com.github.readingbat.server.ChallengeName
 import com.github.readingbat.server.GroupName
-import com.vladsch.flexmark.html.HtmlRenderer
-import com.vladsch.flexmark.parser.Parser
-import com.vladsch.flexmark.util.data.MutableDataSet
+import com.github.readingbat.server.ReadingBatServer.redisPool
+import com.github.readingbat.server.keyOf
+import com.github.readingbat.server.md5Of
 import mu.KLogging
 import java.io.File
 import kotlin.reflect.KProperty
@@ -37,40 +40,60 @@ import kotlin.reflect.KProperty
 @ReadingBatDslMarker
 class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>,
                                     internal val groupNameSuffix: GroupName) {
-  private val options = MutableDataSet().apply { set(HtmlRenderer.SOFT_BREAK, "<br />\n") }
   internal val challenges = mutableListOf<T>()
   internal var namePrefix = ""
 
   internal val groupName by lazy { GroupName("${if (namePrefix.isNotBlank()) namePrefix else ""}${groupNameSuffix.value}") }
-  private val groupPrefix by lazy { "$languageName/$groupName" }
-  private val parser by lazy { Parser.builder(options).build() }
-  private val renderer by lazy { HtmlRenderer.builder(options).build() }
-  internal val parsedDescription: String
-    get() {
-      val document = parser.parse(description.trimIndent())
-      return renderer.render(document)
-    }
+  private val groupPrefix by lazy { pathOf(languageName, groupName) }
+  internal val parsedDescription by lazy { TextFormatter.renderText(description) }
 
   private val srcPath get() = languageGroup.srcPath
   internal val languageType get() = languageGroup.languageType
-  internal val languageName get() = languageType.languageName
-  internal val repo get() = languageGroup.repo
-  internal val branchName get() = languageGroup.branchName
-  internal val metrics get() = languageGroup.metrics
+  private val languageName get() = languageType.languageName
+  private val repo get() = languageGroup.repo
+  private val branchName get() = languageGroup.branchName
+  private val metrics get() = languageGroup.metrics
+  internal val packageNameAsPath get() = packageName.replace(".", "/")
+
+  private fun dirContentsKey(path: String) = keyOf(DIR_CONTENTS_KEY, md5Of(path))
+
+  private fun fetchDirContentsFromRedis(path: String) =
+    if (cacheContentInRedis())
+      redisPool.withRedisPool { redis -> redis?.lrange(dirContentsKey(path), 0, -1) }
+    else
+      null
 
   internal val fileList by lazy {
     repo.let { root ->
       when (root) {
         is GitHubRepo -> {
-          val path = srcPath.ensureSuffix("/") + packageName
-          if (root.ownerType.isUser())
-            root.userDirectoryContents(branchName, path, metrics)
-          else
-            root.organizationDirectoryContents(branchName, path, metrics)
+          val path = "${srcPath.ensureSuffix("/")}$packageNameAsPath"
+          val files = fetchDirContentsFromRedis(path)
+          if (files.isNotNull() && files.isNotEmpty()) {
+            logger.debug { """Retrieved "$path" from redis""" }
+            files
+          }
+          else {
+            val remoteFiles =
+              if (root.ownerType.isUser())
+                root.userDirectoryContents(branchName, path, metrics)
+              else
+                root.organizationDirectoryContents(branchName, path, metrics)
+
+            redisPool.withRedisPool { redis ->
+              if (redis.isNotNull() && cacheContentInRedis()) {
+                val dirContentsKey = dirContentsKey(path)
+                remoteFiles.forEach { redis.rpush(dirContentsKey, it) }
+                logger.info { """Saved "$path" to redis""" }
+              }
+            }
+            remoteFiles
+          }
         }
-        is FileSystemSource -> File(PageUtils.pathOf(root.pathPrefix, srcPath, packageName)).walk().map { it.name }
-          .toList()
-        else -> throw InvalidConfigurationException("Invalid repo type")
+        is FileSystemSource -> {
+          File(pathOf(root.pathPrefix, srcPath, packageNameAsPath)).walk().map { it.name }.toList()
+        }
+        else -> throw InvalidConfigurationException("Invalid repo type: $root")
       }
     }
   }
@@ -85,7 +108,7 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
     val includeList = mutableListOf<PatternReturnType>()
     operator fun getValue(thisRef: Any?, property: KProperty<*>) = includeList.toString()
     operator fun setValue(thisRef: Any?, property: KProperty<*>, value: String) {
-      if (languageType.isJava()) {
+      if (languageType.isJava) {
         val prt = PatternReturnType(value, Runtime)
         includeList += prt
         group.languageGroup.addIncludedFiles(group, prt)
@@ -101,7 +124,7 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
     val includeList = mutableListOf<PatternReturnType>()
     operator fun getValue(thisRef: Any?, property: KProperty<*>): PatternReturnType = PatternReturnType("", Runtime)
     operator fun setValue(thisRef: Any?, property: KProperty<*>, value: PatternReturnType) {
-      if (!languageType.isJava()) {
+      if (!languageType.isJava) {
         includeList += value
         group.languageGroup.addIncludedFiles(group, value)
       }
@@ -112,7 +135,7 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
     }
   }
 
-  fun hasChallenge(challengeName: String) = challenges.any { it.challengeName.value == challengeName }
+  private fun hasChallenge(challengeName: String) = challenges.any { it.challengeName.value == challengeName }
 
   operator fun contains(challengeName: String) = hasChallenge(challengeName)
 
@@ -120,14 +143,14 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
 
   fun findChallenge(challengeName: String): T =
     challenges.firstOrNull { it.challengeName.value == challengeName }
-      ?: throw InvalidPathException("Challenge $groupPrefix/$challengeName not found.")
+      ?: throw InvalidPathException("Challenge ${pathOf(groupPrefix, challengeName)} not found.")
 
   operator fun get(challengeName: String): T = findChallenge(challengeName)
 
   internal fun indexOf(challengeName: ChallengeName): Int {
     val pos = challenges.indexOfFirst { it.challengeName == challengeName }
     if (pos == -1)
-      throw InvalidPathException("Challenge $groupPrefix/$challengeName not found.")
+      throw InvalidPathException("Challenge ${pathOf(groupPrefix, challengeName)} not found.")
     return pos
   }
 
@@ -158,8 +181,8 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
       val challenge = challenge(this, challengeName, true)
       // Skip this next step for Java because returnType is calculated
       when {
-        languageType.isPython() -> (challenge as PythonChallenge).apply { returnType = challengeFile.returnType }
-        languageType.isKotlin() -> (challenge as KotlinChallenge).apply { returnType = challengeFile.returnType }
+        languageType.isPython -> (challenge as PythonChallenge).apply { returnType = challengeFile.returnType }
+        languageType.isKotlin -> (challenge as KotlinChallenge).apply { returnType = challengeFile.returnType }
       }
       challenges += challenge as T
     }
@@ -173,7 +196,7 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
       }
       else {
         if (throwExceptionIfPresent)
-          throw InvalidConfigurationException("Challenge $groupPrefix/$challengeName already exists")
+          throw InvalidConfigurationException("Challenge ${pathOf(groupPrefix, challengeName)} already exists")
         else
           return false
       }

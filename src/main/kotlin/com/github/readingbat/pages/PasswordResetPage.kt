@@ -17,43 +17,60 @@
 
 package com.github.readingbat.pages
 
+import com.github.readingbat.common.CSSNames.INDENT_1EM
+import com.github.readingbat.common.Constants.INVALID_RESET_ID
+import com.github.readingbat.common.Constants.LABEL_WIDTH
+import com.github.readingbat.common.Endpoints.PASSWORD_CHANGE_ENDPOINT
+import com.github.readingbat.common.Endpoints.PASSWORD_RESET_ENDPOINT
+import com.github.readingbat.common.FormFields.CONFIRM_PASSWORD_PARAM
+import com.github.readingbat.common.FormFields.EMAIL_PARAM
+import com.github.readingbat.common.FormFields.NEW_PASSWORD_PARAM
+import com.github.readingbat.common.FormFields.RESET_ID_PARAM
+import com.github.readingbat.common.FormFields.RETURN_PARAM
+import com.github.readingbat.common.FormFields.UPDATE_PASSWORD
+import com.github.readingbat.common.FormFields.USER_PREFS_ACTION_PARAM
+import com.github.readingbat.common.Message
+import com.github.readingbat.common.Message.Companion.EMPTY_MESSAGE
 import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.misc.CSSNames.INDENT_1EM
-import com.github.readingbat.misc.Constants.INVALID_RESET_ID
-import com.github.readingbat.misc.Constants.LABEL_WIDTH
-import com.github.readingbat.misc.Constants.RESET_ID
-import com.github.readingbat.misc.Constants.RETURN_PATH
-import com.github.readingbat.misc.Endpoints.PASSWORD_CHANGE_POST_ENDPOINT
-import com.github.readingbat.misc.Endpoints.PASSWORD_RESET_ENDPOINT
-import com.github.readingbat.misc.Endpoints.PASSWORD_RESET_POST_ENDPOINT
-import com.github.readingbat.misc.FormFields.CONFIRM_PASSWORD
-import com.github.readingbat.misc.FormFields.EMAIL
-import com.github.readingbat.misc.FormFields.NEW_PASSWORD
-import com.github.readingbat.misc.FormFields.UPDATE_PASSWORD
-import com.github.readingbat.misc.FormFields.USER_PREFS_ACTION
-import com.github.readingbat.misc.Message
-import com.github.readingbat.misc.Message.Companion.EMPTY_MESSAGE
-import com.github.readingbat.misc.PageUtils.hideShowButton
-import com.github.readingbat.pages.PageCommon.backLink
-import com.github.readingbat.pages.PageCommon.bodyTitle
-import com.github.readingbat.pages.PageCommon.clickButtonScript
-import com.github.readingbat.pages.PageCommon.displayMessage
-import com.github.readingbat.pages.PageCommon.headDefault
-import com.github.readingbat.pages.PageCommon.privacyStatement
+import com.github.readingbat.pages.PageUtils.backLink
+import com.github.readingbat.pages.PageUtils.bodyTitle
+import com.github.readingbat.pages.PageUtils.clickButtonScript
+import com.github.readingbat.pages.PageUtils.displayMessage
+import com.github.readingbat.pages.PageUtils.headDefault
+import com.github.readingbat.pages.PageUtils.hideShowButton
+import com.github.readingbat.pages.PageUtils.privacyStatement
 import com.github.readingbat.posts.PasswordResetPost.ResetPasswordException
 import com.github.readingbat.server.Email
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ResetId
 import com.github.readingbat.server.ServerUtils.queryParam
-import kotlinx.html.*
+import kotlinx.html.FormMethod
+import kotlinx.html.InputType
+import kotlinx.html.body
+import kotlinx.html.div
+import kotlinx.html.form
+import kotlinx.html.h2
+import kotlinx.html.h3
+import kotlinx.html.head
+import kotlinx.html.html
+import kotlinx.html.id
+import kotlinx.html.input
+import kotlinx.html.label
+import kotlinx.html.onKeyPress
+import kotlinx.html.p
+import kotlinx.html.span
 import kotlinx.html.stream.createHTML
+import kotlinx.html.style
+import kotlinx.html.table
+import kotlinx.html.td
+import kotlinx.html.tr
 import mu.KLogging
 import redis.clients.jedis.Jedis
 
 internal object PasswordResetPage : KLogging() {
 
-  const val formName = "pform"
-  const val passwordButton = "UpdatePasswordButton"
+  private const val formName = "pform"
+  private const val passwordButton = "UpdatePasswordButton"
 
   fun PipelineCall.passwordResetPage(content: ReadingBatContent,
                                      resetId: ResetId,
@@ -65,7 +82,9 @@ internal object PasswordResetPage : KLogging() {
       try {
         val passwordResetKey = resetId.passwordResetKey
         val email = Email(redis.get(passwordResetKey) ?: throw ResetPasswordException(INVALID_RESET_ID))
+
         changePasswordPage(content, email, resetId, msg)
+
       } catch (e: ResetPasswordException) {
         logger.info { e }
         requestPasswordResetPage(content, Message(e.message ?: "Unable to reset password", true))
@@ -79,29 +98,29 @@ internal object PasswordResetPage : KLogging() {
         head { headDefault(content) }
 
         body {
-          val returnPath = queryParam(RETURN_PATH, "/")
+          val returnPath = queryParam(RETURN_PARAM, "/")
 
           bodyTitle()
 
-          p { span { style = "color:red;"; this@body.displayMessage(msg) } }
+          p { span { style = "color:red"; this@body.displayMessage(msg) } }
 
           h2 { +"Password Reset" }
 
           div(classes = INDENT_1EM) {
             form {
-              action = "$PASSWORD_RESET_POST_ENDPOINT?$RETURN_PATH=$returnPath"
+              action = "$PASSWORD_RESET_ENDPOINT?$RETURN_PARAM=$returnPath"
               method = FormMethod.post
               table {
                 tr {
                   td { style = LABEL_WIDTH; label { +"Email (used as account id)" } }
-                  td { input { name = EMAIL; type = InputType.text; size = "50" } }
+                  td { input { name = EMAIL_PARAM; type = InputType.text; size = "50" } }
                 }
                 tr {
                   td { }
                   td {
-                    style = "padding-top:10;"
+                    style = "padding-top:10"
                     input {
-                      style = "font-size:25px; height:35; width:  155;"
+                      style = "font-size:25px; height:35; width:  155"
                       type = InputType.submit
                       value = "Send Password Reset"
                     }
@@ -137,45 +156,47 @@ internal object PasswordResetPage : KLogging() {
         }
 
         body {
-          val returnPath = queryParam(RETURN_PATH, "/")
+          val returnPath = queryParam(RETURN_PARAM, "/")
 
           bodyTitle()
 
-          p { span { style = "color:red;"; this@body.displayMessage(msg) } }
+          p { span { style = "color:red"; this@body.displayMessage(msg) } }
 
           h3 { +"Change password for $email" }
           p { +"Password must contain at least 6 characters" }
           form {
             name = formName
-            action = PASSWORD_CHANGE_POST_ENDPOINT
+            action = PASSWORD_CHANGE_ENDPOINT
             method = FormMethod.post
             table {
               tr {
                 td { style = LABEL_WIDTH; label { +"New Password" } }
-                td { input { type = InputType.password; size = "42"; name = NEW_PASSWORD; value = "" } }
-                td { hideShowButton(formName, NEW_PASSWORD) }
+                td { input { type = InputType.password; size = "42"; name = NEW_PASSWORD_PARAM; value = "" } }
+                td { hideShowButton(formName, NEW_PASSWORD_PARAM) }
               }
+
               tr {
                 td { style = LABEL_WIDTH; label { +"Confirm Password" } }
                 td {
                   input {
                     type = InputType.password
                     size = "42"
-                    name = CONFIRM_PASSWORD
+                    name = CONFIRM_PASSWORD_PARAM
                     value = ""
-                    onKeyPress = "click$passwordButton(event);"
+                    onKeyPress = "click$passwordButton(event)"
                   }
                 }
-                td { hideShowButton(formName, CONFIRM_PASSWORD) }
+                td { hideShowButton(formName, CONFIRM_PASSWORD_PARAM) }
               }
+
               tr {
-                td { input { type = InputType.hidden; name = RESET_ID; value = resetId.value } }
+                td { input { type = InputType.hidden; name = RESET_ID_PARAM; value = resetId.value } }
                 td {
                   input {
-                    style = "font-size:25px; height:35; width:  155;"
+                    style = "font-size:25px; height:35; width:155"
                     type = InputType.submit
                     id = passwordButton
-                    name = USER_PREFS_ACTION
+                    name = USER_PREFS_ACTION_PARAM
                     value = UPDATE_PASSWORD
                   }
                 }
