@@ -50,6 +50,7 @@ import com.github.readingbat.common.Endpoints.CHALLENGE_ROOT
 import com.github.readingbat.common.Endpoints.CLEAR_CHALLENGE_ANSWERS_ENDPOINT
 import com.github.readingbat.common.Endpoints.PLAYGROUND_ROOT
 import com.github.readingbat.common.Endpoints.STATIC_ROOT
+import com.github.readingbat.common.Endpoints.classSummaryEndpoint
 import com.github.readingbat.common.FormFields.CHALLENGE_ANSWERS_PARAM
 import com.github.readingbat.common.FormFields.CHALLENGE_NAME_PARAM
 import com.github.readingbat.common.FormFields.CORRECT_ANSWERS_PARAM
@@ -356,7 +357,7 @@ internal object ChallengePage : KLogging() {
       h3 {
         style = "margin-left: 5px; color: $headerColor"
         a(classes = UNDERLINE) {
-          href = Endpoints.classSummaryEndpoint(classCode, languageName, groupName)
+          href = classSummaryEndpoint(classCode, languageName, groupName)
           +displayStr
         }
         +enrolleesDesc(enrollees)
