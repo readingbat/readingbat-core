@@ -152,7 +152,9 @@ internal object ChallengePage : KLogging() {
             }
             else {
               displayStudentProgress(challenge, content.maxHistoryLength, funcInfo, activeClassCode, enrollees, redis)
-              p { +"Connection time: "; span { id = pingMsg } }
+
+              if (enrollees.isNotEmpty())
+                p { +"Connection time: "; span { id = pingMsg } }
             }
           }
 

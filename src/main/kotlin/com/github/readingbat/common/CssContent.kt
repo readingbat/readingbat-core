@@ -92,9 +92,6 @@ internal val cssContent by lazy {
     .apply {
 
       rule("html, body") {
-        //+"font-size: small;"
-      }
-      rule("html, body") {
         /* MOBILE-CSS prevents crazy shrinking of font in table e.g. on section page */
         //"-webkit-text-size-adjust:none; text-size-adjust:none;"
       }
@@ -108,7 +105,8 @@ internal val cssContent by lazy {
         marginRight = 8.px
       }
       rule("html, body") {
-        fontSize = LinearDimension.auto
+        //fontSize = LinearDimension.auto
+        fontSize = 16.px
         fontFamily = "verdana, arial, helvetica, sans-serif"
       }
       p {

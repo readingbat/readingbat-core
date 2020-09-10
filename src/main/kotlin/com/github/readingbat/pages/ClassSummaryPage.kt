@@ -76,6 +76,7 @@ import redis.clients.jedis.Jedis
 internal object ClassSummaryPage : KLogging() {
 
   internal const val STATS = "-stats"
+  private const val SIZE = "130%"
 
   fun PipelineCall.classSummaryPage(content: ReadingBatContent, user: User?, redis: Jedis): String {
 
@@ -186,7 +187,7 @@ internal object ClassSummaryPage : KLogging() {
     table {
       style = "border-collapse: separate; border-spacing: 15px 10px"
       tr {
-        td { style = "font-size:140%"; +"Challenge Group: " }
+        td { style = "font-size:$SIZE"; +"Challenge Group: " }
         LanguageType.values()
           .map { content.findLanguage(it) }
           .forEach { langGroup ->
@@ -371,7 +372,7 @@ internal object ClassSummaryPage : KLogging() {
   private fun LI.dropdownToggle(block: A.() -> Unit) {
     a("#", null, "dropdown-toggle") {
       style =
-        "font-size:140%; text-decoration:none; border-radius: 5px; padding: 1px 7px; cursor: pointer; color: black; border:1px solid black;"
+        "font-size:$SIZE; text-decoration:none; border-radius: 5px; padding: 0px 7px; cursor: pointer; color: black; border:1px solid black;"
       attributes["data-toggle"] = "dropdown"
       role = "button"
       attributes["aria-expanded"] = "false"
