@@ -21,7 +21,11 @@ import com.github.readingbat.common.CSSNames.INDENT_1EM
 import com.github.readingbat.common.Endpoints.ABOUT_ENDPOINT
 import com.github.readingbat.common.Endpoints.TEACHER_PREFS_ENDPOINT
 import com.github.readingbat.common.Endpoints.USER_PREFS_ENDPOINT
+import com.github.readingbat.common.FormFields.CREATE_CLASS
+import com.github.readingbat.common.FormFields.JOIN_A_CLASS
+import com.github.readingbat.common.FormFields.NO_ACTIVE_CLASS
 import com.github.readingbat.common.FormFields.RETURN_PARAM
+import com.github.readingbat.common.FormFields.UPDATE_ACTIVE_CLASS
 import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.fetchActiveClassCode
 import com.github.readingbat.dsl.ReadingBatContent
@@ -56,7 +60,7 @@ internal object HelpPage {
             h3 { +"Student Tips" }
 
             div(classes = INDENT_1EM) {
-              h4 { rawHtml("&bull;"); +" Join a Class" }
+              h4 { rawHtml("&bull;"); +" $JOIN_A_CLASS" }
 
               p {
                 +"Your teacher will give you a class code required to join a class. Click on "
@@ -103,12 +107,12 @@ internal object HelpPage {
 
               p {
                 +"Enter a class description and click on the"
-                i { +" Create Class " }
+                i { +" $CREATE_CLASS " }
                 +"button on the"
                 a { href = TEACHER_PREFS_ENDPOINT; b { +" Teacher Preferences " } }
                 +"page. Each class will be assigned a unique class code. "
                 +"To enroll students in a class, send them the class code and ask them to follow the"
-                i { +" Join a Class " }
+                i { +" $JOIN_A_CLASS " }
                 +"instructions above. For testing purposes, it is fine to enroll in the class you created."
               }
 
@@ -116,13 +120,13 @@ internal object HelpPage {
 
               p {
                 +"Select the radio button of the class you are interested in monitoring and then click the"
-                b { +" Update Active Class " }
+                b { +" $UPDATE_ACTIVE_CLASS " }
                 +"button. You will then be in"
                 i { +" teacher mode, " }
                 +"which will allow you see student progress. Select the"
-                b { +" No active class " }
+                b { +" $NO_ACTIVE_CLASS " }
                 +"option and then click the"
-                b { +" Update Active Class " }
+                b { +" $UPDATE_ACTIVE_CLASS " }
                 +"button to exit"
                 i { +" teacher mode." }
               }

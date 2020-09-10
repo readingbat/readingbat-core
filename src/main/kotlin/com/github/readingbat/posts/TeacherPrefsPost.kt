@@ -45,9 +45,10 @@ import com.github.readingbat.server.RedirectException
 import com.github.readingbat.server.ServerUtils.queryParam
 import io.ktor.application.*
 import io.ktor.request.*
+import mu.KLogging
 import redis.clients.jedis.Jedis
 
-internal object TeacherPrefsPost {
+internal object TeacherPrefsPost : KLogging() {
   private const val STUDENT_MODE_ENABLED_MSG = "Student mode enabled"
   private const val TEACHER_MODE_ENABLED_MSG = "Teacher mode enabled"
 
@@ -59,7 +60,7 @@ internal object TeacherPrefsPost {
         UPDATE_ACTIVE_CLASS -> {
           val source = parameters[CHOICE_SOURCE_PARAM] ?: ""
           val classCode = parameters.getClassCode(CLASS_CODE_CHOICE_PARAM)
-          val msg = updateActiveClass(content, user, classCode, redis)
+          val msg = updateActiveClass(user, classCode, redis)
           when (source) {
             TEACHER_PREF -> teacherPrefsPage(content, user, redis, msg)
             CLASS_SUMMARY -> classSummaryPage(content, user, redis, classCode, msg = msg)
@@ -136,15 +137,12 @@ internal object TeacherPrefsPost {
       }
     }
 
-  private fun PipelineCall.updateActiveClass(content: ReadingBatContent,
-                                             user: User,
-                                             classCode: ClassCode,
-                                             redis: Jedis) =
+  private fun updateActiveClass(user: User, classCode: ClassCode, redis: Jedis) =
     when {
       // Do not allow this for classCode.isStudentMode because turns off the
       // student/teacher toggle mode
-      user.fetchActiveClassCode(redis) == classCode &&
-          classCode.isEnabled -> Message("Same active class selected [$classCode]", true)
+      user.fetchActiveClassCode(redis) == classCode && classCode.isEnabled ->
+        Message("Same active class selected [$classCode]", true)
       else -> {
         user.assignActiveClassCode(classCode, true, redis)
         if (classCode.isNotEnabled)
@@ -169,15 +167,22 @@ internal object TeacherPrefsPost {
         val activeClassCode = user.fetchActiveClassCode(redis)
         val enrollees = classCode.fetchEnrollees(redis)
 
-        redis.multi().also { tx ->
-          // Disable current class if deleted class is the active class
-          if (activeClassCode == classCode)
-            user.resetActiveClassCode(tx)
+        val email = user.email(redis)
+        val name = user.name(redis)
 
-          user.deleteClassCode(classCode, enrollees, tx)
+        redis.multi()
+          .also { tx ->
+            // Disable current class if deleted class is the active class
+            if (activeClassCode == classCode) {
+              logger.info { "Resetting $name ($email) active class code" }
+              user.resetActiveClassCode(tx)
+            }
 
-          tx.exec()
-        }
+            logger.info { "Deleting ${enrollees.size} enrollees for class code $classCode for $name ($email)" }
+            user.deleteClassCode(classCode, enrollees, tx)
+
+            tx.exec()
+          }
 
         teacherPrefsPage(content, user, redis, Message("Deleted class code: $classCode"))
       }

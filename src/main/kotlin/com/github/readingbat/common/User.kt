@@ -64,8 +64,6 @@ internal class User private constructor(val id: String, val browserSession: Brow
   private val userInfoBrowserKey by lazy { keyOf(USER_INFO_BROWSER_KEY, id, browserSession?.id ?: "unassigned") }
   private val userInfoBrowserQueryKey by lazy { keyOf(USER_INFO_BROWSER_KEY, id, "*") }
   private val browserSpecificUserInfoKey by lazy {
-    if (browserSession.isNull())
-      logger.error { "Null browser session value" }
     if (browserSession.isNotNull()) userInfoBrowserKey else throw InvalidConfigurationException("Null browser session for $this")
   }
   private val userClassesKey by lazy { keyOf(USER_CLASSES_KEY, id) }
@@ -147,8 +145,10 @@ internal class User private constructor(val id: String, val browserSession: Brow
       redis.hset(browserSpecificUserInfoKey, PREVIOUS_TEACHER_CLASS_CODE_FIELD, classCode.value)
   }
 
-  fun resetActiveClassCode(tx: Transaction): Response<Long> =
+  fun resetActiveClassCode(tx: Transaction) {
     tx.hset(browserSpecificUserInfoKey, ACTIVE_CLASS_CODE_FIELD, DISABLED_CLASS_CODE.value)
+    tx.hset(browserSpecificUserInfoKey, PREVIOUS_TEACHER_CLASS_CODE_FIELD, DISABLED_CLASS_CODE.value)
+  }
 
   private fun interestedInActiveClassCode(classCode: ClassCode, redis: Jedis?): Boolean {
     return when {
@@ -204,14 +204,21 @@ internal class User private constructor(val id: String, val browserSession: Brow
   }
 
   fun deleteClassCode(classCode: ClassCode, enrollees: List<User>, tx: Transaction) {
+    // Reset every enrollee's enrolled class and remove from class
+    enrollees
+      .forEach {
+        logger.info { "Removing ${it.id} from $classCode" }
+        classCode.removeEnrollee(it, tx)
+
+        logger.info { "Assigning ${it.id} to $DISABLED_CLASS_CODE" }
+        it.assignEnrolledClassCode(DISABLED_CLASS_CODE, tx)
+      }
+
     // Delete class description
     tx.del(classCode.classInfoKey)
 
     // Remove classcode from list of classes created by user
     tx.srem(userClassesKey, classCode.value)
-
-    // Reset every enrollee's enrolled class
-    enrollees.forEach { it.assignEnrolledClassCode(DISABLED_CLASS_CODE, tx) }
 
     // Delete enrollee list
     classCode.deleteAllEnrollees(tx)

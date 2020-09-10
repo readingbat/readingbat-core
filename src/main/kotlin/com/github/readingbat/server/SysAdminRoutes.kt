@@ -149,8 +149,8 @@ internal fun Routing.sysAdminRoutes(metrics: Metrics,
   get(GARBAGE_COLLECTOR_ENDPOINT, metrics) {
     val msg =
       authenticatedAction {
-        System.gc()
-        Message("Garbage collector invoked.".also { logger.info { it } })
+        val dur = measureTime { System.gc() }
+        Message("Garbage collector invoked for $dur.".also { logger.info { it } })
       }
     respondWithRedisCheck(contentSrc()) { redis -> systemAdminPage(contentSrc(), fetchUser(), redis, msg) }
   }

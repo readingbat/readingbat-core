@@ -32,6 +32,7 @@ import com.github.readingbat.common.FormFields.CLASS_CODE_NAME_PARAM
 import com.github.readingbat.common.FormFields.CONFIRM_PASSWORD_PARAM
 import com.github.readingbat.common.FormFields.CURR_PASSWORD_PARAM
 import com.github.readingbat.common.FormFields.DELETE_ACCOUNT
+import com.github.readingbat.common.FormFields.JOIN_A_CLASS
 import com.github.readingbat.common.FormFields.JOIN_CLASS
 import com.github.readingbat.common.FormFields.NEW_PASSWORD_PARAM
 import com.github.readingbat.common.FormFields.RETURN_PARAM
@@ -212,7 +213,7 @@ internal object UserPrefsPage : KLogging() {
       }
     }
     else {
-      h3 { +"Join a class" }
+      h3 { +JOIN_A_CLASS }
       div(classes = INDENT_2EM) {
         p { +"Enter the class code your teacher gave you. This will make your progress visible to your teacher." }
         form {

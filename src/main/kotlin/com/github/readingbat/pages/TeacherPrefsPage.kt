@@ -30,6 +30,7 @@ import com.github.readingbat.common.FormFields.CLASS_DESC_PARAM
 import com.github.readingbat.common.FormFields.CREATE_CLASS
 import com.github.readingbat.common.FormFields.DELETE_CLASS
 import com.github.readingbat.common.FormFields.DISABLED_MODE
+import com.github.readingbat.common.FormFields.NO_ACTIVE_CLASS
 import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.FormFields.TEACHER_PREF
 import com.github.readingbat.common.FormFields.UPDATE_ACTIVE_CLASS
@@ -186,7 +187,7 @@ internal object TeacherPrefsPage : KLogging() {
               activeClassCode.isNotEnabled
             }
           }
-          td { colSpan = "3"; +"No active class" }
+          td { colSpan = "3"; +NO_ACTIVE_CLASS }
         }
 
         input { type = InputType.hidden; name = CHOICE_SOURCE_PARAM; value = TEACHER_PREF }
