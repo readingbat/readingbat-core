@@ -154,8 +154,7 @@ internal object HelpPage {
                 +"To see both the student and teacher experience with ReadingBat, follow these steps:"
 
                 ol {
-                  li { +"Create a ReadingBat account." }
-                  li { +"Log in to your newly created account." }
+                  li { +"Create a ReadingBat account and sign into it." }
                   li { +"Go to the teacher preferences and create a demo class and copy the class code into your copy/paste buffer." }
                   li { +"On the same page, select the radio button of the newly created class and make it your active class." }
                   li { +"Go to the user preferences and paste the class code you just copied and enroll as a student in your own class." }

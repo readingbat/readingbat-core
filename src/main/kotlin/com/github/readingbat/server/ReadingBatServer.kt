@@ -54,7 +54,7 @@ import kotlin.time.TimeSource
 import kotlin.time.measureTime
 import kotlin.time.seconds
 
-@Version(version = "1.4.0", date = "9/20/20")
+@Version(version = "1.4.0", date = "9/10/20")
 object ReadingBatServer : KLogging() {
   internal val timeStamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("M/d/y H:m:ss"))
   private val startTime = TimeSource.Monotonic.markNow()
@@ -170,11 +170,18 @@ internal fun Application.module() {
   adminUsers.addAll(ADMIN_USERS.configPropertyOrNull(this)?.getList() ?: emptyList())
 
   IS_PRODUCTION.setProperty(IS_PRODUCTION.configProperty(this, "false").toBoolean().toString())
-  CACHE_CONTENT_IN_REDIS.setProperty(CACHE_CONTENT_IN_REDIS.configProperty(this, "false").toBoolean().toString())
   AGENT_ENABLED_PROPERTY.setProperty(agentEnabled().toString())
+  CACHE_CONTENT_IN_REDIS.setProperty(CACHE_CONTENT_IN_REDIS.configProperty(this, "false").toBoolean().toString())
+
+  PINGDOM_URL.setProperty(PINGDOM_URL.configProperty(this, ""))
+  STATUS_PAGE_URL.setProperty(STATUS_PAGE_URL.configProperty(this, ""))
+  PROMETHEUS_URL.setProperty(PROMETHEUS_URL.configProperty(this, ""))
+  GRAFANA_URL.setProperty(GRAFANA_URL.configProperty(this, ""))
+
   JAVA_SCRIPTS_POOL_SIZE.setProperty(JAVA_SCRIPTS_POOL_SIZE.configProperty(this, "5"))
   KOTLIN_SCRIPTS_POOL_SIZE.setProperty(KOTLIN_SCRIPTS_POOL_SIZE.configProperty(this, "5"))
   PYTHON_SCRIPTS_POOL_SIZE.setProperty(PYTHON_SCRIPTS_POOL_SIZE.configProperty(this, "5"))
+
   REDIS_MAX_POOL_SIZE.setProperty(REDIS_MAX_POOL_SIZE.configProperty(this, "10"))
   REDIS_MAX_IDLE_SIZE.setProperty(REDIS_MAX_IDLE_SIZE.configProperty(this, "5"))
   REDIS_MIN_IDLE_SIZE.setProperty(REDIS_MIN_IDLE_SIZE.configProperty(this, "1"))

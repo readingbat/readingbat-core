@@ -32,47 +32,51 @@ import mu.KLogging
 enum class Properties(val propertyValue: String,
                       val maskFunc: Properties.() -> String = { getProperty("unassigned") }) {
 
-  IS_PRODUCTION("$READINGBAT.$SITE.production"),
-  CACHE_CONTENT_IN_REDIS("$READINGBAT.$SITE.cacheContentInRedis"),
+  KOTLIN_SCRIPT_CLASSPATH("kotlin.script.classpath"),
+
+  CONFIG_FILENAME("$READINGBAT.configFilename"),
+  ADMIN_USERS("$READINGBAT.adminUsers"),
+  LOGBACK_CONFIG_FILE("logback.configurationFile"),
+  AGENT_LAUNCH_ID("$AGENT.launchId"),
+
+  AGENT_CONFIG_PROPERTY("agent.config"),
+
+  // These are used in module()
+  FILE_NAME("$READINGBAT.$CONTENT.fileName"),
+  VARIABLE_NAME("$READINGBAT.$CONTENT.variableName"),
+  PROXY_HOSTNAME("$AGENT.proxy.hostname"),
   STARTUP_DELAY_SECS("$READINGBAT.$SITE.startupMaxDelaySecs"),
+
+  // These are defaults for enf var values
   REDIRECT_HOSTNAME_PROPERTY("$READINGBAT.$SITE.redirectHostname"),
   SENDGRID_PREFIX_PROPERTY("$READINGBAT.$SITE.sendGridPrefix"),
   FORWARDED_ENABLED_PROPERTY("$READINGBAT.$SITE.forwardedHeaderSupportEnabled"),
   XFORWARDED_ENABLED_PROPERTY("$READINGBAT.$SITE.xforwardedHeaderSupportEnabled"),
+
+  // These are assigned to ReadingBatContent vals
   ANALYTICS_ID("$READINGBAT.$SITE.googleAnalyticsId", { getPropertyOrNull() ?: "unassigned" }),
+  MAX_HISTORY_LENGTH("$READINGBAT.$CHALLENGES.maxHistoryLength"),
+  MAX_CLASS_COUNT("$READINGBAT.$CLASSES.maxCount"),
+  KTOR_PORT("ktor.deployment.port"),
+  KTOR_WATCH("ktor.deployment.watch"),
+
+  // These are assigned in ReadingBatServer
+  IS_PRODUCTION("$READINGBAT.$SITE.production"),
+  AGENT_ENABLED_PROPERTY("$AGENT.enabled"),
+  CACHE_CONTENT_IN_REDIS("$READINGBAT.$SITE.cacheContentInRedis"),
 
   PINGDOM_URL("$READINGBAT.$SITE.pingdomUrl", { getPropertyOrNull() ?: "unassigned" }),
   STATUS_PAGE_URL("$READINGBAT.$SITE.statusPageUrl", { getPropertyOrNull() ?: "unassigned" }),
+  PROMETHEUS_URL("$READINGBAT.prometheus.url"),
+  GRAFANA_URL("$READINGBAT.grafana.url"),
 
   JAVA_SCRIPTS_POOL_SIZE("$READINGBAT.scripts.javaPoolSize"),
   KOTLIN_SCRIPTS_POOL_SIZE("$READINGBAT.scripts.kotlinPoolSize"),
   PYTHON_SCRIPTS_POOL_SIZE("$READINGBAT.scripts.pythonPoolSize"),
 
-  FILE_NAME("$READINGBAT.$CONTENT.fileName"),
-  VARIABLE_NAME("$READINGBAT.$CONTENT.variableName"),
-
-  PROMETHEUS_URL("$READINGBAT.prometheus.url"),
-  GRAFANA_URL("$READINGBAT.grafana.url"),
-  CONFIG_FILENAME("$READINGBAT.configFilename"),
-
-  MAX_HISTORY_LENGTH("$READINGBAT.$CHALLENGES.maxHistoryLength"),
-  MAX_CLASS_COUNT("$READINGBAT.$CLASSES.maxCount"),
-
-  ADMIN_USERS("$READINGBAT.adminUsers"),
-  KTOR_WATCH("ktor.deployment.watch"),
-  LOGBACK_CONFIG_FILE("logback.configurationFile"),
-
-  AGENT_CONFIG_PROPERTY("agent.config"),
-  AGENT_ENABLED_PROPERTY("$AGENT.enabled"),
-  PROXY_HOSTNAME("$AGENT.proxy.hostname"),
-  AGENT_LAUNCH_ID("$AGENT.launchId"),
-
   REDIS_MAX_POOL_SIZE("redis.maxPoolSize"),
   REDIS_MAX_IDLE_SIZE("redis.maxIdleSize"),
   REDIS_MIN_IDLE_SIZE("redis.minIdleSize"),
-
-  KOTLIN_SCRIPT_CLASSPATH("kotlin.script.classpath"),
-  KTOR_PORT("ktor.deployment.port"),
   ;
 
   private fun Application.configProperty(name: String, default: String = "", warn: Boolean = false) =
@@ -99,6 +103,7 @@ enum class Properties(val propertyValue: String,
   fun getPropertyOrNull(): String? = System.getProperty(propertyValue)
 
   fun getRequiredProperty() = getPropertyOrNull() ?: throw InvalidConfigurationException("Missing $propertyValue value")
+
 
   fun setProperty(value: String) {
     logger.info { "$propertyValue: $value" }
