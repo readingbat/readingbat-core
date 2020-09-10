@@ -142,14 +142,16 @@ internal fun Application.assignContentDsl(fileName: String, variableName: String
           dslFileName = fileName
           dslVariableName = variableName
           sendGridPrefix = sendGridPrefix()
-          googleAnalyticsId = ANALYTICS_ID.configProperty(this@assignContentDsl)
-          maxHistoryLength = MAX_HISTORY_LENGTH.configProperty(this@assignContentDsl, default = "10").toInt()
-          maxClassCount = MAX_CLASS_COUNT.configProperty(this@assignContentDsl, default = "25").toInt()
+          googleAnalyticsId = ANALYTICS_ID.configProperty(this@assignContentDsl, "")
+          maxHistoryLength = MAX_HISTORY_LENGTH.configProperty(this@assignContentDsl, "10").toInt()
+          maxClassCount = MAX_CLASS_COUNT.configProperty(this@assignContentDsl, "25").toInt()
           ktorPort = KTOR_PORT.configProperty(this@assignContentDsl, "0").toInt()
           val watchVal = KTOR_WATCH.configPropertyOrNull(this@assignContentDsl)?.getList() ?: emptyList()
           ktorWatch = if (watchVal.isNotEmpty()) watchVal.toString() else "unassigned"
-          grafanaUrl = GRAFANA_URL.configProperty(this@assignContentDsl)
-          prometheusUrl = PROMETHEUS_URL.configProperty(this@assignContentDsl)
+          pingdomUrl = PINGDOM_URL.configProperty(this@assignContentDsl, "")
+          statusPageUrl = STATUS_PAGE_URL.configProperty(this@assignContentDsl, "")
+          grafanaUrl = GRAFANA_URL.configProperty(this@assignContentDsl, "")
+          prometheusUrl = PROMETHEUS_URL.configProperty(this@assignContentDsl, "")
         }.apply { clearContentMap() })
     ReadingBatServer.metrics.contentLoadedCount.labels(agentLaunchId()).inc()
   }.also {

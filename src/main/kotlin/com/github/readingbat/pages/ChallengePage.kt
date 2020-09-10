@@ -166,6 +166,8 @@ internal object ChallengePage : KLogging() {
 
           if (activeClassCode.isEnabled && enrollees.isNotEmpty())
             enableWebSockets(activeClassCode, funcInfo.challengeMd5)
+
+          content.pingdomUrl.also { if (it.isNotBlank()) script { src = it; async = true } }
         }
       }
 

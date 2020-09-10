@@ -45,9 +45,7 @@ internal object HelpPage {
   fun PipelineCall.helpPage(content: ReadingBatContent, user: User?, redis: Jedis) =
     createHTML()
       .html {
-        head {
-          headDefault(content)
-        }
+        head { headDefault(content) }
 
         body {
           helpAndLogin(content, user, ABOUT_ENDPOINT, user.fetchActiveClassCode(redis).isEnabled, redis)
@@ -149,10 +147,32 @@ internal object HelpPage {
               p {
                 +"You can monitor student inputs on multiple challenges by opening multiple windows in a single browser."
               }
+
+              h4 { rawHtml("&bull;"); +" Self-driven Demo" }
+
+              p {
+                +"To see both the student and teacher experience with ReadingBat, follow these steps:"
+
+                ol {
+                  li { +"Create a ReadingBat account." }
+                  li { +"Log in to your newly created account." }
+                  li { +"Go to the teacher preferences and create a demo class and copy the class code into your copy/paste buffer." }
+                  li { +"On the same page, select the radio button of the newly created class and make it your active class." }
+                  li { +"Go to the user preferences and paste the class code you just copied and enroll as a student in your own class." }
+                  li { +"Go to one of the challenges (in teacher mode) and you should see yourself as the only student." }
+                  li { +"Open a second browser (not just a second window) and go to ReadingBat.com and login." }
+                  li { +"Go to the same challenge as a student and enter some answers. You will see your answers appearing in the other browser." }
+                  li { +"Go back to the other browser (in teacher mode) and click on the challenge group link and you will see statistics for all the challenges in that group." }
+                  li { +"Click on the class link and you will see a class overview." }
+                  li { +"Click on your student link and you will see a student overview." }
+                }
+              }
             }
           }
 
           backLink(queryParam(RETURN_PARAM, "/"))
+
+          content.pingdomUrl.also { if (it.isNotBlank()) script { src = it; async = true } }
         }
       }
 }

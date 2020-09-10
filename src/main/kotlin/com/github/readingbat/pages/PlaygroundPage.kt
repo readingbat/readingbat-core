@@ -109,6 +109,8 @@ internal object PlaygroundPage {
           }
 
           backLink(CHALLENGE_ROOT, languageName.value, groupName.value, challengeName.value)
+
+          content.pingdomUrl.also { if (it.isNotBlank()) script { src = it; async = true } }
         }
       }
 }

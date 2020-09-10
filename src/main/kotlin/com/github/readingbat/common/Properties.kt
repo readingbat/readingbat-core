@@ -18,7 +18,6 @@
 package com.github.readingbat.common
 
 import com.github.pambrose.common.util.isNotNull
-import com.github.readingbat.common.CommonUtils.obfuscate
 import com.github.readingbat.common.PropertyNames.AGENT
 import com.github.readingbat.common.PropertyNames.CHALLENGES
 import com.github.readingbat.common.PropertyNames.CLASSES
@@ -40,7 +39,10 @@ enum class Properties(val propertyValue: String,
   SENDGRID_PREFIX_PROPERTY("$READINGBAT.$SITE.sendGridPrefix"),
   FORWARDED_ENABLED_PROPERTY("$READINGBAT.$SITE.forwardedHeaderSupportEnabled"),
   XFORWARDED_ENABLED_PROPERTY("$READINGBAT.$SITE.xforwardedHeaderSupportEnabled"),
-  ANALYTICS_ID("$READINGBAT.$SITE.googleAnalyticsId", { getPropertyOrNull()?.obfuscate(2) ?: "unassigned" }),
+  ANALYTICS_ID("$READINGBAT.$SITE.googleAnalyticsId", { getPropertyOrNull() ?: "unassigned" }),
+
+  PINGDOM_URL("$READINGBAT.$SITE.pingdomUrl", { getPropertyOrNull() ?: "unassigned" }),
+  STATUS_PAGE_URL("$READINGBAT.$SITE.statusPageUrl", { getPropertyOrNull() ?: "unassigned" }),
 
   JAVA_SCRIPTS_POOL_SIZE("$READINGBAT.scripts.javaPoolSize"),
   KOTLIN_SCRIPTS_POOL_SIZE("$READINGBAT.scripts.kotlinPoolSize"),

@@ -80,14 +80,13 @@ internal object TeacherPrefsPage : KLogging() {
                                                      redis: Jedis) =
     createHTML()
       .html {
-        val activeClassCode = user.fetchActiveClassCode(redis)
-
         head {
           headDefault(content)
           clickButtonScript(createClassButton)
         }
 
         body {
+          val activeClassCode = user.fetchActiveClassCode(redis)
           val returnPath = queryParam(RETURN_PARAM, "/")
 
           helpAndLogin(content, user, returnPath, activeClassCode.isEnabled, redis)
@@ -103,6 +102,8 @@ internal object TeacherPrefsPage : KLogging() {
           displayClasses(user, activeClassCode, redis)
 
           backLink(returnPath)
+
+          content.pingdomUrl.also { if (it.isNotBlank()) script { src = it; async = true } }
         }
       }
 

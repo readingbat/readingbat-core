@@ -25,10 +25,7 @@ import com.github.readingbat.pages.PageUtils.bodyTitle
 import com.github.readingbat.pages.PageUtils.headDefault
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
-import kotlinx.html.body
-import kotlinx.html.h2
-import kotlinx.html.head
-import kotlinx.html.html
+import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 
 internal object DbmsDownPage {
@@ -36,15 +33,16 @@ internal object DbmsDownPage {
   fun PipelineCall.dbmsDownPage(content: ReadingBatContent) =
     createHTML()
       .html {
-        head {
-          headDefault(content)
-        }
+        head { headDefault(content) }
 
         body {
           bodyTitle()
+
           h2 { +DBMS_DOWN.toString() }
 
           backLink(queryParam(RETURN_PARAM))
+
+          content.pingdomUrl.also { if (it.isNotBlank()) script { src = it; async = true } }
         }
       }
 }

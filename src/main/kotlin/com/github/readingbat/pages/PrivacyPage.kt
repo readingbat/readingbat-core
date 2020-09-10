@@ -26,13 +26,7 @@ import com.github.readingbat.pages.PageUtils.bodyTitle
 import com.github.readingbat.pages.PageUtils.headDefault
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
-import kotlinx.html.a
-import kotlinx.html.body
-import kotlinx.html.div
-import kotlinx.html.h2
-import kotlinx.html.head
-import kotlinx.html.html
-import kotlinx.html.p
+import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 
 internal object PrivacyPage {
@@ -70,6 +64,8 @@ internal object PrivacyPage {
           val backPath = queryParam(BACK_PATH)
           val returnPath = queryParam(RETURN_PARAM)
           backLink("$backPath${if (returnPath.isNotEmpty()) "?$RETURN_PARAM=$returnPath" else ""}")
+
+          content.pingdomUrl.also { if (it.isNotBlank()) script { src = it; async = true } }
         }
       }
 }

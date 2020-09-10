@@ -166,6 +166,8 @@ internal object ChallengeGroupPage : KLogging() {
 
           if (enrollees.isNotEmpty())
             enableWebSockets(languageName, groupName, activeClassCode)
+
+          content.pingdomUrl.also { if (it.isNotBlank()) script { src = it; async = true } }
         }
       }
 

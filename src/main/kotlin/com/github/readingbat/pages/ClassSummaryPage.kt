@@ -146,6 +146,8 @@ internal object ClassSummaryPage : KLogging() {
             enableWebSockets(languageName, groupName, classCode)
 
           backLink(returnPath)
+
+          content.pingdomUrl.also { if (it.isNotBlank()) script { src = it; async = true } }
         }
       }
   }

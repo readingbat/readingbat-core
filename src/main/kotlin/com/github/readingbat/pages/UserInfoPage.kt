@@ -44,8 +44,8 @@ internal object UserInfoPage {
                                 msg: Message = EMPTY_MESSAGE) =
     createHTML()
       .html {
-
         head { headDefault(content) }
+
         body {
           val returnPath = queryParam(RETURN_PARAM, "/")
 
@@ -93,6 +93,8 @@ internal object UserInfoPage {
           }
 
           backLink(returnPath)
+
+          content.pingdomUrl.also { if (it.isNotBlank()) script { src = it; async = true } }
         }
       }
 }

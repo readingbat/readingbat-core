@@ -248,6 +248,8 @@ internal object ConfigPage {
           }
 
           backLink("$USER_PREFS_ENDPOINT?$RETURN_PARAM=${queryParam(RETURN_PARAM, "/")}")
+
+          content.statusPageUrl.also { if (it.isNotBlank()) script { src = it } }
         }
       }
 }

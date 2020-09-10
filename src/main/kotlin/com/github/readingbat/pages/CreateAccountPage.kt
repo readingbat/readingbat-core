@@ -40,28 +40,12 @@ import com.github.readingbat.server.FullName
 import com.github.readingbat.server.FullName.Companion.EMPTY_FULLNAME
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
-import kotlinx.html.FormMethod
-import kotlinx.html.InputType
-import kotlinx.html.body
-import kotlinx.html.div
-import kotlinx.html.form
-import kotlinx.html.h2
-import kotlinx.html.head
-import kotlinx.html.hiddenInput
-import kotlinx.html.html
-import kotlinx.html.id
-import kotlinx.html.input
-import kotlinx.html.label
-import kotlinx.html.onKeyPress
-import kotlinx.html.p
-import kotlinx.html.span
+import kotlinx.html.*
 import kotlinx.html.stream.createHTML
-import kotlinx.html.style
-import kotlinx.html.table
-import kotlinx.html.td
-import kotlinx.html.tr
 
 internal object CreateAccountPage {
+
+  private const val createButton = "CreateAccountButton"
 
   fun PipelineCall.createAccountPage(content: ReadingBatContent,
                                      defaultFullName: FullName = EMPTY_FULLNAME,
@@ -70,7 +54,6 @@ internal object CreateAccountPage {
     createHTML()
       .html {
         val returnPath = queryParam(RETURN_PARAM, "/")
-        val createButton = "CreateAccountButton"
 
         head {
           headDefault(content)
@@ -166,6 +149,8 @@ internal object CreateAccountPage {
           privacyStatement(CREATE_ACCOUNT_ENDPOINT, returnPath)
 
           backLink(returnPath)
+
+          content.pingdomUrl.also { if (it.isNotBlank()) script { src = it; async = true } }
         }
       }
 }

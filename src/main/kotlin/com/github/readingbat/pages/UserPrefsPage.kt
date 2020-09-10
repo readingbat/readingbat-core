@@ -54,30 +54,9 @@ import com.github.readingbat.pages.PageUtils.hideShowButton
 import com.github.readingbat.pages.PageUtils.privacyStatement
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
-import kotlinx.html.BODY
-import kotlinx.html.FormMethod
-import kotlinx.html.InputType
+import kotlinx.html.*
 import kotlinx.html.InputType.submit
-import kotlinx.html.a
-import kotlinx.html.body
-import kotlinx.html.div
-import kotlinx.html.form
-import kotlinx.html.h2
-import kotlinx.html.h3
-import kotlinx.html.head
-import kotlinx.html.html
-import kotlinx.html.id
-import kotlinx.html.input
-import kotlinx.html.label
-import kotlinx.html.onKeyPress
-import kotlinx.html.onSubmit
-import kotlinx.html.p
-import kotlinx.html.span
 import kotlinx.html.stream.createHTML
-import kotlinx.html.style
-import kotlinx.html.table
-import kotlinx.html.td
-import kotlinx.html.tr
 import mu.KLogging
 import redis.clients.jedis.Jedis
 
@@ -104,14 +83,13 @@ internal object UserPrefsPage : KLogging() {
                                                   redis: Jedis) =
     createHTML()
       .html {
-        val activeClassCode = user.fetchActiveClassCode(redis)
-
         head {
           headDefault(content)
           clickButtonScript(passwordButton, joinClassButton)
         }
 
         body {
+          val activeClassCode = user.fetchActiveClassCode(redis)
           val returnPath = queryParam(RETURN_PARAM, "/")
 
           helpAndLogin(content, user, returnPath, activeClassCode.isEnabled, redis)
@@ -330,6 +308,8 @@ internal object UserPrefsPage : KLogging() {
           privacyStatement(USER_PREFS_ENDPOINT, returnPath)
 
           backLink(returnPath)
+
+          content.pingdomUrl.also { if (it.isNotBlank()) script { src = it; async = true } }
         }
       }
 }

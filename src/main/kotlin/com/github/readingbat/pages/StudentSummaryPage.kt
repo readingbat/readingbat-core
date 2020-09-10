@@ -84,10 +84,7 @@ internal object StudentSummaryPage : KLogging() {
 
     return createHTML()
       .html {
-
-        head {
-          headDefault(content)
-        }
+        head { headDefault(content) }
 
         body {
           val returnPath = queryParam(RETURN_PARAM, "/")
@@ -118,6 +115,8 @@ internal object StudentSummaryPage : KLogging() {
           displayChallengeGroups(content, classCode, languageName, redis)
           enableWebSockets(languageName, student, classCode)
           backLink(returnPath)
+
+          content.pingdomUrl.also { if (it.isNotBlank()) script { src = it; async = true } }
         }
       }
   }

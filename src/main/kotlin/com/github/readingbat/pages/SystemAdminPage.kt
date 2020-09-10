@@ -65,13 +65,10 @@ internal object SystemAdminPage : KLogging() {
                                                 redis: Jedis) =
     createHTML()
       .html {
-        val activeClassCode = user.fetchActiveClassCode(redis)
-
-        head {
-          headDefault(content)
-        }
+        head { headDefault(content) }
 
         body {
+          val activeClassCode = user.fetchActiveClassCode(redis)
           val returnPath = queryParam(RETURN_PARAM, "/")
 
           helpAndLogin(content, user, returnPath, activeClassCode.isEnabled, redis)
@@ -125,25 +122,23 @@ internal object SystemAdminPage : KLogging() {
                                          "Are you sure you want to run the garbage collector?")
             }
 
-            if (content.grafanaUrl.isNotBlank())
-              p {
-                +"Grafana Dashboard is "
-                a { href = content.grafanaUrl; target = "_blank"; +"here" }
+            content.grafanaUrl
+              .also {
+                if (it.isNotBlank()) p { +"Grafana Dashboard is "; a { href = it; target = "_blank"; +"here" } }
               }
 
-            if (content.prometheusUrl.isNotBlank())
-              p {
-                +"Prometheus Dashboard is "
-                a { href = content.prometheusUrl; target = "_blank"; +"here" }
+            content.prometheusUrl
+              .also {
+                if (it.isNotBlank()) p { +"Prometheus Dashboard is "; a { href = it; target = "_blank"; +"here" } }
               }
           }
           else {
-            p {
-              +"Not authorized"
-            }
+            p { +"Not authorized" }
           }
 
           backLink("$USER_PREFS_ENDPOINT?$RETURN_PARAM=${queryParam(RETURN_PARAM, "/")}")
+
+          content.statusPageUrl.also { if (it.isNotBlank()) script { src = it } }
         }
       }
 }

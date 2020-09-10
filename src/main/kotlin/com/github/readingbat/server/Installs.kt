@@ -161,6 +161,7 @@ internal object Installs : KLogging() {
 
       status(HttpStatusCode.NotFound) {
         call.respond(TextContent("${it.value} ${it.description}", Plain.withCharset(UTF_8), it))
+
       }
     }
 
