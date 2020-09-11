@@ -40,7 +40,6 @@ import io.ktor.http.HttpHeaders.Location
 import io.ktor.http.HttpStatusCode.Companion.Found
 import io.ktor.locations.Locations
 import io.ktor.request.*
-import io.ktor.response.*
 import io.ktor.server.engine.*
 import io.ktor.sessions.*
 import io.ktor.websocket.*
@@ -149,19 +148,18 @@ internal object Installs : KLogging() {
 
       exception<InvalidRequestException> { cause ->
         //call.respond(HttpStatusCode.BadRequest)
-        //call.respondHtml { errorPage(cause.message?:"") }
-        logger.info(cause) { " Throwable caught: ${cause.simpleClassName}" }
+        logger.info(cause) { " InvalidRequestException caught: ${cause.simpleClassName}" }
         respondWith {
           invalidRequestPage(ReadingBatServer.content.get(), call.request.uri, cause.message ?: "Unknown")
         }
       }
 
-      //statusFile(HttpStatusCode.NotFound, HttpStatusCode.Unauthorized, filePattern = "error#.html")
-
       // Catch all
       exception<Throwable> { cause ->
         logger.info(cause) { " Throwable caught: ${cause.simpleClassName}" }
-        call.respond(HttpStatusCode.BadRequest)
+        respondWith {
+          errorPage(ReadingBatServer.content.get())
+        }
       }
 
       status(HttpStatusCode.NotFound) {
@@ -169,11 +167,6 @@ internal object Installs : KLogging() {
         respondWith {
           notFoundPage(ReadingBatServer.content.get(), call.request.uri.replaceAfter("?", "").replace("?", ""))
         }
-      }
-
-      status(HttpStatusCode.BadRequest) {
-        //call.respond(TextContent("${it.value} ${it.description}", Plain.withCharset(UTF_8), it))
-        respondWith { errorPage(ReadingBatServer.content.get()) }
       }
     }
 
