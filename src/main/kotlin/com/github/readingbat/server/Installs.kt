@@ -145,7 +145,8 @@ internal object Installs : KLogging() {
     */
 
     install(StatusPages) {
-      exception<InvalidPathException> { cause ->
+
+    exception<InvalidPathException> { cause ->
         call.respond(HttpStatusCode.NotFound)
         //call.respondHtml { errorPage(cause.message?:"") }
         logger.info(cause) { " Throwable caught: ${cause.simpleClassName}" }
@@ -161,7 +162,6 @@ internal object Installs : KLogging() {
 
       status(HttpStatusCode.NotFound) {
         call.respond(TextContent("${it.value} ${it.description}", Plain.withCharset(UTF_8), it))
-
       }
     }
 

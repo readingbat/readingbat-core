@@ -30,7 +30,6 @@ internal object Constants {
   const val SESSION_ID = "sessionid"
   const val ICONS = "icons"
   const val MSG = "msg"
-  const val BACK_PATH = "backPath"
   const val STATIC = "static"
   const val PRISM = "prism"
   const val RESP = "response"

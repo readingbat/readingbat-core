@@ -146,7 +146,7 @@ internal object CreateAccountPage {
             }
           }
 
-          privacyStatement(CREATE_ACCOUNT_ENDPOINT, returnPath)
+          privacyStatement(CREATE_ACCOUNT_ENDPOINT)
 
           backLink(returnPath)
 

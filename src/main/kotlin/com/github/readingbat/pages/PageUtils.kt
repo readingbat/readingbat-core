@@ -24,7 +24,6 @@ import com.github.readingbat.common.CSSNames.INDENT_1EM
 import com.github.readingbat.common.CSSNames.SELECTED_TAB
 import com.github.readingbat.common.ClassCode
 import com.github.readingbat.common.CommonUtils.pathOf
-import com.github.readingbat.common.Constants.BACK_PATH
 import com.github.readingbat.common.Constants.ICONS
 import com.github.readingbat.common.Endpoints.CHALLENGE_ROOT
 import com.github.readingbat.common.Endpoints.CSS_ENDPOINT
@@ -159,9 +158,9 @@ internal object PageUtils {
   fun BODY.addLink(text: String, url: String, newWindow: Boolean = false) =
     a { href = url; if (newWindow) target = "_blank"; +text }
 
-  fun BODY.privacyStatement(backPath: String, returnPath: String) =
+  fun BODY.privacyStatement(returnPath: String) =
     p(classes = INDENT_1EM) {
-      a { href = "$PRIVACY_ENDPOINT?$BACK_PATH=$backPath&$RETURN_PARAM=$returnPath"; +"Privacy Statement" }
+      a { href = "$PRIVACY_ENDPOINT?$RETURN_PARAM=$returnPath"; +"Privacy Statement" }
     }
 
   private fun BODY.linkWithIndent(url: String, text: String, marginLeft: String = "1em") {

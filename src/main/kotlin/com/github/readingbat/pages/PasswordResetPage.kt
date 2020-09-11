@@ -120,7 +120,7 @@ internal object PasswordResetPage : KLogging() {
             }
           }
 
-          privacyStatement(PASSWORD_RESET_ENDPOINT, returnPath)
+          privacyStatement(PASSWORD_RESET_ENDPOINT)
 
           backLink(returnPath)
 

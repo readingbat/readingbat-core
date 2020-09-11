@@ -125,7 +125,7 @@ internal object UserPrefsPage : KLogging() {
             }
           }
           else {
-            privacyStatement(USER_PREFS_ENDPOINT, returnPath)
+            privacyStatement(USER_PREFS_ENDPOINT)
           }
 
           backLink(returnPath)
@@ -305,7 +305,7 @@ internal object UserPrefsPage : KLogging() {
             +"or log in to an existing account to edit preferences."
           }
 
-          privacyStatement(USER_PREFS_ENDPOINT, returnPath)
+          privacyStatement(USER_PREFS_ENDPOINT)
 
           backLink(returnPath)
 
