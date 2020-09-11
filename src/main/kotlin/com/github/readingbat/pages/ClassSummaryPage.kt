@@ -95,11 +95,11 @@ internal object ClassSummaryPage : KLogging() {
                                     groupName: GroupName = EMPTY_GROUP,
                                     msg: Message = EMPTY_MESSAGE): String {
     when {
-      classCode.isNotValid(redis) -> throw InvalidRequestException("Invalid class code $classCode")
+      classCode.isNotValid(redis) -> throw InvalidRequestException("Invalid class code: $classCode")
       user.isNotValidUser(redis) -> throw InvalidRequestException("Invalid user")
       classCode.fetchClassTeacherId(redis) != user.id -> {
         val teacherId = classCode.fetchClassTeacherId(redis)
-        throw InvalidRequestException("User id ${user.id} does not match class code teacher id $teacherId")
+        throw InvalidRequestException("User id ${user.id} does not match class code's teacher id $teacherId")
       }
       else -> {
       }

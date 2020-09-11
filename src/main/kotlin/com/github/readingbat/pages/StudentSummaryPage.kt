@@ -71,12 +71,12 @@ internal object StudentSummaryPage : KLogging() {
     val activeClassCode = user.fetchActiveClassCode(redis)
 
     when {
-      classCode.isNotValid(redis) -> throw InvalidRequestException("Invalid classCode $classCode")
+      classCode.isNotValid(redis) -> throw InvalidRequestException("Invalid class code: $classCode")
       user.isNotValidUser(redis) -> throw InvalidRequestException("Invalid user")
       //classCode != activeClassCode -> throw InvalidRequestException("Class code mismatch")
       classCode.fetchClassTeacherId(redis) != user.id -> {
         val teacherId = classCode.fetchClassTeacherId(redis)
-        throw InvalidRequestException("User id ${user.id} does not match classCode teacher Id $teacherId")
+        throw InvalidRequestException("User id ${user.id} does not match class code's teacher Id $teacherId")
       }
       else -> {
       }

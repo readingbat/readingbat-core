@@ -38,7 +38,10 @@ import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.gson
 import com.github.readingbat.common.User.Companion.toUser
 import com.github.readingbat.common.isNotValidUser
-import com.github.readingbat.dsl.*
+import com.github.readingbat.dsl.Challenge
+import com.github.readingbat.dsl.InvalidRequestException
+import com.github.readingbat.dsl.ReadingBatContent
+import com.github.readingbat.dsl.agentLaunchId
 import com.github.readingbat.posts.ChallengeHistory
 import com.github.readingbat.server.ReadingBatServer.redisPool
 import com.github.readingbat.server.ServerUtils.fetchEmail
@@ -82,15 +85,15 @@ internal object WsEndoints : KLogging() {
       redisPool.withRedisPool { redis ->
         when {
           redis.isNull() -> false to context
-          languageName.isNotNull() && languageName.isNotValid() -> false to "Invalid language name $languageName"
-          groupName.isNotNull() && groupName.isNotValid() -> false to "Invalid group name $groupName"
-          classCode.isNotValid(redis) -> false to "Invalid classCode $classCode"
-          student.isNotNull() && student.isNotValidUser(redis) -> false to "Invalid student id"
+          languageName.isNotNull() && languageName.isNotValid() -> false to "Invalid language: $languageName"
+          groupName.isNotNull() && groupName.isNotValid() -> false to "Invalid group: $groupName"
+          classCode.isNotValid(redis) -> false to "Invalid class code: $classCode"
+          student.isNotNull() && student.isNotValidUser(redis) -> false to "Invalid student id: ${student.id}"
           student.isNotNull() && student.isNotEnrolled(classCode, redis) -> false to "Student not enrolled in class"
-          user.isNotValidUser(redis) -> false to "Invalid user id"
+          user.isNotValidUser(redis) -> false to "Invalid user id: ${user.id}"
           classCode.fetchClassTeacherId(redis) != user.id -> {
             val teacherId = classCode.fetchClassTeacherId(redis)
-            false to "User id ${user.id} does not match classCode teacher Id $teacherId"
+            false to "User id ${user.id} does not match class code's teacher Id $teacherId"
           }
           else -> true to ""
         }
@@ -99,8 +102,8 @@ internal object WsEndoints : KLogging() {
     webSocket("$CHALLENGE_ENDPOINT/{$CLASS_CODE}/{$CHALLENGE_MD5}") {
       val content = contentSrc.invoke()
       val classCode =
-        call.parameters[CLASS_CODE]?.let { ClassCode(it) } ?: throw InvalidPathException("Missing class code")
-      val challengeMd5 = call.parameters[CHALLENGE_MD5] ?: throw InvalidPathException("Missing challenge md5")
+        call.parameters[CLASS_CODE]?.let { ClassCode(it) } ?: throw InvalidRequestException("Missing class code")
+      val challengeMd5 = call.parameters[CHALLENGE_MD5] ?: throw InvalidRequestException("Missing challenge md5")
       val finished = BooleanMonitor(false)
       val remote = call.request.origin.remoteHost
       val user = fetchUser() ?: throw InvalidRequestException("Null user")
@@ -197,9 +200,9 @@ internal object WsEndoints : KLogging() {
       val content = contentSrc.invoke()
       val (languageName, groupName, classCode) =
         Triple(
-          call.parameters[LANGUAGE_NAME]?.let { LanguageName(it) } ?: throw InvalidPathException("Missing language"),
-          call.parameters[GROUP_NAME]?.let { GroupName(it) } ?: throw InvalidPathException("Missing group name"),
-          call.parameters[CLASS_CODE]?.let { ClassCode(it) } ?: throw InvalidPathException("Missing class code"))
+          call.parameters[LANGUAGE_NAME]?.let { LanguageName(it) } ?: throw InvalidRequestException("Missing language"),
+          call.parameters[GROUP_NAME]?.let { GroupName(it) } ?: throw InvalidRequestException("Missing group name"),
+          call.parameters[CLASS_CODE]?.let { ClassCode(it) } ?: throw InvalidRequestException("Missing class code"))
       val challenges = content.findGroup(languageName, groupName).challenges
       val finished = AtomicBoolean(false)
       val remote = call.request.origin.remoteHost
@@ -336,9 +339,9 @@ internal object WsEndoints : KLogging() {
       val content = contentSrc.invoke()
       val (languageName, groupName, classCode) =
         Triple(
-          call.parameters[LANGUAGE_NAME]?.let { LanguageName(it) } ?: throw InvalidPathException("Missing language"),
-          call.parameters[GROUP_NAME]?.let { GroupName(it) } ?: throw InvalidPathException("Missing group name"),
-          call.parameters[CLASS_CODE]?.let { ClassCode(it) } ?: throw InvalidPathException("Missing class code"))
+          call.parameters[LANGUAGE_NAME]?.let { LanguageName(it) } ?: throw InvalidRequestException("Missing language"),
+          call.parameters[GROUP_NAME]?.let { GroupName(it) } ?: throw InvalidRequestException("Missing group name"),
+          call.parameters[CLASS_CODE]?.let { ClassCode(it) } ?: throw InvalidRequestException("Missing class code"))
       val challenges = content.findGroup(languageName, groupName).challenges
       val finished = AtomicBoolean(false)
       val remote = call.request.origin.remoteHost
@@ -443,9 +446,9 @@ internal object WsEndoints : KLogging() {
       val content = contentSrc.invoke()
       val (languageName, student, classCode) =
         Triple(
-          call.parameters[LANGUAGE_NAME]?.let { LanguageName(it) } ?: throw InvalidPathException("Missing language"),
-          call.parameters[STUDENT_ID]?.toUser(null) ?: throw InvalidPathException("Missing student id"),
-          call.parameters[CLASS_CODE]?.let { ClassCode(it) } ?: throw InvalidPathException("Missing class code"))
+          call.parameters[LANGUAGE_NAME]?.let { LanguageName(it) } ?: throw InvalidRequestException("Missing language"),
+          call.parameters[STUDENT_ID]?.toUser(null) ?: throw InvalidRequestException("Missing student id"),
+          call.parameters[CLASS_CODE]?.let { ClassCode(it) } ?: throw InvalidRequestException("Missing class code"))
       val finished = AtomicBoolean(false)
       val remote = call.request.origin.remoteHost
       val user = fetchUser() ?: throw InvalidRequestException("Null user")

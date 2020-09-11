@@ -193,7 +193,7 @@ internal object PageUtils {
   fun BODY.displayMessage(msg: Message) = if (msg.isNotBlank) +(msg.toString()) else rawHtml(nbsp.text)
 
   private val rootVals = listOf("", "/", Java.contentRoot, Python.contentRoot, Kotlin.contentRoot)
-  fun BODY.backLink(vararg pathElems: String = arrayOf("")) {
+  fun BODY.backLink(vararg pathElems: String = arrayOf("/")) {
     if (pathElems.size == 1 && pathElems[0] in rootVals)
       linkWithIndent(pathElems.toList().toRootPath(), "Home")
     else

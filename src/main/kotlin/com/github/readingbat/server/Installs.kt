@@ -18,12 +18,16 @@
 package com.github.readingbat.server
 
 import com.github.pambrose.common.features.HerokuHttpsRedirect
+import com.github.pambrose.common.response.respondWith
 import com.github.pambrose.common.util.simpleClassName
 import com.github.readingbat.common.Endpoints.CSS_ENDPOINT
 import com.github.readingbat.common.Endpoints.FAV_ICON_ENDPOINT
 import com.github.readingbat.common.Endpoints.STATIC_ROOT
 import com.github.readingbat.common.EnvVars.FILTER_LOG
-import com.github.readingbat.dsl.InvalidPathException
+import com.github.readingbat.dsl.InvalidRequestException
+import com.github.readingbat.pages.ErrorPage.errorPage
+import com.github.readingbat.pages.InvalidRequestPage.invalidRequestPage
+import com.github.readingbat.pages.NotFoundPage.notFoundPage
 import com.github.readingbat.server.ConfigureCookies.configureAuthCookie
 import com.github.readingbat.server.ConfigureCookies.configureSessionIdCookie
 import com.github.readingbat.server.ConfigureFormAuth.configureFormAuth
@@ -32,10 +36,8 @@ import io.ktor.application.*
 import io.ktor.auth.*
 import io.ktor.features.*
 import io.ktor.http.*
-import io.ktor.http.ContentType.Text.Plain
 import io.ktor.http.HttpHeaders.Location
 import io.ktor.http.HttpStatusCode.Companion.Found
-import io.ktor.http.content.*
 import io.ktor.locations.Locations
 import io.ktor.request.*
 import io.ktor.response.*
@@ -44,7 +46,6 @@ import io.ktor.sessions.*
 import io.ktor.websocket.*
 import mu.KLogging
 import org.slf4j.event.Level
-import kotlin.text.Charsets.UTF_8
 
 internal object Installs : KLogging() {
 
@@ -146,10 +147,13 @@ internal object Installs : KLogging() {
 
     install(StatusPages) {
 
-    exception<InvalidPathException> { cause ->
-        call.respond(HttpStatusCode.NotFound)
+      exception<InvalidRequestException> { cause ->
+        //call.respond(HttpStatusCode.BadRequest)
         //call.respondHtml { errorPage(cause.message?:"") }
         logger.info(cause) { " Throwable caught: ${cause.simpleClassName}" }
+        respondWith {
+          invalidRequestPage(ReadingBatServer.content.get(), call.request.uri, cause.message ?: "Unknown")
+        }
       }
 
       //statusFile(HttpStatusCode.NotFound, HttpStatusCode.Unauthorized, filePattern = "error#.html")
@@ -157,11 +161,19 @@ internal object Installs : KLogging() {
       // Catch all
       exception<Throwable> { cause ->
         logger.info(cause) { " Throwable caught: ${cause.simpleClassName}" }
-        call.respond(HttpStatusCode.NotFound)
+        call.respond(HttpStatusCode.BadRequest)
       }
 
       status(HttpStatusCode.NotFound) {
-        call.respond(TextContent("${it.value} ${it.description}", Plain.withCharset(UTF_8), it))
+        //call.respond(TextContent("${it.value} ${it.description}", Plain.withCharset(UTF_8), it))
+        respondWith {
+          notFoundPage(ReadingBatServer.content.get(), call.request.uri.replaceAfter("?", "").replace("?", ""))
+        }
+      }
+
+      status(HttpStatusCode.BadRequest) {
+        //call.respond(TextContent("${it.value} ${it.description}", Plain.withCharset(UTF_8), it))
+        respondWith { errorPage(ReadingBatServer.content.get()) }
       }
     }
 

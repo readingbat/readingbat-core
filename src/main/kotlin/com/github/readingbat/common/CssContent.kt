@@ -19,6 +19,7 @@ package com.github.readingbat.common
 
 import com.github.readingbat.common.CSSNames.ARROW
 import com.github.readingbat.common.CSSNames.BTN
+import com.github.readingbat.common.CSSNames.CENTER
 import com.github.readingbat.common.CSSNames.CHALLENGE_DESC
 import com.github.readingbat.common.CSSNames.CHECK_ANSWERS
 import com.github.readingbat.common.CSSNames.CODE_BLOCK
@@ -50,6 +51,7 @@ import kotlinx.css.*
 import kotlinx.css.BorderCollapse.separate
 import kotlinx.css.Display.block
 import kotlinx.css.FontWeight.Companion.bold
+import kotlinx.css.LinearDimension.Companion.auto
 import kotlinx.css.properties.LineHeight
 import kotlinx.css.properties.TextDecoration
 import kotlinx.css.properties.TextDecorationLine.underline
@@ -84,6 +86,7 @@ internal object CSSNames {
   const val INVOC_TD = "invoc_td"
   const val INVOC_STAT = "invoc_stat"
   const val BTN = "btn"
+  const val CENTER = "center"
 }
 
 internal val cssContent by lazy {
@@ -149,6 +152,12 @@ internal val cssContent by lazy {
       }
       h2 {
         fontSize = 150.pct
+      }
+      rule(".$CENTER") {
+        display = block
+        marginLeft = auto
+        marginRight = auto
+        width = LinearDimension("50%")
       }
       rule(".$CHALLENGE_DESC") {
         fontSize = textFs
@@ -333,7 +342,7 @@ internal val cssContent by lazy {
       }
       // This fixes a bug in the window size
       rule(".CodeMirror-scroll") {
-        height = LinearDimension.auto
+        height = auto
       }
       // This will add an outline to all the tables
       /*

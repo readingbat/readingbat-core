@@ -143,14 +143,14 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
 
   fun findChallenge(challengeName: String): T =
     challenges.firstOrNull { it.challengeName.value == challengeName }
-      ?: throw InvalidPathException("Challenge ${pathOf(groupPrefix, challengeName)} not found.")
+      ?: throw InvalidRequestException("Challenge not found: ${pathOf(groupPrefix, challengeName)}")
 
   operator fun get(challengeName: String): T = findChallenge(challengeName)
 
   internal fun indexOf(challengeName: ChallengeName): Int {
     val pos = challenges.indexOfFirst { it.challengeName == challengeName }
     if (pos == -1)
-      throw InvalidPathException("Challenge ${pathOf(groupPrefix, challengeName)} not found.")
+      throw InvalidRequestException("Challenge not found: ${pathOf(groupPrefix, challengeName)}")
     return pos
   }
 

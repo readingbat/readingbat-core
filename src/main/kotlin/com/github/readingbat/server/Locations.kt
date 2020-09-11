@@ -31,7 +31,7 @@ import com.github.readingbat.common.KeyConstants.USER_EMAIL_KEY
 import com.github.readingbat.common.Metrics
 import com.github.readingbat.common.Metrics.Companion.GET
 import com.github.readingbat.common.Metrics.Companion.POST
-import com.github.readingbat.dsl.InvalidPathException
+import com.github.readingbat.dsl.InvalidRequestException
 import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.dsl.LanguageType.Java
 import com.github.readingbat.dsl.LanguageType.Kotlin
@@ -175,12 +175,12 @@ inline class LanguageName(val value: String) {
     try {
       LanguageType.values().first { it.name.equals(value, ignoreCase = true) }
     } catch (e: NoSuchElementException) {
-      throw InvalidPathException("Invalid language name: $this")
+      throw InvalidRequestException("Invalid language: $this")
     }
 
   internal fun isValid() = try {
     toLanguageType(); true
-  } catch (e: InvalidPathException) {
+  } catch (e: InvalidRequestException) {
     false
   }
 
