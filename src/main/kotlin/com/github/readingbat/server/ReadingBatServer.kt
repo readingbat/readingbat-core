@@ -148,6 +148,7 @@ internal fun Application.assignContentDsl(fileName: String, variableName: String
           ktorPort = KTOR_PORT.configProperty(this@assignContentDsl, "0").toInt()
           val watchVal = KTOR_WATCH.configPropertyOrNull(this@assignContentDsl)?.getList() ?: emptyList()
           ktorWatch = if (watchVal.isNotEmpty()) watchVal.toString() else "unassigned"
+          pingdomBannerId = PINGDOM_BANNER_ID.configProperty(this@assignContentDsl, "")
           pingdomUrl = PINGDOM_URL.configProperty(this@assignContentDsl, "")
           statusPageUrl = STATUS_PAGE_URL.configProperty(this@assignContentDsl, "")
           grafanaUrl = GRAFANA_URL.configProperty(this@assignContentDsl, "")
@@ -173,6 +174,7 @@ internal fun Application.module() {
   AGENT_ENABLED_PROPERTY.setProperty(agentEnabled().toString())
   CACHE_CONTENT_IN_REDIS.setProperty(CACHE_CONTENT_IN_REDIS.configProperty(this, "false").toBoolean().toString())
 
+  PINGDOM_BANNER_ID.setProperty(PINGDOM_BANNER_ID.configProperty(this, ""))
   PINGDOM_URL.setProperty(PINGDOM_URL.configProperty(this, ""))
   STATUS_PAGE_URL.setProperty(STATUS_PAGE_URL.configProperty(this, ""))
   PROMETHEUS_URL.setProperty(PROMETHEUS_URL.configProperty(this, ""))

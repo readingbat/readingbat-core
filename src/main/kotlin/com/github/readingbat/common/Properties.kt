@@ -65,6 +65,7 @@ enum class Properties(val propertyValue: String,
   AGENT_ENABLED_PROPERTY("$AGENT.enabled"),
   CACHE_CONTENT_IN_REDIS("$READINGBAT.$SITE.cacheContentInRedis"),
 
+  PINGDOM_BANNER_ID("$READINGBAT.$SITE.pingdomBannerId", { getPropertyOrNull() ?: "unassigned" }),
   PINGDOM_URL("$READINGBAT.$SITE.pingdomUrl", { getPropertyOrNull() ?: "unassigned" }),
   STATUS_PAGE_URL("$READINGBAT.$SITE.statusPageUrl", { getPropertyOrNull() ?: "unassigned" }),
   PROMETHEUS_URL("$READINGBAT.prometheus.url"),

@@ -131,6 +131,22 @@ internal object SystemAdminPage : KLogging() {
               .also {
                 if (it.isNotBlank()) p { +"Prometheus Dashboard is "; a { href = it; target = "_blank"; +"here" } }
               }
+
+            content.pingdomBannerId
+              .also {
+                p {
+                  a {
+                    href = "https://share.pingdom.com/banners/$it"
+                    img {
+                      src = "https://share.pingdom.com/banners/$it"
+                      alt = "Uptime Report for ReadingBat.com: Last 30 days"
+                      title = "Uptime Report for ReadingBat.com: Last 30 days"
+                      width = "300"
+                      height = "165"
+                    }
+                  }
+                }
+              }
           }
           else {
             p { +"Not authorized" }

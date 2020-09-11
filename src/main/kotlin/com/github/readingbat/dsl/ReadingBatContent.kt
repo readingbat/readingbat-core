@@ -58,6 +58,7 @@ class ReadingBatContent {
   internal val timeStamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("M/d/y H:m:ss"))
   internal var sendGridPrefix = ""
   internal var googleAnalyticsId = ""
+  internal var pingdomBannerId = ""
   internal var pingdomUrl = ""
   internal var statusPageUrl = ""
   internal var maxHistoryLength = 10
