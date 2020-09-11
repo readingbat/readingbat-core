@@ -19,6 +19,7 @@ package com.github.readingbat.pages
 
 import com.github.readingbat.common.Endpoints.DELETE_CONTENT_IN_REDIS_ENDPOINT
 import com.github.readingbat.common.Endpoints.GARBAGE_COLLECTOR_ENDPOINT
+import com.github.readingbat.common.Endpoints.LOAD_ALL_ENDPOINT
 import com.github.readingbat.common.Endpoints.LOAD_JAVA_ENDPOINT
 import com.github.readingbat.common.Endpoints.LOAD_KOTLIN_ENDPOINT
 import com.github.readingbat.common.Endpoints.LOAD_PYTHON_ENDPOINT
@@ -114,6 +115,12 @@ internal object SystemAdminPage : KLogging() {
               this@body.confirmingButton("Load all Kotlin Challenges",
                                          LOAD_KOTLIN_ENDPOINT,
                                          "Are you sure you want to load all the kotlin challenges? (This can take a while)")
+            }
+
+            p {
+              this@body.confirmingButton("Load all Challenges",
+                                         LOAD_ALL_ENDPOINT,
+                                         "Are you sure you want to load all the challenges? (This can take a while)")
             }
 
             p {

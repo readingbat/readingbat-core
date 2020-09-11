@@ -22,6 +22,7 @@ import com.github.pambrose.common.util.isNull
 import com.github.pambrose.common.util.pluralize
 import com.github.readingbat.common.Endpoints.DELETE_CONTENT_IN_REDIS_ENDPOINT
 import com.github.readingbat.common.Endpoints.GARBAGE_COLLECTOR_ENDPOINT
+import com.github.readingbat.common.Endpoints.LOAD_ALL_ENDPOINT
 import com.github.readingbat.common.Endpoints.LOAD_JAVA_ENDPOINT
 import com.github.readingbat.common.Endpoints.LOAD_KOTLIN_ENDPOINT
 import com.github.readingbat.common.Endpoints.LOAD_PYTHON_ENDPOINT
@@ -33,6 +34,7 @@ import com.github.readingbat.common.KeyConstants.SOURCE_CODE_KEY
 import com.github.readingbat.common.Message
 import com.github.readingbat.common.Metrics
 import com.github.readingbat.common.RedisAdmin.scanKeys
+import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.dsl.LanguageType.Java
 import com.github.readingbat.dsl.LanguageType.Kotlin
 import com.github.readingbat.dsl.LanguageType.Python
@@ -144,11 +146,23 @@ internal fun Routing.sysAdminRoutes(metrics: Metrics, contentSrc: () -> ReadingB
       }
     }
 
+  get(LOAD_ALL_ENDPOINT) {
+    val msg =
+      authenticatedAction {
+        val result =
+          LanguageType.values()
+            .map { contentSrc().loadChallenges(call.request.origin.preUri, it, false) }
+            .joinToString(", ")
+        Message(result)
+      }
+    respondWithRedisCheck(contentSrc()) { redis -> systemAdminPage(contentSrc(), fetchUser(), redis, msg) }
+  }
+
   get(GARBAGE_COLLECTOR_ENDPOINT, metrics) {
     val msg =
       authenticatedAction {
         val dur = measureTime { System.gc() }
-        Message("Garbage collector invoked for $dur.".also { logger.info { it } })
+        Message("Garbage collector invoked for $dur".also { logger.info { it } })
       }
     respondWithRedisCheck(contentSrc()) { redis -> systemAdminPage(contentSrc(), fetchUser(), redis, msg) }
   }
