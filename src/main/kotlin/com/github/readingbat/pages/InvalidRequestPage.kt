@@ -46,7 +46,7 @@ internal object InvalidRequestPage {
 
           div(classes = CSSNames.INDENT_1EM) {
             p {
-              +"The page "
+              +"The request "
               i { +uri }
               +" has this problem: "
             }

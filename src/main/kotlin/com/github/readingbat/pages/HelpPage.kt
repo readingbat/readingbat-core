@@ -161,9 +161,9 @@ internal object HelpPage {
                   li { +"Go to one of the challenges (in teacher mode) and you should see yourself as the only student." }
                   li { +"Open a second browser (not just a second window) and go to ReadingBat.com and login." }
                   li { +"Go to the same challenge as a student and enter some answers. You will see your answers appearing in the other browser." }
-                  li { +"Go back to the other browser (in teacher mode) and click on the challenge group link and you will see statistics for all the challenges in that group." }
-                  li { +"Click on the class link and you will see a class overview." }
-                  li { +"Click on your student link and you will see a student overview." }
+                  li { +"Go back to the other browser (in teacher mode) and click on the challenge group link to see statistics for all the challenges in that group." }
+                  li { +"Click on the class link to see a class overview." }
+                  li { +"Click on your student link to see a student overview." }
                 }
               }
             }
