@@ -33,7 +33,6 @@ import com.github.readingbat.common.Endpoints.RESET_CONTENT_DSL_ENDPOINT
 import com.github.readingbat.common.KeyConstants.CONTENT_DSL_KEY
 import com.github.readingbat.common.KeyConstants.DIR_CONTENTS_KEY
 import com.github.readingbat.common.KeyConstants.SOURCE_CODE_KEY
-import com.github.readingbat.common.Message
 import com.github.readingbat.common.Metrics
 import com.github.readingbat.common.RedisAdmin.scanKeys
 import com.github.readingbat.dsl.LanguageType
@@ -44,10 +43,10 @@ import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.pages.SystemAdminPage.systemAdminPage
 import com.github.readingbat.server.ReadingBatServer.logger
 import com.github.readingbat.server.ReadingBatServer.redisPool
-import com.github.readingbat.server.ServerUtils.authenticatedAction
+import com.github.readingbat.server.ServerUtils.authenticateAdminUser
 import com.github.readingbat.server.ServerUtils.fetchUser
 import com.github.readingbat.server.ServerUtils.get
-import com.github.readingbat.server.ServerUtils.respondWithRedisCheck
+import com.github.readingbat.server.ServerUtils.respondWithSuspendingRedisCheck
 import io.ktor.application.*
 import io.ktor.features.*
 import io.ktor.routing.*
@@ -102,36 +101,42 @@ internal fun Routing.sysAdminRoutes(metrics: Metrics, contentSrc: () -> ReadingB
       .also { logger.info { "clearContentInRedis(): $it" } }
 
   get(RESET_CONTENT_DSL_ENDPOINT, metrics) {
-    val msg =
-      authenticatedAction {
-        measureTime {
-          deleteContentInRedis()
-          resetFunc.invoke()
+    respondWithSuspendingRedisCheck { redis ->
+      val user = fetchUser()
+      val msg =
+        authenticateAdminUser(user, redis) {
+          measureTime {
+            deleteContentInRedis()
+            resetFunc.invoke()
+          }.let { "DSL content reset in $it".also { logger.info { it } } }
         }
-          .let {
-            Message("DSL content reset in $it".also { logger.info { it } })
-          }
-      }
-    respondWithRedisCheck { redis -> systemAdminPage(contentSrc(), fetchUser(), redis, msg) }
+      systemAdminPage(contentSrc(), user, redis, msg)
+    }
   }
 
   get(RESET_CACHE_ENDPOINT, metrics) {
-    val msg =
-      authenticatedAction {
-        deleteContentInRedis()
-        val content = contentSrc()
-        val cnt = content.functionInfoMap.size
-        content.clearSourcesMap()
-          .let {
-            Message("Challenge cache reset -- $cnt challenges removed".also { logger.info { it } })
-          }
-      }
-    respondWithRedisCheck { redis -> systemAdminPage(contentSrc(), fetchUser(), redis, msg) }
+    respondWithSuspendingRedisCheck { redis ->
+      val user = fetchUser()
+      val msg =
+        authenticateAdminUser(user, redis) {
+          deleteContentInRedis()
+          val content = contentSrc()
+          val cnt = content.functionInfoMap.size
+          content.clearSourcesMap()
+            .let {
+              "Challenge cache reset -- $cnt challenges removed".also { logger.info { it } }
+            }
+        }
+      systemAdminPage(contentSrc(), user, redis, msg)
+    }
   }
 
   get(DELETE_CONTENT_IN_REDIS_ENDPOINT, metrics) {
-    val msg = authenticatedAction { Message(deleteContentInRedis()) }
-    respondWithRedisCheck { redis -> systemAdminPage(contentSrc(), fetchUser(), redis, msg) }
+    respondWithSuspendingRedisCheck { redis ->
+      val user = fetchUser()
+      val msg = authenticateAdminUser(user, redis) { deleteContentInRedis() }
+      systemAdminPage(contentSrc(), user, redis, msg)
+    }
   }
 
   listOf(LOAD_JAVA_ENDPOINT to Java,
@@ -139,32 +144,39 @@ internal fun Routing.sysAdminRoutes(metrics: Metrics, contentSrc: () -> ReadingB
          LOAD_KOTLIN_ENDPOINT to Kotlin)
     .forEach { pair ->
       get(pair.first) {
-        val msg =
-          authenticatedAction {
-            Message(contentSrc().loadChallenges(call.request.origin.uriPrefix, pair.second, false))
-          }
-        respondWithRedisCheck { redis -> systemAdminPage(contentSrc(), fetchUser(), redis, msg) }
+        respondWithSuspendingRedisCheck { redis ->
+          val user = fetchUser()
+          val msg =
+            authenticateAdminUser(user, redis) {
+              contentSrc().loadChallenges(call.request.origin.uriPrefix, pair.second, false)
+            }
+          systemAdminPage(contentSrc(), user, redis, msg)
+        }
       }
     }
 
   get(LOAD_ALL_ENDPOINT) {
-    val msg =
-      authenticatedAction {
-        val result =
+    respondWithSuspendingRedisCheck { redis ->
+      val user = fetchUser()
+      val msg =
+        authenticateAdminUser(user, redis) {
           LanguageType.values()
             .map { contentSrc().loadChallenges(call.request.origin.uriPrefix, it, false) }
             .joinToString(", ")
-        Message(result)
-      }
-    respondWithRedisCheck { redis -> systemAdminPage(contentSrc(), fetchUser(), redis, msg) }
+        }
+      systemAdminPage(contentSrc(), user, redis, msg)
+    }
   }
 
   get(GARBAGE_COLLECTOR_ENDPOINT, metrics) {
-    val msg =
-      authenticatedAction {
-        val dur = measureTime { System.gc() }
-        Message("Garbage collector invoked for $dur".also { logger.info { it } })
-      }
-    respondWithRedisCheck { redis -> systemAdminPage(contentSrc(), fetchUser(), redis, msg) }
+    respondWithSuspendingRedisCheck { redis ->
+      val user = fetchUser()
+      val msg =
+        authenticateAdminUser(user, redis) {
+          val dur = measureTime { System.gc() }
+          "Garbage collector invoked for $dur".also { logger.info { it } }
+        }
+      systemAdminPage(contentSrc(), user, redis, msg)
+    }
   }
 }

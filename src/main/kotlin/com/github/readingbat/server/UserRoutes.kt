@@ -87,7 +87,7 @@ import com.github.readingbat.posts.TeacherPrefsPost.teacherPrefs
 import com.github.readingbat.posts.UserPrefsPost.userPrefs
 import com.github.readingbat.server.ReadingBatServer.redisPool
 import com.github.readingbat.server.ResourceContent.getResourceAsText
-import com.github.readingbat.server.ServerUtils.authenticateAdminPage
+import com.github.readingbat.server.ServerUtils.authenticateAdminUser
 import com.github.readingbat.server.ServerUtils.defaultLanguageTab
 import com.github.readingbat.server.ServerUtils.fetchUser
 import com.github.readingbat.server.ServerUtils.get
@@ -121,18 +121,18 @@ internal fun Routing.userRoutes(metrics: Metrics, contentSrc: () -> ReadingBatCo
 
   get(CONFIG_ENDPOINT) {
     respondWithSuspendingRedisCheck { redis ->
-      authenticateAdminPage(redis) { configPage(contentSrc()) }
+      authenticateAdminUser(fetchUser(), redis) { configPage(contentSrc()) }
+    }
+  }
+
+  get(SESSIONS_ENDPOINT) {
+    respondWithSuspendingRedisCheck { redis ->
+      authenticateAdminUser(fetchUser(), redis) { sessionsPage(contentSrc(), redis) }
     }
   }
 
   get(PRIVACY_ENDPOINT) {
     respondWith { privacyPage(contentSrc()) }
-  }
-
-  get(SESSIONS_ENDPOINT) {
-    respondWithSuspendingRedisCheck { redis ->
-      authenticateAdminPage(redis) { sessionsPage(contentSrc(), redis) }
-    }
   }
 
   get(ABOUT_ENDPOINT) {
@@ -189,7 +189,10 @@ internal fun Routing.userRoutes(metrics: Metrics, contentSrc: () -> ReadingBatCo
 
   get(ADMIN_PREFS_ENDPOINT) {
     respondWithRedisCheck { redis ->
-      authenticateAdminPage(redis) { adminPrefsPage(contentSrc(), fetchUser(), redis) }
+      fetchUser()
+        .let {
+          authenticateAdminUser(it, redis) { adminPrefsPage(contentSrc(), it, redis) }
+        }
     }
   }
 
@@ -211,7 +214,10 @@ internal fun Routing.userRoutes(metrics: Metrics, contentSrc: () -> ReadingBatCo
 
   get(SYSTEM_ADMIN_ENDPOINT, metrics) {
     respondWithSuspendingRedisCheck { redis ->
-      authenticateAdminPage(redis) { systemAdminPage(contentSrc(), fetchUser(), redis) }
+      fetchUser()
+        .let {
+          authenticateAdminUser(it, redis) { systemAdminPage(contentSrc(), it, redis) }
+        }
     }
   }
 

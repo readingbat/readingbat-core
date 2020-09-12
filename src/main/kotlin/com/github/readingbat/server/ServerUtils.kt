@@ -26,10 +26,10 @@ import com.github.pambrose.common.util.isNotNull
 import com.github.pambrose.common.util.isNull
 import com.github.pambrose.common.util.md5
 import com.github.readingbat.common.*
-import com.github.readingbat.common.Constants.DBMS_DOWN
 import com.github.readingbat.common.Constants.UNKNOWN
 import com.github.readingbat.common.KeyConstants.KEY_SEP
 import com.github.readingbat.common.User.Companion.toUser
+import com.github.readingbat.dsl.InvalidRequestException
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.RedisUnavailableException
 import com.github.readingbat.dsl.isProduction
@@ -120,28 +120,12 @@ internal object ServerUtils : KLogging() {
       redirectTo { e.redirectUrl }
     }
 
-  suspend fun PipelineCall.authenticatedAction(block: () -> Message): Message =
-    when {
-      isProduction() ->
-        redisPool?.withSuspendingRedisPool { redis ->
-          val user = fetchUser()
-          when {
-            redis.isNull() -> Message(DBMS_DOWN.value, true)
-            user.isNotValidUser(redis) -> Message("Must be logged in for this function", true)
-            user.isNotAdminUser(redis) -> Message("Must be system admin for this function", true)
-            else -> block.invoke()
-          }
-        } ?: Message(DBMS_DOWN.value, true)
-      else -> block.invoke()
-    }
-
-  fun PipelineCall.authenticateAdminPage(redis: Jedis, block: () -> String): String =
+  fun authenticateAdminUser(user: User?, redis: Jedis, block: () -> String): String =
     when {
       isProduction() -> {
-        val user = fetchUser()
         when {
-          user.isNotValidUser(redis) -> "Must be logged in for this function"
-          user.isNotAdminUser(redis) -> "Must be system admin for this function"
+          user.isNotValidUser(redis) -> throw InvalidRequestException("Must be logged in for this function")
+          user.isNotAdminUser(redis) -> throw InvalidRequestException("Must be system admin for this function")
           else -> block.invoke()
         }
       }
