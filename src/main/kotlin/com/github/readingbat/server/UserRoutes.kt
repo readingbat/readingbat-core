@@ -25,6 +25,7 @@ import com.github.readingbat.common.CommonUtils.pathOf
 import com.github.readingbat.common.Constants.ICONS
 import com.github.readingbat.common.Endpoints.ABOUT_ENDPOINT
 import com.github.readingbat.common.Endpoints.ADMIN_ENDPOINT
+import com.github.readingbat.common.Endpoints.ADMIN_PREFS_ENDPOINT
 import com.github.readingbat.common.Endpoints.CHALLENGE_ROOT
 import com.github.readingbat.common.Endpoints.CHECK_ANSWERS_ENDPOINT
 import com.github.readingbat.common.Endpoints.CLASS_SUMMARY_ENDPOINT
@@ -59,6 +60,7 @@ import com.github.readingbat.common.cssContent
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.pages.AboutPage.aboutPage
 import com.github.readingbat.pages.AdminPage.adminDataPage
+import com.github.readingbat.pages.AdminPrefsPage.adminPrefsPage
 import com.github.readingbat.pages.ClassSummaryPage.classSummaryPage
 import com.github.readingbat.pages.ConfigPage.configPage
 import com.github.readingbat.pages.CreateAccountPage.createAccountPage
@@ -85,7 +87,7 @@ import com.github.readingbat.posts.TeacherPrefsPost.teacherPrefs
 import com.github.readingbat.posts.UserPrefsPost.userPrefs
 import com.github.readingbat.server.ReadingBatServer.redisPool
 import com.github.readingbat.server.ResourceContent.getResourceAsText
-import com.github.readingbat.server.ServerUtils.authenticatedPage
+import com.github.readingbat.server.ServerUtils.authenticateAdminPage
 import com.github.readingbat.server.ServerUtils.defaultLanguageTab
 import com.github.readingbat.server.ServerUtils.fetchUser
 import com.github.readingbat.server.ServerUtils.get
@@ -118,15 +120,19 @@ internal fun Routing.userRoutes(metrics: Metrics, contentSrc: () -> ReadingBatCo
   }
 
   get(CONFIG_ENDPOINT) {
-    respondWith { authenticatedPage { configPage(contentSrc()) } }
-  }
-
-  get(SESSIONS_ENDPOINT) {
-    respondWithSuspendingRedisCheck { redis -> authenticatedPage { sessionsPage(contentSrc(), redis) } }
+    respondWithSuspendingRedisCheck { redis ->
+      authenticateAdminPage(redis) { configPage(contentSrc()) }
+    }
   }
 
   get(PRIVACY_ENDPOINT) {
     respondWith { privacyPage(contentSrc()) }
+  }
+
+  get(SESSIONS_ENDPOINT) {
+    respondWithSuspendingRedisCheck { redis ->
+      authenticateAdminPage(redis) { sessionsPage(contentSrc(), redis) }
+    }
   }
 
   get(ABOUT_ENDPOINT) {
@@ -181,6 +187,12 @@ internal fun Routing.userRoutes(metrics: Metrics, contentSrc: () -> ReadingBatCo
     respondWithSuspendingRedisCheck { redis -> createAccount(contentSrc(), redis) }
   }
 
+  get(ADMIN_PREFS_ENDPOINT) {
+    respondWithRedisCheck { redis ->
+      authenticateAdminPage(redis) { adminPrefsPage(contentSrc(), fetchUser(), redis) }
+    }
+  }
+
   get(USER_PREFS_ENDPOINT, metrics) {
     respondWithRedisCheck { redis -> userPrefsPage(contentSrc(), fetchUser(), redis) }
   }
@@ -198,7 +210,9 @@ internal fun Routing.userRoutes(metrics: Metrics, contentSrc: () -> ReadingBatCo
   }
 
   get(SYSTEM_ADMIN_ENDPOINT, metrics) {
-    respondWithRedisCheck { redis -> systemAdminPage(contentSrc(), fetchUser(), redis) }
+    respondWithSuspendingRedisCheck { redis ->
+      authenticateAdminPage(redis) { systemAdminPage(contentSrc(), fetchUser(), redis) }
+    }
   }
 
   get(CLASS_SUMMARY_ENDPOINT, metrics) {

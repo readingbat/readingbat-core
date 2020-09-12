@@ -17,15 +17,12 @@
 
 package com.github.readingbat.pages
 
-import com.github.readingbat.common.*
 import com.github.readingbat.common.CSSNames.INDENT_1EM
 import com.github.readingbat.common.CSSNames.INDENT_2EM
+import com.github.readingbat.common.ClassCode
 import com.github.readingbat.common.ClassCode.Companion.DISABLED_CLASS_CODE
 import com.github.readingbat.common.Constants.LABEL_WIDTH
-import com.github.readingbat.common.Endpoints.CONFIG_ENDPOINT
 import com.github.readingbat.common.Endpoints.CREATE_ACCOUNT_ENDPOINT
-import com.github.readingbat.common.Endpoints.SESSIONS_ENDPOINT
-import com.github.readingbat.common.Endpoints.SYSTEM_ADMIN_ENDPOINT
 import com.github.readingbat.common.Endpoints.TEACHER_PREFS_ENDPOINT
 import com.github.readingbat.common.Endpoints.USER_PREFS_ENDPOINT
 import com.github.readingbat.common.FormFields.CLASS_CODE_NAME_PARAM
@@ -39,11 +36,13 @@ import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.FormFields.UPDATE_PASSWORD
 import com.github.readingbat.common.FormFields.USER_PREFS_ACTION_PARAM
 import com.github.readingbat.common.FormFields.WITHDRAW_FROM_CLASS
+import com.github.readingbat.common.Message
 import com.github.readingbat.common.Message.Companion.EMPTY_MESSAGE
+import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.fetchActiveClassCode
 import com.github.readingbat.common.User.Companion.fetchEnrolledClassCode
+import com.github.readingbat.common.isValidUser
 import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.dsl.isProduction
 import com.github.readingbat.pages.HelpAndLogin.helpAndLogin
 import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyTitle
@@ -96,7 +95,7 @@ internal object UserPrefsPage : KLogging() {
 
           bodyTitle()
 
-          h2 { +"ReadingBat User Preferences" }
+          h2 { +"User Preferences" }
 
           if (msg.isAssigned())
             p { span { style = "color:${msg.color}"; this@body.displayMessage(msg) } }
@@ -109,24 +108,7 @@ internal object UserPrefsPage : KLogging() {
             a { href = "$TEACHER_PREFS_ENDPOINT?$RETURN_PARAM=$USER_PREFS_ENDPOINT"; +"Teacher Preferences" }
           }
 
-          if (!isProduction() || user.isAdminUser(redis)) {
-            h3 { +"Administrator Options" }
-
-            p(classes = INDENT_1EM) {
-              a { href = "$CONFIG_ENDPOINT?$RETURN_PARAM=$returnPath"; +"System Configuration" }
-            }
-
-            p(classes = INDENT_1EM) {
-              a { href = "$SESSIONS_ENDPOINT?$RETURN_PARAM=$returnPath"; +"Current Sessions" }
-            }
-
-            p(classes = INDENT_1EM) {
-              a { href = "$SYSTEM_ADMIN_ENDPOINT?$RETURN_PARAM=$returnPath"; +"System Admin" }
-            }
-          }
-          else {
-            privacyStatement(USER_PREFS_ENDPOINT)
-          }
+          privacyStatement(USER_PREFS_ENDPOINT)
 
           backLink(returnPath)
         }

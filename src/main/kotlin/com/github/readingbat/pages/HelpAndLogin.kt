@@ -20,6 +20,7 @@ package com.github.readingbat.pages
 import com.github.pambrose.common.util.isNotNull
 import com.github.readingbat.common.AuthRoutes.LOGOUT
 import com.github.readingbat.common.Endpoints.ABOUT_ENDPOINT
+import com.github.readingbat.common.Endpoints.ADMIN_PREFS_ENDPOINT
 import com.github.readingbat.common.Endpoints.CREATE_ACCOUNT_ENDPOINT
 import com.github.readingbat.common.Endpoints.ENABLE_STUDENT_MODE_ENDPOINT
 import com.github.readingbat.common.Endpoints.ENABLE_TEACHER_MODE_ENDPOINT
@@ -31,7 +32,9 @@ import com.github.readingbat.common.FormFields.PASSWORD_PARAM
 import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.fetchPreviousTeacherClassCode
+import com.github.readingbat.common.isAdminUser
 import com.github.readingbat.dsl.ReadingBatContent
+import com.github.readingbat.dsl.isProduction
 import com.github.readingbat.pages.PageUtils.rawHtml
 import kotlinx.html.*
 import redis.clients.jedis.Jedis
@@ -80,6 +83,11 @@ internal object HelpAndLogin {
             a { href = "$HELP_ENDPOINT?$RETURN_PARAM=$loginPath"; +"help" }
 
             if (redis.isNotNull()) {
+              if (!isProduction() || user.isAdminUser(redis)) {
+                +" | "
+                a { href = "$ADMIN_PREFS_ENDPOINT?$RETURN_PARAM=$loginPath"; +"admin" }
+              }
+
               +" | "
               a { href = "$USER_PREFS_ENDPOINT?$RETURN_PARAM=$loginPath"; +"prefs" }
             }

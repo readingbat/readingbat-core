@@ -79,6 +79,7 @@ internal object Endpoints {
   const val STATIC_ROOT = "https://static.readingbat.com"
   const val CHALLENGE_ROOT = "/content"
   const val PLAYGROUND_ROOT = "/playground"
+  const val ADMIN_PREFS_ENDPOINT = "/admin-prefs"
   const val USER_PREFS_ENDPOINT = "/user-prefs"
   const val TEACHER_PREFS_ENDPOINT = "/teacher-prefs"
   const val CLASS_SUMMARY_ENDPOINT = "/class-summary"

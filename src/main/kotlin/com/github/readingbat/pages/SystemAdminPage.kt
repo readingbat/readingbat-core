@@ -17,6 +17,7 @@
 
 package com.github.readingbat.pages
 
+import com.github.readingbat.common.Endpoints.ADMIN_PREFS_ENDPOINT
 import com.github.readingbat.common.Endpoints.DELETE_CONTENT_IN_REDIS_ENDPOINT
 import com.github.readingbat.common.Endpoints.GARBAGE_COLLECTOR_ENDPOINT
 import com.github.readingbat.common.Endpoints.LOAD_ALL_ENDPOINT
@@ -25,7 +26,6 @@ import com.github.readingbat.common.Endpoints.LOAD_KOTLIN_ENDPOINT
 import com.github.readingbat.common.Endpoints.LOAD_PYTHON_ENDPOINT
 import com.github.readingbat.common.Endpoints.RESET_CACHE_ENDPOINT
 import com.github.readingbat.common.Endpoints.RESET_CONTENT_DSL_ENDPOINT
-import com.github.readingbat.common.Endpoints.USER_PREFS_ENDPOINT
 import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.Message
 import com.github.readingbat.common.Message.Companion.EMPTY_MESSAGE
@@ -75,7 +75,7 @@ internal object SystemAdminPage : KLogging() {
           helpAndLogin(content, user, returnPath, activeClassCode.isEnabled, redis)
           bodyTitle()
 
-          h2 { +"ReadingBat System Admin" }
+          h2 { +"System Admin" }
 
           if (msg.isAssigned())
             p { span { style = "color:${msg.color}"; this@body.displayMessage(msg) } }
@@ -138,28 +138,12 @@ internal object SystemAdminPage : KLogging() {
               .also {
                 if (it.isNotBlank()) p { +"Prometheus Dashboard is "; a { href = it; target = "_blank"; +"here" } }
               }
-
-            content.pingdomBannerId
-              .also {
-                p {
-                  a {
-                    href = "https://share.pingdom.com/banners/$it"
-                    img {
-                      src = "https://share.pingdom.com/banners/$it"
-                      alt = "Uptime Report for ReadingBat.com: Last 30 days"
-                      title = "Uptime Report for ReadingBat.com: Last 30 days"
-                      width = "300"
-                      height = "165"
-                    }
-                  }
-                }
-              }
           }
           else {
             p { +"Not authorized" }
           }
 
-          backLink("$USER_PREFS_ENDPOINT?$RETURN_PARAM=${queryParam(RETURN_PARAM, "/")}")
+          backLink("$ADMIN_PREFS_ENDPOINT?$RETURN_PARAM=${queryParam(RETURN_PARAM, "/")}")
 
           content.statusPageUrl.also { if (it.isNotBlank()) script { src = it } }
         }

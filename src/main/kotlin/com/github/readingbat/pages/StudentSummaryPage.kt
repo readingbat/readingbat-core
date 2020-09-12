@@ -91,7 +91,7 @@ internal object StudentSummaryPage : KLogging() {
           helpAndLogin(content, user, returnPath, activeClassCode.isEnabled, redis)
           bodyTitle()
 
-          h2 { +"ReadingBat Student Summary" }
+          h2 { +"Student Summary" }
 
           h3 {
             style = "margin-left: 15px; color: $headerColor"

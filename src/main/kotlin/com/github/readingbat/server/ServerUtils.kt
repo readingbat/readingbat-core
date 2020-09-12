@@ -135,18 +135,16 @@ internal object ServerUtils : KLogging() {
       else -> block.invoke()
     }
 
-  suspend fun PipelineCall.authenticatedPage(block: () -> String): String =
+  fun PipelineCall.authenticateAdminPage(redis: Jedis, block: () -> String): String =
     when {
-      isProduction() ->
-        redisPool?.withSuspendingRedisPool { redis ->
-          val user = fetchUser()
-          when {
-            redis.isNull() -> DBMS_DOWN.value
-            user.isNotValidUser(redis) -> "Must be logged in for this function"
-            user.isNotAdminUser(redis) -> "Must be system admin for this function"
-            else -> block.invoke()
-          }
-        } ?: DBMS_DOWN.value
+      isProduction() -> {
+        val user = fetchUser()
+        when {
+          user.isNotValidUser(redis) -> "Must be logged in for this function"
+          user.isNotAdminUser(redis) -> "Must be system admin for this function"
+          else -> block.invoke()
+        }
+      }
       else -> block.invoke()
     }
 

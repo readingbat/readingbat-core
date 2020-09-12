@@ -127,7 +127,7 @@ internal object ClassSummaryPage : KLogging() {
 
           bodyTitle()
 
-          h2 { +"ReadingBat Class Summary" }
+          h2 { +"Class Summary" }
 
           if (msg.isAssigned())
             p { span { style = "color:${msg.color}"; this@body.displayMessage(msg) } }
