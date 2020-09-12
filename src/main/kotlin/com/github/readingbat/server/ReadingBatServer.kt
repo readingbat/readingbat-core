@@ -57,16 +57,18 @@ import kotlin.time.TimeSource
 import kotlin.time.measureTime
 import kotlin.time.seconds
 
-@Version(version = "1.4.0", date = "9/10/20")
+@Version(version = "1.4.0", date = "9/11/20")
 object ReadingBatServer : KLogging() {
   internal val timeStamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("M/d/y H:m:ss"))
   private val startTime = TimeSource.Monotonic.markNow()
+  private val redisPoolSrc = AtomicReference<JedisPool>()
   internal val upTime get() = startTime.elapsedNow()
   internal val content = AtomicReference(ReadingBatContent())
   internal val adminUsers = mutableListOf<String>()
   internal val contentReadCount = AtomicInteger(0)
   internal val metrics by lazy { Metrics() }
-  internal var redisPool: JedisPool? = null
+
+  internal val redisPool: JedisPool? get() = redisPoolSrc.get()
 
   fun start(args: Array<String>) {
 
@@ -116,13 +118,12 @@ object ReadingBatServer : KLogging() {
     ScriptPools.pythonScriptPool
     ScriptPools.kotlinScriptPool
 
-    redisPool =
+    redisPoolSrc.set(
       try {
-        RedisUtils.newJedisPool()
+        RedisUtils.newJedisPool().also { logger.info { "Created Redis pool" } }
       } catch (e: JedisConnectionException) {
-        logger.error { REDIS_IS_DOWN }
-        null
-      }
+        null.also { logger.error { "Failed to create Redis pool: $REDIS_IS_DOWN" } }
+      })
 
     val environment = commandLineEnvironment(newargs)
     embeddedServer(CIO, environment).start(wait = true)

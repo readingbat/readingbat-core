@@ -77,7 +77,6 @@ internal object ConfigureFormAuth : KLogging() {
           }
           else {
             var principal: UserPrincipal? = null
-
             val user = lookupUserByEmail(Email(cred.name), redis)
             if (user.isNotNull()) {
               val (salt, digest) = user.lookupDigestInfoByUser(redis)
