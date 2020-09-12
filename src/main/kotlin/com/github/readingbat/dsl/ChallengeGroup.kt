@@ -17,6 +17,7 @@
 
 package com.github.readingbat.dsl
 
+import com.github.pambrose.common.redis.RedisUtils.withNonNullRedisPool
 import com.github.pambrose.common.redis.RedisUtils.withRedisPool
 import com.github.pambrose.common.util.FileSystemSource
 import com.github.pambrose.common.util.GitHubRepo
@@ -59,35 +60,44 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
 
   private fun fetchDirContentsFromRedis(path: String) =
     if (cacheContentInRedis())
-      redisPool.withRedisPool { redis -> redis?.lrange(dirContentsKey(path), 0, -1) }
+      redisPool?.withRedisPool { redis -> redis?.lrange(dirContentsKey(path), 0, -1) }
+        ?.apply { logger.debug { """Retrieved "$path" from redis""" } }
     else
       null
+
+  private fun fetchRemoteFiles(root: GitHubRepo, path: String) =
+    (if (root.ownerType.isUser())
+      root.userDirectoryContents(branchName, path, metrics)
+    else
+      root.organizationDirectoryContents(branchName, path, metrics))
+
+      .also {
+        if (cacheContentInRedis()) {
+          redisPool?.withNonNullRedisPool { redis ->
+            val dirContentsKey = dirContentsKey(path)
+            it.forEach { redis.rpush(dirContentsKey, it) }
+            logger.info { """Saved "$path" to redis""" }
+          }
+        }
+      }
 
   internal val fileList by lazy {
     repo.let { root ->
       when (root) {
         is GitHubRepo -> {
           val path = "${srcPath.ensureSuffix("/")}$packageNameAsPath"
-          val files = fetchDirContentsFromRedis(path)
-          if (files.isNotNull() && files.isNotEmpty()) {
-            logger.debug { """Retrieved "$path" from redis""" }
-            files
+
+          if (cacheContentInRedis()) {
+            fetchDirContentsFromRedis(path)
+              .let {
+                if (it.isNotNull() && it.isNotEmpty())
+                  it
+                else
+                  fetchRemoteFiles(root, path)
+              }
           }
           else {
-            val remoteFiles =
-              if (root.ownerType.isUser())
-                root.userDirectoryContents(branchName, path, metrics)
-              else
-                root.organizationDirectoryContents(branchName, path, metrics)
-
-            redisPool.withRedisPool { redis ->
-              if (redis.isNotNull() && cacheContentInRedis()) {
-                val dirContentsKey = dirContentsKey(path)
-                remoteFiles.forEach { redis.rpush(dirContentsKey, it) }
-                logger.info { """Saved "$path" to redis""" }
-              }
-            }
-            remoteFiles
+            fetchRemoteFiles(root, path)
           }
         }
         is FileSystemSource -> {

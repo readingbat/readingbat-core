@@ -17,14 +17,15 @@
 
 package com.github.readingbat.pages
 
+import com.github.readingbat.common.CSSNames.CENTER
+import com.github.readingbat.common.CommonUtils.pathOf
 import com.github.readingbat.common.Constants.DBMS_DOWN
-import com.github.readingbat.common.FormFields.RETURN_PARAM
+import com.github.readingbat.common.Endpoints.STATIC_ROOT
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyTitle
 import com.github.readingbat.pages.PageUtils.headDefault
 import com.github.readingbat.server.PipelineCall
-import com.github.readingbat.server.ServerUtils.queryParam
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 
@@ -38,9 +39,17 @@ internal object DbmsDownPage {
         body {
           bodyTitle()
 
+          p {
+            img(classes = CENTER) { src = pathOf(STATIC_ROOT, "dbmsdown.jpg") }
+          }
+
           h2 { +DBMS_DOWN.toString() }
 
-          backLink(queryParam(RETURN_PARAM))
+          p {
+            +"We seem to be having problems with our database. Please check back later."
+          }
+
+          backLink("/")
 
           content.pingdomUrl.also { if (it.isNotBlank()) script { src = it; async = true } }
         }

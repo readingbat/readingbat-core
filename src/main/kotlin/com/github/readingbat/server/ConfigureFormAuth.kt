@@ -25,9 +25,11 @@ import com.github.pambrose.common.util.isNull
 import com.github.pambrose.common.util.sha256
 import com.github.readingbat.common.AuthName
 import com.github.readingbat.common.Constants.DBMS_DOWN
+import com.github.readingbat.common.Constants.UNKNOWN
 import com.github.readingbat.common.FormFields
 import com.github.readingbat.common.User.Companion.lookupUserByEmail
 import com.github.readingbat.common.UserPrincipal
+import com.github.readingbat.dsl.RedisUnavailableException
 import com.github.readingbat.server.ReadingBatServer.redisPool
 import com.google.common.util.concurrent.RateLimiter
 import io.ktor.auth.*
@@ -67,10 +69,11 @@ internal object ConfigureFormAuth : KLogging() {
       }
 
       validate { cred: UserPasswordCredential ->
-        redisPool.withRedisPool { redis ->
+        redisPool?.withRedisPool { redis ->
           if (redis.isNull()) {
-            logger.warn { DBMS_DOWN }
-            null
+            logger.error { DBMS_DOWN }
+            throw RedisUnavailableException("validate()")
+            //null
           }
           else {
             var principal: UserPrincipal? = null
@@ -84,14 +87,14 @@ internal object ConfigureFormAuth : KLogging() {
               }
             }
 
-            logger.info { "Login ${if (principal.isNull()) "failure" else "success for $user ${user?.email(redis) ?: "Unknown"}"}" }
+            logger.info { "Login ${if (principal.isNull()) "failure" else "success for $user ${user?.email(redis) ?: UNKNOWN}"}" }
 
             if (principal.isNull())
               failedLoginLimiter.acquire() // may block
 
             principal
           }
-        }
+        } ?: throw RedisUnavailableException("validate()")
       }
     }
 

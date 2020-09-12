@@ -19,9 +19,9 @@ package com.github.readingbat.common
 
 import com.github.pambrose.common.dsl.KtorDsl.get
 import com.github.pambrose.common.dsl.KtorDsl.httpClient
-import com.github.pambrose.common.redis.RedisUtils.withRedisPool
+import com.github.pambrose.common.redis.RedisUtils.withNonNullRedisPool
 import com.github.pambrose.common.util.isInt
-import com.github.pambrose.common.util.isNotNull
+import com.github.readingbat.common.Constants.UNKNOWN
 import com.github.readingbat.common.EnvVars.IPGEOLOCATION_KEY
 import com.github.readingbat.common.KeyConstants.IPGEO_KEY
 import com.github.readingbat.common.SessionActivites.RemoteHost.Companion.unknown
@@ -48,18 +48,18 @@ import kotlin.time.hours
 internal object SessionActivites : KLogging() {
 
   class RemoteHost(val value: String) {
-    val city get() = geoInfoMap[value]?.city?.toString() ?: "Unknown"
-    val state get() = geoInfoMap[value]?.state_prov?.toString() ?: "Unknown"
-    val country get() = geoInfoMap[value]?.country_name?.toString() ?: "Unknown"
-    val organization get() = geoInfoMap[value]?.organization?.toString() ?: "Unknown"
-    val flagUrl get() = geoInfoMap[value]?.country_flag?.toString() ?: "Unknown"
+    val city get() = geoInfoMap[value]?.city?.toString() ?: UNKNOWN
+    val state get() = geoInfoMap[value]?.state_prov?.toString() ?: UNKNOWN
+    val country get() = geoInfoMap[value]?.country_name?.toString() ?: UNKNOWN
+    val organization get() = geoInfoMap[value]?.organization?.toString() ?: UNKNOWN
+    val flagUrl get() = geoInfoMap[value]?.country_flag?.toString() ?: UNKNOWN
 
     fun isIpAddress() = value.split(".").run { size == 4 && all { it.isInt() } }
 
     override fun toString() = value
 
     internal companion object {
-      val unknown = RemoteHost("unknown")
+      val unknown = RemoteHost(UNKNOWN)
     }
   }
 
@@ -157,7 +157,7 @@ internal object SessionActivites : KLogging() {
     val remoteHost = RemoteHost(call.request.origin.remoteHost)
 
     // Use https://ipgeolocation.io/documentation/user-agent-api.html to parse userAgent data
-    val userAgent = call.request.headers[HttpHeaders.UserAgent] ?: "unknown"
+    val userAgent = call.request.headers[HttpHeaders.UserAgent] ?: UNKNOWN
 
     // Update session
     sessionsMap.getOrPut(id, { Session(this, userAgent) }).update(principal, remoteHost)
@@ -182,21 +182,19 @@ internal object SessionActivites : KLogging() {
 
     try {
       if (IPGEOLOCATION_KEY.isDefined() && remoteHost.value !in ignoreHosts && !geoInfoMap.containsKey(remoteHost.value)) {
-        redisPool.withRedisPool { redis ->
-          if (redis.isNotNull()) {
-            geoInfoMap.computeIfAbsent(remoteHost.value) { ipAddress ->
-              val geoKey = keyOf(IPGEO_KEY, remoteHost)
-              val json = redis.get(geoKey) ?: ""
-              if (json.isNotBlank())
-                GeoInfo(json).apply { logger.info { "Redis GEO info for $remoteHost: ${summary()}" } }
-              else
-                lookUpGeoInfo(ipAddress)
-                  .let {
-                    redis.set(geoKey, it.first, SetParams().ex(7.days.inSeconds.toInt()))
-                    it.second
+        redisPool?.withNonNullRedisPool { redis ->
+          geoInfoMap.computeIfAbsent(remoteHost.value) { ipAddress ->
+            val geoKey = keyOf(IPGEO_KEY, remoteHost)
+            val json = redis.get(geoKey) ?: ""
+            if (json.isNotBlank())
+              GeoInfo(json).apply { logger.info { "Redis GEO info for $remoteHost: ${summary()}" } }
+            else
+              lookUpGeoInfo(ipAddress)
+                .let {
+                  redis.set(geoKey, it.first, SetParams().ex(7.days.inSeconds.toInt()))
+                  it.second
                   }
             }
-          }
         }
       }
     } catch (e: Throwable) {

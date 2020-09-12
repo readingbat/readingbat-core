@@ -22,6 +22,7 @@ import com.github.pambrose.common.util.*
 import com.github.pambrose.common.util.Version
 import com.github.pambrose.common.util.Version.Companion.versionDesc
 import com.github.readingbat.common.CommonUtils.maskUrl
+import com.github.readingbat.common.Constants.REDIS_IS_DOWN
 import com.github.readingbat.common.Endpoints.STATIC_ROOT
 import com.github.readingbat.common.EnvVars.*
 import com.github.readingbat.common.Metrics
@@ -46,6 +47,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeoutOrNull
 import mu.KLogging
+import redis.clients.jedis.JedisPool
+import redis.clients.jedis.exceptions.JedisConnectionException
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.atomic.AtomicInteger
@@ -63,7 +66,7 @@ object ReadingBatServer : KLogging() {
   internal val adminUsers = mutableListOf<String>()
   internal val contentReadCount = AtomicInteger(0)
   internal val metrics by lazy { Metrics() }
-  internal val redisPool by lazy { RedisUtils.newJedisPool() }
+  internal var redisPool: JedisPool? = null
 
   fun start(args: Array<String>) {
 
@@ -112,6 +115,14 @@ object ReadingBatServer : KLogging() {
     ScriptPools.javaScriptPool
     ScriptPools.pythonScriptPool
     ScriptPools.kotlinScriptPool
+
+    redisPool =
+      try {
+        RedisUtils.newJedisPool()
+      } catch (e: JedisConnectionException) {
+        logger.error { REDIS_IS_DOWN }
+        null
+      }
 
     val environment = commandLineEnvironment(newargs)
     embeddedServer(CIO, environment).start(wait = true)
@@ -187,9 +198,6 @@ internal fun Application.module() {
   REDIS_MAX_POOL_SIZE.setProperty(REDIS_MAX_POOL_SIZE.configProperty(this, "10"))
   REDIS_MAX_IDLE_SIZE.setProperty(REDIS_MAX_IDLE_SIZE.configProperty(this, "5"))
   REDIS_MIN_IDLE_SIZE.setProperty(REDIS_MIN_IDLE_SIZE.configProperty(this, "1"))
-
-  // Reference to load it
-  ReadingBatServer.redisPool.isClosed
 
   if (isAgentEnabled()) {
     if (proxyHostname.isNotEmpty()) {

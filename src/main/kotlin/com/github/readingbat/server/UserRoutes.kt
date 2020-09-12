@@ -17,6 +17,7 @@
 
 package com.github.readingbat.server
 
+import com.github.pambrose.common.redis.RedisUtils.withRedisPool
 import com.github.pambrose.common.redis.RedisUtils.withSuspendingRedisPool
 import com.github.pambrose.common.response.redirectTo
 import com.github.pambrose.common.response.respondWith
@@ -121,9 +122,7 @@ internal fun Routing.userRoutes(metrics: Metrics, contentSrc: () -> ReadingBatCo
   }
 
   get(SESSIONS_ENDPOINT) {
-    respondWithSuspendingRedisCheck(contentSrc()) { redis ->
-      authenticatedPage { sessionsPage(contentSrc(), redis) }
-    }
+    respondWithSuspendingRedisCheck { redis -> authenticatedPage { sessionsPage(contentSrc(), redis) } }
   }
 
   get(PRIVACY_ENDPOINT) {
@@ -131,120 +130,126 @@ internal fun Routing.userRoutes(metrics: Metrics, contentSrc: () -> ReadingBatCo
   }
 
   get(ABOUT_ENDPOINT) {
-    respondWithRedisCheck(contentSrc()) { redis -> aboutPage(contentSrc(), fetchUser(), redis) }
+    respondWith {
+      redisPool?.withRedisPool { redis ->
+        aboutPage(contentSrc(), fetchUser(), redis)
+      } ?: aboutPage(contentSrc(), fetchUser(), null)
+    }
   }
 
   get(HELP_ENDPOINT) {
-    respondWithRedisCheck(contentSrc()) { redis -> helpPage(contentSrc(), fetchUser(), redis) }
+    respondWith {
+      redisPool?.withRedisPool { redis ->
+        helpPage(contentSrc(), fetchUser(), redis)
+      } ?: helpPage(contentSrc(), fetchUser(), null)
+    }
   }
 
   post(CHECK_ANSWERS_ENDPOINT) {
     metrics.measureEndpointRequest(CHECK_ANSWERS_ENDPOINT) {
-      redisPool.withSuspendingRedisPool { redis -> checkAnswers(contentSrc(), fetchUser(), redis) }
+      redisPool?.withSuspendingRedisPool { redis ->
+        checkAnswers(contentSrc(), fetchUser(), redis)
+      } ?: checkAnswers(contentSrc(), fetchUser(), null)
     }
   }
 
   post(LIKE_DISLIKE_ENDPOINT) {
     metrics.measureEndpointRequest(LIKE_DISLIKE_ENDPOINT) {
-      redisPool.withSuspendingRedisPool { redis -> likeDislike(contentSrc(), fetchUser(), redis) }
+      redisPool?.withSuspendingRedisPool { redis ->
+        likeDislike(contentSrc(), fetchUser(), redis)
+      } ?: likeDislike(contentSrc(), fetchUser(), null)
     }
   }
 
   post(CLEAR_GROUP_ANSWERS_ENDPOINT) {
-    respondWithSuspendingRedisCheck(contentSrc()) { redis ->
+    respondWithSuspendingRedisCheck { redis ->
       clearGroupAnswers(contentSrc(), fetchUser(), redis)
     }
   }
 
   post(CLEAR_CHALLENGE_ANSWERS_ENDPOINT) {
-    respondWithSuspendingRedisCheck(contentSrc()) { redis ->
+    respondWithSuspendingRedisCheck { redis ->
       clearChallengeAnswers(contentSrc(), fetchUser(), redis)
     }
   }
 
   get(CREATE_ACCOUNT_ENDPOINT, metrics) {
-    respondWithRedisCheck(contentSrc()) { createAccountPage(contentSrc()) }
+    respondWithRedisCheck { createAccountPage(contentSrc()) }
   }
 
   post(CREATE_ACCOUNT_ENDPOINT) {
-    respondWithSuspendingRedisCheck(contentSrc()) { redis -> createAccount(contentSrc(), redis) }
+    respondWithSuspendingRedisCheck { redis -> createAccount(contentSrc(), redis) }
   }
 
   get(USER_PREFS_ENDPOINT, metrics) {
-    respondWithRedisCheck(contentSrc()) { redis -> userPrefsPage(contentSrc(), fetchUser(), redis) }
+    respondWithRedisCheck { redis -> userPrefsPage(contentSrc(), fetchUser(), redis) }
   }
 
   post(USER_PREFS_ENDPOINT) {
-    respondWithSuspendingRedisCheck(contentSrc()) { redis -> userPrefs(contentSrc(), fetchUser(), redis) }
+    respondWithSuspendingRedisCheck { redis -> userPrefs(contentSrc(), fetchUser(), redis) }
   }
 
   get(TEACHER_PREFS_ENDPOINT, metrics) {
-    respondWithRedisCheck(contentSrc()) { redis -> teacherPrefsPage(contentSrc(), fetchUser(), redis) }
+    respondWithRedisCheck { redis -> teacherPrefsPage(contentSrc(), fetchUser(), redis) }
   }
 
   post(TEACHER_PREFS_ENDPOINT) {
-    respondWithSuspendingRedisCheck(contentSrc()) { redis -> teacherPrefs(contentSrc(), fetchUser(), redis) }
+    respondWithSuspendingRedisCheck { redis -> teacherPrefs(contentSrc(), fetchUser(), redis) }
   }
 
   get(SYSTEM_ADMIN_ENDPOINT, metrics) {
-    respondWithRedisCheck(contentSrc()) { redis -> systemAdminPage(contentSrc(), fetchUser(), redis) }
+    respondWithRedisCheck { redis -> systemAdminPage(contentSrc(), fetchUser(), redis) }
   }
 
   get(CLASS_SUMMARY_ENDPOINT, metrics) {
     metrics.measureEndpointRequest(CLASS_SUMMARY_ENDPOINT) {
-      respondWithRedisCheck(contentSrc()) { redis -> classSummaryPage(contentSrc(), fetchUser(), redis) }
+      respondWithRedisCheck { redis -> classSummaryPage(contentSrc(), fetchUser(), redis) }
     }
   }
 
   post(CLASS_SUMMARY_ENDPOINT) {
-    respondWithSuspendingRedisCheck(contentSrc()) { redis -> teacherPrefs(contentSrc(), fetchUser(), redis) }
+    respondWithSuspendingRedisCheck { redis -> teacherPrefs(contentSrc(), fetchUser(), redis) }
   }
 
   get(STUDENT_SUMMARY_ENDPOINT, metrics) {
     metrics.measureEndpointRequest(STUDENT_SUMMARY_ENDPOINT) {
-      respondWithRedisCheck(contentSrc()) { redis -> studentSummaryPage(contentSrc(), fetchUser(), redis) }
+      respondWithRedisCheck { redis -> studentSummaryPage(contentSrc(), fetchUser(), redis) }
     }
   }
 
   get(ENABLE_STUDENT_MODE_ENDPOINT, metrics) {
-    respondWithSuspendingRedisCheck(contentSrc()) { redis -> enableStudentMode(fetchUser(), redis) }
+    respondWithSuspendingRedisCheck { redis -> enableStudentMode(fetchUser(), redis) }
   }
 
   get(ENABLE_TEACHER_MODE_ENDPOINT, metrics) {
-    respondWithSuspendingRedisCheck(contentSrc()) { redis -> enableTeacherMode(fetchUser(), redis) }
+    respondWithSuspendingRedisCheck { redis -> enableTeacherMode(fetchUser(), redis) }
   }
 
   get(USER_INFO_ENDPOINT, metrics) {
-    respondWithRedisCheck(contentSrc()) { redis -> userInfoPage(contentSrc(), fetchUser(), redis = redis) }
+    respondWithRedisCheck { redis -> userInfoPage(contentSrc(), fetchUser(), redis = redis) }
   }
 
   get(ADMIN_ENDPOINT, metrics) {
-    respondWithRedisCheck(contentSrc()) { redis -> adminDataPage(contentSrc(), fetchUser(), redis = redis) }
+    respondWithRedisCheck { redis -> adminDataPage(contentSrc(), fetchUser(), redis = redis) }
   }
 
   post(ADMIN_ENDPOINT) {
     metrics.measureEndpointRequest(ADMIN_ENDPOINT) {
-      respondWithSuspendingRedisCheck(contentSrc()) { redis -> adminActions(contentSrc(), fetchUser(), redis) }
+      respondWithSuspendingRedisCheck { redis -> adminActions(contentSrc(), fetchUser(), redis) }
     }
   }
 
   // RESET_ID is passed here when user clicks on email URL
   get(PASSWORD_RESET_ENDPOINT, metrics) {
-    respondWithRedisCheck(contentSrc()) { redis ->
-      passwordResetPage(contentSrc(), ResetId(queryParam(RESET_ID_PARAM)), redis)
-    }
+    respondWithRedisCheck { redis -> passwordResetPage(contentSrc(), ResetId(queryParam(RESET_ID_PARAM)), redis) }
   }
 
   post(PASSWORD_RESET_ENDPOINT) {
-    respondWithSuspendingRedisCheck(contentSrc()) { redis ->
-      sendPasswordReset(contentSrc(), redis)
-    }
+    respondWithSuspendingRedisCheck { redis -> sendPasswordReset(contentSrc(), redis) }
   }
 
   post(PASSWORD_CHANGE_ENDPOINT) {
-    respondWithSuspendingRedisCheck(contentSrc()) { redis ->
-      changePassword(contentSrc(), redis)
-    }
+    respondWithSuspendingRedisCheck { redis -> changePassword(contentSrc(), redis) }
   }
 
   get(LOGOUT_ENDPOINT, metrics) {

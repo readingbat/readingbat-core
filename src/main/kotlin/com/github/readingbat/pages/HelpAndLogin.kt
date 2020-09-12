@@ -49,12 +49,13 @@ internal object HelpAndLogin {
     val previousClassCode = user.fetchPreviousTeacherClassCode(redis)
     val path = if (loginPath in rootVals) content.defaultLanguageType().contentRoot else loginPath
 
-    div {
-      style = "float:right; margin:0px; border: 1px solid lightgray; margin-left: 10px; padding: 5px"
-      table {
-        if (user.isNotNull() && redis.isNotNull()) logout(user, path, redis) else login(path)
+    if (redis.isNotNull())
+      div {
+        style = "float:right; margin:0px; border: 1px solid lightgray; margin-left: 10px; padding: 5px"
+        table {
+          if (user.isNotNull() && redis.isNotNull()) logout(user, path, redis) else login(path)
+        }
       }
-    }
 
     div {
       style = "float:right"
@@ -77,8 +78,11 @@ internal object HelpAndLogin {
             a { href = "$ABOUT_ENDPOINT?$RETURN_PARAM=$loginPath"; +"about" }
             +" | "
             a { href = "$HELP_ENDPOINT?$RETURN_PARAM=$loginPath"; +"help" }
-            +" | "
-            a { href = "$USER_PREFS_ENDPOINT?$RETURN_PARAM=$loginPath"; +"prefs" }
+
+            if (redis.isNotNull()) {
+              +" | "
+              a { href = "$USER_PREFS_ENDPOINT?$RETURN_PARAM=$loginPath"; +"prefs" }
+            }
           }
         }
       }

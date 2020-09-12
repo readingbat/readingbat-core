@@ -17,6 +17,7 @@
 
 package com.github.readingbat.dsl
 
+import com.github.pambrose.common.redis.RedisUtils.withNonNullRedisPool
 import com.github.pambrose.common.redis.RedisUtils.withRedisPool
 import com.github.pambrose.common.util.*
 import com.github.readingbat.common.KeyConstants.CONTENT_DSL_KEY
@@ -68,7 +69,10 @@ fun ContentSource.eval(enclosingContent: ReadingBatContent, variableName: String
 private fun contentDslKey(source: String) = keyOf(CONTENT_DSL_KEY, md5Of(source))
 
 private fun fetchContentDslFromRedis(source: String) =
-  if (cacheContentInRedis()) redisPool.withRedisPool { redis -> redis?.get(contentDslKey(source)) } else null
+  if (cacheContentInRedis())
+    redisPool?.withRedisPool { redis -> redis?.get(contentDslKey(source)) }
+  else
+    null
 
 internal fun readContentDsl(contentSource: ContentSource, variableName: String = "content"): ReadingBatContent {
   val (code, dur) =
@@ -82,8 +86,8 @@ internal fun readContentDsl(contentSource: ContentSource, variableName: String =
         }
         else {
           dsl = contentSource.content
-          redisPool.withRedisPool { redis ->
-            if (redis.isNotNull() && cacheContentInRedis()) {
+          if (cacheContentInRedis()) {
+            redisPool?.withNonNullRedisPool { redis ->
               redis.set(contentDslKey(contentSource.source), dsl)
               Challenge.logger.debug { """Saved "${contentSource.source}" to redis""" }
             }

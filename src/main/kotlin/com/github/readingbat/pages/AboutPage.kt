@@ -35,7 +35,7 @@ import redis.clients.jedis.Jedis
 
 internal object AboutPage {
 
-  fun PipelineCall.aboutPage(content: ReadingBatContent, user: User?, redis: Jedis) =
+  fun PipelineCall.aboutPage(content: ReadingBatContent, user: User?, redis: Jedis?) =
     createHTML()
       .html {
         head { headDefault(content) }

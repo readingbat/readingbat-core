@@ -97,10 +97,10 @@ internal object Locations {
     respondWith {
       assignBrowserSession()
       content.checkLanguage(language.languageType)
-      redisPool.withRedisPool { redis ->
-        val user = fetchUser(loginAttempt)
+      val user = fetchUser(loginAttempt)
+      redisPool?.withRedisPool { redis ->
         languageGroupPage(content, user, language.languageType, loginAttempt, redis)
-      }
+      } ?: languageGroupPage(content, user, language.languageType, loginAttempt, null)
     }
 
   private suspend fun PipelineCall.group(content: ReadingBatContent,
@@ -109,10 +109,11 @@ internal object Locations {
     respondWith {
       assignBrowserSession()
       content.checkLanguage(groupLoc.languageType)
-      redisPool.withRedisPool { redis ->
-        val user = fetchUser(loginAttempt)
+      val user = fetchUser(loginAttempt)
+      redisPool?.withRedisPool { redis ->
         challengeGroupPage(content, user, content.findGroup(groupLoc), loginAttempt, redis)
-      }
+      } ?: challengeGroupPage(content, user, content.findGroup(groupLoc), loginAttempt, null)
+
     }
 
   private suspend fun PipelineCall.challenge(content: ReadingBatContent,
@@ -121,10 +122,10 @@ internal object Locations {
     respondWith {
       assignBrowserSession()
       content.checkLanguage(challengeLoc.languageType)
-      redisPool.withRedisPool { redis ->
-        val user = fetchUser(loginAttempt)
+      val user = fetchUser(loginAttempt)
+      redisPool?.withRedisPool { redis ->
         challengePage(content, user, content.findChallenge(challengeLoc), loginAttempt, redis)
-      }
+      } ?: challengePage(content, user, content.findChallenge(challengeLoc), loginAttempt, null)
     }
 
   private suspend fun PipelineCall.playground(content: ReadingBatContent,
@@ -132,14 +133,11 @@ internal object Locations {
                                               loginAttempt: Boolean) =
     respondWith {
       assignBrowserSession()
-      redisPool.withRedisPool { redis ->
-        val user = fetchUser(loginAttempt)
-        playgroundPage(content,
-                       user,
-                       content.findLanguage(Kotlin).findChallenge(request.groupName, request.challengeName),
-                       loginAttempt,
-                       redis)
-      }
+      val user = fetchUser(loginAttempt)
+      val languageGroup = content.findLanguage(Kotlin).findChallenge(request.groupName, request.challengeName)
+      redisPool?.withRedisPool { redis ->
+        playgroundPage(content, user, languageGroup, loginAttempt, redis)
+      } ?: playgroundPage(content, user, languageGroup, loginAttempt, null)
     }
 }
 

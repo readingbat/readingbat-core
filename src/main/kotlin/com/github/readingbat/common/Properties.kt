@@ -17,6 +17,7 @@
 
 package com.github.readingbat.common
 
+import com.github.pambrose.common.redis.RedisUtils
 import com.github.pambrose.common.util.isNotNull
 import com.github.readingbat.common.PropertyNames.AGENT
 import com.github.readingbat.common.PropertyNames.CHALLENGES
@@ -75,9 +76,9 @@ enum class Properties(val propertyValue: String,
   KOTLIN_SCRIPTS_POOL_SIZE("$READINGBAT.scripts.kotlinPoolSize"),
   PYTHON_SCRIPTS_POOL_SIZE("$READINGBAT.scripts.pythonPoolSize"),
 
-  REDIS_MAX_POOL_SIZE("redis.maxPoolSize"),
-  REDIS_MAX_IDLE_SIZE("redis.maxIdleSize"),
-  REDIS_MIN_IDLE_SIZE("redis.minIdleSize"),
+  REDIS_MAX_POOL_SIZE(RedisUtils.REDIS_MAX_POOL_SIZE),
+  REDIS_MAX_IDLE_SIZE(RedisUtils.REDIS_MAX_IDLE_SIZE),
+  REDIS_MIN_IDLE_SIZE(RedisUtils.REDIS_MIN_IDLE_SIZE),
   ;
 
   private fun Application.configProperty(name: String, default: String = "", warn: Boolean = false) =

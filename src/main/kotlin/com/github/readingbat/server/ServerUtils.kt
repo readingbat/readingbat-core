@@ -27,15 +27,17 @@ import com.github.pambrose.common.util.isNull
 import com.github.pambrose.common.util.md5
 import com.github.readingbat.common.*
 import com.github.readingbat.common.Constants.DBMS_DOWN
+import com.github.readingbat.common.Constants.UNKNOWN
 import com.github.readingbat.common.KeyConstants.KEY_SEP
 import com.github.readingbat.common.User.Companion.toUser
 import com.github.readingbat.dsl.ReadingBatContent
+import com.github.readingbat.dsl.RedisUnavailableException
 import com.github.readingbat.dsl.isProduction
-import com.github.readingbat.pages.DbmsDownPage.dbmsDownPage
 import com.github.readingbat.server.ReadingBatServer.redisPool
 import io.ktor.application.*
 import io.ktor.auth.*
 import io.ktor.http.*
+import io.ktor.request.*
 import io.ktor.routing.*
 import io.ktor.sessions.*
 import io.ktor.util.pipeline.*
@@ -58,12 +60,12 @@ internal object ServerUtils : KLogging() {
 
   // Calls for PipelineCall
   fun PipelineCall.fetchEmail() =
-    redisPool.withRedisPool { redis ->
+    redisPool?.withRedisPool { redis ->
       if (redis.isNull())
-        "Unknown"
+        UNKNOWN
       else
-        fetchUser()?.email(redis)?.value ?: "Unknown"
-    }
+        fetchUser()?.email(redis)?.value ?: UNKNOWN
+    } ?: UNKNOWN
 
   fun PipelineCall.fetchUser(loginAttempt: Boolean = false): User? =
     fetchPrincipal(loginAttempt)?.userId?.toUser(call.browserSession)
@@ -76,50 +78,43 @@ internal object ServerUtils : KLogging() {
 
   // Calls for WebSocketServerSession
   fun WebSocketServerSession.fetchEmail() =
-    redisPool.withRedisPool { redis ->
+    redisPool?.withRedisPool { redis ->
       if (redis.isNull())
-        "Unknown"
+        UNKNOWN
       else
-        fetchUser()?.email(redis)?.value ?: "Unknown"
-    }
+        fetchUser()?.email(redis)?.value ?: UNKNOWN
+    } ?: UNKNOWN
 
   fun WebSocketServerSession.fetchUser(): User? = call.userPrincipal?.userId?.toUser(call.browserSession)
 
   // Calls for ApplicationCall
   fun ApplicationCall.fetchEmail() =
-    redisPool.withRedisPool { redis ->
+    redisPool?.withRedisPool { redis ->
       if (redis.isNull())
-        "Unknown"
+        UNKNOWN
       else
-        fetchUser()?.email(redis)?.value ?: "Unknown"
-    }
+        fetchUser()?.email(redis)?.value ?: UNKNOWN
+    } ?: UNKNOWN
 
   fun ApplicationCall.fetchUser(): User? = userPrincipal?.userId?.toUser(browserSession)
 
-  suspend fun PipelineCall.respondWithRedisCheck(content: ReadingBatContent, block: (redis: Jedis) -> String) =
+  suspend fun PipelineCall.respondWithRedisCheck(block: (redis: Jedis) -> String) =
     try {
       val html =
-        redisPool.withRedisPool { redis ->
-          if (redis.isNull())
-            dbmsDownPage(content)
-          else
-            block.invoke(redis)
-        }
+        redisPool?.withRedisPool { redis ->
+          block.invoke(redis ?: throw RedisUnavailableException(call.request.uri))
+        } ?: throw RedisUnavailableException(call.request.uri)
       respondWith { html }
     } catch (e: RedirectException) {
       redirectTo { e.redirectUrl }
     }
 
-  suspend fun PipelineCall.respondWithSuspendingRedisCheck(content: ReadingBatContent,
-                                                           block: suspend (redis: Jedis) -> String) =
+  suspend fun PipelineCall.respondWithSuspendingRedisCheck(block: suspend (redis: Jedis) -> String) =
     try {
       val html =
-        redisPool.withSuspendingRedisPool { redis ->
-          if (redis.isNull())
-            dbmsDownPage(content)
-          else
-            block.invoke(redis)
-        }
+        redisPool?.withSuspendingRedisPool { redis ->
+          block.invoke(redis ?: throw RedisUnavailableException(call.request.uri))
+        } ?: throw RedisUnavailableException(call.request.uri)
       respondWith { html }
     } catch (e: RedirectException) {
       redirectTo { e.redirectUrl }
@@ -128,7 +123,7 @@ internal object ServerUtils : KLogging() {
   suspend fun PipelineCall.authenticatedAction(block: () -> Message): Message =
     when {
       isProduction() ->
-        redisPool.withSuspendingRedisPool { redis ->
+        redisPool?.withSuspendingRedisPool { redis ->
           val user = fetchUser()
           when {
             redis.isNull() -> Message(DBMS_DOWN.value, true)
@@ -136,14 +131,14 @@ internal object ServerUtils : KLogging() {
             user.isNotAdminUser(redis) -> Message("Must be system admin for this function", true)
             else -> block.invoke()
           }
-        }
+        } ?: Message(DBMS_DOWN.value, true)
       else -> block.invoke()
     }
 
   suspend fun PipelineCall.authenticatedPage(block: () -> String): String =
     when {
       isProduction() ->
-        redisPool.withSuspendingRedisPool { redis ->
+        redisPool?.withSuspendingRedisPool { redis ->
           val user = fetchUser()
           when {
             redis.isNull() -> DBMS_DOWN.value
@@ -151,7 +146,7 @@ internal object ServerUtils : KLogging() {
             user.isNotAdminUser(redis) -> "Must be system admin for this function"
             else -> block.invoke()
           }
-        }
+        } ?: DBMS_DOWN.value
       else -> block.invoke()
     }
 

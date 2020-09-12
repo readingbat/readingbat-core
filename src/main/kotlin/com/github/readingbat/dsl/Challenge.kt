@@ -18,6 +18,7 @@
 package com.github.readingbat.dsl
 
 import ch.obermuhlner.scriptengine.java.Isolation.IsolatedClassLoader
+import com.github.pambrose.common.redis.RedisUtils.withNonNullRedisPool
 import com.github.pambrose.common.redis.RedisUtils.withRedisPool
 import com.github.pambrose.common.util.*
 import com.github.readingbat.common.CommonUtils.pathOf
@@ -103,7 +104,7 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
   }
 
   private fun fetchCodeFromRedis(): String? =
-    if (cacheContentInRedis()) redisPool.withRedisPool { redis -> redis?.get(sourceCodeKey) } else null
+    if (cacheContentInRedis()) redisPool?.withRedisPool { redis -> redis?.get(sourceCodeKey) } else null
 
   internal fun functionInfo(content: ReadingBatContent) =
     if (repo.remote) {
@@ -115,8 +116,9 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
               val path = pathOf((repo as AbstractRepo).rawSourcePrefix, branchName, srcPath, fqName)
               val (text, dur) = measureTimedValue { URL(path).readText() }
               logger.debug { """Fetched "${pathOf(groupName, fileName)}" in: $dur from: $path""" }
-              redisPool.withRedisPool { redis ->
-                if (redis.isNotNull() && cacheContentInRedis()) {
+
+              if (cacheContentInRedis()) {
+                redisPool?.withNonNullRedisPool { redis ->
                   redis.set(sourceCodeKey, text)
                   logger.debug { """Saved "${pathOf(groupName, fileName)}" to redis""" }
                 }

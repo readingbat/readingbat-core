@@ -17,8 +17,8 @@
 
 package com.github.readingbat.common
 
+import com.github.pambrose.common.redis.RedisUtils.withNonNullRedis
 import com.github.pambrose.common.redis.RedisUtils.withRedis
-import com.github.pambrose.common.util.isNotNull
 import com.github.readingbat.dsl.InvalidConfigurationException
 import redis.clients.jedis.Jedis
 import redis.clients.jedis.ScanParams
@@ -84,22 +84,20 @@ internal object RedisAdmin {
   }
 
   private fun showAll(url: String) {
-    withRedis(url) { redis ->
-      if (redis.isNotNull()) {
-        println(
-          redis.scanKeys("*")
-            .joinToString("\n") {
+    withNonNullRedis(url) { redis ->
+      println(
+        redis.scanKeys("*")
+          .joinToString("\n") {
+            try {
+              "$it - ${redis[it]}"
+            } catch (e: JedisDataException) {
               try {
-                "$it - ${redis[it]}"
+                "$it - ${redis.hgetAll(it)}"
               } catch (e: JedisDataException) {
-                try {
-                  "$it - ${redis.hgetAll(it)}"
-                } catch (e: JedisDataException) {
-                  "$it - ${redis.smembers(it)}"
-                }
+                "$it - ${redis.smembers(it)}"
               }
-            })
-      }
+            }
+          })
     }
   }
 

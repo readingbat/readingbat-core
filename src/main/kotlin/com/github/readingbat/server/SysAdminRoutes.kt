@@ -18,8 +18,10 @@
 package com.github.readingbat.server
 
 import com.github.pambrose.common.redis.RedisUtils.withRedisPool
+import com.github.pambrose.common.response.uriPrefix
 import com.github.pambrose.common.util.isNull
 import com.github.pambrose.common.util.pluralize
+import com.github.readingbat.common.Constants.REDIS_IS_DOWN
 import com.github.readingbat.common.Endpoints.DELETE_CONTENT_IN_REDIS_ENDPOINT
 import com.github.readingbat.common.Endpoints.GARBAGE_COLLECTOR_ENDPOINT
 import com.github.readingbat.common.Endpoints.LOAD_ALL_ENDPOINT
@@ -48,16 +50,15 @@ import com.github.readingbat.server.ServerUtils.get
 import com.github.readingbat.server.ServerUtils.respondWithRedisCheck
 import io.ktor.application.*
 import io.ktor.features.*
-import io.ktor.http.*
 import io.ktor.routing.*
 import kotlin.time.measureTime
 
 internal fun Routing.sysAdminRoutes(metrics: Metrics, contentSrc: () -> ReadingBatContent, resetFunc: () -> Unit) {
 
   fun deleteContentDslInRedis() =
-    redisPool.withRedisPool { redis ->
+    redisPool?.withRedisPool { redis ->
       if (redis.isNull())
-        "Redis is down"
+        REDIS_IS_DOWN
       else {
         val pattern = keyOf(CONTENT_DSL_KEY, "*")
         val keys = redis.scanKeys(pattern).toList()
@@ -65,12 +66,12 @@ internal fun Routing.sysAdminRoutes(metrics: Metrics, contentSrc: () -> ReadingB
         keys.forEach { redis.del(it) }
         "$cnt content DSLs ${"file".pluralize(cnt)} deleted from Redis".also { logger.info { it } }
       }
-    }
+    } ?: REDIS_IS_DOWN
 
   fun deleteDirContentsInRedis() =
-    redisPool.withRedisPool { redis ->
+    redisPool?.withRedisPool { redis ->
       if (redis.isNull())
-        "Redis is down"
+        REDIS_IS_DOWN
       else {
         val pattern = keyOf(DIR_CONTENTS_KEY, "*")
         val keys = redis.scanKeys(pattern).toList()
@@ -78,12 +79,12 @@ internal fun Routing.sysAdminRoutes(metrics: Metrics, contentSrc: () -> ReadingB
         keys.forEach { redis.del(it) }
         "$cnt directory ${"content".pluralize(cnt)} deleted from Redis".also { logger.info { it } }
       }
-    }
+    } ?: REDIS_IS_DOWN
 
   fun deleteSourceCodeInRedis() =
-    redisPool.withRedisPool { redis ->
+    redisPool?.withRedisPool { redis ->
       if (redis.isNull())
-        "Redis is down"
+        REDIS_IS_DOWN
       else {
         val pattern = keyOf(SOURCE_CODE_KEY, "*")
         val keys = redis.scanKeys(pattern).toList()
@@ -91,7 +92,7 @@ internal fun Routing.sysAdminRoutes(metrics: Metrics, contentSrc: () -> ReadingB
         keys.forEach { redis.del(it) }
         "$cnt source code ${"file".pluralize(cnt)} deleted from Redis".also { logger.info { it } }
       }
-    }
+    } ?: REDIS_IS_DOWN
 
   fun deleteContentInRedis() =
     listOf(deleteContentDslInRedis(),
@@ -111,7 +112,7 @@ internal fun Routing.sysAdminRoutes(metrics: Metrics, contentSrc: () -> ReadingB
             Message("DSL content reset in $it".also { logger.info { it } })
           }
       }
-    respondWithRedisCheck(contentSrc()) { redis -> systemAdminPage(contentSrc(), fetchUser(), redis, msg) }
+    respondWithRedisCheck { redis -> systemAdminPage(contentSrc(), fetchUser(), redis, msg) }
   }
 
   get(RESET_CACHE_ENDPOINT, metrics) {
@@ -125,12 +126,12 @@ internal fun Routing.sysAdminRoutes(metrics: Metrics, contentSrc: () -> ReadingB
             Message("Challenge cache reset -- $cnt challenges removed".also { logger.info { it } })
           }
       }
-    respondWithRedisCheck(contentSrc()) { redis -> systemAdminPage(contentSrc(), fetchUser(), redis, msg) }
+    respondWithRedisCheck { redis -> systemAdminPage(contentSrc(), fetchUser(), redis, msg) }
   }
 
   get(DELETE_CONTENT_IN_REDIS_ENDPOINT, metrics) {
     val msg = authenticatedAction { Message(deleteContentInRedis()) }
-    respondWithRedisCheck(contentSrc()) { redis -> systemAdminPage(contentSrc(), fetchUser(), redis, msg) }
+    respondWithRedisCheck { redis -> systemAdminPage(contentSrc(), fetchUser(), redis, msg) }
   }
 
   listOf(LOAD_JAVA_ENDPOINT to Java,
@@ -140,9 +141,9 @@ internal fun Routing.sysAdminRoutes(metrics: Metrics, contentSrc: () -> ReadingB
       get(pair.first) {
         val msg =
           authenticatedAction {
-            Message(contentSrc().loadChallenges(call.request.origin.preUri, pair.second, false))
+            Message(contentSrc().loadChallenges(call.request.origin.uriPrefix, pair.second, false))
           }
-        respondWithRedisCheck(contentSrc()) { redis -> systemAdminPage(contentSrc(), fetchUser(), redis, msg) }
+        respondWithRedisCheck { redis -> systemAdminPage(contentSrc(), fetchUser(), redis, msg) }
       }
     }
 
@@ -151,11 +152,11 @@ internal fun Routing.sysAdminRoutes(metrics: Metrics, contentSrc: () -> ReadingB
       authenticatedAction {
         val result =
           LanguageType.values()
-            .map { contentSrc().loadChallenges(call.request.origin.preUri, it, false) }
+            .map { contentSrc().loadChallenges(call.request.origin.uriPrefix, it, false) }
             .joinToString(", ")
         Message(result)
       }
-    respondWithRedisCheck(contentSrc()) { redis -> systemAdminPage(contentSrc(), fetchUser(), redis, msg) }
+    respondWithRedisCheck { redis -> systemAdminPage(contentSrc(), fetchUser(), redis, msg) }
   }
 
   get(GARBAGE_COLLECTOR_ENDPOINT, metrics) {
@@ -164,9 +165,6 @@ internal fun Routing.sysAdminRoutes(metrics: Metrics, contentSrc: () -> ReadingB
         val dur = measureTime { System.gc() }
         Message("Garbage collector invoked for $dur".also { logger.info { it } })
       }
-    respondWithRedisCheck(contentSrc()) { redis -> systemAdminPage(contentSrc(), fetchUser(), redis, msg) }
+    respondWithRedisCheck { redis -> systemAdminPage(contentSrc(), fetchUser(), redis, msg) }
   }
 }
-
-// TODO Move this to utils
-private val RequestConnectionPoint.preUri get() = "$scheme://$host:$port"

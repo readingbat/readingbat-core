@@ -20,11 +20,14 @@ package com.github.readingbat.server
 import com.github.pambrose.common.features.HerokuHttpsRedirect
 import com.github.pambrose.common.response.respondWith
 import com.github.pambrose.common.util.simpleClassName
+import com.github.readingbat.common.Constants.UNKNOWN
 import com.github.readingbat.common.Endpoints.CSS_ENDPOINT
 import com.github.readingbat.common.Endpoints.FAV_ICON_ENDPOINT
 import com.github.readingbat.common.Endpoints.STATIC_ROOT
 import com.github.readingbat.common.EnvVars.FILTER_LOG
 import com.github.readingbat.dsl.InvalidRequestException
+import com.github.readingbat.dsl.RedisUnavailableException
+import com.github.readingbat.pages.DbmsDownPage.dbmsDownPage
 import com.github.readingbat.pages.ErrorPage.errorPage
 import com.github.readingbat.pages.InvalidRequestPage.invalidRequestPage
 import com.github.readingbat.pages.NotFoundPage.notFoundPage
@@ -118,7 +121,7 @@ internal object Installs : KLogging() {
         val logStr = call.request.toLogString()
         val remote = call.request.origin.remoteHost
         val email = call.fetchEmail()
-        when (val status = call.response.status() ?: "Unknown") {
+        when (val status = call.response.status() ?: UNKNOWN) {
           // Show redirections
           Found -> "$status: $logStr -> ${call.response.headers[Location]} - $remote - $email"
           else -> {
@@ -147,10 +150,16 @@ internal object Installs : KLogging() {
     install(StatusPages) {
 
       exception<InvalidRequestException> { cause ->
-        //call.respond(HttpStatusCode.BadRequest)
         logger.info(cause) { " InvalidRequestException caught: ${cause.simpleClassName}" }
         respondWith {
-          invalidRequestPage(ReadingBatServer.content.get(), call.request.uri, cause.message ?: "Unknown")
+          invalidRequestPage(ReadingBatServer.content.get(), call.request.uri, cause.message ?: UNKNOWN)
+        }
+      }
+
+      exception<RedisUnavailableException> { cause ->
+        logger.info(cause) { " RedisUnavailableException caught: ${cause.simpleClassName}" }
+        respondWith {
+          dbmsDownPage(ReadingBatServer.content.get())
         }
       }
 
