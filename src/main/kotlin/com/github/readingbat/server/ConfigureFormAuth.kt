@@ -69,11 +69,11 @@ internal object ConfigureFormAuth : KLogging() {
       }
 
       validate { cred: UserPasswordCredential ->
+        redisPool ?: throw RedisUnavailableException("redisPool validate()")
         redisPool?.withRedisPool { redis ->
           if (redis.isNull()) {
             logger.error { DBMS_DOWN }
-            throw RedisUnavailableException("validate()")
-            //null
+            throw RedisUnavailableException("redis validate()")
           }
           else {
             var principal: UserPrincipal? = null
@@ -93,7 +93,7 @@ internal object ConfigureFormAuth : KLogging() {
 
             principal
           }
-        } ?: throw RedisUnavailableException("validate()")
+        }
       }
     }
 
