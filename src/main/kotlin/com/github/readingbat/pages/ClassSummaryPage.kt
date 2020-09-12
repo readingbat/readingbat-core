@@ -60,6 +60,7 @@ import com.github.readingbat.pages.PageUtils.displayMessage
 import com.github.readingbat.pages.PageUtils.encodeUriElems
 import com.github.readingbat.pages.PageUtils.headDefault
 import com.github.readingbat.pages.PageUtils.loadBootstrap
+import com.github.readingbat.pages.PageUtils.loadPingdomScript
 import com.github.readingbat.pages.PageUtils.rawHtml
 import com.github.readingbat.server.GroupName
 import com.github.readingbat.server.GroupName.Companion.EMPTY_GROUP
@@ -147,7 +148,7 @@ internal object ClassSummaryPage : KLogging() {
 
           backLink(returnPath)
 
-          content.pingdomUrl.also { if (it.isNotBlank()) script { src = it; async = true } }
+          loadPingdomScript()
         }
       }
   }

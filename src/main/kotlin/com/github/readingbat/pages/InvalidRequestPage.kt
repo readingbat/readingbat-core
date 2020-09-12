@@ -25,6 +25,7 @@ import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyTitle
 import com.github.readingbat.pages.PageUtils.headDefault
+import com.github.readingbat.pages.PageUtils.loadPingdomScript
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 
@@ -63,7 +64,7 @@ internal object InvalidRequestPage {
 
           backLink("/")
 
-          content.pingdomUrl.also { if (it.isNotBlank()) script { src = it; async = true } }
+          loadPingdomScript()
         }
       }
 }

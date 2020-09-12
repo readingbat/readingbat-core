@@ -22,6 +22,7 @@ import com.github.readingbat.common.Endpoints.CONFIG_ENDPOINT
 import com.github.readingbat.common.Endpoints.SESSIONS_ENDPOINT
 import com.github.readingbat.common.Endpoints.SYSTEM_ADMIN_ENDPOINT
 import com.github.readingbat.common.FormFields.RETURN_PARAM
+import com.github.readingbat.common.Properties.PINGDOM_BANNER_ID
 import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.fetchActiveClassCode
 import com.github.readingbat.common.isAdminUser
@@ -68,10 +69,10 @@ internal object AdminPrefsPage : KLogging() {
               a { href = "$SYSTEM_ADMIN_ENDPOINT?$RETURN_PARAM=$returnPath"; +"System Admin" }
             }
 
-            p(classes = INDENT_1EM) {
-              a {
-                content.pingdomBannerId
-                  .also {
+            PINGDOM_BANNER_ID.getPropertyOrNull()
+              ?.also {
+                p(classes = INDENT_1EM) {
+                  a {
                     href = "https://share.pingdom.com/banners/$it"
                     img {
                       src = "https://share.pingdom.com/banners/$it"
@@ -81,8 +82,8 @@ internal object AdminPrefsPage : KLogging() {
                       height = "165"
                     }
                   }
+                }
               }
-            }
           }
           else {
             p { +"Not authorized" }

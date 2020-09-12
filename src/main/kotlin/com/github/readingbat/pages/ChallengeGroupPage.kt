@@ -49,6 +49,7 @@ import com.github.readingbat.pages.PageUtils.bodyHeader
 import com.github.readingbat.pages.PageUtils.encodeUriElems
 import com.github.readingbat.pages.PageUtils.enrolleesDesc
 import com.github.readingbat.pages.PageUtils.headDefault
+import com.github.readingbat.pages.PageUtils.loadPingdomScript
 import com.github.readingbat.pages.PageUtils.rawHtml
 import com.github.readingbat.server.GroupName
 import com.github.readingbat.server.LanguageName
@@ -167,7 +168,7 @@ internal object ChallengeGroupPage : KLogging() {
           if (enrollees.isNotEmpty())
             enableWebSockets(languageName, groupName, activeClassCode)
 
-          content.pingdomUrl.also { if (it.isNotBlank()) script { src = it; async = true } }
+          loadPingdomScript()
         }
       }
 

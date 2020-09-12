@@ -21,13 +21,13 @@ import com.github.pambrose.common.util.encode
 import com.github.readingbat.common.Constants.INVALID_RESET_ID
 import com.github.readingbat.common.Constants.MSG
 import com.github.readingbat.common.Emailer.sendEmail
-import com.github.readingbat.common.Endpoints.PASSWORD_RESET_ENDPOINT
 import com.github.readingbat.common.FormFields.CONFIRM_PASSWORD_PARAM
 import com.github.readingbat.common.FormFields.EMAIL_PARAM
 import com.github.readingbat.common.FormFields.NEW_PASSWORD_PARAM
 import com.github.readingbat.common.FormFields.RESET_ID_PARAM
 import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.Message
+import com.github.readingbat.common.Properties.SENDGRID_PREFIX_PROPERTY
 import com.github.readingbat.common.User.Companion.isNotRegisteredEmail
 import com.github.readingbat.common.User.Companion.lookupUserByEmail
 import com.github.readingbat.common.isNotValidUser
@@ -93,7 +93,7 @@ internal object PasswordResetPost : KLogging() {
           try {
             val msg = Message("""
               |This is a password reset message for the ReadingBat.com account for '$email'
-              |Go to this URL to set a new password: ${content.sendGridPrefix}$PASSWORD_RESET_ENDPOINT?$RESET_ID_PARAM=$newResetId 
+              |Go to this URL to set a new password: ${SENDGRID_PREFIX_PROPERTY.getProperty("")}?$RESET_ID_PARAM=$newResetId 
               |If you did not request to reset your password, please ignore this message.
             """.trimMargin())
             sendEmail(to = email,

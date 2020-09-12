@@ -28,6 +28,7 @@ import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyTitle
 import com.github.readingbat.pages.PageUtils.displayMessage
 import com.github.readingbat.pages.PageUtils.headDefault
+import com.github.readingbat.pages.PageUtils.loadPingdomScript
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
 import io.ktor.application.*
@@ -94,7 +95,7 @@ internal object UserInfoPage {
 
           backLink(returnPath)
 
-          content.pingdomUrl.also { if (it.isNotBlank()) script { src = it; async = true } }
+          loadPingdomScript()
         }
       }
 }

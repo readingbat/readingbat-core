@@ -36,6 +36,7 @@ import com.github.readingbat.pages.ChallengeGroupPage.displayClassDescription
 import com.github.readingbat.pages.ChallengeGroupPage.isCorrect
 import com.github.readingbat.pages.PageUtils.bodyHeader
 import com.github.readingbat.pages.PageUtils.headDefault
+import com.github.readingbat.pages.PageUtils.loadPingdomScript
 import com.github.readingbat.pages.PageUtils.rawHtml
 import com.github.readingbat.server.GroupName.Companion.EMPTY_GROUP
 import com.github.readingbat.server.PipelineCall
@@ -126,7 +127,7 @@ internal object LanguageGroupPage {
             }
           }
 
-          content.pingdomUrl.also { if (it.isNotBlank()) script { src = it; async = true } }
+          loadPingdomScript()
         }
       }
 }

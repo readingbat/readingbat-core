@@ -33,6 +33,7 @@ import com.github.readingbat.pages.PageUtils.addLink
 import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyHeader
 import com.github.readingbat.pages.PageUtils.headDefault
+import com.github.readingbat.pages.PageUtils.loadPingdomScript
 import com.github.readingbat.pages.PageUtils.rawHtml
 import kotlinx.html.body
 import kotlinx.html.br
@@ -110,7 +111,7 @@ internal object PlaygroundPage {
 
           backLink(CHALLENGE_ROOT, languageName.value, groupName.value, challengeName.value)
 
-          content.pingdomUrl.also { if (it.isNotBlank()) script { src = it; async = true } }
+          loadPingdomScript()
         }
       }
 }

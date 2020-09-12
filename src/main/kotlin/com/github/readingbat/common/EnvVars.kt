@@ -20,18 +20,19 @@ package com.github.readingbat.common
 import com.github.pambrose.common.util.isNotNull
 import com.github.readingbat.common.CommonUtils.maskUrl
 import com.github.readingbat.common.CommonUtils.obfuscate
+import com.github.readingbat.common.Constants.UNASSIGNED
 import com.github.readingbat.dsl.InvalidConfigurationException
 
-enum class EnvVars(val maskFunc: EnvVars.() -> String = { getEnv("unassigned") }) {
+enum class EnvVars(val maskFunc: EnvVars.() -> String = { getEnv(UNASSIGNED) }) {
 
   AGENT_ENABLED,
   AGENT_CONFIG,
-  REDIS_URL({ getEnv("unassigned").maskUrl() }),
-  GITHUB_OAUTH({ getEnvOrNull()?.obfuscate(4) ?: "unassigned" }),
+  REDIS_URL({ getEnv(UNASSIGNED).maskUrl() }),
+  GITHUB_OAUTH({ getEnvOrNull()?.obfuscate(4) ?: UNASSIGNED }),
   PAPERTRAIL_PORT,
-  IPGEOLOCATION_KEY({ getEnvOrNull()?.obfuscate(4) ?: "unassigned" }),
+  IPGEOLOCATION_KEY({ getEnvOrNull()?.obfuscate(4) ?: UNASSIGNED }),
   SCRIPT_CLASSPATH,
-  SENDGRID_API_KEY({ getEnvOrNull()?.obfuscate(4) ?: "unassigned" }),
+  SENDGRID_API_KEY({ getEnvOrNull()?.obfuscate(4) ?: UNASSIGNED }),
   SENDGRID_PREFIX,
   FILTER_LOG,
   REDIRECT_HOSTNAME,

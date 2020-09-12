@@ -87,6 +87,7 @@ import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyHeader
 import com.github.readingbat.pages.PageUtils.enrolleesDesc
 import com.github.readingbat.pages.PageUtils.headDefault
+import com.github.readingbat.pages.PageUtils.loadPingdomScript
 import com.github.readingbat.pages.PageUtils.rawHtml
 import com.github.readingbat.posts.ChallengeHistory
 import com.github.readingbat.server.ChallengeMd5
@@ -167,7 +168,7 @@ internal object ChallengePage : KLogging() {
           if (activeClassCode.isEnabled && enrollees.isNotEmpty())
             enableWebSockets(activeClassCode, funcInfo.challengeMd5)
 
-          content.pingdomUrl.also { if (it.isNotBlank()) script { src = it; async = true } }
+          loadPingdomScript()
         }
       }
 

@@ -23,6 +23,7 @@ import com.github.pambrose.common.util.newStringSalt
 import com.github.pambrose.common.util.randomId
 import com.github.readingbat.common.ClassCode.Companion.DISABLED_CLASS_CODE
 import com.github.readingbat.common.Constants.RESP
+import com.github.readingbat.common.Constants.UNASSIGNED
 import com.github.readingbat.common.KeyConstants.ANSWER_HISTORY_KEY
 import com.github.readingbat.common.KeyConstants.AUTH_KEY
 import com.github.readingbat.common.KeyConstants.CHALLENGE_ANSWERS_KEY
@@ -61,7 +62,7 @@ import kotlin.time.minutes
 internal class User private constructor(val id: String, val browserSession: BrowserSession?) {
 
   private val userInfoKey by lazy { keyOf(USER_INFO_KEY, id) }
-  private val userInfoBrowserKey by lazy { keyOf(USER_INFO_BROWSER_KEY, id, browserSession?.id ?: "unassigned") }
+  private val userInfoBrowserKey by lazy { keyOf(USER_INFO_BROWSER_KEY, id, browserSession?.id ?: UNASSIGNED) }
   private val userInfoBrowserQueryKey by lazy { keyOf(USER_INFO_BROWSER_KEY, id, "*") }
   private val browserSpecificUserInfoKey by lazy {
     if (browserSession.isNotNull()) userInfoBrowserKey else throw InvalidConfigurationException("Null browser session for $this")

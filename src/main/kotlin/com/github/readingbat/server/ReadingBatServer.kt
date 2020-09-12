@@ -23,6 +23,7 @@ import com.github.pambrose.common.util.Version
 import com.github.pambrose.common.util.Version.Companion.versionDesc
 import com.github.readingbat.common.CommonUtils.maskUrl
 import com.github.readingbat.common.Constants.REDIS_IS_DOWN
+import com.github.readingbat.common.Constants.UNASSIGNED
 import com.github.readingbat.common.Endpoints.STATIC_ROOT
 import com.github.readingbat.common.EnvVars.*
 import com.github.readingbat.common.Metrics
@@ -57,18 +58,16 @@ import kotlin.time.TimeSource
 import kotlin.time.measureTime
 import kotlin.time.seconds
 
-@Version(version = "1.4.0", date = "9/11/20")
+@Version(version = "1.4.0", date = "9/12/20")
 object ReadingBatServer : KLogging() {
-  internal val timeStamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("M/d/y H:m:ss"))
   private val startTime = TimeSource.Monotonic.markNow()
-  private val redisPoolSrc = AtomicReference<JedisPool>()
+  internal val timeStamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("M/d/y H:m:ss"))
   internal val upTime get() = startTime.elapsedNow()
   internal val content = AtomicReference(ReadingBatContent())
   internal val adminUsers = mutableListOf<String>()
   internal val contentReadCount = AtomicInteger(0)
   internal val metrics by lazy { Metrics() }
-
-  internal val redisPool: JedisPool? get() = redisPoolSrc.get()
+  internal var redisPool: JedisPool? = null
 
   fun start(args: Array<String>) {
 
@@ -82,10 +81,8 @@ object ReadingBatServer : KLogging() {
     val scriptClasspathProp = KOTLIN_SCRIPT_CLASSPATH.getPropertyOrNull()
     if (scriptClasspathProp.isNull()) {
       val scriptClasspathEnvVar = SCRIPT_CLASSPATH.getEnvOrNull()
-      if (scriptClasspathEnvVar.isNotNull()) {
-        logger.info { "Assigning ${KOTLIN_SCRIPT_CLASSPATH.propertyValue} = $scriptClasspathEnvVar" }
+      if (scriptClasspathEnvVar.isNotNull())
         KOTLIN_SCRIPT_CLASSPATH.setProperty(scriptClasspathEnvVar)
-      }
       else
         logger.warn { "Missing ${KOTLIN_SCRIPT_CLASSPATH.propertyValue} and $SCRIPT_CLASSPATH values" }
     }
@@ -93,7 +90,7 @@ object ReadingBatServer : KLogging() {
       logger.info { "${KOTLIN_SCRIPT_CLASSPATH.propertyValue}: $scriptClasspathProp" }
     }
 
-    logger.info { "$REDIS_URL: ${REDIS_URL.getEnv("unassigned").maskUrl()}" }
+    logger.info { "$REDIS_URL: ${REDIS_URL.getEnv(UNASSIGNED).maskUrl()}" }
 
     // Grab config filename from CLI args and then try ENV var
     val configFilename =
@@ -118,32 +115,17 @@ object ReadingBatServer : KLogging() {
     ScriptPools.pythonScriptPool
     ScriptPools.kotlinScriptPool
 
-    redisPoolSrc.set(
+    redisPool =
       try {
         RedisUtils.newJedisPool().also { logger.info { "Created Redis pool" } }
       } catch (e: JedisConnectionException) {
         null.also { logger.error { "Failed to create Redis pool: $REDIS_IS_DOWN" } }
-      })
+      }
 
     val environment = commandLineEnvironment(newargs)
     embeddedServer(CIO, environment).start(wait = true)
   }
 }
-
-private fun Application.redirectHostname() =
-  REDIRECT_HOSTNAME.getEnv(REDIRECT_HOSTNAME_PROPERTY.configProperty(this, default = ""))
-
-private fun Application.sendGridPrefix() =
-  SENDGRID_PREFIX.getEnv(SENDGRID_PREFIX_PROPERTY.configProperty(this, default = "https://www.readingbat.com"))
-
-private fun Application.agentEnabled() =
-  AGENT_ENABLED.getEnv(AGENT_ENABLED_PROPERTY.configProperty(this, default = "false").toBoolean())
-
-private fun Application.forwardedHeaderSupportEnabled() =
-  FORWARDED_ENABLED.getEnv(FORWARDED_ENABLED_PROPERTY.configProperty(this, default = "false").toBoolean())
-
-private fun Application.xforwardedHeaderSupportEnabled() =
-  XFORWARDED_ENABLED.getEnv(XFORWARDED_ENABLED_PROPERTY.configProperty(this, default = "false").toBoolean())
 
 internal fun Application.assignContentDsl(fileName: String, variableName: String) {
   logger.info { "Loading content using $variableName in $fileName" }
@@ -153,18 +135,11 @@ internal fun Application.assignContentDsl(fileName: String, variableName: String
         .apply {
           dslFileName = fileName
           dslVariableName = variableName
-          sendGridPrefix = sendGridPrefix()
-          googleAnalyticsId = ANALYTICS_ID.configProperty(this@assignContentDsl, "")
           maxHistoryLength = MAX_HISTORY_LENGTH.configProperty(this@assignContentDsl, "10").toInt()
           maxClassCount = MAX_CLASS_COUNT.configProperty(this@assignContentDsl, "25").toInt()
           ktorPort = KTOR_PORT.configProperty(this@assignContentDsl, "0").toInt()
           val watchVal = KTOR_WATCH.configPropertyOrNull(this@assignContentDsl)?.getList() ?: emptyList()
-          ktorWatch = if (watchVal.isNotEmpty()) watchVal.toString() else "unassigned"
-          pingdomBannerId = PINGDOM_BANNER_ID.configProperty(this@assignContentDsl, "")
-          pingdomUrl = PINGDOM_URL.configProperty(this@assignContentDsl, "")
-          statusPageUrl = STATUS_PAGE_URL.configProperty(this@assignContentDsl, "")
-          grafanaUrl = GRAFANA_URL.configProperty(this@assignContentDsl, "")
-          prometheusUrl = PROMETHEUS_URL.configProperty(this@assignContentDsl, "")
+          ktorWatch = if (watchVal.isNotEmpty()) watchVal.toString() else UNASSIGNED
         }.apply { clearContentMap() })
     ReadingBatServer.metrics.contentLoadedCount.labels(agentLaunchId()).inc()
   }.also {
@@ -182,23 +157,34 @@ internal fun Application.module() {
 
   adminUsers.addAll(ADMIN_USERS.configPropertyOrNull(this)?.getList() ?: emptyList())
 
+  AGENT_ENABLED_PROPERTY.setProperty(agentEnabled.toString())
+
   IS_PRODUCTION.setProperty(IS_PRODUCTION.configProperty(this, "false").toBoolean().toString())
-  AGENT_ENABLED_PROPERTY.setProperty(agentEnabled().toString())
   CACHE_CONTENT_IN_REDIS.setProperty(CACHE_CONTENT_IN_REDIS.configProperty(this, "false").toBoolean().toString())
 
-  PINGDOM_BANNER_ID.setProperty(PINGDOM_BANNER_ID.configProperty(this, ""))
-  PINGDOM_URL.setProperty(PINGDOM_URL.configProperty(this, ""))
-  STATUS_PAGE_URL.setProperty(STATUS_PAGE_URL.configProperty(this, ""))
-  PROMETHEUS_URL.setProperty(PROMETHEUS_URL.configProperty(this, ""))
-  GRAFANA_URL.setProperty(GRAFANA_URL.configProperty(this, ""))
+  ANALYTICS_ID.setPropertyFromConfig(this, "")
 
-  JAVA_SCRIPTS_POOL_SIZE.setProperty(JAVA_SCRIPTS_POOL_SIZE.configProperty(this, "5"))
-  KOTLIN_SCRIPTS_POOL_SIZE.setProperty(KOTLIN_SCRIPTS_POOL_SIZE.configProperty(this, "5"))
-  PYTHON_SCRIPTS_POOL_SIZE.setProperty(PYTHON_SCRIPTS_POOL_SIZE.configProperty(this, "5"))
+  PINGDOM_BANNER_ID.setPropertyFromConfig(this, "")
+  PINGDOM_URL.setPropertyFromConfig(this, "")
+  STATUS_PAGE_URL.setPropertyFromConfig(this, "")
 
-  REDIS_MAX_POOL_SIZE.setProperty(REDIS_MAX_POOL_SIZE.configProperty(this, "10"))
-  REDIS_MAX_IDLE_SIZE.setProperty(REDIS_MAX_IDLE_SIZE.configProperty(this, "5"))
-  REDIS_MIN_IDLE_SIZE.setProperty(REDIS_MIN_IDLE_SIZE.configProperty(this, "1"))
+  PROMETHEUS_URL.setPropertyFromConfig(this, "")
+  GRAFANA_URL.setPropertyFromConfig(this, "")
+
+  PINGDOM_BANNER_ID.setPropertyFromConfig(this, "")
+  PINGDOM_URL.setPropertyFromConfig(this, "")
+  STATUS_PAGE_URL.setPropertyFromConfig(this, "")
+
+  JAVA_SCRIPTS_POOL_SIZE.setPropertyFromConfig(this, "5")
+  KOTLIN_SCRIPTS_POOL_SIZE.setPropertyFromConfig(this, "5")
+  PYTHON_SCRIPTS_POOL_SIZE.setPropertyFromConfig(this, "5")
+
+  REDIS_MAX_POOL_SIZE.setPropertyFromConfig(this, "10")
+  REDIS_MAX_IDLE_SIZE.setPropertyFromConfig(this, "5")
+  REDIS_MIN_IDLE_SIZE.setPropertyFromConfig(this, "1")
+
+  SENDGRID_PREFIX_PROPERTY.setProperty(SENDGRID_PREFIX.getEnv(SENDGRID_PREFIX_PROPERTY.configProperty(this,
+                                                                                                      "https://www.readingbat.com")))
 
   if (isAgentEnabled()) {
     if (proxyHostname.isNotEmpty()) {
@@ -231,9 +217,9 @@ internal fun Application.module() {
   }
 
   installs(isProduction(),
-           redirectHostname(),
-           forwardedHeaderSupportEnabled(),
-           xforwardedHeaderSupportEnabled())
+           redirectHostname,
+           forwardedHeaderSupportEnabled,
+           xforwardedHeaderSupportEnabled)
   intercepts()
 
   routing {
@@ -245,3 +231,19 @@ internal fun Application.module() {
     static(STATIC_ROOT) { resources("static") }
   }
 }
+
+private val Application.redirectHostname
+  get() =
+    REDIRECT_HOSTNAME.getEnv(REDIRECT_HOSTNAME_PROPERTY.configProperty(this, default = ""))
+
+private val Application.agentEnabled
+  get() =
+    AGENT_ENABLED.getEnv(AGENT_ENABLED_PROPERTY.configProperty(this, default = "false").toBoolean())
+
+private val Application.forwardedHeaderSupportEnabled
+  get() =
+    FORWARDED_ENABLED.getEnv(FORWARDED_ENABLED_PROPERTY.configProperty(this, default = "false").toBoolean())
+
+private val Application.xforwardedHeaderSupportEnabled
+  get() =
+    XFORWARDED_ENABLED.getEnv(XFORWARDED_ENABLED_PROPERTY.configProperty(this, default = "false").toBoolean())

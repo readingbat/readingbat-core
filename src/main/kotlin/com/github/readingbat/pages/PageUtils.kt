@@ -32,6 +32,9 @@ import com.github.readingbat.common.Endpoints.STATIC_ROOT
 import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.Message
 import com.github.readingbat.common.Message.Companion.EMPTY_MESSAGE
+import com.github.readingbat.common.Properties.ANALYTICS_ID
+import com.github.readingbat.common.Properties.PINGDOM_URL
+import com.github.readingbat.common.Properties.STATUS_PAGE_URL
 import com.github.readingbat.common.User
 import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.dsl.LanguageType.Companion.languageTypesInOrder
@@ -64,14 +67,15 @@ internal object PageUtils {
 
     title(READING_BAT)
 
-    if (isProduction() && content.googleAnalyticsId.isNotBlank()) {
-      script { async = true; src = "https://www.googletagmanager.com/gtag/js?id=${content.googleAnalyticsId}" }
+    val analyticsId = ANALYTICS_ID.getPropertyOrNull() ?: ""
+    if (isProduction() && analyticsId.isNotBlank()) {
+      script { async = true; src = "https://www.googletagmanager.com/gtag/js?id=$analyticsId" }
       script {
         rawHtml("""
           window.dataLayer = window.dataLayer || [];
           function gtag(){dataLayer.push(arguments);}
           gtag('js', new Date());
-          gtag('config', '${content.googleAnalyticsId}');
+          gtag('config', '$analyticsId');
         """)
       }
     }
@@ -193,11 +197,20 @@ internal object PageUtils {
   fun BODY.displayMessage(msg: Message) = if (msg.isNotBlank) +(msg.toString()) else rawHtml(nbsp.text)
 
   private val rootVals = listOf("", "/", Java.contentRoot, Python.contentRoot, Kotlin.contentRoot)
+
   fun BODY.backLink(vararg pathElems: String = arrayOf("/")) {
     if (pathElems.size == 1 && pathElems[0] in rootVals)
       linkWithIndent(pathElems.toList().toRootPath(), "Home")
     else
       linkWithIndent(pathElems.toList().toRootPath(), "Back")
+  }
+
+  fun BODY.loadPingdomScript() {
+    PINGDOM_URL.getPropertyOrNull()?.also { if (it.isNotBlank()) script { src = it; async = true } }
+  }
+
+  fun BODY.loadStatusPageDisplay() {
+    STATUS_PAGE_URL.getPropertyOrNull()?.also { if (it.isNotBlank()) script { src = it } }
   }
 
   fun HTMLTag.rawHtml(html: String) = unsafe { raw(html) }

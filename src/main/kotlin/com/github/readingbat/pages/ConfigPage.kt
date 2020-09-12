@@ -21,6 +21,7 @@ import com.github.pambrose.common.time.format
 import com.github.pambrose.common.util.Version.Companion.versionDesc
 import com.github.readingbat.common.CSSNames.INDENT_1EM
 import com.github.readingbat.common.CSSNames.TD_PADDING
+import com.github.readingbat.common.Constants.UNASSIGNED
 import com.github.readingbat.common.Endpoints.ADMIN_PREFS_ENDPOINT
 import com.github.readingbat.common.EnvVars
 import com.github.readingbat.common.FormFields.RETURN_PARAM
@@ -33,6 +34,7 @@ import com.github.readingbat.dsl.LanguageType.Python
 import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyTitle
 import com.github.readingbat.pages.PageUtils.headDefault
+import com.github.readingbat.pages.PageUtils.loadStatusPageDisplay
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ReadingBatServer
 import com.github.readingbat.server.ServerUtils.queryParam
@@ -157,19 +159,19 @@ internal object ConfigPage {
               table {
                 tr {
                   td { +"java.runtime.name" }
-                  td { +(System.getProperty("java.runtime.name", "unassigned")) }
+                  td { +(System.getProperty("java.runtime.name", UNASSIGNED)) }
                 }
                 tr {
                   td { +"java.runtime.version" }
-                  td { +(System.getProperty("java.runtime.version", "unassigned")) }
+                  td { +(System.getProperty("java.runtime.version", UNASSIGNED)) }
                 }
                 tr {
                   td { +"java.vm.name" }
-                  td { +(System.getProperty("java.vm.name", "unassigned")) }
+                  td { +(System.getProperty("java.vm.name", UNASSIGNED)) }
                 }
                 tr {
                   td { +"java.vm.vendor" }
-                  td { +(System.getProperty("java.vm.vendor", "unassigned")) }
+                  td { +(System.getProperty("java.vm.vendor", UNASSIGNED)) }
                 }
               }
             }
@@ -249,7 +251,7 @@ internal object ConfigPage {
 
           backLink("$ADMIN_PREFS_ENDPOINT?$RETURN_PARAM=${queryParam(RETURN_PARAM, "/")}")
 
-          content.statusPageUrl.also { if (it.isNotBlank()) script { src = it } }
+          loadStatusPageDisplay()
         }
       }
 }

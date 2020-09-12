@@ -29,6 +29,7 @@ import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyTitle
 import com.github.readingbat.pages.PageUtils.headDefault
+import com.github.readingbat.pages.PageUtils.loadStatusPageDisplay
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
 import kotlinx.html.*
@@ -111,7 +112,7 @@ internal object SessionsPage {
 
           backLink("$ADMIN_PREFS_ENDPOINT?$RETURN_PARAM=${queryParam(RETURN_PARAM, "/")}")
 
-          content.statusPageUrl.also { if (it.isNotBlank()) script { src = it } }
+          loadStatusPageDisplay()
         }
       }
 }

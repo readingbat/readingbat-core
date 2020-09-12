@@ -20,6 +20,7 @@ package com.github.readingbat.dsl
 import com.github.pambrose.common.redis.RedisUtils.withNonNullRedisPool
 import com.github.pambrose.common.redis.RedisUtils.withRedisPool
 import com.github.pambrose.common.util.*
+import com.github.readingbat.common.Constants.UNASSIGNED
 import com.github.readingbat.common.KeyConstants.CONTENT_DSL_KEY
 import com.github.readingbat.common.Properties.AGENT_ENABLED_PROPERTY
 import com.github.readingbat.common.Properties.AGENT_LAUNCH_ID
@@ -57,11 +58,11 @@ private val logger = KotlinLogging.logger {}
 // This is accessible from the Content.kt descriptions
 fun isProduction() = IS_PRODUCTION.getProperty(false)
 
-fun cacheContentInRedis() = CACHE_CONTENT_IN_REDIS.getProperty(false)
+internal fun cacheContentInRedis() = CACHE_CONTENT_IN_REDIS.getProperty(false)
 
-fun isAgentEnabled() = AGENT_ENABLED_PROPERTY.getProperty(false)
+internal fun isAgentEnabled() = AGENT_ENABLED_PROPERTY.getProperty(false)
 
-fun agentLaunchId() = AGENT_LAUNCH_ID.getProperty("unassigned")
+internal fun agentLaunchId() = AGENT_LAUNCH_ID.getProperty(UNASSIGNED)
 
 fun ContentSource.eval(enclosingContent: ReadingBatContent, variableName: String = "content"): ReadingBatContent =
   enclosingContent.evalContent(this, variableName)

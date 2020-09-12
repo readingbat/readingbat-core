@@ -19,6 +19,7 @@ package com.github.readingbat.common
 
 import com.github.pambrose.common.redis.RedisUtils
 import com.github.pambrose.common.util.isNotNull
+import com.github.readingbat.common.Constants.UNASSIGNED
 import com.github.readingbat.common.PropertyNames.AGENT
 import com.github.readingbat.common.PropertyNames.CHALLENGES
 import com.github.readingbat.common.PropertyNames.CLASSES
@@ -31,7 +32,7 @@ import io.ktor.config.*
 import mu.KLogging
 
 enum class Properties(val propertyValue: String,
-                      val maskFunc: Properties.() -> String = { getProperty("unassigned") }) {
+                      val maskFunc: Properties.() -> String = { getProperty(UNASSIGNED) }) {
 
   KOTLIN_SCRIPT_CLASSPATH("kotlin.script.classpath"),
 
@@ -55,7 +56,7 @@ enum class Properties(val propertyValue: String,
   XFORWARDED_ENABLED_PROPERTY("$READINGBAT.$SITE.xforwardedHeaderSupportEnabled"),
 
   // These are assigned to ReadingBatContent vals
-  ANALYTICS_ID("$READINGBAT.$SITE.googleAnalyticsId", { getPropertyOrNull() ?: "unassigned" }),
+  ANALYTICS_ID("$READINGBAT.$SITE.googleAnalyticsId", { getPropertyOrNull() ?: UNASSIGNED }),
   MAX_HISTORY_LENGTH("$READINGBAT.$CHALLENGES.maxHistoryLength"),
   MAX_CLASS_COUNT("$READINGBAT.$CLASSES.maxCount"),
   KTOR_PORT("ktor.deployment.port"),
@@ -66,9 +67,9 @@ enum class Properties(val propertyValue: String,
   AGENT_ENABLED_PROPERTY("$AGENT.enabled"),
   CACHE_CONTENT_IN_REDIS("$READINGBAT.$SITE.cacheContentInRedis"),
 
-  PINGDOM_BANNER_ID("$READINGBAT.$SITE.pingdomBannerId", { getPropertyOrNull() ?: "unassigned" }),
-  PINGDOM_URL("$READINGBAT.$SITE.pingdomUrl", { getPropertyOrNull() ?: "unassigned" }),
-  STATUS_PAGE_URL("$READINGBAT.$SITE.statusPageUrl", { getPropertyOrNull() ?: "unassigned" }),
+  PINGDOM_BANNER_ID("$READINGBAT.$SITE.pingdomBannerId", { getPropertyOrNull() ?: UNASSIGNED }),
+  PINGDOM_URL("$READINGBAT.$SITE.pingdomUrl", { getPropertyOrNull() ?: UNASSIGNED }),
+  STATUS_PAGE_URL("$READINGBAT.$SITE.statusPageUrl", { getPropertyOrNull() ?: UNASSIGNED }),
   PROMETHEUS_URL("$READINGBAT.prometheus.url"),
   GRAFANA_URL("$READINGBAT.grafana.url"),
 
@@ -106,6 +107,9 @@ enum class Properties(val propertyValue: String,
 
   fun getRequiredProperty() = getPropertyOrNull() ?: throw InvalidConfigurationException("Missing $propertyValue value")
 
+  fun setPropertyFromConfig(application: Application, default: String) {
+    setProperty(configProperty(application, default))
+  }
 
   fun setProperty(value: String) {
     logger.info { "$propertyValue: $value" }

@@ -28,6 +28,8 @@ import com.github.readingbat.common.Endpoints.RESET_CACHE_ENDPOINT
 import com.github.readingbat.common.Endpoints.RESET_CONTENT_DSL_ENDPOINT
 import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.Message
+import com.github.readingbat.common.Properties.GRAFANA_URL
+import com.github.readingbat.common.Properties.PROMETHEUS_URL
 import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.fetchActiveClassCode
 import com.github.readingbat.common.isAdminUser
@@ -40,6 +42,7 @@ import com.github.readingbat.pages.PageUtils.bodyTitle
 import com.github.readingbat.pages.PageUtils.confirmingButton
 import com.github.readingbat.pages.PageUtils.displayMessage
 import com.github.readingbat.pages.PageUtils.headDefault
+import com.github.readingbat.pages.PageUtils.loadStatusPageDisplay
 import com.github.readingbat.pages.UserPrefsPage.requestLogInPage
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
@@ -128,13 +131,13 @@ internal object SystemAdminPage : KLogging() {
                                          "Are you sure you want to run the garbage collector?")
             }
 
-            content.grafanaUrl
-              .also {
+            GRAFANA_URL.getPropertyOrNull()
+              ?.also {
                 if (it.isNotBlank()) p { +"Grafana Dashboard is "; a { href = it; target = "_blank"; +"here" } }
               }
 
-            content.prometheusUrl
-              .also {
+            PROMETHEUS_URL.getPropertyOrNull()
+              ?.also {
                 if (it.isNotBlank()) p { +"Prometheus Dashboard is "; a { href = it; target = "_blank"; +"here" } }
               }
           }
@@ -144,7 +147,7 @@ internal object SystemAdminPage : KLogging() {
 
           backLink("$ADMIN_PREFS_ENDPOINT?$RETURN_PARAM=${queryParam(RETURN_PARAM, "/")}")
 
-          content.statusPageUrl.also { if (it.isNotBlank()) script { src = it } }
+          loadStatusPageDisplay()
         }
       }
 }

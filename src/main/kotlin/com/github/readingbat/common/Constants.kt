@@ -49,6 +49,7 @@ internal object Constants {
   const val LIKE_DISLIKE_JS_FUNC = "likeDislike"
   const val NO_TRACK_HEADER = "NO_TRACK"
   const val UNKNOWN = "Unknown"
+  const val UNASSIGNED = "unassigned"
   const val REDIS_IS_DOWN = "Redis is down"
 
   const val CLASS_CODE_QP = "class-code"

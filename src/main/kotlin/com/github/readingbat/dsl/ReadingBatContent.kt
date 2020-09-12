@@ -56,19 +56,12 @@ class ReadingBatContent {
 
   internal val functionInfoMap = ConcurrentHashMap<Int, FunctionInfo>()
   internal val timeStamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("M/d/y H:m:ss"))
-  internal var sendGridPrefix = ""
-  internal var googleAnalyticsId = ""
-  internal var pingdomBannerId = ""
-  internal var pingdomUrl = ""
-  internal var statusPageUrl = ""
   internal var maxHistoryLength = 10
   internal var maxClassCount = 25
   internal var dslFileName = ""
   internal var dslVariableName = ""
   internal var ktorPort = 0
   internal var ktorWatch = ""
-  internal var grafanaUrl = ""
-  internal var prometheusUrl = ""
 
   // Accessible from Content.kt DSL
   val python by lazy { LanguageGroup<PythonChallenge>(this, Python) }
