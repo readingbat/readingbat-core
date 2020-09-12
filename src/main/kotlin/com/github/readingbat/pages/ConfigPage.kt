@@ -26,6 +26,7 @@ import com.github.readingbat.common.Endpoints.ADMIN_PREFS_ENDPOINT
 import com.github.readingbat.common.EnvVars
 import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.Properties
+import com.github.readingbat.common.Properties.*
 import com.github.readingbat.common.SessionActivites
 import com.github.readingbat.dsl.*
 import com.github.readingbat.dsl.LanguageType.Java
@@ -74,19 +75,19 @@ internal object ConfigPage {
                 }
                 tr {
                   td { +"Ktor port:" }
-                  td { +"${content.ktorPort}" }
+                  td { +KTOR_PORT.getProperty(UNASSIGNED) }
                 }
                 tr {
                   td { +"Ktor watch:" }
-                  td { +content.ktorWatch }
+                  td { +KTOR_WATCH.getProperty(UNASSIGNED) }
                 }
                 tr {
                   td { +"DSL filename:" }
-                  td { +content.dslFileName }
+                  td { +DSL_FILE_NAME.getRequiredProperty() }
                 }
                 tr {
                   td { +"DSL variable name:" }
-                  td { +content.dslVariableName }
+                  td { +DSL_VARIABLE_NAME.getRequiredProperty() }
                 }
                 tr {
                   td { +"Production:" }
@@ -127,19 +128,6 @@ internal object ConfigPage {
               }
             }
 
-            h3 { +"Env Vars" }
-            div(classes = INDENT_1EM) {
-              table {
-                EnvVars.values()
-                  .forEach {
-                    tr {
-                      td { +it.name }
-                      td { +it.maskFunc.invoke(it) }
-                    }
-                  }
-              }
-            }
-
             h3 { +"Application Properties" }
             div(classes = INDENT_1EM) {
               table {
@@ -176,16 +164,35 @@ internal object ConfigPage {
               }
             }
 
-            h3 { +"Prometheus Agent" }
+            h3 { +"Env Vars" }
             div(classes = INDENT_1EM) {
               table {
-                tr {
-                  td { +"Agent Id:" }
-                  td { +if (isAgentEnabled()) agentLaunchId() else "disabled" }
-                }
-                tr {
-                  td { +"Agent Version:" }
-                  td { +if (isAgentEnabled()) Agent::class.versionDesc() else "disabled" }
+                EnvVars.values()
+                  .forEach {
+                    tr {
+                      td { +it.name }
+                      td { +it.maskFunc.invoke(it) }
+                    }
+                  }
+              }
+            }
+
+            if (isAgentEnabled()) {
+              h3 { +"Prometheus Agent" }
+              div(classes = INDENT_1EM) {
+                table {
+                  tr {
+                    td { +"Agent Id:" }
+                    td { +agentLaunchId() }
+                  }
+                  tr {
+                    td { +"Agent Version:" }
+                    td { +Agent::class.versionDesc() }
+                  }
+                  tr {
+                    td { +"Proxy Hostname:" }
+                    td { +PROXY_HOSTNAME.getProperty(UNASSIGNED) }
+                  }
                 }
               }
             }

@@ -44,8 +44,8 @@ enum class Properties(val propertyValue: String,
   AGENT_CONFIG_PROPERTY("agent.config"),
 
   // These are used in module()
-  FILE_NAME("$READINGBAT.$CONTENT.fileName"),
-  VARIABLE_NAME("$READINGBAT.$CONTENT.variableName"),
+  DSL_FILE_NAME("$READINGBAT.$CONTENT.fileName"),
+  DSL_VARIABLE_NAME("$READINGBAT.$CONTENT.variableName"),
   PROXY_HOSTNAME("$AGENT.proxy.hostname"),
   STARTUP_DELAY_SECS("$READINGBAT.$SITE.startupMaxDelaySecs"),
 

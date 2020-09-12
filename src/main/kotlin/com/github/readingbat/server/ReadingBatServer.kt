@@ -37,6 +37,7 @@ import com.github.readingbat.server.ReadingBatServer.adminUsers
 import com.github.readingbat.server.ReadingBatServer.content
 import com.github.readingbat.server.ReadingBatServer.contentReadCount
 import com.github.readingbat.server.ReadingBatServer.logger
+import com.github.readingbat.server.ReadingBatServer.metrics
 import com.github.readingbat.server.WsEndoints.wsEndpoints
 import io.ktor.application.*
 import io.ktor.http.content.*
@@ -131,17 +132,12 @@ internal fun Application.assignContentDsl(fileName: String, variableName: String
   logger.info { "Loading content using $variableName in $fileName" }
   measureTime {
     content.set(
-      readContentDsl(FileSource(fileName = fileName), variableName = variableName)
+      readContentDsl(FileSource(fileName = fileName), variableName)
         .apply {
-          dslFileName = fileName
-          dslVariableName = variableName
           maxHistoryLength = MAX_HISTORY_LENGTH.configProperty(this@assignContentDsl, "10").toInt()
           maxClassCount = MAX_CLASS_COUNT.configProperty(this@assignContentDsl, "25").toInt()
-          ktorPort = KTOR_PORT.configProperty(this@assignContentDsl, "0").toInt()
-          val watchVal = KTOR_WATCH.configPropertyOrNull(this@assignContentDsl)?.getList() ?: emptyList()
-          ktorWatch = if (watchVal.isNotEmpty()) watchVal.toString() else UNASSIGNED
         }.apply { clearContentMap() })
-    ReadingBatServer.metrics.contentLoadedCount.labels(agentLaunchId()).inc()
+    metrics.contentLoadedCount.labels(agentLaunchId()).inc()
   }.also {
     logger.info { "Loaded content using $variableName in $fileName in $it" }
   }
@@ -149,18 +145,16 @@ internal fun Application.assignContentDsl(fileName: String, variableName: String
 }
 
 internal fun Application.module() {
-  val fileName = FILE_NAME.configProperty(this, "src/Content.kt")
-  val variableName = VARIABLE_NAME.configProperty(this, "content")
-  val proxyHostname = PROXY_HOSTNAME.configProperty(this, "")
-  val maxDelay = STARTUP_DELAY_SECS.configProperty(this, "30").toInt()
-  val metrics = ReadingBatServer.metrics
-
   adminUsers.addAll(ADMIN_USERS.configPropertyOrNull(this)?.getList() ?: emptyList())
 
   AGENT_ENABLED_PROPERTY.setProperty(agentEnabled.toString())
+  PROXY_HOSTNAME.setPropertyFromConfig(this, "")
 
   IS_PRODUCTION.setProperty(IS_PRODUCTION.configProperty(this, "false").toBoolean().toString())
   CACHE_CONTENT_IN_REDIS.setProperty(CACHE_CONTENT_IN_REDIS.configProperty(this, "false").toBoolean().toString())
+
+  DSL_FILE_NAME.setPropertyFromConfig(this, "src/Content.kt")
+  DSL_VARIABLE_NAME.setPropertyFromConfig(this, "content")
 
   ANALYTICS_ID.setPropertyFromConfig(this, "")
 
@@ -183,11 +177,14 @@ internal fun Application.module() {
   REDIS_MAX_IDLE_SIZE.setPropertyFromConfig(this, "5")
   REDIS_MIN_IDLE_SIZE.setPropertyFromConfig(this, "1")
 
+  KTOR_PORT.setPropertyFromConfig(this, "0")
+  KTOR_WATCH.setProperty(KTOR_WATCH.configPropertyOrNull(this)?.getList()?.toString() ?: UNASSIGNED)
+
   SENDGRID_PREFIX_PROPERTY.setProperty(SENDGRID_PREFIX.getEnv(SENDGRID_PREFIX_PROPERTY.configProperty(this,
                                                                                                       "https://www.readingbat.com")))
 
   if (isAgentEnabled()) {
-    if (proxyHostname.isNotEmpty()) {
+    if (PROXY_HOSTNAME.getRequiredProperty().isNotEmpty()) {
       val configFilename = CONFIG_FILENAME.getRequiredProperty()
       val agentInfo = startAsyncAgent(configFilename, true)
       AGENT_LAUNCH_ID.setProperty(agentInfo.launchId)
@@ -200,12 +197,13 @@ internal fun Application.module() {
   // This is done *after* AGENT_LAUNCH_ID is assigned because metrics depend on it
   metrics.init { content.get() }
 
-  val job =
-    launch {
-      assignContentDsl(fileName, variableName)
-    }
+  val fileName = DSL_FILE_NAME.getRequiredProperty()
+  val variableName = DSL_VARIABLE_NAME.getRequiredProperty()
+
+  val job = launch { assignContentDsl(fileName, variableName) }
 
   runBlocking {
+    val maxDelay = STARTUP_DELAY_SECS.configProperty(this@module, "30").toInt()
     logger.info { "Delaying start-up by max of $maxDelay seconds" }
     measureTime {
       withTimeoutOrNull(maxDelay.seconds) {

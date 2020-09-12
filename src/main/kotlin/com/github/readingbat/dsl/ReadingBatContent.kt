@@ -56,12 +56,9 @@ class ReadingBatContent {
 
   internal val functionInfoMap = ConcurrentHashMap<Int, FunctionInfo>()
   internal val timeStamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("M/d/y H:m:ss"))
+
   internal var maxHistoryLength = 10
   internal var maxClassCount = 25
-  internal var dslFileName = ""
-  internal var dslVariableName = ""
-  internal var ktorPort = 0
-  internal var ktorWatch = ""
 
   // Accessible from Content.kt DSL
   val python by lazy { LanguageGroup<PythonChallenge>(this, Python) }
