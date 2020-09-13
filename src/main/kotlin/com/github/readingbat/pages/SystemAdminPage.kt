@@ -102,19 +102,19 @@ internal object SystemAdminPage : KLogging() {
             }
 
             p {
-              this@body.confirmingButton("Load all Java Challenges",
+              this@body.confirmingButton("Load Java Challenges",
                                          LOAD_JAVA_ENDPOINT,
                                          "Are you sure you want to load all the java challenges? (This can take a while)")
             }
 
             p {
-              this@body.confirmingButton("Load all Python Challenges",
+              this@body.confirmingButton("Load Python Challenges",
                                          LOAD_PYTHON_ENDPOINT,
                                          "Are you sure you want to load all the python challenges? (This can take a while)")
             }
 
             p {
-              this@body.confirmingButton("Load all Kotlin Challenges",
+              this@body.confirmingButton("Load Kotlin Challenges",
                                          LOAD_KOTLIN_ENDPOINT,
                                          "Are you sure you want to load all the kotlin challenges? (This can take a while)")
             }
