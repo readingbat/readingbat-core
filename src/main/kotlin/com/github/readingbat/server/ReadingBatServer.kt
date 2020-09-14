@@ -128,14 +128,14 @@ object ReadingBatServer : KLogging() {
   }
 }
 
-internal fun Application.assignContentDsl(fileName: String, variableName: String) {
+internal fun Application.readContentDsl(fileName: String, variableName: String) {
   logger.info { "Loading content using $variableName in $fileName" }
   measureTime {
     content.set(
       readContentDsl(FileSource(fileName = fileName), variableName)
         .apply {
-          maxHistoryLength = MAX_HISTORY_LENGTH.configProperty(this@assignContentDsl, "10").toInt()
-          maxClassCount = MAX_CLASS_COUNT.configProperty(this@assignContentDsl, "25").toInt()
+          maxHistoryLength = MAX_HISTORY_LENGTH.configProperty(this@readContentDsl, "10").toInt()
+          maxClassCount = MAX_CLASS_COUNT.configProperty(this@readContentDsl, "25").toInt()
         }.apply { clearContentMap() })
     metrics.contentLoadedCount.labels(agentLaunchId()).inc()
   }.also {
@@ -200,13 +200,13 @@ internal fun Application.module() {
   val fileName = DSL_FILE_NAME.getRequiredProperty()
   val variableName = DSL_VARIABLE_NAME.getRequiredProperty()
 
-  val job = launch { assignContentDsl(fileName, variableName) }
+  val job = launch { readContentDsl(fileName, variableName) }
 
   runBlocking {
-    val maxDelay = STARTUP_DELAY_SECS.configProperty(this@module, "30").toInt()
-    logger.info { "Delaying start-up by max of $maxDelay seconds" }
+    val maxDelay = STARTUP_DELAY_SECS.configProperty(this@module, "30").toInt().seconds
+    logger.info { "Delaying start-up by max of $maxDelay" }
     measureTime {
-      withTimeoutOrNull(maxDelay.seconds) {
+      withTimeoutOrNull(maxDelay) {
         job.join()
       }
     }.also {
@@ -224,7 +224,7 @@ internal fun Application.module() {
     adminRoutes(metrics)
     locations(metrics) { content.get() }
     userRoutes(metrics) { content.get() }
-    sysAdminRoutes(metrics, { content.get() }, { assignContentDsl(fileName, variableName) })
+    sysAdminRoutes(metrics, { content.get() }, { readContentDsl(fileName, variableName) })
     wsEndpoints(metrics) { content.get() }
     static(STATIC_ROOT) { resources("static") }
   }
