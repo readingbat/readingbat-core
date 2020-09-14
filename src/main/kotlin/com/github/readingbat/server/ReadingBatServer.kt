@@ -208,7 +208,7 @@ internal fun Application.module() {
     measureTime {
       withTimeoutOrNull(maxDelay) {
         job.join()
-      }
+      } ?: logger.info { "Timed-out after waiting $maxDelay for readContentDsl()" }
     }.also {
       logger.info { "Continued start-up after delaying $it" }
     }
