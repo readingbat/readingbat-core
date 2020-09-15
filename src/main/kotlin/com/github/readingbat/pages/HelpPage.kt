@@ -18,7 +18,9 @@
 package com.github.readingbat.pages
 
 import com.github.readingbat.common.CSSNames.INDENT_1EM
+import com.github.readingbat.common.CommonUtils.pathOf
 import com.github.readingbat.common.Endpoints.ABOUT_ENDPOINT
+import com.github.readingbat.common.Endpoints.STATIC_ROOT
 import com.github.readingbat.common.Endpoints.TEACHER_PREFS_ENDPOINT
 import com.github.readingbat.common.Endpoints.USER_PREFS_ENDPOINT
 import com.github.readingbat.common.FormFields.CREATE_CLASS
@@ -154,17 +156,35 @@ internal object HelpPage {
               p {
                 +"To see both the student and teacher experience with ReadingBat, follow these steps:"
 
+                val help = "help"
+                val h4 = "400"
+                val h5 = "500"
+                val h6 = "600"
+                val s = "margin-top:5; margin-bottom:5"
                 ol {
                   li { +"Create a ReadingBat account and sign into it." }
+                  img { style = s; height = h4; src = pathOf(STATIC_ROOT, help, "create-account.png") }
+
                   li { +"Go to the teacher preferences and create a demo class and copy the class code into your copy/paste buffer." }
                   li { +"On the same page, select the radio button of the newly created class and make it your active class." }
+
+                  img { style = s; height = h5; src = pathOf(STATIC_ROOT, help, "teacher-classes.png") }
+
                   li { +"Go to the user preferences and paste the class code you just copied and enroll as a student in your own class." }
                   li { +"Go to one of the challenges (in teacher mode) and you should see yourself as the only student." }
                   li { +"Open a second browser (not just a second window) and go to ReadingBat.com and login." }
+
                   li { +"Go to the same challenge as a student and enter some answers. You will see your answers appearing in the other browser." }
+                  img { style = s; height = h6; src = pathOf(STATIC_ROOT, help, "challenge-feedback.png") }
+
                   li { +"Go back to the other browser (in teacher mode) and click on the challenge group link to see statistics for all the challenges in that group." }
-                  li { +"Click on the class link to see a class overview." }
+                  img { style = s; height = h4; src = pathOf(STATIC_ROOT, help, "group-summary.png") }
+
+                  li { +"Click on the class link to see a class summary." }
+                  img { style = s; height = h4; src = pathOf(STATIC_ROOT, help, "class-summary.png") }
+
                   li { +"Click on your student link to see a student overview." }
+                  img { style = s; height = h5; src = pathOf(STATIC_ROOT, help, "student-summary.png") }
                 }
               }
             }

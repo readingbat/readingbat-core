@@ -59,7 +59,7 @@ import kotlin.time.TimeSource
 import kotlin.time.measureTime
 import kotlin.time.seconds
 
-@Version(version = "1.4.0", date = "9/12/20")
+@Version(version = "1.4.0", date = "9/15/20")
 object ReadingBatServer : KLogging() {
   private val startTime = TimeSource.Monotonic.markNow()
   internal val timeStamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("M/d/y H:m:ss"))

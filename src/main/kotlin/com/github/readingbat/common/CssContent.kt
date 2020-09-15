@@ -110,6 +110,9 @@ internal val cssContent by lazy {
       rule("h1, h2, h3, h4") {
         fontWeight = bold
       }
+      rule("li") {
+        marginTop = 10.px
+      }
       p {
         maxWidth = 800.px
         lineHeight = LineHeight("1.5")
