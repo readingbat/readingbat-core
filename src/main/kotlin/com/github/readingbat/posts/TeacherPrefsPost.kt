@@ -30,11 +30,15 @@ import com.github.readingbat.common.FormFields.CLASS_DESC_PARAM
 import com.github.readingbat.common.FormFields.CLASS_SUMMARY
 import com.github.readingbat.common.FormFields.CREATE_CLASS
 import com.github.readingbat.common.FormFields.DELETE_CLASS
+import com.github.readingbat.common.FormFields.PREFS_ACTION_PARAM
+import com.github.readingbat.common.FormFields.REMOVE_FROM_CLASS
 import com.github.readingbat.common.FormFields.TEACHER_PREF
 import com.github.readingbat.common.FormFields.UPDATE_ACTIVE_CLASS
-import com.github.readingbat.common.FormFields.USER_PREFS_ACTION_PARAM
+import com.github.readingbat.common.FormFields.USER_ID_PARAM
 import com.github.readingbat.common.User.Companion.fetchActiveClassCode
+import com.github.readingbat.common.User.Companion.fetchEnrolledClassCode
 import com.github.readingbat.common.User.Companion.fetchPreviousTeacherClassCode
+import com.github.readingbat.common.User.Companion.toUser
 import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.pages.ClassSummaryPage.classSummaryPage
@@ -55,7 +59,7 @@ internal object TeacherPrefsPost : KLogging() {
   suspend fun PipelineCall.teacherPrefs(content: ReadingBatContent, user: User?, redis: Jedis) =
     if (user.isValidUser(redis)) {
       val parameters = call.receiveParameters()
-      when (val action = parameters[USER_PREFS_ACTION_PARAM] ?: "") {
+      when (val action = parameters[PREFS_ACTION_PARAM] ?: "") {
         CREATE_CLASS -> createClass(content, user, parameters[CLASS_DESC_PARAM] ?: "", redis)
         UPDATE_ACTIVE_CLASS -> {
           val source = parameters[CHOICE_SOURCE_PARAM] ?: ""
@@ -66,6 +70,15 @@ internal object TeacherPrefsPost : KLogging() {
             CLASS_SUMMARY -> classSummaryPage(content, user, redis, classCode, msg = msg)
             else -> throw InvalidConfigurationException("Invalid source: $source")
           }
+        }
+        REMOVE_FROM_CLASS -> {
+          val studentId = parameters[USER_ID_PARAM] ?: throw InvalidConfigurationException("Missing: $USER_ID_PARAM")
+          val student = studentId.toUser(null)
+          val classCode = student.fetchEnrolledClassCode(redis)
+          student.withdrawFromClass(classCode, redis)
+          val msg = "${student.name(redis)} removed from class ${classCode.toDisplayString(redis)}"
+          logger.info { msg }
+          classSummaryPage(content, user, redis, classCode, msg = Message(msg))
         }
         DELETE_CLASS -> deleteClass(content, user, parameters.getClassCode(CLASS_CODE_NAME_PARAM), redis)
         else -> throw InvalidConfigurationException("Invalid action: $action")

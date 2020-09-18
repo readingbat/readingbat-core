@@ -32,9 +32,9 @@ import com.github.readingbat.common.FormFields.DELETE_ACCOUNT
 import com.github.readingbat.common.FormFields.JOIN_A_CLASS
 import com.github.readingbat.common.FormFields.JOIN_CLASS
 import com.github.readingbat.common.FormFields.NEW_PASSWORD_PARAM
+import com.github.readingbat.common.FormFields.PREFS_ACTION_PARAM
 import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.FormFields.UPDATE_PASSWORD
-import com.github.readingbat.common.FormFields.USER_PREFS_ACTION_PARAM
 import com.github.readingbat.common.FormFields.WITHDRAW_FROM_CLASS
 import com.github.readingbat.common.Message
 import com.github.readingbat.common.Message.Companion.EMPTY_MESSAGE
@@ -149,7 +149,7 @@ internal object UserPrefsPage : KLogging() {
           }
           tr {
             td {}
-            td { input { type = submit; id = passwordButton; name = USER_PREFS_ACTION_PARAM; value = UPDATE_PASSWORD } }
+            td { input { type = submit; id = passwordButton; name = PREFS_ACTION_PARAM; value = UPDATE_PASSWORD } }
           }
         }
       }
@@ -168,7 +168,7 @@ internal object UserPrefsPage : KLogging() {
             action = USER_PREFS_ENDPOINT
             method = FormMethod.post
             onSubmit = "return confirm('Are you sure you want to withdraw from class $displayStr?')"
-            input { type = submit; name = USER_PREFS_ACTION_PARAM; value = WITHDRAW_FROM_CLASS }
+            input { type = submit; name = PREFS_ACTION_PARAM; value = WITHDRAW_FROM_CLASS }
           }
         }
       }
@@ -195,7 +195,7 @@ internal object UserPrefsPage : KLogging() {
             }
             tr {
               td {}
-              td { input { type = submit; id = joinClassButton; name = USER_PREFS_ACTION_PARAM; value = JOIN_CLASS } }
+              td { input { type = submit; id = joinClassButton; name = PREFS_ACTION_PARAM; value = JOIN_CLASS } }
             }
           }
         }
@@ -257,7 +257,7 @@ internal object UserPrefsPage : KLogging() {
           action = USER_PREFS_ENDPOINT
           method = FormMethod.post
           onSubmit = "return confirm('Are you sure you want to permanently delete the account for $email ?')"
-          input { type = submit; name = USER_PREFS_ACTION_PARAM; value = DELETE_ACCOUNT }
+          input { type = submit; name = PREFS_ACTION_PARAM; value = DELETE_ACCOUNT }
         }
       }
     }

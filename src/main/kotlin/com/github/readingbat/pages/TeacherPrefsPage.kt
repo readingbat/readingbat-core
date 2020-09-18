@@ -31,10 +31,10 @@ import com.github.readingbat.common.FormFields.CREATE_CLASS
 import com.github.readingbat.common.FormFields.DELETE_CLASS
 import com.github.readingbat.common.FormFields.DISABLED_MODE
 import com.github.readingbat.common.FormFields.NO_ACTIVE_CLASS
+import com.github.readingbat.common.FormFields.PREFS_ACTION_PARAM
 import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.FormFields.TEACHER_PREF
 import com.github.readingbat.common.FormFields.UPDATE_ACTIVE_CLASS
-import com.github.readingbat.common.FormFields.USER_PREFS_ACTION_PARAM
 import com.github.readingbat.common.Message
 import com.github.readingbat.common.Message.Companion.EMPTY_MESSAGE
 import com.github.readingbat.common.User
@@ -130,7 +130,7 @@ internal object TeacherPrefsPage : KLogging() {
           }
           tr {
             td {}
-            td { input { type = submit; id = createClassButton; name = USER_PREFS_ACTION_PARAM; value = CREATE_CLASS } }
+            td { input { type = submit; id = createClassButton; name = PREFS_ACTION_PARAM; value = CREATE_CLASS } }
           }
         }
       }
@@ -196,7 +196,7 @@ internal object TeacherPrefsPage : KLogging() {
 
         this@table.tr {
           td {}
-          td { input { type = submit; name = USER_PREFS_ACTION_PARAM; value = UPDATE_ACTIVE_CLASS } }
+          td { input { type = submit; name = PREFS_ACTION_PARAM; value = UPDATE_ACTIVE_CLASS } }
         }
       }
     }
@@ -216,9 +216,9 @@ internal object TeacherPrefsPage : KLogging() {
               onSubmit = "return confirm('Are you sure you want to delete class ${classCode.toDisplayString(redis)}?')"
               input { type = InputType.hidden; name = CLASS_CODE_NAME_PARAM; value = classCode.displayedValue }
               input {
-                style = "vertical-align:middle; margin-top:1; margin-bottom:0"
+                style = "vertical-align:middle; margin-top:1; margin-bottom:0;"
                 type = submit
-                name = USER_PREFS_ACTION_PARAM
+                name = PREFS_ACTION_PARAM
                 value = DELETE_CLASS
               }
             }

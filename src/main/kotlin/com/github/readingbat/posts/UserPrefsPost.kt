@@ -17,7 +17,6 @@
 
 package com.github.readingbat.posts
 
-import com.github.readingbat.common.*
 import com.github.readingbat.common.ClassCode.Companion.getClassCode
 import com.github.readingbat.common.FormFields.CLASS_CODE_NAME_PARAM
 import com.github.readingbat.common.FormFields.CONFIRM_PASSWORD_PARAM
@@ -25,10 +24,15 @@ import com.github.readingbat.common.FormFields.CURR_PASSWORD_PARAM
 import com.github.readingbat.common.FormFields.DELETE_ACCOUNT
 import com.github.readingbat.common.FormFields.JOIN_CLASS
 import com.github.readingbat.common.FormFields.NEW_PASSWORD_PARAM
+import com.github.readingbat.common.FormFields.PREFS_ACTION_PARAM
 import com.github.readingbat.common.FormFields.UPDATE_PASSWORD
-import com.github.readingbat.common.FormFields.USER_PREFS_ACTION_PARAM
 import com.github.readingbat.common.FormFields.WITHDRAW_FROM_CLASS
+import com.github.readingbat.common.Message
+import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.fetchEnrolledClassCode
+import com.github.readingbat.common.UserPrincipal
+import com.github.readingbat.common.isValidUser
+import com.github.readingbat.dsl.DataException
 import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.pages.UserPrefsPage.requestLogInPage
@@ -49,7 +53,7 @@ internal object UserPrefsPost : KLogging() {
     val parameters = call.receiveParameters()
 
     return if (user.isValidUser(redis)) {
-      when (val action = parameters[USER_PREFS_ACTION_PARAM] ?: "") {
+      when (val action = parameters[PREFS_ACTION_PARAM] ?: "") {
         UPDATE_PASSWORD -> updatePassword(content, parameters, user, redis)
         JOIN_CLASS -> enrollInClass(content, parameters, user, redis)
         WITHDRAW_FROM_CLASS -> withdrawFromClass(content, user, redis)

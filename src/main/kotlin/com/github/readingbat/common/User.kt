@@ -35,6 +35,7 @@ import com.github.readingbat.common.KeyConstants.USER_INFO_KEY
 import com.github.readingbat.common.KeyConstants.USER_RESET_KEY
 import com.github.readingbat.common.RedisAdmin.scanKeys
 import com.github.readingbat.dsl.Challenge
+import com.github.readingbat.dsl.DataException
 import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.posts.ChallengeHistory

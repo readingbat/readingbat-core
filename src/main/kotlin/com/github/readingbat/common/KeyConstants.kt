@@ -17,8 +17,6 @@
 
 package com.github.readingbat.common
 
-import redis.clients.jedis.exceptions.JedisException
-
 internal object KeyConstants {
   const val AUTH_KEY = "auth"
   const val NO_AUTH_KEY = "noauth"
@@ -47,4 +45,3 @@ internal object KeyConstants {
   const val KEY_SEP = "|"
 }
 
-class DataException(val msg: String) : JedisException(msg)

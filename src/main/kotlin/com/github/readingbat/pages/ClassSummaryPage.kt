@@ -41,9 +41,9 @@ import com.github.readingbat.common.Endpoints.studentSummaryEndpoint
 import com.github.readingbat.common.FormFields.CHOICE_SOURCE_PARAM
 import com.github.readingbat.common.FormFields.CLASS_CODE_CHOICE_PARAM
 import com.github.readingbat.common.FormFields.CLASS_SUMMARY
+import com.github.readingbat.common.FormFields.PREFS_ACTION_PARAM
 import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.FormFields.UPDATE_ACTIVE_CLASS
-import com.github.readingbat.common.FormFields.USER_PREFS_ACTION_PARAM
 import com.github.readingbat.common.Message
 import com.github.readingbat.common.Message.Companion.EMPTY_MESSAGE
 import com.github.readingbat.common.User
@@ -62,6 +62,7 @@ import com.github.readingbat.pages.PageUtils.headDefault
 import com.github.readingbat.pages.PageUtils.loadBootstrap
 import com.github.readingbat.pages.PageUtils.loadPingdomScript
 import com.github.readingbat.pages.PageUtils.rawHtml
+import com.github.readingbat.pages.StudentSummaryPage.removeFromClassButton
 import com.github.readingbat.server.GroupName
 import com.github.readingbat.server.GroupName.Companion.EMPTY_GROUP
 import com.github.readingbat.server.LanguageName
@@ -158,7 +159,7 @@ internal object ClassSummaryPage : KLogging() {
       tr {
         td {
           h3 {
-            style = "margin-left: 15px; margin-bottom: 15px; color: $headerColor"; +classCode.toDisplayString(redis)
+            style = "margin-left:15px; margin-bottom:15px; color:$headerColor"; +classCode.toDisplayString(redis)
           }
         }
         if (classCode != activeClassCode) {
@@ -171,9 +172,9 @@ internal object ClassSummaryPage : KLogging() {
               input { type = InputType.hidden; name = CLASS_CODE_CHOICE_PARAM; value = classCode.value }
               input(classes = BTN) {
                 style =
-                  "padding: 2px 5px; margin-top:9; margin-left:20; border-radius: 5px; cursor: pointer; border:1px solid black;"
+                  "padding:2px 5px; margin-top:9; margin-left:20; border-radius:5px; cursor:pointer; border:1px solid black;"
                 type = InputType.submit
-                name = USER_PREFS_ACTION_PARAM
+                name = PREFS_ACTION_PARAM
                 value = UPDATE_ACTIVE_CLASS
               }
             }
@@ -259,10 +260,14 @@ internal object ClassSummaryPage : KLogging() {
                                    groupName: GroupName,
                                    redis: Jedis) =
     div(classes = INDENT_2EM) {
+      val showDetail = hasGroup && classCode == activeClassCode
+
       if (enrollees.isNotEmpty())
         table {
           style = "border-collapse: separate; border-spacing: 15px 5px"
           tr {
+            if (!showDetail)
+              th { +"" }
             th { +"Name" }
             th { +"Email" }
             if (hasGroup) {
@@ -286,21 +291,25 @@ internal object ClassSummaryPage : KLogging() {
 
           enrollees
             .forEach { student ->
+              val studentName = student.name(redis)
+              val studentEmail = student.email(redis).toString()
+
               tr {
-                if (hasGroup && classCode == activeClassCode) {
+                if (showDetail) {
                   val returnUrl = classSummaryEndpoint(classCode, languageName, groupName)
                   "${studentSummaryEndpoint(classCode, languageName, student)}&$RETURN_PARAM=${returnUrl.encode()}"
                     .also {
-                      td { a(classes = UNDERLINE) { href = it; +student.name(redis) } }
-                      td { a(classes = UNDERLINE) { href = it; +student.email(redis).toString() } }
+                      td { a(classes = UNDERLINE) { href = it; +studentName } }
+                      td { a(classes = UNDERLINE) { href = it; +studentEmail } }
                     }
                 }
                 else {
-                  td { +student.name(redis) }
-                  td { +student.email(redis).toString() }
+                  td { this@displayStudents.removeFromClassButton(student, studentName) }
+                  td { +studentName }
+                  td { +studentEmail }
                 }
 
-                if (hasGroup) {
+                if (showDetail) {
                   content.findGroup(languageName, groupName).challenges
                     .forEach { challenge ->
                       td {

@@ -34,8 +34,12 @@ import com.github.readingbat.common.Constants.WRONG_COLOR
 import com.github.readingbat.common.Constants.YES
 import com.github.readingbat.common.Endpoints.CHALLENGE_ROOT
 import com.github.readingbat.common.Endpoints.STUDENT_SUMMARY_ENDPOINT
+import com.github.readingbat.common.Endpoints.TEACHER_PREFS_ENDPOINT
 import com.github.readingbat.common.Endpoints.classSummaryEndpoint
+import com.github.readingbat.common.FormFields.PREFS_ACTION_PARAM
+import com.github.readingbat.common.FormFields.REMOVE_FROM_CLASS
 import com.github.readingbat.common.FormFields.RETURN_PARAM
+import com.github.readingbat.common.FormFields.USER_ID_PARAM
 import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.fetchActiveClassCode
 import com.github.readingbat.common.User.Companion.toUser
@@ -56,6 +60,8 @@ import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
 import io.ktor.application.*
 import kotlinx.html.*
+import kotlinx.html.FormMethod.post
+import kotlinx.html.InputType.submit
 import kotlinx.html.stream.createHTML
 import mu.KLogging
 import redis.clients.jedis.Jedis
@@ -85,6 +91,8 @@ internal object StudentSummaryPage : KLogging() {
 
     return createHTML()
       .html {
+        val studentName = student.name(redis)
+
         head { headDefault(content) }
 
         body {
@@ -95,22 +103,25 @@ internal object StudentSummaryPage : KLogging() {
           h2 { +"Student Summary" }
 
           h3 {
-            style = "margin-left: 15px; color: $headerColor"
-            a(classes = UNDERLINE) {
-              href = classSummaryEndpoint(classCode); +classCode.toDisplayString(redis)
-            }
-          }
-
-          h3 {
-            style = "margin-left: 15px; color: $headerColor"
+            style = "margin-left:15px; color: $headerColor"
             a(classes = UNDERLINE) {
               href = pathOf(CHALLENGE_ROOT, languageName); +languageName.toLanguageType().toString()
             }
           }
 
           h3 {
-            style = "margin-left: 15px; color: $headerColor"
-            +"Student: ${student.name(redis)} ${student.email(redis)}"
+            style = "margin-left:15px; color: $headerColor"
+            a(classes = UNDERLINE) { href = classSummaryEndpoint(classCode); +classCode.toDisplayString(redis) }
+          }
+
+          h3 {
+            style = "margin-left:15px; color: $headerColor"
+            +"Student: $studentName ${student.email(redis)} "
+          }
+
+          div {
+            style = "margin-left:15px; margin-bottom:10px"
+            this@body.removeFromClassButton(student, studentName)
           }
 
           displayChallengeGroups(content, classCode, languageName, redis)
@@ -120,6 +131,22 @@ internal object StudentSummaryPage : KLogging() {
           loadPingdomScript()
         }
       }
+  }
+
+  internal fun BODY.removeFromClassButton(student: User, studentName: String) {
+    form {
+      style = "margin:0"
+      action = TEACHER_PREFS_ENDPOINT
+      method = post
+      onSubmit = "return confirm('Are you sure you want to remove $studentName from the class?')"
+      input { type = InputType.hidden; name = USER_ID_PARAM; value = student.id }
+      input {
+        style = "vertical-align:middle; margin-top:1; margin-bottom:0; border-radius: 8px; font-size:12px"
+        type = submit
+        name = PREFS_ACTION_PARAM
+        value = REMOVE_FROM_CLASS
+      }
+    }
   }
 
   private fun BODY.displayChallengeGroups(content: ReadingBatContent,

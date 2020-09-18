@@ -25,10 +25,10 @@ import com.github.readingbat.common.Endpoints.PASSWORD_RESET_ENDPOINT
 import com.github.readingbat.common.FormFields.CONFIRM_PASSWORD_PARAM
 import com.github.readingbat.common.FormFields.EMAIL_PARAM
 import com.github.readingbat.common.FormFields.NEW_PASSWORD_PARAM
+import com.github.readingbat.common.FormFields.PREFS_ACTION_PARAM
 import com.github.readingbat.common.FormFields.RESET_ID_PARAM
 import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.FormFields.UPDATE_PASSWORD
-import com.github.readingbat.common.FormFields.USER_PREFS_ACTION_PARAM
 import com.github.readingbat.common.Message
 import com.github.readingbat.common.Message.Companion.EMPTY_MESSAGE
 import com.github.readingbat.dsl.ReadingBatContent
@@ -181,7 +181,7 @@ internal object PasswordResetPage : KLogging() {
                     style = "font-size:25px; height:35; width:155"
                     type = InputType.submit
                     id = passwordButton
-                    name = USER_PREFS_ACTION_PARAM
+                    name = PREFS_ACTION_PARAM
                     value = UPDATE_PASSWORD
                   }
                 }
