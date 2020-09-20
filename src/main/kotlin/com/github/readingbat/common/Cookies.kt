@@ -17,6 +17,9 @@
 
 package com.github.readingbat.common
 
+import com.github.readingbat.common.KeyConstants.CORRECT_ANSWERS_KEY
+import com.github.readingbat.common.KeyConstants.LIKE_DISLIKE_KEY
+import com.github.readingbat.common.KeyConstants.NO_AUTH_KEY
 import com.github.readingbat.posts.ChallengeNames
 import com.github.readingbat.server.*
 import io.ktor.application.*
@@ -32,20 +35,20 @@ internal data class BrowserSession(val id: String, val created: Long = Instant.n
     correctAnswersKey(names.languageName, names.groupName, names.challengeName)
 
   fun correctAnswersKey(languageName: LanguageName, groupName: GroupName, challengeName: ChallengeName) =
-    keyOf(KeyConstants.CORRECT_ANSWERS_KEY, KeyConstants.NO_AUTH_KEY, id, md5Of(languageName, groupName, challengeName))
+    keyOf(CORRECT_ANSWERS_KEY, NO_AUTH_KEY, id, md5Of(languageName, groupName, challengeName))
 
   fun likeDislikeKey(names: ChallengeNames) =
     likeDislikeKey(names.languageName, names.groupName, names.challengeName)
 
   fun likeDislikeKey(languageName: LanguageName, groupName: GroupName, challengeName: ChallengeName) =
-    keyOf(KeyConstants.LIKE_DISLIKE_KEY, KeyConstants.NO_AUTH_KEY, id, md5Of(languageName, groupName, challengeName))
+    keyOf(LIKE_DISLIKE_KEY, NO_AUTH_KEY, id, md5Of(languageName, groupName, challengeName))
 
   fun challengeAnswerKey(names: ChallengeNames) =
     challengeAnswerKey(names.languageName, names.groupName, names.challengeName)
 
   fun challengeAnswerKey(languageName: LanguageName, groupName: GroupName, challengeName: ChallengeName) =
     keyOf(KeyConstants.CHALLENGE_ANSWERS_KEY,
-          KeyConstants.NO_AUTH_KEY,
+          NO_AUTH_KEY,
           id,
           md5Of(languageName, groupName, challengeName))
 
@@ -57,7 +60,7 @@ internal data class BrowserSession(val id: String, val created: Long = Instant.n
                                challengeName: ChallengeName,
                                invocation: Invocation) =
     keyOf(KeyConstants.ANSWER_HISTORY_KEY,
-          KeyConstants.NO_AUTH_KEY,
+          NO_AUTH_KEY,
           id,
           md5Of(languageName, groupName, challengeName, invocation))
 

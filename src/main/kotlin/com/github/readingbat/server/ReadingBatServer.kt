@@ -39,6 +39,8 @@ import com.github.readingbat.server.ReadingBatServer.contentReadCount
 import com.github.readingbat.server.ReadingBatServer.logger
 import com.github.readingbat.server.ReadingBatServer.metrics
 import com.github.readingbat.server.WsEndoints.wsEndpoints
+import com.zaxxer.hikari.HikariConfig
+import com.zaxxer.hikari.HikariDataSource
 import io.ktor.application.*
 import io.ktor.http.content.*
 import io.ktor.routing.*
@@ -49,6 +51,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeoutOrNull
 import mu.KLogging
+import org.jetbrains.exposed.sql.Database
 import redis.clients.jedis.JedisPool
 import redis.clients.jedis.exceptions.JedisConnectionException
 import java.time.LocalDateTime
@@ -68,7 +71,24 @@ object ReadingBatServer : KLogging() {
   internal val adminUsers = mutableListOf<String>()
   internal val contentReadCount = AtomicInteger(0)
   internal val metrics by lazy { Metrics() }
+
   internal var redisPool: JedisPool? = null
+
+  internal val postgres by lazy {
+    Database.connect(
+      HikariDataSource(
+        HikariConfig()
+          .apply {
+            driverClassName = "com.impossibl.postgres.jdbc.PGDriver"
+            jdbcUrl = "jdbc:pgsql://localhost:5432/postgres"
+            username = "postgres"
+            password = "docker"
+            maximumPoolSize = 10
+            isAutoCommit = false
+            transactionIsolation = "TRANSACTION_REPEATABLE_READ"
+            validate()
+          }))
+  }
 
   fun start(args: Array<String>) {
 
@@ -180,8 +200,8 @@ internal fun Application.module() {
   KTOR_PORT.setPropertyFromConfig(this, "0")
   KTOR_WATCH.setProperty(KTOR_WATCH.configPropertyOrNull(this)?.getList()?.toString() ?: UNASSIGNED)
 
-  SENDGRID_PREFIX_PROPERTY.setProperty(SENDGRID_PREFIX.getEnv(SENDGRID_PREFIX_PROPERTY.configProperty(this,
-                                                                                                      "https://www.readingbat.com")))
+  SENDGRID_PREFIX_PROPERTY.setProperty(
+    SENDGRID_PREFIX.getEnv(SENDGRID_PREFIX_PROPERTY.configProperty(this, "https://www.readingbat.com")))
 
   if (isAgentEnabled()) {
     if (PROXY_HOSTNAME.getRequiredProperty().isNotEmpty()) {

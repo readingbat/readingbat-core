@@ -52,4 +52,8 @@ Setup:
 * `mkdir -p $HOME/docker/volumes/postgres`
 * `docker run --rm   --name pg-docker -e POSTGRES_PASSWORD=docker -d -p 5432:5432 -v $HOME/docker/volumes/postgres:/var/lib/postgresql/data  postgres`
 * `psql -h localhost -U postgres -d postgres`  use password: docker
+
+## Postgres Connection Pools
+* https://www.thebookofjoel.com/kotlin-ktor-exposed-postgres
+* https://github.com/brettwooldridge/HikariCP
  

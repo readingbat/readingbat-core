@@ -20,6 +20,7 @@ package com.github.readingbat.server
 import com.github.pambrose.common.features.HerokuHttpsRedirect
 import com.github.pambrose.common.response.respondWith
 import com.github.pambrose.common.util.simpleClassName
+import com.github.readingbat.common.Constants.STATIC
 import com.github.readingbat.common.Constants.UNKNOWN
 import com.github.readingbat.common.Endpoints.CSS_ENDPOINT
 import com.github.readingbat.common.Endpoints.FAV_ICON_ENDPOINT
@@ -116,7 +117,9 @@ internal object Installs : KLogging() {
     install(CallLogging) {
       level = Level.INFO
       if (FILTER_LOG.getEnv(true))
-        filter { call -> call.request.path().let { it.startsWith("/") && !it.startsWith("/static/") && it != "/ping" } }
+        filter { call ->
+          call.request.path().let { it.startsWith("/") && !it.startsWith("/$STATIC/") && it != "/ping" }
+        }
       format { call ->
         val logStr = call.request.toLogString()
         val remote = call.request.origin.remoteHost

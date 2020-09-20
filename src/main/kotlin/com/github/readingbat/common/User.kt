@@ -100,20 +100,21 @@ internal class User private constructor(val id: String, val browserSession: Brow
     return salt to digest
   }
 
-  fun passwordResetKey(redis: Jedis): String? = redis.get(userPasswordResetKey)
-
   fun isValidUserInfoKey(redis: Jedis) = redis.hlen(userInfoKey) > 0
 
   fun assignDigest(redis: Jedis, newDigest: String): Long = redis.hset(userInfoKey, DIGEST_FIELD, newDigest)
 
   fun assignDigest(tx: Transaction, newDigest: String): Response<Long> = tx.hset(userInfoKey, DIGEST_FIELD, newDigest)
 
+  fun passwordResetKey(redis: Jedis): String? = redis.get(userPasswordResetKey)
+
   private fun correctAnswersKey(names: ChallengeNames) =
     correctAnswersKey(names.languageName, names.groupName, names.challengeName)
 
   fun deletePasswordResetKey(tx: Transaction): Response<Long> = tx.del(userPasswordResetKey)
 
-  fun correctAnswersKey(languageName: LanguageName, groupName: GroupName, challengeName: ChallengeName) =
+  fun
+      correctAnswersKey(languageName: LanguageName, groupName: GroupName, challengeName: ChallengeName) =
     keyOf(CORRECT_ANSWERS_KEY, AUTH_KEY, id, md5Of(languageName, groupName, challengeName))
 
   private fun likeDislikeKey(names: ChallengeNames) =
@@ -190,18 +191,16 @@ internal class User private constructor(val id: String, val browserSession: Brow
   }
 
   fun withdrawFromClass(classCode: ClassCode, redis: Jedis) {
-    if (classCode.isNotEnabled) {
+    if (classCode.isNotEnabled)
       throw DataException("Not enrolled in a class")
-    }
-    else {
-      // This should always be true
-      val enrolled = classCode.isValid(redis) && isEnrolled(classCode, redis)
-      redis.multi().also { tx ->
-        assignEnrolledClassCode(DISABLED_CLASS_CODE, tx)
-        if (enrolled)
-          classCode.removeEnrollee(this, tx)
-        tx.exec()
-      }
+
+    // This should always be true
+    val enrolled = classCode.isValid(redis) && isEnrolled(classCode, redis)
+    redis.multi().also { tx ->
+      assignEnrolledClassCode(DISABLED_CLASS_CODE, tx)
+      if (enrolled)
+        classCode.removeEnrollee(this, tx)
+      tx.exec()
     }
   }
 
