@@ -1,23 +1,23 @@
 CREATE TABLE users
 (
-    id                  BIGSERIAL PRIMARY KEY,
+    id                  BIGSERIAL UNIQUE PRIMARY KEY,
     created             TIMESTAMPTZ DEFAULT NOW(),
-    user_id             varchar(25),
+    user_id             varchar(25) UNIQUE,
     email               TEXT NOT NULL,
-    first               TEXT NOT NULL,
-    last                TEXT NOT NULL,
+    name                TEXT NOT NULL,
     salt                TEXT NOT NULL,
     digest              TEXT NOT NULL,
     enrolled_class_code TEXT NOT NULL
 );
 
 CREATE UNIQUE INDEX users1_index ON users (user_id);
+CREATE UNIQUE INDEX users2_index ON users (email);
 
 CREATE TABLE browser_sessions
 (
-    id                          BIGSERIAL PRIMARY KEY,
+    id                          BIGSERIAL UNIQUE PRIMARY KEY,
     created                     TIMESTAMPTZ DEFAULT NOW(),
-    user_ref                    INTEGER REFERENCES users ON DELETE CASCADE,
+    user_ref                    INTEGER REFERENCES users (id) ON DELETE CASCADE,
     session_id                  VARCHAR(15) NOT NULL,
     active_class_code           VARCHAR(15) NOT NULL,
     previous_teacher_class_code VARCHAR(15) NOT NULL
@@ -27,7 +27,7 @@ CREATE TABLE authorized_correct_answers
 (
     id       BIGSERIAL PRIMARY KEY,
     created  TIMESTAMPTZ DEFAULT NOW(),
-    user_ref INTEGER REFERENCES users ON DELETE CASCADE
+    user_ref INTEGER REFERENCES users (id) ON DELETE CASCADE
 );
 
 CREATE TABLE unauthorized_correct_answers

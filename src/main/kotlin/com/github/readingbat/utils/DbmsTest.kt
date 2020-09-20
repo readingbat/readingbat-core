@@ -77,12 +77,12 @@ class City(id: EntityID<Int>) : IntEntity(id) {
   companion object : IntEntityClass<City>(Cities)
 }
 
-private fun hikari() =
+internal fun hikari() =
   HikariDataSource(
     HikariConfig()
       .apply {
         driverClassName = "com.impossibl.postgres.jdbc.PGDriver"
-        jdbcUrl = "jdbc:pgsql://localhost:5432/postgres"
+        jdbcUrl = "jdbc:pgsql://localhost:5432/readingbat"
         username = "postgres"
         password = "docker"
         maximumPoolSize = 5

@@ -33,7 +33,7 @@ import com.github.readingbat.common.KeyConstants.USER_CLASSES_KEY
 import com.github.readingbat.common.KeyConstants.USER_INFO_BROWSER_KEY
 import com.github.readingbat.common.KeyConstants.USER_INFO_KEY
 import com.github.readingbat.common.KeyConstants.USER_RESET_KEY
-import com.github.readingbat.common.RedisAdmin.scanKeys
+import com.github.readingbat.common.RedisUtils.scanKeys
 import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.DataException
 import com.github.readingbat.dsl.InvalidConfigurationException
@@ -64,8 +64,8 @@ internal class User private constructor(val id: String, val browserSession: Brow
 
   private val userInfoKey by lazy { keyOf(USER_INFO_KEY, id) }
   private val userInfoBrowserKey by lazy { keyOf(USER_INFO_BROWSER_KEY, id, browserSession?.id ?: UNASSIGNED) }
-  private val userInfoBrowserQueryKey by lazy { keyOf(USER_INFO_BROWSER_KEY, id, "*") }
-  private val browserSpecificUserInfoKey by lazy {
+  internal val userInfoBrowserQueryKey by lazy { keyOf(USER_INFO_BROWSER_KEY, id, "*") }
+  internal val browserSpecificUserInfoKey by lazy {
     if (browserSession.isNotNull()) userInfoBrowserKey else throw InvalidConfigurationException("Null browser session for $this")
   }
   private val userClassesKey by lazy { keyOf(USER_CLASSES_KEY, id) }
@@ -347,14 +347,14 @@ internal class User private constructor(val id: String, val browserSession: Brow
 
   companion object : KLogging() {
 
-    private const val EMAIL_FIELD = "email"
-    private const val SALT_FIELD = "salt"
-    private const val DIGEST_FIELD = "digest"
-    private const val NAME_FIELD = "name"
+    internal const val EMAIL_FIELD = "email"
+    internal const val SALT_FIELD = "salt"
+    internal const val DIGEST_FIELD = "digest"
+    internal const val NAME_FIELD = "name"
 
     // Class code a user is enrolled in. Will report answers to when in student mode
     // This is not browser-id specific
-    private const val ENROLLED_CLASS_CODE_FIELD = "enrolled-class-code"
+    internal const val ENROLLED_CLASS_CODE_FIELD = "enrolled-class-code"
 
     // Class code you will observe updates on when in teacher mode
     // This is browser-id specific

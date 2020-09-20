@@ -15,20 +15,19 @@
  *
  */
 
-package com.github.readingbat.common
+package com.github.readingbat.utils
 
 import com.github.pambrose.common.redis.RedisUtils.withNonNullRedis
 import com.github.pambrose.common.redis.RedisUtils.withRedis
+import com.github.readingbat.common.RedisUtils.scanKeys
 import com.github.readingbat.dsl.InvalidConfigurationException
-import redis.clients.jedis.Jedis
-import redis.clients.jedis.ScanParams
 import redis.clients.jedis.exceptions.JedisDataException
 
 internal object RedisAdmin {
 
-  private const val docean = ""
-  private const val heroku = ""
-  private const val local = "redis://user:none@localhost:6379"
+  internal const val docean = ""
+  internal const val heroku = ""
+  internal const val local = "redis://user:none@localhost:6379"
 
   @JvmStatic
   fun main(args: Array<String>) {
@@ -62,28 +61,13 @@ internal object RedisAdmin {
       redis?.scanKeys("*")?.count() ?: throw InvalidConfigurationException("No connection")
     }
 
-  fun Jedis.scanKeys(pattern: String, count: Int = 100): Sequence<String> =
-    sequence {
-      val scanParams = ScanParams().match(pattern).count(count)
-      var cursorVal = "0"
-      while (true) {
-        cursorVal =
-          scan(cursorVal, scanParams).run {
-            result.forEach { yield(it) }
-            cursor
-          }
-        if (cursorVal == "0")
-          break
-      }
-    }
-
   fun deleteAll(url: String) {
     withRedis(url) { redis ->
       redis?.scanKeys("*")?.forEach { redis.del(it) }
     }
   }
 
-  private fun showAll(url: String) {
+  internal fun showAll(url: String) {
     withNonNullRedis(url) { redis ->
       println(
         redis.scanKeys("*")
