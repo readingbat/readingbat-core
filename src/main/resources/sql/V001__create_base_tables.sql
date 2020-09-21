@@ -13,42 +13,57 @@ CREATE TABLE users
 CREATE UNIQUE INDEX users1_index ON users (user_id);
 CREATE UNIQUE INDEX users2_index ON users (email);
 
-CREATE TABLE browser_sessions
+CREATE TABLE user_browser_sessions
 (
     id                          BIGSERIAL UNIQUE PRIMARY KEY,
     created                     TIMESTAMPTZ DEFAULT NOW(),
-    user_ref                    INTEGER REFERENCES users (id) ON DELETE CASCADE,
-    session_id                  VARCHAR(15) NOT NULL,
-    active_class_code           VARCHAR(15) NOT NULL,
-    previous_teacher_class_code VARCHAR(15) NOT NULL
+    user_ref                    INTEGER REFERENCES users ON DELETE CASCADE,
+    session_id                  TEXT NOT NULL,
+    active_class_code           TEXT NOT NULL,
+    previous_teacher_class_code TEXT NOT NULL
 );
 
-CREATE TABLE authorized_correct_answers
+CREATE TABLE session_browser_sessions
 (
-    id       BIGSERIAL PRIMARY KEY,
-    created  TIMESTAMPTZ DEFAULT NOW(),
-    user_ref INTEGER REFERENCES users (id) ON DELETE CASCADE
+    id                          BIGSERIAL UNIQUE PRIMARY KEY,
+    created                     TIMESTAMPTZ DEFAULT NOW(),
+    session_id                  TEXT NOT NULL,
+    active_class_code           TEXT NOT NULL,
+    previous_teacher_class_code TEXT NOT NULL
 );
 
-CREATE TABLE unauthorized_correct_answers
+/* Is a challenge correct */
+CREATE TABLE user_challenge_info
 (
     id          BIGSERIAL PRIMARY KEY,
     created     TIMESTAMPTZ DEFAULT NOW(),
-    session_ref INTEGER REFERENCES browser_sessions ON DELETE CASCADE
+    user_ref    INTEGER REFERENCES users ON DELETE CASCADE,
+    md5         TEXT NOT NULL,
+    correct     BOOLEAN     DEFAULT false,
+    likedislike SMALLINT    DEFAULT 0,
+    CONSTRAINT user_ref_md5_unique unique (user_ref, md5)
 );
 
-CREATE TABLE authorized_likes_dislikes
+/*
+CREATE TABLE session_correct_answers
+(
+    id          BIGSERIAL PRIMARY KEY,
+    created     TIMESTAMPTZ DEFAULT NOW(),
+    session_ref INTEGER REFERENCES user_browser_sessions ON DELETE CASCADE
+);
+
+CREATE TABLE user_likes_dislikes
 (
     id       BIGSERIAL PRIMARY KEY,
     created  TIMESTAMPTZ DEFAULT NOW(),
     user_ref INTEGER REFERENCES users ON DELETE CASCADE
 );
 
-CREATE TABLE unauthorized_likes_dislikes
+CREATE TABLE session_likes_dislikes
 (
     id           BIGSERIAL PRIMARY KEY,
     created      TIMESTAMPTZ DEFAULT NOW(),
-    session_ref  INTEGER REFERENCES browser_sessions ON DELETE CASCADE,
+    session_ref  INTEGER REFERENCES user_browser_sessions ON DELETE CASCADE,
     like_dislike INTEGER     DEFAULT 0
 );
 
@@ -63,6 +78,7 @@ CREATE TABLE requests
 );
 
 CREATE UNIQUE INDEX requests1_index ON requests (user_ref);
+*/
 
 /*
 CREATE TABLE usergroups

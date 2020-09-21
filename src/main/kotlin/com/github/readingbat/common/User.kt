@@ -113,8 +113,7 @@ internal class User private constructor(val id: String, val browserSession: Brow
 
   fun deletePasswordResetKey(tx: Transaction): Response<Long> = tx.del(userPasswordResetKey)
 
-  fun
-      correctAnswersKey(languageName: LanguageName, groupName: GroupName, challengeName: ChallengeName) =
+  fun correctAnswersKey(languageName: LanguageName, groupName: GroupName, challengeName: ChallengeName) =
     keyOf(CORRECT_ANSWERS_KEY, AUTH_KEY, id, md5Of(languageName, groupName, challengeName))
 
   private fun likeDislikeKey(names: ChallengeNames) =

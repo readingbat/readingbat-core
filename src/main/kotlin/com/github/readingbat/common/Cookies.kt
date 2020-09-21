@@ -17,6 +17,8 @@
 
 package com.github.readingbat.common
 
+import com.github.readingbat.common.KeyConstants.ANSWER_HISTORY_KEY
+import com.github.readingbat.common.KeyConstants.CHALLENGE_ANSWERS_KEY
 import com.github.readingbat.common.KeyConstants.CORRECT_ANSWERS_KEY
 import com.github.readingbat.common.KeyConstants.LIKE_DISLIKE_KEY
 import com.github.readingbat.common.KeyConstants.NO_AUTH_KEY
@@ -47,10 +49,7 @@ internal data class BrowserSession(val id: String, val created: Long = Instant.n
     challengeAnswerKey(names.languageName, names.groupName, names.challengeName)
 
   fun challengeAnswerKey(languageName: LanguageName, groupName: GroupName, challengeName: ChallengeName) =
-    keyOf(KeyConstants.CHALLENGE_ANSWERS_KEY,
-          NO_AUTH_KEY,
-          id,
-          md5Of(languageName, groupName, challengeName))
+    keyOf(CHALLENGE_ANSWERS_KEY, NO_AUTH_KEY, id, md5Of(languageName, groupName, challengeName))
 
   fun answerHistoryKey(names: ChallengeNames, invocation: Invocation) =
     answerHistoryKey(names.languageName, names.groupName, names.challengeName, invocation)
@@ -59,11 +58,7 @@ internal data class BrowserSession(val id: String, val created: Long = Instant.n
                                groupName: GroupName,
                                challengeName: ChallengeName,
                                invocation: Invocation) =
-    keyOf(KeyConstants.ANSWER_HISTORY_KEY,
-          NO_AUTH_KEY,
-          id,
-          md5Of(languageName, groupName, challengeName, invocation))
-
+    keyOf(ANSWER_HISTORY_KEY, NO_AUTH_KEY, id, md5Of(languageName, groupName, challengeName, invocation))
 }
 
 internal val ApplicationCall.browserSession get() = sessions.get<BrowserSession>()

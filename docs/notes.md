@@ -57,3 +57,6 @@ Setup:
 * https://www.thebookofjoel.com/kotlin-ktor-exposed-postgres
 * https://github.com/brettwooldridge/HikariCP
  
+## Exposed
+* Upsert: https://github.com/JetBrains/Exposed/issues/167
+* Upsert: https://medium.com/@OhadShai/first-steps-with-kotlin-exposed-cb361a9bf5ac
