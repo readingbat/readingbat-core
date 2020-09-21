@@ -47,6 +47,8 @@ import org.jetbrains.exposed.sql.statements.StatementContext
 import org.jetbrains.exposed.sql.statements.expandArgs
 import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.joda.time.DateTime
+import org.joda.time.DateTimeZone.UTC
 
 internal object TransferUsers : KLogging() {
 
@@ -70,6 +72,7 @@ internal object TransferUsers : KLogging() {
 
   object Users : LongIdTable() {
     val created = datetime("created")
+    val updated = datetime("updated")
     val userId = varchar("user_id", 25)
     val email = text("email")
     val name = text("name")
@@ -80,10 +83,11 @@ internal object TransferUsers : KLogging() {
     override fun toString(): String = userId.toString()
   }
 
-  object UserBrowserSessions : LongIdTable("user_browser_sessions") {
+  object BrowserSessions : LongIdTable("browser_sessions") {
     val created = datetime("created")
-    val userRef = long("user_ref")
+    val updated = datetime("updated")
     val session_id = text("session_id")
+    val userRef = long("user_ref")
     val activeClassCode = text("active_class_code")
     val previousTeacherClassCode = text("previous_teacher_class_code")
 
@@ -92,6 +96,7 @@ internal object TransferUsers : KLogging() {
 
   object UserChallengeInfo : LongIdTable("user_challenge_info") {
     val created = datetime("created")
+    val updated = datetime("updated")
     val userRef = long("user_ref")
     val md5 = text("md5")
     val correct = bool("correct")
@@ -103,6 +108,7 @@ internal object TransferUsers : KLogging() {
 
   object UserAnswerHistory : LongIdTable("user_answer_history") {
     val created = datetime("created")
+    val updated = datetime("updated")
     val userRef = long("user_ref")
     val md5 = text("md5")
     val invocation = text("invocation")
@@ -119,11 +125,11 @@ internal object TransferUsers : KLogging() {
         redis.scanKeys(keyOf(USER_INFO_KEY, "*"))
           .filter { (redis.hget(it, NAME_FIELD) ?: "").isNotBlank() }
           .onEach { ukey ->
-            val userId = ukey.split(KEY_SEP)[1]
-            val user1 = userId.toUser(null)
+            val keyUserId = ukey.split(KEY_SEP)[1]
+            val user1 = keyUserId.toUser(null)
             val id =
               Users.insertAndGetId { record ->
-                record[this.userId] = userId
+                record[userId] = keyUserId
                 record[email] = user1.email(redis).value
                 record[name] = user1.name(redis)
                 record[salt] = user1.salt(redis)
@@ -135,12 +141,12 @@ internal object TransferUsers : KLogging() {
             redis.scanKeys(user1.userInfoBrowserQueryKey)
               .forEach { bkey ->
                 val browser_sessions_id = bkey.split(KEY_SEP)[2]
-                val user2 = userId.toUser(BrowserSession(browser_sessions_id))
+                val user2 = keyUserId.toUser(BrowserSession(browser_sessions_id))
                 val activeClassCode2 = user2.fetchActiveClassCode(redis)
                 val previousClassCode2 = user2.fetchPreviousTeacherClassCode(redis)
                 //println("$bkey $browser_sessions_id ${redis.hgetAll(user2.browserSpecificUserInfoKey)} $activeClassCode2 $previousClassCode2")
 
-                UserBrowserSessions.insertAndGetId { record ->
+                BrowserSessions.insertAndGetId { record ->
                   record[userRef] = id.value
                   record[session_id] = browser_sessions_id
                   record[activeClassCode] = activeClassCode2.value
@@ -150,54 +156,53 @@ internal object TransferUsers : KLogging() {
 
             val userChallengeIndex = Index(listOf(userRef, md5), true, "user_challenge_info_unique")
 
-            redis.scanKeys(keyOf(CORRECT_ANSWERS_KEY, AUTH_KEY, userId, "*"))
+            redis.scanKeys(keyOf(CORRECT_ANSWERS_KEY, AUTH_KEY, keyUserId, "*"))
               .filter { it.split(KEY_SEP).size == 4 }
               .forEach { key ->
-                val user_id = key.split(KEY_SEP)[2]
-                require(userId == user_id)
-                //println("$key $user_id ${redis[key]}")
+                require(keyUserId == key.split(KEY_SEP)[2])
+                //println("$key userId ${redis[key]}")
 
-                UserChallengeInfo.upsert(null, userChallengeIndex) { record ->
+                UserChallengeInfo.upsert(conflictIndex = userChallengeIndex) { record ->
                   record[userRef] = id.value
                   record[md5] = key.split(KEY_SEP)[3]
+                  record[updated] = DateTime.now(UTC)
                   record[correct] = redis[key].toBoolean()
                 }
               }
 
-            redis.scanKeys(keyOf(LIKE_DISLIKE_KEY, AUTH_KEY, userId, "*"))
+            redis.scanKeys(keyOf(LIKE_DISLIKE_KEY, AUTH_KEY, keyUserId, "*"))
               .filter { it.split(KEY_SEP).size == 4 }
               .forEach { key ->
-                val user_id = key.split(KEY_SEP)[2]
-                require(userId == user_id)
-                //println("$key $user_id ${redis[key]}")
+                require(keyUserId == key.split(KEY_SEP)[2])
+                //println("$key userId ${redis[key]}")
 
-                UserChallengeInfo.upsert(null, userChallengeIndex) { record ->
+                UserChallengeInfo.upsert(conflictIndex = userChallengeIndex) { record ->
                   record[userRef] = id.value
                   record[md5] = key.split(KEY_SEP)[3]
+                  record[updated] = DateTime.now(UTC)
                   record[likedislike] = redis[key].toShort()
                 }
               }
 
-            redis.scanKeys(keyOf(CHALLENGE_ANSWERS_KEY, AUTH_KEY, userId, "*"))
+            redis.scanKeys(keyOf(CHALLENGE_ANSWERS_KEY, AUTH_KEY, keyUserId, "*"))
               .filter { it.split(KEY_SEP).size == 4 }
               .forEach { key ->
-                val user_id = key.split(KEY_SEP)[2]
-                require(userId == user_id)
+                require(keyUserId == key.split(KEY_SEP)[2])
                 //println("$key ${redis.hgetAll(key)}")
 
-                UserChallengeInfo.upsert(null, userChallengeIndex) { record ->
+                UserChallengeInfo.upsert(conflictIndex = userChallengeIndex) { record ->
                   record[userRef] = id.value
                   record[md5] = key.split(KEY_SEP)[3]
+                  record[updated] = DateTime.now(UTC)
                   record[answersJson] = gson.toJson(redis.hgetAll(key))
                 }
               }
 
             // md5 has names and invocation in it
-            redis.scanKeys(keyOf(ANSWER_HISTORY_KEY, AUTH_KEY, userId, "*"))
+            redis.scanKeys(keyOf(ANSWER_HISTORY_KEY, AUTH_KEY, keyUserId, "*"))
               .filter { it.split(KEY_SEP).size == 4 }
               .forEach { key ->
-                val user_id = key.split(KEY_SEP)[2]
-                require(userId == user_id)
+                require(keyUserId == key.split(KEY_SEP)[2])
                 //println("$key ${redis.get(key)}")
 
                 UserAnswerHistory.insertAndGetId() { record ->

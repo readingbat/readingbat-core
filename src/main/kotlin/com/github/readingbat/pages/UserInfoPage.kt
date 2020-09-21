@@ -77,6 +77,8 @@ internal object UserInfoPage {
 
               p {
                 table {
+                  style = "border-spacing: 5px 10px"
+
                   tr { td { +"User Principal" }; td { +principal.toString() } }
                   tr { td { +"Session Id" }; td { +sessionId.toString() } }
                   tr { td { +"Name" }; td { +name } }
