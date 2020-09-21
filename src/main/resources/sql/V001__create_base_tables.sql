@@ -34,12 +34,13 @@ CREATE TABLE session_browser_sessions
 
 CREATE TABLE user_challenge_info
 (
-    id          BIGSERIAL PRIMARY KEY,
-    created     TIMESTAMPTZ DEFAULT NOW(),
-    user_ref    INTEGER REFERENCES users ON DELETE CASCADE,
-    md5         TEXT NOT NULL,
-    correct     BOOLEAN     DEFAULT false,
-    likedislike SMALLINT    DEFAULT 0,
+    id           BIGSERIAL PRIMARY KEY,
+    created      TIMESTAMPTZ   DEFAULT NOW(),
+    user_ref     INTEGER REFERENCES users ON DELETE CASCADE,
+    md5          TEXT NOT NULL,
+    correct      BOOLEAN       DEFAULT false,
+    likedislike  SMALLINT      DEFAULT 0,
+    answers_json TEXT NOT NULL DEFAULT '',
     CONSTRAINT user_challenge_info_unique unique (user_ref, md5)
 );
 
@@ -50,9 +51,9 @@ CREATE TABLE user_answer_history
     user_ref           INTEGER REFERENCES users ON DELETE CASCADE,
     md5                TEXT NOT NULL,
     invocation         TEXT NOT NULL,
-    correct            BOOLEAN     DEFAULT false,
-    incorrect_attempts INTEGER     DEFAULT 0,
-    answers_json       TEXT NOT NULL,
+    correct            BOOLEAN,
+    incorrect_attempts INTEGER,
+    history_json       TEXT NOT NULL,
     CONSTRAINT user_answer_history_unique unique (user_ref, md5)
 );
 
