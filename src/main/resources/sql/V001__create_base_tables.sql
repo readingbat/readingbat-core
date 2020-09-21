@@ -66,6 +66,20 @@ CREATE TABLE session_challenge_info
     CONSTRAINT session_challenge_info_unique unique (session_ref, md5)
 );
 
+CREATE TABLE session_answer_history
+(
+    id                 BIGSERIAL PRIMARY KEY,
+    created            TIMESTAMP DEFAULT NOW(),
+    updated            TIMESTAMP DEFAULT NOW(),
+    session_ref        INTEGER REFERENCES browser_sessions ON DELETE CASCADE,
+    md5                TEXT NOT NULL,
+    invocation         TEXT NOT NULL,
+    correct            BOOLEAN,
+    incorrect_attempts INTEGER,
+    history_json       TEXT NOT NULL,
+    CONSTRAINT session_answer_history_unique unique (session_ref, md5)
+);
+
 /*
 CREATE TABLE session_correct_answers
 (
