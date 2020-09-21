@@ -32,7 +32,9 @@ import com.github.readingbat.common.User.Companion.NAME_FIELD
 import com.github.readingbat.common.User.Companion.fetchActiveClassCode
 import com.github.readingbat.common.User.Companion.fetchEnrolledClassCode
 import com.github.readingbat.common.User.Companion.fetchPreviousTeacherClassCode
+import com.github.readingbat.common.User.Companion.gson
 import com.github.readingbat.common.User.Companion.toUser
+import com.github.readingbat.posts.ChallengeHistory
 import com.github.readingbat.server.keyOf
 import com.github.readingbat.utils.TransferUsers.UserChallengeInfo.md5
 import com.github.readingbat.utils.TransferUsers.UserChallengeInfo.userRef
@@ -98,6 +100,18 @@ internal object TransferUsers : KLogging() {
     override fun toString(): String = "$id $md5 $correct $likedislike"
   }
 
+  object UserAnswerHistory : LongIdTable("user_answer_history") {
+    val created = datetime("created")
+    val userRef = long("user_ref")
+    val md5 = text("md5")
+    val invocation = text("invocation")
+    val correct = bool("correct")
+    val incorrectAttempts = integer("incorrect_attempts")
+    val answersJson = text("answers_json")
+
+    override fun toString(): String = "$id $md5 $invocation $correct"
+  }
+
   internal fun transform(url: String) {
     RedisUtils.withNonNullRedis(url) { redis ->
       println(
@@ -133,7 +147,7 @@ internal object TransferUsers : KLogging() {
                 }
               }
 
-            val userChallengeIndex = Index(listOf(userRef, md5), true, "user_ref_md5_unique")
+            val userChallengeIndex = Index(listOf(userRef, md5), true, "user_challenge_info_unique")
 
             redis.scanKeys(keyOf(CORRECT_ANSWERS_KEY, AUTH_KEY, userId, "*"))
               .filter { it.split(KEY_SEP).size == 4 }
@@ -163,12 +177,24 @@ internal object TransferUsers : KLogging() {
                 }
               }
 
+            // md5 has names and invocation in it
             redis.scanKeys(keyOf(ANSWER_HISTORY_KEY, AUTH_KEY, userId, "*"))
               .filter { it.split(KEY_SEP).size == 4 }
               .forEach { key ->
                 val user_id = key.split(KEY_SEP)[2]
                 require(userId == user_id)
                 println("$key ${redis.get(key)}")
+
+                val history = gson.fromJson(redis[key], ChallengeHistory::class.java)
+
+                UserAnswerHistory.insertAndGetId() { record ->
+                  record[userRef] = id.value
+                  record[md5] = key.split(KEY_SEP)[3]
+                  record[invocation] = history.invocation.value
+                  record[correct] = history.correct
+                  record[incorrectAttempts] = history.incorrectAttempts
+                  record[answersJson] = gson.toJson(history.answers)
+                }
               }
 
             redis.scanKeys(keyOf(CHALLENGE_ANSWERS_KEY, AUTH_KEY, userId, "*"))

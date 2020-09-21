@@ -32,7 +32,6 @@ CREATE TABLE session_browser_sessions
     previous_teacher_class_code TEXT NOT NULL
 );
 
-/* Is a challenge correct */
 CREATE TABLE user_challenge_info
 (
     id          BIGSERIAL PRIMARY KEY,
@@ -41,7 +40,20 @@ CREATE TABLE user_challenge_info
     md5         TEXT NOT NULL,
     correct     BOOLEAN     DEFAULT false,
     likedislike SMALLINT    DEFAULT 0,
-    CONSTRAINT user_ref_md5_unique unique (user_ref, md5)
+    CONSTRAINT user_challenge_info_unique unique (user_ref, md5)
+);
+
+CREATE TABLE user_answer_history
+(
+    id                 BIGSERIAL PRIMARY KEY,
+    created            TIMESTAMPTZ DEFAULT NOW(),
+    user_ref           INTEGER REFERENCES users ON DELETE CASCADE,
+    md5                TEXT NOT NULL,
+    invocation         TEXT NOT NULL,
+    correct            BOOLEAN     DEFAULT false,
+    incorrect_attempts INTEGER     DEFAULT 0,
+    answers_json       TEXT NOT NULL,
+    CONSTRAINT user_answer_history_unique unique (user_ref, md5)
 );
 
 /*
