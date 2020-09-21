@@ -114,19 +114,37 @@ internal class User private constructor(val id: String, val browserSession: Brow
   fun deletePasswordResetKey(tx: Transaction): Response<Long> = tx.del(userPasswordResetKey)
 
   fun correctAnswersKey(languageName: LanguageName, groupName: GroupName, challengeName: ChallengeName) =
-    keyOf(CORRECT_ANSWERS_KEY, AUTH_KEY, id, md5Of(languageName, groupName, challengeName))
+    keyOf(CORRECT_ANSWERS_KEY,
+          AUTH_KEY,
+          id,
+          if (languageName == ANY_LANGUAGE && groupName == ANY_GROUP && challengeName == ANY_CHALLENGE)
+            "*"
+          else
+            md5Of(languageName, groupName, challengeName))
 
   private fun likeDislikeKey(names: ChallengeNames) =
     likeDislikeKey(names.languageName, names.groupName, names.challengeName)
 
   fun likeDislikeKey(languageName: LanguageName, groupName: GroupName, challengeName: ChallengeName) =
-    keyOf(LIKE_DISLIKE_KEY, AUTH_KEY, id, md5Of(languageName, groupName, challengeName))
+    keyOf(LIKE_DISLIKE_KEY,
+          AUTH_KEY,
+          id,
+          if (languageName == ANY_LANGUAGE && groupName == ANY_GROUP && challengeName == ANY_CHALLENGE)
+            "*"
+          else
+            md5Of(languageName, groupName, challengeName))
 
   private fun challengeAnswersKey(names: ChallengeNames) =
     challengeAnswersKey(names.languageName, names.groupName, names.challengeName)
 
   private fun challengeAnswersKey(languageName: LanguageName, groupName: GroupName, challengeName: ChallengeName) =
-    keyOf(CHALLENGE_ANSWERS_KEY, AUTH_KEY, id, md5Of(languageName, groupName, challengeName))
+    keyOf(CHALLENGE_ANSWERS_KEY,
+          AUTH_KEY,
+          id,
+          if (languageName == ANY_LANGUAGE && groupName == ANY_GROUP && challengeName == ANY_CHALLENGE)
+            "*"
+          else
+            md5Of(languageName, groupName, challengeName))
 
   private fun answerHistoryKey(names: ChallengeNames, invocation: Invocation) =
     answerHistoryKey(names.languageName, names.groupName, names.challengeName, invocation)
@@ -135,7 +153,13 @@ internal class User private constructor(val id: String, val browserSession: Brow
                        groupName: GroupName,
                        challengeName: ChallengeName,
                        invocation: Invocation) =
-    keyOf(ANSWER_HISTORY_KEY, AUTH_KEY, id, md5Of(languageName, groupName, challengeName, invocation))
+    keyOf(ANSWER_HISTORY_KEY,
+          AUTH_KEY,
+          id,
+          if (languageName == ANY_LANGUAGE && groupName == ANY_GROUP && challengeName == ANY_CHALLENGE && invocation == ANY_INVOCATION)
+            "*"
+          else
+            md5Of(languageName, groupName, challengeName, invocation))
 
   private fun assignEnrolledClassCode(classCode: ClassCode, tx: Transaction): Response<Long> =
     tx.hset(userInfoKey, ENROLLED_CLASS_CODE_FIELD, classCode.value)
