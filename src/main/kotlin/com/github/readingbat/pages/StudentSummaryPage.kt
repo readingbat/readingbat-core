@@ -91,7 +91,7 @@ internal object StudentSummaryPage : KLogging() {
 
     return createHTML()
       .html {
-        val studentName = student.name(redis)
+        val studentName = student.name(redis).value
 
         head { headDefault(content) }
 

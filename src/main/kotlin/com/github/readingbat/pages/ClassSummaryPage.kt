@@ -291,8 +291,8 @@ internal object ClassSummaryPage : KLogging() {
 
           enrollees
             .forEach { student ->
-              val studentName = student.name(redis)
-              val studentEmail = student.email(redis).toString()
+              val studentName = student.name(redis).value
+              val studentEmail = student.email(redis).value
 
               tr {
                 if (showDetail) {

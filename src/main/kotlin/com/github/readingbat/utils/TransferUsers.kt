@@ -18,7 +18,7 @@
 package com.github.readingbat.utils
 
 import com.github.pambrose.common.redis.RedisUtils
-import com.github.readingbat.common.BrowserSession
+import com.github.readingbat.common.*
 import com.github.readingbat.common.KeyConstants.ANSWER_HISTORY_KEY
 import com.github.readingbat.common.KeyConstants.AUTH_KEY
 import com.github.readingbat.common.KeyConstants.CHALLENGE_ANSWERS_KEY
@@ -38,9 +38,7 @@ import com.github.readingbat.common.User.Companion.toUser
 import com.github.readingbat.posts.ChallengeHistory
 import com.github.readingbat.server.keyOf
 import mu.KLogging
-import org.jetbrains.exposed.dao.id.LongIdTable
 import org.jetbrains.exposed.sql.*
-import org.jetbrains.exposed.sql.jodatime.datetime
 import org.jetbrains.exposed.sql.statements.InsertStatement
 import org.jetbrains.exposed.sql.statements.StatementContext
 import org.jetbrains.exposed.sql.statements.expandArgs
@@ -67,80 +65,6 @@ internal object TransferUsers : KLogging() {
 
       transform(RedisAdmin.local)
     }
-  }
-
-  object Users : LongIdTable() {
-    val created = datetime("created")
-    val updated = datetime("updated")
-    val userId = varchar("user_id", 25)
-    val email = text("email")
-    val name = text("name")
-    val salt = text("salt")
-    val digest = text("digest")
-    val enrolledClassCode = text("enrolled_class_code")
-
-    override fun toString(): String = userId.toString()
-  }
-
-  object BrowserSessions : LongIdTable("browser_sessions") {
-    val created = datetime("created")
-    val updated = datetime("updated")
-    val session_id = text("session_id")
-    val userRef = long("user_ref")
-    val activeClassCode = text("active_class_code")
-    val previousTeacherClassCode = text("previous_teacher_class_code")
-
-    override fun toString(): String = "$id $activeClassCode $previousTeacherClassCode"
-  }
-
-  object UserChallengeInfo : LongIdTable("user_challenge_info") {
-    val created = datetime("created")
-    val updated = datetime("updated")
-    val userRef = long("user_ref")
-    val md5 = text("md5")
-    val correct = bool("correct")
-    val likedislike = short("likedislike")
-    val answersJson = text("answers_json")
-
-    override fun toString(): String = "$id $md5 $correct $likedislike"
-  }
-
-  object SessionChallengeInfo : LongIdTable("session_challenge_info") {
-    val created = datetime("created")
-    val updated = datetime("updated")
-    val sessionRef = long("session_ref")
-    val md5 = text("md5")
-    val correct = bool("correct")
-    val likedislike = short("likedislike")
-    val answersJson = text("answers_json")
-
-    override fun toString(): String = "$id $md5 $correct $likedislike"
-  }
-
-  object UserAnswerHistory : LongIdTable("user_answer_history") {
-    val created = datetime("created")
-    val updated = datetime("updated")
-    val userRef = long("user_ref")
-    val md5 = text("md5")
-    val invocation = text("invocation")
-    val correct = bool("correct")
-    val incorrectAttempts = integer("incorrect_attempts")
-    val historyJson = text("history_json")
-
-    override fun toString(): String = "$id $md5 $invocation $correct"
-  }
-
-  object SessionAnswerHistory : LongIdTable("session_answer_history") {
-    val created = datetime("created")
-    val updated = datetime("updated")
-    val sessionRef = long("session_ref")
-    val md5 = text("md5")
-    val invocation = text("invocation")
-    val correct = bool("correct")
-    val incorrectAttempts = integer("incorrect_attempts")
-    val historyJson = text("history_json")
-
-    override fun toString(): String = "$id $md5 $invocation $correct"
   }
 
   internal fun transform(url: String) {
@@ -190,7 +114,7 @@ internal object TransferUsers : KLogging() {
                 record[sessionRef] = dbmsSessionId.value
                 record[md5] = key.split(KEY_SEP)[3]
                 record[updated] = DateTime.now(UTC)
-                record[likedislike] = redis[key].toShort()
+                record[likeDislike] = redis[key].toShort()
               }
             }
 
@@ -237,7 +161,7 @@ internal object TransferUsers : KLogging() {
             Users.insertAndGetId { record ->
               record[Users.userId] = userId
               record[email] = user1.email(redis).value
-              record[name] = user1.name(redis)
+              record[name] = user1.name(redis).value
               record[salt] = user1.salt(redis)
               record[digest] = user1.digest(redis)
               record[enrolledClassCode] = user1.fetchEnrolledClassCode(redis).value
@@ -284,7 +208,7 @@ internal object TransferUsers : KLogging() {
                 record[userRef] = id.value
                 record[md5] = key.split(KEY_SEP)[3]
                 record[updated] = DateTime.now(UTC)
-                record[likedislike] = redis[key].toShort()
+                record[likeDislike] = redis[key].toShort()
               }
             }
 

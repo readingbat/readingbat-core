@@ -45,22 +45,45 @@ import com.github.readingbat.posts.DashboardInfo
 import com.github.readingbat.server.*
 import com.github.readingbat.server.ChallengeName.Companion.ANY_CHALLENGE
 import com.github.readingbat.server.Email.Companion.EMPTY_EMAIL
+import com.github.readingbat.server.FullName.Companion.EMPTY_FULLNAME
 import com.github.readingbat.server.GroupName.Companion.ANY_GROUP
 import com.github.readingbat.server.Invocation.Companion.ANY_INVOCATION
 import com.github.readingbat.server.LanguageName.Companion.ANY_LANGUAGE
 import com.github.readingbat.server.ReadingBatServer.adminUsers
+import com.github.readingbat.server.ReadingBatServer.useRdbms
 import com.github.readingbat.server.ResetId.Companion.EMPTY_RESET_ID
 import com.github.readingbat.server.WsEndoints.classTopicName
 import com.google.gson.Gson
 import mu.KLogging
+import org.jetbrains.exposed.sql.and
+import org.jetbrains.exposed.sql.or
+import org.jetbrains.exposed.sql.select
+import org.jetbrains.exposed.sql.transactions.transaction
 import redis.clients.jedis.Jedis
 import redis.clients.jedis.Response
 import redis.clients.jedis.Transaction
 import redis.clients.jedis.params.SetParams
 import kotlin.contracts.contract
+import kotlin.time.measureTime
 import kotlin.time.minutes
 
 internal class User private constructor(val id: String, val browserSession: BrowserSession?) {
+  private val dbmsId: Long
+
+  init {
+    measureTime {
+      dbmsId =
+        if (useRdbms)
+          transaction {
+            Users.slice(Users.id)
+              .select { Users.userId eq this@User.id }
+              .map { it[Users.id].value }
+              .firstOrNull() ?: -1
+          }
+        else
+          -1
+    }.also { logger.info { "Selected userId in $it" } }
+  }
 
   private val userInfoKey by lazy { keyOf(USER_INFO_KEY, id) }
   private val userInfoBrowserKey by lazy { keyOf(USER_INFO_BROWSER_KEY, id, browserSession?.id ?: UNASSIGNED) }
@@ -77,7 +100,20 @@ internal class User private constructor(val id: String, val browserSession: Brow
 
   fun correctAnswers(redis: Jedis) = redis.scanKeys(correctAnswersKey(ANY_LANGUAGE, ANY_GROUP, ANY_CHALLENGE)).toList()
 
-  fun likeDislikes(redis: Jedis) = redis.scanKeys(likeDislikeKey(ANY_LANGUAGE, ANY_GROUP, ANY_CHALLENGE)).toList()
+  fun likeDislikes(redis: Jedis) =
+    if (useRdbms)
+      transaction {
+        UserChallengeInfo.slice(UserChallengeInfo.likeDislike)
+          .select { (UserChallengeInfo.userRef eq dbmsId) and ((UserChallengeInfo.likeDislike eq 1) or (UserChallengeInfo.likeDislike eq 2)) }
+          .map { it.toString() }
+      }
+    else
+      redis.scanKeys(likeDislikeKey(ANY_LANGUAGE, ANY_GROUP, ANY_CHALLENGE))
+        //.filter { it.split(KEY_SEP).size == 4 }
+        //.map { redis[it].toInt() }
+        //.filter { it > 0 }
+        //.map { it.toString() }
+        .toList()
 
   fun challenges(redis: Jedis) = redis.scanKeys(challengeAnswersKey(ANY_LANGUAGE, ANY_GROUP, ANY_CHALLENGE)).toList()
 
@@ -88,7 +124,7 @@ internal class User private constructor(val id: String, val browserSession: Brow
 
   fun email(redis: Jedis) = redis.hget(userInfoKey, EMAIL_FIELD)?.let { Email(it) } ?: EMPTY_EMAIL
 
-  fun name(redis: Jedis) = redis.hget(userInfoKey, NAME_FIELD) ?: ""
+  fun name(redis: Jedis) = redis.hget(userInfoKey, NAME_FIELD)?.let { FullName(it) } ?: EMPTY_FULLNAME
 
   fun salt(redis: Jedis) = redis.hget(userInfoKey, SALT_FIELD) ?: throw DataException("Missing salt field: $this")
 

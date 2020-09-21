@@ -71,6 +71,7 @@ object ReadingBatServer : KLogging() {
   internal val adminUsers = mutableListOf<String>()
   internal val contentReadCount = AtomicInteger(0)
   internal val metrics by lazy { Metrics() }
+  internal val useRdbms = true
 
   internal var redisPool: JedisPool? = null
 
@@ -80,7 +81,7 @@ object ReadingBatServer : KLogging() {
         HikariConfig()
           .apply {
             driverClassName = "com.impossibl.postgres.jdbc.PGDriver"
-            jdbcUrl = "jdbc:pgsql://localhost:5432/postgres"
+            jdbcUrl = "jdbc:pgsql://localhost:5432/readingbat"
             username = "postgres"
             password = "docker"
             maximumPoolSize = 10
@@ -88,6 +89,11 @@ object ReadingBatServer : KLogging() {
             transactionIsolation = "TRANSACTION_REPEATABLE_READ"
             validate()
           }))
+  }
+
+  init {
+    if (useRdbms)
+      postgres
   }
 
   fun start(args: Array<String>) {
