@@ -54,16 +54,13 @@ import com.github.readingbat.server.Invocation.Companion.ANY_INVOCATION
 import com.github.readingbat.server.LanguageName.Companion.ANY_LANGUAGE
 import com.github.readingbat.server.ReadingBatServer.adminUsers
 import com.github.readingbat.server.ReadingBatServer.redisPool
-import com.github.readingbat.server.ReadingBatServer.useRdbms
+import com.github.readingbat.server.ReadingBatServer.usePostgres
 import com.github.readingbat.server.ResetId.Companion.EMPTY_RESET_ID
 import com.github.readingbat.server.WsEndoints.classTopicName
 import com.google.gson.Gson
 import mu.KLogging
-import org.jetbrains.exposed.sql.and
-import org.jetbrains.exposed.sql.or
-import org.jetbrains.exposed.sql.select
+import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
-import org.jetbrains.exposed.sql.update
 import redis.clients.jedis.Jedis
 import redis.clients.jedis.Response
 import redis.clients.jedis.Transaction
@@ -87,7 +84,7 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
 
   init {
     measureTime {
-      if (useRdbms) {
+      if (usePostgres) {
         val row =
           transaction {
             Users.slice(Users.id, Users.email, Users.name, Users.salt, Users.digest)
@@ -111,17 +108,17 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
   }
 
   private val userInfoBrowserKey by lazy { keyOf(USER_INFO_BROWSER_KEY, userId, browserSession?.id ?: UNASSIGNED) }
-  internal val userInfoBrowserQueryKey by lazy { keyOf(USER_INFO_BROWSER_KEY, userId, "*") }
+  val userInfoBrowserQueryKey by lazy { keyOf(USER_INFO_BROWSER_KEY, userId, "*") }
   private val browserSpecificUserInfoKey by lazy {
     if (browserSession.isNotNull()) userInfoBrowserKey else throw InvalidConfigurationException("Null browser session for $this")
   }
-  private val userClassesKey by lazy { keyOf(USER_CLASSES_KEY, userId) }
+  val userClassesKey by lazy { keyOf(USER_CLASSES_KEY, userId) }
 
   // This key maps to a reset_id
   private val userPasswordResetKey by lazy { keyOf(USER_RESET_KEY, userId) }
 
   fun browserSessions(redis: Jedis) =
-    if (useRdbms)
+    if (usePostgres)
       transaction {
         BrowserSessions.slice(BrowserSessions.session_id)
           .select { (BrowserSessions.userRef eq dbmsId) }
@@ -131,7 +128,7 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
       redis.scanKeys(userInfoBrowserQueryKey).toList()
 
   fun correctAnswers(redis: Jedis) =
-    if (useRdbms)
+    if (usePostgres)
       transaction {
         UserChallengeInfo.slice(UserChallengeInfo.correct)
           .select { (UserChallengeInfo.userRef eq dbmsId) and UserChallengeInfo.correct }
@@ -146,7 +143,7 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
         .toList()
 
   fun likeDislikes(redis: Jedis) =
-    if (useRdbms)
+    if (usePostgres)
       transaction {
         UserChallengeInfo.slice(UserChallengeInfo.likeDislike)
           .select { (UserChallengeInfo.userRef eq dbmsId) and ((UserChallengeInfo.likeDislike eq 1) or (UserChallengeInfo.likeDislike eq 2)) }
@@ -160,12 +157,52 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
         //.map { it.toString() }
         .toList()
 
-  fun classCodes(redis: Jedis) = redis.smembers(userClassesKey).map { ClassCode(it) }
+  fun classCount(redis: Jedis) =
+    if (usePostgres)
+      transaction {
+        Classes.slice(Classes.classCode)
+          .select { Classes.userRef eq dbmsId }
+          .count()
+      }
+    else
+      redis.smembers(userClassesKey).count()
 
-  fun isValidUserInfoKey(redis: Jedis) = redis.hlen(userInfoKey) > 0
+  fun addClassCreated(classCode: ClassCode, classDesc: String, tx: Transaction) {
+    if (usePostgres)
+      transaction {
+        Classes.insert { row ->
+          row[userRef] = dbmsId
+          row[Classes.classCode] = classCode.value
+          row[description] = classDesc
+        }
+      }
+    else
+      tx.sadd(userClassesKey, classCode.value)
+  }
+
+  fun classCodes(redis: Jedis) =
+    if (usePostgres)
+      transaction {
+        Classes.slice(Classes.classCode)
+          .select { Classes.userRef eq dbmsId }
+          .map { ClassCode(it[Classes.classCode]) }
+      }
+    else
+      redis.smembers(userClassesKey).map { ClassCode(it) }
+
+  fun isInDbms(redis: Jedis) =
+    if (usePostgres)
+      transaction {
+        Users.slice(Users.id.count())
+          .select { Users.id eq dbmsId }
+          .map { it[Users.id.count()].toInt() }
+          .first() > 0
+      }
+    else
+      redis.hlen(userInfoKey) > 0
 
   fun assignDigest(tx: Transaction, newDigest: String) {
-    if (useRdbms)
+    if (usePostgres)
       transaction {
         Users.update({ Users.id eq dbmsId }) { row ->
           row[digest] = newDigest
@@ -261,10 +298,10 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
     }
   }
 
-  internal fun isEnrolled(classCode: ClassCode, redis: Jedis) =
+  fun isEnrolled(classCode: ClassCode, redis: Jedis) =
     redis.sismember(classCode.classCodeEnrollmentKey, userId) ?: false
 
-  internal fun isNotEnrolled(classCode: ClassCode, redis: Jedis) = !isEnrolled(classCode, redis)
+  fun isNotEnrolled(classCode: ClassCode, redis: Jedis) = !isEnrolled(classCode, redis)
 
   fun enrollInClass(classCode: ClassCode, redis: Jedis) {
     when {
@@ -322,12 +359,6 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
     // Delete enrollee list
     classCode.deleteAllEnrollees(tx)
   }
-
-  fun addClassCreated(classCode: ClassCode, tx: Transaction) {
-    tx.sadd(userClassesKey, classCode.value)
-  }
-
-  fun classCount(redis: Jedis) = redis.smembers(userClassesKey).count()
 
   fun isUniqueClassDesc(classDesc: String, redis: Jedis) =
     redis.smembers(userClassesKey)
@@ -692,5 +723,5 @@ internal fun User?.isValidUser(redis: Jedis): Boolean {
   contract {
     returns(true) implies (this@isValidUser is User)
   }
-  return if (isNull()) false else isValidUserInfoKey(redis)
+  return if (isNull()) false else isInDbms(redis)
 }

@@ -11,8 +11,10 @@ CREATE TABLE users
     enrolled_class_code TEXT NOT NULL
 );
 
-/*CREATE UNIQUE INDEX users1_index ON users (user_id);
-CREATE UNIQUE INDEX users2_index ON users (email);*/
+/*
+CREATE UNIQUE INDEX users1_index ON users (user_id);
+CREATE UNIQUE INDEX users2_index ON users (email);
+*/
 
 CREATE TABLE browser_sessions
 (
@@ -38,6 +40,17 @@ CREATE TABLE user_challenge_info
     answers_json TEXT NOT NULL DEFAULT '',
     CONSTRAINT user_challenge_info_unique unique (user_ref, md5)
 );
+
+CREATE TABLE classes
+(
+    id          BIGSERIAL PRIMARY KEY,
+    created     TIMESTAMP DEFAULT NOW(),
+    updated     TIMESTAMP DEFAULT NOW(),
+    user_ref    INTEGER REFERENCES users ON DELETE CASCADE,
+    class_code  TEXT NOT NULL UNIQUE,
+    description TEXT NOT NULL
+);
+
 
 CREATE TABLE user_answer_history
 (

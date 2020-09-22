@@ -71,7 +71,7 @@ object ReadingBatServer : KLogging() {
   internal val adminUsers = mutableListOf<String>()
   internal val contentReadCount = AtomicInteger(0)
   internal val metrics by lazy { Metrics() }
-  internal val useRdbms = true
+  internal val usePostgres = true
   internal var redisPool: JedisPool? = null
   internal val postgres by lazy {
     Database.connect(
@@ -204,7 +204,7 @@ internal fun Application.module() {
   SENDGRID_PREFIX_PROPERTY.setProperty(
     SENDGRID_PREFIX.getEnv(SENDGRID_PREFIX_PROPERTY.configProperty(this, "https://www.readingbat.com")))
 
-  if (ReadingBatServer.useRdbms)
+  if (ReadingBatServer.usePostgres)
     ReadingBatServer.postgres
 
   if (isAgentEnabled()) {

@@ -156,25 +156,41 @@ internal object TransferUsers : KLogging() {
         .filter { (redis.hget(it, NAME_FIELD) ?: "").isNotBlank() }
         .onEach { ukey ->
           val userId = ukey.split(KEY_SEP)[1]
-          val user1 = userId.toUser(redis, null)
+          val user = userId.toUser(redis, null)
           val id =
             Users.insertAndGetId { row ->
               row[Users.userId] = userId
-              row[email] = user1.email.value
-              row[name] = user1.name.value
-              row[salt] = user1.salt
-              row[digest] = user1.digest
-              row[enrolledClassCode] = user1.fetchEnrolledClassCode(redis).value
+              row[email] = user.email.value
+              row[name] = user.name.value
+              row[salt] = user.salt
+              row[digest] = user.digest
+              row[enrolledClassCode] = user.fetchEnrolledClassCode(redis).value
             }
           println("Created user id: $id")
 
-          redis.scanKeys(user1.userInfoBrowserQueryKey)
-            .forEach { bkey ->
-              val sessions_id = bkey.split(KEY_SEP)[2]
-              val user2 = userId.toUser(redis, BrowserSession(sessions_id))
-              val activeClassCode = user2.fetchActiveClassCode(redis)
-              val previousClassCode = user2.fetchPreviousTeacherClassCode(redis)
-              //println("$bkey $browser_sessions_id ${redis.hgetAll(user2.browserSpecificUserInfoKey)} $activeClassCode $previousClassCode")
+          redis.scanKeys(user.userClassesKey)
+            .forEach { key ->
+              require(userId == key.split(KEY_SEP)[1])
+              //println("ClassCodes: $key ${redis.smembers(user.userClassesKey)}")
+
+              redis.smembers(user.userClassesKey)
+                .forEach { classCode ->
+                  Classes.insert { row ->
+                    row[userRef] = id.value
+                    row[Classes.classCode] = classCode
+                    row[description] = ""
+                  }
+                }
+            }
+
+
+          redis.scanKeys(user.userInfoBrowserQueryKey)
+            .forEach { key ->
+              val sessions_id = key.split(KEY_SEP)[2]
+              val browserUser = userId.toUser(redis, BrowserSession(sessions_id))
+              val activeClassCode = browserUser.fetchActiveClassCode(redis)
+              val previousClassCode = browserUser.fetchPreviousTeacherClassCode(redis)
+              //println("$key $browser_sessions_id ${redis.hgetAll(user2.browserSpecificUserInfoKey)} $activeClassCode $previousClassCode")
 
               BrowserSessions.upsert(conflictIndex = browserSessionIndex) { row ->
                 row[userRef] = id.value

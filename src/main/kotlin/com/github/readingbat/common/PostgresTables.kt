@@ -56,6 +56,16 @@ object UserChallengeInfo : LongIdTable("user_challenge_info") {
   override fun toString(): String = "$id $md5 $correct $likeDislike"
 }
 
+object Classes : LongIdTable("classes") {
+  val created = datetime("created")
+  val updated = datetime("updated")
+  val userRef = long("user_ref")
+  val classCode = text("class_code")
+  val description = text("description")
+
+  override fun toString(): String = "$id $classCode"
+}
+
 object SessionChallengeInfo : LongIdTable("session_challenge_info") {
   val created = datetime("created")
   val updated = datetime("updated")
