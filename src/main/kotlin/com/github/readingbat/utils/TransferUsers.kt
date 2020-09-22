@@ -19,6 +19,7 @@ package com.github.readingbat.utils
 
 import com.github.pambrose.common.redis.RedisUtils
 import com.github.readingbat.common.*
+import com.github.readingbat.common.CommonUtils.keyOf
 import com.github.readingbat.common.KeyConstants.ANSWER_HISTORY_KEY
 import com.github.readingbat.common.KeyConstants.AUTH_KEY
 import com.github.readingbat.common.KeyConstants.CHALLENGE_ANSWERS_KEY
@@ -36,7 +37,6 @@ import com.github.readingbat.common.User.Companion.fetchPreviousTeacherClassCode
 import com.github.readingbat.common.User.Companion.gson
 import com.github.readingbat.common.User.Companion.toUser
 import com.github.readingbat.posts.ChallengeHistory
-import com.github.readingbat.server.keyOf
 import mu.KLogging
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.statements.InsertStatement

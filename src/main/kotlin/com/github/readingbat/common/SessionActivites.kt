@@ -21,6 +21,7 @@ import com.github.pambrose.common.dsl.KtorDsl.get
 import com.github.pambrose.common.dsl.KtorDsl.httpClient
 import com.github.pambrose.common.redis.RedisUtils.withNonNullRedisPool
 import com.github.pambrose.common.util.isInt
+import com.github.readingbat.common.CommonUtils.keyOf
 import com.github.readingbat.common.Constants.UNKNOWN
 import com.github.readingbat.common.EnvVar.IPGEOLOCATION_KEY
 import com.github.readingbat.common.KeyConstants.IPGEO_KEY
@@ -28,7 +29,6 @@ import com.github.readingbat.common.SessionActivites.RemoteHost.Companion.unknow
 import com.github.readingbat.common.User.Companion.gson
 import com.github.readingbat.common.User.Companion.toUser
 import com.github.readingbat.server.ReadingBatServer.redisPool
-import com.github.readingbat.server.keyOf
 import io.ktor.application.*
 import io.ktor.client.statement.*
 import io.ktor.features.*

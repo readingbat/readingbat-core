@@ -23,10 +23,8 @@ import com.github.pambrose.common.response.redirectTo
 import com.github.pambrose.common.response.respondWith
 import com.github.pambrose.common.util.Version.Companion.versionDesc
 import com.github.pambrose.common.util.isNotNull
-import com.github.pambrose.common.util.md5
 import com.github.readingbat.common.*
 import com.github.readingbat.common.Constants.UNKNOWN
-import com.github.readingbat.common.KeyConstants.KEY_SEP
 import com.github.readingbat.common.User.Companion.toUser
 import com.github.readingbat.dsl.InvalidRequestException
 import com.github.readingbat.dsl.ReadingBatContent
@@ -46,10 +44,6 @@ import mu.KLogging
 import redis.clients.jedis.Jedis
 
 typealias PipelineCall = PipelineContext<Unit, ApplicationCall>
-
-internal fun keyOf(vararg keys: Any) = keys.joinToString(KEY_SEP) { it.toString() }
-
-internal fun md5Of(vararg keys: Any) = keys.joinToString(KEY_SEP) { it.toString() }.md5()
 
 internal object ServerUtils : KLogging() {
 

@@ -23,6 +23,8 @@ import com.github.pambrose.common.util.FileSystemSource
 import com.github.pambrose.common.util.GitHubRepo
 import com.github.pambrose.common.util.ensureSuffix
 import com.github.pambrose.common.util.isNotNull
+import com.github.readingbat.common.CommonUtils.keyOf
+import com.github.readingbat.common.CommonUtils.md5Of
 import com.github.readingbat.common.CommonUtils.pathOf
 import com.github.readingbat.common.KeyConstants.DIR_CONTENTS_KEY
 import com.github.readingbat.dsl.Challenge.Companion.challenge
@@ -32,8 +34,6 @@ import com.github.readingbat.dsl.ReturnType.Runtime
 import com.github.readingbat.server.ChallengeName
 import com.github.readingbat.server.GroupName
 import com.github.readingbat.server.ReadingBatServer.redisPool
-import com.github.readingbat.server.keyOf
-import com.github.readingbat.server.md5Of
 import mu.KLogging
 import java.io.File
 import kotlin.reflect.KProperty

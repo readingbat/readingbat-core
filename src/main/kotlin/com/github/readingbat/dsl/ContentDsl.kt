@@ -20,6 +20,8 @@ package com.github.readingbat.dsl
 import com.github.pambrose.common.redis.RedisUtils.withNonNullRedisPool
 import com.github.pambrose.common.redis.RedisUtils.withRedisPool
 import com.github.pambrose.common.util.*
+import com.github.readingbat.common.CommonUtils.keyOf
+import com.github.readingbat.common.CommonUtils.md5Of
 import com.github.readingbat.common.Constants.UNASSIGNED
 import com.github.readingbat.common.KeyConstants.CONTENT_DSL_KEY
 import com.github.readingbat.common.Property.AGENT_ENABLED_PROPERTY
@@ -29,8 +31,6 @@ import com.github.readingbat.common.Property.IS_PRODUCTION
 import com.github.readingbat.common.ScriptPools.kotlinScriptPool
 import com.github.readingbat.server.ReadingBatServer
 import com.github.readingbat.server.ReadingBatServer.redisPool
-import com.github.readingbat.server.keyOf
-import com.github.readingbat.server.md5Of
 import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
 import kotlin.reflect.KFunction

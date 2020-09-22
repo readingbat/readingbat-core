@@ -23,6 +23,8 @@ import com.github.pambrose.common.util.isNull
 import com.github.pambrose.common.util.newStringSalt
 import com.github.pambrose.common.util.randomId
 import com.github.readingbat.common.ClassCode.Companion.DISABLED_CLASS_CODE
+import com.github.readingbat.common.CommonUtils.keyOf
+import com.github.readingbat.common.CommonUtils.md5Of
 import com.github.readingbat.common.Constants.RESP
 import com.github.readingbat.common.Constants.UNASSIGNED
 import com.github.readingbat.common.KeyConstants.ANSWER_HISTORY_KEY
