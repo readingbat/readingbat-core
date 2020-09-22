@@ -61,6 +61,7 @@ import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.or
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.sql.update
 import redis.clients.jedis.Jedis
 import redis.clients.jedis.Response
 import redis.clients.jedis.Transaction
@@ -69,11 +70,11 @@ import kotlin.contracts.contract
 import kotlin.time.measureTime
 import kotlin.time.minutes
 
-internal class User private constructor(redis: Jedis?, val id: String, val browserSession: BrowserSession?) {
-  private val userInfoKey = keyOf(USER_INFO_KEY, id)
+internal class User private constructor(redis: Jedis?, val userId: String, val browserSession: BrowserSession?) {
+  private val userInfoKey = keyOf(USER_INFO_KEY, userId)
   private val dbmsId: Long
   private val saltBacking: String
-  private val digestBacking: String
+  private var digestBacking: String
   val email: Email
   val name: FullName
 
@@ -84,35 +85,48 @@ internal class User private constructor(redis: Jedis?, val id: String, val brows
 
   init {
     measureTime {
-      email = redis?.hget(userInfoKey, EMAIL_FIELD)?.let { Email(it) } ?: UNKNOWN_EMAIL
-      name = redis?.hget(userInfoKey, NAME_FIELD)?.let { FullName(it) } ?: UNKNOWN_FULLNAME
-      saltBacking = redis?.hget(userInfoKey, SALT_FIELD) ?: ""
-      digestBacking = redis?.hget(userInfoKey, DIGEST_FIELD) ?: ""
-
-      dbmsId =
-        if (useRdbms)
+      if (useRdbms) {
+        val row =
           transaction {
-            Users.slice(Users.id)
-              .select { Users.userId eq this@User.id }
-              .map { it[Users.id].value }
-              .firstOrNull() ?: -1
+            Users.slice(Users.id, Users.email, Users.name, Users.salt, Users.digest)
+              .select { Users.userId eq this@User.userId }
+              .firstOrNull()
           }
-        else
-          -1
-    }.also { logger.info { "Selected userId in $it" } }
+        dbmsId = row?.get(Users.id)?.value ?: -1
+        email = row?.get(Users.email)?.let { Email(it) } ?: UNKNOWN_EMAIL
+        name = row?.get(Users.name)?.let { FullName(it) } ?: UNKNOWN_FULLNAME
+        saltBacking = row?.get(Users.salt) ?: ""
+        digestBacking = row?.get(Users.digest) ?: ""
+      }
+      else {
+        dbmsId = -1
+        email = redis?.hget(userInfoKey, EMAIL_FIELD)?.let { Email(it) } ?: UNKNOWN_EMAIL
+        name = redis?.hget(userInfoKey, NAME_FIELD)?.let { FullName(it) } ?: UNKNOWN_FULLNAME
+        saltBacking = redis?.hget(userInfoKey, SALT_FIELD) ?: ""
+        digestBacking = redis?.hget(userInfoKey, DIGEST_FIELD) ?: ""
+      }
+    }.also { logger.info { "Selected user info in $it" } }
   }
 
-  private val userInfoBrowserKey by lazy { keyOf(USER_INFO_BROWSER_KEY, id, browserSession?.id ?: UNASSIGNED) }
-  internal val userInfoBrowserQueryKey by lazy { keyOf(USER_INFO_BROWSER_KEY, id, "*") }
+  private val userInfoBrowserKey by lazy { keyOf(USER_INFO_BROWSER_KEY, userId, browserSession?.id ?: UNASSIGNED) }
+  internal val userInfoBrowserQueryKey by lazy { keyOf(USER_INFO_BROWSER_KEY, userId, "*") }
   private val browserSpecificUserInfoKey by lazy {
     if (browserSession.isNotNull()) userInfoBrowserKey else throw InvalidConfigurationException("Null browser session for $this")
   }
-  private val userClassesKey by lazy { keyOf(USER_CLASSES_KEY, id) }
+  private val userClassesKey by lazy { keyOf(USER_CLASSES_KEY, userId) }
 
   // This key maps to a reset_id
-  private val userPasswordResetKey by lazy { keyOf(USER_RESET_KEY, id) }
+  private val userPasswordResetKey by lazy { keyOf(USER_RESET_KEY, userId) }
 
-  fun browserSessions(redis: Jedis) = redis.scanKeys(userInfoBrowserQueryKey).toList()
+  fun browserSessions(redis: Jedis) =
+    if (useRdbms)
+      transaction {
+        BrowserSessions.slice(BrowserSessions.session_id)
+          .select { (BrowserSessions.userRef eq dbmsId) }
+          .map { it[BrowserSessions.session_id].toString() }
+      }
+    else
+      redis.scanKeys(userInfoBrowserQueryKey).toList()
 
   fun correctAnswers(redis: Jedis) =
     if (useRdbms)
@@ -148,9 +162,28 @@ internal class User private constructor(redis: Jedis?, val id: String, val brows
 
   fun isValidUserInfoKey(redis: Jedis) = redis.hlen(userInfoKey) > 0
 
-  fun assignDigest(redis: Jedis, newDigest: String): Long = redis.hset(userInfoKey, DIGEST_FIELD, newDigest)
+  fun assignDigest(redis: Jedis, newDigest: String) =
+    if (useRdbms)
+      transaction {
+        Users.update({ Users.id eq dbmsId }) { row ->
+          row[digest] = newDigest
+          digestBacking = newDigest
+        }
+      }
+    else
+      redis.hset(userInfoKey, DIGEST_FIELD, newDigest)
 
-  fun assignDigest(tx: Transaction, newDigest: String): Response<Long> = tx.hset(userInfoKey, DIGEST_FIELD, newDigest)
+  fun assignDigest(tx: Transaction, newDigest: String) {
+    if (useRdbms)
+      transaction {
+        Users.update({ Users.id eq dbmsId }) { row ->
+          row[digest] = newDigest
+          digestBacking = newDigest
+        }
+      }
+    else
+      tx.hset(userInfoKey, DIGEST_FIELD, newDigest)
+  }
 
   fun passwordResetKey(redis: Jedis): String? = redis.get(userPasswordResetKey)
 
@@ -167,7 +200,7 @@ internal class User private constructor(redis: Jedis?, val id: String, val brows
   fun correctAnswersKey(languageName: LanguageName, groupName: GroupName, challengeName: ChallengeName) =
     keyOf(CORRECT_ANSWERS_KEY,
           AUTH_KEY,
-          id,
+          userId,
           if (languageName == ANY_LANGUAGE && groupName == ANY_GROUP && challengeName == ANY_CHALLENGE)
             "*"
           else
@@ -179,7 +212,7 @@ internal class User private constructor(redis: Jedis?, val id: String, val brows
   fun likeDislikeKey(languageName: LanguageName, groupName: GroupName, challengeName: ChallengeName) =
     keyOf(LIKE_DISLIKE_KEY,
           AUTH_KEY,
-          id,
+          userId,
           if (languageName == ANY_LANGUAGE && groupName == ANY_GROUP && challengeName == ANY_CHALLENGE)
             "*"
           else
@@ -191,7 +224,7 @@ internal class User private constructor(redis: Jedis?, val id: String, val brows
   private fun challengeAnswersKey(languageName: LanguageName, groupName: GroupName, challengeName: ChallengeName) =
     keyOf(CHALLENGE_ANSWERS_KEY,
           AUTH_KEY,
-          id,
+          userId,
           if (languageName == ANY_LANGUAGE && groupName == ANY_GROUP && challengeName == ANY_CHALLENGE)
             "*"
           else
@@ -206,7 +239,7 @@ internal class User private constructor(redis: Jedis?, val id: String, val brows
                        invocation: Invocation) =
     keyOf(ANSWER_HISTORY_KEY,
           AUTH_KEY,
-          id,
+          userId,
           if (languageName == ANY_LANGUAGE && groupName == ANY_GROUP && challengeName == ANY_CHALLENGE && invocation == ANY_INVOCATION)
             "*"
           else
@@ -238,7 +271,7 @@ internal class User private constructor(redis: Jedis?, val id: String, val brows
   }
 
   internal fun isEnrolled(classCode: ClassCode, redis: Jedis) =
-    redis.sismember(classCode.classCodeEnrollmentKey, id) ?: false
+    redis.sismember(classCode.classCodeEnrollmentKey, userId) ?: false
 
   internal fun isNotEnrolled(classCode: ClassCode, redis: Jedis) = !isEnrolled(classCode, redis)
 
@@ -282,10 +315,10 @@ internal class User private constructor(redis: Jedis?, val id: String, val brows
     // Reset every enrollee's enrolled class and remove from class
     enrollees
       .forEach {
-        logger.info { "Removing ${it.id} from $classCode" }
+        logger.info { "Removing ${it.userId} from $classCode" }
         classCode.removeEnrollee(it, tx)
 
-        logger.info { "Assigning ${it.id} to $DISABLED_CLASS_CODE" }
+        logger.info { "Assigning ${it.userId} to $DISABLED_CLASS_CODE" }
         it.assignEnrolledClassCode(DISABLED_CLASS_CODE, tx)
       }
 
@@ -334,7 +367,7 @@ internal class User private constructor(redis: Jedis?, val id: String, val brows
     val previousResetId = redis.get(userPasswordResetKey)?.let { ResetId(it) } ?: EMPTY_RESET_ID
     val enrolleePairs = classCodes.map { it to it.fetchEnrollees(redis) }
 
-    logger.info { "Deleting User: $id $name" }
+    logger.info { "Deleting User: $userId $name" }
     logger.info { "User Email: $email" }
     logger.info { "User Info Key: $userInfoKey" }
     logger.info { "User Info browser sessions: ${browserSessions.size}" }
@@ -386,7 +419,7 @@ internal class User private constructor(redis: Jedis?, val id: String, val brows
                      redis: Jedis) {
     // Publish to challenge dashboard
     logger.debug { "Publishing user answers to $classCode on $challengeMd5 for $this" }
-    val dashboardInfo = DashboardInfo(id, complete, numCorrect, maxHistoryLength, history)
+    val dashboardInfo = DashboardInfo(userId, complete, numCorrect, maxHistoryLength, history)
     redis.publish(classTopicName(classCode, challengeMd5.value), gson.toJson(dashboardInfo))
   }
 
@@ -415,7 +448,7 @@ internal class User private constructor(redis: Jedis?, val id: String, val brows
       }
   }
 
-  override fun toString() = "User(id='$id')"
+  override fun toString() = "User(userId='$userId')"
 
   companion object : KLogging() {
 
@@ -539,10 +572,10 @@ internal class User private constructor(redis: Jedis?, val id: String, val brows
 
       val user = newUser(browserSession)
       val salt = newStringSalt()
-      logger.info { "Created user $email ${user.id}" }
+      logger.info { "Created user $email ${user.userId}" }
 
       redis.multi().also { tx ->
-        tx.set(email.userEmailKey, user.id)
+        tx.set(email.userEmailKey, user.userId)
         tx.hset(user.userInfoKey, mapOf(NAME_FIELD to name.value,
                                         EMAIL_FIELD to email.value,
                                         SALT_FIELD to salt,

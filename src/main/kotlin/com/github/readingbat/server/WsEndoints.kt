@@ -90,12 +90,12 @@ internal object WsEndoints : KLogging() {
           groupName.isNotNull() && groupName.isNotValid() -> false to "Invalid group: $groupName"
           classCode.isNotValid(redis) -> false to "Invalid class code: $classCode"
           classCode.isNotEnabled -> false to "Class code not enabled"
-          student.isNotNull() && student.isNotValidUser(redis) -> false to "Invalid student id: ${student.id}"
+          student.isNotNull() && student.isNotValidUser(redis) -> false to "Invalid student id: ${student.userId}"
           student.isNotNull() && student.isNotEnrolled(classCode, redis) -> false to "Student not enrolled in class"
-          user.isNotValidUser(redis) -> false to "Invalid user id: ${user.id}"
-          classCode.fetchClassTeacherId(redis) != user.id -> {
+          user.isNotValidUser(redis) -> false to "Invalid user id: ${user.userId}"
+          classCode.fetchClassTeacherId(redis) != user.userId -> {
             val teacherId = classCode.fetchClassTeacherId(redis)
-            false to "User id ${user.id} does not match class code's teacher Id $teacherId"
+            false to "User id ${user.userId} does not match class code's teacher Id $teacherId"
           }
           else -> true to ""
         }
@@ -408,7 +408,7 @@ internal object WsEndoints : KLogging() {
                       if (incorrectAttempts > 0 || results.any { it != UNANSWERED }) {
                         val json =
                           gson.toJson(
-                            ClassSummary(enrollee.id,
+                            ClassSummary(enrollee.userId,
                                          challengeName.encode(),
                                          results,
                                          if (incorrectAttempts == 0 && results.all { it == UNANSWERED }) "" else incorrectAttempts.toString()))
@@ -448,7 +448,7 @@ internal object WsEndoints : KLogging() {
       val remote = call.request.origin.remoteHost
       val user = fetchUser() ?: throw InvalidRequestException("Null user")
       val email = user.email //fetchEmail()
-      val desc = "${pathOf(CLASS_SUMMARY_ENDPOINT, languageName, student.id, classCode)} - $remote - $email"
+      val desc = "${pathOf(CLASS_SUMMARY_ENDPOINT, languageName, student.userId, classCode)} - $remote - $email"
 
       validateContext(languageName, null, classCode, student, user, "Student sumary")
         .also {

@@ -56,11 +56,11 @@ internal data class ClassCode(val value: String) {
   }
 
   fun addEnrollee(user: User, tx: Transaction) {
-    tx.sadd(classCodeEnrollmentKey, user.id)
+    tx.sadd(classCodeEnrollmentKey, user.userId)
   }
 
   fun removeEnrollee(user: User, tx: Transaction) {
-    tx.srem(classCodeEnrollmentKey, user.id)
+    tx.srem(classCodeEnrollmentKey, user.userId)
   }
 
   fun deleteAllEnrollees(tx: Transaction) {
@@ -68,7 +68,7 @@ internal data class ClassCode(val value: String) {
   }
 
   fun initializeWith(classDesc: String, user: User, tx: Transaction) {
-    tx.hset(classInfoKey, mapOf(DESC_FIELD to classDesc, TEACHER_FIELD to user.id))
+    tx.hset(classInfoKey, mapOf(DESC_FIELD to classDesc, TEACHER_FIELD to user.userId))
   }
 
   fun fetchClassDesc(redis: Jedis, quoted: Boolean = false) =

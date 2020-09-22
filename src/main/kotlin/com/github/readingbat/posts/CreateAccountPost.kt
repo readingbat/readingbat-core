@@ -107,7 +107,7 @@ internal object CreateAccountPost : KLogging() {
       // Create user
       val browserSession = call.browserSession
       val user = createUser(name, email, password, browserSession, redis)
-      call.sessions.set(UserPrincipal(userId = user.id))
+      call.sessions.set(UserPrincipal(userId = user.userId))
       val returnPath = queryParam(RETURN_PARAM, "/")
       throw RedirectException("$returnPath?$MSG=${"User $email created".encode()}")
     }

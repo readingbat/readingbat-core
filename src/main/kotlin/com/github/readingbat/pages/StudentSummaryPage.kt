@@ -81,9 +81,9 @@ internal object StudentSummaryPage : KLogging() {
       classCode.isNotValid(redis) -> throw InvalidRequestException("Invalid class code: $classCode")
       user.isNotValidUser(redis) -> throw InvalidRequestException("Invalid user")
       //classCode != activeClassCode -> throw InvalidRequestException("Class code mismatch")
-      classCode.fetchClassTeacherId(redis) != user.id -> {
+      classCode.fetchClassTeacherId(redis) != user.userId -> {
         val teacherId = classCode.fetchClassTeacherId(redis)
-        throw InvalidRequestException("User id ${user.id} does not match class code's teacher Id $teacherId")
+        throw InvalidRequestException("User id ${user.userId} does not match class code's teacher Id $teacherId")
       }
       else -> {
       }
@@ -124,7 +124,7 @@ internal object StudentSummaryPage : KLogging() {
             this@body.removeFromClassButton(student, studentName)
           }
 
-          displayChallengeGroups(content, classCode, languageName, redis)
+          displayChallengeGroups(content, classCode, languageName)
           enableWebSockets(languageName, student, classCode)
           backLink(returnPath)
 
@@ -139,7 +139,7 @@ internal object StudentSummaryPage : KLogging() {
       action = TEACHER_PREFS_ENDPOINT
       method = post
       onSubmit = "return confirm('Are you sure you want to remove $studentName from the class?')"
-      input { type = InputType.hidden; name = USER_ID_PARAM; value = student.id }
+      input { type = InputType.hidden; name = USER_ID_PARAM; value = student.userId }
       input {
         style = "vertical-align:middle; margin-top:1; margin-bottom:0; border-radius: 8px; font-size:12px"
         type = submit
@@ -151,8 +151,7 @@ internal object StudentSummaryPage : KLogging() {
 
   private fun BODY.displayChallengeGroups(content: ReadingBatContent,
                                           classCode: ClassCode,
-                                          languageName: LanguageName,
-                                          redis: Jedis) =
+                                          languageName: LanguageName) =
     div(classes = INDENT_2EM) {
       table(classes = INVOC_TABLE) {
         content.findLanguage(languageName).challengeGroups
@@ -217,7 +216,11 @@ internal object StudentSummaryPage : KLogging() {
           else
             wshost = wshost.replace(/^http:/, 'ws:');
 
-          var wsurl = wshost + '$STUDENT_SUMMARY_ENDPOINT/' + ${encodeUriElems(languageName, student.id, classCode)};
+          var wsurl = wshost + '$STUDENT_SUMMARY_ENDPOINT/' + ${
+          encodeUriElems(languageName,
+                         student.userId,
+                         classCode)
+        };
           var ws = new WebSocket(wsurl);
 
           ws.onopen = function (event) {

@@ -99,9 +99,9 @@ internal object ClassSummaryPage : KLogging() {
     when {
       classCode.isNotValid(redis) -> throw InvalidRequestException("Invalid class code: $classCode")
       user.isNotValidUser(redis) -> throw InvalidRequestException("Invalid user")
-      classCode.fetchClassTeacherId(redis) != user.id -> {
+      classCode.fetchClassTeacherId(redis) != user.userId -> {
         val teacherId = classCode.fetchClassTeacherId(redis)
-        throw InvalidRequestException("User id ${user.id} does not match class code's teacher id $teacherId")
+        throw InvalidRequestException("User id ${user.userId} does not match class code's teacher id $teacherId")
       }
       else -> {
       }
@@ -137,12 +137,12 @@ internal object ClassSummaryPage : KLogging() {
           displayClassInfo(classCode, activeClassCode, redis)
 
           if (classCode == activeClassCode)
-            displayClassChoices(content, classCode, redis)
+            displayClassChoices(content, classCode)
 
           if (hasGroupName)
             displayGroupInfo(classCode, activeClassCode, languageName, groupName)
 
-          displayStudents(content, enrollees, classCode, activeClassCode, hasGroupName, languageName, groupName, redis)
+          displayStudents(content, enrollees, classCode, activeClassCode, hasGroupName, languageName, groupName)
 
           if (enrollees.isNotEmpty() && languageName.isValid() && groupName.isValid())
             enableWebSockets(languageName, groupName, classCode)
@@ -184,7 +184,7 @@ internal object ClassSummaryPage : KLogging() {
     }
   }
 
-  private fun BODY.displayClassChoices(content: ReadingBatContent, classCode: ClassCode, redis: Jedis) {
+  private fun BODY.displayClassChoices(content: ReadingBatContent, classCode: ClassCode) {
     table {
       style = "border-collapse: separate; border-spacing: 15px 10px"
       tr {
@@ -257,8 +257,7 @@ internal object ClassSummaryPage : KLogging() {
                                    activeClassCode: ClassCode,
                                    hasGroup: Boolean,
                                    languageName: LanguageName,
-                                   groupName: GroupName,
-                                   redis: Jedis) =
+                                   groupName: GroupName) =
     div(classes = INDENT_2EM) {
       val showDetail = hasGroup && classCode == activeClassCode
 
@@ -318,11 +317,11 @@ internal object ClassSummaryPage : KLogging() {
                             challenge.functionInfo(content).invocations
                               .forEachIndexed { i, invocation ->
                                 td(classes = INVOC_TD) {
-                                  id = "${student.id}-${challenge.challengeName.encode()}-$i"; +""
+                                  id = "${student.userId}-${challenge.challengeName.encode()}-$i"; +""
                                 }
                               }
                             td(classes = INVOC_STAT) {
-                              id = "${student.id}-${challenge.challengeName.encode()}$STATS"; +""
+                              id = "${student.userId}-${challenge.challengeName.encode()}$STATS"; +""
                             }
                           }
                         }

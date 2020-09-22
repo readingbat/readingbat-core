@@ -398,11 +398,11 @@ internal object ChallengePage : KLogging() {
 
               tr(classes = DASHBOARD) {
                 td(classes = DASHBOARD) {
-                  id = "${enrollee.id}-$nameTd"
+                  id = "${enrollee.userId}-$nameTd"
                   style =
                     "width:15%;white-space:nowrap; background-color:${if (allCorrect) CORRECT_COLOR else INCOMPLETE_COLOR}"
 
-                  span { id = "${enrollee.id}-$numCorrectSpan"; +numCorrect.toString() }
+                  span { id = "${enrollee.userId}-$numCorrectSpan"; +numCorrect.toString() }
                   +"/$numChallenges"
                   rawHtml(nbsp.text)
                   +enrollee.name.value
@@ -411,11 +411,11 @@ internal object ChallengePage : KLogging() {
                 results
                   .forEach { (invocation, history) ->
                     td(classes = DASHBOARD) {
-                      id = "${enrollee.id}-$invocation-$answersTd"
+                      id = "${enrollee.userId}-$invocation-$answersTd"
                       style =
                         "background-color:${if (history.correct) CORRECT_COLOR else (if (history.answers.isNotEmpty()) WRONG_COLOR else INCOMPLETE_COLOR)}"
                       span {
-                        id = "${enrollee.id}-$invocation-$answersSpan"
+                        id = "${enrollee.userId}-$invocation-$answersSpan"
                         history.answers.asReversed().take(maxHistoryLength).forEach { answer -> +answer; br }
                       }
                     }

@@ -83,7 +83,7 @@ internal object UserPrefsPost : KLogging() {
         val digest = user.digest
         if (salt.isNotEmpty() && digest.isNotEmpty() && digest == currPassword.sha256(salt)) {
           val newDigest = newPassword.sha256(salt)
-          user.assignDigest(redis, newDigest)
+          redis.multi().also { tx -> user.assignDigest(tx, newDigest) }
           Message("Password changed")
         }
         else {

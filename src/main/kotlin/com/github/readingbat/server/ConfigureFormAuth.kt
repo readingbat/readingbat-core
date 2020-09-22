@@ -83,8 +83,8 @@ internal object ConfigureFormAuth : KLogging() {
               val salt = user.salt
               val digest = user.digest
               if (salt.isNotBlank() && digest.isNotBlank() && digest == cred.password.sha256(salt)) {
-                logger.debug { "Found user ${cred.name} ${user.id}" }
-                principal = UserPrincipal(user.id)
+                logger.debug { "Found user ${cred.name} ${user.userId}" }
+                principal = UserPrincipal(user.userId)
               }
             }
 

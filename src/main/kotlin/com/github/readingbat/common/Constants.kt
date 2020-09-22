@@ -131,7 +131,7 @@ internal object Endpoints {
     "${classSummaryEndpoint(classCode)}&$LANG_TYPE_QP=$languageName&$GROUP_NAME_QP=$groupName"
 
   fun studentSummaryEndpoint(classCode: ClassCode, languageName: LanguageName, student: User) =
-    "$STUDENT_SUMMARY_ENDPOINT?$CLASS_CODE_QP=$classCode&$LANG_TYPE_QP=$languageName&$USER_ID_QP=${student.id}"
+    "$STUDENT_SUMMARY_ENDPOINT?$CLASS_CODE_QP=$classCode&$LANG_TYPE_QP=$languageName&$USER_ID_QP=${student.userId}"
 }
 
 internal object StaticFileNames {
