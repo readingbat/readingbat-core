@@ -22,7 +22,7 @@ import com.github.pambrose.common.dsl.KtorDsl.httpClient
 import com.github.pambrose.common.redis.RedisUtils.withNonNullRedisPool
 import com.github.pambrose.common.util.isInt
 import com.github.readingbat.common.Constants.UNKNOWN
-import com.github.readingbat.common.EnvVars.IPGEOLOCATION_KEY
+import com.github.readingbat.common.EnvVar.IPGEOLOCATION_KEY
 import com.github.readingbat.common.KeyConstants.IPGEO_KEY
 import com.github.readingbat.common.SessionActivites.RemoteHost.Companion.unknown
 import com.github.readingbat.common.User.Companion.gson

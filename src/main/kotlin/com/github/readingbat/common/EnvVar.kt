@@ -23,7 +23,7 @@ import com.github.readingbat.common.CommonUtils.obfuscate
 import com.github.readingbat.common.Constants.UNASSIGNED
 import com.github.readingbat.dsl.InvalidConfigurationException
 
-enum class EnvVars(val maskFunc: EnvVars.() -> String = { getEnv(UNASSIGNED) }) {
+enum class EnvVar(val maskFunc: EnvVar.() -> String = { getEnv(UNASSIGNED) }) {
 
   AGENT_ENABLED,
   AGENT_CONFIG,

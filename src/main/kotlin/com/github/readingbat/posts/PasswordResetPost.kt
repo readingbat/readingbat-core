@@ -27,7 +27,7 @@ import com.github.readingbat.common.FormFields.NEW_PASSWORD_PARAM
 import com.github.readingbat.common.FormFields.RESET_ID_PARAM
 import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.Message
-import com.github.readingbat.common.Properties.SENDGRID_PREFIX_PROPERTY
+import com.github.readingbat.common.Property.SENDGRID_PREFIX_PROPERTY
 import com.github.readingbat.common.User.Companion.isNotRegisteredEmail
 import com.github.readingbat.common.User.Companion.lookupUserByEmail
 import com.github.readingbat.common.isNotValidUser
@@ -118,7 +118,7 @@ internal object PasswordResetPost : KLogging() {
     }
   }
 
-  suspend fun PipelineCall.changePassword(content: ReadingBatContent, redis: Jedis): String =
+  suspend fun PipelineCall.updatePassword(content: ReadingBatContent, redis: Jedis): String =
     try {
       val parameters = call.receiveParameters()
       val resetId = parameters.getResetId(RESET_ID_PARAM)

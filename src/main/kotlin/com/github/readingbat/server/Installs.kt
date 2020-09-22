@@ -25,7 +25,7 @@ import com.github.readingbat.common.Constants.UNKNOWN
 import com.github.readingbat.common.Endpoints.CSS_ENDPOINT
 import com.github.readingbat.common.Endpoints.FAV_ICON_ENDPOINT
 import com.github.readingbat.common.Endpoints.STATIC_ROOT
-import com.github.readingbat.common.EnvVars.FILTER_LOG
+import com.github.readingbat.common.EnvVar.FILTER_LOG
 import com.github.readingbat.dsl.InvalidRequestException
 import com.github.readingbat.dsl.RedisUnavailableException
 import com.github.readingbat.pages.DbmsDownPage.dbmsDownPage

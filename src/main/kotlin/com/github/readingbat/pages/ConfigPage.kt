@@ -23,10 +23,10 @@ import com.github.readingbat.common.CSSNames.INDENT_1EM
 import com.github.readingbat.common.CSSNames.TD_PADDING
 import com.github.readingbat.common.Constants.UNASSIGNED
 import com.github.readingbat.common.Endpoints.ADMIN_PREFS_ENDPOINT
-import com.github.readingbat.common.EnvVars
+import com.github.readingbat.common.EnvVar
 import com.github.readingbat.common.FormFields.RETURN_PARAM
-import com.github.readingbat.common.Properties
-import com.github.readingbat.common.Properties.*
+import com.github.readingbat.common.Property
+import com.github.readingbat.common.Property.*
 import com.github.readingbat.common.SessionActivites
 import com.github.readingbat.dsl.*
 import com.github.readingbat.dsl.LanguageType.Java
@@ -131,7 +131,7 @@ internal object ConfigPage {
             h3 { +"Application Properties" }
             div(classes = INDENT_1EM) {
               table {
-                Properties.values()
+                Property.values()
                   .filter { it.isDefined() }
                   .forEach {
                     tr {
@@ -167,7 +167,7 @@ internal object ConfigPage {
             h3 { +"Env Vars" }
             div(classes = INDENT_1EM) {
               table {
-                EnvVars.values()
+                EnvVar.values()
                   .forEach {
                     tr {
                       td { +it.name }

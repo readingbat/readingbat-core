@@ -28,8 +28,8 @@ import com.github.readingbat.common.Endpoints.RESET_CACHE_ENDPOINT
 import com.github.readingbat.common.Endpoints.RESET_CONTENT_DSL_ENDPOINT
 import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.Message
-import com.github.readingbat.common.Properties.GRAFANA_URL
-import com.github.readingbat.common.Properties.PROMETHEUS_URL
+import com.github.readingbat.common.Property.GRAFANA_URL
+import com.github.readingbat.common.Property.PROMETHEUS_URL
 import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.fetchActiveClassCode
 import com.github.readingbat.common.isAdminUser

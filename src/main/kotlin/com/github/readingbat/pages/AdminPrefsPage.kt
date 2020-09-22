@@ -22,7 +22,7 @@ import com.github.readingbat.common.Endpoints.CONFIG_ENDPOINT
 import com.github.readingbat.common.Endpoints.SESSIONS_ENDPOINT
 import com.github.readingbat.common.Endpoints.SYSTEM_ADMIN_ENDPOINT
 import com.github.readingbat.common.FormFields.RETURN_PARAM
-import com.github.readingbat.common.Properties.PINGDOM_BANNER_ID
+import com.github.readingbat.common.Property.PINGDOM_BANNER_ID
 import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.fetchActiveClassCode
 import com.github.readingbat.common.isAdminUser

@@ -79,8 +79,8 @@ import com.github.readingbat.posts.ChallengePost.clearChallengeAnswers
 import com.github.readingbat.posts.ChallengePost.clearGroupAnswers
 import com.github.readingbat.posts.ChallengePost.likeDislike
 import com.github.readingbat.posts.CreateAccountPost.createAccount
-import com.github.readingbat.posts.PasswordResetPost.changePassword
 import com.github.readingbat.posts.PasswordResetPost.sendPasswordReset
+import com.github.readingbat.posts.PasswordResetPost.updatePassword
 import com.github.readingbat.posts.TeacherPrefsPost.enableStudentMode
 import com.github.readingbat.posts.TeacherPrefsPost.enableTeacherMode
 import com.github.readingbat.posts.TeacherPrefsPost.teacherPrefs
@@ -269,7 +269,7 @@ internal fun Routing.userRoutes(metrics: Metrics, contentSrc: () -> ReadingBatCo
   }
 
   post(PASSWORD_CHANGE_ENDPOINT) {
-    respondWithSuspendingRedisCheck { redis -> changePassword(contentSrc(), redis) }
+    respondWithSuspendingRedisCheck { redis -> updatePassword(contentSrc(), redis) }
   }
 
   get(LOGOUT_ENDPOINT, metrics) {

@@ -19,6 +19,7 @@ package com.github.readingbat.common
 
 import com.github.pambrose.common.redis.RedisUtils
 import com.github.pambrose.common.util.isNotNull
+import com.github.readingbat.common.CommonUtils.obfuscate
 import com.github.readingbat.common.Constants.UNASSIGNED
 import com.github.readingbat.common.PropertyNames.AGENT
 import com.github.readingbat.common.PropertyNames.CHALLENGES
@@ -32,8 +33,8 @@ import io.ktor.application.*
 import io.ktor.config.*
 import mu.KLogging
 
-enum class Properties(val propertyValue: String,
-                      val maskFunc: Properties.() -> String = { getProperty(UNASSIGNED) }) {
+enum class Property(val propertyValue: String,
+                    val maskFunc: Property.() -> String = { getProperty(UNASSIGNED) }) {
 
   KOTLIN_SCRIPT_CLASSPATH("kotlin.script.classpath"),
 
@@ -82,7 +83,7 @@ enum class Properties(val propertyValue: String,
   DBMS_DRIVER_CLASSNAME("$DBMS.driverClassName"),
   DBMS_JDBC_URL("$DBMS.jdbcUrl"),
   DBMS_USERNAME("$DBMS.username"),
-  DBMS_PASSWORD("$DBMS.password"),
+  DBMS_PASSWORD("$DBMS.password", { getPropertyOrNull()?.obfuscate(1) ?: UNASSIGNED }),
   DBMS_MAX_POOL_SIZE("$DBMS.maxPoolSize"),
 
   REDIS_MAX_POOL_SIZE(RedisUtils.REDIS_MAX_POOL_SIZE),
@@ -120,8 +121,8 @@ enum class Properties(val propertyValue: String,
   }
 
   fun setProperty(value: String) {
-    logger.info { "$propertyValue: $value" }
     System.setProperty(propertyValue, value)
+    logger.info { "$propertyValue: ${maskFunc()}" }
   }
 
   fun isDefined() = getPropertyOrNull().isNotNull()

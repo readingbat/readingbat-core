@@ -80,11 +80,15 @@ internal object UserPrefsPost : KLogging() {
       }
       else {
         val salt = user.salt
-        val digest = user.digest
-        if (salt.isNotEmpty() && digest.isNotEmpty() && digest == currPassword.sha256(salt)) {
+        val oldDigest = user.digest
+        if (salt.isNotEmpty() && oldDigest.isNotEmpty() && oldDigest == currPassword.sha256(salt)) {
           val newDigest = newPassword.sha256(salt)
-          redis.multi().also { tx -> user.assignDigest(tx, newDigest) }
-          Message("Password changed")
+          if (newDigest == oldDigest)
+            Message("New password is the same as the current password", true)
+          else {
+            redis.multi().also { tx -> user.assignDigest(tx, newDigest) }
+            Message("Password changed")
+          }
         }
         else {
           Message("Incorrect current password", true)

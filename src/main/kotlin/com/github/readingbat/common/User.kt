@@ -162,17 +162,6 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
 
   fun isValidUserInfoKey(redis: Jedis) = redis.hlen(userInfoKey) > 0
 
-  fun assignDigest(redis: Jedis, newDigest: String) =
-    if (useRdbms)
-      transaction {
-        Users.update({ Users.id eq dbmsId }) { row ->
-          row[digest] = newDigest
-          digestBacking = newDigest
-        }
-      }
-    else
-      redis.hset(userInfoKey, DIGEST_FIELD, newDigest)
-
   fun assignDigest(tx: Transaction, newDigest: String) {
     if (useRdbms)
       transaction {
@@ -644,14 +633,11 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
           logger.debug { "Saving: $json to $answerHistoryKey" }
           redis.set(answerHistoryKey, json)
 
-          if (shouldPublish)
-            this?.publishAnswers(classCode,
-                                 funcInfo.challengeMd5,
-                                 content.maxHistoryLength,
-                                 complete,
-                                 numCorrect,
-                                 history,
-                                 redis)
+          if (shouldPublish) {
+            val md5 = funcInfo.challengeMd5
+            val maxLength = content.maxHistoryLength
+            this?.publishAnswers(classCode, md5, maxLength, complete, numCorrect, history, redis)
+          }
         }
       }
     }

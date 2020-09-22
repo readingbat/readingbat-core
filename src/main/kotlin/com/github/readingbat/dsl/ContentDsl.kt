@@ -22,10 +22,10 @@ import com.github.pambrose.common.redis.RedisUtils.withRedisPool
 import com.github.pambrose.common.util.*
 import com.github.readingbat.common.Constants.UNASSIGNED
 import com.github.readingbat.common.KeyConstants.CONTENT_DSL_KEY
-import com.github.readingbat.common.Properties.AGENT_ENABLED_PROPERTY
-import com.github.readingbat.common.Properties.AGENT_LAUNCH_ID
-import com.github.readingbat.common.Properties.CACHE_CONTENT_IN_REDIS
-import com.github.readingbat.common.Properties.IS_PRODUCTION
+import com.github.readingbat.common.Property.AGENT_ENABLED_PROPERTY
+import com.github.readingbat.common.Property.AGENT_LAUNCH_ID
+import com.github.readingbat.common.Property.CACHE_CONTENT_IN_REDIS
+import com.github.readingbat.common.Property.IS_PRODUCTION
 import com.github.readingbat.common.ScriptPools.kotlinScriptPool
 import com.github.readingbat.server.ReadingBatServer
 import com.github.readingbat.server.ReadingBatServer.redisPool

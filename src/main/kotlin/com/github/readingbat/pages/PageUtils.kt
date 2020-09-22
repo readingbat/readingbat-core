@@ -32,9 +32,9 @@ import com.github.readingbat.common.Endpoints.STATIC_ROOT
 import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.Message
 import com.github.readingbat.common.Message.Companion.EMPTY_MESSAGE
-import com.github.readingbat.common.Properties.ANALYTICS_ID
-import com.github.readingbat.common.Properties.PINGDOM_URL
-import com.github.readingbat.common.Properties.STATUS_PAGE_URL
+import com.github.readingbat.common.Property.ANALYTICS_ID
+import com.github.readingbat.common.Property.PINGDOM_URL
+import com.github.readingbat.common.Property.STATUS_PAGE_URL
 import com.github.readingbat.common.User
 import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.dsl.LanguageType.Companion.languageTypesInOrder
