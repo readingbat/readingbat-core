@@ -24,6 +24,7 @@ import com.github.readingbat.common.PropertyNames.AGENT
 import com.github.readingbat.common.PropertyNames.CHALLENGES
 import com.github.readingbat.common.PropertyNames.CLASSES
 import com.github.readingbat.common.PropertyNames.CONTENT
+import com.github.readingbat.common.PropertyNames.DBMS
 import com.github.readingbat.common.PropertyNames.READINGBAT
 import com.github.readingbat.common.PropertyNames.SITE
 import com.github.readingbat.dsl.InvalidConfigurationException
@@ -70,12 +71,19 @@ enum class Properties(val propertyValue: String,
   PINGDOM_BANNER_ID("$READINGBAT.$SITE.pingdomBannerId", { getPropertyOrNull() ?: UNASSIGNED }),
   PINGDOM_URL("$READINGBAT.$SITE.pingdomUrl", { getPropertyOrNull() ?: UNASSIGNED }),
   STATUS_PAGE_URL("$READINGBAT.$SITE.statusPageUrl", { getPropertyOrNull() ?: UNASSIGNED }),
+
   PROMETHEUS_URL("$READINGBAT.prometheus.url"),
   GRAFANA_URL("$READINGBAT.grafana.url"),
 
   JAVA_SCRIPTS_POOL_SIZE("$READINGBAT.scripts.javaPoolSize"),
   KOTLIN_SCRIPTS_POOL_SIZE("$READINGBAT.scripts.kotlinPoolSize"),
   PYTHON_SCRIPTS_POOL_SIZE("$READINGBAT.scripts.pythonPoolSize"),
+
+  DBMS_DRIVER_CLASSNAME("$DBMS.driverClassName"),
+  DBMS_JDBC_URL("$DBMS.jdbcUrl"),
+  DBMS_USERNAME("$DBMS.username"),
+  DBMS_PASSWORD("$DBMS.password"),
+  DBMS_MAX_POOL_SIZE("$DBMS.maxPoolSize"),
 
   REDIS_MAX_POOL_SIZE(RedisUtils.REDIS_MAX_POOL_SIZE),
   REDIS_MAX_IDLE_SIZE(RedisUtils.REDIS_MAX_IDLE_SIZE),

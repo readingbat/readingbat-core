@@ -62,7 +62,7 @@ import kotlin.time.TimeSource
 import kotlin.time.measureTime
 import kotlin.time.seconds
 
-@Version(version = "1.4.0", date = "9/17/20")
+@Version(version = "1.4.0", date = "9/22/20")
 object ReadingBatServer : KLogging() {
   private val startTime = TimeSource.Monotonic.markNow()
   internal val timeStamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("M/d/y H:m:ss"))
@@ -71,29 +71,22 @@ object ReadingBatServer : KLogging() {
   internal val adminUsers = mutableListOf<String>()
   internal val contentReadCount = AtomicInteger(0)
   internal val metrics by lazy { Metrics() }
-  internal val useRdbms = false
-
+  internal val useRdbms = true
   internal var redisPool: JedisPool? = null
-
   internal val postgres by lazy {
     Database.connect(
       HikariDataSource(
         HikariConfig()
           .apply {
-            driverClassName = "com.impossibl.postgres.jdbc.PGDriver"
-            jdbcUrl = "jdbc:pgsql://localhost:5432/readingbat"
-            username = "postgres"
-            password = "docker"
-            maximumPoolSize = 10
+            driverClassName = DBMS_DRIVER_CLASSNAME.getRequiredProperty()
+            jdbcUrl = DBMS_JDBC_URL.getRequiredProperty()
+            username = DBMS_USERNAME.getRequiredProperty()
+            password = DBMS_PASSWORD.getRequiredProperty()
+            maximumPoolSize = DBMS_MAX_POOL_SIZE.getRequiredProperty().toInt()
             isAutoCommit = false
             transactionIsolation = "TRANSACTION_REPEATABLE_READ"
             validate()
           }))
-  }
-
-  init {
-    if (useRdbms)
-      postgres
   }
 
   fun start(args: Array<String>) {
@@ -191,13 +184,15 @@ internal fun Application.module() {
   PROMETHEUS_URL.setPropertyFromConfig(this, "")
   GRAFANA_URL.setPropertyFromConfig(this, "")
 
-  PINGDOM_BANNER_ID.setPropertyFromConfig(this, "")
-  PINGDOM_URL.setPropertyFromConfig(this, "")
-  STATUS_PAGE_URL.setPropertyFromConfig(this, "")
-
   JAVA_SCRIPTS_POOL_SIZE.setPropertyFromConfig(this, "5")
   KOTLIN_SCRIPTS_POOL_SIZE.setPropertyFromConfig(this, "5")
   PYTHON_SCRIPTS_POOL_SIZE.setPropertyFromConfig(this, "5")
+
+  DBMS_DRIVER_CLASSNAME.setPropertyFromConfig(this, "com.impossibl.postgres.jdbc.PGDriver")
+  DBMS_JDBC_URL.setPropertyFromConfig(this, "jdbc:pgsql://localhost:5432/postgres")
+  DBMS_USERNAME.setPropertyFromConfig(this, "postgres")
+  DBMS_PASSWORD.setPropertyFromConfig(this, "")
+  DBMS_MAX_POOL_SIZE.setPropertyFromConfig(this, "10")
 
   REDIS_MAX_POOL_SIZE.setPropertyFromConfig(this, "10")
   REDIS_MAX_IDLE_SIZE.setPropertyFromConfig(this, "5")
@@ -208,6 +203,9 @@ internal fun Application.module() {
 
   SENDGRID_PREFIX_PROPERTY.setProperty(
     SENDGRID_PREFIX.getEnv(SENDGRID_PREFIX_PROPERTY.configProperty(this, "https://www.readingbat.com")))
+
+  if (ReadingBatServer.useRdbms)
+    ReadingBatServer.postgres
 
   if (isAgentEnabled()) {
     if (PROXY_HOSTNAME.getRequiredProperty().isNotEmpty()) {

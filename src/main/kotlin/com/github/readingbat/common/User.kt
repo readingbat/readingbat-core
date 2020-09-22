@@ -82,7 +82,6 @@ internal class User private constructor(redis: Jedis?, val id: String, val brows
   val digest: String
     get() = if (digestBacking.isBlank()) throw DataException("Missing digest field") else digestBacking
 
-
   init {
     measureTime {
       email = redis?.hget(userInfoKey, EMAIL_FIELD)?.let { Email(it) } ?: UNKNOWN_EMAIL
@@ -105,7 +104,7 @@ internal class User private constructor(redis: Jedis?, val id: String, val brows
 
   private val userInfoBrowserKey by lazy { keyOf(USER_INFO_BROWSER_KEY, id, browserSession?.id ?: UNASSIGNED) }
   internal val userInfoBrowserQueryKey by lazy { keyOf(USER_INFO_BROWSER_KEY, id, "*") }
-  internal val browserSpecificUserInfoKey by lazy {
+  private val browserSpecificUserInfoKey by lazy {
     if (browserSession.isNotNull()) userInfoBrowserKey else throw InvalidConfigurationException("Null browser session for $this")
   }
   private val userClassesKey by lazy { keyOf(USER_CLASSES_KEY, id) }
@@ -115,7 +114,20 @@ internal class User private constructor(redis: Jedis?, val id: String, val brows
 
   fun browserSessions(redis: Jedis) = redis.scanKeys(userInfoBrowserQueryKey).toList()
 
-  fun correctAnswers(redis: Jedis) = redis.scanKeys(correctAnswersKey(ANY_LANGUAGE, ANY_GROUP, ANY_CHALLENGE)).toList()
+  fun correctAnswers(redis: Jedis) =
+    if (useRdbms)
+      transaction {
+        UserChallengeInfo.slice(UserChallengeInfo.correct)
+          .select { (UserChallengeInfo.userRef eq dbmsId) and UserChallengeInfo.correct }
+          .map { it.toString() }
+      }
+    else
+      redis.scanKeys(correctAnswersKey(ANY_LANGUAGE, ANY_GROUP, ANY_CHALLENGE))
+        //.filter { it.split(KEY_SEP).size == 4 }
+        //.map { redis[it].toBoolean() }
+        //.filter { it }
+        //.map { it.toString() }
+        .toList()
 
   fun likeDislikes(redis: Jedis) =
     if (useRdbms)
@@ -132,11 +144,6 @@ internal class User private constructor(redis: Jedis?, val id: String, val brows
         //.map { it.toString() }
         .toList()
 
-  fun challenges(redis: Jedis) = redis.scanKeys(challengeAnswersKey(ANY_LANGUAGE, ANY_GROUP, ANY_CHALLENGE)).toList()
-
-  fun invocations(redis: Jedis) =
-    redis.scanKeys(answerHistoryKey(ANY_LANGUAGE, ANY_GROUP, ANY_CHALLENGE, ANY_INVOCATION)).toList()
-
   fun classCodes(redis: Jedis) = redis.smembers(userClassesKey).map { ClassCode(it) }
 
   fun isValidUserInfoKey(redis: Jedis) = redis.hlen(userInfoKey) > 0
@@ -147,10 +154,15 @@ internal class User private constructor(redis: Jedis?, val id: String, val brows
 
   fun passwordResetKey(redis: Jedis): String? = redis.get(userPasswordResetKey)
 
+  fun deletePasswordResetKey(tx: Transaction): Response<Long> = tx.del(userPasswordResetKey)
+
+  fun invocations(redis: Jedis) =
+    redis.scanKeys(answerHistoryKey(ANY_LANGUAGE, ANY_GROUP, ANY_CHALLENGE, ANY_INVOCATION)).toList()
+
+  fun challenges(redis: Jedis) = redis.scanKeys(challengeAnswersKey(ANY_LANGUAGE, ANY_GROUP, ANY_CHALLENGE)).toList()
+
   private fun correctAnswersKey(names: ChallengeNames) =
     correctAnswersKey(names.languageName, names.groupName, names.challengeName)
-
-  fun deletePasswordResetKey(tx: Transaction): Response<Long> = tx.del(userPasswordResetKey)
 
   fun correctAnswersKey(languageName: LanguageName, groupName: GroupName, challengeName: ChallengeName) =
     keyOf(CORRECT_ANSWERS_KEY,
