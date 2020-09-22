@@ -28,7 +28,13 @@ import com.github.readingbat.common.KeyConstants.CLASS_INFO_KEY
 import com.github.readingbat.common.KeyConstants.DESC_FIELD
 import com.github.readingbat.common.KeyConstants.TEACHER_FIELD
 import com.github.readingbat.common.User.Companion.toUser
+import com.github.readingbat.server.ReadingBatServer.usePostgres
 import io.ktor.http.*
+import mu.KLogging
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.and
+import org.jetbrains.exposed.sql.select
+import org.jetbrains.exposed.sql.transactions.transaction
 import redis.clients.jedis.Jedis
 import redis.clients.jedis.Transaction
 
@@ -38,6 +44,8 @@ internal data class ClassCode(val value: String) {
   val classCodeEnrollmentKey by lazy { keyOf(CLASS_CODE_KEY, value) }
   val classInfoKey by lazy { keyOf(CLASS_INFO_KEY, value) }
   val displayedValue get() = if (value == DISABLED_MODE) "" else value
+
+  val classesUsersJoinCond by lazy { Classes.userRef eq Users.id }
 
   fun isValid(redis: Jedis) = redis.exists(classCodeEnrollmentKey) ?: false
 
@@ -68,22 +76,48 @@ internal data class ClassCode(val value: String) {
   }
 
   fun initializeWith(classDesc: String, user: User, tx: Transaction) {
-    tx.hset(classInfoKey, mapOf(DESC_FIELD to classDesc, TEACHER_FIELD to user.userId))
+    if (usePostgres) {
+      // Work done in user.addClassCode()
+    }
+    else {
+      tx.hset(classInfoKey, mapOf(DESC_FIELD to classDesc, TEACHER_FIELD to user.userId))
+    }
   }
 
   fun fetchClassDesc(redis: Jedis, quoted: Boolean = false) =
-    (redis.hget(classInfoKey, DESC_FIELD) ?: "Missing description").let { if (quoted) it.toDoubleQuoted() else it }
+    if (usePostgres)
+      transaction {
+        (Classes
+          .slice(Classes.description)
+          .select { Classes.classCode eq value }
+          .map { it[Classes.description] }
+          .firstOrNull() ?: "").also { logger.info { "fetchClassDesc() returned $it for $value" } }
+      }
+    else {
+      redis.hget(classInfoKey, DESC_FIELD) ?: "Missing description"
+    }
+      .let { if (quoted) it.toDoubleQuoted() else it }
 
   fun toDisplayString(redis: Jedis?): String {
     val classDesc = if (redis.isNotNull()) fetchClassDesc(redis, true) else "Description unavailable"
     return "$classDesc [$value]"
   }
 
-  fun fetchClassTeacherId(redis: Jedis) = redis.hget(classInfoKey, TEACHER_FIELD) ?: ""
+  fun fetchClassTeacherId(redis: Jedis) =
+    if (usePostgres)
+      transaction {
+        ((Classes innerJoin Users)
+          .slice(Users.userId)
+          .select { (Classes.classCode eq value) and classesUsersJoinCond }
+          .map { it[Users.userId] }
+          .firstOrNull() ?: "").also { logger.info { "fetchClassTeacherId() returned $it" } }
+      }
+    else
+      redis.hget(classInfoKey, TEACHER_FIELD) ?: ""
 
   override fun toString() = value
 
-  companion object {
+  companion object : KLogging() {
     internal val DISABLED_CLASS_CODE = ClassCode(DISABLED_MODE)
 
     internal fun newClassCode() = ClassCode(randomId(15))

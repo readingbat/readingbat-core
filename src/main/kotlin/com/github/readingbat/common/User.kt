@@ -167,7 +167,7 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
     else
       redis.smembers(userClassesKey).count()
 
-  fun addClassCreated(classCode: ClassCode, classDesc: String, tx: Transaction) {
+  fun addClassCode(classCode: ClassCode, classDesc: String, tx: Transaction) {
     if (usePostgres)
       transaction {
         Classes.insert { row ->

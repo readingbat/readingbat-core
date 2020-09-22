@@ -173,12 +173,14 @@ internal object TransferUsers : KLogging() {
               require(userId == key.split(KEY_SEP)[1])
               //println("ClassCodes: $key ${redis.smembers(user.userClassesKey)}")
 
+
               redis.smembers(user.userClassesKey)
+                .map { ClassCode(it) }
                 .forEach { classCode ->
                   Classes.insert { row ->
                     row[userRef] = id.value
-                    row[Classes.classCode] = classCode
-                    row[description] = ""
+                    row[Classes.classCode] = classCode.value
+                    row[description] = classCode.fetchClassDesc(redis)
                   }
                 }
             }

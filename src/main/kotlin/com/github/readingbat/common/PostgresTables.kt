@@ -20,6 +20,42 @@ package com.github.readingbat.common
 import org.jetbrains.exposed.dao.id.LongIdTable
 import org.jetbrains.exposed.sql.jodatime.datetime
 
+object BrowserSessions : LongIdTable("browser_sessions") {
+  val created = datetime("created")
+  val updated = datetime("updated")
+  val session_id = text("session_id")
+  val userRef = long("user_ref") // May not have a value
+  val activeClassCode = text("active_class_code")
+  val previousTeacherClassCode = text("previous_teacher_class_code")
+
+  override fun toString(): String = "$id $activeClassCode $previousTeacherClassCode"
+}
+
+object SessionChallengeInfo : LongIdTable("session_challenge_info") {
+  val created = datetime("created")
+  val updated = datetime("updated")
+  val sessionRef = long("session_ref").references(BrowserSessions.id)
+  val md5 = text("md5")
+  val correct = bool("correct")
+  val likeDislike = short("like_dislike")
+  val answersJson = text("answers_json")
+
+  override fun toString(): String = "$id $md5 $correct $likeDislike"
+}
+
+object SessionAnswerHistory : LongIdTable("session_answer_history") {
+  val created = datetime("created")
+  val updated = datetime("updated")
+  val sessionRef = long("session_ref").references(BrowserSessions.id)
+  val md5 = text("md5")
+  val invocation = text("invocation")
+  val correct = bool("correct")
+  val incorrectAttempts = integer("incorrect_attempts")
+  val historyJson = text("history_json")
+
+  override fun toString(): String = "$id $md5 $invocation $correct"
+}
+
 object Users : LongIdTable() {
   val created = datetime("created")
   val updated = datetime("updated")
@@ -33,43 +69,20 @@ object Users : LongIdTable() {
   override fun toString(): String = userId.toString()
 }
 
-object BrowserSessions : LongIdTable("browser_sessions") {
-  val created = datetime("created")
-  val updated = datetime("updated")
-  val session_id = text("session_id")
-  val userRef = long("user_ref")
-  val activeClassCode = text("active_class_code")
-  val previousTeacherClassCode = text("previous_teacher_class_code")
-
-  override fun toString(): String = "$id $activeClassCode $previousTeacherClassCode"
-}
-
-object UserChallengeInfo : LongIdTable("user_challenge_info") {
-  val created = datetime("created")
-  val updated = datetime("updated")
-  val userRef = long("user_ref")
-  val md5 = text("md5")
-  val correct = bool("correct")
-  val likeDislike = short("like_dislike")
-  val answersJson = text("answers_json")
-
-  override fun toString(): String = "$id $md5 $correct $likeDislike"
-}
-
 object Classes : LongIdTable("classes") {
   val created = datetime("created")
   val updated = datetime("updated")
-  val userRef = long("user_ref")
+  val userRef = long("user_ref").references(Users.id)
   val classCode = text("class_code")
   val description = text("description")
 
   override fun toString(): String = "$id $classCode"
 }
 
-object SessionChallengeInfo : LongIdTable("session_challenge_info") {
+object UserChallengeInfo : LongIdTable("user_challenge_info") {
   val created = datetime("created")
   val updated = datetime("updated")
-  val sessionRef = long("session_ref")
+  val userRef = long("user_ref").references(Users.id)
   val md5 = text("md5")
   val correct = bool("correct")
   val likeDislike = short("like_dislike")
@@ -81,20 +94,7 @@ object SessionChallengeInfo : LongIdTable("session_challenge_info") {
 object UserAnswerHistory : LongIdTable("user_answer_history") {
   val created = datetime("created")
   val updated = datetime("updated")
-  val userRef = long("user_ref")
-  val md5 = text("md5")
-  val invocation = text("invocation")
-  val correct = bool("correct")
-  val incorrectAttempts = integer("incorrect_attempts")
-  val historyJson = text("history_json")
-
-  override fun toString(): String = "$id $md5 $invocation $correct"
-}
-
-object SessionAnswerHistory : LongIdTable("session_answer_history") {
-  val created = datetime("created")
-  val updated = datetime("updated")
-  val sessionRef = long("session_ref")
+  val userRef = long("user_ref").references(Users.id)
   val md5 = text("md5")
   val invocation = text("invocation")
   val correct = bool("correct")

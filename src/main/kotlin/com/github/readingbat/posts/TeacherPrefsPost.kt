@@ -139,7 +139,7 @@ internal object TeacherPrefsPost : KLogging() {
           classCode.initializeWith(classDesc, user, tx)
 
           // Add classcode to list of classes created by user
-          user.addClassCreated(classCode, classDesc, tx)
+          user.addClassCode(classCode, classDesc, tx)
 
           // Create class with no one enrolled to prevent class from being created a 2nd time
           classCode.addEnrolleePlaceholder(tx)
