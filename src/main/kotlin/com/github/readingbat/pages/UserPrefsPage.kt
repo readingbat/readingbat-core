@@ -248,7 +248,7 @@ internal object UserPrefsPage : KLogging() {
   */
 
   private fun BODY.deleteAccount(user: User, redis: Jedis) {
-    val email = user.email(redis)
+    val email = user.email
     if (email.isNotBlank()) {
       h3 { +"Delete account" }
       div(classes = INDENT_2EM) {

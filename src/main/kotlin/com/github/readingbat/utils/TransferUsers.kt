@@ -156,14 +156,14 @@ internal object TransferUsers : KLogging() {
         .filter { (redis.hget(it, NAME_FIELD) ?: "").isNotBlank() }
         .onEach { ukey ->
           val userId = ukey.split(KEY_SEP)[1]
-          val user1 = userId.toUser(null)
+          val user1 = userId.toUser(redis, null)
           val id =
             Users.insertAndGetId { record ->
               record[Users.userId] = userId
-              record[email] = user1.email(redis).value
-              record[name] = user1.name(redis).value
-              record[salt] = user1.salt(redis)
-              record[digest] = user1.digest(redis)
+              record[email] = user1.email.value
+              record[name] = user1.name.value
+              record[salt] = user1.salt
+              record[digest] = user1.digest
               record[enrolledClassCode] = user1.fetchEnrolledClassCode(redis).value
             }
           println("Created user id: $id")
@@ -171,7 +171,7 @@ internal object TransferUsers : KLogging() {
           redis.scanKeys(user1.userInfoBrowserQueryKey)
             .forEach { bkey ->
               val sessions_id = bkey.split(KEY_SEP)[2]
-              val user2 = userId.toUser(BrowserSession(sessions_id))
+              val user2 = userId.toUser(redis, BrowserSession(sessions_id))
               val activeClassCode = user2.fetchActiveClassCode(redis)
               val previousClassCode = user2.fetchPreviousTeacherClassCode(redis)
               //println("$bkey $browser_sessions_id ${redis.hgetAll(user2.browserSpecificUserInfoKey)} $activeClassCode $previousClassCode")

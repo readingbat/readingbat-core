@@ -71,7 +71,7 @@ object ReadingBatServer : KLogging() {
   internal val adminUsers = mutableListOf<String>()
   internal val contentReadCount = AtomicInteger(0)
   internal val metrics by lazy { Metrics() }
-  internal val useRdbms = true
+  internal val useRdbms = false
 
   internal var redisPool: JedisPool? = null
 

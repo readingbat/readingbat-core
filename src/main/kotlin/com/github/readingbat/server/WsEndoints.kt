@@ -46,7 +46,6 @@ import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.agentLaunchId
 import com.github.readingbat.posts.ChallengeHistory
 import com.github.readingbat.server.ReadingBatServer.redisPool
-import com.github.readingbat.server.ServerUtils.fetchEmail
 import com.github.readingbat.server.ServerUtils.fetchUser
 import com.github.readingbat.server.ServerUtils.rows
 import io.ktor.features.*
@@ -110,7 +109,7 @@ internal object WsEndoints : KLogging() {
       val finished = BooleanMonitor(false)
       val remote = call.request.origin.remoteHost
       val user = fetchUser() ?: throw InvalidRequestException("Null user")
-      val email = fetchEmail()
+      val email = user.email // fetchEmail()
       val path = content.functionInfoByMd5(challengeMd5)?.challenge?.path ?: UNKNOWN
       val desc = "${pathOf(CHALLENGE_ENDPOINT, classCode, challengeMd5)} ($path) - $remote - $email"
 
@@ -204,7 +203,7 @@ internal object WsEndoints : KLogging() {
       val finished = AtomicBoolean(false)
       val remote = call.request.origin.remoteHost
       val user = fetchUser() ?: throw InvalidRequestException("Null user")
-      val email = fetchEmail()
+      val email = user.email //fetchEmail()
       val desc = "${pathOf(CHALLENGE_ENDPOINT, languageName, groupName, classCode)} - $remote - $email"
 
       validateContext(languageName, groupName, classCode, null, user, "Class statistics")
@@ -343,7 +342,7 @@ internal object WsEndoints : KLogging() {
       val finished = AtomicBoolean(false)
       val remote = call.request.origin.remoteHost
       val user = fetchUser() ?: throw InvalidRequestException("Null user")
-      val email = fetchEmail()
+      val email = user.email //fetchEmail()
       val desc = "${pathOf(CLASS_SUMMARY_ENDPOINT, languageName, groupName, classCode)} - $remote - $email"
 
       validateContext(languageName, groupName, classCode, null, user, "Class summary")
@@ -448,7 +447,7 @@ internal object WsEndoints : KLogging() {
       val finished = AtomicBoolean(false)
       val remote = call.request.origin.remoteHost
       val user = fetchUser() ?: throw InvalidRequestException("Null user")
-      val email = fetchEmail()
+      val email = user.email //fetchEmail()
       val desc = "${pathOf(CLASS_SUMMARY_ENDPOINT, languageName, student.id, classCode)} - $remote - $email"
 
       validateContext(languageName, null, classCode, student, user, "Student sumary")

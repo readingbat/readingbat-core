@@ -79,7 +79,8 @@ internal object UserPrefsPost : KLogging() {
         passwordError
       }
       else {
-        val (salt, digest) = user.lookupDigestInfoByUser(redis)
+        val salt = user.salt
+        val digest = user.digest
         if (salt.isNotEmpty() && digest.isNotEmpty() && digest == currPassword.sha256(salt)) {
           val newDigest = newPassword.sha256(salt)
           user.assignDigest(redis, newDigest)
@@ -116,7 +117,7 @@ internal object UserPrefsPost : KLogging() {
     }
 
   private fun PipelineCall.deleteAccount(content: ReadingBatContent, user: User, redis: Jedis): String {
-    val email = user.email(redis)
+    val email = user.email
     logger.info { "Deleting user $email" }
     user.deleteUser(redis)
     call.sessions.clear<UserPrincipal>()

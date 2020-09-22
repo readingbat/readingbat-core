@@ -132,9 +132,9 @@ internal object PasswordResetPost : KLogging() {
       val passwordResetKey = resetId.passwordResetKey
       val email = Email(redis.get(passwordResetKey) ?: throw ResetPasswordException(INVALID_RESET_ID))
       val user = lookupUserByEmail(email, redis) ?: throw ResetPasswordException("Unable to find $email")
-      val salt = user.salt(redis)
+      val salt = user.salt
       val newDigest = newPassword.sha256(salt)
-      val oldDigest = user.digest(redis)
+      val oldDigest = user.digest
 
       if (!user.isValidUser(redis))
         throw ResetPasswordException("Invalid user", resetId)

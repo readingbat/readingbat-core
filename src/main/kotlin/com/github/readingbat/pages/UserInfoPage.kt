@@ -59,8 +59,8 @@ internal object UserInfoPage {
               br { +"Must be logged in for this function" }
             }
             else -> {
-              val name = user.name(redis)
-              val email = user.email(redis)
+              val name = user.name
+              val email = user.email
               val browserSessions = user.browserSessions(redis).map { it.split(KEY_SEP).last() }
               val idCnt = browserSessions.size
               val challenges = user.challenges(redis)

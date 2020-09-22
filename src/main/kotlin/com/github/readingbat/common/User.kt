@@ -17,6 +17,7 @@
 
 package com.github.readingbat.common
 
+import com.github.pambrose.common.redis.RedisUtils.withRedisPool
 import com.github.pambrose.common.util.isNotNull
 import com.github.pambrose.common.util.isNull
 import com.github.pambrose.common.util.newStringSalt
@@ -44,12 +45,13 @@ import com.github.readingbat.posts.ChallengeResults
 import com.github.readingbat.posts.DashboardInfo
 import com.github.readingbat.server.*
 import com.github.readingbat.server.ChallengeName.Companion.ANY_CHALLENGE
-import com.github.readingbat.server.Email.Companion.EMPTY_EMAIL
-import com.github.readingbat.server.FullName.Companion.EMPTY_FULLNAME
+import com.github.readingbat.server.Email.Companion.UNKNOWN_EMAIL
+import com.github.readingbat.server.FullName.Companion.UNKNOWN_FULLNAME
 import com.github.readingbat.server.GroupName.Companion.ANY_GROUP
 import com.github.readingbat.server.Invocation.Companion.ANY_INVOCATION
 import com.github.readingbat.server.LanguageName.Companion.ANY_LANGUAGE
 import com.github.readingbat.server.ReadingBatServer.adminUsers
+import com.github.readingbat.server.ReadingBatServer.redisPool
 import com.github.readingbat.server.ReadingBatServer.useRdbms
 import com.github.readingbat.server.ResetId.Companion.EMPTY_RESET_ID
 import com.github.readingbat.server.WsEndoints.classTopicName
@@ -67,11 +69,27 @@ import kotlin.contracts.contract
 import kotlin.time.measureTime
 import kotlin.time.minutes
 
-internal class User private constructor(val id: String, val browserSession: BrowserSession?) {
+internal class User private constructor(redis: Jedis?, val id: String, val browserSession: BrowserSession?) {
+  private val userInfoKey = keyOf(USER_INFO_KEY, id)
   private val dbmsId: Long
+  private val saltBacking: String
+  private val digestBacking: String
+  val email: Email
+  val name: FullName
+
+  val salt: String
+    get() = if (saltBacking.isBlank()) throw DataException("Missing salt field") else saltBacking
+  val digest: String
+    get() = if (digestBacking.isBlank()) throw DataException("Missing digest field") else digestBacking
+
 
   init {
     measureTime {
+      email = redis?.hget(userInfoKey, EMAIL_FIELD)?.let { Email(it) } ?: UNKNOWN_EMAIL
+      name = redis?.hget(userInfoKey, NAME_FIELD)?.let { FullName(it) } ?: UNKNOWN_FULLNAME
+      saltBacking = redis?.hget(userInfoKey, SALT_FIELD) ?: ""
+      digestBacking = redis?.hget(userInfoKey, DIGEST_FIELD) ?: ""
+
       dbmsId =
         if (useRdbms)
           transaction {
@@ -85,7 +103,6 @@ internal class User private constructor(val id: String, val browserSession: Brow
     }.also { logger.info { "Selected userId in $it" } }
   }
 
-  private val userInfoKey by lazy { keyOf(USER_INFO_KEY, id) }
   private val userInfoBrowserKey by lazy { keyOf(USER_INFO_BROWSER_KEY, id, browserSession?.id ?: UNASSIGNED) }
   internal val userInfoBrowserQueryKey by lazy { keyOf(USER_INFO_BROWSER_KEY, id, "*") }
   internal val browserSpecificUserInfoKey by lazy {
@@ -121,20 +138,6 @@ internal class User private constructor(val id: String, val browserSession: Brow
     redis.scanKeys(answerHistoryKey(ANY_LANGUAGE, ANY_GROUP, ANY_CHALLENGE, ANY_INVOCATION)).toList()
 
   fun classCodes(redis: Jedis) = redis.smembers(userClassesKey).map { ClassCode(it) }
-
-  fun email(redis: Jedis) = redis.hget(userInfoKey, EMAIL_FIELD)?.let { Email(it) } ?: EMPTY_EMAIL
-
-  fun name(redis: Jedis) = redis.hget(userInfoKey, NAME_FIELD)?.let { FullName(it) } ?: EMPTY_FULLNAME
-
-  fun salt(redis: Jedis) = redis.hget(userInfoKey, SALT_FIELD) ?: throw DataException("Missing salt field: $this")
-
-  fun digest(redis: Jedis) = redis.hget(userInfoKey, DIGEST_FIELD) ?: throw DataException("Missing digest field: $this")
-
-  fun lookupDigestInfoByUser(redis: Jedis): Pair<String, String> {
-    val salt = redis.hget(userInfoKey, SALT_FIELD) ?: ""
-    val digest = redis.hget(userInfoKey, DIGEST_FIELD) ?: ""
-    return salt to digest
-  }
 
   fun isValidUserInfoKey(redis: Jedis) = redis.hlen(userInfoKey) > 0
 
@@ -309,8 +312,6 @@ internal class User private constructor(val id: String, val browserSession: Brow
   }
 
   fun deleteUser(redis: Jedis) {
-    val name = name(redis)
-    val email = email(redis)
     val classCodes = classCodes(redis)
     val browserSessions = browserSessions(redis)
     val correctAnswers = correctAnswers(redis)
@@ -425,9 +426,14 @@ internal class User private constructor(val id: String, val browserSession: Brow
 
     internal val gson = Gson()
 
-    fun String.toUser(browserSession: BrowserSession?) = User(this, browserSession)
+    fun String.toUser(redis: Jedis, browserSession: BrowserSession?) = User(redis, this, browserSession)
 
-    private fun newUser(browserSession: BrowserSession?) = User(randomId(25), browserSession)
+    fun String.toUser(browserSession: BrowserSession?) =
+      redisPool?.withRedisPool { redis ->
+        User(redis, this, browserSession)
+      } ?: User(null, this, browserSession)
+
+    private fun newUser(browserSession: BrowserSession?) = User(null, randomId(25), browserSession)
 
     fun User?.fetchActiveClassCode(redis: Jedis?): ClassCode {
       return when {
@@ -611,7 +617,8 @@ internal class User private constructor(val id: String, val browserSession: Brow
         classCode.isEnabled -> {
           // Check to see if the teacher that owns class has it set as their active class in one of the sessions
           val teacherId = classCode.fetchClassTeacherId(redis)
-          val publish = teacherId.isNotEmpty() && teacherId.toUser(null).interestedInActiveClassCode(classCode, redis)
+          val publish =
+            teacherId.isNotEmpty() && teacherId.toUser(redis, null).interestedInActiveClassCode(classCode, redis)
           logger.debug { "Publishing teacherId: $teacherId for $classCode" }
           publish
         }
@@ -630,14 +637,14 @@ internal class User private constructor(val id: String, val browserSession: Brow
 
     fun lookupUserByEmail(email: Email, redis: Jedis): User? {
       val id = redis.get(email.userEmailKey) ?: ""
-      return if (id.isNotEmpty()) id.toUser(null) else null
+      return if (id.isNotEmpty()) id.toUser(redis, null) else null
     }
   }
 
   internal data class ChallengeAnswers(val id: String, val correctAnswers: MutableMap<String, String> = mutableMapOf())
 }
 
-internal fun User?.isAdminUser(redis: Jedis) = isValidUser(redis) && email(redis).value in adminUsers
+internal fun User?.isAdminUser(redis: Jedis) = isValidUser(redis) && email.value in adminUsers
 
 internal fun User?.isNotAdminUser(redis: Jedis) = !isAdminUser(redis)
 

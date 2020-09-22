@@ -49,7 +49,7 @@ internal data class ClassCode(val value: String) {
     else
       (redis.smembers(classCodeEnrollmentKey) ?: emptySet())
         .filter { it.isNotEmpty() }
-        .map { it.toUser(null) }
+        .map { it.toUser(redis, null) }
 
   fun addEnrolleePlaceholder(tx: Transaction) {
     tx.sadd(classCodeEnrollmentKey, "")

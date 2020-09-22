@@ -23,7 +23,6 @@ import com.github.pambrose.common.response.redirectTo
 import com.github.pambrose.common.response.respondWith
 import com.github.pambrose.common.util.Version.Companion.versionDesc
 import com.github.pambrose.common.util.isNotNull
-import com.github.pambrose.common.util.isNull
 import com.github.pambrose.common.util.md5
 import com.github.readingbat.common.*
 import com.github.readingbat.common.Constants.UNKNOWN
@@ -58,15 +57,6 @@ internal object ServerUtils : KLogging() {
 
   fun PipelineCall.queryParam(key: String, default: String = "") = call.request.queryParameters[key] ?: default
 
-  // Calls for PipelineCall
-  fun PipelineCall.fetchEmail() =
-    redisPool?.withRedisPool { redis ->
-      if (redis.isNull())
-        UNKNOWN
-      else
-        fetchUser()?.email(redis)?.value ?: UNKNOWN
-    } ?: UNKNOWN
-
   fun PipelineCall.fetchUser(loginAttempt: Boolean = false): User? =
     fetchPrincipal(loginAttempt)?.userId?.toUser(call.browserSession)
 
@@ -76,25 +66,19 @@ internal object ServerUtils : KLogging() {
   private fun PipelineCall.assignPrincipal(): UserPrincipal? =
     call.principal<UserPrincipal>().apply { if (isNotNull()) call.sessions.set(this) }  // Set the cookie
 
-  // Calls for WebSocketServerSession
-  fun WebSocketServerSession.fetchEmail() =
-    redisPool?.withRedisPool { redis ->
-      if (redis.isNull())
-        UNKNOWN
-      else
-        fetchUser()?.email(redis)?.value ?: UNKNOWN
-    } ?: UNKNOWN
-
   fun WebSocketServerSession.fetchUser(): User? = call.userPrincipal?.userId?.toUser(call.browserSession)
 
   // Calls for ApplicationCall
-  fun ApplicationCall.fetchEmail() =
-    redisPool?.withRedisPool { redis ->
+  fun ApplicationCall.fetchEmail() = fetchUser()?.email?.value ?: UNKNOWN
+  /*
+  redisPool?.withRedisPool { redis ->
       if (redis.isNull())
         UNKNOWN
       else
-        fetchUser()?.email(redis)?.value ?: UNKNOWN
+      fetchUser()?.email(redis)?.value ?: UNKNOWN
     } ?: UNKNOWN
+
+   */
 
   fun ApplicationCall.fetchUser(): User? = userPrincipal?.userId?.toUser(browserSession)
 

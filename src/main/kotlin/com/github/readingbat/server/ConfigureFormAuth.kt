@@ -80,14 +80,15 @@ internal object ConfigureFormAuth : KLogging() {
             var principal: UserPrincipal? = null
             val user = lookupUserByEmail(Email(cred.name), redis)
             if (user.isNotNull()) {
-              val (salt, digest) = user.lookupDigestInfoByUser(redis)
+              val salt = user.salt
+              val digest = user.digest
               if (salt.isNotBlank() && digest.isNotBlank() && digest == cred.password.sha256(salt)) {
                 logger.debug { "Found user ${cred.name} ${user.id}" }
                 principal = UserPrincipal(user.id)
               }
             }
 
-            logger.info { "Login ${if (principal.isNull()) "failure" else "success for $user ${user?.email(redis) ?: UNKNOWN}"}" }
+            logger.info { "Login ${if (principal.isNull()) "failure" else "success for $user ${user?.email ?: UNKNOWN}"}" }
 
             if (principal.isNull())
               failedLoginLimiter.acquire() // may block

@@ -24,6 +24,7 @@ import com.github.pambrose.common.util.isNotValidEmail
 import com.github.pambrose.common.util.randomId
 import com.github.pambrose.common.util.sha256
 import com.github.readingbat.common.AuthName.FORM
+import com.github.readingbat.common.Constants.UNKNOWN
 import com.github.readingbat.common.Endpoints.CHALLENGE_ROOT
 import com.github.readingbat.common.Endpoints.PLAYGROUND_ROOT
 import com.github.readingbat.common.KeyConstants.RESET_KEY
@@ -253,6 +254,7 @@ inline class FullName(val value: String) {
 
   companion object {
     val EMPTY_FULLNAME = FullName("")
+    val UNKNOWN_FULLNAME = FullName(UNKNOWN)
     fun Parameters.getFullName(name: String) = this[name]?.let { FullName(it) } ?: EMPTY_FULLNAME
   }
 }
@@ -281,6 +283,7 @@ inline class Email(val value: String) {
 
   companion object {
     val EMPTY_EMAIL = Email("")
+    val UNKNOWN_EMAIL = Email(UNKNOWN)
     fun Parameters.getEmail(name: String) = this[name]?.let { Email(it) } ?: EMPTY_EMAIL
   }
 }

@@ -99,7 +99,7 @@ internal object HelpAndLogin {
 
   private fun TABLE.logout(user: User, loginPath: String, redis: Jedis) {
     tr {
-      val email = user.email(redis)
+      val email = user.email
       val elems = email.value.split("@")
       td {
         +elems[0]

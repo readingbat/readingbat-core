@@ -73,10 +73,10 @@ internal object TeacherPrefsPost : KLogging() {
         }
         REMOVE_FROM_CLASS -> {
           val studentId = parameters[USER_ID_PARAM] ?: throw InvalidConfigurationException("Missing: $USER_ID_PARAM")
-          val student = studentId.toUser(null)
+          val student = studentId.toUser(redis, null)
           val classCode = student.fetchEnrolledClassCode(redis)
           student.withdrawFromClass(classCode, redis)
-          val msg = "${student.name(redis)} removed from class ${classCode.toDisplayString(redis)}"
+          val msg = "${student.name} removed from class ${classCode.toDisplayString(redis)}"
           logger.info { msg }
           classSummaryPage(content, user, redis, classCode, msg = Message(msg))
         }
@@ -180,8 +180,8 @@ internal object TeacherPrefsPost : KLogging() {
         val activeClassCode = user.fetchActiveClassCode(redis)
         val enrollees = classCode.fetchEnrollees(redis)
 
-        val email = user.email(redis)
-        val name = user.name(redis)
+        val email = user.email
+        val name = user.name
 
         redis.multi()
           .also { tx ->
