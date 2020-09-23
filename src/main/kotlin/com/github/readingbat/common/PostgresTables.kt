@@ -27,8 +27,6 @@ object BrowserSessions : LongIdTable("browser_sessions") {
   val userRef = long("user_ref") // May not have a value
   val activeClassCode = text("active_class_code")
   val previousTeacherClassCode = text("previous_teacher_class_code")
-
-  override fun toString(): String = "$id $activeClassCode $previousTeacherClassCode"
 }
 
 object SessionChallengeInfo : LongIdTable("session_challenge_info") {
@@ -39,8 +37,6 @@ object SessionChallengeInfo : LongIdTable("session_challenge_info") {
   val correct = bool("correct")
   val likeDislike = short("like_dislike")
   val answersJson = text("answers_json")
-
-  override fun toString(): String = "$id $md5 $correct $likeDislike"
 }
 
 object SessionAnswerHistory : LongIdTable("session_answer_history") {
@@ -52,8 +48,6 @@ object SessionAnswerHistory : LongIdTable("session_answer_history") {
   val correct = bool("correct")
   val incorrectAttempts = integer("incorrect_attempts")
   val historyJson = text("history_json")
-
-  override fun toString(): String = "$id $md5 $invocation $correct"
 }
 
 object Users : LongIdTable() {
@@ -65,18 +59,6 @@ object Users : LongIdTable() {
   val salt = text("salt")
   val digest = text("digest")
   val enrolledClassCode = text("enrolled_class_code")
-
-  override fun toString(): String = userId.toString()
-}
-
-object Classes : LongIdTable("classes") {
-  val created = datetime("created")
-  val updated = datetime("updated")
-  val userRef = long("user_ref").references(Users.id)
-  val classCode = text("class_code")
-  val description = text("description")
-
-  override fun toString(): String = "$id $classCode"
 }
 
 object UserChallengeInfo : LongIdTable("user_challenge_info") {
@@ -87,8 +69,6 @@ object UserChallengeInfo : LongIdTable("user_challenge_info") {
   val correct = bool("correct")
   val likeDislike = short("like_dislike")
   val answersJson = text("answers_json")
-
-  override fun toString(): String = "$id $md5 $correct $likeDislike"
 }
 
 object UserAnswerHistory : LongIdTable("user_answer_history") {
@@ -100,6 +80,20 @@ object UserAnswerHistory : LongIdTable("user_answer_history") {
   val correct = bool("correct")
   val incorrectAttempts = integer("incorrect_attempts")
   val historyJson = text("history_json")
-
-  override fun toString(): String = "$id $md5 $invocation $correct"
 }
+
+object Classes : LongIdTable("classes") {
+  val created = datetime("created")
+  val updated = datetime("updated")
+  val userRef = long("user_ref").references(Users.id)
+  val classCode = text("class_code")
+  val description = text("description")
+}
+
+object Enrollees : LongIdTable("classes") {
+  val created = datetime("created")
+  val classesRef = long("classes_ref").references(Users.id)
+  val userRef = long("user_ref").references(Users.id)
+}
+
+

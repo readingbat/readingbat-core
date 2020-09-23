@@ -61,6 +61,8 @@ import com.google.gson.Gson
 import mu.KLogging
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.joda.time.DateTime
+import org.joda.time.DateTimeZone
 import redis.clients.jedis.Jedis
 import redis.clients.jedis.Response
 import redis.clients.jedis.Transaction
@@ -70,12 +72,13 @@ import kotlin.time.measureTime
 import kotlin.time.minutes
 
 internal class User private constructor(redis: Jedis?, val userId: String, val browserSession: BrowserSession?) {
-  private val userInfoKey = keyOf(USER_INFO_KEY, userId)
-  private val dbmsId: Long
-  private val saltBacking: String
-  private var digestBacking: String
+  val dbmsId: Long
   val email: Email
   val name: FullName
+  private val saltBacking: String
+  private var digestBacking: String
+
+  private val userInfoKey = keyOf(USER_INFO_KEY, userId)
 
   val salt: String
     get() = if (saltBacking.isBlank()) throw DataException("Missing salt field") else saltBacking
@@ -87,7 +90,8 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
       if (usePostgres) {
         val row =
           transaction {
-            Users.slice(Users.id, Users.email, Users.name, Users.salt, Users.digest)
+            Users
+              .slice(Users.id, Users.email, Users.name, Users.salt, Users.digest)
               .select { Users.userId eq this@User.userId }
               .firstOrNull()
           }
@@ -120,7 +124,8 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
   fun browserSessions(redis: Jedis) =
     if (usePostgres)
       transaction {
-        BrowserSessions.slice(BrowserSessions.session_id)
+        BrowserSessions
+          .slice(BrowserSessions.session_id)
           .select { (BrowserSessions.userRef eq dbmsId) }
           .map { it[BrowserSessions.session_id].toString() }
       }
@@ -130,7 +135,8 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
   fun correctAnswers(redis: Jedis) =
     if (usePostgres)
       transaction {
-        UserChallengeInfo.slice(UserChallengeInfo.correct)
+        UserChallengeInfo
+          .slice(UserChallengeInfo.correct)
           .select { (UserChallengeInfo.userRef eq dbmsId) and UserChallengeInfo.correct }
           .map { it.toString() }
       }
@@ -160,7 +166,8 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
   fun classCount(redis: Jedis) =
     if (usePostgres)
       transaction {
-        Classes.slice(Classes.classCode)
+        Classes
+          .slice(Classes.classCode)
           .select { Classes.userRef eq dbmsId }
           .count()
       }
@@ -170,11 +177,12 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
   fun addClassCode(classCode: ClassCode, classDesc: String, tx: Transaction) {
     if (usePostgres)
       transaction {
-        Classes.insert { row ->
-          row[userRef] = dbmsId
-          row[Classes.classCode] = classCode.value
-          row[description] = classDesc
-        }
+        Classes
+          .insert { row ->
+            row[userRef] = dbmsId
+            row[Classes.classCode] = classCode.value
+            row[description] = classDesc
+          }
       }
     else
       tx.sadd(userClassesKey, classCode.value)
@@ -183,7 +191,8 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
   fun classCodes(redis: Jedis) =
     if (usePostgres)
       transaction {
-        Classes.slice(Classes.classCode)
+        Classes
+          .slice(Classes.classCode)
           .select { Classes.userRef eq dbmsId }
           .map { ClassCode(it[Classes.classCode]) }
       }
@@ -204,10 +213,12 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
   fun assignDigest(tx: Transaction, newDigest: String) {
     if (usePostgres)
       transaction {
-        Users.update({ Users.id eq dbmsId }) { row ->
-          row[digest] = newDigest
-          digestBacking = newDigest
-        }
+        Users
+          .update({ Users.id eq dbmsId }) { row ->
+            row[updated] = DateTime.now(DateTimeZone.UTC)
+            row[digest] = newDigest
+            digestBacking = newDigest
+          }
       }
     else
       tx.hset(userInfoKey, DIGEST_FIELD, newDigest)

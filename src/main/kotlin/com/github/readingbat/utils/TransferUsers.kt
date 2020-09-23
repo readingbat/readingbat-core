@@ -158,14 +158,15 @@ internal object TransferUsers : KLogging() {
           val userId = ukey.split(KEY_SEP)[1]
           val user = userId.toUser(redis, null)
           val id =
-            Users.insertAndGetId { row ->
-              row[Users.userId] = userId
-              row[email] = user.email.value
-              row[name] = user.name.value
-              row[salt] = user.salt
-              row[digest] = user.digest
-              row[enrolledClassCode] = user.fetchEnrolledClassCode(redis).value
-            }
+            Users
+              .insertAndGetId { row ->
+                row[Users.userId] = userId
+                row[email] = user.email.value
+                row[name] = user.name.value
+                row[salt] = user.salt
+                row[digest] = user.digest
+                row[enrolledClassCode] = user.fetchEnrolledClassCode(redis).value
+              }
           println("Created user id: $id")
 
           redis.scanKeys(user.userClassesKey)
@@ -177,11 +178,12 @@ internal object TransferUsers : KLogging() {
               redis.smembers(user.userClassesKey)
                 .map { ClassCode(it) }
                 .forEach { classCode ->
-                  Classes.insert { row ->
-                    row[userRef] = id.value
-                    row[Classes.classCode] = classCode.value
-                    row[description] = classCode.fetchClassDesc(redis)
-                  }
+                  Classes
+                    .insert { row ->
+                      row[userRef] = id.value
+                      row[Classes.classCode] = classCode.value
+                      row[description] = classCode.fetchClassDesc(redis)
+                    }
                 }
             }
 
@@ -194,12 +196,13 @@ internal object TransferUsers : KLogging() {
               val previousClassCode = browserUser.fetchPreviousTeacherClassCode(redis)
               //println("$key $browser_sessions_id ${redis.hgetAll(user2.browserSpecificUserInfoKey)} $activeClassCode $previousClassCode")
 
-              BrowserSessions.upsert(conflictIndex = browserSessionIndex) { row ->
-                row[userRef] = id.value
-                row[session_id] = sessions_id
-                row[BrowserSessions.activeClassCode] = activeClassCode.value
-                row[previousTeacherClassCode] = previousClassCode.value
-              }
+              BrowserSessions
+                .upsert(conflictIndex = browserSessionIndex) { row ->
+                  row[userRef] = id.value
+                  row[session_id] = sessions_id
+                  row[BrowserSessions.activeClassCode] = activeClassCode.value
+                  row[previousTeacherClassCode] = previousClassCode.value
+                }
             }
 
           redis.scanKeys(keyOf(CORRECT_ANSWERS_KEY, AUTH_KEY, userId, "*"))
@@ -208,12 +211,13 @@ internal object TransferUsers : KLogging() {
               require(userId == key.split(KEY_SEP)[2])
               //println("$key userId ${redis[key]}")
 
-              UserChallengeInfo.upsert(conflictIndex = userChallengeIndex) { row ->
-                row[userRef] = id.value
-                row[md5] = key.split(KEY_SEP)[3]
-                row[updated] = DateTime.now(UTC)
-                row[correct] = redis[key].toBoolean()
-              }
+              UserChallengeInfo
+                .upsert(conflictIndex = userChallengeIndex) { row ->
+                  row[userRef] = id.value
+                  row[md5] = key.split(KEY_SEP)[3]
+                  row[updated] = DateTime.now(UTC)
+                  row[correct] = redis[key].toBoolean()
+                }
             }
 
           redis.scanKeys(keyOf(LIKE_DISLIKE_KEY, AUTH_KEY, userId, "*"))
@@ -222,12 +226,13 @@ internal object TransferUsers : KLogging() {
               require(userId == key.split(KEY_SEP)[2])
               //println("$key userId ${redis[key]}")
 
-              UserChallengeInfo.upsert(conflictIndex = userChallengeIndex) { row ->
-                row[userRef] = id.value
-                row[md5] = key.split(KEY_SEP)[3]
-                row[updated] = DateTime.now(UTC)
-                row[likeDislike] = redis[key].toShort()
-              }
+              UserChallengeInfo
+                .upsert(conflictIndex = userChallengeIndex) { row ->
+                  row[userRef] = id.value
+                  row[md5] = key.split(KEY_SEP)[3]
+                  row[updated] = DateTime.now(UTC)
+                  row[likeDislike] = redis[key].toShort()
+                }
             }
 
           redis.scanKeys(keyOf(CHALLENGE_ANSWERS_KEY, AUTH_KEY, userId, "*"))
@@ -236,12 +241,13 @@ internal object TransferUsers : KLogging() {
               require(userId == key.split(KEY_SEP)[2])
               //println("$key ${redis.hgetAll(key)}")
 
-              UserChallengeInfo.upsert(conflictIndex = userChallengeIndex) { row ->
-                row[userRef] = id.value
-                row[md5] = key.split(KEY_SEP)[3]
-                row[updated] = DateTime.now(UTC)
-                row[answersJson] = gson.toJson(redis.hgetAll(key))
-              }
+              UserChallengeInfo
+                .upsert(conflictIndex = userChallengeIndex) { row ->
+                  row[userRef] = id.value
+                  row[md5] = key.split(KEY_SEP)[3]
+                  row[updated] = DateTime.now(UTC)
+                  row[answersJson] = gson.toJson(redis.hgetAll(key))
+                }
             }
 
           // md5 has names and invocation in it
@@ -251,16 +257,17 @@ internal object TransferUsers : KLogging() {
               require(userId == key.split(KEY_SEP)[2])
               //println("$key ${redis.get(key)}")
 
-              UserAnswerHistory.insertAndGetId() { row ->
-                val history = gson.fromJson(redis[key], ChallengeHistory::class.java)
+              UserAnswerHistory
+                .insertAndGetId() { row ->
+                  val history = gson.fromJson(redis[key], ChallengeHistory::class.java)
 
-                row[userRef] = id.value
-                row[md5] = key.split(KEY_SEP)[3]
-                row[invocation] = history.invocation.value
-                row[correct] = history.correct
-                row[incorrectAttempts] = history.incorrectAttempts
-                row[historyJson] = gson.toJson(history.answers)
-              }
+                  row[userRef] = id.value
+                  row[md5] = key.split(KEY_SEP)[3]
+                  row[invocation] = history.invocation.value
+                  row[correct] = history.correct
+                  row[incorrectAttempts] = history.incorrectAttempts
+                  row[historyJson] = gson.toJson(history.answers)
+                }
             }
         }
         .forEach {
