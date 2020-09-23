@@ -37,6 +37,7 @@ import com.github.readingbat.common.User.Companion.gson
 import com.github.readingbat.common.User.Companion.toUser
 import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.posts.ChallengeHistory
+import com.github.readingbat.server.ReadingBatServer.usePostgres
 import mu.KLogging
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.statements.InsertStatement
@@ -58,6 +59,9 @@ internal object TransferUsers : KLogging() {
 
   @JvmStatic
   fun main(args: Array<String>) {
+
+    usePostgres = false
+
     Database.connect(hikari())
 
     transaction {

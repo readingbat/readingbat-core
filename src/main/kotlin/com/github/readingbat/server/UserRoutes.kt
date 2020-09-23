@@ -259,17 +259,17 @@ internal fun Routing.userRoutes(metrics: Metrics, contentSrc: () -> ReadingBatCo
     }
   }
 
-  // RESET_ID is passed here when user clicks on email URL
-  get(PASSWORD_RESET_ENDPOINT, metrics) {
-    respondWithRedisCheck { redis -> passwordResetPage(contentSrc(), ResetId(queryParam(RESET_ID_PARAM)), redis) }
+  post(PASSWORD_CHANGE_ENDPOINT) {
+    respondWithSuspendingRedisCheck { redis -> updatePassword(contentSrc(), redis) }
   }
 
   post(PASSWORD_RESET_ENDPOINT) {
     respondWithSuspendingRedisCheck { redis -> sendPasswordReset(contentSrc(), redis) }
   }
 
-  post(PASSWORD_CHANGE_ENDPOINT) {
-    respondWithSuspendingRedisCheck { redis -> updatePassword(contentSrc(), redis) }
+  // RESET_ID is passed here when user clicks on email URL
+  get(PASSWORD_RESET_ENDPOINT, metrics) {
+    respondWithRedisCheck { redis -> passwordResetPage(contentSrc(), ResetId(queryParam(RESET_ID_PARAM)), redis) }
   }
 
   get(LOGOUT_ENDPOINT, metrics) {

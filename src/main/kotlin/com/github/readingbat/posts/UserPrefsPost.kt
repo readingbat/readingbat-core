@@ -85,8 +85,7 @@ internal object UserPrefsPost : KLogging() {
           if (newDigest == oldDigest)
             Message("New password is the same as the current password", true)
           else {
-            redis.multi()
-              .also { tx -> user.assignDigest(tx, newDigest) }
+            redis.multi().also { tx -> user.assignDigest(tx, newDigest) }
             Message("Password changed")
           }
         }

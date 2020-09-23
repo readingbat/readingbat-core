@@ -63,9 +63,8 @@ import mu.KLogging
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.joda.time.DateTime
-import org.joda.time.DateTimeZone
+import org.joda.time.DateTimeZone.UTC
 import redis.clients.jedis.Jedis
-import redis.clients.jedis.Response
 import redis.clients.jedis.Transaction
 import redis.clients.jedis.params.SetParams
 import kotlin.contracts.contract
@@ -242,27 +241,24 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
     else
       redis.hlen(userInfoKey) > 0
 
-  fun assignDigest(tx: Transaction, newDigest: String) {
-    if (usePostgres)
-      transaction {
-        Users
-          .update({ Users.id eq dbmsId }) { row ->
-            row[updated] = DateTime.now(DateTimeZone.UTC)
-            row[digest] = newDigest
-            digestBacking = newDigest
-          }
+  fun assignDigest(newDigest: String) =
+    Users
+      .update({ Users.id eq dbmsId }) { row ->
+        row[updated] = DateTime.now(UTC)
+        row[digest] = newDigest
+        digestBacking = newDigest
       }
-    else {
-      tx.hset(userInfoKey, DIGEST_FIELD, newDigest)
-      digestBacking = newDigest
-    }
+
+  fun assignDigest(tx: Transaction, newDigest: String) {
+    tx.hset(userInfoKey, DIGEST_FIELD, newDigest)
+    digestBacking = newDigest
   }
 
   private fun assignEnrolledClassCode(classCode: ClassCode) =
     transaction {
       Users
         .update({ Users.id eq dbmsId }) { row ->
-          row[updated] = DateTime.now(DateTimeZone.UTC)
+          row[updated] = DateTime.now(UTC)
           row[enrolledClassCode] = classCode.value
           this@User.enrolledClassCode = classCode
         }
@@ -272,25 +268,6 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
     tx.hset(userInfoKey, ENROLLED_CLASS_CODE_FIELD, classCode.value)
     enrolledClassCode = classCode
   }
-
-  // TODO
-  fun passwordResetKey(redis: Jedis): String? =
-    if (usePostgres)
-      transaction {
-        /*
-        UserAnswerHistory
-          .slice(UserAnswerHistory.md5)
-          .select { UserAnswerHistory.userRef eq dbmsId }
-          .map { it[UserAnswerHistory.md5] }.also { logger.info { "invocations() return ${it.size}" } }
-          .first()
-          */
-        ""
-      }
-    else
-      redis.get(userPasswordResetKey)
-
-  // TODO
-  fun deletePasswordResetKey(tx: Transaction): Response<Long> = tx.del(userPasswordResetKey)
 
   fun challenges(redis: Jedis) =
     if (usePostgres)
@@ -374,7 +351,7 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
       transaction {
         UserSessions
           .update({ (UserSessions.userRef eq dbmsId) and (UserSessions.sessionRef eq sessionDbmsId) }) { row ->
-            row[updated] = DateTime.now(DateTimeZone.UTC)
+            row[updated] = DateTime.now(UTC)
             row[activeClassCode] = classCode.value
             if (resetPreviousClassCode)
               row[previousTeacherClassCode] = classCode.value
@@ -392,7 +369,7 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
       transaction {
         UserSessions
           .update({ (UserSessions.userRef eq dbmsId) and (UserSessions.sessionRef eq sessionDbmsId) }) { row ->
-            row[updated] = DateTime.now(DateTimeZone.UTC)
+            row[updated] = DateTime.now(UTC)
             row[activeClassCode] = DISABLED_CLASS_CODE.value
             row[previousTeacherClassCode] = DISABLED_CLASS_CODE.value
           }
@@ -500,20 +477,38 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
         .filter { classCode -> classDesc == classCode.fetchClassDesc(redis) }
         .none()
 
-  fun savePasswordResetKey(email: Email, previousResetId: ResetId, newResetId: ResetId, redis: Jedis) {
+  fun userPasswordResetId(redis: Jedis): String? =
     if (usePostgres)
       transaction {
-        if (previousResetId.isNotBlank()) {
-          // TODO
-        }
+        PasswordResets
+          .slice(PasswordResets.resetId)
+          .select { PasswordResets.userRef eq dbmsId }
+          .map { it[PasswordResets.resetId] }.also { logger.info { "userPasswordResetId() returned $it" } }
+          .first()
+      }
+    else
+      redis.get(userPasswordResetKey)
+
+  fun deleteUserPasswordResetId() = PasswordResets.deleteWhere { PasswordResets.userRef eq dbmsId }
+
+  fun deleteUserPasswordResetId(tx: Transaction) = tx.del(userPasswordResetKey)
+
+  fun savePasswordResetId(email: Email, previousResetId: ResetId, newResetId: ResetId, redis: Jedis) {
+    if (usePostgres)
+      transaction {
+        PasswordResets
+          .insert { row ->
+            row[updated] = DateTime.now(UTC)
+            row[userRef] = dbmsId
+            row[resetId] = newResetId.value
+            row[PasswordResets.email] = email.value
+          }
       }
     else
       redis.multi()
         .also { tx ->
-          if (previousResetId.isNotBlank()) {
-            tx.del(userPasswordResetKey)
+          if (previousResetId.isNotBlank())
             tx.del(previousResetId.passwordResetKey)
-          }
 
           val expiration = SetParams().ex(15.minutes.inSeconds.toInt())
           tx.set(userPasswordResetKey, newResetId.value, expiration)
@@ -523,7 +518,6 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
         }
   }
 
-  // TODO
   fun deleteUser(redis: Jedis) {
     val classCodes = classCodes(redis)
     val browserSessions = browserSessions(redis)
@@ -532,7 +526,7 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
     val challenges = challenges(redis)
     val invocations = invocations(redis)
 
-    val previousResetId = redis.get(userPasswordResetKey)?.let { ResetId(it) } ?: EMPTY_RESET_ID
+    val previousResetId = userPasswordResetId(redis)?.let { ResetId(it) } ?: EMPTY_RESET_ID
     val enrolleePairs = classCodes.map { it to it.fetchEnrollees(redis) }
 
     logger.info { "Deleting User: $userId $name" }
@@ -548,6 +542,7 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
     val classCode = enrolledClassCode
     val enrolled = classCode.isEnabled && classCode.isValid(redis) && isEnrolled(classCode, redis)
 
+    // TODO
     redis.multi()
       .also { tx ->
         if (previousResetId.isNotBlank()) {

@@ -63,8 +63,8 @@ internal object PasswordResetPage : KLogging() {
       requestPasswordResetPage(content, msg)
     else {
       try {
-        // TODO
         val passwordResetKey = resetId.passwordResetKey
+        // TODO
         val email = Email(redis.get(passwordResetKey) ?: throw ResetPasswordException(INVALID_RESET_ID))
 
         changePasswordPage(content, email, resetId, msg)

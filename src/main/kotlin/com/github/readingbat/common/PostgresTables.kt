@@ -101,4 +101,10 @@ object Enrollees : LongIdTable("enrollees") {
   val userRef = long("user_ref").references(Users.id)
 }
 
-
+object PasswordResets : LongIdTable("password_resets") {
+  val created = datetime("created")
+  val updated = datetime("updated")
+  val userRef = long("user_ref").references(Users.id)
+  val resetId = text("reset_id")
+  val email = text("email")
+}

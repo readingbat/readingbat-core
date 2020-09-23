@@ -107,6 +107,16 @@ CREATE TABLE enrollees
     user_ref    INTEGER REFERENCES users ON DELETE CASCADE
 );
 
+CREATE TABLE password_resets
+(
+    id       BIGSERIAL PRIMARY KEY,
+    created  TIMESTAMP DEFAULT NOW(),
+    updated  TIMESTAMP DEFAULT NOW(),
+    user_ref INTEGER REFERENCES users ON DELETE CASCADE UNIQUE,
+    reset_id TEXT NOT NULL UNIQUE,
+    email    TEXT NOT NULL
+);
+
 
 /*
 CREATE TABLE session_correct_answers

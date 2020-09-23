@@ -27,6 +27,7 @@ import com.github.readingbat.common.FormFields.NEW_PASSWORD_PARAM
 import com.github.readingbat.common.FormFields.RESET_ID_PARAM
 import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.Message
+import com.github.readingbat.common.PasswordResets
 import com.github.readingbat.common.Property.SENDGRID_PREFIX_PROPERTY
 import com.github.readingbat.common.User.Companion.isNotRegisteredEmail
 import com.github.readingbat.common.User.Companion.lookupUserByEmail
@@ -39,6 +40,7 @@ import com.github.readingbat.server.Email
 import com.github.readingbat.server.Email.Companion.getEmail
 import com.github.readingbat.server.Password.Companion.getPassword
 import com.github.readingbat.server.PipelineCall
+import com.github.readingbat.server.ReadingBatServer.usePostgres
 import com.github.readingbat.server.RedirectException
 import com.github.readingbat.server.ResetId
 import com.github.readingbat.server.ResetId.Companion.EMPTY_RESET_ID
@@ -50,6 +52,8 @@ import io.ktor.application.*
 import io.ktor.features.*
 import io.ktor.request.*
 import mu.KLogging
+import org.jetbrains.exposed.sql.select
+import org.jetbrains.exposed.sql.transactions.transaction
 import redis.clients.jedis.Jedis
 import java.io.IOException
 
@@ -82,8 +86,8 @@ internal object PasswordResetPost : KLogging() {
 
           // Lookup and remove previous value if it exists
           val user2 = lookupUserByEmail(email, redis) ?: throw ResetPasswordException("Unable to find $email")
-          val previousResetId = user2.passwordResetKey(redis)?.let { ResetId(it) } ?: EMPTY_RESET_ID
-          user2.savePasswordResetKey(email, previousResetId, newResetId, redis)
+          val previousResetId = user2.userPasswordResetId(redis)?.let { ResetId(it) } ?: EMPTY_RESET_ID
+          user2.savePasswordResetId(email, previousResetId, newResetId, redis)
 
           logger.info { "Sending password reset email to $email - $remoteStr" }
           try {
@@ -112,7 +116,6 @@ internal object PasswordResetPost : KLogging() {
     }
   }
 
-  // TODO
   suspend fun PipelineCall.updatePassword(content: ReadingBatContent, redis: Jedis): String =
     try {
       val parameters = call.receiveParameters()
@@ -125,7 +128,19 @@ internal object PasswordResetPost : KLogging() {
         throw ResetPasswordException(passwordError.value, resetId)
 
       val passwordResetKey = resetId.passwordResetKey
-      val email = Email(redis.get(passwordResetKey) ?: throw ResetPasswordException(INVALID_RESET_ID))
+      val email =
+        Email(
+          (if (usePostgres)
+            transaction {
+              PasswordResets
+                .slice(PasswordResets.email)
+                .select { PasswordResets.resetId eq resetId.value }
+                .map { it[PasswordResets.email] }
+                .firstOrNull()
+            }
+          else
+            redis.get(passwordResetKey)) ?: throw ResetPasswordException(INVALID_RESET_ID))
+
       val user = lookupUserByEmail(email, redis) ?: throw ResetPasswordException("Unable to find $email")
       val salt = user.salt
       val newDigest = newPassword.sha256(salt)
@@ -137,13 +152,20 @@ internal object PasswordResetPost : KLogging() {
       if (newDigest == oldDigest)
         throw ResetPasswordException("New password is the same as the current password", resetId)
 
-      redis.multi()
-        .also { tx ->
-          user.deletePasswordResetKey(tx)
-          tx.del(passwordResetKey)
-          user.assignDigest(tx, newDigest)  // Set new password
-          tx.exec()
+      if (usePostgres)
+        transaction {
+          user.deleteUserPasswordResetId()
+          user.assignDigest(newDigest)  // Set new password
         }
+      else
+        redis.multi()
+          .also { tx ->
+            user.deleteUserPasswordResetId(tx)
+            tx.del(passwordResetKey)
+            user.assignDigest(tx, newDigest)  // Set new password
+
+            tx.exec()
+          }
       throw RedirectException("/?$MSG=${"Password reset for $email".encode()}")
     } catch (e: ResetPasswordException) {
       logger.info { e }
