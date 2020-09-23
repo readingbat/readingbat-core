@@ -279,7 +279,6 @@ internal object TransferUsers : KLogging() {
               UserAnswerHistory
                 .insertAndGetId() { row ->
                   val history = gson.fromJson(redis[key], ChallengeHistory::class.java)
-
                   row[userRef] = userMap[userId]!!
                   row[md5] = key.split(KEY_SEP)[3]
                   row[invocation] = history.invocation.value

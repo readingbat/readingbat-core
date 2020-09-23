@@ -79,9 +79,15 @@ internal data class ClassCode(val value: String) {
       emptyList()
     else if (usePostgres)
       transaction {
-        (Classes innerJoin Enrollees innerJoin Users)
+        val userIds =
+          (Classes innerJoin Enrollees)
+            .slice(Enrollees.userRef)
+            .select { Enrollees.classesRef eq Classes.id }
+            .map { it[Enrollees.userRef].toLong() }
+
+        Users
           .slice(Users.userId)
-          .select { (Enrollees.classesRef eq Classes.id) and (Enrollees.userRef eq Users.id) }
+          .select { Users.id inList userIds }
           .map { it[Users.userId].toUser(redis, null) }
           .also { logger.info { "fetchEnrollees() returning $it" } }
       }
@@ -146,7 +152,7 @@ internal data class ClassCode(val value: String) {
           .select { Classes.classCode eq value }
           .map { it[Classes.description] }
           .firstOrNull() ?: "Missing description")
-          .also { logger.info { "fetchClassDesc() returned $it for $value" } }
+          .also { logger.info { "fetchClassDesc() returned ${it.toDoubleQuoted()} for $value" } }
       }
     else {
       if (redis.isNull())

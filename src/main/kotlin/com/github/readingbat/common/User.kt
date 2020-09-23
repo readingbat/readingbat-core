@@ -31,6 +31,7 @@ import com.github.readingbat.common.KeyConstants.ANSWER_HISTORY_KEY
 import com.github.readingbat.common.KeyConstants.AUTH_KEY
 import com.github.readingbat.common.KeyConstants.CHALLENGE_ANSWERS_KEY
 import com.github.readingbat.common.KeyConstants.CORRECT_ANSWERS_KEY
+import com.github.readingbat.common.KeyConstants.KEY_SEP
 import com.github.readingbat.common.KeyConstants.LIKE_DISLIKE_KEY
 import com.github.readingbat.common.KeyConstants.USER_CLASSES_KEY
 import com.github.readingbat.common.KeyConstants.USER_INFO_BROWSER_KEY
@@ -92,7 +93,6 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
         val row =
           transaction {
             Users
-              .slice(Users.id, Users.email, Users.name, Users.salt, Users.digest)
               .select { Users.userId eq this@User.userId }
               .firstOrNull()
           }
@@ -153,7 +153,6 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
       }
     }
 
-
   fun correctAnswers(redis: Jedis) =
     if (usePostgres)
       transaction {
@@ -164,10 +163,10 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
       }
     else
       redis.scanKeys(correctAnswersKey(ANY_LANGUAGE, ANY_GROUP, ANY_CHALLENGE))
-        //.filter { it.split(KEY_SEP).size == 4 }
-        //.map { redis[it].toBoolean() }
-        //.filter { it }
-        //.map { it.toString() }
+        .filter { it.split(KEY_SEP).size == 4 }
+        .map { redis[it].toBoolean() }
+        .filter { it }
+        .map { it.toString() }
         .toList()
 
   fun likeDislikes(redis: Jedis) =
@@ -179,10 +178,10 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
       }
     else
       redis.scanKeys(likeDislikeKey(ANY_LANGUAGE, ANY_GROUP, ANY_CHALLENGE))
-        //.filter { it.split(KEY_SEP).size == 4 }
-        //.map { redis[it].toInt() }
-        //.filter { it > 0 }
-        //.map { it.toString() }
+        .filter { it.split(KEY_SEP).size == 4 }
+        .map { redis[it].toInt() }
+        .filter { it > 0 }
+        .map { it.toString() }
         .toList()
 
   fun classCount(redis: Jedis) =
@@ -272,21 +271,31 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
   // TODO
   fun deletePasswordResetKey(tx: Transaction): Response<Long> = tx.del(userPasswordResetKey)
 
-  // TODO
-  fun invocations(redis: Jedis) =
-    redis.scanKeys(answerHistoryKey(ANY_LANGUAGE, ANY_GROUP, ANY_CHALLENGE, ANY_INVOCATION)).toList()
-
-  // TODO TEST
   fun challenges(redis: Jedis) =
     if (usePostgres)
       transaction {
-        UserAnswerHistory
-          .slice(UserAnswerHistory.id)
-          .select { UserAnswerHistory.userRef eq dbmsId }
-          .map { it[UserAnswerHistory.id].value.toString() }
+        UserChallengeInfo
+          .slice(UserChallengeInfo.md5)
+          .select { UserChallengeInfo.userRef eq dbmsId }
+          .map { it[UserChallengeInfo.md5] }.also { logger.info { "challenges() return ${it.size}" } }
       }
     else
-      redis.scanKeys(challengeAnswersKey(ANY_LANGUAGE, ANY_GROUP, ANY_CHALLENGE)).toList()
+      redis.scanKeys(challengeAnswersKey(ANY_LANGUAGE, ANY_GROUP, ANY_CHALLENGE))
+        .filter { it.split(KEY_SEP).size == 4 }
+        .toList()
+
+  fun invocations(redis: Jedis) =
+    if (usePostgres)
+      transaction {
+        UserAnswerHistory
+          .slice(UserAnswerHistory.md5)
+          .select { UserAnswerHistory.userRef eq dbmsId }
+          .map { it[UserAnswerHistory.md5] }.also { logger.info { "invocations() return ${it.size}" } }
+      }
+    else
+      redis.scanKeys(answerHistoryKey(ANY_LANGUAGE, ANY_GROUP, ANY_CHALLENGE, ANY_INVOCATION))
+        .filter { it.split(KEY_SEP).size == 4 }
+        .toList()
 
   private fun correctAnswersKey(names: ChallengeNames) =
     correctAnswersKey(names.languageName, names.groupName, names.challengeName)
@@ -382,7 +391,16 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
   }
 
   fun isEnrolled(classCode: ClassCode, redis: Jedis) =
-    redis.sismember(classCode.classCodeEnrollmentKey, userId) ?: false
+    if (usePostgres)
+      transaction {
+        Enrollees
+          .slice(Enrollees.id.count())
+          .select { Enrollees.userRef eq dbmsId }
+          .map { it[Enrollees.id.count()].toInt() }
+          .first().also { logger.info { "isEnrolled() returned $it for $classCode" } } > 0
+      }
+    else
+      redis.sismember(classCode.classCodeEnrollmentKey, userId) ?: false
 
   fun isNotEnrolled(classCode: ClassCode, redis: Jedis) = !isEnrolled(classCode, redis)
 
