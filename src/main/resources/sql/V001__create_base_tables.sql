@@ -1,12 +1,8 @@
 CREATE TABLE browser_sessions
 (
-    id                          BIGSERIAL UNIQUE PRIMARY KEY,
-    created                     TIMESTAMP     DEFAULT NOW(),
-    updated                     TIMESTAMP     DEFAULT NOW(),
-    session_id                  TEXT NOT NULL,
-    user_ref                    INTEGER       DEFAULT 0,
-    active_class_code           TEXT NOT NULL DEFAULT '',
-    previous_teacher_class_code TEXT NOT NULL DEFAULT '',
+    id         BIGSERIAL UNIQUE PRIMARY KEY,
+    created    TIMESTAMP DEFAULT NOW(),
+    session_id TEXT NOT NULL UNIQUE,
     CONSTRAINT browser_sessions_unique unique (session_id)
 );
 
@@ -53,6 +49,18 @@ CREATE TABLE users
 CREATE UNIQUE INDEX users1_index ON users (user_id);
 CREATE UNIQUE INDEX users2_index ON users (email);
 */
+
+CREATE TABLE user_sessions
+(
+    id                          BIGSERIAL UNIQUE PRIMARY KEY,
+    created                     TIMESTAMP     DEFAULT NOW(),
+    updated                     TIMESTAMP     DEFAULT NOW(),
+    session_ref                 INTEGER REFERENCES browser_sessions ON DELETE CASCADE,
+    user_ref                    INTEGER REFERENCES users ON DELETE CASCADE,
+    active_class_code           TEXT NOT NULL DEFAULT '',
+    previous_teacher_class_code TEXT NOT NULL DEFAULT '',
+    CONSTRAINT user_sessions_unique unique (session_ref, user_ref)
+);
 
 CREATE TABLE user_challenge_info
 (

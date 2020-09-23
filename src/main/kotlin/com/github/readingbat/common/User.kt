@@ -125,13 +125,23 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
   // This key maps to a reset_id
   private val userPasswordResetKey by lazy { keyOf(USER_RESET_KEY, userId) }
 
+  private val sessionDbmsId: Long
+    get() {
+      val sessionId = browserSession?.id ?: throw InvalidConfigurationException("Missing browser session id")
+      return BrowserSessions
+        .slice(BrowserSessions.id)
+        .select { BrowserSessions.session_id eq sessionId }
+        .map { it[BrowserSessions.id].value }
+        .firstOrNull() ?: throw InvalidConfigurationException("Invalid browser session id: $sessionId")
+    }
+
   fun browserSessions(redis: Jedis) =
     if (usePostgres)
       transaction {
-        BrowserSessions
-          .slice(BrowserSessions.session_id)
-          .select { (BrowserSessions.userRef eq dbmsId) }
-          .map { it[BrowserSessions.session_id].toString() }
+        UserSessions
+          .slice(UserSessions.sessionRef)
+          .select { UserSessions.userRef eq dbmsId }
+          .map { it[UserSessions.sessionRef].toString() }
       }
     else
       redis.scanKeys(userInfoBrowserQueryKey).toList()
@@ -141,16 +151,16 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
       isNull() || redis.isNull() -> false
       usePostgres ->
         transaction {
-          BrowserSessions
-            .slice(BrowserSessions.id.count())
-            .select { (BrowserSessions.activeClassCode eq classCode.value) }
-            .map { it[BrowserSessions.id.count()].toInt() }
+          UserSessions
+            .slice(UserSessions.id.count())
+            .select { (UserSessions.userRef eq dbmsId) and (UserSessions.activeClassCode eq classCode.value) }
+            .map { it[UserSessions.id.count()].toInt() }
             .first() > 0
         }
-      else -> {
+      else ->
         redis.scanKeys(userInfoBrowserQueryKey)
-          .filter { redis.hget(it, ACTIVE_CLASS_CODE_FIELD) == classCode.value }.any()
-      }
+          .filter { redis.hget(it, ACTIVE_CLASS_CODE_FIELD) == classCode.value }
+          .any()
     }
 
   fun correctAnswers(redis: Jedis) =
@@ -349,25 +359,17 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
   fun assignActiveClassCode(classCode: ClassCode, resetPreviousClassCode: Boolean, redis: Jedis) {
     if (usePostgres)
       transaction {
-        BrowserSessions
-          .update({ BrowserSessions.userRef eq dbmsId }) { row ->
+        UserSessions
+          .update({ (UserSessions.userRef eq dbmsId) and (UserSessions.sessionRef eq sessionDbmsId) }) { row ->
             row[updated] = DateTime.now(DateTimeZone.UTC)
             row[activeClassCode] = classCode.value
+            if (resetPreviousClassCode)
+              row[previousTeacherClassCode] = classCode.value
           }
       }
-    else
+    else {
       redis.hset(browserSpecificUserInfoKey, ACTIVE_CLASS_CODE_FIELD, classCode.value)
-
-    if (resetPreviousClassCode) {
-      if (usePostgres)
-        transaction {
-          BrowserSessions
-            .update({ BrowserSessions.userRef eq dbmsId }) { row ->
-              row[updated] = DateTime.now(DateTimeZone.UTC)
-              row[previousTeacherClassCode] = classCode.value
-            }
-        }
-      else
+      if (resetPreviousClassCode)
         redis.hset(browserSpecificUserInfoKey, PREVIOUS_TEACHER_CLASS_CODE_FIELD, classCode.value)
     }
   }
@@ -375,8 +377,8 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
   fun resetActiveClassCode(tx: Transaction) {
     if (usePostgres)
       transaction {
-        BrowserSessions
-          .update({ BrowserSessions.userRef eq dbmsId }) { row ->
+        UserSessions
+          .update({ (UserSessions.userRef eq dbmsId) and (UserSessions.sessionRef eq sessionDbmsId) }) { row ->
             row[updated] = DateTime.now(DateTimeZone.UTC)
             row[activeClassCode] = DISABLED_CLASS_CODE.value
             row[previousTeacherClassCode] = DISABLED_CLASS_CODE.value
@@ -705,22 +707,52 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
 
       val user = newUser(browserSession)
       val salt = newStringSalt()
+      val digest = password.sha256(salt)
       logger.info { "Created user $email ${user.userId}" }
 
-      redis.multi()
-        .also { tx ->
-          tx.set(email.userEmailKey, user.userId)
-          tx.hset(user.userInfoKey, mapOf(NAME_FIELD to name.value,
-                                          EMAIL_FIELD to email.value,
-                                          SALT_FIELD to salt,
-                                          DIGEST_FIELD to password.sha256(salt),
-                                          ENROLLED_CLASS_CODE_FIELD to DISABLED_CLASS_CODE.value))
+      if (usePostgres)
+        transaction {
+          val userId =
+            Users
+              .insertAndGetId { row ->
+                row[Users.name] = name.value
+                row[Users.email] = email.value
+                row[Users.enrolledClassCode] = DISABLED_CLASS_CODE.value
+                row[Users.salt] = salt
+                row[Users.digest] = digest
+              }.value
 
-          tx.hset(user.userInfoBrowserKey, mapOf(ACTIVE_CLASS_CODE_FIELD to DISABLED_CLASS_CODE.value,
-                                                 PREVIOUS_TEACHER_CLASS_CODE_FIELD to DISABLED_CLASS_CODE.value))
+          val browserId =
+            BrowserSessions
+              .insertAndGetId { row ->
+                row[BrowserSessions.session_id] =
+                  browserSession?.id ?: throw InvalidConfigurationException("Missing browser session")
+              }.value
 
-          tx.exec()
+          UserSessions
+            .insert { row ->
+              row[UserSessions.sessionRef] = browserId
+              row[UserSessions.userRef] = userId
+              row[UserSessions.activeClassCode] = DISABLED_CLASS_CODE.value
+              row[UserSessions.previousTeacherClassCode] = DISABLED_CLASS_CODE.value
+            }
+
         }
+      else
+        redis.multi()
+          .also { tx ->
+            tx.set(email.userEmailKey, user.userId)
+            tx.hset(user.userInfoKey, mapOf(NAME_FIELD to name.value,
+                                            EMAIL_FIELD to email.value,
+                                            SALT_FIELD to salt,
+                                            DIGEST_FIELD to digest,
+                                            ENROLLED_CLASS_CODE_FIELD to DISABLED_CLASS_CODE.value))
+
+            tx.hset(user.userInfoBrowserKey, mapOf(ACTIVE_CLASS_CODE_FIELD to DISABLED_CLASS_CODE.value,
+                                                   PREVIOUS_TEACHER_CLASS_CODE_FIELD to DISABLED_CLASS_CODE.value))
+
+            tx.exec()
+          }
 
       return user
     }
@@ -794,10 +826,8 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
         classCode.isEnabled -> {
           // Check to see if the teacher that owns class has it set as their active class in one of the sessions
           val teacherId = classCode.fetchClassTeacherId(redis)
-          val publish =
-            teacherId.isNotEmpty() && teacherId.toUser(redis, null).interestedInActiveClassCode(classCode, redis)
-          logger.debug { "Publishing teacherId: $teacherId for $classCode" }
-          publish
+          teacherId.isNotEmpty() && teacherId.toUser(redis, null).interestedInActiveClassCode(classCode, redis)
+            .also { logger.debug { "Publishing teacherId: $teacherId for $classCode" } }
         }
         else -> false
       }

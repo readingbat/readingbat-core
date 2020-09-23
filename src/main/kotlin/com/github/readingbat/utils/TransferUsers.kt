@@ -35,6 +35,7 @@ import com.github.readingbat.common.User.Companion.fetchActiveClassCode
 import com.github.readingbat.common.User.Companion.fetchPreviousTeacherClassCode
 import com.github.readingbat.common.User.Companion.gson
 import com.github.readingbat.common.User.Companion.toUser
+import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.posts.ChallengeHistory
 import mu.KLogging
 import org.jetbrains.exposed.sql.*
@@ -72,7 +73,9 @@ internal object TransferUsers : KLogging() {
         Index(listOf(UserChallengeInfo.userRef, UserChallengeInfo.md5), true, "user_challenge_info_unique")
       val sessionChallengeIndex =
         Index(listOf(SessionChallengeInfo.sessionRef, SessionChallengeInfo.md5), true, "session_challenge_info_unique")
-      val browserSessionIndex = Index(listOf(BrowserSessions.session_id), true, "browser_sessions_unique")
+      val userSessionIndex = Index(listOf(BrowserSessions.session_id), true, "user_sessions_unique")
+
+      val sessionMap = mutableMapOf<String, Long>()
 
       listOf(redis.scanKeys(keyOf(CORRECT_ANSWERS_KEY, NO_AUTH_KEY, "*", "*")).toList(),
              redis.scanKeys(keyOf(LIKE_DISLIKE_KEY, NO_AUTH_KEY, "*", "*")).toList(),
@@ -84,10 +87,11 @@ internal object TransferUsers : KLogging() {
         .distinct()
         .onEach { sessionId ->
 
-          val dbmsSessionId =
+          val sessionDbmsId =
             BrowserSessions.insertAndGetId { row ->
               row[session_id] = sessionId
-            }
+            }.value
+          sessionMap[sessionId] = sessionDbmsId
 
           redis.scanKeys(keyOf(CORRECT_ANSWERS_KEY, NO_AUTH_KEY, sessionId, "*"))
             .filter { it.split(KEY_SEP).size == 4 }
@@ -96,7 +100,7 @@ internal object TransferUsers : KLogging() {
               //println("$key ${redis[key]}")
 
               SessionChallengeInfo.upsert(conflictIndex = sessionChallengeIndex) { row ->
-                row[sessionRef] = dbmsSessionId.value
+                row[sessionRef] = sessionDbmsId
                 row[md5] = key.split(KEY_SEP)[3]
                 row[updated] = DateTime.now(UTC)
                 row[correct] = redis[key].toBoolean()
@@ -110,7 +114,7 @@ internal object TransferUsers : KLogging() {
               //println("$key userId ${redis[key]}")
 
               SessionChallengeInfo.upsert(conflictIndex = sessionChallengeIndex) { row ->
-                row[sessionRef] = dbmsSessionId.value
+                row[sessionRef] = sessionDbmsId
                 row[md5] = key.split(KEY_SEP)[3]
                 row[updated] = DateTime.now(UTC)
                 row[likeDislike] = redis[key].toShort()
@@ -124,7 +128,7 @@ internal object TransferUsers : KLogging() {
               //println("$key ${redis.hgetAll(key)}")
 
               SessionChallengeInfo.upsert(conflictIndex = sessionChallengeIndex) { row ->
-                row[sessionRef] = dbmsSessionId.value
+                row[sessionRef] = sessionDbmsId
                 row[md5] = key.split(KEY_SEP)[3]
                 row[updated] = DateTime.now(UTC)
                 row[answersJson] = gson.toJson(redis.hgetAll(key))
@@ -140,7 +144,7 @@ internal object TransferUsers : KLogging() {
 
               SessionAnswerHistory.insertAndGetId() { row ->
                 val history = gson.fromJson(redis[key], ChallengeHistory::class.java)
-                row[sessionRef] = dbmsSessionId.value
+                row[sessionRef] = sessionDbmsId
                 row[md5] = key.split(KEY_SEP)[3]
                 row[invocation] = history.invocation.value
                 row[correct] = history.correct
@@ -152,6 +156,7 @@ internal object TransferUsers : KLogging() {
 
       val userMap = mutableMapOf<String, Long>()
 
+      // Preload all users and stick ids in map.
       redis.scanKeys(keyOf(USER_INFO_KEY, "*"))
         .filter { (redis.hget(it, NAME_FIELD) ?: "").isNotBlank() }
         .forEach { ukey ->
@@ -209,17 +214,18 @@ internal object TransferUsers : KLogging() {
 
           redis.scanKeys(user.userInfoBrowserQueryKey)
             .forEach { key ->
-              val sessions_id = key.split(KEY_SEP)[2]
-              val browserUser = userId.toUser(redis, BrowserSession(sessions_id))
+              val sessionId = key.split(KEY_SEP)[2]
+              val browserUser = userId.toUser(redis, BrowserSession(sessionId))
               val activeClassCode = browserUser.fetchActiveClassCode(redis)
               val previousClassCode = browserUser.fetchPreviousTeacherClassCode(redis)
               //println("$key $browser_sessions_id ${redis.hgetAll(user2.browserSpecificUserInfoKey)} $activeClassCode $previousClassCode")
 
-              BrowserSessions
-                .upsert(conflictIndex = browserSessionIndex) { row ->
-                  row[userRef] = userMap[userId]!!
-                  row[session_id] = sessions_id
-                  row[BrowserSessions.activeClassCode] = activeClassCode.value
+              UserSessions
+                .upsert(conflictIndex = userSessionIndex) { row ->
+                  row[userRef] = userMap[userId] ?: throw InvalidConfigurationException("Invalid user id $userId")
+                  row[sessionRef] =
+                    sessionMap[sessionId] ?: throw InvalidConfigurationException("Invalid session id $sessionId")
+                  row[UserSessions.activeClassCode] = activeClassCode.value
                   row[previousTeacherClassCode] = previousClassCode.value
                 }
             }

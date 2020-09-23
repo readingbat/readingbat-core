@@ -22,11 +22,7 @@ import org.jetbrains.exposed.sql.jodatime.datetime
 
 object BrowserSessions : LongIdTable("browser_sessions") {
   val created = datetime("created")
-  val updated = datetime("updated")
   val session_id = text("session_id")
-  val userRef = long("user_ref") // May not have a value
-  val activeClassCode = text("active_class_code")
-  val previousTeacherClassCode = text("previous_teacher_class_code")
 }
 
 object SessionChallengeInfo : LongIdTable("session_challenge_info") {
@@ -59,6 +55,15 @@ object Users : LongIdTable() {
   val salt = text("salt")
   val digest = text("digest")
   val enrolledClassCode = text("enrolled_class_code")
+}
+
+object UserSessions : LongIdTable("user_sessions") {
+  val created = datetime("created")
+  val updated = datetime("updated")
+  val sessionRef = long("session_ref").references(BrowserSessions.id)
+  val userRef = long("user_ref").references(Users.id)
+  val activeClassCode = text("active_class_code")
+  val previousTeacherClassCode = text("previous_teacher_class_code")
 }
 
 object UserChallengeInfo : LongIdTable("user_challenge_info") {
