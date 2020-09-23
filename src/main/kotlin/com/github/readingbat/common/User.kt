@@ -274,7 +274,20 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
   }
 
   // TODO
-  fun passwordResetKey(redis: Jedis): String? = redis.get(userPasswordResetKey)
+  fun passwordResetKey(redis: Jedis): String? =
+    if (usePostgres)
+      transaction {
+        /*
+        UserAnswerHistory
+          .slice(UserAnswerHistory.md5)
+          .select { UserAnswerHistory.userRef eq dbmsId }
+          .map { it[UserAnswerHistory.md5] }.also { logger.info { "invocations() return ${it.size}" } }
+          .first()
+          */
+        ""
+      }
+    else
+      redis.get(userPasswordResetKey)
 
   // TODO
   fun deletePasswordResetKey(tx: Transaction): Response<Long> = tx.del(userPasswordResetKey)
@@ -471,24 +484,43 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
     classCode.deleteAllEnrollees(tx)
   }
 
-  // TODO
   fun isUniqueClassDesc(classDesc: String, redis: Jedis) =
-    redis.smembers(userClassesKey)
-      .asSequence()
-      .map { ClassCode(it) }
-      .filter { classCode -> classDesc == classCode.fetchClassDesc(redis) }
-      .none()
+    if (usePostgres)
+      transaction {
+        Classes
+          .slice(Classes.id.count())
+          .select { Classes.description eq classDesc }
+          .map { it[Classes.id.count()].toInt() }
+          .first() == 0
+      }
+    else
+      redis.smembers(userClassesKey)
+        .asSequence()
+        .map { ClassCode(it) }
+        .filter { classCode -> classDesc == classCode.fetchClassDesc(redis) }
+        .none()
 
-  // TODO
-  fun savePasswordResetKey(email: Email, previousResetId: ResetId, newResetId: ResetId, tx: Transaction) {
-    if (previousResetId.isNotBlank()) {
-      tx.del(userPasswordResetKey)
-      tx.del(previousResetId.passwordResetKey)
-    }
+  fun savePasswordResetKey(email: Email, previousResetId: ResetId, newResetId: ResetId, redis: Jedis) {
+    if (usePostgres)
+      transaction {
+        if (previousResetId.isNotBlank()) {
+          // TODO
+        }
+      }
+    else
+      redis.multi()
+        .also { tx ->
+          if (previousResetId.isNotBlank()) {
+            tx.del(userPasswordResetKey)
+            tx.del(previousResetId.passwordResetKey)
+          }
 
-    val expiration = SetParams().ex(15.minutes.inSeconds.toInt())
-    tx.set(userPasswordResetKey, newResetId.value, expiration)
-    tx.set(newResetId.passwordResetKey, email.value, expiration)
+          val expiration = SetParams().ex(15.minutes.inSeconds.toInt())
+          tx.set(userPasswordResetKey, newResetId.value, expiration)
+          tx.set(newResetId.passwordResetKey, email.value, expiration)
+
+          tx.exec()
+        }
   }
 
   // TODO
@@ -843,11 +875,19 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
 
     fun isNotRegisteredEmail(email: Email, redis: Jedis) = !isRegisteredEmail(email, redis)
 
-    // TODO
-    fun lookupUserByEmail(email: Email, redis: Jedis): User? {
-      val id = redis.get(email.userEmailKey) ?: ""
-      return if (id.isNotEmpty()) id.toUser(redis, null) else null
-    }
+    fun lookupUserByEmail(email: Email, redis: Jedis): User? =
+      if (usePostgres)
+        transaction {
+          Users
+            .slice(Users.userId)
+            .select { Users.email eq email.value }
+            .map { it[Users.userId].toUser(redis, null) }
+            .firstOrNull().also { logger.info { "lookupUserByEmail() returned ${it?.name ?: "email not found"}" } }
+        }
+      else {
+        val id = redis.get(email.userEmailKey) ?: ""
+        if (id.isNotEmpty()) id.toUser(redis, null) else null
+      }
   }
 
   internal data class ChallengeAnswers(val id: String, val correctAnswers: MutableMap<String, String> = mutableMapOf())

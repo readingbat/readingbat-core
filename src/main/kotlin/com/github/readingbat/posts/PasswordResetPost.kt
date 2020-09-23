@@ -57,7 +57,6 @@ internal object PasswordResetPost : KLogging() {
   private val unknownUserLimiter = RateLimiter.create(0.5) // rate 2.0 is "2 permits per second"
   private val unableToSend = Message("Unable to send password reset email -- missing email address", true)
 
-  // TODO
   suspend fun PipelineCall.sendPasswordReset(content: ReadingBatContent, redis: Jedis): String {
     val parameters = call.receiveParameters()
     val email = parameters.getEmail(EMAIL_PARAM)
@@ -84,12 +83,7 @@ internal object PasswordResetPost : KLogging() {
           // Lookup and remove previous value if it exists
           val user2 = lookupUserByEmail(email, redis) ?: throw ResetPasswordException("Unable to find $email")
           val previousResetId = user2.passwordResetKey(redis)?.let { ResetId(it) } ?: EMPTY_RESET_ID
-
-          redis.multi()
-            .also { tx ->
-              user2.savePasswordResetKey(email, previousResetId, newResetId, tx)
-              tx.exec()
-            }
+          user2.savePasswordResetKey(email, previousResetId, newResetId, redis)
 
           logger.info { "Sending password reset email to $email - $remoteStr" }
           try {
@@ -111,10 +105,8 @@ internal object PasswordResetPost : KLogging() {
           throw RedirectException("$returnPath?$MSG=${"Password reset email sent to $email".encode()}")
         } catch (e: ResetPasswordException) {
           logger.info { e }
-          passwordResetPage(content,
-                            EMPTY_RESET_ID,
-                            redis,
-                            Message("Unable to send password reset email to $email", true))
+          val msg = Message("Unable to send password reset email to $email", true)
+          passwordResetPage(content, EMPTY_RESET_ID, redis, msg)
         }
       }
     }
