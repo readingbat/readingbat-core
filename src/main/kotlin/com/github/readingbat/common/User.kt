@@ -248,21 +248,19 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
     }
   }
 
-  // TODO Add transaction to outer scope for dbms
-  private fun assignEnrolledClassCode(classCode: ClassCode, tx: Transaction) {
-    if (usePostgres)
-      transaction {
-        Users
-          .update({ Users.id eq dbmsId }) { row ->
-            row[updated] = DateTime.now(DateTimeZone.UTC)
-            row[enrolledClassCode] = classCode.value
-            this@User.enrolledClassCode = classCode
-          }
-      }
-    else {
-      tx.hset(userInfoKey, ENROLLED_CLASS_CODE_FIELD, classCode.value)
-      enrolledClassCode = classCode
+  private fun assignEnrolledClassCode(classCode: ClassCode) =
+    transaction {
+      Users
+        .update({ Users.id eq dbmsId }) { row ->
+          row[updated] = DateTime.now(DateTimeZone.UTC)
+          row[enrolledClassCode] = classCode.value
+          this@User.enrolledClassCode = classCode
+        }
     }
+
+  private fun assignEnrolledClassCode(classCode: ClassCode, tx: Transaction) {
+    tx.hset(userInfoKey, ENROLLED_CLASS_CODE_FIELD, classCode.value)
+    enrolledClassCode = classCode
   }
 
   // TODO
@@ -411,35 +409,45 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
       isEnrolled(classCode, redis) -> throw DataException("Already enrolled in class $classCode")
       else -> {
         val previousClassCode = enrolledClassCode
-        redis.multi().also { tx ->
-          // Remove if already enrolled in another class
-          if (previousClassCode.isEnabled)
-            previousClassCode.removeEnrollee(this, tx)
 
-          assignEnrolledClassCode(classCode, tx)
-
-          classCode.addEnrollee(this, tx)
-
-          tx.exec()
-        }
+        if (usePostgres)
+          transaction {
+            if (previousClassCode.isEnabled)
+              previousClassCode.removeEnrollee(this@User)
+            assignEnrolledClassCode(classCode)
+            classCode.addEnrollee(this@User)
+          }
+        else
+          redis.multi()
+            .also { tx ->
+              // Remove if already enrolled in another class
+              if (previousClassCode.isEnabled)
+                previousClassCode.removeEnrollee(this, tx)
+              assignEnrolledClassCode(classCode, tx)
+              classCode.addEnrollee(this, tx)
+              tx.exec()
+            }
       }
     }
   }
 
+  // TODO
   fun withdrawFromClass(classCode: ClassCode, redis: Jedis) {
     if (classCode.isNotEnabled)
       throw DataException("Not enrolled in a class")
 
     // This should always be true
     val enrolled = classCode.isValid(redis) && isEnrolled(classCode, redis)
-    redis.multi().also { tx ->
-      assignEnrolledClassCode(DISABLED_CLASS_CODE, tx)
-      if (enrolled)
-        classCode.removeEnrollee(this, tx)
-      tx.exec()
-    }
+    redis.multi()
+      .also { tx ->
+        assignEnrolledClassCode(DISABLED_CLASS_CODE, tx)
+        if (enrolled)
+          classCode.removeEnrollee(this, tx)
+        tx.exec()
+      }
   }
 
+  // TODO
   fun deleteClassCode(classCode: ClassCode, enrollees: List<User>, tx: Transaction) {
     // Reset every enrollee's enrolled class and remove from class
     enrollees
@@ -461,6 +469,7 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
     classCode.deleteAllEnrollees(tx)
   }
 
+  // TODO
   fun isUniqueClassDesc(classDesc: String, redis: Jedis) =
     redis.smembers(userClassesKey)
       .asSequence()
@@ -468,6 +477,7 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
       .filter { classCode -> classDesc == classCode.fetchClassDesc(redis) }
       .none()
 
+  // TODO
   fun savePasswordResetKey(email: Email, previousResetId: ResetId, newResetId: ResetId, tx: Transaction) {
     if (previousResetId.isNotBlank()) {
       tx.del(userPasswordResetKey)
@@ -479,6 +489,7 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
     tx.set(newResetId.passwordResetKey, email.value, expiration)
   }
 
+  // TODO
   fun deleteUser(redis: Jedis) {
     val classCodes = classCodes(redis)
     val browserSessions = browserSessions(redis)
@@ -546,6 +557,7 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
     redis.publish(classTopicName(classCode, challengeMd5.value), gson.toJson(dashboardInfo))
   }
 
+  // TODO
   fun resetHistory(funcInfo: FunctionInfo,
                    languageName: LanguageName,
                    groupName: GroupName,
@@ -603,6 +615,7 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
 
     private fun newUser(browserSession: BrowserSession?) = User(null, randomId(25), browserSession)
 
+    // TODO
     fun User?.fetchActiveClassCode(redis: Jedis?): ClassCode {
       return when {
         isNull() || redis.isNull() -> DISABLED_CLASS_CODE
@@ -611,6 +624,7 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
       }
     }
 
+    // TODO
     fun User?.fetchPreviousTeacherClassCode(redis: Jedis?) =
       when {
         isNull() || redis.isNull() -> DISABLED_CLASS_CODE
@@ -664,6 +678,7 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
     private fun User?.answerHistoryKey(browserSession: BrowserSession?, names: ChallengeNames, invocation: Invocation) =
       this?.answerHistoryKey(names, invocation) ?: browserSession?.answerHistoryKey(names, invocation) ?: ""
 
+    // TODO
     fun User?.fetchPreviousResponses(challenge: Challenge,
                                      browserSession: BrowserSession?,
                                      redis: Jedis?): Map<String, String> =
@@ -677,6 +692,7 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
         if (challengeAnswersKey.isNotEmpty()) redis.hgetAll(challengeAnswersKey) else emptyMap()
       }
 
+    // TODO
     fun createUser(name: FullName,
                    email: Email,
                    password: Password,
@@ -691,23 +707,25 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
       val salt = newStringSalt()
       logger.info { "Created user $email ${user.userId}" }
 
-      redis.multi().also { tx ->
-        tx.set(email.userEmailKey, user.userId)
-        tx.hset(user.userInfoKey, mapOf(NAME_FIELD to name.value,
-                                        EMAIL_FIELD to email.value,
-                                        SALT_FIELD to salt,
-                                        DIGEST_FIELD to password.sha256(salt),
-                                        ENROLLED_CLASS_CODE_FIELD to DISABLED_CLASS_CODE.value))
+      redis.multi()
+        .also { tx ->
+          tx.set(email.userEmailKey, user.userId)
+          tx.hset(user.userInfoKey, mapOf(NAME_FIELD to name.value,
+                                          EMAIL_FIELD to email.value,
+                                          SALT_FIELD to salt,
+                                          DIGEST_FIELD to password.sha256(salt),
+                                          ENROLLED_CLASS_CODE_FIELD to DISABLED_CLASS_CODE.value))
 
-        tx.hset(user.userInfoBrowserKey, mapOf(ACTIVE_CLASS_CODE_FIELD to DISABLED_CLASS_CODE.value,
-                                               PREVIOUS_TEACHER_CLASS_CODE_FIELD to DISABLED_CLASS_CODE.value))
+          tx.hset(user.userInfoBrowserKey, mapOf(ACTIVE_CLASS_CODE_FIELD to DISABLED_CLASS_CODE.value,
+                                                 PREVIOUS_TEACHER_CLASS_CODE_FIELD to DISABLED_CLASS_CODE.value))
 
-        tx.exec()
-      }
+          tx.exec()
+        }
 
       return user
     }
 
+    // TODO
     fun User?.saveChallengeAnswers(browserSession: BrowserSession?,
                                    content: ReadingBatContent,
                                    names: ChallengeNames,
@@ -784,6 +802,7 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
         else -> false
       }
 
+    // TODO
     fun User?.saveLikeDislike(browserSession: BrowserSession?, names: ChallengeNames, likeVal: Int, redis: Jedis) =
       likeDislikeKey(browserSession, names).let {
         if (it.isNotEmpty())
@@ -794,6 +813,7 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
 
     fun isNotRegisteredEmail(email: Email, redis: Jedis) = !isRegisteredEmail(email, redis)
 
+    // TODO
     fun lookupUserByEmail(email: Email, redis: Jedis): User? {
       val id = redis.get(email.userEmailKey) ?: ""
       return if (id.isNotEmpty()) id.toUser(redis, null) else null

@@ -267,6 +267,7 @@ internal object ChallengePost : KLogging() {
 
     // Save whether all the answers for the challenge were correct
     if (redis.isNotNull()) {
+      // TODO
       val browserSession = call.browserSession
       user.saveChallengeAnswers(browserSession, content, names, paramMap, funcInfo, userResponses, results, redis)
     }
@@ -285,6 +286,7 @@ internal object ChallengePost : KLogging() {
     call.respondText(answerMapping.toString())
   }
 
+  // TODO
   suspend fun PipelineCall.clearChallengeAnswers(content: ReadingBatContent, user: User?, redis: Jedis): String {
     val params = call.receiveParameters()
 
@@ -376,6 +378,7 @@ internal object ChallengePost : KLogging() {
 
     logger.debug { "Like/dislike arg -- response: $likeArg -- $likeVal" }
 
+    // TODO
     if (redis.isNotNull()) {
       val browserSession = call.browserSession
       user.saveLikeDislike(browserSession, names, likeVal, redis)

@@ -115,6 +115,7 @@ internal object TeacherPrefsPost : KLogging() {
     throw RedirectException("$returnPath?$MSG=${msg.encode()}")
   }
 
+  // TODO
   private fun PipelineCall.createClass(content: ReadingBatContent, user: User, classDesc: String, redis: Jedis) =
     when {
       classDesc.isBlank() -> {
@@ -133,18 +134,19 @@ internal object TeacherPrefsPost : KLogging() {
       else -> {
         val classCode = newClassCode()
 
-        redis.multi().also { tx ->
+        redis.multi()
+          .also { tx ->
 
-          classCode.initializeWith(classDesc, user, tx)
+            classCode.initializeWith(classDesc, user, tx)
 
-          // Add classcode to list of classes created by user
-          user.addClassCode(classCode, classDesc, tx)
+            // Add classcode to list of classes created by user
+            user.addClassCode(classCode, classDesc, tx)
 
-          // Create class with no one enrolled to prevent class from being created a 2nd time
-          classCode.addEnrolleePlaceholder(tx)
+            // Create class with no one enrolled to prevent class from being created a 2nd time
+            classCode.addEnrolleePlaceholder(tx)
 
-          tx.exec()
-        }
+            tx.exec()
+          }
         teacherPrefsPage(content, user, redis, Message("Created class code: $classCode", false))
       }
     }

@@ -105,27 +105,23 @@ internal data class ClassCode(val value: String) {
       tx.sadd(classCodeEnrollmentKey, "")
   }
 
-  fun addEnrollee(user: User, tx: Transaction) {
-    if (usePostgres)
-      transaction {
-        Enrollees
-          .insert { row ->
-            row[classesRef] = dbmsId
-            row[userRef] = user.dbmsId
-          }
-      }
-    else
-      tx.sadd(classCodeEnrollmentKey, user.userId)
-  }
+  fun addEnrollee(user: User) =
+    transaction {
+      Enrollees
+        .insert { row ->
+          row[classesRef] = dbmsId
+          row[userRef] = user.dbmsId
+        }
+    }
 
-  fun removeEnrollee(user: User, tx: Transaction) {
-    if (usePostgres)
-      transaction {
-        Enrollees.deleteWhere { (Enrollees.classesRef eq dbmsId) and (Enrollees.userRef eq user.dbmsId) }
-      }
-    else
-      tx.srem(classCodeEnrollmentKey, user.userId)
-  }
+  fun addEnrollee(user: User, tx: Transaction) = tx.sadd(classCodeEnrollmentKey, user.userId)
+
+  fun removeEnrollee(user: User) =
+    transaction {
+      Enrollees.deleteWhere { (Enrollees.classesRef eq dbmsId) and (Enrollees.userRef eq user.dbmsId) }
+    }
+
+  fun removeEnrollee(user: User, tx: Transaction) = tx.srem(classCodeEnrollmentKey, user.userId)
 
   fun deleteAllEnrollees(tx: Transaction) {
     if (usePostgres)

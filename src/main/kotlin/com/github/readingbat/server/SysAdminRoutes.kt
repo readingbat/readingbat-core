@@ -55,6 +55,7 @@ import kotlin.time.measureTime
 
 internal fun Routing.sysAdminRoutes(metrics: Metrics, contentSrc: () -> ReadingBatContent, resetFunc: () -> Unit) {
 
+  // TODO
   fun deleteContentDslInRedis() =
     redisPool?.withRedisPool { redis ->
       if (redis.isNull())
@@ -68,6 +69,7 @@ internal fun Routing.sysAdminRoutes(metrics: Metrics, contentSrc: () -> ReadingB
       }
     } ?: REDIS_IS_DOWN
 
+  // TODO
   fun deleteDirContentsInRedis() =
     redisPool?.withRedisPool { redis ->
       if (redis.isNull())
@@ -81,6 +83,7 @@ internal fun Routing.sysAdminRoutes(metrics: Metrics, contentSrc: () -> ReadingB
       }
     } ?: REDIS_IS_DOWN
 
+  // TODO
   fun deleteSourceCodeInRedis() =
     redisPool?.withRedisPool { redis ->
       if (redis.isNull())
