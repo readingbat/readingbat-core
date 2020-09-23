@@ -31,10 +31,7 @@ import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.server.ReadingBatServer.usePostgres
 import io.ktor.http.*
 import mu.KLogging
-import org.jetbrains.exposed.sql.and
-import org.jetbrains.exposed.sql.deleteWhere
-import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.select
+import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 import redis.clients.jedis.Jedis
 import redis.clients.jedis.Transaction
@@ -48,7 +45,7 @@ internal data class ClassCode(val value: String) {
 
   val displayedValue get() = if (value == DISABLED_MODE) "" else value
 
-  val classId
+  val dbmsId
     get() =
       measureTimedValue {
         transaction {
@@ -65,18 +62,41 @@ internal data class ClassCode(val value: String) {
 
   fun isNotValid(redis: Jedis) = !isValid(redis)
 
-  fun isValid(redis: Jedis) = redis.exists(classCodeEnrollmentKey) ?: false
+  fun isValid(redis: Jedis) =
+    if (usePostgres)
+      transaction {
+        Classes
+          .slice(Classes.classCode.count())
+          .select { Classes.classCode eq value }
+          .map { it[Classes.classCode.count()].toInt() }
+          .first().also { logger.info { "ClassCode.isValid() returned $it for $value" } } > 0
+      }
+    else
+      redis.exists(classCodeEnrollmentKey) ?: false
 
   fun fetchEnrollees(redis: Jedis?): List<User> =
     if (redis.isNull() || isNotEnabled)
       emptyList()
-    else
+    else if (usePostgres)
+      transaction {
+        (Classes innerJoin Enrollees innerJoin Users)
+          .slice(Users.userId)
+          .select { (Enrollees.classesRef eq Classes.id) and (Enrollees.userRef eq Users.id) }
+          .map { it[Users.userId].toUser(redis, null) }
+          .also { logger.info { "fetchEnrollees() returning $it" } }
+      }
+    else {
       (redis.smembers(classCodeEnrollmentKey) ?: emptySet())
         .filter { it.isNotEmpty() }
         .map { it.toUser(redis, null) }
+    }
 
   fun addEnrolleePlaceholder(tx: Transaction) {
-    tx.sadd(classCodeEnrollmentKey, "")
+    if (usePostgres) {
+      // No-op for postgres
+    }
+    else
+      tx.sadd(classCodeEnrollmentKey, "")
   }
 
   fun addEnrollee(user: User, tx: Transaction) {
@@ -84,7 +104,7 @@ internal data class ClassCode(val value: String) {
       transaction {
         Enrollees
           .insert { row ->
-            row[classesRef] = classId
+            row[classesRef] = dbmsId
             row[userRef] = user.dbmsId
           }
       }
@@ -95,7 +115,7 @@ internal data class ClassCode(val value: String) {
   fun removeEnrollee(user: User, tx: Transaction) {
     if (usePostgres)
       transaction {
-        Enrollees.deleteWhere { (Enrollees.classesRef eq classId) and (Enrollees.userRef eq user.dbmsId) }
+        Enrollees.deleteWhere { (Enrollees.classesRef eq dbmsId) and (Enrollees.userRef eq user.dbmsId) }
       }
     else
       tx.srem(classCodeEnrollmentKey, user.userId)
@@ -104,7 +124,7 @@ internal data class ClassCode(val value: String) {
   fun deleteAllEnrollees(tx: Transaction) {
     if (usePostgres)
       transaction {
-        Enrollees.deleteWhere { Enrollees.classesRef eq classId }
+        Enrollees.deleteWhere { Enrollees.classesRef eq dbmsId }
       }
     else
       tx.del(classCodeEnrollmentKey)

@@ -167,9 +167,10 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
     if (usePostgres)
       transaction {
         Classes
-          .slice(Classes.classCode)
+          .slice(Classes.classCode.count())
           .select { Classes.userRef eq dbmsId }
-          .count()
+          .map { it[Classes.classCode.count()].toInt() }
+          .first().also { logger.info { "classCount() returned $it" } }
       }
     else
       redis.smembers(userClassesKey).count()

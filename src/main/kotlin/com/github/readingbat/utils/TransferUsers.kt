@@ -61,7 +61,7 @@ internal object TransferUsers : KLogging() {
     Database.connect(hikari())
 
     transaction {
-      addLogger(KotlinLoggingSqlLogger)
+      //addLogger(KotlinLoggingSqlLogger)
 
       transform(RedisAdmin.local)
     }
@@ -94,7 +94,7 @@ internal object TransferUsers : KLogging() {
             .filter { it.split(KEY_SEP).size == 4 }
             .forEach { key ->
               require(sessionId == key.split(KEY_SEP)[2])
-              println("$key ${redis[key]}")
+              //println("$key ${redis[key]}")
 
               SessionChallengeInfo.upsert(conflictIndex = sessionChallengeIndex) { row ->
                 row[sessionRef] = dbmsSessionId.value
@@ -151,10 +151,11 @@ internal object TransferUsers : KLogging() {
             }
         }
 
+      val userMap = mutableMapOf<String, Long>()
 
       redis.scanKeys(keyOf(USER_INFO_KEY, "*"))
         .filter { (redis.hget(it, NAME_FIELD) ?: "").isNotBlank() }
-        .onEach { ukey ->
+        .forEach { ukey ->
           val userId = ukey.split(KEY_SEP)[1]
           val user = userId.toUser(redis, null)
           val id =
@@ -166,23 +167,43 @@ internal object TransferUsers : KLogging() {
                 row[salt] = user.salt
                 row[digest] = user.digest
                 row[enrolledClassCode] = user.fetchEnrolledClassCode(redis).value
-              }
-          println("Created user id: $id")
+              }.value
+          userMap[userId] = id
+          logger.info { "Created user id: $id for $userId" }
+        }
+
+      redis.scanKeys(keyOf(USER_INFO_KEY, "*"))
+        .filter { (redis.hget(it, NAME_FIELD) ?: "").isNotBlank() }
+        .onEach { ukey ->
+          val userId = ukey.split(KEY_SEP)[1]
+          val user = userId.toUser(redis, null)
+          logger.info { "Fetched user ${userMap[userId]} ${user.email} for $userId" }
 
           redis.scanKeys(user.userClassesKey)
             .forEach { key ->
               require(userId == key.split(KEY_SEP)[1])
               //println("ClassCodes: $key ${redis.smembers(user.userClassesKey)}")
 
-
               redis.smembers(user.userClassesKey)
                 .map { ClassCode(it) }
                 .forEach { classCode ->
-                  Classes
-                    .insert { row ->
-                      row[userRef] = id.value
-                      row[Classes.classCode] = classCode.value
-                      row[description] = classCode.fetchClassDesc(redis)
+                  logger.info { "Inserting Classes ${userMap[userId]} ${user.email} ${classCode.value}" }
+                  val classCodeId =
+                    Classes
+                      .insertAndGetId { row ->
+                        row[userRef] = userMap[userId]!!
+                        row[Classes.classCode] = classCode.value
+                        row[description] = classCode.fetchClassDesc(redis)
+                      }.value
+
+                  redis.smembers(classCode.classCodeEnrollmentKey)
+                    .filter { it.isNotBlank() }
+                    .forEach { enrolleeId ->
+                      Enrollees
+                        .insert { row ->
+                          row[classesRef] = classCodeId
+                          row[userRef] = userMap[enrolleeId]!!
+                        }
                     }
                 }
             }
@@ -198,7 +219,7 @@ internal object TransferUsers : KLogging() {
 
               BrowserSessions
                 .upsert(conflictIndex = browserSessionIndex) { row ->
-                  row[userRef] = id.value
+                  row[userRef] = userMap[userId]!!
                   row[session_id] = sessions_id
                   row[BrowserSessions.activeClassCode] = activeClassCode.value
                   row[previousTeacherClassCode] = previousClassCode.value
@@ -213,7 +234,7 @@ internal object TransferUsers : KLogging() {
 
               UserChallengeInfo
                 .upsert(conflictIndex = userChallengeIndex) { row ->
-                  row[userRef] = id.value
+                  row[userRef] = userMap[userId]!!
                   row[md5] = key.split(KEY_SEP)[3]
                   row[updated] = DateTime.now(UTC)
                   row[correct] = redis[key].toBoolean()
@@ -228,7 +249,7 @@ internal object TransferUsers : KLogging() {
 
               UserChallengeInfo
                 .upsert(conflictIndex = userChallengeIndex) { row ->
-                  row[userRef] = id.value
+                  row[userRef] = userMap[userId]!!
                   row[md5] = key.split(KEY_SEP)[3]
                   row[updated] = DateTime.now(UTC)
                   row[likeDislike] = redis[key].toShort()
@@ -243,7 +264,7 @@ internal object TransferUsers : KLogging() {
 
               UserChallengeInfo
                 .upsert(conflictIndex = userChallengeIndex) { row ->
-                  row[userRef] = id.value
+                  row[userRef] = userMap[userId]!!
                   row[md5] = key.split(KEY_SEP)[3]
                   row[updated] = DateTime.now(UTC)
                   row[answersJson] = gson.toJson(redis.hgetAll(key))
@@ -261,7 +282,7 @@ internal object TransferUsers : KLogging() {
                 .insertAndGetId() { row ->
                   val history = gson.fromJson(redis[key], ChallengeHistory::class.java)
 
-                  row[userRef] = id.value
+                  row[userRef] = userMap[userId]!!
                   row[md5] = key.split(KEY_SEP)[3]
                   row[invocation] = history.invocation.value
                   row[correct] = history.correct

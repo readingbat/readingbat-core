@@ -90,9 +90,9 @@ object Classes : LongIdTable("classes") {
   val description = text("description")
 }
 
-object Enrollees : LongIdTable("classes") {
+object Enrollees : LongIdTable("enrollees") {
   val created = datetime("created")
-  val classesRef = long("classes_ref").references(Users.id)
+  val classesRef = long("classes_ref").references(Classes.id)
   val userRef = long("user_ref").references(Users.id)
 }
 
