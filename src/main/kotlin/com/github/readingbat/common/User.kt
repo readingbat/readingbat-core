@@ -75,6 +75,7 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
   val dbmsId: Long
   val email: Email
   val name: FullName
+  var enrolledClassCode: ClassCode
   private val saltBacking: String
   private var digestBacking: String
 
@@ -98,6 +99,7 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
         dbmsId = row?.get(Users.id)?.value ?: -1
         email = row?.get(Users.email)?.let { Email(it) } ?: UNKNOWN_EMAIL
         name = row?.get(Users.name)?.let { FullName(it) } ?: UNKNOWN_FULLNAME
+        enrolledClassCode = row?.get(Users.enrolledClassCode)?.let { ClassCode(it) } ?: DISABLED_CLASS_CODE
         saltBacking = row?.get(Users.salt) ?: ""
         digestBacking = row?.get(Users.digest) ?: ""
       }
@@ -105,6 +107,8 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
         dbmsId = -1
         email = redis?.hget(userInfoKey, EMAIL_FIELD)?.let { Email(it) } ?: UNKNOWN_EMAIL
         name = redis?.hget(userInfoKey, NAME_FIELD)?.let { FullName(it) } ?: UNKNOWN_FULLNAME
+        enrolledClassCode =
+          redis?.hget(userInfoKey, ENROLLED_CLASS_CODE_FIELD)?.let { ClassCode(it) } ?: DISABLED_CLASS_CODE
         saltBacking = redis?.hget(userInfoKey, SALT_FIELD) ?: ""
         digestBacking = redis?.hget(userInfoKey, DIGEST_FIELD) ?: ""
       }
@@ -132,12 +136,30 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
     else
       redis.scanKeys(userInfoBrowserQueryKey).toList()
 
+  private fun interestedInActiveClassCode(classCode: ClassCode, redis: Jedis?) =
+    when {
+      isNull() || redis.isNull() -> false
+      usePostgres ->
+        transaction {
+          BrowserSessions
+            .slice(BrowserSessions.id.count())
+            .select { (BrowserSessions.activeClassCode eq classCode.value) }
+            .map { it[BrowserSessions.id.count()].toInt() }
+            .first() > 0
+        }
+      else -> {
+        redis.scanKeys(userInfoBrowserQueryKey)
+          .filter { redis.hget(it, ACTIVE_CLASS_CODE_FIELD) == classCode.value }.any()
+      }
+    }
+
+
   fun correctAnswers(redis: Jedis) =
     if (usePostgres)
       transaction {
         UserChallengeInfo
-          .slice(UserChallengeInfo.correct)
-          .select { (UserChallengeInfo.userRef eq dbmsId) and UserChallengeInfo.correct }
+          .slice(UserChallengeInfo.allCorrect)
+          .select { (UserChallengeInfo.userRef eq dbmsId) and UserChallengeInfo.allCorrect }
           .map { it.toString() }
       }
     else
@@ -221,18 +243,50 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
             digestBacking = newDigest
           }
       }
-    else
+    else {
       tx.hset(userInfoKey, DIGEST_FIELD, newDigest)
+      digestBacking = newDigest
+    }
   }
 
+  // TODO Add transaction to outer scope for dbms
+  private fun assignEnrolledClassCode(classCode: ClassCode, tx: Transaction) {
+    if (usePostgres)
+      transaction {
+        Users
+          .update({ Users.id eq dbmsId }) { row ->
+            row[updated] = DateTime.now(DateTimeZone.UTC)
+            row[enrolledClassCode] = classCode.value
+            this@User.enrolledClassCode = classCode
+          }
+      }
+    else {
+      tx.hset(userInfoKey, ENROLLED_CLASS_CODE_FIELD, classCode.value)
+      enrolledClassCode = classCode
+    }
+  }
+
+  // TODO
   fun passwordResetKey(redis: Jedis): String? = redis.get(userPasswordResetKey)
 
+  // TODO
   fun deletePasswordResetKey(tx: Transaction): Response<Long> = tx.del(userPasswordResetKey)
 
+  // TODO
   fun invocations(redis: Jedis) =
     redis.scanKeys(answerHistoryKey(ANY_LANGUAGE, ANY_GROUP, ANY_CHALLENGE, ANY_INVOCATION)).toList()
 
-  fun challenges(redis: Jedis) = redis.scanKeys(challengeAnswersKey(ANY_LANGUAGE, ANY_GROUP, ANY_CHALLENGE)).toList()
+  // TODO TEST
+  fun challenges(redis: Jedis) =
+    if (usePostgres)
+      transaction {
+        UserAnswerHistory
+          .slice(UserAnswerHistory.id)
+          .select { UserAnswerHistory.userRef eq dbmsId }
+          .map { it[UserAnswerHistory.id].value.toString() }
+      }
+    else
+      redis.scanKeys(challengeAnswersKey(ANY_LANGUAGE, ANY_GROUP, ANY_CHALLENGE)).toList()
 
   private fun correctAnswersKey(names: ChallengeNames) =
     correctAnswersKey(names.languageName, names.groupName, names.challengeName)
@@ -285,28 +339,45 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
           else
             md5Of(languageName, groupName, challengeName, invocation))
 
-  private fun assignEnrolledClassCode(classCode: ClassCode, tx: Transaction): Response<Long> =
-    tx.hset(userInfoKey, ENROLLED_CLASS_CODE_FIELD, classCode.value)
-
   fun assignActiveClassCode(classCode: ClassCode, resetPreviousClassCode: Boolean, redis: Jedis) {
-    redis.hset(browserSpecificUserInfoKey, ACTIVE_CLASS_CODE_FIELD, classCode.value)
+    if (usePostgres)
+      transaction {
+        BrowserSessions
+          .update({ BrowserSessions.userRef eq dbmsId }) { row ->
+            row[updated] = DateTime.now(DateTimeZone.UTC)
+            row[activeClassCode] = classCode.value
+          }
+      }
+    else
+      redis.hset(browserSpecificUserInfoKey, ACTIVE_CLASS_CODE_FIELD, classCode.value)
 
-    if (resetPreviousClassCode)
-      redis.hset(browserSpecificUserInfoKey, PREVIOUS_TEACHER_CLASS_CODE_FIELD, classCode.value)
+    if (resetPreviousClassCode) {
+      if (usePostgres)
+        transaction {
+          BrowserSessions
+            .update({ BrowserSessions.userRef eq dbmsId }) { row ->
+              row[updated] = DateTime.now(DateTimeZone.UTC)
+              row[previousTeacherClassCode] = classCode.value
+            }
+        }
+      else
+        redis.hset(browserSpecificUserInfoKey, PREVIOUS_TEACHER_CLASS_CODE_FIELD, classCode.value)
+    }
   }
 
   fun resetActiveClassCode(tx: Transaction) {
-    tx.hset(browserSpecificUserInfoKey, ACTIVE_CLASS_CODE_FIELD, DISABLED_CLASS_CODE.value)
-    tx.hset(browserSpecificUserInfoKey, PREVIOUS_TEACHER_CLASS_CODE_FIELD, DISABLED_CLASS_CODE.value)
-  }
-
-  private fun interestedInActiveClassCode(classCode: ClassCode, redis: Jedis?): Boolean {
-    return when {
-      isNull() || redis.isNull() -> false
-      else -> {
-        val pattern = userInfoBrowserQueryKey
-        redis.scanKeys(pattern).filter { redis.hget(it, ACTIVE_CLASS_CODE_FIELD) == classCode.value }.any()
+    if (usePostgres)
+      transaction {
+        BrowserSessions
+          .update({ BrowserSessions.userRef eq dbmsId }) { row ->
+            row[updated] = DateTime.now(DateTimeZone.UTC)
+            row[activeClassCode] = DISABLED_CLASS_CODE.value
+            row[previousTeacherClassCode] = DISABLED_CLASS_CODE.value
+          }
       }
+    else {
+      tx.hset(browserSpecificUserInfoKey, ACTIVE_CLASS_CODE_FIELD, DISABLED_CLASS_CODE.value)
+      tx.hset(browserSpecificUserInfoKey, PREVIOUS_TEACHER_CLASS_CODE_FIELD, DISABLED_CLASS_CODE.value)
     }
   }
 
@@ -321,7 +392,7 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
       classCode.isNotValid(redis) -> throw DataException("Invalid class code: $classCode")
       isEnrolled(classCode, redis) -> throw DataException("Already enrolled in class $classCode")
       else -> {
-        val previousClassCode = fetchEnrolledClassCode(redis)
+        val previousClassCode = enrolledClassCode
         redis.multi().also { tx ->
           // Remove if already enrolled in another class
           if (previousClassCode.isEnabled)
@@ -411,7 +482,7 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
     logger.info { "Invocations: ${invocations.size}" }
     logger.info { "User Classes: $classCodes" }
 
-    val classCode = fetchEnrolledClassCode(redis)
+    val classCode = enrolledClassCode
     val enrolled = classCode.isEnabled && classCode.isValid(redis) && isEnrolled(classCode, redis)
 
     redis.multi()
@@ -463,7 +534,7 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
                    challengeName: ChallengeName,
                    maxHistoryLength: Int,
                    redis: Jedis) {
-    val classCode = fetchEnrolledClassCode(redis)
+    val classCode = enrolledClassCode
     val shouldPublish = shouldPublish(classCode, redis)
 
     funcInfo.invocations
@@ -527,12 +598,6 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
         isNull() || redis.isNull() -> DISABLED_CLASS_CODE
         else -> redis.hget(browserSpecificUserInfoKey, PREVIOUS_TEACHER_CLASS_CODE_FIELD)?.let { ClassCode(it) }
           ?: DISABLED_CLASS_CODE
-      }
-
-    fun User?.fetchEnrolledClassCode(redis: Jedis) =
-      when {
-        isNull() -> DISABLED_CLASS_CODE
-        else -> redis.hget(userInfoKey, ENROLLED_CLASS_CODE_FIELD)?.let { ClassCode(it) } ?: DISABLED_CLASS_CODE
       }
 
     fun User?.likeDislikeKey(browserSession: BrowserSession?, names: ChallengeNames) =
@@ -634,7 +699,7 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
                                    results: List<ChallengeResults>,
                                    redis: Jedis) {
       val correctAnswersKey = correctAnswersKey(browserSession, names)
-      val challengeAnswerKey = challengeAnswersKey(browserSession, names)
+      val challengeAnswersKey = challengeAnswersKey(browserSession, names)
 
       val complete = results.all { it.correct }
       val numCorrect = results.count { it.correct }
@@ -643,7 +708,7 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
       if (correctAnswersKey.isNotEmpty())
         redis.set(correctAnswersKey, complete.toString())
 
-      if (challengeAnswerKey.isNotEmpty()) {
+      if (challengeAnswersKey.isNotEmpty()) {
         // Save the last answers given
         userResponses.indices
           .map { i ->
@@ -654,11 +719,11 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
           }
           .toMap()
           .forEach { (invocation, userResponse) ->
-            redis.hset(challengeAnswerKey, invocation.value, userResponse)
+            redis.hset(challengeAnswersKey, invocation.value, userResponse)
           }
       }
 
-      val classCode = fetchEnrolledClassCode(redis)
+      val classCode = this?.enrolledClassCode ?: DISABLED_CLASS_CODE
       val shouldPublish = shouldPublish(classCode, redis)
 
       // Save the history of each answer on a per-invocation basis

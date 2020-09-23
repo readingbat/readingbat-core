@@ -66,7 +66,7 @@ object UserChallengeInfo : LongIdTable("user_challenge_info") {
   val updated = datetime("updated")
   val userRef = long("user_ref").references(Users.id)
   val md5 = text("md5")
-  val correct = bool("correct")
+  val allCorrect = bool("all_correct")
   val likeDislike = short("like_dislike")
   val answersJson = text("answers_json")
 }

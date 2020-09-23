@@ -40,7 +40,6 @@ import com.github.readingbat.common.Message
 import com.github.readingbat.common.Message.Companion.EMPTY_MESSAGE
 import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.fetchActiveClassCode
-import com.github.readingbat.common.User.Companion.fetchEnrolledClassCode
 import com.github.readingbat.common.isValidUser
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.pages.HelpAndLogin.helpAndLogin
@@ -157,7 +156,7 @@ internal object UserPrefsPage : KLogging() {
   }
 
   private fun BODY.joinOrWithdrawFromClass(user: User, defaultClassCode: ClassCode, redis: Jedis) {
-    val enrolledClass = user.fetchEnrolledClassCode(redis)
+    val enrolledClass = user.enrolledClassCode
     if (enrolledClass.isEnabled) {
       h3 { +"Enrolled class" }
       val displayStr = enrolledClass.toDisplayString(redis)

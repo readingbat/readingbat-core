@@ -36,7 +36,6 @@ import com.github.readingbat.common.FormFields.TEACHER_PREF
 import com.github.readingbat.common.FormFields.UPDATE_ACTIVE_CLASS
 import com.github.readingbat.common.FormFields.USER_ID_PARAM
 import com.github.readingbat.common.User.Companion.fetchActiveClassCode
-import com.github.readingbat.common.User.Companion.fetchEnrolledClassCode
 import com.github.readingbat.common.User.Companion.fetchPreviousTeacherClassCode
 import com.github.readingbat.common.User.Companion.toUser
 import com.github.readingbat.dsl.InvalidConfigurationException
@@ -74,7 +73,7 @@ internal object TeacherPrefsPost : KLogging() {
         REMOVE_FROM_CLASS -> {
           val studentId = parameters[USER_ID_PARAM] ?: throw InvalidConfigurationException("Missing: $USER_ID_PARAM")
           val student = studentId.toUser(redis, null)
-          val classCode = student.fetchEnrolledClassCode(redis)
+          val classCode = student.enrolledClassCode
           student.withdrawFromClass(classCode, redis)
           val msg = "${student.name} removed from class ${classCode.toDisplayString(redis)}"
           logger.info { msg }

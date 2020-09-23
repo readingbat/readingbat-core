@@ -32,7 +32,6 @@ import com.github.readingbat.common.RedisUtils.scanKeys
 import com.github.readingbat.common.User.Companion.EMAIL_FIELD
 import com.github.readingbat.common.User.Companion.NAME_FIELD
 import com.github.readingbat.common.User.Companion.fetchActiveClassCode
-import com.github.readingbat.common.User.Companion.fetchEnrolledClassCode
 import com.github.readingbat.common.User.Companion.fetchPreviousTeacherClassCode
 import com.github.readingbat.common.User.Companion.gson
 import com.github.readingbat.common.User.Companion.toUser
@@ -166,7 +165,7 @@ internal object TransferUsers : KLogging() {
                 row[name] = user.name.value
                 row[salt] = user.salt
                 row[digest] = user.digest
-                row[enrolledClassCode] = user.fetchEnrolledClassCode(redis).value
+                row[enrolledClassCode] = user.enrolledClassCode.value
               }.value
           userMap[userId] = id
           logger.info { "Created user id: $id for $userId" }
@@ -208,7 +207,6 @@ internal object TransferUsers : KLogging() {
                 }
             }
 
-
           redis.scanKeys(user.userInfoBrowserQueryKey)
             .forEach { key ->
               val sessions_id = key.split(KEY_SEP)[2]
@@ -237,7 +235,7 @@ internal object TransferUsers : KLogging() {
                   row[userRef] = userMap[userId]!!
                   row[md5] = key.split(KEY_SEP)[3]
                   row[updated] = DateTime.now(UTC)
-                  row[correct] = redis[key].toBoolean()
+                  row[allCorrect] = redis[key].toBoolean()
                 }
             }
 

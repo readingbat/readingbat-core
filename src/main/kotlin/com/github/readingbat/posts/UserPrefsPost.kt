@@ -29,7 +29,6 @@ import com.github.readingbat.common.FormFields.UPDATE_PASSWORD
 import com.github.readingbat.common.FormFields.WITHDRAW_FROM_CLASS
 import com.github.readingbat.common.Message
 import com.github.readingbat.common.User
-import com.github.readingbat.common.User.Companion.fetchEnrolledClassCode
 import com.github.readingbat.common.UserPrincipal
 import com.github.readingbat.common.isValidUser
 import com.github.readingbat.dsl.DataException
@@ -113,7 +112,7 @@ internal object UserPrefsPost : KLogging() {
 
   private fun PipelineCall.withdrawFromClass(content: ReadingBatContent, user: User, redis: Jedis) =
     try {
-      val enrolledClassCode = user.fetchEnrolledClassCode(redis)
+      val enrolledClassCode = user.enrolledClassCode
       user.withdrawFromClass(enrolledClassCode, redis)
       userPrefsPage(content, user, redis, Message("Withdrawn from class ${enrolledClassCode.toDisplayString(redis)}"))
     } catch (e: DataException) {
