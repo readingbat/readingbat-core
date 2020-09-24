@@ -273,7 +273,6 @@ internal object ChallengePost : KLogging() {
 
     // Save whether all the answers for the challenge were correct
     if (redis.isNotNull()) {
-      // TODO
       val browserSession = call.browserSession
       user.saveChallengeAnswers(browserSession, content, names, paramMap, funcInfo, userResponses, results, redis)
     }
@@ -292,7 +291,32 @@ internal object ChallengePost : KLogging() {
     call.respondText(answerMapping.toString())
   }
 
-  // TODO
+  private fun deleteChallengeInfo(type: String, id: String, md5: String) =
+    transaction {
+      when (type) {
+        AUTH_KEY ->
+          UserChallengeInfo
+            .deleteWhere { (UserChallengeInfo.userRef eq id.userDbmsId) and (UserChallengeInfo.md5 eq md5) }
+        NO_AUTH_KEY ->
+          SessionChallengeInfo
+            .deleteWhere { (SessionChallengeInfo.sessionRef eq id.sessionDbmsId) and (SessionChallengeInfo.md5 eq md5) }
+        else -> throw InvalidConfigurationException("Invalid type: $type")
+      }
+    }
+
+  private fun deleteAnswerHistory(type: String, id: String, md5: String) =
+    transaction {
+      when (type) {
+        AUTH_KEY ->
+          UserAnswerHistory
+            .deleteWhere { (UserAnswerHistory.userRef eq id.userDbmsId) and (UserAnswerHistory.md5 eq md5) }
+        NO_AUTH_KEY ->
+          SessionAnswerHistory
+            .deleteWhere { (SessionAnswerHistory.sessionRef eq id.sessionDbmsId) and (SessionAnswerHistory.md5 eq md5) }
+        else -> throw InvalidConfigurationException("Invalid type: $type")
+      }
+    }
+
   suspend fun PipelineCall.clearChallengeAnswers(content: ReadingBatContent, user: User?, redis: Jedis): String {
     val params = call.receiveParameters()
 
@@ -309,47 +333,21 @@ internal object ChallengePost : KLogging() {
 
     // Clears answer history
     if (correctAnswersKey.isNotEmpty()) {
-      logger.info { "Clearing correctAnswersKey for ${challenge.challengeName} $correctAnswersKey" }
-      if (usePostgres)
-        transaction {
-          val elems = challengeAnswersKey.split(KEY_SEP)
-          val type = elems[1]
-          val id = elems[2]
-          val md5 = elems[3]
-          when (type) {
-            AUTH_KEY ->
-              UserChallengeInfo
-                .deleteWhere { (UserChallengeInfo.userRef eq id.userDbmsId) and (UserChallengeInfo.md5 eq md5) }
-            NO_AUTH_KEY ->
-              SessionChallengeInfo
-                .deleteWhere { (SessionChallengeInfo.sessionRef eq id.sessionDbmsId) and (SessionChallengeInfo.md5 eq md5) }
-            else -> throw InvalidConfigurationException("Invalid type: $type")
-          }
-        }
-      else
-        redis.del(correctAnswersKey)
+      when {
+        usePostgres -> correctAnswersKey.split(KEY_SEP).let { deleteChallengeInfo(it[1], it[2], it[3]) }
+        else -> redis.del(correctAnswersKey)
+      }.also {
+        logger.info { "Deleted $it correctAnswers vals for ${challenge.challengeName} $correctAnswersKey" }
+      }
     }
 
     if (challengeAnswersKey.isNotEmpty()) {
-      logger.info { "Clearing challengeAnswersKey for ${challenge.challengeName} $challengeAnswersKey" }
-      if (usePostgres)
-        transaction {
-          val elems = challengeAnswersKey.split(KEY_SEP)
-          val type = elems[1]
-          val id = elems[2]
-          val md5 = elems[3]
-          when (type) {
-            AUTH_KEY ->
-              UserAnswerHistory
-                .deleteWhere { (UserAnswerHistory.userRef eq id.userDbmsId) and (UserAnswerHistory.md5 eq md5) }
-            NO_AUTH_KEY ->
-              SessionAnswerHistory
-                .deleteWhere { (SessionAnswerHistory.sessionRef eq id.sessionDbmsId) and (SessionAnswerHistory.md5 eq md5) }
-            else -> throw InvalidConfigurationException("Invalid type: $type")
-          }
-        }
-      else
-        redis.del(challengeAnswersKey)
+      when {
+        usePostgres -> challengeAnswersKey.split(KEY_SEP).let { deleteAnswerHistory(it[1], it[2], it[3]) }
+        else -> redis.del(challengeAnswersKey)
+      }.also {
+        logger.info { "Deleted $it challengeAnswers for ${challenge.challengeName} $challengeAnswersKey" }
+      }
     }
 
     user?.resetHistory(funcInfo, languageName, groupName, challengeName, content.maxHistoryLength, redis)
@@ -371,20 +369,27 @@ internal object ChallengePost : KLogging() {
 
     val path = pathOf(CHALLENGE_ROOT, languageName, groupName)
 
-    // TODO
     correctAnswersKeys
       .forEach { correctAnswersKey ->
         if (correctAnswersKey.isNotEmpty()) {
-          logger.info { "Clearing correctAnswersKey for $correctAnswersKey" }
-          redis.del(correctAnswersKey)
+          when {
+            usePostgres -> correctAnswersKey.split(KEY_SEP).let { deleteChallengeInfo(it[1], it[2], it[3]) }
+            else -> redis.del(correctAnswersKey)
+          }.also {
+            logger.info { "Deleted $it correctAnswers vals for $correctAnswersKey" }
+          }
         }
       }
 
     challengeAnswersKeys
       .forEach { challengeAnswersKey ->
         if (challengeAnswersKey.isNotEmpty()) {
-          logger.info { "Clearing challengeAnswersKey answers for $challengeAnswersKey" }
-          redis.del(challengeAnswersKey)
+          when {
+            usePostgres -> challengeAnswersKey.split(KEY_SEP).let { deleteAnswerHistory(it[1], it[2], it[3]) }
+            else -> redis.del(challengeAnswersKey)
+          }.also {
+            logger.info { "Deleted $it challengeAnswers for $challengeAnswersKey" }
+          }
         }
       }
 
@@ -420,7 +425,6 @@ internal object ChallengePost : KLogging() {
 
     logger.debug { "Like/dislike arg -- response: $likeArg -- $likeVal" }
 
-    // TODO
     if (redis.isNotNull()) {
       val browserSession = call.browserSession
       user.saveLikeDislike(browserSession, names, likeVal, redis)
