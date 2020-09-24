@@ -85,6 +85,7 @@ internal object TransferUsers : KLogging() {
              redis.scanKeys(keyOf(LIKE_DISLIKE_KEY, NO_AUTH_KEY, "*", "*")).toList(),
              redis.scanKeys(keyOf(CHALLENGE_ANSWERS_KEY, NO_AUTH_KEY, "*", "*")).toList(),
              redis.scanKeys(keyOf(ANSWER_HISTORY_KEY, NO_AUTH_KEY, "*", "*")).toList())
+        .asSequence()
         .flatten()
         .map { it.split(KEY_SEP)[2] }  // pull out the browser session_id value
         .sorted()
@@ -146,7 +147,7 @@ internal object TransferUsers : KLogging() {
               require(sessionId == key.split(KEY_SEP)[2])
               //println("$key ${redis.get(key)}")
 
-              SessionAnswerHistory.insertAndGetId() { row ->
+              SessionAnswerHistory.insertAndGetId { row ->
                 val history = gson.fromJson(redis[key], ChallengeHistory::class.java)
                 row[sessionRef] = sessionDbmsId
                 row[md5] = key.split(KEY_SEP)[3]
@@ -157,6 +158,7 @@ internal object TransferUsers : KLogging() {
               }
             }
         }
+        .toList()
 
       val userMap = mutableMapOf<String, Long>()
 
@@ -287,7 +289,7 @@ internal object TransferUsers : KLogging() {
               //println("$key ${redis.get(key)}")
 
               UserAnswerHistory
-                .insertAndGetId() { row ->
+                .insertAndGetId { row ->
                   val history = gson.fromJson(redis[key], ChallengeHistory::class.java)
                   row[userRef] = userMap[userId]!!
                   row[md5] = key.split(KEY_SEP)[3]

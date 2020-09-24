@@ -75,7 +75,6 @@ private fun fetchContentDslFromRedis(source: String) =
   else
     null
 
-// TODO
 internal fun readContentDsl(contentSource: ContentSource, variableName: String = "content"): ReadingBatContent {
   val (code, dur) =
     measureTimedValue {

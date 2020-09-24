@@ -44,6 +44,7 @@ import com.github.readingbat.pages.ClassSummaryPage.classSummaryPage
 import com.github.readingbat.pages.TeacherPrefsPage.teacherPrefsPage
 import com.github.readingbat.pages.UserPrefsPage.requestLogInPage
 import com.github.readingbat.server.PipelineCall
+import com.github.readingbat.server.ReadingBatServer.usePostgres
 import com.github.readingbat.server.RedirectException
 import com.github.readingbat.server.ServerUtils.queryParam
 import io.ktor.application.*
@@ -115,7 +116,6 @@ internal object TeacherPrefsPost : KLogging() {
     throw RedirectException("$returnPath?$MSG=${msg.encode()}")
   }
 
-  // TODO
   private fun PipelineCall.createClass(content: ReadingBatContent, user: User, classDesc: String, redis: Jedis) =
     when {
       classDesc.isBlank() -> {
@@ -125,28 +125,20 @@ internal object TeacherPrefsPost : KLogging() {
         teacherPrefsPage(content, user, redis, Message("Class description is not unique [$classDesc]", true), classDesc)
       }
       user.classCount(redis) == content.maxClassCount -> {
-        teacherPrefsPage(content,
-                         user,
-                         redis,
-                         Message("Maximum number of classes is: [${content.maxClassCount}]", true),
-                         classDesc)
+        val msg = Message("Maximum number of classes is: [${content.maxClassCount}]", true)
+        teacherPrefsPage(content, user, redis, msg, classDesc)
       }
       else -> {
+        // Add classcode to list of classes created by user
         val classCode = newClassCode()
-
-        redis.multi()
-          .also { tx ->
-
-            classCode.initializeWith(classDesc, user, tx)
-
-            // Add classcode to list of classes created by user
-            user.addClassCode(classCode, classDesc, tx)
-
-            // Create class with no one enrolled to prevent class from being created a 2nd time
-            classCode.addEnrolleePlaceholder(tx)
-
-            tx.exec()
-          }
+        if (usePostgres)
+          user.addClassCode(classCode, classDesc)
+        else
+          redis.multi()
+            .also { tx ->
+              user.addClassCode(classCode, classDesc, tx)
+              tx.exec()
+            }
         teacherPrefsPage(content, user, redis, Message("Created class code: $classCode", false))
       }
     }

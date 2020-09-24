@@ -82,7 +82,7 @@ internal data class ClassCode(val value: String) {
         val userIds =
           (Classes innerJoin Enrollees)
             .slice(Enrollees.userRef)
-            .select { Enrollees.classesRef eq Classes.id }
+            .select { (Classes.classCode eq value) and (Enrollees.classesRef eq Classes.id) }
             .map { it[Enrollees.userRef].toLong() }
 
         Users
@@ -114,14 +114,18 @@ internal data class ClassCode(val value: String) {
         }
     }
 
-  fun addEnrollee(user: User, tx: Transaction) = tx.sadd(classCodeEnrollmentKey, user.userId)
+  fun addEnrollee(user: User, tx: Transaction) {
+    tx.sadd(classCodeEnrollmentKey, user.userId)
+  }
 
   fun removeEnrollee(user: User) =
     transaction {
       Enrollees.deleteWhere { (Enrollees.classesRef eq dbmsId) and (Enrollees.userRef eq user.dbmsId) }
     }
 
-  fun removeEnrollee(user: User, tx: Transaction) = tx.srem(classCodeEnrollmentKey, user.userId)
+  fun removeEnrollee(user: User, tx: Transaction) {
+    tx.srem(classCodeEnrollmentKey, user.userId)
+  }
 
   fun deleteAllEnrollees(tx: Transaction) {
     if (usePostgres)

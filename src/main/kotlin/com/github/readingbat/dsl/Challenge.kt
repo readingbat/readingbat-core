@@ -117,7 +117,6 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
               val (text, dur) = measureTimedValue { URL(path).readText() }
               logger.debug { """Fetched "${pathOf(groupName, fileName)}" in: $dur from: $path""" }
 
-              // TODO
               if (cacheContentInRedis()) {
                 redisPool?.withNonNullRedisPool { redis ->
                   redis.set(sourceCodeKey, text)

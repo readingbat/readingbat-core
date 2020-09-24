@@ -18,6 +18,7 @@
 package com.github.readingbat.posts
 
 import com.github.pambrose.common.util.*
+import com.github.readingbat.common.*
 import com.github.readingbat.common.CommonUtils.pathOf
 import com.github.readingbat.common.Constants.CHALLENGE_SRC
 import com.github.readingbat.common.Constants.GROUP_SRC
@@ -31,17 +32,18 @@ import com.github.readingbat.common.FormFields.CHALLENGE_NAME_PARAM
 import com.github.readingbat.common.FormFields.CORRECT_ANSWERS_PARAM
 import com.github.readingbat.common.FormFields.GROUP_NAME_PARAM
 import com.github.readingbat.common.FormFields.LANGUAGE_NAME_PARAM
+import com.github.readingbat.common.KeyConstants.AUTH_KEY
+import com.github.readingbat.common.KeyConstants.KEY_SEP
+import com.github.readingbat.common.KeyConstants.NO_AUTH_KEY
 import com.github.readingbat.common.ParameterIds.DISLIKE_CLEAR
 import com.github.readingbat.common.ParameterIds.DISLIKE_COLOR
 import com.github.readingbat.common.ParameterIds.LIKE_CLEAR
 import com.github.readingbat.common.ParameterIds.LIKE_COLOR
 import com.github.readingbat.common.ScriptPools.kotlinScriptPool
 import com.github.readingbat.common.ScriptPools.pythonScriptPool
-import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.gson
 import com.github.readingbat.common.User.Companion.saveChallengeAnswers
 import com.github.readingbat.common.User.Companion.saveLikeDislike
-import com.github.readingbat.common.browserSession
 import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.ReturnType
@@ -52,10 +54,14 @@ import com.github.readingbat.server.*
 import com.github.readingbat.server.ChallengeName.Companion.getChallengeName
 import com.github.readingbat.server.GroupName.Companion.getGroupName
 import com.github.readingbat.server.LanguageName.Companion.getLanguageName
+import com.github.readingbat.server.ReadingBatServer.usePostgres
 import io.ktor.application.*
 import io.ktor.request.*
 import io.ktor.response.*
 import mu.KLogging
+import org.jetbrains.exposed.sql.and
+import org.jetbrains.exposed.sql.deleteWhere
+import org.jetbrains.exposed.sql.transactions.transaction
 import redis.clients.jedis.Jedis
 import javax.script.ScriptException
 
@@ -301,14 +307,49 @@ internal object ChallengePost : KLogging() {
     val funcInfo = challenge.functionInfo(content)
     val path = pathOf(CHALLENGE_ROOT, languageName, groupName, challengeName)
 
+    // Clears answer history
     if (correctAnswersKey.isNotEmpty()) {
       logger.info { "Clearing correctAnswersKey for ${challenge.challengeName} $correctAnswersKey" }
-      redis.del(correctAnswersKey)
+      if (usePostgres)
+        transaction {
+          val elems = challengeAnswersKey.split(KEY_SEP)
+          val type = elems[1]
+          val id = elems[2]
+          val md5 = elems[3]
+          when (type) {
+            AUTH_KEY ->
+              UserChallengeInfo
+                .deleteWhere { (UserChallengeInfo.userRef eq id.userDbmsId) and (UserChallengeInfo.md5 eq md5) }
+            NO_AUTH_KEY ->
+              SessionChallengeInfo
+                .deleteWhere { (SessionChallengeInfo.sessionRef eq id.sessionDbmsId) and (SessionChallengeInfo.md5 eq md5) }
+            else -> throw InvalidConfigurationException("Invalid type: $type")
+          }
+        }
+      else
+        redis.del(correctAnswersKey)
     }
 
     if (challengeAnswersKey.isNotEmpty()) {
       logger.info { "Clearing challengeAnswersKey for ${challenge.challengeName} $challengeAnswersKey" }
-      redis.del(challengeAnswersKey)
+      if (usePostgres)
+        transaction {
+          val elems = challengeAnswersKey.split(KEY_SEP)
+          val type = elems[1]
+          val id = elems[2]
+          val md5 = elems[3]
+          when (type) {
+            AUTH_KEY ->
+              UserAnswerHistory
+                .deleteWhere { (UserAnswerHistory.userRef eq id.userDbmsId) and (UserAnswerHistory.md5 eq md5) }
+            NO_AUTH_KEY ->
+              SessionAnswerHistory
+                .deleteWhere { (SessionAnswerHistory.sessionRef eq id.sessionDbmsId) and (SessionAnswerHistory.md5 eq md5) }
+            else -> throw InvalidConfigurationException("Invalid type: $type")
+          }
+        }
+      else
+        redis.del(challengeAnswersKey)
     }
 
     user?.resetHistory(funcInfo, languageName, groupName, challengeName, content.maxHistoryLength, redis)
@@ -330,6 +371,7 @@ internal object ChallengePost : KLogging() {
 
     val path = pathOf(CHALLENGE_ROOT, languageName, groupName)
 
+    // TODO
     correctAnswersKeys
       .forEach { correctAnswersKey ->
         if (correctAnswersKey.isNotEmpty()) {

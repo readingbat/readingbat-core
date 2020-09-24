@@ -86,7 +86,6 @@ internal object WsEndoints : KLogging() {
                         context: String) =
       redisPool?.withRedisPool { redis ->
         when {
-          // TODO
           redis.isNull() -> false to context
           languageName.isNotNull() && languageName.isNotValid() -> false to "Invalid language: $languageName"
           groupName.isNotNull() && groupName.isNotValid() -> false to "Invalid group: $groupName"
@@ -391,6 +390,7 @@ internal object WsEndoints : KLogging() {
                         val historyKey =
                           enrollee.answerHistoryKey(languageName, groupName, challengeName, invocation)
 
+                        // TODO
                         if (redis.exists(historyKey)) {
                           val json = redis[historyKey] ?: ""
                           results +=
@@ -494,6 +494,7 @@ internal object WsEndoints : KLogging() {
                       val historyKey =
                         student.answerHistoryKey(languageName, challengeGroup.groupName, challengeName, invocation)
 
+                      // TODO
                       if (redis.exists(historyKey)) {
                         attempted++
                         val json = redis[historyKey] ?: ""

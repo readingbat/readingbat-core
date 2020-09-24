@@ -125,14 +125,7 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
   private val userPasswordResetKey by lazy { keyOf(USER_RESET_KEY, userId) }
 
   private val sessionDbmsId: Long
-    get() {
-      val sessionId = browserSession?.id ?: throw InvalidConfigurationException("Missing browser session id")
-      return BrowserSessions
-        .slice(BrowserSessions.id)
-        .select { BrowserSessions.session_id eq sessionId }
-        .map { it[BrowserSessions.id].value }
-        .firstOrNull() ?: throw InvalidConfigurationException("Invalid browser session id: $sessionId")
-    }
+    get() = browserSession?.id?.sessionDbmsId ?: throw InvalidConfigurationException("Missing browser session id")
 
   fun browserSessions(redis: Jedis) =
     if (usePostgres)
@@ -205,18 +198,21 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
     else
       redis.smembers(userClassesKey).count()
 
+  fun addClassCode(classCode: ClassCode, classDesc: String) =
+    transaction {
+      Classes
+        .insert { row ->
+          row[userRef] = dbmsId
+          row[Classes.classCode] = classCode.value
+          row[description] = classDesc
+        }
+    }
+
   fun addClassCode(classCode: ClassCode, classDesc: String, tx: Transaction) {
-    if (usePostgres)
-      transaction {
-        Classes
-          .insert { row ->
-            row[userRef] = dbmsId
-            row[Classes.classCode] = classCode.value
-            row[description] = classDesc
-          }
-      }
-    else
-      tx.sadd(userClassesKey, classCode.value)
+    classCode.initializeWith(classDesc, this, tx)
+    tx.sadd(userClassesKey, classCode.value)
+    // Create class with no one enrolled to prevent class from being created a 2nd time
+    classCode.addEnrolleePlaceholder(tx)
   }
 
   fun classCodes(redis: Jedis) =
@@ -489,9 +485,13 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
     else
       redis.get(userPasswordResetKey)
 
-  fun deleteUserPasswordResetId() = PasswordResets.deleteWhere { PasswordResets.userRef eq dbmsId }
+  fun deleteUserPasswordResetId() {
+    PasswordResets.deleteWhere { PasswordResets.userRef eq dbmsId }
+  }
 
-  fun deleteUserPasswordResetId(tx: Transaction) = tx.del(userPasswordResetKey)
+  fun deleteUserPasswordResetId(tx: Transaction) {
+    tx.del(userPasswordResetKey)
+  }
 
   fun savePasswordResetId(email: Email, previousResetId: ResetId, newResetId: ResetId, redis: Jedis) {
     if (usePostgres)
@@ -644,21 +644,41 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
 
     private fun newUser(browserSession: BrowserSession?) = User(null, randomId(25), browserSession)
 
-    // TODO
-    fun User?.fetchActiveClassCode(redis: Jedis?): ClassCode {
-      return when {
+    fun User?.fetchActiveClassCode(redis: Jedis?) =
+      when {
         isNull() || redis.isNull() -> DISABLED_CLASS_CODE
+        usePostgres ->
+          if (this.isNotNull())
+            transaction {
+              UserSessions
+                .slice(UserSessions.activeClassCode)
+                .select { UserSessions.userRef eq dbmsId }
+                .map { it[UserSessions.activeClassCode] }
+                .firstOrNull()?.let { ClassCode(it) } ?: DISABLED_CLASS_CODE
+            }
+          else
+            DISABLED_CLASS_CODE
         else -> redis.hget(browserSpecificUserInfoKey, ACTIVE_CLASS_CODE_FIELD)?.let { ClassCode(it) }
           ?: DISABLED_CLASS_CODE
       }
-    }
 
-    // TODO
     fun User?.fetchPreviousTeacherClassCode(redis: Jedis?) =
       when {
         isNull() || redis.isNull() -> DISABLED_CLASS_CODE
-        else -> redis.hget(browserSpecificUserInfoKey, PREVIOUS_TEACHER_CLASS_CODE_FIELD)?.let { ClassCode(it) }
-          ?: DISABLED_CLASS_CODE
+        usePostgres ->
+          if (this.isNotNull())
+            transaction {
+              UserSessions
+                .slice(UserSessions.previousTeacherClassCode)
+                .select { UserSessions.userRef eq dbmsId }
+                .map { it[UserSessions.previousTeacherClassCode] }
+                .firstOrNull()?.let { ClassCode(it) } ?: DISABLED_CLASS_CODE
+            }
+          else
+            DISABLED_CLASS_CODE
+        else ->
+          redis.hget(browserSpecificUserInfoKey, PREVIOUS_TEACHER_CLASS_CODE_FIELD)?.let { ClassCode(it) }
+            ?: DISABLED_CLASS_CODE
       }
 
     fun User?.likeDislikeKey(browserSession: BrowserSession?, names: ChallengeNames) =
@@ -744,7 +764,7 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
               .insertAndGetId { row ->
                 row[Users.name] = name.value
                 row[Users.email] = email.value
-                row[Users.enrolledClassCode] = DISABLED_CLASS_CODE.value
+                row[enrolledClassCode] = DISABLED_CLASS_CODE.value
                 row[Users.salt] = salt
                 row[Users.digest] = digest
               }.value
@@ -752,16 +772,15 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
           val browserId =
             BrowserSessions
               .insertAndGetId { row ->
-                row[BrowserSessions.session_id] =
-                  browserSession?.id ?: throw InvalidConfigurationException("Missing browser session")
+                row[session_id] = browserSession?.id ?: throw InvalidConfigurationException("Missing browser session")
               }.value
 
           UserSessions
             .insert { row ->
-              row[UserSessions.sessionRef] = browserId
-              row[UserSessions.userRef] = userId
-              row[UserSessions.activeClassCode] = DISABLED_CLASS_CODE.value
-              row[UserSessions.previousTeacherClassCode] = DISABLED_CLASS_CODE.value
+              row[sessionRef] = browserId
+              row[userRef] = userId
+              row[activeClassCode] = DISABLED_CLASS_CODE.value
+              row[previousTeacherClassCode] = DISABLED_CLASS_CODE.value
             }
 
         }
@@ -859,12 +878,36 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
         else -> false
       }
 
-    // TODO
-    fun User?.saveLikeDislike(browserSession: BrowserSession?, names: ChallengeNames, likeVal: Int, redis: Jedis) =
-      likeDislikeKey(browserSession, names).let {
-        if (it.isNotEmpty())
-          redis.apply { if (likeVal == 0) del(it) else set(it, likeVal.toString()) }
-      }
+    fun User?.saveLikeDislike(browserSession: BrowserSession?, names: ChallengeNames, likeVal: Int, redis: Jedis) {
+      if (usePostgres)
+        when {
+          this@saveLikeDislike.isNotNull() ->
+            transaction {
+              UserChallengeInfo
+                .update({ UserChallengeInfo.userRef eq dbmsId }) { row ->
+                  row[updated] = DateTime.now(UTC)
+                  row[likeDislike] = likeVal.toShort()
+                }
+            }
+          browserSession.isNotNull() ->
+            transaction {
+              SessionChallengeInfo
+                .update({ SessionChallengeInfo.sessionRef eq (browserSession.id.sessionDbmsId) }) { row ->
+                  row[updated] = DateTime.now(UTC)
+                  row[likeDislike] = likeVal.toShort()
+                }
+            }
+          else -> {
+            // Do nothing
+          }
+        }
+      else
+        likeDislikeKey(browserSession, names)
+          .let {
+            if (it.isNotEmpty())
+              redis.apply { if (likeVal == 0) del(it) else set(it, likeVal.toString()) }
+          }
+    }
 
     fun isRegisteredEmail(email: Email, redis: Jedis) = lookupUserByEmail(email, redis).isNotNull()
 
@@ -887,6 +930,22 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
 
   internal data class ChallengeAnswers(val id: String, val correctAnswers: MutableMap<String, String> = mutableMapOf())
 }
+
+internal val String.userDbmsId: Long
+  get() =
+    Users
+      .slice(Users.id)
+      .select { Users.userId eq this@userDbmsId }
+      .map { it[Users.id].value }
+      .firstOrNull() ?: throw InvalidConfigurationException("Invalid user id: ${this@userDbmsId}")
+
+internal val String.sessionDbmsId: Long
+  get() =
+    BrowserSessions
+      .slice(BrowserSessions.id)
+      .select { BrowserSessions.session_id eq this@sessionDbmsId }
+      .map { it[BrowserSessions.id].value }
+      .firstOrNull() ?: throw InvalidConfigurationException("Invalid browser session id: ${this@sessionDbmsId}")
 
 internal fun User?.isAdminUser(redis: Jedis) = isValidUser(redis) && email.value in adminUsers
 

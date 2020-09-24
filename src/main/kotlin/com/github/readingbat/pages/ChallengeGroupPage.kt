@@ -227,8 +227,6 @@ internal object ChallengeGroupPage : KLogging() {
 
     val correctAnswersKeys = challenges.map { user.correctAnswersKey(browserSession, it) }
     val challengeAnswerKeys = challenges.map { user.challengeAnswersKey(browserSession, it) }
-    val correctAnswersKey = gson.toJson(correctAnswersKeys)
-    val challengeAnswersKey = gson.toJson(challengeAnswerKeys)
 
     p {
       form {
@@ -238,8 +236,8 @@ internal object ChallengeGroupPage : KLogging() {
         onSubmit = """return confirm('Are you sure you want to clear your previous answers for group "$groupName"?')"""
         input { type = InputType.hidden; name = LANGUAGE_NAME_PARAM; value = languageName.value }
         input { type = InputType.hidden; name = GROUP_NAME_PARAM; value = groupName.value }
-        input { type = InputType.hidden; name = CORRECT_ANSWERS_PARAM; value = correctAnswersKey }
-        input { type = InputType.hidden; name = CHALLENGE_ANSWERS_PARAM; value = challengeAnswersKey }
+        input { type = InputType.hidden; name = CORRECT_ANSWERS_PARAM; value = gson.toJson(correctAnswersKeys) }
+        input { type = InputType.hidden; name = CHALLENGE_ANSWERS_PARAM; value = gson.toJson(challengeAnswerKeys) }
         input {
           style = "vertical-align:middle; margin-top:1; margin-bottom:0"
           type = InputType.submit; value = "Clear answer history"
