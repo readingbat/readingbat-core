@@ -119,9 +119,7 @@ internal data class ClassCode(val value: String) {
   }
 
   fun removeEnrollee(user: User) =
-    transaction {
       Enrollees.deleteWhere { (Enrollees.classesRef eq dbmsId) and (Enrollees.userRef eq user.dbmsId) }
-    }
 
   fun removeEnrollee(user: User, tx: Transaction) {
     tx.srem(classCodeEnrollmentKey, user.userId)

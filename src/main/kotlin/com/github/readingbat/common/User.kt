@@ -251,14 +251,12 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
   }
 
   private fun assignEnrolledClassCode(classCode: ClassCode) =
-    transaction {
-      Users
-        .update({ Users.id eq dbmsId }) { row ->
-          row[updated] = DateTime.now(UTC)
-          row[enrolledClassCode] = classCode.value
-          this@User.enrolledClassCode = classCode
-        }
-    }
+    Users
+      .update({ Users.id eq dbmsId }) { row ->
+        row[updated] = DateTime.now(UTC)
+        row[enrolledClassCode] = classCode.value
+        this@User.enrolledClassCode = classCode
+      }
 
   private fun assignEnrolledClassCode(classCode: ClassCode, tx: Transaction) {
     tx.hset(userInfoKey, ENROLLED_CLASS_CODE_FIELD, classCode.value)
@@ -342,6 +340,32 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
           else
             md5Of(languageName, groupName, challengeName, invocation))
 
+  fun historyExists(md5: String) =
+    UserAnswerHistory
+      .slice(UserAnswerHistory.id.count())
+      .select { (UserAnswerHistory.userRef eq dbmsId) and (UserAnswerHistory.md5 eq md5) }
+      .map { it[UserAnswerHistory.id.count()].toInt() }
+      .first() > 0
+
+  fun answerHistory(md5: String, invocation: Invocation) =
+    UserAnswerHistory
+      .slice(UserAnswerHistory.invocation,
+             UserAnswerHistory.correct,
+             UserAnswerHistory.incorrectAttempts,
+             UserAnswerHistory.historyJson)
+      .select { (UserAnswerHistory.userRef eq dbmsId) and (UserAnswerHistory.md5 eq md5) }
+      .map {
+        val json = it[UserAnswerHistory.historyJson]
+        val history =
+          mutableListOf<String>().apply { addAll(gson.fromJson(json, List::class.java) as List<String>) }
+
+        ChallengeHistory(Invocation(it[UserAnswerHistory.invocation]),
+                         it[UserAnswerHistory.correct],
+                         it[UserAnswerHistory.incorrectAttempts].toInt(),
+                         history)
+      }
+      .firstOrNull() ?: ChallengeHistory(invocation)
+
   fun assignActiveClassCode(classCode: ClassCode, resetPreviousClassCode: Boolean, redis: Jedis) {
     if (usePostgres)
       transaction {
@@ -360,20 +384,20 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
     }
   }
 
-  fun resetActiveClassCode(tx: Transaction) {
-    if (usePostgres)
-      transaction {
-        UserSessions
-          .update({ (UserSessions.userRef eq dbmsId) and (UserSessions.sessionRef eq sessionDbmsId) }) { row ->
-            row[updated] = DateTime.now(UTC)
-            row[activeClassCode] = DISABLED_CLASS_CODE.value
-            row[previousTeacherClassCode] = DISABLED_CLASS_CODE.value
-          }
+  fun resetActiveClassCode() {
+    logger.info { "Resetting $name ($email) active class code" }
+    UserSessions
+      .update({ (UserSessions.userRef eq dbmsId) and (UserSessions.sessionRef eq sessionDbmsId) }) { row ->
+        row[updated] = DateTime.now(UTC)
+        row[activeClassCode] = DISABLED_CLASS_CODE.value
+        row[previousTeacherClassCode] = DISABLED_CLASS_CODE.value
       }
-    else {
-      tx.hset(browserSpecificUserInfoKey, ACTIVE_CLASS_CODE_FIELD, DISABLED_CLASS_CODE.value)
-      tx.hset(browserSpecificUserInfoKey, PREVIOUS_TEACHER_CLASS_CODE_FIELD, DISABLED_CLASS_CODE.value)
-    }
+  }
+
+  fun resetActiveClassCode(tx: Transaction) {
+    logger.info { "Resetting $name ($email) active class code" }
+    tx.hset(browserSpecificUserInfoKey, ACTIVE_CLASS_CODE_FIELD, DISABLED_CLASS_CODE.value)
+    tx.hset(browserSpecificUserInfoKey, PREVIOUS_TEACHER_CLASS_CODE_FIELD, DISABLED_CLASS_CODE.value)
   }
 
   fun isEnrolled(classCode: ClassCode, redis: Jedis) =
@@ -419,24 +443,48 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
     }
   }
 
-  // TODO
   fun withdrawFromClass(classCode: ClassCode, redis: Jedis) {
     if (classCode.isNotEnabled)
       throw DataException("Not enrolled in a class")
 
     // This should always be true
     val enrolled = classCode.isValid(redis) && isEnrolled(classCode, redis)
-    redis.multi()
-      .also { tx ->
-        assignEnrolledClassCode(DISABLED_CLASS_CODE, tx)
+
+    if (usePostgres)
+      transaction {
+        assignEnrolledClassCode(DISABLED_CLASS_CODE)
         if (enrolled)
-          classCode.removeEnrollee(this, tx)
-        tx.exec()
+          classCode.removeEnrollee(this@User)
       }
+    else
+      redis.multi()
+        .also { tx ->
+          assignEnrolledClassCode(DISABLED_CLASS_CODE, tx)
+          if (enrolled)
+            classCode.removeEnrollee(this, tx)
+          tx.exec()
+        }
   }
 
-  // TODO
+  fun deleteClassCode(classCode: ClassCode, enrollees: List<User>) {
+    logger.info { "Deleting ${enrollees.size} enrollees for class code $classCode for $name ($email)" }
+    // Reset every enrollee's enrolled class and remove from class
+    enrollees
+      .forEach { enrollee ->
+        logger.info { "Assigning ${enrollee.email} to $DISABLED_CLASS_CODE" }
+        Users
+          .update({ Users.id eq enrollee.dbmsId }) { row ->
+            row[updated] = DateTime.now(UTC)
+            row[enrolledClassCode] = DISABLED_CLASS_CODE.value
+          }
+      }
+
+    // Delete class
+    Classes.deleteWhere { Classes.classCode eq classCode.value }
+  }
+
   fun deleteClassCode(classCode: ClassCode, enrollees: List<User>, tx: Transaction) {
+    logger.info { "Deleting ${enrollees.size} enrollees for class code $classCode for $name ($email)" }
     // Reset every enrollee's enrolled class and remove from class
     enrollees
       .forEach {
@@ -586,7 +634,6 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
     redis.publish(classTopicName(classCode, challengeMd5.value), gson.toJson(dashboardInfo))
   }
 
-  // TODO
   fun resetHistory(funcInfo: FunctionInfo,
                    languageName: LanguageName,
                    groupName: GroupName,
@@ -596,19 +643,33 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
     val classCode = enrolledClassCode
     val shouldPublish = shouldPublish(classCode, redis)
 
+    logger.debug { "Resetting $languageName $groupName $challengeName" }
+
     funcInfo.invocations
       .map { ChallengeResults(invocation = it) }
       .forEach { result ->
         // Reset the history of each answer on a per-invocation basis
-        val answerHistoryKey = answerHistoryKey(languageName, groupName, challengeName, result.invocation)
-        if (answerHistoryKey.isNotEmpty()) {
-          val history = ChallengeHistory(result.invocation).apply { markUnanswered() }
-          logger.debug { "Resetting $answerHistoryKey" }
-          redis.set(answerHistoryKey, gson.toJson(history))
+        logger.debug { "Resetting invocation: ${result.invocation}" }
+        val history = ChallengeHistory(result.invocation).apply { markUnanswered() }
 
-          if (shouldPublish)
-            publishAnswers(classCode, funcInfo.challengeMd5, maxHistoryLength, false, 0, history, redis)
+        if (usePostgres)
+          transaction {
+            val md5 = md5Of(languageName, groupName, challengeName, result.invocation)
+            UserAnswerHistory
+              .update({ (UserAnswerHistory.userRef eq dbmsId) and (UserAnswerHistory.md5 eq md5) }) { row ->
+                row[updated] = DateTime.now(UTC)
+                row[correct] = false
+                row[incorrectAttempts] = 0
+                row[historyJson] = gson.toJson(emptyList<String>())
+              }
+          }
+        else {
+          val answerHistoryKey = answerHistoryKey(languageName, groupName, challengeName, result.invocation)
+          redis.set(answerHistoryKey, gson.toJson(history))
         }
+
+        if (shouldPublish)
+          publishAnswers(classCode, funcInfo.challengeMd5, maxHistoryLength, false, 0, history, redis)
       }
   }
 
@@ -843,25 +904,24 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
       // Save the history of each answer on a per-invocation basis
       for (result in results) {
         val answerHistoryKey = answerHistoryKey(browserSession, names, result.invocation)
-        if (answerHistoryKey.isNotEmpty()) {
-          val history =
-            gson.fromJson(redis[answerHistoryKey], ChallengeHistory::class.java) ?: ChallengeHistory(result.invocation)
 
-          when {
-            !result.answered -> history.markUnanswered()
-            result.correct -> history.markCorrect(result.userResponse)
-            else -> history.markIncorrect(result.userResponse)
-          }
+        val history =
+          gson.fromJson(redis[answerHistoryKey], ChallengeHistory::class.java) ?: ChallengeHistory(result.invocation)
 
-          val json = gson.toJson(history)
-          logger.debug { "Saving: $json to $answerHistoryKey" }
-          redis.set(answerHistoryKey, json)
+        when {
+          !result.answered -> history.markUnanswered()
+          result.correct -> history.markCorrect(result.userResponse)
+          else -> history.markIncorrect(result.userResponse)
+        }
 
-          if (shouldPublish) {
-            val md5 = funcInfo.challengeMd5
-            val maxLength = content.maxHistoryLength
-            this?.publishAnswers(classCode, md5, maxLength, complete, numCorrect, history, redis)
-          }
+        val json = gson.toJson(history)
+        logger.debug { "Saving: $json to $answerHistoryKey" }
+        redis.set(answerHistoryKey, json)
+
+        if (shouldPublish) {
+          val md5 = funcInfo.challengeMd5
+          val maxLength = content.maxHistoryLength
+          this?.publishAnswers(classCode, md5, maxLength, complete, numCorrect, history, redis)
         }
       }
     }

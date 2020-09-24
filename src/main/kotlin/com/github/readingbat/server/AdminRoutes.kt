@@ -28,6 +28,7 @@ import com.github.readingbat.common.Constants.NO_TRACK_HEADER
 import com.github.readingbat.common.Endpoints.PING
 import com.github.readingbat.common.Endpoints.THREAD_DUMP
 import com.github.readingbat.common.SessionActivites.markActivity
+import com.github.readingbat.server.ReadingBatServer.usePostgres
 import com.github.readingbat.server.ServerUtils.get
 import io.ktor.application.*
 import io.ktor.features.*
@@ -40,6 +41,8 @@ import io.ktor.util.pipeline.*
 import kotlinx.html.body
 import kotlinx.html.div
 import mu.KLogging
+import org.jetbrains.exposed.sql.deleteWhere
+import org.jetbrains.exposed.sql.transactions.transaction
 import java.io.ByteArrayOutputStream
 import java.lang.management.ManagementFactory
 import java.time.Instant.ofEpochMilli
@@ -107,7 +110,11 @@ internal object AdminRoutes : KLogging() {
         .also {
           if (it.isNotNull()) {
             logger.info { "Clearing browser session id $it" }
-            // @TODO Should delete session data from redis
+            if (usePostgres) {
+              transaction {
+                BrowserSessions.deleteWhere { BrowserSessions.session_id eq it.id }
+              }
+            }
             call.sessions.clear<BrowserSession>()
           }
           else {

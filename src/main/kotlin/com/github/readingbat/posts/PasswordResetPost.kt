@@ -129,19 +129,18 @@ internal object PasswordResetPost : KLogging() {
 
       val passwordResetKey = resetId.passwordResetKey
       val email =
-        Email(
-          (if (usePostgres)
-            transaction {
-              PasswordResets
-                .slice(PasswordResets.email)
-                .select { PasswordResets.resetId eq resetId.value }
-                .map { it[PasswordResets.email] }
-                .firstOrNull()
-            }
-          else
-            redis.get(passwordResetKey)) ?: throw ResetPasswordException(INVALID_RESET_ID))
+        (if (usePostgres)
+          transaction {
+            PasswordResets
+              .slice(PasswordResets.email)
+              .select { PasswordResets.resetId eq resetId.value }
+              .map { it[PasswordResets.email] }
+              .firstOrNull()
+          }
+        else
+          redis.get(passwordResetKey)) ?: throw ResetPasswordException(INVALID_RESET_ID)
 
-      val user = lookupUserByEmail(email, redis) ?: throw ResetPasswordException("Unable to find $email")
+      val user = lookupUserByEmail(Email(email), redis) ?: throw ResetPasswordException("Unable to find $email")
       val salt = user.salt
       val newDigest = newPassword.sha256(salt)
       val oldDigest = user.digest

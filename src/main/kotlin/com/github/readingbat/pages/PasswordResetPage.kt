@@ -31,6 +31,8 @@ import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.FormFields.UPDATE_PASSWORD
 import com.github.readingbat.common.Message
 import com.github.readingbat.common.Message.Companion.EMPTY_MESSAGE
+import com.github.readingbat.common.PasswordResets
+import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyTitle
@@ -43,11 +45,13 @@ import com.github.readingbat.pages.PageUtils.privacyStatement
 import com.github.readingbat.posts.PasswordResetPost.ResetPasswordException
 import com.github.readingbat.server.Email
 import com.github.readingbat.server.PipelineCall
+import com.github.readingbat.server.ReadingBatServer.usePostgres
 import com.github.readingbat.server.ResetId
 import com.github.readingbat.server.ServerUtils.queryParam
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 import mu.KLogging
+import org.jetbrains.exposed.sql.select
 import redis.clients.jedis.Jedis
 
 internal object PasswordResetPage : KLogging() {
@@ -63,11 +67,20 @@ internal object PasswordResetPage : KLogging() {
       requestPasswordResetPage(content, msg)
     else {
       try {
-        val passwordResetKey = resetId.passwordResetKey
-        // TODO
-        val email = Email(redis.get(passwordResetKey) ?: throw ResetPasswordException(INVALID_RESET_ID))
+        val email =
+          if (usePostgres) {
+            PasswordResets
+              .slice(PasswordResets.email)
+              .select { PasswordResets.resetId eq resetId.value }
+              .map { it[PasswordResets.email] }
+              .firstOrNull() ?: throw InvalidConfigurationException("Invalid reset id: ${resetId.value}")
+          }
+          else {
+            val passwordResetKey = resetId.passwordResetKey
+            redis.get(passwordResetKey) ?: throw ResetPasswordException(INVALID_RESET_ID)
+          }
 
-        changePasswordPage(content, email, resetId, msg)
+        changePasswordPage(content, Email(email), resetId, msg)
 
       } catch (e: ResetPasswordException) {
         logger.info { e }

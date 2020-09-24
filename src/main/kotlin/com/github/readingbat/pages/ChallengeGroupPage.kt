@@ -160,7 +160,6 @@ internal object ChallengeGroupPage : KLogging() {
             }
           }
 
-          // TODO
           if (redis.isNotNull() && activeClassCode.isNotEnabled && challenges.isNotEmpty())
             clearGroupAnswerHistoryOption(user, browserSession, languageName, groupName, challenges)
 

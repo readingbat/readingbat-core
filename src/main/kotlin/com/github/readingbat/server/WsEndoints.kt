@@ -25,6 +25,7 @@ import com.github.pambrose.common.util.isNotNull
 import com.github.pambrose.common.util.isNull
 import com.github.readingbat.common.ClassCode
 import com.github.readingbat.common.CommonUtils.keyOf
+import com.github.readingbat.common.CommonUtils.md5Of
 import com.github.readingbat.common.CommonUtils.pathOf
 import com.github.readingbat.common.Constants.COLUMN_CNT
 import com.github.readingbat.common.Constants.NO
@@ -47,6 +48,7 @@ import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.agentLaunchId
 import com.github.readingbat.posts.ChallengeHistory
 import com.github.readingbat.server.ReadingBatServer.redisPool
+import com.github.readingbat.server.ReadingBatServer.usePostgres
 import com.github.readingbat.server.ServerUtils.fetchUser
 import com.github.readingbat.server.ServerUtils.rows
 import io.ktor.features.*
@@ -266,16 +268,28 @@ internal object WsEndoints : KLogging() {
                         val historyKey =
                           enrollee.answerHistoryKey(languageName, groupName, challengeName, invocation)
 
-                        // TODO
-                        if (redis.exists(historyKey)) {
-                          attempted++
-                          val json = redis[historyKey] ?: ""
-                          val history =
-                            gson.fromJson(json, ChallengeHistory::class.java) ?: ChallengeHistory(invocation)
-                          if (history.correct)
-                            numCorrect++
+                        if (usePostgres) {
+                          val md5 = md5Of(languageName, groupName, challengeName, invocation)
+                          if (enrollee.historyExists(md5)) {
+                            attempted++
+                            val history = enrollee.answerHistory(md5, invocation)
+                            if (history.correct)
+                              numCorrect++
 
-                          incorrectAttempts += history.incorrectAttempts
+                            incorrectAttempts += history.incorrectAttempts
+                          }
+                        }
+                        else {
+                          if (redis.exists(historyKey)) {
+                            attempted++
+                            val json = redis[historyKey] ?: ""
+                            val history =
+                              gson.fromJson(json, ChallengeHistory::class.java) ?: ChallengeHistory(invocation)
+                            if (history.correct)
+                              numCorrect++
+
+                            incorrectAttempts += history.incorrectAttempts
+                          }
                         }
 
                         if (finished.get())
@@ -390,18 +404,33 @@ internal object WsEndoints : KLogging() {
                         val historyKey =
                           enrollee.answerHistoryKey(languageName, groupName, challengeName, invocation)
 
-                        // TODO
-                        if (redis.exists(historyKey)) {
-                          val json = redis[historyKey] ?: ""
-                          results +=
-                            (gson.fromJson(json, ChallengeHistory::class.java) ?: ChallengeHistory(invocation))
-                              .let {
-                                incorrectAttempts += it.incorrectAttempts
-                                if (it.correct) YES else if (it.incorrectAttempts > 0) NO else UNANSWERED
-                              }
+                        if (usePostgres) {
+                          val md5 = md5Of(languageName, groupName, challengeName, invocation)
+                          if (enrollee.historyExists(md5)) {
+                            results +=
+                              enrollee.answerHistory(md5, invocation)
+                                .let {
+                                  incorrectAttempts += it.incorrectAttempts
+                                  if (it.correct) YES else if (it.incorrectAttempts > 0) NO else UNANSWERED
+                                }
+                          }
+                          else {
+                            results += UNANSWERED
+                          }
                         }
                         else {
-                          results += UNANSWERED
+                          if (redis.exists(historyKey)) {
+                            val json = redis[historyKey] ?: ""
+                            results +=
+                              (gson.fromJson(json, ChallengeHistory::class.java) ?: ChallengeHistory(invocation))
+                                .let {
+                                  incorrectAttempts += it.incorrectAttempts
+                                  if (it.correct) YES else if (it.incorrectAttempts > 0) NO else UNANSWERED
+                                }
+                          }
+                          else {
+                            results += UNANSWERED
+                          }
                         }
 
                         if (finished.get())
@@ -482,6 +511,7 @@ internal object WsEndoints : KLogging() {
                 for (challengeGroup in content.findLanguage(languageName).challengeGroups) {
                   for (challenge in challengeGroup.challenges) {
                     val funcInfo = challenge.functionInfo(content)
+                    val groupName = challengeGroup.groupName
                     val challengeName = challenge.challengeName
                     val numCalls = funcInfo.invocations.size
                     var likes = 0
@@ -491,22 +521,37 @@ internal object WsEndoints : KLogging() {
 
                     val results = mutableListOf<String>()
                     for (invocation in funcInfo.invocations) {
-                      val historyKey =
-                        student.answerHistoryKey(languageName, challengeGroup.groupName, challengeName, invocation)
+                      val historyKey = student.answerHistoryKey(languageName, groupName, challengeName, invocation)
 
-                      // TODO
-                      if (redis.exists(historyKey)) {
-                        attempted++
-                        val json = redis[historyKey] ?: ""
-                        results +=
-                          (gson.fromJson(json, ChallengeHistory::class.java) ?: ChallengeHistory(invocation))
-                            .let {
-                              incorrectAttempts += it.incorrectAttempts
-                              if (it.correct) YES else if (it.incorrectAttempts > 0) NO else UNANSWERED
-                            }
+                      if (usePostgres) {
+                        val md5 = md5Of(languageName, groupName, challengeName, invocation)
+                        if (student.historyExists(md5)) {
+                          attempted++
+                          results +=
+                            student.answerHistory(md5, invocation)
+                              .let {
+                                incorrectAttempts += it.incorrectAttempts
+                                if (it.correct) YES else if (it.incorrectAttempts > 0) NO else UNANSWERED
+                              }
+                        }
+                        else {
+                          results += UNANSWERED
+                        }
                       }
                       else {
-                        results += UNANSWERED
+                        if (redis.exists(historyKey)) {
+                          attempted++
+                          val json = redis[historyKey] ?: ""
+                          results +=
+                            (gson.fromJson(json, ChallengeHistory::class.java) ?: ChallengeHistory(invocation))
+                              .let {
+                                incorrectAttempts += it.incorrectAttempts
+                                if (it.correct) YES else if (it.incorrectAttempts > 0) NO else UNANSWERED
+                              }
+                        }
+                        else {
+                          results += UNANSWERED
+                        }
                       }
 
                       if (finished.get())
@@ -514,12 +559,9 @@ internal object WsEndoints : KLogging() {
                     }
 
                     if (incorrectAttempts > 0 || results.any { it != UNANSWERED }) {
-                      val json =
-                        gson.toJson(
-                          StudentSummary(challengeGroup.groupName.encode(),
-                                         challengeName.encode(),
-                                         results,
-                                         if (incorrectAttempts == 0 && results.all { it == UNANSWERED }) "" else incorrectAttempts.toString()))
+                      val msg =
+                        if (incorrectAttempts == 0 && results.all { it == UNANSWERED }) "" else incorrectAttempts.toString()
+                      val json = gson.toJson(StudentSummary(groupName.encode(), challengeName.encode(), results, msg))
 
                       metrics.wsClassSummaryResponseCount.labels(agentLaunchId()).inc()
                       logger.debug { "Sending data $json" }

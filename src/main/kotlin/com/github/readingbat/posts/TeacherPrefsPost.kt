@@ -50,6 +50,7 @@ import com.github.readingbat.server.ServerUtils.queryParam
 import io.ktor.application.*
 import io.ktor.request.*
 import mu.KLogging
+import org.jetbrains.exposed.sql.transactions.transaction
 import redis.clients.jedis.Jedis
 
 internal object TeacherPrefsPost : KLogging() {
@@ -173,22 +174,26 @@ internal object TeacherPrefsPost : KLogging() {
         val activeClassCode = user.fetchActiveClassCode(redis)
         val enrollees = classCode.fetchEnrollees(redis)
 
-        val email = user.email
-        val name = user.name
+        if (usePostgres) {
+          transaction {
+            if (activeClassCode == classCode)
+              user.resetActiveClassCode()
 
-        redis.multi()
-          .also { tx ->
-            // Disable current class if deleted class is the active class
-            if (activeClassCode == classCode) {
-              logger.info { "Resetting $name ($email) active class code" }
-              user.resetActiveClassCode(tx)
-            }
-
-            logger.info { "Deleting ${enrollees.size} enrollees for class code $classCode for $name ($email)" }
-            user.deleteClassCode(classCode, enrollees, tx)
-
-            tx.exec()
+            user.deleteClassCode(classCode, enrollees)
           }
+        }
+        else {
+          redis.multi()
+            .also { tx ->
+              // Disable current class if deleted class is the active class
+              if (activeClassCode == classCode)
+                user.resetActiveClassCode(tx)
+
+              user.deleteClassCode(classCode, enrollees, tx)
+
+              tx.exec()
+            }
+        }
 
         teacherPrefsPage(content, user, redis, Message("Deleted class code: $classCode"))
       }
