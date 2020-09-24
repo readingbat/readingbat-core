@@ -71,7 +71,7 @@ internal object TransferUsers : KLogging() {
     }
   }
 
-  internal fun transform(url: String) {
+  private fun transform(url: String) {
     RedisUtils.withNonNullRedis(url) { redis ->
       val userChallengeIndex =
         Index(listOf(UserChallengeInfo.userRef, UserChallengeInfo.md5), true, "user_challenge_info_unique")
@@ -320,8 +320,8 @@ inline fun <T : Table> T.upsert(conflictColumn: Column<*>? = null,
 class UpsertStatement<Key : Any>(table: Table,
                                  conflictColumn: Column<*>? = null,
                                  conflictIndex: Index? = null) : InsertStatement<Key>(table, false) {
-  val indexName: String
-  val indexColumns: List<Column<*>>
+  private val indexName: String
+  private val indexColumns: List<Column<*>>
 
   init {
     when {

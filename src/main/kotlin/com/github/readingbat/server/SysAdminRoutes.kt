@@ -162,8 +162,7 @@ internal fun Routing.sysAdminRoutes(metrics: Metrics, contentSrc: () -> ReadingB
       val msg =
         authenticateAdminUser(user, redis) {
           LanguageType.values()
-            .map { contentSrc().loadChallenges(call.request.origin.uriPrefix, it, false) }
-            .joinToString(", ")
+            .joinToString(", ") { contentSrc().loadChallenges(call.request.origin.uriPrefix, it, false) }
         }
       systemAdminPage(contentSrc(), user, redis, msg)
     }

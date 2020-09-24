@@ -909,7 +909,7 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
           }
     }
 
-    fun isRegisteredEmail(email: Email, redis: Jedis) = lookupUserByEmail(email, redis).isNotNull()
+    private fun isRegisteredEmail(email: Email, redis: Jedis) = lookupUserByEmail(email, redis).isNotNull()
 
     fun isNotRegisteredEmail(email: Email, redis: Jedis) = !isRegisteredEmail(email, redis)
 

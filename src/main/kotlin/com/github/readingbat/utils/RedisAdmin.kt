@@ -67,7 +67,7 @@ internal object RedisAdmin {
     }
   }
 
-  internal fun showAll(url: String) {
+  private fun showAll(url: String) {
     withNonNullRedis(url) { redis ->
       println(
         redis.scanKeys("*")
