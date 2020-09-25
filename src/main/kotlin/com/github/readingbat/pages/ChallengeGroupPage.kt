@@ -22,6 +22,7 @@ import com.github.readingbat.common.*
 import com.github.readingbat.common.CSSNames.FUNC_ITEM1
 import com.github.readingbat.common.CSSNames.FUNC_ITEM2
 import com.github.readingbat.common.CSSNames.UNDERLINE
+import com.github.readingbat.common.CommonUtils.md5Of
 import com.github.readingbat.common.CommonUtils.pathOf
 import com.github.readingbat.common.Constants.COLUMN_CNT
 import com.github.readingbat.common.Constants.MSG
@@ -52,6 +53,7 @@ import com.github.readingbat.pages.PageUtils.rawHtml
 import com.github.readingbat.server.GroupName
 import com.github.readingbat.server.LanguageName
 import com.github.readingbat.server.PipelineCall
+import com.github.readingbat.server.ReadingBatServer.usePostgres
 import com.github.readingbat.server.ServerUtils.queryParam
 import com.github.readingbat.server.ServerUtils.rows
 import io.ktor.application.*
@@ -79,14 +81,40 @@ import kotlinx.html.table
 import kotlinx.html.td
 import kotlinx.html.tr
 import mu.KLogging
+import org.jetbrains.exposed.sql.and
+import org.jetbrains.exposed.sql.select
+import org.jetbrains.exposed.sql.transactions.transaction
 import redis.clients.jedis.Jedis
 
 internal object ChallengeGroupPage : KLogging() {
 
-  fun Challenge.isCorrect(user: User?, browserSession: BrowserSession?, redis: Jedis?): Boolean {
-    val correctAnswersKey = correctAnswersKey(user, browserSession, languageName, groupName, challengeName)
-    return if (correctAnswersKey.isNotEmpty()) redis?.get(correctAnswersKey)?.toBoolean() == true else false
-  }
+  fun Challenge.isCorrect(user: User?, browserSession: BrowserSession?, redis: Jedis?) =
+    if (usePostgres) {
+      val md5 = md5Of(languageName, groupName, challengeName)
+      when {
+        user.isNotNull() ->
+          transaction {
+            UserChallengeInfo
+              .slice(UserChallengeInfo.allCorrect)
+              .select { (UserChallengeInfo.userRef eq user.userDbmsId) and (UserChallengeInfo.md5 eq md5) }
+              .map { it[UserChallengeInfo.allCorrect] }
+              .firstOrNull() ?: false
+          }
+        browserSession.isNotNull() ->
+          transaction {
+            SessionChallengeInfo
+              .slice(SessionChallengeInfo.allCorrect)
+              .select { (SessionChallengeInfo.sessionRef eq browserSession.sessionDbmsId()) and (SessionChallengeInfo.md5 eq md5) }
+              .map { it[SessionChallengeInfo.allCorrect] }
+              .firstOrNull() ?: false
+          }
+        else -> false
+      }
+    }
+    else {
+      val correctAnswersKey = correctAnswersKey(user, browserSession, languageName, groupName, challengeName)
+      if (correctAnswersKey.isNotEmpty()) redis?.get(correctAnswersKey)?.toBoolean() == true else false
+    }
 
   fun PipelineCall.challengeGroupPage(content: ReadingBatContent,
                                       user: User?,
