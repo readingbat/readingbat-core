@@ -54,6 +54,7 @@ import com.github.readingbat.server.ChallengeName.Companion.getChallengeName
 import com.github.readingbat.server.GroupName.Companion.getGroupName
 import com.github.readingbat.server.LanguageName.Companion.getLanguageName
 import com.github.readingbat.server.ReadingBatServer.usePostgres
+import com.github.readingbat.utils.upsert
 import io.ktor.application.*
 import io.ktor.request.*
 import io.ktor.response.*
@@ -458,18 +459,7 @@ internal object ChallengePost : KLogging() {
 
     // Record if all answers were correct
     if (usePostgres) {
-      if (user.isNotNull())
-        UserChallengeInfo
-          .update({ (UserChallengeInfo.userRef eq user.userDbmsId) and (UserChallengeInfo.md5 eq md5) }) {
-            it[updated] = DateTime.now(DateTimeZone.UTC)
-            it[allCorrect] = complete
-          }
-      else if (browserSession.isNotNull())
-        SessionChallengeInfo
-          .update({ (SessionChallengeInfo.sessionRef eq browserSession.sessionDbmsId()) and (SessionChallengeInfo.md5 eq md5) }) {
-            it[updated] = DateTime.now(DateTimeZone.UTC)
-            it[allCorrect] = complete
-          }
+      // Do it below
     }
     else {
       if (correctAnswersKey.isNotEmpty())
@@ -486,18 +476,25 @@ internal object ChallengePost : KLogging() {
         }
     if (usePostgres) {
       val invokeMap = invokeList.map { it.first.value to it.second }.toMap()
+      val invokeStr = gson.toJson(invokeMap)
       when {
         user.isNotNull() ->
           UserChallengeInfo
-            .update({ (UserChallengeInfo.userRef eq user.userDbmsId) and (UserChallengeInfo.md5 eq md5) }) {
-              it[updated] = DateTime.now(DateTimeZone.UTC)
-              it[answersJson] = gson.toJson(invokeMap)
+            .upsert(conflictIndex = userChallengeInfoIndex) { row ->
+              row[userRef] = user.userDbmsId
+              row[UserChallengeInfo.md5] = md5
+              row[updated] = DateTime.now(DateTimeZone.UTC)
+              row[allCorrect] = complete
+              row[answersJson] = invokeStr
             }
         browserSession.isNotNull() ->
           SessionChallengeInfo
-            .update({ (SessionChallengeInfo.sessionRef eq browserSession.sessionDbmsId()) and (SessionChallengeInfo.md5 eq md5) }) {
-              it[updated] = DateTime.now(DateTimeZone.UTC)
-              it[answersJson] = gson.toJson(invokeMap)
+            .upsert(conflictIndex = sessionChallengeIfoIndex) { row ->
+              row[sessionRef] = browserSession.sessionDbmsId()
+              row[SessionChallengeInfo.md5] = md5
+              row[updated] = DateTime.now(DateTimeZone.UTC)
+              row[allCorrect] = complete
+              row[answersJson] = invokeStr
             }
         else ->
           logger.warn { "Challenge Info not updated" }
@@ -540,21 +537,25 @@ internal object ChallengePost : KLogging() {
         when {
           user.isNotNull() ->
             UserAnswerHistory
-              .update({ (UserAnswerHistory.userRef eq user.userDbmsId) and (UserAnswerHistory.md5 eq md5) }) {
-                it[updated] = DateTime.now(DateTimeZone.UTC)
-                it[invocation] = history.invocation.value
-                it[correct] = history.correct
-                it[incorrectAttempts] = history.incorrectAttempts
-                it[historyJson] = gson.toJson(history.answers)
+              .upsert(conflictIndex = userAnswerHistoryIndex) { row ->
+                row[userRef] = user.userDbmsId
+                row[UserAnswerHistory.md5] = md5
+                row[updated] = DateTime.now(DateTimeZone.UTC)
+                row[invocation] = history.invocation.value
+                row[correct] = history.correct
+                row[incorrectAttempts] = history.incorrectAttempts
+                row[historyJson] = gson.toJson(history.answers)
               }
           browserSession.isNotNull() ->
             SessionAnswerHistory
-              .update({ (SessionAnswerHistory.sessionRef eq browserSession.sessionDbmsId()) and (SessionAnswerHistory.md5 eq md5) }) {
-                it[updated] = DateTime.now(DateTimeZone.UTC)
-                it[UserAnswerHistory.invocation] = history.invocation.value
-                it[UserAnswerHistory.correct] = history.correct
-                it[UserAnswerHistory.incorrectAttempts] = history.incorrectAttempts
-                it[UserAnswerHistory.historyJson] = gson.toJson(history.answers)
+              .upsert(conflictIndex = sessionAnswerHistoryIndex) { row ->
+                row[sessionRef] = browserSession.sessionDbmsId()
+                row[SessionAnswerHistory.md5] = md5
+                row[updated] = DateTime.now(DateTimeZone.UTC)
+                row[invocation] = history.invocation.value
+                row[correct] = history.correct
+                row[incorrectAttempts] = history.incorrectAttempts
+                row[historyJson] = gson.toJson(history.answers)
               }
           else ->
             logger.warn { "Answer History not updated" }

@@ -55,11 +55,13 @@ import com.github.readingbat.server.ReadingBatServer.redisPool
 import com.github.readingbat.server.ReadingBatServer.usePostgres
 import com.github.readingbat.server.ResetId.Companion.EMPTY_RESET_ID
 import com.github.readingbat.server.WsEndoints.classTopicName
+import com.github.readingbat.utils.upsert
 import com.google.gson.Gson
 import mu.KLogging
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.joda.time.DateTime
+import org.joda.time.DateTimeZone
 import org.joda.time.DateTimeZone.UTC
 import redis.clients.jedis.Jedis
 import redis.clients.jedis.Transaction
@@ -653,8 +655,11 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
           transaction {
             val md5 = md5Of(languageName, groupName, challengeName, result.invocation)
             UserAnswerHistory
-              .update({ (UserAnswerHistory.userRef eq userDbmsId) and (UserAnswerHistory.md5 eq md5) }) { row ->
-                row[updated] = DateTime.now(UTC)
+              .upsert(conflictIndex = userAnswerHistoryIndex) { row ->
+                row[userRef] = userDbmsId
+                row[UserAnswerHistory.md5] = md5
+                row[updated] = DateTime.now(DateTimeZone.UTC)
+                row[invocation] = history.invocation.value
                 row[correct] = false
                 row[incorrectAttempts] = 0
                 row[historyJson] = gson.toJson(emptyList<String>())

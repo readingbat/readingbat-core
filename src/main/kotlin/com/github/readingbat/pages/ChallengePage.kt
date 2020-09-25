@@ -645,7 +645,7 @@ internal object ChallengePage : KLogging() {
                              challenge: Challenge,
                              redis: Jedis?): Map<String, String> =
     if (redis.isNull())
-      kotlinx.html.emptyMap
+      emptyMap
     else {
       val languageName = challenge.languageType.languageName
       val groupName = challenge.groupName
@@ -662,25 +662,25 @@ internal object ChallengePage : KLogging() {
                 .map { it[UserChallengeInfo.answersJson] }
                 .firstOrNull()
                 ?.let { gson.fromJson(it, Map::class.java) as Map<String, String> }
-                ?: kotlinx.html.emptyMap //throw InvalidConfigurationException("UserChallengeInfo not found: ${user.userDbmsId} $md5")
+                ?: emptyMap
             }
             browserSession.isNotNull() -> {
-              val sessionDbmsId = browserSession.sessionDbmsId()
+              logger.info { "Selecting from ${browserSession.sessionDbmsId()} and $md5" }
               SessionChallengeInfo
                 .slice(SessionChallengeInfo.answersJson)
-                .select { (SessionChallengeInfo.sessionRef eq sessionDbmsId) and (SessionChallengeInfo.md5 eq md5) }
+                .select { (SessionChallengeInfo.sessionRef eq browserSession.sessionDbmsId()) and (SessionChallengeInfo.md5 eq md5) }
                 .map { it[SessionChallengeInfo.answersJson] }
                 .firstOrNull()
                 ?.let { gson.fromJson(it, Map::class.java) as Map<String, String> }
-                ?: kotlinx.html.emptyMap //throw InvalidConfigurationException("SessionChallengeInfo not found: $sessionDbmsId $md5")
+                ?: emptyMap
             }
-            else -> kotlinx.html.emptyMap
+            else -> emptyMap
           }
         }
         else -> {
           val challengeAnswersKey = challengeAnswersKey(user, browserSession, languageName, groupName, challengeName)
           if (challengeAnswersKey.isEmpty())
-            kotlinx.html.emptyMap
+            emptyMap
           else
             redis.hgetAll(challengeAnswersKey)
         }

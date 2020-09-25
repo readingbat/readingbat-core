@@ -74,11 +74,6 @@ internal object TransferUsers : KLogging() {
 
   private fun transform(url: String) {
     RedisUtils.withNonNullRedis(url) { redis ->
-      val userChallengeIndex =
-        Index(listOf(UserChallengeInfo.userRef, UserChallengeInfo.md5), true, "user_challenge_info_unique")
-      val sessionChallengeIndex =
-        Index(listOf(SessionChallengeInfo.sessionRef, SessionChallengeInfo.md5), true, "session_challenge_info_unique")
-      val userSessionIndex = Index(listOf(BrowserSessions.session_id), true, "user_sessions_unique")
 
       val sessionMap = mutableMapOf<String, Long>()
 
@@ -105,10 +100,10 @@ internal object TransferUsers : KLogging() {
               require(sessionId == key.split(KEY_SEP)[2])
               //println("$key ${redis[key]}")
 
-              SessionChallengeInfo.upsert(conflictIndex = sessionChallengeIndex) { row ->
-                row[updated] = DateTime.now(UTC)
+              SessionChallengeInfo.upsert(conflictIndex = sessionChallengeIfoIndex) { row ->
                 row[sessionRef] = sessionDbmsId
                 row[md5] = key.split(KEY_SEP)[3]
+                row[updated] = DateTime.now(UTC)
                 row[allCorrect] = redis[key].toBoolean()
               }
             }
@@ -119,7 +114,7 @@ internal object TransferUsers : KLogging() {
               require(sessionId == key.split(KEY_SEP)[2])
               //println("$key userId ${redis[key]}")
 
-              SessionChallengeInfo.upsert(conflictIndex = sessionChallengeIndex) { row ->
+              SessionChallengeInfo.upsert(conflictIndex = sessionChallengeIfoIndex) { row ->
                 row[sessionRef] = sessionDbmsId
                 row[md5] = key.split(KEY_SEP)[3]
                 row[updated] = DateTime.now(UTC)
@@ -133,7 +128,7 @@ internal object TransferUsers : KLogging() {
               require(sessionId == key.split(KEY_SEP)[2])
               //println("$key ${redis.hgetAll(key)}")
 
-              SessionChallengeInfo.upsert(conflictIndex = sessionChallengeIndex) { row ->
+              SessionChallengeInfo.upsert(conflictIndex = sessionChallengeIfoIndex) { row ->
                 row[sessionRef] = sessionDbmsId
                 row[md5] = key.split(KEY_SEP)[3]
                 row[updated] = DateTime.now(UTC)
@@ -244,7 +239,7 @@ internal object TransferUsers : KLogging() {
               //println("$key userId ${redis[key]}")
 
               UserChallengeInfo
-                .upsert(conflictIndex = userChallengeIndex) { row ->
+                .upsert(conflictIndex = userChallengeInfoIndex) { row ->
                   row[userRef] = userMap[userId]!!
                   row[md5] = key.split(KEY_SEP)[3]
                   row[updated] = DateTime.now(UTC)
@@ -259,7 +254,7 @@ internal object TransferUsers : KLogging() {
               //println("$key userId ${redis[key]}")
 
               UserChallengeInfo
-                .upsert(conflictIndex = userChallengeIndex) { row ->
+                .upsert(conflictIndex = userChallengeInfoIndex) { row ->
                   row[userRef] = userMap[userId]!!
                   row[md5] = key.split(KEY_SEP)[3]
                   row[updated] = DateTime.now(UTC)
@@ -274,7 +269,7 @@ internal object TransferUsers : KLogging() {
               //println("$key ${redis.hgetAll(key)}")
 
               UserChallengeInfo
-                .upsert(conflictIndex = userChallengeIndex) { row ->
+                .upsert(conflictIndex = userChallengeInfoIndex) { row ->
                   row[userRef] = userMap[userId]!!
                   row[md5] = key.split(KEY_SEP)[3]
                   row[updated] = DateTime.now(UTC)

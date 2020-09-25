@@ -18,7 +18,18 @@
 package com.github.readingbat.common
 
 import org.jetbrains.exposed.dao.id.LongIdTable
+import org.jetbrains.exposed.sql.Index
 import org.jetbrains.exposed.sql.jodatime.datetime
+
+val userSessionIndex = Index(listOf(BrowserSessions.session_id), true, "user_sessions_unique")
+val sessionChallengeIfoIndex =
+  Index(listOf(SessionChallengeInfo.sessionRef, SessionChallengeInfo.md5), true, "session_challenge_info_unique")
+val userChallengeInfoIndex =
+  Index(listOf(UserChallengeInfo.userRef, UserChallengeInfo.md5), true, "user_challenge_info_unique")
+val sessionAnswerHistoryIndex =
+  Index(listOf(SessionAnswerHistory.sessionRef, SessionAnswerHistory.md5), true, "session_answer_history_unique")
+val userAnswerHistoryIndex =
+  Index(listOf(UserAnswerHistory.userRef, UserAnswerHistory.md5), true, "user_answer_history_unique")
 
 object BrowserSessions : LongIdTable("browser_sessions") {
   val created = datetime("created")
