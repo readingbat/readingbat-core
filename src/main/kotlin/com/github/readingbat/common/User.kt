@@ -25,7 +25,6 @@ import com.github.pambrose.common.util.randomId
 import com.github.readingbat.common.ClassCode.Companion.DISABLED_CLASS_CODE
 import com.github.readingbat.common.CommonUtils.keyOf
 import com.github.readingbat.common.CommonUtils.md5Of
-import com.github.readingbat.common.Constants.RESP
 import com.github.readingbat.common.Constants.UNASSIGNED
 import com.github.readingbat.common.KeyConstants.ANSWER_HISTORY_KEY
 import com.github.readingbat.common.KeyConstants.AUTH_KEY
@@ -38,10 +37,8 @@ import com.github.readingbat.common.KeyConstants.USER_INFO_BROWSER_KEY
 import com.github.readingbat.common.KeyConstants.USER_INFO_KEY
 import com.github.readingbat.common.KeyConstants.USER_RESET_KEY
 import com.github.readingbat.common.RedisUtils.scanKeys
-import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.DataException
 import com.github.readingbat.dsl.InvalidConfigurationException
-import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.posts.ChallengeHistory
 import com.github.readingbat.posts.ChallengeNames
 import com.github.readingbat.posts.ChallengeResults
@@ -124,8 +121,8 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
   // This key maps to a reset_id
   private val userPasswordResetKey by lazy { keyOf(USER_RESET_KEY, userId) }
 
-  private val sessionDbmsId: Long
-    get() = browserSession?.sessionDbmsId() ?: throw InvalidConfigurationException("Missing browser session id")
+  private fun sessionDbmsId() =
+    browserSession?.sessionDbmsId() ?: throw InvalidConfigurationException("Missing browser session id")
 
   fun browserSessions(redis: Jedis) =
     if (usePostgres)
@@ -370,7 +367,7 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
     if (usePostgres)
       transaction {
         UserSessions
-          .update({ (UserSessions.userRef eq userDbmsId) and (UserSessions.sessionRef eq sessionDbmsId) }) { row ->
+          .update({ (UserSessions.userRef eq userDbmsId) and (UserSessions.sessionRef eq sessionDbmsId()) }) { row ->
             row[updated] = DateTime.now(UTC)
             row[activeClassCode] = classCode.value
             if (resetPreviousClassCode)
@@ -387,7 +384,7 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
   fun resetActiveClassCode() {
     logger.info { "Resetting $name ($email) active class code" }
     UserSessions
-      .update({ (UserSessions.userRef eq userDbmsId) and (UserSessions.sessionRef eq sessionDbmsId) }) { row ->
+      .update({ (UserSessions.userRef eq userDbmsId) and (UserSessions.sessionRef eq sessionDbmsId()) }) { row ->
         row[updated] = DateTime.now(UTC)
         row[activeClassCode] = DISABLED_CLASS_CODE.value
         row[previousTeacherClassCode] = DISABLED_CLASS_CODE.value
@@ -742,53 +739,6 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
             ?: DISABLED_CLASS_CODE
       }
 
-    fun fetchPreviousResponses(user: User?,
-                               browserSession: BrowserSession?,
-                               challenge: Challenge,
-                               redis: Jedis?): Map<String, String> =
-      if (redis.isNull())
-        kotlinx.html.emptyMap
-      else {
-        val languageName = challenge.languageType.languageName
-        val groupName = challenge.groupName
-        val challengeName = challenge.challengeName
-
-        when {
-          usePostgres -> {
-            val md5 = md5Of(languageName, groupName, challengeName)
-            when {
-              user.isNotNull() -> {
-                UserChallengeInfo
-                  .slice(UserChallengeInfo.answersJson)
-                  .select { (UserChallengeInfo.userRef eq user.userDbmsId) and (UserChallengeInfo.md5 eq md5) }
-                  .map { it[UserChallengeInfo.answersJson] }
-                  .firstOrNull()
-                  ?.let { gson.fromJson(it, Map::class.java) as Map<String, String> }
-                  ?: throw InvalidConfigurationException("UserChallengeInfo not found: ${user.userDbmsId} $md5")
-              }
-              browserSession.isNotNull() -> {
-                val sessionDbmsId = browserSession.sessionDbmsId()
-                SessionChallengeInfo
-                  .slice(SessionChallengeInfo.answersJson)
-                  .select { (SessionChallengeInfo.sessionRef eq sessionDbmsId) and (SessionChallengeInfo.md5 eq md5) }
-                  .map { it[SessionChallengeInfo.answersJson] }
-                  .firstOrNull()
-                  ?.let { gson.fromJson(it, Map::class.java) as Map<String, String> }
-                  ?: throw InvalidConfigurationException("SessionChallengeInfo not found: $sessionDbmsId $md5")
-              }
-              else -> kotlinx.html.emptyMap
-            }
-          }
-          else -> {
-            val challengeAnswersKey = challengeAnswersKey(user, browserSession, languageName, groupName, challengeName)
-            if (challengeAnswersKey.isEmpty())
-              kotlinx.html.emptyMap
-            else
-              redis.hgetAll(challengeAnswersKey)
-          }
-        }
-      }
-
     // TODO
     fun createUser(name: FullName,
                    email: Email,
@@ -851,140 +801,7 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
       return user
     }
 
-    fun saveChallengeAnswers(user: User?,
-                             browserSession: BrowserSession?,
-                             content: ReadingBatContent,
-                             names: ChallengeNames,
-                             paramMap: Map<String, String>,
-                             funcInfo: FunctionInfo,
-                             userResponses: List<Map.Entry<String, List<String>>>,
-                             results: List<ChallengeResults>,
-                             redis: Jedis) {
-      val correctAnswersKey = correctAnswersKey(user, browserSession, names)
-      val challengeAnswersKey = challengeAnswersKey(user, browserSession, names)
-      val md5 = md5Of(names.languageName, names.groupName, names.challengeName)
-
-      val complete = results.all { it.correct }
-      val numCorrect = results.count { it.correct }
-
-      // Record if all answers were correct
-      if (usePostgres) {
-        if (user.isNotNull())
-          UserChallengeInfo
-            .update({ (UserChallengeInfo.userRef eq user.userDbmsId) and (UserChallengeInfo.md5 eq md5) }) {
-              it[updated] = DateTime.now(UTC)
-              it[allCorrect] = complete
-            }
-        else if (browserSession.isNotNull())
-          SessionChallengeInfo
-            .update({ (SessionChallengeInfo.sessionRef eq browserSession.sessionDbmsId()) and (SessionChallengeInfo.md5 eq md5) }) {
-              it[updated] = DateTime.now(UTC)
-              it[allCorrect] = complete
-            }
-      }
-      else {
-        if (correctAnswersKey.isNotEmpty())
-          redis.set(correctAnswersKey, complete.toString())
-      }
-
-      // Save the last answers given
-      val invokeList =
-        userResponses.indices
-          .map { i ->
-            val userResponse =
-              paramMap[RESP + i]?.trim() ?: throw InvalidConfigurationException("Missing user response")
-            funcInfo.invocations[i] to userResponse
-          }
-      if (usePostgres) {
-        val invokeMap = invokeList.map { it.first.value to it.second }.toMap()
-        when {
-          user.isNotNull() ->
-            UserChallengeInfo
-              .update({ (UserChallengeInfo.userRef eq user.userDbmsId) and (UserChallengeInfo.md5 eq md5) }) {
-                it[updated] = DateTime.now(UTC)
-                it[answersJson] = gson.toJson(invokeMap)
-              }
-          browserSession.isNotNull() ->
-            SessionChallengeInfo
-              .update({ (SessionChallengeInfo.sessionRef eq browserSession.sessionDbmsId()) and (SessionChallengeInfo.md5 eq md5) }) {
-                it[updated] = DateTime.now(UTC)
-                it[answersJson] = gson.toJson(invokeMap)
-              }
-          else ->
-            logger.warn { "Challenge Info not updated" }
-        }
-      }
-      else {
-        if (challengeAnswersKey.isNotEmpty()) {
-          invokeList
-            .toMap()
-            .forEach { (invocation, userResponse) ->
-              redis.hset(challengeAnswersKey, invocation.value, userResponse)
-            }
-        }
-      }
-
-      val classCode = user?.enrolledClassCode ?: DISABLED_CLASS_CODE
-      val shouldPublish = user.shouldPublish(classCode, redis)
-
-      // Save the history of each answer on a per-invocation basis
-      for (result in results) {
-        val answerHistoryKey = answerHistoryKey(user, browserSession, names, result.invocation)
-
-        val history =
-          if (usePostgres)
-            when {
-              user.isNotNull() -> user.answerHistory(md5, result.invocation)
-              browserSession.isNotNull() -> browserSession.answerHistory(md5, result.invocation)
-              else -> ChallengeHistory(result.invocation)
-            }
-          else
-            gson.fromJson(redis[answerHistoryKey], ChallengeHistory::class.java) ?: ChallengeHistory(result.invocation)
-
-        when {
-          !result.answered -> history.markUnanswered()
-          result.correct -> history.markCorrect(result.userResponse)
-          else -> history.markIncorrect(result.userResponse)
-        }
-
-        if (usePostgres) {
-          when {
-            user.isNotNull() ->
-              UserAnswerHistory
-                .update({ (UserAnswerHistory.userRef eq user.userDbmsId) and (UserAnswerHistory.md5 eq md5) }) {
-                  it[updated] = DateTime.now(UTC)
-                  it[invocation] = history.invocation.value
-                  it[correct] = history.correct
-                  it[incorrectAttempts] = history.incorrectAttempts
-                  it[historyJson] = gson.toJson(history.answers)
-                }
-            browserSession.isNotNull() ->
-              SessionAnswerHistory
-                .update({ (SessionAnswerHistory.sessionRef eq browserSession.sessionDbmsId()) and (SessionAnswerHistory.md5 eq md5) }) {
-                  it[updated] = DateTime.now(UTC)
-                  it[UserAnswerHistory.invocation] = history.invocation.value
-                  it[UserAnswerHistory.correct] = history.correct
-                  it[UserAnswerHistory.incorrectAttempts] = history.incorrectAttempts
-                  it[UserAnswerHistory.historyJson] = gson.toJson(history.answers)
-                }
-            else ->
-              logger.warn { "Answer History not updated" }
-          }
-        }
-        else {
-          val json = gson.toJson(history)
-          logger.debug { "Saving: $json to $answerHistoryKey" }
-          redis.set(answerHistoryKey, json)
-        }
-
-        if (shouldPublish) {
-          val maxLength = content.maxHistoryLength
-          user?.publishAnswers(classCode, funcInfo.challengeMd5, maxLength, complete, numCorrect, history, redis)
-        }
-      }
-    }
-
-    private fun User?.shouldPublish(classCode: ClassCode, redis: Jedis) =
+    fun User?.shouldPublish(classCode: ClassCode, redis: Jedis) =
       when {
         isNull() -> false
         classCode.isEnabled -> {
@@ -995,41 +812,6 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
         }
         else -> false
       }
-
-    fun saveLikeDislike(user: User?,
-                        browserSession: BrowserSession?,
-                        names: ChallengeNames,
-                        likeVal: Int,
-                        redis: Jedis) {
-      if (usePostgres)
-        when {
-          user.isNotNull() ->
-            transaction {
-              UserChallengeInfo
-                .update({ UserChallengeInfo.userRef eq user.userDbmsId }) { row ->
-                  row[updated] = DateTime.now(UTC)
-                  row[likeDislike] = likeVal.toShort()
-                }
-            }
-          browserSession.isNotNull() ->
-            transaction {
-              SessionChallengeInfo
-                .update({ SessionChallengeInfo.sessionRef eq (browserSession.sessionDbmsId()) }) { row ->
-                  row[updated] = DateTime.now(UTC)
-                  row[likeDislike] = likeVal.toShort()
-                }
-            }
-          else -> {
-            // Do nothing
-          }
-        }
-      else
-        likeDislikeKey(user, browserSession, names)
-          .let {
-            if (it.isNotEmpty())
-              redis.apply { if (likeVal == 0) del(it) else set(it, likeVal.toString()) }
-          }
-    }
 
     private fun isRegisteredEmail(email: Email, redis: Jedis) = lookupUserByEmail(email, redis).isNotNull()
 

@@ -74,7 +74,6 @@ import com.github.readingbat.common.StaticFileNames.DISLIKE_COLOR_FILE
 import com.github.readingbat.common.StaticFileNames.LIKE_CLEAR_FILE
 import com.github.readingbat.common.StaticFileNames.LIKE_COLOR_FILE
 import com.github.readingbat.common.User.Companion.fetchActiveClassCode
-import com.github.readingbat.common.User.Companion.fetchPreviousResponses
 import com.github.readingbat.common.User.Companion.gson
 import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.ReadingBatContent
@@ -525,7 +524,7 @@ internal object ChallengePage : KLogging() {
               .firstOrNull() ?: 0
           browserSession.isNotNull() ->
             SessionChallengeInfo
-              .slice(UserChallengeInfo.likeDislike)
+              .slice(SessionChallengeInfo.likeDislike)
               .select { (SessionChallengeInfo.sessionRef eq browserSession.sessionDbmsId()) and (SessionChallengeInfo.md5 eq md5) }
               .map { it[SessionChallengeInfo.likeDislike].toInt() }
               .firstOrNull() ?: 0
@@ -640,4 +639,52 @@ internal object ChallengePage : KLogging() {
         """.trimIndent())
     }
   }
+
+  fun fetchPreviousResponses(user: User?,
+                             browserSession: BrowserSession?,
+                             challenge: Challenge,
+                             redis: Jedis?): Map<String, String> =
+    if (redis.isNull())
+      kotlinx.html.emptyMap
+    else {
+      val languageName = challenge.languageType.languageName
+      val groupName = challenge.groupName
+      val challengeName = challenge.challengeName
+
+      when {
+        usePostgres -> {
+          val md5 = md5Of(languageName, groupName, challengeName)
+          when {
+            user.isNotNull() -> {
+              UserChallengeInfo
+                .slice(UserChallengeInfo.answersJson)
+                .select { (UserChallengeInfo.userRef eq user.userDbmsId) and (UserChallengeInfo.md5 eq md5) }
+                .map { it[UserChallengeInfo.answersJson] }
+                .firstOrNull()
+                ?.let { gson.fromJson(it, Map::class.java) as Map<String, String> }
+                ?: kotlinx.html.emptyMap //throw InvalidConfigurationException("UserChallengeInfo not found: ${user.userDbmsId} $md5")
+            }
+            browserSession.isNotNull() -> {
+              val sessionDbmsId = browserSession.sessionDbmsId()
+              SessionChallengeInfo
+                .slice(SessionChallengeInfo.answersJson)
+                .select { (SessionChallengeInfo.sessionRef eq sessionDbmsId) and (SessionChallengeInfo.md5 eq md5) }
+                .map { it[SessionChallengeInfo.answersJson] }
+                .firstOrNull()
+                ?.let { gson.fromJson(it, Map::class.java) as Map<String, String> }
+                ?: kotlinx.html.emptyMap //throw InvalidConfigurationException("SessionChallengeInfo not found: $sessionDbmsId $md5")
+            }
+            else -> kotlinx.html.emptyMap
+          }
+        }
+        else -> {
+          val challengeAnswersKey = challengeAnswersKey(user, browserSession, languageName, groupName, challengeName)
+          if (challengeAnswersKey.isEmpty())
+            kotlinx.html.emptyMap
+          else
+            redis.hgetAll(challengeAnswersKey)
+        }
+      }
+    }
+
 }
