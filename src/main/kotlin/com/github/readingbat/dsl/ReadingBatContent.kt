@@ -102,7 +102,7 @@ class ReadingBatContent {
   internal fun findGroup(languageName: LanguageName, groupName: GroupName): ChallengeGroup<out Challenge> =
     findLanguage(languageName.toLanguageType()).findGroup(groupName.value)
 
-  internal fun findGroup(languageType: LanguageType, groupName: GroupName): ChallengeGroup<out Challenge> =
+  private fun findGroup(languageType: LanguageType, groupName: GroupName): ChallengeGroup<out Challenge> =
     findLanguage(languageType).findGroup(groupName.value)
 
   internal fun findGroup(groupLoc: Language.Group): ChallengeGroup<out Challenge> =

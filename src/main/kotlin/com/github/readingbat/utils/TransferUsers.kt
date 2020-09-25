@@ -106,9 +106,9 @@ internal object TransferUsers : KLogging() {
               //println("$key ${redis[key]}")
 
               SessionChallengeInfo.upsert(conflictIndex = sessionChallengeIndex) { row ->
+                row[updated] = DateTime.now(UTC)
                 row[sessionRef] = sessionDbmsId
                 row[md5] = key.split(KEY_SEP)[3]
-                row[updated] = DateTime.now(UTC)
                 row[allCorrect] = redis[key].toBoolean()
               }
             }

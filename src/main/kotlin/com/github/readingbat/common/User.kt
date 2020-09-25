@@ -755,7 +755,7 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
         val challengeAnswersKey = challengeAnswersKey(user, browserSession, languageName, groupName, challengeName)
 
         when {
-          challengeAnswersKey.isEmpty() -> kotlinx.html.emptyMap as Map<String, String>
+          challengeAnswersKey.isEmpty() -> kotlinx.html.emptyMap
           usePostgres -> {
             val elems = challengeAnswersKey.split(KEY_SEP)
             val md5 = elems[2]
@@ -894,19 +894,22 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
           }
       if (usePostgres) {
         val invokeMap = invokeList.map { it.first.value to it.second }.toMap()
-        if (user.isNotNull()) {
-          UserChallengeInfo
-            .update({ (UserChallengeInfo.userRef eq user.dbmsId) and (UserChallengeInfo.md5 eq md5) }) {
-              it[updated] = DateTime.now(UTC)
-              it[answersJson] = gson.toJson(invokeMap)
-            }
+        when {
+          user.isNotNull() ->
+            UserChallengeInfo
+              .update({ (UserChallengeInfo.userRef eq user.dbmsId) and (UserChallengeInfo.md5 eq md5) }) {
+                it[updated] = DateTime.now(UTC)
+                it[answersJson] = gson.toJson(invokeMap)
+              }
+          browserSession.isNotNull() ->
+            SessionChallengeInfo
+              .update({ (SessionChallengeInfo.sessionRef eq browserSession.sessionDbmsId) and (SessionChallengeInfo.md5 eq md5) }) {
+                it[updated] = DateTime.now(UTC)
+                it[answersJson] = gson.toJson(invokeMap)
+              }
+          else ->
+            logger.warn { "Challenge Info not updated" }
         }
-        else if (browserSession.isNotNull())
-          SessionChallengeInfo
-            .update({ (SessionChallengeInfo.sessionRef eq browserSession.sessionDbmsId) and (SessionChallengeInfo.md5 eq md5) }) {
-              it[updated] = DateTime.now(UTC)
-              it[answersJson] = gson.toJson(invokeMap)
-            }
       }
       else {
         if (challengeAnswersKey.isNotEmpty()) {
@@ -926,13 +929,12 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
         val answerHistoryKey = answerHistoryKey(user, browserSession, names, result.invocation)
 
         val history =
-          if (usePostgres) {
+          if (usePostgres)
             when {
               user.isNotNull() -> user.answerHistory(md5, result.invocation)
               browserSession.isNotNull() -> browserSession.answerHistory(md5, result.invocation)
               else -> ChallengeHistory(result.invocation)
             }
-          }
           else
             gson.fromJson(redis[answerHistoryKey], ChallengeHistory::class.java) ?: ChallengeHistory(result.invocation)
 
@@ -942,9 +944,29 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
           else -> history.markIncorrect(result.userResponse)
         }
 
-        // TODO
         if (usePostgres) {
-
+          when {
+            user.isNotNull() ->
+              UserAnswerHistory
+                .update({ (UserAnswerHistory.userRef eq user.dbmsId) and (UserAnswerHistory.md5 eq md5) }) {
+                  it[updated] = DateTime.now(UTC)
+                  it[invocation] = history.invocation.value
+                  it[correct] = history.correct
+                  it[incorrectAttempts] = history.incorrectAttempts
+                  it[historyJson] = gson.toJson(history.answers)
+                }
+            browserSession.isNotNull() ->
+              SessionAnswerHistory
+                .update({ (SessionAnswerHistory.sessionRef eq browserSession.sessionDbmsId) and (SessionAnswerHistory.md5 eq md5) }) {
+                  it[updated] = DateTime.now(UTC)
+                  it[UserAnswerHistory.invocation] = history.invocation.value
+                  it[UserAnswerHistory.correct] = history.correct
+                  it[UserAnswerHistory.incorrectAttempts] = history.incorrectAttempts
+                  it[UserAnswerHistory.historyJson] = gson.toJson(history.answers)
+                }
+            else ->
+              logger.warn { "Answer History not updated" }
+          }
         }
         else {
           val json = gson.toJson(history)
