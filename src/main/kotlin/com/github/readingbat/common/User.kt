@@ -289,7 +289,7 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
         .filter { it.split(KEY_SEP).size == 4 }
         .toList()
 
-  private fun correctAnswersKey(names: ChallengeNames) =
+  fun correctAnswersKey(names: ChallengeNames) =
     correctAnswersKey(names.languageName, names.groupName, names.challengeName)
 
   fun correctAnswersKey(languageName: LanguageName, groupName: GroupName, challengeName: ChallengeName) =
@@ -301,7 +301,7 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
           else
             md5Of(languageName, groupName, challengeName))
 
-  private fun likeDislikeKey(names: ChallengeNames) =
+  fun likeDislikeKey(names: ChallengeNames) =
     likeDislikeKey(names.languageName, names.groupName, names.challengeName)
 
   fun likeDislikeKey(languageName: LanguageName, groupName: GroupName, challengeName: ChallengeName) =
@@ -313,10 +313,10 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
           else
             md5Of(languageName, groupName, challengeName))
 
-  private fun challengeAnswersKey(names: ChallengeNames) =
+  fun challengeAnswersKey(names: ChallengeNames) =
     challengeAnswersKey(names.languageName, names.groupName, names.challengeName)
 
-  private fun challengeAnswersKey(languageName: LanguageName, groupName: GroupName, challengeName: ChallengeName) =
+  fun challengeAnswersKey(languageName: LanguageName, groupName: GroupName, challengeName: ChallengeName) =
     keyOf(CHALLENGE_ANSWERS_KEY,
           AUTH_KEY,
           userId,
@@ -325,7 +325,7 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
           else
             md5Of(languageName, groupName, challengeName))
 
-  private fun answerHistoryKey(names: ChallengeNames, invocation: Invocation) =
+  fun answerHistoryKey(names: ChallengeNames, invocation: Invocation) =
     answerHistoryKey(names.languageName, names.groupName, names.challengeName, invocation)
 
   fun answerHistoryKey(languageName: LanguageName,
@@ -742,62 +742,17 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
             ?: DISABLED_CLASS_CODE
       }
 
-    fun User?.likeDislikeKey(browserSession: BrowserSession?, names: ChallengeNames) =
-      this?.likeDislikeKey(names) ?: browserSession?.likeDislikeKey(names) ?: ""
-
-    fun User?.likeDislikeKey(browserSession: BrowserSession?,
-                             languageName: LanguageName,
-                             groupName: GroupName,
-                             challengeName: ChallengeName) =
-      this?.likeDislikeKey(languageName, groupName, challengeName)
-        ?: browserSession?.likeDislikeKey(languageName, groupName, challengeName)
-        ?: ""
-
-    fun User?.correctAnswersKey(browserSession: BrowserSession?, names: ChallengeNames) =
-      this?.correctAnswersKey(names) ?: browserSession?.correctAnswersKey(names) ?: ""
-
-    fun User?.correctAnswersKey(browserSession: BrowserSession?, challenge: Challenge) =
-      this?.correctAnswersKey(challenge.languageName, challenge.groupName, challenge.challengeName)
-        ?: browserSession?.correctAnswersKey(challenge.languageName, challenge.groupName, challenge.challengeName) ?: ""
-
-    fun User?.correctAnswersKey(browserSession: BrowserSession?,
-                                languageName: LanguageName,
-                                groupName: GroupName,
-                                challengeName: ChallengeName) =
-      this?.correctAnswersKey(languageName, groupName, challengeName)
-        ?: browserSession?.correctAnswersKey(languageName, groupName, challengeName)
-        ?: ""
-
-    fun User?.challengeAnswersKey(browserSession: BrowserSession?, names: ChallengeNames) =
-      this?.challengeAnswersKey(names) ?: browserSession?.challengeAnswerKey(names) ?: ""
-
-    fun User?.challengeAnswersKey(browserSession: BrowserSession?,
-                                  languageName: LanguageName,
-                                  groupName: GroupName,
-                                  challengeName: ChallengeName) =
-      this?.challengeAnswersKey(languageName, groupName, challengeName)
-        ?: browserSession?.challengeAnswerKey(languageName, groupName, challengeName)
-        ?: ""
-
-    fun User?.challengeAnswersKey(browserSession: BrowserSession?, challenge: Challenge) =
-      challengeAnswersKey(browserSession,
-                          challenge.languageType.languageName,
-                          challenge.groupName,
-                          challenge.challengeName)
-
-    private fun User?.answerHistoryKey(browserSession: BrowserSession?, names: ChallengeNames, invocation: Invocation) =
-      this?.answerHistoryKey(names, invocation) ?: browserSession?.answerHistoryKey(names, invocation) ?: ""
-
-    fun User?.fetchPreviousResponses(challenge: Challenge,
-                                     browserSession: BrowserSession?,
-                                     redis: Jedis?): Map<String, String> =
+    fun fetchPreviousResponses(user: User?,
+                               browserSession: BrowserSession?,
+                               challenge: Challenge,
+                               redis: Jedis?): Map<String, String> =
       if (redis.isNull())
         kotlinx.html.emptyMap
       else {
         val languageName = challenge.languageType.languageName
         val groupName = challenge.groupName
         val challengeName = challenge.challengeName
-        val challengeAnswersKey = challengeAnswersKey(browserSession, languageName, groupName, challengeName)
+        val challengeAnswersKey = challengeAnswersKey(user, browserSession, languageName, groupName, challengeName)
 
         when {
           challengeAnswersKey.isEmpty() -> kotlinx.html.emptyMap as Map<String, String>
@@ -805,14 +760,14 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
             val elems = challengeAnswersKey.split(KEY_SEP)
             val md5 = elems[2]
             when {
-              this != null -> {
+              user != null -> {
                 UserChallengeInfo
                   .slice(UserChallengeInfo.answersJson)
-                  .select { (UserChallengeInfo.userRef eq dbmsId) and (UserChallengeInfo.md5 eq md5) }
+                  .select { (UserChallengeInfo.userRef eq user.dbmsId) and (UserChallengeInfo.md5 eq md5) }
                   .map { it[UserChallengeInfo.answersJson] }
                   .firstOrNull()
                   ?.let { gson.fromJson(it, Map::class.java) as Map<String, String> }
-                  ?: throw InvalidConfigurationException("UserChallengeInfo not found: $dbmsId $md5")
+                  ?: throw InvalidConfigurationException("UserChallengeInfo not found: ${user.dbmsId} $md5")
               }
               browserSession != null -> {
                 val sessionDbmsId = browserSession.id.sessionDbmsId
@@ -894,21 +849,23 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
     }
 
     // TODO
-    fun User?.saveChallengeAnswers(browserSession: BrowserSession?,
-                                   content: ReadingBatContent,
-                                   names: ChallengeNames,
-                                   paramMap: Map<String, String>,
-                                   funcInfo: FunctionInfo,
-                                   userResponses: List<Map.Entry<String, List<String>>>,
-                                   results: List<ChallengeResults>,
-                                   redis: Jedis) {
-      val correctAnswersKey = correctAnswersKey(browserSession, names)
-      val challengeAnswersKey = challengeAnswersKey(browserSession, names)
+    fun saveChallengeAnswers(user: User?,
+                             browserSession: BrowserSession?,
+                             content: ReadingBatContent,
+                             names: ChallengeNames,
+                             paramMap: Map<String, String>,
+                             funcInfo: FunctionInfo,
+                             userResponses: List<Map.Entry<String, List<String>>>,
+                             results: List<ChallengeResults>,
+                             redis: Jedis) {
+      val correctAnswersKey = correctAnswersKey(user, browserSession, names)
+      val challengeAnswersKey = challengeAnswersKey(user, browserSession, names)
 
       val complete = results.all { it.correct }
       val numCorrect = results.count { it.correct }
 
       // Record if all answers were correct
+      //if (usePostgres)
       if (correctAnswersKey.isNotEmpty())
         redis.set(correctAnswersKey, complete.toString())
 
@@ -927,12 +884,12 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
           }
       }
 
-      val classCode = this?.enrolledClassCode ?: DISABLED_CLASS_CODE
-      val shouldPublish = shouldPublish(classCode, redis)
+      val classCode = user?.enrolledClassCode ?: DISABLED_CLASS_CODE
+      val shouldPublish = user.shouldPublish(classCode, redis)
 
       // Save the history of each answer on a per-invocation basis
       for (result in results) {
-        val answerHistoryKey = answerHistoryKey(browserSession, names, result.invocation)
+        val answerHistoryKey = answerHistoryKey(user, browserSession, names, result.invocation)
 
         val history =
           gson.fromJson(redis[answerHistoryKey], ChallengeHistory::class.java) ?: ChallengeHistory(result.invocation)
@@ -950,7 +907,7 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
         if (shouldPublish) {
           val md5 = funcInfo.challengeMd5
           val maxLength = content.maxHistoryLength
-          this?.publishAnswers(classCode, md5, maxLength, complete, numCorrect, history, redis)
+          user?.publishAnswers(classCode, md5, maxLength, complete, numCorrect, history, redis)
         }
       }
     }
@@ -967,13 +924,17 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
         else -> false
       }
 
-    fun User?.saveLikeDislike(browserSession: BrowserSession?, names: ChallengeNames, likeVal: Int, redis: Jedis) {
+    fun saveLikeDislike(user: User?,
+                        browserSession: BrowserSession?,
+                        names: ChallengeNames,
+                        likeVal: Int,
+                        redis: Jedis) {
       if (usePostgres)
         when {
-          this@saveLikeDislike.isNotNull() ->
+          user.isNotNull() ->
             transaction {
               UserChallengeInfo
-                .update({ UserChallengeInfo.userRef eq dbmsId }) { row ->
+                .update({ UserChallengeInfo.userRef eq user.dbmsId }) { row ->
                   row[updated] = DateTime.now(UTC)
                   row[likeDislike] = likeVal.toShort()
                 }
@@ -991,7 +952,7 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
           }
         }
       else
-        likeDislikeKey(browserSession, names)
+        likeDislikeKey(user, browserSession, names)
           .let {
             if (it.isNotEmpty())
               redis.apply { if (likeVal == 0) del(it) else set(it, likeVal.toString()) }

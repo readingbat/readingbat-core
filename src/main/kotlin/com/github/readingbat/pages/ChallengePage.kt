@@ -72,12 +72,9 @@ import com.github.readingbat.common.StaticFileNames.DISLIKE_CLEAR_FILE
 import com.github.readingbat.common.StaticFileNames.DISLIKE_COLOR_FILE
 import com.github.readingbat.common.StaticFileNames.LIKE_CLEAR_FILE
 import com.github.readingbat.common.StaticFileNames.LIKE_COLOR_FILE
-import com.github.readingbat.common.User.Companion.challengeAnswersKey
-import com.github.readingbat.common.User.Companion.correctAnswersKey
 import com.github.readingbat.common.User.Companion.fetchActiveClassCode
 import com.github.readingbat.common.User.Companion.fetchPreviousResponses
 import com.github.readingbat.common.User.Companion.gson
-import com.github.readingbat.common.User.Companion.likeDislikeKey
 import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.pages.CheckAnswersJs.checkAnswersScript
@@ -241,7 +238,7 @@ internal object ChallengePage : KLogging() {
         val topFocus = "topFocus"
         val bottomFocus = "bottomFocus"
         val offset = 5 // The login dialog takes tabIndex values 1-4
-        val previousResponses = user.fetchPreviousResponses(challenge, browserSession, redis)
+        val previousResponses = fetchPreviousResponses(user, browserSession, challenge, redis)
 
         // This will cause shift tab to go to bottom input element
         span { tabIndex = "5"; onFocus = "document.querySelector('.$bottomFocus').focus()" }
@@ -495,7 +492,7 @@ internal object ChallengePage : KLogging() {
     val groupName = challenge.groupName
     val challengeName = challenge.challengeName
 
-    val likeDislikeKey = user.likeDislikeKey(browserSession, languageName, groupName, challengeName)
+    val likeDislikeKey = likeDislikeKey(user, browserSession, languageName, groupName, challengeName)
     val likeDislikeVal = if (likeDislikeKey.isNotEmpty()) redis[likeDislikeKey]?.toInt() ?: 0 else 0
 
     p {
@@ -571,8 +568,8 @@ internal object ChallengePage : KLogging() {
     val languageName = challenge.languageType.languageName
     val groupName = challenge.groupName
     val challengeName = challenge.challengeName
-    val correctAnswersKey = user.correctAnswersKey(browserSession, languageName, groupName, challengeName)
-    val challengeAnswersKey = user.challengeAnswersKey(browserSession, languageName, groupName, challengeName)
+    val correctAnswersKey = correctAnswersKey(user, browserSession, languageName, groupName, challengeName)
+    val challengeAnswersKey = challengeAnswersKey(user, browserSession, languageName, groupName, challengeName)
 
     form {
       style = "margin:0"

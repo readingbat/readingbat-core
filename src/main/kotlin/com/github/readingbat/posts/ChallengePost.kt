@@ -274,7 +274,7 @@ internal object ChallengePost : KLogging() {
     // Save whether all the answers for the challenge were correct
     if (redis.isNotNull()) {
       val browserSession = call.browserSession
-      user.saveChallengeAnswers(browserSession, content, names, paramMap, funcInfo, userResponses, results, redis)
+      saveChallengeAnswers(user, browserSession, content, names, paramMap, funcInfo, userResponses, results, redis)
     }
 
     // Return values: 0 = not answered, 1 = correct, 2 = incorrect
@@ -427,7 +427,7 @@ internal object ChallengePost : KLogging() {
 
     if (redis.isNotNull()) {
       val browserSession = call.browserSession
-      user.saveLikeDislike(browserSession, names, likeVal, redis)
+      saveLikeDislike(user, browserSession, names, likeVal, redis)
     }
 
     call.respondText(likeVal.toString())

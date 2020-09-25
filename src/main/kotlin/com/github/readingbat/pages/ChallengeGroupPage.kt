@@ -36,8 +36,6 @@ import com.github.readingbat.common.FormFields.GROUP_NAME_PARAM
 import com.github.readingbat.common.FormFields.LANGUAGE_NAME_PARAM
 import com.github.readingbat.common.StaticFileNames.GREEN_CHECK
 import com.github.readingbat.common.StaticFileNames.WHITE_CHECK
-import com.github.readingbat.common.User.Companion.challengeAnswersKey
-import com.github.readingbat.common.User.Companion.correctAnswersKey
 import com.github.readingbat.common.User.Companion.fetchActiveClassCode
 import com.github.readingbat.common.User.Companion.gson
 import com.github.readingbat.dsl.Challenge
@@ -86,7 +84,7 @@ import redis.clients.jedis.Jedis
 internal object ChallengeGroupPage : KLogging() {
 
   fun Challenge.isCorrect(user: User?, browserSession: BrowserSession?, redis: Jedis?): Boolean {
-    val correctAnswersKey = user.correctAnswersKey(browserSession, languageName, groupName, challengeName)
+    val correctAnswersKey = correctAnswersKey(user, browserSession, languageName, groupName, challengeName)
     return if (correctAnswersKey.isNotEmpty()) redis?.get(correctAnswersKey)?.toBoolean() == true else false
   }
 
@@ -224,8 +222,8 @@ internal object ChallengeGroupPage : KLogging() {
                                                  groupName: GroupName,
                                                  challenges: List<Challenge>) {
 
-    val correctAnswersKeys = challenges.map { user.correctAnswersKey(browserSession, it) }
-    val challengeAnswerKeys = challenges.map { user.challengeAnswersKey(browserSession, it) }
+    val correctAnswersKeys = challenges.map { correctAnswersKey(user, browserSession, it) }
+    val challengeAnswerKeys = challenges.map { challengeAnswersKey(user, browserSession, it) }
 
     p {
       form {
