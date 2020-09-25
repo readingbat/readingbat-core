@@ -300,7 +300,7 @@ internal object WsEndoints : KLogging() {
                           val md5 = md5Of(languageName, groupName, challengeName)
                           UserChallengeInfo
                             .slice(UserChallengeInfo.likeDislike)
-                            .select { (UserChallengeInfo.userRef eq enrollee.dbmsId) and (UserChallengeInfo.md5 eq md5) }
+                            .select { (UserChallengeInfo.userRef eq enrollee.userDbmsId) and (UserChallengeInfo.md5 eq md5) }
                             .map { it[UserChallengeInfo.likeDislike].toInt() }
                             .firstOrNull() ?: 0
                         }

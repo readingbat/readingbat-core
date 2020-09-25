@@ -110,7 +110,7 @@ internal data class ClassCode(val value: String) {
       Enrollees
         .insert { row ->
           row[classesRef] = dbmsId
-          row[userRef] = user.dbmsId
+          row[userRef] = user.userDbmsId
         }
     }
 
@@ -119,7 +119,7 @@ internal data class ClassCode(val value: String) {
   }
 
   fun removeEnrollee(user: User) =
-      Enrollees.deleteWhere { (Enrollees.classesRef eq dbmsId) and (Enrollees.userRef eq user.dbmsId) }
+    Enrollees.deleteWhere { (Enrollees.classesRef eq dbmsId) and (Enrollees.userRef eq user.userDbmsId) }
 
   fun removeEnrollee(user: User, tx: Transaction) {
     tx.srem(classCodeEnrollmentKey, user.userId)

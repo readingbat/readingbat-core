@@ -43,7 +43,7 @@ internal data class UserPrincipal(val userId: String, val created: Long = Instan
 
 internal data class BrowserSession(val id: String, val created: Long = Instant.now().toEpochMilli()) {
 
-  internal val sessionDbmsId: Long get() = this.id.sessionDbmsId
+  val sessionDbmsId: Long get() = id.sessionDbmsId
 
   fun correctAnswersKey(names: ChallengeNames) =
     correctAnswersKey(names.languageName, names.groupName, names.challengeName)

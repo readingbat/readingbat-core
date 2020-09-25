@@ -511,7 +511,7 @@ internal object ChallengePage : KLogging() {
           user.isNotNull() ->
             UserChallengeInfo
               .slice(UserChallengeInfo.likeDislike)
-              .select { (UserChallengeInfo.userRef eq user.dbmsId) and (UserChallengeInfo.md5 eq md5) }
+              .select { (UserChallengeInfo.userRef eq user.userDbmsId) and (UserChallengeInfo.md5 eq md5) }
               .map { it[UserChallengeInfo.likeDislike].toInt() }
               .firstOrNull() ?: 0
           browserSession.isNotNull() ->

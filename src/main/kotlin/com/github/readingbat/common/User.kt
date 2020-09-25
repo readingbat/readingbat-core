@@ -72,7 +72,7 @@ import kotlin.time.measureTime
 import kotlin.time.minutes
 
 internal class User private constructor(redis: Jedis?, val userId: String, val browserSession: BrowserSession?) {
-  val dbmsId: Long
+  val userDbmsId: Long
   val email: Email
   val name: FullName
   var enrolledClassCode: ClassCode
@@ -95,7 +95,7 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
               .select { Users.userId eq this@User.userId }
               .firstOrNull()
           }
-        dbmsId = row?.get(Users.id)?.value ?: -1
+        userDbmsId = row?.get(Users.id)?.value ?: -1
         email = row?.get(Users.email)?.let { Email(it) } ?: UNKNOWN_EMAIL
         name = row?.get(Users.name)?.let { FullName(it) } ?: UNKNOWN_FULLNAME
         enrolledClassCode = row?.get(Users.enrolledClassCode)?.let { ClassCode(it) } ?: DISABLED_CLASS_CODE
@@ -103,7 +103,7 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
         digestBacking = row?.get(Users.digest) ?: ""
       }
       else {
-        dbmsId = -1
+        userDbmsId = -1
         email = redis?.hget(userInfoKey, EMAIL_FIELD)?.let { Email(it) } ?: UNKNOWN_EMAIL
         name = redis?.hget(userInfoKey, NAME_FIELD)?.let { FullName(it) } ?: UNKNOWN_FULLNAME
         enrolledClassCode =
@@ -132,7 +132,7 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
       transaction {
         UserSessions
           .slice(UserSessions.sessionRef)
-          .select { UserSessions.userRef eq dbmsId }
+          .select { UserSessions.userRef eq userDbmsId }
           .map { it[UserSessions.sessionRef].toString() }
       }
     else
@@ -145,7 +145,7 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
         transaction {
           UserSessions
             .slice(UserSessions.id.count())
-            .select { (UserSessions.userRef eq dbmsId) and (UserSessions.activeClassCode eq classCode.value) }
+            .select { (UserSessions.userRef eq userDbmsId) and (UserSessions.activeClassCode eq classCode.value) }
             .map { it[UserSessions.id.count()].toInt() }
             .first() > 0
         }
@@ -160,7 +160,7 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
       transaction {
         UserChallengeInfo
           .slice(UserChallengeInfo.allCorrect)
-          .select { (UserChallengeInfo.userRef eq dbmsId) and UserChallengeInfo.allCorrect }
+          .select { (UserChallengeInfo.userRef eq userDbmsId) and UserChallengeInfo.allCorrect }
           .map { it.toString() }
       }
     else
@@ -175,7 +175,7 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
     if (usePostgres)
       transaction {
         UserChallengeInfo.slice(UserChallengeInfo.likeDislike)
-          .select { (UserChallengeInfo.userRef eq dbmsId) and ((UserChallengeInfo.likeDislike eq 1) or (UserChallengeInfo.likeDislike eq 2)) }
+          .select { (UserChallengeInfo.userRef eq userDbmsId) and ((UserChallengeInfo.likeDislike eq 1) or (UserChallengeInfo.likeDislike eq 2)) }
           .map { it.toString() }
       }
     else
@@ -191,7 +191,7 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
       transaction {
         Classes
           .slice(Classes.classCode.count())
-          .select { Classes.userRef eq dbmsId }
+          .select { Classes.userRef eq userDbmsId }
           .map { it[Classes.classCode.count()].toInt() }
           .first().also { logger.info { "classCount() returned $it" } }
       }
@@ -202,7 +202,7 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
     transaction {
       Classes
         .insert { row ->
-          row[userRef] = dbmsId
+          row[userRef] = userDbmsId
           row[Classes.classCode] = classCode.value
           row[description] = classDesc
         }
@@ -220,7 +220,7 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
       transaction {
         Classes
           .slice(Classes.classCode)
-          .select { Classes.userRef eq dbmsId }
+          .select { Classes.userRef eq userDbmsId }
           .map { ClassCode(it[Classes.classCode]) }
       }
     else
@@ -230,7 +230,7 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
     if (usePostgres)
       transaction {
         Users.slice(Users.id.count())
-          .select { Users.id eq dbmsId }
+          .select { Users.id eq userDbmsId }
           .map { it[Users.id.count()].toInt() }
           .first() > 0
       }
@@ -239,7 +239,7 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
 
   fun assignDigest(newDigest: String) =
     Users
-      .update({ Users.id eq dbmsId }) { row ->
+      .update({ Users.id eq userDbmsId }) { row ->
         row[updated] = DateTime.now(UTC)
         row[digest] = newDigest
         digestBacking = newDigest
@@ -252,7 +252,7 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
 
   private fun assignEnrolledClassCode(classCode: ClassCode) =
     Users
-      .update({ Users.id eq dbmsId }) { row ->
+      .update({ Users.id eq userDbmsId }) { row ->
         row[updated] = DateTime.now(UTC)
         row[enrolledClassCode] = classCode.value
         this@User.enrolledClassCode = classCode
@@ -268,7 +268,7 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
       transaction {
         UserChallengeInfo
           .slice(UserChallengeInfo.md5)
-          .select { UserChallengeInfo.userRef eq dbmsId }
+          .select { UserChallengeInfo.userRef eq userDbmsId }
           .map { it[UserChallengeInfo.md5] }.also { logger.info { "challenges() return ${it.size}" } }
       }
     else
@@ -281,7 +281,7 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
       transaction {
         UserAnswerHistory
           .slice(UserAnswerHistory.md5)
-          .select { UserAnswerHistory.userRef eq dbmsId }
+          .select { UserAnswerHistory.userRef eq userDbmsId }
           .map { it[UserAnswerHistory.md5] }.also { logger.info { "invocations() return ${it.size}" } }
       }
     else
@@ -343,7 +343,7 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
   fun historyExists(md5: String) =
     UserAnswerHistory
       .slice(UserAnswerHistory.id.count())
-      .select { (UserAnswerHistory.userRef eq dbmsId) and (UserAnswerHistory.md5 eq md5) }
+      .select { (UserAnswerHistory.userRef eq userDbmsId) and (UserAnswerHistory.md5 eq md5) }
       .map { it[UserAnswerHistory.id.count()].toInt() }
       .first() > 0
 
@@ -353,7 +353,7 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
              UserAnswerHistory.correct,
              UserAnswerHistory.incorrectAttempts,
              UserAnswerHistory.historyJson)
-      .select { (UserAnswerHistory.userRef eq dbmsId) and (UserAnswerHistory.md5 eq md5) }
+      .select { (UserAnswerHistory.userRef eq userDbmsId) and (UserAnswerHistory.md5 eq md5) }
       .map {
         val json = it[UserAnswerHistory.historyJson]
         val history =
@@ -370,7 +370,7 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
     if (usePostgres)
       transaction {
         UserSessions
-          .update({ (UserSessions.userRef eq dbmsId) and (UserSessions.sessionRef eq sessionDbmsId) }) { row ->
+          .update({ (UserSessions.userRef eq userDbmsId) and (UserSessions.sessionRef eq sessionDbmsId) }) { row ->
             row[updated] = DateTime.now(UTC)
             row[activeClassCode] = classCode.value
             if (resetPreviousClassCode)
@@ -387,7 +387,7 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
   fun resetActiveClassCode() {
     logger.info { "Resetting $name ($email) active class code" }
     UserSessions
-      .update({ (UserSessions.userRef eq dbmsId) and (UserSessions.sessionRef eq sessionDbmsId) }) { row ->
+      .update({ (UserSessions.userRef eq userDbmsId) and (UserSessions.sessionRef eq sessionDbmsId) }) { row ->
         row[updated] = DateTime.now(UTC)
         row[activeClassCode] = DISABLED_CLASS_CODE.value
         row[previousTeacherClassCode] = DISABLED_CLASS_CODE.value
@@ -405,7 +405,7 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
       transaction {
         Enrollees
           .slice(Enrollees.id.count())
-          .select { Enrollees.userRef eq dbmsId }
+          .select { Enrollees.userRef eq userDbmsId }
           .map { it[Enrollees.id.count()].toInt() }
           .first().also { logger.info { "isEnrolled() returned $it for $classCode" } } > 0
       }
@@ -473,7 +473,7 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
       .forEach { enrollee ->
         logger.info { "Assigning ${enrollee.email} to $DISABLED_CLASS_CODE" }
         Users
-          .update({ Users.id eq enrollee.dbmsId }) { row ->
+          .update({ Users.id eq enrollee.userDbmsId }) { row ->
             row[updated] = DateTime.now(UTC)
             row[enrolledClassCode] = DISABLED_CLASS_CODE.value
           }
@@ -526,7 +526,7 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
       transaction {
         PasswordResets
           .slice(PasswordResets.resetId)
-          .select { PasswordResets.userRef eq dbmsId }
+          .select { PasswordResets.userRef eq userDbmsId }
           .map { it[PasswordResets.resetId] }.also { logger.info { "userPasswordResetId() returned $it" } }
           .first()
       }
@@ -534,7 +534,7 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
       redis.get(userPasswordResetKey)
 
   fun deleteUserPasswordResetId() {
-    PasswordResets.deleteWhere { PasswordResets.userRef eq dbmsId }
+    PasswordResets.deleteWhere { PasswordResets.userRef eq userDbmsId }
   }
 
   fun deleteUserPasswordResetId(tx: Transaction) {
@@ -547,7 +547,7 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
         PasswordResets
           .insert { row ->
             row[updated] = DateTime.now(UTC)
-            row[userRef] = dbmsId
+            row[userRef] = userDbmsId
             row[resetId] = newResetId.value
             row[PasswordResets.email] = email.value
           }
@@ -656,7 +656,7 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
           transaction {
             val md5 = md5Of(languageName, groupName, challengeName, result.invocation)
             UserAnswerHistory
-              .update({ (UserAnswerHistory.userRef eq dbmsId) and (UserAnswerHistory.md5 eq md5) }) { row ->
+              .update({ (UserAnswerHistory.userRef eq userDbmsId) and (UserAnswerHistory.md5 eq md5) }) { row ->
                 row[updated] = DateTime.now(UTC)
                 row[correct] = false
                 row[incorrectAttempts] = 0
@@ -713,7 +713,7 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
             transaction {
               UserSessions
                 .slice(UserSessions.activeClassCode)
-                .select { UserSessions.userRef eq user.dbmsId }
+                .select { UserSessions.userRef eq user.userDbmsId }
                 .map { it[UserSessions.activeClassCode] }
                 .firstOrNull()?.let { ClassCode(it) } ?: DISABLED_CLASS_CODE
             }
@@ -731,7 +731,7 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
             transaction {
               UserSessions
                 .slice(UserSessions.previousTeacherClassCode)
-                .select { UserSessions.userRef eq user.dbmsId }
+                .select { UserSessions.userRef eq user.userDbmsId }
                 .map { it[UserSessions.previousTeacherClassCode] }
                 .firstOrNull()?.let { ClassCode(it) } ?: DISABLED_CLASS_CODE
             }
@@ -763,11 +763,11 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
               user.isNotNull() -> {
                 UserChallengeInfo
                   .slice(UserChallengeInfo.answersJson)
-                  .select { (UserChallengeInfo.userRef eq user.dbmsId) and (UserChallengeInfo.md5 eq md5) }
+                  .select { (UserChallengeInfo.userRef eq user.userDbmsId) and (UserChallengeInfo.md5 eq md5) }
                   .map { it[UserChallengeInfo.answersJson] }
                   .firstOrNull()
                   ?.let { gson.fromJson(it, Map::class.java) as Map<String, String> }
-                  ?: throw InvalidConfigurationException("UserChallengeInfo not found: ${user.dbmsId} $md5")
+                  ?: throw InvalidConfigurationException("UserChallengeInfo not found: ${user.userDbmsId} $md5")
               }
               browserSession.isNotNull() -> {
                 val sessionDbmsId = browserSession.sessionDbmsId
@@ -868,7 +868,7 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
       if (usePostgres) {
         if (user.isNotNull())
           UserChallengeInfo
-            .update({ (UserChallengeInfo.userRef eq user.dbmsId) and (UserChallengeInfo.md5 eq md5) }) {
+            .update({ (UserChallengeInfo.userRef eq user.userDbmsId) and (UserChallengeInfo.md5 eq md5) }) {
               it[updated] = DateTime.now(UTC)
               it[allCorrect] = complete
             }
@@ -897,7 +897,7 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
         when {
           user.isNotNull() ->
             UserChallengeInfo
-              .update({ (UserChallengeInfo.userRef eq user.dbmsId) and (UserChallengeInfo.md5 eq md5) }) {
+              .update({ (UserChallengeInfo.userRef eq user.userDbmsId) and (UserChallengeInfo.md5 eq md5) }) {
                 it[updated] = DateTime.now(UTC)
                 it[answersJson] = gson.toJson(invokeMap)
               }
@@ -948,7 +948,7 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
           when {
             user.isNotNull() ->
               UserAnswerHistory
-                .update({ (UserAnswerHistory.userRef eq user.dbmsId) and (UserAnswerHistory.md5 eq md5) }) {
+                .update({ (UserAnswerHistory.userRef eq user.userDbmsId) and (UserAnswerHistory.md5 eq md5) }) {
                   it[updated] = DateTime.now(UTC)
                   it[invocation] = history.invocation.value
                   it[correct] = history.correct
@@ -1003,7 +1003,7 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
           user.isNotNull() ->
             transaction {
               UserChallengeInfo
-                .update({ UserChallengeInfo.userRef eq user.dbmsId }) { row ->
+                .update({ UserChallengeInfo.userRef eq user.userDbmsId }) { row ->
                   row[updated] = DateTime.now(UTC)
                   row[likeDislike] = likeVal.toShort()
                 }
