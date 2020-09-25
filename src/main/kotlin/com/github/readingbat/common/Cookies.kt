@@ -43,7 +43,7 @@ internal data class UserPrincipal(val userId: String, val created: Long = Instan
 
 internal data class BrowserSession(val id: String, val created: Long = Instant.now().toEpochMilli()) {
 
-  val sessionDbmsId: Long get() = id.sessionDbmsId
+  fun sessionDbmsId(): Long = id.sessionDbmsId
 
   fun correctAnswersKey(names: ChallengeNames) =
     correctAnswersKey(names.languageName, names.groupName, names.challengeName)
@@ -78,7 +78,7 @@ internal data class BrowserSession(val id: String, val created: Long = Instant.n
              SessionAnswerHistory.correct,
              SessionAnswerHistory.incorrectAttempts,
              SessionAnswerHistory.historyJson)
-      .select { (SessionAnswerHistory.sessionRef eq sessionDbmsId) and (SessionAnswerHistory.md5 eq md5) }
+      .select { (SessionAnswerHistory.sessionRef eq sessionDbmsId()) and (SessionAnswerHistory.md5 eq md5) }
       .map {
         val json = it[SessionAnswerHistory.historyJson]
         val history =

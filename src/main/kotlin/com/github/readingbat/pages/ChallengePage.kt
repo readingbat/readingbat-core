@@ -102,6 +102,7 @@ import kotlinx.html.stream.createHTML
 import mu.KLogging
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.select
+import org.jetbrains.exposed.sql.transactions.transaction
 import redis.clients.jedis.Jedis
 
 internal object ChallengePage : KLogging() {
@@ -150,7 +151,12 @@ internal object ChallengePage : KLogging() {
           displayChallenge(challenge, funcInfo)
 
           if (activeClassCode.isNotEnabled)
-            displayQuestions(user, browserSession, challenge, funcInfo, redis)
+            if (usePostgres)
+              transaction {
+                displayQuestions(user, browserSession, challenge, funcInfo, redis)
+              }
+            else
+              displayQuestions(user, browserSession, challenge, funcInfo, redis)
           else {
             if (redis.isNull()) {
               p { +DBMS_DOWN.toString() }
@@ -294,9 +300,12 @@ internal object ChallengePage : KLogging() {
       }
 
       this@displayQuestions.processAnswers(funcInfo, challenge)
+
       if (redis.isNotNull())
         this@displayQuestions.likeDislike(user, browserSession, challenge, redis)
+
       this@displayQuestions.otherLinks(challenge)
+
       if (redis.isNotNull())
         this@displayQuestions.clearChallengeAnswerHistoryOption(user, browserSession, challenge)
     }
@@ -517,7 +526,7 @@ internal object ChallengePage : KLogging() {
           browserSession.isNotNull() ->
             SessionChallengeInfo
               .slice(UserChallengeInfo.likeDislike)
-              .select { (SessionChallengeInfo.sessionRef eq browserSession.sessionDbmsId) and (SessionChallengeInfo.md5 eq md5) }
+              .select { (SessionChallengeInfo.sessionRef eq browserSession.sessionDbmsId()) and (SessionChallengeInfo.md5 eq md5) }
               .map { it[SessionChallengeInfo.likeDislike].toInt() }
               .firstOrNull() ?: 0
           else -> 0

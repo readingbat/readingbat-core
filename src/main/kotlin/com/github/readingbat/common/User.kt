@@ -125,7 +125,7 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
   private val userPasswordResetKey by lazy { keyOf(USER_RESET_KEY, userId) }
 
   private val sessionDbmsId: Long
-    get() = browserSession?.sessionDbmsId ?: throw InvalidConfigurationException("Missing browser session id")
+    get() = browserSession?.sessionDbmsId() ?: throw InvalidConfigurationException("Missing browser session id")
 
   fun browserSessions(redis: Jedis) =
     if (usePostgres)
@@ -752,13 +752,10 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
         val languageName = challenge.languageType.languageName
         val groupName = challenge.groupName
         val challengeName = challenge.challengeName
-        val challengeAnswersKey = challengeAnswersKey(user, browserSession, languageName, groupName, challengeName)
 
         when {
-          challengeAnswersKey.isEmpty() -> kotlinx.html.emptyMap
           usePostgres -> {
-            val elems = challengeAnswersKey.split(KEY_SEP)
-            val md5 = elems[2]
+            val md5 = md5Of(languageName, groupName, challengeName)
             when {
               user.isNotNull() -> {
                 UserChallengeInfo
@@ -770,7 +767,7 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
                   ?: throw InvalidConfigurationException("UserChallengeInfo not found: ${user.userDbmsId} $md5")
               }
               browserSession.isNotNull() -> {
-                val sessionDbmsId = browserSession.sessionDbmsId
+                val sessionDbmsId = browserSession.sessionDbmsId()
                 SessionChallengeInfo
                   .slice(SessionChallengeInfo.answersJson)
                   .select { (SessionChallengeInfo.sessionRef eq sessionDbmsId) and (SessionChallengeInfo.md5 eq md5) }
@@ -782,7 +779,13 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
               else -> kotlinx.html.emptyMap
             }
           }
-          else -> redis.hgetAll(challengeAnswersKey)
+          else -> {
+            val challengeAnswersKey = challengeAnswersKey(user, browserSession, languageName, groupName, challengeName)
+            if (challengeAnswersKey.isEmpty())
+              kotlinx.html.emptyMap
+            else
+              redis.hgetAll(challengeAnswersKey)
+          }
         }
       }
 
@@ -874,7 +877,7 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
             }
         else if (browserSession.isNotNull())
           SessionChallengeInfo
-            .update({ (SessionChallengeInfo.sessionRef eq browserSession.sessionDbmsId) and (SessionChallengeInfo.md5 eq md5) }) {
+            .update({ (SessionChallengeInfo.sessionRef eq browserSession.sessionDbmsId()) and (SessionChallengeInfo.md5 eq md5) }) {
               it[updated] = DateTime.now(UTC)
               it[allCorrect] = complete
             }
@@ -903,7 +906,7 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
               }
           browserSession.isNotNull() ->
             SessionChallengeInfo
-              .update({ (SessionChallengeInfo.sessionRef eq browserSession.sessionDbmsId) and (SessionChallengeInfo.md5 eq md5) }) {
+              .update({ (SessionChallengeInfo.sessionRef eq browserSession.sessionDbmsId()) and (SessionChallengeInfo.md5 eq md5) }) {
                 it[updated] = DateTime.now(UTC)
                 it[answersJson] = gson.toJson(invokeMap)
               }
@@ -957,7 +960,7 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
                 }
             browserSession.isNotNull() ->
               SessionAnswerHistory
-                .update({ (SessionAnswerHistory.sessionRef eq browserSession.sessionDbmsId) and (SessionAnswerHistory.md5 eq md5) }) {
+                .update({ (SessionAnswerHistory.sessionRef eq browserSession.sessionDbmsId()) and (SessionAnswerHistory.md5 eq md5) }) {
                   it[updated] = DateTime.now(UTC)
                   it[UserAnswerHistory.invocation] = history.invocation.value
                   it[UserAnswerHistory.correct] = history.correct
@@ -1011,7 +1014,7 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
           browserSession.isNotNull() ->
             transaction {
               SessionChallengeInfo
-                .update({ SessionChallengeInfo.sessionRef eq (browserSession.sessionDbmsId) }) { row ->
+                .update({ SessionChallengeInfo.sessionRef eq (browserSession.sessionDbmsId()) }) { row ->
                   row[updated] = DateTime.now(UTC)
                   row[likeDislike] = likeVal.toShort()
                 }
