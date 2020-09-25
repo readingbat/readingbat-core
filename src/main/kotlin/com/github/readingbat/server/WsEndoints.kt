@@ -23,7 +23,7 @@ import com.github.pambrose.common.redis.RedisUtils.withRedisPool
 import com.github.pambrose.common.time.format
 import com.github.pambrose.common.util.isNotNull
 import com.github.pambrose.common.util.isNull
-import com.github.readingbat.common.ClassCode
+import com.github.readingbat.common.*
 import com.github.readingbat.common.CommonUtils.keyOf
 import com.github.readingbat.common.CommonUtils.md5Of
 import com.github.readingbat.common.CommonUtils.pathOf
@@ -37,11 +37,8 @@ import com.github.readingbat.common.Endpoints.CHALLENGE_ENDPOINT
 import com.github.readingbat.common.Endpoints.CHALLENGE_GROUP_ENDPOINT
 import com.github.readingbat.common.Endpoints.CLASS_SUMMARY_ENDPOINT
 import com.github.readingbat.common.Endpoints.STUDENT_SUMMARY_ENDPOINT
-import com.github.readingbat.common.Metrics
-import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.gson
 import com.github.readingbat.common.User.Companion.toUser
-import com.github.readingbat.common.isNotValidUser
 import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.InvalidRequestException
 import com.github.readingbat.dsl.ReadingBatContent
@@ -63,6 +60,8 @@ import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import mu.KLogging
+import org.jetbrains.exposed.sql.and
+import org.jetbrains.exposed.sql.select
 import redis.clients.jedis.JedisPubSub
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.TimeSource
@@ -296,9 +295,19 @@ internal object WsEndoints : KLogging() {
                           break
                       }
 
-                      val likeDislikeKey = enrollee.likeDislikeKey(languageName, groupName, challengeName)
-                      // TODO
-                      val likeDislike = redis[likeDislikeKey]?.toInt() ?: 0
+                      val likeDislike =
+                        if (usePostgres) {
+                          val md5 = md5Of(languageName, groupName, challengeName)
+                          UserChallengeInfo
+                            .slice(UserChallengeInfo.likeDislike)
+                            .select { (UserChallengeInfo.userRef eq enrollee.dbmsId) and (UserChallengeInfo.md5 eq md5) }
+                            .map { it[UserChallengeInfo.likeDislike].toInt() }
+                            .firstOrNull() ?: 0
+                        }
+                        else {
+                          val likeDislikeKey = enrollee.likeDislikeKey(languageName, groupName, challengeName)
+                          redis[likeDislikeKey]?.toInt() ?: 0
+                        }
 
                       if (likeDislike == 1)
                         likes++

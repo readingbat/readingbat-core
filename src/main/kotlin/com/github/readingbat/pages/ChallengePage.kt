@@ -34,6 +34,7 @@ import com.github.readingbat.common.CSSNames.STATUS
 import com.github.readingbat.common.CSSNames.SUCCESS
 import com.github.readingbat.common.CSSNames.UNDERLINE
 import com.github.readingbat.common.CSSNames.USER_RESP
+import com.github.readingbat.common.CommonUtils.md5Of
 import com.github.readingbat.common.CommonUtils.pathOf
 import com.github.readingbat.common.Constants.CORRECT_COLOR
 import com.github.readingbat.common.Constants.DBMS_DOWN
@@ -89,6 +90,8 @@ import com.github.readingbat.pages.PageUtils.rawHtml
 import com.github.readingbat.posts.ChallengeHistory
 import com.github.readingbat.server.ChallengeMd5
 import com.github.readingbat.server.PipelineCall
+import com.github.readingbat.server.ReadingBatServer
+import com.github.readingbat.server.ReadingBatServer.usePostgres
 import com.github.readingbat.server.ServerUtils.queryParam
 import io.ktor.application.*
 import io.ktor.http.ContentType.Text.CSS
@@ -97,6 +100,8 @@ import kotlinx.html.Entities.nbsp
 import kotlinx.html.ScriptType.textJavaScript
 import kotlinx.html.stream.createHTML
 import mu.KLogging
+import org.jetbrains.exposed.sql.and
+import org.jetbrains.exposed.sql.select
 import redis.clients.jedis.Jedis
 
 internal object ChallengePage : KLogging() {
@@ -384,22 +389,27 @@ internal object ChallengePage : KLogging() {
               val results =
                 funcInfo.invocations
                   .map { invocation ->
-                    val historyKey = enrollee.answerHistoryKey(languageName, groupName, challengeName, invocation)
-                    // TODO
                     val history =
-                      gson.fromJson(redis[historyKey], ChallengeHistory::class.java) ?: ChallengeHistory(invocation)
+                      if (usePostgres) {
+                        val md5 = md5Of(languageName, groupName, challengeName, invocation)
+                        enrollee.answerHistory(md5, invocation)
+                      }
+                      else {
+                        val historyKey = enrollee.answerHistoryKey(languageName, groupName, challengeName, invocation)
+                        gson.fromJson(redis[historyKey], ChallengeHistory::class.java) ?: ChallengeHistory(invocation)
+                      }
                     if (history.correct)
                       numCorrect++
                     invocation to history
                   }
+
               val allCorrect = numCorrect == numChallenges
 
               tr(classes = DASHBOARD) {
                 td(classes = DASHBOARD) {
                   id = "${enrollee.userId}-$nameTd"
-                  style =
-                    "width:15%;white-space:nowrap; background-color:${if (allCorrect) CORRECT_COLOR else INCOMPLETE_COLOR}"
-
+                  val color = if (allCorrect) CORRECT_COLOR else INCOMPLETE_COLOR
+                  style = "width:15%;white-space:nowrap; background-color:$color"
                   span { id = "${enrollee.userId}-$numCorrectSpan"; +numCorrect.toString() }
                   +"/$numChallenges"
                   rawHtml(nbsp.text)
@@ -410,8 +420,9 @@ internal object ChallengePage : KLogging() {
                   .forEach { (invocation, history) ->
                     td(classes = DASHBOARD) {
                       id = "${enrollee.userId}-$invocation-$answersTd"
-                      style =
-                        "background-color:${if (history.correct) CORRECT_COLOR else (if (history.answers.isNotEmpty()) WRONG_COLOR else INCOMPLETE_COLOR)}"
+                      val color =
+                        if (history.correct) CORRECT_COLOR else (if (history.answers.isNotEmpty()) WRONG_COLOR else INCOMPLETE_COLOR)
+                      style = "background-color:$color"
                       span {
                         id = "${enrollee.userId}-$invocation-$answersSpan"
                         history.answers.asReversed().take(maxHistoryLength).forEach { answer -> +answer; br }
@@ -493,9 +504,29 @@ internal object ChallengePage : KLogging() {
     val groupName = challenge.groupName
     val challengeName = challenge.challengeName
 
-    val likeDislikeKey = likeDislikeKey(user, browserSession, languageName, groupName, challengeName)
-    // TODO
-    val likeDislikeVal = if (likeDislikeKey.isNotEmpty()) redis[likeDislikeKey]?.toInt() ?: 0 else 0
+    val likeDislikeVal =
+      if (ReadingBatServer.usePostgres) {
+        val md5 = md5Of(languageName, groupName, challengeName)
+        when {
+          user.isNotNull() ->
+            UserChallengeInfo
+              .slice(UserChallengeInfo.likeDislike)
+              .select { (UserChallengeInfo.userRef eq user.dbmsId) and (UserChallengeInfo.md5 eq md5) }
+              .map { it[UserChallengeInfo.likeDislike].toInt() }
+              .firstOrNull() ?: 0
+          browserSession.isNotNull() ->
+            SessionChallengeInfo
+              .slice(UserChallengeInfo.likeDislike)
+              .select { (SessionChallengeInfo.sessionRef eq browserSession.sessionDbmsId) and (SessionChallengeInfo.md5 eq md5) }
+              .map { it[SessionChallengeInfo.likeDislike].toInt() }
+              .firstOrNull() ?: 0
+          else -> 0
+        }
+      }
+      else {
+        val likeDislikeKey = likeDislikeKey(user, browserSession, languageName, groupName, challengeName)
+        if (likeDislikeKey.isNotEmpty()) redis[likeDislikeKey]?.toInt() ?: 0 else 0
+      }
 
     p {
       table {
