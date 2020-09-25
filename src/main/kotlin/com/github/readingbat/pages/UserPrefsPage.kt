@@ -161,7 +161,7 @@ internal object UserPrefsPage : KLogging() {
       h3 { +"Enrolled class" }
       val displayStr = enrolledClass.toDisplayString(redis)
       div(classes = INDENT_2EM) {
-        p { +"Currently enrolled in class $enrolledClass." }
+        p { +"Currently enrolled in class $displayStr." }
         p {
           form {
             action = USER_PREFS_ENDPOINT
