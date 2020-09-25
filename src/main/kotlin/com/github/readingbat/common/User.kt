@@ -788,7 +788,6 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
     private fun User?.answerHistoryKey(browserSession: BrowserSession?, names: ChallengeNames, invocation: Invocation) =
       this?.answerHistoryKey(names, invocation) ?: browserSession?.answerHistoryKey(names, invocation) ?: ""
 
-    // TODO
     fun User?.fetchPreviousResponses(challenge: Challenge,
                                      browserSession: BrowserSession?,
                                      redis: Jedis?): Map<String, String> =
@@ -799,7 +798,37 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
         val groupName = challenge.groupName
         val challengeName = challenge.challengeName
         val challengeAnswersKey = challengeAnswersKey(browserSession, languageName, groupName, challengeName)
-        if (challengeAnswersKey.isNotEmpty()) redis.hgetAll(challengeAnswersKey) else emptyMap()
+
+        when {
+          challengeAnswersKey.isEmpty() -> kotlinx.html.emptyMap as Map<String, String>
+          usePostgres -> {
+            val elems = challengeAnswersKey.split(KEY_SEP)
+            val md5 = elems[2]
+            when {
+              this != null -> {
+                UserChallengeInfo
+                  .slice(UserChallengeInfo.answersJson)
+                  .select { (UserChallengeInfo.userRef eq dbmsId) and (UserChallengeInfo.md5 eq md5) }
+                  .map { it[UserChallengeInfo.answersJson] }
+                  .firstOrNull()
+                  ?.let { gson.fromJson(it, Map::class.java) as Map<String, String> }
+                  ?: throw InvalidConfigurationException("UserChallengeInfo not found: $dbmsId $md5")
+              }
+              browserSession != null -> {
+                val sessionDbmsId = browserSession.id.sessionDbmsId
+                SessionChallengeInfo
+                  .slice(SessionChallengeInfo.answersJson)
+                  .select { (SessionChallengeInfo.sessionRef eq sessionDbmsId) and (SessionChallengeInfo.md5 eq md5) }
+                  .map { it[SessionChallengeInfo.answersJson] }
+                  .firstOrNull()
+                  ?.let { gson.fromJson(it, Map::class.java) as Map<String, String> }
+                  ?: throw InvalidConfigurationException("SessionChallengeInfo not found: $sessionDbmsId $md5")
+              }
+              else -> kotlinx.html.emptyMap
+            }
+          }
+          else -> redis.hgetAll(challengeAnswersKey)
+        }
       }
 
     // TODO

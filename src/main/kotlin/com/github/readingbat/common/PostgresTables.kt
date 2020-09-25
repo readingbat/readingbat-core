@@ -25,6 +25,7 @@ object BrowserSessions : LongIdTable("browser_sessions") {
   val session_id = text("session_id")
 }
 
+// answersJson is a map of invocations to answers
 object SessionChallengeInfo : LongIdTable("session_challenge_info") {
   val created = datetime("created")
   val updated = datetime("updated")
@@ -66,6 +67,7 @@ object UserSessions : LongIdTable("user_sessions") {
   val previousTeacherClassCode = text("previous_teacher_class_code")
 }
 
+// answersJson is a map of invocations to answers
 object UserChallengeInfo : LongIdTable("user_challenge_info") {
   val created = datetime("created")
   val updated = datetime("updated")
