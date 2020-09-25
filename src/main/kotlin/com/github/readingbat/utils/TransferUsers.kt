@@ -108,7 +108,7 @@ internal object TransferUsers : KLogging() {
                 row[sessionRef] = sessionDbmsId
                 row[md5] = key.split(KEY_SEP)[3]
                 row[updated] = DateTime.now(UTC)
-                row[correct] = redis[key].toBoolean()
+                row[allCorrect] = redis[key].toBoolean()
               }
             }
 

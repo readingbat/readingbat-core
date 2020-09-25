@@ -13,7 +13,7 @@ CREATE TABLE session_challenge_info
     updated      TIMESTAMP     DEFAULT NOW(),
     session_ref  INTEGER REFERENCES browser_sessions ON DELETE CASCADE,
     md5          TEXT NOT NULL,
-    correct      BOOLEAN       DEFAULT false,
+    all_correct  BOOLEAN       DEFAULT false,
     like_dislike SMALLINT      DEFAULT 0,
     answers_json TEXT NOT NULL DEFAULT '',
     CONSTRAINT session_challenge_info_unique unique (session_ref, md5)

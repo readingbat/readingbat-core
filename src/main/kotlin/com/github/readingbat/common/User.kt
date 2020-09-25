@@ -125,7 +125,7 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
   private val userPasswordResetKey by lazy { keyOf(USER_RESET_KEY, userId) }
 
   private val sessionDbmsId: Long
-    get() = browserSession?.id?.sessionDbmsId ?: throw InvalidConfigurationException("Missing browser session id")
+    get() = browserSession?.sessionDbmsId ?: throw InvalidConfigurationException("Missing browser session id")
 
   fun browserSessions(redis: Jedis) =
     if (usePostgres)
@@ -770,7 +770,7 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
                   ?: throw InvalidConfigurationException("UserChallengeInfo not found: ${user.dbmsId} $md5")
               }
               browserSession != null -> {
-                val sessionDbmsId = browserSession.id.sessionDbmsId
+                val sessionDbmsId = browserSession.sessionDbmsId
                 SessionChallengeInfo
                   .slice(SessionChallengeInfo.answersJson)
                   .select { (SessionChallengeInfo.sessionRef eq sessionDbmsId) and (SessionChallengeInfo.md5 eq md5) }
@@ -848,7 +848,6 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
       return user
     }
 
-    // TODO
     fun saveChallengeAnswers(user: User?,
                              browserSession: BrowserSession?,
                              content: ReadingBatContent,
@@ -865,9 +864,27 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
       val numCorrect = results.count { it.correct }
 
       // Record if all answers were correct
-      //if (usePostgres)
-      if (correctAnswersKey.isNotEmpty())
-        redis.set(correctAnswersKey, complete.toString())
+      if (usePostgres) {
+        val md5 = md5Of(names.languageName, names.groupName, names.challengeName)
+        if (user != null)
+          transaction {
+            UserChallengeInfo
+              .update({ (UserChallengeInfo.userRef eq user.dbmsId) and (UserChallengeInfo.md5 eq md5) }) {
+                it[allCorrect] = complete
+              }
+          }
+        else if (browserSession != null)
+          transaction {
+            SessionChallengeInfo
+              .update({ (SessionChallengeInfo.sessionRef eq browserSession.sessionDbmsId) and (SessionChallengeInfo.md5 eq md5) }) {
+                it[allCorrect] = complete
+              }
+          }
+      }
+      else {
+        if (correctAnswersKey.isNotEmpty())
+          redis.set(correctAnswersKey, complete.toString())
+      }
 
       if (challengeAnswersKey.isNotEmpty()) {
         // Save the last answers given
@@ -942,7 +959,7 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
           browserSession.isNotNull() ->
             transaction {
               SessionChallengeInfo
-                .update({ SessionChallengeInfo.sessionRef eq (browserSession.id.sessionDbmsId) }) { row ->
+                .update({ SessionChallengeInfo.sessionRef eq (browserSession.sessionDbmsId) }) { row ->
                   row[updated] = DateTime.now(UTC)
                   row[likeDislike] = likeVal.toShort()
                 }
@@ -981,6 +998,8 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
   internal data class ChallengeAnswers(val id: String, val correctAnswers: MutableMap<String, String> = mutableMapOf())
 }
 
+internal val User.userDbmsId: Long get() = this.userId.userDbmsId
+
 internal val String.userDbmsId: Long
   get() =
     Users
@@ -988,6 +1007,8 @@ internal val String.userDbmsId: Long
       .select { Users.userId eq this@userDbmsId }
       .map { it[Users.id].value }
       .firstOrNull() ?: throw InvalidConfigurationException("Invalid user id: ${this@userDbmsId}")
+
+internal val BrowserSession.sessionDbmsId: Long get() = this.sessionDbmsId
 
 internal val String.sessionDbmsId: Long
   get() =

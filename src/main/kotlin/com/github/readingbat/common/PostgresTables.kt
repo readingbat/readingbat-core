@@ -31,7 +31,7 @@ object SessionChallengeInfo : LongIdTable("session_challenge_info") {
   val updated = datetime("updated")
   val sessionRef = long("session_ref").references(BrowserSessions.id)
   val md5 = text("md5")
-  val correct = bool("correct")
+  val allCorrect = bool("all_correct")
   val likeDislike = short("like_dislike")
   val answersJson = text("answers_json")
 }
