@@ -18,6 +18,7 @@
 package com.github.readingbat.utils
 
 import com.github.pambrose.common.redis.RedisUtils
+import com.github.pambrose.common.util.isNotNull
 import com.github.readingbat.common.*
 import com.github.readingbat.common.CommonUtils.keyOf
 import com.github.readingbat.common.KeyConstants.ANSWER_HISTORY_KEY
@@ -222,8 +223,8 @@ internal object TransferUsers : KLogging() {
             .forEach { key ->
               val sessionId = key.split(KEY_SEP)[2]
               val browserUser = userId.toUser(redis, BrowserSession(sessionId))
-              val activeClassCode = browserUser.fetchActiveClassCode(redis)
-              val previousClassCode = browserUser.fetchPreviousTeacherClassCode(redis)
+              val activeClassCode = fetchActiveClassCode(browserUser, redis)
+              val previousClassCode = fetchPreviousTeacherClassCode(browserUser, redis)
               //println("$key $browser_sessions_id ${redis.hgetAll(user2.browserSpecificUserInfoKey)} $activeClassCode $previousClassCode")
 
               UserSessions
@@ -325,11 +326,11 @@ class UpsertStatement<Key : Any>(table: Table,
 
   init {
     when {
-      conflictIndex != null -> {
+      conflictIndex.isNotNull() -> {
         indexName = conflictIndex.indexName
         indexColumns = conflictIndex.columns
       }
-      conflictColumn != null -> {
+      conflictColumn.isNotNull() -> {
         indexName = conflictColumn.name
         indexColumns = listOf(conflictColumn)
       }

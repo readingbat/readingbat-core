@@ -107,7 +107,7 @@ internal object TeacherPrefsPost : KLogging() {
     val returnPath = queryParam(FormFields.RETURN_PARAM, "/")
     val msg =
       if (user.isValidUser(redis)) {
-        val previousTeacherClassCode = user.fetchPreviousTeacherClassCode(redis)
+        val previousTeacherClassCode = fetchPreviousTeacherClassCode(user, redis)
         user.assignActiveClassCode(previousTeacherClassCode, false, redis)
         TEACHER_MODE_ENABLED_MSG
       }
@@ -148,7 +148,7 @@ internal object TeacherPrefsPost : KLogging() {
     when {
       // Do not allow this for classCode.isStudentMode because turns off the
       // student/teacher toggle mode
-      user.fetchActiveClassCode(redis) == classCode && classCode.isEnabled ->
+      fetchActiveClassCode(user, redis) == classCode && classCode.isEnabled ->
         Message("Same active class selected [$classCode]", true)
       else -> {
         user.assignActiveClassCode(classCode, true, redis)
@@ -171,7 +171,7 @@ internal object TeacherPrefsPost : KLogging() {
                                                       redis,
                                                       Message("Invalid class code: $classCode", true))
       else -> {
-        val activeClassCode = user.fetchActiveClassCode(redis)
+        val activeClassCode = fetchActiveClassCode(user, redis)
         val enrollees = classCode.fetchEnrollees(redis)
 
         if (usePostgres) {

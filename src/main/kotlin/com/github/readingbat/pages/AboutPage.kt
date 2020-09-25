@@ -42,7 +42,7 @@ internal object AboutPage {
         head { headDefault(content) }
 
         body {
-          helpAndLogin(content, user, ABOUT_ENDPOINT, user.fetchActiveClassCode(redis).isEnabled, redis)
+          helpAndLogin(content, user, ABOUT_ENDPOINT, fetchActiveClassCode(user, redis).isEnabled, redis)
 
           bodyTitle()
 

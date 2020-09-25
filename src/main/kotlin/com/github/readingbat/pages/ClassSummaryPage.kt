@@ -110,7 +110,7 @@ internal object ClassSummaryPage : KLogging() {
     return createHTML()
       .html {
         val hasGroupName = groupName.isDefined(content, languageName)
-        val activeClassCode = user.fetchActiveClassCode(redis)
+        val activeClassCode = fetchActiveClassCode(user, redis)
         val enrollees = classCode.fetchEnrollees(redis)
 
         head {

@@ -101,7 +101,7 @@ internal object ChallengeGroupPage : KLogging() {
         val groupName = challengeGroup.groupName
         val challenges = challengeGroup.challenges
         val loginPath = pathOf(CHALLENGE_ROOT, languageName, groupName)
-        val activeClassCode = user.fetchActiveClassCode(redis)
+        val activeClassCode = fetchActiveClassCode(user, redis)
         val enrollees = activeClassCode.fetchEnrollees(redis)
         val msg = Message(queryParam(MSG))
 

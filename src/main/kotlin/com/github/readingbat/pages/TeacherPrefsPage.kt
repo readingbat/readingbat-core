@@ -87,7 +87,7 @@ internal object TeacherPrefsPage : KLogging() {
         }
 
         body {
-          val activeClassCode = user.fetchActiveClassCode(redis)
+          val activeClassCode = fetchActiveClassCode(user, redis)
           val returnPath = queryParam(RETURN_PARAM, "/")
 
           helpAndLogin(content, user, returnPath, activeClassCode.isEnabled, redis)

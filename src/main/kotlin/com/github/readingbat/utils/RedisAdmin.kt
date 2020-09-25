@@ -19,6 +19,7 @@ package com.github.readingbat.utils
 
 import com.github.pambrose.common.redis.RedisUtils.withNonNullRedis
 import com.github.pambrose.common.redis.RedisUtils.withRedis
+import com.github.pambrose.common.util.isNotNull
 import com.github.readingbat.common.RedisUtils.scanKeys
 import com.github.readingbat.dsl.InvalidConfigurationException
 import redis.clients.jedis.exceptions.JedisDataException
@@ -42,10 +43,10 @@ internal object RedisAdmin {
   private fun copy(urlFrom: String, urlTo: String) {
     var cnt = 0
     withRedis(urlFrom) { redisFrom ->
-      require(redisFrom != null)
+      require(redisFrom.isNotNull())
       val allKeys = redisFrom.scanKeys("*")
       withRedis(urlTo) { redisTo ->
-        require(redisTo != null)
+        require(redisTo.isNotNull())
         allKeys.forEach { key ->
           val dump = redisFrom.dump(key)
           println("($cnt) Transferring key: $key - $dump")

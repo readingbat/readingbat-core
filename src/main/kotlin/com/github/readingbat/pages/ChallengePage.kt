@@ -122,7 +122,7 @@ internal object ChallengePage : KLogging() {
         val challengeName = challenge.challengeName
         val funcInfo = challenge.functionInfo(content)
         val loginPath = pathOf(CHALLENGE_ROOT, languageName, groupName, challengeName)
-        val activeClassCode = user.fetchActiveClassCode(redis)
+        val activeClassCode = fetchActiveClassCode(user, redis)
         val enrollees = activeClassCode.fetchEnrollees(redis)
         val msg = Message(queryParam(MSG))
 
@@ -385,6 +385,7 @@ internal object ChallengePage : KLogging() {
                 funcInfo.invocations
                   .map { invocation ->
                     val historyKey = enrollee.answerHistoryKey(languageName, groupName, challengeName, invocation)
+                    // TODO
                     val history =
                       gson.fromJson(redis[historyKey], ChallengeHistory::class.java) ?: ChallengeHistory(invocation)
                     if (history.correct)
@@ -493,6 +494,7 @@ internal object ChallengePage : KLogging() {
     val challengeName = challenge.challengeName
 
     val likeDislikeKey = likeDislikeKey(user, browserSession, languageName, groupName, challengeName)
+    // TODO
     val likeDislikeVal = if (likeDislikeKey.isNotEmpty()) redis[likeDislikeKey]?.toInt() ?: 0 else 0
 
     p {

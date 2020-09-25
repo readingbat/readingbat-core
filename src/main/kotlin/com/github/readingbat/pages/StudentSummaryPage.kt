@@ -75,7 +75,7 @@ internal object StudentSummaryPage : KLogging() {
         call.parameters[LANG_TYPE_QP]?.let { LanguageName(it) } ?: throw InvalidRequestException("Missing language"),
         call.parameters[USER_ID_QP]?.toUser(redis, null) ?: throw InvalidRequestException("Missing user id"),
         call.parameters[CLASS_CODE_QP]?.let { ClassCode(it) } ?: throw InvalidRequestException("Missing class code"))
-    val activeClassCode = user.fetchActiveClassCode(redis)
+    val activeClassCode = fetchActiveClassCode(user, redis)
 
     when {
       classCode.isNotValid(redis) -> throw InvalidRequestException("Invalid class code: $classCode")

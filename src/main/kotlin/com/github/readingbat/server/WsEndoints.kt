@@ -297,6 +297,7 @@ internal object WsEndoints : KLogging() {
                       }
 
                       val likeDislikeKey = enrollee.likeDislikeKey(languageName, groupName, challengeName)
+                      // TODO
                       val likeDislike = redis[likeDislikeKey]?.toInt() ?: 0
 
                       if (likeDislike == 1)

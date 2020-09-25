@@ -61,7 +61,7 @@ internal object LanguageGroupPage {
         val languageName = languageType.languageName
         val loginPath = pathOf(CHALLENGE_ROOT, languageName)
         val groups = content[languageType].challengeGroups
-        val activeClassCode = user.fetchActiveClassCode(redis)
+        val activeClassCode = fetchActiveClassCode(user, redis)
         val enrollees = activeClassCode.fetchEnrollees(redis)
 
         fun TR.groupItem(user: User?, challengeGroup: ChallengeGroup<*>, redis: Jedis?) {

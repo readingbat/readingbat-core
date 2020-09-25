@@ -274,7 +274,12 @@ internal object ChallengePost : KLogging() {
     // Save whether all the answers for the challenge were correct
     if (redis.isNotNull()) {
       val browserSession = call.browserSession
-      saveChallengeAnswers(user, browserSession, content, names, paramMap, funcInfo, userResponses, results, redis)
+      if (usePostgres)
+        transaction {
+          saveChallengeAnswers(user, browserSession, content, names, paramMap, funcInfo, userResponses, results, redis)
+        }
+      else
+        saveChallengeAnswers(user, browserSession, content, names, paramMap, funcInfo, userResponses, results, redis)
     }
 
     // Return values: 0 = not answered, 1 = correct, 2 = incorrect

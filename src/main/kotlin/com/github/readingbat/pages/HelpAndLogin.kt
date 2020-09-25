@@ -49,7 +49,7 @@ internal object HelpAndLogin {
                         teacherMode: Boolean,
                         redis: Jedis?) {
 
-    val previousClassCode = user.fetchPreviousTeacherClassCode(redis)
+    val previousClassCode = fetchPreviousTeacherClassCode(user, redis)
     val path = if (loginPath in rootVals) content.defaultLanguageType().contentRoot else loginPath
 
     if (redis.isNotNull())

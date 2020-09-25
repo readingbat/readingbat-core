@@ -705,40 +705,40 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
 
     private fun newUser(browserSession: BrowserSession?) = User(null, randomId(25), browserSession)
 
-    fun User?.fetchActiveClassCode(redis: Jedis?) =
+    fun fetchActiveClassCode(user: User?, redis: Jedis?) =
       when {
-        isNull() || redis.isNull() -> DISABLED_CLASS_CODE
+        user.isNull() || redis.isNull() -> DISABLED_CLASS_CODE
         usePostgres ->
-          if (this.isNotNull())
+          if (user.isNotNull())
             transaction {
               UserSessions
                 .slice(UserSessions.activeClassCode)
-                .select { UserSessions.userRef eq dbmsId }
+                .select { UserSessions.userRef eq user.dbmsId }
                 .map { it[UserSessions.activeClassCode] }
                 .firstOrNull()?.let { ClassCode(it) } ?: DISABLED_CLASS_CODE
             }
           else
             DISABLED_CLASS_CODE
-        else -> redis.hget(browserSpecificUserInfoKey, ACTIVE_CLASS_CODE_FIELD)?.let { ClassCode(it) }
+        else -> redis.hget(user.browserSpecificUserInfoKey, ACTIVE_CLASS_CODE_FIELD)?.let { ClassCode(it) }
           ?: DISABLED_CLASS_CODE
       }
 
-    fun User?.fetchPreviousTeacherClassCode(redis: Jedis?) =
+    fun fetchPreviousTeacherClassCode(user: User?, redis: Jedis?) =
       when {
-        isNull() || redis.isNull() -> DISABLED_CLASS_CODE
+        user.isNull() || redis.isNull() -> DISABLED_CLASS_CODE
         usePostgres ->
-          if (this.isNotNull())
+          if (user.isNotNull())
             transaction {
               UserSessions
                 .slice(UserSessions.previousTeacherClassCode)
-                .select { UserSessions.userRef eq dbmsId }
+                .select { UserSessions.userRef eq user.dbmsId }
                 .map { it[UserSessions.previousTeacherClassCode] }
                 .firstOrNull()?.let { ClassCode(it) } ?: DISABLED_CLASS_CODE
             }
           else
             DISABLED_CLASS_CODE
         else ->
-          redis.hget(browserSpecificUserInfoKey, PREVIOUS_TEACHER_CLASS_CODE_FIELD)?.let { ClassCode(it) }
+          redis.hget(user.browserSpecificUserInfoKey, PREVIOUS_TEACHER_CLASS_CODE_FIELD)?.let { ClassCode(it) }
             ?: DISABLED_CLASS_CODE
       }
 
@@ -760,7 +760,7 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
             val elems = challengeAnswersKey.split(KEY_SEP)
             val md5 = elems[2]
             when {
-              user != null -> {
+              user.isNotNull() -> {
                 UserChallengeInfo
                   .slice(UserChallengeInfo.answersJson)
                   .select { (UserChallengeInfo.userRef eq user.dbmsId) and (UserChallengeInfo.md5 eq md5) }
@@ -769,7 +769,7 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
                   ?.let { gson.fromJson(it, Map::class.java) as Map<String, String> }
                   ?: throw InvalidConfigurationException("UserChallengeInfo not found: ${user.dbmsId} $md5")
               }
-              browserSession != null -> {
+              browserSession.isNotNull() -> {
                 val sessionDbmsId = browserSession.sessionDbmsId
                 SessionChallengeInfo
                   .slice(SessionChallengeInfo.answersJson)
@@ -859,46 +859,63 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
                              redis: Jedis) {
       val correctAnswersKey = correctAnswersKey(user, browserSession, names)
       val challengeAnswersKey = challengeAnswersKey(user, browserSession, names)
+      val md5 = md5Of(names.languageName, names.groupName, names.challengeName)
 
       val complete = results.all { it.correct }
       val numCorrect = results.count { it.correct }
 
       // Record if all answers were correct
       if (usePostgres) {
-        val md5 = md5Of(names.languageName, names.groupName, names.challengeName)
-        if (user != null)
-          transaction {
-            UserChallengeInfo
-              .update({ (UserChallengeInfo.userRef eq user.dbmsId) and (UserChallengeInfo.md5 eq md5) }) {
-                it[allCorrect] = complete
-              }
-          }
-        else if (browserSession != null)
-          transaction {
-            SessionChallengeInfo
-              .update({ (SessionChallengeInfo.sessionRef eq browserSession.sessionDbmsId) and (SessionChallengeInfo.md5 eq md5) }) {
-                it[allCorrect] = complete
-              }
-          }
+        if (user.isNotNull())
+          UserChallengeInfo
+            .update({ (UserChallengeInfo.userRef eq user.dbmsId) and (UserChallengeInfo.md5 eq md5) }) {
+              it[updated] = DateTime.now(UTC)
+              it[allCorrect] = complete
+            }
+        else if (browserSession.isNotNull())
+          SessionChallengeInfo
+            .update({ (SessionChallengeInfo.sessionRef eq browserSession.sessionDbmsId) and (SessionChallengeInfo.md5 eq md5) }) {
+              it[updated] = DateTime.now(UTC)
+              it[allCorrect] = complete
+            }
       }
       else {
         if (correctAnswersKey.isNotEmpty())
           redis.set(correctAnswersKey, complete.toString())
       }
 
-      if (challengeAnswersKey.isNotEmpty()) {
-        // Save the last answers given
+      // Save the last answers given
+      val invokeList =
         userResponses.indices
           .map { i ->
             val userResponse =
               paramMap[RESP + i]?.trim() ?: throw InvalidConfigurationException("Missing user response")
-            //if (userResponses.isNotEmpty()) funcInfo.invocations[i] to userResp else null
             funcInfo.invocations[i] to userResponse
           }
-          .toMap()
-          .forEach { (invocation, userResponse) ->
-            redis.hset(challengeAnswersKey, invocation.value, userResponse)
-          }
+      if (usePostgres) {
+        val invokeMap = invokeList.map { it.first.value to it.second }.toMap()
+        if (user.isNotNull()) {
+          UserChallengeInfo
+            .update({ (UserChallengeInfo.userRef eq user.dbmsId) and (UserChallengeInfo.md5 eq md5) }) {
+              it[updated] = DateTime.now(UTC)
+              it[answersJson] = gson.toJson(invokeMap)
+            }
+        }
+        else if (browserSession.isNotNull())
+          SessionChallengeInfo
+            .update({ (SessionChallengeInfo.sessionRef eq browserSession.sessionDbmsId) and (SessionChallengeInfo.md5 eq md5) }) {
+              it[updated] = DateTime.now(UTC)
+              it[answersJson] = gson.toJson(invokeMap)
+            }
+      }
+      else {
+        if (challengeAnswersKey.isNotEmpty()) {
+          invokeList
+            .toMap()
+            .forEach { (invocation, userResponse) ->
+              redis.hset(challengeAnswersKey, invocation.value, userResponse)
+            }
+        }
       }
 
       val classCode = user?.enrolledClassCode ?: DISABLED_CLASS_CODE
@@ -909,7 +926,15 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
         val answerHistoryKey = answerHistoryKey(user, browserSession, names, result.invocation)
 
         val history =
-          gson.fromJson(redis[answerHistoryKey], ChallengeHistory::class.java) ?: ChallengeHistory(result.invocation)
+          if (usePostgres) {
+            when {
+              user.isNotNull() -> user.answerHistory(md5, result.invocation)
+              browserSession.isNotNull() -> browserSession.answerHistory(md5, result.invocation)
+              else -> ChallengeHistory(result.invocation)
+            }
+          }
+          else
+            gson.fromJson(redis[answerHistoryKey], ChallengeHistory::class.java) ?: ChallengeHistory(result.invocation)
 
         when {
           !result.answered -> history.markUnanswered()
@@ -917,14 +942,19 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
           else -> history.markIncorrect(result.userResponse)
         }
 
-        val json = gson.toJson(history)
-        logger.debug { "Saving: $json to $answerHistoryKey" }
-        redis.set(answerHistoryKey, json)
+        // TODO
+        if (usePostgres) {
+
+        }
+        else {
+          val json = gson.toJson(history)
+          logger.debug { "Saving: $json to $answerHistoryKey" }
+          redis.set(answerHistoryKey, json)
+        }
 
         if (shouldPublish) {
-          val md5 = funcInfo.challengeMd5
           val maxLength = content.maxHistoryLength
-          user?.publishAnswers(classCode, md5, maxLength, complete, numCorrect, history, redis)
+          user?.publishAnswers(classCode, funcInfo.challengeMd5, maxLength, complete, numCorrect, history, redis)
         }
       }
     }
@@ -1007,16 +1037,6 @@ internal val String.userDbmsId: Long
       .select { Users.userId eq this@userDbmsId }
       .map { it[Users.id].value }
       .firstOrNull() ?: throw InvalidConfigurationException("Invalid user id: ${this@userDbmsId}")
-
-internal val BrowserSession.sessionDbmsId: Long get() = this.sessionDbmsId
-
-internal val String.sessionDbmsId: Long
-  get() =
-    BrowserSessions
-      .slice(BrowserSessions.id)
-      .select { BrowserSessions.session_id eq this@sessionDbmsId }
-      .map { it[BrowserSessions.id].value }
-      .firstOrNull() ?: throw InvalidConfigurationException("Invalid browser session id: ${this@sessionDbmsId}")
 
 internal fun User?.isAdminUser(redis: Jedis) = isValidUser(redis) && email.value in adminUsers
 
