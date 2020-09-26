@@ -34,7 +34,6 @@ import com.github.readingbat.common.CSSNames.STATUS
 import com.github.readingbat.common.CSSNames.SUCCESS
 import com.github.readingbat.common.CSSNames.UNDERLINE
 import com.github.readingbat.common.CSSNames.USER_RESP
-import com.github.readingbat.common.CommonUtils.md5Of
 import com.github.readingbat.common.CommonUtils.pathOf
 import com.github.readingbat.common.Constants.CORRECT_COLOR
 import com.github.readingbat.common.Constants.DBMS_DOWN
@@ -400,8 +399,8 @@ internal object ChallengePage : KLogging() {
                     val history =
                       if (usePostgres)
                         transaction {
-                          val md5 = md5Of(languageName, groupName, challengeName, invocation)
-                          enrollee.answerHistory(md5, invocation)
+                          val historyMd5 = challenge.md5(invocation)
+                          enrollee.answerHistory(historyMd5, invocation)
                         }
                       else {
                         val historyKey = enrollee.answerHistoryKey(languageName, groupName, challengeName, invocation)
@@ -509,30 +508,29 @@ internal object ChallengePage : KLogging() {
   }
 
   private fun BODY.likeDislike(user: User?, browserSession: BrowserSession?, challenge: Challenge, redis: Jedis) {
-    val languageName = challenge.languageType.languageName
-    val groupName = challenge.groupName
-    val challengeName = challenge.challengeName
-
     val likeDislikeVal =
       if (ReadingBatServer.usePostgres) {
-        val md5 = md5Of(languageName, groupName, challengeName)
+        val challengeMd5 = challenge.md5()
         when {
           user.isNotNull() ->
             UserChallengeInfo
               .slice(UserChallengeInfo.likeDislike)
-              .select { (UserChallengeInfo.userRef eq user.userDbmsId) and (UserChallengeInfo.md5 eq md5) }
+              .select { (UserChallengeInfo.userRef eq user.userDbmsId) and (UserChallengeInfo.md5 eq challengeMd5) }
               .map { it[UserChallengeInfo.likeDislike].toInt() }
               .firstOrNull() ?: 0
           browserSession.isNotNull() ->
             SessionChallengeInfo
               .slice(SessionChallengeInfo.likeDislike)
-              .select { (SessionChallengeInfo.sessionRef eq browserSession.sessionDbmsId()) and (SessionChallengeInfo.md5 eq md5) }
+              .select { (SessionChallengeInfo.sessionRef eq browserSession.sessionDbmsId()) and (SessionChallengeInfo.md5 eq challengeMd5) }
               .map { it[SessionChallengeInfo.likeDislike].toInt() }
               .firstOrNull() ?: 0
           else -> 0
         }
       }
       else {
+        val languageName = challenge.languageType.languageName
+        val groupName = challenge.groupName
+        val challengeName = challenge.challengeName
         val likeDislikeKey = likeDislikeKey(user, browserSession, languageName, groupName, challengeName)
         if (likeDislikeKey.isNotEmpty()) redis[likeDislikeKey]?.toInt() ?: 0 else 0
       }
@@ -648,28 +646,24 @@ internal object ChallengePage : KLogging() {
     if (redis.isNull())
       emptyMap
     else {
-      val languageName = challenge.languageType.languageName
-      val groupName = challenge.groupName
-      val challengeName = challenge.challengeName
-
       when {
         usePostgres -> {
-          val md5 = md5Of(languageName, groupName, challengeName)
+          val challengeMd5 = challenge.md5()
           when {
             user.isNotNull() -> {
               UserChallengeInfo
                 .slice(UserChallengeInfo.answersJson)
-                .select { (UserChallengeInfo.userRef eq user.userDbmsId) and (UserChallengeInfo.md5 eq md5) }
+                .select { (UserChallengeInfo.userRef eq user.userDbmsId) and (UserChallengeInfo.md5 eq challengeMd5) }
                 .map { it[UserChallengeInfo.answersJson] }
                 .firstOrNull()
                 ?.let { gson.fromJson(it, Map::class.java) as Map<String, String> }
                 ?: emptyMap
             }
             browserSession.isNotNull() -> {
-              logger.info { "Selecting from ${browserSession.sessionDbmsId()} and $md5" }
+              logger.info { "Selecting from ${browserSession.sessionDbmsId()} and $challengeMd5" }
               SessionChallengeInfo
                 .slice(SessionChallengeInfo.answersJson)
-                .select { (SessionChallengeInfo.sessionRef eq browserSession.sessionDbmsId()) and (SessionChallengeInfo.md5 eq md5) }
+                .select { (SessionChallengeInfo.sessionRef eq browserSession.sessionDbmsId()) and (SessionChallengeInfo.md5 eq challengeMd5) }
                 .map { it[SessionChallengeInfo.answersJson] }
                 .firstOrNull()
                 ?.let { gson.fromJson(it, Map::class.java) as Map<String, String> }
@@ -679,6 +673,9 @@ internal object ChallengePage : KLogging() {
           }
         }
         else -> {
+          val languageName = challenge.languageType.languageName
+          val groupName = challenge.groupName
+          val challengeName = challenge.challengeName
           val challengeAnswersKey = challengeAnswersKey(user, browserSession, languageName, groupName, challengeName)
           if (challengeAnswersKey.isEmpty())
             emptyMap

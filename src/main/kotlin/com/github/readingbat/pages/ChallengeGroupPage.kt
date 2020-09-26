@@ -90,13 +90,13 @@ internal object ChallengeGroupPage : KLogging() {
 
   fun Challenge.isCorrect(user: User?, browserSession: BrowserSession?, redis: Jedis?) =
     if (usePostgres) {
-      val md5 = md5Of(languageName, groupName, challengeName)
+      val challengeMd5 = md5Of(languageName, groupName, challengeName)
       when {
         user.isNotNull() ->
           transaction {
             UserChallengeInfo
               .slice(UserChallengeInfo.allCorrect)
-              .select { (UserChallengeInfo.userRef eq user.userDbmsId) and (UserChallengeInfo.md5 eq md5) }
+              .select { (UserChallengeInfo.userRef eq user.userDbmsId) and (UserChallengeInfo.md5 eq challengeMd5) }
               .map { it[UserChallengeInfo.allCorrect] }
               .firstOrNull() ?: false
           }
@@ -104,7 +104,7 @@ internal object ChallengeGroupPage : KLogging() {
           transaction {
             SessionChallengeInfo
               .slice(SessionChallengeInfo.allCorrect)
-              .select { (SessionChallengeInfo.sessionRef eq browserSession.sessionDbmsId()) and (SessionChallengeInfo.md5 eq md5) }
+              .select { (SessionChallengeInfo.sessionRef eq browserSession.sessionDbmsId()) and (SessionChallengeInfo.md5 eq challengeMd5) }
               .map { it[SessionChallengeInfo.allCorrect] }
               .firstOrNull() ?: false
           }

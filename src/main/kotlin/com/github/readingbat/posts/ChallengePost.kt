@@ -358,7 +358,7 @@ internal object ChallengePost : KLogging() {
       }
     }
 
-    user?.resetHistory(funcInfo, languageName, groupName, challengeName, content.maxHistoryLength, redis)
+    user?.resetHistory(funcInfo, challenge, content.maxHistoryLength, redis)
 
     throw RedirectException("$path?$MSG=${"Answers cleared".encode()}")
   }
@@ -406,7 +406,7 @@ internal object ChallengePost : KLogging() {
         .forEach { challenge ->
           logger.info { "Clearing answers for challengeName ${challenge.challengeName}" }
           val funcInfo = challenge.functionInfo(content)
-          user.resetHistory(funcInfo, languageName, groupName, challenge.challengeName, content.maxHistoryLength, redis)
+          user.resetHistory(funcInfo, challenge, content.maxHistoryLength, redis)
         }
     }
 
@@ -540,7 +540,7 @@ internal object ChallengePost : KLogging() {
             UserAnswerHistory
               .upsert(conflictIndex = userAnswerHistoryIndex) { row ->
                 row[userRef] = user.userDbmsId
-                row[UserAnswerHistory.md5] = historyMd5
+                row[md5] = historyMd5
                 row[invocation] = history.invocation.value
                 row[updated] = DateTime.now(DateTimeZone.UTC)
                 row[correct] = history.correct
@@ -551,7 +551,7 @@ internal object ChallengePost : KLogging() {
             SessionAnswerHistory
               .upsert(conflictIndex = sessionAnswerHistoryIndex) { row ->
                 row[sessionRef] = browserSession.sessionDbmsId()
-                row[SessionAnswerHistory.md5] = historyMd5
+                row[md5] = historyMd5
                 row[invocation] = history.invocation.value
                 row[updated] = DateTime.now(DateTimeZone.UTC)
                 row[correct] = history.correct
@@ -581,14 +581,14 @@ internal object ChallengePost : KLogging() {
                               likeVal: Int,
                               redis: Jedis) {
     if (usePostgres) {
-      val md5 = md5Of(names.languageName, names.groupName, names.challengeName)
+      val challengeMd5 = md5Of(names.languageName, names.groupName, names.challengeName)
       when {
         user.isNotNull() ->
           transaction {
             UserChallengeInfo
               .upsert(conflictIndex = userChallengeInfoIndex) { row ->
                 row[userRef] = user.userDbmsId
-                row[UserChallengeInfo.md5] = md5
+                row[md5] = challengeMd5
                 row[updated] = DateTime.now(DateTimeZone.UTC)
                 row[likeDislike] = likeVal.toShort()
               }
@@ -598,7 +598,7 @@ internal object ChallengePost : KLogging() {
             SessionChallengeInfo
               .upsert(conflictIndex = sessionChallengeIfoIndex) { row ->
                 row[sessionRef] = browserSession.sessionDbmsId()
-                row[SessionChallengeInfo.md5] = md5
+                row[SessionChallengeInfo.md5] = challengeMd5
                 row[updated] = DateTime.now(DateTimeZone.UTC)
                 row[likeDislike] = likeVal.toShort()
               }

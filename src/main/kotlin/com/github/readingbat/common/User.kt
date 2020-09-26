@@ -38,6 +38,7 @@ import com.github.readingbat.common.KeyConstants.USER_INFO_BROWSER_KEY
 import com.github.readingbat.common.KeyConstants.USER_INFO_KEY
 import com.github.readingbat.common.KeyConstants.USER_RESET_KEY
 import com.github.readingbat.common.RedisUtils.scanKeys
+import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.DataException
 import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.MissingBrowserSessionException
@@ -672,15 +673,13 @@ internal class User private constructor(val userId: String,
   }
 
   fun resetHistory(funcInfo: FunctionInfo,
-                   languageName: LanguageName,
-                   groupName: GroupName,
-                   challengeName: ChallengeName,
+                   challenge: Challenge,
                    maxHistoryLength: Int,
                    redis: Jedis) {
     val classCode = enrolledClassCode
     val shouldPublish = shouldPublish(classCode, redis)
 
-    logger.debug { "Resetting $languageName $groupName $challengeName" }
+    logger.debug { "Resetting challenge: $challenge" }
 
     funcInfo.invocations
       .map { ChallengeResults(invocation = it) }
@@ -691,11 +690,10 @@ internal class User private constructor(val userId: String,
 
         if (usePostgres)
           transaction {
-            val md5 = md5Of(languageName, groupName, challengeName, result.invocation)
             UserAnswerHistory
               .upsert(conflictIndex = userAnswerHistoryIndex) { row ->
                 row[userRef] = userDbmsId
-                row[UserAnswerHistory.md5] = md5
+                row[md5] = challenge.md5(result.invocation)
                 row[updated] = DateTime.now(DateTimeZone.UTC)
                 row[invocation] = history.invocation.value
                 row[correct] = false
@@ -704,6 +702,9 @@ internal class User private constructor(val userId: String,
               }
           }
         else {
+          val languageName = challenge.languageType.languageName
+          val groupName = challenge.groupName
+          val challengeName = challenge.challengeName
           val answerHistoryKey = answerHistoryKey(languageName, groupName, challengeName, result.invocation)
           redis.set(answerHistoryKey, gson.toJson(history))
         }

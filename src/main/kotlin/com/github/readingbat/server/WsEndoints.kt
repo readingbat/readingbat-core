@@ -270,10 +270,10 @@ internal object WsEndoints : KLogging() {
 
                         if (usePostgres)
                           transaction {
-                            val md5 = md5Of(languageName, groupName, challengeName, invocation)
-                            if (enrollee.historyExists(md5, invocation)) {
+                            val historyMd5 = md5Of(languageName, groupName, challengeName, invocation)
+                            if (enrollee.historyExists(historyMd5, invocation)) {
                               attempted++
-                              val history = enrollee.answerHistory(md5, invocation)
+                              val history = enrollee.answerHistory(historyMd5, invocation)
                               if (history.correct)
                                 numCorrect++
 
@@ -300,10 +300,10 @@ internal object WsEndoints : KLogging() {
                       val likeDislike =
                         if (usePostgres)
                           transaction {
-                            val md5 = md5Of(languageName, groupName, challengeName)
+                            val challengeMd5 = md5Of(languageName, groupName, challengeName)
                             UserChallengeInfo
                               .slice(UserChallengeInfo.likeDislike)
-                              .select { (UserChallengeInfo.userRef eq enrollee.userDbmsId) and (UserChallengeInfo.md5 eq md5) }
+                              .select { (UserChallengeInfo.userRef eq enrollee.userDbmsId) and (UserChallengeInfo.md5 eq challengeMd5) }
                               .map { it[UserChallengeInfo.likeDislike].toInt() }
                               .firstOrNull() ?: 0
                           }
@@ -419,10 +419,10 @@ internal object WsEndoints : KLogging() {
 
                         if (usePostgres)
                           transaction {
-                            val md5 = md5Of(languageName, groupName, challengeName, invocation)
-                            if (enrollee.historyExists(md5, invocation)) {
+                            val historyMd5 = md5Of(languageName, groupName, challengeName, invocation)
+                            if (enrollee.historyExists(historyMd5, invocation)) {
                               results +=
-                                enrollee.answerHistory(md5, invocation)
+                                enrollee.answerHistory(historyMd5, invocation)
                                   .let {
                                     incorrectAttempts += it.incorrectAttempts
                                     if (it.correct) YES else if (it.incorrectAttempts > 0) NO else UNANSWERED
@@ -539,11 +539,11 @@ internal object WsEndoints : KLogging() {
 
                       if (usePostgres)
                         transaction {
-                          val md5 = md5Of(languageName, groupName, challengeName, invocation)
-                          if (student.historyExists(md5, invocation)) {
+                          val historyMd5 = md5Of(languageName, groupName, challengeName, invocation)
+                          if (student.historyExists(historyMd5, invocation)) {
                             attempted++
                             results +=
-                              student.answerHistory(md5, invocation)
+                              student.answerHistory(historyMd5, invocation)
                                 .let {
                                   incorrectAttempts += it.incorrectAttempts
                                   if (it.correct) YES else if (it.incorrectAttempts > 0) NO else UNANSWERED

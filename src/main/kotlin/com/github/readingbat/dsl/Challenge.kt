@@ -50,6 +50,7 @@ import com.github.readingbat.dsl.parse.PythonParse.extractPythonFunction
 import com.github.readingbat.dsl.parse.PythonParse.extractPythonInvocations
 import com.github.readingbat.dsl.parse.PythonParse.ifMainEndRegex
 import com.github.readingbat.server.ChallengeName
+import com.github.readingbat.server.Invocation
 import com.github.readingbat.server.ReadingBatServer.redisPool
 import kotlinx.coroutines.runBlocking
 import mu.KLogging
@@ -144,6 +145,10 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
         parseCode()
     }
 
+  fun md5() = md5Of(languageName, groupName, challengeName)
+
+  fun md5(invocation: Invocation) = md5Of(languageName, groupName, challengeName, invocation)
+
   internal open fun validate() {
     if (challengeName.value.isEmpty())
       throw InvalidConfigurationException(""""$challengeName" is empty""")
@@ -169,6 +174,8 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
         .joinToString("\n")
         .also { logger.debug { """Assigning $challengeName description = "$it"""" } }
     }
+
+  override fun toString() = "$languageName $groupName $challengeName"
 
   companion object : KLogging() {
     internal val counter = AtomicInteger(0)
