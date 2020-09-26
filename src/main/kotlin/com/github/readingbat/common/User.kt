@@ -137,6 +137,7 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
     else
       redis.scanKeys(userInfoBrowserQueryKey).toList()
 
+  // Look across all possible browser sessions
   private fun interestedInActiveClassCode(classCode: ClassCode, redis: Jedis?) =
     when {
       isNull() || redis.isNull() -> false
@@ -369,7 +370,9 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
     if (usePostgres)
       transaction {
         UserSessions
-          .update({ (UserSessions.userRef eq userDbmsId) and (UserSessions.sessionRef eq sessionDbmsId()) }) { row ->
+          .upsert(conflictIndex = userSessionIndex) { row ->
+            row[sessionRef] = sessionDbmsId()
+            row[userRef] = userDbmsId
             row[updated] = DateTime.now(UTC)
             row[activeClassCode] = classCode.value
             if (resetPreviousClassCode)
@@ -386,7 +389,9 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
   fun resetActiveClassCode() {
     logger.info { "Resetting $name ($email) active class code" }
     UserSessions
-      .update({ (UserSessions.userRef eq userDbmsId) and (UserSessions.sessionRef eq sessionDbmsId()) }) { row ->
+      .upsert(conflictIndex = userSessionIndex) { row ->
+        row[sessionRef] = sessionDbmsId()
+        row[userRef] = userDbmsId
         row[updated] = DateTime.now(UTC)
         row[activeClassCode] = DISABLED_CLASS_CODE.value
         row[previousTeacherClassCode] = DISABLED_CLASS_CODE.value
@@ -715,7 +720,7 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
             transaction {
               UserSessions
                 .slice(UserSessions.activeClassCode)
-                .select { UserSessions.userRef eq user.userDbmsId }
+                .select { (UserSessions.sessionRef eq user.sessionDbmsId()) and (UserSessions.userRef eq user.userDbmsId) }
                 .map { it[UserSessions.activeClassCode] }
                 .firstOrNull()?.let { ClassCode(it) } ?: DISABLED_CLASS_CODE
             }
@@ -733,7 +738,7 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
             transaction {
               UserSessions
                 .slice(UserSessions.previousTeacherClassCode)
-                .select { UserSessions.userRef eq user.userDbmsId }
+                .select { (UserSessions.sessionRef eq user.sessionDbmsId()) and (UserSessions.userRef eq user.userDbmsId) }
                 .map { it[UserSessions.previousTeacherClassCode] }
                 .firstOrNull()?.let { ClassCode(it) } ?: DISABLED_CLASS_CODE
             }

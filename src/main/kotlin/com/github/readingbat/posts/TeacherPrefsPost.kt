@@ -152,11 +152,11 @@ internal object TeacherPrefsPost : KLogging() {
         Message("Same active class selected [$classCode]", true)
       else -> {
         user.assignActiveClassCode(classCode, true, redis)
-        if (classCode.isNotEnabled)
-          Message(STUDENT_MODE_ENABLED_MSG)
-        else {
-          Message("Active class updated to ${classCode.toDisplayString(redis)}")
-        }
+        Message(
+          if (classCode.isNotEnabled)
+            STUDENT_MODE_ENABLED_MSG
+          else
+            "Active class updated to ${classCode.toDisplayString(redis)}")
       }
     }
 

@@ -19,6 +19,7 @@ package com.github.readingbat.posts
 
 import com.github.pambrose.common.util.*
 import com.github.readingbat.common.*
+import com.github.readingbat.common.CommonUtils.md5Of
 import com.github.readingbat.common.CommonUtils.pathOf
 import com.github.readingbat.common.Constants.CHALLENGE_SRC
 import com.github.readingbat.common.Constants.GROUP_SRC
@@ -62,7 +63,6 @@ import mu.KLogging
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.transactions.transaction
-import org.jetbrains.exposed.sql.update
 import org.joda.time.DateTime
 import org.joda.time.DateTimeZone
 import redis.clients.jedis.Jedis
@@ -452,7 +452,7 @@ internal object ChallengePost : KLogging() {
                                    redis: Jedis) {
     val correctAnswersKey = correctAnswersKey(user, browserSession, names)
     val challengeAnswersKey = challengeAnswersKey(user, browserSession, names)
-    val md5 = CommonUtils.md5Of(names.languageName, names.groupName, names.challengeName)
+    val md5 = md5Of(names.languageName, names.groupName, names.challengeName)
 
     val complete = results.all { it.correct }
     val numCorrect = results.count { it.correct }
@@ -579,12 +579,15 @@ internal object ChallengePost : KLogging() {
                               names: ChallengeNames,
                               likeVal: Int,
                               redis: Jedis) {
-    if (usePostgres)
+    if (usePostgres) {
+      val md5 = md5Of(names.languageName, names.groupName, names.challengeName)
       when {
         user.isNotNull() ->
           transaction {
             UserChallengeInfo
-              .update({ UserChallengeInfo.userRef eq user.userDbmsId }) { row ->
+              .upsert(conflictIndex = userChallengeInfoIndex) { row ->
+                row[userRef] = user.userDbmsId
+                row[UserChallengeInfo.md5] = md5
                 row[updated] = DateTime.now(DateTimeZone.UTC)
                 row[likeDislike] = likeVal.toShort()
               }
@@ -592,7 +595,9 @@ internal object ChallengePost : KLogging() {
         browserSession.isNotNull() ->
           transaction {
             SessionChallengeInfo
-              .update({ SessionChallengeInfo.sessionRef eq (browserSession.sessionDbmsId()) }) { row ->
+              .upsert(conflictIndex = sessionChallengeIfoIndex) { row ->
+                row[sessionRef] = browserSession.sessionDbmsId()
+                row[SessionChallengeInfo.md5] = md5
                 row[updated] = DateTime.now(DateTimeZone.UTC)
                 row[likeDislike] = likeVal.toShort()
               }
@@ -601,6 +606,7 @@ internal object ChallengePost : KLogging() {
           // Do nothing
         }
       }
+    }
     else
       likeDislikeKey(user, browserSession, names)
         .let {

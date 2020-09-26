@@ -22,10 +22,12 @@ import org.jetbrains.exposed.sql.Index
 import org.jetbrains.exposed.sql.jodatime.datetime
 
 internal val userSessionIndex = Index(listOf(BrowserSessions.session_id), true, "user_sessions_unique")
+
 internal val sessionChallengeIfoIndex =
   Index(listOf(SessionChallengeInfo.sessionRef, SessionChallengeInfo.md5), true, "session_challenge_info_unique")
 internal val userChallengeInfoIndex =
   Index(listOf(UserChallengeInfo.userRef, UserChallengeInfo.md5), true, "user_challenge_info_unique")
+
 internal val sessionAnswerHistoryIndex =
   Index(listOf(SessionAnswerHistory.sessionRef, SessionAnswerHistory.md5), true, "session_answer_history_unique")
 internal val userAnswerHistoryIndex =
@@ -108,13 +110,13 @@ internal object Classes : LongIdTable("classes") {
   val description = text("description")
 }
 
-internal object Enrollees : LongIdTable("enrollees") {
+object Enrollees : LongIdTable("enrollees") {
   val created = datetime("created")
   val classesRef = long("classes_ref").references(Classes.id)
   val userRef = long("user_ref").references(Users.id)
 }
 
-internal object PasswordResets : LongIdTable("password_resets") {
+object PasswordResets : LongIdTable("password_resets") {
   val created = datetime("created")
   val updated = datetime("updated")
   val userRef = long("user_ref").references(Users.id)

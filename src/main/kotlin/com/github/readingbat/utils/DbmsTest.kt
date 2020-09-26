@@ -112,8 +112,8 @@ fun main() {
     val dur1 = measureTime {
       repeat(10) { i ->
         val stPete =
-          Requests.insertAndGetId {
-            it[path] = "St. Petersburg $i"
+          Requests.insertAndGetId { row ->
+            row[path] = "St. Petersburg $i"
           }
       }
     }
