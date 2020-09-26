@@ -421,7 +421,7 @@ internal object ChallengePage : KLogging() {
                   span { id = "${enrollee.userId}-$numCorrectSpan"; +numCorrect.toString() }
                   +"/$numChallenges"
                   rawHtml(nbsp.text)
-                  +enrollee.name.value
+                  +enrollee.fullName.value
                 }
 
                 results

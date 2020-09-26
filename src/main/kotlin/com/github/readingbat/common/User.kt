@@ -47,7 +47,9 @@ import com.github.readingbat.posts.ChallengeResults
 import com.github.readingbat.posts.DashboardInfo
 import com.github.readingbat.server.*
 import com.github.readingbat.server.ChallengeName.Companion.ANY_CHALLENGE
+import com.github.readingbat.server.Email.Companion.EMPTY_EMAIL
 import com.github.readingbat.server.Email.Companion.UNKNOWN_EMAIL
+import com.github.readingbat.server.FullName.Companion.EMPTY_FULLNAME
 import com.github.readingbat.server.FullName.Companion.UNKNOWN_FULLNAME
 import com.github.readingbat.server.GroupName.Companion.ANY_GROUP
 import com.github.readingbat.server.Invocation.Companion.ANY_INVOCATION
@@ -72,10 +74,13 @@ import kotlin.contracts.contract
 import kotlin.time.measureTime
 import kotlin.time.minutes
 
-internal class User private constructor(redis: Jedis?, val userId: String, val browserSession: BrowserSession?) {
+internal class User private constructor(val userId: String,
+                                        val browserSession: BrowserSession?,
+                                        initFields: Boolean,
+                                        redis: Jedis?) {
   val userDbmsId: Long
   val email: Email
-  val name: FullName
+  val fullName: FullName
   var enrolledClassCode: ClassCode
   private val saltBacking: String
   private var digestBacking: String
@@ -88,31 +93,41 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
     get() = if (digestBacking.isBlank()) throw DataException("Missing digest field") else digestBacking
 
   init {
-    measureTime {
-      if (usePostgres) {
-        val row =
-          transaction {
-            Users
-              .select { Users.userId eq this@User.userId }
-              .firstOrNull()
-          }
-        userDbmsId = row?.get(Users.id)?.value ?: -1
-        email = row?.get(Users.email)?.let { Email(it) } ?: UNKNOWN_EMAIL
-        name = row?.get(Users.name)?.let { FullName(it) } ?: UNKNOWN_FULLNAME
-        enrolledClassCode = row?.get(Users.enrolledClassCode)?.let { ClassCode(it) } ?: DISABLED_CLASS_CODE
-        saltBacking = row?.get(Users.salt) ?: ""
-        digestBacking = row?.get(Users.digest) ?: ""
-      }
-      else {
-        userDbmsId = -1
-        email = redis?.hget(userInfoKey, EMAIL_FIELD)?.let { Email(it) } ?: UNKNOWN_EMAIL
-        name = redis?.hget(userInfoKey, NAME_FIELD)?.let { FullName(it) } ?: UNKNOWN_FULLNAME
-        enrolledClassCode =
-          redis?.hget(userInfoKey, ENROLLED_CLASS_CODE_FIELD)?.let { ClassCode(it) } ?: DISABLED_CLASS_CODE
-        saltBacking = redis?.hget(userInfoKey, SALT_FIELD) ?: ""
-        digestBacking = redis?.hget(userInfoKey, DIGEST_FIELD) ?: ""
-      }
-    }.also { logger.info { "Selected user info in $it" } }
+    if (initFields) {
+      measureTime {
+        if (usePostgres) {
+          val row =
+            transaction {
+              Users
+                .select { Users.userId eq this@User.userId }
+                .firstOrNull()
+            }
+          userDbmsId = row?.get(Users.id)?.value ?: -1
+          email = row?.get(Users.email)?.let { Email(it) } ?: UNKNOWN_EMAIL
+          fullName = row?.get(Users.name)?.let { FullName(it) } ?: UNKNOWN_FULLNAME
+          enrolledClassCode = row?.get(Users.enrolledClassCode)?.let { ClassCode(it) } ?: DISABLED_CLASS_CODE
+          saltBacking = row?.get(Users.salt) ?: ""
+          digestBacking = row?.get(Users.digest) ?: ""
+        }
+        else {
+          userDbmsId = -1
+          email = redis?.hget(userInfoKey, EMAIL_FIELD)?.let { Email(it) } ?: UNKNOWN_EMAIL
+          fullName = redis?.hget(userInfoKey, NAME_FIELD)?.let { FullName(it) } ?: UNKNOWN_FULLNAME
+          enrolledClassCode =
+            redis?.hget(userInfoKey, ENROLLED_CLASS_CODE_FIELD)?.let { ClassCode(it) } ?: DISABLED_CLASS_CODE
+          saltBacking = redis?.hget(userInfoKey, SALT_FIELD) ?: ""
+          digestBacking = redis?.hget(userInfoKey, DIGEST_FIELD) ?: ""
+        }
+      }.also { logger.info { "Selected user info in $it" } }
+    }
+    else {
+      userDbmsId = -1
+      email = EMPTY_EMAIL
+      fullName = EMPTY_FULLNAME
+      enrolledClassCode = DISABLED_CLASS_CODE
+      saltBacking = ""
+      digestBacking = ""
+    }
   }
 
   private val userInfoBrowserKey by lazy { keyOf(USER_INFO_BROWSER_KEY, userId, browserSession?.id ?: UNASSIGNED) }
@@ -394,7 +409,7 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
   }
 
   fun resetActiveClassCode() {
-    logger.info { "Resetting $name ($email) active class code" }
+    logger.info { "Resetting $fullName ($email) active class code" }
     UserSessions
       .upsert(conflictIndex = userSessionIndex) { row ->
         row[sessionRef] = sessionDbmsId()
@@ -406,7 +421,7 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
   }
 
   fun resetActiveClassCode(tx: Transaction) {
-    logger.info { "Resetting $name ($email) active class code" }
+    logger.info { "Resetting $fullName ($email) active class code" }
     tx.hset(browserSpecificUserInfoKey, ACTIVE_CLASS_CODE_FIELD, DISABLED_CLASS_CODE.value)
     tx.hset(browserSpecificUserInfoKey, PREVIOUS_TEACHER_CLASS_CODE_FIELD, DISABLED_CLASS_CODE.value)
   }
@@ -478,7 +493,7 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
   }
 
   fun unenrollEnrolleesClassCode(classCode: ClassCode, enrollees: List<User>) {
-    logger.info { "Deleting ${enrollees.size} enrollees for class code $classCode for $name ($email)" }
+    logger.info { "Deleting ${enrollees.size} enrollees for class code $classCode for $fullName ($email)" }
     // Reset every enrollee's enrolled class and remove from class
     enrollees
       .forEach { enrollee ->
@@ -492,7 +507,7 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
   }
 
   fun deleteClassCode(classCode: ClassCode, enrollees: List<User>, tx: Transaction) {
-    logger.info { "Deleting ${enrollees.size} enrollees for class code $classCode for $name ($email)" }
+    logger.info { "Deleting ${enrollees.size} enrollees for class code $classCode for $fullName ($email)" }
     // Reset every enrollee's enrolled class and remove from class
     enrollees
       .forEach { enrollee ->
@@ -585,7 +600,7 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
     val previousResetId = userPasswordResetId(redis)?.let { ResetId(it) } ?: EMPTY_RESET_ID
     val enrolleePairs = classCodes.map { it to it.fetchEnrollees(redis) }
 
-    logger.info { "Deleting User: $userId $name" }
+    logger.info { "Deleting User: $userId $fullName" }
     logger.info { "User Email: $email" }
     logger.info { "User Info Key: $userInfoKey" }
     logger.info { "User Info browser sessions: ${browserSessions.size}" }
@@ -720,14 +735,12 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
 
     internal val gson = Gson()
 
-    fun String.toUser(redis: Jedis, browserSession: BrowserSession?) = User(redis, this, browserSession)
+    fun String.toUser(redis: Jedis, browserSession: BrowserSession?) = User(this, browserSession, true, redis)
 
     fun String.toUser(browserSession: BrowserSession?) =
       redisPool?.withRedisPool { redis ->
-        User(redis, this, browserSession)
-      } ?: User(null, this, browserSession)
-
-    private fun newUser(browserSession: BrowserSession?) = User(null, randomId(25), browserSession)
+        User(this, browserSession, true, redis)
+      } ?: User(this, browserSession, true, null)
 
     fun fetchActiveClassCode(user: User?, redis: Jedis?) =
       when {
@@ -776,10 +789,9 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
       // email -> userId
       // userId -> salt and sha256-encoded digest
 
-      val user = newUser(browserSession)
+      val user = User(randomId(25), browserSession, false, null)
       val salt = newStringSalt()
       val digest = password.sha256(salt)
-      logger.info { "Created user $email ${user.userId}" }
 
       if (usePostgres)
         transaction {
@@ -819,6 +831,8 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
             tx.exec()
           }
 
+      logger.info { "Created user $email ${user.userId}" }
+
       return user
     }
 
@@ -845,7 +859,7 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
             .slice(Users.userId)
             .select { Users.email eq email.value }
             .map { it[Users.userId].toUser(redis, null) }
-            .firstOrNull().also { logger.info { "lookupUserByEmail() returned ${it?.name ?: "email not found"}" } }
+            .firstOrNull().also { logger.info { "lookupUserByEmail() returned ${it?.fullName ?: "email not found"}" } }
         }
       else {
         val id = redis.get(email.userEmailKey) ?: ""

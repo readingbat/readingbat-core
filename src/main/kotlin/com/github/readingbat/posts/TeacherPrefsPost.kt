@@ -77,7 +77,7 @@ internal object TeacherPrefsPost : KLogging() {
           val student = studentId.toUser(redis, null)
           val classCode = student.enrolledClassCode
           student.withdrawFromClass(classCode, redis)
-          val msg = "${student.name} removed from class ${classCode.toDisplayString(redis)}"
+          val msg = "${student.fullName} removed from class ${classCode.toDisplayString(redis)}"
           logger.info { msg }
           classSummaryPage(content, user, redis, classCode, msg = Message(msg))
         }

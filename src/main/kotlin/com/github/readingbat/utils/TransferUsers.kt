@@ -175,7 +175,7 @@ internal object TransferUsers : KLogging() {
               .insertAndGetId { row ->
                 row[Users.userId] = userId
                 row[email] = user.email.value
-                row[name] = user.name.value
+                row[name] = user.fullName.value
                 row[salt] = user.salt
                 row[digest] = user.digest
                 row[enrolledClassCode] = user.enrolledClassCode.value

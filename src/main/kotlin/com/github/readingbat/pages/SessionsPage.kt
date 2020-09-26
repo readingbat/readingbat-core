@@ -92,7 +92,7 @@ internal object SessionsPage {
                   .forEach {
                     tr {
                       val user = it.principal?.userId?.toUser(redis, it.browserSession)
-                      val userDesc = user?.let { "${it.name} (${it.email})" } ?: "Not logged in"
+                      val userDesc = user?.let { "${it.fullName} (${it.email})" } ?: "Not logged in"
                       td { +it.browserSession.id }
                       td { +userDesc }
                       td { +it.age.format(false) }
