@@ -86,7 +86,7 @@ internal object PasswordResetPost : KLogging() {
 
           // Lookup and remove previous value if it exists
           val user2 = lookupUserByEmail(email, redis) ?: throw ResetPasswordException("Unable to find $email")
-          val previousResetId = user2.userPasswordResetId(redis)?.let { ResetId(it) } ?: EMPTY_RESET_ID
+          val previousResetId = user2.userPasswordResetId(redis)
           user2.savePasswordResetId(email, previousResetId, newResetId, redis)
 
           logger.info { "Sending password reset email to $email - $remoteStr" }

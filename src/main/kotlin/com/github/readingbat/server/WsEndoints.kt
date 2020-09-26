@@ -271,7 +271,7 @@ internal object WsEndoints : KLogging() {
                         if (usePostgres)
                           transaction {
                             val md5 = md5Of(languageName, groupName, challengeName, invocation)
-                            if (enrollee.historyExists(md5)) {
+                            if (enrollee.historyExists(md5, invocation)) {
                               attempted++
                               val history = enrollee.answerHistory(md5, invocation)
                               if (history.correct)
@@ -298,14 +298,15 @@ internal object WsEndoints : KLogging() {
                       }
 
                       val likeDislike =
-                        if (usePostgres) {
-                          val md5 = md5Of(languageName, groupName, challengeName)
-                          UserChallengeInfo
-                            .slice(UserChallengeInfo.likeDislike)
-                            .select { (UserChallengeInfo.userRef eq enrollee.userDbmsId) and (UserChallengeInfo.md5 eq md5) }
-                            .map { it[UserChallengeInfo.likeDislike].toInt() }
-                            .firstOrNull() ?: 0
-                        }
+                        if (usePostgres)
+                          transaction {
+                            val md5 = md5Of(languageName, groupName, challengeName)
+                            UserChallengeInfo
+                              .slice(UserChallengeInfo.likeDislike)
+                              .select { (UserChallengeInfo.userRef eq enrollee.userDbmsId) and (UserChallengeInfo.md5 eq md5) }
+                              .map { it[UserChallengeInfo.likeDislike].toInt() }
+                              .firstOrNull() ?: 0
+                          }
                         else {
                           val likeDislikeKey = enrollee.likeDislikeKey(languageName, groupName, challengeName)
                           redis[likeDislikeKey]?.toInt() ?: 0
@@ -419,7 +420,7 @@ internal object WsEndoints : KLogging() {
                         if (usePostgres)
                           transaction {
                             val md5 = md5Of(languageName, groupName, challengeName, invocation)
-                            if (enrollee.historyExists(md5)) {
+                            if (enrollee.historyExists(md5, invocation)) {
                               results +=
                                 enrollee.answerHistory(md5, invocation)
                                   .let {
@@ -539,7 +540,7 @@ internal object WsEndoints : KLogging() {
                       if (usePostgres)
                         transaction {
                           val md5 = md5Of(languageName, groupName, challengeName, invocation)
-                          if (student.historyExists(md5)) {
+                          if (student.historyExists(md5, invocation)) {
                             attempted++
                             results +=
                               student.answerHistory(md5, invocation)

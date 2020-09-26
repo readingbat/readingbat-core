@@ -452,7 +452,7 @@ internal object ChallengePost : KLogging() {
                                    redis: Jedis) {
     val correctAnswersKey = correctAnswersKey(user, browserSession, names)
     val challengeAnswersKey = challengeAnswersKey(user, browserSession, names)
-    val md5 = md5Of(names.languageName, names.groupName, names.challengeName)
+    val challengeMd5 = md5Of(names.languageName, names.groupName, names.challengeName)
 
     val complete = results.all { it.correct }
     val numCorrect = results.count { it.correct }
@@ -482,7 +482,7 @@ internal object ChallengePost : KLogging() {
           UserChallengeInfo
             .upsert(conflictIndex = userChallengeInfoIndex) { row ->
               row[userRef] = user.userDbmsId
-              row[UserChallengeInfo.md5] = md5
+              row[UserChallengeInfo.md5] = challengeMd5
               row[updated] = DateTime.now(DateTimeZone.UTC)
               row[allCorrect] = complete
               row[answersJson] = invokeStr
@@ -491,7 +491,7 @@ internal object ChallengePost : KLogging() {
           SessionChallengeInfo
             .upsert(conflictIndex = sessionChallengeIfoIndex) { row ->
               row[sessionRef] = browserSession.sessionDbmsId()
-              row[SessionChallengeInfo.md5] = md5
+              row[SessionChallengeInfo.md5] = challengeMd5
               row[updated] = DateTime.now(DateTimeZone.UTC)
               row[allCorrect] = complete
               row[answersJson] = invokeStr
@@ -516,12 +516,13 @@ internal object ChallengePost : KLogging() {
     // Save the history of each answer on a per-invocation basis
     for (result in results) {
       val answerHistoryKey = answerHistoryKey(user, browserSession, names, result.invocation)
+      val historyMd5 = md5Of(names.languageName, names.groupName, names.challengeName, result.invocation)
 
       val history =
         if (usePostgres)
           when {
-            user.isNotNull() -> user.answerHistory(md5, result.invocation)
-            browserSession.isNotNull() -> browserSession.answerHistory(md5, result.invocation)
+            user.isNotNull() -> user.answerHistory(historyMd5, result.invocation)
+            browserSession.isNotNull() -> browserSession.answerHistory(historyMd5, result.invocation)
             else -> ChallengeHistory(result.invocation)
           }
         else
@@ -539,7 +540,7 @@ internal object ChallengePost : KLogging() {
             UserAnswerHistory
               .upsert(conflictIndex = userAnswerHistoryIndex) { row ->
                 row[userRef] = user.userDbmsId
-                row[UserAnswerHistory.md5] = md5
+                row[UserAnswerHistory.md5] = historyMd5
                 row[invocation] = history.invocation.value
                 row[updated] = DateTime.now(DateTimeZone.UTC)
                 row[correct] = history.correct
@@ -550,7 +551,7 @@ internal object ChallengePost : KLogging() {
             SessionAnswerHistory
               .upsert(conflictIndex = sessionAnswerHistoryIndex) { row ->
                 row[sessionRef] = browserSession.sessionDbmsId()
-                row[SessionAnswerHistory.md5] = md5
+                row[SessionAnswerHistory.md5] = historyMd5
                 row[invocation] = history.invocation.value
                 row[updated] = DateTime.now(DateTimeZone.UTC)
                 row[correct] = history.correct

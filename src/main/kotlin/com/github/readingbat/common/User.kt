@@ -362,10 +362,10 @@ internal class User private constructor(val userId: String,
           else
             md5Of(languageName, groupName, challengeName, invocation))
 
-  fun historyExists(md5: String) =
+  fun historyExists(md5: String, invocation: Invocation) =
     UserAnswerHistory
       .slice(UserAnswerHistory.id.count())
-      .select { (UserAnswerHistory.userRef eq userDbmsId) and (UserAnswerHistory.md5 eq md5) }
+      .select { (UserAnswerHistory.userRef eq userDbmsId) and (UserAnswerHistory.md5 eq md5) and (UserAnswerHistory.invocation eq invocation.value) }
       .map { it[UserAnswerHistory.id.count()].toInt() }
       .first() > 0
 
@@ -544,17 +544,18 @@ internal class User private constructor(val userId: String,
         .filter { classCode -> classDesc == classCode.fetchClassDesc(redis) }
         .none()
 
-  fun userPasswordResetId(redis: Jedis): String? =
+  fun userPasswordResetId(redis: Jedis) =
     if (usePostgres)
       transaction {
         PasswordResets
           .slice(PasswordResets.resetId)
           .select { PasswordResets.userRef eq userDbmsId }
           .map { it[PasswordResets.resetId] }.also { logger.info { "userPasswordResetId() returned $it" } }
-          .first()
+          .map { ResetId(it) }
+          .firstOrNull() ?: EMPTY_RESET_ID
       }
     else
-      redis.get(userPasswordResetKey)
+      redis.get(userPasswordResetKey)?.let { ResetId(it) } ?: EMPTY_RESET_ID
 
   fun deleteUserPasswordResetId() {
     PasswordResets.deleteWhere { PasswordResets.userRef eq userDbmsId }
@@ -597,7 +598,6 @@ internal class User private constructor(val userId: String,
     val challenges = challenges(redis)
     val invocations = invocations(redis)
 
-    val previousResetId = userPasswordResetId(redis)?.let { ResetId(it) } ?: EMPTY_RESET_ID
     val enrolleePairs = classCodes.map { it to it.fetchEnrollees(redis) }
 
     logger.info { "Deleting User: $userId $fullName" }
@@ -609,9 +609,6 @@ internal class User private constructor(val userId: String,
     logger.info { "Challenges: ${challenges.size}" }
     logger.info { "Invocations: ${invocations.size}" }
     logger.info { "User Classes: $classCodes" }
-
-    val classCode = enrolledClassCode
-    val enrolled = classCode.isEnabled && classCode.isValid(redis) && isEnrolled(classCode, redis)
 
     if (usePostgres) {
       transaction {
@@ -629,6 +626,10 @@ internal class User private constructor(val userId: String,
     else
       redis.multi()
         .also { tx ->
+          val previousResetId = userPasswordResetId(redis)
+          val classCode = enrolledClassCode
+          val enrolled = classCode.isEnabled && classCode.isValid(redis) && isEnrolled(classCode, redis)
+
           if (previousResetId.isNotBlank()) {
             tx.del(userPasswordResetKey)
             tx.del(previousResetId.passwordResetKey)
