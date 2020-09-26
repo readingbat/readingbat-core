@@ -470,7 +470,7 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
         }
   }
 
-  fun deleteClassCode(classCode: ClassCode, enrollees: List<User>) {
+  fun unenrollEnrolleesClassCode(classCode: ClassCode, enrollees: List<User>) {
     logger.info { "Deleting ${enrollees.size} enrollees for class code $classCode for $name ($email)" }
     // Reset every enrollee's enrolled class and remove from class
     enrollees
@@ -482,9 +482,6 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
             row[enrolledClassCode] = DISABLED_CLASS_CODE.value
           }
       }
-
-    // Delete class
-    Classes.deleteWhere { Classes.classCode eq classCode.value }
   }
 
   fun deleteClassCode(classCode: ClassCode, enrollees: List<User>, tx: Transaction) {
@@ -595,34 +592,49 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
     val enrolled = classCode.isEnabled && classCode.isValid(redis) && isEnrolled(classCode, redis)
 
     // TODO
-    redis.multi()
-      .also { tx ->
-        if (previousResetId.isNotBlank()) {
-          tx.del(userPasswordResetKey)
-          tx.del(previousResetId.passwordResetKey)
-        }
+    if (usePostgres) {
+      transaction {
+        // Reset enrollees in all classes created by User
+        enrolleePairs.forEach { (classCode, enrollees) -> unenrollEnrolleesClassCode(classCode, enrollees) }
 
-        tx.del(email.userEmailKey)
-        tx.del(userInfoKey)
-        tx.del(userClassesKey)
+        // Delete BrwoserSessions known
 
-        // Withdraw from class
-        if (enrolled) {
-          logger.info { "Withdrawing from $classCode" }
-          classCode.removeEnrollee(this, tx)
-        }
-
-        browserSessions.forEach { tx.del(it) }
-        correctAnswers.forEach { tx.del(it) }
-        likeDislikes.forEach { tx.del(it) }
-        challenges.forEach { tx.del(it) }
-        invocations.forEach { tx.del(it) }
-
-        // Delete class info
-        enrolleePairs.forEach { (classCode, enrollees) -> deleteClassCode(classCode, enrollees, tx) }
-
-        tx.exec()
+        // Classes delete on cascade
+        // UserAnswerHistory delete on cascade
+        // UserChallengeInfo delete on cascade
+        // UserSessions delete on cascade
+        Users.deleteWhere { Users.id eq userDbmsId }
       }
+    }
+    else
+      redis.multi()
+        .also { tx ->
+          if (previousResetId.isNotBlank()) {
+            tx.del(userPasswordResetKey)
+            tx.del(previousResetId.passwordResetKey)
+          }
+
+          tx.del(email.userEmailKey)
+          tx.del(userInfoKey)
+          tx.del(userClassesKey)
+
+          // Withdraw from class
+          if (enrolled) {
+            logger.info { "Withdrawing from $classCode" }
+            classCode.removeEnrollee(this, tx)
+          }
+
+          browserSessions.forEach { tx.del(it) }
+          correctAnswers.forEach { tx.del(it) }
+          likeDislikes.forEach { tx.del(it) }
+          challenges.forEach { tx.del(it) }
+          invocations.forEach { tx.del(it) }
+
+          // Delete class info
+          enrolleePairs.forEach { (classCode, enrollees) -> deleteClassCode(classCode, enrollees, tx) }
+
+          tx.exec()
+        }
   }
 
   fun publishAnswers(classCode: ClassCode,
@@ -749,7 +761,6 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
             ?: DISABLED_CLASS_CODE
       }
 
-    // TODO
     fun createUser(name: FullName,
                    email: Email,
                    password: Password,
@@ -790,7 +801,6 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
               row[activeClassCode] = DISABLED_CLASS_CODE.value
               row[previousTeacherClassCode] = DISABLED_CLASS_CODE.value
             }
-
         }
       else
         redis.multi()

@@ -179,7 +179,8 @@ internal object TeacherPrefsPost : KLogging() {
             if (activeClassCode == classCode)
               user.resetActiveClassCode()
 
-            user.deleteClassCode(classCode, enrollees)
+            user.unenrollEnrolleesClassCode(classCode, enrollees)
+            classCode.deleteClassCode()
           }
         }
         else {

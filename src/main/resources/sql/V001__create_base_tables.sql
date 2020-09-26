@@ -104,7 +104,8 @@ CREATE TABLE enrollees
     id          BIGSERIAL PRIMARY KEY,
     created     TIMESTAMP DEFAULT NOW(),
     classes_ref INTEGER REFERENCES classes ON DELETE CASCADE,
-    user_ref    INTEGER REFERENCES users ON DELETE CASCADE
+    user_ref    INTEGER REFERENCES users ON DELETE CASCADE,
+    CONSTRAINT enrollees_unique unique (classes_ref, user_ref)
 );
 
 CREATE TABLE password_resets

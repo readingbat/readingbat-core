@@ -45,7 +45,7 @@ internal data class ClassCode(val value: String) {
 
   val displayedValue get() = if (value == DISABLED_MODE) "" else value
 
-  val dbmsId
+  val classCodeDbmsId
     get() =
       measureTimedValue {
         transaction {
@@ -97,6 +97,14 @@ internal data class ClassCode(val value: String) {
         .map { it.toUser(redis, null) }
     }
 
+  fun deleteClassCode() {
+    if (usePostgres)
+      Classes.deleteWhere { Classes.classCode eq value }
+    else {
+      // Takes place in User.deleteClassCode() for redis
+    }
+  }
+
   fun addEnrolleePlaceholder(tx: Transaction) {
     if (usePostgres) {
       // No-op for postgres
@@ -109,7 +117,7 @@ internal data class ClassCode(val value: String) {
     transaction {
       Enrollees
         .insert { row ->
-          row[classesRef] = dbmsId
+          row[classesRef] = classCodeDbmsId
           row[userRef] = user.userDbmsId
         }
     }
@@ -119,7 +127,7 @@ internal data class ClassCode(val value: String) {
   }
 
   fun removeEnrollee(user: User) =
-    Enrollees.deleteWhere { (Enrollees.classesRef eq dbmsId) and (Enrollees.userRef eq user.userDbmsId) }
+    Enrollees.deleteWhere { (Enrollees.classesRef eq classCodeDbmsId) and (Enrollees.userRef eq user.userDbmsId) }
 
   fun removeEnrollee(user: User, tx: Transaction) {
     tx.srem(classCodeEnrollmentKey, user.userId)
@@ -127,8 +135,9 @@ internal data class ClassCode(val value: String) {
 
   fun deleteAllEnrollees(tx: Transaction) {
     if (usePostgres)
+    // Never used
       transaction {
-        Enrollees.deleteWhere { Enrollees.classesRef eq dbmsId }
+        Enrollees.deleteWhere { Enrollees.classesRef eq classCodeDbmsId }
       }
     else
       tx.del(classCodeEnrollmentKey)
