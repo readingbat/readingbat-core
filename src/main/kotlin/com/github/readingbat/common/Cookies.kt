@@ -17,6 +17,7 @@
 
 package com.github.readingbat.common
 
+import com.github.readingbat.common.BrowserSession.Companion.createBrowserSession
 import com.github.readingbat.common.CommonUtils.keyOf
 import com.github.readingbat.common.CommonUtils.md5Of
 import com.github.readingbat.common.KeyConstants.ANSWER_HISTORY_KEY
@@ -45,7 +46,13 @@ internal data class UserPrincipal(val userId: String, val created: Long = Instan
 
 internal data class BrowserSession(val id: String, val created: Long = Instant.now().toEpochMilli()) {
 
-  fun sessionDbmsId(): Long = id.sessionDbmsId
+  fun sessionDbmsId() =
+    try {
+      id.sessionDbmsId
+    } catch (e: MissingBrowserSessionException) {
+      User.logger.info { "Creating BrowserSession for ${e.message}" }
+      createBrowserSession()
+    }
 
   fun correctAnswersKey(names: ChallengeNames) =
     correctAnswersKey(names.languageName, names.groupName, names.challengeName)
@@ -110,7 +117,6 @@ internal val String.sessionDbmsId: Long
       .select { BrowserSessions.session_id eq this@sessionDbmsId }
       .map { it[BrowserSessions.id].value }
       .firstOrNull() ?: throw MissingBrowserSessionException(this@sessionDbmsId)
-
 
 internal val ApplicationCall.browserSession get() = sessions.get<BrowserSession>()
 
