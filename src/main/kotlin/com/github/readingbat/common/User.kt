@@ -375,7 +375,7 @@ internal class User private constructor(val userId: String,
              UserAnswerHistory.correct,
              UserAnswerHistory.incorrectAttempts,
              UserAnswerHistory.historyJson)
-      .select { (UserAnswerHistory.userRef eq userDbmsId) and (UserAnswerHistory.md5 eq md5) }
+      .select { (UserAnswerHistory.userRef eq userDbmsId) and (UserAnswerHistory.md5 eq md5) and (UserAnswerHistory.invocation eq invocation.value) }
       .map {
         val json = it[UserAnswerHistory.historyJson]
         val history =
@@ -798,6 +798,7 @@ internal class User private constructor(val userId: String,
           val userId =
             Users
               .insertAndGetId { row ->
+                row[Users.userId] = user.userId
                 row[Users.name] = name.value
                 row[Users.email] = email.value
                 row[enrolledClassCode] = DISABLED_CLASS_CODE.value
@@ -805,7 +806,7 @@ internal class User private constructor(val userId: String,
                 row[Users.digest] = digest
               }.value
 
-          val browserId = browserSession.createBrowserSession()
+          val browserId = browserSession?.sessionDbmsId() ?: browserSession.createBrowserSession()
 
           UserSessions
             .insert { row ->

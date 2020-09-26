@@ -30,7 +30,7 @@ CREATE TABLE session_answer_history
     correct            BOOLEAN,
     incorrect_attempts INTEGER,
     history_json       TEXT NOT NULL,
-    CONSTRAINT session_answer_history_unique unique (session_ref, md5)
+    CONSTRAINT session_answer_history_unique unique (session_ref, md5, invocation)
 );
 
 CREATE TABLE users
@@ -38,7 +38,7 @@ CREATE TABLE users
     id                  BIGSERIAL UNIQUE PRIMARY KEY,
     created             TIMESTAMP DEFAULT NOW(),
     updated             TIMESTAMP DEFAULT NOW(),
-    user_id             varchar(25) UNIQUE,
+    user_id             TEXT NOT NULL UNIQUE,
     email               TEXT NOT NULL UNIQUE,
     name                TEXT NOT NULL,
     salt                TEXT NOT NULL,
@@ -82,7 +82,7 @@ CREATE TABLE user_answer_history
     correct            BOOLEAN,
     incorrect_attempts INTEGER,
     history_json       TEXT NOT NULL,
-    CONSTRAINT user_answer_history_unique unique (user_ref, md5)
+    CONSTRAINT user_answer_history_unique unique (user_ref, md5, invocation)
 );
 
 CREATE TABLE classes

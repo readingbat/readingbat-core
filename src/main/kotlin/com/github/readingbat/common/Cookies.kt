@@ -100,7 +100,6 @@ internal data class BrowserSession(val id: String, val created: Long = Instant.n
           row[session_id] =
             this@createBrowserSession?.id ?: throw InvalidConfigurationException("Missing browser session")
         }.value
-
   }
 }
 

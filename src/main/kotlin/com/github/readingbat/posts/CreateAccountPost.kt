@@ -28,6 +28,7 @@ import com.github.readingbat.common.Message
 import com.github.readingbat.common.Message.Companion.EMPTY_MESSAGE
 import com.github.readingbat.common.User.Companion.createUser
 import com.github.readingbat.common.UserPrincipal
+import com.github.readingbat.common.Users
 import com.github.readingbat.common.browserSession
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.pages.CreateAccountPage.createAccountPage
@@ -35,12 +36,16 @@ import com.github.readingbat.server.*
 import com.github.readingbat.server.Email.Companion.getEmail
 import com.github.readingbat.server.FullName.Companion.getFullName
 import com.github.readingbat.server.Password.Companion.getPassword
+import com.github.readingbat.server.ReadingBatServer.usePostgres
 import com.github.readingbat.server.ServerUtils.queryParam
 import com.google.common.util.concurrent.RateLimiter
 import io.ktor.application.*
 import io.ktor.request.*
 import io.ktor.sessions.*
 import mu.KLogging
+import org.jetbrains.exposed.sql.count
+import org.jetbrains.exposed.sql.select
+import org.jetbrains.exposed.sql.transactions.transaction
 import redis.clients.jedis.Jedis
 
 internal object CreateAccountPost : KLogging() {
@@ -92,6 +97,18 @@ internal object CreateAccountPost : KLogging() {
     }
   }
 
+  private fun emailExists(email: Email, redis: Jedis) =
+    if (usePostgres)
+      transaction {
+        Users
+          .slice(Users.id.count())
+          .select { Users.email eq email.value }
+          .map { it[Users.id.count()] }
+          .first() > 0
+      }
+    else
+      redis.exists(email.userEmailKey)
+
   private fun PipelineCall.createAccount(content: ReadingBatContent,
                                          name: FullName,
                                          email: Email,
@@ -100,7 +117,7 @@ internal object CreateAccountPost : KLogging() {
     createAccountLimiter.acquire() // may wait
 
     // Check if email already exists
-    return if (redis.exists(email.userEmailKey)) {
+    return if (emailExists(email, redis)) {
       createAccountPage(content, msg = Message("Email already registered: $email"))
     }
     else {

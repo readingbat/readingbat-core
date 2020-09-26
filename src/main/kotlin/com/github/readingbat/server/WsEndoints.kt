@@ -62,6 +62,7 @@ import kotlinx.coroutines.runBlocking
 import mu.KLogging
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.select
+import org.jetbrains.exposed.sql.transactions.transaction
 import redis.clients.jedis.JedisPubSub
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.TimeSource
@@ -267,17 +268,18 @@ internal object WsEndoints : KLogging() {
                         val historyKey =
                           enrollee.answerHistoryKey(languageName, groupName, challengeName, invocation)
 
-                        if (usePostgres) {
-                          val md5 = md5Of(languageName, groupName, challengeName, invocation)
-                          if (enrollee.historyExists(md5)) {
-                            attempted++
-                            val history = enrollee.answerHistory(md5, invocation)
-                            if (history.correct)
-                              numCorrect++
+                        if (usePostgres)
+                          transaction {
+                            val md5 = md5Of(languageName, groupName, challengeName, invocation)
+                            if (enrollee.historyExists(md5)) {
+                              attempted++
+                              val history = enrollee.answerHistory(md5, invocation)
+                              if (history.correct)
+                                numCorrect++
 
-                            incorrectAttempts += history.incorrectAttempts
+                              incorrectAttempts += history.incorrectAttempts
+                            }
                           }
-                        }
                         else {
                           if (redis.exists(historyKey)) {
                             attempted++
@@ -414,20 +416,21 @@ internal object WsEndoints : KLogging() {
                         val historyKey =
                           enrollee.answerHistoryKey(languageName, groupName, challengeName, invocation)
 
-                        if (usePostgres) {
-                          val md5 = md5Of(languageName, groupName, challengeName, invocation)
-                          if (enrollee.historyExists(md5)) {
-                            results +=
-                              enrollee.answerHistory(md5, invocation)
-                                .let {
-                                  incorrectAttempts += it.incorrectAttempts
-                                  if (it.correct) YES else if (it.incorrectAttempts > 0) NO else UNANSWERED
-                                }
+                        if (usePostgres)
+                          transaction {
+                            val md5 = md5Of(languageName, groupName, challengeName, invocation)
+                            if (enrollee.historyExists(md5)) {
+                              results +=
+                                enrollee.answerHistory(md5, invocation)
+                                  .let {
+                                    incorrectAttempts += it.incorrectAttempts
+                                    if (it.correct) YES else if (it.incorrectAttempts > 0) NO else UNANSWERED
+                                  }
+                            }
+                            else {
+                              results += UNANSWERED
+                            }
                           }
-                          else {
-                            results += UNANSWERED
-                          }
-                        }
                         else {
                           if (redis.exists(historyKey)) {
                             val json = redis[historyKey] ?: ""
@@ -533,21 +536,22 @@ internal object WsEndoints : KLogging() {
                     for (invocation in funcInfo.invocations) {
                       val historyKey = student.answerHistoryKey(languageName, groupName, challengeName, invocation)
 
-                      if (usePostgres) {
-                        val md5 = md5Of(languageName, groupName, challengeName, invocation)
-                        if (student.historyExists(md5)) {
-                          attempted++
-                          results +=
-                            student.answerHistory(md5, invocation)
-                              .let {
-                                incorrectAttempts += it.incorrectAttempts
-                                if (it.correct) YES else if (it.incorrectAttempts > 0) NO else UNANSWERED
-                              }
+                      if (usePostgres)
+                        transaction {
+                          val md5 = md5Of(languageName, groupName, challengeName, invocation)
+                          if (student.historyExists(md5)) {
+                            attempted++
+                            results +=
+                              student.answerHistory(md5, invocation)
+                                .let {
+                                  incorrectAttempts += it.incorrectAttempts
+                                  if (it.correct) YES else if (it.incorrectAttempts > 0) NO else UNANSWERED
+                                }
+                          }
+                          else {
+                            results += UNANSWERED
+                          }
                         }
-                        else {
-                          results += UNANSWERED
-                        }
-                      }
                       else {
                         if (redis.exists(historyKey)) {
                           attempted++

@@ -398,10 +398,11 @@ internal object ChallengePage : KLogging() {
                 funcInfo.invocations
                   .map { invocation ->
                     val history =
-                      if (usePostgres) {
-                        val md5 = md5Of(languageName, groupName, challengeName, invocation)
-                        enrollee.answerHistory(md5, invocation)
-                      }
+                      if (usePostgres)
+                        transaction {
+                          val md5 = md5Of(languageName, groupName, challengeName, invocation)
+                          enrollee.answerHistory(md5, invocation)
+                        }
                       else {
                         val historyKey = enrollee.answerHistoryKey(languageName, groupName, challengeName, invocation)
                         gson.fromJson(redis[historyKey], ChallengeHistory::class.java) ?: ChallengeHistory(invocation)

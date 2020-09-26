@@ -540,8 +540,8 @@ internal object ChallengePost : KLogging() {
               .upsert(conflictIndex = userAnswerHistoryIndex) { row ->
                 row[userRef] = user.userDbmsId
                 row[UserAnswerHistory.md5] = md5
-                row[updated] = DateTime.now(DateTimeZone.UTC)
                 row[invocation] = history.invocation.value
+                row[updated] = DateTime.now(DateTimeZone.UTC)
                 row[correct] = history.correct
                 row[incorrectAttempts] = history.incorrectAttempts
                 row[historyJson] = gson.toJson(history.answers)
@@ -551,8 +551,8 @@ internal object ChallengePost : KLogging() {
               .upsert(conflictIndex = sessionAnswerHistoryIndex) { row ->
                 row[sessionRef] = browserSession.sessionDbmsId()
                 row[SessionAnswerHistory.md5] = md5
-                row[updated] = DateTime.now(DateTimeZone.UTC)
                 row[invocation] = history.invocation.value
+                row[updated] = DateTime.now(DateTimeZone.UTC)
                 row[correct] = history.correct
                 row[incorrectAttempts] = history.incorrectAttempts
                 row[historyJson] = gson.toJson(history.answers)
