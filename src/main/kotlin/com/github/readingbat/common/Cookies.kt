@@ -26,6 +26,7 @@ import com.github.readingbat.common.KeyConstants.LIKE_DISLIKE_KEY
 import com.github.readingbat.common.KeyConstants.NO_AUTH_KEY
 import com.github.readingbat.common.User.Companion.gson
 import com.github.readingbat.dsl.InvalidConfigurationException
+import com.github.readingbat.dsl.MissingBrowserSessionException
 import com.github.readingbat.posts.ChallengeHistory
 import com.github.readingbat.posts.ChallengeNames
 import com.github.readingbat.server.ChallengeName
@@ -36,6 +37,7 @@ import io.ktor.application.*
 import io.ktor.auth.*
 import io.ktor.sessions.*
 import org.jetbrains.exposed.sql.and
+import org.jetbrains.exposed.sql.insertAndGetId
 import org.jetbrains.exposed.sql.select
 import java.time.Instant
 
@@ -91,6 +93,15 @@ internal data class BrowserSession(val id: String, val created: Long = Instant.n
       }
       .firstOrNull() ?: ChallengeHistory(invocation)
 
+  companion object {
+    fun BrowserSession?.createBrowserSession() =
+      BrowserSessions
+        .insertAndGetId { row ->
+          row[session_id] =
+            this@createBrowserSession?.id ?: throw InvalidConfigurationException("Missing browser session")
+        }.value
+
+  }
 }
 
 internal val String.sessionDbmsId: Long
@@ -99,7 +110,7 @@ internal val String.sessionDbmsId: Long
       .slice(BrowserSessions.id)
       .select { BrowserSessions.session_id eq this@sessionDbmsId }
       .map { it[BrowserSessions.id].value }
-      .firstOrNull() ?: throw InvalidConfigurationException("Invalid browser session id: ${this@sessionDbmsId}")
+      .firstOrNull() ?: throw MissingBrowserSessionException(this@sessionDbmsId)
 
 
 internal val ApplicationCall.browserSession get() = sessions.get<BrowserSession>()

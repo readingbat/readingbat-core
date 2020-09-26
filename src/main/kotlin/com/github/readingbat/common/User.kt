@@ -22,6 +22,7 @@ import com.github.pambrose.common.util.isNotNull
 import com.github.pambrose.common.util.isNull
 import com.github.pambrose.common.util.newStringSalt
 import com.github.pambrose.common.util.randomId
+import com.github.readingbat.common.BrowserSession.Companion.createBrowserSession
 import com.github.readingbat.common.ClassCode.Companion.DISABLED_CLASS_CODE
 import com.github.readingbat.common.CommonUtils.keyOf
 import com.github.readingbat.common.CommonUtils.md5Of
@@ -39,6 +40,7 @@ import com.github.readingbat.common.KeyConstants.USER_RESET_KEY
 import com.github.readingbat.common.RedisUtils.scanKeys
 import com.github.readingbat.dsl.DataException
 import com.github.readingbat.dsl.InvalidConfigurationException
+import com.github.readingbat.dsl.MissingBrowserSessionException
 import com.github.readingbat.posts.ChallengeHistory
 import com.github.readingbat.posts.ChallengeNames
 import com.github.readingbat.posts.ChallengeResults
@@ -124,7 +126,12 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
   private val userPasswordResetKey by lazy { keyOf(USER_RESET_KEY, userId) }
 
   private fun sessionDbmsId() =
-    browserSession?.sessionDbmsId() ?: throw InvalidConfigurationException("Missing browser session id")
+    try {
+      browserSession?.sessionDbmsId() ?: browserSession.createBrowserSession()
+    } catch (e: MissingBrowserSessionException) {
+      logger.info { "Creating BrowserSession for ${e.message}" }
+      browserSession.createBrowserSession()
+    }
 
   fun browserSessions(redis: Jedis) =
     if (usePostgres)
@@ -488,12 +495,12 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
     logger.info { "Deleting ${enrollees.size} enrollees for class code $classCode for $name ($email)" }
     // Reset every enrollee's enrolled class and remove from class
     enrollees
-      .forEach {
-        logger.info { "Removing ${it.userId} from $classCode" }
-        classCode.removeEnrollee(it, tx)
+      .forEach { enrollee ->
+        logger.info { "Removing ${enrollee.userId} from $classCode" }
+        classCode.removeEnrollee(enrollee, tx)
 
-        logger.info { "Assigning ${it.userId} to $DISABLED_CLASS_CODE" }
-        it.assignEnrolledClassCode(DISABLED_CLASS_CODE, tx)
+        logger.info { "Assigning ${enrollee.userId} to $DISABLED_CLASS_CODE" }
+        enrollee.assignEnrolledClassCode(DISABLED_CLASS_CODE, tx)
       }
 
     // Delete class description
@@ -591,18 +598,16 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
     val classCode = enrolledClassCode
     val enrolled = classCode.isEnabled && classCode.isValid(redis) && isEnrolled(classCode, redis)
 
-    // TODO
     if (usePostgres) {
       transaction {
         // Reset enrollees in all classes created by User
         enrolleePairs.forEach { (classCode, enrollees) -> unenrollEnrolleesClassCode(classCode, enrollees) }
 
-        // Delete BrwoserSessions known
-
         // Classes delete on cascade
         // UserAnswerHistory delete on cascade
         // UserChallengeInfo delete on cascade
         // UserSessions delete on cascade
+        // PasswordResets delete on cascade
         Users.deleteWhere { Users.id eq userDbmsId }
       }
     }
@@ -788,11 +793,7 @@ internal class User private constructor(redis: Jedis?, val userId: String, val b
                 row[Users.digest] = digest
               }.value
 
-          val browserId =
-            BrowserSessions
-              .insertAndGetId { row ->
-                row[session_id] = browserSession?.id ?: throw InvalidConfigurationException("Missing browser session")
-              }.value
+          val browserId = browserSession.createBrowserSession()
 
           UserSessions
             .insert { row ->

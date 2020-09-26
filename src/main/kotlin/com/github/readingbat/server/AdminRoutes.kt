@@ -110,12 +110,12 @@ internal object AdminRoutes : KLogging() {
         .also {
           if (it.isNotNull()) {
             logger.info { "Clearing browser session id $it" }
+            call.sessions.clear<BrowserSession>()
             if (usePostgres) {
               transaction {
                 BrowserSessions.deleteWhere { BrowserSessions.session_id eq it.id }
               }
             }
-            call.sessions.clear<BrowserSession>()
           }
           else {
             logger.info { "Browser session id not set" }

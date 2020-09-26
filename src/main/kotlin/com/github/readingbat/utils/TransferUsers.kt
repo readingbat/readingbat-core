@@ -89,9 +89,11 @@ internal object TransferUsers : KLogging() {
         .onEach { sessionId ->
 
           val sessionDbmsId =
-            BrowserSessions.insertAndGetId { row ->
-              row[session_id] = sessionId
-            }.value
+            BrowserSessions
+              .insertAndGetId { row ->
+                row[session_id] = sessionId
+              }.value
+
           sessionMap[sessionId] = sessionDbmsId
 
           redis.scanKeys(keyOf(CORRECT_ANSWERS_KEY, NO_AUTH_KEY, sessionId, "*"))
@@ -100,12 +102,13 @@ internal object TransferUsers : KLogging() {
               require(sessionId == key.split(KEY_SEP)[2])
               //println("$key ${redis[key]}")
 
-              SessionChallengeInfo.upsert(conflictIndex = sessionChallengeIfoIndex) { row ->
-                row[sessionRef] = sessionDbmsId
-                row[md5] = key.split(KEY_SEP)[3]
-                row[updated] = DateTime.now(UTC)
-                row[allCorrect] = redis[key].toBoolean()
-              }
+              SessionChallengeInfo
+                .upsert(conflictIndex = sessionChallengeIfoIndex) { row ->
+                  row[sessionRef] = sessionDbmsId
+                  row[md5] = key.split(KEY_SEP)[3]
+                  row[updated] = DateTime.now(UTC)
+                  row[allCorrect] = redis[key].toBoolean()
+                }
             }
 
           redis.scanKeys(keyOf(LIKE_DISLIKE_KEY, NO_AUTH_KEY, sessionId, "*"))
@@ -114,12 +117,13 @@ internal object TransferUsers : KLogging() {
               require(sessionId == key.split(KEY_SEP)[2])
               //println("$key userId ${redis[key]}")
 
-              SessionChallengeInfo.upsert(conflictIndex = sessionChallengeIfoIndex) { row ->
-                row[sessionRef] = sessionDbmsId
-                row[md5] = key.split(KEY_SEP)[3]
-                row[updated] = DateTime.now(UTC)
-                row[likeDislike] = redis[key].toShort()
-              }
+              SessionChallengeInfo
+                .upsert(conflictIndex = sessionChallengeIfoIndex) { row ->
+                  row[sessionRef] = sessionDbmsId
+                  row[md5] = key.split(KEY_SEP)[3]
+                  row[updated] = DateTime.now(UTC)
+                  row[likeDislike] = redis[key].toShort()
+                }
             }
 
           redis.scanKeys(keyOf(CHALLENGE_ANSWERS_KEY, NO_AUTH_KEY, sessionId, "*"))
@@ -128,12 +132,13 @@ internal object TransferUsers : KLogging() {
               require(sessionId == key.split(KEY_SEP)[2])
               //println("$key ${redis.hgetAll(key)}")
 
-              SessionChallengeInfo.upsert(conflictIndex = sessionChallengeIfoIndex) { row ->
-                row[sessionRef] = sessionDbmsId
-                row[md5] = key.split(KEY_SEP)[3]
-                row[updated] = DateTime.now(UTC)
-                row[answersJson] = gson.toJson(redis.hgetAll(key))
-              }
+              SessionChallengeInfo
+                .upsert(conflictIndex = sessionChallengeIfoIndex) { row ->
+                  row[sessionRef] = sessionDbmsId
+                  row[md5] = key.split(KEY_SEP)[3]
+                  row[updated] = DateTime.now(UTC)
+                  row[answersJson] = gson.toJson(redis.hgetAll(key))
+                }
             }
 
           // md5 has names and invocation in it
@@ -143,15 +148,16 @@ internal object TransferUsers : KLogging() {
               require(sessionId == key.split(KEY_SEP)[2])
               //println("$key ${redis.get(key)}")
 
-              SessionAnswerHistory.insertAndGetId { row ->
-                val history = gson.fromJson(redis[key], ChallengeHistory::class.java)
-                row[sessionRef] = sessionDbmsId
-                row[md5] = key.split(KEY_SEP)[3]
-                row[invocation] = history.invocation.value
-                row[correct] = history.correct
-                row[incorrectAttempts] = history.incorrectAttempts
-                row[historyJson] = gson.toJson(history.answers)
-              }
+              SessionAnswerHistory
+                .insertAndGetId { row ->
+                  val history = gson.fromJson(redis[key], ChallengeHistory::class.java)
+                  row[sessionRef] = sessionDbmsId
+                  row[md5] = key.split(KEY_SEP)[3]
+                  row[invocation] = history.invocation.value
+                  row[correct] = history.correct
+                  row[incorrectAttempts] = history.incorrectAttempts
+                  row[historyJson] = gson.toJson(history.answers)
+                }
             }
         }
         .toList()
@@ -302,7 +308,6 @@ internal object TransferUsers : KLogging() {
         }
     }
   }
-
 }
 
 inline fun <T : Table> T.upsert(conflictColumn: Column<*>? = null,

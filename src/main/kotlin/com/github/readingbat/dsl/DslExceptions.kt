@@ -23,6 +23,8 @@ internal class InvalidRequestException(msg: String) : Exception(msg)
 
 internal class InvalidConfigurationException(msg: String) : Exception(msg)
 
+internal class MissingBrowserSessionException(msg: String) : Exception(msg)
+
 internal class RedisUnavailableException(msg: String) : Exception(msg)
 
 internal class DataException(val msg: String) : JedisException(msg)
