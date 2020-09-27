@@ -482,7 +482,7 @@ internal object ChallengePost : KLogging() {
           UserChallengeInfo
             .upsert(conflictIndex = userChallengeInfoIndex) { row ->
               row[userRef] = user.userDbmsId
-              row[UserChallengeInfo.md5] = challengeMd5
+              row[md5] = challengeMd5
               row[updated] = DateTime.now(DateTimeZone.UTC)
               row[allCorrect] = complete
               row[answersJson] = invokeStr
@@ -491,7 +491,7 @@ internal object ChallengePost : KLogging() {
           SessionChallengeInfo
             .upsert(conflictIndex = sessionChallengeIfoIndex) { row ->
               row[sessionRef] = browserSession.sessionDbmsId()
-              row[SessionChallengeInfo.md5] = challengeMd5
+              row[md5] = challengeMd5
               row[updated] = DateTime.now(DateTimeZone.UTC)
               row[allCorrect] = complete
               row[answersJson] = invokeStr
@@ -598,7 +598,7 @@ internal object ChallengePost : KLogging() {
             SessionChallengeInfo
               .upsert(conflictIndex = sessionChallengeIfoIndex) { row ->
                 row[sessionRef] = browserSession.sessionDbmsId()
-                row[SessionChallengeInfo.md5] = challengeMd5
+                row[md5] = challengeMd5
                 row[updated] = DateTime.now(DateTimeZone.UTC)
                 row[likeDislike] = likeVal.toShort()
               }

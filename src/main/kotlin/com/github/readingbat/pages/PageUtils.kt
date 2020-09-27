@@ -37,7 +37,7 @@ import com.github.readingbat.common.Property.PINGDOM_URL
 import com.github.readingbat.common.Property.STATUS_PAGE_URL
 import com.github.readingbat.common.User
 import com.github.readingbat.dsl.LanguageType
-import com.github.readingbat.dsl.LanguageType.Companion.languageTypes
+import com.github.readingbat.dsl.LanguageType.Companion.languageTypeList
 import com.github.readingbat.dsl.LanguageType.Java
 import com.github.readingbat.dsl.LanguageType.Kotlin
 import com.github.readingbat.dsl.LanguageType.Python
@@ -141,7 +141,7 @@ internal object PageUtils {
       style = "padding-top:10px; min-width:100vw; clear:both"
       nav {
         ul {
-          languageTypes(user?.defaultLanguage)
+          languageTypeList
             .filter { content[it].isNotEmpty() }
             .forEach { lang ->
               li(classes = "h2") {

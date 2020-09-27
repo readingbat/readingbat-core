@@ -88,7 +88,6 @@ import com.github.readingbat.pages.PageUtils.rawHtml
 import com.github.readingbat.posts.ChallengeHistory
 import com.github.readingbat.server.ChallengeMd5
 import com.github.readingbat.server.PipelineCall
-import com.github.readingbat.server.ReadingBatServer
 import com.github.readingbat.server.ReadingBatServer.usePostgres
 import com.github.readingbat.server.ServerUtils.queryParam
 import io.ktor.application.*
@@ -509,7 +508,7 @@ internal object ChallengePage : KLogging() {
 
   private fun BODY.likeDislike(user: User?, browserSession: BrowserSession?, challenge: Challenge, redis: Jedis) {
     val likeDislikeVal =
-      if (ReadingBatServer.usePostgres) {
+      if (usePostgres) {
         val challengeMd5 = challenge.md5()
         when {
           user.isNotNull() ->

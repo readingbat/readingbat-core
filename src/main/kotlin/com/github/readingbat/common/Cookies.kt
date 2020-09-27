@@ -17,7 +17,6 @@
 
 package com.github.readingbat.common
 
-import com.github.readingbat.common.BrowserSession.Companion.createBrowserSession
 import com.github.readingbat.common.CommonUtils.keyOf
 import com.github.readingbat.common.CommonUtils.md5Of
 import com.github.readingbat.common.KeyConstants.ANSWER_HISTORY_KEY

@@ -37,22 +37,22 @@ enum class LanguageType(val useDoubleQuotes: Boolean, val suffix: String, val sr
 
   companion object {
     val defaultLanguageType = Java
-    private val defaultLanguageList = listOf(Java, Python, Kotlin)
+    val languageTypeList = listOf(Java, Python, Kotlin)
 
     fun languageTypes(defaultLanguage: LanguageType? = null) =
       if (defaultLanguage.isNull())
-        defaultLanguageList
+        languageTypeList
       else
         mutableListOf(defaultLanguage)
           .also { list ->
-            defaultLanguageList
+            languageTypeList
               .filterNot { it == defaultLanguage }
               .forEach {
                 list += it
               }
           }
 
-    fun String.toLanguageType() = values().filter { it.name.equals(this, ignoreCase = true) }.firstOrNull()
+    fun String.toLanguageType() = values().firstOrNull { it.name.equals(this, ignoreCase = true) }
 
     internal fun Parameters.getLanguageType(parameterName: String) =
       this[parameterName]?.let { it.toLanguageType() ?: Java } ?: Java

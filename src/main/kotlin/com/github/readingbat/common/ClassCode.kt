@@ -45,7 +45,7 @@ internal data class ClassCode(val value: String) {
 
   val displayedValue get() = if (value == DISABLED_MODE) "" else value
 
-  val classCodeDbmsId
+  private val classCodeDbmsId
     get() =
       measureTimedValue {
         transaction {

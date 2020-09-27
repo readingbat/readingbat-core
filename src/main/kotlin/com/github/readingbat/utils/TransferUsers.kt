@@ -28,6 +28,7 @@ import com.github.readingbat.common.KeyConstants.CORRECT_ANSWERS_KEY
 import com.github.readingbat.common.KeyConstants.KEY_SEP
 import com.github.readingbat.common.KeyConstants.LIKE_DISLIKE_KEY
 import com.github.readingbat.common.KeyConstants.NO_AUTH_KEY
+import com.github.readingbat.common.KeyConstants.USER_INFO_BROWSER_KEY
 import com.github.readingbat.common.KeyConstants.USER_INFO_KEY
 import com.github.readingbat.common.RedisUtils.scanKeys
 import com.github.readingbat.common.User.Companion.EMAIL_FIELD
@@ -67,9 +68,10 @@ internal object TransferUsers : KLogging() {
     Database.connect(hikari())
 
     transaction {
-      //addLogger(KotlinLoggingSqlLogger)
+      addLogger(KotlinLoggingSqlLogger)
 
-      transform(RedisAdmin.local)
+      //transform(RedisAdmin.local)
+      transform("rediss://default:t9bzmgv4x024negg@readingbat-redis-do-user-329986-0.a.db.ondigitalocean.com:25061")
     }
   }
 
@@ -78,12 +80,16 @@ internal object TransferUsers : KLogging() {
 
       val sessionMap = mutableMapOf<String, Long>()
 
-      listOf(redis.scanKeys(keyOf(CORRECT_ANSWERS_KEY, NO_AUTH_KEY, "*", "*")).toList(),
-             redis.scanKeys(keyOf(LIKE_DISLIKE_KEY, NO_AUTH_KEY, "*", "*")).toList(),
-             redis.scanKeys(keyOf(CHALLENGE_ANSWERS_KEY, NO_AUTH_KEY, "*", "*")).toList(),
-             redis.scanKeys(keyOf(ANSWER_HISTORY_KEY, NO_AUTH_KEY, "*", "*")).toList())
+      listOf(
+        redis.scanKeys(keyOf(CORRECT_ANSWERS_KEY, NO_AUTH_KEY, "*", "*")).toList(),
+        redis.scanKeys(keyOf(LIKE_DISLIKE_KEY, NO_AUTH_KEY, "*", "*")).toList(),
+        redis.scanKeys(keyOf(CHALLENGE_ANSWERS_KEY, NO_AUTH_KEY, "*", "*")).toList(),
+        redis.scanKeys(keyOf(ANSWER_HISTORY_KEY, NO_AUTH_KEY, "*", "*")).toList(),
+        redis.scanKeys(keyOf(USER_INFO_BROWSER_KEY, "*", "*")).toList(),
+            )
         .asSequence()
         .flatten()
+        .filter { it != "unassigned" }
         .map { it.split(KEY_SEP)[2] }  // pull out the browser session_id value
         .sorted()
         .distinct()
@@ -224,8 +230,9 @@ internal object TransferUsers : KLogging() {
             }
 
           redis.scanKeys(user.userInfoBrowserQueryKey)
-            .forEach { key ->
-              val sessionId = key.split(KEY_SEP)[2]
+            .map { it.split(KEY_SEP)[2] }
+            .filter { it != "unassigned" }
+            .forEach { sessionId ->
               val browserUser = userId.toUser(redis, BrowserSession(sessionId))
               val activeClassCode = fetchActiveClassCode(browserUser, redis)
               val previousClassCode = fetchPreviousTeacherClassCode(browserUser, redis)

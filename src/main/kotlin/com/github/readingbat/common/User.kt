@@ -68,7 +68,6 @@ import mu.KLogging
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.joda.time.DateTime
-import org.joda.time.DateTimeZone
 import org.joda.time.DateTimeZone.UTC
 import redis.clients.jedis.Jedis
 import redis.clients.jedis.Transaction
@@ -130,6 +129,9 @@ internal class User private constructor(val userId: String,
 
   private val userInfoBrowserKey by lazy { keyOf(USER_INFO_BROWSER_KEY, userId, browserSession?.id ?: UNASSIGNED) }
   val userInfoBrowserQueryKey by lazy { keyOf(USER_INFO_BROWSER_KEY, userId, "*") }
+
+  val allUserInfoBrowserQueryKey by lazy { keyOf(USER_INFO_BROWSER_KEY, "*", "*") }
+
   private val browserSpecificUserInfoKey by lazy {
     if (browserSession.isNotNull()) userInfoBrowserKey else throw InvalidConfigurationException("Null browser session for $this")
   }
@@ -691,7 +693,7 @@ internal class User private constructor(val userId: String,
               .upsert(conflictIndex = userAnswerHistoryIndex) { row ->
                 row[userRef] = userDbmsId
                 row[md5] = challenge.md5(result.invocation)
-                row[updated] = DateTime.now(DateTimeZone.UTC)
+                row[updated] = DateTime.now(UTC)
                 row[invocation] = history.invocation.value
                 row[correct] = false
                 row[incorrectAttempts] = 0
@@ -798,7 +800,7 @@ internal class User private constructor(val userId: String,
           val userId =
             Users
               .insertAndGetId { row ->
-                row[Users.userId] = user.userId
+                row[userId] = user.userId
                 row[Users.name] = name.value
                 row[Users.email] = email.value
                 row[enrolledClassCode] = DISABLED_CLASS_CODE.value

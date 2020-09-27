@@ -79,9 +79,9 @@ object ReadingBatServer : KLogging() {
         HikariConfig()
           .apply {
             driverClassName = DBMS_DRIVER_CLASSNAME.getRequiredProperty()
-            jdbcUrl = DBMS_JDBC_URL.getRequiredProperty()
-            username = DBMS_USERNAME.getRequiredProperty()
-            password = DBMS_PASSWORD.getRequiredProperty()
+            jdbcUrl = POSTGRES_URL.getEnvOrNull() ?: DBMS_URL.getRequiredProperty()
+            username = POSTGRES_USERNAME.getEnvOrNull() ?: DBMS_USERNAME.getRequiredProperty()
+            password = POSTGRES_PASSWORD.getEnvOrNull() ?: DBMS_PASSWORD.getRequiredProperty()
             maximumPoolSize = DBMS_MAX_POOL_SIZE.getRequiredProperty().toInt()
             isAutoCommit = false
             transactionIsolation = "TRANSACTION_REPEATABLE_READ"
@@ -189,7 +189,7 @@ internal fun Application.module() {
   PYTHON_SCRIPTS_POOL_SIZE.setPropertyFromConfig(this, "5")
 
   DBMS_DRIVER_CLASSNAME.setPropertyFromConfig(this, "com.impossibl.postgres.jdbc.PGDriver")
-  DBMS_JDBC_URL.setPropertyFromConfig(this, "jdbc:pgsql://localhost:5432/postgres")
+  DBMS_URL.setPropertyFromConfig(this, "jdbc:pgsql://localhost:5432/postgres")
   DBMS_USERNAME.setPropertyFromConfig(this, "postgres")
   DBMS_PASSWORD.setPropertyFromConfig(this, "")
   DBMS_MAX_POOL_SIZE.setPropertyFromConfig(this, "10")

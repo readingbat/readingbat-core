@@ -81,7 +81,7 @@ enum class Property(val propertyValue: String,
   PYTHON_SCRIPTS_POOL_SIZE("$READINGBAT.scripts.pythonPoolSize"),
 
   DBMS_DRIVER_CLASSNAME("$DBMS.driverClassName"),
-  DBMS_JDBC_URL("$DBMS.jdbcUrl"),
+  DBMS_URL("$DBMS.jdbcUrl"),
   DBMS_USERNAME("$DBMS.username"),
   DBMS_PASSWORD("$DBMS.password", { getPropertyOrNull()?.obfuscate(1) ?: UNASSIGNED }),
   DBMS_MAX_POOL_SIZE("$DBMS.maxPoolSize"),

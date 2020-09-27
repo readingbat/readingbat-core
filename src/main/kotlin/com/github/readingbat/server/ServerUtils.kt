@@ -122,11 +122,10 @@ internal object ServerUtils : KLogging() {
   }
 
 
-  fun firstNonEmptyLanguageType(content: ReadingBatContent,
-                                defaultLanguage: LanguageType? = null) =
+  fun firstNonEmptyLanguageType(content: ReadingBatContent, defaultLanguage: LanguageType? = null) =
     LanguageType.languageTypes(defaultLanguage)
       .asSequence()
-      .filter { content.get(it).isNotEmpty() }
+      .filter { content[it].isNotEmpty() }
       .firstOrNull() ?: throw InvalidConfigurationException("Missing non-empty language")
 
   fun Int.rows(cols: Int) = if (this % cols == 0) this / cols else (this / cols) + 1
