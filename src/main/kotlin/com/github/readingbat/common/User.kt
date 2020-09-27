@@ -41,7 +41,8 @@ import com.github.readingbat.common.RedisUtils.scanKeys
 import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.DataException
 import com.github.readingbat.dsl.InvalidConfigurationException
-import com.github.readingbat.dsl.LanguageType.Companion.defaultLanguageName
+import com.github.readingbat.dsl.LanguageType.Companion.defaultLanguageType
+import com.github.readingbat.dsl.LanguageType.Companion.toLanguageType
 import com.github.readingbat.dsl.MissingBrowserSessionException
 import com.github.readingbat.posts.ChallengeHistory
 import com.github.readingbat.posts.ChallengeNames
@@ -84,7 +85,7 @@ internal class User private constructor(val userId: String,
   var email: Email = EMPTY_EMAIL
   var fullName: FullName = EMPTY_FULLNAME
   var enrolledClassCode: ClassCode = DISABLED_CLASS_CODE
-  var defaultLanguage: String = defaultLanguageName
+  var defaultLanguage = defaultLanguageType
   private var saltBacking: String = ""
   private var digestBacking: String = ""
 
@@ -109,7 +110,7 @@ internal class User private constructor(val userId: String,
           email = row?.get(Users.email)?.let { Email(it) } ?: UNKNOWN_EMAIL
           fullName = row?.get(Users.name)?.let { FullName(it) } ?: UNKNOWN_FULLNAME
           enrolledClassCode = row?.get(Users.enrolledClassCode)?.let { ClassCode(it) } ?: DISABLED_CLASS_CODE
-          defaultLanguage = row?.get(Users.defaultLanguage) ?: defaultLanguageName
+          defaultLanguage = row?.get(Users.defaultLanguage)?.toLanguageType() ?: defaultLanguageType
           saltBacking = row?.get(Users.salt) ?: ""
           digestBacking = row?.get(Users.digest) ?: ""
         }
@@ -119,7 +120,7 @@ internal class User private constructor(val userId: String,
           fullName = redis?.hget(userInfoKey, NAME_FIELD)?.let { FullName(it) } ?: UNKNOWN_FULLNAME
           enrolledClassCode =
             redis?.hget(userInfoKey, ENROLLED_CLASS_CODE_FIELD)?.let { ClassCode(it) } ?: DISABLED_CLASS_CODE
-          defaultLanguage = redis?.hget(userInfoKey, DEFAULT_LANGUAGE_FIELD) ?: defaultLanguageName
+          defaultLanguage = redis?.hget(userInfoKey, DEFAULT_LANGUAGE_FIELD)?.toLanguageType() ?: defaultLanguageType
           saltBacking = redis?.hget(userInfoKey, SALT_FIELD) ?: ""
           digestBacking = redis?.hget(userInfoKey, DIGEST_FIELD) ?: ""
         }
@@ -801,7 +802,7 @@ internal class User private constructor(val userId: String,
                 row[Users.name] = name.value
                 row[Users.email] = email.value
                 row[enrolledClassCode] = DISABLED_CLASS_CODE.value
-                row[defaultLanguage] = defaultLanguageName
+                row[defaultLanguage] = defaultLanguageType.languageName.value
                 row[Users.salt] = salt
                 row[Users.digest] = digest
               }.value

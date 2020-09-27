@@ -83,12 +83,6 @@ class ReadingBatContent {
     functionInfoMap.clear()
   }
 
-  internal fun defaultLanguageType() =
-    LanguageType.languageTypesInOrder
-      .asSequence()
-      .filter { get(it).isNotEmpty() }
-      .firstOrNull() ?: throw InvalidConfigurationException("Missing default language")
-
   internal fun hasLanguage(languageType: LanguageType) = languageMap.containsKey(languageType)
 
   internal operator fun contains(languageType: LanguageType) = this[languageType].isNotEmpty()

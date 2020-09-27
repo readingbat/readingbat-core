@@ -17,6 +17,7 @@
 
 package com.github.readingbat.dsl
 
+import com.github.pambrose.common.util.isNull
 import com.github.readingbat.common.CommonUtils.pathOf
 import com.github.readingbat.common.Endpoints.CHALLENGE_ROOT
 import com.github.readingbat.server.LanguageName
@@ -35,12 +36,25 @@ enum class LanguageType(val useDoubleQuotes: Boolean, val suffix: String, val sr
   val isKotlin by lazy { this == Kotlin }
 
   companion object {
-    val defaultLanguageName = Java.languageName.value
-    val languageTypesInOrder by lazy { listOf(Java, Python, Kotlin) }
+    val defaultLanguageType = Java
+    private val defaultLanguageList = listOf(Java, Python, Kotlin)
+
+    fun languageTypes(defaultLanguage: LanguageType? = null) =
+      if (defaultLanguage.isNull())
+        defaultLanguageList
+      else
+        mutableListOf(defaultLanguage)
+          .also { list ->
+            defaultLanguageList
+              .filterNot { it == defaultLanguage }
+              .forEach {
+                list += it
+              }
+          }
+
+    fun String.toLanguageType() = values().filter { it.name.equals(this, ignoreCase = true) }.firstOrNull()
 
     internal fun Parameters.getLanguageType(parameterName: String) =
-      this[parameterName]?.let { paramValue ->
-        values().filter { it.name.equals(paramValue, ignoreCase = true) }.firstOrNull() ?: Java
-      } ?: Java
+      this[parameterName]?.let { it.toLanguageType() ?: Java } ?: Java
   }
 }

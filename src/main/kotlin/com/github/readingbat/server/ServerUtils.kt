@@ -26,10 +26,7 @@ import com.github.pambrose.common.util.isNotNull
 import com.github.readingbat.common.*
 import com.github.readingbat.common.Constants.UNKNOWN
 import com.github.readingbat.common.User.Companion.toUser
-import com.github.readingbat.dsl.InvalidRequestException
-import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.dsl.RedisUnavailableException
-import com.github.readingbat.dsl.isProduction
+import com.github.readingbat.dsl.*
 import com.github.readingbat.server.ReadingBatServer.redisPool
 import io.ktor.application.*
 import io.ktor.auth.*
@@ -118,11 +115,19 @@ internal object ServerUtils : KLogging() {
       }
     }
 
-  fun PipelineCall.defaultLanguageTab(content: ReadingBatContent): String {
-    val langRoot = content.defaultLanguageType().contentRoot
+  fun PipelineCall.defaultLanguageTab(content: ReadingBatContent, user: User?): String {
+    val langRoot = firstNonEmptyLanguageType(content, user?.defaultLanguage).contentRoot
     val params = call.parameters.formUrlEncode()
     return "$langRoot${if (params.isNotEmpty()) "?$params" else ""}"
   }
+
+
+  fun firstNonEmptyLanguageType(content: ReadingBatContent,
+                                defaultLanguage: LanguageType? = null) =
+    LanguageType.languageTypes(defaultLanguage)
+      .asSequence()
+      .filter { content.get(it).isNotEmpty() }
+      .firstOrNull() ?: throw InvalidConfigurationException("Missing non-empty language")
 
   fun Int.rows(cols: Int) = if (this % cols == 0) this / cols else (this / cols) + 1
 }

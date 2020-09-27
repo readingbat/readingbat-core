@@ -80,7 +80,7 @@ internal object UserPrefsPost : KLogging() {
             .update({ Users.id eq user.userDbmsId }) { row ->
               row[updated] = DateTime.now(UTC)
               row[defaultLanguage] = it.languageName.value
-              user.defaultLanguage = it.languageName.value
+              user.defaultLanguage = it
             }
         }
         userPrefsPage(content, user, redis, Message("Default language updated to $it", true))

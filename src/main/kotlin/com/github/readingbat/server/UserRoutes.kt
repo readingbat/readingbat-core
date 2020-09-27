@@ -104,19 +104,19 @@ import io.ktor.sessions.*
 internal fun Routing.userRoutes(metrics: Metrics, contentSrc: () -> ReadingBatContent) {
 
   get(ROOT) {
-    redirectTo { defaultLanguageTab(contentSrc()) }
+    redirectTo { defaultLanguageTab(contentSrc(), fetchUser()) }
   }
 
   post(ROOT) {
-    redirectTo { defaultLanguageTab(contentSrc()) }
+    redirectTo { defaultLanguageTab(contentSrc(), fetchUser()) }
   }
 
   get(CHALLENGE_ROOT) {
-    redirectTo { defaultLanguageTab(contentSrc()) }
+    redirectTo { defaultLanguageTab(contentSrc(), fetchUser()) }
   }
 
   post(CHALLENGE_ROOT) {
-    redirectTo { defaultLanguageTab(contentSrc()) }
+    redirectTo { defaultLanguageTab(contentSrc(), fetchUser()) }
   }
 
   get(CONFIG_ENDPOINT) {

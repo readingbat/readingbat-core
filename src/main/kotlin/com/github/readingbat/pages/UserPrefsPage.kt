@@ -123,7 +123,6 @@ internal object UserPrefsPage : KLogging() {
     h3 { +"Default Language" }
     div(classes = INDENT_2EM) {
       table {
-        //style = "border-spacing: 5px"
         form {
           action = USER_PREFS_ENDPOINT
           method = FormMethod.post
@@ -138,7 +137,7 @@ internal object UserPrefsPage : KLogging() {
                     id = languageType.languageName.value
                     name = DEFAULT_LANGUAGE_CHOICE_PARAM
                     value = languageType.languageName.value
-                    checked = user.defaultLanguage == languageType.languageName.value
+                    checked = user.defaultLanguage == languageType
                   }
                   label {
                     htmlFor = languageType.languageName.value

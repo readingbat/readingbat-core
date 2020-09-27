@@ -36,6 +36,7 @@ import com.github.readingbat.common.isAdminUser
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.isProduction
 import com.github.readingbat.pages.PageUtils.rawHtml
+import com.github.readingbat.server.ServerUtils.firstNonEmptyLanguageType
 import kotlinx.html.*
 import redis.clients.jedis.Jedis
 
@@ -50,7 +51,11 @@ internal object HelpAndLogin {
                         redis: Jedis?) {
 
     val previousClassCode = fetchPreviousTeacherClassCode(user, redis)
-    val path = if (loginPath in rootVals) content.defaultLanguageType().contentRoot else loginPath
+    val path =
+      if (loginPath in rootVals)
+        firstNonEmptyLanguageType(content, user?.defaultLanguage).contentRoot
+      else
+        loginPath
 
     if (redis.isNotNull())
       div {
