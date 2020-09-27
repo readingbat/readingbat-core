@@ -71,8 +71,8 @@ object ReadingBatServer : KLogging() {
   internal val adminUsers = mutableListOf<String>()
   internal val contentReadCount = AtomicInteger(0)
   internal val metrics by lazy { Metrics() }
-  internal var usePostgres = true
   internal var redisPool: JedisPool? = null
+  internal var usePostgres = true
   internal val postgres by lazy {
     Database.connect(
       HikariDataSource(
