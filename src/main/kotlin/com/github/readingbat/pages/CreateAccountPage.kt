@@ -89,8 +89,8 @@ internal object CreateAccountPage {
                 tr {
                   td { style = labelWidth; label { +"Name" } }
                   td {
-                    input {
-                      style = inputFs; type = InputType.text; size = "42"; name = FULLNAME_PARAM; value =
+                    textInput {
+                      style = inputFs; size = "42"; name = FULLNAME_PARAM; value =
                       defaultFullName.value
                     }
                   }
@@ -98,8 +98,8 @@ internal object CreateAccountPage {
                 tr {
                   td { style = labelWidth; label { +"Email (used as account id)" } }
                   td {
-                    input {
-                      style = inputFs; type = InputType.text; size = "42"; name = EMAIL_PARAM; value =
+                    textInput {
+                      style = inputFs; size = "42"; name = EMAIL_PARAM; value =
                       defaultEmail.value
                     }
                   }
@@ -107,9 +107,8 @@ internal object CreateAccountPage {
                 tr {
                   td { style = labelWidth; label { +"Password" } }
                   td {
-                    input {
+                    passwordInput {
                       style = inputFs
-                      type = InputType.password
                       size = "42"
                       name = PASSWORD_PARAM
                       value = ""
@@ -120,9 +119,8 @@ internal object CreateAccountPage {
                 tr {
                   td { style = labelWidth; label { +"Confirm Password" } }
                   td {
-                    input {
+                    passwordInput {
                       style = inputFs
-                      type = InputType.password
                       size = "42"
                       name = CONFIRM_PASSWORD_PARAM
                       value = ""
@@ -135,10 +133,9 @@ internal object CreateAccountPage {
                 tr {
                   td { }
                   td {
-                    input {
+                    submitInput {
                       style = "font-size : 25px; height: 35; width: 115"
                       id = createButton
-                      type = InputType.submit
                       value = "Create Account"
                     }
                   }

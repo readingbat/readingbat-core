@@ -90,7 +90,7 @@ internal object AdminPage {
         action = ADMIN_ENDPOINT
         method = FormMethod.post
         onSubmit = "return confirm('Are you sure you want to permanently delete all data ?')"
-        input { type = InputType.submit; name = ADMIN_ACTION_PARAM; value = DELETE_ALL_DATA }
+        submitInput { name = ADMIN_ACTION_PARAM; value = DELETE_ALL_DATA }
       }
     }
   }

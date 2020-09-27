@@ -61,7 +61,6 @@ import com.github.readingbat.server.ServerUtils.queryParam
 import io.ktor.application.*
 import kotlinx.html.*
 import kotlinx.html.FormMethod.post
-import kotlinx.html.InputType.submit
 import kotlinx.html.stream.createHTML
 import mu.KLogging
 import redis.clients.jedis.Jedis
@@ -139,10 +138,9 @@ internal object StudentSummaryPage : KLogging() {
       action = TEACHER_PREFS_ENDPOINT
       method = post
       onSubmit = "return confirm('Are you sure you want to remove $studentName from the class?')"
-      input { type = InputType.hidden; name = USER_ID_PARAM; value = student.userId }
-      input {
+      hiddenInput { name = USER_ID_PARAM; value = student.userId }
+      submitInput {
         style = "vertical-align:middle; margin-top:1; margin-bottom:0; border-radius: 8px; font-size:12px"
-        type = submit
         name = PREFS_ACTION_PARAM
         value = REMOVE_FROM_CLASS
       }

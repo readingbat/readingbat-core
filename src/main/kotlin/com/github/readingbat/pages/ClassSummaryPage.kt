@@ -168,12 +168,11 @@ internal object ClassSummaryPage : KLogging() {
               style = "margin:0"
               action = CLASS_SUMMARY_ENDPOINT
               method = FormMethod.post
-              input { type = InputType.hidden; name = CHOICE_SOURCE_PARAM; value = CLASS_SUMMARY }
-              input { type = InputType.hidden; name = CLASS_CODE_CHOICE_PARAM; value = classCode.value }
-              input(classes = BTN) {
+              hiddenInput { name = CHOICE_SOURCE_PARAM; value = CLASS_SUMMARY }
+              hiddenInput { name = CLASS_CODE_CHOICE_PARAM; value = classCode.value }
+              submitInput(classes = BTN) {
                 style =
                   "padding:2px 5px; margin-top:9; margin-left:20; border-radius:5px; cursor:pointer; border:1px solid black;"
-                type = InputType.submit
                 name = PREFS_ACTION_PARAM
                 value = UPDATE_ACTIVE_CLASS
               }

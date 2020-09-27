@@ -20,6 +20,7 @@ package com.github.readingbat.dsl
 import com.github.readingbat.common.CommonUtils.pathOf
 import com.github.readingbat.common.Endpoints.CHALLENGE_ROOT
 import com.github.readingbat.server.LanguageName
+import io.ktor.http.*
 
 enum class LanguageType(val useDoubleQuotes: Boolean, val suffix: String, val srcPrefix: String) {
   Java(true, "java", "src/main/java"),
@@ -34,6 +35,12 @@ enum class LanguageType(val useDoubleQuotes: Boolean, val suffix: String, val sr
   val isKotlin by lazy { this == Kotlin }
 
   companion object {
+    val defaultLanguageName = Java.languageName.value
     val languageTypesInOrder by lazy { listOf(Java, Python, Kotlin) }
+
+    internal fun Parameters.getLanguageType(parameterName: String) =
+      this[parameterName]?.let { paramValue ->
+        values().filter { it.name.equals(paramValue, ignoreCase = true) }.firstOrNull() ?: Java
+      } ?: Java
   }
 }

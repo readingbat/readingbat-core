@@ -41,6 +41,7 @@ import com.github.readingbat.common.RedisUtils.scanKeys
 import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.DataException
 import com.github.readingbat.dsl.InvalidConfigurationException
+import com.github.readingbat.dsl.LanguageType.Companion.defaultLanguageName
 import com.github.readingbat.dsl.MissingBrowserSessionException
 import com.github.readingbat.posts.ChallengeHistory
 import com.github.readingbat.posts.ChallengeNames
@@ -79,12 +80,13 @@ internal class User private constructor(val userId: String,
                                         val browserSession: BrowserSession?,
                                         initFields: Boolean,
                                         redis: Jedis?) {
-  val userDbmsId: Long
-  val email: Email
-  val fullName: FullName
-  var enrolledClassCode: ClassCode
-  private val saltBacking: String
-  private var digestBacking: String
+  var userDbmsId: Long = -1
+  var email: Email = EMPTY_EMAIL
+  var fullName: FullName = EMPTY_FULLNAME
+  var enrolledClassCode: ClassCode = DISABLED_CLASS_CODE
+  var defaultLanguage: String = defaultLanguageName
+  private var saltBacking: String = ""
+  private var digestBacking: String = ""
 
   private val userInfoKey = keyOf(USER_INFO_KEY, userId)
 
@@ -107,6 +109,7 @@ internal class User private constructor(val userId: String,
           email = row?.get(Users.email)?.let { Email(it) } ?: UNKNOWN_EMAIL
           fullName = row?.get(Users.name)?.let { FullName(it) } ?: UNKNOWN_FULLNAME
           enrolledClassCode = row?.get(Users.enrolledClassCode)?.let { ClassCode(it) } ?: DISABLED_CLASS_CODE
+          defaultLanguage = row?.get(Users.defaultLanguage) ?: defaultLanguageName
           saltBacking = row?.get(Users.salt) ?: ""
           digestBacking = row?.get(Users.digest) ?: ""
         }
@@ -116,18 +119,11 @@ internal class User private constructor(val userId: String,
           fullName = redis?.hget(userInfoKey, NAME_FIELD)?.let { FullName(it) } ?: UNKNOWN_FULLNAME
           enrolledClassCode =
             redis?.hget(userInfoKey, ENROLLED_CLASS_CODE_FIELD)?.let { ClassCode(it) } ?: DISABLED_CLASS_CODE
+          defaultLanguage = redis?.hget(userInfoKey, DEFAULT_LANGUAGE_FIELD) ?: defaultLanguageName
           saltBacking = redis?.hget(userInfoKey, SALT_FIELD) ?: ""
           digestBacking = redis?.hget(userInfoKey, DIGEST_FIELD) ?: ""
         }
       }.also { logger.info { "Selected user info in $it" } }
-    }
-    else {
-      userDbmsId = -1
-      email = EMPTY_EMAIL
-      fullName = EMPTY_FULLNAME
-      enrolledClassCode = DISABLED_CLASS_CODE
-      saltBacking = ""
-      digestBacking = ""
     }
   }
 
@@ -721,6 +717,7 @@ internal class User private constructor(val userId: String,
     internal const val EMAIL_FIELD = "email"
     internal const val SALT_FIELD = "salt"
     internal const val DIGEST_FIELD = "digest"
+    internal const val DEFAULT_LANGUAGE_FIELD = "default-language"
     internal const val NAME_FIELD = "name"
 
     // Class code a user is enrolled in. Will report answers to when in student mode
@@ -804,6 +801,7 @@ internal class User private constructor(val userId: String,
                 row[Users.name] = name.value
                 row[Users.email] = email.value
                 row[enrolledClassCode] = DISABLED_CLASS_CODE.value
+                row[defaultLanguage] = defaultLanguageName
                 row[Users.salt] = salt
                 row[Users.digest] = digest
               }.value

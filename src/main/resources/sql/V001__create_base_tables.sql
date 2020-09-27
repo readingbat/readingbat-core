@@ -43,7 +43,8 @@ CREATE TABLE users
     name                TEXT NOT NULL,
     salt                TEXT NOT NULL,
     digest              TEXT NOT NULL,
-    enrolled_class_code TEXT NOT NULL
+    enrolled_class_code TEXT NOT NULL,
+    default_language    TEXT NOT NULL
 );
 
 CREATE TABLE user_sessions

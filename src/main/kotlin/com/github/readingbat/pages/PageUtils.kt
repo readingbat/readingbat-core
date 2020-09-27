@@ -187,9 +187,9 @@ internal object PageUtils {
       action = endpoint
       method = FormMethod.get
       onSubmit = "return confirm('$msg')"
-      input {
+      submitInput {
         style = "vertical-align:middle; margin-top:1; margin-bottom:0"
-        type = InputType.submit; value = text
+        value = text
       }
     }
   }

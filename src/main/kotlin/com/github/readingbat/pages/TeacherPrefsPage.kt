@@ -54,8 +54,6 @@ import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
 import kotlinx.html.*
 import kotlinx.html.Entities.nbsp
-import kotlinx.html.InputType.radio
-import kotlinx.html.InputType.submit
 import kotlinx.html.stream.createHTML
 import mu.KLogging
 import redis.clients.jedis.Jedis
@@ -119,8 +117,7 @@ internal object TeacherPrefsPage : KLogging() {
           tr {
             td { style = LABEL_WIDTH; label { +"Class Description" } }
             td {
-              input {
-                type = InputType.text
+              textInput {
                 size = "42"
                 name = CLASS_DESC_PARAM
                 value = defaultClassDesc
@@ -130,7 +127,7 @@ internal object TeacherPrefsPage : KLogging() {
           }
           tr {
             td {}
-            td { input { type = submit; id = createClassButton; name = PREFS_ACTION_PARAM; value = CREATE_CLASS } }
+            td { submitInput { id = createClassButton; name = PREFS_ACTION_PARAM; value = CREATE_CLASS } }
           }
         }
       }
@@ -166,8 +163,7 @@ internal object TeacherPrefsPage : KLogging() {
             this@table.tr {
               td {
                 style = "text-align:center"
-                input {
-                  type = radio
+                radioInput {
                   name = CLASS_CODE_CHOICE_PARAM
                   value = classCode.value
                   checked = activeClassCode == classCode
@@ -184,19 +180,20 @@ internal object TeacherPrefsPage : KLogging() {
         this@table.tr {
           td {
             style = "text-align:center"
-            input {
-              type = radio; name = CLASS_CODE_CHOICE_PARAM; value = DISABLED_MODE; checked =
-              activeClassCode.isNotEnabled
+            radioInput {
+              name = CLASS_CODE_CHOICE_PARAM
+              value = DISABLED_MODE
+              checked = activeClassCode.isNotEnabled
             }
           }
           td { colSpan = "3"; +NO_ACTIVE_CLASS }
         }
 
-        input { type = InputType.hidden; name = CHOICE_SOURCE_PARAM; value = TEACHER_PREF }
+        hiddenInput { name = CHOICE_SOURCE_PARAM; value = TEACHER_PREF }
 
         this@table.tr {
           td {}
-          td { input { type = submit; name = PREFS_ACTION_PARAM; value = UPDATE_ACTIVE_CLASS } }
+          td { submitInput { name = PREFS_ACTION_PARAM; value = UPDATE_ACTIVE_CLASS } }
         }
       }
     }
@@ -214,10 +211,9 @@ internal object TeacherPrefsPage : KLogging() {
               action = TEACHER_PREFS_ENDPOINT
               method = FormMethod.post
               onSubmit = "return confirm('Are you sure you want to delete class ${classCode.toDisplayString(redis)}?')"
-              input { type = InputType.hidden; name = CLASS_CODE_NAME_PARAM; value = classCode.displayedValue }
-              input {
+              hiddenInput { name = CLASS_CODE_NAME_PARAM; value = classCode.displayedValue }
+              submitInput {
                 style = "vertical-align:middle; margin-top:1; margin-bottom:0;"
-                type = submit
                 name = PREFS_ACTION_PARAM
                 value = DELETE_CLASS
               }

@@ -57,29 +57,8 @@ import com.github.readingbat.server.ReadingBatServer.usePostgres
 import com.github.readingbat.server.ServerUtils.queryParam
 import com.github.readingbat.server.ServerUtils.rows
 import io.ktor.application.*
-import kotlinx.html.BODY
-import kotlinx.html.FormMethod
-import kotlinx.html.InputType
-import kotlinx.html.TR
-import kotlinx.html.a
-import kotlinx.html.body
-import kotlinx.html.form
-import kotlinx.html.h2
-import kotlinx.html.h3
-import kotlinx.html.head
-import kotlinx.html.html
-import kotlinx.html.id
-import kotlinx.html.img
-import kotlinx.html.input
-import kotlinx.html.onSubmit
-import kotlinx.html.p
-import kotlinx.html.script
-import kotlinx.html.span
+import kotlinx.html.*
 import kotlinx.html.stream.createHTML
-import kotlinx.html.style
-import kotlinx.html.table
-import kotlinx.html.td
-import kotlinx.html.tr
 import mu.KLogging
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.select
@@ -259,13 +238,13 @@ internal object ChallengeGroupPage : KLogging() {
         action = CLEAR_GROUP_ANSWERS_ENDPOINT
         method = FormMethod.post
         onSubmit = """return confirm('Are you sure you want to clear your previous answers for group "$groupName"?')"""
-        input { type = InputType.hidden; name = LANGUAGE_NAME_PARAM; value = languageName.value }
-        input { type = InputType.hidden; name = GROUP_NAME_PARAM; value = groupName.value }
-        input { type = InputType.hidden; name = CORRECT_ANSWERS_PARAM; value = gson.toJson(correctAnswersKeys) }
-        input { type = InputType.hidden; name = CHALLENGE_ANSWERS_PARAM; value = gson.toJson(challengeAnswerKeys) }
-        input {
+        hiddenInput { name = LANGUAGE_NAME_PARAM; value = languageName.value }
+        hiddenInput { name = GROUP_NAME_PARAM; value = groupName.value }
+        hiddenInput { name = CORRECT_ANSWERS_PARAM; value = gson.toJson(correctAnswersKeys) }
+        hiddenInput { name = CHALLENGE_ANSWERS_PARAM; value = gson.toJson(challengeAnswerKeys) }
+        submitInput {
           style = "vertical-align:middle; margin-top:1; margin-bottom:0"
-          type = InputType.submit; value = "Clear answer history"
+          value = "Clear answer history"
         }
       }
     }

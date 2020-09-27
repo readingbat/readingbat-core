@@ -28,12 +28,14 @@ import com.github.readingbat.common.Endpoints.USER_PREFS_ENDPOINT
 import com.github.readingbat.common.FormFields.CLASS_CODE_NAME_PARAM
 import com.github.readingbat.common.FormFields.CONFIRM_PASSWORD_PARAM
 import com.github.readingbat.common.FormFields.CURR_PASSWORD_PARAM
+import com.github.readingbat.common.FormFields.DEFAULT_LANGUAGE_CHOICE_PARAM
 import com.github.readingbat.common.FormFields.DELETE_ACCOUNT
 import com.github.readingbat.common.FormFields.JOIN_A_CLASS
 import com.github.readingbat.common.FormFields.JOIN_CLASS
 import com.github.readingbat.common.FormFields.NEW_PASSWORD_PARAM
 import com.github.readingbat.common.FormFields.PREFS_ACTION_PARAM
 import com.github.readingbat.common.FormFields.RETURN_PARAM
+import com.github.readingbat.common.FormFields.UPDATE_DEFAULT_LANGUAGE
 import com.github.readingbat.common.FormFields.UPDATE_PASSWORD
 import com.github.readingbat.common.FormFields.WITHDRAW_FROM_CLASS
 import com.github.readingbat.common.Message
@@ -41,6 +43,7 @@ import com.github.readingbat.common.Message.Companion.EMPTY_MESSAGE
 import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.fetchActiveClassCode
 import com.github.readingbat.common.isValidUser
+import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.pages.HelpAndLogin.helpAndLogin
 import com.github.readingbat.pages.PageUtils.backLink
@@ -51,10 +54,11 @@ import com.github.readingbat.pages.PageUtils.headDefault
 import com.github.readingbat.pages.PageUtils.hideShowButton
 import com.github.readingbat.pages.PageUtils.loadPingdomScript
 import com.github.readingbat.pages.PageUtils.privacyStatement
+import com.github.readingbat.pages.PageUtils.rawHtml
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
 import kotlinx.html.*
-import kotlinx.html.InputType.submit
+import kotlinx.html.Entities.nbsp
 import kotlinx.html.stream.createHTML
 import mu.KLogging
 import redis.clients.jedis.Jedis
@@ -100,6 +104,7 @@ internal object UserPrefsPage : KLogging() {
           if (msg.isAssigned())
             p { span { style = "color:${msg.color}"; this@body.displayMessage(msg) } }
 
+          defaultLanguage(user)
           changePassword()
           joinOrWithdrawFromClass(user, defaultClassCode, redis)
           deleteAccount(user, redis)
@@ -114,6 +119,43 @@ internal object UserPrefsPage : KLogging() {
         }
       }
 
+  private fun BODY.defaultLanguage(user: User) {
+    h3 { +"Default Language" }
+    div(classes = INDENT_2EM) {
+      table {
+        //style = "border-spacing: 5px"
+        form {
+          action = USER_PREFS_ENDPOINT
+          method = FormMethod.post
+
+          this@table.tr {
+            LanguageType
+              .values()
+              .forEach { languageType ->
+                td {
+                  style = "text-align:center"
+                  radioInput {
+                    id = languageType.languageName.value
+                    name = DEFAULT_LANGUAGE_CHOICE_PARAM
+                    value = languageType.languageName.value
+                    checked = user.defaultLanguage == languageType.languageName.value
+                  }
+                  label {
+                    htmlFor = languageType.languageName.value
+                    +" ${languageType.name} "
+                  }
+                }
+                td { rawHtml(nbsp.text) }
+                td { rawHtml(nbsp.text) }
+              }
+            td {}
+            td { submitInput { name = PREFS_ACTION_PARAM; value = UPDATE_DEFAULT_LANGUAGE } }
+          }
+        }
+      }
+    }
+  }
+
   private fun BODY.changePassword() {
     h3 { +"Change password" }
     div(classes = INDENT_2EM) {
@@ -125,19 +167,18 @@ internal object UserPrefsPage : KLogging() {
         table {
           tr {
             td { style = LABEL_WIDTH; label { +"Current Password" } }
-            td { input { type = InputType.password; size = "42"; name = CURR_PASSWORD_PARAM; value = "" } }
+            td { passwordInput { size = "42"; name = CURR_PASSWORD_PARAM; value = "" } }
             td { hideShowButton(formName, CURR_PASSWORD_PARAM) }
           }
           tr {
             td { style = LABEL_WIDTH; label { +"New Password" } }
-            td { input { type = InputType.password; size = "42"; name = NEW_PASSWORD_PARAM; value = "" } }
+            td { passwordInput { size = "42"; name = NEW_PASSWORD_PARAM; value = "" } }
             td { hideShowButton(formName, NEW_PASSWORD_PARAM) }
           }
           tr {
             td { style = LABEL_WIDTH; label { +"Confirm Password" } }
             td {
-              input {
-                type = InputType.password
+              passwordInput {
                 size = "42"
                 name = CONFIRM_PASSWORD_PARAM
                 value = ""
@@ -148,7 +189,7 @@ internal object UserPrefsPage : KLogging() {
           }
           tr {
             td {}
-            td { input { type = submit; id = passwordButton; name = PREFS_ACTION_PARAM; value = UPDATE_PASSWORD } }
+            td { submitInput { id = passwordButton; name = PREFS_ACTION_PARAM; value = UPDATE_PASSWORD } }
           }
         }
       }
@@ -167,7 +208,7 @@ internal object UserPrefsPage : KLogging() {
             action = USER_PREFS_ENDPOINT
             method = FormMethod.post
             onSubmit = "return confirm('Are you sure you want to withdraw from class $displayStr?')"
-            input { type = submit; name = PREFS_ACTION_PARAM; value = WITHDRAW_FROM_CLASS }
+            submitInput { name = PREFS_ACTION_PARAM; value = WITHDRAW_FROM_CLASS }
           }
         }
       }
@@ -183,8 +224,7 @@ internal object UserPrefsPage : KLogging() {
             tr {
               td { style = LABEL_WIDTH; label { +"Class Code" } }
               td {
-                input {
-                  type = InputType.text
+                textInput {
                   size = "42"
                   name = CLASS_CODE_NAME_PARAM
                   value = defaultClassCode.displayedValue
@@ -194,7 +234,7 @@ internal object UserPrefsPage : KLogging() {
             }
             tr {
               td {}
-              td { input { type = submit; id = joinClassButton; name = PREFS_ACTION_PARAM; value = JOIN_CLASS } }
+              td { submitInput { id = joinClassButton; name = PREFS_ACTION_PARAM; value = JOIN_CLASS } }
             }
           }
         }
@@ -214,11 +254,11 @@ internal object UserPrefsPage : KLogging() {
         table {
           tr {
             td { style = LABEL_WIDTH; label { +"Share To" } }
-            td { input { type = InputType.text; size = "42"; name = "pdt"; value = "" } }
+            td { textInput { size = "42"; name = "pdt"; value = "" } }
           }
           tr {
             td {}
-            td { input { type = submit; name = USER_PREFS_ACTION; value = "Share" } }
+            td { submitInput { name = USER_PREFS_ACTION; value = "Share" } }
           }
         }
       }
@@ -231,15 +271,15 @@ internal object UserPrefsPage : KLogging() {
     form {
       action = USER_PREFS_ENDPOINT
       method = FormMethod.post
-      input { type = InputType.hidden; name = "date"; value = "963892736" }
+      hiddenInput { name = "date"; value = "963892736" }
       table {
         tr {
           td { style = LABEL_WIDTH; label { +"Memo" } }
-          td { input { type = InputType.text; size = "42"; name = "real"; value = "" } }
+          td { textInput { size = "42"; name = "real"; value = "" } }
         }
         tr {
           td {}
-          td { input { type = submit; name = USER_PREFS_ACTION; value = "Update Memo" } }
+          td { submitInput { name = USER_PREFS_ACTION; value = "Update Memo" } }
         }
       }
     }
@@ -256,7 +296,7 @@ internal object UserPrefsPage : KLogging() {
           action = USER_PREFS_ENDPOINT
           method = FormMethod.post
           onSubmit = "return confirm('Are you sure you want to permanently delete the account for $email ?')"
-          input { type = submit; name = PREFS_ACTION_PARAM; value = DELETE_ACCOUNT }
+          submitInput { name = PREFS_ACTION_PARAM; value = DELETE_ACCOUNT }
         }
       }
     }

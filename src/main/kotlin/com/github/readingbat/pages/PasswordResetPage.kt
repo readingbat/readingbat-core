@@ -110,15 +110,14 @@ internal object PasswordResetPage : KLogging() {
               table {
                 tr {
                   td { style = LABEL_WIDTH; label { +"Email (used as account id)" } }
-                  td { input { name = EMAIL_PARAM; type = InputType.text; size = "50" } }
+                  td { textInput { name = EMAIL_PARAM; size = "50" } }
                 }
                 tr {
                   td { }
                   td {
                     style = "padding-top:10"
-                    input {
+                    submitInput {
                       style = "font-size:25px; height:35; width:  155"
-                      type = InputType.submit
                       value = "Send Password Reset"
                     }
                   }
@@ -170,15 +169,14 @@ internal object PasswordResetPage : KLogging() {
             table {
               tr {
                 td { style = LABEL_WIDTH; label { +"New Password" } }
-                td { input { type = InputType.password; size = "42"; name = NEW_PASSWORD_PARAM; value = "" } }
+                td { passwordInput { size = "42"; name = NEW_PASSWORD_PARAM; value = "" } }
                 td { hideShowButton(formName, NEW_PASSWORD_PARAM) }
               }
 
               tr {
                 td { style = LABEL_WIDTH; label { +"Confirm Password" } }
                 td {
-                  input {
-                    type = InputType.password
+                  passwordInput {
                     size = "42"
                     name = CONFIRM_PASSWORD_PARAM
                     value = ""
@@ -189,11 +187,10 @@ internal object PasswordResetPage : KLogging() {
               }
 
               tr {
-                td { input { type = InputType.hidden; name = RESET_ID_PARAM; value = resetId.value } }
+                td { hiddenInput { name = RESET_ID_PARAM; value = resetId.value } }
                 td {
-                  input {
+                  submitInput {
                     style = "font-size:25px; height:35; width:155"
-                    type = InputType.submit
                     id = passwordButton
                     name = PREFS_ACTION_PARAM
                     value = UPDATE_PASSWORD

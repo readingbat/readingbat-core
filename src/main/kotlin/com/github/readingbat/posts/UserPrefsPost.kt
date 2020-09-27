@@ -17,42 +17,47 @@
 
 package com.github.readingbat.posts
 
+import com.github.readingbat.common.*
 import com.github.readingbat.common.ClassCode.Companion.getClassCode
 import com.github.readingbat.common.FormFields.CLASS_CODE_NAME_PARAM
 import com.github.readingbat.common.FormFields.CONFIRM_PASSWORD_PARAM
 import com.github.readingbat.common.FormFields.CURR_PASSWORD_PARAM
+import com.github.readingbat.common.FormFields.DEFAULT_LANGUAGE_CHOICE_PARAM
 import com.github.readingbat.common.FormFields.DELETE_ACCOUNT
 import com.github.readingbat.common.FormFields.JOIN_CLASS
 import com.github.readingbat.common.FormFields.NEW_PASSWORD_PARAM
 import com.github.readingbat.common.FormFields.PREFS_ACTION_PARAM
+import com.github.readingbat.common.FormFields.UPDATE_DEFAULT_LANGUAGE
 import com.github.readingbat.common.FormFields.UPDATE_PASSWORD
 import com.github.readingbat.common.FormFields.WITHDRAW_FROM_CLASS
-import com.github.readingbat.common.Message
-import com.github.readingbat.common.User
-import com.github.readingbat.common.UserPrincipal
-import com.github.readingbat.common.isValidUser
 import com.github.readingbat.dsl.DataException
 import com.github.readingbat.dsl.InvalidConfigurationException
+import com.github.readingbat.dsl.LanguageType.Companion.getLanguageType
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.pages.UserPrefsPage.requestLogInPage
 import com.github.readingbat.pages.UserPrefsPage.userPrefsPage
 import com.github.readingbat.posts.CreateAccountPost.checkPassword
 import com.github.readingbat.server.Password.Companion.getPassword
 import com.github.readingbat.server.PipelineCall
+import com.github.readingbat.server.ReadingBatServer.usePostgres
 import io.ktor.application.*
 import io.ktor.http.*
 import io.ktor.request.*
 import io.ktor.sessions.*
 import mu.KLogging
+import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.sql.update
+import org.joda.time.DateTime
+import org.joda.time.DateTimeZone.UTC
 import redis.clients.jedis.Jedis
 
 internal object UserPrefsPost : KLogging() {
 
-  suspend fun PipelineCall.userPrefs(content: ReadingBatContent, user: User?, redis: Jedis): String {
-    val parameters = call.receiveParameters()
-
-    return if (user.isValidUser(redis)) {
+  suspend fun PipelineCall.userPrefs(content: ReadingBatContent, user: User?, redis: Jedis) =
+    if (user.isValidUser(redis)) {
+      val parameters = call.receiveParameters()
       when (val action = parameters[PREFS_ACTION_PARAM] ?: "") {
+        UPDATE_DEFAULT_LANGUAGE -> updateDefaultLanguage(content, parameters, user, redis)
         UPDATE_PASSWORD -> updatePassword(content, parameters, user, redis)
         JOIN_CLASS -> enrollInClass(content, parameters, user, redis)
         WITHDRAW_FROM_CLASS -> withdrawFromClass(content, user, redis)
@@ -63,7 +68,23 @@ internal object UserPrefsPost : KLogging() {
     else {
       requestLogInPage(content, redis)
     }
-  }
+
+  private fun PipelineCall.updateDefaultLanguage(content: ReadingBatContent,
+                                                 parameters: Parameters,
+                                                 user: User,
+                                                 redis: Jedis) =
+    parameters.getLanguageType(DEFAULT_LANGUAGE_CHOICE_PARAM)
+      .let {
+        transaction {
+          Users
+            .update({ Users.id eq user.userDbmsId }) { row ->
+              row[updated] = DateTime.now(UTC)
+              row[defaultLanguage] = it.languageName.value
+              user.defaultLanguage = it.languageName.value
+            }
+        }
+        userPrefsPage(content, user, redis, Message("Default language updated to $it", true))
+      }
 
   private fun PipelineCall.updatePassword(content: ReadingBatContent,
                                           parameters: Parameters,
@@ -85,7 +106,12 @@ internal object UserPrefsPost : KLogging() {
           if (newDigest == oldDigest)
             Message("New password is the same as the current password", true)
           else {
-            redis.multi().also { tx -> user.assignDigest(tx, newDigest) }
+            if (usePostgres)
+              transaction {
+                user.assignDigest(newDigest)
+              }
+            else
+              redis.multi().also { tx -> user.assignDigest(tx, newDigest) }
             Message("Password changed")
           }
         }

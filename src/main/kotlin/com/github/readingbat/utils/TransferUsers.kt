@@ -37,6 +37,7 @@ import com.github.readingbat.common.User.Companion.fetchPreviousTeacherClassCode
 import com.github.readingbat.common.User.Companion.gson
 import com.github.readingbat.common.User.Companion.toUser
 import com.github.readingbat.dsl.InvalidConfigurationException
+import com.github.readingbat.dsl.LanguageType.Companion.defaultLanguageName
 import com.github.readingbat.posts.ChallengeHistory
 import com.github.readingbat.server.ReadingBatServer.usePostgres
 import mu.KLogging
@@ -179,6 +180,7 @@ internal object TransferUsers : KLogging() {
                 row[salt] = user.salt
                 row[digest] = user.digest
                 row[enrolledClassCode] = user.enrolledClassCode.value
+                row[defaultLanguage] = defaultLanguageName
               }.value
           userMap[userId] = id
           logger.info { "Created user id: $id for $userId" }

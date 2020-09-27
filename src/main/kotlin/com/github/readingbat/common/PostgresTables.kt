@@ -69,6 +69,7 @@ internal object Users : LongIdTable() {
   val salt = text("salt")
   val digest = text("digest")
   val enrolledClassCode = text("enrolled_class_code")
+  val defaultLanguage = text("default_language")
 }
 
 internal object UserSessions : LongIdTable("user_sessions") {

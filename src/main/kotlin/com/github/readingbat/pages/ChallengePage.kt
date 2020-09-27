@@ -616,14 +616,14 @@ internal object ChallengePage : KLogging() {
       action = CLEAR_CHALLENGE_ANSWERS_ENDPOINT
       method = FormMethod.post
       onSubmit = """return confirm('Are you sure you want to clear your previous answers for "$challengeName"?')"""
-      input { type = InputType.hidden; name = LANGUAGE_NAME_PARAM; value = languageName.value }
-      input { type = InputType.hidden; name = GROUP_NAME_PARAM; value = groupName.value }
-      input { type = InputType.hidden; name = CHALLENGE_NAME_PARAM; value = challengeName.value }
-      input { type = InputType.hidden; name = CORRECT_ANSWERS_PARAM; value = correctAnswersKey }
-      input { type = InputType.hidden; name = CHALLENGE_ANSWERS_PARAM; value = challengeAnswersKey }
-      input {
+      hiddenInput { name = LANGUAGE_NAME_PARAM; value = languageName.value }
+      hiddenInput { name = GROUP_NAME_PARAM; value = groupName.value }
+      hiddenInput { name = CHALLENGE_NAME_PARAM; value = challengeName.value }
+      hiddenInput { name = CORRECT_ANSWERS_PARAM; value = correctAnswersKey }
+      hiddenInput { name = CHALLENGE_ANSWERS_PARAM; value = challengeAnswersKey }
+      submitInput {
         style = "vertical-align:middle; margin-top:1; margin-bottom:0"
-        type = InputType.submit; value = "Clear answer history"
+        value = "Clear answer history"
       }
     }
   }
