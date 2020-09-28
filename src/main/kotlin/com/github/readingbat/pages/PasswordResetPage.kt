@@ -32,7 +32,6 @@ import com.github.readingbat.common.FormFields.UPDATE_PASSWORD
 import com.github.readingbat.common.Message
 import com.github.readingbat.common.Message.Companion.EMPTY_MESSAGE
 import com.github.readingbat.common.PasswordResets
-import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyTitle
@@ -43,15 +42,14 @@ import com.github.readingbat.pages.PageUtils.hideShowButton
 import com.github.readingbat.pages.PageUtils.loadPingdomScript
 import com.github.readingbat.pages.PageUtils.privacyStatement
 import com.github.readingbat.posts.PasswordResetPost.ResetPasswordException
-import com.github.readingbat.server.Email
-import com.github.readingbat.server.PipelineCall
+import com.github.readingbat.server.*
 import com.github.readingbat.server.ReadingBatServer.usePostgres
-import com.github.readingbat.server.ResetId
 import com.github.readingbat.server.ServerUtils.queryParam
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 import mu.KLogging
 import org.jetbrains.exposed.sql.select
+import org.jetbrains.exposed.sql.transactions.transaction
 import redis.clients.jedis.Jedis
 
 internal object PasswordResetPage : KLogging() {
@@ -68,13 +66,21 @@ internal object PasswordResetPage : KLogging() {
     else {
       try {
         val email =
-          if (usePostgres) {
-            PasswordResets
-              .slice(PasswordResets.email)
-              .select { PasswordResets.resetId eq resetId.value }
-              .map { it[PasswordResets.email] }
-              .firstOrNull() ?: throw InvalidConfigurationException("Invalid reset id: ${resetId.value}")
-          }
+          if (usePostgres)
+            transaction {
+              PasswordResets
+                .slice(PasswordResets.email,
+                       PasswordResets.updated,
+                       CustomDateTimeConstant("NOW() - INTERVAL '2 minute'"))
+                .select {
+                  (PasswordResets.resetId eq resetId.value) /*and (PasswordResets.updated greater CustomDateTimeConstant("NOW() - INTERVAL '2 minute'"))*/
+                }
+                .onEach {
+                  logger.info { "${it[1]} and ${it[2]}" }
+                }
+                .map { it[0] as String }
+                .firstOrNull() ?: throw ResetPasswordException("Time expired or Invalid reset id. Try again.")
+            }
           else {
             val passwordResetKey = resetId.passwordResetKey
             redis.get(passwordResetKey) ?: throw ResetPasswordException(INVALID_RESET_ID)

@@ -33,6 +33,8 @@ internal val sessionAnswerHistoryIndex =
 internal val userAnswerHistoryIndex =
   Index(listOf(UserAnswerHistory.userRef, UserAnswerHistory.md5), true, "user_answer_history_unique")
 
+internal val passwordResetsIndex = Index(listOf(PasswordResets.userRef), true, "password_resets_unique")
+
 internal object BrowserSessions : LongIdTable("browser_sessions") {
   val created = datetime("created")
   val session_id = text("session_id")
@@ -63,7 +65,7 @@ internal object SessionAnswerHistory : LongIdTable("session_answer_history") {
 internal object Users : LongIdTable() {
   val created = datetime("created")
   val updated = datetime("updated")
-  val userId = varchar("user_id", 25)
+  val userId = text("user_id")
   val email = text("email")
   val name = text("name")
   val salt = text("salt")

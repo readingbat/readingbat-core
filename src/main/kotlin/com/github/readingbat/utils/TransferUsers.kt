@@ -17,7 +17,7 @@
 
 package com.github.readingbat.utils
 
-import com.github.pambrose.common.redis.RedisUtils
+import com.github.pambrose.common.redis.RedisUtils.withNonNullRedis
 import com.github.pambrose.common.util.isNotNull
 import com.github.readingbat.common.*
 import com.github.readingbat.common.CommonUtils.keyOf
@@ -67,254 +67,253 @@ internal object TransferUsers : KLogging() {
 
     Database.connect(hikari())
 
-    transaction {
-      addLogger(KotlinLoggingSqlLogger)
-
-      //transform(RedisAdmin.local)
-      transform("rediss://default:t9bzmgv4x024negg@readingbat-redis-do-user-329986-0.a.db.ondigitalocean.com:25061")
-    }
+    //transform(RedisAdmin.local)
+    transform("rediss://default:rbgt9bzmgv4x024negg@readingbat-redis-do-user-329986-0.a.db.ondigitalocean.com:25061")
   }
 
   private fun transform(url: String) {
-    RedisUtils.withNonNullRedis(url) { redis ->
+    withNonNullRedis(url) { redis ->
 
       val sessionMap = mutableMapOf<String, Long>()
 
-      listOf(
-        redis.scanKeys(keyOf(CORRECT_ANSWERS_KEY, NO_AUTH_KEY, "*", "*")).toList(),
-        redis.scanKeys(keyOf(LIKE_DISLIKE_KEY, NO_AUTH_KEY, "*", "*")).toList(),
-        redis.scanKeys(keyOf(CHALLENGE_ANSWERS_KEY, NO_AUTH_KEY, "*", "*")).toList(),
-        redis.scanKeys(keyOf(ANSWER_HISTORY_KEY, NO_AUTH_KEY, "*", "*")).toList(),
-        redis.scanKeys(keyOf(USER_INFO_BROWSER_KEY, "*", "*")).toList(),
-            )
-        .asSequence()
-        .flatten()
-        .filter { it != "unassigned" }
-        .map { it.split(KEY_SEP)[2] }  // pull out the browser session_id value
-        .sorted()
-        .distinct()
-        .onEach { sessionId ->
+      transaction {
+        addLogger(KotlinLoggingSqlLogger)
 
-          val sessionDbmsId =
-            BrowserSessions
-              .insertAndGetId { row ->
-                row[session_id] = sessionId
-              }.value
+        listOf(
+          redis.scanKeys(keyOf(CORRECT_ANSWERS_KEY, NO_AUTH_KEY, "*", "*")).toList(),
+          redis.scanKeys(keyOf(LIKE_DISLIKE_KEY, NO_AUTH_KEY, "*", "*")).toList(),
+          redis.scanKeys(keyOf(CHALLENGE_ANSWERS_KEY, NO_AUTH_KEY, "*", "*")).toList(),
+          redis.scanKeys(keyOf(ANSWER_HISTORY_KEY, NO_AUTH_KEY, "*", "*")).toList(),
+          redis.scanKeys(keyOf(USER_INFO_BROWSER_KEY, "*", "*")).toList())
+          .flatten()
+          .map { it.split(KEY_SEP)[2] }  // pull out the browser session_id value
+          .filter { it != "unassigned" }
+          .sorted()
+          .distinct()
+          .onEach { sessionId ->
 
-          sessionMap[sessionId] = sessionDbmsId
+            val sessionDbmsId = BrowserSessions.insertAndGetId { row -> row[session_id] = sessionId }.value
 
-          redis.scanKeys(keyOf(CORRECT_ANSWERS_KEY, NO_AUTH_KEY, sessionId, "*"))
-            .filter { it.split(KEY_SEP).size == 4 }
-            .forEach { key ->
-              require(sessionId == key.split(KEY_SEP)[2])
-              //println("$key ${redis[key]}")
+            sessionMap[sessionId] = sessionDbmsId
 
-              SessionChallengeInfo
-                .upsert(conflictIndex = sessionChallengeIfoIndex) { row ->
-                  row[sessionRef] = sessionDbmsId
-                  row[md5] = key.split(KEY_SEP)[3]
-                  row[updated] = DateTime.now(UTC)
-                  row[allCorrect] = redis[key].toBoolean()
-                }
-            }
+            redis.scanKeys(keyOf(CORRECT_ANSWERS_KEY, NO_AUTH_KEY, sessionId, "*"))
+              .filter { it.split(KEY_SEP).size == 4 }
+              .forEach { key ->
+                require(sessionId == key.split(KEY_SEP)[2])
+                //println("$key ${redis[key]}")
 
-          redis.scanKeys(keyOf(LIKE_DISLIKE_KEY, NO_AUTH_KEY, sessionId, "*"))
-            .filter { it.split(KEY_SEP).size == 4 }
-            .forEach { key ->
-              require(sessionId == key.split(KEY_SEP)[2])
-              //println("$key userId ${redis[key]}")
+                SessionChallengeInfo
+                  .upsert(conflictIndex = sessionChallengeIfoIndex) { row ->
+                    row[sessionRef] = sessionDbmsId
+                    row[md5] = key.split(KEY_SEP)[3]
+                    row[updated] = DateTime.now(UTC)
+                    row[allCorrect] = redis[key].toBoolean()
+                  }
+              }
 
-              SessionChallengeInfo
-                .upsert(conflictIndex = sessionChallengeIfoIndex) { row ->
-                  row[sessionRef] = sessionDbmsId
-                  row[md5] = key.split(KEY_SEP)[3]
-                  row[updated] = DateTime.now(UTC)
-                  row[likeDislike] = redis[key].toShort()
-                }
-            }
+            redis.scanKeys(keyOf(LIKE_DISLIKE_KEY, NO_AUTH_KEY, sessionId, "*"))
+              .filter { it.split(KEY_SEP).size == 4 }
+              .forEach { key ->
+                require(sessionId == key.split(KEY_SEP)[2])
+                //println("$key userId ${redis[key]}")
 
-          redis.scanKeys(keyOf(CHALLENGE_ANSWERS_KEY, NO_AUTH_KEY, sessionId, "*"))
-            .filter { it.split(KEY_SEP).size == 4 }
-            .forEach { key ->
-              require(sessionId == key.split(KEY_SEP)[2])
-              //println("$key ${redis.hgetAll(key)}")
+                SessionChallengeInfo
+                  .upsert(conflictIndex = sessionChallengeIfoIndex) { row ->
+                    row[sessionRef] = sessionDbmsId
+                    row[md5] = key.split(KEY_SEP)[3]
+                    row[updated] = DateTime.now(UTC)
+                    row[likeDislike] = redis[key].toShort()
+                  }
+              }
 
-              SessionChallengeInfo
-                .upsert(conflictIndex = sessionChallengeIfoIndex) { row ->
-                  row[sessionRef] = sessionDbmsId
-                  row[md5] = key.split(KEY_SEP)[3]
-                  row[updated] = DateTime.now(UTC)
-                  row[answersJson] = gson.toJson(redis.hgetAll(key))
-                }
-            }
+            redis.scanKeys(keyOf(CHALLENGE_ANSWERS_KEY, NO_AUTH_KEY, sessionId, "*"))
+              .filter { it.split(KEY_SEP).size == 4 }
+              .forEach { key ->
+                require(sessionId == key.split(KEY_SEP)[2])
+                //println("$key ${redis.hgetAll(key)}")
 
-          // md5 has names and invocation in it
-          redis.scanKeys(keyOf(ANSWER_HISTORY_KEY, NO_AUTH_KEY, sessionId, "*"))
-            .filter { it.split(KEY_SEP).size == 4 }
-            .forEach { key ->
-              require(sessionId == key.split(KEY_SEP)[2])
-              //println("$key ${redis.get(key)}")
+                SessionChallengeInfo
+                  .upsert(conflictIndex = sessionChallengeIfoIndex) { row ->
+                    row[sessionRef] = sessionDbmsId
+                    row[md5] = key.split(KEY_SEP)[3]
+                    row[updated] = DateTime.now(UTC)
+                    row[answersJson] = gson.toJson(redis.hgetAll(key))
+                  }
+              }
 
-              SessionAnswerHistory
+            // md5 has names and invocation in it
+            redis.scanKeys(keyOf(ANSWER_HISTORY_KEY, NO_AUTH_KEY, sessionId, "*"))
+              .filter { it.split(KEY_SEP).size == 4 }
+              .forEach { key ->
+                require(sessionId == key.split(KEY_SEP)[2])
+                //println("$key ${redis.get(key)}")
+
+                SessionAnswerHistory
+                  .insertAndGetId { row ->
+                    val history = gson.fromJson(redis[key], ChallengeHistory::class.java)
+                    row[sessionRef] = sessionDbmsId
+                    row[md5] = key.split(KEY_SEP)[3]
+                    row[invocation] = history.invocation.value
+                    row[correct] = history.correct
+                    row[incorrectAttempts] = history.incorrectAttempts
+                    row[historyJson] = gson.toJson(history.answers)
+                  }
+              }
+          }
+      }
+
+      transaction {
+        addLogger(KotlinLoggingSqlLogger)
+        val userMap = mutableMapOf<String, Long>()
+
+        // Preload all users and stick ids in map.
+        redis.scanKeys(keyOf(USER_INFO_KEY, "*"))
+          .filter { (redis.hget(it, NAME_FIELD) ?: "").isNotBlank() }
+          .forEach { ukey ->
+            val userId = ukey.split(KEY_SEP)[1]
+            val user = userId.toUser(redis, null)
+            val id =
+              Users
                 .insertAndGetId { row ->
-                  val history = gson.fromJson(redis[key], ChallengeHistory::class.java)
-                  row[sessionRef] = sessionDbmsId
-                  row[md5] = key.split(KEY_SEP)[3]
-                  row[invocation] = history.invocation.value
-                  row[correct] = history.correct
-                  row[incorrectAttempts] = history.incorrectAttempts
-                  row[historyJson] = gson.toJson(history.answers)
-                }
-            }
-        }
-        .toList()
+                  row[Users.userId] = userId
+                  row[email] = user.email.value
+                  row[name] = user.fullName.value
+                  row[salt] = user.salt
+                  row[digest] = user.digest
+                  row[enrolledClassCode] = user.enrolledClassCode.value
+                  row[defaultLanguage] = defaultLanguageType.languageName.value
+                }.value
+            userMap[userId] = id
+            logger.info { "Created user id: $id for $userId" }
+          }
 
-      val userMap = mutableMapOf<String, Long>()
 
-      // Preload all users and stick ids in map.
-      redis.scanKeys(keyOf(USER_INFO_KEY, "*"))
-        .filter { (redis.hget(it, NAME_FIELD) ?: "").isNotBlank() }
-        .forEach { ukey ->
-          val userId = ukey.split(KEY_SEP)[1]
-          val user = userId.toUser(redis, null)
-          val id =
-            Users
-              .insertAndGetId { row ->
-                row[Users.userId] = userId
-                row[email] = user.email.value
-                row[name] = user.fullName.value
-                row[salt] = user.salt
-                row[digest] = user.digest
-                row[enrolledClassCode] = user.enrolledClassCode.value
-                row[defaultLanguage] = defaultLanguageType.languageName.value
-              }.value
-          userMap[userId] = id
-          logger.info { "Created user id: $id for $userId" }
-        }
+        redis.scanKeys(keyOf(USER_INFO_KEY, "*"))
+          .filter { (redis.hget(it, NAME_FIELD) ?: "").isNotBlank() }
+          .onEach { ukey ->
+            val userId = ukey.split(KEY_SEP)[1]
+            val user = userId.toUser(redis, null)
+            logger.info { "Fetched user ${userMap[userId]} ${user.email} for $userId" }
 
-      redis.scanKeys(keyOf(USER_INFO_KEY, "*"))
-        .filter { (redis.hget(it, NAME_FIELD) ?: "").isNotBlank() }
-        .onEach { ukey ->
-          val userId = ukey.split(KEY_SEP)[1]
-          val user = userId.toUser(redis, null)
-          logger.info { "Fetched user ${userMap[userId]} ${user.email} for $userId" }
+            redis.scanKeys(user.userClassesKey)
+              .forEach { key ->
+                require(userId == key.split(KEY_SEP)[1])
+                //println("ClassCodes: $key ${redis.smembers(user.userClassesKey)}")
 
-          redis.scanKeys(user.userClassesKey)
-            .forEach { key ->
-              require(userId == key.split(KEY_SEP)[1])
-              //println("ClassCodes: $key ${redis.smembers(user.userClassesKey)}")
-
-              redis.smembers(user.userClassesKey)
-                .map { ClassCode(it) }
-                .forEach { classCode ->
-                  logger.info { "Inserting Classes ${userMap[userId]} ${user.email} ${classCode.value}" }
-                  val classCodeId =
-                    Classes
-                      .insertAndGetId { row ->
-                        row[userRef] = userMap[userId] ?: throw InvalidConfigurationException("Invalid user id $userId")
-                        row[Classes.classCode] = classCode.value
-                        row[description] = classCode.fetchClassDesc(redis)
-                      }.value
-
-                  redis.smembers(classCode.classCodeEnrollmentKey)
-                    .filter { it.isNotBlank() }
-                    .forEach { enrolleeId ->
-                      Enrollees
-                        .insert { row ->
-                          row[classesRef] = classCodeId
+                redis.smembers(user.userClassesKey)
+                  .map { ClassCode(it) }
+                  .forEach { classCode ->
+                    logger.info { "Inserting Classes ${userMap[userId]} ${user.email} ${classCode.value}" }
+                    val classCodeId =
+                      Classes
+                        .insertAndGetId { row ->
                           row[userRef] =
-                            userMap[enrolleeId] ?: throw InvalidConfigurationException("Invalid user id $enrolleeId")
-                        }
-                    }
-                }
-            }
+                            userMap[userId] ?: throw InvalidConfigurationException("Invalid user id $userId")
+                          row[Classes.classCode] = classCode.value
+                          row[description] = classCode.fetchClassDesc(redis)
+                        }.value
 
-          redis.scanKeys(user.userInfoBrowserQueryKey)
-            .map { it.split(KEY_SEP)[2] }
-            .filter { it != "unassigned" }
-            .forEach { sessionId ->
-              val browserUser = userId.toUser(redis, BrowserSession(sessionId))
-              val activeClassCode = fetchActiveClassCode(browserUser, redis)
-              val previousClassCode = fetchPreviousTeacherClassCode(browserUser, redis)
-              //println("$key $browser_sessions_id ${redis.hgetAll(user2.browserSpecificUserInfoKey)} $activeClassCode $previousClassCode")
+                    redis.smembers(classCode.classCodeEnrollmentKey)
+                      .filter { it.isNotBlank() }
+                      .forEach { enrolleeId ->
+                        Enrollees
+                          .insert { row ->
+                            row[classesRef] = classCodeId
+                            row[userRef] =
+                              userMap[enrolleeId] ?: throw InvalidConfigurationException("Invalid user id $enrolleeId")
+                          }
+                      }
+                  }
+              }
 
-              UserSessions
-                .upsert(conflictIndex = userSessionIndex) { row ->
-                  row[sessionRef] =
-                    sessionMap[sessionId] ?: throw InvalidConfigurationException("Invalid session id $sessionId")
-                  row[userRef] = userMap[userId] ?: throw InvalidConfigurationException("Invalid user id $userId")
-                  row[UserSessions.activeClassCode] = activeClassCode.value
-                  row[previousTeacherClassCode] = previousClassCode.value
-                }
-            }
+            redis.scanKeys(user.userInfoBrowserQueryKey)
+              .map { it.split(KEY_SEP)[2] }
+              .filter { it != "unassigned" }
+              .forEach { sessionId ->
+                val browserUser = userId.toUser(redis, BrowserSession(sessionId))
+                val activeClassCode = fetchActiveClassCode(browserUser, redis)
+                val previousClassCode = fetchPreviousTeacherClassCode(browserUser, redis)
+                //println("$key $browser_sessions_id ${redis.hgetAll(user2.browserSpecificUserInfoKey)} $activeClassCode $previousClassCode")
 
-          redis.scanKeys(keyOf(CORRECT_ANSWERS_KEY, AUTH_KEY, userId, "*"))
-            .filter { it.split(KEY_SEP).size == 4 }
-            .forEach { key ->
-              require(userId == key.split(KEY_SEP)[2])
-              //println("$key userId ${redis[key]}")
+                UserSessions
+                  .upsert(conflictIndex = userSessionIndex) { row ->
+                    row[sessionRef] =
+                      sessionMap[sessionId]
+                        ?: throw InvalidConfigurationException("Invalid session id $sessionId $sessionMap")
+                    row[userRef] = userMap[userId] ?: throw InvalidConfigurationException("Invalid user id $userId")
+                    row[UserSessions.activeClassCode] = activeClassCode.value
+                    row[previousTeacherClassCode] = previousClassCode.value
+                  }
+              }
 
-              UserChallengeInfo
-                .upsert(conflictIndex = userChallengeInfoIndex) { row ->
-                  row[userRef] = userMap[userId] ?: throw InvalidConfigurationException("Invalid user id $userId")
-                  row[md5] = key.split(KEY_SEP)[3]
-                  row[updated] = DateTime.now(UTC)
-                  row[allCorrect] = redis[key].toBoolean()
-                }
-            }
+            redis.scanKeys(keyOf(CORRECT_ANSWERS_KEY, AUTH_KEY, userId, "*"))
+              .filter { it.split(KEY_SEP).size == 4 }
+              .forEach { key ->
+                require(userId == key.split(KEY_SEP)[2])
+                //println("$key userId ${redis[key]}")
 
-          redis.scanKeys(keyOf(LIKE_DISLIKE_KEY, AUTH_KEY, userId, "*"))
-            .filter { it.split(KEY_SEP).size == 4 }
-            .forEach { key ->
-              require(userId == key.split(KEY_SEP)[2])
-              //println("$key userId ${redis[key]}")
+                UserChallengeInfo
+                  .upsert(conflictIndex = userChallengeInfoIndex) { row ->
+                    row[userRef] = userMap[userId] ?: throw InvalidConfigurationException("Invalid user id $userId")
+                    row[md5] = key.split(KEY_SEP)[3]
+                    row[updated] = DateTime.now(UTC)
+                    row[allCorrect] = redis[key].toBoolean()
+                  }
+              }
 
-              UserChallengeInfo
-                .upsert(conflictIndex = userChallengeInfoIndex) { row ->
-                  row[userRef] = userMap[userId] ?: throw InvalidConfigurationException("Invalid user id $userId")
-                  row[md5] = key.split(KEY_SEP)[3]
-                  row[updated] = DateTime.now(UTC)
-                  row[likeDislike] = redis[key].toShort()
-                }
-            }
+            redis.scanKeys(keyOf(LIKE_DISLIKE_KEY, AUTH_KEY, userId, "*"))
+              .filter { it.split(KEY_SEP).size == 4 }
+              .forEach { key ->
+                require(userId == key.split(KEY_SEP)[2])
+                //println("$key userId ${redis[key]}")
 
-          redis.scanKeys(keyOf(CHALLENGE_ANSWERS_KEY, AUTH_KEY, userId, "*"))
-            .filter { it.split(KEY_SEP).size == 4 }
-            .forEach { key ->
-              require(userId == key.split(KEY_SEP)[2])
-              //println("$key ${redis.hgetAll(key)}")
+                UserChallengeInfo
+                  .upsert(conflictIndex = userChallengeInfoIndex) { row ->
+                    row[userRef] = userMap[userId] ?: throw InvalidConfigurationException("Invalid user id $userId")
+                    row[md5] = key.split(KEY_SEP)[3]
+                    row[updated] = DateTime.now(UTC)
+                    row[likeDislike] = redis[key].toShort()
+                  }
+              }
 
-              UserChallengeInfo
-                .upsert(conflictIndex = userChallengeInfoIndex) { row ->
-                  row[userRef] = userMap[userId] ?: throw InvalidConfigurationException("Invalid user id $userId")
-                  row[md5] = key.split(KEY_SEP)[3]
-                  row[updated] = DateTime.now(UTC)
-                  row[answersJson] = gson.toJson(redis.hgetAll(key))
-                }
-            }
+            redis.scanKeys(keyOf(CHALLENGE_ANSWERS_KEY, AUTH_KEY, userId, "*"))
+              .filter { it.split(KEY_SEP).size == 4 }
+              .forEach { key ->
+                require(userId == key.split(KEY_SEP)[2])
+                //println("$key ${redis.hgetAll(key)}")
 
-          // md5 has names and invocation in it
-          redis.scanKeys(keyOf(ANSWER_HISTORY_KEY, AUTH_KEY, userId, "*"))
-            .filter { it.split(KEY_SEP).size == 4 }
-            .forEach { key ->
-              require(userId == key.split(KEY_SEP)[2])
-              //println("$key ${redis.get(key)}")
+                UserChallengeInfo
+                  .upsert(conflictIndex = userChallengeInfoIndex) { row ->
+                    row[userRef] = userMap[userId] ?: throw InvalidConfigurationException("Invalid user id $userId")
+                    row[md5] = key.split(KEY_SEP)[3]
+                    row[updated] = DateTime.now(UTC)
+                    row[answersJson] = gson.toJson(redis.hgetAll(key))
+                  }
+              }
 
-              UserAnswerHistory
-                .insertAndGetId { row ->
-                  val history = gson.fromJson(redis[key], ChallengeHistory::class.java)
-                  row[userRef] = userMap[userId] ?: throw InvalidConfigurationException("Invalid user id $userId")
-                  row[md5] = key.split(KEY_SEP)[3]
-                  row[invocation] = history.invocation.value
-                  row[correct] = history.correct
-                  row[incorrectAttempts] = history.incorrectAttempts
-                  row[historyJson] = gson.toJson(history.answers)
-                }
-            }
-        }
-        .forEach {
-          println("$it  ${redis.hget(it, NAME_FIELD)} ${redis.hget(it, EMAIL_FIELD)}")
-        }
+            // md5 has names and invocation in it
+            redis.scanKeys(keyOf(ANSWER_HISTORY_KEY, AUTH_KEY, userId, "*"))
+              .filter { it.split(KEY_SEP).size == 4 }
+              .forEach { key ->
+                require(userId == key.split(KEY_SEP)[2])
+                //println("$key ${redis.get(key)}")
+
+                UserAnswerHistory
+                  .insertAndGetId { row ->
+                    val history = gson.fromJson(redis[key], ChallengeHistory::class.java)
+                    row[userRef] = userMap[userId] ?: throw InvalidConfigurationException("Invalid user id $userId")
+                    row[md5] = key.split(KEY_SEP)[3]
+                    row[invocation] = history.invocation.value
+                    row[correct] = history.correct
+                    row[incorrectAttempts] = history.incorrectAttempts
+                    row[historyJson] = gson.toJson(history.answers)
+                  }
+              }
+          }
+          .forEach {
+            println("$it  ${redis.hget(it, NAME_FIELD)} ${redis.hget(it, EMAIL_FIELD)}")
+          }
+      }
     }
   }
 }

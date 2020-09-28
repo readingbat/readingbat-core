@@ -130,8 +130,6 @@ internal class User private constructor(val userId: String,
   private val userInfoBrowserKey by lazy { keyOf(USER_INFO_BROWSER_KEY, userId, browserSession?.id ?: UNASSIGNED) }
   val userInfoBrowserQueryKey by lazy { keyOf(USER_INFO_BROWSER_KEY, userId, "*") }
 
-  val allUserInfoBrowserQueryKey by lazy { keyOf(USER_INFO_BROWSER_KEY, "*", "*") }
-
   private val browserSpecificUserInfoKey by lazy {
     if (browserSession.isNotNull()) userInfoBrowserKey else throw InvalidConfigurationException("Null browser session for $this")
   }
@@ -166,9 +164,9 @@ internal class User private constructor(val userId: String,
       usePostgres ->
         transaction {
           UserSessions
-            .slice(UserSessions.id.count())
+            .slice(Count(UserSessions.id))
             .select { (UserSessions.userRef eq userDbmsId) and (UserSessions.activeClassCode eq classCode.value) }
-            .map { it[UserSessions.id.count()].toInt() }
+            .map { it[0] as Long }
             .first() > 0
         }
       else ->
@@ -183,7 +181,7 @@ internal class User private constructor(val userId: String,
         UserChallengeInfo
           .slice(UserChallengeInfo.allCorrect)
           .select { (UserChallengeInfo.userRef eq userDbmsId) and UserChallengeInfo.allCorrect }
-          .map { it.toString() }
+          .map { (it[0] as Boolean).toString() }
       }
     else
       redis.scanKeys(correctAnswersKey(ANY_LANGUAGE, ANY_GROUP, ANY_CHALLENGE))
@@ -212,9 +210,9 @@ internal class User private constructor(val userId: String,
     if (usePostgres)
       transaction {
         Classes
-          .slice(Classes.classCode.count())
+          .slice(Count(Classes.classCode))
           .select { Classes.userRef eq userDbmsId }
-          .map { it[Classes.classCode.count()].toInt() }
+          .map { it[0] as Long }
           .first().also { logger.info { "classCount() returned $it" } }
       }
     else
@@ -243,7 +241,7 @@ internal class User private constructor(val userId: String,
         Classes
           .slice(Classes.classCode)
           .select { Classes.userRef eq userDbmsId }
-          .map { ClassCode(it[Classes.classCode]) }
+          .map { ClassCode(it[0] as String) }
       }
     else
       redis.smembers(userClassesKey).map { ClassCode(it) }
@@ -251,9 +249,9 @@ internal class User private constructor(val userId: String,
   fun isInDbms(redis: Jedis) =
     if (usePostgres)
       transaction {
-        Users.slice(Users.id.count())
+        Users.slice(Count(Users.id))
           .select { Users.id eq userDbmsId }
-          .map { it[Users.id.count()].toInt() }
+          .map { it[0] as Long }
           .first() > 0
       }
     else
@@ -291,7 +289,7 @@ internal class User private constructor(val userId: String,
         UserChallengeInfo
           .slice(UserChallengeInfo.md5)
           .select { UserChallengeInfo.userRef eq userDbmsId }
-          .map { it[UserChallengeInfo.md5] }.also { logger.info { "challenges() return ${it.size}" } }
+          .map { it[0] as String }.also { logger.info { "challenges() return ${it.size}" } }
       }
     else
       redis.scanKeys(challengeAnswersKey(ANY_LANGUAGE, ANY_GROUP, ANY_CHALLENGE))
@@ -304,7 +302,7 @@ internal class User private constructor(val userId: String,
         UserAnswerHistory
           .slice(UserAnswerHistory.md5)
           .select { UserAnswerHistory.userRef eq userDbmsId }
-          .map { it[UserAnswerHistory.md5] }.also { logger.info { "invocations() return ${it.size}" } }
+          .map { it[0] as String }.also { logger.info { "invocations() return ${it.size}" } }
       }
     else
       redis.scanKeys(answerHistoryKey(ANY_LANGUAGE, ANY_GROUP, ANY_CHALLENGE, ANY_INVOCATION))
@@ -364,9 +362,9 @@ internal class User private constructor(val userId: String,
 
   fun historyExists(md5: String, invocation: Invocation) =
     UserAnswerHistory
-      .slice(UserAnswerHistory.id.count())
+      .slice(Count(UserAnswerHistory.id))
       .select { (UserAnswerHistory.userRef eq userDbmsId) and (UserAnswerHistory.md5 eq md5) and (UserAnswerHistory.invocation eq invocation.value) }
-      .map { it[UserAnswerHistory.id.count()].toInt() }
+      .map { it[0] as Long }
       .first() > 0
 
   fun answerHistory(md5: String, invocation: Invocation) =
@@ -430,9 +428,9 @@ internal class User private constructor(val userId: String,
     if (usePostgres)
       transaction {
         Enrollees
-          .slice(Enrollees.id.count())
+          .slice(Count(Enrollees.id))
           .select { Enrollees.userRef eq userDbmsId }
-          .map { it[Enrollees.id.count()].toInt() }
+          .map { it[0] as Long }
           .first().also { logger.info { "isEnrolled() returned $it for $classCode" } } > 0
       }
     else
@@ -532,10 +530,10 @@ internal class User private constructor(val userId: String,
     if (usePostgres)
       transaction {
         Classes
-          .slice(Classes.id.count())
+          .slice(Count(Classes.id))
           .select { Classes.description eq classDesc }
-          .map { it[Classes.id.count()].toInt() }
-          .first() == 0
+          .map { it[0] as Long }
+          .first() == 0L
       }
     else
       redis.smembers(userClassesKey)
@@ -550,7 +548,7 @@ internal class User private constructor(val userId: String,
         PasswordResets
           .slice(PasswordResets.resetId)
           .select { PasswordResets.userRef eq userDbmsId }
-          .map { it[PasswordResets.resetId] }.also { logger.info { "userPasswordResetId() returned $it" } }
+          .map { it[0] as String }.also { logger.info { "userPasswordResetId() returned $it" } }
           .map { ResetId(it) }
           .firstOrNull() ?: EMPTY_RESET_ID
       }
@@ -569,9 +567,9 @@ internal class User private constructor(val userId: String,
     if (usePostgres)
       transaction {
         PasswordResets
-          .insert { row ->
-            row[updated] = DateTime.now(UTC)
+          .upsert(conflictIndex = passwordResetsIndex) { row ->
             row[userRef] = userDbmsId
+            row[updated] = DateTime.now(UTC)
             row[resetId] = newResetId.value
             row[PasswordResets.email] = email.value
           }
@@ -753,7 +751,7 @@ internal class User private constructor(val userId: String,
               UserSessions
                 .slice(UserSessions.activeClassCode)
                 .select { (UserSessions.sessionRef eq user.sessionDbmsId()) and (UserSessions.userRef eq user.userDbmsId) }
-                .map { it[UserSessions.activeClassCode] }
+                .map { it[0] as String }
                 .firstOrNull()?.let { ClassCode(it) } ?: DISABLED_CLASS_CODE
             }
           else
@@ -771,7 +769,7 @@ internal class User private constructor(val userId: String,
               UserSessions
                 .slice(UserSessions.previousTeacherClassCode)
                 .select { (UserSessions.sessionRef eq user.sessionDbmsId()) and (UserSessions.userRef eq user.userDbmsId) }
-                .map { it[UserSessions.previousTeacherClassCode] }
+                .map { it[0] as String }
                 .firstOrNull()?.let { ClassCode(it) } ?: DISABLED_CLASS_CODE
             }
           else
@@ -862,7 +860,7 @@ internal class User private constructor(val userId: String,
           Users
             .slice(Users.userId)
             .select { Users.email eq email.value }
-            .map { it[Users.userId].toUser(redis, null) }
+            .map { (it[0] as String).toUser(redis, null) }
             .firstOrNull().also { logger.info { "lookupUserByEmail() returned ${it?.fullName ?: "email not found"}" } }
         }
       else {

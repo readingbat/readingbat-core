@@ -56,6 +56,7 @@ import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ReadingBatServer.usePostgres
 import com.github.readingbat.server.ServerUtils.queryParam
 import com.github.readingbat.server.ServerUtils.rows
+import com.github.readingbat.server.get
 import io.ktor.application.*
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
@@ -76,7 +77,7 @@ internal object ChallengeGroupPage : KLogging() {
             UserChallengeInfo
               .slice(UserChallengeInfo.allCorrect)
               .select { (UserChallengeInfo.userRef eq user.userDbmsId) and (UserChallengeInfo.md5 eq challengeMd5) }
-              .map { it[UserChallengeInfo.allCorrect] }
+              .map { it[0] as Boolean }
               .firstOrNull() ?: false
           }
         browserSession.isNotNull() ->
@@ -84,7 +85,7 @@ internal object ChallengeGroupPage : KLogging() {
             SessionChallengeInfo
               .slice(SessionChallengeInfo.allCorrect)
               .select { (SessionChallengeInfo.sessionRef eq browserSession.sessionDbmsId()) and (SessionChallengeInfo.md5 eq challengeMd5) }
-              .map { it[SessionChallengeInfo.allCorrect] }
+              .map { it[0] as Boolean }
               .firstOrNull() ?: false
           }
         else -> false

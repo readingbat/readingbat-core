@@ -29,6 +29,7 @@ import com.github.readingbat.common.KeyConstants.TEACHER_FIELD
 import com.github.readingbat.common.User.Companion.toUser
 import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.server.ReadingBatServer.usePostgres
+import com.github.readingbat.server.get
 import io.ktor.http.*
 import mu.KLogging
 import org.jetbrains.exposed.sql.*
@@ -66,9 +67,9 @@ internal data class ClassCode(val value: String) {
     if (usePostgres)
       transaction {
         Classes
-          .slice(Classes.classCode.count())
+          .slice(Count(Classes.classCode))
           .select { Classes.classCode eq value }
-          .map { it[Classes.classCode.count()].toInt() }
+          .map { it[0] as Long }
           .first().also { logger.info { "ClassCode.isValid() returned $it for $value" } } > 0
       }
     else
@@ -83,12 +84,12 @@ internal data class ClassCode(val value: String) {
           (Classes innerJoin Enrollees)
             .slice(Enrollees.userRef)
             .select { (Classes.classCode eq value) and (Enrollees.classesRef eq Classes.id) }
-            .map { it[Enrollees.userRef].toLong() }
+            .map { it[0] as Long }
 
         Users
           .slice(Users.userId)
           .select { Users.id inList userIds }
-          .map { it[Users.userId].toUser(redis, null) }
+          .map { (it[0] as String).toUser(redis, null) }
           .also { logger.info { "fetchEnrollees() returning $it" } }
       }
     else {
@@ -157,7 +158,7 @@ internal data class ClassCode(val value: String) {
         (Classes
           .slice(Classes.description)
           .select { Classes.classCode eq value }
-          .map { it[Classes.description] }
+          .map { it[0] as String }
           .firstOrNull() ?: "Missing description")
           .also { logger.info { "fetchClassDesc() returned ${it.toDoubleQuoted()} for $value" } }
       }
@@ -177,7 +178,7 @@ internal data class ClassCode(val value: String) {
         ((Classes innerJoin Users)
           .slice(Users.userId)
           .select { (Classes.classCode eq value) and (Classes.userRef eq Users.id) }
-          .map { it[Users.userId] }
+          .map { it[0] as String }
           .firstOrNull() ?: "").also { logger.info { "fetchClassTeacherId() returned $it" } }
       }
     else

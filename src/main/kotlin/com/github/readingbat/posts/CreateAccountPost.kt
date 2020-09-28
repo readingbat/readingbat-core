@@ -43,7 +43,7 @@ import io.ktor.application.*
 import io.ktor.request.*
 import io.ktor.sessions.*
 import mu.KLogging
-import org.jetbrains.exposed.sql.count
+import org.jetbrains.exposed.sql.Count
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
 import redis.clients.jedis.Jedis
@@ -101,9 +101,9 @@ internal object CreateAccountPost : KLogging() {
     if (usePostgres)
       transaction {
         Users
-          .slice(Users.id.count())
+          .slice(Count(Users.id))
           .select { Users.email eq email.value }
-          .map { it[Users.id.count()] }
+          .map { it[0] as Long }
           .first() > 0
       }
     else

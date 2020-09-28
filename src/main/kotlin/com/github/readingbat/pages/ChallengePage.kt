@@ -90,6 +90,7 @@ import com.github.readingbat.server.ChallengeMd5
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ReadingBatServer.usePostgres
 import com.github.readingbat.server.ServerUtils.queryParam
+import com.github.readingbat.server.get
 import io.ktor.application.*
 import io.ktor.http.ContentType.Text.CSS
 import kotlinx.html.*
@@ -653,7 +654,7 @@ internal object ChallengePage : KLogging() {
               UserChallengeInfo
                 .slice(UserChallengeInfo.answersJson)
                 .select { (UserChallengeInfo.userRef eq user.userDbmsId) and (UserChallengeInfo.md5 eq challengeMd5) }
-                .map { it[UserChallengeInfo.answersJson] }
+                .map { it[0] as String }
                 .firstOrNull()
                 ?.let { gson.fromJson(it, Map::class.java) as Map<String, String> }
                 ?: emptyMap
@@ -663,7 +664,7 @@ internal object ChallengePage : KLogging() {
               SessionChallengeInfo
                 .slice(SessionChallengeInfo.answersJson)
                 .select { (SessionChallengeInfo.sessionRef eq browserSession.sessionDbmsId()) and (SessionChallengeInfo.md5 eq challengeMd5) }
-                .map { it[SessionChallengeInfo.answersJson] }
+                .map { it[0] as String }
                 .firstOrNull()
                 ?.let { gson.fromJson(it, Map::class.java) as Map<String, String> }
                 ?: emptyMap

@@ -112,5 +112,6 @@ CREATE TABLE password_resets
     updated  TIMESTAMP DEFAULT NOW(),
     user_ref INTEGER REFERENCES users ON DELETE CASCADE UNIQUE,
     reset_id TEXT NOT NULL UNIQUE,
-    email    TEXT NOT NULL
+    email    TEXT NOT NULL,
+    CONSTRAINT password_resets_unique unique (user_ref)
 );

@@ -38,6 +38,12 @@ import io.ktor.util.pipeline.*
 import io.ktor.websocket.*
 import kotlinx.coroutines.runBlocking
 import mu.KLogging
+import org.jetbrains.exposed.sql.Function
+import org.jetbrains.exposed.sql.IColumnType
+import org.jetbrains.exposed.sql.QueryBuilder
+import org.jetbrains.exposed.sql.ResultRow
+import org.jetbrains.exposed.sql.jodatime.DateColumnType
+import org.joda.time.DateTime
 import redis.clients.jedis.Jedis
 
 typealias PipelineCall = PipelineContext<Unit, ApplicationCall>
@@ -129,6 +135,19 @@ internal object ServerUtils : KLogging() {
       .firstOrNull() ?: throw InvalidConfigurationException("Missing non-empty language")
 
   fun Int.rows(cols: Int) = if (this % cols == 0) this / cols else (this / cols) + 1
+
 }
+
+fun CustomDateTimeConstant(functionName: String) = CustomConstant<DateTime?>(functionName, DateColumnType(true))
+
+open class CustomConstant<T>(val functionName: String, _columnType: IColumnType) : Function<T>(_columnType) {
+  override fun toQueryBuilder(queryBuilder: QueryBuilder): Unit =
+    queryBuilder {
+      append(functionName)
+    }
+}
+
+operator fun ResultRow.get(index: Int) = fieldIndex.filter { it.value == index }.map { this.get(it.key) }.firstOrNull()
+  ?: throw IllegalArgumentException("No value at index $index")
 
 class RedirectException(val redirectUrl: String) : Exception()

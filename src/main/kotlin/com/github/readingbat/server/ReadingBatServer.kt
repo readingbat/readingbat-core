@@ -19,7 +19,6 @@ package com.github.readingbat.server
 
 import com.github.pambrose.common.redis.RedisUtils
 import com.github.pambrose.common.util.*
-import com.github.pambrose.common.util.Version
 import com.github.pambrose.common.util.Version.Companion.versionDesc
 import com.github.readingbat.common.CommonUtils.maskUrl
 import com.github.readingbat.common.Constants.REDIS_IS_DOWN
@@ -79,9 +78,9 @@ object ReadingBatServer : KLogging() {
         HikariConfig()
           .apply {
             driverClassName = DBMS_DRIVER_CLASSNAME.getRequiredProperty()
-            jdbcUrl = POSTGRES_URL.getEnvOrNull() ?: DBMS_URL.getRequiredProperty()
-            username = POSTGRES_USERNAME.getEnvOrNull() ?: DBMS_USERNAME.getRequiredProperty()
-            password = POSTGRES_PASSWORD.getEnvOrNull() ?: DBMS_PASSWORD.getRequiredProperty()
+            jdbcUrl = POSTGRES_URL.getEnv(DBMS_URL.getRequiredProperty())
+            username = POSTGRES_USERNAME.getEnv(DBMS_USERNAME.getRequiredProperty())
+            password = POSTGRES_PASSWORD.getEnv(DBMS_PASSWORD.getRequiredProperty())
             maximumPoolSize = DBMS_MAX_POOL_SIZE.getRequiredProperty().toInt()
             isAutoCommit = false
             transactionIsolation = "TRANSACTION_REPEATABLE_READ"
