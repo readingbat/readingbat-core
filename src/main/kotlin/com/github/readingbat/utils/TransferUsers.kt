@@ -115,7 +115,6 @@ internal object TransferUsers : KLogging() {
               .filter { it.split(KEY_SEP).size == 4 }
               .forEach { key ->
                 require(sessionId == key.split(KEY_SEP)[2])
-                //println("$key userId ${redis[key]}")
 
                 SessionChallengeInfo
                   .upsert(conflictIndex = sessionChallengeIfoIndex) { row ->
