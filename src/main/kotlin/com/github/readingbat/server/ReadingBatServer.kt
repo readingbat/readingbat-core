@@ -18,8 +18,12 @@
 package com.github.readingbat.server
 
 import com.github.pambrose.common.redis.RedisUtils
-import com.github.pambrose.common.util.*
+import com.github.pambrose.common.util.FileSource
+import com.github.pambrose.common.util.Version
 import com.github.pambrose.common.util.Version.Companion.versionDesc
+import com.github.pambrose.common.util.getBanner
+import com.github.pambrose.common.util.isNotNull
+import com.github.pambrose.common.util.isNull
 import com.github.readingbat.common.CommonUtils.maskUrl
 import com.github.readingbat.common.Constants.REDIS_IS_DOWN
 import com.github.readingbat.common.Constants.UNASSIGNED

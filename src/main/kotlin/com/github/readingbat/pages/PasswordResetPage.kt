@@ -50,7 +50,12 @@ import kotlinx.html.stream.createHTML
 import mu.KLogging
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.joda.time.DateTime
+import org.joda.time.DateTime.now
+import org.joda.time.Seconds
 import redis.clients.jedis.Jedis
+import kotlin.time.minutes
+import kotlin.time.seconds
 
 internal object PasswordResetPage : KLogging() {
 
@@ -68,18 +73,20 @@ internal object PasswordResetPage : KLogging() {
         val email =
           if (usePostgres)
             transaction {
-              PasswordResets
-                .slice(PasswordResets.email,
-                       PasswordResets.updated,
-                       CustomDateTimeConstant("NOW() - INTERVAL '2 minute'"))
-                .select {
-                  (PasswordResets.resetId eq resetId.value) /*and (PasswordResets.updated greater CustomDateTimeConstant("NOW() - INTERVAL '2 minute'"))*/
+              val idAndUpdate =
+                PasswordResets
+                  .slice(PasswordResets.email, PasswordResets.updated)
+                  .select { PasswordResets.resetId eq resetId.value }
+                  .map { it[0] as String to it[1] as DateTime }
+                  .firstOrNull() ?: throw ResetPasswordException("Invalid reset id. Try again.")
+
+              Seconds.secondsBetween(idAndUpdate.second, now()).seconds.seconds
+                .let { diff ->
+                  if (diff >= 15.minutes)
+                    throw ResetPasswordException("Password reset must be completed within 15 mins ($diff). Try again.")
+                  else
+                    idAndUpdate.first
                 }
-                .onEach {
-                  logger.info { "${it[1]} and ${it[2]}" }
-                }
-                .map { it[0] as String }
-                .firstOrNull() ?: throw ResetPasswordException("Time expired or Invalid reset id. Try again.")
             }
           else {
             val passwordResetKey = resetId.passwordResetKey
