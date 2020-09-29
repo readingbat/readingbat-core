@@ -21,8 +21,6 @@ import com.github.pambrose.common.util.simpleClassName
 import com.github.readingbat.common.PasswordResets
 import com.github.readingbat.server.CustomDateTimeConstant
 import com.github.readingbat.server.get
-import com.zaxxer.hikari.HikariConfig
-import com.zaxxer.hikari.HikariDataSource
 import org.jetbrains.exposed.dao.IntEntity
 import org.jetbrains.exposed.dao.IntEntityClass
 import org.jetbrains.exposed.dao.UUIDEntity
@@ -31,7 +29,6 @@ import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.dao.id.IntIdTable
 import org.jetbrains.exposed.dao.id.LongIdTable
 import org.jetbrains.exposed.dao.id.UUIDTable
-import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.StdOutSqlLogger
 import org.jetbrains.exposed.sql.addLogger
 import org.jetbrains.exposed.sql.jodatime.CurrentDateTime
@@ -83,20 +80,6 @@ class City(id: EntityID<Int>) : IntEntity(id) {
   companion object : IntEntityClass<City>(Cities)
 }
 
-internal fun hikari() =
-  HikariDataSource(
-    HikariConfig()
-      .apply {
-        driverClassName = "com.impossibl.postgres.jdbc.PGDriver"
-        jdbcUrl = "jdbc:pgsql://localhost:5432/readingbat"
-        username = "postgres"
-        password = "docker"
-        maximumPoolSize = 5
-        isAutoCommit = false
-        transactionIsolation = "TRANSACTION_REPEATABLE_READ"
-        validate()
-      })
-
 /*
 abstract class Function<T>(override val columnType: IColumnType)
    : ExpressionWithColumnType<T>()
@@ -118,7 +101,7 @@ fun main() {
                    user = "postgres", password = "docker")
    */
 
-  Database.connect(hikari())
+  //Database.connect(hikari())
 
   transaction {
     // print sql to std-out

@@ -32,7 +32,11 @@ import com.github.readingbat.server.ReadingBatServer.usePostgres
 import com.github.readingbat.server.get
 import io.ktor.http.*
 import mu.KLogging
-import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.Count
+import org.jetbrains.exposed.sql.and
+import org.jetbrains.exposed.sql.deleteWhere
+import org.jetbrains.exposed.sql.insert
+import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
 import redis.clients.jedis.Jedis
 import redis.clients.jedis.Transaction
@@ -83,7 +87,7 @@ internal data class ClassCode(val value: String) {
         val userIds =
           (Classes innerJoin Enrollees)
             .slice(Enrollees.userRef)
-            .select { (Classes.classCode eq value) and (Enrollees.classesRef eq Classes.id) }
+            .select { Classes.classCode eq value }
             .map { it[0] as Long }
 
         Users
@@ -177,7 +181,7 @@ internal data class ClassCode(val value: String) {
       transaction {
         ((Classes innerJoin Users)
           .slice(Users.userId)
-          .select { (Classes.classCode eq value) and (Classes.userRef eq Users.id) }
+          .select { Classes.classCode eq value }
           .map { it[0] as String }
           .firstOrNull() ?: "").also { logger.info { "fetchClassTeacherId() returned $it" } }
       }

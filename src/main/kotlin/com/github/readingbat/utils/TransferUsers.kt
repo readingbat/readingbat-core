@@ -40,12 +40,20 @@ import com.github.readingbat.common.User.Companion.toUser
 import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.LanguageType.Companion.defaultLanguageType
 import com.github.readingbat.posts.ChallengeHistory
+import com.github.readingbat.server.KotlinLoggingSqlLogger
 import com.github.readingbat.server.ReadingBatServer.usePostgres
+import com.zaxxer.hikari.HikariConfig
+import com.zaxxer.hikari.HikariDataSource
 import mu.KLogging
-import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.Column
+import org.jetbrains.exposed.sql.Database
+import org.jetbrains.exposed.sql.Index
+import org.jetbrains.exposed.sql.Table
+import org.jetbrains.exposed.sql.Transaction
+import org.jetbrains.exposed.sql.addLogger
+import org.jetbrains.exposed.sql.insert
+import org.jetbrains.exposed.sql.insertAndGetId
 import org.jetbrains.exposed.sql.statements.InsertStatement
-import org.jetbrains.exposed.sql.statements.StatementContext
-import org.jetbrains.exposed.sql.statements.expandArgs
 import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.joda.time.DateTime
@@ -53,12 +61,19 @@ import org.joda.time.DateTimeZone.UTC
 
 internal object TransferUsers : KLogging() {
 
-  object KotlinLoggingSqlLogger : SqlLogger {
-    override
-    fun log(context: StatementContext, transaction: Transaction) {
-      logger.info { "SQL: ${context.expandArgs(transaction)}" }
-    }
-  }
+  internal fun hikari() =
+    HikariDataSource(
+      HikariConfig()
+        .apply {
+          driverClassName = "com.impossibl.postgres.jdbc.PGDriver"
+          jdbcUrl =
+            "jdbc:pgsql://readingbat-postgres-do-user-329986-0.b.db.ondigitalocean.com:25060/readingbat?ssl.mode=Require"
+          username = "readingbat"
+          maximumPoolSize = 10
+          isAutoCommit = false
+          transactionIsolation = "TRANSACTION_REPEATABLE_READ"
+          validate()
+        })
 
   @JvmStatic
   fun main(args: Array<String>) {
@@ -67,8 +82,7 @@ internal object TransferUsers : KLogging() {
 
     Database.connect(hikari())
 
-    //transform(RedisAdmin.local)
-    transform("rediss://default:rbgt9bzmgv4x024negg@readingbat-redis-do-user-329986-0.a.db.ondigitalocean.com:25061")
+    transform(RedisAdmin.local)
   }
 
   private fun transform(url: String) {
@@ -90,9 +104,13 @@ internal object TransferUsers : KLogging() {
           .filter { it != "unassigned" }
           .sorted()
           .distinct()
-          .onEach { sessionId ->
+          .forEach { sessionId ->
 
-            val sessionDbmsId = BrowserSessions.insertAndGetId { row -> row[session_id] = sessionId }.value
+            val sessionDbmsId =
+              BrowserSessions.insertAndGetId { row ->
+                logger.info { "Inserting browser session: $sessionId" }
+                row[session_id] = sessionId
+              }.value
 
             sessionMap[sessionId] = sessionDbmsId
 

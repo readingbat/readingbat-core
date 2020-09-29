@@ -149,10 +149,10 @@ internal class User private constructor(val userId: String,
   fun browserSessions(redis: Jedis) =
     if (usePostgres)
       transaction {
-        UserSessions
-          .slice(UserSessions.sessionRef)
+        (BrowserSessions innerJoin UserSessions)
+          .slice(BrowserSessions.session_id)
           .select { UserSessions.userRef eq userDbmsId }
-          .map { it[UserSessions.sessionRef].toString() }
+          .map { it[0] as String }
       }
     else
       redis.scanKeys(userInfoBrowserQueryKey).toList()

@@ -23,10 +23,21 @@ import com.github.pambrose.common.response.redirectTo
 import com.github.pambrose.common.response.respondWith
 import com.github.pambrose.common.util.Version.Companion.versionDesc
 import com.github.pambrose.common.util.isNotNull
-import com.github.readingbat.common.*
 import com.github.readingbat.common.Constants.UNKNOWN
+import com.github.readingbat.common.Metrics
+import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.toUser
-import com.github.readingbat.dsl.*
+import com.github.readingbat.common.UserPrincipal
+import com.github.readingbat.common.browserSession
+import com.github.readingbat.common.isNotAdminUser
+import com.github.readingbat.common.isNotValidUser
+import com.github.readingbat.common.userPrincipal
+import com.github.readingbat.dsl.InvalidConfigurationException
+import com.github.readingbat.dsl.InvalidRequestException
+import com.github.readingbat.dsl.LanguageType
+import com.github.readingbat.dsl.ReadingBatContent
+import com.github.readingbat.dsl.RedisUnavailableException
+import com.github.readingbat.dsl.isProduction
 import com.github.readingbat.server.ReadingBatServer.redisPool
 import io.ktor.application.*
 import io.ktor.auth.*
@@ -42,7 +53,11 @@ import org.jetbrains.exposed.sql.Function
 import org.jetbrains.exposed.sql.IColumnType
 import org.jetbrains.exposed.sql.QueryBuilder
 import org.jetbrains.exposed.sql.ResultRow
+import org.jetbrains.exposed.sql.SqlLogger
+import org.jetbrains.exposed.sql.Transaction
 import org.jetbrains.exposed.sql.jodatime.DateColumnType
+import org.jetbrains.exposed.sql.statements.StatementContext
+import org.jetbrains.exposed.sql.statements.expandArgs
 import org.joda.time.DateTime
 import redis.clients.jedis.Jedis
 
@@ -145,6 +160,13 @@ open class CustomConstant<T>(val functionName: String, _columnType: IColumnType)
     queryBuilder {
       append(functionName)
     }
+}
+
+object KotlinLoggingSqlLogger : SqlLogger {
+  override
+  fun log(context: StatementContext, transaction: Transaction) {
+    ReadingBatServer.logger.info { "SQL: ${context.expandArgs(transaction)}" }
+  }
 }
 
 operator fun ResultRow.get(index: Int) = fieldIndex.filter { it.value == index }.map { this.get(it.key) }.firstOrNull()
