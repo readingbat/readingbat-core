@@ -18,11 +18,12 @@
 package com.github.readingbat.posts
 
 import com.github.pambrose.common.util.encode
-import com.github.readingbat.common.*
+import com.github.readingbat.common.ClassCode
 import com.github.readingbat.common.ClassCode.Companion.DISABLED_CLASS_CODE
 import com.github.readingbat.common.ClassCode.Companion.getClassCode
 import com.github.readingbat.common.ClassCode.Companion.newClassCode
 import com.github.readingbat.common.Constants.MSG
+import com.github.readingbat.common.FormFields
 import com.github.readingbat.common.FormFields.CHOICE_SOURCE_PARAM
 import com.github.readingbat.common.FormFields.CLASS_CODE_CHOICE_PARAM
 import com.github.readingbat.common.FormFields.CLASS_CODE_NAME_PARAM
@@ -30,14 +31,19 @@ import com.github.readingbat.common.FormFields.CLASS_DESC_PARAM
 import com.github.readingbat.common.FormFields.CLASS_SUMMARY
 import com.github.readingbat.common.FormFields.CREATE_CLASS
 import com.github.readingbat.common.FormFields.DELETE_CLASS
+import com.github.readingbat.common.FormFields.MAKE_ACTIVE_CLASS
 import com.github.readingbat.common.FormFields.PREFS_ACTION_PARAM
 import com.github.readingbat.common.FormFields.REMOVE_FROM_CLASS
 import com.github.readingbat.common.FormFields.TEACHER_PREF
 import com.github.readingbat.common.FormFields.UPDATE_ACTIVE_CLASS
 import com.github.readingbat.common.FormFields.USER_ID_PARAM
+import com.github.readingbat.common.Message
+import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.fetchActiveClassCode
 import com.github.readingbat.common.User.Companion.fetchPreviousTeacherClassCode
 import com.github.readingbat.common.User.Companion.toUser
+import com.github.readingbat.common.browserSession
+import com.github.readingbat.common.isValidUser
 import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.pages.ClassSummaryPage.classSummaryPage
@@ -62,7 +68,8 @@ internal object TeacherPrefsPost : KLogging() {
       val parameters = call.receiveParameters()
       when (val action = parameters[PREFS_ACTION_PARAM] ?: "") {
         CREATE_CLASS -> createClass(content, user, parameters[CLASS_DESC_PARAM] ?: "", redis)
-        UPDATE_ACTIVE_CLASS -> {
+        UPDATE_ACTIVE_CLASS,
+        MAKE_ACTIVE_CLASS -> {
           val source = parameters[CHOICE_SOURCE_PARAM] ?: ""
           val classCode = parameters.getClassCode(CLASS_CODE_CHOICE_PARAM)
           val msg = updateActiveClass(user, classCode, redis)

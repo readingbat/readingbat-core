@@ -41,9 +41,9 @@ import com.github.readingbat.common.Endpoints.studentSummaryEndpoint
 import com.github.readingbat.common.FormFields.CHOICE_SOURCE_PARAM
 import com.github.readingbat.common.FormFields.CLASS_CODE_CHOICE_PARAM
 import com.github.readingbat.common.FormFields.CLASS_SUMMARY
+import com.github.readingbat.common.FormFields.MAKE_ACTIVE_CLASS
 import com.github.readingbat.common.FormFields.PREFS_ACTION_PARAM
 import com.github.readingbat.common.FormFields.RETURN_PARAM
-import com.github.readingbat.common.FormFields.UPDATE_ACTIVE_CLASS
 import com.github.readingbat.common.Message
 import com.github.readingbat.common.Message.Companion.EMPTY_MESSAGE
 import com.github.readingbat.common.User
@@ -174,7 +174,7 @@ internal object ClassSummaryPage : KLogging() {
                 style =
                   "padding:2px 5px; margin-top:9; margin-left:20; border-radius:5px; cursor:pointer; border:1px solid black;"
                 name = PREFS_ACTION_PARAM
-                value = UPDATE_ACTIVE_CLASS
+                value = MAKE_ACTIVE_CLASS
               }
             }
           }

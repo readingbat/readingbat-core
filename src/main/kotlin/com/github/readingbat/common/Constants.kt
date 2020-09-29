@@ -191,6 +191,7 @@ internal object FormFields {
   const val JOIN_CLASS = "Join Class"
   const val CREATE_CLASS = "Create Class"
   const val DELETE_CLASS = "Delete Class"
+  const val MAKE_ACTIVE_CLASS = "Make Active Class"
   const val UPDATE_ACTIVE_CLASS = "Update Active Class"
   const val UPDATE_DEFAULT_LANGUAGE = "Update Default Language"
   const val NO_ACTIVE_CLASS = "No active class"

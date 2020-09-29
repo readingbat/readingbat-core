@@ -65,7 +65,7 @@ internal object PasswordResetPage : KLogging() {
   fun PipelineCall.passwordResetPage(content: ReadingBatContent,
                                      resetId: ResetId,
                                      redis: Jedis,
-                                     msg: Message = EMPTY_MESSAGE): String =
+                                     msg: Message = EMPTY_MESSAGE) =
     if (resetId.isBlank())
       requestPasswordResetPage(content, msg)
     else {
