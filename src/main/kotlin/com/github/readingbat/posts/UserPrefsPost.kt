@@ -17,7 +17,6 @@
 
 package com.github.readingbat.posts
 
-import com.github.readingbat.common.*
 import com.github.readingbat.common.ClassCode.Companion.getClassCode
 import com.github.readingbat.common.FormFields.CLASS_CODE_NAME_PARAM
 import com.github.readingbat.common.FormFields.CONFIRM_PASSWORD_PARAM
@@ -30,6 +29,11 @@ import com.github.readingbat.common.FormFields.PREFS_ACTION_PARAM
 import com.github.readingbat.common.FormFields.UPDATE_DEFAULT_LANGUAGE
 import com.github.readingbat.common.FormFields.UPDATE_PASSWORD
 import com.github.readingbat.common.FormFields.WITHDRAW_FROM_CLASS
+import com.github.readingbat.common.Message
+import com.github.readingbat.common.User
+import com.github.readingbat.common.UserPrincipal
+import com.github.readingbat.common.Users
+import com.github.readingbat.common.isValidUser
 import com.github.readingbat.dsl.DataException
 import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.LanguageType.Companion.getLanguageType
@@ -83,7 +87,7 @@ internal object UserPrefsPost : KLogging() {
               user.defaultLanguage = it
             }
         }
-        userPrefsPage(content, user, redis, Message("Default language updated to $it", true))
+        userPrefsPage(content, user, redis, Message("Default language updated to $it", false))
       }
 
   private fun PipelineCall.updatePassword(content: ReadingBatContent,
