@@ -17,7 +17,6 @@
 
 package com.github.readingbat.server
 
-import com.github.pambrose.common.redis.RedisUtils.withRedisPool
 import com.github.pambrose.common.redis.RedisUtils.withSuspendingRedisPool
 import com.github.pambrose.common.response.redirectTo
 import com.github.pambrose.common.response.respondWith
@@ -92,7 +91,9 @@ import com.github.readingbat.server.ServerUtils.defaultLanguageTab
 import com.github.readingbat.server.ServerUtils.fetchUser
 import com.github.readingbat.server.ServerUtils.get
 import com.github.readingbat.server.ServerUtils.queryParam
+import com.github.readingbat.server.ServerUtils.respondWithRedirect
 import com.github.readingbat.server.ServerUtils.respondWithRedisCheck
+import com.github.readingbat.server.ServerUtils.respondWithSuspendingRedirect
 import com.github.readingbat.server.ServerUtils.respondWithSuspendingRedisCheck
 import com.github.readingbat.server.StaticVals.robotsTxt
 import io.ktor.application.*
@@ -120,14 +121,14 @@ internal fun Routing.userRoutes(metrics: Metrics, contentSrc: () -> ReadingBatCo
   }
 
   get(CONFIG_ENDPOINT) {
-    respondWithSuspendingRedisCheck { redis ->
-      authenticateAdminUser(fetchUser(), redis) { configPage(contentSrc()) }
+    respondWith {
+      authenticateAdminUser(fetchUser()) { configPage(contentSrc()) }
     }
   }
 
   get(SESSIONS_ENDPOINT) {
-    respondWithSuspendingRedisCheck { redis ->
-      authenticateAdminUser(fetchUser(), redis) { sessionsPage(contentSrc(), redis) }
+    respondWith {
+      authenticateAdminUser(fetchUser()) { sessionsPage(contentSrc()) }
     }
   }
 
@@ -136,18 +137,12 @@ internal fun Routing.userRoutes(metrics: Metrics, contentSrc: () -> ReadingBatCo
   }
 
   get(ABOUT_ENDPOINT) {
-    respondWith {
-      redisPool?.withRedisPool { redis ->
-        aboutPage(contentSrc(), fetchUser(), redis)
-      } ?: aboutPage(contentSrc(), fetchUser(), null)
-    }
+    respondWith { aboutPage(contentSrc(), fetchUser()) }
   }
 
   get(HELP_ENDPOINT) {
     respondWith {
-      redisPool?.withRedisPool { redis ->
-        helpPage(contentSrc(), fetchUser(), redis)
-      } ?: helpPage(contentSrc(), fetchUser(), null)
+      helpPage(contentSrc(), fetchUser())
     }
   }
 
@@ -161,9 +156,7 @@ internal fun Routing.userRoutes(metrics: Metrics, contentSrc: () -> ReadingBatCo
 
   post(LIKE_DISLIKE_ENDPOINT) {
     metrics.measureEndpointRequest(LIKE_DISLIKE_ENDPOINT) {
-      redisPool?.withSuspendingRedisPool { redis ->
-        likeDislike(contentSrc(), fetchUser(), redis)
-      } ?: likeDislike(contentSrc(), fetchUser(), null)
+      likeDislike(contentSrc(), fetchUser())
     }
   }
 
@@ -180,73 +173,67 @@ internal fun Routing.userRoutes(metrics: Metrics, contentSrc: () -> ReadingBatCo
   }
 
   get(CREATE_ACCOUNT_ENDPOINT, metrics) {
-    respondWithRedisCheck { createAccountPage(contentSrc()) }
+    respondWith { createAccountPage(contentSrc()) }
   }
 
   post(CREATE_ACCOUNT_ENDPOINT) {
-    respondWithSuspendingRedisCheck { redis -> createAccount(contentSrc(), redis) }
+    respondWithSuspendingRedirect { createAccount(contentSrc()) }
   }
 
   get(ADMIN_PREFS_ENDPOINT) {
-    respondWithRedisCheck { redis ->
-      fetchUser()
-        .let {
-          authenticateAdminUser(it, redis) { adminPrefsPage(contentSrc(), it, redis) }
-        }
+    respondWith {
+      fetchUser().let { authenticateAdminUser(it) { adminPrefsPage(contentSrc(), it) } }
     }
   }
 
   get(USER_PREFS_ENDPOINT, metrics) {
-    respondWithRedisCheck { redis -> userPrefsPage(contentSrc(), fetchUser(), redis) }
+    respondWith { userPrefsPage(contentSrc(), fetchUser()) }
   }
 
   post(USER_PREFS_ENDPOINT) {
-    respondWithSuspendingRedisCheck { redis -> userPrefs(contentSrc(), fetchUser(), redis) }
+    respondWith { userPrefs(contentSrc(), fetchUser()) }
   }
 
   get(TEACHER_PREFS_ENDPOINT, metrics) {
-    respondWithRedisCheck { redis -> teacherPrefsPage(contentSrc(), fetchUser(), redis) }
+    respondWith { teacherPrefsPage(contentSrc(), fetchUser()) }
   }
 
   post(TEACHER_PREFS_ENDPOINT) {
-    respondWithSuspendingRedisCheck { redis -> teacherPrefs(contentSrc(), fetchUser(), redis) }
+    respondWith { teacherPrefs(contentSrc(), fetchUser()) }
   }
 
   get(SYSTEM_ADMIN_ENDPOINT, metrics) {
-    respondWithSuspendingRedisCheck { redis ->
-      fetchUser()
-        .let {
-          authenticateAdminUser(it, redis) { systemAdminPage(contentSrc(), it, redis) }
-        }
+    respondWith {
+      fetchUser().let { authenticateAdminUser(it) { systemAdminPage(contentSrc(), it) } }
     }
   }
 
   get(CLASS_SUMMARY_ENDPOINT, metrics) {
     metrics.measureEndpointRequest(CLASS_SUMMARY_ENDPOINT) {
-      respondWithRedisCheck { redis -> classSummaryPage(contentSrc(), fetchUser(), redis) }
+      respondWith { classSummaryPage(contentSrc(), fetchUser()) }
     }
   }
 
   post(CLASS_SUMMARY_ENDPOINT) {
-    respondWithSuspendingRedisCheck { redis -> teacherPrefs(contentSrc(), fetchUser(), redis) }
+    respondWith { teacherPrefs(contentSrc(), fetchUser()) }
   }
 
   get(STUDENT_SUMMARY_ENDPOINT, metrics) {
     metrics.measureEndpointRequest(STUDENT_SUMMARY_ENDPOINT) {
-      respondWithRedisCheck { redis -> studentSummaryPage(contentSrc(), fetchUser(), redis) }
+      respondWith { studentSummaryPage(contentSrc(), fetchUser()) }
     }
   }
 
   get(ENABLE_STUDENT_MODE_ENDPOINT, metrics) {
-    respondWithSuspendingRedisCheck { redis -> enableStudentMode(fetchUser(), redis) }
+    respondWithRedirect { enableStudentMode(fetchUser()) }
   }
 
   get(ENABLE_TEACHER_MODE_ENDPOINT, metrics) {
-    respondWithSuspendingRedisCheck { redis -> enableTeacherMode(fetchUser(), redis) }
+    respondWithRedirect { enableTeacherMode(fetchUser()) }
   }
 
   get(USER_INFO_ENDPOINT, metrics) {
-    respondWithRedisCheck { redis -> userInfoPage(contentSrc(), fetchUser(), redis = redis) }
+    respondWith { userInfoPage(contentSrc(), fetchUser()) }
   }
 
   get(ADMIN_ENDPOINT, metrics) {
@@ -260,16 +247,16 @@ internal fun Routing.userRoutes(metrics: Metrics, contentSrc: () -> ReadingBatCo
   }
 
   post(PASSWORD_CHANGE_ENDPOINT) {
-    respondWithSuspendingRedisCheck { redis -> updatePassword(contentSrc(), redis) }
+    respondWithSuspendingRedirect { updatePassword(contentSrc()) }
   }
 
   post(PASSWORD_RESET_ENDPOINT) {
-    respondWithSuspendingRedisCheck { redis -> sendPasswordReset(contentSrc(), redis) }
+    respondWithSuspendingRedirect { sendPasswordReset(contentSrc()) }
   }
 
   // RESET_ID is passed here when user clicks on email URL
   get(PASSWORD_RESET_ENDPOINT, metrics) {
-    respondWithRedisCheck { redis -> passwordResetPage(contentSrc(), ResetId(queryParam(RESET_ID_PARAM)), redis) }
+    respondWith { passwordResetPage(contentSrc(), ResetId(queryParam(RESET_ID_PARAM))) }
   }
 
   get(LOGOUT_ENDPOINT, metrics) {

@@ -69,16 +69,14 @@ internal object ConfigureFormAuth : KLogging() {
       }
 
       validate { cred: UserPasswordCredential ->
-        val pool = redisPool
-        pool ?: throw RedisUnavailableException("redisPool validate()")
-        pool.withRedisPool { redis ->
+        redisPool?.withRedisPool { redis ->
           if (redis.isNull()) {
             logger.error { DBMS_DOWN }
             throw RedisUnavailableException("redis validate()")
           }
           else {
             var principal: UserPrincipal? = null
-            val user = lookupUserByEmail(Email(cred.name), redis)
+            val user = lookupUserByEmail(Email(cred.name))
             if (user.isNotNull()) {
               val salt = user.salt
               val digest = user.digest
@@ -95,7 +93,7 @@ internal object ConfigureFormAuth : KLogging() {
 
             principal
           }
-        }
+        } ?: throw RedisUnavailableException("redisPool validate()")
       }
     }
 

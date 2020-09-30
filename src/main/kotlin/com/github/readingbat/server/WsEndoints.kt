@@ -23,7 +23,7 @@ import com.github.pambrose.common.redis.RedisUtils.withRedisPool
 import com.github.pambrose.common.time.format
 import com.github.pambrose.common.util.isNotNull
 import com.github.pambrose.common.util.isNull
-import com.github.readingbat.common.*
+import com.github.readingbat.common.ClassCode
 import com.github.readingbat.common.CommonUtils.keyOf
 import com.github.readingbat.common.CommonUtils.md5Of
 import com.github.readingbat.common.CommonUtils.pathOf
@@ -37,15 +37,16 @@ import com.github.readingbat.common.Endpoints.CHALLENGE_ENDPOINT
 import com.github.readingbat.common.Endpoints.CHALLENGE_GROUP_ENDPOINT
 import com.github.readingbat.common.Endpoints.CLASS_SUMMARY_ENDPOINT
 import com.github.readingbat.common.Endpoints.STUDENT_SUMMARY_ENDPOINT
+import com.github.readingbat.common.Metrics
+import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.gson
 import com.github.readingbat.common.User.Companion.toUser
+import com.github.readingbat.common.isNotValidUser
 import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.InvalidRequestException
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.agentLaunchId
-import com.github.readingbat.posts.ChallengeHistory
 import com.github.readingbat.server.ReadingBatServer.redisPool
-import com.github.readingbat.server.ReadingBatServer.usePostgres
 import com.github.readingbat.server.ServerUtils.fetchUser
 import com.github.readingbat.server.ServerUtils.rows
 import io.ktor.features.*
@@ -91,13 +92,13 @@ internal object WsEndoints : KLogging() {
           redis.isNull() -> false to context
           languageName.isNotNull() && languageName.isNotValid() -> false to "Invalid language: $languageName"
           groupName.isNotNull() && groupName.isNotValid() -> false to "Invalid group: $groupName"
-          classCode.isNotValid(redis) -> false to "Invalid class code: $classCode"
+          classCode.isNotValid() -> false to "Invalid class code: $classCode"
           classCode.isNotEnabled -> false to "Class code not enabled"
-          student.isNotNull() && student.isNotValidUser(redis) -> false to "Invalid student id: ${student.userId}"
-          student.isNotNull() && student.isNotEnrolled(classCode, redis) -> false to "Student not enrolled in class"
-          user.isNotValidUser(redis) -> false to "Invalid user id: ${user.userId}"
-          classCode.fetchClassTeacherId(redis) != user.userId -> {
-            val teacherId = classCode.fetchClassTeacherId(redis)
+          student.isNotNull() && student.isNotValidUser() -> false to "Invalid student id: ${student.userId}"
+          student.isNotNull() && student.isNotEnrolled(classCode) -> false to "Student not enrolled in class"
+          user.isNotValidUser() -> false to "Invalid user id: ${user.userId}"
+          classCode.fetchClassTeacherId() != user.userId -> {
+            val teacherId = classCode.fetchClassTeacherId()
             false to "User id ${user.userId} does not match class code's teacher Id $teacherId"
           }
           else -> true to ""
@@ -142,41 +143,41 @@ internal object WsEndoints : KLogging() {
             .collect { frame ->
               val inboundMsg = frame.readText()
 
-              redisPool?.withNonNullRedisPool { redis ->
-                val clock = TimeSource.Monotonic
-                val start = clock.markNow()
+              val clock = TimeSource.Monotonic
+              val start = clock.markNow()
 
-                launch {
-                  var secs = 0
-                  while (!finished.get()) {
-                    val duration = start.elapsedNow()
-                    val json = gson.toJson(PingMessage(duration.format()))
-                    logger.debug { "Sending $json" }
-                    outgoing.send(Frame.Text(json))
-                    delay(1.seconds)
-                    secs += 1
+              launch {
+                var secs = 0
+                while (!finished.get()) {
+                  val duration = start.elapsedNow()
+                  val json = gson.toJson(PingMessage(duration.format()))
+                  logger.debug { "Sending $json" }
+                  outgoing.send(Frame.Text(json))
+                  delay(1.seconds)
+                  secs += 1
+                }
+              }
+
+              val pubsub =
+                object : JedisPubSub() {
+                  override fun onMessage(channel: String?, message: String?) {
+                    if (message.isNotNull()) {
+                      logger.debug { "Sending data $message from $channel to $challengeMd5" }
+                      metrics.wsStudentAnswerResponseCount.labels(agentLaunchId()).inc()
+                      runBlocking { outgoing.send(Frame.Text(message)) }
+                    }
+                  }
+
+                  override fun onSubscribe(channel: String?, subscribedChannels: Int) {
+                    logger.debug { "Subscribed to $channel for $challengeMd5" }
+                  }
+
+                  override fun onUnsubscribe(channel: String?, subscribedChannels: Int) {
+                    logger.debug { "Unsubscribed from $channel for $challengeMd5" }
                   }
                 }
 
-                val pubsub =
-                  object : JedisPubSub() {
-                    override fun onMessage(channel: String?, message: String?) {
-                      if (message.isNotNull()) {
-                        logger.debug { "Sending data $message from $channel to $challengeMd5" }
-                        metrics.wsStudentAnswerResponseCount.labels(agentLaunchId()).inc()
-                        runBlocking { outgoing.send(Frame.Text(message)) }
-                      }
-                    }
-
-                    override fun onSubscribe(channel: String?, subscribedChannels: Int) {
-                      logger.debug { "Subscribed to $channel for $challengeMd5" }
-                    }
-
-                    override fun onUnsubscribe(channel: String?, subscribedChannels: Int) {
-                      logger.debug { "Unsubscribed from $channel for $challengeMd5" }
-                    }
-                  }
-
+              redisPool?.withNonNullRedisPool { redis ->
                 val subscriber = launch { redis.subscribe(pubsub, classTopicName(classCode, challengeMd5)) }
 
                 // Wait for closure to happen
@@ -234,117 +235,94 @@ internal object WsEndoints : KLogging() {
             .mapNotNull { it as? Frame.Text }
             .collect { frame ->
               val inboundMsg = frame.readText()
-              redisPool?.withNonNullRedisPool { redis ->
-                val enrollees = classCode.fetchEnrollees(redis)
-                if (enrollees.isNotEmpty()) {
-                  // Reorder challenges to return values left to right
-                  val ltor = mutableListOf<Challenge>()
-                  val rows = challenges.size.rows(COLUMN_CNT)
-                  repeat(rows) { i ->
-                    challenges
-                      .apply {
-                        ltor += elementAt(i)
-                        elementAtOrNull(i + rows)?.also { ltor += it }
-                        elementAtOrNull(i + (2 * rows))?.also { ltor += it }
-                      }
-                  }
+              val enrollees = classCode.fetchEnrollees()
+              if (enrollees.isNotEmpty()) {
+                // Reorder challenges to return values left to right
+                val ltor = mutableListOf<Challenge>()
+                val rows = challenges.size.rows(COLUMN_CNT)
+                repeat(rows) { i ->
+                  challenges
+                    .apply {
+                      ltor += elementAt(i)
+                      elementAtOrNull(i + rows)?.also { ltor += it }
+                      elementAtOrNull(i + (2 * rows))?.also { ltor += it }
+                    }
+                }
 
-                  for (challenge in ltor) {
-                    val funcInfo = challenge.functionInfo(content)
-                    val challengeName = challenge.challengeName
-                    val numCalls = funcInfo.invocations.size
-                    var totAttemptedAtLeastOne = 0
-                    var totAllCorrect = 0
-                    var totCorrect = 0
-                    var incorrectAttempts = 0
-                    var likes = 0
-                    var dislikes = 0
+                for (challenge in ltor) {
+                  val funcInfo = challenge.functionInfo(content)
+                  val challengeName = challenge.challengeName
+                  val numCalls = funcInfo.invocations.size
+                  var totAttemptedAtLeastOne = 0
+                  var totAllCorrect = 0
+                  var totCorrect = 0
+                  var incorrectAttempts = 0
+                  var likes = 0
+                  var dislikes = 0
 
-                    for (enrollee in enrollees) {
-                      var attempted = 0
-                      var numCorrect = 0
+                  for (enrollee in enrollees) {
+                    var attempted = 0
+                    var numCorrect = 0
 
-                      for (invocation in funcInfo.invocations) {
-                        val historyKey =
-                          enrollee.answerHistoryKey(languageName, groupName, challengeName, invocation)
+                    for (invocation in funcInfo.invocations) {
+                      transaction {
+                        val historyMd5 = md5Of(languageName, groupName, challengeName, invocation)
+                        if (enrollee.historyExists(historyMd5, invocation)) {
+                          attempted++
+                          val history = enrollee.answerHistory(historyMd5, invocation)
+                          if (history.correct)
+                            numCorrect++
 
-                        if (usePostgres)
-                          transaction {
-                            val historyMd5 = md5Of(languageName, groupName, challengeName, invocation)
-                            if (enrollee.historyExists(historyMd5, invocation)) {
-                              attempted++
-                              val history = enrollee.answerHistory(historyMd5, invocation)
-                              if (history.correct)
-                                numCorrect++
-
-                              incorrectAttempts += history.incorrectAttempts
-                            }
-                          }
-                        else {
-                          if (redis.exists(historyKey)) {
-                            attempted++
-                            val json = redis[historyKey] ?: ""
-                            val history =
-                              gson.fromJson(json, ChallengeHistory::class.java) ?: ChallengeHistory(invocation)
-                            if (history.correct)
-                              numCorrect++
-
-                            incorrectAttempts += history.incorrectAttempts
-                          }
+                          incorrectAttempts += history.incorrectAttempts
                         }
-
-                        if (finished.get())
-                          break
                       }
-
-                      val likeDislike =
-                        if (usePostgres)
-                          transaction {
-                            val challengeMd5 = md5Of(languageName, groupName, challengeName)
-                            UserChallengeInfo
-                              .slice(UserChallengeInfo.likeDislike)
-                              .select { (UserChallengeInfo.userRef eq enrollee.userDbmsId) and (UserChallengeInfo.md5 eq challengeMd5) }
-                              .map { it[UserChallengeInfo.likeDislike].toInt() }
-                              .firstOrNull() ?: 0
-                          }
-                        else {
-                          val likeDislikeKey = enrollee.likeDislikeKey(languageName, groupName, challengeName)
-                          redis[likeDislikeKey]?.toInt() ?: 0
-                        }
-
-                      if (likeDislike == 1)
-                        likes++
-                      else if (likeDislike == 2)
-                        dislikes++
-
-                      if (attempted > 0)
-                        totAttemptedAtLeastOne++
-
-                      if (numCorrect == numCalls)
-                        totAllCorrect++
-
-                      totCorrect += numCorrect
 
                       if (finished.get())
                         break
                     }
 
-                    val avgCorrect =
-                      if (totAttemptedAtLeastOne > 0) totCorrect / totAttemptedAtLeastOne.toFloat() else 0.0f
-                    val avgCorrectFmt = "%.1f".format(avgCorrect)
+                    val likeDislike =
+                      transaction {
+                        val challengeMd5 = md5Of(languageName, groupName, challengeName)
+                        UserChallengeInfo
+                          .slice(UserChallengeInfo.likeDislike)
+                          .select { (UserChallengeInfo.userRef eq enrollee.userDbmsId) and (UserChallengeInfo.md5 eq challengeMd5) }
+                          .map { it[UserChallengeInfo.likeDislike].toInt() }
+                          .firstOrNull() ?: 0
+                      }
 
-                    val msg =
-                      " ($numCalls | $totAttemptedAtLeastOne | $totAllCorrect | $avgCorrectFmt | $incorrectAttempts | $likes/$dislikes)"
+                    if (likeDislike == 1)
+                      likes++
+                    else if (likeDislike == 2)
+                      dislikes++
 
-                    val json = gson.toJson(ChallengeStats(challengeName.value, msg))
+                    if (attempted > 0)
+                      totAttemptedAtLeastOne++
 
-                    metrics.wsClassStatisticsResponseCount.labels(agentLaunchId()).inc()
-                    logger.debug { "Sending data $json" }
-                    runBlocking { outgoing.send(Frame.Text(json)) }
+                    if (numCorrect == numCalls)
+                      totAllCorrect++
+
+                    totCorrect += numCorrect
 
                     if (finished.get())
                       break
                   }
+
+                  val avgCorrect =
+                    if (totAttemptedAtLeastOne > 0) totCorrect / totAttemptedAtLeastOne.toFloat() else 0.0f
+                  val avgCorrectFmt = "%.1f".format(avgCorrect)
+
+                  val msg =
+                    " ($numCalls | $totAttemptedAtLeastOne | $totAllCorrect | $avgCorrectFmt | $incorrectAttempts | $likes/$dislikes)"
+
+                  val json = gson.toJson(ChallengeStats(challengeName.value, msg))
+
+                  metrics.wsClassStatisticsResponseCount.labels(agentLaunchId()).inc()
+                  logger.debug { "Sending data $json" }
+                  runBlocking { outgoing.send(Frame.Text(json)) }
+
+                  if (finished.get())
+                    break
                 }
               }
 
@@ -399,74 +377,54 @@ internal object WsEndoints : KLogging() {
             .mapNotNull { it as? Frame.Text }
             .collect { frame ->
               val inboundMsg = frame.readText()
-              redisPool?.withNonNullRedisPool { redis ->
-                val enrollees = classCode.fetchEnrollees(redis)
-                if (enrollees.isNotEmpty()) {
-                  for (challenge in challenges) {
-                    val funcInfo = challenge.functionInfo(content)
-                    val challengeName = challenge.challengeName
-                    val numCalls = funcInfo.invocations.size
-                    var likes = 0
-                    var dislikes = 0
+              val enrollees = classCode.fetchEnrollees()
+              if (enrollees.isNotEmpty()) {
+                for (challenge in challenges) {
+                  val funcInfo = challenge.functionInfo(content)
+                  val challengeName = challenge.challengeName
+                  val numCalls = funcInfo.invocations.size
+                  var likes = 0
+                  var dislikes = 0
 
-                    for (enrollee in enrollees) {
-                      var incorrectAttempts = 0
+                  for (enrollee in enrollees) {
+                    var incorrectAttempts = 0
 
-                      val results = mutableListOf<String>()
-                      for (invocation in funcInfo.invocations) {
-                        val historyKey =
-                          enrollee.answerHistoryKey(languageName, groupName, challengeName, invocation)
-
-                        if (usePostgres)
-                          transaction {
-                            val historyMd5 = md5Of(languageName, groupName, challengeName, invocation)
-                            if (enrollee.historyExists(historyMd5, invocation)) {
-                              results +=
-                                enrollee.answerHistory(historyMd5, invocation)
-                                  .let {
-                                    incorrectAttempts += it.incorrectAttempts
-                                    if (it.correct) YES else if (it.incorrectAttempts > 0) NO else UNANSWERED
-                                  }
-                            }
-                            else {
-                              results += UNANSWERED
-                            }
-                          }
-                        else {
-                          if (redis.exists(historyKey)) {
-                            val json = redis[historyKey] ?: ""
-                            results +=
-                              (gson.fromJson(json, ChallengeHistory::class.java) ?: ChallengeHistory(invocation))
-                                .let {
-                                  incorrectAttempts += it.incorrectAttempts
-                                  if (it.correct) YES else if (it.incorrectAttempts > 0) NO else UNANSWERED
-                                }
-                          }
-                          else {
-                            results += UNANSWERED
-                          }
+                    val results = mutableListOf<String>()
+                    for (invocation in funcInfo.invocations) {
+                      transaction {
+                        val historyMd5 = md5Of(languageName, groupName, challengeName, invocation)
+                        if (enrollee.historyExists(historyMd5, invocation)) {
+                          results +=
+                            enrollee.answerHistory(historyMd5, invocation)
+                              .let {
+                                incorrectAttempts += it.incorrectAttempts
+                                if (it.correct) YES else if (it.incorrectAttempts > 0) NO else UNANSWERED
+                              }
                         }
-
-                        if (finished.get())
-                          break
-                      }
-
-                      if (incorrectAttempts > 0 || results.any { it != UNANSWERED }) {
-                        val json =
-                          gson.toJson(
-                            ClassSummary(enrollee.userId,
-                                         challengeName.encode(),
-                                         results,
-                                         if (incorrectAttempts == 0 && results.all { it == UNANSWERED }) "" else incorrectAttempts.toString()))
-
-                        metrics.wsClassSummaryResponseCount.labels(agentLaunchId()).inc()
-                        logger.debug { "Sending data $json" }
-                        runBlocking { outgoing.send(Frame.Text(json)) }
+                        else {
+                          results += UNANSWERED
+                        }
                       }
 
                       if (finished.get())
                         break
                     }
+
+                    if (incorrectAttempts > 0 || results.any { it != UNANSWERED }) {
+                      val json =
+                        gson.toJson(
+                          ClassSummary(enrollee.userId,
+                                       challengeName.encode(),
+                                       results,
+                                       if (incorrectAttempts == 0 && results.all { it == UNANSWERED }) "" else incorrectAttempts.toString()))
+
+                      metrics.wsClassSummaryResponseCount.labels(agentLaunchId()).inc()
+                      logger.debug { "Sending data $json" }
+                      runBlocking { outgoing.send(Frame.Text(json)) }
+                    }
+
+                    if (finished.get())
+                      break
                   }
                 }
               }
@@ -521,71 +479,53 @@ internal object WsEndoints : KLogging() {
             .mapNotNull { it as? Frame.Text }
             .collect { frame ->
               val inboundMsg = frame.readText()
-              redisPool?.withNonNullRedisPool { redis ->
-                for (challengeGroup in content.findLanguage(languageName).challengeGroups) {
-                  for (challenge in challengeGroup.challenges) {
-                    val funcInfo = challenge.functionInfo(content)
-                    val groupName = challengeGroup.groupName
-                    val challengeName = challenge.challengeName
-                    val numCalls = funcInfo.invocations.size
-                    var likes = 0
-                    var dislikes = 0
-                    var incorrectAttempts = 0
-                    var attempted = 0
+              for (challengeGroup in content.findLanguage(languageName).challengeGroups) {
+                for (challenge in challengeGroup.challenges) {
+                  val funcInfo = challenge.functionInfo(content)
+                  val groupName = challengeGroup.groupName
+                  val challengeName = challenge.challengeName
+                  val numCalls = funcInfo.invocations.size
+                  var likes = 0
+                  var dislikes = 0
+                  var incorrectAttempts = 0
+                  var attempted = 0
 
-                    val results = mutableListOf<String>()
-                    for (invocation in funcInfo.invocations) {
-                      val historyKey = student.answerHistoryKey(languageName, groupName, challengeName, invocation)
+                  val results = mutableListOf<String>()
+                  for (invocation in funcInfo.invocations) {
+                    val historyKey = student.answerHistoryKey(languageName, groupName, challengeName, invocation)
 
-                      if (usePostgres)
-                        transaction {
-                          val historyMd5 = md5Of(languageName, groupName, challengeName, invocation)
-                          if (student.historyExists(historyMd5, invocation)) {
-                            attempted++
-                            results +=
-                              student.answerHistory(historyMd5, invocation)
-                                .let {
-                                  incorrectAttempts += it.incorrectAttempts
-                                  if (it.correct) YES else if (it.incorrectAttempts > 0) NO else UNANSWERED
-                                }
-                          }
-                          else {
-                            results += UNANSWERED
-                          }
-                        }
-                      else {
-                        if (redis.exists(historyKey)) {
-                          attempted++
-                          val json = redis[historyKey] ?: ""
-                          results +=
-                            (gson.fromJson(json, ChallengeHistory::class.java) ?: ChallengeHistory(invocation))
-                              .let {
-                                incorrectAttempts += it.incorrectAttempts
-                                if (it.correct) YES else if (it.incorrectAttempts > 0) NO else UNANSWERED
-                              }
-                        }
-                        else {
-                          results += UNANSWERED
-                        }
+                    transaction {
+                      val historyMd5 = md5Of(languageName, groupName, challengeName, invocation)
+                      if (student.historyExists(historyMd5, invocation)) {
+                        attempted++
+                        results +=
+                          student.answerHistory(historyMd5, invocation)
+                            .let {
+                              incorrectAttempts += it.incorrectAttempts
+                              if (it.correct) YES else if (it.incorrectAttempts > 0) NO else UNANSWERED
+                            }
                       }
-
-                      if (finished.get())
-                        break
-                    }
-
-                    if (incorrectAttempts > 0 || results.any { it != UNANSWERED }) {
-                      val msg =
-                        if (incorrectAttempts == 0 && results.all { it == UNANSWERED }) "" else incorrectAttempts.toString()
-                      val json = gson.toJson(StudentSummary(groupName.encode(), challengeName.encode(), results, msg))
-
-                      metrics.wsClassSummaryResponseCount.labels(agentLaunchId()).inc()
-                      logger.debug { "Sending data $json" }
-                      runBlocking { outgoing.send(Frame.Text(json)) }
+                      else {
+                        results += UNANSWERED
+                      }
                     }
 
                     if (finished.get())
                       break
                   }
+
+                  if (incorrectAttempts > 0 || results.any { it != UNANSWERED }) {
+                    val msg =
+                      if (incorrectAttempts == 0 && results.all { it == UNANSWERED }) "" else incorrectAttempts.toString()
+                    val json = gson.toJson(StudentSummary(groupName.encode(), challengeName.encode(), results, msg))
+
+                    metrics.wsClassSummaryResponseCount.labels(agentLaunchId()).inc()
+                    logger.debug { "Sending data $json" }
+                    runBlocking { outgoing.send(Frame.Text(json)) }
+                  }
+
+                  if (finished.get())
+                    break
                 }
               }
 

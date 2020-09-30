@@ -63,25 +63,24 @@ import kotlinx.html.*
 import kotlinx.html.FormMethod.post
 import kotlinx.html.stream.createHTML
 import mu.KLogging
-import redis.clients.jedis.Jedis
 
 internal object StudentSummaryPage : KLogging() {
 
-  fun PipelineCall.studentSummaryPage(content: ReadingBatContent, user: User?, redis: Jedis): String {
+  fun PipelineCall.studentSummaryPage(content: ReadingBatContent, user: User?): String {
 
     val (languageName, student, classCode) =
       Triple(
         call.parameters[LANG_TYPE_QP]?.let { LanguageName(it) } ?: throw InvalidRequestException("Missing language"),
-        call.parameters[USER_ID_QP]?.toUser(redis, null) ?: throw InvalidRequestException("Missing user id"),
+        call.parameters[USER_ID_QP]?.toUser(null) ?: throw InvalidRequestException("Missing user id"),
         call.parameters[CLASS_CODE_QP]?.let { ClassCode(it) } ?: throw InvalidRequestException("Missing class code"))
-    val activeClassCode = fetchActiveClassCode(user, redis)
+    val activeClassCode = fetchActiveClassCode(user)
 
     when {
-      classCode.isNotValid(redis) -> throw InvalidRequestException("Invalid class code: $classCode")
-      user.isNotValidUser(redis) -> throw InvalidRequestException("Invalid user")
+      classCode.isNotValid() -> throw InvalidRequestException("Invalid class code: $classCode")
+      user.isNotValidUser() -> throw InvalidRequestException("Invalid user")
       //classCode != activeClassCode -> throw InvalidRequestException("Class code mismatch")
-      classCode.fetchClassTeacherId(redis) != user.userId -> {
-        val teacherId = classCode.fetchClassTeacherId(redis)
+      classCode.fetchClassTeacherId() != user.userId -> {
+        val teacherId = classCode.fetchClassTeacherId()
         throw InvalidRequestException("User id ${user.userId} does not match class code's teacher Id $teacherId")
       }
       else -> {
@@ -96,7 +95,7 @@ internal object StudentSummaryPage : KLogging() {
 
         body {
           val returnPath = queryParam(RETURN_PARAM, "/")
-          helpAndLogin(content, user, returnPath, activeClassCode.isEnabled, redis)
+          helpAndLogin(content, user, returnPath, activeClassCode.isEnabled)
           bodyTitle()
 
           h2 { +"Student Summary" }
@@ -110,7 +109,7 @@ internal object StudentSummaryPage : KLogging() {
 
           h3 {
             style = "margin-left:15px; color: $headerColor"
-            a(classes = UNDERLINE) { href = classSummaryEndpoint(classCode); +classCode.toDisplayString(redis) }
+            a(classes = UNDERLINE) { href = classSummaryEndpoint(classCode); +classCode.toDisplayString() }
           }
 
           h3 {

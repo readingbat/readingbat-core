@@ -18,8 +18,8 @@
 package com.github.readingbat.utils
 
 import com.github.pambrose.common.util.simpleClassName
-import com.github.readingbat.common.PasswordResets
 import com.github.readingbat.server.CustomDateTimeConstant
+import com.github.readingbat.server.PasswordResets
 import com.github.readingbat.server.get
 import org.jetbrains.exposed.dao.IntEntity
 import org.jetbrains.exposed.dao.IntEntityClass
@@ -130,7 +130,7 @@ fun main() {
       .select { PasswordResets.created greater CustomDateTimeConstant("NOW() - INTERVAL '1 hour'") }
       .forEach { row ->
         val p = row[2]
-        println("${row[0]} ${row[1]} ${p} ${p?.simpleClassName}")
+        println("${row[0]} ${row[1]} $p ${p.simpleClassName}")
 
       }
   }

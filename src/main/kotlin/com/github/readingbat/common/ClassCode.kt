@@ -17,18 +17,17 @@
 
 package com.github.readingbat.common
 
-import com.github.pambrose.common.util.isNull
 import com.github.pambrose.common.util.randomId
 import com.github.pambrose.common.util.toDoubleQuoted
 import com.github.readingbat.common.CommonUtils.keyOf
 import com.github.readingbat.common.FormFields.DISABLED_MODE
 import com.github.readingbat.common.KeyConstants.CLASS_CODE_KEY
 import com.github.readingbat.common.KeyConstants.CLASS_INFO_KEY
-import com.github.readingbat.common.KeyConstants.DESC_FIELD
-import com.github.readingbat.common.KeyConstants.TEACHER_FIELD
 import com.github.readingbat.common.User.Companion.toUser
 import com.github.readingbat.dsl.InvalidConfigurationException
-import com.github.readingbat.server.ReadingBatServer.usePostgres
+import com.github.readingbat.server.Classes
+import com.github.readingbat.server.Enrollees
+import com.github.readingbat.server.Users
 import com.github.readingbat.server.get
 import io.ktor.http.*
 import mu.KLogging
@@ -38,8 +37,6 @@ import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
-import redis.clients.jedis.Jedis
-import redis.clients.jedis.Transaction
 import kotlin.time.measureTimedValue
 
 internal data class ClassCode(val value: String) {
@@ -65,24 +62,21 @@ internal data class ClassCode(val value: String) {
         it.value
       }
 
-  fun isNotValid(redis: Jedis) = !isValid(redis)
+  fun isNotValid() = !isValid()
 
-  fun isValid(redis: Jedis) =
-    if (usePostgres)
-      transaction {
-        Classes
-          .slice(Count(Classes.classCode))
-          .select { Classes.classCode eq value }
-          .map { it[0] as Long }
-          .first().also { logger.info { "ClassCode.isValid() returned $it for $value" } } > 0
-      }
-    else
-      redis.exists(classCodeEnrollmentKey) ?: false
+  fun isValid() =
+    transaction {
+      Classes
+        .slice(Count(Classes.classCode))
+        .select { Classes.classCode eq value }
+        .map { it[0] as Long }
+        .first().also { logger.info { "ClassCode.isValid() returned $it for $value" } } > 0
+    }
 
-  fun fetchEnrollees(redis: Jedis?): List<User> =
-    if (redis.isNull() || isNotEnabled)
+  fun fetchEnrollees(): List<User> =
+    if (isNotEnabled)
       emptyList()
-    else if (usePostgres)
+    else
       transaction {
         val userIds =
           (Classes innerJoin Enrollees)
@@ -93,30 +87,11 @@ internal data class ClassCode(val value: String) {
         Users
           .slice(Users.userId)
           .select { Users.id inList userIds }
-          .map { (it[0] as String).toUser(redis, null) }
+          .map { (it[0] as String).toUser(null) }
           .also { logger.info { "fetchEnrollees() returning $it" } }
       }
-    else {
-      (redis.smembers(classCodeEnrollmentKey) ?: emptySet())
-        .filter { it.isNotEmpty() }
-        .map { it.toUser(redis, null) }
-    }
 
-  fun deleteClassCode() {
-    if (usePostgres)
-      Classes.deleteWhere { Classes.classCode eq value }
-    else {
-      // Takes place in User.deleteClassCode() for redis
-    }
-  }
-
-  fun addEnrolleePlaceholder(tx: Transaction) {
-    if (usePostgres) {
-      // No-op for postgres
-    }
-    else
-      tx.sadd(classCodeEnrollmentKey, "")
-  }
+  fun deleteClassCode() = Classes.deleteWhere { Classes.classCode eq value }
 
   fun addEnrollee(user: User) =
     transaction {
@@ -127,66 +102,30 @@ internal data class ClassCode(val value: String) {
         }
     }
 
-  fun addEnrollee(user: User, tx: Transaction) {
-    tx.sadd(classCodeEnrollmentKey, user.userId)
-  }
-
   fun removeEnrollee(user: User) =
     Enrollees.deleteWhere { (Enrollees.classesRef eq classCodeDbmsId) and (Enrollees.userRef eq user.userDbmsId) }
 
-  fun removeEnrollee(user: User, tx: Transaction) {
-    tx.srem(classCodeEnrollmentKey, user.userId)
-  }
 
-  fun deleteAllEnrollees(tx: Transaction) {
-    if (usePostgres)
-    // Never used
-      transaction {
-        Enrollees.deleteWhere { Enrollees.classesRef eq classCodeDbmsId }
-      }
-    else
-      tx.del(classCodeEnrollmentKey)
-  }
+  fun fetchClassDesc(quoted: Boolean = false) =
+    transaction {
+      (Classes
+        .slice(Classes.description)
+        .select { Classes.classCode eq value }
+        .map { it[0] as String }
+        .firstOrNull() ?: "Missing description")
+        .also { logger.info { "fetchClassDesc() returned ${it.toDoubleQuoted()} for $value" } }
+    }.let { if (quoted) it.toDoubleQuoted() else it }
 
-  fun initializeWith(classDesc: String, user: User, tx: Transaction) {
-    if (usePostgres) {
-      // Work done in user.addClassCode()
+  fun toDisplayString() = "${fetchClassDesc(true)} [$value]"
+
+  fun fetchClassTeacherId() =
+    transaction {
+      ((Classes innerJoin Users)
+        .slice(Users.userId)
+        .select { Classes.classCode eq value }
+        .map { it[0] as String }
+        .firstOrNull() ?: "").also { logger.info { "fetchClassTeacherId() returned $it" } }
     }
-    else
-      tx.hset(classInfoKey, mapOf(DESC_FIELD to classDesc, TEACHER_FIELD to user.userId))
-  }
-
-  fun fetchClassDesc(redis: Jedis?, quoted: Boolean = false) =
-    if (usePostgres)
-      transaction {
-        (Classes
-          .slice(Classes.description)
-          .select { Classes.classCode eq value }
-          .map { it[0] as String }
-          .firstOrNull() ?: "Missing description")
-          .also { logger.info { "fetchClassDesc() returned ${it.toDoubleQuoted()} for $value" } }
-      }
-    else {
-      if (redis.isNull())
-        "Description unavailable"
-      else
-        redis.hget(classInfoKey, DESC_FIELD) ?: "Missing description"
-    }
-      .let { if (quoted) it.toDoubleQuoted() else it }
-
-  fun toDisplayString(redis: Jedis?) = "${fetchClassDesc(redis, true)} [$value]"
-
-  fun fetchClassTeacherId(redis: Jedis) =
-    if (usePostgres)
-      transaction {
-        ((Classes innerJoin Users)
-          .slice(Users.userId)
-          .select { Classes.classCode eq value }
-          .map { it[0] as String }
-          .firstOrNull() ?: "").also { logger.info { "fetchClassTeacherId() returned $it" } }
-      }
-    else
-      redis.hget(classInfoKey, TEACHER_FIELD) ?: ""
 
   override fun toString() = value
 

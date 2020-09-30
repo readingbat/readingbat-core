@@ -18,6 +18,7 @@
 package com.github.readingbat.server
 
 import com.github.pambrose.common.redis.RedisUtils.withRedisPool
+import com.github.pambrose.common.response.respondWith
 import com.github.pambrose.common.response.uriPrefix
 import com.github.pambrose.common.util.isNull
 import com.github.pambrose.common.util.pluralize
@@ -47,7 +48,6 @@ import com.github.readingbat.server.ReadingBatServer.redisPool
 import com.github.readingbat.server.ServerUtils.authenticateAdminUser
 import com.github.readingbat.server.ServerUtils.fetchUser
 import com.github.readingbat.server.ServerUtils.get
-import com.github.readingbat.server.ServerUtils.respondWithSuspendingRedisCheck
 import io.ktor.application.*
 import io.ktor.features.*
 import io.ktor.routing.*
@@ -102,24 +102,24 @@ internal fun Routing.sysAdminRoutes(metrics: Metrics, contentSrc: () -> ReadingB
       .also { logger.info { "clearContentInRedis(): $it" } }
 
   get(RESET_CONTENT_DSL_ENDPOINT, metrics) {
-    respondWithSuspendingRedisCheck { redis ->
+    respondWith {
       val user = fetchUser()
       val msg =
-        authenticateAdminUser(user, redis) {
+        authenticateAdminUser(user) {
           measureTime {
             deleteContentInRedis()
             resetFunc.invoke()
           }.let { "DSL content reset in $it".also { logger.info { it } } }
         }
-      systemAdminPage(contentSrc(), user, redis, msg)
+      systemAdminPage(contentSrc(), user, msg)
     }
   }
 
   get(RESET_CACHE_ENDPOINT, metrics) {
-    respondWithSuspendingRedisCheck { redis ->
+    respondWith {
       val user = fetchUser()
       val msg =
-        authenticateAdminUser(user, redis) {
+        authenticateAdminUser(user) {
           deleteContentInRedis()
           val content = contentSrc()
           val cnt = content.functionInfoMap.size
@@ -128,15 +128,15 @@ internal fun Routing.sysAdminRoutes(metrics: Metrics, contentSrc: () -> ReadingB
               "Challenge cache reset -- $cnt challenges removed".also { logger.info { it } }
             }
         }
-      systemAdminPage(contentSrc(), user, redis, msg)
+      systemAdminPage(contentSrc(), user, msg)
     }
   }
 
   get(DELETE_CONTENT_IN_REDIS_ENDPOINT, metrics) {
-    respondWithSuspendingRedisCheck { redis ->
+    respondWith {
       val user = fetchUser()
-      val msg = authenticateAdminUser(user, redis) { deleteContentInRedis() }
-      systemAdminPage(contentSrc(), user, redis, msg)
+      val msg = authenticateAdminUser(user) { deleteContentInRedis() }
+      systemAdminPage(contentSrc(), user, msg)
     }
   }
 
@@ -145,38 +145,38 @@ internal fun Routing.sysAdminRoutes(metrics: Metrics, contentSrc: () -> ReadingB
          LOAD_KOTLIN_ENDPOINT to Kotlin)
     .forEach { pair ->
       get(pair.first) {
-        respondWithSuspendingRedisCheck { redis ->
+        respondWith {
           val user = fetchUser()
           val msg =
-            authenticateAdminUser(user, redis) {
+            authenticateAdminUser(user) {
               contentSrc().loadChallenges(call.request.origin.uriPrefix, pair.second, false)
             }
-          systemAdminPage(contentSrc(), user, redis, msg)
+          systemAdminPage(contentSrc(), user, msg)
         }
       }
     }
 
   get(LOAD_ALL_ENDPOINT) {
-    respondWithSuspendingRedisCheck { redis ->
+    respondWith {
       val user = fetchUser()
       val msg =
-        authenticateAdminUser(user, redis) {
+        authenticateAdminUser(user) {
           LanguageType.values()
             .joinToString(", ") { contentSrc().loadChallenges(call.request.origin.uriPrefix, it, false) }
         }
-      systemAdminPage(contentSrc(), user, redis, msg)
+      systemAdminPage(contentSrc(), user, msg)
     }
   }
 
   get(GARBAGE_COLLECTOR_ENDPOINT, metrics) {
-    respondWithSuspendingRedisCheck { redis ->
+    respondWith {
       val user = fetchUser()
       val msg =
-        authenticateAdminUser(user, redis) {
+        authenticateAdminUser(user) {
           val dur = measureTime { System.gc() }
           "Garbage collector invoked for $dur".also { logger.info { it } }
         }
-      systemAdminPage(contentSrc(), user, redis, msg)
+      systemAdminPage(contentSrc(), user, msg)
     }
   }
 }

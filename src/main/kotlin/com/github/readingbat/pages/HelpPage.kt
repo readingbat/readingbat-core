@@ -41,17 +41,16 @@ import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
-import redis.clients.jedis.Jedis
 
 internal object HelpPage {
 
-  fun PipelineCall.helpPage(content: ReadingBatContent, user: User?, redis: Jedis?) =
+  fun PipelineCall.helpPage(content: ReadingBatContent, user: User?) =
     createHTML()
       .html {
         head { headDefault(content) }
 
         body {
-          helpAndLogin(content, user, ABOUT_ENDPOINT, fetchActiveClassCode(user, redis).isEnabled, redis)
+          helpAndLogin(content, user, ABOUT_ENDPOINT, fetchActiveClassCode(user).isEnabled)
 
           bodyTitle()
 

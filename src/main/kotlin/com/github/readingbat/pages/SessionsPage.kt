@@ -34,13 +34,12 @@ import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
-import redis.clients.jedis.Jedis
 import kotlin.time.hours
 import kotlin.time.minutes
 
 internal object SessionsPage {
 
-  fun PipelineCall.sessionsPage(content: ReadingBatContent, redis: Jedis) =
+  fun PipelineCall.sessionsPage(content: ReadingBatContent) =
     createHTML()
       .html {
         head { headDefault(content) }
@@ -91,7 +90,7 @@ internal object SessionsPage {
                 sessions
                   .forEach {
                     tr {
-                      val user = it.principal?.userId?.toUser(redis, it.browserSession)
+                      val user = it.principal?.userId?.toUser(it.browserSession)
                       val userDesc = user?.let { "${it.fullName} (${it.email})" } ?: "Not logged in"
                       td { +it.browserSession.id }
                       td { +userDesc }

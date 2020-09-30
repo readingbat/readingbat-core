@@ -32,7 +32,6 @@ import com.github.readingbat.common.FormFields.WITHDRAW_FROM_CLASS
 import com.github.readingbat.common.Message
 import com.github.readingbat.common.User
 import com.github.readingbat.common.UserPrincipal
-import com.github.readingbat.common.Users
 import com.github.readingbat.common.isValidUser
 import com.github.readingbat.dsl.DataException
 import com.github.readingbat.dsl.InvalidConfigurationException
@@ -43,7 +42,7 @@ import com.github.readingbat.pages.UserPrefsPage.userPrefsPage
 import com.github.readingbat.posts.CreateAccountPost.checkPassword
 import com.github.readingbat.server.Password.Companion.getPassword
 import com.github.readingbat.server.PipelineCall
-import com.github.readingbat.server.ReadingBatServer.usePostgres
+import com.github.readingbat.server.Users
 import io.ktor.application.*
 import io.ktor.http.*
 import io.ktor.request.*
@@ -53,30 +52,28 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.update
 import org.joda.time.DateTime
 import org.joda.time.DateTimeZone.UTC
-import redis.clients.jedis.Jedis
 
 internal object UserPrefsPost : KLogging() {
 
-  suspend fun PipelineCall.userPrefs(content: ReadingBatContent, user: User?, redis: Jedis) =
-    if (user.isValidUser(redis)) {
+  suspend fun PipelineCall.userPrefs(content: ReadingBatContent, user: User?) =
+    if (user.isValidUser()) {
       val parameters = call.receiveParameters()
       when (val action = parameters[PREFS_ACTION_PARAM] ?: "") {
-        UPDATE_DEFAULT_LANGUAGE -> updateDefaultLanguage(content, parameters, user, redis)
-        UPDATE_PASSWORD -> updatePassword(content, parameters, user, redis)
-        JOIN_CLASS -> enrollInClass(content, parameters, user, redis)
-        WITHDRAW_FROM_CLASS -> withdrawFromClass(content, user, redis)
-        DELETE_ACCOUNT -> deleteAccount(content, user, redis)
+        UPDATE_DEFAULT_LANGUAGE -> updateDefaultLanguage(content, parameters, user)
+        UPDATE_PASSWORD -> updatePassword(content, parameters, user)
+        JOIN_CLASS -> enrollInClass(content, parameters, user)
+        WITHDRAW_FROM_CLASS -> withdrawFromClass(content, user)
+        DELETE_ACCOUNT -> deleteAccount(content, user)
         else -> throw InvalidConfigurationException("Invalid action: $action")
       }
     }
     else {
-      requestLogInPage(content, redis)
+      requestLogInPage(content)
     }
 
   private fun PipelineCall.updateDefaultLanguage(content: ReadingBatContent,
                                                  parameters: Parameters,
-                                                 user: User,
-                                                 redis: Jedis) =
+                                                 user: User) =
     parameters.getLanguageType(DEFAULT_LANGUAGE_CHOICE_PARAM)
       .let {
         transaction {
@@ -87,13 +84,12 @@ internal object UserPrefsPost : KLogging() {
               user.defaultLanguage = it
             }
         }
-        userPrefsPage(content, user, redis, Message("Default language updated to $it", false))
+        userPrefsPage(content, user, Message("Default language updated to $it", false))
       }
 
   private fun PipelineCall.updatePassword(content: ReadingBatContent,
                                           parameters: Parameters,
-                                          user: User,
-                                          redis: Jedis): String {
+                                          user: User): String {
     val currPassword = parameters.getPassword(CURR_PASSWORD_PARAM)
     val newPassword = parameters.getPassword(NEW_PASSWORD_PARAM)
     val confirmPassword = parameters.getPassword(CONFIRM_PASSWORD_PARAM)
@@ -110,12 +106,9 @@ internal object UserPrefsPost : KLogging() {
           if (newDigest == oldDigest)
             Message("New password is the same as the current password", true)
           else {
-            if (usePostgres)
-              transaction {
-                user.assignDigest(newDigest)
-              }
-            else
-              redis.multi().also { tx -> user.assignDigest(tx, newDigest) }
+            transaction {
+              user.assignDigest(newDigest)
+            }
             Message("Password changed")
           }
         }
@@ -124,36 +117,35 @@ internal object UserPrefsPost : KLogging() {
         }
       }
 
-    return userPrefsPage(content, user, redis, msg)
+    return userPrefsPage(content, user, msg)
   }
 
   private fun PipelineCall.enrollInClass(content: ReadingBatContent,
                                          parameters: Parameters,
-                                         user: User,
-                                         redis: Jedis): String {
+                                         user: User): String {
     val classCode = parameters.getClassCode(CLASS_CODE_NAME_PARAM)
     return try {
-      user.enrollInClass(classCode, redis)
-      userPrefsPage(content, user, redis, Message("Enrolled in class ${classCode.toDisplayString(redis)}"))
+      user.enrollInClass(classCode)
+      userPrefsPage(content, user, Message("Enrolled in class ${classCode.toDisplayString()}"))
     } catch (e: DataException) {
-      userPrefsPage(content, user, redis, Message("Unable to join class [${e.msg}]", true), classCode)
+      userPrefsPage(content, user, Message("Unable to join class [${e.msg}]", true), classCode)
     }
   }
 
-  private fun PipelineCall.withdrawFromClass(content: ReadingBatContent, user: User, redis: Jedis) =
+  private fun PipelineCall.withdrawFromClass(content: ReadingBatContent, user: User) =
     try {
       val enrolledClassCode = user.enrolledClassCode
-      user.withdrawFromClass(enrolledClassCode, redis)
-      userPrefsPage(content, user, redis, Message("Withdrawn from class ${enrolledClassCode.toDisplayString(redis)}"))
+      user.withdrawFromClass(enrolledClassCode)
+      userPrefsPage(content, user, Message("Withdrawn from class ${enrolledClassCode.toDisplayString()}"))
     } catch (e: DataException) {
-      userPrefsPage(content, user, redis, Message("Unable to withdraw from class [${e.msg}]", true))
+      userPrefsPage(content, user, Message("Unable to withdraw from class [${e.msg}]", true))
     }
 
-  private fun PipelineCall.deleteAccount(content: ReadingBatContent, user: User, redis: Jedis): String {
+  private fun PipelineCall.deleteAccount(content: ReadingBatContent, user: User): String {
     val email = user.email
     logger.info { "Deleting user $email" }
-    user.deleteUser(redis)
+    user.deleteUser()
     call.sessions.clear<UserPrincipal>()
-    return requestLogInPage(content, redis, Message("User $email deleted"))
+    return requestLogInPage(content, Message("User $email deleted"))
   }
 }

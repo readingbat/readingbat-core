@@ -50,7 +50,6 @@ import io.ktor.routing.*
 import io.ktor.util.pipeline.*
 import kotlinx.html.*
 import kotlinx.html.Entities.nbsp
-import redis.clients.jedis.Jedis
 
 internal object PageUtils {
   private const val READING_BAT = "ReadingBat"
@@ -118,10 +117,9 @@ internal object PageUtils {
                       loginPath: String,
                       displayWelcomeMsg: Boolean,
                       activeClassCode: ClassCode,
-                      redis: Jedis?,
                       msg: Message = EMPTY_MESSAGE) {
 
-    helpAndLogin(content, user, loginPath, activeClassCode.isEnabled, redis)
+    helpAndLogin(content, user, loginPath, activeClassCode.isEnabled)
 
     bodyTitle()
 
@@ -131,7 +129,7 @@ internal object PageUtils {
       p {
         span {
           style =
-            "color:red"; +"Failed to login -- ${if (redis.isNull()) "database is down" else "incorrect email or password"}"
+            "color:red"; +"Failed to login -- incorrect email or password"
         }
       }
 

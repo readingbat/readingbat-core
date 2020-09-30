@@ -94,6 +94,22 @@ internal object ServerUtils : KLogging() {
 
   fun ApplicationCall.fetchUser(): User? = userPrincipal?.userId?.toUser(browserSession)
 
+  suspend fun PipelineCall.respondWithRedirect(block: () -> String) =
+    try {
+      val html = block.invoke()
+      respondWith { html }
+    } catch (e: RedirectException) {
+      redirectTo { e.redirectUrl }
+    }
+
+  suspend fun PipelineCall.respondWithSuspendingRedirect(block: suspend () -> String) =
+    try {
+      val html = block.invoke()
+      respondWith { html }
+    } catch (e: RedirectException) {
+      redirectTo { e.redirectUrl }
+    }
+
   suspend fun PipelineCall.respondWithRedisCheck(block: (redis: Jedis) -> String) =
     try {
       val html =
@@ -116,12 +132,12 @@ internal object ServerUtils : KLogging() {
       redirectTo { e.redirectUrl }
     }
 
-  fun authenticateAdminUser(user: User?, redis: Jedis, block: () -> String): String =
+  fun authenticateAdminUser(user: User?, block: () -> String): String =
     when {
       isProduction() -> {
         when {
-          user.isNotValidUser(redis) -> throw InvalidRequestException("Must be logged in for this function")
-          user.isNotAdminUser(redis) -> throw InvalidRequestException("Must be system admin for this function")
+          user.isNotValidUser() -> throw InvalidRequestException("Must be logged in for this function")
+          user.isNotAdminUser() -> throw InvalidRequestException("Must be system admin for this function")
           else -> block.invoke()
         }
       }

@@ -30,7 +30,6 @@ import com.github.readingbat.common.Constants.UNKNOWN
 import com.github.readingbat.common.Endpoints.CHALLENGE_ROOT
 import com.github.readingbat.common.Endpoints.PLAYGROUND_ROOT
 import com.github.readingbat.common.KeyConstants.RESET_KEY
-import com.github.readingbat.common.KeyConstants.USER_EMAIL_KEY
 import com.github.readingbat.common.Metrics
 import com.github.readingbat.common.Metrics.Companion.GET
 import com.github.readingbat.common.Metrics.Companion.POST
@@ -102,8 +101,8 @@ internal object Locations {
       content.checkLanguage(language.languageType)
       val user = fetchUser(loginAttempt)
       redisPool?.withRedisPool { redis ->
-        languageGroupPage(content, user, language.languageType, loginAttempt, redis)
-      } ?: languageGroupPage(content, user, language.languageType, loginAttempt, null)
+        languageGroupPage(content, user, language.languageType, loginAttempt)
+      } ?: languageGroupPage(content, user, language.languageType, loginAttempt)
     }
 
   private suspend fun PipelineCall.group(content: ReadingBatContent,
@@ -113,9 +112,7 @@ internal object Locations {
       assignBrowserSession()
       content.checkLanguage(groupLoc.languageType)
       val user = fetchUser(loginAttempt)
-      redisPool?.withRedisPool { redis ->
-        challengeGroupPage(content, user, content.findGroup(groupLoc), loginAttempt, redis)
-      } ?: challengeGroupPage(content, user, content.findGroup(groupLoc), loginAttempt, null)
+      challengeGroupPage(content, user, content.findGroup(groupLoc), loginAttempt)
 
     }
 
@@ -126,9 +123,7 @@ internal object Locations {
       assignBrowserSession()
       content.checkLanguage(challengeLoc.languageType)
       val user = fetchUser(loginAttempt)
-      redisPool?.withRedisPool { redis ->
-        challengePage(content, user, content.findChallenge(challengeLoc), loginAttempt, redis)
-      } ?: challengePage(content, user, content.findChallenge(challengeLoc), loginAttempt, null)
+      challengePage(content, user, content.findChallenge(challengeLoc), loginAttempt)
     }
 
   private suspend fun PipelineCall.playground(content: ReadingBatContent,
@@ -138,9 +133,7 @@ internal object Locations {
       assignBrowserSession()
       val user = fetchUser(loginAttempt)
       val languageGroup = content.findLanguage(Kotlin).findChallenge(request.groupName, request.challengeName)
-      redisPool?.withRedisPool { redis ->
-        playgroundPage(content, user, languageGroup, loginAttempt, redis)
-      } ?: playgroundPage(content, user, languageGroup, loginAttempt, null)
+      playgroundPage(content, user, languageGroup, loginAttempt)
     }
 }
 
@@ -275,8 +268,6 @@ inline class Password(val value: String) {
 }
 
 inline class Email(val value: String) {
-  val userEmailKey get() = keyOf(USER_EMAIL_KEY, value)
-
   fun isBlank() = value.isBlank()
   fun isNotBlank() = value.isNotBlank()
   fun isNotValidEmail() = value.isNotValidEmail()

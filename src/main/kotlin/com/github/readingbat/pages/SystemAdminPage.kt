@@ -49,32 +49,27 @@ import com.github.readingbat.server.ServerUtils.queryParam
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 import mu.KLogging
-import redis.clients.jedis.Jedis
 
 internal object SystemAdminPage : KLogging() {
 
   fun PipelineCall.systemAdminPage(content: ReadingBatContent,
                                    user: User?,
-                                   redis: Jedis,
                                    msg: String = "") =
-    if (user.isValidUser(redis))
-      systemAdminLoginPage(content, user, Message(msg), redis)
+    if (user.isValidUser())
+      systemAdminLoginPage(content, user, Message(msg))
     else
-      requestLogInPage(content, redis)
+      requestLogInPage(content)
 
-  private fun PipelineCall.systemAdminLoginPage(content: ReadingBatContent,
-                                                user: User,
-                                                msg: Message,
-                                                redis: Jedis) =
+  private fun PipelineCall.systemAdminLoginPage(content: ReadingBatContent, user: User, msg: Message) =
     createHTML()
       .html {
         head { headDefault(content) }
 
         body {
-          val activeClassCode = fetchActiveClassCode(user, redis)
+          val activeClassCode = fetchActiveClassCode(user)
           val returnPath = queryParam(RETURN_PARAM, "/")
 
-          helpAndLogin(content, user, returnPath, activeClassCode.isEnabled, redis)
+          helpAndLogin(content, user, returnPath, activeClassCode.isEnabled)
           bodyTitle()
 
           h2 { +"System Admin" }
@@ -82,7 +77,7 @@ internal object SystemAdminPage : KLogging() {
           if (msg.isAssigned())
             p { span { style = "color:${msg.color}"; this@body.displayMessage(msg) } }
 
-          if (!isProduction() || user.isAdminUser(redis)) {
+          if (!isProduction() || user.isAdminUser()) {
             p {
               this@body.confirmingButton("Reset ReadingBat Content",
                                          RESET_CONTENT_DSL_ENDPOINT,

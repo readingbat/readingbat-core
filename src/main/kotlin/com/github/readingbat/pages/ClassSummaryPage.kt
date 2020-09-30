@@ -73,34 +73,32 @@ import io.ktor.application.*
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 import mu.KLogging
-import redis.clients.jedis.Jedis
 
 internal object ClassSummaryPage : KLogging() {
 
   internal const val STATS = "-stats"
   private const val BTN_SIZE = "130%"
 
-  fun PipelineCall.classSummaryPage(content: ReadingBatContent, user: User?, redis: Jedis): String {
+  fun PipelineCall.classSummaryPage(content: ReadingBatContent, user: User?): String {
     val (languageName, groupName, classCode) =
       Triple(
         call.parameters[LANG_TYPE_QP]?.let { LanguageName(it) } ?: EMPTY_LANGUAGE,
         call.parameters[GROUP_NAME_QP]?.let { GroupName(it) } ?: EMPTY_GROUP,
         call.parameters[CLASS_CODE_QP]?.let { ClassCode(it) } ?: throw InvalidRequestException("Missing class code"))
-    return classSummaryPage(content, user, redis, classCode, languageName, groupName)
+    return classSummaryPage(content, user, classCode, languageName, groupName)
   }
 
   fun PipelineCall.classSummaryPage(content: ReadingBatContent,
                                     user: User?,
-                                    redis: Jedis,
                                     classCode: ClassCode,
                                     languageName: LanguageName = EMPTY_LANGUAGE,
                                     groupName: GroupName = EMPTY_GROUP,
                                     msg: Message = EMPTY_MESSAGE): String {
     when {
-      classCode.isNotValid(redis) -> throw InvalidRequestException("Invalid class code: $classCode")
-      user.isNotValidUser(redis) -> throw InvalidRequestException("Invalid user")
-      classCode.fetchClassTeacherId(redis) != user.userId -> {
-        val teacherId = classCode.fetchClassTeacherId(redis)
+      classCode.isNotValid() -> throw InvalidRequestException("Invalid class code: $classCode")
+      user.isNotValidUser() -> throw InvalidRequestException("Invalid user")
+      classCode.fetchClassTeacherId() != user.userId -> {
+        val teacherId = classCode.fetchClassTeacherId()
         throw InvalidRequestException("User id ${user.userId} does not match class code's teacher id $teacherId")
       }
       else -> {
@@ -110,8 +108,8 @@ internal object ClassSummaryPage : KLogging() {
     return createHTML()
       .html {
         val hasGroupName = groupName.isDefined(content, languageName)
-        val activeClassCode = fetchActiveClassCode(user, redis)
-        val enrollees = classCode.fetchEnrollees(redis)
+        val activeClassCode = fetchActiveClassCode(user)
+        val enrollees = classCode.fetchEnrollees()
 
         head {
           loadBootstrap()
@@ -125,7 +123,7 @@ internal object ClassSummaryPage : KLogging() {
             else
               queryParam(RETURN_PARAM, if (languageName.isValid()) pathOf(CHALLENGE_ROOT, languageName) else "/")
 
-          helpAndLogin(content, user, returnPath, activeClassCode.isEnabled, redis)
+          helpAndLogin(content, user, returnPath, activeClassCode.isEnabled)
 
           bodyTitle()
 
@@ -134,7 +132,7 @@ internal object ClassSummaryPage : KLogging() {
           if (msg.isAssigned())
             p { span { style = "color:${msg.color}"; this@body.displayMessage(msg) } }
 
-          displayClassInfo(classCode, activeClassCode, redis)
+          displayClassInfo(classCode, activeClassCode)
 
           if (classCode == activeClassCode)
             displayClassChoices(content, classCode)
@@ -154,12 +152,12 @@ internal object ClassSummaryPage : KLogging() {
       }
   }
 
-  private fun BODY.displayClassInfo(classCode: ClassCode, activeClassCode: ClassCode, redis: Jedis) {
+  private fun BODY.displayClassInfo(classCode: ClassCode, activeClassCode: ClassCode) {
     table {
       tr {
         td {
           h3 {
-            style = "margin-left:15px; margin-bottom:15px; color:$headerColor"; +classCode.toDisplayString(redis)
+            style = "margin-left:15px; margin-bottom:15px; color:$headerColor"; +classCode.toDisplayString()
           }
         }
         if (classCode != activeClassCode) {

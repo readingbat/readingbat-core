@@ -29,10 +29,12 @@ import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.MissingBrowserSessionException
 import com.github.readingbat.posts.ChallengeHistory
 import com.github.readingbat.posts.ChallengeNames
+import com.github.readingbat.server.BrowserSessions
 import com.github.readingbat.server.ChallengeName
 import com.github.readingbat.server.GroupName
 import com.github.readingbat.server.Invocation
 import com.github.readingbat.server.LanguageName
+import com.github.readingbat.server.SessionAnswerHistory
 import io.ktor.application.*
 import io.ktor.auth.*
 import io.ktor.sessions.*

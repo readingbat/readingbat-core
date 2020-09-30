@@ -18,7 +18,6 @@
 package com.github.readingbat.pages
 
 import com.github.readingbat.common.CSSNames.INDENT_1EM
-import com.github.readingbat.common.Constants.INVALID_RESET_ID
 import com.github.readingbat.common.Constants.LABEL_WIDTH
 import com.github.readingbat.common.Endpoints.PASSWORD_CHANGE_ENDPOINT
 import com.github.readingbat.common.Endpoints.PASSWORD_RESET_ENDPOINT
@@ -31,7 +30,6 @@ import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.FormFields.UPDATE_PASSWORD
 import com.github.readingbat.common.Message
 import com.github.readingbat.common.Message.Companion.EMPTY_MESSAGE
-import com.github.readingbat.common.PasswordResets
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyTitle
@@ -43,7 +41,6 @@ import com.github.readingbat.pages.PageUtils.loadPingdomScript
 import com.github.readingbat.pages.PageUtils.privacyStatement
 import com.github.readingbat.posts.PasswordResetPost.ResetPasswordException
 import com.github.readingbat.server.*
-import com.github.readingbat.server.ReadingBatServer.usePostgres
 import com.github.readingbat.server.ServerUtils.queryParam
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
@@ -53,7 +50,6 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import org.joda.time.DateTime
 import org.joda.time.DateTime.now
 import org.joda.time.Seconds
-import redis.clients.jedis.Jedis
 import kotlin.time.minutes
 import kotlin.time.seconds
 
@@ -64,33 +60,27 @@ internal object PasswordResetPage : KLogging() {
 
   fun PipelineCall.passwordResetPage(content: ReadingBatContent,
                                      resetId: ResetId,
-                                     redis: Jedis,
                                      msg: Message = EMPTY_MESSAGE) =
     if (resetId.isBlank())
       requestPasswordResetPage(content, msg)
     else {
       try {
         val email =
-          if (usePostgres)
-            transaction {
-              val idAndUpdate =
-                PasswordResets
-                  .slice(PasswordResets.email, PasswordResets.updated)
-                  .select { PasswordResets.resetId eq resetId.value }
-                  .map { it[0] as String to it[1] as DateTime }
-                  .firstOrNull() ?: throw ResetPasswordException("Invalid reset id. Try again.")
+          transaction {
+            val idAndUpdate =
+              PasswordResets
+                .slice(PasswordResets.email, PasswordResets.updated)
+                .select { PasswordResets.resetId eq resetId.value }
+                .map { it[0] as String to it[1] as DateTime }
+                .firstOrNull() ?: throw ResetPasswordException("Invalid reset id. Try again.")
 
-              Seconds.secondsBetween(idAndUpdate.second, now()).seconds.seconds
-                .let { diff ->
-                  if (diff >= 15.minutes)
-                    throw ResetPasswordException("Password reset must be completed within 15 mins ($diff). Try again.")
-                  else
-                    idAndUpdate.first
-                }
-            }
-          else {
-            val passwordResetKey = resetId.passwordResetKey
-            redis.get(passwordResetKey) ?: throw ResetPasswordException(INVALID_RESET_ID)
+            Seconds.secondsBetween(idAndUpdate.second, now()).seconds.seconds
+              .let { diff ->
+                if (diff >= 15.minutes)
+                  throw ResetPasswordException("Password reset must be completed within 15 mins ($diff). Try again.")
+                else
+                  idAndUpdate.first
+              }
           }
 
         changePasswordPage(content, Email(email), resetId, msg)

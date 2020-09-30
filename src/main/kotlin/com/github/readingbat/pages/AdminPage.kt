@@ -57,15 +57,15 @@ internal object AdminPage {
         body {
           val returnPath = queryParam(RETURN_PARAM, "/")
 
-          helpAndLogin(content, user, returnPath, false, redis)
+          helpAndLogin(content, user, returnPath, false)
 
           bodyTitle()
 
           when {
-            isProduction() && user.isNotValidUser(redis) -> {
+            isProduction() && user.isNotValidUser() -> {
               br { +"Must be logged in for this function" }
             }
-            isProduction() && user.isNotAdminUser(redis) -> {
+            isProduction() && user.isNotAdminUser() -> {
               br { +"Must be a system admin for this function" }
             }
             else -> {

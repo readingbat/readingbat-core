@@ -17,10 +17,14 @@
 
 package com.github.readingbat.posts
 
-import com.github.readingbat.common.*
 import com.github.readingbat.common.FormFields.ADMIN_ACTION_PARAM
 import com.github.readingbat.common.FormFields.DELETE_ALL_DATA
+import com.github.readingbat.common.Message
 import com.github.readingbat.common.RedisUtils.scanKeys
+import com.github.readingbat.common.User
+import com.github.readingbat.common.UserPrincipal
+import com.github.readingbat.common.isNotAdminUser
+import com.github.readingbat.common.isNotValidUser
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.isProduction
 import com.github.readingbat.pages.AdminPage.adminDataPage
@@ -38,8 +42,8 @@ internal object AdminPost {
 
   suspend fun PipelineCall.adminActions(content: ReadingBatContent, user: User?, redis: Jedis): String {
     return when {
-      isProduction() && user.isNotValidUser(redis) -> adminDataPage(content, user, redis = redis, msg = mustBeLoggedIn)
-      isProduction() && user.isNotAdminUser((redis)) -> adminDataPage(content, user, redis, mustBeSysAdmin)
+      isProduction() && user.isNotValidUser() -> adminDataPage(content, user, redis = redis, msg = mustBeLoggedIn)
+      isProduction() && user.isNotAdminUser() -> adminDataPage(content, user, redis, mustBeSysAdmin)
       else -> {
         when (call.receiveParameters()[ADMIN_ACTION_PARAM] ?: "") {
           DELETE_ALL_DATA -> {

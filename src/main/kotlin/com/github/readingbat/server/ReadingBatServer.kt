@@ -75,7 +75,6 @@ object ReadingBatServer : KLogging() {
   internal val contentReadCount = AtomicInteger(0)
   internal val metrics by lazy { Metrics() }
   internal var redisPool: JedisPool? = null
-  internal var usePostgres = true
   internal val postgres by lazy {
     Database.connect(
       HikariDataSource(
@@ -173,6 +172,7 @@ internal fun Application.module() {
   PROXY_HOSTNAME.setPropertyFromConfig(this, "")
 
   IS_PRODUCTION.setProperty(IS_PRODUCTION.configProperty(this, "false").toBoolean().toString())
+  POSTGRES_ENABLED.setProperty(POSTGRES_ENABLED.configProperty(this, "false").toBoolean().toString())
   CACHE_CONTENT_IN_REDIS.setProperty(CACHE_CONTENT_IN_REDIS.configProperty(this, "false").toBoolean().toString())
 
   DSL_FILE_NAME.setPropertyFromConfig(this, "src/Content.kt")
@@ -207,7 +207,7 @@ internal fun Application.module() {
   SENDGRID_PREFIX_PROPERTY.setProperty(
     SENDGRID_PREFIX.getEnv(SENDGRID_PREFIX_PROPERTY.configProperty(this, "https://www.readingbat.com")))
 
-  if (ReadingBatServer.usePostgres)
+  if (isPostgresEnabled())
     ReadingBatServer.postgres
 
   if (isAgentEnabled()) {

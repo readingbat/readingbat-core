@@ -66,8 +66,9 @@ enum class Property(val propertyValue: String,
 
   // These are assigned in ReadingBatServer
   IS_PRODUCTION("$READINGBAT.$SITE.production"),
-  AGENT_ENABLED_PROPERTY("$AGENT.enabled"),
+  POSTGRES_ENABLED("$READINGBAT.$SITE.postgresEnabled"),
   CACHE_CONTENT_IN_REDIS("$READINGBAT.$SITE.cacheContentInRedis"),
+  AGENT_ENABLED_PROPERTY("$AGENT.enabled"),
 
   PINGDOM_BANNER_ID("$READINGBAT.$SITE.pingdomBannerId", { getPropertyOrNull() ?: UNASSIGNED }),
   PINGDOM_URL("$READINGBAT.$SITE.pingdomUrl", { getPropertyOrNull() ?: UNASSIGNED }),

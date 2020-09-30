@@ -50,11 +50,11 @@ import com.github.readingbat.dsl.ReturnType
 import com.github.readingbat.dsl.ReturnType.BooleanType
 import com.github.readingbat.dsl.ReturnType.IntType
 import com.github.readingbat.dsl.ReturnType.StringType
+import com.github.readingbat.dsl.isPostgresEnabled
 import com.github.readingbat.server.*
 import com.github.readingbat.server.ChallengeName.Companion.getChallengeName
 import com.github.readingbat.server.GroupName.Companion.getGroupName
 import com.github.readingbat.server.LanguageName.Companion.getLanguageName
-import com.github.readingbat.server.ReadingBatServer.usePostgres
 import com.github.readingbat.utils.upsert
 import io.ktor.application.*
 import io.ktor.request.*
@@ -275,15 +275,11 @@ internal object ChallengePost : KLogging() {
 
 
     // Save whether all the answers for the challenge were correct
-    if (redis.isNotNull()) {
-      val browserSession = call.browserSession
-      if (usePostgres)
-        transaction {
-          saveChallengeAnswers(user, browserSession, content, names, paramMap, funcInfo, userResponses, results, redis)
-        }
-      else
+    if (isPostgresEnabled())
+      transaction {
+        val browserSession = call.browserSession
         saveChallengeAnswers(user, browserSession, content, names, paramMap, funcInfo, userResponses, results, redis)
-    }
+      }
 
     // Return values: 0 = not answered, 1 = correct, 2 = incorrect
     val answerMapping =
@@ -304,7 +300,7 @@ internal object ChallengePost : KLogging() {
       when (type) {
         AUTH_KEY ->
           UserChallengeInfo
-            .deleteWhere { (UserChallengeInfo.userRef eq id.userDbmsId) and (UserChallengeInfo.md5 eq md5) }
+            .deleteWhere { (UserChallengeInfo.userRef eq userDbmsIdByUserId(id)) and (UserChallengeInfo.md5 eq md5) }
         NO_AUTH_KEY ->
           SessionChallengeInfo
             .deleteWhere { (SessionChallengeInfo.sessionRef eq id.sessionDbmsId) and (SessionChallengeInfo.md5 eq md5) }
@@ -317,7 +313,7 @@ internal object ChallengePost : KLogging() {
       when (type) {
         AUTH_KEY ->
           UserAnswerHistory
-            .deleteWhere { (UserAnswerHistory.userRef eq id.userDbmsId) and (UserAnswerHistory.md5 eq md5) }
+            .deleteWhere { (UserAnswerHistory.userRef eq userDbmsIdByUserId(id)) and (UserAnswerHistory.md5 eq md5) }
         NO_AUTH_KEY ->
           SessionAnswerHistory
             .deleteWhere { (SessionAnswerHistory.sessionRef eq id.sessionDbmsId) and (SessionAnswerHistory.md5 eq md5) }
@@ -341,21 +337,17 @@ internal object ChallengePost : KLogging() {
 
     // Clears answer history
     if (correctAnswersKey.isNotEmpty()) {
-      when {
-        usePostgres -> correctAnswersKey.split(KEY_SEP).let { deleteChallengeInfo(it[1], it[2], it[3]) }
-        else -> redis.del(correctAnswersKey)
-      }.also {
-        logger.info { "Deleted $it correctAnswers vals for ${challenge.challengeName} $correctAnswersKey" }
-      }
+      correctAnswersKey.split(KEY_SEP).let { deleteChallengeInfo(it[1], it[2], it[3]) }
+        .also {
+          logger.info { "Deleted $it correctAnswers vals for ${challenge.challengeName} $correctAnswersKey" }
+        }
     }
 
     if (challengeAnswersKey.isNotEmpty()) {
-      when {
-        usePostgres -> challengeAnswersKey.split(KEY_SEP).let { deleteAnswerHistory(it[1], it[2], it[3]) }
-        else -> redis.del(challengeAnswersKey)
-      }.also {
-        logger.info { "Deleted $it challengeAnswers for ${challenge.challengeName} $challengeAnswersKey" }
-      }
+      challengeAnswersKey.split(KEY_SEP).let { deleteAnswerHistory(it[1], it[2], it[3]) }
+        .also {
+          logger.info { "Deleted $it challengeAnswers for ${challenge.challengeName} $challengeAnswersKey" }
+        }
     }
 
     user?.resetHistory(funcInfo, challenge, content.maxHistoryLength, redis)
@@ -377,27 +369,26 @@ internal object ChallengePost : KLogging() {
 
     val path = pathOf(CHALLENGE_ROOT, languageName, groupName)
 
+    if (!isPostgresEnabled())
+      throw RedirectException("$path?$MSG=${"Database not enabled"}")
+
     correctAnswersKeys
       .forEach { correctAnswersKey ->
         if (correctAnswersKey.isNotEmpty()) {
-          when {
-            usePostgres -> correctAnswersKey.split(KEY_SEP).let { deleteChallengeInfo(it[1], it[2], it[3]) }
-            else -> redis.del(correctAnswersKey)
-          }.also {
-            logger.info { "Deleted $it correctAnswers vals for $correctAnswersKey" }
-          }
+          correctAnswersKey.split(KEY_SEP).let { deleteChallengeInfo(it[1], it[2], it[3]) }
+            .also {
+              logger.info { "Deleted $it correctAnswers vals for $correctAnswersKey" }
+            }
         }
       }
 
     challengeAnswersKeys
       .forEach { challengeAnswersKey ->
         if (challengeAnswersKey.isNotEmpty()) {
-          when {
-            usePostgres -> challengeAnswersKey.split(KEY_SEP).let { deleteAnswerHistory(it[1], it[2], it[3]) }
-            else -> redis.del(challengeAnswersKey)
-          }.also {
-            logger.info { "Deleted $it challengeAnswers for $challengeAnswersKey" }
-          }
+          challengeAnswersKey.split(KEY_SEP).let { deleteAnswerHistory(it[1], it[2], it[3]) }
+            .also {
+              logger.info { "Deleted $it challengeAnswers for $challengeAnswersKey" }
+            }
         }
       }
 
@@ -413,7 +404,7 @@ internal object ChallengePost : KLogging() {
     throw RedirectException("$path?$MSG=${"Answers cleared".encode()}")
   }
 
-  suspend fun PipelineCall.likeDislike(content: ReadingBatContent, user: User?, redis: Jedis?) {
+  suspend fun PipelineCall.likeDislike(content: ReadingBatContent, user: User?) {
     val params = call.receiveParameters()
     val paramMap = params.entries().map { it.key to it.value[0] }.toMap()
     val names = ChallengeNames(paramMap)
@@ -433,10 +424,8 @@ internal object ChallengePost : KLogging() {
 
     logger.debug { "Like/dislike arg -- response: $likeArg -- $likeVal" }
 
-    if (redis.isNotNull()) {
-      val browserSession = call.browserSession
-      saveLikeDislike(user, browserSession, names, likeVal, redis)
-    }
+    val browserSession = call.browserSession
+    saveLikeDislike(user, browserSession, names, likeVal)
 
     call.respondText(likeVal.toString())
   }
@@ -449,22 +438,13 @@ internal object ChallengePost : KLogging() {
                                    funcInfo: FunctionInfo,
                                    userResponses: List<Map.Entry<String, List<String>>>,
                                    results: List<ChallengeResults>,
-                                   redis: Jedis) {
+                                   redis: Jedis?) {
     val correctAnswersKey = correctAnswersKey(user, browserSession, names)
     val challengeAnswersKey = challengeAnswersKey(user, browserSession, names)
     val challengeMd5 = md5Of(names.languageName, names.groupName, names.challengeName)
 
     val complete = results.all { it.correct }
     val numCorrect = results.count { it.correct }
-
-    // Record if all answers were correct
-    if (usePostgres) {
-      // Do it below
-    }
-    else {
-      if (correctAnswersKey.isNotEmpty())
-        redis.set(correctAnswersKey, complete.toString())
-    }
 
     // Save the last answers given
     val invokeList =
@@ -474,44 +454,34 @@ internal object ChallengePost : KLogging() {
             paramMap[RESP + i]?.trim() ?: throw InvalidConfigurationException("Missing user response")
           funcInfo.invocations[i] to userResponse
         }
-    if (usePostgres) {
-      val invokeMap = invokeList.map { it.first.value to it.second }.toMap()
-      val invokeStr = gson.toJson(invokeMap)
-      when {
-        user.isNotNull() ->
-          UserChallengeInfo
-            .upsert(conflictIndex = userChallengeInfoIndex) { row ->
-              row[userRef] = user.userDbmsId
-              row[md5] = challengeMd5
-              row[updated] = DateTime.now(DateTimeZone.UTC)
-              row[allCorrect] = complete
-              row[answersJson] = invokeStr
-            }
-        browserSession.isNotNull() ->
-          SessionChallengeInfo
-            .upsert(conflictIndex = sessionChallengeIfoIndex) { row ->
-              row[sessionRef] = browserSession.sessionDbmsId()
-              row[md5] = challengeMd5
-              row[updated] = DateTime.now(DateTimeZone.UTC)
-              row[allCorrect] = complete
-              row[answersJson] = invokeStr
-            }
-        else ->
-          logger.warn { "Challenge Info not updated" }
-      }
-    }
-    else {
-      if (challengeAnswersKey.isNotEmpty()) {
-        invokeList
-          .toMap()
-          .forEach { (invocation, userResponse) ->
-            redis.hset(challengeAnswersKey, invocation.value, userResponse)
+
+    val invokeMap = invokeList.map { it.first.value to it.second }.toMap()
+    val invokeStr = gson.toJson(invokeMap)
+    when {
+      user.isNotNull() ->
+        UserChallengeInfo
+          .upsert(conflictIndex = userChallengeInfoIndex) { row ->
+            row[userRef] = user.userDbmsId
+            row[md5] = challengeMd5
+            row[updated] = DateTime.now(DateTimeZone.UTC)
+            row[allCorrect] = complete
+            row[answersJson] = invokeStr
           }
-      }
+      browserSession.isNotNull() ->
+        SessionChallengeInfo
+          .upsert(conflictIndex = sessionChallengeInfoIndex) { row ->
+            row[sessionRef] = browserSession.sessionDbmsId()
+            row[md5] = challengeMd5
+            row[updated] = DateTime.now(DateTimeZone.UTC)
+            row[allCorrect] = complete
+            row[answersJson] = invokeStr
+          }
+      else ->
+        logger.warn { "ChallengeInfo not updated" }
     }
 
     val classCode = user?.enrolledClassCode ?: ClassCode.DISABLED_CLASS_CODE
-    val shouldPublish = user.shouldPublish(classCode, redis)
+    val shouldPublish = user.shouldPublish(classCode)
 
     // Save the history of each answer on a per-invocation basis
     for (result in results) {
@@ -519,14 +489,11 @@ internal object ChallengePost : KLogging() {
       val historyMd5 = md5Of(names.languageName, names.groupName, names.challengeName, result.invocation)
 
       val history =
-        if (usePostgres)
-          when {
-            user.isNotNull() -> user.answerHistory(historyMd5, result.invocation)
-            browserSession.isNotNull() -> browserSession.answerHistory(historyMd5, result.invocation)
-            else -> ChallengeHistory(result.invocation)
-          }
-        else
-          gson.fromJson(redis[answerHistoryKey], ChallengeHistory::class.java) ?: ChallengeHistory(result.invocation)
+        when {
+          user.isNotNull() -> user.answerHistory(historyMd5, result.invocation)
+          browserSession.isNotNull() -> browserSession.answerHistory(historyMd5, result.invocation)
+          else -> ChallengeHistory(result.invocation)
+        }
 
       when {
         !result.answered -> history.markUnanswered()
@@ -534,41 +501,34 @@ internal object ChallengePost : KLogging() {
         else -> history.markIncorrect(result.userResponse)
       }
 
-      if (usePostgres) {
-        when {
-          user.isNotNull() ->
-            UserAnswerHistory
-              .upsert(conflictIndex = userAnswerHistoryIndex) { row ->
-                row[userRef] = user.userDbmsId
-                row[md5] = historyMd5
-                row[invocation] = history.invocation.value
-                row[updated] = DateTime.now(DateTimeZone.UTC)
-                row[correct] = history.correct
-                row[incorrectAttempts] = history.incorrectAttempts
-                row[historyJson] = gson.toJson(history.answers)
-              }
-          browserSession.isNotNull() ->
-            SessionAnswerHistory
-              .upsert(conflictIndex = sessionAnswerHistoryIndex) { row ->
-                row[sessionRef] = browserSession.sessionDbmsId()
-                row[md5] = historyMd5
-                row[invocation] = history.invocation.value
-                row[updated] = DateTime.now(DateTimeZone.UTC)
-                row[correct] = history.correct
-                row[incorrectAttempts] = history.incorrectAttempts
-                row[historyJson] = gson.toJson(history.answers)
-              }
-          else ->
-            logger.warn { "Answer History not updated" }
-        }
-      }
-      else {
-        val json = gson.toJson(history)
-        logger.debug { "Saving: $json to $answerHistoryKey" }
-        redis.set(answerHistoryKey, json)
+      when {
+        user.isNotNull() ->
+          UserAnswerHistory
+            .upsert(conflictIndex = userAnswerHistoryIndex) { row ->
+              row[userRef] = user.userDbmsId
+              row[md5] = historyMd5
+              row[invocation] = history.invocation.value
+              row[updated] = DateTime.now(DateTimeZone.UTC)
+              row[correct] = history.correct
+              row[incorrectAttempts] = history.incorrectAttempts
+              row[historyJson] = gson.toJson(history.answers)
+            }
+        browserSession.isNotNull() ->
+          SessionAnswerHistory
+            .upsert(conflictIndex = sessionAnswerHistoryIndex) { row ->
+              row[sessionRef] = browserSession.sessionDbmsId()
+              row[md5] = historyMd5
+              row[invocation] = history.invocation.value
+              row[updated] = DateTime.now(DateTimeZone.UTC)
+              row[correct] = history.correct
+              row[incorrectAttempts] = history.incorrectAttempts
+              row[historyJson] = gson.toJson(history.answers)
+            }
+        else ->
+          logger.warn { "Answer history not updated" }
       }
 
-      if (shouldPublish) {
+      if (shouldPublish && redis.isNotNull()) {
         val maxLength = content.maxHistoryLength
         user?.publishAnswers(classCode, funcInfo.challengeMd5, maxLength, complete, numCorrect, history, redis)
       }
@@ -578,43 +538,32 @@ internal object ChallengePost : KLogging() {
   private fun saveLikeDislike(user: User?,
                               browserSession: BrowserSession?,
                               names: ChallengeNames,
-                              likeVal: Int,
-                              redis: Jedis) {
-    if (usePostgres) {
-      val challengeMd5 = md5Of(names.languageName, names.groupName, names.challengeName)
-      when {
-        user.isNotNull() ->
-          transaction {
-            UserChallengeInfo
-              .upsert(conflictIndex = userChallengeInfoIndex) { row ->
-                row[userRef] = user.userDbmsId
-                row[md5] = challengeMd5
-                row[updated] = DateTime.now(DateTimeZone.UTC)
-                row[likeDislike] = likeVal.toShort()
-              }
-          }
-        browserSession.isNotNull() ->
-          transaction {
-            SessionChallengeInfo
-              .upsert(conflictIndex = sessionChallengeIfoIndex) { row ->
-                row[sessionRef] = browserSession.sessionDbmsId()
-                row[md5] = challengeMd5
-                row[updated] = DateTime.now(DateTimeZone.UTC)
-                row[likeDislike] = likeVal.toShort()
-              }
-          }
-        else -> {
-          // Do nothing
+                              likeVal: Int) {
+    val challengeMd5 = md5Of(names.languageName, names.groupName, names.challengeName)
+    when {
+      user.isNotNull() ->
+        transaction {
+          UserChallengeInfo
+            .upsert(conflictIndex = userChallengeInfoIndex) { row ->
+              row[userRef] = user.userDbmsId
+              row[md5] = challengeMd5
+              row[updated] = DateTime.now(DateTimeZone.UTC)
+              row[likeDislike] = likeVal.toShort()
+            }
         }
+      browserSession.isNotNull() ->
+        transaction {
+          SessionChallengeInfo
+            .upsert(conflictIndex = sessionChallengeInfoIndex) { row ->
+              row[sessionRef] = browserSession.sessionDbmsId()
+              row[md5] = challengeMd5
+              row[updated] = DateTime.now(DateTimeZone.UTC)
+              row[likeDislike] = likeVal.toShort()
+            }
+        }
+      else -> {
+        // Do nothing
       }
     }
-    else
-      likeDislikeKey(user, browserSession, names)
-        .let {
-          if (it.isNotEmpty())
-            redis.apply { if (likeVal == 0) del(it) else set(it, likeVal.toString()) }
-        }
   }
-
-
 }

@@ -20,7 +20,12 @@ package com.github.readingbat.dsl
 import ch.obermuhlner.scriptengine.java.Isolation.IsolatedClassLoader
 import com.github.pambrose.common.redis.RedisUtils.withNonNullRedisPool
 import com.github.pambrose.common.redis.RedisUtils.withRedisPool
-import com.github.pambrose.common.util.*
+import com.github.pambrose.common.util.AbstractRepo
+import com.github.pambrose.common.util.FileSystemSource
+import com.github.pambrose.common.util.ensureSuffix
+import com.github.pambrose.common.util.toDoubleQuoted
+import com.github.pambrose.common.util.toSingleQuoted
+import com.github.pambrose.common.util.withLineNumbers
 import com.github.readingbat.common.CommonUtils.keyOf
 import com.github.readingbat.common.CommonUtils.md5Of
 import com.github.readingbat.common.CommonUtils.pathOf
@@ -104,7 +109,7 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
     keyOf(SOURCE_CODE_KEY, languageType.name, md5Of(languageName, groupName, challengeName))
   }
 
-  private fun fetchCodeFromRedis(): String? =
+  private fun fetchCodeFromRedis() =
     if (cacheContentInRedis()) redisPool?.withRedisPool { redis -> redis?.get(sourceCodeKey) } else null
 
   internal fun functionInfo(content: ReadingBatContent) =

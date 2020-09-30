@@ -56,7 +56,6 @@ import kotlinx.html.*
 import kotlinx.html.Entities.nbsp
 import kotlinx.html.stream.createHTML
 import mu.KLogging
-import redis.clients.jedis.Jedis
 
 internal object TeacherPrefsPage : KLogging() {
 
@@ -64,19 +63,17 @@ internal object TeacherPrefsPage : KLogging() {
 
   fun PipelineCall.teacherPrefsPage(content: ReadingBatContent,
                                     user: User?,
-                                    redis: Jedis,
                                     msg: Message = EMPTY_MESSAGE,
                                     defaultClassDesc: String = "") =
-    if (user.isValidUser(redis))
-      teacherPrefsWithLoginPage(content, user, msg, defaultClassDesc, redis)
+    if (user.isValidUser())
+      teacherPrefsWithLoginPage(content, user, msg, defaultClassDesc)
     else
-      requestLogInPage(content, redis)
+      requestLogInPage(content)
 
   private fun PipelineCall.teacherPrefsWithLoginPage(content: ReadingBatContent,
                                                      user: User,
                                                      msg: Message,
-                                                     defaultClassDesc: String,
-                                                     redis: Jedis) =
+                                                     defaultClassDesc: String) =
     createHTML()
       .html {
         head {
@@ -85,10 +82,10 @@ internal object TeacherPrefsPage : KLogging() {
         }
 
         body {
-          val activeClassCode = fetchActiveClassCode(user, redis)
+          val activeClassCode = fetchActiveClassCode(user)
           val returnPath = queryParam(RETURN_PARAM, "/")
 
-          helpAndLogin(content, user, returnPath, activeClassCode.isEnabled, redis)
+          helpAndLogin(content, user, returnPath, activeClassCode.isEnabled)
           bodyTitle()
 
           h2 { +"Teacher Preferences" }
@@ -98,7 +95,7 @@ internal object TeacherPrefsPage : KLogging() {
 
           createClass(defaultClassDesc)
 
-          displayClasses(user, activeClassCode, redis)
+          displayClasses(user, activeClassCode)
 
           backLink(returnPath)
 
@@ -134,22 +131,22 @@ internal object TeacherPrefsPage : KLogging() {
     }
   }
 
-  private fun BODY.displayClasses(user: User, activeClassCode: ClassCode, redis: Jedis) {
-    val classCodes = user.classCodes(redis)
+  private fun BODY.displayClasses(user: User, activeClassCode: ClassCode) {
+    val classCodes = user.classCodes()
     if (classCodes.isNotEmpty()) {
       h3 { +"Classes" }
       div(classes = INDENT_2EM) {
         table {
           tr {
-            td { style = "vertical-align:top"; this@displayClasses.classList(activeClassCode, classCodes, redis) }
-            td { style = "vertical-align:top"; this@displayClasses.deleteClassButtons(classCodes, redis) }
+            td { style = "vertical-align:top"; this@displayClasses.classList(activeClassCode, classCodes) }
+            td { style = "vertical-align:top"; this@displayClasses.deleteClassButtons(classCodes) }
           }
         }
       }
     }
   }
 
-  private fun BODY.classList(activeClassCode: ClassCode, classCodes: List<ClassCode>, redis: Jedis) {
+  private fun BODY.classList(activeClassCode: ClassCode, classCodes: List<ClassCode>) {
     table {
       style = "border-spacing: 15px 5px"
       tr { th { +"Active" }; th { +"Description" }; th { +"Class Code" }; th { +"Enrollees" } }
@@ -159,7 +156,7 @@ internal object TeacherPrefsPage : KLogging() {
 
         classCodes
           .forEach { classCode ->
-            val enrolleeCount = classCode.fetchEnrollees(redis).count()
+            val enrolleeCount = classCode.fetchEnrollees().count()
             this@table.tr {
               td {
                 style = "text-align:center"
@@ -171,7 +168,7 @@ internal object TeacherPrefsPage : KLogging() {
               }
 
               val summary = classSummaryEndpoint(classCode, TEACHER_PREFS_ENDPOINT)
-              td { a(classes = UNDERLINE) { href = summary; +classCode.fetchClassDesc(redis) } }
+              td { a(classes = UNDERLINE) { href = summary; +classCode.fetchClassDesc() } }
               td { a(classes = UNDERLINE) { href = summary; +classCode.displayedValue } }
               td { style = "text-align:center"; +enrolleeCount.toString() }
             }
@@ -199,7 +196,7 @@ internal object TeacherPrefsPage : KLogging() {
     }
   }
 
-  private fun BODY.deleteClassButtons(classCodes: List<ClassCode>, redis: Jedis) {
+  private fun BODY.deleteClassButtons(classCodes: List<ClassCode>) {
     table {
       style = "border-spacing: 5px 5px"
       tr { th { rawHtml(nbsp.text) } }
@@ -210,7 +207,7 @@ internal object TeacherPrefsPage : KLogging() {
               style = "margin:0"
               action = TEACHER_PREFS_ENDPOINT
               method = FormMethod.post
-              onSubmit = "return confirm('Are you sure you want to delete class ${classCode.toDisplayString(redis)}?')"
+              onSubmit = "return confirm('Are you sure you want to delete class ${classCode.toDisplayString()}?')"
               hiddenInput { name = CLASS_CODE_NAME_PARAM; value = classCode.displayedValue }
               submitInput {
                 style = "vertical-align:middle; margin-top:1; margin-bottom:0;"

@@ -34,15 +34,11 @@ import com.github.readingbat.server.ServerUtils.queryParam
 import io.ktor.application.*
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
-import redis.clients.jedis.Jedis
 
 
 internal object UserInfoPage {
 
-  fun PipelineCall.userInfoPage(content: ReadingBatContent,
-                                user: User?,
-                                redis: Jedis,
-                                msg: Message = EMPTY_MESSAGE) =
+  fun PipelineCall.userInfoPage(content: ReadingBatContent, user: User?, msg: Message = EMPTY_MESSAGE) =
     createHTML()
       .html {
         head { headDefault(content) }
@@ -50,24 +46,24 @@ internal object UserInfoPage {
         body {
           val returnPath = queryParam(RETURN_PARAM, "/")
 
-          helpAndLogin(content, user, returnPath, false, redis)
+          helpAndLogin(content, user, returnPath, false)
 
           bodyTitle()
 
           when {
-            user.isNotValidUser(redis) -> {
+            user.isNotValidUser() -> {
               br { +"Must be logged in for this function" }
             }
             else -> {
               val name = user.fullName
               val email = user.email
-              val browserSessions = user.browserSessions(redis).map { it.split(KEY_SEP).last() }
+              val browserSessions = user.browserSessions().map { it.split(KEY_SEP).last() }
               val idCnt = browserSessions.size
-              val challenges = user.challenges(redis)
-              val invocations = user.invocations(redis)
-              val correctAnswers = user.correctAnswers(redis)
-              val likeDislikes = user.likeDislikes(redis)
-              val classCodes = user.classCodes(redis)
+              val challenges = user.challenges()
+              val invocations = user.invocations()
+              val correctAnswers = user.correctAnswers()
+              val likeDislikes = user.likeDislikes()
+              val classCodes = user.classCodes()
 
               if (msg.isAssigned())
                 p { span { style = "color:${msg.color}"; this@body.displayMessage(msg) } }

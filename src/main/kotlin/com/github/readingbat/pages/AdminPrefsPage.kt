@@ -34,29 +34,35 @@ import com.github.readingbat.pages.PageUtils.bodyTitle
 import com.github.readingbat.pages.PageUtils.headDefault
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
-import kotlinx.html.*
+import kotlinx.html.a
+import kotlinx.html.body
+import kotlinx.html.h2
+import kotlinx.html.head
+import kotlinx.html.html
+import kotlinx.html.img
+import kotlinx.html.p
 import kotlinx.html.stream.createHTML
+import kotlinx.html.title
 import mu.KLogging
-import redis.clients.jedis.Jedis
 
 internal object AdminPrefsPage : KLogging() {
 
-  fun PipelineCall.adminPrefsPage(content: ReadingBatContent, user: User?, redis: Jedis) =
+  fun PipelineCall.adminPrefsPage(content: ReadingBatContent, user: User?) =
     createHTML()
       .html {
         head { headDefault(content) }
 
         body {
-          val activeClassCode = fetchActiveClassCode(user, redis)
+          val activeClassCode = fetchActiveClassCode(user)
           val returnPath = queryParam(RETURN_PARAM, "/")
 
-          helpAndLogin(content, user, returnPath, activeClassCode.isEnabled, redis)
+          helpAndLogin(content, user, returnPath, activeClassCode.isEnabled)
 
           bodyTitle()
 
           h2 { +"Admin Preferences" }
 
-          if (!isProduction() || user.isAdminUser(redis)) {
+          if (!isProduction() || user.isAdminUser()) {
             p(classes = INDENT_1EM) {
               a { href = "$CONFIG_ENDPOINT?$RETURN_PARAM=$returnPath"; +"System Configuration" }
             }

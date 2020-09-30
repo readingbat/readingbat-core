@@ -28,16 +28,20 @@ import com.github.readingbat.common.Message
 import com.github.readingbat.common.Message.Companion.EMPTY_MESSAGE
 import com.github.readingbat.common.User.Companion.createUser
 import com.github.readingbat.common.UserPrincipal
-import com.github.readingbat.common.Users
 import com.github.readingbat.common.browserSession
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.pages.CreateAccountPage.createAccountPage
-import com.github.readingbat.server.*
+import com.github.readingbat.server.Email
 import com.github.readingbat.server.Email.Companion.getEmail
+import com.github.readingbat.server.FullName
 import com.github.readingbat.server.FullName.Companion.getFullName
+import com.github.readingbat.server.Password
 import com.github.readingbat.server.Password.Companion.getPassword
-import com.github.readingbat.server.ReadingBatServer.usePostgres
+import com.github.readingbat.server.PipelineCall
+import com.github.readingbat.server.RedirectException
 import com.github.readingbat.server.ServerUtils.queryParam
+import com.github.readingbat.server.Users
+import com.github.readingbat.server.get
 import com.google.common.util.concurrent.RateLimiter
 import io.ktor.application.*
 import io.ktor.request.*
@@ -46,7 +50,6 @@ import mu.KLogging
 import org.jetbrains.exposed.sql.Count
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
-import redis.clients.jedis.Jedis
 
 internal object CreateAccountPost : KLogging() {
 
@@ -69,7 +72,7 @@ internal object CreateAccountPost : KLogging() {
       else -> EMPTY_MESSAGE
     }
 
-  suspend fun PipelineCall.createAccount(content: ReadingBatContent, redis: Jedis): String {
+  suspend fun PipelineCall.createAccount(content: ReadingBatContent): String {
     val parameters = call.receiveParameters()
     val fullName = parameters.getFullName(FULLNAME_PARAM)
     val email = parameters.getEmail(EMAIL_PARAM)
@@ -92,38 +95,34 @@ internal object CreateAccountPost : KLogging() {
                             defaultEmail = email,
                             msg = passwordError)
         else
-          createAccount(content, fullName, email, password, redis)
+          createAccount(content, fullName, email, password)
       }
     }
   }
 
-  private fun emailExists(email: Email, redis: Jedis) =
-    if (usePostgres)
-      transaction {
-        Users
-          .slice(Count(Users.id))
-          .select { Users.email eq email.value }
-          .map { it[0] as Long }
-          .first() > 0
-      }
-    else
-      redis.exists(email.userEmailKey)
+  private fun emailExists(email: Email) =
+    transaction {
+      Users
+        .slice(Count(Users.id))
+        .select { Users.email eq email.value }
+        .map { it[0] as Long }
+        .first() > 0
+    }
 
   private fun PipelineCall.createAccount(content: ReadingBatContent,
                                          name: FullName,
                                          email: Email,
-                                         password: Password,
-                                         redis: Jedis): String {
+                                         password: Password): String {
     createAccountLimiter.acquire() // may wait
 
     // Check if email already exists
-    return if (emailExists(email, redis)) {
+    return if (emailExists(email)) {
       createAccountPage(content, msg = Message("Email already registered: $email"))
     }
     else {
       // Create user
       val browserSession = call.browserSession
-      val user = createUser(name, email, password, browserSession, redis)
+      val user = createUser(name, email, password, browserSession)
       call.sessions.set(UserPrincipal(userId = user.userId))
       val returnPath = queryParam(RETURN_PARAM, "/")
       throw RedirectException("$returnPath?$MSG=${"User $email created".encode()}")

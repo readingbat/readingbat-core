@@ -34,11 +34,11 @@ import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.fetchPreviousTeacherClassCode
 import com.github.readingbat.common.isAdminUser
 import com.github.readingbat.dsl.ReadingBatContent
+import com.github.readingbat.dsl.isPostgresEnabled
 import com.github.readingbat.dsl.isProduction
 import com.github.readingbat.pages.PageUtils.rawHtml
 import com.github.readingbat.server.ServerUtils.firstNonEmptyLanguageType
 import kotlinx.html.*
-import redis.clients.jedis.Jedis
 
 internal object HelpAndLogin {
 
@@ -47,21 +47,20 @@ internal object HelpAndLogin {
   fun BODY.helpAndLogin(content: ReadingBatContent,
                         user: User?,
                         loginPath: String,
-                        teacherMode: Boolean,
-                        redis: Jedis?) {
+                        teacherMode: Boolean) {
 
-    val previousClassCode = fetchPreviousTeacherClassCode(user, redis)
+    val previousClassCode = fetchPreviousTeacherClassCode(user)
     val path =
       if (loginPath in rootVals)
         firstNonEmptyLanguageType(content, user?.defaultLanguage).contentRoot
       else
         loginPath
 
-    if (redis.isNotNull())
+    if (isPostgresEnabled())
       div {
         style = "float:right; margin:0px; border: 1px solid lightgray; margin-left: 10px; padding: 5px"
         table {
-          if (user.isNotNull() && redis.isNotNull()) logout(user, path, redis) else login(path)
+          if (user.isNotNull()) logout(user, path) else login(path)
         }
       }
 
@@ -87,8 +86,8 @@ internal object HelpAndLogin {
             +" | "
             a { href = "$HELP_ENDPOINT?$RETURN_PARAM=$loginPath"; +"help" }
 
-            if (redis.isNotNull()) {
-              if (!isProduction() || user.isAdminUser(redis)) {
+            if (isPostgresEnabled()) {
+              if (!isProduction() || user.isAdminUser()) {
                 +" | "
                 a { href = "$ADMIN_PREFS_ENDPOINT?$RETURN_PARAM=$loginPath"; +"admin" }
               }
@@ -102,7 +101,7 @@ internal object HelpAndLogin {
     }
   }
 
-  private fun TABLE.logout(user: User, loginPath: String, redis: Jedis) {
+  private fun TABLE.logout(user: User, loginPath: String) {
     tr {
       val email = user.email
       val elems = email.value.split("@")

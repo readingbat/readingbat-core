@@ -47,7 +47,6 @@ import kotlinx.html.span
 import kotlinx.html.stream.createHTML
 import kotlinx.html.style
 import org.apache.commons.text.StringEscapeUtils.escapeHtml4
-import redis.clients.jedis.Jedis
 import kotlin.collections.set
 
 // Playground customization details are here:
@@ -56,11 +55,12 @@ import kotlin.collections.set
 
 internal object PlaygroundPage {
 
-  fun playgroundPage(content: ReadingBatContent,
-                     user: User?,
-                     challenge: Challenge,
-                     loginAttempt: Boolean,
-                     redis: Jedis?) =
+  fun playgroundPage(
+    content: ReadingBatContent,
+    user: User?,
+    challenge: Challenge,
+    loginAttempt: Boolean,
+                    ) =
     createHTML()
       .html {
         val languageType = challenge.languageType
@@ -69,7 +69,7 @@ internal object PlaygroundPage {
         val challengeName = challenge.challengeName
         val funcInfo = challenge.functionInfo(content)
         val loginPath = pathOf(CHALLENGE_ROOT, languageName, groupName, challengeName)
-        val activeClassCode = fetchActiveClassCode(user, redis)
+        val activeClassCode = fetchActiveClassCode(user)
 
         head {
           script { src = "https://unpkg.com/kotlin-playground@1"; attributes["data-selector"] = ".$KOTLIN_CODE" }
@@ -77,7 +77,7 @@ internal object PlaygroundPage {
         }
 
         body {
-          bodyHeader(content, user, languageType, loginAttempt, loginPath, false, activeClassCode, redis)
+          bodyHeader(content, user, languageType, loginAttempt, loginPath, false, activeClassCode)
 
           h2 {
             val groupPath = pathOf(CHALLENGE_ROOT, languageName, groupName)

@@ -46,25 +46,23 @@ import io.ktor.application.*
 import kotlinx.html.*
 import kotlinx.html.Entities.nbsp
 import kotlinx.html.stream.createHTML
-import redis.clients.jedis.Jedis
 
 internal object LanguageGroupPage {
 
   fun PipelineCall.languageGroupPage(content: ReadingBatContent,
                                      user: User?,
                                      languageType: LanguageType,
-                                     loginAttempt: Boolean,
-                                     redis: Jedis?) =
+                                     loginAttempt: Boolean) =
     createHTML()
       .html {
         val browserSession = call.browserSession
         val languageName = languageType.languageName
         val loginPath = pathOf(CHALLENGE_ROOT, languageName)
         val groups = content[languageType].challengeGroups
-        val activeClassCode = fetchActiveClassCode(user, redis)
-        val enrollees = activeClassCode.fetchEnrollees(redis)
+        val activeClassCode = fetchActiveClassCode(user)
+        val enrollees = activeClassCode.fetchEnrollees()
 
-        fun TR.groupItem(user: User?, challengeGroup: ChallengeGroup<*>, redis: Jedis?) {
+        fun TR.groupItem(user: User?, challengeGroup: ChallengeGroup<*>) {
           val groupName = challengeGroup.groupName
           val challenges = challengeGroup.challenges
 
@@ -74,7 +72,7 @@ internal object LanguageGroupPage {
 
           if (activeClassCode.isNotEnabled) {
             for (challenge in challenges) {
-              if (challenge.isCorrect(user, browserSession, redis))
+              if (challenge.isCorrect(user, browserSession))
                 cnt++
               if (cnt == maxCnt + 1) {
                 maxFound = true
@@ -108,10 +106,10 @@ internal object LanguageGroupPage {
 
         body {
           val msg = Message(queryParam(MSG))
-          bodyHeader(content, user, languageType, loginAttempt, loginPath, true, activeClassCode, redis, msg)
+          bodyHeader(content, user, languageType, loginAttempt, loginPath, true, activeClassCode, msg)
 
           if (activeClassCode.isEnabled)
-            displayClassDescription(activeClassCode, languageName, EMPTY_GROUP, enrollees, redis)
+            displayClassDescription(activeClassCode, languageName, EMPTY_GROUP, enrollees)
 
           table {
             val cols = 3
@@ -120,9 +118,9 @@ internal object LanguageGroupPage {
 
             repeat(rows) { i ->
               tr {
-                groups[i].also { group -> groupItem(user, group, redis) }
-                groups.elementAtOrNull(i + rows)?.also { groupItem(user, it, redis) } ?: td {}
-                groups.elementAtOrNull(i + (2 * rows))?.also { groupItem(user, it, redis) } ?: td {}
+                groups[i].also { group -> groupItem(user, group) }
+                groups.elementAtOrNull(i + rows)?.also { groupItem(user, it) } ?: td {}
+                groups.elementAtOrNull(i + (2 * rows))?.also { groupItem(user, it) } ?: td {}
               }
             }
           }

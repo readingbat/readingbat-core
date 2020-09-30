@@ -56,7 +56,7 @@ CREATE TABLE user_sessions
     user_ref                    INTEGER REFERENCES users ON DELETE CASCADE,
     active_class_code           TEXT NOT NULL DEFAULT '',
     previous_teacher_class_code TEXT NOT NULL DEFAULT '',
-    CONSTRAINT user_sessions_unique unique (session_ref)
+    CONSTRAINT user_sessions_unique unique (session_ref, user_ref)
 );
 
 CREATE TABLE user_challenge_info

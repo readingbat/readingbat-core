@@ -25,18 +25,6 @@ import com.github.readingbat.server.Invocation
 import com.github.readingbat.server.LanguageName
 
 
-internal fun likeDislikeKey(user: User?, browserSession: BrowserSession?, names: ChallengeNames) =
-  user?.likeDislikeKey(names) ?: browserSession?.likeDislikeKey(names) ?: ""
-
-internal fun likeDislikeKey(user: User?,
-                            browserSession: BrowserSession?,
-                            languageName: LanguageName,
-                            groupName: GroupName,
-                            challengeName: ChallengeName) =
-  user?.likeDislikeKey(languageName, groupName, challengeName)
-    ?: browserSession?.likeDislikeKey(languageName, groupName, challengeName)
-    ?: ""
-
 internal fun correctAnswersKey(user: User?, browserSession: BrowserSession?, names: ChallengeNames) =
   user?.correctAnswersKey(names) ?: browserSession?.correctAnswersKey(names) ?: ""
 

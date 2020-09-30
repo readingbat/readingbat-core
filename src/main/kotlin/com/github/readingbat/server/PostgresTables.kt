@@ -15,15 +15,16 @@
  *
  */
 
-package com.github.readingbat.common
+package com.github.readingbat.server
 
 import org.jetbrains.exposed.dao.id.LongIdTable
 import org.jetbrains.exposed.sql.Index
 import org.jetbrains.exposed.sql.jodatime.datetime
 
-internal val userSessionIndex = Index(listOf(BrowserSessions.session_id), true, "user_sessions_unique")
+internal val userSessionIndex =
+  Index(listOf(UserSessions.sessionRef, UserSessions.userRef), true, "user_sessions_unique")
 
-internal val sessionChallengeIfoIndex =
+internal val sessionChallengeInfoIndex =
   Index(listOf(SessionChallengeInfo.sessionRef, SessionChallengeInfo.md5), true, "session_challenge_info_unique")
 internal val userChallengeInfoIndex =
   Index(listOf(UserChallengeInfo.userRef, UserChallengeInfo.md5), true, "user_challenge_info_unique")

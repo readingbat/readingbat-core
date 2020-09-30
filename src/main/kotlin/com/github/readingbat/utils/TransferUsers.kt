@@ -19,7 +19,8 @@ package com.github.readingbat.utils
 
 import com.github.pambrose.common.redis.RedisUtils.withNonNullRedis
 import com.github.pambrose.common.util.isNotNull
-import com.github.readingbat.common.*
+import com.github.readingbat.common.BrowserSession
+import com.github.readingbat.common.ClassCode
 import com.github.readingbat.common.CommonUtils.keyOf
 import com.github.readingbat.common.KeyConstants.ANSWER_HISTORY_KEY
 import com.github.readingbat.common.KeyConstants.AUTH_KEY
@@ -40,8 +41,7 @@ import com.github.readingbat.common.User.Companion.toUser
 import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.LanguageType.Companion.defaultLanguageType
 import com.github.readingbat.posts.ChallengeHistory
-import com.github.readingbat.server.KotlinLoggingSqlLogger
-import com.github.readingbat.server.ReadingBatServer.usePostgres
+import com.github.readingbat.server.*
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import mu.KLogging
@@ -78,7 +78,7 @@ internal object TransferUsers : KLogging() {
   @JvmStatic
   fun main(args: Array<String>) {
 
-    usePostgres = false
+    //usePostgres = false
 
     Database.connect(hikari())
 
@@ -107,10 +107,11 @@ internal object TransferUsers : KLogging() {
           .forEach { sessionId ->
 
             val sessionDbmsId =
-              BrowserSessions.insertAndGetId { row ->
-                logger.info { "Inserting browser session: $sessionId" }
-                row[session_id] = sessionId
-              }.value
+              BrowserSessions
+                .insertAndGetId { row ->
+                  logger.info { "Inserting browser session: $sessionId" }
+                  row[session_id] = sessionId
+                }.value
 
             sessionMap[sessionId] = sessionDbmsId
 
@@ -121,7 +122,7 @@ internal object TransferUsers : KLogging() {
                 //println("$key ${redis[key]}")
 
                 SessionChallengeInfo
-                  .upsert(conflictIndex = sessionChallengeIfoIndex) { row ->
+                  .upsert(conflictIndex = sessionChallengeInfoIndex) { row ->
                     row[sessionRef] = sessionDbmsId
                     row[md5] = key.split(KEY_SEP)[3]
                     row[updated] = DateTime.now(UTC)
@@ -135,7 +136,7 @@ internal object TransferUsers : KLogging() {
                 require(sessionId == key.split(KEY_SEP)[2])
 
                 SessionChallengeInfo
-                  .upsert(conflictIndex = sessionChallengeIfoIndex) { row ->
+                  .upsert(conflictIndex = sessionChallengeInfoIndex) { row ->
                     row[sessionRef] = sessionDbmsId
                     row[md5] = key.split(KEY_SEP)[3]
                     row[updated] = DateTime.now(UTC)
@@ -150,7 +151,7 @@ internal object TransferUsers : KLogging() {
                 //println("$key ${redis.hgetAll(key)}")
 
                 SessionChallengeInfo
-                  .upsert(conflictIndex = sessionChallengeIfoIndex) { row ->
+                  .upsert(conflictIndex = sessionChallengeInfoIndex) { row ->
                     row[sessionRef] = sessionDbmsId
                     row[md5] = key.split(KEY_SEP)[3]
                     row[updated] = DateTime.now(UTC)
@@ -188,7 +189,7 @@ internal object TransferUsers : KLogging() {
           .filter { (redis.hget(it, NAME_FIELD) ?: "").isNotBlank() }
           .forEach { ukey ->
             val userId = ukey.split(KEY_SEP)[1]
-            val user = userId.toUser(redis, null)
+            val user = userId.toUser(null)
             val id =
               Users
                 .insertAndGetId { row ->
@@ -209,7 +210,7 @@ internal object TransferUsers : KLogging() {
           .filter { (redis.hget(it, NAME_FIELD) ?: "").isNotBlank() }
           .onEach { ukey ->
             val userId = ukey.split(KEY_SEP)[1]
-            val user = userId.toUser(redis, null)
+            val user = userId.toUser(null)
             logger.info { "Fetched user ${userMap[userId]} ${user.email} for $userId" }
 
             redis.scanKeys(user.userClassesKey)
@@ -227,7 +228,7 @@ internal object TransferUsers : KLogging() {
                           row[userRef] =
                             userMap[userId] ?: throw InvalidConfigurationException("Invalid user id $userId")
                           row[Classes.classCode] = classCode.value
-                          row[description] = classCode.fetchClassDesc(redis)
+                          row[description] = classCode.fetchClassDesc()
                         }.value
 
                     redis.smembers(classCode.classCodeEnrollmentKey)
@@ -247,9 +248,9 @@ internal object TransferUsers : KLogging() {
               .map { it.split(KEY_SEP)[2] }
               .filter { it != "unassigned" }
               .forEach { sessionId ->
-                val browserUser = userId.toUser(redis, BrowserSession(sessionId))
-                val activeClassCode = fetchActiveClassCode(browserUser, redis)
-                val previousClassCode = fetchPreviousTeacherClassCode(browserUser, redis)
+                val browserUser = userId.toUser(BrowserSession(sessionId))
+                val activeClassCode = fetchActiveClassCode(browserUser)
+                val previousClassCode = fetchPreviousTeacherClassCode(browserUser)
                 //println("$key $browser_sessions_id ${redis.hgetAll(user2.browserSpecificUserInfoKey)} $activeClassCode $previousClassCode")
 
                 UserSessions

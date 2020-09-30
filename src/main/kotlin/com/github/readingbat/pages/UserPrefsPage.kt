@@ -61,7 +61,6 @@ import kotlinx.html.*
 import kotlinx.html.Entities.nbsp
 import kotlinx.html.stream.createHTML
 import mu.KLogging
-import redis.clients.jedis.Jedis
 
 internal object UserPrefsPage : KLogging() {
 
@@ -71,19 +70,17 @@ internal object UserPrefsPage : KLogging() {
 
   fun PipelineCall.userPrefsPage(content: ReadingBatContent,
                                  user: User?,
-                                 redis: Jedis,
                                  msg: Message = EMPTY_MESSAGE,
                                  defaultClassCode: ClassCode = DISABLED_CLASS_CODE) =
-    if (user.isValidUser(redis))
-      userPrefsWithLoginPage(content, user, msg, defaultClassCode, redis)
+    if (user.isValidUser())
+      userPrefsWithLoginPage(content, user, msg, defaultClassCode)
     else
-      requestLogInPage(content, redis)
+      requestLogInPage(content)
 
   private fun PipelineCall.userPrefsWithLoginPage(content: ReadingBatContent,
                                                   user: User,
                                                   msg: Message,
-                                                  defaultClassCode: ClassCode,
-                                                  redis: Jedis) =
+                                                  defaultClassCode: ClassCode) =
     createHTML()
       .html {
         head {
@@ -92,10 +89,10 @@ internal object UserPrefsPage : KLogging() {
         }
 
         body {
-          val activeClassCode = fetchActiveClassCode(user, redis)
+          val activeClassCode = fetchActiveClassCode(user)
           val returnPath = queryParam(RETURN_PARAM, "/")
 
-          helpAndLogin(content, user, returnPath, activeClassCode.isEnabled, redis)
+          helpAndLogin(content, user, returnPath, activeClassCode.isEnabled)
 
           bodyTitle()
 
@@ -106,8 +103,8 @@ internal object UserPrefsPage : KLogging() {
 
           defaultLanguage(user)
           changePassword()
-          joinOrWithdrawFromClass(user, defaultClassCode, redis)
-          deleteAccount(user, redis)
+          joinOrWithdrawFromClass(user, defaultClassCode)
+          deleteAccount(user)
 
           p(classes = INDENT_1EM) {
             a { href = "$TEACHER_PREFS_ENDPOINT?$RETURN_PARAM=$USER_PREFS_ENDPOINT"; +"Teacher Preferences" }
@@ -195,11 +192,11 @@ internal object UserPrefsPage : KLogging() {
     }
   }
 
-  private fun BODY.joinOrWithdrawFromClass(user: User, defaultClassCode: ClassCode, redis: Jedis) {
+  private fun BODY.joinOrWithdrawFromClass(user: User, defaultClassCode: ClassCode) {
     val enrolledClass = user.enrolledClassCode
     if (enrolledClass.isEnabled) {
       h3 { +"Enrolled class" }
-      val displayStr = enrolledClass.toDisplayString(redis)
+      val displayStr = enrolledClass.toDisplayString()
       div(classes = INDENT_2EM) {
         p { +"Currently enrolled in class $displayStr." }
         p {
@@ -285,7 +282,7 @@ internal object UserPrefsPage : KLogging() {
   }
   */
 
-  private fun BODY.deleteAccount(user: User, redis: Jedis) {
+  private fun BODY.deleteAccount(user: User) {
     val email = user.email
     if (email.isNotBlank()) {
       h3 { +"Delete account" }
@@ -301,9 +298,7 @@ internal object UserPrefsPage : KLogging() {
     }
   }
 
-  fun PipelineCall.requestLogInPage(content: ReadingBatContent,
-                                    redis: Jedis,
-                                    msg: Message = EMPTY_MESSAGE) =
+  fun PipelineCall.requestLogInPage(content: ReadingBatContent, msg: Message = EMPTY_MESSAGE) =
     createHTML()
       .html {
         head { headDefault(content) }
@@ -311,7 +306,7 @@ internal object UserPrefsPage : KLogging() {
         body {
           val returnPath = queryParam(RETURN_PARAM, "/")
 
-          helpAndLogin(content, null, returnPath, false, redis)
+          helpAndLogin(content, null, returnPath, false)
 
           bodyTitle()
 
