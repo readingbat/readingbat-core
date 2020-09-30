@@ -636,7 +636,6 @@ internal object ChallengePage : KLogging() {
         }
       browserSession.isNotNull() ->
         transaction {
-          logger.info { "Selecting from ${browserSession.sessionDbmsId()} and ${challenge.md5()}" }
           SessionChallengeInfo
             .slice(SessionChallengeInfo.answersJson)
             .select { (SessionChallengeInfo.sessionRef eq browserSession.sessionDbmsId()) and (SessionChallengeInfo.md5 eq challenge.md5()) }

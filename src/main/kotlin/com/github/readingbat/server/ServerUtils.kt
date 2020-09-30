@@ -26,7 +26,7 @@ import com.github.pambrose.common.util.isNotNull
 import com.github.readingbat.common.Constants.UNKNOWN
 import com.github.readingbat.common.Metrics
 import com.github.readingbat.common.User
-import com.github.readingbat.common.User.Companion.toUser
+import com.github.readingbat.common.User.Companion.createUser
 import com.github.readingbat.common.UserPrincipal
 import com.github.readingbat.common.browserSession
 import com.github.readingbat.common.isNotAdminUser
@@ -70,7 +70,7 @@ internal object ServerUtils : KLogging() {
   fun PipelineCall.queryParam(key: String, default: String = "") = call.request.queryParameters[key] ?: default
 
   fun PipelineCall.fetchUser(loginAttempt: Boolean = false): User? =
-    fetchPrincipal(loginAttempt)?.userId?.toUser(call.browserSession)
+    fetchPrincipal(loginAttempt)?.userId?.let { createUser(it, call.browserSession) }
 
   private fun PipelineCall.fetchPrincipal(loginAttempt: Boolean): UserPrincipal? =
     if (loginAttempt) assignPrincipal() else call.userPrincipal
@@ -78,7 +78,8 @@ internal object ServerUtils : KLogging() {
   private fun PipelineCall.assignPrincipal(): UserPrincipal? =
     call.principal<UserPrincipal>().apply { if (isNotNull()) call.sessions.set(this) }  // Set the cookie
 
-  fun WebSocketServerSession.fetchUser(): User? = call.userPrincipal?.userId?.toUser(call.browserSession)
+  fun WebSocketServerSession.fetchUser(): User? =
+    call.userPrincipal?.userId?.let { createUser(it, call.browserSession) }
 
   // Calls for ApplicationCall
   fun ApplicationCall.fetchEmail() = fetchUser()?.email?.value ?: UNKNOWN
@@ -92,7 +93,7 @@ internal object ServerUtils : KLogging() {
 
    */
 
-  fun ApplicationCall.fetchUser(): User? = userPrincipal?.userId?.toUser(browserSession)
+  fun ApplicationCall.fetchUser(): User? = userPrincipal?.userId?.let { createUser(it, browserSession) }
 
   suspend fun PipelineCall.respondWithRedirect(block: () -> String) =
     try {

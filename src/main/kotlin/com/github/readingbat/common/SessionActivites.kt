@@ -26,8 +26,8 @@ import com.github.readingbat.common.Constants.UNKNOWN
 import com.github.readingbat.common.EnvVar.IPGEOLOCATION_KEY
 import com.github.readingbat.common.KeyConstants.IPGEO_KEY
 import com.github.readingbat.common.SessionActivites.RemoteHost.Companion.unknown
+import com.github.readingbat.common.User.Companion.createUser
 import com.github.readingbat.common.User.Companion.gson
-import com.github.readingbat.common.User.Companion.toUser
 import com.github.readingbat.server.ReadingBatServer.redisPool
 import io.ktor.application.*
 import io.ktor.client.statement.*
@@ -70,7 +70,7 @@ internal object SessionActivites : KLogging() {
     var remoteHost: RemoteHost = unknown
     var principal: UserPrincipal? = null
 
-    val user by lazy { principal?.userId?.toUser(browserSession) }
+    val user by lazy { principal?.userId?.let { createUser(it, browserSession) } }
     val age get() = lastUpdate.elapsedNow()
     val requests get() = pages.get()
 
@@ -193,8 +193,8 @@ internal object SessionActivites : KLogging() {
                 .let {
                   redis.set(geoKey, it.first, SetParams().ex(7.days.inSeconds.toInt()))
                   it.second
-                  }
-            }
+                }
+          }
         }
       }
     } catch (e: Throwable) {

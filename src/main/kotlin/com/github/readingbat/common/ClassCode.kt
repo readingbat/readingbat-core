@@ -23,7 +23,7 @@ import com.github.readingbat.common.CommonUtils.keyOf
 import com.github.readingbat.common.FormFields.DISABLED_MODE
 import com.github.readingbat.common.KeyConstants.CLASS_CODE_KEY
 import com.github.readingbat.common.KeyConstants.CLASS_INFO_KEY
-import com.github.readingbat.common.User.Companion.toUser
+import com.github.readingbat.common.User.Companion.createUser
 import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.server.Classes
 import com.github.readingbat.server.Enrollees
@@ -87,7 +87,7 @@ internal data class ClassCode(val value: String) {
         Users
           .slice(Users.userId)
           .select { Users.id inList userIds }
-          .map { (it[0] as String).toUser(null) }
+          .map { createUser(it[0] as String) }
           .also { logger.info { "fetchEnrollees() returning $it" } }
       }
 

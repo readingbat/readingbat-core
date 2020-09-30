@@ -32,12 +32,10 @@ import com.github.readingbat.common.KeyConstants.NO_AUTH_KEY
 import com.github.readingbat.common.KeyConstants.USER_INFO_BROWSER_KEY
 import com.github.readingbat.common.KeyConstants.USER_INFO_KEY
 import com.github.readingbat.common.RedisUtils.scanKeys
-import com.github.readingbat.common.User.Companion.EMAIL_FIELD
-import com.github.readingbat.common.User.Companion.NAME_FIELD
+import com.github.readingbat.common.User.Companion.createUser
 import com.github.readingbat.common.User.Companion.fetchActiveClassCode
 import com.github.readingbat.common.User.Companion.fetchPreviousTeacherClassCode
 import com.github.readingbat.common.User.Companion.gson
-import com.github.readingbat.common.User.Companion.toUser
 import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.LanguageType.Companion.defaultLanguageType
 import com.github.readingbat.posts.ChallengeHistory
@@ -60,6 +58,9 @@ import org.joda.time.DateTime
 import org.joda.time.DateTimeZone.UTC
 
 internal object TransferUsers : KLogging() {
+
+  internal const val EMAIL_FIELD = "email"
+  internal const val NAME_FIELD = "name"
 
   internal fun hikari() =
     HikariDataSource(
@@ -189,7 +190,7 @@ internal object TransferUsers : KLogging() {
           .filter { (redis.hget(it, NAME_FIELD) ?: "").isNotBlank() }
           .forEach { ukey ->
             val userId = ukey.split(KEY_SEP)[1]
-            val user = userId.toUser(null)
+            val user = createUser(userId)
             val id =
               Users
                 .insertAndGetId { row ->
@@ -210,7 +211,7 @@ internal object TransferUsers : KLogging() {
           .filter { (redis.hget(it, NAME_FIELD) ?: "").isNotBlank() }
           .onEach { ukey ->
             val userId = ukey.split(KEY_SEP)[1]
-            val user = userId.toUser(null)
+            val user = createUser(userId)
             logger.info { "Fetched user ${userMap[userId]} ${user.email} for $userId" }
 
             redis.scanKeys(user.userClassesKey)
@@ -248,7 +249,7 @@ internal object TransferUsers : KLogging() {
               .map { it.split(KEY_SEP)[2] }
               .filter { it != "unassigned" }
               .forEach { sessionId ->
-                val browserUser = userId.toUser(BrowserSession(sessionId))
+                val browserUser = createUser(userId, BrowserSession(sessionId))
                 val activeClassCode = fetchActiveClassCode(browserUser)
                 val previousClassCode = fetchPreviousTeacherClassCode(browserUser)
                 //println("$key $browser_sessions_id ${redis.hgetAll(user2.browserSpecificUserInfoKey)} $activeClassCode $previousClassCode")

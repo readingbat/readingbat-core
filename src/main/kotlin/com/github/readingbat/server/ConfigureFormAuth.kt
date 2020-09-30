@@ -69,6 +69,7 @@ internal object ConfigureFormAuth : KLogging() {
       }
 
       validate { cred: UserPasswordCredential ->
+        // Do not move the elvis check to the end of the lambda because it can return a null value
         val pool = redisPool ?: throw RedisUnavailableException("redisPool validate()")
         pool.withRedisPool { redis ->
           if (redis.isNull()) {

@@ -24,7 +24,7 @@ import com.github.readingbat.common.CSSNames.TD_PADDING
 import com.github.readingbat.common.Endpoints.ADMIN_PREFS_ENDPOINT
 import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.SessionActivites
-import com.github.readingbat.common.User.Companion.toUser
+import com.github.readingbat.common.User.Companion.createUser
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyTitle
@@ -88,21 +88,21 @@ internal object SessionsPage {
                   th { +"User Agent" }
                 }
                 sessions
-                  .forEach {
+                  .forEach { session ->
                     tr {
-                      val user = it.principal?.userId?.toUser(it.browserSession)
+                      val user = session.principal?.userId?.let { createUser(it, session.browserSession) }
                       val userDesc = user?.let { "${it.fullName} (${it.email})" } ?: "Not logged in"
-                      td { +it.browserSession.id }
+                      td { +session.browserSession.id }
                       td { +userDesc }
-                      td { +it.age.format(false) }
-                      td { +it.requests.toString() }
-                      td { +it.remoteHost.value }
-                      td { +it.remoteHost.city }
-                      td { +it.remoteHost.state }
-                      td { +it.remoteHost.country }
-                      td { +it.remoteHost.organization }
-                      td { if ("://" in it.remoteHost.flagUrl) img { src = it.remoteHost.flagUrl } else +"" }
-                      td { +it.userAgent }
+                      td { +session.age.format(false) }
+                      td { +session.requests.toString() }
+                      td { +session.remoteHost.value }
+                      td { +session.remoteHost.city }
+                      td { +session.remoteHost.state }
+                      td { +session.remoteHost.country }
+                      td { +session.remoteHost.organization }
+                      td { if ("://" in session.remoteHost.flagUrl) img { src = session.remoteHost.flagUrl } else +"" }
+                      td { +session.userAgent }
                     }
                   }
               }

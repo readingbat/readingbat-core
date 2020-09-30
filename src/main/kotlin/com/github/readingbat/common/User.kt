@@ -499,15 +499,9 @@ internal class User private constructor(val userId: String,
       }
   }
 
-  override fun toString() = "User(userId='$userId')"
+  override fun toString() = "User(userId='$userId', name='$fullName')"
 
   companion object : KLogging() {
-
-    internal const val EMAIL_FIELD = "email"
-    internal const val SALT_FIELD = "salt"
-    internal const val DIGEST_FIELD = "digest"
-    internal const val DEFAULT_LANGUAGE_FIELD = "default-language"
-    internal const val NAME_FIELD = "name"
 
     // Class code a user is enrolled in. Will report answers to when in student mode
     // This is not browser-id specific
@@ -523,7 +517,7 @@ internal class User private constructor(val userId: String,
 
     internal val gson = Gson()
 
-    fun String.toUser(browserSession: BrowserSession?) = User(this, browserSession, true)
+    fun createUser(userId: String, browserSession: BrowserSession? = null) = User(userId, browserSession, true)
 
     fun fetchActiveClassCode(user: User?) =
       when {
@@ -595,7 +589,7 @@ internal class User private constructor(val userId: String,
         classCode.isEnabled -> {
           // Check to see if the teacher that owns class has it set as their active class in one of the sessions
           val teacherId = classCode.fetchClassTeacherId()
-          teacherId.isNotEmpty() && teacherId.toUser(null).interestedInActiveClassCode(classCode)
+          teacherId.isNotEmpty() && createUser(teacherId).interestedInActiveClassCode(classCode)
             .also { logger.debug { "Publishing teacherId: $teacherId for $classCode" } }
         }
         else -> false
@@ -610,8 +604,9 @@ internal class User private constructor(val userId: String,
         Users
           .slice(Users.userId)
           .select { Users.email eq email.value }
-          .map { (it[0] as String).toUser(null) }
-          .firstOrNull().also { logger.info { "lookupUserByEmail() returned ${it?.fullName ?: "email not found"}" } }
+          .map { createUser(it[0] as String) }
+          .firstOrNull()
+          .also { logger.info { "lookupUserByEmail() returned: ${it?.email ?: " ${email.value} not found"}" } }
       }
   }
 
