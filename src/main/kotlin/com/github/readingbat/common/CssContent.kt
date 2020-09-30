@@ -19,6 +19,7 @@ package com.github.readingbat.common
 
 import com.github.readingbat.common.CSSNames.ARROW
 import com.github.readingbat.common.CSSNames.BTN
+import com.github.readingbat.common.CSSNames.CENTER
 import com.github.readingbat.common.CSSNames.CHALLENGE_DESC
 import com.github.readingbat.common.CSSNames.CHECK_ANSWERS
 import com.github.readingbat.common.CSSNames.CODE_BLOCK
@@ -48,6 +49,9 @@ import com.github.readingbat.common.CSSNames.USER_RESP
 import com.github.readingbat.common.Constants.INCOMPLETE_COLOR
 import kotlinx.css.*
 import kotlinx.css.BorderCollapse.separate
+import kotlinx.css.Display.block
+import kotlinx.css.FontWeight.Companion.bold
+import kotlinx.css.LinearDimension.Companion.auto
 import kotlinx.css.properties.LineHeight
 import kotlinx.css.properties.TextDecoration
 import kotlinx.css.properties.TextDecorationLine.underline
@@ -82,6 +86,7 @@ internal object CSSNames {
   const val INVOC_TD = "invoc_td"
   const val INVOC_STAT = "invoc_stat"
   const val BTN = "btn"
+  const val CENTER = "center"
 }
 
 internal val cssContent by lazy {
@@ -92,24 +97,21 @@ internal val cssContent by lazy {
     .apply {
 
       rule("html, body") {
-        //+"font-size: small;"
-      }
-      rule("html, body") {
-        /* MOBILE-CSS prevents crazy shrinking of font in table e.g. on section page */
-        //"-webkit-text-size-adjust:none; text-size-adjust:none;"
-      }
-      rule("h1, h2, h3, h4") {
-        fontWeight = FontWeight.bold
+        fontSize = 16.px
+        fontFamily = "verdana, arial, helvetica, sans-serif"
       }
       rule("body") {
-        display = Display.block
+        display = block
         marginTop = 8.px
         marginLeft = 8.px
         marginRight = 8.px
+        lineHeight = LineHeight.normal
       }
-      rule("html, body") {
-        fontSize = LinearDimension.auto
-        fontFamily = "verdana, arial, helvetica, sans-serif"
+      rule("h1, h2, h3, h4") {
+        fontWeight = bold
+      }
+      rule("li") {
+        marginTop = 10.px
       }
       p {
         maxWidth = 800.px
@@ -153,6 +155,12 @@ internal val cssContent by lazy {
       }
       h2 {
         fontSize = 150.pct
+      }
+      rule(".$CENTER") {
+        display = block
+        marginLeft = auto
+        marginRight = auto
+        width = LinearDimension("50%")
       }
       rule(".$CHALLENGE_DESC") {
         fontSize = textFs
@@ -221,7 +229,7 @@ internal val cssContent by lazy {
         height = 2.em
         backgroundColor = Color("#f1f1f1")
         fontSize = textFs
-        fontWeight = FontWeight.bold
+        fontWeight = bold
         borderRadius = 6.px
       }
       rule(".$LIKE_BUTTONS") {
@@ -337,7 +345,7 @@ internal val cssContent by lazy {
       }
       // This fixes a bug in the window size
       rule(".CodeMirror-scroll") {
-        height = LinearDimension.auto
+        height = auto
       }
       // This will add an outline to all the tables
       /*

@@ -21,10 +21,12 @@ import com.github.pambrose.common.time.format
 import com.github.pambrose.common.util.Version.Companion.versionDesc
 import com.github.readingbat.common.CSSNames.INDENT_1EM
 import com.github.readingbat.common.CSSNames.TD_PADDING
-import com.github.readingbat.common.Endpoints.USER_PREFS_ENDPOINT
-import com.github.readingbat.common.EnvVars
+import com.github.readingbat.common.Constants.UNASSIGNED
+import com.github.readingbat.common.Endpoints.ADMIN_PREFS_ENDPOINT
+import com.github.readingbat.common.EnvVar
 import com.github.readingbat.common.FormFields.RETURN_PARAM
-import com.github.readingbat.common.Properties
+import com.github.readingbat.common.Property
+import com.github.readingbat.common.Property.*
 import com.github.readingbat.common.SessionActivites
 import com.github.readingbat.dsl.*
 import com.github.readingbat.dsl.LanguageType.Java
@@ -33,6 +35,7 @@ import com.github.readingbat.dsl.LanguageType.Python
 import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyTitle
 import com.github.readingbat.pages.PageUtils.headDefault
+import com.github.readingbat.pages.PageUtils.loadStatusPageDisplay
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ReadingBatServer
 import com.github.readingbat.server.ServerUtils.queryParam
@@ -72,19 +75,19 @@ internal object ConfigPage {
                 }
                 tr {
                   td { +"Ktor port:" }
-                  td { +"${content.ktorPort}" }
+                  td { +KTOR_PORT.getProperty(UNASSIGNED) }
                 }
                 tr {
                   td { +"Ktor watch:" }
-                  td { +content.ktorWatch }
+                  td { +KTOR_WATCH.getProperty(UNASSIGNED) }
                 }
                 tr {
                   td { +"DSL filename:" }
-                  td { +content.dslFileName }
+                  td { +DSL_FILE_NAME.getRequiredProperty() }
                 }
                 tr {
                   td { +"DSL variable name:" }
-                  td { +content.dslVariableName }
+                  td { +DSL_VARIABLE_NAME.getRequiredProperty() }
                 }
                 tr {
                   td { +"Production:" }
@@ -125,23 +128,10 @@ internal object ConfigPage {
               }
             }
 
-            h3 { +"Env Vars" }
-            div(classes = INDENT_1EM) {
-              table {
-                EnvVars.values()
-                  .forEach {
-                    tr {
-                      td { +it.name }
-                      td { +it.maskFunc.invoke(it) }
-                    }
-                  }
-              }
-            }
-
             h3 { +"Application Properties" }
             div(classes = INDENT_1EM) {
               table {
-                Properties.values()
+                Property.values()
                   .filter { it.isDefined() }
                   .forEach {
                     tr {
@@ -157,33 +147,52 @@ internal object ConfigPage {
               table {
                 tr {
                   td { +"java.runtime.name" }
-                  td { +(System.getProperty("java.runtime.name", "unassigned")) }
+                  td { +(System.getProperty("java.runtime.name", UNASSIGNED)) }
                 }
                 tr {
                   td { +"java.runtime.version" }
-                  td { +(System.getProperty("java.runtime.version", "unassigned")) }
+                  td { +(System.getProperty("java.runtime.version", UNASSIGNED)) }
                 }
                 tr {
                   td { +"java.vm.name" }
-                  td { +(System.getProperty("java.vm.name", "unassigned")) }
+                  td { +(System.getProperty("java.vm.name", UNASSIGNED)) }
                 }
                 tr {
                   td { +"java.vm.vendor" }
-                  td { +(System.getProperty("java.vm.vendor", "unassigned")) }
+                  td { +(System.getProperty("java.vm.vendor", UNASSIGNED)) }
                 }
               }
             }
 
-            h3 { +"Prometheus Agent" }
+            h3 { +"Env Vars" }
             div(classes = INDENT_1EM) {
               table {
-                tr {
-                  td { +"Agent Id:" }
-                  td { +if (isAgentEnabled()) agentLaunchId() else "disabled" }
-                }
-                tr {
-                  td { +"Agent Version:" }
-                  td { +if (isAgentEnabled()) Agent::class.versionDesc() else "disabled" }
+                EnvVar.values()
+                  .forEach {
+                    tr {
+                      td { +it.name }
+                      td { +it.maskFunc.invoke(it) }
+                    }
+                  }
+              }
+            }
+
+            if (isAgentEnabled()) {
+              h3 { +"Prometheus Agent" }
+              div(classes = INDENT_1EM) {
+                table {
+                  tr {
+                    td { +"Agent Id:" }
+                    td { +agentLaunchId() }
+                  }
+                  tr {
+                    td { +"Agent Version:" }
+                    td { +Agent::class.versionDesc() }
+                  }
+                  tr {
+                    td { +"Proxy Hostname:" }
+                    td { +PROXY_HOSTNAME.getProperty(UNASSIGNED) }
+                  }
                 }
               }
             }
@@ -247,7 +256,9 @@ internal object ConfigPage {
             }
           }
 
-          backLink("$USER_PREFS_ENDPOINT?$RETURN_PARAM=${queryParam(RETURN_PARAM, "/")}")
+          backLink("$ADMIN_PREFS_ENDPOINT?$RETURN_PARAM=${queryParam(RETURN_PARAM, "/")}")
+
+          loadStatusPageDisplay()
         }
       }
 }

@@ -25,9 +25,11 @@ import com.github.pambrose.common.util.isNull
 import com.github.pambrose.common.util.sha256
 import com.github.readingbat.common.AuthName
 import com.github.readingbat.common.Constants.DBMS_DOWN
+import com.github.readingbat.common.Constants.UNKNOWN
 import com.github.readingbat.common.FormFields
 import com.github.readingbat.common.User.Companion.lookupUserByEmail
 import com.github.readingbat.common.UserPrincipal
+import com.github.readingbat.dsl.RedisUnavailableException
 import com.github.readingbat.server.ReadingBatServer.redisPool
 import com.google.common.util.concurrent.RateLimiter
 import io.ktor.auth.*
@@ -67,31 +69,31 @@ internal object ConfigureFormAuth : KLogging() {
       }
 
       validate { cred: UserPasswordCredential ->
-        redisPool.withRedisPool { redis ->
+        redisPool?.withRedisPool { redis ->
           if (redis.isNull()) {
-            logger.warn { DBMS_DOWN }
-            null
+            logger.error { DBMS_DOWN }
+            throw RedisUnavailableException("redis validate()")
           }
           else {
             var principal: UserPrincipal? = null
-
-            val user = lookupUserByEmail(Email(cred.name), redis)
+            val user = lookupUserByEmail(Email(cred.name))
             if (user.isNotNull()) {
-              val (salt, digest) = user.lookupDigestInfoByUser(redis)
+              val salt = user.salt
+              val digest = user.digest
               if (salt.isNotBlank() && digest.isNotBlank() && digest == cred.password.sha256(salt)) {
-                logger.debug { "Found user ${cred.name} ${user.id}" }
-                principal = UserPrincipal(user.id)
+                logger.debug { "Found user ${cred.name} ${user.userId}" }
+                principal = UserPrincipal(user.userId)
               }
             }
 
-            logger.info { "Login ${if (principal.isNull()) "failure" else "success for $user ${user?.email(redis) ?: "Unknown"}"}" }
+            logger.info { "Login ${if (principal.isNull()) "failure" else "success for $user ${user?.email ?: UNKNOWN}"}" }
 
             if (principal.isNull())
               failedLoginLimiter.acquire() // may block
 
             principal
           }
-        }
+        } ?: throw RedisUnavailableException("redisPool validate()")
       }
     }
 

@@ -18,6 +18,8 @@
 package com.github.readingbat.posts
 
 import com.github.pambrose.common.util.*
+import com.github.readingbat.common.*
+import com.github.readingbat.common.CommonUtils.md5Of
 import com.github.readingbat.common.CommonUtils.pathOf
 import com.github.readingbat.common.Constants.CHALLENGE_SRC
 import com.github.readingbat.common.Constants.GROUP_SRC
@@ -31,31 +33,38 @@ import com.github.readingbat.common.FormFields.CHALLENGE_NAME_PARAM
 import com.github.readingbat.common.FormFields.CORRECT_ANSWERS_PARAM
 import com.github.readingbat.common.FormFields.GROUP_NAME_PARAM
 import com.github.readingbat.common.FormFields.LANGUAGE_NAME_PARAM
+import com.github.readingbat.common.KeyConstants.AUTH_KEY
+import com.github.readingbat.common.KeyConstants.KEY_SEP
+import com.github.readingbat.common.KeyConstants.NO_AUTH_KEY
 import com.github.readingbat.common.ParameterIds.DISLIKE_CLEAR
 import com.github.readingbat.common.ParameterIds.DISLIKE_COLOR
 import com.github.readingbat.common.ParameterIds.LIKE_CLEAR
 import com.github.readingbat.common.ParameterIds.LIKE_COLOR
 import com.github.readingbat.common.ScriptPools.kotlinScriptPool
 import com.github.readingbat.common.ScriptPools.pythonScriptPool
-import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.gson
-import com.github.readingbat.common.User.Companion.saveChallengeAnswers
-import com.github.readingbat.common.User.Companion.saveLikeDislike
-import com.github.readingbat.common.browserSession
+import com.github.readingbat.common.User.Companion.shouldPublish
 import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.ReturnType
 import com.github.readingbat.dsl.ReturnType.BooleanType
 import com.github.readingbat.dsl.ReturnType.IntType
 import com.github.readingbat.dsl.ReturnType.StringType
+import com.github.readingbat.dsl.isPostgresEnabled
 import com.github.readingbat.server.*
 import com.github.readingbat.server.ChallengeName.Companion.getChallengeName
 import com.github.readingbat.server.GroupName.Companion.getGroupName
 import com.github.readingbat.server.LanguageName.Companion.getLanguageName
+import com.github.readingbat.utils.upsert
 import io.ktor.application.*
 import io.ktor.request.*
 import io.ktor.response.*
 import mu.KLogging
+import org.jetbrains.exposed.sql.and
+import org.jetbrains.exposed.sql.deleteWhere
+import org.jetbrains.exposed.sql.transactions.transaction
+import org.joda.time.DateTime
+import org.joda.time.DateTimeZone
 import redis.clients.jedis.Jedis
 import javax.script.ScriptException
 
@@ -266,10 +275,11 @@ internal object ChallengePost : KLogging() {
 
 
     // Save whether all the answers for the challenge were correct
-    if (redis.isNotNull()) {
-      val browserSession = call.browserSession
-      user.saveChallengeAnswers(browserSession, content, names, paramMap, funcInfo, userResponses, results, redis)
-    }
+    if (isPostgresEnabled())
+      transaction {
+        val browserSession = call.browserSession
+        saveChallengeAnswers(user, browserSession, content, names, paramMap, funcInfo, userResponses, results, redis)
+      }
 
     // Return values: 0 = not answered, 1 = correct, 2 = incorrect
     val answerMapping =
@@ -285,6 +295,32 @@ internal object ChallengePost : KLogging() {
     call.respondText(answerMapping.toString())
   }
 
+  private fun deleteChallengeInfo(type: String, id: String, md5: String) =
+    transaction {
+      when (type) {
+        AUTH_KEY ->
+          UserChallengeInfo
+            .deleteWhere { (UserChallengeInfo.userRef eq userDbmsIdByUserId(id)) and (UserChallengeInfo.md5 eq md5) }
+        NO_AUTH_KEY ->
+          SessionChallengeInfo
+            .deleteWhere { (SessionChallengeInfo.sessionRef eq id.sessionDbmsId) and (SessionChallengeInfo.md5 eq md5) }
+        else -> throw InvalidConfigurationException("Invalid type: $type")
+      }
+    }
+
+  private fun deleteAnswerHistory(type: String, id: String, md5: String) =
+    transaction {
+      when (type) {
+        AUTH_KEY ->
+          UserAnswerHistory
+            .deleteWhere { (UserAnswerHistory.userRef eq userDbmsIdByUserId(id)) and (UserAnswerHistory.md5 eq md5) }
+        NO_AUTH_KEY ->
+          SessionAnswerHistory
+            .deleteWhere { (SessionAnswerHistory.sessionRef eq id.sessionDbmsId) and (SessionAnswerHistory.md5 eq md5) }
+        else -> throw InvalidConfigurationException("Invalid type: $type")
+      }
+    }
+
   suspend fun PipelineCall.clearChallengeAnswers(content: ReadingBatContent, user: User?, redis: Jedis): String {
     val params = call.receiveParameters()
 
@@ -299,17 +335,22 @@ internal object ChallengePost : KLogging() {
     val funcInfo = challenge.functionInfo(content)
     val path = pathOf(CHALLENGE_ROOT, languageName, groupName, challengeName)
 
+    // Clears answer history
     if (correctAnswersKey.isNotEmpty()) {
-      logger.info { "Clearing correctAnswersKey for ${challenge.challengeName} $correctAnswersKey" }
-      redis.del(correctAnswersKey)
+      correctAnswersKey.split(KEY_SEP).let { deleteChallengeInfo(it[1], it[2], it[3]) }
+        .also {
+          logger.info { "Deleted $it correctAnswers vals for ${challenge.challengeName} $correctAnswersKey" }
+        }
     }
 
     if (challengeAnswersKey.isNotEmpty()) {
-      logger.info { "Clearing challengeAnswersKey for ${challenge.challengeName} $challengeAnswersKey" }
-      redis.del(challengeAnswersKey)
+      challengeAnswersKey.split(KEY_SEP).let { deleteAnswerHistory(it[1], it[2], it[3]) }
+        .also {
+          logger.info { "Deleted $it challengeAnswers for ${challenge.challengeName} $challengeAnswersKey" }
+        }
     }
 
-    user?.resetHistory(funcInfo, languageName, groupName, challengeName, content.maxHistoryLength, redis)
+    user?.resetHistory(funcInfo, challenge, content.maxHistoryLength, redis)
 
     throw RedirectException("$path?$MSG=${"Answers cleared".encode()}")
   }
@@ -328,19 +369,26 @@ internal object ChallengePost : KLogging() {
 
     val path = pathOf(CHALLENGE_ROOT, languageName, groupName)
 
+    if (!isPostgresEnabled())
+      throw RedirectException("$path?$MSG=${"Database not enabled"}")
+
     correctAnswersKeys
       .forEach { correctAnswersKey ->
         if (correctAnswersKey.isNotEmpty()) {
-          logger.info { "Clearing correctAnswersKey for $correctAnswersKey" }
-          redis.del(correctAnswersKey)
+          correctAnswersKey.split(KEY_SEP).let { deleteChallengeInfo(it[1], it[2], it[3]) }
+            .also {
+              logger.info { "Deleted $it correctAnswers vals for $correctAnswersKey" }
+            }
         }
       }
 
     challengeAnswersKeys
       .forEach { challengeAnswersKey ->
         if (challengeAnswersKey.isNotEmpty()) {
-          logger.info { "Clearing challengeAnswersKey answers for $challengeAnswersKey" }
-          redis.del(challengeAnswersKey)
+          challengeAnswersKey.split(KEY_SEP).let { deleteAnswerHistory(it[1], it[2], it[3]) }
+            .also {
+              logger.info { "Deleted $it challengeAnswers for $challengeAnswersKey" }
+            }
         }
       }
 
@@ -349,14 +397,14 @@ internal object ChallengePost : KLogging() {
         .forEach { challenge ->
           logger.info { "Clearing answers for challengeName ${challenge.challengeName}" }
           val funcInfo = challenge.functionInfo(content)
-          user.resetHistory(funcInfo, languageName, groupName, challenge.challengeName, content.maxHistoryLength, redis)
+          user.resetHistory(funcInfo, challenge, content.maxHistoryLength, redis)
         }
     }
 
     throw RedirectException("$path?$MSG=${"Answers cleared".encode()}")
   }
 
-  suspend fun PipelineCall.likeDislike(content: ReadingBatContent, user: User?, redis: Jedis?) {
+  suspend fun PipelineCall.likeDislike(content: ReadingBatContent, user: User?) {
     val params = call.receiveParameters()
     val paramMap = params.entries().map { it.key to it.value[0] }.toMap()
     val names = ChallengeNames(paramMap)
@@ -376,11 +424,146 @@ internal object ChallengePost : KLogging() {
 
     logger.debug { "Like/dislike arg -- response: $likeArg -- $likeVal" }
 
-    if (redis.isNotNull()) {
-      val browserSession = call.browserSession
-      user.saveLikeDislike(browserSession, names, likeVal, redis)
-    }
+    val browserSession = call.browserSession
+    saveLikeDislike(user, browserSession, names, likeVal)
 
     call.respondText(likeVal.toString())
+  }
+
+  private fun saveChallengeAnswers(user: User?,
+                                   browserSession: BrowserSession?,
+                                   content: ReadingBatContent,
+                                   names: ChallengeNames,
+                                   paramMap: Map<String, String>,
+                                   funcInfo: FunctionInfo,
+                                   userResponses: List<Map.Entry<String, List<String>>>,
+                                   results: List<ChallengeResults>,
+                                   redis: Jedis?) {
+    val correctAnswersKey = correctAnswersKey(user, browserSession, names)
+    val challengeAnswersKey = challengeAnswersKey(user, browserSession, names)
+    val challengeMd5 = md5Of(names.languageName, names.groupName, names.challengeName)
+
+    val complete = results.all { it.correct }
+    val numCorrect = results.count { it.correct }
+
+    // Save the last answers given
+    val invokeList =
+      userResponses.indices
+        .map { i ->
+          val userResponse =
+            paramMap[RESP + i]?.trim() ?: throw InvalidConfigurationException("Missing user response")
+          funcInfo.invocations[i] to userResponse
+        }
+
+    val invokeMap = invokeList.map { it.first.value to it.second }.toMap()
+    val invokeStr = gson.toJson(invokeMap)
+    when {
+      user.isNotNull() ->
+        UserChallengeInfo
+          .upsert(conflictIndex = userChallengeInfoIndex) { row ->
+            row[userRef] = user.userDbmsId
+            row[md5] = challengeMd5
+            row[updated] = DateTime.now(DateTimeZone.UTC)
+            row[allCorrect] = complete
+            row[answersJson] = invokeStr
+          }
+      browserSession.isNotNull() ->
+        SessionChallengeInfo
+          .upsert(conflictIndex = sessionChallengeInfoIndex) { row ->
+            row[sessionRef] = browserSession.sessionDbmsId()
+            row[md5] = challengeMd5
+            row[updated] = DateTime.now(DateTimeZone.UTC)
+            row[allCorrect] = complete
+            row[answersJson] = invokeStr
+          }
+      else ->
+        logger.warn { "ChallengeInfo not updated" }
+    }
+
+    val classCode = user?.enrolledClassCode ?: ClassCode.DISABLED_CLASS_CODE
+    val shouldPublish = user.shouldPublish(classCode)
+
+    // Save the history of each answer on a per-invocation basis
+    for (result in results) {
+      val answerHistoryKey = answerHistoryKey(user, browserSession, names, result.invocation)
+      val historyMd5 = md5Of(names.languageName, names.groupName, names.challengeName, result.invocation)
+
+      val history =
+        when {
+          user.isNotNull() -> user.answerHistory(historyMd5, result.invocation)
+          browserSession.isNotNull() -> browserSession.answerHistory(historyMd5, result.invocation)
+          else -> ChallengeHistory(result.invocation)
+        }
+
+      when {
+        !result.answered -> history.markUnanswered()
+        result.correct -> history.markCorrect(result.userResponse)
+        else -> history.markIncorrect(result.userResponse)
+      }
+
+      when {
+        user.isNotNull() ->
+          UserAnswerHistory
+            .upsert(conflictIndex = userAnswerHistoryIndex) { row ->
+              row[userRef] = user.userDbmsId
+              row[md5] = historyMd5
+              row[invocation] = history.invocation.value
+              row[updated] = DateTime.now(DateTimeZone.UTC)
+              row[correct] = history.correct
+              row[incorrectAttempts] = history.incorrectAttempts
+              row[historyJson] = gson.toJson(history.answers)
+            }
+        browserSession.isNotNull() ->
+          SessionAnswerHistory
+            .upsert(conflictIndex = sessionAnswerHistoryIndex) { row ->
+              row[sessionRef] = browserSession.sessionDbmsId()
+              row[md5] = historyMd5
+              row[invocation] = history.invocation.value
+              row[updated] = DateTime.now(DateTimeZone.UTC)
+              row[correct] = history.correct
+              row[incorrectAttempts] = history.incorrectAttempts
+              row[historyJson] = gson.toJson(history.answers)
+            }
+        else ->
+          logger.warn { "Answer history not updated" }
+      }
+
+      if (shouldPublish && redis.isNotNull()) {
+        val maxLength = content.maxHistoryLength
+        user?.publishAnswers(classCode, funcInfo.challengeMd5, maxLength, complete, numCorrect, history, redis)
+      }
+    }
+  }
+
+  private fun saveLikeDislike(user: User?,
+                              browserSession: BrowserSession?,
+                              names: ChallengeNames,
+                              likeVal: Int) {
+    val challengeMd5 = md5Of(names.languageName, names.groupName, names.challengeName)
+    when {
+      user.isNotNull() ->
+        transaction {
+          UserChallengeInfo
+            .upsert(conflictIndex = userChallengeInfoIndex) { row ->
+              row[userRef] = user.userDbmsId
+              row[md5] = challengeMd5
+              row[updated] = DateTime.now(DateTimeZone.UTC)
+              row[likeDislike] = likeVal.toShort()
+            }
+        }
+      browserSession.isNotNull() ->
+        transaction {
+          SessionChallengeInfo
+            .upsert(conflictIndex = sessionChallengeInfoIndex) { row ->
+              row[sessionRef] = browserSession.sessionDbmsId()
+              row[md5] = challengeMd5
+              row[updated] = DateTime.now(DateTimeZone.UTC)
+              row[likeDislike] = likeVal.toShort()
+            }
+        }
+      else -> {
+        // Do nothing
+      }
+    }
   }
 }

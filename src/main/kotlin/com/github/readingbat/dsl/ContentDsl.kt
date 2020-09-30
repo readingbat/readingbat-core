@@ -17,18 +17,25 @@
 
 package com.github.readingbat.dsl
 
+import com.github.pambrose.common.redis.RedisUtils.withNonNullRedisPool
 import com.github.pambrose.common.redis.RedisUtils.withRedisPool
-import com.github.pambrose.common.util.*
+import com.github.pambrose.common.util.ContentSource
+import com.github.pambrose.common.util.GitHubFile
+import com.github.pambrose.common.util.GitHubRepo
+import com.github.pambrose.common.util.OwnerType
+import com.github.pambrose.common.util.isNotNull
+import com.github.readingbat.common.CommonUtils.keyOf
+import com.github.readingbat.common.CommonUtils.md5Of
+import com.github.readingbat.common.Constants.UNASSIGNED
 import com.github.readingbat.common.KeyConstants.CONTENT_DSL_KEY
-import com.github.readingbat.common.Properties.AGENT_ENABLED_PROPERTY
-import com.github.readingbat.common.Properties.AGENT_LAUNCH_ID
-import com.github.readingbat.common.Properties.CACHE_CONTENT_IN_REDIS
-import com.github.readingbat.common.Properties.IS_PRODUCTION
+import com.github.readingbat.common.Property.AGENT_ENABLED_PROPERTY
+import com.github.readingbat.common.Property.AGENT_LAUNCH_ID
+import com.github.readingbat.common.Property.CACHE_CONTENT_IN_REDIS
+import com.github.readingbat.common.Property.IS_PRODUCTION
+import com.github.readingbat.common.Property.POSTGRES_ENABLED
 import com.github.readingbat.common.ScriptPools.kotlinScriptPool
 import com.github.readingbat.server.ReadingBatServer
 import com.github.readingbat.server.ReadingBatServer.redisPool
-import com.github.readingbat.server.keyOf
-import com.github.readingbat.server.md5Of
 import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
 import kotlin.reflect.KFunction
@@ -56,11 +63,13 @@ private val logger = KotlinLogging.logger {}
 // This is accessible from the Content.kt descriptions
 fun isProduction() = IS_PRODUCTION.getProperty(false)
 
-fun cacheContentInRedis() = CACHE_CONTENT_IN_REDIS.getProperty(false)
+internal fun isPostgresEnabled() = POSTGRES_ENABLED.getProperty(false)
 
-fun isAgentEnabled() = AGENT_ENABLED_PROPERTY.getProperty(false)
+internal fun cacheContentInRedis() = CACHE_CONTENT_IN_REDIS.getProperty(false)
 
-fun agentLaunchId() = AGENT_LAUNCH_ID.getProperty("unassigned")
+internal fun isAgentEnabled() = AGENT_ENABLED_PROPERTY.getProperty(false)
+
+internal fun agentLaunchId() = AGENT_LAUNCH_ID.getProperty(UNASSIGNED)
 
 fun ContentSource.eval(enclosingContent: ReadingBatContent, variableName: String = "content"): ReadingBatContent =
   enclosingContent.evalContent(this, variableName)
@@ -68,7 +77,10 @@ fun ContentSource.eval(enclosingContent: ReadingBatContent, variableName: String
 private fun contentDslKey(source: String) = keyOf(CONTENT_DSL_KEY, md5Of(source))
 
 private fun fetchContentDslFromRedis(source: String) =
-  if (cacheContentInRedis()) redisPool.withRedisPool { redis -> redis?.get(contentDslKey(source)) } else null
+  if (cacheContentInRedis())
+    redisPool?.withRedisPool { redis -> redis?.get(contentDslKey(source)) }
+  else
+    null
 
 internal fun readContentDsl(contentSource: ContentSource, variableName: String = "content"): ReadingBatContent {
   val (code, dur) =
@@ -82,10 +94,10 @@ internal fun readContentDsl(contentSource: ContentSource, variableName: String =
         }
         else {
           dsl = contentSource.content
-          redisPool.withRedisPool { redis ->
-            if (redis.isNotNull() && cacheContentInRedis()) {
+          if (cacheContentInRedis()) {
+            redisPool?.withNonNullRedisPool { redis ->
               redis.set(contentDslKey(contentSource.source), dsl)
-              Challenge.logger.debug { """Saved "${contentSource.source}" to redis""" }
+              logger.debug { """Saved "${contentSource.source}" to redis""" }
             }
           }
         }

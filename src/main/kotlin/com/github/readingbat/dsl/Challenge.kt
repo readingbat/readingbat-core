@@ -18,8 +18,16 @@
 package com.github.readingbat.dsl
 
 import ch.obermuhlner.scriptengine.java.Isolation.IsolatedClassLoader
+import com.github.pambrose.common.redis.RedisUtils.withNonNullRedisPool
 import com.github.pambrose.common.redis.RedisUtils.withRedisPool
-import com.github.pambrose.common.util.*
+import com.github.pambrose.common.util.AbstractRepo
+import com.github.pambrose.common.util.FileSystemSource
+import com.github.pambrose.common.util.ensureSuffix
+import com.github.pambrose.common.util.toDoubleQuoted
+import com.github.pambrose.common.util.toSingleQuoted
+import com.github.pambrose.common.util.withLineNumbers
+import com.github.readingbat.common.CommonUtils.keyOf
+import com.github.readingbat.common.CommonUtils.md5Of
 import com.github.readingbat.common.CommonUtils.pathOf
 import com.github.readingbat.common.FunctionInfo
 import com.github.readingbat.common.KeyConstants.SOURCE_CODE_KEY
@@ -47,9 +55,8 @@ import com.github.readingbat.dsl.parse.PythonParse.extractPythonFunction
 import com.github.readingbat.dsl.parse.PythonParse.extractPythonInvocations
 import com.github.readingbat.dsl.parse.PythonParse.ifMainEndRegex
 import com.github.readingbat.server.ChallengeName
+import com.github.readingbat.server.Invocation
 import com.github.readingbat.server.ReadingBatServer.redisPool
-import com.github.readingbat.server.keyOf
-import com.github.readingbat.server.md5Of
 import kotlinx.coroutines.runBlocking
 import mu.KLogging
 import java.net.URL
@@ -102,8 +109,8 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
     keyOf(SOURCE_CODE_KEY, languageType.name, md5Of(languageName, groupName, challengeName))
   }
 
-  private fun fetchCodeFromRedis(): String? =
-    if (cacheContentInRedis()) redisPool.withRedisPool { redis -> redis?.get(sourceCodeKey) } else null
+  private fun fetchCodeFromRedis() =
+    if (cacheContentInRedis()) redisPool?.withRedisPool { redis -> redis?.get(sourceCodeKey) } else null
 
   internal fun functionInfo(content: ReadingBatContent) =
     if (repo.remote) {
@@ -115,8 +122,9 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
               val path = pathOf((repo as AbstractRepo).rawSourcePrefix, branchName, srcPath, fqName)
               val (text, dur) = measureTimedValue { URL(path).readText() }
               logger.debug { """Fetched "${pathOf(groupName, fileName)}" in: $dur from: $path""" }
-              redisPool.withRedisPool { redis ->
-                if (redis.isNotNull() && cacheContentInRedis()) {
+
+              if (cacheContentInRedis()) {
+                redisPool?.withNonNullRedisPool { redis ->
                   redis.set(sourceCodeKey, text)
                   logger.debug { """Saved "${pathOf(groupName, fileName)}" to redis""" }
                 }
@@ -141,6 +149,10 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
       else
         parseCode()
     }
+
+  fun md5() = md5Of(languageName, groupName, challengeName)
+
+  fun md5(invocation: Invocation) = md5Of(languageName, groupName, challengeName, invocation)
 
   internal open fun validate() {
     if (challengeName.value.isEmpty())
@@ -167,6 +179,8 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
         .joinToString("\n")
         .also { logger.debug { """Assigning $challengeName description = "$it"""" } }
     }
+
+  override fun toString() = "$languageName $groupName $challengeName"
 
   companion object : KLogging() {
     internal val counter = AtomicInteger(0)

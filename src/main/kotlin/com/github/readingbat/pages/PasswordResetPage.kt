@@ -18,17 +18,16 @@
 package com.github.readingbat.pages
 
 import com.github.readingbat.common.CSSNames.INDENT_1EM
-import com.github.readingbat.common.Constants.INVALID_RESET_ID
 import com.github.readingbat.common.Constants.LABEL_WIDTH
 import com.github.readingbat.common.Endpoints.PASSWORD_CHANGE_ENDPOINT
 import com.github.readingbat.common.Endpoints.PASSWORD_RESET_ENDPOINT
 import com.github.readingbat.common.FormFields.CONFIRM_PASSWORD_PARAM
 import com.github.readingbat.common.FormFields.EMAIL_PARAM
 import com.github.readingbat.common.FormFields.NEW_PASSWORD_PARAM
+import com.github.readingbat.common.FormFields.PREFS_ACTION_PARAM
 import com.github.readingbat.common.FormFields.RESET_ID_PARAM
 import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.FormFields.UPDATE_PASSWORD
-import com.github.readingbat.common.FormFields.USER_PREFS_ACTION_PARAM
 import com.github.readingbat.common.Message
 import com.github.readingbat.common.Message.Companion.EMPTY_MESSAGE
 import com.github.readingbat.dsl.ReadingBatContent
@@ -38,34 +37,21 @@ import com.github.readingbat.pages.PageUtils.clickButtonScript
 import com.github.readingbat.pages.PageUtils.displayMessage
 import com.github.readingbat.pages.PageUtils.headDefault
 import com.github.readingbat.pages.PageUtils.hideShowButton
+import com.github.readingbat.pages.PageUtils.loadPingdomScript
 import com.github.readingbat.pages.PageUtils.privacyStatement
 import com.github.readingbat.posts.PasswordResetPost.ResetPasswordException
-import com.github.readingbat.server.Email
-import com.github.readingbat.server.PipelineCall
-import com.github.readingbat.server.ResetId
+import com.github.readingbat.server.*
 import com.github.readingbat.server.ServerUtils.queryParam
-import kotlinx.html.FormMethod
-import kotlinx.html.InputType
-import kotlinx.html.body
-import kotlinx.html.div
-import kotlinx.html.form
-import kotlinx.html.h2
-import kotlinx.html.h3
-import kotlinx.html.head
-import kotlinx.html.html
-import kotlinx.html.id
-import kotlinx.html.input
-import kotlinx.html.label
-import kotlinx.html.onKeyPress
-import kotlinx.html.p
-import kotlinx.html.span
+import kotlinx.html.*
 import kotlinx.html.stream.createHTML
-import kotlinx.html.style
-import kotlinx.html.table
-import kotlinx.html.td
-import kotlinx.html.tr
 import mu.KLogging
-import redis.clients.jedis.Jedis
+import org.jetbrains.exposed.sql.select
+import org.jetbrains.exposed.sql.transactions.transaction
+import org.joda.time.DateTime
+import org.joda.time.DateTime.now
+import org.joda.time.Seconds
+import kotlin.time.minutes
+import kotlin.time.seconds
 
 internal object PasswordResetPage : KLogging() {
 
@@ -74,16 +60,30 @@ internal object PasswordResetPage : KLogging() {
 
   fun PipelineCall.passwordResetPage(content: ReadingBatContent,
                                      resetId: ResetId,
-                                     redis: Jedis,
-                                     msg: Message = EMPTY_MESSAGE): String =
+                                     msg: Message = EMPTY_MESSAGE) =
     if (resetId.isBlank())
       requestPasswordResetPage(content, msg)
     else {
       try {
-        val passwordResetKey = resetId.passwordResetKey
-        val email = Email(redis.get(passwordResetKey) ?: throw ResetPasswordException(INVALID_RESET_ID))
+        val email =
+          transaction {
+            val idAndUpdate =
+              PasswordResets
+                .slice(PasswordResets.email, PasswordResets.updated)
+                .select { PasswordResets.resetId eq resetId.value }
+                .map { it[0] as String to it[1] as DateTime }
+                .firstOrNull() ?: throw ResetPasswordException("Invalid reset id. Try again.")
 
-        changePasswordPage(content, email, resetId, msg)
+            Seconds.secondsBetween(idAndUpdate.second, now()).seconds.seconds
+              .let { diff ->
+                if (diff >= 15.minutes)
+                  throw ResetPasswordException("Password reset must be completed within 15 mins ($diff). Try again.")
+                else
+                  idAndUpdate.first
+              }
+          }
+
+        changePasswordPage(content, Email(email), resetId, msg)
 
       } catch (e: ResetPasswordException) {
         logger.info { e }
@@ -113,15 +113,14 @@ internal object PasswordResetPage : KLogging() {
               table {
                 tr {
                   td { style = LABEL_WIDTH; label { +"Email (used as account id)" } }
-                  td { input { name = EMAIL_PARAM; type = InputType.text; size = "50" } }
+                  td { textInput { name = EMAIL_PARAM; size = "50" } }
                 }
                 tr {
                   td { }
                   td {
                     style = "padding-top:10"
-                    input {
+                    submitInput {
                       style = "font-size:25px; height:35; width:  155"
-                      type = InputType.submit
                       value = "Send Password Reset"
                     }
                   }
@@ -138,9 +137,11 @@ internal object PasswordResetPage : KLogging() {
             }
           }
 
-          privacyStatement(PASSWORD_RESET_ENDPOINT, returnPath)
+          privacyStatement(PASSWORD_RESET_ENDPOINT)
 
           backLink(returnPath)
+
+          loadPingdomScript()
         }
       }
 
@@ -171,15 +172,14 @@ internal object PasswordResetPage : KLogging() {
             table {
               tr {
                 td { style = LABEL_WIDTH; label { +"New Password" } }
-                td { input { type = InputType.password; size = "42"; name = NEW_PASSWORD_PARAM; value = "" } }
+                td { passwordInput { size = "42"; name = NEW_PASSWORD_PARAM; value = "" } }
                 td { hideShowButton(formName, NEW_PASSWORD_PARAM) }
               }
 
               tr {
                 td { style = LABEL_WIDTH; label { +"Confirm Password" } }
                 td {
-                  input {
-                    type = InputType.password
+                  passwordInput {
                     size = "42"
                     name = CONFIRM_PASSWORD_PARAM
                     value = ""
@@ -190,13 +190,12 @@ internal object PasswordResetPage : KLogging() {
               }
 
               tr {
-                td { input { type = InputType.hidden; name = RESET_ID_PARAM; value = resetId.value } }
+                td { hiddenInput { name = RESET_ID_PARAM; value = resetId.value } }
                 td {
-                  input {
+                  submitInput {
                     style = "font-size:25px; height:35; width:155"
-                    type = InputType.submit
                     id = passwordButton
-                    name = USER_PREFS_ACTION_PARAM
+                    name = PREFS_ACTION_PARAM
                     value = UPDATE_PASSWORD
                   }
                 }

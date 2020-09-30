@@ -17,73 +17,119 @@
 
 package com.github.readingbat.common
 
-import com.github.pambrose.common.util.isNotNull
-import com.github.pambrose.common.util.isNull
 import com.github.pambrose.common.util.randomId
 import com.github.pambrose.common.util.toDoubleQuoted
+import com.github.readingbat.common.CommonUtils.keyOf
 import com.github.readingbat.common.FormFields.DISABLED_MODE
 import com.github.readingbat.common.KeyConstants.CLASS_CODE_KEY
 import com.github.readingbat.common.KeyConstants.CLASS_INFO_KEY
-import com.github.readingbat.common.KeyConstants.DESC_FIELD
-import com.github.readingbat.common.KeyConstants.TEACHER_FIELD
 import com.github.readingbat.common.User.Companion.toUser
-import com.github.readingbat.server.keyOf
+import com.github.readingbat.dsl.InvalidConfigurationException
+import com.github.readingbat.server.Classes
+import com.github.readingbat.server.Enrollees
+import com.github.readingbat.server.Users
+import com.github.readingbat.server.get
 import io.ktor.http.*
-import redis.clients.jedis.Jedis
-import redis.clients.jedis.Transaction
+import mu.KLogging
+import org.jetbrains.exposed.sql.Count
+import org.jetbrains.exposed.sql.and
+import org.jetbrains.exposed.sql.deleteWhere
+import org.jetbrains.exposed.sql.insert
+import org.jetbrains.exposed.sql.select
+import org.jetbrains.exposed.sql.transactions.transaction
+import kotlin.time.measureTimedValue
 
 internal data class ClassCode(val value: String) {
   val isNotEnabled by lazy { value == DISABLED_MODE || value.isBlank() }
   val isEnabled by lazy { !isNotEnabled }
   val classCodeEnrollmentKey by lazy { keyOf(CLASS_CODE_KEY, value) }
   val classInfoKey by lazy { keyOf(CLASS_INFO_KEY, value) }
+
   val displayedValue get() = if (value == DISABLED_MODE) "" else value
 
-  fun isValid(redis: Jedis) = redis.exists(classCodeEnrollmentKey) ?: false
+  private val classCodeDbmsId
+    get() =
+      measureTimedValue {
+        transaction {
+          Classes
+            .slice(Classes.id)
+            .select { Classes.classCode eq value }
+            .map { it[Classes.id].value }
+            .firstOrNull() ?: throw InvalidConfigurationException("Missing class code $value")
+        }
+      }.let {
+        logger.info { "Looked up classId in ${it.duration}" }
+        it.value
+      }
 
-  fun isNotValid(redis: Jedis) = !isValid(redis)
+  fun isNotValid() = !isValid()
 
-  fun fetchEnrollees(redis: Jedis?): List<User> =
-    if (redis.isNull() || isNotEnabled)
+  fun isValid() =
+    transaction {
+      Classes
+        .slice(Count(Classes.classCode))
+        .select { Classes.classCode eq value }
+        .map { it[0] as Long }
+        .first().also { logger.info { "ClassCode.isValid() returned $it for $value" } } > 0
+    }
+
+  fun fetchEnrollees(): List<User> =
+    if (isNotEnabled)
       emptyList()
     else
-      (redis.smembers(classCodeEnrollmentKey) ?: emptySet())
-        .filter { it.isNotEmpty() }
-        .map { it.toUser(null) }
+      transaction {
+        val userIds =
+          (Classes innerJoin Enrollees)
+            .slice(Enrollees.userRef)
+            .select { Classes.classCode eq value }
+            .map { it[0] as Long }
 
-  fun addEnrolleePlaceholder(tx: Transaction) {
-    tx.sadd(classCodeEnrollmentKey, "")
-  }
+        Users
+          .slice(Users.userId)
+          .select { Users.id inList userIds }
+          .map { (it[0] as String).toUser(null) }
+          .also { logger.info { "fetchEnrollees() returning $it" } }
+      }
 
-  fun addEnrollee(user: User, tx: Transaction) {
-    tx.sadd(classCodeEnrollmentKey, user.id)
-  }
+  fun deleteClassCode() = Classes.deleteWhere { Classes.classCode eq value }
 
-  fun removeEnrollee(user: User, tx: Transaction) {
-    tx.srem(classCodeEnrollmentKey, user.id)
-  }
+  fun addEnrollee(user: User) =
+    transaction {
+      Enrollees
+        .insert { row ->
+          row[classesRef] = classCodeDbmsId
+          row[userRef] = user.userDbmsId
+        }
+    }
 
-  fun deleteAllEnrollees(tx: Transaction) {
-    tx.del(classCodeEnrollmentKey)
-  }
+  fun removeEnrollee(user: User) =
+    Enrollees.deleteWhere { (Enrollees.classesRef eq classCodeDbmsId) and (Enrollees.userRef eq user.userDbmsId) }
 
-  fun initializeWith(classDesc: String, user: User, tx: Transaction) {
-    tx.hset(classInfoKey, mapOf(DESC_FIELD to classDesc, TEACHER_FIELD to user.id))
-  }
 
-  fun fetchClassDesc(redis: Jedis, quoted: Boolean = false) =
-    (redis.hget(classInfoKey, DESC_FIELD) ?: "Missing description").let { if (quoted) it.toDoubleQuoted() else it }
+  fun fetchClassDesc(quoted: Boolean = false) =
+    transaction {
+      (Classes
+        .slice(Classes.description)
+        .select { Classes.classCode eq value }
+        .map { it[0] as String }
+        .firstOrNull() ?: "Missing description")
+        .also { logger.info { "fetchClassDesc() returned ${it.toDoubleQuoted()} for $value" } }
+    }.let { if (quoted) it.toDoubleQuoted() else it }
 
-  fun toDisplayString(redis: Jedis?): String {
-    val classDesc = if (redis.isNotNull()) fetchClassDesc(redis, true) else "Description unavailable"
-    return "$classDesc [$value]"
-  }
+  fun toDisplayString() = "${fetchClassDesc(true)} [$value]"
 
-  fun fetchClassTeacherId(redis: Jedis) = redis.hget(classInfoKey, TEACHER_FIELD) ?: ""
+  fun fetchClassTeacherId() =
+    transaction {
+      ((Classes innerJoin Users)
+        .slice(Users.userId)
+        .select { Classes.classCode eq value }
+        .map { it[0] as String }
+        .firstOrNull() ?: "").also { logger.info { "fetchClassTeacherId() returned $it" } }
+    }
 
   override fun toString() = value
 
-  companion object {
+  companion object : KLogging() {
     internal val DISABLED_CLASS_CODE = ClassCode(DISABLED_MODE)
 
     internal fun newClassCode() = ClassCode(randomId(15))

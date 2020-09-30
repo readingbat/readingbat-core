@@ -15,7 +15,7 @@
  *
  */
 
-package com.github.readingbat
+package com.github.readingbat.utils
 
 import com.github.pambrose.common.script.JavaScript
 import com.github.pambrose.common.script.PythonScript
@@ -43,7 +43,6 @@ fun main() {
       }
     }
   }
-
 }
 
 fun javaTest() {

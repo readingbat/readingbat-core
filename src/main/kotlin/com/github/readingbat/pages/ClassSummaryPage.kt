@@ -41,9 +41,9 @@ import com.github.readingbat.common.Endpoints.studentSummaryEndpoint
 import com.github.readingbat.common.FormFields.CHOICE_SOURCE_PARAM
 import com.github.readingbat.common.FormFields.CLASS_CODE_CHOICE_PARAM
 import com.github.readingbat.common.FormFields.CLASS_SUMMARY
+import com.github.readingbat.common.FormFields.MAKE_ACTIVE_CLASS
+import com.github.readingbat.common.FormFields.PREFS_ACTION_PARAM
 import com.github.readingbat.common.FormFields.RETURN_PARAM
-import com.github.readingbat.common.FormFields.UPDATE_ACTIVE_CLASS
-import com.github.readingbat.common.FormFields.USER_PREFS_ACTION_PARAM
 import com.github.readingbat.common.Message
 import com.github.readingbat.common.Message.Companion.EMPTY_MESSAGE
 import com.github.readingbat.common.User
@@ -60,7 +60,9 @@ import com.github.readingbat.pages.PageUtils.displayMessage
 import com.github.readingbat.pages.PageUtils.encodeUriElems
 import com.github.readingbat.pages.PageUtils.headDefault
 import com.github.readingbat.pages.PageUtils.loadBootstrap
+import com.github.readingbat.pages.PageUtils.loadPingdomScript
 import com.github.readingbat.pages.PageUtils.rawHtml
+import com.github.readingbat.pages.StudentSummaryPage.removeFromClassButton
 import com.github.readingbat.server.GroupName
 import com.github.readingbat.server.GroupName.Companion.EMPTY_GROUP
 import com.github.readingbat.server.LanguageName
@@ -71,36 +73,33 @@ import io.ktor.application.*
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 import mu.KLogging
-import redis.clients.jedis.Jedis
 
 internal object ClassSummaryPage : KLogging() {
 
   internal const val STATS = "-stats"
+  private const val BTN_SIZE = "130%"
 
-  fun PipelineCall.classSummaryPage(content: ReadingBatContent, user: User?, redis: Jedis): String {
-
+  fun PipelineCall.classSummaryPage(content: ReadingBatContent, user: User?): String {
     val (languageName, groupName, classCode) =
       Triple(
         call.parameters[LANG_TYPE_QP]?.let { LanguageName(it) } ?: EMPTY_LANGUAGE,
         call.parameters[GROUP_NAME_QP]?.let { GroupName(it) } ?: EMPTY_GROUP,
         call.parameters[CLASS_CODE_QP]?.let { ClassCode(it) } ?: throw InvalidRequestException("Missing class code"))
-
-    return classSummaryPage(content, user, redis, classCode, languageName, groupName)
+    return classSummaryPage(content, user, classCode, languageName, groupName)
   }
 
   fun PipelineCall.classSummaryPage(content: ReadingBatContent,
                                     user: User?,
-                                    redis: Jedis,
                                     classCode: ClassCode,
                                     languageName: LanguageName = EMPTY_LANGUAGE,
                                     groupName: GroupName = EMPTY_GROUP,
                                     msg: Message = EMPTY_MESSAGE): String {
     when {
-      classCode.isNotValid(redis) -> throw InvalidRequestException("Invalid class code $classCode")
-      user.isNotValidUser(redis) -> throw InvalidRequestException("Invalid user")
-      classCode.fetchClassTeacherId(redis) != user.id -> {
-        val teacherId = classCode.fetchClassTeacherId(redis)
-        throw InvalidRequestException("User id ${user.id} does not match class code teacher id $teacherId")
+      classCode.isNotValid() -> throw InvalidRequestException("Invalid class code: $classCode")
+      user.isNotValidUser() -> throw InvalidRequestException("Invalid user")
+      classCode.fetchClassTeacherId() != user.userId -> {
+        val teacherId = classCode.fetchClassTeacherId()
+        throw InvalidRequestException("User id ${user.userId} does not match class code's teacher id $teacherId")
       }
       else -> {
       }
@@ -108,10 +107,9 @@ internal object ClassSummaryPage : KLogging() {
 
     return createHTML()
       .html {
-
         val hasGroupName = groupName.isDefined(content, languageName)
-        val activeClassCode = user.fetchActiveClassCode(redis)
-        val enrollees = classCode.fetchEnrollees(redis)
+        val activeClassCode = fetchActiveClassCode(user)
+        val enrollees = classCode.fetchEnrollees()
 
         head {
           loadBootstrap()
@@ -125,39 +123,41 @@ internal object ClassSummaryPage : KLogging() {
             else
               queryParam(RETURN_PARAM, if (languageName.isValid()) pathOf(CHALLENGE_ROOT, languageName) else "/")
 
-          helpAndLogin(content, user, returnPath, activeClassCode.isEnabled, redis)
+          helpAndLogin(content, user, returnPath, activeClassCode.isEnabled)
 
           bodyTitle()
 
-          h2 { +"ReadingBat Class Summary" }
+          h2 { +"Class Summary" }
 
           if (msg.isAssigned())
             p { span { style = "color:${msg.color}"; this@body.displayMessage(msg) } }
 
-          displayClassInfo(classCode, activeClassCode, redis)
+          displayClassInfo(classCode, activeClassCode)
 
           if (classCode == activeClassCode)
-            displayClassChoices(content, classCode, redis)
+            displayClassChoices(content, classCode)
 
           if (hasGroupName)
             displayGroupInfo(classCode, activeClassCode, languageName, groupName)
 
-          displayStudents(content, enrollees, classCode, activeClassCode, hasGroupName, languageName, groupName, redis)
+          displayStudents(content, enrollees, classCode, activeClassCode, hasGroupName, languageName, groupName)
 
           if (enrollees.isNotEmpty() && languageName.isValid() && groupName.isValid())
             enableWebSockets(languageName, groupName, classCode)
 
           backLink(returnPath)
+
+          loadPingdomScript()
         }
       }
   }
 
-  private fun BODY.displayClassInfo(classCode: ClassCode, activeClassCode: ClassCode, redis: Jedis) {
+  private fun BODY.displayClassInfo(classCode: ClassCode, activeClassCode: ClassCode) {
     table {
       tr {
         td {
           h3 {
-            style = "margin-left: 15px; margin-bottom: 15px; color: $headerColor"; +classCode.toDisplayString(redis)
+            style = "margin-left:15px; margin-bottom:15px; color:$headerColor"; +classCode.toDisplayString()
           }
         }
         if (classCode != activeClassCode) {
@@ -166,14 +166,13 @@ internal object ClassSummaryPage : KLogging() {
               style = "margin:0"
               action = CLASS_SUMMARY_ENDPOINT
               method = FormMethod.post
-              input { type = InputType.hidden; name = CHOICE_SOURCE_PARAM; value = CLASS_SUMMARY }
-              input { type = InputType.hidden; name = CLASS_CODE_CHOICE_PARAM; value = classCode.value }
-              input(classes = BTN) {
+              hiddenInput { name = CHOICE_SOURCE_PARAM; value = CLASS_SUMMARY }
+              hiddenInput { name = CLASS_CODE_CHOICE_PARAM; value = classCode.value }
+              submitInput(classes = BTN) {
                 style =
-                  "padding: 2px 5px; margin-top:9; margin-left:20; border-radius: 5px; cursor: pointer; border:1px solid black;"
-                type = InputType.submit
-                name = USER_PREFS_ACTION_PARAM
-                value = UPDATE_ACTIVE_CLASS
+                  "padding:2px 5px; margin-top:9; margin-left:20; border-radius:5px; cursor:pointer; border:1px solid black;"
+                name = PREFS_ACTION_PARAM
+                value = MAKE_ACTIVE_CLASS
               }
             }
           }
@@ -182,11 +181,11 @@ internal object ClassSummaryPage : KLogging() {
     }
   }
 
-  private fun BODY.displayClassChoices(content: ReadingBatContent, classCode: ClassCode, redis: Jedis) {
+  private fun BODY.displayClassChoices(content: ReadingBatContent, classCode: ClassCode) {
     table {
       style = "border-collapse: separate; border-spacing: 15px 10px"
       tr {
-        td { style = "font-size:140%"; +"Challenge Group: " }
+        td { style = "font-size:$BTN_SIZE"; +"Challenge Group: " }
         LanguageType.values()
           .map { content.findLanguage(it) }
           .forEach { langGroup ->
@@ -255,13 +254,16 @@ internal object ClassSummaryPage : KLogging() {
                                    activeClassCode: ClassCode,
                                    hasGroup: Boolean,
                                    languageName: LanguageName,
-                                   groupName: GroupName,
-                                   redis: Jedis) =
+                                   groupName: GroupName) =
     div(classes = INDENT_2EM) {
+      val showDetail = hasGroup && classCode == activeClassCode
+
       if (enrollees.isNotEmpty())
         table {
           style = "border-collapse: separate; border-spacing: 15px 5px"
           tr {
+            if (!showDetail)
+              th { +"" }
             th { +"Name" }
             th { +"Email" }
             if (hasGroup) {
@@ -285,21 +287,25 @@ internal object ClassSummaryPage : KLogging() {
 
           enrollees
             .forEach { student ->
+              val studentName = student.fullName.value
+              val studentEmail = student.email.value
+
               tr {
-                if (hasGroup && classCode == activeClassCode) {
+                if (showDetail) {
                   val returnUrl = classSummaryEndpoint(classCode, languageName, groupName)
                   "${studentSummaryEndpoint(classCode, languageName, student)}&$RETURN_PARAM=${returnUrl.encode()}"
                     .also {
-                      td { a(classes = UNDERLINE) { href = it; +student.name(redis) } }
-                      td { a(classes = UNDERLINE) { href = it; +student.email(redis).toString() } }
+                      td { a(classes = UNDERLINE) { href = it; +studentName } }
+                      td { a(classes = UNDERLINE) { href = it; +studentEmail } }
                     }
                 }
                 else {
-                  td { +student.name(redis) }
-                  td { +student.email(redis).toString() }
+                  td { this@displayStudents.removeFromClassButton(student, studentName) }
+                  td { +studentName }
+                  td { +studentEmail }
                 }
 
-                if (hasGroup) {
+                if (showDetail) {
                   content.findGroup(languageName, groupName).challenges
                     .forEach { challenge ->
                       td {
@@ -308,11 +314,11 @@ internal object ClassSummaryPage : KLogging() {
                             challenge.functionInfo(content).invocations
                               .forEachIndexed { i, invocation ->
                                 td(classes = INVOC_TD) {
-                                  id = "${student.id}-${challenge.challengeName.encode()}-$i"; +""
+                                  id = "${student.userId}-${challenge.challengeName.encode()}-$i"; +""
                                 }
                               }
                             td(classes = INVOC_STAT) {
-                              id = "${student.id}-${challenge.challengeName.encode()}$STATS"; +""
+                              id = "${student.userId}-${challenge.challengeName.encode()}$STATS"; +""
                             }
                           }
                         }
@@ -371,7 +377,7 @@ internal object ClassSummaryPage : KLogging() {
   private fun LI.dropdownToggle(block: A.() -> Unit) {
     a("#", null, "dropdown-toggle") {
       style =
-        "font-size:140%; text-decoration:none; border-radius: 5px; padding: 1px 7px; cursor: pointer; color: black; border:1px solid black;"
+        "font-size:$BTN_SIZE; text-decoration:none; border-radius: 5px; padding: 0px 7px; cursor: pointer; color: black; border:1px solid black;"
       attributes["data-toggle"] = "dropdown"
       role = "button"
       attributes["aria-expanded"] = "false"

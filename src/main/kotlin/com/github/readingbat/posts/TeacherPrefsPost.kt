@@ -18,7 +18,7 @@
 package com.github.readingbat.posts
 
 import com.github.pambrose.common.util.encode
-import com.github.readingbat.common.*
+import com.github.readingbat.common.ClassCode
 import com.github.readingbat.common.ClassCode.Companion.DISABLED_CLASS_CODE
 import com.github.readingbat.common.ClassCode.Companion.getClassCode
 import com.github.readingbat.common.ClassCode.Companion.newClassCode
@@ -30,11 +30,20 @@ import com.github.readingbat.common.FormFields.CLASS_DESC_PARAM
 import com.github.readingbat.common.FormFields.CLASS_SUMMARY
 import com.github.readingbat.common.FormFields.CREATE_CLASS
 import com.github.readingbat.common.FormFields.DELETE_CLASS
+import com.github.readingbat.common.FormFields.MAKE_ACTIVE_CLASS
+import com.github.readingbat.common.FormFields.PREFS_ACTION_PARAM
+import com.github.readingbat.common.FormFields.REMOVE_FROM_CLASS
+import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.FormFields.TEACHER_PREF
 import com.github.readingbat.common.FormFields.UPDATE_ACTIVE_CLASS
-import com.github.readingbat.common.FormFields.USER_PREFS_ACTION_PARAM
+import com.github.readingbat.common.FormFields.USER_ID_PARAM
+import com.github.readingbat.common.Message
+import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.fetchActiveClassCode
 import com.github.readingbat.common.User.Companion.fetchPreviousTeacherClassCode
+import com.github.readingbat.common.User.Companion.toUser
+import com.github.readingbat.common.browserSession
+import com.github.readingbat.common.isValidUser
 import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.pages.ClassSummaryPage.classSummaryPage
@@ -46,41 +55,51 @@ import com.github.readingbat.server.ServerUtils.queryParam
 import io.ktor.application.*
 import io.ktor.request.*
 import mu.KLogging
-import redis.clients.jedis.Jedis
+import org.jetbrains.exposed.sql.transactions.transaction
 
 internal object TeacherPrefsPost : KLogging() {
   private const val STUDENT_MODE_ENABLED_MSG = "Student mode enabled"
   private const val TEACHER_MODE_ENABLED_MSG = "Teacher mode enabled"
 
-  suspend fun PipelineCall.teacherPrefs(content: ReadingBatContent, user: User?, redis: Jedis) =
-    if (user.isValidUser(redis)) {
+  suspend fun PipelineCall.teacherPrefs(content: ReadingBatContent, user: User?) =
+    if (user.isValidUser()) {
       val parameters = call.receiveParameters()
-      when (val action = parameters[USER_PREFS_ACTION_PARAM] ?: "") {
-        CREATE_CLASS -> createClass(content, user, parameters[CLASS_DESC_PARAM] ?: "", redis)
-        UPDATE_ACTIVE_CLASS -> {
+      when (val action = parameters[PREFS_ACTION_PARAM] ?: "") {
+        CREATE_CLASS -> createClass(content, user, parameters[CLASS_DESC_PARAM] ?: "")
+        UPDATE_ACTIVE_CLASS,
+        MAKE_ACTIVE_CLASS -> {
           val source = parameters[CHOICE_SOURCE_PARAM] ?: ""
           val classCode = parameters.getClassCode(CLASS_CODE_CHOICE_PARAM)
-          val msg = updateActiveClass(user, classCode, redis)
+          val msg = updateActiveClass(user, classCode)
           when (source) {
-            TEACHER_PREF -> teacherPrefsPage(content, user, redis, msg)
-            CLASS_SUMMARY -> classSummaryPage(content, user, redis, classCode, msg = msg)
+            TEACHER_PREF -> teacherPrefsPage(content, user, msg)
+            CLASS_SUMMARY -> classSummaryPage(content, user, classCode, msg = msg)
             else -> throw InvalidConfigurationException("Invalid source: $source")
           }
         }
-        DELETE_CLASS -> deleteClass(content, user, parameters.getClassCode(CLASS_CODE_NAME_PARAM), redis)
+        REMOVE_FROM_CLASS -> {
+          val studentId = parameters[USER_ID_PARAM] ?: throw InvalidConfigurationException("Missing: $USER_ID_PARAM")
+          val student = studentId.toUser(null)
+          val classCode = student.enrolledClassCode
+          student.withdrawFromClass(classCode)
+          val msg = "${student.fullName} removed from class ${classCode.toDisplayString()}"
+          logger.info { msg }
+          classSummaryPage(content, user, classCode, msg = Message(msg))
+        }
+        DELETE_CLASS -> deleteClass(content, user, parameters.getClassCode(CLASS_CODE_NAME_PARAM))
         else -> throw InvalidConfigurationException("Invalid action: $action")
       }
     }
     else {
-      requestLogInPage(content, redis)
+      requestLogInPage(content)
     }
 
-  fun PipelineCall.enableStudentMode(user: User?, redis: Jedis): String {
-    val returnPath = queryParam(FormFields.RETURN_PARAM, "/")
+  fun PipelineCall.enableStudentMode(user: User?): String {
+    val returnPath = queryParam(RETURN_PARAM, "/")
     val browserSession = call.browserSession
     val msg =
-      if (user.isValidUser(redis)) {
-        user.assignActiveClassCode(DISABLED_CLASS_CODE, false, redis)
+      if (user.isValidUser()) {
+        user.assignActiveClassCode(DISABLED_CLASS_CODE, false)
         STUDENT_MODE_ENABLED_MSG
       }
       else {
@@ -89,12 +108,12 @@ internal object TeacherPrefsPost : KLogging() {
     throw RedirectException("$returnPath?$MSG=${msg.encode()}")
   }
 
-  fun PipelineCall.enableTeacherMode(user: User?, redis: Jedis): String {
-    val returnPath = queryParam(FormFields.RETURN_PARAM, "/")
+  fun PipelineCall.enableTeacherMode(user: User?): String {
+    val returnPath = queryParam(RETURN_PARAM, "/")
     val msg =
-      if (user.isValidUser(redis)) {
-        val previousTeacherClassCode = user.fetchPreviousTeacherClassCode(redis)
-        user.assignActiveClassCode(previousTeacherClassCode, false, redis)
+      if (user.isValidUser()) {
+        val previousTeacherClassCode = fetchPreviousTeacherClassCode(user)
+        user.assignActiveClassCode(previousTeacherClassCode, false)
         TEACHER_MODE_ENABLED_MSG
       }
       else {
@@ -103,88 +122,61 @@ internal object TeacherPrefsPost : KLogging() {
     throw RedirectException("$returnPath?$MSG=${msg.encode()}")
   }
 
-  private fun PipelineCall.createClass(content: ReadingBatContent, user: User, classDesc: String, redis: Jedis) =
+  private fun PipelineCall.createClass(content: ReadingBatContent, user: User, classDesc: String) =
     when {
       classDesc.isBlank() -> {
-        teacherPrefsPage(content, user, redis, Message("Unable to create class [Empty class description]", true))
+        teacherPrefsPage(content, user, Message("Unable to create class [Empty class description]", true))
       }
-      !user.isUniqueClassDesc(classDesc, redis) -> {
-        teacherPrefsPage(content, user, redis, Message("Class description is not unique [$classDesc]", true), classDesc)
+      !user.isUniqueClassDesc(classDesc) -> {
+        teacherPrefsPage(content, user, Message("Class description is not unique [$classDesc]", true), classDesc)
       }
-      user.classCount(redis) == content.maxClassCount -> {
-        teacherPrefsPage(content,
-                         user,
-                         redis,
-                         Message("Maximum number of classes is: [${content.maxClassCount}]", true),
-                         classDesc)
+      user.classCount() == content.maxClassCount -> {
+        val msg = Message("Maximum number of classes is: [${content.maxClassCount}]", true)
+        teacherPrefsPage(content, user, msg, classDesc)
       }
       else -> {
+        // Add classcode to list of classes created by user
         val classCode = newClassCode()
-
-        redis.multi().also { tx ->
-
-          classCode.initializeWith(classDesc, user, tx)
-
-          // Add classcode to list of classes created by user
-          user.addClassCreated(classCode, tx)
-
-          // Create class with no one enrolled to prevent class from being created a 2nd time
-          classCode.addEnrolleePlaceholder(tx)
-
-          tx.exec()
-        }
-        teacherPrefsPage(content, user, redis, Message("Created class code: $classCode", false))
+        user.addClassCode(classCode, classDesc)
+        teacherPrefsPage(content, user, Message("Created class code: $classCode", false))
       }
     }
 
-  private fun updateActiveClass(user: User, classCode: ClassCode, redis: Jedis) =
+  private fun updateActiveClass(user: User, classCode: ClassCode) =
     when {
       // Do not allow this for classCode.isStudentMode because turns off the
       // student/teacher toggle mode
-      user.fetchActiveClassCode(redis) == classCode && classCode.isEnabled ->
+      fetchActiveClassCode(user) == classCode && classCode.isEnabled ->
         Message("Same active class selected [$classCode]", true)
       else -> {
-        user.assignActiveClassCode(classCode, true, redis)
-        if (classCode.isNotEnabled)
-          Message(STUDENT_MODE_ENABLED_MSG)
-        else {
-          Message("Active class updated to ${classCode.toDisplayString(redis)}")
-        }
+        user.assignActiveClassCode(classCode, true)
+        Message(
+          if (classCode.isNotEnabled)
+            STUDENT_MODE_ENABLED_MSG
+          else
+            "Active class updated to ${classCode.toDisplayString()}")
       }
     }
 
-  private fun PipelineCall.deleteClass(content: ReadingBatContent,
-                                       user: User,
-                                       classCode: ClassCode,
-                                       redis: Jedis) =
+  private fun PipelineCall.deleteClass(content: ReadingBatContent, user: User, classCode: ClassCode) =
     when {
-      classCode.isNotEnabled -> teacherPrefsPage(content, user, redis, Message("Empty class code", true))
-      classCode.isNotValid(redis) -> teacherPrefsPage(content,
-                                                      user,
-                                                      redis,
-                                                      Message("Invalid class code: $classCode", true))
+      classCode.isNotEnabled -> teacherPrefsPage(content, user, Message("Empty class code", true))
+      classCode.isNotValid() -> teacherPrefsPage(content,
+                                                 user,
+                                                 Message("Invalid class code: $classCode", true))
       else -> {
-        val activeClassCode = user.fetchActiveClassCode(redis)
-        val enrollees = classCode.fetchEnrollees(redis)
+        val activeClassCode = fetchActiveClassCode(user)
+        val enrollees = classCode.fetchEnrollees()
 
-        val email = user.email(redis)
-        val name = user.name(redis)
+        transaction {
+          if (activeClassCode == classCode)
+            user.resetActiveClassCode()
 
-        redis.multi()
-          .also { tx ->
-            // Disable current class if deleted class is the active class
-            if (activeClassCode == classCode) {
-              logger.info { "Resetting $name ($email) active class code" }
-              user.resetActiveClassCode(tx)
-            }
+          user.unenrollEnrolleesClassCode(classCode, enrollees)
+          classCode.deleteClassCode()
+        }
 
-            logger.info { "Deleting ${enrollees.size} enrollees for class code $classCode for $name ($email)" }
-            user.deleteClassCode(classCode, enrollees, tx)
-
-            tx.exec()
-          }
-
-        teacherPrefsPage(content, user, redis, Message("Deleted class code: $classCode"))
+        teacherPrefsPage(content, user, Message("Deleted class code: $classCode"))
       }
     }
 }

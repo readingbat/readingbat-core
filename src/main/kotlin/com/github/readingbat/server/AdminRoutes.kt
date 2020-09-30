@@ -22,12 +22,17 @@ import com.github.pambrose.common.response.redirectTo
 import com.github.pambrose.common.util.isNotNull
 import com.github.pambrose.common.util.isNull
 import com.github.pambrose.common.util.randomId
-import com.github.readingbat.common.*
 import com.github.readingbat.common.AuthRoutes.COOKIES
+import com.github.readingbat.common.BrowserSession
 import com.github.readingbat.common.Constants.NO_TRACK_HEADER
 import com.github.readingbat.common.Endpoints.PING
 import com.github.readingbat.common.Endpoints.THREAD_DUMP
+import com.github.readingbat.common.Metrics
 import com.github.readingbat.common.SessionActivites.markActivity
+import com.github.readingbat.common.UserPrincipal
+import com.github.readingbat.common.browserSession
+import com.github.readingbat.common.userPrincipal
+import com.github.readingbat.dsl.isPostgresEnabled
 import com.github.readingbat.server.ServerUtils.get
 import io.ktor.application.*
 import io.ktor.features.*
@@ -40,6 +45,8 @@ import io.ktor.util.pipeline.*
 import kotlinx.html.body
 import kotlinx.html.div
 import mu.KLogging
+import org.jetbrains.exposed.sql.deleteWhere
+import org.jetbrains.exposed.sql.transactions.transaction
 import java.io.ByteArrayOutputStream
 import java.lang.management.ManagementFactory
 import java.time.Instant.ofEpochMilli
@@ -107,8 +114,11 @@ internal object AdminRoutes : KLogging() {
         .also {
           if (it.isNotNull()) {
             logger.info { "Clearing browser session id $it" }
-            // @TODO Should delete session data from redis
             call.sessions.clear<BrowserSession>()
+            if (isPostgresEnabled())
+              transaction {
+                BrowserSessions.deleteWhere { BrowserSessions.session_id eq it.id }
+              }
           }
           else {
             logger.info { "Browser session id not set" }

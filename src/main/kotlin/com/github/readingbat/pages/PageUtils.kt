@@ -18,12 +18,12 @@
 package com.github.readingbat.pages
 
 import com.github.pambrose.common.util.isNull
+import com.github.pambrose.common.util.pluralize
 import com.github.pambrose.common.util.toRootPath
 import com.github.readingbat.common.CSSNames.INDENT_1EM
 import com.github.readingbat.common.CSSNames.SELECTED_TAB
 import com.github.readingbat.common.ClassCode
 import com.github.readingbat.common.CommonUtils.pathOf
-import com.github.readingbat.common.Constants.BACK_PATH
 import com.github.readingbat.common.Constants.ICONS
 import com.github.readingbat.common.Endpoints.CHALLENGE_ROOT
 import com.github.readingbat.common.Endpoints.CSS_ENDPOINT
@@ -32,9 +32,12 @@ import com.github.readingbat.common.Endpoints.STATIC_ROOT
 import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.Message
 import com.github.readingbat.common.Message.Companion.EMPTY_MESSAGE
+import com.github.readingbat.common.Property.ANALYTICS_ID
+import com.github.readingbat.common.Property.PINGDOM_URL
+import com.github.readingbat.common.Property.STATUS_PAGE_URL
 import com.github.readingbat.common.User
 import com.github.readingbat.dsl.LanguageType
-import com.github.readingbat.dsl.LanguageType.Companion.languageTypesInOrder
+import com.github.readingbat.dsl.LanguageType.Companion.languageTypeList
 import com.github.readingbat.dsl.LanguageType.Java
 import com.github.readingbat.dsl.LanguageType.Kotlin
 import com.github.readingbat.dsl.LanguageType.Python
@@ -47,7 +50,6 @@ import io.ktor.routing.*
 import io.ktor.util.pipeline.*
 import kotlinx.html.*
 import kotlinx.html.Entities.nbsp
-import redis.clients.jedis.Jedis
 
 internal object PageUtils {
   private const val READING_BAT = "ReadingBat"
@@ -64,14 +66,15 @@ internal object PageUtils {
 
     title(READING_BAT)
 
-    if (isProduction() && content.googleAnalyticsId.isNotBlank()) {
-      script { async = true; src = "https://www.googletagmanager.com/gtag/js?id=${content.googleAnalyticsId}" }
+    val analyticsId = ANALYTICS_ID.getPropertyOrNull() ?: ""
+    if (isProduction() && analyticsId.isNotBlank()) {
+      script { async = true; src = "https://www.googletagmanager.com/gtag/js?id=$analyticsId" }
       script {
         rawHtml("""
           window.dataLayer = window.dataLayer || [];
           function gtag(){dataLayer.push(arguments);}
           gtag('js', new Date());
-          gtag('config', '${content.googleAnalyticsId}');
+          gtag('config', '$analyticsId');
         """)
       }
     }
@@ -114,10 +117,9 @@ internal object PageUtils {
                       loginPath: String,
                       displayWelcomeMsg: Boolean,
                       activeClassCode: ClassCode,
-                      redis: Jedis?,
                       msg: Message = EMPTY_MESSAGE) {
 
-    helpAndLogin(content, user, loginPath, activeClassCode.isEnabled, redis)
+    helpAndLogin(content, user, loginPath, activeClassCode.isEnabled)
 
     bodyTitle()
 
@@ -127,7 +129,7 @@ internal object PageUtils {
       p {
         span {
           style =
-            "color:red"; +"Failed to login -- ${if (redis.isNull()) "database is down" else "incorrect email or password"}"
+            "color:red"; +"Failed to login -- incorrect email or password"
         }
       }
 
@@ -137,7 +139,7 @@ internal object PageUtils {
       style = "padding-top:10px; min-width:100vw; clear:both"
       nav {
         ul {
-          languageTypesInOrder
+          languageTypeList
             .filter { content[it].isNotEmpty() }
             .forEach { lang ->
               li(classes = "h2") {
@@ -158,9 +160,9 @@ internal object PageUtils {
   fun BODY.addLink(text: String, url: String, newWindow: Boolean = false) =
     a { href = url; if (newWindow) target = "_blank"; +text }
 
-  fun BODY.privacyStatement(backPath: String, returnPath: String) =
+  fun BODY.privacyStatement(returnPath: String) =
     p(classes = INDENT_1EM) {
-      a { href = "$PRIVACY_ENDPOINT?$BACK_PATH=$backPath&$RETURN_PARAM=$returnPath"; +"Privacy Statement" }
+      a { href = "$PRIVACY_ENDPOINT?$RETURN_PARAM=$returnPath"; +"Privacy Statement" }
     }
 
   private fun BODY.linkWithIndent(url: String, text: String, marginLeft: String = "1em") {
@@ -172,15 +174,20 @@ internal object PageUtils {
     }
   }
 
+  internal fun enrolleesDesc(enrollees: List<User>): String {
+    val studentCount = if (enrollees.isEmpty()) "No" else enrollees.count().toString()
+    return " - $studentCount ${"student".pluralize(enrollees.count())} enrolled"
+  }
+
   internal fun BODY.confirmingButton(text: String, endpoint: String, msg: String) {
     form {
       style = "margin:0"
       action = endpoint
       method = FormMethod.get
       onSubmit = "return confirm('$msg')"
-      input {
+      submitInput {
         style = "vertical-align:middle; margin-top:1; margin-bottom:0"
-        type = InputType.submit; value = text
+        value = text
       }
     }
   }
@@ -188,11 +195,20 @@ internal object PageUtils {
   fun BODY.displayMessage(msg: Message) = if (msg.isNotBlank) +(msg.toString()) else rawHtml(nbsp.text)
 
   private val rootVals = listOf("", "/", Java.contentRoot, Python.contentRoot, Kotlin.contentRoot)
-  fun BODY.backLink(vararg pathElems: String = arrayOf("")) {
+
+  fun BODY.backLink(vararg pathElems: String = arrayOf("/")) {
     if (pathElems.size == 1 && pathElems[0] in rootVals)
       linkWithIndent(pathElems.toList().toRootPath(), "Home")
     else
       linkWithIndent(pathElems.toList().toRootPath(), "Back")
+  }
+
+  fun BODY.loadPingdomScript() {
+    PINGDOM_URL.getPropertyOrNull()?.also { if (it.isNotBlank()) script { src = it; async = true } }
+  }
+
+  fun BODY.loadStatusPageDisplay() {
+    STATUS_PAGE_URL.getPropertyOrNull()?.also { if (it.isNotBlank()) script { src = it } }
   }
 
   fun HTMLTag.rawHtml(html: String) = unsafe { raw(html) }

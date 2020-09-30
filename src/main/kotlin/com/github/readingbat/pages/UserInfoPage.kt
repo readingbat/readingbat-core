@@ -28,45 +28,42 @@ import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyTitle
 import com.github.readingbat.pages.PageUtils.displayMessage
 import com.github.readingbat.pages.PageUtils.headDefault
+import com.github.readingbat.pages.PageUtils.loadPingdomScript
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
 import io.ktor.application.*
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
-import redis.clients.jedis.Jedis
 
 
 internal object UserInfoPage {
 
-  fun PipelineCall.userInfoPage(content: ReadingBatContent,
-                                user: User?,
-                                redis: Jedis,
-                                msg: Message = EMPTY_MESSAGE) =
+  fun PipelineCall.userInfoPage(content: ReadingBatContent, user: User?, msg: Message = EMPTY_MESSAGE) =
     createHTML()
       .html {
-
         head { headDefault(content) }
+
         body {
           val returnPath = queryParam(RETURN_PARAM, "/")
 
-          helpAndLogin(content, user, returnPath, false, redis)
+          helpAndLogin(content, user, returnPath, false)
 
           bodyTitle()
 
           when {
-            user.isNotValidUser(redis) -> {
+            user.isNotValidUser() -> {
               br { +"Must be logged in for this function" }
             }
             else -> {
-              val name = user.name(redis)
-              val email = user.email(redis)
-              val browserSessions = user.browserSessions(redis).map { it.split(KEY_SEP).last() }
+              val name = user.fullName
+              val email = user.email
+              val browserSessions = user.browserSessions().map { it.split(KEY_SEP).last() }
               val idCnt = browserSessions.size
-              val challenges = user.challenges(redis)
-              val invocations = user.invocations(redis)
-              val correctAnswers = user.correctAnswers(redis)
-              val likeDislikes = user.likeDislikes(redis)
-              val classCodes = user.classCodes(redis)
+              val challenges = user.challenges()
+              val invocations = user.invocations()
+              val correctAnswers = user.correctAnswers()
+              val likeDislikes = user.likeDislikes()
+              val classCodes = user.classCodes()
 
               if (msg.isAssigned())
                 p { span { style = "color:${msg.color}"; this@body.displayMessage(msg) } }
@@ -76,11 +73,13 @@ internal object UserInfoPage {
 
               p {
                 table {
+                  style = "border-spacing: 5px 10px"
+
                   tr { td { +"User Principal" }; td { +principal.toString() } }
                   tr { td { +"Session Id" }; td { +sessionId.toString() } }
-                  tr { td { +"Name" }; td { +name } }
-                  tr { td { +"Id" }; td { +user.id } }
-                  tr { td { +"Email" }; td { +email.toString() } }
+                  tr { td { +"Name" }; td { +name.value } }
+                  tr { td { +"Id" }; td { +user.userId } }
+                  tr { td { +"Email" }; td { +email.value } }
                   tr { td { +"Challenges" }; td { +challenges.size.toString() } }
                   tr { td { +"Invocations" }; td { +invocations.size.toString() } }
                   tr { td { +"Correct answers" }; td { +correctAnswers.size.toString() } }
@@ -93,6 +92,8 @@ internal object UserInfoPage {
           }
 
           backLink(returnPath)
+
+          loadPingdomScript()
         }
       }
 }

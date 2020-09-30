@@ -23,6 +23,12 @@ cc:
 run:
 	./gradlew run
 
+local-reset:
+	cd flyway; make local-reset
+
+do-reset:
+	cd flyway; make do-reset
+
 tests:
 	./gradlew check
 

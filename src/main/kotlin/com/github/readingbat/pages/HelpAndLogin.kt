@@ -20,6 +20,7 @@ package com.github.readingbat.pages
 import com.github.pambrose.common.util.isNotNull
 import com.github.readingbat.common.AuthRoutes.LOGOUT
 import com.github.readingbat.common.Endpoints.ABOUT_ENDPOINT
+import com.github.readingbat.common.Endpoints.ADMIN_PREFS_ENDPOINT
 import com.github.readingbat.common.Endpoints.CREATE_ACCOUNT_ENDPOINT
 import com.github.readingbat.common.Endpoints.ENABLE_STUDENT_MODE_ENDPOINT
 import com.github.readingbat.common.Endpoints.ENABLE_TEACHER_MODE_ENDPOINT
@@ -31,10 +32,13 @@ import com.github.readingbat.common.FormFields.PASSWORD_PARAM
 import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.fetchPreviousTeacherClassCode
+import com.github.readingbat.common.isAdminUser
 import com.github.readingbat.dsl.ReadingBatContent
+import com.github.readingbat.dsl.isPostgresEnabled
+import com.github.readingbat.dsl.isProduction
 import com.github.readingbat.pages.PageUtils.rawHtml
+import com.github.readingbat.server.ServerUtils.firstNonEmptyLanguageType
 import kotlinx.html.*
-import redis.clients.jedis.Jedis
 
 internal object HelpAndLogin {
 
@@ -43,18 +47,22 @@ internal object HelpAndLogin {
   fun BODY.helpAndLogin(content: ReadingBatContent,
                         user: User?,
                         loginPath: String,
-                        teacherMode: Boolean,
-                        redis: Jedis?) {
+                        teacherMode: Boolean) {
 
-    val previousClassCode = user.fetchPreviousTeacherClassCode(redis)
-    val path = if (loginPath in rootVals) content.defaultLanguageType().contentRoot else loginPath
+    val previousClassCode = fetchPreviousTeacherClassCode(user)
+    val path =
+      if (loginPath in rootVals)
+        firstNonEmptyLanguageType(content, user?.defaultLanguage).contentRoot
+      else
+        loginPath
 
-    div {
-      style = "float:right; margin:0px; border: 1px solid lightgray; margin-left: 10px; padding: 5px"
-      table {
-        if (user.isNotNull() && redis.isNotNull()) logout(user, path, redis) else login(path)
+    if (isPostgresEnabled())
+      div {
+        style = "float:right; margin:0px; border: 1px solid lightgray; margin-left: 10px; padding: 5px"
+        table {
+          if (user.isNotNull()) logout(user, path) else login(path)
+        }
       }
-    }
 
     div {
       style = "float:right"
@@ -77,17 +85,25 @@ internal object HelpAndLogin {
             a { href = "$ABOUT_ENDPOINT?$RETURN_PARAM=$loginPath"; +"about" }
             +" | "
             a { href = "$HELP_ENDPOINT?$RETURN_PARAM=$loginPath"; +"help" }
-            +" | "
-            a { href = "$USER_PREFS_ENDPOINT?$RETURN_PARAM=$loginPath"; +"prefs" }
+
+            if (isPostgresEnabled()) {
+              if (!isProduction() || user.isAdminUser()) {
+                +" | "
+                a { href = "$ADMIN_PREFS_ENDPOINT?$RETURN_PARAM=$loginPath"; +"admin" }
+              }
+
+              +" | "
+              a { href = "$USER_PREFS_ENDPOINT?$RETURN_PARAM=$loginPath"; +"prefs" }
+            }
           }
         }
       }
     }
   }
 
-  private fun TABLE.logout(user: User, loginPath: String, redis: Jedis) {
+  private fun TABLE.logout(user: User, loginPath: String) {
     tr {
-      val email = user.email(redis)
+      val email = user.email
       val elems = email.value.split("@")
       td {
         +elems[0]

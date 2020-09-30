@@ -56,16 +56,9 @@ class ReadingBatContent {
 
   internal val functionInfoMap = ConcurrentHashMap<Int, FunctionInfo>()
   internal val timeStamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("M/d/y H:m:ss"))
-  internal var sendGridPrefix = ""
-  internal var googleAnalyticsId = ""
+
   internal var maxHistoryLength = 10
   internal var maxClassCount = 25
-  internal var dslFileName = ""
-  internal var dslVariableName = ""
-  internal var ktorPort = 0
-  internal var ktorWatch = ""
-  internal var grafanaUrl = ""
-  internal var prometheusUrl = ""
 
   // Accessible from Content.kt DSL
   val python by lazy { LanguageGroup<PythonChallenge>(this, Python) }
@@ -90,12 +83,6 @@ class ReadingBatContent {
     functionInfoMap.clear()
   }
 
-  internal fun defaultLanguageType() =
-    LanguageType.languageTypesInOrder
-      .asSequence()
-      .filter { get(it).isNotEmpty() }
-      .firstOrNull() ?: throw InvalidConfigurationException("Missing default language")
-
   internal fun hasLanguage(languageType: LanguageType) = languageMap.containsKey(languageType)
 
   internal operator fun contains(languageType: LanguageType) = this[languageType].isNotEmpty()
@@ -109,7 +96,7 @@ class ReadingBatContent {
   internal fun findGroup(languageName: LanguageName, groupName: GroupName): ChallengeGroup<out Challenge> =
     findLanguage(languageName.toLanguageType()).findGroup(groupName.value)
 
-  internal fun findGroup(languageType: LanguageType, groupName: GroupName): ChallengeGroup<out Challenge> =
+  private fun findGroup(languageType: LanguageType, groupName: GroupName): ChallengeGroup<out Challenge> =
     findLanguage(languageType).findGroup(groupName.value)
 
   internal fun findGroup(groupLoc: Language.Group): ChallengeGroup<out Challenge> =

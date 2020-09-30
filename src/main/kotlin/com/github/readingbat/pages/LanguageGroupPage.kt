@@ -36,44 +36,33 @@ import com.github.readingbat.pages.ChallengeGroupPage.displayClassDescription
 import com.github.readingbat.pages.ChallengeGroupPage.isCorrect
 import com.github.readingbat.pages.PageUtils.bodyHeader
 import com.github.readingbat.pages.PageUtils.headDefault
+import com.github.readingbat.pages.PageUtils.loadPingdomScript
 import com.github.readingbat.pages.PageUtils.rawHtml
 import com.github.readingbat.server.GroupName.Companion.EMPTY_GROUP
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
 import com.github.readingbat.server.ServerUtils.rows
 import io.ktor.application.*
+import kotlinx.html.*
 import kotlinx.html.Entities.nbsp
-import kotlinx.html.TR
-import kotlinx.html.a
-import kotlinx.html.body
-import kotlinx.html.div
-import kotlinx.html.head
-import kotlinx.html.html
-import kotlinx.html.img
-import kotlinx.html.p
 import kotlinx.html.stream.createHTML
-import kotlinx.html.table
-import kotlinx.html.td
-import kotlinx.html.tr
-import redis.clients.jedis.Jedis
 
 internal object LanguageGroupPage {
 
   fun PipelineCall.languageGroupPage(content: ReadingBatContent,
                                      user: User?,
                                      languageType: LanguageType,
-                                     loginAttempt: Boolean,
-                                     redis: Jedis?) =
+                                     loginAttempt: Boolean) =
     createHTML()
       .html {
         val browserSession = call.browserSession
         val languageName = languageType.languageName
         val loginPath = pathOf(CHALLENGE_ROOT, languageName)
         val groups = content[languageType].challengeGroups
-        val activeClassCode = user.fetchActiveClassCode(redis)
-        val enrollees = activeClassCode.fetchEnrollees(redis)
+        val activeClassCode = fetchActiveClassCode(user)
+        val enrollees = activeClassCode.fetchEnrollees()
 
-        fun TR.groupItem(user: User?, challengeGroup: ChallengeGroup<*>, redis: Jedis?) {
+        fun TR.groupItem(user: User?, challengeGroup: ChallengeGroup<*>) {
           val groupName = challengeGroup.groupName
           val challenges = challengeGroup.challenges
 
@@ -83,7 +72,7 @@ internal object LanguageGroupPage {
 
           if (activeClassCode.isNotEnabled) {
             for (challenge in challenges) {
-              if (challenge.isCorrect(user, browserSession, redis))
+              if (challenge.isCorrect(user, browserSession))
                 cnt++
               if (cnt == maxCnt + 1) {
                 maxFound = true
@@ -117,10 +106,10 @@ internal object LanguageGroupPage {
 
         body {
           val msg = Message(queryParam(MSG))
-          bodyHeader(content, user, languageType, loginAttempt, loginPath, true, activeClassCode, redis, msg)
+          bodyHeader(content, user, languageType, loginAttempt, loginPath, true, activeClassCode, msg)
 
           if (activeClassCode.isEnabled)
-            displayClassDescription(activeClassCode, languageName, EMPTY_GROUP, enrollees, redis)
+            displayClassDescription(activeClassCode, languageName, EMPTY_GROUP, enrollees)
 
           table {
             val cols = 3
@@ -129,12 +118,14 @@ internal object LanguageGroupPage {
 
             repeat(rows) { i ->
               tr {
-                groups[i].also { group -> groupItem(user, group, redis) }
-                groups.elementAtOrNull(i + rows)?.also { groupItem(user, it, redis) } ?: td {}
-                groups.elementAtOrNull(i + (2 * rows))?.also { groupItem(user, it, redis) } ?: td {}
+                groups[i].also { group -> groupItem(user, group) }
+                groups.elementAtOrNull(i + rows)?.also { groupItem(user, it) } ?: td {}
+                groups.elementAtOrNull(i + (2 * rows))?.also { groupItem(user, it) } ?: td {}
               }
             }
           }
+
+          loadPingdomScript()
         }
       }
 }

@@ -15,20 +15,20 @@
  *
  */
 
-package com.github.readingbat.common
+package com.github.readingbat.utils
 
+import com.github.pambrose.common.redis.RedisUtils.withNonNullRedis
 import com.github.pambrose.common.redis.RedisUtils.withRedis
 import com.github.pambrose.common.util.isNotNull
+import com.github.readingbat.common.RedisUtils.scanKeys
 import com.github.readingbat.dsl.InvalidConfigurationException
-import redis.clients.jedis.Jedis
-import redis.clients.jedis.ScanParams
 import redis.clients.jedis.exceptions.JedisDataException
 
 internal object RedisAdmin {
 
-  private const val docean = ""
-  private const val heroku = ""
-  private const val local = "redis://user:none@localhost:6379"
+  internal const val docean = ""
+  internal const val heroku = ""
+  internal const val local = "redis://user:none@localhost:6379"
 
   @JvmStatic
   fun main(args: Array<String>) {
@@ -43,10 +43,10 @@ internal object RedisAdmin {
   private fun copy(urlFrom: String, urlTo: String) {
     var cnt = 0
     withRedis(urlFrom) { redisFrom ->
-      require(redisFrom != null)
+      require(redisFrom.isNotNull())
       val allKeys = redisFrom.scanKeys("*")
       withRedis(urlTo) { redisTo ->
-        require(redisTo != null)
+        require(redisTo.isNotNull())
         allKeys.forEach { key ->
           val dump = redisFrom.dump(key)
           println("($cnt) Transferring key: $key - $dump")
@@ -62,21 +62,6 @@ internal object RedisAdmin {
       redis?.scanKeys("*")?.count() ?: throw InvalidConfigurationException("No connection")
     }
 
-  fun Jedis.scanKeys(pattern: String, count: Int = 100): Sequence<String> =
-    sequence {
-      val scanParams = ScanParams().match(pattern).count(count)
-      var cursorVal = "0"
-      while (true) {
-        cursorVal =
-          scan(cursorVal, scanParams).run {
-            result.forEach { yield(it) }
-            cursor
-          }
-        if (cursorVal == "0")
-          break
-      }
-    }
-
   fun deleteAll(url: String) {
     withRedis(url) { redis ->
       redis?.scanKeys("*")?.forEach { redis.del(it) }
@@ -84,22 +69,20 @@ internal object RedisAdmin {
   }
 
   private fun showAll(url: String) {
-    withRedis(url) { redis ->
-      if (redis.isNotNull()) {
-        println(
-          redis.scanKeys("*")
-            .joinToString("\n") {
+    withNonNullRedis(url) { redis ->
+      println(
+        redis.scanKeys("*")
+          .joinToString("\n") {
+            try {
+              "$it - ${redis[it]}"
+            } catch (e: JedisDataException) {
               try {
-                "$it - ${redis[it]}"
+                "$it - ${redis.hgetAll(it)}"
               } catch (e: JedisDataException) {
-                try {
-                  "$it - ${redis.hgetAll(it)}"
-                } catch (e: JedisDataException) {
-                  "$it - ${redis.smembers(it)}"
-                }
+                "$it - ${redis.smembers(it)}"
               }
-            })
-      }
+            }
+          })
     }
   }
 

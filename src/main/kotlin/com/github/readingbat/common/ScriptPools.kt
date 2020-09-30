@@ -20,9 +20,9 @@ package com.github.readingbat.common
 import com.github.pambrose.common.script.JavaScriptPool
 import com.github.pambrose.common.script.KotlinScriptPool
 import com.github.pambrose.common.script.PythonScriptPool
-import com.github.readingbat.common.Properties.JAVA_SCRIPTS_POOL_SIZE
-import com.github.readingbat.common.Properties.KOTLIN_SCRIPTS_POOL_SIZE
-import com.github.readingbat.common.Properties.PYTHON_SCRIPTS_POOL_SIZE
+import com.github.readingbat.common.Property.JAVA_SCRIPTS_POOL_SIZE
+import com.github.readingbat.common.Property.KOTLIN_SCRIPTS_POOL_SIZE
+import com.github.readingbat.common.Property.PYTHON_SCRIPTS_POOL_SIZE
 import mu.KLogging
 
 internal object ScriptPools : KLogging() {

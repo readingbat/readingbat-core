@@ -21,7 +21,7 @@ import com.github.pambrose.common.time.format
 import com.github.pambrose.common.util.pluralize
 import com.github.readingbat.common.CSSNames.INDENT_1EM
 import com.github.readingbat.common.CSSNames.TD_PADDING
-import com.github.readingbat.common.Endpoints.USER_PREFS_ENDPOINT
+import com.github.readingbat.common.Endpoints.ADMIN_PREFS_ENDPOINT
 import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.SessionActivites
 import com.github.readingbat.common.User.Companion.toUser
@@ -29,17 +29,17 @@ import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyTitle
 import com.github.readingbat.pages.PageUtils.headDefault
+import com.github.readingbat.pages.PageUtils.loadStatusPageDisplay
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
-import redis.clients.jedis.Jedis
 import kotlin.time.hours
 import kotlin.time.minutes
 
 internal object SessionsPage {
 
-  fun PipelineCall.sessionsPage(content: ReadingBatContent, redis: Jedis) =
+  fun PipelineCall.sessionsPage(content: ReadingBatContent) =
     createHTML()
       .html {
         head { headDefault(content) }
@@ -91,7 +91,7 @@ internal object SessionsPage {
                   .forEach {
                     tr {
                       val user = it.principal?.userId?.toUser(it.browserSession)
-                      val userDesc = user?.let { "${it.name(redis)} (${it.email(redis)})" } ?: "Not logged in"
+                      val userDesc = user?.let { "${it.fullName} (${it.email})" } ?: "Not logged in"
                       td { +it.browserSession.id }
                       td { +userDesc }
                       td { +it.age.format(false) }
@@ -109,7 +109,9 @@ internal object SessionsPage {
             }
           }
 
-          backLink("$USER_PREFS_ENDPOINT?$RETURN_PARAM=${queryParam(RETURN_PARAM, "/")}")
+          backLink("$ADMIN_PREFS_ENDPOINT?$RETURN_PARAM=${queryParam(RETURN_PARAM, "/")}")
+
+          loadStatusPageDisplay()
         }
       }
 }

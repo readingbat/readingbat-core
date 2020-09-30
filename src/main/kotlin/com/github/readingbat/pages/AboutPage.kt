@@ -27,6 +27,7 @@ import com.github.readingbat.pages.HelpAndLogin.helpAndLogin
 import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyTitle
 import com.github.readingbat.pages.PageUtils.headDefault
+import com.github.readingbat.pages.PageUtils.loadPingdomScript
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
 import kotlinx.html.a
@@ -37,19 +38,16 @@ import kotlinx.html.head
 import kotlinx.html.html
 import kotlinx.html.p
 import kotlinx.html.stream.createHTML
-import redis.clients.jedis.Jedis
 
 internal object AboutPage {
 
-  fun PipelineCall.aboutPage(content: ReadingBatContent, user: User?, redis: Jedis) =
+  fun PipelineCall.aboutPage(content: ReadingBatContent, user: User?) =
     createHTML()
       .html {
-        head {
-          headDefault(content)
-        }
+        head { headDefault(content) }
 
         body {
-          helpAndLogin(content, user, ABOUT_ENDPOINT, user.fetchActiveClassCode(redis).isEnabled, redis)
+          helpAndLogin(content, user, ABOUT_ENDPOINT, fetchActiveClassCode(user).isEnabled)
 
           bodyTitle()
 
@@ -95,6 +93,8 @@ internal object AboutPage {
           }
 
           backLink(queryParam(RETURN_PARAM))
+
+          loadPingdomScript()
         }
       }
 }

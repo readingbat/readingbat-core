@@ -18,12 +18,17 @@
 package com.github.readingbat.common
 
 import com.github.pambrose.common.util.join
+import com.github.pambrose.common.util.md5
 
 internal object CommonUtils {
 
-  internal fun pathOf(vararg elems: Any): String = elems.toList().map { it.toString() }.join("/")
+  fun keyOf(vararg keys: Any) = keys.joinToString(KeyConstants.KEY_SEP) { it.toString() }
 
-  internal fun String.maskUrl() =
+  fun md5Of(vararg keys: Any) = keys.joinToString(KeyConstants.KEY_SEP) { it.toString() }.md5()
+
+  fun pathOf(vararg elems: Any): String = elems.toList().map { it.toString() }.join("/")
+
+  fun String.maskUrl() =
     if ("://" in this && "@" in this) {
       val scheme = split("://")
       val uri = split("@")
@@ -33,6 +38,6 @@ internal object CommonUtils {
       this
     }
 
-  internal fun String.obfuscate(freq: Int = 2) =
+  fun String.obfuscate(freq: Int = 2) =
     mapIndexed { i, v -> if (i % freq == 0) '*' else v }.joinToString("")
 }

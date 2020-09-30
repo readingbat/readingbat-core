@@ -24,7 +24,7 @@ import com.github.readingbat.common.FormFields.DELETE_ALL_DATA
 import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.Message
 import com.github.readingbat.common.Message.Companion.EMPTY_MESSAGE
-import com.github.readingbat.common.RedisAdmin.scanKeys
+import com.github.readingbat.common.RedisUtils.scanKeys
 import com.github.readingbat.common.User
 import com.github.readingbat.common.isNotAdminUser
 import com.github.readingbat.common.isNotValidUser
@@ -35,28 +35,11 @@ import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyTitle
 import com.github.readingbat.pages.PageUtils.displayMessage
 import com.github.readingbat.pages.PageUtils.headDefault
+import com.github.readingbat.pages.PageUtils.loadPingdomScript
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
-import kotlinx.html.BODY
-import kotlinx.html.FormMethod
-import kotlinx.html.InputType
-import kotlinx.html.body
-import kotlinx.html.br
-import kotlinx.html.div
-import kotlinx.html.form
-import kotlinx.html.h3
-import kotlinx.html.h4
-import kotlinx.html.head
-import kotlinx.html.html
-import kotlinx.html.input
-import kotlinx.html.onSubmit
-import kotlinx.html.p
-import kotlinx.html.span
+import kotlinx.html.*
 import kotlinx.html.stream.createHTML
-import kotlinx.html.style
-import kotlinx.html.table
-import kotlinx.html.td
-import kotlinx.html.tr
 import redis.clients.jedis.Jedis
 import redis.clients.jedis.exceptions.JedisDataException
 
@@ -69,20 +52,20 @@ internal object AdminPage {
                                  msg: Message = EMPTY_MESSAGE) =
     createHTML()
       .html {
-
         head { headDefault(content) }
+
         body {
           val returnPath = queryParam(RETURN_PARAM, "/")
 
-          helpAndLogin(content, user, returnPath, false, redis)
+          helpAndLogin(content, user, returnPath, false)
 
           bodyTitle()
 
           when {
-            isProduction() && user.isNotValidUser(redis) -> {
+            isProduction() && user.isNotValidUser() -> {
               br { +"Must be logged in for this function" }
             }
-            isProduction() && user.isNotAdminUser(redis) -> {
+            isProduction() && user.isNotAdminUser() -> {
               br { +"Must be a system admin for this function" }
             }
             else -> {
@@ -94,6 +77,8 @@ internal object AdminPage {
           }
 
           backLink(returnPath)
+
+          loadPingdomScript()
         }
       }
 
@@ -105,7 +90,7 @@ internal object AdminPage {
         action = ADMIN_ENDPOINT
         method = FormMethod.post
         onSubmit = "return confirm('Are you sure you want to permanently delete all data ?')"
-        input { type = InputType.submit; name = ADMIN_ACTION_PARAM; value = DELETE_ALL_DATA }
+        submitInput { name = ADMIN_ACTION_PARAM; value = DELETE_ALL_DATA }
       }
     }
   }

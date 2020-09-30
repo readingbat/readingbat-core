@@ -17,11 +17,14 @@
 
 package com.github.readingbat.dsl
 
+import com.github.pambrose.common.redis.RedisUtils.withNonNullRedisPool
 import com.github.pambrose.common.redis.RedisUtils.withRedisPool
 import com.github.pambrose.common.util.FileSystemSource
 import com.github.pambrose.common.util.GitHubRepo
 import com.github.pambrose.common.util.ensureSuffix
 import com.github.pambrose.common.util.isNotNull
+import com.github.readingbat.common.CommonUtils.keyOf
+import com.github.readingbat.common.CommonUtils.md5Of
 import com.github.readingbat.common.CommonUtils.pathOf
 import com.github.readingbat.common.KeyConstants.DIR_CONTENTS_KEY
 import com.github.readingbat.dsl.Challenge.Companion.challenge
@@ -31,8 +34,6 @@ import com.github.readingbat.dsl.ReturnType.Runtime
 import com.github.readingbat.server.ChallengeName
 import com.github.readingbat.server.GroupName
 import com.github.readingbat.server.ReadingBatServer.redisPool
-import com.github.readingbat.server.keyOf
-import com.github.readingbat.server.md5Of
 import mu.KLogging
 import java.io.File
 import kotlin.reflect.KProperty
@@ -59,35 +60,44 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
 
   private fun fetchDirContentsFromRedis(path: String) =
     if (cacheContentInRedis())
-      redisPool.withRedisPool { redis -> redis?.lrange(dirContentsKey(path), 0, -1) }
+      redisPool?.withRedisPool { redis -> redis?.lrange(dirContentsKey(path), 0, -1) }
+        ?.apply { logger.debug { """Retrieved "$path" from redis""" } }
     else
       null
+
+  private fun fetchRemoteFiles(root: GitHubRepo, path: String) =
+    (if (root.ownerType.isUser())
+      root.userDirectoryContents(branchName, path, metrics)
+    else
+      root.organizationDirectoryContents(branchName, path, metrics))
+
+      .also {
+        if (cacheContentInRedis()) {
+          redisPool?.withNonNullRedisPool { redis ->
+            val dirContentsKey = dirContentsKey(path)
+            it.forEach { redis.rpush(dirContentsKey, it) }
+            logger.info { """Saved "$path" to redis""" }
+          }
+        }
+      }
 
   internal val fileList by lazy {
     repo.let { root ->
       when (root) {
         is GitHubRepo -> {
           val path = "${srcPath.ensureSuffix("/")}$packageNameAsPath"
-          val files = fetchDirContentsFromRedis(path)
-          if (files.isNotNull() && files.isNotEmpty()) {
-            logger.debug { """Retrieved "$path" from redis""" }
-            files
+
+          if (cacheContentInRedis()) {
+            fetchDirContentsFromRedis(path)
+              .let {
+                if (it.isNotNull() && it.isNotEmpty())
+                  it
+                else
+                  fetchRemoteFiles(root, path)
+              }
           }
           else {
-            val remoteFiles =
-              if (root.ownerType.isUser())
-                root.userDirectoryContents(branchName, path, metrics)
-              else
-                root.organizationDirectoryContents(branchName, path, metrics)
-
-            redisPool.withRedisPool { redis ->
-              if (redis.isNotNull() && cacheContentInRedis()) {
-                val dirContentsKey = dirContentsKey(path)
-                remoteFiles.forEach { redis.rpush(dirContentsKey, it) }
-                logger.info { """Saved "$path" to redis""" }
-              }
-            }
-            remoteFiles
+            fetchRemoteFiles(root, path)
           }
         }
         is FileSystemSource -> {
@@ -143,14 +153,14 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
 
   fun findChallenge(challengeName: String): T =
     challenges.firstOrNull { it.challengeName.value == challengeName }
-      ?: throw InvalidPathException("Challenge ${pathOf(groupPrefix, challengeName)} not found.")
+      ?: throw InvalidRequestException("Challenge not found: ${pathOf(groupPrefix, challengeName)}")
 
   operator fun get(challengeName: String): T = findChallenge(challengeName)
 
   internal fun indexOf(challengeName: ChallengeName): Int {
     val pos = challenges.indexOfFirst { it.challengeName == challengeName }
     if (pos == -1)
-      throw InvalidPathException("Challenge ${pathOf(groupPrefix, challengeName)} not found.")
+      throw InvalidRequestException("Challenge not found: ${pathOf(groupPrefix, challengeName)}")
     return pos
   }
 

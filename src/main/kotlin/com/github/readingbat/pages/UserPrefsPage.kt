@@ -17,33 +17,34 @@
 
 package com.github.readingbat.pages
 
-import com.github.readingbat.common.*
 import com.github.readingbat.common.CSSNames.INDENT_1EM
 import com.github.readingbat.common.CSSNames.INDENT_2EM
+import com.github.readingbat.common.ClassCode
 import com.github.readingbat.common.ClassCode.Companion.DISABLED_CLASS_CODE
 import com.github.readingbat.common.Constants.LABEL_WIDTH
-import com.github.readingbat.common.Endpoints.CONFIG_ENDPOINT
 import com.github.readingbat.common.Endpoints.CREATE_ACCOUNT_ENDPOINT
-import com.github.readingbat.common.Endpoints.SESSIONS_ENDPOINT
-import com.github.readingbat.common.Endpoints.SYSTEM_ADMIN_ENDPOINT
 import com.github.readingbat.common.Endpoints.TEACHER_PREFS_ENDPOINT
 import com.github.readingbat.common.Endpoints.USER_PREFS_ENDPOINT
 import com.github.readingbat.common.FormFields.CLASS_CODE_NAME_PARAM
 import com.github.readingbat.common.FormFields.CONFIRM_PASSWORD_PARAM
 import com.github.readingbat.common.FormFields.CURR_PASSWORD_PARAM
+import com.github.readingbat.common.FormFields.DEFAULT_LANGUAGE_CHOICE_PARAM
 import com.github.readingbat.common.FormFields.DELETE_ACCOUNT
 import com.github.readingbat.common.FormFields.JOIN_A_CLASS
 import com.github.readingbat.common.FormFields.JOIN_CLASS
 import com.github.readingbat.common.FormFields.NEW_PASSWORD_PARAM
+import com.github.readingbat.common.FormFields.PREFS_ACTION_PARAM
 import com.github.readingbat.common.FormFields.RETURN_PARAM
+import com.github.readingbat.common.FormFields.UPDATE_DEFAULT_LANGUAGE
 import com.github.readingbat.common.FormFields.UPDATE_PASSWORD
-import com.github.readingbat.common.FormFields.USER_PREFS_ACTION_PARAM
 import com.github.readingbat.common.FormFields.WITHDRAW_FROM_CLASS
+import com.github.readingbat.common.Message
 import com.github.readingbat.common.Message.Companion.EMPTY_MESSAGE
+import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.fetchActiveClassCode
-import com.github.readingbat.common.User.Companion.fetchEnrolledClassCode
+import com.github.readingbat.common.isValidUser
+import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.dsl.isProduction
 import com.github.readingbat.pages.HelpAndLogin.helpAndLogin
 import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyTitle
@@ -51,35 +52,15 @@ import com.github.readingbat.pages.PageUtils.clickButtonScript
 import com.github.readingbat.pages.PageUtils.displayMessage
 import com.github.readingbat.pages.PageUtils.headDefault
 import com.github.readingbat.pages.PageUtils.hideShowButton
+import com.github.readingbat.pages.PageUtils.loadPingdomScript
 import com.github.readingbat.pages.PageUtils.privacyStatement
+import com.github.readingbat.pages.PageUtils.rawHtml
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
-import kotlinx.html.BODY
-import kotlinx.html.FormMethod
-import kotlinx.html.InputType
-import kotlinx.html.InputType.submit
-import kotlinx.html.a
-import kotlinx.html.body
-import kotlinx.html.div
-import kotlinx.html.form
-import kotlinx.html.h2
-import kotlinx.html.h3
-import kotlinx.html.head
-import kotlinx.html.html
-import kotlinx.html.id
-import kotlinx.html.input
-import kotlinx.html.label
-import kotlinx.html.onKeyPress
-import kotlinx.html.onSubmit
-import kotlinx.html.p
-import kotlinx.html.span
+import kotlinx.html.*
+import kotlinx.html.Entities.nbsp
 import kotlinx.html.stream.createHTML
-import kotlinx.html.style
-import kotlinx.html.table
-import kotlinx.html.td
-import kotlinx.html.tr
 import mu.KLogging
-import redis.clients.jedis.Jedis
 
 internal object UserPrefsPage : KLogging() {
 
@@ -89,70 +70,87 @@ internal object UserPrefsPage : KLogging() {
 
   fun PipelineCall.userPrefsPage(content: ReadingBatContent,
                                  user: User?,
-                                 redis: Jedis,
                                  msg: Message = EMPTY_MESSAGE,
                                  defaultClassCode: ClassCode = DISABLED_CLASS_CODE) =
-    if (user.isValidUser(redis))
-      userPrefsWithLoginPage(content, user, msg, defaultClassCode, redis)
+    if (user.isValidUser())
+      userPrefsWithLoginPage(content, user, msg, defaultClassCode)
     else
-      requestLogInPage(content, redis)
+      requestLogInPage(content)
 
   private fun PipelineCall.userPrefsWithLoginPage(content: ReadingBatContent,
                                                   user: User,
                                                   msg: Message,
-                                                  defaultClassCode: ClassCode,
-                                                  redis: Jedis) =
+                                                  defaultClassCode: ClassCode) =
     createHTML()
       .html {
-        val activeClassCode = user.fetchActiveClassCode(redis)
-
         head {
           headDefault(content)
           clickButtonScript(passwordButton, joinClassButton)
         }
 
         body {
+          val activeClassCode = fetchActiveClassCode(user)
           val returnPath = queryParam(RETURN_PARAM, "/")
 
-          helpAndLogin(content, user, returnPath, activeClassCode.isEnabled, redis)
+          helpAndLogin(content, user, returnPath, activeClassCode.isEnabled)
 
           bodyTitle()
 
-          h2 { +"ReadingBat User Preferences" }
+          h2 { +"User Preferences" }
 
           if (msg.isAssigned())
             p { span { style = "color:${msg.color}"; this@body.displayMessage(msg) } }
 
+          defaultLanguage(user)
           changePassword()
-          joinOrWithdrawFromClass(user, defaultClassCode, redis)
-          deleteAccount(user, redis)
+          joinOrWithdrawFromClass(user, defaultClassCode)
+          deleteAccount(user)
 
           p(classes = INDENT_1EM) {
             a { href = "$TEACHER_PREFS_ENDPOINT?$RETURN_PARAM=$USER_PREFS_ENDPOINT"; +"Teacher Preferences" }
           }
 
-          if (!isProduction() || user.isAdminUser(redis)) {
-            h3 { +"Administrator Options" }
-
-            p(classes = INDENT_1EM) {
-              a { href = "$CONFIG_ENDPOINT?$RETURN_PARAM=$returnPath"; +"System Configuration" }
-            }
-
-            p(classes = INDENT_1EM) {
-              a { href = "$SESSIONS_ENDPOINT?$RETURN_PARAM=$returnPath"; +"Current Sessions" }
-            }
-
-            p(classes = INDENT_1EM) {
-              a { href = "$SYSTEM_ADMIN_ENDPOINT?$RETURN_PARAM=$returnPath"; +"System Admin" }
-            }
-          }
-          else {
-            privacyStatement(USER_PREFS_ENDPOINT, returnPath)
-          }
+          privacyStatement(USER_PREFS_ENDPOINT)
 
           backLink(returnPath)
         }
       }
+
+  private fun BODY.defaultLanguage(user: User) {
+    h3 { +"Default Language" }
+    div(classes = INDENT_2EM) {
+      table {
+        form {
+          action = USER_PREFS_ENDPOINT
+          method = FormMethod.post
+
+          this@table.tr {
+            LanguageType
+              .values()
+              .forEach { languageType ->
+                td {
+                  style = "text-align:center"
+                  radioInput {
+                    id = languageType.languageName.value
+                    name = DEFAULT_LANGUAGE_CHOICE_PARAM
+                    value = languageType.languageName.value
+                    checked = user.defaultLanguage == languageType
+                  }
+                  label {
+                    htmlFor = languageType.languageName.value
+                    +" ${languageType.name} "
+                  }
+                }
+                td { rawHtml(nbsp.text) }
+                td { rawHtml(nbsp.text) }
+              }
+            td {}
+            td { submitInput { name = PREFS_ACTION_PARAM; value = UPDATE_DEFAULT_LANGUAGE } }
+          }
+        }
+      }
+    }
+  }
 
   private fun BODY.changePassword() {
     h3 { +"Change password" }
@@ -165,19 +163,18 @@ internal object UserPrefsPage : KLogging() {
         table {
           tr {
             td { style = LABEL_WIDTH; label { +"Current Password" } }
-            td { input { type = InputType.password; size = "42"; name = CURR_PASSWORD_PARAM; value = "" } }
+            td { passwordInput { size = "42"; name = CURR_PASSWORD_PARAM; value = "" } }
             td { hideShowButton(formName, CURR_PASSWORD_PARAM) }
           }
           tr {
             td { style = LABEL_WIDTH; label { +"New Password" } }
-            td { input { type = InputType.password; size = "42"; name = NEW_PASSWORD_PARAM; value = "" } }
+            td { passwordInput { size = "42"; name = NEW_PASSWORD_PARAM; value = "" } }
             td { hideShowButton(formName, NEW_PASSWORD_PARAM) }
           }
           tr {
             td { style = LABEL_WIDTH; label { +"Confirm Password" } }
             td {
-              input {
-                type = InputType.password
+              passwordInput {
                 size = "42"
                 name = CONFIRM_PASSWORD_PARAM
                 value = ""
@@ -188,26 +185,26 @@ internal object UserPrefsPage : KLogging() {
           }
           tr {
             td {}
-            td { input { type = submit; id = passwordButton; name = USER_PREFS_ACTION_PARAM; value = UPDATE_PASSWORD } }
+            td { submitInput { id = passwordButton; name = PREFS_ACTION_PARAM; value = UPDATE_PASSWORD } }
           }
         }
       }
     }
   }
 
-  private fun BODY.joinOrWithdrawFromClass(user: User, defaultClassCode: ClassCode, redis: Jedis) {
-    val enrolledClass = user.fetchEnrolledClassCode(redis)
+  private fun BODY.joinOrWithdrawFromClass(user: User, defaultClassCode: ClassCode) {
+    val enrolledClass = user.enrolledClassCode
     if (enrolledClass.isEnabled) {
       h3 { +"Enrolled class" }
-      val displayStr = enrolledClass.toDisplayString(redis)
+      val displayStr = enrolledClass.toDisplayString()
       div(classes = INDENT_2EM) {
-        p { +"Currently enrolled in class $enrolledClass." }
+        p { +"Currently enrolled in class $displayStr." }
         p {
           form {
             action = USER_PREFS_ENDPOINT
             method = FormMethod.post
             onSubmit = "return confirm('Are you sure you want to withdraw from class $displayStr?')"
-            input { type = submit; name = USER_PREFS_ACTION_PARAM; value = WITHDRAW_FROM_CLASS }
+            submitInput { name = PREFS_ACTION_PARAM; value = WITHDRAW_FROM_CLASS }
           }
         }
       }
@@ -223,8 +220,7 @@ internal object UserPrefsPage : KLogging() {
             tr {
               td { style = LABEL_WIDTH; label { +"Class Code" } }
               td {
-                input {
-                  type = InputType.text
+                textInput {
                   size = "42"
                   name = CLASS_CODE_NAME_PARAM
                   value = defaultClassCode.displayedValue
@@ -234,7 +230,7 @@ internal object UserPrefsPage : KLogging() {
             }
             tr {
               td {}
-              td { input { type = submit; id = joinClassButton; name = USER_PREFS_ACTION_PARAM; value = JOIN_CLASS } }
+              td { submitInput { id = joinClassButton; name = PREFS_ACTION_PARAM; value = JOIN_CLASS } }
             }
           }
         }
@@ -254,11 +250,11 @@ internal object UserPrefsPage : KLogging() {
         table {
           tr {
             td { style = LABEL_WIDTH; label { +"Share To" } }
-            td { input { type = InputType.text; size = "42"; name = "pdt"; value = "" } }
+            td { textInput { size = "42"; name = "pdt"; value = "" } }
           }
           tr {
             td {}
-            td { input { type = submit; name = USER_PREFS_ACTION; value = "Share" } }
+            td { submitInput { name = USER_PREFS_ACTION; value = "Share" } }
           }
         }
       }
@@ -271,23 +267,23 @@ internal object UserPrefsPage : KLogging() {
     form {
       action = USER_PREFS_ENDPOINT
       method = FormMethod.post
-      input { type = InputType.hidden; name = "date"; value = "963892736" }
+      hiddenInput { name = "date"; value = "963892736" }
       table {
         tr {
           td { style = LABEL_WIDTH; label { +"Memo" } }
-          td { input { type = InputType.text; size = "42"; name = "real"; value = "" } }
+          td { textInput { size = "42"; name = "real"; value = "" } }
         }
         tr {
           td {}
-          td { input { type = submit; name = USER_PREFS_ACTION; value = "Update Memo" } }
+          td { submitInput { name = USER_PREFS_ACTION; value = "Update Memo" } }
         }
       }
     }
   }
   */
 
-  private fun BODY.deleteAccount(user: User, redis: Jedis) {
-    val email = user.email(redis)
+  private fun BODY.deleteAccount(user: User) {
+    val email = user.email
     if (email.isNotBlank()) {
       h3 { +"Delete account" }
       div(classes = INDENT_2EM) {
@@ -296,15 +292,13 @@ internal object UserPrefsPage : KLogging() {
           action = USER_PREFS_ENDPOINT
           method = FormMethod.post
           onSubmit = "return confirm('Are you sure you want to permanently delete the account for $email ?')"
-          input { type = submit; name = USER_PREFS_ACTION_PARAM; value = DELETE_ACCOUNT }
+          submitInput { name = PREFS_ACTION_PARAM; value = DELETE_ACCOUNT }
         }
       }
     }
   }
 
-  fun PipelineCall.requestLogInPage(content: ReadingBatContent,
-                                    redis: Jedis,
-                                    msg: Message = EMPTY_MESSAGE) =
+  fun PipelineCall.requestLogInPage(content: ReadingBatContent, msg: Message = EMPTY_MESSAGE) =
     createHTML()
       .html {
         head { headDefault(content) }
@@ -312,7 +306,7 @@ internal object UserPrefsPage : KLogging() {
         body {
           val returnPath = queryParam(RETURN_PARAM, "/")
 
-          helpAndLogin(content, null, returnPath, false, redis)
+          helpAndLogin(content, null, returnPath, false)
 
           bodyTitle()
 
@@ -327,9 +321,11 @@ internal object UserPrefsPage : KLogging() {
             +"or log in to an existing account to edit preferences."
           }
 
-          privacyStatement(USER_PREFS_ENDPOINT, returnPath)
+          privacyStatement(USER_PREFS_ENDPOINT)
 
           backLink(returnPath)
+
+          loadPingdomScript()
         }
       }
 }

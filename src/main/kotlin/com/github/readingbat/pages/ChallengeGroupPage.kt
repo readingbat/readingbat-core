@@ -18,11 +18,12 @@
 package com.github.readingbat.pages
 
 import com.github.pambrose.common.util.isNotNull
-import com.github.pambrose.common.util.pluralize
-import com.github.readingbat.common.*
+import com.github.readingbat.common.BrowserSession
 import com.github.readingbat.common.CSSNames.FUNC_ITEM1
 import com.github.readingbat.common.CSSNames.FUNC_ITEM2
 import com.github.readingbat.common.CSSNames.UNDERLINE
+import com.github.readingbat.common.ClassCode
+import com.github.readingbat.common.CommonUtils.md5Of
 import com.github.readingbat.common.CommonUtils.pathOf
 import com.github.readingbat.common.Constants.COLUMN_CNT
 import com.github.readingbat.common.Constants.MSG
@@ -35,64 +36,74 @@ import com.github.readingbat.common.FormFields.CHALLENGE_ANSWERS_PARAM
 import com.github.readingbat.common.FormFields.CORRECT_ANSWERS_PARAM
 import com.github.readingbat.common.FormFields.GROUP_NAME_PARAM
 import com.github.readingbat.common.FormFields.LANGUAGE_NAME_PARAM
+import com.github.readingbat.common.Message
 import com.github.readingbat.common.StaticFileNames.GREEN_CHECK
 import com.github.readingbat.common.StaticFileNames.WHITE_CHECK
-import com.github.readingbat.common.User.Companion.challengeAnswersKey
-import com.github.readingbat.common.User.Companion.correctAnswersKey
+import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.fetchActiveClassCode
 import com.github.readingbat.common.User.Companion.gson
+import com.github.readingbat.common.browserSession
+import com.github.readingbat.common.challengeAnswersKey
+import com.github.readingbat.common.correctAnswersKey
 import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.ChallengeGroup
 import com.github.readingbat.dsl.ReadingBatContent
+import com.github.readingbat.dsl.isPostgresEnabled
+import com.github.readingbat.pages.ChallengePage.headerColor
 import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyHeader
 import com.github.readingbat.pages.PageUtils.encodeUriElems
+import com.github.readingbat.pages.PageUtils.enrolleesDesc
 import com.github.readingbat.pages.PageUtils.headDefault
+import com.github.readingbat.pages.PageUtils.loadPingdomScript
 import com.github.readingbat.pages.PageUtils.rawHtml
 import com.github.readingbat.server.GroupName
 import com.github.readingbat.server.LanguageName
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
 import com.github.readingbat.server.ServerUtils.rows
+import com.github.readingbat.server.SessionChallengeInfo
+import com.github.readingbat.server.UserChallengeInfo
+import com.github.readingbat.server.get
 import io.ktor.application.*
-import kotlinx.html.BODY
-import kotlinx.html.FormMethod
-import kotlinx.html.InputType
-import kotlinx.html.TR
-import kotlinx.html.a
-import kotlinx.html.body
-import kotlinx.html.form
-import kotlinx.html.h2
-import kotlinx.html.h3
-import kotlinx.html.head
-import kotlinx.html.html
-import kotlinx.html.id
-import kotlinx.html.img
-import kotlinx.html.input
-import kotlinx.html.onSubmit
-import kotlinx.html.p
-import kotlinx.html.script
-import kotlinx.html.span
+import kotlinx.html.*
 import kotlinx.html.stream.createHTML
-import kotlinx.html.style
-import kotlinx.html.table
-import kotlinx.html.td
-import kotlinx.html.tr
 import mu.KLogging
-import redis.clients.jedis.Jedis
+import org.jetbrains.exposed.sql.and
+import org.jetbrains.exposed.sql.select
+import org.jetbrains.exposed.sql.transactions.transaction
 
 internal object ChallengeGroupPage : KLogging() {
 
-  fun Challenge.isCorrect(user: User?, browserSession: BrowserSession?, redis: Jedis?): Boolean {
-    val correctAnswersKey = user.correctAnswersKey(browserSession, languageName, groupName, challengeName)
-    return if (correctAnswersKey.isNotEmpty()) redis?.get(correctAnswersKey)?.toBoolean() == true else false
+  fun Challenge.isCorrect(user: User?, browserSession: BrowserSession?): Boolean {
+    val challengeMd5 = md5Of(languageName, groupName, challengeName)
+    return when {
+      !isPostgresEnabled() -> false
+      user.isNotNull() ->
+        transaction {
+          UserChallengeInfo
+            .slice(UserChallengeInfo.allCorrect)
+            .select { (UserChallengeInfo.userRef eq user.userDbmsId) and (UserChallengeInfo.md5 eq challengeMd5) }
+            .map { it[0] as Boolean }
+            .firstOrNull() ?: false
+        }
+      browserSession.isNotNull() ->
+        transaction {
+          SessionChallengeInfo
+            .slice(SessionChallengeInfo.allCorrect)
+            .select { (SessionChallengeInfo.sessionRef eq browserSession.sessionDbmsId()) and (SessionChallengeInfo.md5 eq challengeMd5) }
+            .map { it[0] as Boolean }
+            .firstOrNull() ?: false
+        }
+      else -> false
+    }
   }
+
 
   fun PipelineCall.challengeGroupPage(content: ReadingBatContent,
                                       user: User?,
                                       challengeGroup: ChallengeGroup<*>,
-                                      loginAttempt: Boolean,
-                                      redis: Jedis?) =
+                                      loginAttempt: Boolean) =
     createHTML()
       .html {
         val browserSession = call.browserSession
@@ -101,15 +112,15 @@ internal object ChallengeGroupPage : KLogging() {
         val groupName = challengeGroup.groupName
         val challenges = challengeGroup.challenges
         val loginPath = pathOf(CHALLENGE_ROOT, languageName, groupName)
-        val activeClassCode = user.fetchActiveClassCode(redis)
-        val enrollees = activeClassCode.fetchEnrollees(redis)
+        val activeClassCode = fetchActiveClassCode(user)
+        val enrollees = activeClassCode.fetchEnrollees()
         val msg = Message(queryParam(MSG))
 
-        fun TR.displayFunctionCall(user: User?, challenge: Challenge, redis: Jedis?) {
+        fun TR.displayFunctionCall(user: User?, challenge: Challenge) {
           val challengeName = challenge.challengeName
-          val allCorrect = challenge.isCorrect(user, browserSession, redis)
+          val allCorrect = challenge.isCorrect(user, browserSession)
 
-          td(classes = if (activeClassCode.isEnabled) FUNC_ITEM1 else FUNC_ITEM2) {
+          td(classes = if (activeClassCode.isEnabled && enrollees.isNotEmpty()) FUNC_ITEM1 else FUNC_ITEM2) {
             if (activeClassCode.isNotEnabled)
               img { src = pathOf(STATIC_ROOT, if (allCorrect) GREEN_CHECK else WHITE_CHECK) }
 
@@ -128,12 +139,12 @@ internal object ChallengeGroupPage : KLogging() {
         head { headDefault(content) }
 
         body {
-          bodyHeader(content, user, languageType, loginAttempt, loginPath, false, activeClassCode, redis, msg)
+          bodyHeader(content, user, languageType, loginAttempt, loginPath, false, activeClassCode, msg)
 
           h2 { +groupName.toString() }
 
           if (activeClassCode.isEnabled)
-            displayClassDescription(activeClassCode, languageName, groupName, enrollees, redis)
+            displayClassDescription(activeClassCode, languageName, groupName, enrollees)
 
           if (enrollees.isNotEmpty())
             p { +"(# of questions | # that started | # completed | Avg correct | Incorrect attempts | Likes/Dislikes)" }
@@ -150,41 +161,41 @@ internal object ChallengeGroupPage : KLogging() {
               tr {
                 style = "height:30"
                 challenges.apply {
-                  displayFunctionCall(user, elementAt(i), redis)
-                  elementAtOrNull(i + rows)?.also { displayFunctionCall(user, it, redis) } ?: td {}
-                  elementAtOrNull(i + (2 * rows))?.also { displayFunctionCall(user, it, redis) } ?: td {}
+                  displayFunctionCall(user, elementAt(i))
+                  elementAtOrNull(i + rows)?.also { displayFunctionCall(user, it) } ?: td {}
+                  elementAtOrNull(i + (2 * rows))?.also { displayFunctionCall(user, it) } ?: td {}
                 }
               }
             }
           }
 
-          if (redis.isNotNull() && activeClassCode.isNotEnabled && challenges.isNotEmpty())
+          if (isPostgresEnabled() && activeClassCode.isNotEnabled && challenges.isNotEmpty())
             clearGroupAnswerHistoryOption(user, browserSession, languageName, groupName, challenges)
 
           backLink(CHALLENGE_ROOT, languageName.value)
 
           if (enrollees.isNotEmpty())
             enableWebSockets(languageName, groupName, activeClassCode)
+
+          loadPingdomScript()
         }
       }
 
   fun BODY.displayClassDescription(classCode: ClassCode,
                                    languageName: LanguageName,
                                    groupName: GroupName,
-                                   enrollees: List<User>,
-                                   redis: Jedis?) {
-    val studentCount = if (enrollees.isEmpty()) "No" else enrollees.count().toString()
+                                   enrollees: List<User>) {
     h3 {
-      style = "margin-left: 5px; color: ${ChallengePage.headerColor}"
+      style = "margin-left: 5px; color: $headerColor"
       a(classes = UNDERLINE) {
         href =
           if (groupName.isNotValid())
             classSummaryEndpoint(classCode)
           else
             classSummaryEndpoint(classCode, languageName, groupName)
-        +classCode.toDisplayString(redis)
+        +classCode.toDisplayString()
       }
-      +" - $studentCount ${"student".pluralize(enrollees.count())} enrolled"
+      +enrolleesDesc(enrollees)
     }
   }
 
@@ -221,10 +232,8 @@ internal object ChallengeGroupPage : KLogging() {
                                                  groupName: GroupName,
                                                  challenges: List<Challenge>) {
 
-    val correctAnswersKeys = challenges.map { user.correctAnswersKey(browserSession, it) }
-    val challengeAnswerKeys = challenges.map { user.challengeAnswersKey(browserSession, it) }
-    val correctAnswersKey = gson.toJson(correctAnswersKeys)
-    val challengeAnswersKey = gson.toJson(challengeAnswerKeys)
+    val correctAnswersKeys = challenges.map { correctAnswersKey(user, browserSession, it) }
+    val challengeAnswerKeys = challenges.map { challengeAnswersKey(user, browserSession, it) }
 
     p {
       form {
@@ -232,13 +241,13 @@ internal object ChallengeGroupPage : KLogging() {
         action = CLEAR_GROUP_ANSWERS_ENDPOINT
         method = FormMethod.post
         onSubmit = """return confirm('Are you sure you want to clear your previous answers for group "$groupName"?')"""
-        input { type = InputType.hidden; name = LANGUAGE_NAME_PARAM; value = languageName.value }
-        input { type = InputType.hidden; name = GROUP_NAME_PARAM; value = groupName.value }
-        input { type = InputType.hidden; name = CORRECT_ANSWERS_PARAM; value = correctAnswersKey }
-        input { type = InputType.hidden; name = CHALLENGE_ANSWERS_PARAM; value = challengeAnswersKey }
-        input {
+        hiddenInput { name = LANGUAGE_NAME_PARAM; value = languageName.value }
+        hiddenInput { name = GROUP_NAME_PARAM; value = groupName.value }
+        hiddenInput { name = CORRECT_ANSWERS_PARAM; value = gson.toJson(correctAnswersKeys) }
+        hiddenInput { name = CHALLENGE_ANSWERS_PARAM; value = gson.toJson(challengeAnswerKeys) }
+        submitInput {
           style = "vertical-align:middle; margin-top:1; margin-bottom:0"
-          type = InputType.submit; value = "Clear answer history"
+          value = "Clear answer history"
         }
       }
     }

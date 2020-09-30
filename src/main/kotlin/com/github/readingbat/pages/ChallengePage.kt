@@ -36,7 +36,6 @@ import com.github.readingbat.common.CSSNames.UNDERLINE
 import com.github.readingbat.common.CSSNames.USER_RESP
 import com.github.readingbat.common.CommonUtils.pathOf
 import com.github.readingbat.common.Constants.CORRECT_COLOR
-import com.github.readingbat.common.Constants.DBMS_DOWN
 import com.github.readingbat.common.Constants.INCOMPLETE_COLOR
 import com.github.readingbat.common.Constants.LIKE_DISLIKE_JS_FUNC
 import com.github.readingbat.common.Constants.MSG
@@ -50,6 +49,7 @@ import com.github.readingbat.common.Endpoints.CHALLENGE_ROOT
 import com.github.readingbat.common.Endpoints.CLEAR_CHALLENGE_ANSWERS_ENDPOINT
 import com.github.readingbat.common.Endpoints.PLAYGROUND_ROOT
 import com.github.readingbat.common.Endpoints.STATIC_ROOT
+import com.github.readingbat.common.Endpoints.classSummaryEndpoint
 import com.github.readingbat.common.FormFields.CHALLENGE_ANSWERS_PARAM
 import com.github.readingbat.common.FormFields.CHALLENGE_NAME_PARAM
 import com.github.readingbat.common.FormFields.CORRECT_ANSWERS_PARAM
@@ -71,25 +71,26 @@ import com.github.readingbat.common.StaticFileNames.DISLIKE_CLEAR_FILE
 import com.github.readingbat.common.StaticFileNames.DISLIKE_COLOR_FILE
 import com.github.readingbat.common.StaticFileNames.LIKE_CLEAR_FILE
 import com.github.readingbat.common.StaticFileNames.LIKE_COLOR_FILE
-import com.github.readingbat.common.User.Companion.challengeAnswersKey
-import com.github.readingbat.common.User.Companion.correctAnswersKey
 import com.github.readingbat.common.User.Companion.fetchActiveClassCode
-import com.github.readingbat.common.User.Companion.fetchPreviousResponses
 import com.github.readingbat.common.User.Companion.gson
-import com.github.readingbat.common.User.Companion.likeDislikeKey
 import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.ReadingBatContent
+import com.github.readingbat.dsl.isPostgresEnabled
 import com.github.readingbat.pages.CheckAnswersJs.checkAnswersScript
 import com.github.readingbat.pages.LikeDislikeJs.likeDislikeScript
 import com.github.readingbat.pages.PageUtils.addLink
 import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyHeader
+import com.github.readingbat.pages.PageUtils.enrolleesDesc
 import com.github.readingbat.pages.PageUtils.headDefault
+import com.github.readingbat.pages.PageUtils.loadPingdomScript
 import com.github.readingbat.pages.PageUtils.rawHtml
-import com.github.readingbat.posts.ChallengeHistory
 import com.github.readingbat.server.ChallengeMd5
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
+import com.github.readingbat.server.SessionChallengeInfo
+import com.github.readingbat.server.UserChallengeInfo
+import com.github.readingbat.server.get
 import io.ktor.application.*
 import io.ktor.http.ContentType.Text.CSS
 import kotlinx.html.*
@@ -97,7 +98,9 @@ import kotlinx.html.Entities.nbsp
 import kotlinx.html.ScriptType.textJavaScript
 import kotlinx.html.stream.createHTML
 import mu.KLogging
-import redis.clients.jedis.Jedis
+import org.jetbrains.exposed.sql.and
+import org.jetbrains.exposed.sql.select
+import org.jetbrains.exposed.sql.transactions.transaction
 
 internal object ChallengePage : KLogging() {
   private const val spinnerCss = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
@@ -111,8 +114,7 @@ internal object ChallengePage : KLogging() {
   fun PipelineCall.challengePage(content: ReadingBatContent,
                                  user: User?,
                                  challenge: Challenge,
-                                 loginAttempt: Boolean,
-                                 redis: Jedis?) =
+                                 loginAttempt: Boolean) =
     createHTML()
       .html {
         val browserSession = call.browserSession
@@ -122,8 +124,8 @@ internal object ChallengePage : KLogging() {
         val challengeName = challenge.challengeName
         val funcInfo = challenge.functionInfo(content)
         val loginPath = pathOf(CHALLENGE_ROOT, languageName, groupName, challengeName)
-        val activeClassCode = user.fetchActiveClassCode(redis)
-        val enrollees = activeClassCode.fetchEnrollees(redis)
+        val activeClassCode = fetchActiveClassCode(user)
+        val enrollees = activeClassCode.fetchEnrollees()
         val msg = Message(queryParam(MSG))
 
         head {
@@ -140,20 +142,17 @@ internal object ChallengePage : KLogging() {
         }
 
         body {
-          bodyHeader(content, user, languageType, loginAttempt, loginPath, false, activeClassCode, redis, msg)
+          bodyHeader(content, user, languageType, loginAttempt, loginPath, false, activeClassCode, msg)
 
           displayChallenge(challenge, funcInfo)
 
           if (activeClassCode.isNotEnabled)
-            displayQuestions(user, browserSession, challenge, funcInfo, redis)
+            displayQuestions(user, browserSession, challenge, funcInfo)
           else {
-            if (redis.isNull()) {
-              p { +DBMS_DOWN.toString() }
-            }
-            else {
-              displayStudentProgress(challenge, content.maxHistoryLength, funcInfo, activeClassCode, enrollees, redis)
+            displayStudentProgress(challenge, content.maxHistoryLength, funcInfo, activeClassCode, enrollees)
+
+            if (enrollees.isNotEmpty())
               p { +"Connection time: "; span { id = pingMsg } }
-            }
           }
 
           backLink(CHALLENGE_ROOT, languageName.value, groupName.value)
@@ -162,6 +161,8 @@ internal object ChallengePage : KLogging() {
 
           if (activeClassCode.isEnabled && enrollees.isNotEmpty())
             enableWebSockets(activeClassCode, funcInfo.challengeMd5)
+
+          loadPingdomScript()
         }
       }
 
@@ -211,8 +212,7 @@ internal object ChallengePage : KLogging() {
   private fun BODY.displayQuestions(user: User?,
                                     browserSession: BrowserSession?,
                                     challenge: Challenge,
-                                    funcInfo: FunctionInfo,
-                                    redis: Jedis?) =
+                                    funcInfo: FunctionInfo) =
     div {
       style = "margin-top:2em; margin-left:2em"
 
@@ -234,7 +234,7 @@ internal object ChallengePage : KLogging() {
         val topFocus = "topFocus"
         val bottomFocus = "bottomFocus"
         val offset = 5 // The login dialog takes tabIndex values 1-4
-        val previousResponses = user.fetchPreviousResponses(challenge, browserSession, redis)
+        val previousResponses = fetchPreviousResponses(user, browserSession, challenge)
 
         // This will cause shift tab to go to bottom input element
         span { tabIndex = "5"; onFocus = "document.querySelector('.$bottomFocus').focus()" }
@@ -285,11 +285,12 @@ internal object ChallengePage : KLogging() {
       }
 
       this@displayQuestions.processAnswers(funcInfo, challenge)
-      if (redis.isNotNull())
-        this@displayQuestions.likeDislike(user, browserSession, challenge, redis)
+
+      this@displayQuestions.likeDislike(user, browserSession, challenge)
+
       this@displayQuestions.otherLinks(challenge)
-      if (redis.isNotNull())
-        this@displayQuestions.clearChallengeAnswerHistoryOption(user, browserSession, challenge)
+
+      this@displayQuestions.clearChallengeAnswerHistoryOption(user, browserSession, challenge)
     }
 
   private fun BODY.enableWebSockets(classCode: ClassCode, challengeMd5: ChallengeMd5) {
@@ -340,23 +341,22 @@ internal object ChallengePage : KLogging() {
                                           maxHistoryLength: Int,
                                           funcInfo: FunctionInfo,
                                           classCode: ClassCode,
-                                          enrollees: List<User>,
-                                          redis: Jedis) =
+                                          enrollees: List<User>) =
     div {
       style = "margin-top:2em"
 
       val languageName = challenge.languageType.languageName
       val groupName = challenge.groupName
       val challengeName = challenge.challengeName
-      val displayStr = classCode.toDisplayString(redis)
+      val displayStr = classCode.toDisplayString()
 
       h3 {
         style = "margin-left: 5px; color: $headerColor"
-        +if (enrollees.isEmpty()) "No students enrolled in " else "Student progress for "
         a(classes = UNDERLINE) {
-          href = Endpoints.classSummaryEndpoint(classCode, languageName, groupName)
+          href = classSummaryEndpoint(classCode, languageName, groupName)
           +displayStr
         }
+        +enrolleesDesc(enrollees)
       }
 
       if (enrollees.isNotEmpty()) {
@@ -380,35 +380,40 @@ internal object ChallengePage : KLogging() {
               val results =
                 funcInfo.invocations
                   .map { invocation ->
-                    val historyKey = enrollee.answerHistoryKey(languageName, groupName, challengeName, invocation)
                     val history =
-                      gson.fromJson(redis[historyKey], ChallengeHistory::class.java) ?: ChallengeHistory(invocation)
+                      transaction {
+                        val historyMd5 = challenge.md5(invocation)
+                        enrollee.answerHistory(historyMd5, invocation)
+                      }
+
                     if (history.correct)
                       numCorrect++
+
                     invocation to history
                   }
+
               val allCorrect = numCorrect == numChallenges
 
               tr(classes = DASHBOARD) {
                 td(classes = DASHBOARD) {
-                  id = "${enrollee.id}-$nameTd"
-                  style =
-                    "width:15%;white-space:nowrap; background-color:${if (allCorrect) CORRECT_COLOR else INCOMPLETE_COLOR}"
-
-                  span { id = "${enrollee.id}-$numCorrectSpan"; +numCorrect.toString() }
+                  id = "${enrollee.userId}-$nameTd"
+                  val color = if (allCorrect) CORRECT_COLOR else INCOMPLETE_COLOR
+                  style = "width:15%;white-space:nowrap; background-color:$color"
+                  span { id = "${enrollee.userId}-$numCorrectSpan"; +numCorrect.toString() }
                   +"/$numChallenges"
                   rawHtml(nbsp.text)
-                  +enrollee.name(redis)
+                  +enrollee.fullName.value
                 }
 
                 results
                   .forEach { (invocation, history) ->
                     td(classes = DASHBOARD) {
-                      id = "${enrollee.id}-$invocation-$answersTd"
-                      style =
-                        "background-color:${if (history.correct) CORRECT_COLOR else (if (history.answers.isNotEmpty()) WRONG_COLOR else INCOMPLETE_COLOR)}"
+                      id = "${enrollee.userId}-$invocation-$answersTd"
+                      val color =
+                        if (history.correct) CORRECT_COLOR else (if (history.answers.isNotEmpty()) WRONG_COLOR else INCOMPLETE_COLOR)
+                      style = "background-color:$color"
                       span {
-                        id = "${enrollee.id}-$invocation-$answersSpan"
+                        id = "${enrollee.userId}-$invocation-$answersSpan"
                         history.answers.asReversed().take(maxHistoryLength).forEach { answer -> +answer; br }
                       }
                     }
@@ -483,13 +488,31 @@ internal object ChallengePage : KLogging() {
     }
   }
 
-  private fun BODY.likeDislike(user: User?, browserSession: BrowserSession?, challenge: Challenge, redis: Jedis) {
-    val languageName = challenge.languageType.languageName
-    val groupName = challenge.groupName
-    val challengeName = challenge.challengeName
+  private fun BODY.likeDislike(user: User?, browserSession: BrowserSession?, challenge: Challenge) {
 
-    val likeDislikeKey = user.likeDislikeKey(browserSession, languageName, groupName, challengeName)
-    val likeDislikeVal = if (likeDislikeKey.isNotEmpty()) redis[likeDislikeKey]?.toInt() ?: 0 else 0
+    if (!isPostgresEnabled())
+      return
+
+    val likeDislikeVal =
+      when {
+        user.isNotNull() ->
+          transaction {
+            UserChallengeInfo
+              .slice(UserChallengeInfo.likeDislike)
+              .select { (UserChallengeInfo.userRef eq user.userDbmsId) and (UserChallengeInfo.md5 eq challenge.md5()) }
+              .map { it[UserChallengeInfo.likeDislike].toInt() }
+              .firstOrNull() ?: 0
+          }
+        browserSession.isNotNull() ->
+          transaction {
+            SessionChallengeInfo
+              .slice(SessionChallengeInfo.likeDislike)
+              .select { (SessionChallengeInfo.sessionRef eq browserSession.sessionDbmsId()) and (SessionChallengeInfo.md5 eq challenge.md5()) }
+              .map { it[SessionChallengeInfo.likeDislike].toInt() }
+              .firstOrNull() ?: 0
+          }
+        else -> 0
+      }
 
     p {
       table {
@@ -564,22 +587,25 @@ internal object ChallengePage : KLogging() {
     val languageName = challenge.languageType.languageName
     val groupName = challenge.groupName
     val challengeName = challenge.challengeName
-    val correctAnswersKey = user.correctAnswersKey(browserSession, languageName, groupName, challengeName)
-    val challengeAnswersKey = user.challengeAnswersKey(browserSession, languageName, groupName, challengeName)
+    val correctAnswersKey = correctAnswersKey(user, browserSession, languageName, groupName, challengeName)
+    val challengeAnswersKey = challengeAnswersKey(user, browserSession, languageName, groupName, challengeName)
+
+    if (!isPostgresEnabled())
+      return
 
     form {
       style = "margin:0"
       action = CLEAR_CHALLENGE_ANSWERS_ENDPOINT
       method = FormMethod.post
       onSubmit = """return confirm('Are you sure you want to clear your previous answers for "$challengeName"?')"""
-      input { type = InputType.hidden; name = LANGUAGE_NAME_PARAM; value = languageName.value }
-      input { type = InputType.hidden; name = GROUP_NAME_PARAM; value = groupName.value }
-      input { type = InputType.hidden; name = CHALLENGE_NAME_PARAM; value = challengeName.value }
-      input { type = InputType.hidden; name = CORRECT_ANSWERS_PARAM; value = correctAnswersKey }
-      input { type = InputType.hidden; name = CHALLENGE_ANSWERS_PARAM; value = challengeAnswersKey }
-      input {
+      hiddenInput { name = LANGUAGE_NAME_PARAM; value = languageName.value }
+      hiddenInput { name = GROUP_NAME_PARAM; value = groupName.value }
+      hiddenInput { name = CHALLENGE_NAME_PARAM; value = challengeName.value }
+      hiddenInput { name = CORRECT_ANSWERS_PARAM; value = correctAnswersKey }
+      hiddenInput { name = CHALLENGE_ANSWERS_PARAM; value = challengeAnswersKey }
+      submitInput {
         style = "vertical-align:middle; margin-top:1; margin-bottom:0"
-        type = InputType.submit; value = "Clear answer history"
+        value = "Clear answer history"
       }
     }
   }
@@ -594,4 +620,31 @@ internal object ChallengePage : KLogging() {
         """.trimIndent())
     }
   }
+
+  fun fetchPreviousResponses(user: User?, browserSession: BrowserSession?, challenge: Challenge) =
+    when {
+      !isPostgresEnabled() -> emptyMap
+      user.isNotNull() ->
+        transaction {
+          UserChallengeInfo
+            .slice(UserChallengeInfo.answersJson)
+            .select { (UserChallengeInfo.userRef eq user.userDbmsId) and (UserChallengeInfo.md5 eq challenge.md5()) }
+            .map { it[0] as String }
+            .firstOrNull()
+            ?.let { gson.fromJson(it, Map::class.java) as Map<String, String> }
+            ?: emptyMap
+        }
+      browserSession.isNotNull() ->
+        transaction {
+          logger.info { "Selecting from ${browserSession.sessionDbmsId()} and ${challenge.md5()}" }
+          SessionChallengeInfo
+            .slice(SessionChallengeInfo.answersJson)
+            .select { (SessionChallengeInfo.sessionRef eq browserSession.sessionDbmsId()) and (SessionChallengeInfo.md5 eq challenge.md5()) }
+            .map { it[0] as String }
+            .firstOrNull()
+            ?.let { gson.fromJson(it, Map::class.java) as Map<String, String> }
+            ?: emptyMap
+        }
+      else -> emptyMap
+    }
 }

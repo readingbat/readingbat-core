@@ -95,7 +95,7 @@ class LanguageGroup<T : Challenge>(internal val content: ReadingBatContent,
 
   fun findGroup(groupName: String): ChallengeGroup<T> =
     groupName.decode().let { decoded -> challengeGroups.firstOrNull { it.groupName.value == decoded } }
-      ?: throw InvalidPathException("Group ${pathOf(languageName, groupName)} not found")
+      ?: throw InvalidRequestException("Group not found: ${pathOf(languageName, groupName)}")
 
   fun findChallenge(groupName: String, challengeName: String) = findGroup(groupName).findChallenge(challengeName)
 

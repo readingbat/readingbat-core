@@ -34,8 +34,12 @@ import com.github.readingbat.common.Constants.WRONG_COLOR
 import com.github.readingbat.common.Constants.YES
 import com.github.readingbat.common.Endpoints.CHALLENGE_ROOT
 import com.github.readingbat.common.Endpoints.STUDENT_SUMMARY_ENDPOINT
+import com.github.readingbat.common.Endpoints.TEACHER_PREFS_ENDPOINT
 import com.github.readingbat.common.Endpoints.classSummaryEndpoint
+import com.github.readingbat.common.FormFields.PREFS_ACTION_PARAM
+import com.github.readingbat.common.FormFields.REMOVE_FROM_CLASS
 import com.github.readingbat.common.FormFields.RETURN_PARAM
+import com.github.readingbat.common.FormFields.USER_ID_PARAM
 import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.fetchActiveClassCode
 import com.github.readingbat.common.User.Companion.toUser
@@ -49,34 +53,35 @@ import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyTitle
 import com.github.readingbat.pages.PageUtils.encodeUriElems
 import com.github.readingbat.pages.PageUtils.headDefault
+import com.github.readingbat.pages.PageUtils.loadPingdomScript
 import com.github.readingbat.pages.PageUtils.rawHtml
 import com.github.readingbat.server.LanguageName
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
 import io.ktor.application.*
 import kotlinx.html.*
+import kotlinx.html.FormMethod.post
 import kotlinx.html.stream.createHTML
 import mu.KLogging
-import redis.clients.jedis.Jedis
 
 internal object StudentSummaryPage : KLogging() {
 
-  fun PipelineCall.studentSummaryPage(content: ReadingBatContent, user: User?, redis: Jedis): String {
+  fun PipelineCall.studentSummaryPage(content: ReadingBatContent, user: User?): String {
 
     val (languageName, student, classCode) =
       Triple(
         call.parameters[LANG_TYPE_QP]?.let { LanguageName(it) } ?: throw InvalidRequestException("Missing language"),
         call.parameters[USER_ID_QP]?.toUser(null) ?: throw InvalidRequestException("Missing user id"),
         call.parameters[CLASS_CODE_QP]?.let { ClassCode(it) } ?: throw InvalidRequestException("Missing class code"))
-    val activeClassCode = user.fetchActiveClassCode(redis)
+    val activeClassCode = fetchActiveClassCode(user)
 
     when {
-      classCode.isNotValid(redis) -> throw InvalidRequestException("Invalid classCode $classCode")
-      user.isNotValidUser(redis) -> throw InvalidRequestException("Invalid user")
+      classCode.isNotValid() -> throw InvalidRequestException("Invalid class code: $classCode")
+      user.isNotValidUser() -> throw InvalidRequestException("Invalid user")
       //classCode != activeClassCode -> throw InvalidRequestException("Class code mismatch")
-      classCode.fetchClassTeacherId(redis) != user.id -> {
-        val teacherId = classCode.fetchClassTeacherId(redis)
-        throw InvalidRequestException("User id ${user.id} does not match classCode teacher Id $teacherId")
+      classCode.fetchClassTeacherId() != user.userId -> {
+        val teacherId = classCode.fetchClassTeacherId()
+        throw InvalidRequestException("User id ${user.userId} does not match class code's teacher Id $teacherId")
       }
       else -> {
       }
@@ -84,48 +89,66 @@ internal object StudentSummaryPage : KLogging() {
 
     return createHTML()
       .html {
+        val studentName = student.fullName.value
 
-        head {
-          headDefault(content)
-        }
+        head { headDefault(content) }
 
         body {
           val returnPath = queryParam(RETURN_PARAM, "/")
-          helpAndLogin(content, user, returnPath, activeClassCode.isEnabled, redis)
+          helpAndLogin(content, user, returnPath, activeClassCode.isEnabled)
           bodyTitle()
 
-          h2 { +"ReadingBat Student Summary" }
+          h2 { +"Student Summary" }
 
           h3 {
-            style = "margin-left: 15px; color: $headerColor"
-            a(classes = UNDERLINE) {
-              href = classSummaryEndpoint(classCode); +classCode.toDisplayString(redis)
-            }
-          }
-
-          h3 {
-            style = "margin-left: 15px; color: $headerColor"
+            style = "margin-left:15px; color: $headerColor"
             a(classes = UNDERLINE) {
               href = pathOf(CHALLENGE_ROOT, languageName); +languageName.toLanguageType().toString()
             }
           }
 
           h3 {
-            style = "margin-left: 15px; color: $headerColor"
-            +"Student: ${student.name(redis)} ${student.email(redis)}"
+            style = "margin-left:15px; color: $headerColor"
+            a(classes = UNDERLINE) { href = classSummaryEndpoint(classCode); +classCode.toDisplayString() }
           }
 
-          displayChallengeGroups(content, classCode, languageName, redis)
+          h3 {
+            style = "margin-left:15px; color: $headerColor"
+            +"Student: $studentName ${student.email} "
+          }
+
+          div {
+            style = "margin-left:15px; margin-bottom:10px"
+            this@body.removeFromClassButton(student, studentName)
+          }
+
+          displayChallengeGroups(content, classCode, languageName)
           enableWebSockets(languageName, student, classCode)
           backLink(returnPath)
+
+          loadPingdomScript()
         }
       }
   }
 
+  internal fun BODY.removeFromClassButton(student: User, studentName: String) {
+    form {
+      style = "margin:0"
+      action = TEACHER_PREFS_ENDPOINT
+      method = post
+      onSubmit = "return confirm('Are you sure you want to remove $studentName from the class?')"
+      hiddenInput { name = USER_ID_PARAM; value = student.userId }
+      submitInput {
+        style = "vertical-align:middle; margin-top:1; margin-bottom:0; border-radius: 8px; font-size:12px"
+        name = PREFS_ACTION_PARAM
+        value = REMOVE_FROM_CLASS
+      }
+    }
+  }
+
   private fun BODY.displayChallengeGroups(content: ReadingBatContent,
                                           classCode: ClassCode,
-                                          languageName: LanguageName,
-                                          redis: Jedis) =
+                                          languageName: LanguageName) =
     div(classes = INDENT_2EM) {
       table(classes = INVOC_TABLE) {
         content.findLanguage(languageName).challengeGroups
@@ -190,7 +213,11 @@ internal object StudentSummaryPage : KLogging() {
           else
             wshost = wshost.replace(/^http:/, 'ws:');
 
-          var wsurl = wshost + '$STUDENT_SUMMARY_ENDPOINT/' + ${encodeUriElems(languageName, student.id, classCode)};
+          var wsurl = wshost + '$STUDENT_SUMMARY_ENDPOINT/' + ${
+          encodeUriElems(languageName,
+                         student.userId,
+                         classCode)
+        };
           var ws = new WebSocket(wsurl);
 
           ws.onopen = function (event) {

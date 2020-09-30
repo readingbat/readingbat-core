@@ -18,12 +18,20 @@
 package com.github.readingbat.server
 
 import com.github.pambrose.common.features.HerokuHttpsRedirect
+import com.github.pambrose.common.response.respondWith
 import com.github.pambrose.common.util.simpleClassName
+import com.github.readingbat.common.Constants.STATIC
+import com.github.readingbat.common.Constants.UNKNOWN
 import com.github.readingbat.common.Endpoints.CSS_ENDPOINT
 import com.github.readingbat.common.Endpoints.FAV_ICON_ENDPOINT
 import com.github.readingbat.common.Endpoints.STATIC_ROOT
-import com.github.readingbat.common.EnvVars.FILTER_LOG
-import com.github.readingbat.dsl.InvalidPathException
+import com.github.readingbat.common.EnvVar.FILTER_LOG
+import com.github.readingbat.dsl.InvalidRequestException
+import com.github.readingbat.dsl.RedisUnavailableException
+import com.github.readingbat.pages.DbmsDownPage.dbmsDownPage
+import com.github.readingbat.pages.ErrorPage.errorPage
+import com.github.readingbat.pages.InvalidRequestPage.invalidRequestPage
+import com.github.readingbat.pages.NotFoundPage.notFoundPage
 import com.github.readingbat.server.ConfigureCookies.configureAuthCookie
 import com.github.readingbat.server.ConfigureCookies.configureSessionIdCookie
 import com.github.readingbat.server.ConfigureFormAuth.configureFormAuth
@@ -32,19 +40,15 @@ import io.ktor.application.*
 import io.ktor.auth.*
 import io.ktor.features.*
 import io.ktor.http.*
-import io.ktor.http.ContentType.Text.Plain
 import io.ktor.http.HttpHeaders.Location
 import io.ktor.http.HttpStatusCode.Companion.Found
-import io.ktor.http.content.*
 import io.ktor.locations.Locations
 import io.ktor.request.*
-import io.ktor.response.*
 import io.ktor.server.engine.*
 import io.ktor.sessions.*
 import io.ktor.websocket.*
 import mu.KLogging
 import org.slf4j.event.Level
-import kotlin.text.Charsets.UTF_8
 
 internal object Installs : KLogging() {
 
@@ -113,12 +117,14 @@ internal object Installs : KLogging() {
     install(CallLogging) {
       level = Level.INFO
       if (FILTER_LOG.getEnv(true))
-        filter { call -> call.request.path().let { it.startsWith("/") && !it.startsWith("/static/") && it != "/ping" } }
+        filter { call ->
+          call.request.path().let { it.startsWith("/") && !it.startsWith("/$STATIC/") && it != "/ping" }
+        }
       format { call ->
         val logStr = call.request.toLogString()
         val remote = call.request.origin.remoteHost
         val email = call.fetchEmail()
-        when (val status = call.response.status() ?: "Unknown") {
+        when (val status = call.response.status() ?: UNKNOWN) {
           // Show redirections
           Found -> "$status: $logStr -> ${call.response.headers[Location]} - $remote - $email"
           else -> {
@@ -145,22 +151,34 @@ internal object Installs : KLogging() {
     */
 
     install(StatusPages) {
-      exception<InvalidPathException> { cause ->
-        call.respond(HttpStatusCode.NotFound)
-        //call.respondHtml { errorPage(cause.message?:"") }
-        logger.info(cause) { " Throwable caught: ${cause.simpleClassName}" }
+
+      exception<InvalidRequestException> { cause ->
+        logger.info(cause) { " InvalidRequestException caught: ${cause.simpleClassName}" }
+        respondWith {
+          invalidRequestPage(ReadingBatServer.content.get(), call.request.uri, cause.message ?: UNKNOWN)
+        }
       }
 
-      //statusFile(HttpStatusCode.NotFound, HttpStatusCode.Unauthorized, filePattern = "error#.html")
+      exception<RedisUnavailableException> { cause ->
+        logger.info(cause) { " RedisUnavailableException caught: ${cause.simpleClassName}" }
+        respondWith {
+          dbmsDownPage(ReadingBatServer.content.get())
+        }
+      }
 
       // Catch all
       exception<Throwable> { cause ->
         logger.info(cause) { " Throwable caught: ${cause.simpleClassName}" }
-        call.respond(HttpStatusCode.NotFound)
+        respondWith {
+          errorPage(ReadingBatServer.content.get())
+        }
       }
 
       status(HttpStatusCode.NotFound) {
-        call.respond(TextContent("${it.value} ${it.description}", Plain.withCharset(UTF_8), it))
+        //call.respond(TextContent("${it.value} ${it.description}", Plain.withCharset(UTF_8), it))
+        respondWith {
+          notFoundPage(ReadingBatServer.content.get(), call.request.uri.replaceAfter("?", "").replace("?", ""))
+        }
       }
     }
 

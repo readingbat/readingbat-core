@@ -30,7 +30,6 @@ internal object Constants {
   const val SESSION_ID = "sessionid"
   const val ICONS = "icons"
   const val MSG = "msg"
-  const val BACK_PATH = "backPath"
   const val STATIC = "static"
   const val PRISM = "prism"
   const val RESP = "response"
@@ -49,6 +48,9 @@ internal object Constants {
   const val PROCESS_USER_ANSWERS_JS_FUNC = "processUserAnswers"
   const val LIKE_DISLIKE_JS_FUNC = "likeDislike"
   const val NO_TRACK_HEADER = "NO_TRACK"
+  const val UNKNOWN = "Unknown"
+  const val UNASSIGNED = "unassigned"
+  const val REDIS_IS_DOWN = "Redis is down"
 
   const val CLASS_CODE_QP = "class-code"
   const val USER_ID_QP = "user-id"
@@ -64,6 +66,7 @@ internal object Constants {
 
 internal object PropertyNames {
   internal const val READINGBAT = "readingbat"
+  internal const val DBMS = "dbms"
   internal const val SITE = "site"
   internal const val AGENT = "agent"
   internal const val CLASSES = "classes"
@@ -78,6 +81,7 @@ internal object Endpoints {
   const val STATIC_ROOT = "https://static.readingbat.com"
   const val CHALLENGE_ROOT = "/content"
   const val PLAYGROUND_ROOT = "/playground"
+  const val ADMIN_PREFS_ENDPOINT = "/admin-prefs"
   const val USER_PREFS_ENDPOINT = "/user-prefs"
   const val TEACHER_PREFS_ENDPOINT = "/teacher-prefs"
   const val CLASS_SUMMARY_ENDPOINT = "/class-summary"
@@ -109,6 +113,7 @@ internal object Endpoints {
   const val LOAD_JAVA_ENDPOINT = "/load-java"
   const val LOAD_PYTHON_ENDPOINT = "/load-python"
   const val LOAD_KOTLIN_ENDPOINT = "/load-kotlin"
+  const val LOAD_ALL_ENDPOINT = "/load-all"
 
   const val DELETE_CONTENT_IN_REDIS_ENDPOINT = "/clear-caches"
 
@@ -126,7 +131,7 @@ internal object Endpoints {
     "${classSummaryEndpoint(classCode)}&$LANG_TYPE_QP=$languageName&$GROUP_NAME_QP=$groupName"
 
   fun studentSummaryEndpoint(classCode: ClassCode, languageName: LanguageName, student: User) =
-    "$STUDENT_SUMMARY_ENDPOINT?$CLASS_CODE_QP=$classCode&$LANG_TYPE_QP=$languageName&$USER_ID_QP=${student.id}"
+    "$STUDENT_SUMMARY_ENDPOINT?$CLASS_CODE_QP=$classCode&$LANG_TYPE_QP=$languageName&$USER_ID_QP=${student.userId}"
 }
 
 internal object StaticFileNames {
@@ -164,15 +169,17 @@ internal object FormFields {
   const val CLASS_CODE_NAME_PARAM = "class_code"
   const val CLASS_DESC_PARAM = "class_desc"
   const val CLASS_CODE_CHOICE_PARAM = "class_code_choice"
+  const val DEFAULT_LANGUAGE_CHOICE_PARAM = "default_language_choice"
   const val CHOICE_SOURCE_PARAM = "choice_source"
   const val TEACHER_PREF = "teacher_prefs"
   const val CLASS_SUMMARY = "class_summary"
   const val DISABLED_MODE = "classes_disabled"
   const val CURR_PASSWORD_PARAM = "curr_passwd"
   const val NEW_PASSWORD_PARAM = "new_passwd"
-  const val USER_PREFS_ACTION_PARAM = "pref_action"
+  const val PREFS_ACTION_PARAM = "pref_action"
   const val RESET_ID_PARAM = "reset_id"
   const val ADMIN_ACTION_PARAM = "admin_action"
+  const val USER_ID_PARAM = "user_id"
 
   const val LANGUAGE_NAME_PARAM = "language_name_key"
   const val GROUP_NAME_PARAM = "group_name_key"
@@ -184,9 +191,12 @@ internal object FormFields {
   const val JOIN_CLASS = "Join Class"
   const val CREATE_CLASS = "Create Class"
   const val DELETE_CLASS = "Delete Class"
+  const val MAKE_ACTIVE_CLASS = "Make Active Class"
   const val UPDATE_ACTIVE_CLASS = "Update Active Class"
+  const val UPDATE_DEFAULT_LANGUAGE = "Update Default Language"
   const val NO_ACTIVE_CLASS = "No active class"
   const val JOIN_A_CLASS = "Join a Class"
+  const val REMOVE_FROM_CLASS = "Remove From Class"
   const val WITHDRAW_FROM_CLASS = "Withdraw From Class"
   const val DELETE_ACCOUNT = "Delete Account"
   const val DELETE_ALL_DATA = "Delete All Data"

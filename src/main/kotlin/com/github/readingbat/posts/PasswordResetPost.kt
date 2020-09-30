@@ -28,16 +28,19 @@ import com.github.readingbat.common.FormFields.NEW_PASSWORD_PARAM
 import com.github.readingbat.common.FormFields.RESET_ID_PARAM
 import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.Message
+import com.github.readingbat.common.Property.SENDGRID_PREFIX_PROPERTY
 import com.github.readingbat.common.User.Companion.isNotRegisteredEmail
 import com.github.readingbat.common.User.Companion.lookupUserByEmail
 import com.github.readingbat.common.isNotValidUser
 import com.github.readingbat.common.isValidUser
 import com.github.readingbat.dsl.ReadingBatContent
+import com.github.readingbat.dsl.isPostgresEnabled
 import com.github.readingbat.pages.PasswordResetPage.passwordResetPage
 import com.github.readingbat.posts.CreateAccountPost.checkPassword
 import com.github.readingbat.server.Email
 import com.github.readingbat.server.Email.Companion.getEmail
 import com.github.readingbat.server.Password.Companion.getPassword
+import com.github.readingbat.server.PasswordResets
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.RedirectException
 import com.github.readingbat.server.ResetId
@@ -45,55 +48,53 @@ import com.github.readingbat.server.ResetId.Companion.EMPTY_RESET_ID
 import com.github.readingbat.server.ResetId.Companion.getResetId
 import com.github.readingbat.server.ResetId.Companion.newResetId
 import com.github.readingbat.server.ServerUtils.queryParam
+import com.github.readingbat.server.get
 import com.google.common.util.concurrent.RateLimiter
 import io.ktor.application.*
 import io.ktor.features.*
 import io.ktor.request.*
 import mu.KLogging
-import redis.clients.jedis.Jedis
+import org.jetbrains.exposed.sql.select
+import org.jetbrains.exposed.sql.transactions.transaction
 import java.io.IOException
 
 internal object PasswordResetPost : KLogging() {
   private val unknownUserLimiter = RateLimiter.create(0.5) // rate 2.0 is "2 permits per second"
   private val unableToSend = Message("Unable to send password reset email -- missing email address", true)
 
-  suspend fun PipelineCall.sendPasswordReset(content: ReadingBatContent, redis: Jedis): String {
+  suspend fun PipelineCall.sendPasswordReset(content: ReadingBatContent): String {
     val parameters = call.receiveParameters()
     val email = parameters.getEmail(EMAIL_PARAM)
     val remoteStr = call.request.origin.remoteHost
     logger.info { "Password change request for $email - $remoteStr" }
-    val user = lookupUserByEmail(email, redis)
+    val user = lookupUserByEmail(email)
     return when {
-      user.isNotValidUser(redis) -> {
+      user.isNotValidUser() -> {
         unknownUserLimiter.acquire()
-        passwordResetPage(content, EMPTY_RESET_ID, redis, Message("Invalid user: $email", true))
+        passwordResetPage(content, EMPTY_RESET_ID, Message("Invalid user: $email", true))
       }
-      email.isBlank() -> passwordResetPage(content, EMPTY_RESET_ID, redis, unableToSend)
+      email.isBlank() -> passwordResetPage(content, EMPTY_RESET_ID, unableToSend)
       email.isNotValidEmail() -> {
-        passwordResetPage(content, EMPTY_RESET_ID, redis, Message("Invalid email address: $email", true))
+        passwordResetPage(content, EMPTY_RESET_ID, Message("Invalid email address: $email", true))
       }
-      isNotRegisteredEmail(email, redis) -> {
+      isNotRegisteredEmail(email) -> {
         unknownUserLimiter.acquire()
-        passwordResetPage(content, EMPTY_RESET_ID, redis, Message("Unknown user: $email", true))
+        passwordResetPage(content, EMPTY_RESET_ID, Message("Unknown user: $email", true))
       }
       else -> {
         try {
           val newResetId = newResetId()
 
           // Lookup and remove previous value if it exists
-          val user2 = lookupUserByEmail(email, redis) ?: throw ResetPasswordException("Unable to find $email")
-          val previousResetId = user2.passwordResetKey(redis)?.let { ResetId(it) } ?: EMPTY_RESET_ID
-
-          redis.multi().also { tx ->
-            user2.savePasswordResetKey(email, previousResetId, newResetId, tx)
-            tx.exec()
-          }
+          val user2 = lookupUserByEmail(email) ?: throw ResetPasswordException("Unable to find $email")
+          val previousResetId = user2.userPasswordResetId()
+          user2.savePasswordResetId(email, previousResetId, newResetId)
 
           logger.info { "Sending password reset email to $email - $remoteStr" }
           try {
             val msg = Message("""
               |This is a password reset message for the ReadingBat.com account for '$email'
-              |Go to this URL to set a new password: ${content.sendGridPrefix}$PASSWORD_RESET_ENDPOINT?$RESET_ID_PARAM=$newResetId 
+              |Go to this URL to set a new password: ${SENDGRID_PREFIX_PROPERTY.getProperty("")}$PASSWORD_RESET_ENDPOINT?$RESET_ID_PARAM=$newResetId 
               |If you did not request to reset your password, please ignore this message.
             """.trimMargin())
             sendEmail(to = email,
@@ -109,16 +110,14 @@ internal object PasswordResetPost : KLogging() {
           throw RedirectException("$returnPath?$MSG=${"Password reset email sent to $email".encode()}")
         } catch (e: ResetPasswordException) {
           logger.info { e }
-          passwordResetPage(content,
-                            EMPTY_RESET_ID,
-                            redis,
-                            Message("Unable to send password reset email to $email", true))
+          val msg = Message("Unable to send password reset email to $email", true)
+          passwordResetPage(content, EMPTY_RESET_ID, msg)
         }
       }
     }
   }
 
-  suspend fun PipelineCall.changePassword(content: ReadingBatContent, redis: Jedis): String =
+  suspend fun PipelineCall.updatePassword(content: ReadingBatContent): String =
     try {
       val parameters = call.receiveParameters()
       val resetId = parameters.getResetId(RESET_ID_PARAM)
@@ -126,33 +125,39 @@ internal object PasswordResetPost : KLogging() {
       val confirmPassword = parameters.getPassword(CONFIRM_PASSWORD_PARAM)
       val passwordError = checkPassword(newPassword, confirmPassword)
 
+      if (!isPostgresEnabled())
+        throw ResetPasswordException("Function unavailable without database enabled")
+
       if (passwordError.isNotBlank)
         throw ResetPasswordException(passwordError.value, resetId)
 
       val passwordResetKey = resetId.passwordResetKey
-      val email = Email(redis.get(passwordResetKey) ?: throw ResetPasswordException(INVALID_RESET_ID))
-      val user = lookupUserByEmail(email, redis) ?: throw ResetPasswordException("Unable to find $email")
-      val salt = user.salt(redis)
-      val newDigest = newPassword.sha256(salt)
-      val oldDigest = user.digest(redis)
+      val email =
+        transaction {
+          PasswordResets
+            .slice(PasswordResets.email)
+            .select { PasswordResets.resetId eq resetId.value }
+            .map { it[0] as String }
+            .firstOrNull() ?: throw ResetPasswordException(INVALID_RESET_ID)
+        }
 
-      if (!user.isValidUser(redis))
+      val user = lookupUserByEmail(Email(email)) ?: throw ResetPasswordException("Unable to find $email")
+      val salt = user.salt
+      val newDigest = newPassword.sha256(salt)
+      val oldDigest = user.digest
+
+      if (!user.isValidUser())
         throw ResetPasswordException("Invalid user", resetId)
 
       if (newDigest == oldDigest)
         throw ResetPasswordException("New password is the same as the current password", resetId)
 
-      redis.multi()
-        .also { tx ->
-          user.deletePasswordResetKey(tx)
-          tx.del(passwordResetKey)
-          user.assignDigest(tx, newDigest)  // Set new password
-          tx.exec()
-        }
+      user.assignDigest(newDigest)  // Set new password
+
       throw RedirectException("/?$MSG=${"Password reset for $email".encode()}")
     } catch (e: ResetPasswordException) {
       logger.info { e }
-      passwordResetPage(content, e.resetId, redis, Message(e.msg))
+      passwordResetPage(content, e.resetId, Message(e.msg))
     }
 
   class ResetPasswordException(val msg: String, val resetId: ResetId = EMPTY_RESET_ID) : Exception(msg)

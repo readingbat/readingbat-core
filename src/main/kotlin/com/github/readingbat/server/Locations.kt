@@ -24,14 +24,16 @@ import com.github.pambrose.common.util.isNotValidEmail
 import com.github.pambrose.common.util.randomId
 import com.github.pambrose.common.util.sha256
 import com.github.readingbat.common.AuthName.FORM
+import com.github.readingbat.common.CommonUtils.keyOf
+import com.github.readingbat.common.CommonUtils.md5Of
+import com.github.readingbat.common.Constants.UNKNOWN
 import com.github.readingbat.common.Endpoints.CHALLENGE_ROOT
 import com.github.readingbat.common.Endpoints.PLAYGROUND_ROOT
-import com.github.readingbat.common.KeyConstants
-import com.github.readingbat.common.KeyConstants.USER_EMAIL_KEY
+import com.github.readingbat.common.KeyConstants.RESET_KEY
 import com.github.readingbat.common.Metrics
 import com.github.readingbat.common.Metrics.Companion.GET
 import com.github.readingbat.common.Metrics.Companion.POST
-import com.github.readingbat.dsl.InvalidPathException
+import com.github.readingbat.dsl.InvalidRequestException
 import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.dsl.LanguageType.Java
 import com.github.readingbat.dsl.LanguageType.Kotlin
@@ -97,10 +99,10 @@ internal object Locations {
     respondWith {
       assignBrowserSession()
       content.checkLanguage(language.languageType)
-      redisPool.withRedisPool { redis ->
-        val user = fetchUser(loginAttempt)
-        languageGroupPage(content, user, language.languageType, loginAttempt, redis)
-      }
+      val user = fetchUser(loginAttempt)
+      redisPool?.withRedisPool { redis ->
+        languageGroupPage(content, user, language.languageType, loginAttempt)
+      } ?: languageGroupPage(content, user, language.languageType, loginAttempt)
     }
 
   private suspend fun PipelineCall.group(content: ReadingBatContent,
@@ -109,10 +111,9 @@ internal object Locations {
     respondWith {
       assignBrowserSession()
       content.checkLanguage(groupLoc.languageType)
-      redisPool.withRedisPool { redis ->
-        val user = fetchUser(loginAttempt)
-        challengeGroupPage(content, user, content.findGroup(groupLoc), loginAttempt, redis)
-      }
+      val user = fetchUser(loginAttempt)
+      challengeGroupPage(content, user, content.findGroup(groupLoc), loginAttempt)
+
     }
 
   private suspend fun PipelineCall.challenge(content: ReadingBatContent,
@@ -121,10 +122,8 @@ internal object Locations {
     respondWith {
       assignBrowserSession()
       content.checkLanguage(challengeLoc.languageType)
-      redisPool.withRedisPool { redis ->
-        val user = fetchUser(loginAttempt)
-        challengePage(content, user, content.findChallenge(challengeLoc), loginAttempt, redis)
-      }
+      val user = fetchUser(loginAttempt)
+      challengePage(content, user, content.findChallenge(challengeLoc), loginAttempt)
     }
 
   private suspend fun PipelineCall.playground(content: ReadingBatContent,
@@ -132,14 +131,9 @@ internal object Locations {
                                               loginAttempt: Boolean) =
     respondWith {
       assignBrowserSession()
-      redisPool.withRedisPool { redis ->
-        val user = fetchUser(loginAttempt)
-        playgroundPage(content,
-                       user,
-                       content.findLanguage(Kotlin).findChallenge(request.groupName, request.challengeName),
-                       loginAttempt,
-                       redis)
-      }
+      val user = fetchUser(loginAttempt)
+      val languageGroup = content.findLanguage(Kotlin).findChallenge(request.groupName, request.challengeName)
+      playgroundPage(content, user, languageGroup, loginAttempt)
     }
 }
 
@@ -175,12 +169,12 @@ inline class LanguageName(val value: String) {
     try {
       LanguageType.values().first { it.name.equals(value, ignoreCase = true) }
     } catch (e: NoSuchElementException) {
-      throw InvalidPathException("Invalid language name: $this")
+      throw InvalidRequestException("Invalid language: $this")
     }
 
   internal fun isValid() = try {
     toLanguageType(); true
-  } catch (e: InvalidPathException) {
+  } catch (e: InvalidRequestException) {
     false
   }
 
@@ -255,6 +249,7 @@ inline class FullName(val value: String) {
 
   companion object {
     val EMPTY_FULLNAME = FullName("")
+    val UNKNOWN_FULLNAME = FullName(UNKNOWN)
     fun Parameters.getFullName(name: String) = this[name]?.let { FullName(it) } ?: EMPTY_FULLNAME
   }
 }
@@ -273,8 +268,6 @@ inline class Password(val value: String) {
 }
 
 inline class Email(val value: String) {
-  val userEmailKey get() = keyOf(USER_EMAIL_KEY, value)
-
   fun isBlank() = value.isBlank()
   fun isNotBlank() = value.isNotBlank()
   fun isNotValidEmail() = value.isNotValidEmail()
@@ -283,6 +276,7 @@ inline class Email(val value: String) {
 
   companion object {
     val EMPTY_EMAIL = Email("")
+    val UNKNOWN_EMAIL = Email(UNKNOWN)
     fun Parameters.getEmail(name: String) = this[name]?.let { Email(it) } ?: EMPTY_EMAIL
   }
 }
@@ -292,7 +286,7 @@ inline class ResetId(val value: String) {
   fun isNotBlank() = value.isNotBlank()
 
   // Maps resetId to username
-  val passwordResetKey get() = keyOf(KeyConstants.RESET_KEY, value)
+  val passwordResetKey get() = keyOf(RESET_KEY, value)
 
   override fun toString() = value
 

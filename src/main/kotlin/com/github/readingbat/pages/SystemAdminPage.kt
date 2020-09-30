@@ -17,17 +17,19 @@
 
 package com.github.readingbat.pages
 
+import com.github.readingbat.common.Endpoints.ADMIN_PREFS_ENDPOINT
 import com.github.readingbat.common.Endpoints.DELETE_CONTENT_IN_REDIS_ENDPOINT
 import com.github.readingbat.common.Endpoints.GARBAGE_COLLECTOR_ENDPOINT
+import com.github.readingbat.common.Endpoints.LOAD_ALL_ENDPOINT
 import com.github.readingbat.common.Endpoints.LOAD_JAVA_ENDPOINT
 import com.github.readingbat.common.Endpoints.LOAD_KOTLIN_ENDPOINT
 import com.github.readingbat.common.Endpoints.LOAD_PYTHON_ENDPOINT
 import com.github.readingbat.common.Endpoints.RESET_CACHE_ENDPOINT
 import com.github.readingbat.common.Endpoints.RESET_CONTENT_DSL_ENDPOINT
-import com.github.readingbat.common.Endpoints.USER_PREFS_ENDPOINT
 import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.Message
-import com.github.readingbat.common.Message.Companion.EMPTY_MESSAGE
+import com.github.readingbat.common.Property.GRAFANA_URL
+import com.github.readingbat.common.Property.PROMETHEUS_URL
 import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.fetchActiveClassCode
 import com.github.readingbat.common.isAdminUser
@@ -40,49 +42,42 @@ import com.github.readingbat.pages.PageUtils.bodyTitle
 import com.github.readingbat.pages.PageUtils.confirmingButton
 import com.github.readingbat.pages.PageUtils.displayMessage
 import com.github.readingbat.pages.PageUtils.headDefault
+import com.github.readingbat.pages.PageUtils.loadStatusPageDisplay
 import com.github.readingbat.pages.UserPrefsPage.requestLogInPage
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 import mu.KLogging
-import redis.clients.jedis.Jedis
 
 internal object SystemAdminPage : KLogging() {
 
   fun PipelineCall.systemAdminPage(content: ReadingBatContent,
                                    user: User?,
-                                   redis: Jedis,
-                                   msg: Message = EMPTY_MESSAGE) =
-    if (user.isValidUser(redis))
-      systemAdminLoginPage(content, user, msg, redis)
+                                   msg: String = "") =
+    if (user.isValidUser())
+      systemAdminLoginPage(content, user, Message(msg))
     else
-      requestLogInPage(content, redis)
+      requestLogInPage(content)
 
-  private fun PipelineCall.systemAdminLoginPage(content: ReadingBatContent,
-                                                user: User,
-                                                msg: Message,
-                                                redis: Jedis) =
+  private fun PipelineCall.systemAdminLoginPage(content: ReadingBatContent, user: User, msg: Message) =
     createHTML()
       .html {
-        val activeClassCode = user.fetchActiveClassCode(redis)
-
-        head {
-          headDefault(content)
-        }
+        head { headDefault(content) }
 
         body {
+          val activeClassCode = fetchActiveClassCode(user)
           val returnPath = queryParam(RETURN_PARAM, "/")
 
-          helpAndLogin(content, user, returnPath, activeClassCode.isEnabled, redis)
+          helpAndLogin(content, user, returnPath, activeClassCode.isEnabled)
           bodyTitle()
 
-          h2 { +"ReadingBat System Admin" }
+          h2 { +"System Admin" }
 
           if (msg.isAssigned())
             p { span { style = "color:${msg.color}"; this@body.displayMessage(msg) } }
 
-          if (!isProduction() || user.isAdminUser(redis)) {
+          if (!isProduction() || user.isAdminUser()) {
             p {
               this@body.confirmingButton("Reset ReadingBat Content",
                                          RESET_CONTENT_DSL_ENDPOINT,
@@ -102,21 +97,27 @@ internal object SystemAdminPage : KLogging() {
             }
 
             p {
-              this@body.confirmingButton("Load all Java Challenges",
+              this@body.confirmingButton("Load Java Challenges",
                                          LOAD_JAVA_ENDPOINT,
                                          "Are you sure you want to load all the java challenges? (This can take a while)")
             }
 
             p {
-              this@body.confirmingButton("Load all Python Challenges",
+              this@body.confirmingButton("Load Python Challenges",
                                          LOAD_PYTHON_ENDPOINT,
                                          "Are you sure you want to load all the python challenges? (This can take a while)")
             }
 
             p {
-              this@body.confirmingButton("Load all Kotlin Challenges",
+              this@body.confirmingButton("Load Kotlin Challenges",
                                          LOAD_KOTLIN_ENDPOINT,
                                          "Are you sure you want to load all the kotlin challenges? (This can take a while)")
+            }
+
+            p {
+              this@body.confirmingButton("Load all Challenges",
+                                         LOAD_ALL_ENDPOINT,
+                                         "Are you sure you want to load all the challenges? (This can take a while)")
             }
 
             p {
@@ -125,25 +126,23 @@ internal object SystemAdminPage : KLogging() {
                                          "Are you sure you want to run the garbage collector?")
             }
 
-            if (content.grafanaUrl.isNotBlank())
-              p {
-                +"Grafana Dashboard is "
-                a { href = content.grafanaUrl; target = "_blank"; +"here" }
+            GRAFANA_URL.getPropertyOrNull()
+              ?.also {
+                if (it.isNotBlank()) p { +"Grafana Dashboard is "; a { href = it; target = "_blank"; +"here" } }
               }
 
-            if (content.prometheusUrl.isNotBlank())
-              p {
-                +"Prometheus Dashboard is "
-                a { href = content.prometheusUrl; target = "_blank"; +"here" }
+            PROMETHEUS_URL.getPropertyOrNull()
+              ?.also {
+                if (it.isNotBlank()) p { +"Prometheus Dashboard is "; a { href = it; target = "_blank"; +"here" } }
               }
           }
           else {
-            p {
-              +"Not authorized"
-            }
+            p { +"Not authorized" }
           }
 
-          backLink("$USER_PREFS_ENDPOINT?$RETURN_PARAM=${queryParam(RETURN_PARAM, "/")}")
+          backLink("$ADMIN_PREFS_ENDPOINT?$RETURN_PARAM=${queryParam(RETURN_PARAM, "/")}")
+
+          loadStatusPageDisplay()
         }
       }
 }

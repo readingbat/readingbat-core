@@ -17,7 +17,7 @@
 
 package com.github.readingbat.common
 
-import com.github.readingbat.common.EnvVars.SENDGRID_API_KEY
+import com.github.readingbat.common.EnvVar.SENDGRID_API_KEY
 import com.github.readingbat.server.Email
 import com.sendgrid.Method
 import com.sendgrid.Request
