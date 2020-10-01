@@ -26,11 +26,9 @@ import com.github.readingbat.common.ClassCode.Companion.DISABLED_CLASS_CODE
 import com.github.readingbat.common.CommonUtils.keyOf
 import com.github.readingbat.common.CommonUtils.md5Of
 import com.github.readingbat.common.Constants.UNASSIGNED
-import com.github.readingbat.common.KeyConstants.ANSWER_HISTORY_KEY
 import com.github.readingbat.common.KeyConstants.AUTH_KEY
 import com.github.readingbat.common.KeyConstants.CHALLENGE_ANSWERS_KEY
 import com.github.readingbat.common.KeyConstants.CORRECT_ANSWERS_KEY
-import com.github.readingbat.common.KeyConstants.LIKE_DISLIKE_KEY
 import com.github.readingbat.common.KeyConstants.USER_CLASSES_KEY
 import com.github.readingbat.common.KeyConstants.USER_INFO_BROWSER_KEY
 import com.github.readingbat.common.KeyConstants.USER_INFO_KEY
@@ -53,7 +51,6 @@ import com.github.readingbat.server.Email.Companion.UNKNOWN_EMAIL
 import com.github.readingbat.server.FullName.Companion.EMPTY_FULLNAME
 import com.github.readingbat.server.FullName.Companion.UNKNOWN_FULLNAME
 import com.github.readingbat.server.GroupName.Companion.ANY_GROUP
-import com.github.readingbat.server.Invocation.Companion.ANY_INVOCATION
 import com.github.readingbat.server.LanguageName.Companion.ANY_LANGUAGE
 import com.github.readingbat.server.ReadingBatServer.adminUsers
 import com.github.readingbat.server.ResetId.Companion.EMPTY_RESET_ID
@@ -243,18 +240,6 @@ internal class User private constructor(val userId: String,
           else
             md5Of(languageName, groupName, challengeName))
 
-  fun likeDislikeKey(names: ChallengeNames) =
-    likeDislikeKey(names.languageName, names.groupName, names.challengeName)
-
-  fun likeDislikeKey(languageName: LanguageName, groupName: GroupName, challengeName: ChallengeName) =
-    keyOf(LIKE_DISLIKE_KEY,
-          AUTH_KEY,
-          userId,
-          if (languageName == ANY_LANGUAGE && groupName == ANY_GROUP && challengeName == ANY_CHALLENGE)
-            "*"
-          else
-            md5Of(languageName, groupName, challengeName))
-
   fun challengeAnswersKey(names: ChallengeNames) =
     challengeAnswersKey(names.languageName, names.groupName, names.challengeName)
 
@@ -266,21 +251,6 @@ internal class User private constructor(val userId: String,
             "*"
           else
             md5Of(languageName, groupName, challengeName))
-
-  fun answerHistoryKey(names: ChallengeNames, invocation: Invocation) =
-    answerHistoryKey(names.languageName, names.groupName, names.challengeName, invocation)
-
-  fun answerHistoryKey(languageName: LanguageName,
-                       groupName: GroupName,
-                       challengeName: ChallengeName,
-                       invocation: Invocation) =
-    keyOf(ANSWER_HISTORY_KEY,
-          AUTH_KEY,
-          userId,
-          if (languageName == ANY_LANGUAGE && groupName == ANY_GROUP && challengeName == ANY_CHALLENGE && invocation == ANY_INVOCATION)
-            "*"
-          else
-            md5Of(languageName, groupName, challengeName, invocation))
 
   fun historyExists(md5: String, invocation: Invocation) =
     UserAnswerHistory
@@ -551,10 +521,10 @@ internal class User private constructor(val userId: String,
                    browserSession: BrowserSession?): User {
 
       val user = User(randomId(25), browserSession, false)
-      val salt = newStringSalt()
-      val digest = password.sha256(salt)
 
       transaction {
+        val salt = newStringSalt()
+        val digest = password.sha256(salt)
         val userId =
           Users
             .insertAndGetId { row ->

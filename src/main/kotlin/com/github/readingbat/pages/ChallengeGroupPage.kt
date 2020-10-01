@@ -99,7 +99,6 @@ internal object ChallengeGroupPage : KLogging() {
     }
   }
 
-
   fun PipelineCall.challengeGroupPage(content: ReadingBatContent,
                                       user: User?,
                                       challengeGroup: ChallengeGroup<*>,
@@ -231,7 +230,6 @@ internal object ChallengeGroupPage : KLogging() {
                                                  languageName: LanguageName,
                                                  groupName: GroupName,
                                                  challenges: List<Challenge>) {
-
     val correctAnswersKeys = challenges.map { correctAnswersKey(user, browserSession, it) }
     val challengeAnswerKeys = challenges.map { challengeAnswersKey(user, browserSession, it) }
 

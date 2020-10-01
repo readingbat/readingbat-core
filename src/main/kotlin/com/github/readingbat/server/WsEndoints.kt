@@ -492,8 +492,6 @@ internal object WsEndoints : KLogging() {
 
                   val results = mutableListOf<String>()
                   for (invocation in funcInfo.invocations) {
-                    val historyKey = student.answerHistoryKey(languageName, groupName, challengeName, invocation)
-
                     transaction {
                       val historyMd5 = md5Of(languageName, groupName, challengeName, invocation)
                       if (student.historyExists(historyMd5, invocation)) {

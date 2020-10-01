@@ -18,15 +18,9 @@
 package com.github.readingbat.common
 
 import com.github.readingbat.dsl.Challenge
-import com.github.readingbat.posts.ChallengeNames
 import com.github.readingbat.server.ChallengeName
 import com.github.readingbat.server.GroupName
-import com.github.readingbat.server.Invocation
 import com.github.readingbat.server.LanguageName
-
-
-internal fun correctAnswersKey(user: User?, browserSession: BrowserSession?, names: ChallengeNames) =
-  user?.correctAnswersKey(names) ?: browserSession?.correctAnswersKey(names) ?: ""
 
 internal fun correctAnswersKey(user: User?, browserSession: BrowserSession?, challenge: Challenge) =
   user?.correctAnswersKey(challenge.languageName, challenge.groupName, challenge.challengeName)
@@ -40,9 +34,6 @@ internal fun correctAnswersKey(user: User?,
   user?.correctAnswersKey(languageName, groupName, challengeName)
     ?: browserSession?.correctAnswersKey(languageName, groupName, challengeName)
     ?: ""
-
-internal fun challengeAnswersKey(user: User?, browserSession: BrowserSession?, names: ChallengeNames) =
-  user?.challengeAnswersKey(names) ?: browserSession?.challengeAnswerKey(names) ?: ""
 
 internal fun challengeAnswersKey(user: User?,
                                  browserSession: BrowserSession?,
@@ -59,10 +50,3 @@ internal fun challengeAnswersKey(user: User?, browserSession: BrowserSession?, c
                       challenge.languageType.languageName,
                       challenge.groupName,
                       challenge.challengeName)
-
-internal fun answerHistoryKey(user: User?,
-                              browserSession: BrowserSession?,
-                              names: ChallengeNames,
-                              invocation: Invocation) =
-  user?.answerHistoryKey(names, invocation) ?: browserSession?.answerHistoryKey(names, invocation) ?: ""
-

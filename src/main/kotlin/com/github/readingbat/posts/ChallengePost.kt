@@ -18,7 +18,8 @@
 package com.github.readingbat.posts
 
 import com.github.pambrose.common.util.*
-import com.github.readingbat.common.*
+import com.github.readingbat.common.BrowserSession
+import com.github.readingbat.common.ClassCode
 import com.github.readingbat.common.CommonUtils.md5Of
 import com.github.readingbat.common.CommonUtils.pathOf
 import com.github.readingbat.common.Constants.CHALLENGE_SRC
@@ -33,6 +34,7 @@ import com.github.readingbat.common.FormFields.CHALLENGE_NAME_PARAM
 import com.github.readingbat.common.FormFields.CORRECT_ANSWERS_PARAM
 import com.github.readingbat.common.FormFields.GROUP_NAME_PARAM
 import com.github.readingbat.common.FormFields.LANGUAGE_NAME_PARAM
+import com.github.readingbat.common.FunctionInfo
 import com.github.readingbat.common.KeyConstants.AUTH_KEY
 import com.github.readingbat.common.KeyConstants.KEY_SEP
 import com.github.readingbat.common.KeyConstants.NO_AUTH_KEY
@@ -42,8 +44,12 @@ import com.github.readingbat.common.ParameterIds.LIKE_CLEAR
 import com.github.readingbat.common.ParameterIds.LIKE_COLOR
 import com.github.readingbat.common.ScriptPools.kotlinScriptPool
 import com.github.readingbat.common.ScriptPools.pythonScriptPool
+import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.gson
 import com.github.readingbat.common.User.Companion.shouldPublish
+import com.github.readingbat.common.browserSession
+import com.github.readingbat.common.sessionDbmsId
+import com.github.readingbat.common.userDbmsIdByUserId
 import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.ReturnType
@@ -439,8 +445,6 @@ internal object ChallengePost : KLogging() {
                                    userResponses: List<Map.Entry<String, List<String>>>,
                                    results: List<ChallengeResults>,
                                    redis: Jedis?) {
-    val correctAnswersKey = correctAnswersKey(user, browserSession, names)
-    val challengeAnswersKey = challengeAnswersKey(user, browserSession, names)
     val challengeMd5 = md5Of(names.languageName, names.groupName, names.challengeName)
 
     val complete = results.all { it.correct }
@@ -485,7 +489,6 @@ internal object ChallengePost : KLogging() {
 
     // Save the history of each answer on a per-invocation basis
     for (result in results) {
-      val answerHistoryKey = answerHistoryKey(user, browserSession, names, result.invocation)
       val historyMd5 = md5Of(names.languageName, names.groupName, names.challengeName, result.invocation)
 
       val history =
