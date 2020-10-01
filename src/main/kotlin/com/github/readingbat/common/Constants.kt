@@ -77,7 +77,6 @@ internal object PropertyNames {
 internal object Endpoints {
   const val ROOT = "/"
 
-  //const val STATIC_ROOT = "/$STATIC"
   const val STATIC_ROOT = "https://static.readingbat.com"
   const val CHALLENGE_ROOT = "/content"
   const val PLAYGROUND_ROOT = "/playground"

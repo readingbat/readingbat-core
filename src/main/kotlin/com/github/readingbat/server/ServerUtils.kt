@@ -23,10 +23,9 @@ import com.github.pambrose.common.response.redirectTo
 import com.github.pambrose.common.response.respondWith
 import com.github.pambrose.common.util.Version.Companion.versionDesc
 import com.github.pambrose.common.util.isNotNull
-import com.github.readingbat.common.Constants.UNKNOWN
 import com.github.readingbat.common.Metrics
 import com.github.readingbat.common.User
-import com.github.readingbat.common.User.Companion.createUser
+import com.github.readingbat.common.User.Companion.toUser
 import com.github.readingbat.common.UserPrincipal
 import com.github.readingbat.common.browserSession
 import com.github.readingbat.common.isNotAdminUser
@@ -70,7 +69,7 @@ internal object ServerUtils : KLogging() {
   fun PipelineCall.queryParam(key: String, default: String = "") = call.request.queryParameters[key] ?: default
 
   fun PipelineCall.fetchUser(loginAttempt: Boolean = false): User? =
-    fetchPrincipal(loginAttempt)?.userId?.let { createUser(it, call.browserSession) }
+    fetchPrincipal(loginAttempt)?.userId?.let { toUser(it, call.browserSession) }
 
   private fun PipelineCall.fetchPrincipal(loginAttempt: Boolean): UserPrincipal? =
     if (loginAttempt) assignPrincipal() else call.userPrincipal
@@ -79,21 +78,9 @@ internal object ServerUtils : KLogging() {
     call.principal<UserPrincipal>().apply { if (isNotNull()) call.sessions.set(this) }  // Set the cookie
 
   fun WebSocketServerSession.fetchUser(): User? =
-    call.userPrincipal?.userId?.let { createUser(it, call.browserSession) }
+    call.userPrincipal?.userId?.let { toUser(it, call.browserSession) }
 
-  // Calls for ApplicationCall
-  fun ApplicationCall.fetchEmail() = fetchUser()?.email?.value ?: UNKNOWN
-  /*
-  redisPool?.withRedisPool { redis ->
-      if (redis.isNull())
-        UNKNOWN
-      else
-      fetchUser()?.email(redis)?.value ?: UNKNOWN
-    } ?: UNKNOWN
-
-   */
-
-  fun ApplicationCall.fetchUser(): User? = userPrincipal?.userId?.let { createUser(it, browserSession) }
+  fun ApplicationCall.fetchUser(): User? = userPrincipal?.userId?.let { toUser(it, browserSession) }
 
   suspend fun PipelineCall.respondWithRedirect(block: () -> String) =
     try {

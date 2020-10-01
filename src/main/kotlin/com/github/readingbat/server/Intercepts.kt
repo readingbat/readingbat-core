@@ -37,8 +37,8 @@ internal fun Application.intercepts() {
     // Phase for features. Most features should intercept this phase
     if (!context.request.path().startsWith("/$STATIC/")) {
       val browserSession = call.browserSession
-      //ReadingBatServer.logger.info { "${context.request.origin.remoteHost} $sessionId ${context.request.path()}" }
-      browserSession?.markActivity(call)
+      //ReadingBatServer.logger.info { "${context.request.origin.remoteHost} $browserSession ${context.request.path()}" }
+      browserSession?.markActivity("intercept()", call)
         ?: ReadingBatServer.logger.debug { "Null browser sessions for ${call.request.origin.remoteHost}" }
     }
   }

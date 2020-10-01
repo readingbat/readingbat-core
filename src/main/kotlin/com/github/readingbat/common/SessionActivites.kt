@@ -26,8 +26,8 @@ import com.github.readingbat.common.Constants.UNKNOWN
 import com.github.readingbat.common.EnvVar.IPGEOLOCATION_KEY
 import com.github.readingbat.common.KeyConstants.IPGEO_KEY
 import com.github.readingbat.common.SessionActivites.RemoteHost.Companion.unknown
-import com.github.readingbat.common.User.Companion.createUser
 import com.github.readingbat.common.User.Companion.gson
+import com.github.readingbat.common.User.Companion.toUser
 import com.github.readingbat.server.ReadingBatServer.redisPool
 import io.ktor.application.*
 import io.ktor.client.statement.*
@@ -70,7 +70,7 @@ internal object SessionActivites : KLogging() {
     var remoteHost: RemoteHost = unknown
     var principal: UserPrincipal? = null
 
-    val user by lazy { principal?.userId?.let { createUser(it, browserSession) } }
+    val user by lazy { principal?.userId?.let { toUser(it, browserSession) } }
     val age get() = lastUpdate.elapsedNow()
     val requests get() = pages.get()
 
@@ -151,10 +151,12 @@ internal object SessionActivites : KLogging() {
     }
   }
 
-  fun BrowserSession.markActivity(call: ApplicationCall) {
+  fun BrowserSession.markActivity(source: String, call: ApplicationCall) {
 
     val principal = call.userPrincipal
     val remoteHost = RemoteHost(call.request.origin.remoteHost)
+
+    logger.debug { "Marking activity for $source $remoteHost" }
 
     // Use https://ipgeolocation.io/documentation/user-agent-api.html to parse userAgent data
     val userAgent = call.request.headers[HttpHeaders.UserAgent] ?: UNKNOWN
@@ -186,6 +188,7 @@ internal object SessionActivites : KLogging() {
           geoInfoMap.computeIfAbsent(remoteHost.value) { ipAddress ->
             val geoKey = keyOf(IPGEO_KEY, remoteHost)
             val json = redis.get(geoKey) ?: ""
+
             if (json.isNotBlank())
               GeoInfo(json).apply { logger.info { "Redis GEO info for $remoteHost: ${summary()}" } }
             else

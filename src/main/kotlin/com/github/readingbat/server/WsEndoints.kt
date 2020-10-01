@@ -39,8 +39,8 @@ import com.github.readingbat.common.Endpoints.CLASS_SUMMARY_ENDPOINT
 import com.github.readingbat.common.Endpoints.STUDENT_SUMMARY_ENDPOINT
 import com.github.readingbat.common.Metrics
 import com.github.readingbat.common.User
-import com.github.readingbat.common.User.Companion.createUser
 import com.github.readingbat.common.User.Companion.gson
+import com.github.readingbat.common.User.Companion.toUser
 import com.github.readingbat.common.isNotValidUser
 import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.InvalidRequestException
@@ -446,7 +446,7 @@ internal object WsEndoints : KLogging() {
       val (languageName, student, classCode) =
         Triple(
           call.parameters[LANGUAGE_NAME]?.let { LanguageName(it) } ?: throw InvalidRequestException("Missing language"),
-          call.parameters[STUDENT_ID]?.let { createUser(it) } ?: throw InvalidRequestException("Missing student id"),
+          call.parameters[STUDENT_ID]?.let { toUser(it) } ?: throw InvalidRequestException("Missing student id"),
           call.parameters[CLASS_CODE]?.let { ClassCode(it) } ?: throw InvalidRequestException("Missing class code"))
       val finished = AtomicBoolean(false)
       val remote = call.request.origin.remoteHost

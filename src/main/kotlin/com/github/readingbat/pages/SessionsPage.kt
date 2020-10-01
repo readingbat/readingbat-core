@@ -24,7 +24,7 @@ import com.github.readingbat.common.CSSNames.TD_PADDING
 import com.github.readingbat.common.Endpoints.ADMIN_PREFS_ENDPOINT
 import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.SessionActivites
-import com.github.readingbat.common.User.Companion.createUser
+import com.github.readingbat.common.User.Companion.toUser
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyTitle
@@ -90,7 +90,7 @@ internal object SessionsPage {
                 sessions
                   .forEach { session ->
                     tr {
-                      val user = session.principal?.userId?.let { createUser(it, session.browserSession) }
+                      val user = session.principal?.userId?.let { toUser(it, session.browserSession) }
                       val userDesc = user?.let { "${it.fullName} (${it.email})" } ?: "Not logged in"
                       td { +session.browserSession.id }
                       td { +userDesc }

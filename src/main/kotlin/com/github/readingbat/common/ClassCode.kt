@@ -23,7 +23,7 @@ import com.github.readingbat.common.CommonUtils.keyOf
 import com.github.readingbat.common.FormFields.DISABLED_MODE
 import com.github.readingbat.common.KeyConstants.CLASS_CODE_KEY
 import com.github.readingbat.common.KeyConstants.CLASS_INFO_KEY
-import com.github.readingbat.common.User.Companion.createUser
+import com.github.readingbat.common.User.Companion.toUser
 import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.server.Classes
 import com.github.readingbat.server.Enrollees
@@ -87,8 +87,8 @@ internal data class ClassCode(val value: String) {
         Users
           .slice(Users.userId)
           .select { Users.id inList userIds }
-          .map { createUser(it[0] as String) }
-          .also { logger.info { "fetchEnrollees() returning $it" } }
+          .map { toUser(it[0] as String) }
+          .also { logger.debug { "fetchEnrollees() returning $it" } }
       }
 
   fun deleteClassCode() = Classes.deleteWhere { Classes.classCode eq value }
@@ -113,7 +113,7 @@ internal data class ClassCode(val value: String) {
         .select { Classes.classCode eq value }
         .map { it[0] as String }
         .firstOrNull() ?: "Missing description")
-        .also { logger.info { "fetchClassDesc() returned ${it.toDoubleQuoted()} for $value" } }
+        .also { logger.debug { "fetchClassDesc() returned ${it.toDoubleQuoted()} for $value" } }
     }.let { if (quoted) it.toDoubleQuoted() else it }
 
   fun toDisplayString() = "${fetchClassDesc(true)} [$value]"

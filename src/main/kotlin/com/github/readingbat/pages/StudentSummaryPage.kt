@@ -41,8 +41,8 @@ import com.github.readingbat.common.FormFields.REMOVE_FROM_CLASS
 import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.FormFields.USER_ID_PARAM
 import com.github.readingbat.common.User
-import com.github.readingbat.common.User.Companion.createUser
 import com.github.readingbat.common.User.Companion.fetchActiveClassCode
+import com.github.readingbat.common.User.Companion.toUser
 import com.github.readingbat.common.isNotValidUser
 import com.github.readingbat.dsl.InvalidRequestException
 import com.github.readingbat.dsl.ReadingBatContent
@@ -71,7 +71,7 @@ internal object StudentSummaryPage : KLogging() {
     val (languageName, student, classCode) =
       Triple(
         call.parameters[LANG_TYPE_QP]?.let { LanguageName(it) } ?: throw InvalidRequestException("Missing language"),
-        call.parameters[USER_ID_QP]?.let { createUser(it) } ?: throw InvalidRequestException("Missing user id"),
+        call.parameters[USER_ID_QP]?.let { toUser(it) } ?: throw InvalidRequestException("Missing user id"),
         call.parameters[CLASS_CODE_QP]?.let { ClassCode(it) } ?: throw InvalidRequestException("Missing class code"))
     val activeClassCode = fetchActiveClassCode(user)
 

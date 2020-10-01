@@ -35,7 +35,7 @@ import com.github.readingbat.pages.NotFoundPage.notFoundPage
 import com.github.readingbat.server.ConfigureCookies.configureAuthCookie
 import com.github.readingbat.server.ConfigureCookies.configureSessionIdCookie
 import com.github.readingbat.server.ConfigureFormAuth.configureFormAuth
-import com.github.readingbat.server.ServerUtils.fetchEmail
+import com.github.readingbat.server.ServerUtils.fetchUser
 import io.ktor.application.*
 import io.ktor.auth.*
 import io.ktor.features.*
@@ -120,16 +120,17 @@ internal object Installs : KLogging() {
         filter { call ->
           call.request.path().let { it.startsWith("/") && !it.startsWith("/$STATIC/") && it != "/ping" }
         }
+
       format { call ->
-        val logStr = call.request.toLogString()
-        val remote = call.request.origin.remoteHost
-        val email = call.fetchEmail()
-        when (val status = call.response.status() ?: UNKNOWN) {
-          // Show redirections
-          Found -> "$status: $logStr -> ${call.response.headers[Location]} - $remote - $email"
-          else -> {
-            "$status: $logStr - $remote - $email"
-          }
+        val request = call.request
+        val response = call.response
+        val logStr = request.toLogString()
+        val remote = request.origin.remoteHost
+        val email = call.fetchUser()?.email?.value ?: UNKNOWN
+
+        when (val status = response.status() ?: HttpStatusCode(-1, "Unknown")) {
+          Found -> "Redirect: $logStr -> ${response.headers[Location]} - $remote - $email"
+          else -> "$status: $logStr - $remote - $email"
         }
       }
     }

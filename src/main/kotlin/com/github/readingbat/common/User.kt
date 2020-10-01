@@ -487,7 +487,7 @@ internal class User private constructor(val userId: String,
 
     internal val gson = Gson()
 
-    fun createUser(userId: String, browserSession: BrowserSession? = null) = User(userId, browserSession, true)
+    fun toUser(userId: String, browserSession: BrowserSession? = null) = User(userId, browserSession, true)
 
     fun fetchActiveClassCode(user: User?) =
       when {
@@ -559,7 +559,7 @@ internal class User private constructor(val userId: String,
         classCode.isEnabled -> {
           // Check to see if the teacher that owns class has it set as their active class in one of the sessions
           val teacherId = classCode.fetchClassTeacherId()
-          teacherId.isNotEmpty() && createUser(teacherId).interestedInActiveClassCode(classCode)
+          teacherId.isNotEmpty() && toUser(teacherId).interestedInActiveClassCode(classCode)
             .also { logger.debug { "Publishing teacherId: $teacherId for $classCode" } }
         }
         else -> false
@@ -574,7 +574,7 @@ internal class User private constructor(val userId: String,
         Users
           .slice(Users.userId)
           .select { Users.email eq email.value }
-          .map { createUser(it[0] as String) }
+          .map { toUser(it[0] as String) }
           .firstOrNull()
           .also { logger.info { "lookupUserByEmail() returned: ${it?.email ?: " ${email.value} not found"}" } }
       }
