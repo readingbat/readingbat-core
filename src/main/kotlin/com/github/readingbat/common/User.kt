@@ -25,14 +25,10 @@ import com.github.readingbat.common.BrowserSession.Companion.createBrowserSessio
 import com.github.readingbat.common.ClassCode.Companion.DISABLED_CLASS_CODE
 import com.github.readingbat.common.CommonUtils.keyOf
 import com.github.readingbat.common.CommonUtils.md5Of
-import com.github.readingbat.common.Constants.UNASSIGNED
 import com.github.readingbat.common.KeyConstants.AUTH_KEY
 import com.github.readingbat.common.KeyConstants.CHALLENGE_ANSWERS_KEY
 import com.github.readingbat.common.KeyConstants.CORRECT_ANSWERS_KEY
-import com.github.readingbat.common.KeyConstants.USER_CLASSES_KEY
-import com.github.readingbat.common.KeyConstants.USER_INFO_BROWSER_KEY
 import com.github.readingbat.common.KeyConstants.USER_INFO_KEY
-import com.github.readingbat.common.KeyConstants.USER_RESET_KEY
 import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.DataException
 import com.github.readingbat.dsl.InvalidConfigurationException
@@ -41,15 +37,12 @@ import com.github.readingbat.dsl.LanguageType.Companion.toLanguageType
 import com.github.readingbat.dsl.MissingBrowserSessionException
 import com.github.readingbat.dsl.isPostgresEnabled
 import com.github.readingbat.posts.ChallengeHistory
-import com.github.readingbat.posts.ChallengeNames
 import com.github.readingbat.posts.ChallengeResults
 import com.github.readingbat.posts.DashboardInfo
 import com.github.readingbat.server.*
 import com.github.readingbat.server.ChallengeName.Companion.ANY_CHALLENGE
 import com.github.readingbat.server.Email.Companion.EMPTY_EMAIL
-import com.github.readingbat.server.Email.Companion.UNKNOWN_EMAIL
 import com.github.readingbat.server.FullName.Companion.EMPTY_FULLNAME
-import com.github.readingbat.server.FullName.Companion.UNKNOWN_FULLNAME
 import com.github.readingbat.server.GroupName.Companion.ANY_GROUP
 import com.github.readingbat.server.LanguageName.Companion.ANY_LANGUAGE
 import com.github.readingbat.server.ReadingBatServer.adminUsers
@@ -87,33 +80,22 @@ internal class User private constructor(val userId: String,
   init {
     if (initFields && isPostgresEnabled()) {
       measureTime {
-        val row =
-          transaction {
-            Users
-              .select { Users.userId eq this@User.userId }
-              .firstOrNull()
-          }
-        userDbmsId = row?.get(Users.id)?.value ?: -1
-        email = row?.get(Users.email)?.let { Email(it) } ?: UNKNOWN_EMAIL
-        fullName = row?.get(Users.name)?.let { FullName(it) } ?: UNKNOWN_FULLNAME
-        enrolledClassCode = row?.get(Users.enrolledClassCode)?.let { ClassCode(it) } ?: DISABLED_CLASS_CODE
-        defaultLanguage = row?.get(Users.defaultLanguage)?.toLanguageType() ?: defaultLanguageType
-        saltBacking = row?.get(Users.salt) ?: ""
-        digestBacking = row?.get(Users.digest) ?: ""
+        transaction {
+          Users
+            .select { Users.userId eq this@User.userId }
+            .firstOrNull() ?: throw InvalidConfigurationException("UserId not found: ${this@User.userId}")
+        }.also { row ->
+          userDbmsId = row[Users.id].value
+          email = row[Users.email].let { Email(it) }
+          fullName = row[Users.name].let { FullName(it) }
+          enrolledClassCode = row[Users.enrolledClassCode].let { ClassCode(it) }
+          defaultLanguage = row[Users.defaultLanguage].toLanguageType() ?: defaultLanguageType
+          saltBacking = row[Users.salt]
+          digestBacking = row[Users.digest]
+        }
       }.also { logger.info { "Selected user info in $it" } }
     }
   }
-
-  private val userInfoBrowserKey by lazy { keyOf(USER_INFO_BROWSER_KEY, userId, browserSession?.id ?: UNASSIGNED) }
-  val userInfoBrowserQueryKey by lazy { keyOf(USER_INFO_BROWSER_KEY, userId, "*") }
-
-  private val browserSpecificUserInfoKey by lazy {
-    if (browserSession.isNotNull()) userInfoBrowserKey else throw InvalidConfigurationException("Null browser session for $this")
-  }
-  val userClassesKey by lazy { keyOf(USER_CLASSES_KEY, userId) }
-
-  // This key maps to a reset_id
-  private val userPasswordResetKey by lazy { keyOf(USER_RESET_KEY, userId) }
 
   private fun sessionDbmsId() =
     try {
@@ -228,9 +210,6 @@ internal class User private constructor(val userId: String,
         .map { it[0] as String }.also { logger.info { "invocations() return ${it.size}" } }
     }
 
-  fun correctAnswersKey(names: ChallengeNames) =
-    correctAnswersKey(names.languageName, names.groupName, names.challengeName)
-
   fun correctAnswersKey(languageName: LanguageName, groupName: GroupName, challengeName: ChallengeName) =
     keyOf(CORRECT_ANSWERS_KEY,
           AUTH_KEY,
@@ -239,9 +218,6 @@ internal class User private constructor(val userId: String,
             "*"
           else
             md5Of(languageName, groupName, challengeName))
-
-  fun challengeAnswersKey(names: ChallengeNames) =
-    challengeAnswersKey(names.languageName, names.groupName, names.challengeName)
 
   fun challengeAnswersKey(languageName: LanguageName, groupName: GroupName, challengeName: ChallengeName) =
     keyOf(CHALLENGE_ANSWERS_KEY,
@@ -487,7 +463,10 @@ internal class User private constructor(val userId: String,
 
     internal val gson = Gson()
 
-    fun toUser(userId: String, browserSession: BrowserSession? = null) = User(userId, browserSession, true)
+    fun toUser(userId: String, browserSession: BrowserSession? = null): User {
+
+      return User(userId, browserSession, true)
+    }
 
     fun fetchActiveClassCode(user: User?) =
       when {
@@ -518,40 +497,37 @@ internal class User private constructor(val userId: String,
     fun createUser(name: FullName,
                    email: Email,
                    password: Password,
-                   browserSession: BrowserSession?): User {
+                   browserSession: BrowserSession?): User =
 
-      val user = User(randomId(25), browserSession, false)
+      User(randomId(25), browserSession, false)
+        .also { user ->
+          transaction {
+            val salt = newStringSalt()
+            val digest = password.sha256(salt)
+            val userId =
+              Users
+                .insertAndGetId { row ->
+                  row[userId] = user.userId
+                  row[Users.name] = name.value
+                  row[Users.email] = email.value
+                  row[enrolledClassCode] = DISABLED_CLASS_CODE.value
+                  row[defaultLanguage] = defaultLanguageType.languageName.value
+                  row[Users.salt] = salt
+                  row[Users.digest] = digest
+                }.value
 
-      transaction {
-        val salt = newStringSalt()
-        val digest = password.sha256(salt)
-        val userId =
-          Users
-            .insertAndGetId { row ->
-              row[userId] = user.userId
-              row[Users.name] = name.value
-              row[Users.email] = email.value
-              row[enrolledClassCode] = DISABLED_CLASS_CODE.value
-              row[defaultLanguage] = defaultLanguageType.languageName.value
-              row[Users.salt] = salt
-              row[Users.digest] = digest
-            }.value
+            val browserId = browserSession?.sessionDbmsId() ?: browserSession.createBrowserSession()
 
-        val browserId = browserSession?.sessionDbmsId() ?: browserSession.createBrowserSession()
-
-        UserSessions
-          .insert { row ->
-            row[sessionRef] = browserId
-            row[userRef] = userId
-            row[activeClassCode] = DISABLED_CLASS_CODE.value
-            row[previousTeacherClassCode] = DISABLED_CLASS_CODE.value
+            UserSessions
+              .insert { row ->
+                row[sessionRef] = browserId
+                row[userRef] = userId
+                row[activeClassCode] = DISABLED_CLASS_CODE.value
+                row[previousTeacherClassCode] = DISABLED_CLASS_CODE.value
+              }
           }
-      }
-
-      logger.info { "Created user $email ${user.userId}" }
-
-      return user
-    }
+          logger.info { "Created user $email ${user.userId}" }
+        }
 
     fun User?.shouldPublish(classCode: ClassCode) =
       when {
@@ -579,8 +555,6 @@ internal class User private constructor(val userId: String,
           .also { logger.info { "lookupUserByEmail() returned: ${it?.email ?: " ${email.value} not found"}" } }
       }
   }
-
-  internal data class ChallengeAnswers(val id: String, val correctAnswers: MutableMap<String, String> = mutableMapOf())
 }
 
 internal fun userDbmsIdByUserId(userId: String) =

@@ -214,12 +214,12 @@ internal object TransferUsers : KLogging() {
             val user = toUser(userId)
             logger.info { "Fetched user ${userMap[userId]} ${user.email} for $userId" }
 
-            redis.scanKeys(user.userClassesKey)
+            redis.scanKeys(""/*user.userClassesKey*/)
               .forEach { key ->
                 require(userId == key.split(KEY_SEP)[1])
                 //println("ClassCodes: $key ${redis.smembers(user.userClassesKey)}")
 
-                redis.smembers(user.userClassesKey)
+                redis.smembers(""/*user.userClassesKey*/)
                   .map { ClassCode(it) }
                   .forEach { classCode ->
                     logger.info { "Inserting Classes ${userMap[userId]} ${user.email} ${classCode.value}" }
@@ -245,7 +245,7 @@ internal object TransferUsers : KLogging() {
                   }
               }
 
-            redis.scanKeys(user.userInfoBrowserQueryKey)
+            redis.scanKeys(""/*user.userInfoBrowserQueryKey*/)
               .map { it.split(KEY_SEP)[2] }
               .filter { it != "unassigned" }
               .forEach { sessionId ->
