@@ -156,14 +156,14 @@ internal object Installs : KLogging() {
     install(StatusPages) {
 
       exception<InvalidRequestException> { cause ->
-        logger.info(cause) { " InvalidRequestException caught: ${cause.simpleClassName}" }
+        logger.info { " InvalidRequestException caught: ${cause.message}" }
         respondWith {
           invalidRequestPage(ReadingBatServer.content.get(), call.request.uri, cause.message ?: UNKNOWN)
         }
       }
 
       exception<RedisUnavailableException> { cause ->
-        logger.info(cause) { " RedisUnavailableException caught: ${cause.simpleClassName}" }
+        logger.info(cause) { " RedisUnavailableException caught: ${cause.message}" }
         respondWith {
           dbmsDownPage(ReadingBatServer.content.get())
         }
