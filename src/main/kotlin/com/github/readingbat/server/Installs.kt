@@ -128,8 +128,6 @@ internal object Installs : KLogging() {
         val remote = request.origin.remoteHost
         val email = call.fetchEmail()
 
-        // TODO log these requests into DBMS
-
         when (val status = response.status() ?: HttpStatusCode(-1, "Unknown")) {
           Found -> "Redirect: $logStr -> ${response.headers[Location]} - $remote - $email"
           else -> "$status: $logStr - $remote - $email"

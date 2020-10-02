@@ -71,6 +71,7 @@ typealias PipelineCall = PipelineContext<Unit, ApplicationCall>
 
 internal object ServerUtils : KLogging() {
 
+  private val userIdCache = ConcurrentHashMap<String, Long>()
   private val emailCache = ConcurrentHashMap<String, String>()
 
   fun getVersionDesc(asJson: Boolean = false): String = ReadingBatServer::class.versionDesc(asJson)
@@ -99,6 +100,15 @@ internal object ServerUtils : KLogging() {
             .also { email -> logger.info { "Looked up email for $userId: $email" } }
         }
       } ?: UNKNOWN
+
+  fun ApplicationCall.fetchUserDbmsId() =
+    userPrincipal?.userId
+      ?.let { userId ->
+        userIdCache.computeIfAbsent(userId) {
+          (fetchUser()?.userDbmsId ?: -1)
+            .also { userDbmsId -> logger.info { "Looked up userDbmsId for $userId: $userDbmsId" } }
+        }
+      } ?: -1
 
   suspend fun PipelineCall.respondWithRedirect(block: () -> String) =
     try {

@@ -80,10 +80,9 @@ internal data class ClassCode(val value: String) {
             .map { it[0] as Long }
 
         Users
-          .slice(Users.userId)
           .select { Users.id inList userIds }
-          .map { toUser(it[0] as String) }
-          .also { logger.debug { "fetchEnrollees() returning $it" } }
+          .map { toUser(it[Users.userId], it) }
+          .also { logger.info { "fetchEnrollees() returning ${it.size} users" } }
       }
 
   fun deleteClassCode() = Classes.deleteWhere { Classes.classCode eq value }

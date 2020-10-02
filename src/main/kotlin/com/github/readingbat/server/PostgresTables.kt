@@ -156,3 +156,12 @@ object GeoInfos : LongIdTable("geo_info") {
   val timeZone = text("time_zone")
 }
 
+object ServerRequests : LongIdTable("server_requests") {
+  val created = datetime("created")
+  val sessionRef = long("session_ref").references(BrowserSessions.id)
+  val userRef = long("user_ref").references(Users.id)
+  val geoRef = long("geo_ref").references(GeoInfos.id)
+  val verb = text("verb")
+  val path = text("path")
+  val queryString = text("query_string")
+}

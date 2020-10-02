@@ -25,6 +25,7 @@ import com.github.readingbat.common.EnvVar.IPGEOLOCATION_KEY
 import com.github.readingbat.common.SessionActivites.RemoteHost.Companion.unknown
 import com.github.readingbat.common.User.Companion.gson
 import com.github.readingbat.common.User.Companion.toUser
+import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.isPostgresEnabled
 import com.github.readingbat.server.GeoInfos
 import com.github.readingbat.server.geoInfosUnique
@@ -197,6 +198,15 @@ internal object SessionActivites : KLogging() {
       }
     }
 
+  fun queryGeoDbmsId(ipAddress: String) =
+    transaction {
+      GeoInfos
+        .slice(GeoInfos.id)
+        .select { GeoInfos.ip eq ipAddress }
+        .map { it[GeoInfos.id].value }
+        .firstOrNull() ?: throw InvalidConfigurationException("Missing ip address: $ipAddress")
+    }
+
   fun BrowserSession.markActivity(source: String, call: ApplicationCall) {
 
     val principal = call.userPrincipal
@@ -222,8 +232,8 @@ internal object SessionActivites : KLogging() {
             ?: try {
               fetchGeoInfo(ipAddress)
             } catch (e: Throwable) {
-              GeoInfo(ipAddress,
-                      "").also { logger.info { "Unable to determine IP geolocation data for ${it.remoteHost} (${e.message})" } }
+              GeoInfo(ipAddress, "")
+                .also { logger.info { "Unable to determine IP geolocation data for ${it.remoteHost} (${e.message})" } }
             }.also { it.save() }
         }
       }

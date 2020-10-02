@@ -17,12 +17,21 @@
 
 package com.github.readingbat.server
 
+import com.github.pambrose.common.util.isNotNull
+import com.github.readingbat.common.BrowserSession.Companion.querySessionDbmsId
 import com.github.readingbat.common.Constants.STATIC
 import com.github.readingbat.common.SessionActivites.markActivity
+import com.github.readingbat.common.SessionActivites.queryGeoDbmsId
 import com.github.readingbat.common.browserSession
+import com.github.readingbat.dsl.isPostgresEnabled
+import com.github.readingbat.server.Intercepts.logger
+import com.github.readingbat.server.ServerUtils.fetchUserDbmsId
 import io.ktor.application.*
 import io.ktor.features.*
 import io.ktor.request.*
+import mu.KLogging
+import org.jetbrains.exposed.sql.insertAndGetId
+import org.jetbrains.exposed.sql.transactions.transaction
 
 internal fun Application.intercepts() {
   intercept(ApplicationCallPipeline.Setup) {
@@ -39,15 +48,42 @@ internal fun Application.intercepts() {
       val browserSession = call.browserSession
       //ReadingBatServer.logger.info { "${context.request.origin.remoteHost} $browserSession ${context.request.path()}" }
       browserSession?.markActivity("intercept()", call)
-        ?: ReadingBatServer.logger.debug { "Null browser sessions for ${call.request.origin.remoteHost}" }
+        ?: ReadingBatServer.logger.info { "Null browser sessions for ${call.request.origin.remoteHost}" }
+
+      if (isPostgresEnabled() && browserSession.isNotNull()) {
+        val request = call.request
+        val ipAddress = request.origin.remoteHost
+        val sessionDbmsId = transaction { querySessionDbmsId(browserSession.id) }
+        val userDbmsId = call.fetchUserDbmsId()
+        val geoDbmsId = queryGeoDbmsId(ipAddress)
+        val verb = request.httpMethod.value
+        val path = request.path()
+        val queryString = request.queryString()
+
+        logger.debug { "Saving request: $ipAddress $userDbmsId $verb $path $queryString $geoDbmsId" }
+        transaction {
+          ServerRequests
+            .insertAndGetId { row ->
+              row[sessionRef] = sessionDbmsId
+              row[userRef] = userDbmsId
+              row[geoRef] = geoDbmsId
+              row[ServerRequests.verb] = verb
+              row[ServerRequests.path] = path
+              row[ServerRequests.queryString] = queryString
+            }
+        }
+      }
     }
   }
 
   intercept(ApplicationCallPipeline.Call) {
     // Phase for processing a call and sending a response
+    logger.info { "In Call" }
   }
 
   intercept(ApplicationCallPipeline.Fallback) {
     // Phase for handling unprocessed calls
   }
 }
+
+object Intercepts : KLogging()

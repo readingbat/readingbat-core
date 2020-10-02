@@ -30,7 +30,7 @@ import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.Message
 import com.github.readingbat.common.Property.SENDGRID_PREFIX_PROPERTY
 import com.github.readingbat.common.User.Companion.isNotRegisteredEmail
-import com.github.readingbat.common.User.Companion.lookupUserByEmail
+import com.github.readingbat.common.User.Companion.queryUserByEmail
 import com.github.readingbat.common.isNotValidUser
 import com.github.readingbat.common.isValidUser
 import com.github.readingbat.dsl.ReadingBatContent
@@ -67,7 +67,7 @@ internal object PasswordResetPost : KLogging() {
     val email = parameters.getEmail(EMAIL_PARAM)
     val remoteStr = call.request.origin.remoteHost
     logger.info { "Password change request for $email - $remoteStr" }
-    val user = lookupUserByEmail(email)
+    val user = queryUserByEmail(email)
     return when {
       user.isNotValidUser() -> {
         unknownUserLimiter.acquire()
@@ -86,7 +86,7 @@ internal object PasswordResetPost : KLogging() {
           val newResetId = newResetId()
 
           // Lookup and remove previous value if it exists
-          val user2 = lookupUserByEmail(email) ?: throw ResetPasswordException("Unable to find $email")
+          val user2 = queryUserByEmail(email) ?: throw ResetPasswordException("Unable to find $email")
           val previousResetId = user2.userPasswordResetId()
           user2.savePasswordResetId(email, previousResetId, newResetId)
 
@@ -140,7 +140,7 @@ internal object PasswordResetPost : KLogging() {
             .firstOrNull() ?: throw ResetPasswordException(INVALID_RESET_ID)
         }
 
-      val user = lookupUserByEmail(Email(email)) ?: throw ResetPasswordException("Unable to find $email")
+      val user = queryUserByEmail(Email(email)) ?: throw ResetPasswordException("Unable to find $email")
       val salt = user.salt
       val newDigest = newPassword.sha256(salt)
       val oldDigest = user.digest

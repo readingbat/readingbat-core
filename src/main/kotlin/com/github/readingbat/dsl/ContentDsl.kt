@@ -34,10 +34,11 @@ import com.github.readingbat.common.Property.CACHE_CONTENT_IN_REDIS
 import com.github.readingbat.common.Property.IS_PRODUCTION
 import com.github.readingbat.common.Property.POSTGRES_ENABLED
 import com.github.readingbat.common.ScriptPools.kotlinScriptPool
+import com.github.readingbat.dsl.ContentDsl.logger
 import com.github.readingbat.server.ReadingBatServer
 import com.github.readingbat.server.ReadingBatServer.redisPool
 import kotlinx.coroutines.runBlocking
-import mu.KotlinLogging
+import mu.KLogging
 import kotlin.reflect.KFunction
 import kotlin.time.measureTimedValue
 
@@ -58,7 +59,6 @@ class GitHubContent(ownerType: OwnerType,
 fun readingBatContent(block: ReadingBatContent.() -> Unit) =
   ReadingBatContent().apply(block).apply { validate() }
 
-private val logger = KotlinLogging.logger {}
 
 // This is accessible from the Content.kt descriptions
 fun isProduction() = IS_PRODUCTION.getProperty(false)
@@ -142,3 +142,5 @@ private suspend fun evalDsl(code: String, sourceName: String) =
     logger.info { "Error in $sourceName:\n$code" }
     throw e
   }
+
+object ContentDsl : KLogging()

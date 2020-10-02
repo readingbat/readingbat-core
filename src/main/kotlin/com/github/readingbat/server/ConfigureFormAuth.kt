@@ -27,7 +27,7 @@ import com.github.readingbat.common.AuthName
 import com.github.readingbat.common.Constants.DBMS_DOWN
 import com.github.readingbat.common.Constants.UNKNOWN
 import com.github.readingbat.common.FormFields
-import com.github.readingbat.common.User.Companion.lookupUserByEmail
+import com.github.readingbat.common.User.Companion.queryUserByEmail
 import com.github.readingbat.common.UserPrincipal
 import com.github.readingbat.dsl.RedisUnavailableException
 import com.github.readingbat.server.ReadingBatServer.redisPool
@@ -78,7 +78,7 @@ internal object ConfigureFormAuth : KLogging() {
           }
           else {
             var principal: UserPrincipal? = null
-            val user = lookupUserByEmail(Email(cred.name))
+            val user = queryUserByEmail(Email(cred.name))
             if (user.isNotNull()) {
               val salt = user.salt
               val digest = user.digest

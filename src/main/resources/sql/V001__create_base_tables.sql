@@ -146,12 +146,14 @@ CREATE TABLE geo_info
     CONSTRAINT geo_info_unique unique (ip)
 );
 
-CREATE TABLE user_requests
+CREATE TABLE server_requests
 (
-    id          BIGSERIAL PRIMARY KEY,
-    created     TIMESTAMP DEFAULT NOW(),
-    session_ref INTEGER REFERENCES browser_sessions ON DELETE CASCADE,
-    user_ref    INTEGER REFERENCES users ON DELETE CASCADE UNIQUE,
-    geo_ref     INTEGER REFERENCES geo_info ON DELETE CASCADE UNIQUE,
-    path        TEXT NOT NULL
+    id           BIGSERIAL PRIMARY KEY,
+    created      TIMESTAMP DEFAULT NOW(),
+    session_ref  INTEGER REFERENCES browser_sessions ON DELETE CASCADE,
+    user_ref     INTEGER REFERENCES users ON DELETE CASCADE,
+    geo_ref      INTEGER REFERENCES geo_info ON DELETE CASCADE,
+    verb         TEXT NOT NULL,
+    path         TEXT NOT NULL,
+    query_string TEXT NOT NULL
 );

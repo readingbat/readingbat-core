@@ -57,9 +57,35 @@ import redis.clients.jedis.Jedis
 import kotlin.contracts.contract
 import kotlin.time.measureTime
 
-internal class User private constructor(val userId: String,
-                                        private val browserSession: BrowserSession?,
-                                        initFields: Boolean) {
+internal class User {
+
+  private constructor(userId: String,
+                      browserSession: BrowserSession?,
+                      initFields: Boolean) {
+    this.userId = userId
+    this.browserSession = browserSession
+
+    if (initFields && isPostgresEnabled()) {
+      measureTime {
+        transaction {
+          Users
+            .select { Users.userId eq this@User.userId }
+            .firstOrNull() ?: throw InvalidConfigurationException("UserId not found: ${this@User.userId}")
+        }.also { row -> assignRowVals(row) }
+      }.also { logger.info { "Selected user info in $it" } }
+    }
+  }
+
+  private constructor(userId: String,
+                      browserSession: BrowserSession?,
+                      row: ResultRow) {
+    this.userId = userId
+    this.browserSession = browserSession
+    assignRowVals(row)
+  }
+
+  val userId: String
+  val browserSession: BrowserSession?
   var userDbmsId: Long = -1
   var email: Email = EMPTY_EMAIL
   var fullName: FullName = EMPTY_FULLNAME
@@ -73,26 +99,6 @@ internal class User private constructor(val userId: String,
   val digest: String
     get() = if (digestBacking.isBlank()) throw DataException("Missing digest field") else digestBacking
 
-  init {
-    if (initFields && isPostgresEnabled()) {
-      measureTime {
-        transaction {
-          Users
-            .select { Users.userId eq this@User.userId }
-            .firstOrNull() ?: throw InvalidConfigurationException("UserId not found: ${this@User.userId}")
-        }.also { row ->
-          userDbmsId = row[Users.id].value
-          email = Email(row[Users.email])
-          fullName = FullName(row[Users.name])
-          enrolledClassCode = ClassCode(row[Users.enrolledClassCode])
-          defaultLanguage = row[Users.defaultLanguage].toLanguageType() ?: defaultLanguageType
-          saltBacking = row[Users.salt]
-          digestBacking = row[Users.digest]
-        }
-      }.also { logger.info { "Selected user info in $it" } }
-    }
-  }
-
   private fun sessionDbmsId(): Long {
     if (browserSession.isNull()) throw InvalidConfigurationException("Null browser session")
     return try {
@@ -101,6 +107,16 @@ internal class User private constructor(val userId: String,
       logger.info { "Creating BrowserSession for ${e.message}" }
       createBrowserSession(browserSession.id)
     }
+  }
+
+  private fun assignRowVals(row: ResultRow) {
+    userDbmsId = row[Users.id].value
+    email = Email(row[Users.email])
+    fullName = FullName(row[Users.name])
+    enrolledClassCode = ClassCode(row[Users.enrolledClassCode])
+    defaultLanguage = row[Users.defaultLanguage].toLanguageType() ?: defaultLanguageType
+    saltBacking = row[Users.salt]
+    digestBacking = row[Users.digest]
   }
 
   fun browserSessions() =
@@ -463,6 +479,8 @@ internal class User private constructor(val userId: String,
 
     fun toUser(userId: String, browserSession: BrowserSession? = null) = User(userId, browserSession, true)
 
+    fun toUser(userId: String, row: ResultRow) = User(userId, null, row)
+
     fun fetchActiveClassCode(user: User?) =
       when {
         user.isNull() || !isPostgresEnabled() -> DISABLED_CLASS_CODE
@@ -537,11 +555,11 @@ internal class User private constructor(val userId: String,
         else -> false
       }
 
-    private fun isRegisteredEmail(email: Email) = lookupUserByEmail(email).isNotNull()
+    private fun isRegisteredEmail(email: Email) = queryUserByEmail(email).isNotNull()
 
     fun isNotRegisteredEmail(email: Email) = !isRegisteredEmail(email)
 
-    fun lookupUserByEmail(email: Email): User? =
+    fun queryUserByEmail(email: Email): User? =
       transaction {
         Users
           .slice(Users.userId)
