@@ -118,10 +118,10 @@ internal object WsEndoints : KLogging() {
       val desc = "${pathOf(CHALLENGE_ENDPOINT, classCode, challengeMd5)} ($path) - $remote - $email"
 
       validateContext(null, null, classCode, null, user, "Student answers")
-        .also {
-          if (!it.first) {
+        .also { (valid, msg) ->
+          if (!valid) {
             close(CloseReason(Codes.GOING_AWAY, "Client disconnected"))
-            throw InvalidRequestException(it.second)
+            throw InvalidRequestException(msg)
           }
         }
 
@@ -211,10 +211,10 @@ internal object WsEndoints : KLogging() {
       val desc = "${pathOf(CHALLENGE_ENDPOINT, languageName, groupName, classCode)} - $remote - $email"
 
       validateContext(languageName, groupName, classCode, null, user, "Class statistics")
-        .also {
-          if (!it.first) {
+        .also { (valid, msg) ->
+          if (!valid) {
             close(CloseReason(Codes.GOING_AWAY, "Client disconnected"))
-            throw InvalidRequestException(it.second)
+            throw InvalidRequestException(msg)
           }
         }
 
@@ -353,10 +353,10 @@ internal object WsEndoints : KLogging() {
       val desc = "${pathOf(CLASS_SUMMARY_ENDPOINT, languageName, groupName, classCode)} - $remote - $email"
 
       validateContext(languageName, groupName, classCode, null, user, "Class summary")
-        .also {
-          if (!it.first) {
+        .also { (valid, msg) ->
+          if (!valid) {
             close(CloseReason(Codes.GOING_AWAY, "Client disconnected"))
-            throw InvalidRequestException(it.second)
+            throw InvalidRequestException(msg)
           }
         }
 
@@ -455,10 +455,10 @@ internal object WsEndoints : KLogging() {
       val desc = "${pathOf(CLASS_SUMMARY_ENDPOINT, languageName, student.userId, classCode)} - $remote - $email"
 
       validateContext(languageName, null, classCode, student, user, "Student sumary")
-        .also {
-          if (!it.first) {
+        .also { (valid, msg) ->
+          if (!valid) {
             close(CloseReason(Codes.GOING_AWAY, "Client disconnected"))
-            throw InvalidRequestException(it.second)
+            throw InvalidRequestException(msg)
           }
         }
 

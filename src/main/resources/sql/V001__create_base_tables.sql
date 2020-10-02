@@ -115,3 +115,43 @@ CREATE TABLE password_resets
     email    TEXT NOT NULL,
     CONSTRAINT password_resets_unique unique (user_ref)
 );
+
+
+CREATE TABLE geo_info
+(
+    id              BIGSERIAL PRIMARY KEY,
+    created         TIMESTAMP     DEFAULT NOW(),
+    ip              TEXT NOT NULL UNIQUE,
+    json            TEXT NOT NULL DEFAULT '',
+    continent_code  TEXT NOT NULL DEFAULT '',
+    continent_name  TEXT NOT NULL DEFAULT '',
+    country_code2   TEXT NOT NULL DEFAULT '',
+    country_code3   TEXT NOT NULL DEFAULT '',
+    country_name    TEXT NOT NULL DEFAULT '',
+    country_capital TEXT NOT NULL DEFAULT '',
+    district        TEXT NOT NULL DEFAULT '',
+    city            TEXT NOT NULL DEFAULT '',
+    state_prov      TEXT NOT NULL DEFAULT '',
+    zipcode         TEXT NOT NULL DEFAULT '',
+    latitude        TEXT NOT NULL DEFAULT '',
+    longitude       TEXT NOT NULL DEFAULT '',
+    is_eu           TEXT NOT NULL DEFAULT '',
+    calling_code    TEXT NOT NULL DEFAULT '',
+    country_tld     TEXT NOT NULL DEFAULT '',
+    country_flag    TEXT NOT NULL DEFAULT '',
+    isp             TEXT NOT NULL DEFAULT '',
+    connection_type TEXT NOT NULL DEFAULT '',
+    organization    TEXT NOT NULL DEFAULT '',
+    time_zone       TEXT NOT NULL DEFAULT '',
+    CONSTRAINT geo_info_unique unique (ip)
+);
+
+CREATE TABLE user_requests
+(
+    id          BIGSERIAL PRIMARY KEY,
+    created     TIMESTAMP DEFAULT NOW(),
+    session_ref INTEGER REFERENCES browser_sessions ON DELETE CASCADE,
+    user_ref    INTEGER REFERENCES users ON DELETE CASCADE UNIQUE,
+    geo_ref     INTEGER REFERENCES geo_info ON DELETE CASCADE UNIQUE,
+    path        TEXT NOT NULL
+);

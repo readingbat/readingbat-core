@@ -96,7 +96,7 @@ internal object SessionsPage {
                       td { +userDesc }
                       td { +session.age.format(false) }
                       td { +session.requests.toString() }
-                      td { +session.remoteHost.value }
+                      td { +session.remoteHost.remoteHost }
                       td { +session.remoteHost.city }
                       td { +session.remoteHost.state }
                       td { +session.remoteHost.country }
