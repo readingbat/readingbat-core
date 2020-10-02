@@ -23,6 +23,7 @@ import com.github.pambrose.common.response.redirectTo
 import com.github.pambrose.common.response.respondWith
 import com.github.pambrose.common.util.Version.Companion.versionDesc
 import com.github.pambrose.common.util.isNotNull
+import com.github.readingbat.common.Constants.UNKNOWN
 import com.github.readingbat.common.Metrics
 import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.toUser
@@ -48,23 +49,31 @@ import io.ktor.util.pipeline.*
 import io.ktor.websocket.*
 import kotlinx.coroutines.runBlocking
 import mu.KLogging
+import org.jetbrains.exposed.sql.Column
 import org.jetbrains.exposed.sql.Function
 import org.jetbrains.exposed.sql.IColumnType
+import org.jetbrains.exposed.sql.Index
 import org.jetbrains.exposed.sql.QueryBuilder
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.SqlLogger
+import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.Transaction
 import org.jetbrains.exposed.sql.jodatime.DateColumnType
+import org.jetbrains.exposed.sql.statements.InsertStatement
 import org.jetbrains.exposed.sql.statements.StatementContext
 import org.jetbrains.exposed.sql.statements.expandArgs
+import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.joda.time.DateTime
 import redis.clients.jedis.Jedis
+import java.util.concurrent.ConcurrentHashMap
 
 typealias PipelineCall = PipelineContext<Unit, ApplicationCall>
 
 internal object ServerUtils : KLogging() {
 
-  internal fun getVersionDesc(asJson: Boolean = false): String = ReadingBatServer::class.versionDesc(asJson)
+  private val emailCache = ConcurrentHashMap<String, String>()
+
+  fun getVersionDesc(asJson: Boolean = false): String = ReadingBatServer::class.versionDesc(asJson)
 
   fun PipelineCall.queryParam(key: String, default: String = "") = call.request.queryParameters[key] ?: default
 
@@ -82,8 +91,18 @@ internal object ServerUtils : KLogging() {
 
   fun ApplicationCall.fetchUser(): User? = userPrincipal?.userId?.let { toUser(it, browserSession) }
 
+  fun ApplicationCall.fetchEmail() =
+    userPrincipal?.userId
+      ?.let { userId ->
+        emailCache.computeIfAbsent(userId) {
+          (fetchUser()?.email?.value ?: UNKNOWN)
+            .also { email -> logger.info { "Looked up email for $userId: $email" } }
+        }
+      } ?: UNKNOWN
+
   suspend fun PipelineCall.respondWithRedirect(block: () -> String) =
     try {
+      // Do this outside of respondWith{} so that exceptions will be caught
       val html = block.invoke()
       respondWith { html }
     } catch (e: RedirectException) {
@@ -154,7 +173,6 @@ internal object ServerUtils : KLogging() {
       .firstOrNull() ?: throw InvalidConfigurationException("Missing non-empty language")
 
   fun Int.rows(cols: Int) = if (this % cols == 0) this / cols else (this / cols) + 1
-
 }
 
 fun CustomDateTimeConstant(functionName: String) = CustomConstant<DateTime?>(functionName, DateColumnType(true))
@@ -166,6 +184,9 @@ open class CustomConstant<T>(val functionName: String, _columnType: IColumnType)
     }
 }
 
+operator fun ResultRow.get(index: Int) = fieldIndex.filter { it.value == index }.map { this[it.key] }.firstOrNull()
+  ?: throw IllegalArgumentException("No value at index $index")
+
 object KotlinLoggingSqlLogger : SqlLogger {
   override
   fun log(context: StatementContext, transaction: Transaction) {
@@ -173,7 +194,43 @@ object KotlinLoggingSqlLogger : SqlLogger {
   }
 }
 
-operator fun ResultRow.get(index: Int) = fieldIndex.filter { it.value == index }.map { this.get(it.key) }.firstOrNull()
-  ?: throw IllegalArgumentException("No value at index $index")
+inline fun <T : Table> T.upsert(conflictColumn: Column<*>? = null,
+                                conflictIndex: Index? = null,
+                                body: T.(UpsertStatement<Number>) -> Unit) =
+  UpsertStatement<Number>(this, conflictColumn, conflictIndex)
+    .apply {
+      body(this)
+      execute(TransactionManager.current())
+    }
+
+class UpsertStatement<Key : Any>(table: Table,
+                                 conflictColumn: Column<*>? = null,
+                                 conflictIndex: Index? = null) : InsertStatement<Key>(table, false) {
+  private val indexName: String
+  private val indexColumns: List<Column<*>>
+
+  init {
+    when {
+      conflictIndex.isNotNull() -> {
+        indexName = conflictIndex.indexName
+        indexColumns = conflictIndex.columns
+      }
+      conflictColumn.isNotNull() -> {
+        indexName = conflictColumn.name
+        indexColumns = listOf(conflictColumn)
+      }
+      else -> throw IllegalArgumentException()
+    }
+  }
+
+  override fun prepareSQL(transaction: Transaction) =
+    buildString {
+      append(super.prepareSQL(transaction))
+      append(" ON CONFLICT ON CONSTRAINT $indexName DO UPDATE SET ")
+      values.keys.filter { it !in indexColumns }
+        .joinTo(this) { "${transaction.identity(it)}=EXCLUDED.${transaction.identity(it)}" }
+    }
+}
+
 
 class RedirectException(val redirectUrl: String) : Exception()

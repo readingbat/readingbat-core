@@ -19,10 +19,7 @@ package com.github.readingbat.common
 
 import com.github.pambrose.common.util.randomId
 import com.github.pambrose.common.util.toDoubleQuoted
-import com.github.readingbat.common.CommonUtils.keyOf
 import com.github.readingbat.common.FormFields.DISABLED_MODE
-import com.github.readingbat.common.KeyConstants.CLASS_CODE_KEY
-import com.github.readingbat.common.KeyConstants.CLASS_INFO_KEY
 import com.github.readingbat.common.User.Companion.toUser
 import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.server.Classes
@@ -42,8 +39,6 @@ import kotlin.time.measureTimedValue
 internal data class ClassCode(val value: String) {
   val isNotEnabled by lazy { value == DISABLED_MODE || value.isBlank() }
   val isEnabled by lazy { !isNotEnabled }
-  val classCodeEnrollmentKey by lazy { keyOf(CLASS_CODE_KEY, value) }
-  val classInfoKey by lazy { keyOf(CLASS_INFO_KEY, value) }
 
   val displayedValue get() = if (value == DISABLED_MODE) "" else value
 

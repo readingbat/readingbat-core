@@ -24,7 +24,8 @@ import com.github.readingbat.server.LanguageName
 
 internal fun correctAnswersKey(user: User?, browserSession: BrowserSession?, challenge: Challenge) =
   user?.correctAnswersKey(challenge.languageName, challenge.groupName, challenge.challengeName)
-    ?: browserSession?.correctAnswersKey(challenge.languageName, challenge.groupName, challenge.challengeName) ?: ""
+    ?: browserSession?.correctAnswersKey(challenge.languageName, challenge.groupName, challenge.challengeName)
+    ?: ""
 
 internal fun correctAnswersKey(user: User?,
                                browserSession: BrowserSession?,

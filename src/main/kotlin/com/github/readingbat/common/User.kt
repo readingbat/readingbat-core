@@ -28,7 +28,6 @@ import com.github.readingbat.common.CommonUtils.md5Of
 import com.github.readingbat.common.KeyConstants.AUTH_KEY
 import com.github.readingbat.common.KeyConstants.CHALLENGE_ANSWERS_KEY
 import com.github.readingbat.common.KeyConstants.CORRECT_ANSWERS_KEY
-import com.github.readingbat.common.KeyConstants.USER_INFO_KEY
 import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.DataException
 import com.github.readingbat.dsl.InvalidConfigurationException
@@ -48,7 +47,6 @@ import com.github.readingbat.server.LanguageName.Companion.ANY_LANGUAGE
 import com.github.readingbat.server.ReadingBatServer.adminUsers
 import com.github.readingbat.server.ResetId.Companion.EMPTY_RESET_ID
 import com.github.readingbat.server.WsEndoints.classTopicName
-import com.github.readingbat.utils.upsert
 import com.google.gson.Gson
 import mu.KLogging
 import org.jetbrains.exposed.sql.*
@@ -60,7 +58,7 @@ import kotlin.contracts.contract
 import kotlin.time.measureTime
 
 internal class User private constructor(val userId: String,
-                                        val browserSession: BrowserSession?,
+                                        private val browserSession: BrowserSession?,
                                         initFields: Boolean) {
   var userDbmsId: Long = -1
   var email: Email = EMPTY_EMAIL
@@ -69,8 +67,6 @@ internal class User private constructor(val userId: String,
   var defaultLanguage = defaultLanguageType
   private var saltBacking: String = ""
   private var digestBacking: String = ""
-
-  private val userInfoKey = keyOf(USER_INFO_KEY, userId)
 
   val salt: String
     get() = if (saltBacking.isBlank()) throw DataException("Missing salt field") else saltBacking
@@ -86,9 +82,9 @@ internal class User private constructor(val userId: String,
             .firstOrNull() ?: throw InvalidConfigurationException("UserId not found: ${this@User.userId}")
         }.also { row ->
           userDbmsId = row[Users.id].value
-          email = row[Users.email].let { Email(it) }
-          fullName = row[Users.name].let { FullName(it) }
-          enrolledClassCode = row[Users.enrolledClassCode].let { ClassCode(it) }
+          email = Email(row[Users.email])
+          fullName = FullName(row[Users.name])
+          enrolledClassCode = ClassCode(row[Users.enrolledClassCode])
           defaultLanguage = row[Users.defaultLanguage].toLanguageType() ?: defaultLanguageType
           saltBacking = row[Users.salt]
           digestBacking = row[Users.digest]
@@ -97,13 +93,15 @@ internal class User private constructor(val userId: String,
     }
   }
 
-  private fun sessionDbmsId() =
-    try {
-      browserSession?.sessionDbmsId() ?: browserSession.createBrowserSession()
+  private fun sessionDbmsId(): Long {
+    if (browserSession.isNull()) throw InvalidConfigurationException("Null browser session")
+    return try {
+      browserSession.sessionDbmsId()
     } catch (e: MissingBrowserSessionException) {
       logger.info { "Creating BrowserSession for ${e.message}" }
-      browserSession.createBrowserSession()
+      createBrowserSession(browserSession.id)
     }
+  }
 
   fun browserSessions() =
     transaction {
@@ -377,7 +375,7 @@ internal class User private constructor(val userId: String,
 
     logger.info { "Deleting User: $userId $fullName" }
     logger.info { "User Email: $email" }
-    logger.info { "User Info Key: $userInfoKey" }
+    logger.info { "UserId: $userId" }
     logger.info { "User Info browser sessions: ${browserSessions.size}" }
     logger.info { "Correct Answers: ${correctAnswers.size}" }
     logger.info { "Likes/Dislikes: ${likeDislikes.size}" }
@@ -451,22 +449,19 @@ internal class User private constructor(val userId: String,
 
     // Class code a user is enrolled in. Will report answers to when in student mode
     // This is not browser-id specific
-    internal const val ENROLLED_CLASS_CODE_FIELD = "enrolled-class-code"
+    //internal const val ENROLLED_CLASS_CODE_FIELD = "enrolled-class-code"
 
     // Class code you will observe updates on when in teacher mode
     // This is browser-id specific
-    private const val ACTIVE_CLASS_CODE_FIELD = "active-class-code"
+    //private const val ACTIVE_CLASS_CODE_FIELD = "active-class-code"
 
     // Previous teacher class code that a user had
     // This is browser-id specific
-    private const val PREVIOUS_TEACHER_CLASS_CODE_FIELD = "previous-teacher-class-code"
+    //private const val PREVIOUS_TEACHER_CLASS_CODE_FIELD = "previous-teacher-class-code"
 
     internal val gson = Gson()
 
-    fun toUser(userId: String, browserSession: BrowserSession? = null): User {
-
-      return User(userId, browserSession, true)
-    }
+    fun toUser(userId: String, browserSession: BrowserSession? = null) = User(userId, browserSession, true)
 
     fun fetchActiveClassCode(user: User?) =
       when {
@@ -516,7 +511,8 @@ internal class User private constructor(val userId: String,
                   row[Users.digest] = digest
                 }.value
 
-            val browserId = browserSession?.sessionDbmsId() ?: browserSession.createBrowserSession()
+            val browserId =
+              browserSession?.sessionDbmsId() ?: throw InvalidConfigurationException("Missing browser session")
 
             UserSessions
               .insert { row ->

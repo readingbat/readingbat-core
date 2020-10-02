@@ -24,12 +24,10 @@ import com.github.pambrose.common.util.isNotValidEmail
 import com.github.pambrose.common.util.randomId
 import com.github.pambrose.common.util.sha256
 import com.github.readingbat.common.AuthName.FORM
-import com.github.readingbat.common.CommonUtils.keyOf
 import com.github.readingbat.common.CommonUtils.md5Of
 import com.github.readingbat.common.Constants.UNKNOWN
 import com.github.readingbat.common.Endpoints.CHALLENGE_ROOT
 import com.github.readingbat.common.Endpoints.PLAYGROUND_ROOT
-import com.github.readingbat.common.KeyConstants.RESET_KEY
 import com.github.readingbat.common.Metrics
 import com.github.readingbat.common.Metrics.Companion.GET
 import com.github.readingbat.common.Metrics.Companion.POST
@@ -236,10 +234,6 @@ class ChallengeMd5(languageName: LanguageName, groupName: GroupName, challengeNa
 
 inline class Invocation(val value: String) {
   override fun toString() = value
-
-  companion object {
-    internal val ANY_INVOCATION = Invocation("*")
-  }
 }
 
 inline class FullName(val value: String) {
@@ -276,7 +270,6 @@ inline class Email(val value: String) {
 
   companion object {
     val EMPTY_EMAIL = Email("")
-    val UNKNOWN_EMAIL = Email(UNKNOWN)
     fun Parameters.getEmail(name: String) = this[name]?.let { Email(it) } ?: EMPTY_EMAIL
   }
 }
@@ -284,9 +277,6 @@ inline class Email(val value: String) {
 inline class ResetId(val value: String) {
   fun isBlank() = value.isBlank()
   fun isNotBlank() = value.isNotBlank()
-
-  // Maps resetId to username
-  val passwordResetKey get() = keyOf(RESET_KEY, value)
 
   override fun toString() = value
 

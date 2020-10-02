@@ -131,7 +131,6 @@ internal object PasswordResetPost : KLogging() {
       if (passwordError.isNotBlank)
         throw ResetPasswordException(passwordError.value, resetId)
 
-      val passwordResetKey = resetId.passwordResetKey
       val email =
         transaction {
           PasswordResets

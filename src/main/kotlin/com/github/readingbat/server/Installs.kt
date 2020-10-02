@@ -35,7 +35,7 @@ import com.github.readingbat.pages.NotFoundPage.notFoundPage
 import com.github.readingbat.server.ConfigureCookies.configureAuthCookie
 import com.github.readingbat.server.ConfigureCookies.configureSessionIdCookie
 import com.github.readingbat.server.ConfigureFormAuth.configureFormAuth
-import com.github.readingbat.server.ServerUtils.fetchUser
+import com.github.readingbat.server.ServerUtils.fetchEmail
 import io.ktor.application.*
 import io.ktor.auth.*
 import io.ktor.features.*
@@ -126,7 +126,7 @@ internal object Installs : KLogging() {
         val response = call.response
         val logStr = request.toLogString()
         val remote = request.origin.remoteHost
-        val email = call.fetchUser()?.email?.value ?: UNKNOWN
+        val email = call.fetchEmail()
 
         // TODO log these requests into DBMS
 

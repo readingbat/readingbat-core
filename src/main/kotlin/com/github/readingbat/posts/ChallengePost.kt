@@ -19,6 +19,7 @@ package com.github.readingbat.posts
 
 import com.github.pambrose.common.util.*
 import com.github.readingbat.common.BrowserSession
+import com.github.readingbat.common.BrowserSession.Companion.querySessionDbmsId
 import com.github.readingbat.common.ClassCode
 import com.github.readingbat.common.CommonUtils.md5Of
 import com.github.readingbat.common.CommonUtils.pathOf
@@ -48,7 +49,6 @@ import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.gson
 import com.github.readingbat.common.User.Companion.shouldPublish
 import com.github.readingbat.common.browserSession
-import com.github.readingbat.common.sessionDbmsId
 import com.github.readingbat.common.userDbmsIdByUserId
 import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.ReadingBatContent
@@ -61,7 +61,6 @@ import com.github.readingbat.server.*
 import com.github.readingbat.server.ChallengeName.Companion.getChallengeName
 import com.github.readingbat.server.GroupName.Companion.getGroupName
 import com.github.readingbat.server.LanguageName.Companion.getLanguageName
-import com.github.readingbat.utils.upsert
 import io.ktor.application.*
 import io.ktor.request.*
 import io.ktor.response.*
@@ -309,7 +308,7 @@ internal object ChallengePost : KLogging() {
             .deleteWhere { (UserChallengeInfo.userRef eq userDbmsIdByUserId(id)) and (UserChallengeInfo.md5 eq md5) }
         NO_AUTH_KEY ->
           SessionChallengeInfo
-            .deleteWhere { (SessionChallengeInfo.sessionRef eq id.sessionDbmsId) and (SessionChallengeInfo.md5 eq md5) }
+            .deleteWhere { (SessionChallengeInfo.sessionRef eq querySessionDbmsId(id)) and (SessionChallengeInfo.md5 eq md5) }
         else -> throw InvalidConfigurationException("Invalid type: $type")
       }
     }
@@ -322,7 +321,7 @@ internal object ChallengePost : KLogging() {
             .deleteWhere { (UserAnswerHistory.userRef eq userDbmsIdByUserId(id)) and (UserAnswerHistory.md5 eq md5) }
         NO_AUTH_KEY ->
           SessionAnswerHistory
-            .deleteWhere { (SessionAnswerHistory.sessionRef eq id.sessionDbmsId) and (SessionAnswerHistory.md5 eq md5) }
+            .deleteWhere { (SessionAnswerHistory.sessionRef eq querySessionDbmsId(id)) and (SessionAnswerHistory.md5 eq md5) }
         else -> throw InvalidConfigurationException("Invalid type: $type")
       }
     }
