@@ -126,7 +126,7 @@ internal object WsEndoints : KLogging() {
           }
         }
 
-      logger.info { "Opened student answers websocket for $desc" }
+      logger.debug { "Opened student answers websocket for $desc" }
 
       outgoing.invokeOnClose {
         logger.debug { "Close received for student answers websocket for $desc" }
@@ -152,7 +152,7 @@ internal object WsEndoints : KLogging() {
                 while (!finished.get()) {
                   val duration = start.elapsedNow()
                   val json = gson.toJson(PingMessage(duration.format()))
-                  logger.debug { "Sending $json" }
+                  logger.info { "Sending $json" }
                   outgoing.send(Frame.Text(json))
                   delay(1.seconds)
                   secs += 1
@@ -219,7 +219,7 @@ internal object WsEndoints : KLogging() {
           }
         }
 
-      logger.info { "Opened class statistics websocket for $desc" }
+      logger.debug { "Opened class statistics websocket for $desc" }
 
       outgoing.invokeOnClose {
         logger.debug { "Close received for class statistics websocket for $desc" }
@@ -361,7 +361,7 @@ internal object WsEndoints : KLogging() {
           }
         }
 
-      logger.info { "Opened class summary websocket for $desc" }
+      logger.debug { "Opened class summary websocket for $desc" }
 
       outgoing.invokeOnClose {
         logger.debug { "Close received for class summary websocket for $desc" }
@@ -464,7 +464,7 @@ internal object WsEndoints : KLogging() {
           }
         }
 
-      logger.info { "Opened student summary websocket for $desc" }
+      logger.debug { "Opened student summary websocket for $desc" }
 
       outgoing.invokeOnClose {
         logger.debug { "Close received for student summary websocket for $desc" }
