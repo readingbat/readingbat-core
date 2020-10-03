@@ -152,7 +152,7 @@ internal object WsEndoints : KLogging() {
                 while (!finished.get()) {
                   val duration = start.elapsedNow()
                   val json = gson.toJson(PingMessage(duration.format()))
-                  logger.info { "Sending $json" }
+                  logger.debug { "Sending $json" }
                   outgoing.send(Frame.Text(json))
                   delay(1.seconds)
                   secs += 1
