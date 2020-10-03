@@ -21,7 +21,6 @@ import com.github.pambrose.common.util.isNotNull
 import com.github.pambrose.common.util.isNull
 import com.github.pambrose.common.util.newStringSalt
 import com.github.pambrose.common.util.randomId
-import com.github.readingbat.common.BrowserSession.Companion.createBrowserSession
 import com.github.readingbat.common.ClassCode.Companion.DISABLED_CLASS_CODE
 import com.github.readingbat.common.CommonUtils.keyOf
 import com.github.readingbat.common.CommonUtils.md5Of
@@ -35,7 +34,6 @@ import com.github.readingbat.dsl.DataException
 import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.LanguageType.Companion.defaultLanguageType
 import com.github.readingbat.dsl.LanguageType.Companion.toLanguageType
-import com.github.readingbat.dsl.MissingBrowserSessionException
 import com.github.readingbat.dsl.isPostgresEnabled
 import com.github.readingbat.posts.ChallengeHistory
 import com.github.readingbat.posts.ChallengeResults
@@ -100,15 +98,8 @@ internal class User {
   val digest: String
     get() = if (digestBacking.isBlank()) throw DataException("Missing digest field") else digestBacking
 
-  private fun sessionDbmsId(): Long {
-    if (browserSession.isNull()) throw InvalidConfigurationException("Null browser session")
-    return try {
-      browserSession.sessionDbmsId()
-    } catch (e: MissingBrowserSessionException) {
-      logger.info { "Creating BrowserSession for ${e.message}" }
-      createBrowserSession(browserSession.id)
-    }
-  }
+  private fun sessionDbmsId() =
+    browserSession?.sessionDbmsId() ?: throw InvalidConfigurationException("Null browser session")
 
   private fun assignRowVals(row: ResultRow) {
     userDbmsId = row[Users.id].value
