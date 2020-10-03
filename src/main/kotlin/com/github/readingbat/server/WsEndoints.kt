@@ -192,7 +192,7 @@ internal object WsEndoints : KLogging() {
         } finally {
           metrics.wsStudentAnswerGauge.labels(agentLaunchId()).dec()
           close(CloseReason(Codes.GOING_AWAY, "Client disconnected"))
-          logger.info { "Closed student answers websocket for $desc" }
+          logger.debug { "Closed student answers websocket for $desc" }
         }
       }
     }
@@ -334,7 +334,7 @@ internal object WsEndoints : KLogging() {
         } finally {
           metrics.wsClassStatisticsGauge.labels(agentLaunchId()).dec()
           close(CloseReason(Codes.GOING_AWAY, "Client disconnected"))
-          logger.info { "Closed class statistics websocket for $desc" }
+          logger.debug { "Closed class statistics websocket for $desc" }
         }
       }
     }
@@ -437,7 +437,7 @@ internal object WsEndoints : KLogging() {
         } finally {
           metrics.wsClassSummaryGauge.labels(agentLaunchId()).dec()
           close(CloseReason(Codes.GOING_AWAY, "Client disconnected"))
-          logger.info { "Closed class summary websocket for $desc" }
+          logger.debug { "Closed class summary websocket for $desc" }
         }
       }
     }
@@ -536,7 +536,7 @@ internal object WsEndoints : KLogging() {
         } finally {
           metrics.wsStudentSummaryGauge.labels(agentLaunchId()).dec()
           close(CloseReason(Codes.GOING_AWAY, "Client disconnected"))
-          logger.info { "Closed student summary websocket for $desc" }
+          logger.debug { "Closed student summary websocket for $desc" }
         }
       }
     }
