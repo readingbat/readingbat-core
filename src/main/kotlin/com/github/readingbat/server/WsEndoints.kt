@@ -37,6 +37,7 @@ import com.github.readingbat.common.Endpoints.CHALLENGE_ENDPOINT
 import com.github.readingbat.common.Endpoints.CHALLENGE_GROUP_ENDPOINT
 import com.github.readingbat.common.Endpoints.CLASS_SUMMARY_ENDPOINT
 import com.github.readingbat.common.Endpoints.STUDENT_SUMMARY_ENDPOINT
+import com.github.readingbat.common.Endpoints.WS_ROOT
 import com.github.readingbat.common.Metrics
 import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.gson
@@ -105,7 +106,7 @@ internal object WsEndoints : KLogging() {
         }
       } ?: false to context
 
-    webSocket("$CHALLENGE_ENDPOINT/{$CLASS_CODE}/{$CHALLENGE_MD5}") {
+    webSocket("$WS_ROOT$CHALLENGE_ENDPOINT/{$CLASS_CODE}/{$CHALLENGE_MD5}") {
       val content = contentSrc.invoke()
       val classCode =
         call.parameters[CLASS_CODE]?.let { ClassCode(it) } ?: throw InvalidRequestException("Missing class code")
@@ -115,7 +116,7 @@ internal object WsEndoints : KLogging() {
       val user = fetchUser() ?: throw InvalidRequestException("Null user")
       val email = user.email // fetchEmail()
       val path = content.functionInfoByMd5(challengeMd5)?.challenge?.path ?: UNKNOWN
-      val desc = "${pathOf(CHALLENGE_ENDPOINT, classCode, challengeMd5)} ($path) - $remote - $email"
+      val desc = "${pathOf(WS_ROOT, CHALLENGE_ENDPOINT, classCode, challengeMd5)} ($path) - $remote - $email"
 
       validateContext(null, null, classCode, null, user, "Student answers")
         .also { (valid, msg) ->
@@ -196,7 +197,7 @@ internal object WsEndoints : KLogging() {
       }
     }
 
-    webSocket("$CHALLENGE_GROUP_ENDPOINT/{$LANGUAGE_NAME}/{$GROUP_NAME}/{$CLASS_CODE}") {
+    webSocket("$WS_ROOT$CHALLENGE_GROUP_ENDPOINT/{$LANGUAGE_NAME}/{$GROUP_NAME}/{$CLASS_CODE}") {
       val content = contentSrc.invoke()
       val (languageName, groupName, classCode) =
         Triple(
@@ -208,7 +209,7 @@ internal object WsEndoints : KLogging() {
       val remote = call.request.origin.remoteHost
       val user = fetchUser() ?: throw InvalidRequestException("Null user")
       val email = user.email //fetchEmail()
-      val desc = "${pathOf(CHALLENGE_ENDPOINT, languageName, groupName, classCode)} - $remote - $email"
+      val desc = "${pathOf(WS_ROOT, CHALLENGE_ENDPOINT, languageName, groupName, classCode)} - $remote - $email"
 
       validateContext(languageName, groupName, classCode, null, user, "Class statistics")
         .also { (valid, msg) ->
@@ -338,7 +339,7 @@ internal object WsEndoints : KLogging() {
       }
     }
 
-    webSocket("$CLASS_SUMMARY_ENDPOINT/{$LANGUAGE_NAME}/{$GROUP_NAME}/{$CLASS_CODE}") {
+    webSocket("$WS_ROOT$CLASS_SUMMARY_ENDPOINT/{$LANGUAGE_NAME}/{$GROUP_NAME}/{$CLASS_CODE}") {
       val content = contentSrc.invoke()
       val (languageName, groupName, classCode) =
         Triple(
@@ -350,7 +351,7 @@ internal object WsEndoints : KLogging() {
       val remote = call.request.origin.remoteHost
       val user = fetchUser() ?: throw InvalidRequestException("Null user")
       val email = user.email //fetchEmail()
-      val desc = "${pathOf(CLASS_SUMMARY_ENDPOINT, languageName, groupName, classCode)} - $remote - $email"
+      val desc = "${pathOf(WS_ROOT, CLASS_SUMMARY_ENDPOINT, languageName, groupName, classCode)} - $remote - $email"
 
       validateContext(languageName, groupName, classCode, null, user, "Class summary")
         .also { (valid, msg) ->
@@ -441,7 +442,7 @@ internal object WsEndoints : KLogging() {
       }
     }
 
-    webSocket("$STUDENT_SUMMARY_ENDPOINT/{$LANGUAGE_NAME}/{$STUDENT_ID}/{$CLASS_CODE}") {
+    webSocket("$WS_ROOT$STUDENT_SUMMARY_ENDPOINT/{$LANGUAGE_NAME}/{$STUDENT_ID}/{$CLASS_CODE}") {
       val content = contentSrc.invoke()
       val (languageName, student, classCode) =
         Triple(
@@ -452,9 +453,10 @@ internal object WsEndoints : KLogging() {
       val remote = call.request.origin.remoteHost
       val user = fetchUser() ?: throw InvalidRequestException("Null user")
       val email = user.email //fetchEmail()
-      val desc = "${pathOf(CLASS_SUMMARY_ENDPOINT, languageName, student.userId, classCode)} - $remote - $email"
+      val desc =
+        "${pathOf(WS_ROOT, CLASS_SUMMARY_ENDPOINT, languageName, student.userId, classCode)} - $remote - $email"
 
-      validateContext(languageName, null, classCode, student, user, "Student sumary")
+      validateContext(languageName, null, classCode, student, user, "Student summary")
         .also { (valid, msg) ->
           if (!valid) {
             close(CloseReason(Codes.GOING_AWAY, "Client disconnected"))

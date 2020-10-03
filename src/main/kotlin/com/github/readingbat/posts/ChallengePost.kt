@@ -49,7 +49,7 @@ import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.gson
 import com.github.readingbat.common.User.Companion.shouldPublish
 import com.github.readingbat.common.browserSession
-import com.github.readingbat.common.userDbmsIdByUserId
+import com.github.readingbat.common.queryUserDbmsId
 import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.ReturnType
@@ -305,7 +305,7 @@ internal object ChallengePost : KLogging() {
       when (type) {
         AUTH_KEY ->
           UserChallengeInfo
-            .deleteWhere { (UserChallengeInfo.userRef eq userDbmsIdByUserId(id)) and (UserChallengeInfo.md5 eq md5) }
+            .deleteWhere { (UserChallengeInfo.userRef eq queryUserDbmsId(id)) and (UserChallengeInfo.md5 eq md5) }
         NO_AUTH_KEY ->
           SessionChallengeInfo
             .deleteWhere { (SessionChallengeInfo.sessionRef eq querySessionDbmsId(id)) and (SessionChallengeInfo.md5 eq md5) }
@@ -318,7 +318,7 @@ internal object ChallengePost : KLogging() {
       when (type) {
         AUTH_KEY ->
           UserAnswerHistory
-            .deleteWhere { (UserAnswerHistory.userRef eq userDbmsIdByUserId(id)) and (UserAnswerHistory.md5 eq md5) }
+            .deleteWhere { (UserAnswerHistory.userRef eq queryUserDbmsId(id)) and (UserAnswerHistory.md5 eq md5) }
         NO_AUTH_KEY ->
           SessionAnswerHistory
             .deleteWhere { (SessionAnswerHistory.sessionRef eq querySessionDbmsId(id)) and (SessionAnswerHistory.md5 eq md5) }

@@ -36,6 +36,7 @@ import com.github.readingbat.common.Constants.YES
 import com.github.readingbat.common.Endpoints.CHALLENGE_ROOT
 import com.github.readingbat.common.Endpoints.CLASS_SUMMARY_ENDPOINT
 import com.github.readingbat.common.Endpoints.TEACHER_PREFS_ENDPOINT
+import com.github.readingbat.common.Endpoints.WS_ROOT
 import com.github.readingbat.common.Endpoints.classSummaryEndpoint
 import com.github.readingbat.common.Endpoints.studentSummaryEndpoint
 import com.github.readingbat.common.FormFields.CHOICE_SOURCE_PARAM
@@ -47,7 +48,7 @@ import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.Message
 import com.github.readingbat.common.Message.Companion.EMPTY_MESSAGE
 import com.github.readingbat.common.User
-import com.github.readingbat.common.User.Companion.fetchActiveClassCode
+import com.github.readingbat.common.User.Companion.queryActiveClassCode
 import com.github.readingbat.common.isNotValidUser
 import com.github.readingbat.dsl.InvalidRequestException
 import com.github.readingbat.dsl.LanguageType
@@ -108,7 +109,7 @@ internal object ClassSummaryPage : KLogging() {
     return createHTML()
       .html {
         val hasGroupName = groupName.isDefined(content, languageName)
-        val activeClassCode = fetchActiveClassCode(user)
+        val activeClassCode = queryActiveClassCode(user)
         val enrollees = classCode.fetchEnrollees()
 
         head {
@@ -343,7 +344,11 @@ internal object ClassSummaryPage : KLogging() {
           else
             wshost = wshost.replace(/^http:/, 'ws:');
 
-          var wsurl = wshost + '$CLASS_SUMMARY_ENDPOINT/' + ${encodeUriElems(languageName, groupName, classCode)};
+          var wsurl = wshost + '$WS_ROOT$CLASS_SUMMARY_ENDPOINT/' + ${
+          encodeUriElems(languageName,
+                         groupName,
+                         classCode)
+        };
           var ws = new WebSocket(wsurl);
 
           ws.onopen = function (event) {

@@ -49,6 +49,7 @@ import com.github.readingbat.common.Endpoints.CHALLENGE_ROOT
 import com.github.readingbat.common.Endpoints.CLEAR_CHALLENGE_ANSWERS_ENDPOINT
 import com.github.readingbat.common.Endpoints.PLAYGROUND_ROOT
 import com.github.readingbat.common.Endpoints.STATIC_ROOT
+import com.github.readingbat.common.Endpoints.WS_ROOT
 import com.github.readingbat.common.Endpoints.classSummaryEndpoint
 import com.github.readingbat.common.FormFields.CHALLENGE_ANSWERS_PARAM
 import com.github.readingbat.common.FormFields.CHALLENGE_NAME_PARAM
@@ -71,8 +72,8 @@ import com.github.readingbat.common.StaticFileNames.DISLIKE_CLEAR_FILE
 import com.github.readingbat.common.StaticFileNames.DISLIKE_COLOR_FILE
 import com.github.readingbat.common.StaticFileNames.LIKE_CLEAR_FILE
 import com.github.readingbat.common.StaticFileNames.LIKE_COLOR_FILE
-import com.github.readingbat.common.User.Companion.fetchActiveClassCode
 import com.github.readingbat.common.User.Companion.gson
+import com.github.readingbat.common.User.Companion.queryActiveClassCode
 import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.isPostgresEnabled
@@ -124,7 +125,7 @@ internal object ChallengePage : KLogging() {
         val challengeName = challenge.challengeName
         val funcInfo = challenge.functionInfo(content)
         val loginPath = pathOf(CHALLENGE_ROOT, languageName, groupName, challengeName)
-        val activeClassCode = fetchActiveClassCode(user)
+        val activeClassCode = queryActiveClassCode(user)
         val enrollees = activeClassCode.fetchEnrollees()
         val msg = Message(queryParam(MSG))
 
@@ -303,7 +304,7 @@ internal object ChallengePage : KLogging() {
           else
             wshost = wshost.replace(/^http:/, 'ws:');
 
-          var wsurl = wshost + '$CHALLENGE_ENDPOINT/'+encodeURIComponent('$classCode')+'/'+encodeURIComponent('$challengeMd5');
+          var wsurl = wshost + '$WS_ROOT$CHALLENGE_ENDPOINT/'+encodeURIComponent('$classCode')+'/'+encodeURIComponent('$challengeMd5');
 
           var ws = new WebSocket(wsurl);
           

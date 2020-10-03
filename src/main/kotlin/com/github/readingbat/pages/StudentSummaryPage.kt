@@ -35,13 +35,14 @@ import com.github.readingbat.common.Constants.YES
 import com.github.readingbat.common.Endpoints.CHALLENGE_ROOT
 import com.github.readingbat.common.Endpoints.STUDENT_SUMMARY_ENDPOINT
 import com.github.readingbat.common.Endpoints.TEACHER_PREFS_ENDPOINT
+import com.github.readingbat.common.Endpoints.WS_ROOT
 import com.github.readingbat.common.Endpoints.classSummaryEndpoint
 import com.github.readingbat.common.FormFields.PREFS_ACTION_PARAM
 import com.github.readingbat.common.FormFields.REMOVE_FROM_CLASS
 import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.FormFields.USER_ID_PARAM
 import com.github.readingbat.common.User
-import com.github.readingbat.common.User.Companion.fetchActiveClassCode
+import com.github.readingbat.common.User.Companion.queryActiveClassCode
 import com.github.readingbat.common.User.Companion.toUser
 import com.github.readingbat.common.isNotValidUser
 import com.github.readingbat.dsl.InvalidRequestException
@@ -73,7 +74,7 @@ internal object StudentSummaryPage : KLogging() {
         call.parameters[LANG_TYPE_QP]?.let { LanguageName(it) } ?: throw InvalidRequestException("Missing language"),
         call.parameters[USER_ID_QP]?.let { toUser(it) } ?: throw InvalidRequestException("Missing user id"),
         call.parameters[CLASS_CODE_QP]?.let { ClassCode(it) } ?: throw InvalidRequestException("Missing class code"))
-    val activeClassCode = fetchActiveClassCode(user)
+    val activeClassCode = queryActiveClassCode(user)
 
     when {
       classCode.isNotValid() -> throw InvalidRequestException("Invalid class code: $classCode")
@@ -213,7 +214,7 @@ internal object StudentSummaryPage : KLogging() {
           else
             wshost = wshost.replace(/^http:/, 'ws:');
 
-          var wsurl = wshost + '$STUDENT_SUMMARY_ENDPOINT/' + ${
+          var wsurl = wshost + '$WS_ROOT$STUDENT_SUMMARY_ENDPOINT/' + ${
           encodeUriElems(languageName,
                          student.userId,
                          classCode)

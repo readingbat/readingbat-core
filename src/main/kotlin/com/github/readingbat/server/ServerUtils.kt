@@ -23,7 +23,6 @@ import com.github.pambrose.common.response.redirectTo
 import com.github.pambrose.common.response.respondWith
 import com.github.pambrose.common.util.Version.Companion.versionDesc
 import com.github.pambrose.common.util.isNotNull
-import com.github.readingbat.common.Constants.UNKNOWN
 import com.github.readingbat.common.Metrics
 import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.toUser
@@ -38,6 +37,7 @@ import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.RedisUnavailableException
 import com.github.readingbat.dsl.isProduction
+import com.github.readingbat.server.Email.Companion.UNKNOWN_EMAIL
 import com.github.readingbat.server.ReadingBatServer.redisPool
 import io.ktor.application.*
 import io.ktor.auth.*
@@ -72,7 +72,7 @@ typealias PipelineCall = PipelineContext<Unit, ApplicationCall>
 internal object ServerUtils : KLogging() {
 
   private val userIdCache = ConcurrentHashMap<String, Long>()
-  private val emailCache = ConcurrentHashMap<String, String>()
+  private val emailCache = ConcurrentHashMap<String, Email>()
 
   fun getVersionDesc(asJson: Boolean = false): String = ReadingBatServer::class.versionDesc(asJson)
 
@@ -96,10 +96,10 @@ internal object ServerUtils : KLogging() {
     userPrincipal?.userId
       ?.let { userId ->
         emailCache.computeIfAbsent(userId) {
-          (fetchUser()?.email?.value ?: UNKNOWN)
+          (fetchUser()?.email?.value?.let { Email(it) } ?: UNKNOWN_EMAIL)
             .also { email -> logger.info { "Looked up email for $userId: $email" } }
         }
-      } ?: UNKNOWN
+      } ?: UNKNOWN_EMAIL
 
   fun ApplicationCall.fetchUserDbmsId() =
     userPrincipal?.userId
@@ -200,7 +200,7 @@ operator fun ResultRow.get(index: Int) = fieldIndex.filter { it.value == index }
 object KotlinLoggingSqlLogger : SqlLogger {
   override
   fun log(context: StatementContext, transaction: Transaction) {
-    ReadingBatServer.logger.info { "SQL: ${context.expandArgs(transaction)}" }
+    ServerUtils.logger.info { "SQL: ${context.expandArgs(transaction)}" }
   }
 }
 

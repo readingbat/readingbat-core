@@ -38,7 +38,7 @@ import com.github.readingbat.common.FormFields.UPDATE_ACTIVE_CLASS
 import com.github.readingbat.common.Message
 import com.github.readingbat.common.Message.Companion.EMPTY_MESSAGE
 import com.github.readingbat.common.User
-import com.github.readingbat.common.User.Companion.fetchActiveClassCode
+import com.github.readingbat.common.User.Companion.queryActiveClassCode
 import com.github.readingbat.common.isValidUser
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.pages.HelpAndLogin.helpAndLogin
@@ -82,7 +82,7 @@ internal object TeacherPrefsPage : KLogging() {
         }
 
         body {
-          val activeClassCode = fetchActiveClassCode(user)
+          val activeClassCode = queryActiveClassCode(user)
           val returnPath = queryParam(RETURN_PARAM, "/")
 
           helpAndLogin(content, user, returnPath, activeClassCode.isEnabled)

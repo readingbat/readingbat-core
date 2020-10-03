@@ -24,14 +24,18 @@ import com.github.pambrose.common.util.Version.Companion.versionDesc
 import com.github.pambrose.common.util.getBanner
 import com.github.pambrose.common.util.isNotNull
 import com.github.pambrose.common.util.isNull
+import com.github.pambrose.common.util.randomId
 import com.github.readingbat.common.CommonUtils.maskUrl
 import com.github.readingbat.common.Constants.REDIS_IS_DOWN
 import com.github.readingbat.common.Constants.UNASSIGNED
+import com.github.readingbat.common.Constants.UNKNOWN_USER_ID
 import com.github.readingbat.common.Endpoints.STATIC_ROOT
 import com.github.readingbat.common.EnvVar.*
 import com.github.readingbat.common.Metrics
 import com.github.readingbat.common.Property.*
 import com.github.readingbat.common.ScriptPools
+import com.github.readingbat.common.User.Companion.createUnknownUser
+import com.github.readingbat.common.User.Companion.userExists
 import com.github.readingbat.dsl.*
 import com.github.readingbat.server.AdminRoutes.adminRoutes
 import com.github.readingbat.server.Installs.installs
@@ -68,6 +72,7 @@ import kotlin.time.seconds
 @Version(version = "1.5.0", date = "10/1/20")
 object ReadingBatServer : KLogging() {
   private val startTime = TimeSource.Monotonic.markNow()
+  internal val serverSessionId = randomId(10)
   internal val timeStamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("M/d/y H:m:ss"))
   internal val upTime get() = startTime.elapsedNow()
   internal val content = AtomicReference(ReadingBatContent())
@@ -207,8 +212,13 @@ internal fun Application.module() {
   SENDGRID_PREFIX_PROPERTY.setProperty(
     SENDGRID_PREFIX.getEnv(SENDGRID_PREFIX_PROPERTY.configProperty(this, "https://www.readingbat.com")))
 
-  if (isPostgresEnabled())
+  if (isPostgresEnabled()) {
     ReadingBatServer.postgres
+
+    // Create unknown user if it does not already exist
+    if (!userExists(UNKNOWN_USER_ID))
+      createUnknownUser()
+  }
 
   if (isAgentEnabled()) {
     if (PROXY_HOSTNAME.getRequiredProperty().isNotEmpty()) {
@@ -245,6 +255,7 @@ internal fun Application.module() {
            redirectHostname,
            forwardedHeaderSupportEnabled,
            xforwardedHeaderSupportEnabled)
+
   intercepts()
 
   routing {

@@ -184,7 +184,6 @@ inline class LanguageName(val value: String) {
 
   companion object {
     internal val EMPTY_LANGUAGE = LanguageName("")
-    internal val ANY_LANGUAGE = LanguageName("*")
     private val jmvLanguages by lazy { listOf(Java.languageName, Kotlin.languageName) }
 
     internal fun Parameters.getLanguageName(name: String) = this[name]?.let { LanguageName(it) } ?: EMPTY_LANGUAGE
@@ -206,7 +205,6 @@ inline class GroupName(val value: String) {
 
   companion object {
     internal val EMPTY_GROUP = GroupName("")
-    internal val ANY_GROUP = GroupName("*")
     internal fun Parameters.getGroupName(name: String) = this[name]?.let { GroupName(it) } ?: EMPTY_GROUP
   }
 }
@@ -222,7 +220,6 @@ inline class ChallengeName(val value: String) {
 
   companion object {
     private val EMPTY_CHALLENGE = ChallengeName("")
-    internal val ANY_CHALLENGE = ChallengeName("*")
     internal fun Parameters.getChallengeName(name: String) = this[name]?.let { ChallengeName(it) } ?: EMPTY_CHALLENGE
   }
 }
@@ -270,6 +267,7 @@ inline class Email(val value: String) {
 
   companion object {
     val EMPTY_EMAIL = Email("")
+    val UNKNOWN_EMAIL = Email(UNKNOWN)
     fun Parameters.getEmail(name: String) = this[name]?.let { Email(it) } ?: EMPTY_EMAIL
   }
 }

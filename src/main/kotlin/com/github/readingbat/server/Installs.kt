@@ -49,6 +49,7 @@ import io.ktor.sessions.*
 import io.ktor.websocket.*
 import mu.KLogging
 import org.slf4j.event.Level
+import java.util.concurrent.atomic.AtomicLong
 
 internal object Installs : KLogging() {
 
@@ -116,6 +117,7 @@ internal object Installs : KLogging() {
 
     install(CallLogging) {
       level = Level.INFO
+
       if (FILTER_LOG.getEnv(true))
         filter { call ->
           call.request.path().let { it.startsWith("/") && !it.startsWith("/$STATIC/") && it != "/ping" }
@@ -137,6 +139,14 @@ internal object Installs : KLogging() {
 
     install(DefaultHeaders) {
       header("X-Engine", "Ktor")
+    }
+
+    val requestCounter = AtomicLong()
+
+    install(CallId) {
+      retrieveFromHeader(HttpHeaders.XRequestId)
+      generate { "${ReadingBatServer.serverSessionId}-${requestCounter.incrementAndGet()}" }
+      verify { it.isNotEmpty() }
     }
 
     /*

@@ -25,6 +25,8 @@ import com.github.readingbat.common.BrowserSession.Companion.createBrowserSessio
 import com.github.readingbat.common.ClassCode.Companion.DISABLED_CLASS_CODE
 import com.github.readingbat.common.CommonUtils.keyOf
 import com.github.readingbat.common.CommonUtils.md5Of
+import com.github.readingbat.common.Constants.UNKNOWN
+import com.github.readingbat.common.Constants.UNKNOWN_USER_ID
 import com.github.readingbat.common.KeyConstants.AUTH_KEY
 import com.github.readingbat.common.KeyConstants.CHALLENGE_ANSWERS_KEY
 import com.github.readingbat.common.KeyConstants.CORRECT_ANSWERS_KEY
@@ -39,11 +41,10 @@ import com.github.readingbat.posts.ChallengeHistory
 import com.github.readingbat.posts.ChallengeResults
 import com.github.readingbat.posts.DashboardInfo
 import com.github.readingbat.server.*
-import com.github.readingbat.server.ChallengeName.Companion.ANY_CHALLENGE
 import com.github.readingbat.server.Email.Companion.EMPTY_EMAIL
+import com.github.readingbat.server.Email.Companion.UNKNOWN_EMAIL
 import com.github.readingbat.server.FullName.Companion.EMPTY_FULLNAME
-import com.github.readingbat.server.GroupName.Companion.ANY_GROUP
-import com.github.readingbat.server.LanguageName.Companion.ANY_LANGUAGE
+import com.github.readingbat.server.FullName.Companion.UNKNOWN_FULLNAME
 import com.github.readingbat.server.ReadingBatServer.adminUsers
 import com.github.readingbat.server.ResetId.Companion.EMPTY_RESET_ID
 import com.github.readingbat.server.WsEndoints.classTopicName
@@ -182,7 +183,8 @@ internal class User {
 
   fun isInDbms() =
     transaction {
-      Users.slice(Count(Users.id))
+      Users
+        .slice(Count(Users.id))
         .select { Users.id eq userDbmsId }
         .map { it[0] as Long }
         .first() > 0
@@ -225,22 +227,10 @@ internal class User {
     }
 
   fun correctAnswersKey(languageName: LanguageName, groupName: GroupName, challengeName: ChallengeName) =
-    keyOf(CORRECT_ANSWERS_KEY,
-          AUTH_KEY,
-          userId,
-          if (languageName == ANY_LANGUAGE && groupName == ANY_GROUP && challengeName == ANY_CHALLENGE)
-            "*"
-          else
-            md5Of(languageName, groupName, challengeName))
+    keyOf(CORRECT_ANSWERS_KEY, AUTH_KEY, userId, md5Of(languageName, groupName, challengeName))
 
   fun challengeAnswersKey(languageName: LanguageName, groupName: GroupName, challengeName: ChallengeName) =
-    keyOf(CHALLENGE_ANSWERS_KEY,
-          AUTH_KEY,
-          userId,
-          if (languageName == ANY_LANGUAGE && groupName == ANY_GROUP && challengeName == ANY_CHALLENGE)
-            "*"
-          else
-            md5Of(languageName, groupName, challengeName))
+    keyOf(CHALLENGE_ANSWERS_KEY, AUTH_KEY, userId, md5Of(languageName, groupName, challengeName))
 
   fun historyExists(md5: String, invocation: Invocation) =
     UserAnswerHistory
@@ -481,7 +471,7 @@ internal class User {
 
     fun toUser(userId: String, row: ResultRow) = User(userId, null, row)
 
-    fun fetchActiveClassCode(user: User?) =
+    fun queryActiveClassCode(user: User?) =
       when {
         user.isNull() || !isPostgresEnabled() -> DISABLED_CLASS_CODE
         else ->
@@ -494,7 +484,7 @@ internal class User {
           }
       }
 
-    fun fetchPreviousTeacherClassCode(user: User?) =
+    fun queryPreviousTeacherClassCode(user: User?) =
       when {
         user.isNull() || !isPostgresEnabled() -> DISABLED_CLASS_CODE
         else ->
@@ -507,6 +497,29 @@ internal class User {
           }
       }
 
+    fun userExists(userId: String) =
+      transaction {
+        Users
+          .slice(Count(Users.id))
+          .select { Users.userId eq userId }
+          .map { it[0] as Long }
+          .first() > 0
+      }
+
+    fun createUnknownUser() =
+      transaction {
+        Users
+          .insertAndGetId { row ->
+            row[userId] = UNKNOWN_USER_ID
+            row[name] = UNKNOWN_FULLNAME.value
+            row[email] = UNKNOWN_EMAIL.value
+            row[enrolledClassCode] = DISABLED_CLASS_CODE.value
+            row[defaultLanguage] = defaultLanguageType.languageName.value
+            row[salt] = UNKNOWN
+            row[digest] = UNKNOWN
+          }.value.also { logger.info { "Created unknown user ${it}" } }
+      }
+
     fun createUser(name: FullName,
                    email: Email,
                    password: Password,
@@ -517,7 +530,7 @@ internal class User {
           transaction {
             val salt = newStringSalt()
             val digest = password.sha256(salt)
-            val userId =
+            val userDbmsId =
               Users
                 .insertAndGetId { row ->
                   row[userId] = user.userId
@@ -535,7 +548,7 @@ internal class User {
             UserSessions
               .insert { row ->
                 row[sessionRef] = browserId
-                row[userRef] = userId
+                row[userRef] = userDbmsId
                 row[activeClassCode] = DISABLED_CLASS_CODE.value
                 row[previousTeacherClassCode] = DISABLED_CLASS_CODE.value
               }
@@ -571,7 +584,7 @@ internal class User {
   }
 }
 
-internal fun userDbmsIdByUserId(userId: String) =
+internal fun queryUserDbmsId(userId: String) =
   Users
     .slice(Users.id)
     .select { Users.userId eq userId }

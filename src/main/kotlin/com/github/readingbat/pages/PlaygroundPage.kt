@@ -26,7 +26,7 @@ import com.github.readingbat.common.Endpoints.CHALLENGE_ROOT
 import com.github.readingbat.common.Endpoints.STATIC_ROOT
 import com.github.readingbat.common.StaticFileNames.RUN_BUTTON
 import com.github.readingbat.common.User
-import com.github.readingbat.common.User.Companion.fetchActiveClassCode
+import com.github.readingbat.common.User.Companion.queryActiveClassCode
 import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.pages.PageUtils.addLink
@@ -69,7 +69,7 @@ internal object PlaygroundPage {
         val challengeName = challenge.challengeName
         val funcInfo = challenge.functionInfo(content)
         val loginPath = pathOf(CHALLENGE_ROOT, languageName, groupName, challengeName)
-        val activeClassCode = fetchActiveClassCode(user)
+        val activeClassCode = queryActiveClassCode(user)
 
         head {
           script { src = "https://unpkg.com/kotlin-playground@1"; attributes["data-selector"] = ".$KOTLIN_CODE" }

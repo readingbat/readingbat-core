@@ -111,7 +111,7 @@ internal object SessionActivites : KLogging() {
     val organization by map
     val time_zone by map
 
-    fun summary() = listOf(city, state_prov, country_name, organization).joinToString(", ")
+    fun summary() = if (valid) listOf(city, state_prov, country_name, organization).joinToString(", ") else UNKNOWN
 
     fun save() {
       transaction {
@@ -199,13 +199,11 @@ internal object SessionActivites : KLogging() {
     }
 
   fun queryGeoDbmsId(ipAddress: String) =
-    transaction {
-      GeoInfos
-        .slice(GeoInfos.id)
-        .select { GeoInfos.ip eq ipAddress }
-        .map { it[GeoInfos.id].value }
-        .firstOrNull() ?: throw InvalidConfigurationException("Missing ip address: $ipAddress")
-    }
+    GeoInfos
+      .slice(GeoInfos.id)
+      .select { GeoInfos.ip eq ipAddress }
+      .map { it[GeoInfos.id].value }
+      .firstOrNull() ?: throw InvalidConfigurationException("Missing ip address: $ipAddress")
 
   fun BrowserSession.markActivity(source: String, call: ApplicationCall) {
 

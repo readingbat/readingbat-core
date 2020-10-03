@@ -31,6 +31,7 @@ import com.github.readingbat.common.Endpoints.CHALLENGE_GROUP_ENDPOINT
 import com.github.readingbat.common.Endpoints.CHALLENGE_ROOT
 import com.github.readingbat.common.Endpoints.CLEAR_GROUP_ANSWERS_ENDPOINT
 import com.github.readingbat.common.Endpoints.STATIC_ROOT
+import com.github.readingbat.common.Endpoints.WS_ROOT
 import com.github.readingbat.common.Endpoints.classSummaryEndpoint
 import com.github.readingbat.common.FormFields.CHALLENGE_ANSWERS_PARAM
 import com.github.readingbat.common.FormFields.CORRECT_ANSWERS_PARAM
@@ -40,8 +41,8 @@ import com.github.readingbat.common.Message
 import com.github.readingbat.common.StaticFileNames.GREEN_CHECK
 import com.github.readingbat.common.StaticFileNames.WHITE_CHECK
 import com.github.readingbat.common.User
-import com.github.readingbat.common.User.Companion.fetchActiveClassCode
 import com.github.readingbat.common.User.Companion.gson
+import com.github.readingbat.common.User.Companion.queryActiveClassCode
 import com.github.readingbat.common.browserSession
 import com.github.readingbat.common.challengeAnswersKey
 import com.github.readingbat.common.correctAnswersKey
@@ -111,7 +112,7 @@ internal object ChallengeGroupPage : KLogging() {
         val groupName = challengeGroup.groupName
         val challenges = challengeGroup.challenges
         val loginPath = pathOf(CHALLENGE_ROOT, languageName, groupName)
-        val activeClassCode = fetchActiveClassCode(user)
+        val activeClassCode = queryActiveClassCode(user)
         val enrollees = activeClassCode.fetchEnrollees()
         val msg = Message(queryParam(MSG))
 
@@ -209,7 +210,11 @@ internal object ChallengeGroupPage : KLogging() {
           else
             wshost = wshost.replace(/^http:/, 'ws:');
 
-          var wsurl = wshost + '${CHALLENGE_GROUP_ENDPOINT}/' + ${encodeUriElems(languageName, groupName, classCode)};
+          var wsurl = wshost + '$WS_ROOT$CHALLENGE_GROUP_ENDPOINT/' + ${
+          encodeUriElems(languageName,
+                         groupName,
+                         classCode)
+        };
           var ws = new WebSocket(wsurl);
 
           ws.onopen = function (event) {

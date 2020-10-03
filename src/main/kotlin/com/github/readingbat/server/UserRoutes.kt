@@ -101,6 +101,28 @@ import io.ktor.http.*
 import io.ktor.http.ContentType.Text.CSS
 import io.ktor.routing.*
 import io.ktor.sessions.*
+import kotlinx.coroutines.withTimeout
+import kotlin.time.Duration
+
+fun Route.routeTimeout(time: Duration, callback: Route.() -> Unit): Route {
+  // With createChild, we create a child node for this received Route
+  val routeWithTimeout = this.createChild(object : RouteSelector(1.0) {
+    override fun evaluate(context: RoutingResolveContext, segmentIndex: Int): RouteSelectorEvaluation =
+      RouteSelectorEvaluation.Constant
+  })
+
+  // Intercepts calls from this route at the features step
+  routeWithTimeout.intercept(ApplicationCallPipeline.Features) {
+    withTimeout(time.toLongMilliseconds()) {
+      proceed()
+    }
+  }
+
+  // Configure this route with the block provided by the user
+  callback(routeWithTimeout)
+
+  return routeWithTimeout
+}
 
 internal fun Routing.userRoutes(metrics: Metrics, contentSrc: () -> ReadingBatContent) {
 

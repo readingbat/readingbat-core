@@ -53,7 +53,7 @@ internal data class ClassCode(val value: String) {
             .firstOrNull() ?: throw InvalidConfigurationException("Missing class code $value")
         }
       }.let {
-        logger.info { "Looked up classId in ${it.duration}" }
+        logger.debug { "Looked up classId in ${it.duration}" }
         it.value
       }
 
@@ -65,7 +65,7 @@ internal data class ClassCode(val value: String) {
         .slice(Count(Classes.classCode))
         .select { Classes.classCode eq value }
         .map { it[0] as Long }
-        .first().also { logger.info { "ClassCode.isValid() returned $it for $value" } } > 0
+        .first().also { logger.debug { "ClassCode.isValid() returned $it for $value" } } > 0
     }
 
   fun fetchEnrollees(): List<User> =
@@ -118,7 +118,7 @@ internal data class ClassCode(val value: String) {
         .slice(Users.userId)
         .select { Classes.classCode eq value }
         .map { it[0] as String }
-        .firstOrNull() ?: "").also { logger.info { "fetchClassTeacherId() returned $it" } }
+        .firstOrNull() ?: "").also { logger.debug { "fetchClassTeacherId() returned $it" } }
     }
 
   override fun toString() = value

@@ -31,7 +31,7 @@ import com.github.readingbat.common.Message
 import com.github.readingbat.common.Property.GRAFANA_URL
 import com.github.readingbat.common.Property.PROMETHEUS_URL
 import com.github.readingbat.common.User
-import com.github.readingbat.common.User.Companion.fetchActiveClassCode
+import com.github.readingbat.common.User.Companion.queryActiveClassCode
 import com.github.readingbat.common.isAdminUser
 import com.github.readingbat.common.isValidUser
 import com.github.readingbat.dsl.ReadingBatContent
@@ -66,7 +66,7 @@ internal object SystemAdminPage : KLogging() {
         head { headDefault(content) }
 
         body {
-          val activeClassCode = fetchActiveClassCode(user)
+          val activeClassCode = queryActiveClassCode(user)
           val returnPath = queryParam(RETURN_PARAM, "/")
 
           helpAndLogin(content, user, returnPath, activeClassCode.isEnabled)

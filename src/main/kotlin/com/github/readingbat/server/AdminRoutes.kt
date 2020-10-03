@@ -41,7 +41,6 @@ import io.ktor.http.ContentType.Text.Plain
 import io.ktor.response.*
 import io.ktor.routing.*
 import io.ktor.sessions.*
-import io.ktor.util.pipeline.*
 import kotlinx.html.body
 import kotlinx.html.div
 import mu.KLogging
@@ -96,7 +95,7 @@ internal object AdminRoutes : KLogging() {
       }
     }
 
-    fun PipelineContext<Unit, ApplicationCall>.clearPrincipal() {
+    fun PipelineCall.clearPrincipal() {
       call.userPrincipal
         .also {
           if (it.isNotNull()) {
@@ -109,7 +108,7 @@ internal object AdminRoutes : KLogging() {
         }
     }
 
-    fun PipelineContext<Unit, ApplicationCall>.clearSessionId() {
+    fun PipelineCall.clearSessionId() {
       call.browserSession
         .also {
           if (it.isNotNull()) {

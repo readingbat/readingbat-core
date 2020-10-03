@@ -150,10 +150,12 @@ CREATE TABLE server_requests
 (
     id           BIGSERIAL PRIMARY KEY,
     created      TIMESTAMP DEFAULT NOW(),
+    request_id   TEXT NOT NULL UNIQUE,
     session_ref  INTEGER REFERENCES browser_sessions ON DELETE CASCADE,
     user_ref     INTEGER REFERENCES users ON DELETE CASCADE,
     geo_ref      INTEGER REFERENCES geo_info ON DELETE CASCADE,
     verb         TEXT NOT NULL,
     path         TEXT NOT NULL,
-    query_string TEXT NOT NULL
+    query_string TEXT NOT NULL,
+    duration     INTEGER   DEFAULT 0
 );
