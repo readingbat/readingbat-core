@@ -18,11 +18,9 @@
 package com.github.readingbat.server
 
 import com.github.pambrose.common.concurrent.BooleanMonitor
-import com.github.pambrose.common.redis.RedisUtils.withNonNullRedisPool
-import com.github.pambrose.common.redis.RedisUtils.withRedisPool
 import com.github.pambrose.common.time.format
 import com.github.pambrose.common.util.isNotNull
-import com.github.pambrose.common.util.isNull
+import com.github.pambrose.common.util.simpleClassName
 import com.github.readingbat.common.ClassCode
 import com.github.readingbat.common.CommonUtils.keyOf
 import com.github.readingbat.common.CommonUtils.md5Of
@@ -47,7 +45,6 @@ import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.InvalidRequestException
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.agentLaunchId
-import com.github.readingbat.server.ReadingBatServer.redisPool
 import com.github.readingbat.server.ServerUtils.fetchUser
 import com.github.readingbat.server.ServerUtils.rows
 import io.ktor.features.*
@@ -55,20 +52,24 @@ import io.ktor.http.cio.websocket.*
 import io.ktor.http.cio.websocket.CloseReason.*
 import io.ktor.routing.*
 import io.ktor.websocket.*
+import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import mu.KLogging
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
-import redis.clients.jedis.JedisPubSub
+import org.joda.time.DateTime.now
+import java.util.*
+import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.collections.LinkedHashSet
 import kotlin.time.TimeSource
-import kotlin.time.seconds
+import kotlin.time.milliseconds
 
 internal object WsEndoints : KLogging() {
 
@@ -78,7 +79,16 @@ internal object WsEndoints : KLogging() {
   private const val CLASS_CODE = "classCode"
   private const val CHALLENGE_MD5 = "challengeMd5"
 
+  private val wsConnections = Collections.synchronizedSet(LinkedHashSet<DefaultWebSocketSession>())
+  private val dispatcher = Executors.newCachedThreadPool().asCoroutineDispatcher()
+  private val clock = TimeSource.Monotonic
+
   fun classTopicName(classCode: ClassCode, challengeMd5: String) = keyOf(classCode, challengeMd5)
+
+  fun exceptionHandler(name: String) =
+    CoroutineExceptionHandler { _, e ->
+      logger.error(e) { "Error ${e.simpleClassName} ${e.message} in $name" }
+    }
 
   fun Routing.wsEndpoints(metrics: Metrics, contentSrc: () -> ReadingBatContent) {
 
@@ -88,148 +98,163 @@ internal object WsEndoints : KLogging() {
                         student: User?,
                         user: User,
                         context: String) =
-      redisPool?.withRedisPool { redis ->
-        when {
-          redis.isNull() -> false to context
-          languageName.isNotNull() && languageName.isNotValid() -> false to "Invalid language: $languageName"
-          groupName.isNotNull() && groupName.isNotValid() -> false to "Invalid group: $groupName"
-          classCode.isNotValid() -> false to "Invalid class code: $classCode"
-          classCode.isNotEnabled -> false to "Class code not enabled"
-          student.isNotNull() && student.isNotValidUser() -> false to "Invalid student id: ${student.userId}"
-          student.isNotNull() && student.isNotEnrolled(classCode) -> false to "Student not enrolled in class"
-          user.isNotValidUser() -> false to "Invalid user id: ${user.userId}"
-          classCode.fetchClassTeacherId() != user.userId -> {
-            val teacherId = classCode.fetchClassTeacherId()
-            false to "User id ${user.userId} does not match class code's teacher Id $teacherId"
-          }
-          else -> true to ""
+      when {
+        languageName.isNotNull() && languageName.isNotValid() -> false to "Invalid language: $languageName"
+        groupName.isNotNull() && groupName.isNotValid() -> false to "Invalid group: $groupName"
+        classCode.isNotValid() -> false to "Invalid class code: $classCode"
+        classCode.isNotEnabled -> false to "Class code not enabled"
+        student.isNotNull() && student.isNotValidUser() -> false to "Invalid student id: ${student.userId}"
+        student.isNotNull() && student.isNotEnrolled(classCode) -> false to "Student not enrolled in class"
+        user.isNotValidUser() -> false to "Invalid user id: ${user.userId}"
+        classCode.fetchClassTeacherId() != user.userId -> {
+          val teacherId = classCode.fetchClassTeacherId()
+          false to "User id ${user.userId} does not match class code's teacher Id $teacherId"
         }
-      } ?: false to context
-
-    webSocket("$WS_ROOT$CHALLENGE_ENDPOINT/{$CLASS_CODE}/{$CHALLENGE_MD5}") {
-      val content = contentSrc.invoke()
-      val classCode =
-        call.parameters[CLASS_CODE]?.let { ClassCode(it) } ?: throw InvalidRequestException("Missing class code")
-      val challengeMd5 = call.parameters[CHALLENGE_MD5] ?: throw InvalidRequestException("Missing challenge md5")
-      val finished = BooleanMonitor(false)
-      val remote = call.request.origin.remoteHost
-      val user = fetchUser() ?: throw InvalidRequestException("Null user")
-      val email = user.email // fetchEmail()
-      val path = content.functionInfoByMd5(challengeMd5)?.challenge?.path ?: UNKNOWN
-      val desc = "${pathOf(WS_ROOT, CHALLENGE_ENDPOINT, classCode, challengeMd5)} ($path) - $remote - $email"
-
-      validateContext(null, null, classCode, null, user, "Student answers")
-        .also { (valid, msg) ->
-          if (!valid) {
-            close(CloseReason(Codes.GOING_AWAY, "Client disconnected"))
-            throw InvalidRequestException(msg)
-          }
-        }
-
-      logger.debug { "Opened student answers websocket for $desc" }
-
-      outgoing.invokeOnClose {
-        logger.debug { "Close received for student answers websocket for $desc" }
-        finished.set(true)
+        else -> true to ""
       }
 
-      metrics.measureEndpointRequest("/websocket_student_answers") {
-        try {
-          metrics.wsStudentAnswerCount.labels(agentLaunchId()).inc()
-          metrics.wsStudentAnswerGauge.labels(agentLaunchId()).inc()
+    webSocket("$WS_ROOT$CHALLENGE_ENDPOINT/{$CLASS_CODE}/{$CHALLENGE_MD5}") {
+      try {
+        val finished = BooleanMonitor(false)
+
+        outgoing.invokeOnClose {
+          logger.debug { "Close received for student answers websocket:  ${wsConnections.size}" }
+          finished.set(true)
+        }
+
+        wsConnections += this
+
+        logger.info { "Opened student answers websocket: ${wsConnections.size}" }
+
+        metrics.wsStudentAnswerCount.labels(agentLaunchId()).inc()
+        metrics.wsStudentAnswerGauge.labels(agentLaunchId()).inc()
+
+        metrics.measureEndpointRequest("/websocket_student_answers") {
+
+          logger.info { "Past thread context: ${wsConnections.size}" }
+
+          val content = contentSrc.invoke()
+          val p = call.parameters
+          val classCode = p[CLASS_CODE]?.let { ClassCode(it) } ?: throw InvalidRequestException("Missing class code")
+          val challengeMd5 = p[CHALLENGE_MD5] ?: throw InvalidRequestException("Missing challenge md5")
+          val remote = call.request.origin.remoteHost
+          val user = fetchUser() ?: throw InvalidRequestException("Null user")
+          val email = user.email
+          val path = content.functionInfoByMd5(challengeMd5)?.challenge?.path ?: UNKNOWN
+          val desc = "${pathOf(WS_ROOT, CHALLENGE_ENDPOINT, classCode, challengeMd5)} ($path) - $remote - $email"
+
+          logger.info { "Before validateContext: ${wsConnections.size}" }
+
+          validateContext(null, null, classCode, null, user, "Student answers")
+            .also { (valid, msg) ->
+              if (!valid) {
+                throw InvalidRequestException(msg)
+              }
+            }
+
+          logger.info { "Before incoming: ${wsConnections.size}" }
 
           incoming
             .consumeAsFlow()
             .mapNotNull { it as? Frame.Text }
             .collect { frame ->
               val inboundMsg = frame.readText()
-
-              val clock = TimeSource.Monotonic
               val start = clock.markNow()
 
-              launch {
-                var secs = 0
-                while (!finished.get()) {
-                  val duration = start.elapsedNow()
-                  val json = gson.toJson(PingMessage(duration.format()))
-                  logger.debug { "Sending $json" }
-                  outgoing.send(Frame.Text(json))
-                  delay(1.seconds)
-                  secs += 1
-                }
-              }
+              logger.info { "Past incoming: ${wsConnections.size}" }
 
-              val pubsub =
-                object : JedisPubSub() {
-                  override fun onMessage(channel: String?, message: String?) {
-                    if (message.isNotNull()) {
-                      logger.debug { "Sending data $message from $channel to $challengeMd5" }
-                      metrics.wsStudentAnswerResponseCount.labels(agentLaunchId()).inc()
-                      runBlocking { outgoing.send(Frame.Text(message)) }
+              val pinger =
+                launch(dispatcher + exceptionHandler("pinger")) {
+                  logger.info { "Starting pinger: ${wsConnections.size}" }
+                  while (!finished.get()) {
+                    gson.toJson(PingMessage(start.elapsedNow().format()))
+                      .also { json ->
+                        logger.debug { "Sending $json" }
+                        outgoing.send(Frame.Text(json))
+                      }
+                    delay(500.milliseconds)
+                    if (finished.get())
+                      continue
+                    delay(500.milliseconds)
+                  }
+                }
+
+              logger.info { "Before pubsub: ${wsConnections.size}" }
+
+              val subscriber =
+                launch(dispatcher + exceptionHandler("outgoing.send()")) {
+                  val cutOff = now()
+                  val topicName = classTopicName(classCode, challengeMd5)
+                  for (v in ReadingBatServer.channel.openSubscription()) {
+                    if (finished.get())
+                      break
+                    when {
+                      v.topic != topicName -> logger.debug { "Ignoring msg that does not apply: ${v.topic}" }
+                      else -> {
+                        logger.debug { "Sending value: $v" }
+                        metrics.wsStudentAnswerResponseCount.labels(agentLaunchId()).inc()
+                        outgoing.send(Frame.Text(v.message))
+                      }
                     }
                   }
-
-                  override fun onSubscribe(channel: String?, subscribedChannels: Int) {
-                    logger.debug { "Subscribed to $channel for $challengeMd5" }
-                  }
-
-                  override fun onUnsubscribe(channel: String?, subscribedChannels: Int) {
-                    logger.debug { "Unsubscribed from $channel for $challengeMd5" }
-                  }
                 }
 
-              redisPool?.withNonNullRedisPool { redis ->
-                val subscriber = launch { redis.subscribe(pubsub, classTopicName(classCode, challengeMd5)) }
+              logger.info { "Waiting for finished to be true: ${wsConnections.size}" }
 
-                // Wait for closure to happen
-                finished.waitUntilTrue()
+              // Wait for user to close socket
+              finished.waitUntilTrue()
 
-                pubsub.unsubscribe()
+              // Send this to break out of loop reading channel
+              ReadingBatServer.channel.send(PublishedData("no-op", ""))
 
-                runBlocking { subscriber.join() }
-              }
+              pinger.join()
+              subscriber.join()
             }
-        } finally {
-          metrics.wsStudentAnswerGauge.labels(agentLaunchId()).dec()
-          close(CloseReason(Codes.GOING_AWAY, "Client disconnected"))
-          logger.debug { "Closed student answers websocket for $desc" }
         }
+      } finally {
+        metrics.wsStudentAnswerGauge.labels(agentLaunchId()).dec()
+        close(CloseReason(Codes.GOING_AWAY, "Client disconnected"))
+        logger.debug { "Closed student answers websocket for desc" }
+        wsConnections -= this
+        logger.info { "Connection count exit: ${wsConnections.size}" }
       }
     }
 
     webSocket("$WS_ROOT$CHALLENGE_GROUP_ENDPOINT/{$LANGUAGE_NAME}/{$GROUP_NAME}/{$CLASS_CODE}") {
-      val content = contentSrc.invoke()
-      val (languageName, groupName, classCode) =
-        Triple(
-          call.parameters[LANGUAGE_NAME]?.let { LanguageName(it) } ?: throw InvalidRequestException("Missing language"),
-          call.parameters[GROUP_NAME]?.let { GroupName(it) } ?: throw InvalidRequestException("Missing group name"),
-          call.parameters[CLASS_CODE]?.let { ClassCode(it) } ?: throw InvalidRequestException("Missing class code"))
-      val challenges = content.findGroup(languageName, groupName).challenges
-      val finished = AtomicBoolean(false)
-      val remote = call.request.origin.remoteHost
-      val user = fetchUser() ?: throw InvalidRequestException("Null user")
-      val email = user.email //fetchEmail()
-      val desc = "${pathOf(WS_ROOT, CHALLENGE_ENDPOINT, languageName, groupName, classCode)} - $remote - $email"
+      try {
+        val finished = AtomicBoolean(false)
 
-      validateContext(languageName, groupName, classCode, null, user, "Class statistics")
-        .also { (valid, msg) ->
-          if (!valid) {
-            close(CloseReason(Codes.GOING_AWAY, "Client disconnected"))
-            throw InvalidRequestException(msg)
-          }
+        logger.debug { "Opened class statistics websocket" }
+
+        outgoing.invokeOnClose {
+          logger.debug { "Close received for class statistics websocket" }
+          finished.set(true)
         }
 
-      logger.debug { "Opened class statistics websocket for $desc" }
+        metrics.wsClassStatisticsCount.labels(agentLaunchId()).inc()
+        metrics.wsClassStatisticsGauge.labels(agentLaunchId()).inc()
 
-      outgoing.invokeOnClose {
-        logger.debug { "Close received for class statistics websocket for $desc" }
-        finished.set(true)
-      }
+        metrics.measureEndpointRequest("/websocket_class_statistics") {
 
-      metrics.measureEndpointRequest("/websocket_class_statistics") {
-        try {
-          metrics.wsClassStatisticsCount.labels(agentLaunchId()).inc()
-          metrics.wsClassStatisticsGauge.labels(agentLaunchId()).inc()
+          val content = contentSrc.invoke()
+          val p = call.parameters
+          val languageName =
+            p[LANGUAGE_NAME]?.let { LanguageName(it) } ?: throw InvalidRequestException("Missing language")
+          val groupName = p[GROUP_NAME]?.let { GroupName(it) } ?: throw InvalidRequestException("Missing group name")
+          val classCode = p[CLASS_CODE]?.let { ClassCode(it) } ?: throw InvalidRequestException("Missing class code")
+          val challenges = content.findGroup(languageName, groupName).challenges
+          val remote = call.request.origin.remoteHost
+          val user = fetchUser() ?: throw InvalidRequestException("Null user")
+          val email = user.email //fetchEmail()
+          val desc = "${pathOf(WS_ROOT, CHALLENGE_ENDPOINT, languageName, groupName, classCode)} - $remote - $email"
+
+          validateContext(languageName, groupName, classCode, null, user, "Class statistics")
+            .also { (valid, msg) ->
+              if (!valid) {
+                close(CloseReason(Codes.GOING_AWAY, "Client disconnected"))
+                throw InvalidRequestException(msg)
+              }
+            }
 
           incoming
             .consumeAsFlow()
@@ -237,6 +262,7 @@ internal object WsEndoints : KLogging() {
             .collect { frame ->
               val inboundMsg = frame.readText()
               val enrollees = classCode.fetchEnrollees()
+
               if (enrollees.isNotEmpty()) {
                 // Reorder challenges to return values left to right
                 val ltor = mutableListOf<Challenge>()
@@ -320,7 +346,7 @@ internal object WsEndoints : KLogging() {
 
                   metrics.wsClassStatisticsResponseCount.labels(agentLaunchId()).inc()
                   logger.debug { "Sending data $json" }
-                  runBlocking { outgoing.send(Frame.Text(json)) }
+                  outgoing.send(Frame.Text(json))
 
                   if (finished.get())
                     break
@@ -331,47 +357,49 @@ internal object WsEndoints : KLogging() {
               outgoing.close()
               incoming.cancel()
             }
-        } finally {
-          metrics.wsClassStatisticsGauge.labels(agentLaunchId()).dec()
-          close(CloseReason(Codes.GOING_AWAY, "Client disconnected"))
-          logger.debug { "Closed class statistics websocket for $desc" }
         }
+      } finally {
+        metrics.wsClassStatisticsGauge.labels(agentLaunchId()).dec()
+        close(CloseReason(Codes.GOING_AWAY, "Client disconnected"))
+        logger.debug { "Closed class statistics websocket" }
       }
     }
 
     webSocket("$WS_ROOT$CLASS_SUMMARY_ENDPOINT/{$LANGUAGE_NAME}/{$GROUP_NAME}/{$CLASS_CODE}") {
-      val content = contentSrc.invoke()
-      val (languageName, groupName, classCode) =
-        Triple(
-          call.parameters[LANGUAGE_NAME]?.let { LanguageName(it) } ?: throw InvalidRequestException("Missing language"),
-          call.parameters[GROUP_NAME]?.let { GroupName(it) } ?: throw InvalidRequestException("Missing group name"),
-          call.parameters[CLASS_CODE]?.let { ClassCode(it) } ?: throw InvalidRequestException("Missing class code"))
-      val challenges = content.findGroup(languageName, groupName).challenges
-      val finished = AtomicBoolean(false)
-      val remote = call.request.origin.remoteHost
-      val user = fetchUser() ?: throw InvalidRequestException("Null user")
-      val email = user.email //fetchEmail()
-      val desc = "${pathOf(WS_ROOT, CLASS_SUMMARY_ENDPOINT, languageName, groupName, classCode)} - $remote - $email"
+      try {
+        val finished = AtomicBoolean(false)
 
-      validateContext(languageName, groupName, classCode, null, user, "Class summary")
-        .also { (valid, msg) ->
-          if (!valid) {
-            close(CloseReason(Codes.GOING_AWAY, "Client disconnected"))
-            throw InvalidRequestException(msg)
-          }
+        logger.debug { "Opened class summary websocket" }
+
+        outgoing.invokeOnClose {
+          logger.debug { "Close received for class summary websocket" }
+          finished.set(true)
         }
 
-      logger.debug { "Opened class summary websocket for $desc" }
+        metrics.wsClassSummaryCount.labels(agentLaunchId()).inc()
+        metrics.wsClassSummaryGauge.labels(agentLaunchId()).inc()
 
-      outgoing.invokeOnClose {
-        logger.debug { "Close received for class summary websocket for $desc" }
-        finished.set(true)
-      }
+        metrics.measureEndpointRequest("/websocket_class_summary") {
 
-      metrics.measureEndpointRequest("/websocket_class_summary") {
-        try {
-          metrics.wsClassSummaryCount.labels(agentLaunchId()).inc()
-          metrics.wsClassSummaryGauge.labels(agentLaunchId()).inc()
+          val content = contentSrc.invoke()
+          val p = call.parameters
+          val languageName =
+            p[LANGUAGE_NAME]?.let { LanguageName(it) } ?: throw InvalidRequestException("Missing language")
+          val groupName = p[GROUP_NAME]?.let { GroupName(it) } ?: throw InvalidRequestException("Missing group name")
+          val classCode = p[CLASS_CODE]?.let { ClassCode(it) } ?: throw InvalidRequestException("Missing class code")
+          val challenges = content.findGroup(languageName, groupName).challenges
+          val remote = call.request.origin.remoteHost
+          val user = fetchUser() ?: throw InvalidRequestException("Null user")
+          val email = user.email //fetchEmail()
+          val desc = "${pathOf(WS_ROOT, CLASS_SUMMARY_ENDPOINT, languageName, groupName, classCode)} - $remote - $email"
+
+          validateContext(languageName, groupName, classCode, null, user, "Class summary")
+            .also { (valid, msg) ->
+              if (!valid) {
+                close(CloseReason(Codes.GOING_AWAY, "Client disconnected"))
+                throw InvalidRequestException(msg)
+              }
+            }
 
           incoming
             .consumeAsFlow()
@@ -421,7 +449,7 @@ internal object WsEndoints : KLogging() {
 
                       metrics.wsClassSummaryResponseCount.labels(agentLaunchId()).inc()
                       logger.debug { "Sending data $json" }
-                      runBlocking { outgoing.send(Frame.Text(json)) }
+                      outgoing.send(Frame.Text(json))
                     }
 
                     if (finished.get())
@@ -434,47 +462,49 @@ internal object WsEndoints : KLogging() {
               outgoing.close()
               incoming.cancel()
             }
-        } finally {
-          metrics.wsClassSummaryGauge.labels(agentLaunchId()).dec()
-          close(CloseReason(Codes.GOING_AWAY, "Client disconnected"))
-          logger.debug { "Closed class summary websocket for $desc" }
         }
+      } finally {
+        metrics.wsClassSummaryGauge.labels(agentLaunchId()).dec()
+        close(CloseReason(Codes.GOING_AWAY, "Client disconnected"))
+        logger.debug { "Closed class summary websocket" }
       }
     }
 
     webSocket("$WS_ROOT$STUDENT_SUMMARY_ENDPOINT/{$LANGUAGE_NAME}/{$STUDENT_ID}/{$CLASS_CODE}") {
-      val content = contentSrc.invoke()
-      val (languageName, student, classCode) =
-        Triple(
-          call.parameters[LANGUAGE_NAME]?.let { LanguageName(it) } ?: throw InvalidRequestException("Missing language"),
-          call.parameters[STUDENT_ID]?.let { toUser(it) } ?: throw InvalidRequestException("Missing student id"),
-          call.parameters[CLASS_CODE]?.let { ClassCode(it) } ?: throw InvalidRequestException("Missing class code"))
       val finished = AtomicBoolean(false)
-      val remote = call.request.origin.remoteHost
-      val user = fetchUser() ?: throw InvalidRequestException("Null user")
-      val email = user.email //fetchEmail()
-      val desc =
-        "${pathOf(WS_ROOT, CLASS_SUMMARY_ENDPOINT, languageName, student.userId, classCode)} - $remote - $email"
 
-      validateContext(languageName, null, classCode, student, user, "Student summary")
-        .also { (valid, msg) ->
-          if (!valid) {
-            close(CloseReason(Codes.GOING_AWAY, "Client disconnected"))
-            throw InvalidRequestException(msg)
-          }
+      try {
+        logger.debug { "Opened student summary websocket" }
+
+        outgoing.invokeOnClose {
+          logger.debug { "Close received for student summary websocket" }
+          finished.set(true)
         }
 
-      logger.debug { "Opened student summary websocket for $desc" }
+        metrics.wsStudentSummaryCount.labels(agentLaunchId()).inc()
+        metrics.wsStudentSummaryGauge.labels(agentLaunchId()).inc()
 
-      outgoing.invokeOnClose {
-        logger.debug { "Close received for student summary websocket for $desc" }
-        finished.set(true)
-      }
+        metrics.measureEndpointRequest("/websocket_student_summary") {
 
-      metrics.measureEndpointRequest("/websocket_student_summary") {
-        try {
-          metrics.wsStudentSummaryCount.labels(agentLaunchId()).inc()
-          metrics.wsStudentSummaryGauge.labels(agentLaunchId()).inc()
+          val content = contentSrc.invoke()
+          val p = call.parameters
+          val languageName =
+            p[LANGUAGE_NAME]?.let { LanguageName(it) } ?: throw InvalidRequestException("Missing language")
+          val student = p[STUDENT_ID]?.let { toUser(it) } ?: throw InvalidRequestException("Missing student id")
+          val classCode = p[CLASS_CODE]?.let { ClassCode(it) } ?: throw InvalidRequestException("Missing class code")
+          val remote = call.request.origin.remoteHost
+          val user = fetchUser() ?: throw InvalidRequestException("Null user")
+          val email = user.email //fetchEmail()
+          val desc =
+            "${pathOf(WS_ROOT, CLASS_SUMMARY_ENDPOINT, languageName, student.userId, classCode)} - $remote - $email"
+
+          validateContext(languageName, null, classCode, student, user, "Student summary")
+            .also { (valid, msg) ->
+              if (!valid) {
+                close(CloseReason(Codes.GOING_AWAY, "Client disconnected"))
+                throw InvalidRequestException(msg)
+              }
+            }
 
           incoming
             .consumeAsFlow()
@@ -521,7 +551,7 @@ internal object WsEndoints : KLogging() {
 
                     metrics.wsClassSummaryResponseCount.labels(agentLaunchId()).inc()
                     logger.debug { "Sending data $json" }
-                    runBlocking { outgoing.send(Frame.Text(json)) }
+                    outgoing.send(Frame.Text(json))
                   }
 
                   if (finished.get())
@@ -533,11 +563,11 @@ internal object WsEndoints : KLogging() {
               outgoing.close()
               incoming.cancel()
             }
-        } finally {
-          metrics.wsStudentSummaryGauge.labels(agentLaunchId()).dec()
-          close(CloseReason(Codes.GOING_AWAY, "Client disconnected"))
-          logger.debug { "Closed student summary websocket for $desc" }
         }
+      } finally {
+        metrics.wsStudentSummaryGauge.labels(agentLaunchId()).dec()
+        close(CloseReason(Codes.GOING_AWAY, "Client disconnected"))
+        logger.debug { "Closed student summary websocket" }
       }
     }
   }
@@ -555,4 +585,3 @@ internal class StudentSummary(val groupName: String,
 internal class PingMessage(val msg: String) {
   val type = PING_CODE
 }
-

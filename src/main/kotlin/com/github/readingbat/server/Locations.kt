@@ -17,7 +17,6 @@
 
 package com.github.readingbat.server
 
-import com.github.pambrose.common.redis.RedisUtils.withRedisPool
 import com.github.pambrose.common.response.respondWith
 import com.github.pambrose.common.util.encode
 import com.github.pambrose.common.util.isNotValidEmail
@@ -42,7 +41,6 @@ import com.github.readingbat.pages.ChallengePage.challengePage
 import com.github.readingbat.pages.LanguageGroupPage.languageGroupPage
 import com.github.readingbat.pages.PlaygroundPage.playgroundPage
 import com.github.readingbat.server.AdminRoutes.assignBrowserSession
-import com.github.readingbat.server.ReadingBatServer.redisPool
 import com.github.readingbat.server.ServerUtils.fetchUser
 import io.ktor.auth.*
 import io.ktor.http.*
@@ -98,9 +96,7 @@ internal object Locations {
       assignBrowserSession()
       content.checkLanguage(language.languageType)
       val user = fetchUser(loginAttempt)
-      redisPool?.withRedisPool { redis ->
-        languageGroupPage(content, user, language.languageType, loginAttempt)
-      } ?: languageGroupPage(content, user, language.languageType, loginAttempt)
+      languageGroupPage(content, user, language.languageType, loginAttempt)
     }
 
   private suspend fun PipelineCall.group(content: ReadingBatContent,

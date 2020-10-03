@@ -124,7 +124,7 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
               logger.debug { """Fetched "${pathOf(groupName, fileName)}" in: $dur from: $path""" }
 
               if (cacheContentInRedis()) {
-                redisPool?.withNonNullRedisPool { redis ->
+                redisPool?.withNonNullRedisPool(true) { redis ->
                   redis.set(sourceCodeKey, text)
                   logger.debug { """Saved "${pathOf(groupName, fileName)}" to redis""" }
                 }

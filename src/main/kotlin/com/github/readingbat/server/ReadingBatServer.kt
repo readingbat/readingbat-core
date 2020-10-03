@@ -49,11 +49,15 @@ import com.github.readingbat.server.WsEndoints.wsEndpoints
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import io.ktor.application.*
+import io.ktor.http.cio.websocket.*
 import io.ktor.http.content.*
 import io.ktor.routing.*
 import io.ktor.server.cio.*
 import io.ktor.server.engine.*
 import io.prometheus.Agent.Companion.startAsyncAgent
+import kotlinx.coroutines.channels.BroadcastChannel
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeoutOrNull
@@ -69,6 +73,18 @@ import kotlin.time.TimeSource
 import kotlin.time.measureTime
 import kotlin.time.seconds
 
+data class PublishedData(val topic: String, val message: String)
+
+class Receiver(val id: String, val channel: ReceiveChannel<PublishedData>) {
+  suspend fun listen() {
+    logger.info { "Listening for data in Receiver" }
+    for (v in channel) {
+      println("**********Receiver $id read value: $v")
+    }
+    println("Receiver $id completed")
+  }
+}
+
 @Version(version = "1.5.0", date = "10/2/20")
 object ReadingBatServer : KLogging() {
   private val startTime = TimeSource.Monotonic.markNow()
@@ -79,6 +95,7 @@ object ReadingBatServer : KLogging() {
   internal val adminUsers = mutableListOf<String>()
   internal val contentReadCount = AtomicInteger(0)
   internal val metrics by lazy { Metrics() }
+  internal val channel = BroadcastChannel<PublishedData>(Channel.BUFFERED)
   internal var redisPool: JedisPool? = null
   internal val postgres by lazy {
     Database.connect(
@@ -137,6 +154,8 @@ object ReadingBatServer : KLogging() {
       else
         args.toMutableList().apply { add("-config=$configFilename") }.toTypedArray()
 
+    val environment = commandLineEnvironment(newargs)
+
     // Reference these to load them
     ScriptPools.javaScriptPool
     ScriptPools.pythonScriptPool
@@ -146,10 +165,10 @@ object ReadingBatServer : KLogging() {
       try {
         RedisUtils.newJedisPool().also { logger.info { "Created Redis pool" } }
       } catch (e: JedisConnectionException) {
-        null.also { logger.error { "Failed to create Redis pool: $REDIS_IS_DOWN" } }
+        logger.error { "Failed to create Redis pool: $REDIS_IS_DOWN" }
+        null  // Return null
       }
 
-    val environment = commandLineEnvironment(newargs)
     embeddedServer(CIO, environment).start(wait = true)
   }
 }

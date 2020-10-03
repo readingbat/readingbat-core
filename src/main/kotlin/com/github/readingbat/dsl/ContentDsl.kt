@@ -95,7 +95,7 @@ internal fun readContentDsl(contentSource: ContentSource, variableName: String =
         else {
           dsl = contentSource.content
           if (cacheContentInRedis()) {
-            redisPool?.withNonNullRedisPool { redis ->
+            redisPool?.withNonNullRedisPool(true) { redis ->
               redis.set(contentDslKey(contentSource.source), dsl)
               logger.debug { """Saved "${contentSource.source}" to redis""" }
             }

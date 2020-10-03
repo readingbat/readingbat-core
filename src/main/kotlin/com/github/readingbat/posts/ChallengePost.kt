@@ -70,7 +70,6 @@ import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.joda.time.DateTime
 import org.joda.time.DateTimeZone
-import redis.clients.jedis.Jedis
 import javax.script.ScriptException
 
 internal data class StudentInfo(val studentId: String, val firstName: String, val lastName: String)
@@ -233,7 +232,7 @@ internal object ChallengePost : KLogging() {
     }
   }
 
-  suspend fun PipelineCall.checkAnswers(content: ReadingBatContent, user: User?, redis: Jedis?) {
+  suspend fun PipelineCall.checkAnswers(content: ReadingBatContent, user: User?) {
     val params = call.receiveParameters()
     val paramMap = params.entries().map { it.key to it.value[0] }.toMap()
     val names = ChallengeNames(paramMap)
@@ -283,7 +282,7 @@ internal object ChallengePost : KLogging() {
     if (isPostgresEnabled())
       transaction {
         val browserSession = call.browserSession
-        saveChallengeAnswers(user, browserSession, content, names, paramMap, funcInfo, userResponses, results, redis)
+        saveChallengeAnswers(user, browserSession, content, names, paramMap, funcInfo, userResponses, results)
       }
 
     // Return values: 0 = not answered, 1 = correct, 2 = incorrect
@@ -326,7 +325,7 @@ internal object ChallengePost : KLogging() {
       }
     }
 
-  suspend fun PipelineCall.clearChallengeAnswers(content: ReadingBatContent, user: User?, redis: Jedis): String {
+  suspend fun PipelineCall.clearChallengeAnswers(content: ReadingBatContent, user: User?): String {
     val params = call.receiveParameters()
 
     val languageName = params.getLanguageName(LANGUAGE_NAME_PARAM)
@@ -355,12 +354,12 @@ internal object ChallengePost : KLogging() {
         }
     }
 
-    user?.resetHistory(funcInfo, challenge, content.maxHistoryLength, redis)
+    user?.resetHistory(funcInfo, challenge, content.maxHistoryLength)
 
     throw RedirectException("$path?$MSG=${"Answers cleared".encode()}")
   }
 
-  suspend fun PipelineCall.clearGroupAnswers(content: ReadingBatContent, user: User?, redis: Jedis): String {
+  suspend fun PipelineCall.clearGroupAnswers(content: ReadingBatContent, user: User?): String {
     val parameters = call.receiveParameters()
 
     val languageName = parameters.getLanguageName(LANGUAGE_NAME_PARAM)
@@ -402,7 +401,7 @@ internal object ChallengePost : KLogging() {
         .forEach { challenge ->
           logger.info { "Clearing answers for challengeName ${challenge.challengeName}" }
           val funcInfo = challenge.functionInfo(content)
-          user.resetHistory(funcInfo, challenge, content.maxHistoryLength, redis)
+          user.resetHistory(funcInfo, challenge, content.maxHistoryLength)
         }
     }
 
@@ -442,8 +441,7 @@ internal object ChallengePost : KLogging() {
                                    paramMap: Map<String, String>,
                                    funcInfo: FunctionInfo,
                                    userResponses: List<Map.Entry<String, List<String>>>,
-                                   results: List<ChallengeResults>,
-                                   redis: Jedis?) {
+                                   results: List<ChallengeResults>) {
     val challengeMd5 = md5Of(names.languageName, names.groupName, names.challengeName)
 
     val complete = results.all { it.correct }
@@ -530,9 +528,9 @@ internal object ChallengePost : KLogging() {
           logger.warn { "Answer history not updated" }
       }
 
-      if (shouldPublish && redis.isNotNull()) {
+      if (shouldPublish) {
         val maxLength = content.maxHistoryLength
-        user?.publishAnswers(classCode, funcInfo.challengeMd5, maxLength, complete, numCorrect, history, redis)
+        user?.publishAnswers(classCode, funcInfo.challengeMd5, maxLength, complete, numCorrect, history)
       }
     }
   }

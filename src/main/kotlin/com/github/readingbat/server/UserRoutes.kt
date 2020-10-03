@@ -17,7 +17,6 @@
 
 package com.github.readingbat.server
 
-import com.github.pambrose.common.redis.RedisUtils.withSuspendingRedisPool
 import com.github.pambrose.common.response.redirectTo
 import com.github.pambrose.common.response.respondWith
 import com.github.readingbat.common.CommonUtils.pathOf
@@ -84,7 +83,6 @@ import com.github.readingbat.posts.TeacherPrefsPost.enableStudentMode
 import com.github.readingbat.posts.TeacherPrefsPost.enableTeacherMode
 import com.github.readingbat.posts.TeacherPrefsPost.teacherPrefs
 import com.github.readingbat.posts.UserPrefsPost.userPrefs
-import com.github.readingbat.server.ReadingBatServer.redisPool
 import com.github.readingbat.server.ResourceContent.getResourceAsText
 import com.github.readingbat.server.ServerUtils.authenticateAdminUser
 import com.github.readingbat.server.ServerUtils.defaultLanguageTab
@@ -170,9 +168,7 @@ internal fun Routing.userRoutes(metrics: Metrics, contentSrc: () -> ReadingBatCo
 
   post(CHECK_ANSWERS_ENDPOINT) {
     metrics.measureEndpointRequest(CHECK_ANSWERS_ENDPOINT) {
-      redisPool?.withSuspendingRedisPool { redis ->
-        checkAnswers(contentSrc(), fetchUser(), redis)
-      } ?: checkAnswers(contentSrc(), fetchUser(), null)
+      checkAnswers(contentSrc(), fetchUser())
     }
   }
 
@@ -183,14 +179,14 @@ internal fun Routing.userRoutes(metrics: Metrics, contentSrc: () -> ReadingBatCo
   }
 
   post(CLEAR_GROUP_ANSWERS_ENDPOINT) {
-    respondWithSuspendingRedisCheck { redis ->
-      clearGroupAnswers(contentSrc(), fetchUser(), redis)
+    respondWith {
+      clearGroupAnswers(contentSrc(), fetchUser())
     }
   }
 
   post(CLEAR_CHALLENGE_ANSWERS_ENDPOINT) {
-    respondWithSuspendingRedisCheck { redis ->
-      clearChallengeAnswers(contentSrc(), fetchUser(), redis)
+    respondWith {
+      clearChallengeAnswers(contentSrc(), fetchUser())
     }
   }
 

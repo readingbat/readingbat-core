@@ -68,12 +68,10 @@ import mu.KLogging
 internal object StudentSummaryPage : KLogging() {
 
   fun PipelineCall.studentSummaryPage(content: ReadingBatContent, user: User?): String {
-
-    val (languageName, student, classCode) =
-      Triple(
-        call.parameters[LANG_TYPE_QP]?.let { LanguageName(it) } ?: throw InvalidRequestException("Missing language"),
-        call.parameters[USER_ID_QP]?.let { toUser(it) } ?: throw InvalidRequestException("Missing user id"),
-        call.parameters[CLASS_CODE_QP]?.let { ClassCode(it) } ?: throw InvalidRequestException("Missing class code"))
+    val p = call.parameters
+    val languageName = p[LANG_TYPE_QP]?.let { LanguageName(it) } ?: throw InvalidRequestException("Missing language")
+    val student = p[USER_ID_QP]?.let { toUser(it) } ?: throw InvalidRequestException("Missing user id")
+    val classCode = p[CLASS_CODE_QP]?.let { ClassCode(it) } ?: throw InvalidRequestException("Missing class code")
     val activeClassCode = queryActiveClassCode(user)
 
     when {
@@ -85,6 +83,7 @@ internal object StudentSummaryPage : KLogging() {
         throw InvalidRequestException("User id ${user.userId} does not match class code's teacher Id $teacherId")
       }
       else -> {
+        // Do nothing
       }
     }
 

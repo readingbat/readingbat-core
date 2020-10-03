@@ -47,12 +47,12 @@ import com.github.readingbat.server.ReadingBatServer.adminUsers
 import com.github.readingbat.server.ResetId.Companion.EMPTY_RESET_ID
 import com.github.readingbat.server.WsEndoints.classTopicName
 import com.google.gson.Gson
+import kotlinx.coroutines.runBlocking
 import mu.KLogging
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.joda.time.DateTime
 import org.joda.time.DateTimeZone.UTC
-import redis.clients.jedis.Jedis
 import kotlin.contracts.contract
 import kotlin.time.measureTime
 
@@ -69,8 +69,9 @@ internal class User {
         transaction {
           Users
             .select { Users.userId eq this@User.userId }
+            .map { assignRowVals(it) }
             .firstOrNull() ?: throw InvalidConfigurationException("UserId not found: ${this@User.userId}")
-        }.also { row -> assignRowVals(row) }
+        }
       }.also { logger.info { "Selected user info in $it" } }
     }
   }
@@ -398,18 +399,21 @@ internal class User {
                      maxHistoryLength: Int,
                      complete: Boolean,
                      numCorrect: Int,
-                     history: ChallengeHistory,
-                     redis: Jedis) {
+                     history: ChallengeHistory) {
     // Publish to challenge dashboard
     logger.debug { "Publishing user answers to $classCode on $challengeMd5 for $this" }
     val dashboardInfo = DashboardInfo(userId, complete, numCorrect, maxHistoryLength, history)
-    redis.publish(classTopicName(classCode, challengeMd5.value), gson.toJson(dashboardInfo))
+    val topicName = classTopicName(classCode, challengeMd5.value)
+    val data = gson.toJson(dashboardInfo)
+    //redis.publish(topicName, data)
+    runBlocking {
+      ReadingBatServer.channel.send(PublishedData(topicName, data))
+    }
   }
 
   fun resetHistory(funcInfo: FunctionInfo,
                    challenge: Challenge,
-                   maxHistoryLength: Int,
-                   redis: Jedis) {
+                   maxHistoryLength: Int) {
     val classCode = enrolledClassCode
     val shouldPublish = shouldPublish(classCode)
 
@@ -436,7 +440,7 @@ internal class User {
         }
 
         if (shouldPublish)
-          publishAnswers(classCode, funcInfo.challengeMd5, maxHistoryLength, false, 0, history, redis)
+          publishAnswers(classCode, funcInfo.challengeMd5, maxHistoryLength, false, 0, history)
       }
   }
 

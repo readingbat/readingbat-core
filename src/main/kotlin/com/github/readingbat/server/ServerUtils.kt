@@ -97,7 +97,7 @@ internal object ServerUtils : KLogging() {
       ?.let { userId ->
         emailCache.computeIfAbsent(userId) {
           (fetchUser()?.email?.value?.let { Email(it) } ?: UNKNOWN_EMAIL)
-            .also { email -> logger.info { "Looked up email for $userId: $email" } }
+            .also { email -> logger.debug { "Looked up email for $userId: $email" } }
         }
       } ?: UNKNOWN_EMAIL
 
@@ -106,7 +106,7 @@ internal object ServerUtils : KLogging() {
       ?.let { userId ->
         userIdCache.computeIfAbsent(userId) {
           (fetchUser()?.userDbmsId ?: -1)
-            .also { userDbmsId -> logger.info { "Looked up userDbmsId for $userId: $userDbmsId" } }
+            .also { userDbmsId -> logger.debug { "Looked up userDbmsId for $userId: $userDbmsId" } }
         }
       } ?: -1
 

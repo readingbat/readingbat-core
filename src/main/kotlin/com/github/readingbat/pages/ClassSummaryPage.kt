@@ -81,11 +81,10 @@ internal object ClassSummaryPage : KLogging() {
   private const val BTN_SIZE = "130%"
 
   fun PipelineCall.classSummaryPage(content: ReadingBatContent, user: User?): String {
-    val (languageName, groupName, classCode) =
-      Triple(
-        call.parameters[LANG_TYPE_QP]?.let { LanguageName(it) } ?: EMPTY_LANGUAGE,
-        call.parameters[GROUP_NAME_QP]?.let { GroupName(it) } ?: EMPTY_GROUP,
-        call.parameters[CLASS_CODE_QP]?.let { ClassCode(it) } ?: throw InvalidRequestException("Missing class code"))
+    val p = call.parameters
+    val languageName = p[LANG_TYPE_QP]?.let { LanguageName(it) } ?: EMPTY_LANGUAGE
+    val groupName = p[GROUP_NAME_QP]?.let { GroupName(it) } ?: EMPTY_GROUP
+    val classCode = p[CLASS_CODE_QP]?.let { ClassCode(it) } ?: throw InvalidRequestException("Missing class code")
     return classSummaryPage(content, user, classCode, languageName, groupName)
   }
 
