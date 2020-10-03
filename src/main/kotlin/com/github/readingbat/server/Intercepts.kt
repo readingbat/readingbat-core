@@ -35,7 +35,7 @@ import io.ktor.routing.*
 import io.ktor.routing.Routing.Feature.RoutingCallFinished
 import io.ktor.routing.Routing.Feature.RoutingCallStarted
 import mu.KLogging
-import org.jetbrains.exposed.sql.insertAndGetId
+import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.update
 import java.util.concurrent.ConcurrentHashMap
@@ -77,7 +77,7 @@ internal fun Application.intercepts() {
         logger.info { "Saving request: ${call.callId} $ipAddress $userDbmsId $verb $path $queryString $geoDbmsId" }
         transaction {
           ServerRequests
-            .insertAndGetId { row ->
+            .insert { row ->
               row[requestId] = call.callId ?: "None"
               row[sessionRef] = sessionDbmsId
               row[userRef] = userDbmsId
@@ -85,6 +85,7 @@ internal fun Application.intercepts() {
               row[ServerRequests.verb] = verb
               row[ServerRequests.path] = path
               row[ServerRequests.queryString] = queryString
+              row[duration] = 0
             }
         }
       }
@@ -105,7 +106,6 @@ internal fun Application.intercepts() {
         .also { callId ->
           if (callId.isNotNull()) {
             timingMap.put(callId, clock.markNow())
-            // logger.info { "Monitor start ${call.callId}  ${call.request.toLogString()}" }
           }
         }
     }
