@@ -121,7 +121,7 @@ internal object Endpoints {
 
   const val DELETE_CONTENT_IN_REDIS_ENDPOINT = "/clear-caches"
 
-  const val PING = "/ping"
+  const val PING_ENDPOINT = "/ping"
   const val THREAD_DUMP = "/threaddump"
   const val LOGOUT_ENDPOINT = "/logout"
 

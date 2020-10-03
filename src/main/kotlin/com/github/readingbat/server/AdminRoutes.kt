@@ -25,7 +25,7 @@ import com.github.pambrose.common.util.randomId
 import com.github.readingbat.common.AuthRoutes.COOKIES
 import com.github.readingbat.common.BrowserSession
 import com.github.readingbat.common.Constants.NO_TRACK_HEADER
-import com.github.readingbat.common.Endpoints.PING
+import com.github.readingbat.common.Endpoints.PING_ENDPOINT
 import com.github.readingbat.common.Endpoints.THREAD_DUMP
 import com.github.readingbat.common.Metrics
 import com.github.readingbat.common.SessionActivites.markActivity
@@ -56,7 +56,7 @@ internal object AdminRoutes : KLogging() {
 
   fun Routing.adminRoutes(metrics: Metrics) {
 
-    get(PING, metrics) {
+    get(PING_ENDPOINT, metrics) {
       call.respondText("pong", Plain)
     }
 
