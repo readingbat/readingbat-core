@@ -89,7 +89,7 @@ internal object ServerUtils : KLogging() {
   fun ApplicationCall.fetchUser(): User? = userPrincipal?.userId?.let { toUser(it, browserSession) }
 
   fun ApplicationCall.fetchUserDbmsIdFromCache() =
-    userPrincipal?.userId?.let { User.fetchUserDbmsIdFromCache(it) } ?: -1
+    userPrincipal?.userId?.let { User.fetchUserDbmsIdFromCache(it) } ?: -1L
 
   fun ApplicationCall.fetchEmailFromCache() =
     userPrincipal?.userId?.let { User.fetchEmailFromCache(it) } ?: UNKNOWN_EMAIL

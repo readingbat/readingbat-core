@@ -28,30 +28,49 @@ import com.github.readingbat.common.User.Companion.fetchUserDbmsIdFromCache
 import com.github.readingbat.common.browserSession
 import com.github.readingbat.dsl.isPostgresEnabled
 import com.github.readingbat.dsl.isSaveRequestsEnabled
-import com.github.readingbat.server.InterceptContext.requestTimingMap
+import com.github.readingbat.server.Intercepts.clock
 import com.github.readingbat.server.Intercepts.logger
+import com.github.readingbat.server.Intercepts.requestTimingMap
 import com.github.readingbat.server.ServerUtils.fetchUserDbmsIdFromCache
 import io.ktor.application.*
 import io.ktor.features.*
 import io.ktor.request.*
-import io.ktor.routing.*
 import io.ktor.routing.Routing.Feature.RoutingCallFinished
 import io.ktor.routing.Routing.Feature.RoutingCallStarted
+import kotlinx.coroutines.runBlocking
 import mu.KLogging
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.update
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.concurrent.timer
 import kotlin.time.TimeMark
 import kotlin.time.TimeSource
+import kotlin.time.hours
+import kotlin.time.minutes
 
-internal object InterceptContext {
+
+internal object Intercepts : KLogging() {
+  val clock = TimeSource.Monotonic
   val requestTimingMap = ConcurrentHashMap<String, TimeMark>()
+  val timer =
+    timer("requestTimingMap admin", true, 1.minutes.toLongMilliseconds(), 1.minutes.toLongMilliseconds()) {
+      runBlocking {
+        requestTimingMap
+          .filter { (_, start) -> start.elapsedNow() > 1.hours }
+          .forEach { (callId, start) ->
+            requestTimingMap.remove(callId)
+              ?.also {
+                logger.info { "Removing requestTimingMap: $callId after ${start.elapsedNow()}" }
+                updateServerRequest(callId, start)
+              }
+              ?: logger.info { "Unable to remove requestTimingMap item: $callId ${start.elapsedNow()}" }
+          }
+      }
+    }
 }
 
 internal fun Application.intercepts() {
-
-  val clock = TimeSource.Monotonic
 
   intercept(ApplicationCallPipeline.Setup) {
     // Phase for preparing call and it's attributes for processing
@@ -108,46 +127,51 @@ internal fun Application.intercepts() {
   }
 
   if (isSaveRequestsEnabled() && isPostgresEnabled()) {
-    environment.monitor.subscribe(RoutingCallStarted) { call: RoutingApplicationCall ->
-      val path = call.request.path()
-      if (!path.startsWith("/$STATIC/") && path != PING_ENDPOINT) {
-        call.callId
-          .also { callId ->
-            if (callId.isNotNull()) {
-              requestTimingMap.put(callId, clock.markNow())
-            }
-          }
-      }
-    }
-
-    environment.monitor.subscribe(RoutingCallFinished) { call: RoutingApplicationCall ->
-      val path = call.request.path()
-      if (!path.startsWith("/$STATIC/") && path != PING_ENDPOINT) {
-        call.callId
-          .also { requestId ->
-            if (requestId.isNotNull()) {
-              requestTimingMap.remove(requestId)
-                .also { start ->
-                  if (start.isNotNull() && requestId.isNotNull()) {
-                    logger.info { "Logged call ${requestTimingMap.size} ${start.elapsedNow()} ${call.callId} ${call.request.toLogString()}" }
-                    transaction {
-                      ServerRequests
-                        .update({ ServerRequests.requestId eq requestId }) { row ->
-                          row[duration] = start.elapsedNow().toLongMilliseconds()
-                        }
-                    }
-                  }
+    environment.monitor
+      .apply {
+        subscribe(RoutingCallStarted) { call ->
+          val path = call.request.path()
+          if (!path.startsWith("/$STATIC/") && path != PING_ENDPOINT) {
+            call.callId
+              .also { callId ->
+                if (callId.isNotNull()) {
+                  requestTimingMap.put(callId, clock.markNow())
                 }
-            }
-            else {
-              logger.error { "Null requestId for $path" }
-            }
+              }
           }
+        }
+
+        subscribe(RoutingCallFinished) { call ->
+          val path = call.request.path()
+          if (!path.startsWith("/$STATIC/") && path != PING_ENDPOINT) {
+            call.callId
+              .also { callId ->
+                if (callId.isNotNull()) {
+                  requestTimingMap.remove(callId)
+                    .also { start ->
+                      if (start.isNotNull()) {
+                        logger.debug { "Logged call ${requestTimingMap.size} ${start.elapsedNow()} ${call.callId} ${call.request.toLogString()}" }
+                        updateServerRequest(callId, start)
+                      }
+                    }
+                }
+                else {
+                  logger.error { "Null requestId for $path" }
+                }
+              }
+          }
+        }
       }
-    }
+  }
+}
+
+fun updateServerRequest(callId: String, start: TimeMark) {
+  transaction {
+    ServerRequests
+      .update({ ServerRequests.requestId eq callId }) { row ->
+        row[duration] = start.elapsedNow().toLongMilliseconds()
+      }
   }
 }
 
 fun PipelineCall.isStaticCall() = context.request.path().startsWith("/$STATIC/")
-
-object Intercepts : KLogging()

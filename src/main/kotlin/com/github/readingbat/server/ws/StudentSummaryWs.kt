@@ -82,7 +82,7 @@ internal object StudentSummaryWs : KLogging() {
           val desc =
             "${pathOf(WS_ROOT, CLASS_SUMMARY_ENDPOINT, languageName, student.userId, classCode)} - $remote - $email"
 
-          validateContext(languageName, null, classCode, student, user, "Student summary")
+          validateContext(languageName, null, classCode, student, user)
             .also { (valid, msg) -> if (!valid) throw InvalidRequestException(msg) }
 
           incoming

@@ -43,16 +43,15 @@ import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.runBlocking
 import mu.KLogging
 import java.util.*
-import java.util.concurrent.Executors
+import java.util.concurrent.Executors.newSingleThreadExecutor
 import kotlin.collections.LinkedHashSet
-import kotlin.concurrent.schedule
+import kotlin.concurrent.timer
 import kotlin.math.max
 import kotlin.time.TimeSource
 import kotlin.time.seconds
 
 internal object ChallengeWs : KLogging() {
   private val clock = TimeSource.Monotonic
-  private val timer = Timer()
   val wsConnections = Collections.synchronizedSet(LinkedHashSet<SessionContext>())
   var maxWsConnections = 0
 
@@ -71,20 +70,20 @@ internal object ChallengeWs : KLogging() {
   }
 
   init {
-    timer.schedule(0L, 1.seconds.toLongMilliseconds()) {
-      runBlocking {
-        for (sessionContext in wsConnections)
-          try {
-            val elapsed = sessionContext.start.elapsedNow().format()
-            val json = gson.toJson(PingMessage(elapsed))
+    timer("pinger", true, 0L, 1.seconds.toLongMilliseconds()) {
+      for (sessionContext in wsConnections)
+        try {
+          val elapsed = sessionContext.start.elapsedNow().format()
+          val json = gson.toJson(PingMessage(elapsed))
+          runBlocking {
             sessionContext.wsSession.outgoing.send(Frame.Text(json))
-          } catch (e: Throwable) {
-            logger.error { "Exception in pinger ${e.simpleClassName} ${e.message}" }
           }
-      }
+        } catch (e: Throwable) {
+          logger.error { "Exception in pinger ${e.simpleClassName} ${e.message}" }
+        }
     }
 
-    Executors.newSingleThreadExecutor()
+    newSingleThreadExecutor()
       .submit {
         while (true) {
           try {
@@ -131,7 +130,7 @@ internal object ChallengeWs : KLogging() {
           val challengeMd5 = p[CHALLENGE_MD5] ?: throw InvalidRequestException("Missing challenge md5")
           val user = fetchUser() ?: throw InvalidRequestException("Null user")
 
-          validateContext(null, null, classCode, null, user, "Student answers")
+          validateContext(null, null, classCode, null, user)
             .also { (valid, msg) -> if (!valid) throw InvalidRequestException(msg) }
 
           incoming

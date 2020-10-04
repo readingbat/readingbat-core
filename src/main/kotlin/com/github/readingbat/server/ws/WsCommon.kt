@@ -19,10 +19,17 @@ package com.github.readingbat.server.ws
 
 import com.github.pambrose.common.util.isNotNull
 import com.github.readingbat.common.ClassCode
+import com.github.readingbat.common.Metrics
 import com.github.readingbat.common.User
 import com.github.readingbat.common.isNotValidUser
+import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.server.GroupName
 import com.github.readingbat.server.LanguageName
+import com.github.readingbat.server.ws.ChallengeGroupWs.challengeGroupWsEndpoint
+import com.github.readingbat.server.ws.ChallengeWs.challengeWsEndpoint
+import com.github.readingbat.server.ws.ClassSummaryWs.classSummaryWsEndpoint
+import com.github.readingbat.server.ws.StudentSummaryWs.studentSummaryWsEndpoint
+import io.ktor.routing.*
 import io.ktor.websocket.*
 import mu.KLogging
 
@@ -34,12 +41,19 @@ internal object WsCommon : KLogging() {
   const val CLASS_CODE = "classCode"
   const val CHALLENGE_MD5 = "challengeMd5"
 
+  internal fun Routing.wsRoutes(metrics: Metrics, contentSrc: () -> ReadingBatContent) {
+    challengeWsEndpoint(metrics)
+    challengeGroupWsEndpoint(metrics, contentSrc)
+    classSummaryWsEndpoint(metrics, contentSrc)
+    studentSummaryWsEndpoint(metrics, contentSrc)
+    //clockWsEndpoint()
+  }
+
   fun validateContext(languageName: LanguageName?,
                       groupName: GroupName?,
                       classCode: ClassCode,
                       student: User?,
-                      user: User,
-                      context: String) =
+                      user: User) =
     when {
       languageName.isNotNull() && languageName.isNotValid() -> false to "Invalid language: $languageName"
       groupName.isNotNull() && groupName.isNotValid() -> false to "Invalid group: $groupName"

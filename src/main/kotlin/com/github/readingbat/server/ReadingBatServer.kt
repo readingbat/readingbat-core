@@ -45,11 +45,7 @@ import com.github.readingbat.server.ReadingBatServer.content
 import com.github.readingbat.server.ReadingBatServer.contentReadCount
 import com.github.readingbat.server.ReadingBatServer.logger
 import com.github.readingbat.server.ReadingBatServer.metrics
-import com.github.readingbat.server.ws.ChallengeGroupWs.challengeGroupWsEndpoint
-import com.github.readingbat.server.ws.ChallengeWs.challengeWsEndpoint
-import com.github.readingbat.server.ws.ClassSummaryWs.classSummaryWsEndpoint
-import com.github.readingbat.server.ws.ClockWs.clockWsEndpoint
-import com.github.readingbat.server.ws.StudentSummaryWs.studentSummaryWsEndpoint
+import com.github.readingbat.server.ws.WsCommon.wsRoutes
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import io.ktor.application.*
@@ -287,11 +283,7 @@ internal fun Application.module() {
     locations(metrics) { content.get() }
     userRoutes(metrics) { content.get() }
     sysAdminRoutes(metrics, { content.get() }, { readContentDsl(fileName, variableName) })
-    challengeWsEndpoint(metrics)
-    challengeGroupWsEndpoint(metrics) { content.get() }
-    classSummaryWsEndpoint(metrics) { content.get() }
-    studentSummaryWsEndpoint(metrics) { content.get() }
-    clockWsEndpoint()
+    wsRoutes(metrics) { content.get() }
     static(STATIC_ROOT) { resources("static") }
   }
 }

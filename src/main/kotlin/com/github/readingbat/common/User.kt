@@ -506,12 +506,12 @@ internal class User {
 
     fun fetchUserDbmsIdFromCache(userId: String) =
       userIdCache.computeIfAbsent(userId) {
-        queryUserDbmsId(userId).also { logger.info { "Looked up userDbmsId for $userId: $it" } }
+        queryUserDbmsId(userId).also { logger.debug { "Looked up userDbmsId for $userId: $it" } }
       }
 
     fun fetchEmailFromCache(userId: String) =
       emailCache.computeIfAbsent(userId) {
-        queryUserEmail(userId).also { logger.info { "Looked up email for $userId: $it" } }
+        queryUserEmail(userId).also { logger.debug { "Looked up email for $userId: $it" } }
       }
 
     private fun queryUserDbmsId(userId: String, defaultIfMissing: Long = -1) =

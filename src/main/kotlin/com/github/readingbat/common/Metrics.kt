@@ -28,7 +28,7 @@ import com.github.readingbat.common.User.Companion.emailCache
 import com.github.readingbat.common.User.Companion.userIdCache
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.agentLaunchId
-import com.github.readingbat.server.InterceptContext.requestTimingMap
+import com.github.readingbat.server.Intercepts.requestTimingMap
 import com.github.readingbat.server.ws.ChallengeWs.wsConnections
 import kotlin.time.hours
 import kotlin.time.minutes

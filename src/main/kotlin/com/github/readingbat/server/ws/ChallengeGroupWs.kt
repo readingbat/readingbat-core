@@ -84,7 +84,7 @@ internal object ChallengeGroupWs : KLogging() {
           val desc =
             "${pathOf(WS_ROOT, Endpoints.CHALLENGE_ENDPOINT, languageName, groupName, classCode)} - $remote - $email"
 
-          validateContext(languageName, groupName, classCode, null, user, "Class statistics")
+          validateContext(languageName, groupName, classCode, null, user)
             .also { (valid, msg) -> if (!valid) throw InvalidRequestException(msg) }
 
           incoming

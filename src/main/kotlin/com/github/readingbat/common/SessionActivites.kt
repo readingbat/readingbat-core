@@ -42,7 +42,7 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
-import kotlin.concurrent.schedule
+import kotlin.concurrent.timer
 import kotlin.time.Duration
 import kotlin.time.TimeSource
 import kotlin.time.hours
@@ -155,10 +155,9 @@ internal object SessionActivites : KLogging() {
   private val timeOutAge = 24.hours
   val sessionsMap = ConcurrentHashMap<String, Session>()
   val geoInfoMap = ConcurrentHashMap<String, GeoInfo>()
-  private val timer = Timer()
 
   init {
-    timer.schedule(delay.toLongMilliseconds(), period.toLongMilliseconds()) {
+    timer("stale session admin", true, delay.toLongMilliseconds(), period.toLongMilliseconds()) {
       try {
         val staleCnt =
           sessionsMap.entries

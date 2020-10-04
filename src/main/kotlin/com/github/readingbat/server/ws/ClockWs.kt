@@ -34,14 +34,13 @@ import kotlinx.coroutines.runBlocking
 import mu.KLogging
 import java.util.*
 import kotlin.collections.LinkedHashSet
-import kotlin.concurrent.schedule
+import kotlin.concurrent.timer
 import kotlin.math.max
 import kotlin.time.TimeSource
 import kotlin.time.seconds
 
 internal object ClockWs : KLogging() {
   private val clock = TimeSource.Monotonic
-  private val timer = Timer()
   val wsConnections = Collections.synchronizedSet(LinkedHashSet<SessionContext>())
   var maxWsConnections = 0
 
@@ -59,17 +58,17 @@ internal object ClockWs : KLogging() {
   }
 
   init {
-    timer.schedule(0L, 1.seconds.toLongMilliseconds()) {
-      runBlocking {
-        for (sessionContext in wsConnections)
-          try {
-            val elapsed = sessionContext.start.elapsedNow().format()
-            val json = gson.toJson(PingMessage("$elapsed [${wsConnections.size}/$maxWsConnections]"))
+    timer("clock msg sender", true, 0L, 1.seconds.toLongMilliseconds()) {
+      for (sessionContext in wsConnections)
+        try {
+          val elapsed = sessionContext.start.elapsedNow().format()
+          val json = gson.toJson(PingMessage("$elapsed [${wsConnections.size}/$maxWsConnections]"))
+          runBlocking {
             sessionContext.wsSession.outgoing.send(Frame.Text(json))
-          } catch (e: Throwable) {
-            logger.error { "Exception in pinger ${e.simpleClassName} ${e.message}" }
           }
-      }
+        } catch (e: Throwable) {
+          logger.error { "Exception in pinger ${e.simpleClassName} ${e.message}" }
+        }
     }
   }
 
