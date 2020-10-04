@@ -49,13 +49,13 @@ import kotlin.time.TimeSource
 import kotlin.time.seconds
 
 internal object ChallengeWs : KLogging() {
-  val wsConnections = Collections.synchronizedSet(LinkedHashSet<SessionContext>())
-  var maxWsConnections = 0
   private val clock = TimeSource.Monotonic
   private val timer = Timer()
+  val wsConnections = Collections.synchronizedSet(LinkedHashSet<SessionContext>())
+  var maxWsConnections = 0
 
   @Synchronized
-  private fun setMaxConnections() {
+  private fun assignMaxConnections() {
     maxWsConnections = max(maxWsConnections, wsConnections.size)
   }
 
@@ -117,7 +117,7 @@ internal object ChallengeWs : KLogging() {
         }
 
         wsConnections += wsContext
-        setMaxConnections()
+        assignMaxConnections()
 
         logger.info { "Opened student answers websocket: ${wsConnections.size}" }
 

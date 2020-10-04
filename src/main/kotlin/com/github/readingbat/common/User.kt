@@ -550,7 +550,6 @@ internal class User {
                    email: Email,
                    password: Password,
                    browserSession: BrowserSession?): User =
-
       User(randomId(25), browserSession, false)
         .also { user ->
           transaction {
