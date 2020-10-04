@@ -240,7 +240,7 @@ internal fun Application.module() {
 
     // Create unknown user if it does not already exist
     if (!userExists(UNKNOWN_USER_ID))
-      createUnknownUser()
+      createUnknownUser(UNKNOWN_USER_ID)
   }
 
   if (isAgentEnabled()) {

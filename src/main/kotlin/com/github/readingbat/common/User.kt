@@ -25,7 +25,6 @@ import com.github.readingbat.common.ClassCode.Companion.DISABLED_CLASS_CODE
 import com.github.readingbat.common.CommonUtils.keyOf
 import com.github.readingbat.common.CommonUtils.md5Of
 import com.github.readingbat.common.Constants.UNKNOWN
-import com.github.readingbat.common.Constants.UNKNOWN_USER_ID
 import com.github.readingbat.common.KeyConstants.AUTH_KEY
 import com.github.readingbat.common.KeyConstants.CHALLENGE_ANSWERS_KEY
 import com.github.readingbat.common.KeyConstants.CORRECT_ANSWERS_KEY
@@ -533,18 +532,18 @@ internal class User {
           .firstOrNull() ?: defaultIfMissing
       }
 
-    fun createUnknownUser() =
+    fun createUnknownUser(userId: String) =
       transaction {
         Users
           .insertAndGetId { row ->
-            row[userId] = UNKNOWN_USER_ID
+            row[Users.userId] = userId
             row[name] = UNKNOWN_FULLNAME.value
-            row[email] = UNKNOWN_EMAIL.value
+            row[email] = "${UNKNOWN_EMAIL.value}-${randomId(4)}"
             row[enrolledClassCode] = DISABLED_CLASS_CODE.value
             row[defaultLanguage] = defaultLanguageType.languageName.value
             row[salt] = UNKNOWN
             row[digest] = UNKNOWN
-          }.value.also { logger.info { "Created unknown user ${it}" } }
+          }.value.also { logger.info { "Created unknown user $it" } }
       }
 
     fun createUser(name: FullName,
