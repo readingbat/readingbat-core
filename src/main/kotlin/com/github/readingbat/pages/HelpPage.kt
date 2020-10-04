@@ -47,7 +47,7 @@ internal object HelpPage {
   fun PipelineCall.helpPage(content: ReadingBatContent, user: User?) =
     createHTML()
       .html {
-        head { headDefault(content) }
+        head { headDefault() }
 
         body {
           helpAndLogin(content, user, ABOUT_ENDPOINT, queryActiveClassCode(user).isEnabled)

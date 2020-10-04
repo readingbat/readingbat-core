@@ -25,7 +25,6 @@ import com.github.readingbat.common.Constants
 import com.github.readingbat.common.Endpoints.CHALLENGE_ENDPOINT
 import com.github.readingbat.common.Endpoints.WS_ROOT
 import com.github.readingbat.common.Metrics
-import com.github.readingbat.common.User.Companion.gson
 import com.github.readingbat.dsl.InvalidRequestException
 import com.github.readingbat.dsl.agentLaunchId
 import com.github.readingbat.server.ReadingBatServer.anwwersChannel
@@ -41,6 +40,8 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 import mu.KLogging
 import java.util.*
 import java.util.concurrent.Executors.newSingleThreadExecutor
@@ -65,8 +66,10 @@ internal object ChallengeWs : KLogging() {
     var topicName = ""
   }
 
+  @Serializable
   class PingMessage(val msg: String) {
     val type = Constants.PING_CODE
+    fun toJson() = Json.encodeToString(serializer(), this)
   }
 
   init {
@@ -74,7 +77,7 @@ internal object ChallengeWs : KLogging() {
       for (sessionContext in wsConnections)
         try {
           val elapsed = sessionContext.start.elapsedNow().format()
-          val json = gson.toJson(PingMessage(elapsed))
+          val json = PingMessage(elapsed).toJson()
           runBlocking {
             sessionContext.wsSession.outgoing.send(Frame.Text(json))
           }
@@ -136,7 +139,7 @@ internal object ChallengeWs : KLogging() {
           incoming
             .consumeAsFlow()
             .mapNotNull { it as? Frame.Text }
-            .collect { frame ->
+            .collect {
               if (wsContext.topicName.isBlank())
                 wsContext.topicName = classTopicName(classCode, challengeMd5)
             }

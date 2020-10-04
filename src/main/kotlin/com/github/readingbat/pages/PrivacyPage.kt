@@ -26,7 +26,13 @@ import com.github.readingbat.pages.PageUtils.headDefault
 import com.github.readingbat.pages.PageUtils.loadPingdomScript
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
-import kotlinx.html.*
+import kotlinx.html.a
+import kotlinx.html.body
+import kotlinx.html.div
+import kotlinx.html.h2
+import kotlinx.html.head
+import kotlinx.html.html
+import kotlinx.html.p
 import kotlinx.html.stream.createHTML
 
 internal object PrivacyPage {
@@ -34,7 +40,7 @@ internal object PrivacyPage {
   fun PipelineCall.privacyPage(content: ReadingBatContent) =
     createHTML()
       .html {
-        head { headDefault(content) }
+        head { headDefault() }
 
         body {
           bodyTitle()

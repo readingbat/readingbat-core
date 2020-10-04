@@ -50,7 +50,7 @@ internal object AdminPrefsPage : KLogging() {
   fun PipelineCall.adminPrefsPage(content: ReadingBatContent, user: User?) =
     createHTML()
       .html {
-        head { headDefault(content) }
+        head { headDefault() }
 
         body {
           val activeClassCode = queryActiveClassCode(user)

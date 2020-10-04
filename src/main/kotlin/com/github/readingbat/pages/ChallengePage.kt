@@ -72,7 +72,6 @@ import com.github.readingbat.common.StaticFileNames.DISLIKE_CLEAR_FILE
 import com.github.readingbat.common.StaticFileNames.DISLIKE_COLOR_FILE
 import com.github.readingbat.common.StaticFileNames.LIKE_CLEAR_FILE
 import com.github.readingbat.common.StaticFileNames.LIKE_COLOR_FILE
-import com.github.readingbat.common.User.Companion.gson
 import com.github.readingbat.common.User.Companion.queryActiveClassCode
 import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.ReadingBatContent
@@ -98,6 +97,8 @@ import kotlinx.html.*
 import kotlinx.html.Entities.nbsp
 import kotlinx.html.ScriptType.textJavaScript
 import kotlinx.html.stream.createHTML
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
 import mu.KLogging
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.select
@@ -139,7 +140,7 @@ internal object ChallengePage : KLogging() {
           script(type = textJavaScript) { likeDislikeScript(languageName, groupName, challengeName) }
 
           removePrismShadow()
-          headDefault(content)
+          headDefault()
         }
 
         body {
@@ -632,7 +633,7 @@ internal object ChallengePage : KLogging() {
             .select { (UserChallengeInfo.userRef eq user.userDbmsId) and (UserChallengeInfo.md5 eq challenge.md5()) }
             .map { it[0] as String }
             .firstOrNull()
-            ?.let { gson.fromJson(it, Map::class.java) as Map<String, String> }
+            ?.let { Json.decodeFromString<Map<String, String>>(it) }
             ?: emptyMap
         }
       browserSession.isNotNull() ->
@@ -642,7 +643,7 @@ internal object ChallengePage : KLogging() {
             .select { (SessionChallengeInfo.sessionRef eq browserSession.sessionDbmsId()) and (SessionChallengeInfo.md5 eq challenge.md5()) }
             .map { it[0] as String }
             .firstOrNull()
-            ?.let { gson.fromJson(it, Map::class.java) as Map<String, String> }
+            ?.let { Json.decodeFromString<Map<String, String>>(it) }
             ?: emptyMap
         }
       else -> emptyMap

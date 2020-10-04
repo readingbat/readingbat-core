@@ -46,6 +46,7 @@ import io.ktor.auth.*
 import io.ktor.http.*
 import io.ktor.locations.*
 import io.ktor.routing.*
+import kotlinx.serialization.Serializable
 
 internal object Locations {
   private const val trueStr = true.toString()
@@ -225,7 +226,8 @@ class ChallengeMd5(languageName: LanguageName, groupName: GroupName, challengeNa
   override fun toString() = value
 }
 
-inline class Invocation(val value: String) {
+@Serializable
+class Invocation(val value: String) {
   override fun toString() = value
 }
 

@@ -77,7 +77,7 @@ internal object TeacherPrefsPage : KLogging() {
     createHTML()
       .html {
         head {
-          headDefault(content)
+          headDefault()
           clickButtonScript(createClassButton)
         }
 

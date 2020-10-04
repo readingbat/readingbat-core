@@ -91,7 +91,7 @@ internal object StudentSummaryPage : KLogging() {
       .html {
         val studentName = student.fullName.value
 
-        head { headDefault(content) }
+        head { headDefault() }
 
         body {
           val returnPath = queryParam(RETURN_PARAM, "/")

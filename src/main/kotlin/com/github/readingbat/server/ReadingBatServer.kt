@@ -57,7 +57,6 @@ import io.ktor.server.engine.*
 import io.prometheus.Agent.Companion.startAsyncAgent
 import kotlinx.coroutines.channels.BroadcastChannel
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeoutOrNull
@@ -72,18 +71,6 @@ import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.TimeSource
 import kotlin.time.measureTime
 import kotlin.time.seconds
-
-data class PublishedData(val topic: String, val message: String)
-
-class Receiver(val id: String, val channel: ReceiveChannel<PublishedData>) {
-  suspend fun listen() {
-    logger.info { "Listening for data in Receiver" }
-    for (v in channel) {
-      println("**********Receiver $id read value: $v")
-    }
-    println("Receiver $id completed")
-  }
-}
 
 @Version(version = "1.5.0", date = "10/2/20")
 object ReadingBatServer : KLogging() {
@@ -287,6 +274,8 @@ internal fun Application.module() {
     static(STATIC_ROOT) { resources("static") }
   }
 }
+
+internal data class PublishedData(val topic: String, val message: String)
 
 private val Application.redirectHostname
   get() =

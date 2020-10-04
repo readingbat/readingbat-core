@@ -19,10 +19,9 @@ package com.github.readingbat.server.ws
 
 import com.github.pambrose.common.time.format
 import com.github.pambrose.common.util.simpleClassName
-import com.github.readingbat.common.Constants
 import com.github.readingbat.common.Endpoints.CLOCK_ENDPOINT
 import com.github.readingbat.common.Endpoints.WS_ROOT
-import com.github.readingbat.common.User.Companion.gson
+import com.github.readingbat.server.ws.ChallengeWs.PingMessage
 import com.github.readingbat.server.ws.WsCommon.closeChannels
 import io.ktor.http.cio.websocket.*
 import io.ktor.routing.*
@@ -53,16 +52,12 @@ internal object ClockWs : KLogging() {
     val start = clock.markNow()
   }
 
-  class PingMessage(val msg: String) {
-    val type = Constants.PING_CODE
-  }
-
   init {
     timer("clock msg sender", true, 0L, 1.seconds.toLongMilliseconds()) {
       for (sessionContext in wsConnections)
         try {
           val elapsed = sessionContext.start.elapsedNow().format()
-          val json = gson.toJson(PingMessage("$elapsed [${wsConnections.size}/$maxWsConnections]"))
+          val json = PingMessage("$elapsed [${wsConnections.size}/$maxWsConnections]").toJson()
           runBlocking {
             sessionContext.wsSession.outgoing.send(Frame.Text(json))
           }
@@ -86,8 +81,7 @@ internal object ClockWs : KLogging() {
         incoming
           .consumeAsFlow()
           .mapNotNull { it as? Frame.Text }
-          .collect { frame ->
-          }
+          .collect {}
       } finally {
         wsConnections -= wsContext
         closeChannels()

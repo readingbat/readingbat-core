@@ -65,7 +65,7 @@ internal object ConfigPage {
   fun PipelineCall.configPage(content: ReadingBatContent) =
     createHTML()
       .html {
-        head { headDefault(content) }
+        head { headDefault() }
 
         body {
           bodyTitle()

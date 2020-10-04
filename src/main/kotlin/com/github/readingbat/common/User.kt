@@ -36,6 +36,7 @@ import com.github.readingbat.dsl.LanguageType.Companion.toLanguageType
 import com.github.readingbat.dsl.isPostgresEnabled
 import com.github.readingbat.posts.ChallengeHistory
 import com.github.readingbat.posts.ChallengeResults
+import com.github.readingbat.posts.DashboardHistory
 import com.github.readingbat.posts.DashboardInfo
 import com.github.readingbat.server.*
 import com.github.readingbat.server.Email.Companion.EMPTY_EMAIL
@@ -45,9 +46,11 @@ import com.github.readingbat.server.FullName.Companion.UNKNOWN_FULLNAME
 import com.github.readingbat.server.ReadingBatServer.adminUsers
 import com.github.readingbat.server.ResetId.Companion.EMPTY_RESET_ID
 import com.github.readingbat.server.ws.ChallengeWs.classTopicName
-import com.google.gson.Gson
 import io.ktor.application.*
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import mu.KLogging
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -241,8 +244,7 @@ internal class User {
       .select { (UserAnswerHistory.userRef eq userDbmsId) and (UserAnswerHistory.md5 eq md5) and (UserAnswerHistory.invocation eq invocation.value) }
       .map {
         val json = it[UserAnswerHistory.historyJson]
-        val history =
-          mutableListOf<String>().apply { addAll(gson.fromJson(json, List::class.java) as List<String>) }
+        val history = Json.decodeFromString<List<String>>(json).toMutableList()
 
         ChallengeHistory(Invocation(it[UserAnswerHistory.invocation]),
                          it[UserAnswerHistory.correct],
@@ -403,9 +405,12 @@ internal class User {
                      history: ChallengeHistory) {
     // Publish to challenge dashboard
     logger.debug { "Publishing user answers to $classCode on $challengeMd5 for $this" }
-    val dashboardInfo = DashboardInfo(userId, complete, numCorrect, maxHistoryLength, history)
+    val dashboardHistory = DashboardHistory(history.invocation.value,
+                                            history.correct,
+                                            history.answers.asReversed().take(maxHistoryLength).joinToString("<br>"))
+    val dashboardInfo = DashboardInfo(userId, complete, numCorrect, dashboardHistory)
     val topicName = classTopicName(classCode, challengeMd5.value)
-    val data = gson.toJson(dashboardInfo)
+    val data = dashboardInfo.toJson()
     //redis.publish(topicName, data)
     runBlocking {
       ReadingBatServer.anwwersChannel.send(PublishedData(topicName, data))
@@ -436,7 +441,7 @@ internal class User {
               row[invocation] = history.invocation.value
               row[correct] = false
               row[incorrectAttempts] = 0
-              row[historyJson] = gson.toJson(emptyList<String>())
+              row[historyJson] = Json.encodeToString(emptyList<String>())
             }
         }
 
@@ -461,7 +466,6 @@ internal class User {
     // This is browser-id specific
     //private const val PREVIOUS_TEACHER_CLASS_CODE_FIELD = "previous-teacher-class-code"
 
-    internal val gson = Gson()
     val userIdCache = ConcurrentHashMap<String, Long>()
     val emailCache = ConcurrentHashMap<String, Email>()
 

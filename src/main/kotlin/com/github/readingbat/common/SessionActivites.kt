@@ -23,7 +23,6 @@ import com.github.pambrose.common.util.isInt
 import com.github.readingbat.common.Constants.UNKNOWN
 import com.github.readingbat.common.EnvVar.IPGEOLOCATION_KEY
 import com.github.readingbat.common.SessionActivites.RemoteHost.Companion.unknown
-import com.github.readingbat.common.User.Companion.gson
 import com.github.readingbat.common.User.Companion.toUser
 import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.isPostgresEnabled
@@ -36,6 +35,8 @@ import io.ktor.client.statement.*
 import io.ktor.features.*
 import io.ktor.http.*
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
 import mu.KLogging
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -87,7 +88,7 @@ internal object SessionActivites : KLogging() {
   class GeoInfo(val remoteHost: String, val json: String) {
     val valid get() = json.isNotBlank()
 
-    private val map = if (json.isNotBlank()) gson.fromJson(json, Map::class.java) as Map<String, Any?> else emptyMap()
+    private val map = if (json.isNotBlank()) Json.decodeFromString<Map<String, Any?>>(json) else emptyMap()
 
     val ip by map
     val continent_code by map

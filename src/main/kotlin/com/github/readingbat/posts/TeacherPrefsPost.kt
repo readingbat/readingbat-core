@@ -42,7 +42,6 @@ import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.queryActiveClassCode
 import com.github.readingbat.common.User.Companion.queryPreviousTeacherClassCode
 import com.github.readingbat.common.User.Companion.toUser
-import com.github.readingbat.common.browserSession
 import com.github.readingbat.common.isValidUser
 import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.ReadingBatContent
@@ -96,7 +95,7 @@ internal object TeacherPrefsPost : KLogging() {
 
   fun PipelineCall.enableStudentMode(user: User?): String {
     val returnPath = queryParam(RETURN_PARAM, "/")
-    val browserSession = call.browserSession
+    //val browserSession = call.browserSession
     val msg =
       if (user.isValidUser()) {
         user.assignActiveClassCode(DISABLED_CLASS_CODE, false)

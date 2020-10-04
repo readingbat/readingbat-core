@@ -41,7 +41,6 @@ import com.github.readingbat.common.Message
 import com.github.readingbat.common.StaticFileNames.GREEN_CHECK
 import com.github.readingbat.common.StaticFileNames.WHITE_CHECK
 import com.github.readingbat.common.User
-import com.github.readingbat.common.User.Companion.gson
 import com.github.readingbat.common.User.Companion.queryActiveClassCode
 import com.github.readingbat.common.browserSession
 import com.github.readingbat.common.challengeAnswersKey
@@ -69,6 +68,8 @@ import com.github.readingbat.server.get
 import io.ktor.application.*
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import mu.KLogging
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.select
@@ -136,7 +137,7 @@ internal object ChallengeGroupPage : KLogging() {
           }
         }
 
-        head { headDefault(content) }
+        head { headDefault() }
 
         body {
           bodyHeader(content, user, languageType, loginAttempt, loginPath, false, activeClassCode, msg)
@@ -246,8 +247,8 @@ internal object ChallengeGroupPage : KLogging() {
         onSubmit = """return confirm('Are you sure you want to clear your previous answers for group "$groupName"?')"""
         hiddenInput { name = LANGUAGE_NAME_PARAM; value = languageName.value }
         hiddenInput { name = GROUP_NAME_PARAM; value = groupName.value }
-        hiddenInput { name = CORRECT_ANSWERS_PARAM; value = gson.toJson(correctAnswersKeys) }
-        hiddenInput { name = CHALLENGE_ANSWERS_PARAM; value = gson.toJson(challengeAnswerKeys) }
+        hiddenInput { name = CORRECT_ANSWERS_PARAM; value = Json.encodeToString(correctAnswersKeys) }
+        hiddenInput { name = CHALLENGE_ANSWERS_PARAM; value = Json.encodeToString(challengeAnswerKeys) }
         submitInput {
           style = "vertical-align:middle; margin-top:1; margin-bottom:0"
           value = "Clear answer history"

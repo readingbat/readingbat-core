@@ -84,7 +84,7 @@ internal object UserPrefsPage : KLogging() {
     createHTML()
       .html {
         head {
-          headDefault(content)
+          headDefault()
           clickButtonScript(passwordButton, joinClassButton)
         }
 
@@ -301,7 +301,7 @@ internal object UserPrefsPage : KLogging() {
   fun PipelineCall.requestLogInPage(content: ReadingBatContent, msg: Message = EMPTY_MESSAGE) =
     createHTML()
       .html {
-        head { headDefault(content) }
+        head { headDefault() }
 
         body {
           val returnPath = queryParam(RETURN_PARAM, "/")

@@ -19,12 +19,10 @@ package com.github.readingbat.server.ws
 
 import com.github.readingbat.common.ClassCode
 import com.github.readingbat.common.CommonUtils
-import com.github.readingbat.common.CommonUtils.pathOf
 import com.github.readingbat.common.Constants
 import com.github.readingbat.common.Endpoints.CLASS_SUMMARY_ENDPOINT
 import com.github.readingbat.common.Endpoints.WS_ROOT
 import com.github.readingbat.common.Metrics
-import com.github.readingbat.common.User
 import com.github.readingbat.dsl.InvalidRequestException
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.agentLaunchId
@@ -36,13 +34,14 @@ import com.github.readingbat.server.ws.WsCommon.GROUP_NAME
 import com.github.readingbat.server.ws.WsCommon.LANGUAGE_NAME
 import com.github.readingbat.server.ws.WsCommon.closeChannels
 import com.github.readingbat.server.ws.WsCommon.validateContext
-import io.ktor.features.*
 import io.ktor.http.cio.websocket.*
 import io.ktor.routing.*
 import io.ktor.websocket.*
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 import mu.KLogging
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.util.concurrent.atomic.AtomicBoolean
@@ -74,10 +73,10 @@ internal object ClassSummaryWs : KLogging() {
           val groupName = p[GROUP_NAME]?.let { GroupName(it) } ?: throw InvalidRequestException("Missing group name")
           val classCode = p[CLASS_CODE]?.let { ClassCode(it) } ?: throw InvalidRequestException("Missing class code")
           val challenges = content.findGroup(languageName, groupName).challenges
-          val remote = call.request.origin.remoteHost
           val user = fetchUser() ?: throw InvalidRequestException("Null user")
-          val email = user.email
-          val desc = "${pathOf(WS_ROOT, CLASS_SUMMARY_ENDPOINT, languageName, groupName, classCode)} - $remote - $email"
+          //val email = user.email
+          //val remote = call.request.origin.remoteHost
+          //val desc = "${pathOf(WS_ROOT, CLASS_SUMMARY_ENDPOINT, languageName, groupName, classCode)} - $remote - $email"
 
           validateContext(languageName, groupName, classCode, null, user)
             .also { (valid, msg) -> if (!valid) throw InvalidRequestException(msg) }
@@ -85,7 +84,7 @@ internal object ClassSummaryWs : KLogging() {
           incoming
             .consumeAsFlow()
             .mapNotNull { it as? Frame.Text }
-            .collect { frame ->
+            .collect {
               val enrollees = classCode.fetchEnrollees()
               if (enrollees.isNotEmpty()) {
                 for (challenge in challenges) {
@@ -121,11 +120,10 @@ internal object ClassSummaryWs : KLogging() {
 
                     if (incorrectAttempts > 0 || results.any { it != Constants.UNANSWERED }) {
                       val json =
-                        User.gson.toJson(
-                          ClassSummary(enrollee.userId,
-                                       challengeName.encode(),
-                                       results,
-                                       if (incorrectAttempts == 0 && results.all { it == Constants.UNANSWERED }) "" else incorrectAttempts.toString()))
+                        ClassSummary(enrollee.userId,
+                                     challengeName.encode(),
+                                     results,
+                                     if (incorrectAttempts == 0 && results.all { it == Constants.UNANSWERED }) "" else incorrectAttempts.toString()).toJson()
 
                       metrics.wsClassSummaryResponseCount.labels(agentLaunchId()).inc()
                       logger.debug { "Sending data $json" }
@@ -153,5 +151,8 @@ internal object ClassSummaryWs : KLogging() {
     }
   }
 
-  class ClassSummary(val userId: String, val challengeName: String, val results: List<String>, val msg: String)
+  @Serializable
+  class ClassSummary(val userId: String, val challengeName: String, val results: List<String>, val msg: String) {
+    fun toJson() = Json.encodeToString(serializer(), this)
+  }
 }

@@ -42,7 +42,7 @@ internal object SessionsPage {
   fun PipelineCall.sessionsPage(content: ReadingBatContent) =
     createHTML()
       .html {
-        head { headDefault(content) }
+        head { headDefault() }
 
         body {
           bodyTitle()

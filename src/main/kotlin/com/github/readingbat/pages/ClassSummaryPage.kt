@@ -113,7 +113,7 @@ internal object ClassSummaryPage : KLogging() {
 
         head {
           loadBootstrap()
-          headDefault(content)
+          headDefault()
         }
 
         body {

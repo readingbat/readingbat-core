@@ -22,7 +22,6 @@ import com.github.readingbat.common.CommonUtils.md5Of
 import com.github.readingbat.common.KeyConstants.CHALLENGE_ANSWERS_KEY
 import com.github.readingbat.common.KeyConstants.CORRECT_ANSWERS_KEY
 import com.github.readingbat.common.KeyConstants.NO_AUTH_KEY
-import com.github.readingbat.common.User.Companion.gson
 import com.github.readingbat.dsl.MissingBrowserSessionException
 import com.github.readingbat.posts.ChallengeHistory
 import com.github.readingbat.server.BrowserSessions
@@ -34,6 +33,8 @@ import com.github.readingbat.server.SessionAnswerHistory
 import io.ktor.application.*
 import io.ktor.auth.*
 import io.ktor.sessions.*
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
 import mu.KLogging
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.insertAndGetId
@@ -68,9 +69,7 @@ internal data class BrowserSession(val id: String, val created: Long = Instant.n
       .select { (SessionAnswerHistory.sessionRef eq sessionDbmsId()) and (SessionAnswerHistory.md5 eq md5) }
       .map {
         val json = it[SessionAnswerHistory.historyJson]
-        val history =
-          mutableListOf<String>().apply { addAll(gson.fromJson(json, List::class.java) as List<String>) }
-
+        val history = Json.decodeFromString<List<String>>(json).toMutableList()
         ChallengeHistory(Invocation(it[SessionAnswerHistory.invocation]),
                          it[SessionAnswerHistory.correct],
                          it[SessionAnswerHistory.incorrectAttempts].toInt(),

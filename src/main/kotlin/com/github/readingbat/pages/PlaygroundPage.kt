@@ -73,7 +73,7 @@ internal object PlaygroundPage {
 
         head {
           script { src = "https://unpkg.com/kotlin-playground@1"; attributes["data-selector"] = ".$KOTLIN_CODE" }
-          headDefault(content)
+          headDefault()
         }
 
         body {

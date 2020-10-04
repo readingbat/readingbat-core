@@ -102,7 +102,7 @@ internal object LanguageGroupPage {
           }
         }
 
-        head { headDefault(content) }
+        head { headDefault() }
 
         body {
           val msg = Message(queryParam(MSG))

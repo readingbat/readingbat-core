@@ -57,7 +57,7 @@ internal object CreateAccountPage {
         val returnPath = queryParam(RETURN_PARAM, "/")
 
         head {
-          headDefault(content)
+          headDefault()
           clickButtonScript(createButton)
         }
 

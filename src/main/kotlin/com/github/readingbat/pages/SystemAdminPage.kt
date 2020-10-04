@@ -63,7 +63,7 @@ internal object SystemAdminPage : KLogging() {
   private fun PipelineCall.systemAdminLoginPage(content: ReadingBatContent, user: User, msg: Message) =
     createHTML()
       .html {
-        head { headDefault(content) }
+        head { headDefault() }
 
         body {
           val activeClassCode = queryActiveClassCode(user)

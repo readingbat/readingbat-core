@@ -19,11 +19,9 @@ package com.github.readingbat.server.ws
 
 import com.github.readingbat.common.ClassCode
 import com.github.readingbat.common.CommonUtils
-import com.github.readingbat.common.CommonUtils.pathOf
 import com.github.readingbat.common.Constants.NO
 import com.github.readingbat.common.Constants.UNANSWERED
 import com.github.readingbat.common.Constants.YES
-import com.github.readingbat.common.Endpoints.CLASS_SUMMARY_ENDPOINT
 import com.github.readingbat.common.Endpoints.STUDENT_SUMMARY_ENDPOINT
 import com.github.readingbat.common.Endpoints.WS_ROOT
 import com.github.readingbat.common.Metrics
@@ -38,7 +36,6 @@ import com.github.readingbat.server.ws.WsCommon.LANGUAGE_NAME
 import com.github.readingbat.server.ws.WsCommon.STUDENT_ID
 import com.github.readingbat.server.ws.WsCommon.closeChannels
 import com.github.readingbat.server.ws.WsCommon.validateContext
-import io.ktor.features.*
 import io.ktor.http.cio.websocket.*
 import io.ktor.http.cio.websocket.CloseReason.Codes.*
 import io.ktor.routing.*
@@ -46,6 +43,8 @@ import io.ktor.websocket.*
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 import mu.KLogging
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.util.concurrent.atomic.AtomicBoolean
@@ -76,11 +75,10 @@ internal object StudentSummaryWs : KLogging() {
             p[LANGUAGE_NAME]?.let { LanguageName(it) } ?: throw InvalidRequestException("Missing language")
           val student = p[STUDENT_ID]?.let { User.toUser(it) } ?: throw InvalidRequestException("Missing student id")
           val classCode = p[CLASS_CODE]?.let { ClassCode(it) } ?: throw InvalidRequestException("Missing class code")
-          val remote = call.request.origin.remoteHost
           val user = fetchUser() ?: throw InvalidRequestException("Null user")
-          val email = user.email //fetchEmail()
-          val desc =
-            "${pathOf(WS_ROOT, CLASS_SUMMARY_ENDPOINT, languageName, student.userId, classCode)} - $remote - $email"
+          //val email = user.email //fetchEmail()
+          //val remote = call.request.origin.remoteHost
+          //val desc = "${pathOf(WS_ROOT, CLASS_SUMMARY_ENDPOINT, languageName, student.userId, classCode)} - $remote - $email"
 
           validateContext(languageName, null, classCode, student, user)
             .also { (valid, msg) -> if (!valid) throw InvalidRequestException(msg) }
@@ -88,7 +86,7 @@ internal object StudentSummaryWs : KLogging() {
           incoming
             .consumeAsFlow()
             .mapNotNull { it as? Frame.Text }
-            .collect { frame ->
+            .collect {
               for (challengeGroup in content.findLanguage(languageName).challengeGroups) {
                 for (challenge in challengeGroup.challenges) {
                   val funcInfo = challenge.functionInfo(content)
@@ -125,8 +123,7 @@ internal object StudentSummaryWs : KLogging() {
                   if (incorrectAttempts > 0 || results.any { it != UNANSWERED }) {
                     val msg =
                       if (incorrectAttempts == 0 && results.all { it == UNANSWERED }) "" else incorrectAttempts.toString()
-                    val json =
-                      User.gson.toJson(StudentSummary(groupName.encode(), challengeName.encode(), results, msg))
+                    val json = StudentSummary(groupName.encode(), challengeName.encode(), results, msg).toJson()
 
                     metrics.wsClassSummaryResponseCount.labels(agentLaunchId()).inc()
                     logger.debug { "Sending data $json" }
@@ -153,5 +150,8 @@ internal object StudentSummaryWs : KLogging() {
     }
   }
 
-  class StudentSummary(val groupName: String, val challengeName: String, val results: List<String>, val msg: String)
+  @Serializable
+  class StudentSummary(val groupName: String, val challengeName: String, val results: List<String>, val msg: String) {
+    fun toJson() = Json.encodeToString(serializer(), this)
+  }
 }

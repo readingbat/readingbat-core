@@ -47,7 +47,6 @@ import com.github.readingbat.common.ScriptPools.kotlinScriptPool
 import com.github.readingbat.common.ScriptPools.pythonScriptPool
 import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.fetchUserDbmsIdFromCache
-import com.github.readingbat.common.User.Companion.gson
 import com.github.readingbat.common.User.Companion.shouldPublish
 import com.github.readingbat.common.browserSession
 import com.github.readingbat.dsl.InvalidConfigurationException
@@ -64,6 +63,10 @@ import com.github.readingbat.server.LanguageName.Companion.getLanguageName
 import io.ktor.application.*
 import io.ktor.request.*
 import io.ktor.response.*
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import mu.KLogging
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.deleteWhere
@@ -83,20 +86,20 @@ internal data class ChallengeResults(val invocation: Invocation,
                                      val correct: Boolean = false,
                                      val hint: String = "")
 
+@Serializable
 internal class DashboardInfo(val userId: String,
                              val complete: Boolean,
                              val numCorrect: Int,
-                             maxHistoryLength: Int,
-                             origHistory: ChallengeHistory) {
-  val history = DashboardHistory(origHistory.invocation.value,
-                                 origHistory.correct,
-                                 origHistory.answers.asReversed().take(maxHistoryLength).joinToString("<br>"))
+                             val history: DashboardHistory) {
+  fun toJson() = Json.encodeToString(serializer(), this)
 }
 
+@Serializable
 internal class DashboardHistory(val invocation: String,
                                 val correct: Boolean = false,
                                 val answers: String)
 
+@Serializable
 internal data class ChallengeHistory(var invocation: Invocation,
                                      var correct: Boolean = false,
                                      var incorrectAttempts: Int = 0,
@@ -372,8 +375,8 @@ internal object ChallengePost : KLogging() {
     val correctJson = parameters[CORRECT_ANSWERS_PARAM] ?: ""
     val challengeJson = parameters[CHALLENGE_ANSWERS_PARAM] ?: ""
 
-    val correctAnswersKeys = gson.fromJson(correctJson, List::class.java) as List<String>
-    val challengeAnswersKeys = gson.fromJson(challengeJson, List::class.java) as List<String>
+    val correctAnswersKeys = Json.decodeFromString<List<String>>(correctJson)
+    val challengeAnswersKeys = Json.decodeFromString<List<String>>(challengeJson)
 
     val path = pathOf(CHALLENGE_ROOT, languageName, groupName)
 
@@ -416,7 +419,7 @@ internal object ChallengePost : KLogging() {
     val params = call.receiveParameters()
     val paramMap = params.entries().map { it.key to it.value[0] }.toMap()
     val names = ChallengeNames(paramMap)
-    val challenge = content.findChallenge(names.languageName, names.groupName, names.challengeName)
+    //val challenge = content.findChallenge(names.languageName, names.groupName, names.challengeName)
 
     val likeArg = paramMap[LIKE_DESC]?.trim() ?: throw InvalidConfigurationException("Missing like/dislike argument")
 
@@ -461,7 +464,7 @@ internal object ChallengePost : KLogging() {
         }
 
     val invokeMap = invokeList.map { it.first.value to it.second }.toMap()
-    val invokeStr = gson.toJson(invokeMap)
+    val invokeStr = Json.encodeToString(invokeMap)
     when {
       user.isNotNull() ->
         UserChallengeInfo
@@ -515,7 +518,7 @@ internal object ChallengePost : KLogging() {
               row[updated] = DateTime.now(DateTimeZone.UTC)
               row[correct] = history.correct
               row[incorrectAttempts] = history.incorrectAttempts
-              row[historyJson] = gson.toJson(history.answers)
+              row[historyJson] = Json.encodeToString(history.answers)
             }
         browserSession.isNotNull() ->
           SessionAnswerHistory
@@ -526,7 +529,7 @@ internal object ChallengePost : KLogging() {
               row[updated] = DateTime.now(DateTimeZone.UTC)
               row[correct] = history.correct
               row[incorrectAttempts] = history.incorrectAttempts
-              row[historyJson] = gson.toJson(history.answers)
+              row[historyJson] = Json.encodeToString(history.answers)
             }
         else ->
           logger.warn { "Answer history not updated" }
