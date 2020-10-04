@@ -84,6 +84,7 @@ dependencies {
 
     implementation "com.impossibl.pgjdbc-ng:pgjdbc-ng-all:$postgres_version"
 
+    implementation "com.google.code.gson:gson:$gson_version"
     implementation "com.google.guava:guava:$guava_version"
 
     implementation "com.sendgrid:sendgrid-java:$sendgrid_version"

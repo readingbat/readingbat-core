@@ -203,8 +203,7 @@ internal object ChallengeGroupPage : KLogging() {
   private fun BODY.enableWebSockets(languageName: LanguageName, groupName: GroupName, classCode: ClassCode) {
     script {
       rawHtml(
-        """
-          
+        """ 
           var wshost = location.origin;
           if (wshost.startsWith('https:'))
             wshost = wshost.replace(/^https:/, 'wss:');

@@ -212,14 +212,14 @@ internal object StudentSummaryPage : KLogging() {
             wshost = wshost.replace(/^https:/, 'wss:');
           else
             wshost = wshost.replace(/^http:/, 'ws:');
-
+      
           var wsurl = wshost + '$WS_ROOT$STUDENT_SUMMARY_ENDPOINT/' + ${
           encodeUriElems(languageName,
                          student.userId,
                          classCode)
         };
           var ws = new WebSocket(wsurl);
-
+      
           ws.onopen = function (event) {
             ws.send("$classCode"); 
           };
@@ -235,7 +235,7 @@ internal object StudentSummaryPage : KLogging() {
               answers.style.backgroundColor = obj.results[i] == '$YES' ? '$CORRECT_COLOR' 
                                                                     : (obj.results[i] == '$NO' ? '$WRONG_COLOR' 
                                                                                              : '$INCOMPLETE_COLOR');
-
+      
               document.getElementById(prefix + '$STATS').innerHTML = obj.msg;
             }
           };

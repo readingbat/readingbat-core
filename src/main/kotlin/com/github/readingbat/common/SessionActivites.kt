@@ -30,13 +30,12 @@ import com.github.readingbat.server.GeoInfos
 import com.github.readingbat.server.geoInfosUnique
 import com.github.readingbat.server.get
 import com.github.readingbat.server.upsert
+import com.google.gson.Gson
 import io.ktor.application.*
 import io.ktor.client.statement.*
 import io.ktor.features.*
 import io.ktor.http.*
 import kotlinx.coroutines.runBlocking
-import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.json.Json
 import mu.KLogging
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -49,6 +48,8 @@ import kotlin.time.TimeSource
 import kotlin.time.hours
 
 internal object SessionActivites : KLogging() {
+
+  val gson = Gson()
 
   class RemoteHost(val remoteHost: String) {
     val city get() = geoInfoMap[remoteHost]?.takeIf { it.valid }?.city?.toString() ?: UNKNOWN
@@ -88,7 +89,8 @@ internal object SessionActivites : KLogging() {
   class GeoInfo(val remoteHost: String, val json: String) {
     val valid get() = json.isNotBlank()
 
-    private val map = if (json.isNotBlank()) Json.decodeFromString<Map<String, Any?>>(json) else emptyMap()
+    //private val map = if (json.isNotBlank()) Json.decodeFromString<Map<String, Any?>>(json) else emptyMap()
+    private val map = if (json.isNotBlank()) gson.fromJson(json, Map::class.java) as Map<String, Any?> else emptyMap()
 
     val ip by map
     val continent_code by map
@@ -145,7 +147,6 @@ internal object SessionActivites : KLogging() {
             }
           }
       }
-
     }
 
     override fun toString() = map.toString()

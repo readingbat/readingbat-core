@@ -342,14 +342,14 @@ internal object ClassSummaryPage : KLogging() {
             wshost = wshost.replace(/^https:/, 'wss:');
           else
             wshost = wshost.replace(/^http:/, 'ws:');
-
+      
           var wsurl = wshost + '$WS_ROOT$CLASS_SUMMARY_ENDPOINT/' + ${
           encodeUriElems(languageName,
                          groupName,
                          classCode)
         };
           var ws = new WebSocket(wsurl);
-
+      
           ws.onopen = function (event) {
             ws.send("$classCode"); 
           };
@@ -365,7 +365,7 @@ internal object ClassSummaryPage : KLogging() {
               answers.style.backgroundColor = obj.results[i] == '$YES' ? '$CORRECT_COLOR' 
                                                                     : (obj.results[i] == '$NO' ? '$WRONG_COLOR' 
                                                                                              : '$INCOMPLETE_COLOR');
-
+      
               document.getElementById(prefix + '$STATS').innerHTML = obj.msg;
             }
           };

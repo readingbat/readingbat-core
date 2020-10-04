@@ -287,11 +287,8 @@ internal object ChallengePage : KLogging() {
       }
 
       this@displayQuestions.processAnswers(funcInfo, challenge)
-
       this@displayQuestions.likeDislike(user, browserSession, challenge)
-
       this@displayQuestions.otherLinks(challenge)
-
       this@displayQuestions.clearChallengeAnswerHistoryOption(user, browserSession, challenge)
     }
 
@@ -304,9 +301,8 @@ internal object ChallengePage : KLogging() {
             wshost = wshost.replace(/^https:/, 'wss:');
           else
             wshost = wshost.replace(/^http:/, 'ws:');
-
+      
           var wsurl = wshost + '$WS_ROOT$CHALLENGE_ENDPOINT/'+encodeURIComponent('$classCode')+'/'+encodeURIComponent('$challengeMd5');
-
           var ws = new WebSocket(wsurl);
           
           ws.onopen = function (event) {
@@ -315,23 +311,23 @@ internal object ChallengePage : KLogging() {
           
           ws.onmessage = function (event) {
             var obj = JSON.parse(event.data);
-
+      
             if (obj.hasOwnProperty("type") && obj.type == "$PING_CODE") {
               document.getElementById('$pingMsg').innerHTML = obj.msg;
             }
             else {
               var name = document.getElementById(obj.userId + '-$nameTd');
               name.style.backgroundColor = obj.complete ? '$CORRECT_COLOR' : '$INCOMPLETE_COLOR';
-  
+      
               document.getElementById(obj.userId + '-$numCorrectSpan').innerHTML = obj.numCorrect;
-  
+      
               var prefix = obj.userId + '-' + obj.history.invocation;
               
               var answers = document.getElementById(prefix + '-$answersTd')
               answers.style.backgroundColor = obj.history.correct ? '$CORRECT_COLOR' 
                                                                   : (obj.history.answers.length > 0 ? '$WRONG_COLOR' 
                                                                                                     : '$INCOMPLETE_COLOR');
-  
+      
               document.getElementById(prefix + '-$answersSpan').innerHTML = obj.history.answers;
             }
           };
