@@ -81,7 +81,7 @@ internal fun Application.intercepts() {
         val path = request.path()
         val queryString = request.queryString()
 
-        logger.info { "Saving request: ${call.callId} $ipAddress $userDbmsId $verb $path $queryString $geoDbmsId" }
+        logger.debug { "Saving request: ${call.callId} $ipAddress $userDbmsId $verb $path $queryString $geoDbmsId" }
         transaction {
           ServerRequests
             .insert { row ->

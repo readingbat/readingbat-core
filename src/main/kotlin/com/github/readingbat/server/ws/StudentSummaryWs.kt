@@ -20,7 +20,9 @@ package com.github.readingbat.server.ws
 import com.github.readingbat.common.ClassCode
 import com.github.readingbat.common.CommonUtils
 import com.github.readingbat.common.CommonUtils.pathOf
-import com.github.readingbat.common.Constants
+import com.github.readingbat.common.Constants.NO
+import com.github.readingbat.common.Constants.UNANSWERED
+import com.github.readingbat.common.Constants.YES
 import com.github.readingbat.common.Endpoints.CLASS_SUMMARY_ENDPOINT
 import com.github.readingbat.common.Endpoints.STUDENT_SUMMARY_ENDPOINT
 import com.github.readingbat.common.Endpoints.WS_ROOT
@@ -53,14 +55,14 @@ internal object StudentSummaryWs : KLogging() {
   fun Routing.studentSummaryWsEndpoint(metrics: Metrics, contentSrc: () -> ReadingBatContent) {
 
     webSocket("$WS_ROOT$STUDENT_SUMMARY_ENDPOINT/{$LANGUAGE_NAME}/{$STUDENT_ID}/{$CLASS_CODE}") {
-      val finished = AtomicBoolean(false)
-
       try {
+        val finished = AtomicBoolean(false)
         logger.debug { "Opened student summary websocket" }
 
         outgoing.invokeOnClose {
           logger.debug { "Close received for student summary websocket" }
           finished.set(true)
+          incoming.cancel()
         }
 
         metrics.wsStudentSummaryCount.labels(agentLaunchId()).inc()
@@ -108,11 +110,11 @@ internal object StudentSummaryWs : KLogging() {
                           student.answerHistory(historyMd5, invocation)
                             .let {
                               incorrectAttempts += it.incorrectAttempts
-                              if (it.correct) Constants.YES else if (it.incorrectAttempts > 0) Constants.NO else Constants.UNANSWERED
+                              if (it.correct) YES else if (it.incorrectAttempts > 0) NO else UNANSWERED
                             }
                       }
                       else {
-                        results += Constants.UNANSWERED
+                        results += UNANSWERED
                       }
                     }
 
@@ -120,15 +122,16 @@ internal object StudentSummaryWs : KLogging() {
                       break
                   }
 
-                  if (incorrectAttempts > 0 || results.any { it != Constants.UNANSWERED }) {
+                  if (incorrectAttempts > 0 || results.any { it != UNANSWERED }) {
                     val msg =
-                      if (incorrectAttempts == 0 && results.all { it == Constants.UNANSWERED }) "" else incorrectAttempts.toString()
+                      if (incorrectAttempts == 0 && results.all { it == UNANSWERED }) "" else incorrectAttempts.toString()
                     val json =
                       User.gson.toJson(StudentSummary(groupName.encode(), challengeName.encode(), results, msg))
 
                     metrics.wsClassSummaryResponseCount.labels(agentLaunchId()).inc()
                     logger.debug { "Sending data $json" }
-                    outgoing.send(Frame.Text(json))
+                    if (!finished.get())
+                      outgoing.send(Frame.Text(json))
                   }
 
                   if (finished.get())

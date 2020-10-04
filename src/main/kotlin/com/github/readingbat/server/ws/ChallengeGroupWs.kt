@@ -19,6 +19,7 @@ package com.github.readingbat.server.ws
 
 import com.github.readingbat.common.ClassCode
 import com.github.readingbat.common.CommonUtils
+import com.github.readingbat.common.CommonUtils.pathOf
 import com.github.readingbat.common.Constants
 import com.github.readingbat.common.Endpoints
 import com.github.readingbat.common.Endpoints.CHALLENGE_GROUP_ENDPOINT
@@ -58,19 +59,18 @@ internal object ChallengeGroupWs : KLogging() {
     webSocket("$WS_ROOT$CHALLENGE_GROUP_ENDPOINT/{$LANGUAGE_NAME}/{$GROUP_NAME}/{$CLASS_CODE}") {
       try {
         val finished = AtomicBoolean(false)
-
         logger.debug { "Opened class statistics websocket" }
 
         outgoing.invokeOnClose {
           logger.debug { "Close received for class statistics websocket" }
           finished.set(true)
+          incoming.cancel()
         }
 
         metrics.wsClassStatisticsCount.labels(agentLaunchId()).inc()
         metrics.wsClassStatisticsGauge.labels(agentLaunchId()).inc()
 
         metrics.measureEndpointRequest("/websocket_class_statistics") {
-
           val content = contentSrc.invoke()
           val p = call.parameters
           val languageName =
@@ -81,13 +81,8 @@ internal object ChallengeGroupWs : KLogging() {
           val remote = call.request.origin.remoteHost
           val user = fetchUser() ?: throw InvalidRequestException("Null user")
           val email = user.email //fetchEmail()
-          val desc = "${
-            CommonUtils.pathOf(WS_ROOT,
-                               Endpoints.CHALLENGE_ENDPOINT,
-                               languageName,
-                               groupName,
-                               classCode)
-          } - $remote - $email"
+          val desc =
+            "${pathOf(WS_ROOT, Endpoints.CHALLENGE_ENDPOINT, languageName, groupName, classCode)} - $remote - $email"
 
           validateContext(languageName, groupName, classCode, null, user, "Class statistics")
             .also { (valid, msg) -> if (!valid) throw InvalidRequestException(msg) }
@@ -181,10 +176,9 @@ internal object ChallengeGroupWs : KLogging() {
 
                   metrics.wsClassStatisticsResponseCount.labels(agentLaunchId()).inc()
                   logger.debug { "Sending data $json" }
-                  outgoing.send(Frame.Text(json))
-
                   if (finished.get())
                     break
+                  outgoing.send(Frame.Text(json))
                 }
               }
 

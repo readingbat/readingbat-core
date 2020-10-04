@@ -29,6 +29,7 @@ import com.github.readingbat.common.Endpoints.CHECK_ANSWERS_ENDPOINT
 import com.github.readingbat.common.Endpoints.CLASS_SUMMARY_ENDPOINT
 import com.github.readingbat.common.Endpoints.CLEAR_CHALLENGE_ANSWERS_ENDPOINT
 import com.github.readingbat.common.Endpoints.CLEAR_GROUP_ANSWERS_ENDPOINT
+import com.github.readingbat.common.Endpoints.CLOCK_ENDPOINT
 import com.github.readingbat.common.Endpoints.CONFIG_ENDPOINT
 import com.github.readingbat.common.Endpoints.CREATE_ACCOUNT_ENDPOINT
 import com.github.readingbat.common.Endpoints.CSS_ENDPOINT
@@ -60,6 +61,7 @@ import com.github.readingbat.pages.AboutPage.aboutPage
 import com.github.readingbat.pages.AdminPage.adminDataPage
 import com.github.readingbat.pages.AdminPrefsPage.adminPrefsPage
 import com.github.readingbat.pages.ClassSummaryPage.classSummaryPage
+import com.github.readingbat.pages.ClockPage.clockPage
 import com.github.readingbat.pages.ConfigPage.configPage
 import com.github.readingbat.pages.CreateAccountPage.createAccountPage
 import com.github.readingbat.pages.HelpPage.helpPage
@@ -161,9 +163,11 @@ internal fun Routing.userRoutes(metrics: Metrics, contentSrc: () -> ReadingBatCo
   }
 
   get(HELP_ENDPOINT) {
-    respondWith {
-      helpPage(contentSrc(), fetchUser())
-    }
+    respondWith { helpPage(contentSrc(), fetchUser()) }
+  }
+
+  get(CLOCK_ENDPOINT) {
+    respondWith { clockPage() }
   }
 
   post(CHECK_ANSWERS_ENDPOINT) {

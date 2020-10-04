@@ -48,6 +48,7 @@ import com.github.readingbat.server.ReadingBatServer.metrics
 import com.github.readingbat.server.ws.ChallengeGroupWs.challengeGroupWsEndpoint
 import com.github.readingbat.server.ws.ChallengeWs.challengeWsEndpoint
 import com.github.readingbat.server.ws.ClassSummaryWs.classSummaryWsEndpoint
+import com.github.readingbat.server.ws.ClockWs.clockWsEndpoint
 import com.github.readingbat.server.ws.StudentSummaryWs.studentSummaryWsEndpoint
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
@@ -290,6 +291,7 @@ internal fun Application.module() {
     challengeGroupWsEndpoint(metrics) { content.get() }
     classSummaryWsEndpoint(metrics) { content.get() }
     studentSummaryWsEndpoint(metrics) { content.get() }
+    clockWsEndpoint()
     static(STATIC_ROOT) { resources("static") }
   }
 }

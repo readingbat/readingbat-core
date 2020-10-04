@@ -19,6 +19,7 @@ package com.github.readingbat.server.ws
 
 import com.github.readingbat.common.ClassCode
 import com.github.readingbat.common.CommonUtils
+import com.github.readingbat.common.CommonUtils.pathOf
 import com.github.readingbat.common.Constants
 import com.github.readingbat.common.Endpoints.CLASS_SUMMARY_ENDPOINT
 import com.github.readingbat.common.Endpoints.WS_ROOT
@@ -58,6 +59,7 @@ internal object ClassSummaryWs : KLogging() {
         outgoing.invokeOnClose {
           logger.debug { "Close received for class summary websocket" }
           finished.set(true)
+          incoming.cancel()
         }
 
         metrics.wsClassSummaryCount.labels(agentLaunchId()).inc()
@@ -74,14 +76,8 @@ internal object ClassSummaryWs : KLogging() {
           val challenges = content.findGroup(languageName, groupName).challenges
           val remote = call.request.origin.remoteHost
           val user = fetchUser() ?: throw InvalidRequestException("Null user")
-          val email = user.email //fetchEmail()
-          val desc = "${
-            CommonUtils.pathOf(WS_ROOT,
-                               CLASS_SUMMARY_ENDPOINT,
-                               languageName,
-                               groupName,
-                               classCode)
-          } - $remote - $email"
+          val email = user.email
+          val desc = "${pathOf(WS_ROOT, CLASS_SUMMARY_ENDPOINT, languageName, groupName, classCode)} - $remote - $email"
 
           validateContext(languageName, groupName, classCode, null, user, "Class summary")
             .also { (valid, msg) -> if (!valid) throw InvalidRequestException(msg) }
@@ -133,7 +129,8 @@ internal object ClassSummaryWs : KLogging() {
 
                       metrics.wsClassSummaryResponseCount.labels(agentLaunchId()).inc()
                       logger.debug { "Sending data $json" }
-                      outgoing.send(Frame.Text(json))
+                      if (!finished.get())
+                        outgoing.send(Frame.Text(json))
                     }
 
                     if (finished.get())

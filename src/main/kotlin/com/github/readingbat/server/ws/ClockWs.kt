@@ -17,31 +17,22 @@
 
 package com.github.readingbat.server.ws
 
-import com.github.pambrose.common.concurrent.BooleanMonitor
 import com.github.pambrose.common.time.format
 import com.github.pambrose.common.util.simpleClassName
-import com.github.readingbat.common.ClassCode
-import com.github.readingbat.common.CommonUtils
 import com.github.readingbat.common.Constants
-import com.github.readingbat.common.Endpoints.CHALLENGE_ENDPOINT
+import com.github.readingbat.common.Endpoints.CLOCK_ENDPOINT
 import com.github.readingbat.common.Endpoints.WS_ROOT
-import com.github.readingbat.common.Metrics
 import com.github.readingbat.common.User.Companion.gson
-import com.github.readingbat.dsl.InvalidRequestException
-import com.github.readingbat.dsl.agentLaunchId
-import com.github.readingbat.server.ReadingBatServer.anwwersChannel
-import com.github.readingbat.server.ServerUtils.fetchUser
-import com.github.readingbat.server.ws.WsCommon.CHALLENGE_MD5
-import com.github.readingbat.server.ws.WsCommon.CLASS_CODE
 import com.github.readingbat.server.ws.WsCommon.closeChannels
-import com.github.readingbat.server.ws.WsCommon.validateContext
 import io.ktor.http.cio.websocket.*
 import io.ktor.routing.*
 import io.ktor.websocket.*
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.consumeAsFlow
+import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.runBlocking
 import mu.KLogging
 import java.util.*
-import java.util.concurrent.Executors
 import kotlin.collections.LinkedHashSet
 import kotlin.concurrent.schedule
 import kotlin.math.max
@@ -59,9 +50,8 @@ internal object ClockWs : KLogging() {
     maxWsConnections = max(maxWsConnections, wsConnections.size)
   }
 
-  data class SessionContext(val wsSession: DefaultWebSocketServerSession, val metrics: Metrics) {
+  data class SessionContext(val wsSession: DefaultWebSocketServerSession) {
     val start = clock.markNow()
-    var topicName = ""
   }
 
   class PingMessage(val msg: String) {
@@ -73,80 +63,38 @@ internal object ClockWs : KLogging() {
       runBlocking {
         for (sessionContext in wsConnections)
           try {
-            val json = gson.toJson(PingMessage(sessionContext.start.elapsedNow().format()))
+            val elapsed = sessionContext.start.elapsedNow().format()
+            val json = gson.toJson(PingMessage("$elapsed [${wsConnections.size}/$maxWsConnections]"))
             sessionContext.wsSession.outgoing.send(Frame.Text(json))
           } catch (e: Throwable) {
             logger.error { "Exception in pinger ${e.simpleClassName} ${e.message}" }
           }
       }
     }
-
-    Executors.newSingleThreadExecutor()
-      .submit {
-        while (true) {
-          try {
-            runBlocking {
-              for (data in anwwersChannel.openSubscription()) {
-                wsConnections
-                  .filter { it.topicName == data.topic }
-                  .forEach {
-                    it.metrics.wsStudentAnswerResponseCount.labels(agentLaunchId()).inc()
-                    it.wsSession.outgoing.send(Frame.Text(data.message))
-                    logger.debug { "Sent $data ${wsConnections.size}" }
-                  }
-              }
-            }
-          } catch (e: Throwable) {
-            logger.error { "Exception in dispatcher ${e.simpleClassName} ${e.message}" }
-            Thread.sleep(1.seconds.toLongMilliseconds())
-          }
-        }
-      }
   }
 
-  fun Routing.challengeWsEndpoint(metrics: Metrics) {
-
-    webSocket("$WS_ROOT$CHALLENGE_ENDPOINT/{$CLASS_CODE}/{$CHALLENGE_MD5}") {
-      val wsContext = SessionContext(this, metrics)
+  fun Routing.clockWsEndpoint() {
+    webSocket("$WS_ROOT$CLOCK_ENDPOINT") {
+      val wsContext = SessionContext(this)
       try {
-        val finished = BooleanMonitor(false)
-
         outgoing.invokeOnClose {
-          logger.debug { "Close received for student answers websocket:  ${wsConnections.size}" }
-          finished.set(true)
+          incoming.cancel()
         }
 
         wsConnections += wsContext
         assignMaxConnections()
 
-        logger.info { "Opened student answers websocket: ${wsConnections.size}" }
-
-        metrics.wsStudentAnswerCount.labels(agentLaunchId()).inc()
-        metrics.wsStudentAnswerGauge.labels(agentLaunchId()).inc()
-
-        metrics.measureEndpointRequest("/websocket_student_answers") {
-          val p = call.parameters
-          val classCode = p[CLASS_CODE]?.let { ClassCode(it) } ?: throw InvalidRequestException("Missing class code")
-          val challengeMd5 = p[CHALLENGE_MD5] ?: throw InvalidRequestException("Missing challenge md5")
-          val user = fetchUser() ?: throw InvalidRequestException("Null user")
-
-          validateContext(null, null, classCode, null, user, "Student answers")
-            .also { (valid, msg) -> if (!valid) throw InvalidRequestException(msg) }
-
-          val frame = incoming.receive()
-          wsContext.topicName = classTopicName(classCode, challengeMd5)
-          logger.debug { "Waiting to finish: ${wsConnections.size}" }
-          finished.waitUntilTrue()
-        }
+        incoming
+          .consumeAsFlow()
+          .mapNotNull { it as? Frame.Text }
+          .collect { frame ->
+          }
       } finally {
+        wsConnections -= wsContext
         closeChannels()
         close(CloseReason(CloseReason.Codes.GOING_AWAY, "Client disconnected"))
-        wsConnections -= wsContext
-        metrics.wsStudentAnswerGauge.labels(agentLaunchId()).dec()
-        logger.info { "Closed student answers websocket ${wsConnections.size}" }
+        logger.info { "Closed clock websocket: ${wsConnections.size} $maxWsConnections" }
       }
     }
   }
-
-  fun classTopicName(classCode: ClassCode, challengeMd5: String) = CommonUtils.keyOf(classCode, challengeMd5)
 }

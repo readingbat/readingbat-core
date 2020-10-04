@@ -80,6 +80,7 @@ internal object PropertyNames {
 
 internal object Endpoints {
   const val ROOT = "/"
+  const val WS_ROOT = "/ws"
 
   const val STATIC_ROOT = "https://static.readingbat.com"
   const val CHALLENGE_ROOT = "/content"
@@ -104,8 +105,8 @@ internal object Endpoints {
   const val PASSWORD_CHANGE_ENDPOINT = "/password-change"
   const val FAV_ICON_ENDPOINT = "/favicon.ico"
   const val ROBOTS_ENDPOINT = "/robots.txt"
-  const val WS_ROOT = "/ws"
   const val CHALLENGE_ENDPOINT = "/challenge"
+  const val CLOCK_ENDPOINT = "/clock"
   const val CHALLENGE_GROUP_ENDPOINT = "/challenge-group"
   const val CHECK_ANSWERS_ENDPOINT = "/check-answers"
   const val LIKE_DISLIKE_ENDPOINT = "/like-dislike"

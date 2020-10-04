@@ -28,6 +28,7 @@ import com.github.readingbat.common.Endpoints.STATIC_ROOT
 import com.github.readingbat.common.EnvVar.FILTER_LOG
 import com.github.readingbat.dsl.InvalidRequestException
 import com.github.readingbat.dsl.RedisUnavailableException
+import com.github.readingbat.dsl.isPostgresEnabled
 import com.github.readingbat.pages.DbmsDownPage.dbmsDownPage
 import com.github.readingbat.pages.ErrorPage.errorPage
 import com.github.readingbat.pages.InvalidRequestPage.invalidRequestPage
@@ -129,7 +130,7 @@ internal object Installs : KLogging() {
         val response = call.response
         val logStr = request.toLogString()
         val remote = request.origin.remoteHost
-        val email = call.fetchEmailFromCache()
+        val email = if (isPostgresEnabled()) call.fetchEmailFromCache() else Email.UNKNOWN_EMAIL
 
         when (val status = response.status() ?: HttpStatusCode(-1, "Unknown")) {
           Found -> "Redirect: $logStr -> ${response.headers[Location]} - $remote - $email"
