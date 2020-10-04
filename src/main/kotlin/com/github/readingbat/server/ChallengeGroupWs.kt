@@ -86,16 +86,12 @@ internal object ChallengeGroupWs : KLogging() {
           } - $remote - $email"
 
           validateContext(languageName, groupName, classCode, null, user, "Class statistics")
-            .also { (valid, msg) ->
-              if (!valid)
-                throw InvalidRequestException(msg)
-            }
+            .also { (valid, msg) -> if (!valid) throw InvalidRequestException(msg) }
 
           incoming
             .consumeAsFlow()
             .mapNotNull { it as? Frame.Text }
             .collect { frame ->
-              val inboundMsg = frame.readText()
               val enrollees = classCode.fetchEnrollees()
 
               if (enrollees.isNotEmpty()) {
