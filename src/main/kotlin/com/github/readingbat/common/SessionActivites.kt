@@ -153,8 +153,8 @@ internal object SessionActivites : KLogging() {
   private val delay = 1.hours
   private val period = 1.hours
   private val timeOutAge = 24.hours
-  private val sessionsMap = ConcurrentHashMap<String, Session>()
-  private val geoInfoMap = ConcurrentHashMap<String, GeoInfo>()
+  val sessionsMap = ConcurrentHashMap<String, Session>()
+  val geoInfoMap = ConcurrentHashMap<String, GeoInfo>()
   private val timer = Timer()
 
   val sessionsMapSize get() = sessionsMap.size

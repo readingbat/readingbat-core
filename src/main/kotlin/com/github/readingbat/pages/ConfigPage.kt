@@ -26,16 +26,31 @@ import com.github.readingbat.common.Endpoints.ADMIN_PREFS_ENDPOINT
 import com.github.readingbat.common.EnvVar
 import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.Property
-import com.github.readingbat.common.Property.*
+import com.github.readingbat.common.Property.DSL_FILE_NAME
+import com.github.readingbat.common.Property.DSL_VARIABLE_NAME
+import com.github.readingbat.common.Property.KTOR_PORT
+import com.github.readingbat.common.Property.KTOR_WATCH
+import com.github.readingbat.common.Property.PROXY_HOSTNAME
 import com.github.readingbat.common.SessionActivites
-import com.github.readingbat.dsl.*
+import com.github.readingbat.common.SessionActivites.geoInfoMap
+import com.github.readingbat.common.SessionActivites.sessionsMap
+import com.github.readingbat.common.User.Companion.emailCache
+import com.github.readingbat.common.User.Companion.userIdCache
 import com.github.readingbat.dsl.LanguageType.Java
 import com.github.readingbat.dsl.LanguageType.Kotlin
 import com.github.readingbat.dsl.LanguageType.Python
+import com.github.readingbat.dsl.ReadingBatContent
+import com.github.readingbat.dsl.agentLaunchId
+import com.github.readingbat.dsl.cacheContentInRedis
+import com.github.readingbat.dsl.isAgentEnabled
+import com.github.readingbat.dsl.isProduction
 import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyTitle
 import com.github.readingbat.pages.PageUtils.headDefault
 import com.github.readingbat.pages.PageUtils.loadStatusPageDisplay
+import com.github.readingbat.server.ChallengeWs.maxWsConnections
+import com.github.readingbat.server.ChallengeWs.wsConnections
+import com.github.readingbat.server.InterceptContext.requestTimingMap
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ReadingBatServer
 import com.github.readingbat.server.ServerUtils.queryParam
@@ -110,20 +125,40 @@ internal object ConfigPage {
                   td { +content.maxClassCount.toString() }
                 }
                 tr {
+                  td { +"Admin Users:" }
+                  td { +ReadingBatServer.adminUsers.joinToString(", ") }
+                }
+              }
+            }
+
+            h3 { +"System Maps" }
+            div(classes = INDENT_1EM) {
+              table {
+                listOf(
+                  "Active sessions map size" to sessionsMap,
+                  "Request timing map size" to requestTimingMap,
+                  "IP Geo map size" to geoInfoMap,
+                  "Content map size" to content.contentMap,
+                  "User ID cache size" to userIdCache,
+                  "User email cache size" to emailCache,
+                      )
+                  .forEach {
+                    tr {
+                      td { +it.first }
+                      td { +it.second.size.toString() }
+                    }
+                  }
+                tr {
+                  td { +"WS connections size/max:" }
+                  td { +"${wsConnections.size}/${maxWsConnections}" }
+                }
+                tr {
                   td { +"Challenge cache size:" }
                   val map = content.functionInfoMap
                   val javaCnt = map.filter { it.value.languageType == Java }.count()
                   val pythonCnt = map.filter { it.value.languageType == Python }.count()
                   val kotlinCnt = map.filter { it.value.languageType == Kotlin }.count()
-                  td { +"Total: ${map.size} (Java: $javaCnt Python: $pythonCnt Kotlin: $kotlinCnt)" }
-                }
-                tr {
-                  td { +"Session map size:" }
-                  td { +SessionActivites.sessionsMapSize.toString() }
-                }
-                tr {
-                  td { +"Admin Users:" }
-                  td { +ReadingBatServer.adminUsers.joinToString(", ") }
+                  td { +"${map.size} (Java: $javaCnt Python: $pythonCnt Kotlin: $kotlinCnt)" }
                 }
               }
             }

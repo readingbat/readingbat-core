@@ -98,7 +98,7 @@ object ReadingBatServer : KLogging() {
   internal val adminUsers = mutableListOf<String>()
   internal val contentReadCount = AtomicInteger(0)
   internal val metrics by lazy { Metrics() }
-  internal val channel = BroadcastChannel<PublishedData>(Channel.BUFFERED)
+  internal val anwwersChannel = BroadcastChannel<PublishedData>(Channel.BUFFERED)
   internal var redisPool: JedisPool? = null
   internal val postgres by lazy {
     Database.connect(

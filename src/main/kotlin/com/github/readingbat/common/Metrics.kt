@@ -21,8 +21,15 @@ import com.github.pambrose.common.dsl.PrometheusDsl.counter
 import com.github.pambrose.common.dsl.PrometheusDsl.gauge
 import com.github.pambrose.common.dsl.PrometheusDsl.summary
 import com.github.pambrose.common.metrics.SamplerGaugeCollector
+import com.github.readingbat.common.SessionActivites.activeSessions
+import com.github.readingbat.common.SessionActivites.geoInfoMap
+import com.github.readingbat.common.SessionActivites.sessionsMapSize
+import com.github.readingbat.common.User.Companion.emailCache
+import com.github.readingbat.common.User.Companion.userIdCache
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.agentLaunchId
+import com.github.readingbat.server.ChallengeWs.wsConnections
+import com.github.readingbat.server.InterceptContext.requestTimingMap
 import kotlin.time.hours
 import kotlin.time.minutes
 
@@ -184,35 +191,71 @@ internal class Metrics {
       help("Server start time in seconds")
     }.labels(agentLaunchId()).setToCurrentTime()
 
+    SamplerGaugeCollector("active_users_map_size",
+                          "Active users map size",
+                          labelNames = listOf(AGENT_ID),
+                          labelValues = listOf(agentLaunchId()),
+                          data = { sessionsMapSize.toDouble() })
+
+    SamplerGaugeCollector("request_timing_map_size",
+                          "Request timing map size",
+                          labelNames = listOf(AGENT_ID),
+                          labelValues = listOf(agentLaunchId()),
+                          data = { requestTimingMap.size.toDouble() })
+
+    SamplerGaugeCollector("geo_map_size",
+                          "IP Geo map size",
+                          labelNames = listOf(AGENT_ID),
+                          labelValues = listOf(agentLaunchId()),
+                          data = { geoInfoMap.size.toDouble() })
+
+    SamplerGaugeCollector("content_map_size",
+                          "Content map size",
+                          labelNames = listOf(AGENT_ID),
+                          labelValues = listOf(agentLaunchId()),
+                          data = { contentSource().contentMap.size.toDouble() })
+
+    SamplerGaugeCollector("user_id_cache_size",
+                          "User ID cache size",
+                          labelNames = listOf(AGENT_ID),
+                          labelValues = listOf(agentLaunchId()),
+                          data = { userIdCache.size.toDouble() })
+
+    SamplerGaugeCollector("user_email_cache_size",
+                          "User email cache size size",
+                          labelNames = listOf(AGENT_ID),
+                          labelValues = listOf(agentLaunchId()),
+                          data = { emailCache.size.toDouble() })
+
     SamplerGaugeCollector("sources_cache_size",
                           "Sources cache size",
                           labelNames = listOf(AGENT_ID),
                           labelValues = listOf(agentLaunchId()),
                           data = { contentSource().functionInfoMap.size.toDouble() })
 
-    SamplerGaugeCollector("active_users_map_size",
-                          "Active users map size",
+    SamplerGaugeCollector("websocket_connection_list_size",
+                          "Websocket connection list size",
                           labelNames = listOf(AGENT_ID),
                           labelValues = listOf(agentLaunchId()),
-                          data = { SessionActivites.sessionsMapSize.toDouble() })
+                          data = { wsConnections.size.toDouble() })
 
     SamplerGaugeCollector("active_users_1min_count",
                           "Active users in last 1 min count",
                           labelNames = listOf(AGENT_ID),
                           labelValues = listOf(agentLaunchId()),
-                          data = { SessionActivites.activeSessions(1.minutes).toDouble() })
+                          data = { activeSessions(1.minutes).toDouble() })
 
     SamplerGaugeCollector("active_users_15mins_count",
                           "Active users in last 15 mins count",
                           labelNames = listOf(AGENT_ID),
                           labelValues = listOf(agentLaunchId()),
-                          data = { SessionActivites.activeSessions(15.minutes).toDouble() })
+                          data = { activeSessions(15.minutes).toDouble() })
 
     SamplerGaugeCollector("active_users_60mins_count",
                           "Active users in last 60 mins count",
                           labelNames = listOf(AGENT_ID),
                           labelValues = listOf(agentLaunchId()),
-                          data = { SessionActivites.activeSessions(1.hours).toDouble() })
+                          data = { activeSessions(1.hours).toDouble() })
   }
 
   suspend fun measureEndpointRequest(endpoint: String, body: suspend () -> Unit) {

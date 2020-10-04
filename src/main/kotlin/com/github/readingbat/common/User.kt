@@ -409,7 +409,7 @@ internal class User {
     val data = gson.toJson(dashboardInfo)
     //redis.publish(topicName, data)
     runBlocking {
-      ReadingBatServer.channel.send(PublishedData(topicName, data))
+      ReadingBatServer.anwwersChannel.send(PublishedData(topicName, data))
     }
   }
 
@@ -463,8 +463,8 @@ internal class User {
     //private const val PREVIOUS_TEACHER_CLASS_CODE_FIELD = "previous-teacher-class-code"
 
     internal val gson = Gson()
-    private val userIdCache = ConcurrentHashMap<String, Long>()
-    private val emailCache = ConcurrentHashMap<String, Email>()
+    val userIdCache = ConcurrentHashMap<String, Long>()
+    val emailCache = ConcurrentHashMap<String, Email>()
 
     fun toUser(userId: String, browserSession: BrowserSession? = null) = User(userId, browserSession, true)
 

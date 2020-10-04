@@ -29,6 +29,7 @@ import com.github.readingbat.common.Metrics
 import com.github.readingbat.common.User.Companion.gson
 import com.github.readingbat.dsl.InvalidRequestException
 import com.github.readingbat.dsl.agentLaunchId
+import com.github.readingbat.server.ReadingBatServer.anwwersChannel
 import com.github.readingbat.server.ServerUtils.fetchUser
 import com.github.readingbat.server.WsCommon.CHALLENGE_MD5
 import com.github.readingbat.server.WsCommon.CLASS_CODE
@@ -43,13 +44,20 @@ import java.util.*
 import java.util.concurrent.Executors
 import kotlin.collections.LinkedHashSet
 import kotlin.concurrent.schedule
+import kotlin.math.max
 import kotlin.time.TimeSource
 import kotlin.time.seconds
 
 internal object ChallengeWs : KLogging() {
-  private val wsConnections = Collections.synchronizedSet(LinkedHashSet<SessionContext>())
+  val wsConnections = Collections.synchronizedSet(LinkedHashSet<SessionContext>())
+  var maxWsConnections = 0
   private val clock = TimeSource.Monotonic
   private val timer = Timer()
+
+  @Synchronized
+  private fun setMaxConnections() {
+    maxWsConnections = max(maxWsConnections, wsConnections.size)
+  }
 
   data class SessionContext(val wsSession: DefaultWebSocketServerSession, val metrics: Metrics) {
     val start = clock.markNow()
@@ -63,17 +71,13 @@ internal object ChallengeWs : KLogging() {
   init {
     timer.schedule(0L, 1.seconds.toLongMilliseconds()) {
       runBlocking {
-        for (sessionContext in wsConnections) {
-          gson.toJson(PingMessage(sessionContext.start.elapsedNow().format()))
-            .also { json ->
-              try {
-                sessionContext.wsSession.outgoing.send(Frame.Text(json))
-                //logger.info { "Sent $json ${wsConnections.size}" }
-              } catch (e: Throwable) {
-                logger.info { "Exception in pinger ${e.simpleClassName} ${e.message}" }
-              }
-            }
-        }
+        for (sessionContext in wsConnections)
+          try {
+            val json = gson.toJson(PingMessage(sessionContext.start.elapsedNow().format()))
+            sessionContext.wsSession.outgoing.send(Frame.Text(json))
+          } catch (e: Throwable) {
+            logger.error { "Exception in pinger ${e.simpleClassName} ${e.message}" }
+          }
       }
     }
 
@@ -82,7 +86,7 @@ internal object ChallengeWs : KLogging() {
         while (true) {
           try {
             runBlocking {
-              for (data in ReadingBatServer.channel.openSubscription()) {
+              for (data in anwwersChannel.openSubscription()) {
                 wsConnections
                   .filter { it.topicName == data.topic }
                   .forEach {
@@ -113,6 +117,7 @@ internal object ChallengeWs : KLogging() {
         }
 
         wsConnections += wsContext
+        setMaxConnections()
 
         logger.info { "Opened student answers websocket: ${wsConnections.size}" }
 
@@ -120,7 +125,6 @@ internal object ChallengeWs : KLogging() {
         metrics.wsStudentAnswerGauge.labels(agentLaunchId()).inc()
 
         metrics.measureEndpointRequest("/websocket_student_answers") {
-
           val p = call.parameters
           val classCode = p[CLASS_CODE]?.let { ClassCode(it) } ?: throw InvalidRequestException("Missing class code")
           val challengeMd5 = p[CHALLENGE_MD5] ?: throw InvalidRequestException("Missing challenge md5")
@@ -131,7 +135,7 @@ internal object ChallengeWs : KLogging() {
 
           val frame = incoming.receive()
           wsContext.topicName = classTopicName(classCode, challengeMd5)
-          logger.info { "Waiting to finish: ${wsConnections.size}" }
+          logger.debug { "Waiting to finish: ${wsConnections.size}" }
           finished.waitUntilTrue()
         }
       } finally {

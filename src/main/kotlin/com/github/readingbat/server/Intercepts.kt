@@ -28,6 +28,7 @@ import com.github.readingbat.common.User.Companion.fetchUserDbmsIdFromCache
 import com.github.readingbat.common.browserSession
 import com.github.readingbat.dsl.isPostgresEnabled
 import com.github.readingbat.dsl.isSaveRequestsEnabled
+import com.github.readingbat.server.InterceptContext.requestTimingMap
 import com.github.readingbat.server.Intercepts.logger
 import com.github.readingbat.server.ServerUtils.fetchUserDbmsIdFromCache
 import io.ktor.application.*
@@ -44,10 +45,13 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.TimeMark
 import kotlin.time.TimeSource
 
+internal object InterceptContext {
+  val requestTimingMap = ConcurrentHashMap<String, TimeMark>()
+}
+
 internal fun Application.intercepts() {
 
   val clock = TimeSource.Monotonic
-  val timingMap = ConcurrentHashMap<String, TimeMark>()
 
   intercept(ApplicationCallPipeline.Setup) {
     // Phase for preparing call and it's attributes for processing
@@ -110,7 +114,7 @@ internal fun Application.intercepts() {
         call.callId
           .also { callId ->
             if (callId.isNotNull()) {
-              timingMap.put(callId, clock.markNow())
+              requestTimingMap.put(callId, clock.markNow())
             }
           }
       }
@@ -122,10 +126,10 @@ internal fun Application.intercepts() {
         call.callId
           .also { requestId ->
             if (requestId.isNotNull()) {
-              timingMap.remove(requestId)
+              requestTimingMap.remove(requestId)
                 .also { start ->
                   if (start.isNotNull() && requestId.isNotNull()) {
-                    logger.info { "Logged call ${timingMap.size} ${start.elapsedNow()} ${call.callId} ${call.request.toLogString()}" }
+                    logger.info { "Logged call ${requestTimingMap.size} ${start.elapsedNow()} ${call.callId} ${call.request.toLogString()}" }
                     transaction {
                       ServerRequests
                         .update({ ServerRequests.requestId eq requestId }) { row ->
@@ -136,7 +140,7 @@ internal fun Application.intercepts() {
                 }
             }
             else {
-              logger.info { "Null requestId for $path" }
+              logger.error { "Null requestId for $path" }
             }
           }
       }
