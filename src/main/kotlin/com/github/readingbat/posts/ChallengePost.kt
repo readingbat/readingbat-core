@@ -46,10 +46,10 @@ import com.github.readingbat.common.ParameterIds.LIKE_COLOR
 import com.github.readingbat.common.ScriptPools.kotlinScriptPool
 import com.github.readingbat.common.ScriptPools.pythonScriptPool
 import com.github.readingbat.common.User
+import com.github.readingbat.common.User.Companion.fetchUserDbmsIdFromCache
 import com.github.readingbat.common.User.Companion.gson
 import com.github.readingbat.common.User.Companion.shouldPublish
 import com.github.readingbat.common.browserSession
-import com.github.readingbat.common.queryUserDbmsId
 import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.ReturnType
@@ -300,29 +300,33 @@ internal object ChallengePost : KLogging() {
   }
 
   private fun deleteChallengeInfo(type: String, id: String, md5: String) =
-    transaction {
-      when (type) {
-        AUTH_KEY ->
+    when (type) {
+      AUTH_KEY ->
+        transaction {
           UserChallengeInfo
-            .deleteWhere { (UserChallengeInfo.userRef eq queryUserDbmsId(id)) and (UserChallengeInfo.md5 eq md5) }
-        NO_AUTH_KEY ->
+            .deleteWhere { (UserChallengeInfo.userRef eq fetchUserDbmsIdFromCache(id)) and (UserChallengeInfo.md5 eq md5) }
+        }
+      NO_AUTH_KEY ->
+        transaction {
           SessionChallengeInfo
             .deleteWhere { (SessionChallengeInfo.sessionRef eq querySessionDbmsId(id)) and (SessionChallengeInfo.md5 eq md5) }
-        else -> throw InvalidConfigurationException("Invalid type: $type")
-      }
+        }
+      else -> throw InvalidConfigurationException("Invalid type: $type")
     }
 
   private fun deleteAnswerHistory(type: String, id: String, md5: String) =
-    transaction {
-      when (type) {
-        AUTH_KEY ->
+    when (type) {
+      AUTH_KEY ->
+        transaction {
           UserAnswerHistory
-            .deleteWhere { (UserAnswerHistory.userRef eq queryUserDbmsId(id)) and (UserAnswerHistory.md5 eq md5) }
-        NO_AUTH_KEY ->
+            .deleteWhere { (UserAnswerHistory.userRef eq fetchUserDbmsIdFromCache(id)) and (UserAnswerHistory.md5 eq md5) }
+        }
+      NO_AUTH_KEY ->
+        transaction {
           SessionAnswerHistory
             .deleteWhere { (SessionAnswerHistory.sessionRef eq querySessionDbmsId(id)) and (SessionAnswerHistory.md5 eq md5) }
-        else -> throw InvalidConfigurationException("Invalid type: $type")
-      }
+        }
+      else -> throw InvalidConfigurationException("Invalid type: $type")
     }
 
   suspend fun PipelineCall.clearChallengeAnswers(content: ReadingBatContent, user: User?): String {

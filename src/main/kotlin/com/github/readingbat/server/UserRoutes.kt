@@ -167,27 +167,19 @@ internal fun Routing.userRoutes(metrics: Metrics, contentSrc: () -> ReadingBatCo
   }
 
   post(CHECK_ANSWERS_ENDPOINT) {
-    metrics.measureEndpointRequest(CHECK_ANSWERS_ENDPOINT) {
-      checkAnswers(contentSrc(), fetchUser())
-    }
+    metrics.measureEndpointRequest(CHECK_ANSWERS_ENDPOINT) { checkAnswers(contentSrc(), fetchUser()) }
   }
 
   post(LIKE_DISLIKE_ENDPOINT) {
-    metrics.measureEndpointRequest(LIKE_DISLIKE_ENDPOINT) {
-      likeDislike(contentSrc(), fetchUser())
-    }
+    metrics.measureEndpointRequest(LIKE_DISLIKE_ENDPOINT) { likeDislike(contentSrc(), fetchUser()) }
   }
 
   post(CLEAR_GROUP_ANSWERS_ENDPOINT) {
-    respondWith {
-      clearGroupAnswers(contentSrc(), fetchUser())
-    }
+    respondWithSuspendingRedirect { clearGroupAnswers(contentSrc(), fetchUser()) }
   }
 
   post(CLEAR_CHALLENGE_ANSWERS_ENDPOINT) {
-    respondWith {
-      clearChallengeAnswers(contentSrc(), fetchUser())
-    }
+    respondWithSuspendingRedirect { clearChallengeAnswers(contentSrc(), fetchUser()) }
   }
 
   get(CREATE_ACCOUNT_ENDPOINT, metrics) {
@@ -199,9 +191,7 @@ internal fun Routing.userRoutes(metrics: Metrics, contentSrc: () -> ReadingBatCo
   }
 
   get(ADMIN_PREFS_ENDPOINT) {
-    respondWith {
-      fetchUser().let { authenticateAdminUser(it) { adminPrefsPage(contentSrc(), it) } }
-    }
+    respondWith { fetchUser().let { authenticateAdminUser(it) { adminPrefsPage(contentSrc(), it) } } }
   }
 
   get(USER_PREFS_ENDPOINT, metrics) {
@@ -221,9 +211,7 @@ internal fun Routing.userRoutes(metrics: Metrics, contentSrc: () -> ReadingBatCo
   }
 
   get(SYSTEM_ADMIN_ENDPOINT, metrics) {
-    respondWith {
-      fetchUser().let { authenticateAdminUser(it) { systemAdminPage(contentSrc(), it) } }
-    }
+    respondWith { fetchUser().let { authenticateAdminUser(it) { systemAdminPage(contentSrc(), it) } } }
   }
 
   get(CLASS_SUMMARY_ENDPOINT, metrics) {

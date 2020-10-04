@@ -23,12 +23,13 @@ import com.github.readingbat.common.Constants.STATIC
 import com.github.readingbat.common.Constants.UNKNOWN_USER_ID
 import com.github.readingbat.common.Endpoints.PING_ENDPOINT
 import com.github.readingbat.common.SessionActivites.markActivity
-import com.github.readingbat.common.SessionActivites.queryGeoDbmsId
+import com.github.readingbat.common.SessionActivites.queryGeoDbmsIdByIpAddress
+import com.github.readingbat.common.User.Companion.fetchUserDbmsIdFromCache
 import com.github.readingbat.common.browserSession
-import com.github.readingbat.common.queryUserDbmsId
 import com.github.readingbat.dsl.isPostgresEnabled
+import com.github.readingbat.dsl.isSaveRequestsEnabled
 import com.github.readingbat.server.Intercepts.logger
-import com.github.readingbat.server.ServerUtils.fetchUserDbmsId
+import com.github.readingbat.server.ServerUtils.fetchUserDbmsIdFromCache
 import io.ktor.application.*
 import io.ktor.features.*
 import io.ktor.request.*
@@ -65,17 +66,18 @@ internal fun Application.intercepts() {
       browserSession?.markActivity("intercept()", call)
         ?: logger.debug { "Null browser sessions for ${call.request.origin.remoteHost}" }
 
-      if (isPostgresEnabled() && browserSession.isNotNull()) {
+      if (isSaveRequestsEnabled() && isPostgresEnabled() && browserSession.isNotNull()) {
         val request = call.request
         val ipAddress = request.origin.remoteHost
         val sessionDbmsId = transaction { querySessionDbmsId(browserSession.id) }
-        val userDbmsId = call.fetchUserDbmsId().takeIf { it != -1L } ?: transaction { queryUserDbmsId(UNKNOWN_USER_ID) }
-        val geoDbmsId = transaction { queryGeoDbmsId(ipAddress) }
+        val userDbmsId =
+          call.fetchUserDbmsIdFromCache().takeIf { it != -1L } ?: fetchUserDbmsIdFromCache(UNKNOWN_USER_ID)
+        val geoDbmsId = transaction { queryGeoDbmsIdByIpAddress(ipAddress) }
         val verb = request.httpMethod.value
         val path = request.path()
         val queryString = request.queryString()
 
-        logger.debug { "Saving request: ${call.callId} $ipAddress $userDbmsId $verb $path $queryString $geoDbmsId" }
+        logger.info { "Saving request: ${call.callId} $ipAddress $userDbmsId $verb $path $queryString $geoDbmsId" }
         transaction {
           ServerRequests
             .insert { row ->
@@ -101,41 +103,43 @@ internal fun Application.intercepts() {
     // Phase for handling unprocessed calls
   }
 
-  environment.monitor.subscribe(RoutingCallStarted) { call: RoutingApplicationCall ->
-    val path = call.request.path()
-    if (!path.startsWith("/$STATIC/") && path != PING_ENDPOINT) {
-      call.callId
-        .also { callId ->
-          if (callId.isNotNull()) {
-            timingMap.put(callId, clock.markNow())
+  if (isSaveRequestsEnabled() && isPostgresEnabled()) {
+    environment.monitor.subscribe(RoutingCallStarted) { call: RoutingApplicationCall ->
+      val path = call.request.path()
+      if (!path.startsWith("/$STATIC/") && path != PING_ENDPOINT) {
+        call.callId
+          .also { callId ->
+            if (callId.isNotNull()) {
+              timingMap.put(callId, clock.markNow())
+            }
           }
-        }
+      }
     }
-  }
 
-  environment.monitor.subscribe(RoutingCallFinished) { call: RoutingApplicationCall ->
-    val path = call.request.path()
-    if (!path.startsWith("/$STATIC/") && path != PING_ENDPOINT) {
-      call.callId
-        .also { requestId ->
-          if (requestId.isNotNull()) {
-            timingMap.remove(requestId)
-              .also { start ->
-                if (start.isNotNull() && requestId.isNotNull()) {
-                  logger.info { "Call finished ${timingMap.size} ${call.callId}  ${start.elapsedNow()} ${call.request.toLogString()}" }
-                  transaction {
-                    ServerRequests
-                      .update({ ServerRequests.requestId eq requestId }) { row ->
-                        row[duration] = start.elapsedNow().toLongMilliseconds()
-                      }
+    environment.monitor.subscribe(RoutingCallFinished) { call: RoutingApplicationCall ->
+      val path = call.request.path()
+      if (!path.startsWith("/$STATIC/") && path != PING_ENDPOINT) {
+        call.callId
+          .also { requestId ->
+            if (requestId.isNotNull()) {
+              timingMap.remove(requestId)
+                .also { start ->
+                  if (start.isNotNull() && requestId.isNotNull()) {
+                    logger.info { "Logged call ${timingMap.size} ${start.elapsedNow()} ${call.callId} ${call.request.toLogString()}" }
+                    transaction {
+                      ServerRequests
+                        .update({ ServerRequests.requestId eq requestId }) { row ->
+                          row[duration] = start.elapsedNow().toLongMilliseconds()
+                        }
+                    }
                   }
                 }
-              }
+            }
+            else {
+              logger.info { "Null requestId for $path" }
+            }
           }
-          else {
-            logger.info { "Null requestId for $path" }
-          }
-        }
+      }
     }
   }
 }

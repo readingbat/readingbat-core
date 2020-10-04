@@ -38,6 +38,9 @@ import com.github.readingbat.common.User.Companion.createUnknownUser
 import com.github.readingbat.common.User.Companion.userExists
 import com.github.readingbat.dsl.*
 import com.github.readingbat.server.AdminRoutes.adminRoutes
+import com.github.readingbat.server.ChallengeGroupWs.challengeGroupWsEndpoint
+import com.github.readingbat.server.ChallengeWs.challengeWsEndpoint
+import com.github.readingbat.server.ClassSummaryWs.classSummaryWsEndpoint
 import com.github.readingbat.server.Installs.installs
 import com.github.readingbat.server.Locations.locations
 import com.github.readingbat.server.ReadingBatServer.adminUsers
@@ -45,7 +48,7 @@ import com.github.readingbat.server.ReadingBatServer.content
 import com.github.readingbat.server.ReadingBatServer.contentReadCount
 import com.github.readingbat.server.ReadingBatServer.logger
 import com.github.readingbat.server.ReadingBatServer.metrics
-import com.github.readingbat.server.WsEndoints.wsEndpoints
+import com.github.readingbat.server.StudentSummaryWs.studentSummaryWsEndpoint
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import io.ktor.application.*
@@ -179,8 +182,8 @@ internal fun Application.readContentDsl(fileName: String, variableName: String) 
     content.set(
       readContentDsl(FileSource(fileName = fileName), variableName)
         .apply {
-          maxHistoryLength = MAX_HISTORY_LENGTH.configProperty(this@readContentDsl, "10").toInt()
-          maxClassCount = MAX_CLASS_COUNT.configProperty(this@readContentDsl, "25").toInt()
+          maxHistoryLength = MAX_HISTORY_LENGTH.configValue(this@readContentDsl, "10").toInt()
+          maxClassCount = MAX_CLASS_COUNT.configValue(this@readContentDsl, "25").toInt()
         }.apply { clearContentMap() })
     metrics.contentLoadedCount.labels(agentLaunchId()).inc()
   }.also {
@@ -190,14 +193,15 @@ internal fun Application.readContentDsl(fileName: String, variableName: String) 
 }
 
 internal fun Application.module() {
-  adminUsers.addAll(ADMIN_USERS.configPropertyOrNull(this)?.getList() ?: emptyList())
+  adminUsers.addAll(ADMIN_USERS.configValueOrNull(this)?.getList() ?: emptyList())
 
   AGENT_ENABLED_PROPERTY.setProperty(agentEnabled.toString())
   PROXY_HOSTNAME.setPropertyFromConfig(this, "")
 
-  IS_PRODUCTION.setProperty(IS_PRODUCTION.configProperty(this, "false").toBoolean().toString())
-  POSTGRES_ENABLED.setProperty(POSTGRES_ENABLED.configProperty(this, "false").toBoolean().toString())
-  CACHE_CONTENT_IN_REDIS.setProperty(CACHE_CONTENT_IN_REDIS.configProperty(this, "false").toBoolean().toString())
+  IS_PRODUCTION.setProperty(IS_PRODUCTION.configValue(this, "false").toBoolean().toString())
+  POSTGRES_ENABLED.setProperty(POSTGRES_ENABLED.configValue(this, "false").toBoolean().toString())
+  SAVE_REQUESTS_ENABLED.setProperty(SAVE_REQUESTS_ENABLED.configValue(this, "true").toBoolean().toString())
+  CACHE_CONTENT_IN_REDIS.setProperty(CACHE_CONTENT_IN_REDIS.configValue(this, "false").toBoolean().toString())
 
   DSL_FILE_NAME.setPropertyFromConfig(this, "src/Content.kt")
   DSL_VARIABLE_NAME.setPropertyFromConfig(this, "content")
@@ -226,10 +230,10 @@ internal fun Application.module() {
   REDIS_MIN_IDLE_SIZE.setPropertyFromConfig(this, "1")
 
   KTOR_PORT.setPropertyFromConfig(this, "0")
-  KTOR_WATCH.setProperty(KTOR_WATCH.configPropertyOrNull(this)?.getList()?.toString() ?: UNASSIGNED)
+  KTOR_WATCH.setProperty(KTOR_WATCH.configValueOrNull(this)?.getList()?.toString() ?: UNASSIGNED)
 
   SENDGRID_PREFIX_PROPERTY.setProperty(
-    SENDGRID_PREFIX.getEnv(SENDGRID_PREFIX_PROPERTY.configProperty(this, "https://www.readingbat.com")))
+    SENDGRID_PREFIX.getEnv(SENDGRID_PREFIX_PROPERTY.configValue(this, "https://www.readingbat.com")))
 
   if (isPostgresEnabled()) {
     ReadingBatServer.postgres
@@ -259,7 +263,7 @@ internal fun Application.module() {
   val job = launch { readContentDsl(fileName, variableName) }
 
   runBlocking {
-    val maxDelay = STARTUP_DELAY_SECS.configProperty(this@module, "30").toInt().seconds
+    val maxDelay = STARTUP_DELAY_SECS.configValue(this@module, "30").toInt().seconds
     logger.info { "Delaying start-up by max of $maxDelay" }
     measureTime {
       withTimeoutOrNull(maxDelay) {
@@ -282,23 +286,26 @@ internal fun Application.module() {
     locations(metrics) { content.get() }
     userRoutes(metrics) { content.get() }
     sysAdminRoutes(metrics, { content.get() }, { readContentDsl(fileName, variableName) })
-    wsEndpoints(metrics) { content.get() }
+    challengeWsEndpoint(metrics) { content.get() }
+    challengeGroupWsEndpoint(metrics) { content.get() }
+    classSummaryWsEndpoint(metrics) { content.get() }
+    studentSummaryWsEndpoint(metrics) { content.get() }
     static(STATIC_ROOT) { resources("static") }
   }
 }
 
 private val Application.redirectHostname
   get() =
-    REDIRECT_HOSTNAME.getEnv(REDIRECT_HOSTNAME_PROPERTY.configProperty(this, default = ""))
+    REDIRECT_HOSTNAME.getEnv(REDIRECT_HOSTNAME_PROPERTY.configValue(this, default = ""))
 
 private val Application.agentEnabled
   get() =
-    AGENT_ENABLED.getEnv(AGENT_ENABLED_PROPERTY.configProperty(this, default = "false").toBoolean())
+    AGENT_ENABLED.getEnv(AGENT_ENABLED_PROPERTY.configValue(this, default = "false").toBoolean())
 
 private val Application.forwardedHeaderSupportEnabled
   get() =
-    FORWARDED_ENABLED.getEnv(FORWARDED_ENABLED_PROPERTY.configProperty(this, default = "false").toBoolean())
+    FORWARDED_ENABLED.getEnv(FORWARDED_ENABLED_PROPERTY.configValue(this, default = "false").toBoolean())
 
 private val Application.xforwardedHeaderSupportEnabled
   get() =
-    XFORWARDED_ENABLED.getEnv(XFORWARDED_ENABLED_PROPERTY.configProperty(this, default = "false").toBoolean())
+    XFORWARDED_ENABLED.getEnv(XFORWARDED_ENABLED_PROPERTY.configValue(this, default = "false").toBoolean())

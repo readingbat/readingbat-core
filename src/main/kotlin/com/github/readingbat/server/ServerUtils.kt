@@ -65,14 +65,10 @@ import org.jetbrains.exposed.sql.statements.expandArgs
 import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.joda.time.DateTime
 import redis.clients.jedis.Jedis
-import java.util.concurrent.ConcurrentHashMap
 
 typealias PipelineCall = PipelineContext<Unit, ApplicationCall>
 
 internal object ServerUtils : KLogging() {
-
-  private val userIdCache = ConcurrentHashMap<String, Long>()
-  private val emailCache = ConcurrentHashMap<String, Email>()
 
   fun getVersionDesc(asJson: Boolean = false): String = ReadingBatServer::class.versionDesc(asJson)
 
@@ -92,23 +88,11 @@ internal object ServerUtils : KLogging() {
 
   fun ApplicationCall.fetchUser(): User? = userPrincipal?.userId?.let { toUser(it, browserSession) }
 
-  fun ApplicationCall.fetchEmail() =
-    userPrincipal?.userId
-      ?.let { userId ->
-        emailCache.computeIfAbsent(userId) {
-          (fetchUser()?.email?.value?.let { Email(it) } ?: UNKNOWN_EMAIL)
-            .also { email -> logger.debug { "Looked up email for $userId: $email" } }
-        }
-      } ?: UNKNOWN_EMAIL
+  fun ApplicationCall.fetchUserDbmsIdFromCache() =
+    userPrincipal?.userId?.let { User.fetchUserDbmsIdFromCache(it) } ?: -1
 
-  fun ApplicationCall.fetchUserDbmsId() =
-    userPrincipal?.userId
-      ?.let { userId ->
-        userIdCache.computeIfAbsent(userId) {
-          (fetchUser()?.userDbmsId ?: -1)
-            .also { userDbmsId -> logger.debug { "Looked up userDbmsId for $userId: $userDbmsId" } }
-        }
-      } ?: -1
+  fun ApplicationCall.fetchEmailFromCache() =
+    userPrincipal?.userId?.let { User.fetchEmailFromCache(it) } ?: UNKNOWN_EMAIL
 
   suspend fun PipelineCall.respondWithRedirect(block: () -> String) =
     try {

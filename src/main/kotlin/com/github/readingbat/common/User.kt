@@ -39,20 +39,22 @@ import com.github.readingbat.posts.ChallengeHistory
 import com.github.readingbat.posts.ChallengeResults
 import com.github.readingbat.posts.DashboardInfo
 import com.github.readingbat.server.*
+import com.github.readingbat.server.ChallengeWs.classTopicName
 import com.github.readingbat.server.Email.Companion.EMPTY_EMAIL
 import com.github.readingbat.server.Email.Companion.UNKNOWN_EMAIL
 import com.github.readingbat.server.FullName.Companion.EMPTY_FULLNAME
 import com.github.readingbat.server.FullName.Companion.UNKNOWN_FULLNAME
 import com.github.readingbat.server.ReadingBatServer.adminUsers
 import com.github.readingbat.server.ResetId.Companion.EMPTY_RESET_ID
-import com.github.readingbat.server.WsEndoints.classTopicName
 import com.google.gson.Gson
+import io.ktor.application.*
 import kotlinx.coroutines.runBlocking
 import mu.KLogging
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.joda.time.DateTime
 import org.joda.time.DateTimeZone.UTC
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.contracts.contract
 import kotlin.time.measureTime
 
@@ -461,6 +463,8 @@ internal class User {
     //private const val PREVIOUS_TEACHER_CLASS_CODE_FIELD = "previous-teacher-class-code"
 
     internal val gson = Gson()
+    private val userIdCache = ConcurrentHashMap<String, Long>()
+    private val emailCache = ConcurrentHashMap<String, Email>()
 
     fun toUser(userId: String, browserSession: BrowserSession? = null) = User(userId, browserSession, true)
 
@@ -499,6 +503,34 @@ internal class User {
           .select { Users.userId eq userId }
           .map { it[0] as Long }
           .first() > 0
+      }
+
+    fun fetchUserDbmsIdFromCache(userId: String) =
+      userIdCache.computeIfAbsent(userId) {
+        queryUserDbmsId(userId).also { logger.info { "Looked up userDbmsId for $userId: $it" } }
+      }
+
+    fun fetchEmailFromCache(userId: String) =
+      emailCache.computeIfAbsent(userId) {
+        queryUserEmail(userId).also { logger.info { "Looked up email for $userId: $it" } }
+      }
+
+    private fun queryUserDbmsId(userId: String, defaultIfMissing: Long = -1) =
+      transaction {
+        Users
+          .slice(Users.id)
+          .select { Users.userId eq userId }
+          .map { it[Users.id].value }
+          .firstOrNull() ?: defaultIfMissing
+      }
+
+    private fun queryUserEmail(userId: String, defaultIfMissing: Email = UNKNOWN_EMAIL) =
+      transaction {
+        Users
+          .slice(Users.email)
+          .select { Users.userId eq userId }
+          .map { Email(it[0] as String) }
+          .firstOrNull() ?: defaultIfMissing
       }
 
     fun createUnknownUser() =
@@ -578,13 +610,6 @@ internal class User {
       }
   }
 }
-
-internal fun queryUserDbmsId(userId: String) =
-  Users
-    .slice(Users.id)
-    .select { Users.userId eq userId }
-    .map { it[Users.id].value }
-    .firstOrNull() ?: throw InvalidConfigurationException("Invalid user id: $userId")
 
 internal fun User?.isAdminUser() = isValidUser() && email.value in adminUsers
 

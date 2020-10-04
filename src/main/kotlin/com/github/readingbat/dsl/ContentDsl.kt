@@ -33,6 +33,7 @@ import com.github.readingbat.common.Property.AGENT_LAUNCH_ID
 import com.github.readingbat.common.Property.CACHE_CONTENT_IN_REDIS
 import com.github.readingbat.common.Property.IS_PRODUCTION
 import com.github.readingbat.common.Property.POSTGRES_ENABLED
+import com.github.readingbat.common.Property.SAVE_REQUESTS_ENABLED
 import com.github.readingbat.common.ScriptPools.kotlinScriptPool
 import com.github.readingbat.dsl.ContentDsl.logger
 import com.github.readingbat.server.ReadingBatServer
@@ -64,6 +65,8 @@ fun readingBatContent(block: ReadingBatContent.() -> Unit) =
 fun isProduction() = IS_PRODUCTION.getProperty(false)
 
 internal fun isPostgresEnabled() = POSTGRES_ENABLED.getProperty(false)
+
+internal fun isSaveRequestsEnabled() = SAVE_REQUESTS_ENABLED.getProperty(true)
 
 internal fun cacheContentInRedis() = CACHE_CONTENT_IN_REDIS.getProperty(false)
 

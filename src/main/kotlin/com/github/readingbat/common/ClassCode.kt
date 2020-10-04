@@ -82,7 +82,7 @@ internal data class ClassCode(val value: String) {
         Users
           .select { Users.id inList userIds }
           .map { toUser(it[Users.userId], it) }
-          .also { logger.info { "fetchEnrollees() returning ${it.size} users" } }
+          .also { logger.debug { "fetchEnrollees() returning ${it.size} users" } }
       }
 
   fun deleteClassCode() = Classes.deleteWhere { Classes.classCode eq value }

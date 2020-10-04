@@ -35,7 +35,7 @@ import com.github.readingbat.pages.NotFoundPage.notFoundPage
 import com.github.readingbat.server.ConfigureCookies.configureAuthCookie
 import com.github.readingbat.server.ConfigureCookies.configureSessionIdCookie
 import com.github.readingbat.server.ConfigureFormAuth.configureFormAuth
-import com.github.readingbat.server.ServerUtils.fetchEmail
+import com.github.readingbat.server.ServerUtils.fetchEmailFromCache
 import io.ktor.application.*
 import io.ktor.auth.*
 import io.ktor.features.*
@@ -50,6 +50,7 @@ import io.ktor.websocket.*
 import mu.KLogging
 import org.slf4j.event.Level
 import java.util.concurrent.atomic.AtomicLong
+import kotlin.time.seconds
 
 internal object Installs : KLogging() {
 
@@ -71,7 +72,7 @@ internal object Installs : KLogging() {
     }
 
     install(WebSockets) {
-      pingPeriodMillis = 5000L   // Duration between pings or `0` to disable pings
+      pingPeriodMillis = 15.seconds.toLongMilliseconds()   // Duration between pings or `0` to disable pings
     }
 
     if (forwardedHeaderSupportEnabled) {
@@ -128,7 +129,7 @@ internal object Installs : KLogging() {
         val response = call.response
         val logStr = request.toLogString()
         val remote = request.origin.remoteHost
-        val email = call.fetchEmail()
+        val email = call.fetchEmailFromCache()
 
         when (val status = response.status() ?: HttpStatusCode(-1, "Unknown")) {
           Found -> "Redirect: $logStr -> ${response.headers[Location]} - $remote - $email"

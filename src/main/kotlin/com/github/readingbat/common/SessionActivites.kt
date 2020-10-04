@@ -198,7 +198,7 @@ internal object SessionActivites : KLogging() {
       }
     }
 
-  fun queryGeoDbmsId(ipAddress: String) =
+  fun queryGeoDbmsIdByIpAddress(ipAddress: String) =
     GeoInfos
       .slice(GeoInfos.id)
       .select { GeoInfos.ip eq ipAddress }

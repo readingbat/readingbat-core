@@ -38,6 +38,7 @@ import mu.KLogging
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.insertAndGetId
 import org.jetbrains.exposed.sql.select
+import org.jetbrains.exposed.sql.transactions.transaction
 import java.time.Instant
 
 internal data class UserPrincipal(val userId: String, val created: Long = Instant.now().toEpochMilli()) : Principal
@@ -85,11 +86,13 @@ internal data class BrowserSession(val id: String, val created: Long = Instant.n
         }.value
 
     fun querySessionDbmsId(id: String) =
-      BrowserSessions
-        .slice(BrowserSessions.id)
-        .select { BrowserSessions.session_id eq id }
-        .map { it[BrowserSessions.id].value }
-        .firstOrNull() ?: throw MissingBrowserSessionException(id)
+      transaction {
+        BrowserSessions
+          .slice(BrowserSessions.id)
+          .select { BrowserSessions.session_id eq id }
+          .map { it[BrowserSessions.id].value }
+          .firstOrNull() ?: throw MissingBrowserSessionException(id)
+      }
   }
 }
 
