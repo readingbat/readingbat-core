@@ -35,7 +35,7 @@ version '1.5.0'
 
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
-    implementation 'org.jetbrains.kotlinx:kotlinx-serialization-core:1.0.0-RC'
+    implementation "org.jetbrains.kotlinx:kotlinx-serialization-core:$serialization_version"
 
     implementation "com.github.pambrose.common-utils:core-utils:$utils_version"
 
