@@ -286,7 +286,7 @@ internal fun Application.module() {
     locations(metrics) { content.get() }
     userRoutes(metrics) { content.get() }
     sysAdminRoutes(metrics, { content.get() }, { readContentDsl(fileName, variableName) })
-    challengeWsEndpoint(metrics) { content.get() }
+    challengeWsEndpoint(metrics)
     challengeGroupWsEndpoint(metrics) { content.get() }
     classSummaryWsEndpoint(metrics) { content.get() }
     studentSummaryWsEndpoint(metrics) { content.get() }

@@ -21,9 +21,10 @@ import com.github.pambrose.common.util.isNotNull
 import com.github.readingbat.common.ClassCode
 import com.github.readingbat.common.User
 import com.github.readingbat.common.isNotValidUser
+import io.ktor.websocket.*
 import mu.KLogging
 
-internal object WsEndoints : KLogging() {
+internal object WsCommon : KLogging() {
 
   const val LANGUAGE_NAME = "languageName"
   const val GROUP_NAME = "groupName"
@@ -51,4 +52,10 @@ internal object WsEndoints : KLogging() {
       }
       else -> true to ""
     }
+
+  fun DefaultWebSocketServerSession.closeChannels() {
+    outgoing.close()
+    incoming.cancel()
+  }
 }
+

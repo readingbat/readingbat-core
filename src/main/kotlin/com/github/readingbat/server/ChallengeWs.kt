@@ -28,16 +28,15 @@ import com.github.readingbat.common.Endpoints.WS_ROOT
 import com.github.readingbat.common.Metrics
 import com.github.readingbat.common.User.Companion.gson
 import com.github.readingbat.dsl.InvalidRequestException
-import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.agentLaunchId
 import com.github.readingbat.server.ServerUtils.fetchUser
-import com.github.readingbat.server.WsEndoints.CHALLENGE_MD5
-import com.github.readingbat.server.WsEndoints.CLASS_CODE
-import com.github.readingbat.server.WsEndoints.validateContext
+import com.github.readingbat.server.WsCommon.CHALLENGE_MD5
+import com.github.readingbat.server.WsCommon.CLASS_CODE
+import com.github.readingbat.server.WsCommon.closeChannels
+import com.github.readingbat.server.WsCommon.validateContext
 import io.ktor.http.cio.websocket.*
 import io.ktor.routing.*
 import io.ktor.websocket.*
-import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.runBlocking
 import mu.KLogging
 import java.util.*
@@ -55,6 +54,10 @@ internal object ChallengeWs : KLogging() {
   data class SessionContext(val wsSession: DefaultWebSocketServerSession, val metrics: Metrics) {
     val start = clock.markNow()
     var topicName = ""
+  }
+
+  class PingMessage(val msg: String) {
+    val type = Constants.PING_CODE
   }
 
   init {
@@ -97,7 +100,7 @@ internal object ChallengeWs : KLogging() {
       }
   }
 
-  fun Routing.challengeWsEndpoint(metrics: Metrics, contentSrc: () -> ReadingBatContent) {
+  fun Routing.challengeWsEndpoint(metrics: Metrics) {
 
     webSocket("$WS_ROOT$CHALLENGE_ENDPOINT/{$CLASS_CODE}/{$CHALLENGE_MD5}") {
       val wsContext = SessionContext(this, metrics)
@@ -118,43 +121,28 @@ internal object ChallengeWs : KLogging() {
 
         metrics.measureEndpointRequest("/websocket_student_answers") {
 
-          logger.info { "Past thread context: ${wsConnections.size}" }
-
-          val content = contentSrc.invoke()
           val p = call.parameters
           val classCode = p[CLASS_CODE]?.let { ClassCode(it) } ?: throw InvalidRequestException("Missing class code")
           val challengeMd5 = p[CHALLENGE_MD5] ?: throw InvalidRequestException("Missing challenge md5")
           val user = fetchUser() ?: throw InvalidRequestException("Null user")
 
-          wsContext.topicName = classTopicName(classCode, challengeMd5)
-
-          logger.info { "Before validateContext: ${wsConnections.size}" }
-
           validateContext(null, null, classCode, null, user, "Student answers")
             .also { (valid, msg) -> if (!valid) throw InvalidRequestException(msg) }
 
           val frame = incoming.receive()
+          wsContext.topicName = classTopicName(classCode, challengeMd5)
           logger.info { "Waiting to finish: ${wsConnections.size}" }
           finished.waitUntilTrue()
         }
       } finally {
-        metrics.wsStudentAnswerGauge.labels(agentLaunchId()).dec()
+        closeChannels()
         close(CloseReason(CloseReason.Codes.GOING_AWAY, "Client disconnected"))
-        logger.debug { "Closed student answers websocket for desc" }
         wsConnections -= wsContext
-        logger.info { "Connection count exit: ${wsConnections.size}" }
+        metrics.wsStudentAnswerGauge.labels(agentLaunchId()).dec()
+        logger.info { "Closed student answers websocket ${wsConnections.size}" }
       }
     }
   }
 
   fun classTopicName(classCode: ClassCode, challengeMd5: String) = CommonUtils.keyOf(classCode, challengeMd5)
-
-  fun exceptionHandler(name: String) =
-    CoroutineExceptionHandler { _, e ->
-      logger.error(e) { "Error ${e.simpleClassName} ${e.message} in $name" }
-    }
-
-  class PingMessage(val msg: String) {
-    val type = Constants.PING_CODE
-  }
 }

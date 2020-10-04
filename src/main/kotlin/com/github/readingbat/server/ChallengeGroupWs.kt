@@ -31,10 +31,11 @@ import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.agentLaunchId
 import com.github.readingbat.server.ServerUtils.fetchUser
 import com.github.readingbat.server.ServerUtils.rows
-import com.github.readingbat.server.WsEndoints.CLASS_CODE
-import com.github.readingbat.server.WsEndoints.GROUP_NAME
-import com.github.readingbat.server.WsEndoints.LANGUAGE_NAME
-import com.github.readingbat.server.WsEndoints.validateContext
+import com.github.readingbat.server.WsCommon.CLASS_CODE
+import com.github.readingbat.server.WsCommon.GROUP_NAME
+import com.github.readingbat.server.WsCommon.LANGUAGE_NAME
+import com.github.readingbat.server.WsCommon.closeChannels
+import com.github.readingbat.server.WsCommon.validateContext
 import io.ktor.features.*
 import io.ktor.http.cio.websocket.*
 import io.ktor.routing.*
@@ -185,13 +186,14 @@ internal object ChallengeGroupWs : KLogging() {
               }
 
               // Shut things down to exit collect
-              outgoing.close()
               incoming.cancel()
             }
         }
       } finally {
-        metrics.wsClassStatisticsGauge.labels(agentLaunchId()).dec()
+        // In case exited early
+        closeChannels()
         close(CloseReason(CloseReason.Codes.GOING_AWAY, "Client disconnected"))
+        metrics.wsClassStatisticsGauge.labels(agentLaunchId()).dec()
         logger.debug { "Closed class statistics websocket" }
       }
     }
