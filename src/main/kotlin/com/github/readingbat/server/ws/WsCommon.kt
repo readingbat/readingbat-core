@@ -15,12 +15,14 @@
  *
  */
 
-package com.github.readingbat.server
+package com.github.readingbat.server.ws
 
 import com.github.pambrose.common.util.isNotNull
 import com.github.readingbat.common.ClassCode
 import com.github.readingbat.common.User
 import com.github.readingbat.common.isNotValidUser
+import com.github.readingbat.server.GroupName
+import com.github.readingbat.server.LanguageName
 import io.ktor.websocket.*
 import mu.KLogging
 

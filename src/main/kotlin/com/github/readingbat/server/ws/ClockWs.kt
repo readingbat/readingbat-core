@@ -15,7 +15,7 @@
  *
  */
 
-package com.github.readingbat.server
+package com.github.readingbat.server.ws
 
 import com.github.pambrose.common.concurrent.BooleanMonitor
 import com.github.pambrose.common.time.format
@@ -31,10 +31,10 @@ import com.github.readingbat.dsl.InvalidRequestException
 import com.github.readingbat.dsl.agentLaunchId
 import com.github.readingbat.server.ReadingBatServer.anwwersChannel
 import com.github.readingbat.server.ServerUtils.fetchUser
-import com.github.readingbat.server.WsCommon.CHALLENGE_MD5
-import com.github.readingbat.server.WsCommon.CLASS_CODE
-import com.github.readingbat.server.WsCommon.closeChannels
-import com.github.readingbat.server.WsCommon.validateContext
+import com.github.readingbat.server.ws.WsCommon.CHALLENGE_MD5
+import com.github.readingbat.server.ws.WsCommon.CLASS_CODE
+import com.github.readingbat.server.ws.WsCommon.closeChannels
+import com.github.readingbat.server.ws.WsCommon.validateContext
 import io.ktor.http.cio.websocket.*
 import io.ktor.routing.*
 import io.ktor.websocket.*
@@ -48,7 +48,7 @@ import kotlin.math.max
 import kotlin.time.TimeSource
 import kotlin.time.seconds
 
-internal object ChallengeWs : KLogging() {
+internal object ClockWs : KLogging() {
   private val clock = TimeSource.Monotonic
   private val timer = Timer()
   val wsConnections = Collections.synchronizedSet(LinkedHashSet<SessionContext>())

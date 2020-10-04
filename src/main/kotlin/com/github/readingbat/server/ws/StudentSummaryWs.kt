@@ -15,7 +15,7 @@
  *
  */
 
-package com.github.readingbat.server
+package com.github.readingbat.server.ws
 
 import com.github.readingbat.common.ClassCode
 import com.github.readingbat.common.CommonUtils
@@ -29,12 +29,13 @@ import com.github.readingbat.common.User
 import com.github.readingbat.dsl.InvalidRequestException
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.agentLaunchId
+import com.github.readingbat.server.LanguageName
 import com.github.readingbat.server.ServerUtils.fetchUser
-import com.github.readingbat.server.WsCommon.CLASS_CODE
-import com.github.readingbat.server.WsCommon.LANGUAGE_NAME
-import com.github.readingbat.server.WsCommon.STUDENT_ID
-import com.github.readingbat.server.WsCommon.closeChannels
-import com.github.readingbat.server.WsCommon.validateContext
+import com.github.readingbat.server.ws.WsCommon.CLASS_CODE
+import com.github.readingbat.server.ws.WsCommon.LANGUAGE_NAME
+import com.github.readingbat.server.ws.WsCommon.STUDENT_ID
+import com.github.readingbat.server.ws.WsCommon.closeChannels
+import com.github.readingbat.server.ws.WsCommon.validateContext
 import io.ktor.features.*
 import io.ktor.http.cio.websocket.*
 import io.ktor.http.cio.websocket.CloseReason.Codes.*

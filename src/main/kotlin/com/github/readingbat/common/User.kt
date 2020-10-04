@@ -38,13 +38,13 @@ import com.github.readingbat.posts.ChallengeHistory
 import com.github.readingbat.posts.ChallengeResults
 import com.github.readingbat.posts.DashboardInfo
 import com.github.readingbat.server.*
-import com.github.readingbat.server.ChallengeWs.classTopicName
 import com.github.readingbat.server.Email.Companion.EMPTY_EMAIL
 import com.github.readingbat.server.Email.Companion.UNKNOWN_EMAIL
 import com.github.readingbat.server.FullName.Companion.EMPTY_FULLNAME
 import com.github.readingbat.server.FullName.Companion.UNKNOWN_FULLNAME
 import com.github.readingbat.server.ReadingBatServer.adminUsers
 import com.github.readingbat.server.ResetId.Companion.EMPTY_RESET_ID
+import com.github.readingbat.server.ws.ChallengeWs.classTopicName
 import com.google.gson.Gson
 import io.ktor.application.*
 import kotlinx.coroutines.runBlocking
