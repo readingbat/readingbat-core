@@ -47,7 +47,6 @@ import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.launch
 import mu.KLogging
-import org.joda.time.DateTime
 import java.util.*
 import java.util.concurrent.Executors
 import kotlin.collections.LinkedHashSet
@@ -127,24 +126,21 @@ internal object ChallengeWs : KLogging() {
                         break
                     }
                   }
+                  logger.info { "Ending pinger: ${wsConnections.size}" }
                 }
 
               logger.info { "Before pubsub: ${wsConnections.size}" }
 
               val subscriber =
                 launch(dispatcher + exceptionHandler("outgoing.send()")) {
-                  val cutOff = DateTime.now()
                   val topicName = classTopicName(classCode, challengeMd5)
-                  for (v in ReadingBatServer.channel.openSubscription()) {
+                  for (data in ReadingBatServer.channel.openSubscription()) {
                     if (finished.get())
                       break
-                    when {
-                      v.topic != topicName -> logger.debug { "Ignoring msg that does not apply: ${v.topic}" }
-                      else -> {
-                        metrics.wsStudentAnswerResponseCount.labels(agentLaunchId()).inc()
-                        outgoing.send(Frame.Text(v.message))
-                        logger.info { "Sent $v ${wsConnections.size}" }
-                      }
+                    if (data.topic == topicName) {
+                      metrics.wsStudentAnswerResponseCount.labels(agentLaunchId()).inc()
+                      outgoing.send(Frame.Text(data.message))
+                      logger.info { "Sent $data ${wsConnections.size}" }
                     }
                   }
                 }
