@@ -157,8 +157,6 @@ internal object SessionActivites : KLogging() {
   val geoInfoMap = ConcurrentHashMap<String, GeoInfo>()
   private val timer = Timer()
 
-  val sessionsMapSize get() = sessionsMap.size
-
   init {
     timer.schedule(delay.toLongMilliseconds(), period.toLongMilliseconds()) {
       try {

@@ -23,7 +23,7 @@ import com.github.pambrose.common.dsl.PrometheusDsl.summary
 import com.github.pambrose.common.metrics.SamplerGaugeCollector
 import com.github.readingbat.common.SessionActivites.activeSessions
 import com.github.readingbat.common.SessionActivites.geoInfoMap
-import com.github.readingbat.common.SessionActivites.sessionsMapSize
+import com.github.readingbat.common.SessionActivites.sessionsMap
 import com.github.readingbat.common.User.Companion.emailCache
 import com.github.readingbat.common.User.Companion.userIdCache
 import com.github.readingbat.dsl.ReadingBatContent
@@ -195,7 +195,7 @@ internal class Metrics {
                           "Active users map size",
                           labelNames = listOf(AGENT_ID),
                           labelValues = listOf(agentLaunchId()),
-                          data = { sessionsMapSize.toDouble() })
+                          data = { sessionsMap.size.toDouble() })
 
     SamplerGaugeCollector("request_timing_map_size",
                           "Request timing map size",
