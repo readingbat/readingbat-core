@@ -43,7 +43,7 @@ import io.ktor.http.cio.websocket.*
 import io.ktor.routing.*
 import io.ktor.websocket.*
 import kotlinx.coroutines.channels.BroadcastChannel
-import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.Channel.Factory.BUFFERED
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.mapNotNull
@@ -64,9 +64,9 @@ import kotlin.time.seconds
 
 internal object ChallengeWs : KLogging() {
   private val clock = TimeSource.Monotonic
-  val singleServerChannel by lazy { BroadcastChannel<PublishedData>(Channel.BUFFERED) }
-  val multiServerWriteChannel by lazy { BroadcastChannel<PublishedData>(Channel.BUFFERED) }
-  private val multiServerReadChannel by lazy { BroadcastChannel<PublishedData>(Channel.BUFFERED) }
+  val singleServerChannel by lazy { BroadcastChannel<PublishedData>(BUFFERED) }
+  val multiServerWriteChannel by lazy { BroadcastChannel<PublishedData>(BUFFERED) }
+  private val multiServerReadChannel by lazy { BroadcastChannel<PublishedData>(BUFFERED) }
   val wsConnections = Collections.synchronizedSet(LinkedHashSet<SessionContext>())
   var maxWsConnections = 0
 
@@ -110,8 +110,8 @@ internal object ChallengeWs : KLogging() {
                   multiServerWriteChannel
                     .openSubscription()
                     .consumeAsFlow()
-                    .onStart { logger.info { "Starting to read multi server writer ws channel values" } }
-                    .onCompletion { logger.info { "Finished reading multi server writer ws channel values" } }
+                    .onStart { logger.info { "Starting to read multi-server writer ws channel values" } }
+                    .onCompletion { logger.info { "Finished reading multi-server writer ws channel values" } }
                     .collect { data ->
                       redis.publish(data.topic, data.message)
                     }
@@ -130,9 +130,8 @@ internal object ChallengeWs : KLogging() {
             object : JedisPubSub() {
               override fun onPMessage(pattern: String?, channel: String?, message: String?) {
                 logger.debug { "On message $pattern $channel" }
-                if (channel.isNotNull() && message.isNotNull()) {
+                if (channel.isNotNull() && message.isNotNull())
                   runBlocking { multiServerReadChannel.send(PublishedData(channel, message)) }
-                }
               }
 
               override fun onPSubscribe(pattern: String?, subscribedChannels: Int) {
@@ -150,7 +149,7 @@ internal object ChallengeWs : KLogging() {
                 redis.psubscribe(pubsub, "*")
               } ?: throw RedisUnavailableException("multiServerReadChannel")
             } catch (e: Throwable) {
-              logger.error { "Exception in challenge ws reader ${e.simpleClassName} ${e.message}" }
+              logger.error { "Exception in multiServerReadChannel reader ${e.simpleClassName} ${e.message}" }
               Thread.sleep(1.seconds.toLongMilliseconds())
             }
           }
