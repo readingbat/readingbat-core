@@ -41,8 +41,8 @@ import com.github.readingbat.dsl.LanguageType.Kotlin
 import com.github.readingbat.dsl.LanguageType.Python
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.agentLaunchId
-import com.github.readingbat.dsl.cacheContentInRedis
 import com.github.readingbat.dsl.isAgentEnabled
+import com.github.readingbat.dsl.isContentCachingEnabled
 import com.github.readingbat.dsl.isMultiServerEnabled
 import com.github.readingbat.dsl.isPostgresEnabled
 import com.github.readingbat.dsl.isProduction
@@ -124,8 +124,8 @@ internal object SystemConfigurationPage {
                   td { +isSaveRequestsEnabled().toString() }
                 }
                 tr {
-                  td { +"Cache content in Redis:" }
-                  td { +cacheContentInRedis().toString() }
+                  td { +"Content caching enabled:" }
+                  td { +isContentCachingEnabled().toString() }
                 }
                 tr {
                   td { +"Cache challenges:" }

@@ -184,7 +184,7 @@ internal fun Application.module() {
   POSTGRES_ENABLED.setProperty(POSTGRES_ENABLED.configValue(this, "false").toBoolean().toString())
   SAVE_REQUESTS_ENABLED.setProperty(SAVE_REQUESTS_ENABLED.configValue(this, "true").toBoolean().toString())
   MULTI_SERVER_ENABLED.setProperty(MULTI_SERVER_ENABLED.configValue(this, "false").toBoolean().toString())
-  CACHE_CONTENT_IN_REDIS.setProperty(CACHE_CONTENT_IN_REDIS.configValue(this, "false").toBoolean().toString())
+  CONTENT_CACHING_ENABLED.setProperty(CONTENT_CACHING_ENABLED.configValue(this, "false").toBoolean().toString())
 
   DSL_FILE_NAME.setPropertyFromConfig(this, "src/Content.kt")
   DSL_VARIABLE_NAME.setPropertyFromConfig(this, "content")

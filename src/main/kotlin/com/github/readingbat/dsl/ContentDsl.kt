@@ -30,7 +30,7 @@ import com.github.readingbat.common.Constants.UNASSIGNED
 import com.github.readingbat.common.KeyConstants.CONTENT_DSL_KEY
 import com.github.readingbat.common.Property.AGENT_ENABLED_PROPERTY
 import com.github.readingbat.common.Property.AGENT_LAUNCH_ID
-import com.github.readingbat.common.Property.CACHE_CONTENT_IN_REDIS
+import com.github.readingbat.common.Property.CONTENT_CACHING_ENABLED
 import com.github.readingbat.common.Property.IS_PRODUCTION
 import com.github.readingbat.common.Property.MULTI_SERVER_ENABLED
 import com.github.readingbat.common.Property.POSTGRES_ENABLED
@@ -61,17 +61,16 @@ class GitHubContent(ownerType: OwnerType,
 fun readingBatContent(block: ReadingBatContent.() -> Unit) =
   ReadingBatContent().apply(block).apply { validate() }
 
-
 // This is accessible from the Content.kt descriptions
 fun isProduction() = IS_PRODUCTION.getProperty(false)
 
 internal fun isPostgresEnabled() = POSTGRES_ENABLED.getProperty(false)
 
-internal fun isSaveRequestsEnabled() = SAVE_REQUESTS_ENABLED.getProperty(true)
+internal fun isSaveRequestsEnabled() = SAVE_REQUESTS_ENABLED.getProperty(true) && isPostgresEnabled()
+
+internal fun isContentCachingEnabled() = CONTENT_CACHING_ENABLED.getProperty(false) && isPostgresEnabled()
 
 internal fun isMultiServerEnabled() = MULTI_SERVER_ENABLED.getProperty(false)
-
-internal fun cacheContentInRedis() = CACHE_CONTENT_IN_REDIS.getProperty(false)
 
 internal fun isAgentEnabled() = AGENT_ENABLED_PROPERTY.getProperty(false)
 
@@ -82,11 +81,8 @@ fun ContentSource.eval(enclosingContent: ReadingBatContent, variableName: String
 
 private fun contentDslKey(source: String) = keyOf(CONTENT_DSL_KEY, md5Of(source))
 
-private fun fetchContentDslFromRedis(source: String) =
-  if (cacheContentInRedis())
-    redisPool?.withRedisPool { redis -> redis?.get(contentDslKey(source)) }
-  else
-    null
+private fun fetchContentDsl(source: String) =
+  if (isContentCachingEnabled()) redisPool?.withRedisPool { it?.get(contentDslKey(source)) } else null
 
 internal fun readContentDsl(contentSource: ContentSource, variableName: String = "content"): ReadingBatContent {
   val (code, dur) =
@@ -94,13 +90,13 @@ internal fun readContentDsl(contentSource: ContentSource, variableName: String =
       if (!contentSource.remote)
         contentSource.content
       else {
-        var dsl = fetchContentDslFromRedis(contentSource.source)
+        var dsl = fetchContentDsl(contentSource.source)
         if (dsl.isNotNull()) {
           logger.debug { "Fetched ${contentSource.source} from redis cache" }
         }
         else {
           dsl = contentSource.content
-          if (cacheContentInRedis()) {
+          if (isContentCachingEnabled()) {
             redisPool?.withNonNullRedisPool(true) { redis ->
               redis.set(contentDslKey(contentSource.source), dsl)
               logger.debug { """Saved "${contentSource.source}" to redis""" }

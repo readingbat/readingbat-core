@@ -224,7 +224,7 @@ internal object ChallengeWs : KLogging() {
         closeChannels()
         close(CloseReason(CloseReason.Codes.GOING_AWAY, "Client disconnected"))
         metrics.wsStudentAnswerGauge.labels(agentLaunchId()).dec()
-        logger.info { "Closed student answers websocket ${wsConnections.size}" }
+        logger.debug { "Closed student answers websocket ${wsConnections.size}" }
       }
     }
   }

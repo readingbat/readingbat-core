@@ -59,7 +59,7 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
   private fun dirContentsKey(path: String) = keyOf(DIR_CONTENTS_KEY, md5Of(path))
 
   private fun fetchDirContentsFromRedis(path: String) =
-    if (cacheContentInRedis())
+    if (isContentCachingEnabled())
       redisPool?.withRedisPool { redis -> redis?.lrange(dirContentsKey(path), 0, -1) }
         ?.apply { logger.debug { """Retrieved "$path" from redis""" } }
     else
@@ -70,9 +70,8 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
       root.userDirectoryContents(branchName, path, metrics)
     else
       root.organizationDirectoryContents(branchName, path, metrics))
-
       .also {
-        if (cacheContentInRedis()) {
+        if (isContentCachingEnabled()) {
           redisPool?.withNonNullRedisPool(true) { redis ->
             val dirContentsKey = dirContentsKey(path)
             it.forEach { redis.rpush(dirContentsKey, it) }
@@ -87,7 +86,7 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
         is GitHubRepo -> {
           val path = "${srcPath.ensureSuffix("/")}$packageNameAsPath"
 
-          if (cacheContentInRedis()) {
+          if (isContentCachingEnabled()) {
             fetchDirContentsFromRedis(path)
               .let {
                 if (it.isNotNull() && it.isNotEmpty())

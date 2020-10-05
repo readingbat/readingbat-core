@@ -26,7 +26,6 @@ import com.github.readingbat.common.SessionActivites.markActivity
 import com.github.readingbat.common.SessionActivites.queryGeoDbmsIdByIpAddress
 import com.github.readingbat.common.User.Companion.fetchUserDbmsIdFromCache
 import com.github.readingbat.common.browserSession
-import com.github.readingbat.dsl.isPostgresEnabled
 import com.github.readingbat.dsl.isSaveRequestsEnabled
 import com.github.readingbat.server.Intercepts.clock
 import com.github.readingbat.server.Intercepts.logger
@@ -86,7 +85,7 @@ internal fun Application.intercepts() {
       browserSession?.markActivity("intercept()", call)
         ?: logger.debug { "Null browser sessions for ${call.request.origin.remoteHost}" }
 
-      if (isSaveRequestsEnabled() && isPostgresEnabled() && browserSession.isNotNull()) {
+      if (isSaveRequestsEnabled() && browserSession.isNotNull()) {
         val request = call.request
         val ipAddress = request.origin.remoteHost
         val sessionDbmsId = transaction { querySessionDbmsId(browserSession.id) }
@@ -123,7 +122,7 @@ internal fun Application.intercepts() {
     // Phase for handling unprocessed calls
   }
 
-  if (isSaveRequestsEnabled() && isPostgresEnabled()) {
+  if (isSaveRequestsEnabled()) {
     environment.monitor
       .apply {
         subscribe(RoutingCallStarted) { call ->
