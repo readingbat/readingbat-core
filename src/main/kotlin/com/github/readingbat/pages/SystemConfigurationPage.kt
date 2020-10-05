@@ -43,7 +43,10 @@ import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.agentLaunchId
 import com.github.readingbat.dsl.cacheContentInRedis
 import com.github.readingbat.dsl.isAgentEnabled
+import com.github.readingbat.dsl.isMultiServerEnabled
+import com.github.readingbat.dsl.isPostgresEnabled
 import com.github.readingbat.dsl.isProduction
+import com.github.readingbat.dsl.isSaveRequestsEnabled
 import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyTitle
 import com.github.readingbat.pages.PageUtils.headDefault
@@ -60,9 +63,9 @@ import kotlinx.html.stream.createHTML
 import kotlin.time.hours
 import kotlin.time.minutes
 
-internal object ConfigPage {
+internal object SystemConfigurationPage {
 
-  fun PipelineCall.configPage(content: ReadingBatContent) =
+  fun PipelineCall.systemConfigurationPage(content: ReadingBatContent) =
     createHTML()
       .html {
         head { headDefault() }
@@ -107,6 +110,18 @@ internal object ConfigPage {
                 tr {
                   td { +"Production:" }
                   td { +isProduction().toString() }
+                }
+                tr {
+                  td { +"Postgres enabled:" }
+                  td { +isPostgresEnabled().toString() }
+                }
+                tr {
+                  td { +"Multi-server enabled:" }
+                  td { +isMultiServerEnabled().toString() }
+                }
+                tr {
+                  td { +"Save requests enabled:" }
+                  td { +isSaveRequestsEnabled().toString() }
                 }
                 tr {
                   td { +"Cache content in Redis:" }

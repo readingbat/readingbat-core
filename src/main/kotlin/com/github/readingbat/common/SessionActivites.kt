@@ -225,7 +225,7 @@ internal object SessionActivites : KLogging() {
             .select { GeoInfos.ip eq ipAddress }
             .map { GeoInfo(ipAddress, it[0] as String) }
             .firstOrNull()
-            ?.also { logger.info { "Postgres GEO info for $ipAddress: ${it.summary()}" } }
+            ?.also { logger.debug { "Postgres GEO info for $ipAddress: ${it.summary()}" } }
             ?: try {
               fetchGeoInfo(ipAddress)
             } catch (e: Throwable) {

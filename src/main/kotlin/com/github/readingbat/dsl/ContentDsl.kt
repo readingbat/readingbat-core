@@ -32,6 +32,7 @@ import com.github.readingbat.common.Property.AGENT_ENABLED_PROPERTY
 import com.github.readingbat.common.Property.AGENT_LAUNCH_ID
 import com.github.readingbat.common.Property.CACHE_CONTENT_IN_REDIS
 import com.github.readingbat.common.Property.IS_PRODUCTION
+import com.github.readingbat.common.Property.MULTI_SERVER_ENABLED
 import com.github.readingbat.common.Property.POSTGRES_ENABLED
 import com.github.readingbat.common.Property.SAVE_REQUESTS_ENABLED
 import com.github.readingbat.common.ScriptPools.kotlinScriptPool
@@ -67,6 +68,8 @@ fun isProduction() = IS_PRODUCTION.getProperty(false)
 internal fun isPostgresEnabled() = POSTGRES_ENABLED.getProperty(false)
 
 internal fun isSaveRequestsEnabled() = SAVE_REQUESTS_ENABLED.getProperty(true)
+
+internal fun isMultiServerEnabled() = MULTI_SERVER_ENABLED.getProperty(false)
 
 internal fun cacheContentInRedis() = CACHE_CONTENT_IN_REDIS.getProperty(false)
 

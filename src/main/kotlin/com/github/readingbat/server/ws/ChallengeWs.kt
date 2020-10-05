@@ -17,7 +17,10 @@
 
 package com.github.readingbat.server.ws
 
+import com.github.pambrose.common.redis.RedisUtils.withNonNullRedisPool
+import com.github.pambrose.common.redis.RedisUtils.withSuspendingNonNullRedisPool
 import com.github.pambrose.common.time.format
+import com.github.pambrose.common.util.isNotNull
 import com.github.pambrose.common.util.simpleClassName
 import com.github.readingbat.common.ClassCode
 import com.github.readingbat.common.CommonUtils.keyOf
@@ -26,8 +29,11 @@ import com.github.readingbat.common.Endpoints.CHALLENGE_ENDPOINT
 import com.github.readingbat.common.Endpoints.WS_ROOT
 import com.github.readingbat.common.Metrics
 import com.github.readingbat.dsl.InvalidRequestException
+import com.github.readingbat.dsl.RedisUnavailableException
 import com.github.readingbat.dsl.agentLaunchId
-import com.github.readingbat.server.ReadingBatServer.answersChannel
+import com.github.readingbat.dsl.isMultiServerEnabled
+import com.github.readingbat.server.PublishedData
+import com.github.readingbat.server.ReadingBatServer.redisPool
 import com.github.readingbat.server.ServerUtils.fetchUser
 import com.github.readingbat.server.ws.WsCommon.CHALLENGE_MD5
 import com.github.readingbat.server.ws.WsCommon.CLASS_CODE
@@ -36,6 +42,8 @@ import com.github.readingbat.server.ws.WsCommon.validateContext
 import io.ktor.http.cio.websocket.*
 import io.ktor.routing.*
 import io.ktor.websocket.*
+import kotlinx.coroutines.channels.BroadcastChannel
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.mapNotNull
@@ -45,6 +53,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import mu.KLogging
+import redis.clients.jedis.JedisPubSub
 import java.util.*
 import java.util.concurrent.Executors.newSingleThreadExecutor
 import kotlin.collections.LinkedHashSet
@@ -55,6 +64,9 @@ import kotlin.time.seconds
 
 internal object ChallengeWs : KLogging() {
   private val clock = TimeSource.Monotonic
+  val singleServerChannel by lazy { BroadcastChannel<PublishedData>(Channel.BUFFERED) }
+  val multiServerWriteChannel by lazy { BroadcastChannel<PublishedData>(Channel.BUFFERED) }
+  private val multiServerReadChannel by lazy { BroadcastChannel<PublishedData>(Channel.BUFFERED) }
   val wsConnections = Collections.synchronizedSet(LinkedHashSet<SessionContext>())
   var maxWsConnections = 0
 
@@ -88,12 +100,69 @@ internal object ChallengeWs : KLogging() {
         }
     }
 
+    if (isMultiServerEnabled()) {
+      newSingleThreadExecutor()
+        .submit {
+          while (true) {
+            try {
+              runBlocking {
+                redisPool?.withSuspendingNonNullRedisPool() { redis ->
+                  multiServerWriteChannel
+                    .openSubscription()
+                    .consumeAsFlow()
+                    .onStart { logger.info { "Starting to read multi server writer ws channel values" } }
+                    .onCompletion { logger.info { "Finished reading multi server writer ws channel values" } }
+                    .collect { data ->
+                      redis.publish(data.topic, data.message)
+                    }
+                } ?: throw RedisUnavailableException("multiServerWriteChannel")
+              }
+            } catch (e: Throwable) {
+              logger.error { "Exception in challenge ws writer ${e.simpleClassName} ${e.message}" }
+              Thread.sleep(1.seconds.toLongMilliseconds())
+            }
+          }
+        }
+
+      newSingleThreadExecutor()
+        .submit {
+          val pubsub =
+            object : JedisPubSub() {
+              override fun onPMessage(pattern: String?, channel: String?, message: String?) {
+                logger.debug { "On message $pattern $channel" }
+                if (channel.isNotNull() && message.isNotNull()) {
+                  runBlocking { multiServerReadChannel.send(PublishedData(channel, message)) }
+                }
+              }
+
+              override fun onPSubscribe(pattern: String?, subscribedChannels: Int) {
+                logger.info { "Subscribed to pattern: $pattern [$subscribedChannels]" }
+              }
+
+              override fun onPUnsubscribe(pattern: String?, subscribedChannels: Int) {
+                logger.info { "Unsubscribed from pattern: $pattern [$subscribedChannels]" }
+              }
+            }
+
+          while (true) {
+            try {
+              redisPool?.withNonNullRedisPool() { redis ->
+                redis.psubscribe(pubsub, "*")
+              } ?: throw RedisUnavailableException("multiServerReadChannel")
+            } catch (e: Throwable) {
+              logger.error { "Exception in challenge ws reader ${e.simpleClassName} ${e.message}" }
+              Thread.sleep(1.seconds.toLongMilliseconds())
+            }
+          }
+        }
+    }
+
     newSingleThreadExecutor()
       .submit {
         while (true) {
           try {
             runBlocking {
-              answersChannel
+              (if (isMultiServerEnabled()) multiServerReadChannel else singleServerChannel)
                 .openSubscription()
                 .consumeAsFlow()
                 .onStart { logger.info { "Starting to read challenge ws channel values" } }

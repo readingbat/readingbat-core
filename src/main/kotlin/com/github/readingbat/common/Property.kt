@@ -68,6 +68,7 @@ enum class Property(val propertyValue: String,
   IS_PRODUCTION("$READINGBAT.$SITE.production"),
   POSTGRES_ENABLED("$READINGBAT.$SITE.postgresEnabled"),
   SAVE_REQUESTS_ENABLED("$READINGBAT.$SITE.saveRequestsEnabled"),
+  MULTI_SERVER_ENABLED("$READINGBAT.$SITE.multiServerEnabled"),
   CACHE_CONTENT_IN_REDIS("$READINGBAT.$SITE.cacheContentInRedis"),
   AGENT_ENABLED_PROPERTY("$AGENT.enabled"),
 

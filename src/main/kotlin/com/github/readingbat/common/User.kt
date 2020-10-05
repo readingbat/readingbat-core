@@ -33,6 +33,7 @@ import com.github.readingbat.dsl.DataException
 import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.LanguageType.Companion.defaultLanguageType
 import com.github.readingbat.dsl.LanguageType.Companion.toLanguageType
+import com.github.readingbat.dsl.isMultiServerEnabled
 import com.github.readingbat.dsl.isPostgresEnabled
 import com.github.readingbat.posts.ChallengeHistory
 import com.github.readingbat.posts.ChallengeResults
@@ -46,6 +47,8 @@ import com.github.readingbat.server.FullName.Companion.UNKNOWN_FULLNAME
 import com.github.readingbat.server.ReadingBatServer.adminUsers
 import com.github.readingbat.server.ResetId.Companion.EMPTY_RESET_ID
 import com.github.readingbat.server.ws.ChallengeWs.classTopicName
+import com.github.readingbat.server.ws.ChallengeWs.multiServerWriteChannel
+import com.github.readingbat.server.ws.ChallengeWs.singleServerChannel
 import io.ktor.application.*
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.decodeFromString
@@ -411,9 +414,9 @@ internal class User {
     val dashboardInfo = DashboardInfo(userId, complete, numCorrect, dashboardHistory)
     val topicName = classTopicName(classCode, challengeMd5.value)
     val data = dashboardInfo.toJson()
-    //redis.publish(topicName, data)
     runBlocking {
-      ReadingBatServer.answersChannel.send(PublishedData(topicName, data))
+      (if (isMultiServerEnabled()) multiServerWriteChannel else singleServerChannel)
+        .send(PublishedData(topicName, data))
     }
   }
 

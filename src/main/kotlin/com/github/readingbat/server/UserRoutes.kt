@@ -62,7 +62,6 @@ import com.github.readingbat.pages.AdminPage.adminDataPage
 import com.github.readingbat.pages.AdminPrefsPage.adminPrefsPage
 import com.github.readingbat.pages.ClassSummaryPage.classSummaryPage
 import com.github.readingbat.pages.ClockPage.clockPage
-import com.github.readingbat.pages.ConfigPage.configPage
 import com.github.readingbat.pages.CreateAccountPage.createAccountPage
 import com.github.readingbat.pages.HelpPage.helpPage
 import com.github.readingbat.pages.PasswordResetPage.passwordResetPage
@@ -70,6 +69,7 @@ import com.github.readingbat.pages.PrivacyPage.privacyPage
 import com.github.readingbat.pages.SessionsPage.sessionsPage
 import com.github.readingbat.pages.StudentSummaryPage.studentSummaryPage
 import com.github.readingbat.pages.SystemAdminPage.systemAdminPage
+import com.github.readingbat.pages.SystemConfigurationPage.systemConfigurationPage
 import com.github.readingbat.pages.TeacherPrefsPage.teacherPrefsPage
 import com.github.readingbat.pages.UserInfoPage.userInfoPage
 import com.github.readingbat.pages.UserPrefsPage.userPrefsPage
@@ -144,7 +144,7 @@ internal fun Routing.userRoutes(metrics: Metrics, contentSrc: () -> ReadingBatCo
 
   get(CONFIG_ENDPOINT) {
     respondWith {
-      authenticateAdminUser(fetchUser()) { configPage(contentSrc()) }
+      authenticateAdminUser(fetchUser()) { systemConfigurationPage(contentSrc()) }
     }
   }
 

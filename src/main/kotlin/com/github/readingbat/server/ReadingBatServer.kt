@@ -55,8 +55,6 @@ import io.ktor.routing.*
 import io.ktor.server.cio.*
 import io.ktor.server.engine.*
 import io.prometheus.Agent.Companion.startAsyncAgent
-import kotlinx.coroutines.channels.BroadcastChannel
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeoutOrNull
@@ -80,7 +78,6 @@ object ReadingBatServer : KLogging() {
   internal val content = AtomicReference(ReadingBatContent())
   internal val adminUsers = mutableListOf<String>()
   internal val contentReadCount = AtomicInteger(0)
-  internal val answersChannel = BroadcastChannel<PublishedData>(Channel.BUFFERED)
   internal val metrics by lazy { Metrics() }
   internal var redisPool: JedisPool? = null
   internal val postgres by lazy {
@@ -186,6 +183,7 @@ internal fun Application.module() {
   IS_PRODUCTION.setProperty(IS_PRODUCTION.configValue(this, "false").toBoolean().toString())
   POSTGRES_ENABLED.setProperty(POSTGRES_ENABLED.configValue(this, "false").toBoolean().toString())
   SAVE_REQUESTS_ENABLED.setProperty(SAVE_REQUESTS_ENABLED.configValue(this, "true").toBoolean().toString())
+  MULTI_SERVER_ENABLED.setProperty(MULTI_SERVER_ENABLED.configValue(this, "false").toBoolean().toString())
   CACHE_CONTENT_IN_REDIS.setProperty(CACHE_CONTENT_IN_REDIS.configValue(this, "false").toBoolean().toString())
 
   DSL_FILE_NAME.setPropertyFromConfig(this, "src/Content.kt")
