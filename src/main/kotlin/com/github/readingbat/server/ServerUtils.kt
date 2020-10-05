@@ -159,7 +159,6 @@ internal object ServerUtils : KLogging() {
     return "$langRoot${if (params.isNotEmpty()) "?$params" else ""}"
   }
 
-
   fun firstNonEmptyLanguageType(content: ReadingBatContent, defaultLanguage: LanguageType? = null) =
     LanguageType.languageTypes(defaultLanguage)
       .asSequence()

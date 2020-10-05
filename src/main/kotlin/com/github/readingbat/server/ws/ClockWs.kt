@@ -40,8 +40,8 @@ import kotlin.time.seconds
 
 internal object ClockWs : KLogging() {
   private val clock = TimeSource.Monotonic
-  val wsConnections = Collections.synchronizedSet(LinkedHashSet<SessionContext>())
-  var maxWsConnections = 0
+  private val wsConnections = Collections.synchronizedSet(LinkedHashSet<SessionContext>())
+  private var maxWsConnections = 0
 
   @Synchronized
   private fun assignMaxConnections() {

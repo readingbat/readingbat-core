@@ -37,7 +37,6 @@ import io.ktor.features.*
 import io.ktor.request.*
 import io.ktor.routing.Routing.Feature.RoutingCallFinished
 import io.ktor.routing.Routing.Feature.RoutingCallStarted
-import kotlinx.coroutines.runBlocking
 import mu.KLogging
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -55,18 +54,16 @@ internal object Intercepts : KLogging() {
   val requestTimingMap = ConcurrentHashMap<String, TimeMark>()
   val timer =
     timer("requestTimingMap admin", true, 1.minutes.toLongMilliseconds(), 1.minutes.toLongMilliseconds()) {
-      runBlocking {
-        requestTimingMap
-          .filter { (_, start) -> start.elapsedNow() > 1.hours }
-          .forEach { (callId, start) ->
-            requestTimingMap.remove(callId)
-              ?.also {
-                logger.info { "Removing requestTimingMap: $callId after ${start.elapsedNow()}" }
-                updateServerRequest(callId, start)
-              }
-              ?: logger.info { "Unable to remove requestTimingMap item: $callId ${start.elapsedNow()}" }
-          }
-      }
+      requestTimingMap
+        .filter { (_, start) -> start.elapsedNow() > 1.hours }
+        .forEach { (callId, start) ->
+          requestTimingMap.remove(callId)
+            ?.also {
+              logger.info { "Removing requestTimingMap: $callId after ${start.elapsedNow()}" }
+              updateServerRequest(callId, start)
+            }
+            ?: logger.info { "Unable to remove requestTimingMap item: $callId ${start.elapsedNow()}" }
+        }
     }
 }
 
@@ -135,7 +132,7 @@ internal fun Application.intercepts() {
             call.callId
               .also { callId ->
                 if (callId.isNotNull()) {
-                  requestTimingMap.put(callId, clock.markNow())
+                  requestTimingMap[callId] = clock.markNow()
                 }
               }
           }

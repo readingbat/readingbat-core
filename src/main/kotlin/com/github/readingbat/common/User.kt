@@ -50,7 +50,6 @@ import com.github.readingbat.server.ws.ChallengeWs.classTopicName
 import com.github.readingbat.server.ws.ChallengeWs.multiServerWriteChannel
 import com.github.readingbat.server.ws.ChallengeWs.singleServerChannel
 import io.ktor.application.*
-import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -400,12 +399,12 @@ internal class User {
     }
   }
 
-  fun publishAnswers(classCode: ClassCode,
-                     challengeMd5: ChallengeMd5,
-                     maxHistoryLength: Int,
-                     complete: Boolean,
-                     numCorrect: Int,
-                     history: ChallengeHistory) {
+  suspend fun publishAnswers(classCode: ClassCode,
+                             challengeMd5: ChallengeMd5,
+                             maxHistoryLength: Int,
+                             complete: Boolean,
+                             numCorrect: Int,
+                             history: ChallengeHistory) {
     // Publish to challenge dashboard
     logger.debug { "Publishing user answers to $classCode on $challengeMd5 for $this" }
     val dashboardHistory = DashboardHistory(history.invocation.value,
@@ -414,15 +413,13 @@ internal class User {
     val dashboardInfo = DashboardInfo(userId, complete, numCorrect, dashboardHistory)
     val topicName = classTopicName(classCode, challengeMd5.value)
     val data = dashboardInfo.toJson()
-    runBlocking {
-      (if (isMultiServerEnabled()) multiServerWriteChannel else singleServerChannel)
-        .send(PublishedData(topicName, data))
-    }
+    (if (isMultiServerEnabled()) multiServerWriteChannel else singleServerChannel)
+      .send(PublishedData(topicName, data))
   }
 
-  fun resetHistory(funcInfo: FunctionInfo,
-                   challenge: Challenge,
-                   maxHistoryLength: Int) {
+  suspend fun resetHistory(funcInfo: FunctionInfo,
+                           challenge: Challenge,
+                           maxHistoryLength: Int) {
     val classCode = enrolledClassCode
     val shouldPublish = shouldPublish(classCode)
 

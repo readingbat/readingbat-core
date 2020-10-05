@@ -280,13 +280,11 @@ internal object ChallengePost : KLogging() {
                            hint = correctAndHint.second)
         }
 
-
     // Save whether all the answers for the challenge were correct
-    if (isPostgresEnabled())
-      transaction {
-        val browserSession = call.browserSession
-        saveChallengeAnswers(user, browserSession, content, names, paramMap, funcInfo, userResponses, results)
-      }
+    if (isPostgresEnabled()) {
+      val browserSession = call.browserSession
+      saveChallengeAnswers(user, browserSession, content, names, paramMap, funcInfo, userResponses, results)
+    }
 
     // Return values: 0 = not answered, 1 = correct, 2 = incorrect
     val answerMapping =
@@ -441,14 +439,14 @@ internal object ChallengePost : KLogging() {
     call.respondText(likeVal.toString())
   }
 
-  private fun saveChallengeAnswers(user: User?,
-                                   browserSession: BrowserSession?,
-                                   content: ReadingBatContent,
-                                   names: ChallengeNames,
-                                   paramMap: Map<String, String>,
-                                   funcInfo: FunctionInfo,
-                                   userResponses: List<Map.Entry<String, List<String>>>,
-                                   results: List<ChallengeResults>) {
+  private suspend fun saveChallengeAnswers(user: User?,
+                                           browserSession: BrowserSession?,
+                                           content: ReadingBatContent,
+                                           names: ChallengeNames,
+                                           paramMap: Map<String, String>,
+                                           funcInfo: FunctionInfo,
+                                           userResponses: List<Map.Entry<String, List<String>>>,
+                                           results: List<ChallengeResults>) {
     val challengeMd5 = md5Of(names.languageName, names.groupName, names.challengeName)
 
     val complete = results.all { it.correct }
@@ -463,83 +461,89 @@ internal object ChallengePost : KLogging() {
           funcInfo.invocations[i] to userResponse
         }
 
-    val invokeMap = invokeList.map { it.first.value to it.second }.toMap()
-    val invokeStr = Json.encodeToString(invokeMap)
-    when {
-      user.isNotNull() ->
-        UserChallengeInfo
-          .upsert(conflictIndex = userChallengeInfoIndex) { row ->
-            row[userRef] = user.userDbmsId
-            row[md5] = challengeMd5
-            row[updated] = DateTime.now(DateTimeZone.UTC)
-            row[allCorrect] = complete
-            row[answersJson] = invokeStr
-          }
-      browserSession.isNotNull() ->
-        SessionChallengeInfo
-          .upsert(conflictIndex = sessionChallengeInfoIndex) { row ->
-            row[sessionRef] = browserSession.sessionDbmsId()
-            row[md5] = challengeMd5
-            row[updated] = DateTime.now(DateTimeZone.UTC)
-            row[allCorrect] = complete
-            row[answersJson] = invokeStr
-          }
-      else ->
-        logger.warn { "ChallengeInfo not updated" }
-    }
-
     val classCode = user?.enrolledClassCode ?: ClassCode.DISABLED_CLASS_CODE
     val shouldPublish = user.shouldPublish(classCode)
+    val invokeMap = invokeList.map { it.first.value to it.second }.toMap()
+    val invokeStr = Json.encodeToString(invokeMap)
+    val historyList = mutableListOf<ChallengeHistory>()
 
-    // Save the history of each answer on a per-invocation basis
-    for (result in results) {
-      val historyMd5 = md5Of(names.languageName, names.groupName, names.challengeName, result.invocation)
-
-      val history =
-        when {
-          user.isNotNull() -> user.answerHistory(historyMd5, result.invocation)
-          browserSession.isNotNull() -> browserSession.answerHistory(historyMd5, result.invocation)
-          else -> ChallengeHistory(result.invocation)
-        }
-
-      when {
-        !result.answered -> history.markUnanswered()
-        result.correct -> history.markCorrect(result.userResponse)
-        else -> history.markIncorrect(result.userResponse)
-      }
-
+    transaction {
       when {
         user.isNotNull() ->
-          UserAnswerHistory
-            .upsert(conflictIndex = userAnswerHistoryIndex) { row ->
+          UserChallengeInfo
+            .upsert(conflictIndex = userChallengeInfoIndex) { row ->
               row[userRef] = user.userDbmsId
-              row[md5] = historyMd5
-              row[invocation] = history.invocation.value
+              row[md5] = challengeMd5
               row[updated] = DateTime.now(DateTimeZone.UTC)
-              row[correct] = history.correct
-              row[incorrectAttempts] = history.incorrectAttempts
-              row[historyJson] = Json.encodeToString(history.answers)
+              row[allCorrect] = complete
+              row[answersJson] = invokeStr
             }
         browserSession.isNotNull() ->
-          SessionAnswerHistory
-            .upsert(conflictIndex = sessionAnswerHistoryIndex) { row ->
+          SessionChallengeInfo
+            .upsert(conflictIndex = sessionChallengeInfoIndex) { row ->
               row[sessionRef] = browserSession.sessionDbmsId()
-              row[md5] = historyMd5
-              row[invocation] = history.invocation.value
+              row[md5] = challengeMd5
               row[updated] = DateTime.now(DateTimeZone.UTC)
-              row[correct] = history.correct
-              row[incorrectAttempts] = history.incorrectAttempts
-              row[historyJson] = Json.encodeToString(history.answers)
+              row[allCorrect] = complete
+              row[answersJson] = invokeStr
             }
         else ->
-          logger.warn { "Answer history not updated" }
+          logger.warn { "ChallengeInfo not updated" }
       }
 
-      if (shouldPublish) {
-        val maxLength = content.maxHistoryLength
-        user?.publishAnswers(classCode, funcInfo.challengeMd5, maxLength, complete, numCorrect, history)
+      // Save the history of each answer on a per-invocation basis
+      for (result in results) {
+        val historyMd5 = md5Of(names.languageName, names.groupName, names.challengeName, result.invocation)
+
+        val history =
+          when {
+            user.isNotNull() -> user.answerHistory(historyMd5, result.invocation)
+            browserSession.isNotNull() -> browserSession.answerHistory(historyMd5, result.invocation)
+            else -> ChallengeHistory(result.invocation)
+          }
+        historyList += history
+
+        when {
+          !result.answered -> history.markUnanswered()
+          result.correct -> history.markCorrect(result.userResponse)
+          else -> history.markIncorrect(result.userResponse)
+        }
+
+        when {
+          user.isNotNull() ->
+            UserAnswerHistory
+              .upsert(conflictIndex = userAnswerHistoryIndex) { row ->
+                row[userRef] = user.userDbmsId
+                row[md5] = historyMd5
+                row[invocation] = history.invocation.value
+                row[updated] = DateTime.now(DateTimeZone.UTC)
+                row[correct] = history.correct
+                row[incorrectAttempts] = history.incorrectAttempts
+                row[historyJson] = Json.encodeToString(history.answers)
+              }
+          browserSession.isNotNull() ->
+            SessionAnswerHistory
+              .upsert(conflictIndex = sessionAnswerHistoryIndex) { row ->
+                row[sessionRef] = browserSession.sessionDbmsId()
+                row[md5] = historyMd5
+                row[invocation] = history.invocation.value
+                row[updated] = DateTime.now(DateTimeZone.UTC)
+                row[correct] = history.correct
+                row[incorrectAttempts] = history.incorrectAttempts
+                row[historyJson] = Json.encodeToString(history.answers)
+              }
+          else ->
+            logger.warn { "Answer history not updated" }
+        }
       }
     }
+
+    if (shouldPublish)
+      historyList
+        .forEach { history ->
+          val maxLength = content.maxHistoryLength
+          user?.publishAnswers(classCode, funcInfo.challengeMd5, maxLength, complete, numCorrect, history)
+        }
   }
 
   private fun saveLikeDislike(user: User?,

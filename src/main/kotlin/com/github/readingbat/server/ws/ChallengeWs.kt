@@ -106,7 +106,7 @@ internal object ChallengeWs : KLogging() {
           while (true) {
             try {
               runBlocking {
-                redisPool?.withSuspendingNonNullRedisPool() { redis ->
+                redisPool?.withSuspendingNonNullRedisPool { redis ->
                   multiServerWriteChannel
                     .openSubscription()
                     .consumeAsFlow()
@@ -145,7 +145,7 @@ internal object ChallengeWs : KLogging() {
 
           while (true) {
             try {
-              redisPool?.withNonNullRedisPool() { redis ->
+              redisPool?.withNonNullRedisPool { redis ->
                 redis.psubscribe(pubsub, "*")
               } ?: throw RedisUnavailableException("multiServerReadChannel")
             } catch (e: Throwable) {
