@@ -27,7 +27,7 @@ import com.github.readingbat.common.Endpoints.WS_ROOT
 import com.github.readingbat.common.Metrics
 import com.github.readingbat.dsl.InvalidRequestException
 import com.github.readingbat.dsl.agentLaunchId
-import com.github.readingbat.server.ReadingBatServer.anwwersChannel
+import com.github.readingbat.server.ReadingBatServer.answersChannel
 import com.github.readingbat.server.ServerUtils.fetchUser
 import com.github.readingbat.server.ws.WsCommon.CHALLENGE_MD5
 import com.github.readingbat.server.ws.WsCommon.CLASS_CODE
@@ -39,6 +39,8 @@ import io.ktor.websocket.*
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.flow.onCompletion
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -91,15 +93,20 @@ internal object ChallengeWs : KLogging() {
         while (true) {
           try {
             runBlocking {
-              for (data in anwwersChannel.openSubscription()) {
-                wsConnections
-                  .filter { it.topicName == data.topic }
-                  .forEach {
-                    it.metrics.wsStudentAnswerResponseCount.labels(agentLaunchId()).inc()
-                    it.wsSession.outgoing.send(Frame.Text(data.message))
-                    logger.debug { "Sent $data ${wsConnections.size}" }
-                  }
-              }
+              answersChannel
+                .openSubscription()
+                .consumeAsFlow()
+                .onStart { logger.info { "Starting to read challenge ws channel values" } }
+                .onCompletion { logger.info { "Finished reading challenge ws channel values" } }
+                .collect { data ->
+                  wsConnections
+                    .filter { it.topicName == data.topic }
+                    .forEach {
+                      it.metrics.wsStudentAnswerResponseCount.labels(agentLaunchId()).inc()
+                      it.wsSession.outgoing.send(Frame.Text(data.message))
+                      logger.debug { "Sent $data ${wsConnections.size}" }
+                    }
+                }
             }
           } catch (e: Throwable) {
             logger.error { "Exception in dispatcher ${e.simpleClassName} ${e.message}" }

@@ -77,12 +77,11 @@ object ReadingBatServer : KLogging() {
   private val startTime = TimeSource.Monotonic.markNow()
   internal val serverSessionId = randomId(10)
   internal val timeStamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("M/d/y H:m:ss"))
-  internal val upTime get() = startTime.elapsedNow()
   internal val content = AtomicReference(ReadingBatContent())
   internal val adminUsers = mutableListOf<String>()
   internal val contentReadCount = AtomicInteger(0)
+  internal val answersChannel = BroadcastChannel<PublishedData>(Channel.BUFFERED)
   internal val metrics by lazy { Metrics() }
-  internal val anwwersChannel = BroadcastChannel<PublishedData>(Channel.BUFFERED)
   internal var redisPool: JedisPool? = null
   internal val postgres by lazy {
     Database.connect(
@@ -99,6 +98,8 @@ object ReadingBatServer : KLogging() {
             validate()
           }))
   }
+
+  internal val upTime get() = startTime.elapsedNow()
 
   fun start(args: Array<String>) {
 

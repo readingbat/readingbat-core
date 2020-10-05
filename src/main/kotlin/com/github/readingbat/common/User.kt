@@ -413,7 +413,7 @@ internal class User {
     val data = dashboardInfo.toJson()
     //redis.publish(topicName, data)
     runBlocking {
-      ReadingBatServer.anwwersChannel.send(PublishedData(topicName, data))
+      ReadingBatServer.answersChannel.send(PublishedData(topicName, data))
     }
   }
 
