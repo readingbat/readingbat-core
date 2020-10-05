@@ -48,6 +48,10 @@ internal object Constants {
   const val PROCESS_USER_ANSWERS_JS_FUNC = "processUserAnswers"
   const val LIKE_DISLIKE_JS_FUNC = "likeDislike"
   const val NO_TRACK_HEADER = "NO_TRACK"
+
+  // Do not change this value without adjusting values in DBMS
+  const val UNKNOWN_USER_ID = "unknown-user"
+
   const val UNKNOWN = "Unknown"
   const val UNASSIGNED = "unassigned"
   const val REDIS_IS_DOWN = "Redis is down"
@@ -76,8 +80,8 @@ internal object PropertyNames {
 
 internal object Endpoints {
   const val ROOT = "/"
+  const val WS_ROOT = "/ws"
 
-  //const val STATIC_ROOT = "/$STATIC"
   const val STATIC_ROOT = "https://static.readingbat.com"
   const val CHALLENGE_ROOT = "/content"
   const val PLAYGROUND_ROOT = "/playground"
@@ -102,6 +106,7 @@ internal object Endpoints {
   const val FAV_ICON_ENDPOINT = "/favicon.ico"
   const val ROBOTS_ENDPOINT = "/robots.txt"
   const val CHALLENGE_ENDPOINT = "/challenge"
+  const val CLOCK_ENDPOINT = "/clock"
   const val CHALLENGE_GROUP_ENDPOINT = "/challenge-group"
   const val CHECK_ANSWERS_ENDPOINT = "/check-answers"
   const val LIKE_DISLIKE_ENDPOINT = "/like-dislike"
@@ -117,7 +122,7 @@ internal object Endpoints {
 
   const val DELETE_CONTENT_IN_REDIS_ENDPOINT = "/clear-caches"
 
-  const val PING = "/ping"
+  const val PING_ENDPOINT = "/ping"
   const val THREAD_DUMP = "/threaddump"
   const val LOGOUT_ENDPOINT = "/logout"
 

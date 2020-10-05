@@ -17,19 +17,16 @@
 
 package com.github.readingbat.server
 
-import com.github.pambrose.common.redis.RedisUtils.withRedisPool
 import com.github.pambrose.common.response.respondWith
 import com.github.pambrose.common.util.encode
 import com.github.pambrose.common.util.isNotValidEmail
 import com.github.pambrose.common.util.randomId
 import com.github.pambrose.common.util.sha256
 import com.github.readingbat.common.AuthName.FORM
-import com.github.readingbat.common.CommonUtils.keyOf
 import com.github.readingbat.common.CommonUtils.md5Of
 import com.github.readingbat.common.Constants.UNKNOWN
 import com.github.readingbat.common.Endpoints.CHALLENGE_ROOT
 import com.github.readingbat.common.Endpoints.PLAYGROUND_ROOT
-import com.github.readingbat.common.KeyConstants.RESET_KEY
 import com.github.readingbat.common.Metrics
 import com.github.readingbat.common.Metrics.Companion.GET
 import com.github.readingbat.common.Metrics.Companion.POST
@@ -44,12 +41,12 @@ import com.github.readingbat.pages.ChallengePage.challengePage
 import com.github.readingbat.pages.LanguageGroupPage.languageGroupPage
 import com.github.readingbat.pages.PlaygroundPage.playgroundPage
 import com.github.readingbat.server.AdminRoutes.assignBrowserSession
-import com.github.readingbat.server.ReadingBatServer.redisPool
 import com.github.readingbat.server.ServerUtils.fetchUser
 import io.ktor.auth.*
 import io.ktor.http.*
 import io.ktor.locations.*
 import io.ktor.routing.*
+import kotlinx.serialization.Serializable
 
 internal object Locations {
   private const val trueStr = true.toString()
@@ -100,9 +97,7 @@ internal object Locations {
       assignBrowserSession()
       content.checkLanguage(language.languageType)
       val user = fetchUser(loginAttempt)
-      redisPool?.withRedisPool { redis ->
-        languageGroupPage(content, user, language.languageType, loginAttempt)
-      } ?: languageGroupPage(content, user, language.languageType, loginAttempt)
+      languageGroupPage(content, user, language.languageType, loginAttempt)
     }
 
   private suspend fun PipelineCall.group(content: ReadingBatContent,
@@ -186,7 +181,6 @@ inline class LanguageName(val value: String) {
 
   companion object {
     internal val EMPTY_LANGUAGE = LanguageName("")
-    internal val ANY_LANGUAGE = LanguageName("*")
     private val jmvLanguages by lazy { listOf(Java.languageName, Kotlin.languageName) }
 
     internal fun Parameters.getLanguageName(name: String) = this[name]?.let { LanguageName(it) } ?: EMPTY_LANGUAGE
@@ -208,7 +202,6 @@ inline class GroupName(val value: String) {
 
   companion object {
     internal val EMPTY_GROUP = GroupName("")
-    internal val ANY_GROUP = GroupName("*")
     internal fun Parameters.getGroupName(name: String) = this[name]?.let { GroupName(it) } ?: EMPTY_GROUP
   }
 }
@@ -224,7 +217,6 @@ inline class ChallengeName(val value: String) {
 
   companion object {
     private val EMPTY_CHALLENGE = ChallengeName("")
-    internal val ANY_CHALLENGE = ChallengeName("*")
     internal fun Parameters.getChallengeName(name: String) = this[name]?.let { ChallengeName(it) } ?: EMPTY_CHALLENGE
   }
 }
@@ -234,12 +226,9 @@ class ChallengeMd5(languageName: LanguageName, groupName: GroupName, challengeNa
   override fun toString() = value
 }
 
-inline class Invocation(val value: String) {
+@Serializable
+class Invocation(val value: String) {
   override fun toString() = value
-
-  companion object {
-    internal val ANY_INVOCATION = Invocation("*")
-  }
 }
 
 inline class FullName(val value: String) {
@@ -284,9 +273,6 @@ inline class Email(val value: String) {
 inline class ResetId(val value: String) {
   fun isBlank() = value.isBlank()
   fun isNotBlank() = value.isNotBlank()
-
-  // Maps resetId to username
-  val passwordResetKey get() = keyOf(RESET_KEY, value)
 
   override fun toString() = value
 

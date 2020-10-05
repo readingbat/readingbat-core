@@ -31,6 +31,7 @@ import com.github.readingbat.common.Endpoints.CHALLENGE_GROUP_ENDPOINT
 import com.github.readingbat.common.Endpoints.CHALLENGE_ROOT
 import com.github.readingbat.common.Endpoints.CLEAR_GROUP_ANSWERS_ENDPOINT
 import com.github.readingbat.common.Endpoints.STATIC_ROOT
+import com.github.readingbat.common.Endpoints.WS_ROOT
 import com.github.readingbat.common.Endpoints.classSummaryEndpoint
 import com.github.readingbat.common.FormFields.CHALLENGE_ANSWERS_PARAM
 import com.github.readingbat.common.FormFields.CORRECT_ANSWERS_PARAM
@@ -40,8 +41,7 @@ import com.github.readingbat.common.Message
 import com.github.readingbat.common.StaticFileNames.GREEN_CHECK
 import com.github.readingbat.common.StaticFileNames.WHITE_CHECK
 import com.github.readingbat.common.User
-import com.github.readingbat.common.User.Companion.fetchActiveClassCode
-import com.github.readingbat.common.User.Companion.gson
+import com.github.readingbat.common.User.Companion.queryActiveClassCode
 import com.github.readingbat.common.browserSession
 import com.github.readingbat.common.challengeAnswersKey
 import com.github.readingbat.common.correctAnswersKey
@@ -68,6 +68,8 @@ import com.github.readingbat.server.get
 import io.ktor.application.*
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import mu.KLogging
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.select
@@ -99,7 +101,6 @@ internal object ChallengeGroupPage : KLogging() {
     }
   }
 
-
   fun PipelineCall.challengeGroupPage(content: ReadingBatContent,
                                       user: User?,
                                       challengeGroup: ChallengeGroup<*>,
@@ -112,7 +113,7 @@ internal object ChallengeGroupPage : KLogging() {
         val groupName = challengeGroup.groupName
         val challenges = challengeGroup.challenges
         val loginPath = pathOf(CHALLENGE_ROOT, languageName, groupName)
-        val activeClassCode = fetchActiveClassCode(user)
+        val activeClassCode = queryActiveClassCode(user)
         val enrollees = activeClassCode.fetchEnrollees()
         val msg = Message(queryParam(MSG))
 
@@ -136,7 +137,7 @@ internal object ChallengeGroupPage : KLogging() {
           }
         }
 
-        head { headDefault(content) }
+        head { headDefault() }
 
         body {
           bodyHeader(content, user, languageType, loginAttempt, loginPath, false, activeClassCode, msg)
@@ -202,15 +203,18 @@ internal object ChallengeGroupPage : KLogging() {
   private fun BODY.enableWebSockets(languageName: LanguageName, groupName: GroupName, classCode: ClassCode) {
     script {
       rawHtml(
-        """
-          
+        """ 
           var wshost = location.origin;
           if (wshost.startsWith('https:'))
             wshost = wshost.replace(/^https:/, 'wss:');
           else
             wshost = wshost.replace(/^http:/, 'ws:');
 
-          var wsurl = wshost + '${CHALLENGE_GROUP_ENDPOINT}/' + ${encodeUriElems(languageName, groupName, classCode)};
+          var wsurl = wshost + '$WS_ROOT$CHALLENGE_GROUP_ENDPOINT/' + ${
+          encodeUriElems(languageName,
+                         groupName,
+                         classCode)
+        };
           var ws = new WebSocket(wsurl);
 
           ws.onopen = function (event) {
@@ -231,7 +235,6 @@ internal object ChallengeGroupPage : KLogging() {
                                                  languageName: LanguageName,
                                                  groupName: GroupName,
                                                  challenges: List<Challenge>) {
-
     val correctAnswersKeys = challenges.map { correctAnswersKey(user, browserSession, it) }
     val challengeAnswerKeys = challenges.map { challengeAnswersKey(user, browserSession, it) }
 
@@ -243,8 +246,8 @@ internal object ChallengeGroupPage : KLogging() {
         onSubmit = """return confirm('Are you sure you want to clear your previous answers for group "$groupName"?')"""
         hiddenInput { name = LANGUAGE_NAME_PARAM; value = languageName.value }
         hiddenInput { name = GROUP_NAME_PARAM; value = groupName.value }
-        hiddenInput { name = CORRECT_ANSWERS_PARAM; value = gson.toJson(correctAnswersKeys) }
-        hiddenInput { name = CHALLENGE_ANSWERS_PARAM; value = gson.toJson(challengeAnswerKeys) }
+        hiddenInput { name = CORRECT_ANSWERS_PARAM; value = Json.encodeToString(correctAnswersKeys) }
+        hiddenInput { name = CHALLENGE_ANSWERS_PARAM; value = Json.encodeToString(challengeAnswerKeys) }
         submitInput {
           style = "vertical-align:middle; margin-top:1; margin-bottom:0"
           value = "Clear answer history"

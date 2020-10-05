@@ -41,7 +41,7 @@ import com.github.readingbat.common.FormFields.WITHDRAW_FROM_CLASS
 import com.github.readingbat.common.Message
 import com.github.readingbat.common.Message.Companion.EMPTY_MESSAGE
 import com.github.readingbat.common.User
-import com.github.readingbat.common.User.Companion.fetchActiveClassCode
+import com.github.readingbat.common.User.Companion.queryActiveClassCode
 import com.github.readingbat.common.isValidUser
 import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.dsl.ReadingBatContent
@@ -84,12 +84,12 @@ internal object UserPrefsPage : KLogging() {
     createHTML()
       .html {
         head {
-          headDefault(content)
+          headDefault()
           clickButtonScript(passwordButton, joinClassButton)
         }
 
         body {
-          val activeClassCode = fetchActiveClassCode(user)
+          val activeClassCode = queryActiveClassCode(user)
           val returnPath = queryParam(RETURN_PARAM, "/")
 
           helpAndLogin(content, user, returnPath, activeClassCode.isEnabled)
@@ -301,7 +301,7 @@ internal object UserPrefsPage : KLogging() {
   fun PipelineCall.requestLogInPage(content: ReadingBatContent, msg: Message = EMPTY_MESSAGE) =
     createHTML()
       .html {
-        head { headDefault(content) }
+        head { headDefault() }
 
         body {
           val returnPath = queryParam(RETURN_PARAM, "/")

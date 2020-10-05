@@ -39,10 +39,9 @@ import com.github.readingbat.common.FormFields.UPDATE_ACTIVE_CLASS
 import com.github.readingbat.common.FormFields.USER_ID_PARAM
 import com.github.readingbat.common.Message
 import com.github.readingbat.common.User
-import com.github.readingbat.common.User.Companion.fetchActiveClassCode
-import com.github.readingbat.common.User.Companion.fetchPreviousTeacherClassCode
+import com.github.readingbat.common.User.Companion.queryActiveClassCode
+import com.github.readingbat.common.User.Companion.queryPreviousTeacherClassCode
 import com.github.readingbat.common.User.Companion.toUser
-import com.github.readingbat.common.browserSession
 import com.github.readingbat.common.isValidUser
 import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.ReadingBatContent
@@ -79,7 +78,7 @@ internal object TeacherPrefsPost : KLogging() {
         }
         REMOVE_FROM_CLASS -> {
           val studentId = parameters[USER_ID_PARAM] ?: throw InvalidConfigurationException("Missing: $USER_ID_PARAM")
-          val student = studentId.toUser(null)
+          val student = toUser(studentId)
           val classCode = student.enrolledClassCode
           student.withdrawFromClass(classCode)
           val msg = "${student.fullName} removed from class ${classCode.toDisplayString()}"
@@ -96,7 +95,7 @@ internal object TeacherPrefsPost : KLogging() {
 
   fun PipelineCall.enableStudentMode(user: User?): String {
     val returnPath = queryParam(RETURN_PARAM, "/")
-    val browserSession = call.browserSession
+    //val browserSession = call.browserSession
     val msg =
       if (user.isValidUser()) {
         user.assignActiveClassCode(DISABLED_CLASS_CODE, false)
@@ -112,7 +111,7 @@ internal object TeacherPrefsPost : KLogging() {
     val returnPath = queryParam(RETURN_PARAM, "/")
     val msg =
       if (user.isValidUser()) {
-        val previousTeacherClassCode = fetchPreviousTeacherClassCode(user)
+        val previousTeacherClassCode = queryPreviousTeacherClassCode(user)
         user.assignActiveClassCode(previousTeacherClassCode, false)
         TEACHER_MODE_ENABLED_MSG
       }
@@ -146,7 +145,7 @@ internal object TeacherPrefsPost : KLogging() {
     when {
       // Do not allow this for classCode.isStudentMode because turns off the
       // student/teacher toggle mode
-      fetchActiveClassCode(user) == classCode && classCode.isEnabled ->
+      queryActiveClassCode(user) == classCode && classCode.isEnabled ->
         Message("Same active class selected [$classCode]", true)
       else -> {
         user.assignActiveClassCode(classCode, true)
@@ -165,7 +164,7 @@ internal object TeacherPrefsPost : KLogging() {
                                                  user,
                                                  Message("Invalid class code: $classCode", true))
       else -> {
-        val activeClassCode = fetchActiveClassCode(user)
+        val activeClassCode = queryActiveClassCode(user)
         val enrollees = classCode.fetchEnrollees()
 
         transaction {

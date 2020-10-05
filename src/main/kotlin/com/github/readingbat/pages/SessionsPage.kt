@@ -42,7 +42,7 @@ internal object SessionsPage {
   fun PipelineCall.sessionsPage(content: ReadingBatContent) =
     createHTML()
       .html {
-        head { headDefault(content) }
+        head { headDefault() }
 
         body {
           bodyTitle()
@@ -88,21 +88,21 @@ internal object SessionsPage {
                   th { +"User Agent" }
                 }
                 sessions
-                  .forEach {
+                  .forEach { session ->
                     tr {
-                      val user = it.principal?.userId?.toUser(it.browserSession)
+                      val user = session.principal?.userId?.let { toUser(it, session.browserSession) }
                       val userDesc = user?.let { "${it.fullName} (${it.email})" } ?: "Not logged in"
-                      td { +it.browserSession.id }
+                      td { +session.browserSession.id }
                       td { +userDesc }
-                      td { +it.age.format(false) }
-                      td { +it.requests.toString() }
-                      td { +it.remoteHost.value }
-                      td { +it.remoteHost.city }
-                      td { +it.remoteHost.state }
-                      td { +it.remoteHost.country }
-                      td { +it.remoteHost.organization }
-                      td { if ("://" in it.remoteHost.flagUrl) img { src = it.remoteHost.flagUrl } else +"" }
-                      td { +it.userAgent }
+                      td { +session.age.format(false) }
+                      td { +session.requests.toString() }
+                      td { +session.remoteHost.remoteHost }
+                      td { +session.remoteHost.city }
+                      td { +session.remoteHost.state }
+                      td { +session.remoteHost.country }
+                      td { +session.remoteHost.organization }
+                      td { if ("://" in session.remoteHost.flagUrl) img { src = session.remoteHost.flagUrl } else +"" }
+                      td { +session.userAgent }
                     }
                   }
               }

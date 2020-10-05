@@ -73,7 +73,7 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
 
       .also {
         if (cacheContentInRedis()) {
-          redisPool?.withNonNullRedisPool { redis ->
+          redisPool?.withNonNullRedisPool(true) { redis ->
             val dirContentsKey = dirContentsKey(path)
             it.forEach { redis.rpush(dirContentsKey, it) }
             logger.info { """Saved "$path" to redis""" }

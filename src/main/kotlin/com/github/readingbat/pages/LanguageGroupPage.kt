@@ -27,7 +27,7 @@ import com.github.readingbat.common.Message
 import com.github.readingbat.common.StaticFileNames.GREEN_CHECK
 import com.github.readingbat.common.StaticFileNames.WHITE_CHECK
 import com.github.readingbat.common.User
-import com.github.readingbat.common.User.Companion.fetchActiveClassCode
+import com.github.readingbat.common.User.Companion.queryActiveClassCode
 import com.github.readingbat.common.browserSession
 import com.github.readingbat.dsl.ChallengeGroup
 import com.github.readingbat.dsl.LanguageType
@@ -59,7 +59,7 @@ internal object LanguageGroupPage {
         val languageName = languageType.languageName
         val loginPath = pathOf(CHALLENGE_ROOT, languageName)
         val groups = content[languageType].challengeGroups
-        val activeClassCode = fetchActiveClassCode(user)
+        val activeClassCode = queryActiveClassCode(user)
         val enrollees = activeClassCode.fetchEnrollees()
 
         fun TR.groupItem(user: User?, challengeGroup: ChallengeGroup<*>) {
@@ -102,7 +102,7 @@ internal object LanguageGroupPage {
           }
         }
 
-        head { headDefault(content) }
+        head { headDefault() }
 
         body {
           val msg = Message(queryParam(MSG))

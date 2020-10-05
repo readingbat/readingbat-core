@@ -29,7 +29,7 @@ import com.github.readingbat.common.FormFields.NO_ACTIVE_CLASS
 import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.FormFields.UPDATE_ACTIVE_CLASS
 import com.github.readingbat.common.User
-import com.github.readingbat.common.User.Companion.fetchActiveClassCode
+import com.github.readingbat.common.User.Companion.queryActiveClassCode
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.pages.HelpAndLogin.helpAndLogin
 import com.github.readingbat.pages.PageUtils.backLink
@@ -47,10 +47,10 @@ internal object HelpPage {
   fun PipelineCall.helpPage(content: ReadingBatContent, user: User?) =
     createHTML()
       .html {
-        head { headDefault(content) }
+        head { headDefault() }
 
         body {
-          helpAndLogin(content, user, ABOUT_ENDPOINT, fetchActiveClassCode(user).isEnabled)
+          helpAndLogin(content, user, ABOUT_ENDPOINT, queryActiveClassCode(user).isEnabled)
 
           bodyTitle()
 

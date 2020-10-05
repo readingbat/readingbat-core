@@ -19,10 +19,7 @@ package com.github.readingbat.common
 
 import com.github.pambrose.common.util.randomId
 import com.github.pambrose.common.util.toDoubleQuoted
-import com.github.readingbat.common.CommonUtils.keyOf
 import com.github.readingbat.common.FormFields.DISABLED_MODE
-import com.github.readingbat.common.KeyConstants.CLASS_CODE_KEY
-import com.github.readingbat.common.KeyConstants.CLASS_INFO_KEY
 import com.github.readingbat.common.User.Companion.toUser
 import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.server.Classes
@@ -42,8 +39,6 @@ import kotlin.time.measureTimedValue
 internal data class ClassCode(val value: String) {
   val isNotEnabled by lazy { value == DISABLED_MODE || value.isBlank() }
   val isEnabled by lazy { !isNotEnabled }
-  val classCodeEnrollmentKey by lazy { keyOf(CLASS_CODE_KEY, value) }
-  val classInfoKey by lazy { keyOf(CLASS_INFO_KEY, value) }
 
   val displayedValue get() = if (value == DISABLED_MODE) "" else value
 
@@ -58,7 +53,7 @@ internal data class ClassCode(val value: String) {
             .firstOrNull() ?: throw InvalidConfigurationException("Missing class code $value")
         }
       }.let {
-        logger.info { "Looked up classId in ${it.duration}" }
+        logger.debug { "Looked up classId in ${it.duration}" }
         it.value
       }
 
@@ -70,7 +65,7 @@ internal data class ClassCode(val value: String) {
         .slice(Count(Classes.classCode))
         .select { Classes.classCode eq value }
         .map { it[0] as Long }
-        .first().also { logger.info { "ClassCode.isValid() returned $it for $value" } } > 0
+        .first().also { logger.debug { "ClassCode.isValid() returned $it for $value" } } > 0
     }
 
   fun fetchEnrollees(): List<User> =
@@ -85,10 +80,9 @@ internal data class ClassCode(val value: String) {
             .map { it[0] as Long }
 
         Users
-          .slice(Users.userId)
           .select { Users.id inList userIds }
-          .map { (it[0] as String).toUser(null) }
-          .also { logger.info { "fetchEnrollees() returning $it" } }
+          .map { toUser(it[Users.userId], it) }
+          .also { logger.debug { "fetchEnrollees() returning ${it.size} users" } }
       }
 
   fun deleteClassCode() = Classes.deleteWhere { Classes.classCode eq value }
@@ -113,7 +107,7 @@ internal data class ClassCode(val value: String) {
         .select { Classes.classCode eq value }
         .map { it[0] as String }
         .firstOrNull() ?: "Missing description")
-        .also { logger.info { "fetchClassDesc() returned ${it.toDoubleQuoted()} for $value" } }
+        .also { logger.debug { "fetchClassDesc() returned ${it.toDoubleQuoted()} for $value" } }
     }.let { if (quoted) it.toDoubleQuoted() else it }
 
   fun toDisplayString() = "${fetchClassDesc(true)} [$value]"
@@ -124,7 +118,7 @@ internal data class ClassCode(val value: String) {
         .slice(Users.userId)
         .select { Classes.classCode eq value }
         .map { it[0] as String }
-        .firstOrNull() ?: "").also { logger.info { "fetchClassTeacherId() returned $it" } }
+        .firstOrNull() ?: "").also { logger.debug { "fetchClassTeacherId() returned $it" } }
     }
 
   override fun toString() = value

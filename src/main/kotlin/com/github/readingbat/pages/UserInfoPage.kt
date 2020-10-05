@@ -41,7 +41,7 @@ internal object UserInfoPage {
   fun PipelineCall.userInfoPage(content: ReadingBatContent, user: User?, msg: Message = EMPTY_MESSAGE) =
     createHTML()
       .html {
-        head { headDefault(content) }
+        head { headDefault() }
 
         body {
           val returnPath = queryParam(RETURN_PARAM, "/")

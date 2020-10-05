@@ -31,7 +31,7 @@ import com.github.readingbat.common.FormFields.EMAIL_PARAM
 import com.github.readingbat.common.FormFields.PASSWORD_PARAM
 import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.User
-import com.github.readingbat.common.User.Companion.fetchPreviousTeacherClassCode
+import com.github.readingbat.common.User.Companion.queryPreviousTeacherClassCode
 import com.github.readingbat.common.isAdminUser
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.isPostgresEnabled
@@ -49,7 +49,7 @@ internal object HelpAndLogin {
                         loginPath: String,
                         teacherMode: Boolean) {
 
-    val previousClassCode = fetchPreviousTeacherClassCode(user)
+    val previousClassCode = queryPreviousTeacherClassCode(user)
     val path =
       if (loginPath in rootVals)
         firstNonEmptyLanguageType(content, user?.defaultLanguage).contentRoot

@@ -20,18 +20,8 @@ package com.github.readingbat.common
 internal object KeyConstants {
   const val AUTH_KEY = "auth"
   const val NO_AUTH_KEY = "noauth"
-  const val USER_EMAIL_KEY = "user-email"
-  const val USER_INFO_KEY = "user-info"
-  const val USER_INFO_BROWSER_KEY = "user-info-browser"
-  const val USER_CLASSES_KEY = "user-classes"
   const val CORRECT_ANSWERS_KEY = "correct-answers"
-  const val LIKE_DISLIKE_KEY = "like-dislike"
   const val CHALLENGE_ANSWERS_KEY = "challenge-answers"
-  const val ANSWER_HISTORY_KEY = "answer-history"
-  const val RESET_KEY = "password-reset"
-  const val USER_RESET_KEY = "user-password-reset"
-  const val CLASS_CODE_KEY = "class-code"
-  const val CLASS_INFO_KEY = "class-info"
   const val IPGEO_KEY = "ip-geo"
 
   const val SOURCE_CODE_KEY = "source-code"

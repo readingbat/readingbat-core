@@ -25,7 +25,7 @@ import com.github.pambrose.common.util.randomId
 import com.github.readingbat.common.AuthRoutes.COOKIES
 import com.github.readingbat.common.BrowserSession
 import com.github.readingbat.common.Constants.NO_TRACK_HEADER
-import com.github.readingbat.common.Endpoints.PING
+import com.github.readingbat.common.Endpoints.PING_ENDPOINT
 import com.github.readingbat.common.Endpoints.THREAD_DUMP
 import com.github.readingbat.common.Metrics
 import com.github.readingbat.common.SessionActivites.markActivity
@@ -41,7 +41,6 @@ import io.ktor.http.ContentType.Text.Plain
 import io.ktor.response.*
 import io.ktor.routing.*
 import io.ktor.sessions.*
-import io.ktor.util.pipeline.*
 import kotlinx.html.body
 import kotlinx.html.div
 import mu.KLogging
@@ -57,7 +56,7 @@ internal object AdminRoutes : KLogging() {
 
   fun Routing.adminRoutes(metrics: Metrics) {
 
-    get(PING, metrics) {
+    get(PING_ENDPOINT, metrics) {
       call.respondText("pong", Plain)
     }
 
@@ -96,7 +95,7 @@ internal object AdminRoutes : KLogging() {
       }
     }
 
-    fun PipelineContext<Unit, ApplicationCall>.clearPrincipal() {
+    fun PipelineCall.clearPrincipal() {
       call.userPrincipal
         .also {
           if (it.isNotNull()) {
@@ -109,7 +108,7 @@ internal object AdminRoutes : KLogging() {
         }
     }
 
-    fun PipelineContext<Unit, ApplicationCall>.clearSessionId() {
+    fun PipelineCall.clearSessionId() {
       call.browserSession
         .also {
           if (it.isNotNull()) {
@@ -150,8 +149,8 @@ internal object AdminRoutes : KLogging() {
     if (call.browserSession.isNull()) {
       val browserSession = BrowserSession(id = randomId(15))
       call.sessions.set(browserSession)
-      browserSession.markActivity(call)
-      logger.info { "Created browser session: ${browserSession.id} - ${call.request.origin.remoteHost}" }
+      browserSession.markActivity("assignBrowserSession()", call)
+      logger.debug { "Created browser session: ${browserSession.id} - ${call.request.origin.remoteHost}" }
     }
   }
 

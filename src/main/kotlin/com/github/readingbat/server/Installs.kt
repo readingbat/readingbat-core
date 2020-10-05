@@ -28,6 +28,7 @@ import com.github.readingbat.common.Endpoints.STATIC_ROOT
 import com.github.readingbat.common.EnvVar.FILTER_LOG
 import com.github.readingbat.dsl.InvalidRequestException
 import com.github.readingbat.dsl.RedisUnavailableException
+import com.github.readingbat.dsl.isPostgresEnabled
 import com.github.readingbat.pages.DbmsDownPage.dbmsDownPage
 import com.github.readingbat.pages.ErrorPage.errorPage
 import com.github.readingbat.pages.InvalidRequestPage.invalidRequestPage
@@ -35,7 +36,7 @@ import com.github.readingbat.pages.NotFoundPage.notFoundPage
 import com.github.readingbat.server.ConfigureCookies.configureAuthCookie
 import com.github.readingbat.server.ConfigureCookies.configureSessionIdCookie
 import com.github.readingbat.server.ConfigureFormAuth.configureFormAuth
-import com.github.readingbat.server.ServerUtils.fetchEmail
+import com.github.readingbat.server.ServerUtils.fetchEmailFromCache
 import io.ktor.application.*
 import io.ktor.auth.*
 import io.ktor.features.*
@@ -49,6 +50,8 @@ import io.ktor.sessions.*
 import io.ktor.websocket.*
 import mu.KLogging
 import org.slf4j.event.Level
+import java.util.concurrent.atomic.AtomicLong
+import kotlin.time.seconds
 
 internal object Installs : KLogging() {
 
@@ -70,7 +73,7 @@ internal object Installs : KLogging() {
     }
 
     install(WebSockets) {
-      pingPeriodMillis = 5000L   // Duration between pings or `0` to disable pings
+      pingPeriodMillis = 15.seconds.toLongMilliseconds()   // Duration between pings or `0` to disable pings
     }
 
     if (forwardedHeaderSupportEnabled) {
@@ -116,26 +119,36 @@ internal object Installs : KLogging() {
 
     install(CallLogging) {
       level = Level.INFO
+
       if (FILTER_LOG.getEnv(true))
         filter { call ->
           call.request.path().let { it.startsWith("/") && !it.startsWith("/$STATIC/") && it != "/ping" }
         }
+
       format { call ->
-        val logStr = call.request.toLogString()
-        val remote = call.request.origin.remoteHost
-        val email = call.fetchEmail()
-        when (val status = call.response.status() ?: UNKNOWN) {
-          // Show redirections
-          Found -> "$status: $logStr -> ${call.response.headers[Location]} - $remote - $email"
-          else -> {
-            "$status: $logStr - $remote - $email"
-          }
+        val request = call.request
+        val response = call.response
+        val logStr = request.toLogString()
+        val remote = request.origin.remoteHost
+        val email = if (isPostgresEnabled()) call.fetchEmailFromCache() else Email.UNKNOWN_EMAIL
+
+        when (val status = response.status() ?: HttpStatusCode(-1, "Unknown")) {
+          Found -> "Redirect: $logStr -> ${response.headers[Location]} - $remote - $email"
+          else -> "$status: $logStr - $remote - $email"
         }
       }
     }
 
     install(DefaultHeaders) {
       header("X-Engine", "Ktor")
+    }
+
+    val requestCounter = AtomicLong()
+
+    install(CallId) {
+      retrieveFromHeader(HttpHeaders.XRequestId)
+      generate { "${ReadingBatServer.serverSessionId}-${requestCounter.incrementAndGet()}" }
+      verify { it.isNotEmpty() }
     }
 
     /*
@@ -153,14 +166,14 @@ internal object Installs : KLogging() {
     install(StatusPages) {
 
       exception<InvalidRequestException> { cause ->
-        logger.info(cause) { " InvalidRequestException caught: ${cause.simpleClassName}" }
+        logger.info { " InvalidRequestException caught: ${cause.message}" }
         respondWith {
           invalidRequestPage(ReadingBatServer.content.get(), call.request.uri, cause.message ?: UNKNOWN)
         }
       }
 
       exception<RedisUnavailableException> { cause ->
-        logger.info(cause) { " RedisUnavailableException caught: ${cause.simpleClassName}" }
+        logger.info(cause) { " RedisUnavailableException caught: ${cause.message}" }
         respondWith {
           dbmsDownPage(ReadingBatServer.content.get())
         }

@@ -34,7 +34,7 @@ internal object InvalidRequestPage {
   fun invalidRequestPage(content: ReadingBatContent, uri: String, msg: String) =
     createHTML()
       .html {
-        head { headDefault(content) }
+        head { headDefault() }
 
         body {
           bodyTitle()

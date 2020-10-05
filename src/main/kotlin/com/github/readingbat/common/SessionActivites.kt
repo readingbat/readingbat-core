@@ -19,44 +19,48 @@ package com.github.readingbat.common
 
 import com.github.pambrose.common.dsl.KtorDsl.get
 import com.github.pambrose.common.dsl.KtorDsl.httpClient
-import com.github.pambrose.common.redis.RedisUtils.withNonNullRedisPool
 import com.github.pambrose.common.util.isInt
-import com.github.readingbat.common.CommonUtils.keyOf
 import com.github.readingbat.common.Constants.UNKNOWN
 import com.github.readingbat.common.EnvVar.IPGEOLOCATION_KEY
-import com.github.readingbat.common.KeyConstants.IPGEO_KEY
 import com.github.readingbat.common.SessionActivites.RemoteHost.Companion.unknown
-import com.github.readingbat.common.User.Companion.gson
 import com.github.readingbat.common.User.Companion.toUser
-import com.github.readingbat.server.ReadingBatServer.redisPool
+import com.github.readingbat.dsl.InvalidConfigurationException
+import com.github.readingbat.dsl.isPostgresEnabled
+import com.github.readingbat.server.GeoInfos
+import com.github.readingbat.server.geoInfosUnique
+import com.github.readingbat.server.get
+import com.github.readingbat.server.upsert
+import com.google.gson.Gson
 import io.ktor.application.*
 import io.ktor.client.statement.*
 import io.ktor.features.*
 import io.ktor.http.*
 import kotlinx.coroutines.runBlocking
 import mu.KLogging
-import redis.clients.jedis.params.SetParams
+import org.jetbrains.exposed.sql.select
+import org.jetbrains.exposed.sql.transactions.transaction
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
-import kotlin.concurrent.schedule
+import kotlin.concurrent.timer
 import kotlin.time.Duration
 import kotlin.time.TimeSource
-import kotlin.time.days
 import kotlin.time.hours
 
 internal object SessionActivites : KLogging() {
 
-  class RemoteHost(val value: String) {
-    val city get() = geoInfoMap[value]?.city?.toString() ?: UNKNOWN
-    val state get() = geoInfoMap[value]?.state_prov?.toString() ?: UNKNOWN
-    val country get() = geoInfoMap[value]?.country_name?.toString() ?: UNKNOWN
-    val organization get() = geoInfoMap[value]?.organization?.toString() ?: UNKNOWN
-    val flagUrl get() = geoInfoMap[value]?.country_flag?.toString() ?: UNKNOWN
+  val gson = Gson()
 
-    fun isIpAddress() = value.split(".").run { size == 4 && all { it.isInt() } }
+  class RemoteHost(val remoteHost: String) {
+    val city get() = geoInfoMap[remoteHost]?.takeIf { it.valid }?.city?.toString() ?: UNKNOWN
+    val state get() = geoInfoMap[remoteHost]?.takeIf { it.valid }?.state_prov?.toString() ?: UNKNOWN
+    val country get() = geoInfoMap[remoteHost]?.takeIf { it.valid }?.country_name?.toString() ?: UNKNOWN
+    val organization get() = geoInfoMap[remoteHost]?.takeIf { it.valid }?.organization?.toString() ?: UNKNOWN
+    val flagUrl get() = geoInfoMap[remoteHost]?.takeIf { it.valid }?.country_flag?.toString() ?: UNKNOWN
 
-    override fun toString() = value
+    fun isIpAddress() = remoteHost.split(".").run { size == 4 && all { it.isInt() } }
+
+    override fun toString() = remoteHost
 
     internal companion object {
       val unknown = RemoteHost(UNKNOWN)
@@ -70,7 +74,7 @@ internal object SessionActivites : KLogging() {
     var remoteHost: RemoteHost = unknown
     var principal: UserPrincipal? = null
 
-    val user by lazy { principal?.userId?.toUser(browserSession) }
+    val user by lazy { principal?.userId?.let { toUser(it, browserSession) } }
     val age get() = lastUpdate.elapsedNow()
     val requests get() = pages.get()
 
@@ -82,9 +86,11 @@ internal object SessionActivites : KLogging() {
     }
   }
 
-  class GeoInfo(private val map: Map<String, Any?>) {
+  class GeoInfo(val remoteHost: String, val json: String) {
+    val valid get() = json.isNotBlank()
 
-    constructor(json: String) : this(gson.fromJson(json, Map::class.java) as Map<String, Any?>)
+    //private val map = if (json.isNotBlank()) Json.decodeFromString<Map<String, Any?>>(json) else emptyMap()
+    private val map = if (json.isNotBlank()) gson.fromJson(json, Map::class.java) as Map<String, Any?> else emptyMap()
 
     val ip by map
     val continent_code by map
@@ -108,7 +114,40 @@ internal object SessionActivites : KLogging() {
     val organization by map
     val time_zone by map
 
-    fun summary() = listOf(city, state_prov, country_name, organization).joinToString(", ")
+    fun summary() = if (valid) listOf(city, state_prov, country_name, organization).joinToString(", ") else UNKNOWN
+
+    fun save() {
+      transaction {
+        GeoInfos
+          .upsert(conflictIndex = geoInfosUnique) { row ->
+            row[ip] = remoteHost
+            row[json] = this@GeoInfo.json
+
+            if (this@GeoInfo.valid) {
+              row[continentCode] = this@GeoInfo.continent_code.toString()
+              row[continentName] = this@GeoInfo.continent_name.toString()
+              row[countryCode2] = this@GeoInfo.country_code2.toString()
+              row[countryCode3] = this@GeoInfo.country_code3.toString()
+              row[countryName] = this@GeoInfo.country_name.toString()
+              row[countryCapital] = this@GeoInfo.country_capital.toString()
+              row[district] = this@GeoInfo.district.toString()
+              row[city] = this@GeoInfo.city.toString()
+              row[stateProv] = this@GeoInfo.state_prov.toString()
+              row[zipcode] = this@GeoInfo.zipcode.toString()
+              row[latitude] = this@GeoInfo.latitude.toString()
+              row[longitude] = this@GeoInfo.longitude.toString()
+              row[isEu] = this@GeoInfo.is_eu.toString()
+              row[callingCode] = this@GeoInfo.calling_code.toString()
+              row[countryTld] = this@GeoInfo.country_tld.toString()
+              row[countryFlag] = this@GeoInfo.country_flag.toString()
+              row[isp] = this@GeoInfo.isp.toString()
+              row[connectionType] = this@GeoInfo.connection_type.toString()
+              row[organization] = this@GeoInfo.organization.toString()
+              row[timeZone] = this@GeoInfo.time_zone.toString()
+            }
+          }
+      }
+    }
 
     override fun toString() = map.toString()
   }
@@ -116,15 +155,11 @@ internal object SessionActivites : KLogging() {
   private val delay = 1.hours
   private val period = 1.hours
   private val timeOutAge = 24.hours
-  private val sessionsMap = ConcurrentHashMap<String, Session>()
-  private val geoInfoMap = ConcurrentHashMap<String, GeoInfo>()
-  private val timer = Timer()
-  private val ignoreHosts = mutableListOf("localhost", "0.0.0.0", "127.0.0.1")
-
-  val sessionsMapSize get() = sessionsMap.size
+  val sessionsMap = ConcurrentHashMap<String, Session>()
+  val geoInfoMap = ConcurrentHashMap<String, GeoInfo>()
 
   init {
-    timer.schedule(delay.toLongMilliseconds(), period.toLongMilliseconds()) {
+    timer("stale session admin", true, delay.toLongMilliseconds(), period.toLongMilliseconds()) {
       try {
         val staleCnt =
           sessionsMap.entries
@@ -151,10 +186,30 @@ internal object SessionActivites : KLogging() {
     }
   }
 
-  fun BrowserSession.markActivity(call: ApplicationCall) {
+  private fun fetchGeoInfo(ipAddress: String) =
+    runBlocking {
+      httpClient { client ->
+        val apiKey = IPGEOLOCATION_KEY.getRequiredEnv()
+        client.get("https://api.ipgeolocation.io/ipgeo?apiKey=$apiKey&ip=$ipAddress") { response ->
+          val json = response.readText()
+          GeoInfo(ipAddress, json).apply { logger.info { "API GEO info for $ipAddress: ${summary()}" } }
+        }
+      }
+    }
+
+  fun queryGeoDbmsIdByIpAddress(ipAddress: String) =
+    GeoInfos
+      .slice(GeoInfos.id)
+      .select { GeoInfos.ip eq ipAddress }
+      .map { it[GeoInfos.id].value }
+      .firstOrNull() ?: throw InvalidConfigurationException("Missing ip address: $ipAddress")
+
+  fun BrowserSession.markActivity(source: String, call: ApplicationCall) {
 
     val principal = call.userPrincipal
     val remoteHost = RemoteHost(call.request.origin.remoteHost)
+
+    logger.debug { "Marking activity for $source $remoteHost" }
 
     // Use https://ipgeolocation.io/documentation/user-agent-api.html to parse userAgent data
     val userAgent = call.request.headers[HttpHeaders.UserAgent] ?: UNKNOWN
@@ -162,48 +217,28 @@ internal object SessionActivites : KLogging() {
     // Update session
     sessionsMap.getOrPut(id, { Session(this, userAgent) }).update(principal, remoteHost)
 
-    fun lookUpGeoInfo(ipAddress: String) =
-      runBlocking {
-        httpClient { client ->
-          val apiKey = IPGEOLOCATION_KEY.getRequiredEnv()
-          client.get("https://api.ipgeolocation.io/ipgeo?apiKey=$apiKey&ip=$ipAddress") { response ->
-            val json = response.readText()
-            json to GeoInfo(json).apply {
-              logger.info { "API GEO info for $ipAddress: ${summary()}" }
-            }
-          }
+    if (isPostgresEnabled() && IPGEOLOCATION_KEY.isDefined()) {
+      geoInfoMap.computeIfAbsent(remoteHost.remoteHost) { ipAddress ->
+        transaction {
+          GeoInfos
+            .slice(GeoInfos.json)
+            .select { GeoInfos.ip eq ipAddress }
+            .map { GeoInfo(ipAddress, it[0] as String) }
+            .firstOrNull()
+            ?.also { logger.debug { "Postgres GEO info for $ipAddress: ${it.summary()}" } }
+            ?: try {
+              fetchGeoInfo(ipAddress)
+            } catch (e: Throwable) {
+              GeoInfo(ipAddress, "")
+                .also { logger.info { "Unable to determine IP geolocation data for ${it.remoteHost} (${e.message})" } }
+            }.also { it.save() }
         }
       }
-
-    if (!remoteHost.isIpAddress()) {
-      logger.debug { "Skipped looking up $remoteHost" }
-      return
-    }
-
-    try {
-      if (IPGEOLOCATION_KEY.isDefined() && remoteHost.value !in ignoreHosts && !geoInfoMap.containsKey(remoteHost.value)) {
-        redisPool?.withNonNullRedisPool { redis ->
-          geoInfoMap.computeIfAbsent(remoteHost.value) { ipAddress ->
-            val geoKey = keyOf(IPGEO_KEY, remoteHost)
-            val json = redis.get(geoKey) ?: ""
-            if (json.isNotBlank())
-              GeoInfo(json).apply { logger.info { "Redis GEO info for $remoteHost: ${summary()}" } }
-            else
-              lookUpGeoInfo(ipAddress)
-                .let {
-                  redis.set(geoKey, it.first, SetParams().ex(7.days.inSeconds.toInt()))
-                  it.second
-                  }
-            }
-        }
-      }
-    } catch (e: Throwable) {
-      logger.warn { "Unable to determine IP geolocation data for $remoteHost (${e.message})" }
-      ignoreHosts += remoteHost.value
     }
   }
 
-  fun activeSessions(duration: Duration) = sessionsMap.filter { it.value.requests > 1 && it.value.age <= duration }.size
+  fun activeSessions(duration: Duration) =
+    sessionsMap.filter { it.value.requests > 1 && it.value.age <= duration }.size
 
   fun allSessions(): List<Session> = sessionsMap.map { it.value }.toList()
 }

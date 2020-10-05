@@ -50,7 +50,7 @@ import kotlin.time.measureTimedValue
 @ReadingBatDslMarker
 class ReadingBatContent {
   // contentMap will prevent reading the same content multiple times
-  private val contentMap = ConcurrentHashMap<String, ReadingBatContent>()
+  internal val contentMap = ConcurrentHashMap<String, ReadingBatContent>()
   private val languageList by lazy { listOf(java, python, kotlin) }
   private val languageMap by lazy { languageList.map { it.languageType to it }.toMap() }
 

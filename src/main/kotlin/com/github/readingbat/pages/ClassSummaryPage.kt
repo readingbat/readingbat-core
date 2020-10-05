@@ -36,6 +36,7 @@ import com.github.readingbat.common.Constants.YES
 import com.github.readingbat.common.Endpoints.CHALLENGE_ROOT
 import com.github.readingbat.common.Endpoints.CLASS_SUMMARY_ENDPOINT
 import com.github.readingbat.common.Endpoints.TEACHER_PREFS_ENDPOINT
+import com.github.readingbat.common.Endpoints.WS_ROOT
 import com.github.readingbat.common.Endpoints.classSummaryEndpoint
 import com.github.readingbat.common.Endpoints.studentSummaryEndpoint
 import com.github.readingbat.common.FormFields.CHOICE_SOURCE_PARAM
@@ -47,7 +48,7 @@ import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.Message
 import com.github.readingbat.common.Message.Companion.EMPTY_MESSAGE
 import com.github.readingbat.common.User
-import com.github.readingbat.common.User.Companion.fetchActiveClassCode
+import com.github.readingbat.common.User.Companion.queryActiveClassCode
 import com.github.readingbat.common.isNotValidUser
 import com.github.readingbat.dsl.InvalidRequestException
 import com.github.readingbat.dsl.LanguageType
@@ -80,11 +81,10 @@ internal object ClassSummaryPage : KLogging() {
   private const val BTN_SIZE = "130%"
 
   fun PipelineCall.classSummaryPage(content: ReadingBatContent, user: User?): String {
-    val (languageName, groupName, classCode) =
-      Triple(
-        call.parameters[LANG_TYPE_QP]?.let { LanguageName(it) } ?: EMPTY_LANGUAGE,
-        call.parameters[GROUP_NAME_QP]?.let { GroupName(it) } ?: EMPTY_GROUP,
-        call.parameters[CLASS_CODE_QP]?.let { ClassCode(it) } ?: throw InvalidRequestException("Missing class code"))
+    val p = call.parameters
+    val languageName = p[LANG_TYPE_QP]?.let { LanguageName(it) } ?: EMPTY_LANGUAGE
+    val groupName = p[GROUP_NAME_QP]?.let { GroupName(it) } ?: EMPTY_GROUP
+    val classCode = p[CLASS_CODE_QP]?.let { ClassCode(it) } ?: throw InvalidRequestException("Missing class code")
     return classSummaryPage(content, user, classCode, languageName, groupName)
   }
 
@@ -108,12 +108,12 @@ internal object ClassSummaryPage : KLogging() {
     return createHTML()
       .html {
         val hasGroupName = groupName.isDefined(content, languageName)
-        val activeClassCode = fetchActiveClassCode(user)
+        val activeClassCode = queryActiveClassCode(user)
         val enrollees = classCode.fetchEnrollees()
 
         head {
           loadBootstrap()
-          headDefault(content)
+          headDefault()
         }
 
         body {
@@ -342,10 +342,14 @@ internal object ClassSummaryPage : KLogging() {
             wshost = wshost.replace(/^https:/, 'wss:');
           else
             wshost = wshost.replace(/^http:/, 'ws:');
-
-          var wsurl = wshost + '$CLASS_SUMMARY_ENDPOINT/' + ${encodeUriElems(languageName, groupName, classCode)};
+      
+          var wsurl = wshost + '$WS_ROOT$CLASS_SUMMARY_ENDPOINT/' + ${
+          encodeUriElems(languageName,
+                         groupName,
+                         classCode)
+        };
           var ws = new WebSocket(wsurl);
-
+      
           ws.onopen = function (event) {
             ws.send("$classCode"); 
           };
@@ -361,7 +365,7 @@ internal object ClassSummaryPage : KLogging() {
               answers.style.backgroundColor = obj.results[i] == '$YES' ? '$CORRECT_COLOR' 
                                                                     : (obj.results[i] == '$NO' ? '$WRONG_COLOR' 
                                                                                              : '$INCOMPLETE_COLOR');
-
+      
               document.getElementById(prefix + '$STATS').innerHTML = obj.msg;
             }
           };

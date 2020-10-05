@@ -54,7 +54,7 @@ import kotlinx.html.Entities.nbsp
 internal object PageUtils {
   private const val READING_BAT = "ReadingBat"
 
-  fun HEAD.headDefault(content: ReadingBatContent) {
+  fun HEAD.headDefault() {
     link { rel = "stylesheet"; href = CSS_ENDPOINT; type = CSS.toString() }
 
     // From: https://favicon.io/emoji-favicons/glasses/

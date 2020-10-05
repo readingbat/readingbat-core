@@ -24,14 +24,18 @@ import com.github.pambrose.common.util.Version.Companion.versionDesc
 import com.github.pambrose.common.util.getBanner
 import com.github.pambrose.common.util.isNotNull
 import com.github.pambrose.common.util.isNull
+import com.github.pambrose.common.util.randomId
 import com.github.readingbat.common.CommonUtils.maskUrl
 import com.github.readingbat.common.Constants.REDIS_IS_DOWN
 import com.github.readingbat.common.Constants.UNASSIGNED
+import com.github.readingbat.common.Constants.UNKNOWN_USER_ID
 import com.github.readingbat.common.Endpoints.STATIC_ROOT
 import com.github.readingbat.common.EnvVar.*
 import com.github.readingbat.common.Metrics
 import com.github.readingbat.common.Property.*
 import com.github.readingbat.common.ScriptPools
+import com.github.readingbat.common.User.Companion.createUnknownUser
+import com.github.readingbat.common.User.Companion.userExists
 import com.github.readingbat.dsl.*
 import com.github.readingbat.server.AdminRoutes.adminRoutes
 import com.github.readingbat.server.Installs.installs
@@ -41,10 +45,11 @@ import com.github.readingbat.server.ReadingBatServer.content
 import com.github.readingbat.server.ReadingBatServer.contentReadCount
 import com.github.readingbat.server.ReadingBatServer.logger
 import com.github.readingbat.server.ReadingBatServer.metrics
-import com.github.readingbat.server.WsEndoints.wsEndpoints
+import com.github.readingbat.server.ws.WsCommon.wsRoutes
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import io.ktor.application.*
+import io.ktor.http.cio.websocket.*
 import io.ktor.http.content.*
 import io.ktor.routing.*
 import io.ktor.server.cio.*
@@ -65,11 +70,11 @@ import kotlin.time.TimeSource
 import kotlin.time.measureTime
 import kotlin.time.seconds
 
-@Version(version = "1.4.0", date = "9/30/20")
+@Version(version = "1.5.0", date = "10/4/20")
 object ReadingBatServer : KLogging() {
   private val startTime = TimeSource.Monotonic.markNow()
+  internal val serverSessionId = randomId(10)
   internal val timeStamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("M/d/y H:m:ss"))
-  internal val upTime get() = startTime.elapsedNow()
   internal val content = AtomicReference(ReadingBatContent())
   internal val adminUsers = mutableListOf<String>()
   internal val contentReadCount = AtomicInteger(0)
@@ -90,6 +95,8 @@ object ReadingBatServer : KLogging() {
             validate()
           }))
   }
+
+  internal val upTime get() = startTime.elapsedNow()
 
   fun start(args: Array<String>) {
 
@@ -132,6 +139,8 @@ object ReadingBatServer : KLogging() {
       else
         args.toMutableList().apply { add("-config=$configFilename") }.toTypedArray()
 
+    val environment = commandLineEnvironment(newargs)
+
     // Reference these to load them
     ScriptPools.javaScriptPool
     ScriptPools.pythonScriptPool
@@ -141,10 +150,10 @@ object ReadingBatServer : KLogging() {
       try {
         RedisUtils.newJedisPool().also { logger.info { "Created Redis pool" } }
       } catch (e: JedisConnectionException) {
-        null.also { logger.error { "Failed to create Redis pool: $REDIS_IS_DOWN" } }
+        logger.error { "Failed to create Redis pool: $REDIS_IS_DOWN" }
+        null  // Return null
       }
 
-    val environment = commandLineEnvironment(newargs)
     embeddedServer(CIO, environment).start(wait = true)
   }
 }
@@ -155,8 +164,8 @@ internal fun Application.readContentDsl(fileName: String, variableName: String) 
     content.set(
       readContentDsl(FileSource(fileName = fileName), variableName)
         .apply {
-          maxHistoryLength = MAX_HISTORY_LENGTH.configProperty(this@readContentDsl, "10").toInt()
-          maxClassCount = MAX_CLASS_COUNT.configProperty(this@readContentDsl, "25").toInt()
+          maxHistoryLength = MAX_HISTORY_LENGTH.configValue(this@readContentDsl, "10").toInt()
+          maxClassCount = MAX_CLASS_COUNT.configValue(this@readContentDsl, "25").toInt()
         }.apply { clearContentMap() })
     metrics.contentLoadedCount.labels(agentLaunchId()).inc()
   }.also {
@@ -166,14 +175,16 @@ internal fun Application.readContentDsl(fileName: String, variableName: String) 
 }
 
 internal fun Application.module() {
-  adminUsers.addAll(ADMIN_USERS.configPropertyOrNull(this)?.getList() ?: emptyList())
+  adminUsers.addAll(ADMIN_USERS.configValueOrNull(this)?.getList() ?: emptyList())
 
   AGENT_ENABLED_PROPERTY.setProperty(agentEnabled.toString())
   PROXY_HOSTNAME.setPropertyFromConfig(this, "")
 
-  IS_PRODUCTION.setProperty(IS_PRODUCTION.configProperty(this, "false").toBoolean().toString())
-  POSTGRES_ENABLED.setProperty(POSTGRES_ENABLED.configProperty(this, "false").toBoolean().toString())
-  CACHE_CONTENT_IN_REDIS.setProperty(CACHE_CONTENT_IN_REDIS.configProperty(this, "false").toBoolean().toString())
+  IS_PRODUCTION.setProperty(IS_PRODUCTION.configValue(this, "false").toBoolean().toString())
+  POSTGRES_ENABLED.setProperty(POSTGRES_ENABLED.configValue(this, "false").toBoolean().toString())
+  SAVE_REQUESTS_ENABLED.setProperty(SAVE_REQUESTS_ENABLED.configValue(this, "true").toBoolean().toString())
+  MULTI_SERVER_ENABLED.setProperty(MULTI_SERVER_ENABLED.configValue(this, "false").toBoolean().toString())
+  CACHE_CONTENT_IN_REDIS.setProperty(CACHE_CONTENT_IN_REDIS.configValue(this, "false").toBoolean().toString())
 
   DSL_FILE_NAME.setPropertyFromConfig(this, "src/Content.kt")
   DSL_VARIABLE_NAME.setPropertyFromConfig(this, "content")
@@ -202,13 +213,18 @@ internal fun Application.module() {
   REDIS_MIN_IDLE_SIZE.setPropertyFromConfig(this, "1")
 
   KTOR_PORT.setPropertyFromConfig(this, "0")
-  KTOR_WATCH.setProperty(KTOR_WATCH.configPropertyOrNull(this)?.getList()?.toString() ?: UNASSIGNED)
+  KTOR_WATCH.setProperty(KTOR_WATCH.configValueOrNull(this)?.getList()?.toString() ?: UNASSIGNED)
 
   SENDGRID_PREFIX_PROPERTY.setProperty(
-    SENDGRID_PREFIX.getEnv(SENDGRID_PREFIX_PROPERTY.configProperty(this, "https://www.readingbat.com")))
+    SENDGRID_PREFIX.getEnv(SENDGRID_PREFIX_PROPERTY.configValue(this, "https://www.readingbat.com")))
 
-  if (isPostgresEnabled())
+  if (isPostgresEnabled()) {
     ReadingBatServer.postgres
+
+    // Create unknown user if it does not already exist
+    if (!userExists(UNKNOWN_USER_ID))
+      createUnknownUser(UNKNOWN_USER_ID)
+  }
 
   if (isAgentEnabled()) {
     if (PROXY_HOSTNAME.getRequiredProperty().isNotEmpty()) {
@@ -230,7 +246,7 @@ internal fun Application.module() {
   val job = launch { readContentDsl(fileName, variableName) }
 
   runBlocking {
-    val maxDelay = STARTUP_DELAY_SECS.configProperty(this@module, "30").toInt().seconds
+    val maxDelay = STARTUP_DELAY_SECS.configValue(this@module, "30").toInt().seconds
     logger.info { "Delaying start-up by max of $maxDelay" }
     measureTime {
       withTimeoutOrNull(maxDelay) {
@@ -245,6 +261,7 @@ internal fun Application.module() {
            redirectHostname,
            forwardedHeaderSupportEnabled,
            xforwardedHeaderSupportEnabled)
+
   intercepts()
 
   routing {
@@ -252,23 +269,25 @@ internal fun Application.module() {
     locations(metrics) { content.get() }
     userRoutes(metrics) { content.get() }
     sysAdminRoutes(metrics, { content.get() }, { readContentDsl(fileName, variableName) })
-    wsEndpoints(metrics) { content.get() }
+    wsRoutes(metrics) { content.get() }
     static(STATIC_ROOT) { resources("static") }
   }
 }
 
+internal data class PublishedData(val topic: String, val message: String)
+
 private val Application.redirectHostname
   get() =
-    REDIRECT_HOSTNAME.getEnv(REDIRECT_HOSTNAME_PROPERTY.configProperty(this, default = ""))
+    REDIRECT_HOSTNAME.getEnv(REDIRECT_HOSTNAME_PROPERTY.configValue(this, default = ""))
 
 private val Application.agentEnabled
   get() =
-    AGENT_ENABLED.getEnv(AGENT_ENABLED_PROPERTY.configProperty(this, default = "false").toBoolean())
+    AGENT_ENABLED.getEnv(AGENT_ENABLED_PROPERTY.configValue(this, default = "false").toBoolean())
 
 private val Application.forwardedHeaderSupportEnabled
   get() =
-    FORWARDED_ENABLED.getEnv(FORWARDED_ENABLED_PROPERTY.configProperty(this, default = "false").toBoolean())
+    FORWARDED_ENABLED.getEnv(FORWARDED_ENABLED_PROPERTY.configValue(this, default = "false").toBoolean())
 
 private val Application.xforwardedHeaderSupportEnabled
   get() =
-    XFORWARDED_ENABLED.getEnv(XFORWARDED_ENABLED_PROPERTY.configProperty(this, default = "false").toBoolean())
+    XFORWARDED_ENABLED.getEnv(XFORWARDED_ENABLED_PROPERTY.configValue(this, default = "false").toBoolean())

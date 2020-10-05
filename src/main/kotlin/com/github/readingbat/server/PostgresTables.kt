@@ -36,6 +36,8 @@ internal val userAnswerHistoryIndex =
 
 internal val passwordResetsIndex = Index(listOf(PasswordResets.userRef), true, "password_resets_unique")
 
+internal val geoInfosUnique = Index(listOf(GeoInfos.id), true, "geo_info_unique")
+
 internal object BrowserSessions : LongIdTable("browser_sessions") {
   val created = datetime("created")
   val session_id = text("session_id")
@@ -126,4 +128,42 @@ object PasswordResets : LongIdTable("password_resets") {
   val userRef = long("user_ref").references(Users.id)
   val resetId = text("reset_id")
   val email = text("email")
+}
+
+object GeoInfos : LongIdTable("geo_info") {
+  val created = datetime("created")
+  val ip = text("ip")
+  val json = text("json")
+  val continentCode = text("continent_code")
+  val continentName = text("continent_name")
+  val countryCode2 = text("country_code2")
+  val countryCode3 = text("country_code3")
+  val countryName = text("country_name")
+  val countryCapital = text("country_capital")
+  val district = text("district")
+  val city = text("city")
+  val stateProv = text("state_prov")
+  val zipcode = text("zipcode")
+  val latitude = text("latitude")
+  val longitude = text("longitude")
+  val isEu = text("is_eu")
+  val callingCode = text("calling_code")
+  val countryTld = text("country_tld")
+  val countryFlag = text("country_flag")
+  val isp = text("isp")
+  val connectionType = text("connection_type")
+  val organization = text("organization")
+  val timeZone = text("time_zone")
+}
+
+object ServerRequests : LongIdTable("server_requests") {
+  val created = datetime("created")
+  val requestId = text("request_id")
+  val sessionRef = long("session_ref").references(BrowserSessions.id)
+  val userRef = long("user_ref").references(Users.id)
+  val geoRef = long("geo_ref").references(GeoInfos.id)
+  val verb = text("verb")
+  val path = text("path")
+  val queryString = text("query_string")
+  val duration = long("duration")
 }

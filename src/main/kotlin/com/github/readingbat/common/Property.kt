@@ -67,6 +67,8 @@ enum class Property(val propertyValue: String,
   // These are assigned in ReadingBatServer
   IS_PRODUCTION("$READINGBAT.$SITE.production"),
   POSTGRES_ENABLED("$READINGBAT.$SITE.postgresEnabled"),
+  SAVE_REQUESTS_ENABLED("$READINGBAT.$SITE.saveRequestsEnabled"),
+  MULTI_SERVER_ENABLED("$READINGBAT.$SITE.multiServerEnabled"),
   CACHE_CONTENT_IN_REDIS("$READINGBAT.$SITE.cacheContentInRedis"),
   AGENT_ENABLED_PROPERTY("$AGENT.enabled"),
 
@@ -101,10 +103,10 @@ enum class Property(val propertyValue: String,
       default
     }
 
-  fun configProperty(application: Application, default: String = "", warn: Boolean = false) =
+  fun configValue(application: Application, default: String = "", warn: Boolean = false) =
     application.configProperty(propertyValue, default, warn)
 
-  fun configPropertyOrNull(application: Application) =
+  fun configValueOrNull(application: Application) =
     application.environment.config.propertyOrNull(propertyValue)
 
   fun getProperty(default: String) = System.getProperty(propertyValue) ?: default
@@ -117,13 +119,13 @@ enum class Property(val propertyValue: String,
 
   fun getRequiredProperty() = getPropertyOrNull() ?: throw InvalidConfigurationException("Missing $propertyValue value")
 
-  fun setPropertyFromConfig(application: Application, default: String) {
-    setProperty(configProperty(application, default))
-  }
-
   fun setProperty(value: String) {
     System.setProperty(propertyValue, value)
     logger.info { "$propertyValue: ${maskFunc()}" }
+  }
+
+  fun setPropertyFromConfig(application: Application, default: String) {
+    setProperty(configValue(application, default))
   }
 
   fun isDefined() = getPropertyOrNull().isNotNull()

@@ -49,6 +49,7 @@ import com.github.readingbat.common.Endpoints.CHALLENGE_ROOT
 import com.github.readingbat.common.Endpoints.CLEAR_CHALLENGE_ANSWERS_ENDPOINT
 import com.github.readingbat.common.Endpoints.PLAYGROUND_ROOT
 import com.github.readingbat.common.Endpoints.STATIC_ROOT
+import com.github.readingbat.common.Endpoints.WS_ROOT
 import com.github.readingbat.common.Endpoints.classSummaryEndpoint
 import com.github.readingbat.common.FormFields.CHALLENGE_ANSWERS_PARAM
 import com.github.readingbat.common.FormFields.CHALLENGE_NAME_PARAM
@@ -71,8 +72,7 @@ import com.github.readingbat.common.StaticFileNames.DISLIKE_CLEAR_FILE
 import com.github.readingbat.common.StaticFileNames.DISLIKE_COLOR_FILE
 import com.github.readingbat.common.StaticFileNames.LIKE_CLEAR_FILE
 import com.github.readingbat.common.StaticFileNames.LIKE_COLOR_FILE
-import com.github.readingbat.common.User.Companion.fetchActiveClassCode
-import com.github.readingbat.common.User.Companion.gson
+import com.github.readingbat.common.User.Companion.queryActiveClassCode
 import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.isPostgresEnabled
@@ -97,6 +97,8 @@ import kotlinx.html.*
 import kotlinx.html.Entities.nbsp
 import kotlinx.html.ScriptType.textJavaScript
 import kotlinx.html.stream.createHTML
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
 import mu.KLogging
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.select
@@ -124,7 +126,7 @@ internal object ChallengePage : KLogging() {
         val challengeName = challenge.challengeName
         val funcInfo = challenge.functionInfo(content)
         val loginPath = pathOf(CHALLENGE_ROOT, languageName, groupName, challengeName)
-        val activeClassCode = fetchActiveClassCode(user)
+        val activeClassCode = queryActiveClassCode(user)
         val enrollees = activeClassCode.fetchEnrollees()
         val msg = Message(queryParam(MSG))
 
@@ -138,7 +140,7 @@ internal object ChallengePage : KLogging() {
           script(type = textJavaScript) { likeDislikeScript(languageName, groupName, challengeName) }
 
           removePrismShadow()
-          headDefault(content)
+          headDefault()
         }
 
         body {
@@ -285,11 +287,8 @@ internal object ChallengePage : KLogging() {
       }
 
       this@displayQuestions.processAnswers(funcInfo, challenge)
-
       this@displayQuestions.likeDislike(user, browserSession, challenge)
-
       this@displayQuestions.otherLinks(challenge)
-
       this@displayQuestions.clearChallengeAnswerHistoryOption(user, browserSession, challenge)
     }
 
@@ -302,9 +301,8 @@ internal object ChallengePage : KLogging() {
             wshost = wshost.replace(/^https:/, 'wss:');
           else
             wshost = wshost.replace(/^http:/, 'ws:');
-
-          var wsurl = wshost + '$CHALLENGE_ENDPOINT/'+encodeURIComponent('$classCode')+'/'+encodeURIComponent('$challengeMd5');
-
+      
+          var wsurl = wshost + '$WS_ROOT$CHALLENGE_ENDPOINT/'+encodeURIComponent('$classCode')+'/'+encodeURIComponent('$challengeMd5');
           var ws = new WebSocket(wsurl);
           
           ws.onopen = function (event) {
@@ -313,23 +311,23 @@ internal object ChallengePage : KLogging() {
           
           ws.onmessage = function (event) {
             var obj = JSON.parse(event.data);
-
+      
             if (obj.hasOwnProperty("type") && obj.type == "$PING_CODE") {
               document.getElementById('$pingMsg').innerHTML = obj.msg;
             }
             else {
               var name = document.getElementById(obj.userId + '-$nameTd');
               name.style.backgroundColor = obj.complete ? '$CORRECT_COLOR' : '$INCOMPLETE_COLOR';
-  
+      
               document.getElementById(obj.userId + '-$numCorrectSpan').innerHTML = obj.numCorrect;
-  
+      
               var prefix = obj.userId + '-' + obj.history.invocation;
               
               var answers = document.getElementById(prefix + '-$answersTd')
               answers.style.backgroundColor = obj.history.correct ? '$CORRECT_COLOR' 
                                                                   : (obj.history.answers.length > 0 ? '$WRONG_COLOR' 
                                                                                                     : '$INCOMPLETE_COLOR');
-  
+      
               document.getElementById(prefix + '-$answersSpan').innerHTML = obj.history.answers;
             }
           };
@@ -631,18 +629,17 @@ internal object ChallengePage : KLogging() {
             .select { (UserChallengeInfo.userRef eq user.userDbmsId) and (UserChallengeInfo.md5 eq challenge.md5()) }
             .map { it[0] as String }
             .firstOrNull()
-            ?.let { gson.fromJson(it, Map::class.java) as Map<String, String> }
+            ?.let { Json.decodeFromString<Map<String, String>>(it) }
             ?: emptyMap
         }
       browserSession.isNotNull() ->
         transaction {
-          logger.info { "Selecting from ${browserSession.sessionDbmsId()} and ${challenge.md5()}" }
           SessionChallengeInfo
             .slice(SessionChallengeInfo.answersJson)
             .select { (SessionChallengeInfo.sessionRef eq browserSession.sessionDbmsId()) and (SessionChallengeInfo.md5 eq challenge.md5()) }
             .map { it[0] as String }
             .firstOrNull()
-            ?.let { gson.fromJson(it, Map::class.java) as Map<String, String> }
+            ?.let { Json.decodeFromString<Map<String, String>>(it) }
             ?: emptyMap
         }
       else -> emptyMap

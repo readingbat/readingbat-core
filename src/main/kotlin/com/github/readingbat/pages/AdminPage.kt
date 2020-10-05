@@ -52,7 +52,7 @@ internal object AdminPage {
                                  msg: Message = EMPTY_MESSAGE) =
     createHTML()
       .html {
-        head { headDefault(content) }
+        head { headDefault() }
 
         body {
           val returnPath = queryParam(RETURN_PARAM, "/")

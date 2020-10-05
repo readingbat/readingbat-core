@@ -35,13 +35,14 @@ import com.github.readingbat.common.Constants.YES
 import com.github.readingbat.common.Endpoints.CHALLENGE_ROOT
 import com.github.readingbat.common.Endpoints.STUDENT_SUMMARY_ENDPOINT
 import com.github.readingbat.common.Endpoints.TEACHER_PREFS_ENDPOINT
+import com.github.readingbat.common.Endpoints.WS_ROOT
 import com.github.readingbat.common.Endpoints.classSummaryEndpoint
 import com.github.readingbat.common.FormFields.PREFS_ACTION_PARAM
 import com.github.readingbat.common.FormFields.REMOVE_FROM_CLASS
 import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.FormFields.USER_ID_PARAM
 import com.github.readingbat.common.User
-import com.github.readingbat.common.User.Companion.fetchActiveClassCode
+import com.github.readingbat.common.User.Companion.queryActiveClassCode
 import com.github.readingbat.common.User.Companion.toUser
 import com.github.readingbat.common.isNotValidUser
 import com.github.readingbat.dsl.InvalidRequestException
@@ -67,13 +68,11 @@ import mu.KLogging
 internal object StudentSummaryPage : KLogging() {
 
   fun PipelineCall.studentSummaryPage(content: ReadingBatContent, user: User?): String {
-
-    val (languageName, student, classCode) =
-      Triple(
-        call.parameters[LANG_TYPE_QP]?.let { LanguageName(it) } ?: throw InvalidRequestException("Missing language"),
-        call.parameters[USER_ID_QP]?.toUser(null) ?: throw InvalidRequestException("Missing user id"),
-        call.parameters[CLASS_CODE_QP]?.let { ClassCode(it) } ?: throw InvalidRequestException("Missing class code"))
-    val activeClassCode = fetchActiveClassCode(user)
+    val p = call.parameters
+    val languageName = p[LANG_TYPE_QP]?.let { LanguageName(it) } ?: throw InvalidRequestException("Missing language")
+    val student = p[USER_ID_QP]?.let { toUser(it) } ?: throw InvalidRequestException("Missing user id")
+    val classCode = p[CLASS_CODE_QP]?.let { ClassCode(it) } ?: throw InvalidRequestException("Missing class code")
+    val activeClassCode = queryActiveClassCode(user)
 
     when {
       classCode.isNotValid() -> throw InvalidRequestException("Invalid class code: $classCode")
@@ -84,6 +83,7 @@ internal object StudentSummaryPage : KLogging() {
         throw InvalidRequestException("User id ${user.userId} does not match class code's teacher Id $teacherId")
       }
       else -> {
+        // Do nothing
       }
     }
 
@@ -91,7 +91,7 @@ internal object StudentSummaryPage : KLogging() {
       .html {
         val studentName = student.fullName.value
 
-        head { headDefault(content) }
+        head { headDefault() }
 
         body {
           val returnPath = queryParam(RETURN_PARAM, "/")
@@ -212,14 +212,14 @@ internal object StudentSummaryPage : KLogging() {
             wshost = wshost.replace(/^https:/, 'wss:');
           else
             wshost = wshost.replace(/^http:/, 'ws:');
-
-          var wsurl = wshost + '$STUDENT_SUMMARY_ENDPOINT/' + ${
+      
+          var wsurl = wshost + '$WS_ROOT$STUDENT_SUMMARY_ENDPOINT/' + ${
           encodeUriElems(languageName,
                          student.userId,
                          classCode)
         };
           var ws = new WebSocket(wsurl);
-
+      
           ws.onopen = function (event) {
             ws.send("$classCode"); 
           };
@@ -235,7 +235,7 @@ internal object StudentSummaryPage : KLogging() {
               answers.style.backgroundColor = obj.results[i] == '$YES' ? '$CORRECT_COLOR' 
                                                                     : (obj.results[i] == '$NO' ? '$WRONG_COLOR' 
                                                                                              : '$INCOMPLETE_COLOR');
-
+      
               document.getElementById(prefix + '$STATS').innerHTML = obj.msg;
             }
           };

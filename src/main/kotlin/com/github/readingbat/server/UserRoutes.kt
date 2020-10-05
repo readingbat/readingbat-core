@@ -17,7 +17,6 @@
 
 package com.github.readingbat.server
 
-import com.github.pambrose.common.redis.RedisUtils.withSuspendingRedisPool
 import com.github.pambrose.common.response.redirectTo
 import com.github.pambrose.common.response.respondWith
 import com.github.readingbat.common.CommonUtils.pathOf
@@ -30,6 +29,7 @@ import com.github.readingbat.common.Endpoints.CHECK_ANSWERS_ENDPOINT
 import com.github.readingbat.common.Endpoints.CLASS_SUMMARY_ENDPOINT
 import com.github.readingbat.common.Endpoints.CLEAR_CHALLENGE_ANSWERS_ENDPOINT
 import com.github.readingbat.common.Endpoints.CLEAR_GROUP_ANSWERS_ENDPOINT
+import com.github.readingbat.common.Endpoints.CLOCK_ENDPOINT
 import com.github.readingbat.common.Endpoints.CONFIG_ENDPOINT
 import com.github.readingbat.common.Endpoints.CREATE_ACCOUNT_ENDPOINT
 import com.github.readingbat.common.Endpoints.CSS_ENDPOINT
@@ -61,7 +61,7 @@ import com.github.readingbat.pages.AboutPage.aboutPage
 import com.github.readingbat.pages.AdminPage.adminDataPage
 import com.github.readingbat.pages.AdminPrefsPage.adminPrefsPage
 import com.github.readingbat.pages.ClassSummaryPage.classSummaryPage
-import com.github.readingbat.pages.ConfigPage.configPage
+import com.github.readingbat.pages.ClockPage.clockPage
 import com.github.readingbat.pages.CreateAccountPage.createAccountPage
 import com.github.readingbat.pages.HelpPage.helpPage
 import com.github.readingbat.pages.PasswordResetPage.passwordResetPage
@@ -69,6 +69,7 @@ import com.github.readingbat.pages.PrivacyPage.privacyPage
 import com.github.readingbat.pages.SessionsPage.sessionsPage
 import com.github.readingbat.pages.StudentSummaryPage.studentSummaryPage
 import com.github.readingbat.pages.SystemAdminPage.systemAdminPage
+import com.github.readingbat.pages.SystemConfigurationPage.systemConfigurationPage
 import com.github.readingbat.pages.TeacherPrefsPage.teacherPrefsPage
 import com.github.readingbat.pages.UserInfoPage.userInfoPage
 import com.github.readingbat.pages.UserPrefsPage.userPrefsPage
@@ -84,7 +85,6 @@ import com.github.readingbat.posts.TeacherPrefsPost.enableStudentMode
 import com.github.readingbat.posts.TeacherPrefsPost.enableTeacherMode
 import com.github.readingbat.posts.TeacherPrefsPost.teacherPrefs
 import com.github.readingbat.posts.UserPrefsPost.userPrefs
-import com.github.readingbat.server.ReadingBatServer.redisPool
 import com.github.readingbat.server.ResourceContent.getResourceAsText
 import com.github.readingbat.server.ServerUtils.authenticateAdminUser
 import com.github.readingbat.server.ServerUtils.defaultLanguageTab
@@ -101,6 +101,28 @@ import io.ktor.http.*
 import io.ktor.http.ContentType.Text.CSS
 import io.ktor.routing.*
 import io.ktor.sessions.*
+import kotlinx.coroutines.withTimeout
+import kotlin.time.Duration
+
+fun Route.routeTimeout(time: Duration, callback: Route.() -> Unit): Route {
+  // With createChild, we create a child node for this received Route
+  val routeWithTimeout = this.createChild(object : RouteSelector(1.0) {
+    override fun evaluate(context: RoutingResolveContext, segmentIndex: Int): RouteSelectorEvaluation =
+      RouteSelectorEvaluation.Constant
+  })
+
+  // Intercepts calls from this route at the features step
+  routeWithTimeout.intercept(ApplicationCallPipeline.Features) {
+    withTimeout(time.toLongMilliseconds()) {
+      proceed()
+    }
+  }
+
+  // Configure this route with the block provided by the user
+  callback(routeWithTimeout)
+
+  return routeWithTimeout
+}
 
 internal fun Routing.userRoutes(metrics: Metrics, contentSrc: () -> ReadingBatContent) {
 
@@ -122,7 +144,7 @@ internal fun Routing.userRoutes(metrics: Metrics, contentSrc: () -> ReadingBatCo
 
   get(CONFIG_ENDPOINT) {
     respondWith {
-      authenticateAdminUser(fetchUser()) { configPage(contentSrc()) }
+      authenticateAdminUser(fetchUser()) { systemConfigurationPage(contentSrc()) }
     }
   }
 
@@ -141,35 +163,27 @@ internal fun Routing.userRoutes(metrics: Metrics, contentSrc: () -> ReadingBatCo
   }
 
   get(HELP_ENDPOINT) {
-    respondWith {
-      helpPage(contentSrc(), fetchUser())
-    }
+    respondWith { helpPage(contentSrc(), fetchUser()) }
+  }
+
+  get(CLOCK_ENDPOINT) {
+    respondWith { clockPage() }
   }
 
   post(CHECK_ANSWERS_ENDPOINT) {
-    metrics.measureEndpointRequest(CHECK_ANSWERS_ENDPOINT) {
-      redisPool?.withSuspendingRedisPool { redis ->
-        checkAnswers(contentSrc(), fetchUser(), redis)
-      } ?: checkAnswers(contentSrc(), fetchUser(), null)
-    }
+    metrics.measureEndpointRequest(CHECK_ANSWERS_ENDPOINT) { checkAnswers(contentSrc(), fetchUser()) }
   }
 
   post(LIKE_DISLIKE_ENDPOINT) {
-    metrics.measureEndpointRequest(LIKE_DISLIKE_ENDPOINT) {
-      likeDislike(contentSrc(), fetchUser())
-    }
+    metrics.measureEndpointRequest(LIKE_DISLIKE_ENDPOINT) { likeDislike(contentSrc(), fetchUser()) }
   }
 
   post(CLEAR_GROUP_ANSWERS_ENDPOINT) {
-    respondWithSuspendingRedisCheck { redis ->
-      clearGroupAnswers(contentSrc(), fetchUser(), redis)
-    }
+    respondWithSuspendingRedirect { clearGroupAnswers(contentSrc(), fetchUser()) }
   }
 
   post(CLEAR_CHALLENGE_ANSWERS_ENDPOINT) {
-    respondWithSuspendingRedisCheck { redis ->
-      clearChallengeAnswers(contentSrc(), fetchUser(), redis)
-    }
+    respondWithSuspendingRedirect { clearChallengeAnswers(contentSrc(), fetchUser()) }
   }
 
   get(CREATE_ACCOUNT_ENDPOINT, metrics) {
@@ -181,9 +195,7 @@ internal fun Routing.userRoutes(metrics: Metrics, contentSrc: () -> ReadingBatCo
   }
 
   get(ADMIN_PREFS_ENDPOINT) {
-    respondWith {
-      fetchUser().let { authenticateAdminUser(it) { adminPrefsPage(contentSrc(), it) } }
-    }
+    respondWith { fetchUser().let { authenticateAdminUser(it) { adminPrefsPage(contentSrc(), it) } } }
   }
 
   get(USER_PREFS_ENDPOINT, metrics) {
@@ -203,9 +215,7 @@ internal fun Routing.userRoutes(metrics: Metrics, contentSrc: () -> ReadingBatCo
   }
 
   get(SYSTEM_ADMIN_ENDPOINT, metrics) {
-    respondWith {
-      fetchUser().let { authenticateAdminUser(it) { systemAdminPage(contentSrc(), it) } }
-    }
+    respondWith { fetchUser().let { authenticateAdminUser(it) { systemAdminPage(contentSrc(), it) } } }
   }
 
   get(CLASS_SUMMARY_ENDPOINT, metrics) {

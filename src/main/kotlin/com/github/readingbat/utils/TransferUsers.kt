@@ -17,49 +17,11 @@
 
 package com.github.readingbat.utils
 
-import com.github.pambrose.common.redis.RedisUtils.withNonNullRedis
-import com.github.pambrose.common.util.isNotNull
-import com.github.readingbat.common.BrowserSession
-import com.github.readingbat.common.ClassCode
-import com.github.readingbat.common.CommonUtils.keyOf
-import com.github.readingbat.common.KeyConstants.ANSWER_HISTORY_KEY
-import com.github.readingbat.common.KeyConstants.AUTH_KEY
-import com.github.readingbat.common.KeyConstants.CHALLENGE_ANSWERS_KEY
-import com.github.readingbat.common.KeyConstants.CORRECT_ANSWERS_KEY
-import com.github.readingbat.common.KeyConstants.KEY_SEP
-import com.github.readingbat.common.KeyConstants.LIKE_DISLIKE_KEY
-import com.github.readingbat.common.KeyConstants.NO_AUTH_KEY
-import com.github.readingbat.common.KeyConstants.USER_INFO_BROWSER_KEY
-import com.github.readingbat.common.KeyConstants.USER_INFO_KEY
-import com.github.readingbat.common.RedisUtils.scanKeys
-import com.github.readingbat.common.User.Companion.EMAIL_FIELD
-import com.github.readingbat.common.User.Companion.NAME_FIELD
-import com.github.readingbat.common.User.Companion.fetchActiveClassCode
-import com.github.readingbat.common.User.Companion.fetchPreviousTeacherClassCode
-import com.github.readingbat.common.User.Companion.gson
-import com.github.readingbat.common.User.Companion.toUser
-import com.github.readingbat.dsl.InvalidConfigurationException
-import com.github.readingbat.dsl.LanguageType.Companion.defaultLanguageType
-import com.github.readingbat.posts.ChallengeHistory
-import com.github.readingbat.server.*
-import com.zaxxer.hikari.HikariConfig
-import com.zaxxer.hikari.HikariDataSource
-import mu.KLogging
-import org.jetbrains.exposed.sql.Column
-import org.jetbrains.exposed.sql.Database
-import org.jetbrains.exposed.sql.Index
-import org.jetbrains.exposed.sql.Table
-import org.jetbrains.exposed.sql.Transaction
-import org.jetbrains.exposed.sql.addLogger
-import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.insertAndGetId
-import org.jetbrains.exposed.sql.statements.InsertStatement
-import org.jetbrains.exposed.sql.transactions.TransactionManager
-import org.jetbrains.exposed.sql.transactions.transaction
-import org.joda.time.DateTime
-import org.joda.time.DateTimeZone.UTC
-
+/*
 internal object TransferUsers : KLogging() {
+
+  internal const val EMAIL_FIELD = "email"
+  internal const val NAME_FIELD = "name"
 
   internal fun hikari() =
     HikariDataSource(
@@ -189,7 +151,7 @@ internal object TransferUsers : KLogging() {
           .filter { (redis.hget(it, NAME_FIELD) ?: "").isNotBlank() }
           .forEach { ukey ->
             val userId = ukey.split(KEY_SEP)[1]
-            val user = userId.toUser(null)
+            val user = toUser(userId)
             val id =
               Users
                 .insertAndGetId { row ->
@@ -210,15 +172,15 @@ internal object TransferUsers : KLogging() {
           .filter { (redis.hget(it, NAME_FIELD) ?: "").isNotBlank() }
           .onEach { ukey ->
             val userId = ukey.split(KEY_SEP)[1]
-            val user = userId.toUser(null)
+            val user = toUser(userId)
             logger.info { "Fetched user ${userMap[userId]} ${user.email} for $userId" }
 
-            redis.scanKeys(user.userClassesKey)
+            redis.scanKeys(""/*user.userClassesKey*/)
               .forEach { key ->
                 require(userId == key.split(KEY_SEP)[1])
                 //println("ClassCodes: $key ${redis.smembers(user.userClassesKey)}")
 
-                redis.smembers(user.userClassesKey)
+                redis.smembers(""/*user.userClassesKey*/)
                   .map { ClassCode(it) }
                   .forEach { classCode ->
                     logger.info { "Inserting Classes ${userMap[userId]} ${user.email} ${classCode.value}" }
@@ -244,11 +206,11 @@ internal object TransferUsers : KLogging() {
                   }
               }
 
-            redis.scanKeys(user.userInfoBrowserQueryKey)
+            redis.scanKeys(""/*user.userInfoBrowserQueryKey*/)
               .map { it.split(KEY_SEP)[2] }
               .filter { it != "unassigned" }
               .forEach { sessionId ->
-                val browserUser = userId.toUser(BrowserSession(sessionId))
+                val browserUser = toUser(userId, BrowserSession(sessionId))
                 val activeClassCode = fetchActiveClassCode(browserUser)
                 val previousClassCode = fetchPreviousTeacherClassCode(browserUser)
                 //println("$key $browser_sessions_id ${redis.hgetAll(user2.browserSpecificUserInfoKey)} $activeClassCode $previousClassCode")
@@ -335,45 +297,7 @@ internal object TransferUsers : KLogging() {
     }
   }
 }
-
-inline fun <T : Table> T.upsert(conflictColumn: Column<*>? = null,
-                                conflictIndex: Index? = null,
-                                body: T.(UpsertStatement<Number>) -> Unit) =
-  UpsertStatement<Number>(this, conflictColumn, conflictIndex)
-    .apply {
-      body(this)
-      execute(TransactionManager.current())
-    }
-
-class UpsertStatement<Key : Any>(table: Table,
-                                 conflictColumn: Column<*>? = null,
-                                 conflictIndex: Index? = null) : InsertStatement<Key>(table, false) {
-  private val indexName: String
-  private val indexColumns: List<Column<*>>
-
-  init {
-    when {
-      conflictIndex.isNotNull() -> {
-        indexName = conflictIndex.indexName
-        indexColumns = conflictIndex.columns
-      }
-      conflictColumn.isNotNull() -> {
-        indexName = conflictColumn.name
-        indexColumns = listOf(conflictColumn)
-      }
-      else -> throw IllegalArgumentException()
-    }
-  }
-
-  override fun prepareSQL(transaction: Transaction) =
-    buildString {
-      append(super.prepareSQL(transaction))
-      append(" ON CONFLICT ON CONSTRAINT $indexName DO UPDATE SET ")
-      values.keys.filter { it !in indexColumns }
-        .joinTo(this) { "${transaction.identity(it)}=EXCLUDED.${transaction.identity(it)}" }
-    }
-}
-
+*/
 
 /*
 fun <T : Table> T.insertOrUpdate(constrainName: String,

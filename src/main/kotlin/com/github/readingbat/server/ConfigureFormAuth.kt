@@ -27,7 +27,7 @@ import com.github.readingbat.common.AuthName
 import com.github.readingbat.common.Constants.DBMS_DOWN
 import com.github.readingbat.common.Constants.UNKNOWN
 import com.github.readingbat.common.FormFields
-import com.github.readingbat.common.User.Companion.lookupUserByEmail
+import com.github.readingbat.common.User.Companion.queryUserByEmail
 import com.github.readingbat.common.UserPrincipal
 import com.github.readingbat.dsl.RedisUnavailableException
 import com.github.readingbat.server.ReadingBatServer.redisPool
@@ -69,14 +69,16 @@ internal object ConfigureFormAuth : KLogging() {
       }
 
       validate { cred: UserPasswordCredential ->
-        redisPool?.withRedisPool { redis ->
+        // Do not move the elvis check to the end of the lambda because it can return a null value
+        val pool = redisPool ?: throw RedisUnavailableException("redisPool validate()")
+        pool.withRedisPool { redis ->
           if (redis.isNull()) {
             logger.error { DBMS_DOWN }
             throw RedisUnavailableException("redis validate()")
           }
           else {
             var principal: UserPrincipal? = null
-            val user = lookupUserByEmail(Email(cred.name))
+            val user = queryUserByEmail(Email(cred.name))
             if (user.isNotNull()) {
               val salt = user.salt
               val digest = user.digest
@@ -93,7 +95,7 @@ internal object ConfigureFormAuth : KLogging() {
 
             principal
           }
-        } ?: throw RedisUnavailableException("redisPool validate()")
+        }
       }
     }
 
