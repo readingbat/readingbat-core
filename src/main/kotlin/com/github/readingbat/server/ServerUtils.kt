@@ -168,19 +168,21 @@ internal object ServerUtils : KLogging() {
   fun Int.rows(cols: Int) = if (this % cols == 0) this / cols else (this / cols) + 1
 }
 
-fun CustomDateTimeConstant(functionName: String) = CustomConstant<DateTime?>(functionName, DateColumnType(true))
+fun CustomDateTimeConstant(functionName: String) = CustomExpr<DateTime?>(functionName, DateColumnType(true))
 
-open class CustomConstant<T>(val functionName: String, _columnType: IColumnType) : Function<T>(_columnType) {
+fun dateTimeExpr(str: String): CustomExpr<DateTime> = CustomExpr(str, DateColumnType(true))
+
+open class CustomExpr<T>(val str: String, _columnType: IColumnType) : Function<T>(_columnType) {
   override fun toQueryBuilder(queryBuilder: QueryBuilder): Unit =
     queryBuilder {
-      append(functionName)
+      append(str)
     }
 }
 
 operator fun ResultRow.get(index: Int) = fieldIndex.filter { it.value == index }.map { this[it.key] }.firstOrNull()
   ?: throw IllegalArgumentException("No value at index $index")
 
-fun ResultRow.toRowString() = fieldIndex.values.map { this[it].toString() }.joinToString(" - ")
+fun ResultRow.toRowString() = fieldIndex.values.map { this[it].toString() }.filter { it.length > 0 }.joinToString(" - ")
 
 object KotlinLoggingSqlLogger : SqlLogger {
   override

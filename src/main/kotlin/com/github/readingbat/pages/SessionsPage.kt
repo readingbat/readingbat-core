@@ -30,15 +30,33 @@ import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyTitle
 import com.github.readingbat.pages.PageUtils.headDefault
 import com.github.readingbat.pages.PageUtils.loadStatusPageDisplay
+import com.github.readingbat.server.BrowserSessions
+import com.github.readingbat.server.Email
+import com.github.readingbat.server.FullName
+import com.github.readingbat.server.FullName.Companion.UNKNOWN_FULLNAME
+import com.github.readingbat.server.GeoInfos
 import com.github.readingbat.server.PipelineCall
+import com.github.readingbat.server.ServerRequests
 import com.github.readingbat.server.ServerUtils.queryParam
+import com.github.readingbat.server.Users
+import com.github.readingbat.server.dateTimeExpr
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
+import mu.KLogging
+import org.jetbrains.exposed.sql.Count
+import org.jetbrains.exposed.sql.Max
+import org.jetbrains.exposed.sql.SortOrder
+import org.jetbrains.exposed.sql.jodatime.DateColumnType
+import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.joda.time.DateTime
+import org.joda.time.DateTimeZone.UTC
 import kotlin.time.hours
+import kotlin.time.measureTimedValue
+import kotlin.time.milliseconds
 import kotlin.time.minutes
 
-internal object SessionsPage {
+internal object SessionsPage : KLogging() {
 
   fun PipelineCall.sessionsPage(content: ReadingBatContent) =
     createHTML()
@@ -84,7 +102,7 @@ internal object SessionsPage {
                   th { +"City" }
                   th { +"State" }
                   th { +"Country" }
-                  th { +"Organization" }
+                  th { +"ISP" }
                   th { +"" }
                   th { +"User Agent" }
                 }
@@ -110,12 +128,64 @@ internal object SessionsPage {
             }
           }
 
+          class QueryInfo(val session_id: String,
+                          val fullName: FullName,
+                          val email: Email,
+                          val ip: String,
+                          val city: String,
+                          val state: String,
+                          val country: String,
+                          val isp: String,
+                          val flagUrl: String,
+                          val userAgent: String,
+                          val count: Long,
+                          val maxDate: DateTime)
 
-          transaction {
+          val rows =
+            transaction {
+              //addLogger(KotlinLoggingSqlLogger)
+              measureTimedValue {
+                val session_id = BrowserSessions.session_id
+                val fullName = Users.fullName
+                val email = Users.email
+                val ip = GeoInfos.ip
+                val city = GeoInfos.city
+                val state = GeoInfos.stateProv
+                val country = GeoInfos.countryName
+                val isp = GeoInfos.organization
+                val flagUrl = GeoInfos.countryFlag
+                val userAgent = ServerRequests.userAgent
+                val count = Count(Users.id)
+                val maxDate = Max(ServerRequests.created, DateColumnType(true))
+                val created = ServerRequests.created
 
-          }
+                (ServerRequests innerJoin BrowserSessions innerJoin Users innerJoin GeoInfos)
+                  .slice(session_id, fullName, email, ip, city, state, country, isp, flagUrl, userAgent, count, maxDate)
+                  .select { created greater dateTimeExpr("now() - interval '2 day'") }
+                  .groupBy(session_id, fullName, email, ip, city, state, country, isp, flagUrl, userAgent)
+                  .orderBy(maxDate, SortOrder.DESC)
+                  .map { row ->
+                    QueryInfo(row[session_id],
+                              FullName(row[fullName]),
+                              Email(row[email]),
+                              row[ip],
+                              row[city],
+                              row[state],
+                              row[country],
+                              row[isp],
+                              row[flagUrl],
+                              row[userAgent],
+                              row[count],
+                              row[maxDate] ?: DateTime.now(UTC))
+                  }
+              }.let { (query, duration) ->
+                logger.info { "User sessions query took ${duration}" }
+                query
+              }
 
-          h3 { +"${sessions.size} User Session".pluralize(sessions.size) }
+            }
+
+          h3 { +"${rows.size} User Session".pluralize(rows.size) }
 
           div(classes = TD_PADDING) {
             div(classes = INDENT_1EM) {
@@ -129,32 +199,30 @@ internal object SessionsPage {
                   th { +"City" }
                   th { +"State" }
                   th { +"Country" }
-                  th { +"Organization" }
+                  th { +"ISP" }
                   th { +"" }
                   th { +"User Agent" }
                 }
-                sessions
-                  .forEach { session ->
+                val now = DateTime.now(UTC)
+                rows
+                  .forEach { row ->
                     tr {
-                      val user = session.principal?.userId?.let { toUser(it, session.browserSession) }
-                      val userDesc = user?.let { "${it.fullName} (${it.email})" } ?: "Not logged in"
-                      td { +session.browserSession.id }
-                      td { +userDesc }
-                      td { +session.age.format(false) }
-                      td { +session.requests.toString() }
-                      td { +session.remoteHost.remoteHost }
-                      td { +session.remoteHost.city }
-                      td { +session.remoteHost.state }
-                      td { +session.remoteHost.country }
-                      td { +session.remoteHost.organization }
-                      td { if ("://" in session.remoteHost.flagUrl) img { src = session.remoteHost.flagUrl } else +"" }
-                      td { +session.userAgent }
+                      td { +row.session_id }
+                      td { +(if (row.fullName != UNKNOWN_FULLNAME) "${row.fullName} (${row.email})" else "Not logged in") }
+                      td { +(now.millis - row.maxDate.millis).milliseconds.format() }
+                      td { +row.count.toString() }
+                      td { +row.ip }
+                      td { +row.city }
+                      td { +row.state }
+                      td { +row.country }
+                      td { +row.isp }
+                      td { if ("://" in row.flagUrl) img { src = row.flagUrl } else +"" }
+                      td { +row.userAgent }
                     }
                   }
               }
             }
           }
-
 
           backLink("$ADMIN_PREFS_ENDPOINT?$RETURN_PARAM=${queryParam(RETURN_PARAM, "/")}")
 

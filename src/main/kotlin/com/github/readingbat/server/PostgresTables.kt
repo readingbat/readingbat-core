@@ -165,5 +165,6 @@ object ServerRequests : LongIdTable("server_requests") {
   val verb = text("verb")
   val path = text("path")
   val queryString = text("query_string")
+  val userAgent = text("user_agent")
   val duration = long("duration")
 }

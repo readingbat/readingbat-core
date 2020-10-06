@@ -1,7 +1,7 @@
 CREATE TABLE browser_sessions
 (
     id         BIGSERIAL UNIQUE PRIMARY KEY,
-    created    TIMESTAMP DEFAULT NOW(),
+    created    TIMESTAMPTZ DEFAULT NOW(),
     session_id TEXT NOT NULL UNIQUE,
     CONSTRAINT browser_sessions_unique unique (session_id)
 );
@@ -9,9 +9,9 @@ CREATE TABLE browser_sessions
 CREATE TABLE session_challenge_info
 (
     id           BIGSERIAL PRIMARY KEY,
-    created      TIMESTAMP     DEFAULT NOW(),
-    updated      TIMESTAMP     DEFAULT NOW(),
-    session_ref  INTEGER REFERENCES browser_sessions ON DELETE CASCADE,
+    created      TIMESTAMPTZ   DEFAULT NOW(),
+    updated      TIMESTAMPTZ   DEFAULT NOW(),
+    session_ref  BIGINT REFERENCES browser_sessions ON DELETE CASCADE,
     md5          TEXT NOT NULL,
     all_correct  BOOLEAN       DEFAULT false,
     like_dislike SMALLINT      DEFAULT 0,
@@ -22,9 +22,9 @@ CREATE TABLE session_challenge_info
 CREATE TABLE session_answer_history
 (
     id                 BIGSERIAL PRIMARY KEY,
-    created            TIMESTAMP DEFAULT NOW(),
-    updated            TIMESTAMP DEFAULT NOW(),
-    session_ref        INTEGER REFERENCES browser_sessions ON DELETE CASCADE,
+    created            TIMESTAMPTZ DEFAULT NOW(),
+    updated            TIMESTAMPTZ DEFAULT NOW(),
+    session_ref        BIGINT REFERENCES browser_sessions ON DELETE CASCADE,
     md5                TEXT NOT NULL,
     invocation         TEXT NOT NULL,
     correct            BOOLEAN,
@@ -36,8 +36,8 @@ CREATE TABLE session_answer_history
 CREATE TABLE users
 (
     id                  BIGSERIAL UNIQUE PRIMARY KEY,
-    created             TIMESTAMP DEFAULT NOW(),
-    updated             TIMESTAMP DEFAULT NOW(),
+    created             TIMESTAMPTZ DEFAULT NOW(),
+    updated             TIMESTAMPTZ DEFAULT NOW(),
     user_id             TEXT NOT NULL UNIQUE,
     email               TEXT NOT NULL UNIQUE,
     name                TEXT NOT NULL,
@@ -50,10 +50,10 @@ CREATE TABLE users
 CREATE TABLE user_sessions
 (
     id                          BIGSERIAL UNIQUE PRIMARY KEY,
-    created                     TIMESTAMP     DEFAULT NOW(),
-    updated                     TIMESTAMP     DEFAULT NOW(),
-    session_ref                 INTEGER REFERENCES browser_sessions ON DELETE CASCADE,
-    user_ref                    INTEGER REFERENCES users ON DELETE CASCADE,
+    created                     TIMESTAMPTZ   DEFAULT NOW(),
+    updated                     TIMESTAMPTZ   DEFAULT NOW(),
+    session_ref                 BIGINT REFERENCES browser_sessions ON DELETE CASCADE,
+    user_ref                    BIGINT REFERENCES users ON DELETE CASCADE,
     active_class_code           TEXT NOT NULL DEFAULT '',
     previous_teacher_class_code TEXT NOT NULL DEFAULT '',
     CONSTRAINT user_sessions_unique unique (session_ref, user_ref)
@@ -62,9 +62,9 @@ CREATE TABLE user_sessions
 CREATE TABLE user_challenge_info
 (
     id           BIGSERIAL PRIMARY KEY,
-    created      TIMESTAMP     DEFAULT NOW(),
-    updated      TIMESTAMP     DEFAULT NOW(),
-    user_ref     INTEGER REFERENCES users ON DELETE CASCADE,
+    created      TIMESTAMPTZ   DEFAULT NOW(),
+    updated      TIMESTAMPTZ   DEFAULT NOW(),
+    user_ref     BIGINT REFERENCES users ON DELETE CASCADE,
     md5          TEXT NOT NULL,
     all_correct  BOOLEAN       DEFAULT false,
     like_dislike SMALLINT      DEFAULT 0,
@@ -75,9 +75,9 @@ CREATE TABLE user_challenge_info
 CREATE TABLE user_answer_history
 (
     id                 BIGSERIAL PRIMARY KEY,
-    created            TIMESTAMP DEFAULT NOW(),
-    updated            TIMESTAMP DEFAULT NOW(),
-    user_ref           INTEGER REFERENCES users ON DELETE CASCADE,
+    created            TIMESTAMPTZ DEFAULT NOW(),
+    updated            TIMESTAMPTZ DEFAULT NOW(),
+    user_ref           BIGINT REFERENCES users ON DELETE CASCADE,
     md5                TEXT NOT NULL,
     invocation         TEXT NOT NULL,
     correct            BOOLEAN,
@@ -89,9 +89,9 @@ CREATE TABLE user_answer_history
 CREATE TABLE classes
 (
     id          BIGSERIAL PRIMARY KEY,
-    created     TIMESTAMP DEFAULT NOW(),
-    updated     TIMESTAMP DEFAULT NOW(),
-    user_ref    INTEGER REFERENCES users ON DELETE CASCADE,
+    created     TIMESTAMPTZ DEFAULT NOW(),
+    updated     TIMESTAMPTZ DEFAULT NOW(),
+    user_ref    BIGINT REFERENCES users ON DELETE CASCADE,
     class_code  TEXT NOT NULL UNIQUE,
     description TEXT NOT NULL
 );
@@ -99,18 +99,18 @@ CREATE TABLE classes
 CREATE TABLE enrollees
 (
     id          BIGSERIAL PRIMARY KEY,
-    created     TIMESTAMP DEFAULT NOW(),
-    classes_ref INTEGER REFERENCES classes ON DELETE CASCADE,
-    user_ref    INTEGER REFERENCES users ON DELETE CASCADE,
+    created     TIMESTAMPTZ DEFAULT NOW(),
+    classes_ref BIGINT REFERENCES classes ON DELETE CASCADE,
+    user_ref    BIGINT REFERENCES users ON DELETE CASCADE,
     CONSTRAINT enrollees_unique unique (classes_ref, user_ref)
 );
 
 CREATE TABLE password_resets
 (
     id       BIGSERIAL PRIMARY KEY,
-    created  TIMESTAMP DEFAULT NOW(),
-    updated  TIMESTAMP DEFAULT NOW(),
-    user_ref INTEGER REFERENCES users ON DELETE CASCADE UNIQUE,
+    created  TIMESTAMPTZ DEFAULT NOW(),
+    updated  TIMESTAMPTZ DEFAULT NOW(),
+    user_ref BIGINT REFERENCES users ON DELETE CASCADE UNIQUE,
     reset_id TEXT NOT NULL UNIQUE,
     email    TEXT NOT NULL,
     CONSTRAINT password_resets_unique unique (user_ref)
@@ -120,7 +120,7 @@ CREATE TABLE password_resets
 CREATE TABLE geo_info
 (
     id              BIGSERIAL PRIMARY KEY,
-    created         TIMESTAMP     DEFAULT NOW(),
+    created         TIMESTAMPTZ   DEFAULT NOW(),
     ip              TEXT NOT NULL UNIQUE,
     json            TEXT NOT NULL DEFAULT '',
     continent_code  TEXT NOT NULL DEFAULT '',
@@ -149,13 +149,14 @@ CREATE TABLE geo_info
 CREATE TABLE server_requests
 (
     id           BIGSERIAL PRIMARY KEY,
-    created      TIMESTAMP DEFAULT NOW(),
+    created      TIMESTAMPTZ DEFAULT NOW(),
     request_id   TEXT NOT NULL UNIQUE,
-    session_ref  INTEGER REFERENCES browser_sessions ON DELETE CASCADE,
-    user_ref     INTEGER REFERENCES users ON DELETE CASCADE,
-    geo_ref      INTEGER REFERENCES geo_info ON DELETE CASCADE,
+    session_ref  BIGINT REFERENCES browser_sessions ON DELETE CASCADE,
+    user_ref     BIGINT REFERENCES users ON DELETE CASCADE,
+    geo_ref      BIGINT REFERENCES geo_info ON DELETE CASCADE,
     verb         TEXT NOT NULL,
     path         TEXT NOT NULL,
     query_string TEXT NOT NULL,
-    duration     INTEGER   DEFAULT 0
+    user_agent   TEXT        DEFAULT '',
+    duration     BIGINT      DEFAULT 0
 );

@@ -33,6 +33,7 @@ import com.github.readingbat.server.Intercepts.requestTimingMap
 import com.github.readingbat.server.ServerUtils.fetchUserDbmsIdFromCache
 import io.ktor.application.*
 import io.ktor.features.*
+import io.ktor.http.HttpHeaders.UserAgent
 import io.ktor.request.*
 import io.ktor.routing.Routing.Feature.RoutingCallFinished
 import io.ktor.routing.Routing.Feature.RoutingCallStarted
@@ -95,6 +96,7 @@ internal fun Application.intercepts() {
         val verb = request.httpMethod.value
         val path = request.path()
         val queryString = request.queryString()
+        val userAgent = request.headers[UserAgent] ?: ""
 
         logger.debug { "Saving request: ${call.callId} $ipAddress $userDbmsId $verb $path $queryString $geoDbmsId" }
         transaction {
@@ -107,6 +109,7 @@ internal fun Application.intercepts() {
               row[ServerRequests.verb] = verb
               row[ServerRequests.path] = path
               row[ServerRequests.queryString] = queryString
+              row[ServerRequests.userAgent] = userAgent
               row[duration] = 0
             }
         }
