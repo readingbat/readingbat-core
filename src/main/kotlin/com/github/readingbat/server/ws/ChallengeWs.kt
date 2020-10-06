@@ -87,7 +87,7 @@ internal object ChallengeWs : KLogging() {
   }
 
   init {
-    timer("pinger", true, 0L, 1.seconds.toLongMilliseconds()) {
+    timer("pinger", false, 0L, 1.seconds.toLongMilliseconds()) {
       for (sessionContext in wsConnections)
         try {
           val elapsed = sessionContext.start.elapsedNow().format()

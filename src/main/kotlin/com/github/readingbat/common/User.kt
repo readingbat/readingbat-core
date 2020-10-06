@@ -111,7 +111,7 @@ internal class User {
   private fun assignRowVals(row: ResultRow) {
     userDbmsId = row[Users.id].value
     email = Email(row[Users.email])
-    fullName = FullName(row[Users.name])
+    fullName = FullName(row[Users.fullName])
     enrolledClassCode = ClassCode(row[Users.enrolledClassCode])
     defaultLanguage = row[Users.defaultLanguage].toLanguageType() ?: defaultLanguageType
     saltBacking = row[Users.salt]
@@ -541,7 +541,7 @@ internal class User {
         Users
           .insertAndGetId { row ->
             row[Users.userId] = userId
-            row[name] = UNKNOWN_FULLNAME.value
+            row[fullName] = UNKNOWN_FULLNAME.value
             row[email] = "${UNKNOWN_EMAIL.value}-${randomId(4)}"
             row[enrolledClassCode] = DISABLED_CLASS_CODE.value
             row[defaultLanguage] = defaultLanguageType.languageName.value
@@ -563,7 +563,7 @@ internal class User {
               Users
                 .insertAndGetId { row ->
                   row[userId] = user.userId
-                  row[Users.name] = name.value
+                  row[Users.fullName] = name.value
                   row[Users.email] = email.value
                   row[enrolledClassCode] = DISABLED_CLASS_CODE.value
                   row[defaultLanguage] = defaultLanguageType.languageName.value

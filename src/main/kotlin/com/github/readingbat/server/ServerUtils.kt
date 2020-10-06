@@ -180,6 +180,8 @@ open class CustomConstant<T>(val functionName: String, _columnType: IColumnType)
 operator fun ResultRow.get(index: Int) = fieldIndex.filter { it.value == index }.map { this[it.key] }.firstOrNull()
   ?: throw IllegalArgumentException("No value at index $index")
 
+fun ResultRow.toRowString() = fieldIndex.values.map { this[it].toString() }.joinToString(" - ")
+
 object KotlinLoggingSqlLogger : SqlLogger {
   override
   fun log(context: StatementContext, transaction: Transaction) {

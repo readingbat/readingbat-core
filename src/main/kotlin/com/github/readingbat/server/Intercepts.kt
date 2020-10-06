@@ -52,7 +52,7 @@ internal object Intercepts : KLogging() {
   val clock = TimeSource.Monotonic
   val requestTimingMap = ConcurrentHashMap<String, TimeMark>()
   val timer =
-    timer("requestTimingMap admin", true, 1.minutes.toLongMilliseconds(), 1.minutes.toLongMilliseconds()) {
+    timer("requestTimingMap admin", false, 1.minutes.toLongMilliseconds(), 1.minutes.toLongMilliseconds()) {
       requestTimingMap
         .filter { (_, start) -> start.elapsedNow() > 1.hours }
         .forEach { (callId, start) ->

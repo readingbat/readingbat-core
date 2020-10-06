@@ -70,7 +70,7 @@ internal object Users : LongIdTable() {
   val updated = datetime("updated")
   val userId = text("user_id")
   val email = text("email")
-  val name = text("name")
+  val fullName = text("name")
   val salt = text("salt")
   val digest = text("digest")
   val enrolledClassCode = text("enrolled_class_code")

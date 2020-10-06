@@ -159,7 +159,7 @@ internal object SessionActivites : KLogging() {
   val geoInfoMap = ConcurrentHashMap<String, GeoInfo>()
 
   init {
-    timer("stale session admin", true, delay.toLongMilliseconds(), period.toLongMilliseconds()) {
+    timer("stale session admin", false, delay.toLongMilliseconds(), period.toLongMilliseconds()) {
       try {
         val staleCnt =
           sessionsMap.entries

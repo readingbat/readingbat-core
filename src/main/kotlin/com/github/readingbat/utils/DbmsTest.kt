@@ -17,10 +17,14 @@
 
 package com.github.readingbat.utils
 
-import com.github.pambrose.common.util.simpleClassName
-import com.github.readingbat.server.CustomDateTimeConstant
-import com.github.readingbat.server.PasswordResets
-import com.github.readingbat.server.get
+import com.github.readingbat.server.BrowserSessions
+import com.github.readingbat.server.CustomConstant
+import com.github.readingbat.server.GeoInfos
+import com.github.readingbat.server.ServerRequests
+import com.github.readingbat.server.Users
+import com.github.readingbat.server.toRowString
+import com.zaxxer.hikari.HikariConfig
+import com.zaxxer.hikari.HikariDataSource
 import org.jetbrains.exposed.dao.IntEntity
 import org.jetbrains.exposed.dao.IntEntityClass
 import org.jetbrains.exposed.dao.UUIDEntity
@@ -29,13 +33,19 @@ import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.dao.id.IntIdTable
 import org.jetbrains.exposed.dao.id.LongIdTable
 import org.jetbrains.exposed.dao.id.UUIDTable
+import org.jetbrains.exposed.sql.Count
+import org.jetbrains.exposed.sql.Database
+import org.jetbrains.exposed.sql.Max
+import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.StdOutSqlLogger
 import org.jetbrains.exposed.sql.addLogger
 import org.jetbrains.exposed.sql.jodatime.CurrentDateTime
+import org.jetbrains.exposed.sql.jodatime.DateColumnType
 import org.jetbrains.exposed.sql.jodatime.datetime
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.util.*
+import kotlin.time.measureTime
 
 object Requests : LongIdTable() {
   val created = datetime("created").defaultExpression(CurrentDateTime())
@@ -101,11 +111,42 @@ fun main() {
                    user = "postgres", password = "docker")
    */
 
-  //Database.connect(hikari())
+  val postgres =
+    Database.connect(
+      HikariDataSource(
+        HikariConfig()
+          .apply {
+            driverClassName = "com.impossibl.postgres.jdbc.PGDriver"
+            maximumPoolSize = 5
+            isAutoCommit = false
+            transactionIsolation = "TRANSACTION_REPEATABLE_READ"
+            validate()
+          }))
 
   transaction {
     // print sql to std-out
     addLogger(StdOutSqlLogger)
+
+    measureTime {
+      val session_id = BrowserSessions.session_id
+      val name = Users.fullName
+      val ip = GeoInfos.ip
+      val city = GeoInfos.city
+      val stateProv = GeoInfos.stateProv
+      val organization = GeoInfos.organization
+      val countryFlag = GeoInfos.countryFlag
+      val count = Count(Users.id)
+      val maxDate = Max(ServerRequests.created, DateColumnType(true))
+
+      (ServerRequests innerJoin BrowserSessions innerJoin Users innerJoin GeoInfos)
+        .slice(session_id, name, ip, city, stateProv, organization, countryFlag, count, maxDate)
+        .select { ServerRequests.created greater CustomConstant("now() - interval '2 day'", DateColumnType(true)) }
+        .groupBy(session_id, name, ip, city, stateProv, organization, countryFlag)
+        .orderBy(maxDate, SortOrder.DESC)
+        .forEach {
+          println(it.toRowString())
+        }
+    }.also { println("Took $it") }
 
     /*
     repeat(10) {
@@ -118,22 +159,23 @@ fun main() {
         }
       Thread.sleep(10000)
     }
-
      */
   }
 
-  transaction {
-    addLogger(StdOutSqlLogger)
+  //transaction {
+  //addLogger(StdOutSqlLogger)
 
-    PasswordResets
-      .slice(PasswordResets.created, CurrentDateTime(), CustomDateTimeConstant("NOW() - INTERVAL '1 hour'"))
-      .select { PasswordResets.created greater CustomDateTimeConstant("NOW() - INTERVAL '1 hour'") }
-      .forEach { row ->
-        val p = row[2]
-        println("${row[0]} ${row[1]} $p ${p.simpleClassName}")
+  /*
+  PasswordResets
+    .slice(PasswordResets.created, CurrentDateTime(), CustomDateTimeConstant("NOW() - INTERVAL '1 hour'"))
+    .select { PasswordResets.created greater CustomDateTimeConstant("NOW() - INTERVAL '1 hour'") }
+    .forEach { row ->
+      val p = row[2]
+      println("${row[0]} ${row[1]} $p ${p.simpleClassName}")
 
-      }
-  }
+    }
+   */
+  //}
   /*
   //SchemaUtils.drop(Cities)
   //SchemaUtils.create(Cities)

@@ -34,6 +34,7 @@ import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
+import org.jetbrains.exposed.sql.transactions.transaction
 import kotlin.time.hours
 import kotlin.time.minutes
 
@@ -108,6 +109,52 @@ internal object SessionsPage {
               }
             }
           }
+
+
+          transaction {
+
+          }
+
+          h3 { +"${sessions.size} User Session".pluralize(sessions.size) }
+
+          div(classes = TD_PADDING) {
+            div(classes = INDENT_1EM) {
+              table {
+                tr {
+                  th { +"Session Id" }
+                  th { +"User" }
+                  th { +"Last Activity" }
+                  th { +"Requests" }
+                  th { +"Remote Host" }
+                  th { +"City" }
+                  th { +"State" }
+                  th { +"Country" }
+                  th { +"Organization" }
+                  th { +"" }
+                  th { +"User Agent" }
+                }
+                sessions
+                  .forEach { session ->
+                    tr {
+                      val user = session.principal?.userId?.let { toUser(it, session.browserSession) }
+                      val userDesc = user?.let { "${it.fullName} (${it.email})" } ?: "Not logged in"
+                      td { +session.browserSession.id }
+                      td { +userDesc }
+                      td { +session.age.format(false) }
+                      td { +session.requests.toString() }
+                      td { +session.remoteHost.remoteHost }
+                      td { +session.remoteHost.city }
+                      td { +session.remoteHost.state }
+                      td { +session.remoteHost.country }
+                      td { +session.remoteHost.organization }
+                      td { if ("://" in session.remoteHost.flagUrl) img { src = session.remoteHost.flagUrl } else +"" }
+                      td { +session.userAgent }
+                    }
+                  }
+              }
+            }
+          }
+
 
           backLink("$ADMIN_PREFS_ENDPOINT?$RETURN_PARAM=${queryParam(RETURN_PARAM, "/")}")
 
