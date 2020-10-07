@@ -150,7 +150,7 @@ internal fun Routing.userRoutes(metrics: Metrics, contentSrc: () -> ReadingBatCo
 
   get(SESSIONS_ENDPOINT) {
     respondWith {
-      authenticateAdminUser(fetchUser()) { sessionsPage(contentSrc()) }
+      authenticateAdminUser(fetchUser()) { sessionsPage() }
     }
   }
 

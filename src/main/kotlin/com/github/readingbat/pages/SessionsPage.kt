@@ -24,8 +24,6 @@ import com.github.readingbat.common.CSSNames.TD_PADDING
 import com.github.readingbat.common.Endpoints.ADMIN_PREFS_ENDPOINT
 import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.SessionActivites
-import com.github.readingbat.common.User.Companion.toUser
-import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyTitle
 import com.github.readingbat.pages.PageUtils.headDefault
@@ -58,7 +56,7 @@ import kotlin.time.minutes
 
 internal object SessionsPage : KLogging() {
 
-  fun PipelineCall.sessionsPage(content: ReadingBatContent) =
+  fun PipelineCall.sessionsPage() =
     createHTML()
       .html {
         head { headDefault() }
@@ -86,47 +84,7 @@ internal object SessionsPage : KLogging() {
             }
           }
 
-          val sessions = SessionActivites.allSessions().filter { it.requests > 1 }.sortedBy { it.age }
-
-          h3 { +"${sessions.size} User Session".pluralize(sessions.size) }
-
-          div(classes = TD_PADDING) {
-            div(classes = INDENT_1EM) {
-              table {
-                tr {
-                  th { +"Session Id" }
-                  th { +"User" }
-                  th { +"Last Activity" }
-                  th { +"Requests" }
-                  th { +"Remote Host" }
-                  th { +"City" }
-                  th { +"State" }
-                  th { +"Country" }
-                  th { +"ISP" }
-                  th { +"" }
-                  th { +"User Agent" }
-                }
-                sessions
-                  .forEach { session ->
-                    tr {
-                      val user = session.principal?.userId?.let { toUser(it, session.browserSession) }
-                      val userDesc = user?.let { "${it.fullName} (${it.email})" } ?: "Not logged in"
-                      td { +session.browserSession.id }
-                      td { +userDesc }
-                      td { +session.age.format(false) }
-                      td { +session.requests.toString() }
-                      td { +session.remoteHost.remoteHost }
-                      td { +session.remoteHost.city }
-                      td { +session.remoteHost.state }
-                      td { +session.remoteHost.country }
-                      td { +session.remoteHost.organization }
-                      td { if ("://" in session.remoteHost.flagUrl) img { src = session.remoteHost.flagUrl } else +"" }
-                      td { +session.userAgent }
-                    }
-                  }
-              }
-            }
-          }
+          val dayCount = queryParam("days", "2").toInt()
 
           class QueryInfo(val session_id: String,
                           val fullName: FullName,
@@ -159,10 +117,12 @@ internal object SessionsPage : KLogging() {
                 val maxDate = Max(ServerRequests.created, DateColumnType(true))
                 val created = ServerRequests.created
 
+                val elems = arrayOf(session_id, fullName, email, ip, city, state, country, isp, flagUrl, userAgent)
+
                 (ServerRequests innerJoin BrowserSessions innerJoin Users innerJoin GeoInfos)
-                  .slice(session_id, fullName, email, ip, city, state, country, isp, flagUrl, userAgent, count, maxDate)
-                  .select { created greater dateTimeExpr("now() - interval '2 day'") }
-                  .groupBy(session_id, fullName, email, ip, city, state, country, isp, flagUrl, userAgent)
+                  .slice(*elems, count, maxDate)
+                  .select { created greater dateTimeExpr("now() - interval '$dayCount day'") }
+                  .groupBy(*elems)
                   .orderBy(maxDate, SortOrder.DESC)
                   .map { row ->
                     QueryInfo(row[session_id],
@@ -185,7 +145,9 @@ internal object SessionsPage : KLogging() {
 
             }
 
-          h3 { +"${rows.size} User Session".pluralize(rows.size) }
+          val sessions = "Session".pluralize(rows.size)
+          val days = "Day".pluralize(dayCount)
+          h3 { +"${rows.size} User $sessions in $dayCount $days" }
 
           div(classes = TD_PADDING) {
             div(classes = INDENT_1EM) {
