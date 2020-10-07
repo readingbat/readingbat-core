@@ -33,7 +33,6 @@ import com.github.readingbat.common.Endpoints.STATIC_ROOT
 import com.github.readingbat.common.EnvVar.*
 import com.github.readingbat.common.Metrics
 import com.github.readingbat.common.Property.*
-import com.github.readingbat.common.ScriptPools
 import com.github.readingbat.common.User.Companion.createUnknownUser
 import com.github.readingbat.common.User.Companion.userExists
 import com.github.readingbat.dsl.*

@@ -15,7 +15,7 @@
  *
  */
 
-package com.github.readingbat.common
+package com.github.readingbat.server
 
 import redis.clients.jedis.Jedis
 import redis.clients.jedis.ScanParams

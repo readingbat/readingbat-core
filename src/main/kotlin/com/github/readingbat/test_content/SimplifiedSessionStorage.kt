@@ -15,7 +15,7 @@
  *
  */
 
-package com.github.readingbat.common
+package com.github.readingbat.test_content
 
 import io.ktor.sessions.*
 import io.ktor.utils.io.*

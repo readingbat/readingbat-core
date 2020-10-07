@@ -27,13 +27,13 @@ import com.github.readingbat.common.BrowserSession
 import com.github.readingbat.common.Constants.NO_TRACK_HEADER
 import com.github.readingbat.common.Endpoints.PING_ENDPOINT
 import com.github.readingbat.common.Endpoints.THREAD_DUMP
-import com.github.readingbat.common.GeoInfo.Companion.lookupGeoInfo
 import com.github.readingbat.common.Metrics
 import com.github.readingbat.common.UserPrincipal
 import com.github.readingbat.common.browserSession
 import com.github.readingbat.common.userPrincipal
 import com.github.readingbat.dsl.isPostgresEnabled
 import com.github.readingbat.dsl.isSaveRequestsEnabled
+import com.github.readingbat.server.GeoInfo.Companion.lookupGeoInfo
 import com.github.readingbat.server.ServerUtils.get
 import io.ktor.application.*
 import io.ktor.features.*

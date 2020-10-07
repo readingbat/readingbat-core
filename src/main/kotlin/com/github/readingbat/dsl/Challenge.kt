@@ -31,9 +31,6 @@ import com.github.readingbat.common.CommonUtils.md5Of
 import com.github.readingbat.common.CommonUtils.pathOf
 import com.github.readingbat.common.FunctionInfo
 import com.github.readingbat.common.KeyConstants.SOURCE_CODE_KEY
-import com.github.readingbat.common.ScriptPools.javaScriptPool
-import com.github.readingbat.common.ScriptPools.kotlinScriptPool
-import com.github.readingbat.common.ScriptPools.pythonScriptPool
 import com.github.readingbat.dsl.LanguageType.Java
 import com.github.readingbat.dsl.LanguageType.Kotlin
 import com.github.readingbat.dsl.LanguageType.Python
@@ -57,6 +54,9 @@ import com.github.readingbat.dsl.parse.PythonParse.ifMainEndRegex
 import com.github.readingbat.server.ChallengeName
 import com.github.readingbat.server.Invocation
 import com.github.readingbat.server.ReadingBatServer.redisPool
+import com.github.readingbat.server.ScriptPools.javaScriptPool
+import com.github.readingbat.server.ScriptPools.kotlinScriptPool
+import com.github.readingbat.server.ScriptPools.pythonScriptPool
 import kotlinx.coroutines.runBlocking
 import mu.KLogging
 import java.net.URL

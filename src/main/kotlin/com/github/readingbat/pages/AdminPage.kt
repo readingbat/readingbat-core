@@ -24,7 +24,6 @@ import com.github.readingbat.common.FormFields.DELETE_ALL_DATA
 import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.Message
 import com.github.readingbat.common.Message.Companion.EMPTY_MESSAGE
-import com.github.readingbat.common.RedisUtils.scanKeys
 import com.github.readingbat.common.User
 import com.github.readingbat.common.isNotAdminUser
 import com.github.readingbat.common.isNotValidUser
@@ -37,6 +36,7 @@ import com.github.readingbat.pages.PageUtils.displayMessage
 import com.github.readingbat.pages.PageUtils.headDefault
 import com.github.readingbat.pages.PageUtils.loadPingdomScript
 import com.github.readingbat.server.PipelineCall
+import com.github.readingbat.server.RedisUtils.scanKeys
 import com.github.readingbat.server.ServerUtils.queryParam
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML

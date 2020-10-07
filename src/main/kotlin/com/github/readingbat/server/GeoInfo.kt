@@ -15,15 +15,12 @@
  *
  */
 
-package com.github.readingbat.common
+package com.github.readingbat.server
 
 import com.github.pambrose.common.dsl.KtorDsl
 import com.github.pambrose.common.dsl.KtorDsl.get
+import com.github.readingbat.common.Constants
 import com.github.readingbat.common.EnvVar.IPGEOLOCATION_KEY
-import com.github.readingbat.server.GeoInfos
-import com.github.readingbat.server.geoInfosUnique
-import com.github.readingbat.server.get
-import com.github.readingbat.server.upsert
 import com.google.gson.Gson
 import io.ktor.application.*
 import io.ktor.client.statement.*
@@ -113,6 +110,15 @@ internal class GeoInfo(val requireDbmsLookUp: Boolean, val dbmsId: Long, val rem
         }
       }
 
+    fun queryGeoInfo(ipAddress: String) =
+      transaction {
+        GeoInfos
+          .slice(GeoInfos.id, GeoInfos.json)
+          .select { GeoInfos.ip eq ipAddress }
+          .map { GeoInfo(false, it[GeoInfos.id].value, ipAddress, it[1] as String) }
+          .firstOrNull()
+      }
+
     fun lookupGeoInfo(ipAddress: String) =
       SessionActivites.geoInfoMap.computeIfAbsent(ipAddress) { ip ->
         queryGeoInfo(ip)?.apply { logger.info { "Postgres GEO info for $ip: ${summary()}" } }
@@ -122,15 +128,6 @@ internal class GeoInfo(val requireDbmsLookUp: Boolean, val dbmsId: Long, val rem
             GeoInfo(true, -1, ip, "")
               .also { logger.info { "Unable to determine IP geolocation data for ${it.remoteHost} (${e.message})" } }
           }.also { it.insert() }
-      }
-
-    fun queryGeoInfo(ipAddress: String) =
-      transaction {
-        GeoInfos
-          .slice(GeoInfos.id, GeoInfos.json)
-          .select { GeoInfos.ip eq ipAddress }
-          .map { GeoInfo(false, it[GeoInfos.id].value, ipAddress, it[1] as String) }
-          .firstOrNull()
       }
   }
 }

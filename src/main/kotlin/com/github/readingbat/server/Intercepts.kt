@@ -22,12 +22,12 @@ import com.github.readingbat.common.BrowserSession.Companion.querySessionDbmsId
 import com.github.readingbat.common.Constants.STATIC
 import com.github.readingbat.common.Constants.UNKNOWN_USER_ID
 import com.github.readingbat.common.Endpoints.PING_ENDPOINT
-import com.github.readingbat.common.GeoInfo.Companion.lookupGeoInfo
-import com.github.readingbat.common.GeoInfo.Companion.queryGeoInfo
 import com.github.readingbat.common.User.Companion.fetchUserDbmsIdFromCache
 import com.github.readingbat.common.browserSession
 import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.isSaveRequestsEnabled
+import com.github.readingbat.server.GeoInfo.Companion.lookupGeoInfo
+import com.github.readingbat.server.GeoInfo.Companion.queryGeoInfo
 import com.github.readingbat.server.Intercepts.clock
 import com.github.readingbat.server.Intercepts.logger
 import com.github.readingbat.server.Intercepts.requestTimingMap

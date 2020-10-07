@@ -43,8 +43,6 @@ import com.github.readingbat.common.ParameterIds.DISLIKE_CLEAR
 import com.github.readingbat.common.ParameterIds.DISLIKE_COLOR
 import com.github.readingbat.common.ParameterIds.LIKE_CLEAR
 import com.github.readingbat.common.ParameterIds.LIKE_COLOR
-import com.github.readingbat.common.ScriptPools.kotlinScriptPool
-import com.github.readingbat.common.ScriptPools.pythonScriptPool
 import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.fetchUserDbmsIdFromCache
 import com.github.readingbat.common.User.Companion.shouldPublish
@@ -60,6 +58,8 @@ import com.github.readingbat.server.*
 import com.github.readingbat.server.ChallengeName.Companion.getChallengeName
 import com.github.readingbat.server.GroupName.Companion.getGroupName
 import com.github.readingbat.server.LanguageName.Companion.getLanguageName
+import com.github.readingbat.server.ScriptPools.kotlinScriptPool
+import com.github.readingbat.server.ScriptPools.pythonScriptPool
 import io.ktor.application.*
 import io.ktor.request.*
 import io.ktor.response.*

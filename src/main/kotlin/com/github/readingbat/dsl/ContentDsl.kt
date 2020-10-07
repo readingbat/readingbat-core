@@ -36,10 +36,10 @@ import com.github.readingbat.common.Property.IS_PRODUCTION
 import com.github.readingbat.common.Property.MULTI_SERVER_ENABLED
 import com.github.readingbat.common.Property.POSTGRES_ENABLED
 import com.github.readingbat.common.Property.SAVE_REQUESTS_ENABLED
-import com.github.readingbat.common.ScriptPools.kotlinScriptPool
 import com.github.readingbat.dsl.ContentDsl.logger
 import com.github.readingbat.server.ReadingBatServer
 import com.github.readingbat.server.ReadingBatServer.redisPool
+import com.github.readingbat.server.ScriptPools.kotlinScriptPool
 import kotlinx.coroutines.runBlocking
 import mu.KLogging
 import kotlin.reflect.KFunction

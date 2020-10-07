@@ -31,8 +31,6 @@ import com.github.readingbat.common.Property.DSL_VARIABLE_NAME
 import com.github.readingbat.common.Property.KTOR_PORT
 import com.github.readingbat.common.Property.KTOR_WATCH
 import com.github.readingbat.common.Property.PROXY_HOSTNAME
-import com.github.readingbat.common.SessionActivites
-import com.github.readingbat.common.SessionActivites.geoInfoMap
 import com.github.readingbat.common.User.Companion.emailCache
 import com.github.readingbat.common.User.Companion.userIdCache
 import com.github.readingbat.dsl.LanguageType.Java
@@ -54,11 +52,14 @@ import com.github.readingbat.server.Intercepts.requestTimingMap
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ReadingBatServer
 import com.github.readingbat.server.ServerUtils.queryParam
+import com.github.readingbat.server.SessionActivites
+import com.github.readingbat.server.SessionActivites.geoInfoMap
 import com.github.readingbat.server.ws.ChallengeWs.maxWsConnections
 import com.github.readingbat.server.ws.ChallengeWs.wsConnections
 import io.prometheus.Agent
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
+import kotlin.time.days
 import kotlin.time.hours
 import kotlin.time.minutes
 
@@ -259,6 +260,14 @@ internal object SystemConfigurationPage {
                 tr {
                   td { +"Active users in the last hour:" }
                   td { +SessionActivites.activeSessions(1.hours).toString() }
+                }
+                tr {
+                  td { +"Active users in the last 24 hours:" }
+                  td { +SessionActivites.activeSessions(24.hours).toString() }
+                }
+                tr {
+                  td { +"Active users in the last week:" }
+                  td { +SessionActivites.activeSessions(7.days).toString() }
                 }
               }
             }

@@ -15,15 +15,8 @@
  *
  */
 
-package com.github.readingbat.common
+package com.github.readingbat.server
 
-import com.github.readingbat.server.BrowserSessions
-import com.github.readingbat.server.Email
-import com.github.readingbat.server.FullName
-import com.github.readingbat.server.GeoInfos
-import com.github.readingbat.server.ServerRequests
-import com.github.readingbat.server.Users
-import com.github.readingbat.server.dateTimeExpr
 import mu.KLogging
 import org.jetbrains.exposed.sql.Count
 import org.jetbrains.exposed.sql.Max

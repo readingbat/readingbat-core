@@ -36,7 +36,6 @@ import com.github.readingbat.common.KeyConstants.CONTENT_DSL_KEY
 import com.github.readingbat.common.KeyConstants.DIR_CONTENTS_KEY
 import com.github.readingbat.common.KeyConstants.SOURCE_CODE_KEY
 import com.github.readingbat.common.Metrics
-import com.github.readingbat.common.RedisUtils.scanKeys
 import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.dsl.LanguageType.Java
 import com.github.readingbat.dsl.LanguageType.Kotlin
@@ -45,6 +44,7 @@ import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.pages.SystemAdminPage.systemAdminPage
 import com.github.readingbat.server.ReadingBatServer.logger
 import com.github.readingbat.server.ReadingBatServer.redisPool
+import com.github.readingbat.server.RedisUtils.scanKeys
 import com.github.readingbat.server.ServerUtils.authenticateAdminUser
 import com.github.readingbat.server.ServerUtils.fetchUser
 import com.github.readingbat.server.ServerUtils.get

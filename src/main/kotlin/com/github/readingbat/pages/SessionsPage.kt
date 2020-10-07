@@ -23,8 +23,6 @@ import com.github.readingbat.common.CSSNames.INDENT_1EM
 import com.github.readingbat.common.CSSNames.TD_PADDING
 import com.github.readingbat.common.Endpoints.ADMIN_PREFS_ENDPOINT
 import com.github.readingbat.common.FormFields.RETURN_PARAM
-import com.github.readingbat.common.SessionActivites
-import com.github.readingbat.common.SessionActivites.querySessionActivities
 import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyTitle
 import com.github.readingbat.pages.PageUtils.headDefault
@@ -32,11 +30,14 @@ import com.github.readingbat.pages.PageUtils.loadStatusPageDisplay
 import com.github.readingbat.server.FullName.Companion.UNKNOWN_FULLNAME
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
+import com.github.readingbat.server.SessionActivites
+import com.github.readingbat.server.SessionActivites.querySessionActivities
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 import mu.KLogging
 import org.joda.time.DateTime
 import org.joda.time.DateTimeZone.UTC
+import kotlin.time.days
 import kotlin.time.hours
 import kotlin.time.milliseconds
 import kotlin.time.minutes
@@ -67,6 +68,14 @@ internal object SessionsPage : KLogging() {
               tr {
                 td { +"Active users in the last hour: " }
                 td { +SessionActivites.activeSessions(1.hours).toString() }
+              }
+              tr {
+                td { +"Active users in the last 24 hours: " }
+                td { +SessionActivites.activeSessions(24.hours).toString() }
+              }
+              tr {
+                td { +"Active users in the last week: " }
+                td { +SessionActivites.activeSessions(7.days).toString() }
               }
             }
           }
