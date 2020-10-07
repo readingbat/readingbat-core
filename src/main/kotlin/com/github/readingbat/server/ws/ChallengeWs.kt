@@ -50,6 +50,7 @@ import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.Required
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import mu.KLogging
@@ -82,7 +83,8 @@ internal object ChallengeWs : KLogging() {
 
   @Serializable
   class PingMessage(val msg: String) {
-    val type = Constants.PING_CODE
+    @Required
+    val type: String = Constants.PING_CODE
     fun toJson() = Json.encodeToString(serializer(), this)
   }
 

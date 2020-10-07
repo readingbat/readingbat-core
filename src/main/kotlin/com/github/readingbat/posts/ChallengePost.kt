@@ -63,6 +63,7 @@ import com.github.readingbat.server.ScriptPools.pythonScriptPool
 import io.ktor.application.*
 import io.ktor.request.*
 import io.ktor.response.*
+import kotlinx.serialization.Required
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
@@ -103,7 +104,7 @@ internal class DashboardHistory(val invocation: String,
 internal data class ChallengeHistory(var invocation: Invocation,
                                      var correct: Boolean = false,
                                      var incorrectAttempts: Int = 0,
-                                     val answers: MutableList<String> = mutableListOf()) {
+                                     @Required val answers: MutableList<String> = mutableListOf()) {
 
   fun markCorrect(userResponse: String) {
     correct = true

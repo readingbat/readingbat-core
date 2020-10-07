@@ -21,7 +21,6 @@ import mu.KLogging
 import org.jetbrains.exposed.sql.Count
 import org.jetbrains.exposed.sql.Max
 import org.jetbrains.exposed.sql.SortOrder
-import org.jetbrains.exposed.sql.addLogger
 import org.jetbrains.exposed.sql.countDistinct
 import org.jetbrains.exposed.sql.jodatime.DateColumnType
 import org.jetbrains.exposed.sql.select
@@ -81,7 +80,7 @@ internal object SessionActivites : KLogging() {
 
   fun activeSessions(duration: Duration) =
     transaction {
-      addLogger(KotlinLoggingSqlLogger)
+      //addLogger(KotlinLoggingSqlLogger)
       measureTimedValue {
         ServerRequests
           .slice(ServerRequests.sessionRef.countDistinct())
