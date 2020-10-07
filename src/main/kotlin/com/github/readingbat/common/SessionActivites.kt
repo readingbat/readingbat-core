@@ -83,10 +83,8 @@ internal object SessionActivites : KLogging() {
     transaction {
       addLogger(KotlinLoggingSqlLogger)
       measureTimedValue {
-        val userRef = ServerRequests.userRef
-        val count = Count(userRef)
         ServerRequests
-          .slice(userRef.countDistinct())
+          .slice(ServerRequests.sessionRef.countDistinct())
           .select { ServerRequests.created greater dateTimeExpr("now() - interval '${duration.toLongMilliseconds()} milliseconds'") }
           .map { it[0] as Long }
           .first()
