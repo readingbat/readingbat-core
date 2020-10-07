@@ -30,7 +30,7 @@ import com.github.readingbat.pages.PageUtils.loadStatusPageDisplay
 import com.github.readingbat.server.FullName.Companion.UNKNOWN_FULLNAME
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
-import com.github.readingbat.server.SessionActivites
+import com.github.readingbat.server.SessionActivites.activeSessions
 import com.github.readingbat.server.SessionActivites.querySessionActivities
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
@@ -59,23 +59,23 @@ internal object SessionsPage : KLogging() {
             table {
               tr {
                 td { +"Active users in the last minute: " }
-                td { +SessionActivites.activeSessions(1.minutes).toString() }
+                td { +activeSessions(1.minutes).toString() }
               }
               tr {
                 td { +"Active users in the last 15 minutes: " }
-                td { +SessionActivites.activeSessions(15.minutes).toString() }
+                td { +activeSessions(15.minutes).toString() }
               }
               tr {
                 td { +"Active users in the last hour: " }
-                td { +SessionActivites.activeSessions(1.hours).toString() }
+                td { +activeSessions(1.hours).toString() }
               }
               tr {
                 td { +"Active users in the last 24 hours: " }
-                td { +SessionActivites.activeSessions(24.hours).toString() }
+                td { +activeSessions(24.hours).toString() }
               }
               tr {
                 td { +"Active users in the last week: " }
-                td { +SessionActivites.activeSessions(7.days).toString() }
+                td { +activeSessions(7.days).toString() }
               }
             }
           }

@@ -21,6 +21,8 @@ import mu.KLogging
 import org.jetbrains.exposed.sql.Count
 import org.jetbrains.exposed.sql.Max
 import org.jetbrains.exposed.sql.SortOrder
+import org.jetbrains.exposed.sql.addLogger
+import org.jetbrains.exposed.sql.countDistinct
 import org.jetbrains.exposed.sql.jodatime.DateColumnType
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -31,19 +33,6 @@ import kotlin.time.Duration
 import kotlin.time.measureTimedValue
 
 internal object SessionActivites : KLogging() {
-
-  class QueryInfo(val session_id: String,
-                  val fullName: FullName,
-                  val email: Email,
-                  val ip: String,
-                  val city: String,
-                  val state: String,
-                  val country: String,
-                  val isp: String,
-                  val flagUrl: String,
-                  val userAgent: String,
-                  val count: Long,
-                  val maxDate: DateTime)
 
   private val session_id = BrowserSessions.session_id
   private val fullName = Users.fullName
@@ -92,16 +81,31 @@ internal object SessionActivites : KLogging() {
 
   fun activeSessions(duration: Duration) =
     transaction {
+      addLogger(KotlinLoggingSqlLogger)
       measureTimedValue {
-        val count = Count(ServerRequests.id)
+        val userRef = ServerRequests.userRef
+        val count = Count(userRef)
         ServerRequests
-          .slice(count)
+          .slice(userRef.countDistinct())
           .select { ServerRequests.created greater dateTimeExpr("now() - interval '${duration.toLongMilliseconds()} milliseconds'") }
-          .map { row -> row[count] }
+          .map { it[0] as Long }
           .first()
       }.let { (query, duration) ->
         logger.debug { "Active sessions query took ${duration}" }
         query
       }
     }
+
+  class QueryInfo(val session_id: String,
+                  val fullName: FullName,
+                  val email: Email,
+                  val ip: String,
+                  val city: String,
+                  val state: String,
+                  val country: String,
+                  val isp: String,
+                  val flagUrl: String,
+                  val userAgent: String,
+                  val count: Long,
+                  val maxDate: DateTime)
 }
