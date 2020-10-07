@@ -28,6 +28,7 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import org.joda.time.DateTime
 import org.joda.time.DateTimeZone
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.math.min
 import kotlin.time.Duration
 import kotlin.time.measureTimedValue
 
@@ -55,7 +56,7 @@ internal object SessionActivites : KLogging() {
 
         (ServerRequests innerJoin BrowserSessions innerJoin Users innerJoin GeoInfos)
           .slice(*elems, count, maxDate)
-          .select { created greater dateTimeExpr("now() - interval '$dayCount day'") }
+          .select { created greater dateTimeExpr("now() - interval '${min(dayCount, 14)} day'") }
           .groupBy(*elems)
           .orderBy(maxDate, SortOrder.DESC)
           .map { row ->
