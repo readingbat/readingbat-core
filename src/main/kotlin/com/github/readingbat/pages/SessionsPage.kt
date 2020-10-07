@@ -24,33 +24,20 @@ import com.github.readingbat.common.CSSNames.TD_PADDING
 import com.github.readingbat.common.Endpoints.ADMIN_PREFS_ENDPOINT
 import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.SessionActivites
+import com.github.readingbat.common.SessionActivites.querySessionActivities
 import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyTitle
 import com.github.readingbat.pages.PageUtils.headDefault
 import com.github.readingbat.pages.PageUtils.loadStatusPageDisplay
-import com.github.readingbat.server.BrowserSessions
-import com.github.readingbat.server.Email
-import com.github.readingbat.server.FullName
 import com.github.readingbat.server.FullName.Companion.UNKNOWN_FULLNAME
-import com.github.readingbat.server.GeoInfos
 import com.github.readingbat.server.PipelineCall
-import com.github.readingbat.server.ServerRequests
 import com.github.readingbat.server.ServerUtils.queryParam
-import com.github.readingbat.server.Users
-import com.github.readingbat.server.dateTimeExpr
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 import mu.KLogging
-import org.jetbrains.exposed.sql.Count
-import org.jetbrains.exposed.sql.Max
-import org.jetbrains.exposed.sql.SortOrder
-import org.jetbrains.exposed.sql.jodatime.DateColumnType
-import org.jetbrains.exposed.sql.select
-import org.jetbrains.exposed.sql.transactions.transaction
 import org.joda.time.DateTime
 import org.joda.time.DateTimeZone.UTC
 import kotlin.time.hours
-import kotlin.time.measureTimedValue
 import kotlin.time.milliseconds
 import kotlin.time.minutes
 
@@ -85,68 +72,10 @@ internal object SessionsPage : KLogging() {
           }
 
           val dayCount = queryParam("days", "2").toInt()
-
-          class QueryInfo(val session_id: String,
-                          val fullName: FullName,
-                          val email: Email,
-                          val ip: String,
-                          val city: String,
-                          val state: String,
-                          val country: String,
-                          val isp: String,
-                          val flagUrl: String,
-                          val userAgent: String,
-                          val count: Long,
-                          val maxDate: DateTime)
-
-          val rows =
-            transaction {
-              //addLogger(KotlinLoggingSqlLogger)
-              measureTimedValue {
-                val session_id = BrowserSessions.session_id
-                val fullName = Users.fullName
-                val email = Users.email
-                val ip = GeoInfos.ip
-                val city = GeoInfos.city
-                val state = GeoInfos.stateProv
-                val country = GeoInfos.countryName
-                val isp = GeoInfos.organization
-                val flagUrl = GeoInfos.countryFlag
-                val userAgent = ServerRequests.userAgent
-                val count = Count(Users.id)
-                val maxDate = Max(ServerRequests.created, DateColumnType(true))
-                val created = ServerRequests.created
-
-                val elems = arrayOf(session_id, fullName, email, ip, city, state, country, isp, flagUrl, userAgent)
-
-                (ServerRequests innerJoin BrowserSessions innerJoin Users innerJoin GeoInfos)
-                  .slice(*elems, count, maxDate)
-                  .select { created greater dateTimeExpr("now() - interval '$dayCount day'") }
-                  .groupBy(*elems)
-                  .orderBy(maxDate, SortOrder.DESC)
-                  .map { row ->
-                    QueryInfo(row[session_id],
-                              FullName(row[fullName]),
-                              Email(row[email]),
-                              row[ip],
-                              row[city],
-                              row[state],
-                              row[country],
-                              row[isp],
-                              row[flagUrl],
-                              row[userAgent],
-                              row[count],
-                              row[maxDate] ?: DateTime.now(UTC))
-                  }
-              }.let { (query, duration) ->
-                logger.info { "User sessions query took ${duration}" }
-                query
-              }
-
-            }
-
+          val rows = querySessionActivities(dayCount)
           val sessions = "Session".pluralize(rows.size)
           val days = "Day".pluralize(dayCount)
+
           h3 { +"${rows.size} User $sessions in $dayCount $days" }
 
           div(classes = TD_PADDING) {

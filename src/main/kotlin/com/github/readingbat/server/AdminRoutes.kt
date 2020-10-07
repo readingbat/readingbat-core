@@ -27,12 +27,13 @@ import com.github.readingbat.common.BrowserSession
 import com.github.readingbat.common.Constants.NO_TRACK_HEADER
 import com.github.readingbat.common.Endpoints.PING_ENDPOINT
 import com.github.readingbat.common.Endpoints.THREAD_DUMP
+import com.github.readingbat.common.GeoInfo.Companion.lookupGeoInfo
 import com.github.readingbat.common.Metrics
-import com.github.readingbat.common.SessionActivites.markActivity
 import com.github.readingbat.common.UserPrincipal
 import com.github.readingbat.common.browserSession
 import com.github.readingbat.common.userPrincipal
 import com.github.readingbat.dsl.isPostgresEnabled
+import com.github.readingbat.dsl.isSaveRequestsEnabled
 import com.github.readingbat.server.ServerUtils.get
 import io.ktor.application.*
 import io.ktor.features.*
@@ -149,7 +150,12 @@ internal object AdminRoutes : KLogging() {
     if (call.browserSession.isNull()) {
       val browserSession = BrowserSession(id = randomId(15))
       call.sessions.set(browserSession)
-      browserSession.markActivity("assignBrowserSession()", call)
+
+      if (isSaveRequestsEnabled()) {
+        val ipAddress = call.request.origin.remoteHost
+        lookupGeoInfo(ipAddress)
+      }
+
       logger.debug { "Created browser session: ${browserSession.id} - ${call.request.origin.remoteHost}" }
     }
   }

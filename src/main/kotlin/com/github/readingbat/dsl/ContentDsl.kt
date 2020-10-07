@@ -27,6 +27,7 @@ import com.github.pambrose.common.util.isNotNull
 import com.github.readingbat.common.CommonUtils.keyOf
 import com.github.readingbat.common.CommonUtils.md5Of
 import com.github.readingbat.common.Constants.UNASSIGNED
+import com.github.readingbat.common.EnvVar.IPGEOLOCATION_KEY
 import com.github.readingbat.common.KeyConstants.CONTENT_DSL_KEY
 import com.github.readingbat.common.Property.AGENT_ENABLED_PROPERTY
 import com.github.readingbat.common.Property.AGENT_LAUNCH_ID
@@ -66,7 +67,8 @@ fun isProduction() = IS_PRODUCTION.getProperty(false)
 
 internal fun isPostgresEnabled() = POSTGRES_ENABLED.getProperty(false)
 
-internal fun isSaveRequestsEnabled() = SAVE_REQUESTS_ENABLED.getProperty(true) && isPostgresEnabled()
+internal fun isSaveRequestsEnabled() =
+  SAVE_REQUESTS_ENABLED.getProperty(true) && isPostgresEnabled() && IPGEOLOCATION_KEY.isDefined()
 
 internal fun isContentCachingEnabled() = CONTENT_CACHING_ENABLED.getProperty(false) && isPostgresEnabled()
 

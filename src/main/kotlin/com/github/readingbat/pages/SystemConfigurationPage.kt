@@ -33,7 +33,6 @@ import com.github.readingbat.common.Property.KTOR_WATCH
 import com.github.readingbat.common.Property.PROXY_HOSTNAME
 import com.github.readingbat.common.SessionActivites
 import com.github.readingbat.common.SessionActivites.geoInfoMap
-import com.github.readingbat.common.SessionActivites.sessionsMap
 import com.github.readingbat.common.User.Companion.emailCache
 import com.github.readingbat.common.User.Companion.userIdCache
 import com.github.readingbat.dsl.LanguageType.Java
@@ -150,7 +149,6 @@ internal object SystemConfigurationPage {
             div(classes = INDENT_1EM) {
               table {
                 listOf(
-                  "Active sessions map size" to sessionsMap,
                   "Request timing map size" to requestTimingMap,
                   "IP Geo map size" to geoInfoMap,
                   "Content map size" to content.contentMap,

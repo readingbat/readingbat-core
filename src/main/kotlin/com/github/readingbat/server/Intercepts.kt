@@ -22,10 +22,11 @@ import com.github.readingbat.common.BrowserSession.Companion.querySessionDbmsId
 import com.github.readingbat.common.Constants.STATIC
 import com.github.readingbat.common.Constants.UNKNOWN_USER_ID
 import com.github.readingbat.common.Endpoints.PING_ENDPOINT
-import com.github.readingbat.common.SessionActivites.markActivity
-import com.github.readingbat.common.SessionActivites.queryGeoDbmsIdByIpAddress
+import com.github.readingbat.common.GeoInfo.Companion.lookupGeoInfo
+import com.github.readingbat.common.GeoInfo.Companion.queryGeoInfo
 import com.github.readingbat.common.User.Companion.fetchUserDbmsIdFromCache
 import com.github.readingbat.common.browserSession
+import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.isSaveRequestsEnabled
 import com.github.readingbat.server.Intercepts.clock
 import com.github.readingbat.server.Intercepts.logger
@@ -82,9 +83,6 @@ internal fun Application.intercepts() {
 
     if (!isStaticCall()) {
       val browserSession = call.browserSession
-      //logger.info { "${context.request.origin.remoteHost} $browserSession ${context.request.path()}" }
-      browserSession?.markActivity("intercept()", call)
-        ?: logger.debug { "Null browser sessions for ${call.request.origin.remoteHost}" }
 
       if (isSaveRequestsEnabled() && browserSession.isNotNull()) {
         val request = call.request
@@ -92,11 +90,18 @@ internal fun Application.intercepts() {
         val sessionDbmsId = transaction { querySessionDbmsId(browserSession.id) }
         val userDbmsId =
           call.fetchUserDbmsIdFromCache().takeIf { it != -1L } ?: fetchUserDbmsIdFromCache(UNKNOWN_USER_ID)
-        val geoDbmsId = transaction { queryGeoDbmsIdByIpAddress(ipAddress) }
         val verb = request.httpMethod.value
         val path = request.path()
         val queryString = request.queryString()
+        // Use https://ipgeolocation.io/documentation/user-agent-api.html to parse userAgent data
         val userAgent = request.headers[UserAgent] ?: ""
+
+        val geoInfo = lookupGeoInfo(ipAddress)
+        val geoDbmsId =
+          if (geoInfo.requireDbmsLookUp)
+            queryGeoInfo(ipAddress)?.dbmsId ?: throw InvalidConfigurationException("Missing ip address: $ipAddress")
+          else
+            geoInfo.dbmsId
 
         logger.debug { "Saving request: ${call.callId} $ipAddress $userDbmsId $verb $path $queryString $geoDbmsId" }
         transaction {
