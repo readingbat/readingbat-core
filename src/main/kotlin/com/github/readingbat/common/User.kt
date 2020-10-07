@@ -563,7 +563,7 @@ internal class User {
               Users
                 .insertAndGetId { row ->
                   row[userId] = user.userId
-                  row[Users.fullName] = name.value
+                  row[fullName] = name.value
                   row[Users.email] = email.value
                   row[enrolledClassCode] = DISABLED_CLASS_CODE.value
                   row[defaultLanguage] = defaultLanguageType.languageName.value

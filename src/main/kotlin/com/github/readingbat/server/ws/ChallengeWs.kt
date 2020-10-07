@@ -68,7 +68,7 @@ internal object ChallengeWs : KLogging() {
   val singleServerChannel by lazy { BroadcastChannel<PublishedData>(BUFFERED) }
   val multiServerWriteChannel by lazy { BroadcastChannel<PublishedData>(BUFFERED) }
   private val multiServerReadChannel by lazy { BroadcastChannel<PublishedData>(BUFFERED) }
-  val wsConnections = Collections.synchronizedSet(LinkedHashSet<SessionContext>())
+  val wsConnections: MutableSet<SessionContext> = Collections.synchronizedSet(LinkedHashSet<SessionContext>())
   var maxWsConnections = 0
 
   @Synchronized

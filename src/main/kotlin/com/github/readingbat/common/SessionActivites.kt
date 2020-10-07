@@ -15,8 +15,16 @@
  *
  */
 
-package com.github.readingbat.server
+package com.github.readingbat.common
 
+import com.github.readingbat.server.BrowserSessions
+import com.github.readingbat.server.Email
+import com.github.readingbat.server.FullName
+import com.github.readingbat.server.GeoInfos
+import com.github.readingbat.server.ServerRequests
+import com.github.readingbat.server.Users
+import com.github.readingbat.server.dateTimeExpr
+import com.github.readingbat.server.get
 import mu.KLogging
 import org.jetbrains.exposed.sql.Count
 import org.jetbrains.exposed.sql.Max
@@ -27,7 +35,6 @@ import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.joda.time.DateTime
 import org.joda.time.DateTimeZone
-import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.min
 import kotlin.time.Duration
 import kotlin.time.measureTimedValue
@@ -45,9 +52,21 @@ internal object SessionActivites : KLogging() {
   private val flagUrl = GeoInfos.countryFlag
   private val userAgent = ServerRequests.userAgent
   private val created = ServerRequests.created
-  val geoInfoMap = ConcurrentHashMap<String, GeoInfo>()
 
-  fun querySessionActivities(dayCount: Int) =
+  class QueryInfo(val session_id: String,
+                  val fullName: FullName,
+                  val email: Email,
+                  val ip: String,
+                  val city: String,
+                  val state: String,
+                  val country: String,
+                  val isp: String,
+                  val flagUrl: String,
+                  val userAgent: String,
+                  val count: Long,
+                  val maxDate: DateTime)
+
+  fun querySessions(dayCount: Int) =
     transaction {
       measureTimedValue {
         val count = Count(Users.id)
@@ -74,7 +93,7 @@ internal object SessionActivites : KLogging() {
                       row[maxDate] ?: DateTime.now(DateTimeZone.UTC))
           }
       }.let { (query, duration) ->
-        logger.debug { "User sessions query took ${duration}" }
+        logger.debug { "User sessions query took $duration" }
         query
       }
     }
@@ -83,27 +102,16 @@ internal object SessionActivites : KLogging() {
     transaction {
       //addLogger(KotlinLoggingSqlLogger)
       measureTimedValue {
+        val sessionRef = ServerRequests.sessionRef
+        val created = ServerRequests.created
         ServerRequests
-          .slice(ServerRequests.sessionRef.countDistinct())
-          .select { ServerRequests.created greater dateTimeExpr("now() - interval '${duration.toLongMilliseconds()} milliseconds'") }
+          .slice(sessionRef.countDistinct())
+          .select { created greater dateTimeExpr("now() - interval '${duration.toLongMilliseconds()} milliseconds'") }
           .map { it[0] as Long }
           .first()
       }.let { (query, duration) ->
-        logger.debug { "Active sessions query took ${duration}" }
+        logger.debug { "Active sessions query took $duration" }
         query
       }
     }
-
-  class QueryInfo(val session_id: String,
-                  val fullName: FullName,
-                  val email: Email,
-                  val ip: String,
-                  val city: String,
-                  val state: String,
-                  val country: String,
-                  val isp: String,
-                  val flagUrl: String,
-                  val userAgent: String,
-                  val count: Long,
-                  val maxDate: DateTime)
 }

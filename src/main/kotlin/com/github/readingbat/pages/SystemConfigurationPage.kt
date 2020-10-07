@@ -31,6 +31,7 @@ import com.github.readingbat.common.Property.DSL_VARIABLE_NAME
 import com.github.readingbat.common.Property.KTOR_PORT
 import com.github.readingbat.common.Property.KTOR_WATCH
 import com.github.readingbat.common.Property.PROXY_HOSTNAME
+import com.github.readingbat.common.SessionActivites.activeSessions
 import com.github.readingbat.common.User.Companion.emailCache
 import com.github.readingbat.common.User.Companion.userIdCache
 import com.github.readingbat.dsl.LanguageType.Java
@@ -48,12 +49,11 @@ import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyTitle
 import com.github.readingbat.pages.PageUtils.headDefault
 import com.github.readingbat.pages.PageUtils.loadStatusPageDisplay
+import com.github.readingbat.server.GeoInfo.Companion.geoInfoMap
 import com.github.readingbat.server.Intercepts.requestTimingMap
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ReadingBatServer
 import com.github.readingbat.server.ServerUtils.queryParam
-import com.github.readingbat.server.SessionActivites.activeSessions
-import com.github.readingbat.server.SessionActivites.geoInfoMap
 import com.github.readingbat.server.ws.ChallengeWs.maxWsConnections
 import com.github.readingbat.server.ws.ChallengeWs.wsConnections
 import io.prometheus.Agent

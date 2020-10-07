@@ -29,34 +29,35 @@ import kotlinx.coroutines.runBlocking
 import mu.KLogging
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
+import java.util.concurrent.ConcurrentHashMap
 
 internal class GeoInfo(val requireDbmsLookUp: Boolean, val dbmsId: Long, val remoteHost: String, val json: String) {
-  val valid get() = json.isNotBlank()
+  private val valid get() = json.isNotBlank()
 
   //private val map = if (json.isNotBlank()) Json.decodeFromString<Map<String, Any?>>(json) else emptyMap()
   private val map = if (json.isNotBlank()) gson.fromJson(json, Map::class.java) as Map<String, Any?> else emptyMap()
 
-  val ip by map
-  val continent_code by map
-  val continent_name by map
-  val country_code2 by map
-  val country_code3 by map
-  val country_name by map
-  val country_capital by map
-  val district by map
-  val city by map
-  val state_prov by map
-  val zipcode by map
-  val latitude by map
-  val longitude by map
-  val is_eu by map
-  val calling_code by map
-  val country_tld by map
-  val country_flag by map
-  val isp by map
-  val connection_type by map
-  val organization by map
-  val time_zone by map
+  private val ip by map
+  private val continent_code by map
+  private val continent_name by map
+  private val country_code2 by map
+  private val country_code3 by map
+  private val country_name by map
+  private val country_capital by map
+  private val district by map
+  private val city by map
+  private val state_prov by map
+  private val zipcode by map
+  private val latitude by map
+  private val longitude by map
+  private val is_eu by map
+  private val calling_code by map
+  private val country_tld by map
+  private val country_flag by map
+  private val isp by map
+  private val connection_type by map
+  private val organization by map
+  private val time_zone by map
 
   fun summary() =
     if (valid) listOf(city, state_prov, country_name, organization).joinToString(", ") else Constants.UNKNOWN
@@ -98,6 +99,7 @@ internal class GeoInfo(val requireDbmsLookUp: Boolean, val dbmsId: Long, val rem
 
   companion object : KLogging() {
     val gson = Gson()
+    val geoInfoMap = ConcurrentHashMap<String, GeoInfo>()
 
     private fun callGeoInfoApi(ipAddress: String) =
       runBlocking {
@@ -120,7 +122,7 @@ internal class GeoInfo(val requireDbmsLookUp: Boolean, val dbmsId: Long, val rem
       }
 
     fun lookupGeoInfo(ipAddress: String) =
-      SessionActivites.geoInfoMap.computeIfAbsent(ipAddress) { ip ->
+      geoInfoMap.computeIfAbsent(ipAddress) { ip ->
         queryGeoInfo(ip)?.apply { logger.info { "Postgres GEO info for $ip: ${summary()}" } }
           ?: try {
             callGeoInfoApi(ip)

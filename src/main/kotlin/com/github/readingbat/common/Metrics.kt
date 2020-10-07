@@ -21,13 +21,13 @@ import com.github.pambrose.common.dsl.PrometheusDsl.counter
 import com.github.pambrose.common.dsl.PrometheusDsl.gauge
 import com.github.pambrose.common.dsl.PrometheusDsl.summary
 import com.github.pambrose.common.metrics.SamplerGaugeCollector
+import com.github.readingbat.common.SessionActivites.activeSessions
 import com.github.readingbat.common.User.Companion.emailCache
 import com.github.readingbat.common.User.Companion.userIdCache
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.agentLaunchId
+import com.github.readingbat.server.GeoInfo.Companion.geoInfoMap
 import com.github.readingbat.server.Intercepts.requestTimingMap
-import com.github.readingbat.server.SessionActivites.activeSessions
-import com.github.readingbat.server.SessionActivites.geoInfoMap
 import com.github.readingbat.server.ws.ChallengeWs.wsConnections
 import kotlin.time.hours
 import kotlin.time.minutes

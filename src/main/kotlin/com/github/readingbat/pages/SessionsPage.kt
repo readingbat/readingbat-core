@@ -25,6 +25,8 @@ import com.github.readingbat.common.Endpoints.ADMIN_PREFS_ENDPOINT
 import com.github.readingbat.common.FormFields.DAYS_DEFAULT
 import com.github.readingbat.common.FormFields.DAYS_PARAM
 import com.github.readingbat.common.FormFields.RETURN_PARAM
+import com.github.readingbat.common.SessionActivites.activeSessions
+import com.github.readingbat.common.SessionActivites.querySessions
 import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyTitle
 import com.github.readingbat.pages.PageUtils.headDefault
@@ -32,8 +34,6 @@ import com.github.readingbat.pages.PageUtils.loadStatusPageDisplay
 import com.github.readingbat.server.FullName.Companion.UNKNOWN_FULLNAME
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
-import com.github.readingbat.server.SessionActivites.activeSessions
-import com.github.readingbat.server.SessionActivites.querySessionActivities
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 import mu.KLogging
@@ -83,7 +83,7 @@ internal object SessionsPage : KLogging() {
           }
 
           val dayCount = queryParam(DAYS_PARAM, DAYS_DEFAULT).toInt()
-          val rows = querySessionActivities(dayCount)
+          val rows = querySessions(dayCount)
           val sessions = "Session".pluralize(rows.size)
           val days = "Day".pluralize(dayCount)
 

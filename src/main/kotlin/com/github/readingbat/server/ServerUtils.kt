@@ -182,7 +182,8 @@ open class CustomExpr<T>(val str: String, _columnType: IColumnType) : Function<T
 operator fun ResultRow.get(index: Int) = fieldIndex.filter { it.value == index }.map { this[it.key] }.firstOrNull()
   ?: throw IllegalArgumentException("No value at index $index")
 
-fun ResultRow.toRowString() = fieldIndex.values.map { this[it].toString() }.filter { it.length > 0 }.joinToString(" - ")
+fun ResultRow.toRowString() =
+  fieldIndex.values.map { this[it].toString() }.filter { it.isNotEmpty() }.joinToString(" - ")
 
 object KotlinLoggingSqlLogger : SqlLogger {
   override
