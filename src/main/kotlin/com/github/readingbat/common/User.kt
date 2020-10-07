@@ -78,7 +78,7 @@ internal class User {
             .map { assignRowVals(it) }
             .firstOrNull() ?: throw InvalidConfigurationException("UserId not found: ${this@User.userId}")
         }
-      }.also { logger.info { "Selected user info in $it" } }
+      }.also { logger.debug { "Selected user info in $it" } }
     }
   }
 
