@@ -22,6 +22,8 @@ import com.github.pambrose.common.util.pluralize
 import com.github.readingbat.common.CSSNames.INDENT_1EM
 import com.github.readingbat.common.CSSNames.TD_PADDING
 import com.github.readingbat.common.Endpoints.ADMIN_PREFS_ENDPOINT
+import com.github.readingbat.common.FormFields.DAYS_DEFAULT
+import com.github.readingbat.common.FormFields.DAYS_PARAM
 import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyTitle
@@ -80,7 +82,7 @@ internal object SessionsPage : KLogging() {
             }
           }
 
-          val dayCount = queryParam("days", "2").toInt()
+          val dayCount = queryParam(DAYS_PARAM, DAYS_DEFAULT).toInt()
           val rows = querySessionActivities(dayCount)
           val sessions = "Session".pluralize(rows.size)
           val days = "Day".pluralize(dayCount)
