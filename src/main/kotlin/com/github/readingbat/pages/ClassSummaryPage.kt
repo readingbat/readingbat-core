@@ -311,18 +311,19 @@ internal object ClassSummaryPage : KLogging() {
                     .forEach { challenge ->
                       td {
                         table {
+                          val encodedName = challenge.challengeName.encode()
                           tr {
                             challenge.functionInfo(content).invocations
                               .forEachIndexed { i, _ ->
                                 td(classes = INVOC_TD) {
-                                  id = "${student.userId}-${challenge.challengeName.encode()}-$i"; +""
+                                  id = "${student.userId}-$encodedName-$i"; +""
                                 }
                               }
                             td(classes = INVOC_STAT) {
-                              id = "${student.userId}-${challenge.challengeName.encode()}$STATS"; +""
+                              id = "${student.userId}-$encodedName$STATS"; +""
                             }
                             td {
-                              id = "${student.userId}-${challenge.challengeName.encode()}$LIKE_DISLIKE"; +""
+                              id = "${student.userId}-$encodedName$LIKE_DISLIKE"; +""
                             }
                           }
                         }
@@ -367,7 +368,6 @@ internal object ClassSummaryPage : KLogging() {
               answers.style.backgroundColor = obj.results[i] == '$YES' ? '$CORRECT_COLOR' 
                                                                     : (obj.results[i] == '$NO' ? '$WRONG_COLOR' 
                                                                                              : '$INCOMPLETE_COLOR');
-      
               document.getElementById(prefix + '$STATS').innerText = obj.stats;
               document.getElementById(prefix + '$LIKE_DISLIKE').innerHTML = obj.likeDislike;
             }

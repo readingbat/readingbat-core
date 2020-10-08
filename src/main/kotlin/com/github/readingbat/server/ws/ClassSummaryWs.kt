@@ -119,14 +119,15 @@ internal object ClassSummaryWs : KLogging() {
                         break
                     }
 
-                    if (incorrectAttempts > 0 || results.any { it != UNANSWERED }) {
+                    val likeDislike = enrollee.likeDislike(challenge)
+                    if (incorrectAttempts > 0 || results.any { it != UNANSWERED } || likeDislike != 0) {
                       val json =
                         ClassSummary(enrollee.userId,
                                      challengeName.encode(),
                                      results,
                                      if (incorrectAttempts == 0 && results.all { it == UNANSWERED }) "" else incorrectAttempts.toString(),
                           // TODO Consolidate this into a single call per user
-                                     enrollee.likeDislikeEmoji(challenge)
+                                     enrollee.likeDislikeEmoji(likeDislike)
                                     ).toJson()
 
                       metrics.wsClassSummaryResponseCount.labels(agentLaunchId()).inc()

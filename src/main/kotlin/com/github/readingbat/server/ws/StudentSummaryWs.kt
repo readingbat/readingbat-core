@@ -120,10 +120,17 @@ internal object StudentSummaryWs : KLogging() {
                       break
                   }
 
-                  if (incorrectAttempts > 0 || results.any { it != UNANSWERED }) {
-                    val msg =
+                  val likeDislike = student.likeDislike(challenge)
+
+                  if (incorrectAttempts > 0 || results.any { it != UNANSWERED } || likeDislike != 0) {
+                    val stats =
                       if (incorrectAttempts == 0 && results.all { it == UNANSWERED }) "" else incorrectAttempts.toString()
-                    val json = StudentSummary(groupName.encode(), challengeName.encode(), results, msg).toJson()
+                    val json =
+                      StudentSummary(groupName.encode(),
+                                     challengeName.encode(),
+                                     results,
+                                     stats,
+                                     student.likeDislikeEmoji(likeDislike)).toJson()
 
                     metrics.wsClassSummaryResponseCount.labels(agentLaunchId()).inc()
                     logger.debug { "Sending data $json" }
@@ -151,7 +158,11 @@ internal object StudentSummaryWs : KLogging() {
   }
 
   @Serializable
-  class StudentSummary(val groupName: String, val challengeName: String, val results: List<String>, val msg: String) {
+  class StudentSummary(val groupName: String,
+                       val challengeName: String,
+                       val results: List<String>,
+                       val stats: String,
+                       val likeDislike: String) {
     fun toJson() = Json.encodeToString(serializer(), this)
   }
 }

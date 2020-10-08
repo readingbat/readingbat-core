@@ -48,6 +48,7 @@ import com.github.readingbat.common.isNotValidUser
 import com.github.readingbat.dsl.InvalidRequestException
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.pages.ChallengePage.headerColor
+import com.github.readingbat.pages.ClassSummaryPage.LIKE_DISLIKE
 import com.github.readingbat.pages.ClassSummaryPage.STATS
 import com.github.readingbat.pages.HelpAndLogin.helpAndLogin
 import com.github.readingbat.pages.PageUtils.backLink
@@ -181,15 +182,20 @@ internal object StudentSummaryPage : KLogging() {
                       .forEach { challenge ->
                         td {
                           table {
+                            val encodedGroup = group.groupName.encode()
+                            val encodedName = challenge.challengeName.encode()
                             tr {
                               challenge.functionInfo(content).invocations
                                 .forEachIndexed { i, _ ->
                                   td(classes = INVOC_TD) {
-                                    id = "${group.groupName.encode()}-${challenge.challengeName.encode()}-$i"; +""
+                                    id = "$encodedGroup-$encodedName-$i"; +""
                                   }
                                 }
                               td(classes = INVOC_STAT) {
-                                id = "${group.groupName.encode()}-${challenge.challengeName.encode()}$STATS"; +""
+                                id = "$encodedGroup-$encodedName$STATS"; +""
+                              }
+                              td {
+                                id = "$encodedGroup-$encodedName$LIKE_DISLIKE"; +""
                               }
                             }
                           }
@@ -233,9 +239,9 @@ internal object StudentSummaryPage : KLogging() {
               answers.style.backgroundColor = obj.results[i] == '$YES' ? '$CORRECT_COLOR' 
                                                                     : (obj.results[i] == '$NO' ? '$WRONG_COLOR' 
                                                                                              : '$INCOMPLETE_COLOR');
-      
-              document.getElementById(prefix + '$STATS').innerText = obj.msg;
-            }
+              document.getElementById(prefix + '$STATS').innerText = obj.stats;
+              document.getElementById(prefix + '$LIKE_DISLIKE').innerHTML = obj.likeDislike;
+   }
           };
         """.trimIndent())
     }
