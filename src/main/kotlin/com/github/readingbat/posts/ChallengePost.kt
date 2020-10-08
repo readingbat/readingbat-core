@@ -20,8 +20,6 @@ package com.github.readingbat.posts
 import com.github.pambrose.common.util.*
 import com.github.readingbat.common.BrowserSession
 import com.github.readingbat.common.BrowserSession.Companion.querySessionDbmsId
-import com.github.readingbat.common.CommonUtils.md5Of
-import com.github.readingbat.common.CommonUtils.pathOf
 import com.github.readingbat.common.Constants
 import com.github.readingbat.common.Constants.CHALLENGE_SRC
 import com.github.readingbat.common.Constants.GROUP_SRC

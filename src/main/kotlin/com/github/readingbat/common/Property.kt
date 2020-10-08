@@ -19,7 +19,7 @@ package com.github.readingbat.common
 
 import com.github.pambrose.common.redis.RedisUtils
 import com.github.pambrose.common.util.isNotNull
-import com.github.readingbat.common.CommonUtils.obfuscate
+import com.github.pambrose.common.util.obfuscate
 import com.github.readingbat.common.Constants.UNASSIGNED
 import com.github.readingbat.common.PropertyNames.AGENT
 import com.github.readingbat.common.PropertyNames.CHALLENGES

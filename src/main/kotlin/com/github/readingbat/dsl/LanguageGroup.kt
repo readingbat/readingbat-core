@@ -21,7 +21,8 @@ import com.github.pambrose.common.util.ContentRoot
 import com.github.pambrose.common.util.ContentSource
 import com.github.pambrose.common.util.asRegex
 import com.github.pambrose.common.util.decode
-import com.github.readingbat.common.CommonUtils.pathOf
+import com.github.pambrose.common.util.pathOf
+
 import com.github.readingbat.server.GroupName
 import com.github.readingbat.server.ReadingBatServer
 

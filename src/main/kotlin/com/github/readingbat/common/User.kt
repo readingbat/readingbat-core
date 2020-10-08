@@ -19,11 +19,11 @@ package com.github.readingbat.common
 
 import com.github.pambrose.common.util.isNotNull
 import com.github.pambrose.common.util.isNull
+import com.github.pambrose.common.util.md5Of
 import com.github.pambrose.common.util.newStringSalt
 import com.github.pambrose.common.util.randomId
 import com.github.readingbat.common.ClassCode.Companion.DISABLED_CLASS_CODE
 import com.github.readingbat.common.CommonUtils.keyOf
-import com.github.readingbat.common.CommonUtils.md5Of
 import com.github.readingbat.common.Constants.UNKNOWN
 import com.github.readingbat.common.Endpoints.THUMBS_DOWN
 import com.github.readingbat.common.Endpoints.THUMBS_UP

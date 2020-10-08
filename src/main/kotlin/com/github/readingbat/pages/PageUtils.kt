@@ -18,12 +18,12 @@
 package com.github.readingbat.pages
 
 import com.github.pambrose.common.util.isNull
+import com.github.pambrose.common.util.pathOf
 import com.github.pambrose.common.util.pluralize
 import com.github.pambrose.common.util.toRootPath
 import com.github.readingbat.common.CSSNames.INDENT_1EM
 import com.github.readingbat.common.CSSNames.SELECTED_TAB
 import com.github.readingbat.common.ClassCode
-import com.github.readingbat.common.CommonUtils.pathOf
 import com.github.readingbat.common.Constants.ICONS
 import com.github.readingbat.common.Endpoints.CHALLENGE_ROOT
 import com.github.readingbat.common.Endpoints.CSS_ENDPOINT

@@ -22,8 +22,8 @@ import com.github.pambrose.common.dsl.KtorDsl.withHttpClient
 import com.github.pambrose.common.util.ContentRoot
 import com.github.pambrose.common.util.ContentSource
 import com.github.pambrose.common.util.FileSystemSource
+import com.github.pambrose.common.util.pathOf
 import com.github.pambrose.common.util.pluralize
-import com.github.readingbat.common.CommonUtils.pathOf
 import com.github.readingbat.common.Constants.NO_TRACK_HEADER
 import com.github.readingbat.common.FunctionInfo
 import com.github.readingbat.common.PropertyNames.CONTENT

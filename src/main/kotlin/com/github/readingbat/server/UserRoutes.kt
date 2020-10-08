@@ -19,7 +19,8 @@ package com.github.readingbat.server
 
 import com.github.pambrose.common.response.redirectTo
 import com.github.pambrose.common.response.respondWith
-import com.github.readingbat.common.CommonUtils.pathOf
+import com.github.pambrose.common.util.pathOf
+
 import com.github.readingbat.common.Constants.ICONS
 import com.github.readingbat.common.Endpoints.ABOUT_ENDPOINT
 import com.github.readingbat.common.Endpoints.ADMIN_ENDPOINT

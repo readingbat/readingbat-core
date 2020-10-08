@@ -17,8 +17,8 @@
 
 package com.github.readingbat.pages
 
+import com.github.pambrose.common.util.pathOf
 import com.github.readingbat.common.CSSNames.INDENT_1EM
-import com.github.readingbat.common.CommonUtils.pathOf
 import com.github.readingbat.common.Endpoints.ABOUT_ENDPOINT
 import com.github.readingbat.common.Endpoints.STATIC_ROOT
 import com.github.readingbat.common.Endpoints.TEACHER_PREFS_ENDPOINT

@@ -18,13 +18,13 @@
 package com.github.readingbat.pages
 
 import com.github.pambrose.common.util.encode
+import com.github.pambrose.common.util.pathOf
 import com.github.readingbat.common.CSSNames.BTN
 import com.github.readingbat.common.CSSNames.INDENT_2EM
 import com.github.readingbat.common.CSSNames.INVOC_STAT
 import com.github.readingbat.common.CSSNames.INVOC_TD
 import com.github.readingbat.common.CSSNames.UNDERLINE
 import com.github.readingbat.common.ClassCode
-import com.github.readingbat.common.CommonUtils.pathOf
 import com.github.readingbat.common.Constants.CLASS_CODE_QP
 import com.github.readingbat.common.Constants.CORRECT_COLOR
 import com.github.readingbat.common.Constants.GROUP_NAME_QP

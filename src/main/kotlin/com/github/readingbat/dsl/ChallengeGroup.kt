@@ -23,9 +23,9 @@ import com.github.pambrose.common.util.FileSystemSource
 import com.github.pambrose.common.util.GitHubRepo
 import com.github.pambrose.common.util.ensureSuffix
 import com.github.pambrose.common.util.isNotNull
+import com.github.pambrose.common.util.md5Of
+import com.github.pambrose.common.util.pathOf
 import com.github.readingbat.common.CommonUtils.keyOf
-import com.github.readingbat.common.CommonUtils.md5Of
-import com.github.readingbat.common.CommonUtils.pathOf
 import com.github.readingbat.common.KeyConstants.DIR_CONTENTS_KEY
 import com.github.readingbat.dsl.Challenge.Companion.challenge
 import com.github.readingbat.dsl.GitHubUtils.organizationDirectoryContents

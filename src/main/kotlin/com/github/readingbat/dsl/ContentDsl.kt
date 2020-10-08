@@ -24,8 +24,8 @@ import com.github.pambrose.common.util.GitHubFile
 import com.github.pambrose.common.util.GitHubRepo
 import com.github.pambrose.common.util.OwnerType
 import com.github.pambrose.common.util.isNotNull
+import com.github.pambrose.common.util.md5Of
 import com.github.readingbat.common.CommonUtils.keyOf
-import com.github.readingbat.common.CommonUtils.md5Of
 import com.github.readingbat.common.Constants.UNASSIGNED
 import com.github.readingbat.common.EnvVar.IPGEOLOCATION_KEY
 import com.github.readingbat.common.KeyConstants.CONTENT_DSL_KEY

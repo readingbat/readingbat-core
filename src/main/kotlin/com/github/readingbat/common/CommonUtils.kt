@@ -17,27 +17,10 @@
 
 package com.github.readingbat.common
 
-import com.github.pambrose.common.util.join
-import com.github.pambrose.common.util.md5
+import com.github.readingbat.common.KeyConstants.KEY_SEP
 
 internal object CommonUtils {
 
-  fun keyOf(vararg keys: Any) = keys.joinToString(KeyConstants.KEY_SEP) { it.toString() }
+  fun keyOf(vararg keys: Any) = keys.joinToString(KEY_SEP) { it.toString() }
 
-  fun md5Of(vararg keys: Any) = keys.joinToString(KeyConstants.KEY_SEP) { it.toString() }.md5()
-
-  fun pathOf(vararg elems: Any): String = elems.toList().map { it.toString() }.join("/")
-
-  fun String.maskUrl() =
-    if ("://" in this && "@" in this) {
-      val scheme = split("://")
-      val uri = split("@")
-      "${scheme[0]}://*****:*****@${uri[1]}"
-    }
-    else {
-      this
-    }
-
-  fun String.obfuscate(freq: Int = 2) =
-    mapIndexed { i, v -> if (i % freq == 0) '*' else v }.joinToString("")
 }

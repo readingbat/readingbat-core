@@ -17,8 +17,8 @@
 
 package com.github.readingbat.server.ws
 
+import com.github.pambrose.common.util.md5Of
 import com.github.readingbat.common.ClassCode
-import com.github.readingbat.common.CommonUtils.md5Of
 import com.github.readingbat.common.Constants.NO
 import com.github.readingbat.common.Constants.UNANSWERED
 import com.github.readingbat.common.Constants.YES
