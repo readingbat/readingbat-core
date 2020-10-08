@@ -442,7 +442,7 @@ internal class User {
     }
   }
 
-  suspend fun publishAnswers(challengeMd5: ChallengeMd5,
+  suspend fun publishAnswers(challengeMd5: String,
                              maxHistoryLength: Int,
                              complete: Boolean,
                              numCorrect: Int,
@@ -452,7 +452,7 @@ internal class User {
     val dashboardHistory = DashboardHistory(history.invocation.value,
                                             history.correct,
                                             history.answers.asReversed().take(maxHistoryLength).joinToString("<br>"))
-    val topicName = classTopicName(enrolledClassCode, challengeMd5.value)
+    val topicName = classTopicName(enrolledClassCode, challengeMd5)
     val dashboardInfo = DashboardInfo(userId, complete, numCorrect, dashboardHistory)
     val data = dashboardInfo.toJson()
     (if (isMultiServerEnabled()) multiServerWriteChannel else singleServerChannel).send(PublishedData(topicName, data))
@@ -468,7 +468,6 @@ internal class User {
   }
 
   suspend fun resetHistory(funcInfo: FunctionInfo, challenge: Challenge, maxHistoryLength: Int) {
-    val shouldPublish = shouldPublish()
     logger.debug { "Resetting challenge: $challenge" }
 
     funcInfo.invocations
@@ -477,7 +476,6 @@ internal class User {
         // Reset the history of each answer on a per-invocation basis
         logger.debug { "Resetting invocation: ${result.invocation}" }
         val history = ChallengeHistory(result.invocation).apply { markUnanswered() }
-
         transaction {
           UserAnswerHistory
             .upsert(conflictIndex = userAnswerHistoryIndex) { row ->
@@ -491,8 +489,11 @@ internal class User {
             }
         }
 
-        if (shouldPublish)
-          publishAnswers(funcInfo.challengeMd5, maxHistoryLength, false, 0, history)
+        if (shouldPublish())
+          funcInfo.challengeMd5.value.also { md5 ->
+            publishAnswers(md5, maxHistoryLength, false, 0, history)
+            publishLikeDislike(md5, 0)
+          }
       }
   }
 

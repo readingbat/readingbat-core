@@ -23,14 +23,17 @@ import com.github.pambrose.common.redis.RedisUtils.withRedisPool
 import com.github.pambrose.common.util.AbstractRepo
 import com.github.pambrose.common.util.FileSystemSource
 import com.github.pambrose.common.util.ensureSuffix
+import com.github.pambrose.common.util.isNotNull
 import com.github.pambrose.common.util.toDoubleQuoted
 import com.github.pambrose.common.util.toSingleQuoted
 import com.github.pambrose.common.util.withLineNumbers
+import com.github.readingbat.common.BrowserSession
 import com.github.readingbat.common.CommonUtils.keyOf
 import com.github.readingbat.common.CommonUtils.md5Of
 import com.github.readingbat.common.CommonUtils.pathOf
 import com.github.readingbat.common.FunctionInfo
 import com.github.readingbat.common.KeyConstants.SOURCE_CODE_KEY
+import com.github.readingbat.common.User
 import com.github.readingbat.dsl.LanguageType.Java
 import com.github.readingbat.dsl.LanguageType.Kotlin
 import com.github.readingbat.dsl.LanguageType.Python
@@ -57,8 +60,14 @@ import com.github.readingbat.server.ReadingBatServer.redisPool
 import com.github.readingbat.server.ScriptPools.javaScriptPool
 import com.github.readingbat.server.ScriptPools.kotlinScriptPool
 import com.github.readingbat.server.ScriptPools.pythonScriptPool
+import com.github.readingbat.server.SessionChallengeInfo
+import com.github.readingbat.server.UserChallengeInfo
+import com.pambrose.common.exposed.get
 import kotlinx.coroutines.runBlocking
 import mu.KLogging
+import org.jetbrains.exposed.sql.and
+import org.jetbrains.exposed.sql.select
+import org.jetbrains.exposed.sql.transactions.transaction
 import java.net.URL
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.reflect.typeOf
@@ -179,6 +188,30 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
         .joinToString("\n")
         .also { logger.debug { """Assigning $challengeName description = "$it"""" } }
     }
+
+  internal fun isCorrect(user: User?, browserSession: BrowserSession?): Boolean {
+    val challengeMd5 = md5Of(languageName, groupName, challengeName)
+    return when {
+      !isPostgresEnabled() -> false
+      user.isNotNull() ->
+        transaction {
+          UserChallengeInfo
+            .slice(UserChallengeInfo.allCorrect)
+            .select { (UserChallengeInfo.userRef eq user.userDbmsId) and (UserChallengeInfo.md5 eq challengeMd5) }
+            .map { it[0] as Boolean }
+            .firstOrNull() ?: false
+        }
+      browserSession.isNotNull() ->
+        transaction {
+          SessionChallengeInfo
+            .slice(SessionChallengeInfo.allCorrect)
+            .select { (SessionChallengeInfo.sessionRef eq browserSession.sessionDbmsId()) and (SessionChallengeInfo.md5 eq challengeMd5) }
+            .map { it[0] as Boolean }
+            .firstOrNull() ?: false
+        }
+      else -> false
+    }
+  }
 
   override fun toString() = "$languageName $groupName $challengeName"
 

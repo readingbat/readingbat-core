@@ -17,13 +17,11 @@
 
 package com.github.readingbat.pages
 
-import com.github.pambrose.common.util.isNotNull
 import com.github.readingbat.common.BrowserSession
 import com.github.readingbat.common.CSSNames.FUNC_ITEM1
 import com.github.readingbat.common.CSSNames.FUNC_ITEM2
 import com.github.readingbat.common.CSSNames.UNDERLINE
 import com.github.readingbat.common.ClassCode
-import com.github.readingbat.common.CommonUtils.md5Of
 import com.github.readingbat.common.CommonUtils.pathOf
 import com.github.readingbat.common.Constants.COLUMN_CNT
 import com.github.readingbat.common.Constants.MSG
@@ -62,44 +60,14 @@ import com.github.readingbat.server.LanguageName
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
 import com.github.readingbat.server.ServerUtils.rows
-import com.github.readingbat.server.SessionChallengeInfo
-import com.github.readingbat.server.UserChallengeInfo
-import com.pambrose.common.exposed.get
 import io.ktor.application.*
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import mu.KLogging
-import org.jetbrains.exposed.sql.and
-import org.jetbrains.exposed.sql.select
-import org.jetbrains.exposed.sql.transactions.transaction
 
 internal object ChallengeGroupPage : KLogging() {
-
-  fun Challenge.isCorrect(user: User?, browserSession: BrowserSession?): Boolean {
-    val challengeMd5 = md5Of(languageName, groupName, challengeName)
-    return when {
-      !isPostgresEnabled() -> false
-      user.isNotNull() ->
-        transaction {
-          UserChallengeInfo
-            .slice(UserChallengeInfo.allCorrect)
-            .select { (UserChallengeInfo.userRef eq user.userDbmsId) and (UserChallengeInfo.md5 eq challengeMd5) }
-            .map { it[0] as Boolean }
-            .firstOrNull() ?: false
-        }
-      browserSession.isNotNull() ->
-        transaction {
-          SessionChallengeInfo
-            .slice(SessionChallengeInfo.allCorrect)
-            .select { (SessionChallengeInfo.sessionRef eq browserSession.sessionDbmsId()) and (SessionChallengeInfo.md5 eq challengeMd5) }
-            .map { it[0] as Boolean }
-            .firstOrNull() ?: false
-        }
-      else -> false
-    }
-  }
 
   fun PipelineCall.challengeGroupPage(content: ReadingBatContent,
                                       user: User?,
