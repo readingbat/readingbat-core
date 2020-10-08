@@ -18,10 +18,10 @@
 package com.github.readingbat.common
 
 import com.github.pambrose.common.util.md5Of
-import com.github.readingbat.common.CommonUtils.keyOf
 import com.github.readingbat.common.KeyConstants.CHALLENGE_ANSWERS_KEY
 import com.github.readingbat.common.KeyConstants.CORRECT_ANSWERS_KEY
 import com.github.readingbat.common.KeyConstants.NO_AUTH_KEY
+import com.github.readingbat.common.KeyConstants.keyOf
 import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.MissingBrowserSessionException
 import com.github.readingbat.posts.ChallengeHistory

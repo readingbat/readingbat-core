@@ -30,9 +30,9 @@ import com.github.pambrose.common.util.toDoubleQuoted
 import com.github.pambrose.common.util.toSingleQuoted
 import com.github.pambrose.common.util.withLineNumbers
 import com.github.readingbat.common.BrowserSession
-import com.github.readingbat.common.CommonUtils.keyOf
 import com.github.readingbat.common.FunctionInfo
 import com.github.readingbat.common.KeyConstants.SOURCE_CODE_KEY
+import com.github.readingbat.common.KeyConstants.keyOf
 import com.github.readingbat.common.User
 import com.github.readingbat.dsl.LanguageType.Java
 import com.github.readingbat.dsl.LanguageType.Kotlin

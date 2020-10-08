@@ -17,10 +17,6 @@
 
 package com.github.readingbat.common
 
-import com.github.readingbat.common.KeyConstants.KEY_SEP
-
 internal object CommonUtils {
-
-  fun keyOf(vararg keys: Any) = keys.joinToString(KEY_SEP) { it.toString() }
 
 }

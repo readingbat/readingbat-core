@@ -25,10 +25,10 @@ import com.github.pambrose.common.util.GitHubRepo
 import com.github.pambrose.common.util.OwnerType
 import com.github.pambrose.common.util.isNotNull
 import com.github.pambrose.common.util.md5Of
-import com.github.readingbat.common.CommonUtils.keyOf
 import com.github.readingbat.common.Constants.UNASSIGNED
 import com.github.readingbat.common.EnvVar.IPGEOLOCATION_KEY
 import com.github.readingbat.common.KeyConstants.CONTENT_DSL_KEY
+import com.github.readingbat.common.KeyConstants.keyOf
 import com.github.readingbat.common.Property.AGENT_ENABLED_PROPERTY
 import com.github.readingbat.common.Property.AGENT_LAUNCH_ID
 import com.github.readingbat.common.Property.CONTENT_CACHING_ENABLED

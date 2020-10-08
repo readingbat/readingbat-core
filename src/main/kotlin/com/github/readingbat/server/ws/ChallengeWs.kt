@@ -23,10 +23,10 @@ import com.github.pambrose.common.time.format
 import com.github.pambrose.common.util.isNotNull
 import com.github.pambrose.common.util.simpleClassName
 import com.github.readingbat.common.ClassCode
-import com.github.readingbat.common.CommonUtils.keyOf
 import com.github.readingbat.common.Constants
 import com.github.readingbat.common.Endpoints.CHALLENGE_ENDPOINT
 import com.github.readingbat.common.Endpoints.WS_ROOT
+import com.github.readingbat.common.KeyConstants.keyOf
 import com.github.readingbat.common.Metrics
 import com.github.readingbat.dsl.InvalidRequestException
 import com.github.readingbat.dsl.RedisUnavailableException
