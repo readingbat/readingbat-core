@@ -31,6 +31,7 @@ import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyTitle
 import com.github.readingbat.pages.PageUtils.headDefault
 import com.github.readingbat.pages.PageUtils.loadStatusPageDisplay
+import com.github.readingbat.pages.PageUtils.rawHtml
 import com.github.readingbat.server.FullName.Companion.UNKNOWN_FULLNAME
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
@@ -110,7 +111,16 @@ internal object SessionsPage : KLogging() {
                   .forEach { row ->
                     tr {
                       td { +row.session_id }
-                      td { +(if (row.fullName != UNKNOWN_FULLNAME) "${row.fullName} (${row.email})" else "Not logged in") }
+                      td {
+                        if (row.fullName != UNKNOWN_FULLNAME) {
+                          +row.fullName.toString()
+                          rawHtml("</br>")
+                          +"(${row.email})"
+                        }
+                        else {
+                          +"Not logged in"
+                        }
+                      }
                       td { +(now.millis - row.maxDate.millis).milliseconds.format() }
                       td { +row.count.toString() }
                       td { +row.ip }

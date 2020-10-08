@@ -40,7 +40,7 @@ internal val geoInfosUnique = Index(listOf(GeoInfos.id), true, "geo_info_unique"
 
 internal object BrowserSessions : LongIdTable("browser_sessions") {
   val created = datetime("created")
-  val session_id = text("session_id")
+  val sessionId = text("session_id")
 }
 
 // answersJson is a map of invocations to answers

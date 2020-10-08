@@ -276,7 +276,8 @@ internal val cssContent by lazy {
       }
       rule(".$INVOC_STAT") {
         paddingLeft = 5.px
-        width = 20.px
+        paddingRight = 1.px
+        width = 10.px
       }
       // Turn links red on mouse hovers.
       rule("a:hover") {

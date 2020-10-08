@@ -58,7 +58,7 @@ internal object ClockPage : KLogging() {
                 ws.onmessage = function (event) {
                   var obj = JSON.parse(event.data);
                   if (obj.hasOwnProperty("type") && obj.type == "$PING_CODE") {
-                    document.getElementById('$pingMsg').innerHTML = obj.msg;
+                    document.getElementById('$pingMsg').innerText = obj.msg;
                   }
                 };
               """.trimIndent())

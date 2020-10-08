@@ -174,12 +174,12 @@ internal object PageUtils {
     }
   }
 
-  internal fun enrolleesDesc(enrollees: List<User>): String {
+  fun enrolleesDesc(enrollees: List<User>): String {
     val studentCount = if (enrollees.isEmpty()) "No" else enrollees.count().toString()
     return " - $studentCount ${"student".pluralize(enrollees.count())} enrolled"
   }
 
-  internal fun BODY.confirmingButton(text: String, endpoint: String, msg: String) {
+  fun BODY.confirmingButton(text: String, endpoint: String, msg: String) {
     form {
       style = "margin:0"
       action = endpoint
@@ -225,11 +225,9 @@ internal object PageUtils {
       return false;
     """.trimIndent()
 
-  internal fun FlowOrInteractiveOrPhrasingContent.hideShowButton(formName: String,
-                                                                 fieldName: String,
-                                                                 sizePct: Int = 85) {
+  fun FlowOrInteractiveOrPhrasingContent.hideShowButton(formName: String, fieldName: String, sizePct: Int = 85) {
     button { style = "font-size:$sizePct%"; onClick = hideShowJs(formName, fieldName); +"show/hide" }
   }
 
-  internal fun encodeUriElems(vararg elems: Any) = elems.joinToString("+'/'+") { "encodeURIComponent('$it')" }
+  fun encodeUriElems(vararg elems: Any) = elems.joinToString("+'/'+") { "encodeURIComponent('$it')" }
 }

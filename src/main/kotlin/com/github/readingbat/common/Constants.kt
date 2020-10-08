@@ -41,6 +41,7 @@ internal object Constants {
   const val LABEL_WIDTH = "width:250"
   const val INVALID_RESET_ID = "Invalid reset_id"
   const val PING_CODE = "P"
+  const val LIKE_DISLIKE_CODE = "LD"
   const val COLUMN_CNT = 3
   const val LANG_SRC = "lang"
   const val GROUP_SRC = "groupName"
@@ -125,6 +126,9 @@ internal object Endpoints {
   const val PING_ENDPOINT = "/ping"
   const val THREAD_DUMP = "/threaddump"
   const val LOGOUT_ENDPOINT = "/logout"
+
+  const val THUMBS_UP = "&#128077;"
+  const val THUMBS_DOWN = "&#128078;"
 
   // This is a dynamic page
   const val CSS_ENDPOINT = "/$STATIC/styles.css"

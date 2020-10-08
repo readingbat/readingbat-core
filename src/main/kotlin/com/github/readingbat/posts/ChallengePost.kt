@@ -20,9 +20,9 @@ package com.github.readingbat.posts
 import com.github.pambrose.common.util.*
 import com.github.readingbat.common.BrowserSession
 import com.github.readingbat.common.BrowserSession.Companion.querySessionDbmsId
-import com.github.readingbat.common.ClassCode
 import com.github.readingbat.common.CommonUtils.md5Of
 import com.github.readingbat.common.CommonUtils.pathOf
+import com.github.readingbat.common.Constants
 import com.github.readingbat.common.Constants.CHALLENGE_SRC
 import com.github.readingbat.common.Constants.GROUP_SRC
 import com.github.readingbat.common.Constants.LANG_SRC
@@ -45,7 +45,6 @@ import com.github.readingbat.common.ParameterIds.LIKE_CLEAR
 import com.github.readingbat.common.ParameterIds.LIKE_COLOR
 import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.fetchUserDbmsIdFromCache
-import com.github.readingbat.common.User.Companion.shouldPublish
 import com.github.readingbat.common.browserSession
 import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.ReadingBatContent
@@ -87,6 +86,14 @@ internal data class ChallengeResults(val invocation: Invocation,
                                      val answered: Boolean = false,
                                      val correct: Boolean = false,
                                      val hint: String = "")
+
+@Serializable
+internal class LikeDislikeInfo(val userId: String,
+                               val likeDislike: String) {
+  @Required
+  val type: String = Constants.LIKE_DISLIKE_CODE
+  fun toJson() = Json.encodeToString(serializer(), this)
+}
 
 @Serializable
 internal class DashboardInfo(val userId: String,
@@ -463,8 +470,7 @@ internal object ChallengePost : KLogging() {
           funcInfo.invocations[i] to userResponse
         }
 
-    val classCode = user?.enrolledClassCode ?: ClassCode.DISABLED_CLASS_CODE
-    val shouldPublish = user.shouldPublish(classCode)
+    val shouldPublish = user?.shouldPublish() ?: false
     val invokeMap = invokeList.map { it.first.value to it.second }.toMap()
     val invokeStr = Json.encodeToString(invokeMap)
     val historyList = mutableListOf<ChallengeHistory>()
@@ -540,30 +546,35 @@ internal object ChallengePost : KLogging() {
       }
     }
 
+    // This is done oustide the transaction
     if (shouldPublish)
       historyList
         .forEach { history ->
           val maxLength = content.maxHistoryLength
-          user?.publishAnswers(classCode, funcInfo.challengeMd5, maxLength, complete, numCorrect, history)
+          user?.publishAnswers(funcInfo.challengeMd5, maxLength, complete, numCorrect, history)
         }
   }
 
-  private fun saveLikeDislike(user: User?,
-                              browserSession: BrowserSession?,
-                              names: ChallengeNames,
-                              likeVal: Int) {
+  private suspend fun saveLikeDislike(user: User?,
+                                      browserSession: BrowserSession?,
+                                      names: ChallengeNames,
+                                      likeDislikeVal: Int) {
     val challengeMd5 = md5Of(names.languageName, names.groupName, names.challengeName)
+    val shouldPublish = user?.shouldPublish() ?: false
     when {
-      user.isNotNull() ->
+      user.isNotNull() -> {
         transaction {
           UserChallengeInfo
             .upsert(conflictIndex = userChallengeInfoIndex) { row ->
               row[userRef] = user.userDbmsId
               row[md5] = challengeMd5
               row[updated] = DateTime.now(DateTimeZone.UTC)
-              row[likeDislike] = likeVal.toShort()
+              row[likeDislike] = likeDislikeVal.toShort()
             }
         }
+        if (shouldPublish)
+          user.publishLikeDislike(challengeMd5, likeDislikeVal)
+      }
       browserSession.isNotNull() ->
         transaction {
           SessionChallengeInfo
@@ -571,7 +582,7 @@ internal object ChallengePost : KLogging() {
               row[sessionRef] = browserSession.sessionDbmsId()
               row[md5] = challengeMd5
               row[updated] = DateTime.now(DateTimeZone.UTC)
-              row[likeDislike] = likeVal.toShort()
+              row[likeDislike] = likeDislikeVal.toShort()
             }
         }
       else -> {

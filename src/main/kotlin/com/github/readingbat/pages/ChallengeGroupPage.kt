@@ -211,9 +211,7 @@ internal object ChallengeGroupPage : KLogging() {
             wshost = wshost.replace(/^http:/, 'ws:');
 
           var wsurl = wshost + '$WS_ROOT$CHALLENGE_GROUP_ENDPOINT/' + ${
-          encodeUriElems(languageName,
-                         groupName,
-                         classCode)
+          encodeUriElems(languageName, groupName, classCode)
         };
           var ws = new WebSocket(wsurl);
 
@@ -224,7 +222,7 @@ internal object ChallengeGroupPage : KLogging() {
           ws.onmessage = function (event) {
             //console.log(event.data);
             var obj = JSON.parse(event.data)
-            document.getElementById(obj.challengeName).innerHTML = obj.msg;
+            document.getElementById(obj.challengeName).innerText = obj.msg;
           };
         """.trimIndent())
     }

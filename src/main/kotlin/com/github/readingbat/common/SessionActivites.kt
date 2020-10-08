@@ -41,7 +41,7 @@ import kotlin.time.measureTimedValue
 
 internal object SessionActivites : KLogging() {
 
-  private val session_id = BrowserSessions.session_id
+  private val session_id = BrowserSessions.sessionId
   private val fullName = Users.fullName
   private val email = Users.email
   private val ip = GeoInfos.ip

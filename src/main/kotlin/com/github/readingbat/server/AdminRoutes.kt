@@ -117,7 +117,7 @@ internal object AdminRoutes : KLogging() {
             call.sessions.clear<BrowserSession>()
             if (isPostgresEnabled())
               transaction {
-                BrowserSessions.deleteWhere { BrowserSessions.session_id eq it.id }
+                BrowserSessions.deleteWhere { BrowserSessions.sessionId eq it.id }
               }
           }
           else {

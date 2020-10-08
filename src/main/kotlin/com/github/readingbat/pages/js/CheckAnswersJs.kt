@@ -15,7 +15,7 @@
  *
  */
 
-package com.github.readingbat.pages
+package com.github.readingbat.pages.js
 
 import com.github.readingbat.common.Constants.CHALLENGE_SRC
 import com.github.readingbat.common.Constants.CORRECT_COLOR
@@ -60,7 +60,7 @@ internal object CheckAnswersJs {
           var x = document.getElementById("$FEEDBACK_ID"+i);
           x.style.backgroundColor = "white";
           
-          document.getElementById("$HINT_ID"+i).innerHTML = '';
+          document.getElementById("$HINT_ID"+i).innerText = '';
           
           var ur = document.getElementById("$RESP"+i).value;
           data += "&$RESP" + i + "=" + encodeURIComponent(ur);
@@ -81,8 +81,8 @@ internal object CheckAnswersJs {
     function checkAnswerHandleDone(){
       if(re.readyState == 1) {  // starting
         document.getElementById('$SPINNER_ID').innerHTML = '<i class="fa fa-spinner fa-spin" style="font-size:24px"></i>';
-        document.getElementById('$STATUS_ID').innerHTML = 'Checking answers...';
-        document.getElementById('$SUCCESS_ID').innerHTML = '';
+        document.getElementById('$STATUS_ID').innerText = 'Checking answers...';
+        document.getElementById('$SUCCESS_ID').innerText = '';
         document.getElementById('$NEXTPREVCHANCE_ID').style.display = "none";
       }
       else if(re.readyState == 4) {  // done
@@ -100,13 +100,13 @@ internal object CheckAnswersJs {
           else {
             x.style.backgroundColor = '$WRONG_COLOR';
             success = false;
-            document.getElementById("$HINT_ID"+i).innerHTML = results[i][1];
+            document.getElementById("$HINT_ID"+i).innerText = results[i][1];
           }
         }
         
-        document.getElementById('$SPINNER_ID').innerHTML = "";
-        document.getElementById('$STATUS_ID').innerHTML = "";
-        document.getElementById('$SUCCESS_ID').innerHTML = success ? "Success! Congratulations!" : "";
+        document.getElementById('$SPINNER_ID').innerText = '';
+        document.getElementById('$STATUS_ID').innerText = '';
+        document.getElementById('$SUCCESS_ID').innerText = success ? "Success! Congratulations!" : "";
         document.getElementById('$NEXTPREVCHANCE_ID').style.display = success ? "inline" : "none";
       }
     }

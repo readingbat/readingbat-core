@@ -15,10 +15,9 @@
  *
  */
 
-package com.github.readingbat.server
+package com.github.readingbat.test_content
 
 import com.github.pambrose.common.util.isNull
-import com.github.readingbat.test_content.SimplifiedSessionStorage
 import redis.clients.jedis.Jedis
 import kotlin.time.Duration
 import kotlin.time.seconds

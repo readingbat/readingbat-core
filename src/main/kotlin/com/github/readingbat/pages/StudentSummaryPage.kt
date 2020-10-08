@@ -183,7 +183,7 @@ internal object StudentSummaryPage : KLogging() {
                           table {
                             tr {
                               challenge.functionInfo(content).invocations
-                                .forEachIndexed { i, invocation ->
+                                .forEachIndexed { i, _ ->
                                   td(classes = INVOC_TD) {
                                     id = "${group.groupName.encode()}-${challenge.challengeName.encode()}-$i"; +""
                                   }
@@ -214,9 +214,7 @@ internal object StudentSummaryPage : KLogging() {
             wshost = wshost.replace(/^http:/, 'ws:');
       
           var wsurl = wshost + '$WS_ROOT$STUDENT_SUMMARY_ENDPOINT/' + ${
-          encodeUriElems(languageName,
-                         student.userId,
-                         classCode)
+          encodeUriElems(languageName, student.userId, classCode)
         };
           var ws = new WebSocket(wsurl);
       
@@ -236,7 +234,7 @@ internal object StudentSummaryPage : KLogging() {
                                                                     : (obj.results[i] == '$NO' ? '$WRONG_COLOR' 
                                                                                              : '$INCOMPLETE_COLOR');
       
-              document.getElementById(prefix + '$STATS').innerHTML = obj.msg;
+              document.getElementById(prefix + '$STATS').innerText = obj.msg;
             }
           };
         """.trimIndent())

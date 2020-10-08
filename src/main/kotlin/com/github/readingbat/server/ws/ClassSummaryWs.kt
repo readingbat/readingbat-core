@@ -20,6 +20,7 @@ package com.github.readingbat.server.ws
 import com.github.readingbat.common.ClassCode
 import com.github.readingbat.common.CommonUtils
 import com.github.readingbat.common.Constants
+import com.github.readingbat.common.Constants.UNANSWERED
 import com.github.readingbat.common.Endpoints.CLASS_SUMMARY_ENDPOINT
 import com.github.readingbat.common.Endpoints.WS_ROOT
 import com.github.readingbat.common.Metrics
@@ -106,11 +107,11 @@ internal object ClassSummaryWs : KLogging() {
                             enrollee.answerHistory(historyMd5, invocation)
                               .let {
                                 incorrectAttempts += it.incorrectAttempts
-                                if (it.correct) Constants.YES else if (it.incorrectAttempts > 0) Constants.NO else Constants.UNANSWERED
+                                if (it.correct) Constants.YES else if (it.incorrectAttempts > 0) Constants.NO else UNANSWERED
                               }
                         }
                         else {
-                          results += Constants.UNANSWERED
+                          results += UNANSWERED
                         }
                       }
 
@@ -118,12 +119,15 @@ internal object ClassSummaryWs : KLogging() {
                         break
                     }
 
-                    if (incorrectAttempts > 0 || results.any { it != Constants.UNANSWERED }) {
+                    if (incorrectAttempts > 0 || results.any { it != UNANSWERED }) {
                       val json =
                         ClassSummary(enrollee.userId,
                                      challengeName.encode(),
                                      results,
-                                     if (incorrectAttempts == 0 && results.all { it == Constants.UNANSWERED }) "" else incorrectAttempts.toString()).toJson()
+                                     if (incorrectAttempts == 0 && results.all { it == UNANSWERED }) "" else incorrectAttempts.toString(),
+                          // TODO Consolidate this into a single call per user
+                                     enrollee.likeDislikeEmoji(challenge)
+                                    ).toJson()
 
                       metrics.wsClassSummaryResponseCount.labels(agentLaunchId()).inc()
                       logger.debug { "Sending data $json" }
@@ -152,7 +156,11 @@ internal object ClassSummaryWs : KLogging() {
   }
 
   @Serializable
-  class ClassSummary(val userId: String, val challengeName: String, val results: List<String>, val msg: String) {
+  class ClassSummary(val userId: String,
+                     val challengeName: String,
+                     val results: List<String>,
+                     val stats: String,
+                     val likeDislike: String) {
     fun toJson() = Json.encodeToString(serializer(), this)
   }
 }

@@ -37,6 +37,7 @@ import com.github.readingbat.common.CSSNames.USER_RESP
 import com.github.readingbat.common.CommonUtils.pathOf
 import com.github.readingbat.common.Constants.CORRECT_COLOR
 import com.github.readingbat.common.Constants.INCOMPLETE_COLOR
+import com.github.readingbat.common.Constants.LIKE_DISLIKE_CODE
 import com.github.readingbat.common.Constants.LIKE_DISLIKE_JS_FUNC
 import com.github.readingbat.common.Constants.MSG
 import com.github.readingbat.common.Constants.PING_CODE
@@ -76,8 +77,6 @@ import com.github.readingbat.common.User.Companion.queryActiveClassCode
 import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.isPostgresEnabled
-import com.github.readingbat.pages.CheckAnswersJs.checkAnswersScript
-import com.github.readingbat.pages.LikeDislikeJs.likeDislikeScript
 import com.github.readingbat.pages.PageUtils.addLink
 import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyHeader
@@ -85,6 +84,8 @@ import com.github.readingbat.pages.PageUtils.enrolleesDesc
 import com.github.readingbat.pages.PageUtils.headDefault
 import com.github.readingbat.pages.PageUtils.loadPingdomScript
 import com.github.readingbat.pages.PageUtils.rawHtml
+import com.github.readingbat.pages.js.CheckAnswersJs.checkAnswersScript
+import com.github.readingbat.pages.js.LikeDislikeJs.likeDislikeScript
 import com.github.readingbat.server.ChallengeMd5
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
@@ -108,6 +109,7 @@ internal object ChallengePage : KLogging() {
   private const val spinnerCss = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
   private const val nameTd = "nameTd"
   private const val answersTd = "answersTd"
+  private const val likeDislikeSpan = "likeDislikeSpan"
   private const val answersSpan = "answersSpan"
   private const val numCorrectSpan = "numCorrectSpan"
   private const val pingMsg = "pingMsg"
@@ -313,13 +315,16 @@ internal object ChallengePage : KLogging() {
             var obj = JSON.parse(event.data);
       
             if (obj.hasOwnProperty("type") && obj.type == "$PING_CODE") {
-              document.getElementById('$pingMsg').innerHTML = obj.msg;
+              document.getElementById('$pingMsg').innerText = obj.msg;
+            }
+            else if (obj.hasOwnProperty("type") && obj.type == "$LIKE_DISLIKE_CODE") {
+              document.getElementById(obj.userId + '-$likeDislikeSpan').innerHTML = obj.likeDislike;
             }
             else {
               var name = document.getElementById(obj.userId + '-$nameTd');
               name.style.backgroundColor = obj.complete ? '$CORRECT_COLOR' : '$INCOMPLETE_COLOR';
       
-              document.getElementById(obj.userId + '-$numCorrectSpan').innerHTML = obj.numCorrect;
+              document.getElementById(obj.userId + '-$numCorrectSpan').innerText = obj.numCorrect;
       
               var prefix = obj.userId + '-' + obj.history.invocation;
               
@@ -397,10 +402,19 @@ internal object ChallengePage : KLogging() {
                   id = "${enrollee.userId}-$nameTd"
                   val color = if (allCorrect) CORRECT_COLOR else INCOMPLETE_COLOR
                   style = "width:15%;white-space:nowrap; background-color:$color"
-                  span { id = "${enrollee.userId}-$numCorrectSpan"; +numCorrect.toString() }
+                  span {
+                    id = "${enrollee.userId}-$numCorrectSpan"
+                    +numCorrect.toString()
+                  }
                   +"/$numChallenges"
                   rawHtml(nbsp.text)
                   +enrollee.fullName.value
+                  rawHtml(nbsp.text)
+                  // TODO Optimize this to a single query and grab all values at once
+                  span {
+                    id = "${enrollee.userId}-$likeDislikeSpan"
+                    rawHtml(enrollee.likeDislikeEmoji(challenge))
+                  }
                 }
 
                 results
@@ -493,22 +507,8 @@ internal object ChallengePage : KLogging() {
 
     val likeDislikeVal =
       when {
-        user.isNotNull() ->
-          transaction {
-            UserChallengeInfo
-              .slice(UserChallengeInfo.likeDislike)
-              .select { (UserChallengeInfo.userRef eq user.userDbmsId) and (UserChallengeInfo.md5 eq challenge.md5()) }
-              .map { it[UserChallengeInfo.likeDislike].toInt() }
-              .firstOrNull() ?: 0
-          }
-        browserSession.isNotNull() ->
-          transaction {
-            SessionChallengeInfo
-              .slice(SessionChallengeInfo.likeDislike)
-              .select { (SessionChallengeInfo.sessionRef eq browserSession.sessionDbmsId()) and (SessionChallengeInfo.md5 eq challenge.md5()) }
-              .map { it[SessionChallengeInfo.likeDislike].toInt() }
-              .firstOrNull() ?: 0
-          }
+        user.isNotNull() -> user.likeDislike(challenge)
+        browserSession.isNotNull() -> browserSession.likeDislike(challenge)
         else -> 0
       }
 
