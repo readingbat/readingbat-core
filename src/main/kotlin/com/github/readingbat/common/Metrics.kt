@@ -22,12 +22,11 @@ import com.github.pambrose.common.dsl.PrometheusDsl.gauge
 import com.github.pambrose.common.dsl.PrometheusDsl.summary
 import com.github.pambrose.common.metrics.SamplerGaugeCollector
 import com.github.readingbat.common.SessionActivites.activeSessions
-import com.github.readingbat.common.SessionActivites.geoInfoMap
-import com.github.readingbat.common.SessionActivites.sessionsMap
 import com.github.readingbat.common.User.Companion.emailCache
 import com.github.readingbat.common.User.Companion.userIdCache
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.agentLaunchId
+import com.github.readingbat.server.GeoInfo.Companion.geoInfoMap
 import com.github.readingbat.server.Intercepts.requestTimingMap
 import com.github.readingbat.server.ws.ChallengeWs.wsConnections
 import kotlin.time.hours
@@ -190,12 +189,6 @@ internal class Metrics {
       labelNames(AGENT_ID)
       help("Server start time in seconds")
     }.labels(agentLaunchId()).setToCurrentTime()
-
-    SamplerGaugeCollector("active_users_map_size",
-                          "Active users map size",
-                          labelNames = listOf(AGENT_ID),
-                          labelValues = listOf(agentLaunchId()),
-                          data = { sessionsMap.size.toDouble() })
 
     SamplerGaugeCollector("request_timing_map_size",
                           "Request timing map size",

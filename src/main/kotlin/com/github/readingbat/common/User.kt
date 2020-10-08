@@ -19,15 +19,17 @@ package com.github.readingbat.common
 
 import com.github.pambrose.common.util.isNotNull
 import com.github.pambrose.common.util.isNull
+import com.github.pambrose.common.util.md5Of
 import com.github.pambrose.common.util.newStringSalt
 import com.github.pambrose.common.util.randomId
 import com.github.readingbat.common.ClassCode.Companion.DISABLED_CLASS_CODE
-import com.github.readingbat.common.CommonUtils.keyOf
-import com.github.readingbat.common.CommonUtils.md5Of
 import com.github.readingbat.common.Constants.UNKNOWN
+import com.github.readingbat.common.Endpoints.THUMBS_DOWN
+import com.github.readingbat.common.Endpoints.THUMBS_UP
 import com.github.readingbat.common.KeyConstants.AUTH_KEY
 import com.github.readingbat.common.KeyConstants.CHALLENGE_ANSWERS_KEY
 import com.github.readingbat.common.KeyConstants.CORRECT_ANSWERS_KEY
+import com.github.readingbat.common.KeyConstants.keyOf
 import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.DataException
 import com.github.readingbat.dsl.InvalidConfigurationException
@@ -39,6 +41,7 @@ import com.github.readingbat.posts.ChallengeHistory
 import com.github.readingbat.posts.ChallengeResults
 import com.github.readingbat.posts.DashboardHistory
 import com.github.readingbat.posts.DashboardInfo
+import com.github.readingbat.posts.LikeDislikeInfo
 import com.github.readingbat.server.*
 import com.github.readingbat.server.Email.Companion.EMPTY_EMAIL
 import com.github.readingbat.server.Email.Companion.UNKNOWN_EMAIL
@@ -49,7 +52,10 @@ import com.github.readingbat.server.ResetId.Companion.EMPTY_RESET_ID
 import com.github.readingbat.server.ws.ChallengeWs.classTopicName
 import com.github.readingbat.server.ws.ChallengeWs.multiServerWriteChannel
 import com.github.readingbat.server.ws.ChallengeWs.singleServerChannel
+import com.pambrose.common.exposed.get
+import com.pambrose.common.exposed.upsert
 import io.ktor.application.*
+import kotlinx.html.Entities.nbsp
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -78,7 +84,7 @@ internal class User {
             .map { assignRowVals(it) }
             .firstOrNull() ?: throw InvalidConfigurationException("UserId not found: ${this@User.userId}")
         }
-      }.also { logger.info { "Selected user info in $it" } }
+      }.also { logger.debug { "Selected user info in $it" } }
     }
   }
 
@@ -111,7 +117,7 @@ internal class User {
   private fun assignRowVals(row: ResultRow) {
     userDbmsId = row[Users.id].value
     email = Email(row[Users.email])
-    fullName = FullName(row[Users.name])
+    fullName = FullName(row[Users.fullName])
     enrolledClassCode = ClassCode(row[Users.enrolledClassCode])
     defaultLanguage = row[Users.defaultLanguage].toLanguageType() ?: defaultLanguageType
     saltBacking = row[Users.salt]
@@ -120,42 +126,73 @@ internal class User {
 
   fun browserSessions() =
     transaction {
+      val sessionId = BrowserSessions.sessionId
+      val userRef = UserSessions.userRef
       (BrowserSessions innerJoin UserSessions)
-        .slice(BrowserSessions.session_id)
-        .select { UserSessions.userRef eq userDbmsId }
+        .slice(sessionId)
+        .select { userRef eq userDbmsId }
         .map { it[0] as String }
     }
 
   // Look across all possible browser sessions
   private fun interestedInActiveClassCode(classCode: ClassCode) =
     transaction {
+      val id = UserSessions.id
+      val userRef = UserSessions.userRef
+      val activeClassCode = UserSessions.activeClassCode
       UserSessions
-        .slice(Count(UserSessions.id))
-        .select { (UserSessions.userRef eq userDbmsId) and (UserSessions.activeClassCode eq classCode.value) }
+        .slice(Count(id))
+        .select { (userRef eq userDbmsId) and (activeClassCode eq classCode.value) }
         .map { it[0] as Long }
         .first() > 0
     }
 
   fun correctAnswers() =
     transaction {
+      val allCorrect = UserChallengeInfo.allCorrect
+      val userRef = UserChallengeInfo.userRef
       UserChallengeInfo
-        .slice(UserChallengeInfo.allCorrect)
-        .select { (UserChallengeInfo.userRef eq userDbmsId) and UserChallengeInfo.allCorrect }
+        .slice(allCorrect)
+        .select { (userRef eq userDbmsId) and allCorrect }
         .map { (it[0] as Boolean).toString() }
+    }
+
+  fun likeDislikeEmoji(likeDislike: Int) =
+    when (likeDislike) {
+      1 -> THUMBS_UP
+      2 -> THUMBS_DOWN
+      else -> nbsp.text
+    }
+
+  fun likeDislikeEmoji(challenge: Challenge) = likeDislikeEmoji(likeDislike(challenge))
+
+  fun likeDislike(challenge: Challenge) =
+    transaction {
+      val likeDislike = UserChallengeInfo.likeDislike
+      val userRef = UserChallengeInfo.userRef
+      val md5 = UserChallengeInfo.md5
+      UserChallengeInfo
+        .slice(likeDislike)
+        .select { (userRef eq userDbmsId) and (md5 eq challenge.md5()) }
+        .map { it[likeDislike].toInt() }
+        .firstOrNull() ?: 0
     }
 
   fun likeDislikes() =
     transaction {
-      UserChallengeInfo.slice(UserChallengeInfo.likeDislike)
-        .select { (UserChallengeInfo.userRef eq userDbmsId) and ((UserChallengeInfo.likeDislike eq 1) or (UserChallengeInfo.likeDislike eq 2)) }
+      val userRef = UserChallengeInfo.userRef
+      val likeDislike = UserChallengeInfo.likeDislike
+      UserChallengeInfo.slice(likeDislike)
+        .select { (userRef eq userDbmsId) and ((likeDislike eq 1) or (likeDislike eq 2)) }
         .map { it.toString() }
     }
 
   fun classCount() =
     transaction {
+      val userRef = Classes.userRef
       Classes
         .slice(Count(Classes.classCode))
-        .select { Classes.userRef eq userDbmsId }
+        .select { userRef eq userDbmsId }
         .map { it[0] as Long }
         .first().also { logger.info { "classCount() returned $it" } }
         .toInt()
@@ -173,17 +210,20 @@ internal class User {
 
   fun classCodes() =
     transaction {
+      val classCode = Classes.classCode
+      val userRef = Classes.userRef
       Classes
-        .slice(Classes.classCode)
-        .select { Classes.userRef eq userDbmsId }
+        .slice(classCode)
+        .select { userRef eq userDbmsId }
         .map { ClassCode(it[0] as String) }
     }
 
   fun isInDbms() =
     transaction {
+      val id = Users.id
       Users
-        .slice(Count(Users.id))
-        .select { Users.id eq userDbmsId }
+        .slice(Count(id))
+        .select { id eq userDbmsId }
         .map { it[0] as Long }
         .first() > 0
     }
@@ -216,44 +256,41 @@ internal class User {
         .map { it[0] as String }.also { logger.info { "challenges() return ${it.size}" } }
     }
 
+  private val uahId = UserAnswerHistory.id
+  private val uahInvocation = UserAnswerHistory.invocation
+  private val uahUserRef = UserAnswerHistory.userRef
+  private val uahMd5 = UserAnswerHistory.md5
+
   fun invocations() =
     transaction {
       UserAnswerHistory
-        .slice(UserAnswerHistory.md5)
-        .select { UserAnswerHistory.userRef eq userDbmsId }
+        .slice(uahMd5)
+        .select { uahUserRef eq userDbmsId }
         .map { it[0] as String }.also { logger.info { "invocations() return ${it.size}" } }
     }
 
-  fun correctAnswersKey(languageName: LanguageName, groupName: GroupName, challengeName: ChallengeName) =
-    keyOf(CORRECT_ANSWERS_KEY, AUTH_KEY, userId, md5Of(languageName, groupName, challengeName))
-
-  fun challengeAnswersKey(languageName: LanguageName, groupName: GroupName, challengeName: ChallengeName) =
-    keyOf(CHALLENGE_ANSWERS_KEY, AUTH_KEY, userId, md5Of(languageName, groupName, challengeName))
-
   fun historyExists(md5: String, invocation: Invocation) =
     UserAnswerHistory
-      .slice(Count(UserAnswerHistory.id))
-      .select { (UserAnswerHistory.userRef eq userDbmsId) and (UserAnswerHistory.md5 eq md5) and (UserAnswerHistory.invocation eq invocation.value) }
+      .slice(Count(uahId))
+      .select { (uahUserRef eq userDbmsId) and (uahMd5 eq md5) and (uahInvocation eq invocation.value) }
       .map { it[0] as Long }
       .first() > 0
 
-  fun answerHistory(md5: String, invocation: Invocation) =
-    UserAnswerHistory
-      .slice(UserAnswerHistory.invocation,
-             UserAnswerHistory.correct,
-             UserAnswerHistory.incorrectAttempts,
-             UserAnswerHistory.historyJson)
-      .select { (UserAnswerHistory.userRef eq userDbmsId) and (UserAnswerHistory.md5 eq md5) and (UserAnswerHistory.invocation eq invocation.value) }
-      .map {
-        val json = it[UserAnswerHistory.historyJson]
-        val history = Json.decodeFromString<List<String>>(json).toMutableList()
+  fun answerHistory(md5: String, invocation: Invocation): ChallengeHistory {
+    val correct = UserAnswerHistory.correct
+    val incorrectAttempts = UserAnswerHistory.incorrectAttempts
+    val historyJson = UserAnswerHistory.historyJson
 
-        ChallengeHistory(Invocation(it[UserAnswerHistory.invocation]),
-                         it[UserAnswerHistory.correct],
-                         it[UserAnswerHistory.incorrectAttempts].toInt(),
-                         history)
+    return UserAnswerHistory
+      .slice(uahInvocation, correct, incorrectAttempts, historyJson)
+      .select { (uahUserRef eq userDbmsId) and (uahMd5 eq md5) and (uahInvocation eq invocation.value) }
+      .map {
+        val json = it[historyJson]
+        val history = Json.decodeFromString<List<String>>(json).toMutableList()
+        ChallengeHistory(Invocation(it[uahInvocation]), it[correct], it[incorrectAttempts].toInt(), history)
       }
       .firstOrNull() ?: ChallengeHistory(invocation)
+  }
 
   fun assignActiveClassCode(classCode: ClassCode, resetPreviousClassCode: Boolean) =
     transaction {
@@ -288,6 +325,12 @@ internal class User {
         .map { it[0] as Long }
         .first().also { logger.info { "isEnrolled() returned $it for $classCode" } } > 0
     }
+
+  fun correctAnswersKey(languageName: LanguageName, groupName: GroupName, challengeName: ChallengeName) =
+    keyOf(CORRECT_ANSWERS_KEY, AUTH_KEY, userId, md5Of(languageName, groupName, challengeName))
+
+  fun challengeAnswersKey(languageName: LanguageName, groupName: GroupName, challengeName: ChallengeName) =
+    keyOf(CHALLENGE_ANSWERS_KEY, AUTH_KEY, userId, md5Of(languageName, groupName, challengeName))
 
   fun isNotEnrolled(classCode: ClassCode) = !isEnrolled(classCode)
 
@@ -399,30 +442,32 @@ internal class User {
     }
   }
 
-  suspend fun publishAnswers(classCode: ClassCode,
-                             challengeMd5: ChallengeMd5,
+  suspend fun publishAnswers(challengeMd5: String,
                              maxHistoryLength: Int,
                              complete: Boolean,
                              numCorrect: Int,
                              history: ChallengeHistory) {
     // Publish to challenge dashboard
-    logger.debug { "Publishing user answers to $classCode on $challengeMd5 for $this" }
+    logger.debug { "Publishing user answers to $enrolledClassCode on $challengeMd5 for $this" }
     val dashboardHistory = DashboardHistory(history.invocation.value,
                                             history.correct,
                                             history.answers.asReversed().take(maxHistoryLength).joinToString("<br>"))
+    val topicName = classTopicName(enrolledClassCode, challengeMd5)
     val dashboardInfo = DashboardInfo(userId, complete, numCorrect, dashboardHistory)
-    val topicName = classTopicName(classCode, challengeMd5.value)
     val data = dashboardInfo.toJson()
-    (if (isMultiServerEnabled()) multiServerWriteChannel else singleServerChannel)
-      .send(PublishedData(topicName, data))
+    (if (isMultiServerEnabled()) multiServerWriteChannel else singleServerChannel).send(PublishedData(topicName, data))
   }
 
-  suspend fun resetHistory(funcInfo: FunctionInfo,
-                           challenge: Challenge,
-                           maxHistoryLength: Int) {
-    val classCode = enrolledClassCode
-    val shouldPublish = shouldPublish(classCode)
+  suspend fun publishLikeDislike(challengeMd5: String, likeDislike: Int) {
+    logger.debug { "Publishing user likeDislike to $enrolledClassCode on $challengeMd5 for $this" }
+    val topicName = classTopicName(enrolledClassCode, challengeMd5)
+    val emoji = likeDislikeEmoji(likeDislike)
+    val likeDislikeInfo = LikeDislikeInfo(userId, emoji)
+    val data = likeDislikeInfo.toJson()
+    (if (isMultiServerEnabled()) multiServerWriteChannel else singleServerChannel).send(PublishedData(topicName, data))
+  }
 
+  suspend fun resetHistory(funcInfo: FunctionInfo, challenge: Challenge, maxHistoryLength: Int) {
     logger.debug { "Resetting challenge: $challenge" }
 
     funcInfo.invocations
@@ -431,7 +476,6 @@ internal class User {
         // Reset the history of each answer on a per-invocation basis
         logger.debug { "Resetting invocation: ${result.invocation}" }
         val history = ChallengeHistory(result.invocation).apply { markUnanswered() }
-
         transaction {
           UserAnswerHistory
             .upsert(conflictIndex = userAnswerHistoryIndex) { row ->
@@ -445,10 +489,25 @@ internal class User {
             }
         }
 
-        if (shouldPublish)
-          publishAnswers(classCode, funcInfo.challengeMd5, maxHistoryLength, false, 0, history)
+        if (shouldPublish())
+          funcInfo.challengeMd5.value.also { md5 ->
+            publishAnswers(md5, maxHistoryLength, false, 0, history)
+            publishLikeDislike(md5, 0)
+          }
       }
   }
+
+  fun shouldPublish(classCode: ClassCode = enrolledClassCode) =
+    when {
+      !isPostgresEnabled() -> false
+      classCode.isEnabled -> {
+        // Check to see if the teacher that owns class has it set as their active class in one of the sessions
+        val teacherId = classCode.fetchClassTeacherId()
+        teacherId.isNotEmpty() && toUser(teacherId).interestedInActiveClassCode(classCode)
+          .also { logger.debug { "Publishing teacherId: $teacherId for $classCode" } }
+      }
+      else -> false
+    }
 
   override fun toString() = "User(userId='$userId', name='$fullName')"
 
@@ -541,7 +600,7 @@ internal class User {
         Users
           .insertAndGetId { row ->
             row[Users.userId] = userId
-            row[name] = UNKNOWN_FULLNAME.value
+            row[fullName] = UNKNOWN_FULLNAME.value
             row[email] = "${UNKNOWN_EMAIL.value}-${randomId(4)}"
             row[enrolledClassCode] = DISABLED_CLASS_CODE.value
             row[defaultLanguage] = defaultLanguageType.languageName.value
@@ -563,7 +622,7 @@ internal class User {
               Users
                 .insertAndGetId { row ->
                   row[userId] = user.userId
-                  row[Users.name] = name.value
+                  row[fullName] = name.value
                   row[Users.email] = email.value
                   row[enrolledClassCode] = DISABLED_CLASS_CODE.value
                   row[defaultLanguage] = defaultLanguageType.languageName.value
@@ -584,18 +643,6 @@ internal class User {
           }
           logger.info { "Created user $email ${user.userId}" }
         }
-
-    fun User?.shouldPublish(classCode: ClassCode) =
-      when {
-        isNull() || !isPostgresEnabled() -> false
-        classCode.isEnabled -> {
-          // Check to see if the teacher that owns class has it set as their active class in one of the sessions
-          val teacherId = classCode.fetchClassTeacherId()
-          teacherId.isNotEmpty() && toUser(teacherId).interestedInActiveClassCode(classCode)
-            .also { logger.debug { "Publishing teacherId: $teacherId for $classCode" } }
-        }
-        else -> false
-      }
 
     private fun isRegisteredEmail(email: Email) = queryUserByEmail(email).isNotNull()
 

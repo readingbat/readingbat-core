@@ -17,13 +17,13 @@
 
 package com.github.readingbat.pages
 
+import com.github.pambrose.common.util.pathOf
 import com.github.readingbat.common.CSSNames.INDENT_2EM
 import com.github.readingbat.common.CSSNames.INVOC_STAT
 import com.github.readingbat.common.CSSNames.INVOC_TABLE
 import com.github.readingbat.common.CSSNames.INVOC_TD
 import com.github.readingbat.common.CSSNames.UNDERLINE
 import com.github.readingbat.common.ClassCode
-import com.github.readingbat.common.CommonUtils.pathOf
 import com.github.readingbat.common.Constants.CLASS_CODE_QP
 import com.github.readingbat.common.Constants.CORRECT_COLOR
 import com.github.readingbat.common.Constants.INCOMPLETE_COLOR
@@ -48,6 +48,7 @@ import com.github.readingbat.common.isNotValidUser
 import com.github.readingbat.dsl.InvalidRequestException
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.pages.ChallengePage.headerColor
+import com.github.readingbat.pages.ClassSummaryPage.LIKE_DISLIKE
 import com.github.readingbat.pages.ClassSummaryPage.STATS
 import com.github.readingbat.pages.HelpAndLogin.helpAndLogin
 import com.github.readingbat.pages.PageUtils.backLink
@@ -181,15 +182,20 @@ internal object StudentSummaryPage : KLogging() {
                       .forEach { challenge ->
                         td {
                           table {
+                            val encodedGroup = group.groupName.encode()
+                            val encodedName = challenge.challengeName.encode()
                             tr {
                               challenge.functionInfo(content).invocations
-                                .forEachIndexed { i, invocation ->
+                                .forEachIndexed { i, _ ->
                                   td(classes = INVOC_TD) {
-                                    id = "${group.groupName.encode()}-${challenge.challengeName.encode()}-$i"; +""
+                                    id = "$encodedGroup-$encodedName-$i"; +""
                                   }
                                 }
                               td(classes = INVOC_STAT) {
-                                id = "${group.groupName.encode()}-${challenge.challengeName.encode()}$STATS"; +""
+                                id = "$encodedGroup-$encodedName$STATS"; +""
+                              }
+                              td {
+                                id = "$encodedGroup-$encodedName$LIKE_DISLIKE"; +""
                               }
                             }
                           }
@@ -214,9 +220,7 @@ internal object StudentSummaryPage : KLogging() {
             wshost = wshost.replace(/^http:/, 'ws:');
       
           var wsurl = wshost + '$WS_ROOT$STUDENT_SUMMARY_ENDPOINT/' + ${
-          encodeUriElems(languageName,
-                         student.userId,
-                         classCode)
+          encodeUriElems(languageName, student.userId, classCode)
         };
           var ws = new WebSocket(wsurl);
       
@@ -235,9 +239,9 @@ internal object StudentSummaryPage : KLogging() {
               answers.style.backgroundColor = obj.results[i] == '$YES' ? '$CORRECT_COLOR' 
                                                                     : (obj.results[i] == '$NO' ? '$WRONG_COLOR' 
                                                                                              : '$INCOMPLETE_COLOR');
-      
-              document.getElementById(prefix + '$STATS').innerHTML = obj.msg;
-            }
+              document.getElementById(prefix + '$STATS').innerText = obj.stats;
+              document.getElementById(prefix + '$LIKE_DISLIKE').innerHTML = obj.likeDislike;
+   }
           };
         """.trimIndent())
     }

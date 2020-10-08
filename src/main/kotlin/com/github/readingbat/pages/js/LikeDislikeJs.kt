@@ -15,7 +15,7 @@
  *
  */
 
-package com.github.readingbat.pages
+package com.github.readingbat.pages.js
 
 import com.github.readingbat.common.Constants.CHALLENGE_SRC
 import com.github.readingbat.common.Constants.GROUP_SRC
@@ -60,13 +60,13 @@ internal object LikeDislikeJs {
     function likeDislikeHandleDone(){
       if(re.readyState == 1) {       // starting
         document.getElementById('$LIKE_SPINNER_ID').innerHTML = '<i class="fa fa-spinner fa-spin" style="font-size:24px"></i>';
-        document.getElementById('$LIKE_STATUS_ID').innerHTML = 'Setting like/dislike...';
+        document.getElementById('$LIKE_STATUS_ID').innerText = 'Setting like/dislike...';
       }
       else if(re.readyState == 4) {  // done
         var results = eval(re.responseText);
         
-        document.getElementById('$LIKE_SPINNER_ID').innerHTML = "";
-        document.getElementById('$LIKE_STATUS_ID').innerHTML = "";
+        document.getElementById('$LIKE_SPINNER_ID').innerText = '';
+        document.getElementById('$LIKE_STATUS_ID').innerText = '';
         
         if (results == 0) {
           document.getElementById('$LIKE_CLEAR').style.display = "inline";

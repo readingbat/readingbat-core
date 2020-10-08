@@ -22,24 +22,32 @@ import com.github.pambrose.common.util.pluralize
 import com.github.readingbat.common.CSSNames.INDENT_1EM
 import com.github.readingbat.common.CSSNames.TD_PADDING
 import com.github.readingbat.common.Endpoints.ADMIN_PREFS_ENDPOINT
+import com.github.readingbat.common.FormFields.DAYS_DEFAULT
+import com.github.readingbat.common.FormFields.DAYS_PARAM
 import com.github.readingbat.common.FormFields.RETURN_PARAM
-import com.github.readingbat.common.SessionActivites
-import com.github.readingbat.common.User.Companion.toUser
-import com.github.readingbat.dsl.ReadingBatContent
+import com.github.readingbat.common.SessionActivites.activeSessions
+import com.github.readingbat.common.SessionActivites.querySessions
 import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyTitle
 import com.github.readingbat.pages.PageUtils.headDefault
 import com.github.readingbat.pages.PageUtils.loadStatusPageDisplay
+import com.github.readingbat.pages.PageUtils.rawHtml
+import com.github.readingbat.server.FullName.Companion.UNKNOWN_FULLNAME
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
+import mu.KLogging
+import org.joda.time.DateTime
+import org.joda.time.DateTimeZone.UTC
+import kotlin.time.days
 import kotlin.time.hours
+import kotlin.time.milliseconds
 import kotlin.time.minutes
 
-internal object SessionsPage {
+internal object SessionsPage : KLogging() {
 
-  fun PipelineCall.sessionsPage(content: ReadingBatContent) =
+  fun PipelineCall.sessionsPage() =
     createHTML()
       .html {
         head { headDefault() }
@@ -54,22 +62,33 @@ internal object SessionsPage {
             table {
               tr {
                 td { +"Active users in the last minute: " }
-                td { +SessionActivites.activeSessions(1.minutes).toString() }
+                td { +activeSessions(1.minutes).toString() }
               }
               tr {
                 td { +"Active users in the last 15 minutes: " }
-                td { +SessionActivites.activeSessions(15.minutes).toString() }
+                td { +activeSessions(15.minutes).toString() }
               }
               tr {
                 td { +"Active users in the last hour: " }
-                td { +SessionActivites.activeSessions(1.hours).toString() }
+                td { +activeSessions(1.hours).toString() }
+              }
+              tr {
+                td { +"Active users in the last 24 hours: " }
+                td { +activeSessions(24.hours).toString() }
+              }
+              tr {
+                td { +"Active users in the last week: " }
+                td { +activeSessions(7.days).toString() }
               }
             }
           }
 
-          val sessions = SessionActivites.allSessions().filter { it.requests > 1 }.sortedBy { it.age }
+          val dayCount = queryParam(DAYS_PARAM, DAYS_DEFAULT).toInt()
+          val rows = querySessions(dayCount)
+          val sessions = "Session".pluralize(rows.size)
+          val days = "Day".pluralize(dayCount)
 
-          h3 { +"${sessions.size} User Session".pluralize(sessions.size) }
+          h3 { +"${rows.size} User $sessions in $dayCount $days" }
 
           div(classes = TD_PADDING) {
             div(classes = INDENT_1EM) {
@@ -83,26 +102,34 @@ internal object SessionsPage {
                   th { +"City" }
                   th { +"State" }
                   th { +"Country" }
-                  th { +"Organization" }
+                  th { +"ISP" }
                   th { +"" }
                   th { +"User Agent" }
                 }
-                sessions
-                  .forEach { session ->
+                val now = DateTime.now(UTC)
+                rows
+                  .forEach { row ->
                     tr {
-                      val user = session.principal?.userId?.let { toUser(it, session.browserSession) }
-                      val userDesc = user?.let { "${it.fullName} (${it.email})" } ?: "Not logged in"
-                      td { +session.browserSession.id }
-                      td { +userDesc }
-                      td { +session.age.format(false) }
-                      td { +session.requests.toString() }
-                      td { +session.remoteHost.remoteHost }
-                      td { +session.remoteHost.city }
-                      td { +session.remoteHost.state }
-                      td { +session.remoteHost.country }
-                      td { +session.remoteHost.organization }
-                      td { if ("://" in session.remoteHost.flagUrl) img { src = session.remoteHost.flagUrl } else +"" }
-                      td { +session.userAgent }
+                      td { +row.session_id }
+                      td {
+                        if (row.fullName != UNKNOWN_FULLNAME) {
+                          +row.fullName.toString()
+                          rawHtml("</br>")
+                          +"(${row.email})"
+                        }
+                        else {
+                          +"Not logged in"
+                        }
+                      }
+                      td { +(now.millis - row.maxDate.millis).milliseconds.format() }
+                      td { +row.count.toString() }
+                      td { +row.ip }
+                      td { +row.city }
+                      td { +row.state }
+                      td { +row.country }
+                      td { +row.isp }
+                      td { if ("://" in row.flagUrl) img { src = row.flagUrl } else +"" }
+                      td { +row.userAgent }
                     }
                   }
               }

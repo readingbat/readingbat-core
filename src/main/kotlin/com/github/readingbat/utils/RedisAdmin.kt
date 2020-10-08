@@ -17,10 +17,10 @@
 
 package com.github.readingbat.utils
 
+import com.github.pambrose.common.redis.RedisUtils.scanKeys
 import com.github.pambrose.common.redis.RedisUtils.withNonNullRedis
 import com.github.pambrose.common.redis.RedisUtils.withRedis
 import com.github.pambrose.common.util.isNotNull
-import com.github.readingbat.common.RedisUtils.scanKeys
 import com.github.readingbat.dsl.InvalidConfigurationException
 import redis.clients.jedis.exceptions.JedisDataException
 

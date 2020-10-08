@@ -41,8 +41,8 @@ import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.RedirectException
 import com.github.readingbat.server.ServerUtils.queryParam
 import com.github.readingbat.server.Users
-import com.github.readingbat.server.get
 import com.google.common.util.concurrent.RateLimiter
+import com.pambrose.common.exposed.get
 import io.ktor.application.*
 import io.ktor.request.*
 import io.ktor.sessions.*

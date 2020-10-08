@@ -41,6 +41,7 @@ internal object Constants {
   const val LABEL_WIDTH = "width:250"
   const val INVALID_RESET_ID = "Invalid reset_id"
   const val PING_CODE = "P"
+  const val LIKE_DISLIKE_CODE = "LD"
   const val COLUMN_CNT = 3
   const val LANG_SRC = "lang"
   const val GROUP_SRC = "groupName"
@@ -126,6 +127,9 @@ internal object Endpoints {
   const val THREAD_DUMP = "/threaddump"
   const val LOGOUT_ENDPOINT = "/logout"
 
+  const val THUMBS_UP = "&#128077;"
+  const val THUMBS_DOWN = "&#128078;"
+
   // This is a dynamic page
   const val CSS_ENDPOINT = "/$STATIC/styles.css"
 
@@ -185,6 +189,8 @@ internal object FormFields {
   const val RESET_ID_PARAM = "reset_id"
   const val ADMIN_ACTION_PARAM = "admin_action"
   const val USER_ID_PARAM = "user_id"
+  const val DAYS_PARAM = "days"
+  const val DAYS_DEFAULT = "2"
 
   const val LANGUAGE_NAME_PARAM = "language_name_key"
   const val GROUP_NAME_PARAM = "group_name_key"

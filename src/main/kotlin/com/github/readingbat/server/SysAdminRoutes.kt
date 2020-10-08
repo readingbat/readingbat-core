@@ -17,12 +17,12 @@
 
 package com.github.readingbat.server
 
+import com.github.pambrose.common.redis.RedisUtils.scanKeys
 import com.github.pambrose.common.redis.RedisUtils.withRedisPool
 import com.github.pambrose.common.response.respondWith
 import com.github.pambrose.common.response.uriPrefix
 import com.github.pambrose.common.util.isNull
 import com.github.pambrose.common.util.pluralize
-import com.github.readingbat.common.CommonUtils.keyOf
 import com.github.readingbat.common.Constants.REDIS_IS_DOWN
 import com.github.readingbat.common.Endpoints.DELETE_CONTENT_IN_REDIS_ENDPOINT
 import com.github.readingbat.common.Endpoints.GARBAGE_COLLECTOR_ENDPOINT
@@ -35,8 +35,8 @@ import com.github.readingbat.common.Endpoints.RESET_CONTENT_DSL_ENDPOINT
 import com.github.readingbat.common.KeyConstants.CONTENT_DSL_KEY
 import com.github.readingbat.common.KeyConstants.DIR_CONTENTS_KEY
 import com.github.readingbat.common.KeyConstants.SOURCE_CODE_KEY
+import com.github.readingbat.common.KeyConstants.keyOf
 import com.github.readingbat.common.Metrics
-import com.github.readingbat.common.RedisUtils.scanKeys
 import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.dsl.LanguageType.Java
 import com.github.readingbat.dsl.LanguageType.Kotlin

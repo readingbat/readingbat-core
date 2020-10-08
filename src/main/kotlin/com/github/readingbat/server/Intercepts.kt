@@ -22,18 +22,19 @@ import com.github.readingbat.common.BrowserSession.Companion.querySessionDbmsId
 import com.github.readingbat.common.Constants.STATIC
 import com.github.readingbat.common.Constants.UNKNOWN_USER_ID
 import com.github.readingbat.common.Endpoints.PING_ENDPOINT
-import com.github.readingbat.common.SessionActivites.markActivity
-import com.github.readingbat.common.SessionActivites.queryGeoDbmsIdByIpAddress
 import com.github.readingbat.common.User.Companion.fetchUserDbmsIdFromCache
 import com.github.readingbat.common.browserSession
-import com.github.readingbat.dsl.isPostgresEnabled
+import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.isSaveRequestsEnabled
+import com.github.readingbat.server.GeoInfo.Companion.lookupGeoInfo
+import com.github.readingbat.server.GeoInfo.Companion.queryGeoInfo
 import com.github.readingbat.server.Intercepts.clock
 import com.github.readingbat.server.Intercepts.logger
 import com.github.readingbat.server.Intercepts.requestTimingMap
 import com.github.readingbat.server.ServerUtils.fetchUserDbmsIdFromCache
 import io.ktor.application.*
 import io.ktor.features.*
+import io.ktor.http.HttpHeaders.UserAgent
 import io.ktor.request.*
 import io.ktor.routing.Routing.Feature.RoutingCallFinished
 import io.ktor.routing.Routing.Feature.RoutingCallStarted
@@ -53,7 +54,7 @@ internal object Intercepts : KLogging() {
   val clock = TimeSource.Monotonic
   val requestTimingMap = ConcurrentHashMap<String, TimeMark>()
   val timer =
-    timer("requestTimingMap admin", true, 1.minutes.toLongMilliseconds(), 1.minutes.toLongMilliseconds()) {
+    timer("requestTimingMap admin", false, 1.minutes.toLongMilliseconds(), 1.minutes.toLongMilliseconds()) {
       requestTimingMap
         .filter { (_, start) -> start.elapsedNow() > 1.hours }
         .forEach { (callId, start) ->
@@ -82,20 +83,25 @@ internal fun Application.intercepts() {
 
     if (!isStaticCall()) {
       val browserSession = call.browserSession
-      //logger.info { "${context.request.origin.remoteHost} $browserSession ${context.request.path()}" }
-      browserSession?.markActivity("intercept()", call)
-        ?: logger.debug { "Null browser sessions for ${call.request.origin.remoteHost}" }
 
-      if (isSaveRequestsEnabled() && isPostgresEnabled() && browserSession.isNotNull()) {
+      if (isSaveRequestsEnabled() && browserSession.isNotNull()) {
         val request = call.request
         val ipAddress = request.origin.remoteHost
         val sessionDbmsId = transaction { querySessionDbmsId(browserSession.id) }
         val userDbmsId =
           call.fetchUserDbmsIdFromCache().takeIf { it != -1L } ?: fetchUserDbmsIdFromCache(UNKNOWN_USER_ID)
-        val geoDbmsId = transaction { queryGeoDbmsIdByIpAddress(ipAddress) }
         val verb = request.httpMethod.value
         val path = request.path()
         val queryString = request.queryString()
+        // Use https://ipgeolocation.io/documentation/user-agent-api.html to parse userAgent data
+        val userAgent = request.headers[UserAgent] ?: ""
+
+        val geoInfo = lookupGeoInfo(ipAddress)
+        val geoDbmsId =
+          if (geoInfo.requireDbmsLookUp)
+            queryGeoInfo(ipAddress)?.dbmsId ?: throw InvalidConfigurationException("Missing ip address: $ipAddress")
+          else
+            geoInfo.dbmsId
 
         logger.debug { "Saving request: ${call.callId} $ipAddress $userDbmsId $verb $path $queryString $geoDbmsId" }
         transaction {
@@ -108,6 +114,7 @@ internal fun Application.intercepts() {
               row[ServerRequests.verb] = verb
               row[ServerRequests.path] = path
               row[ServerRequests.queryString] = queryString
+              row[ServerRequests.userAgent] = userAgent
               row[duration] = 0
             }
         }
@@ -123,7 +130,7 @@ internal fun Application.intercepts() {
     // Phase for handling unprocessed calls
   }
 
-  if (isSaveRequestsEnabled() && isPostgresEnabled()) {
+  if (isSaveRequestsEnabled()) {
     environment.monitor
       .apply {
         subscribe(RoutingCallStarted) { call ->

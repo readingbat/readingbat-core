@@ -31,9 +31,7 @@ import com.github.readingbat.common.Property.DSL_VARIABLE_NAME
 import com.github.readingbat.common.Property.KTOR_PORT
 import com.github.readingbat.common.Property.KTOR_WATCH
 import com.github.readingbat.common.Property.PROXY_HOSTNAME
-import com.github.readingbat.common.SessionActivites
-import com.github.readingbat.common.SessionActivites.geoInfoMap
-import com.github.readingbat.common.SessionActivites.sessionsMap
+import com.github.readingbat.common.SessionActivites.activeSessions
 import com.github.readingbat.common.User.Companion.emailCache
 import com.github.readingbat.common.User.Companion.userIdCache
 import com.github.readingbat.dsl.LanguageType.Java
@@ -41,8 +39,8 @@ import com.github.readingbat.dsl.LanguageType.Kotlin
 import com.github.readingbat.dsl.LanguageType.Python
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.agentLaunchId
-import com.github.readingbat.dsl.cacheContentInRedis
 import com.github.readingbat.dsl.isAgentEnabled
+import com.github.readingbat.dsl.isContentCachingEnabled
 import com.github.readingbat.dsl.isMultiServerEnabled
 import com.github.readingbat.dsl.isPostgresEnabled
 import com.github.readingbat.dsl.isProduction
@@ -51,6 +49,7 @@ import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyTitle
 import com.github.readingbat.pages.PageUtils.headDefault
 import com.github.readingbat.pages.PageUtils.loadStatusPageDisplay
+import com.github.readingbat.server.GeoInfo.Companion.geoInfoMap
 import com.github.readingbat.server.Intercepts.requestTimingMap
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ReadingBatServer
@@ -60,6 +59,7 @@ import com.github.readingbat.server.ws.ChallengeWs.wsConnections
 import io.prometheus.Agent
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
+import kotlin.time.days
 import kotlin.time.hours
 import kotlin.time.minutes
 
@@ -124,8 +124,8 @@ internal object SystemConfigurationPage {
                   td { +isSaveRequestsEnabled().toString() }
                 }
                 tr {
-                  td { +"Cache content in Redis:" }
-                  td { +cacheContentInRedis().toString() }
+                  td { +"Content caching enabled:" }
+                  td { +isContentCachingEnabled().toString() }
                 }
                 tr {
                   td { +"Cache challenges:" }
@@ -150,7 +150,6 @@ internal object SystemConfigurationPage {
             div(classes = INDENT_1EM) {
               table {
                 listOf(
-                  "Active sessions map size" to sessionsMap,
                   "Request timing map size" to requestTimingMap,
                   "IP Geo map size" to geoInfoMap,
                   "Content map size" to content.contentMap,
@@ -252,15 +251,23 @@ internal object SystemConfigurationPage {
               table {
                 tr {
                   td { +"Active users in the last minute:" }
-                  td { +SessionActivites.activeSessions(1.minutes).toString() }
+                  td { +activeSessions(1.minutes).toString() }
                 }
                 tr {
                   td { +"Active users in the last 15 minutes:" }
-                  td { +SessionActivites.activeSessions(15.minutes).toString() }
+                  td { +activeSessions(15.minutes).toString() }
                 }
                 tr {
                   td { +"Active users in the last hour:" }
-                  td { +SessionActivites.activeSessions(1.hours).toString() }
+                  td { +activeSessions(1.hours).toString() }
+                }
+                tr {
+                  td { +"Active users in the last 24 hours:" }
+                  td { +activeSessions(24.hours).toString() }
+                }
+                tr {
+                  td { +"Active users in the last week:" }
+                  td { +activeSessions(7.days).toString() }
                 }
               }
             }

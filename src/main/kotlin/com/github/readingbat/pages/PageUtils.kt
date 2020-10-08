@@ -18,12 +18,12 @@
 package com.github.readingbat.pages
 
 import com.github.pambrose.common.util.isNull
+import com.github.pambrose.common.util.pathOf
 import com.github.pambrose.common.util.pluralize
 import com.github.pambrose.common.util.toRootPath
 import com.github.readingbat.common.CSSNames.INDENT_1EM
 import com.github.readingbat.common.CSSNames.SELECTED_TAB
 import com.github.readingbat.common.ClassCode
-import com.github.readingbat.common.CommonUtils.pathOf
 import com.github.readingbat.common.Constants.ICONS
 import com.github.readingbat.common.Endpoints.CHALLENGE_ROOT
 import com.github.readingbat.common.Endpoints.CSS_ENDPOINT
@@ -174,12 +174,12 @@ internal object PageUtils {
     }
   }
 
-  internal fun enrolleesDesc(enrollees: List<User>): String {
+  fun enrolleesDesc(enrollees: List<User>): String {
     val studentCount = if (enrollees.isEmpty()) "No" else enrollees.count().toString()
     return " - $studentCount ${"student".pluralize(enrollees.count())} enrolled"
   }
 
-  internal fun BODY.confirmingButton(text: String, endpoint: String, msg: String) {
+  fun BODY.confirmingButton(text: String, endpoint: String, msg: String) {
     form {
       style = "margin:0"
       action = endpoint
@@ -225,11 +225,9 @@ internal object PageUtils {
       return false;
     """.trimIndent()
 
-  internal fun FlowOrInteractiveOrPhrasingContent.hideShowButton(formName: String,
-                                                                 fieldName: String,
-                                                                 sizePct: Int = 85) {
+  fun FlowOrInteractiveOrPhrasingContent.hideShowButton(formName: String, fieldName: String, sizePct: Int = 85) {
     button { style = "font-size:$sizePct%"; onClick = hideShowJs(formName, fieldName); +"show/hide" }
   }
 
-  internal fun encodeUriElems(vararg elems: Any) = elems.joinToString("+'/'+") { "encodeURIComponent('$it')" }
+  fun encodeUriElems(vararg elems: Any) = elems.joinToString("+'/'+") { "encodeURIComponent('$it')" }
 }

@@ -23,10 +23,10 @@ import com.github.pambrose.common.time.format
 import com.github.pambrose.common.util.isNotNull
 import com.github.pambrose.common.util.simpleClassName
 import com.github.readingbat.common.ClassCode
-import com.github.readingbat.common.CommonUtils.keyOf
 import com.github.readingbat.common.Constants
 import com.github.readingbat.common.Endpoints.CHALLENGE_ENDPOINT
 import com.github.readingbat.common.Endpoints.WS_ROOT
+import com.github.readingbat.common.KeyConstants.keyOf
 import com.github.readingbat.common.Metrics
 import com.github.readingbat.dsl.InvalidRequestException
 import com.github.readingbat.dsl.RedisUnavailableException
@@ -50,6 +50,7 @@ import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.Required
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import mu.KLogging
@@ -67,7 +68,7 @@ internal object ChallengeWs : KLogging() {
   val singleServerChannel by lazy { BroadcastChannel<PublishedData>(BUFFERED) }
   val multiServerWriteChannel by lazy { BroadcastChannel<PublishedData>(BUFFERED) }
   private val multiServerReadChannel by lazy { BroadcastChannel<PublishedData>(BUFFERED) }
-  val wsConnections = Collections.synchronizedSet(LinkedHashSet<SessionContext>())
+  val wsConnections: MutableSet<SessionContext> = Collections.synchronizedSet(LinkedHashSet<SessionContext>())
   var maxWsConnections = 0
 
   @Synchronized
@@ -82,12 +83,13 @@ internal object ChallengeWs : KLogging() {
 
   @Serializable
   class PingMessage(val msg: String) {
-    val type = Constants.PING_CODE
+    @Required
+    val type: String = Constants.PING_CODE
     fun toJson() = Json.encodeToString(serializer(), this)
   }
 
   init {
-    timer("pinger", true, 0L, 1.seconds.toLongMilliseconds()) {
+    timer("pinger", false, 0L, 1.seconds.toLongMilliseconds()) {
       for (sessionContext in wsConnections)
         try {
           val elapsed = sessionContext.start.elapsedNow().format()
@@ -224,7 +226,7 @@ internal object ChallengeWs : KLogging() {
         closeChannels()
         close(CloseReason(CloseReason.Codes.GOING_AWAY, "Client disconnected"))
         metrics.wsStudentAnswerGauge.labels(agentLaunchId()).dec()
-        logger.info { "Closed student answers websocket ${wsConnections.size}" }
+        logger.debug { "Closed student answers websocket ${wsConnections.size}" }
       }
     }
   }

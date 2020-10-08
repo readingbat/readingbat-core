@@ -22,6 +22,19 @@ import com.github.readingbat.server.ChallengeName
 import com.github.readingbat.server.GroupName
 import com.github.readingbat.server.LanguageName
 
+internal object KeyConstants {
+  const val KEY_SEP = "|"
+  const val AUTH_KEY = "auth"
+  const val NO_AUTH_KEY = "noauth"
+  const val CORRECT_ANSWERS_KEY = "correct-answers"
+  const val CHALLENGE_ANSWERS_KEY = "challenge-answers"
+  const val SOURCE_CODE_KEY = "source-code"
+  const val CONTENT_DSL_KEY = "content-dsl"
+  const val DIR_CONTENTS_KEY = "dir-contents"
+
+  fun keyOf(vararg keys: Any) = keys.joinToString(KEY_SEP) { it.toString() }
+}
+
 internal fun correctAnswersKey(user: User?, browserSession: BrowserSession?, challenge: Challenge) =
   user?.correctAnswersKey(challenge.languageName, challenge.groupName, challenge.challengeName)
     ?: browserSession?.correctAnswersKey(challenge.languageName, challenge.groupName, challenge.challengeName)

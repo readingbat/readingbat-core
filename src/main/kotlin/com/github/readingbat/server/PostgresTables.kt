@@ -40,7 +40,7 @@ internal val geoInfosUnique = Index(listOf(GeoInfos.id), true, "geo_info_unique"
 
 internal object BrowserSessions : LongIdTable("browser_sessions") {
   val created = datetime("created")
-  val session_id = text("session_id")
+  val sessionId = text("session_id")
 }
 
 // answersJson is a map of invocations to answers
@@ -70,7 +70,7 @@ internal object Users : LongIdTable() {
   val updated = datetime("updated")
   val userId = text("user_id")
   val email = text("email")
-  val name = text("name")
+  val fullName = text("name")
   val salt = text("salt")
   val digest = text("digest")
   val enrolledClassCode = text("enrolled_class_code")
@@ -165,5 +165,6 @@ object ServerRequests : LongIdTable("server_requests") {
   val verb = text("verb")
   val path = text("path")
   val queryString = text("query_string")
+  val userAgent = text("user_agent")
   val duration = long("duration")
 }

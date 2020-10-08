@@ -17,8 +17,8 @@
 
 package com.github.readingbat.server.ws
 
+import com.github.pambrose.common.util.md5Of
 import com.github.readingbat.common.ClassCode
-import com.github.readingbat.common.CommonUtils
 import com.github.readingbat.common.Constants.NO
 import com.github.readingbat.common.Constants.UNANSWERED
 import com.github.readingbat.common.Constants.YES
@@ -101,7 +101,7 @@ internal object StudentSummaryWs : KLogging() {
                   val results = mutableListOf<String>()
                   for (invocation in funcInfo.invocations) {
                     transaction {
-                      val historyMd5 = CommonUtils.md5Of(languageName, groupName, challengeName, invocation)
+                      val historyMd5 = md5Of(languageName, groupName, challengeName, invocation)
                       if (student.historyExists(historyMd5, invocation)) {
                         attempted++
                         results +=
@@ -120,10 +120,17 @@ internal object StudentSummaryWs : KLogging() {
                       break
                   }
 
-                  if (incorrectAttempts > 0 || results.any { it != UNANSWERED }) {
-                    val msg =
+                  val likeDislike = student.likeDislike(challenge)
+
+                  if (incorrectAttempts > 0 || results.any { it != UNANSWERED } || likeDislike != 0) {
+                    val stats =
                       if (incorrectAttempts == 0 && results.all { it == UNANSWERED }) "" else incorrectAttempts.toString()
-                    val json = StudentSummary(groupName.encode(), challengeName.encode(), results, msg).toJson()
+                    val json =
+                      StudentSummary(groupName.encode(),
+                                     challengeName.encode(),
+                                     results,
+                                     stats,
+                                     student.likeDislikeEmoji(likeDislike)).toJson()
 
                     metrics.wsClassSummaryResponseCount.labels(agentLaunchId()).inc()
                     logger.debug { "Sending data $json" }
@@ -151,7 +158,11 @@ internal object StudentSummaryWs : KLogging() {
   }
 
   @Serializable
-  class StudentSummary(val groupName: String, val challengeName: String, val results: List<String>, val msg: String) {
+  class StudentSummary(val groupName: String,
+                       val challengeName: String,
+                       val results: List<String>,
+                       val stats: String,
+                       val likeDislike: String) {
     fun toJson() = Json.encodeToString(serializer(), this)
   }
 }

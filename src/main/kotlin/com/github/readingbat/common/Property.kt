@@ -19,7 +19,7 @@ package com.github.readingbat.common
 
 import com.github.pambrose.common.redis.RedisUtils
 import com.github.pambrose.common.util.isNotNull
-import com.github.readingbat.common.CommonUtils.obfuscate
+import com.github.pambrose.common.util.obfuscate
 import com.github.readingbat.common.Constants.UNASSIGNED
 import com.github.readingbat.common.PropertyNames.AGENT
 import com.github.readingbat.common.PropertyNames.CHALLENGES
@@ -69,7 +69,7 @@ enum class Property(val propertyValue: String,
   POSTGRES_ENABLED("$READINGBAT.$SITE.postgresEnabled"),
   SAVE_REQUESTS_ENABLED("$READINGBAT.$SITE.saveRequestsEnabled"),
   MULTI_SERVER_ENABLED("$READINGBAT.$SITE.multiServerEnabled"),
-  CACHE_CONTENT_IN_REDIS("$READINGBAT.$SITE.cacheContentInRedis"),
+  CONTENT_CACHING_ENABLED("$READINGBAT.$SITE.contentCachingEnabled"),
   AGENT_ENABLED_PROPERTY("$AGENT.enabled"),
 
   PINGDOM_BANNER_ID("$READINGBAT.$SITE.pingdomBannerId", { getPropertyOrNull() ?: UNASSIGNED }),

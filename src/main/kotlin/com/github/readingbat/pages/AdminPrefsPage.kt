@@ -21,6 +21,8 @@ import com.github.readingbat.common.CSSNames.INDENT_1EM
 import com.github.readingbat.common.Endpoints.CONFIG_ENDPOINT
 import com.github.readingbat.common.Endpoints.SESSIONS_ENDPOINT
 import com.github.readingbat.common.Endpoints.SYSTEM_ADMIN_ENDPOINT
+import com.github.readingbat.common.FormFields.DAYS_DEFAULT
+import com.github.readingbat.common.FormFields.DAYS_PARAM
 import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.Property.PINGDOM_BANNER_ID
 import com.github.readingbat.common.User
@@ -68,7 +70,7 @@ internal object AdminPrefsPage : KLogging() {
             }
 
             p(classes = INDENT_1EM) {
-              a { href = "$SESSIONS_ENDPOINT?$RETURN_PARAM=$returnPath"; +"Current Sessions" }
+              a { href = "$SESSIONS_ENDPOINT?$RETURN_PARAM=$returnPath&$DAYS_PARAM=$DAYS_DEFAULT"; +"Current Sessions" }
             }
 
             p(classes = INDENT_1EM) {

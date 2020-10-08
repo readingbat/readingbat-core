@@ -48,8 +48,8 @@ import com.github.readingbat.server.ResetId.Companion.EMPTY_RESET_ID
 import com.github.readingbat.server.ResetId.Companion.getResetId
 import com.github.readingbat.server.ResetId.Companion.newResetId
 import com.github.readingbat.server.ServerUtils.queryParam
-import com.github.readingbat.server.get
 import com.google.common.util.concurrent.RateLimiter
+import com.pambrose.common.exposed.get
 import io.ktor.application.*
 import io.ktor.features.*
 import io.ktor.request.*

@@ -17,9 +17,9 @@
 
 package com.github.readingbat.pages
 
+import com.github.pambrose.common.util.pathOf
 import com.github.readingbat.common.CSSNames.GROUP_CHOICE
 import com.github.readingbat.common.CSSNames.GROUP_ITEM_SRC
-import com.github.readingbat.common.CommonUtils.pathOf
 import com.github.readingbat.common.Constants.MSG
 import com.github.readingbat.common.Endpoints.CHALLENGE_ROOT
 import com.github.readingbat.common.Endpoints.STATIC_ROOT
@@ -33,7 +33,6 @@ import com.github.readingbat.dsl.ChallengeGroup
 import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.pages.ChallengeGroupPage.displayClassDescription
-import com.github.readingbat.pages.ChallengeGroupPage.isCorrect
 import com.github.readingbat.pages.PageUtils.bodyHeader
 import com.github.readingbat.pages.PageUtils.headDefault
 import com.github.readingbat.pages.PageUtils.loadPingdomScript

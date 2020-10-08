@@ -17,11 +17,12 @@
 
 package com.github.readingbat.common
 
-import com.github.readingbat.common.CommonUtils.keyOf
-import com.github.readingbat.common.CommonUtils.md5Of
+import com.github.pambrose.common.util.md5Of
 import com.github.readingbat.common.KeyConstants.CHALLENGE_ANSWERS_KEY
 import com.github.readingbat.common.KeyConstants.CORRECT_ANSWERS_KEY
 import com.github.readingbat.common.KeyConstants.NO_AUTH_KEY
+import com.github.readingbat.common.KeyConstants.keyOf
+import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.MissingBrowserSessionException
 import com.github.readingbat.posts.ChallengeHistory
 import com.github.readingbat.server.BrowserSessions
@@ -30,6 +31,7 @@ import com.github.readingbat.server.GroupName
 import com.github.readingbat.server.Invocation
 import com.github.readingbat.server.LanguageName
 import com.github.readingbat.server.SessionAnswerHistory
+import com.github.readingbat.server.SessionChallengeInfo
 import io.ktor.application.*
 import io.ktor.auth.*
 import io.ktor.sessions.*
@@ -60,6 +62,18 @@ internal data class BrowserSession(val id: String, val created: Long = Instant.n
   fun challengeAnswerKey(languageName: LanguageName, groupName: GroupName, challengeName: ChallengeName) =
     keyOf(CHALLENGE_ANSWERS_KEY, NO_AUTH_KEY, id, md5Of(languageName, groupName, challengeName))
 
+  fun likeDislike(challenge: Challenge) =
+    transaction {
+      val likeDislike = SessionChallengeInfo.likeDislike
+      val sessionRef = SessionChallengeInfo.sessionRef
+      val md5 = SessionChallengeInfo.md5
+      SessionChallengeInfo
+        .slice(likeDislike)
+        .select { (sessionRef eq sessionDbmsId()) and (md5 eq challenge.md5()) }
+        .map { it[likeDislike].toInt() }
+        .firstOrNull() ?: 0
+    }
+
   fun answerHistory(md5: String, invocation: Invocation) =
     SessionAnswerHistory
       .slice(SessionAnswerHistory.invocation,
@@ -81,14 +95,14 @@ internal data class BrowserSession(val id: String, val created: Long = Instant.n
     fun createBrowserSession(id: String) =
       BrowserSessions
         .insertAndGetId { row ->
-          row[session_id] = id
+          row[sessionId] = id
         }.value
 
     fun querySessionDbmsId(id: String) =
       transaction {
         BrowserSessions
           .slice(BrowserSessions.id)
-          .select { BrowserSessions.session_id eq id }
+          .select { BrowserSessions.sessionId eq id }
           .map { it[BrowserSessions.id].value }
           .firstOrNull() ?: throw MissingBrowserSessionException(id)
       }

@@ -20,9 +20,7 @@ package com.github.readingbat.posts
 import com.github.pambrose.common.util.*
 import com.github.readingbat.common.BrowserSession
 import com.github.readingbat.common.BrowserSession.Companion.querySessionDbmsId
-import com.github.readingbat.common.ClassCode
-import com.github.readingbat.common.CommonUtils.md5Of
-import com.github.readingbat.common.CommonUtils.pathOf
+import com.github.readingbat.common.Constants
 import com.github.readingbat.common.Constants.CHALLENGE_SRC
 import com.github.readingbat.common.Constants.GROUP_SRC
 import com.github.readingbat.common.Constants.LANG_SRC
@@ -43,11 +41,8 @@ import com.github.readingbat.common.ParameterIds.DISLIKE_CLEAR
 import com.github.readingbat.common.ParameterIds.DISLIKE_COLOR
 import com.github.readingbat.common.ParameterIds.LIKE_CLEAR
 import com.github.readingbat.common.ParameterIds.LIKE_COLOR
-import com.github.readingbat.common.ScriptPools.kotlinScriptPool
-import com.github.readingbat.common.ScriptPools.pythonScriptPool
 import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.fetchUserDbmsIdFromCache
-import com.github.readingbat.common.User.Companion.shouldPublish
 import com.github.readingbat.common.browserSession
 import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.ReadingBatContent
@@ -60,9 +55,13 @@ import com.github.readingbat.server.*
 import com.github.readingbat.server.ChallengeName.Companion.getChallengeName
 import com.github.readingbat.server.GroupName.Companion.getGroupName
 import com.github.readingbat.server.LanguageName.Companion.getLanguageName
+import com.github.readingbat.server.ScriptPools.kotlinScriptPool
+import com.github.readingbat.server.ScriptPools.pythonScriptPool
+import com.pambrose.common.exposed.upsert
 import io.ktor.application.*
 import io.ktor.request.*
 import io.ktor.response.*
+import kotlinx.serialization.Required
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
@@ -87,6 +86,14 @@ internal data class ChallengeResults(val invocation: Invocation,
                                      val hint: String = "")
 
 @Serializable
+internal class LikeDislikeInfo(val userId: String,
+                               val likeDislike: String) {
+  @Required
+  val type: String = Constants.LIKE_DISLIKE_CODE
+  fun toJson() = Json.encodeToString(serializer(), this)
+}
+
+@Serializable
 internal class DashboardInfo(val userId: String,
                              val complete: Boolean,
                              val numCorrect: Int,
@@ -103,7 +110,7 @@ internal class DashboardHistory(val invocation: String,
 internal data class ChallengeHistory(var invocation: Invocation,
                                      var correct: Boolean = false,
                                      var incorrectAttempts: Int = 0,
-                                     val answers: MutableList<String> = mutableListOf()) {
+                                     @Required val answers: MutableList<String> = mutableListOf()) {
 
   fun markCorrect(userResponse: String) {
     correct = true
@@ -133,6 +140,9 @@ internal class ChallengeNames(paramMap: Map<String, String>) {
   val groupName = GroupName(paramMap[GROUP_SRC] ?: throw InvalidConfigurationException("Missing group name"))
   val challengeName =
     ChallengeName(paramMap[CHALLENGE_SRC] ?: throw InvalidConfigurationException("Missing challenge name"))
+
+  fun md5() = md5Of(languageName, groupName, challengeName)
+  fun md5(invocation: Invocation) = md5Of(languageName, groupName, challengeName, invocation)
 }
 
 internal object ChallengePost : KLogging() {
@@ -447,10 +457,6 @@ internal object ChallengePost : KLogging() {
                                            funcInfo: FunctionInfo,
                                            userResponses: List<Map.Entry<String, List<String>>>,
                                            results: List<ChallengeResults>) {
-    val challengeMd5 = md5Of(names.languageName, names.groupName, names.challengeName)
-
-    val complete = results.all { it.correct }
-    val numCorrect = results.count { it.correct }
 
     // Save the last answers given
     val invokeList =
@@ -461,8 +467,10 @@ internal object ChallengePost : KLogging() {
           funcInfo.invocations[i] to userResponse
         }
 
-    val classCode = user?.enrolledClassCode ?: ClassCode.DISABLED_CLASS_CODE
-    val shouldPublish = user.shouldPublish(classCode)
+    val challengeMd5 = names.md5()
+    val shouldPublish = user?.shouldPublish() ?: false
+    val complete = results.all { it.correct }
+    val numCorrect = results.count { it.correct }
     val invokeMap = invokeList.map { it.first.value to it.second }.toMap()
     val invokeStr = Json.encodeToString(invokeMap)
     val historyList = mutableListOf<ChallengeHistory>()
@@ -493,8 +501,7 @@ internal object ChallengePost : KLogging() {
 
       // Save the history of each answer on a per-invocation basis
       for (result in results) {
-        val historyMd5 = md5Of(names.languageName, names.groupName, names.challengeName, result.invocation)
-
+        val historyMd5 = names.md5(result.invocation)
         val history =
           when {
             user.isNotNull() -> user.answerHistory(historyMd5, result.invocation)
@@ -509,28 +516,34 @@ internal object ChallengePost : KLogging() {
           else -> history.markIncorrect(result.userResponse)
         }
 
+        val invocation = history.invocation.value
+        val updated = DateTime.now(DateTimeZone.UTC)
+        val correct = history.correct
+        val incorrectAttempts = history.incorrectAttempts
+        val json = Json.encodeToString(history.answers)
+
         when {
           user.isNotNull() ->
             UserAnswerHistory
               .upsert(conflictIndex = userAnswerHistoryIndex) { row ->
                 row[userRef] = user.userDbmsId
                 row[md5] = historyMd5
-                row[invocation] = history.invocation.value
-                row[updated] = DateTime.now(DateTimeZone.UTC)
-                row[correct] = history.correct
-                row[incorrectAttempts] = history.incorrectAttempts
-                row[historyJson] = Json.encodeToString(history.answers)
+                row[UserAnswerHistory.invocation] = invocation
+                row[UserAnswerHistory.updated] = updated
+                row[UserAnswerHistory.correct] = correct
+                row[UserAnswerHistory.incorrectAttempts] = incorrectAttempts
+                row[historyJson] = json
               }
           browserSession.isNotNull() ->
             SessionAnswerHistory
               .upsert(conflictIndex = sessionAnswerHistoryIndex) { row ->
                 row[sessionRef] = browserSession.sessionDbmsId()
                 row[md5] = historyMd5
-                row[invocation] = history.invocation.value
-                row[updated] = DateTime.now(DateTimeZone.UTC)
-                row[correct] = history.correct
-                row[incorrectAttempts] = history.incorrectAttempts
-                row[historyJson] = Json.encodeToString(history.answers)
+                row[SessionAnswerHistory.invocation] = invocation
+                row[SessionAnswerHistory.updated] = updated
+                row[SessionAnswerHistory.correct] = correct
+                row[SessionAnswerHistory.incorrectAttempts] = incorrectAttempts
+                row[historyJson] = json
               }
           else ->
             logger.warn { "Answer history not updated" }
@@ -538,30 +551,33 @@ internal object ChallengePost : KLogging() {
       }
     }
 
+    // This is done oustide the transaction
     if (shouldPublish)
-      historyList
-        .forEach { history ->
-          val maxLength = content.maxHistoryLength
-          user?.publishAnswers(classCode, funcInfo.challengeMd5, maxLength, complete, numCorrect, history)
-        }
+      historyList.forEach {
+        user?.publishAnswers(challengeMd5, content.maxHistoryLength, complete, numCorrect, it)
+      }
   }
 
-  private fun saveLikeDislike(user: User?,
-                              browserSession: BrowserSession?,
-                              names: ChallengeNames,
-                              likeVal: Int) {
-    val challengeMd5 = md5Of(names.languageName, names.groupName, names.challengeName)
+  private suspend fun saveLikeDislike(user: User?,
+                                      browserSession: BrowserSession?,
+                                      names: ChallengeNames,
+                                      likeDislikeVal: Int) {
+    val challengeMd5 = names.md5()
+    val shouldPublish = user?.shouldPublish() ?: false
     when {
-      user.isNotNull() ->
+      user.isNotNull() -> {
         transaction {
           UserChallengeInfo
             .upsert(conflictIndex = userChallengeInfoIndex) { row ->
               row[userRef] = user.userDbmsId
               row[md5] = challengeMd5
               row[updated] = DateTime.now(DateTimeZone.UTC)
-              row[likeDislike] = likeVal.toShort()
+              row[likeDislike] = likeDislikeVal.toShort()
             }
         }
+        if (shouldPublish)
+          user.publishLikeDislike(challengeMd5, likeDislikeVal)
+      }
       browserSession.isNotNull() ->
         transaction {
           SessionChallengeInfo
@@ -569,7 +585,7 @@ internal object ChallengePost : KLogging() {
               row[sessionRef] = browserSession.sessionDbmsId()
               row[md5] = challengeMd5
               row[updated] = DateTime.now(DateTimeZone.UTC)
-              row[likeDislike] = likeVal.toShort()
+              row[likeDislike] = likeDislikeVal.toShort()
             }
         }
       else -> {

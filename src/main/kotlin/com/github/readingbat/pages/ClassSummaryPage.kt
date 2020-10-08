@@ -18,13 +18,13 @@
 package com.github.readingbat.pages
 
 import com.github.pambrose.common.util.encode
+import com.github.pambrose.common.util.pathOf
 import com.github.readingbat.common.CSSNames.BTN
 import com.github.readingbat.common.CSSNames.INDENT_2EM
 import com.github.readingbat.common.CSSNames.INVOC_STAT
 import com.github.readingbat.common.CSSNames.INVOC_TD
 import com.github.readingbat.common.CSSNames.UNDERLINE
 import com.github.readingbat.common.ClassCode
-import com.github.readingbat.common.CommonUtils.pathOf
 import com.github.readingbat.common.Constants.CLASS_CODE_QP
 import com.github.readingbat.common.Constants.CORRECT_COLOR
 import com.github.readingbat.common.Constants.GROUP_NAME_QP
@@ -78,6 +78,7 @@ import mu.KLogging
 internal object ClassSummaryPage : KLogging() {
 
   internal const val STATS = "-stats"
+  internal const val LIKE_DISLIKE = "-likeDislike"
   private const val BTN_SIZE = "130%"
 
   fun PipelineCall.classSummaryPage(content: ReadingBatContent, user: User?): String {
@@ -270,7 +271,7 @@ internal object ClassSummaryPage : KLogging() {
               content.findLanguage(languageName).findGroup(groupName.value).challenges
                 .forEach { challenge ->
                   th {
-                    challenge.challengeName.toString()
+                    challenge.challengeName.value
                       .also {
                         if (classCode == activeClassCode)
                           a(classes = UNDERLINE) {
@@ -310,15 +311,19 @@ internal object ClassSummaryPage : KLogging() {
                     .forEach { challenge ->
                       td {
                         table {
+                          val encodedName = challenge.challengeName.encode()
                           tr {
                             challenge.functionInfo(content).invocations
-                              .forEachIndexed { i, invocation ->
+                              .forEachIndexed { i, _ ->
                                 td(classes = INVOC_TD) {
-                                  id = "${student.userId}-${challenge.challengeName.encode()}-$i"; +""
+                                  id = "${student.userId}-$encodedName-$i"; +""
                                 }
                               }
                             td(classes = INVOC_STAT) {
-                              id = "${student.userId}-${challenge.challengeName.encode()}$STATS"; +""
+                              id = "${student.userId}-$encodedName$STATS"; +""
+                            }
+                            td {
+                              id = "${student.userId}-$encodedName$LIKE_DISLIKE"; +""
                             }
                           }
                         }
@@ -344,9 +349,7 @@ internal object ClassSummaryPage : KLogging() {
             wshost = wshost.replace(/^http:/, 'ws:');
       
           var wsurl = wshost + '$WS_ROOT$CLASS_SUMMARY_ENDPOINT/' + ${
-          encodeUriElems(languageName,
-                         groupName,
-                         classCode)
+          encodeUriElems(languageName, groupName, classCode)
         };
           var ws = new WebSocket(wsurl);
       
@@ -365,8 +368,8 @@ internal object ClassSummaryPage : KLogging() {
               answers.style.backgroundColor = obj.results[i] == '$YES' ? '$CORRECT_COLOR' 
                                                                     : (obj.results[i] == '$NO' ? '$WRONG_COLOR' 
                                                                                              : '$INCOMPLETE_COLOR');
-      
-              document.getElementById(prefix + '$STATS').innerHTML = obj.msg;
+              document.getElementById(prefix + '$STATS').innerText = obj.stats;
+              document.getElementById(prefix + '$LIKE_DISLIKE').innerHTML = obj.likeDislike;
             }
           };
         """.trimIndent())

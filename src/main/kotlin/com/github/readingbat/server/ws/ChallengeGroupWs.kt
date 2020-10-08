@@ -17,8 +17,8 @@
 
 package com.github.readingbat.server.ws
 
+import com.github.pambrose.common.util.md5Of
 import com.github.readingbat.common.ClassCode
-import com.github.readingbat.common.CommonUtils
 import com.github.readingbat.common.Constants
 import com.github.readingbat.common.Endpoints.CHALLENGE_GROUP_ENDPOINT
 import com.github.readingbat.common.Endpoints.WS_ROOT
@@ -120,7 +120,7 @@ internal object ChallengeGroupWs : KLogging() {
 
                     for (invocation in funcInfo.invocations) {
                       transaction {
-                        val historyMd5 = CommonUtils.md5Of(languageName, groupName, challengeName, invocation)
+                        val historyMd5 = md5Of(languageName, groupName, challengeName, invocation)
                         if (enrollee.historyExists(historyMd5, invocation)) {
                           attempted++
                           val history = enrollee.answerHistory(historyMd5, invocation)
@@ -137,11 +137,14 @@ internal object ChallengeGroupWs : KLogging() {
 
                     val likeDislike =
                       transaction {
-                        val challengeMd5 = CommonUtils.md5Of(languageName, groupName, challengeName)
+                        val challengeMd5 = md5Of(languageName, groupName, challengeName)
+                        val likeDislike = UserChallengeInfo.likeDislike
+                        val userRef = UserChallengeInfo.userRef
+                        val md5 = UserChallengeInfo.md5
                         UserChallengeInfo
-                          .slice(UserChallengeInfo.likeDislike)
-                          .select { (UserChallengeInfo.userRef eq enrollee.userDbmsId) and (UserChallengeInfo.md5 eq challengeMd5) }
-                          .map { it[UserChallengeInfo.likeDislike].toInt() }
+                          .slice(likeDislike)
+                          .select { (userRef eq enrollee.userDbmsId) and (md5 eq challengeMd5) }
+                          .map { it[likeDislike].toInt() }
                           .firstOrNull() ?: 0
                       }
 
