@@ -22,6 +22,8 @@ import com.github.pambrose.common.dsl.KtorDsl.get
 import com.github.readingbat.common.Constants
 import com.github.readingbat.common.EnvVar.IPGEOLOCATION_KEY
 import com.google.gson.Gson
+import com.pambrose.common.exposed.get
+import com.pambrose.common.exposed.upsert
 import io.ktor.application.*
 import io.ktor.client.statement.*
 import io.ktor.features.*

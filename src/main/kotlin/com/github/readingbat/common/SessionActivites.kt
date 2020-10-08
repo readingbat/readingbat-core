@@ -23,8 +23,8 @@ import com.github.readingbat.server.FullName
 import com.github.readingbat.server.GeoInfos
 import com.github.readingbat.server.ServerRequests
 import com.github.readingbat.server.Users
-import com.github.readingbat.server.dateTimeExpr
-import com.github.readingbat.server.get
+import com.pambrose.common.exposed.dateTimeExpr
+import com.pambrose.common.exposed.get
 import mu.KLogging
 import org.jetbrains.exposed.sql.Count
 import org.jetbrains.exposed.sql.Max

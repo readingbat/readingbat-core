@@ -60,6 +60,7 @@ import com.github.readingbat.server.GroupName.Companion.getGroupName
 import com.github.readingbat.server.LanguageName.Companion.getLanguageName
 import com.github.readingbat.server.ScriptPools.kotlinScriptPool
 import com.github.readingbat.server.ScriptPools.pythonScriptPool
+import com.pambrose.common.exposed.upsert
 import io.ktor.application.*
 import io.ktor.request.*
 import io.ktor.response.*

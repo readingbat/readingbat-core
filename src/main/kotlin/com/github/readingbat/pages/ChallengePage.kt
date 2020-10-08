@@ -90,7 +90,7 @@ import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
 import com.github.readingbat.server.SessionChallengeInfo
 import com.github.readingbat.server.UserChallengeInfo
-import com.github.readingbat.server.get
+import com.pambrose.common.exposed.get
 import io.ktor.application.*
 import io.ktor.http.ContentType.Text.CSS
 import kotlinx.html.*

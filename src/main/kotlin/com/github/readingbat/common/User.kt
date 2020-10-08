@@ -49,6 +49,8 @@ import com.github.readingbat.server.ResetId.Companion.EMPTY_RESET_ID
 import com.github.readingbat.server.ws.ChallengeWs.classTopicName
 import com.github.readingbat.server.ws.ChallengeWs.multiServerWriteChannel
 import com.github.readingbat.server.ws.ChallengeWs.singleServerChannel
+import com.pambrose.common.exposed.get
+import com.pambrose.common.exposed.upsert
 import io.ktor.application.*
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString

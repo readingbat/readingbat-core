@@ -42,6 +42,7 @@ import com.github.readingbat.pages.PageUtils.privacyStatement
 import com.github.readingbat.posts.PasswordResetPost.ResetPasswordException
 import com.github.readingbat.server.*
 import com.github.readingbat.server.ServerUtils.queryParam
+import com.pambrose.common.exposed.get
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 import mu.KLogging

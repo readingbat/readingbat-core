@@ -64,7 +64,7 @@ import com.github.readingbat.server.ServerUtils.queryParam
 import com.github.readingbat.server.ServerUtils.rows
 import com.github.readingbat.server.SessionChallengeInfo
 import com.github.readingbat.server.UserChallengeInfo
-import com.github.readingbat.server.get
+import com.pambrose.common.exposed.get
 import io.ktor.application.*
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML

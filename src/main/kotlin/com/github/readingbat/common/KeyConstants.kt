@@ -18,16 +18,13 @@
 package com.github.readingbat.common
 
 internal object KeyConstants {
+  const val KEY_SEP = "|"
   const val AUTH_KEY = "auth"
   const val NO_AUTH_KEY = "noauth"
   const val CORRECT_ANSWERS_KEY = "correct-answers"
   const val CHALLENGE_ANSWERS_KEY = "challenge-answers"
-  const val IPGEO_KEY = "ip-geo"
-
   const val SOURCE_CODE_KEY = "source-code"
   const val CONTENT_DSL_KEY = "content-dsl"
   const val DIR_CONTENTS_KEY = "dir-contents"
-
-  const val KEY_SEP = "|"
 }
 

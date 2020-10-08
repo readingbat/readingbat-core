@@ -25,7 +25,7 @@ import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.server.Classes
 import com.github.readingbat.server.Enrollees
 import com.github.readingbat.server.Users
-import com.github.readingbat.server.get
+import com.pambrose.common.exposed.get
 import io.ktor.http.*
 import mu.KLogging
 import org.jetbrains.exposed.sql.Count
