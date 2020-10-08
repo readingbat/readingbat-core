@@ -144,6 +144,7 @@ internal class ChallengeNames(paramMap: Map<String, String>) {
     ChallengeName(paramMap[CHALLENGE_SRC] ?: throw InvalidConfigurationException("Missing challenge name"))
 
   fun md5() = md5Of(languageName, groupName, challengeName)
+  fun md5(invocation: Invocation) = md5Of(languageName, groupName, challengeName, invocation)
 }
 
 internal object ChallengePost : KLogging() {
@@ -502,8 +503,7 @@ internal object ChallengePost : KLogging() {
 
       // Save the history of each answer on a per-invocation basis
       for (result in results) {
-        val historyMd5 = md5Of(names.languageName, names.groupName, names.challengeName, result.invocation)
-
+        val historyMd5 = names.md5(result.invocation)
         val history =
           when {
             user.isNotNull() -> user.answerHistory(historyMd5, result.invocation)

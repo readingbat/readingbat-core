@@ -18,7 +18,7 @@
 package com.github.readingbat.server.ws
 
 import com.github.readingbat.common.ClassCode
-import com.github.readingbat.common.CommonUtils
+import com.github.readingbat.common.CommonUtils.md5Of
 import com.github.readingbat.common.Constants.NO
 import com.github.readingbat.common.Constants.UNANSWERED
 import com.github.readingbat.common.Constants.YES
@@ -101,7 +101,7 @@ internal object StudentSummaryWs : KLogging() {
                   val results = mutableListOf<String>()
                   for (invocation in funcInfo.invocations) {
                     transaction {
-                      val historyMd5 = CommonUtils.md5Of(languageName, groupName, challengeName, invocation)
+                      val historyMd5 = md5Of(languageName, groupName, challengeName, invocation)
                       if (student.historyExists(historyMd5, invocation)) {
                         attempted++
                         results +=

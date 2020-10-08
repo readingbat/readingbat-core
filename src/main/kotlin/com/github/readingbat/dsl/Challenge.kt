@@ -104,6 +104,10 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
 
   internal abstract suspend fun computeFunctionInfo(code: String): FunctionInfo
 
+  fun md5() = md5Of(languageName, groupName, challengeName)
+
+  fun md5(invocation: Invocation) = md5Of(languageName, groupName, challengeName, invocation)
+
   private fun measureParsing(code: String) =
     metrics.challengeParseDuration.labels(agentLaunchId(), languageType.toString()).startTimer()
       .let {
@@ -114,9 +118,7 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
         }
       }
 
-  private val sourceCodeKey by lazy {
-    keyOf(SOURCE_CODE_KEY, languageType.name, md5Of(languageName, groupName, challengeName))
-  }
+  private val sourceCodeKey by lazy { keyOf(SOURCE_CODE_KEY, languageType.name, md5()) }
 
   private fun fetchCodeFromRedis() =
     if (isContentCachingEnabled()) redisPool?.withRedisPool { redis -> redis?.get(sourceCodeKey) } else null
@@ -159,10 +161,6 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
         parseCode()
     }
 
-  fun md5() = md5Of(languageName, groupName, challengeName)
-
-  fun md5(invocation: Invocation) = md5Of(languageName, groupName, challengeName, invocation)
-
   internal open fun validate() {
     if (challengeName.value.isEmpty())
       throw InvalidConfigurationException(""""$challengeName" is empty""")
@@ -190,7 +188,7 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
     }
 
   internal fun isCorrect(user: User?, browserSession: BrowserSession?): Boolean {
-    val challengeMd5 = md5Of(languageName, groupName, challengeName)
+    val challengeMd5 = md5()
     return when {
       !isPostgresEnabled() -> false
       user.isNotNull() ->
