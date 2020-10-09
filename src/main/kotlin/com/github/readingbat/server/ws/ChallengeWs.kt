@@ -44,6 +44,7 @@ import io.ktor.routing.*
 import io.ktor.websocket.*
 import kotlinx.coroutines.channels.BroadcastChannel
 import kotlinx.coroutines.channels.Channel.Factory.BUFFERED
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.mapNotNull
@@ -79,6 +80,7 @@ internal object ChallengeWs : KLogging() {
   data class SessionContext(val wsSession: DefaultWebSocketServerSession, val metrics: Metrics) {
     val start = clock.markNow()
     var topicName = ""
+    val enabled get() = topicName.isNotEmpty()
   }
 
   @Serializable
@@ -91,15 +93,16 @@ internal object ChallengeWs : KLogging() {
   init {
     timer("pinger", false, 0L, 1.seconds.toLongMilliseconds()) {
       for (sessionContext in wsConnections)
-        try {
-          val elapsed = sessionContext.start.elapsedNow().format()
-          val json = PingMessage(elapsed).toJson()
-          runBlocking {
-            sessionContext.wsSession.outgoing.send(Frame.Text(json))
+        if (sessionContext.enabled)
+          try {
+            val elapsed = sessionContext.start.elapsedNow().format()
+            val json = PingMessage(elapsed).toJson()
+            runBlocking {
+              sessionContext.wsSession.outgoing.send(Frame.Text(json))
+            }
+          } catch (e: Throwable) {
+            logger.error { "Exception in pinger ${e.simpleClassName} ${e.message}" }
           }
-        } catch (e: Throwable) {
-          logger.error { "Exception in pinger ${e.simpleClassName} ${e.message}" }
-        }
     }
 
     if (isMultiServerEnabled()) {
@@ -217,6 +220,9 @@ internal object ChallengeWs : KLogging() {
             .consumeAsFlow()
             .mapNotNull { it as? Frame.Text }
             .collect {
+              // Pause to show the "Connected" message on the client
+              delay(1.seconds)
+              // This will enable the connected client to get msgs
               if (wsContext.topicName.isBlank())
                 wsContext.topicName = classTopicName(classCode, challengeMd5)
             }

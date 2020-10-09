@@ -301,7 +301,7 @@ internal object ChallengePage : KLogging() {
         function sleep(ms) {
           return new Promise(resolve => setTimeout(resolve, ms));
         }
-        
+            
         var cnt = 0;
         var firstTime = true;
         var connected = false;
@@ -318,7 +318,6 @@ internal object ChallengePage : KLogging() {
           ws.onopen = function (event) {
             //console.log("WebSocket connected.");
             firstTime = false;
-            connected = true;
             document.getElementById('$pingLabel').innerText = 'Connected';
             document.getElementById('$pingMsg').innerText = '';
             ws.send("$classCode"); 
@@ -326,27 +325,18 @@ internal object ChallengePage : KLogging() {
           
           ws.onclose = function (event) {
             //console.log('WebSocket closed. Reconnect will be attempted in 1 second.', event.reason);
-            //if (connected) {
-              sleep(1000).then(() => { 
-                document.getElementById('$pingLabel').innerText = 'Disconnected';
-                document.getElementById('$pingMsg').innerText = '';
-              });
-            //}
-
             var msg = 'Connecting';
             if (!firstTime)
               msg = 'Reconnecting';
-            for (i = 0; i < cnt%4; i++) {
+            for (i = 0; i < cnt%4; i++) 
               msg += '.'
-            }
-            connected = false;
             document.getElementById('$pingLabel').innerText = msg;
             document.getElementById('$pingMsg').innerText = '';
             setTimeout(function() {
               cnt+=1;
               connect();
             }, 1000);
-          };
+          }
           
           ws.onerror = function(err) {
             //console.error(err)
@@ -374,8 +364,7 @@ internal object ChallengePage : KLogging() {
               var answers = document.getElementById(prefix + '-$answersTd')
               answers.style.backgroundColor = obj.history.correct ? '$CORRECT_COLOR' 
                                                                   : (obj.history.answers.length > 0 ? '$WRONG_COLOR' 
-                                                                                                    : '$INCOMPLETE_COLOR');
-      
+                                                                                                    : '$INCOMPLETE_COLOR');      
               document.getElementById(prefix + '-$answersSpan').innerHTML = obj.history.answers;
             }
           };
