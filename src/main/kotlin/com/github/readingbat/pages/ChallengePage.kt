@@ -111,6 +111,7 @@ internal object ChallengePage : KLogging() {
   private const val likeDislikeSpan = "likeDislikeSpan"
   private const val answersSpan = "answersSpan"
   private const val numCorrectSpan = "numCorrectSpan"
+  private const val pingLabel = "pingLabel"
   private const val pingMsg = "pingMsg"
   internal const val headerColor = "#419DC1"
 
@@ -155,7 +156,7 @@ internal object ChallengePage : KLogging() {
             displayStudentProgress(challenge, content.maxHistoryLength, funcInfo, activeClassCode, enrollees)
 
             if (enrollees.isNotEmpty())
-              p { +"Connection time: "; span { id = pingMsg } }
+              p { span { id = pingLabel }; span { id = pingMsg } }
           }
 
           backLink(CHALLENGE_ROOT, languageName.value, groupName.value)
@@ -297,6 +298,14 @@ internal object ChallengePage : KLogging() {
     script {
       rawHtml(
         """
+        function sleep(ms) {
+          return new Promise(resolve => setTimeout(resolve, ms));
+        }
+        
+        var cnt = 0;
+        var firstTime = true;
+        var connected = false;
+        function connect() {
           var wshost = location.origin;
           if (wshost.startsWith('https:'))
             wshost = wshost.replace(/^https:/, 'wss:');
@@ -307,13 +316,48 @@ internal object ChallengePage : KLogging() {
           var ws = new WebSocket(wsurl);
           
           ws.onopen = function (event) {
+            //console.log("WebSocket connected.");
+            firstTime = false;
+            connected = true;
+            document.getElementById('$pingLabel').innerText = 'Connected';
+            document.getElementById('$pingMsg').innerText = '';
             ws.send("$classCode"); 
+          };
+          
+          ws.onclose = function (event) {
+            //console.log('WebSocket closed. Reconnect will be attempted in 1 second.', event.reason);
+            //if (connected) {
+              sleep(1000).then(() => { 
+                document.getElementById('$pingLabel').innerText = 'Disconnected';
+                document.getElementById('$pingMsg').innerText = '';
+              });
+            //}
+
+            var msg = 'Connecting';
+            if (!firstTime)
+              msg = 'Reconnecting';
+            for (i = 0; i < cnt%4; i++) {
+              msg += '.'
+            }
+            connected = false;
+            document.getElementById('$pingLabel').innerText = msg;
+            document.getElementById('$pingMsg').innerText = '';
+            setTimeout(function() {
+              cnt+=1;
+              connect();
+            }, 1000);
+          };
+          
+          ws.onerror = function(err) {
+            //console.error(err)
+            ws.close();
           };
           
           ws.onmessage = function (event) {
             var obj = JSON.parse(event.data);
       
             if (obj.hasOwnProperty("type") && obj.type == "$PING_CODE") {
+              document.getElementById('$pingLabel').innerText = 'Connection time: ';
               document.getElementById('$pingMsg').innerText = obj.msg;
             }
             else if (obj.hasOwnProperty("type") && obj.type == "$LIKE_DISLIKE_CODE") {
@@ -335,6 +379,8 @@ internal object ChallengePage : KLogging() {
               document.getElementById(prefix + '-$answersSpan').innerHTML = obj.history.answers;
             }
           };
+        }
+        connect();
         """.trimIndent())
     }
   }
