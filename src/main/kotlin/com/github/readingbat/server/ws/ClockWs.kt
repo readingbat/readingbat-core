@@ -43,9 +43,10 @@ internal object ClockWs : KLogging() {
   private val wsConnections = Collections.synchronizedSet(LinkedHashSet<SessionContext>())
   private var maxWsConnections = 0
 
-  @Synchronized
   private fun assignMaxConnections() {
-    maxWsConnections = max(maxWsConnections, wsConnections.size)
+    synchronized(this) {
+      maxWsConnections = max(maxWsConnections, wsConnections.size)
+    }
   }
 
   data class SessionContext(val wsSession: DefaultWebSocketServerSession) {

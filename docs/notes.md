@@ -1,6 +1,7 @@
 # Notes
 
 * [ktor Examples](https://github.com/ktorio/ktor-samples)
+* [Scripting Examples](https://github.com/Kotlin/kotlin-script-examples)
 * [Like/Dislike gifs](http://pngimg.com/imgs/symbols/like/)
 
 ## Running from *readingbat-core*

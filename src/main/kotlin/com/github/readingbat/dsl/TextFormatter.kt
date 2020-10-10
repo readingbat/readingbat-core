@@ -26,9 +26,11 @@ internal object TextFormatter {
   private val parser by lazy { Parser.builder(options).build() }
   private val renderer by lazy { HtmlRenderer.builder(options).build() }
 
-  @Synchronized
-  fun renderText(str: String): String {
-    val document = parser.parse(str.trimIndent())
-    return renderer.render(document)
-  }
+  fun renderText(str: String) =
+    synchronized(this) {
+      parser.parse(str.trimIndent())
+        .let {
+          renderer.render(it)
+        }
+    }
 }

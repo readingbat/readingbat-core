@@ -72,9 +72,10 @@ internal object ChallengeWs : KLogging() {
   val wsConnections: MutableSet<SessionContext> = Collections.synchronizedSet(LinkedHashSet<SessionContext>())
   var maxWsConnections = 0
 
-  @Synchronized
   private fun assignMaxConnections() {
-    maxWsConnections = max(maxWsConnections, wsConnections.size)
+    synchronized(this) {
+      maxWsConnections = max(maxWsConnections, wsConnections.size)
+    }
   }
 
   data class SessionContext(val wsSession: DefaultWebSocketServerSession, val metrics: Metrics) {
