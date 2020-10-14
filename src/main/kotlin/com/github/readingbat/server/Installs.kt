@@ -26,6 +26,7 @@ import com.github.readingbat.common.Endpoints.CSS_ENDPOINT
 import com.github.readingbat.common.Endpoints.FAV_ICON_ENDPOINT
 import com.github.readingbat.common.Endpoints.STATIC_ROOT
 import com.github.readingbat.common.EnvVar.FILTER_LOG
+import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.InvalidRequestException
 import com.github.readingbat.dsl.RedisUnavailableException
 import com.github.readingbat.dsl.isPostgresEnabled
@@ -166,14 +167,21 @@ internal object Installs : KLogging() {
     install(StatusPages) {
 
       exception<InvalidRequestException> { cause ->
-        logger.info { " InvalidRequestException caught: ${cause.message}" }
+        logger.info { "InvalidRequestException caught: ${cause.message}" }
         respondWith {
           invalidRequestPage(ReadingBatServer.content.get(), call.request.uri, cause.message ?: UNKNOWN)
         }
       }
 
+      exception<InvalidConfigurationException> { cause ->
+        logger.info { "InvalidConfigurationException caught: ${cause.message}" }
+        respondWith {
+          errorPage(ReadingBatServer.content.get())
+        }
+      }
+
       exception<RedisUnavailableException> { cause ->
-        logger.info(cause) { " RedisUnavailableException caught: ${cause.message}" }
+        logger.info(cause) { "RedisUnavailableException caught: ${cause.message}" }
         respondWith {
           dbmsDownPage(ReadingBatServer.content.get())
         }
@@ -181,7 +189,7 @@ internal object Installs : KLogging() {
 
       // Catch all
       exception<Throwable> { cause ->
-        logger.info(cause) { " Throwable caught: ${cause.simpleClassName}" }
+        logger.info(cause) { "Throwable caught: ${cause.simpleClassName}" }
         respondWith {
           errorPage(ReadingBatServer.content.get())
         }

@@ -113,7 +113,7 @@ enum class Property(val propertyValue: String,
 
   fun getProperty(default: Boolean) = System.getProperty(propertyValue)?.toBoolean() ?: default
 
-  fun getProperty(default: Int) = System.getProperty(propertyValue)?.toInt() ?: default
+  fun getProperty(default: Int) = System.getProperty(propertyValue)?.toIntOrNull() ?: default
 
   fun getPropertyOrNull(): String? = System.getProperty(propertyValue)
 
