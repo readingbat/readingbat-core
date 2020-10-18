@@ -21,44 +21,43 @@ import com.github.pambrose.common.redis.RedisUtils.withNonNullRedisPool
 import com.github.pambrose.common.util.isNotNull
 import com.github.pambrose.common.util.simpleClassName
 import com.github.readingbat.dsl.RedisUnavailableException
-import com.github.readingbat.server.ReadingBatServer
+import com.github.readingbat.server.ReadingBatServer.redisPool
 import com.github.readingbat.server.ws.ChallengeWs.AnswerData
 import com.github.readingbat.server.ws.ChallengeWs.AnswerMessage
 import com.github.readingbat.server.ws.ChallengeWs.multiServerWsReadChannel
-import com.github.readingbat.server.ws.LogWs.LoadCommand
-import com.github.readingbat.server.ws.LogWs.LoadCommandData
-import com.github.readingbat.server.ws.LogWs.LogMessage
-import com.github.readingbat.server.ws.LogWs.Topic
-import com.github.readingbat.server.ws.LogWs.Topic.LIKE_DISLIKE
-import com.github.readingbat.server.ws.LogWs.Topic.LOAD_COMMAND
-import com.github.readingbat.server.ws.LogWs.Topic.LOG_MESSAGE
-import com.github.readingbat.server.ws.LogWs.Topic.USER_ANSWERS
-import com.github.readingbat.server.ws.LogWs.adminCommandChannel
-import com.github.readingbat.server.ws.LogWs.logWsReadChannel
+import com.github.readingbat.server.ws.LoggingWs.LoadCommandData
+import com.github.readingbat.server.ws.LoggingWs.LogData
+import com.github.readingbat.server.ws.LoggingWs.Topic
+import com.github.readingbat.server.ws.LoggingWs.Topic.LIKE_DISLIKE
+import com.github.readingbat.server.ws.LoggingWs.Topic.LOAD_COMMAND
+import com.github.readingbat.server.ws.LoggingWs.Topic.LOG_MESSAGE
+import com.github.readingbat.server.ws.LoggingWs.Topic.USER_ANSWERS
+import com.github.readingbat.server.ws.LoggingWs.adminCommandChannel
+import com.github.readingbat.server.ws.LoggingWs.logWsReadChannel
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import mu.KLogging
 import redis.clients.jedis.JedisPubSub
-import java.util.concurrent.Executors
+import java.util.concurrent.Executors.newSingleThreadExecutor
 import kotlin.time.seconds
 
 object PubSubWs : KLogging() {
 
   init {
-    Executors.newSingleThreadExecutor()
+    newSingleThreadExecutor()
       .submit {
         val pubsub =
           object : JedisPubSub() {
             override fun onMessage(channel: String?, message: String?) {
-              logger.debug { "On message $channel" }
+              logger.info { "On channel $channel $message" }
               if (channel.isNotNull() && message.isNotNull())
                 runBlocking {
                   val topic = Topic.valueOf(channel)
                   when (topic) {
                     LOAD_COMMAND -> {
-                      val adminCommand = LoadCommand.valueOf(message)
-                      adminCommandChannel.send(LoadCommandData(adminCommand))
+                      val loadComandData = Json.decodeFromString<LoadCommandData>(message)
+                      adminCommandChannel.send(loadComandData)
                     }
                     USER_ANSWERS,
                     LIKE_DISLIKE -> {
@@ -66,7 +65,8 @@ object PubSubWs : KLogging() {
                       multiServerWsReadChannel.send(AnswerData(topic, answerMessage))
                     }
                     LOG_MESSAGE -> {
-                      val logMessage = Json.decodeFromString<LogMessage>(message)
+                      logger.info { "log message $message" }
+                      val logMessage = Json.decodeFromString<LogData>(message)
                       logWsReadChannel.send(logMessage)
                     }
                   }
@@ -84,16 +84,14 @@ object PubSubWs : KLogging() {
 
         while (true) {
           try {
-            ReadingBatServer.redisPool?.withNonNullRedisPool { redis ->
+            redisPool?.withNonNullRedisPool { redis ->
               redis.subscribe(pubsub, *Topic.values().map { it.name }.toTypedArray())
-            } ?: throw RedisUnavailableException("multiServerReadChannel")
+            } ?: throw RedisUnavailableException("pubsubWs subscriber")
           } catch (e: Throwable) {
-            logger.error { "Exception in multiServerReadChannel reader ${e.simpleClassName} ${e.message}" }
+            logger.error(e) { "Exception in pubsubWs subscriber ${e.simpleClassName} ${e.message}" }
             Thread.sleep(1.seconds.toLongMilliseconds())
           }
         }
       }
-
-
   }
 }

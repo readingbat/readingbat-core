@@ -54,7 +54,7 @@ import com.github.readingbat.server.ws.ChallengeWs.AnswerMessage
 import com.github.readingbat.server.ws.ChallengeWs.classTargetName
 import com.github.readingbat.server.ws.ChallengeWs.multiServerWsWriteChannel
 import com.github.readingbat.server.ws.ChallengeWs.singleServerWsChannel
-import com.github.readingbat.server.ws.LogWs.Topic.*
+import com.github.readingbat.server.ws.LoggingWs.Topic.*
 import com.pambrose.common.exposed.get
 import com.pambrose.common.exposed.upsert
 import io.ktor.application.*

@@ -29,7 +29,7 @@ import com.github.readingbat.server.LanguageName
 import com.github.readingbat.server.ws.ChallengeGroupWs.challengeGroupWsEndpoint
 import com.github.readingbat.server.ws.ChallengeWs.challengeWsEndpoint
 import com.github.readingbat.server.ws.ClassSummaryWs.classSummaryWsEndpoint
-import com.github.readingbat.server.ws.LogWs.logWsEndpoint
+import com.github.readingbat.server.ws.LoggingWs.loggingWsEndpoint
 import com.github.readingbat.server.ws.StudentSummaryWs.studentSummaryWsEndpoint
 import io.ktor.routing.*
 import io.ktor.websocket.*
@@ -49,7 +49,7 @@ internal object WsCommon : KLogging() {
     challengeGroupWsEndpoint(metrics, contentSrc)
     classSummaryWsEndpoint(metrics, contentSrc)
     studentSummaryWsEndpoint(metrics, contentSrc)
-    logWsEndpoint(metrics)
+    loggingWsEndpoint(metrics)
     //clockWsEndpoint()
   }
 

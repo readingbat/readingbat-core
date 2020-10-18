@@ -19,15 +19,16 @@ package com.github.readingbat.server.ws
 
 import com.github.pambrose.common.redis.RedisUtils.withNonNullRedisPool
 import com.github.pambrose.common.util.simpleClassName
-import com.github.readingbat.common.Endpoints.LOG_ENDPOINT
+import com.github.readingbat.common.Endpoints.LOGGING_ENDPOINT
 import com.github.readingbat.common.Endpoints.WS_ROOT
 import com.github.readingbat.common.Metrics
 import com.github.readingbat.dsl.InvalidRequestException
 import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.dsl.RedisUnavailableException
-import com.github.readingbat.server.ReadingBatServer
+import com.github.readingbat.server.ReadingBatServer.content
 import com.github.readingbat.server.ReadingBatServer.redisPool
 import com.github.readingbat.server.ServerUtils.fetchUser
+import com.github.readingbat.server.ws.LoggingWs.Topic.LOG_MESSAGE
 import com.github.readingbat.server.ws.WsCommon.LOG_ID
 import com.github.readingbat.server.ws.WsCommon.closeChannels
 import io.ktor.http.cio.websocket.*
@@ -42,6 +43,7 @@ import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import mu.KLogging
 import java.util.Collections.synchronizedSet
@@ -49,10 +51,10 @@ import java.util.concurrent.Executors.newSingleThreadExecutor
 import kotlin.time.TimeSource
 import kotlin.time.seconds
 
-internal object LogWs : KLogging() {
+internal object LoggingWs : KLogging() {
   private val clock = TimeSource.Monotonic
   val adminCommandChannel by lazy { BroadcastChannel<LoadCommandData>(Channel.BUFFERED) }
-  val logWsReadChannel by lazy { BroadcastChannel<LogMessage>(Channel.BUFFERED) }
+  val logWsReadChannel by lazy { BroadcastChannel<LogData>(Channel.BUFFERED) }
   val logWsConnections: MutableSet<LogSessionContext> = synchronizedSet(LinkedHashSet<LogSessionContext>())
 
   data class LogSessionContext(val wsSession: DefaultWebSocketServerSession, val metrics: Metrics) {
@@ -62,13 +64,16 @@ internal object LogWs : KLogging() {
   }
 
   @Serializable
-  data class LogMessage(val logId: String, val message: String) {
+  data class LogData(val logId: String, val message: String) {
     fun toJson() = Json.encodeToString(serializer(), this)
   }
 
   enum class Topic { LOAD_COMMAND, USER_ANSWERS, LIKE_DISLIKE, LOG_MESSAGE }
 
-  data class LoadCommandData(val command: LoadCommand)
+  @Serializable
+  data class LoadCommandData(val logId: String, val command: LoadCommand) {
+    fun toJson() = Json.encodeToString(serializer(), this)
+  }
 
   enum class LoadCommand(val languageTypes: List<LanguageType>) {
     LOAD_JAVA(listOf(LanguageType.Java)),
@@ -92,8 +97,9 @@ internal object LogWs : KLogging() {
                   redisPool?.withNonNullRedisPool { redis ->
                     loadCommandData.command.languageTypes
                       .forEach {
-                        val output = ReadingBatServer.content.get().loadChallenges(it, "", false)
-                        redis.publish(Topic.LOG_MESSAGE.name, output)
+                        val output = content.get().loadChallenges(it, "", false)
+                        val logData = LogData(loadCommandData.logId, output)
+                        redis.publish(LOG_MESSAGE.name, logData.toJson())
                       }
                   } ?: throw RedisUnavailableException("adminCommandChannel")
                 }
@@ -116,11 +122,13 @@ internal object LogWs : KLogging() {
                 .onStart { logger.info { "Starting to read log ws channel values" } }
                 .onCompletion { logger.info { "Finished reading log ws channel values" } }
                 .collect { logData ->
+                  logger.info { "Got data $logData" }
+                  val json = Json.encodeToString(logData.message)
                   logWsConnections
                     .filter { it.logId == logData.logId }
                     .forEach {
-                      it.wsSession.outgoing.send(Frame.Text(logData.message))
-                      logger.debug { "Sent $logData ${logWsConnections.size}" }
+                      it.wsSession.outgoing.send(Frame.Text(json))
+                      logger.info { "Sent log data $json ${logWsConnections.size}" }
                     }
                 }
             }
@@ -132,8 +140,8 @@ internal object LogWs : KLogging() {
       }
   }
 
-  fun Routing.logWsEndpoint(metrics: Metrics) {
-    webSocket("$WS_ROOT$LOG_ENDPOINT/{$LOG_ID}") {
+  fun Routing.loggingWsEndpoint(metrics: Metrics) {
+    webSocket("$WS_ROOT$LOGGING_ENDPOINT/{$LOG_ID}") {
       val logWsContext = LogSessionContext(this, metrics)
       try {
         outgoing.invokeOnClose {
@@ -143,7 +151,7 @@ internal object LogWs : KLogging() {
 
         logWsConnections += logWsContext
 
-        logger.debug { "Opened log websocket: ${logWsConnections.size}" }
+        logger.info { "Opened log websocket: ${logWsConnections.size}" }
 
         metrics.measureEndpointRequest("/websocket_log") {
           val p = call.parameters
@@ -156,8 +164,10 @@ internal object LogWs : KLogging() {
             .consumeAsFlow()
             .mapNotNull { it as? Frame.Text }
             .collect {
-              if (logWsContext.logId.isBlank())
+              if (logWsContext.logId.isBlank()) {
+                logger.info { "Assigning log id: $logId" }
                 logWsContext.logId = logId
+              }
             }
         }
       } finally {

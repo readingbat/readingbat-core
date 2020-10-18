@@ -73,7 +73,7 @@ internal object ChallengeWs : KLogging() {
     fun toJson() = Json.encodeToString(serializer(), this)
   }
 
-  data class AnswerData(val topic: LogWs.Topic, val answerMessage: AnswerMessage)
+  data class AnswerData(val topic: LoggingWs.Topic, val answerMessage: AnswerMessage)
 
   private fun assignMaxConnections() {
     synchronized(this) {

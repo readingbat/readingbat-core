@@ -20,7 +20,7 @@ package com.github.readingbat.pages
 import com.github.pambrose.common.util.randomId
 import com.github.pambrose.common.util.toDoubleQuoted
 import com.github.readingbat.common.CSSNames
-import com.github.readingbat.common.Constants.LOAD_CHALLENGES_JS_FUNC
+import com.github.readingbat.common.Constants.LOAD_CHALLENGE_JS_FUNC
 import com.github.readingbat.common.Endpoints.ADMIN_PREFS_ENDPOINT
 import com.github.readingbat.common.Endpoints.DELETE_CONTENT_IN_REDIS_ENDPOINT
 import com.github.readingbat.common.Endpoints.GARBAGE_COLLECTOR_ENDPOINT
@@ -28,8 +28,10 @@ import com.github.readingbat.common.Endpoints.LOAD_ALL_ENDPOINT
 import com.github.readingbat.common.Endpoints.LOAD_JAVA_ENDPOINT
 import com.github.readingbat.common.Endpoints.LOAD_KOTLIN_ENDPOINT
 import com.github.readingbat.common.Endpoints.LOAD_PYTHON_ENDPOINT
+import com.github.readingbat.common.Endpoints.LOGGING_ENDPOINT
 import com.github.readingbat.common.Endpoints.RESET_CACHE_ENDPOINT
 import com.github.readingbat.common.Endpoints.RESET_CONTENT_DSL_ENDPOINT
+import com.github.readingbat.common.Endpoints.WS_ROOT
 import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.Message
 import com.github.readingbat.common.Property.GRAFANA_URL
@@ -47,6 +49,7 @@ import com.github.readingbat.pages.PageUtils.confirmingButton
 import com.github.readingbat.pages.PageUtils.displayMessage
 import com.github.readingbat.pages.PageUtils.headDefault
 import com.github.readingbat.pages.PageUtils.loadStatusPageDisplay
+import com.github.readingbat.pages.PageUtils.rawHtml
 import com.github.readingbat.pages.UserPrefsPage.requestLogInPage
 import com.github.readingbat.pages.js.LoadCommandsJs.loadCommandsScript
 import com.github.readingbat.server.PipelineCall
@@ -56,6 +59,9 @@ import kotlinx.html.stream.createHTML
 import mu.KLogging
 
 internal object SystemAdminPage : KLogging() {
+
+  private val msgs = "msgs"
+  private val status = "status"
 
   fun PipelineCall.systemAdminPage(content: ReadingBatContent,
                                    user: User?,
@@ -123,7 +129,7 @@ internal object SystemAdminPage : KLogging() {
               button(classes = CSSNames.LOAD_CHALLENGE) {
                 val confirm = "Are you sure you want to load all the python challenges? (This can take a while)"
                 onClick =
-                  "$LOAD_CHALLENGES_JS_FUNC(${confirm.toDoubleQuoted()}, ${LOAD_PYTHON_ENDPOINT.toDoubleQuoted()})"
+                  "$LOAD_CHALLENGE_JS_FUNC(${confirm.toDoubleQuoted()}, ${LOAD_PYTHON_ENDPOINT.toDoubleQuoted()})"
                 +"Load Python Challenges"
               }
             }
@@ -162,7 +168,83 @@ internal object SystemAdminPage : KLogging() {
 
           backLink("$ADMIN_PREFS_ENDPOINT?$RETURN_PARAM=${queryParam(RETURN_PARAM, "/")}")
 
+          p { span { id = status } }
+
+          p {
+            textArea {
+              id = msgs
+              rows = "30"
+              cols = "120"
+              +""
+            }
+          }
+
+          enableWebSockets(logId)
+
           loadStatusPageDisplay()
         }
       }
+
+  private fun BODY.enableWebSockets(logId: String) {
+    script {
+      rawHtml(
+        """
+        function sleep(ms) {
+          return new Promise(resolve => setTimeout(resolve, ms));
+        }
+            
+        var cnt = 0;
+        var firstTime = true;
+        var connected = false;
+        function connect() {
+          var wshost = location.origin;
+          if (wshost.startsWith('https:'))
+            wshost = wshost.replace(/^https:/, 'wss:');
+          else
+            wshost = wshost.replace(/^http:/, 'ws:');
+      
+          var wsurl = wshost + '$WS_ROOT$LOGGING_ENDPOINT/$logId';
+          var ws = new WebSocket(wsurl);
+          
+          ws.onopen = function (event) {
+            //console.log("WebSocket connected.");
+            firstTime = false;
+            document.getElementById('$status').innerText = 'Connected';
+            document.getElementById('$msgs').innerText = '';
+            ws.send("ready"); 
+          };
+          
+          ws.onclose = function (event) {
+            //console.log('WebSocket closed. Reconnect will be attempted in 1 second.', event.reason);
+            var msg = 'Connecting';
+            if (!firstTime)
+              msg = 'Reconnecting';
+            for (i = 0; i < cnt%4; i++) 
+              msg += '.'
+            document.getElementById('$status').innerText = msg;
+            setTimeout(function() {
+              cnt+=1;
+              connect();
+            }, 1000);
+          }
+          
+          ws.onerror = function(err) {
+            //console.error(err)
+            ws.close();
+          };
+          
+          ws.onmessage = function (event) {
+            var obj = JSON.parse(event.data);
+            console.log(obj)
+            var elem = document.getElementById('$msgs');
+            var orig = elem.innerText;
+            console.log(orig)
+            elem.innerHTML = obj + '\n' + orig;
+          };
+        }
+        connect();
+        """.trimIndent())
+    }
+  }
+
 }
