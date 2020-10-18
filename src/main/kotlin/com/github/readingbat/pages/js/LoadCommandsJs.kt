@@ -17,7 +17,7 @@
 
 package com.github.readingbat.pages.js
 
-import com.github.readingbat.common.Constants.LOAD_CHALLENGE_JS_FUNC
+import com.github.readingbat.common.Constants.LOAD_CHALLENGE_FUNC
 import com.github.readingbat.common.Constants.NO_ANSWER_COLOR
 import com.github.readingbat.common.Constants.SESSION_ID
 import com.github.readingbat.common.Constants.WRONG_COLOR
@@ -39,7 +39,7 @@ internal object LoadCommandsJs {
       """
     var re = new XMLHttpRequest();
 
-    function $LOAD_CHALLENGE_JS_FUNC(msg, endPoint) { 
+    function $LOAD_CHALLENGE_FUNC(msg, endPoint) { 
      
       if (confirm(msg)) {
         var data = "$SESSION_ID=${sessionCounter.incrementAndGet()}&$LOG_ID=$logId";

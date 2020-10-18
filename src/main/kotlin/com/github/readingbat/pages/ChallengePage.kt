@@ -37,11 +37,11 @@ import com.github.readingbat.common.CSSNames.USER_RESP
 import com.github.readingbat.common.Constants.CORRECT_COLOR
 import com.github.readingbat.common.Constants.INCOMPLETE_COLOR
 import com.github.readingbat.common.Constants.LIKE_DISLIKE_CODE
-import com.github.readingbat.common.Constants.LIKE_DISLIKE_JS_FUNC
+import com.github.readingbat.common.Constants.LIKE_DISLIKE_FUNC
 import com.github.readingbat.common.Constants.MSG
 import com.github.readingbat.common.Constants.PING_CODE
 import com.github.readingbat.common.Constants.PRISM
-import com.github.readingbat.common.Constants.PROCESS_USER_ANSWERS_JS_FUNC
+import com.github.readingbat.common.Constants.PROCESS_USER_ANSWERS_FUNC
 import com.github.readingbat.common.Constants.RESP
 import com.github.readingbat.common.Constants.WRONG_COLOR
 import com.github.readingbat.common.Endpoints.CHALLENGE_ENDPOINT
@@ -265,7 +265,7 @@ internal object ChallengePage : KLogging() {
                   }
                 textInput(classes = USER_RESP + cls) {
                   id = "$RESP$i"
-                  onKeyDown = "$PROCESS_USER_ANSWERS_JS_FUNC(event, ${funcInfo.correctAnswers.size})"
+                  onKeyDown = "$PROCESS_USER_ANSWERS_FUNC(event, ${funcInfo.correctAnswers.size})"
 
                   val response = previousResponses[invocation.value] ?: ""
                   if (response.isNotBlank())
@@ -477,7 +477,7 @@ internal object ChallengePage : KLogging() {
         tr {
           td {
             button(classes = CHECK_ANSWERS) {
-              onClick = "$PROCESS_USER_ANSWERS_JS_FUNC(null, ${funcInfo.correctAnswers.size})"
+              onClick = "$PROCESS_USER_ANSWERS_FUNC(null, ${funcInfo.correctAnswers.size})"
               +"Check My Answers"
             }
           }
@@ -555,7 +555,7 @@ internal object ChallengePage : KLogging() {
             id = LIKE_CLEAR
             style = "display:${if (likeDislikeVal == 0 || likeDislikeVal == 2) "inline" else "none"}"
             button(classes = LIKE_BUTTONS) {
-              onClick = "$LIKE_DISLIKE_JS_FUNC(${LIKE_CLEAR.toDoubleQuoted()})"
+              onClick = "$LIKE_DISLIKE_FUNC(${LIKE_CLEAR.toDoubleQuoted()})"
               img { height = imgSize; src = pathOf(STATIC_ROOT, LIKE_CLEAR_FILE) }
             }
           }
@@ -563,7 +563,7 @@ internal object ChallengePage : KLogging() {
             id = LIKE_COLOR
             style = "display:${if (likeDislikeVal == 1) "inline" else "none"}"
             button(classes = LIKE_BUTTONS) {
-              onClick = "$LIKE_DISLIKE_JS_FUNC(${LIKE_COLOR.toDoubleQuoted()})"
+              onClick = "$LIKE_DISLIKE_FUNC(${LIKE_COLOR.toDoubleQuoted()})"
               img { height = imgSize; src = pathOf(STATIC_ROOT, LIKE_COLOR_FILE) }
             }
           }
@@ -571,7 +571,7 @@ internal object ChallengePage : KLogging() {
             id = DISLIKE_CLEAR
             style = "display:${if (likeDislikeVal == 0 || likeDislikeVal == 1) "inline" else "none"}"
             button(classes = LIKE_BUTTONS) {
-              onClick = "$LIKE_DISLIKE_JS_FUNC(${DISLIKE_CLEAR.toDoubleQuoted()})"
+              onClick = "$LIKE_DISLIKE_FUNC(${DISLIKE_CLEAR.toDoubleQuoted()})"
               img { height = imgSize; src = pathOf(STATIC_ROOT, DISLIKE_CLEAR_FILE) }
             }
           }
@@ -579,7 +579,7 @@ internal object ChallengePage : KLogging() {
             id = DISLIKE_COLOR
             style = "display:${if (likeDislikeVal == 2) "inline" else "none"}"
             button(classes = LIKE_BUTTONS) {
-              onClick = "$LIKE_DISLIKE_JS_FUNC(${DISLIKE_COLOR.toDoubleQuoted()})"
+              onClick = "$LIKE_DISLIKE_FUNC(${DISLIKE_COLOR.toDoubleQuoted()})"
               img { height = imgSize; src = pathOf(STATIC_ROOT, DISLIKE_COLOR_FILE) }
             }
           }

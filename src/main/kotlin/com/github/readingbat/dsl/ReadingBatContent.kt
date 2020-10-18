@@ -158,7 +158,10 @@ class ReadingBatContent {
       throw InvalidConfigurationException("Invalid language: $languageType")
   }
 
-  internal fun loadChallenges(languageType: LanguageType, prefix: String = "", useWebApi: Boolean = false) =
+  internal fun loadChallenges(languageType: LanguageType,
+                              log: (String) -> Unit,
+                              prefix: String = "",
+                              useWebApi: Boolean = false) =
     measureTimedValue {
       val cnt = AtomicInteger(0)
       runBlocking {
@@ -182,6 +185,7 @@ class ReadingBatContent {
                 }
                 else {
                   logger.info { "Loading: ${challenge.path}" }
+                  log("Loading: ${challenge.path}")
                   challenge.functionInfo(this@ReadingBatContent)
                   cnt.incrementAndGet()
                 }

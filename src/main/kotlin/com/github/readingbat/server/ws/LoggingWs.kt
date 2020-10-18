@@ -31,6 +31,7 @@ import com.github.readingbat.server.ServerUtils.fetchUser
 import com.github.readingbat.server.ws.LoggingWs.Topic.LOG_MESSAGE
 import com.github.readingbat.server.ws.WsCommon.LOG_ID
 import com.github.readingbat.server.ws.WsCommon.closeChannels
+import com.github.readingbat.server.ws.WsCommon.validateLogContext
 import io.ktor.http.cio.websocket.*
 import io.ktor.routing.*
 import io.ktor.websocket.*
@@ -95,11 +96,15 @@ internal object LoggingWs : KLogging() {
                 .onCompletion { logger.info { "Finished reading admin command channel values" } }
                 .collect { loadCommandData ->
                   redisPool?.withNonNullRedisPool { redis ->
+                    val log = { s: String ->
+                      val logData = LogData(loadCommandData.logId, s)
+                      redis.publish(LOG_MESSAGE.name, logData.toJson())
+                      Unit
+                    }
                     loadCommandData.command.languageTypes
                       .forEach {
-                        val output = content.get().loadChallenges(it, "", false)
-                        val logData = LogData(loadCommandData.logId, output)
-                        redis.publish(LOG_MESSAGE.name, logData.toJson())
+                        val output = content.get().loadChallenges(it, log, "", false)
+                        log(output)
                       }
                   } ?: throw RedisUnavailableException("adminCommandChannel")
                 }
@@ -122,13 +127,11 @@ internal object LoggingWs : KLogging() {
                 .onStart { logger.info { "Starting to read log ws channel values" } }
                 .onCompletion { logger.info { "Finished reading log ws channel values" } }
                 .collect { logData ->
-                  logger.info { "Got data $logData" }
                   val json = Json.encodeToString(logData.message)
                   logWsConnections
                     .filter { it.logId == logData.logId }
                     .forEach {
                       it.wsSession.outgoing.send(Frame.Text(json))
-                      logger.info { "Sent log data $json ${logWsConnections.size}" }
                     }
                 }
             }
@@ -151,21 +154,21 @@ internal object LoggingWs : KLogging() {
 
         logWsConnections += logWsContext
 
-        logger.info { "Opened log websocket: ${logWsConnections.size}" }
+        logger.debug { "Opened log websocket: ${logWsConnections.size}" }
 
         metrics.measureEndpointRequest("/websocket_log") {
           val p = call.parameters
           val logId = p[LOG_ID] ?: throw InvalidRequestException("Missing log id")
           val user = fetchUser() ?: throw InvalidRequestException("Null user")
 
-          WsCommon.validateLogContext(user)
+          validateLogContext(user)
 
           incoming
             .consumeAsFlow()
             .mapNotNull { it as? Frame.Text }
             .collect {
               if (logWsContext.logId.isBlank()) {
-                logger.info { "Assigning log id: $logId" }
+                logger.debug { "Assigning log id: $logId" }
                 logWsContext.logId = logId
               }
             }

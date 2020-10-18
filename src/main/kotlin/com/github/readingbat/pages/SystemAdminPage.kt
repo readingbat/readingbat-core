@@ -19,8 +19,8 @@ package com.github.readingbat.pages
 
 import com.github.pambrose.common.util.randomId
 import com.github.pambrose.common.util.toDoubleQuoted
-import com.github.readingbat.common.CSSNames
-import com.github.readingbat.common.Constants.LOAD_CHALLENGE_JS_FUNC
+import com.github.readingbat.common.CSSNames.LOAD_CHALLENGE
+import com.github.readingbat.common.Constants.LOAD_CHALLENGE_FUNC
 import com.github.readingbat.common.Endpoints.ADMIN_PREFS_ENDPOINT
 import com.github.readingbat.common.Endpoints.DELETE_CONTENT_IN_REDIS_ENDPOINT
 import com.github.readingbat.common.Endpoints.GARBAGE_COLLECTOR_ENDPOINT
@@ -114,36 +114,35 @@ internal object SystemAdminPage : KLogging() {
             }
 
             p {
-              this@body.confirmingButton("Load Java Challenges",
-                                         LOAD_JAVA_ENDPOINT,
-                                         "Are you sure you want to load all the java challenges? (This can take a while)")
+              button(classes = LOAD_CHALLENGE) {
+                val confirm = "Are you sure you want to load all the Java challenges? (This can take a while)"
+                onClick = "$LOAD_CHALLENGE_FUNC(${confirm.toDoubleQuoted()}, ${LOAD_JAVA_ENDPOINT.toDoubleQuoted()})"
+                +"Load Java Challenges"
+              }
             }
 
             p {
-              this@body.confirmingButton("Load Python Challenges",
-                                         LOAD_PYTHON_ENDPOINT,
-                                         "Are you sure you want to load all the python challenges? (This can take a while)")
-            }
-
-            p {
-              button(classes = CSSNames.LOAD_CHALLENGE) {
-                val confirm = "Are you sure you want to load all the python challenges? (This can take a while)"
-                onClick =
-                  "$LOAD_CHALLENGE_JS_FUNC(${confirm.toDoubleQuoted()}, ${LOAD_PYTHON_ENDPOINT.toDoubleQuoted()})"
+              button(classes = LOAD_CHALLENGE) {
+                val confirm = "Are you sure you want to load all the Python challenges? (This can take a while)"
+                onClick = "$LOAD_CHALLENGE_FUNC(${confirm.toDoubleQuoted()}, ${LOAD_PYTHON_ENDPOINT.toDoubleQuoted()})"
                 +"Load Python Challenges"
               }
             }
 
             p {
-              this@body.confirmingButton("Load Kotlin Challenges",
-                                         LOAD_KOTLIN_ENDPOINT,
-                                         "Are you sure you want to load all the kotlin challenges? (This can take a while)")
+              button(classes = LOAD_CHALLENGE) {
+                val confirm = "Are you sure you want to load all the Kotlin challenges? (This can take a while)"
+                onClick = "$LOAD_CHALLENGE_FUNC(${confirm.toDoubleQuoted()}, ${LOAD_KOTLIN_ENDPOINT.toDoubleQuoted()})"
+                +"Load Kotlin Challenges"
+              }
             }
 
             p {
-              this@body.confirmingButton("Load all Challenges",
-                                         LOAD_ALL_ENDPOINT,
-                                         "Are you sure you want to load all the challenges? (This can take a while)")
+              button(classes = LOAD_CHALLENGE) {
+                val confirm = "Are you sure you want to load all the challenges? (This can take a while)"
+                onClick = "$LOAD_CHALLENGE_FUNC(${confirm.toDoubleQuoted()}, ${LOAD_ALL_ENDPOINT.toDoubleQuoted()})"
+                +"Load All Challenges"
+              }
             }
 
             p {
@@ -166,18 +165,18 @@ internal object SystemAdminPage : KLogging() {
             p { +"Not authorized" }
           }
 
-          backLink("$ADMIN_PREFS_ENDPOINT?$RETURN_PARAM=${queryParam(RETURN_PARAM, "/")}")
-
-          p { span { id = status } }
-
           p {
             textArea {
               id = msgs
-              rows = "30"
+              rows = "20"
               cols = "120"
               +""
             }
           }
+
+          p { span { id = status } }
+
+          backLink("$ADMIN_PREFS_ENDPOINT?$RETURN_PARAM=${queryParam(RETURN_PARAM, "/")}")
 
           enableWebSockets(logId)
 
@@ -210,7 +209,7 @@ internal object SystemAdminPage : KLogging() {
             //console.log("WebSocket connected.");
             firstTime = false;
             document.getElementById('$status').innerText = 'Connected';
-            document.getElementById('$msgs').innerText = '';
+            document.getElementById('$msgs').value = '';
             ws.send("ready"); 
           };
           
@@ -235,11 +234,8 @@ internal object SystemAdminPage : KLogging() {
           
           ws.onmessage = function (event) {
             var obj = JSON.parse(event.data);
-            console.log(obj)
             var elem = document.getElementById('$msgs');
-            var orig = elem.innerText;
-            console.log(orig)
-            elem.innerHTML = obj + '\n' + orig;
+            elem.value = obj + '\n' + elem.value;
           };
         }
         connect();

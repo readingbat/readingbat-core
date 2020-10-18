@@ -50,7 +50,7 @@ object PubSubWs : KLogging() {
         val pubsub =
           object : JedisPubSub() {
             override fun onMessage(channel: String?, message: String?) {
-              logger.info { "On channel $channel $message" }
+              logger.debug { "On channel $channel $message" }
               if (channel.isNotNull() && message.isNotNull())
                 runBlocking {
                   val topic = Topic.valueOf(channel)
@@ -65,7 +65,6 @@ object PubSubWs : KLogging() {
                       multiServerWsReadChannel.send(AnswerData(topic, answerMessage))
                     }
                     LOG_MESSAGE -> {
-                      logger.info { "log message $message" }
                       val logMessage = Json.decodeFromString<LogData>(message)
                       logWsReadChannel.send(logMessage)
                     }

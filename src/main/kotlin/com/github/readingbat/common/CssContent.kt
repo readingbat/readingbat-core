@@ -239,7 +239,7 @@ internal val cssContent by lazy {
         paddingRight = 1.em
         height = 2.em
         backgroundColor = Color("#f1f1f1")
-        fontSize = 100.pct
+        fontSize = 80.pct
         fontWeight = bold
         borderRadius = 6.px
       }

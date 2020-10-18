@@ -22,7 +22,7 @@ import com.github.readingbat.common.Constants.CORRECT_COLOR
 import com.github.readingbat.common.Constants.GROUP_SRC
 import com.github.readingbat.common.Constants.LANG_SRC
 import com.github.readingbat.common.Constants.NO_ANSWER_COLOR
-import com.github.readingbat.common.Constants.PROCESS_USER_ANSWERS_JS_FUNC
+import com.github.readingbat.common.Constants.PROCESS_USER_ANSWERS_FUNC
 import com.github.readingbat.common.Constants.RESP
 import com.github.readingbat.common.Constants.SESSION_ID
 import com.github.readingbat.common.Constants.WRONG_COLOR
@@ -48,7 +48,7 @@ internal object CheckAnswersJs {
       """
     var re = new XMLHttpRequest();
 
-    function $PROCESS_USER_ANSWERS_JS_FUNC(event, cnt) { 
+    function $PROCESS_USER_ANSWERS_FUNC(event, cnt) { 
      
       // event will equal null on button press
       if (event != null && (event.keyCode != 13 && event.keyCode != 9)) 

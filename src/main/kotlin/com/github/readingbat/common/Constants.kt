@@ -46,9 +46,9 @@ internal object Constants {
   const val LANG_SRC = "lang"
   const val GROUP_SRC = "groupName"
   const val CHALLENGE_SRC = "challengeName"
-  const val PROCESS_USER_ANSWERS_JS_FUNC = "processUserAnswers"
-  const val LOAD_CHALLENGE_JS_FUNC = "loadChallenge"
-  const val LIKE_DISLIKE_JS_FUNC = "likeDislike"
+  const val PROCESS_USER_ANSWERS_FUNC = "processUserAnswers"
+  const val LOAD_CHALLENGE_FUNC = "loadChallenge"
+  const val LIKE_DISLIKE_FUNC = "likeDislike"
   const val NO_TRACK_HEADER = "NO_TRACK"
 
   // Do not change this value without adjusting values in DBMS
