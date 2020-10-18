@@ -47,6 +47,7 @@ internal object Constants {
   const val GROUP_SRC = "groupName"
   const val CHALLENGE_SRC = "challengeName"
   const val PROCESS_USER_ANSWERS_JS_FUNC = "processUserAnswers"
+  const val LOAD_CHALLENGES_JS_FUNC = "loadChallenges"
   const val LIKE_DISLIKE_JS_FUNC = "likeDislike"
   const val NO_TRACK_HEADER = "NO_TRACK"
 
@@ -107,6 +108,7 @@ internal object Endpoints {
   const val FAV_ICON_ENDPOINT = "/favicon.ico"
   const val ROBOTS_ENDPOINT = "/robots.txt"
   const val CHALLENGE_ENDPOINT = "/challenge"
+  const val LOG_ENDPOINT = "/log"
   const val CLOCK_ENDPOINT = "/clock"
   const val CHALLENGE_GROUP_ENDPOINT = "/challenge-group"
   const val CHECK_ANSWERS_ENDPOINT = "/check-answers"

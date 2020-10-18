@@ -22,12 +22,14 @@ import com.github.readingbat.common.ClassCode
 import com.github.readingbat.common.Metrics
 import com.github.readingbat.common.User
 import com.github.readingbat.common.isNotValidUser
+import com.github.readingbat.dsl.InvalidRequestException
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.server.GroupName
 import com.github.readingbat.server.LanguageName
 import com.github.readingbat.server.ws.ChallengeGroupWs.challengeGroupWsEndpoint
 import com.github.readingbat.server.ws.ChallengeWs.challengeWsEndpoint
 import com.github.readingbat.server.ws.ClassSummaryWs.classSummaryWsEndpoint
+import com.github.readingbat.server.ws.LogWs.logWsEndpoint
 import com.github.readingbat.server.ws.StudentSummaryWs.studentSummaryWsEndpoint
 import io.ktor.routing.*
 import io.ktor.websocket.*
@@ -40,12 +42,14 @@ internal object WsCommon : KLogging() {
   const val STUDENT_ID = "studentId"
   const val CLASS_CODE = "classCode"
   const val CHALLENGE_MD5 = "challengeMd5"
+  const val LOG_ID = "logId"
 
   internal fun Routing.wsRoutes(metrics: Metrics, contentSrc: () -> ReadingBatContent) {
     challengeWsEndpoint(metrics)
     challengeGroupWsEndpoint(metrics, contentSrc)
     classSummaryWsEndpoint(metrics, contentSrc)
     studentSummaryWsEndpoint(metrics, contentSrc)
+    logWsEndpoint(metrics)
     //clockWsEndpoint()
   }
 
@@ -67,7 +71,13 @@ internal object WsCommon : KLogging() {
         false to "User id ${user.userId} does not match class code's teacher Id $teacherId"
       }
       else -> true to ""
-    }
+    }.also { (valid, msg) -> if (!valid) throw InvalidRequestException(msg) }
+
+  fun validateLogContext(user: User) =
+    when {
+      user.isNotValidUser() -> false to "Invalid user id: ${user.userId}"
+      else -> true to ""
+    }.also { (valid, msg) -> if (!valid) throw InvalidRequestException(msg) }
 
   fun DefaultWebSocketServerSession.closeChannels() {
     outgoing.close()

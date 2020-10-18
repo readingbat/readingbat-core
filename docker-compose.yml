@@ -1,0 +1,14 @@
+version: "3.8"
+services:
+  readingbat0:
+    image: "pambrose/readingbat:1.0.14"
+    restart: always
+    env_file: docker_env_vars
+    ports:
+      - "8080:8080"
+  readingbat1:
+    image: "pambrose/readingbat:1.0.14"
+    restart: always
+    env_file: docker_env_vars
+    ports:
+      - "8081:8080"

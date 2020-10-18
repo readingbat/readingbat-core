@@ -49,9 +49,12 @@ import com.github.readingbat.server.FullName.Companion.EMPTY_FULLNAME
 import com.github.readingbat.server.FullName.Companion.UNKNOWN_FULLNAME
 import com.github.readingbat.server.ReadingBatServer.adminUsers
 import com.github.readingbat.server.ResetId.Companion.EMPTY_RESET_ID
-import com.github.readingbat.server.ws.ChallengeWs.classTopicName
-import com.github.readingbat.server.ws.ChallengeWs.multiServerWriteChannel
-import com.github.readingbat.server.ws.ChallengeWs.singleServerChannel
+import com.github.readingbat.server.ws.ChallengeWs.AnswerData
+import com.github.readingbat.server.ws.ChallengeWs.AnswerMessage
+import com.github.readingbat.server.ws.ChallengeWs.classTargetName
+import com.github.readingbat.server.ws.ChallengeWs.multiServerWsWriteChannel
+import com.github.readingbat.server.ws.ChallengeWs.singleServerWsChannel
+import com.github.readingbat.server.ws.LogWs.Topic.*
 import com.pambrose.common.exposed.get
 import com.pambrose.common.exposed.upsert
 import io.ktor.application.*
@@ -452,19 +455,21 @@ internal class User {
     val dashboardHistory = DashboardHistory(history.invocation.value,
                                             history.correct,
                                             history.answers.asReversed().take(maxHistoryLength).joinToString("<br>"))
-    val topicName = classTopicName(enrolledClassCode, challengeMd5)
+    val targetName = classTargetName(enrolledClassCode, challengeMd5)
     val dashboardInfo = DashboardInfo(userId, complete, numCorrect, dashboardHistory)
     val data = dashboardInfo.toJson()
-    (if (isMultiServerEnabled()) multiServerWriteChannel else singleServerChannel).send(PublishedData(topicName, data))
+    (if (isMultiServerEnabled()) multiServerWsWriteChannel else singleServerWsChannel)
+      .send(AnswerData(USER_ANSWERS, AnswerMessage(targetName, data)))
   }
 
   suspend fun publishLikeDislike(challengeMd5: String, likeDislike: Int) {
     logger.debug { "Publishing user likeDislike to $enrolledClassCode on $challengeMd5 for $this" }
-    val topicName = classTopicName(enrolledClassCode, challengeMd5)
+    val targetName = classTargetName(enrolledClassCode, challengeMd5)
     val emoji = likeDislikeEmoji(likeDislike)
     val likeDislikeInfo = LikeDislikeInfo(userId, emoji)
     val data = likeDislikeInfo.toJson()
-    (if (isMultiServerEnabled()) multiServerWriteChannel else singleServerChannel).send(PublishedData(topicName, data))
+    (if (isMultiServerEnabled()) multiServerWsWriteChannel else singleServerWsChannel)
+      .send(AnswerData(LIKE_DISLIKE, AnswerMessage(targetName, data)))
   }
 
   suspend fun resetHistory(funcInfo: FunctionInfo, challenge: Challenge, maxHistoryLength: Int) {

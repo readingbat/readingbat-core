@@ -127,20 +127,24 @@ fun Route.routeTimeout(time: Duration, callback: Route.() -> Unit): Route {
 
 internal fun Routing.userRoutes(metrics: Metrics, contentSrc: () -> ReadingBatContent) {
 
-  get(ROOT) {
-    redirectTo { defaultLanguageTab(contentSrc(), fetchUser()) }
+  route(ROOT) {
+    get {
+      redirectTo { defaultLanguageTab(contentSrc(), fetchUser()) }
+    }
+
+    post {
+      redirectTo { defaultLanguageTab(contentSrc(), fetchUser()) }
+    }
   }
 
-  post(ROOT) {
-    redirectTo { defaultLanguageTab(contentSrc(), fetchUser()) }
-  }
+  route(CHALLENGE_ROOT) {
+    get {
+      redirectTo { defaultLanguageTab(contentSrc(), fetchUser()) }
+    }
 
-  get(CHALLENGE_ROOT) {
-    redirectTo { defaultLanguageTab(contentSrc(), fetchUser()) }
-  }
-
-  post(CHALLENGE_ROOT) {
-    redirectTo { defaultLanguageTab(contentSrc(), fetchUser()) }
+    post {
+      redirectTo { defaultLanguageTab(contentSrc(), fetchUser()) }
+    }
   }
 
   get(CONFIG_ENDPOINT) {

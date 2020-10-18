@@ -28,7 +28,7 @@ import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.agentLaunchId
 import com.github.readingbat.server.GeoInfo.Companion.geoInfoMap
 import com.github.readingbat.server.Intercepts.requestTimingMap
-import com.github.readingbat.server.ws.ChallengeWs.wsConnections
+import com.github.readingbat.server.ws.ChallengeWs.answerWsConnections
 import kotlin.time.hours
 import kotlin.time.minutes
 
@@ -230,7 +230,7 @@ internal class Metrics {
                           "Websocket connection list size",
                           labelNames = listOf(AGENT_ID),
                           labelValues = listOf(agentLaunchId()),
-                          data = { wsConnections.size.toDouble() })
+                          data = { answerWsConnections.size.toDouble() })
 
     SamplerGaugeCollector("active_users_1min_count",
                           "Active users in last 1 min count",

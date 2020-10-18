@@ -273,8 +273,6 @@ internal fun Application.module() {
   }
 }
 
-internal data class PublishedData(val topic: String, val message: String)
-
 private val Application.redirectHostname
   get() =
     REDIRECT_HOSTNAME.getEnv(REDIRECT_HOSTNAME_PROPERTY.configValue(this, default = ""))

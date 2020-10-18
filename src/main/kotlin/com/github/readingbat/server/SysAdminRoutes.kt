@@ -18,10 +18,8 @@
 package com.github.readingbat.server
 
 import com.github.pambrose.common.redis.RedisUtils.scanKeys
-import com.github.pambrose.common.redis.RedisUtils.withRedisPool
+import com.github.pambrose.common.redis.RedisUtils.withNonNullRedisPool
 import com.github.pambrose.common.response.respondWith
-import com.github.pambrose.common.response.uriPrefix
-import com.github.pambrose.common.util.isNull
 import com.github.pambrose.common.util.pluralize
 import com.github.readingbat.common.Constants.REDIS_IS_DOWN
 import com.github.readingbat.common.Endpoints.DELETE_CONTENT_IN_REDIS_ENDPOINT
@@ -37,67 +35,53 @@ import com.github.readingbat.common.KeyConstants.DIR_CONTENTS_KEY
 import com.github.readingbat.common.KeyConstants.SOURCE_CODE_KEY
 import com.github.readingbat.common.KeyConstants.keyOf
 import com.github.readingbat.common.Metrics
-import com.github.readingbat.dsl.LanguageType
-import com.github.readingbat.dsl.LanguageType.Java
-import com.github.readingbat.dsl.LanguageType.Kotlin
-import com.github.readingbat.dsl.LanguageType.Python
 import com.github.readingbat.dsl.ReadingBatContent
+import com.github.readingbat.dsl.RedisUnavailableException
 import com.github.readingbat.pages.SystemAdminPage.systemAdminPage
 import com.github.readingbat.server.ReadingBatServer.logger
 import com.github.readingbat.server.ReadingBatServer.redisPool
 import com.github.readingbat.server.ServerUtils.authenticateAdminUser
 import com.github.readingbat.server.ServerUtils.fetchUser
 import com.github.readingbat.server.ServerUtils.get
-import io.ktor.application.*
-import io.ktor.features.*
+import com.github.readingbat.server.ws.LogWs.LoadCommand.LOAD_ALL
+import com.github.readingbat.server.ws.LogWs.LoadCommand.LOAD_JAVA
+import com.github.readingbat.server.ws.LogWs.LoadCommand.LOAD_KOTLIN
+import com.github.readingbat.server.ws.LogWs.LoadCommand.LOAD_PYTHON
+import com.github.readingbat.server.ws.LogWs.Topic.LOAD_COMMAND
 import io.ktor.routing.*
 import kotlin.time.measureTime
 
 internal fun Routing.sysAdminRoutes(metrics: Metrics, contentSrc: () -> ReadingBatContent, resetFunc: () -> Unit) {
 
   fun deleteContentDslInRedis() =
-    redisPool?.withRedisPool { redis ->
-      if (redis.isNull())
-        REDIS_IS_DOWN
-      else {
-        val pattern = keyOf(CONTENT_DSL_KEY, "*")
-        val keys = redis.scanKeys(pattern).toList()
-        val cnt = keys.count()
-        keys.forEach { redis.del(it) }
-        "$cnt content DSLs ${"file".pluralize(cnt)} deleted from Redis".also { logger.info { it } }
-      }
+    redisPool?.withNonNullRedisPool { redis ->
+      val pattern = keyOf(CONTENT_DSL_KEY, "*")
+      val keys = redis.scanKeys(pattern).toList()
+      val cnt = keys.count()
+      keys.forEach { redis.del(it) }
+      "$cnt content DSLs ${"file".pluralize(cnt)} deleted from Redis".also { logger.info { it } }
     } ?: REDIS_IS_DOWN
 
   fun deleteDirContentsInRedis() =
-    redisPool?.withRedisPool { redis ->
-      if (redis.isNull())
-        REDIS_IS_DOWN
-      else {
-        val pattern = keyOf(DIR_CONTENTS_KEY, "*")
-        val keys = redis.scanKeys(pattern).toList()
-        val cnt = keys.count()
-        keys.forEach { redis.del(it) }
-        "$cnt directory ${"content".pluralize(cnt)} deleted from Redis".also { logger.info { it } }
-      }
+    redisPool?.withNonNullRedisPool { redis ->
+      val pattern = keyOf(DIR_CONTENTS_KEY, "*")
+      val keys = redis.scanKeys(pattern).toList()
+      val cnt = keys.count()
+      keys.forEach { redis.del(it) }
+      "$cnt directory ${"content".pluralize(cnt)} deleted from Redis".also { logger.info { it } }
     } ?: REDIS_IS_DOWN
 
   fun deleteSourceCodeInRedis() =
-    redisPool?.withRedisPool { redis ->
-      if (redis.isNull())
-        REDIS_IS_DOWN
-      else {
-        val pattern = keyOf(SOURCE_CODE_KEY, "*")
-        val keys = redis.scanKeys(pattern).toList()
-        val cnt = keys.count()
-        keys.forEach { redis.del(it) }
-        "$cnt source code ${"file".pluralize(cnt)} deleted from Redis".also { logger.info { it } }
-      }
+    redisPool?.withNonNullRedisPool { redis ->
+      val pattern = keyOf(SOURCE_CODE_KEY, "*")
+      val keys = redis.scanKeys(pattern).toList()
+      val cnt = keys.count()
+      keys.forEach { redis.del(it) }
+      "$cnt source code ${"file".pluralize(cnt)} deleted from Redis".also { logger.info { it } }
     } ?: REDIS_IS_DOWN
 
   fun deleteContentInRedis() =
-    listOf(deleteContentDslInRedis(),
-           deleteDirContentsInRedis(),
-           deleteSourceCodeInRedis())
+    listOf(deleteContentDslInRedis(), deleteDirContentsInRedis(), deleteSourceCodeInRedis())
       .joinToString(", ")
       .also { logger.info { "clearContentInRedis(): $it" } }
 
@@ -140,16 +124,19 @@ internal fun Routing.sysAdminRoutes(metrics: Metrics, contentSrc: () -> ReadingB
     }
   }
 
-  listOf(LOAD_JAVA_ENDPOINT to Java,
-         LOAD_PYTHON_ENDPOINT to Python,
-         LOAD_KOTLIN_ENDPOINT to Kotlin)
+  listOf(LOAD_JAVA_ENDPOINT to LOAD_JAVA,
+         LOAD_PYTHON_ENDPOINT to LOAD_PYTHON,
+         LOAD_KOTLIN_ENDPOINT to LOAD_KOTLIN)
     .forEach { pair ->
-      get(pair.first) {
+      post(pair.first) {
         respondWith {
           val user = fetchUser()
           val msg =
             authenticateAdminUser(user) {
-              contentSrc().loadChallenges(call.request.origin.uriPrefix, pair.second, false)
+              redisPool?.withNonNullRedisPool { redis ->
+                redis.publish(LOAD_COMMAND.name, pair.second.name)
+              } ?: throw RedisUnavailableException(pair.first)
+              ""
             }
           systemAdminPage(contentSrc(), user, msg)
         }
@@ -161,8 +148,12 @@ internal fun Routing.sysAdminRoutes(metrics: Metrics, contentSrc: () -> ReadingB
       val user = fetchUser()
       val msg =
         authenticateAdminUser(user) {
-          LanguageType.values()
-            .joinToString(", ") { contentSrc().loadChallenges(call.request.origin.uriPrefix, it, false) }
+          // LanguageType.values()
+          //  .joinToString(", ") { contentSrc().loadChallenges(it, call.request.origin.uriPrefix, false) }
+          redisPool?.withNonNullRedisPool { redis ->
+            redis.publish(LOAD_COMMAND.name, LOAD_ALL.name)
+          } ?: throw RedisUnavailableException(LOAD_ALL_ENDPOINT)
+          ""
         }
       systemAdminPage(contentSrc(), user, msg)
     }

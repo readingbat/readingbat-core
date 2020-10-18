@@ -17,13 +17,11 @@
 
 package com.github.readingbat.server.ws
 
-import com.github.pambrose.common.redis.RedisUtils.withNonNullRedisPool
 import com.github.pambrose.common.redis.RedisUtils.withSuspendingNonNullRedisPool
 import com.github.pambrose.common.time.format
-import com.github.pambrose.common.util.isNotNull
 import com.github.pambrose.common.util.simpleClassName
 import com.github.readingbat.common.ClassCode
-import com.github.readingbat.common.Constants
+import com.github.readingbat.common.Constants.PING_CODE
 import com.github.readingbat.common.Endpoints.CHALLENGE_ENDPOINT
 import com.github.readingbat.common.Endpoints.WS_ROOT
 import com.github.readingbat.common.KeyConstants.keyOf
@@ -32,7 +30,6 @@ import com.github.readingbat.dsl.InvalidRequestException
 import com.github.readingbat.dsl.RedisUnavailableException
 import com.github.readingbat.dsl.agentLaunchId
 import com.github.readingbat.dsl.isMultiServerEnabled
-import com.github.readingbat.server.PublishedData
 import com.github.readingbat.server.ReadingBatServer.redisPool
 import com.github.readingbat.server.ServerUtils.fetchUser
 import com.github.readingbat.server.ws.WsCommon.CHALLENGE_MD5
@@ -40,6 +37,7 @@ import com.github.readingbat.server.ws.WsCommon.CLASS_CODE
 import com.github.readingbat.server.ws.WsCommon.closeChannels
 import com.github.readingbat.server.ws.WsCommon.validateContext
 import io.ktor.http.cio.websocket.*
+import io.ktor.http.cio.websocket.CloseReason.Codes.*
 import io.ktor.routing.*
 import io.ktor.websocket.*
 import kotlinx.coroutines.channels.BroadcastChannel
@@ -55,10 +53,8 @@ import kotlinx.serialization.Required
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import mu.KLogging
-import redis.clients.jedis.JedisPubSub
-import java.util.*
+import java.util.Collections.synchronizedSet
 import java.util.concurrent.Executors.newSingleThreadExecutor
-import kotlin.collections.LinkedHashSet
 import kotlin.concurrent.timer
 import kotlin.math.max
 import kotlin.time.TimeSource
@@ -66,34 +62,44 @@ import kotlin.time.seconds
 
 internal object ChallengeWs : KLogging() {
   private val clock = TimeSource.Monotonic
-  val singleServerChannel by lazy { BroadcastChannel<PublishedData>(BUFFERED) }
-  val multiServerWriteChannel by lazy { BroadcastChannel<PublishedData>(BUFFERED) }
-  private val multiServerReadChannel by lazy { BroadcastChannel<PublishedData>(BUFFERED) }
-  val wsConnections: MutableSet<SessionContext> = Collections.synchronizedSet(LinkedHashSet<SessionContext>())
-  var maxWsConnections = 0
+  val singleServerWsChannel by lazy { BroadcastChannel<AnswerData>(BUFFERED) }
+  val multiServerWsWriteChannel by lazy { BroadcastChannel<AnswerData>(BUFFERED) }
+  val multiServerWsReadChannel by lazy { BroadcastChannel<AnswerData>(BUFFERED) }
+  val answerWsConnections: MutableSet<AnswerSessionContext> = synchronizedSet(LinkedHashSet<AnswerSessionContext>())
+  var maxAnswerWsConnections = 0
+
+  @Serializable
+  data class AnswerMessage(val target: String, val message: String) {
+    fun toJson() = Json.encodeToString(serializer(), this)
+  }
+
+  data class AnswerData(val topic: LogWs.Topic, val answerMessage: AnswerMessage)
 
   private fun assignMaxConnections() {
     synchronized(this) {
-      maxWsConnections = max(maxWsConnections, wsConnections.size)
+      maxAnswerWsConnections = max(maxAnswerWsConnections, answerWsConnections.size)
     }
   }
 
-  data class SessionContext(val wsSession: DefaultWebSocketServerSession, val metrics: Metrics) {
+  data class AnswerSessionContext(val wsSession: DefaultWebSocketServerSession, val metrics: Metrics) {
     val start = clock.markNow()
-    var topicName = ""
-    val enabled get() = topicName.isNotEmpty()
+    var targetName = ""
+    val enabled get() = targetName.isNotEmpty()
   }
+
 
   @Serializable
   class PingMessage(val msg: String) {
     @Required
-    val type: String = Constants.PING_CODE
+    val type: String = PING_CODE
     fun toJson() = Json.encodeToString(serializer(), this)
   }
 
   init {
+    logger.info { "Initalizing ChallengeWs" }
+
     timer("pinger", false, 0L, 1.seconds.toLongMilliseconds()) {
-      for (sessionContext in wsConnections)
+      for (sessionContext in answerWsConnections)
         if (sessionContext.enabled)
           try {
             val elapsed = sessionContext.start.elapsedNow().format()
@@ -113,49 +119,18 @@ internal object ChallengeWs : KLogging() {
             try {
               runBlocking {
                 redisPool?.withSuspendingNonNullRedisPool { redis ->
-                  multiServerWriteChannel
+                  multiServerWsWriteChannel
                     .openSubscription()
                     .consumeAsFlow()
                     .onStart { logger.info { "Starting to read multi-server writer ws channel values" } }
                     .onCompletion { logger.info { "Finished reading multi-server writer ws channel values" } }
                     .collect { data ->
-                      redis.publish(data.topic, data.message)
+                      redis.publish(data.topic.name, data.answerMessage.toJson())
                     }
                 } ?: throw RedisUnavailableException("multiServerWriteChannel")
               }
             } catch (e: Throwable) {
               logger.error { "Exception in challenge ws writer ${e.simpleClassName} ${e.message}" }
-              Thread.sleep(1.seconds.toLongMilliseconds())
-            }
-          }
-        }
-
-      newSingleThreadExecutor()
-        .submit {
-          val pubsub =
-            object : JedisPubSub() {
-              override fun onPMessage(pattern: String?, channel: String?, message: String?) {
-                logger.debug { "On message $pattern $channel" }
-                if (channel.isNotNull() && message.isNotNull())
-                  runBlocking { multiServerReadChannel.send(PublishedData(channel, message)) }
-              }
-
-              override fun onPSubscribe(pattern: String?, subscribedChannels: Int) {
-                logger.info { "Subscribed to pattern: $pattern [$subscribedChannels]" }
-              }
-
-              override fun onPUnsubscribe(pattern: String?, subscribedChannels: Int) {
-                logger.info { "Unsubscribed from pattern: $pattern [$subscribedChannels]" }
-              }
-            }
-
-          while (true) {
-            try {
-              redisPool?.withNonNullRedisPool { redis ->
-                redis.psubscribe(pubsub, "*")
-              } ?: throw RedisUnavailableException("multiServerReadChannel")
-            } catch (e: Throwable) {
-              logger.error { "Exception in multiServerReadChannel reader ${e.simpleClassName} ${e.message}" }
               Thread.sleep(1.seconds.toLongMilliseconds())
             }
           }
@@ -167,18 +142,19 @@ internal object ChallengeWs : KLogging() {
         while (true) {
           try {
             runBlocking {
-              (if (isMultiServerEnabled()) multiServerReadChannel else singleServerChannel)
+              (if (isMultiServerEnabled()) multiServerWsReadChannel else singleServerWsChannel)
                 .openSubscription()
                 .consumeAsFlow()
                 .onStart { logger.info { "Starting to read challenge ws channel values" } }
                 .onCompletion { logger.info { "Finished reading challenge ws channel values" } }
-                .collect { data ->
-                  wsConnections
-                    .filter { it.topicName == data.topic }
+                .collect { answerData ->
+                  val targetMessage = answerData.answerMessage
+                  answerWsConnections
+                    .filter { it.targetName == targetMessage.target }
                     .forEach {
                       it.metrics.wsStudentAnswerResponseCount.labels(agentLaunchId()).inc()
-                      it.wsSession.outgoing.send(Frame.Text(data.message))
-                      logger.debug { "Sent $data ${wsConnections.size}" }
+                      it.wsSession.outgoing.send(Frame.Text(targetMessage.message))
+                      logger.debug { "Sent $answerData ${answerWsConnections.size}" }
                     }
                 }
             }
@@ -191,19 +167,18 @@ internal object ChallengeWs : KLogging() {
   }
 
   fun Routing.challengeWsEndpoint(metrics: Metrics) {
-
     webSocket("$WS_ROOT$CHALLENGE_ENDPOINT/{$CLASS_CODE}/{$CHALLENGE_MD5}") {
-      val wsContext = SessionContext(this, metrics)
+      val answerWsContext = AnswerSessionContext(this, metrics)
       try {
         outgoing.invokeOnClose {
-          logger.debug { "Close received for student answers websocket:  ${wsConnections.size}" }
+          logger.debug { "Close received for student answers websocket:  ${answerWsConnections.size}" }
           incoming.cancel()
         }
 
-        wsConnections += wsContext
+        answerWsConnections += answerWsContext
         assignMaxConnections()
 
-        logger.debug { "Opened student answers websocket: ${wsConnections.size}" }
+        logger.debug { "Opened student answers websocket: ${answerWsConnections.size}" }
 
         metrics.wsStudentAnswerCount.labels(agentLaunchId()).inc()
         metrics.wsStudentAnswerGauge.labels(agentLaunchId()).inc()
@@ -215,7 +190,6 @@ internal object ChallengeWs : KLogging() {
           val user = fetchUser() ?: throw InvalidRequestException("Null user")
 
           validateContext(null, null, classCode, null, user)
-            .also { (valid, msg) -> if (!valid) throw InvalidRequestException(msg) }
 
           incoming
             .consumeAsFlow()
@@ -224,19 +198,19 @@ internal object ChallengeWs : KLogging() {
               // Pause to show the "Connected" message on the client
               delay(1.seconds)
               // This will enable the connected client to get msgs
-              if (wsContext.topicName.isBlank())
-                wsContext.topicName = classTopicName(classCode, challengeMd5)
+              if (answerWsContext.targetName.isBlank())
+                answerWsContext.targetName = classTargetName(classCode, challengeMd5)
             }
         }
       } finally {
-        wsConnections -= wsContext
+        answerWsConnections -= answerWsContext
         closeChannels()
-        close(CloseReason(CloseReason.Codes.GOING_AWAY, "Client disconnected"))
+        close(CloseReason(GOING_AWAY, "Client disconnected"))
         metrics.wsStudentAnswerGauge.labels(agentLaunchId()).dec()
-        logger.debug { "Closed student answers websocket ${wsConnections.size}" }
+        logger.debug { "Closed student answers websocket ${answerWsConnections.size}" }
       }
     }
   }
 
-  fun classTopicName(classCode: ClassCode, challengeMd5: String) = keyOf(classCode, challengeMd5)
+  fun classTargetName(classCode: ClassCode, challengeMd5: String) = keyOf(classCode, challengeMd5)
 }

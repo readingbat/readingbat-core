@@ -158,33 +158,35 @@ class ReadingBatContent {
       throw InvalidConfigurationException("Invalid language: $languageType")
   }
 
-  internal fun loadChallenges(prefix: String, languageType: LanguageType, useWebApi: Boolean = true) =
+  internal fun loadChallenges(languageType: LanguageType, prefix: String = "", useWebApi: Boolean = false) =
     measureTimedValue {
       val cnt = AtomicInteger(0)
       runBlocking {
-        findLanguage(languageType).challengeGroups.forEach { challengeGroup ->
-          challengeGroup.challenges.forEach { challenge ->
-            if (useWebApi) {
-              HttpClient(CIO)
-                .use { httpClient ->
-                  withHttpClient(httpClient) {
-                    val url = pathOf(prefix, CONTENT, challenge.path)
-                    logger.info { "Fetching: $url" }
-                    get(url, setUp = { header(NO_TRACK_HEADER, "") }) { response ->
-                      val body = response.readText()
-                      logger.info { "Response: ${response.status} ${body.length} chars" }
-                      cnt.incrementAndGet()
+        findLanguage(languageType).challengeGroups
+          .forEach { challengeGroup ->
+            challengeGroup.challenges
+              .forEach { challenge ->
+                if (useWebApi) {
+                  HttpClient(CIO)
+                    .use { httpClient ->
+                      withHttpClient(httpClient) {
+                        val url = pathOf(prefix, CONTENT, challenge.path)
+                        logger.info { "Fetching: $url" }
+                        get(url, setUp = { header(NO_TRACK_HEADER, "") }) { response ->
+                          val body = response.readText()
+                          logger.info { "Response: ${response.status} ${body.length} chars" }
+                          cnt.incrementAndGet()
+                        }
+                      }
                     }
-                  }
                 }
-            }
-            else {
-              logger.info { "Loading: ${challenge.path}" }
-              challenge.functionInfo(this@ReadingBatContent)
-              cnt.incrementAndGet()
-            }
+                else {
+                  logger.info { "Loading: ${challenge.path}" }
+                  challenge.functionInfo(this@ReadingBatContent)
+                  cnt.incrementAndGet()
+                }
+              }
           }
-        }
       }
       cnt.get()
     }.let {

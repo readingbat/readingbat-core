@@ -54,8 +54,8 @@ import com.github.readingbat.server.Intercepts.requestTimingMap
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ReadingBatServer
 import com.github.readingbat.server.ServerUtils.queryParam
-import com.github.readingbat.server.ws.ChallengeWs.maxWsConnections
-import com.github.readingbat.server.ws.ChallengeWs.wsConnections
+import com.github.readingbat.server.ws.ChallengeWs.answerWsConnections
+import com.github.readingbat.server.ws.ChallengeWs.maxAnswerWsConnections
 import io.prometheus.Agent
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
@@ -164,7 +164,7 @@ internal object SystemConfigurationPage {
                   }
                 tr {
                   td { +"WS connections size/max:" }
-                  td { +"${wsConnections.size}/${maxWsConnections}" }
+                  td { +"${answerWsConnections.size}/${maxAnswerWsConnections}" }
                 }
                 tr {
                   td { +"Challenge cache size:" }

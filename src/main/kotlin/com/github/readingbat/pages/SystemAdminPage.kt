@@ -17,6 +17,10 @@
 
 package com.github.readingbat.pages
 
+import com.github.pambrose.common.util.randomId
+import com.github.pambrose.common.util.toDoubleQuoted
+import com.github.readingbat.common.CSSNames
+import com.github.readingbat.common.Constants.LOAD_CHALLENGES_JS_FUNC
 import com.github.readingbat.common.Endpoints.ADMIN_PREFS_ENDPOINT
 import com.github.readingbat.common.Endpoints.DELETE_CONTENT_IN_REDIS_ENDPOINT
 import com.github.readingbat.common.Endpoints.GARBAGE_COLLECTOR_ENDPOINT
@@ -44,6 +48,7 @@ import com.github.readingbat.pages.PageUtils.displayMessage
 import com.github.readingbat.pages.PageUtils.headDefault
 import com.github.readingbat.pages.PageUtils.loadStatusPageDisplay
 import com.github.readingbat.pages.UserPrefsPage.requestLogInPage
+import com.github.readingbat.pages.js.LoadCommandsJs.loadCommandsScript
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
 import kotlinx.html.*
@@ -63,7 +68,13 @@ internal object SystemAdminPage : KLogging() {
   private fun PipelineCall.systemAdminLoginPage(content: ReadingBatContent, user: User, msg: Message) =
     createHTML()
       .html {
-        head { headDefault() }
+
+        val logId = randomId(15)
+
+        head {
+          headDefault()
+          script(type = ScriptType.textJavaScript) { loadCommandsScript(logId) }
+        }
 
         body {
           val activeClassCode = queryActiveClassCode(user)
@@ -106,6 +117,15 @@ internal object SystemAdminPage : KLogging() {
               this@body.confirmingButton("Load Python Challenges",
                                          LOAD_PYTHON_ENDPOINT,
                                          "Are you sure you want to load all the python challenges? (This can take a while)")
+            }
+
+            p {
+              button(classes = CSSNames.LOAD_CHALLENGE) {
+                val confirm = "Are you sure you want to load all the python challenges? (This can take a while)"
+                onClick =
+                  "$LOAD_CHALLENGES_JS_FUNC(${confirm.toDoubleQuoted()}, ${LOAD_PYTHON_ENDPOINT.toDoubleQuoted()})"
+                +"Load Python Challenges"
+              }
             }
 
             p {
