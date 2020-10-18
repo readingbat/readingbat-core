@@ -15,12 +15,11 @@
  *
  */
 
-package com.github.readingbat.server
+package com.github.readingbat.server.routes
 
 import com.github.pambrose.common.response.redirectTo
 import com.github.pambrose.common.response.respondWith
 import com.github.pambrose.common.util.pathOf
-
 import com.github.readingbat.common.Constants.ICONS
 import com.github.readingbat.common.Endpoints.ABOUT_ENDPOINT
 import com.github.readingbat.common.Endpoints.ADMIN_ENDPOINT
@@ -86,7 +85,7 @@ import com.github.readingbat.posts.TeacherPrefsPost.enableStudentMode
 import com.github.readingbat.posts.TeacherPrefsPost.enableTeacherMode
 import com.github.readingbat.posts.TeacherPrefsPost.teacherPrefs
 import com.github.readingbat.posts.UserPrefsPost.userPrefs
-import com.github.readingbat.server.ResourceContent.getResourceAsText
+import com.github.readingbat.server.ResetId
 import com.github.readingbat.server.ServerUtils.authenticateAdminUser
 import com.github.readingbat.server.ServerUtils.defaultLanguageTab
 import com.github.readingbat.server.ServerUtils.fetchUser
@@ -96,7 +95,8 @@ import com.github.readingbat.server.ServerUtils.respondWithRedirect
 import com.github.readingbat.server.ServerUtils.respondWithRedisCheck
 import com.github.readingbat.server.ServerUtils.respondWithSuspendingRedirect
 import com.github.readingbat.server.ServerUtils.respondWithSuspendingRedisCheck
-import com.github.readingbat.server.StaticVals.robotsTxt
+import com.github.readingbat.server.routes.ResourceContent.getResourceAsText
+import com.github.readingbat.server.routes.StaticVals.robotsTxt
 import io.ktor.application.*
 import io.ktor.http.*
 import io.ktor.http.ContentType.Text.CSS

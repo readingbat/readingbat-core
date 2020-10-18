@@ -15,7 +15,7 @@
  *
  */
 
-package com.github.readingbat.server
+package com.github.readingbat.server.routes
 
 import com.github.pambrose.common.redis.RedisUtils.scanKeys
 import com.github.pambrose.common.redis.RedisUtils.withNonNullRedisPool

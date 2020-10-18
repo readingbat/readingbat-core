@@ -40,8 +40,8 @@ import com.github.readingbat.pages.ChallengeGroupPage.challengeGroupPage
 import com.github.readingbat.pages.ChallengePage.challengePage
 import com.github.readingbat.pages.LanguageGroupPage.languageGroupPage
 import com.github.readingbat.pages.PlaygroundPage.playgroundPage
-import com.github.readingbat.server.AdminRoutes.assignBrowserSession
 import com.github.readingbat.server.ServerUtils.fetchUser
+import com.github.readingbat.server.routes.AdminRoutes.assignBrowserSession
 import io.ktor.auth.*
 import io.ktor.http.*
 import io.ktor.locations.*
