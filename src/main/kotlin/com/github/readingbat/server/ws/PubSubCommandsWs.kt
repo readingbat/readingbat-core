@@ -99,22 +99,21 @@ internal object PubSubCommandsWs : KLogging() {
         val pubsub =
           object : JedisPubSub() {
             override fun onMessage(channel: String?, message: String?) {
-              logger.debug { "On channel $channel $message" }
               if (channel.isNotNull() && message.isNotNull())
                 runBlocking {
                   when (PubSubTopic.valueOf(channel)) {
                     ADMIN_COMMAND -> {
-                      val adminCommandData = Json.decodeFromString<AdminCommandData>(message)
-                      adminCommandChannel.send(adminCommandData)
+                      val data = Json.decodeFromString<AdminCommandData>(message)
+                      adminCommandChannel.send(data)
                     }
                     USER_ANSWERS,
                     LIKE_DISLIKE -> {
-                      val answerMessage = Json.decodeFromString<ChallengeAnswerData>(message)
-                      multiServerWsReadChannel.send(answerMessage)
+                      val data = Json.decodeFromString<ChallengeAnswerData>(message)
+                      multiServerWsReadChannel.send(data)
                     }
                     LOG_MESSAGE -> {
-                      val logData = Json.decodeFromString<LogData>(message)
-                      logWsReadChannel.send(logData)
+                      val data = Json.decodeFromString<LogData>(message)
+                      logWsReadChannel.send(data)
                     }
                   }
                 }
