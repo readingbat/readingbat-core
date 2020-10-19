@@ -54,7 +54,7 @@ internal object PubSubCommandsWs : KLogging() {
 
   enum class PubSubTopic { ADMIN_COMMAND, USER_ANSWERS, LIKE_DISLIKE, LOG_MESSAGE }
 
-  enum class AdminCommand { RESET_DSL_CONTENT, RESET_CACHE, LOAD_CHALLENGE, RUN_GC }
+  enum class AdminCommand { RESET_CONTENT_DSL, RESET_CACHE, LOAD_CHALLENGE, RUN_GC }
 
   @Serializable
   class AdminCommandData(val command: AdminCommand, val jsonArgs: String, val logId: String) {

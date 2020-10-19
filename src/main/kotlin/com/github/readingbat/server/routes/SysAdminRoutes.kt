@@ -23,7 +23,6 @@ import com.github.pambrose.common.response.respondWith
 import com.github.pambrose.common.util.pluralize
 import com.github.readingbat.common.Endpoints.DELETE_CONTENT_IN_REDIS_ENDPOINT
 import com.github.readingbat.common.Endpoints.GARBAGE_COLLECTOR_ENDPOINT
-import com.github.readingbat.common.Endpoints.LOAD_ALL_ENDPOINT
 import com.github.readingbat.common.Endpoints.RESET_CACHE_ENDPOINT
 import com.github.readingbat.common.Endpoints.RESET_CONTENT_DSL_ENDPOINT
 import com.github.readingbat.common.KeyConstants.CONTENT_DSL_KEY
@@ -41,7 +40,7 @@ import com.github.readingbat.server.ServerUtils.paramMap
 import com.github.readingbat.server.ServerUtils.post
 import com.github.readingbat.server.ws.PubSubCommandsWs.AdminCommand.LOAD_CHALLENGE
 import com.github.readingbat.server.ws.PubSubCommandsWs.AdminCommand.RESET_CACHE
-import com.github.readingbat.server.ws.PubSubCommandsWs.AdminCommand.RESET_DSL_CONTENT
+import com.github.readingbat.server.ws.PubSubCommandsWs.AdminCommand.RESET_CONTENT_DSL
 import com.github.readingbat.server.ws.PubSubCommandsWs.AdminCommand.RUN_GC
 import com.github.readingbat.server.ws.PubSubCommandsWs.LoadChallengeType
 import com.github.readingbat.server.ws.PubSubCommandsWs.publishAdminCommand
@@ -110,7 +109,7 @@ internal fun Routing.sysAdminRoutes(metrics: Metrics) {
       authenticateAdminUser(user) {
         redisPool?.withNonNullRedisPool { redis ->
           deleteContentInRedis(logId, redis)
-          redis.publishAdminCommand(RESET_DSL_CONTENT, logId)
+          redis.publishAdminCommand(RESET_CONTENT_DSL, logId)
           ""
         } ?: throw RedisUnavailableException(RESET_CONTENT_DSL_ENDPOINT)
       }
@@ -167,7 +166,7 @@ internal fun Routing.sysAdminRoutes(metrics: Metrics) {
       authenticateAdminUser(user) {
         redisPool?.withNonNullRedisPool { redis ->
           redis.publishAdminCommand(RUN_GC, logId)
-        } ?: throw RedisUnavailableException(LOAD_ALL_ENDPOINT)
+        } ?: throw RedisUnavailableException(GARBAGE_COLLECTOR_ENDPOINT)
         ""
       }
     }

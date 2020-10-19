@@ -30,7 +30,7 @@ import com.github.readingbat.server.ReadingBatServer.redisPool
 import com.github.readingbat.server.ServerUtils.fetchUser
 import com.github.readingbat.server.ws.PubSubCommandsWs.AdminCommand.LOAD_CHALLENGE
 import com.github.readingbat.server.ws.PubSubCommandsWs.AdminCommand.RESET_CACHE
-import com.github.readingbat.server.ws.PubSubCommandsWs.AdminCommand.RESET_DSL_CONTENT
+import com.github.readingbat.server.ws.PubSubCommandsWs.AdminCommand.RESET_CONTENT_DSL
 import com.github.readingbat.server.ws.PubSubCommandsWs.AdminCommand.RUN_GC
 import com.github.readingbat.server.ws.PubSubCommandsWs.AdminCommandData
 import com.github.readingbat.server.ws.PubSubCommandsWs.LoadChallengeType
@@ -85,7 +85,7 @@ internal object LoggingWs : KLogging() {
                     val log = { s: String -> redis.publishLog(s, adminCommandData.logId) }
 
                     when (adminCommandData.command) {
-                      RESET_DSL_CONTENT -> {
+                      RESET_CONTENT_DSL -> {
                         measureTime { resetContentFunc.invoke() }
                           .also { dur ->
                             "DSL content reset in $dur"
