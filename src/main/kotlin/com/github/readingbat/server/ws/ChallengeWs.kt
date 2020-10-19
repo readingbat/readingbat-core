@@ -32,7 +32,7 @@ import com.github.readingbat.dsl.agentLaunchId
 import com.github.readingbat.dsl.isMultiServerEnabled
 import com.github.readingbat.server.ReadingBatServer.redisPool
 import com.github.readingbat.server.ServerUtils.fetchUser
-import com.github.readingbat.server.ws.CommandsWs.AnswerData
+import com.github.readingbat.server.ws.PubSubCommandsWs.ChallengeAnswerData
 import com.github.readingbat.server.ws.WsCommon.CHALLENGE_MD5
 import com.github.readingbat.server.ws.WsCommon.CLASS_CODE
 import com.github.readingbat.server.ws.WsCommon.closeChannels
@@ -63,9 +63,9 @@ import kotlin.time.seconds
 
 internal object ChallengeWs : KLogging() {
   private val clock = TimeSource.Monotonic
-  val singleServerWsChannel by lazy { BroadcastChannel<AnswerData>(BUFFERED) }
-  val multiServerWsWriteChannel by lazy { BroadcastChannel<AnswerData>(BUFFERED) }
-  val multiServerWsReadChannel by lazy { BroadcastChannel<AnswerData>(BUFFERED) }
+  val singleServerWsChannel by lazy { BroadcastChannel<ChallengeAnswerData>(BUFFERED) }
+  val multiServerWsWriteChannel by lazy { BroadcastChannel<ChallengeAnswerData>(BUFFERED) }
+  val multiServerWsReadChannel by lazy { BroadcastChannel<ChallengeAnswerData>(BUFFERED) }
   val answerWsConnections: MutableSet<AnswerSessionContext> = synchronizedSet(LinkedHashSet<AnswerSessionContext>())
   var maxAnswerWsConnections = 0
 
@@ -119,7 +119,7 @@ internal object ChallengeWs : KLogging() {
                     .onStart { logger.info { "Starting to read multi-server writer ws channel values" } }
                     .onCompletion { logger.info { "Finished reading multi-server writer ws channel values" } }
                     .collect { answerData ->
-                      redis.publish(answerData.commandTopic.name, answerData.answerMessage.toJson())
+                      redis.publish(answerData.pubSubTopic.name, answerData.toJson())
                     }
                 } ?: throw RedisUnavailableException("multiServerWriteChannel")
               }
@@ -142,12 +142,11 @@ internal object ChallengeWs : KLogging() {
                 .onStart { logger.info { "Starting to read challenge ws channel values" } }
                 .onCompletion { logger.info { "Finished reading challenge ws channel values" } }
                 .collect { answerData ->
-                  val targetMessage = answerData.answerMessage
                   answerWsConnections
-                    .filter { it.targetName == targetMessage.target }
+                    .filter { it.targetName == answerData.target }
                     .forEach {
                       it.metrics.wsStudentAnswerResponseCount.labels(agentLaunchId()).inc()
-                      it.wsSession.outgoing.send(Frame.Text(targetMessage.message))
+                      it.wsSession.outgoing.send(Frame.Text(answerData.jsonArgs))
                       logger.debug { "Sent $answerData ${answerWsConnections.size}" }
                     }
                 }

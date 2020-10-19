@@ -57,8 +57,8 @@ import mu.KLogging
 
 internal object SystemAdminPage : KLogging() {
 
-  private val msgs = "msgs"
-  private val status = "status"
+  private const val msgs = "msgs"
+  private const val status = "status"
 
   fun PipelineCall.systemAdminPage(content: ReadingBatContent,
                                    user: User?,

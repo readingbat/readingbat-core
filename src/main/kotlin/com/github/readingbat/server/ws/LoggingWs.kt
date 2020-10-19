@@ -23,18 +23,18 @@ import com.github.readingbat.common.Endpoints.LOGGING_ENDPOINT
 import com.github.readingbat.common.Endpoints.WS_ROOT
 import com.github.readingbat.common.Metrics
 import com.github.readingbat.dsl.InvalidRequestException
-import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.RedisUnavailableException
 import com.github.readingbat.server.ReadingBatServer.content
 import com.github.readingbat.server.ReadingBatServer.redisPool
 import com.github.readingbat.server.ServerUtils.fetchUser
-import com.github.readingbat.server.ws.CommandsWs.AdminCommand.LOAD_CHALLENGE
-import com.github.readingbat.server.ws.CommandsWs.AdminCommand.RESET_CACHE
-import com.github.readingbat.server.ws.CommandsWs.AdminCommand.RESET_DSL_CONTENT
-import com.github.readingbat.server.ws.CommandsWs.AdminCommand.RUN_GC
-import com.github.readingbat.server.ws.CommandsWs.AdminCommandData
-import com.github.readingbat.server.ws.CommandsWs.publishLog
+import com.github.readingbat.server.ws.PubSubCommandsWs.AdminCommand.LOAD_CHALLENGE
+import com.github.readingbat.server.ws.PubSubCommandsWs.AdminCommand.RESET_CACHE
+import com.github.readingbat.server.ws.PubSubCommandsWs.AdminCommand.RESET_DSL_CONTENT
+import com.github.readingbat.server.ws.PubSubCommandsWs.AdminCommand.RUN_GC
+import com.github.readingbat.server.ws.PubSubCommandsWs.AdminCommandData
+import com.github.readingbat.server.ws.PubSubCommandsWs.LoadChallengeType
+import com.github.readingbat.server.ws.PubSubCommandsWs.publishLog
 import com.github.readingbat.server.ws.WsCommon.LOG_ID
 import com.github.readingbat.server.ws.WsCommon.closeChannels
 import com.github.readingbat.server.ws.WsCommon.validateLogContext
@@ -49,7 +49,6 @@ import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.runBlocking
-import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -62,24 +61,14 @@ import kotlin.time.seconds
 
 internal object LoggingWs : KLogging() {
   private val clock = TimeSource.Monotonic
+  private val logWsConnections: MutableSet<LogSessionContext> = synchronizedSet(LinkedHashSet<LogSessionContext>())
   val adminCommandChannel by lazy { BroadcastChannel<AdminCommandData>(Channel.BUFFERED) }
-  val logWsReadChannel by lazy { BroadcastChannel<CommandsWs.LogData>(Channel.BUFFERED) }
-  val logWsConnections: MutableSet<LogSessionContext> = synchronizedSet(LinkedHashSet<LogSessionContext>())
+  val logWsReadChannel by lazy { BroadcastChannel<PubSubCommandsWs.LogData>(Channel.BUFFERED) }
 
   data class LogSessionContext(val wsSession: DefaultWebSocketServerSession, val metrics: Metrics) {
     val start = clock.markNow()
     var logId = ""
     val enabled get() = logId.isNotEmpty()
-  }
-
-  @Serializable
-  enum class LoadCommand(val languageTypes: List<LanguageType>) {
-    LOAD_JAVA(listOf(LanguageType.Java)),
-    LOAD_PYTHON(listOf(LanguageType.Python)),
-    LOAD_KOTLIN(listOf(LanguageType.Kotlin)),
-    LOAD_ALL(listOf(LanguageType.Java, LanguageType.Python, LanguageType.Kotlin));
-
-    fun toJson() = Json.encodeToString(serializer(), this)
   }
 
   fun initThreads(contentSrc: () -> ReadingBatContent, resetContentFunc: () -> Unit) {
@@ -95,7 +84,7 @@ internal object LoggingWs : KLogging() {
                 .onCompletion { logger.info { "Finished reading admin command channel values" } }
                 .collect { adminCommandData ->
                   redisPool?.withNonNullRedisPool { redis ->
-                    val log = { s: String -> redis.publishLog(adminCommandData.logId, s) }
+                    val log = { s: String -> redis.publishLog(s, adminCommandData.logId) }
 
                     when (adminCommandData.command) {
                       RESET_DSL_CONTENT -> {
@@ -121,10 +110,10 @@ internal object LoggingWs : KLogging() {
                           }
                       }
                       LOAD_CHALLENGE -> {
-                        val loadCommand = Json.decodeFromString<LoadCommand>(adminCommandData.jsonCommandArgs)
-                        loadCommand.languageTypes
-                          .forEach {
-                            content.get().loadChallenges(it, log, "", false)
+                        val type = Json.decodeFromString<LoadChallengeType>(adminCommandData.jsonArgs)
+                        type.languageTypes
+                          .forEach { langType ->
+                            content.get().loadChallenges(langType, log, "", false)
                               .also {
                                 logger.info { it }
                                 log(it)

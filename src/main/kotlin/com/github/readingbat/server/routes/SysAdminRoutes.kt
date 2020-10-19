@@ -24,9 +24,6 @@ import com.github.pambrose.common.util.pluralize
 import com.github.readingbat.common.Endpoints.DELETE_CONTENT_IN_REDIS_ENDPOINT
 import com.github.readingbat.common.Endpoints.GARBAGE_COLLECTOR_ENDPOINT
 import com.github.readingbat.common.Endpoints.LOAD_ALL_ENDPOINT
-import com.github.readingbat.common.Endpoints.LOAD_JAVA_ENDPOINT
-import com.github.readingbat.common.Endpoints.LOAD_KOTLIN_ENDPOINT
-import com.github.readingbat.common.Endpoints.LOAD_PYTHON_ENDPOINT
 import com.github.readingbat.common.Endpoints.RESET_CACHE_ENDPOINT
 import com.github.readingbat.common.Endpoints.RESET_CONTENT_DSL_ENDPOINT
 import com.github.readingbat.common.KeyConstants.CONTENT_DSL_KEY
@@ -42,16 +39,13 @@ import com.github.readingbat.server.ServerUtils.authenticateAdminUser
 import com.github.readingbat.server.ServerUtils.fetchUser
 import com.github.readingbat.server.ServerUtils.paramMap
 import com.github.readingbat.server.ServerUtils.post
-import com.github.readingbat.server.ws.CommandsWs.AdminCommand.LOAD_CHALLENGE
-import com.github.readingbat.server.ws.CommandsWs.AdminCommand.RESET_CACHE
-import com.github.readingbat.server.ws.CommandsWs.AdminCommand.RESET_DSL_CONTENT
-import com.github.readingbat.server.ws.CommandsWs.AdminCommand.RUN_GC
-import com.github.readingbat.server.ws.CommandsWs.publishAdminCommand
-import com.github.readingbat.server.ws.CommandsWs.publishLog
-import com.github.readingbat.server.ws.LoggingWs.LoadCommand.LOAD_ALL
-import com.github.readingbat.server.ws.LoggingWs.LoadCommand.LOAD_JAVA
-import com.github.readingbat.server.ws.LoggingWs.LoadCommand.LOAD_KOTLIN
-import com.github.readingbat.server.ws.LoggingWs.LoadCommand.LOAD_PYTHON
+import com.github.readingbat.server.ws.PubSubCommandsWs.AdminCommand.LOAD_CHALLENGE
+import com.github.readingbat.server.ws.PubSubCommandsWs.AdminCommand.RESET_CACHE
+import com.github.readingbat.server.ws.PubSubCommandsWs.AdminCommand.RESET_DSL_CONTENT
+import com.github.readingbat.server.ws.PubSubCommandsWs.AdminCommand.RUN_GC
+import com.github.readingbat.server.ws.PubSubCommandsWs.LoadChallengeType
+import com.github.readingbat.server.ws.PubSubCommandsWs.publishAdminCommand
+import com.github.readingbat.server.ws.PubSubCommandsWs.publishLog
 import com.github.readingbat.server.ws.WsCommon.LOG_ID
 import io.ktor.application.*
 import io.ktor.routing.*
@@ -73,7 +67,7 @@ internal fun Routing.sysAdminRoutes(metrics: Metrics) {
       return "$cnt content DSLs ${"file".pluralize(cnt)} deleted from Redis"
         .also {
           logger.info { it }
-          redis.publishLog(logId, it)
+          redis.publishLog(it, logId)
         }
     }
 
@@ -85,7 +79,7 @@ internal fun Routing.sysAdminRoutes(metrics: Metrics) {
       return "$cnt directory ${"content".pluralize(cnt)} deleted from Redis"
         .also {
           logger.info { it }
-          redis.publishLog(logId, it)
+          redis.publishLog(it, logId)
         }
     }
 
@@ -97,7 +91,7 @@ internal fun Routing.sysAdminRoutes(metrics: Metrics) {
       return "$cnt source code ${"file".pluralize(cnt)} deleted from Redis"
         .also {
           logger.info { it }
-          redis.publishLog(logId, it)
+          redis.publishLog(it, logId)
         }
     }
 
@@ -105,7 +99,7 @@ internal fun Routing.sysAdminRoutes(metrics: Metrics) {
       .joinToString(", ")
       .also {
         logger.info { "deleteContentInRedis(): $it" }
-        redis.publishLog(logId, "deleteContentInRedis(): $it")
+        redis.publishLog("deleteContentInRedis(): $it", logId)
       }
   }
 
@@ -116,7 +110,7 @@ internal fun Routing.sysAdminRoutes(metrics: Metrics) {
       authenticateAdminUser(user) {
         redisPool?.withNonNullRedisPool { redis ->
           deleteContentInRedis(logId, redis)
-          redis.publishAdminCommand(logId, RESET_DSL_CONTENT)
+          redis.publishAdminCommand(RESET_DSL_CONTENT, logId)
           ""
         } ?: throw RedisUnavailableException(RESET_CONTENT_DSL_ENDPOINT)
       }
@@ -131,7 +125,7 @@ internal fun Routing.sysAdminRoutes(metrics: Metrics) {
       authenticateAdminUser(user) {
         redisPool?.withNonNullRedisPool { redis ->
           deleteContentInRedis(logId, redis)
-          redis.publishAdminCommand(logId, RESET_CACHE)
+          redis.publishAdminCommand(RESET_CACHE, logId)
         } ?: throw RedisUnavailableException(RESET_CACHE_ENDPOINT)
         ""
       }
@@ -150,36 +144,21 @@ internal fun Routing.sysAdminRoutes(metrics: Metrics) {
     }
   }
 
-  listOf(LOAD_JAVA_ENDPOINT to LOAD_JAVA,
-         LOAD_PYTHON_ENDPOINT to LOAD_PYTHON,
-         LOAD_KOTLIN_ENDPOINT to LOAD_KOTLIN)
-    .forEach { pair ->
-      post(pair.first) {
+  LoadChallengeType.values()
+    .forEach { type ->
+      post(type.endPoint) {
         respondWith {
           val user = fetchUser()
           val logId = call.logId()
           authenticateAdminUser(user) {
             redisPool?.withNonNullRedisPool { redis ->
-              redis.publishAdminCommand(logId, LOAD_CHALLENGE, pair.second.toJson())
-            } ?: throw RedisUnavailableException(pair.first)
+              redis.publishAdminCommand(LOAD_CHALLENGE, logId, type.toJson())
+            } ?: throw RedisUnavailableException(type.endPoint)
             ""
           }
         }
       }
     }
-
-  post(LOAD_ALL_ENDPOINT) {
-    respondWith {
-      val user = fetchUser()
-      val logId = call.logId()
-      authenticateAdminUser(user) {
-        redisPool?.withNonNullRedisPool { redis ->
-          redis.publishAdminCommand(logId, LOAD_CHALLENGE, LOAD_ALL.toJson())
-        } ?: throw RedisUnavailableException(LOAD_ALL_ENDPOINT)
-        ""
-      }
-    }
-  }
 
   post(GARBAGE_COLLECTOR_ENDPOINT, metrics) {
     respondWith {
@@ -187,7 +166,7 @@ internal fun Routing.sysAdminRoutes(metrics: Metrics) {
       val logId = call.logId()
       authenticateAdminUser(user) {
         redisPool?.withNonNullRedisPool { redis ->
-          redis.publishAdminCommand(logId, RUN_GC)
+          redis.publishAdminCommand(RUN_GC, logId)
         } ?: throw RedisUnavailableException(LOAD_ALL_ENDPOINT)
         ""
       }

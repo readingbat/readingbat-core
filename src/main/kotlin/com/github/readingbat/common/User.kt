@@ -52,10 +52,9 @@ import com.github.readingbat.server.ResetId.Companion.EMPTY_RESET_ID
 import com.github.readingbat.server.ws.ChallengeWs.classTargetName
 import com.github.readingbat.server.ws.ChallengeWs.multiServerWsWriteChannel
 import com.github.readingbat.server.ws.ChallengeWs.singleServerWsChannel
-import com.github.readingbat.server.ws.CommandsWs.AnswerData
-import com.github.readingbat.server.ws.CommandsWs.AnswerMessage
-import com.github.readingbat.server.ws.CommandsWs.CommandTopic.LIKE_DISLIKE
-import com.github.readingbat.server.ws.CommandsWs.CommandTopic.USER_ANSWERS
+import com.github.readingbat.server.ws.PubSubCommandsWs.ChallengeAnswerData
+import com.github.readingbat.server.ws.PubSubCommandsWs.PubSubTopic.LIKE_DISLIKE
+import com.github.readingbat.server.ws.PubSubCommandsWs.PubSubTopic.USER_ANSWERS
 import com.pambrose.common.exposed.get
 import com.pambrose.common.exposed.upsert
 import io.ktor.application.*
@@ -458,9 +457,8 @@ internal class User {
                                             history.answers.asReversed().take(maxHistoryLength).joinToString("<br>"))
     val targetName = classTargetName(enrolledClassCode, challengeMd5)
     val dashboardInfo = DashboardInfo(userId, complete, numCorrect, dashboardHistory)
-    val data = dashboardInfo.toJson()
     (if (isMultiServerEnabled()) multiServerWsWriteChannel else singleServerWsChannel)
-      .send(AnswerData(USER_ANSWERS, AnswerMessage(targetName, data)))
+      .send(ChallengeAnswerData(USER_ANSWERS, targetName, dashboardInfo.toJson()))
   }
 
   suspend fun publishLikeDislike(challengeMd5: String, likeDislike: Int) {
@@ -468,9 +466,8 @@ internal class User {
     val targetName = classTargetName(enrolledClassCode, challengeMd5)
     val emoji = likeDislikeEmoji(likeDislike)
     val likeDislikeInfo = LikeDislikeInfo(userId, emoji)
-    val data = likeDislikeInfo.toJson()
     (if (isMultiServerEnabled()) multiServerWsWriteChannel else singleServerWsChannel)
-      .send(AnswerData(LIKE_DISLIKE, AnswerMessage(targetName, data)))
+      .send(ChallengeAnswerData(LIKE_DISLIKE, targetName, likeDislikeInfo.toJson()))
   }
 
   suspend fun resetHistory(funcInfo: FunctionInfo, challenge: Challenge, maxHistoryLength: Int) {

@@ -46,8 +46,8 @@ import com.github.readingbat.server.ReadingBatServer.metrics
 import com.github.readingbat.server.routes.AdminRoutes.adminRoutes
 import com.github.readingbat.server.routes.sysAdminRoutes
 import com.github.readingbat.server.routes.userRoutes
-import com.github.readingbat.server.ws.CommandsWs
 import com.github.readingbat.server.ws.LoggingWs
+import com.github.readingbat.server.ws.PubSubCommandsWs
 import com.github.readingbat.server.ws.WsCommon.wsRoutes
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
@@ -158,7 +158,7 @@ object ReadingBatServer : KLogging() {
       }
 
     // Load pubsub
-    CommandsWs
+    PubSubCommandsWs
 
     embeddedServer(CIO, environment).start(wait = true)
   }
