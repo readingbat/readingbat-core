@@ -44,7 +44,7 @@ internal object WsCommon : KLogging() {
   const val CHALLENGE_MD5 = "challengeMd5"
   const val LOG_ID = "logId"
 
-  internal fun Routing.wsRoutes(metrics: Metrics, contentSrc: () -> ReadingBatContent) {
+  fun Routing.wsRoutes(metrics: Metrics, contentSrc: () -> ReadingBatContent) {
     challengeWsEndpoint(metrics)
     challengeGroupWsEndpoint(metrics, contentSrc)
     classSummaryWsEndpoint(metrics, contentSrc)

@@ -32,7 +32,7 @@ import com.github.readingbat.dsl.agentLaunchId
 import com.github.readingbat.dsl.isMultiServerEnabled
 import com.github.readingbat.server.ReadingBatServer.redisPool
 import com.github.readingbat.server.ServerUtils.fetchUser
-import com.github.readingbat.server.ws.LoggingWs.Topic
+import com.github.readingbat.server.ws.CommandsWs.AnswerData
 import com.github.readingbat.server.ws.WsCommon.CHALLENGE_MD5
 import com.github.readingbat.server.ws.WsCommon.CLASS_CODE
 import com.github.readingbat.server.ws.WsCommon.closeChannels
@@ -68,13 +68,6 @@ internal object ChallengeWs : KLogging() {
   val multiServerWsReadChannel by lazy { BroadcastChannel<AnswerData>(BUFFERED) }
   val answerWsConnections: MutableSet<AnswerSessionContext> = synchronizedSet(LinkedHashSet<AnswerSessionContext>())
   var maxAnswerWsConnections = 0
-
-  @Serializable
-  data class AnswerMessage(val target: String, val message: String) {
-    fun toJson() = Json.encodeToString(serializer(), this)
-  }
-
-  data class AnswerData(val topic: Topic, val answerMessage: AnswerMessage)
 
   private fun assignMaxConnections() {
     synchronized(this) {
@@ -126,7 +119,7 @@ internal object ChallengeWs : KLogging() {
                     .onStart { logger.info { "Starting to read multi-server writer ws channel values" } }
                     .onCompletion { logger.info { "Finished reading multi-server writer ws channel values" } }
                     .collect { answerData ->
-                      redis.publish(answerData.topic.name, answerData.answerMessage.toJson())
+                      redis.publish(answerData.commandTopic.name, answerData.answerMessage.toJson())
                     }
                 } ?: throw RedisUnavailableException("multiServerWriteChannel")
               }

@@ -62,13 +62,13 @@ internal object TeacherPrefsPost : KLogging() {
 
   suspend fun PipelineCall.teacherPrefs(content: ReadingBatContent, user: User?) =
     if (user.isValidUser()) {
-      val parameters = call.receiveParameters()
-      when (val action = parameters[PREFS_ACTION_PARAM] ?: "") {
-        CREATE_CLASS -> createClass(content, user, parameters[CLASS_DESC_PARAM] ?: "")
+      val params = call.receiveParameters()
+      when (val action = params[PREFS_ACTION_PARAM] ?: "") {
+        CREATE_CLASS -> createClass(content, user, params[CLASS_DESC_PARAM] ?: "")
         UPDATE_ACTIVE_CLASS,
         MAKE_ACTIVE_CLASS -> {
-          val source = parameters[CHOICE_SOURCE_PARAM] ?: ""
-          val classCode = parameters.getClassCode(CLASS_CODE_CHOICE_PARAM)
+          val source = params[CHOICE_SOURCE_PARAM] ?: ""
+          val classCode = params.getClassCode(CLASS_CODE_CHOICE_PARAM)
           val msg = updateActiveClass(user, classCode)
           when (source) {
             TEACHER_PREF -> teacherPrefsPage(content, user, msg)
@@ -77,7 +77,7 @@ internal object TeacherPrefsPost : KLogging() {
           }
         }
         REMOVE_FROM_CLASS -> {
-          val studentId = parameters[USER_ID_PARAM] ?: throw InvalidConfigurationException("Missing: $USER_ID_PARAM")
+          val studentId = params[USER_ID_PARAM] ?: throw InvalidConfigurationException("Missing: $USER_ID_PARAM")
           val student = toUser(studentId)
           val classCode = student.enrolledClassCode
           student.withdrawFromClass(classCode)
@@ -85,7 +85,7 @@ internal object TeacherPrefsPost : KLogging() {
           logger.info { msg }
           classSummaryPage(content, user, classCode, msg = Message(msg))
         }
-        DELETE_CLASS -> deleteClass(content, user, parameters.getClassCode(CLASS_CODE_NAME_PARAM))
+        DELETE_CLASS -> deleteClass(content, user, params.getClassCode(CLASS_CODE_NAME_PARAM))
         else -> throw InvalidConfigurationException("Invalid action: $action")
       }
     }

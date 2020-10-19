@@ -71,6 +71,8 @@ internal object ServerUtils : KLogging() {
   fun WebSocketServerSession.fetchUser(): User? =
     call.userPrincipal?.userId?.let { toUser(it, call.browserSession) }
 
+  suspend fun ApplicationCall.paramMap() = receiveParameters().entries().map { it.key to it.value[0] }.toMap()
+
   fun ApplicationCall.fetchUser(): User? = userPrincipal?.userId?.let { toUser(it, browserSession) }
 
   fun ApplicationCall.fetchUserDbmsIdFromCache() =

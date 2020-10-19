@@ -193,6 +193,7 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
         languageType.isPython -> (challenge as PythonChallenge).apply { returnType = challengeFile.returnType }
         languageType.isKotlin -> (challenge as KotlinChallenge).apply { returnType = challengeFile.returnType }
       }
+      @Suppress("UNCHECKED_CAST")
       challenges += challenge as T
     }
   }
@@ -218,6 +219,8 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
     val challengeName = ChallengeName(name)
     logger.debug { "Adding $challengeName" }
     checkChallengeName(challengeName)
+
+    @Suppress("UNCHECKED_CAST")
     val challenge = challenge(this, challengeName, false) as T
     challenges += challenge.apply(block).apply { validate() }
   }

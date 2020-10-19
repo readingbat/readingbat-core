@@ -24,14 +24,17 @@ import com.github.readingbat.common.Endpoints.WS_ROOT
 import com.github.readingbat.common.Metrics
 import com.github.readingbat.dsl.InvalidRequestException
 import com.github.readingbat.dsl.LanguageType
+import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.RedisUnavailableException
 import com.github.readingbat.server.ReadingBatServer.content
 import com.github.readingbat.server.ReadingBatServer.redisPool
-import com.github.readingbat.server.ReadingBatServer.serverSessionId
 import com.github.readingbat.server.ServerUtils.fetchUser
-import com.github.readingbat.server.ws.LoggingWs.AdminCommand.LOAD_CHALLENGE
-import com.github.readingbat.server.ws.LoggingWs.AdminCommand.RUN_GC
-import com.github.readingbat.server.ws.LoggingWs.Topic.LOG_MESSAGE
+import com.github.readingbat.server.ws.CommandsWs.AdminCommand.LOAD_CHALLENGE
+import com.github.readingbat.server.ws.CommandsWs.AdminCommand.RESET_CACHE
+import com.github.readingbat.server.ws.CommandsWs.AdminCommand.RESET_DSL_CONTENT
+import com.github.readingbat.server.ws.CommandsWs.AdminCommand.RUN_GC
+import com.github.readingbat.server.ws.CommandsWs.AdminCommandData
+import com.github.readingbat.server.ws.CommandsWs.publishLog
 import com.github.readingbat.server.ws.WsCommon.LOG_ID
 import com.github.readingbat.server.ws.WsCommon.closeChannels
 import com.github.readingbat.server.ws.WsCommon.validateLogContext
@@ -51,9 +54,6 @@ import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import mu.KLogging
-import redis.clients.jedis.Jedis
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 import java.util.Collections.synchronizedSet
 import java.util.concurrent.Executors.newSingleThreadExecutor
 import kotlin.time.TimeSource
@@ -63,7 +63,7 @@ import kotlin.time.seconds
 internal object LoggingWs : KLogging() {
   private val clock = TimeSource.Monotonic
   val adminCommandChannel by lazy { BroadcastChannel<AdminCommandData>(Channel.BUFFERED) }
-  val logWsReadChannel by lazy { BroadcastChannel<LogData>(Channel.BUFFERED) }
+  val logWsReadChannel by lazy { BroadcastChannel<CommandsWs.LogData>(Channel.BUFFERED) }
   val logWsConnections: MutableSet<LogSessionContext> = synchronizedSet(LinkedHashSet<LogSessionContext>())
 
   data class LogSessionContext(val wsSession: DefaultWebSocketServerSession, val metrics: Metrics) {
@@ -71,20 +71,6 @@ internal object LoggingWs : KLogging() {
     var logId = ""
     val enabled get() = logId.isNotEmpty()
   }
-
-  @Serializable
-  data class LogData(val logId: String, val message: String) {
-    fun toJson() = Json.encodeToString(serializer(), this)
-  }
-
-  enum class Topic { ADMIN_COMMAND, USER_ANSWERS, LIKE_DISLIKE, LOG_MESSAGE }
-
-  @Serializable
-  data class AdminCommandData(val logId: String, val command: AdminCommand, val jsonArgs: String) {
-    fun toJson() = Json.encodeToString(serializer(), this)
-  }
-
-  enum class AdminCommand { LOAD_CHALLENGE, RUN_GC }
 
   @Serializable
   enum class LoadCommand(val languageTypes: List<LanguageType>) {
@@ -96,13 +82,7 @@ internal object LoggingWs : KLogging() {
     fun toJson() = Json.encodeToString(serializer(), this)
   }
 
-  private val timeFormat = DateTimeFormatter.ofPattern("H:m:ss.SSS")
-  fun Jedis.log(logId: String, msg: String) {
-    publish(LOG_MESSAGE.name,
-            LogData(logId, "${LocalDateTime.now().format(timeFormat)} [$serverSessionId] - $msg").toJson())
-  }
-
-  init {
+  fun initThreads(contentSrc: () -> ReadingBatContent, resetContentFunc: () -> Unit) {
     newSingleThreadExecutor()
       .submit {
         while (true) {
@@ -115,21 +95,51 @@ internal object LoggingWs : KLogging() {
                 .onCompletion { logger.info { "Finished reading admin command channel values" } }
                 .collect { adminCommandData ->
                   redisPool?.withNonNullRedisPool { redis ->
-                    val log = { s: String -> redis.log(adminCommandData.logId, s) }
+                    val log = { s: String -> redis.publishLog(adminCommandData.logId, s) }
 
                     when (adminCommandData.command) {
+                      RESET_DSL_CONTENT -> {
+                        measureTime { resetContentFunc.invoke() }
+                          .also { dur ->
+                            "DSL content reset in $dur"
+                              .also {
+                                logger.info { it }
+                                log(it)
+                              }
+                          }
+                      }
+                      RESET_CACHE -> {
+                        val content = contentSrc()
+                        val cnt = content.functionInfoMap.size
+                        content.clearSourcesMap()
+                          .let {
+                            "Challenge cache reset -- $cnt challenges removed"
+                              .also {
+                                logger.info { it }
+                                log(it)
+                              }
+                          }
+                      }
                       LOAD_CHALLENGE -> {
-                        val loadCommand = Json.decodeFromString<LoadCommand>(adminCommandData.jsonArgs)
+                        val loadCommand = Json.decodeFromString<LoadCommand>(adminCommandData.jsonCommandArgs)
                         loadCommand.languageTypes
                           .forEach {
-                            val output = content.get().loadChallenges(it, log, "", false)
-                            log(output)
+                            content.get().loadChallenges(it, log, "", false)
+                              .also {
+                                logger.info { it }
+                                log(it)
+                              }
                           }
                       }
                       RUN_GC -> {
-                        val dur = measureTime { System.gc() }
-                        val output = "Garbage collector invoked for $dur".also { logger.info { it } }
-                        log(output)
+                        measureTime { System.gc() }
+                          .also { dur ->
+                            "Garbage collector invoked for $dur"
+                              .also {
+                                logger.info { it }
+                                log(it)
+                              }
+                          }
                       }
                     }
 

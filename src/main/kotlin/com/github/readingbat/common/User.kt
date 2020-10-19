@@ -49,12 +49,13 @@ import com.github.readingbat.server.FullName.Companion.EMPTY_FULLNAME
 import com.github.readingbat.server.FullName.Companion.UNKNOWN_FULLNAME
 import com.github.readingbat.server.ReadingBatServer.adminUsers
 import com.github.readingbat.server.ResetId.Companion.EMPTY_RESET_ID
-import com.github.readingbat.server.ws.ChallengeWs.AnswerData
-import com.github.readingbat.server.ws.ChallengeWs.AnswerMessage
 import com.github.readingbat.server.ws.ChallengeWs.classTargetName
 import com.github.readingbat.server.ws.ChallengeWs.multiServerWsWriteChannel
 import com.github.readingbat.server.ws.ChallengeWs.singleServerWsChannel
-import com.github.readingbat.server.ws.LoggingWs.Topic.*
+import com.github.readingbat.server.ws.CommandsWs.AnswerData
+import com.github.readingbat.server.ws.CommandsWs.AnswerMessage
+import com.github.readingbat.server.ws.CommandsWs.CommandTopic.LIKE_DISLIKE
+import com.github.readingbat.server.ws.CommandsWs.CommandTopic.USER_ANSWERS
 import com.pambrose.common.exposed.get
 import com.pambrose.common.exposed.upsert
 import io.ktor.application.*

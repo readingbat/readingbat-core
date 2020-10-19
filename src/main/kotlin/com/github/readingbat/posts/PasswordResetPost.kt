@@ -63,8 +63,7 @@ internal object PasswordResetPost : KLogging() {
   private val unableToSend = Message("Unable to send password reset email -- missing email address", true)
 
   suspend fun PipelineCall.sendPasswordReset(content: ReadingBatContent): String {
-    val parameters = call.receiveParameters()
-    val email = parameters.getEmail(EMAIL_PARAM)
+    val email = call.receiveParameters().getEmail(EMAIL_PARAM)
     val remoteStr = call.request.origin.remoteHost
     logger.info { "Password change request for $email - $remoteStr" }
     val user = queryUserByEmail(email)
@@ -119,10 +118,10 @@ internal object PasswordResetPost : KLogging() {
 
   suspend fun PipelineCall.updatePassword(content: ReadingBatContent): String =
     try {
-      val parameters = call.receiveParameters()
-      val resetId = parameters.getResetId(RESET_ID_PARAM)
-      val newPassword = parameters.getPassword(NEW_PASSWORD_PARAM)
-      val confirmPassword = parameters.getPassword(CONFIRM_PASSWORD_PARAM)
+      val params = call.receiveParameters()
+      val resetId = params.getResetId(RESET_ID_PARAM)
+      val newPassword = params.getPassword(NEW_PASSWORD_PARAM)
+      val confirmPassword = params.getPassword(CONFIRM_PASSWORD_PARAM)
       val passwordError = checkPassword(newPassword, confirmPassword)
 
       if (!isPostgresEnabled())

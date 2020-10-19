@@ -57,11 +57,11 @@ internal object UserPrefsPost : KLogging() {
 
   suspend fun PipelineCall.userPrefs(content: ReadingBatContent, user: User?) =
     if (user.isValidUser()) {
-      val parameters = call.receiveParameters()
-      when (val action = parameters[PREFS_ACTION_PARAM] ?: "") {
-        UPDATE_DEFAULT_LANGUAGE -> updateDefaultLanguage(content, parameters, user)
-        UPDATE_PASSWORD -> updatePassword(content, parameters, user)
-        JOIN_CLASS -> enrollInClass(content, parameters, user)
+      val params = call.receiveParameters()
+      when (val action = params[PREFS_ACTION_PARAM] ?: "") {
+        UPDATE_DEFAULT_LANGUAGE -> updateDefaultLanguage(content, params, user)
+        UPDATE_PASSWORD -> updatePassword(content, params, user)
+        JOIN_CLASS -> enrollInClass(content, params, user)
         WITHDRAW_FROM_CLASS -> withdrawFromClass(content, user)
         DELETE_ACCOUNT -> deleteAccount(content, user)
         else -> throw InvalidConfigurationException("Invalid action: $action")

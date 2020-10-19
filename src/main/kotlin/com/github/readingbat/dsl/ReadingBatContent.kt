@@ -144,6 +144,7 @@ class ReadingBatContent {
 
   @ReadingBatDslMarker
   fun <T : Challenge> include(languageGroup: LanguageGroup<T>, namePrefix: String = "") {
+    @Suppress("UNCHECKED_CAST")
     val group = findLanguage(languageGroup.languageType) as LanguageGroup<T>
     languageGroup.challengeGroups
       .forEach {
@@ -194,7 +195,7 @@ class ReadingBatContent {
       }
       cnt.get()
     }.let {
-      "${it.value} $languageType ${"exercise".pluralize(it.value)} loaded in ${it.duration}".also { logger.info { it } }
+      "${it.value} $languageType ${"exercise".pluralize(it.value)} loaded in ${it.duration}"
     }
 
   internal fun evalContent(contentSource: ContentSource, variableName: String): ReadingBatContent =

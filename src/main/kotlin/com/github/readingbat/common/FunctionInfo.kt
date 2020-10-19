@@ -38,6 +38,8 @@ internal class FunctionInfo(val challenge: Challenge,
   val languageType get() = challenge.challengeGroup.languageType
 
   val challengeMd5 by lazy { ChallengeMd5(languageType.languageName, groupName, challengeName) }
+
+  @Suppress("UNCHECKED_CAST")
   val correctAnswers by lazy {
     List(rawAnswers.size) { i ->
       val raw = rawAnswers[i]

@@ -57,6 +57,7 @@ import com.github.readingbat.server.GroupName.Companion.getGroupName
 import com.github.readingbat.server.LanguageName.Companion.getLanguageName
 import com.github.readingbat.server.ScriptPools.kotlinScriptPool
 import com.github.readingbat.server.ScriptPools.pythonScriptPool
+import com.github.readingbat.server.ServerUtils.paramMap
 import com.pambrose.common.exposed.upsert
 import io.ktor.application.*
 import io.ktor.request.*
@@ -424,8 +425,7 @@ internal object ChallengePost : KLogging() {
   }
 
   suspend fun PipelineCall.likeDislike(content: ReadingBatContent, user: User?) {
-    val params = call.receiveParameters()
-    val paramMap = params.entries().map { it.key to it.value[0] }.toMap()
+    val paramMap = call.paramMap()
     val names = ChallengeNames(paramMap)
     //val challenge = content.findChallenge(names.languageName, names.groupName, names.challengeName)
 

@@ -21,7 +21,6 @@ import com.github.pambrose.common.redis.RedisUtils.scanKeys
 import com.github.pambrose.common.redis.RedisUtils.withNonNullRedisPool
 import com.github.pambrose.common.response.respondWith
 import com.github.pambrose.common.util.pluralize
-import com.github.readingbat.common.Constants.REDIS_IS_DOWN
 import com.github.readingbat.common.Endpoints.DELETE_CONTENT_IN_REDIS_ENDPOINT
 import com.github.readingbat.common.Endpoints.GARBAGE_COLLECTOR_ENDPOINT
 import com.github.readingbat.common.Endpoints.LOAD_ALL_ENDPOINT
@@ -36,120 +35,117 @@ import com.github.readingbat.common.KeyConstants.SOURCE_CODE_KEY
 import com.github.readingbat.common.KeyConstants.keyOf
 import com.github.readingbat.common.Metrics
 import com.github.readingbat.dsl.InvalidRequestException
-import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.RedisUnavailableException
-import com.github.readingbat.pages.SystemAdminPage.systemAdminPage
 import com.github.readingbat.server.ReadingBatServer.logger
 import com.github.readingbat.server.ReadingBatServer.redisPool
 import com.github.readingbat.server.ServerUtils.authenticateAdminUser
 import com.github.readingbat.server.ServerUtils.fetchUser
+import com.github.readingbat.server.ServerUtils.paramMap
 import com.github.readingbat.server.ServerUtils.post
-import com.github.readingbat.server.ws.LoggingWs.AdminCommand.LOAD_CHALLENGE
-import com.github.readingbat.server.ws.LoggingWs.AdminCommand.RUN_GC
-import com.github.readingbat.server.ws.LoggingWs.AdminCommandData
+import com.github.readingbat.server.ws.CommandsWs.AdminCommand.LOAD_CHALLENGE
+import com.github.readingbat.server.ws.CommandsWs.AdminCommand.RESET_CACHE
+import com.github.readingbat.server.ws.CommandsWs.AdminCommand.RESET_DSL_CONTENT
+import com.github.readingbat.server.ws.CommandsWs.AdminCommand.RUN_GC
+import com.github.readingbat.server.ws.CommandsWs.publishAdminCommand
+import com.github.readingbat.server.ws.CommandsWs.publishLog
 import com.github.readingbat.server.ws.LoggingWs.LoadCommand.LOAD_ALL
 import com.github.readingbat.server.ws.LoggingWs.LoadCommand.LOAD_JAVA
 import com.github.readingbat.server.ws.LoggingWs.LoadCommand.LOAD_KOTLIN
 import com.github.readingbat.server.ws.LoggingWs.LoadCommand.LOAD_PYTHON
-import com.github.readingbat.server.ws.LoggingWs.Topic.ADMIN_COMMAND
-import com.github.readingbat.server.ws.LoggingWs.log
 import com.github.readingbat.server.ws.WsCommon.LOG_ID
 import io.ktor.application.*
-import io.ktor.request.*
 import io.ktor.routing.*
-import kotlin.time.measureTime
+import redis.clients.jedis.Jedis
 
-internal fun Routing.sysAdminRoutes(metrics: Metrics, contentSrc: () -> ReadingBatContent, resetFunc: () -> Unit) {
+internal fun Routing.sysAdminRoutes(metrics: Metrics) {
 
-  fun deleteContentDslInRedis(logId: String) =
-    redisPool?.withNonNullRedisPool { redis ->
+  suspend fun ApplicationCall.logId(): String {
+    val paranMap = paramMap()
+    return paranMap[LOG_ID] ?: throw InvalidRequestException("Missing log id")
+  }
+
+  fun deleteContentInRedis(logId: String, redis: Jedis): String {
+    fun deleteContentDslInRedis(): String {
       val pattern = keyOf(CONTENT_DSL_KEY, "*")
       val keys = redis.scanKeys(pattern).toList()
       val cnt = keys.count()
       keys.forEach { redis.del(it) }
-      "$cnt content DSLs ${"file".pluralize(cnt)} deleted from Redis"
+      return "$cnt content DSLs ${"file".pluralize(cnt)} deleted from Redis"
         .also {
           logger.info { it }
-          redis.log(logId, it)
+          redis.publishLog(logId, it)
         }
-    } ?: REDIS_IS_DOWN
+    }
 
-  fun deleteDirContentsInRedis(logId: String) =
-    redisPool?.withNonNullRedisPool { redis ->
+    fun deleteDirContentsInRedis(): String {
       val pattern = keyOf(DIR_CONTENTS_KEY, "*")
       val keys = redis.scanKeys(pattern).toList()
       val cnt = keys.count()
       keys.forEach { redis.del(it) }
-      "$cnt directory ${"content".pluralize(cnt)} deleted from Redis"
+      return "$cnt directory ${"content".pluralize(cnt)} deleted from Redis"
         .also {
           logger.info { it }
-          redis.log(logId, it)
+          redis.publishLog(logId, it)
         }
-    } ?: REDIS_IS_DOWN
+    }
 
-  fun deleteSourceCodeInRedis(logId: String) =
-    redisPool?.withNonNullRedisPool { redis ->
+    fun deleteSourceCodeInRedis(): String {
       val pattern = keyOf(SOURCE_CODE_KEY, "*")
       val keys = redis.scanKeys(pattern).toList()
       val cnt = keys.count()
       keys.forEach { redis.del(it) }
-      "$cnt source code ${"file".pluralize(cnt)} deleted from Redis"
+      return "$cnt source code ${"file".pluralize(cnt)} deleted from Redis"
         .also {
           logger.info { it }
-          redis.log(logId, it)
+          redis.publishLog(logId, it)
         }
-    } ?: REDIS_IS_DOWN
+    }
 
-  fun deleteContentInRedis(logId: String) =
-    listOf(deleteContentDslInRedis(logId), deleteDirContentsInRedis(logId), deleteSourceCodeInRedis(logId))
+    return listOf(deleteContentDslInRedis(), deleteDirContentsInRedis(), deleteSourceCodeInRedis())
       .joinToString(", ")
-      .also { logger.info { "deleteContentInRedis(): $it" } }
+      .also {
+        logger.info { "deleteContentInRedis(): $it" }
+        redis.publishLog(logId, "deleteContentInRedis(): $it")
+      }
+  }
 
   post(RESET_CONTENT_DSL_ENDPOINT, metrics) {
     respondWith {
       val user = fetchUser()
-      val params = call.receiveParameters()
-      val paramMap = params.entries().map { it.key to it.value[0] }.toMap()
-      val logId = paramMap[LOG_ID] ?: throw InvalidRequestException("Missing log id")
-      val msg =
-        authenticateAdminUser(user) {
-          measureTime {
-            deleteContentInRedis(logId)
-            // @TODO
-            resetFunc.invoke()
-          }.let { "DSL content reset in $it".also { logger.info { it } } }
-        }
-      systemAdminPage(contentSrc(), user, msg)
+      val logId = call.logId()
+      authenticateAdminUser(user) {
+        redisPool?.withNonNullRedisPool { redis ->
+          deleteContentInRedis(logId, redis)
+          redis.publishAdminCommand(logId, RESET_DSL_CONTENT)
+          ""
+        } ?: throw RedisUnavailableException(RESET_CONTENT_DSL_ENDPOINT)
+      }
+      ""
     }
   }
 
   post(RESET_CACHE_ENDPOINT, metrics) {
     respondWith {
       val user = fetchUser()
-      val params = call.receiveParameters()
-      val paramMap = params.entries().map { it.key to it.value[0] }.toMap()
-      val logId = paramMap[LOG_ID] ?: throw InvalidRequestException("Missing log id")
-      val msg =
-        authenticateAdminUser(user) {
-          deleteContentInRedis(logId)
-          // @TODO
-          val content = contentSrc()
-          val cnt = content.functionInfoMap.size
-          content.clearSourcesMap()
-            .let { "Challenge cache reset -- $cnt challenges removed".also { logger.info { it } } }
-        }
-      systemAdminPage(contentSrc(), user, msg)
+      val logId = call.logId()
+      authenticateAdminUser(user) {
+        redisPool?.withNonNullRedisPool { redis ->
+          deleteContentInRedis(logId, redis)
+          redis.publishAdminCommand(logId, RESET_CACHE)
+        } ?: throw RedisUnavailableException(RESET_CACHE_ENDPOINT)
+        ""
+      }
     }
   }
 
   post(DELETE_CONTENT_IN_REDIS_ENDPOINT, metrics) {
     respondWith {
       val user = fetchUser()
-      val params = call.receiveParameters()
-      val paramMap = params.entries().map { it.key to it.value[0] }.toMap()
-      val logId = paramMap[LOG_ID] ?: throw InvalidRequestException("Missing log id")
+      val logId = call.logId()
       authenticateAdminUser(user) {
-        deleteContentInRedis(logId)
+        redisPool?.withNonNullRedisPool { redis ->
+          deleteContentInRedis(logId, redis)
+        } ?: throw RedisUnavailableException(DELETE_CONTENT_IN_REDIS_ENDPOINT)
       }
     }
   }
@@ -161,14 +157,10 @@ internal fun Routing.sysAdminRoutes(metrics: Metrics, contentSrc: () -> ReadingB
       post(pair.first) {
         respondWith {
           val user = fetchUser()
-          val params = call.receiveParameters()
-          val paramMap = params.entries().map { it.key to it.value[0] }.toMap()
-          val logId = paramMap[LOG_ID] ?: throw InvalidRequestException("Missing log id")
+          val logId = call.logId()
           authenticateAdminUser(user) {
             redisPool?.withNonNullRedisPool { redis ->
-              logger.debug { "Publishing $ADMIN_COMMAND ${pair.second}" }
-              val adminCommandData = AdminCommandData(logId, LOAD_CHALLENGE, pair.second.toJson())
-              redis.publish(ADMIN_COMMAND.name, adminCommandData.toJson())
+              redis.publishAdminCommand(logId, LOAD_CHALLENGE, pair.second.toJson())
             } ?: throw RedisUnavailableException(pair.first)
             ""
           }
@@ -179,13 +171,10 @@ internal fun Routing.sysAdminRoutes(metrics: Metrics, contentSrc: () -> ReadingB
   post(LOAD_ALL_ENDPOINT) {
     respondWith {
       val user = fetchUser()
-      val params = call.receiveParameters()
-      val paramMap = params.entries().map { it.key to it.value[0] }.toMap()
-      val logId = paramMap[LOG_ID] ?: throw InvalidRequestException("Missing log id")
+      val logId = call.logId()
       authenticateAdminUser(user) {
         redisPool?.withNonNullRedisPool { redis ->
-          val adminCommandData = AdminCommandData(logId, LOAD_CHALLENGE, LOAD_ALL.toJson())
-          redis.publish(ADMIN_COMMAND.name, adminCommandData.toJson())
+          redis.publishAdminCommand(logId, LOAD_CHALLENGE, LOAD_ALL.toJson())
         } ?: throw RedisUnavailableException(LOAD_ALL_ENDPOINT)
         ""
       }
@@ -195,13 +184,10 @@ internal fun Routing.sysAdminRoutes(metrics: Metrics, contentSrc: () -> ReadingB
   post(GARBAGE_COLLECTOR_ENDPOINT, metrics) {
     respondWith {
       val user = fetchUser()
-      val params = call.receiveParameters()
-      val paramMap = params.entries().map { it.key to it.value[0] }.toMap()
-      val logId = paramMap[LOG_ID] ?: throw InvalidRequestException("Missing log id")
+      val logId = call.logId()
       authenticateAdminUser(user) {
         redisPool?.withNonNullRedisPool { redis ->
-          val adminCommandData = AdminCommandData(logId, RUN_GC, "")
-          redis.publish(ADMIN_COMMAND.name, adminCommandData.toJson())
+          redis.publishAdminCommand(logId, RUN_GC)
         } ?: throw RedisUnavailableException(LOAD_ALL_ENDPOINT)
         ""
       }

@@ -46,7 +46,8 @@ import com.github.readingbat.server.ReadingBatServer.metrics
 import com.github.readingbat.server.routes.AdminRoutes.adminRoutes
 import com.github.readingbat.server.routes.sysAdminRoutes
 import com.github.readingbat.server.routes.userRoutes
-import com.github.readingbat.server.ws.PubSubWs
+import com.github.readingbat.server.ws.CommandsWs
+import com.github.readingbat.server.ws.LoggingWs
 import com.github.readingbat.server.ws.WsCommon.wsRoutes
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
@@ -157,7 +158,7 @@ object ReadingBatServer : KLogging() {
       }
 
     // Load pubsub
-    PubSubWs
+    CommandsWs
 
     embeddedServer(CIO, environment).start(wait = true)
   }
@@ -262,6 +263,8 @@ internal fun Application.module() {
     }
   }
 
+  LoggingWs.initThreads({ content.get() }, { readContentDsl(fileName, variableName) })
+
   installs(isProduction(),
            redirectHostname,
            forwardedHeaderSupportEnabled,
@@ -273,7 +276,7 @@ internal fun Application.module() {
     adminRoutes(metrics)
     locations(metrics) { content.get() }
     userRoutes(metrics) { content.get() }
-    sysAdminRoutes(metrics, { content.get() }, { readContentDsl(fileName, variableName) })
+    sysAdminRoutes(metrics)
     wsRoutes(metrics) { content.get() }
     static(STATIC_ROOT) { resources("static") }
   }
