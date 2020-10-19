@@ -32,6 +32,7 @@ import com.github.readingbat.dsl.agentLaunchId
 import com.github.readingbat.dsl.isMultiServerEnabled
 import com.github.readingbat.server.ReadingBatServer.redisPool
 import com.github.readingbat.server.ServerUtils.fetchUser
+import com.github.readingbat.server.ws.LoggingWs.Topic
 import com.github.readingbat.server.ws.WsCommon.CHALLENGE_MD5
 import com.github.readingbat.server.ws.WsCommon.CLASS_CODE
 import com.github.readingbat.server.ws.WsCommon.closeChannels
@@ -73,7 +74,7 @@ internal object ChallengeWs : KLogging() {
     fun toJson() = Json.encodeToString(serializer(), this)
   }
 
-  data class AnswerData(val topic: LoggingWs.Topic, val answerMessage: AnswerMessage)
+  data class AnswerData(val topic: Topic, val answerMessage: AnswerMessage)
 
   private fun assignMaxConnections() {
     synchronized(this) {
@@ -124,8 +125,8 @@ internal object ChallengeWs : KLogging() {
                     .consumeAsFlow()
                     .onStart { logger.info { "Starting to read multi-server writer ws channel values" } }
                     .onCompletion { logger.info { "Finished reading multi-server writer ws channel values" } }
-                    .collect { data ->
-                      redis.publish(data.topic.name, data.answerMessage.toJson())
+                    .collect { answerData ->
+                      redis.publish(answerData.topic.name, answerData.answerMessage.toJson())
                     }
                 } ?: throw RedisUnavailableException("multiServerWriteChannel")
               }

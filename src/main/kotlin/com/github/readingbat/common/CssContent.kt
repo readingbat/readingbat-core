@@ -17,6 +17,7 @@
 
 package com.github.readingbat.common
 
+import com.github.readingbat.common.CSSNames.ADMIN_BUTTON
 import com.github.readingbat.common.CSSNames.ARROW
 import com.github.readingbat.common.CSSNames.BTN
 import com.github.readingbat.common.CSSNames.CENTER
@@ -40,7 +41,6 @@ import com.github.readingbat.common.CSSNames.INVOC_TABLE
 import com.github.readingbat.common.CSSNames.INVOC_TD
 import com.github.readingbat.common.CSSNames.KOTLIN_CODE
 import com.github.readingbat.common.CSSNames.LIKE_BUTTONS
-import com.github.readingbat.common.CSSNames.LOAD_CHALLENGE
 import com.github.readingbat.common.CSSNames.SELECTED_TAB
 import com.github.readingbat.common.CSSNames.STATUS
 import com.github.readingbat.common.CSSNames.SUCCESS
@@ -60,7 +60,7 @@ import kotlinx.css.properties.boxShadow
 
 internal object CSSNames {
   const val CHECK_ANSWERS = "checkAnswers"
-  const val LOAD_CHALLENGE = "loadChallenge"
+  const val ADMIN_BUTTON = "loadChallenge"
   const val LIKE_BUTTONS = "likeButtons"
   const val FEEDBACK = "hint"
   const val HINT = "feedback"
@@ -234,7 +234,7 @@ internal val cssContent by lazy {
         fontWeight = bold
         borderRadius = 6.px
       }
-      rule(".$LOAD_CHALLENGE") {
+      rule(".$ADMIN_BUTTON") {
         paddingLeft = 1.em
         paddingRight = 1.em
         height = 2.em

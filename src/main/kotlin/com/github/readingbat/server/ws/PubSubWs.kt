@@ -25,11 +25,11 @@ import com.github.readingbat.server.ReadingBatServer.redisPool
 import com.github.readingbat.server.ws.ChallengeWs.AnswerData
 import com.github.readingbat.server.ws.ChallengeWs.AnswerMessage
 import com.github.readingbat.server.ws.ChallengeWs.multiServerWsReadChannel
-import com.github.readingbat.server.ws.LoggingWs.LoadCommandData
+import com.github.readingbat.server.ws.LoggingWs.AdminCommandData
 import com.github.readingbat.server.ws.LoggingWs.LogData
 import com.github.readingbat.server.ws.LoggingWs.Topic
+import com.github.readingbat.server.ws.LoggingWs.Topic.ADMIN_COMMAND
 import com.github.readingbat.server.ws.LoggingWs.Topic.LIKE_DISLIKE
-import com.github.readingbat.server.ws.LoggingWs.Topic.LOAD_COMMAND
 import com.github.readingbat.server.ws.LoggingWs.Topic.LOG_MESSAGE
 import com.github.readingbat.server.ws.LoggingWs.Topic.USER_ANSWERS
 import com.github.readingbat.server.ws.LoggingWs.adminCommandChannel
@@ -55,9 +55,9 @@ object PubSubWs : KLogging() {
                 runBlocking {
                   val topic = Topic.valueOf(channel)
                   when (topic) {
-                    LOAD_COMMAND -> {
-                      val loadComandData = Json.decodeFromString<LoadCommandData>(message)
-                      adminCommandChannel.send(loadComandData)
+                    ADMIN_COMMAND -> {
+                      val adminCommandData = Json.decodeFromString<AdminCommandData>(message)
+                      adminCommandChannel.send(adminCommandData)
                     }
                     USER_ANSWERS,
                     LIKE_DISLIKE -> {
@@ -65,8 +65,8 @@ object PubSubWs : KLogging() {
                       multiServerWsReadChannel.send(AnswerData(topic, answerMessage))
                     }
                     LOG_MESSAGE -> {
-                      val logMessage = Json.decodeFromString<LogData>(message)
-                      logWsReadChannel.send(logMessage)
+                      val logData = Json.decodeFromString<LogData>(message)
+                      logWsReadChannel.send(logData)
                     }
                   }
                 }

@@ -27,7 +27,10 @@ import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.dsl.RedisUnavailableException
 import com.github.readingbat.server.ReadingBatServer.content
 import com.github.readingbat.server.ReadingBatServer.redisPool
+import com.github.readingbat.server.ReadingBatServer.serverSessionId
 import com.github.readingbat.server.ServerUtils.fetchUser
+import com.github.readingbat.server.ws.LoggingWs.AdminCommand.LOAD_CHALLENGE
+import com.github.readingbat.server.ws.LoggingWs.AdminCommand.RUN_GC
 import com.github.readingbat.server.ws.LoggingWs.Topic.LOG_MESSAGE
 import com.github.readingbat.server.ws.WsCommon.LOG_ID
 import com.github.readingbat.server.ws.WsCommon.closeChannels
@@ -44,17 +47,22 @@ import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import mu.KLogging
+import redis.clients.jedis.Jedis
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import java.util.Collections.synchronizedSet
 import java.util.concurrent.Executors.newSingleThreadExecutor
 import kotlin.time.TimeSource
+import kotlin.time.measureTime
 import kotlin.time.seconds
 
 internal object LoggingWs : KLogging() {
   private val clock = TimeSource.Monotonic
-  val adminCommandChannel by lazy { BroadcastChannel<LoadCommandData>(Channel.BUFFERED) }
+  val adminCommandChannel by lazy { BroadcastChannel<AdminCommandData>(Channel.BUFFERED) }
   val logWsReadChannel by lazy { BroadcastChannel<LogData>(Channel.BUFFERED) }
   val logWsConnections: MutableSet<LogSessionContext> = synchronizedSet(LinkedHashSet<LogSessionContext>())
 
@@ -69,18 +77,29 @@ internal object LoggingWs : KLogging() {
     fun toJson() = Json.encodeToString(serializer(), this)
   }
 
-  enum class Topic { LOAD_COMMAND, USER_ANSWERS, LIKE_DISLIKE, LOG_MESSAGE }
+  enum class Topic { ADMIN_COMMAND, USER_ANSWERS, LIKE_DISLIKE, LOG_MESSAGE }
 
   @Serializable
-  data class LoadCommandData(val logId: String, val command: LoadCommand) {
+  data class AdminCommandData(val logId: String, val command: AdminCommand, val jsonArgs: String) {
     fun toJson() = Json.encodeToString(serializer(), this)
   }
 
+  enum class AdminCommand { LOAD_CHALLENGE, RUN_GC }
+
+  @Serializable
   enum class LoadCommand(val languageTypes: List<LanguageType>) {
     LOAD_JAVA(listOf(LanguageType.Java)),
     LOAD_PYTHON(listOf(LanguageType.Python)),
     LOAD_KOTLIN(listOf(LanguageType.Kotlin)),
-    LOAD_ALL(listOf(LanguageType.Java, LanguageType.Python, LanguageType.Kotlin))
+    LOAD_ALL(listOf(LanguageType.Java, LanguageType.Python, LanguageType.Kotlin));
+
+    fun toJson() = Json.encodeToString(serializer(), this)
+  }
+
+  private val timeFormat = DateTimeFormatter.ofPattern("H:m:ss.SSS")
+  fun Jedis.logger(logId: String, msg: String) {
+    publish(LOG_MESSAGE.name,
+            LogData(logId, "${LocalDateTime.now().format(timeFormat)} [$serverSessionId] - $msg").toJson())
   }
 
   init {
@@ -94,18 +113,26 @@ internal object LoggingWs : KLogging() {
                 .consumeAsFlow()
                 .onStart { logger.info { "Starting to read admin command channel values" } }
                 .onCompletion { logger.info { "Finished reading admin command channel values" } }
-                .collect { loadCommandData ->
+                .collect { adminCommandData ->
                   redisPool?.withNonNullRedisPool { redis ->
-                    val log = { s: String ->
-                      val logData = LogData(loadCommandData.logId, s)
-                      redis.publish(LOG_MESSAGE.name, logData.toJson())
-                      Unit
-                    }
-                    loadCommandData.command.languageTypes
-                      .forEach {
-                        val output = content.get().loadChallenges(it, log, "", false)
+                    val log = { s: String -> redis.logger(adminCommandData.logId, s) }
+
+                    when (adminCommandData.command) {
+                      LOAD_CHALLENGE -> {
+                        val loadCommand = Json.decodeFromString<LoadCommand>(adminCommandData.jsonArgs)
+                        loadCommand.languageTypes
+                          .forEach {
+                            val output = content.get().loadChallenges(it, log, "", false)
+                            log(output)
+                          }
+                      }
+                      RUN_GC -> {
+                        val dur = measureTime { System.gc() }
+                        val output = "Garbage collector invoked for $dur".also { logger.info { it } }
                         log(output)
                       }
+                    }
+
                   } ?: throw RedisUnavailableException("adminCommandChannel")
                 }
             }

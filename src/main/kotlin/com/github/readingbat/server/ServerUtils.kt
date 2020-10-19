@@ -138,6 +138,14 @@ internal object ServerUtils : KLogging() {
       }
     }
 
+  @ContextDsl
+  fun Route.post(path: String, metrics: Metrics, body: PipelineInterceptor<Unit, ApplicationCall>) =
+    route(path, HttpMethod.Post) {
+      runBlocking {
+        metrics.measureEndpointRequest(path) { handle(body) }
+      }
+    }
+
   fun PipelineCall.defaultLanguageTab(content: ReadingBatContent, user: User?): String {
     val langRoot = firstNonEmptyLanguageType(content, user?.defaultLanguage).contentRoot
     val params = call.parameters.formUrlEncode()

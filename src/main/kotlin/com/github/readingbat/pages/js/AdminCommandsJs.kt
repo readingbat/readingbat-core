@@ -17,9 +17,8 @@
 
 package com.github.readingbat.pages.js
 
-import com.github.readingbat.common.Constants.LOAD_CHALLENGE_FUNC
+import com.github.readingbat.common.Constants.ADMIN_FUNC
 import com.github.readingbat.common.Constants.NO_ANSWER_COLOR
-import com.github.readingbat.common.Constants.SESSION_ID
 import com.github.readingbat.common.Constants.WRONG_COLOR
 import com.github.readingbat.common.ParameterIds.FEEDBACK_ID
 import com.github.readingbat.common.ParameterIds.HINT_ID
@@ -29,20 +28,18 @@ import com.github.readingbat.common.ParameterIds.SUCCESS_ID
 import com.github.readingbat.pages.PageUtils.rawHtml
 import com.github.readingbat.server.ws.WsCommon.LOG_ID
 import kotlinx.html.SCRIPT
-import java.util.concurrent.atomic.AtomicInteger
 
-internal object LoadCommandsJs {
-  private val sessionCounter = AtomicInteger(0)
+internal object AdminCommandsJs {
 
   fun SCRIPT.loadCommandsScript(logId: String) =
     rawHtml(
       """
     var re = new XMLHttpRequest();
 
-    function $LOAD_CHALLENGE_FUNC(msg, endPoint) { 
+    function $ADMIN_FUNC(msg, endPoint) { 
      
       if (confirm(msg)) {
-        var data = "$SESSION_ID=${sessionCounter.incrementAndGet()}&$LOG_ID=$logId";
+        var data = "$LOG_ID=$logId";
         //re.onreadystatechange = checkLogHandleDone;  
         re.open("POST", endPoint, true);
         re.setRequestHeader("Content-type", "application/x-www-form-urlencoded");

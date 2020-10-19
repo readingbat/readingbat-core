@@ -19,8 +19,8 @@ package com.github.readingbat.pages
 
 import com.github.pambrose.common.util.randomId
 import com.github.pambrose.common.util.toDoubleQuoted
-import com.github.readingbat.common.CSSNames.LOAD_CHALLENGE
-import com.github.readingbat.common.Constants.LOAD_CHALLENGE_FUNC
+import com.github.readingbat.common.CSSNames.ADMIN_BUTTON
+import com.github.readingbat.common.Constants.ADMIN_FUNC
 import com.github.readingbat.common.Endpoints.ADMIN_PREFS_ENDPOINT
 import com.github.readingbat.common.Endpoints.DELETE_CONTENT_IN_REDIS_ENDPOINT
 import com.github.readingbat.common.Endpoints.GARBAGE_COLLECTOR_ENDPOINT
@@ -51,7 +51,7 @@ import com.github.readingbat.pages.PageUtils.headDefault
 import com.github.readingbat.pages.PageUtils.loadStatusPageDisplay
 import com.github.readingbat.pages.PageUtils.rawHtml
 import com.github.readingbat.pages.UserPrefsPage.requestLogInPage
-import com.github.readingbat.pages.js.LoadCommandsJs.loadCommandsScript
+import com.github.readingbat.pages.js.AdminCommandsJs.loadCommandsScript
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
 import kotlinx.html.*
@@ -114,41 +114,43 @@ internal object SystemAdminPage : KLogging() {
             }
 
             p {
-              button(classes = LOAD_CHALLENGE) {
+              button(classes = ADMIN_BUTTON) {
                 val confirm = "Are you sure you want to load all the Java challenges? (This can take a while)"
-                onClick = "$LOAD_CHALLENGE_FUNC(${confirm.toDoubleQuoted()}, ${LOAD_JAVA_ENDPOINT.toDoubleQuoted()})"
+                onClick = "$ADMIN_FUNC(${confirm.toDoubleQuoted()}, ${LOAD_JAVA_ENDPOINT.toDoubleQuoted()})"
                 +"Load Java Challenges"
               }
             }
 
             p {
-              button(classes = LOAD_CHALLENGE) {
+              button(classes = ADMIN_BUTTON) {
                 val confirm = "Are you sure you want to load all the Python challenges? (This can take a while)"
-                onClick = "$LOAD_CHALLENGE_FUNC(${confirm.toDoubleQuoted()}, ${LOAD_PYTHON_ENDPOINT.toDoubleQuoted()})"
+                onClick = "$ADMIN_FUNC(${confirm.toDoubleQuoted()}, ${LOAD_PYTHON_ENDPOINT.toDoubleQuoted()})"
                 +"Load Python Challenges"
               }
             }
 
             p {
-              button(classes = LOAD_CHALLENGE) {
+              button(classes = ADMIN_BUTTON) {
                 val confirm = "Are you sure you want to load all the Kotlin challenges? (This can take a while)"
-                onClick = "$LOAD_CHALLENGE_FUNC(${confirm.toDoubleQuoted()}, ${LOAD_KOTLIN_ENDPOINT.toDoubleQuoted()})"
+                onClick = "$ADMIN_FUNC(${confirm.toDoubleQuoted()}, ${LOAD_KOTLIN_ENDPOINT.toDoubleQuoted()})"
                 +"Load Kotlin Challenges"
               }
             }
 
             p {
-              button(classes = LOAD_CHALLENGE) {
+              button(classes = ADMIN_BUTTON) {
                 val confirm = "Are you sure you want to load all the challenges? (This can take a while)"
-                onClick = "$LOAD_CHALLENGE_FUNC(${confirm.toDoubleQuoted()}, ${LOAD_ALL_ENDPOINT.toDoubleQuoted()})"
+                onClick = "$ADMIN_FUNC(${confirm.toDoubleQuoted()}, ${LOAD_ALL_ENDPOINT.toDoubleQuoted()})"
                 +"Load All Challenges"
               }
             }
 
             p {
-              this@body.confirmingButton("Run Garbage Collector",
-                                         GARBAGE_COLLECTOR_ENDPOINT,
-                                         "Are you sure you want to run the garbage collector?")
+              button(classes = ADMIN_BUTTON) {
+                val confirm = "Are you sure you want to run the garbage collector?"
+                onClick = "$ADMIN_FUNC(${confirm.toDoubleQuoted()}, ${GARBAGE_COLLECTOR_ENDPOINT.toDoubleQuoted()})"
+                +"Run Garbage Collector"
+              }
             }
 
             GRAFANA_URL.getPropertyOrNull()

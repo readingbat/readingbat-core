@@ -44,12 +44,15 @@ import com.github.readingbat.server.ReadingBatServer.redisPool
 import com.github.readingbat.server.ServerUtils.authenticateAdminUser
 import com.github.readingbat.server.ServerUtils.fetchUser
 import com.github.readingbat.server.ServerUtils.get
+import com.github.readingbat.server.ServerUtils.post
+import com.github.readingbat.server.ws.LoggingWs.AdminCommand.LOAD_CHALLENGE
+import com.github.readingbat.server.ws.LoggingWs.AdminCommand.RUN_GC
+import com.github.readingbat.server.ws.LoggingWs.AdminCommandData
 import com.github.readingbat.server.ws.LoggingWs.LoadCommand.LOAD_ALL
 import com.github.readingbat.server.ws.LoggingWs.LoadCommand.LOAD_JAVA
 import com.github.readingbat.server.ws.LoggingWs.LoadCommand.LOAD_KOTLIN
 import com.github.readingbat.server.ws.LoggingWs.LoadCommand.LOAD_PYTHON
-import com.github.readingbat.server.ws.LoggingWs.LoadCommandData
-import com.github.readingbat.server.ws.LoggingWs.Topic.LOAD_COMMAND
+import com.github.readingbat.server.ws.LoggingWs.Topic.ADMIN_COMMAND
 import com.github.readingbat.server.ws.WsCommon.LOG_ID
 import io.ktor.application.*
 import io.ktor.request.*
@@ -141,9 +144,9 @@ internal fun Routing.sysAdminRoutes(metrics: Metrics, contentSrc: () -> ReadingB
           val logId = paramMap[LOG_ID] ?: throw InvalidRequestException("Missing log id")
           authenticateAdminUser(user) {
             redisPool?.withNonNullRedisPool { redis ->
-              logger.debug { "Publishing $LOAD_COMMAND ${pair.second}" }
-              val loadCommandData = LoadCommandData(logId, pair.second)
-              redis.publish(LOAD_COMMAND.name, loadCommandData.toJson())
+              logger.debug { "Publishing $ADMIN_COMMAND ${pair.second}" }
+              val loadCommandData = AdminCommandData(logId, LOAD_CHALLENGE, pair.second.toJson())
+              redis.publish(ADMIN_COMMAND.name, loadCommandData.toJson())
             } ?: throw RedisUnavailableException(pair.first)
             ""
           }
@@ -159,23 +162,27 @@ internal fun Routing.sysAdminRoutes(metrics: Metrics, contentSrc: () -> ReadingB
       val logId = paramMap[LOG_ID] ?: throw InvalidRequestException("Missing log id")
       authenticateAdminUser(user) {
         redisPool?.withNonNullRedisPool { redis ->
-          val loadCommandData = LoadCommandData(logId, LOAD_ALL)
-          redis.publish(LOAD_COMMAND.name, loadCommandData.toJson())
+          val adminCommandData = AdminCommandData(logId, LOAD_CHALLENGE, LOAD_ALL.toJson())
+          redis.publish(ADMIN_COMMAND.name, adminCommandData.toJson())
         } ?: throw RedisUnavailableException(LOAD_ALL_ENDPOINT)
         ""
       }
     }
   }
 
-  get(GARBAGE_COLLECTOR_ENDPOINT, metrics) {
+  post(GARBAGE_COLLECTOR_ENDPOINT, metrics) {
     respondWith {
       val user = fetchUser()
-      val msg =
-        authenticateAdminUser(user) {
-          val dur = measureTime { System.gc() }
-          "Garbage collector invoked for $dur".also { logger.info { it } }
-        }
-      systemAdminPage(contentSrc(), user, msg)
+      val params = call.receiveParameters()
+      val paramMap = params.entries().map { it.key to it.value[0] }.toMap()
+      val logId = paramMap[LOG_ID] ?: throw InvalidRequestException("Missing log id")
+      authenticateAdminUser(user) {
+        redisPool?.withNonNullRedisPool { redis ->
+          val adminCommandData = AdminCommandData(logId, RUN_GC, "")
+          redis.publish(ADMIN_COMMAND.name, adminCommandData.toJson())
+        } ?: throw RedisUnavailableException(LOAD_ALL_ENDPOINT)
+        ""
+      }
     }
   }
 }
