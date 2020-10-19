@@ -18,9 +18,6 @@
 package com.github.readingbat.pages
 
 import com.github.pambrose.common.util.randomId
-import com.github.pambrose.common.util.toDoubleQuoted
-import com.github.readingbat.common.CSSNames.ADMIN_BUTTON
-import com.github.readingbat.common.Constants.ADMIN_FUNC
 import com.github.readingbat.common.Endpoints.ADMIN_PREFS_ENDPOINT
 import com.github.readingbat.common.Endpoints.DELETE_CONTENT_IN_REDIS_ENDPOINT
 import com.github.readingbat.common.Endpoints.GARBAGE_COLLECTOR_ENDPOINT
@@ -43,9 +40,9 @@ import com.github.readingbat.common.isValidUser
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.isProduction
 import com.github.readingbat.pages.HelpAndLogin.helpAndLogin
+import com.github.readingbat.pages.PageUtils.adminButton
 import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyTitle
-import com.github.readingbat.pages.PageUtils.confirmingButton
 import com.github.readingbat.pages.PageUtils.displayMessage
 import com.github.readingbat.pages.PageUtils.headDefault
 import com.github.readingbat.pages.PageUtils.loadStatusPageDisplay
@@ -96,61 +93,51 @@ internal object SystemAdminPage : KLogging() {
 
           if (!isProduction() || user.isAdminUser()) {
             p {
-              this@body.confirmingButton("Reset ReadingBat Content",
-                                         RESET_CONTENT_DSL_ENDPOINT,
-                                         "Are you sure you want to reset the content? (This can take a while)")
+              this@body.adminButton("Reset ReadingBat Content",
+                                    RESET_CONTENT_DSL_ENDPOINT,
+                                    "Are you sure you want to reset the content? (This can take a while)")
             }
 
             p {
-              this@body.confirmingButton("Reset Challenges Cache",
-                                         RESET_CACHE_ENDPOINT,
-                                         "Are you sure you want to reset the challenges cache?")
+              this@body.adminButton("Reset Challenges Cache",
+                                    RESET_CACHE_ENDPOINT,
+                                    "Are you sure you want to reset the challenges cache?")
             }
 
             p {
-              this@body.confirmingButton("Delete all content cached in Redis",
-                                         DELETE_CONTENT_IN_REDIS_ENDPOINT,
-                                         "Are you sure you want to delete all content cached in Redis?")
+              this@body.adminButton("Delete all content cached in Redis",
+                                    DELETE_CONTENT_IN_REDIS_ENDPOINT,
+                                    "Are you sure you want to delete all content cached in Redis?")
             }
 
             p {
-              button(classes = ADMIN_BUTTON) {
-                val confirm = "Are you sure you want to load all the Java challenges? (This can take a while)"
-                onClick = "$ADMIN_FUNC(${confirm.toDoubleQuoted()}, ${LOAD_JAVA_ENDPOINT.toDoubleQuoted()})"
-                +"Load Java Challenges"
-              }
+              this@body.adminButton("Load Java Challenges",
+                                    LOAD_JAVA_ENDPOINT,
+                                    "Are you sure you want to load all the Java challenges? (This can take a while)")
             }
 
             p {
-              button(classes = ADMIN_BUTTON) {
-                val confirm = "Are you sure you want to load all the Python challenges? (This can take a while)"
-                onClick = "$ADMIN_FUNC(${confirm.toDoubleQuoted()}, ${LOAD_PYTHON_ENDPOINT.toDoubleQuoted()})"
-                +"Load Python Challenges"
-              }
+              this@body.adminButton("Load Python Challenges",
+                                    LOAD_PYTHON_ENDPOINT,
+                                    "Are you sure you want to load all the Python challenges? (This can take a while)")
             }
 
             p {
-              button(classes = ADMIN_BUTTON) {
-                val confirm = "Are you sure you want to load all the Kotlin challenges? (This can take a while)"
-                onClick = "$ADMIN_FUNC(${confirm.toDoubleQuoted()}, ${LOAD_KOTLIN_ENDPOINT.toDoubleQuoted()})"
-                +"Load Kotlin Challenges"
-              }
+              this@body.adminButton("Load Kotlin Challenges",
+                                    LOAD_KOTLIN_ENDPOINT,
+                                    "Are you sure you want to load all the Kotlin challenges? (This can take a while)")
             }
 
             p {
-              button(classes = ADMIN_BUTTON) {
-                val confirm = "Are you sure you want to load all the challenges? (This can take a while)"
-                onClick = "$ADMIN_FUNC(${confirm.toDoubleQuoted()}, ${LOAD_ALL_ENDPOINT.toDoubleQuoted()})"
-                +"Load All Challenges"
-              }
+              this@body.adminButton("Load All Challenges",
+                                    LOAD_ALL_ENDPOINT,
+                                    "Are you sure you want to load all the challenges? (This can take a while)")
             }
 
             p {
-              button(classes = ADMIN_BUTTON) {
-                val confirm = "Are you sure you want to run the garbage collector?"
-                onClick = "$ADMIN_FUNC(${confirm.toDoubleQuoted()}, ${GARBAGE_COLLECTOR_ENDPOINT.toDoubleQuoted()})"
-                +"Run Garbage Collector"
-              }
+              this@body.adminButton("Run Garbage Collector",
+                                    GARBAGE_COLLECTOR_ENDPOINT,
+                                    "Are you sure you want to run the garbage collector?")
             }
 
             GRAFANA_URL.getPropertyOrNull()

@@ -97,7 +97,7 @@ internal object LoggingWs : KLogging() {
   }
 
   private val timeFormat = DateTimeFormatter.ofPattern("H:m:ss.SSS")
-  fun Jedis.logger(logId: String, msg: String) {
+  fun Jedis.log(logId: String, msg: String) {
     publish(LOG_MESSAGE.name,
             LogData(logId, "${LocalDateTime.now().format(timeFormat)} [$serverSessionId] - $msg").toJson())
   }
@@ -115,7 +115,7 @@ internal object LoggingWs : KLogging() {
                 .onCompletion { logger.info { "Finished reading admin command channel values" } }
                 .collect { adminCommandData ->
                   redisPool?.withNonNullRedisPool { redis ->
-                    val log = { s: String -> redis.logger(adminCommandData.logId, s) }
+                    val log = { s: String -> redis.log(adminCommandData.logId, s) }
 
                     when (adminCommandData.command) {
                       LOAD_CHALLENGE -> {

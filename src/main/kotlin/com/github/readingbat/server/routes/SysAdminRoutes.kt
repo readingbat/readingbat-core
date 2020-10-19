@@ -43,7 +43,6 @@ import com.github.readingbat.server.ReadingBatServer.logger
 import com.github.readingbat.server.ReadingBatServer.redisPool
 import com.github.readingbat.server.ServerUtils.authenticateAdminUser
 import com.github.readingbat.server.ServerUtils.fetchUser
-import com.github.readingbat.server.ServerUtils.get
 import com.github.readingbat.server.ServerUtils.post
 import com.github.readingbat.server.ws.LoggingWs.AdminCommand.LOAD_CHALLENGE
 import com.github.readingbat.server.ws.LoggingWs.AdminCommand.RUN_GC
@@ -53,6 +52,7 @@ import com.github.readingbat.server.ws.LoggingWs.LoadCommand.LOAD_JAVA
 import com.github.readingbat.server.ws.LoggingWs.LoadCommand.LOAD_KOTLIN
 import com.github.readingbat.server.ws.LoggingWs.LoadCommand.LOAD_PYTHON
 import com.github.readingbat.server.ws.LoggingWs.Topic.ADMIN_COMMAND
+import com.github.readingbat.server.ws.LoggingWs.log
 import com.github.readingbat.server.ws.WsCommon.LOG_ID
 import io.ktor.application.*
 import io.ktor.request.*
@@ -61,45 +61,61 @@ import kotlin.time.measureTime
 
 internal fun Routing.sysAdminRoutes(metrics: Metrics, contentSrc: () -> ReadingBatContent, resetFunc: () -> Unit) {
 
-  fun deleteContentDslInRedis() =
+  fun deleteContentDslInRedis(logId: String) =
     redisPool?.withNonNullRedisPool { redis ->
       val pattern = keyOf(CONTENT_DSL_KEY, "*")
       val keys = redis.scanKeys(pattern).toList()
       val cnt = keys.count()
       keys.forEach { redis.del(it) }
-      "$cnt content DSLs ${"file".pluralize(cnt)} deleted from Redis".also { logger.info { it } }
+      "$cnt content DSLs ${"file".pluralize(cnt)} deleted from Redis"
+        .also {
+          logger.info { it }
+          redis.log(logId, it)
+        }
     } ?: REDIS_IS_DOWN
 
-  fun deleteDirContentsInRedis() =
+  fun deleteDirContentsInRedis(logId: String) =
     redisPool?.withNonNullRedisPool { redis ->
       val pattern = keyOf(DIR_CONTENTS_KEY, "*")
       val keys = redis.scanKeys(pattern).toList()
       val cnt = keys.count()
       keys.forEach { redis.del(it) }
-      "$cnt directory ${"content".pluralize(cnt)} deleted from Redis".also { logger.info { it } }
+      "$cnt directory ${"content".pluralize(cnt)} deleted from Redis"
+        .also {
+          logger.info { it }
+          redis.log(logId, it)
+        }
     } ?: REDIS_IS_DOWN
 
-  fun deleteSourceCodeInRedis() =
+  fun deleteSourceCodeInRedis(logId: String) =
     redisPool?.withNonNullRedisPool { redis ->
       val pattern = keyOf(SOURCE_CODE_KEY, "*")
       val keys = redis.scanKeys(pattern).toList()
       val cnt = keys.count()
       keys.forEach { redis.del(it) }
-      "$cnt source code ${"file".pluralize(cnt)} deleted from Redis".also { logger.info { it } }
+      "$cnt source code ${"file".pluralize(cnt)} deleted from Redis"
+        .also {
+          logger.info { it }
+          redis.log(logId, it)
+        }
     } ?: REDIS_IS_DOWN
 
-  fun deleteContentInRedis() =
-    listOf(deleteContentDslInRedis(), deleteDirContentsInRedis(), deleteSourceCodeInRedis())
+  fun deleteContentInRedis(logId: String) =
+    listOf(deleteContentDslInRedis(logId), deleteDirContentsInRedis(logId), deleteSourceCodeInRedis(logId))
       .joinToString(", ")
-      .also { logger.info { "clearContentInRedis(): $it" } }
+      .also { logger.info { "deleteContentInRedis(): $it" } }
 
-  get(RESET_CONTENT_DSL_ENDPOINT, metrics) {
+  post(RESET_CONTENT_DSL_ENDPOINT, metrics) {
     respondWith {
       val user = fetchUser()
+      val params = call.receiveParameters()
+      val paramMap = params.entries().map { it.key to it.value[0] }.toMap()
+      val logId = paramMap[LOG_ID] ?: throw InvalidRequestException("Missing log id")
       val msg =
         authenticateAdminUser(user) {
           measureTime {
-            deleteContentInRedis()
+            deleteContentInRedis(logId)
+            // @TODO
             resetFunc.invoke()
           }.let { "DSL content reset in $it".also { logger.info { it } } }
         }
@@ -107,28 +123,34 @@ internal fun Routing.sysAdminRoutes(metrics: Metrics, contentSrc: () -> ReadingB
     }
   }
 
-  get(RESET_CACHE_ENDPOINT, metrics) {
+  post(RESET_CACHE_ENDPOINT, metrics) {
     respondWith {
       val user = fetchUser()
+      val params = call.receiveParameters()
+      val paramMap = params.entries().map { it.key to it.value[0] }.toMap()
+      val logId = paramMap[LOG_ID] ?: throw InvalidRequestException("Missing log id")
       val msg =
         authenticateAdminUser(user) {
-          deleteContentInRedis()
+          deleteContentInRedis(logId)
+          // @TODO
           val content = contentSrc()
           val cnt = content.functionInfoMap.size
           content.clearSourcesMap()
-            .let {
-              "Challenge cache reset -- $cnt challenges removed".also { logger.info { it } }
-            }
+            .let { "Challenge cache reset -- $cnt challenges removed".also { logger.info { it } } }
         }
       systemAdminPage(contentSrc(), user, msg)
     }
   }
 
-  get(DELETE_CONTENT_IN_REDIS_ENDPOINT, metrics) {
+  post(DELETE_CONTENT_IN_REDIS_ENDPOINT, metrics) {
     respondWith {
       val user = fetchUser()
-      val msg = authenticateAdminUser(user) { deleteContentInRedis() }
-      systemAdminPage(contentSrc(), user, msg)
+      val params = call.receiveParameters()
+      val paramMap = params.entries().map { it.key to it.value[0] }.toMap()
+      val logId = paramMap[LOG_ID] ?: throw InvalidRequestException("Missing log id")
+      authenticateAdminUser(user) {
+        deleteContentInRedis(logId)
+      }
     }
   }
 
@@ -145,8 +167,8 @@ internal fun Routing.sysAdminRoutes(metrics: Metrics, contentSrc: () -> ReadingB
           authenticateAdminUser(user) {
             redisPool?.withNonNullRedisPool { redis ->
               logger.debug { "Publishing $ADMIN_COMMAND ${pair.second}" }
-              val loadCommandData = AdminCommandData(logId, LOAD_CHALLENGE, pair.second.toJson())
-              redis.publish(ADMIN_COMMAND.name, loadCommandData.toJson())
+              val adminCommandData = AdminCommandData(logId, LOAD_CHALLENGE, pair.second.toJson())
+              redis.publish(ADMIN_COMMAND.name, adminCommandData.toJson())
             } ?: throw RedisUnavailableException(pair.first)
             ""
           }

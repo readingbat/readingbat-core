@@ -20,10 +20,13 @@ package com.github.readingbat.pages
 import com.github.pambrose.common.util.isNull
 import com.github.pambrose.common.util.pathOf
 import com.github.pambrose.common.util.pluralize
+import com.github.pambrose.common.util.toDoubleQuoted
 import com.github.pambrose.common.util.toRootPath
+import com.github.readingbat.common.CSSNames.ADMIN_BUTTON
 import com.github.readingbat.common.CSSNames.INDENT_1EM
 import com.github.readingbat.common.CSSNames.SELECTED_TAB
 import com.github.readingbat.common.ClassCode
+import com.github.readingbat.common.Constants.ADMIN_FUNC
 import com.github.readingbat.common.Constants.ICONS
 import com.github.readingbat.common.Endpoints.CHALLENGE_ROOT
 import com.github.readingbat.common.Endpoints.CSS_ENDPOINT
@@ -189,6 +192,13 @@ internal object PageUtils {
         style = "vertical-align:middle; margin-top:1; margin-bottom:0"
         value = text
       }
+    }
+  }
+
+  fun BODY.adminButton(text: String, endpoint: String, confirm: String) {
+    button(classes = ADMIN_BUTTON) {
+      onClick = "$ADMIN_FUNC(${confirm.toDoubleQuoted()}, ${endpoint.toDoubleQuoted()})"
+      +text
     }
   }
 
