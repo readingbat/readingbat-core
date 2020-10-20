@@ -80,13 +80,13 @@ internal object LoggingWs : KLogging() {
                 .consumeAsFlow()
                 .onStart { logger.info { "Starting to read admin command channel values" } }
                 .onCompletion { logger.info { "Finished reading admin command channel values" } }
-                .collect { adminCommandData ->
+                .collect { data ->
                   redisPool?.withNonNullRedisPool { redis ->
-                    val redisLog = { s: String -> redis.publishLog(s, adminCommandData.logId) }
+                    val redisLog = { s: String -> redis.publishLog(s, data.logId) }
 
-                    when (adminCommandData.command) {
+                    when (data.command) {
                       RESET_CONTENT_DSL -> {
-                        measureTime { resetContentFunc.invoke(adminCommandData.logId) }
+                        measureTime { resetContentFunc.invoke(data.logId) }
                           .also { dur ->
                             "DSL content reset in $dur"
                               .also {
@@ -108,7 +108,7 @@ internal object LoggingWs : KLogging() {
                           }
                       }
                       LOAD_CHALLENGE -> {
-                        val type = Json.decodeFromString<LoadChallengeType>(adminCommandData.jsonArgs)
+                        val type = Json.decodeFromString<LoadChallengeType>(data.jsonArgs)
                         type.languageTypes
                           .forEach { langType ->
                             content.get().loadChallenges(langType, redisLog, "", false)
@@ -149,10 +149,10 @@ internal object LoggingWs : KLogging() {
                 .consumeAsFlow()
                 .onStart { logger.info { "Starting to read log ws channel values" } }
                 .onCompletion { logger.info { "Finished reading log ws channel values" } }
-                .collect { logData ->
-                  val json = Json.encodeToString(logData.text)
+                .collect { data ->
+                  val json = Json.encodeToString(data.text)
                   logWsConnections
-                    .filter { it.logId == logData.logId }
+                    .filter { it.logId == data.logId }
                     .forEach {
                       it.wsSession.outgoing.send(Frame.Text(json))
                     }

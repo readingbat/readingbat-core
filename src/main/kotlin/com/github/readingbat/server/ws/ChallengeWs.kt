@@ -89,7 +89,7 @@ internal object ChallengeWs : KLogging() {
   }
 
   init {
-    logger.info { "Initalizing ChallengeWs" }
+    logger.info { "Initializing ChallengeWs" }
 
     timer("pinger", false, 0L, 1.seconds.toLongMilliseconds()) {
       for (sessionContext in answerWsConnections)
@@ -116,8 +116,8 @@ internal object ChallengeWs : KLogging() {
                     .consumeAsFlow()
                     .onStart { logger.info { "Starting to read multi-server writer ws channel values" } }
                     .onCompletion { logger.info { "Finished reading multi-server writer ws channel values" } }
-                    .collect { answerData ->
-                      redis.publish(answerData.pubSubTopic.name, answerData.toJson())
+                    .collect { data ->
+                      redis.publish(data.pubSubTopic.name, data.toJson())
                     }
                 } ?: throw RedisUnavailableException("multiServerWriteChannel")
               }
@@ -138,13 +138,13 @@ internal object ChallengeWs : KLogging() {
                 .consumeAsFlow()
                 .onStart { logger.info { "Starting to read challenge ws channel values" } }
                 .onCompletion { logger.info { "Finished reading challenge ws channel values" } }
-                .collect { answerData ->
+                .collect { data ->
                   answerWsConnections
-                    .filter { it.targetName == answerData.target }
+                    .filter { it.targetName == data.target }
                     .forEach {
                       it.metrics.wsStudentAnswerResponseCount.labels(agentLaunchId()).inc()
-                      it.wsSession.outgoing.send(Frame.Text(answerData.jsonArgs))
-                      logger.debug { "Sent $answerData ${answerWsConnections.size}" }
+                      it.wsSession.outgoing.send(Frame.Text(data.jsonArgs))
+                      logger.debug { "Sent $data ${answerWsConnections.size}" }
                     }
                 }
             }
