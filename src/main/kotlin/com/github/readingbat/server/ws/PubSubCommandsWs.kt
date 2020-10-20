@@ -57,12 +57,17 @@ internal object PubSubCommandsWs : KLogging() {
   enum class AdminCommand { RESET_CONTENT_DSL, RESET_CACHE, LOAD_CHALLENGE, RUN_GC }
 
   @Serializable
-  class AdminCommandData(val command: AdminCommand, val jsonArgs: String, val logId: String) {
+  enum class LoadChallengeType(@Transient val endPoint: String, val languageTypes: List<LanguageType>) {
+    LOAD_JAVA(LOAD_JAVA_ENDPOINT, listOf(Java)),
+    LOAD_PYTHON(LOAD_PYTHON_ENDPOINT, listOf(Python)),
+    LOAD_KOTLIN(LOAD_KOTLIN_ENDPOINT, listOf(Kotlin)),
+    LOAD_ALL(LOAD_ALL_ENDPOINT, listOf(Java, Python, Kotlin));
+
     fun toJson() = Json.encodeToString(serializer(), this)
   }
 
   @Serializable
-  class LogData(val message: String, val logId: String) {
+  class AdminCommandData(val command: AdminCommand, val jsonArgs: String, val logId: String) {
     fun toJson() = Json.encodeToString(serializer(), this)
   }
 
@@ -72,12 +77,7 @@ internal object PubSubCommandsWs : KLogging() {
   }
 
   @Serializable
-  enum class LoadChallengeType(@Transient val endPoint: String, val languageTypes: List<LanguageType>) {
-    LOAD_JAVA(LOAD_JAVA_ENDPOINT, listOf(Java)),
-    LOAD_PYTHON(LOAD_PYTHON_ENDPOINT, listOf(Python)),
-    LOAD_KOTLIN(LOAD_KOTLIN_ENDPOINT, listOf(Kotlin)),
-    LOAD_ALL(LOAD_ALL_ENDPOINT, listOf(Java, Python, Kotlin));
-
+  class LogData(val text: String, val logId: String) {
     fun toJson() = Json.encodeToString(serializer(), this)
   }
 
@@ -94,10 +94,10 @@ internal object PubSubCommandsWs : KLogging() {
     publish(LOG_MESSAGE.name, logData.toJson())
   }
 
-  init {
+  fun initThreads() {
     newSingleThreadExecutor()
       .submit {
-        val pubsub =
+        val pubSub =
           object : JedisPubSub() {
             override fun onMessage(channel: String?, message: String?) {
               if (channel.isNotNull() && message.isNotNull())
@@ -132,7 +132,7 @@ internal object PubSubCommandsWs : KLogging() {
         while (true) {
           try {
             redisPool?.withNonNullRedisPool { redis ->
-              redis.subscribe(pubsub, *PubSubTopic.values().map { it.name }.toTypedArray())
+              redis.subscribe(pubSub, *PubSubTopic.values().map { it.name }.toTypedArray())
             } ?: throw RedisUnavailableException("pubsubWs subscriber")
           } catch (e: Throwable) {
             logger.error(e) { "Exception in pubsubWs subscriber ${e.simpleClassName} ${e.message}" }

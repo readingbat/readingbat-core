@@ -150,7 +150,7 @@ internal object LoggingWs : KLogging() {
                 .onStart { logger.info { "Starting to read log ws channel values" } }
                 .onCompletion { logger.info { "Finished reading log ws channel values" } }
                 .collect { logData ->
-                  val json = Json.encodeToString(logData.message)
+                  val json = Json.encodeToString(logData.text)
                   logWsConnections
                     .filter { it.logId == logData.logId }
                     .forEach {

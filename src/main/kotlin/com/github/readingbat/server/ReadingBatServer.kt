@@ -159,14 +159,18 @@ object ReadingBatServer : KLogging() {
       }
 
     // Load pubsub
-    PubSubCommandsWs
+    PubSubCommandsWs.initThreads()
 
     embeddedServer(CIO, environment).start(wait = true)
   }
 }
 
 internal fun Application.readContentDsl(fileName: String, variableName: String, logId: String = "") {
-  logger.info { "Loading content using $variableName in $fileName" }
+  "Loading content using $variableName in $fileName"
+    .also {
+      logger.info { it }
+      redisLog(it, logId)
+    }
   measureTime {
     content.set(
       readContentDsl(FileSource(fileName = fileName), logId, variableName)

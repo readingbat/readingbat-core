@@ -164,7 +164,7 @@ internal object ServerUtils : KLogging() {
 
   fun redisLog(msg: String, logId: String) {
     if (logId.isNotEmpty()) {
-      redisPool?.withNonNullRedisPool() { redis ->
+      redisPool?.withNonNullRedisPool { redis ->
         redis.publishLog(msg, logId)
       }
     }
