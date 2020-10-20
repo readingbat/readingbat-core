@@ -46,16 +46,16 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
   internal var namePrefix = ""
 
   internal val groupName by lazy { GroupName("${if (namePrefix.isNotBlank()) namePrefix else ""}${groupNameSuffix.value}") }
-  private val groupPrefix by lazy { pathOf(languageName, groupName) }
   internal val parsedDescription by lazy { TextFormatter.renderText(description) }
+  private val groupPrefix by lazy { pathOf(languageName, groupName) }
 
-  private val srcPath get() = languageGroup.srcPath
   internal val languageType get() = languageGroup.languageType
+  internal val packageNameAsPath get() = packageName.replace(".", "/")
+  private val srcPath get() = languageGroup.srcPath
   private val languageName get() = languageType.languageName
   private val repo get() = languageGroup.repo
   private val branchName get() = languageGroup.branchName
   private val metrics get() = languageGroup.metrics
-  internal val packageNameAsPath get() = packageName.replace(".", "/")
 
   private fun dirContentsKey(path: String) = keyOf(DIR_CONTENTS_KEY, md5Of(path))
 
@@ -90,20 +90,17 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
           if (isContentCachingEnabled()) {
             fetchDirContentsFromRedis(path)
               .let {
-                if (it.isNotNull() && it.isNotEmpty())
-                  it
-                else
-                  fetchRemoteFiles(root, path)
+                if (it.isNotNull() && it.isNotEmpty()) it else fetchRemoteFiles(root, path)
               }
           }
           else {
             fetchRemoteFiles(root, path)
           }
         }
-        is FileSystemSource -> {
+        is FileSystemSource ->
           File(pathOf(root.pathPrefix, srcPath, packageNameAsPath)).walk().map { it.name }.toList()
-        }
-        else -> throw InvalidConfigurationException("Invalid repo type: $root")
+        else ->
+          throw InvalidConfigurationException("Invalid repo type: $root")
       }
     }
   }
