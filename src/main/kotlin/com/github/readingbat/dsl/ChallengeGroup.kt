@@ -25,6 +25,7 @@ import com.github.pambrose.common.util.ensureSuffix
 import com.github.pambrose.common.util.isNotNull
 import com.github.pambrose.common.util.md5Of
 import com.github.pambrose.common.util.pathOf
+import com.github.pambrose.common.util.toDoubleQuoted
 import com.github.readingbat.common.KeyConstants.DIR_CONTENTS_KEY
 import com.github.readingbat.common.KeyConstants.keyOf
 import com.github.readingbat.dsl.Challenge.Companion.challenge
@@ -75,7 +76,7 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
           redisPool?.withNonNullRedisPool(true) { redis ->
             val dirContentsKey = dirContentsKey(path)
             it.forEach { redis.rpush(dirContentsKey, it) }
-            logger.info { """Saved "$path" to redis""" }
+            logger.info { "Saved ${path.toDoubleQuoted()} to redis" }
           }
         }
       }
@@ -186,7 +187,7 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
   internal fun addChallenge(challengeFile: LanguageGroup.ChallengeFile, pattern: String) {
     val challengeName = ChallengeName(challengeFile.fileName.split(".").first())
     if (checkChallengeName(challengeName, false)) {
-      logger.debug { """Adding $challengeName by pattern "$pattern"""" }
+      logger.debug { "Adding $challengeName by pattern ${pattern.toDoubleQuoted()}" }
       val challenge = challenge(this, challengeName, true)
       // Skip this next step for Java because returnType is calculated
       when {

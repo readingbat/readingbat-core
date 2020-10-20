@@ -43,6 +43,7 @@ import com.github.readingbat.server.ReadingBatServer.content
 import com.github.readingbat.server.ReadingBatServer.contentReadCount
 import com.github.readingbat.server.ReadingBatServer.logger
 import com.github.readingbat.server.ReadingBatServer.metrics
+import com.github.readingbat.server.ServerUtils.redisLog
 import com.github.readingbat.server.routes.AdminRoutes.adminRoutes
 import com.github.readingbat.server.routes.sysAdminRoutes
 import com.github.readingbat.server.routes.userRoutes
@@ -164,18 +165,22 @@ object ReadingBatServer : KLogging() {
   }
 }
 
-internal fun Application.readContentDsl(fileName: String, variableName: String) {
+internal fun Application.readContentDsl(fileName: String, variableName: String, logId: String = "") {
   logger.info { "Loading content using $variableName in $fileName" }
   measureTime {
     content.set(
-      readContentDsl(FileSource(fileName = fileName), variableName)
+      readContentDsl(FileSource(fileName = fileName), logId, variableName)
         .apply {
           maxHistoryLength = MAX_HISTORY_LENGTH.configValue(this@readContentDsl, "10").toInt()
           maxClassCount = MAX_CLASS_COUNT.configValue(this@readContentDsl, "25").toInt()
         }.apply { clearContentMap() })
     metrics.contentLoadedCount.labels(agentLaunchId()).inc()
-  }.also {
-    logger.info { "Loaded content using $variableName in $fileName in $it" }
+  }.also { dur ->
+    "Loaded content using $variableName in $fileName in $dur"
+      .also {
+        logger.info { it }
+        redisLog(it, logId)
+      }
   }
   contentReadCount.incrementAndGet()
 }
@@ -246,10 +251,10 @@ internal fun Application.module() {
   // This is done *after* AGENT_LAUNCH_ID is assigned because metrics depend on it
   metrics.init { content.get() }
 
-  val fileName = DSL_FILE_NAME.getRequiredProperty()
-  val variableName = DSL_VARIABLE_NAME.getRequiredProperty()
+  val dslFileName = DSL_FILE_NAME.getRequiredProperty()
+  val dslVariableName = DSL_VARIABLE_NAME.getRequiredProperty()
 
-  val job = launch { readContentDsl(fileName, variableName) }
+  val job = launch { readContentDsl(dslFileName, dslVariableName) }
 
   runBlocking {
     val maxDelay = STARTUP_DELAY_SECS.configValue(this@module, "30").toInt().seconds
@@ -263,7 +268,10 @@ internal fun Application.module() {
     }
   }
 
-  LoggingWs.initThreads({ content.get() }, { readContentDsl(fileName, variableName) })
+  // readContentDsl() is passed as a lambda because it is Application.readContentDsl()
+  val readContentDslFunc = { logId: String -> readContentDsl(dslFileName, dslVariableName, logId) }
+
+  LoggingWs.initThreads({ content.get() }, readContentDslFunc)
 
   installs(isProduction(),
            redirectHostname,
@@ -276,7 +284,7 @@ internal fun Application.module() {
     adminRoutes(metrics)
     locations(metrics) { content.get() }
     userRoutes(metrics) { content.get() }
-    sysAdminRoutes(metrics)
+    sysAdminRoutes(metrics, readContentDslFunc)
     wsRoutes(metrics) { content.get() }
     static(STATIC_ROOT) { resources("static") }
   }

@@ -25,6 +25,7 @@ import com.github.pambrose.common.util.GitHubRepo
 import com.github.pambrose.common.util.OwnerType
 import com.github.pambrose.common.util.isNotNull
 import com.github.pambrose.common.util.md5Of
+import com.github.pambrose.common.util.toDoubleQuoted
 import com.github.readingbat.common.Constants.UNASSIGNED
 import com.github.readingbat.common.EnvVar.IPGEOLOCATION_KEY
 import com.github.readingbat.common.KeyConstants.CONTENT_DSL_KEY
@@ -83,16 +84,19 @@ fun ContentSource.eval(enclosingContent: ReadingBatContent, variableName: String
 
 private fun contentDslKey(source: String) = keyOf(CONTENT_DSL_KEY, md5Of(source))
 
-private fun fetchContentDsl(source: String) =
+private fun fetchContentDslFromRedis(source: String) =
   if (isContentCachingEnabled()) redisPool?.withRedisPool { it?.get(contentDslKey(source)) } else null
 
-internal fun readContentDsl(contentSource: ContentSource, variableName: String = "content"): ReadingBatContent {
+internal fun readContentDsl(contentSource: ContentSource,
+                            logId: String,
+                            variableName: String = "content"): ReadingBatContent {
   val (code, dur) =
     measureTimedValue {
-      if (!contentSource.remote)
+      if (!contentSource.remote) {
         contentSource.content
+      }
       else {
-        var dsl = fetchContentDsl(contentSource.source)
+        var dsl = fetchContentDslFromRedis(contentSource.source)
         if (dsl.isNotNull()) {
           logger.debug { "Fetched ${contentSource.source} from redis cache" }
         }
@@ -101,7 +105,7 @@ internal fun readContentDsl(contentSource: ContentSource, variableName: String =
           if (isContentCachingEnabled()) {
             redisPool?.withNonNullRedisPool(true) { redis ->
               redis.set(contentDslKey(contentSource.source), dsl)
-              logger.debug { """Saved "${contentSource.source}" to redis""" }
+              logger.debug { "Saved ${contentSource.source.toDoubleQuoted()} to redis" }
             }
           }
         }
@@ -109,7 +113,7 @@ internal fun readContentDsl(contentSource: ContentSource, variableName: String =
       }
     }
 
-  logger.info { """Read content for "${contentSource.source}" in $dur""" }
+  logger.info { "Read content for ${contentSource.source.toDoubleQuoted()} in $dur" }
   val withImports = addImports(code, variableName)
   return runBlocking { evalDsl(withImports, contentSource.source) }
 }
@@ -119,16 +123,16 @@ internal fun addImports(code: String, variableName: String): String {
     listOf(ReadingBatServer::class, GitHubContent::class)
       //.onEach { println("Checking for ${it.javaObjectType.name}") }
       .filter { code.contains("${it.javaObjectType.simpleName}(") }   // See if the class is referenced
-      .map { "import ${it.javaObjectType.name}" }                     // Convert to import stmt
-      .filterNot { code.contains(it) }                                // Do not include if import already present
-      .joinToString("\n")                                             // Turn into String
+      .map { "import ${it.javaObjectType.name}" }                           // Convert to import stmt
+      .filterNot { code.contains(it) }                                      // Do not include if import already present
+      .joinToString("\n")                                         // Turn into String
 
   val funcImports =
     listOf(::readingBatContent)
       .filter { code.contains("${it.name}(") }  // See if the function is referenced
-      .map { "import ${it.fqMethodName}" }      // Convert to import stmt
-      .filterNot { code.contains(it) }          // Do not include is import already present
-      .joinToString("\n")                       // Turn into String
+      .map { "import ${it.fqMethodName}" }            // Convert to import stmt
+      .filterNot { code.contains(it) }                // Do not include is import already present
+      .joinToString("\n")                   // Turn into String
 
   val imports = listOf(classImports, funcImports).filter { it.isNotBlank() }.joinToString("\n")
   return """

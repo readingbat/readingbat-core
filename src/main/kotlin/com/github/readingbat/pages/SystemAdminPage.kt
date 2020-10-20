@@ -72,7 +72,7 @@ internal object SystemAdminPage : KLogging() {
     createHTML()
       .html {
 
-        val logId = randomId(15)
+        val logId = randomId(10)
 
         head {
           headDefault()
@@ -111,6 +111,12 @@ internal object SystemAdminPage : KLogging() {
             }
 
             p {
+              this@body.adminButton("Run Garbage Collector",
+                                    GARBAGE_COLLECTOR_ENDPOINT,
+                                    "Are you sure you want to run the garbage collector?")
+            }
+
+            p {
               this@body.adminButton("Load Java Challenges",
                                     LOAD_JAVA_ENDPOINT,
                                     "Are you sure you want to load all the Java challenges? (This can take a while)")
@@ -132,12 +138,6 @@ internal object SystemAdminPage : KLogging() {
               this@body.adminButton("Load All Challenges",
                                     LOAD_ALL_ENDPOINT,
                                     "Are you sure you want to load all the challenges? (This can take a while)")
-            }
-
-            p {
-              this@body.adminButton("Run Garbage Collector",
-                                    GARBAGE_COLLECTOR_ENDPOINT,
-                                    "Are you sure you want to run the garbage collector?")
             }
 
             GRAFANA_URL.getPropertyOrNull()

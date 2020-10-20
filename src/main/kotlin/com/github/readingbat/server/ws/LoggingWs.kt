@@ -70,7 +70,7 @@ internal object LoggingWs : KLogging() {
     val enabled get() = logId.isNotEmpty()
   }
 
-  fun initThreads(contentSrc: () -> ReadingBatContent, resetContentFunc: () -> Unit) {
+  fun initThreads(contentSrc: () -> ReadingBatContent, resetContentFunc: (String) -> Unit) {
     newSingleThreadExecutor()
       .submit {
         while (true) {
@@ -86,7 +86,7 @@ internal object LoggingWs : KLogging() {
 
                     when (adminCommandData.command) {
                       RESET_CONTENT_DSL -> {
-                        measureTime { resetContentFunc.invoke() }
+                        measureTime { resetContentFunc.invoke(adminCommandData.logId) }
                           .also { dur ->
                             "DSL content reset in $dur"
                               .also {

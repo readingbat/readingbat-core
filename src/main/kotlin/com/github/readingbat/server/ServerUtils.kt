@@ -17,6 +17,7 @@
 
 package com.github.readingbat.server
 
+import com.github.pambrose.common.redis.RedisUtils.withNonNullRedisPool
 import com.github.pambrose.common.redis.RedisUtils.withRedisPool
 import com.github.pambrose.common.redis.RedisUtils.withSuspendingRedisPool
 import com.github.pambrose.common.response.redirectTo
@@ -39,6 +40,7 @@ import com.github.readingbat.dsl.RedisUnavailableException
 import com.github.readingbat.dsl.isProduction
 import com.github.readingbat.server.Email.Companion.UNKNOWN_EMAIL
 import com.github.readingbat.server.ReadingBatServer.redisPool
+import com.github.readingbat.server.ws.PubSubCommandsWs.publishLog
 import io.ktor.application.*
 import io.ktor.auth.*
 import io.ktor.http.*
@@ -159,6 +161,14 @@ internal object ServerUtils : KLogging() {
       .asSequence()
       .filter { content[it].isNotEmpty() }
       .firstOrNull() ?: throw InvalidConfigurationException("Missing non-empty language")
+
+  fun redisLog(msg: String, logId: String) {
+    if (logId.isNotEmpty()) {
+      redisPool?.withNonNullRedisPool() { redis ->
+        redis.publishLog(msg, logId)
+      }
+    }
+  }
 
   fun Int.rows(cols: Int) = if (this % cols == 0) this / cols else (this / cols) + 1
 }

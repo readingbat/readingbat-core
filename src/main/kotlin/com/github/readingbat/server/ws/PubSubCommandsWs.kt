@@ -84,6 +84,7 @@ internal object PubSubCommandsWs : KLogging() {
   private val timeFormat = DateTimeFormatter.ofPattern("H:m:ss.SSS")
 
   fun Jedis.publishAdminCommand(command: AdminCommand, logId: String, jsonArgs: String = "") {
+    publishLog("Dispatching ${command.name} $jsonArgs", logId)
     val adminCommandData = AdminCommandData(command, jsonArgs, logId)
     publish(ADMIN_COMMAND.name, adminCommandData.toJson())
   }
