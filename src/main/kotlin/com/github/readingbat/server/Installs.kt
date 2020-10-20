@@ -37,6 +37,7 @@ import com.github.readingbat.pages.NotFoundPage.notFoundPage
 import com.github.readingbat.server.ConfigureCookies.configureAuthCookie
 import com.github.readingbat.server.ConfigureCookies.configureSessionIdCookie
 import com.github.readingbat.server.ConfigureFormAuth.configureFormAuth
+import com.github.readingbat.server.ReadingBatServer.serverSessionId
 import com.github.readingbat.server.ServerUtils.fetchEmailFromCache
 import io.ktor.application.*
 import io.ktor.auth.*
@@ -148,7 +149,7 @@ internal object Installs : KLogging() {
 
     install(CallId) {
       retrieveFromHeader(HttpHeaders.XRequestId)
-      generate { "${ReadingBatServer.serverSessionId}-${requestCounter.incrementAndGet()}" }
+      generate { "$serverSessionId-${requestCounter.incrementAndGet()}" }
       verify { it.isNotEmpty() }
     }
 

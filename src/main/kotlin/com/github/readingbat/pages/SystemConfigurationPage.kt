@@ -92,6 +92,10 @@ internal object SystemConfigurationPage {
                   td { +ReadingBatServer.upTime.format(true) }
                 }
                 tr {
+                  td { +"Server Session Id:" }
+                  td { +ReadingBatServer.serverSessionId }
+                }
+                tr {
                   td { +"Ktor port:" }
                   td { +KTOR_PORT.getProperty(UNASSIGNED) }
                 }

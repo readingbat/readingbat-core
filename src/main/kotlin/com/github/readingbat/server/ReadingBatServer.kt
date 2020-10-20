@@ -74,7 +74,7 @@ import kotlin.time.TimeSource
 import kotlin.time.measureTime
 import kotlin.time.seconds
 
-@Version(version = "1.7.0", date = "10/8/20")
+@Version(version = "1.7.0", date = "10/19/20")
 object ReadingBatServer : KLogging() {
   private val startTime = TimeSource.Monotonic.markNow()
   internal val serverSessionId = randomId(10)
@@ -137,13 +137,13 @@ object ReadingBatServer : KLogging() {
 
     CONFIG_FILENAME.setProperty(configFilename)
 
-    val newargs =
+    val newArgs =
       if (args.any { it.startsWith("-config=") })
         args
       else
         args.toMutableList().apply { add("-config=$configFilename") }.toTypedArray()
 
-    val environment = commandLineEnvironment(newargs)
+    val environment = commandLineEnvironment(newArgs)
 
     // Reference these to load them
     ScriptPools.javaScriptPool
