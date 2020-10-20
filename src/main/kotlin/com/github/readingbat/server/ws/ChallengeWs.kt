@@ -41,7 +41,7 @@ import io.ktor.http.cio.websocket.*
 import io.ktor.http.cio.websocket.CloseReason.Codes.*
 import io.ktor.routing.*
 import io.ktor.websocket.*
-import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.BroadcastChannel
 import kotlinx.coroutines.channels.Channel.Factory.BUFFERED
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collect
@@ -63,9 +63,9 @@ import kotlin.time.seconds
 
 internal object ChallengeWs : KLogging() {
   private val clock = TimeSource.Monotonic
-  val singleServerWsChannel by lazy { Channel<ChallengeAnswerData>(BUFFERED) }
-  val multiServerWsWriteChannel by lazy { Channel<ChallengeAnswerData>(BUFFERED) }
-  val multiServerWsReadChannel by lazy { Channel<ChallengeAnswerData>(BUFFERED) }
+  val singleServerWsChannel by lazy { BroadcastChannel<ChallengeAnswerData>(BUFFERED) }
+  val multiServerWsWriteChannel by lazy { BroadcastChannel<ChallengeAnswerData>(BUFFERED) }
+  val multiServerWsReadChannel by lazy { BroadcastChannel<ChallengeAnswerData>(BUFFERED) }
   val answerWsConnections: MutableSet<AnswerSessionContext> = synchronizedSet(LinkedHashSet<AnswerSessionContext>())
   var maxAnswerWsConnections = 0
 
@@ -113,6 +113,7 @@ internal object ChallengeWs : KLogging() {
               runBlocking {
                 redisPool?.withSuspendingNonNullRedisPool { redis ->
                   multiServerWsWriteChannel
+                    .openSubscription()
                     .consumeAsFlow()
                     .onStart { logger.info { "Starting to read multi-server writer ws channel values" } }
                     .onCompletion { logger.info { "Finished reading multi-server writer ws channel values" } }
@@ -122,7 +123,7 @@ internal object ChallengeWs : KLogging() {
                 } ?: throw RedisUnavailableException("multiServerWriteChannel")
               }
             } catch (e: Throwable) {
-              logger.error { "Exception in challenge ws writer ${e.simpleClassName} ${e.message}" }
+              logger.error { "Exception in challenge ws writer: ${e.simpleClassName} ${e.message}" }
               Thread.sleep(1.seconds.toLongMilliseconds())
             }
           }
@@ -135,6 +136,7 @@ internal object ChallengeWs : KLogging() {
           try {
             runBlocking {
               (if (isMultiServerEnabled()) multiServerWsReadChannel else singleServerWsChannel)
+                .openSubscription()
                 .consumeAsFlow()
                 .onStart { logger.info { "Starting to read challenge ws channel values" } }
                 .onCompletion { logger.info { "Finished reading challenge ws channel values" } }

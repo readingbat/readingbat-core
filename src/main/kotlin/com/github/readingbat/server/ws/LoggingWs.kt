@@ -41,6 +41,7 @@ import com.github.readingbat.server.ws.WsCommon.validateLogContext
 import io.ktor.http.cio.websocket.*
 import io.ktor.routing.*
 import io.ktor.websocket.*
+import kotlinx.coroutines.channels.BroadcastChannel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.consumeAsFlow
@@ -61,8 +62,8 @@ import kotlin.time.seconds
 internal object LoggingWs : KLogging() {
   private val clock = TimeSource.Monotonic
   private val logWsConnections: MutableSet<LogSessionContext> = synchronizedSet(LinkedHashSet<LogSessionContext>())
-  val adminCommandChannel by lazy { Channel<AdminCommandData>(Channel.BUFFERED) }
-  val logWsReadChannel by lazy { Channel<PubSubCommandsWs.LogData>(Channel.BUFFERED) }
+  val adminCommandChannel by lazy { BroadcastChannel<AdminCommandData>(Channel.BUFFERED) }
+  val logWsReadChannel by lazy { BroadcastChannel<PubSubCommandsWs.LogData>(Channel.BUFFERED) }
 
   data class LogSessionContext(val wsSession: DefaultWebSocketServerSession, val metrics: Metrics) {
     val start = clock.markNow()
@@ -77,6 +78,7 @@ internal object LoggingWs : KLogging() {
           try {
             runBlocking {
               adminCommandChannel
+                .openSubscription()
                 .consumeAsFlow()
                 .onStart { logger.info { "Starting to read admin command channel values" } }
                 .onCompletion { logger.info { "Finished reading admin command channel values" } }
@@ -146,6 +148,7 @@ internal object LoggingWs : KLogging() {
           try {
             runBlocking {
               logWsReadChannel
+                .openSubscription()
                 .consumeAsFlow()
                 .onStart { logger.info { "Starting to read log ws channel values" } }
                 .onCompletion { logger.info { "Finished reading log ws channel values" } }
