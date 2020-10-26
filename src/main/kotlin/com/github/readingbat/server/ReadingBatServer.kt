@@ -30,8 +30,10 @@ import com.github.readingbat.common.Constants.REDIS_IS_DOWN
 import com.github.readingbat.common.Constants.UNASSIGNED
 import com.github.readingbat.common.Constants.UNKNOWN_USER_ID
 import com.github.readingbat.common.Endpoints.STATIC_ROOT
+import com.github.readingbat.common.EnvVar
 import com.github.readingbat.common.EnvVar.*
 import com.github.readingbat.common.Metrics
+import com.github.readingbat.common.Property
 import com.github.readingbat.common.Property.*
 import com.github.readingbat.common.User.Companion.createUnknownUser
 import com.github.readingbat.common.User.Companion.userExists
@@ -89,7 +91,7 @@ object ReadingBatServer : KLogging() {
       HikariDataSource(
         HikariConfig()
           .apply {
-            driverClassName = DBMS_DRIVER_CLASSNAME.getRequiredProperty()
+            driverClassName = EnvVar.DBMS_DRIVER_CLASSNAME.getEnv(Property.DBMS_DRIVER_CLASSNAME.getRequiredProperty())
             jdbcUrl = POSTGRES_URL.getEnv(DBMS_URL.getRequiredProperty())
             username = POSTGRES_USERNAME.getEnv(DBMS_USERNAME.getRequiredProperty())
             password = POSTGRES_PASSWORD.getEnv(DBMS_PASSWORD.getRequiredProperty())
@@ -227,7 +229,7 @@ internal fun Application.module() {
   KOTLIN_SCRIPTS_POOL_SIZE.setPropertyFromConfig(this, "5")
   PYTHON_SCRIPTS_POOL_SIZE.setPropertyFromConfig(this, "5")
 
-  DBMS_DRIVER_CLASSNAME.setPropertyFromConfig(this, "com.impossibl.postgres.jdbc.PGDriver")
+  Property.DBMS_DRIVER_CLASSNAME.setPropertyFromConfig(this, "com.impossibl.postgres.jdbc.PGDriver")
   DBMS_URL.setPropertyFromConfig(this, "jdbc:pgsql://localhost:5432/postgres")
   DBMS_USERNAME.setPropertyFromConfig(this, "postgres")
   DBMS_PASSWORD.setPropertyFromConfig(this, "")

@@ -36,6 +36,7 @@ enum class EnvVar(val maskFunc: EnvVar.() -> String = { getEnv(UNASSIGNED) }) {
   SENDGRID_PREFIX,
   FILTER_LOG,
   REDIRECT_HOSTNAME,
+  DBMS_DRIVER_CLASSNAME,
   POSTGRES_URL({ getEnvOrNull()?.obfuscate(4) ?: UNASSIGNED }),
   POSTGRES_USERNAME,
   POSTGRES_PASSWORD({ getEnvOrNull()?.obfuscate(1) ?: UNASSIGNED }),
