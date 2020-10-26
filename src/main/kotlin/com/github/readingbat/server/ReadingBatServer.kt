@@ -90,7 +90,7 @@ object ReadingBatServer : KLogging() {
       HikariDataSource(
         HikariConfig()
           .apply {
-            //driverClassName = EnvVar.DBMS_DRIVER_CLASSNAME.getEnv(Property.DBMS_DRIVER_CLASSNAME.getRequiredProperty())
+            driverClassName = EnvVar.DBMS_DRIVER_CLASSNAME.getEnv(Property.DBMS_DRIVER_CLASSNAME.getRequiredProperty())
             jdbcUrl = POSTGRES_URL.getEnv(DBMS_URL.getRequiredProperty())
             username = POSTGRES_USERNAME.getEnv(DBMS_USERNAME.getRequiredProperty())
             password = POSTGRES_PASSWORD.getEnv(DBMS_PASSWORD.getRequiredProperty())
