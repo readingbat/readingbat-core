@@ -30,6 +30,7 @@ import com.github.readingbat.common.Constants.REDIS_IS_DOWN
 import com.github.readingbat.common.Constants.UNASSIGNED
 import com.github.readingbat.common.Constants.UNKNOWN_USER_ID
 import com.github.readingbat.common.Endpoints.STATIC_ROOT
+import com.github.readingbat.common.EnvVar
 import com.github.readingbat.common.EnvVar.*
 import com.github.readingbat.common.Metrics
 import com.github.readingbat.common.Property
