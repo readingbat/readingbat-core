@@ -85,7 +85,9 @@ dependencies {
 
     implementation "com.impossibl.pgjdbc-ng:pgjdbc-ng-all:$postgres_version"
 
-    implementation group: 'com.google.cloud.sql', name: 'jdbc-socket-factory-parent', version: "$cloud_version", ext: 'pom'
+    //implementation group: 'com.google.cloud.sql', name: 'jdbc-socket-factory-parent', version: "$cloud_version", ext: 'pom'
+
+    implementation "com.google.cloud.sql:postgres-socket-factory:$cloud_version"
 
     implementation "com.google.code.gson:gson:$gson_version"
     implementation "com.google.guava:guava:$guava_version"
