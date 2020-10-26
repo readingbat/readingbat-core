@@ -62,3 +62,6 @@ Setup:
 * https://www.thebookofjoel.com/kotlin-ktor-exposed-postgres
 * Upsert: https://github.com/JetBrains/Exposed/issues/167
 * Upsert: https://medium.com/@OhadShai/first-steps-with-kotlin-exposed-cb361a9bf5ac
+
+## Google Cloud Postgres
+* ./bin/cloud_sql_proxy -instances=${ID}:${region}:readingbat-postgres=tcp:5432
