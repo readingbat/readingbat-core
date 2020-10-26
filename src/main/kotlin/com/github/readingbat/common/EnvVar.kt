@@ -39,6 +39,7 @@ enum class EnvVar(val maskFunc: EnvVar.() -> String = { getEnv(UNASSIGNED) }) {
   POSTGRES_URL({ getEnvOrNull()?.obfuscate(4) ?: UNASSIGNED }),
   POSTGRES_USERNAME,
   POSTGRES_PASSWORD({ getEnvOrNull()?.obfuscate(1) ?: UNASSIGNED }),
+  CLOUD_SQL_CONNECTION_NAME,
   FORWARDED_ENABLED,
   XFORWARDED_ENABLED,
   JAVA_TOOL_OPTIONS;

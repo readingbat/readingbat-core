@@ -93,6 +93,15 @@ object ReadingBatServer : KLogging() {
             jdbcUrl = POSTGRES_URL.getEnv(DBMS_URL.getRequiredProperty())
             username = POSTGRES_USERNAME.getEnv(DBMS_USERNAME.getRequiredProperty())
             password = POSTGRES_PASSWORD.getEnv(DBMS_PASSWORD.getRequiredProperty())
+
+            CLOUD_SQL_CONNECTION_NAME.getEnv("")
+              .also {
+                if (it.isNotBlank()) {
+                  addDataSourceProperty("cloudSqlInstance", it)
+                  addDataSourceProperty("socketFactory", "com.google.cloud.sql.postgres.SocketFactory")
+                }
+              }
+
             maximumPoolSize = DBMS_MAX_POOL_SIZE.getRequiredProperty().toInt()
             isAutoCommit = false
             transactionIsolation = "TRANSACTION_REPEATABLE_READ"
