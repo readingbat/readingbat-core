@@ -64,4 +64,5 @@ Setup:
 * Upsert: https://medium.com/@OhadShai/first-steps-with-kotlin-exposed-cb361a9bf5ac
 
 ## Google Cloud Postgres
+* https://github.com/GoogleCloudPlatform/cloud-sql-jdbc-socket-factory
 * ./bin/cloud_sql_proxy -instances=${ID}:${region}:readingbat-postgres=tcp:5432
