@@ -13,7 +13,13 @@ IPGEOLOCATION_KEY=
 ```
 
 ## localhost
+```
+REDIS_URL=redis://user:none@host.docker.internal:6379
 
+POSTGRES_URL=jdbc:pgsql://host.docker.internal:5432/readingbat
+POSTGRES_USERNAME=postgres
+POSTGRES_PASSWORD=docker
+```
 
 ## Digital Ocean
 
