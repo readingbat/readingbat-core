@@ -45,6 +45,7 @@ import io.ktor.features.*
 import io.ktor.http.*
 import io.ktor.http.HttpHeaders.Location
 import io.ktor.http.HttpStatusCode.Companion.Found
+import io.ktor.http.cio.websocket.*
 import io.ktor.locations.Locations
 import io.ktor.request.*
 import io.ktor.server.engine.*
@@ -52,8 +53,8 @@ import io.ktor.sessions.*
 import io.ktor.websocket.*
 import mu.KLogging
 import org.slf4j.event.Level
+import java.time.Duration
 import java.util.concurrent.atomic.AtomicLong
-import kotlin.time.seconds
 
 internal object Installs : KLogging() {
 
@@ -75,7 +76,8 @@ internal object Installs : KLogging() {
     }
 
     install(WebSockets) {
-      pingPeriodMillis = 15.seconds.toLongMilliseconds()   // Duration between pings or `0` to disable pings
+      pingPeriod = Duration.ofSeconds(15)  // Duration between pings or `0` to disable pings
+      timeout = Duration.ofSeconds(15)
     }
 
     if (forwardedHeaderSupportEnabled) {
