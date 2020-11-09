@@ -209,7 +209,8 @@ internal object StudentSummaryPage : KLogging() {
       }
     }
 
-  private fun BODY.enableWebSockets(languageName: LanguageName, student: User, classCode: ClassCode) {
+  private fun BODY.enableWebSockets(langName: LanguageName, student: User, classCode: ClassCode) {
+    val studentId = student.userId
     script {
       rawHtml(
         """
@@ -219,9 +220,7 @@ internal object StudentSummaryPage : KLogging() {
           else
             wshost = wshost.replace(/^http:/, 'ws:');
       
-          var wsurl = wshost + '$WS_ROOT$STUDENT_SUMMARY_ENDPOINT/' + ${
-          encodeUriElems(languageName, student.userId, classCode)
-        };
+          var wsurl = wshost + '$WS_ROOT$STUDENT_SUMMARY_ENDPOINT/' + ${encodeUriElems(langName, studentId, classCode)};
           var ws = new WebSocket(wsurl);
       
           ws.onopen = function (event) {

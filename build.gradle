@@ -2,9 +2,9 @@ plugins {
     id 'java'
     id 'application'
     id 'maven'  // Required for jitpack.io to do a ./gradlew install
-    id 'org.jetbrains.kotlin.jvm' version '1.4.10'
-    id 'org.jetbrains.kotlin.plugin.serialization' version '1.4.10'
-    id "com.github.ben-manes.versions" version '0.33.0'
+    id 'org.jetbrains.kotlin.jvm' version '1.4.20-RC'
+    id 'org.jetbrains.kotlin.plugin.serialization' version '1.4.20-RC'
+    id "com.github.ben-manes.versions" version '0.35.0'
     id 'com.github.johnrengelman.shadow' version '6.1.0'
 }
 
@@ -122,9 +122,13 @@ task sourcesJar(type: Jar, dependsOn: classes) {
     from sourceSets.main.allSource
 }
 
-artifacts {
-    archives sourcesJar
+java {
+    withSourcesJar()
 }
+
+//artifacts {
+//    archives sourcesJar
+//}
 
 // Include build uberjars in heroku deploy
 task stage(dependsOn: ['uberjar', 'build', 'clean'])
