@@ -306,13 +306,13 @@ internal fun Application.module() {
   }
 }
 
-private val Application.redirectHostname
-  get() =
-    REDIRECT_HOSTNAME.getEnv(REDIRECT_HOSTNAME_PROPERTY.configValue(this, default = ""))
-
 private val Application.agentEnabled
   get() =
     AGENT_ENABLED.getEnv(AGENT_ENABLED_PROPERTY.configValue(this, default = "false").toBoolean())
+
+private val Application.redirectHostname
+  get() =
+    REDIRECT_HOSTNAME.getEnv(REDIRECT_HOSTNAME_PROPERTY.configValue(this, default = ""))
 
 private val Application.forwardedHeaderSupportEnabled
   get() =

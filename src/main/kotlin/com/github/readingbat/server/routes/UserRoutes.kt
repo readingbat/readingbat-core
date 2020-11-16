@@ -96,7 +96,6 @@ import com.github.readingbat.server.ServerUtils.respondWithRedisCheck
 import com.github.readingbat.server.ServerUtils.respondWithSuspendingRedirect
 import com.github.readingbat.server.ServerUtils.respondWithSuspendingRedisCheck
 import com.github.readingbat.server.routes.ResourceContent.getResourceAsText
-import com.github.readingbat.server.routes.StaticVals.robotsTxt
 import io.ktor.application.*
 import io.ktor.http.*
 import io.ktor.http.ContentType.Text.CSS
@@ -289,12 +288,8 @@ internal fun Routing.userRoutes(metrics: Metrics, contentSrc: () -> ReadingBatCo
   }
 
   get(ROBOTS_ENDPOINT) {
-    respondWith(ContentType.Text.Plain) { robotsTxt }
+    respondWith(ContentType.Text.Plain) { getResourceAsText("/static$ROBOTS_ENDPOINT") }
   }
-}
-
-private object StaticVals {
-  val robotsTxt by lazy { getResourceAsText("/static$ROBOTS_ENDPOINT") }
 }
 
 object ResourceContent {
