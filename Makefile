@@ -39,4 +39,4 @@ depends:
 	./gradlew dependencies
 
 upgrade-wrapper:
-	./gradlew wrapper --gradle-version=6.7 --distribution-type=bin
+	./gradlew wrapper --gradle-version=6.7.1 --distribution-type=bin
