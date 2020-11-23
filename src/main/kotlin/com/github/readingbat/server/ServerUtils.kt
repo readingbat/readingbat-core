@@ -162,7 +162,7 @@ internal object ServerUtils : KLogging() {
       .filter { content[it].isNotEmpty() }
       .firstOrNull() ?: throw InvalidConfigurationException("Missing non-empty language")
 
-  fun redisLog(msg: String, logId: String) {
+  fun logToRedis(msg: String, logId: String) {
     if (logId.isNotEmpty()) {
       redisPool?.withNonNullRedisPool { redis ->
         redis.publishLog(msg, logId)

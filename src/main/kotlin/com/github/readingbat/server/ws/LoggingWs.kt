@@ -84,7 +84,7 @@ internal object LoggingWs : KLogging() {
                 .onCompletion { logger.info { "Finished reading admin command channel values" } }
                 .collect { data ->
                   redisPool?.withNonNullRedisPool { redis ->
-                    val redisLog = { s: String -> redis.publishLog(s, data.logId) }
+                    val logToRedis = { s: String -> redis.publishLog(s, data.logId) }
 
                     when (data.command) {
                       RESET_CONTENT_DSL -> {
@@ -93,7 +93,7 @@ internal object LoggingWs : KLogging() {
                             "DSL content reset in $dur"
                               .also {
                                 logger.info { it }
-                                redisLog(it)
+                                logToRedis(it)
                               }
                           }
                       }
@@ -105,7 +105,7 @@ internal object LoggingWs : KLogging() {
                             "Challenge cache reset -- $cnt challenges removed"
                               .also {
                                 logger.info { it }
-                                redisLog(it)
+                                logToRedis(it)
                               }
                           }
                       }
@@ -113,10 +113,10 @@ internal object LoggingWs : KLogging() {
                         val type = Json.decodeFromString<LoadChallengeType>(data.jsonArgs)
                         type.languageTypes
                           .forEach { langType ->
-                            content.get().loadChallenges(langType, redisLog, "", false)
+                            content.get().loadChallenges(langType, logToRedis, "", false)
                               .also {
                                 logger.info { it }
-                                redisLog(it)
+                                logToRedis(it)
                               }
                           }
                       }
@@ -126,7 +126,7 @@ internal object LoggingWs : KLogging() {
                             "Garbage collector invoked for $dur"
                               .also {
                                 logger.info { it }
-                                redisLog(it)
+                                logToRedis(it)
                               }
                           }
                       }

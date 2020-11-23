@@ -33,8 +33,8 @@ import com.github.readingbat.common.Endpoints.STATIC_ROOT
 import com.github.readingbat.common.EnvVar
 import com.github.readingbat.common.EnvVar.*
 import com.github.readingbat.common.Metrics
-import com.github.readingbat.common.Property
 import com.github.readingbat.common.Property.*
+import com.github.readingbat.common.Property.DBMS_DRIVER_CLASSNAME
 import com.github.readingbat.common.User.Companion.createUnknownUser
 import com.github.readingbat.common.User.Companion.userExists
 import com.github.readingbat.dsl.*
@@ -45,7 +45,7 @@ import com.github.readingbat.server.ReadingBatServer.content
 import com.github.readingbat.server.ReadingBatServer.contentReadCount
 import com.github.readingbat.server.ReadingBatServer.logger
 import com.github.readingbat.server.ReadingBatServer.metrics
-import com.github.readingbat.server.ServerUtils.redisLog
+import com.github.readingbat.server.ServerUtils.logToRedis
 import com.github.readingbat.server.routes.AdminRoutes.adminRoutes
 import com.github.readingbat.server.routes.sysAdminRoutes
 import com.github.readingbat.server.routes.userRoutes
@@ -91,7 +91,7 @@ object ReadingBatServer : KLogging() {
       HikariDataSource(
         HikariConfig()
           .apply {
-            driverClassName = EnvVar.DBMS_DRIVER_CLASSNAME.getEnv(Property.DBMS_DRIVER_CLASSNAME.getRequiredProperty())
+            driverClassName = EnvVar.DBMS_DRIVER_CLASSNAME.getEnv(DBMS_DRIVER_CLASSNAME.getRequiredProperty())
             jdbcUrl = POSTGRES_URL.getEnv(DBMS_URL.getRequiredProperty())
             username = POSTGRES_USERNAME.getEnv(DBMS_USERNAME.getRequiredProperty())
             password = POSTGRES_PASSWORD.getEnv(DBMS_PASSWORD.getRequiredProperty())
@@ -169,10 +169,6 @@ object ReadingBatServer : KLogging() {
         null  // Return null
       }
 
-    // Load pubsub
-    if (isProduction())
-      PubSubCommandsWs.initThreads()
-
     embeddedServer(CIO, environment).start(wait = true)
   }
 }
@@ -181,7 +177,7 @@ internal fun Application.readContentDsl(fileName: String, variableName: String, 
   "Loading content using $variableName in $fileName"
     .also {
       logger.info { it }
-      redisLog(it, logId)
+      logToRedis(it, logId)
     }
   measureTime {
     val contentSource = FileSource(fileName = fileName)
@@ -198,7 +194,7 @@ internal fun Application.readContentDsl(fileName: String, variableName: String, 
     "Loaded content using $variableName in $fileName in $dur"
       .also {
         logger.info { it }
-        redisLog(it, logId)
+        logToRedis(it, logId)
       }
   }
   contentReadCount.incrementAndGet()
@@ -232,7 +228,7 @@ internal fun Application.module() {
   KOTLIN_SCRIPTS_POOL_SIZE.setPropertyFromConfig(this, "5")
   PYTHON_SCRIPTS_POOL_SIZE.setPropertyFromConfig(this, "5")
 
-  Property.DBMS_DRIVER_CLASSNAME.setPropertyFromConfig(this, "com.impossibl.postgres.jdbc.PGDriver")
+  DBMS_DRIVER_CLASSNAME.setPropertyFromConfig(this, "com.impossibl.postgres.jdbc.PGDriver")
   DBMS_URL.setPropertyFromConfig(this, "jdbc:pgsql://localhost:5432/postgres")
   DBMS_USERNAME.setPropertyFromConfig(this, "postgres")
   DBMS_PASSWORD.setPropertyFromConfig(this, "")
@@ -247,6 +243,11 @@ internal fun Application.module() {
 
   SENDGRID_PREFIX_PROPERTY.setProperty(
     SENDGRID_PREFIX.getEnv(SENDGRID_PREFIX_PROPERTY.configValue(this, "https://www.readingbat.com")))
+
+  // Do not load if not production and redis is not available
+  val prod = isProduction()
+  if (isProduction())
+    PubSubCommandsWs.initThreads()
 
   if (isPostgresEnabled()) {
     ReadingBatServer.postgres

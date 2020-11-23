@@ -102,7 +102,7 @@ internal object PubSubCommandsWs : KLogging() {
             override fun onMessage(channel: String?, message: String?) {
               if (channel.isNotNull() && message.isNotNull())
                 runBlocking {
-                  when (PubSubTopic.valueOf(channel)) {
+                  when (enumValueOf<PubSubTopic>(channel)) {
                     ADMIN_COMMAND -> {
                       val data = Json.decodeFromString<AdminCommandData>(message)
                       adminCommandChannel.send(data)
