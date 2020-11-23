@@ -201,7 +201,11 @@ class ReadingBatContent {
   internal fun evalContent(contentSource: ContentSource, variableName: String): ReadingBatContent =
     try {
       // Catch exceptions so that remote code does not bring down the server
-      contentMap.computeIfAbsent(contentSource.source) { readContentDsl(contentSource, "", variableName) }
+      contentMap.computeIfAbsent(contentSource.source) {
+        logger.info { "Computing contentMap element for ${contentSource.source}" }
+        val dslCode = readContentDsl(contentSource)
+        evalContentDsl(contentSource.source, variableName, dslCode)
+      }
     } catch (e: Throwable) {
       logger.error(e) { "While evaluating: $this" }
       ReadingBatContent()

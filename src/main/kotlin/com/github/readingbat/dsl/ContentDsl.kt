@@ -25,7 +25,6 @@ import com.github.pambrose.common.util.GitHubRepo
 import com.github.pambrose.common.util.OwnerType
 import com.github.pambrose.common.util.isNotNull
 import com.github.pambrose.common.util.md5Of
-import com.github.pambrose.common.util.toDoubleQuoted
 import com.github.readingbat.common.Constants.UNASSIGNED
 import com.github.readingbat.common.EnvVar.IPGEOLOCATION_KEY
 import com.github.readingbat.common.KeyConstants.CONTENT_DSL_KEY
@@ -84,39 +83,53 @@ fun ContentSource.eval(enclosingContent: ReadingBatContent, variableName: String
 
 private fun contentDslKey(source: String) = keyOf(CONTENT_DSL_KEY, md5Of(source))
 
+
 private fun fetchContentDslFromRedis(source: String) =
   if (isContentCachingEnabled()) redisPool?.withRedisPool { it?.get(contentDslKey(source)) } else null
 
-internal fun readContentDsl(contentSource: ContentSource,
-                            logId: String,
-                            variableName: String = "content"): ReadingBatContent {
-  val (code, dur) =
-    measureTimedValue {
-      if (!contentSource.remote) {
-        contentSource.content
+private fun saveContentDslToRedis(source: String, dsl: String) {
+  if (isContentCachingEnabled()) {
+    redisPool?.withNonNullRedisPool(true) { redis ->
+      redis.set(contentDslKey(source), dsl)
+      logger.info { "Saved $source to redis" }
+    }
+  }
+}
+
+internal fun readContentDsl(contentSource: ContentSource) =
+  measureTimedValue {
+    if (!contentSource.remote) {
+      contentSource.content
+    }
+    else {
+      var dslCode = fetchContentDslFromRedis(contentSource.source)
+      if (dslCode.isNotNull()) {
+        logger.info { "Fetched ${contentSource.source} from redis cache" }
       }
       else {
-        var dsl = fetchContentDslFromRedis(contentSource.source)
-        if (dsl.isNotNull()) {
-          logger.debug { "Fetched ${contentSource.source} from redis cache" }
-        }
-        else {
-          dsl = contentSource.content
-          if (isContentCachingEnabled()) {
-            redisPool?.withNonNullRedisPool(true) { redis ->
-              redis.set(contentDslKey(contentSource.source), dsl)
-              logger.debug { "Saved ${contentSource.source.toDoubleQuoted()} to redis" }
-            }
-          }
-        }
-        dsl
+        dslCode = contentSource.content
+        saveContentDslToRedis(contentSource.source, dslCode)
       }
+      dslCode
     }
+  }.let {
+    logger.info { "Read content for ${contentSource.source} in ${it.duration}" }
+    it.value
+  }
 
-  logger.info { "Read content for ${contentSource.source.toDoubleQuoted()} in $dur" }
-  val withImports = addImports(code, variableName)
-  return runBlocking { evalDsl(withImports, contentSource.source) }
-}
+internal fun evalContentDsl(source: String,
+                            variableName: String = "content",
+                            code: String) =
+  runBlocking {
+    measureTimedValue {
+      logger.info { "Starting eval for $source" }
+      val withImports = addImports(code, variableName)
+      evalDsl(withImports, source)
+    }
+  }.let {
+    logger.info { "Evaluated $source in ${it.duration}" }
+    it.value
+  }
 
 internal fun addImports(code: String, variableName: String): String {
   val classImports =
@@ -145,6 +158,7 @@ private val <T> KFunction<T>.fqMethodName get() = "${javaClass.packageName}.$nam
 
 private suspend fun evalDsl(code: String, sourceName: String) =
   try {
+    logger.debug { "Evaluating code from $sourceName:\n$code" }
     kotlinScriptPool.eval { eval(code) as ReadingBatContent }.apply { validate() }
   } catch (e: Throwable) {
     logger.info { "Error in $sourceName:\n$code" }

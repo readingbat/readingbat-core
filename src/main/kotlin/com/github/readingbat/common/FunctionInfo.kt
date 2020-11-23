@@ -21,6 +21,9 @@ import com.github.pambrose.common.util.asBracketed
 import com.github.pambrose.common.util.toDoubleQuoted
 import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.InvalidConfigurationException
+import com.github.readingbat.dsl.LanguageType.Java
+import com.github.readingbat.dsl.LanguageType.Kotlin
+import com.github.readingbat.dsl.LanguageType.Python
 import com.github.readingbat.dsl.ReturnType
 import com.github.readingbat.dsl.ReturnType.*
 import com.github.readingbat.server.ChallengeMd5
@@ -43,16 +46,75 @@ internal class FunctionInfo(val challenge: Challenge,
   val correctAnswers by lazy {
     List(rawAnswers.size) { i ->
       val raw = rawAnswers[i]
+
+      fun Any?.pythonAdjust(quoteIt: Boolean) =
+        toString().trim()
+          .removeSurrounding("[", "]").trim()
+          .let { if (it.isEmpty()) emptyList() else it.split(",") }
+          .map { it.trim().removeSurrounding("'") }
+          .joinToString { if (quoteIt) it.toDoubleQuoted() else it }
+          .asBracketed()
+
       when (returnType) {
-        BooleanType -> if (languageType.isPython) raw.toString().capitalize() else raw.toString()
-        IntType -> raw.toString()
+        BooleanType ->
+          when (languageType) {
+            Python -> raw.toString().capitalize()
+            Java,
+            Kotlin -> raw.toString()
+          }
+
+        IntType, FloatType -> raw.toString()
+
         StringType -> raw.toString().toDoubleQuoted()
-        BooleanArrayType -> (raw as BooleanArray).map { it }.joinToString().asBracketed()
-        IntArrayType -> (raw as IntArray).map { it }.joinToString().asBracketed()
-        StringArrayType -> (raw as Array<String>).joinToString { it.toDoubleQuoted() }.asBracketed()
-        BooleanListType -> (raw as List<Boolean>).toString()
-        IntListType -> (raw as List<Int>).toString()
-        StringListType -> "[${(raw as List<String>).joinToString { it.toDoubleQuoted() }}]"
+
+        BooleanArrayType ->
+          when (languageType) {
+            Python -> raw.pythonAdjust(false)
+            Java, Kotlin -> (raw as BooleanArray).map { it }.joinToString().asBracketed()
+          }
+
+        IntArrayType ->
+          when (languageType) {
+            Python -> raw.pythonAdjust(false)
+            Java, Kotlin -> (raw as IntArray).map { it }.joinToString().asBracketed()
+          }
+
+        FloatArrayType ->
+          when (languageType) {
+            Python -> raw.pythonAdjust(false)
+            Java, Kotlin -> (raw as FloatArray).map { it }.joinToString().asBracketed()
+          }
+
+        StringArrayType ->
+          when (languageType) {
+            Python -> raw.pythonAdjust(true)
+            Java, Kotlin -> (raw as Array<String>).joinToString { it.toDoubleQuoted() }.asBracketed()
+          }
+
+        BooleanListType ->
+          when (languageType) {
+            Python -> raw.pythonAdjust(false)
+            Java, Kotlin -> (raw as List<Boolean>).toString()
+          }
+
+        IntListType ->
+          when (languageType) {
+            Python -> raw.pythonAdjust(false)
+            Java, Kotlin -> (raw as List<Int>).toString()
+          }
+
+        FloatListType ->
+          when (languageType) {
+            Python -> raw.pythonAdjust(false)
+            Java, Kotlin -> (raw as List<Float>).toString()
+          }
+
+        StringListType ->
+          when (languageType) {
+            Python -> raw.pythonAdjust(false)
+            Java, Kotlin -> "[${(raw as List<String>).joinToString { it.toDoubleQuoted() }}]"
+          }
+
         Runtime -> throw InvalidConfigurationException("Invalid return type")
       }
     }
@@ -62,9 +124,11 @@ internal class FunctionInfo(val challenge: Challenge,
     when (returnType) {
       BooleanType -> if (languageType.isPython) "True" else "true"
       IntType -> "0"
+      FloatType -> "0.0"
       StringType -> if (languageType.isPython) "''" else """"""""
       BooleanListType, BooleanArrayType -> if (languageType.isPython) "[True, False]" else "[true, false]"
       IntListType, IntArrayType -> "[0, 1]"
+      FloatListType, FloatArrayType -> "[0.0, 1.0]"
       StringListType, StringArrayType -> if (languageType.isPython) "['', '']" else """["", ""]"""
       Runtime -> throw InvalidConfigurationException("Invalid return type")
     }

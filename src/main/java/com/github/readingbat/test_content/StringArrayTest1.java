@@ -15,28 +15,19 @@
  *
  */
 
-package com.github.readingbat.dsl
+package com.github.readingbat.test_content;
 
-enum class ReturnType(val typeStr: String) {
+import static com.github.pambrose.common.util.ArrayUtils.arrayPrint;
 
-  Runtime("runtime"),
+public class StringArrayTest1 {
 
-  BooleanType("boolean"),
-  IntType("int"),
-  FloatType("float"),
-  StringType("String"),
+    public static String[] combine(String s1, String s2) {
+        return new String[]{s1, s2};
+    }
 
-  BooleanArrayType("boolean[]"),
-  IntArrayType("int[]"),
-  FloatArrayType("float[]"),
-  StringArrayType("String[]"),
-
-  BooleanListType("List<Boolean>"),
-  IntListType("List<Integer>"),
-  FloatListType("List<Float>"),
-  StringListType("List<String>");
-
-  companion object {
-    val String.asReturnType get() = values().firstOrNull { this == it.typeStr }
-  }
+    public static void main(String[] args) {
+        arrayPrint(combine("Car", "wash"));
+        arrayPrint(combine("Hello", " world"));
+        arrayPrint(combine("", ""));
+    }
 }

@@ -336,7 +336,7 @@ class KotlinChallenge(challengeGroup: ChallengeGroup<*>,
     val strippedCode = lines.joinToString("\n")
     val funcCode = "\n${extractKotlinFunction(lines)}\n\n"
     val invocations = extractKotlinInvocations(lines, funMainRegex, kotlinEndRegex)
-    val script = convertToKotlinScript(lines)
+    val script = convertToKotlinScript(lines).also { logger.debug { "Kotlin: $it" } }
     val correctAnswers = mutableListOf<Any>()
 
     logger.debug { "$challengeName return type: $returnType script: \n${script.withLineNumbers()}" }

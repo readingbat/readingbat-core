@@ -15,28 +15,25 @@
  *
  */
 
-package com.github.readingbat.dsl
+package com.github.readingbat.test_content;
 
-enum class ReturnType(val typeStr: String) {
+import java.util.ArrayList;
+import java.util.List;
 
-  Runtime("runtime"),
+import static com.github.pambrose.common.util.ListUtils.listPrint;
 
-  BooleanType("boolean"),
-  IntType("int"),
-  FloatType("float"),
-  StringType("String"),
+public class StringListTest1 {
 
-  BooleanArrayType("boolean[]"),
-  IntArrayType("int[]"),
-  FloatArrayType("float[]"),
-  StringArrayType("String[]"),
+    public static List<String> combine(String s1, String s2) {
+        List<String> retval = new ArrayList<String>();
+        retval.add(s1);
+        retval.add(s2);
+        return retval;
+    }
 
-  BooleanListType("List<Boolean>"),
-  IntListType("List<Integer>"),
-  FloatListType("List<Float>"),
-  StringListType("List<String>");
-
-  companion object {
-    val String.asReturnType get() = values().firstOrNull { this == it.typeStr }
-  }
+    public static void main(String[] args) {
+        listPrint(combine("Car", "wash"));
+        listPrint(combine("Hello", " world"));
+        listPrint(combine("", ""));
+    }
 }

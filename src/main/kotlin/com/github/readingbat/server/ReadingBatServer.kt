@@ -184,12 +184,15 @@ internal fun Application.readContentDsl(fileName: String, variableName: String, 
       redisLog(it, logId)
     }
   measureTime {
+    val contentSource = FileSource(fileName = fileName)
+    val dslCode = readContentDsl(contentSource)
     content.set(
-      readContentDsl(FileSource(fileName = fileName), logId, variableName)
+      evalContentDsl(contentSource.source, variableName, dslCode)
         .apply {
           maxHistoryLength = MAX_HISTORY_LENGTH.configValue(this@readContentDsl, "10").toInt()
           maxClassCount = MAX_CLASS_COUNT.configValue(this@readContentDsl, "25").toInt()
-        }.apply { clearContentMap() })
+        }
+        .apply { clearContentMap() })
     metrics.contentLoadedCount.labels(agentLaunchId()).inc()
   }.also { dur ->
     "Loaded content using $variableName in $fileName in $dur"
@@ -285,9 +288,9 @@ internal fun Application.module() {
   }
 
   // readContentDsl() is passed as a lambda because it is Application.readContentDsl()
-  val readContentDslFunc = { logId: String -> readContentDsl(dslFileName, dslVariableName, logId) }
+  val resetContentDslFunc = { logId: String -> readContentDsl(dslFileName, dslVariableName, logId) }
 
-  LoggingWs.initThreads({ content.get() }, readContentDslFunc)
+  LoggingWs.initThreads({ content.get() }, resetContentDslFunc)
 
   installs(isProduction(),
            redirectHostname,
@@ -300,7 +303,7 @@ internal fun Application.module() {
     adminRoutes(metrics)
     locations(metrics) { content.get() }
     userRoutes(metrics) { content.get() }
-    sysAdminRoutes(metrics, readContentDslFunc)
+    sysAdminRoutes(metrics, resetContentDslFunc)
     wsRoutes(metrics) { content.get() }
     static(STATIC_ROOT) { resources("static") }
   }

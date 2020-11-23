@@ -48,6 +48,7 @@ import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.ReturnType
 import com.github.readingbat.dsl.ReturnType.BooleanType
+import com.github.readingbat.dsl.ReturnType.FloatType
 import com.github.readingbat.dsl.ReturnType.IntType
 import com.github.readingbat.dsl.ReturnType.StringType
 import com.github.readingbat.dsl.isPostgresEnabled
@@ -166,6 +167,7 @@ internal object ChallengePost : KLogging() {
           }
         returnType == StringType && isNotDoubleQuoted() -> "$languageType strings are double quoted"
         returnType == IntType && isNotInt() -> "Answer should be an int value"
+        returnType == FloatType && isNotFloat() -> "Answer should be a float value"
         else -> ""
       }
 
@@ -195,6 +197,7 @@ internal object ChallengePost : KLogging() {
           }
         returnType == StringType && isNotQuoted() -> "Python strings are either single or double quoted"
         returnType == IntType && isNotInt() -> "Answer should be an int value"
+        returnType == FloatType && isNotFloat() -> "Answer should be a float value"
         else -> ""
       }
 
@@ -216,9 +219,12 @@ internal object ChallengePost : KLogging() {
 
   private suspend fun String.equalsAsJvmList(correctAnswer: String): Pair<Boolean, String> {
     fun deriveHint() = if (isNotBracketed()) "Answer should be bracketed" else ""
-
-    val compareExpr =
-      "listOf(${if (isBracketed()) trimEnds() else this}) == listOf(${if (correctAnswer.isBracketed()) correctAnswer.trimEnds() else correctAnswer})"
+    val lho = if (isBracketed()) removeSurrounding("[", "]") else this
+    val rho = if (correctAnswer.isBracketed()) correctAnswer.removeSurrounding("[", "]") else correctAnswer
+    // Use <String> here because a type is required. It doesn't matter which type is used.
+    val lhs = if (lho.isBlank()) "emptyList<String>()" else "listOf($lho)"
+    val rhs = if (rho.isBlank()) "emptyList<String>()" else "listOf($rho)"
+    val compareExpr = "$lhs == $rhs"
     logger.debug { "Check answers expression: $compareExpr" }
     return try {
       val result = kotlinScriptPool.eval { eval(compareExpr) } as Boolean
