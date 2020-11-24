@@ -201,51 +201,12 @@ internal fun Application.readContentDsl(fileName: String, variableName: String, 
 }
 
 internal fun Application.module() {
+
+  assignProperties()
+
   adminUsers.addAll(ADMIN_USERS.configValueOrNull(this)?.getList() ?: emptyList())
 
-  AGENT_ENABLED_PROPERTY.setProperty(agentEnabled.toString())
-  PROXY_HOSTNAME.setPropertyFromConfig(this, "")
-
-  IS_PRODUCTION.setProperty(IS_PRODUCTION.configValue(this, "false").toBoolean().toString())
-  POSTGRES_ENABLED.setProperty(POSTGRES_ENABLED.configValue(this, "false").toBoolean().toString())
-  SAVE_REQUESTS_ENABLED.setProperty(SAVE_REQUESTS_ENABLED.configValue(this, "true").toBoolean().toString())
-  MULTI_SERVER_ENABLED.setProperty(MULTI_SERVER_ENABLED.configValue(this, "false").toBoolean().toString())
-  CONTENT_CACHING_ENABLED.setProperty(CONTENT_CACHING_ENABLED.configValue(this, "false").toBoolean().toString())
-
-  DSL_FILE_NAME.setPropertyFromConfig(this, "src/Content.kt")
-  DSL_VARIABLE_NAME.setPropertyFromConfig(this, "content")
-
-  ANALYTICS_ID.setPropertyFromConfig(this, "")
-
-  PINGDOM_BANNER_ID.setPropertyFromConfig(this, "")
-  PINGDOM_URL.setPropertyFromConfig(this, "")
-  STATUS_PAGE_URL.setPropertyFromConfig(this, "")
-
-  PROMETHEUS_URL.setPropertyFromConfig(this, "")
-  GRAFANA_URL.setPropertyFromConfig(this, "")
-
-  JAVA_SCRIPTS_POOL_SIZE.setPropertyFromConfig(this, "5")
-  KOTLIN_SCRIPTS_POOL_SIZE.setPropertyFromConfig(this, "5")
-  PYTHON_SCRIPTS_POOL_SIZE.setPropertyFromConfig(this, "5")
-
-  DBMS_DRIVER_CLASSNAME.setPropertyFromConfig(this, "com.impossibl.postgres.jdbc.PGDriver")
-  DBMS_URL.setPropertyFromConfig(this, "jdbc:pgsql://localhost:5432/postgres")
-  DBMS_USERNAME.setPropertyFromConfig(this, "postgres")
-  DBMS_PASSWORD.setPropertyFromConfig(this, "")
-  DBMS_MAX_POOL_SIZE.setPropertyFromConfig(this, "10")
-
-  REDIS_MAX_POOL_SIZE.setPropertyFromConfig(this, "10")
-  REDIS_MAX_IDLE_SIZE.setPropertyFromConfig(this, "5")
-  REDIS_MIN_IDLE_SIZE.setPropertyFromConfig(this, "1")
-
-  KTOR_PORT.setPropertyFromConfig(this, "0")
-  KTOR_WATCH.setProperty(KTOR_WATCH.configValueOrNull(this)?.getList()?.toString() ?: UNASSIGNED)
-
-  SENDGRID_PREFIX_PROPERTY.setProperty(
-    SENDGRID_PREFIX.getEnv(SENDGRID_PREFIX_PROPERTY.configValue(this, "https://www.readingbat.com")))
-
-  // Do not load if not production and redis is not available
-  val prod = isProduction()
+  // Only run this
   if (isProduction())
     PubSubCommandsWs.initThreads()
 
@@ -293,10 +254,7 @@ internal fun Application.module() {
 
   LoggingWs.initThreads({ content.get() }, resetContentDslFunc)
 
-  installs(isProduction(),
-           redirectHostname,
-           forwardedHeaderSupportEnabled,
-           xforwardedHeaderSupportEnabled)
+  installs(isProduction())
 
   intercepts()
 
@@ -310,18 +268,47 @@ internal fun Application.module() {
   }
 }
 
-private val Application.agentEnabled
-  get() =
-    AGENT_ENABLED.getEnv(AGENT_ENABLED_PROPERTY.configValue(this, default = "false").toBoolean())
+private fun Application.assignProperties() {
 
-private val Application.redirectHostname
-  get() =
-    REDIRECT_HOSTNAME.getEnv(REDIRECT_HOSTNAME_PROPERTY.configValue(this, default = ""))
+  val agentEnabled = AGENT_ENABLED.getEnv(AGENT_ENABLED_PROPERTY.configValue(this, default = "false").toBoolean())
+  AGENT_ENABLED_PROPERTY.setProperty(agentEnabled.toString())
+  PROXY_HOSTNAME.setPropertyFromConfig(this, "")
 
-private val Application.forwardedHeaderSupportEnabled
-  get() =
-    FORWARDED_ENABLED.getEnv(FORWARDED_ENABLED_PROPERTY.configValue(this, default = "false").toBoolean())
+  IS_PRODUCTION.setProperty(IS_PRODUCTION.configValue(this, "false").toBoolean().toString())
+  POSTGRES_ENABLED.setProperty(POSTGRES_ENABLED.configValue(this, "false").toBoolean().toString())
+  SAVE_REQUESTS_ENABLED.setProperty(SAVE_REQUESTS_ENABLED.configValue(this, "true").toBoolean().toString())
+  MULTI_SERVER_ENABLED.setProperty(MULTI_SERVER_ENABLED.configValue(this, "false").toBoolean().toString())
+  CONTENT_CACHING_ENABLED.setProperty(CONTENT_CACHING_ENABLED.configValue(this, "false").toBoolean().toString())
 
-private val Application.xforwardedHeaderSupportEnabled
-  get() =
-    XFORWARDED_ENABLED.getEnv(XFORWARDED_ENABLED_PROPERTY.configValue(this, default = "false").toBoolean())
+  DSL_FILE_NAME.setPropertyFromConfig(this, "src/Content.kt")
+  DSL_VARIABLE_NAME.setPropertyFromConfig(this, "content")
+
+  ANALYTICS_ID.setPropertyFromConfig(this, "")
+
+  PINGDOM_BANNER_ID.setPropertyFromConfig(this, "")
+  PINGDOM_URL.setPropertyFromConfig(this, "")
+  STATUS_PAGE_URL.setPropertyFromConfig(this, "")
+
+  PROMETHEUS_URL.setPropertyFromConfig(this, "")
+  GRAFANA_URL.setPropertyFromConfig(this, "")
+
+  JAVA_SCRIPTS_POOL_SIZE.setPropertyFromConfig(this, "5")
+  KOTLIN_SCRIPTS_POOL_SIZE.setPropertyFromConfig(this, "5")
+  PYTHON_SCRIPTS_POOL_SIZE.setPropertyFromConfig(this, "5")
+
+  DBMS_DRIVER_CLASSNAME.setPropertyFromConfig(this, "com.impossibl.postgres.jdbc.PGDriver")
+  DBMS_URL.setPropertyFromConfig(this, "jdbc:pgsql://localhost:5432/postgres")
+  DBMS_USERNAME.setPropertyFromConfig(this, "postgres")
+  DBMS_PASSWORD.setPropertyFromConfig(this, "")
+  DBMS_MAX_POOL_SIZE.setPropertyFromConfig(this, "10")
+
+  REDIS_MAX_POOL_SIZE.setPropertyFromConfig(this, "10")
+  REDIS_MAX_IDLE_SIZE.setPropertyFromConfig(this, "5")
+  REDIS_MIN_IDLE_SIZE.setPropertyFromConfig(this, "1")
+
+  KTOR_PORT.setPropertyFromConfig(this, "0")
+  KTOR_WATCH.setProperty(KTOR_WATCH.configValueOrNull(this)?.getList()?.toString() ?: UNASSIGNED)
+
+  SENDGRID_PREFIX_PROPERTY.setProperty(
+    SENDGRID_PREFIX.getEnv(SENDGRID_PREFIX_PROPERTY.configValue(this, "https://www.readingbat.com")))
+}

@@ -26,6 +26,12 @@ import com.github.readingbat.common.Endpoints.CSS_ENDPOINT
 import com.github.readingbat.common.Endpoints.FAV_ICON_ENDPOINT
 import com.github.readingbat.common.Endpoints.STATIC_ROOT
 import com.github.readingbat.common.EnvVar.FILTER_LOG
+import com.github.readingbat.common.EnvVar.FORWARDED_ENABLED
+import com.github.readingbat.common.EnvVar.REDIRECT_HOSTNAME
+import com.github.readingbat.common.EnvVar.XFORWARDED_ENABLED
+import com.github.readingbat.common.Property.FORWARDED_ENABLED_PROPERTY
+import com.github.readingbat.common.Property.REDIRECT_HOSTNAME_PROPERTY
+import com.github.readingbat.common.Property.XFORWARDED_ENABLED_PROPERTY
 import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.InvalidRequestException
 import com.github.readingbat.dsl.RedisUnavailableException
@@ -58,10 +64,7 @@ import java.util.concurrent.atomic.AtomicLong
 
 internal object Installs : KLogging() {
 
-  fun Application.installs(production: Boolean,
-                           redirectHostname: String,
-                           forwardedHeaderSupportEnabled: Boolean,
-                           xforwardedHeaderSupportEnabled: Boolean) {
+  fun Application.installs(production: Boolean) {
 
     install(Locations)
 
@@ -75,11 +78,13 @@ internal object Installs : KLogging() {
       configureFormAuth()
     }
 
-    install(WebSockets) {
+    val install = install(WebSockets) {
       pingPeriod = Duration.ofSeconds(15)  // Duration between pings or `0` to disable pings
       timeout = Duration.ofSeconds(15)
     }
 
+    val forwardedHeaderSupportEnabled =
+      FORWARDED_ENABLED.getEnv(FORWARDED_ENABLED_PROPERTY.configValue(this, default = "false").toBoolean())
     if (forwardedHeaderSupportEnabled) {
       logger.info { "Enabling ForwardedHeaderSupport" }
       install(ForwardedHeaderSupport)
@@ -88,6 +93,8 @@ internal object Installs : KLogging() {
       logger.info { "Not enabling ForwardedHeaderSupport" }
     }
 
+    val xforwardedHeaderSupportEnabled =
+      XFORWARDED_ENABLED.getEnv(XFORWARDED_ENABLED_PROPERTY.configValue(this, default = "false").toBoolean())
     if (xforwardedHeaderSupportEnabled) {
       logger.info { "Enabling XForwardedHeaderSupport" }
       install(XForwardedHeaderSupport)
@@ -96,6 +103,7 @@ internal object Installs : KLogging() {
       logger.info { "Not enabling XForwardedHeaderSupport" }
     }
 
+    val redirectHostname = REDIRECT_HOSTNAME.getEnv(REDIRECT_HOSTNAME_PROPERTY.configValue(this, default = ""))
     if (production && redirectHostname.isNotBlank()) {
       logger.info { "Installing HerokuHttpsRedirect using: $redirectHostname" }
       install(HerokuHttpsRedirect) {

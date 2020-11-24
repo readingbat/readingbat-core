@@ -51,7 +51,7 @@ enum class Property(val propertyValue: String,
   PROXY_HOSTNAME("$AGENT.proxy.hostname"),
   STARTUP_DELAY_SECS("$READINGBAT.$SITE.startupMaxDelaySecs"),
 
-  // These are defaults for enf var values
+  // These are defaults for env var values
   REDIRECT_HOSTNAME_PROPERTY("$READINGBAT.$SITE.redirectHostname"),
   SENDGRID_PREFIX_PROPERTY("$READINGBAT.$SITE.sendGridPrefix"),
   FORWARDED_ENABLED_PROPERTY("$READINGBAT.$SITE.forwardedHeaderSupportEnabled"),
