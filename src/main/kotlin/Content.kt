@@ -16,6 +16,7 @@
  */
 
 import com.github.pambrose.common.util.FileSystemSource
+import com.github.pambrose.common.util.GitHubRepo
 import com.github.pambrose.common.util.OwnerType.Organization
 import com.github.pambrose.common.util.OwnerType.User
 import com.github.readingbat.dsl.GitHubContent
@@ -99,6 +100,10 @@ val content =
     include(GitHubContent(User, "maleich", "ReadingBat-content").eval(this).python, "Athenian: ")
 
     python {
+      repo = GitHubRepo(Organization, "readingbat", "readingbat-core")
+      srcPath = "python"
+      branchName = "1.7.0"
+
       group("Test Cases") {
         packageName = "test_content"
         description = "Tests"
@@ -126,6 +131,10 @@ val content =
     }
 
     java {
+      repo = GitHubRepo(Organization, "readingbat", "readingbat-core")
+      srcPath = "src/test/java"
+      branchName = "1.7.0"
+
       group("Java Tests") {
         packageName = "com.github.readingbat.test_content"
         description = "Tests"
@@ -138,6 +147,10 @@ val content =
     }
 
     kotlin {
+      repo = GitHubRepo(Organization, "readingbat", "readingbat-core")
+      srcPath = "src/test/kotlin"
+      branchName = "1.7.0"
+
       group("Kotlin Tests") {
         packageName = "com.github.readingbat.test_content"
         description = "Tests"
