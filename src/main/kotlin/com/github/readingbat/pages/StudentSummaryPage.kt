@@ -96,6 +96,7 @@ internal object StudentSummaryPage : KLogging() {
 
         body {
           val returnPath = queryParam(RETURN_PARAM, "/")
+
           helpAndLogin(content, user, returnPath, activeClassCode.isEnabled)
           bodyTitle()
 
@@ -126,7 +127,6 @@ internal object StudentSummaryPage : KLogging() {
           displayChallengeGroups(content, classCode, languageName)
           enableWebSockets(languageName, student, classCode)
           backLink(returnPath)
-
           loadPingdomScript()
         }
       }

@@ -51,7 +51,6 @@ internal object HelpPage {
 
         body {
           helpAndLogin(content, user, ABOUT_ENDPOINT, queryActiveClassCode(user).isEnabled)
-
           bodyTitle()
 
           h2 { +"ReadingBat Help" }
@@ -190,7 +189,6 @@ internal object HelpPage {
           }
 
           backLink(queryParam(RETURN_PARAM, "/"))
-
           loadPingdomScript()
         }
       }

@@ -145,9 +145,7 @@ internal object CreateAccountPage {
           }
 
           privacyStatement(CREATE_ACCOUNT_ENDPOINT)
-
           backLink(returnPath)
-
           loadPingdomScript()
         }
       }

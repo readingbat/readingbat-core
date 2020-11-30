@@ -25,7 +25,7 @@ import static com.github.pambrose.common.util.ListUtils.listPrint;
 public class StringListTest1 {
 
     public static List<String> combine(String s1, String s2) {
-        List<String> retval = new ArrayList<String>();
+        List<String> retval = new ArrayList<>();
         retval.add(s1);
         retval.add(s2);
         return retval;

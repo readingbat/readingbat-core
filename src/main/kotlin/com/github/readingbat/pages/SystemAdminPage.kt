@@ -166,9 +166,7 @@ internal object SystemAdminPage : KLogging() {
           p { span { id = status } }
 
           backLink("$ADMIN_PREFS_ENDPOINT?$RETURN_PARAM=${queryParam(RETURN_PARAM, "/")}")
-
           enableWebSockets(logId)
-
           loadStatusPageDisplay()
         }
       }

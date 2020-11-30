@@ -47,7 +47,6 @@ internal object UserInfoPage {
           val returnPath = queryParam(RETURN_PARAM, "/")
 
           helpAndLogin(content, user, returnPath, false)
-
           bodyTitle()
 
           when {
@@ -74,7 +73,6 @@ internal object UserInfoPage {
               p {
                 table {
                   style = "border-spacing: 5px 10px"
-
                   tr { td { +"User Principal" }; td { +principal.toString() } }
                   tr { td { +"Session Id" }; td { +sessionId.toString() } }
                   tr { td { +"Name" }; td { +name.value } }
@@ -92,7 +90,6 @@ internal object UserInfoPage {
           }
 
           backLink(returnPath)
-
           loadPingdomScript()
         }
       }

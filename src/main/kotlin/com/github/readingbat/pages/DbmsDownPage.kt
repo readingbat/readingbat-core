@@ -55,7 +55,6 @@ internal object DbmsDownPage {
           }
 
           backLink("/")
-
           loadPingdomScript()
         }
       }

@@ -137,7 +137,6 @@ internal object SessionsPage : KLogging() {
           }
 
           backLink("$ADMIN_PREFS_ENDPOINT?$RETURN_PARAM=${queryParam(RETURN_PARAM, "/")}")
-
           loadStatusPageDisplay()
         }
       }

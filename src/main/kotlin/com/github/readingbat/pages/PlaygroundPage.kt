@@ -110,7 +110,6 @@ internal object PlaygroundPage {
           }
 
           backLink(CHALLENGE_ROOT, languageName.value, groupName.value, challengeName.value)
-
           loadPingdomScript()
         }
       }

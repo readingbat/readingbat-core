@@ -44,7 +44,6 @@ import com.github.readingbat.common.ParameterIds.LIKE_COLOR
 import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.fetchUserDbmsIdFromCache
 import com.github.readingbat.common.browserSession
-import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.ReturnType
 import com.github.readingbat.dsl.ReturnType.BooleanType
@@ -138,10 +137,9 @@ internal data class ChallengeHistory(var invocation: Invocation,
 }
 
 internal class ChallengeNames(paramMap: Map<String, String>) {
-  val languageName = LanguageName(paramMap[LANG_SRC] ?: throw InvalidConfigurationException("Missing language"))
-  val groupName = GroupName(paramMap[GROUP_SRC] ?: throw InvalidConfigurationException("Missing group name"))
-  val challengeName =
-    ChallengeName(paramMap[CHALLENGE_SRC] ?: throw InvalidConfigurationException("Missing challenge name"))
+  val languageName = LanguageName(paramMap[LANG_SRC] ?: error("Missing language"))
+  val groupName = GroupName(paramMap[GROUP_SRC] ?: error("Missing group name"))
+  val challengeName = ChallengeName(paramMap[CHALLENGE_SRC] ?: error("Missing challenge name"))
 
   fun md5() = md5Of(languageName, groupName, challengeName)
   fun md5(invocation: Invocation) = md5Of(languageName, groupName, challengeName, invocation)
@@ -266,7 +264,7 @@ internal object ChallengePost : KLogging() {
       userResponses.indices
         .map { i ->
           val languageName = names.languageName
-          val userResponse = paramMap[RESP + i]?.trim() ?: throw InvalidConfigurationException("Missing user response")
+          val userResponse = paramMap[RESP + i]?.trim() ?: error("Missing user response")
           val correctAnswer = funcInfo.correctAnswers[i]
           val returnType = funcInfo.returnType
           val answered = userResponse.isNotBlank()
@@ -329,7 +327,7 @@ internal object ChallengePost : KLogging() {
           SessionChallengeInfo
             .deleteWhere { (SessionChallengeInfo.sessionRef eq querySessionDbmsId(id)) and (SessionChallengeInfo.md5 eq md5) }
         }
-      else -> throw InvalidConfigurationException("Invalid type: $type")
+      else -> error("Invalid type: $type")
     }
 
   private fun deleteAnswerHistory(type: String, id: String, md5: String) =
@@ -344,7 +342,7 @@ internal object ChallengePost : KLogging() {
           SessionAnswerHistory
             .deleteWhere { (SessionAnswerHistory.sessionRef eq querySessionDbmsId(id)) and (SessionAnswerHistory.md5 eq md5) }
         }
-      else -> throw InvalidConfigurationException("Invalid type: $type")
+      else -> error("Invalid type: $type")
     }
 
   suspend fun PipelineCall.clearChallengeAnswers(content: ReadingBatContent, user: User?): String {
@@ -435,7 +433,7 @@ internal object ChallengePost : KLogging() {
     val names = ChallengeNames(paramMap)
     //val challenge = content.findChallenge(names.languageName, names.groupName, names.challengeName)
 
-    val likeArg = paramMap[LIKE_DESC]?.trim() ?: throw InvalidConfigurationException("Missing like/dislike argument")
+    val likeArg = paramMap[LIKE_DESC]?.trim() ?: error("Missing like/dislike argument")
 
     // Return values: 0 = not answered, 1 = like selected, 2 = dislike selected
     val likeVal =
@@ -444,7 +442,7 @@ internal object ChallengePost : KLogging() {
         LIKE_COLOR,
         DISLIKE_COLOR -> 0
         DISLIKE_CLEAR -> 2
-        else -> throw InvalidConfigurationException("Invalid like/dislike argument: $likeArg")
+        else -> error("Invalid like/dislike argument: $likeArg")
       }
 
     logger.debug { "Like/dislike arg -- response: $likeArg -- $likeVal" }
@@ -469,7 +467,7 @@ internal object ChallengePost : KLogging() {
       userResponses.indices
         .map { i ->
           val userResponse =
-            paramMap[RESP + i]?.trim() ?: throw InvalidConfigurationException("Missing user response")
+            paramMap[RESP + i]?.trim() ?: error("Missing user response")
           funcInfo.invocations[i] to userResponse
         }
 

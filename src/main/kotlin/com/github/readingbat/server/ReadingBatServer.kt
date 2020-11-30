@@ -200,7 +200,7 @@ internal fun Application.readContentDsl(fileName: String, variableName: String, 
   contentReadCount.incrementAndGet()
 }
 
-internal fun Application.module() {
+internal fun Application.module(testing: Boolean = false) {
 
   assignProperties()
 

@@ -105,6 +105,7 @@ internal object LanguageGroupPage {
 
         body {
           val msg = Message(queryParam(MSG))
+
           bodyHeader(content, user, languageType, loginAttempt, loginPath, true, activeClassCode, msg)
 
           if (activeClassCode.isEnabled)

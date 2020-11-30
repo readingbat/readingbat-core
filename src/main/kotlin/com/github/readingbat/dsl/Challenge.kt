@@ -163,7 +163,7 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
 
   internal open fun validate() {
     if (challengeName.value.isEmpty())
-      throw InvalidConfigurationException(""""$challengeName" is empty""")
+      error(""""$challengeName" is empty""")
   }
 
   private fun Any?.prettyQuote(capitalizePythonBooleans: Boolean = true, useDoubleQuotes: Boolean = false) =
@@ -240,7 +240,7 @@ class PythonChallenge(challengeGroup: ChallengeGroup<*>,
     super.validate()
 
     if (!this::returnType.isInitialized)
-      throw InvalidConfigurationException("$challengeName missing returnType value")
+      error("$challengeName missing returnType value")
   }
 
   override suspend fun computeFunctionInfo(code: String): FunctionInfo {
@@ -305,7 +305,7 @@ class JavaChallenge(challengeGroup: ChallengeGroup<*>,
     logger.debug { "$challengeName computed answers in ${timedValue.duration}" }
 
     if (correctAnswers !is List<*>)
-      throw InvalidConfigurationException("Invalid type returned for $challengeName [${correctAnswers::class.java.simpleName}]")
+      error("Invalid type returned for $challengeName [${correctAnswers::class.java.simpleName}]")
 
     return FunctionInfo(this, code, funcCode, invocations, returnType, correctAnswers)
   }
@@ -325,7 +325,7 @@ class KotlinChallenge(challengeGroup: ChallengeGroup<*>,
     super.validate()
 
     if (!this::returnType.isInitialized)
-      throw InvalidConfigurationException("$challengeName missing returnType value")
+      error("$challengeName missing returnType value")
   }
 
   override suspend fun computeFunctionInfo(code: String): FunctionInfo {

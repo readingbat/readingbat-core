@@ -89,16 +89,11 @@ internal object TeacherPrefsPage : KLogging() {
           bodyTitle()
 
           h2 { +"Teacher Preferences" }
-
           if (msg.isAssigned())
             p { span { style = "color:${msg.color}"; this@body.displayMessage(msg) } }
-
           createClass(defaultClassDesc)
-
           displayClasses(user, activeClassCode)
-
           backLink(returnPath)
-
           loadPingdomScript()
         }
       }

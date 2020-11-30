@@ -76,7 +76,7 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
           redisPool?.withNonNullRedisPool(true) { redis ->
             val dirContentsKey = dirContentsKey(path)
             it.forEach { redis.rpush(dirContentsKey, it) }
-            logger.info { "Saved ${path.toDoubleQuoted()} to redis" }
+            logger.info { "Saved to redis: ${path.toDoubleQuoted()}" }
           }
         }
       }
@@ -100,7 +100,7 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
         is FileSystemSource ->
           File(pathOf(root.pathPrefix, srcPath, packageNameAsPath)).walk().map { it.name }.toList()
         else ->
-          throw InvalidConfigurationException("Invalid repo type: $root")
+          error("Invalid repo type: $root")
       }
     }
   }
@@ -122,7 +122,7 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
       }
       else {
         val lang = languageType.languageName
-        throw InvalidConfigurationException("Use includeFilesWithType instead of includeFiles for $lang challenges")
+        error("Use includeFilesWithType instead of includeFiles for $lang challenges")
       }
     }
   }
@@ -137,7 +137,7 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
       }
       else {
         val lang = languageType.languageName
-        throw InvalidConfigurationException("Use includeFiles instead of includeFilesWithType for $lang challenges")
+        error("Use includeFiles instead of includeFilesWithType for $lang challenges")
       }
     }
   }
@@ -204,7 +204,7 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
       }
       else {
         if (throwExceptionIfPresent)
-          throw InvalidConfigurationException("Challenge ${pathOf(groupPrefix, challengeName)} already exists")
+          error("Challenge ${pathOf(groupPrefix, challengeName)} already exists")
         else
           return false
       }

@@ -318,7 +318,6 @@ internal object SystemConfigurationPage {
           }
 
           backLink("$ADMIN_PREFS_ENDPOINT?$RETURN_PARAM=${queryParam(RETURN_PARAM, "/")}")
-
           loadStatusPageDisplay()
         }
       }

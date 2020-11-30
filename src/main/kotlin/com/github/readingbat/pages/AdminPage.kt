@@ -58,7 +58,6 @@ internal object AdminPage {
           val returnPath = queryParam(RETURN_PARAM, "/")
 
           helpAndLogin(content, user, returnPath, false)
-
           bodyTitle()
 
           when {
@@ -77,7 +76,6 @@ internal object AdminPage {
           }
 
           backLink(returnPath)
-
           loadPingdomScript()
         }
       }

@@ -91,7 +91,7 @@ class ReadingBatContent {
     findLanguage(languageName.toLanguageType())
 
   internal fun findLanguage(languageType: LanguageType): LanguageGroup<out Challenge> =
-    languageMap[languageType] ?: throw InvalidConfigurationException("Invalid language $languageType")
+    languageMap[languageType] ?: error("Invalid language $languageType")
 
   internal fun findGroup(languageName: LanguageName, groupName: GroupName): ChallengeGroup<out Challenge> =
     findLanguage(languageName.toLanguageType()).findGroup(groupName.value)
@@ -156,7 +156,7 @@ class ReadingBatContent {
 
   internal fun checkLanguage(languageType: LanguageType) {
     if (languageType !in this || this[languageType].isEmpty())
-      throw InvalidConfigurationException("Invalid language: $languageType")
+      error("Invalid language: $languageType")
   }
 
   internal fun loadChallenges(languageType: LanguageType,
@@ -199,8 +199,8 @@ class ReadingBatContent {
     }
 
   internal fun evalContent(contentSource: ContentSource, variableName: String): ReadingBatContent =
+    // Catch exceptions so that remote code does not bring down the server
     try {
-      // Catch exceptions so that remote code does not bring down the server
       contentMap.computeIfAbsent(contentSource.source) {
         logger.info { "Computing contentMap element for ${contentSource.source}" }
         val dslCode = readContentDsl(contentSource)

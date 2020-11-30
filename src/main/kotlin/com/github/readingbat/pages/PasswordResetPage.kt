@@ -139,9 +139,7 @@ internal object PasswordResetPage : KLogging() {
           }
 
           privacyStatement(PASSWORD_RESET_ENDPOINT)
-
           backLink(returnPath)
-
           loadPingdomScript()
         }
       }

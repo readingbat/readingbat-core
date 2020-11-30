@@ -43,7 +43,6 @@ import com.github.readingbat.common.User.Companion.queryActiveClassCode
 import com.github.readingbat.common.User.Companion.queryPreviousTeacherClassCode
 import com.github.readingbat.common.User.Companion.toUser
 import com.github.readingbat.common.isValidUser
-import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.pages.ClassSummaryPage.classSummaryPage
 import com.github.readingbat.pages.TeacherPrefsPage.teacherPrefsPage
@@ -73,11 +72,11 @@ internal object TeacherPrefsPost : KLogging() {
           when (source) {
             TEACHER_PREF -> teacherPrefsPage(content, user, msg)
             CLASS_SUMMARY -> classSummaryPage(content, user, classCode, msg = msg)
-            else -> throw InvalidConfigurationException("Invalid source: $source")
+            else -> error("Invalid source: $source")
           }
         }
         REMOVE_FROM_CLASS -> {
-          val studentId = params[USER_ID_PARAM] ?: throw InvalidConfigurationException("Missing: $USER_ID_PARAM")
+          val studentId = params[USER_ID_PARAM] ?: error("Missing: $USER_ID_PARAM")
           val student = toUser(studentId)
           val classCode = student.enrolledClassCode
           student.withdrawFromClass(classCode)
@@ -86,7 +85,7 @@ internal object TeacherPrefsPost : KLogging() {
           classSummaryPage(content, user, classCode, msg = Message(msg))
         }
         DELETE_CLASS -> deleteClass(content, user, params.getClassCode(CLASS_CODE_NAME_PARAM))
-        else -> throw InvalidConfigurationException("Invalid action: $action")
+        else -> error("Invalid action: $action")
       }
     }
     else {

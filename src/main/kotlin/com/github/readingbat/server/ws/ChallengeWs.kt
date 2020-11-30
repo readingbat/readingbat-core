@@ -75,7 +75,7 @@ internal object ChallengeWs : KLogging() {
     }
   }
 
-  data class AnswerSessionContext(val wsSession: DefaultWebSocketServerSession, val metrics: Metrics) {
+  data class AnswerSessionContext(val wsSession: DefaultWebSocketServerSession, val metrics: Metrics?) {
     val start = clock.markNow()
     var targetName = ""
     val enabled get() = targetName.isNotEmpty()
@@ -144,7 +144,7 @@ internal object ChallengeWs : KLogging() {
                   answerWsConnections
                     .filter { it.targetName == data.target }
                     .forEach {
-                      it.metrics.wsStudentAnswerResponseCount.labels(agentLaunchId()).inc()
+                      it.metrics?.wsStudentAnswerResponseCount?.labels(agentLaunchId())?.inc()
                       it.wsSession.outgoing.send(Frame.Text(data.jsonArgs))
                       logger.debug { "Sent $data ${answerWsConnections.size}" }
                     }
@@ -158,7 +158,7 @@ internal object ChallengeWs : KLogging() {
       }
   }
 
-  fun Routing.challengeWsEndpoint(metrics: Metrics) {
+  fun Routing.challengeWsEndpoint(metrics: Metrics?) {
     webSocket("$WS_ROOT$CHALLENGE_ENDPOINT/{$CLASS_CODE}/{$CHALLENGE_MD5}") {
       val answerWsContext = AnswerSessionContext(this, metrics)
       try {
@@ -172,10 +172,10 @@ internal object ChallengeWs : KLogging() {
 
         logger.debug { "Opened student answers websocket: ${answerWsConnections.size}" }
 
-        metrics.wsStudentAnswerCount.labels(agentLaunchId()).inc()
-        metrics.wsStudentAnswerGauge.labels(agentLaunchId()).inc()
+        metrics?.wsStudentAnswerCount?.labels(agentLaunchId())?.inc()
+        metrics?.wsStudentAnswerGauge?.labels(agentLaunchId())?.inc()
 
-        metrics.measureEndpointRequest("/websocket_student_answers") {
+        metrics?.measureEndpointRequest("/websocket_student_answers") {
           val p = call.parameters
           val classCode = p[CLASS_CODE]?.let { ClassCode(it) } ?: throw InvalidRequestException("Missing class code")
           val challengeMd5 = p[CHALLENGE_MD5] ?: throw InvalidRequestException("Missing challenge md5")
@@ -198,7 +198,7 @@ internal object ChallengeWs : KLogging() {
         answerWsConnections -= answerWsContext
         closeChannels()
         close(CloseReason(GOING_AWAY, "Client disconnected"))
-        metrics.wsStudentAnswerGauge.labels(agentLaunchId()).dec()
+        metrics?.wsStudentAnswerGauge?.labels(agentLaunchId())?.dec()
         logger.debug { "Closed student answers websocket ${answerWsConnections.size}" }
       }
     }

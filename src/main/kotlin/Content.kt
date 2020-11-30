@@ -88,6 +88,8 @@ val content =
     }
 */
 
+    //include(GitHubContent(Organization, "readingbat", "readingbat-java-content", fileName = "Content.kt").eval(this, variableName = "content").java)
+
     include(GitHubContent(Organization, "readingbat", "readingbat-java-content").eval(this).java)
 
     include(GitHubContent(Organization, "readingbat", "readingbat-java-content").eval(this).kotlin, "Athenian: ")

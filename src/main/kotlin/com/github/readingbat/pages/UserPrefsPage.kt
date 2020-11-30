@@ -93,7 +93,6 @@ internal object UserPrefsPage : KLogging() {
           val returnPath = queryParam(RETURN_PARAM, "/")
 
           helpAndLogin(content, user, returnPath, activeClassCode.isEnabled)
-
           bodyTitle()
 
           h2 { +"User Preferences" }
@@ -111,7 +110,6 @@ internal object UserPrefsPage : KLogging() {
           }
 
           privacyStatement(USER_PREFS_ENDPOINT)
-
           backLink(returnPath)
         }
       }
@@ -307,7 +305,6 @@ internal object UserPrefsPage : KLogging() {
           val returnPath = queryParam(RETURN_PARAM, "/")
 
           helpAndLogin(content, null, returnPath, false)
-
           bodyTitle()
 
           if (msg.isAssigned())
@@ -322,9 +319,7 @@ internal object UserPrefsPage : KLogging() {
           }
 
           privacyStatement(USER_PREFS_ENDPOINT)
-
           backLink(returnPath)
-
           loadPingdomScript()
         }
       }

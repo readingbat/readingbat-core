@@ -32,7 +32,6 @@ import com.github.readingbat.common.browserSession
 import com.github.readingbat.common.isNotAdminUser
 import com.github.readingbat.common.isNotValidUser
 import com.github.readingbat.common.userPrincipal
-import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.InvalidRequestException
 import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.dsl.ReadingBatContent
@@ -135,18 +134,18 @@ internal object ServerUtils : KLogging() {
     }
 
   @ContextDsl
-  fun Route.get(path: String, metrics: Metrics, body: PipelineInterceptor<Unit, ApplicationCall>) =
+  fun Route.get(path: String, metrics: Metrics?, body: PipelineInterceptor<Unit, ApplicationCall>) =
     route(path, HttpMethod.Get) {
       runBlocking {
-        metrics.measureEndpointRequest(path) { handle(body) }
+        metrics?.measureEndpointRequest(path) { handle(body) }
       }
     }
 
   @ContextDsl
-  fun Route.post(path: String, metrics: Metrics, body: PipelineInterceptor<Unit, ApplicationCall>) =
+  fun Route.post(path: String, metrics: Metrics?, body: PipelineInterceptor<Unit, ApplicationCall>) =
     route(path, HttpMethod.Post) {
       runBlocking {
-        metrics.measureEndpointRequest(path) { handle(body) }
+        metrics?.measureEndpointRequest(path) { handle(body) }
       }
     }
 
@@ -160,7 +159,7 @@ internal object ServerUtils : KLogging() {
     LanguageType.languageTypes(defaultLanguage)
       .asSequence()
       .filter { content[it].isNotEmpty() }
-      .firstOrNull() ?: throw InvalidConfigurationException("Missing non-empty language")
+      .firstOrNull() ?: error("Missing non-empty language")
 
   fun logToRedis(msg: String, logId: String) {
     if (logId.isNotEmpty()) {

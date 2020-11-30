@@ -68,7 +68,6 @@ internal object PrivacyPage {
           }
 
           backLink(queryParam(RETURN_PARAM, "/"))
-
           loadPingdomScript()
         }
       }

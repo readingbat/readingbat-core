@@ -123,7 +123,6 @@ internal object PageUtils {
                       msg: Message = EMPTY_MESSAGE) {
 
     helpAndLogin(content, user, loginPath, activeClassCode.isEnabled)
-
     bodyTitle()
 
     p { if (displayWelcomeMsg) +"Welcome to ReadingBat." else rawHtml(nbsp.text) }

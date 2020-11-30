@@ -28,7 +28,6 @@ import com.github.readingbat.common.PropertyNames.CONTENT
 import com.github.readingbat.common.PropertyNames.DBMS
 import com.github.readingbat.common.PropertyNames.READINGBAT
 import com.github.readingbat.common.PropertyNames.SITE
-import com.github.readingbat.dsl.InvalidConfigurationException
 import io.ktor.application.*
 import io.ktor.config.*
 import mu.KLogging
@@ -117,7 +116,7 @@ enum class Property(val propertyValue: String,
 
   fun getPropertyOrNull(): String? = System.getProperty(propertyValue)
 
-  fun getRequiredProperty() = getPropertyOrNull() ?: throw InvalidConfigurationException("Missing $propertyValue value")
+  fun getRequiredProperty() = getPropertyOrNull() ?: error("Missing $propertyValue value")
 
   fun setProperty(value: String) {
     System.setProperty(propertyValue, value)

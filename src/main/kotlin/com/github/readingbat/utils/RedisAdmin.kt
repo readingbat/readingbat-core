@@ -21,7 +21,6 @@ import com.github.pambrose.common.redis.RedisUtils.scanKeys
 import com.github.pambrose.common.redis.RedisUtils.withNonNullRedis
 import com.github.pambrose.common.redis.RedisUtils.withRedis
 import com.github.pambrose.common.util.isNotNull
-import com.github.readingbat.dsl.InvalidConfigurationException
 import redis.clients.jedis.exceptions.JedisDataException
 
 internal object RedisAdmin {
@@ -32,8 +31,8 @@ internal object RedisAdmin {
 
   @JvmStatic
   fun main(args: Array<String>) {
-    showAll(local)
-    //deleteAll(docean)
+    //deleteAll(local)
+    println("Count: " + count(local))
     //copy(heroku, docean)
     //println("Heroku count: ${count(heroku)}")
     //println("DO count: ${count(docean)}")
@@ -59,7 +58,7 @@ internal object RedisAdmin {
 
   private fun count(url: String) =
     withRedis(url) { redis ->
-      redis?.scanKeys("*")?.count() ?: throw InvalidConfigurationException("No connection")
+      redis?.scanKeys("*")?.count() ?: error("No connection")
     }
 
   fun deleteAll(url: String) {

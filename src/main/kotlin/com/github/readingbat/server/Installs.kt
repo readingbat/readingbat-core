@@ -32,7 +32,6 @@ import com.github.readingbat.common.EnvVar.XFORWARDED_ENABLED
 import com.github.readingbat.common.Property.FORWARDED_ENABLED_PROPERTY
 import com.github.readingbat.common.Property.REDIRECT_HOSTNAME_PROPERTY
 import com.github.readingbat.common.Property.XFORWARDED_ENABLED_PROPERTY
-import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.InvalidRequestException
 import com.github.readingbat.dsl.RedisUnavailableException
 import com.github.readingbat.dsl.isPostgresEnabled
@@ -184,8 +183,8 @@ internal object Installs : KLogging() {
         }
       }
 
-      exception<InvalidConfigurationException> { cause ->
-        logger.info { "InvalidConfigurationException caught: ${cause.message}" }
+      exception<IllegalStateException> { cause ->
+        logger.info { "IllegalStateException caught: ${cause.message}" }
         respondWith {
           errorPage(ReadingBatServer.content.get())
         }

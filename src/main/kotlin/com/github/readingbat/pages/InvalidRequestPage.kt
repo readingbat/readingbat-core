@@ -63,7 +63,6 @@ internal object InvalidRequestPage {
           }
 
           backLink("/")
-
           loadPingdomScript()
         }
       }

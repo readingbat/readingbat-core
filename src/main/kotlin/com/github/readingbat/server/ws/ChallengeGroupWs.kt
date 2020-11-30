@@ -53,7 +53,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 internal object ChallengeGroupWs : KLogging() {
 
-  fun Routing.challengeGroupWsEndpoint(metrics: Metrics, contentSrc: () -> ReadingBatContent) {
+  fun Routing.challengeGroupWsEndpoint(metrics: Metrics?, contentSrc: () -> ReadingBatContent) {
     webSocket("$WS_ROOT$CHALLENGE_GROUP_ENDPOINT/{$LANGUAGE_NAME}/{$GROUP_NAME}/{$CLASS_CODE}") {
       try {
         val finished = AtomicBoolean(false)
@@ -65,10 +65,10 @@ internal object ChallengeGroupWs : KLogging() {
           incoming.cancel()
         }
 
-        metrics.wsClassStatisticsCount.labels(agentLaunchId()).inc()
-        metrics.wsClassStatisticsGauge.labels(agentLaunchId()).inc()
+        metrics?.wsClassStatisticsCount?.labels(agentLaunchId())?.inc()
+        metrics?.wsClassStatisticsGauge?.labels(agentLaunchId())?.inc()
 
-        metrics.measureEndpointRequest("/websocket_class_statistics") {
+        metrics?.measureEndpointRequest("/websocket_class_statistics") {
           val content = contentSrc.invoke()
           val p = call.parameters
           val languageName =
@@ -189,7 +189,7 @@ internal object ChallengeGroupWs : KLogging() {
         // In case exited early
         closeChannels()
         close(CloseReason(CloseReason.Codes.GOING_AWAY, "Client disconnected"))
-        metrics.wsClassStatisticsGauge.labels(agentLaunchId()).dec()
+        metrics?.wsClassStatisticsGauge?.labels(agentLaunchId())?.dec()
         logger.debug { "Closed class statistics websocket" }
       }
     }

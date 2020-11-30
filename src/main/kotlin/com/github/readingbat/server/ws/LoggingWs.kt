@@ -65,7 +65,7 @@ internal object LoggingWs : KLogging() {
   val adminCommandChannel by lazy { BroadcastChannel<AdminCommandData>(Channel.BUFFERED) }
   val logWsReadChannel by lazy { BroadcastChannel<PubSubCommandsWs.LogData>(Channel.BUFFERED) }
 
-  data class LogSessionContext(val wsSession: DefaultWebSocketServerSession, val metrics: Metrics) {
+  data class LogSessionContext(val wsSession: DefaultWebSocketServerSession, val metrics: Metrics?) {
     val start = clock.markNow()
     var logId = ""
     val enabled get() = logId.isNotEmpty()
@@ -169,7 +169,7 @@ internal object LoggingWs : KLogging() {
       }
   }
 
-  fun Routing.loggingWsEndpoint(metrics: Metrics) {
+  fun Routing.loggingWsEndpoint(metrics: Metrics?) {
     webSocket("$WS_ROOT$LOGGING_ENDPOINT/{$LOG_ID}") {
       val logWsContext = LogSessionContext(this, metrics)
       try {
@@ -182,7 +182,7 @@ internal object LoggingWs : KLogging() {
 
         logger.debug { "Opened log websocket: ${logWsConnections.size}" }
 
-        metrics.measureEndpointRequest("/websocket_log") {
+        metrics?.measureEndpointRequest("/websocket_log") {
           val p = call.parameters
           val logId = p[LOG_ID] ?: throw InvalidRequestException("Missing log id")
           val user = fetchUser() ?: throw InvalidRequestException("Null user")

@@ -20,7 +20,6 @@ package com.github.readingbat.common
 import com.github.pambrose.common.util.asBracketed
 import com.github.pambrose.common.util.toDoubleQuoted
 import com.github.readingbat.dsl.Challenge
-import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.LanguageType.Java
 import com.github.readingbat.dsl.LanguageType.Kotlin
 import com.github.readingbat.dsl.LanguageType.Python
@@ -115,7 +114,7 @@ internal class FunctionInfo(val challenge: Challenge,
             Java, Kotlin -> "[${(raw as List<String>).joinToString { it.toDoubleQuoted() }}]"
           }
 
-        Runtime -> throw InvalidConfigurationException("Invalid return type")
+        Runtime -> error("Invalid return type")
       }
     }
   }
@@ -130,7 +129,7 @@ internal class FunctionInfo(val challenge: Challenge,
       IntListType, IntArrayType -> "[0, 1]"
       FloatListType, FloatArrayType -> "[0.0, 1.0]"
       StringListType, StringArrayType -> if (languageType.isPython) "['', '']" else """["", ""]"""
-      Runtime -> throw InvalidConfigurationException("Invalid return type")
+      Runtime -> error("Invalid return type")
     }
   }
 
@@ -141,7 +140,7 @@ internal class FunctionInfo(val challenge: Challenge,
 
   private fun validate() {
     if (correctAnswers.size != invocations.size)
-      throw InvalidConfigurationException("Mismatch between ${correctAnswers.size} answers and ${invocations.size} invocations in $challengeName")
+      error("Mismatch between ${correctAnswers.size} answers and ${invocations.size} invocations in $challengeName")
   }
 
   companion object : KLogging()

@@ -67,7 +67,6 @@ internal object NotFoundPage {
           }
 
           backLink("/")
-
           loadPingdomScript()
         }
       }

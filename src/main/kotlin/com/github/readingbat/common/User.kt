@@ -32,7 +32,6 @@ import com.github.readingbat.common.KeyConstants.CORRECT_ANSWERS_KEY
 import com.github.readingbat.common.KeyConstants.keyOf
 import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.DataException
-import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.LanguageType.Companion.defaultLanguageType
 import com.github.readingbat.dsl.LanguageType.Companion.toLanguageType
 import com.github.readingbat.dsl.isMultiServerEnabled
@@ -85,7 +84,7 @@ internal class User {
           Users
             .select { Users.userId eq this@User.userId }
             .map { assignRowVals(it) }
-            .firstOrNull() ?: throw InvalidConfigurationException("UserId not found: ${this@User.userId}")
+            .firstOrNull() ?: error("UserId not found: ${this@User.userId}")
         }
       }.also { logger.debug { "Selected user info in $it" } }
     }
@@ -115,7 +114,7 @@ internal class User {
     get() = if (digestBacking.isBlank()) throw DataException("Missing digest field") else digestBacking
 
   private fun sessionDbmsId() =
-    browserSession?.sessionDbmsId() ?: throw InvalidConfigurationException("Null browser session")
+    browserSession?.sessionDbmsId() ?: error("Null browser session")
 
   private fun assignRowVals(row: ResultRow) {
     userDbmsId = row[Users.id].value
@@ -634,7 +633,7 @@ internal class User {
                 }.value
 
             val browserId =
-              browserSession?.sessionDbmsId() ?: throw InvalidConfigurationException("Missing browser session")
+              browserSession?.sessionDbmsId() ?: error("Missing browser session")
 
             UserSessions
               .insert { row ->

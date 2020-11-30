@@ -125,7 +125,6 @@ internal object ClassSummaryPage : KLogging() {
               queryParam(RETURN_PARAM, if (languageName.isValid()) pathOf(CHALLENGE_ROOT, languageName) else "/")
 
           helpAndLogin(content, user, returnPath, activeClassCode.isEnabled)
-
           bodyTitle()
 
           h2 { +"Class Summary" }
@@ -147,7 +146,6 @@ internal object ClassSummaryPage : KLogging() {
             enableWebSockets(languageName, groupName, classCode)
 
           backLink(returnPath)
-
           loadPingdomScript()
         }
       }

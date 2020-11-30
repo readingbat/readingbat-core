@@ -59,7 +59,6 @@ internal object AdminPrefsPage : KLogging() {
           val returnPath = queryParam(RETURN_PARAM, "/")
 
           helpAndLogin(content, user, returnPath, activeClassCode.isEnabled)
-
           bodyTitle()
 
           h2 { +"Admin Preferences" }

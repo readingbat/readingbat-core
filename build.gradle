@@ -2,8 +2,8 @@ plugins {
     id 'java'
     id 'application'
     id 'maven'  // Required for jitpack.io to do a ./gradlew install
-    id 'org.jetbrains.kotlin.jvm' version '1.4.10'
-    id 'org.jetbrains.kotlin.plugin.serialization' version '1.4.10'
+    id 'org.jetbrains.kotlin.jvm' version '1.4.20'
+    id 'org.jetbrains.kotlin.plugin.serialization' version '1.4.20'
     id "com.github.ben-manes.versions" version '0.36.0'
     id 'com.github.johnrengelman.shadow' version '6.1.0'
 }
@@ -102,7 +102,13 @@ dependencies {
 
     //testImplementation "org.seleniumhq.selenium:selenium-java:$selenium_version"
     testImplementation "io.ktor:ktor-server-tests:$ktor_version"
-    testImplementation "org.amshove.kluent:kluent:$kluent_version"
+    testImplementation "io.ktor:ktor-server-test-host:$ktor_version"
+    //testImplementation "org.amshove.kluent:kluent:$kluent_version"
+
+    testImplementation "io.kotest:kotest-runner-junit5:$kotest_version"
+    testImplementation "io.kotest:kotest-assertions-core:$kotest_version"
+    testImplementation "io.kotest:kotest-property:$kotest_version"
+
     testImplementation "org.junit.jupiter:junit-jupiter-api:$junit_version"
     testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:$junit_version"
 }

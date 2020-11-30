@@ -124,7 +124,7 @@ fun Route.routeTimeout(time: Duration, callback: Route.() -> Unit): Route {
   return routeWithTimeout
 }
 
-internal fun Routing.userRoutes(metrics: Metrics, contentSrc: () -> ReadingBatContent) {
+internal fun Routing.userRoutes(metrics: Metrics? = null, contentSrc: () -> ReadingBatContent) {
 
   route(ROOT) {
     get {
@@ -175,11 +175,11 @@ internal fun Routing.userRoutes(metrics: Metrics, contentSrc: () -> ReadingBatCo
   }
 
   post(CHECK_ANSWERS_ENDPOINT) {
-    metrics.measureEndpointRequest(CHECK_ANSWERS_ENDPOINT) { checkAnswers(contentSrc(), fetchUser()) }
+    metrics?.measureEndpointRequest(CHECK_ANSWERS_ENDPOINT) { checkAnswers(contentSrc(), fetchUser()) }
   }
 
   post(LIKE_DISLIKE_ENDPOINT) {
-    metrics.measureEndpointRequest(LIKE_DISLIKE_ENDPOINT) { likeDislike(contentSrc(), fetchUser()) }
+    metrics?.measureEndpointRequest(LIKE_DISLIKE_ENDPOINT) { likeDislike(contentSrc(), fetchUser()) }
   }
 
   post(CLEAR_GROUP_ANSWERS_ENDPOINT) {
@@ -223,7 +223,7 @@ internal fun Routing.userRoutes(metrics: Metrics, contentSrc: () -> ReadingBatCo
   }
 
   get(CLASS_SUMMARY_ENDPOINT, metrics) {
-    metrics.measureEndpointRequest(CLASS_SUMMARY_ENDPOINT) {
+    metrics?.measureEndpointRequest(CLASS_SUMMARY_ENDPOINT) {
       respondWith { classSummaryPage(contentSrc(), fetchUser()) }
     }
   }
@@ -233,7 +233,7 @@ internal fun Routing.userRoutes(metrics: Metrics, contentSrc: () -> ReadingBatCo
   }
 
   get(STUDENT_SUMMARY_ENDPOINT, metrics) {
-    metrics.measureEndpointRequest(STUDENT_SUMMARY_ENDPOINT) {
+    metrics?.measureEndpointRequest(STUDENT_SUMMARY_ENDPOINT) {
       respondWith { studentSummaryPage(contentSrc(), fetchUser()) }
     }
   }
@@ -255,7 +255,7 @@ internal fun Routing.userRoutes(metrics: Metrics, contentSrc: () -> ReadingBatCo
   }
 
   post(ADMIN_ENDPOINT) {
-    metrics.measureEndpointRequest(ADMIN_ENDPOINT) {
+    metrics?.measureEndpointRequest(ADMIN_ENDPOINT) {
       respondWithSuspendingRedisCheck { redis -> adminActions(contentSrc(), fetchUser(), redis) }
     }
   }

@@ -83,7 +83,6 @@ fun ContentSource.eval(enclosingContent: ReadingBatContent, variableName: String
 
 private fun contentDslKey(source: String) = keyOf(CONTENT_DSL_KEY, md5Of(source))
 
-
 private fun fetchContentDslFromRedis(source: String) =
   if (isContentCachingEnabled()) redisPool?.withRedisPool { it?.get(contentDslKey(source)) } else null
 
@@ -142,6 +141,7 @@ internal fun addImports(code: String, variableName: String): String {
 
   val funcImports =
     listOf(::readingBatContent)
+      //.onEach { println("Checking for ${it.name}") }
       .filter { code.contains("${it.name}(") }  // See if the function is referenced
       .map { "import ${it.fqMethodName}" }            // Convert to import stmt
       .filterNot { code.contains(it) }                // Do not include is import already present
@@ -158,7 +158,6 @@ private val <T> KFunction<T>.fqMethodName get() = "${javaClass.packageName}.$nam
 
 private suspend fun evalDsl(code: String, sourceName: String) =
   try {
-    logger.debug { "Evaluating code from $sourceName:\n$code" }
     kotlinScriptPool.eval { eval(code) as ReadingBatContent }.apply { validate() }
   } catch (e: Throwable) {
     logger.info { "Error in $sourceName:\n$code" }

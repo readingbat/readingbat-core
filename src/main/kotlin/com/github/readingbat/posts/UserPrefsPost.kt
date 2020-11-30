@@ -34,7 +34,6 @@ import com.github.readingbat.common.User
 import com.github.readingbat.common.UserPrincipal
 import com.github.readingbat.common.isValidUser
 import com.github.readingbat.dsl.DataException
-import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.LanguageType.Companion.getLanguageType
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.pages.UserPrefsPage.requestLogInPage
@@ -64,7 +63,7 @@ internal object UserPrefsPost : KLogging() {
         JOIN_CLASS -> enrollInClass(content, params, user)
         WITHDRAW_FROM_CLASS -> withdrawFromClass(content, user)
         DELETE_ACCOUNT -> deleteAccount(content, user)
-        else -> throw InvalidConfigurationException("Invalid action: $action")
+        else -> error("Invalid action: $action")
       }
     }
     else {
