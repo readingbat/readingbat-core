@@ -108,25 +108,11 @@ val content =
         packageName = "test_content"
         description = "Tests"
 
-        challenge("boolean_array_test") {
-          returnType = BooleanArrayType
-        }
-
-        challenge("int_array_test") {
-          returnType = IntArrayType
-        }
-
-        challenge("float_test") {
-          returnType = FloatType
-        }
-
-        challenge("float_array_test") {
-          returnType = FloatArrayType
-        }
-
-        challenge("string_array_test") {
-          returnType = StringArrayType
-        }
+        challenge("boolean_array_test") { returnType = BooleanArrayType }
+        challenge("int_array_test") { returnType = IntArrayType }
+        challenge("float_test") { returnType = FloatType }
+        challenge("float_array_test") { returnType = FloatArrayType }
+        challenge("string_array_test") { returnType = StringArrayType }
       }
     }
 
@@ -155,18 +141,10 @@ val content =
         packageName = "com.github.readingbat.test_content"
         description = "Tests"
 
-        challenge("StringArrayKtTest1") {
-          returnType = StringArrayType
-        }
-        challenge("StringArrayKtTest2") {
-          returnType = StringArrayType
-        }
-        challenge("StringListKtTest1") {
-          returnType = StringListType
-        }
-        challenge("StringListKtTest2") {
-          returnType = StringListType
-        }
+        challenge("StringArrayKtTest1") { returnType = StringArrayType }
+        challenge("StringArrayKtTest2") { returnType = StringArrayType }
+        challenge("StringListKtTest1") { returnType = StringListType }
+        challenge("StringListKtTest2") { returnType = StringListType }
       }
     }
 

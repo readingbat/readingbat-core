@@ -49,13 +49,13 @@ import kotlin.time.measureTimedValue
 
 @ReadingBatDslMarker
 class ReadingBatContent {
-  // contentMap will prevent reading the same content multiple times
-  internal val contentMap = ConcurrentHashMap<String, ReadingBatContent>()
+  internal val timeStamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("M/d/y H:m:ss"))
   private val languageList by lazy { listOf(java, python, kotlin) }
   private val languageMap by lazy { languageList.map { it.languageType to it }.toMap() }
 
+  // contentMap will prevent reading the same content multiple times
+  internal val contentMap = ConcurrentHashMap<String, ReadingBatContent>()
   internal val functionInfoMap = ConcurrentHashMap<Int, FunctionInfo>()
-  internal val timeStamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("M/d/y H:m:ss"))
 
   internal var maxHistoryLength = 10
   internal var maxClassCount = 25
@@ -201,10 +201,11 @@ class ReadingBatContent {
   internal fun evalContent(contentSource: ContentSource, variableName: String): ReadingBatContent =
     // Catch exceptions so that remote code does not bring down the server
     try {
-      contentMap.computeIfAbsent(contentSource.source) {
-        logger.info { "Computing contentMap element for ${contentSource.source}" }
+      val src = contentSource.source
+      contentMap.computeIfAbsent(src) {
+        logger.info { "Computing contentMap element for $src" }
         val dslCode = readContentDsl(contentSource)
-        evalContentDsl(contentSource.source, variableName, dslCode)
+        evalContentDsl(src, variableName, dslCode)
       }
     } catch (e: Throwable) {
       logger.error(e) { "While evaluating: $this" }

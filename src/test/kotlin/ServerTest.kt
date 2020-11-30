@@ -23,6 +23,11 @@ import com.github.readingbat.common.Endpoints.STATIC_ROOT
 import com.github.readingbat.dsl.LanguageType.Java
 import com.github.readingbat.dsl.LanguageType.Kotlin
 import com.github.readingbat.dsl.LanguageType.Python
+import com.github.readingbat.dsl.ReturnType.BooleanArrayType
+import com.github.readingbat.dsl.ReturnType.FloatArrayType
+import com.github.readingbat.dsl.ReturnType.FloatType
+import com.github.readingbat.dsl.ReturnType.IntArrayType
+import com.github.readingbat.dsl.ReturnType.StringArrayType
 import com.github.readingbat.dsl.readingBatContent
 import com.github.readingbat.server.Installs.installs
 import com.github.readingbat.server.Locations.locations
@@ -44,20 +49,31 @@ class ServerTest {
   val testContent =
     readingBatContent {
 
-      java {
-        repo = GitHubRepo(Organization, "readingbat", "readingbat-java-content")
-        group("group1") {
+      python {
+        repo = GitHubRepo(Organization, "readingbat", "readingbat-core")
+        srcPath = "python"
+        branchName = "1.7.0"
+
+        group("Test Cases") {
+          packageName = "test_content"
+          description = "Tests"
+
+          challenge("boolean_array_test") { returnType = BooleanArrayType }
+          challenge("int_array_test") { returnType = IntArrayType }
+          challenge("float_test") { returnType = FloatType }
+          challenge("float_array_test") { returnType = FloatArrayType }
+          challenge("string_array_test") { returnType = StringArrayType }
         }
       }
 
-      python {
-        repo = GitHubRepo(Organization, "readingbat", "readingbat-java-content")
+      java {
+        repo = GitHubRepo(Organization, "readingbat", "readingbat-core")
         group("group1") {
         }
       }
 
       kotlin {
-        repo = GitHubRepo(Organization, "readingbat", "readingbat-java-content")
+        repo = GitHubRepo(Organization, "readingbat", "readingbat-core")
         group("group1") {
         }
       }
@@ -98,6 +114,8 @@ class ServerTest {
       handleRequest(HttpMethod.Get, Kotlin.contentRoot).apply {
         assertEquals(OK, response.status())
       }
+
+      content.get().contentMap
     }
   }
 }
