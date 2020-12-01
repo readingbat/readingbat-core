@@ -29,6 +29,7 @@ import com.github.readingbat.server.ChallengeMd5
 import com.github.readingbat.server.Invocation
 import com.github.readingbat.server.LanguageName
 import com.github.readingbat.server.ScriptPools
+import kotlinx.coroutines.runBlocking
 import mu.KLogging
 import javax.script.ScriptException
 
@@ -146,7 +147,12 @@ internal class FunctionInfo(val challenge: Challenge,
       error("Mismatch between ${correctAnswers.size} answers and ${invocations.size} invocations in $challengeName")
   }
 
-  suspend fun gradeResponse(index: Int, userResponse: String): ChallengeResults {
+  internal fun gradeResponseNB(index: Int, userResponse: String) =
+    runBlocking {
+      gradeResponse(index, userResponse)
+    }
+
+  suspend internal fun gradeResponse(index: Int, userResponse: String): ChallengeResults {
     val correctAnswer = correctAnswers[index]
     val answered = userResponse.isNotBlank()
     val correctAndHint =

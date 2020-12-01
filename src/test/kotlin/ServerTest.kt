@@ -25,6 +25,7 @@ import com.github.readingbat.dsl.ChallengeGroup
 import com.github.readingbat.dsl.LanguageType.Java
 import com.github.readingbat.dsl.LanguageType.Kotlin
 import com.github.readingbat.dsl.LanguageType.Python
+import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.ReturnType.BooleanArrayType
 import com.github.readingbat.dsl.ReturnType.FloatArrayType
 import com.github.readingbat.dsl.ReturnType.FloatType
@@ -45,7 +46,6 @@ import io.ktor.http.HttpStatusCode.Companion.OK
 import io.ktor.http.content.*
 import io.ktor.routing.*
 import io.ktor.server.testing.*
-import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 
 class ServerTest {
@@ -105,17 +105,26 @@ class ServerTest {
       handleRequest(HttpMethod.Get, Python.contentRoot).apply { response.status() shouldBe OK }
       handleRequest(HttpMethod.Get, Kotlin.contentRoot).apply { response.status() shouldBe OK }
 
-      val group = testContent.python.get(GROUP_NAME)
-      val challenge = group.challengeByName("boolean_array_test") ?: error("Missing challenge")
-
-      val funcInfo = testContent.functionInfoMap[challenge.challengeId] ?: error("Missing functionInfo")
-      runBlocking {
-        val resp = funcInfo.gradeResponse(0, "")
-        resp.correct shouldBe false
-      }
+      testContent.pythonGroup(GROUP_NAME)
+        .apply {
+          functionInfo("boolean_array_test")
+            .apply {
+              gradeResponseNB(0, "False, False").correct shouldBe false
+              gradeResponseNB(0, "[false, False]").correct shouldBe false
+              gradeResponseNB(0, "[true, False]").correct shouldBe false
+              gradeResponseNB(0, "[False, False]").correct shouldBe true
+            }
+        }
     }
   }
 }
 
-fun <T : Challenge> ChallengeGroup<T>.challengeByName(name: String) =
-  challenges.firstOrNull { it.challengeName.value == name }
+internal fun ReadingBatContent.pythonGroup(name: String) = python.get(name)
+internal fun ReadingBatContent.javaGroup(name: String) = java.get(name)
+internal fun ReadingBatContent.kotlinGroup(name: String) = kotlin.get(name)
+
+internal fun <T : Challenge> ChallengeGroup<T>.challengeByName(name: String) =
+  challenges.firstOrNull { it.challengeName.value == name } ?: error("Missing challenge $name")
+
+internal fun <T : Challenge> ChallengeGroup<T>.functionInfo(name: String) =
+  challengeByName(name).functionInfo()
