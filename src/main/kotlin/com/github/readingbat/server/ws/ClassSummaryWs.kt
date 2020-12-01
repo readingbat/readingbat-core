@@ -88,7 +88,7 @@ internal object ClassSummaryWs : KLogging() {
               val enrollees = classCode.fetchEnrollees()
               if (enrollees.isNotEmpty()) {
                 for (challenge in challenges) {
-                  val funcInfo = challenge.functionInfo(content)
+                  val funcInfo = challenge.functionInfo()
                   val challengeName = challenge.challengeName
                   val numCalls = funcInfo.invocations.size
                   var likes = 0

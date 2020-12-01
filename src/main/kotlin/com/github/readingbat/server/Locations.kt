@@ -108,7 +108,6 @@ internal object Locations {
       content.checkLanguage(groupLoc.languageType)
       val user = fetchUser(loginAttempt)
       challengeGroupPage(content, user, content.findGroup(groupLoc), loginAttempt)
-
     }
 
   private suspend fun PipelineCall.challenge(content: ReadingBatContent,

@@ -17,19 +17,23 @@
 
 package com.github.readingbat.common
 
-import com.github.pambrose.common.util.asBracketed
-import com.github.pambrose.common.util.toDoubleQuoted
+import com.github.pambrose.common.util.*
 import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.LanguageType.Java
 import com.github.readingbat.dsl.LanguageType.Kotlin
 import com.github.readingbat.dsl.LanguageType.Python
 import com.github.readingbat.dsl.ReturnType
 import com.github.readingbat.dsl.ReturnType.*
+import com.github.readingbat.posts.ChallengeResults
 import com.github.readingbat.server.ChallengeMd5
 import com.github.readingbat.server.Invocation
+import com.github.readingbat.server.LanguageName
+import com.github.readingbat.server.ScriptPools
 import mu.KLogging
+import javax.script.ScriptException
 
 internal class FunctionInfo(val challenge: Challenge,
+                            val languageName: LanguageName,
                             val originalCode: String,
                             val codeSnippet: String,
                             val invocations: List<Invocation>,
@@ -38,11 +42,11 @@ internal class FunctionInfo(val challenge: Challenge,
   val challengeName get() = challenge.challengeName
   val groupName get() = challenge.challengeGroup.groupName
   val languageType get() = challenge.challengeGroup.languageType
-
+  val questionCount get() = correctAnswers.size
   val challengeMd5 by lazy { ChallengeMd5(languageType.languageName, groupName, challengeName) }
 
   @Suppress("UNCHECKED_CAST")
-  val correctAnswers by lazy {
+  private val correctAnswers by lazy {
     List(rawAnswers.size) { i ->
       val raw = rawAnswers[i]
 
@@ -58,8 +62,7 @@ internal class FunctionInfo(val challenge: Challenge,
         BooleanType ->
           when (languageType) {
             Python -> raw.toString().capitalize()
-            Java,
-            Kotlin -> raw.toString()
+            Java, Kotlin -> raw.toString()
           }
 
         IntType, FloatType -> raw.toString()
@@ -143,5 +146,139 @@ internal class FunctionInfo(val challenge: Challenge,
       error("Mismatch between ${correctAnswers.size} answers and ${invocations.size} invocations in $challengeName")
   }
 
-  companion object : KLogging()
+  suspend fun gradeResponse(index: Int, userResponse: String): ChallengeResults {
+    val correctAnswer = correctAnswers[index]
+    val answered = userResponse.isNotBlank()
+    val correctAndHint =
+      if (answered) {
+        logger.debug("""Comparing user response: "$userResponse" with correct answer: "$correctAnswer"""")
+        if (languageName.isJvm) {
+          if (correctAnswer.isBracketed())
+            userResponse.equalsAsJvmList(correctAnswer)
+          else
+            userResponse.equalsAsJvmScalar(correctAnswer, returnType, languageName)
+        }
+        else {
+          if (correctAnswer.isBracketed())
+            userResponse.equalsAsPythonList(correctAnswer)
+          else
+            userResponse.equalsAsPythonScalar(correctAnswer, returnType)
+        }
+      }
+      else {
+        false to ""
+      }
+
+    return ChallengeResults(invocation = invocations[index],
+                            userResponse = userResponse,
+                            answered = answered,
+                            correct = correctAndHint.first,
+                            hint = correctAndHint.second)
+  }
+
+  companion object : KLogging() {
+    private fun String.isJavaBoolean() = this == "true" || this == "false"
+
+    private fun String.isPythonBoolean() = this == "True" || this == "False"
+
+    private suspend fun String.equalsAsJvmList(correctAnswer: String): Pair<Boolean, String> {
+      fun deriveHint() = if (isNotBracketed()) "Answer should be bracketed" else ""
+      val lho = if (isBracketed()) removeSurrounding("[", "]") else this
+      val rho = if (correctAnswer.isBracketed()) correctAnswer.removeSurrounding("[", "]") else correctAnswer
+      // Use <String> here because a type is required. It doesn't matter which type is used.
+      val lhs = if (lho.isBlank()) "emptyList<String>()" else "listOf($lho)"
+      val rhs = if (rho.isBlank()) "emptyList<String>()" else "listOf($rho)"
+      val compareExpr = "$lhs == $rhs"
+      logger.debug { "Check answers expression: $compareExpr" }
+      return try {
+        val result = ScriptPools.kotlinScriptPool.eval { eval(compareExpr) } as Boolean
+        result to (if (result) "" else deriveHint())
+      } catch (e: ScriptException) {
+        logger.info { "Caught exception comparing $this and $correctAnswer: ${e.message} in $compareExpr" }
+        false to deriveHint()
+      } catch (e: Exception) {
+        false to deriveHint()
+      }
+    }
+
+    private suspend fun String.equalsAsPythonList(correctAnswer: String): Pair<Boolean, String> {
+      fun deriveHint() = if (isNotBracketed()) "Answer should be bracketed" else ""
+      val compareExpr = "${trim()} == ${correctAnswer.trim()}"
+      return try {
+        logger.debug { "Check answers expression: $compareExpr" }
+        val result = ScriptPools.pythonScriptPool.eval { eval(compareExpr) } as Boolean
+        result to (if (result) "" else deriveHint())
+      } catch (e: ScriptException) {
+        logger.info { "Caught exception comparing $this and $correctAnswer: ${e.message} in: $compareExpr" }
+        false to deriveHint()
+      } catch (e: Exception) {
+        false to deriveHint()
+      }
+    }
+
+    private fun String.equalsAsJvmScalar(that: String,
+                                         returnType: ReturnType,
+                                         languageName: LanguageName): Pair<Boolean, String> {
+      val languageType = languageName.toLanguageType()
+
+      fun deriveHint() =
+        when {
+          returnType == BooleanType ->
+            when {
+              isPythonBoolean() -> "$languageType boolean values are either true or false"
+              !isJavaBoolean() -> "Answer should be either true or false"
+              else -> ""
+            }
+          returnType == StringType && isNotDoubleQuoted() -> "$languageType strings are double quoted"
+          returnType == IntType && isNotInt() -> "Answer should be an int value"
+          returnType == FloatType && isNotFloat() -> "Answer should be a float value"
+          else -> ""
+        }
+
+      return try {
+        val result =
+          when {
+            this.isEmpty() || that.isEmpty() -> false
+            returnType == StringType -> this == that
+            this.contains(".") || that.contains(".") -> this.toDouble() == that.toDouble()
+            this.isJavaBoolean() && that.isJavaBoolean() -> this.toBoolean() == that.toBoolean()
+            else -> this.toInt() == that.toInt()
+          }
+        result to (if (result) "" else deriveHint())
+      } catch (e: Exception) {
+        false to deriveHint()
+      }
+    }
+
+    private fun String.equalsAsPythonScalar(correctAnswer: String, returnType: ReturnType): Pair<Boolean, String> {
+      fun deriveHint() =
+        when {
+          returnType == BooleanType ->
+            when {
+              isJavaBoolean() -> "Python boolean values are either True or False"
+              !isPythonBoolean() -> "Answer should be either True or False"
+              else -> ""
+            }
+          returnType == StringType && isNotQuoted() -> "Python strings are either single or double quoted"
+          returnType == IntType && isNotInt() -> "Answer should be an int value"
+          returnType == FloatType && isNotFloat() -> "Answer should be a float value"
+          else -> ""
+        }
+
+      return try {
+        val result =
+          when {
+            isEmpty() || correctAnswer.isEmpty() -> false
+            isDoubleQuoted() -> this == correctAnswer
+            isSingleQuoted() -> singleToDoubleQuoted() == correctAnswer
+            contains(".") || correctAnswer.contains(".") -> toDouble() == correctAnswer.toDouble()
+            isPythonBoolean() && correctAnswer.isPythonBoolean() -> toBoolean() == correctAnswer.toBoolean()
+            else -> toInt() == correctAnswer.toInt()
+          }
+        result to (if (result) "" else deriveHint())
+      } catch (e: Exception) {
+        false to deriveHint()
+      }
+    }
+  }
 }

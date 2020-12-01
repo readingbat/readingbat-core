@@ -185,7 +185,7 @@ internal object StudentSummaryPage : KLogging() {
                             val encodedGroup = group.groupName.encode()
                             val encodedName = challenge.challengeName.encode()
                             tr {
-                              challenge.functionInfo(content).invocations
+                              challenge.functionInfo().invocations
                                 .forEachIndexed { i, _ ->
                                   td(classes = INVOC_TD) {
                                     id = "$encodedGroup-$encodedName-$i"; +""

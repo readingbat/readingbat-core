@@ -187,7 +187,7 @@ class ReadingBatContent {
                 else {
                   logger.info { "Loading: ${challenge.path}" }
                   log("Loading: ${challenge.path}")
-                  challenge.functionInfo(this@ReadingBatContent)
+                  challenge.functionInfo()
                   cnt.incrementAndGet()
                 }
               }

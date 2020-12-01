@@ -34,6 +34,8 @@ import com.github.readingbat.common.ParameterIds.SPINNER_ID
 import com.github.readingbat.common.ParameterIds.STATUS_ID
 import com.github.readingbat.common.ParameterIds.SUCCESS_ID
 import com.github.readingbat.pages.PageUtils.rawHtml
+import com.github.readingbat.posts.AnswerStatus.CORRECT
+import com.github.readingbat.posts.AnswerStatus.NOT_ANSWERED
 import com.github.readingbat.server.ChallengeName
 import com.github.readingbat.server.GroupName
 import com.github.readingbat.server.LanguageName
@@ -90,11 +92,11 @@ internal object CheckAnswersJs {
         var results = eval(re.responseText);
         for (var i = 0; i < results.length; i++) {
           var x = document.getElementById("$FEEDBACK_ID"+i);
-          if (results[i][0] == 0) {
+          if (results[i][0] == ${NOT_ANSWERED.value}) {
             x.style.backgroundColor = '$NO_ANSWER_COLOR';
             success = false;
           }
-          else if (results[i][0] == 1) {
+          else if (results[i][0] == ${CORRECT.value}) {
             x.style.backgroundColor = '$CORRECT_COLOR';
           }
           else {

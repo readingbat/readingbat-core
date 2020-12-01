@@ -49,13 +49,13 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
   internal val parsedDescription by lazy { TextFormatter.renderText(description) }
   private val groupPrefix by lazy { pathOf(languageName, groupName) }
 
-  internal val languageType get() = languageGroup.languageType
-  internal val packageNameAsPath get() = packageName.replace(".", "/")
   private val srcPath get() = languageGroup.srcPath
   private val languageName get() = languageType.languageName
   private val repo get() = languageGroup.repo
   private val branchName get() = languageGroup.branchName
   private val metrics get() = languageGroup.metrics
+  internal val languageType get() = languageGroup.languageType
+  internal val packageNameAsPath get() = packageName.replace(".", "/")
 
   private fun dirContentsKey(path: String) = keyOf(DIR_CONTENTS_KEY, md5Of(path))
 

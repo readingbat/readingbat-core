@@ -78,7 +78,7 @@ import kotlin.time.measureTimedValue
 sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
                        val challengeName: ChallengeName,
                        val replaceable: Boolean) {
-  private val challengeId = counter.incrementAndGet()
+  internal val challengeId = counter.incrementAndGet()
   private val fqName by lazy { packageNameAsPath.ensureSuffix("/") + fileName.ensureSuffix(".${languageType.suffix}") }
 
   // Allow description updates only if not found in the Content.kt decl
@@ -96,6 +96,7 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
   internal val languageName get() = languageType.languageName
   internal val groupName get() = challengeGroup.groupName
   protected val packageNameAsPath get() = challengeGroup.packageNameAsPath
+  private val content get() = challengeGroup.languageGroup.content
 
   // User properties
   var fileName = "$challengeName.${languageType.suffix}"
@@ -123,7 +124,7 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
   private fun fetchCodeFromRedis() =
     if (isContentCachingEnabled()) redisPool?.withRedisPool { redis -> redis?.get(sourceCodeKey) } else null
 
-  internal fun functionInfo(content: ReadingBatContent) =
+  internal fun functionInfo() =
     if (repo.remote) {
       content.functionInfoMap
         .computeIfAbsent(challengeId) {
@@ -264,7 +265,7 @@ class PythonChallenge(challengeGroup: ChallengeGroup<*>,
       logger.debug { "$challengeName computed answers in $it for: $correctAnswers" }
     }
 
-    return FunctionInfo(this, code, funcCode, invocations, returnType, correctAnswers)
+    return FunctionInfo(this, Python.languageName, code, funcCode, invocations, returnType, correctAnswers)
   }
 
   override fun toString() =
@@ -307,7 +308,7 @@ class JavaChallenge(challengeGroup: ChallengeGroup<*>,
     if (correctAnswers !is List<*>)
       error("Invalid type returned for $challengeName [${correctAnswers::class.java.simpleName}]")
 
-    return FunctionInfo(this, code, funcCode, invocations, returnType, correctAnswers)
+    return FunctionInfo(this, Java.languageName, code, funcCode, invocations, returnType, correctAnswers)
   }
 
   override fun toString() = "JavaChallenge(packageName='$packageNameAsPath', fileName='$fileName')"
@@ -353,7 +354,7 @@ class KotlinChallenge(challengeGroup: ChallengeGroup<*>,
       logger.debug { "$challengeName computed answers in $it for: $correctAnswers" }
     }
 
-    return FunctionInfo(this, strippedCode, funcCode, invocations, returnType, correctAnswers)
+    return FunctionInfo(this, Kotlin.languageName, strippedCode, funcCode, invocations, returnType, correctAnswers)
   }
 
   override fun toString() =

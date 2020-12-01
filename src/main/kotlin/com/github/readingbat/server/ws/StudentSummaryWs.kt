@@ -88,7 +88,7 @@ internal object StudentSummaryWs : KLogging() {
             .collect {
               for (challengeGroup in content.findLanguage(languageName).challengeGroups) {
                 for (challenge in challengeGroup.challenges) {
-                  val funcInfo = challenge.functionInfo(content)
+                  val funcInfo = challenge.functionInfo()
                   val groupName = challengeGroup.groupName
                   val challengeName = challenge.challengeName
                   val numCalls = funcInfo.invocations.size

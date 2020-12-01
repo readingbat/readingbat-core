@@ -126,7 +126,7 @@ internal object ChallengePage : KLogging() {
         val languageName = languageType.languageName
         val groupName = challenge.groupName
         val challengeName = challenge.challengeName
-        val funcInfo = challenge.functionInfo(content)
+        val funcInfo = challenge.functionInfo()
         val loginPath = pathOf(CHALLENGE_ROOT, languageName, groupName, challengeName)
         val activeClassCode = queryActiveClassCode(user)
         val enrollees = activeClassCode.fetchEnrollees()
@@ -265,7 +265,7 @@ internal object ChallengePage : KLogging() {
                   }
                 textInput(classes = USER_RESP + cls) {
                   id = "$RESP$i"
-                  onKeyDown = "$PROCESS_USER_ANSWERS_FUNC(event, ${funcInfo.correctAnswers.size})"
+                  onKeyDown = "$PROCESS_USER_ANSWERS_FUNC(event, ${funcInfo.questionCount})"
 
                   val response = previousResponses[invocation.value] ?: ""
                   if (response.isNotBlank())
@@ -477,7 +477,7 @@ internal object ChallengePage : KLogging() {
         tr {
           td {
             button(classes = CHECK_ANSWERS) {
-              onClick = "$PROCESS_USER_ANSWERS_FUNC(null, ${funcInfo.correctAnswers.size})"
+              onClick = "$PROCESS_USER_ANSWERS_FUNC(null, ${funcInfo.questionCount})"
               +"Check My Answers"
             }
           }

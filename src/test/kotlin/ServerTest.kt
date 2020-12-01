@@ -20,6 +20,8 @@ package com.github.readingbat
 import com.github.pambrose.common.util.GitHubRepo
 import com.github.pambrose.common.util.OwnerType.Organization
 import com.github.readingbat.common.Endpoints.STATIC_ROOT
+import com.github.readingbat.dsl.Challenge
+import com.github.readingbat.dsl.ChallengeGroup
 import com.github.readingbat.dsl.LanguageType.Java
 import com.github.readingbat.dsl.LanguageType.Kotlin
 import com.github.readingbat.dsl.LanguageType.Python
@@ -36,51 +38,53 @@ import com.github.readingbat.server.routes.AdminRoutes.adminRoutes
 import com.github.readingbat.server.routes.sysAdminRoutes
 import com.github.readingbat.server.routes.userRoutes
 import com.github.readingbat.server.ws.WsCommon.wsRoutes
+import io.kotest.matchers.shouldBe
 import io.ktor.application.*
 import io.ktor.http.*
 import io.ktor.http.HttpStatusCode.Companion.OK
 import io.ktor.http.content.*
 import io.ktor.routing.*
 import io.ktor.server.testing.*
+import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
-import kotlin.test.assertEquals
 
 class ServerTest {
-  val testContent =
-    readingBatContent {
-
-      python {
-        repo = GitHubRepo(Organization, "readingbat", "readingbat-core")
-        srcPath = "python"
-        branchName = "1.7.0"
-
-        group("Test Cases") {
-          packageName = "test_content"
-          description = "Tests"
-
-          challenge("boolean_array_test") { returnType = BooleanArrayType }
-          challenge("int_array_test") { returnType = IntArrayType }
-          challenge("float_test") { returnType = FloatType }
-          challenge("float_array_test") { returnType = FloatArrayType }
-          challenge("string_array_test") { returnType = StringArrayType }
-        }
-      }
-
-      java {
-        repo = GitHubRepo(Organization, "readingbat", "readingbat-core")
-        group("group1") {
-        }
-      }
-
-      kotlin {
-        repo = GitHubRepo(Organization, "readingbat", "readingbat-core")
-        group("group1") {
-        }
-      }
-    }
+  val GROUP_NAME = "Test Cases"
 
   @Test
   fun testRoot() {
+    val testContent =
+      readingBatContent {
+
+        python {
+          repo = GitHubRepo(Organization, "readingbat", "readingbat-core")
+          srcPath = "python"
+          branchName = "1.7.0"
+
+          group(GROUP_NAME) {
+            packageName = "test_content"
+
+            challenge("boolean_array_test") { returnType = BooleanArrayType }
+            challenge("int_array_test") { returnType = IntArrayType }
+            challenge("float_test") { returnType = FloatType }
+            challenge("float_array_test") { returnType = FloatArrayType }
+            challenge("string_array_test") { returnType = StringArrayType }
+          }
+        }
+
+        java {
+          repo = GitHubRepo(Organization, "readingbat", "readingbat-core")
+          group(GROUP_NAME) {
+          }
+        }
+
+        kotlin {
+          repo = GitHubRepo(Organization, "readingbat", "readingbat-core")
+          group(GROUP_NAME) {
+          }
+        }
+      }
+
     fun Application.module(testing: Boolean = false) {
       installs(false)
 
@@ -94,28 +98,24 @@ class ServerTest {
       }
     }
 
-    withTestApplication({
-                          testContent.validate()
-                          module(true)
-                        }) {
+    withTestApplication({ testContent.validate(); module(true) }) {
 
-      handleRequest(HttpMethod.Get, "/").apply {
-        assertEquals(OK, response.status())
+      handleRequest(HttpMethod.Get, "/").apply { response.status() shouldBe OK }
+      handleRequest(HttpMethod.Get, Java.contentRoot).apply { response.status() shouldBe OK }
+      handleRequest(HttpMethod.Get, Python.contentRoot).apply { response.status() shouldBe OK }
+      handleRequest(HttpMethod.Get, Kotlin.contentRoot).apply { response.status() shouldBe OK }
+
+      val group = testContent.python.get(GROUP_NAME)
+      val challenge = group.challengeByName("boolean_array_test") ?: error("Missing challenge")
+
+      val funcInfo = testContent.functionInfoMap[challenge.challengeId] ?: error("Missing functionInfo")
+      runBlocking {
+        val resp = funcInfo.gradeResponse(0, "")
+        resp.correct shouldBe false
       }
-
-      handleRequest(HttpMethod.Get, Java.contentRoot).apply {
-        assertEquals(OK, response.status())
-      }
-
-      handleRequest(HttpMethod.Get, Python.contentRoot).apply {
-        assertEquals(OK, response.status())
-      }
-
-      handleRequest(HttpMethod.Get, Kotlin.contentRoot).apply {
-        assertEquals(OK, response.status())
-      }
-
-      content.get().contentMap
     }
   }
 }
+
+fun <T : Challenge> ChallengeGroup<T>.challengeByName(name: String) =
+  challenges.firstOrNull { it.challengeName.value == name }
