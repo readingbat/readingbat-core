@@ -39,7 +39,9 @@ import com.github.readingbat.server.routes.AdminRoutes.adminRoutes
 import com.github.readingbat.server.routes.sysAdminRoutes
 import com.github.readingbat.server.routes.userRoutes
 import com.github.readingbat.server.ws.WsCommon.wsRoutes
-import io.kotest.matchers.shouldBe
+import io.kotest.assertions.ktor.shouldHaveStatus
+import io.kotest.matchers.booleans.shouldBeFalse
+import io.kotest.matchers.booleans.shouldBeTrue
 import io.ktor.application.*
 import io.ktor.http.*
 import io.ktor.http.HttpStatusCode.Companion.OK
@@ -100,19 +102,19 @@ class ServerTest {
 
     withTestApplication({ testContent.validate(); module(true) }) {
 
-      handleRequest(HttpMethod.Get, "/").apply { response.status() shouldBe OK }
-      handleRequest(HttpMethod.Get, Java.contentRoot).apply { response.status() shouldBe OK }
-      handleRequest(HttpMethod.Get, Python.contentRoot).apply { response.status() shouldBe OK }
-      handleRequest(HttpMethod.Get, Kotlin.contentRoot).apply { response.status() shouldBe OK }
+      handleRequest(HttpMethod.Get, "/").apply { response shouldHaveStatus OK }
+      handleRequest(HttpMethod.Get, Java.contentRoot).apply { response shouldHaveStatus OK }
+      handleRequest(HttpMethod.Get, Python.contentRoot).apply { response shouldHaveStatus OK }
+      handleRequest(HttpMethod.Get, Kotlin.contentRoot).apply { response shouldHaveStatus OK }
 
       testContent.pythonGroup(GROUP_NAME)
         .apply {
           functionInfo("boolean_array_test")
             .apply {
-              gradeResponseNB(0, "False, False").correct shouldBe false
-              gradeResponseNB(0, "[false, False]").correct shouldBe false
-              gradeResponseNB(0, "[true, False]").correct shouldBe false
-              gradeResponseNB(0, "[False, False]").correct shouldBe true
+              gradeResponseNB(0, "False, False").correct.shouldBeFalse()
+              gradeResponseNB(0, "[false, False]").correct.shouldBeFalse()
+              gradeResponseNB(0, "[true, False]").correct.shouldBeFalse()
+              gradeResponseNB(0, "[False, False]").correct.shouldBeTrue()
             }
         }
     }
