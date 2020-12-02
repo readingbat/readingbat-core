@@ -17,11 +17,14 @@
 
 package com.github.readingbat
 
-import com.github.readingbat.TestUtils.GROUP_NAME
-import com.github.readingbat.TestUtils.functionInfo
-import com.github.readingbat.TestUtils.module
-import com.github.readingbat.TestUtils.pythonGroup
-import com.github.readingbat.TestUtils.readTestContent
+import com.github.readingbat.TestSupport.GROUP_NAME
+import com.github.readingbat.TestSupport.checkUserResponse
+import com.github.readingbat.TestSupport.functionInfo
+import com.github.readingbat.TestSupport.javaGroup
+import com.github.readingbat.TestSupport.kotlinGroup
+import com.github.readingbat.TestSupport.module
+import com.github.readingbat.TestSupport.pythonGroup
+import com.github.readingbat.TestSupport.readTestContent
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.booleans.shouldBeFalse
 import io.kotest.matchers.booleans.shouldBeTrue
@@ -31,20 +34,41 @@ import io.ktor.server.testing.*
 class UserAnswers : StringSpec(
   {
     "Test user answers" {
-      val testContent = readTestContent()
-      withTestApplication({ testContent.validate(); module(true, testContent) }) {
+      val testContent = readTestContent().apply { validate() }
 
+      withTestApplication({ module(true, testContent) }) {
         testContent.pythonGroup(GROUP_NAME)
           .apply {
             functionInfo("boolean_array_test")
               .apply {
-                gradeResponseNB(0, "False, False").correct.shouldBeFalse()
-                gradeResponseNB(0, "[false, False]").correct.shouldBeFalse()
-                gradeResponseNB(0, "[true, False]").correct.shouldBeFalse()
-                gradeResponseNB(0, "[False, False]").correct.shouldBeTrue()
+                checkUserResponse(0, "False, False").correct.shouldBeFalse()
+                checkUserResponse(0, "[false, False]").correct.shouldBeFalse()
+                checkUserResponse(0, "[true, False]").correct.shouldBeFalse()
+                checkUserResponse(0, "[False, False]").correct.shouldBeTrue()
+              }
+          }
+
+        testContent.javaGroup(GROUP_NAME)
+          .apply {
+            functionInfo("StringArrayTest1")
+              .apply {
+                checkUserResponse(0, "False, False").correct.shouldBeFalse()
+                checkUserResponse(0, "[false, False]").correct.shouldBeFalse()
+                checkUserResponse(0, "[true, False]").correct.shouldBeFalse()
+                checkUserResponse(0, "[False, False]").correct.shouldBeFalse()
+              }
+          }
+
+        testContent.kotlinGroup(GROUP_NAME)
+          .apply {
+            functionInfo("StringArrayKtTest1")
+              .apply {
+                checkUserResponse(0, "False, False").correct.shouldBeFalse()
+                checkUserResponse(0, "[false, False]").correct.shouldBeFalse()
+                checkUserResponse(0, "[true, False]").correct.shouldBeFalse()
+                checkUserResponse(0, "[False, False]").correct.shouldBeFalse()
               }
           }
       }
     }
   })
-

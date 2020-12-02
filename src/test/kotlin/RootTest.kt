@@ -17,8 +17,8 @@
 
 package com.github.readingbat
 
-import com.github.readingbat.TestUtils.module
-import com.github.readingbat.TestUtils.readTestContent
+import com.github.readingbat.TestSupport.module
+import com.github.readingbat.TestSupport.readTestContent
 import com.github.readingbat.dsl.LanguageType.Java
 import com.github.readingbat.dsl.LanguageType.Kotlin
 import com.github.readingbat.dsl.LanguageType.Python

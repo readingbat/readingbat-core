@@ -164,7 +164,7 @@ internal object ChallengePost : KLogging() {
     val results =
       userResponses.indices
         .map { paramMap[RESP + it]?.trim() ?: error("Missing user response") }
-        .mapIndexed { i, userResponse -> funcInfo.gradeResponse(i, userResponse) }
+        .mapIndexed { i, userResponse -> funcInfo.checkResponse(i, userResponse) }
 
     if (isPostgresEnabled())
       saveChallengeAnswers(user, call.browserSession, content, names, paramMap, funcInfo, userResponses, results)
