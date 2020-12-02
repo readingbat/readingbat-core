@@ -26,6 +26,7 @@ import com.github.pambrose.common.util.isNotNull
 import com.github.pambrose.common.util.md5Of
 import com.github.pambrose.common.util.pathOf
 import com.github.pambrose.common.util.toDoubleQuoted
+import com.github.readingbat.common.Constants.CHALLENGE_NOT_FOUND
 import com.github.readingbat.common.KeyConstants.DIR_CONTENTS_KEY
 import com.github.readingbat.common.KeyConstants.keyOf
 import com.github.readingbat.dsl.Challenge.Companion.challenge
@@ -150,14 +151,14 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
 
   fun findChallenge(challengeName: String): T =
     challenges.firstOrNull { it.challengeName.value == challengeName }
-      ?: throw InvalidRequestException("Challenge not found: ${pathOf(groupPrefix, challengeName)}")
+      ?: throw InvalidRequestException("$CHALLENGE_NOT_FOUND: ${pathOf(groupPrefix, challengeName)}")
 
   operator fun get(challengeName: String): T = findChallenge(challengeName)
 
   internal fun indexOf(challengeName: ChallengeName): Int {
     val pos = challenges.indexOfFirst { it.challengeName == challengeName }
     if (pos == -1)
-      throw InvalidRequestException("Challenge not found: ${pathOf(groupPrefix, challengeName)}")
+      throw InvalidRequestException("$CHALLENGE_NOT_FOUND: ${pathOf(groupPrefix, challengeName)}")
     return pos
   }
 

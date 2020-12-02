@@ -67,6 +67,8 @@ internal object Constants {
   const val NO = "N"
   const val UNANSWERED = "U"
 
+  const val CHALLENGE_NOT_FOUND = "Challenge not found"
+
   val DBMS_DOWN = Message("Database is down", true)
 }
 

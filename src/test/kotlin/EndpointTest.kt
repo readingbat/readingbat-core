@@ -23,6 +23,7 @@ import com.github.readingbat.TestData.readTestContent
 import com.github.readingbat.TestSupport.getUrl
 import com.github.readingbat.TestSupport.module
 import com.github.readingbat.TestSupport.provideAnswers
+import com.github.readingbat.common.Constants.CHALLENGE_NOT_FOUND
 import com.github.readingbat.common.Endpoints.ABOUT_ENDPOINT
 import com.github.readingbat.common.Endpoints.HELP_ENDPOINT
 import com.github.readingbat.common.Endpoints.PRIVACY_ENDPOINT
@@ -33,7 +34,6 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldNotContain
-import io.ktor.http.HttpMethod.Companion.Get
 import io.ktor.http.HttpStatusCode.Companion.Found
 import io.ktor.http.HttpStatusCode.Companion.OK
 import io.ktor.server.testing.*
@@ -42,9 +42,10 @@ import io.ktor.server.testing.*
 class EndpointTest : StringSpec(
   {
     "Endpoint Test" {
-      val testContent = readTestContent()
-      withTestApplication({ testContent.validate(); module(true, testContent) }) {
-        handleRequest(Get, "/").apply { response shouldHaveStatus Found }
+      val testContent = readTestContent().apply { validate() }
+      withTestApplication({ module(true, testContent) }) {
+
+        getUrl("/") { response shouldHaveStatus Found }
 
         getUrl(ABOUT_ENDPOINT) { response shouldHaveStatus OK }
         getUrl(HELP_ENDPOINT) { response shouldHaveStatus OK }
@@ -52,8 +53,7 @@ class EndpointTest : StringSpec(
 
         getUrl(pathOf(Python.contentRoot,
                       GROUP_NAME,
-                      "boolean_array_test2")) { response.content.shouldContain("Challenge not found") }
-
+                      "boolean_array_test2")) { response.content.shouldContain(CHALLENGE_NOT_FOUND) }
 
         listOf(testContent.python, testContent.java, testContent.kotlin)
           .forEach { lang ->
@@ -64,18 +64,25 @@ class EndpointTest : StringSpec(
               challengeGroup.challenges.forEach { challenge ->
                 getUrl(pathOf(lang.languageType.contentRoot,
                               challengeGroup.groupName,
-                              challenge.challengeName)) { response.content.shouldNotContain("Challenge not found") }
+                              challenge.challengeName)) { response.content.shouldNotContain(CHALLENGE_NOT_FOUND) }
               }
             }
+          }
+      }
+    }
+
+    "Test answers" {
+      val testContent = readTestContent().apply { validate() }
+      withTestApplication({ module(true, testContent) }) {
+
+        listOf(testContent.python, testContent.java, testContent.kotlin)
+          .forEach { lang ->
 
             provideAnswers(lang, "")
               .forEach {
                 it.first shouldBe AnswerStatus.NOT_ANSWERED
               }
-          }
 
-        listOf(testContent.python, testContent.java, testContent.kotlin)
-          .forEach { lang ->
             provideAnswers(lang, "[wrong]")
               .forEach {
                 it.first shouldBe AnswerStatus.INCORRECT
@@ -83,5 +90,5 @@ class EndpointTest : StringSpec(
           }
       }
     }
-  })
 
+  })
