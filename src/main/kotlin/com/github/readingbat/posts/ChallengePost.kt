@@ -136,7 +136,11 @@ internal data class ChallengeHistory(var invocation: Invocation,
 }
 
 internal enum class AnswerStatus(val value: Int) {
-  NOT_ANSWERED(0), CORRECT(1), INCORRECT(2)
+  NOT_ANSWERED(0), CORRECT(1), INCORRECT(2);
+
+  companion object {
+    fun Int.toAnswerStatus() = values().firstOrNull { this == it.value } ?: error("Invalid AnswerStatus value: $this")
+  }
 }
 
 internal class ChallengeNames(paramMap: Map<String, String>) {

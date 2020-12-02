@@ -34,7 +34,7 @@ import kotlin.time.minutes
 
 internal class Metrics {
 
-  //  /reset call count
+  // /reset call count
   val contentLoadedCount =
     counter {
       name("content_loaded_count")

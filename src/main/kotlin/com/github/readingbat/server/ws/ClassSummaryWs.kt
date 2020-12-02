@@ -49,7 +49,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 internal object ClassSummaryWs : KLogging() {
 
-  fun Routing.classSummaryWsEndpoint(metrics: Metrics?, contentSrc: () -> ReadingBatContent) {
+  fun Routing.classSummaryWsEndpoint(metrics: Metrics, contentSrc: () -> ReadingBatContent) {
     webSocket("$WS_ROOT$CLASS_SUMMARY_ENDPOINT/{$LANGUAGE_NAME}/{$GROUP_NAME}/{$CLASS_CODE}") {
       try {
         val finished = AtomicBoolean(false)
@@ -62,10 +62,10 @@ internal object ClassSummaryWs : KLogging() {
           incoming.cancel()
         }
 
-        metrics?.wsClassSummaryCount?.labels(agentLaunchId())?.inc()
-        metrics?.wsClassSummaryGauge?.labels(agentLaunchId())?.inc()
+        metrics.wsClassSummaryCount.labels(agentLaunchId()).inc()
+        metrics.wsClassSummaryGauge.labels(agentLaunchId()).inc()
 
-        metrics?.measureEndpointRequest("/websocket_class_summary") {
+        metrics.measureEndpointRequest("/websocket_class_summary") {
 
           val content = contentSrc.invoke()
           val p = call.parameters
@@ -149,7 +149,7 @@ internal object ClassSummaryWs : KLogging() {
         // In case exited early
         closeChannels()
         close(CloseReason(CloseReason.Codes.GOING_AWAY, "Client disconnected"))
-        metrics?.wsClassSummaryGauge?.labels(agentLaunchId())?.dec()
+        metrics.wsClassSummaryGauge.labels(agentLaunchId()).dec()
         logger.debug { "Closed class summary websocket" }
       }
     }

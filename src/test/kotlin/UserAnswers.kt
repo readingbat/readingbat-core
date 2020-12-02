@@ -17,14 +17,14 @@
 
 package com.github.readingbat
 
-import com.github.readingbat.TestSupport.GROUP_NAME
+import com.github.readingbat.TestData.GROUP_NAME
+import com.github.readingbat.TestData.readTestContent
 import com.github.readingbat.TestSupport.checkUserResponse
 import com.github.readingbat.TestSupport.functionInfo
 import com.github.readingbat.TestSupport.javaGroup
 import com.github.readingbat.TestSupport.kotlinGroup
 import com.github.readingbat.TestSupport.module
 import com.github.readingbat.TestSupport.pythonGroup
-import com.github.readingbat.TestSupport.readTestContent
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.booleans.shouldBeFalse
 import io.kotest.matchers.booleans.shouldBeTrue

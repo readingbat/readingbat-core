@@ -134,18 +134,18 @@ internal object ServerUtils : KLogging() {
     }
 
   @ContextDsl
-  fun Route.get(path: String, metrics: Metrics?, body: PipelineInterceptor<Unit, ApplicationCall>) =
+  fun Route.get(path: String, metrics: Metrics, body: PipelineInterceptor<Unit, ApplicationCall>) =
     route(path, HttpMethod.Get) {
       runBlocking {
-        metrics?.measureEndpointRequest(path) { handle(body) }
+        metrics.measureEndpointRequest(path) { handle(body) }
       }
     }
 
   @ContextDsl
-  fun Route.post(path: String, metrics: Metrics?, body: PipelineInterceptor<Unit, ApplicationCall>) =
+  fun Route.post(path: String, metrics: Metrics, body: PipelineInterceptor<Unit, ApplicationCall>) =
     route(path, HttpMethod.Post) {
       runBlocking {
-        metrics?.measureEndpointRequest(path) { handle(body) }
+        metrics.measureEndpointRequest(path) { handle(body) }
       }
     }
 

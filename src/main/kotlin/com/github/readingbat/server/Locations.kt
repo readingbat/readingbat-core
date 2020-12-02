@@ -52,39 +52,39 @@ internal object Locations {
   private const val trueStr = true.toString()
   private const val falseStr = false.toString()
 
-  fun Routing.locations(metrics: Metrics? = null, content: () -> ReadingBatContent) {
+  fun Routing.locations(metrics: Metrics, content: () -> ReadingBatContent) {
     get<Language> { languageLoc ->
-      metrics?.languageGroupRequestCount?.labels(agentLaunchId(), GET, languageLoc.languageTypeStr, falseStr)?.inc()
+      metrics.languageGroupRequestCount.labels(agentLaunchId(), GET, languageLoc.languageTypeStr, falseStr).inc()
       language(content.invoke(), languageLoc, false)
     }
     get<Language.Group> { groupLoc ->
-      metrics?.challengeGroupRequestCount?.labels(agentLaunchId(), GET, groupLoc.languageTypeStr, falseStr)?.inc()
+      metrics.challengeGroupRequestCount.labels(agentLaunchId(), GET, groupLoc.languageTypeStr, falseStr).inc()
       group(content.invoke(), groupLoc, false)
     }
     get<Language.Group.Challenge> { challengeLoc ->
-      metrics?.challengeRequestCount?.labels(agentLaunchId(), GET, challengeLoc.languageTypeStr, falseStr)?.inc()
+      metrics.challengeRequestCount.labels(agentLaunchId(), GET, challengeLoc.languageTypeStr, falseStr).inc()
       challenge(content.invoke(), challengeLoc, false)
     }
     get<PlaygroundRequest> { request ->
-      metrics?.playgroundRequestCount?.labels(agentLaunchId(), GET, falseStr)?.inc()
+      metrics.playgroundRequestCount.labels(agentLaunchId(), GET, falseStr).inc()
       playground(content.invoke(), request, false)
     }
 
     authenticate(FORM) {
       post<Language> { languageLoc ->
-        metrics?.languageGroupRequestCount?.labels(agentLaunchId(), POST, languageLoc.languageTypeStr, trueStr)?.inc()
+        metrics.languageGroupRequestCount.labels(agentLaunchId(), POST, languageLoc.languageTypeStr, trueStr).inc()
         language(content.invoke(), languageLoc, true)
       }
       post<Language.Group> { groupLoc ->
-        metrics?.challengeGroupRequestCount?.labels(agentLaunchId(), POST, groupLoc.languageTypeStr, trueStr)?.inc()
+        metrics.challengeGroupRequestCount.labels(agentLaunchId(), POST, groupLoc.languageTypeStr, trueStr).inc()
         group(content.invoke(), groupLoc, true)
       }
       post<Language.Group.Challenge> { challengeLoc ->
-        metrics?.challengeRequestCount?.labels(agentLaunchId(), POST, challengeLoc.languageTypeStr, trueStr)?.inc()
+        metrics.challengeRequestCount.labels(agentLaunchId(), POST, challengeLoc.languageTypeStr, trueStr).inc()
         challenge(content.invoke(), challengeLoc, true)
       }
       post<PlaygroundRequest> { request ->
-        metrics?.playgroundRequestCount?.labels(agentLaunchId(), POST, trueStr)?.inc()
+        metrics.playgroundRequestCount.labels(agentLaunchId(), POST, trueStr).inc()
         playground(content.invoke(), request, true)
       }
     }

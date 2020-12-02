@@ -17,27 +17,28 @@
 
 package com.github.readingbat
 
-import com.github.pambrose.common.util.FileSystemSource
+import com.github.readingbat.common.Constants
 import com.github.readingbat.common.Endpoints
 import com.github.readingbat.common.FunctionInfo
 import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.ChallengeGroup
+import com.github.readingbat.dsl.LanguageGroup
 import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.dsl.ReturnType.BooleanArrayType
-import com.github.readingbat.dsl.ReturnType.FloatArrayType
-import com.github.readingbat.dsl.ReturnType.FloatType
-import com.github.readingbat.dsl.ReturnType.IntArrayType
-import com.github.readingbat.dsl.ReturnType.StringArrayType
-import com.github.readingbat.dsl.readingBatContent
+import com.github.readingbat.posts.AnswerStatus
+import com.github.readingbat.posts.AnswerStatus.Companion.toAnswerStatus
+import com.github.readingbat.server.GeoInfo
 import com.github.readingbat.server.Installs.installs
 import com.github.readingbat.server.Locations.locations
+import com.github.readingbat.server.ReadingBatServer.metrics
 import com.github.readingbat.server.routes.AdminRoutes.adminRoutes
 import com.github.readingbat.server.routes.sysAdminRoutes
 import com.github.readingbat.server.routes.userRoutes
 import com.github.readingbat.server.ws.WsCommon.wsRoutes
 import io.ktor.application.*
+import io.ktor.http.*
 import io.ktor.http.content.*
 import io.ktor.routing.*
+import io.ktor.server.testing.*
 import kotlinx.coroutines.runBlocking
 
 object TestSupport {
@@ -51,65 +52,54 @@ object TestSupport {
   internal fun <T : Challenge> ChallengeGroup<T>.functionInfo(name: String) =
     challengeByName(name).functionInfo()
 
-  val GROUP_NAME = "Test Cases"
-
-  internal fun readTestContent() =
-    readingBatContent {
-      python {
-        repo = FileSystemSource("./")
-        //repo = GitHubRepo(OwnerType.Organization, "readingbat", "readingbat-core")
-        //branchName = "1.7.0"
-        srcPath = "python"
-
-        group(GROUP_NAME) {
-          packageName = "test_content"
-
-          challenge("boolean_array_test") { returnType = BooleanArrayType }
-          challenge("int_array_test") { returnType = IntArrayType }
-          challenge("float_test") { returnType = FloatType }
-          challenge("float_array_test") { returnType = FloatArrayType }
-          challenge("string_array_test") { returnType = StringArrayType }
-        }
-      }
-
-      java {
-        repo = FileSystemSource("./")
-        //repo = GitHubRepo(OwnerType.Organization, "readingbat", "readingbat-core")
-        srcPath = "src/test/java"
-        group(GROUP_NAME) {
-          packageName = "com.github.readingbat.test_content"
-
-          challenge("StringArrayTest1")
-        }
-      }
-
-      kotlin {
-        repo = FileSystemSource("./")
-        //repo = GitHubRepo(OwnerType.Organization, "readingbat", "readingbat-core")
-        srcPath = "src/test/kotlin"
-        group(GROUP_NAME) {
-          packageName = "com.github.readingbat.test_content"
-
-          challenge("StringArrayKtTest1") { returnType = StringArrayType }
-        }
-      }
-    }
-
   internal fun FunctionInfo.checkUserResponse(index: Int, userResponse: String) =
     runBlocking {
       checkResponse(index, userResponse)
     }
 
+  fun TestApplicationEngine.getUrl(uri: String, block: TestApplicationCall.() -> Unit) =
+    handleRequest(HttpMethod.Get, uri)
+      .apply { block() }
+
+  fun TestApplicationEngine.postUrl(uri: String, block: TestApplicationCall.() -> Unit) =
+    handleRequest(HttpMethod.Post, uri)
+      .apply { block() }
+
+  internal fun <T : Challenge> TestApplicationEngine.provideAnswers(lang: LanguageGroup<T>, answer: String) =
+    buildList<Pair<AnswerStatus, String>> {
+      lang.challengeGroups.forEach { challengeGroup ->
+        challengeGroup.challenges.forEach { challenge ->
+          val content =
+            handleRequest(HttpMethod.Post, Endpoints.CHECK_ANSWERS_ENDPOINT) {
+              addHeader(HttpHeaders.ContentType, ContentType.Application.FormUrlEncoded.toString())
+              val data =
+                mutableListOf(Constants.LANG_SRC to lang.languageName.value,
+                              Constants.GROUP_SRC to challengeGroup.groupName.value,
+                              Constants.CHALLENGE_SRC to challenge.challengeName.value)
+              challenge.functionInfo().invocations.indices.forEach { data += "${Constants.RESP}$it" to answer }
+              setBody(data.formUrlEncode())
+            }.response.content
+
+          GeoInfo.gson.fromJson(content, List::class.java)
+            .map { v ->
+              (v as List<Any?>).let {
+                (it[0] as Double).toInt().toAnswerStatus() to (it[1] as String)
+              }
+            }
+            .forEach { this += it }
+        }
+      }
+    }
 
   fun Application.module(testing: Boolean = false, testContent: ReadingBatContent) {
     installs(false)
 
     routing {
-      adminRoutes()
-      locations { testContent }
-      userRoutes { testContent }
-      sysAdminRoutes { s: String -> }
-      wsRoutes { testContent }
+      adminRoutes(metrics)
+      locations(metrics) { testContent }
+      userRoutes(metrics) { testContent }
+      sysAdminRoutes(metrics) { s: String -> }
+      wsRoutes(metrics) { testContent }
       static(Endpoints.STATIC_ROOT) { resources("static") }
     }
   }

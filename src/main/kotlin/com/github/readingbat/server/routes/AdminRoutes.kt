@@ -57,7 +57,7 @@ import java.time.ZoneId
 
 internal object AdminRoutes : KLogging() {
 
-  fun Routing.adminRoutes(metrics: Metrics? = null) {
+  fun Routing.adminRoutes(metrics: Metrics) {
 
     get(PING_ENDPOINT, metrics) {
       call.respondText("pong", Plain)
