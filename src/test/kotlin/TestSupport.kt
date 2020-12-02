@@ -17,8 +17,12 @@
 
 package com.github.readingbat
 
-import com.github.readingbat.common.Constants
+import com.github.readingbat.common.Constants.CHALLENGE_SRC
+import com.github.readingbat.common.Constants.GROUP_SRC
+import com.github.readingbat.common.Constants.LANG_SRC
+import com.github.readingbat.common.Constants.RESP
 import com.github.readingbat.common.Endpoints
+import com.github.readingbat.common.Endpoints.CHECK_ANSWERS_ENDPOINT
 import com.github.readingbat.common.FunctionInfo
 import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.ChallengeGroup
@@ -26,7 +30,7 @@ import com.github.readingbat.dsl.LanguageGroup
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.posts.AnswerStatus
 import com.github.readingbat.posts.AnswerStatus.Companion.toAnswerStatus
-import com.github.readingbat.server.GeoInfo
+import com.github.readingbat.server.GeoInfo.Companion.gson
 import com.github.readingbat.server.Installs.installs
 import com.github.readingbat.server.Locations.locations
 import com.github.readingbat.server.ReadingBatServer.metrics
@@ -36,6 +40,8 @@ import com.github.readingbat.server.routes.userRoutes
 import com.github.readingbat.server.ws.WsCommon.wsRoutes
 import io.ktor.application.*
 import io.ktor.http.*
+import io.ktor.http.ContentType.Application.FormUrlEncoded
+import io.ktor.http.HttpHeaders.ContentType
 import io.ktor.http.content.*
 import io.ktor.routing.*
 import io.ktor.server.testing.*
@@ -58,29 +64,27 @@ object TestSupport {
     }
 
   fun TestApplicationEngine.getUrl(uri: String, block: TestApplicationCall.() -> Unit) =
-    handleRequest(HttpMethod.Get, uri)
-      .apply { block() }
+    handleRequest(HttpMethod.Get, uri).apply { block() }
 
-  fun TestApplicationEngine.postUrl(uri: String, block: TestApplicationCall.() -> Unit) =
-    handleRequest(HttpMethod.Post, uri)
-      .apply { block() }
+  fun TestApplicationEngine.postUrl(uri: String, block: TestApplicationRequest.() -> Unit) =
+    handleRequest(HttpMethod.Post, uri, block)
 
   internal fun <T : Challenge> TestApplicationEngine.provideAnswers(lang: LanguageGroup<T>, answer: String) =
     buildList<Pair<AnswerStatus, String>> {
       lang.challengeGroups.forEach { challengeGroup ->
         challengeGroup.challenges.forEach { challenge ->
           val content =
-            handleRequest(HttpMethod.Post, Endpoints.CHECK_ANSWERS_ENDPOINT) {
-              addHeader(HttpHeaders.ContentType, ContentType.Application.FormUrlEncoded.toString())
+            postUrl(CHECK_ANSWERS_ENDPOINT) {
+              addHeader(ContentType, FormUrlEncoded.toString())
               val data =
-                mutableListOf(Constants.LANG_SRC to lang.languageName.value,
-                              Constants.GROUP_SRC to challengeGroup.groupName.value,
-                              Constants.CHALLENGE_SRC to challenge.challengeName.value)
-              challenge.functionInfo().invocations.indices.forEach { data += "${Constants.RESP}$it" to answer }
+                mutableListOf(LANG_SRC to lang.languageName.value,
+                              GROUP_SRC to challengeGroup.groupName.value,
+                              CHALLENGE_SRC to challenge.challengeName.value)
+              challenge.functionInfo().invocations.indices.forEach { data += "$RESP$it" to answer }
               setBody(data.formUrlEncode())
             }.response.content
 
-          GeoInfo.gson.fromJson(content, List::class.java)
+          gson.fromJson(content, List::class.java)
             .map { v ->
               (v as List<Any?>).let {
                 (it[0] as Double).toInt().toAnswerStatus() to (it[1] as String)
