@@ -69,7 +69,7 @@ object TestSupport {
   fun TestApplicationEngine.postUrl(uri: String, block: TestApplicationRequest.() -> Unit) =
     handleRequest(HttpMethod.Post, uri, block)
 
-  internal fun <T : Challenge> TestApplicationEngine.provideAnswers(lang: LanguageGroup<T>, answer: String) =
+  internal fun <T : Challenge> TestApplicationEngine.testAllChallenges(lang: LanguageGroup<T>, answer: String) =
     buildList<Pair<AnswerStatus, String>> {
       lang.challengeGroups.forEach { challengeGroup ->
         challengeGroup.challenges.forEach { challenge ->

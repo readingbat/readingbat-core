@@ -34,7 +34,7 @@ import io.ktor.server.testing.*
 class UserAnswers : StringSpec(
   {
     "Test user answers" {
-      val testContent = readTestContent().apply { validate() }
+      val testContent = readTestContent()
 
       withTestApplication({ module(true, testContent) }) {
         testContent.pythonGroup(GROUP_NAME)

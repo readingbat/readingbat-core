@@ -22,7 +22,7 @@ import com.github.readingbat.TestData.GROUP_NAME
 import com.github.readingbat.TestData.readTestContent
 import com.github.readingbat.TestSupport.getUrl
 import com.github.readingbat.TestSupport.module
-import com.github.readingbat.TestSupport.provideAnswers
+import com.github.readingbat.TestSupport.testAllChallenges
 import com.github.readingbat.common.Constants.CHALLENGE_NOT_FOUND
 import com.github.readingbat.common.Endpoints.ABOUT_ENDPOINT
 import com.github.readingbat.common.Endpoints.HELP_ENDPOINT
@@ -31,18 +31,19 @@ import com.github.readingbat.dsl.LanguageType.Python
 import com.github.readingbat.posts.AnswerStatus
 import io.kotest.assertions.ktor.shouldHaveStatus
 import io.kotest.core.spec.style.StringSpec
+import io.kotest.inspectors.forAll
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldBeBlank
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldNotContain
 import io.ktor.http.HttpStatusCode.Companion.Found
 import io.ktor.http.HttpStatusCode.Companion.OK
 import io.ktor.server.testing.*
 
-
 class EndpointTest : StringSpec(
   {
-    "Endpoint Test" {
-      val testContent = readTestContent().apply { validate() }
+    "Simple endpoint tests" {
+      val testContent = readTestContent()
       withTestApplication({ module(true, testContent) }) {
 
         getUrl("/") { response shouldHaveStatus Found }
@@ -55,8 +56,8 @@ class EndpointTest : StringSpec(
                       GROUP_NAME,
                       "boolean_array_test2")) { response.content.shouldContain(CHALLENGE_NOT_FOUND) }
 
-        listOf(testContent.python, testContent.java, testContent.kotlin)
-          .forEach { lang ->
+        testContent.languages
+          .forAll { lang ->
 
             getUrl(lang.languageType.contentRoot) { response shouldHaveStatus OK }
 
@@ -71,20 +72,21 @@ class EndpointTest : StringSpec(
       }
     }
 
-    "Test answers" {
-      val testContent = readTestContent().apply { validate() }
+    "Test all challenges" {
+      val testContent = readTestContent()
       withTestApplication({ module(true, testContent) }) {
 
-        listOf(testContent.python, testContent.java, testContent.kotlin)
+        testContent.languages
           .forEach { lang ->
 
-            provideAnswers(lang, "")
-              .forEach {
+            testAllChallenges(lang, "")
+              .forAll {
                 it.first shouldBe AnswerStatus.NOT_ANSWERED
+                it.second.shouldBeBlank()
               }
 
-            provideAnswers(lang, "[wrong]")
-              .forEach {
+            testAllChallenges(lang, "[wrong]")
+              .forAll {
                 it.first shouldBe AnswerStatus.INCORRECT
               }
           }

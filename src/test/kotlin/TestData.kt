@@ -65,6 +65,6 @@ object TestData {
           challenge("StringArrayKtTest1") { returnType = ReturnType.StringArrayType }
         }
       }
-    }
+    }.apply { validate() }
 
 }
