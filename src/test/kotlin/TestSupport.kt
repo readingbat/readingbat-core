@@ -28,7 +28,6 @@ import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.ChallengeGroup
 import com.github.readingbat.dsl.LanguageGroup
 import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.posts.AnswerStatus
 import com.github.readingbat.posts.AnswerStatus.Companion.toAnswerStatus
 import com.github.readingbat.server.GeoInfo.Companion.gson
 import com.github.readingbat.server.Installs.installs
@@ -70,7 +69,7 @@ object TestSupport {
     handleRequest(HttpMethod.Post, uri, block)
 
   internal fun <T : Challenge> TestApplicationEngine.testAllChallenges(lang: LanguageGroup<T>, answer: String) =
-    buildList<Pair<AnswerStatus, String>> {
+    buildList {
       lang.challengeGroups.forEach { challengeGroup ->
         challengeGroup.challenges.forEach { challenge ->
           val content =

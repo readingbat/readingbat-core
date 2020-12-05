@@ -36,7 +36,7 @@ class PropertyExample : StringSpec(
 class PropertyExample2 : StringSpec(
   {
     "integers under addition should have an identity value" {
-      checkAll<Int, Int, Int>() { a, b, c ->
+      checkAll<Int, Int, Int> { a, b, c ->
         println("$a $b")
         a + 0 shouldBe a
         0 + a shouldBe a

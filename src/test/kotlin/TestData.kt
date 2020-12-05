@@ -23,7 +23,7 @@ import com.github.readingbat.dsl.readingBatContent
 
 object TestData {
 
-  val GROUP_NAME = "Test Cases"
+  const val GROUP_NAME = "Test Cases"
 
   internal fun readTestContent() =
     readingBatContent {

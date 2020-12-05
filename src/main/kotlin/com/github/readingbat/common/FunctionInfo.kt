@@ -146,7 +146,7 @@ internal class FunctionInfo(val challenge: Challenge,
       error("Mismatch between ${correctAnswers.size} answers and ${invocations.size} invocations in $challengeName")
   }
 
-  suspend internal fun checkResponse(index: Int, userResponse: String): ChallengeResults {
+  internal suspend fun checkResponse(index: Int, userResponse: String): ChallengeResults {
     val correctAnswer = correctAnswers[index]
     val answered = userResponse.isNotBlank()
     val correctAndHint =
