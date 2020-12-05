@@ -144,7 +144,7 @@ internal object ChallengeWs : KLogging() {
                   answerWsConnections
                     .filter { it.targetName == data.target }
                     .forEach {
-                      it.metrics.wsStudentAnswerResponseCount?.labels(agentLaunchId())?.inc()
+                      it.metrics.wsStudentAnswerResponseCount.labels(agentLaunchId())?.inc()
                       it.wsSession.outgoing.send(Frame.Text(data.jsonArgs))
                       logger.debug { "Sent $data ${answerWsConnections.size}" }
                     }
