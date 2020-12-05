@@ -66,10 +66,10 @@ object TestSupport {
   internal fun ChallengeResults.shouldBeCorrect() = correct.shouldBeTrue()
   internal fun ChallengeResults.shouldBeIncorrect() = correct.shouldBeFalse()
 
-  fun TestApplicationEngine.getUrl(uri: String, block: TestApplicationCall.() -> Unit) =
+  internal fun TestApplicationEngine.getUrl(uri: String, block: TestApplicationCall.() -> Unit) =
     handleRequest(HttpMethod.Get, uri).apply { block() }
 
-  fun TestApplicationEngine.postUrl(uri: String, block: TestApplicationRequest.() -> Unit) =
+  internal fun TestApplicationEngine.postUrl(uri: String, block: TestApplicationRequest.() -> Unit) =
     handleRequest(HttpMethod.Post, uri, block)
 
   internal fun <T : Challenge> TestApplicationEngine.testAllChallenges(lang: LanguageGroup<T>, answer: String) =
