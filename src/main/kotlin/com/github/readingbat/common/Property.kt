@@ -28,7 +28,6 @@ import com.github.readingbat.common.PropertyNames.CONTENT
 import com.github.readingbat.common.PropertyNames.DBMS
 import com.github.readingbat.common.PropertyNames.READINGBAT
 import com.github.readingbat.common.PropertyNames.SITE
-import com.github.readingbat.dsl.InvalidConfigurationException
 import io.ktor.application.*
 import io.ktor.config.*
 import mu.KLogging
@@ -51,7 +50,7 @@ enum class Property(val propertyValue: String,
   PROXY_HOSTNAME("$AGENT.proxy.hostname"),
   STARTUP_DELAY_SECS("$READINGBAT.$SITE.startupMaxDelaySecs"),
 
-  // These are defaults for enf var values
+  // These are defaults for env var values
   REDIRECT_HOSTNAME_PROPERTY("$READINGBAT.$SITE.redirectHostname"),
   SENDGRID_PREFIX_PROPERTY("$READINGBAT.$SITE.sendGridPrefix"),
   FORWARDED_ENABLED_PROPERTY("$READINGBAT.$SITE.forwardedHeaderSupportEnabled"),
@@ -113,11 +112,11 @@ enum class Property(val propertyValue: String,
 
   fun getProperty(default: Boolean) = System.getProperty(propertyValue)?.toBoolean() ?: default
 
-  fun getProperty(default: Int) = System.getProperty(propertyValue)?.toInt() ?: default
+  fun getProperty(default: Int) = System.getProperty(propertyValue)?.toIntOrNull() ?: default
 
   fun getPropertyOrNull(): String? = System.getProperty(propertyValue)
 
-  fun getRequiredProperty() = getPropertyOrNull() ?: throw InvalidConfigurationException("Missing $propertyValue value")
+  fun getRequiredProperty() = getPropertyOrNull() ?: error("Missing $propertyValue value")
 
   fun setProperty(value: String) {
     System.setProperty(propertyValue, value)

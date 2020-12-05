@@ -83,52 +83,69 @@ fun ContentSource.eval(enclosingContent: ReadingBatContent, variableName: String
 
 private fun contentDslKey(source: String) = keyOf(CONTENT_DSL_KEY, md5Of(source))
 
-private fun fetchContentDsl(source: String) =
+private fun fetchContentDslFromRedis(source: String) =
   if (isContentCachingEnabled()) redisPool?.withRedisPool { it?.get(contentDslKey(source)) } else null
 
-internal fun readContentDsl(contentSource: ContentSource, variableName: String = "content"): ReadingBatContent {
-  val (code, dur) =
-    measureTimedValue {
-      if (!contentSource.remote)
-        contentSource.content
-      else {
-        var dsl = fetchContentDsl(contentSource.source)
-        if (dsl.isNotNull()) {
-          logger.debug { "Fetched ${contentSource.source} from redis cache" }
-        }
-        else {
-          dsl = contentSource.content
-          if (isContentCachingEnabled()) {
-            redisPool?.withNonNullRedisPool(true) { redis ->
-              redis.set(contentDslKey(contentSource.source), dsl)
-              logger.debug { """Saved "${contentSource.source}" to redis""" }
-            }
-          }
-        }
-        dsl
-      }
+private fun saveContentDslToRedis(source: String, dsl: String) {
+  if (isContentCachingEnabled()) {
+    redisPool?.withNonNullRedisPool(true) { redis ->
+      redis.set(contentDslKey(source), dsl)
+      logger.info { "Saved $source to redis" }
     }
-
-  logger.info { """Read content for "${contentSource.source}" in $dur""" }
-  val withImports = addImports(code, variableName)
-  return runBlocking { evalDsl(withImports, contentSource.source) }
+  }
 }
+
+internal fun readContentDsl(contentSource: ContentSource) =
+  measureTimedValue {
+    if (!contentSource.remote) {
+      contentSource.content
+    }
+    else {
+      var dslCode = fetchContentDslFromRedis(contentSource.source)
+      if (dslCode.isNotNull()) {
+        logger.info { "Fetched ${contentSource.source} from redis cache" }
+      }
+      else {
+        dslCode = contentSource.content
+        saveContentDslToRedis(contentSource.source, dslCode)
+      }
+      dslCode
+    }
+  }.let {
+    logger.info { "Read content for ${contentSource.source} in ${it.duration}" }
+    it.value
+  }
+
+internal fun evalContentDsl(source: String,
+                            variableName: String = "content",
+                            code: String) =
+  runBlocking {
+    measureTimedValue {
+      logger.info { "Starting eval for $source" }
+      val withImports = addImports(code, variableName)
+      evalDsl(withImports, source)
+    }
+  }.let {
+    logger.info { "Evaluated $source in ${it.duration}" }
+    it.value
+  }
 
 internal fun addImports(code: String, variableName: String): String {
   val classImports =
     listOf(ReadingBatServer::class, GitHubContent::class)
       //.onEach { println("Checking for ${it.javaObjectType.name}") }
       .filter { code.contains("${it.javaObjectType.simpleName}(") }   // See if the class is referenced
-      .map { "import ${it.javaObjectType.name}" }                     // Convert to import stmt
-      .filterNot { code.contains(it) }                                // Do not include if import already present
-      .joinToString("\n")                                             // Turn into String
+      .map { "import ${it.javaObjectType.name}" }                           // Convert to import stmt
+      .filterNot { code.contains(it) }                                      // Do not include if import already present
+      .joinToString("\n")                                         // Turn into String
 
   val funcImports =
     listOf(::readingBatContent)
+      //.onEach { println("Checking for ${it.name}") }
       .filter { code.contains("${it.name}(") }  // See if the function is referenced
-      .map { "import ${it.fqMethodName}" }      // Convert to import stmt
-      .filterNot { code.contains(it) }          // Do not include is import already present
-      .joinToString("\n")                       // Turn into String
+      .map { "import ${it.fqMethodName}" }            // Convert to import stmt
+      .filterNot { code.contains(it) }                // Do not include is import already present
+      .joinToString("\n")                   // Turn into String
 
   val imports = listOf(classImports, funcImports).filter { it.isNotBlank() }.joinToString("\n")
   return """

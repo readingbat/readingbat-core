@@ -37,11 +37,11 @@ import com.github.readingbat.common.CSSNames.USER_RESP
 import com.github.readingbat.common.Constants.CORRECT_COLOR
 import com.github.readingbat.common.Constants.INCOMPLETE_COLOR
 import com.github.readingbat.common.Constants.LIKE_DISLIKE_CODE
-import com.github.readingbat.common.Constants.LIKE_DISLIKE_JS_FUNC
+import com.github.readingbat.common.Constants.LIKE_DISLIKE_FUNC
 import com.github.readingbat.common.Constants.MSG
 import com.github.readingbat.common.Constants.PING_CODE
 import com.github.readingbat.common.Constants.PRISM
-import com.github.readingbat.common.Constants.PROCESS_USER_ANSWERS_JS_FUNC
+import com.github.readingbat.common.Constants.PROCESS_USER_ANSWERS_FUNC
 import com.github.readingbat.common.Constants.RESP
 import com.github.readingbat.common.Constants.WRONG_COLOR
 import com.github.readingbat.common.Endpoints.CHALLENGE_ENDPOINT
@@ -111,6 +111,7 @@ internal object ChallengePage : KLogging() {
   private const val likeDislikeSpan = "likeDislikeSpan"
   private const val answersSpan = "answersSpan"
   private const val numCorrectSpan = "numCorrectSpan"
+  private const val pingLabel = "pingLabel"
   private const val pingMsg = "pingMsg"
   internal const val headerColor = "#419DC1"
 
@@ -125,7 +126,7 @@ internal object ChallengePage : KLogging() {
         val languageName = languageType.languageName
         val groupName = challenge.groupName
         val challengeName = challenge.challengeName
-        val funcInfo = challenge.functionInfo(content)
+        val funcInfo = challenge.functionInfo()
         val loginPath = pathOf(CHALLENGE_ROOT, languageName, groupName, challengeName)
         val activeClassCode = queryActiveClassCode(user)
         val enrollees = activeClassCode.fetchEnrollees()
@@ -155,7 +156,7 @@ internal object ChallengePage : KLogging() {
             displayStudentProgress(challenge, content.maxHistoryLength, funcInfo, activeClassCode, enrollees)
 
             if (enrollees.isNotEmpty())
-              p { +"Connection time: "; span { id = pingMsg } }
+              p { span { id = pingLabel }; span { id = pingMsg } }
           }
 
           backLink(CHALLENGE_ROOT, languageName.value, groupName.value)
@@ -264,7 +265,7 @@ internal object ChallengePage : KLogging() {
                   }
                 textInput(classes = USER_RESP + cls) {
                   id = "$RESP$i"
-                  onKeyDown = "$PROCESS_USER_ANSWERS_JS_FUNC(event, ${funcInfo.correctAnswers.size})"
+                  onKeyDown = "$PROCESS_USER_ANSWERS_FUNC(event, ${funcInfo.questionCount})"
 
                   val response = previousResponses[invocation.value] ?: ""
                   if (response.isNotBlank())
@@ -297,6 +298,14 @@ internal object ChallengePage : KLogging() {
     script {
       rawHtml(
         """
+        function sleep(ms) {
+          return new Promise(resolve => setTimeout(resolve, ms));
+        }
+            
+        var cnt = 0;
+        var firstTime = true;
+        var connected = false;
+        function connect() {
           var wshost = location.origin;
           if (wshost.startsWith('https:'))
             wshost = wshost.replace(/^https:/, 'wss:');
@@ -307,13 +316,38 @@ internal object ChallengePage : KLogging() {
           var ws = new WebSocket(wsurl);
           
           ws.onopen = function (event) {
+            //console.log("WebSocket connected.");
+            firstTime = false;
+            document.getElementById('$pingLabel').innerText = 'Connected';
+            document.getElementById('$pingMsg').innerText = '';
             ws.send("$classCode"); 
+          };
+          
+          ws.onclose = function (event) {
+            //console.log('WebSocket closed. Reconnect will be attempted in 1 second.', event.reason);
+            var msg = 'Connecting';
+            if (!firstTime)
+              msg = 'Reconnecting';
+            for (i = 0; i < cnt%4; i++) 
+              msg += '.'
+            document.getElementById('$pingLabel').innerText = msg;
+            document.getElementById('$pingMsg').innerText = '';
+            setTimeout(function() {
+              cnt+=1;
+              connect();
+            }, 1000);
+          }
+          
+          ws.onerror = function(err) {
+            //console.error(err)
+            ws.close();
           };
           
           ws.onmessage = function (event) {
             var obj = JSON.parse(event.data);
       
             if (obj.hasOwnProperty("type") && obj.type == "$PING_CODE") {
+              document.getElementById('$pingLabel').innerText = 'Connection time: ';
               document.getElementById('$pingMsg').innerText = obj.msg;
             }
             else if (obj.hasOwnProperty("type") && obj.type == "$LIKE_DISLIKE_CODE") {
@@ -330,11 +364,12 @@ internal object ChallengePage : KLogging() {
               var answers = document.getElementById(prefix + '-$answersTd')
               answers.style.backgroundColor = obj.history.correct ? '$CORRECT_COLOR' 
                                                                   : (obj.history.answers.length > 0 ? '$WRONG_COLOR' 
-                                                                                                    : '$INCOMPLETE_COLOR');
-      
+                                                                                                    : '$INCOMPLETE_COLOR');      
               document.getElementById(prefix + '-$answersSpan').innerHTML = obj.history.answers;
             }
           };
+        }
+        connect();
         """.trimIndent())
     }
   }
@@ -442,7 +477,8 @@ internal object ChallengePage : KLogging() {
         tr {
           td {
             button(classes = CHECK_ANSWERS) {
-              onClick = "$PROCESS_USER_ANSWERS_JS_FUNC(null, ${funcInfo.correctAnswers.size})"; +"Check My Answers"
+              onClick = "$PROCESS_USER_ANSWERS_FUNC(null, ${funcInfo.questionCount})"
+              +"Check My Answers"
             }
           }
 
@@ -519,7 +555,7 @@ internal object ChallengePage : KLogging() {
             id = LIKE_CLEAR
             style = "display:${if (likeDislikeVal == 0 || likeDislikeVal == 2) "inline" else "none"}"
             button(classes = LIKE_BUTTONS) {
-              onClick = "$LIKE_DISLIKE_JS_FUNC(${LIKE_CLEAR.toDoubleQuoted()})"
+              onClick = "$LIKE_DISLIKE_FUNC(${LIKE_CLEAR.toDoubleQuoted()})"
               img { height = imgSize; src = pathOf(STATIC_ROOT, LIKE_CLEAR_FILE) }
             }
           }
@@ -527,7 +563,7 @@ internal object ChallengePage : KLogging() {
             id = LIKE_COLOR
             style = "display:${if (likeDislikeVal == 1) "inline" else "none"}"
             button(classes = LIKE_BUTTONS) {
-              onClick = "$LIKE_DISLIKE_JS_FUNC(${LIKE_COLOR.toDoubleQuoted()})"
+              onClick = "$LIKE_DISLIKE_FUNC(${LIKE_COLOR.toDoubleQuoted()})"
               img { height = imgSize; src = pathOf(STATIC_ROOT, LIKE_COLOR_FILE) }
             }
           }
@@ -535,7 +571,7 @@ internal object ChallengePage : KLogging() {
             id = DISLIKE_CLEAR
             style = "display:${if (likeDislikeVal == 0 || likeDislikeVal == 1) "inline" else "none"}"
             button(classes = LIKE_BUTTONS) {
-              onClick = "$LIKE_DISLIKE_JS_FUNC(${DISLIKE_CLEAR.toDoubleQuoted()})"
+              onClick = "$LIKE_DISLIKE_FUNC(${DISLIKE_CLEAR.toDoubleQuoted()})"
               img { height = imgSize; src = pathOf(STATIC_ROOT, DISLIKE_CLEAR_FILE) }
             }
           }
@@ -543,7 +579,7 @@ internal object ChallengePage : KLogging() {
             id = DISLIKE_COLOR
             style = "display:${if (likeDislikeVal == 2) "inline" else "none"}"
             button(classes = LIKE_BUTTONS) {
-              onClick = "$LIKE_DISLIKE_JS_FUNC(${DISLIKE_COLOR.toDoubleQuoted()})"
+              onClick = "$LIKE_DISLIKE_FUNC(${DISLIKE_COLOR.toDoubleQuoted()})"
               img { height = imgSize; src = pathOf(STATIC_ROOT, DISLIKE_COLOR_FILE) }
             }
           }

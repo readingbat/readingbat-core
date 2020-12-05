@@ -17,6 +17,7 @@
 
 package com.github.readingbat.server
 
+import com.github.pambrose.common.redis.RedisUtils.withNonNullRedisPool
 import com.github.pambrose.common.redis.RedisUtils.withRedisPool
 import com.github.pambrose.common.redis.RedisUtils.withSuspendingRedisPool
 import com.github.pambrose.common.response.redirectTo
@@ -31,7 +32,6 @@ import com.github.readingbat.common.browserSession
 import com.github.readingbat.common.isNotAdminUser
 import com.github.readingbat.common.isNotValidUser
 import com.github.readingbat.common.userPrincipal
-import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.InvalidRequestException
 import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.dsl.ReadingBatContent
@@ -39,6 +39,7 @@ import com.github.readingbat.dsl.RedisUnavailableException
 import com.github.readingbat.dsl.isProduction
 import com.github.readingbat.server.Email.Companion.UNKNOWN_EMAIL
 import com.github.readingbat.server.ReadingBatServer.redisPool
+import com.github.readingbat.server.ws.PubSubCommandsWs.publishLog
 import io.ktor.application.*
 import io.ktor.auth.*
 import io.ktor.http.*
@@ -70,6 +71,8 @@ internal object ServerUtils : KLogging() {
 
   fun WebSocketServerSession.fetchUser(): User? =
     call.userPrincipal?.userId?.let { toUser(it, call.browserSession) }
+
+  suspend fun ApplicationCall.paramMap() = receiveParameters().entries().map { it.key to it.value[0] }.toMap()
 
   fun ApplicationCall.fetchUser(): User? = userPrincipal?.userId?.let { toUser(it, browserSession) }
 
@@ -138,6 +141,14 @@ internal object ServerUtils : KLogging() {
       }
     }
 
+  @ContextDsl
+  fun Route.post(path: String, metrics: Metrics, body: PipelineInterceptor<Unit, ApplicationCall>) =
+    route(path, HttpMethod.Post) {
+      runBlocking {
+        metrics.measureEndpointRequest(path) { handle(body) }
+      }
+    }
+
   fun PipelineCall.defaultLanguageTab(content: ReadingBatContent, user: User?): String {
     val langRoot = firstNonEmptyLanguageType(content, user?.defaultLanguage).contentRoot
     val params = call.parameters.formUrlEncode()
@@ -148,7 +159,15 @@ internal object ServerUtils : KLogging() {
     LanguageType.languageTypes(defaultLanguage)
       .asSequence()
       .filter { content[it].isNotEmpty() }
-      .firstOrNull() ?: throw InvalidConfigurationException("Missing non-empty language")
+      .firstOrNull() ?: error("Missing non-empty language")
+
+  fun logToRedis(msg: String, logId: String) {
+    if (logId.isNotEmpty()) {
+      redisPool?.withNonNullRedisPool { redis ->
+        redis.publishLog(msg, logId)
+      }
+    }
+  }
 
   fun Int.rows(cols: Int) = if (this % cols == 0) this / cols else (this / cols) + 1
 }

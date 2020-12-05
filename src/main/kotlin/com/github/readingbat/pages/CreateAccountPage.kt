@@ -134,7 +134,7 @@ internal object CreateAccountPage {
                   td { }
                   td {
                     submitInput {
-                      style = "font-size : 25px; height: 35; width: 115"
+                      style = "font-size:25px; height:35; width:115"
                       id = createButton
                       value = "Create Account"
                     }
@@ -145,9 +145,7 @@ internal object CreateAccountPage {
           }
 
           privacyStatement(CREATE_ACCOUNT_ENDPOINT)
-
           backLink(returnPath)
-
           loadPingdomScript()
         }
       }

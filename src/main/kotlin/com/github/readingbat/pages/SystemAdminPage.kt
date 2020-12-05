@@ -17,6 +17,7 @@
 
 package com.github.readingbat.pages
 
+import com.github.pambrose.common.util.randomId
 import com.github.readingbat.common.Endpoints.ADMIN_PREFS_ENDPOINT
 import com.github.readingbat.common.Endpoints.DELETE_CONTENT_IN_REDIS_ENDPOINT
 import com.github.readingbat.common.Endpoints.GARBAGE_COLLECTOR_ENDPOINT
@@ -24,8 +25,10 @@ import com.github.readingbat.common.Endpoints.LOAD_ALL_ENDPOINT
 import com.github.readingbat.common.Endpoints.LOAD_JAVA_ENDPOINT
 import com.github.readingbat.common.Endpoints.LOAD_KOTLIN_ENDPOINT
 import com.github.readingbat.common.Endpoints.LOAD_PYTHON_ENDPOINT
+import com.github.readingbat.common.Endpoints.LOGGING_ENDPOINT
 import com.github.readingbat.common.Endpoints.RESET_CACHE_ENDPOINT
 import com.github.readingbat.common.Endpoints.RESET_CONTENT_DSL_ENDPOINT
+import com.github.readingbat.common.Endpoints.WS_ROOT
 import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.Message
 import com.github.readingbat.common.Property.GRAFANA_URL
@@ -37,13 +40,15 @@ import com.github.readingbat.common.isValidUser
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.isProduction
 import com.github.readingbat.pages.HelpAndLogin.helpAndLogin
+import com.github.readingbat.pages.PageUtils.adminButton
 import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyTitle
-import com.github.readingbat.pages.PageUtils.confirmingButton
 import com.github.readingbat.pages.PageUtils.displayMessage
 import com.github.readingbat.pages.PageUtils.headDefault
 import com.github.readingbat.pages.PageUtils.loadStatusPageDisplay
+import com.github.readingbat.pages.PageUtils.rawHtml
 import com.github.readingbat.pages.UserPrefsPage.requestLogInPage
+import com.github.readingbat.pages.js.AdminCommandsJs.loadCommandsScript
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
 import kotlinx.html.*
@@ -51,6 +56,9 @@ import kotlinx.html.stream.createHTML
 import mu.KLogging
 
 internal object SystemAdminPage : KLogging() {
+
+  private const val msgs = "msgs"
+  private const val status = "status"
 
   fun PipelineCall.systemAdminPage(content: ReadingBatContent,
                                    user: User?,
@@ -63,7 +71,13 @@ internal object SystemAdminPage : KLogging() {
   private fun PipelineCall.systemAdminLoginPage(content: ReadingBatContent, user: User, msg: Message) =
     createHTML()
       .html {
-        head { headDefault() }
+
+        val logId = randomId(10)
+
+        head {
+          headDefault()
+          script(type = ScriptType.textJavaScript) { loadCommandsScript(logId) }
+        }
 
         body {
           val activeClassCode = queryActiveClassCode(user)
@@ -79,51 +93,51 @@ internal object SystemAdminPage : KLogging() {
 
           if (!isProduction() || user.isAdminUser()) {
             p {
-              this@body.confirmingButton("Reset ReadingBat Content",
-                                         RESET_CONTENT_DSL_ENDPOINT,
-                                         "Are you sure you want to reset the content? (This can take a while)")
+              this@body.adminButton("Reset ReadingBat Content",
+                                    RESET_CONTENT_DSL_ENDPOINT,
+                                    "Are you sure you want to reset the content? (This can take a while)")
             }
 
             p {
-              this@body.confirmingButton("Reset Challenges Cache",
-                                         RESET_CACHE_ENDPOINT,
-                                         "Are you sure you want to reset the challenges cache?")
+              this@body.adminButton("Reset Challenges Cache",
+                                    RESET_CACHE_ENDPOINT,
+                                    "Are you sure you want to reset the challenges cache?")
             }
 
             p {
-              this@body.confirmingButton("Delete all content cached in Redis",
-                                         DELETE_CONTENT_IN_REDIS_ENDPOINT,
-                                         "Are you sure you want to delete all content cached in Redis?")
+              this@body.adminButton("Delete all content cached in Redis",
+                                    DELETE_CONTENT_IN_REDIS_ENDPOINT,
+                                    "Are you sure you want to delete all content cached in Redis?")
             }
 
             p {
-              this@body.confirmingButton("Load Java Challenges",
-                                         LOAD_JAVA_ENDPOINT,
-                                         "Are you sure you want to load all the java challenges? (This can take a while)")
+              this@body.adminButton("Run Garbage Collector",
+                                    GARBAGE_COLLECTOR_ENDPOINT,
+                                    "Are you sure you want to run the garbage collector?")
             }
 
             p {
-              this@body.confirmingButton("Load Python Challenges",
-                                         LOAD_PYTHON_ENDPOINT,
-                                         "Are you sure you want to load all the python challenges? (This can take a while)")
+              this@body.adminButton("Load Java Challenges",
+                                    LOAD_JAVA_ENDPOINT,
+                                    "Are you sure you want to load all the Java challenges? (This can take a while)")
             }
 
             p {
-              this@body.confirmingButton("Load Kotlin Challenges",
-                                         LOAD_KOTLIN_ENDPOINT,
-                                         "Are you sure you want to load all the kotlin challenges? (This can take a while)")
+              this@body.adminButton("Load Python Challenges",
+                                    LOAD_PYTHON_ENDPOINT,
+                                    "Are you sure you want to load all the Python challenges? (This can take a while)")
             }
 
             p {
-              this@body.confirmingButton("Load all Challenges",
-                                         LOAD_ALL_ENDPOINT,
-                                         "Are you sure you want to load all the challenges? (This can take a while)")
+              this@body.adminButton("Load Kotlin Challenges",
+                                    LOAD_KOTLIN_ENDPOINT,
+                                    "Are you sure you want to load all the Kotlin challenges? (This can take a while)")
             }
 
             p {
-              this@body.confirmingButton("Run Garbage Collector",
-                                         GARBAGE_COLLECTOR_ENDPOINT,
-                                         "Are you sure you want to run the garbage collector?")
+              this@body.adminButton("Load All Challenges",
+                                    LOAD_ALL_ENDPOINT,
+                                    "Are you sure you want to load all the challenges? (This can take a while)")
             }
 
             GRAFANA_URL.getPropertyOrNull()
@@ -140,9 +154,80 @@ internal object SystemAdminPage : KLogging() {
             p { +"Not authorized" }
           }
 
-          backLink("$ADMIN_PREFS_ENDPOINT?$RETURN_PARAM=${queryParam(RETURN_PARAM, "/")}")
+          p {
+            textArea {
+              id = msgs
+              rows = "20"
+              cols = "120"
+              +""
+            }
+          }
 
+          p { span { id = status } }
+
+          backLink("$ADMIN_PREFS_ENDPOINT?$RETURN_PARAM=${queryParam(RETURN_PARAM, "/")}")
+          enableWebSockets(logId)
           loadStatusPageDisplay()
         }
       }
+
+  private fun BODY.enableWebSockets(logId: String) {
+    script {
+      rawHtml(
+        """
+        function sleep(ms) {
+          return new Promise(resolve => setTimeout(resolve, ms));
+        }
+            
+        var cnt = 0;
+        var firstTime = true;
+        var connected = false;
+        function connect() {
+          var wshost = location.origin;
+          if (wshost.startsWith('https:'))
+            wshost = wshost.replace(/^https:/, 'wss:');
+          else
+            wshost = wshost.replace(/^http:/, 'ws:');
+      
+          var wsurl = wshost + '$WS_ROOT$LOGGING_ENDPOINT/$logId';
+          var ws = new WebSocket(wsurl);
+          
+          ws.onopen = function (event) {
+            //console.log("WebSocket connected.");
+            firstTime = false;
+            document.getElementById('$status').innerText = 'Connected';
+            document.getElementById('$msgs').value = '';
+            ws.send("ready"); 
+          };
+          
+          ws.onclose = function (event) {
+            //console.log('WebSocket closed. Reconnect will be attempted in 1 second.', event.reason);
+            var msg = 'Connecting';
+            if (!firstTime)
+              msg = 'Reconnecting';
+            for (i = 0; i < cnt%4; i++) 
+              msg += '.'
+            document.getElementById('$status').innerText = msg;
+            setTimeout(function() {
+              cnt+=1;
+              connect();
+            }, 1000);
+          }
+          
+          ws.onerror = function(err) {
+            //console.error(err)
+            ws.close();
+          };
+          
+          ws.onmessage = function (event) {
+            var obj = JSON.parse(event.data);
+            var elem = document.getElementById('$msgs');
+            elem.value = obj + '\n' + elem.value;
+          };
+        }
+        connect();
+        """.trimIndent())
+    }
+  }
+
 }

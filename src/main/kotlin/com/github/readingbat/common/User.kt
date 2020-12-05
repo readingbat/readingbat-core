@@ -32,7 +32,6 @@ import com.github.readingbat.common.KeyConstants.CORRECT_ANSWERS_KEY
 import com.github.readingbat.common.KeyConstants.keyOf
 import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.DataException
-import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.LanguageType.Companion.defaultLanguageType
 import com.github.readingbat.dsl.LanguageType.Companion.toLanguageType
 import com.github.readingbat.dsl.isMultiServerEnabled
@@ -49,9 +48,12 @@ import com.github.readingbat.server.FullName.Companion.EMPTY_FULLNAME
 import com.github.readingbat.server.FullName.Companion.UNKNOWN_FULLNAME
 import com.github.readingbat.server.ReadingBatServer.adminUsers
 import com.github.readingbat.server.ResetId.Companion.EMPTY_RESET_ID
-import com.github.readingbat.server.ws.ChallengeWs.classTopicName
-import com.github.readingbat.server.ws.ChallengeWs.multiServerWriteChannel
-import com.github.readingbat.server.ws.ChallengeWs.singleServerChannel
+import com.github.readingbat.server.ws.ChallengeWs.classTargetName
+import com.github.readingbat.server.ws.ChallengeWs.multiServerWsWriteChannel
+import com.github.readingbat.server.ws.ChallengeWs.singleServerWsChannel
+import com.github.readingbat.server.ws.PubSubCommandsWs.ChallengeAnswerData
+import com.github.readingbat.server.ws.PubSubCommandsWs.PubSubTopic.LIKE_DISLIKE
+import com.github.readingbat.server.ws.PubSubCommandsWs.PubSubTopic.USER_ANSWERS
 import com.pambrose.common.exposed.get
 import com.pambrose.common.exposed.upsert
 import io.ktor.application.*
@@ -82,7 +84,7 @@ internal class User {
           Users
             .select { Users.userId eq this@User.userId }
             .map { assignRowVals(it) }
-            .firstOrNull() ?: throw InvalidConfigurationException("UserId not found: ${this@User.userId}")
+            .firstOrNull() ?: error("UserId not found: ${this@User.userId}")
         }
       }.also { logger.debug { "Selected user info in $it" } }
     }
@@ -112,7 +114,7 @@ internal class User {
     get() = if (digestBacking.isBlank()) throw DataException("Missing digest field") else digestBacking
 
   private fun sessionDbmsId() =
-    browserSession?.sessionDbmsId() ?: throw InvalidConfigurationException("Null browser session")
+    browserSession?.sessionDbmsId() ?: error("Null browser session")
 
   private fun assignRowVals(row: ResultRow) {
     userDbmsId = row[Users.id].value
@@ -452,19 +454,19 @@ internal class User {
     val dashboardHistory = DashboardHistory(history.invocation.value,
                                             history.correct,
                                             history.answers.asReversed().take(maxHistoryLength).joinToString("<br>"))
-    val topicName = classTopicName(enrolledClassCode, challengeMd5)
+    val targetName = classTargetName(enrolledClassCode, challengeMd5)
     val dashboardInfo = DashboardInfo(userId, complete, numCorrect, dashboardHistory)
-    val data = dashboardInfo.toJson()
-    (if (isMultiServerEnabled()) multiServerWriteChannel else singleServerChannel).send(PublishedData(topicName, data))
+    (if (isMultiServerEnabled()) multiServerWsWriteChannel else singleServerWsChannel)
+      .send(ChallengeAnswerData(USER_ANSWERS, targetName, dashboardInfo.toJson()))
   }
 
   suspend fun publishLikeDislike(challengeMd5: String, likeDislike: Int) {
     logger.debug { "Publishing user likeDislike to $enrolledClassCode on $challengeMd5 for $this" }
-    val topicName = classTopicName(enrolledClassCode, challengeMd5)
+    val targetName = classTargetName(enrolledClassCode, challengeMd5)
     val emoji = likeDislikeEmoji(likeDislike)
     val likeDislikeInfo = LikeDislikeInfo(userId, emoji)
-    val data = likeDislikeInfo.toJson()
-    (if (isMultiServerEnabled()) multiServerWriteChannel else singleServerChannel).send(PublishedData(topicName, data))
+    (if (isMultiServerEnabled()) multiServerWsWriteChannel else singleServerWsChannel)
+      .send(ChallengeAnswerData(LIKE_DISLIKE, targetName, likeDislikeInfo.toJson()))
   }
 
   suspend fun resetHistory(funcInfo: FunctionInfo, challenge: Challenge, maxHistoryLength: Int) {
@@ -631,7 +633,7 @@ internal class User {
                 }.value
 
             val browserId =
-              browserSession?.sessionDbmsId() ?: throw InvalidConfigurationException("Missing browser session")
+              browserSession?.sessionDbmsId() ?: error("Missing browser session")
 
             UserSessions
               .insert { row ->

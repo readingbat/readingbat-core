@@ -21,7 +21,7 @@ import com.github.readingbat.common.Constants.CHALLENGE_SRC
 import com.github.readingbat.common.Constants.GROUP_SRC
 import com.github.readingbat.common.Constants.LANG_SRC
 import com.github.readingbat.common.Constants.LIKE_DESC
-import com.github.readingbat.common.Constants.LIKE_DISLIKE_JS_FUNC
+import com.github.readingbat.common.Constants.LIKE_DISLIKE_FUNC
 import com.github.readingbat.common.Constants.SESSION_ID
 import com.github.readingbat.common.Endpoints.LIKE_DISLIKE_ENDPOINT
 import com.github.readingbat.common.ParameterIds.DISLIKE_CLEAR
@@ -45,7 +45,7 @@ internal object LikeDislikeJs {
       """
     var re = new XMLHttpRequest();
 
-    function $LIKE_DISLIKE_JS_FUNC(desc) { 
+    function $LIKE_DISLIKE_FUNC(desc) { 
 
       var data = "$SESSION_ID=${sessionCounter.incrementAndGet()}&$LANG_SRC=$languageName&$GROUP_SRC=$groupName&$CHALLENGE_SRC=$challengeName";
       data += "&$LIKE_DESC=" + encodeURIComponent(desc);

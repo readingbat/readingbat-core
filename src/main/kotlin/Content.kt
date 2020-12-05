@@ -16,9 +16,16 @@
  */
 
 import com.github.pambrose.common.util.FileSystemSource
+import com.github.pambrose.common.util.GitHubRepo
 import com.github.pambrose.common.util.OwnerType.Organization
 import com.github.pambrose.common.util.OwnerType.User
 import com.github.readingbat.dsl.GitHubContent
+import com.github.readingbat.dsl.ReturnType.BooleanArrayType
+import com.github.readingbat.dsl.ReturnType.FloatArrayType
+import com.github.readingbat.dsl.ReturnType.FloatType
+import com.github.readingbat.dsl.ReturnType.IntArrayType
+import com.github.readingbat.dsl.ReturnType.StringArrayType
+import com.github.readingbat.dsl.ReturnType.StringListType
 import com.github.readingbat.dsl.eval
 import com.github.readingbat.dsl.readingBatContent
 
@@ -27,6 +34,7 @@ val content =
     //repo = GitHubRepo(organization, "readingbat-java-content")
 
     repo = FileSystemSource("./")
+
 /*
     java {
       //repo = GitHubRepo(organization, "readingbat-java-content")
@@ -81,12 +89,64 @@ val content =
     }
 */
 
+    //include(GitHubContent(Organization, "readingbat", "readingbat-java-content", fileName = "Content.kt").eval(this, variableName = "content").java)
+
     include(GitHubContent(Organization, "readingbat", "readingbat-java-content").eval(this).java)
 
     include(GitHubContent(Organization, "readingbat", "readingbat-java-content").eval(this).kotlin, "Athenian: ")
 
     include(GitHubContent(Organization, "readingbat", "readingbat-python-content", srcPath = "src").eval(this).python)
+
     include(GitHubContent(User, "maleich", "ReadingBat-content").eval(this).python, "Athenian: ")
+
+    python {
+      repo = GitHubRepo(Organization, "readingbat", "readingbat-core")
+      srcPath = "python"
+      branchName = "1.7.0"
+
+      group("Test Cases") {
+        packageName = "test_content"
+        description = "Tests"
+
+        challenge("boolean_array_test") { returnType = BooleanArrayType }
+        challenge("int_array_test") { returnType = IntArrayType }
+        challenge("float_test") { returnType = FloatType }
+        challenge("float_array_test") { returnType = FloatArrayType }
+        challenge("string_array_test") { returnType = StringArrayType }
+      }
+    }
+
+    java {
+      repo = GitHubRepo(Organization, "readingbat", "readingbat-core")
+      srcPath = "src/test/java"
+      branchName = "1.7.0"
+
+      group("Java Tests") {
+        packageName = "com.github.readingbat.test_content"
+        description = "Tests"
+
+        challenge("StringArrayTest1")
+        challenge("StringArrayTest2")
+        challenge("StringListTest1")
+        challenge("StringListTest2")
+      }
+    }
+
+    kotlin {
+      repo = GitHubRepo(Organization, "readingbat", "readingbat-core")
+      srcPath = "src/test/kotlin"
+      branchName = "1.7.0"
+
+      group("Kotlin Tests") {
+        packageName = "com.github.readingbat.test_content"
+        description = "Tests"
+
+        challenge("StringArrayKtTest1") { returnType = StringArrayType }
+        challenge("StringArrayKtTest2") { returnType = StringArrayType }
+        challenge("StringListKtTest1") { returnType = StringListType }
+        challenge("StringListKtTest2") { returnType = StringListType }
+      }
+    }
 
     /*
     java {

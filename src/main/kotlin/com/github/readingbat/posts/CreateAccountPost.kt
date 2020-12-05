@@ -73,11 +73,11 @@ internal object CreateAccountPost : KLogging() {
     }
 
   suspend fun PipelineCall.createAccount(content: ReadingBatContent): String {
-    val parameters = call.receiveParameters()
-    val fullName = parameters.getFullName(FULLNAME_PARAM)
-    val email = parameters.getEmail(EMAIL_PARAM)
-    val password = parameters.getPassword(PASSWORD_PARAM)
-    val confirmPassword = parameters.getPassword(CONFIRM_PASSWORD_PARAM)
+    val params = call.receiveParameters()
+    val fullName = params.getFullName(FULLNAME_PARAM)
+    val email = params.getEmail(EMAIL_PARAM)
+    val password = params.getPassword(PASSWORD_PARAM)
+    val confirmPassword = params.getPassword(CONFIRM_PASSWORD_PARAM)
 
     return when {
       fullName.isBlank() -> createAccountPage(content, defaultEmail = email, msg = EMPTY_NAME_MSG)

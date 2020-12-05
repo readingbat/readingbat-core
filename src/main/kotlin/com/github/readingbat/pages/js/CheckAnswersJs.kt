@@ -22,7 +22,7 @@ import com.github.readingbat.common.Constants.CORRECT_COLOR
 import com.github.readingbat.common.Constants.GROUP_SRC
 import com.github.readingbat.common.Constants.LANG_SRC
 import com.github.readingbat.common.Constants.NO_ANSWER_COLOR
-import com.github.readingbat.common.Constants.PROCESS_USER_ANSWERS_JS_FUNC
+import com.github.readingbat.common.Constants.PROCESS_USER_ANSWERS_FUNC
 import com.github.readingbat.common.Constants.RESP
 import com.github.readingbat.common.Constants.SESSION_ID
 import com.github.readingbat.common.Constants.WRONG_COLOR
@@ -34,6 +34,8 @@ import com.github.readingbat.common.ParameterIds.SPINNER_ID
 import com.github.readingbat.common.ParameterIds.STATUS_ID
 import com.github.readingbat.common.ParameterIds.SUCCESS_ID
 import com.github.readingbat.pages.PageUtils.rawHtml
+import com.github.readingbat.posts.AnswerStatus.CORRECT
+import com.github.readingbat.posts.AnswerStatus.NOT_ANSWERED
 import com.github.readingbat.server.ChallengeName
 import com.github.readingbat.server.GroupName
 import com.github.readingbat.server.LanguageName
@@ -48,7 +50,7 @@ internal object CheckAnswersJs {
       """
     var re = new XMLHttpRequest();
 
-    function $PROCESS_USER_ANSWERS_JS_FUNC(event, cnt) { 
+    function $PROCESS_USER_ANSWERS_FUNC(event, cnt) { 
      
       // event will equal null on button press
       if (event != null && (event.keyCode != 13 && event.keyCode != 9)) 
@@ -90,11 +92,11 @@ internal object CheckAnswersJs {
         var results = eval(re.responseText);
         for (var i = 0; i < results.length; i++) {
           var x = document.getElementById("$FEEDBACK_ID"+i);
-          if (results[i][0] == 0) {
+          if (results[i][0] == ${NOT_ANSWERED.value}) {
             x.style.backgroundColor = '$NO_ANSWER_COLOR';
             success = false;
           }
-          else if (results[i][0] == 1) {
+          else if (results[i][0] == ${CORRECT.value}) {
             x.style.backgroundColor = '$CORRECT_COLOR';
           }
           else {

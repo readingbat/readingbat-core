@@ -67,7 +67,7 @@ internal object PlaygroundPage {
         val languageName = languageType.languageName
         val groupName = challenge.groupName
         val challengeName = challenge.challengeName
-        val funcInfo = challenge.functionInfo(content)
+        val funcInfo = challenge.functionInfo()
         val loginPath = pathOf(CHALLENGE_ROOT, languageName, groupName, challengeName)
         val activeClassCode = queryActiveClassCode(user)
 
@@ -110,7 +110,6 @@ internal object PlaygroundPage {
           }
 
           backLink(CHALLENGE_ROOT, languageName.value, groupName.value, challengeName.value)
-
           loadPingdomScript()
         }
       }

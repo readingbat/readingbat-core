@@ -18,22 +18,23 @@
 package com.github.readingbat
 
 import com.github.readingbat.dsl.addImports
-import com.github.readingbat.dsl.parse.JavaParse
+import com.github.readingbat.dsl.parse.JavaParse.extractJavaInvocations
 import com.github.readingbat.dsl.parse.JavaParse.javaEndRegex
 import com.github.readingbat.dsl.parse.JavaParse.psvmRegex
-import com.github.readingbat.dsl.parse.KotlinParse
+import com.github.readingbat.dsl.parse.KotlinParse.extractKotlinInvocations
 import com.github.readingbat.dsl.parse.KotlinParse.funMainRegex
 import com.github.readingbat.dsl.parse.KotlinParse.kotlinEndRegex
-import com.github.readingbat.dsl.parse.PythonParse
 import com.github.readingbat.dsl.parse.PythonParse.defMainRegex
+import com.github.readingbat.dsl.parse.PythonParse.extractPythonInvocations
 import com.github.readingbat.dsl.parse.PythonParse.ifMainEndRegex
-import org.amshove.kluent.shouldBeEqualTo
-import org.junit.jupiter.api.Test
+import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.shouldBe
 
-class UtilsTest {
-  @Test
-  fun pythonInvokesTest() {
-    val s = """
+class InvokesTest : StringSpec(
+  {
+
+    "pythonInvokesTest" {
+      val s = """
         def simple_choice2(sunny, raining):
             if (sunny or raining):
                 return sunny
@@ -49,15 +50,13 @@ class UtilsTest {
             main()
     """.trimIndent()
 
-    PythonParse.extractPythonInvocations(s,
-                                         defMainRegex,
-                                         ifMainEndRegex) shouldBeEqualTo listOf("simple_choice2(True, True)",
-                                                                                "simple_choice2(True, False)")
-  }
+      extractPythonInvocations(s, defMainRegex, ifMainEndRegex).map { it.toString() } shouldBe
+          listOf("simple_choice2(True, True)",
+                 "simple_choice2(True, False)")
+    }
 
-  @Test
-  fun javaInvokesTest() {
-    val s = """
+    "javaInvokesTest" {
+      val s = """
       package warmup1;
       
       public class JoinEnds {
@@ -79,13 +78,13 @@ class UtilsTest {
       }
     """.trimIndent()
 
-    JavaParse.extractJavaInvocations(s, psvmRegex, javaEndRegex) shouldBeEqualTo listOf("""joinEnds("Blue zebra")""",
-                                                                                        """joinEnds("Tree")""")
-  }
+      extractJavaInvocations(s, psvmRegex, javaEndRegex).map { it.toString() } shouldBe
+          listOf("""joinEnds("Blue zebra")""",
+                 """joinEnds("Tree")""")
+    }
 
-  @Test
-  fun kotlinInvokesTest() {
-    val s = """
+    "kotlinInvokesTest" {
+      val s = """
       package lambda1
       
       fun List<String>.combine2(): String = mapIndexed { i, s -> i.toString() + s }.joinToString(", ")
@@ -96,139 +95,135 @@ class UtilsTest {
       }
     """.trimIndent()
 
-    KotlinParse.extractKotlinInvocations(s,
-                                         funMainRegex,
-                                         kotlinEndRegex) shouldBeEqualTo listOf("""listOf("a").combine2()""",
-                                                                                """listOf("a", "b", "c", "d").combine2()""")
-  }
+      extractKotlinInvocations(s, funMainRegex, kotlinEndRegex).map { it.toString() } shouldBe
+          listOf("""listOf("a").combine2()""",
+                 """listOf("a", "b", "c", "d").combine2()""")
+    }
 
-  @Test
-  fun classImportTest() {
+    "classImportTest" {
 
-    val variable = "content"
-    addImports("", variable).trim() shouldBeEqualTo variable
+      val variable = "content"
+      addImports("", variable).trim() shouldBe variable
 
-    val s1 = "ReadingBatServer"
-    addImports(s1, variable).trimIndent() shouldBeEqualTo
-        """
+      val s1 = "ReadingBatServer"
+      addImports(s1, variable).trimIndent() shouldBe
+          """
         $s1
         $variable
         """.trimIndent()
 
-    val s2 = "ReadingBatServer()"
-    addImports(s2, variable).trimIndent() shouldBeEqualTo
-        """
+      val s2 = "ReadingBatServer()"
+      addImports(s2, variable).trimIndent() shouldBe
+          """
         import com.github.readingbat.server.ReadingBatServer
 
         $s2
         $variable
         """.trimIndent()
 
-    val s3 = "GitHubContent"
-    addImports(s3, variable).trimIndent() shouldBeEqualTo
-        """
+      val s3 = "GitHubContent"
+      addImports(s3, variable).trimIndent() shouldBe
+          """
         $s3
         $variable
         """.trimIndent()
 
-    val s4 = "GitHubContent()"
-    addImports(s4, variable).trimIndent() shouldBeEqualTo
-        """
+      val s4 = "GitHubContent()"
+      addImports(s4, variable).trimIndent() shouldBe
+          """
         import com.github.readingbat.dsl.GitHubContent
 
         $s4
         $variable
         """.trimIndent()
 
-    val s5 = "ReadingBatServer GitHubContent"
-    addImports(s5, variable).trimIndent() shouldBeEqualTo
-        """
+      val s5 = "ReadingBatServer GitHubContent"
+      addImports(s5, variable).trimIndent() shouldBe
+          """
         $s5
         $variable
         """.trimIndent()
 
-    val s6 = "ReadingBatServer() GitHubContent()"
-    addImports(s6, variable).trimIndent() shouldBeEqualTo
-        """
+      val s6 = "ReadingBatServer() GitHubContent()"
+      addImports(s6, variable).trimIndent() shouldBe
+          """
         import com.github.readingbat.server.ReadingBatServer
         import com.github.readingbat.dsl.GitHubContent
 
         $s6
         $variable
         """.trimIndent()
-  }
+    }
 
-  @Test
-  fun methodImportTest() {
+    "methodImportTest" {
 
-    val variable = "content"
+      val variable = "content"
 
-    val s1 = "readingBatContent"
-    addImports(s1, variable).trimIndent() shouldBeEqualTo
-        """
+      val s1 = "readingBatContent"
+      addImports(s1, variable).trimIndent() shouldBe
+          """
         $s1
         $variable
         """.trimIndent()
 
-    val s2 = "readingBatContent()"
-    addImports(s2, variable).trimIndent() shouldBeEqualTo
-        """
+      val s2 = "readingBatContent()"
+      addImports(s2, variable).trimIndent() shouldBe
+          """
         import com.github.readingbat.dsl.readingBatContent
         
         $s2
         $variable
         """.trimIndent()
 
-    val s3 = "oldInclude"
-    addImports(s3, variable).trimIndent() shouldBeEqualTo
-        """
+      val s3 = "oldInclude"
+      addImports(s3, variable).trimIndent() shouldBe
+          """
         $s3
         $variable
         """.trimIndent()
 
-    val s4 = "oldInclude()"
-    addImports(s4, variable).trimIndent() shouldBeEqualTo
-        """
-        import com.github.readingbat.dsl.oldInclude
-        
-        $s4
-        $variable
-        """.trimIndent()
+//    val s4 = "oldInclude()"
+//    addImports(s4, variable).trimIndent() shouldBe
+//        """
+//        import com.github.readingbat.dsl.oldInclude
+//
+//        $s4
+//        $variable
+//        """.trimIndent()
 
-    val s5 = "ReadingBatServer GitHubContent"
-    //println(addImports(s5, variable))
-    addImports(s5, variable).trimIndent() shouldBeEqualTo
-        """
+      val s5 = "ReadingBatServer GitHubContent"
+      //println(addImports(s5, variable))
+      addImports(s5, variable).trimIndent() shouldBe
+          """
         $s5
         $variable
         """.trimIndent()
 
-    val s6 = "ReadingBatServer() GitHubContent()"
-    //println(addImports(s6, variable))
-    addImports(s6, variable).trimIndent() shouldBeEqualTo
-        """
+      val s6 = "ReadingBatServer() GitHubContent()"
+      //println(addImports(s6, variable))
+      addImports(s6, variable).trimIndent() shouldBe
+          """
         import com.github.readingbat.server.ReadingBatServer
         import com.github.readingbat.dsl.GitHubContent
 
         $s6
         $variable
         """.trimIndent()
-  }
+    }
 
-  @Test
-  fun combinedImportTest() {
-    val variable = "content"
+    "combinedImportTest" {
+      val variable = "content"
 
-    val s1 = "readingBatContent ReadingBatServer"
-    addImports(s1, variable).trimIndent() shouldBeEqualTo
-        """
+      val s1 = "readingBatContent ReadingBatServer"
+      addImports(s1, variable).trimIndent() shouldBe
+          """
         $s1
         $variable
         """.trimIndent()
 
-    val s2 = "readingBatContent() ReadingBatServer()"
-    addImports(s2, variable).trimIndent() shouldBeEqualTo
-        """
+      val s2 = "readingBatContent() ReadingBatServer()"
+      addImports(s2, variable).trimIndent() shouldBe
+          """
         import com.github.readingbat.server.ReadingBatServer
         import com.github.readingbat.dsl.readingBatContent
         
@@ -236,23 +231,22 @@ class UtilsTest {
         $variable
         """.trimIndent()
 
-    val s3 = "oldInclude readingBatContent ReadingBatServer GitHubContent"
-    addImports(s3, variable).trimIndent() shouldBeEqualTo
-        """
+      val s3 = "oldInclude readingBatContent ReadingBatServer GitHubContent"
+      addImports(s3, variable).trimIndent() shouldBe
+          """
         $s3
         $variable
         """.trimIndent()
 
-    val s4 = "oldInclude() readingBatContent() ReadingBatServer() GitHubContent()"
-    addImports(s4, variable).trimIndent() shouldBeEqualTo
-        """
+      val s4 = "oldInclude() readingBatContent() ReadingBatServer() GitHubContent()"
+      addImports(s4, variable).trimIndent() shouldBe
+          """
         import com.github.readingbat.server.ReadingBatServer
         import com.github.readingbat.dsl.GitHubContent
         import com.github.readingbat.dsl.readingBatContent
-        import com.github.readingbat.dsl.oldInclude
         
         $s4
         $variable
         """.trimIndent()
-  }
-}
+    }
+  })

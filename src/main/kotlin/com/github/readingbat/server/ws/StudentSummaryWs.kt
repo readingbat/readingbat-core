@@ -81,7 +81,6 @@ internal object StudentSummaryWs : KLogging() {
           //val desc = "${pathOf(WS_ROOT, CLASS_SUMMARY_ENDPOINT, languageName, student.userId, classCode)} - $remote - $email"
 
           validateContext(languageName, null, classCode, student, user)
-            .also { (valid, msg) -> if (!valid) throw InvalidRequestException(msg) }
 
           incoming
             .consumeAsFlow()
@@ -89,7 +88,7 @@ internal object StudentSummaryWs : KLogging() {
             .collect {
               for (challengeGroup in content.findLanguage(languageName).challengeGroups) {
                 for (challenge in challengeGroup.challenges) {
-                  val funcInfo = challenge.functionInfo(content)
+                  val funcInfo = challenge.functionInfo()
                   val groupName = challengeGroup.groupName
                   val challengeName = challenge.challengeName
                   val numCalls = funcInfo.invocations.size

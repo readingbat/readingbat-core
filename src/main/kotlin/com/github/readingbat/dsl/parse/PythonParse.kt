@@ -64,7 +64,7 @@ internal object PythonParse : KLogging() {
 
   fun extractPythonInvocations(code: List<String>, start: Regex, end: Regex) =
     code.linesBetween(start, end)
-      .filter { it.contains("print(") }
-      .map { it.substringBetween("print(", ")") }
+      .filter { it.contains(printPrefix) }
+      .map { it.substringBetween(printPrefix, ")") }
       .map { Invocation(it) }
 }

@@ -25,6 +25,8 @@ import com.github.pambrose.common.util.ensureSuffix
 import com.github.pambrose.common.util.isNotNull
 import com.github.pambrose.common.util.md5Of
 import com.github.pambrose.common.util.pathOf
+import com.github.pambrose.common.util.toDoubleQuoted
+import com.github.readingbat.common.Constants.CHALLENGE_NOT_FOUND
 import com.github.readingbat.common.KeyConstants.DIR_CONTENTS_KEY
 import com.github.readingbat.common.KeyConstants.keyOf
 import com.github.readingbat.dsl.Challenge.Companion.challenge
@@ -45,15 +47,15 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
   internal var namePrefix = ""
 
   internal val groupName by lazy { GroupName("${if (namePrefix.isNotBlank()) namePrefix else ""}${groupNameSuffix.value}") }
-  private val groupPrefix by lazy { pathOf(languageName, groupName) }
   internal val parsedDescription by lazy { TextFormatter.renderText(description) }
+  private val groupPrefix by lazy { pathOf(languageName, groupName) }
 
   private val srcPath get() = languageGroup.srcPath
-  internal val languageType get() = languageGroup.languageType
   private val languageName get() = languageType.languageName
   private val repo get() = languageGroup.repo
   private val branchName get() = languageGroup.branchName
   private val metrics get() = languageGroup.metrics
+  internal val languageType get() = languageGroup.languageType
   internal val packageNameAsPath get() = packageName.replace(".", "/")
 
   private fun dirContentsKey(path: String) = keyOf(DIR_CONTENTS_KEY, md5Of(path))
@@ -75,7 +77,7 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
           redisPool?.withNonNullRedisPool(true) { redis ->
             val dirContentsKey = dirContentsKey(path)
             it.forEach { redis.rpush(dirContentsKey, it) }
-            logger.info { """Saved "$path" to redis""" }
+            logger.info { "Saved to redis: ${path.toDoubleQuoted()}" }
           }
         }
       }
@@ -89,20 +91,17 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
           if (isContentCachingEnabled()) {
             fetchDirContentsFromRedis(path)
               .let {
-                if (it.isNotNull() && it.isNotEmpty())
-                  it
-                else
-                  fetchRemoteFiles(root, path)
+                if (it.isNotNull() && it.isNotEmpty()) it else fetchRemoteFiles(root, path)
               }
           }
           else {
             fetchRemoteFiles(root, path)
           }
         }
-        is FileSystemSource -> {
+        is FileSystemSource ->
           File(pathOf(root.pathPrefix, srcPath, packageNameAsPath)).walk().map { it.name }.toList()
-        }
-        else -> throw InvalidConfigurationException("Invalid repo type: $root")
+        else ->
+          error("Invalid repo type: $root")
       }
     }
   }
@@ -124,7 +123,7 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
       }
       else {
         val lang = languageType.languageName
-        throw InvalidConfigurationException("Use includeFilesWithType instead of includeFiles for $lang challenges")
+        error("Use includeFilesWithType instead of includeFiles for $lang challenges")
       }
     }
   }
@@ -139,7 +138,7 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
       }
       else {
         val lang = languageType.languageName
-        throw InvalidConfigurationException("Use includeFiles instead of includeFilesWithType for $lang challenges")
+        error("Use includeFiles instead of includeFilesWithType for $lang challenges")
       }
     }
   }
@@ -152,14 +151,14 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
 
   fun findChallenge(challengeName: String): T =
     challenges.firstOrNull { it.challengeName.value == challengeName }
-      ?: throw InvalidRequestException("Challenge not found: ${pathOf(groupPrefix, challengeName)}")
+      ?: throw InvalidRequestException("$CHALLENGE_NOT_FOUND: ${pathOf(groupPrefix, challengeName)}")
 
   operator fun get(challengeName: String): T = findChallenge(challengeName)
 
   internal fun indexOf(challengeName: ChallengeName): Int {
     val pos = challenges.indexOfFirst { it.challengeName == challengeName }
     if (pos == -1)
-      throw InvalidRequestException("Challenge not found: ${pathOf(groupPrefix, challengeName)}")
+      throw InvalidRequestException("$CHALLENGE_NOT_FOUND: ${pathOf(groupPrefix, challengeName)}")
     return pos
   }
 
@@ -186,13 +185,14 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
   internal fun addChallenge(challengeFile: LanguageGroup.ChallengeFile, pattern: String) {
     val challengeName = ChallengeName(challengeFile.fileName.split(".").first())
     if (checkChallengeName(challengeName, false)) {
-      logger.debug { """Adding $challengeName by pattern "$pattern"""" }
+      logger.debug { "Adding $challengeName by pattern ${pattern.toDoubleQuoted()}" }
       val challenge = challenge(this, challengeName, true)
       // Skip this next step for Java because returnType is calculated
       when {
         languageType.isPython -> (challenge as PythonChallenge).apply { returnType = challengeFile.returnType }
         languageType.isKotlin -> (challenge as KotlinChallenge).apply { returnType = challengeFile.returnType }
       }
+      @Suppress("UNCHECKED_CAST")
       challenges += challenge as T
     }
   }
@@ -205,7 +205,7 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
       }
       else {
         if (throwExceptionIfPresent)
-          throw InvalidConfigurationException("Challenge ${pathOf(groupPrefix, challengeName)} already exists")
+          error("Challenge ${pathOf(groupPrefix, challengeName)} already exists")
         else
           return false
       }
@@ -218,6 +218,8 @@ class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>
     val challengeName = ChallengeName(name)
     logger.debug { "Adding $challengeName" }
     checkChallengeName(challengeName)
+
+    @Suppress("UNCHECKED_CAST")
     val challenge = challenge(this, challengeName, false) as T
     challenges += challenge.apply(block).apply { validate() }
   }

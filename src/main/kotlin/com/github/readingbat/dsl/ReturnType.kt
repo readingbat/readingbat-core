@@ -23,22 +23,20 @@ enum class ReturnType(val typeStr: String) {
 
   BooleanType("boolean"),
   IntType("int"),
+  FloatType("float"),
   StringType("String"),
 
   BooleanArrayType("boolean[]"),
   IntArrayType("int[]"),
+  FloatArrayType("float[]"),
   StringArrayType("String[]"),
 
   BooleanListType("List<Boolean>"),
   IntListType("List<Integer>"),
+  FloatListType("List<Float>"),
   StringListType("List<String>");
 
   companion object {
-    val String.asReturnType: ReturnType?
-      get() = try {
-        values().first { this == it.typeStr }
-      } catch (e: NoSuchElementException) {
-        null
-      }
+    val String.asReturnType get() = values().firstOrNull { this == it.typeStr }
   }
 }

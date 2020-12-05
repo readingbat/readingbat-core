@@ -60,7 +60,6 @@ internal object ErrorPage {
           }
 
           backLink("/")
-
           loadPingdomScript()
         }
       }

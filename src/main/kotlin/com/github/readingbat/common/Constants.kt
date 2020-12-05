@@ -46,8 +46,9 @@ internal object Constants {
   const val LANG_SRC = "lang"
   const val GROUP_SRC = "groupName"
   const val CHALLENGE_SRC = "challengeName"
-  const val PROCESS_USER_ANSWERS_JS_FUNC = "processUserAnswers"
-  const val LIKE_DISLIKE_JS_FUNC = "likeDislike"
+  const val PROCESS_USER_ANSWERS_FUNC = "processUserAnswers"
+  const val ADMIN_FUNC = "loadChallenge"
+  const val LIKE_DISLIKE_FUNC = "likeDislike"
   const val NO_TRACK_HEADER = "NO_TRACK"
 
   // Do not change this value without adjusting values in DBMS
@@ -65,6 +66,8 @@ internal object Constants {
   const val YES = "Y"
   const val NO = "N"
   const val UNANSWERED = "U"
+
+  const val CHALLENGE_NOT_FOUND = "Challenge not found"
 
   val DBMS_DOWN = Message("Database is down", true)
 }
@@ -107,6 +110,7 @@ internal object Endpoints {
   const val FAV_ICON_ENDPOINT = "/favicon.ico"
   const val ROBOTS_ENDPOINT = "/robots.txt"
   const val CHALLENGE_ENDPOINT = "/challenge"
+  const val LOGGING_ENDPOINT = "/logging"
   const val CLOCK_ENDPOINT = "/clock"
   const val CHALLENGE_GROUP_ENDPOINT = "/challenge-group"
   const val CHECK_ANSWERS_ENDPOINT = "/check-answers"

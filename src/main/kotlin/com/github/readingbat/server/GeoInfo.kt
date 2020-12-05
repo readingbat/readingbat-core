@@ -37,6 +37,7 @@ internal class GeoInfo(val requireDbmsLookUp: Boolean, val dbmsId: Long, val rem
   private val valid get() = json.isNotBlank()
 
   //private val map = if (json.isNotBlank()) Json.decodeFromString<Map<String, Any?>>(json) else emptyMap()
+  @Suppress("UNCHECKED_CAST")
   private val map = if (json.isNotBlank()) gson.fromJson(json, Map::class.java) as Map<String, Any?> else emptyMap()
 
   private val ip by map

@@ -96,6 +96,7 @@ internal object StudentSummaryPage : KLogging() {
 
         body {
           val returnPath = queryParam(RETURN_PARAM, "/")
+
           helpAndLogin(content, user, returnPath, activeClassCode.isEnabled)
           bodyTitle()
 
@@ -126,7 +127,6 @@ internal object StudentSummaryPage : KLogging() {
           displayChallengeGroups(content, classCode, languageName)
           enableWebSockets(languageName, student, classCode)
           backLink(returnPath)
-
           loadPingdomScript()
         }
       }
@@ -185,7 +185,7 @@ internal object StudentSummaryPage : KLogging() {
                             val encodedGroup = group.groupName.encode()
                             val encodedName = challenge.challengeName.encode()
                             tr {
-                              challenge.functionInfo(content).invocations
+                              challenge.functionInfo().invocations
                                 .forEachIndexed { i, _ ->
                                   td(classes = INVOC_TD) {
                                     id = "$encodedGroup-$encodedName-$i"; +""
@@ -209,7 +209,8 @@ internal object StudentSummaryPage : KLogging() {
       }
     }
 
-  private fun BODY.enableWebSockets(languageName: LanguageName, student: User, classCode: ClassCode) {
+  private fun BODY.enableWebSockets(langName: LanguageName, student: User, classCode: ClassCode) {
+    val studentId = student.userId
     script {
       rawHtml(
         """
@@ -219,9 +220,7 @@ internal object StudentSummaryPage : KLogging() {
           else
             wshost = wshost.replace(/^http:/, 'ws:');
       
-          var wsurl = wshost + '$WS_ROOT$STUDENT_SUMMARY_ENDPOINT/' + ${
-          encodeUriElems(languageName, student.userId, classCode)
-        };
+          var wsurl = wshost + '$WS_ROOT$STUDENT_SUMMARY_ENDPOINT/' + ${encodeUriElems(langName, studentId, classCode)};
           var ws = new WebSocket(wsurl);
       
           ws.onopen = function (event) {

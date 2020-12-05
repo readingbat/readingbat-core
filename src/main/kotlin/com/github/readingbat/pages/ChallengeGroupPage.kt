@@ -168,7 +168,7 @@ internal object ChallengeGroupPage : KLogging() {
     }
   }
 
-  private fun BODY.enableWebSockets(languageName: LanguageName, groupName: GroupName, classCode: ClassCode) {
+  private fun BODY.enableWebSockets(langName: LanguageName, groupName: GroupName, classCode: ClassCode) {
     script {
       rawHtml(
         """ 
@@ -178,9 +178,7 @@ internal object ChallengeGroupPage : KLogging() {
           else
             wshost = wshost.replace(/^http:/, 'ws:');
 
-          var wsurl = wshost + '$WS_ROOT$CHALLENGE_GROUP_ENDPOINT/' + ${
-          encodeUriElems(languageName, groupName, classCode)
-        };
+          var wsurl = wshost + '$WS_ROOT$CHALLENGE_GROUP_ENDPOINT/' + ${encodeUriElems(langName, groupName, classCode)};
           var ws = new WebSocket(wsurl);
 
           ws.onopen = function (event) {

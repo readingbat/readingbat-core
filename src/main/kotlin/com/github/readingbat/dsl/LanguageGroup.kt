@@ -38,7 +38,7 @@ class LanguageGroup<T : Challenge>(internal val content: ReadingBatContent,
   var repo: ContentRoot = content.repo           // Defaults to outer-level value
     get() =
       if (field == defaultContentRoot)
-        throw InvalidConfigurationException("$languageName section is missing a repo value")
+        error("$languageName section is missing a repo value")
       else
         field
   var branchName = content.branchName    // Defaults to outer-level value
@@ -50,9 +50,9 @@ class LanguageGroup<T : Challenge>(internal val content: ReadingBatContent,
 
   internal fun addGroup(group: ChallengeGroup<T>) {
     if (languageType != group.languageType)
-      throw InvalidConfigurationException("${group.groupName} language type mismatch: $languageType and ${group.languageType}")
+      error("${group.groupName} language type mismatch: $languageType and ${group.languageType}")
     if (hasGroupNameSuffix(group.groupNameSuffix))
-      throw InvalidConfigurationException("Duplicate group name: ${group.groupNameSuffix}")
+      error("Duplicate group name: ${group.groupNameSuffix}")
     challengeGroups += group
   }
 

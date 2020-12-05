@@ -54,8 +54,8 @@ import com.github.readingbat.server.Intercepts.requestTimingMap
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ReadingBatServer
 import com.github.readingbat.server.ServerUtils.queryParam
-import com.github.readingbat.server.ws.ChallengeWs.maxWsConnections
-import com.github.readingbat.server.ws.ChallengeWs.wsConnections
+import com.github.readingbat.server.ws.ChallengeWs.answerWsConnections
+import com.github.readingbat.server.ws.ChallengeWs.maxAnswerWsConnections
 import io.prometheus.Agent
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
@@ -90,6 +90,10 @@ internal object SystemConfigurationPage {
                 tr {
                   td { +"Server uptime:" }
                   td { +ReadingBatServer.upTime.format(true) }
+                }
+                tr {
+                  td { +"Server Session Id:" }
+                  td { +ReadingBatServer.serverSessionId }
                 }
                 tr {
                   td { +"Ktor port:" }
@@ -164,7 +168,7 @@ internal object SystemConfigurationPage {
                   }
                 tr {
                   td { +"WS connections size/max:" }
-                  td { +"${wsConnections.size}/${maxWsConnections}" }
+                  td { +"${answerWsConnections.size}/${maxAnswerWsConnections}" }
                 }
                 tr {
                   td { +"Challenge cache size:" }
@@ -314,7 +318,6 @@ internal object SystemConfigurationPage {
           }
 
           backLink("$ADMIN_PREFS_ENDPOINT?$RETURN_PARAM=${queryParam(RETURN_PARAM, "/")}")
-
           loadStatusPageDisplay()
         }
       }

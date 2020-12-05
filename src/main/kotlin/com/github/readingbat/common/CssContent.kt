@@ -17,6 +17,7 @@
 
 package com.github.readingbat.common
 
+import com.github.readingbat.common.CSSNames.ADMIN_BUTTON
 import com.github.readingbat.common.CSSNames.ARROW
 import com.github.readingbat.common.CSSNames.BTN
 import com.github.readingbat.common.CSSNames.CENTER
@@ -59,6 +60,7 @@ import kotlinx.css.properties.boxShadow
 
 internal object CSSNames {
   const val CHECK_ANSWERS = "checkAnswers"
+  const val ADMIN_BUTTON = "loadChallenge"
   const val LIKE_BUTTONS = "likeButtons"
   const val FEEDBACK = "hint"
   const val HINT = "feedback"
@@ -229,6 +231,15 @@ internal val cssContent by lazy {
         height = 2.em
         backgroundColor = Color("#f1f1f1")
         fontSize = textFs
+        fontWeight = bold
+        borderRadius = 6.px
+      }
+      rule(".$ADMIN_BUTTON") {
+        paddingLeft = 1.em
+        paddingRight = 1.em
+        height = 2.em
+        backgroundColor = Color("#f1f1f1")
+        fontSize = 80.pct
         fontWeight = bold
         borderRadius = 6.px
       }

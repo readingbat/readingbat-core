@@ -21,7 +21,6 @@ import com.github.pambrose.common.util.isNotNull
 import com.github.pambrose.common.util.maskUrlCredentials
 import com.github.pambrose.common.util.obfuscate
 import com.github.readingbat.common.Constants.UNASSIGNED
-import com.github.readingbat.dsl.InvalidConfigurationException
 
 enum class EnvVar(val maskFunc: EnvVar.() -> String = { getEnv(UNASSIGNED) }) {
 
@@ -36,9 +35,11 @@ enum class EnvVar(val maskFunc: EnvVar.() -> String = { getEnv(UNASSIGNED) }) {
   SENDGRID_PREFIX,
   FILTER_LOG,
   REDIRECT_HOSTNAME,
+  DBMS_DRIVER_CLASSNAME,
   POSTGRES_URL({ getEnvOrNull()?.obfuscate(4) ?: UNASSIGNED }),
   POSTGRES_USERNAME,
   POSTGRES_PASSWORD({ getEnvOrNull()?.obfuscate(1) ?: UNASSIGNED }),
+  CLOUD_SQL_CONNECTION_NAME,
   FORWARDED_ENABLED,
   XFORWARDED_ENABLED,
   JAVA_TOOL_OPTIONS;
@@ -53,6 +54,6 @@ enum class EnvVar(val maskFunc: EnvVar.() -> String = { getEnv(UNASSIGNED) }) {
 
   fun getEnv(default: Int) = System.getenv(name)?.toInt() ?: default
 
-  fun getRequiredEnv() = getEnvOrNull() ?: throw InvalidConfigurationException("Missing $name value")
+  fun getRequiredEnv() = getEnvOrNull() ?: error("Missing $name value")
 }
 

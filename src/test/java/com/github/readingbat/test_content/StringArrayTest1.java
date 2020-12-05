@@ -15,8 +15,19 @@
  *
  */
 
-package com.github.readingbat.common
+package com.github.readingbat.test_content;
 
-internal object CommonUtils {
+import static com.github.pambrose.common.util.ArrayUtils.arrayPrint;
 
+public class StringArrayTest1 {
+
+    public static String[] combine(String s1, String s2) {
+        return new String[]{s1, s2};
+    }
+
+    public static void main(String[] args) {
+        arrayPrint(combine("Car", "wash"));
+        arrayPrint(combine("Hello", " world"));
+        arrayPrint(combine("", ""));
+    }
 }

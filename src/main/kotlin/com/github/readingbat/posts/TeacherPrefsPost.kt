@@ -43,7 +43,6 @@ import com.github.readingbat.common.User.Companion.queryActiveClassCode
 import com.github.readingbat.common.User.Companion.queryPreviousTeacherClassCode
 import com.github.readingbat.common.User.Companion.toUser
 import com.github.readingbat.common.isValidUser
-import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.pages.ClassSummaryPage.classSummaryPage
 import com.github.readingbat.pages.TeacherPrefsPage.teacherPrefsPage
@@ -62,22 +61,22 @@ internal object TeacherPrefsPost : KLogging() {
 
   suspend fun PipelineCall.teacherPrefs(content: ReadingBatContent, user: User?) =
     if (user.isValidUser()) {
-      val parameters = call.receiveParameters()
-      when (val action = parameters[PREFS_ACTION_PARAM] ?: "") {
-        CREATE_CLASS -> createClass(content, user, parameters[CLASS_DESC_PARAM] ?: "")
+      val params = call.receiveParameters()
+      when (val action = params[PREFS_ACTION_PARAM] ?: "") {
+        CREATE_CLASS -> createClass(content, user, params[CLASS_DESC_PARAM] ?: "")
         UPDATE_ACTIVE_CLASS,
         MAKE_ACTIVE_CLASS -> {
-          val source = parameters[CHOICE_SOURCE_PARAM] ?: ""
-          val classCode = parameters.getClassCode(CLASS_CODE_CHOICE_PARAM)
+          val source = params[CHOICE_SOURCE_PARAM] ?: ""
+          val classCode = params.getClassCode(CLASS_CODE_CHOICE_PARAM)
           val msg = updateActiveClass(user, classCode)
           when (source) {
             TEACHER_PREF -> teacherPrefsPage(content, user, msg)
             CLASS_SUMMARY -> classSummaryPage(content, user, classCode, msg = msg)
-            else -> throw InvalidConfigurationException("Invalid source: $source")
+            else -> error("Invalid source: $source")
           }
         }
         REMOVE_FROM_CLASS -> {
-          val studentId = parameters[USER_ID_PARAM] ?: throw InvalidConfigurationException("Missing: $USER_ID_PARAM")
+          val studentId = params[USER_ID_PARAM] ?: error("Missing: $USER_ID_PARAM")
           val student = toUser(studentId)
           val classCode = student.enrolledClassCode
           student.withdrawFromClass(classCode)
@@ -85,8 +84,8 @@ internal object TeacherPrefsPost : KLogging() {
           logger.info { msg }
           classSummaryPage(content, user, classCode, msg = Message(msg))
         }
-        DELETE_CLASS -> deleteClass(content, user, parameters.getClassCode(CLASS_CODE_NAME_PARAM))
-        else -> throw InvalidConfigurationException("Invalid action: $action")
+        DELETE_CLASS -> deleteClass(content, user, params.getClassCode(CLASS_CODE_NAME_PARAM))
+        else -> error("Invalid action: $action")
       }
     }
     else {

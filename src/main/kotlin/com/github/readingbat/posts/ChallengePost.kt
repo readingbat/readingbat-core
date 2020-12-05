@@ -17,7 +17,11 @@
 
 package com.github.readingbat.posts
 
-import com.github.pambrose.common.util.*
+import com.github.pambrose.common.util.encode
+import com.github.pambrose.common.util.isNotNull
+import com.github.pambrose.common.util.md5Of
+import com.github.pambrose.common.util.pathOf
+import com.github.pambrose.common.util.toDoubleQuoted
 import com.github.readingbat.common.BrowserSession
 import com.github.readingbat.common.BrowserSession.Companion.querySessionDbmsId
 import com.github.readingbat.common.Constants
@@ -44,19 +48,16 @@ import com.github.readingbat.common.ParameterIds.LIKE_COLOR
 import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.fetchUserDbmsIdFromCache
 import com.github.readingbat.common.browserSession
-import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.dsl.ReturnType
-import com.github.readingbat.dsl.ReturnType.BooleanType
-import com.github.readingbat.dsl.ReturnType.IntType
-import com.github.readingbat.dsl.ReturnType.StringType
 import com.github.readingbat.dsl.isPostgresEnabled
+import com.github.readingbat.posts.AnswerStatus.CORRECT
+import com.github.readingbat.posts.AnswerStatus.INCORRECT
+import com.github.readingbat.posts.AnswerStatus.NOT_ANSWERED
 import com.github.readingbat.server.*
 import com.github.readingbat.server.ChallengeName.Companion.getChallengeName
 import com.github.readingbat.server.GroupName.Companion.getGroupName
 import com.github.readingbat.server.LanguageName.Companion.getLanguageName
-import com.github.readingbat.server.ScriptPools.kotlinScriptPool
-import com.github.readingbat.server.ScriptPools.pythonScriptPool
+import com.github.readingbat.server.ServerUtils.paramMap
 import com.pambrose.common.exposed.upsert
 import io.ktor.application.*
 import io.ktor.request.*
@@ -72,7 +73,6 @@ import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.joda.time.DateTime
 import org.joda.time.DateTimeZone
-import javax.script.ScriptException
 
 internal data class StudentInfo(val studentId: String, val firstName: String, val lastName: String)
 
@@ -135,178 +135,53 @@ internal data class ChallengeHistory(var invocation: Invocation,
   }
 }
 
+internal enum class AnswerStatus(val value: Int) {
+  NOT_ANSWERED(0), CORRECT(1), INCORRECT(2);
+
+  companion object {
+    fun Int.toAnswerStatus() = values().firstOrNull { this == it.value } ?: error("Invalid AnswerStatus value: $this")
+  }
+}
+
 internal class ChallengeNames(paramMap: Map<String, String>) {
-  val languageName = LanguageName(paramMap[LANG_SRC] ?: throw InvalidConfigurationException("Missing language"))
-  val groupName = GroupName(paramMap[GROUP_SRC] ?: throw InvalidConfigurationException("Missing group name"))
-  val challengeName =
-    ChallengeName(paramMap[CHALLENGE_SRC] ?: throw InvalidConfigurationException("Missing challenge name"))
+  val languageName = LanguageName(paramMap[LANG_SRC] ?: error("Missing language"))
+  val groupName = GroupName(paramMap[GROUP_SRC] ?: error("Missing group name"))
+  val challengeName = ChallengeName(paramMap[CHALLENGE_SRC] ?: error("Missing challenge name"))
 
   fun md5() = md5Of(languageName, groupName, challengeName)
   fun md5(invocation: Invocation) = md5Of(languageName, groupName, challengeName, invocation)
 }
 
+private val EMPTY_STRING = "".toDoubleQuoted()
+
 internal object ChallengePost : KLogging() {
-
-  private fun String.isJavaBoolean() = this == "true" || this == "false"
-  private fun String.isPythonBoolean() = this == "True" || this == "False"
-
-  private fun String.equalsAsJvmScalar(that: String,
-                                       returnType: ReturnType,
-                                       languageName: LanguageName): Pair<Boolean, String> {
-    val languageType = languageName.toLanguageType()
-
-    fun deriveHint() =
-      when {
-        returnType == BooleanType ->
-          when {
-            isPythonBoolean() -> "$languageType boolean values are either true or false"
-            !isJavaBoolean() -> "Answer should be either true or false"
-            else -> ""
-          }
-        returnType == StringType && isNotDoubleQuoted() -> "$languageType strings are double quoted"
-        returnType == IntType && isNotInt() -> "Answer should be an int value"
-        else -> ""
-      }
-
-    return try {
-      val result =
-        when {
-          this.isEmpty() || that.isEmpty() -> false
-          returnType == StringType -> this == that
-          this.contains(".") || that.contains(".") -> this.toDouble() == that.toDouble()
-          this.isJavaBoolean() && that.isJavaBoolean() -> this.toBoolean() == that.toBoolean()
-          else -> this.toInt() == that.toInt()
-        }
-      result to (if (result) "" else deriveHint())
-    } catch (e: Exception) {
-      false to deriveHint()
-    }
-  }
-
-  private fun String.equalsAsPythonScalar(correctAnswer: String, returnType: ReturnType): Pair<Boolean, String> {
-    fun deriveHint() =
-      when {
-        returnType == BooleanType ->
-          when {
-            isJavaBoolean() -> "Python boolean values are either True or False"
-            !isPythonBoolean() -> "Answer should be either True or False"
-            else -> ""
-          }
-        returnType == StringType && isNotQuoted() -> "Python strings are either single or double quoted"
-        returnType == IntType && isNotInt() -> "Answer should be an int value"
-        else -> ""
-      }
-
-    return try {
-      val result =
-        when {
-          isEmpty() || correctAnswer.isEmpty() -> false
-          isDoubleQuoted() -> this == correctAnswer
-          isSingleQuoted() -> singleToDoubleQuoted() == correctAnswer
-          contains(".") || correctAnswer.contains(".") -> toDouble() == correctAnswer.toDouble()
-          isPythonBoolean() && correctAnswer.isPythonBoolean() -> toBoolean() == correctAnswer.toBoolean()
-          else -> toInt() == correctAnswer.toInt()
-        }
-      result to (if (result) "" else deriveHint())
-    } catch (e: Exception) {
-      false to deriveHint()
-    }
-  }
-
-  private suspend fun String.equalsAsJvmList(correctAnswer: String): Pair<Boolean, String> {
-    fun deriveHint() = if (isNotBracketed()) "Answer should be bracketed" else ""
-
-    val compareExpr =
-      "listOf(${if (isBracketed()) trimEnds() else this}) == listOf(${if (correctAnswer.isBracketed()) correctAnswer.trimEnds() else correctAnswer})"
-    logger.debug { "Check answers expression: $compareExpr" }
-    return try {
-      val result = kotlinScriptPool.eval { eval(compareExpr) } as Boolean
-      result to (if (result) "" else deriveHint())
-    } catch (e: ScriptException) {
-      logger.info { "Caught exception comparing $this and $correctAnswer: ${e.message} in $compareExpr" }
-      false to deriveHint()
-    } catch (e: Exception) {
-      false to deriveHint()
-    }
-  }
-
-  private suspend fun String.equalsAsPythonList(correctAnswer: String): Pair<Boolean, String> {
-    fun deriveHint() = if (isNotBracketed()) "Answer should be bracketed" else ""
-    val compareExpr = "${trim()} == ${correctAnswer.trim()}"
-    return try {
-      logger.debug { "Check answers expression: $compareExpr" }
-      val result = pythonScriptPool.eval { eval(compareExpr) } as Boolean
-      result to (if (result) "" else deriveHint())
-    } catch (e: ScriptException) {
-      logger.info { "Caught exception comparing $this and $correctAnswer: ${e.message} in: $compareExpr" }
-      false to deriveHint()
-    } catch (e: Exception) {
-      false to deriveHint()
-    }
-  }
-
   suspend fun PipelineCall.checkAnswers(content: ReadingBatContent, user: User?) {
     val params = call.receiveParameters()
     val paramMap = params.entries().map { it.key to it.value[0] }.toMap()
     val names = ChallengeNames(paramMap)
-    val userResponses = params.entries().filter { it.key.startsWith(RESP) }
     val challenge = content.findChallenge(names.languageName, names.groupName, names.challengeName)
-    val funcInfo = challenge.functionInfo(content)
+    val funcInfo = challenge.functionInfo()
+    val userResponses = params.entries().filter { it.key.startsWith(RESP) }
 
     logger.debug("Found ${userResponses.size} user responses in $paramMap")
 
     val results =
       userResponses.indices
-        .map { i ->
-          val languageName = names.languageName
-          val userResponse = paramMap[RESP + i]?.trim() ?: throw InvalidConfigurationException("Missing user response")
-          val correctAnswer = funcInfo.correctAnswers[i]
-          val returnType = funcInfo.returnType
-          val answered = userResponse.isNotBlank()
-          val correctAndHint =
-            if (answered) {
-              logger.debug("""Comparing user response: "$userResponse" with correct answer: "$correctAnswer"""")
-              if (languageName.isJvm) {
-                if (correctAnswer.isBracketed())
-                  userResponse.equalsAsJvmList(correctAnswer)
-                else
-                  userResponse.equalsAsJvmScalar(correctAnswer, returnType, languageName)
-              }
-              else {
-                if (correctAnswer.isBracketed())
-                  userResponse.equalsAsPythonList(correctAnswer)
-                else
-                  userResponse.equalsAsPythonScalar(correctAnswer, returnType)
-              }
-            }
-            else {
-              false to ""
-            }
+        .map { paramMap[RESP + it]?.trim() ?: error("Missing user response") }
+        .mapIndexed { i, userResponse -> funcInfo.checkResponse(i, userResponse) }
 
-          ChallengeResults(invocation = funcInfo.invocations[i],
-                           userResponse = userResponse,
-                           answered = answered,
-                           correct = correctAndHint.first,
-                           hint = correctAndHint.second)
-        }
+    if (isPostgresEnabled())
+      saveChallengeAnswers(user, call.browserSession, content, names, paramMap, funcInfo, userResponses, results)
 
-    // Save whether all the answers for the challenge were correct
-    if (isPostgresEnabled()) {
-      val browserSession = call.browserSession
-      saveChallengeAnswers(user, browserSession, content, names, paramMap, funcInfo, userResponses, results)
-    }
-
-    // Return values: 0 = not answered, 1 = correct, 2 = incorrect
     val answerMapping =
       results
         .map {
           when {
-            !it.answered -> listOf(0, "".toDoubleQuoted())
-            it.correct -> listOf(1, "".toDoubleQuoted())
-            else -> listOf(2, it.hint.toDoubleQuoted())
+            !it.answered -> listOf(NOT_ANSWERED.value, EMPTY_STRING)
+            it.correct -> listOf(CORRECT.value, EMPTY_STRING)
+            else -> listOf(INCORRECT.value, it.hint.toDoubleQuoted())
           }
         }
-    logger.debug { "Answers: $answerMapping" }
     call.respondText(answerMapping.toString())
   }
 
@@ -322,7 +197,7 @@ internal object ChallengePost : KLogging() {
           SessionChallengeInfo
             .deleteWhere { (SessionChallengeInfo.sessionRef eq querySessionDbmsId(id)) and (SessionChallengeInfo.md5 eq md5) }
         }
-      else -> throw InvalidConfigurationException("Invalid type: $type")
+      else -> error("Invalid type: $type")
     }
 
   private fun deleteAnswerHistory(type: String, id: String, md5: String) =
@@ -337,7 +212,7 @@ internal object ChallengePost : KLogging() {
           SessionAnswerHistory
             .deleteWhere { (SessionAnswerHistory.sessionRef eq querySessionDbmsId(id)) and (SessionAnswerHistory.md5 eq md5) }
         }
-      else -> throw InvalidConfigurationException("Invalid type: $type")
+      else -> error("Invalid type: $type")
     }
 
   suspend fun PipelineCall.clearChallengeAnswers(content: ReadingBatContent, user: User?): String {
@@ -351,7 +226,7 @@ internal object ChallengePost : KLogging() {
     val challengeAnswersKey = params[CHALLENGE_ANSWERS_PARAM] ?: ""
 
     val challenge = content[languageName, groupName, challengeName]
-    val funcInfo = challenge.functionInfo(content)
+    val funcInfo = challenge.functionInfo()
     val path = pathOf(CHALLENGE_ROOT, languageName, groupName, challengeName)
 
     // Clears answer history
@@ -415,7 +290,7 @@ internal object ChallengePost : KLogging() {
       content.findGroup(languageName, groupName).challenges
         .forEach { challenge ->
           logger.info { "Clearing answers for challengeName ${challenge.challengeName}" }
-          val funcInfo = challenge.functionInfo(content)
+          val funcInfo = challenge.functionInfo()
           user.resetHistory(funcInfo, challenge, content.maxHistoryLength)
         }
     }
@@ -424,12 +299,11 @@ internal object ChallengePost : KLogging() {
   }
 
   suspend fun PipelineCall.likeDislike(content: ReadingBatContent, user: User?) {
-    val params = call.receiveParameters()
-    val paramMap = params.entries().map { it.key to it.value[0] }.toMap()
+    val paramMap = call.paramMap()
     val names = ChallengeNames(paramMap)
     //val challenge = content.findChallenge(names.languageName, names.groupName, names.challengeName)
 
-    val likeArg = paramMap[LIKE_DESC]?.trim() ?: throw InvalidConfigurationException("Missing like/dislike argument")
+    val likeArg = paramMap[LIKE_DESC]?.trim() ?: error("Missing like/dislike argument")
 
     // Return values: 0 = not answered, 1 = like selected, 2 = dislike selected
     val likeVal =
@@ -438,7 +312,7 @@ internal object ChallengePost : KLogging() {
         LIKE_COLOR,
         DISLIKE_COLOR -> 0
         DISLIKE_CLEAR -> 2
-        else -> throw InvalidConfigurationException("Invalid like/dislike argument: $likeArg")
+        else -> error("Invalid like/dislike argument: $likeArg")
       }
 
     logger.debug { "Like/dislike arg -- response: $likeArg -- $likeVal" }
@@ -463,7 +337,7 @@ internal object ChallengePost : KLogging() {
       userResponses.indices
         .map { i ->
           val userResponse =
-            paramMap[RESP + i]?.trim() ?: throw InvalidConfigurationException("Missing user response")
+            paramMap[RESP + i]?.trim() ?: error("Missing user response")
           funcInfo.invocations[i] to userResponse
         }
 

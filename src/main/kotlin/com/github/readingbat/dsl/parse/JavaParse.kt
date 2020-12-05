@@ -19,7 +19,6 @@ package com.github.readingbat.dsl.parse
 
 import com.github.pambrose.common.util.linesBetween
 import com.github.pambrose.common.util.substringBetween
-import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.ReturnType.Companion.asReturnType
 import com.github.readingbat.server.ChallengeName
 import com.github.readingbat.server.Invocation
@@ -32,7 +31,7 @@ internal object JavaParse : KLogging() {
   private val staticRegex = Regex("""static.+\(""")
   private val staticStartRegex = Regex("""\sstatic.+\(""")
   private val psRegex = Regex("""^\s+public\s+static.+\(""")
-  private val psvmRegex = Regex("""^\s*public\s+static\s+void\s+main.+\)""")
+  internal val psvmRegex = Regex("""^\s*public\s+static\s+void\s+main.+\)""")
   internal val javaEndRegex = Regex("""\s*}\s*""")
   internal val svmRegex = Regex("""\s*static\s+void\s+main\(""")
 
@@ -52,9 +51,9 @@ internal object JavaParse : KLogging() {
         val words = str.trim().split(spaceRegex).filter { it.isNotBlank() }
         val staticPos = words.indices.first { words[it] == "static" }
         val typeStr = words[staticPos + 1]
-        typeStr.asReturnType ?: throw InvalidConfigurationException("In $challengeName invalid type $typeStr")
+        typeStr.asReturnType ?: error("In $challengeName invalid type $typeStr")
       }
-      .firstOrNull() ?: throw InvalidConfigurationException("In $challengeName unable to determine return type")
+      .firstOrNull() ?: error("In $challengeName unable to determine return type")
 
   fun extractJavaFunction(code: List<String>): String {
     val lineNums =

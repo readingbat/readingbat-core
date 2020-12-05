@@ -93,7 +93,6 @@ internal object AboutPage {
           }
 
           backLink(queryParam(RETURN_PARAM))
-
           loadPingdomScript()
         }
       }

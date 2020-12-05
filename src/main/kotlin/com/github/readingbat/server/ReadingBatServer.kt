@@ -30,13 +30,14 @@ import com.github.readingbat.common.Constants.REDIS_IS_DOWN
 import com.github.readingbat.common.Constants.UNASSIGNED
 import com.github.readingbat.common.Constants.UNKNOWN_USER_ID
 import com.github.readingbat.common.Endpoints.STATIC_ROOT
+import com.github.readingbat.common.EnvVar
 import com.github.readingbat.common.EnvVar.*
 import com.github.readingbat.common.Metrics
 import com.github.readingbat.common.Property.*
+import com.github.readingbat.common.Property.DBMS_DRIVER_CLASSNAME
 import com.github.readingbat.common.User.Companion.createUnknownUser
 import com.github.readingbat.common.User.Companion.userExists
 import com.github.readingbat.dsl.*
-import com.github.readingbat.server.AdminRoutes.adminRoutes
 import com.github.readingbat.server.Installs.installs
 import com.github.readingbat.server.Locations.locations
 import com.github.readingbat.server.ReadingBatServer.adminUsers
@@ -44,6 +45,12 @@ import com.github.readingbat.server.ReadingBatServer.content
 import com.github.readingbat.server.ReadingBatServer.contentReadCount
 import com.github.readingbat.server.ReadingBatServer.logger
 import com.github.readingbat.server.ReadingBatServer.metrics
+import com.github.readingbat.server.ServerUtils.logToRedis
+import com.github.readingbat.server.routes.AdminRoutes.adminRoutes
+import com.github.readingbat.server.routes.sysAdminRoutes
+import com.github.readingbat.server.routes.userRoutes
+import com.github.readingbat.server.ws.LoggingWs
+import com.github.readingbat.server.ws.PubSubCommandsWs
 import com.github.readingbat.server.ws.WsCommon.wsRoutes
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
@@ -69,7 +76,7 @@ import kotlin.time.TimeSource
 import kotlin.time.measureTime
 import kotlin.time.seconds
 
-@Version(version = "1.6.0", date = "10/8/20")
+@Version(version = "1.7.0", date = "12/4/20")
 object ReadingBatServer : KLogging() {
   private val startTime = TimeSource.Monotonic.markNow()
   internal val serverSessionId = randomId(10)
@@ -84,10 +91,19 @@ object ReadingBatServer : KLogging() {
       HikariDataSource(
         HikariConfig()
           .apply {
-            driverClassName = DBMS_DRIVER_CLASSNAME.getRequiredProperty()
+            driverClassName = EnvVar.DBMS_DRIVER_CLASSNAME.getEnv(DBMS_DRIVER_CLASSNAME.getRequiredProperty())
             jdbcUrl = POSTGRES_URL.getEnv(DBMS_URL.getRequiredProperty())
             username = POSTGRES_USERNAME.getEnv(DBMS_USERNAME.getRequiredProperty())
             password = POSTGRES_PASSWORD.getEnv(DBMS_PASSWORD.getRequiredProperty())
+
+            CLOUD_SQL_CONNECTION_NAME.getEnv("")
+              .also {
+                if (it.isNotBlank()) {
+                  addDataSourceProperty("cloudSqlInstance", it)
+                  addDataSourceProperty("socketFactory", "com.google.cloud.sql.postgres.SocketFactory")
+                }
+              }
+
             maximumPoolSize = DBMS_MAX_POOL_SIZE.getRequiredProperty().toInt()
             isAutoCommit = false
             transactionIsolation = "TRANSACTION_REPEATABLE_READ"
@@ -132,13 +148,13 @@ object ReadingBatServer : KLogging() {
 
     CONFIG_FILENAME.setProperty(configFilename)
 
-    val newargs =
+    val newArgs =
       if (args.any { it.startsWith("-config=") })
         args
       else
         args.toMutableList().apply { add("-config=$configFilename") }.toTypedArray()
 
-    val environment = commandLineEnvironment(newargs)
+    val environment = commandLineEnvironment(newArgs)
 
     // Reference these to load them
     ScriptPools.javaScriptPool
@@ -157,25 +173,104 @@ object ReadingBatServer : KLogging() {
   }
 }
 
-internal fun Application.readContentDsl(fileName: String, variableName: String) {
-  logger.info { "Loading content using $variableName in $fileName" }
+internal fun Application.readContentDsl(fileName: String, variableName: String, logId: String = "") {
+  "Loading content using $variableName in $fileName"
+    .also {
+      logger.info { it }
+      logToRedis(it, logId)
+    }
   measureTime {
+    val contentSource = FileSource(fileName = fileName)
+    val dslCode = readContentDsl(contentSource)
     content.set(
-      readContentDsl(FileSource(fileName = fileName), variableName)
+      evalContentDsl(contentSource.source, variableName, dslCode)
         .apply {
           maxHistoryLength = MAX_HISTORY_LENGTH.configValue(this@readContentDsl, "10").toInt()
           maxClassCount = MAX_CLASS_COUNT.configValue(this@readContentDsl, "25").toInt()
-        }.apply { clearContentMap() })
+        }
+        .apply { clearContentMap() })
     metrics.contentLoadedCount.labels(agentLaunchId()).inc()
-  }.also {
-    logger.info { "Loaded content using $variableName in $fileName in $it" }
+  }.also { dur ->
+    "Loaded content using $variableName in $fileName in $dur"
+      .also {
+        logger.info { it }
+        logToRedis(it, logId)
+      }
   }
   contentReadCount.incrementAndGet()
 }
 
-internal fun Application.module() {
+internal fun Application.module(testing: Boolean = false) {
+
+  assignProperties()
+
   adminUsers.addAll(ADMIN_USERS.configValueOrNull(this)?.getList() ?: emptyList())
 
+  // Only run this
+  if (isProduction())
+    PubSubCommandsWs.initThreads()
+
+  if (isPostgresEnabled()) {
+    ReadingBatServer.postgres
+
+    // Create unknown user if it does not already exist
+    if (!userExists(UNKNOWN_USER_ID))
+      createUnknownUser(UNKNOWN_USER_ID)
+  }
+
+  if (isAgentEnabled()) {
+    if (PROXY_HOSTNAME.getRequiredProperty().isNotEmpty()) {
+      val configFilename = CONFIG_FILENAME.getRequiredProperty()
+      val agentInfo = startAsyncAgent(configFilename, true)
+      AGENT_LAUNCH_ID.setProperty(agentInfo.launchId)
+    }
+    else {
+      logger.error { "Prometheus agent is enabled but the proxy hostname is not assigned" }
+    }
+  }
+
+  // This is done *after* AGENT_LAUNCH_ID is assigned because metrics depend on it
+  metrics.init { content.get() }
+
+  val dslFileName = DSL_FILE_NAME.getRequiredProperty()
+  val dslVariableName = DSL_VARIABLE_NAME.getRequiredProperty()
+
+  val job = launch { readContentDsl(dslFileName, dslVariableName) }
+
+  runBlocking {
+    val maxDelay = STARTUP_DELAY_SECS.configValue(this@module, "30").toInt().seconds
+    logger.info { "Delaying start-up by max of $maxDelay" }
+    measureTime {
+      withTimeoutOrNull(maxDelay) {
+        job.join()
+      } ?: logger.info { "Timed-out after waiting $maxDelay" }
+    }.also {
+      logger.info { "Continued start-up after delaying $it" }
+    }
+  }
+
+  // readContentDsl() is passed as a lambda because it is Application.readContentDsl()
+  val resetContentDslFunc = { logId: String -> readContentDsl(dslFileName, dslVariableName, logId) }
+
+  LoggingWs.initThreads({ content.get() }, resetContentDslFunc)
+
+  installs(isProduction())
+
+  intercepts()
+
+  routing {
+    adminRoutes(metrics)
+    locations(metrics) { content.get() }
+    userRoutes(metrics) { content.get() }
+    sysAdminRoutes(metrics, resetContentDslFunc)
+    wsRoutes(metrics) { content.get() }
+    static(STATIC_ROOT) { resources("static") }
+  }
+}
+
+private fun Application.assignProperties() {
+
+  val agentEnabled = AGENT_ENABLED.getEnv(AGENT_ENABLED_PROPERTY.configValue(this, default = "false").toBoolean())
   AGENT_ENABLED_PROPERTY.setProperty(agentEnabled.toString())
   PROXY_HOSTNAME.setPropertyFromConfig(this, "")
 
@@ -216,77 +311,4 @@ internal fun Application.module() {
 
   SENDGRID_PREFIX_PROPERTY.setProperty(
     SENDGRID_PREFIX.getEnv(SENDGRID_PREFIX_PROPERTY.configValue(this, "https://www.readingbat.com")))
-
-  if (isPostgresEnabled()) {
-    ReadingBatServer.postgres
-
-    // Create unknown user if it does not already exist
-    if (!userExists(UNKNOWN_USER_ID))
-      createUnknownUser(UNKNOWN_USER_ID)
-  }
-
-  if (isAgentEnabled()) {
-    if (PROXY_HOSTNAME.getRequiredProperty().isNotEmpty()) {
-      val configFilename = CONFIG_FILENAME.getRequiredProperty()
-      val agentInfo = startAsyncAgent(configFilename, true)
-      AGENT_LAUNCH_ID.setProperty(agentInfo.launchId)
-    }
-    else {
-      logger.error { "Prometheus agent is enabled but the proxy hostname is not assigned" }
-    }
-  }
-
-  // This is done *after* AGENT_LAUNCH_ID is assigned because metrics depend on it
-  metrics.init { content.get() }
-
-  val fileName = DSL_FILE_NAME.getRequiredProperty()
-  val variableName = DSL_VARIABLE_NAME.getRequiredProperty()
-
-  val job = launch { readContentDsl(fileName, variableName) }
-
-  runBlocking {
-    val maxDelay = STARTUP_DELAY_SECS.configValue(this@module, "30").toInt().seconds
-    logger.info { "Delaying start-up by max of $maxDelay" }
-    measureTime {
-      withTimeoutOrNull(maxDelay) {
-        job.join()
-      } ?: logger.info { "Timed-out after waiting $maxDelay" }
-    }.also {
-      logger.info { "Continued start-up after delaying $it" }
-    }
-  }
-
-  installs(isProduction(),
-           redirectHostname,
-           forwardedHeaderSupportEnabled,
-           xforwardedHeaderSupportEnabled)
-
-  intercepts()
-
-  routing {
-    adminRoutes(metrics)
-    locations(metrics) { content.get() }
-    userRoutes(metrics) { content.get() }
-    sysAdminRoutes(metrics, { content.get() }, { readContentDsl(fileName, variableName) })
-    wsRoutes(metrics) { content.get() }
-    static(STATIC_ROOT) { resources("static") }
-  }
 }
-
-internal data class PublishedData(val topic: String, val message: String)
-
-private val Application.redirectHostname
-  get() =
-    REDIRECT_HOSTNAME.getEnv(REDIRECT_HOSTNAME_PROPERTY.configValue(this, default = ""))
-
-private val Application.agentEnabled
-  get() =
-    AGENT_ENABLED.getEnv(AGENT_ENABLED_PROPERTY.configValue(this, default = "false").toBoolean())
-
-private val Application.forwardedHeaderSupportEnabled
-  get() =
-    FORWARDED_ENABLED.getEnv(FORWARDED_ENABLED_PROPERTY.configValue(this, default = "false").toBoolean())
-
-private val Application.xforwardedHeaderSupportEnabled
-  get() =
-    XFORWARDED_ENABLED.getEnv(XFORWARDED_ENABLED_PROPERTY.configValue(this, default = "false").toBoolean())

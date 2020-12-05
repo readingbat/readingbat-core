@@ -26,6 +26,12 @@ import com.github.readingbat.common.Endpoints.CSS_ENDPOINT
 import com.github.readingbat.common.Endpoints.FAV_ICON_ENDPOINT
 import com.github.readingbat.common.Endpoints.STATIC_ROOT
 import com.github.readingbat.common.EnvVar.FILTER_LOG
+import com.github.readingbat.common.EnvVar.FORWARDED_ENABLED
+import com.github.readingbat.common.EnvVar.REDIRECT_HOSTNAME
+import com.github.readingbat.common.EnvVar.XFORWARDED_ENABLED
+import com.github.readingbat.common.Property.FORWARDED_ENABLED_PROPERTY
+import com.github.readingbat.common.Property.REDIRECT_HOSTNAME_PROPERTY
+import com.github.readingbat.common.Property.XFORWARDED_ENABLED_PROPERTY
 import com.github.readingbat.dsl.InvalidRequestException
 import com.github.readingbat.dsl.RedisUnavailableException
 import com.github.readingbat.dsl.isPostgresEnabled
@@ -36,6 +42,7 @@ import com.github.readingbat.pages.NotFoundPage.notFoundPage
 import com.github.readingbat.server.ConfigureCookies.configureAuthCookie
 import com.github.readingbat.server.ConfigureCookies.configureSessionIdCookie
 import com.github.readingbat.server.ConfigureFormAuth.configureFormAuth
+import com.github.readingbat.server.ReadingBatServer.serverSessionId
 import com.github.readingbat.server.ServerUtils.fetchEmailFromCache
 import io.ktor.application.*
 import io.ktor.auth.*
@@ -43,6 +50,7 @@ import io.ktor.features.*
 import io.ktor.http.*
 import io.ktor.http.HttpHeaders.Location
 import io.ktor.http.HttpStatusCode.Companion.Found
+import io.ktor.http.cio.websocket.*
 import io.ktor.locations.Locations
 import io.ktor.request.*
 import io.ktor.server.engine.*
@@ -50,15 +58,12 @@ import io.ktor.sessions.*
 import io.ktor.websocket.*
 import mu.KLogging
 import org.slf4j.event.Level
+import java.time.Duration
 import java.util.concurrent.atomic.AtomicLong
-import kotlin.time.seconds
 
 internal object Installs : KLogging() {
 
-  fun Application.installs(production: Boolean,
-                           redirectHostname: String,
-                           forwardedHeaderSupportEnabled: Boolean,
-                           xforwardedHeaderSupportEnabled: Boolean) {
+  fun Application.installs(production: Boolean) {
 
     install(Locations)
 
@@ -72,10 +77,13 @@ internal object Installs : KLogging() {
       configureFormAuth()
     }
 
-    install(WebSockets) {
-      pingPeriodMillis = 15.seconds.toLongMilliseconds()   // Duration between pings or `0` to disable pings
+    val install = install(WebSockets) {
+      pingPeriod = Duration.ofSeconds(15)  // Duration between pings or `0` to disable pings
+      timeout = Duration.ofSeconds(15)
     }
 
+    val forwardedHeaderSupportEnabled =
+      FORWARDED_ENABLED.getEnv(FORWARDED_ENABLED_PROPERTY.configValue(this, default = "false").toBoolean())
     if (forwardedHeaderSupportEnabled) {
       logger.info { "Enabling ForwardedHeaderSupport" }
       install(ForwardedHeaderSupport)
@@ -84,6 +92,8 @@ internal object Installs : KLogging() {
       logger.info { "Not enabling ForwardedHeaderSupport" }
     }
 
+    val xforwardedHeaderSupportEnabled =
+      XFORWARDED_ENABLED.getEnv(XFORWARDED_ENABLED_PROPERTY.configValue(this, default = "false").toBoolean())
     if (xforwardedHeaderSupportEnabled) {
       logger.info { "Enabling XForwardedHeaderSupport" }
       install(XForwardedHeaderSupport)
@@ -92,6 +102,7 @@ internal object Installs : KLogging() {
       logger.info { "Not enabling XForwardedHeaderSupport" }
     }
 
+    val redirectHostname = REDIRECT_HOSTNAME.getEnv(REDIRECT_HOSTNAME_PROPERTY.configValue(this, default = ""))
     if (production && redirectHostname.isNotBlank()) {
       logger.info { "Installing HerokuHttpsRedirect using: $redirectHostname" }
       install(HerokuHttpsRedirect) {
@@ -147,7 +158,7 @@ internal object Installs : KLogging() {
 
     install(CallId) {
       retrieveFromHeader(HttpHeaders.XRequestId)
-      generate { "${ReadingBatServer.serverSessionId}-${requestCounter.incrementAndGet()}" }
+      generate { "$serverSessionId-${requestCounter.incrementAndGet()}" }
       verify { it.isNotEmpty() }
     }
 
@@ -166,14 +177,21 @@ internal object Installs : KLogging() {
     install(StatusPages) {
 
       exception<InvalidRequestException> { cause ->
-        logger.info { " InvalidRequestException caught: ${cause.message}" }
+        logger.info { "InvalidRequestException caught: ${cause.message}" }
         respondWith {
           invalidRequestPage(ReadingBatServer.content.get(), call.request.uri, cause.message ?: UNKNOWN)
         }
       }
 
+      exception<IllegalStateException> { cause ->
+        logger.info { "IllegalStateException caught: ${cause.message}" }
+        respondWith {
+          errorPage(ReadingBatServer.content.get())
+        }
+      }
+
       exception<RedisUnavailableException> { cause ->
-        logger.info(cause) { " RedisUnavailableException caught: ${cause.message}" }
+        logger.info(cause) { "RedisUnavailableException caught: ${cause.message}" }
         respondWith {
           dbmsDownPage(ReadingBatServer.content.get())
         }
@@ -181,7 +199,7 @@ internal object Installs : KLogging() {
 
       // Catch all
       exception<Throwable> { cause ->
-        logger.info(cause) { " Throwable caught: ${cause.simpleClassName}" }
+        logger.info(cause) { "Throwable caught: ${cause.simpleClassName}" }
         respondWith {
           errorPage(ReadingBatServer.content.get())
         }

@@ -188,7 +188,7 @@ internal object TransferUsers : KLogging() {
                       Classes
                         .insertAndGetId { row ->
                           row[userRef] =
-                            userMap[userId] ?: throw InvalidConfigurationException("Invalid user id $userId")
+                            userMap[userId] ?: error("Invalid user id $userId")
                           row[Classes.classCode] = classCode.value
                           row[description] = classCode.fetchClassDesc()
                         }.value
@@ -200,7 +200,7 @@ internal object TransferUsers : KLogging() {
                           .insert { row ->
                             row[classesRef] = classCodeId
                             row[userRef] =
-                              userMap[enrolleeId] ?: throw InvalidConfigurationException("Invalid user id $enrolleeId")
+                              userMap[enrolleeId] ?: error("Invalid user id $enrolleeId")
                           }
                       }
                   }
@@ -219,8 +219,8 @@ internal object TransferUsers : KLogging() {
                   .upsert(conflictIndex = userSessionIndex) { row ->
                     row[sessionRef] =
                       sessionMap[sessionId]
-                        ?: throw InvalidConfigurationException("Invalid session id $sessionId $sessionMap")
-                    row[userRef] = userMap[userId] ?: throw InvalidConfigurationException("Invalid user id $userId")
+                        ?: error("Invalid session id $sessionId $sessionMap")
+                    row[userRef] = userMap[userId] ?: error("Invalid user id $userId")
                     row[UserSessions.activeClassCode] = activeClassCode.value
                     row[previousTeacherClassCode] = previousClassCode.value
                   }
@@ -234,7 +234,7 @@ internal object TransferUsers : KLogging() {
 
                 UserChallengeInfo
                   .upsert(conflictIndex = userChallengeInfoIndex) { row ->
-                    row[userRef] = userMap[userId] ?: throw InvalidConfigurationException("Invalid user id $userId")
+                    row[userRef] = userMap[userId] ?: error("Invalid user id $userId")
                     row[md5] = key.split(KEY_SEP)[3]
                     row[updated] = DateTime.now(UTC)
                     row[allCorrect] = redis[key].toBoolean()
@@ -249,7 +249,7 @@ internal object TransferUsers : KLogging() {
 
                 UserChallengeInfo
                   .upsert(conflictIndex = userChallengeInfoIndex) { row ->
-                    row[userRef] = userMap[userId] ?: throw InvalidConfigurationException("Invalid user id $userId")
+                    row[userRef] = userMap[userId] ?: error("Invalid user id $userId")
                     row[md5] = key.split(KEY_SEP)[3]
                     row[updated] = DateTime.now(UTC)
                     row[likeDislike] = redis[key].toShort()
@@ -264,7 +264,7 @@ internal object TransferUsers : KLogging() {
 
                 UserChallengeInfo
                   .upsert(conflictIndex = userChallengeInfoIndex) { row ->
-                    row[userRef] = userMap[userId] ?: throw InvalidConfigurationException("Invalid user id $userId")
+                    row[userRef] = userMap[userId] ?: error("Invalid user id $userId")
                     row[md5] = key.split(KEY_SEP)[3]
                     row[updated] = DateTime.now(UTC)
                     row[answersJson] = gson.toJson(redis.hgetAll(key))
@@ -281,7 +281,7 @@ internal object TransferUsers : KLogging() {
                 UserAnswerHistory
                   .insertAndGetId { row ->
                     val history = gson.fromJson(redis[key], ChallengeHistory::class.java)
-                    row[userRef] = userMap[userId] ?: throw InvalidConfigurationException("Invalid user id $userId")
+                    row[userRef] = userMap[userId] ?: error("Invalid user id $userId")
                     row[md5] = key.split(KEY_SEP)[3]
                     row[invocation] = history.invocation.value
                     row[correct] = history.correct

@@ -24,7 +24,6 @@ import com.github.readingbat.common.Constants.UNKNOWN_USER_ID
 import com.github.readingbat.common.Endpoints.PING_ENDPOINT
 import com.github.readingbat.common.User.Companion.fetchUserDbmsIdFromCache
 import com.github.readingbat.common.browserSession
-import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.dsl.isSaveRequestsEnabled
 import com.github.readingbat.server.GeoInfo.Companion.lookupGeoInfo
 import com.github.readingbat.server.GeoInfo.Companion.queryGeoInfo
@@ -99,7 +98,7 @@ internal fun Application.intercepts() {
         val geoInfo = lookupGeoInfo(ipAddress)
         val geoDbmsId =
           if (geoInfo.requireDbmsLookUp)
-            queryGeoInfo(ipAddress)?.dbmsId ?: throw InvalidConfigurationException("Missing ip address: $ipAddress")
+            queryGeoInfo(ipAddress)?.dbmsId ?: error("Missing ip address: $ipAddress")
           else
             geoInfo.dbmsId
 

@@ -15,7 +15,7 @@
  *
  */
 
-package com.github.readingbat.server
+package com.github.readingbat.server.routes
 
 import com.codahale.metrics.jvm.ThreadDump
 import com.github.pambrose.common.response.redirectTo
@@ -33,7 +33,9 @@ import com.github.readingbat.common.browserSession
 import com.github.readingbat.common.userPrincipal
 import com.github.readingbat.dsl.isPostgresEnabled
 import com.github.readingbat.dsl.isSaveRequestsEnabled
+import com.github.readingbat.server.BrowserSessions
 import com.github.readingbat.server.GeoInfo.Companion.lookupGeoInfo
+import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.get
 import io.ktor.application.*
 import io.ktor.features.*

@@ -82,7 +82,6 @@ internal object ChallengeGroupWs : KLogging() {
           //val desc = "${pathOf(WS_ROOT, Endpoints.CHALLENGE_ENDPOINT, languageName, groupName, classCode)} - $remote - $email"
 
           validateContext(languageName, groupName, classCode, null, user)
-            .also { (valid, msg) -> if (!valid) throw InvalidRequestException(msg) }
 
           incoming
             .consumeAsFlow()
@@ -104,7 +103,7 @@ internal object ChallengeGroupWs : KLogging() {
                 }
 
                 for (challenge in ltor) {
-                  val funcInfo = challenge.functionInfo(content)
+                  val funcInfo = challenge.functionInfo()
                   val challengeName = challenge.challengeName
                   val numCalls = funcInfo.invocations.size
                   var totAttemptedAtLeastOne = 0

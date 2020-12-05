@@ -49,13 +49,13 @@ import kotlin.time.measureTimedValue
 
 @ReadingBatDslMarker
 class ReadingBatContent {
-  // contentMap will prevent reading the same content multiple times
-  internal val contentMap = ConcurrentHashMap<String, ReadingBatContent>()
+  internal val timeStamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("M/d/y H:m:ss"))
   private val languageList by lazy { listOf(java, python, kotlin) }
   private val languageMap by lazy { languageList.map { it.languageType to it }.toMap() }
 
+  // contentMap will prevent reading the same content multiple times
+  internal val contentMap = ConcurrentHashMap<String, ReadingBatContent>()
   internal val functionInfoMap = ConcurrentHashMap<Int, FunctionInfo>()
-  internal val timeStamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("M/d/y H:m:ss"))
 
   internal var maxHistoryLength = 10
   internal var maxClassCount = 25
@@ -64,6 +64,8 @@ class ReadingBatContent {
   val python by lazy { LanguageGroup<PythonChallenge>(this, Python) }
   val java by lazy { LanguageGroup<JavaChallenge>(this, Java) }
   val kotlin by lazy { LanguageGroup<KotlinChallenge>(this, Kotlin) }
+
+  internal val languages by lazy { listOf(python, java, kotlin) }
 
   // User properties
   var cacheChallenges = isProduction()
@@ -91,7 +93,7 @@ class ReadingBatContent {
     findLanguage(languageName.toLanguageType())
 
   internal fun findLanguage(languageType: LanguageType): LanguageGroup<out Challenge> =
-    languageMap[languageType] ?: throw InvalidConfigurationException("Invalid language $languageType")
+    languageMap[languageType] ?: error("Invalid language $languageType")
 
   internal fun findGroup(languageName: LanguageName, groupName: GroupName): ChallengeGroup<out Challenge> =
     findLanguage(languageName.toLanguageType()).findGroup(groupName.value)
@@ -144,6 +146,7 @@ class ReadingBatContent {
 
   @ReadingBatDslMarker
   fun <T : Challenge> include(languageGroup: LanguageGroup<T>, namePrefix: String = "") {
+    @Suppress("UNCHECKED_CAST")
     val group = findLanguage(languageGroup.languageType) as LanguageGroup<T>
     languageGroup.challengeGroups
       .forEach {
@@ -155,46 +158,57 @@ class ReadingBatContent {
 
   internal fun checkLanguage(languageType: LanguageType) {
     if (languageType !in this || this[languageType].isEmpty())
-      throw InvalidConfigurationException("Invalid language: $languageType")
+      error("Invalid language: $languageType")
   }
 
-  internal fun loadChallenges(prefix: String, languageType: LanguageType, useWebApi: Boolean = true) =
+  internal fun loadChallenges(languageType: LanguageType,
+                              log: (String) -> Unit,
+                              prefix: String = "",
+                              useWebApi: Boolean = false) =
     measureTimedValue {
       val cnt = AtomicInteger(0)
       runBlocking {
-        findLanguage(languageType).challengeGroups.forEach { challengeGroup ->
-          challengeGroup.challenges.forEach { challenge ->
-            if (useWebApi) {
-              HttpClient(CIO)
-                .use { httpClient ->
-                  withHttpClient(httpClient) {
-                    val url = pathOf(prefix, CONTENT, challenge.path)
-                    logger.info { "Fetching: $url" }
-                    get(url, setUp = { header(NO_TRACK_HEADER, "") }) { response ->
-                      val body = response.readText()
-                      logger.info { "Response: ${response.status} ${body.length} chars" }
-                      cnt.incrementAndGet()
+        findLanguage(languageType).challengeGroups
+          .forEach { challengeGroup ->
+            challengeGroup.challenges
+              .forEach { challenge ->
+                if (useWebApi) {
+                  HttpClient(CIO)
+                    .use { httpClient ->
+                      withHttpClient(httpClient) {
+                        val url = pathOf(prefix, CONTENT, challenge.path)
+                        logger.info { "Fetching: $url" }
+                        get(url, setUp = { header(NO_TRACK_HEADER, "") }) { response ->
+                          val body = response.readText()
+                          logger.info { "Response: ${response.status} ${body.length} chars" }
+                          cnt.incrementAndGet()
+                        }
+                      }
                     }
-                  }
                 }
-            }
-            else {
-              logger.info { "Loading: ${challenge.path}" }
-              challenge.functionInfo(this@ReadingBatContent)
-              cnt.incrementAndGet()
-            }
+                else {
+                  logger.info { "Loading: ${challenge.path}" }
+                  log("Loading: ${challenge.path}")
+                  challenge.functionInfo()
+                  cnt.incrementAndGet()
+                }
+              }
           }
-        }
       }
       cnt.get()
     }.let {
-      "${it.value} $languageType ${"exercise".pluralize(it.value)} loaded in ${it.duration}".also { logger.info { it } }
+      "${it.value} $languageType ${"exercise".pluralize(it.value)} loaded in ${it.duration}"
     }
 
   internal fun evalContent(contentSource: ContentSource, variableName: String): ReadingBatContent =
+    // Catch exceptions so that remote code does not bring down the server
     try {
-      // Catch exceptions so that remote code does not bring down the server
-      contentMap.computeIfAbsent(contentSource.source) { readContentDsl(contentSource, variableName) }
+      val src = contentSource.source
+      contentMap.computeIfAbsent(src) {
+        logger.info { "Computing contentMap element for $src" }
+        val dslCode = readContentDsl(contentSource)
+        evalContentDsl(src, variableName, dslCode)
+      }
     } catch (e: Throwable) {
       logger.error(e) { "While evaluating: $this" }
       ReadingBatContent()

@@ -21,7 +21,6 @@ import com.github.pambrose.common.util.randomId
 import com.github.pambrose.common.util.toDoubleQuoted
 import com.github.readingbat.common.FormFields.DISABLED_MODE
 import com.github.readingbat.common.User.Companion.toUser
-import com.github.readingbat.dsl.InvalidConfigurationException
 import com.github.readingbat.server.Classes
 import com.github.readingbat.server.Enrollees
 import com.github.readingbat.server.Users
@@ -50,7 +49,7 @@ internal data class ClassCode(val value: String) {
             .slice(Classes.id)
             .select { Classes.classCode eq value }
             .map { it[Classes.id].value }
-            .firstOrNull() ?: throw InvalidConfigurationException("Missing class code $value")
+            .firstOrNull() ?: error("Missing class code $value")
         }
       }.let {
         logger.debug { "Looked up classId in ${it.duration}" }
