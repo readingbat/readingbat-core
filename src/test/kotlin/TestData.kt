@@ -18,8 +18,20 @@
 package com.github.readingbat
 
 import com.github.pambrose.common.util.FileSystemSource
+import com.github.readingbat.common.Endpoints
+import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.ReturnType
 import com.github.readingbat.dsl.readingBatContent
+import com.github.readingbat.server.Installs.installs
+import com.github.readingbat.server.Locations.locations
+import com.github.readingbat.server.ReadingBatServer
+import com.github.readingbat.server.routes.AdminRoutes.adminRoutes
+import com.github.readingbat.server.routes.sysAdminRoutes
+import com.github.readingbat.server.routes.userRoutes
+import com.github.readingbat.server.ws.WsCommon.wsRoutes
+import io.ktor.application.*
+import io.ktor.http.content.*
+import io.ktor.routing.*
 
 object TestData {
 
@@ -67,4 +79,16 @@ object TestData {
       }
     }.apply { validate() }
 
+  fun Application.module(testing: Boolean = false, testContent: ReadingBatContent) {
+    installs(false)
+
+    routing {
+      adminRoutes(ReadingBatServer.metrics)
+      locations(ReadingBatServer.metrics) { testContent }
+      userRoutes(ReadingBatServer.metrics) { testContent }
+      sysAdminRoutes(ReadingBatServer.metrics) { s: String -> }
+      wsRoutes(ReadingBatServer.metrics) { testContent }
+      static(Endpoints.STATIC_ROOT) { resources("static") }
+    }
+  }
 }

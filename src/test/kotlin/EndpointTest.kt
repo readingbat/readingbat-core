@@ -19,9 +19,9 @@ package com.github.readingbat
 
 import com.github.pambrose.common.util.pathOf
 import com.github.readingbat.TestData.GROUP_NAME
+import com.github.readingbat.TestData.module
 import com.github.readingbat.TestData.readTestContent
 import com.github.readingbat.TestSupport.getUrl
-import com.github.readingbat.TestSupport.module
 import com.github.readingbat.TestSupport.testAllChallenges
 import com.github.readingbat.common.Constants.CHALLENGE_NOT_FOUND
 import com.github.readingbat.common.Endpoints.ABOUT_ENDPOINT

@@ -21,7 +21,6 @@ import com.github.readingbat.common.Constants.CHALLENGE_SRC
 import com.github.readingbat.common.Constants.GROUP_SRC
 import com.github.readingbat.common.Constants.LANG_SRC
 import com.github.readingbat.common.Constants.RESP
-import com.github.readingbat.common.Endpoints
 import com.github.readingbat.common.Endpoints.CHECK_ANSWERS_ENDPOINT
 import com.github.readingbat.common.FunctionInfo
 import com.github.readingbat.dsl.Challenge
@@ -29,24 +28,27 @@ import com.github.readingbat.dsl.ChallengeGroup
 import com.github.readingbat.dsl.LanguageGroup
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.posts.AnswerStatus.Companion.toAnswerStatus
+import com.github.readingbat.posts.ChallengeResults
 import com.github.readingbat.server.GeoInfo.Companion.gson
-import com.github.readingbat.server.Installs.installs
-import com.github.readingbat.server.Locations.locations
-import com.github.readingbat.server.ReadingBatServer.metrics
-import com.github.readingbat.server.routes.AdminRoutes.adminRoutes
-import com.github.readingbat.server.routes.sysAdminRoutes
-import com.github.readingbat.server.routes.userRoutes
-import com.github.readingbat.server.ws.WsCommon.wsRoutes
-import io.ktor.application.*
+import io.kotest.matchers.booleans.shouldBeFalse
+import io.kotest.matchers.booleans.shouldBeTrue
 import io.ktor.http.*
 import io.ktor.http.ContentType.Application.FormUrlEncoded
 import io.ktor.http.HttpHeaders.ContentType
-import io.ktor.http.content.*
-import io.ktor.routing.*
 import io.ktor.server.testing.*
 import kotlinx.coroutines.runBlocking
 
 object TestSupport {
+
+  internal fun ReadingBatContent.pythonChallenge(groupName: String, challengeName: String) =
+    pythonGroup(groupName).functionInfo(challengeName)
+
+  internal fun ReadingBatContent.javaChallenge(groupName: String, challengeName: String) =
+    javaGroup(groupName).functionInfo(challengeName)
+
+  internal fun ReadingBatContent.kotlinChallenge(groupName: String, challengeName: String) =
+    kotlinGroup(groupName).functionInfo(challengeName)
+
   internal fun ReadingBatContent.pythonGroup(name: String) = python.get(name)
   internal fun ReadingBatContent.javaGroup(name: String) = java.get(name)
   internal fun ReadingBatContent.kotlinGroup(name: String) = kotlin.get(name)
@@ -54,13 +56,15 @@ object TestSupport {
   internal fun <T : Challenge> ChallengeGroup<T>.challengeByName(name: String) =
     challenges.firstOrNull { it.challengeName.value == name } ?: error("Missing challenge $name")
 
-  internal fun <T : Challenge> ChallengeGroup<T>.functionInfo(name: String) =
-    challengeByName(name).functionInfo()
+  internal fun <T : Challenge> ChallengeGroup<T>.functionInfo(name: String) = challengeByName(name).functionInfo()
 
-  internal fun FunctionInfo.checkUserResponse(index: Int, userResponse: String) =
+  internal fun FunctionInfo.answer(index: Int, userResponse: String) =
     runBlocking {
       checkResponse(index, userResponse)
     }
+
+  internal fun ChallengeResults.shouldBeCorrect() = correct.shouldBeTrue()
+  internal fun ChallengeResults.shouldBeIncorrect() = correct.shouldBeFalse()
 
   fun TestApplicationEngine.getUrl(uri: String, block: TestApplicationCall.() -> Unit) =
     handleRequest(HttpMethod.Get, uri).apply { block() }
@@ -93,17 +97,4 @@ object TestSupport {
         }
       }
     }
-
-  fun Application.module(testing: Boolean = false, testContent: ReadingBatContent) {
-    installs(false)
-
-    routing {
-      adminRoutes(metrics)
-      locations(metrics) { testContent }
-      userRoutes(metrics) { testContent }
-      sysAdminRoutes(metrics) { s: String -> }
-      wsRoutes(metrics) { testContent }
-      static(Endpoints.STATIC_ROOT) { resources("static") }
-    }
-  }
 }

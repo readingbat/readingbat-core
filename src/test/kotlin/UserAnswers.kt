@@ -18,16 +18,15 @@
 package com.github.readingbat
 
 import com.github.readingbat.TestData.GROUP_NAME
+import com.github.readingbat.TestData.module
 import com.github.readingbat.TestData.readTestContent
-import com.github.readingbat.TestSupport.checkUserResponse
-import com.github.readingbat.TestSupport.functionInfo
-import com.github.readingbat.TestSupport.javaGroup
-import com.github.readingbat.TestSupport.kotlinGroup
-import com.github.readingbat.TestSupport.module
-import com.github.readingbat.TestSupport.pythonGroup
+import com.github.readingbat.TestSupport.answer
+import com.github.readingbat.TestSupport.javaChallenge
+import com.github.readingbat.TestSupport.kotlinChallenge
+import com.github.readingbat.TestSupport.pythonChallenge
+import com.github.readingbat.TestSupport.shouldBeCorrect
+import com.github.readingbat.TestSupport.shouldBeIncorrect
 import io.kotest.core.spec.style.StringSpec
-import io.kotest.matchers.booleans.shouldBeFalse
-import io.kotest.matchers.booleans.shouldBeTrue
 import io.ktor.server.testing.*
 
 
@@ -37,37 +36,29 @@ class UserAnswers : StringSpec(
       val testContent = readTestContent()
 
       withTestApplication({ module(true, testContent) }) {
-        testContent.pythonGroup(GROUP_NAME)
+
+        testContent.pythonChallenge(GROUP_NAME, "boolean_array_test")
           .apply {
-            functionInfo("boolean_array_test")
-              .apply {
-                checkUserResponse(0, "False, False").correct.shouldBeFalse()
-                checkUserResponse(0, "[false, False]").correct.shouldBeFalse()
-                checkUserResponse(0, "[true, False]").correct.shouldBeFalse()
-                checkUserResponse(0, "[False, False]").correct.shouldBeTrue()
-              }
+            answer(0, "False, False").shouldBeIncorrect()
+            answer(0, "[false, False]").shouldBeIncorrect()
+            answer(0, "[true, False]").shouldBeIncorrect()
+            answer(0, "[False, False]").shouldBeCorrect()
           }
 
-        testContent.javaGroup(GROUP_NAME)
+        testContent.javaChallenge(GROUP_NAME, "StringArrayTest1")
           .apply {
-            functionInfo("StringArrayTest1")
-              .apply {
-                checkUserResponse(0, "False, False").correct.shouldBeFalse()
-                checkUserResponse(0, "[false, False]").correct.shouldBeFalse()
-                checkUserResponse(0, "[true, False]").correct.shouldBeFalse()
-                checkUserResponse(0, "[False, False]").correct.shouldBeFalse()
-              }
+            answer(0, "False, False").shouldBeIncorrect()
+            answer(0, "[false, False]").shouldBeIncorrect()
+            answer(0, "[true, False]").shouldBeIncorrect()
+            answer(0, "[False, False]").shouldBeIncorrect()
           }
 
-        testContent.kotlinGroup(GROUP_NAME)
+        testContent.kotlinChallenge(GROUP_NAME, "StringArrayKtTest1")
           .apply {
-            functionInfo("StringArrayKtTest1")
-              .apply {
-                checkUserResponse(0, "False, False").correct.shouldBeFalse()
-                checkUserResponse(0, "[false, False]").correct.shouldBeFalse()
-                checkUserResponse(0, "[true, False]").correct.shouldBeFalse()
-                checkUserResponse(0, "[False, False]").correct.shouldBeFalse()
-              }
+            answer(0, "False, False").shouldBeIncorrect()
+            answer(0, "[false, False]").shouldBeIncorrect()
+            answer(0, "[true, False]").shouldBeIncorrect()
+            answer(0, "[False, False]").shouldBeIncorrect()
           }
       }
     }
