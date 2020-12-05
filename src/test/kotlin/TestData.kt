@@ -30,7 +30,7 @@ object TestData {
       python {
         repo = FileSystemSource("./")
         //repo = GitHubRepo(OwnerType.Organization, "readingbat", "readingbat-core")
-        //branchName = "1.7.0"
+        //branchName = "1.8.0"
         srcPath = "python"
 
         group(GROUP_NAME) {

@@ -102,7 +102,7 @@ val content =
     python {
       repo = GitHubRepo(Organization, "readingbat", "readingbat-core")
       srcPath = "python"
-      branchName = "1.7.0"
+      branchName = "1.8.0"
 
       group("Test Cases") {
         packageName = "test_content"
@@ -119,7 +119,7 @@ val content =
     java {
       repo = GitHubRepo(Organization, "readingbat", "readingbat-core")
       srcPath = "src/test/java"
-      branchName = "1.7.0"
+      branchName = "1.8.0"
 
       group("Java Tests") {
         packageName = "com.github.readingbat.test_content"
@@ -135,7 +135,7 @@ val content =
     kotlin {
       repo = GitHubRepo(Organization, "readingbat", "readingbat-core")
       srcPath = "src/test/kotlin"
-      branchName = "1.7.0"
+      branchName = "1.8.0"
 
       group("Kotlin Tests") {
         packageName = "com.github.readingbat.test_content"
