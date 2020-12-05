@@ -17,6 +17,7 @@
 
 package com.github.readingbat.common
 
+import com.github.readingbat.dsl.isPostgresEnabled
 import com.github.readingbat.server.BrowserSessions
 import com.github.readingbat.server.Email
 import com.github.readingbat.server.FullName
@@ -98,20 +99,23 @@ internal object SessionActivites : KLogging() {
       }
     }
 
-  fun activeSessions(duration: Duration) =
-    transaction {
-      //addLogger(KotlinLoggingSqlLogger)
-      measureTimedValue {
-        val sessionRef = ServerRequests.sessionRef
-        val created = ServerRequests.created
-        ServerRequests
-          .slice(sessionRef.countDistinct())
-          .select { created greater dateTimeExpr("now() - interval '${duration.toLongMilliseconds()} milliseconds'") }
-          .map { it[0] as Long }
-          .first()
-      }.let { (query, duration) ->
-        logger.debug { "Active sessions query took $duration" }
-        query
+  fun activeSessions(duration: Duration): Long =
+    if (!isPostgresEnabled())
+      0
+    else
+      transaction {
+        //addLogger(KotlinLoggingSqlLogger)
+        measureTimedValue {
+          val sessionRef = ServerRequests.sessionRef
+          val created = ServerRequests.created
+          ServerRequests
+            .slice(sessionRef.countDistinct())
+            .select { created greater dateTimeExpr("now() - interval '${duration.toLongMilliseconds()} milliseconds'") }
+            .map { it[0] as Long }
+            .first()
+        }.let { (query, duration) ->
+          logger.debug { "Active sessions query took $duration" }
+          query
+        }
       }
-    }
 }
