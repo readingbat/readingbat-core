@@ -1,4 +1,0 @@
-User-agent: * Allow: /about.html
-User-agent: * Disallow: /content/java/*
-User-agent: * Disallow: /content/python/*
-User-agent: * Disallow: /content/kotlin/*

@@ -15,14 +15,23 @@
  *
  */
 
-pluginManagement {
-    repositories {
-        maven { url 'https://dl.bintray.com/kotlin/kotlin-eap' }
-        mavenCentral()
-        maven { url 'https://plugins.gradle.org/m2/' }
-    }
+package com.github.readingbat.common
+
+import com.github.readingbat.common.Constants.CORRECT_COLOR
+import com.github.readingbat.common.Constants.WRONG_COLOR
+
+/*internal*/ data class Message(val value: String, val isError: Boolean = false) {
+  val isBlank get() = value.isBlank()
+  val isNotBlank get() = value.isNotBlank()
+
+  val color get() = if (isError) WRONG_COLOR else CORRECT_COLOR
+
+  fun isAssigned() = this != EMPTY_MESSAGE
+  fun isUnassigned() = this == EMPTY_MESSAGE
+
+  override fun toString() = value
+
+  companion object {
+    val EMPTY_MESSAGE = Message("")
+  }
 }
-
-include 'readingbat-core'
-include 'readingbat-testing'
-
