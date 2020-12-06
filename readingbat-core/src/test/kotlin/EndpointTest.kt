@@ -44,7 +44,7 @@ class EndpointTest : StringSpec(
   {
     "Simple endpoint tests" {
       val testContent = readTestContent()
-      withTestApplication({ module(true, testContent) }) {
+      withTestApplication({ module(testContent) }) {
 
         getUrl("/") { response shouldHaveStatus Found }
 
@@ -74,7 +74,7 @@ class EndpointTest : StringSpec(
 
     "Test all challenges" {
       val testContent = readTestContent()
-      withTestApplication({ module(true, testContent) }) {
+      withTestApplication({ module(testContent) }) {
 
         testContent.languages
           .forEach { lang ->

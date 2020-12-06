@@ -79,15 +79,15 @@ object TestData {
       }
     }.apply { validate() }
 
-  fun Application.module(testing: Boolean = false, testContent: ReadingBatContent) {
+  fun Application.module(content: ReadingBatContent, testing: Boolean = true) {
     installs(false)
 
     routing {
       adminRoutes(ReadingBatServer.metrics)
-      locations(ReadingBatServer.metrics) { testContent }
-      userRoutes(ReadingBatServer.metrics) { testContent }
+      locations(ReadingBatServer.metrics) { content }
+      userRoutes(ReadingBatServer.metrics) { content }
       sysAdminRoutes(ReadingBatServer.metrics) { s: String -> }
-      wsRoutes(ReadingBatServer.metrics) { testContent }
+      wsRoutes(ReadingBatServer.metrics) { content }
       static(Endpoints.STATIC_ROOT) { resources("static") }
     }
   }

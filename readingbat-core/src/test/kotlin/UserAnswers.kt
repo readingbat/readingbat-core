@@ -38,7 +38,7 @@ class UserAnswers : StringSpec(
     "Test user answers" {
       val testContent = readTestContent()
 
-      withTestApplication({ module(true, testContent) }) {
+      withTestApplication({ module(testContent) }) {
 
         testContent.pythonChallenge(GROUP_NAME, "boolean_array_test")
           .apply {
@@ -70,14 +70,15 @@ class UserAnswers : StringSpec(
     "Test known answers" {
       val testContent = readTestContent()
 
-      withTestApplication({ module(true, testContent) }) {
-        testContent forEachLanguage {
-          forEachGroup {
-            forEachFuncInfo {
-              forEachAnswer { it shouldBe correctAnswers[it.index] }
+      withTestApplication({ module(testContent) }) {
+        testContent
+          .forEachLanguage {
+            forEachGroup {
+              forEachFuncInfo {
+                forEachAnswer { it shouldBe correctAnswers[it.index] }
+              }
             }
           }
-        }
       }
     }
   })
