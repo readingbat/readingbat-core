@@ -1,8 +1,9 @@
-/.vscode
-/.gradle
-/.idea
-/out
-/build
+.vscode
+.gradle
+.idea
+out
+build
+core
 *.iml
 *.ipr
 *.iws
