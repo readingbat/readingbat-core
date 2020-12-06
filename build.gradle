@@ -75,7 +75,6 @@ ext {
 
             github                   : "org.kohsuke:github-api:$github_api_version",
 
-            //testImplementation "org.seleniumhq.selenium:selenium-java:$selenium_version"
             ktor_server_tests        : "io.ktor:ktor-server-tests:$ktor_version",
             ktor_server_test_host    : "io.ktor:ktor-server-test-host:$ktor_version",
 

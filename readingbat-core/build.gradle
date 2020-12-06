@@ -105,7 +105,7 @@ dependencies {
     testImplementation libraries.kotest_assertions_ktor
     testImplementation libraries.kotest_property
 
-    testImplementation project(':readingbat-testing')
+    testImplementation project(':readingbat-kotest')
 }
 
 // Include build uberjars in heroku deploy
