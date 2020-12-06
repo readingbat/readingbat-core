@@ -59,7 +59,7 @@ object TestData {
       java {
         //repo = GitHubRepo(OwnerType.Organization, "readingbat", "readingbat-core")
         repo = FileSystemSource("./")
-        srcPath = "src/test/java"
+        srcPath = "readingbat-core/src/test/java"
         group(GROUP_NAME) {
           packageName = "com.github.readingbat.test_content"
 
@@ -70,7 +70,7 @@ object TestData {
       kotlin {
         //repo = GitHubRepo(OwnerType.Organization, "readingbat", "readingbat-core")
         repo = FileSystemSource("./")
-        srcPath = "src/test/kotlin"
+        srcPath = "readingbat-core/src/test/kotlin"
         group(GROUP_NAME) {
           packageName = "com.github.readingbat.test_content"
 

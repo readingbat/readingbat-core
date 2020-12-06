@@ -113,13 +113,7 @@ object ReadingBatServer : KLogging() {
 
   internal val upTime get() = startTime.elapsedNow()
 
-  fun start(args: Array<String>) {
-
-    logger.apply {
-      info { getBanner("banners/readingbat.txt", this) }
-      info { ReadingBatServer::class.versionDesc() }
-    }
-
+  fun assignKotlinSciptProperty() {
     // If kotlin.script.classpath property is missing, set it based on env var SCRIPT_CLASSPATH
     // This has to take place before reading DSL
     val scriptClasspathProp = KOTLIN_SCRIPT_CLASSPATH.getPropertyOrNull()
@@ -133,9 +127,9 @@ object ReadingBatServer : KLogging() {
     else {
       logger.info { "${KOTLIN_SCRIPT_CLASSPATH.propertyValue}: $scriptClasspathProp" }
     }
+  }
 
-    logger.info { "$REDIS_URL: ${REDIS_URL.getEnv(UNASSIGNED).maskUrlCredentials()}" }
-
+  fun deriveArgs(args: Array<String>): Array<String> {
     // Grab config filename from CLI args and then try ENV var
     val configFilename =
       args.asSequence()
@@ -148,13 +142,24 @@ object ReadingBatServer : KLogging() {
 
     CONFIG_FILENAME.setProperty(configFilename)
 
-    val newArgs =
-      if (args.any { it.startsWith("-config=") })
-        args
-      else
-        args.toMutableList().apply { add("-config=$configFilename") }.toTypedArray()
+    return if (args.any { it.startsWith("-config=") })
+      args
+    else
+      args.toMutableList().apply { add("-config=$configFilename") }.toTypedArray()
+  }
 
-    val environment = commandLineEnvironment(newArgs)
+  fun start(args: Array<String>) {
+
+    logger.apply {
+      info { getBanner("banners/readingbat.txt", this) }
+      info { ReadingBatServer::class.versionDesc() }
+    }
+
+    logger.info { "$REDIS_URL: ${REDIS_URL.getEnv(UNASSIGNED).maskUrlCredentials()}" }
+
+    assignKotlinSciptProperty()
+
+    val environment = commandLineEnvironment(deriveArgs(args))
 
     // Reference these to load them
     ScriptPools.javaScriptPool
