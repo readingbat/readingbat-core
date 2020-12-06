@@ -87,7 +87,7 @@ ext {
 
 allprojects {
     description = 'ReadingBat Core'
-    group 'com.github.readingbat'
+    group 'com.github'
     version '1.9.0'
 
     apply plugin: 'maven' // required for jitpack.io install
