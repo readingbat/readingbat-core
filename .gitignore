@@ -1,9 +1,9 @@
 .vscode
 .gradle
 .idea
+.run
 out
 build
-core
 *.iml
 *.ipr
 *.iws
