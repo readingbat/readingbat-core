@@ -1,4 +1,5 @@
-description = 'readingbat-kotest'
+//description = 'readingbat-kotest'
+description = ''
 
 dependencies {
     implementation project(':readingbat-core')

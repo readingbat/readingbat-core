@@ -20,7 +20,8 @@
 //    useJUnitPlatform()
 //}
 
-description = 'readingbat-core'
+//description = 'readingbat-core'
+description = ''
 
 // These are for the uber target
 def mainName = 'TestMain'

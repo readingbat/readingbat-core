@@ -23,6 +23,8 @@ pluginManagement {
     }
 }
 
-include 'readingbat-core'
-include 'readingbat-kotest'
+rootProject.name = 'readingbat'
+
+include ':readingbat-core'
+include ':readingbat-kotest'
 
