@@ -33,6 +33,7 @@ class LanguageGroup<T : Challenge>(internal val content: ReadingBatContent,
   /*internal*/ val challengeGroups = mutableListOf<ChallengeGroup<T>>()
   internal val metrics get() = ReadingBatServer.metrics
   /*internal*/ val languageName get() = languageType.languageName
+  val contentRoot get() = languageType.contentRoot
 
   // User properties
   var repo: ContentRoot = content.repo           // Defaults to outer-level value

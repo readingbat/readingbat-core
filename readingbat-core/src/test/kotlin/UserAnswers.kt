@@ -40,30 +40,27 @@ class UserAnswers : StringSpec(
 
       withTestApplication({ module(testContent) }) {
 
-        testContent.pythonChallenge(GROUP_NAME, "boolean_array_test")
-          .apply {
-            answer(0) shouldNotBe "False, False"
-            answer(0) shouldNotBe "[false, False]"
-            answer(0) shouldNotBe "[true, False]"
+        testContent.pythonChallenge(GROUP_NAME, "boolean_array_test") {
+          answer(0) shouldNotBe "False, False"
+          answer(0) shouldNotBe "[false, False]"
+          answer(0) shouldNotBe "[true, False]"
 
-            answer(0) shouldBe "[False, False]"
-          }
+          answer(0) shouldBe "[False, False]"
+        }
 
-        testContent.javaChallenge(GROUP_NAME, "StringArrayTest1")
-          .apply {
-            answer(0) shouldNotBe "False, False"
-            answer(0) shouldNotBe "[false, False]"
-            answer(0) shouldNotBe "[true, False]"
-            answer(0) shouldNotBe "[False, False]"
-          }
+        testContent.javaChallenge(GROUP_NAME, "StringArrayTest1") {
+          answer(0) shouldNotBe "False, False"
+          answer(0) shouldNotBe "[false, False]"
+          answer(0) shouldNotBe "[true, False]"
+          answer(0) shouldNotBe "[False, False]"
+        }
 
-        testContent.kotlinChallenge(GROUP_NAME, "StringArrayKtTest1")
-          .apply {
-            answer(0) shouldNotBe "False, False"
-            answer(0) shouldNotBe "[false, False]"
-            answer(0) shouldNotBe "[true, False]"
-            answer(0) shouldNotBe "[False, False]"
-          }
+        testContent.kotlinChallenge(GROUP_NAME, "StringArrayKtTest1") {
+          answer(0) shouldNotBe "False, False"
+          answer(0) shouldNotBe "[false, False]"
+          answer(0) shouldNotBe "[true, False]"
+          answer(0) shouldNotBe "[False, False]"
+        }
       }
     }
 

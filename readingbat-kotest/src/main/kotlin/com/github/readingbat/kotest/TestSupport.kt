@@ -42,6 +42,8 @@ import kotlinx.coroutines.runBlocking
 
 data class ChallengeAnswer(val funcInfo: FunctionInfo, val index: Int)
 
+data class ChallengeResult(val answerStatus: AnswerStatus, val message: String)
+
 object TestSupport {
 
   infix fun ReadingBatContent.forEachLanguage(block: LanguageGroup<*>.() -> Unit) =
@@ -50,22 +52,22 @@ object TestSupport {
   fun LanguageGroup<*>.forEachGroup(block: ChallengeGroup<*>.() -> Unit) =
     challengeGroups.forEach { it.block() }
 
-  fun ChallengeGroup<*>.forEachChallenge(block: (Challenge) -> Unit) =
-    challenges.forAll { block(it) }
+  fun ChallengeGroup<*>.forEachChallenge(block: Challenge.() -> Unit) =
+    challenges.forAll { it.block() }
 
   fun ChallengeGroup<*>.forEachFuncInfo(block: FunctionInfo.() -> Unit) =
     forEachChallenge {
-      it.functionInfo().block()
+      functionInfo().block()
     }
 
-  fun ReadingBatContent.pythonChallenge(groupName: String, challengeName: String) =
-    pythonGroup(groupName).functionInfo(challengeName)
+  fun ReadingBatContent.pythonChallenge(groupName: String, challengeName: String, block: FunctionInfo.() -> Unit) =
+    pythonGroup(groupName).functionInfo(challengeName).apply(block)
 
-  fun ReadingBatContent.javaChallenge(groupName: String, challengeName: String) =
-    javaGroup(groupName).functionInfo(challengeName)
+  fun ReadingBatContent.javaChallenge(groupName: String, challengeName: String, block: FunctionInfo.() -> Unit) =
+    javaGroup(groupName).functionInfo(challengeName).apply(block)
 
-  fun ReadingBatContent.kotlinChallenge(groupName: String, challengeName: String) =
-    kotlinGroup(groupName).functionInfo(challengeName)
+  fun ReadingBatContent.kotlinChallenge(groupName: String, challengeName: String, block: FunctionInfo.() -> Unit) =
+    kotlinGroup(groupName).functionInfo(challengeName).apply(block)
 
   fun ReadingBatContent.pythonGroup(name: String) = python.get(name)
   fun ReadingBatContent.javaGroup(name: String) = java.get(name)
@@ -98,9 +100,10 @@ object TestSupport {
   fun TestApplicationEngine.postUrl(uri: String, block: TestApplicationRequest.() -> Unit) =
     handleRequest(HttpMethod.Post, uri, block)
 
-  fun <T : Challenge> TestApplicationEngine.testAllChallenges(lang: LanguageGroup<T>,
-                                                              answer: String): List<Pair<AnswerStatus, String>> =
-    buildList<Pair<AnswerStatus, String>> {
+  fun <T : Challenge> TestApplicationEngine.forEachChallenge(lang: LanguageGroup<T>,
+                                                             answer: String,
+                                                             block: ChallengeResult.() -> Unit) =
+    buildList<ChallengeResult> {
       lang.challengeGroups.forEach { challengeGroup ->
         challengeGroup.challenges.forEach { challenge ->
           val content =
@@ -117,11 +120,13 @@ object TestSupport {
           gson.fromJson(content, List::class.java)
             .map { v ->
               (v as List<Any?>).let {
-                (it[0] as Double).toInt().toAnswerStatus() to (it[1] as String)
+                ChallengeResult((it[0] as Double).toInt().toAnswerStatus(), (it[1] as String))
               }
             }
             .forEach { this += it }
         }
       }
+    }.forAll {
+      it.block()
     }
 }

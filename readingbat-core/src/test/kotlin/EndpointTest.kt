@@ -21,17 +21,19 @@ import com.github.pambrose.common.util.pathOf
 import com.github.readingbat.TestData.GROUP_NAME
 import com.github.readingbat.TestData.module
 import com.github.readingbat.TestData.readTestContent
+import com.github.readingbat.TestSupport.forEachChallenge
+import com.github.readingbat.TestSupport.forEachGroup
+import com.github.readingbat.TestSupport.forEachLanguage
 import com.github.readingbat.TestSupport.getUrl
-import com.github.readingbat.TestSupport.testAllChallenges
 import com.github.readingbat.common.Constants.CHALLENGE_NOT_FOUND
 import com.github.readingbat.common.Endpoints.ABOUT_ENDPOINT
 import com.github.readingbat.common.Endpoints.HELP_ENDPOINT
 import com.github.readingbat.common.Endpoints.PRIVACY_ENDPOINT
 import com.github.readingbat.dsl.LanguageType.Python
-import com.github.readingbat.posts.AnswerStatus
+import com.github.readingbat.posts.AnswerStatus.INCORRECT
+import com.github.readingbat.posts.AnswerStatus.NOT_ANSWERED
 import io.kotest.assertions.ktor.shouldHaveStatus
 import io.kotest.core.spec.style.StringSpec
-import io.kotest.inspectors.forAll
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldBeBlank
 import io.kotest.matchers.string.shouldContain
@@ -52,20 +54,21 @@ class EndpointTest : StringSpec(
         getUrl(HELP_ENDPOINT) { response shouldHaveStatus OK }
         getUrl(PRIVACY_ENDPOINT) { response shouldHaveStatus OK }
 
-        getUrl(pathOf(Python.contentRoot,
-                      GROUP_NAME,
-                      "boolean_array_test2")) { response.content.shouldContain(CHALLENGE_NOT_FOUND) }
+        getUrl(pathOf(Python.contentRoot, GROUP_NAME, "boolean_array_test2")) {
+          response.content shouldContain CHALLENGE_NOT_FOUND
+        }
 
-        testContent.languages
-          .forEach { lang ->
+        testContent.forEachLanguage {
+          getUrl(contentRoot) { response shouldHaveStatus OK }
+        }
 
-            getUrl(lang.languageType.contentRoot) { response shouldHaveStatus OK }
-
-            lang.challengeGroups.forEach { challengeGroup ->
-              challengeGroup.challenges.forAll { challenge ->
-                getUrl(pathOf(lang.languageType.contentRoot,
-                              challengeGroup.groupName,
-                              challenge.challengeName)) { response.content.shouldNotContain(CHALLENGE_NOT_FOUND) }
+        testContent
+          .forEachLanguage {
+            forEachGroup {
+              forEachChallenge {
+                getUrl(pathOf(languageType.contentRoot, groupName, challengeName)) {
+                  response.content shouldNotContain CHALLENGE_NOT_FOUND
+                }
               }
             }
           }
@@ -76,21 +79,16 @@ class EndpointTest : StringSpec(
       val testContent = readTestContent()
       withTestApplication({ module(testContent) }) {
 
-        testContent.languages
-          .forEach { lang ->
-
-            testAllChallenges(lang, "")
-              .forAll {
-                it.first shouldBe AnswerStatus.NOT_ANSWERED
-                it.second.shouldBeBlank()
-              }
-
-            testAllChallenges(lang, "[wrong]")
-              .forAll {
-                it.first shouldBe AnswerStatus.INCORRECT
-              }
+        testContent.forEachLanguage {
+          forEachChallenge(this, "") {
+            answerStatus shouldBe NOT_ANSWERED
+            message.shouldBeBlank()
           }
+
+          forEachChallenge(this, "[wrong]") {
+            answerStatus shouldBe INCORRECT
+          }
+        }
       }
     }
-
   })
