@@ -78,7 +78,7 @@ internal fun isAgentEnabled() = AGENT_ENABLED_PROPERTY.getProperty(false)
 
 internal fun agentLaunchId() = AGENT_LAUNCH_ID.getProperty(UNASSIGNED)
 
-fun ContentSource.eval(enclosingContent: ReadingBatContent, variableName: String = "getContent"): ReadingBatContent =
+fun ContentSource.eval(enclosingContent: ReadingBatContent, variableName: String = "content"): ReadingBatContent =
   enclosingContent.evalContent(this, variableName)
 
 private fun contentDslKey(source: String) = keyOf(CONTENT_DSL_KEY, md5Of(source))
@@ -112,12 +112,12 @@ internal fun readContentDsl(contentSource: ContentSource) =
       dslCode
     }
   }.let {
-    logger.info { "Read getContent for ${contentSource.source} in ${it.duration}" }
+    logger.info { "Read content for ${contentSource.source} in ${it.duration}" }
     it.value
   }
 
 internal fun evalContentDsl(source: String,
-                            variableName: String = "getContent",
+                            variableName: String = "content",
                             code: String) =
   runBlocking {
     measureTimedValue {

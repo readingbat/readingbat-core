@@ -65,7 +65,7 @@ internal fun Routing.sysAdminRoutes(metrics: Metrics, resetContentFunc: (String)
       val keys = redis.scanKeys(pattern).toList()
       val cnt = keys.count()
       keys.forEach { redis.del(it) }
-      return "$cnt getContent DSLs ${"file".pluralize(cnt)} deleted from Redis"
+      return "$cnt content DSLs ${"file".pluralize(cnt)} deleted from Redis"
         .also {
           logger.info { it }
           redis.publishLog(it, logId)
@@ -77,7 +77,7 @@ internal fun Routing.sysAdminRoutes(metrics: Metrics, resetContentFunc: (String)
       val keys = redis.scanKeys(pattern).toList()
       val cnt = keys.count()
       keys.forEach { redis.del(it) }
-      return "$cnt directory ${"getContent".pluralize(cnt)} deleted from Redis"
+      return "$cnt directory ${"content".pluralize(cnt)} deleted from Redis"
         .also {
           logger.info { it }
           redis.publishLog(it, logId)
@@ -113,7 +113,7 @@ internal fun Routing.sysAdminRoutes(metrics: Metrics, resetContentFunc: (String)
           if (isContentCachingEnabled()) {
             measureTime { resetContentFunc.invoke(logId) }
               .also { dur ->
-                "Initial DSL getContent reset in $dur"
+                "Initial DSL content reset in $dur"
                   .also {
                     logger.info { it }
                     redis.publishLog(it, logId)

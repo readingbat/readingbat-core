@@ -10,79 +10,79 @@ plugins {
 
 ext {
     libraries = [
-            kotlin_reflect                      : "org.jetbrains.kotlin:kotlin-reflect",
-            kotlinx_coroutines_core             : "org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutines_version",
-            kotlin_scripting_compiler_embeddable: "org.jetbrains.kotlin:kotlin-scripting-compiler-embeddable",
+            kotlin_reflect           : "org.jetbrains.kotlin:kotlin-reflect",
+            kotlinx_coroutines_core  : "org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutines_version",
+            kotlin_scripting_compiler: "org.jetbrains.kotlin:kotlin-scripting-compiler-embeddable",
 
-            serialization                       : "org.jetbrains.kotlinx:kotlinx-serialization-json:$serialization_version",
+            serialization            : "org.jetbrains.kotlinx:kotlinx-serialization-json:$serialization_version",
 
-            core_utils                          : "com.github.pambrose.common-utils:core-utils:$utils_version",
+            core_utils               : "com.github.pambrose.common-utils:core-utils:$utils_version",
 
-            ktor_server_utils                   : "com.github.pambrose.common-utils:ktor-server-utils:$utils_version",
-            ktor_client_utils                   : "com.github.pambrose.common-utils:ktor-client-utils:$utils_version",
+            ktor_server_utils        : "com.github.pambrose.common-utils:ktor-server-utils:$utils_version",
+            ktor_client_utils        : "com.github.pambrose.common-utils:ktor-client-utils:$utils_version",
 
-            redis_utils                         : "com.github.pambrose.common-utils:redis-utils:$utils_version",
+            redis_utils              : "com.github.pambrose.common-utils:redis-utils:$utils_version",
 
-            script_utils_common                 : "com.github.pambrose.common-utils:script-utils-common:$utils_version",
-            script_utils_python                 : "com.github.pambrose.common-utils:script-utils-python:$utils_version",
-            script_utils_java                   : "com.github.pambrose.common-utils:script-utils-java:$utils_version",
-            script_utils_kotlin                 : "com.github.pambrose.common-utils:script-utils-kotlin:$utils_version",
+            script_utils_common      : "com.github.pambrose.common-utils:script-utils-common:$utils_version",
+            script_utils_python      : "com.github.pambrose.common-utils:script-utils-python:$utils_version",
+            script_utils_java        : "com.github.pambrose.common-utils:script-utils-java:$utils_version",
+            script_utils_kotlin      : "com.github.pambrose.common-utils:script-utils-kotlin:$utils_version",
 
-            guava_utils                         : "com.github.pambrose.common-utils:guava-utils:$utils_version",
-            service_utils                       : "com.github.pambrose.common-utils:service-utils:$utils_version",
-            prometheus_utils                    : "com.github.pambrose.common-utils:prometheus-utils:$utils_version",
-            exposed_utils                       : "com.github.pambrose.common-utils:exposed-utils:$utils_version",
+            guava_utils              : "com.github.pambrose.common-utils:guava-utils:$utils_version",
+            service_utils            : "com.github.pambrose.common-utils:service-utils:$utils_version",
+            prometheus_utils         : "com.github.pambrose.common-utils:prometheus-utils:$utils_version",
+            exposed_utils            : "com.github.pambrose.common-utils:exposed-utils:$utils_version",
 
-            prometheus_proxy                    : "com.github.pambrose:prometheus-proxy:$proxy_version",
+            prometheus_proxy         : "com.github.pambrose:prometheus-proxy:$proxy_version",
 
-            simpleclient                        : "io.prometheus:simpleclient:$prometheus_version",
+            simpleclient             : "io.prometheus:simpleclient:$prometheus_version",
 
-            scriptengine                        : "ch.obermuhlner:java-scriptengine:$java_script_version",
+            scriptengine             : "ch.obermuhlner:java-scriptengine:$java_script_version",
 
-            css                                 : "org.jetbrains:kotlin-css:$css_version",
-            css_jvm                             : "org.jetbrains:kotlin-css-jvm:$css_version",
+            css                      : "org.jetbrains:kotlin-css:$css_version",
+            css_jvm                  : "org.jetbrains:kotlin-css-jvm:$css_version",
 
-            ktor_server_core                    : "io.ktor:ktor-server-core:$ktor_version",
-            ktor_server_cio                     : "io.ktor:ktor-server-cio:$ktor_version",
-            ktor_client_core                    : "io.ktor:ktor-client-core:$ktor_version",
-            ktor_client_cio                     : "io.ktor:ktor-client-cio:$ktor_version",
+            ktor_server_core         : "io.ktor:ktor-server-core:$ktor_version",
+            ktor_server_cio          : "io.ktor:ktor-server-cio:$ktor_version",
+            ktor_client_core         : "io.ktor:ktor-client-core:$ktor_version",
+            ktor_client_cio          : "io.ktor:ktor-client-cio:$ktor_version",
 
-            server_sessions                     : "io.ktor:ktor-server-sessions:$ktor_version",
-            html_builder                        : "io.ktor:ktor-html-builder:$ktor_version",
-            ktor_locations                      : "io.ktor:ktor-locations:$ktor_version",
-            ktor_metrics                        : "io.ktor:ktor-metrics:$ktor_version",
-            ktor_websockets                     : "io.ktor:ktor-websockets:$ktor_version",
+            server_sessions          : "io.ktor:ktor-server-sessions:$ktor_version",
+            html_builder             : "io.ktor:ktor-html-builder:$ktor_version",
+            ktor_locations           : "io.ktor:ktor-locations:$ktor_version",
+            ktor_metrics             : "io.ktor:ktor-metrics:$ktor_version",
+            ktor_websockets          : "io.ktor:ktor-websockets:$ktor_version",
 
-            jedis                               : "redis.clients:jedis:$redis_version",
+            jedis                    : "redis.clients:jedis:$redis_version",
 
-            hikari                              : "com.zaxxer:HikariCP:$hikari_version",
+            hikari                   : "com.zaxxer:HikariCP:$hikari_version",
 
-            exposed_core                        : "org.jetbrains.exposed:exposed-core:$exposed_version",
-            exposed_jdbc                        : "org.jetbrains.exposed:exposed-jdbc:$exposed_version",
-            jodatime                            : "org.jetbrains.exposed:exposed-jodatime:$exposed_version",
+            exposed_core             : "org.jetbrains.exposed:exposed-core:$exposed_version",
+            exposed_jdbc             : "org.jetbrains.exposed:exposed-jdbc:$exposed_version",
+            jodatime                 : "org.jetbrains.exposed:exposed-jodatime:$exposed_version",
 
-            pgjdbc                              : "com.impossibl.pgjdbc-ng:pgjdbc-ng-all:$pgjdbc_version",
-            postgres                            : "org.postgresql:postgresql:$postgres_version",
-            socket                              : "com.google.cloud.sql:postgres-socket-factory:$cloud_version",
+            pgjdbc                   : "com.impossibl.pgjdbc-ng:pgjdbc-ng-all:$pgjdbc_version",
+            postgres                 : "org.postgresql:postgresql:$postgres_version",
+            socket                   : "com.google.cloud.sql:postgres-socket-factory:$cloud_version",
 
-            gson                                : "com.google.code.gson:gson:$gson_version",
-            guava                               : "com.google.guava:guava:$guava_version",
+            gson                     : "com.google.code.gson:gson:$gson_version",
+            guava                    : "com.google.guava:guava:$guava_version",
 
-            sendgrid                            : "com.sendgrid:sendgrid-java:$sendgrid_version",
+            sendgrid                 : "com.sendgrid:sendgrid-java:$sendgrid_version",
 
-            commons                             : "org.apache.commons:commons-text:$commons_version",
-            flexmark                            : "com.vladsch.flexmark:flexmark:$flexmark_version",
+            commons                  : "org.apache.commons:commons-text:$commons_version",
+            flexmark                 : "com.vladsch.flexmark:flexmark:$flexmark_version",
 
-            github                              : "org.kohsuke:github-api:$github_api_version",
+            github                   : "org.kohsuke:github-api:$github_api_version",
 
             //testImplementation "org.seleniumhq.selenium:selenium-java:$selenium_version"
-            ktor_server_tests                   : "io.ktor:ktor-server-tests:$ktor_version",
-            ktor_server_test_host               : "io.ktor:ktor-server-test-host:$ktor_version",
+            ktor_server_tests        : "io.ktor:ktor-server-tests:$ktor_version",
+            ktor_server_test_host    : "io.ktor:ktor-server-test-host:$ktor_version",
 
-            kotest_runner_junit5                : "io.kotest:kotest-runner-junit5:$kotest_version",
-            kotest_assertions_core              : "io.kotest:kotest-assertions-core:$kotest_version",
-            kotest_assertions_ktor              : "io.kotest:kotest-assertions-ktor:$kotest_version",
-            kotest_property                     : "io.kotest:kotest-property:$kotest_version",
+            kotest_runner_junit5     : "io.kotest:kotest-runner-junit5:$kotest_version",
+            kotest_assertions_core   : "io.kotest:kotest-assertions-core:$kotest_version",
+            kotest_assertions_ktor   : "io.kotest:kotest-assertions-ktor:$kotest_version",
+            kotest_property          : "io.kotest:kotest-property:$kotest_version",
     ]
 }
 

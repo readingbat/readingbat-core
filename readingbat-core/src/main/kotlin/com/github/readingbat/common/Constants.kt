@@ -78,7 +78,7 @@ internal object PropertyNames {
   internal const val SITE = "site"
   internal const val AGENT = "agent"
   internal const val CLASSES = "classes"
-  internal const val CONTENT = "getContent"
+  internal const val CONTENT = "content"
   internal const val CHALLENGES = "challenges"
 }
 
@@ -87,7 +87,7 @@ internal object PropertyNames {
   const val WS_ROOT = "/ws"
 
   const val STATIC_ROOT = "https://static.readingbat.com"
-  const val CHALLENGE_ROOT = "/getContent"
+  const val CHALLENGE_ROOT = "/content"
   const val PLAYGROUND_ROOT = "/playground"
   const val ADMIN_PREFS_ENDPOINT = "/admin-prefs"
   const val USER_PREFS_ENDPOINT = "/user-prefs"
@@ -117,7 +117,7 @@ internal object PropertyNames {
   const val LIKE_DISLIKE_ENDPOINT = "/like-dislike"
   const val CLEAR_GROUP_ANSWERS_ENDPOINT = "/clear-group-answers"
   const val CLEAR_CHALLENGE_ANSWERS_ENDPOINT = "/clear-challenge-answers"
-  const val RESET_CONTENT_DSL_ENDPOINT = "/reset-getContent"
+  const val RESET_CONTENT_DSL_ENDPOINT = "/reset-content"
   const val RESET_CACHE_ENDPOINT = "/reset-cache"
   const val GARBAGE_COLLECTOR_ENDPOINT = "/garbage-collector"
   const val LOAD_JAVA_ENDPOINT = "/load-java"

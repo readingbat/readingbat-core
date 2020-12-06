@@ -301,7 +301,7 @@ internal object ChallengePost : KLogging() {
   suspend fun PipelineCall.likeDislike(content: ReadingBatContent, user: User?) {
     val paramMap = call.paramMap()
     val names = ChallengeNames(paramMap)
-    //val challenge = getContent.findChallenge(names.languageName, names.groupName, names.challengeName)
+    //val challenge = content.findChallenge(names.languageName, names.groupName, names.challengeName)
 
     val likeArg = paramMap[LIKE_DESC]?.trim() ?: error("Missing like/dislike argument")
 

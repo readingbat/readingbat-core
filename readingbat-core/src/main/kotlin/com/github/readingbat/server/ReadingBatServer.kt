@@ -174,7 +174,7 @@ object ReadingBatServer : KLogging() {
 }
 
 internal fun Application.readContentDsl(fileName: String, variableName: String, logId: String = "") {
-  "Loading getContent using $variableName in $fileName"
+  "Loading content using $variableName in $fileName"
     .also {
       logger.info { it }
       logToRedis(it, logId)
@@ -191,7 +191,7 @@ internal fun Application.readContentDsl(fileName: String, variableName: String, 
         .apply { clearContentMap() })
     metrics.contentLoadedCount.labels(agentLaunchId()).inc()
   }.also { dur ->
-    "Loaded getContent using $variableName in $fileName in $dur"
+    "Loaded content using $variableName in $fileName in $dur"
       .also {
         logger.info { it }
         logToRedis(it, logId)
@@ -281,7 +281,7 @@ private fun Application.assignProperties() {
   CONTENT_CACHING_ENABLED.setProperty(CONTENT_CACHING_ENABLED.configValue(this, "false").toBoolean().toString())
 
   DSL_FILE_NAME.setPropertyFromConfig(this, "src/Content.kt")
-  DSL_VARIABLE_NAME.setPropertyFromConfig(this, "getContent")
+  DSL_VARIABLE_NAME.setPropertyFromConfig(this, "content")
 
   ANALYTICS_ID.setPropertyFromConfig(this, "")
 

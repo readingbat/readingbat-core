@@ -31,13 +31,13 @@ import com.github.readingbat.dsl.readingBatContent
 
 val content =
   readingBatContent {
-    //repo = GitHubRepo(organization, "readingbat-java-getContent")
+    //repo = GitHubRepo(organization, "readingbat-java-content")
 
     repo = FileSystemSource("./")
 
 /*
     java {
-      //repo = GitHubRepo(organization, "readingbat-java-getContent")
+      //repo = GitHubRepo(organization, "readingbat-java-content")
       //repo = FileSystemSource("./")
       branchName = branch
 
@@ -54,7 +54,7 @@ val content =
     }
 
     python {
-      //repo = GitHubRepo("readingbat", "readingbat-python-getContent")
+      //repo = GitHubRepo("readingbat", "readingbat-python-content")
       branchName = "dev"
 
       group("Numeric Expressions") {
@@ -72,9 +72,9 @@ val content =
 */
 
     /*
-    include(GitHubContent(Organization, "readingbat", "readingbat-java-getContent").eval(this).java)
-    include(GitHubContent(Organization, "readingbat", "readingbat-python-getContent", srcPath = "src").eval(this).python)
-    include(GitHubContent(Organization, "readingbat", "readingbat-java-getContent").eval(this).kotlin)
+    include(GitHubContent(Organization, "readingbat", "readingbat-java-content").eval(this).java)
+    include(GitHubContent(Organization, "readingbat", "readingbat-python-content", srcPath = "src").eval(this).python)
+    include(GitHubContent(Organization, "readingbat", "readingbat-java-content").eval(this).kotlin)
 */
 /*
     kotlin {
@@ -89,18 +89,18 @@ val content =
     }
 */
 
-    //include(GitHubContent(Organization, "readingbat", "readingbat-java-getContent", fileName = "Content.kt").eval(this, variableName = "getContent").java)
+    //include(GitHubContent(Organization, "readingbat", "readingbat-java-content", fileName = "Content.kt").eval(this, variableName = "content").java)
 
-    include(GitHubContent(Organization, "readingbat", "readingbat-java-getContent").eval(this).java)
+    include(GitHubContent(Organization, "readingbat", "readingbat-java-content").eval(this).java)
 
-    include(GitHubContent(Organization, "readingbat", "readingbat-java-getContent").eval(this).kotlin, "Athenian: ")
+    include(GitHubContent(Organization, "readingbat", "readingbat-java-content").eval(this).kotlin, "Athenian: ")
 
     include(GitHubContent(Organization,
                           "readingbat",
-                          "readingbat-python-getContent",
+                          "readingbat-python-content",
                           srcPath = "src").eval(this).python)
 
-    include(GitHubContent(User, "maleich", "ReadingBat-getContent").eval(this).python, "Athenian: ")
+    include(GitHubContent(User, "maleich", "ReadingBat-content").eval(this).python, "Athenian: ")
 
     python {
       repo = GitHubRepo(Organization, "readingbat", "readingbat-core")

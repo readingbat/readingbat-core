@@ -53,7 +53,7 @@ class ReadingBatContent {
   private val languageList by lazy { listOf(java, python, kotlin) }
   private val languageMap by lazy { languageList.map { it.languageType to it }.toMap() }
 
-  // contentMap will prevent reading the same getContent multiple times
+  // contentMap will prevent reading the same content multiple times
   internal val contentMap = ConcurrentHashMap<String, ReadingBatContent>()
   internal val functionInfoMap = ConcurrentHashMap<Int, FunctionInfo>()
 
@@ -76,7 +76,7 @@ class ReadingBatContent {
   var branchName = "master"
 
   internal fun clearContentMap() {
-    logger.info { "Clearing getContent map" }
+    logger.info { "Clearing content map" }
     contentMap.clear()
   }
 

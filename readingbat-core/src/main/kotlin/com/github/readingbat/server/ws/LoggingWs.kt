@@ -90,7 +90,7 @@ internal object LoggingWs : KLogging() {
                       RESET_CONTENT_DSL -> {
                         measureTime { resetContentFunc.invoke(data.logId) }
                           .also { dur ->
-                            "DSL getContent reset in $dur"
+                            "DSL content reset in $dur"
                               .also {
                                 logger.info { it }
                                 logToRedis(it)

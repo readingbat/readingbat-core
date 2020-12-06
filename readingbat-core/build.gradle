@@ -34,7 +34,7 @@ application {
 dependencies {
     implementation libraries.kotlin_reflect
     implementation libraries.kotlinx_coroutines_core
-    implementation libraries.kotlin_scripting_compiler_embeddable
+    implementation libraries.kotlin_scripting_compiler
 
     implementation libraries.serialization
 

@@ -29,7 +29,7 @@ internal object KeyConstants {
   const val CORRECT_ANSWERS_KEY = "correct-answers"
   const val CHALLENGE_ANSWERS_KEY = "challenge-answers"
   const val SOURCE_CODE_KEY = "source-code"
-  const val CONTENT_DSL_KEY = "getContent-dsl"
+  const val CONTENT_DSL_KEY = "content-dsl"
   const val DIR_CONTENTS_KEY = "dir-contents"
 
   fun keyOf(vararg keys: Any) = keys.joinToString(KEY_SEP) { it.toString() }

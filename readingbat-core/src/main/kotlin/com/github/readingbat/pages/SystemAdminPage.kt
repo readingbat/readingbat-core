@@ -95,7 +95,7 @@ internal object SystemAdminPage : KLogging() {
             p {
               this@body.adminButton("Reset ReadingBat Content",
                                     RESET_CONTENT_DSL_ENDPOINT,
-                                    "Are you sure you want to reset the getContent? (This can take a while)")
+                                    "Are you sure you want to reset the content? (This can take a while)")
             }
 
             p {
@@ -105,9 +105,9 @@ internal object SystemAdminPage : KLogging() {
             }
 
             p {
-              this@body.adminButton("Delete all getContent cached in Redis",
+              this@body.adminButton("Delete all content cached in Redis",
                                     DELETE_CONTENT_IN_REDIS_ENDPOINT,
-                                    "Are you sure you want to delete all getContent cached in Redis?")
+                                    "Are you sure you want to delete all content cached in Redis?")
             }
 
             p {
