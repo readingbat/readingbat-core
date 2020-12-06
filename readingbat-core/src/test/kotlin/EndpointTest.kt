@@ -57,12 +57,12 @@ class EndpointTest : StringSpec(
                       "boolean_array_test2")) { response.content.shouldContain(CHALLENGE_NOT_FOUND) }
 
         testContent.languages
-          .forAll { lang ->
+          .forEach { lang ->
 
             getUrl(lang.languageType.contentRoot) { response shouldHaveStatus OK }
 
             lang.challengeGroups.forEach { challengeGroup ->
-              challengeGroup.challenges.forEach { challenge ->
+              challengeGroup.challenges.forAll { challenge ->
                 getUrl(pathOf(lang.languageType.contentRoot,
                               challengeGroup.groupName,
                               challenge.challengeName)) { response.content.shouldNotContain(CHALLENGE_NOT_FOUND) }

@@ -90,7 +90,7 @@ internal object ClassSummaryWs : KLogging() {
                 for (challenge in challenges) {
                   val funcInfo = challenge.functionInfo()
                   val challengeName = challenge.challengeName
-                  val numCalls = funcInfo.invocations.size
+                  val numCalls = funcInfo.invocationCount
                   var likes = 0
                   var dislikes = 0
 

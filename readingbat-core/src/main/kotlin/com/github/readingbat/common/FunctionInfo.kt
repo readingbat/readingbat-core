@@ -42,11 +42,12 @@ import javax.script.ScriptException
   val challengeName get() = challenge.challengeName
   val groupName get() = challenge.challengeGroup.groupName
   val languageType get() = challenge.challengeGroup.languageType
+  val invocationCount get() = invocations.size
   val questionCount get() = correctAnswers.size
   val challengeMd5 by lazy { ChallengeMd5(languageType.languageName, groupName, challengeName) }
 
   @Suppress("UNCHECKED_CAST")
-  private val correctAnswers by lazy {
+  val correctAnswers by lazy {
     List(rawAnswers.size) { i ->
       val raw = rawAnswers[i]
 
@@ -142,8 +143,8 @@ import javax.script.ScriptException
   }
 
   private fun validate() {
-    if (correctAnswers.size != invocations.size)
-      error("Mismatch between ${correctAnswers.size} answers and ${invocations.size} invocations in $challengeName")
+    if (questionCount != invocationCount)
+      error("Mismatch between $questionCount answers and $invocationCount invocations in $challengeName")
   }
 
   /*internal*/ suspend fun checkResponse(index: Int, userResponse: String): ChallengeResults {

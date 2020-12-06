@@ -105,7 +105,7 @@ internal object ChallengeGroupWs : KLogging() {
                 for (challenge in ltor) {
                   val funcInfo = challenge.functionInfo()
                   val challengeName = challenge.challengeName
-                  val numCalls = funcInfo.invocations.size
+                  val numCalls = funcInfo.invocationCount
                   var totAttemptedAtLeastOne = 0
                   var totAllCorrect = 0
                   var totCorrect = 0

@@ -243,7 +243,7 @@ internal object ChallengePage : KLogging() {
         // This will cause shift tab to go to bottom input element
         span { tabIndex = "5"; onFocus = "document.querySelector('.$bottomFocus').focus()" }
 
-        val cnt = funcInfo.invocations.size
+        val cnt = funcInfo.invocationCount
 
         funcInfo.invocations.withIndex()
           .forEach { (i, invocation) ->
@@ -412,7 +412,7 @@ internal object ChallengePage : KLogging() {
 
           enrollees
             .forEach { enrollee ->
-              val numChallenges = funcInfo.invocations.size
+              val numCalls = funcInfo.invocationCount
               var numCorrect = 0
               val results =
                 funcInfo.invocations
@@ -429,7 +429,7 @@ internal object ChallengePage : KLogging() {
                     invocation to history
                   }
 
-              val allCorrect = numCorrect == numChallenges
+              val allCorrect = numCorrect == numCalls
 
               tr(classes = DASHBOARD) {
                 td(classes = DASHBOARD) {
@@ -440,7 +440,7 @@ internal object ChallengePage : KLogging() {
                     id = "${enrollee.userId}-$numCorrectSpan"
                     +numCorrect.toString()
                   }
-                  +"/$numChallenges"
+                  +"/$numCalls"
                   rawHtml(nbsp.text)
                   +enrollee.fullName.value
                   rawHtml(nbsp.text)

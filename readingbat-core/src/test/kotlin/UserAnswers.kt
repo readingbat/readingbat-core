@@ -21,14 +21,17 @@ import com.github.readingbat.TestData.GROUP_NAME
 import com.github.readingbat.TestData.module
 import com.github.readingbat.TestData.readTestContent
 import com.github.readingbat.TestSupport.answer
+import com.github.readingbat.TestSupport.forEachAnswer
+import com.github.readingbat.TestSupport.forEachFuncInfo
+import com.github.readingbat.TestSupport.forEachGroup
+import com.github.readingbat.TestSupport.forEachLanguage
 import com.github.readingbat.TestSupport.javaChallenge
 import com.github.readingbat.TestSupport.kotlinChallenge
 import com.github.readingbat.TestSupport.pythonChallenge
-import com.github.readingbat.TestSupport.shouldBeCorrect
-import com.github.readingbat.TestSupport.shouldBeIncorrect
+import com.github.readingbat.TestSupport.shouldBe
+import com.github.readingbat.TestSupport.shouldNotBe
 import io.kotest.core.spec.style.StringSpec
 import io.ktor.server.testing.*
-
 
 class UserAnswers : StringSpec(
   {
@@ -39,27 +42,42 @@ class UserAnswers : StringSpec(
 
         testContent.pythonChallenge(GROUP_NAME, "boolean_array_test")
           .apply {
-            answer(0, "False, False").shouldBeIncorrect()
-            answer(0, "[false, False]").shouldBeIncorrect()
-            answer(0, "[true, False]").shouldBeIncorrect()
-            answer(0, "[False, False]").shouldBeCorrect()
+            answer(0) shouldNotBe "False, False"
+            answer(0) shouldNotBe "[false, False]"
+            answer(0) shouldNotBe "[true, False]"
+
+            answer(0) shouldBe "[False, False]"
           }
 
         testContent.javaChallenge(GROUP_NAME, "StringArrayTest1")
           .apply {
-            answer(0, "False, False").shouldBeIncorrect()
-            answer(0, "[false, False]").shouldBeIncorrect()
-            answer(0, "[true, False]").shouldBeIncorrect()
-            answer(0, "[False, False]").shouldBeIncorrect()
+            answer(0) shouldNotBe "False, False"
+            answer(0) shouldNotBe "[false, False]"
+            answer(0) shouldNotBe "[true, False]"
+            answer(0) shouldNotBe "[False, False]"
           }
 
         testContent.kotlinChallenge(GROUP_NAME, "StringArrayKtTest1")
           .apply {
-            answer(0, "False, False").shouldBeIncorrect()
-            answer(0, "[false, False]").shouldBeIncorrect()
-            answer(0, "[true, False]").shouldBeIncorrect()
-            answer(0, "[False, False]").shouldBeIncorrect()
+            answer(0) shouldNotBe "False, False"
+            answer(0) shouldNotBe "[false, False]"
+            answer(0) shouldNotBe "[true, False]"
+            answer(0) shouldNotBe "[False, False]"
           }
+      }
+    }
+
+    "Test known answers" {
+      val testContent = readTestContent()
+
+      withTestApplication({ module(true, testContent) }) {
+        testContent forEachLanguage {
+          forEachGroup {
+            forEachFuncInfo {
+              forEachAnswer { it shouldBe correctAnswers[it.index] }
+            }
+          }
+        }
       }
     }
   })

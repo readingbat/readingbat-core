@@ -31,6 +31,7 @@ import com.github.readingbat.posts.AnswerStatus
 import com.github.readingbat.posts.AnswerStatus.Companion.toAnswerStatus
 import com.github.readingbat.posts.ChallengeResults
 import com.github.readingbat.server.GeoInfo.Companion.gson
+import io.kotest.inspectors.forAll
 import io.kotest.matchers.booleans.shouldBeFalse
 import io.kotest.matchers.booleans.shouldBeTrue
 import io.ktor.http.*
@@ -39,7 +40,23 @@ import io.ktor.http.HttpHeaders.ContentType
 import io.ktor.server.testing.*
 import kotlinx.coroutines.runBlocking
 
+data class ChallengeAnswer(val funcInfo: FunctionInfo, val index: Int)
+
 object TestSupport {
+
+  infix fun ReadingBatContent.forEachLanguage(block: LanguageGroup<*>.() -> Unit) =
+    languages.forEach { it.block() }
+
+  fun LanguageGroup<*>.forEachGroup(block: ChallengeGroup<*>.() -> Unit) =
+    challengeGroups.forEach { it.block() }
+
+  fun ChallengeGroup<*>.forEachChallenge(block: (Challenge) -> Unit) =
+    challenges.forAll { block(it) }
+
+  fun ChallengeGroup<*>.forEachFuncInfo(block: FunctionInfo.() -> Unit) =
+    forEachChallenge {
+      it.functionInfo().block()
+    }
 
   fun ReadingBatContent.pythonChallenge(groupName: String, challengeName: String) =
     pythonGroup(groupName).functionInfo(challengeName)
@@ -63,6 +80,14 @@ object TestSupport {
     runBlocking {
       checkResponse(index, userResponse)
     }
+
+  fun FunctionInfo.answer(index: Int) = ChallengeAnswer(this, index)
+
+  fun FunctionInfo.forEachAnswer(block: (ChallengeAnswer) -> Unit) =
+    repeat(questionCount) { i -> block(ChallengeAnswer(this, i)) }
+
+  infix fun ChallengeAnswer.shouldBe(answer: String) = funcInfo.answer(index, answer).shouldBeCorrect()
+  infix fun ChallengeAnswer.shouldNotBe(answer: String) = funcInfo.answer(index, answer).shouldBeIncorrect()
 
   fun ChallengeResults.shouldBeCorrect() = correct.shouldBeTrue()
   fun ChallengeResults.shouldBeIncorrect() = correct.shouldBeFalse()

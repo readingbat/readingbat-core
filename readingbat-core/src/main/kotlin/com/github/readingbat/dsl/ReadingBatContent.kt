@@ -65,7 +65,7 @@ class ReadingBatContent {
   val java by lazy { LanguageGroup<JavaChallenge>(this, Java) }
   val kotlin by lazy { LanguageGroup<KotlinChallenge>(this, Kotlin) }
 
-  internal val languages by lazy { listOf(python, java, kotlin) }
+  val languages by lazy { listOf(python, java, kotlin) }
 
   // User properties
   var cacheChallenges = isProduction()
