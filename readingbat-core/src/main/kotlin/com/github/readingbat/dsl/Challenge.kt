@@ -69,6 +69,7 @@ import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.net.URL
+import java.nio.file.Paths
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.reflect.typeOf
 import kotlin.time.measureTime
@@ -152,7 +153,7 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
       fun parseCode(): FunctionInfo {
         val fs = repo as FileSystemSource
         val file = fs.file(pathOf(fs.pathPrefix, srcPath, packageNameAsPath, fileName))
-        logger.info { """Fetching "${file.fileName}" from filesystem""" }
+        logger.info { """Fetching "${file.fileName}" from filesystem at [${Paths.get("").toAbsolutePath()}]""" }
         return measureParsing(file.content)
       }
 
