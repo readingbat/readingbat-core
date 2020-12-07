@@ -290,7 +290,7 @@ class JavaChallenge(challengeGroup: ChallengeGroup<*>,
     val returnType = deriveJavaReturnType(challengeName, lines)
     val script = JavaParse.convertToScript(lines)
 
-    logger.info { "$challengeName return type: $returnType script: \n${script.withLineNumbers()}" }
+    logger.debug { "$challengeName return type: $returnType script: \n${script.withLineNumbers()}" }
 
     description = deriveDescription(code, "//")
 

@@ -103,9 +103,10 @@ val dslContent =
     include(GitHubContent(User, "maleich", "ReadingBat-content").eval(this).python, "Athenian: ")
 
     python {
-      repo = GitHubRepo(Organization, "readingbat", "readingbat-core")
+      //repo = GitHubRepo(Organization, "readingbat", "readingbat-core")
+      //branchName = "1.9.0"
+      repo = FileSystemSource("./")
       srcPath = "python"
-      branchName = "1.9.0"
 
       group("Test Cases") {
         packageName = "test_content"
