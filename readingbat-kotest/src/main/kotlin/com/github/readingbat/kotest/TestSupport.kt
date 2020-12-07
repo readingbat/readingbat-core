@@ -145,8 +145,9 @@ object TestSupport {
       repeat(questionCount) { i -> block(ChallengeAnswer(this, i)) }
     }
 
-  infix fun ChallengeAnswer.shouldHaveAnswer(answer: String) = funcInfo.answer(index, answer).shouldBeCorrect()
-  infix fun ChallengeAnswer.shouldNotHaveAnswer(answer: String) = funcInfo.answer(index, answer).shouldBeIncorrect()
+  infix fun ChallengeAnswer.shouldHaveAnswer(answer: Any) = funcInfo.answer(index, answer.toString()).shouldBeCorrect()
+  infix fun ChallengeAnswer.shouldNotHaveAnswer(answer: Any) =
+    funcInfo.answer(index, answer.toString()).shouldBeIncorrect()
 
   fun ChallengeResults.shouldBeCorrect() = correct.shouldBeTrue()
   fun ChallengeResults.shouldBeIncorrect() = correct.shouldBeFalse()

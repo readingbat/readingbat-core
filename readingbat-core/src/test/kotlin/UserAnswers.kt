@@ -41,6 +41,8 @@ class UserAnswers : StringSpec(
       withTestApplication({ testModule(testContent) }) {
 
         testContent.pythonChallenge(GROUP_NAME, "boolean_array_test") {
+          answerFor(0) shouldNotHaveAnswer false
+          answerFor(0) shouldNotHaveAnswer 2
           answerFor(0) shouldNotHaveAnswer "False, False"
           answerFor(0) shouldNotHaveAnswer "[false, False]"
           answerFor(0) shouldNotHaveAnswer "[true, False]"

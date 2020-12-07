@@ -1,7 +1,7 @@
 # @desc Determine the value returned by the function.
 
 def div(x):
-    result = x / 2
+    result = x / 2.0
     return result
 
 
