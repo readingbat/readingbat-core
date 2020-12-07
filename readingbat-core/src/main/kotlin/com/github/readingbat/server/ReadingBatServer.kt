@@ -267,8 +267,10 @@ internal fun Application.readContentDsl(fileName: String, variableName: String, 
     adminRoutes(metrics)
     locations(metrics) { content.get() }
     userRoutes(metrics) { content.get() }
-    sysAdminRoutes(metrics, resetContentDslFunc)
-    wsRoutes(metrics) { content.get() }
+    if (isProduction()) {
+      sysAdminRoutes(metrics, resetContentDslFunc)
+      wsRoutes(metrics) { content.get() }
+    }
     static(STATIC_ROOT) { resources("static") }
   }
 }
