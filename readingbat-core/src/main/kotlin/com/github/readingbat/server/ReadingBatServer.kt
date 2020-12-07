@@ -129,6 +129,8 @@ object ReadingBatServer : KLogging() {
     }
   }
 
+  fun withConfigArg(arg: String) = deriveArgs(arrayOf("-config=$arg"))
+
   fun deriveArgs(args: Array<String>): Array<String> {
     // Grab config filename from CLI args and then try ENV var
     val configFilename =
