@@ -111,6 +111,8 @@ val dslContent =
         packageName = "test_content"
         description = "Tests"
 
+        challenge("divide1") { returnType = FloatType  /* This should be a float*/ }
+
         challenge("boolean_array_test") { returnType = BooleanArrayType }
         challenge("int_array_test") { returnType = IntArrayType }
         challenge("float_test") { returnType = FloatType }
