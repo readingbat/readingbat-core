@@ -21,6 +21,8 @@ import com.github.pambrose.common.util.pathOf
 import com.github.readingbat.TestData.GROUP_NAME
 import com.github.readingbat.TestData.module
 import com.github.readingbat.TestData.readTestContent
+import com.github.readingbat.TestSupport.answerAllWith
+import com.github.readingbat.TestSupport.answerAllWithCorrectAnswer
 import com.github.readingbat.TestSupport.forEachChallenge
 import com.github.readingbat.TestSupport.forEachGroup
 import com.github.readingbat.TestSupport.forEachLanguage
@@ -30,6 +32,7 @@ import com.github.readingbat.common.Endpoints.ABOUT_ENDPOINT
 import com.github.readingbat.common.Endpoints.HELP_ENDPOINT
 import com.github.readingbat.common.Endpoints.PRIVACY_ENDPOINT
 import com.github.readingbat.dsl.LanguageType.Python
+import com.github.readingbat.posts.AnswerStatus.CORRECT
 import com.github.readingbat.posts.AnswerStatus.INCORRECT
 import com.github.readingbat.posts.AnswerStatus.NOT_ANSWERED
 import io.kotest.assertions.ktor.shouldHaveStatus
@@ -62,16 +65,15 @@ class EndpointTest : StringSpec(
           getUrl(contentRoot) { response shouldHaveStatus OK }
         }
 
-        testContent
-          .forEachLanguage {
-            forEachGroup {
-              forEachChallenge {
-                getUrl(pathOf(languageType.contentRoot, groupName, challengeName)) {
-                  response.content shouldNotContain CHALLENGE_NOT_FOUND
-                }
+        testContent.forEachLanguage {
+          forEachGroup {
+            forEachChallenge {
+              getUrl(pathOf(languageType.contentRoot, groupName, challengeName)) {
+                response.content shouldNotContain CHALLENGE_NOT_FOUND
               }
             }
           }
+        }
       }
     }
 
@@ -80,13 +82,22 @@ class EndpointTest : StringSpec(
       withTestApplication({ module(testContent) }) {
 
         testContent.forEachLanguage {
-          forEachChallenge(this, "") {
-            answerStatus shouldBe NOT_ANSWERED
-            message.shouldBeBlank()
-          }
+          forEachGroup {
+            forEachChallenge {
+              answerAllWith(this@withTestApplication, "") {
+                answerStatus shouldBe NOT_ANSWERED
+                message.shouldBeBlank()
+              }
 
-          forEachChallenge(this, "[wrong]") {
-            answerStatus shouldBe INCORRECT
+              answerAllWith(this@withTestApplication, "wrong answer") {
+                answerStatus shouldBe INCORRECT
+              }
+
+              answerAllWithCorrectAnswer(this@withTestApplication) {
+                answerStatus shouldBe CORRECT
+                message.shouldBeBlank()
+              }
+            }
           }
         }
       }

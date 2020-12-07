@@ -41,8 +41,8 @@ import java.io.File
 import kotlin.reflect.KProperty
 
 @ReadingBatDslMarker
-class ChallengeGroup<T : Challenge>(internal val languageGroup: LanguageGroup<T>,
-                                    internal val groupNameSuffix: GroupName) {
+class ChallengeGroup<T : Challenge>(/*internal*/ val languageGroup: LanguageGroup<T>,
+                                                 internal val groupNameSuffix: GroupName) {
   /*internal*/ val challenges = mutableListOf<T>()
   internal var namePrefix = ""
 

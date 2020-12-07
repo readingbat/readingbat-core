@@ -20,7 +20,7 @@ package com.github.readingbat
 import com.github.readingbat.TestData.GROUP_NAME
 import com.github.readingbat.TestData.module
 import com.github.readingbat.TestData.readTestContent
-import com.github.readingbat.TestSupport.answer
+import com.github.readingbat.TestSupport.answerFor
 import com.github.readingbat.TestSupport.forEachAnswer
 import com.github.readingbat.TestSupport.forEachFuncInfo
 import com.github.readingbat.TestSupport.forEachGroup
@@ -41,25 +41,25 @@ class UserAnswers : StringSpec(
       withTestApplication({ module(testContent) }) {
 
         testContent.pythonChallenge(GROUP_NAME, "boolean_array_test") {
-          answer(0) shouldNotBe "False, False"
-          answer(0) shouldNotBe "[false, False]"
-          answer(0) shouldNotBe "[true, False]"
+          answerFor(0) shouldNotBe "False, False"
+          answerFor(0) shouldNotBe "[false, False]"
+          answerFor(0) shouldNotBe "[true, False]"
 
-          answer(0) shouldBe "[False, False]"
+          answerFor(0) shouldBe "[False, False]"
         }
 
         testContent.javaChallenge(GROUP_NAME, "StringArrayTest1") {
-          answer(0) shouldNotBe "False, False"
-          answer(0) shouldNotBe "[false, False]"
-          answer(0) shouldNotBe "[true, False]"
-          answer(0) shouldNotBe "[False, False]"
+          answerFor(0) shouldNotBe "False, False"
+          answerFor(0) shouldNotBe "[false, False]"
+          answerFor(0) shouldNotBe "[true, False]"
+          answerFor(0) shouldNotBe "[False, False]"
         }
 
         testContent.kotlinChallenge(GROUP_NAME, "StringArrayKtTest1") {
-          answer(0) shouldNotBe "False, False"
-          answer(0) shouldNotBe "[false, False]"
-          answer(0) shouldNotBe "[true, False]"
-          answer(0) shouldNotBe "[False, False]"
+          answerFor(0) shouldNotBe "False, False"
+          answerFor(0) shouldNotBe "[false, False]"
+          answerFor(0) shouldNotBe "[true, False]"
+          answerFor(0) shouldNotBe "[False, False]"
         }
       }
     }

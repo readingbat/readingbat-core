@@ -49,16 +49,60 @@ object TestSupport {
   infix fun ReadingBatContent.forEachLanguage(block: LanguageGroup<*>.() -> Unit) =
     languages.forEach { it.block() }
 
-  fun LanguageGroup<*>.forEachGroup(block: ChallengeGroup<*>.() -> Unit) =
+  fun <T : Challenge> LanguageGroup<T>.forEachGroup(block: ChallengeGroup<T>.() -> Unit) =
     challengeGroups.forEach { it.block() }
 
-  fun ChallengeGroup<*>.forEachChallenge(block: Challenge.() -> Unit) =
+  fun <T : Challenge> ChallengeGroup<T>.forEachChallenge(block: Challenge.() -> Unit) =
     challenges.forAll { it.block() }
 
   fun ChallengeGroup<*>.forEachFuncInfo(block: FunctionInfo.() -> Unit) =
     forEachChallenge {
       functionInfo().block()
     }
+
+  fun Challenge.answerAllWith(engine: TestApplicationEngine,
+                              userResponse: String,
+                              block: ChallengeResult.() -> Unit) {
+    val content =
+      engine.postUrl(CHECK_ANSWERS_ENDPOINT) {
+        addHeader(ContentType, FormUrlEncoded.toString())
+        val data =
+          mutableListOf(LANG_SRC to challengeGroup.languageGroup.languageName.value,
+                        GROUP_SRC to challengeGroup.groupName.value,
+                        CHALLENGE_SRC to challengeName.value)
+        functionInfo().invocations.indices.forEach { data += "$RESP$it" to userResponse }
+        setBody(data.formUrlEncode())
+      }.response.content
+
+    gson.fromJson(content, List::class.java)
+      .map { v ->
+        (v as List<Any?>).let {
+          ChallengeResult((it[0] as Double).toInt().toAnswerStatus(), (it[1] as String))
+        }
+      }
+      .forAll { it.block() }
+  }
+
+  fun Challenge.answerAllWithCorrectAnswer(engine: TestApplicationEngine, block: ChallengeResult.() -> Unit) {
+    val content =
+      engine.postUrl(CHECK_ANSWERS_ENDPOINT) {
+        addHeader(ContentType, FormUrlEncoded.toString())
+        val data =
+          mutableListOf(LANG_SRC to challengeGroup.languageGroup.languageName.value,
+                        GROUP_SRC to challengeGroup.groupName.value,
+                        CHALLENGE_SRC to challengeName.value)
+        functionInfo().invocations.indices.forEach { data += "$RESP$it" to functionInfo().correctAnswers[it] }
+        setBody(data.formUrlEncode())
+      }.response.content
+
+    gson.fromJson(content, List::class.java)
+      .map { v ->
+        (v as List<Any?>).let {
+          ChallengeResult((it[0] as Double).toInt().toAnswerStatus(), (it[1] as String))
+        }
+      }
+      .forAll { it.block() }
+  }
 
   fun ReadingBatContent.pythonChallenge(groupName: String, challengeName: String, block: FunctionInfo.() -> Unit) =
     pythonGroup(groupName).functionInfo(challengeName).apply(block)
@@ -83,7 +127,7 @@ object TestSupport {
       checkResponse(index, userResponse)
     }
 
-  fun FunctionInfo.answer(index: Int) = ChallengeAnswer(this, index)
+  fun FunctionInfo.answerFor(index: Int) = ChallengeAnswer(this, index)
 
   fun FunctionInfo.forEachAnswer(block: (ChallengeAnswer) -> Unit) =
     repeat(questionCount) { i -> block(ChallengeAnswer(this, i)) }
@@ -99,34 +143,4 @@ object TestSupport {
 
   fun TestApplicationEngine.postUrl(uri: String, block: TestApplicationRequest.() -> Unit) =
     handleRequest(HttpMethod.Post, uri, block)
-
-  fun <T : Challenge> TestApplicationEngine.forEachChallenge(lang: LanguageGroup<T>,
-                                                             answer: String,
-                                                             block: ChallengeResult.() -> Unit) =
-    buildList<ChallengeResult> {
-      lang.challengeGroups.forEach { challengeGroup ->
-        challengeGroup.challenges.forEach { challenge ->
-          val content =
-            postUrl(CHECK_ANSWERS_ENDPOINT) {
-              addHeader(ContentType, FormUrlEncoded.toString())
-              val data =
-                mutableListOf(LANG_SRC to lang.languageName.value,
-                              GROUP_SRC to challengeGroup.groupName.value,
-                              CHALLENGE_SRC to challenge.challengeName.value)
-              challenge.functionInfo().invocations.indices.forEach { data += "$RESP$it" to answer }
-              setBody(data.formUrlEncode())
-            }.response.content
-
-          gson.fromJson(content, List::class.java)
-            .map { v ->
-              (v as List<Any?>).let {
-                ChallengeResult((it[0] as Double).toInt().toAnswerStatus(), (it[1] as String))
-              }
-            }
-            .forEach { this += it }
-        }
-      }
-    }.forAll {
-      it.block()
-    }
 }
