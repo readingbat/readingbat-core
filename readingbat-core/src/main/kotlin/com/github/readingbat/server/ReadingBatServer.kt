@@ -129,6 +129,8 @@ object ReadingBatServer : KLogging() {
     }
   }
 
+  fun configEnviroment(arg: String) = commandLineEnvironment(withConfigArg(arg))
+
   fun withConfigArg(arg: String) = deriveArgs(arrayOf("-config=$arg"))
 
   fun deriveArgs(args: Array<String>): Array<String> {
