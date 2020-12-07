@@ -64,7 +64,7 @@ class UserAnswers : StringSpec(
       }
     }
 
-    "Test known answers" {
+    "Test correct answers" {
       val testContent = readTestContent()
 
       withTestApplication({ module(testContent) }) {
