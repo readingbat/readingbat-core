@@ -27,8 +27,8 @@ import com.github.readingbat.TestSupport.forEachLanguage
 import com.github.readingbat.TestSupport.javaChallenge
 import com.github.readingbat.TestSupport.kotlinChallenge
 import com.github.readingbat.TestSupport.pythonChallenge
-import com.github.readingbat.TestSupport.shouldBe
-import com.github.readingbat.TestSupport.shouldNotBe
+import com.github.readingbat.TestSupport.shouldHaveAnswer
+import com.github.readingbat.TestSupport.shouldNotHaveAnser
 import com.github.readingbat.TestSupport.testModule
 import io.kotest.core.spec.style.StringSpec
 import io.ktor.server.testing.*
@@ -41,25 +41,25 @@ class UserAnswers : StringSpec(
       withTestApplication({ testModule(testContent) }) {
 
         testContent.pythonChallenge(GROUP_NAME, "boolean_array_test") {
-          answerFor(0) shouldNotBe "False, False"
-          answerFor(0) shouldNotBe "[false, False]"
-          answerFor(0) shouldNotBe "[true, False]"
+          answerFor(0) shouldNotHaveAnser "False, False"
+          answerFor(0) shouldNotHaveAnser "[false, False]"
+          answerFor(0) shouldNotHaveAnser "[true, False]"
 
-          answerFor(0) shouldBe "[False, False]"
+          answerFor(0) shouldHaveAnswer "[False, False]"
         }
 
         testContent.javaChallenge(GROUP_NAME, "StringArrayTest1") {
-          answerFor(0) shouldNotBe "False, False"
-          answerFor(0) shouldNotBe "[false, False]"
-          answerFor(0) shouldNotBe "[true, False]"
-          answerFor(0) shouldNotBe "[False, False]"
+          answerFor(0) shouldNotHaveAnser "False, False"
+          answerFor(0) shouldNotHaveAnser "[false, False]"
+          answerFor(0) shouldNotHaveAnser "[true, False]"
+          answerFor(0) shouldNotHaveAnser "[False, False]"
         }
 
         testContent.kotlinChallenge(GROUP_NAME, "StringArrayKtTest1") {
-          answerFor(0) shouldNotBe "False, False"
-          answerFor(0) shouldNotBe "[false, False]"
-          answerFor(0) shouldNotBe "[true, False]"
-          answerFor(0) shouldNotBe "[False, False]"
+          answerFor(0) shouldNotHaveAnser "False, False"
+          answerFor(0) shouldNotHaveAnser "[false, False]"
+          answerFor(0) shouldNotHaveAnser "[true, False]"
+          answerFor(0) shouldNotHaveAnser "[False, False]"
         }
       }
     }
@@ -72,7 +72,9 @@ class UserAnswers : StringSpec(
           .forEachLanguage {
             forEachGroup {
               forEachChallenge {
-                forEachAnswer { it shouldBe correctAnswers[it.index] }
+                forEachAnswer {
+                  it shouldHaveAnswer correctAnswers[it.index]
+                }
               }
             }
           }
