@@ -19,6 +19,7 @@ package com.github.readingbat.common
 
 import com.github.pambrose.common.redis.RedisUtils
 import com.github.pambrose.common.util.isNotNull
+import com.github.pambrose.common.util.isNull
 import com.github.pambrose.common.util.obfuscate
 import com.github.readingbat.common.Constants.UNASSIGNED
 import com.github.readingbat.common.PropertyNames.AGENT
@@ -124,7 +125,8 @@ enum class Property(val propertyValue: String,
   }
 
   fun setPropertyFromConfig(application: Application, default: String) {
-    setProperty(configValue(application, default))
+    if (getPropertyOrNull().isNull())
+      setProperty(configValue(application, default))
   }
 
   fun isDefined() = getPropertyOrNull().isNotNull()
