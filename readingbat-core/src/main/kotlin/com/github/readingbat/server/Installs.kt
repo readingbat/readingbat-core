@@ -24,7 +24,9 @@ import com.github.readingbat.common.Constants.STATIC
 import com.github.readingbat.common.Constants.UNKNOWN
 import com.github.readingbat.common.Endpoints.CSS_ENDPOINT
 import com.github.readingbat.common.Endpoints.FAV_ICON_ENDPOINT
+import com.github.readingbat.common.Endpoints.PING_ENDPOINT
 import com.github.readingbat.common.Endpoints.STATIC_ROOT
+import com.github.readingbat.common.Endpoints.WS_ROOT
 import com.github.readingbat.common.EnvVar.FILTER_LOG
 import com.github.readingbat.common.EnvVar.FORWARDED_ENABLED
 import com.github.readingbat.common.EnvVar.REDIRECT_HOSTNAME
@@ -42,6 +44,7 @@ import com.github.readingbat.pages.NotFoundPage.notFoundPage
 import com.github.readingbat.server.ConfigureCookies.configureAuthCookie
 import com.github.readingbat.server.ConfigureCookies.configureSessionIdCookie
 import com.github.readingbat.server.ConfigureFormAuth.configureFormAuth
+import com.github.readingbat.server.Email.Companion.UNKNOWN_EMAIL
 import com.github.readingbat.server.ReadingBatServer.serverSessionId
 import com.github.readingbat.server.ServerUtils.fetchEmailFromCache
 import io.ktor.application.*
@@ -133,7 +136,9 @@ import java.util.concurrent.atomic.AtomicLong
 
       if (FILTER_LOG.getEnv(true))
         filter { call ->
-          call.request.path().let { it.startsWith("/") && !it.startsWith("/$STATIC/") && it != "/ping" }
+          call.request.path().let {
+            it.startsWith("/") && !it.startsWith("/$STATIC/") && it != PING_ENDPOINT && !it.startsWith("$WS_ROOT/")
+          }
         }
 
       format { call ->
@@ -141,7 +146,7 @@ import java.util.concurrent.atomic.AtomicLong
         val response = call.response
         val logStr = request.toLogString()
         val remote = request.origin.remoteHost
-        val email = if (isPostgresEnabled()) call.fetchEmailFromCache() else Email.UNKNOWN_EMAIL
+        val email = if (isPostgresEnabled()) call.fetchEmailFromCache() else UNKNOWN_EMAIL
 
         when (val status = response.status() ?: HttpStatusCode(-1, "Unknown")) {
           Found -> "Redirect: $logStr -> ${response.headers[Location]} - $remote - $email"
