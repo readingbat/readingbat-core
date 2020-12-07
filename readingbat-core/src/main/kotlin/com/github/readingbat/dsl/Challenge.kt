@@ -99,6 +99,8 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
   protected val packageNameAsPath get() = challengeGroup.packageNameAsPath
   private val content get() = challengeGroup.languageGroup.content
 
+  val correctAnswers get() = functionInfo().correctAnswers
+
   // User properties
   var fileName = "$challengeName.${languageType.suffix}"
   var codingBatEquiv = ""

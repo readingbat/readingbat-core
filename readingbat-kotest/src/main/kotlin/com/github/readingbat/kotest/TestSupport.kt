@@ -129,8 +129,10 @@ object TestSupport {
 
   fun FunctionInfo.answerFor(index: Int) = ChallengeAnswer(this, index)
 
-  fun FunctionInfo.forEachAnswer(block: (ChallengeAnswer) -> Unit) =
-    repeat(questionCount) { i -> block(ChallengeAnswer(this, i)) }
+  fun Challenge.forEachAnswer(block: (ChallengeAnswer) -> Unit) =
+    functionInfo().apply {
+      repeat(questionCount) { i -> block(ChallengeAnswer(this, i)) }
+    }
 
   infix fun ChallengeAnswer.shouldBe(answer: String) = funcInfo.answer(index, answer).shouldBeCorrect()
   infix fun ChallengeAnswer.shouldNotBe(answer: String) = funcInfo.answer(index, answer).shouldBeIncorrect()

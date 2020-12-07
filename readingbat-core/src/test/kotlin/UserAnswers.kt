@@ -22,7 +22,7 @@ import com.github.readingbat.TestData.module
 import com.github.readingbat.TestData.readTestContent
 import com.github.readingbat.TestSupport.answerFor
 import com.github.readingbat.TestSupport.forEachAnswer
-import com.github.readingbat.TestSupport.forEachFuncInfo
+import com.github.readingbat.TestSupport.forEachChallenge
 import com.github.readingbat.TestSupport.forEachGroup
 import com.github.readingbat.TestSupport.forEachLanguage
 import com.github.readingbat.TestSupport.javaChallenge
@@ -71,7 +71,7 @@ class UserAnswers : StringSpec(
         testContent
           .forEachLanguage {
             forEachGroup {
-              forEachFuncInfo {
+              forEachChallenge {
                 forEachAnswer { it shouldBe correctAnswers[it.index] }
               }
             }
