@@ -29,7 +29,7 @@ import com.github.readingbat.dsl.ReturnType.StringListType
 import com.github.readingbat.dsl.eval
 import com.github.readingbat.dsl.readingBatContent
 
-val content =
+val dslContent =
   readingBatContent {
     //repo = GitHubRepo(organization, "readingbat-java-content")
 
