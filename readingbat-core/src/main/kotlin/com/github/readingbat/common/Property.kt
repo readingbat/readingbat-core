@@ -125,11 +125,12 @@ enum class Property(val propertyValue: String,
   }
 
   fun setPropertyFromConfig(application: Application, default: String) {
-    if (getPropertyOrNull().isNull())
+    if (isNotDefined())
       setProperty(configValue(application, default))
   }
 
   fun isDefined() = getPropertyOrNull().isNotNull()
+  fun isNotDefined() = getPropertyOrNull().isNull()
 
   companion object : KLogging()
 }

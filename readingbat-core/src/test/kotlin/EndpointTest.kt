@@ -19,7 +19,6 @@ package com.github.readingbat
 
 import com.github.pambrose.common.util.pathOf
 import com.github.readingbat.TestData.GROUP_NAME
-import com.github.readingbat.TestData.module
 import com.github.readingbat.TestData.readTestContent
 import com.github.readingbat.TestSupport.answerAllWith
 import com.github.readingbat.TestSupport.answerAllWithCorrectAnswer
@@ -27,6 +26,7 @@ import com.github.readingbat.TestSupport.forEachChallenge
 import com.github.readingbat.TestSupport.forEachGroup
 import com.github.readingbat.TestSupport.forEachLanguage
 import com.github.readingbat.TestSupport.getUrl
+import com.github.readingbat.TestSupport.testModule
 import com.github.readingbat.common.Constants.CHALLENGE_NOT_FOUND
 import com.github.readingbat.common.Endpoints.ABOUT_ENDPOINT
 import com.github.readingbat.common.Endpoints.HELP_ENDPOINT
@@ -49,7 +49,7 @@ class EndpointTest : StringSpec(
   {
     "Simple endpoint tests" {
       val testContent = readTestContent()
-      withTestApplication({ module(testContent) }) {
+      withTestApplication({ testModule(testContent) }) {
 
         getUrl("/") { response shouldHaveStatus Found }
 
@@ -79,7 +79,7 @@ class EndpointTest : StringSpec(
 
     "Test all challenges" {
       val testContent = readTestContent()
-      withTestApplication({ module(testContent) }) {
+      withTestApplication({ testModule(testContent) }) {
 
         testContent.forEachLanguage {
           forEachGroup {

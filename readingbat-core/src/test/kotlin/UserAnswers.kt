@@ -18,7 +18,6 @@
 package com.github.readingbat
 
 import com.github.readingbat.TestData.GROUP_NAME
-import com.github.readingbat.TestData.module
 import com.github.readingbat.TestData.readTestContent
 import com.github.readingbat.TestSupport.answerFor
 import com.github.readingbat.TestSupport.forEachAnswer
@@ -30,6 +29,7 @@ import com.github.readingbat.TestSupport.kotlinChallenge
 import com.github.readingbat.TestSupport.pythonChallenge
 import com.github.readingbat.TestSupport.shouldBe
 import com.github.readingbat.TestSupport.shouldNotBe
+import com.github.readingbat.TestSupport.testModule
 import io.kotest.core.spec.style.StringSpec
 import io.ktor.server.testing.*
 
@@ -38,7 +38,7 @@ class UserAnswers : StringSpec(
     "Test user answers" {
       val testContent = readTestContent()
 
-      withTestApplication({ module(testContent) }) {
+      withTestApplication({ testModule(testContent) }) {
 
         testContent.pythonChallenge(GROUP_NAME, "boolean_array_test") {
           answerFor(0) shouldNotBe "False, False"
@@ -67,7 +67,7 @@ class UserAnswers : StringSpec(
     "Test correct answers" {
       val testContent = readTestContent()
 
-      withTestApplication({ module(testContent) }) {
+      withTestApplication({ testModule(testContent) }) {
         testContent
           .forEachLanguage {
             forEachGroup {

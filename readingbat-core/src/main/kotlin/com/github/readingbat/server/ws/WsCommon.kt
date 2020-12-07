@@ -35,7 +35,7 @@ import io.ktor.routing.*
 import io.ktor.websocket.*
 import mu.KLogging
 
-internal object WsCommon : KLogging() {
+/*internal*/ object WsCommon : KLogging() {
 
   const val LANGUAGE_NAME = "languageName"
   const val GROUP_NAME = "groupName"

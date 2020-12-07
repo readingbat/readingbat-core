@@ -21,6 +21,7 @@ import com.github.readingbat.common.Constants.CHALLENGE_SRC
 import com.github.readingbat.common.Constants.GROUP_SRC
 import com.github.readingbat.common.Constants.LANG_SRC
 import com.github.readingbat.common.Constants.RESP
+import com.github.readingbat.common.Endpoints
 import com.github.readingbat.common.Endpoints.CHECK_ANSWERS_ENDPOINT
 import com.github.readingbat.common.FunctionInfo
 import com.github.readingbat.dsl.Challenge
@@ -31,12 +32,22 @@ import com.github.readingbat.posts.AnswerStatus
 import com.github.readingbat.posts.AnswerStatus.Companion.toAnswerStatus
 import com.github.readingbat.posts.ChallengeResults
 import com.github.readingbat.server.GeoInfo.Companion.gson
+import com.github.readingbat.server.Installs.installs
+import com.github.readingbat.server.Locations.locations
+import com.github.readingbat.server.ReadingBatServer
+import com.github.readingbat.server.routes.AdminRoutes.adminRoutes
+import com.github.readingbat.server.routes.sysAdminRoutes
+import com.github.readingbat.server.routes.userRoutes
+import com.github.readingbat.server.ws.WsCommon.wsRoutes
 import io.kotest.inspectors.forAll
 import io.kotest.matchers.booleans.shouldBeFalse
 import io.kotest.matchers.booleans.shouldBeTrue
+import io.ktor.application.*
 import io.ktor.http.*
 import io.ktor.http.ContentType.Application.FormUrlEncoded
 import io.ktor.http.HttpHeaders.ContentType
+import io.ktor.http.content.*
+import io.ktor.routing.*
 import io.ktor.server.testing.*
 import kotlinx.coroutines.runBlocking
 
@@ -145,4 +156,17 @@ object TestSupport {
 
   fun TestApplicationEngine.postUrl(uri: String, block: TestApplicationRequest.() -> Unit) =
     handleRequest(HttpMethod.Post, uri, block)
+
+  fun Application.testModule(content: ReadingBatContent, testing: Boolean = true) {
+    installs(false)
+
+    routing {
+      adminRoutes(ReadingBatServer.metrics)
+      locations(ReadingBatServer.metrics) { content }
+      userRoutes(ReadingBatServer.metrics) { content }
+      sysAdminRoutes(ReadingBatServer.metrics) { s: String -> }
+      wsRoutes(ReadingBatServer.metrics) { content }
+      static(Endpoints.STATIC_ROOT) { resources("static") }
+    }
+  }
 }

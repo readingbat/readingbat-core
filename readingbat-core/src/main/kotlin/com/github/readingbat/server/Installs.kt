@@ -61,7 +61,7 @@ import org.slf4j.event.Level
 import java.time.Duration
 import java.util.concurrent.atomic.AtomicLong
 
-internal object Installs : KLogging() {
+/*internal*/ object Installs : KLogging() {
 
   fun Application.installs(production: Boolean) {
 

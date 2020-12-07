@@ -124,7 +124,7 @@ fun Route.routeTimeout(time: Duration, callback: Route.() -> Unit): Route {
   return routeWithTimeout
 }
 
-internal fun Routing.userRoutes(metrics: Metrics, contentSrc: () -> ReadingBatContent) {
+/*internal*/ fun Routing.userRoutes(metrics: Metrics, contentSrc: () -> ReadingBatContent) {
 
   route(ROOT) {
     get {

@@ -84,7 +84,7 @@ object ReadingBatServer : KLogging() {
   internal val content = AtomicReference(ReadingBatContent())
   internal val adminUsers = mutableListOf<String>()
   internal val contentReadCount = AtomicInteger(0)
-  internal val metrics by lazy { Metrics() }
+  /*internal*/ val metrics by lazy { Metrics() }
   internal var redisPool: JedisPool? = null
   internal val postgres by lazy {
     Database.connect(

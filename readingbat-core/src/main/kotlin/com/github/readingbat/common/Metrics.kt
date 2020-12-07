@@ -32,7 +32,7 @@ import com.github.readingbat.server.ws.ChallengeWs.answerWsConnections
 import kotlin.time.hours
 import kotlin.time.minutes
 
-internal class Metrics {
+/*internal*/ class Metrics {
 
   // /reset call count
   val contentLoadedCount =
