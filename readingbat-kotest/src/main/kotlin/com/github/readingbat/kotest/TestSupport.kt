@@ -146,7 +146,7 @@ object TestSupport {
     }
 
   infix fun ChallengeAnswer.shouldHaveAnswer(answer: String) = funcInfo.answer(index, answer).shouldBeCorrect()
-  infix fun ChallengeAnswer.shouldNotHaveAnser(answer: String) = funcInfo.answer(index, answer).shouldBeIncorrect()
+  infix fun ChallengeAnswer.shouldNotHaveAnswer(answer: String) = funcInfo.answer(index, answer).shouldBeIncorrect()
 
   fun ChallengeResults.shouldBeCorrect() = correct.shouldBeTrue()
   fun ChallengeResults.shouldBeIncorrect() = correct.shouldBeFalse()
