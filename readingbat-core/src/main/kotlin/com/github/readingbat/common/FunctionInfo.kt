@@ -66,7 +66,7 @@ import javax.script.ScriptException
             Java, Kotlin -> raw.toString()
           }
 
-        IntType, FloatType -> raw.toString()
+        IntType, FloatType -> raw.toString().also { logger.info { "Number: $it" } }
 
         StringType -> raw.toString().toDoubleQuoted()
 
