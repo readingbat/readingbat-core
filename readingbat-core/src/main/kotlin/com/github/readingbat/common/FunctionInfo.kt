@@ -114,7 +114,7 @@ import javax.script.ScriptException
 
         StringListType ->
           when (languageType) {
-            Python -> raw.pythonAdjust(false)
+            Python -> raw.pythonAdjust(true)
             Java, Kotlin -> "[${(raw as List<String>).joinToString { it.toDoubleQuoted() }}]"
           }
 
