@@ -56,7 +56,7 @@ import javax.script.ScriptException
           .removeSurrounding("[", "]").trim()
           .let { if (it.isEmpty()) emptyList() else it.split(",") }
           .map { it.trim().removeSurrounding("'") }
-          .joinToString { if (quoteIt) it.toSingleQuoted() else it }
+          .joinToString { if (quoteIt) it.toDoubleQuoted() else it }
           .asBracketed()
 
       when (returnType) {
