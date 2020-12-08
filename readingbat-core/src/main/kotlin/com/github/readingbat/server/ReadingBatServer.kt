@@ -76,7 +76,7 @@ import kotlin.time.TimeSource
 import kotlin.time.measureTime
 import kotlin.time.seconds
 
-@Version(version = "1.9.0", date = "12/5/20")
+@Version(version = "1.9.0", date = "12/8/20")
 object ReadingBatServer : KLogging() {
   private val startTime = TimeSource.Monotonic.markNow()
   internal val serverSessionId = randomId(10)
