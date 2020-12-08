@@ -53,7 +53,10 @@ import kotlinx.coroutines.runBlocking
 
 data class ChallengeAnswer(val funcInfo: FunctionInfo, val index: Int)
 
-data class ChallengeResult(val answerStatus: AnswerStatus, val message: String)
+data class ChallengeResult(val index: Int,
+                           val correctAnswer: String,
+                           val answerStatus: AnswerStatus,
+                           val message: String)
 
 object TestSupport {
 
@@ -85,10 +88,14 @@ object TestSupport {
         setBody(data.formUrlEncode())
       }.response.content
 
+    var cnt = 0
     gson.fromJson(content, List::class.java)
       .map { v ->
         (v as List<Any?>).let {
-          ChallengeResult((it[0] as Double).toInt().toAnswerStatus(), (it[1] as String))
+          ChallengeResult(cnt,
+                          functionInfo().correctAnswers[cnt],
+                          (it[0] as Double).toInt().toAnswerStatus(),
+                          (it[1] as String)).also { cnt++ }
         }
       }
       .forAll { it.block() }
@@ -106,10 +113,14 @@ object TestSupport {
         setBody(data.formUrlEncode())
       }.response.content
 
+    var cnt = 0
     gson.fromJson(content, List::class.java)
       .map { v ->
         (v as List<Any?>).let {
-          ChallengeResult((it[0] as Double).toInt().toAnswerStatus(), (it[1] as String))
+          ChallengeResult(cnt,
+                          functionInfo().correctAnswers[cnt],
+                          (it[0] as Double).toInt().toAnswerStatus(),
+                          (it[1] as String))
         }
       }
       .forAll { it.block() }
