@@ -85,7 +85,7 @@ fun javaTest() {
         println(it)
         // }
       }
-      engine.resetContext()
+      engine.resetContext(false)
     }
   }.also {
     println(it)
@@ -119,7 +119,7 @@ answers.add(less_than(11, 28))
       }
       correctAnswers.clear()
       //  }
-      engine.resetContext()
+      engine.resetContext(true)
       println(it)
     }
   }.also {

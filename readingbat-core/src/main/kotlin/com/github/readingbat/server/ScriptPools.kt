@@ -18,8 +18,11 @@
 package com.github.readingbat.server
 
 import com.github.pambrose.common.script.JavaScriptPool
+import com.github.pambrose.common.script.KotlinExprEvaluatorPool
 import com.github.pambrose.common.script.KotlinScriptPool
+import com.github.pambrose.common.script.PythonExprEvaluatorPool
 import com.github.pambrose.common.script.PythonScriptPool
+import com.github.readingbat.common.Property
 import com.github.readingbat.common.Property.JAVA_SCRIPTS_POOL_SIZE
 import com.github.readingbat.common.Property.KOTLIN_SCRIPTS_POOL_SIZE
 import com.github.readingbat.common.Property.PYTHON_SCRIPTS_POOL_SIZE
@@ -41,5 +44,15 @@ internal object ScriptPools : KLogging() {
   internal val kotlinScriptPool by lazy {
     KotlinScriptPool(KOTLIN_SCRIPTS_POOL_SIZE.getProperty(5), true)
       .also { logger.info { "Created Kotlin script pool with size ${it.size}" } }
+  }
+
+  internal val pythonEvaluatorPool by lazy {
+    PythonExprEvaluatorPool(Property.PYTHON_EVALUATOR_POOL_SIZE.getProperty(5))
+      .also { logger.info { "Created Python evaluator pool with size ${it.size}" } }
+  }
+
+  internal val kotlinEvaluatorPool by lazy {
+    KotlinExprEvaluatorPool(Property.KOTLIN_EVALUATOR_POOL_SIZE.getProperty(5))
+      .also { logger.info { "Created Kotlin evaluator pool with size ${it.size}" } }
   }
 }

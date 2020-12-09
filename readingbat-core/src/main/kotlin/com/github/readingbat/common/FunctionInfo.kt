@@ -17,7 +17,6 @@
 
 package com.github.readingbat.common
 
-import com.github.pambrose.common.script.KotlinScript
 import com.github.pambrose.common.util.*
 import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.LanguageType.Java
@@ -25,13 +24,12 @@ import com.github.readingbat.dsl.LanguageType.Kotlin
 import com.github.readingbat.dsl.LanguageType.Python
 import com.github.readingbat.dsl.ReturnType
 import com.github.readingbat.dsl.ReturnType.*
-import com.github.readingbat.dsl.isTesting
 import com.github.readingbat.posts.ChallengeResults
 import com.github.readingbat.server.ChallengeMd5
 import com.github.readingbat.server.Invocation
 import com.github.readingbat.server.LanguageName
-import com.github.readingbat.server.ScriptPools.kotlinScriptPool
-import com.github.readingbat.server.ScriptPools.pythonScriptPool
+import com.github.readingbat.server.ScriptPools.kotlinEvaluatorPool
+import com.github.readingbat.server.ScriptPools.pythonEvaluatorPool
 import mu.KLogging
 import javax.script.ScriptException
 
@@ -195,11 +193,7 @@ import javax.script.ScriptException
       val compareExpr = "$lhs == $rhs"
       logger.debug { "Check answers expression: $compareExpr" }
       return try {
-        val result =
-          if (isTesting())
-            KotlinScript().eval(compareExpr) as Boolean
-          else
-            kotlinScriptPool.eval { eval(compareExpr) } as Boolean
+        val result = kotlinEvaluatorPool.eval(compareExpr) as Boolean
         result to (if (result) "" else deriveHint())
       } catch (e: ScriptException) {
         logger.info { "Caught exception comparing $this and $correctAnswer: ${e.message} in $compareExpr" }
@@ -214,7 +208,7 @@ import javax.script.ScriptException
       val compareExpr = "${trim()} == ${correctAnswer.trim()}"
       return try {
         logger.debug { "Check answers expression: $compareExpr" }
-        val result = pythonScriptPool.eval { eval(compareExpr) } as Boolean
+        val result = pythonEvaluatorPool.eval(compareExpr) as Boolean
         result to (if (result) "" else deriveHint())
       } catch (e: ScriptException) {
         logger.info { "Caught exception comparing $this and $correctAnswer: ${e.message} in: $compareExpr" }
