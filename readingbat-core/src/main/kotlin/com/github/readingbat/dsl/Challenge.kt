@@ -155,7 +155,7 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
       fun parseCode(): FunctionInfo {
         val fs = repo as FileSystemSource
         val file = fs.file(pathOf(fs.pathPrefix, srcPath, packageNameAsPath, fileName))
-        logger.info { """Fetching "${file.fileName}" from filesystem at [${Paths.get("").toAbsolutePath()}]""" }
+        logger.info { """Fetching "${file.fileName}" from "${Paths.get("").toAbsolutePath()}""" }
         return measureParsing(file.content)
       }
 

@@ -51,19 +51,19 @@ import io.ktor.routing.*
 import io.ktor.server.testing.*
 import kotlinx.coroutines.runBlocking
 
-data class ChallengeAnswer(val funcInfo: FunctionInfo, val index: Int)
+class ChallengeAnswer(val funcInfo: FunctionInfo, val index: Int)
 
-data class ChallengeResult(val index: Int,
-                           val correctAnswer: String,
-                           val answerStatus: AnswerStatus,
-                           val message: String)
+class ChallengeResult(val answerStatus: AnswerStatus,
+                      val hint: String,
+                      val index: Int,
+                      val correctAnswer: String)
 
 object TestSupport {
 
-  infix fun ReadingBatContent.forEachLanguage(block: LanguageGroup<*>.() -> Unit) =
+  inline infix fun ReadingBatContent.forEachLanguage(block: LanguageGroup<*>.() -> Unit) =
     languages.forEach { it.block() }
 
-  fun <T : Challenge> LanguageGroup<T>.forEachGroup(block: ChallengeGroup<T>.() -> Unit) =
+  inline fun <T : Challenge> LanguageGroup<T>.forEachGroup(block: ChallengeGroup<T>.() -> Unit) =
     challengeGroups.forEach { it.block() }
 
   fun <T : Challenge> ChallengeGroup<T>.forEachChallenge(block: Challenge.() -> Unit) =
@@ -74,16 +74,17 @@ object TestSupport {
       functionInfo().block()
     }
 
+  private fun Challenge.formData() = mutableListOf(LANG_SRC to challengeGroup.languageGroup.languageName.value,
+                                                   GROUP_SRC to challengeGroup.groupName.value,
+                                                   CHALLENGE_SRC to challengeName.value)
+
   fun Challenge.answerAllWith(engine: TestApplicationEngine,
                               userResponse: String,
                               block: ChallengeResult.() -> Unit) {
     val content =
       engine.postUrl(CHECK_ANSWERS_ENDPOINT) {
         addHeader(ContentType, FormUrlEncoded.toString())
-        val data =
-          mutableListOf(LANG_SRC to challengeGroup.languageGroup.languageName.value,
-                        GROUP_SRC to challengeGroup.groupName.value,
-                        CHALLENGE_SRC to challengeName.value)
+        val data = formData()
         functionInfo().invocations.indices.forEach { data += "$RESP$it" to userResponse }
         setBody(data.formUrlEncode())
       }.response.content
@@ -92,10 +93,10 @@ object TestSupport {
     gson.fromJson(content, List::class.java)
       .map { v ->
         (v as List<Any?>).let {
-          ChallengeResult(cnt,
-                          functionInfo().correctAnswers[cnt],
-                          (it[0] as Double).toInt().toAnswerStatus(),
-                          (it[1] as String)).also { cnt++ }
+          ChallengeResult((it[0] as Double).toInt().toAnswerStatus(),
+                          (it[1] as String),
+                          cnt,
+                          functionInfo().correctAnswers[cnt]).also { cnt++ }
         }
       }
       .forAll { it.block() }
@@ -105,10 +106,7 @@ object TestSupport {
     val content =
       engine.postUrl(CHECK_ANSWERS_ENDPOINT) {
         addHeader(ContentType, FormUrlEncoded.toString())
-        val data =
-          mutableListOf(LANG_SRC to challengeGroup.languageGroup.languageName.value,
-                        GROUP_SRC to challengeGroup.groupName.value,
-                        CHALLENGE_SRC to challengeName.value)
+        val data = formData()
         functionInfo().invocations.indices.forEach { data += "$RESP$it" to functionInfo().correctAnswers[it] }
         setBody(data.formUrlEncode())
       }.response.content
@@ -117,10 +115,10 @@ object TestSupport {
     gson.fromJson(content, List::class.java)
       .map { v ->
         (v as List<Any?>).let {
-          ChallengeResult(cnt,
-                          functionInfo().correctAnswers[cnt],
-                          (it[0] as Double).toInt().toAnswerStatus(),
-                          (it[1] as String))
+          ChallengeResult((it[0] as Double).toInt().toAnswerStatus(),
+                          (it[1] as String),
+                          cnt,
+                          functionInfo().correctAnswers[cnt]).also { cnt++ }
         }
       }
       .forAll { it.block() }
@@ -144,7 +142,7 @@ object TestSupport {
 
   fun <T : Challenge> ChallengeGroup<T>.functionInfo(name: String) = challengeByName(name).functionInfo()
 
-  fun FunctionInfo.answer(index: Int, userResponse: String) =
+  fun FunctionInfo.checkAnswer(index: Int, userResponse: String) =
     runBlocking {
       checkResponse(index, userResponse)
     }
@@ -153,12 +151,14 @@ object TestSupport {
 
   fun Challenge.forEachAnswer(block: (ChallengeAnswer) -> Unit) =
     functionInfo().apply {
-      repeat(questionCount) { i -> block(ChallengeAnswer(this, i)) }
+      (0 until questionCount).toList().forAll { i -> block(ChallengeAnswer(this, i)) }
     }
 
-  infix fun ChallengeAnswer.shouldHaveAnswer(answer: Any) = funcInfo.answer(index, answer.toString()).shouldBeCorrect()
+  infix fun ChallengeAnswer.shouldHaveAnswer(answer: Any) =
+    funcInfo.checkAnswer(index, answer.toString()).shouldBeCorrect()
+
   infix fun ChallengeAnswer.shouldNotHaveAnswer(answer: Any) =
-    funcInfo.answer(index, answer.toString()).shouldBeIncorrect()
+    funcInfo.checkAnswer(index, answer.toString()).shouldBeIncorrect()
 
   fun ChallengeResults.shouldBeCorrect() = correct.shouldBeTrue()
   fun ChallengeResults.shouldBeIncorrect() = correct.shouldBeFalse()

@@ -28,17 +28,17 @@ import mu.KLogging
 internal object ScriptPools : KLogging() {
 
   internal val javaScriptPool by lazy {
-    JavaScriptPool(JAVA_SCRIPTS_POOL_SIZE.getProperty(5))
+    JavaScriptPool(JAVA_SCRIPTS_POOL_SIZE.getProperty(5), true)
       .also { logger.info { "Created Java script pool with size ${it.size}" } }
   }
 
   internal val pythonScriptPool by lazy {
-    PythonScriptPool(PYTHON_SCRIPTS_POOL_SIZE.getProperty(5))
+    PythonScriptPool(PYTHON_SCRIPTS_POOL_SIZE.getProperty(5), true)
       .also { logger.info { "Created Python script pool with size ${it.size}" } }
   }
 
   internal val kotlinScriptPool by lazy {
-    KotlinScriptPool(KOTLIN_SCRIPTS_POOL_SIZE.getProperty(5))
+    KotlinScriptPool(KOTLIN_SCRIPTS_POOL_SIZE.getProperty(5), true)
       .also { logger.info { "Created Kotlin script pool with size ${it.size}" } }
   }
 }

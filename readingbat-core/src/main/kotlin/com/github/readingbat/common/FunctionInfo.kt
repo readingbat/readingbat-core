@@ -28,7 +28,8 @@ import com.github.readingbat.posts.ChallengeResults
 import com.github.readingbat.server.ChallengeMd5
 import com.github.readingbat.server.Invocation
 import com.github.readingbat.server.LanguageName
-import com.github.readingbat.server.ScriptPools
+import com.github.readingbat.server.ScriptPools.kotlinScriptPool
+import com.github.readingbat.server.ScriptPools.pythonScriptPool
 import mu.KLogging
 import javax.script.ScriptException
 
@@ -192,7 +193,7 @@ import javax.script.ScriptException
       val compareExpr = "$lhs == $rhs"
       logger.debug { "Check answers expression: $compareExpr" }
       return try {
-        val result = ScriptPools.kotlinScriptPool.eval { eval(compareExpr) } as Boolean
+        val result = kotlinScriptPool.eval { eval(compareExpr) } as Boolean
         result to (if (result) "" else deriveHint())
       } catch (e: ScriptException) {
         logger.info { "Caught exception comparing $this and $correctAnswer: ${e.message} in $compareExpr" }
@@ -207,7 +208,7 @@ import javax.script.ScriptException
       val compareExpr = "${trim()} == ${correctAnswer.trim()}"
       return try {
         logger.debug { "Check answers expression: $compareExpr" }
-        val result = ScriptPools.pythonScriptPool.eval { eval(compareExpr) } as Boolean
+        val result = pythonScriptPool.eval { eval(compareExpr) } as Boolean
         result to (if (result) "" else deriveHint())
       } catch (e: ScriptException) {
         logger.info { "Caught exception comparing $this and $correctAnswer: ${e.message} in: $compareExpr" }

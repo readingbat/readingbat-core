@@ -84,18 +84,20 @@ class EndpointTest : StringSpec(
         testContent.forEachLanguage {
           forEachGroup {
             forEachChallenge {
-              answerAllWith(this@withTestApplication, "") {
-                answerStatus shouldBe NOT_ANSWERED
-                message.shouldBeBlank()
-              }
+              repeat(10) {
+                answerAllWith(this@withTestApplication, "") {
+                  answerStatus shouldBe NOT_ANSWERED
+                  hint.shouldBeBlank()
+                }
 
-              answerAllWith(this@withTestApplication, "wrong answer") {
-                answerStatus shouldBe INCORRECT
-              }
+                answerAllWith(this@withTestApplication, "wrong answer") {
+                  answerStatus shouldBe INCORRECT
+                }
 
-              answerAllWithCorrectAnswer(this@withTestApplication) {
-                answerStatus shouldBe CORRECT
-                message.shouldBeBlank()
+                answerAllWithCorrectAnswer(this@withTestApplication) {
+                  answerStatus shouldBe CORRECT
+                  hint.shouldBeBlank()
+                }
               }
             }
           }
