@@ -159,7 +159,7 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
         return measureParsing(file.content)
       }
 
-      if (content.cacheChallenges)
+      if (content.cacheChallenges || isTesting())
         content.functionInfoMap.computeIfAbsent(challengeId) { parseCode() }
       else
         parseCode()
