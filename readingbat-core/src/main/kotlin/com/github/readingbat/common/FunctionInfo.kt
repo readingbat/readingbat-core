@@ -17,6 +17,7 @@
 
 package com.github.readingbat.common
 
+import com.github.pambrose.common.script.KotlinScript
 import com.github.pambrose.common.util.*
 import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.LanguageType.Java
@@ -24,6 +25,7 @@ import com.github.readingbat.dsl.LanguageType.Kotlin
 import com.github.readingbat.dsl.LanguageType.Python
 import com.github.readingbat.dsl.ReturnType
 import com.github.readingbat.dsl.ReturnType.*
+import com.github.readingbat.dsl.isTesting
 import com.github.readingbat.posts.ChallengeResults
 import com.github.readingbat.server.ChallengeMd5
 import com.github.readingbat.server.Invocation
@@ -193,7 +195,11 @@ import javax.script.ScriptException
       val compareExpr = "$lhs == $rhs"
       logger.debug { "Check answers expression: $compareExpr" }
       return try {
-        val result = kotlinScriptPool.eval { eval(compareExpr) } as Boolean
+        val result =
+          if (isTesting())
+            KotlinScript().eval(compareExpr) as Boolean
+          else
+            kotlinScriptPool.eval { eval(compareExpr) } as Boolean
         result to (if (result) "" else deriveHint())
       } catch (e: ScriptException) {
         logger.info { "Caught exception comparing $this and $correctAnswer: ${e.message} in $compareExpr" }
