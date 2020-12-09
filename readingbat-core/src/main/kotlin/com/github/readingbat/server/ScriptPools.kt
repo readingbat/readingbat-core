@@ -28,7 +28,8 @@ import mu.KLogging
 internal object ScriptPools : KLogging() {
 
   internal val javaScriptPool by lazy {
-    JavaScriptPool(JAVA_SCRIPTS_POOL_SIZE.getProperty(5), true)
+    // Global context cannot be null for the java script engine
+    JavaScriptPool(JAVA_SCRIPTS_POOL_SIZE.getProperty(5), false)
       .also { logger.info { "Created Java script pool with size ${it.size}" } }
   }
 
