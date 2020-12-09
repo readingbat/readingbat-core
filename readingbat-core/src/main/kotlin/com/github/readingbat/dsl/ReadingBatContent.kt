@@ -68,7 +68,7 @@ class ReadingBatContent {
   val languages by lazy { listOf(python, java, kotlin) }
 
   // User properties
-  var cacheChallenges = isProduction()
+  var cacheChallenges = isProduction() || isTesting()
 
   // These are defaults and can be overridden in language specific section
   //var repo: ContentRoot = defaultContentRoot # Makes repo a required value

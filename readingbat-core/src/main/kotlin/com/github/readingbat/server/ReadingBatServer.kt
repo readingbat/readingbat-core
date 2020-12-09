@@ -215,7 +215,7 @@ internal fun Application.readContentDsl(fileName: String, variableName: String, 
 
   adminUsers.addAll(ADMIN_USERS.configValueOrNull(this)?.getList() ?: emptyList())
 
-  // Only run this
+  // Only run this in production
   if (isProduction())
     PubSubCommandsWs.initThreads()
 
@@ -286,6 +286,7 @@ private fun Application.assignProperties() {
   PROXY_HOSTNAME.setPropertyFromConfig(this, "")
 
   IS_PRODUCTION.setProperty(IS_PRODUCTION.configValue(this, "false").toBoolean().toString())
+
   POSTGRES_ENABLED.setProperty(POSTGRES_ENABLED.configValue(this, "false").toBoolean().toString())
   SAVE_REQUESTS_ENABLED.setProperty(SAVE_REQUESTS_ENABLED.configValue(this, "true").toBoolean().toString())
   MULTI_SERVER_ENABLED.setProperty(MULTI_SERVER_ENABLED.configValue(this, "false").toBoolean().toString())

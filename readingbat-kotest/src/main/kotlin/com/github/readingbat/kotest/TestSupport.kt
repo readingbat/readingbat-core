@@ -24,6 +24,7 @@ import com.github.readingbat.common.Constants.RESP
 import com.github.readingbat.common.Endpoints
 import com.github.readingbat.common.Endpoints.CHECK_ANSWERS_ENDPOINT
 import com.github.readingbat.common.FunctionInfo
+import com.github.readingbat.common.Property.IS_TESTING
 import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.ChallengeGroup
 import com.github.readingbat.dsl.LanguageGroup
@@ -169,7 +170,10 @@ object TestSupport {
   fun TestApplicationEngine.postUrl(uri: String, block: TestApplicationRequest.() -> Unit) =
     handleRequest(HttpMethod.Post, uri, block)
 
-  fun Application.testModule(content: ReadingBatContent, testing: Boolean = true) {
+  fun Application.testModule(content: ReadingBatContent) {
+
+    IS_TESTING.setProperty("true")
+
     installs(false)
 
     routing {

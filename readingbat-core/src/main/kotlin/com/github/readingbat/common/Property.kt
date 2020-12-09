@@ -66,6 +66,7 @@ enum class Property(val propertyValue: String,
 
   // These are assigned in ReadingBatServer
   IS_PRODUCTION("$READINGBAT.$SITE.production"),
+  IS_TESTING("$READINGBAT.$SITE.testing"),
   POSTGRES_ENABLED("$READINGBAT.$SITE.postgresEnabled"),
   SAVE_REQUESTS_ENABLED("$READINGBAT.$SITE.saveRequestsEnabled"),
   MULTI_SERVER_ENABLED("$READINGBAT.$SITE.multiServerEnabled"),

@@ -33,6 +33,7 @@ import com.github.readingbat.common.Property.AGENT_ENABLED_PROPERTY
 import com.github.readingbat.common.Property.AGENT_LAUNCH_ID
 import com.github.readingbat.common.Property.CONTENT_CACHING_ENABLED
 import com.github.readingbat.common.Property.IS_PRODUCTION
+import com.github.readingbat.common.Property.IS_TESTING
 import com.github.readingbat.common.Property.MULTI_SERVER_ENABLED
 import com.github.readingbat.common.Property.POSTGRES_ENABLED
 import com.github.readingbat.common.Property.SAVE_REQUESTS_ENABLED
@@ -64,6 +65,8 @@ fun readingBatContent(block: ReadingBatContent.() -> Unit) =
 
 // This is accessible from the Content.kt descriptions
 fun isProduction() = IS_PRODUCTION.getProperty(false)
+
+fun isTesting() = IS_TESTING.getProperty(false)
 
 internal fun isPostgresEnabled() = POSTGRES_ENABLED.getProperty(false)
 
