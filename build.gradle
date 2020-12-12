@@ -6,6 +6,7 @@ plugins {
     id 'org.jetbrains.kotlin.plugin.serialization' version '1.4.21' apply false
     id "com.github.ben-manes.versions" version '0.36.0' apply false
     id 'com.github.johnrengelman.shadow' version '6.1.0' apply false
+    id 'com.github.gmazzo.buildconfig' version '2.0.2' apply false
 }
 
 ext {
@@ -88,13 +89,14 @@ ext {
 allprojects {
     description = 'ReadingBat Core'
     group 'com.github.readingbat'
-    version '1.9.0-SNAPSHOT'
+    version '1.9.0'
 
     apply plugin: 'maven' // required for jitpack.io install
     apply plugin: 'org.jetbrains.kotlin.jvm'
     apply plugin: 'org.jetbrains.kotlin.plugin.serialization'
     apply plugin: 'com.github.ben-manes.versions'
     apply plugin: 'com.github.johnrengelman.shadow'
+    apply plugin: 'com.github.gmazzo.buildconfig'
 
     repositories {
         maven { url 'https://kotlin.bintray.com/ktor' }

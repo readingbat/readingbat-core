@@ -38,6 +38,7 @@ import com.github.readingbat.common.Property.DBMS_DRIVER_CLASSNAME
 import com.github.readingbat.common.User.Companion.createUnknownUser
 import com.github.readingbat.common.User.Companion.userExists
 import com.github.readingbat.dsl.*
+import com.github.readingbat.readingbat_core.BuildConfig
 import com.github.readingbat.server.Installs.installs
 import com.github.readingbat.server.Locations.locations
 import com.github.readingbat.server.ReadingBatServer.adminUsers
@@ -76,7 +77,7 @@ import kotlin.time.TimeSource
 import kotlin.time.measureTime
 import kotlin.time.seconds
 
-@Version(version = "1.9.0", date = "12/8/20")
+@Version(version = BuildConfig.APP_VERSION, date = BuildConfig.APP_RELEASE_DATE)
 object ReadingBatServer : KLogging() {
   private val startTime = TimeSource.Monotonic.markNow()
   internal val serverSessionId = randomId(10)
