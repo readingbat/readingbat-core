@@ -505,7 +505,7 @@ import kotlin.time.measureTime
       classCode.isEnabled -> {
         // Check to see if the teacher that owns class has it set as their active class in one of the sessions
         val teacherId = classCode.fetchClassTeacherId()
-        teacherId.isNotEmpty() && toUser(teacherId).interestedInActiveClassCode(classCode)
+        teacherId.isNotEmpty() && teacherId.toUser().interestedInActiveClassCode(classCode)
           .also { logger.debug { "Publishing teacherId: $teacherId for $classCode" } }
       }
       else -> false
@@ -530,9 +530,9 @@ import kotlin.time.measureTime
     val userIdCache = ConcurrentHashMap<String, Long>()
     val emailCache = ConcurrentHashMap<String, Email>()
 
-    fun toUser(userId: String, browserSession: BrowserSession? = null) = User(userId, browserSession, true)
+    fun String.toUser(browserSession: BrowserSession? = null) = User(this, browserSession, true)
 
-    fun toUser(userId: String, row: ResultRow) = User(userId, null, row)
+    fun String.toUser(row: ResultRow) = User(this, null, row)
 
     fun queryActiveClassCode(user: User?) =
       when {
@@ -655,7 +655,7 @@ import kotlin.time.measureTime
         Users
           .slice(Users.userId)
           .select { Users.email eq email.value }
-          .map { toUser(it[0] as String) }
+          .map { (it[0] as String).toUser() }
           .firstOrNull()
           .also { logger.info { "lookupUserByEmail() returned: ${it?.email ?: " ${email.value} not found"}" } }
       }

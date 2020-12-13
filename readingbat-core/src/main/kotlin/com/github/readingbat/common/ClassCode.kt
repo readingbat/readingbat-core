@@ -80,7 +80,7 @@ import kotlin.time.measureTimedValue
 
         Users
           .select { Users.id inList userIds }
-          .map { toUser(it[Users.userId], it) }
+          .map { it[Users.userId].toUser(it) }
           .also { logger.debug { "fetchEnrollees() returning ${it.size} users" } }
       }
 

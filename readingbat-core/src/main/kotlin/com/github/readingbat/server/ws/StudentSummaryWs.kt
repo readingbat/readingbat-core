@@ -25,7 +25,7 @@ import com.github.readingbat.common.Constants.YES
 import com.github.readingbat.common.Endpoints.STUDENT_SUMMARY_ENDPOINT
 import com.github.readingbat.common.Endpoints.WS_ROOT
 import com.github.readingbat.common.Metrics
-import com.github.readingbat.common.User
+import com.github.readingbat.common.User.Companion.toUser
 import com.github.readingbat.dsl.InvalidRequestException
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.agentLaunchId
@@ -73,7 +73,7 @@ internal object StudentSummaryWs : KLogging() {
           val p = call.parameters
           val languageName =
             p[LANGUAGE_NAME]?.let { LanguageName(it) } ?: throw InvalidRequestException("Missing language")
-          val student = p[STUDENT_ID]?.let { User.toUser(it) } ?: throw InvalidRequestException("Missing student id")
+          val student = p[STUDENT_ID]?.toUser() ?: throw InvalidRequestException("Missing student id")
           val classCode = p[CLASS_CODE]?.let { ClassCode(it) } ?: throw InvalidRequestException("Missing class code")
           val user = fetchUser() ?: throw InvalidRequestException("Null user")
           //val email = user.email //fetchEmail()

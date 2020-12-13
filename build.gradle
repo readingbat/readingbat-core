@@ -184,5 +184,4 @@ flyway {
     url = 'jdbc:postgresql://localhost:5432/readingbat'
     user = 'postgres'
     password = 'docker'
-    schemas = ['readingbat']
 }

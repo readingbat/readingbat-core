@@ -9,9 +9,9 @@ services:
   - postgresql
 
 before_script:
-  - chmod +x gradlew
+  - chmod +x ./gradlew
   - psql -c 'create database readingbat;' -U postgres
-  - ./gradlew flywayClean flywayMigrate
+  - ./gradlew flywayClean flywayMigrate flywayInfo
 #  - sudo redis-server /etc/redis/redis.conf --port 6379 --requirepass 'none'
 
 script:

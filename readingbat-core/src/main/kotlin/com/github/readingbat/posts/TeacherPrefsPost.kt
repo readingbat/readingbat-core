@@ -77,7 +77,7 @@ internal object TeacherPrefsPost : KLogging() {
         }
         REMOVE_FROM_CLASS -> {
           val studentId = params[USER_ID_PARAM] ?: error("Missing: $USER_ID_PARAM")
-          val student = toUser(studentId)
+          val student = studentId.toUser()
           val classCode = student.enrolledClassCode
           student.withdrawFromClass(classCode)
           val msg = "${student.fullName} removed from class ${classCode.toDisplayString()}"
