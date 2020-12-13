@@ -41,6 +41,8 @@ dbclean:
 dbmigrate:
 	./gradlew flywayMigrate
 
+dbreset: dbclean dbmigrate
+
 dbvalidate:
 	./gradlew flywayValidate
 
