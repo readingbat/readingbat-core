@@ -63,10 +63,13 @@ fun isTesting() = Property.IS_TESTING.getProperty(false)
 
 internal fun isDbmsEnabled() = Property.DBMS_ENABLED.getProperty(false)
 
+internal fun isRedisEnabled() = Property.REDIS_ENABLED.getProperty(false)
+
 internal fun isSaveRequestsEnabled() =
   Property.SAVE_REQUESTS_ENABLED.getProperty(true) && isDbmsEnabled() && EnvVar.IPGEOLOCATION_KEY.isDefined()
 
-internal fun isContentCachingEnabled() = Property.CONTENT_CACHING_ENABLED.getProperty(false) && isDbmsEnabled()
+internal fun isContentCachingEnabled() =
+  Property.CONTENT_CACHING_ENABLED.getProperty(false) && isDbmsEnabled() && isRedisEnabled()
 
 internal fun isMultiServerEnabled() = Property.MULTI_SERVER_ENABLED.getProperty(false)
 

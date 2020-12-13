@@ -215,7 +215,7 @@ internal fun Application.readContentDsl(fileName: String, variableName: String, 
   adminUsers.addAll(Property.ADMIN_USERS.configValueOrNull(this)?.getList() ?: emptyList())
 
   // Only run this in production
-  if (isProduction())
+  if (isProduction() && isRedisEnabled())
     PubSubCommandsWs.initThreads()
 
   if (isDbmsEnabled()) {

@@ -37,6 +37,7 @@ import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.RedisUnavailableException
 import com.github.readingbat.dsl.isProduction
+import com.github.readingbat.dsl.isRedisEnabled
 import com.github.readingbat.server.Email.Companion.UNKNOWN_EMAIL
 import com.github.readingbat.server.ReadingBatServer.redisPool
 import com.github.readingbat.server.ws.PubSubCommandsWs.publishLog
@@ -162,7 +163,7 @@ internal object ServerUtils : KLogging() {
       .firstOrNull() ?: error("Missing non-empty language")
 
   fun logToRedis(msg: String, logId: String) {
-    if (logId.isNotEmpty()) {
+    if (logId.isNotEmpty() && isRedisEnabled()) {
       redisPool?.withNonNullRedisPool { redis ->
         redis.publishLog(msg, logId)
       }
