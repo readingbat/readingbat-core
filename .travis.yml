@@ -38,7 +38,7 @@ before_script:
 script:
   - ./gradlew check #jacocoTestReport
   - ./gradlew flywayClean flywayMigrate
-  - cd readingbat-code; ../gradlew run --args="-config=src/test/resources/application-test.conf" &
+  - cd readingbat-core; ../gradlew run --args="-config=src/test/resources/application-test.conf" &
   - sleep 20
   - $(npm bin)/cypress run --record --key 5ee5de19-1e84-4807-a199-5c70fda2fe5d
   - curl http://0.0.0.0:8080/shutdown
