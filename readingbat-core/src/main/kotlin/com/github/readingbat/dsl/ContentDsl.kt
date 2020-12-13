@@ -26,17 +26,10 @@ import com.github.pambrose.common.util.OwnerType
 import com.github.pambrose.common.util.isNotNull
 import com.github.pambrose.common.util.md5Of
 import com.github.readingbat.common.Constants.UNASSIGNED
-import com.github.readingbat.common.EnvVar.IPGEOLOCATION_KEY
+import com.github.readingbat.common.EnvVar
 import com.github.readingbat.common.KeyConstants.CONTENT_DSL_KEY
 import com.github.readingbat.common.KeyConstants.keyOf
-import com.github.readingbat.common.Property.AGENT_ENABLED_PROPERTY
-import com.github.readingbat.common.Property.AGENT_LAUNCH_ID
-import com.github.readingbat.common.Property.CONTENT_CACHING_ENABLED
-import com.github.readingbat.common.Property.IS_PRODUCTION
-import com.github.readingbat.common.Property.IS_TESTING
-import com.github.readingbat.common.Property.MULTI_SERVER_ENABLED
-import com.github.readingbat.common.Property.POSTGRES_ENABLED
-import com.github.readingbat.common.Property.SAVE_REQUESTS_ENABLED
+import com.github.readingbat.common.Property
 import com.github.readingbat.dsl.ContentDsl.logger
 import com.github.readingbat.server.ReadingBatServer
 import com.github.readingbat.server.ReadingBatServer.redisPool
@@ -64,22 +57,22 @@ fun readingBatContent(block: ReadingBatContent.() -> Unit) =
   ReadingBatContent().apply(block).apply { validate() }
 
 // This is accessible from the Content.kt descriptions
-fun isProduction() = IS_PRODUCTION.getProperty(false)
+fun isProduction() = Property.IS_PRODUCTION.getProperty(false)
 
-fun isTesting() = IS_TESTING.getProperty(false)
+fun isTesting() = Property.IS_TESTING.getProperty(false)
 
-internal fun isPostgresEnabled() = POSTGRES_ENABLED.getProperty(false)
+internal fun isDbmsEnabled() = Property.DBMS_ENABLED.getProperty(false)
 
 internal fun isSaveRequestsEnabled() =
-  SAVE_REQUESTS_ENABLED.getProperty(true) && isPostgresEnabled() && IPGEOLOCATION_KEY.isDefined()
+  Property.SAVE_REQUESTS_ENABLED.getProperty(true) && isDbmsEnabled() && EnvVar.IPGEOLOCATION_KEY.isDefined()
 
-internal fun isContentCachingEnabled() = CONTENT_CACHING_ENABLED.getProperty(false) && isPostgresEnabled()
+internal fun isContentCachingEnabled() = Property.CONTENT_CACHING_ENABLED.getProperty(false) && isDbmsEnabled()
 
-internal fun isMultiServerEnabled() = MULTI_SERVER_ENABLED.getProperty(false)
+internal fun isMultiServerEnabled() = Property.MULTI_SERVER_ENABLED.getProperty(false)
 
-internal fun isAgentEnabled() = AGENT_ENABLED_PROPERTY.getProperty(false)
+internal fun isAgentEnabled() = Property.AGENT_ENABLED.getProperty(false)
 
-internal fun agentLaunchId() = AGENT_LAUNCH_ID.getProperty(UNASSIGNED)
+internal fun agentLaunchId() = Property.AGENT_LAUNCH_ID.getProperty(UNASSIGNED)
 
 fun ContentSource.eval(enclosingContent: ReadingBatContent, variableName: String = "content"): ReadingBatContent =
   enclosingContent.evalContent(this, variableName)

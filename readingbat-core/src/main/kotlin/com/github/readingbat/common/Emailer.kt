@@ -17,7 +17,6 @@
 
 package com.github.readingbat.common
 
-import com.github.readingbat.common.EnvVar.SENDGRID_API_KEY
 import com.github.readingbat.server.Email
 import com.sendgrid.Method
 import com.sendgrid.Request
@@ -34,7 +33,7 @@ internal object Emailer : KLogging() {
                     subject,
                     com.sendgrid.helpers.mail.objects.Email(to.value),
                     content)
-    val sendGrid = SendGrid(SENDGRID_API_KEY.getRequiredEnv())
+    val sendGrid = SendGrid(EnvVar.SENDGRID_API_KEY.getRequiredEnv())
 
     val request =
       Request()

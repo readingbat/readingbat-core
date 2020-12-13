@@ -194,7 +194,7 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
   internal fun isCorrect(user: User?, browserSession: BrowserSession?): Boolean {
     val challengeMd5 = md5()
     return when {
-      !isPostgresEnabled() -> false
+      !isDbmsEnabled() -> false
       user.isNotNull() ->
         transaction {
           UserChallengeInfo

@@ -34,7 +34,7 @@ import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.queryPreviousTeacherClassCode
 import com.github.readingbat.common.isAdminUser
 import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.dsl.isPostgresEnabled
+import com.github.readingbat.dsl.isDbmsEnabled
 import com.github.readingbat.dsl.isProduction
 import com.github.readingbat.pages.PageUtils.rawHtml
 import com.github.readingbat.server.ServerUtils.firstNonEmptyLanguageType
@@ -56,7 +56,7 @@ internal object HelpAndLogin {
       else
         loginPath
 
-    if (isPostgresEnabled())
+    if (isDbmsEnabled())
       div {
         style = "float:right; margin:0px; border: 1px solid lightgray; margin-left: 10px; padding: 5px"
         table {
@@ -86,7 +86,7 @@ internal object HelpAndLogin {
             +" | "
             a { href = "$HELP_ENDPOINT?$RETURN_PARAM=$loginPath"; +"help" }
 
-            if (isPostgresEnabled()) {
+            if (isDbmsEnabled()) {
               if (!isProduction() || user.isAdminUser()) {
                 +" | "
                 a { href = "$ADMIN_PREFS_ENDPOINT?$RETURN_PARAM=$loginPath"; +"admin" }

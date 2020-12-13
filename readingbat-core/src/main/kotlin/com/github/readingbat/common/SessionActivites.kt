@@ -17,7 +17,7 @@
 
 package com.github.readingbat.common
 
-import com.github.readingbat.dsl.isPostgresEnabled
+import com.github.readingbat.dsl.isDbmsEnabled
 import com.github.readingbat.server.BrowserSessions
 import com.github.readingbat.server.Email
 import com.github.readingbat.server.FullName
@@ -100,7 +100,7 @@ internal object SessionActivites : KLogging() {
     }
 
   fun activeSessions(duration: Duration): Long =
-    if (!isPostgresEnabled())
+    if (!isDbmsEnabled())
       0
     else
       transaction {

@@ -26,11 +26,6 @@ import com.github.readingbat.common.Endpoints.ADMIN_PREFS_ENDPOINT
 import com.github.readingbat.common.EnvVar
 import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.Property
-import com.github.readingbat.common.Property.DSL_FILE_NAME
-import com.github.readingbat.common.Property.DSL_VARIABLE_NAME
-import com.github.readingbat.common.Property.KTOR_PORT
-import com.github.readingbat.common.Property.KTOR_WATCH
-import com.github.readingbat.common.Property.PROXY_HOSTNAME
 import com.github.readingbat.common.SessionActivites.activeSessions
 import com.github.readingbat.common.User.Companion.emailCache
 import com.github.readingbat.common.User.Companion.userIdCache
@@ -41,8 +36,8 @@ import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.agentLaunchId
 import com.github.readingbat.dsl.isAgentEnabled
 import com.github.readingbat.dsl.isContentCachingEnabled
+import com.github.readingbat.dsl.isDbmsEnabled
 import com.github.readingbat.dsl.isMultiServerEnabled
-import com.github.readingbat.dsl.isPostgresEnabled
 import com.github.readingbat.dsl.isProduction
 import com.github.readingbat.dsl.isSaveRequestsEnabled
 import com.github.readingbat.pages.PageUtils.backLink
@@ -97,19 +92,19 @@ internal object SystemConfigurationPage {
                 }
                 tr {
                   td { +"Ktor port:" }
-                  td { +KTOR_PORT.getProperty(UNASSIGNED) }
+                  td { +Property.KTOR_PORT.getProperty(UNASSIGNED) }
                 }
                 tr {
                   td { +"Ktor watch:" }
-                  td { +KTOR_WATCH.getProperty(UNASSIGNED) }
+                  td { +Property.KTOR_WATCH.getProperty(UNASSIGNED) }
                 }
                 tr {
                   td { +"DSL filename:" }
-                  td { +DSL_FILE_NAME.getRequiredProperty() }
+                  td { +Property.DSL_FILE_NAME.getRequiredProperty() }
                 }
                 tr {
                   td { +"DSL variable name:" }
-                  td { +DSL_VARIABLE_NAME.getRequiredProperty() }
+                  td { +Property.DSL_VARIABLE_NAME.getRequiredProperty() }
                 }
                 tr {
                   td { +"Production:" }
@@ -117,7 +112,7 @@ internal object SystemConfigurationPage {
                 }
                 tr {
                   td { +"Postgres enabled:" }
-                  td { +isPostgresEnabled().toString() }
+                  td { +isDbmsEnabled().toString() }
                 }
                 tr {
                   td { +"Multi-server enabled:" }
@@ -244,7 +239,7 @@ internal object SystemConfigurationPage {
                   }
                   tr {
                     td { +"Proxy Hostname:" }
-                    td { +PROXY_HOSTNAME.getProperty(UNASSIGNED) }
+                    td { +Property.PROXY_HOSTNAME.getProperty(UNASSIGNED) }
                   }
                 }
               }

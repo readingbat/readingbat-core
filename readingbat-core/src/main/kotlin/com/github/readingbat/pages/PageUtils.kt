@@ -35,9 +35,7 @@ import com.github.readingbat.common.Endpoints.STATIC_ROOT
 import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.Message
 import com.github.readingbat.common.Message.Companion.EMPTY_MESSAGE
-import com.github.readingbat.common.Property.ANALYTICS_ID
-import com.github.readingbat.common.Property.PINGDOM_URL
-import com.github.readingbat.common.Property.STATUS_PAGE_URL
+import com.github.readingbat.common.Property
 import com.github.readingbat.common.User
 import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.dsl.LanguageType.Companion.languageTypeList
@@ -69,7 +67,7 @@ internal object PageUtils {
 
     title(READING_BAT)
 
-    val analyticsId = ANALYTICS_ID.getPropertyOrNull() ?: ""
+    val analyticsId = Property.ANALYTICS_ID.getPropertyOrNull() ?: ""
     if (isProduction() && analyticsId.isNotBlank()) {
       script { async = true; src = "https://www.googletagmanager.com/gtag/js?id=$analyticsId" }
       script {
@@ -213,11 +211,11 @@ internal object PageUtils {
   }
 
   fun BODY.loadPingdomScript() {
-    PINGDOM_URL.getPropertyOrNull()?.also { if (it.isNotBlank()) script { src = it; async = true } }
+    Property.PINGDOM_URL.getPropertyOrNull()?.also { if (it.isNotBlank()) script { src = it; async = true } }
   }
 
   fun BODY.loadStatusPageDisplay() {
-    STATUS_PAGE_URL.getPropertyOrNull()?.also { if (it.isNotBlank()) script { src = it } }
+    Property.STATUS_PAGE_URL.getPropertyOrNull()?.also { if (it.isNotBlank()) script { src = it } }
   }
 
   fun HTMLTag.rawHtml(html: String) = unsafe { raw(html) }

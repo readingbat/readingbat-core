@@ -23,26 +23,23 @@ import com.github.pambrose.common.script.KotlinScriptPool
 import com.github.pambrose.common.script.PythonExprEvaluatorPool
 import com.github.pambrose.common.script.PythonScriptPool
 import com.github.readingbat.common.Property
-import com.github.readingbat.common.Property.JAVA_SCRIPTS_POOL_SIZE
-import com.github.readingbat.common.Property.KOTLIN_SCRIPTS_POOL_SIZE
-import com.github.readingbat.common.Property.PYTHON_SCRIPTS_POOL_SIZE
 import mu.KLogging
 
 internal object ScriptPools : KLogging() {
 
   internal val javaScriptPool by lazy {
     // Global context cannot be null for the java script engine
-    JavaScriptPool(JAVA_SCRIPTS_POOL_SIZE.getProperty(5), false)
+    JavaScriptPool(Property.JAVA_SCRIPTS_POOL_SIZE.getProperty(5), false)
       .also { logger.info { "Created Java script pool with size ${it.size}" } }
   }
 
   internal val pythonScriptPool by lazy {
-    PythonScriptPool(PYTHON_SCRIPTS_POOL_SIZE.getProperty(5), true)
+    PythonScriptPool(Property.PYTHON_SCRIPTS_POOL_SIZE.getProperty(5), true)
       .also { logger.info { "Created Python script pool with size ${it.size}" } }
   }
 
   internal val kotlinScriptPool by lazy {
-    KotlinScriptPool(KOTLIN_SCRIPTS_POOL_SIZE.getProperty(5), true)
+    KotlinScriptPool(Property.KOTLIN_SCRIPTS_POOL_SIZE.getProperty(5), true)
       .also { logger.info { "Created Kotlin script pool with size ${it.size}" } }
   }
 

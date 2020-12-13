@@ -31,7 +31,7 @@ import com.github.readingbat.common.Metrics
 import com.github.readingbat.common.UserPrincipal
 import com.github.readingbat.common.browserSession
 import com.github.readingbat.common.userPrincipal
-import com.github.readingbat.dsl.isPostgresEnabled
+import com.github.readingbat.dsl.isDbmsEnabled
 import com.github.readingbat.dsl.isSaveRequestsEnabled
 import com.github.readingbat.server.BrowserSessions
 import com.github.readingbat.server.GeoInfo.Companion.lookupGeoInfo
@@ -117,7 +117,7 @@ import java.time.ZoneId
           if (it.isNotNull()) {
             logger.info { "Clearing browser session id $it" }
             call.sessions.clear<BrowserSession>()
-            if (isPostgresEnabled())
+            if (isDbmsEnabled())
               transaction {
                 BrowserSessions.deleteWhere { BrowserSessions.sessionId eq it.id }
               }

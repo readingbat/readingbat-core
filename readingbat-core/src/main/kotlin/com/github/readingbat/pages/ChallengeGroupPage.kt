@@ -46,7 +46,7 @@ import com.github.readingbat.common.correctAnswersKey
 import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.ChallengeGroup
 import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.dsl.isPostgresEnabled
+import com.github.readingbat.dsl.isDbmsEnabled
 import com.github.readingbat.pages.ChallengePage.headerColor
 import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyHeader
@@ -138,7 +138,7 @@ internal object ChallengeGroupPage : KLogging() {
             }
           }
 
-          if (isPostgresEnabled() && activeClassCode.isNotEnabled && challenges.isNotEmpty())
+          if (isDbmsEnabled() && activeClassCode.isNotEnabled && challenges.isNotEmpty())
             clearGroupAnswerHistoryOption(user, browserSession, languageName, groupName, challenges)
 
           backLink(CHALLENGE_ROOT, languageName.value)

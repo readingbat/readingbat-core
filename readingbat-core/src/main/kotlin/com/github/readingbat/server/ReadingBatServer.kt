@@ -31,10 +31,8 @@ import com.github.readingbat.common.Constants.UNASSIGNED
 import com.github.readingbat.common.Constants.UNKNOWN_USER_ID
 import com.github.readingbat.common.Endpoints.STATIC_ROOT
 import com.github.readingbat.common.EnvVar
-import com.github.readingbat.common.EnvVar.*
 import com.github.readingbat.common.Metrics
-import com.github.readingbat.common.Property.*
-import com.github.readingbat.common.Property.DBMS_DRIVER_CLASSNAME
+import com.github.readingbat.common.Property
 import com.github.readingbat.common.User.Companion.createUnknownUser
 import com.github.readingbat.common.User.Companion.userExists
 import com.github.readingbat.dsl.*
@@ -87,17 +85,17 @@ object ReadingBatServer : KLogging() {
   internal val contentReadCount = AtomicInteger(0)
   /*internal*/ val metrics by lazy { Metrics() }
   internal var redisPool: JedisPool? = null
-  internal val postgres by lazy {
+  internal val dbms by lazy {
     Database.connect(
       HikariDataSource(
         HikariConfig()
           .apply {
-            driverClassName = EnvVar.DBMS_DRIVER_CLASSNAME.getEnv(DBMS_DRIVER_CLASSNAME.getRequiredProperty())
-            jdbcUrl = POSTGRES_URL.getEnv(DBMS_URL.getRequiredProperty())
-            username = POSTGRES_USERNAME.getEnv(DBMS_USERNAME.getRequiredProperty())
-            password = POSTGRES_PASSWORD.getEnv(DBMS_PASSWORD.getRequiredProperty())
+            driverClassName = EnvVar.DBMS_DRIVER_CLASSNAME.getEnv(Property.DBMS_DRIVER_CLASSNAME.getRequiredProperty())
+            jdbcUrl = EnvVar.DBMS_URL.getEnv(Property.DBMS_URL.getRequiredProperty())
+            username = EnvVar.DBMS_USERNAME.getEnv(Property.DBMS_USERNAME.getRequiredProperty())
+            password = EnvVar.DBMS_PASSWORD.getEnv(Property.DBMS_PASSWORD.getRequiredProperty())
 
-            CLOUD_SQL_CONNECTION_NAME.getEnv("")
+            EnvVar.CLOUD_SQL_CONNECTION_NAME.getEnv("")
               .also {
                 if (it.isNotBlank()) {
                   addDataSourceProperty("cloudSqlInstance", it)
@@ -105,7 +103,7 @@ object ReadingBatServer : KLogging() {
                 }
               }
 
-            maximumPoolSize = DBMS_MAX_POOL_SIZE.getRequiredProperty().toInt()
+            maximumPoolSize = Property.DBMS_MAX_POOL_SIZE.getRequiredProperty().toInt()
             isAutoCommit = false
             transactionIsolation = "TRANSACTION_REPEATABLE_READ"
             validate()
@@ -117,16 +115,16 @@ object ReadingBatServer : KLogging() {
   fun assignKotlinSciptProperty() {
     // If kotlin.script.classpath property is missing, set it based on env var SCRIPT_CLASSPATH
     // This has to take place before reading DSL
-    val scriptClasspathProp = KOTLIN_SCRIPT_CLASSPATH.getPropertyOrNull()
+    val scriptClasspathProp = Property.KOTLIN_SCRIPT_CLASSPATH.getPropertyOrNull()
     if (scriptClasspathProp.isNull()) {
-      val scriptClasspathEnvVar = SCRIPT_CLASSPATH.getEnvOrNull()
+      val scriptClasspathEnvVar = EnvVar.SCRIPT_CLASSPATH.getEnvOrNull()
       if (scriptClasspathEnvVar.isNotNull())
-        KOTLIN_SCRIPT_CLASSPATH.setProperty(scriptClasspathEnvVar)
+        Property.KOTLIN_SCRIPT_CLASSPATH.setProperty(scriptClasspathEnvVar)
       else
-        logger.warn { "Missing ${KOTLIN_SCRIPT_CLASSPATH.propertyValue} and $SCRIPT_CLASSPATH values" }
+        logger.warn { "Missing ${Property.KOTLIN_SCRIPT_CLASSPATH.propertyValue} and ${EnvVar.SCRIPT_CLASSPATH} values" }
     }
     else {
-      logger.info { "${KOTLIN_SCRIPT_CLASSPATH.propertyValue}: $scriptClasspathProp" }
+      logger.info { "${Property.KOTLIN_SCRIPT_CLASSPATH.propertyValue}: $scriptClasspathProp" }
     }
   }
 
@@ -141,11 +139,11 @@ object ReadingBatServer : KLogging() {
         .filter { it.startsWith("-config=") }
         .map { it.replaceFirst("-config=", "") }
         .firstOrNull()
-        ?: AGENT_CONFIG.getEnvOrNull()
-        ?: AGENT_CONFIG_PROPERTY.getPropertyOrNull()
+        ?: EnvVar.AGENT_CONFIG.getEnvOrNull()
+        ?: Property.AGENT_CONFIG.getPropertyOrNull()
         ?: "src/main/resources/application.conf"
 
-    CONFIG_FILENAME.setProperty(configFilename)
+    Property.CONFIG_FILENAME.setProperty(configFilename)
 
     return if (args.any { it.startsWith("-config=") })
       args
@@ -160,7 +158,7 @@ object ReadingBatServer : KLogging() {
       info { ReadingBatServer::class.versionDesc() }
     }
 
-    logger.info { "$REDIS_URL: ${REDIS_URL.getEnv(UNASSIGNED).maskUrlCredentials()}" }
+    logger.info { "${EnvVar.REDIS_URL}: ${EnvVar.REDIS_URL.getEnv(UNASSIGNED).maskUrlCredentials()}" }
 
     assignKotlinSciptProperty()
 
@@ -195,8 +193,8 @@ internal fun Application.readContentDsl(fileName: String, variableName: String, 
     content.set(
       evalContentDsl(contentSource.source, variableName, dslCode)
         .apply {
-          maxHistoryLength = MAX_HISTORY_LENGTH.configValue(this@readContentDsl, "10").toInt()
-          maxClassCount = MAX_CLASS_COUNT.configValue(this@readContentDsl, "25").toInt()
+          maxHistoryLength = Property.MAX_HISTORY_LENGTH.configValue(this@readContentDsl, "10").toInt()
+          maxClassCount = Property.MAX_CLASS_COUNT.configValue(this@readContentDsl, "25").toInt()
         }
         .apply { clearContentMap() })
     metrics.contentLoadedCount.labels(agentLaunchId()).inc()
@@ -214,14 +212,14 @@ internal fun Application.readContentDsl(fileName: String, variableName: String, 
 
   assignProperties()
 
-  adminUsers.addAll(ADMIN_USERS.configValueOrNull(this)?.getList() ?: emptyList())
+  adminUsers.addAll(Property.ADMIN_USERS.configValueOrNull(this)?.getList() ?: emptyList())
 
   // Only run this in production
   if (isProduction())
     PubSubCommandsWs.initThreads()
 
-  if (isPostgresEnabled()) {
-    ReadingBatServer.postgres
+  if (isDbmsEnabled()) {
+    ReadingBatServer.dbms
 
     // Create unknown user if it does not already exist
     if (!userExists(UNKNOWN_USER_ID))
@@ -229,10 +227,10 @@ internal fun Application.readContentDsl(fileName: String, variableName: String, 
   }
 
   if (isAgentEnabled()) {
-    if (PROXY_HOSTNAME.getRequiredProperty().isNotEmpty()) {
-      val configFilename = CONFIG_FILENAME.getRequiredProperty()
+    if (Property.PROXY_HOSTNAME.getRequiredProperty().isNotEmpty()) {
+      val configFilename = Property.CONFIG_FILENAME.getRequiredProperty()
       val agentInfo = startAsyncAgent(configFilename, true)
-      AGENT_LAUNCH_ID.setProperty(agentInfo.launchId)
+      Property.AGENT_LAUNCH_ID.setProperty(agentInfo.launchId)
     }
     else {
       logger.error { "Prometheus agent is enabled but the proxy hostname is not assigned" }
@@ -242,13 +240,13 @@ internal fun Application.readContentDsl(fileName: String, variableName: String, 
   // This is done *after* AGENT_LAUNCH_ID is assigned because metrics depend on it
   metrics.init { content.get() }
 
-  val dslFileName = DSL_FILE_NAME.getRequiredProperty()
-  val dslVariableName = DSL_VARIABLE_NAME.getRequiredProperty()
+  val dslFileName = Property.DSL_FILE_NAME.getRequiredProperty()
+  val dslVariableName = Property.DSL_VARIABLE_NAME.getRequiredProperty()
 
   val job = launch { readContentDsl(dslFileName, dslVariableName) }
 
   runBlocking {
-    val maxDelay = STARTUP_DELAY_SECS.configValue(this@module, "30").toInt().seconds
+    val maxDelay = Property.STARTUP_DELAY_SECS.configValue(this@module, "30").toInt().seconds
     logger.info { "Delaying start-up by max of $maxDelay" }
     measureTime {
       withTimeoutOrNull(maxDelay) {
@@ -282,46 +280,50 @@ internal fun Application.readContentDsl(fileName: String, variableName: String, 
 
 private fun Application.assignProperties() {
 
-  val agentEnabled = AGENT_ENABLED.getEnv(AGENT_ENABLED_PROPERTY.configValue(this, default = "false").toBoolean())
-  AGENT_ENABLED_PROPERTY.setProperty(agentEnabled.toString())
-  PROXY_HOSTNAME.setPropertyFromConfig(this, "")
+  val agentEnabled =
+    EnvVar.AGENT_ENABLED.getEnv(Property.AGENT_ENABLED.configValue(this, default = "false").toBoolean())
+  Property.AGENT_ENABLED.setProperty(agentEnabled.toString())
+  Property.PROXY_HOSTNAME.setPropertyFromConfig(this, "")
 
-  IS_PRODUCTION.setProperty(IS_PRODUCTION.configValue(this, "false").toBoolean().toString())
+  Property.IS_PRODUCTION.setProperty(Property.IS_PRODUCTION.configValue(this, "false").toBoolean().toString())
 
-  POSTGRES_ENABLED.setProperty(POSTGRES_ENABLED.configValue(this, "false").toBoolean().toString())
-  SAVE_REQUESTS_ENABLED.setProperty(SAVE_REQUESTS_ENABLED.configValue(this, "true").toBoolean().toString())
-  MULTI_SERVER_ENABLED.setProperty(MULTI_SERVER_ENABLED.configValue(this, "false").toBoolean().toString())
-  CONTENT_CACHING_ENABLED.setProperty(CONTENT_CACHING_ENABLED.configValue(this, "false").toBoolean().toString())
+  Property.DBMS_ENABLED.setProperty(Property.DBMS_ENABLED.configValue(this, "false").toBoolean().toString())
+  Property.SAVE_REQUESTS_ENABLED.setProperty(Property.SAVE_REQUESTS_ENABLED.configValue(this, "true").toBoolean()
+                                               .toString())
+  Property.MULTI_SERVER_ENABLED.setProperty(Property.MULTI_SERVER_ENABLED.configValue(this, "false").toBoolean()
+                                              .toString())
+  Property.CONTENT_CACHING_ENABLED.setProperty(Property.CONTENT_CACHING_ENABLED.configValue(this, "false").toBoolean()
+                                                 .toString())
 
-  DSL_FILE_NAME.setPropertyFromConfig(this, "src/Content.kt")
-  DSL_VARIABLE_NAME.setPropertyFromConfig(this, "content")
+  Property.DSL_FILE_NAME.setPropertyFromConfig(this, "src/Content.kt")
+  Property.DSL_VARIABLE_NAME.setPropertyFromConfig(this, "content")
 
-  ANALYTICS_ID.setPropertyFromConfig(this, "")
+  Property.ANALYTICS_ID.setPropertyFromConfig(this, "")
 
-  PINGDOM_BANNER_ID.setPropertyFromConfig(this, "")
-  PINGDOM_URL.setPropertyFromConfig(this, "")
-  STATUS_PAGE_URL.setPropertyFromConfig(this, "")
+  Property.PINGDOM_BANNER_ID.setPropertyFromConfig(this, "")
+  Property.PINGDOM_URL.setPropertyFromConfig(this, "")
+  Property.STATUS_PAGE_URL.setPropertyFromConfig(this, "")
 
-  PROMETHEUS_URL.setPropertyFromConfig(this, "")
-  GRAFANA_URL.setPropertyFromConfig(this, "")
+  Property.PROMETHEUS_URL.setPropertyFromConfig(this, "")
+  Property.GRAFANA_URL.setPropertyFromConfig(this, "")
 
-  JAVA_SCRIPTS_POOL_SIZE.setPropertyFromConfig(this, "5")
-  KOTLIN_SCRIPTS_POOL_SIZE.setPropertyFromConfig(this, "5")
-  PYTHON_SCRIPTS_POOL_SIZE.setPropertyFromConfig(this, "5")
+  Property.JAVA_SCRIPTS_POOL_SIZE.setPropertyFromConfig(this, "5")
+  Property.KOTLIN_SCRIPTS_POOL_SIZE.setPropertyFromConfig(this, "5")
+  Property.PYTHON_SCRIPTS_POOL_SIZE.setPropertyFromConfig(this, "5")
 
-  DBMS_DRIVER_CLASSNAME.setPropertyFromConfig(this, "com.impossibl.postgres.jdbc.PGDriver")
-  DBMS_URL.setPropertyFromConfig(this, "jdbc:pgsql://localhost:5432/postgres")
-  DBMS_USERNAME.setPropertyFromConfig(this, "postgres")
-  DBMS_PASSWORD.setPropertyFromConfig(this, "")
-  DBMS_MAX_POOL_SIZE.setPropertyFromConfig(this, "10")
+  Property.DBMS_DRIVER_CLASSNAME.setPropertyFromConfig(this, "com.impossibl.postgres.jdbc.PGDriver")
+  Property.DBMS_URL.setPropertyFromConfig(this, "jdbc:pgsql://localhost:5432/postgres")
+  Property.DBMS_USERNAME.setPropertyFromConfig(this, "postgres")
+  Property.DBMS_PASSWORD.setPropertyFromConfig(this, "")
+  Property.DBMS_MAX_POOL_SIZE.setPropertyFromConfig(this, "10")
 
-  REDIS_MAX_POOL_SIZE.setPropertyFromConfig(this, "10")
-  REDIS_MAX_IDLE_SIZE.setPropertyFromConfig(this, "5")
-  REDIS_MIN_IDLE_SIZE.setPropertyFromConfig(this, "1")
+  Property.REDIS_MAX_POOL_SIZE.setPropertyFromConfig(this, "10")
+  Property.REDIS_MAX_IDLE_SIZE.setPropertyFromConfig(this, "5")
+  Property.REDIS_MIN_IDLE_SIZE.setPropertyFromConfig(this, "1")
 
-  KTOR_PORT.setPropertyFromConfig(this, "0")
-  KTOR_WATCH.setProperty(KTOR_WATCH.configValueOrNull(this)?.getList()?.toString() ?: UNASSIGNED)
+  Property.KTOR_PORT.setPropertyFromConfig(this, "0")
+  Property.KTOR_WATCH.setProperty(Property.KTOR_WATCH.configValueOrNull(this)?.getList()?.toString() ?: UNASSIGNED)
 
-  SENDGRID_PREFIX_PROPERTY.setProperty(
-    SENDGRID_PREFIX.getEnv(SENDGRID_PREFIX_PROPERTY.configValue(this, "https://www.readingbat.com")))
+  Property.SENDGRID_PREFIX.setProperty(
+    EnvVar.SENDGRID_PREFIX.getEnv(Property.SENDGRID_PREFIX.configValue(this, "https://www.readingbat.com")))
 }

@@ -28,13 +28,13 @@ import com.github.readingbat.common.FormFields.NEW_PASSWORD_PARAM
 import com.github.readingbat.common.FormFields.RESET_ID_PARAM
 import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.Message
-import com.github.readingbat.common.Property.SENDGRID_PREFIX_PROPERTY
+import com.github.readingbat.common.Property
 import com.github.readingbat.common.User.Companion.isNotRegisteredEmail
 import com.github.readingbat.common.User.Companion.queryUserByEmail
 import com.github.readingbat.common.isNotValidUser
 import com.github.readingbat.common.isValidUser
 import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.dsl.isPostgresEnabled
+import com.github.readingbat.dsl.isDbmsEnabled
 import com.github.readingbat.pages.PasswordResetPage.passwordResetPage
 import com.github.readingbat.posts.CreateAccountPost.checkPassword
 import com.github.readingbat.server.Email
@@ -93,7 +93,7 @@ internal object PasswordResetPost : KLogging() {
           try {
             val msg = Message("""
               |This is a password reset message for the ReadingBat.com account for '$email'
-              |Go to this URL to set a new password: ${SENDGRID_PREFIX_PROPERTY.getProperty("")}$PASSWORD_RESET_ENDPOINT?$RESET_ID_PARAM=$newResetId 
+              |Go to this URL to set a new password: ${Property.SENDGRID_PREFIX.getProperty("")}$PASSWORD_RESET_ENDPOINT?$RESET_ID_PARAM=$newResetId 
               |If you did not request to reset your password, please ignore this message.
             """.trimMargin())
             sendEmail(to = email,
@@ -124,7 +124,7 @@ internal object PasswordResetPost : KLogging() {
       val confirmPassword = params.getPassword(CONFIRM_PASSWORD_PARAM)
       val passwordError = checkPassword(newPassword, confirmPassword)
 
-      if (!isPostgresEnabled())
+      if (!isDbmsEnabled())
         throw ResetPasswordException("Function unavailable without database enabled")
 
       if (passwordError.isNotBlank)

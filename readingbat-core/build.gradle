@@ -75,6 +75,8 @@ dependencies {
 
     implementation libraries.github
 
+    runtime libraries.h2
+
     testImplementation libraries.ktor_server_tests
     testImplementation libraries.ktor_server_test_host
 

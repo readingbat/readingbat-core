@@ -43,7 +43,7 @@ enum class Property(val propertyValue: String,
   LOGBACK_CONFIG_FILE("logback.configurationFile"),
   AGENT_LAUNCH_ID("$AGENT.launchId"),
 
-  AGENT_CONFIG_PROPERTY("agent.config"),
+  AGENT_CONFIG("agent.config"),
 
   // These are used in module()
   DSL_FILE_NAME("$READINGBAT.$CONTENT.fileName"),
@@ -52,10 +52,10 @@ enum class Property(val propertyValue: String,
   STARTUP_DELAY_SECS("$READINGBAT.$SITE.startupMaxDelaySecs"),
 
   // These are defaults for env var values
-  REDIRECT_HOSTNAME_PROPERTY("$READINGBAT.$SITE.redirectHostname"),
-  SENDGRID_PREFIX_PROPERTY("$READINGBAT.$SITE.sendGridPrefix"),
-  FORWARDED_ENABLED_PROPERTY("$READINGBAT.$SITE.forwardedHeaderSupportEnabled"),
-  XFORWARDED_ENABLED_PROPERTY("$READINGBAT.$SITE.xforwardedHeaderSupportEnabled"),
+  REDIRECT_HOSTNAME("$READINGBAT.$SITE.redirectHostname"),
+  SENDGRID_PREFIX("$READINGBAT.$SITE.sendGridPrefix"),
+  FORWARDED_ENABLED("$READINGBAT.$SITE.forwardedHeaderSupportEnabled"),
+  XFORWARDED_ENABLED("$READINGBAT.$SITE.xforwardedHeaderSupportEnabled"),
 
   // These are assigned to ReadingBatContent vals
   ANALYTICS_ID("$READINGBAT.$SITE.googleAnalyticsId", { getPropertyOrNull() ?: UNASSIGNED }),
@@ -67,11 +67,11 @@ enum class Property(val propertyValue: String,
   // These are assigned in ReadingBatServer
   IS_PRODUCTION("$READINGBAT.$SITE.production"),
   IS_TESTING("$READINGBAT.$SITE.testing"),
-  POSTGRES_ENABLED("$READINGBAT.$SITE.postgresEnabled"),
+  DBMS_ENABLED("$READINGBAT.$SITE.dbmsEnabled"),
   SAVE_REQUESTS_ENABLED("$READINGBAT.$SITE.saveRequestsEnabled"),
   MULTI_SERVER_ENABLED("$READINGBAT.$SITE.multiServerEnabled"),
   CONTENT_CACHING_ENABLED("$READINGBAT.$SITE.contentCachingEnabled"),
-  AGENT_ENABLED_PROPERTY("$AGENT.enabled"),
+  AGENT_ENABLED("$AGENT.enabled"),
 
   PINGDOM_BANNER_ID("$READINGBAT.$SITE.pingdomBannerId", { getPropertyOrNull() ?: UNASSIGNED }),
   PINGDOM_URL("$READINGBAT.$SITE.pingdomUrl", { getPropertyOrNull() ?: UNASSIGNED }),

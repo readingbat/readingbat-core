@@ -24,7 +24,7 @@ import com.github.readingbat.common.Endpoints.SYSTEM_ADMIN_ENDPOINT
 import com.github.readingbat.common.FormFields.DAYS_DEFAULT
 import com.github.readingbat.common.FormFields.DAYS_PARAM
 import com.github.readingbat.common.FormFields.RETURN_PARAM
-import com.github.readingbat.common.Property.PINGDOM_BANNER_ID
+import com.github.readingbat.common.Property
 import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.queryActiveClassCode
 import com.github.readingbat.common.isAdminUser
@@ -76,7 +76,7 @@ internal object AdminPrefsPage : KLogging() {
               a { href = "$SYSTEM_ADMIN_ENDPOINT?$RETURN_PARAM=$returnPath"; +"System Admin" }
             }
 
-            PINGDOM_BANNER_ID.getPropertyOrNull()
+            Property.PINGDOM_BANNER_ID.getPropertyOrNull()
               ?.also {
                 p(classes = INDENT_1EM) {
                   a {

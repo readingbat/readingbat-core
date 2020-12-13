@@ -20,7 +20,7 @@ package com.github.readingbat.server
 import com.github.pambrose.common.dsl.KtorDsl
 import com.github.pambrose.common.dsl.KtorDsl.get
 import com.github.readingbat.common.Constants
-import com.github.readingbat.common.EnvVar.IPGEOLOCATION_KEY
+import com.github.readingbat.common.EnvVar
 import com.google.gson.Gson
 import com.pambrose.common.exposed.get
 import com.pambrose.common.exposed.upsert
@@ -107,7 +107,7 @@ import java.util.concurrent.ConcurrentHashMap
     private fun callGeoInfoApi(ipAddress: String) =
       runBlocking {
         KtorDsl.httpClient { client ->
-          val apiKey = IPGEOLOCATION_KEY.getRequiredEnv()
+          val apiKey = EnvVar.IPGEOLOCATION_KEY.getRequiredEnv()
           client.get("https://api.ipgeolocation.io/ipgeo?apiKey=$apiKey&ip=$ipAddress") { response ->
             val json = response.readText()
             GeoInfo(true, -1, ipAddress, json).apply { logger.info { "API GEO info for $ipAddress: ${summary()}" } }

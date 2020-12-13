@@ -75,7 +75,7 @@ import com.github.readingbat.common.StaticFileNames.LIKE_COLOR_FILE
 import com.github.readingbat.common.User.Companion.queryActiveClassCode
 import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.dsl.isPostgresEnabled
+import com.github.readingbat.dsl.isDbmsEnabled
 import com.github.readingbat.pages.PageUtils.addLink
 import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyHeader
@@ -537,7 +537,7 @@ internal object ChallengePage : KLogging() {
 
   private fun BODY.likeDislike(user: User?, browserSession: BrowserSession?, challenge: Challenge) {
 
-    if (!isPostgresEnabled())
+    if (!isDbmsEnabled())
       return
 
     val likeDislikeVal =
@@ -623,7 +623,7 @@ internal object ChallengePage : KLogging() {
     val correctAnswersKey = correctAnswersKey(user, browserSession, languageName, groupName, challengeName)
     val challengeAnswersKey = challengeAnswersKey(user, browserSession, languageName, groupName, challengeName)
 
-    if (!isPostgresEnabled())
+    if (!isDbmsEnabled())
       return
 
     form {
@@ -656,7 +656,7 @@ internal object ChallengePage : KLogging() {
 
   fun fetchPreviousResponses(user: User?, browserSession: BrowserSession?, challenge: Challenge) =
     when {
-      !isPostgresEnabled() -> emptyMap
+      !isDbmsEnabled() -> emptyMap
       user.isNotNull() ->
         transaction {
           UserChallengeInfo

@@ -34,8 +34,8 @@ import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.DataException
 import com.github.readingbat.dsl.LanguageType.Companion.defaultLanguageType
 import com.github.readingbat.dsl.LanguageType.Companion.toLanguageType
+import com.github.readingbat.dsl.isDbmsEnabled
 import com.github.readingbat.dsl.isMultiServerEnabled
-import com.github.readingbat.dsl.isPostgresEnabled
 import com.github.readingbat.posts.ChallengeHistory
 import com.github.readingbat.posts.ChallengeResults
 import com.github.readingbat.posts.DashboardHistory
@@ -78,7 +78,7 @@ import kotlin.time.measureTime
     this.userId = userId
     this.browserSession = browserSession
 
-    if (initFields && isPostgresEnabled()) {
+    if (initFields && isDbmsEnabled()) {
       measureTime {
         transaction {
           Users
@@ -501,7 +501,7 @@ import kotlin.time.measureTime
 
   fun shouldPublish(classCode: ClassCode = enrolledClassCode) =
     when {
-      !isPostgresEnabled() -> false
+      !isDbmsEnabled() -> false
       classCode.isEnabled -> {
         // Check to see if the teacher that owns class has it set as their active class in one of the sessions
         val teacherId = classCode.fetchClassTeacherId()
@@ -536,7 +536,7 @@ import kotlin.time.measureTime
 
     fun queryActiveClassCode(user: User?) =
       when {
-        user.isNull() || !isPostgresEnabled() -> DISABLED_CLASS_CODE
+        user.isNull() || !isDbmsEnabled() -> DISABLED_CLASS_CODE
         else ->
           transaction {
             UserSessions
@@ -549,7 +549,7 @@ import kotlin.time.measureTime
 
     fun queryPreviousTeacherClassCode(user: User?) =
       when {
-        user.isNull() || !isPostgresEnabled() -> DISABLED_CLASS_CODE
+        user.isNull() || !isDbmsEnabled() -> DISABLED_CLASS_CODE
         else ->
           transaction {
             UserSessions

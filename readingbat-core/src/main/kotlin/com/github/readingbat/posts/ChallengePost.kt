@@ -49,7 +49,7 @@ import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.fetchUserDbmsIdFromCache
 import com.github.readingbat.common.browserSession
 import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.dsl.isPostgresEnabled
+import com.github.readingbat.dsl.isDbmsEnabled
 import com.github.readingbat.posts.AnswerStatus.CORRECT
 import com.github.readingbat.posts.AnswerStatus.INCORRECT
 import com.github.readingbat.posts.AnswerStatus.NOT_ANSWERED
@@ -170,7 +170,7 @@ internal object ChallengePost : KLogging() {
         .map { paramMap[RESP + it]?.trim() ?: error("Missing user response") }
         .mapIndexed { i, userResponse -> funcInfo.checkResponse(i, userResponse) }
 
-    if (isPostgresEnabled())
+    if (isDbmsEnabled())
       saveChallengeAnswers(user, call.browserSession, content, names, paramMap, funcInfo, userResponses, results)
 
     val answerMapping =
@@ -263,7 +263,7 @@ internal object ChallengePost : KLogging() {
 
     val path = pathOf(CHALLENGE_ROOT, languageName, groupName)
 
-    if (!isPostgresEnabled())
+    if (!isDbmsEnabled())
       throw RedirectException("$path?$MSG=${"Database not enabled"}")
 
     correctAnswersKeys

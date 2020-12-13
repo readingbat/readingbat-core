@@ -31,8 +31,7 @@ import com.github.readingbat.common.Endpoints.RESET_CONTENT_DSL_ENDPOINT
 import com.github.readingbat.common.Endpoints.WS_ROOT
 import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.Message
-import com.github.readingbat.common.Property.GRAFANA_URL
-import com.github.readingbat.common.Property.PROMETHEUS_URL
+import com.github.readingbat.common.Property
 import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.queryActiveClassCode
 import com.github.readingbat.common.isAdminUser
@@ -140,12 +139,12 @@ internal object SystemAdminPage : KLogging() {
                                     "Are you sure you want to load all the challenges? (This can take a while)")
             }
 
-            GRAFANA_URL.getPropertyOrNull()
+            Property.GRAFANA_URL.getPropertyOrNull()
               ?.also {
                 if (it.isNotBlank()) p { +"Grafana Dashboard is "; a { href = it; target = "_blank"; +"here" } }
               }
 
-            PROMETHEUS_URL.getPropertyOrNull()
+            Property.PROMETHEUS_URL.getPropertyOrNull()
               ?.also {
                 if (it.isNotBlank()) p { +"Prometheus Dashboard is "; a { href = it; target = "_blank"; +"here" } }
               }

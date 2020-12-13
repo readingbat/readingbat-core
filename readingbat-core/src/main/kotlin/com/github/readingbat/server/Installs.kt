@@ -27,16 +27,11 @@ import com.github.readingbat.common.Endpoints.FAV_ICON_ENDPOINT
 import com.github.readingbat.common.Endpoints.PING_ENDPOINT
 import com.github.readingbat.common.Endpoints.STATIC_ROOT
 import com.github.readingbat.common.Endpoints.WS_ROOT
-import com.github.readingbat.common.EnvVar.FILTER_LOG
-import com.github.readingbat.common.EnvVar.FORWARDED_ENABLED
-import com.github.readingbat.common.EnvVar.REDIRECT_HOSTNAME
-import com.github.readingbat.common.EnvVar.XFORWARDED_ENABLED
-import com.github.readingbat.common.Property.FORWARDED_ENABLED_PROPERTY
-import com.github.readingbat.common.Property.REDIRECT_HOSTNAME_PROPERTY
-import com.github.readingbat.common.Property.XFORWARDED_ENABLED_PROPERTY
+import com.github.readingbat.common.EnvVar
+import com.github.readingbat.common.Property
 import com.github.readingbat.dsl.InvalidRequestException
 import com.github.readingbat.dsl.RedisUnavailableException
-import com.github.readingbat.dsl.isPostgresEnabled
+import com.github.readingbat.dsl.isDbmsEnabled
 import com.github.readingbat.pages.DbmsDownPage.dbmsDownPage
 import com.github.readingbat.pages.ErrorPage.errorPage
 import com.github.readingbat.pages.InvalidRequestPage.invalidRequestPage
@@ -86,7 +81,7 @@ import java.util.concurrent.atomic.AtomicLong
     }
 
     val forwardedHeaderSupportEnabled =
-      FORWARDED_ENABLED.getEnv(FORWARDED_ENABLED_PROPERTY.configValue(this, default = "false").toBoolean())
+      EnvVar.FORWARDED_ENABLED.getEnv(Property.FORWARDED_ENABLED.configValue(this, default = "false").toBoolean())
     if (forwardedHeaderSupportEnabled) {
       logger.info { "Enabling ForwardedHeaderSupport" }
       install(ForwardedHeaderSupport)
@@ -96,7 +91,7 @@ import java.util.concurrent.atomic.AtomicLong
     }
 
     val xforwardedHeaderSupportEnabled =
-      XFORWARDED_ENABLED.getEnv(XFORWARDED_ENABLED_PROPERTY.configValue(this, default = "false").toBoolean())
+      EnvVar.XFORWARDED_ENABLED.getEnv(Property.XFORWARDED_ENABLED.configValue(this, default = "false").toBoolean())
     if (xforwardedHeaderSupportEnabled) {
       logger.info { "Enabling XForwardedHeaderSupport" }
       install(XForwardedHeaderSupport)
@@ -105,7 +100,7 @@ import java.util.concurrent.atomic.AtomicLong
       logger.info { "Not enabling XForwardedHeaderSupport" }
     }
 
-    val redirectHostname = REDIRECT_HOSTNAME.getEnv(REDIRECT_HOSTNAME_PROPERTY.configValue(this, default = ""))
+    val redirectHostname = EnvVar.REDIRECT_HOSTNAME.getEnv(Property.REDIRECT_HOSTNAME.configValue(this, default = ""))
     if (production && redirectHostname.isNotBlank()) {
       logger.info { "Installing HerokuHttpsRedirect using: $redirectHostname" }
       install(HerokuHttpsRedirect) {
@@ -134,7 +129,7 @@ import java.util.concurrent.atomic.AtomicLong
     install(CallLogging) {
       level = Level.INFO
 
-      if (FILTER_LOG.getEnv(true))
+      if (EnvVar.FILTER_LOG.getEnv(true))
         filter { call ->
           call.request.path().let {
             it.startsWith("/") && !it.startsWith("/$STATIC/") && it != PING_ENDPOINT && !it.startsWith("$WS_ROOT/")
@@ -146,7 +141,7 @@ import java.util.concurrent.atomic.AtomicLong
         val response = call.response
         val logStr = request.toLogString()
         val remote = request.origin.remoteHost
-        val email = if (isPostgresEnabled()) call.fetchEmailFromCache() else UNKNOWN_EMAIL
+        val email = if (isDbmsEnabled()) call.fetchEmailFromCache() else UNKNOWN_EMAIL
 
         when (val status = response.status() ?: HttpStatusCode(-1, "Unknown")) {
           Found -> "Redirect: $logStr -> ${response.headers[Location]} - $remote - $email"
