@@ -151,14 +151,14 @@ internal object HelpAndLogin {
         td { +"password" }
         td {
           passwordInput(classes = bottomFocus) {
-            name = PASSWORD_PARAM; size = "20"; placeholder = "password"; tabIndex = "3"
+            id = PASSWORD_PARAM; name = PASSWORD_PARAM; size = "20"; placeholder = "password"; tabIndex = "3"
           }
         }
       }
 
       this@login.tr {
         td {}
-        td { submitInput { name = "dologin"; value = "log in" } }
+        td { submitInput { id = "login"; name = "dologin"; value = "log in" } }
       }
 
       span { tabIndex = "4"; onFocus = "document.querySelector('.$topFocus').focus()" }

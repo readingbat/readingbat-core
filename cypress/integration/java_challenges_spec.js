@@ -19,8 +19,6 @@ context('Aliasing', () => {
         cy.tryValue(3, 'False', 'rgb(255, 0, 0)')
         cy.tryValue(4, 'False', 'rgb(255, 0, 0)')
 
-        cy.screenshot('clicking-on-nav')
-
         cy.tryValue(0, 'true', 'rgb(78, 170, 58)')
         cy.tryValue(1, 'true', 'rgb(78, 170, 58)')
         cy.tryValue(2, 'false', 'rgb(78, 170, 58)')

@@ -44,6 +44,9 @@ dbmigrate:
 dbvalidate:
 	./gradlew flywayValidate
 
+test:
+	~/node_modules/.bin/cypress open
+
 versioncheck:
 	./gradlew dependencyUpdates
 

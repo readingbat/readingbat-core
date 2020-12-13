@@ -90,7 +90,7 @@ internal object CreateAccountPage {
                   td { style = labelWidth; label { +"Name" } }
                   td {
                     textInput {
-                      style = inputFs; size = "42"; name = FULLNAME_PARAM; value =
+                      style = inputFs; size = "42"; id = "fullname"; name = FULLNAME_PARAM; value =
                       defaultFullName.value
                     }
                   }
@@ -99,7 +99,7 @@ internal object CreateAccountPage {
                   td { style = labelWidth; label { +"Email (used as account id)" } }
                   td {
                     textInput {
-                      style = inputFs; size = "42"; name = EMAIL_PARAM; value =
+                      style = inputFs; size = "42"; id = "email"; name = EMAIL_PARAM; value =
                       defaultEmail.value
                     }
                   }
@@ -110,6 +110,7 @@ internal object CreateAccountPage {
                     passwordInput {
                       style = inputFs
                       size = "42"
+                      id = "passwd"
                       name = PASSWORD_PARAM
                       value = ""
                     }
@@ -122,6 +123,7 @@ internal object CreateAccountPage {
                     passwordInput {
                       style = inputFs
                       size = "42"
+                      id = "confirm_passwd"
                       name = CONFIRM_PASSWORD_PARAM
                       value = ""
                       onKeyPress = "click$createButton(event)"
