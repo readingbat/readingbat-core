@@ -32,6 +32,18 @@ do-reset:
 tests:
 	./gradlew check
 
+dbinfo:
+	./gradlew flywayInfo
+
+dbclean:
+	./gradlew flywayClean
+
+dbmigrate:
+	./gradlew flywayMigrate
+
+dbvalidate:
+	./gradlew flywayValidate
+
 versioncheck:
 	./gradlew dependencyUpdates
 

@@ -124,7 +124,7 @@ val dslContent =
 
     java {
       repo = GitHubRepo(Organization, "readingbat", "readingbat-core")
-      srcPath = "src/test/java"
+      srcPath = "readingbat-core/src/test/java"
       branchName = "1.9.0"
 
       group("Java Tests") {
@@ -140,7 +140,7 @@ val dslContent =
 
     kotlin {
       repo = GitHubRepo(Organization, "readingbat", "readingbat-core")
-      srcPath = "src/test/kotlin"
+      srcPath = "readingbat-core/src/test/kotlin"
       branchName = "1.9.0"
 
       group("Kotlin Tests") {

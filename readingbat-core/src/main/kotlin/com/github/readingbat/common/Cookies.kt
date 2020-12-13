@@ -52,7 +52,7 @@ internal data class UserPrincipal(val userId: String, val created: Long = Instan
     try {
       querySessionDbmsId(id)
     } catch (e: MissingBrowserSessionException) {
-      logger.debug { "Creating BrowserSession for ${e.message}" }
+      logger.info { "Creating BrowserSession in sessionDbmsId() - ${e.message}" }
       createBrowserSession(id)
     }
 
@@ -97,6 +97,19 @@ internal data class UserPrincipal(val userId: String, val created: Long = Instan
         .insertAndGetId { row ->
           row[sessionId] = id
         }.value
+
+    fun findSessionDbmsId(id: String, createIfMissing: Boolean) =
+      try {
+        querySessionDbmsId(id)
+      } catch (e: MissingBrowserSessionException) {
+        if (createIfMissing) {
+          logger.info { "Creating BrowserSession in findSessionDbmsId() - ${e.message}" }
+          createBrowserSession(id)
+        }
+        else {
+          -1
+        }
+      }
 
     fun querySessionDbmsId(id: String) =
       transaction {

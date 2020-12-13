@@ -312,7 +312,7 @@ private fun Application.assignProperties() {
   Property.PYTHON_SCRIPTS_POOL_SIZE.setPropertyFromConfig(this, "5")
 
   Property.DBMS_DRIVER_CLASSNAME.setPropertyFromConfig(this, "com.impossibl.postgres.jdbc.PGDriver")
-  Property.DBMS_URL.setPropertyFromConfig(this, "jdbc:pgsql://localhost:5432/postgres")
+  Property.DBMS_URL.setPropertyFromConfig(this, "jdbc:pgsql://localhost:5432/readingbat")
   Property.DBMS_USERNAME.setPropertyFromConfig(this, "postgres")
   Property.DBMS_PASSWORD.setPropertyFromConfig(this, "")
   Property.DBMS_MAX_POOL_SIZE.setPropertyFromConfig(this, "10")

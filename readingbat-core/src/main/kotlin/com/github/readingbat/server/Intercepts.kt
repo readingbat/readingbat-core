@@ -18,7 +18,7 @@
 package com.github.readingbat.server
 
 import com.github.pambrose.common.util.isNotNull
-import com.github.readingbat.common.BrowserSession.Companion.querySessionDbmsId
+import com.github.readingbat.common.BrowserSession.Companion.findSessionDbmsId
 import com.github.readingbat.common.Constants.STATIC
 import com.github.readingbat.common.Constants.UNKNOWN_USER_ID
 import com.github.readingbat.common.Endpoints.PING_ENDPOINT
@@ -79,46 +79,47 @@ internal fun Application.intercepts() {
 
   intercept(ApplicationCallPipeline.Features) {
     // Phase for features. Most features should intercept this phase
+    if (!isStaticCall())
+      try {
+        val browserSession = call.browserSession
+        if (isSaveRequestsEnabled() && browserSession.isNotNull()) {
+          val request = call.request
+          val ipAddress = request.origin.remoteHost
+          val sessionDbmsId = transaction { findSessionDbmsId(browserSession.id, true) }
+          val userDbmsId =
+            call.fetchUserDbmsIdFromCache().takeIf { it != -1L } ?: fetchUserDbmsIdFromCache(UNKNOWN_USER_ID)
+          val verb = request.httpMethod.value
+          val path = request.path()
+          val queryString = request.queryString()
+          // Use https://ipgeolocation.io/documentation/user-agent-api.html to parse userAgent data
+          val userAgent = request.headers[UserAgent] ?: ""
 
-    if (!isStaticCall()) {
-      val browserSession = call.browserSession
+          val geoInfo = lookupGeoInfo(ipAddress)
+          val geoDbmsId =
+            if (geoInfo.requireDbmsLookUp)
+              queryGeoInfo(ipAddress)?.dbmsId ?: error("Missing ip address: $ipAddress")
+            else
+              geoInfo.dbmsId
 
-      if (isSaveRequestsEnabled() && browserSession.isNotNull()) {
-        val request = call.request
-        val ipAddress = request.origin.remoteHost
-        val sessionDbmsId = transaction { querySessionDbmsId(browserSession.id) }
-        val userDbmsId =
-          call.fetchUserDbmsIdFromCache().takeIf { it != -1L } ?: fetchUserDbmsIdFromCache(UNKNOWN_USER_ID)
-        val verb = request.httpMethod.value
-        val path = request.path()
-        val queryString = request.queryString()
-        // Use https://ipgeolocation.io/documentation/user-agent-api.html to parse userAgent data
-        val userAgent = request.headers[UserAgent] ?: ""
-
-        val geoInfo = lookupGeoInfo(ipAddress)
-        val geoDbmsId =
-          if (geoInfo.requireDbmsLookUp)
-            queryGeoInfo(ipAddress)?.dbmsId ?: error("Missing ip address: $ipAddress")
-          else
-            geoInfo.dbmsId
-
-        logger.debug { "Saving request: ${call.callId} $ipAddress $userDbmsId $verb $path $queryString $geoDbmsId" }
-        transaction {
-          ServerRequests
-            .insert { row ->
-              row[requestId] = call.callId ?: "None"
-              row[sessionRef] = sessionDbmsId
-              row[userRef] = userDbmsId
-              row[geoRef] = geoDbmsId
-              row[ServerRequests.verb] = verb
-              row[ServerRequests.path] = path
-              row[ServerRequests.queryString] = queryString
-              row[ServerRequests.userAgent] = userAgent
-              row[duration] = 0
-            }
+          logger.debug { "Saving request: ${call.callId} $ipAddress $userDbmsId $verb $path $queryString $geoDbmsId" }
+          transaction {
+            ServerRequests
+              .insert { row ->
+                row[requestId] = call.callId ?: "None"
+                row[sessionRef] = sessionDbmsId
+                row[userRef] = userDbmsId
+                row[geoRef] = geoDbmsId
+                row[ServerRequests.verb] = verb
+                row[ServerRequests.path] = path
+                row[ServerRequests.queryString] = queryString
+                row[ServerRequests.userAgent] = userAgent
+                row[duration] = 0
+              }
+          }
         }
+      } catch (e: Throwable) {
+        logger.warn(e) {}
       }
-    }
   }
 
   intercept(ApplicationCallPipeline.Call) {

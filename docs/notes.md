@@ -49,6 +49,7 @@ Setup:
 * docker login
 
 ## Postgres
+
 * https://hackernoon.com/dont-install-postgres-docker-pull-postgres-bee20e200198
 * `mkdir -p $HOME/docker/volumes/postgres`
 * `docker run --rm --name pg-docker -e DBMS_PASSWORD=docker -d -p 5432:5432 -v $HOME/docker/volumes/postgres:/var/lib/postgresql/data  postgres`
@@ -56,8 +57,14 @@ Setup:
 * `psql "dbname=readingbat host=localhost port=5432 user=postgres password=docker"`
 
 ## Postgres Connection Pools
+
 * https://www.thebookofjoel.com/kotlin-ktor-exposed-postgres
 * https://github.com/brettwooldridge/HikariCP
+* Running postgres locally:
+
+```
+  docker run --rm --name pg-docker -e POSTGRES_PASSWORD=docker -d -p 5432:5432 -v $HOME/docker/volumes/postgres:/var/lib/postgresql/data  postgres
+```
 
 ## Exposed
 
@@ -73,3 +80,5 @@ Setup:
 ## Cypress.io
 
 * tab plugin: https://github.com/Bkucera/cypress-plugin-tab
+* To start locally: ~/node_modules/.bin/cypress open
+* To run: ~/node_modules/.bin/cypress run --record --key 5ee5de19-1e84-4807-a199-5c70fda2fe5d

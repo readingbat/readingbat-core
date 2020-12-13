@@ -19,17 +19,17 @@ package com.github.readingbat
 
 import com.github.readingbat.TestData.GROUP_NAME
 import com.github.readingbat.TestData.readTestContent
-import com.github.readingbat.TestSupport.answerFor
-import com.github.readingbat.TestSupport.forEachAnswer
-import com.github.readingbat.TestSupport.forEachChallenge
-import com.github.readingbat.TestSupport.forEachGroup
-import com.github.readingbat.TestSupport.forEachLanguage
-import com.github.readingbat.TestSupport.javaChallenge
-import com.github.readingbat.TestSupport.kotlinChallenge
-import com.github.readingbat.TestSupport.pythonChallenge
-import com.github.readingbat.TestSupport.shouldHaveAnswer
-import com.github.readingbat.TestSupport.shouldNotHaveAnswer
-import com.github.readingbat.TestSupport.testModule
+import com.github.readingbat.kotest.TestSupport.answerFor
+import com.github.readingbat.kotest.TestSupport.forEachAnswer
+import com.github.readingbat.kotest.TestSupport.forEachChallenge
+import com.github.readingbat.kotest.TestSupport.forEachGroup
+import com.github.readingbat.kotest.TestSupport.forEachLanguage
+import com.github.readingbat.kotest.TestSupport.javaChallenge
+import com.github.readingbat.kotest.TestSupport.kotlinChallenge
+import com.github.readingbat.kotest.TestSupport.pythonChallenge
+import com.github.readingbat.kotest.TestSupport.shouldHaveAnswer
+import com.github.readingbat.kotest.TestSupport.shouldNotHaveAnswer
+import com.github.readingbat.kotest.TestSupport.testModule
 import io.kotest.core.spec.style.StringSpec
 import io.ktor.server.testing.*
 

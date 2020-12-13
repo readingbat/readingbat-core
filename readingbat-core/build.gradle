@@ -62,7 +62,6 @@ dependencies {
     implementation libraries.jodatime
 
     implementation libraries.pgjdbc
-    implementation libraries.postgres
     implementation libraries.socket
 
     implementation libraries.gson
@@ -75,7 +74,7 @@ dependencies {
 
     implementation libraries.github
 
-    runtime libraries.h2
+    runtime libraries.postgres
 
     testImplementation libraries.ktor_server_tests
     testImplementation libraries.ktor_server_test_host

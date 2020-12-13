@@ -5,8 +5,13 @@ jdk:
   #- oraclejdk11
   - openjdk11
 
+services:
+  - postgresql
+
 before_script:
   - chmod +x gradlew
+  - psql -c 'create database readingbat;' -U postgres
+  - ./gradlew flywayClean flywayMigrate
 #  - sudo redis-server /etc/redis/redis.conf --port 6379 --requirepass 'none'
 
 script:

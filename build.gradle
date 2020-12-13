@@ -7,6 +7,7 @@ plugins {
     id "com.github.ben-manes.versions" version '0.36.0' apply false
     id 'com.github.johnrengelman.shadow' version '6.1.0' apply false
     id 'com.github.gmazzo.buildconfig' version '2.0.2' apply false
+    id "org.flywaydb.flyway" version "7.3.1"
 }
 
 ext {
@@ -65,8 +66,6 @@ ext {
             pgjdbc                 : "com.impossibl.pgjdbc-ng:pgjdbc-ng-all:$pgjdbc_version",
             postgres               : "org.postgresql:postgresql:$postgres_version",
             socket                 : "com.google.cloud.sql:postgres-socket-factory:$cloud_version",
-            h2                     : "com.h2database:h2:$h2_version",
-
 
             gson                   : "com.google.code.gson:gson:$gson_version",
             guava                  : "com.google.guava:guava:$guava_version",
@@ -174,4 +173,16 @@ subprojects {
             showStandardStreams = true
         }
     }
+}
+
+dependencies {
+    runtime libraries.postgres
+}
+
+flyway {
+    driver = 'org.postgresql.Driver'
+    url = 'jdbc:postgresql://localhost:5432/readingbat'
+    user = 'postgres'
+    password = 'docker'
+    schemas = ['readingbat']
 }

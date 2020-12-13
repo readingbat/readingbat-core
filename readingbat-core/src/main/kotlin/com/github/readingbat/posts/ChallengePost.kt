@@ -23,7 +23,7 @@ import com.github.pambrose.common.util.md5Of
 import com.github.pambrose.common.util.pathOf
 import com.github.pambrose.common.util.toDoubleQuoted
 import com.github.readingbat.common.BrowserSession
-import com.github.readingbat.common.BrowserSession.Companion.querySessionDbmsId
+import com.github.readingbat.common.BrowserSession.Companion.findSessionDbmsId
 import com.github.readingbat.common.Constants
 import com.github.readingbat.common.Constants.CHALLENGE_SRC
 import com.github.readingbat.common.Constants.GROUP_SRC
@@ -195,7 +195,10 @@ internal object ChallengePost : KLogging() {
       NO_AUTH_KEY ->
         transaction {
           SessionChallengeInfo
-            .deleteWhere { (SessionChallengeInfo.sessionRef eq querySessionDbmsId(id)) and (SessionChallengeInfo.md5 eq md5) }
+            .deleteWhere {
+              (SessionChallengeInfo.sessionRef eq findSessionDbmsId(id,
+                                                                    false)) and (SessionChallengeInfo.md5 eq md5)
+            }
         }
       else -> error("Invalid type: $type")
     }
@@ -210,7 +213,10 @@ internal object ChallengePost : KLogging() {
       NO_AUTH_KEY ->
         transaction {
           SessionAnswerHistory
-            .deleteWhere { (SessionAnswerHistory.sessionRef eq querySessionDbmsId(id)) and (SessionAnswerHistory.md5 eq md5) }
+            .deleteWhere {
+              (SessionAnswerHistory.sessionRef eq findSessionDbmsId(id,
+                                                                    false)) and (SessionAnswerHistory.md5 eq md5)
+            }
         }
       else -> error("Invalid type: $type")
     }
