@@ -27,6 +27,7 @@ cache:
 before_install:
   - nvm install $NODE_VERSION
   - npm install cypress
+  - npm install -D cypress-plugin-tab
 
 before_script:
   - chmod +x ./gradlew
@@ -39,7 +40,6 @@ before_script:
 
 script:
   # - ./gradlew check #jacocoTestReport
-  # - $(npm bin)/cypress run --record --key 5ee5de19-1e84-4807-a199-5c70fda2fe5d
   # - npm list -g
   # - npm list
   - cd /home/travis/build/readingbat/readingbat-core; /home/travis/build/readingbat/readingbat-core/node_modules/.bin/cypress run --record --key 5ee5de19-1e84-4807-a199-5c70fda2fe5d
