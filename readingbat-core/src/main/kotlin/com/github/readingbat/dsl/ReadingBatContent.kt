@@ -68,6 +68,7 @@ class ReadingBatContent {
   val languages by lazy { listOf(python, java, kotlin) }
 
   // User properties
+  // Default value is isProduction()
   var cacheChallenges = isProduction()
 
   // These are defaults and can be overridden in language specific section

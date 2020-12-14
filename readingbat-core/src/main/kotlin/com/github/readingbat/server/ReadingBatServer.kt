@@ -260,7 +260,8 @@ internal fun Application.readContentDsl(fileName: String, variableName: String, 
   // readContentDsl() is passed as a lambda because it is Application.readContentDsl()
   val resetContentDslFunc = { logId: String -> readContentDsl(dslFileName, dslVariableName, logId) }
 
-  LoggingWs.initThreads({ content.get() }, resetContentDslFunc)
+  if (isRedisEnabled())
+    LoggingWs.initThreads({ content.get() }, resetContentDslFunc)
 
   installs(isProduction())
 
@@ -270,7 +271,7 @@ internal fun Application.readContentDsl(fileName: String, variableName: String, 
     adminRoutes(metrics)
     locations(metrics) { content.get() }
     userRoutes(metrics) { content.get() }
-    if (isProduction()) {
+    if (isProduction() && isRedisEnabled()) {
       sysAdminRoutes(metrics, resetContentDslFunc)
       wsRoutes(metrics) { content.get() }
     }

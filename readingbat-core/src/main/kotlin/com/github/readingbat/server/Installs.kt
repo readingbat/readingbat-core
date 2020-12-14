@@ -75,7 +75,7 @@ import java.util.concurrent.atomic.AtomicLong
       configureFormAuth()
     }
 
-    val install = install(WebSockets) {
+    install(WebSockets) {
       pingPeriod = Duration.ofSeconds(15)  // Duration between pings or `0` to disable pings
       timeout = Duration.ofSeconds(15)
     }
