@@ -38,8 +38,9 @@ before_script:
   - sleep 20
 
 script:
-  #  - ./gradlew check #jacocoTestReport
-  - $(npm bin)/cypress run --record --key 5ee5de19-1e84-4807-a199-5c70fda2fe5d
+  # - ./gradlew check #jacocoTestReport
+  # - $(npm bin)/cypress run --record --key 5ee5de19-1e84-4807-a199-5c70fda2fe5d
+  - ~/node_modules/.bin/cypress run --record --key 5ee5de19-1e84-4807-a199-5c70fda2fe5d
 
 after_script:
   - curl http://0.0.0.0:8080/shutdown
