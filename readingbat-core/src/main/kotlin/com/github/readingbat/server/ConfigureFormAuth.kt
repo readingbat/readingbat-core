@@ -19,7 +19,6 @@
 
 package com.github.readingbat.server
 
-import com.github.pambrose.common.redis.RedisUtils.withRedisPool
 import com.github.pambrose.common.util.isNotNull
 import com.github.pambrose.common.util.isNull
 import com.github.pambrose.common.util.sha256
@@ -29,8 +28,7 @@ import com.github.readingbat.common.Constants.UNKNOWN
 import com.github.readingbat.common.FormFields
 import com.github.readingbat.common.User.Companion.queryUserByEmail
 import com.github.readingbat.common.UserPrincipal
-import com.github.readingbat.dsl.RedisUnavailableException
-import com.github.readingbat.server.ReadingBatServer.redisPool
+import com.github.readingbat.dsl.isDbmsEnabled
 import com.google.common.util.concurrent.RateLimiter
 import io.ktor.auth.*
 import mu.KLogging
@@ -70,31 +68,28 @@ internal object ConfigureFormAuth : KLogging() {
 
       validate { cred: UserPasswordCredential ->
         // Do not move the elvis check to the end of the lambda because it can return a null value
-        val pool = redisPool ?: throw RedisUnavailableException("redisPool validate()")
-        pool.withRedisPool { redis ->
-          if (redis.isNull()) {
-            logger.error { DBMS_DOWN }
-            throw RedisUnavailableException("redis validate()")
-          }
-          else {
-            var principal: UserPrincipal? = null
-            val user = queryUserByEmail(Email(cred.name))
-            if (user.isNotNull()) {
-              val salt = user.salt
-              val digest = user.digest
-              if (salt.isNotBlank() && digest.isNotBlank() && digest == cred.password.sha256(salt)) {
-                logger.debug { "Found user ${cred.name} ${user.userId}" }
-                principal = UserPrincipal(user.userId)
-              }
+        if (!isDbmsEnabled()) {
+          logger.error { DBMS_DOWN }
+          error("DBMS not enabled")
+        }
+        else {
+          var principal: UserPrincipal? = null
+          val user = queryUserByEmail(Email(cred.name))
+          if (user.isNotNull()) {
+            val salt = user.salt
+            val digest = user.digest
+            if (salt.isNotBlank() && digest.isNotBlank() && digest == cred.password.sha256(salt)) {
+              logger.debug { "Found user ${cred.name} ${user.userId}" }
+              principal = UserPrincipal(user.userId)
             }
-
-            logger.info { "Login ${if (principal.isNull()) "failure" else "success for $user ${user?.email ?: UNKNOWN}"}" }
-
-            if (principal.isNull())
-              failedLoginLimiter.acquire() // may block
-
-            principal
           }
+
+          logger.info { "Login ${if (principal.isNull()) "failure" else "success for $user ${user?.email ?: UNKNOWN}"}" }
+
+          if (principal.isNull())
+            failedLoginLimiter.acquire() // may block
+
+          principal
         }
       }
     }
