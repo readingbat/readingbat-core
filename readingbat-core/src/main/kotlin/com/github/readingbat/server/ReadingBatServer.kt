@@ -170,12 +170,14 @@ object ReadingBatServer : KLogging() {
     ScriptPools.kotlinScriptPool
 
     redisPool =
-      try {
-        RedisUtils.newJedisPool().also { logger.info { "Created Redis pool" } }
-      } catch (e: JedisConnectionException) {
-        logger.error { "Failed to create Redis pool: $REDIS_IS_DOWN" }
-        null  // Return null
-      }
+      if (isRedisEnabled())
+        try {
+          RedisUtils.newJedisPool().also { logger.info { "Created Redis pool" } }
+        } catch (e: JedisConnectionException) {
+          logger.error { "Failed to create Redis pool: $REDIS_IS_DOWN" }
+          null  // Return null
+        }
+      else null
 
     embeddedServer(CIO, environment).start(wait = true)
   }

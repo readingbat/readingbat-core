@@ -31,17 +31,16 @@ before_install:
 
 before_script:
   - chmod +x ./gradlew
+  - sleep 20
   - psql -c 'create database readingbat;' -U postgres
   - ./gradlew flywayClean flywayMigrate flywayInfo
-  #  - sudo redis-server /etc/redis/redis.conf --port 6379 --requirepass 'none'
   - cd readingbat-core; ../gradlew run --args="-config=src/test/resources/application-test.conf" &
   - cd
   - sleep 20
+  #  - sudo redis-server /etc/redis/redis.conf --port 6379 --requirepass 'none'
 
 script:
   # - ./gradlew check #jacocoTestReport
-  # - npm list -g
-  # - npm list
   - cd /home/travis/build/readingbat/readingbat-core; /home/travis/build/readingbat/readingbat-core/node_modules/.bin/cypress run --record --key 5ee5de19-1e84-4807-a199-5c70fda2fe5d
 
 after_script:

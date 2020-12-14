@@ -30,6 +30,7 @@ import com.github.readingbat.dsl.InvalidRequestException
 import com.github.readingbat.dsl.RedisUnavailableException
 import com.github.readingbat.dsl.agentLaunchId
 import com.github.readingbat.dsl.isMultiServerEnabled
+import com.github.readingbat.dsl.isRedisEnabled
 import com.github.readingbat.server.ReadingBatServer.redisPool
 import com.github.readingbat.server.ServerUtils.fetchUser
 import com.github.readingbat.server.ws.PubSubCommandsWs.ChallengeAnswerData
@@ -105,7 +106,7 @@ internal object ChallengeWs : KLogging() {
           }
     }
 
-    if (isMultiServerEnabled()) {
+    if (isMultiServerEnabled() && isRedisEnabled()) {
       newSingleThreadExecutor()
         .submit {
           while (true) {
