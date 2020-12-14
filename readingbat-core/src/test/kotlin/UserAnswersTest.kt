@@ -33,7 +33,7 @@ import com.github.readingbat.kotest.TestSupport.testModule
 import io.kotest.core.spec.style.StringSpec
 import io.ktor.server.testing.*
 
-class UserAnswers : StringSpec(
+class UserAnswersTest : StringSpec(
   {
     "Test user answers" {
       val testContent = readTestContent()

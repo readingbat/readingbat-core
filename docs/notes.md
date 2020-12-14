@@ -82,3 +82,4 @@ Setup:
 * tab plugin: https://github.com/Bkucera/cypress-plugin-tab
 * To start locally: ~/node_modules/.bin/cypress open
 * To run: ~/node_modules/.bin/cypress run --record --key 5ee5de19-1e84-4807-a199-5c70fda2fe5d
+* https://levelup.gitconnected.com/what-ive-learnt-using-cypress-io-for-the-past-three-weeks-c1597999cd2f

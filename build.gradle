@@ -125,9 +125,6 @@ subprojects {
         implementation "ch.qos.logback:logback-classic:$logback_version"
 
         runtimeOnly "org.jetbrains.kotlin:kotlin-scripting-jsr223"
-
-        testImplementation "org.junit.jupiter:junit-jupiter-api:$junit_version"
-        testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:$junit_version"
     }
 
     shadowJar {

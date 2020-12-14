@@ -7,6 +7,10 @@ build
 *.ipr
 *.iws
 
+cypress/videos
+cypress/screenshots
+cypress/examples
+
 ### Kotlin template
 # Compiled class file
 *.class
