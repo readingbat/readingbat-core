@@ -40,7 +40,9 @@ before_script:
 script:
   # - ./gradlew check #jacocoTestReport
   # - $(npm bin)/cypress run --record --key 5ee5de19-1e84-4807-a199-5c70fda2fe5d
-  - /home/travis/build/readingbat/readingbat-core/node_modules/cypress run --record --key 5ee5de19-1e84-4807-a199-5c70fda2fe5d
+  - npm list -g
+  - npm list
+  - /home/travis/build/readingbat/readingbat-core/node_modules/.bin/cypress run --record --key 5ee5de19-1e84-4807-a199-5c70fda2fe5d
 
 after_script:
   - curl http://0.0.0.0:8080/shutdown
