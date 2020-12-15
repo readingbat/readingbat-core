@@ -81,7 +81,6 @@ internal fun Application.intercepts() {
     // Phase for features. Most features should intercept this phase
     if (!isStaticCall())
       try {
-        println("**** Attributes: ${call.attributes.allKeys.map { it.toString() }}")
         val browserSession = call.browserSession
         if (isSaveRequestsEnabled() && browserSession.isNotNull()) {
           val request = call.request
