@@ -24,7 +24,6 @@ import com.github.pambrose.common.util.Version.Companion.versionDesc
 import com.github.pambrose.common.util.getBanner
 import com.github.pambrose.common.util.isNotNull
 import com.github.pambrose.common.util.isNull
-import com.github.pambrose.common.util.maskUrlCredentials
 import com.github.pambrose.common.util.randomId
 import com.github.readingbat.common.Constants.REDIS_IS_DOWN
 import com.github.readingbat.common.Constants.UNASSIGNED
@@ -158,7 +157,7 @@ object ReadingBatServer : KLogging() {
       info { ReadingBatServer::class.versionDesc() }
     }
 
-    logger.info { "${EnvVar.REDIS_URL}: ${EnvVar.REDIS_URL.getEnv(UNASSIGNED).maskUrlCredentials()}" }
+    //logger.info { "${EnvVar.REDIS_URL}: ${EnvVar.REDIS_URL.getEnv(UNASSIGNED).maskUrlCredentials()}" }
 
     assignKotlinSciptProperty()
 
@@ -168,16 +167,6 @@ object ReadingBatServer : KLogging() {
     ScriptPools.javaScriptPool
     ScriptPools.pythonScriptPool
     ScriptPools.kotlinScriptPool
-
-    redisPool =
-      if (isRedisEnabled())
-        try {
-          RedisUtils.newJedisPool().also { logger.info { "Created Redis pool" } }
-        } catch (e: JedisConnectionException) {
-          logger.error { "Failed to create Redis pool: $REDIS_IS_DOWN" }
-          null  // Return null
-        }
-      else null
 
     embeddedServer(CIO, environment).start(wait = true)
   }
@@ -215,6 +204,16 @@ internal fun Application.readContentDsl(fileName: String, variableName: String, 
   assignProperties()
 
   adminUsers.addAll(Property.ADMIN_USERS.configValueOrNull(this)?.getList() ?: emptyList())
+
+  ReadingBatServer.redisPool =
+    if (isRedisEnabled())
+      try {
+        RedisUtils.newJedisPool().also { logger.info { "Created Redis pool" } }
+      } catch (e: JedisConnectionException) {
+        logger.error { "Failed to create Redis pool: $REDIS_IS_DOWN" }
+        null  // Return null
+      }
+    else null
 
   // Only run this in production
   if (isProduction() && isRedisEnabled())
@@ -291,6 +290,8 @@ private fun Application.assignProperties() {
   Property.IS_PRODUCTION.setProperty(Property.IS_PRODUCTION.configValue(this, "false").toBoolean().toString())
 
   Property.DBMS_ENABLED.setProperty(Property.DBMS_ENABLED.configValue(this, "false").toBoolean().toString())
+  Property.REDIS_ENABLED.setProperty(Property.REDIS_ENABLED.configValue(this, "false").toBoolean().toString())
+
   Property.SAVE_REQUESTS_ENABLED.setProperty(Property.SAVE_REQUESTS_ENABLED.configValue(this, "true").toBoolean()
                                                .toString())
   Property.MULTI_SERVER_ENABLED.setProperty(Property.MULTI_SERVER_ENABLED.configValue(this, "false").toBoolean()
@@ -313,6 +314,9 @@ private fun Application.assignProperties() {
   Property.JAVA_SCRIPTS_POOL_SIZE.setPropertyFromConfig(this, "5")
   Property.KOTLIN_SCRIPTS_POOL_SIZE.setPropertyFromConfig(this, "5")
   Property.PYTHON_SCRIPTS_POOL_SIZE.setPropertyFromConfig(this, "5")
+
+  Property.KOTLIN_EVALUATORS_POOL_SIZE.setPropertyFromConfig(this, "5")
+  Property.PYTHON_EVALUATORS_POOL_SIZE.setPropertyFromConfig(this, "5")
 
   Property.DBMS_DRIVER_CLASSNAME.setPropertyFromConfig(this, "com.impossibl.postgres.jdbc.PGDriver")
   Property.DBMS_URL.setPropertyFromConfig(this, "jdbc:pgsql://localhost:5432/readingbat")

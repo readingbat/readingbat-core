@@ -85,8 +85,8 @@ enum class Property(val propertyValue: String,
   KOTLIN_SCRIPTS_POOL_SIZE("$READINGBAT.scripts.kotlinPoolSize"),
   PYTHON_SCRIPTS_POOL_SIZE("$READINGBAT.scripts.pythonPoolSize"),
 
-  KOTLIN_EVALUATOR_POOL_SIZE("$READINGBAT.evaluators.kotlinPoolSize"),
-  PYTHON_EVALUATOR_POOL_SIZE("$READINGBAT.evaluators.pythonPoolSize"),
+  KOTLIN_EVALUATORS_POOL_SIZE("$READINGBAT.evaluators.kotlinPoolSize"),
+  PYTHON_EVALUATORS_POOL_SIZE("$READINGBAT.evaluators.pythonPoolSize"),
 
   DBMS_DRIVER_CLASSNAME("$DBMS.driverClassName"),
   DBMS_URL("$DBMS.jdbcUrl"),

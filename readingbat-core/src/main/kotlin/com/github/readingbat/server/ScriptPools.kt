@@ -44,12 +44,12 @@ internal object ScriptPools : KLogging() {
   }
 
   internal val pythonEvaluatorPool by lazy {
-    PythonExprEvaluatorPool(Property.PYTHON_EVALUATOR_POOL_SIZE.getProperty(5))
+    PythonExprEvaluatorPool(Property.PYTHON_EVALUATORS_POOL_SIZE.getProperty(5))
       .also { logger.info { "Created Python evaluator pool with size ${it.size}" } }
   }
 
   internal val kotlinEvaluatorPool by lazy {
-    KotlinExprEvaluatorPool(Property.KOTLIN_EVALUATOR_POOL_SIZE.getProperty(5))
+    KotlinExprEvaluatorPool(Property.KOTLIN_EVALUATORS_POOL_SIZE.getProperty(5))
       .also { logger.info { "Created Kotlin evaluator pool with size ${it.size}" } }
   }
 }
