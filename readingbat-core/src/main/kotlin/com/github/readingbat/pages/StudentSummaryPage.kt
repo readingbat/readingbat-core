@@ -71,7 +71,7 @@ internal object StudentSummaryPage : KLogging() {
   fun PipelineCall.studentSummaryPage(content: ReadingBatContent, user: User?): String {
     val p = call.parameters
     val languageName = p[LANG_TYPE_QP]?.let { LanguageName(it) } ?: throw InvalidRequestException("Missing language")
-    val student = p[USER_ID_QP]?.let { it.toUser() } ?: throw InvalidRequestException("Missing user id")
+    val student = p[USER_ID_QP]?.toUser() ?: throw InvalidRequestException("Missing user id")
     val classCode = p[CLASS_CODE_QP]?.let { ClassCode(it) } ?: throw InvalidRequestException("Missing class code")
     val activeClassCode = queryActiveClassCode(user)
 

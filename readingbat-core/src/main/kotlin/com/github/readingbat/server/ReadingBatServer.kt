@@ -26,12 +26,12 @@ import com.github.pambrose.common.util.isNotNull
 import com.github.pambrose.common.util.isNull
 import com.github.pambrose.common.util.randomId
 import com.github.readingbat.common.Constants.REDIS_IS_DOWN
-import com.github.readingbat.common.Constants.UNASSIGNED
 import com.github.readingbat.common.Constants.UNKNOWN_USER_ID
 import com.github.readingbat.common.Endpoints.STATIC_ROOT
 import com.github.readingbat.common.EnvVar
 import com.github.readingbat.common.Metrics
 import com.github.readingbat.common.Property
+import com.github.readingbat.common.Property.Companion.assignProperties
 import com.github.readingbat.common.User.Companion.createUnknownUser
 import com.github.readingbat.common.User.Companion.userExists
 import com.github.readingbat.dsl.*
@@ -111,10 +111,10 @@ object ReadingBatServer : KLogging() {
 
   internal val upTime get() = startTime.elapsedNow()
 
-  fun assignKotlinSciptProperty() {
+  private fun assignKotlinSciptProperty() {
     // If kotlin.script.classpath property is missing, set it based on env var SCRIPT_CLASSPATH
     // This has to take place before reading DSL
-    val scriptClasspathProp = Property.KOTLIN_SCRIPT_CLASSPATH.getPropertyOrNull()
+    val scriptClasspathProp = Property.KOTLIN_SCRIPT_CLASSPATH.getUncheckedPropertyOrNull()
     if (scriptClasspathProp.isNull()) {
       val scriptClasspathEnvVar = EnvVar.SCRIPT_CLASSPATH.getEnvOrNull()
       if (scriptClasspathEnvVar.isNotNull())
@@ -127,11 +127,11 @@ object ReadingBatServer : KLogging() {
     }
   }
 
-  fun configEnviroment(arg: String) = commandLineEnvironment(withConfigArg(arg))
+  fun configEnvironment(arg: String) = commandLineEnvironment(withConfigArg(arg))
 
-  fun withConfigArg(arg: String) = deriveArgs(arrayOf("-config=$arg"))
+  private fun withConfigArg(arg: String) = deriveArgs(arrayOf("-config=$arg"))
 
-  fun deriveArgs(args: Array<String>): Array<String> {
+  private fun deriveArgs(args: Array<String>): Array<String> {
     // Grab config filename from CLI args and then try ENV var
     val configFilename =
       args.asSequence()
@@ -157,16 +157,14 @@ object ReadingBatServer : KLogging() {
       info { ReadingBatServer::class.versionDesc() }
     }
 
-    //logger.info { "${EnvVar.REDIS_URL}: ${EnvVar.REDIS_URL.getEnv(UNASSIGNED).maskUrlCredentials()}" }
-
     assignKotlinSciptProperty()
 
     val environment = commandLineEnvironment(deriveArgs(args))
 
     // Reference these to load them
-    ScriptPools.javaScriptPool
-    ScriptPools.pythonScriptPool
-    ScriptPools.kotlinScriptPool
+//    ScriptPools.javaScriptPool
+//    ScriptPools.pythonScriptPool
+//    ScriptPools.kotlinScriptPool
 
     embeddedServer(CIO, environment).start(wait = true)
   }
@@ -278,59 +276,4 @@ internal fun Application.readContentDsl(fileName: String, variableName: String, 
     }
     static(STATIC_ROOT) { resources("static") }
   }
-}
-
-private fun Application.assignProperties() {
-
-  val agentEnabled =
-    EnvVar.AGENT_ENABLED.getEnv(Property.AGENT_ENABLED.configValue(this, default = "false").toBoolean())
-  Property.AGENT_ENABLED.setProperty(agentEnabled.toString())
-  Property.PROXY_HOSTNAME.setPropertyFromConfig(this, "")
-
-  Property.IS_PRODUCTION.setProperty(Property.IS_PRODUCTION.configValue(this, "false").toBoolean().toString())
-
-  Property.DBMS_ENABLED.setProperty(Property.DBMS_ENABLED.configValue(this, "false").toBoolean().toString())
-  Property.REDIS_ENABLED.setProperty(Property.REDIS_ENABLED.configValue(this, "false").toBoolean().toString())
-
-  Property.SAVE_REQUESTS_ENABLED.setProperty(Property.SAVE_REQUESTS_ENABLED.configValue(this, "true").toBoolean()
-                                               .toString())
-  Property.MULTI_SERVER_ENABLED.setProperty(Property.MULTI_SERVER_ENABLED.configValue(this, "false").toBoolean()
-                                              .toString())
-  Property.CONTENT_CACHING_ENABLED.setProperty(Property.CONTENT_CACHING_ENABLED.configValue(this, "false").toBoolean()
-                                                 .toString())
-
-  Property.DSL_FILE_NAME.setPropertyFromConfig(this, "src/Content.kt")
-  Property.DSL_VARIABLE_NAME.setPropertyFromConfig(this, "content")
-
-  Property.ANALYTICS_ID.setPropertyFromConfig(this, "")
-
-  Property.PINGDOM_BANNER_ID.setPropertyFromConfig(this, "")
-  Property.PINGDOM_URL.setPropertyFromConfig(this, "")
-  Property.STATUS_PAGE_URL.setPropertyFromConfig(this, "")
-
-  Property.PROMETHEUS_URL.setPropertyFromConfig(this, "")
-  Property.GRAFANA_URL.setPropertyFromConfig(this, "")
-
-  Property.JAVA_SCRIPTS_POOL_SIZE.setPropertyFromConfig(this, "5")
-  Property.KOTLIN_SCRIPTS_POOL_SIZE.setPropertyFromConfig(this, "5")
-  Property.PYTHON_SCRIPTS_POOL_SIZE.setPropertyFromConfig(this, "5")
-
-  Property.KOTLIN_EVALUATORS_POOL_SIZE.setPropertyFromConfig(this, "5")
-  Property.PYTHON_EVALUATORS_POOL_SIZE.setPropertyFromConfig(this, "5")
-
-  Property.DBMS_DRIVER_CLASSNAME.setPropertyFromConfig(this, "com.impossibl.postgres.jdbc.PGDriver")
-  Property.DBMS_URL.setPropertyFromConfig(this, "jdbc:pgsql://localhost:5432/readingbat")
-  Property.DBMS_USERNAME.setPropertyFromConfig(this, "postgres")
-  Property.DBMS_PASSWORD.setPropertyFromConfig(this, "")
-  Property.DBMS_MAX_POOL_SIZE.setPropertyFromConfig(this, "10")
-
-  Property.REDIS_MAX_POOL_SIZE.setPropertyFromConfig(this, "10")
-  Property.REDIS_MAX_IDLE_SIZE.setPropertyFromConfig(this, "5")
-  Property.REDIS_MIN_IDLE_SIZE.setPropertyFromConfig(this, "1")
-
-  Property.KTOR_PORT.setPropertyFromConfig(this, "0")
-  Property.KTOR_WATCH.setProperty(Property.KTOR_WATCH.configValueOrNull(this)?.getList()?.toString() ?: UNASSIGNED)
-
-  Property.SENDGRID_PREFIX.setProperty(
-    EnvVar.SENDGRID_PREFIX.getEnv(Property.SENDGRID_PREFIX.configValue(this, "https://www.readingbat.com")))
 }

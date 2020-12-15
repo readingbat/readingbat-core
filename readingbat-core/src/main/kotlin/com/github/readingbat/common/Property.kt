@@ -32,6 +32,7 @@ import com.github.readingbat.common.PropertyNames.SITE
 import io.ktor.application.*
 import io.ktor.config.*
 import mu.KLogging
+import java.util.concurrent.atomic.AtomicBoolean
 
 enum class Property(val propertyValue: String,
                     val maskFunc: Property.() -> String = { getProperty(UNASSIGNED) }) {
@@ -114,15 +115,23 @@ enum class Property(val propertyValue: String,
   fun configValueOrNull(application: Application) =
     application.environment.config.propertyOrNull(propertyValue)
 
-  fun getProperty(default: String) = System.getProperty(propertyValue) ?: default
+  fun getProperty(default: String) =
+    (System.getProperty(propertyValue) ?: default).also { if (!initialized.get()) error(NO_INIT_STR) }
 
-  fun getProperty(default: Boolean) = System.getProperty(propertyValue)?.toBoolean() ?: default
+  fun getProperty(default: Boolean) = (System.getProperty(propertyValue)?.toBoolean()
+    ?: default).also { if (!initialized.get()) error(NO_INIT_STR) }
 
-  fun getProperty(default: Int) = System.getProperty(propertyValue)?.toIntOrNull() ?: default
+  fun getProperty(default: Int) = (System.getProperty(propertyValue)?.toIntOrNull()
+    ?: default).also { if (!initialized.get()) error(NO_INIT_STR) }
 
-  fun getPropertyOrNull(): String? = System.getProperty(propertyValue)
+  fun getPropertyOrNull(): String? =
+    System.getProperty(propertyValue).also { if (!initialized.get()) error(NO_INIT_STR) }
 
-  fun getRequiredProperty() = getPropertyOrNull() ?: error("Missing $propertyValue value")
+  fun getUncheckedPropertyOrNull(): String? =
+    System.getProperty(propertyValue)
+
+  fun getRequiredProperty() = (getPropertyOrNull()
+    ?: error("Missing $propertyValue value")).also { if (!initialized.get()) error(NO_INIT_STR) }
 
   fun setProperty(value: String) {
     System.setProperty(propertyValue, value)
@@ -134,9 +143,69 @@ enum class Property(val propertyValue: String,
       setProperty(configValue(application, default))
   }
 
-  fun isDefined() = getPropertyOrNull().isNotNull()
-  fun isNotDefined() = getPropertyOrNull().isNull()
+  fun isDefined() = getUncheckedPropertyOrNull().isNotNull()
+  fun isNotDefined() = getUncheckedPropertyOrNull().isNull()
 
-  companion object : KLogging()
+  companion object : KLogging() {
+    private const val NO_INIT_STR = "Property not initialized"
+    val initialized = AtomicBoolean(false)
+
+    internal fun Application.assignProperties() {
+
+      val agentEnabled =
+        EnvVar.AGENT_ENABLED.getEnv(AGENT_ENABLED.configValue(this, default = "false").toBoolean())
+      AGENT_ENABLED.setProperty(agentEnabled.toString())
+      PROXY_HOSTNAME.setPropertyFromConfig(this, "")
+
+      IS_PRODUCTION.setProperty(IS_PRODUCTION.configValue(this, "false").toBoolean().toString())
+
+      DBMS_ENABLED.setProperty(DBMS_ENABLED.configValue(this, "false").toBoolean().toString())
+      REDIS_ENABLED.setProperty(REDIS_ENABLED.configValue(this, "false").toBoolean().toString())
+
+      SAVE_REQUESTS_ENABLED.setProperty(SAVE_REQUESTS_ENABLED.configValue(this, "true").toBoolean()
+                                          .toString())
+      MULTI_SERVER_ENABLED.setProperty(MULTI_SERVER_ENABLED.configValue(this, "false").toBoolean()
+                                         .toString())
+      CONTENT_CACHING_ENABLED.setProperty(CONTENT_CACHING_ENABLED.configValue(this, "false").toBoolean()
+                                            .toString())
+
+      DSL_FILE_NAME.setPropertyFromConfig(this, "src/Content.kt")
+      DSL_VARIABLE_NAME.setPropertyFromConfig(this, "content")
+
+      ANALYTICS_ID.setPropertyFromConfig(this, "")
+
+      PINGDOM_BANNER_ID.setPropertyFromConfig(this, "")
+      PINGDOM_URL.setPropertyFromConfig(this, "")
+      STATUS_PAGE_URL.setPropertyFromConfig(this, "")
+
+      PROMETHEUS_URL.setPropertyFromConfig(this, "")
+      GRAFANA_URL.setPropertyFromConfig(this, "")
+
+      JAVA_SCRIPTS_POOL_SIZE.setPropertyFromConfig(this, "5")
+      KOTLIN_SCRIPTS_POOL_SIZE.setPropertyFromConfig(this, "5")
+      PYTHON_SCRIPTS_POOL_SIZE.setPropertyFromConfig(this, "5")
+
+      KOTLIN_EVALUATORS_POOL_SIZE.setPropertyFromConfig(this, "5")
+      PYTHON_EVALUATORS_POOL_SIZE.setPropertyFromConfig(this, "5")
+
+      DBMS_DRIVER_CLASSNAME.setPropertyFromConfig(this, "com.impossibl.postgres.jdbc.PGDriver")
+      DBMS_URL.setPropertyFromConfig(this, "jdbc:pgsql://localhost:5432/readingbat")
+      DBMS_USERNAME.setPropertyFromConfig(this, "postgres")
+      DBMS_PASSWORD.setPropertyFromConfig(this, "")
+      DBMS_MAX_POOL_SIZE.setPropertyFromConfig(this, "10")
+
+      REDIS_MAX_POOL_SIZE.setPropertyFromConfig(this, "10")
+      REDIS_MAX_IDLE_SIZE.setPropertyFromConfig(this, "5")
+      REDIS_MIN_IDLE_SIZE.setPropertyFromConfig(this, "1")
+
+      KTOR_PORT.setPropertyFromConfig(this, "0")
+      KTOR_WATCH.setProperty(KTOR_WATCH.configValueOrNull(this)?.getList()?.toString() ?: UNASSIGNED)
+
+      SENDGRID_PREFIX.setProperty(EnvVar.SENDGRID_PREFIX.getEnv(SENDGRID_PREFIX.configValue(this,
+                                                                                            "https://www.readingbat.com")))
+
+      initialized.set(true)
+    }
+  }
 }
 
