@@ -19,7 +19,6 @@ package com.github.readingbat.common
 
 import com.github.pambrose.common.redis.RedisUtils
 import com.github.pambrose.common.util.isNotNull
-import com.github.pambrose.common.util.isNull
 import com.github.pambrose.common.util.obfuscate
 import com.github.readingbat.common.Constants.UNASSIGNED
 import com.github.readingbat.common.PropertyNames.AGENT
@@ -127,9 +126,6 @@ enum class Property(val propertyValue: String,
   fun getPropertyOrNull(): String? =
     System.getProperty(propertyValue).also { if (!initialized.get()) error(NO_INIT_STR) }
 
-  fun getUncheckedPropertyOrNull(): String? =
-    System.getProperty(propertyValue)
-
   fun getRequiredProperty() = (getPropertyOrNull()
     ?: error("Missing $propertyValue value")).also { if (!initialized.get()) error(NO_INIT_STR) }
 
@@ -143,12 +139,12 @@ enum class Property(val propertyValue: String,
       setProperty(configValue(application, default))
   }
 
-  fun isDefined() = getUncheckedPropertyOrNull().isNotNull()
-  fun isNotDefined() = getUncheckedPropertyOrNull().isNull()
+  fun isDefined() = System.getProperty(propertyValue).isNotNull()
+  fun isNotDefined() = !isDefined()
 
   companion object : KLogging() {
     private const val NO_INIT_STR = "Property not initialized"
-    val initialized = AtomicBoolean(false)
+    private val initialized = AtomicBoolean(false)
 
     internal fun Application.assignProperties() {
 
@@ -157,17 +153,16 @@ enum class Property(val propertyValue: String,
       AGENT_ENABLED.setProperty(agentEnabled.toString())
       PROXY_HOSTNAME.setPropertyFromConfig(this, "")
 
-      IS_PRODUCTION.setProperty(IS_PRODUCTION.configValue(this, "false").toBoolean().toString())
+      IS_PRODUCTION.also { it.setProperty(it.configValue(this, "false").toBoolean().toString()) }
 
-      DBMS_ENABLED.setProperty(DBMS_ENABLED.configValue(this, "false").toBoolean().toString())
-      REDIS_ENABLED.setProperty(REDIS_ENABLED.configValue(this, "false").toBoolean().toString())
+      DBMS_ENABLED.also { it.setProperty(it.configValue(this, "false").toBoolean().toString()) }
+      REDIS_ENABLED.also { it.setProperty(it.configValue(this, "false").toBoolean().toString()) }
 
-      SAVE_REQUESTS_ENABLED.setProperty(SAVE_REQUESTS_ENABLED.configValue(this, "true").toBoolean()
-                                          .toString())
-      MULTI_SERVER_ENABLED.setProperty(MULTI_SERVER_ENABLED.configValue(this, "false").toBoolean()
-                                         .toString())
-      CONTENT_CACHING_ENABLED.setProperty(CONTENT_CACHING_ENABLED.configValue(this, "false").toBoolean()
-                                            .toString())
+      SAVE_REQUESTS_ENABLED.also { it.setProperty(it.configValue(this, "true").toBoolean().toString()) }
+
+      MULTI_SERVER_ENABLED.also { it.setProperty(it.configValue(this, "false").toBoolean().toString()) }
+
+      CONTENT_CACHING_ENABLED.also { it.setProperty(it.configValue(this, "false").toBoolean().toString()) }
 
       DSL_FILE_NAME.setPropertyFromConfig(this, "src/Content.kt")
       DSL_VARIABLE_NAME.setPropertyFromConfig(this, "content")
@@ -199,10 +194,12 @@ enum class Property(val propertyValue: String,
       REDIS_MIN_IDLE_SIZE.setPropertyFromConfig(this, "1")
 
       KTOR_PORT.setPropertyFromConfig(this, "0")
-      KTOR_WATCH.setProperty(KTOR_WATCH.configValueOrNull(this)?.getList()?.toString() ?: UNASSIGNED)
+      KTOR_WATCH.also { it.setProperty(it.configValueOrNull(this)?.getList()?.toString() ?: UNASSIGNED) }
 
-      SENDGRID_PREFIX.setProperty(EnvVar.SENDGRID_PREFIX.getEnv(SENDGRID_PREFIX.configValue(this,
-                                                                                            "https://www.readingbat.com")))
+      SENDGRID_PREFIX.also {
+        it.setProperty(EnvVar.SENDGRID_PREFIX.getEnv(it.configValue(this,
+                                                                    "https://www.readingbat.com")))
+      }
 
       initialized.set(true)
     }

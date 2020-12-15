@@ -39,6 +39,7 @@ import com.github.readingbat.readingbat_core.BuildConfig
 import com.github.readingbat.server.Installs.installs
 import com.github.readingbat.server.Locations.locations
 import com.github.readingbat.server.ReadingBatServer.adminUsers
+import com.github.readingbat.server.ReadingBatServer.assignKotlinScriptProperty
 import com.github.readingbat.server.ReadingBatServer.content
 import com.github.readingbat.server.ReadingBatServer.contentReadCount
 import com.github.readingbat.server.ReadingBatServer.logger
@@ -111,10 +112,10 @@ object ReadingBatServer : KLogging() {
 
   internal val upTime get() = startTime.elapsedNow()
 
-  private fun assignKotlinSciptProperty() {
+  fun assignKotlinScriptProperty() {
     // If kotlin.script.classpath property is missing, set it based on env var SCRIPT_CLASSPATH
     // This has to take place before reading DSL
-    val scriptClasspathProp = Property.KOTLIN_SCRIPT_CLASSPATH.getUncheckedPropertyOrNull()
+    val scriptClasspathProp = Property.KOTLIN_SCRIPT_CLASSPATH.getPropertyOrNull()
     if (scriptClasspathProp.isNull()) {
       val scriptClasspathEnvVar = EnvVar.SCRIPT_CLASSPATH.getEnvOrNull()
       if (scriptClasspathEnvVar.isNotNull())
@@ -157,15 +158,7 @@ object ReadingBatServer : KLogging() {
       info { ReadingBatServer::class.versionDesc() }
     }
 
-    assignKotlinSciptProperty()
-
     val environment = commandLineEnvironment(deriveArgs(args))
-
-    // Reference these to load them
-//    ScriptPools.javaScriptPool
-//    ScriptPools.pythonScriptPool
-//    ScriptPools.kotlinScriptPool
-
     embeddedServer(CIO, environment).start(wait = true)
   }
 }
@@ -238,6 +231,8 @@ internal fun Application.readContentDsl(fileName: String, variableName: String, 
 
   // This is done *after* AGENT_LAUNCH_ID is assigned because metrics depend on it
   metrics.init { content.get() }
+
+  assignKotlinScriptProperty()
 
   val dslFileName = Property.DSL_FILE_NAME.getRequiredProperty()
   val dslVariableName = Property.DSL_VARIABLE_NAME.getRequiredProperty()
