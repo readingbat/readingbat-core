@@ -49,21 +49,37 @@ Setup:
 * docker login
 
 ## Postgres
+
 * https://hackernoon.com/dont-install-postgres-docker-pull-postgres-bee20e200198
 * `mkdir -p $HOME/docker/volumes/postgres`
-* `docker run --rm   --name pg-docker -e POSTGRES_PASSWORD=docker -d -p 5432:5432 -v $HOME/docker/volumes/postgres:/var/lib/postgresql/data  postgres`
+* `docker run --rm --name pg-docker -e DBMS_PASSWORD=docker -d -p 5432:5432 -v $HOME/docker/volumes/postgres:/var/lib/postgresql/data  postgres`
 * `psql -h localhost -U postgres -d postgres`  use password: docker
 * `psql "dbname=readingbat host=localhost port=5432 user=postgres password=docker"`
 
 ## Postgres Connection Pools
+
 * https://www.thebookofjoel.com/kotlin-ktor-exposed-postgres
 * https://github.com/brettwooldridge/HikariCP
- 
+* Running postgres locally:
+
+```
+  docker run --rm --name pg-docker -e POSTGRES_PASSWORD=docker -d -p 5432:5432 -v $HOME/docker/volumes/postgres:/var/lib/postgresql/data  postgres
+```
+
 ## Exposed
+
 * https://www.thebookofjoel.com/kotlin-ktor-exposed-postgres
 * Upsert: https://github.com/JetBrains/Exposed/issues/167
 * Upsert: https://medium.com/@OhadShai/first-steps-with-kotlin-exposed-cb361a9bf5ac
 
 ## Google Cloud Postgres
+
 * https://github.com/GoogleCloudPlatform/cloud-sql-jdbc-socket-factory
 * ./bin/cloud_sql_proxy -instances=${ID}:${region}:readingbat-postgres=tcp:5432
+
+## Cypress.io
+
+* tab plugin: https://github.com/Bkucera/cypress-plugin-tab
+* To start locally: ~/node_modules/.bin/cypress open
+* To run: ~/node_modules/.bin/cypress run --record --key 5ee5de19-1e84-4807-a199-5c70fda2fe5d
+* https://levelup.gitconnected.com/what-ive-learnt-using-cypress-io-for-the-past-three-weeks-c1597999cd2f

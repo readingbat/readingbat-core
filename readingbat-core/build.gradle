@@ -1,0 +1,115 @@
+description = 'readingbat-core'
+
+// These are for the uber target
+def mainName = 'TestMain'
+def appName = 'server'
+
+// This is for ./gradlew run
+application {
+    mainClassName = mainName
+}
+
+dependencies {
+    implementation libraries.kotlin_reflect
+    implementation libraries.kotlinx_coroutines_core
+    //implementation libraries.kotlin_scripting_compiler
+
+    implementation libraries.serialization
+
+    implementation libraries.core_utils
+
+    implementation libraries.ktor_server_utils
+    implementation libraries.ktor_client_utils
+
+    implementation libraries.redis_utils
+
+    implementation libraries.script_utils_common
+    implementation libraries.script_utils_python
+    implementation libraries.script_utils_java
+    implementation libraries.script_utils_kotlin
+
+    implementation libraries.guava_utils
+    implementation libraries.service_utils
+    implementation libraries.prometheus_utils
+    implementation libraries.exposed_utils
+
+    implementation libraries.prometheus_proxy
+
+    implementation libraries.simpleclient
+
+    implementation libraries.scriptengine
+
+    implementation libraries.css
+    implementation libraries.css_jvm
+
+    implementation libraries.ktor_server_core
+    implementation libraries.ktor_server_cio
+    implementation libraries.ktor_client_core
+    implementation libraries.ktor_client_cio
+
+    implementation libraries.server_sessions
+    implementation libraries.html_builder
+    implementation libraries.ktor_locations
+    implementation libraries.ktor_metrics
+    implementation libraries.ktor_websockets
+
+    implementation libraries.jedis
+
+    implementation libraries.hikari
+
+    implementation libraries.exposed_core
+    implementation libraries.exposed_jdbc
+    implementation libraries.jodatime
+
+    implementation libraries.pgjdbc
+    implementation libraries.socket
+
+    implementation libraries.gson
+    implementation libraries.guava
+
+    implementation libraries.sendgrid
+
+    implementation libraries.commons
+    implementation libraries.flexmark
+
+    implementation libraries.github
+
+    runtime libraries.postgres
+
+    testImplementation libraries.ktor_server_tests
+    testImplementation libraries.ktor_server_test_host
+
+    testImplementation libraries.kotest_runner_junit5
+    testImplementation libraries.kotest_assertions_core
+    testImplementation libraries.kotest_assertions_ktor
+    testImplementation libraries.kotest_property
+
+    testImplementation project(':readingbat-kotest')
+}
+
+buildConfig {
+    buildConfigField('String', 'APP_NAME', "\"${project.name}\"")
+    buildConfigField('String', 'APP_VERSION', "\"${project.version}\"")
+    buildConfigField('String', 'APP_RELEASE_DATE', "\"12/15/20\"")
+}
+
+// Include build uberjars in heroku deploy
+task stage(dependsOn: ['uberjar', 'build', 'clean'])
+build.mustRunAfter clean
+
+task uberjar(type: Jar, dependsOn: shadowJar) {
+    zip64 true
+    archiveFileName = 'server.jar'
+    manifest {
+        attributes('Implementation-Title': appName)
+        attributes('Implementation-Version': version)
+        attributes('Built-Date': new Date())
+        attributes('Built-JDK': System.getProperty('java.version'))
+        attributes('Main-Class': mainName)
+    }
+    from zipTree(shadowJar.archiveFile)
+}
+
+artifacts {
+    archives sourcesJar
+}

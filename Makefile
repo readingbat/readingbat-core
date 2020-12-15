@@ -23,14 +23,25 @@ cc:
 run:
 	./gradlew run
 
-local-reset:
-	cd flyway; make local-reset
-
-do-reset:
-	cd flyway; make do-reset
-
 tests:
 	./gradlew check
+
+dbinfo:
+	./gradlew flywayInfo
+
+dbclean:
+	./gradlew flywayClean
+
+dbmigrate:
+	./gradlew flywayMigrate
+
+dbreset: dbclean dbmigrate
+
+dbvalidate:
+	./gradlew flywayValidate
+
+test:
+	~/node_modules/.bin/cypress open
 
 versioncheck:
 	./gradlew dependencyUpdates

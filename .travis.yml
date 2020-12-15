@@ -5,12 +5,45 @@ jdk:
   #- oraclejdk11
   - openjdk11
 
+services:
+  - postgresql
+
+env:
+  - NODE_VERSION="14.15.1"
+
+addons:
+  apt:
+    packages:
+      # Ubuntu 16+ does not install this dependency by default, so we need to install it ourselves
+      - libgconf-2-4
+
+cache:
+  # Caches $HOME/.npm when npm ci is default script command
+  # Caches node_modules in all other cases
+  npm: true
+  directories:
+    # we also need to cache folder with Cypress binary
+    - ~/.cache
+
+before_install:
+  - nvm install $NODE_VERSION
+  - npm install cypress
+  - npm install -D cypress-plugin-tab
+
 before_script:
-  - chmod +x gradlew
-#  - sudo redis-server /etc/redis/redis.conf --port 6379 --requirepass 'none'
+  - chmod +x ./gradlew
+  - psql -c 'create database readingbat;' -U postgres
+  - ./gradlew flywayClean flywayMigrate flywayInfo
+  #  - sudo redis-server /etc/redis/redis.conf --port 6379 --requirepass 'none'
 
 script:
   - ./gradlew check #jacocoTestReport
+  - cd readingbat-core; ../gradlew run --args="-config=src/test/resources/application-test.conf" &
+  - sleep 30
+  - cd /home/travis/build/readingbat/readingbat-core; /home/travis/build/readingbat/readingbat-core/node_modules/.bin/cypress run --record --key 5ee5de19-1e84-4807-a199-5c70fda2fe5d
+
+after_script:
+  - curl http://0.0.0.0:8080/shutdown
 
 #after_success:
 #  - bash <(curl -s https://codecov.io/bash)
