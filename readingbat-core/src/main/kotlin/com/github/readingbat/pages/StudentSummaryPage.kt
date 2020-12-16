@@ -148,7 +148,7 @@ internal object StudentSummaryPage : KLogging() {
   }
 
   private fun BODY.displayChallengeGroups(content: ReadingBatContent,
-                                          classCode: ClassCode,
+                                          @Suppress("UNUSED_PARAMETER") classCode: ClassCode,
                                           languageName: LanguageName) =
     div(classes = INDENT_2EM) {
       table(classes = INVOC_TABLE) {

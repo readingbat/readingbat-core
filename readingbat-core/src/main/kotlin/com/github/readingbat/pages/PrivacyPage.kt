@@ -19,7 +19,6 @@ package com.github.readingbat.pages
 
 import com.github.readingbat.common.CSSNames.INDENT_1EM
 import com.github.readingbat.common.FormFields.RETURN_PARAM
-import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyTitle
 import com.github.readingbat.pages.PageUtils.headDefault
@@ -37,7 +36,7 @@ import kotlinx.html.stream.createHTML
 
 internal object PrivacyPage {
 
-  fun PipelineCall.privacyPage(content: ReadingBatContent) =
+  fun PipelineCall.privacyPage() =
     createHTML()
       .html {
         head { headDefault() }

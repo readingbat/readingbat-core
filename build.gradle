@@ -52,6 +52,7 @@ ext {
             server_sessions        : "io.ktor:ktor-server-sessions:$ktor_version",
             html_builder           : "io.ktor:ktor-html-builder:$ktor_version",
             ktor_locations         : "io.ktor:ktor-locations:$ktor_version",
+            //ktor_locations_jvm     : "io.ktor:ktor-locations-jvm:$ktor_version",
             ktor_metrics           : "io.ktor:ktor-metrics:$ktor_version",
             ktor_websockets        : "io.ktor:ktor-websockets:$ktor_version",
 
@@ -118,8 +119,9 @@ subprojects {
     dependencies {
         implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
 
-        // This is required for the ExperimentalCoroutinesApi arg below
-        implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm"
+        // These are required for the annotation args below
+        implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:${coroutines_version}"
+        implementation "io.ktor:ktor-locations:${ktor_version}"
 
         implementation "io.github.microutils:kotlin-logging:$logging_version"
         implementation "ch.qos.logback:logback-classic:$logback_version"
@@ -156,7 +158,6 @@ subprojects {
         kotlinOptions.jvmTarget = '1.8'
         kotlinOptions.freeCompilerArgs += ['-Xuse-experimental=kotlin.time.ExperimentalTime',
                                            '-Xuse-experimental=io.ktor.util.KtorExperimentalAPI',
-                                           '-Xuse-experimental=io.ktor.locations.KtorExperimentalLocationsAPI',
                                            '-Xuse-experimental=kotlinx.coroutines.ExperimentalCoroutinesApi',
                                            '-Xuse-experimental=kotlin.ExperimentalStdlibApi',
                                            '-XXLanguage:+InlineClasses']

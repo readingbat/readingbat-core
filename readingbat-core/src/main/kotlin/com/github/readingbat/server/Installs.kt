@@ -179,21 +179,21 @@ import java.util.concurrent.atomic.AtomicLong
       exception<InvalidRequestException> { cause ->
         logger.info { "InvalidRequestException caught: ${cause.message}" }
         respondWith {
-          invalidRequestPage(ReadingBatServer.content.get(), call.request.uri, cause.message ?: UNKNOWN)
+          invalidRequestPage(call.request.uri, cause.message ?: UNKNOWN)
         }
       }
 
       exception<IllegalStateException> { cause ->
         logger.info { "IllegalStateException caught: ${cause.message}" }
         respondWith {
-          errorPage(ReadingBatServer.content.get())
+          errorPage()
         }
       }
 
       exception<RedisUnavailableException> { cause ->
         logger.info(cause) { "RedisUnavailableException caught: ${cause.message}" }
         respondWith {
-          dbmsDownPage(ReadingBatServer.content.get())
+          dbmsDownPage()
         }
       }
 
@@ -201,14 +201,14 @@ import java.util.concurrent.atomic.AtomicLong
       exception<Throwable> { cause ->
         logger.info(cause) { "Throwable caught: ${cause.simpleClassName}" }
         respondWith {
-          errorPage(ReadingBatServer.content.get())
+          errorPage()
         }
       }
 
       status(HttpStatusCode.NotFound) {
         //call.respond(TextContent("${it.value} ${it.description}", Plain.withCharset(UTF_8), it))
         respondWith {
-          notFoundPage(ReadingBatServer.content.get(), call.request.uri.replaceAfter("?", "").replace("?", ""))
+          notFoundPage(call.request.uri.replaceAfter("?", "").replace("?", ""))
         }
       }
     }

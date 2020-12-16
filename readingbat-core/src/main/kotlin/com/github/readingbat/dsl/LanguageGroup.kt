@@ -91,6 +91,7 @@ class LanguageGroup<T : Challenge>(internal val content: ReadingBatContent,
   }
 
   @ReadingBatDslMarker
+  @Suppress("unused")
   fun include(challengeGroup: ChallengeGroup<T>) {
     addGroup(challengeGroup)
   }

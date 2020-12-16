@@ -23,6 +23,7 @@ import com.github.pambrose.common.redis.RedisUtils.withRedis
 import com.github.pambrose.common.util.isNotNull
 import redis.clients.jedis.exceptions.JedisDataException
 
+@Suppress("unused")
 internal object RedisAdmin {
 
   internal const val docean = ""

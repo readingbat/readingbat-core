@@ -399,7 +399,7 @@ import kotlin.time.measureTime
         .firstOrNull() ?: EMPTY_RESET_ID
     }
 
-  fun savePasswordResetId(email: Email, previousResetId: ResetId, newResetId: ResetId) {
+  fun savePasswordResetId(email: Email, newResetId: ResetId) {
     transaction {
       PasswordResets
         .upsert(conflictIndex = passwordResetsIndex) { row ->

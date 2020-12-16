@@ -40,6 +40,7 @@ import java.util.concurrent.ConcurrentHashMap
   @Suppress("UNCHECKED_CAST")
   private val map = if (json.isNotBlank()) gson.fromJson(json, Map::class.java) as Map<String, Any?> else emptyMap()
 
+  @Suppress("unused")
   private val ip by map
   private val continent_code by map
   private val continent_name by map

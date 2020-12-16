@@ -52,6 +52,7 @@ enum class EnvVar(val maskFunc: EnvVar.() -> String = { getEnv(UNASSIGNED) }) {
 
   fun getEnv(default: Boolean) = System.getenv(name)?.toBoolean() ?: default
 
+  @Suppress("unused")
   fun getEnv(default: Int) = System.getenv(name)?.toInt() ?: default
 
   fun getRequiredEnv() = getEnvOrNull() ?: error("Missing $name value")

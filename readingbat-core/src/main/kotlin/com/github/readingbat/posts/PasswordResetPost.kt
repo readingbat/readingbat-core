@@ -33,7 +33,6 @@ import com.github.readingbat.common.User.Companion.isNotRegisteredEmail
 import com.github.readingbat.common.User.Companion.queryUserByEmail
 import com.github.readingbat.common.isNotValidUser
 import com.github.readingbat.common.isValidUser
-import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.isDbmsEnabled
 import com.github.readingbat.pages.PasswordResetPage.passwordResetPage
 import com.github.readingbat.posts.CreateAccountPost.checkPassword
@@ -62,7 +61,7 @@ internal object PasswordResetPost : KLogging() {
   private val unknownUserLimiter = RateLimiter.create(0.5) // rate 2.0 is "2 permits per second"
   private val unableToSend = Message("Unable to send password reset email -- missing email address", true)
 
-  suspend fun PipelineCall.sendPasswordReset(content: ReadingBatContent): String {
+  suspend fun PipelineCall.sendPasswordReset(): String {
     val email = call.receiveParameters().getEmail(EMAIL_PARAM)
     val remoteStr = call.request.origin.remoteHost
     logger.info { "Password change request for $email - $remoteStr" }
@@ -70,15 +69,15 @@ internal object PasswordResetPost : KLogging() {
     return when {
       user.isNotValidUser() -> {
         unknownUserLimiter.acquire()
-        passwordResetPage(content, EMPTY_RESET_ID, Message("Invalid user: $email", true))
+        passwordResetPage(EMPTY_RESET_ID, Message("Invalid user: $email", true))
       }
-      email.isBlank() -> passwordResetPage(content, EMPTY_RESET_ID, unableToSend)
+      email.isBlank() -> passwordResetPage(EMPTY_RESET_ID, unableToSend)
       email.isNotValidEmail() -> {
-        passwordResetPage(content, EMPTY_RESET_ID, Message("Invalid email address: $email", true))
+        passwordResetPage(EMPTY_RESET_ID, Message("Invalid email address: $email", true))
       }
       isNotRegisteredEmail(email) -> {
         unknownUserLimiter.acquire()
-        passwordResetPage(content, EMPTY_RESET_ID, Message("Unknown user: $email", true))
+        passwordResetPage(EMPTY_RESET_ID, Message("Unknown user: $email", true))
       }
       else -> {
         try {
@@ -86,8 +85,8 @@ internal object PasswordResetPost : KLogging() {
 
           // Lookup and remove previous value if it exists
           val user2 = queryUserByEmail(email) ?: throw ResetPasswordException("Unable to find $email")
-          val previousResetId = user2.userPasswordResetId()
-          user2.savePasswordResetId(email, previousResetId, newResetId)
+          //val previousResetId = user2.userPasswordResetId()
+          user2.savePasswordResetId(email, newResetId)
 
           logger.info { "Sending password reset email to $email - $remoteStr" }
           try {
@@ -110,13 +109,13 @@ internal object PasswordResetPost : KLogging() {
         } catch (e: ResetPasswordException) {
           logger.info { e }
           val msg = Message("Unable to send password reset email to $email", true)
-          passwordResetPage(content, EMPTY_RESET_ID, msg)
+          passwordResetPage(EMPTY_RESET_ID, msg)
         }
       }
     }
   }
 
-  suspend fun PipelineCall.updatePassword(content: ReadingBatContent): String =
+  suspend fun PipelineCall.updatePassword(): String =
     try {
       val params = call.receiveParameters()
       val resetId = params.getResetId(RESET_ID_PARAM)
@@ -155,7 +154,7 @@ internal object PasswordResetPost : KLogging() {
       throw RedirectException("/?$MSG=${"Password reset for $email".encode()}")
     } catch (e: ResetPasswordException) {
       logger.info { e }
-      passwordResetPage(content, e.resetId, Message(e.msg))
+      passwordResetPage(e.resetId, Message(e.msg))
     }
 
   class ResetPasswordException(val msg: String, val resetId: ResetId = EMPTY_RESET_ID) : Exception(msg)

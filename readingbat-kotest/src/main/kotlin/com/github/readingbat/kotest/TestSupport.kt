@@ -54,11 +54,13 @@ import kotlinx.coroutines.runBlocking
 
 class ChallengeAnswer(val funcInfo: FunctionInfo, val index: Int)
 
+@Suppress("unused")
 class ChallengeResult(val answerStatus: AnswerStatus,
                       val hint: String,
                       val index: Int,
                       val correctAnswer: String)
 
+@Suppress("unused")
 object TestSupport {
 
   inline infix fun ReadingBatContent.forEachLanguage(block: LanguageGroup<*>.() -> Unit) =
@@ -134,9 +136,9 @@ object TestSupport {
   fun ReadingBatContent.kotlinChallenge(groupName: String, challengeName: String, block: FunctionInfo.() -> Unit) =
     kotlinGroup(groupName).functionInfo(challengeName).apply(block)
 
-  fun ReadingBatContent.pythonGroup(name: String) = python.get(name)
-  fun ReadingBatContent.javaGroup(name: String) = java.get(name)
-  fun ReadingBatContent.kotlinGroup(name: String) = kotlin.get(name)
+  fun ReadingBatContent.pythonGroup(name: String) = python[name]
+  fun ReadingBatContent.javaGroup(name: String) = java[name]
+  fun ReadingBatContent.kotlinGroup(name: String) = kotlin[name]
 
   fun <T : Challenge> ChallengeGroup<T>.challengeByName(name: String) =
     challenges.firstOrNull { it.challengeName.value == name } ?: error("Missing challenge $name")
@@ -181,7 +183,7 @@ object TestSupport {
       adminRoutes(ReadingBatServer.metrics)
       locations(ReadingBatServer.metrics) { content }
       userRoutes(ReadingBatServer.metrics) { content }
-      sysAdminRoutes(ReadingBatServer.metrics) { s: String -> }
+      sysAdminRoutes(ReadingBatServer.metrics) { }
       wsRoutes(ReadingBatServer.metrics) { content }
       static(Endpoints.STATIC_ROOT) { resources("static") }
     }

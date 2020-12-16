@@ -76,6 +76,7 @@ import org.joda.time.DateTimeZone
 
 internal data class StudentInfo(val studentId: String, val firstName: String, val lastName: String)
 
+@Suppress("unused")
 internal data class ClassEnrollment(val sessionId: String,
                                     val students: List<StudentInfo> = mutableListOf())
 
@@ -93,6 +94,7 @@ internal class LikeDislikeInfo(val userId: String,
   fun toJson() = Json.encodeToString(serializer(), this)
 }
 
+@Suppress("unused")
 @Serializable
 internal class DashboardInfo(val userId: String,
                              val complete: Boolean,
@@ -304,7 +306,7 @@ internal object ChallengePost : KLogging() {
     throw RedirectException("$path?$MSG=${"Answers cleared".encode()}")
   }
 
-  suspend fun PipelineCall.likeDislike(content: ReadingBatContent, user: User?) {
+  suspend fun PipelineCall.likeDislike(user: User?) {
     val paramMap = call.paramMap()
     val names = ChallengeNames(paramMap)
     //val challenge = content.findChallenge(names.languageName, names.groupName, names.challengeName)

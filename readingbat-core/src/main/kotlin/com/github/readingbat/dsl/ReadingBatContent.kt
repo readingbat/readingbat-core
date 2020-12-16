@@ -126,6 +126,7 @@ class ReadingBatContent {
 
   internal fun validate() = languageList.forEach { it.validate() }
 
+  @Suppress("unused")
   internal fun functionInfoByMd5(md5: String) =
     functionInfoMap.asSequence().firstOrNull { it.component2().challengeMd5.value == md5 }?.value
 
@@ -139,6 +140,7 @@ class ReadingBatContent {
   fun kotlin(block: LanguageGroup<KotlinChallenge>.() -> Unit) = kotlin.run(block)
 
   @ReadingBatDslMarker
+  @Suppress("UNCHECKED_CAST")
   operator fun <T : Challenge> LanguageGroup<T>.unaryPlus() {
     val languageGroup = this@ReadingBatContent.findLanguage(languageType) as LanguageGroup<T>
     challengeGroups.forEach { languageGroup.addGroup(it) }

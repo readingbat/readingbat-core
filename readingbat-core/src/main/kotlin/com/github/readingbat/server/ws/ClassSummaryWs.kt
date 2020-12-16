@@ -69,17 +69,16 @@ internal object ClassSummaryWs : KLogging() {
 
           val content = contentSrc.invoke()
           val p = call.parameters
-          val languageName =
-            p[LANGUAGE_NAME]?.let { LanguageName(it) } ?: throw InvalidRequestException("Missing language")
+          val langName = p[LANGUAGE_NAME]?.let { LanguageName(it) } ?: throw InvalidRequestException("Missing language")
           val groupName = p[GROUP_NAME]?.let { GroupName(it) } ?: throw InvalidRequestException("Missing group name")
           val classCode = p[CLASS_CODE]?.let { ClassCode(it) } ?: throw InvalidRequestException("Missing class code")
-          val challenges = content.findGroup(languageName, groupName).challenges
+          val challenges = content.findGroup(langName, groupName).challenges
           val user = fetchUser() ?: throw InvalidRequestException("Null user")
           //val email = user.email
           //val remote = call.request.origin.remoteHost
           //val desc = "${pathOf(WS_ROOT, CLASS_SUMMARY_ENDPOINT, languageName, groupName, classCode)} - $remote - $email"
 
-          validateContext(languageName, groupName, classCode, null, user)
+          validateContext(langName, groupName, classCode, null, user)
 
           incoming
             .consumeAsFlow()
@@ -90,9 +89,9 @@ internal object ClassSummaryWs : KLogging() {
                 for (challenge in challenges) {
                   val funcInfo = challenge.functionInfo()
                   val challengeName = challenge.challengeName
-                  val numCalls = funcInfo.invocationCount
-                  var likes = 0
-                  var dislikes = 0
+                  //val numCalls = funcInfo.invocationCount
+                  //var likes = 0
+                  //var dislikes = 0
 
                   for (enrollee in enrollees) {
                     var incorrectAttempts = 0
@@ -100,7 +99,7 @@ internal object ClassSummaryWs : KLogging() {
                     val results = mutableListOf<String>()
                     for (invocation in funcInfo.invocations) {
                       transaction {
-                        val historyMd5 = md5Of(languageName, groupName, challengeName, invocation)
+                        val historyMd5 = md5Of(langName, groupName, challengeName, invocation)
                         if (enrollee.historyExists(historyMd5, invocation)) {
                           results +=
                             enrollee.answerHistory(historyMd5, invocation)
@@ -155,6 +154,7 @@ internal object ClassSummaryWs : KLogging() {
     }
   }
 
+  @Suppress("unused")
   @Serializable
   class ClassSummary(val userId: String,
                      val challengeName: String,

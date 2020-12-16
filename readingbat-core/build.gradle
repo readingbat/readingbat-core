@@ -50,6 +50,7 @@ dependencies {
     implementation libraries.server_sessions
     implementation libraries.html_builder
     implementation libraries.ktor_locations
+    //implementation libraries.ktor_locations_jvm
     implementation libraries.ktor_metrics
     implementation libraries.ktor_websockets
 

@@ -52,6 +52,8 @@ import kotlin.time.minutes
 internal object Intercepts : KLogging() {
   val clock = TimeSource.Monotonic
   val requestTimingMap = ConcurrentHashMap<String, TimeMark>()
+
+  @Suppress("unused")
   val timer =
     timer("requestTimingMap admin", false, 1.minutes.toLongMilliseconds(), 1.minutes.toLongMilliseconds()) {
       requestTimingMap

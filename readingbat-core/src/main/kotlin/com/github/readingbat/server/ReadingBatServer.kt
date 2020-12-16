@@ -128,6 +128,7 @@ object ReadingBatServer : KLogging() {
     }
   }
 
+  @Suppress("unused")
   fun configEnvironment(arg: String) = commandLineEnvironment(withConfigArg(arg))
 
   private fun withConfigArg(arg: String) = deriveArgs(arrayOf("-config=$arg"))
@@ -190,7 +191,7 @@ internal fun Application.readContentDsl(fileName: String, variableName: String, 
   contentReadCount.incrementAndGet()
 }
 
-/*internal*/ fun Application.module(testing: Boolean = false) {
+/*internal*/ fun Application.module() {
 
   assignProperties()
 

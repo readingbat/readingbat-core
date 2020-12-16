@@ -41,6 +41,7 @@ import java.io.File
 import kotlin.reflect.KProperty
 
 @ReadingBatDslMarker
+@Suppress("unused")
 class ChallengeGroup<T : Challenge>(/*internal*/ val languageGroup: LanguageGroup<T>,
                                                  internal val groupNameSuffix: GroupName) {
   /*internal*/ val challenges = mutableListOf<T>()

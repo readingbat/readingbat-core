@@ -23,6 +23,7 @@ import kotlin.time.Duration
 import kotlin.time.seconds
 
 
+@Suppress("unused")
 class RedisSessionStorage(val redis: Jedis,
                           private val prefix: String = "session_",
                           private val ttl: Duration = 3600.seconds) : SimplifiedSessionStorage() {

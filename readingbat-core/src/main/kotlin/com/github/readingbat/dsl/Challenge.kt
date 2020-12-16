@@ -170,6 +170,7 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
       error(""""$challengeName" is empty""")
   }
 
+  @Suppress("unused")
   private fun Any?.prettyQuote(capitalizePythonBooleans: Boolean = true, useDoubleQuotes: Boolean = false) =
     when {
       this is String -> if (languageType.useDoubleQuotes || useDoubleQuotes) toDoubleQuoted() else toSingleQuoted()

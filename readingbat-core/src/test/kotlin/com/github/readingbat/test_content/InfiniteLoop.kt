@@ -1,6 +1,6 @@
 package com.github.readingbat.com.github.readingbat.test_content
 
-fun deadEnd(i: Int): Boolean {
+fun deadEnd(): Boolean {
   while (true) {
     println("I am stuck")
     Thread.sleep(1000)
@@ -9,7 +9,7 @@ fun deadEnd(i: Int): Boolean {
 }
 
 fun main() {
-  println(deadEnd(1))
-  println(deadEnd(2))
-  println(deadEnd(3))
+  println(deadEnd())
+  println(deadEnd())
+  println(deadEnd())
 }
