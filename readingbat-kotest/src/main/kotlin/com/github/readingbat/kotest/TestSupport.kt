@@ -173,6 +173,7 @@ object TestSupport {
   fun Application.testModule(content: ReadingBatContent) {
 
     Property.IS_TESTING.setProperty("true")
+    Property.assignInitialized()
 
     installs(false)
 

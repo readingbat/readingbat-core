@@ -146,6 +146,8 @@ enum class Property(val propertyValue: String,
   companion object : KLogging() {
     private val initialized = AtomicBoolean(false)
 
+    fun assignInitialized() = initialized.set(true)
+
     private fun notInitialized(prop: Property) = "Property ${prop.name} not initialized"
 
     internal fun Application.assignProperties() {
@@ -203,7 +205,7 @@ enum class Property(val propertyValue: String,
                                                                     "https://www.readingbat.com")))
       }
 
-      initialized.set(true)
+      assignInitialized()
     }
   }
 }
