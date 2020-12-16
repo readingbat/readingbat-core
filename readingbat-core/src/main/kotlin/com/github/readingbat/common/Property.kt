@@ -34,7 +34,7 @@ import mu.KLogging
 import java.util.concurrent.atomic.AtomicBoolean
 
 enum class Property(val propertyValue: String,
-                    val maskFunc: Property.() -> String = { getProperty(UNASSIGNED) }) {
+                    val maskFunc: Property.() -> String = { getProperty(UNASSIGNED, false) }) {
 
   KOTLIN_SCRIPT_CLASSPATH("kotlin.script.classpath"),
 
@@ -58,7 +58,7 @@ enum class Property(val propertyValue: String,
   XFORWARDED_ENABLED("$READINGBAT.$SITE.xforwardedHeaderSupportEnabled"),
 
   // These are assigned to ReadingBatContent vals
-  ANALYTICS_ID("$READINGBAT.$SITE.googleAnalyticsId", { getPropertyOrNull() ?: UNASSIGNED }),
+  ANALYTICS_ID("$READINGBAT.$SITE.googleAnalyticsId", { getPropertyOrNull(false) ?: UNASSIGNED }),
   MAX_HISTORY_LENGTH("$READINGBAT.$CHALLENGES.maxHistoryLength"),
   MAX_CLASS_COUNT("$READINGBAT.$CLASSES.maxCount"),
   KTOR_PORT("ktor.deployment.port"),
@@ -74,9 +74,9 @@ enum class Property(val propertyValue: String,
   CONTENT_CACHING_ENABLED("$READINGBAT.$SITE.contentCachingEnabled"),
   AGENT_ENABLED("$AGENT.enabled"),
 
-  PINGDOM_BANNER_ID("$READINGBAT.$SITE.pingdomBannerId", { getPropertyOrNull() ?: UNASSIGNED }),
-  PINGDOM_URL("$READINGBAT.$SITE.pingdomUrl", { getPropertyOrNull() ?: UNASSIGNED }),
-  STATUS_PAGE_URL("$READINGBAT.$SITE.statusPageUrl", { getPropertyOrNull() ?: UNASSIGNED }),
+  PINGDOM_BANNER_ID("$READINGBAT.$SITE.pingdomBannerId", { getPropertyOrNull(false) ?: UNASSIGNED }),
+  PINGDOM_URL("$READINGBAT.$SITE.pingdomUrl", { getPropertyOrNull(false) ?: UNASSIGNED }),
+  STATUS_PAGE_URL("$READINGBAT.$SITE.statusPageUrl", { getPropertyOrNull(false) ?: UNASSIGNED }),
 
   PROMETHEUS_URL("$READINGBAT.prometheus.url"),
   GRAFANA_URL("$READINGBAT.grafana.url"),
@@ -91,7 +91,7 @@ enum class Property(val propertyValue: String,
   DBMS_DRIVER_CLASSNAME("$DBMS.driverClassName"),
   DBMS_URL("$DBMS.jdbcUrl"),
   DBMS_USERNAME("$DBMS.username"),
-  DBMS_PASSWORD("$DBMS.password", { getPropertyOrNull()?.obfuscate(1) ?: UNASSIGNED }),
+  DBMS_PASSWORD("$DBMS.password", { getPropertyOrNull(false)?.obfuscate(1) ?: UNASSIGNED }),
   DBMS_MAX_POOL_SIZE("$DBMS.maxPoolSize"),
 
   REDIS_MAX_POOL_SIZE(RedisUtils.REDIS_MAX_POOL_SIZE),
@@ -114,20 +114,21 @@ enum class Property(val propertyValue: String,
   fun configValueOrNull(application: Application) =
     application.environment.config.propertyOrNull(propertyValue)
 
-  fun getProperty(default: String) =
-    (System.getProperty(propertyValue) ?: default).also { if (!initialized.get()) error(NO_INIT_STR) }
+  fun getProperty(default: String, errorOnNonInit: Boolean = true) =
+    (System.getProperty(propertyValue)
+      ?: default).also { if (errorOnNonInit && !initialized.get()) error(notInitialized(this)) }
 
   fun getProperty(default: Boolean) = (System.getProperty(propertyValue)?.toBoolean()
-    ?: default).also { if (!initialized.get()) error(NO_INIT_STR) }
+    ?: default).also { if (!initialized.get()) error(notInitialized(this)) }
 
   fun getProperty(default: Int) = (System.getProperty(propertyValue)?.toIntOrNull()
-    ?: default).also { if (!initialized.get()) error(NO_INIT_STR) }
+    ?: default).also { if (!initialized.get()) error(notInitialized(this)) }
 
-  fun getPropertyOrNull(): String? =
-    System.getProperty(propertyValue).also { if (!initialized.get()) error(NO_INIT_STR) }
+  fun getPropertyOrNull(errorOnNonInit: Boolean = true): String? =
+    System.getProperty(propertyValue).also { if (errorOnNonInit && !initialized.get()) error(notInitialized(this)) }
 
   fun getRequiredProperty() = (getPropertyOrNull()
-    ?: error("Missing $propertyValue value")).also { if (!initialized.get()) error(NO_INIT_STR) }
+    ?: error("Missing $propertyValue value")).also { if (!initialized.get()) error(notInitialized(this)) }
 
   fun setProperty(value: String) {
     System.setProperty(propertyValue, value)
@@ -143,8 +144,9 @@ enum class Property(val propertyValue: String,
   fun isNotDefined() = !isDefined()
 
   companion object : KLogging() {
-    private const val NO_INIT_STR = "Property not initialized"
     private val initialized = AtomicBoolean(false)
+
+    private fun notInitialized(prop: Property) = "Property ${prop.name} not initialized"
 
     internal fun Application.assignProperties() {
 
