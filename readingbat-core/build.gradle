@@ -12,7 +12,6 @@ application {
 dependencies {
     implementation libraries.kotlin_reflect
     implementation libraries.kotlinx_coroutines_core
-    //implementation libraries.kotlin_scripting_compiler
 
     implementation libraries.serialization
 
@@ -50,7 +49,6 @@ dependencies {
     implementation libraries.server_sessions
     implementation libraries.html_builder
     implementation libraries.ktor_locations
-    //implementation libraries.ktor_locations_jvm
     implementation libraries.ktor_metrics
     implementation libraries.ktor_websockets
 
@@ -65,6 +63,8 @@ dependencies {
     implementation libraries.pgjdbc
     implementation libraries.socket
 
+    runtimeOnly libraries.postgres
+
     implementation libraries.gson
     implementation libraries.guava
 
@@ -74,8 +74,6 @@ dependencies {
     implementation libraries.flexmark
 
     implementation libraries.github
-
-    runtime libraries.postgres
 
     testImplementation libraries.ktor_server_tests
     testImplementation libraries.ktor_server_test_host
@@ -91,7 +89,7 @@ dependencies {
 buildConfig {
     buildConfigField('String', 'APP_NAME', "\"${project.name}\"")
     buildConfigField('String', 'APP_VERSION', "\"${project.version}\"")
-    buildConfigField('String', 'APP_RELEASE_DATE', "\"12/15/20\"")
+    buildConfigField('String', 'APP_RELEASE_DATE', "\"12/28/20\"")
 }
 
 // Include build uberjars in heroku deploy

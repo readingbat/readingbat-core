@@ -2,19 +2,18 @@ plugins {
     id 'java'
     id 'application'
     id 'maven'  // Required for jitpack.io to do a ./gradlew install
-    id 'org.jetbrains.kotlin.jvm' version '1.4.21' apply false
-    id 'org.jetbrains.kotlin.plugin.serialization' version '1.4.21' apply false
+    id 'org.jetbrains.kotlin.jvm' version '1.4.30-M1' apply false
+    id 'org.jetbrains.kotlin.plugin.serialization' version '1.4.30-M1' apply false
     id "com.github.ben-manes.versions" version '0.36.0' apply false
     id 'com.github.johnrengelman.shadow' version '6.1.0' apply false
     id 'com.github.gmazzo.buildconfig' version '2.0.2' apply false
-    id "org.flywaydb.flyway" version "7.3.1"
+    id "org.flywaydb.flyway" version "7.3.2"
 }
 
 ext {
     libraries = [
             kotlin_reflect         : "org.jetbrains.kotlin:kotlin-reflect",
             kotlinx_coroutines_core: "org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutines_version",
-            //kotlin_scripting_compiler: "org.jetbrains.kotlin:kotlin-scripting-compiler-embeddable",
 
             serialization          : "org.jetbrains.kotlinx:kotlinx-serialization-json:$serialization_version",
 
@@ -52,7 +51,6 @@ ext {
             server_sessions        : "io.ktor:ktor-server-sessions:$ktor_version",
             html_builder           : "io.ktor:ktor-html-builder:$ktor_version",
             ktor_locations         : "io.ktor:ktor-locations:$ktor_version",
-            //ktor_locations_jvm     : "io.ktor:ktor-locations-jvm:$ktor_version",
             ktor_metrics           : "io.ktor:ktor-metrics:$ktor_version",
             ktor_websockets        : "io.ktor:ktor-websockets:$ktor_version",
 

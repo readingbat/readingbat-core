@@ -1,6 +1,7 @@
 .vscode
 .gradle
 .idea
+.run
 out
 build
 *.iml

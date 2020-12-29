@@ -6,9 +6,10 @@
 
 ## Running from *readingbat-core*
 Setup:
-* VM Options: -Dlogback.configurationFile=src/test/resources/logback-test.xml
-* Program Arguments: -config=src/main/resources/application-dev.conf
-* Environment Variables: SENDGRID_API_KEY=**value**
+* Main class: TestMain
+* VM Options: -Dlogback.configurationFile=testresources/logback-test.xml
+* Program Arguments: -config=readingbat-core/src/main/resources/application-dev.conf
+* Environment Variables: IPGEOLOCATION_KEY=**value**;GITHUB_OAUTH=**Value**
 
 ## Heroku
 * Switch shell to Java8 to get jvisualvm to work on an OSX client
