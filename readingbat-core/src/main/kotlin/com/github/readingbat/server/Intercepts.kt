@@ -18,6 +18,7 @@
 package com.github.readingbat.server
 
 import com.github.pambrose.common.util.isNotNull
+import com.github.pambrose.common.util.maxLength
 import com.github.readingbat.common.BrowserSession.Companion.findSessionDbmsId
 import com.github.readingbat.common.Constants.STATIC
 import com.github.readingbat.common.Constants.UNKNOWN_USER_ID
@@ -47,7 +48,6 @@ import kotlin.time.TimeMark
 import kotlin.time.TimeSource
 import kotlin.time.hours
 import kotlin.time.minutes
-
 
 internal object Intercepts : KLogging() {
   val clock = TimeSource.Monotonic
@@ -112,9 +112,9 @@ internal fun Application.intercepts() {
                 row[userRef] = userDbmsId
                 row[geoRef] = geoDbmsId
                 row[ServerRequests.verb] = verb
-                row[ServerRequests.path] = path
-                row[ServerRequests.queryString] = queryString
-                row[ServerRequests.userAgent] = userAgent
+                row[ServerRequests.path] = path.maxLength(256)
+                row[ServerRequests.queryString] = queryString.maxLength(256)
+                row[ServerRequests.userAgent] = userAgent.maxLength(256)
                 row[duration] = 0
               }
           }

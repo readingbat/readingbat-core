@@ -19,6 +19,7 @@ package com.github.readingbat.posts
 
 import com.github.pambrose.common.util.encode
 import com.github.pambrose.common.util.isNotNull
+import com.github.pambrose.common.util.maxLength
 import com.github.pambrose.common.util.md5Of
 import com.github.pambrose.common.util.pathOf
 import com.github.pambrose.common.util.toDoubleQuoted
@@ -344,8 +345,7 @@ internal object ChallengePost : KLogging() {
     val invokeList =
       userResponses.indices
         .map { i ->
-          val userResponse =
-            paramMap[RESP + i]?.trim() ?: error("Missing user response")
+          val userResponse =  paramMap[RESP + i]?.trim()?.maxLength(256) ?: error("Missing user response")
           funcInfo.invocations[i] to userResponse
         }
 

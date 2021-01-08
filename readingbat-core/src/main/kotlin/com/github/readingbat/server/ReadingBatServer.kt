@@ -34,8 +34,7 @@ import com.github.readingbat.common.Property
 import com.github.readingbat.common.Property.Companion.assignProperties
 import com.github.readingbat.common.User.Companion.createUnknownUser
 import com.github.readingbat.common.User.Companion.userExists
-import com.github.readingbat.dsl.*
-import com.github.readingbat.readingbat_core.BuildConfig
+import com.github.readingbat.dsl.*import com.github.readingbat.readingbat_core.BuildConfig
 import com.github.readingbat.server.Installs.installs
 import com.github.readingbat.server.Locations.locations
 import com.github.readingbat.server.ReadingBatServer.adminUsers
@@ -73,6 +72,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.TimeSource
 import kotlin.time.measureTime
+import kotlin.time.minutes
 import kotlin.time.seconds
 
 @Version(version = BuildConfig.APP_VERSION, date = BuildConfig.APP_RELEASE_DATE)
@@ -106,6 +106,7 @@ object ReadingBatServer : KLogging() {
             maximumPoolSize = Property.DBMS_MAX_POOL_SIZE.getRequiredProperty().toInt()
             isAutoCommit = false
             transactionIsolation = "TRANSACTION_REPEATABLE_READ"
+            maxLifetime = Property.DBMS_MAX_LIFETIME_MINS.getRequiredProperty().toInt().minutes.toLongMilliseconds()
             validate()
           }))
   }
@@ -153,7 +154,6 @@ object ReadingBatServer : KLogging() {
   }
 
   fun start(args: Array<String>) {
-
     logger.apply {
       info { getBanner("banners/readingbat.txt", this) }
       info { ReadingBatServer::class.versionDesc() }

@@ -19,6 +19,7 @@ package com.github.readingbat.common
 
 import com.github.pambrose.common.util.isNotNull
 import com.github.pambrose.common.util.isNull
+import com.github.pambrose.common.util.maxLength
 import com.github.pambrose.common.util.md5Of
 import com.github.pambrose.common.util.newStringSalt
 import com.github.pambrose.common.util.randomId
@@ -206,7 +207,7 @@ import kotlin.time.measureTime
         .insert { row ->
           row[userRef] = userDbmsId
           row[Classes.classCode] = classCode.value
-          row[description] = classDesc
+          row[description] = classDesc.maxLength(256)
         }
     }
 
@@ -624,8 +625,8 @@ import kotlin.time.measureTime
               Users
                 .insertAndGetId { row ->
                   row[userId] = user.userId
-                  row[fullName] = name.value
-                  row[Users.email] = email.value
+                  row[fullName] = name.value.maxLength(128)
+                  row[Users.email] = email.value.maxLength(128)
                   row[enrolledClassCode] = DISABLED_CLASS_CODE.value
                   row[defaultLanguage] = defaultLanguageType.languageName.value
                   row[Users.salt] = salt

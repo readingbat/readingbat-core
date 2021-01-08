@@ -93,6 +93,7 @@ enum class Property(val propertyValue: String,
   DBMS_USERNAME("$DBMS.username"),
   DBMS_PASSWORD("$DBMS.password", { getPropertyOrNull(false)?.obfuscate(1) ?: UNASSIGNED }),
   DBMS_MAX_POOL_SIZE("$DBMS.maxPoolSize"),
+  DBMS_MAX_LIFETIME_MINS("$DBMS.maxLifetimeMins"),
 
   REDIS_MAX_POOL_SIZE(RedisUtils.REDIS_MAX_POOL_SIZE),
   REDIS_MAX_IDLE_SIZE(RedisUtils.REDIS_MAX_IDLE_SIZE),
@@ -192,6 +193,7 @@ enum class Property(val propertyValue: String,
       DBMS_USERNAME.setPropertyFromConfig(this, "postgres")
       DBMS_PASSWORD.setPropertyFromConfig(this, "")
       DBMS_MAX_POOL_SIZE.setPropertyFromConfig(this, "10")
+      DBMS_MAX_LIFETIME_MINS.setPropertyFromConfig(this, "30")
 
       REDIS_MAX_POOL_SIZE.setPropertyFromConfig(this, "10")
       REDIS_MAX_IDLE_SIZE.setPropertyFromConfig(this, "5")
