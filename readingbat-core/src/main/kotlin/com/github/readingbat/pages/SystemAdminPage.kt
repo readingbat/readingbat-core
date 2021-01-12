@@ -156,6 +156,7 @@ internal object SystemAdminPage : KLogging() {
           p {
             textArea {
               id = msgs
+              readonly = true
               rows = "20"
               cols = "120"
               +""

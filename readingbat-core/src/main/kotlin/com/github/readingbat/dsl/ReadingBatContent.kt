@@ -175,7 +175,7 @@ class ReadingBatContent {
             challengeGroup.challenges
               .forEach { challenge ->
                 if (useWebApi) {
-                  HttpClient(CIO)
+                  HttpClient(CIO) { expectSuccess = false }
                     .use { httpClient ->
                       withHttpClient(httpClient) {
                         val url = pathOf(prefix, CONTENT, challenge.path)
