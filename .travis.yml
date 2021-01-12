@@ -40,6 +40,7 @@ script:
   - ./gradlew check #jacocoTestReport
   - cd readingbat-core; ../gradlew run --args="-config=src/test/resources/application-test.conf" &
   - sleep 30
+  - make dbreset
   - cd /home/travis/build/readingbat/readingbat-core; /home/travis/build/readingbat/readingbat-core/node_modules/.bin/cypress run --record --key 5ee5de19-1e84-4807-a199-5c70fda2fe5d
 
 after_script:
