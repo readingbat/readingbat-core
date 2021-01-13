@@ -155,7 +155,11 @@ import java.time.ZoneId
 
       if (isSaveRequestsEnabled()) {
         val ipAddress = call.request.origin.remoteHost
-        lookupGeoInfo(ipAddress)
+        try {
+          lookupGeoInfo(ipAddress)
+        } catch (e: Throwable) {
+          logger.warn(e) {}
+        }
       }
 
       logger.debug { "Created browser session: ${browserSession.id} - ${call.request.origin.remoteHost}" }
