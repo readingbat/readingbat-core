@@ -51,20 +51,19 @@ internal object CheckAnswersJs {
     var re = new XMLHttpRequest();
 
     function $PROCESS_USER_ANSWERS_FUNC(event, cnt) { 
-     
       // event will equal null on button press
       if (event != null && (event.keyCode != 13 && event.keyCode != 9)) 
         return 1;
 
-      var data = "$SESSION_ID=${sessionCounter.incrementAndGet()}&$LANG_SRC=$languageName&$GROUP_SRC=$groupName&$CHALLENGE_SRC=$challengeName";
+      let data = "$SESSION_ID=${sessionCounter.incrementAndGet()}&$LANG_SRC=$languageName&$GROUP_SRC=$groupName&$CHALLENGE_SRC=$challengeName";
       try {
-        for (var i = 0; i < cnt; i++) {
-          var x = document.getElementById("$FEEDBACK_ID"+i);
+        for (let i = 0; i < cnt; i++) {
+          let x = document.getElementById("$FEEDBACK_ID"+i);
           x.style.backgroundColor = "white";
           
           document.getElementById("$HINT_ID"+i).innerText = '';
           
-          var ur = document.getElementById("$RESP"+i).value;
+          let ur = document.getElementById("$RESP"+i).value;
           data += "&$RESP" + i + "=" + encodeURIComponent(ur);
         }
       }
@@ -88,10 +87,10 @@ internal object CheckAnswersJs {
         document.getElementById('$NEXTPREVCHANCE_ID').style.display = "none";
       }
       else if(re.readyState == 4) {  // done
-        var success = true;
-        var results = eval(re.responseText);
-        for (var i = 0; i < results.length; i++) {
-          var x = document.getElementById("$FEEDBACK_ID"+i);
+        let success = true;
+        let results = eval(re.responseText);
+        for (let i = 0; i < results.length; i++) {
+          let x = document.getElementById("$FEEDBACK_ID"+i);
           if (results[i][0] == ${NOT_ANSWERED.value}) {
             x.style.backgroundColor = '$NO_ANSWER_COLOR';
             success = false;

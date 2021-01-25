@@ -46,8 +46,7 @@ internal object LikeDislikeJs {
     var re = new XMLHttpRequest();
 
     function $LIKE_DISLIKE_FUNC(desc) { 
-
-      var data = "$SESSION_ID=${sessionCounter.incrementAndGet()}&$LANG_SRC=$languageName&$GROUP_SRC=$groupName&$CHALLENGE_SRC=$challengeName";
+      let data = "$SESSION_ID=${sessionCounter.incrementAndGet()}&$LANG_SRC=$languageName&$GROUP_SRC=$groupName&$CHALLENGE_SRC=$challengeName";
       data += "&$LIKE_DESC=" + encodeURIComponent(desc);
       
       re.onreadystatechange = likeDislikeHandleDone;  
@@ -57,13 +56,13 @@ internal object LikeDislikeJs {
       return 1;
     }
     
-    function likeDislikeHandleDone(){
+    function likeDislikeHandleDone() {
       if(re.readyState == 1) {       // starting
         document.getElementById('$LIKE_SPINNER_ID').innerHTML = '<i class="fa fa-spinner fa-spin" style="font-size:24px"></i>';
         document.getElementById('$LIKE_STATUS_ID').innerText = 'Setting like/dislike...';
       }
       else if(re.readyState == 4) {  // done
-        var results = eval(re.responseText);
+        let results = eval(re.responseText);
         
         document.getElementById('$LIKE_SPINNER_ID').innerText = '';
         document.getElementById('$LIKE_STATUS_ID').innerText = '';

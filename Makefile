@@ -50,4 +50,4 @@ depends:
 	./gradlew dependencies
 
 upgrade-wrapper:
-	./gradlew wrapper --gradle-version=6.8 --distribution-type=bin
+	./gradlew wrapper --gradle-version=6.8.1 --distribution-type=bin

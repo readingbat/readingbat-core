@@ -138,12 +138,12 @@ internal object SystemAdminPage : KLogging() {
 
             Property.GRAFANA_URL.getPropertyOrNull()
               ?.also {
-                if (it.isNotBlank()) p { +"Grafana Dashboard is "; a { href = it; target = "_blank"; +"here" } }
+                //if (it.isNotBlank()) p { +"Grafana Dashboard is "; a { href = it; target = "_blank"; +"here" } }
               }
 
             Property.PROMETHEUS_URL.getPropertyOrNull()
               ?.also {
-                if (it.isNotBlank()) p { +"Prometheus Dashboard is "; a { href = it; target = "_blank"; +"here" } }
+                //if (it.isNotBlank()) p { +"Prometheus Dashboard is "; a { href = it; target = "_blank"; +"here" } }
               }
           }
           else {

@@ -37,9 +37,8 @@ internal object AdminCommandsJs {
     var re = new XMLHttpRequest();
 
     function $ADMIN_FUNC(msg, endPoint) { 
-     
       if (confirm(msg)) {
-        var data = "$LOG_ID=$logId";
+        let data = "$LOG_ID=$logId";
         //re.onreadystatechange = checkLogHandleDone;  
         re.open("POST", endPoint, true);
         re.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
@@ -56,10 +55,10 @@ internal object AdminCommandsJs {
         document.getElementById('$SUCCESS_ID').innerText = '';
       }
       else if(re.readyState == 4) {  // done
-        var success = true;
-        var results = eval(re.responseText);
-        for (var i = 0; i < results.length; i++) {
-          var x = document.getElementById("$FEEDBACK_ID"+i);
+        let success = true;
+        let results = eval(re.responseText);
+        for (let i = 0; i < results.length; i++) {
+          let x = document.getElementById("$FEEDBACK_ID"+i);
           if (results[i][0] == 0) {
             x.style.backgroundColor = '$NO_ANSWER_COLOR';
             success = false;

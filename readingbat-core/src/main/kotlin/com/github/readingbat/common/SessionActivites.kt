@@ -72,12 +72,12 @@ internal object SessionActivites : KLogging() {
       measureTimedValue {
         val count = Count(Users.id)
         val maxDate = Max(created, DateColumnType(true))
-        val elems = arrayOf(session_id, fullName, email, ip, city, state, country, isp, flagUrl, userAgent)
+        val elems = arrayOf(fullName, email, ip, city, state, country, isp, flagUrl, userAgent)
 
         (ServerRequests innerJoin BrowserSessions innerJoin Users innerJoin GeoInfos)
-          .slice(*elems, count, maxDate)
+          .slice(session_id, *elems, count, maxDate)
           .select { created greater dateTimeExpr("now() - interval '${min(dayCount, 14)} day'") }
-          .groupBy(*elems)
+          .groupBy(*(arrayOf(session_id) + elems))
           .orderBy(maxDate, SortOrder.DESC)
           .map { row ->
             QueryInfo(row[session_id],
