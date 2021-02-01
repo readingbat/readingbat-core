@@ -120,7 +120,8 @@ internal fun Application.intercepts() {
           }
         }
       } catch (e: Throwable) {
-        logger.warn(e) {}
+//        logger.warn(e) {}
+        logger.info { "Failure saving request: ${e.message}" }
       }
   }
 
