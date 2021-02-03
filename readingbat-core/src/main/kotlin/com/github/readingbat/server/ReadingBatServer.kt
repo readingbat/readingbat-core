@@ -34,7 +34,8 @@ import com.github.readingbat.common.Property
 import com.github.readingbat.common.Property.Companion.assignProperties
 import com.github.readingbat.common.User.Companion.createUnknownUser
 import com.github.readingbat.common.User.Companion.userExists
-import com.github.readingbat.dsl.*import com.github.readingbat.readingbat_core.BuildConfig
+import com.github.readingbat.dsl.*
+import com.github.readingbat.readingbat_core.BuildConfig
 import com.github.readingbat.server.Installs.installs
 import com.github.readingbat.server.Locations.locations
 import com.github.readingbat.server.ReadingBatServer.adminUsers
@@ -75,7 +76,7 @@ import kotlin.time.measureTime
 import kotlin.time.minutes
 import kotlin.time.seconds
 
-@Version(version = BuildConfig.APP_VERSION, date = BuildConfig.APP_RELEASE_DATE)
+@Version(version = BuildConfig.CORE_VERSION, date = BuildConfig.CORE_RELEASE_DATE)
 object ReadingBatServer : KLogging() {
   private val startTime = TimeSource.Monotonic.markNow()
   internal val serverSessionId = randomId(10)
@@ -85,6 +86,8 @@ object ReadingBatServer : KLogging() {
   internal val contentReadCount = AtomicInteger(0)
   /*internal*/ val metrics by lazy { Metrics() }
   internal var redisPool: JedisPool? = null
+  private const val CALLER_VERSION = "callerVersion"
+  internal var callerVersion = ""
   internal val dbms by lazy {
     Database.connect(
       HikariDataSource(
@@ -134,6 +137,12 @@ object ReadingBatServer : KLogging() {
 
   private fun withConfigArg(arg: String) = deriveArgs(arrayOf("-config=$arg"))
 
+  private fun callerVersion(args: Array<String>) =
+    args.asSequence()
+      .filter { it.startsWith("-$CALLER_VERSION=") }
+      .map { it.replaceFirst("-$CALLER_VERSION=", "") }
+      .firstOrNull() ?: "None specified"
+
   private fun deriveArgs(args: Array<String>): Array<String> {
     // Grab config filename from CLI args and then try ENV var
     val configFilename =
@@ -153,10 +162,17 @@ object ReadingBatServer : KLogging() {
       args.toMutableList().apply { add("-config=$configFilename") }.toTypedArray()
   }
 
+
+  fun start(callerVersion: String, args: Array<String>) {
+    start(args + arrayOf("-$CALLER_VERSION=$callerVersion"))
+  }
+
   fun start(args: Array<String>) {
     logger.apply {
       info { getBanner("banners/readingbat.txt", this) }
       info { ReadingBatServer::class.versionDesc() }
+      callerVersion = callerVersion(args)
+      info { "Caller Version: $callerVersion" }
     }
 
     val environment = commandLineEnvironment(deriveArgs(args))
