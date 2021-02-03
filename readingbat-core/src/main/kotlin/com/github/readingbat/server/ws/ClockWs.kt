@@ -38,6 +38,7 @@ import kotlin.math.max
 import kotlin.time.TimeSource
 import kotlin.time.seconds
 
+@Suppress("unused")
 internal object ClockWs : KLogging() {
   private val clock = TimeSource.Monotonic
   private val wsConnections = Collections.synchronizedSet(LinkedHashSet<SessionContext>())

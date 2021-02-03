@@ -29,7 +29,6 @@ import com.github.readingbat.common.Message.Companion.EMPTY_MESSAGE
 import com.github.readingbat.common.User.Companion.createUser
 import com.github.readingbat.common.UserPrincipal
 import com.github.readingbat.common.browserSession
-import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.pages.CreateAccountPage.createAccountPage
 import com.github.readingbat.server.Email
 import com.github.readingbat.server.Email.Companion.getEmail
@@ -72,7 +71,7 @@ internal object CreateAccountPost : KLogging() {
       else -> EMPTY_MESSAGE
     }
 
-  suspend fun PipelineCall.createAccount(content: ReadingBatContent): String {
+  suspend fun PipelineCall.createAccount(): String {
     val params = call.receiveParameters()
     val fullName = params.getFullName(FULLNAME_PARAM)
     val email = params.getEmail(EMAIL_PARAM)
@@ -80,22 +79,16 @@ internal object CreateAccountPost : KLogging() {
     val confirmPassword = params.getPassword(CONFIRM_PASSWORD_PARAM)
 
     return when {
-      fullName.isBlank() -> createAccountPage(content, defaultEmail = email, msg = EMPTY_NAME_MSG)
-      email.isBlank() -> createAccountPage(content, defaultFullName = fullName, msg = EMPTY_EMAIL_MSG)
+      fullName.isBlank() -> createAccountPage(defaultEmail = email, msg = EMPTY_NAME_MSG)
+      email.isBlank() -> createAccountPage(defaultFullName = fullName, msg = EMPTY_EMAIL_MSG)
       email.isNotValidEmail() ->
-        createAccountPage(content,
-                          defaultFullName = fullName,
-                          defaultEmail = email,
-                          msg = INVALID_EMAIL_MSG)
+        createAccountPage(defaultFullName = fullName, defaultEmail = email, msg = INVALID_EMAIL_MSG)
       else -> {
         val passwordError = checkPassword(password, confirmPassword)
         if (passwordError.isNotBlank)
-          createAccountPage(content,
-                            defaultFullName = fullName,
-                            defaultEmail = email,
-                            msg = passwordError)
+          createAccountPage(defaultFullName = fullName, defaultEmail = email, msg = passwordError)
         else
-          createAccount(content, fullName, email, password)
+          createAccount(fullName, email, password)
       }
     }
   }
@@ -109,15 +102,12 @@ internal object CreateAccountPost : KLogging() {
         .first() > 0
     }
 
-  private fun PipelineCall.createAccount(content: ReadingBatContent,
-                                         name: FullName,
-                                         email: Email,
-                                         password: Password): String {
+  private fun PipelineCall.createAccount(name: FullName, email: Email, password: Password): String {
     createAccountLimiter.acquire() // may wait
 
     // Check if email already exists
     return if (emailExists(email)) {
-      createAccountPage(content, msg = Message("Email already registered: $email"))
+      createAccountPage(msg = Message("Email already registered: $email"))
     }
     else {
       // Create user

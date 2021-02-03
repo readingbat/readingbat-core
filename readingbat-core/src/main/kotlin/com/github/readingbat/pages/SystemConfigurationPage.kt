@@ -75,8 +75,12 @@ internal object SystemConfigurationPage {
             div(classes = INDENT_1EM) {
               table {
                 tr {
-                  td { +"Version:" }
+                  td { +"Core version:" }
                   td { +ReadingBatServer::class.versionDesc() }
+                }
+                tr {
+                  td { +"Caller version:" }
+                  td { +ReadingBatServer.callerVersion }
                 }
                 tr {
                   td { +"Server started:" }

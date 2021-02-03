@@ -104,6 +104,7 @@ import io.ktor.sessions.*
 import kotlinx.coroutines.withTimeout
 import kotlin.time.Duration
 
+@Suppress("unused")
 fun Route.routeTimeout(time: Duration, callback: Route.() -> Unit): Route {
   // With createChild, we create a child node for this received Route
   val routeWithTimeout = this.createChild(object : RouteSelector(1.0) {
@@ -159,7 +160,7 @@ fun Route.routeTimeout(time: Duration, callback: Route.() -> Unit): Route {
   }
 
   get(PRIVACY_ENDPOINT) {
-    respondWith { privacyPage(contentSrc()) }
+    respondWith { privacyPage() }
   }
 
   get(ABOUT_ENDPOINT) {
@@ -179,7 +180,7 @@ fun Route.routeTimeout(time: Duration, callback: Route.() -> Unit): Route {
   }
 
   post(LIKE_DISLIKE_ENDPOINT) {
-    metrics.measureEndpointRequest(LIKE_DISLIKE_ENDPOINT) { likeDislike(contentSrc(), fetchUser()) }
+    metrics.measureEndpointRequest(LIKE_DISLIKE_ENDPOINT) { likeDislike(fetchUser()) }
   }
 
   post(CLEAR_GROUP_ANSWERS_ENDPOINT) {
@@ -191,11 +192,11 @@ fun Route.routeTimeout(time: Duration, callback: Route.() -> Unit): Route {
   }
 
   get(CREATE_ACCOUNT_ENDPOINT, metrics) {
-    respondWith { createAccountPage(contentSrc()) }
+    respondWith { createAccountPage() }
   }
 
   post(CREATE_ACCOUNT_ENDPOINT) {
-    respondWithSuspendingRedirect { createAccount(contentSrc()) }
+    respondWithSuspendingRedirect { createAccount() }
   }
 
   get(ADMIN_PREFS_ENDPOINT) {
@@ -261,16 +262,16 @@ fun Route.routeTimeout(time: Duration, callback: Route.() -> Unit): Route {
   }
 
   post(PASSWORD_CHANGE_ENDPOINT) {
-    respondWithSuspendingRedirect { updatePassword(contentSrc()) }
+    respondWithSuspendingRedirect { updatePassword() }
   }
 
   post(PASSWORD_RESET_ENDPOINT) {
-    respondWithSuspendingRedirect { sendPasswordReset(contentSrc()) }
+    respondWithSuspendingRedirect { sendPasswordReset() }
   }
 
   // RESET_ID is passed here when user clicks on email URL
   get(PASSWORD_RESET_ENDPOINT, metrics) {
-    respondWith { passwordResetPage(contentSrc(), ResetId(queryParam(RESET_ID_PARAM))) }
+    respondWith { passwordResetPage(ResetId(queryParam(RESET_ID_PARAM))) }
   }
 
   get(LOGOUT_ENDPOINT, metrics) {

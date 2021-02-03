@@ -1,11 +1,14 @@
 .vscode
 .gradle
 .idea
+.run
 out
 build
 *.iml
 *.ipr
 *.iws
+
+node_modules/
 
 cypress/videos
 cypress/screenshots

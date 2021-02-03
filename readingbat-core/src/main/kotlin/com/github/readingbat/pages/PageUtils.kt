@@ -179,6 +179,7 @@ internal object PageUtils {
     return " - $studentCount ${"student".pluralize(enrollees.count())} enrolled"
   }
 
+  @Suppress("unused")
   fun BODY.confirmingButton(text: String, endpoint: String, msg: String) {
     form {
       style = "margin:0"
@@ -220,6 +221,7 @@ internal object PageUtils {
 
   fun HTMLTag.rawHtml(html: String) = unsafe { raw(html) }
 
+  @Suppress("unused")
   fun Route.getAndPost(path: String, body: PipelineInterceptor<Unit, ApplicationCall>) {
     get(path, body)
     post(path, body)

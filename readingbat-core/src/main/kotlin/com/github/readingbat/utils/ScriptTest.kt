@@ -49,6 +49,7 @@ fun main() {
   }
 }
 
+@Suppress("unused")
 fun javaTest() {
   val correctAnswers = mutableListOf<Any>()
   val script = """
@@ -93,6 +94,7 @@ fun javaTest() {
 }
 
 
+@Suppress("unused")
 fun pythonTest() {
 
   val correctAnswers = mutableListOf<Any>()
@@ -133,6 +135,8 @@ answers.add(less_than(11, 28))
 
 
 val ScriptEngine.bindings: Bindings get() = getBindings(ScriptContext.ENGINE_SCOPE)
+
+@Suppress("unused")
 val ScriptContext.bindings: Bindings get() = getBindings(ScriptContext.ENGINE_SCOPE)
 
 fun ScriptEngine.reset(scope: Int = ScriptContext.ENGINE_SCOPE) {

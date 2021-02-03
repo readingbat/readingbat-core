@@ -91,9 +91,9 @@ internal object StudentSummaryWs : KLogging() {
                   val funcInfo = challenge.functionInfo()
                   val groupName = challengeGroup.groupName
                   val challengeName = challenge.challengeName
-                  val numCalls = funcInfo.invocationCount
-                  var likes = 0
-                  var dislikes = 0
+                  //val numCalls = funcInfo.invocationCount
+                  //var likes = 0
+                  //var dislikes = 0
                   var incorrectAttempts = 0
                   var attempted = 0
 
@@ -157,6 +157,7 @@ internal object StudentSummaryWs : KLogging() {
   }
 
   @Serializable
+  @Suppress("unused")
   class StudentSummary(val groupName: String,
                        val challengeName: String,
                        val results: List<String>,

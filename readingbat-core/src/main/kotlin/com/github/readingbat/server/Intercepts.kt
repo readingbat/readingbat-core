@@ -18,6 +18,7 @@
 package com.github.readingbat.server
 
 import com.github.pambrose.common.util.isNotNull
+import com.github.pambrose.common.util.maxLength
 import com.github.readingbat.common.BrowserSession.Companion.findSessionDbmsId
 import com.github.readingbat.common.Constants.STATIC
 import com.github.readingbat.common.Constants.UNKNOWN_USER_ID
@@ -48,10 +49,11 @@ import kotlin.time.TimeSource
 import kotlin.time.hours
 import kotlin.time.minutes
 
-
 internal object Intercepts : KLogging() {
   val clock = TimeSource.Monotonic
   val requestTimingMap = ConcurrentHashMap<String, TimeMark>()
+
+  @Suppress("unused")
   val timer =
     timer("requestTimingMap admin", false, 1.minutes.toLongMilliseconds(), 1.minutes.toLongMilliseconds()) {
       requestTimingMap
@@ -81,7 +83,6 @@ internal fun Application.intercepts() {
     // Phase for features. Most features should intercept this phase
     if (!isStaticCall())
       try {
-        println("**** Attributes: ${call.attributes.allKeys.map { it.toString() }}")
         val browserSession = call.browserSession
         if (isSaveRequestsEnabled() && browserSession.isNotNull()) {
           val request = call.request
@@ -111,15 +112,16 @@ internal fun Application.intercepts() {
                 row[userRef] = userDbmsId
                 row[geoRef] = geoDbmsId
                 row[ServerRequests.verb] = verb
-                row[ServerRequests.path] = path
-                row[ServerRequests.queryString] = queryString
-                row[ServerRequests.userAgent] = userAgent
+                row[ServerRequests.path] = path.maxLength(256)
+                row[ServerRequests.queryString] = queryString.maxLength(256)
+                row[ServerRequests.userAgent] = userAgent.maxLength(256)
                 row[duration] = 0
               }
           }
         }
       } catch (e: Throwable) {
-        logger.warn(e) {}
+//        logger.warn(e) {}
+        logger.info { "Failure saving request: ${e.message}" }
       }
   }
 

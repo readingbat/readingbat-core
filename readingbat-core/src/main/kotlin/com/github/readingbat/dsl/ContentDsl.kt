@@ -163,4 +163,5 @@ private suspend fun evalDsl(code: String, sourceName: String) =
     throw e
   }
 
+@Suppress("unused")
 object ContentDsl : KLogging()

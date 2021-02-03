@@ -398,5 +398,6 @@ internal object ClassSummaryPage : KLogging() {
   private fun UL.dropdownHeader(text: String) =
     li { style = "font-size:120%"; classes = setOf("dropdown-header"); +text }
 
+  @Suppress("unused")
   private fun UL.divider() = li { classes = setOf("divider") }
 }

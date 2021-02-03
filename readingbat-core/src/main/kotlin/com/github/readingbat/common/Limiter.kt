@@ -22,6 +22,7 @@ import kotlinx.coroutines.runBlocking
 
 class Limiter(private val maxConcurrencySize: Int = 1) {
 
+  @Suppress("unused")
   class Token(private val limiter: Limiter)
 
   private val channel = Channel<Token>(maxConcurrencySize)

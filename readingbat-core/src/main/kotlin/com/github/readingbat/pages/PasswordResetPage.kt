@@ -30,7 +30,6 @@ import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.FormFields.UPDATE_PASSWORD
 import com.github.readingbat.common.Message
 import com.github.readingbat.common.Message.Companion.EMPTY_MESSAGE
-import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyTitle
 import com.github.readingbat.pages.PageUtils.clickButtonScript
@@ -59,11 +58,9 @@ internal object PasswordResetPage : KLogging() {
   private const val formName = "pform"
   private const val passwordButton = "UpdatePasswordButton"
 
-  fun PipelineCall.passwordResetPage(content: ReadingBatContent,
-                                     resetId: ResetId,
-                                     msg: Message = EMPTY_MESSAGE) =
+  fun PipelineCall.passwordResetPage(resetId: ResetId, msg: Message = EMPTY_MESSAGE) =
     if (resetId.isBlank())
-      requestPasswordResetPage(content, msg)
+      requestPasswordResetPage(msg)
     else {
       try {
         val email =
@@ -84,16 +81,15 @@ internal object PasswordResetPage : KLogging() {
               }
           }
 
-        changePasswordPage(content, Email(email), resetId, msg)
+        changePasswordPage(Email(email), resetId, msg)
 
       } catch (e: ResetPasswordException) {
         logger.info { e }
-        requestPasswordResetPage(content, Message(e.message ?: "Unable to reset password", true))
+        requestPasswordResetPage(Message(e.message ?: "Unable to reset password", true))
       }
     }
 
-  private fun PipelineCall.requestPasswordResetPage(content: ReadingBatContent,
-                                                    msg: Message = EMPTY_MESSAGE) =
+  private fun PipelineCall.requestPasswordResetPage(msg: Message = EMPTY_MESSAGE) =
     createHTML()
       .html {
         head { headDefault() }
@@ -144,10 +140,7 @@ internal object PasswordResetPage : KLogging() {
         }
       }
 
-  private fun PipelineCall.changePasswordPage(content: ReadingBatContent,
-                                              email: Email,
-                                              resetId: ResetId,
-                                              msg: Message) =
+  private fun PipelineCall.changePasswordPage(email: Email, resetId: ResetId, msg: Message) =
     createHTML()
       .html {
         head {

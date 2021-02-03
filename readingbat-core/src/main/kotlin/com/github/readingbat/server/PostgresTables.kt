@@ -108,6 +108,7 @@ internal object UserAnswerHistory : LongIdTable("user_answer_history") {
   val historyJson = text("history_json")
 }
 
+@Suppress("unused")
 internal object Classes : LongIdTable("classes") {
   val created = datetime("created")
   val updated = datetime("updated")

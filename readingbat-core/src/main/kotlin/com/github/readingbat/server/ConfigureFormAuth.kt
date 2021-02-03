@@ -99,6 +99,7 @@ internal object ConfigureFormAuth : KLogging() {
      *
      * This is related to the configureAuthCookie method by virtue of the common `PrincipalType` object.
      */
+    @Suppress("unused")
     fun Authentication.Configuration.configureSessionAuth() {
       session<UserPrincipal>(AuthName.SESSION) {
         challenge {

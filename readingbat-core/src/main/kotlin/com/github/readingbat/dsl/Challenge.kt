@@ -159,7 +159,7 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
         return measureParsing(file.content)
       }
 
-      if (content.cacheChallenges || isTesting())
+      if (content.cacheChallenges)
         content.functionInfoMap.computeIfAbsent(challengeId) { parseCode() }
       else
         parseCode()
@@ -170,6 +170,7 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
       error(""""$challengeName" is empty""")
   }
 
+  @Suppress("unused")
   private fun Any?.prettyQuote(capitalizePythonBooleans: Boolean = true, useDoubleQuotes: Boolean = false) =
     when {
       this is String -> if (languageType.useDoubleQuotes || useDoubleQuotes) toDoubleQuoted() else toSingleQuoted()

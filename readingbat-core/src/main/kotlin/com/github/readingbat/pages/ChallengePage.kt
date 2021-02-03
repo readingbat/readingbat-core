@@ -384,7 +384,6 @@ internal object ChallengePage : KLogging() {
 
       val languageName = challenge.languageType.languageName
       val groupName = challenge.groupName
-      val challengeName = challenge.challengeName
       val displayStr = classCode.toDisplayString()
 
       h3 {

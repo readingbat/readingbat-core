@@ -22,9 +22,6 @@ import com.github.readingbat.common.Endpoints.ADMIN_PREFS_ENDPOINT
 import com.github.readingbat.common.Endpoints.DELETE_CONTENT_IN_REDIS_ENDPOINT
 import com.github.readingbat.common.Endpoints.GARBAGE_COLLECTOR_ENDPOINT
 import com.github.readingbat.common.Endpoints.LOAD_ALL_ENDPOINT
-import com.github.readingbat.common.Endpoints.LOAD_JAVA_ENDPOINT
-import com.github.readingbat.common.Endpoints.LOAD_KOTLIN_ENDPOINT
-import com.github.readingbat.common.Endpoints.LOAD_PYTHON_ENDPOINT
 import com.github.readingbat.common.Endpoints.LOGGING_ENDPOINT
 import com.github.readingbat.common.Endpoints.RESET_CACHE_ENDPOINT
 import com.github.readingbat.common.Endpoints.RESET_CONTENT_DSL_ENDPOINT
@@ -115,23 +112,23 @@ internal object SystemAdminPage : KLogging() {
                                     "Are you sure you want to run the garbage collector?")
             }
 
-            p {
-              this@body.adminButton("Load Java Challenges",
-                                    LOAD_JAVA_ENDPOINT,
-                                    "Are you sure you want to load all the Java challenges? (This can take a while)")
-            }
-
-            p {
-              this@body.adminButton("Load Python Challenges",
-                                    LOAD_PYTHON_ENDPOINT,
-                                    "Are you sure you want to load all the Python challenges? (This can take a while)")
-            }
-
-            p {
-              this@body.adminButton("Load Kotlin Challenges",
-                                    LOAD_KOTLIN_ENDPOINT,
-                                    "Are you sure you want to load all the Kotlin challenges? (This can take a while)")
-            }
+//            p {
+//              this@body.adminButton("Load Java Challenges",
+//                                    LOAD_JAVA_ENDPOINT,
+//                                    "Are you sure you want to load all the Java challenges? (This can take a while)")
+//            }
+//
+//            p {
+//              this@body.adminButton("Load Python Challenges",
+//                                    LOAD_PYTHON_ENDPOINT,
+//                                    "Are you sure you want to load all the Python challenges? (This can take a while)")
+//            }
+//
+//            p {
+//              this@body.adminButton("Load Kotlin Challenges",
+//                                    LOAD_KOTLIN_ENDPOINT,
+//                                    "Are you sure you want to load all the Kotlin challenges? (This can take a while)")
+//            }
 
             p {
               this@body.adminButton("Load All Challenges",
@@ -141,12 +138,12 @@ internal object SystemAdminPage : KLogging() {
 
             Property.GRAFANA_URL.getPropertyOrNull()
               ?.also {
-                if (it.isNotBlank()) p { +"Grafana Dashboard is "; a { href = it; target = "_blank"; +"here" } }
+                //if (it.isNotBlank()) p { +"Grafana Dashboard is "; a { href = it; target = "_blank"; +"here" } }
               }
 
             Property.PROMETHEUS_URL.getPropertyOrNull()
               ?.also {
-                if (it.isNotBlank()) p { +"Prometheus Dashboard is "; a { href = it; target = "_blank"; +"here" } }
+                //if (it.isNotBlank()) p { +"Prometheus Dashboard is "; a { href = it; target = "_blank"; +"here" } }
               }
           }
           else {
@@ -156,6 +153,7 @@ internal object SystemAdminPage : KLogging() {
           p {
             textArea {
               id = msgs
+              readonly = true
               rows = "20"
               cols = "120"
               +""

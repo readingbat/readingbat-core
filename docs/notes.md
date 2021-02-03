@@ -6,9 +6,10 @@
 
 ## Running from *readingbat-core*
 Setup:
-* VM Options: -Dlogback.configurationFile=src/test/resources/logback-test.xml
-* Program Arguments: -config=src/main/resources/application-dev.conf
-* Environment Variables: SENDGRID_API_KEY=**value**
+* Main class: TestMain
+* VM Options: -Dlogback.configurationFile=testresources/logback-test.xml
+* Program Arguments: -config=readingbat-core/src/main/resources/application-dev.conf
+* Environment Variables: IPGEOLOCATION_KEY=**value**;GITHUB_OAUTH=**Value**
 
 ## Heroku
 * Switch shell to Java8 to get jvisualvm to work on an OSX client
@@ -80,6 +81,8 @@ Setup:
 ## Cypress.io
 
 * tab plugin: https://github.com/Bkucera/cypress-plugin-tab
-* To start locally: ~/node_modules/.bin/cypress open
-* To run: ~/node_modules/.bin/cypress run --record --key 5ee5de19-1e84-4807-a199-5c70fda2fe5d
+* Start test server with: `./testdata.sh`
+* Clear data with: `make dbreset`
+* To start locally from repo root: `~/node_modules/.bin/cypress open`
+* To run: `~/node_modules/.bin/cypress run --record --key 5ee5de19-1e84-4807-a199-5c70fda2fe5d`
 * https://levelup.gitconnected.com/what-ive-learnt-using-cypress-io-for-the-past-three-weeks-c1597999cd2f

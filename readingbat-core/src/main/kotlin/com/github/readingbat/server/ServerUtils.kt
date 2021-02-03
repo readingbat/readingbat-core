@@ -55,6 +55,7 @@ import redis.clients.jedis.Jedis
 
 typealias PipelineCall = PipelineContext<Unit, ApplicationCall>
 
+@Suppress("unused")
 internal object ServerUtils : KLogging() {
 
   fun getVersionDesc(asJson: Boolean = false): String = ReadingBatServer::class.versionDesc(asJson)

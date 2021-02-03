@@ -2,19 +2,18 @@ plugins {
     id 'java'
     id 'application'
     id 'maven'  // Required for jitpack.io to do a ./gradlew install
-    id 'org.jetbrains.kotlin.jvm' version '1.4.21' apply false
-    id 'org.jetbrains.kotlin.plugin.serialization' version '1.4.21' apply false
+    id 'org.jetbrains.kotlin.jvm' version '1.4.30' apply false
+    id 'org.jetbrains.kotlin.plugin.serialization' version '1.4.30' apply false
     id "com.github.ben-manes.versions" version '0.36.0' apply false
     id 'com.github.johnrengelman.shadow' version '6.1.0' apply false
     id 'com.github.gmazzo.buildconfig' version '2.0.2' apply false
-    id "org.flywaydb.flyway" version "7.3.1"
+    id "org.flywaydb.flyway" version "7.5.2"
 }
 
 ext {
     libraries = [
             kotlin_reflect         : "org.jetbrains.kotlin:kotlin-reflect",
             kotlinx_coroutines_core: "org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutines_version",
-            //kotlin_scripting_compiler: "org.jetbrains.kotlin:kotlin-scripting-compiler-embeddable",
 
             serialization          : "org.jetbrains.kotlinx:kotlinx-serialization-json:$serialization_version",
 
@@ -90,7 +89,7 @@ ext {
 allprojects {
     description = 'ReadingBat Core'
     group 'com.github.readingbat'
-    version '1.9.0'
+    version '1.10.0'
 
     apply plugin: 'application'
     apply plugin: 'maven' // required for jitpack.io install
@@ -101,10 +100,10 @@ allprojects {
     apply plugin: 'com.github.gmazzo.buildconfig'
 
     repositories {
-        maven { url 'https://kotlin.bintray.com/ktor' }
-        maven { url 'https://kotlin.bintray.com/kotlinx' }
-        maven { url 'https://kotlin.bintray.com/kotlin-js-wrappers' }
-        maven { url 'https://maven-central.storage-download.googleapis.com/repos/central/data/' }
+        maven { url = 'https://kotlin.bintray.com/ktor' }
+        maven { url = 'https://kotlin.bintray.com/kotlinx' }
+        maven { url = 'https://kotlin.bintray.com/kotlin-js-wrappers' }
+        maven { url = 'https://maven-central.storage-download.googleapis.com/repos/central/data/' }
         jcenter()
         maven { url = 'https://jitpack.io' }
     }
@@ -118,8 +117,9 @@ subprojects {
     dependencies {
         implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
 
-        // This is required for the ExperimentalCoroutinesApi arg below
-        implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm"
+        // These are required for the annotation args below
+        implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:${coroutines_version}"
+        implementation "io.ktor:ktor-locations:${ktor_version}"
 
         implementation "io.github.microutils:kotlin-logging:$logging_version"
         implementation "ch.qos.logback:logback-classic:$logback_version"
@@ -156,7 +156,6 @@ subprojects {
         kotlinOptions.jvmTarget = '1.8'
         kotlinOptions.freeCompilerArgs += ['-Xuse-experimental=kotlin.time.ExperimentalTime',
                                            '-Xuse-experimental=io.ktor.util.KtorExperimentalAPI',
-                                           '-Xuse-experimental=io.ktor.locations.KtorExperimentalLocationsAPI',
                                            '-Xuse-experimental=kotlinx.coroutines.ExperimentalCoroutinesApi',
                                            '-Xuse-experimental=kotlin.ExperimentalStdlibApi',
                                            '-XXLanguage:+InlineClasses']

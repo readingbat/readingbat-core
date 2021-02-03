@@ -27,6 +27,8 @@ import com.github.readingbat.common.Constants.WRONG_COLOR
   val color get() = if (isError) WRONG_COLOR else CORRECT_COLOR
 
   fun isAssigned() = this != EMPTY_MESSAGE
+
+  @Suppress("unused")
   fun isUnassigned() = this == EMPTY_MESSAGE
 
   override fun toString() = value

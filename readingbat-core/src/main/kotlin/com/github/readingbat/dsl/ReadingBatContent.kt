@@ -67,10 +67,9 @@ class ReadingBatContent {
 
   val languages by lazy { listOf(python, java, kotlin) }
 
-  // User properties
-  // Default value is isProduction()
-  var cacheChallenges = isProduction()
+  val cacheChallenges get() = isProduction() || isTesting()
 
+  // User properties
   // These are defaults and can be overridden in language specific section
   //var repo: ContentRoot = defaultContentRoot # Makes repo a required value
   var repo: ContentRoot = FileSystemSource("./")
@@ -127,6 +126,7 @@ class ReadingBatContent {
 
   internal fun validate() = languageList.forEach { it.validate() }
 
+  @Suppress("unused")
   internal fun functionInfoByMd5(md5: String) =
     functionInfoMap.asSequence().firstOrNull { it.component2().challengeMd5.value == md5 }?.value
 
@@ -140,6 +140,7 @@ class ReadingBatContent {
   fun kotlin(block: LanguageGroup<KotlinChallenge>.() -> Unit) = kotlin.run(block)
 
   @ReadingBatDslMarker
+  @Suppress("UNCHECKED_CAST")
   operator fun <T : Challenge> LanguageGroup<T>.unaryPlus() {
     val languageGroup = this@ReadingBatContent.findLanguage(languageType) as LanguageGroup<T>
     challengeGroups.forEach { languageGroup.addGroup(it) }
@@ -174,7 +175,7 @@ class ReadingBatContent {
             challengeGroup.challenges
               .forEach { challenge ->
                 if (useWebApi) {
-                  HttpClient(CIO)
+                  HttpClient(CIO) { expectSuccess = false }
                     .use { httpClient ->
                       withHttpClient(httpClient) {
                         val url = pathOf(prefix, CONTENT, challenge.path)

@@ -21,7 +21,6 @@ import com.github.pambrose.common.util.pathOf
 import com.github.readingbat.common.CSSNames
 import com.github.readingbat.common.CSSNames.CENTER
 import com.github.readingbat.common.Endpoints.STATIC_ROOT
-import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyTitle
 import com.github.readingbat.pages.PageUtils.headDefault
@@ -31,7 +30,7 @@ import kotlinx.html.stream.createHTML
 
 internal object InvalidRequestPage {
 
-  fun invalidRequestPage(content: ReadingBatContent, uri: String, msg: String) =
+  fun invalidRequestPage(uri: String, msg: String) =
     createHTML()
       .html {
         head { headDefault() }
