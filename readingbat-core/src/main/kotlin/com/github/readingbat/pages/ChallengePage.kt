@@ -73,8 +73,8 @@ import com.github.readingbat.common.StaticFileNames.DISLIKE_COLOR_FILE
 import com.github.readingbat.common.StaticFileNames.LIKE_CLEAR_FILE
 import com.github.readingbat.common.StaticFileNames.LIKE_COLOR_FILE
 import com.github.readingbat.common.User.Companion.queryActiveClassCode
-import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.ReadingBatContent
+import com.github.readingbat.dsl.challenge.Challenge
 import com.github.readingbat.dsl.isDbmsEnabled
 import com.github.readingbat.pages.PageUtils.addLink
 import com.github.readingbat.pages.PageUtils.backLink

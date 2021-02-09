@@ -31,10 +31,10 @@ import com.github.readingbat.common.KeyConstants.AUTH_KEY
 import com.github.readingbat.common.KeyConstants.CHALLENGE_ANSWERS_KEY
 import com.github.readingbat.common.KeyConstants.CORRECT_ANSWERS_KEY
 import com.github.readingbat.common.KeyConstants.keyOf
-import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.DataException
 import com.github.readingbat.dsl.LanguageType.Companion.defaultLanguageType
 import com.github.readingbat.dsl.LanguageType.Companion.toLanguageType
+import com.github.readingbat.dsl.challenge.Challenge
 import com.github.readingbat.dsl.isDbmsEnabled
 import com.github.readingbat.dsl.isMultiServerEnabled
 import com.github.readingbat.posts.ChallengeHistory

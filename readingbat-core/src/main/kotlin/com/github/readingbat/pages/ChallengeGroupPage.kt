@@ -43,9 +43,9 @@ import com.github.readingbat.common.User.Companion.queryActiveClassCode
 import com.github.readingbat.common.browserSession
 import com.github.readingbat.common.challengeAnswersKey
 import com.github.readingbat.common.correctAnswersKey
-import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.ChallengeGroup
 import com.github.readingbat.dsl.ReadingBatContent
+import com.github.readingbat.dsl.challenge.Challenge
 import com.github.readingbat.dsl.isDbmsEnabled
 import com.github.readingbat.pages.ChallengePage.headerColor
 import com.github.readingbat.pages.PageUtils.backLink

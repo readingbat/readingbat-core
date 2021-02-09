@@ -29,10 +29,13 @@ import com.github.pambrose.common.util.toDoubleQuoted
 import com.github.readingbat.common.Constants.CHALLENGE_NOT_FOUND
 import com.github.readingbat.common.KeyConstants.DIR_CONTENTS_KEY
 import com.github.readingbat.common.KeyConstants.keyOf
-import com.github.readingbat.dsl.Challenge.Companion.challenge
 import com.github.readingbat.dsl.GitHubUtils.organizationDirectoryContents
 import com.github.readingbat.dsl.GitHubUtils.userDirectoryContents
 import com.github.readingbat.dsl.ReturnType.Runtime
+import com.github.readingbat.dsl.challenge.Challenge
+import com.github.readingbat.dsl.challenge.Challenge.Companion.challenge
+import com.github.readingbat.dsl.challenge.KotlinChallenge
+import com.github.readingbat.dsl.challenge.PythonChallenge
 import com.github.readingbat.server.ChallengeName
 import com.github.readingbat.server.GroupName
 import com.github.readingbat.server.ReadingBatServer.redisPool

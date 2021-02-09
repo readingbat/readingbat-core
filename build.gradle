@@ -142,23 +142,33 @@ subprojects {
     }
 
     compileKotlin {
-        kotlinOptions.jvmTarget = '1.8'
-        kotlinOptions.freeCompilerArgs += ['-Xuse-experimental=kotlin.time.ExperimentalTime',
+        kotlinOptions {
+            useIR = true
+            languageVersion = "1.5"
+            apiVersion = "1.5"
+            jvmTarget = '1.8'
+            freeCompilerArgs += ['-Xuse-experimental=kotlin.time.ExperimentalTime',
                                            '-Xuse-experimental=io.ktor.util.KtorExperimentalAPI',
                                            '-Xuse-experimental=io.ktor.locations.KtorExperimentalLocationsAPI',
                                            '-Xuse-experimental=kotlinx.coroutines.ExperimentalCoroutinesApi',
                                            '-Xuse-experimental=kotlin.ExperimentalStdlibApi',
                                            '-Xuse-experimental=kotlin.contracts.ExperimentalContracts',
                                            '-XXLanguage:+InlineClasses']
+        }
     }
 
     compileTestKotlin {
-        kotlinOptions.jvmTarget = '1.8'
-        kotlinOptions.freeCompilerArgs += ['-Xuse-experimental=kotlin.time.ExperimentalTime',
-                                           '-Xuse-experimental=io.ktor.util.KtorExperimentalAPI',
-                                           '-Xuse-experimental=kotlinx.coroutines.ExperimentalCoroutinesApi',
-                                           '-Xuse-experimental=kotlin.ExperimentalStdlibApi',
-                                           '-XXLanguage:+InlineClasses']
+        kotlinOptions {
+            useIR = true
+            languageVersion = "1.5"
+            apiVersion = "1.5"
+            jvmTarget = '1.8'
+            freeCompilerArgs += ['-Xuse-experimental=kotlin.time.ExperimentalTime',
+                                 '-Xuse-experimental=io.ktor.util.KtorExperimentalAPI',
+                                 '-Xuse-experimental=kotlinx.coroutines.ExperimentalCoroutinesApi',
+                                 '-Xuse-experimental=kotlin.ExperimentalStdlibApi',
+                                 '-XXLanguage:+InlineClasses']
+        }
     }
 
     test {

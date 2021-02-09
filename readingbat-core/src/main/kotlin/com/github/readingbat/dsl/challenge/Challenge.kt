@@ -1,5 +1,5 @@
 /*
- * Copyright © 2020 Paul Ambrose (pambrose@mac.com)
+ * Copyright © 2021 Paul Ambrose (pambrose@mac.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,8 @@
  *
  */
 
-package com.github.readingbat.dsl
+package com.github.readingbat.dsl.challenge
 
-import ch.obermuhlner.scriptengine.java.Isolation.IsolatedClassLoader
 import com.github.pambrose.common.redis.RedisUtils.withNonNullRedisPool
 import com.github.pambrose.common.redis.RedisUtils.withRedisPool
 import com.github.pambrose.common.util.AbstractRepo
@@ -28,38 +27,23 @@ import com.github.pambrose.common.util.md5Of
 import com.github.pambrose.common.util.pathOf
 import com.github.pambrose.common.util.toDoubleQuoted
 import com.github.pambrose.common.util.toSingleQuoted
-import com.github.pambrose.common.util.withLineNumbers
 import com.github.readingbat.common.BrowserSession
 import com.github.readingbat.common.FunctionInfo
 import com.github.readingbat.common.KeyConstants.SOURCE_CODE_KEY
 import com.github.readingbat.common.KeyConstants.keyOf
 import com.github.readingbat.common.User
+import com.github.readingbat.dsl.ChallengeGroup
 import com.github.readingbat.dsl.LanguageType.Java
 import com.github.readingbat.dsl.LanguageType.Kotlin
 import com.github.readingbat.dsl.LanguageType.Python
-import com.github.readingbat.dsl.parse.JavaParse
-import com.github.readingbat.dsl.parse.JavaParse.deriveJavaReturnType
-import com.github.readingbat.dsl.parse.JavaParse.extractJavaFunction
-import com.github.readingbat.dsl.parse.JavaParse.extractJavaInvocations
-import com.github.readingbat.dsl.parse.JavaParse.javaEndRegex
-import com.github.readingbat.dsl.parse.JavaParse.svmRegex
-import com.github.readingbat.dsl.parse.KotlinParse.convertToKotlinScript
-import com.github.readingbat.dsl.parse.KotlinParse.extractKotlinFunction
-import com.github.readingbat.dsl.parse.KotlinParse.extractKotlinInvocations
-import com.github.readingbat.dsl.parse.KotlinParse.funMainRegex
-import com.github.readingbat.dsl.parse.KotlinParse.kotlinEndRegex
-import com.github.readingbat.dsl.parse.KotlinParse.varName
-import com.github.readingbat.dsl.parse.PythonParse.convertToPythonScript
-import com.github.readingbat.dsl.parse.PythonParse.defMainRegex
-import com.github.readingbat.dsl.parse.PythonParse.extractPythonFunction
-import com.github.readingbat.dsl.parse.PythonParse.extractPythonInvocations
-import com.github.readingbat.dsl.parse.PythonParse.ifMainEndRegex
+import com.github.readingbat.dsl.ReadingBatDslMarker
+import com.github.readingbat.dsl.TextFormatter
+import com.github.readingbat.dsl.agentLaunchId
+import com.github.readingbat.dsl.isContentCachingEnabled
+import com.github.readingbat.dsl.isDbmsEnabled
 import com.github.readingbat.server.ChallengeName
 import com.github.readingbat.server.Invocation
 import com.github.readingbat.server.ReadingBatServer.redisPool
-import com.github.readingbat.server.ScriptPools.javaScriptPool
-import com.github.readingbat.server.ScriptPools.kotlinScriptPool
-import com.github.readingbat.server.ScriptPools.pythonScriptPool
 import com.github.readingbat.server.SessionChallengeInfo
 import com.github.readingbat.server.UserChallengeInfo
 import com.pambrose.common.exposed.get
@@ -71,8 +55,6 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import java.net.URL
 import java.nio.file.Paths
 import java.util.concurrent.atomic.AtomicInteger
-import kotlin.reflect.typeOf
-import kotlin.time.measureTime
 import kotlin.time.measureTimedValue
 
 @ReadingBatDslMarker
@@ -231,136 +213,4 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
         Kotlin -> KotlinChallenge(challengeGroup, challengeName, replaceable)
       }
   }
-}
-
-class PythonChallenge(challengeGroup: ChallengeGroup<*>,
-                      challengeName: ChallengeName,
-                      replaceable: Boolean) :
-  Challenge(challengeGroup, challengeName, replaceable) {
-
-  // User properties
-  lateinit var returnType: ReturnType
-
-  override fun validate() {
-    super.validate()
-
-    if (!this::returnType.isInitialized)
-      error("$challengeName missing returnType value")
-  }
-
-  override suspend fun computeFunctionInfo(code: String): FunctionInfo {
-    val lines = code.lines().filterNot { it.startsWith("#") && it.contains(DESC) }
-    val funcCode = extractPythonFunction(lines)
-    val invocations = extractPythonInvocations(lines, defMainRegex, ifMainEndRegex)
-    val script = convertToPythonScript(lines)
-    val correctAnswers = mutableListOf<Any>()
-
-    logger.debug { "$challengeName return type: $returnType script: \n${script.withLineNumbers()}" }
-
-    description = deriveDescription(code, "#")
-
-    measureTime {
-      pythonScriptPool
-        .eval {
-          add(varName, correctAnswers)
-          eval(script)
-        }
-    }.also {
-      logger.debug { "$challengeName computed answers in $it for: $correctAnswers" }
-    }
-
-    return FunctionInfo(this, Python.languageName, code, funcCode, invocations, returnType, correctAnswers)
-  }
-
-  override fun toString() =
-    "PythonChallenge(packageName='$packageNameAsPath', fileName='$fileName', returnType=$returnType)"
-}
-
-class JavaChallenge(challengeGroup: ChallengeGroup<*>,
-                    challengeName: ChallengeName,
-                    replaceable: Boolean) :
-  Challenge(challengeGroup, challengeName, replaceable) {
-
-  override suspend fun computeFunctionInfo(code: String): FunctionInfo {
-    val lines =
-      code.lines()
-        .filterNot { it.startsWith("//") && it.contains(DESC) }
-        .filterNot { it.trimStart().startsWith("package") }
-    val funcCode = extractJavaFunction(lines)
-    val invocations = extractJavaInvocations(lines, svmRegex, javaEndRegex)
-    val returnType = deriveJavaReturnType(challengeName, lines)
-    val script = JavaParse.convertToScript(lines)
-
-    logger.debug { "$challengeName return type: $returnType script: \n${script.withLineNumbers()}" }
-
-    description = deriveDescription(code, "//")
-
-    val timedValue =
-      measureTimedValue {
-        javaScriptPool
-          .eval {
-            assignIsolation(IsolatedClassLoader)   // https://github.com/eobermuhlner/java-scriptengine
-            import(List::class.java)
-            import(ArrayList::class.java)
-            evalScript(script)
-          }
-      }
-
-    val correctAnswers = timedValue.value
-    logger.debug { "$challengeName computed answers in ${timedValue.duration}" }
-
-    if (correctAnswers !is List<*>)
-      error("Invalid type returned for $challengeName [${correctAnswers::class.java.simpleName}]")
-
-    return FunctionInfo(this, Java.languageName, code, funcCode, invocations, returnType, correctAnswers)
-  }
-
-  override fun toString() = "JavaChallenge(packageName='$packageNameAsPath', fileName='$fileName')"
-}
-
-class KotlinChallenge(challengeGroup: ChallengeGroup<*>,
-                      challengeName: ChallengeName,
-                      replaceable: Boolean) :
-  Challenge(challengeGroup, challengeName, replaceable) {
-
-  // User properties
-  lateinit var returnType: ReturnType
-
-  override fun validate() {
-    super.validate()
-
-    if (!this::returnType.isInitialized)
-      error("$challengeName missing returnType value")
-  }
-
-  override suspend fun computeFunctionInfo(code: String): FunctionInfo {
-    val lines =
-      code.lines()
-        .filterNot { it.startsWith("//") && it.contains(DESC) }
-        .filterNot { it.trimStart().startsWith("package") }
-    val strippedCode = lines.joinToString("\n")
-    val funcCode = "\n${extractKotlinFunction(lines)}\n\n"
-    val invocations = extractKotlinInvocations(lines, funMainRegex, kotlinEndRegex)
-    val script = convertToKotlinScript(lines).also { logger.debug { "Kotlin: $it" } }
-    val correctAnswers = mutableListOf<Any>()
-
-    logger.debug { "$challengeName return type: $returnType script: \n${script.withLineNumbers()}" }
-
-    description = deriveDescription(code, "//")
-
-    measureTime {
-      kotlinScriptPool
-        .eval {
-          add(varName, correctAnswers, typeOf<Any>())
-          eval(script)
-        }
-    }.also {
-      logger.debug { "$challengeName computed answers in $it for: $correctAnswers" }
-    }
-
-    return FunctionInfo(this, Kotlin.languageName, strippedCode, funcCode, invocations, returnType, correctAnswers)
-  }
-
-  override fun toString() =
-    "KotlinChallenge(packageName='$packageNameAsPath', fileName='$fileName', returnType=$returnType)"
 }

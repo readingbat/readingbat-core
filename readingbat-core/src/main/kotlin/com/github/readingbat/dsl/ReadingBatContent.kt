@@ -30,6 +30,10 @@ import com.github.readingbat.common.PropertyNames.CONTENT
 import com.github.readingbat.dsl.LanguageType.Java
 import com.github.readingbat.dsl.LanguageType.Kotlin
 import com.github.readingbat.dsl.LanguageType.Python
+import com.github.readingbat.dsl.challenge.Challenge
+import com.github.readingbat.dsl.challenge.JavaChallenge
+import com.github.readingbat.dsl.challenge.KotlinChallenge
+import com.github.readingbat.dsl.challenge.PythonChallenge
 import com.github.readingbat.server.ChallengeName
 import com.github.readingbat.server.GroupName
 import com.github.readingbat.server.Language

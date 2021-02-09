@@ -18,12 +18,12 @@
 package com.github.readingbat.common
 
 import com.github.pambrose.common.util.*
-import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.LanguageType.Java
 import com.github.readingbat.dsl.LanguageType.Kotlin
 import com.github.readingbat.dsl.LanguageType.Python
 import com.github.readingbat.dsl.ReturnType
 import com.github.readingbat.dsl.ReturnType.*
+import com.github.readingbat.dsl.challenge.Challenge
 import com.github.readingbat.posts.ChallengeResults
 import com.github.readingbat.server.ChallengeMd5
 import com.github.readingbat.server.Invocation

@@ -27,8 +27,8 @@ import com.github.readingbat.common.Endpoints.STATIC_ROOT
 import com.github.readingbat.common.StaticFileNames.RUN_BUTTON
 import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.queryActiveClassCode
-import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.ReadingBatContent
+import com.github.readingbat.dsl.challenge.Challenge
 import com.github.readingbat.pages.PageUtils.addLink
 import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyHeader
