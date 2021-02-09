@@ -262,7 +262,7 @@ internal fun Application.readContentDsl(fileName: String, variableName: String, 
     measureTime {
       withTimeoutOrNull(maxDelay) {
         job.join()
-      } ?: logger.info { "Timed-out after waiting $maxDelay" }
+      } ?: logger.error { "Timed-out after waiting $maxDelay" }
     }.also {
       logger.info { "Continued start-up after delaying $it" }
     }
