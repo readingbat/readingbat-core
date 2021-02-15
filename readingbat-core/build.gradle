@@ -11,7 +11,7 @@ application {
 
 dependencies {
     implementation libraries.kotlin_reflect
-    implementation libraries.kotlinx_coroutines_core
+    //implementation libraries.kotlinx_coroutines_core
 
     implementation libraries.serialization
 
@@ -34,9 +34,9 @@ dependencies {
 
     implementation libraries.prometheus_proxy
 
-    implementation libraries.simpleclient
+    implementation libraries.simple_client
 
-    implementation libraries.scriptengine
+    implementation libraries.script_engine
 
     implementation libraries.css
     implementation libraries.css_jvm

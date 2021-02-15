@@ -7,12 +7,13 @@ plugins {
     id "com.github.ben-manes.versions" version '0.36.0' apply false
     id 'com.github.johnrengelman.shadow' version '6.1.0' apply false
     id 'com.github.gmazzo.buildconfig' version '2.0.2' apply false
-    id "org.flywaydb.flyway" version "7.5.2"
+    id "org.flywaydb.flyway" version "7.5.3"
 }
 
 ext {
     libraries = [
             kotlin_reflect         : "org.jetbrains.kotlin:kotlin-reflect",
+
             kotlinx_coroutines_core: "org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutines_version",
 
             serialization          : "org.jetbrains.kotlinx:kotlinx-serialization-json:$serialization_version",
@@ -36,9 +37,9 @@ ext {
 
             prometheus_proxy       : "com.github.pambrose:prometheus-proxy:$proxy_version",
 
-            simpleclient           : "io.prometheus:simpleclient:$prometheus_version",
+            simple_client          : "io.prometheus:simpleclient:$prometheus_version",
 
-            scriptengine           : "ch.obermuhlner:java-scriptengine:$java_script_version",
+            script_engine          : "ch.obermuhlner:java-scriptengine:$java_script_version",
 
             css                    : "org.jetbrains:kotlin-css:$css_version",
             css_jvm                : "org.jetbrains:kotlin-css-jvm:$css_version",

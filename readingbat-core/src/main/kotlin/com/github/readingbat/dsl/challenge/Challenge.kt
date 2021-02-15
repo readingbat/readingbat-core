@@ -45,8 +45,17 @@ import com.github.readingbat.dsl.agentLaunchId
 import com.github.readingbat.dsl.isContentCachingEnabled
 import com.github.readingbat.dsl.isDbmsEnabled
 import com.github.readingbat.dsl.parse.JavaParse
+import com.github.readingbat.dsl.parse.JavaParse.convertToScript
+import com.github.readingbat.dsl.parse.JavaParse.deriveJavaReturnType
+import com.github.readingbat.dsl.parse.JavaParse.extractJavaInvocations
 import com.github.readingbat.dsl.parse.KotlinParse
+import com.github.readingbat.dsl.parse.KotlinParse.convertToKotlinScript
+import com.github.readingbat.dsl.parse.KotlinParse.extractKotlinFunction
+import com.github.readingbat.dsl.parse.KotlinParse.extractKotlinInvocations
 import com.github.readingbat.dsl.parse.PythonParse
+import com.github.readingbat.dsl.parse.PythonParse.convertToPythonScript
+import com.github.readingbat.dsl.parse.PythonParse.extractPythonFunction
+import com.github.readingbat.dsl.parse.PythonParse.extractPythonInvocations
 import com.github.readingbat.server.ChallengeName
 import com.github.readingbat.server.Invocation
 import com.github.readingbat.server.ReadingBatServer.redisPool
@@ -176,9 +185,9 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
     else {
       code.lines().asSequence()
         .filter { it.startsWith(commentPrefix) && it.contains(DESC) }
-        .map { it.replaceFirst(commentPrefix, "") }   // Remove comment prefix
-        .map { it.replaceFirst(DESC, "") }            // Remove @desc
-        .map { it.trim() }                            // Strip leading and trailing spaces
+        .map { it.replaceFirst(commentPrefix, "") }  // Remove comment prefix
+        .map { it.replaceFirst(DESC, "") }          // Remove @desc
+        .map { it.trim() }                                    // Strip leading and trailing spaces
         .joinToString("\n")
         .also { logger.debug { """Assigning $challengeName description = "$it"""" } }
     }
@@ -235,9 +244,9 @@ class JavaChallenge(challengeGroup: ChallengeGroup<*>,
         .filterNot { it.startsWith("//") && it.contains(DESC) }
         .filterNot { it.trimStart().startsWith("package") }
     val funcCode = JavaParse.extractJavaFunction(lines)
-    val invocations = JavaParse.extractJavaInvocations(lines, JavaParse.svmRegex, JavaParse.javaEndRegex)
-    val returnType = JavaParse.deriveJavaReturnType(challengeName, lines)
-    val script = JavaParse.convertToScript(lines)
+    val invocations = extractJavaInvocations(lines, JavaParse.svmRegex, JavaParse.javaEndRegex)
+    val returnType = deriveJavaReturnType(challengeName, lines)
+    val script = convertToScript(lines)
 
     logger.debug { "$challengeName return type: $returnType script: \n${script.withLineNumbers()}" }
 
@@ -287,9 +296,9 @@ class KotlinChallenge(challengeGroup: ChallengeGroup<*>,
         .filterNot { it.startsWith("//") && it.contains(DESC) }
         .filterNot { it.trimStart().startsWith("package") }
     val strippedCode = lines.joinToString("\n")
-    val funcCode = "\n${KotlinParse.extractKotlinFunction(lines)}\n\n"
-    val invocations = KotlinParse.extractKotlinInvocations(lines, KotlinParse.funMainRegex, KotlinParse.kotlinEndRegex)
-    val script = KotlinParse.convertToKotlinScript(lines).also { logger.debug { "Kotlin: $it" } }
+    val funcCode = "\n${extractKotlinFunction(lines)}\n\n"
+    val invocations = extractKotlinInvocations(lines, KotlinParse.funMainRegex, KotlinParse.kotlinEndRegex)
+    val script = convertToKotlinScript(lines).also { logger.debug { "Kotlin: $it" } }
     val correctAnswers = mutableListOf<Any>()
 
     logger.debug { "$challengeName return type: $returnType script: \n${script.withLineNumbers()}" }
@@ -336,9 +345,9 @@ class PythonChallenge(challengeGroup: ChallengeGroup<*>,
 
   override suspend fun computeFunctionInfo(code: String): FunctionInfo {
     val lines = code.lines().filterNot { it.startsWith("#") && it.contains(DESC) }
-    val funcCode = PythonParse.extractPythonFunction(lines)
-    val invocations = PythonParse.extractPythonInvocations(lines, PythonParse.defMainRegex, PythonParse.ifMainEndRegex)
-    val script = PythonParse.convertToPythonScript(lines)
+    val funcCode = extractPythonFunction(lines)
+    val invocations = extractPythonInvocations(lines, PythonParse.defMainRegex, PythonParse.ifMainEndRegex)
+    val script = convertToPythonScript(lines)
     val correctAnswers = mutableListOf<Any>()
 
     logger.debug { "$challengeName return type: $returnType script: \n${script.withLineNumbers()}" }
@@ -348,7 +357,7 @@ class PythonChallenge(challengeGroup: ChallengeGroup<*>,
     measureTime {
       ScriptPools.pythonScriptPool
         .eval {
-          add(KotlinParse.varName, correctAnswers)
+          add(PythonParse.varName, correctAnswers)
           eval(script)
         }
     }.also {

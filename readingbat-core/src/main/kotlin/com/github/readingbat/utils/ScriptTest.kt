@@ -26,6 +26,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import javax.script.Bindings
 import javax.script.ScriptContext
+import javax.script.ScriptContext.ENGINE_SCOPE
 import javax.script.ScriptEngine
 import javax.script.ScriptEngineManager
 import javax.script.SimpleScriptContext
@@ -128,18 +129,16 @@ answers.add(less_than(11, 28))
     println(it)
   }
 
-  //Thread.sleep(100000000000000000)
-
   println(correctAnswers)
 }
 
-
-val ScriptEngine.bindings: Bindings get() = getBindings(ScriptContext.ENGINE_SCOPE)
+val ScriptEngine.bindings: Bindings get() = getBindings(ENGINE_SCOPE)
 
 @Suppress("unused")
-val ScriptContext.bindings: Bindings get() = getBindings(ScriptContext.ENGINE_SCOPE)
+val ScriptContext.bindings: Bindings
+  get() = getBindings(ENGINE_SCOPE)
 
-fun ScriptEngine.reset(scope: Int = ScriptContext.ENGINE_SCOPE) {
+fun ScriptEngine.reset(scope: Int = ENGINE_SCOPE) {
   context = SimpleScriptContext().apply { setBindings(createBindings(), scope) }
 }
 
