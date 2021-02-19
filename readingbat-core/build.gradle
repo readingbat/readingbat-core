@@ -79,9 +79,9 @@ dependencies {
     testImplementation libraries.ktor_server_test_host
 
     testImplementation libraries.kotest_runner_junit5
-    testImplementation libraries.kotest_assertions_core
-    testImplementation libraries.kotest_assertions_ktor
-    testImplementation libraries.kotest_property
+//    testImplementation libraries.kotest_assertions_core
+//    testImplementation libraries.kotest_assertions_ktor
+//    testImplementation libraries.kotest_property
 
     testImplementation project(':readingbat-kotest')
 }
