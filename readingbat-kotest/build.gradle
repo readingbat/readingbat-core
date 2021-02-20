@@ -9,7 +9,7 @@ dependencies {
     implementation libraries.ktor_server_test_host
 
     implementation libraries.kotest_runner_junit5
-//    implementation libraries.kotest_assertions_core
-//    implementation libraries.kotest_assertions_ktor
+    implementation libraries.kotest_assertions_core
+    implementation libraries.kotest_assertions_ktor
 //    implementation libraries.kotest_property
 }

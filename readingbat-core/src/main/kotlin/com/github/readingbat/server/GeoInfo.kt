@@ -64,7 +64,14 @@ import java.util.concurrent.ConcurrentHashMap
   private val time_zone by map
 
   fun summary() =
-    if (valid) listOf(city, state_prov, country_name, organization).joinToString(", ") else Constants.UNKNOWN
+    if (valid)
+      try {
+        listOf(city, state_prov, country_name, organization).joinToString(", ")
+      } catch (e: NoSuchElementException) {
+        "Missing Geo data"
+      }
+    else
+      Constants.UNKNOWN
 
   fun mapVal(block: () -> String) =
     try {
