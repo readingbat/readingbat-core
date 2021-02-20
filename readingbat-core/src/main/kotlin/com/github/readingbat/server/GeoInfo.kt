@@ -66,6 +66,14 @@ import java.util.concurrent.ConcurrentHashMap
   fun summary() =
     if (valid) listOf(city, state_prov, country_name, organization).joinToString(", ") else Constants.UNKNOWN
 
+  fun mapVal(block: () -> String) =
+    try {
+      block.invoke()
+    } catch (e: NoSuchElementException) {
+      logger.warn { e.message }
+      "Unknown"
+    }
+
   fun insert() {
     transaction {
       GeoInfos
@@ -74,26 +82,26 @@ import java.util.concurrent.ConcurrentHashMap
           row[json] = this@GeoInfo.json
 
           if (this@GeoInfo.valid) {
-            row[continentCode] = this@GeoInfo.continent_code.toString()
-            row[continentName] = this@GeoInfo.continent_name.toString()
-            row[countryCode2] = this@GeoInfo.country_code2.toString()
-            row[countryCode3] = this@GeoInfo.country_code3.toString()
-            row[countryName] = this@GeoInfo.country_name.toString()
-            row[countryCapital] = this@GeoInfo.country_capital.toString()
-            row[district] = this@GeoInfo.district.toString()
-            row[city] = this@GeoInfo.city.toString()
-            row[stateProv] = this@GeoInfo.state_prov.toString()
-            row[zipcode] = this@GeoInfo.zipcode.toString()
-            row[latitude] = this@GeoInfo.latitude.toString()
-            row[longitude] = this@GeoInfo.longitude.toString()
-            row[isEu] = this@GeoInfo.is_eu.toString()
-            row[callingCode] = this@GeoInfo.calling_code.toString()
-            row[countryTld] = this@GeoInfo.country_tld.toString()
-            row[countryFlag] = this@GeoInfo.country_flag.toString()
-            row[isp] = this@GeoInfo.isp.toString()
-            row[connectionType] = this@GeoInfo.connection_type.toString()
-            row[organization] = this@GeoInfo.organization.toString()
-            row[timeZone] = this@GeoInfo.time_zone.toString()
+            row[continentCode] = mapVal { this@GeoInfo.continent_code.toString() }
+            row[continentName] = mapVal { this@GeoInfo.continent_name.toString() }
+            row[countryCode2] = mapVal { this@GeoInfo.country_code2.toString() }
+            row[countryCode3] = mapVal { this@GeoInfo.country_code3.toString() }
+            row[countryName] = mapVal { this@GeoInfo.country_name.toString() }
+            row[countryCapital] = mapVal { this@GeoInfo.country_capital.toString() }
+            row[district] = mapVal { this@GeoInfo.district.toString() }
+            row[city] = mapVal { this@GeoInfo.city.toString() }
+            row[stateProv] = mapVal { this@GeoInfo.state_prov.toString() }
+            row[zipcode] = mapVal { this@GeoInfo.zipcode.toString() }
+            row[latitude] = mapVal { this@GeoInfo.latitude.toString() }
+            row[longitude] = mapVal { this@GeoInfo.longitude.toString() }
+            row[isEu] = mapVal { this@GeoInfo.is_eu.toString() }
+            row[callingCode] = mapVal { this@GeoInfo.calling_code.toString() }
+            row[countryTld] = mapVal { this@GeoInfo.country_tld.toString() }
+            row[countryFlag] = mapVal { this@GeoInfo.country_flag.toString() }
+            row[isp] = mapVal { this@GeoInfo.isp.toString() }
+            row[connectionType] = mapVal { this@GeoInfo.connection_type.toString() }
+            row[organization] = mapVal { this@GeoInfo.organization.toString() }
+            row[timeZone] = mapVal { this@GeoInfo.time_zone.toString() }
           }
         }
     }
