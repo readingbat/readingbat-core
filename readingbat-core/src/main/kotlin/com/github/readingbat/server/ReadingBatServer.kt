@@ -186,6 +186,7 @@ internal fun Application.readContentDsl(fileName: String, variableName: String, 
       logger.info { it }
       logToRedis(it, logId)
     }
+
   measureTime {
     val contentSource = FileSource(fileName = fileName)
     val dslCode = readContentDsl(contentSource)
@@ -204,6 +205,7 @@ internal fun Application.readContentDsl(fileName: String, variableName: String, 
         logToRedis(it, logId)
       }
   }
+
   contentReadCount.incrementAndGet()
 }
 
