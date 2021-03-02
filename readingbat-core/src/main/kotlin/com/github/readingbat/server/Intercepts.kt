@@ -105,16 +105,16 @@ internal fun Application.intercepts() {
 
           logger.debug { "Saving request: ${call.callId} $ipAddress $userDbmsId $verb $path $queryString $geoDbmsId" }
           transaction {
-            ServerRequests
+            ServerRequestsTable
               .insert { row ->
                 row[requestId] = call.callId ?: "None"
                 row[sessionRef] = sessionDbmsId
                 row[userRef] = userDbmsId
                 row[geoRef] = geoDbmsId
-                row[ServerRequests.verb] = verb
-                row[ServerRequests.path] = path.maxLength(256)
-                row[ServerRequests.queryString] = queryString.maxLength(256)
-                row[ServerRequests.userAgent] = userAgent.maxLength(256)
+                row[ServerRequestsTable.verb] = verb
+                row[ServerRequestsTable.path] = path.maxLength(256)
+                row[ServerRequestsTable.queryString] = queryString.maxLength(256)
+                row[ServerRequestsTable.userAgent] = userAgent.maxLength(256)
                 row[duration] = 0
               }
           }
@@ -174,8 +174,8 @@ internal fun Application.intercepts() {
 
 fun updateServerRequest(callId: String, start: TimeMark) {
   transaction {
-    ServerRequests
-      .update({ ServerRequests.requestId eq callId }) { row ->
+    ServerRequestsTable
+      .update({ ServerRequestsTable.requestId eq callId }) { row ->
         row[duration] = start.elapsedNow().toLongMilliseconds()
       }
   }

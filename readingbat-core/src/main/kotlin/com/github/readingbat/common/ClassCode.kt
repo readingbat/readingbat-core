@@ -21,9 +21,9 @@ import com.github.pambrose.common.util.randomId
 import com.github.pambrose.common.util.toDoubleQuoted
 import com.github.readingbat.common.FormFields.DISABLED_MODE
 import com.github.readingbat.common.User.Companion.toUser
-import com.github.readingbat.server.Classes
-import com.github.readingbat.server.Enrollees
-import com.github.readingbat.server.Users
+import com.github.readingbat.server.ClassesTable
+import com.github.readingbat.server.EnrolleesTable
+import com.github.readingbat.server.UsersTable
 import com.pambrose.common.exposed.get
 import io.ktor.http.*
 import mu.KLogging
@@ -45,10 +45,10 @@ import kotlin.time.measureTimedValue
     get() =
       measureTimedValue {
         transaction {
-          Classes
-            .slice(Classes.id)
-            .select { Classes.classCode eq value }
-            .map { it[Classes.id].value }
+          ClassesTable
+            .slice(ClassesTable.id)
+            .select { ClassesTable.classCode eq value }
+            .map { it[ClassesTable.id].value }
             .firstOrNull() ?: error("Missing class code $value")
         }
       }.let {
@@ -60,9 +60,9 @@ import kotlin.time.measureTimedValue
 
   fun isValid() =
     transaction {
-      Classes
-        .slice(Count(Classes.classCode))
-        .select { Classes.classCode eq value }
+      ClassesTable
+        .slice(Count(ClassesTable.classCode))
+        .select { ClassesTable.classCode eq value }
         .map { it[0] as Long }
         .first().also { logger.debug { "ClassCode.isValid() returned $it for $value" } } > 0
     }
@@ -73,22 +73,22 @@ import kotlin.time.measureTimedValue
     else
       transaction {
         val userIds =
-          (Classes innerJoin Enrollees)
-            .slice(Enrollees.userRef)
-            .select { Classes.classCode eq value }
+          (ClassesTable innerJoin EnrolleesTable)
+            .slice(EnrolleesTable.userRef)
+            .select { ClassesTable.classCode eq value }
             .map { it[0] as Long }
 
-        Users
-          .select { Users.id inList userIds }
-          .map { it[Users.userId].toUser(it) }
+        UsersTable
+          .select { UsersTable.id inList userIds }
+          .map { it[UsersTable.userId].toUser(it) }
           .also { logger.debug { "fetchEnrollees() returning ${it.size} users" } }
       }
 
-  fun deleteClassCode() = Classes.deleteWhere { Classes.classCode eq value }
+  fun deleteClassCode() = ClassesTable.deleteWhere { ClassesTable.classCode eq value }
 
   fun addEnrollee(user: User) =
     transaction {
-      Enrollees
+      EnrolleesTable
         .insert { row ->
           row[classesRef] = classCodeDbmsId
           row[userRef] = user.userDbmsId
@@ -96,14 +96,14 @@ import kotlin.time.measureTimedValue
     }
 
   fun removeEnrollee(user: User) =
-    Enrollees.deleteWhere { (Enrollees.classesRef eq classCodeDbmsId) and (Enrollees.userRef eq user.userDbmsId) }
+    EnrolleesTable.deleteWhere { (EnrolleesTable.classesRef eq classCodeDbmsId) and (EnrolleesTable.userRef eq user.userDbmsId) }
 
 
   fun fetchClassDesc(quoted: Boolean = false) =
     transaction {
-      (Classes
-        .slice(Classes.description)
-        .select { Classes.classCode eq value }
+      (ClassesTable
+        .slice(ClassesTable.description)
+        .select { ClassesTable.classCode eq value }
         .map { it[0] as String }
         .firstOrNull() ?: "Missing description")
         .also { logger.debug { "fetchClassDesc() returned ${it.toDoubleQuoted()} for $value" } }
@@ -113,9 +113,9 @@ import kotlin.time.measureTimedValue
 
   fun fetchClassTeacherId() =
     transaction {
-      ((Classes innerJoin Users)
-        .slice(Users.userId)
-        .select { Classes.classCode eq value }
+      ((ClassesTable innerJoin UsersTable)
+        .slice(UsersTable.userId)
+        .select { ClassesTable.classCode eq value }
         .map { it[0] as String }
         .firstOrNull() ?: "").also { logger.debug { "fetchClassTeacherId() returned $it" } }
     }

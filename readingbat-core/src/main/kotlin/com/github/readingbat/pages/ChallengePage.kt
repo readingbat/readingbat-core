@@ -88,8 +88,8 @@ import com.github.readingbat.pages.js.LikeDislikeJs.likeDislikeScript
 import com.github.readingbat.server.ChallengeMd5
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
-import com.github.readingbat.server.SessionChallengeInfo
-import com.github.readingbat.server.UserChallengeInfo
+import com.github.readingbat.server.SessionChallengeInfoTable
+import com.github.readingbat.server.UserChallengeInfoTable
 import com.pambrose.common.exposed.get
 import io.ktor.application.*
 import io.ktor.http.ContentType.Text.CSS
@@ -658,9 +658,9 @@ internal object ChallengePage : KLogging() {
       !isDbmsEnabled() -> emptyMap
       user.isNotNull() ->
         transaction {
-          UserChallengeInfo
-            .slice(UserChallengeInfo.answersJson)
-            .select { (UserChallengeInfo.userRef eq user.userDbmsId) and (UserChallengeInfo.md5 eq challenge.md5()) }
+          UserChallengeInfoTable
+            .slice(UserChallengeInfoTable.answersJson)
+            .select { (UserChallengeInfoTable.userRef eq user.userDbmsId) and (UserChallengeInfoTable.md5 eq challenge.md5()) }
             .map { it[0] as String }
             .firstOrNull()
             ?.let { Json.decodeFromString<Map<String, String>>(it) }
@@ -668,9 +668,9 @@ internal object ChallengePage : KLogging() {
         }
       browserSession.isNotNull() ->
         transaction {
-          SessionChallengeInfo
-            .slice(SessionChallengeInfo.answersJson)
-            .select { (SessionChallengeInfo.sessionRef eq browserSession.sessionDbmsId()) and (SessionChallengeInfo.md5 eq challenge.md5()) }
+          SessionChallengeInfoTable
+            .slice(SessionChallengeInfoTable.answersJson)
+            .select { (SessionChallengeInfoTable.sessionRef eq browserSession.sessionDbmsId()) and (SessionChallengeInfoTable.md5 eq challenge.md5()) }
             .map { it[0] as String }
             .firstOrNull()
             ?.let { Json.decodeFromString<Map<String, String>>(it) }

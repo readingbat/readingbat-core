@@ -83,7 +83,7 @@ import java.util.concurrent.ConcurrentHashMap
 
   fun insert() {
     transaction {
-      GeoInfos
+      GeoInfosTable
         .upsert(conflictIndex = geoInfosUnique) { row ->
           row[ip] = remoteHost
           row[json] = this@GeoInfo.json
@@ -133,10 +133,10 @@ import java.util.concurrent.ConcurrentHashMap
 
     fun queryGeoInfo(ipAddress: String) =
       transaction {
-        GeoInfos
-          .slice(GeoInfos.id, GeoInfos.json)
-          .select { GeoInfos.ip eq ipAddress }
-          .map { GeoInfo(false, it[GeoInfos.id].value, ipAddress, it[1] as String) }
+        GeoInfosTable
+          .slice(GeoInfosTable.id, GeoInfosTable.json)
+          .select { GeoInfosTable.ip eq ipAddress }
+          .map { GeoInfo(false, it[GeoInfosTable.id].value, ipAddress, it[1] as String) }
           .firstOrNull()
       }
 

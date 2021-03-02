@@ -30,8 +30,8 @@ import com.github.readingbat.server.ChallengeName
 import com.github.readingbat.server.GroupName
 import com.github.readingbat.server.Invocation
 import com.github.readingbat.server.LanguageName
-import com.github.readingbat.server.SessionAnswerHistory
-import com.github.readingbat.server.SessionChallengeInfo
+import com.github.readingbat.server.SessionAnswerHistoryTable
+import com.github.readingbat.server.SessionChallengeInfoTable
 import io.ktor.application.*
 import io.ktor.auth.*
 import io.ktor.sessions.*
@@ -64,10 +64,10 @@ internal data class UserPrincipal(val userId: String, val created: Long = Instan
 
   fun likeDislike(challenge: Challenge) =
     transaction {
-      val likeDislike = SessionChallengeInfo.likeDislike
-      val sessionRef = SessionChallengeInfo.sessionRef
-      val md5 = SessionChallengeInfo.md5
-      SessionChallengeInfo
+      val likeDislike = SessionChallengeInfoTable.likeDislike
+      val sessionRef = SessionChallengeInfoTable.sessionRef
+      val md5 = SessionChallengeInfoTable.md5
+      SessionChallengeInfoTable
         .slice(likeDislike)
         .select { (sessionRef eq sessionDbmsId()) and (md5 eq challenge.md5()) }
         .map { it[likeDislike].toInt() }
@@ -75,18 +75,18 @@ internal data class UserPrincipal(val userId: String, val created: Long = Instan
     }
 
   fun answerHistory(md5: String, invocation: Invocation) =
-    SessionAnswerHistory
-      .slice(SessionAnswerHistory.invocation,
-             SessionAnswerHistory.correct,
-             SessionAnswerHistory.incorrectAttempts,
-             SessionAnswerHistory.historyJson)
-      .select { (SessionAnswerHistory.sessionRef eq sessionDbmsId()) and (SessionAnswerHistory.md5 eq md5) }
+    SessionAnswerHistoryTable
+      .slice(SessionAnswerHistoryTable.invocation,
+             SessionAnswerHistoryTable.correct,
+             SessionAnswerHistoryTable.incorrectAttempts,
+             SessionAnswerHistoryTable.historyJson)
+      .select { (SessionAnswerHistoryTable.sessionRef eq sessionDbmsId()) and (SessionAnswerHistoryTable.md5 eq md5) }
       .map {
-        val json = it[SessionAnswerHistory.historyJson]
+        val json = it[SessionAnswerHistoryTable.historyJson]
         val history = Json.decodeFromString<List<String>>(json).toMutableList()
-        ChallengeHistory(Invocation(it[SessionAnswerHistory.invocation]),
-                         it[SessionAnswerHistory.correct],
-                         it[SessionAnswerHistory.incorrectAttempts].toInt(),
+        ChallengeHistory(Invocation(it[SessionAnswerHistoryTable.invocation]),
+                         it[SessionAnswerHistoryTable.correct],
+                         it[SessionAnswerHistoryTable.incorrectAttempts].toInt(),
                          history)
       }
       .firstOrNull() ?: ChallengeHistory(invocation)

@@ -66,9 +66,9 @@ internal object PasswordResetPage : KLogging() {
         val email =
           transaction {
             val idAndUpdate =
-              PasswordResets
-                .slice(PasswordResets.email, PasswordResets.updated)
-                .select { PasswordResets.resetId eq resetId.value }
+              PasswordResetsTable
+                .slice(PasswordResetsTable.email, PasswordResetsTable.updated)
+                .select { PasswordResetsTable.resetId eq resetId.value }
                 .map { it[0] as String to it[1] as DateTime }
                 .firstOrNull() ?: throw ResetPasswordException("Invalid reset id. Try again.")
 

@@ -2,11 +2,11 @@ plugins {
     id 'java'
     id 'application'
     id 'maven'  // Required for jitpack.io to do a ./gradlew install
-    id 'org.jetbrains.kotlin.jvm' version '1.4.30' apply false
-    id 'org.jetbrains.kotlin.plugin.serialization' version '1.4.30' apply false
+    id 'org.jetbrains.kotlin.jvm' version '1.4.31' apply false
+    id 'org.jetbrains.kotlin.plugin.serialization' version '1.4.31' apply false
     id "com.github.ben-manes.versions" version '0.36.0' apply false
     id 'com.github.johnrengelman.shadow' version '6.1.0' apply false
-    id 'com.github.gmazzo.buildconfig' version '2.1.0' apply false
+    id 'com.github.gmazzo.buildconfig' version '3.0.0' apply false
     id "org.flywaydb.flyway" version "7.5.4"
 }
 
@@ -58,11 +58,9 @@ ext {
             jedis                  : "redis.clients:jedis:$redis_version",
 
             hikari                 : "com.zaxxer:HikariCP:$hikari_version",
-
             exposed_core           : "org.jetbrains.exposed:exposed-core:$exposed_version",
             exposed_jdbc           : "org.jetbrains.exposed:exposed-jdbc:$exposed_version",
             jodatime               : "org.jetbrains.exposed:exposed-jodatime:$exposed_version",
-
             pgjdbc                 : "com.impossibl.pgjdbc-ng:pgjdbc-ng-all:$pgjdbc_version",
             postgres               : "org.postgresql:postgresql:$postgres_version",
             socket                 : "com.google.cloud.sql:postgres-socket-factory:$cloud_version",

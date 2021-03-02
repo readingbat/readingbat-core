@@ -82,8 +82,8 @@ import kotlin.time.measureTime
     if (initFields && isDbmsEnabled()) {
       measureTime {
         transaction {
-          Users
-            .select { Users.userId eq this@User.userId }
+          UsersTable
+            .select { UsersTable.userId eq this@User.userId }
             .map { assignRowVals(it) }
             .firstOrNull() ?: error("UserId not found: ${this@User.userId}")
         }
@@ -118,20 +118,20 @@ import kotlin.time.measureTime
     browserSession?.sessionDbmsId() ?: error("Null browser session")
 
   private fun assignRowVals(row: ResultRow) {
-    userDbmsId = row[Users.id].value
-    email = Email(row[Users.email])
-    fullName = FullName(row[Users.fullName])
-    enrolledClassCode = ClassCode(row[Users.enrolledClassCode])
-    defaultLanguage = row[Users.defaultLanguage].toLanguageType() ?: defaultLanguageType
-    saltBacking = row[Users.salt]
-    digestBacking = row[Users.digest]
+    userDbmsId = row[UsersTable.id].value
+    email = Email(row[UsersTable.email])
+    fullName = FullName(row[UsersTable.fullName])
+    enrolledClassCode = ClassCode(row[UsersTable.enrolledClassCode])
+    defaultLanguage = row[UsersTable.defaultLanguage].toLanguageType() ?: defaultLanguageType
+    saltBacking = row[UsersTable.salt]
+    digestBacking = row[UsersTable.digest]
   }
 
   fun browserSessions() =
     transaction {
       val sessionId = BrowserSessions.sessionId
-      val userRef = UserSessions.userRef
-      (BrowserSessions innerJoin UserSessions)
+      val userRef = UserSessionsTable.userRef
+      (BrowserSessions innerJoin UserSessionsTable)
         .slice(sessionId)
         .select { userRef eq userDbmsId }
         .map { it[0] as String }
@@ -140,10 +140,10 @@ import kotlin.time.measureTime
   // Look across all possible browser sessions
   private fun interestedInActiveClassCode(classCode: ClassCode) =
     transaction {
-      val id = UserSessions.id
-      val userRef = UserSessions.userRef
-      val activeClassCode = UserSessions.activeClassCode
-      UserSessions
+      val id = UserSessionsTable.id
+      val userRef = UserSessionsTable.userRef
+      val activeClassCode = UserSessionsTable.activeClassCode
+      UserSessionsTable
         .slice(Count(id))
         .select { (userRef eq userDbmsId) and (activeClassCode eq classCode.value) }
         .map { it[0] as Long }
@@ -152,9 +152,9 @@ import kotlin.time.measureTime
 
   fun correctAnswers() =
     transaction {
-      val allCorrect = UserChallengeInfo.allCorrect
-      val userRef = UserChallengeInfo.userRef
-      UserChallengeInfo
+      val allCorrect = UserChallengeInfoTable.allCorrect
+      val userRef = UserChallengeInfoTable.userRef
+      UserChallengeInfoTable
         .slice(allCorrect)
         .select { (userRef eq userDbmsId) and allCorrect }
         .map { (it[0] as Boolean).toString() }
@@ -171,10 +171,10 @@ import kotlin.time.measureTime
 
   fun likeDislike(challenge: Challenge) =
     transaction {
-      val likeDislike = UserChallengeInfo.likeDislike
-      val userRef = UserChallengeInfo.userRef
-      val md5 = UserChallengeInfo.md5
-      UserChallengeInfo
+      val likeDislike = UserChallengeInfoTable.likeDislike
+      val userRef = UserChallengeInfoTable.userRef
+      val md5 = UserChallengeInfoTable.md5
+      UserChallengeInfoTable
         .slice(likeDislike)
         .select { (userRef eq userDbmsId) and (md5 eq challenge.md5()) }
         .map { it[likeDislike].toInt() }
@@ -183,18 +183,18 @@ import kotlin.time.measureTime
 
   fun likeDislikes() =
     transaction {
-      val userRef = UserChallengeInfo.userRef
-      val likeDislike = UserChallengeInfo.likeDislike
-      UserChallengeInfo.slice(likeDislike)
+      val userRef = UserChallengeInfoTable.userRef
+      val likeDislike = UserChallengeInfoTable.likeDislike
+      UserChallengeInfoTable.slice(likeDislike)
         .select { (userRef eq userDbmsId) and ((likeDislike eq 1) or (likeDislike eq 2)) }
         .map { it.toString() }
     }
 
   fun classCount() =
     transaction {
-      val userRef = Classes.userRef
-      Classes
-        .slice(Count(Classes.classCode))
+      val userRef = ClassesTable.userRef
+      ClassesTable
+        .slice(Count(ClassesTable.classCode))
         .select { userRef eq userDbmsId }
         .map { it[0] as Long }
         .first().also { logger.info { "classCount() returned $it" } }
@@ -203,19 +203,19 @@ import kotlin.time.measureTime
 
   fun addClassCode(classCode: ClassCode, classDesc: String) =
     transaction {
-      Classes
+      ClassesTable
         .insert { row ->
           row[userRef] = userDbmsId
-          row[Classes.classCode] = classCode.value
+          row[ClassesTable.classCode] = classCode.value
           row[description] = classDesc.maxLength(256)
         }
     }
 
   fun classCodes() =
     transaction {
-      val classCode = Classes.classCode
-      val userRef = Classes.userRef
-      Classes
+      val classCode = ClassesTable.classCode
+      val userRef = ClassesTable.userRef
+      ClassesTable
         .slice(classCode)
         .select { userRef eq userDbmsId }
         .map { ClassCode(it[0] as String) }
@@ -223,8 +223,8 @@ import kotlin.time.measureTime
 
   fun isInDbms() =
     transaction {
-      val id = Users.id
-      Users
+      val id = UsersTable.id
+      UsersTable
         .slice(Count(id))
         .select { id eq userDbmsId }
         .map { it[0] as Long }
@@ -233,10 +233,10 @@ import kotlin.time.measureTime
 
   fun assignDigest(newDigest: String) =
     transaction {
-      PasswordResets.deleteWhere { PasswordResets.userRef eq userDbmsId }
+      PasswordResetsTable.deleteWhere { PasswordResetsTable.userRef eq userDbmsId }
 
-      Users
-        .update({ Users.id eq userDbmsId }) { row ->
+      UsersTable
+        .update({ UsersTable.id eq userDbmsId }) { row ->
           row[updated] = DateTime.now(UTC)
           row[digest] = newDigest
           digestBacking = newDigest
@@ -244,8 +244,8 @@ import kotlin.time.measureTime
     }
 
   private fun assignEnrolledClassCode(classCode: ClassCode) =
-    Users
-      .update({ Users.id eq userDbmsId }) { row ->
+    UsersTable
+      .update({ UsersTable.id eq userDbmsId }) { row ->
         row[updated] = DateTime.now(UTC)
         row[enrolledClassCode] = classCode.value
         this@User.enrolledClassCode = classCode
@@ -253,38 +253,38 @@ import kotlin.time.measureTime
 
   fun challenges() =
     transaction {
-      UserChallengeInfo
-        .slice(UserChallengeInfo.md5)
-        .select { UserChallengeInfo.userRef eq userDbmsId }
+      UserChallengeInfoTable
+        .slice(UserChallengeInfoTable.md5)
+        .select { UserChallengeInfoTable.userRef eq userDbmsId }
         .map { it[0] as String }.also { logger.info { "challenges() return ${it.size}" } }
     }
 
-  private val uahId = UserAnswerHistory.id
-  private val uahInvocation = UserAnswerHistory.invocation
-  private val uahUserRef = UserAnswerHistory.userRef
-  private val uahMd5 = UserAnswerHistory.md5
+  private val uahId = UserAnswerHistoryTable.id
+  private val uahInvocation = UserAnswerHistoryTable.invocation
+  private val uahUserRef = UserAnswerHistoryTable.userRef
+  private val uahMd5 = UserAnswerHistoryTable.md5
 
   fun invocations() =
     transaction {
-      UserAnswerHistory
+      UserAnswerHistoryTable
         .slice(uahMd5)
         .select { uahUserRef eq userDbmsId }
         .map { it[0] as String }.also { logger.info { "invocations() return ${it.size}" } }
     }
 
   fun historyExists(md5: String, invocation: Invocation) =
-    UserAnswerHistory
+    UserAnswerHistoryTable
       .slice(Count(uahId))
       .select { (uahUserRef eq userDbmsId) and (uahMd5 eq md5) and (uahInvocation eq invocation.value) }
       .map { it[0] as Long }
       .first() > 0
 
   fun answerHistory(md5: String, invocation: Invocation): ChallengeHistory {
-    val correct = UserAnswerHistory.correct
-    val incorrectAttempts = UserAnswerHistory.incorrectAttempts
-    val historyJson = UserAnswerHistory.historyJson
+    val correct = UserAnswerHistoryTable.correct
+    val incorrectAttempts = UserAnswerHistoryTable.incorrectAttempts
+    val historyJson = UserAnswerHistoryTable.historyJson
 
-    return UserAnswerHistory
+    return UserAnswerHistoryTable
       .slice(uahInvocation, correct, incorrectAttempts, historyJson)
       .select { (uahUserRef eq userDbmsId) and (uahMd5 eq md5) and (uahInvocation eq invocation.value) }
       .map {
@@ -297,7 +297,7 @@ import kotlin.time.measureTime
 
   fun assignActiveClassCode(classCode: ClassCode, resetPreviousClassCode: Boolean) =
     transaction {
-      UserSessions
+      UserSessionsTable
         .upsert(conflictIndex = userSessionIndex) { row ->
           row[sessionRef] = sessionDbmsId()
           row[userRef] = userDbmsId
@@ -310,7 +310,7 @@ import kotlin.time.measureTime
 
   fun resetActiveClassCode() {
     logger.info { "Resetting $fullName ($email) active class code" }
-    UserSessions
+    UserSessionsTable
       .upsert(conflictIndex = userSessionIndex) { row ->
         row[sessionRef] = sessionDbmsId()
         row[userRef] = userDbmsId
@@ -322,9 +322,9 @@ import kotlin.time.measureTime
 
   fun isEnrolled(classCode: ClassCode) =
     transaction {
-      Enrollees
-        .slice(Count(Enrollees.id))
-        .select { Enrollees.userRef eq userDbmsId }
+      EnrolleesTable
+        .slice(Count(EnrolleesTable.id))
+        .select { EnrolleesTable.userRef eq userDbmsId }
         .map { it[0] as Long }
         .first().also { logger.info { "isEnrolled() returned $it for $classCode" } } > 0
     }
@@ -373,8 +373,8 @@ import kotlin.time.measureTime
     enrollees
       .forEach { enrollee ->
         logger.info { "Assigning ${enrollee.email} to $DISABLED_CLASS_CODE" }
-        Users
-          .update({ Users.id eq enrollee.userDbmsId }) { row ->
+        UsersTable
+          .update({ UsersTable.id eq enrollee.userDbmsId }) { row ->
             row[updated] = DateTime.now(UTC)
             row[enrolledClassCode] = DISABLED_CLASS_CODE.value
           }
@@ -383,18 +383,18 @@ import kotlin.time.measureTime
 
   fun isUniqueClassDesc(classDesc: String) =
     transaction {
-      Classes
-        .slice(Count(Classes.id))
-        .select { Classes.description eq classDesc }
+      ClassesTable
+        .slice(Count(ClassesTable.id))
+        .select { ClassesTable.description eq classDesc }
         .map { it[0] as Long }
         .first() == 0L
     }
 
   fun userPasswordResetId() =
     transaction {
-      PasswordResets
-        .slice(PasswordResets.resetId)
-        .select { PasswordResets.userRef eq userDbmsId }
+      PasswordResetsTable
+        .slice(PasswordResetsTable.resetId)
+        .select { PasswordResetsTable.userRef eq userDbmsId }
         .map { it[0] as String }.also { logger.info { "userPasswordResetId() returned $it" } }
         .map { ResetId(it) }
         .firstOrNull() ?: EMPTY_RESET_ID
@@ -402,12 +402,12 @@ import kotlin.time.measureTime
 
   fun savePasswordResetId(email: Email, newResetId: ResetId) {
     transaction {
-      PasswordResets
+      PasswordResetsTable
         .upsert(conflictIndex = passwordResetsIndex) { row ->
           row[userRef] = userDbmsId
           row[updated] = DateTime.now(UTC)
           row[resetId] = newResetId.value
-          row[PasswordResets.email] = email.value
+          row[PasswordResetsTable.email] = email.value
         }
     }
   }
@@ -441,7 +441,7 @@ import kotlin.time.measureTime
       // UserChallengeInfo delete on cascade
       // UserSessions delete on cascade
       // PasswordResets delete on cascade
-      Users.deleteWhere { Users.id eq userDbmsId }
+      UsersTable.deleteWhere { UsersTable.id eq userDbmsId }
     }
   }
 
@@ -480,7 +480,7 @@ import kotlin.time.measureTime
         logger.debug { "Resetting invocation: ${result.invocation}" }
         val history = ChallengeHistory(result.invocation).apply { markUnanswered() }
         transaction {
-          UserAnswerHistory
+          UserAnswerHistoryTable
             .upsert(conflictIndex = userAnswerHistoryIndex) { row ->
               row[userRef] = userDbmsId
               row[md5] = challenge.md5(result.invocation)
@@ -540,9 +540,9 @@ import kotlin.time.measureTime
         user.isNull() || !isDbmsEnabled() -> DISABLED_CLASS_CODE
         else ->
           transaction {
-            UserSessions
-              .slice(UserSessions.activeClassCode)
-              .select { (UserSessions.sessionRef eq user.sessionDbmsId()) and (UserSessions.userRef eq user.userDbmsId) }
+            UserSessionsTable
+              .slice(UserSessionsTable.activeClassCode)
+              .select { (UserSessionsTable.sessionRef eq user.sessionDbmsId()) and (UserSessionsTable.userRef eq user.userDbmsId) }
               .map { it[0] as String }
               .firstOrNull()?.let { ClassCode(it) } ?: DISABLED_CLASS_CODE
           }
@@ -553,9 +553,9 @@ import kotlin.time.measureTime
         user.isNull() || !isDbmsEnabled() -> DISABLED_CLASS_CODE
         else ->
           transaction {
-            UserSessions
-              .slice(UserSessions.previousTeacherClassCode)
-              .select { (UserSessions.sessionRef eq user.sessionDbmsId()) and (UserSessions.userRef eq user.userDbmsId) }
+            UserSessionsTable
+              .slice(UserSessionsTable.previousTeacherClassCode)
+              .select { (UserSessionsTable.sessionRef eq user.sessionDbmsId()) and (UserSessionsTable.userRef eq user.userDbmsId) }
               .map { it[0] as String }
               .firstOrNull()?.let { ClassCode(it) } ?: DISABLED_CLASS_CODE
           }
@@ -563,9 +563,9 @@ import kotlin.time.measureTime
 
     fun userExists(userId: String) =
       transaction {
-        Users
-          .slice(Count(Users.id))
-          .select { Users.userId eq userId }
+        UsersTable
+          .slice(Count(UsersTable.id))
+          .select { UsersTable.userId eq userId }
           .map { it[0] as Long }
           .first() > 0
       }
@@ -582,27 +582,27 @@ import kotlin.time.measureTime
 
     private fun queryUserDbmsId(userId: String, defaultIfMissing: Long = -1) =
       transaction {
-        Users
-          .slice(Users.id)
-          .select { Users.userId eq userId }
-          .map { it[Users.id].value }
+        UsersTable
+          .slice(UsersTable.id)
+          .select { UsersTable.userId eq userId }
+          .map { it[UsersTable.id].value }
           .firstOrNull() ?: defaultIfMissing
       }
 
     private fun queryUserEmail(userId: String, defaultIfMissing: Email = UNKNOWN_EMAIL) =
       transaction {
-        Users
-          .slice(Users.email)
-          .select { Users.userId eq userId }
+        UsersTable
+          .slice(UsersTable.email)
+          .select { UsersTable.userId eq userId }
           .map { Email(it[0] as String) }
           .firstOrNull() ?: defaultIfMissing
       }
 
     fun createUnknownUser(userId: String) =
       transaction {
-        Users
+        UsersTable
           .insertAndGetId { row ->
-            row[Users.userId] = userId
+            row[UsersTable.userId] = userId
             row[fullName] = UNKNOWN_FULLNAME.value
             row[email] = "${UNKNOWN_EMAIL.value}-${randomId(4)}"
             row[enrolledClassCode] = DISABLED_CLASS_CODE.value
@@ -622,21 +622,21 @@ import kotlin.time.measureTime
             val salt = newStringSalt()
             val digest = password.sha256(salt)
             val userDbmsId =
-              Users
+              UsersTable
                 .insertAndGetId { row ->
                   row[userId] = user.userId
                   row[fullName] = name.value.maxLength(128)
-                  row[Users.email] = email.value.maxLength(128)
+                  row[UsersTable.email] = email.value.maxLength(128)
                   row[enrolledClassCode] = DISABLED_CLASS_CODE.value
                   row[defaultLanguage] = defaultLanguageType.languageName.value
-                  row[Users.salt] = salt
-                  row[Users.digest] = digest
+                  row[UsersTable.salt] = salt
+                  row[UsersTable.digest] = digest
                 }.value
 
             val browserId =
               browserSession?.sessionDbmsId() ?: error("Missing browser session")
 
-            UserSessions
+            UserSessionsTable
               .insert { row ->
                 row[sessionRef] = browserId
                 row[userRef] = userDbmsId
@@ -653,9 +653,9 @@ import kotlin.time.measureTime
 
     fun queryUserByEmail(email: Email): User? =
       transaction {
-        Users
-          .slice(Users.userId)
-          .select { Users.email eq email.value }
+        UsersTable
+          .slice(UsersTable.userId)
+          .select { UsersTable.email eq email.value }
           .map { (it[0] as String).toUser() }
           .firstOrNull()
           .also { logger.info { "lookupUserByEmail() returned: ${it?.email ?: " ${email.value} not found"}" } }

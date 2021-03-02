@@ -60,8 +60,8 @@ import com.github.readingbat.server.ChallengeName
 import com.github.readingbat.server.Invocation
 import com.github.readingbat.server.ReadingBatServer.redisPool
 import com.github.readingbat.server.ScriptPools
-import com.github.readingbat.server.SessionChallengeInfo
-import com.github.readingbat.server.UserChallengeInfo
+import com.github.readingbat.server.SessionChallengeInfoTable
+import com.github.readingbat.server.UserChallengeInfoTable
 import com.pambrose.common.exposed.get
 import kotlinx.coroutines.runBlocking
 import mu.KLogging
@@ -198,17 +198,17 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
       !isDbmsEnabled() -> false
       user.isNotNull() ->
         transaction {
-          UserChallengeInfo
-            .slice(UserChallengeInfo.allCorrect)
-            .select { (UserChallengeInfo.userRef eq user.userDbmsId) and (UserChallengeInfo.md5 eq challengeMd5) }
+          UserChallengeInfoTable
+            .slice(UserChallengeInfoTable.allCorrect)
+            .select { (UserChallengeInfoTable.userRef eq user.userDbmsId) and (UserChallengeInfoTable.md5 eq challengeMd5) }
             .map { it[0] as Boolean }
             .firstOrNull() ?: false
         }
       browserSession.isNotNull() ->
         transaction {
-          SessionChallengeInfo
-            .slice(SessionChallengeInfo.allCorrect)
-            .select { (SessionChallengeInfo.sessionRef eq browserSession.sessionDbmsId()) and (SessionChallengeInfo.md5 eq challengeMd5) }
+          SessionChallengeInfoTable
+            .slice(SessionChallengeInfoTable.allCorrect)
+            .select { (SessionChallengeInfoTable.sessionRef eq browserSession.sessionDbmsId()) and (SessionChallengeInfoTable.md5 eq challengeMd5) }
             .map { it[0] as Boolean }
             .firstOrNull() ?: false
         }

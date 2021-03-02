@@ -31,7 +31,7 @@ import com.github.readingbat.server.GroupName
 import com.github.readingbat.server.LanguageName
 import com.github.readingbat.server.ServerUtils.fetchUser
 import com.github.readingbat.server.ServerUtils.rows
-import com.github.readingbat.server.UserChallengeInfo
+import com.github.readingbat.server.UserChallengeInfoTable
 import com.github.readingbat.server.ws.WsCommon.CLASS_CODE
 import com.github.readingbat.server.ws.WsCommon.GROUP_NAME
 import com.github.readingbat.server.ws.WsCommon.LANGUAGE_NAME
@@ -137,10 +137,10 @@ internal object ChallengeGroupWs : KLogging() {
                     val likeDislike =
                       transaction {
                         val challengeMd5 = md5Of(languageName, groupName, challengeName)
-                        val likeDislike = UserChallengeInfo.likeDislike
-                        val userRef = UserChallengeInfo.userRef
-                        val md5 = UserChallengeInfo.md5
-                        UserChallengeInfo
+                        val likeDislike = UserChallengeInfoTable.likeDislike
+                        val userRef = UserChallengeInfoTable.userRef
+                        val md5 = UserChallengeInfoTable.md5
+                        UserChallengeInfoTable
                           .slice(likeDislike)
                           .select { (userRef eq enrollee.userDbmsId) and (md5 eq challengeMd5) }
                           .map { it[likeDislike].toInt() }

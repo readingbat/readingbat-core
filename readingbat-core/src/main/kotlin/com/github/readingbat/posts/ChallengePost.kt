@@ -192,15 +192,15 @@ internal object ChallengePost : KLogging() {
     when (type) {
       AUTH_KEY ->
         transaction {
-          UserChallengeInfo
-            .deleteWhere { (UserChallengeInfo.userRef eq fetchUserDbmsIdFromCache(id)) and (UserChallengeInfo.md5 eq md5) }
+          UserChallengeInfoTable
+            .deleteWhere { (UserChallengeInfoTable.userRef eq fetchUserDbmsIdFromCache(id)) and (UserChallengeInfoTable.md5 eq md5) }
         }
       NO_AUTH_KEY ->
         transaction {
-          SessionChallengeInfo
+          SessionChallengeInfoTable
             .deleteWhere {
-              (SessionChallengeInfo.sessionRef eq findSessionDbmsId(id,
-                                                                    false)) and (SessionChallengeInfo.md5 eq md5)
+              (SessionChallengeInfoTable.sessionRef eq findSessionDbmsId(id,
+                                                                         false)) and (SessionChallengeInfoTable.md5 eq md5)
             }
         }
       else -> error("Invalid type: $type")
@@ -210,15 +210,15 @@ internal object ChallengePost : KLogging() {
     when (type) {
       AUTH_KEY ->
         transaction {
-          UserAnswerHistory
-            .deleteWhere { (UserAnswerHistory.userRef eq fetchUserDbmsIdFromCache(id)) and (UserAnswerHistory.md5 eq md5) }
+          UserAnswerHistoryTable
+            .deleteWhere { (UserAnswerHistoryTable.userRef eq fetchUserDbmsIdFromCache(id)) and (UserAnswerHistoryTable.md5 eq md5) }
         }
       NO_AUTH_KEY ->
         transaction {
-          SessionAnswerHistory
+          SessionAnswerHistoryTable
             .deleteWhere {
-              (SessionAnswerHistory.sessionRef eq findSessionDbmsId(id,
-                                                                    false)) and (SessionAnswerHistory.md5 eq md5)
+              (SessionAnswerHistoryTable.sessionRef eq findSessionDbmsId(id,
+                                                                         false)) and (SessionAnswerHistoryTable.md5 eq md5)
             }
         }
       else -> error("Invalid type: $type")
@@ -360,7 +360,7 @@ internal object ChallengePost : KLogging() {
     transaction {
       when {
         user.isNotNull() ->
-          UserChallengeInfo
+          UserChallengeInfoTable
             .upsert(conflictIndex = userChallengeInfoIndex) { row ->
               row[userRef] = user.userDbmsId
               row[md5] = challengeMd5
@@ -369,7 +369,7 @@ internal object ChallengePost : KLogging() {
               row[answersJson] = invokeStr
             }
         browserSession.isNotNull() ->
-          SessionChallengeInfo
+          SessionChallengeInfoTable
             .upsert(conflictIndex = sessionChallengeInfoIndex) { row ->
               row[sessionRef] = browserSession.sessionDbmsId()
               row[md5] = challengeMd5
@@ -406,25 +406,25 @@ internal object ChallengePost : KLogging() {
 
         when {
           user.isNotNull() ->
-            UserAnswerHistory
+            UserAnswerHistoryTable
               .upsert(conflictIndex = userAnswerHistoryIndex) { row ->
                 row[userRef] = user.userDbmsId
                 row[md5] = historyMd5
-                row[UserAnswerHistory.invocation] = invocation
-                row[UserAnswerHistory.updated] = updated
-                row[UserAnswerHistory.correct] = correct
-                row[UserAnswerHistory.incorrectAttempts] = incorrectAttempts
+                row[UserAnswerHistoryTable.invocation] = invocation
+                row[UserAnswerHistoryTable.updated] = updated
+                row[UserAnswerHistoryTable.correct] = correct
+                row[UserAnswerHistoryTable.incorrectAttempts] = incorrectAttempts
                 row[historyJson] = json
               }
           browserSession.isNotNull() ->
-            SessionAnswerHistory
+            SessionAnswerHistoryTable
               .upsert(conflictIndex = sessionAnswerHistoryIndex) { row ->
                 row[sessionRef] = browserSession.sessionDbmsId()
                 row[md5] = historyMd5
-                row[SessionAnswerHistory.invocation] = invocation
-                row[SessionAnswerHistory.updated] = updated
-                row[SessionAnswerHistory.correct] = correct
-                row[SessionAnswerHistory.incorrectAttempts] = incorrectAttempts
+                row[SessionAnswerHistoryTable.invocation] = invocation
+                row[SessionAnswerHistoryTable.updated] = updated
+                row[SessionAnswerHistoryTable.correct] = correct
+                row[SessionAnswerHistoryTable.incorrectAttempts] = incorrectAttempts
                 row[historyJson] = json
               }
           else ->
@@ -449,7 +449,7 @@ internal object ChallengePost : KLogging() {
     when {
       user.isNotNull() -> {
         transaction {
-          UserChallengeInfo
+          UserChallengeInfoTable
             .upsert(conflictIndex = userChallengeInfoIndex) { row ->
               row[userRef] = user.userDbmsId
               row[md5] = challengeMd5
@@ -462,7 +462,7 @@ internal object ChallengePost : KLogging() {
       }
       browserSession.isNotNull() ->
         transaction {
-          SessionChallengeInfo
+          SessionChallengeInfoTable
             .upsert(conflictIndex = sessionChallengeInfoIndex) { row ->
               row[sessionRef] = browserSession.sessionDbmsId()
               row[md5] = challengeMd5

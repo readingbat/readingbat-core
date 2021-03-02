@@ -41,7 +41,7 @@ import com.github.readingbat.pages.UserPrefsPage.userPrefsPage
 import com.github.readingbat.posts.CreateAccountPost.checkPassword
 import com.github.readingbat.server.Password.Companion.getPassword
 import com.github.readingbat.server.PipelineCall
-import com.github.readingbat.server.Users
+import com.github.readingbat.server.UsersTable
 import io.ktor.application.*
 import io.ktor.http.*
 import io.ktor.request.*
@@ -76,8 +76,8 @@ internal object UserPrefsPost : KLogging() {
     parameters.getLanguageType(DEFAULT_LANGUAGE_CHOICE_PARAM)
       .let {
         transaction {
-          Users
-            .update({ Users.id eq user.userDbmsId }) { row ->
+          UsersTable
+            .update({ UsersTable.id eq user.userDbmsId }) { row ->
               row[updated] = DateTime.now(UTC)
               row[defaultLanguage] = it.languageName.value
               user.defaultLanguage = it
