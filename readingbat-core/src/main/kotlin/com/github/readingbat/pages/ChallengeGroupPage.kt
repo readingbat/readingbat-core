@@ -39,7 +39,7 @@ import com.github.readingbat.common.Message
 import com.github.readingbat.common.StaticFileNames.GREEN_CHECK
 import com.github.readingbat.common.StaticFileNames.WHITE_CHECK
 import com.github.readingbat.common.User
-import com.github.readingbat.common.User.Companion.queryActiveClassCode
+import com.github.readingbat.common.User.Companion.queryActiveTeachingClassCode
 import com.github.readingbat.common.browserSession
 import com.github.readingbat.common.challengeAnswersKey
 import com.github.readingbat.common.correctAnswersKey
@@ -81,16 +81,16 @@ internal object ChallengeGroupPage : KLogging() {
         val groupName = challengeGroup.groupName
         val challenges = challengeGroup.challenges
         val loginPath = pathOf(CHALLENGE_ROOT, languageName, groupName)
-        val activeClassCode = queryActiveClassCode(user)
-        val enrollees = activeClassCode.fetchEnrollees()
+        val activeTeachingClassCode = queryActiveTeachingClassCode(user)
+        val enrollees = activeTeachingClassCode.fetchEnrollees()
         val msg = Message(queryParam(MSG))
 
         fun TR.displayFunctionCall(user: User?, challenge: Challenge) {
           val challengeName = challenge.challengeName
           val allCorrect = challenge.isCorrect(user, browserSession)
 
-          td(classes = if (activeClassCode.isEnabled && enrollees.isNotEmpty()) FUNC_ITEM1 else FUNC_ITEM2) {
-            if (activeClassCode.isNotEnabled)
+          td(classes = if (activeTeachingClassCode.isEnabled && enrollees.isNotEmpty()) FUNC_ITEM1 else FUNC_ITEM2) {
+            if (activeTeachingClassCode.isNotEnabled)
               img { src = pathOf(STATIC_ROOT, if (allCorrect) GREEN_CHECK else WHITE_CHECK) }
 
             a {
@@ -108,12 +108,12 @@ internal object ChallengeGroupPage : KLogging() {
         head { headDefault() }
 
         body {
-          bodyHeader(content, user, languageType, loginAttempt, loginPath, false, activeClassCode, msg)
+          bodyHeader(content, user, languageType, loginAttempt, loginPath, false, activeTeachingClassCode, msg)
 
           h2 { +groupName.toString() }
 
-          if (activeClassCode.isEnabled)
-            displayClassDescription(activeClassCode, languageName, groupName, enrollees)
+          if (activeTeachingClassCode.isEnabled)
+            displayClassDescription(activeTeachingClassCode, languageName, groupName, enrollees)
 
           if (enrollees.isNotEmpty())
             p { +"(# of questions | # that started | # completed | Avg correct | Incorrect attempts | Likes/Dislikes)" }
@@ -138,13 +138,13 @@ internal object ChallengeGroupPage : KLogging() {
             }
           }
 
-          if (isDbmsEnabled() && activeClassCode.isNotEnabled && challenges.isNotEmpty())
+          if (isDbmsEnabled() && activeTeachingClassCode.isNotEnabled && challenges.isNotEmpty())
             clearGroupAnswerHistoryOption(user, browserSession, languageName, groupName, challenges)
 
           backLink(CHALLENGE_ROOT, languageName.value)
 
           if (enrollees.isNotEmpty())
-            enableWebSockets(languageName, groupName, activeClassCode)
+            enableWebSockets(languageName, groupName, activeTeachingClassCode)
 
           loadPingdomScript()
         }

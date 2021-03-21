@@ -21,7 +21,7 @@ import com.github.readingbat.common.CSSNames.INDENT_1EM
 import com.github.readingbat.common.Endpoints.ABOUT_ENDPOINT
 import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.User
-import com.github.readingbat.common.User.Companion.queryActiveClassCode
+import com.github.readingbat.common.User.Companion.queryActiveTeachingClassCode
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.pages.HelpAndLogin.helpAndLogin
 import com.github.readingbat.pages.PageUtils.backLink
@@ -47,7 +47,8 @@ internal object AboutPage {
         head { headDefault() }
 
         body {
-          helpAndLogin(content, user, ABOUT_ENDPOINT, queryActiveClassCode(user).isEnabled)
+          val activeTeachingClassCode = queryActiveTeachingClassCode(user)
+          helpAndLogin(content, user, ABOUT_ENDPOINT, activeTeachingClassCode.isEnabled)
 
           bodyTitle()
 

@@ -39,7 +39,7 @@ import com.github.readingbat.common.FormFields.UPDATE_ACTIVE_CLASS
 import com.github.readingbat.common.FormFields.USER_ID_PARAM
 import com.github.readingbat.common.Message
 import com.github.readingbat.common.User
-import com.github.readingbat.common.User.Companion.queryActiveClassCode
+import com.github.readingbat.common.User.Companion.queryActiveTeachingClassCode
 import com.github.readingbat.common.User.Companion.queryPreviousTeacherClassCode
 import com.github.readingbat.common.User.Companion.toUser
 import com.github.readingbat.common.isValidUser
@@ -144,7 +144,7 @@ internal object TeacherPrefsPost : KLogging() {
     when {
       // Do not allow this for classCode.isStudentMode because turns off the
       // student/teacher toggle mode
-      queryActiveClassCode(user) == classCode && classCode.isEnabled ->
+      queryActiveTeachingClassCode(user) == classCode && classCode.isEnabled ->
         Message("Same active class selected [$classCode]", true)
       else -> {
         user.assignActiveClassCode(classCode, true)
@@ -163,11 +163,11 @@ internal object TeacherPrefsPost : KLogging() {
                                                  user,
                                                  Message("Invalid class code: $classCode", true))
       else -> {
-        val activeClassCode = queryActiveClassCode(user)
+        val activeTeachingClassCode = queryActiveTeachingClassCode(user)
         val enrollees = classCode.fetchEnrollees()
 
         transaction {
-          if (activeClassCode == classCode)
+          if (activeTeachingClassCode == classCode)
             user.resetActiveClassCode()
 
           user.unenrollEnrolleesClassCode(classCode, enrollees)

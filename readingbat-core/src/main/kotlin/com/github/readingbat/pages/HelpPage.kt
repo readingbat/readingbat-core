@@ -29,7 +29,7 @@ import com.github.readingbat.common.FormFields.NO_ACTIVE_CLASS
 import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.FormFields.UPDATE_ACTIVE_CLASS
 import com.github.readingbat.common.User
-import com.github.readingbat.common.User.Companion.queryActiveClassCode
+import com.github.readingbat.common.User.Companion.queryActiveTeachingClassCode
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.pages.HelpAndLogin.helpAndLogin
 import com.github.readingbat.pages.PageUtils.backLink
@@ -50,7 +50,8 @@ internal object HelpPage {
         head { headDefault() }
 
         body {
-          helpAndLogin(content, user, ABOUT_ENDPOINT, queryActiveClassCode(user).isEnabled)
+          val activeTeachingClassCode = queryActiveTeachingClassCode(user)
+          helpAndLogin(content, user, ABOUT_ENDPOINT, activeTeachingClassCode.isEnabled)
           bodyTitle()
 
           h2 { +"ReadingBat Help" }

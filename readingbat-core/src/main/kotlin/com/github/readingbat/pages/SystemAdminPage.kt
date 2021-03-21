@@ -30,7 +30,7 @@ import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.Message
 import com.github.readingbat.common.Property
 import com.github.readingbat.common.User
-import com.github.readingbat.common.User.Companion.queryActiveClassCode
+import com.github.readingbat.common.User.Companion.queryActiveTeachingClassCode
 import com.github.readingbat.common.isAdminUser
 import com.github.readingbat.common.isValidUser
 import com.github.readingbat.dsl.ReadingBatContent
@@ -76,10 +76,10 @@ internal object SystemAdminPage : KLogging() {
         }
 
         body {
-          val activeClassCode = queryActiveClassCode(user)
           val returnPath = queryParam(RETURN_PARAM, "/")
+          val activeTeachingClassCode = queryActiveTeachingClassCode(user)
 
-          helpAndLogin(content, user, returnPath, activeClassCode.isEnabled)
+          helpAndLogin(content, user, returnPath, activeTeachingClassCode.isEnabled)
           bodyTitle()
 
           h2 { +"System Admin" }

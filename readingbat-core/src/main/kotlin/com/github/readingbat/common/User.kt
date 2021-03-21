@@ -145,7 +145,7 @@ import kotlin.time.measureTime
       val activeClassCode = UserSessionsTable.activeClassCode
       UserSessionsTable
         .slice(Count(id))
-        .select { (userRef eq userDbmsId) and (activeClassCode eq classCode.value) }
+        .select { (userRef eq userDbmsId) and (activeClassCode eq classCode.classCode) }
         .map { it[0] as Long }
         .first() > 0
     }
@@ -206,7 +206,7 @@ import kotlin.time.measureTime
       ClassesTable
         .insert { row ->
           row[userRef] = userDbmsId
-          row[ClassesTable.classCode] = classCode.value
+          row[ClassesTable.classCode] = classCode.classCode
           row[description] = classDesc.maxLength(256)
         }
     }
@@ -247,7 +247,7 @@ import kotlin.time.measureTime
     UsersTable
       .update({ UsersTable.id eq userDbmsId }) { row ->
         row[updated] = DateTime.now(UTC)
-        row[enrolledClassCode] = classCode.value
+        row[enrolledClassCode] = classCode.classCode
         this@User.enrolledClassCode = classCode
       }
 
@@ -302,9 +302,9 @@ import kotlin.time.measureTime
           row[sessionRef] = sessionDbmsId()
           row[userRef] = userDbmsId
           row[updated] = DateTime.now(UTC)
-          row[activeClassCode] = classCode.value
+          row[activeClassCode] = classCode.classCode
           if (resetPreviousClassCode)
-            row[previousTeacherClassCode] = classCode.value
+            row[previousTeacherClassCode] = classCode.classCode
         }
     }
 
@@ -315,8 +315,8 @@ import kotlin.time.measureTime
         row[sessionRef] = sessionDbmsId()
         row[userRef] = userDbmsId
         row[updated] = DateTime.now(UTC)
-        row[activeClassCode] = DISABLED_CLASS_CODE.value
-        row[previousTeacherClassCode] = DISABLED_CLASS_CODE.value
+        row[activeClassCode] = DISABLED_CLASS_CODE.classCode
+        row[previousTeacherClassCode] = DISABLED_CLASS_CODE.classCode
       }
   }
 
@@ -376,7 +376,7 @@ import kotlin.time.measureTime
         UsersTable
           .update({ UsersTable.id eq enrollee.userDbmsId }) { row ->
             row[updated] = DateTime.now(UTC)
-            row[enrolledClassCode] = DISABLED_CLASS_CODE.value
+            row[enrolledClassCode] = DISABLED_CLASS_CODE.classCode
           }
       }
   }
@@ -535,7 +535,7 @@ import kotlin.time.measureTime
 
     fun String.toUser(row: ResultRow) = User(this, null, row)
 
-    fun queryActiveClassCode(user: User?) =
+    fun queryActiveTeachingClassCode(user: User?) =
       when {
         user.isNull() || !isDbmsEnabled() -> DISABLED_CLASS_CODE
         else ->
@@ -605,7 +605,7 @@ import kotlin.time.measureTime
             row[UsersTable.userId] = userId
             row[fullName] = UNKNOWN_FULLNAME.value
             row[email] = "${UNKNOWN_EMAIL.value}-${randomId(4)}"
-            row[enrolledClassCode] = DISABLED_CLASS_CODE.value
+            row[enrolledClassCode] = DISABLED_CLASS_CODE.classCode
             row[defaultLanguage] = defaultLanguageType.languageName.value
             row[salt] = UNKNOWN
             row[digest] = UNKNOWN
@@ -627,7 +627,7 @@ import kotlin.time.measureTime
                   row[userId] = user.userId
                   row[fullName] = name.value.maxLength(128)
                   row[UsersTable.email] = email.value.maxLength(128)
-                  row[enrolledClassCode] = DISABLED_CLASS_CODE.value
+                  row[enrolledClassCode] = DISABLED_CLASS_CODE.classCode
                   row[defaultLanguage] = defaultLanguageType.languageName.value
                   row[UsersTable.salt] = salt
                   row[UsersTable.digest] = digest
@@ -640,8 +640,8 @@ import kotlin.time.measureTime
               .insert { row ->
                 row[sessionRef] = browserId
                 row[userRef] = userDbmsId
-                row[activeClassCode] = DISABLED_CLASS_CODE.value
-                row[previousTeacherClassCode] = DISABLED_CLASS_CODE.value
+                row[activeClassCode] = DISABLED_CLASS_CODE.classCode
+                row[previousTeacherClassCode] = DISABLED_CLASS_CODE.classCode
               }
           }
           logger.info { "Created user $email ${user.userId}" }

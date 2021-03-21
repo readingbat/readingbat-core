@@ -36,6 +36,7 @@ import com.github.readingbat.common.isAdminUser
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.isDbmsEnabled
 import com.github.readingbat.dsl.isProduction
+import com.github.readingbat.pages.ChallengePage.headerColor
 import com.github.readingbat.pages.PageUtils.rawHtml
 import com.github.readingbat.server.ServerUtils.firstNonEmptyLanguageType
 import kotlinx.html.*
@@ -60,7 +61,7 @@ internal object HelpAndLogin {
       div {
         style = "float:right; margin:0px; border: 1px solid lightgray; margin-left: 10px; padding: 5px"
         table {
-          if (user.isNotNull()) logout(user, path) else login(path)
+          if (user.isNotNull()) logoutOption(user, path) else loginOption(path)
         }
       }
 
@@ -69,7 +70,7 @@ internal object HelpAndLogin {
       table {
         tr {
           td {
-            style = "text-align:right"
+            style = "padding-top:10px; text-align:center"
             colSpan = "1"
 
             if (previousClassCode.isEnabled) {
@@ -97,11 +98,23 @@ internal object HelpAndLogin {
             }
           }
         }
+        tr {
+          td {
+            style = "padding-top:10px; text-align:center"
+            colSpan = "1"
+            if (user.isNotNull() && user.enrolledClassCode.isEnabled) {
+              span {
+                style = "color: $headerColor"
+                +user.enrolledClassCode.toDisplayString()
+              }
+            }
+          }
+        }
       }
     }
   }
 
-  private fun TABLE.logout(user: User, loginPath: String) {
+  private fun TABLE.logoutOption(user: User, loginPath: String) {
     tr {
       val email = user.email
       val elems = email.value.split("@")
@@ -128,7 +141,7 @@ internal object HelpAndLogin {
   }
 
 
-  private fun TABLE.login(loginPath: String) {
+  private fun TABLE.loginOption(loginPath: String) {
     val topFocus = "loginTpFocus"
     val bottomFocus = "loginBottomFocus"
 
@@ -138,7 +151,7 @@ internal object HelpAndLogin {
 
       span { tabIndex = "1"; onFocus = "document.querySelector('.$bottomFocus').focus()" }
 
-      this@login.tr {
+      this@loginOption.tr {
         td { +"id/email" }
         td {
           textInput(classes = topFocus) {
@@ -147,7 +160,7 @@ internal object HelpAndLogin {
         }
       }
 
-      this@login.tr {
+      this@loginOption.tr {
         td { +"password" }
         td {
           passwordInput(classes = bottomFocus) {
@@ -156,7 +169,7 @@ internal object HelpAndLogin {
         }
       }
 
-      this@login.tr {
+      this@loginOption.tr {
         td {}
         td { submitInput { id = "login"; name = "dologin"; value = "log in" } }
       }

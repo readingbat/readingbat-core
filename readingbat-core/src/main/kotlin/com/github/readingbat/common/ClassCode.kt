@@ -35,11 +35,11 @@ import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
 import kotlin.time.measureTimedValue
 
-/*internal*/ data class ClassCode(val value: String) {
-  val isNotEnabled by lazy { value == DISABLED_MODE || value.isBlank() }
+/*internal*/ data class ClassCode(val classCode: String) {
+  val isNotEnabled by lazy { classCode == DISABLED_MODE || classCode.isBlank() }
   val isEnabled by lazy { !isNotEnabled }
 
-  val displayedValue get() = if (value == DISABLED_MODE) "" else value
+  val displayedValue get() = if (classCode == DISABLED_MODE) "" else classCode
 
   private val classCodeDbmsId
     get() =
@@ -47,9 +47,9 @@ import kotlin.time.measureTimedValue
         transaction {
           ClassesTable
             .slice(ClassesTable.id)
-            .select { ClassesTable.classCode eq value }
+            .select { ClassesTable.classCode eq classCode }
             .map { it[ClassesTable.id].value }
-            .firstOrNull() ?: error("Missing class code $value")
+            .firstOrNull() ?: error("Missing class code $classCode")
         }
       }.let {
         logger.debug { "Looked up classId in ${it.duration}" }
@@ -62,9 +62,9 @@ import kotlin.time.measureTimedValue
     transaction {
       ClassesTable
         .slice(Count(ClassesTable.classCode))
-        .select { ClassesTable.classCode eq value }
+        .select { ClassesTable.classCode eq classCode }
         .map { it[0] as Long }
-        .first().also { logger.debug { "ClassCode.isValid() returned $it for $value" } } > 0
+        .first().also { logger.debug { "ClassCode.isValid() returned $it for $classCode" } } > 0
     }
 
   fun fetchEnrollees(): List<User> =
@@ -75,7 +75,7 @@ import kotlin.time.measureTimedValue
         val userIds =
           (ClassesTable innerJoin EnrolleesTable)
             .slice(EnrolleesTable.userRef)
-            .select { ClassesTable.classCode eq value }
+            .select { ClassesTable.classCode eq classCode }
             .map { it[0] as Long }
 
         UsersTable
@@ -84,7 +84,7 @@ import kotlin.time.measureTimedValue
           .also { logger.debug { "fetchEnrollees() returning ${it.size} users" } }
       }
 
-  fun deleteClassCode() = ClassesTable.deleteWhere { ClassesTable.classCode eq value }
+  fun deleteClassCode() = ClassesTable.deleteWhere { ClassesTable.classCode eq classCode }
 
   fun addEnrollee(user: User) =
     transaction {
@@ -103,24 +103,24 @@ import kotlin.time.measureTimedValue
     transaction {
       (ClassesTable
         .slice(ClassesTable.description)
-        .select { ClassesTable.classCode eq value }
+        .select { ClassesTable.classCode eq classCode }
         .map { it[0] as String }
         .firstOrNull() ?: "Missing description")
-        .also { logger.debug { "fetchClassDesc() returned ${it.toDoubleQuoted()} for $value" } }
+        .also { logger.debug { "fetchClassDesc() returned ${it.toDoubleQuoted()} for $classCode" } }
     }.let { if (quoted) it.toDoubleQuoted() else it }
 
-  fun toDisplayString() = "${fetchClassDesc(true)} [$value]"
+  fun toDisplayString() = "${fetchClassDesc(true)} [$classCode]"
 
   fun fetchClassTeacherId() =
     transaction {
       ((ClassesTable innerJoin UsersTable)
         .slice(UsersTable.userId)
-        .select { ClassesTable.classCode eq value }
+        .select { ClassesTable.classCode eq classCode }
         .map { it[0] as String }
         .firstOrNull() ?: "").also { logger.debug { "fetchClassTeacherId() returned $it" } }
     }
 
-  override fun toString() = value
+  override fun toString() = classCode
 
   companion object : KLogging() {
     internal val DISABLED_CLASS_CODE = ClassCode(DISABLED_MODE)

@@ -72,7 +72,7 @@ import com.github.readingbat.common.StaticFileNames.DISLIKE_CLEAR_FILE
 import com.github.readingbat.common.StaticFileNames.DISLIKE_COLOR_FILE
 import com.github.readingbat.common.StaticFileNames.LIKE_CLEAR_FILE
 import com.github.readingbat.common.StaticFileNames.LIKE_COLOR_FILE
-import com.github.readingbat.common.User.Companion.queryActiveClassCode
+import com.github.readingbat.common.User.Companion.queryActiveTeachingClassCode
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.challenge.Challenge
 import com.github.readingbat.dsl.isDbmsEnabled
@@ -128,8 +128,8 @@ internal object ChallengePage : KLogging() {
         val challengeName = challenge.challengeName
         val funcInfo = challenge.functionInfo()
         val loginPath = pathOf(CHALLENGE_ROOT, languageName, groupName, challengeName)
-        val activeClassCode = queryActiveClassCode(user)
-        val enrollees = activeClassCode.fetchEnrollees()
+        val activeTeachingClassCode = queryActiveTeachingClassCode(user)
+        val enrollees = activeTeachingClassCode.fetchEnrollees()
         val msg = Message(queryParam(MSG))
 
         head {
@@ -146,14 +146,14 @@ internal object ChallengePage : KLogging() {
         }
 
         body {
-          bodyHeader(content, user, languageType, loginAttempt, loginPath, false, activeClassCode, msg)
+          bodyHeader(content, user, languageType, loginAttempt, loginPath, false, activeTeachingClassCode, msg)
 
           displayChallenge(challenge, funcInfo)
 
-          if (activeClassCode.isNotEnabled)
+          if (activeTeachingClassCode.isNotEnabled)
             displayQuestions(user, browserSession, challenge, funcInfo)
           else {
-            displayStudentProgress(challenge, content.maxHistoryLength, funcInfo, activeClassCode, enrollees)
+            displayStudentProgress(challenge, content.maxHistoryLength, funcInfo, activeTeachingClassCode, enrollees)
 
             if (enrollees.isNotEmpty())
               p { span { id = pingLabel }; span { id = pingMsg } }
@@ -163,8 +163,8 @@ internal object ChallengePage : KLogging() {
 
           script { src = pathOf(STATIC_ROOT, PRISM, "${languageName}-prism.js") }
 
-          if (activeClassCode.isEnabled && enrollees.isNotEmpty())
-            enableWebSockets(activeClassCode, funcInfo.challengeMd5)
+          if (activeTeachingClassCode.isEnabled && enrollees.isNotEmpty())
+            enableWebSockets(activeTeachingClassCode, funcInfo.challengeMd5)
 
           loadPingdomScript()
         }
@@ -265,7 +265,11 @@ internal object ChallengePage : KLogging() {
                   }
                 textInput(classes = USER_RESP + cls) {
                   id = "$RESP$i"
-                  onKeyDown = "$PROCESS_USER_ANSWERS_FUNC(event, ${funcInfo.questionCount})"
+
+                  if (user.isNull() || user.enrolledClassCode.isNotEnabled)
+                    onKeyDown = "$PROCESS_USER_ANSWERS_FUNC(event, ${funcInfo.questionCount})"
+                  else
+                    onFocusOut = "$PROCESS_USER_ANSWERS_FUNC(null, ${funcInfo.questionCount})"
 
                   val response = previousResponses[invocation.value] ?: ""
                   if (response.isNotBlank())
@@ -384,13 +388,12 @@ internal object ChallengePage : KLogging() {
 
       val languageName = challenge.languageType.languageName
       val groupName = challenge.groupName
-      val displayStr = classCode.toDisplayString()
 
       h3 {
         style = "margin-left: 5px; color: $headerColor"
         a(classes = UNDERLINE) {
           href = classSummaryEndpoint(classCode, languageName, groupName)
-          +displayStr
+          +classCode.toDisplayString()
         }
         +enrolleesDesc(enrollees)
       }

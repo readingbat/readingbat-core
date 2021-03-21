@@ -137,11 +137,11 @@ internal object PropertyNames {
   // This is a dynamic page
   const val CSS_ENDPOINT = "/$STATIC/styles.css"
 
-  fun classSummaryEndpoint(classCode: ClassCode, returnPath: String = "") =
-    "$CLASS_SUMMARY_ENDPOINT?$CLASS_CODE_QP=$classCode${if (returnPath.isNotBlank()) "&$RETURN_PARAM=$returnPath" else ""}"
-
   fun classSummaryEndpoint(classCode: ClassCode, languageName: LanguageName, groupName: GroupName) =
     "${classSummaryEndpoint(classCode)}&$LANG_TYPE_QP=$languageName&$GROUP_NAME_QP=$groupName"
+
+  fun classSummaryEndpoint(classCode: ClassCode, returnPath: String = "") =
+    "$CLASS_SUMMARY_ENDPOINT?$CLASS_CODE_QP=$classCode${if (returnPath.isNotBlank()) "&$RETURN_PARAM=$returnPath" else ""}"
 
   fun studentSummaryEndpoint(classCode: ClassCode, languageName: LanguageName, student: User) =
     "$STUDENT_SUMMARY_ENDPOINT?$CLASS_CODE_QP=$classCode&$LANG_TYPE_QP=$languageName&$USER_ID_QP=${student.userId}"

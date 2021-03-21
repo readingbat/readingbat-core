@@ -26,7 +26,7 @@ import com.github.readingbat.common.FormFields.DAYS_PARAM
 import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.Property
 import com.github.readingbat.common.User
-import com.github.readingbat.common.User.Companion.queryActiveClassCode
+import com.github.readingbat.common.User.Companion.queryActiveTeachingClassCode
 import com.github.readingbat.common.isAdminUser
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.isProduction
@@ -55,10 +55,10 @@ internal object AdminPrefsPage : KLogging() {
         head { headDefault() }
 
         body {
-          val activeClassCode = queryActiveClassCode(user)
           val returnPath = queryParam(RETURN_PARAM, "/")
+          val activeTeachingClassCode = queryActiveTeachingClassCode(user)
 
-          helpAndLogin(content, user, returnPath, activeClassCode.isEnabled)
+          helpAndLogin(content, user, returnPath, activeTeachingClassCode.isEnabled)
           bodyTitle()
 
           h2 { +"Admin Preferences" }
