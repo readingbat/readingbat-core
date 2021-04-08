@@ -57,14 +57,21 @@ import com.github.readingbat.server.ws.PubSubCommandsWs.PubSubTopic.LIKE_DISLIKE
 import com.github.readingbat.server.ws.PubSubCommandsWs.PubSubTopic.USER_ANSWERS
 import com.pambrose.common.exposed.get
 import com.pambrose.common.exposed.upsert
-import io.ktor.application.*
 import kotlinx.html.Entities.nbsp
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import mu.KLogging
-import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.Count
+import org.jetbrains.exposed.sql.ResultRow
+import org.jetbrains.exposed.sql.and
+import org.jetbrains.exposed.sql.deleteWhere
+import org.jetbrains.exposed.sql.insert
+import org.jetbrains.exposed.sql.insertAndGetId
+import org.jetbrains.exposed.sql.or
+import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.sql.update
 import org.joda.time.DateTime
 import org.joda.time.DateTimeZone.UTC
 import java.util.concurrent.ConcurrentHashMap
@@ -129,9 +136,9 @@ import kotlin.time.measureTime
 
   fun browserSessions() =
     transaction {
-      val sessionId = BrowserSessions.sessionId
+      val sessionId = BrowserSessionsTable.sessionId
       val userRef = UserSessionsTable.userRef
-      (BrowserSessions innerJoin UserSessionsTable)
+      (BrowserSessionsTable innerJoin UserSessionsTable)
         .slice(sessionId)
         .select { userRef eq userDbmsId }
         .map { it[0] as String }

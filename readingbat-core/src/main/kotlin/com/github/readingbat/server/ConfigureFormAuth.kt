@@ -25,7 +25,8 @@ import com.github.pambrose.common.util.sha256
 import com.github.readingbat.common.AuthName
 import com.github.readingbat.common.Constants.DBMS_DOWN
 import com.github.readingbat.common.Constants.UNKNOWN
-import com.github.readingbat.common.FormFields
+import com.github.readingbat.common.FormFields.EMAIL_PARAM
+import com.github.readingbat.common.FormFields.PASSWORD_PARAM
 import com.github.readingbat.common.User.Companion.queryUserByEmail
 import com.github.readingbat.common.UserPrincipal
 import com.github.readingbat.dsl.isDbmsEnabled
@@ -45,8 +46,8 @@ internal object ConfigureFormAuth : KLogging() {
    */
   fun Authentication.Configuration.configureFormAuth() {
     form(AuthName.FORM) {
-      userParamName = FormFields.EMAIL_PARAM
-      passwordParamName = FormFields.PASSWORD_PARAM
+      userParamName = EMAIL_PARAM
+      passwordParamName = PASSWORD_PARAM
 
       challenge {
         // I don't think form auth supports multiple errors, but we're conservatively assuming there will be at

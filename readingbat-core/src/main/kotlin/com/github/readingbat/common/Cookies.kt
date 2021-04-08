@@ -25,7 +25,7 @@ import com.github.readingbat.common.KeyConstants.keyOf
 import com.github.readingbat.dsl.MissingBrowserSessionException
 import com.github.readingbat.dsl.challenge.Challenge
 import com.github.readingbat.posts.ChallengeHistory
-import com.github.readingbat.server.BrowserSessions
+import com.github.readingbat.server.BrowserSessionsTable
 import com.github.readingbat.server.ChallengeName
 import com.github.readingbat.server.GroupName
 import com.github.readingbat.server.Invocation
@@ -93,7 +93,7 @@ internal data class UserPrincipal(val userId: String, val created: Long = Instan
 
   companion object : KLogging() {
     fun createBrowserSession(id: String) =
-      BrowserSessions
+      BrowserSessionsTable
         .insertAndGetId { row ->
           row[sessionId] = id
         }.value
@@ -113,10 +113,10 @@ internal data class UserPrincipal(val userId: String, val created: Long = Instan
 
     fun querySessionDbmsId(id: String) =
       transaction {
-        BrowserSessions
-          .slice(BrowserSessions.id)
-          .select { BrowserSessions.sessionId eq id }
-          .map { it[BrowserSessions.id].value }
+        BrowserSessionsTable
+          .slice(BrowserSessionsTable.id)
+          .select { BrowserSessionsTable.sessionId eq id }
+          .map { it[BrowserSessionsTable.id].value }
           .firstOrNull() ?: throw MissingBrowserSessionException(id)
       }
   }

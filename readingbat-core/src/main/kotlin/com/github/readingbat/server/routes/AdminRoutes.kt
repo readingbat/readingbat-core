@@ -33,7 +33,7 @@ import com.github.readingbat.common.browserSession
 import com.github.readingbat.common.userPrincipal
 import com.github.readingbat.dsl.isDbmsEnabled
 import com.github.readingbat.dsl.isSaveRequestsEnabled
-import com.github.readingbat.server.BrowserSessions
+import com.github.readingbat.server.BrowserSessionsTable
 import com.github.readingbat.server.GeoInfo.Companion.lookupGeoInfo
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.get
@@ -65,12 +65,16 @@ import java.time.ZoneId
 
     get(THREAD_DUMP, metrics) {
       try {
-        val baos = ByteArrayOutputStream()
-        baos.use { ThreadDumpInfo.threadDump.dump(true, true, it) }
-        val output = String(baos.toByteArray(), Charsets.UTF_8)
-        call.respondText(output, Plain)
+        ByteArrayOutputStream()
+          .apply {
+            use { ThreadDumpInfo.threadDump.dump(true, true, it) }
+          }.let { baos ->
+            String(baos.toByteArray(), Charsets.UTF_8)
+          }
       } catch (e: NoClassDefFoundError) {
-        call.respondText("Sorry, your runtime environment does not allow dump threads.", Plain)
+        "Sorry, your runtime environment does not allow dump threads."
+      }.also {
+        call.respondText(it, Plain)
       }
     }
 
@@ -104,8 +108,7 @@ import java.time.ZoneId
           if (it.isNotNull()) {
             logger.info { "Clearing principal $it" }
             call.sessions.clear<UserPrincipal>()
-          }
-          else {
+          } else {
             logger.info { "Principal not set" }
           }
         }
@@ -119,10 +122,9 @@ import java.time.ZoneId
             call.sessions.clear<BrowserSession>()
             if (isDbmsEnabled())
               transaction {
-                BrowserSessions.deleteWhere { BrowserSessions.sessionId eq it.id }
+                BrowserSessionsTable.deleteWhere { BrowserSessionsTable.sessionId eq it.id }
               }
-          }
-          else {
+          } else {
             logger.info { "Browser session id not set" }
           }
         }

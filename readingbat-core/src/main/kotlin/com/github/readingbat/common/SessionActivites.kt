@@ -18,7 +18,7 @@
 package com.github.readingbat.common
 
 import com.github.readingbat.dsl.isDbmsEnabled
-import com.github.readingbat.server.BrowserSessions
+import com.github.readingbat.server.BrowserSessionsTable
 import com.github.readingbat.server.Email
 import com.github.readingbat.server.FullName
 import com.github.readingbat.server.GeoInfosTable
@@ -42,7 +42,7 @@ import kotlin.time.measureTimedValue
 
 internal object SessionActivites : KLogging() {
 
-  private val session_id = BrowserSessions.sessionId
+  private val session_id = BrowserSessionsTable.sessionId
   private val fullName = UsersTable.fullName
   private val email = UsersTable.email
   private val ip = GeoInfosTable.ip
@@ -74,7 +74,7 @@ internal object SessionActivites : KLogging() {
         val maxDate = Max(created, DateColumnType(true))
         val elems = arrayOf(fullName, email, ip, city, state, country, isp, flagUrl, userAgent)
 
-        (ServerRequestsTable innerJoin BrowserSessions innerJoin UsersTable innerJoin GeoInfosTable)
+        (ServerRequestsTable innerJoin BrowserSessionsTable innerJoin UsersTable innerJoin GeoInfosTable)
           .slice(session_id, *elems, count, maxDate)
           .select { created greater dateTimeExpr("now() - interval '${min(dayCount, 14)} day'") }
           .groupBy(*(arrayOf(session_id) + elems))

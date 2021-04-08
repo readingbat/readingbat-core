@@ -2,12 +2,12 @@ plugins {
     id 'java'
     id 'application'
     id 'maven'  // Required for jitpack.io to do a ./gradlew install
-    id 'org.jetbrains.kotlin.jvm' version '1.4.31' apply false
-    id 'org.jetbrains.kotlin.plugin.serialization' version '1.4.31' apply false
+    id 'org.jetbrains.kotlin.jvm' version '1.4.32' apply false
+    id 'org.jetbrains.kotlin.plugin.serialization' version '1.4.32' apply false
     id "com.github.ben-manes.versions" version '0.38.0' apply false
     id 'com.github.johnrengelman.shadow' version '6.1.0' apply false
     id 'com.github.gmazzo.buildconfig' version '3.0.0' apply false
-    id "org.flywaydb.flyway" version "7.7.0"
+    id "org.flywaydb.flyway" version "7.7.2"
 }
 
 ext {
@@ -30,7 +30,7 @@ ext {
             script_utils_java      : "com.github.pambrose.common-utils:script-utils-java:$utils_version",
             script_utils_kotlin    : "com.github.pambrose.common-utils:script-utils-kotlin:$utils_version",
 
-            guava_utils            : "com.github.pambrose.common-utils:guava-utils:$utils_version",
+            //guava_utils            : "com.github.pambrose.common-utils:guava-utils:$utils_version",
             service_utils          : "com.github.pambrose.common-utils:service-utils:$utils_version",
             prometheus_utils       : "com.github.pambrose.common-utils:prometheus-utils:$utils_version",
             exposed_utils          : "com.github.pambrose.common-utils:exposed-utils:$utils_version",
@@ -66,7 +66,7 @@ ext {
             socket                 : "com.google.cloud.sql:postgres-socket-factory:$cloud_version",
 
             gson                   : "com.google.code.gson:gson:$gson_version",
-            guava                  : "com.google.guava:guava:$guava_version",
+            //guava                  : "com.google.guava:guava:$guava_version",
 
             sendgrid               : "com.sendgrid:sendgrid-java:$sendgrid_version",
 
@@ -99,6 +99,7 @@ allprojects {
     apply plugin: 'com.github.gmazzo.buildconfig'
 
     repositories {
+        maven { url = 'https://maven.pkg.jetbrains.space/public/p/kotlinx-html/maven' }
         maven { url = 'https://kotlin.bintray.com/ktor' }
         maven { url = 'https://kotlin.bintray.com/kotlinx' }
         maven { url = 'https://kotlin.bintray.com/kotlin-js-wrappers' }
@@ -114,7 +115,7 @@ allprojects {
 subprojects {
 
     dependencies {
-        implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+        implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
 
         // These are required for the annotation args below
         implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutines_version"

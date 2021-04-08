@@ -42,7 +42,7 @@ internal val passwordResetsIndex = Index(listOf(PasswordResetsTable.userRef), tr
 
 internal val geoInfosUnique = Index(listOf(GeoInfosTable.id), true, "geo_info_unique")
 
-internal object BrowserSessions : LongIdTable("browser_sessions") {
+internal object BrowserSessionsTable : LongIdTable("browser_sessions") {
   val created = datetime("created")
   val sessionId = text("session_id")
 }
@@ -51,7 +51,7 @@ internal object BrowserSessions : LongIdTable("browser_sessions") {
 internal object SessionChallengeInfoTable : LongIdTable("session_challenge_info") {
   val created = datetime("created")
   val updated = datetime("updated")
-  val sessionRef = long("session_ref").references(BrowserSessions.id)
+  val sessionRef = long("session_ref").references(BrowserSessionsTable.id)
   val md5 = text("md5")
   val allCorrect = bool("all_correct")
   val likeDislike = short("like_dislike")
@@ -61,7 +61,7 @@ internal object SessionChallengeInfoTable : LongIdTable("session_challenge_info"
 internal object SessionAnswerHistoryTable : LongIdTable("session_answer_history") {
   val created = datetime("created")
   val updated = datetime("updated")
-  val sessionRef = long("session_ref").references(BrowserSessions.id)
+  val sessionRef = long("session_ref").references(BrowserSessionsTable.id)
   val md5 = text("md5")
   val invocation = text("invocation")
   val correct = bool("correct")
@@ -84,7 +84,7 @@ internal object UsersTable : LongIdTable("users") {
 internal object UserSessionsTable : LongIdTable("user_sessions") {
   val created = datetime("created")
   val updated = datetime("updated")
-  val sessionRef = long("session_ref").references(BrowserSessions.id)
+  val sessionRef = long("session_ref").references(BrowserSessionsTable.id)
   val userRef = long("user_ref").references(UsersTable.id)
   val activeClassCode = text("active_class_code")
   val previousTeacherClassCode = text("previous_teacher_class_code")
@@ -164,7 +164,7 @@ object GeoInfosTable : LongIdTable("geo_info") {
 object ServerRequestsTable : LongIdTable("server_requests") {
   val created = datetime("created")
   val requestId = text("request_id")
-  val sessionRef = long("session_ref").references(BrowserSessions.id)
+  val sessionRef = long("session_ref").references(BrowserSessionsTable.id)
   val userRef = long("user_ref").references(UsersTable.id)
   val geoRef = long("geo_ref").references(GeoInfosTable.id)
   val verb = text("verb")
