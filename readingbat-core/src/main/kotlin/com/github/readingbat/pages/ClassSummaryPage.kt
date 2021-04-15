@@ -285,6 +285,7 @@ internal object ClassSummaryPage : KLogging() {
           }
 
           enrollees
+            .sortedBy { it.fullName.value }
             .forEach { student ->
               val studentName = student.fullName.value
               val studentEmail = student.email.value
