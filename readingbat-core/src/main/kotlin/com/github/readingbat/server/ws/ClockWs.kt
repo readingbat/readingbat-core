@@ -32,11 +32,10 @@ import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.runBlocking
 import mu.KLogging
 import java.util.*
-import kotlin.collections.LinkedHashSet
 import kotlin.concurrent.timer
 import kotlin.math.max
+import kotlin.time.Duration
 import kotlin.time.TimeSource
-import kotlin.time.seconds
 
 @Suppress("unused")
 internal object ClockWs : KLogging() {
@@ -55,7 +54,7 @@ internal object ClockWs : KLogging() {
   }
 
   init {
-    timer("clock msg sender", false, 0L, 1.seconds.toLongMilliseconds()) {
+    timer("clock msg sender", false, 0L, Duration.seconds(1).inWholeMilliseconds) {
       for (sessionContext in wsConnections)
         try {
           val elapsed = sessionContext.start.elapsedNow().format()

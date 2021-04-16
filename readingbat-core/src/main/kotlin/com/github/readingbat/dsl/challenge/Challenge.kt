@@ -70,6 +70,7 @@ import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.net.URL
 import java.nio.file.Paths
+import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.reflect.typeOf
 import kotlin.time.measureTime
@@ -169,6 +170,9 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
     if (challengeName.value.isEmpty())
       error(""""$challengeName" is empty""")
   }
+
+  fun String.capitalize() =
+    replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
 
   @Suppress("unused")
   private fun Any?.prettyQuote(capitalizePythonBooleans: Boolean = true, useDoubleQuotes: Boolean = false) =

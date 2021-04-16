@@ -29,7 +29,7 @@ enum class LanguageType(val useDoubleQuotes: Boolean, val suffix: String, val sr
   Python(false, "py", "python"),
   Kotlin(true, "kt", "src/main/kotlin");
 
-  internal val languageName = LanguageName(name.toLowerCase())
+  internal val languageName = LanguageName(name.lowercase())
   internal val contentRoot = pathOf(CHALLENGE_ROOT, languageName)
 
   val isJava by lazy { this == Java }

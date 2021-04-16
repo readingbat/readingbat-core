@@ -31,6 +31,7 @@ import com.github.readingbat.server.LanguageName
 import com.github.readingbat.server.ScriptPools.kotlinEvaluatorPool
 import com.github.readingbat.server.ScriptPools.pythonEvaluatorPool
 import mu.KLogging
+import java.util.*
 import javax.script.ScriptException
 
 /*internal*/ class FunctionInfo(val challenge: Challenge,
@@ -63,7 +64,8 @@ import javax.script.ScriptException
       when (returnType) {
         BooleanType ->
           when (languageType) {
-            Python -> raw.toString().capitalize()
+            Python -> raw.toString()
+              .replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
             Java, Kotlin -> raw.toString()
           }
 

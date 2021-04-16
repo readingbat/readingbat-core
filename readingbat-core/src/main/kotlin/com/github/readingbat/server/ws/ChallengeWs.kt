@@ -59,8 +59,8 @@ import java.util.Collections.synchronizedSet
 import java.util.concurrent.Executors.newSingleThreadExecutor
 import kotlin.concurrent.timer
 import kotlin.math.max
+import kotlin.time.Duration
 import kotlin.time.TimeSource
-import kotlin.time.seconds
 
 internal object ChallengeWs : KLogging() {
   private val clock = TimeSource.Monotonic
@@ -92,7 +92,7 @@ internal object ChallengeWs : KLogging() {
   init {
     logger.info { "Initializing ChallengeWs" }
 
-    timer("pinger", false, 0L, 1.seconds.toLongMilliseconds()) {
+    timer("pinger", false, 0L, Duration.seconds(1).inWholeMilliseconds) {
       for (sessionContext in answerWsConnections)
         if (sessionContext.enabled)
           try {
@@ -125,7 +125,7 @@ internal object ChallengeWs : KLogging() {
               }
             } catch (e: Throwable) {
               logger.error { "Exception in challenge ws writer: ${e.simpleClassName} ${e.message}" }
-              Thread.sleep(1.seconds.toLongMilliseconds())
+              Thread.sleep(Duration.seconds(1).inWholeMilliseconds)
             }
           }
         }
@@ -153,7 +153,7 @@ internal object ChallengeWs : KLogging() {
             }
           } catch (e: Throwable) {
             logger.error { "Exception in dispatcher ${e.simpleClassName} ${e.message}" }
-            Thread.sleep(1.seconds.toLongMilliseconds())
+            Thread.sleep(Duration.seconds(1).inWholeMilliseconds)
           }
         }
       }
@@ -189,7 +189,7 @@ internal object ChallengeWs : KLogging() {
             .mapNotNull { it as? Frame.Text }
             .collect {
               // Pause to show the "Connected" message on the client
-              delay(1.seconds)
+              delay(Duration.seconds(1))
               // This will enable the connected client to get msgs
               if (answerWsContext.targetName.isBlank())
                 answerWsContext.targetName = classTargetName(classCode, challengeMd5)

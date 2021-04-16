@@ -44,10 +44,9 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.update
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.concurrent.timer
+import kotlin.time.Duration
 import kotlin.time.TimeMark
 import kotlin.time.TimeSource
-import kotlin.time.hours
-import kotlin.time.minutes
 
 internal object Intercepts : KLogging() {
   val clock = TimeSource.Monotonic
@@ -55,9 +54,14 @@ internal object Intercepts : KLogging() {
 
   @Suppress("unused")
   val timer =
-    timer("requestTimingMap admin", false, 1.minutes.toLongMilliseconds(), 1.minutes.toLongMilliseconds()) {
+    timer(
+      "requestTimingMap admin",
+      false,
+      Duration.minutes(1).inWholeMilliseconds,
+      Duration.minutes(1).inWholeMilliseconds
+         ) {
       requestTimingMap
-        .filter { (_, start) -> start.elapsedNow() > 1.hours }
+        .filter { (_, start) -> start.elapsedNow() > Duration.hours(1) }
         .forEach { (callId, start) ->
           requestTimingMap.remove(callId)
             ?.also {
@@ -161,8 +165,7 @@ internal fun Application.intercepts() {
                         updateServerRequest(callId, start)
                       }
                     }
-                }
-                else {
+                } else {
                   logger.error { "Null requestId for $path" }
                 }
               }
@@ -176,7 +179,7 @@ fun updateServerRequest(callId: String, start: TimeMark) {
   transaction {
     ServerRequestsTable
       .update({ ServerRequestsTable.requestId eq callId }) { row ->
-        row[duration] = start.elapsedNow().toLongMilliseconds()
+        row[duration] = start.elapsedNow().inWholeMilliseconds
       }
   }
 }

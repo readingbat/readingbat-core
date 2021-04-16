@@ -114,7 +114,7 @@ fun Route.routeTimeout(time: Duration, callback: Route.() -> Unit): Route {
 
   // Intercepts calls from this route at the features step
   routeWithTimeout.intercept(ApplicationCallPipeline.Features) {
-    withTimeout(time.toLongMilliseconds()) {
+    withTimeout(time.inWholeMilliseconds) {
       proceed()
     }
   }

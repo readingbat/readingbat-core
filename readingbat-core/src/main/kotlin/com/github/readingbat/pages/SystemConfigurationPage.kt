@@ -54,9 +54,7 @@ import com.github.readingbat.server.ws.ChallengeWs.maxAnswerWsConnections
 import io.prometheus.Agent
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
-import kotlin.time.days
-import kotlin.time.hours
-import kotlin.time.minutes
+import kotlin.time.Duration
 
 internal object SystemConfigurationPage {
 
@@ -254,23 +252,23 @@ internal object SystemConfigurationPage {
               table {
                 tr {
                   td { +"Active users in the last minute:" }
-                  td { +activeSessions(1.minutes).toString() }
+                  td { +activeSessions(Duration.minutes(1)).toString() }
                 }
                 tr {
                   td { +"Active users in the last 15 minutes:" }
-                  td { +activeSessions(15.minutes).toString() }
+                  td { +activeSessions(Duration.minutes(15)).toString() }
                 }
                 tr {
                   td { +"Active users in the last hour:" }
-                  td { +activeSessions(1.hours).toString() }
+                  td { +activeSessions(Duration.hours(1)).toString() }
                 }
                 tr {
                   td { +"Active users in the last 24 hours:" }
-                  td { +activeSessions(24.hours).toString() }
+                  td { +activeSessions(Duration.hours(24)).toString() }
                 }
                 tr {
                   td { +"Active users in the last week:" }
-                  td { +activeSessions(7.days).toString() }
+                  td { +activeSessions(Duration.days(7)).toString() }
                 }
               }
             }

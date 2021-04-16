@@ -55,9 +55,9 @@ import kotlinx.serialization.json.Json
 import mu.KLogging
 import java.util.Collections.synchronizedSet
 import java.util.concurrent.Executors.newSingleThreadExecutor
+import kotlin.time.Duration
 import kotlin.time.TimeSource
 import kotlin.time.measureTime
-import kotlin.time.seconds
 
 internal object LoggingWs : KLogging() {
   private val clock = TimeSource.Monotonic
@@ -137,7 +137,7 @@ internal object LoggingWs : KLogging() {
             }
           } catch (e: Throwable) {
             logger.error { "Exception in dispatcher ${e.simpleClassName} ${e.message}" }
-            Thread.sleep(1.seconds.toLongMilliseconds())
+            Thread.sleep(Duration.seconds(1).inWholeMilliseconds)
           }
         }
       }
@@ -163,7 +163,7 @@ internal object LoggingWs : KLogging() {
             }
           } catch (e: Throwable) {
             logger.error { "Exception in dispatcher ${e.simpleClassName} ${e.message}" }
-            Thread.sleep(1.seconds.toLongMilliseconds())
+            Thread.sleep(Duration.seconds(1).inWholeMilliseconds)
           }
         }
       }

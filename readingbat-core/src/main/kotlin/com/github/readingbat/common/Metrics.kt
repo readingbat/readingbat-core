@@ -29,8 +29,7 @@ import com.github.readingbat.dsl.agentLaunchId
 import com.github.readingbat.server.GeoInfo.Companion.geoInfoMap
 import com.github.readingbat.server.Intercepts.requestTimingMap
 import com.github.readingbat.server.ws.ChallengeWs.answerWsConnections
-import kotlin.time.hours
-import kotlin.time.minutes
+import kotlin.time.Duration
 
 /*internal*/ class Metrics {
 
@@ -236,19 +235,19 @@ import kotlin.time.minutes
                           "Active users in last 1 min count",
                           labelNames = listOf(AGENT_ID),
                           labelValues = listOf(agentLaunchId()),
-                          data = { activeSessions(1.minutes).toDouble() })
+                          data = { activeSessions(Duration.minutes(1)).toDouble() })
 
     SamplerGaugeCollector("active_users_15mins_count",
                           "Active users in last 15 mins count",
                           labelNames = listOf(AGENT_ID),
                           labelValues = listOf(agentLaunchId()),
-                          data = { activeSessions(15.minutes).toDouble() })
+                          data = { activeSessions(Duration.minutes(15)).toDouble() })
 
     SamplerGaugeCollector("active_users_60mins_count",
                           "Active users in last 60 mins count",
                           labelNames = listOf(AGENT_ID),
                           labelValues = listOf(agentLaunchId()),
-                          data = { activeSessions(1.hours).toDouble() })
+                          data = { activeSessions(Duration.hours(1)).toDouble() })
   }
 
   suspend fun measureEndpointRequest(endpoint: String, body: suspend () -> Unit) {

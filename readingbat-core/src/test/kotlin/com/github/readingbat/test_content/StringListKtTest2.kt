@@ -1,8 +1,10 @@
 package com.github.readingbat.com.github.readingbat.test_content
 
+import java.util.*
+
 fun combine2l(strs: List<String>): List<String> {
   val retval = mutableListOf<String>()
-  for (s in strs) retval += s.toUpperCase()
+  for (s in strs) retval += s.uppercase(Locale.getDefault())
   return retval
 }
 
