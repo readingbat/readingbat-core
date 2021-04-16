@@ -88,7 +88,7 @@ ext {
 allprojects {
     description = 'ReadingBat Core'
     group 'com.github.readingbat'
-    version '1.11.0'
+    version '1.11.1'
 
     apply plugin: 'application'
     apply plugin: 'maven' // required for jitpack.io install
@@ -124,7 +124,7 @@ subprojects {
         implementation "io.github.microutils:kotlin-logging:$logging_version"
         implementation "ch.qos.logback:logback-classic:$logback_version"
 
-        runtimeOnly "org.jetbrains.kotlin:kotlin-scripting-jsr223"
+        runtimeOnly "org.jetbrains.kotlin:kotlin-scripting-jsr223:$kotlin_version"
     }
 
     shadowJar {

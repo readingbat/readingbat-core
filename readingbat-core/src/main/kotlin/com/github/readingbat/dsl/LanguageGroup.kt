@@ -54,7 +54,10 @@ class LanguageGroup<T : Challenge>(internal val content: ReadingBatContent,
     if (languageType != group.languageType)
       error("${group.groupName} language type mismatch: $languageType and ${group.languageType}")
     if (hasGroupNameSuffix(group.groupNameSuffix))
+    // TODO rename the duplicate group here
       error("Duplicate group name: ${group.groupNameSuffix}")
+//    if (hasGroup(group.groupName.value))
+//      error("Duplicate group name: ${group.groupName}")
     challengeGroups += group
   }
 
