@@ -24,9 +24,7 @@ import com.github.readingbat.common.EnvVar
 import com.google.gson.Gson
 import com.pambrose.common.exposed.get
 import com.pambrose.common.exposed.upsert
-import io.ktor.application.*
 import io.ktor.client.statement.*
-import io.ktor.features.*
 import kotlinx.coroutines.runBlocking
 import mu.KLogging
 import org.jetbrains.exposed.sql.select

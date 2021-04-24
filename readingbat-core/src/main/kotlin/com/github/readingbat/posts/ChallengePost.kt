@@ -160,7 +160,7 @@ private val EMPTY_STRING = "".toDoubleQuoted()
 internal object ChallengePost : KLogging() {
   suspend fun PipelineCall.checkAnswers(content: ReadingBatContent, user: User?) {
     val params = call.receiveParameters()
-    val paramMap = params.entries().map { it.key to it.value[0] }.toMap()
+    val paramMap = params.entries().associate { it.key to it.value[0] }
     val names = ChallengeNames(paramMap)
     val challenge = content.findChallenge(names.languageName, names.groupName, names.challengeName)
     val funcInfo = challenge.functionInfo()
@@ -353,7 +353,7 @@ internal object ChallengePost : KLogging() {
     val shouldPublish = user?.shouldPublish() ?: false
     val complete = results.all { it.correct }
     val numCorrect = results.count { it.correct }
-    val invokeMap = invokeList.map { it.first.value to it.second }.toMap()
+    val invokeMap = invokeList.associate { it.first.value to it.second }
     val invokeStr = Json.encodeToString(invokeMap)
     val historyList = mutableListOf<ChallengeHistory>()
 

@@ -55,7 +55,7 @@ import kotlin.time.measureTimedValue
 class ReadingBatContent {
   internal val timeStamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("M/d/y H:m:ss"))
   private val languageList by lazy { listOf(java, python, kotlin) }
-  private val languageMap by lazy { languageList.map { it.languageType to it }.toMap() }
+  private val languageMap by lazy { languageList.associateBy { it.languageType } }
 
   // contentMap will prevent reading the same content multiple times
   internal val contentMap = ConcurrentHashMap<String, ReadingBatContent>()

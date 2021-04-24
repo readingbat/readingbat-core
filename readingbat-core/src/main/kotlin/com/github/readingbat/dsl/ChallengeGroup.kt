@@ -50,7 +50,7 @@ class ChallengeGroup<T : Challenge>(/*internal*/ val languageGroup: LanguageGrou
   /*internal*/ val challenges = mutableListOf<T>()
   internal var namePrefix = ""
 
-  /*internal*/ val groupName by lazy { GroupName("${if (namePrefix.isNotBlank()) namePrefix else ""}${groupNameSuffix.value}") }
+  /*internal*/ val groupName by lazy { GroupName("${namePrefix.ifBlank { "" }}${groupNameSuffix.value}") }
   internal val parsedDescription by lazy { TextFormatter.renderText(description) }
   private val groupPrefix by lazy { pathOf(languageName, groupName) }
 

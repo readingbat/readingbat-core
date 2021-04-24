@@ -117,9 +117,9 @@ import kotlin.time.measureTime
   private var digestBacking: String = ""
 
   val salt: String
-    get() = if (saltBacking.isBlank()) throw DataException("Missing salt field") else saltBacking
+    get() = saltBacking.ifBlank { throw DataException("Missing salt field") }
   val digest: String
-    get() = if (digestBacking.isBlank()) throw DataException("Missing digest field") else digestBacking
+    get() = digestBacking.ifBlank { throw DataException("Missing digest field") }
 
   private fun sessionDbmsId() =
     browserSession?.sessionDbmsId() ?: error("Null browser session")
