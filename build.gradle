@@ -90,6 +90,8 @@ allprojects {
     group 'com.github.readingbat'
     version '1.11.1'
 
+    mainClassName = 'TestMain' // This prevents a gradle error
+
     apply plugin: 'application'
     apply plugin: 'maven-publish' // required for jitpack.io install
     apply plugin: 'org.jetbrains.kotlin.jvm'
@@ -134,7 +136,6 @@ subprojects {
         exclude 'META-INF/*.DSA'
         exclude 'META-INF/*.RSA'
         exclude "LICENSE*"
-        mainClassName = 'TestMain' // This prevents a gradle error
     }
 
     task sourcesJar(type: Jar, dependsOn: classes) {

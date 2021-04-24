@@ -97,7 +97,6 @@ build.mustRunAfter clean
 
 task uberjar(type: Jar, dependsOn: shadowJar) {
     zip64 true
-    mainClassName = mainName
     archiveFileName = 'server.jar'
     manifest {
         attributes('Implementation-Title': appName)
