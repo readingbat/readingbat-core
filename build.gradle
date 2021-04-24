@@ -112,6 +112,14 @@ allprojects {
     targetCompatibility = 1.8
 }
 
+def mainName = 'ContentServer'
+def appName = 'server'
+
+// This is for ./gradlew run
+application {
+    mainClassName = mainName
+}
+
 subprojects {
 
     dependencies {
