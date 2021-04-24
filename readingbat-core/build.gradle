@@ -92,22 +92,18 @@ buildConfig {
 }
 
 // Include build uberjars in heroku deploy
-//task stage(dependsOn: ['uberjar', 'build', 'clean'])
-//build.mustRunAfter clean
+task stage(dependsOn: ['uberjar', 'build', 'clean'])
+build.mustRunAfter clean
 
-//task uberjar(type: Jar, dependsOn: shadowJar) {
-//    zip64 true
-//    archiveFileName = 'server.jar'
-//    manifest {
-//        attributes('Implementation-Title': appName)
-//        attributes('Implementation-Version': version)
-//        attributes('Built-Date': new Date())
-//        attributes('Built-JDK': System.getProperty('java.version'))
-//        attributes('Main-Class': mainName)
-//    }
-//    from zipTree(shadowJar.archiveFile)
-//}
-
-artifacts {
-    archives sourcesJar
+task uberjar(type: Jar, dependsOn: shadowJar) {
+    zip64 true
+    archiveFileName = 'server.jar'
+    manifest {
+        attributes('Implementation-Title': appName)
+        attributes('Implementation-Version': version)
+        attributes('Built-Date': new Date())
+        attributes('Built-JDK': System.getProperty('java.version'))
+        attributes('Main-Class': mainName)
+    }
+    from zipTree(shadowJar.archiveFile)
 }
