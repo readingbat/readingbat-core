@@ -157,7 +157,7 @@ object ReadingBatServer : KLogging() {
         .map { it.replaceFirst("-config=", "") }
         .firstOrNull()
         ?: EnvVar.AGENT_CONFIG.getEnvOrNull()
-        ?: Property.AGENT_CONFIG.getPropertyOrNull()
+        ?: Property.AGENT_CONFIG.getPropertyOrNull(false)
         ?: "src/main/resources/application.conf"
 
     Property.CONFIG_FILENAME.setProperty(configFilename)
