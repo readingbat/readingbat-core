@@ -5,7 +5,7 @@ plugins {
     id 'org.jetbrains.kotlin.jvm' version '1.4.32' apply false
     id 'org.jetbrains.kotlin.plugin.serialization' version '1.4.32' apply false
     id "com.github.ben-manes.versions" version '0.38.0' apply false
-    id 'com.github.johnrengelman.shadow' version '6.1.0' apply false
+//    id 'com.github.johnrengelman.shadow' version '6.1.0' apply false
     id 'com.github.gmazzo.buildconfig' version '3.0.0' apply false
     id "org.flywaydb.flyway" version "7.8.1"
 }
@@ -98,7 +98,7 @@ allprojects {
     apply plugin: 'org.jetbrains.kotlin.jvm'
     apply plugin: 'org.jetbrains.kotlin.plugin.serialization'
     apply plugin: 'com.github.ben-manes.versions'
-    apply plugin: 'com.github.johnrengelman.shadow'
+//    apply plugin: 'com.github.johnrengelman.shadow'
     apply plugin: 'com.github.gmazzo.buildconfig'
 
     repositories {
@@ -130,14 +130,14 @@ subprojects {
         runtimeOnly "org.jetbrains.kotlin:kotlin-scripting-jsr223:$kotlin_version"
     }
 
-    shadowJar {
-        zip64 true
-        mergeServiceFiles()
-        exclude "META-INF/*.SF"
-        exclude 'META-INF/*.DSA'
-        exclude 'META-INF/*.RSA'
-        exclude "LICENSE*"
-    }
+//    shadowJar {
+//        zip64 true
+//        mergeServiceFiles()
+//        exclude "META-INF/*.SF"
+//        exclude 'META-INF/*.DSA'
+//        exclude 'META-INF/*.RSA'
+//        exclude "LICENSE*"
+//    }
 
     task sourcesJar(type: Jar, dependsOn: classes) {
         archiveClassifier = 'sources'
