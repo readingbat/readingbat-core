@@ -80,7 +80,6 @@ ext {
             kotest_runner_junit5   : "io.kotest:kotest-runner-junit5:$kotest_version",
             kotest_assertions_core : "io.kotest:kotest-assertions-core:$kotest_version",
             kotest_assertions_ktor : "io.kotest:kotest-assertions-ktor:$kotest_version",
-//            kotest_property        : "io.kotest:kotest-property:$kotest_version",
     ]
 }
 
