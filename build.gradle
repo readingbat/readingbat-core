@@ -104,15 +104,13 @@ allprojects {
         maven { url = 'https://kotlin.bintray.com/kotlinx' }
         maven { url = 'https://kotlin.bintray.com/kotlin-js-wrappers' }
         maven { url = 'https://maven-central.storage-download.googleapis.com/repos/central/data/' }
-        jcenter()
+        mavenCentral()
         maven { url = 'https://jitpack.io' }
     }
 
     sourceCompatibility = 1.8
     targetCompatibility = 1.8
 }
-
-project.setProperty("mainClassName", "ContentServer")
 
 subprojects {
 
@@ -136,6 +134,7 @@ subprojects {
         exclude 'META-INF/*.DSA'
         exclude 'META-INF/*.RSA'
         exclude "LICENSE*"
+        mainClassName = 'TestMain' // This prevents a gradle error
     }
 
     task sourcesJar(type: Jar, dependsOn: classes) {
