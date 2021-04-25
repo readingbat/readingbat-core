@@ -5,9 +5,9 @@ def mainName = 'TestMain'
 def appName = 'server'
 
 // This is for ./gradlew run
-//application {
-//    mainClassName = mainName
-//}
+application {
+    mainClassName = mainName
+}
 
 dependencies {
     implementation libraries.kotlin_reflect
