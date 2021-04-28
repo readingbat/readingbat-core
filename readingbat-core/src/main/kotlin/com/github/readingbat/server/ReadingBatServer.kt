@@ -90,7 +90,7 @@ object ReadingBatServer : KLogging() {
   internal val content = AtomicReference(ReadingBatContent())
   internal val adminUsers = mutableListOf<String>()
   internal val contentReadCount = AtomicInteger(0)
-  /*internal*/ val metrics by lazy { Metrics() }
+  val metrics by lazy { Metrics() }
   internal var redisPool: JedisPool? = null
   private const val CALLER_VERSION = "callerVersion"
   internal var callerVersion = ""
@@ -215,7 +215,7 @@ internal fun Application.readContentDsl(fileName: String, variableName: String, 
   contentReadCount.incrementAndGet()
 }
 
-/*internal*/ fun Application.module() {
+fun Application.module() {
 
   assignProperties()
 

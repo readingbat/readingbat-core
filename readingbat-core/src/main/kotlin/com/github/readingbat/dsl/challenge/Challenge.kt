@@ -127,7 +127,7 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
   private fun fetchCodeFromRedis() =
     if (isContentCachingEnabled()) redisPool?.withRedisPool { redis -> redis?.get(sourceCodeKey) } else null
 
-  /*internal*/ fun functionInfo() =
+  fun functionInfo() =
     if (repo.remote) {
       content.functionInfoMap
         .computeIfAbsent(challengeId) {

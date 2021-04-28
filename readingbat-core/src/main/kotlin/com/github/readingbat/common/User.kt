@@ -78,11 +78,13 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlin.contracts.contract
 import kotlin.time.measureTime
 
-/*internal*/ class User {
+class User {
 
-  private constructor(userId: String,
-                      browserSession: BrowserSession?,
-                      initFields: Boolean) {
+  private constructor(
+    userId: String,
+    browserSession: BrowserSession?,
+    initFields: Boolean
+  ) {
     this.userId = userId
     this.browserSession = browserSession
 

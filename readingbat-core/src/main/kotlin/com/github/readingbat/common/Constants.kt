@@ -26,7 +26,7 @@ import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.server.GroupName
 import com.github.readingbat.server.LanguageName
 
-/*internal*/ object Constants {
+object Constants {
   const val SESSION_ID = "sessionid"
   const val ICONS = "icons"
   const val MSG = "msg"
@@ -82,7 +82,7 @@ internal object PropertyNames {
   internal const val CHALLENGES = "challenges"
 }
 
-/*internal*/ object Endpoints {
+object Endpoints {
   const val ROOT = "/"
   const val WS_ROOT = "/ws"
 

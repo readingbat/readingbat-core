@@ -111,9 +111,11 @@ class ReadingBatContent {
   internal fun findChallenge(challengeLoc: Language.Group.Challenge): Challenge =
     findGroup(challengeLoc.group).findChallenge(challengeLoc.challengeName.value)
 
-  internal fun findChallenge(languageName: LanguageName,
-                             groupName: GroupName,
-                             challengeName: ChallengeName): Challenge =
+  internal fun findChallenge(
+    languageName: LanguageName,
+    groupName: GroupName,
+    challengeName: ChallengeName
+  ): Challenge =
     findGroup(languageName, groupName).findChallenge(challengeName.value)
 
   internal operator fun get(languageType: LanguageType): LanguageGroup<out Challenge> = findLanguage(languageType)
@@ -152,13 +154,16 @@ class ReadingBatContent {
 
   @ReadingBatDslMarker
   fun <T : Challenge> include(languageGroup: LanguageGroup<T>, namePrefix: String = "") {
+    val ppp = languageList
+    val ppp2 = languageMap
+
     @Suppress("UNCHECKED_CAST")
-    val group = findLanguage(languageGroup.languageType) as LanguageGroup<T>
+    val langGroup = findLanguage(languageGroup.languageType) as LanguageGroup<T>
     languageGroup.challengeGroups
       .forEach {
         if (namePrefix.isNotBlank())
           it.namePrefix = namePrefix
-        group.addGroup(it)
+        langGroup.addGroup(it)
       }
   }
 
@@ -167,10 +172,12 @@ class ReadingBatContent {
       error("Invalid language: $languageType")
   }
 
-  internal fun loadChallenges(languageType: LanguageType,
-                              log: (String) -> Unit,
-                              prefix: String = "",
-                              useWebApi: Boolean = false) =
+  internal fun loadChallenges(
+    languageType: LanguageType,
+    log: (String) -> Unit,
+    prefix: String = "",
+    useWebApi: Boolean = false
+  ) =
     measureTimedValue {
       val cnt = AtomicInteger(0)
       runBlocking {
@@ -191,8 +198,7 @@ class ReadingBatContent {
                         }
                       }
                     }
-                }
-                else {
+                } else {
                   logger.info { "Loading: ${challenge.path}" }
                   log("Loading: ${challenge.path}")
                   challenge.functionInfo()

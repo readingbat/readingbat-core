@@ -31,7 +31,7 @@ import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.util.concurrent.ConcurrentHashMap
 
-/*internal*/ class GeoInfo(val requireDbmsLookUp: Boolean, val dbmsId: Long, val remoteHost: String, val json: String) {
+class GeoInfo(val requireDbmsLookUp: Boolean, val dbmsId: Long, val remoteHost: String, val json: String) {
   private val valid get() = json.isNotBlank()
 
   //private val map = if (json.isNotBlank()) Json.decodeFromString<Map<String, Any?>>(json) else emptyMap()

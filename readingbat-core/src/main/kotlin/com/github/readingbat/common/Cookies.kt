@@ -46,7 +46,7 @@ import java.time.Instant
 
 internal data class UserPrincipal(val userId: String, val created: Long = Instant.now().toEpochMilli()) : Principal
 
-/*internal*/ data class BrowserSession(val id: String, val created: Long = Instant.now().toEpochMilli()) {
+data class BrowserSession(val id: String, val created: Long = Instant.now().toEpochMilli()) {
 
   fun sessionDbmsId() =
     try {

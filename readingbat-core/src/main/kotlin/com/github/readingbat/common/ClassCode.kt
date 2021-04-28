@@ -35,7 +35,7 @@ import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
 import kotlin.time.measureTimedValue
 
-/*internal*/ data class ClassCode(val classCode: String) {
+data class ClassCode(val classCode: String) {
   val isNotEnabled by lazy { classCode == DISABLED_MODE || classCode.isBlank() }
   val isEnabled by lazy { !isNotEnabled }
 

@@ -81,11 +81,13 @@ internal data class StudentInfo(val studentId: String, val firstName: String, va
 internal data class ClassEnrollment(val sessionId: String,
                                     val students: List<StudentInfo> = mutableListOf())
 
-/*internal*/ data class ChallengeResults(val invocation: Invocation,
-                                         val userResponse: String = "",
-                                         val answered: Boolean = false,
-                                         val correct: Boolean = false,
-                                         val hint: String = "")
+data class ChallengeResults(
+  val invocation: Invocation,
+  val userResponse: String = "",
+  val answered: Boolean = false,
+  val correct: Boolean = false,
+  val hint: String = ""
+)
 
 @Serializable
 internal class LikeDislikeInfo(val userId: String,
@@ -110,10 +112,12 @@ internal class DashboardHistory(val invocation: String,
                                 val answers: String)
 
 @Serializable
-/*internal*/ data class ChallengeHistory(var invocation: Invocation,
-                                         var correct: Boolean = false,
-                                         var incorrectAttempts: Int = 0,
-                                         @Required val answers: MutableList<String> = mutableListOf()) {
+data class ChallengeHistory(
+  var invocation: Invocation,
+  var correct: Boolean = false,
+  var incorrectAttempts: Int = 0,
+  @Required val answers: MutableList<String> = mutableListOf()
+) {
 
   fun markCorrect(userResponse: String) {
     correct = true
@@ -138,7 +142,7 @@ internal class DashboardHistory(val invocation: String,
   }
 }
 
-/*internal*/ enum class AnswerStatus(val value: Int) {
+enum class AnswerStatus(val value: Int) {
   NOT_ANSWERED(0), CORRECT(1), INCORRECT(2);
 
   companion object {
