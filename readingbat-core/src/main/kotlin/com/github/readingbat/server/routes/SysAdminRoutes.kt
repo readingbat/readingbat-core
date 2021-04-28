@@ -52,7 +52,7 @@ import io.ktor.routing.*
 import redis.clients.jedis.Jedis
 import kotlin.time.measureTime
 
-/*internal*/ fun Routing.sysAdminRoutes(metrics: Metrics, resetContentFunc: (String) -> Unit) {
+fun Routing.sysAdminRoutes(metrics: Metrics, resetContentFunc: (String) -> Unit) {
 
   suspend fun ApplicationCall.logId(): String {
     val paranMap = paramMap()

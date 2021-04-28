@@ -34,7 +34,14 @@ import com.github.readingbat.common.Property
 import com.github.readingbat.common.Property.Companion.assignProperties
 import com.github.readingbat.common.User.Companion.createUnknownUser
 import com.github.readingbat.common.User.Companion.userExists
-import com.github.readingbat.dsl.*
+import com.github.readingbat.dsl.ReadingBatContent
+import com.github.readingbat.dsl.agentLaunchId
+import com.github.readingbat.dsl.evalContentDsl
+import com.github.readingbat.dsl.isAgentEnabled
+import com.github.readingbat.dsl.isDbmsEnabled
+import com.github.readingbat.dsl.isProduction
+import com.github.readingbat.dsl.isRedisEnabled
+import com.github.readingbat.dsl.readContentDsl
 import com.github.readingbat.readingbat_core.BuildConfig
 import com.github.readingbat.server.Installs.installs
 import com.github.readingbat.server.Locations.locations
@@ -54,7 +61,6 @@ import com.github.readingbat.server.ws.WsCommon.wsRoutes
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import io.ktor.application.*
-import io.ktor.http.cio.websocket.*
 import io.ktor.http.content.*
 import io.ktor.routing.*
 import io.ktor.server.cio.*
@@ -84,7 +90,7 @@ object ReadingBatServer : KLogging() {
   internal val content = AtomicReference(ReadingBatContent())
   internal val adminUsers = mutableListOf<String>()
   internal val contentReadCount = AtomicInteger(0)
-  /*internal*/ val metrics by lazy { Metrics() }
+  val metrics by lazy { Metrics() }
   internal var redisPool: JedisPool? = null
   private const val CALLER_VERSION = "callerVersion"
   internal var callerVersion = ""
@@ -111,7 +117,8 @@ object ReadingBatServer : KLogging() {
             transactionIsolation = "TRANSACTION_REPEATABLE_READ"
             maxLifetime = Property.DBMS_MAX_LIFETIME_MINS.getRequiredProperty().toInt().minutes.toLongMilliseconds()
             validate()
-          }))
+          })
+                    )
   }
 
   internal val upTime get() = startTime.elapsedNow()
@@ -126,8 +133,7 @@ object ReadingBatServer : KLogging() {
         Property.KOTLIN_SCRIPT_CLASSPATH.setProperty(scriptClasspathEnvVar)
       else
         logger.warn { "Missing ${Property.KOTLIN_SCRIPT_CLASSPATH.propertyValue} and ${EnvVar.SCRIPT_CLASSPATH} values" }
-    }
-    else {
+    } else {
       logger.info { "${Property.KOTLIN_SCRIPT_CLASSPATH.propertyValue}: $scriptClasspathProp" }
     }
   }
@@ -151,7 +157,7 @@ object ReadingBatServer : KLogging() {
         .map { it.replaceFirst("-config=", "") }
         .firstOrNull()
         ?: EnvVar.AGENT_CONFIG.getEnvOrNull()
-        ?: Property.AGENT_CONFIG.getPropertyOrNull()
+        ?: Property.AGENT_CONFIG.getPropertyOrNull(false)
         ?: "src/main/resources/application.conf"
 
     Property.CONFIG_FILENAME.setProperty(configFilename)
@@ -186,6 +192,7 @@ internal fun Application.readContentDsl(fileName: String, variableName: String, 
       logger.info { it }
       logToRedis(it, logId)
     }
+
   measureTime {
     val contentSource = FileSource(fileName = fileName)
     val dslCode = readContentDsl(contentSource)
@@ -204,10 +211,11 @@ internal fun Application.readContentDsl(fileName: String, variableName: String, 
         logToRedis(it, logId)
       }
   }
+
   contentReadCount.incrementAndGet()
 }
 
-/*internal*/ fun Application.module() {
+fun Application.module() {
 
   assignProperties()
 
@@ -240,8 +248,7 @@ internal fun Application.readContentDsl(fileName: String, variableName: String, 
       val configFilename = Property.CONFIG_FILENAME.getRequiredProperty()
       val agentInfo = startAsyncAgent(configFilename, true)
       Property.AGENT_LAUNCH_ID.setProperty(agentInfo.launchId)
-    }
-    else {
+    } else {
       logger.error { "Prometheus agent is enabled but the proxy hostname is not assigned" }
     }
   }
@@ -262,7 +269,7 @@ internal fun Application.readContentDsl(fileName: String, variableName: String, 
     measureTime {
       withTimeoutOrNull(maxDelay) {
         job.join()
-      } ?: logger.info { "Timed-out after waiting $maxDelay" }
+      } ?: logger.error { "Timed-out after waiting $maxDelay" }
     }.also {
       logger.info { "Continued start-up after delaying $it" }
     }
@@ -282,10 +289,12 @@ internal fun Application.readContentDsl(fileName: String, variableName: String, 
     adminRoutes(metrics)
     locations(metrics) { content.get() }
     userRoutes(metrics) { content.get() }
+
     if (isProduction() && isRedisEnabled()) {
       sysAdminRoutes(metrics, resetContentDslFunc)
       wsRoutes(metrics) { content.get() }
     }
+
     static(STATIC_ROOT) { resources("static") }
   }
 }

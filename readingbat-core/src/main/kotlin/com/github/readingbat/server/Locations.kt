@@ -48,7 +48,7 @@ import io.ktor.locations.*
 import io.ktor.routing.*
 import kotlinx.serialization.Serializable
 
-/*internal*/ object Locations {
+object Locations {
   private const val trueStr = true.toString()
   private const val falseStr = false.toString()
 

@@ -42,7 +42,7 @@ import com.github.readingbat.common.FormFields.REMOVE_FROM_CLASS
 import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.FormFields.USER_ID_PARAM
 import com.github.readingbat.common.User
-import com.github.readingbat.common.User.Companion.queryActiveClassCode
+import com.github.readingbat.common.User.Companion.queryActiveTeachingClassCode
 import com.github.readingbat.common.User.Companion.toUser
 import com.github.readingbat.common.isNotValidUser
 import com.github.readingbat.dsl.InvalidRequestException
@@ -73,7 +73,7 @@ internal object StudentSummaryPage : KLogging() {
     val languageName = p[LANG_TYPE_QP]?.let { LanguageName(it) } ?: throw InvalidRequestException("Missing language")
     val student = p[USER_ID_QP]?.toUser() ?: throw InvalidRequestException("Missing user id")
     val classCode = p[CLASS_CODE_QP]?.let { ClassCode(it) } ?: throw InvalidRequestException("Missing class code")
-    val activeClassCode = queryActiveClassCode(user)
+    val activeTeachingClassCode = queryActiveTeachingClassCode(user)
 
     when {
       classCode.isNotValid() -> throw InvalidRequestException("Invalid class code: $classCode")
@@ -97,7 +97,7 @@ internal object StudentSummaryPage : KLogging() {
         body {
           val returnPath = queryParam(RETURN_PARAM, "/")
 
-          helpAndLogin(content, user, returnPath, activeClassCode.isEnabled)
+          helpAndLogin(content, user, returnPath, activeTeachingClassCode.isEnabled)
           bodyTitle()
 
           h2 { +"Student Summary" }

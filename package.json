@@ -1,5 +1,5 @@
 {
   "devDependencies": {
-    "cypress": "6.2.1"
+    "cypress": "7.1.0"
   }
 }

@@ -22,18 +22,22 @@ import com.github.pambrose.common.util.ContentSource
 import com.github.pambrose.common.util.asRegex
 import com.github.pambrose.common.util.decode
 import com.github.pambrose.common.util.pathOf
+import com.github.readingbat.dsl.challenge.Challenge
 
 import com.github.readingbat.server.GroupName
 import com.github.readingbat.server.ReadingBatServer
+import mu.KLogging
 
 @ReadingBatDslMarker
-class LanguageGroup<T : Challenge>(internal val content: ReadingBatContent,
-                                   internal val languageType: LanguageType) {
-
-  /*internal*/ val challengeGroups = mutableListOf<ChallengeGroup<T>>()
+class LanguageGroup<T : Challenge>(
+  internal val content: ReadingBatContent,
+  internal val languageType: LanguageType
+) {
   internal val metrics get() = ReadingBatServer.metrics
-  /*internal*/ val languageName get() = languageType.languageName
+  val languageName get() = languageType.languageName
   val contentRoot get() = languageType.contentRoot
+
+  val challengeGroups = mutableListOf<ChallengeGroup<T>>()
 
   // User properties
   var repo: ContentRoot = content.repo           // Defaults to outer-level value
@@ -52,8 +56,12 @@ class LanguageGroup<T : Challenge>(internal val content: ReadingBatContent,
   internal fun addGroup(group: ChallengeGroup<T>) {
     if (languageType != group.languageType)
       error("${group.groupName} language type mismatch: $languageType and ${group.languageType}")
-    if (hasGroupNameSuffix(group.groupNameSuffix))
-      error("Duplicate group name: ${group.groupNameSuffix}")
+
+    // TODO Need to deal with collisions here
+    // Check against groupName, not groupNameSuffix names
+    if (hasGroup(group.groupName.value))
+      error("Duplicate group name: ${group.groupName}")
+
     challengeGroups += group
   }
 
@@ -109,7 +117,7 @@ class LanguageGroup<T : Challenge>(internal val content: ReadingBatContent,
   override fun toString() =
     "LanguageGroup(languageType=$languageType, srcPath='$srcPath', challengeGroups=$challengeGroups)"
 
-  companion object {
+  companion object : KLogging() {
     private val excludes = Regex("^__.*__.*$")
 
     internal val defaultContentRoot =

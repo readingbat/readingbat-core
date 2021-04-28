@@ -18,12 +18,12 @@
 package com.github.readingbat.common
 
 import com.github.readingbat.dsl.isDbmsEnabled
-import com.github.readingbat.server.BrowserSessions
+import com.github.readingbat.server.BrowserSessionsTable
 import com.github.readingbat.server.Email
 import com.github.readingbat.server.FullName
-import com.github.readingbat.server.GeoInfos
-import com.github.readingbat.server.ServerRequests
-import com.github.readingbat.server.Users
+import com.github.readingbat.server.GeoInfosTable
+import com.github.readingbat.server.ServerRequestsTable
+import com.github.readingbat.server.UsersTable
 import com.pambrose.common.exposed.dateTimeExpr
 import com.pambrose.common.exposed.get
 import mu.KLogging
@@ -42,17 +42,17 @@ import kotlin.time.measureTimedValue
 
 internal object SessionActivites : KLogging() {
 
-  private val session_id = BrowserSessions.sessionId
-  private val fullName = Users.fullName
-  private val email = Users.email
-  private val ip = GeoInfos.ip
-  private val city = GeoInfos.city
-  private val state = GeoInfos.stateProv
-  private val country = GeoInfos.countryName
-  private val isp = GeoInfos.organization
-  private val flagUrl = GeoInfos.countryFlag
-  private val userAgent = ServerRequests.userAgent
-  private val created = ServerRequests.created
+  private val session_id = BrowserSessionsTable.sessionId
+  private val fullName = UsersTable.fullName
+  private val email = UsersTable.email
+  private val ip = GeoInfosTable.ip
+  private val city = GeoInfosTable.city
+  private val state = GeoInfosTable.stateProv
+  private val country = GeoInfosTable.countryName
+  private val isp = GeoInfosTable.organization
+  private val flagUrl = GeoInfosTable.countryFlag
+  private val userAgent = ServerRequestsTable.userAgent
+  private val created = ServerRequestsTable.created
 
   class QueryInfo(val session_id: String,
                   val fullName: FullName,
@@ -70,11 +70,11 @@ internal object SessionActivites : KLogging() {
   fun querySessions(dayCount: Int) =
     transaction {
       measureTimedValue {
-        val count = Count(Users.id)
+        val count = Count(UsersTable.id)
         val maxDate = Max(created, DateColumnType(true))
         val elems = arrayOf(fullName, email, ip, city, state, country, isp, flagUrl, userAgent)
 
-        (ServerRequests innerJoin BrowserSessions innerJoin Users innerJoin GeoInfos)
+        (ServerRequestsTable innerJoin BrowserSessionsTable innerJoin UsersTable innerJoin GeoInfosTable)
           .slice(session_id, *elems, count, maxDate)
           .select { created greater dateTimeExpr("now() - interval '${min(dayCount, 14)} day'") }
           .groupBy(*(arrayOf(session_id) + elems))
@@ -106,9 +106,9 @@ internal object SessionActivites : KLogging() {
       transaction {
         //addLogger(KotlinLoggingSqlLogger)
         measureTimedValue {
-          val sessionRef = ServerRequests.sessionRef
-          val created = ServerRequests.created
-          ServerRequests
+          val sessionRef = ServerRequestsTable.sessionRef
+          val created = ServerRequestsTable.created
+          ServerRequestsTable
             .slice(sessionRef.countDistinct())
             .select { created greater dateTimeExpr("now() - interval '${duration.toLongMilliseconds()} milliseconds'") }
             .map { it[0] as Long }

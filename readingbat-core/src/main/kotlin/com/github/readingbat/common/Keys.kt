@@ -17,7 +17,7 @@
 
 package com.github.readingbat.common
 
-import com.github.readingbat.dsl.Challenge
+import com.github.readingbat.dsl.challenge.Challenge
 import com.github.readingbat.server.ChallengeName
 import com.github.readingbat.server.GroupName
 import com.github.readingbat.server.LanguageName

@@ -81,11 +81,13 @@ internal data class StudentInfo(val studentId: String, val firstName: String, va
 internal data class ClassEnrollment(val sessionId: String,
                                     val students: List<StudentInfo> = mutableListOf())
 
-/*internal*/ data class ChallengeResults(val invocation: Invocation,
-                                         val userResponse: String = "",
-                                         val answered: Boolean = false,
-                                         val correct: Boolean = false,
-                                         val hint: String = "")
+data class ChallengeResults(
+  val invocation: Invocation,
+  val userResponse: String = "",
+  val answered: Boolean = false,
+  val correct: Boolean = false,
+  val hint: String = ""
+)
 
 @Serializable
 internal class LikeDislikeInfo(val userId: String,
@@ -110,10 +112,12 @@ internal class DashboardHistory(val invocation: String,
                                 val answers: String)
 
 @Serializable
-/*internal*/ data class ChallengeHistory(var invocation: Invocation,
-                                         var correct: Boolean = false,
-                                         var incorrectAttempts: Int = 0,
-                                         @Required val answers: MutableList<String> = mutableListOf()) {
+data class ChallengeHistory(
+  var invocation: Invocation,
+  var correct: Boolean = false,
+  var incorrectAttempts: Int = 0,
+  @Required val answers: MutableList<String> = mutableListOf()
+) {
 
   fun markCorrect(userResponse: String) {
     correct = true
@@ -138,7 +142,7 @@ internal class DashboardHistory(val invocation: String,
   }
 }
 
-/*internal*/ enum class AnswerStatus(val value: Int) {
+enum class AnswerStatus(val value: Int) {
   NOT_ANSWERED(0), CORRECT(1), INCORRECT(2);
 
   companion object {
@@ -160,7 +164,7 @@ private val EMPTY_STRING = "".toDoubleQuoted()
 internal object ChallengePost : KLogging() {
   suspend fun PipelineCall.checkAnswers(content: ReadingBatContent, user: User?) {
     val params = call.receiveParameters()
-    val paramMap = params.entries().map { it.key to it.value[0] }.toMap()
+    val paramMap = params.entries().associate { it.key to it.value[0] }
     val names = ChallengeNames(paramMap)
     val challenge = content.findChallenge(names.languageName, names.groupName, names.challengeName)
     val funcInfo = challenge.functionInfo()
@@ -192,15 +196,15 @@ internal object ChallengePost : KLogging() {
     when (type) {
       AUTH_KEY ->
         transaction {
-          UserChallengeInfo
-            .deleteWhere { (UserChallengeInfo.userRef eq fetchUserDbmsIdFromCache(id)) and (UserChallengeInfo.md5 eq md5) }
+          UserChallengeInfoTable
+            .deleteWhere { (UserChallengeInfoTable.userRef eq fetchUserDbmsIdFromCache(id)) and (UserChallengeInfoTable.md5 eq md5) }
         }
       NO_AUTH_KEY ->
         transaction {
-          SessionChallengeInfo
+          SessionChallengeInfoTable
             .deleteWhere {
-              (SessionChallengeInfo.sessionRef eq findSessionDbmsId(id,
-                                                                    false)) and (SessionChallengeInfo.md5 eq md5)
+              (SessionChallengeInfoTable.sessionRef eq findSessionDbmsId(id,
+                                                                         false)) and (SessionChallengeInfoTable.md5 eq md5)
             }
         }
       else -> error("Invalid type: $type")
@@ -210,15 +214,15 @@ internal object ChallengePost : KLogging() {
     when (type) {
       AUTH_KEY ->
         transaction {
-          UserAnswerHistory
-            .deleteWhere { (UserAnswerHistory.userRef eq fetchUserDbmsIdFromCache(id)) and (UserAnswerHistory.md5 eq md5) }
+          UserAnswerHistoryTable
+            .deleteWhere { (UserAnswerHistoryTable.userRef eq fetchUserDbmsIdFromCache(id)) and (UserAnswerHistoryTable.md5 eq md5) }
         }
       NO_AUTH_KEY ->
         transaction {
-          SessionAnswerHistory
+          SessionAnswerHistoryTable
             .deleteWhere {
-              (SessionAnswerHistory.sessionRef eq findSessionDbmsId(id,
-                                                                    false)) and (SessionAnswerHistory.md5 eq md5)
+              (SessionAnswerHistoryTable.sessionRef eq findSessionDbmsId(id,
+                                                                         false)) and (SessionAnswerHistoryTable.md5 eq md5)
             }
         }
       else -> error("Invalid type: $type")
@@ -353,14 +357,14 @@ internal object ChallengePost : KLogging() {
     val shouldPublish = user?.shouldPublish() ?: false
     val complete = results.all { it.correct }
     val numCorrect = results.count { it.correct }
-    val invokeMap = invokeList.map { it.first.value to it.second }.toMap()
+    val invokeMap = invokeList.associate { it.first.value to it.second }
     val invokeStr = Json.encodeToString(invokeMap)
     val historyList = mutableListOf<ChallengeHistory>()
 
     transaction {
       when {
         user.isNotNull() ->
-          UserChallengeInfo
+          UserChallengeInfoTable
             .upsert(conflictIndex = userChallengeInfoIndex) { row ->
               row[userRef] = user.userDbmsId
               row[md5] = challengeMd5
@@ -369,7 +373,7 @@ internal object ChallengePost : KLogging() {
               row[answersJson] = invokeStr
             }
         browserSession.isNotNull() ->
-          SessionChallengeInfo
+          SessionChallengeInfoTable
             .upsert(conflictIndex = sessionChallengeInfoIndex) { row ->
               row[sessionRef] = browserSession.sessionDbmsId()
               row[md5] = challengeMd5
@@ -406,25 +410,25 @@ internal object ChallengePost : KLogging() {
 
         when {
           user.isNotNull() ->
-            UserAnswerHistory
+            UserAnswerHistoryTable
               .upsert(conflictIndex = userAnswerHistoryIndex) { row ->
                 row[userRef] = user.userDbmsId
                 row[md5] = historyMd5
-                row[UserAnswerHistory.invocation] = invocation
-                row[UserAnswerHistory.updated] = updated
-                row[UserAnswerHistory.correct] = correct
-                row[UserAnswerHistory.incorrectAttempts] = incorrectAttempts
+                row[UserAnswerHistoryTable.invocation] = invocation
+                row[UserAnswerHistoryTable.updated] = updated
+                row[UserAnswerHistoryTable.correct] = correct
+                row[UserAnswerHistoryTable.incorrectAttempts] = incorrectAttempts
                 row[historyJson] = json
               }
           browserSession.isNotNull() ->
-            SessionAnswerHistory
+            SessionAnswerHistoryTable
               .upsert(conflictIndex = sessionAnswerHistoryIndex) { row ->
                 row[sessionRef] = browserSession.sessionDbmsId()
                 row[md5] = historyMd5
-                row[SessionAnswerHistory.invocation] = invocation
-                row[SessionAnswerHistory.updated] = updated
-                row[SessionAnswerHistory.correct] = correct
-                row[SessionAnswerHistory.incorrectAttempts] = incorrectAttempts
+                row[SessionAnswerHistoryTable.invocation] = invocation
+                row[SessionAnswerHistoryTable.updated] = updated
+                row[SessionAnswerHistoryTable.correct] = correct
+                row[SessionAnswerHistoryTable.incorrectAttempts] = incorrectAttempts
                 row[historyJson] = json
               }
           else ->
@@ -449,7 +453,7 @@ internal object ChallengePost : KLogging() {
     when {
       user.isNotNull() -> {
         transaction {
-          UserChallengeInfo
+          UserChallengeInfoTable
             .upsert(conflictIndex = userChallengeInfoIndex) { row ->
               row[userRef] = user.userDbmsId
               row[md5] = challengeMd5
@@ -462,7 +466,7 @@ internal object ChallengePost : KLogging() {
       }
       browserSession.isNotNull() ->
         transaction {
-          SessionChallengeInfo
+          SessionChallengeInfoTable
             .upsert(conflictIndex = sessionChallengeInfoIndex) { row ->
               row[sessionRef] = browserSession.sessionDbmsId()
               row[md5] = challengeMd5

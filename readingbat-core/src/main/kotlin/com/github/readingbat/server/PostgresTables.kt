@@ -22,42 +22,46 @@ import org.jetbrains.exposed.sql.Index
 import org.jetbrains.exposed.sql.jodatime.datetime
 
 internal val userSessionIndex =
-  Index(listOf(UserSessions.sessionRef, UserSessions.userRef), true, "user_sessions_unique")
+  Index(listOf(UserSessionsTable.sessionRef, UserSessionsTable.userRef), true, "user_sessions_unique")
 
 internal val sessionChallengeInfoIndex =
-  Index(listOf(SessionChallengeInfo.sessionRef, SessionChallengeInfo.md5), true, "session_challenge_info_unique")
+  Index(listOf(SessionChallengeInfoTable.sessionRef, SessionChallengeInfoTable.md5),
+        true,
+        "session_challenge_info_unique")
 internal val userChallengeInfoIndex =
-  Index(listOf(UserChallengeInfo.userRef, UserChallengeInfo.md5), true, "user_challenge_info_unique")
+  Index(listOf(UserChallengeInfoTable.userRef, UserChallengeInfoTable.md5), true, "user_challenge_info_unique")
 
 internal val sessionAnswerHistoryIndex =
-  Index(listOf(SessionAnswerHistory.sessionRef, SessionAnswerHistory.md5), true, "session_answer_history_unique")
+  Index(listOf(SessionAnswerHistoryTable.sessionRef, SessionAnswerHistoryTable.md5),
+        true,
+        "session_answer_history_unique")
 internal val userAnswerHistoryIndex =
-  Index(listOf(UserAnswerHistory.userRef, UserAnswerHistory.md5), true, "user_answer_history_unique")
+  Index(listOf(UserAnswerHistoryTable.userRef, UserAnswerHistoryTable.md5), true, "user_answer_history_unique")
 
-internal val passwordResetsIndex = Index(listOf(PasswordResets.userRef), true, "password_resets_unique")
+internal val passwordResetsIndex = Index(listOf(PasswordResetsTable.userRef), true, "password_resets_unique")
 
-internal val geoInfosUnique = Index(listOf(GeoInfos.id), true, "geo_info_unique")
+internal val geoInfosUnique = Index(listOf(GeoInfosTable.id), true, "geo_info_unique")
 
-internal object BrowserSessions : LongIdTable("browser_sessions") {
+internal object BrowserSessionsTable : LongIdTable("browser_sessions") {
   val created = datetime("created")
   val sessionId = text("session_id")
 }
 
 // answersJson is a map of invocations to answers
-internal object SessionChallengeInfo : LongIdTable("session_challenge_info") {
+internal object SessionChallengeInfoTable : LongIdTable("session_challenge_info") {
   val created = datetime("created")
   val updated = datetime("updated")
-  val sessionRef = long("session_ref").references(BrowserSessions.id)
+  val sessionRef = long("session_ref").references(BrowserSessionsTable.id)
   val md5 = text("md5")
   val allCorrect = bool("all_correct")
   val likeDislike = short("like_dislike")
   val answersJson = text("answers_json")
 }
 
-internal object SessionAnswerHistory : LongIdTable("session_answer_history") {
+internal object SessionAnswerHistoryTable : LongIdTable("session_answer_history") {
   val created = datetime("created")
   val updated = datetime("updated")
-  val sessionRef = long("session_ref").references(BrowserSessions.id)
+  val sessionRef = long("session_ref").references(BrowserSessionsTable.id)
   val md5 = text("md5")
   val invocation = text("invocation")
   val correct = bool("correct")
@@ -65,7 +69,7 @@ internal object SessionAnswerHistory : LongIdTable("session_answer_history") {
   val historyJson = text("history_json")
 }
 
-internal object Users : LongIdTable() {
+internal object UsersTable : LongIdTable("users") {
   val created = datetime("created")
   val updated = datetime("updated")
   val userId = text("user_id")
@@ -77,30 +81,30 @@ internal object Users : LongIdTable() {
   val defaultLanguage = text("default_language")
 }
 
-internal object UserSessions : LongIdTable("user_sessions") {
+internal object UserSessionsTable : LongIdTable("user_sessions") {
   val created = datetime("created")
   val updated = datetime("updated")
-  val sessionRef = long("session_ref").references(BrowserSessions.id)
-  val userRef = long("user_ref").references(Users.id)
+  val sessionRef = long("session_ref").references(BrowserSessionsTable.id)
+  val userRef = long("user_ref").references(UsersTable.id)
   val activeClassCode = text("active_class_code")
   val previousTeacherClassCode = text("previous_teacher_class_code")
 }
 
 // answersJson is a map of invocations to answers
-internal object UserChallengeInfo : LongIdTable("user_challenge_info") {
+internal object UserChallengeInfoTable : LongIdTable("user_challenge_info") {
   val created = datetime("created")
   val updated = datetime("updated")
-  val userRef = long("user_ref").references(Users.id)
+  val userRef = long("user_ref").references(UsersTable.id)
   val md5 = text("md5")
   val allCorrect = bool("all_correct")
   val likeDislike = short("like_dislike")
   val answersJson = text("answers_json")
 }
 
-internal object UserAnswerHistory : LongIdTable("user_answer_history") {
+internal object UserAnswerHistoryTable : LongIdTable("user_answer_history") {
   val created = datetime("created")
   val updated = datetime("updated")
-  val userRef = long("user_ref").references(Users.id)
+  val userRef = long("user_ref").references(UsersTable.id)
   val md5 = text("md5")
   val invocation = text("invocation")
   val correct = bool("correct")
@@ -109,29 +113,29 @@ internal object UserAnswerHistory : LongIdTable("user_answer_history") {
 }
 
 @Suppress("unused")
-internal object Classes : LongIdTable("classes") {
+internal object ClassesTable : LongIdTable("classes") {
   val created = datetime("created")
   val updated = datetime("updated")
-  val userRef = long("user_ref").references(Users.id)
+  val userRef = long("user_ref").references(UsersTable.id)
   val classCode = text("class_code")
   val description = text("description")
 }
 
-object Enrollees : LongIdTable("enrollees") {
+object EnrolleesTable : LongIdTable("enrollees") {
   val created = datetime("created")
-  val classesRef = long("classes_ref").references(Classes.id)
-  val userRef = long("user_ref").references(Users.id)
+  val classesRef = long("classes_ref").references(ClassesTable.id)
+  val userRef = long("user_ref").references(UsersTable.id)
 }
 
-object PasswordResets : LongIdTable("password_resets") {
+object PasswordResetsTable : LongIdTable("password_resets") {
   val created = datetime("created")
   val updated = datetime("updated")
-  val userRef = long("user_ref").references(Users.id)
+  val userRef = long("user_ref").references(UsersTable.id)
   val resetId = text("reset_id")
   val email = text("email")
 }
 
-object GeoInfos : LongIdTable("geo_info") {
+object GeoInfosTable : LongIdTable("geo_info") {
   val created = datetime("created")
   val ip = text("ip")
   val json = text("json")
@@ -157,12 +161,12 @@ object GeoInfos : LongIdTable("geo_info") {
   val timeZone = text("time_zone")
 }
 
-object ServerRequests : LongIdTable("server_requests") {
+object ServerRequestsTable : LongIdTable("server_requests") {
   val created = datetime("created")
   val requestId = text("request_id")
-  val sessionRef = long("session_ref").references(BrowserSessions.id)
-  val userRef = long("user_ref").references(Users.id)
-  val geoRef = long("geo_ref").references(GeoInfos.id)
+  val sessionRef = long("session_ref").references(BrowserSessionsTable.id)
+  val userRef = long("user_ref").references(UsersTable.id)
+  val geoRef = long("geo_ref").references(GeoInfosTable.id)
   val verb = text("verb")
   val path = text("path")
   val queryString = text("query_string")

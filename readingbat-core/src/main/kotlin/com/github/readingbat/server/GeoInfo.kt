@@ -24,16 +24,14 @@ import com.github.readingbat.common.EnvVar
 import com.google.gson.Gson
 import com.pambrose.common.exposed.get
 import com.pambrose.common.exposed.upsert
-import io.ktor.application.*
 import io.ktor.client.statement.*
-import io.ktor.features.*
 import kotlinx.coroutines.runBlocking
 import mu.KLogging
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.util.concurrent.ConcurrentHashMap
 
-/*internal*/ class GeoInfo(val requireDbmsLookUp: Boolean, val dbmsId: Long, val remoteHost: String, val json: String) {
+class GeoInfo(val requireDbmsLookUp: Boolean, val dbmsId: Long, val remoteHost: String, val json: String) {
   private val valid get() = json.isNotBlank()
 
   //private val map = if (json.isNotBlank()) Json.decodeFromString<Map<String, Any?>>(json) else emptyMap()
@@ -64,36 +62,51 @@ import java.util.concurrent.ConcurrentHashMap
   private val time_zone by map
 
   fun summary() =
-    if (valid) listOf(city, state_prov, country_name, organization).joinToString(", ") else Constants.UNKNOWN
+    if (valid)
+      try {
+        listOf(city, state_prov, country_name, organization).joinToString(", ")
+      } catch (e: NoSuchElementException) {
+        "Missing Geo data"
+      }
+    else
+      Constants.UNKNOWN
+
+  fun mapVal(block: () -> String) =
+    try {
+      block.invoke()
+    } catch (e: NoSuchElementException) {
+      logger.warn { e.message }
+      "Unknown"
+    }
 
   fun insert() {
     transaction {
-      GeoInfos
+      GeoInfosTable
         .upsert(conflictIndex = geoInfosUnique) { row ->
           row[ip] = remoteHost
           row[json] = this@GeoInfo.json
 
           if (this@GeoInfo.valid) {
-            row[continentCode] = this@GeoInfo.continent_code.toString()
-            row[continentName] = this@GeoInfo.continent_name.toString()
-            row[countryCode2] = this@GeoInfo.country_code2.toString()
-            row[countryCode3] = this@GeoInfo.country_code3.toString()
-            row[countryName] = this@GeoInfo.country_name.toString()
-            row[countryCapital] = this@GeoInfo.country_capital.toString()
-            row[district] = this@GeoInfo.district.toString()
-            row[city] = this@GeoInfo.city.toString()
-            row[stateProv] = this@GeoInfo.state_prov.toString()
-            row[zipcode] = this@GeoInfo.zipcode.toString()
-            row[latitude] = this@GeoInfo.latitude.toString()
-            row[longitude] = this@GeoInfo.longitude.toString()
-            row[isEu] = this@GeoInfo.is_eu.toString()
-            row[callingCode] = this@GeoInfo.calling_code.toString()
-            row[countryTld] = this@GeoInfo.country_tld.toString()
-            row[countryFlag] = this@GeoInfo.country_flag.toString()
-            row[isp] = this@GeoInfo.isp.toString()
-            row[connectionType] = this@GeoInfo.connection_type.toString()
-            row[organization] = this@GeoInfo.organization.toString()
-            row[timeZone] = this@GeoInfo.time_zone.toString()
+            row[continentCode] = mapVal { this@GeoInfo.continent_code.toString() }
+            row[continentName] = mapVal { this@GeoInfo.continent_name.toString() }
+            row[countryCode2] = mapVal { this@GeoInfo.country_code2.toString() }
+            row[countryCode3] = mapVal { this@GeoInfo.country_code3.toString() }
+            row[countryName] = mapVal { this@GeoInfo.country_name.toString() }
+            row[countryCapital] = mapVal { this@GeoInfo.country_capital.toString() }
+            row[district] = mapVal { this@GeoInfo.district.toString() }
+            row[city] = mapVal { this@GeoInfo.city.toString() }
+            row[stateProv] = mapVal { this@GeoInfo.state_prov.toString() }
+            row[zipcode] = mapVal { this@GeoInfo.zipcode.toString() }
+            row[latitude] = mapVal { this@GeoInfo.latitude.toString() }
+            row[longitude] = mapVal { this@GeoInfo.longitude.toString() }
+            row[isEu] = mapVal { this@GeoInfo.is_eu.toString() }
+            row[callingCode] = mapVal { this@GeoInfo.calling_code.toString() }
+            row[countryTld] = mapVal { this@GeoInfo.country_tld.toString() }
+            row[countryFlag] = mapVal { this@GeoInfo.country_flag.toString() }
+            row[isp] = mapVal { this@GeoInfo.isp.toString() }
+            row[connectionType] = mapVal { this@GeoInfo.connection_type.toString() }
+            row[organization] = mapVal { this@GeoInfo.organization.toString() }
+            row[timeZone] = mapVal { this@GeoInfo.time_zone.toString() }
           }
         }
     }
@@ -118,10 +131,10 @@ import java.util.concurrent.ConcurrentHashMap
 
     fun queryGeoInfo(ipAddress: String) =
       transaction {
-        GeoInfos
-          .slice(GeoInfos.id, GeoInfos.json)
-          .select { GeoInfos.ip eq ipAddress }
-          .map { GeoInfo(false, it[GeoInfos.id].value, ipAddress, it[1] as String) }
+        GeoInfosTable
+          .slice(GeoInfosTable.id, GeoInfosTable.json)
+          .select { GeoInfosTable.ip eq ipAddress }
+          .map { GeoInfo(false, it[GeoInfosTable.id].value, ipAddress, it[1] as String) }
           .firstOrNull()
       }
 

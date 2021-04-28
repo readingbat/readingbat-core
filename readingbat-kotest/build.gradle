@@ -1,5 +1,7 @@
 description = 'readingbat-kotest'
 
+//mainClassName = 'TestMain' // This prevents a gradle error
+
 dependencies {
     implementation project(':readingbat-core')
 
@@ -11,5 +13,5 @@ dependencies {
     implementation libraries.kotest_runner_junit5
     implementation libraries.kotest_assertions_core
     implementation libraries.kotest_assertions_ktor
-    implementation libraries.kotest_property
+//    implementation libraries.kotest_property
 }

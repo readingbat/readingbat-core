@@ -29,10 +29,13 @@ import com.github.pambrose.common.util.toDoubleQuoted
 import com.github.readingbat.common.Constants.CHALLENGE_NOT_FOUND
 import com.github.readingbat.common.KeyConstants.DIR_CONTENTS_KEY
 import com.github.readingbat.common.KeyConstants.keyOf
-import com.github.readingbat.dsl.Challenge.Companion.challenge
 import com.github.readingbat.dsl.GitHubUtils.organizationDirectoryContents
 import com.github.readingbat.dsl.GitHubUtils.userDirectoryContents
 import com.github.readingbat.dsl.ReturnType.Runtime
+import com.github.readingbat.dsl.challenge.Challenge
+import com.github.readingbat.dsl.challenge.Challenge.Companion.challenge
+import com.github.readingbat.dsl.challenge.KotlinChallenge
+import com.github.readingbat.dsl.challenge.PythonChallenge
 import com.github.readingbat.server.ChallengeName
 import com.github.readingbat.server.GroupName
 import com.github.readingbat.server.ReadingBatServer.redisPool
@@ -42,22 +45,26 @@ import kotlin.reflect.KProperty
 
 @ReadingBatDslMarker
 @Suppress("unused")
-class ChallengeGroup<T : Challenge>(/*internal*/ val languageGroup: LanguageGroup<T>,
-                                                 internal val groupNameSuffix: GroupName) {
-  /*internal*/ val challenges = mutableListOf<T>()
-  internal var namePrefix = ""
+class ChallengeGroup<T : Challenge>(
+  val languageGroup: LanguageGroup<T>,
+  internal val groupNameSuffix: GroupName,
+) {
+  val challenges = mutableListOf<T>()
 
-  /*internal*/ val groupName by lazy { GroupName("${if (namePrefix.isNotBlank()) namePrefix else ""}${groupNameSuffix.value}") }
-  internal val parsedDescription by lazy { TextFormatter.renderText(description) }
   private val groupPrefix by lazy { pathOf(languageName, groupName) }
-
   private val srcPath get() = languageGroup.srcPath
   private val languageName get() = languageType.languageName
   private val repo get() = languageGroup.repo
   private val branchName get() = languageGroup.branchName
   private val metrics get() = languageGroup.metrics
+
+  internal val parsedDescription by lazy { TextFormatter.renderText(description) }
   internal val languageType get() = languageGroup.languageType
   internal val packageNameAsPath get() = packageName.replace(".", "/")
+  internal var namePrefix = ""
+
+  // Do not use lazy for groupName because namePrefix is assigned late in the process of includes
+  val groupName get() = GroupName("${namePrefix.ifBlank { "" }}${groupNameSuffix.value}")
 
   private fun dirContentsKey(path: String) = keyOf(DIR_CONTENTS_KEY, md5Of(path))
 
@@ -94,8 +101,7 @@ class ChallengeGroup<T : Challenge>(/*internal*/ val languageGroup: LanguageGrou
               .let {
                 if (it.isNotNull() && it.isNotEmpty()) it else fetchRemoteFiles(root, path)
               }
-          }
-          else {
+          } else {
             fetchRemoteFiles(root, path)
           }
         }
@@ -121,8 +127,7 @@ class ChallengeGroup<T : Challenge>(/*internal*/ val languageGroup: LanguageGrou
         val prt = PatternReturnType(value, Runtime)
         includeList += prt
         group.languageGroup.addIncludedFiles(group, prt)
-      }
-      else {
+      } else {
         val lang = languageType.languageName
         error("Use includeFilesWithType instead of includeFiles for $lang challenges")
       }
@@ -136,8 +141,7 @@ class ChallengeGroup<T : Challenge>(/*internal*/ val languageGroup: LanguageGrou
       if (!languageType.isJava) {
         includeList += value
         group.languageGroup.addIncludedFiles(group, value)
-      }
-      else {
+      } else {
         val lang = languageType.languageName
         error("Use includeFiles instead of includeFilesWithType for $lang challenges")
       }
@@ -203,8 +207,7 @@ class ChallengeGroup<T : Challenge>(/*internal*/ val languageGroup: LanguageGrou
       val challenge = this[challengeName.value]
       if (challenge.replaceable) {
         removeChallenge(challengeName)
-      }
-      else {
+      } else {
         if (throwExceptionIfPresent)
           error("Challenge ${pathOf(groupPrefix, challengeName)} already exists")
         else

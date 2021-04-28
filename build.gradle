@@ -2,17 +2,18 @@ plugins {
     id 'java'
     id 'application'
     id 'maven'  // Required for jitpack.io to do a ./gradlew install
-    id 'org.jetbrains.kotlin.jvm' version '1.4.30' apply false
-    id 'org.jetbrains.kotlin.plugin.serialization' version '1.4.30' apply false
-    id "com.github.ben-manes.versions" version '0.36.0' apply false
+    id 'org.jetbrains.kotlin.jvm' version '1.4.32' apply false
+    id 'org.jetbrains.kotlin.plugin.serialization' version '1.4.32' apply false
+    id "com.github.ben-manes.versions" version '0.38.0' apply false
     id 'com.github.johnrengelman.shadow' version '6.1.0' apply false
-    id 'com.github.gmazzo.buildconfig' version '2.0.2' apply false
-    id "org.flywaydb.flyway" version "7.5.2"
+    id 'com.github.gmazzo.buildconfig' version '3.0.0' apply false
+    id "org.flywaydb.flyway" version "7.8.1"
 }
 
 ext {
     libraries = [
-            kotlin_reflect         : "org.jetbrains.kotlin:kotlin-reflect",
+            kotlin_reflect         : "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version",
+
             kotlinx_coroutines_core: "org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutines_version",
 
             serialization          : "org.jetbrains.kotlinx:kotlinx-serialization-json:$serialization_version",
@@ -29,16 +30,16 @@ ext {
             script_utils_java      : "com.github.pambrose.common-utils:script-utils-java:$utils_version",
             script_utils_kotlin    : "com.github.pambrose.common-utils:script-utils-kotlin:$utils_version",
 
-            guava_utils            : "com.github.pambrose.common-utils:guava-utils:$utils_version",
+            //guava_utils            : "com.github.pambrose.common-utils:guava-utils:$utils_version",
             service_utils          : "com.github.pambrose.common-utils:service-utils:$utils_version",
             prometheus_utils       : "com.github.pambrose.common-utils:prometheus-utils:$utils_version",
             exposed_utils          : "com.github.pambrose.common-utils:exposed-utils:$utils_version",
 
             prometheus_proxy       : "com.github.pambrose:prometheus-proxy:$proxy_version",
 
-            simpleclient           : "io.prometheus:simpleclient:$prometheus_version",
+            simple_client          : "io.prometheus:simpleclient:$prometheus_version",
 
-            scriptengine           : "ch.obermuhlner:java-scriptengine:$java_script_version",
+            script_engine          : "ch.obermuhlner:java-scriptengine:$java_script_version",
 
             css                    : "org.jetbrains:kotlin-css:$css_version",
             css_jvm                : "org.jetbrains:kotlin-css-jvm:$css_version",
@@ -57,17 +58,15 @@ ext {
             jedis                  : "redis.clients:jedis:$redis_version",
 
             hikari                 : "com.zaxxer:HikariCP:$hikari_version",
-
             exposed_core           : "org.jetbrains.exposed:exposed-core:$exposed_version",
             exposed_jdbc           : "org.jetbrains.exposed:exposed-jdbc:$exposed_version",
             jodatime               : "org.jetbrains.exposed:exposed-jodatime:$exposed_version",
-
             pgjdbc                 : "com.impossibl.pgjdbc-ng:pgjdbc-ng-all:$pgjdbc_version",
             postgres               : "org.postgresql:postgresql:$postgres_version",
             socket                 : "com.google.cloud.sql:postgres-socket-factory:$cloud_version",
 
             gson                   : "com.google.code.gson:gson:$gson_version",
-            guava                  : "com.google.guava:guava:$guava_version",
+            //guava                  : "com.google.guava:guava:$guava_version",
 
             sendgrid               : "com.sendgrid:sendgrid-java:$sendgrid_version",
 
@@ -82,14 +81,13 @@ ext {
             kotest_runner_junit5   : "io.kotest:kotest-runner-junit5:$kotest_version",
             kotest_assertions_core : "io.kotest:kotest-assertions-core:$kotest_version",
             kotest_assertions_ktor : "io.kotest:kotest-assertions-ktor:$kotest_version",
-            kotest_property        : "io.kotest:kotest-property:$kotest_version",
     ]
 }
 
 allprojects {
     description = 'ReadingBat Core'
     group 'com.github.readingbat'
-    version '1.10.0'
+    version '1.11.1'
 
     apply plugin: 'application'
     apply plugin: 'maven' // required for jitpack.io install
@@ -104,7 +102,7 @@ allprojects {
         maven { url = 'https://kotlin.bintray.com/kotlinx' }
         maven { url = 'https://kotlin.bintray.com/kotlin-js-wrappers' }
         maven { url = 'https://maven-central.storage-download.googleapis.com/repos/central/data/' }
-        jcenter()
+        mavenCentral()
         maven { url = 'https://jitpack.io' }
     }
 
@@ -115,16 +113,16 @@ allprojects {
 subprojects {
 
     dependencies {
-        implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+        implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
 
         // These are required for the annotation args below
-        implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:${coroutines_version}"
-        implementation "io.ktor:ktor-locations:${ktor_version}"
+        implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutines_version"
+        implementation "io.ktor:ktor-locations:$ktor_version"
 
         implementation "io.github.microutils:kotlin-logging:$logging_version"
         implementation "ch.qos.logback:logback-classic:$logback_version"
 
-        runtimeOnly "org.jetbrains.kotlin:kotlin-scripting-jsr223"
+        runtimeOnly "org.jetbrains.kotlin:kotlin-scripting-jsr223:$kotlin_version"
     }
 
     shadowJar {
@@ -141,24 +139,38 @@ subprojects {
         from sourceSets.main.allSource
     }
 
+    artifacts {
+        archives sourcesJar
+    }
+
     compileKotlin {
-        kotlinOptions.jvmTarget = '1.8'
-        kotlinOptions.freeCompilerArgs += ['-Xuse-experimental=kotlin.time.ExperimentalTime',
+        kotlinOptions {
+            useIR = true
+            //languageVersion = "1.5"
+            //apiVersion = "1.5"
+            jvmTarget = '1.8'
+            freeCompilerArgs += ['-Xuse-experimental=kotlin.time.ExperimentalTime',
                                            '-Xuse-experimental=io.ktor.util.KtorExperimentalAPI',
                                            '-Xuse-experimental=io.ktor.locations.KtorExperimentalLocationsAPI',
                                            '-Xuse-experimental=kotlinx.coroutines.ExperimentalCoroutinesApi',
                                            '-Xuse-experimental=kotlin.ExperimentalStdlibApi',
                                            '-Xuse-experimental=kotlin.contracts.ExperimentalContracts',
                                            '-XXLanguage:+InlineClasses']
+        }
     }
 
     compileTestKotlin {
-        kotlinOptions.jvmTarget = '1.8'
-        kotlinOptions.freeCompilerArgs += ['-Xuse-experimental=kotlin.time.ExperimentalTime',
-                                           '-Xuse-experimental=io.ktor.util.KtorExperimentalAPI',
-                                           '-Xuse-experimental=kotlinx.coroutines.ExperimentalCoroutinesApi',
-                                           '-Xuse-experimental=kotlin.ExperimentalStdlibApi',
-                                           '-XXLanguage:+InlineClasses']
+        kotlinOptions {
+            useIR = true
+            //languageVersion = "1.5"
+            //apiVersion = "1.5"
+            jvmTarget = '1.8'
+            freeCompilerArgs += ['-Xuse-experimental=kotlin.time.ExperimentalTime',
+                                 '-Xuse-experimental=io.ktor.util.KtorExperimentalAPI',
+                                 '-Xuse-experimental=kotlinx.coroutines.ExperimentalCoroutinesApi',
+                                 '-Xuse-experimental=kotlin.ExperimentalStdlibApi',
+                                 '-XXLanguage:+InlineClasses']
+        }
     }
 
     test {

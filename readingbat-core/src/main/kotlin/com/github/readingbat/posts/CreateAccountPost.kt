@@ -39,7 +39,7 @@ import com.github.readingbat.server.Password.Companion.getPassword
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.RedirectException
 import com.github.readingbat.server.ServerUtils.queryParam
-import com.github.readingbat.server.Users
+import com.github.readingbat.server.UsersTable
 import com.google.common.util.concurrent.RateLimiter
 import com.pambrose.common.exposed.get
 import io.ktor.application.*
@@ -95,9 +95,9 @@ internal object CreateAccountPost : KLogging() {
 
   private fun emailExists(email: Email) =
     transaction {
-      Users
-        .slice(Count(Users.id))
-        .select { Users.email eq email.value }
+      UsersTable
+        .slice(Count(UsersTable.id))
+        .select { UsersTable.email eq email.value }
         .map { it[0] as Long }
         .first() > 0
     }

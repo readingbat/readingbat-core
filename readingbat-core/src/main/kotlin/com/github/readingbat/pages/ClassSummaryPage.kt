@@ -48,7 +48,7 @@ import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.Message
 import com.github.readingbat.common.Message.Companion.EMPTY_MESSAGE
 import com.github.readingbat.common.User
-import com.github.readingbat.common.User.Companion.queryActiveClassCode
+import com.github.readingbat.common.User.Companion.queryActiveTeachingClassCode
 import com.github.readingbat.common.isNotValidUser
 import com.github.readingbat.dsl.InvalidRequestException
 import com.github.readingbat.dsl.LanguageType
@@ -109,7 +109,7 @@ internal object ClassSummaryPage : KLogging() {
     return createHTML()
       .html {
         val hasGroupName = groupName.isDefined(content, languageName)
-        val activeClassCode = queryActiveClassCode(user)
+        val activeTeachingClassCode = queryActiveTeachingClassCode(user)
         val enrollees = classCode.fetchEnrollees()
 
         head {
@@ -124,7 +124,7 @@ internal object ClassSummaryPage : KLogging() {
             else
               queryParam(RETURN_PARAM, if (languageName.isValid()) pathOf(CHALLENGE_ROOT, languageName) else "/")
 
-          helpAndLogin(content, user, returnPath, activeClassCode.isEnabled)
+          helpAndLogin(content, user, returnPath, activeTeachingClassCode.isEnabled)
           bodyTitle()
 
           h2 { +"Class Summary" }
@@ -132,15 +132,15 @@ internal object ClassSummaryPage : KLogging() {
           if (msg.isAssigned())
             p { span { style = "color:${msg.color}"; this@body.displayMessage(msg) } }
 
-          displayClassInfo(classCode, activeClassCode)
+          displayClassInfo(classCode, activeTeachingClassCode)
 
-          if (classCode == activeClassCode)
+          if (classCode == activeTeachingClassCode)
             displayClassChoices(content, classCode)
 
           if (hasGroupName)
-            displayGroupInfo(classCode, activeClassCode, languageName, groupName)
+            displayGroupInfo(classCode, activeTeachingClassCode, languageName, groupName)
 
-          displayStudents(content, enrollees, classCode, activeClassCode, hasGroupName, languageName, groupName)
+          displayStudents(content, enrollees, classCode, activeTeachingClassCode, hasGroupName, languageName, groupName)
 
           if (enrollees.isNotEmpty() && languageName.isValid() && groupName.isValid())
             enableWebSockets(languageName, groupName, classCode)
@@ -166,7 +166,7 @@ internal object ClassSummaryPage : KLogging() {
               action = CLASS_SUMMARY_ENDPOINT
               method = FormMethod.post
               hiddenInput { name = CHOICE_SOURCE_PARAM; value = CLASS_SUMMARY }
-              hiddenInput { name = CLASS_CODE_CHOICE_PARAM; value = classCode.value }
+              hiddenInput { name = CLASS_CODE_CHOICE_PARAM; value = classCode.classCode }
               submitInput(classes = BTN) {
                 style =
                   "padding:2px 5px; margin-top:9; margin-left:20; border-radius:5px; cursor:pointer; border:1px solid black;"
@@ -285,6 +285,7 @@ internal object ClassSummaryPage : KLogging() {
           }
 
           enrollees
+            .sortedBy { it.fullName.value }
             .forEach { student ->
               val studentName = student.fullName.value
               val studentEmail = student.email.value

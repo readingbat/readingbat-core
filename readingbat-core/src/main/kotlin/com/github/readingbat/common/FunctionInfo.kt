@@ -18,12 +18,12 @@
 package com.github.readingbat.common
 
 import com.github.pambrose.common.util.*
-import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.LanguageType.Java
 import com.github.readingbat.dsl.LanguageType.Kotlin
 import com.github.readingbat.dsl.LanguageType.Python
 import com.github.readingbat.dsl.ReturnType
 import com.github.readingbat.dsl.ReturnType.*
+import com.github.readingbat.dsl.challenge.Challenge
 import com.github.readingbat.posts.ChallengeResults
 import com.github.readingbat.server.ChallengeMd5
 import com.github.readingbat.server.Invocation
@@ -33,13 +33,15 @@ import com.github.readingbat.server.ScriptPools.pythonEvaluatorPool
 import mu.KLogging
 import javax.script.ScriptException
 
-/*internal*/ class FunctionInfo(val challenge: Challenge,
-                                val languageName: LanguageName,
-                                val originalCode: String,
-                                val codeSnippet: String,
-                                val invocations: List<Invocation>,
-                                val returnType: ReturnType,
-                                rawAnswers: List<*>) {
+class FunctionInfo(
+  val challenge: Challenge,
+  val languageName: LanguageName,
+  val originalCode: String,
+  val codeSnippet: String,
+  val invocations: List<Invocation>,
+  val returnType: ReturnType,
+  rawAnswers: List<*>
+) {
   val challengeName get() = challenge.challengeName
   val groupName get() = challenge.challengeGroup.groupName
   val languageType get() = challenge.challengeGroup.languageType
@@ -148,7 +150,7 @@ import javax.script.ScriptException
       error("Mismatch between $questionCount answers and $invocationCount invocations in $challengeName")
   }
 
-  /*internal*/ suspend fun checkResponse(index: Int, userResponse: String): ChallengeResults {
+  suspend fun checkResponse(index: Int, userResponse: String): ChallengeResults {
     val correctAnswer = correctAnswers[index]
     val answered = userResponse.isNotBlank()
     val correctAndHint =

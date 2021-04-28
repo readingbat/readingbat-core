@@ -27,7 +27,7 @@ import com.github.readingbat.common.Message
 import com.github.readingbat.common.StaticFileNames.GREEN_CHECK
 import com.github.readingbat.common.StaticFileNames.WHITE_CHECK
 import com.github.readingbat.common.User
-import com.github.readingbat.common.User.Companion.queryActiveClassCode
+import com.github.readingbat.common.User.Companion.queryActiveTeachingClassCode
 import com.github.readingbat.common.browserSession
 import com.github.readingbat.dsl.ChallengeGroup
 import com.github.readingbat.dsl.LanguageType
@@ -58,8 +58,8 @@ internal object LanguageGroupPage {
         val languageName = languageType.languageName
         val loginPath = pathOf(CHALLENGE_ROOT, languageName)
         val groups = content[languageType].challengeGroups
-        val activeClassCode = queryActiveClassCode(user)
-        val enrollees = activeClassCode.fetchEnrollees()
+        val activeTeachingClassCode = queryActiveTeachingClassCode(user)
+        val enrollees = activeTeachingClassCode.fetchEnrollees()
 
         fun TR.groupItem(user: User?, challengeGroup: ChallengeGroup<*>) {
           val groupName = challengeGroup.groupName
@@ -69,7 +69,7 @@ internal object LanguageGroupPage {
           val maxCnt = 12
           var maxFound = false
 
-          if (activeClassCode.isNotEnabled) {
+          if (activeTeachingClassCode.isNotEnabled) {
             for (challenge in challenges) {
               if (challenge.isCorrect(user, browserSession))
                 cnt++
@@ -88,7 +88,7 @@ internal object LanguageGroupPage {
 
               p { rawHtml(if (challengeGroup.description.isNotBlank()) challengeGroup.parsedDescription else nbsp.text) }
 
-              if (activeClassCode.isNotEnabled) {
+              if (activeTeachingClassCode.isNotEnabled) {
                 if (cnt == 0) {
                   img { src = pathOf(STATIC_ROOT, WHITE_CHECK) }
                 }
@@ -106,10 +106,10 @@ internal object LanguageGroupPage {
         body {
           val msg = Message(queryParam(MSG))
 
-          bodyHeader(content, user, languageType, loginAttempt, loginPath, true, activeClassCode, msg)
+          bodyHeader(content, user, languageType, loginAttempt, loginPath, true, activeTeachingClassCode, msg)
 
-          if (activeClassCode.isEnabled)
-            displayClassDescription(activeClassCode, languageName, EMPTY_GROUP, enrollees)
+          if (activeTeachingClassCode.isEnabled)
+            displayClassDescription(activeTeachingClassCode, languageName, EMPTY_GROUP, enrollees)
 
           table {
             val cols = 3

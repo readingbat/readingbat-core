@@ -25,10 +25,10 @@ import com.github.readingbat.common.Endpoints
 import com.github.readingbat.common.Endpoints.CHECK_ANSWERS_ENDPOINT
 import com.github.readingbat.common.FunctionInfo
 import com.github.readingbat.common.Property
-import com.github.readingbat.dsl.Challenge
 import com.github.readingbat.dsl.ChallengeGroup
 import com.github.readingbat.dsl.LanguageGroup
 import com.github.readingbat.dsl.ReadingBatContent
+import com.github.readingbat.dsl.challenge.Challenge
 import com.github.readingbat.posts.AnswerStatus
 import com.github.readingbat.posts.AnswerStatus.Companion.toAnswerStatus
 import com.github.readingbat.posts.ChallengeResults

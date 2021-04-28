@@ -39,7 +39,7 @@ import com.github.readingbat.posts.CreateAccountPost.checkPassword
 import com.github.readingbat.server.Email
 import com.github.readingbat.server.Email.Companion.getEmail
 import com.github.readingbat.server.Password.Companion.getPassword
-import com.github.readingbat.server.PasswordResets
+import com.github.readingbat.server.PasswordResetsTable
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.RedirectException
 import com.github.readingbat.server.ResetId
@@ -131,9 +131,9 @@ internal object PasswordResetPost : KLogging() {
 
       val email =
         transaction {
-          PasswordResets
-            .slice(PasswordResets.email)
-            .select { PasswordResets.resetId eq resetId.value }
+          PasswordResetsTable
+            .slice(PasswordResetsTable.email)
+            .select { PasswordResetsTable.resetId eq resetId.value }
             .map { it[0] as String }
             .firstOrNull() ?: throw ResetPasswordException(INVALID_RESET_ID)
         }

@@ -72,9 +72,9 @@ import com.github.readingbat.common.StaticFileNames.DISLIKE_CLEAR_FILE
 import com.github.readingbat.common.StaticFileNames.DISLIKE_COLOR_FILE
 import com.github.readingbat.common.StaticFileNames.LIKE_CLEAR_FILE
 import com.github.readingbat.common.StaticFileNames.LIKE_COLOR_FILE
-import com.github.readingbat.common.User.Companion.queryActiveClassCode
-import com.github.readingbat.dsl.Challenge
+import com.github.readingbat.common.User.Companion.queryActiveTeachingClassCode
 import com.github.readingbat.dsl.ReadingBatContent
+import com.github.readingbat.dsl.challenge.Challenge
 import com.github.readingbat.dsl.isDbmsEnabled
 import com.github.readingbat.pages.PageUtils.addLink
 import com.github.readingbat.pages.PageUtils.backLink
@@ -88,8 +88,8 @@ import com.github.readingbat.pages.js.LikeDislikeJs.likeDislikeScript
 import com.github.readingbat.server.ChallengeMd5
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
-import com.github.readingbat.server.SessionChallengeInfo
-import com.github.readingbat.server.UserChallengeInfo
+import com.github.readingbat.server.SessionChallengeInfoTable
+import com.github.readingbat.server.UserChallengeInfoTable
 import com.pambrose.common.exposed.get
 import io.ktor.application.*
 import io.ktor.http.ContentType.Text.CSS
@@ -128,8 +128,8 @@ internal object ChallengePage : KLogging() {
         val challengeName = challenge.challengeName
         val funcInfo = challenge.functionInfo()
         val loginPath = pathOf(CHALLENGE_ROOT, languageName, groupName, challengeName)
-        val activeClassCode = queryActiveClassCode(user)
-        val enrollees = activeClassCode.fetchEnrollees()
+        val activeTeachingClassCode = queryActiveTeachingClassCode(user)
+        val enrollees = activeTeachingClassCode.fetchEnrollees()
         val msg = Message(queryParam(MSG))
 
         head {
@@ -146,14 +146,14 @@ internal object ChallengePage : KLogging() {
         }
 
         body {
-          bodyHeader(content, user, languageType, loginAttempt, loginPath, false, activeClassCode, msg)
+          bodyHeader(content, user, languageType, loginAttempt, loginPath, false, activeTeachingClassCode, msg)
 
           displayChallenge(challenge, funcInfo)
 
-          if (activeClassCode.isNotEnabled)
+          if (activeTeachingClassCode.isNotEnabled)
             displayQuestions(user, browserSession, challenge, funcInfo)
           else {
-            displayStudentProgress(challenge, content.maxHistoryLength, funcInfo, activeClassCode, enrollees)
+            displayStudentProgress(challenge, content.maxHistoryLength, funcInfo, activeTeachingClassCode, enrollees)
 
             if (enrollees.isNotEmpty())
               p { span { id = pingLabel }; span { id = pingMsg } }
@@ -163,8 +163,8 @@ internal object ChallengePage : KLogging() {
 
           script { src = pathOf(STATIC_ROOT, PRISM, "${languageName}-prism.js") }
 
-          if (activeClassCode.isEnabled && enrollees.isNotEmpty())
-            enableWebSockets(activeClassCode, funcInfo.challengeMd5)
+          if (activeTeachingClassCode.isEnabled && enrollees.isNotEmpty())
+            enableWebSockets(activeTeachingClassCode, funcInfo.challengeMd5)
 
           loadPingdomScript()
         }
@@ -265,7 +265,11 @@ internal object ChallengePage : KLogging() {
                   }
                 textInput(classes = USER_RESP + cls) {
                   id = "$RESP$i"
-                  onKeyDown = "$PROCESS_USER_ANSWERS_FUNC(event, ${funcInfo.questionCount})"
+
+                  if (user.isNull() || user.enrolledClassCode.isNotEnabled)
+                    onKeyDown = "$PROCESS_USER_ANSWERS_FUNC(event, ${funcInfo.questionCount})"
+                  else
+                    onFocusOut = "$PROCESS_USER_ANSWERS_FUNC(null, ${funcInfo.questionCount})"
 
                   val response = previousResponses[invocation.value] ?: ""
                   if (response.isNotBlank())
@@ -384,13 +388,12 @@ internal object ChallengePage : KLogging() {
 
       val languageName = challenge.languageType.languageName
       val groupName = challenge.groupName
-      val displayStr = classCode.toDisplayString()
 
       h3 {
         style = "margin-left: 5px; color: $headerColor"
         a(classes = UNDERLINE) {
           href = classSummaryEndpoint(classCode, languageName, groupName)
-          +displayStr
+          +classCode.toDisplayString()
         }
         +enrolleesDesc(enrollees)
       }
@@ -658,9 +661,9 @@ internal object ChallengePage : KLogging() {
       !isDbmsEnabled() -> emptyMap
       user.isNotNull() ->
         transaction {
-          UserChallengeInfo
-            .slice(UserChallengeInfo.answersJson)
-            .select { (UserChallengeInfo.userRef eq user.userDbmsId) and (UserChallengeInfo.md5 eq challenge.md5()) }
+          UserChallengeInfoTable
+            .slice(UserChallengeInfoTable.answersJson)
+            .select { (UserChallengeInfoTable.userRef eq user.userDbmsId) and (UserChallengeInfoTable.md5 eq challenge.md5()) }
             .map { it[0] as String }
             .firstOrNull()
             ?.let { Json.decodeFromString<Map<String, String>>(it) }
@@ -668,9 +671,9 @@ internal object ChallengePage : KLogging() {
         }
       browserSession.isNotNull() ->
         transaction {
-          SessionChallengeInfo
-            .slice(SessionChallengeInfo.answersJson)
-            .select { (SessionChallengeInfo.sessionRef eq browserSession.sessionDbmsId()) and (SessionChallengeInfo.md5 eq challenge.md5()) }
+          SessionChallengeInfoTable
+            .slice(SessionChallengeInfoTable.answersJson)
+            .select { (SessionChallengeInfoTable.sessionRef eq browserSession.sessionDbmsId()) and (SessionChallengeInfoTable.md5 eq challenge.md5()) }
             .map { it[0] as String }
             .firstOrNull()
             ?.let { Json.decodeFromString<Map<String, String>>(it) }
