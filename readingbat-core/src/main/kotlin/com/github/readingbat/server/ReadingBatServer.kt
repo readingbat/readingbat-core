@@ -77,10 +77,10 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeSource
 import kotlin.time.measureTime
-import kotlin.time.minutes
-import kotlin.time.seconds
 
 @Version(version = BuildConfig.CORE_VERSION, date = BuildConfig.CORE_RELEASE_DATE)
 object ReadingBatServer : KLogging() {
@@ -115,10 +115,11 @@ object ReadingBatServer : KLogging() {
             maximumPoolSize = Property.DBMS_MAX_POOL_SIZE.getRequiredProperty().toInt()
             isAutoCommit = false
             transactionIsolation = "TRANSACTION_REPEATABLE_READ"
-            maxLifetime = Property.DBMS_MAX_LIFETIME_MINS.getRequiredProperty().toInt().minutes.toLongMilliseconds()
+            maxLifetime =
+              minutes(Property.DBMS_MAX_LIFETIME_MINS.getRequiredProperty().toInt()).inWholeMilliseconds
             validate()
           })
-                    )
+    )
   }
 
   internal val upTime get() = startTime.elapsedNow()
@@ -264,7 +265,7 @@ fun Application.module() {
   val job = launch { readContentDsl(dslFileName, dslVariableName) }
 
   runBlocking {
-    val maxDelay = Property.STARTUP_DELAY_SECS.configValue(this@module, "30").toInt().seconds
+    val maxDelay = seconds(Property.STARTUP_DELAY_SECS.configValue(this@module, "30").toInt())
     logger.info { "Delaying start-up by max of $maxDelay" }
     measureTime {
       withTimeoutOrNull(maxDelay) {

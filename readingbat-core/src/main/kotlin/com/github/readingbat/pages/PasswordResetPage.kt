@@ -39,7 +39,10 @@ import com.github.readingbat.pages.PageUtils.hideShowButton
 import com.github.readingbat.pages.PageUtils.loadPingdomScript
 import com.github.readingbat.pages.PageUtils.privacyStatement
 import com.github.readingbat.posts.PasswordResetPost.ResetPasswordException
-import com.github.readingbat.server.*
+import com.github.readingbat.server.Email
+import com.github.readingbat.server.PasswordResetsTable
+import com.github.readingbat.server.PipelineCall
+import com.github.readingbat.server.ResetId
 import com.github.readingbat.server.ServerUtils.queryParam
 import com.pambrose.common.exposed.get
 import kotlinx.html.*
@@ -50,8 +53,8 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import org.joda.time.DateTime
 import org.joda.time.DateTime.now
 import org.joda.time.Seconds
-import kotlin.time.minutes
-import kotlin.time.seconds
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 
 internal object PasswordResetPage : KLogging() {
 
@@ -72,9 +75,9 @@ internal object PasswordResetPage : KLogging() {
                 .map { it[0] as String to it[1] as DateTime }
                 .firstOrNull() ?: throw ResetPasswordException("Invalid reset id. Try again.")
 
-            Seconds.secondsBetween(idAndUpdate.second, now()).seconds.seconds
+            seconds(Seconds.secondsBetween(idAndUpdate.second, now()).seconds)
               .let { diff ->
-                if (diff >= 15.minutes)
+                if (diff >= minutes(15))
                   throw ResetPasswordException("Password reset must be completed within 15 mins ($diff). Try again.")
                 else
                   idAndUpdate.first

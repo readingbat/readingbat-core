@@ -30,6 +30,7 @@ import com.github.readingbat.server.Invocation
 import com.github.readingbat.server.LanguageName
 import com.github.readingbat.server.ScriptPools.kotlinEvaluatorPool
 import com.github.readingbat.server.ScriptPools.pythonEvaluatorPool
+import com.github.readingbat.utils.StringUtils.toCapitalized
 import mu.KLogging
 import javax.script.ScriptException
 
@@ -65,7 +66,7 @@ class FunctionInfo(
       when (returnType) {
         BooleanType ->
           when (languageType) {
-            Python -> raw.toString().capitalize()
+            Python -> raw.toString().toCapitalized()
             Java, Kotlin -> raw.toString()
           }
 

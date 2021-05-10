@@ -40,10 +40,10 @@ import kotlinx.html.stream.createHTML
 import mu.KLogging
 import org.joda.time.DateTime
 import org.joda.time.DateTimeZone.UTC
-import kotlin.time.days
-import kotlin.time.hours
-import kotlin.time.milliseconds
-import kotlin.time.minutes
+import kotlin.time.Duration.Companion.days
+import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.minutes
 
 internal object SessionsPage : KLogging() {
 
@@ -62,23 +62,23 @@ internal object SessionsPage : KLogging() {
             table {
               tr {
                 td { +"Active users in the last minute: " }
-                td { +activeSessions(1.minutes).toString() }
+                td { +activeSessions(minutes(1)).toString() }
               }
               tr {
                 td { +"Active users in the last 15 minutes: " }
-                td { +activeSessions(15.minutes).toString() }
+                td { +activeSessions(minutes(15)).toString() }
               }
               tr {
                 td { +"Active users in the last hour: " }
-                td { +activeSessions(1.hours).toString() }
+                td { +activeSessions(hours(1)).toString() }
               }
               tr {
                 td { +"Active users in the last 24 hours: " }
-                td { +activeSessions(24.hours).toString() }
+                td { +activeSessions(hours(24)).toString() }
               }
               tr {
                 td { +"Active users in the last week: " }
-                td { +activeSessions(7.days).toString() }
+                td { +activeSessions(days(7)).toString() }
               }
             }
           }
@@ -116,12 +116,11 @@ internal object SessionsPage : KLogging() {
                           +row.fullName.toString()
                           rawHtml("</br>")
                           +"(${row.email})"
-                        }
-                        else {
+                        } else {
                           +"Not logged in"
                         }
                       }
-                      td { +(now.millis - row.maxDate.millis).milliseconds.format() }
+                      td { +milliseconds((now.millis - row.maxDate.millis)).format() }
                       td { +row.count.toString() }
                       td { +row.ip }
                       td { +row.city }

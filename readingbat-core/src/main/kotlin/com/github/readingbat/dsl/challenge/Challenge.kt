@@ -62,6 +62,7 @@ import com.github.readingbat.server.ReadingBatServer.redisPool
 import com.github.readingbat.server.ScriptPools
 import com.github.readingbat.server.SessionChallengeInfoTable
 import com.github.readingbat.server.UserChallengeInfoTable
+import com.github.readingbat.utils.StringUtils.toCapitalized
 import com.pambrose.common.exposed.get
 import kotlinx.coroutines.runBlocking
 import mu.KLogging
@@ -174,7 +175,7 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
   private fun Any?.prettyQuote(capitalizePythonBooleans: Boolean = true, useDoubleQuotes: Boolean = false) =
     when {
       this is String -> if (languageType.useDoubleQuotes || useDoubleQuotes) toDoubleQuoted() else toSingleQuoted()
-      capitalizePythonBooleans && this is Boolean && languageType.isPython -> toString().capitalize()
+      capitalizePythonBooleans && this is Boolean && languageType.isPython -> toString().toCapitalized()
       else -> toString()
     }
 
