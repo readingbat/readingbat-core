@@ -104,7 +104,7 @@ val dslContent =
 
     python {
       //repo = GitHubRepo(Organization, "readingbat", "readingbat-core")
-      //branchName = "1.11.1"
+      //branchName = "1.12.0"
       repo = FileSystemSource("./")
       srcPath = "python"
 
@@ -125,7 +125,7 @@ val dslContent =
     java {
       repo = GitHubRepo(Organization, "readingbat", "readingbat-core")
       srcPath = "readingbat-core/src/test/java"
-      branchName = "1.11.1"
+      branchName = "1.12.0"
 
       group("Java Tests") {
         packageName = "com.github.readingbat.test_content"
@@ -141,7 +141,7 @@ val dslContent =
     kotlin {
       repo = GitHubRepo(Organization, "readingbat", "readingbat-core")
       srcPath = "readingbat-core/src/test/kotlin"
-      branchName = "1.11.1"
+      branchName = "1.12.0"
 
       group("Kotlin Tests") {
         packageName = "com.github.readingbat.test_content"

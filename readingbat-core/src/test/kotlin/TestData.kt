@@ -33,7 +33,7 @@ object TestData {
     readingBatContent {
       python {
         //repo = GitHubRepo(OwnerType.Organization, "readingbat", "readingbat-core")
-        //branchName = "1.11.1"
+        //branchName = "1.12.0"
         repo = FileSystemSource("../")
         srcPath = "python"
 
