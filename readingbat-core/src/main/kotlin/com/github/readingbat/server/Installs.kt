@@ -56,7 +56,7 @@ import io.ktor.sessions.*
 import io.ktor.websocket.*
 import mu.KLogging
 import org.slf4j.event.Level
-import java.time.Duration
+import java.time.Duration.ofSeconds
 import java.util.concurrent.atomic.AtomicLong
 
 object Installs : KLogging() {
@@ -76,8 +76,8 @@ object Installs : KLogging() {
     }
 
     install(WebSockets) {
-      pingPeriod = Duration.ofSeconds(15)  // Duration between pings or `0` to disable pings
-      timeout = Duration.ofSeconds(15)
+      pingPeriod = ofSeconds(15)  // Duration between pings or `0` to disable pings
+      timeout = ofSeconds(15)
     }
 
     val forwardedHeaderSupportEnabled =

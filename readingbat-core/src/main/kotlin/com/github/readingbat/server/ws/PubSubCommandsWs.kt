@@ -48,7 +48,7 @@ import redis.clients.jedis.JedisPubSub
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.Executors.newSingleThreadExecutor
-import kotlin.time.seconds
+import kotlin.time.Duration.Companion.seconds
 
 internal object PubSubCommandsWs : KLogging() {
 
@@ -136,7 +136,7 @@ internal object PubSubCommandsWs : KLogging() {
             } ?: throw RedisUnavailableException("pubsubWs subscriber")
           } catch (e: Throwable) {
             logger.error(e) { "Exception in pubsubWs subscriber ${e.simpleClassName} ${e.message}" }
-            Thread.sleep(1.seconds.toLongMilliseconds())
+            Thread.sleep(seconds(1).inWholeMilliseconds)
           }
         }
       }

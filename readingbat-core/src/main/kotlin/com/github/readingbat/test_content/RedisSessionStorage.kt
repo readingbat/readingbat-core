@@ -20,13 +20,16 @@ package com.github.readingbat.test_content
 import com.github.pambrose.common.util.isNull
 import redis.clients.jedis.Jedis
 import kotlin.time.Duration
-import kotlin.time.seconds
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.DurationUnit
 
 
 @Suppress("unused")
-class RedisSessionStorage(val redis: Jedis,
-                          private val prefix: String = "session_",
-                          private val ttl: Duration = 3600.seconds) : SimplifiedSessionStorage() {
+class RedisSessionStorage(
+  val redis: Jedis,
+  private val prefix: String = "session_",
+  private val ttl: Duration = seconds(3600)
+) : SimplifiedSessionStorage() {
   private fun buildKey(id: String) = "$prefix$id"
 
   override suspend fun read(id: String): ByteArray? {
@@ -34,7 +37,7 @@ class RedisSessionStorage(val redis: Jedis,
     return try {
       redis[key]?.toByteArray(Charsets.UTF_8)
         .apply {
-          redis.expire(key, ttl.inSeconds.toInt()) // refresh
+          redis.expire(key, ttl.toDouble(DurationUnit.SECONDS).toInt()) // refresh
         }
     } catch (e: Exception) {
       e.printStackTrace()
@@ -50,7 +53,7 @@ class RedisSessionStorage(val redis: Jedis,
     else {
       try {
         redis.set(key, String(data))
-        redis.expire(key, ttl.inSeconds.toInt())
+        redis.expire(key, ttl.toDouble(DurationUnit.SECONDS).toInt())
       } catch (e: Exception) {
         e.printStackTrace()
       }

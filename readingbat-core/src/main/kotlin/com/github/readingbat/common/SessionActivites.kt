@@ -110,7 +110,7 @@ internal object SessionActivites : KLogging() {
           val created = ServerRequestsTable.created
           ServerRequestsTable
             .slice(sessionRef.countDistinct())
-            .select { created greater dateTimeExpr("now() - interval '${duration.toLongMilliseconds()} milliseconds'") }
+            .select { created greater dateTimeExpr("now() - interval '${duration.inWholeMilliseconds} milliseconds'") }
             .map { it[0] as Long }
             .first()
         }.let { (query, duration) ->

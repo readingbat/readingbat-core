@@ -31,8 +31,8 @@ import javax.script.ScriptEngine
 import javax.script.ScriptEngineManager
 import javax.script.SimpleScriptContext
 import kotlin.reflect.typeOf
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.measureTime
-import kotlin.time.seconds
 
 fun main() {
   val limiter = Limiter(3)
@@ -43,7 +43,7 @@ fun main() {
       launch {
         limiter.request {
           println("I am here $it")
-          delay(5.seconds)
+          delay(seconds(5))
         }
       }
     }
