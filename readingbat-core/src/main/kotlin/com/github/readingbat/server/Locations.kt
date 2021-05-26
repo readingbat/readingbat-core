@@ -156,7 +156,8 @@ internal data class Language(val lname: String) {
 @Location("$PLAYGROUND_ROOT/{groupName}/{challengeName}")
 internal class PlaygroundRequest(val groupName: String, val challengeName: String)
 
-inline class LanguageName(val value: String) {
+@JvmInline
+value class LanguageName(val value: String) {
   val isJvm get() = this in jmvLanguages
 
   fun toLanguageType() =
@@ -186,7 +187,8 @@ inline class LanguageName(val value: String) {
   }
 }
 
-inline class GroupName(val value: String) {
+@JvmInline
+value class GroupName(val value: String) {
 
   internal fun isValid() = this != EMPTY_GROUP
 
@@ -205,7 +207,8 @@ inline class GroupName(val value: String) {
   }
 }
 
-inline class ChallengeName(val value: String) {
+@JvmInline
+value class ChallengeName(val value: String) {
   internal fun isValid() = this != EMPTY_CHALLENGE
 
   internal fun isNotValid() = !isValid()
@@ -230,7 +233,8 @@ class Invocation(val value: String) {
   override fun toString() = value
 }
 
-inline class FullName(val value: String) {
+@JvmInline
+value class FullName(val value: String) {
   fun isBlank() = value.isBlank()
 
   override fun toString() = value
@@ -242,7 +246,8 @@ inline class FullName(val value: String) {
   }
 }
 
-inline class Password(val value: String) {
+@JvmInline
+value class Password(val value: String) {
   val length get() = value.length
   fun isBlank() = value.isBlank()
   fun sha256(salt: String) = value.sha256(salt)
@@ -255,7 +260,8 @@ inline class Password(val value: String) {
   }
 }
 
-inline class Email(val value: String) {
+@JvmInline
+value class Email(val value: String) {
   fun isBlank() = value.isBlank()
   fun isNotBlank() = value.isNotBlank()
   fun isNotValidEmail() = value.isNotValidEmail()
@@ -269,7 +275,8 @@ inline class Email(val value: String) {
   }
 }
 
-inline class ResetId(val value: String) {
+@JvmInline
+value class ResetId(val value: String) {
   fun isBlank() = value.isBlank()
   fun isNotBlank() = value.isNotBlank()
 

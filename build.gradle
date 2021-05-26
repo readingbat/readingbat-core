@@ -2,8 +2,8 @@ plugins {
     id 'java'
     id 'application'
     id 'maven'  // Required for jitpack.io to do a ./gradlew install
-    id 'org.jetbrains.kotlin.jvm' version '1.5.0' apply false
-    id 'org.jetbrains.kotlin.plugin.serialization' version '1.5.0' apply false
+    id 'org.jetbrains.kotlin.jvm' version '1.5.10' apply false
+    id 'org.jetbrains.kotlin.plugin.serialization' version '1.5.10' apply false
     id "com.github.ben-manes.versions" version '0.38.0' apply false
     id 'com.github.johnrengelman.shadow' version '6.1.0' apply false
     id 'com.github.gmazzo.buildconfig' version '3.0.0' apply false
@@ -151,12 +151,13 @@ subprojects {
             //apiVersion = "1.5"
             jvmTarget = '1.8'
             freeCompilerArgs += ['-Xuse-experimental=kotlin.time.ExperimentalTime',
-                                           '-Xuse-experimental=io.ktor.util.KtorExperimentalAPI',
-                                           '-Xuse-experimental=io.ktor.locations.KtorExperimentalLocationsAPI',
-                                           '-Xuse-experimental=kotlinx.coroutines.ExperimentalCoroutinesApi',
-                                           '-Xuse-experimental=kotlin.ExperimentalStdlibApi',
-                                           '-Xuse-experimental=kotlin.contracts.ExperimentalContracts',
-                                           '-XXLanguage:+InlineClasses']
+                                 '-Xuse-experimental=io.ktor.util.KtorExperimentalAPI',
+                                 '-Xuse-experimental=io.ktor.locations.KtorExperimentalLocationsAPI',
+                                 '-Xuse-experimental=kotlinx.coroutines.ExperimentalCoroutinesApi',
+                                 '-Xuse-experimental=kotlinx.coroutines.ObsoleteCoroutinesApi',
+                                 '-Xuse-experimental=kotlin.ExperimentalStdlibApi',
+                                 '-Xuse-experimental=kotlin.contracts.ExperimentalContracts',
+                                 '-XXLanguage:+InlineClasses']
         }
     }
 
@@ -169,6 +170,7 @@ subprojects {
             freeCompilerArgs += ['-Xuse-experimental=kotlin.time.ExperimentalTime',
                                  '-Xuse-experimental=io.ktor.util.KtorExperimentalAPI',
                                  '-Xuse-experimental=kotlinx.coroutines.ExperimentalCoroutinesApi',
+                                 '-Xuse-experimental=kotlinx.coroutines.ObsoleteCoroutinesApi',
                                  '-Xuse-experimental=kotlin.ExperimentalStdlibApi',
                                  '-XXLanguage:+InlineClasses']
         }
