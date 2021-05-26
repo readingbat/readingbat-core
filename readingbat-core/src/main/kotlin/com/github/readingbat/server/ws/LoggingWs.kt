@@ -131,7 +131,6 @@ internal object LoggingWs : KLogging() {
                           }
                       }
                     }
-
                   } ?: throw RedisUnavailableException("adminCommandChannel")
                 }
             }

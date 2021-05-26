@@ -33,9 +33,10 @@ import io.ktor.config.*
 import mu.KLogging
 import java.util.concurrent.atomic.AtomicBoolean
 
-enum class Property(val propertyValue: String,
-                    val maskFunc: Property.() -> String = { getProperty(UNASSIGNED, false) }) {
-
+enum class Property(
+  val propertyValue: String,
+  val maskFunc: Property.() -> String = { getProperty(UNASSIGNED, false) }
+) {
   KOTLIN_SCRIPT_CLASSPATH("kotlin.script.classpath"),
 
   CONFIG_FILENAME("$READINGBAT.configFilename"),
@@ -203,12 +204,17 @@ enum class Property(val propertyValue: String,
       KTOR_WATCH.also { it.setProperty(it.configValueOrNull(this)?.getList()?.toString() ?: UNASSIGNED) }
 
       SENDGRID_PREFIX.also {
-        it.setProperty(EnvVar.SENDGRID_PREFIX.getEnv(it.configValue(this,
-                                                                    "https://www.readingbat.com")))
+        it.setProperty(
+          EnvVar.SENDGRID_PREFIX.getEnv(
+            it.configValue(
+              this,
+              "https://www.readingbat.com"
+            )
+          )
+        )
       }
 
       assignInitialized()
     }
   }
 }
-

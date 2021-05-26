@@ -100,9 +100,11 @@ class User {
     }
   }
 
-  private constructor(userId: String,
-                      browserSession: BrowserSession?,
-                      row: ResultRow) {
+  private constructor(
+    userId: String,
+    browserSession: BrowserSession?,
+    row: ResultRow
+  ) {
     this.userId = userId
     this.browserSession = browserSession
     assignRowVals(row)
@@ -454,16 +456,20 @@ class User {
     }
   }
 
-  suspend fun publishAnswers(challengeMd5: String,
-                             maxHistoryLength: Int,
-                             complete: Boolean,
-                             numCorrect: Int,
-                             history: ChallengeHistory) {
+  suspend fun publishAnswers(
+    challengeMd5: String,
+    maxHistoryLength: Int,
+    complete: Boolean,
+    numCorrect: Int,
+    history: ChallengeHistory
+  ) {
     // Publish to challenge dashboard
     logger.debug { "Publishing user answers to $enrolledClassCode on $challengeMd5 for $this" }
-    val dashboardHistory = DashboardHistory(history.invocation.value,
-                                            history.correct,
-                                            history.answers.asReversed().take(maxHistoryLength).joinToString("<br>"))
+    val dashboardHistory = DashboardHistory(
+      history.invocation.value,
+      history.correct,
+      history.answers.asReversed().take(maxHistoryLength).joinToString("<br>")
+    )
     val targetName = classTargetName(enrolledClassCode, challengeMd5)
     val dashboardInfo = DashboardInfo(userId, complete, numCorrect, dashboardHistory)
     (if (isMultiServerEnabled()) multiServerWsWriteChannel else singleServerWsChannel)
@@ -621,10 +627,12 @@ class User {
           }.value.also { logger.info { "Created unknown user $it" } }
       }
 
-    fun createUser(name: FullName,
-                   email: Email,
-                   password: Password,
-                   browserSession: BrowserSession?): User =
+    fun createUser(
+      name: FullName,
+      email: Email,
+      password: Password,
+      browserSession: BrowserSession?
+    ): User =
       User(randomId(25), browserSession, false)
         .also { user ->
           transaction {

@@ -94,7 +94,6 @@ fun javaTest() {
   }
 }
 
-
 @Suppress("unused")
 fun pythonTest() {
 
@@ -104,7 +103,6 @@ fun pythonTest() {
 def less_than(val1, val2):
     result = val1 < val2
     return result
-
 
 answers.add(less_than(4, 6))
 answers.add(less_than(8, 12))

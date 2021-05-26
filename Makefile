@@ -40,6 +40,10 @@ dbreset: dbclean dbmigrate
 dbvalidate:
 	./gradlew flywayValidate
 
+lint:
+	./gradlew lintKotlinMain
+	./gradlew lintKotlinTest
+
 test:
 	~/node_modules/.bin/cypress open
 

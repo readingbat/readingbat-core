@@ -54,18 +54,20 @@ internal object SessionActivites : KLogging() {
   private val userAgent = ServerRequestsTable.userAgent
   private val created = ServerRequestsTable.created
 
-  class QueryInfo(val session_id: String,
-                  val fullName: FullName,
-                  val email: Email,
-                  val ip: String,
-                  val city: String,
-                  val state: String,
-                  val country: String,
-                  val isp: String,
-                  val flagUrl: String,
-                  val userAgent: String,
-                  val count: Long,
-                  val maxDate: DateTime)
+  class QueryInfo(
+    val session_id: String,
+    val fullName: FullName,
+    val email: Email,
+    val ip: String,
+    val city: String,
+    val state: String,
+    val country: String,
+    val isp: String,
+    val flagUrl: String,
+    val userAgent: String,
+    val count: Long,
+    val maxDate: DateTime
+  )
 
   fun querySessions(dayCount: Int) =
     transaction {
@@ -80,18 +82,20 @@ internal object SessionActivites : KLogging() {
           .groupBy(*(arrayOf(session_id) + elems))
           .orderBy(maxDate, SortOrder.DESC)
           .map { row ->
-            QueryInfo(row[session_id],
-                      FullName(row[fullName]),
-                      Email(row[email]),
-                      row[ip],
-                      row[city],
-                      row[state],
-                      row[country],
-                      row[isp],
-                      row[flagUrl],
-                      row[userAgent],
-                      row[count],
-                      row[maxDate] ?: DateTime.now(DateTimeZone.UTC))
+            QueryInfo(
+              row[session_id],
+              FullName(row[fullName]),
+              Email(row[email]),
+              row[ip],
+              row[city],
+              row[state],
+              row[country],
+              row[isp],
+              row[flagUrl],
+              row[userAgent],
+              row[count],
+              row[maxDate] ?: DateTime.now(DateTimeZone.UTC)
+            )
           }
       }.let { (query, duration) ->
         logger.debug { "User sessions query took $duration" }

@@ -78,8 +78,10 @@ import org.joda.time.DateTimeZone
 internal data class StudentInfo(val studentId: String, val firstName: String, val lastName: String)
 
 @Suppress("unused")
-internal data class ClassEnrollment(val sessionId: String,
-                                    val students: List<StudentInfo> = mutableListOf())
+internal data class ClassEnrollment(
+  val sessionId: String,
+  val students: List<StudentInfo> = mutableListOf()
+)
 
 data class ChallengeResults(
   val invocation: Invocation,
@@ -90,8 +92,10 @@ data class ChallengeResults(
 )
 
 @Serializable
-internal class LikeDislikeInfo(val userId: String,
-                               val likeDislike: String) {
+internal class LikeDislikeInfo(
+  val userId: String,
+  val likeDislike: String
+) {
   @Required
   val type: String = Constants.LIKE_DISLIKE_CODE
   fun toJson() = Json.encodeToString(serializer(), this)
@@ -99,17 +103,21 @@ internal class LikeDislikeInfo(val userId: String,
 
 @Suppress("unused")
 @Serializable
-internal class DashboardInfo(val userId: String,
-                             val complete: Boolean,
-                             val numCorrect: Int,
-                             val history: DashboardHistory) {
+internal class DashboardInfo(
+  val userId: String,
+  val complete: Boolean,
+  val numCorrect: Int,
+  val history: DashboardHistory
+) {
   fun toJson() = Json.encodeToString(serializer(), this)
 }
 
 @Serializable
-internal class DashboardHistory(val invocation: String,
-                                val correct: Boolean = false,
-                                val answers: String)
+internal class DashboardHistory(
+  val invocation: String,
+  val correct: Boolean = false,
+  val answers: String
+)
 
 @Serializable
 data class ChallengeHistory(
@@ -203,8 +211,10 @@ internal object ChallengePost : KLogging() {
         transaction {
           SessionChallengeInfoTable
             .deleteWhere {
-              (SessionChallengeInfoTable.sessionRef eq findSessionDbmsId(id,
-                                                                         false)) and (SessionChallengeInfoTable.md5 eq md5)
+              (SessionChallengeInfoTable.sessionRef eq findSessionDbmsId(
+                id,
+                false
+              )) and (SessionChallengeInfoTable.md5 eq md5)
             }
         }
       else -> error("Invalid type: $type")
@@ -221,8 +231,10 @@ internal object ChallengePost : KLogging() {
         transaction {
           SessionAnswerHistoryTable
             .deleteWhere {
-              (SessionAnswerHistoryTable.sessionRef eq findSessionDbmsId(id,
-                                                                         false)) and (SessionAnswerHistoryTable.md5 eq md5)
+              (SessionAnswerHistoryTable.sessionRef eq findSessionDbmsId(
+                id,
+                false
+              )) and (SessionAnswerHistoryTable.md5 eq md5)
             }
         }
       else -> error("Invalid type: $type")
@@ -336,20 +348,22 @@ internal object ChallengePost : KLogging() {
     call.respondText(likeVal.toString())
   }
 
-  private suspend fun saveChallengeAnswers(user: User?,
-                                           browserSession: BrowserSession?,
-                                           content: ReadingBatContent,
-                                           names: ChallengeNames,
-                                           paramMap: Map<String, String>,
-                                           funcInfo: FunctionInfo,
-                                           userResponses: List<Map.Entry<String, List<String>>>,
-                                           results: List<ChallengeResults>) {
+  private suspend fun saveChallengeAnswers(
+    user: User?,
+    browserSession: BrowserSession?,
+    content: ReadingBatContent,
+    names: ChallengeNames,
+    paramMap: Map<String, String>,
+    funcInfo: FunctionInfo,
+    userResponses: List<Map.Entry<String, List<String>>>,
+    results: List<ChallengeResults>
+  ) {
 
     // Save the last answers given
     val invokeList =
       userResponses.indices
         .map { i ->
-          val userResponse =  paramMap[RESP + i]?.trim()?.maxLength(256) ?: error("Missing user response")
+          val userResponse = paramMap[RESP + i]?.trim()?.maxLength(256) ?: error("Missing user response")
           funcInfo.invocations[i] to userResponse
         }
 
@@ -444,10 +458,12 @@ internal object ChallengePost : KLogging() {
       }
   }
 
-  private suspend fun saveLikeDislike(user: User?,
-                                      browserSession: BrowserSession?,
-                                      names: ChallengeNames,
-                                      likeDislikeVal: Int) {
+  private suspend fun saveLikeDislike(
+    user: User?,
+    browserSession: BrowserSession?,
+    names: ChallengeNames,
+    likeDislikeVal: Int
+  ) {
     val challengeMd5 = names.md5()
     val shouldPublish = user?.shouldPublish() ?: false
     when {

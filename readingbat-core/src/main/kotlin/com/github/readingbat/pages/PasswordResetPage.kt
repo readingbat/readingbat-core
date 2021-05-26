@@ -85,7 +85,6 @@ internal object PasswordResetPage : KLogging() {
           }
 
         changePasswordPage(Email(email), resetId, msg)
-
       } catch (e: ResetPasswordException) {
         logger.info { e }
         requestPasswordResetPage(Message(e.message ?: "Unable to reset password", true))

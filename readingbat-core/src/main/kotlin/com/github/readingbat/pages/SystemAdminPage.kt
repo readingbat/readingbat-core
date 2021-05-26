@@ -57,9 +57,11 @@ internal object SystemAdminPage : KLogging() {
   private const val msgs = "msgs"
   private const val status = "status"
 
-  fun PipelineCall.systemAdminPage(content: ReadingBatContent,
-                                   user: User?,
-                                   msg: String = "") =
+  fun PipelineCall.systemAdminPage(
+    content: ReadingBatContent,
+    user: User?,
+    msg: String = ""
+  ) =
     if (user.isValidUser())
       systemAdminLoginPage(content, user, Message(msg))
     else
@@ -90,27 +92,35 @@ internal object SystemAdminPage : KLogging() {
 
           if (!isProduction() || user.isAdminUser()) {
             p {
-              this@body.adminButton("Reset ReadingBat Content",
-                                    RESET_CONTENT_DSL_ENDPOINT,
-                                    "Are you sure you want to reset the content? (This can take a while)")
+              this@body.adminButton(
+                "Reset ReadingBat Content",
+                RESET_CONTENT_DSL_ENDPOINT,
+                "Are you sure you want to reset the content? (This can take a while)"
+              )
             }
 
             p {
-              this@body.adminButton("Reset Challenges Cache",
-                                    RESET_CACHE_ENDPOINT,
-                                    "Are you sure you want to reset the challenges cache?")
+              this@body.adminButton(
+                "Reset Challenges Cache",
+                RESET_CACHE_ENDPOINT,
+                "Are you sure you want to reset the challenges cache?"
+              )
             }
 
             p {
-              this@body.adminButton("Delete all content cached in Redis",
-                                    DELETE_CONTENT_IN_REDIS_ENDPOINT,
-                                    "Are you sure you want to delete all content cached in Redis?")
+              this@body.adminButton(
+                "Delete all content cached in Redis",
+                DELETE_CONTENT_IN_REDIS_ENDPOINT,
+                "Are you sure you want to delete all content cached in Redis?"
+              )
             }
 
             p {
-              this@body.adminButton("Run Garbage Collector",
-                                    GARBAGE_COLLECTOR_ENDPOINT,
-                                    "Are you sure you want to run the garbage collector?")
+              this@body.adminButton(
+                "Run Garbage Collector",
+                GARBAGE_COLLECTOR_ENDPOINT,
+                "Are you sure you want to run the garbage collector?"
+              )
             }
 
 //            p {
@@ -132,9 +142,11 @@ internal object SystemAdminPage : KLogging() {
 //            }
 
             p {
-              this@body.adminButton("Load All Challenges",
-                                    LOAD_ALL_ENDPOINT,
-                                    "Are you sure you want to load all the challenges? (This can take a while)")
+              this@body.adminButton(
+                "Load All Challenges",
+                LOAD_ALL_ENDPOINT,
+                "Are you sure you want to load all the challenges? (This can take a while)"
+              )
             }
 
             GRAFANA_URL.getPropertyOrNull()
@@ -146,8 +158,7 @@ internal object SystemAdminPage : KLogging() {
               ?.also {
                 //if (it.isNotBlank()) p { +"Prometheus Dashboard is "; a { href = it; target = "_blank"; +"here" } }
               }
-          }
-          else {
+          } else {
             p { +"Not authorized" }
           }
 
@@ -224,8 +235,8 @@ internal object SystemAdminPage : KLogging() {
           };
         }
         connect();
-        """.trimIndent())
+        """.trimIndent()
+      )
     }
   }
-
 }

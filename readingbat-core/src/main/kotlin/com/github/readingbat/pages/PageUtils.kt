@@ -71,12 +71,14 @@ internal object PageUtils {
     if (isProduction() && analyticsId.isNotBlank()) {
       script { async = true; src = "https://www.googletagmanager.com/gtag/js?id=$analyticsId" }
       script {
-        rawHtml("""
+        rawHtml(
+          """
           window.dataLayer = window.dataLayer || [];
           function gtag(){dataLayer.push(arguments);}
           gtag('js', new Date());
           gtag('config', '$analyticsId');
-        """)
+        """
+        )
       }
     }
   }
@@ -98,7 +100,8 @@ internal object PageUtils {
               document.getElementById('$buttonName').click();
             }
           }
-        """.trimIndent())
+        """.trimIndent()
+        )
       }
     }
   }
@@ -111,14 +114,16 @@ internal object PageUtils {
     }
   }
 
-  fun BODY.bodyHeader(content: ReadingBatContent,
-                      user: User?,
-                      languageType: LanguageType,
-                      loginAttempt: Boolean,
-                      loginPath: String,
-                      displayWelcomeMsg: Boolean,
-                      activeClassCode: ClassCode,
-                      msg: Message = EMPTY_MESSAGE) {
+  fun BODY.bodyHeader(
+    content: ReadingBatContent,
+    user: User?,
+    languageType: LanguageType,
+    loginAttempt: Boolean,
+    loginPath: String,
+    displayWelcomeMsg: Boolean,
+    activeClassCode: ClassCode,
+    msg: Message = EMPTY_MESSAGE
+  ) {
 
     helpAndLogin(content, user, loginPath, activeClassCode.isEnabled)
     bodyTitle()

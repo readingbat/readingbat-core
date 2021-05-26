@@ -85,8 +85,7 @@ object Installs : KLogging() {
     if (forwardedHeaderSupportEnabled) {
       logger.info { "Enabling ForwardedHeaderSupport" }
       install(ForwardedHeaderSupport)
-    }
-    else {
+    } else {
       logger.info { "Not enabling ForwardedHeaderSupport" }
     }
 
@@ -95,8 +94,7 @@ object Installs : KLogging() {
     if (xforwardedHeaderSupportEnabled) {
       logger.info { "Enabling XForwardedHeaderSupport" }
       install(XForwardedHeaderSupport)
-    }
-    else {
+    } else {
       logger.info { "Not enabling XForwardedHeaderSupport" }
     }
 
@@ -111,8 +109,7 @@ object Installs : KLogging() {
         excludeSuffix(CSS_ENDPOINT)
         excludeSuffix(FAV_ICON_ENDPOINT)
       }
-    }
-    else {
+    } else {
       logger.info { "Not installing HerokuHttpsRedirect" }
     }
 
@@ -199,7 +196,7 @@ object Installs : KLogging() {
 
       // Catch all
       exception<Throwable> { cause ->
-        logger.info(cause) { "Throwable caught: ${cause.simpleClassName}" }
+        logger.warn(cause) { "Throwable caught: ${cause.simpleClassName}" }
         respondWith {
           errorPage()
         }

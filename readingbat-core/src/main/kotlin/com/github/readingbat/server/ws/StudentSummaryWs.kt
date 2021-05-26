@@ -109,8 +109,7 @@ internal object StudentSummaryWs : KLogging() {
                               incorrectAttempts += it.incorrectAttempts
                               if (it.correct) YES else if (it.incorrectAttempts > 0) NO else UNANSWERED
                             }
-                      }
-                      else {
+                      } else {
                         results += UNANSWERED
                       }
                     }
@@ -125,11 +124,13 @@ internal object StudentSummaryWs : KLogging() {
                     val stats =
                       if (incorrectAttempts == 0 && results.all { it == UNANSWERED }) "" else incorrectAttempts.toString()
                     val json =
-                      StudentSummary(groupName.encode(),
-                                     challengeName.encode(),
-                                     results,
-                                     stats,
-                                     student.likeDislikeEmoji(likeDislike)).toJson()
+                      StudentSummary(
+                        groupName.encode(),
+                        challengeName.encode(),
+                        results,
+                        stats,
+                        student.likeDislikeEmoji(likeDislike)
+                      ).toJson()
 
                     metrics.wsClassSummaryResponseCount.labels(agentLaunchId()).inc()
                     logger.debug { "Sending data $json" }
@@ -158,11 +159,13 @@ internal object StudentSummaryWs : KLogging() {
 
   @Serializable
   @Suppress("unused")
-  class StudentSummary(val groupName: String,
-                       val challengeName: String,
-                       val results: List<String>,
-                       val stats: String,
-                       val likeDislike: String) {
+  class StudentSummary(
+    val groupName: String,
+    val challengeName: String,
+    val results: List<String>,
+    val stats: String,
+    val likeDislike: String
+  ) {
     fun toJson() = Json.encodeToString(serializer(), this)
   }
 }

@@ -169,7 +169,6 @@ object ReadingBatServer : KLogging() {
       args.toMutableList().apply { add("-config=$configFilename") }.toTypedArray()
   }
 
-
   fun start(callerVersion: String, args: Array<String>) {
     start(args + arrayOf("-$CALLER_VERSION=$callerVersion"))
   }

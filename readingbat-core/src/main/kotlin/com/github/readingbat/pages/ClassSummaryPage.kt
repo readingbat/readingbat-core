@@ -89,12 +89,14 @@ internal object ClassSummaryPage : KLogging() {
     return classSummaryPage(content, user, classCode, languageName, groupName)
   }
 
-  fun PipelineCall.classSummaryPage(content: ReadingBatContent,
-                                    user: User?,
-                                    classCode: ClassCode,
-                                    languageName: LanguageName = EMPTY_LANGUAGE,
-                                    groupName: GroupName = EMPTY_GROUP,
-                                    msg: Message = EMPTY_MESSAGE): String {
+  fun PipelineCall.classSummaryPage(
+    content: ReadingBatContent,
+    user: User?,
+    classCode: ClassCode,
+    languageName: LanguageName = EMPTY_LANGUAGE,
+    groupName: GroupName = EMPTY_GROUP,
+    msg: Message = EMPTY_MESSAGE
+  ): String {
     when {
       classCode.isNotValid() -> throw InvalidRequestException("Invalid class code: $classCode")
       user.isNotValidUser() -> throw InvalidRequestException("Invalid user")
@@ -205,8 +207,9 @@ internal object ClassSummaryPage : KLogging() {
                         .forEach {
                           li {
                             style = "font-size:110%"
-                            a(classSummaryEndpoint(classCode, langGroup.languageName, it.groupName))
-                            { +it.groupName.toString() }
+                            a(classSummaryEndpoint(classCode, langGroup.languageName, it.groupName)) {
+                              +it.groupName.toString()
+                            }
                           }
                         }
                     }
@@ -219,10 +222,12 @@ internal object ClassSummaryPage : KLogging() {
     }
   }
 
-  private fun BODY.displayGroupInfo(classCode: ClassCode,
-                                    activeClassCode: ClassCode,
-                                    languageName: LanguageName,
-                                    groupName: GroupName) {
+  private fun BODY.displayGroupInfo(
+    classCode: ClassCode,
+    activeClassCode: ClassCode,
+    languageName: LanguageName,
+    groupName: GroupName
+  ) {
     h3 {
       style = "margin-left: 15px; color: $headerColor"
       +" "
@@ -247,13 +252,15 @@ internal object ClassSummaryPage : KLogging() {
     }
   }
 
-  private fun BODY.displayStudents(content: ReadingBatContent,
-                                   enrollees: List<User>,
-                                   classCode: ClassCode,
-                                   activeClassCode: ClassCode,
-                                   hasGroup: Boolean,
-                                   languageName: LanguageName,
-                                   groupName: GroupName) =
+  private fun BODY.displayStudents(
+    content: ReadingBatContent,
+    enrollees: List<User>,
+    classCode: ClassCode,
+    activeClassCode: ClassCode,
+    hasGroup: Boolean,
+    languageName: LanguageName,
+    groupName: GroupName
+  ) =
     div(classes = INDENT_2EM) {
       val showDetail = hasGroup && classCode == activeClassCode
 
@@ -298,8 +305,7 @@ internal object ClassSummaryPage : KLogging() {
                       td { a(classes = UNDERLINE) { href = it; +studentName } }
                       td { a(classes = UNDERLINE) { href = it; +studentEmail } }
                     }
-                }
-                else {
+                } else {
                   td { this@displayStudents.removeFromClassButton(student, studentName) }
                   td { +studentName }
                   td { +studentEmail }
@@ -369,7 +375,8 @@ internal object ClassSummaryPage : KLogging() {
               document.getElementById(prefix + '$LIKE_DISLIKE').innerHTML = obj.likeDislike;
             }
           };
-        """.trimIndent())
+        """.trimIndent()
+      )
     }
   }
 

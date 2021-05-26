@@ -10,8 +10,6 @@ application {
 }
 
 dependencies {
-    implementation libraries.kotlin_reflect
-
     implementation libraries.serialization
 
     implementation libraries.core_utils
@@ -88,7 +86,7 @@ dependencies {
 buildConfig {
     buildConfigField('String', 'CORE_NAME', "\"${project.name}\"")
     buildConfigField('String', 'CORE_VERSION', "\"${project.version}\"")
-    buildConfigField('String', 'CORE_RELEASE_DATE', "\"5/20/21\"")
+    buildConfigField('String', 'CORE_RELEASE_DATE', "\"5/28/21\"")
 }
 
 // Include build uberjars in heroku deploy

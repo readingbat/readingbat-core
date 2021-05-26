@@ -43,13 +43,14 @@ import kotlinx.html.stream.createHTML
 import redis.clients.jedis.Jedis
 import redis.clients.jedis.exceptions.JedisDataException
 
-
 internal object AdminPage {
 
-  fun PipelineCall.adminDataPage(content: ReadingBatContent,
-                                 user: User?,
-                                 redis: Jedis,
-                                 msg: Message = EMPTY_MESSAGE) =
+  fun PipelineCall.adminDataPage(
+    content: ReadingBatContent,
+    user: User?,
+    redis: Jedis,
+    msg: Message = EMPTY_MESSAGE
+  ) =
     createHTML()
       .html {
         head { headDefault() }

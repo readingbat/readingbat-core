@@ -48,10 +48,12 @@ import kotlinx.html.stream.createHTML
 
 internal object LanguageGroupPage {
 
-  fun PipelineCall.languageGroupPage(content: ReadingBatContent,
-                                     user: User?,
-                                     languageType: LanguageType,
-                                     loginAttempt: Boolean) =
+  fun PipelineCall.languageGroupPage(
+    content: ReadingBatContent,
+    user: User?,
+    languageType: LanguageType,
+    loginAttempt: Boolean
+  ) =
     createHTML()
       .html {
         val browserSession = call.browserSession
@@ -91,8 +93,7 @@ internal object LanguageGroupPage {
               if (activeTeachingClassCode.isNotEnabled) {
                 if (cnt == 0) {
                   img { src = pathOf(STATIC_ROOT, WHITE_CHECK) }
-                }
-                else {
+                } else {
                   repeat(if (maxFound) cnt - 1 else cnt) { img { src = pathOf(STATIC_ROOT, GREEN_CHECK) } }
                   if (maxFound) rawHtml("&hellip;")
                 }

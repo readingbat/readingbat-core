@@ -17,8 +17,13 @@
 
 package com.github.readingbat.pages
 
-import com.github.pambrose.common.util.*
-import com.github.readingbat.common.*
+import com.github.pambrose.common.util.decode
+import com.github.pambrose.common.util.isNotNull
+import com.github.pambrose.common.util.isNull
+import com.github.pambrose.common.util.pathOf
+import com.github.pambrose.common.util.random
+import com.github.pambrose.common.util.toDoubleQuoted
+import com.github.readingbat.common.BrowserSession
 import com.github.readingbat.common.CSSNames.ARROW
 import com.github.readingbat.common.CSSNames.CHALLENGE_DESC
 import com.github.readingbat.common.CSSNames.CHECK_ANSWERS
@@ -34,6 +39,7 @@ import com.github.readingbat.common.CSSNames.STATUS
 import com.github.readingbat.common.CSSNames.SUCCESS
 import com.github.readingbat.common.CSSNames.UNDERLINE
 import com.github.readingbat.common.CSSNames.USER_RESP
+import com.github.readingbat.common.ClassCode
 import com.github.readingbat.common.Constants.CORRECT_COLOR
 import com.github.readingbat.common.Constants.INCOMPLETE_COLOR
 import com.github.readingbat.common.Constants.LIKE_DISLIKE_CODE
@@ -56,6 +62,8 @@ import com.github.readingbat.common.FormFields.CHALLENGE_NAME_PARAM
 import com.github.readingbat.common.FormFields.CORRECT_ANSWERS_PARAM
 import com.github.readingbat.common.FormFields.GROUP_NAME_PARAM
 import com.github.readingbat.common.FormFields.LANGUAGE_NAME_PARAM
+import com.github.readingbat.common.FunctionInfo
+import com.github.readingbat.common.Message
 import com.github.readingbat.common.ParameterIds.DISLIKE_CLEAR
 import com.github.readingbat.common.ParameterIds.DISLIKE_COLOR
 import com.github.readingbat.common.ParameterIds.FEEDBACK_ID
@@ -72,7 +80,11 @@ import com.github.readingbat.common.StaticFileNames.DISLIKE_CLEAR_FILE
 import com.github.readingbat.common.StaticFileNames.DISLIKE_COLOR_FILE
 import com.github.readingbat.common.StaticFileNames.LIKE_CLEAR_FILE
 import com.github.readingbat.common.StaticFileNames.LIKE_COLOR_FILE
+import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.queryActiveTeachingClassCode
+import com.github.readingbat.common.browserSession
+import com.github.readingbat.common.challengeAnswersKey
+import com.github.readingbat.common.correctAnswersKey
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.challenge.Challenge
 import com.github.readingbat.dsl.isDbmsEnabled
@@ -115,10 +127,12 @@ internal object ChallengePage : KLogging() {
   private const val pingMsg = "pingMsg"
   internal const val headerColor = "#419DC1"
 
-  fun PipelineCall.challengePage(content: ReadingBatContent,
-                                 user: User?,
-                                 challenge: Challenge,
-                                 loginAttempt: Boolean) =
+  fun PipelineCall.challengePage(
+    content: ReadingBatContent,
+    user: User?,
+    challenge: Challenge,
+    loginAttempt: Boolean
+  ) =
     createHTML()
       .html {
         val browserSession = call.browserSession
@@ -135,7 +149,7 @@ internal object ChallengePage : KLogging() {
         head {
           link { rel = "stylesheet"; href = spinnerCss }
           link {
-            rel = "stylesheet"; href = pathOf(STATIC_ROOT, PRISM, "${languageName}-prism.css"); type = CSS.toString()
+            rel = "stylesheet"; href = pathOf(STATIC_ROOT, PRISM, "$languageName-prism.css"); type = CSS.toString()
           }
 
           script(type = textJavaScript) { checkAnswersScript(languageName, groupName, challengeName) }
@@ -161,7 +175,7 @@ internal object ChallengePage : KLogging() {
 
           backLink(CHALLENGE_ROOT, languageName.value, groupName.value)
 
-          script { src = pathOf(STATIC_ROOT, PRISM, "${languageName}-prism.js") }
+          script { src = pathOf(STATIC_ROOT, PRISM, "$languageName-prism.js") }
 
           if (activeTeachingClassCode.isEnabled && enrollees.isNotEmpty())
             enableWebSockets(activeTeachingClassCode, funcInfo.challengeMd5)
@@ -213,10 +227,12 @@ internal object ChallengePage : KLogging() {
     }
   }
 
-  private fun BODY.displayQuestions(user: User?,
-                                    browserSession: BrowserSession?,
-                                    challenge: Challenge,
-                                    funcInfo: FunctionInfo) =
+  private fun BODY.displayQuestions(
+    user: User?,
+    browserSession: BrowserSession?,
+    challenge: Challenge,
+    funcInfo: FunctionInfo
+  ) =
     div {
       style = "margin-top:2em; margin-left:2em"
 
@@ -374,15 +390,18 @@ internal object ChallengePage : KLogging() {
           };
         }
         connect();
-        """.trimIndent())
+        """.trimIndent()
+      )
     }
   }
 
-  private fun BODY.displayStudentProgress(challenge: Challenge,
-                                          maxHistoryLength: Int,
-                                          funcInfo: FunctionInfo,
-                                          classCode: ClassCode,
-                                          enrollees: List<User>) =
+  private fun BODY.displayStudentProgress(
+    challenge: Challenge,
+    maxHistoryLength: Int,
+    funcInfo: FunctionInfo,
+    classCode: ClassCode,
+    enrollees: List<User>
+  ) =
     div {
       style = "margin-top:2em"
 
@@ -616,9 +635,11 @@ internal object ChallengePage : KLogging() {
     }
   }
 
-  private fun BODY.clearChallengeAnswerHistoryOption(user: User?,
-                                                     browserSession: BrowserSession?,
-                                                     challenge: Challenge) {
+  private fun BODY.clearChallengeAnswerHistoryOption(
+    user: User?,
+    browserSession: BrowserSession?,
+    challenge: Challenge
+  ) {
     val languageName = challenge.languageType.languageName
     val groupName = challenge.groupName
     val challengeName = challenge.challengeName
@@ -652,7 +673,8 @@ internal object ChallengePage : KLogging() {
         """
           pre[class*="language-"]:before,
           pre[class*="language-"]:after { display:none; }
-        """.trimIndent())
+        """.trimIndent()
+      )
     }
   }
 

@@ -55,10 +55,12 @@ import kotlinx.coroutines.runBlocking
 class ChallengeAnswer(val funcInfo: FunctionInfo, val index: Int)
 
 @Suppress("unused")
-class ChallengeResult(val answerStatus: AnswerStatus,
-                      val hint: String,
-                      val index: Int,
-                      val correctAnswer: String)
+class ChallengeResult(
+  val answerStatus: AnswerStatus,
+  val hint: String,
+  val index: Int,
+  val correctAnswer: String
+)
 
 @Suppress("unused")
 object TestSupport {
@@ -77,13 +79,17 @@ object TestSupport {
       functionInfo().block()
     }
 
-  private fun Challenge.formData() = mutableListOf(LANG_SRC to challengeGroup.languageGroup.languageName.value,
-                                                   GROUP_SRC to challengeGroup.groupName.value,
-                                                   CHALLENGE_SRC to challengeName.value)
+  private fun Challenge.formData() = mutableListOf(
+    LANG_SRC to challengeGroup.languageGroup.languageName.value,
+    GROUP_SRC to challengeGroup.groupName.value,
+    CHALLENGE_SRC to challengeName.value
+  )
 
-  fun Challenge.answerAllWith(engine: TestApplicationEngine,
-                              userResponse: String,
-                              block: ChallengeResult.() -> Unit) {
+  fun Challenge.answerAllWith(
+    engine: TestApplicationEngine,
+    userResponse: String,
+    block: ChallengeResult.() -> Unit
+  ) {
     val content =
       engine.postUrl(CHECK_ANSWERS_ENDPOINT) {
         addHeader(ContentType, FormUrlEncoded.toString())
@@ -96,10 +102,12 @@ object TestSupport {
     gson.fromJson(content, List::class.java)
       .map { v ->
         (v as List<Any?>).let {
-          ChallengeResult((it[0] as Double).toInt().toAnswerStatus(),
-                          (it[1] as String),
-                          cnt,
-                          functionInfo().correctAnswers[cnt]).also { cnt++ }
+          ChallengeResult(
+            (it[0] as Double).toInt().toAnswerStatus(),
+            (it[1] as String),
+            cnt,
+            functionInfo().correctAnswers[cnt]
+          ).also { cnt++ }
         }
       }
       .forAll { it.block() }
@@ -118,10 +126,12 @@ object TestSupport {
     gson.fromJson(content, List::class.java)
       .map { v ->
         (v as List<Any?>).let {
-          ChallengeResult((it[0] as Double).toInt().toAnswerStatus(),
-                          (it[1] as String),
-                          cnt,
-                          functionInfo().correctAnswers[cnt]).also { cnt++ }
+          ChallengeResult(
+            (it[0] as Double).toInt().toAnswerStatus(),
+            (it[1] as String),
+            cnt,
+            functionInfo().correctAnswers[cnt]
+          ).also { cnt++ }
         }
       }
       .forAll { it.block() }

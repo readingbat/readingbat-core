@@ -47,9 +47,11 @@ internal object CreateAccountPage {
 
   private const val createButton = "CreateAccountButton"
 
-  fun PipelineCall.createAccountPage(defaultFullName: FullName = EMPTY_FULLNAME,
-                                     defaultEmail: Email = EMPTY_EMAIL,
-                                     msg: Message = EMPTY_MESSAGE) =
+  fun PipelineCall.createAccountPage(
+    defaultFullName: FullName = EMPTY_FULLNAME,
+    defaultEmail: Email = EMPTY_EMAIL,
+    msg: Message = EMPTY_MESSAGE
+  ) =
     createHTML()
       .html {
         val returnPath = queryParam(RETURN_PARAM, "/")

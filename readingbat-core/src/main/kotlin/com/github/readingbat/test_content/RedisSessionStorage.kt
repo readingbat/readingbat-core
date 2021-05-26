@@ -23,7 +23,6 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.DurationUnit
 
-
 @Suppress("unused")
 class RedisSessionStorage(
   val redis: Jedis,
@@ -49,8 +48,7 @@ class RedisSessionStorage(
     val key = buildKey(id)
     if (data.isNull()) {
       redis.del(buildKey(id))
-    }
-    else {
+    } else {
       try {
         redis.set(key, String(data))
         redis.expire(key, ttl.toDouble(DurationUnit.SECONDS).toInt())

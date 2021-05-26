@@ -40,27 +40,33 @@ internal fun correctAnswersKey(user: User?, browserSession: BrowserSession?, cha
     ?: browserSession?.correctAnswersKey(challenge.languageName, challenge.groupName, challenge.challengeName)
     ?: ""
 
-internal fun correctAnswersKey(user: User?,
-                               browserSession: BrowserSession?,
-                               languageName: LanguageName,
-                               groupName: GroupName,
-                               challengeName: ChallengeName) =
+internal fun correctAnswersKey(
+  user: User?,
+  browserSession: BrowserSession?,
+  languageName: LanguageName,
+  groupName: GroupName,
+  challengeName: ChallengeName
+) =
   user?.correctAnswersKey(languageName, groupName, challengeName)
     ?: browserSession?.correctAnswersKey(languageName, groupName, challengeName)
     ?: ""
 
-internal fun challengeAnswersKey(user: User?,
-                                 browserSession: BrowserSession?,
-                                 languageName: LanguageName,
-                                 groupName: GroupName,
-                                 challengeName: ChallengeName) =
+internal fun challengeAnswersKey(
+  user: User?,
+  browserSession: BrowserSession?,
+  languageName: LanguageName,
+  groupName: GroupName,
+  challengeName: ChallengeName
+) =
   user?.challengeAnswersKey(languageName, groupName, challengeName)
     ?: browserSession?.challengeAnswerKey(languageName, groupName, challengeName)
     ?: ""
 
 internal fun challengeAnswersKey(user: User?, browserSession: BrowserSession?, challenge: Challenge) =
-  challengeAnswersKey(user,
-                      browserSession,
-                      challenge.languageType.languageName,
-                      challenge.groupName,
-                      challenge.challengeName)
+  challengeAnswersKey(
+    user,
+    browserSession,
+    challenge.languageType.languageName,
+    challenge.groupName,
+    challenge.challengeName
+  )

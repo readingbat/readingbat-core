@@ -68,19 +68,23 @@ internal object UserPrefsPage : KLogging() {
   private const val passwordButton = "UpdatePasswordButton"
   private const val joinClassButton = "JoinClassButton"
 
-  fun PipelineCall.userPrefsPage(content: ReadingBatContent,
-                                 user: User?,
-                                 msg: Message = EMPTY_MESSAGE,
-                                 defaultClassCode: ClassCode = DISABLED_CLASS_CODE) =
+  fun PipelineCall.userPrefsPage(
+    content: ReadingBatContent,
+    user: User?,
+    msg: Message = EMPTY_MESSAGE,
+    defaultClassCode: ClassCode = DISABLED_CLASS_CODE
+  ) =
     if (user.isValidUser())
       userPrefsWithLoginPage(content, user, msg, defaultClassCode)
     else
       requestLogInPage(content)
 
-  private fun PipelineCall.userPrefsWithLoginPage(content: ReadingBatContent,
-                                                  user: User,
-                                                  msg: Message,
-                                                  defaultClassCode: ClassCode) =
+  private fun PipelineCall.userPrefsWithLoginPage(
+    content: ReadingBatContent,
+    user: User,
+    msg: Message,
+    defaultClassCode: ClassCode
+  ) =
     createHTML()
       .html {
         head {
@@ -206,8 +210,7 @@ internal object UserPrefsPage : KLogging() {
           }
         }
       }
-    }
-    else {
+    } else {
       h3 { +JOIN_A_CLASS }
       div(classes = INDENT_2EM) {
         p { +"Enter the class code your teacher gave you. This will make your progress visible to your teacher." }
