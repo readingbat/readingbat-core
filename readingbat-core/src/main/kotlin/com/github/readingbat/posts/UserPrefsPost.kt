@@ -65,14 +65,15 @@ internal object UserPrefsPost : KLogging() {
         DELETE_ACCOUNT -> deleteAccount(content, user)
         else -> error("Invalid action: $action")
       }
-    }
-    else {
+    } else {
       requestLogInPage(content)
     }
 
-  private fun PipelineCall.updateDefaultLanguage(content: ReadingBatContent,
-                                                 parameters: Parameters,
-                                                 user: User) =
+  private fun PipelineCall.updateDefaultLanguage(
+    content: ReadingBatContent,
+    parameters: Parameters,
+    user: User
+  ) =
     parameters.getLanguageType(DEFAULT_LANGUAGE_CHOICE_PARAM)
       .let {
         transaction {
@@ -86,9 +87,11 @@ internal object UserPrefsPost : KLogging() {
         userPrefsPage(content, user, Message("Default language updated to $it", false))
       }
 
-  private fun PipelineCall.updatePassword(content: ReadingBatContent,
-                                          parameters: Parameters,
-                                          user: User): String {
+  private fun PipelineCall.updatePassword(
+    content: ReadingBatContent,
+    parameters: Parameters,
+    user: User
+  ): String {
     val currPassword = parameters.getPassword(CURR_PASSWORD_PARAM)
     val newPassword = parameters.getPassword(NEW_PASSWORD_PARAM)
     val confirmPassword = parameters.getPassword(CONFIRM_PASSWORD_PARAM)
@@ -96,8 +99,7 @@ internal object UserPrefsPost : KLogging() {
     val msg =
       if (passwordError.isNotBlank) {
         passwordError
-      }
-      else {
+      } else {
         val salt = user.salt
         val oldDigest = user.digest
         if (salt.isNotEmpty() && oldDigest.isNotEmpty() && oldDigest == currPassword.sha256(salt)) {
@@ -110,8 +112,7 @@ internal object UserPrefsPost : KLogging() {
             }
             Message("Password changed")
           }
-        }
-        else {
+        } else {
           Message("Incorrect current password", true)
         }
       }
@@ -119,9 +120,11 @@ internal object UserPrefsPost : KLogging() {
     return userPrefsPage(content, user, msg)
   }
 
-  private fun PipelineCall.enrollInClass(content: ReadingBatContent,
-                                         parameters: Parameters,
-                                         user: User): String {
+  private fun PipelineCall.enrollInClass(
+    content: ReadingBatContent,
+    parameters: Parameters,
+    user: User
+  ): String {
     val classCode = parameters.getClassCode(CLASS_CODE_NAME_PARAM)
     return try {
       user.enrollInClass(classCode)

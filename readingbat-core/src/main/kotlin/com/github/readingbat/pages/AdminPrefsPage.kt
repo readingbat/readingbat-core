@@ -91,8 +91,7 @@ internal object AdminPrefsPage : KLogging() {
                   }
                 }
               }
-          }
-          else {
+          } else {
             p { +"Not authorized" }
           }
 

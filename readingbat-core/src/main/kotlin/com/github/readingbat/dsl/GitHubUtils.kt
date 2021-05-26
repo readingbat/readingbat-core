@@ -30,24 +30,30 @@ internal object GitHubUtils : KLogging() {
 
   private val github by lazy { GitHub.connect() }
 
-  fun GitHubRepo.userDirectoryContents(branchName: String,
-                                       path: String,
-                                       metrics: Metrics): List<String> {
+  fun GitHubRepo.userDirectoryContents(
+    branchName: String,
+    path: String,
+    metrics: Metrics
+  ): List<String> {
     val repo = github.getUser(ownerName).getRepository(repoName)
     return directoryContents(repo, branchName, path, metrics)
   }
 
-  fun GitHubRepo.organizationDirectoryContents(branchName: String,
-                                               path: String,
-                                               metrics: Metrics): List<String> {
+  fun GitHubRepo.organizationDirectoryContents(
+    branchName: String,
+    path: String,
+    metrics: Metrics
+  ): List<String> {
     val repo: GHRepository = github.getOrganization(ownerName).getRepository(repoName)
     return directoryContents(repo, branchName, path, metrics)
   }
 
-  private fun directoryContents(repo: GHRepository,
-                                branchName: String,
-                                path: String,
-                                metrics: Metrics): List<String> {
+  private fun directoryContents(
+    repo: GHRepository,
+    branchName: String,
+    path: String,
+    metrics: Metrics
+  ): List<String> {
     val timer = metrics.githubDirectoryReadDuration.labels(agentLaunchId()).startTimer()
     try {
       val timedValue =

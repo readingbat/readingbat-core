@@ -60,7 +60,7 @@ internal object PlaygroundPage {
     user: User?,
     challenge: Challenge,
     loginAttempt: Boolean,
-                    ) =
+  ) =
     createHTML()
       .html {
         val languageType = challenge.languageType
@@ -100,7 +100,8 @@ internal object PlaygroundPage {
               <div class=$KOTLIN_CODE $options>  
               ${escapeHtml4(funcInfo.originalCode)}
               </div>
-            """.trimIndent())
+            """.trimIndent()
+          )
 
           br
           div(classes = INDENT_1EM) {

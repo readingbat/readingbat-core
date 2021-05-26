@@ -61,19 +61,23 @@ internal object TeacherPrefsPage : KLogging() {
 
   private const val createClassButton = "CreateClassButton"
 
-  fun PipelineCall.teacherPrefsPage(content: ReadingBatContent,
-                                    user: User?,
-                                    msg: Message = EMPTY_MESSAGE,
-                                    defaultClassDesc: String = "") =
+  fun PipelineCall.teacherPrefsPage(
+    content: ReadingBatContent,
+    user: User?,
+    msg: Message = EMPTY_MESSAGE,
+    defaultClassDesc: String = ""
+  ) =
     if (user.isValidUser())
       teacherPrefsWithLoginPage(content, user, msg, defaultClassDesc)
     else
       requestLogInPage(content)
 
-  private fun PipelineCall.teacherPrefsWithLoginPage(content: ReadingBatContent,
-                                                     user: User,
-                                                     msg: Message,
-                                                     defaultClassDesc: String) =
+  private fun PipelineCall.teacherPrefsWithLoginPage(
+    content: ReadingBatContent,
+    user: User,
+    msg: Message,
+    defaultClassDesc: String
+  ) =
     createHTML()
       .html {
         head {
@@ -113,7 +117,7 @@ internal object TeacherPrefsPage : KLogging() {
                 size = "42"
                 name = CLASS_DESC_PARAM
                 value = defaultClassDesc
-                onKeyPress = "click${createClassButton}(event)"
+                onKeyPress = "click$createClassButton(event)"
               }
             }
           }

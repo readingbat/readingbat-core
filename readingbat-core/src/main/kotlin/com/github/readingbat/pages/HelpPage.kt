@@ -101,7 +101,6 @@ internal object HelpPage {
               +"page."
             }
 
-
             div(classes = INDENT_1EM) {
               h4 { rawHtml("&bull;"); +" Create a Class" }
 

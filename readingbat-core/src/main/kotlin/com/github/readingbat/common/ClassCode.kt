@@ -98,7 +98,6 @@ data class ClassCode(val classCode: String) {
   fun removeEnrollee(user: User) =
     EnrolleesTable.deleteWhere { (EnrolleesTable.classesRef eq classCodeDbmsId) and (EnrolleesTable.userRef eq user.userDbmsId) }
 
-
   fun fetchClassDesc(quoted: Boolean = false) =
     transaction {
       (ClassesTable

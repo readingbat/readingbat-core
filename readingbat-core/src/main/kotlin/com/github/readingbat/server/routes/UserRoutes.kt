@@ -296,4 +296,3 @@ fun Routing.userRoutes(metrics: Metrics, contentSrc: () -> ReadingBatContent) {
 object ResourceContent {
   fun getResourceAsText(path: String) = ResourceContent::class.java.getResource(path).readText()
 }
-

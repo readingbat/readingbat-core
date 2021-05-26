@@ -18,10 +18,14 @@
 package com.github.readingbat.pages
 
 import com.github.pambrose.common.util.pluralize
-import com.github.readingbat.common.*
 import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.KeyConstants.KEY_SEP
+import com.github.readingbat.common.Message
 import com.github.readingbat.common.Message.Companion.EMPTY_MESSAGE
+import com.github.readingbat.common.User
+import com.github.readingbat.common.browserSession
+import com.github.readingbat.common.isNotValidUser
+import com.github.readingbat.common.userPrincipal
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.pages.HelpAndLogin.helpAndLogin
 import com.github.readingbat.pages.PageUtils.backLink
@@ -34,7 +38,6 @@ import com.github.readingbat.server.ServerUtils.queryParam
 import io.ktor.application.*
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
-
 
 internal object UserInfoPage {
 

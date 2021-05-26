@@ -107,8 +107,7 @@ internal object ClassSummaryWs : KLogging() {
                                 incorrectAttempts += it.incorrectAttempts
                                 if (it.correct) Constants.YES else if (it.incorrectAttempts > 0) Constants.NO else UNANSWERED
                               }
-                        }
-                        else {
+                        } else {
                           results += UNANSWERED
                         }
                       }
@@ -120,13 +119,14 @@ internal object ClassSummaryWs : KLogging() {
                     val likeDislike = enrollee.likeDislike(challenge)
                     if (incorrectAttempts > 0 || results.any { it != UNANSWERED } || likeDislike != 0) {
                       val json =
-                        ClassSummary(enrollee.userId,
-                                     challengeName.encode(),
-                                     results,
-                                     if (incorrectAttempts == 0 && results.all { it == UNANSWERED }) "" else incorrectAttempts.toString(),
+                        ClassSummary(
+                          enrollee.userId,
+                          challengeName.encode(),
+                          results,
+                          if (incorrectAttempts == 0 && results.all { it == UNANSWERED }) "" else incorrectAttempts.toString(),
                           // TODO Consolidate this into a single call per user
-                                     enrollee.likeDislikeEmoji(likeDislike)
-                                    ).toJson()
+                          enrollee.likeDislikeEmoji(likeDislike)
+                        ).toJson()
 
                       metrics.wsClassSummaryResponseCount.labels(agentLaunchId()).inc()
                       logger.debug { "Sending data $json" }
@@ -156,11 +156,13 @@ internal object ClassSummaryWs : KLogging() {
 
   @Suppress("unused")
   @Serializable
-  class ClassSummary(val userId: String,
-                     val challengeName: String,
-                     val results: List<String>,
-                     val stats: String,
-                     val likeDislike: String) {
+  class ClassSummary(
+    val userId: String,
+    val challengeName: String,
+    val results: List<String>,
+    val stats: String,
+    val likeDislike: String
+  ) {
     fun toJson() = Json.encodeToString(serializer(), this)
   }
 }

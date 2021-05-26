@@ -23,7 +23,6 @@ import com.github.pambrose.common.util.asRegex
 import com.github.pambrose.common.util.decode
 import com.github.pambrose.common.util.pathOf
 import com.github.readingbat.dsl.challenge.Challenge
-
 import com.github.readingbat.server.GroupName
 import com.github.readingbat.server.ReadingBatServer
 import mu.KLogging

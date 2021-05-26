@@ -69,10 +69,12 @@ import mu.KLogging
 
 internal object ChallengeGroupPage : KLogging() {
 
-  fun PipelineCall.challengeGroupPage(content: ReadingBatContent,
-                                      user: User?,
-                                      challengeGroup: ChallengeGroup<*>,
-                                      loginAttempt: Boolean) =
+  fun PipelineCall.challengeGroupPage(
+    content: ReadingBatContent,
+    user: User?,
+    challengeGroup: ChallengeGroup<*>,
+    loginAttempt: Boolean
+  ) =
     createHTML()
       .html {
         val browserSession = call.browserSession
@@ -150,10 +152,12 @@ internal object ChallengeGroupPage : KLogging() {
         }
       }
 
-  fun BODY.displayClassDescription(classCode: ClassCode,
-                                   languageName: LanguageName,
-                                   groupName: GroupName,
-                                   enrollees: List<User>) {
+  fun BODY.displayClassDescription(
+    classCode: ClassCode,
+    languageName: LanguageName,
+    groupName: GroupName,
+    enrollees: List<User>
+  ) {
     h3 {
       style = "margin-left: 5px; color: $headerColor"
       a(classes = UNDERLINE) {
@@ -190,15 +194,18 @@ internal object ChallengeGroupPage : KLogging() {
             var obj = JSON.parse(event.data)
             document.getElementById(obj.challengeName).innerText = obj.msg;
           };
-        """.trimIndent())
+        """.trimIndent()
+      )
     }
   }
 
-  private fun BODY.clearGroupAnswerHistoryOption(user: User?,
-                                                 browserSession: BrowserSession?,
-                                                 languageName: LanguageName,
-                                                 groupName: GroupName,
-                                                 challenges: List<Challenge>) {
+  private fun BODY.clearGroupAnswerHistoryOption(
+    user: User?,
+    browserSession: BrowserSession?,
+    languageName: LanguageName,
+    groupName: GroupName,
+    challenges: List<Challenge>
+  ) {
     val correctAnswersKeys = challenges.map { correctAnswersKey(user, browserSession, it) }
     val challengeAnswerKeys = challenges.map { challengeAnswersKey(user, browserSession, it) }
 

@@ -77,9 +77,11 @@ import kotlin.time.measureTime
 import kotlin.time.measureTimedValue
 
 @ReadingBatDslMarker
-sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
-                       val challengeName: ChallengeName,
-                       val replaceable: Boolean) {
+sealed class Challenge(
+  val challengeGroup: ChallengeGroup<*>,
+  val challengeName: ChallengeName,
+  val replaceable: Boolean
+) {
   internal val challengeId = counter.incrementAndGet()
   private val fqName by lazy { packageNameAsPath.ensureSuffix("/") + fileName.ensureSuffix(".${languageType.suffix}") }
 
@@ -151,8 +153,7 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
             }
           measureParsing(code)
         }
-    }
-    else {
+    } else {
       fun parseCode(): FunctionInfo {
         val fs = repo as FileSystemSource
         val file = fs.file(pathOf(fs.pathPrefix, srcPath, packageNameAsPath, fileName))
@@ -182,8 +183,7 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
   protected fun deriveDescription(code: String, commentPrefix: String) =
     if (isDescriptionSetInDsl) {
       description
-    }
-    else {
+    } else {
       code.lines().asSequence()
         .filter { it.startsWith(commentPrefix) && it.contains(DESC) }
         .map { it.replaceFirst(commentPrefix, "") }  // Remove comment prefix
@@ -223,9 +223,11 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
     internal val counter = AtomicInteger(0)
     internal const val DESC = "@desc "
 
-    internal fun challenge(challengeGroup: ChallengeGroup<*>,
-                           challengeName: ChallengeName,
-                           replaceable: Boolean) =
+    internal fun challenge(
+      challengeGroup: ChallengeGroup<*>,
+      challengeName: ChallengeName,
+      replaceable: Boolean
+    ) =
       when (challengeGroup.languageType) {
         Python -> PythonChallenge(challengeGroup, challengeName, replaceable)
         Java -> JavaChallenge(challengeGroup, challengeName, replaceable)
@@ -234,9 +236,11 @@ sealed class Challenge(val challengeGroup: ChallengeGroup<*>,
   }
 }
 
-class JavaChallenge(challengeGroup: ChallengeGroup<*>,
-                    challengeName: ChallengeName,
-                    replaceable: Boolean) :
+class JavaChallenge(
+  challengeGroup: ChallengeGroup<*>,
+  challengeName: ChallengeName,
+  replaceable: Boolean
+) :
   Challenge(challengeGroup, challengeName, replaceable) {
 
   override suspend fun computeFunctionInfo(code: String): FunctionInfo {
@@ -276,9 +280,11 @@ class JavaChallenge(challengeGroup: ChallengeGroup<*>,
   override fun toString() = "JavaChallenge(packageName='$packageNameAsPath', fileName='$fileName')"
 }
 
-class KotlinChallenge(challengeGroup: ChallengeGroup<*>,
-                      challengeName: ChallengeName,
-                      replaceable: Boolean) :
+class KotlinChallenge(
+  challengeGroup: ChallengeGroup<*>,
+  challengeName: ChallengeName,
+  replaceable: Boolean
+) :
   Challenge(challengeGroup, challengeName, replaceable) {
 
   // User properties
@@ -316,22 +322,26 @@ class KotlinChallenge(challengeGroup: ChallengeGroup<*>,
       logger.debug { "$challengeName computed answers in $it for: $correctAnswers" }
     }
 
-    return FunctionInfo(this,
-                        Kotlin.languageName,
-                        strippedCode,
-                        funcCode,
-                        invocations,
-                        returnType,
-                        correctAnswers)
+    return FunctionInfo(
+      this,
+      Kotlin.languageName,
+      strippedCode,
+      funcCode,
+      invocations,
+      returnType,
+      correctAnswers
+    )
   }
 
   override fun toString() =
     "KotlinChallenge(packageName='$packageNameAsPath', fileName='$fileName', returnType=$returnType)"
 }
 
-class PythonChallenge(challengeGroup: ChallengeGroup<*>,
-                      challengeName: ChallengeName,
-                      replaceable: Boolean) :
+class PythonChallenge(
+  challengeGroup: ChallengeGroup<*>,
+  challengeName: ChallengeName,
+  replaceable: Boolean
+) :
   Challenge(challengeGroup, challengeName, replaceable) {
 
   // User properties

@@ -108,8 +108,7 @@ internal object CreateAccountPost : KLogging() {
     // Check if email already exists
     return if (emailExists(email)) {
       createAccountPage(msg = Message("Email already registered: $email"))
-    }
-    else {
+    } else {
       // Create user
       val browserSession = call.browserSession
       val user = createUser(name, email, password, browserSession)

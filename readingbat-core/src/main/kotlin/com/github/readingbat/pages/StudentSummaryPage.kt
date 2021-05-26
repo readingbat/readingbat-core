@@ -147,9 +147,11 @@ internal object StudentSummaryPage : KLogging() {
     }
   }
 
-  private fun BODY.displayChallengeGroups(content: ReadingBatContent,
-                                          @Suppress("UNUSED_PARAMETER") classCode: ClassCode,
-                                          languageName: LanguageName) =
+  private fun BODY.displayChallengeGroups(
+    content: ReadingBatContent,
+    @Suppress("UNUSED_PARAMETER") classCode: ClassCode,
+    languageName: LanguageName
+  ) =
     div(classes = INDENT_2EM) {
       table(classes = INVOC_TABLE) {
         content.findLanguage(languageName).challengeGroups
@@ -242,7 +244,8 @@ internal object StudentSummaryPage : KLogging() {
               document.getElementById(prefix + '$LIKE_DISLIKE').innerHTML = obj.likeDislike;
    }
           };
-        """.trimIndent())
+        """.trimIndent()
+      )
     }
   }
 }

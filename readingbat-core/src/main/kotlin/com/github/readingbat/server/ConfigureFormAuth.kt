@@ -72,8 +72,7 @@ internal object ConfigureFormAuth : KLogging() {
         if (!isDbmsEnabled()) {
           logger.error { DBMS_DOWN }
           error("DBMS not enabled")
-        }
-        else {
+        } else {
           var principal: UserPrincipal? = null
           val user = queryUserByEmail(Email(cred.name))
           if (user.isNotNull()) {

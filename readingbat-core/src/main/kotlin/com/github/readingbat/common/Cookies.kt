@@ -76,18 +76,22 @@ data class BrowserSession(val id: String, val created: Long = Instant.now().toEp
 
   fun answerHistory(md5: String, invocation: Invocation) =
     SessionAnswerHistoryTable
-      .slice(SessionAnswerHistoryTable.invocation,
-             SessionAnswerHistoryTable.correct,
-             SessionAnswerHistoryTable.incorrectAttempts,
-             SessionAnswerHistoryTable.historyJson)
+      .slice(
+        SessionAnswerHistoryTable.invocation,
+        SessionAnswerHistoryTable.correct,
+        SessionAnswerHistoryTable.incorrectAttempts,
+        SessionAnswerHistoryTable.historyJson
+      )
       .select { (SessionAnswerHistoryTable.sessionRef eq sessionDbmsId()) and (SessionAnswerHistoryTable.md5 eq md5) }
       .map {
         val json = it[SessionAnswerHistoryTable.historyJson]
         val history = Json.decodeFromString<List<String>>(json).toMutableList()
-        ChallengeHistory(Invocation(it[SessionAnswerHistoryTable.invocation]),
-                         it[SessionAnswerHistoryTable.correct],
-                         it[SessionAnswerHistoryTable.incorrectAttempts].toInt(),
-                         history)
+        ChallengeHistory(
+          Invocation(it[SessionAnswerHistoryTable.invocation]),
+          it[SessionAnswerHistoryTable.correct],
+          it[SessionAnswerHistoryTable.incorrectAttempts].toInt(),
+          history
+        )
       }
       .firstOrNull() ?: ChallengeHistory(invocation)
 
@@ -105,8 +109,7 @@ data class BrowserSession(val id: String, val created: Long = Instant.now().toEp
         if (createIfMissing) {
           logger.info { "Creating BrowserSession in findSessionDbmsId() - ${e.message}" }
           createBrowserSession(id)
-        }
-        else {
+        } else {
           -1
         }
       }

@@ -42,16 +42,20 @@ import kotlin.time.measureTimedValue
 @DslMarker
 annotation class ReadingBatDslMarker
 
-class GitHubContent(ownerType: OwnerType,
-                    ownerName: String,
-                    repo: String,
-                    branch: String = "master",
-                    srcPath: String = "src/main/kotlin",
-                    fileName: String = "Content.kt") :
-  GitHubFile(GitHubRepo(ownerType, ownerName, repo),
-             branchName = branch,
-             srcPath = srcPath,
-             fileName = fileName)
+class GitHubContent(
+  ownerType: OwnerType,
+  ownerName: String,
+  repo: String,
+  branch: String = "master",
+  srcPath: String = "src/main/kotlin",
+  fileName: String = "Content.kt"
+) :
+  GitHubFile(
+    GitHubRepo(ownerType, ownerName, repo),
+    branchName = branch,
+    srcPath = srcPath,
+    fileName = fileName
+  )
 
 fun readingBatContent(block: ReadingBatContent.() -> Unit) =
   ReadingBatContent().apply(block).apply { validate() }
@@ -98,13 +102,11 @@ internal fun readContentDsl(contentSource: ContentSource) =
   measureTimedValue {
     if (!contentSource.remote) {
       contentSource.content
-    }
-    else {
+    } else {
       var dslCode = fetchContentDslFromRedis(contentSource.source)
       if (dslCode.isNotNull()) {
         logger.info { "Fetched ${contentSource.source} from redis cache" }
-      }
-      else {
+      } else {
         dslCode = contentSource.content
         saveContentDslToRedis(contentSource.source, dslCode)
       }
@@ -115,9 +117,11 @@ internal fun readContentDsl(contentSource: ContentSource) =
     it.value
   }
 
-internal fun evalContentDsl(source: String,
-                            variableName: String = "content",
-                            code: String) =
+internal fun evalContentDsl(
+  source: String,
+  variableName: String = "content",
+  code: String
+) =
   runBlocking {
     measureTimedValue {
       logger.info { "Starting eval for $source" }

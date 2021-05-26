@@ -53,11 +53,13 @@ object WsCommon : KLogging() {
     //clockWsEndpoint()
   }
 
-  fun validateContext(languageName: LanguageName?,
-                      groupName: GroupName?,
-                      classCode: ClassCode,
-                      student: User?,
-                      user: User) =
+  fun validateContext(
+    languageName: LanguageName?,
+    groupName: GroupName?,
+    classCode: ClassCode,
+    student: User?,
+    user: User
+  ) =
     when {
       languageName.isNotNull() && languageName.isNotValid() -> false to "Invalid language: $languageName"
       groupName.isNotNull() && groupName.isNotValid() -> false to "Invalid group: $groupName"
@@ -84,4 +86,3 @@ object WsCommon : KLogging() {
     incoming.cancel()
   }
 }
-

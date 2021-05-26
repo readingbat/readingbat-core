@@ -162,23 +162,23 @@ class FunctionInfo(
             userResponse.equalsAsJvmList(correctAnswer)
           else
             userResponse.equalsAsJvmScalar(correctAnswer, returnType, languageName)
-        }
-        else {
+        } else {
           if (correctAnswer.isBracketed())
             userResponse.equalsAsPythonList(correctAnswer)
           else
             userResponse.equalsAsPythonScalar(correctAnswer, returnType)
         }
-      }
-      else {
+      } else {
         false to ""
       }
 
-    return ChallengeResults(invocation = invocations[index],
-                            userResponse = userResponse,
-                            answered = answered,
-                            correct = correctAndHint.first,
-                            hint = correctAndHint.second)
+    return ChallengeResults(
+      invocation = invocations[index],
+      userResponse = userResponse,
+      answered = answered,
+      correct = correctAndHint.first,
+      hint = correctAndHint.second
+    )
   }
 
   companion object : KLogging() {
@@ -221,9 +221,11 @@ class FunctionInfo(
       }
     }
 
-    private fun String.equalsAsJvmScalar(that: String,
-                                         returnType: ReturnType,
-                                         languageName: LanguageName): Pair<Boolean, String> {
+    private fun String.equalsAsJvmScalar(
+      that: String,
+      returnType: ReturnType,
+      languageName: LanguageName
+    ): Pair<Boolean, String> {
       val languageType = languageName.toLanguageType()
 
       fun deriveHint() =

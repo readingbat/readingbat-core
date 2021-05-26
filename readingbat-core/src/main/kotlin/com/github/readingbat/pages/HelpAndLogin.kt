@@ -45,10 +45,12 @@ internal object HelpAndLogin {
 
   private val rootVals = listOf("", "/")
 
-  fun BODY.helpAndLogin(content: ReadingBatContent,
-                        user: User?,
-                        loginPath: String,
-                        teacherMode: Boolean) {
+  fun BODY.helpAndLogin(
+    content: ReadingBatContent,
+    user: User?,
+    loginPath: String,
+    teacherMode: Boolean
+  ) {
 
     val previousClassCode = queryPreviousTeacherClassCode(user)
     val path =
@@ -139,7 +141,6 @@ internal object HelpAndLogin {
       }
     }
   }
-
 
   private fun TABLE.loginOption(loginPath: String) {
     val topFocus = "loginTpFocus"

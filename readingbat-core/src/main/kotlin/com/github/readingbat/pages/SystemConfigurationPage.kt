@@ -167,7 +167,7 @@ internal object SystemConfigurationPage {
                   }
                 tr {
                   td { +"WS connections size/max:" }
-                  td { +"${answerWsConnections.size}/${maxAnswerWsConnections}" }
+                  td { +"${answerWsConnections.size}/$maxAnswerWsConnections" }
                 }
                 tr {
                   td { +"Challenge cache size:" }

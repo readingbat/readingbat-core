@@ -87,8 +87,7 @@ internal object TeacherPrefsPost : KLogging() {
         DELETE_CLASS -> deleteClass(content, user, params.getClassCode(CLASS_CODE_NAME_PARAM))
         else -> error("Invalid action: $action")
       }
-    }
-    else {
+    } else {
       requestLogInPage(content)
     }
 
@@ -99,8 +98,7 @@ internal object TeacherPrefsPost : KLogging() {
       if (user.isValidUser()) {
         user.assignActiveClassCode(DISABLED_CLASS_CODE, false)
         STUDENT_MODE_ENABLED_MSG
-      }
-      else {
+      } else {
         "Invalid user"
       }
     throw RedirectException("$returnPath?$MSG=${msg.encode()}")
@@ -113,8 +111,7 @@ internal object TeacherPrefsPost : KLogging() {
         val previousTeacherClassCode = queryPreviousTeacherClassCode(user)
         user.assignActiveClassCode(previousTeacherClassCode, false)
         TEACHER_MODE_ENABLED_MSG
-      }
-      else {
+      } else {
         "Invalid user"
       }
     throw RedirectException("$returnPath?$MSG=${msg.encode()}")
@@ -152,16 +149,19 @@ internal object TeacherPrefsPost : KLogging() {
           if (classCode.isNotEnabled)
             STUDENT_MODE_ENABLED_MSG
           else
-            "Active class updated to ${classCode.toDisplayString()}")
+            "Active class updated to ${classCode.toDisplayString()}"
+        )
       }
     }
 
   private fun PipelineCall.deleteClass(content: ReadingBatContent, user: User, classCode: ClassCode) =
     when {
       classCode.isNotEnabled -> teacherPrefsPage(content, user, Message("Empty class code", true))
-      classCode.isNotValid() -> teacherPrefsPage(content,
-                                                 user,
-                                                 Message("Invalid class code: $classCode", true))
+      classCode.isNotValid() -> teacherPrefsPage(
+        content,
+        user,
+        Message("Invalid class code: $classCode", true)
+      )
       else -> {
         val activeTeachingClassCode = queryActiveTeachingClassCode(user)
         val enrollees = classCode.fetchEnrollees()

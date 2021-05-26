@@ -57,4 +57,3 @@ enum class EnvVar(val maskFunc: EnvVar.() -> String = { getEnv(UNASSIGNED) }) {
 
   fun getRequiredEnv() = getEnvOrNull() ?: error("Missing $name value")
 }
-

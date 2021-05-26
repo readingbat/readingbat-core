@@ -90,9 +90,11 @@ object Locations {
     }
   }
 
-  private suspend fun PipelineCall.language(content: ReadingBatContent,
-                                            language: Language,
-                                            loginAttempt: Boolean) =
+  private suspend fun PipelineCall.language(
+    content: ReadingBatContent,
+    language: Language,
+    loginAttempt: Boolean
+  ) =
     respondWith {
       assignBrowserSession()
       content.checkLanguage(language.languageType)
@@ -100,9 +102,11 @@ object Locations {
       languageGroupPage(content, user, language.languageType, loginAttempt)
     }
 
-  private suspend fun PipelineCall.group(content: ReadingBatContent,
-                                         groupLoc: Language.Group,
-                                         loginAttempt: Boolean) =
+  private suspend fun PipelineCall.group(
+    content: ReadingBatContent,
+    groupLoc: Language.Group,
+    loginAttempt: Boolean
+  ) =
     respondWith {
       assignBrowserSession()
       content.checkLanguage(groupLoc.languageType)
@@ -110,9 +114,11 @@ object Locations {
       challengeGroupPage(content, user, content.findGroup(groupLoc), loginAttempt)
     }
 
-  private suspend fun PipelineCall.challenge(content: ReadingBatContent,
-                                             challengeLoc: Language.Group.Challenge,
-                                             loginAttempt: Boolean) =
+  private suspend fun PipelineCall.challenge(
+    content: ReadingBatContent,
+    challengeLoc: Language.Group.Challenge,
+    loginAttempt: Boolean
+  ) =
     respondWith {
       assignBrowserSession()
       content.checkLanguage(challengeLoc.languageType)
@@ -120,9 +126,11 @@ object Locations {
       challengePage(content, user, content.findChallenge(challengeLoc), loginAttempt)
     }
 
-  private suspend fun PipelineCall.playground(content: ReadingBatContent,
-                                              request: PlaygroundRequest,
-                                              loginAttempt: Boolean) =
+  private suspend fun PipelineCall.playground(
+    content: ReadingBatContent,
+    request: PlaygroundRequest,
+    loginAttempt: Boolean
+  ) =
     respondWith {
       assignBrowserSession()
       val user = fetchUser(loginAttempt)
