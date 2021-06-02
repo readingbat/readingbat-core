@@ -3,9 +3,9 @@ plugins {
     id 'application'
     id 'maven'  // Required for jitpack.io to do a ./gradlew install
     id 'org.jmailen.kotlinter' version "3.4.4" apply false
-    id 'org.jetbrains.kotlin.jvm' version '1.5.10' apply false
-    id 'org.jetbrains.kotlin.plugin.serialization' version '1.5.10' apply false
-    id "com.github.ben-manes.versions" version '0.38.0' apply false
+    id 'org.jetbrains.kotlin.jvm' version '1.5.20-M1' apply false
+    id 'org.jetbrains.kotlin.plugin.serialization' version '1.5.20-M1' apply false
+    id "com.github.ben-manes.versions" version '0.39.0' apply false
     id 'com.github.johnrengelman.shadow' version '6.1.0' apply false
     id 'com.github.gmazzo.buildconfig' version '3.0.0' apply false
     id "org.flywaydb.flyway" version "7.9.1"
@@ -86,7 +86,7 @@ ext {
 allprojects {
     description = 'ReadingBat Core'
     group 'com.github.readingbat'
-    version '1.15.0'
+    version '1.16.0'
 
     apply plugin: 'application'
     apply plugin: 'maven' // required for jitpack.io install

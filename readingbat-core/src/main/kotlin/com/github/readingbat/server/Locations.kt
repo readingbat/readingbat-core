@@ -47,6 +47,7 @@ import io.ktor.http.*
 import io.ktor.locations.*
 import io.ktor.routing.*
 import kotlinx.serialization.Serializable
+import io.ktor.locations.post as locationsPost
 
 object Locations {
   private const val trueStr = true.toString()
@@ -71,19 +72,19 @@ object Locations {
     }
 
     authenticate(FORM) {
-      post<Language> { languageLoc ->
+      locationsPost<Language> { languageLoc ->
         metrics.languageGroupRequestCount.labels(agentLaunchId(), POST, languageLoc.languageTypeStr, trueStr).inc()
         language(content.invoke(), languageLoc, true)
       }
-      post<Language.Group> { groupLoc ->
+      locationsPost<Language.Group> { groupLoc ->
         metrics.challengeGroupRequestCount.labels(agentLaunchId(), POST, groupLoc.languageTypeStr, trueStr).inc()
         group(content.invoke(), groupLoc, true)
       }
-      post<Language.Group.Challenge> { challengeLoc ->
+      locationsPost<Language.Group.Challenge> { challengeLoc ->
         metrics.challengeRequestCount.labels(agentLaunchId(), POST, challengeLoc.languageTypeStr, trueStr).inc()
         challenge(content.invoke(), challengeLoc, true)
       }
-      post<PlaygroundRequest> { request ->
+      locationsPost<PlaygroundRequest> { request ->
         metrics.playgroundRequestCount.labels(agentLaunchId(), POST, trueStr).inc()
         playground(content.invoke(), request, true)
       }
