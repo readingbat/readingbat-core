@@ -1,14 +1,13 @@
 plugins {
     id 'java'
     id 'application'
-    id 'maven'  // Required for jitpack.io to do a ./gradlew install
-    id 'org.jmailen.kotlinter' version "3.4.4" apply false
-    id 'org.jetbrains.kotlin.jvm' version '1.5.20-M1' apply false
-    id 'org.jetbrains.kotlin.plugin.serialization' version '1.5.20-M1' apply false
+    id 'org.jmailen.kotlinter' version "3.4.5" apply false
+    id 'org.jetbrains.kotlin.jvm' version '1.5.20' apply false
+    id 'org.jetbrains.kotlin.plugin.serialization' version '1.5.20' apply false
     id "com.github.ben-manes.versions" version '0.39.0' apply false
-    id 'com.github.johnrengelman.shadow' version '6.1.0' apply false
-    id 'com.github.gmazzo.buildconfig' version '3.0.0' apply false
-    id "org.flywaydb.flyway" version "7.9.1"
+    id 'com.github.johnrengelman.shadow' version '7.0.0' apply false
+    id 'com.github.gmazzo.buildconfig' version '3.0.1' apply false
+    id "org.flywaydb.flyway" version "7.10.0"
 }
 
 ext {
@@ -89,7 +88,8 @@ allprojects {
     version '1.17.0'
 
     apply plugin: 'application'
-    apply plugin: 'maven' // required for jitpack.io install
+    apply plugin: 'java-library'
+    apply plugin: 'maven-publish' // required for jitpack.io install
     apply plugin: 'org.jmailen.kotlinter'
     apply plugin: 'org.jetbrains.kotlin.jvm'
     apply plugin: 'org.jetbrains.kotlin.plugin.serialization'
@@ -136,20 +136,31 @@ subprojects {
         exclude "LICENSE*"
     }
 
-    task sourcesJar(type: Jar, dependsOn: classes) {
-        archiveClassifier = 'sources'
-        from sourceSets.main.allSource
+    task sourcesJar(type: Jar) {
+        from sourceSets.main.allJava
+        archiveClassifier.set("sources")
     }
 
-    artifacts {
-        archives sourcesJar
+    task javadocJar(type: Jar, dependsOn: javadoc) {
+        archiveClassifier.set("javadoc")
+        from javadoc.destinationDir
+    }
+
+    publishing {
+        publications {
+            mavenAar(MavenPublication) {
+                from components.java
+                afterEvaluate {
+                    artifact javadocJar
+                    artifact sourcesJar
+                }
+            }
+        }
     }
 
     compileKotlin {
         kotlinOptions {
             useIR = true
-            //languageVersion = "1.5"
-            //apiVersion = "1.5"
             jvmTarget = '1.8'
             freeCompilerArgs += ['-Xuse-experimental=kotlin.time.ExperimentalTime',
                                  '-Xuse-experimental=io.ktor.util.KtorExperimentalAPI',
@@ -165,8 +176,6 @@ subprojects {
     compileTestKotlin {
         kotlinOptions {
             useIR = true
-            //languageVersion = "1.5"
-            //apiVersion = "1.5"
             jvmTarget = '1.8'
             freeCompilerArgs += ['-Xuse-experimental=kotlin.time.ExperimentalTime',
                                  '-Xuse-experimental=io.ktor.util.KtorExperimentalAPI',
@@ -196,9 +205,9 @@ subprojects {
     }
 }
 
-dependencies {
-    runtime libraries.postgres
-}
+//dependencies {
+//    runtime libraries.postgres
+//}
 
 flyway {
     driver = 'org.postgresql.Driver'
