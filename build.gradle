@@ -127,14 +127,14 @@ subprojects {
         runtimeOnly "org.jetbrains.kotlin:kotlin-scripting-jsr223:$kotlin_version"
     }
 
-    shadowJar {
-        zip64 true
-        mergeServiceFiles()
-        exclude "META-INF/*.SF"
-        exclude 'META-INF/*.DSA'
-        exclude 'META-INF/*.RSA'
-        exclude "LICENSE*"
-    }
+//    shadowJar {
+//        zip64 true
+//        mergeServiceFiles()
+//        exclude "META-INF/*.SF"
+//        exclude 'META-INF/*.DSA'
+//        exclude 'META-INF/*.RSA'
+//        exclude "LICENSE*"
+//    }
 
     task sourcesJar(type: Jar) {
         from sourceSets.main.allJava
