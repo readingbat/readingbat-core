@@ -163,7 +163,6 @@ subprojects {
             useIR = true
             jvmTarget = '1.8'
             freeCompilerArgs += ['-Xuse-experimental=kotlin.time.ExperimentalTime',
-                                 '-Xuse-experimental=io.ktor.util.KtorExperimentalAPI',
                                  '-Xuse-experimental=io.ktor.locations.KtorExperimentalLocationsAPI',
                                  '-Xuse-experimental=kotlinx.coroutines.ExperimentalCoroutinesApi',
                                  '-Xuse-experimental=kotlinx.coroutines.ObsoleteCoroutinesApi',
@@ -178,7 +177,6 @@ subprojects {
             useIR = true
             jvmTarget = '1.8'
             freeCompilerArgs += ['-Xuse-experimental=kotlin.time.ExperimentalTime',
-                                 '-Xuse-experimental=io.ktor.util.KtorExperimentalAPI',
                                  '-Xuse-experimental=kotlinx.coroutines.ExperimentalCoroutinesApi',
                                  '-Xuse-experimental=kotlinx.coroutines.ObsoleteCoroutinesApi',
                                  '-Xuse-experimental=kotlin.ExperimentalStdlibApi',
