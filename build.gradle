@@ -5,7 +5,7 @@ plugins {
     id 'org.jetbrains.kotlin.jvm' version '1.5.20' apply false
     id 'org.jetbrains.kotlin.plugin.serialization' version '1.5.20' apply false
     id "com.github.ben-manes.versions" version '0.39.0' apply false
-    id 'com.github.johnrengelman.shadow' version '7.0.0' apply false
+//    id 'com.github.johnrengelman.shadow' version '7.0.0' apply false
     id 'com.github.gmazzo.buildconfig' version '3.0.1' apply false
     id "org.flywaydb.flyway" version "7.10.0"
 }
@@ -85,7 +85,7 @@ ext {
 allprojects {
     description = 'ReadingBat Core'
     group 'com.github.readingbat'
-    version '1.17.0'
+    version '1.18.0'
 
     apply plugin: 'application'
     apply plugin: 'java-library'
@@ -94,7 +94,7 @@ allprojects {
     apply plugin: 'org.jetbrains.kotlin.jvm'
     apply plugin: 'org.jetbrains.kotlin.plugin.serialization'
     apply plugin: 'com.github.ben-manes.versions'
-    apply plugin: 'com.github.johnrengelman.shadow'
+//    apply plugin: 'com.github.johnrengelman.shadow'
     apply plugin: 'com.github.gmazzo.buildconfig'
 
     repositories {
@@ -127,14 +127,14 @@ subprojects {
         runtimeOnly "org.jetbrains.kotlin:kotlin-scripting-jsr223:$kotlin_version"
     }
 
-    shadowJar {
-        zip64 true
-        mergeServiceFiles()
-        exclude "META-INF/*.SF"
-        exclude 'META-INF/*.DSA'
-        exclude 'META-INF/*.RSA'
-        exclude "LICENSE*"
-    }
+//    shadowJar {
+//        zip64 true
+//        mergeServiceFiles()
+//        exclude "META-INF/*.SF"
+//        exclude 'META-INF/*.DSA'
+//        exclude 'META-INF/*.RSA'
+//        exclude "LICENSE*"
+//    }
 
     task sourcesJar(type: Jar) {
         from sourceSets.main.allJava
@@ -163,7 +163,6 @@ subprojects {
             useIR = true
             jvmTarget = '1.8'
             freeCompilerArgs += ['-Xuse-experimental=kotlin.time.ExperimentalTime',
-                                 '-Xuse-experimental=io.ktor.util.KtorExperimentalAPI',
                                  '-Xuse-experimental=io.ktor.locations.KtorExperimentalLocationsAPI',
                                  '-Xuse-experimental=kotlinx.coroutines.ExperimentalCoroutinesApi',
                                  '-Xuse-experimental=kotlinx.coroutines.ObsoleteCoroutinesApi',
@@ -178,7 +177,6 @@ subprojects {
             useIR = true
             jvmTarget = '1.8'
             freeCompilerArgs += ['-Xuse-experimental=kotlin.time.ExperimentalTime',
-                                 '-Xuse-experimental=io.ktor.util.KtorExperimentalAPI',
                                  '-Xuse-experimental=kotlinx.coroutines.ExperimentalCoroutinesApi',
                                  '-Xuse-experimental=kotlinx.coroutines.ObsoleteCoroutinesApi',
                                  '-Xuse-experimental=kotlin.ExperimentalStdlibApi',
