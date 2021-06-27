@@ -85,7 +85,7 @@ ext {
 allprojects {
     description = 'ReadingBat Core'
     group 'com.github.readingbat'
-    version '1.18.0'
+    version '1.19.0'
 
     apply plugin: 'application'
     apply plugin: 'java-library'
@@ -101,7 +101,7 @@ allprojects {
         maven { url = 'https://kotlin.bintray.com/ktor' }
         maven { url = 'https://kotlin.bintray.com/kotlinx' }
         maven { url = 'https://kotlin.bintray.com/kotlin-js-wrappers' }
-        maven { url = "https://maven.pkg.jetbrains.space/kotlin/p/kotlin/kotlin-js-wrappers" }
+        maven { url = 'https://maven.pkg.jetbrains.space/kotlin/p/kotlin/kotlin-js-wrappers' }
         maven { url = 'https://maven-central.storage-download.googleapis.com/repos/central/data/' }
         mavenCentral()
         maven { url = 'https://jitpack.io' }
@@ -136,27 +136,46 @@ subprojects {
 //        exclude "LICENSE*"
 //    }
 
-    task sourcesJar(type: Jar) {
-        from sourceSets.main.allJava
-        archiveClassifier.set("sources")
+    task sourcesJar(type: Jar, dependsOn: classes) {
+        classifier = 'sources'
+        from sourceSets.main.allSource
     }
 
     task javadocJar(type: Jar, dependsOn: javadoc) {
-        archiveClassifier.set("javadoc")
+        classifier = 'javadoc'
         from javadoc.destinationDir
     }
 
-    publishing {
-        publications {
-            mavenAar(MavenPublication) {
-                from components.java
-                afterEvaluate {
-                    artifact javadocJar
-                    artifact sourcesJar
-                }
-            }
-        }
+    artifacts {
+        archives sourcesJar
+        //archives javadocJar
     }
+
+    java {
+        withSourcesJar()
+    }
+
+//    task sourcesJar(type: Jar) {
+//        from sourceSets.main.allJava
+//        archiveClassifier.set("sources")
+//    }
+//
+//    task javadocJar(type: Jar, dependsOn: javadoc) {
+//        archiveClassifier.set("javadoc")
+//        from javadoc.destinationDir
+//    }
+//
+//    publishing {
+//        publications {
+//            mavenAar(MavenPublication) {
+//                from components.java
+//                afterEvaluate {
+//                    artifact javadocJar
+//                    artifact sourcesJar
+//                }
+//            }
+//        }
+//    }
 
     compileKotlin {
         kotlinOptions {
