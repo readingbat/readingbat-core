@@ -58,7 +58,7 @@ class ChallengeGroup<T : Challenge>(
   private val branchName get() = languageGroup.branchName
   private val metrics get() = languageGroup.metrics
 
-  internal val parsedDescription by lazy { TextFormatter.renderText(description) }
+  internal val parsedDescription by lazy { MarkdownParser.toHtml(description) }
   internal val languageType get() = languageGroup.languageType
   internal val packageNameAsPath get() = packageName.replace(".", "/")
   internal var namePrefix = ""
