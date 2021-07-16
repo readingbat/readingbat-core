@@ -38,9 +38,9 @@ import com.github.readingbat.dsl.ChallengeGroup
 import com.github.readingbat.dsl.LanguageType.Java
 import com.github.readingbat.dsl.LanguageType.Kotlin
 import com.github.readingbat.dsl.LanguageType.Python
+import com.github.readingbat.dsl.MarkdownParser
 import com.github.readingbat.dsl.ReadingBatDslMarker
 import com.github.readingbat.dsl.ReturnType
-import com.github.readingbat.dsl.TextFormatter
 import com.github.readingbat.dsl.agentLaunchId
 import com.github.readingbat.dsl.isContentCachingEnabled
 import com.github.readingbat.dsl.isDbmsEnabled
@@ -88,7 +88,7 @@ sealed class Challenge(
   // Allow description updates only if not found in the Content.kt decl
   private val isDescriptionSetInDsl by lazy { description.isNotBlank() }
   internal val gitpodUrl by lazy { pathOf(repo.sourcePrefix, "blob/$branchName", srcPath, fqName) }
-  internal val parsedDescription by lazy { TextFormatter.renderText(description) }
+  internal val parsedDescription by lazy { MarkdownParser.toHtml(description) }
   internal val path by lazy { pathOf(languageName, groupName, challengeName) }
 
   private val languageGroup get() = challengeGroup.languageGroup
