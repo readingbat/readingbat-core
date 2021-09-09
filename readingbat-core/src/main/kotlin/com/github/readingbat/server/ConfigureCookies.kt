@@ -22,6 +22,7 @@ import com.github.readingbat.common.BrowserSession
 import com.github.readingbat.common.UserPrincipal
 import io.ktor.sessions.*
 import kotlin.collections.set
+import kotlin.time.Duration
 
 internal object ConfigureCookies {
 
@@ -40,20 +41,14 @@ internal object ConfigureCookies {
   }
 
   fun Sessions.Configuration.configureAuthCookie() {
-    cookie<UserPrincipal>(
-      // We set a cookie by this name on login.
-      name = AUTH_COOKIE
-      //,
-      // Stores session contents in memory...good for development only.
-      //storage = SessionStorageMemory()
-                         ) {
+    cookie<UserPrincipal>(name = AUTH_COOKIE) {
       cookie.path = "/" //CHALLENGE_ROOT + "/"
       cookie.httpOnly = true
 
       //if (production)
       //  cookie.secure = true
 
-      cookie.maxAgeInSeconds = 14L * 24 * 3600 // 14 days
+      cookie.maxAgeInSeconds = Duration.days(14).inWholeSeconds
 
       // CSRF protection in modern browsers. Make sure your important side-effect-y operations, like ordering,
       // uploads, and changing settings, use "unsafe" HTTP verbs like POST and PUT, not GET or HEAD.
