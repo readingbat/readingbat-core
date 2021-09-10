@@ -42,9 +42,9 @@ ext {
             css                    : "org.jetbrains:kotlin-css:$css_version",
             css_jvm                : "org.jetbrains:kotlin-css-jvm:$css_version",
 
-            //ktor_server_core       : "io.ktor:ktor-server-core:$ktor_version",
+            ktor_server_core       : "io.ktor:ktor-server-core:$ktor_version",
             ktor_server_cio        : "io.ktor:ktor-server-cio:$ktor_version",
-            //ktor_client_core       : "io.ktor:ktor-client-core:$ktor_version",
+            ktor_client_core       : "io.ktor:ktor-client-core:$ktor_version",
             ktor_client_cio        : "io.ktor:ktor-client-cio:$ktor_version",
 
             server_sessions        : "io.ktor:ktor-server-sessions:$ktor_version",
@@ -180,19 +180,25 @@ subprojects {
 //        }
 //    }
 
+    sourceSets {
+        all {
+            languageSettings {
+                optIn('kotlin.time.ExperimentalTime')
+                optIn('io.ktor.locations.KtorExperimentalLocationsAPI')
+                optIn('kotlinx.coroutines.ExperimentalCoroutinesApi')
+                optIn('kotlin.contracts.ExperimentalContracts')
+                optIn('kotlinx.serialization.ExperimentalSerializationApi')
+                optIn('kotlinx.coroutines.ObsoleteCoroutinesApi')
+                optIn('kotlin.ExperimentalStdlibApi')
+            }
+        }
+    }
+
     compileKotlin {
         kotlinOptions {
             useIR = true
             jvmTarget = '1.8'
-            freeCompilerArgs += ['-Xuse-experimental=kotlin.time.ExperimentalTime',
-                                 '-Xuse-experimental=io.ktor.locations.KtorExperimentalLocationsAPI',
-                                 '-Xuse-experimental=kotlinx.coroutines.ExperimentalCoroutinesApi',
-                                 '-Xuse-experimental=kotlin.contracts.ExperimentalContracts',
-                                 '-Xuse-experimental=kotlin.time.ExperimentalTime',
-                                 '-Xuse-experimental=kotlinx.serialization.ExperimentalSerializationApi',
-                                 '-Xuse-experimental=kotlinx.coroutines.ObsoleteCoroutinesApi',
-                                 '-Xuse-experimental=kotlin.ExperimentalStdlibApi',
-                                 '-XXLanguage:+InlineClasses']
+            //freeCompilerArgs += ['-XXLanguage:+InlineClasses']
         }
     }
 
@@ -200,14 +206,7 @@ subprojects {
         kotlinOptions {
             useIR = true
             jvmTarget = '1.8'
-            freeCompilerArgs += ['-Xuse-experimental=kotlin.time.ExperimentalTime',
-                                 '-Xuse-experimental=kotlinx.coroutines.ExperimentalCoroutinesApi',
-                                 '-Xuse-experimental=kotlin.contracts.ExperimentalContracts',
-                                 '-Xuse-experimental=kotlin.time.ExperimentalTime',
-                                 '-Xuse-experimental=kotlinx.serialization.ExperimentalSerializationApi',
-                                 '-Xuse-experimental=kotlinx.coroutines.ObsoleteCoroutinesApi',
-                                 '-Xuse-experimental=kotlin.ExperimentalStdlibApi',
-                                 '-XXLanguage:+InlineClasses']
+            //freeCompilerArgs += ['-XXLanguage:+InlineClasses']
         }
     }
 
