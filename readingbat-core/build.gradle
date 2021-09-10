@@ -38,9 +38,9 @@ dependencies {
     implementation libraries.css
     implementation libraries.css_jvm
 
-    implementation libraries.ktor_server_core
+    //implementation libraries.ktor_server_core
     implementation libraries.ktor_server_cio
-    implementation libraries.ktor_client_core
+    //implementation libraries.ktor_client_core
     implementation libraries.ktor_client_cio
 
     implementation libraries.server_sessions
@@ -55,7 +55,7 @@ dependencies {
 
     implementation libraries.exposed_core
     implementation libraries.exposed_jdbc
-    implementation libraries.jodatime
+    implementation libraries.exposed_jodatime
 
     implementation libraries.pgjdbc
     implementation libraries.socket

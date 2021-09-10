@@ -42,9 +42,9 @@ ext {
             css                    : "org.jetbrains:kotlin-css:$css_version",
             css_jvm                : "org.jetbrains:kotlin-css-jvm:$css_version",
 
-            ktor_server_core       : "io.ktor:ktor-server-core:$ktor_version",
+            //ktor_server_core       : "io.ktor:ktor-server-core:$ktor_version",
             ktor_server_cio        : "io.ktor:ktor-server-cio:$ktor_version",
-            ktor_client_core       : "io.ktor:ktor-client-core:$ktor_version",
+            //ktor_client_core       : "io.ktor:ktor-client-core:$ktor_version",
             ktor_client_cio        : "io.ktor:ktor-client-cio:$ktor_version",
 
             server_sessions        : "io.ktor:ktor-server-sessions:$ktor_version",
@@ -58,7 +58,7 @@ ext {
             hikari                 : "com.zaxxer:HikariCP:$hikari_version",
             exposed_core           : "org.jetbrains.exposed:exposed-core:$exposed_version",
             exposed_jdbc           : "org.jetbrains.exposed:exposed-jdbc:$exposed_version",
-            jodatime               : "org.jetbrains.exposed:exposed-jodatime:$exposed_version",
+            exposed_jodatime       : "org.jetbrains.exposed:exposed-jodatime:$exposed_version",
             pgjdbc                 : "com.impossibl.pgjdbc-ng:pgjdbc-ng-all:$pgjdbc_version",
             postgres               : "org.postgresql:postgresql:$postgres_version",
             socket                 : "com.google.cloud.sql:postgres-socket-factory:$cloud_version",
@@ -95,10 +95,11 @@ allprojects {
     apply plugin: 'org.jetbrains.kotlin.jvm'
     apply plugin: 'org.jetbrains.kotlin.plugin.serialization'
     apply plugin: 'com.github.ben-manes.versions'
-//    apply plugin: 'com.github.johnrengelman.shadow'
+    //apply plugin: 'com.github.johnrengelman.shadow'
     apply plugin: 'com.github.gmazzo.buildconfig'
 
     repositories {
+        mavenLocal()
         maven { url = 'https://kotlin.bintray.com/ktor' }
         maven { url = 'https://kotlin.bintray.com/kotlinx' }
         maven { url = 'https://kotlin.bintray.com/kotlin-js-wrappers' }
@@ -225,7 +226,7 @@ subprojects {
         indentSize = 2
         reporters = ['checkstyle', 'plain']
         experimentalRules = false
-        disabledRules = ["no-wildcard-imports", "indent",  "final-newline", "comment-spacing", "max-line-length", "no-multi-spaces"]
+        disabledRules = ["no-wildcard-imports", "indent", "final-newline", "comment-spacing", "max-line-length", "no-multi-spaces"]
     }
 }
 
