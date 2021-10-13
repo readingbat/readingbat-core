@@ -92,7 +92,7 @@ internal object ChallengeWs : KLogging() {
   init {
     logger.info { "Initializing ChallengeWs" }
 
-    timer("pinger", false, 0L, seconds(1).inWholeMilliseconds) {
+    timer("pinger", false, 0L, 1.seconds.inWholeMilliseconds) {
       for (sessionContext in answerWsConnections)
         if (sessionContext.enabled)
           try {
@@ -125,7 +125,7 @@ internal object ChallengeWs : KLogging() {
               }
             } catch (e: Throwable) {
               logger.error { "Exception in challenge ws writer: ${e.simpleClassName} ${e.message}" }
-              Thread.sleep(seconds(1).inWholeMilliseconds)
+              Thread.sleep(1.seconds.inWholeMilliseconds)
             }
           }
         }
@@ -153,7 +153,7 @@ internal object ChallengeWs : KLogging() {
             }
           } catch (e: Throwable) {
             logger.error { "Exception in dispatcher ${e.simpleClassName} ${e.message}" }
-            Thread.sleep(seconds(1).inWholeMilliseconds)
+            Thread.sleep(1.seconds.inWholeMilliseconds)
           }
         }
       }
@@ -189,7 +189,7 @@ internal object ChallengeWs : KLogging() {
             .mapNotNull { it as? Frame.Text }
             .collect {
               // Pause to show the "Connected" message on the client
-              delay(seconds(1))
+              delay(1.seconds)
               // This will enable the connected client to get msgs
               if (answerWsContext.targetName.isBlank())
                 answerWsContext.targetName = classTargetName(classCode, challengeMd5)

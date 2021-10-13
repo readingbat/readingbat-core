@@ -116,7 +116,7 @@ object ReadingBatServer : KLogging() {
             isAutoCommit = false
             transactionIsolation = "TRANSACTION_REPEATABLE_READ"
             maxLifetime =
-              minutes(Property.DBMS_MAX_LIFETIME_MINS.getRequiredProperty().toInt()).inWholeMilliseconds
+              Property.DBMS_MAX_LIFETIME_MINS.getRequiredProperty().toInt().minutes.inWholeMilliseconds
             validate()
           })
     )
@@ -264,7 +264,7 @@ fun Application.module() {
   val job = launch { readContentDsl(dslFileName, dslVariableName) }
 
   runBlocking {
-    val maxDelay = seconds(Property.STARTUP_DELAY_SECS.configValue(this@module, "30").toInt())
+    val maxDelay = Property.STARTUP_DELAY_SECS.configValue(this@module, "30").toInt().seconds
     logger.info { "Delaying start-up by max of $maxDelay" }
     measureTime {
       withTimeoutOrNull(maxDelay) {

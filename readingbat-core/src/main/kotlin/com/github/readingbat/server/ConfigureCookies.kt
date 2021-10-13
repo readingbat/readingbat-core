@@ -22,7 +22,7 @@ import com.github.readingbat.common.BrowserSession
 import com.github.readingbat.common.UserPrincipal
 import io.ktor.sessions.*
 import kotlin.collections.set
-import kotlin.time.Duration
+import kotlin.time.Duration.Companion.days
 
 internal object ConfigureCookies {
 
@@ -48,7 +48,7 @@ internal object ConfigureCookies {
       //if (production)
       //  cookie.secure = true
 
-      cookie.maxAgeInSeconds = Duration.days(14).inWholeSeconds
+      cookie.maxAgeInSeconds = 14.days.inWholeSeconds
 
       // CSRF protection in modern browsers. Make sure your important side-effect-y operations, like ordering,
       // uploads, and changing settings, use "unsafe" HTTP verbs like POST and PUT, not GET or HEAD.
