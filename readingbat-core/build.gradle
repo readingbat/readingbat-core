@@ -38,7 +38,7 @@ dependencies {
     implementation libraries.css
     implementation libraries.css_jvm
 
-    //implementation libraries.ktor_server_core
+    implementation libraries.ktor_server_core
     implementation libraries.ktor_server_cio
     implementation libraries.ktor_client_core
     implementation libraries.ktor_client_cio
