@@ -55,4 +55,4 @@ depends:
 
 # 6.9.1
 upgrade-wrapper:
-	./gradlew wrapper --gradle-version=7.3-rc-5 --distribution-type=bin
+	./gradlew wrapper --gradle-version=7.3 --distribution-type=bin
