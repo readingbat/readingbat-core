@@ -84,7 +84,7 @@ ext {
 allprojects {
     description = 'ReadingBat Core'
     group 'com.github.readingbat'
-    version '1.23.5'
+    version '1.23.6'
 
     //apply plugin: 'application'
     apply plugin: 'java-library'
