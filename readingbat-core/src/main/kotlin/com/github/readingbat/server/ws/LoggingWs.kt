@@ -136,7 +136,7 @@ internal object LoggingWs : KLogging() {
             }
           } catch (e: Throwable) {
             logger.error { "Exception in dispatcher ${e.simpleClassName} ${e.message}" }
-            Thread.sleep(seconds(1).inWholeMilliseconds)
+            Thread.sleep(1.seconds.inWholeMilliseconds)
           }
         }
       }
@@ -162,7 +162,7 @@ internal object LoggingWs : KLogging() {
             }
           } catch (e: Throwable) {
             logger.error { "Exception in dispatcher ${e.simpleClassName} ${e.message}" }
-            Thread.sleep(seconds(1).inWholeMilliseconds)
+            Thread.sleep(1.seconds.inWholeMilliseconds)
           }
         }
       }

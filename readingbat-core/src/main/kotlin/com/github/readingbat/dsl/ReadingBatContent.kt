@@ -153,8 +153,8 @@ class ReadingBatContent {
 
   @ReadingBatDslMarker
   fun <T : Challenge> include(languageGroup: LanguageGroup<T>, namePrefix: String = "") {
-    val ppp = languageList
-    val ppp2 = languageMap
+//    val langList = languageList
+//    val langMap = languageMap
 
     @Suppress("UNCHECKED_CAST")
     val langGroup = findLanguage(languageGroup.languageType) as LanguageGroup<T>

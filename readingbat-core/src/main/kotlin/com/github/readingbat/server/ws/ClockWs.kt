@@ -54,7 +54,7 @@ internal object ClockWs : KLogging() {
   }
 
   init {
-    timer("clock msg sender", false, 0L, seconds(1).inWholeMilliseconds) {
+    timer("clock msg sender", false, 0L, 1.seconds.inWholeMilliseconds) {
       for (sessionContext in wsConnections)
         try {
           val elapsed = sessionContext.start.elapsedNow().format()

@@ -75,9 +75,9 @@ internal object PasswordResetPage : KLogging() {
                 .map { it[0] as String to it[1] as DateTime }
                 .firstOrNull() ?: throw ResetPasswordException("Invalid reset id. Try again.")
 
-            seconds(Seconds.secondsBetween(idAndUpdate.second, now()).seconds)
+            Seconds.secondsBetween(idAndUpdate.second, now()).seconds.seconds
               .let { diff ->
-                if (diff >= minutes(15))
+                if (diff >= 15.minutes)
                   throw ResetPasswordException("Password reset must be completed within 15 mins ($diff). Try again.")
                 else
                   idAndUpdate.first

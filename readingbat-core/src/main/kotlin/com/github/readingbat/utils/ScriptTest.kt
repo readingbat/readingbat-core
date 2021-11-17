@@ -43,7 +43,7 @@ fun main() {
       launch {
         limiter.request {
           println("I am here $it")
-          delay(seconds(5))
+          delay(5.seconds)
         }
       }
     }

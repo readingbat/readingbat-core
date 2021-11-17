@@ -1,13 +1,13 @@
 plugins {
     id 'java'
     id 'application'
-    id 'org.jmailen.kotlinter' version "3.5.1" apply false
-    id 'org.jetbrains.kotlin.jvm' version '1.5.30' apply false
-    id 'org.jetbrains.kotlin.plugin.serialization' version '1.5.30' apply false
+    id 'org.jmailen.kotlinter' version "3.7.0" apply false
+    id 'org.jetbrains.kotlin.jvm' version '1.6.0' apply false
+    id 'org.jetbrains.kotlin.plugin.serialization' version '1.6.0' apply false
+    //id 'com.github.johnrengelman.shadow' version '7.1.0' apply false // gradle 7
     id "com.github.ben-manes.versions" version '0.39.0' apply false
-//    id 'com.github.johnrengelman.shadow' version '7.0.0' apply false
-    id 'com.github.gmazzo.buildconfig' version '3.0.2' apply false
-    id "org.flywaydb.flyway" version "7.14.0"
+    id 'com.github.gmazzo.buildconfig' version '3.0.3' apply false
+    id "org.flywaydb.flyway" version "8.0.4"
 }
 
 ext {
@@ -58,7 +58,7 @@ ext {
             hikari                 : "com.zaxxer:HikariCP:$hikari_version",
             exposed_core           : "org.jetbrains.exposed:exposed-core:$exposed_version",
             exposed_jdbc           : "org.jetbrains.exposed:exposed-jdbc:$exposed_version",
-            jodatime               : "org.jetbrains.exposed:exposed-jodatime:$exposed_version",
+            exposed_jodatime       : "org.jetbrains.exposed:exposed-jodatime:$exposed_version",
             pgjdbc                 : "com.impossibl.pgjdbc-ng:pgjdbc-ng-all:$pgjdbc_version",
             postgres               : "org.postgresql:postgresql:$postgres_version",
             socket                 : "com.google.cloud.sql:postgres-socket-factory:$cloud_version",
@@ -85,20 +85,21 @@ ext {
 allprojects {
     description = 'ReadingBat Core'
     group 'com.github.readingbat'
-    version '1.22.0'
+    version '1.23.0'
 
     apply plugin: 'application'
     apply plugin: 'java-library'
-    apply plugin: 'maven' // required for jitpack.io install
-    //apply plugin: 'maven-publish' // required for jitpack.io install
+    //apply plugin: 'maven' // required for jitpack.io install        // gradle 7
+    apply plugin: 'maven-publish' // required for jitpack.io install  // gradle 7
     apply plugin: 'org.jmailen.kotlinter'
     apply plugin: 'org.jetbrains.kotlin.jvm'
     apply plugin: 'org.jetbrains.kotlin.plugin.serialization'
     apply plugin: 'com.github.ben-manes.versions'
-//    apply plugin: 'com.github.johnrengelman.shadow'
+    //apply plugin: 'com.github.johnrengelman.shadow'  // gradle 7
     apply plugin: 'com.github.gmazzo.buildconfig'
 
     repositories {
+        mavenLocal()
         maven { url = 'https://kotlin.bintray.com/ktor' }
         maven { url = 'https://kotlin.bintray.com/kotlinx' }
         maven { url = 'https://kotlin.bintray.com/kotlin-js-wrappers' }
@@ -110,6 +111,23 @@ allprojects {
 
     sourceCompatibility = 1.8
     targetCompatibility = 1.8
+
+    // gradle 7
+    publishing {
+        publications {
+            mavenJava(MavenPublication) {
+                from components.java
+                versionMapping {
+                    usage('java-api') {
+                        fromResolutionOf('runtimeClasspath')
+                    }
+                    usage('java-runtime') {
+                        fromResolutionResult()
+                    }
+                }
+            }
+        }
+    }
 }
 
 subprojects {
@@ -120,6 +138,7 @@ subprojects {
 
         // These are required for the annotation args below
         implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutines_version"
+        implementation "org.jetbrains.kotlinx:kotlinx-serialization-core:$serialization_version"
         implementation "io.ktor:ktor-locations:$ktor_version"
 
         implementation "io.github.microutils:kotlin-logging:$logging_version"
@@ -178,29 +197,33 @@ subprojects {
 //        }
 //    }
 
+    sourceSets {
+        all {
+            languageSettings {
+                optIn('kotlin.time.ExperimentalTime')
+                optIn('io.ktor.locations.KtorExperimentalLocationsAPI')
+                optIn('kotlinx.coroutines.ExperimentalCoroutinesApi')
+                optIn('kotlin.contracts.ExperimentalContracts')
+                optIn('kotlinx.serialization.ExperimentalSerializationApi')
+                optIn('kotlinx.coroutines.ObsoleteCoroutinesApi')
+                optIn('kotlin.ExperimentalStdlibApi')
+            }
+        }
+    }
+
     compileKotlin {
         kotlinOptions {
-            useIR = true
+            //useIR = true
             jvmTarget = '1.8'
-            freeCompilerArgs += ['-Xuse-experimental=kotlin.time.ExperimentalTime',
-                                 '-Xuse-experimental=io.ktor.locations.KtorExperimentalLocationsAPI',
-                                 '-Xuse-experimental=kotlinx.coroutines.ExperimentalCoroutinesApi',
-                                 '-Xuse-experimental=kotlinx.coroutines.ObsoleteCoroutinesApi',
-                                 '-Xuse-experimental=kotlin.ExperimentalStdlibApi',
-                                 '-Xuse-experimental=kotlin.contracts.ExperimentalContracts',
-                                 '-XXLanguage:+InlineClasses']
+            //freeCompilerArgs += ['-XXLanguage:+InlineClasses']
         }
     }
 
     compileTestKotlin {
         kotlinOptions {
-            useIR = true
+            //useIR = true
             jvmTarget = '1.8'
-            freeCompilerArgs += ['-Xuse-experimental=kotlin.time.ExperimentalTime',
-                                 '-Xuse-experimental=kotlinx.coroutines.ExperimentalCoroutinesApi',
-                                 '-Xuse-experimental=kotlinx.coroutines.ObsoleteCoroutinesApi',
-                                 '-Xuse-experimental=kotlin.ExperimentalStdlibApi',
-                                 '-XXLanguage:+InlineClasses']
+            //freeCompilerArgs += ['-XXLanguage:+InlineClasses']
         }
     }
 
@@ -219,26 +242,9 @@ subprojects {
         indentSize = 2
         reporters = ['checkstyle', 'plain']
         experimentalRules = false
-        disabledRules = ["no-wildcard-imports", "indent",  "final-newline", "comment-spacing", "max-line-length", "no-multi-spaces"]
+        disabledRules = ["no-wildcard-imports", "indent", "final-newline", "comment-spacing", "max-line-length", "no-multi-spaces"]
     }
 }
-
-/*
- * Copyright © 2021 Paul Ambrose (pambrose@mac.com)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *       http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- */
 
 //dependencies {
 //    runtime libraries.postgres

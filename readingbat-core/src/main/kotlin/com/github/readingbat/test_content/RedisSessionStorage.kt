@@ -27,7 +27,7 @@ import kotlin.time.DurationUnit
 class RedisSessionStorage(
   val redis: Jedis,
   private val prefix: String = "session_",
-  private val ttl: Duration = seconds(3600)
+  private val ttl: Duration = 3600.seconds
 ) : SimplifiedSessionStorage() {
   private fun buildKey(id: String) = "$prefix$id"
 
@@ -36,7 +36,7 @@ class RedisSessionStorage(
     return try {
       redis[key]?.toByteArray(Charsets.UTF_8)
         .apply {
-          redis.expire(key, ttl.toDouble(DurationUnit.SECONDS).toInt()) // refresh
+          redis.expire(key, ttl.toDouble(DurationUnit.SECONDS).toLong()) // refresh
         }
     } catch (e: Exception) {
       e.printStackTrace()
@@ -51,7 +51,7 @@ class RedisSessionStorage(
     } else {
       try {
         redis.set(key, String(data))
-        redis.expire(key, ttl.toDouble(DurationUnit.SECONDS).toInt())
+        redis.expire(key, ttl.toDouble(DurationUnit.SECONDS).toLong())
       } catch (e: Exception) {
         e.printStackTrace()
       }

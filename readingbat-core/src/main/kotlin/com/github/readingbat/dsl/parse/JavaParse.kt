@@ -96,7 +96,7 @@ internal object JavaParse : KLogging() {
           }
           insideMain && prefixRegex.any { line.contains(it) } -> {
             val expr = line.substringBetween("(", ")")
-            exprIndent = max(0, prefixRegex.map { line.indexOf(it.pattern.substring(0, 6)) }.maxOrNull() ?: 0)
+            exprIndent = max(0, prefixRegex.maxOfOrNull { line.indexOf(it.pattern.substring(0, 6)) } ?: 0)
             val str = "".padStart(exprIndent) + "$varName.add($expr);"
             logger.debug { "Transformed:\n$line\nto:\n$str" }
             appendLine(str)

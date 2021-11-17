@@ -107,7 +107,7 @@ import kotlin.time.Duration
 @Suppress("unused")
 fun Route.routeTimeout(time: Duration, callback: Route.() -> Unit): Route {
   // With createChild, we create a child node for this received Route
-  val routeWithTimeout = this.createChild(object : RouteSelector(1.0) {
+  val routeWithTimeout = this.createChild(object : RouteSelector() {
     override fun evaluate(context: RoutingResolveContext, segmentIndex: Int): RouteSelectorEvaluation =
       RouteSelectorEvaluation.Constant
   })

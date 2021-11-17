@@ -675,7 +675,7 @@ class User {
           .select { UsersTable.email eq email.value }
           .map { (it[0] as String).toUser() }
           .firstOrNull()
-          .also { logger.info { "lookupUserByEmail() returned: ${it?.email ?: " ${email.value} not found"}" } }
+          .also { logger.info { "queryUserByEmail() returned: ${it?.email ?: " ${email.value} not found"}" } }
       }
   }
 }

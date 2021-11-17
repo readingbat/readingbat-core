@@ -254,23 +254,23 @@ internal object SystemConfigurationPage {
               table {
                 tr {
                   td { +"Active users in the last minute:" }
-                  td { +activeSessions(minutes(1)).toString() }
+                  td { +activeSessions(1.minutes).toString() }
                 }
                 tr {
                   td { +"Active users in the last 15 minutes:" }
-                  td { +activeSessions(minutes(15)).toString() }
+                  td { +activeSessions(15.minutes).toString() }
                 }
                 tr {
                   td { +"Active users in the last hour:" }
-                  td { +activeSessions(hours(1)).toString() }
+                  td { +activeSessions(1.hours).toString() }
                 }
                 tr {
                   td { +"Active users in the last 24 hours:" }
-                  td { +activeSessions(hours(24)).toString() }
+                  td { +activeSessions(24.hours).toString() }
                 }
                 tr {
                   td { +"Active users in the last week:" }
-                  td { +activeSessions(days(7)).toString() }
+                  td { +activeSessions(7.days).toString() }
                 }
               }
             }

@@ -1,5 +1,8 @@
 jdk:
   - openjdk11
+install:
+  - ./gradlew build :lib:publishToMavenLocal
+
 #before_install:
 #  - ./custom_setup.sh
 #install:

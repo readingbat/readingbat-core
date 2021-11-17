@@ -50,7 +50,7 @@ internal object RedisAdmin {
         allKeys.forEach { key ->
           val dump = redisFrom.dump(key)
           println("($cnt) Transferring key: $key - $dump")
-          redisTo.restore(key, 0, dump)
+          redisTo.restore(key, 0L, dump)
           cnt++
         }
       }

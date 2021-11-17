@@ -55,9 +55,9 @@ internal object Intercepts : KLogging() {
 
   @Suppress("unused")
   val timer =
-    timer("requestTimingMap admin", false, minutes(1).inWholeMilliseconds, minutes(1).inWholeMilliseconds) {
+    timer("requestTimingMap admin", false, 1.minutes.inWholeMilliseconds, 1.minutes.inWholeMilliseconds) {
       requestTimingMap
-        .filter { (_, start) -> start.elapsedNow() > hours(1) }
+        .filter { (_, start) -> start.elapsedNow() > 1.hours }
         .forEach { (callId, start) ->
           requestTimingMap.remove(callId)
             ?.also {
