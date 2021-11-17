@@ -84,10 +84,10 @@ ext {
 allprojects {
     description = 'ReadingBat Core'
     group 'com.github.readingbat'
-    version '1.23.4'
+    version '1.23.5'
 
     //apply plugin: 'application'
-    //apply plugin: 'java-library'
+    apply plugin: 'java-library'
     //apply plugin: 'maven' // required for jitpack.io install        // gradle 7
     apply plugin: 'maven-publish' // required for jitpack.io install  // gradle 7
     apply plugin: 'org.jmailen.kotlinter'
