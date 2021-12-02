@@ -140,7 +140,7 @@ internal fun addImports(code: String, variableName: String): String {
       .filter { code.contains("${it.javaObjectType.simpleName}(") }   // See if the class is referenced
       .map { "import ${it.javaObjectType.name}" }                           // Convert to import stmt
       .filterNot { code.contains(it) }                                      // Do not include if import already present
-      .joinToString("\n")                                         // Turn into String
+      .joinToString("\n")                                          // Turn into String
 
   val funcImports =
     listOf(::readingBatContent)
@@ -148,7 +148,7 @@ internal fun addImports(code: String, variableName: String): String {
       .filter { code.contains("${it.name}(") }  // See if the function is referenced
       .map { "import ${it.fqMethodName}" }            // Convert to import stmt
       .filterNot { code.contains(it) }                // Do not include is import already present
-      .joinToString("\n")                   // Turn into String
+      .joinToString("\n")                    // Turn into String
 
   val imports = listOf(classImports, funcImports).filter { it.isNotBlank() }.joinToString("\n")
   return """

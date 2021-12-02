@@ -6,7 +6,7 @@ plugins {
     id 'org.jetbrains.kotlin.plugin.serialization' version '1.6.0' apply false
     id 'com.github.gmazzo.buildconfig' version '3.0.3' apply false
     id "com.github.ben-manes.versions" version '0.39.0' apply false
-    id "org.flywaydb.flyway" version "8.0.5"
+    id "org.flywaydb.flyway" version "8.2.0"
 }
 
 ext {
@@ -84,9 +84,10 @@ ext {
 allprojects {
     description = 'ReadingBat Core'
     group 'com.github.readingbat'
-    version '1.23.8'
+    version '1.23.9'
 
     apply plugin: 'application'
+    apply plugin: 'java-library'  // gradle 7
     apply plugin: 'maven-publish' // required for jitpack.io install  // gradle 7
     apply plugin: 'org.jmailen.kotlinter'
     apply plugin: 'org.jetbrains.kotlin.jvm'
@@ -96,11 +97,7 @@ allprojects {
 
     repositories {
         mavenLocal()
-        maven { url = 'https://kotlin.bintray.com/ktor' }
-        maven { url = 'https://kotlin.bintray.com/kotlinx' }
-        maven { url = 'https://kotlin.bintray.com/kotlin-js-wrappers' }
         maven { url = 'https://maven.pkg.jetbrains.space/kotlin/p/kotlin/kotlin-js-wrappers' }
-        maven { url = 'https://maven-central.storage-download.googleapis.com/repos/central/data/' }
         mavenCentral()
         maven { url = 'https://jitpack.io' }
     }
