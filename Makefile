@@ -53,6 +53,5 @@ versioncheck:
 depends:
 	./gradlew dependencies
 
-# 6.9.1
 upgrade-wrapper:
 	./gradlew wrapper --gradle-version=7.3.1 --distribution-type=bin
