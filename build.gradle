@@ -141,15 +141,6 @@ subprojects {
         runtimeOnly "org.jetbrains.kotlin:kotlin-scripting-jsr223:$kotlin_version"
     }
 
-//    shadowJar {
-//        zip64 true
-//        mergeServiceFiles()
-//        exclude "META-INF/*.SF"
-//        exclude 'META-INF/*.DSA'
-//        exclude 'META-INF/*.RSA'
-//        exclude "LICENSE*"
-//    }
-
     task sourcesJar(type: Jar, dependsOn: classes) {
         classifier = 'sources'
         from sourceSets.main.allSource
@@ -168,28 +159,6 @@ subprojects {
     java {
         withSourcesJar()
     }
-
-//    task sourcesJar(type: Jar) {
-//        from sourceSets.main.allJava
-//        archiveClassifier.set("sources")
-//    }
-//
-//    task javadocJar(type: Jar, dependsOn: javadoc) {
-//        archiveClassifier.set("javadoc")
-//        from javadoc.destinationDir
-//    }
-//
-//    publishing {
-//        publications {
-//            mavenAar(MavenPublication) {
-//                from components.java
-//                afterEvaluate {
-//                    artifact javadocJar
-//                    artifact sourcesJar
-//                }
-//            }
-//        }
-//    }
 
     compileKotlin {
         kotlinOptions {
