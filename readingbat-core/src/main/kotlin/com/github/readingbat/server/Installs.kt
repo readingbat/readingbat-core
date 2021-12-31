@@ -42,17 +42,18 @@ import com.github.readingbat.server.ConfigureFormAuth.configureFormAuth
 import com.github.readingbat.server.Email.Companion.UNKNOWN_EMAIL
 import com.github.readingbat.server.ReadingBatServer.serverSessionId
 import com.github.readingbat.server.ServerUtils.fetchEmailFromCache
-import io.ktor.application.*
-import io.ktor.auth.*
-import io.ktor.features.*
 import io.ktor.http.*
 import io.ktor.http.HttpHeaders.Location
 import io.ktor.http.HttpStatusCode.Companion.Found
-import io.ktor.http.cio.websocket.*
-import io.ktor.locations.Locations
-import io.ktor.request.*
+import io.ktor.server.application.*
+import io.ktor.server.auth.*
 import io.ktor.server.engine.*
-import io.ktor.sessions.*
+import io.ktor.server.locations.Locations
+import io.ktor.server.logging.*
+import io.ktor.server.plugins.*
+import io.ktor.server.request.*
+import io.ktor.server.sessions.*
+import io.ktor.server.websocket.*
 import io.ktor.websocket.*
 import mu.KLogging
 import org.slf4j.event.Level
@@ -173,45 +174,45 @@ object Installs : KLogging() {
 
     install(StatusPages) {
 
-      exception<InvalidRequestException> { cause ->
+      exception<InvalidRequestException> { call: ApplicationCall, cause ->
         logger.info { "InvalidRequestException caught: ${cause.message}" }
-        respondWith {
+        call.respondWith {
           invalidRequestPage(call.request.uri, cause.message ?: UNKNOWN)
         }
       }
 
-      exception<IllegalStateException> { cause ->
+      exception<IllegalStateException> { call, cause ->
         logger.info { "IllegalStateException caught: ${cause.message}" }
-        respondWith {
+        call.respondWith {
           errorPage()
         }
       }
 
-      exception<RedisUnavailableException> { cause ->
+      exception<RedisUnavailableException> { call, cause ->
         logger.info(cause) { "RedisUnavailableException caught: ${cause.message}" }
-        respondWith {
+        call.respondWith {
           dbmsDownPage()
         }
       }
 
       // Catch all
-      exception<Throwable> { cause ->
+      exception<Throwable> { call, cause ->
         logger.warn(cause) { "Throwable caught: ${cause.simpleClassName}" }
-        respondWith {
+        call.respondWith {
           errorPage()
         }
       }
 
-      status(HttpStatusCode.NotFound) {
+      status(HttpStatusCode.NotFound) { call, cause ->
         //call.respond(TextContent("${it.value} ${it.description}", Plain.withCharset(UTF_8), it))
-        respondWith {
+        call.respondWith {
           notFoundPage(call.request.uri.replaceAfter("?", "").replace("?", ""))
         }
       }
     }
 
     if (!production) {
-      install(ShutDownUrl.ApplicationCallFeature) {
+      install(ShutDownUrl.ApplicationCallPlugin) {
         // The URL that will be intercepted (you can also use the application.conf's ktor.deployment.shutdown.url key)
         shutDownUrl = "/ktor/application/shutdown"
         // A function that will be executed to get the exit code of the process

@@ -20,7 +20,7 @@ package com.github.readingbat.server
 import com.github.readingbat.common.AuthName.AUTH_COOKIE
 import com.github.readingbat.common.BrowserSession
 import com.github.readingbat.common.UserPrincipal
-import io.ktor.sessions.*
+import io.ktor.server.sessions.*
 import kotlin.collections.set
 import kotlin.time.Duration.Companion.days
 

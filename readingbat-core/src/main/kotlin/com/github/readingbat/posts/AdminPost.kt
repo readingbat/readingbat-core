@@ -29,9 +29,9 @@ import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.isProduction
 import com.github.readingbat.pages.AdminPage.adminDataPage
 import com.github.readingbat.server.PipelineCall
-import io.ktor.application.*
-import io.ktor.request.*
-import io.ktor.sessions.*
+import io.ktor.server.application.*
+import io.ktor.server.request.*
+import io.ktor.server.sessions.*
 import redis.clients.jedis.Jedis
 
 internal object AdminPost {

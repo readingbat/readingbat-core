@@ -103,8 +103,8 @@ import com.github.readingbat.server.ServerUtils.queryParam
 import com.github.readingbat.server.SessionChallengeInfoTable
 import com.github.readingbat.server.UserChallengeInfoTable
 import com.pambrose.common.exposed.get
-import io.ktor.application.*
 import io.ktor.http.ContentType.Text.CSS
+import io.ktor.server.application.*
 import kotlinx.html.*
 import kotlinx.html.Entities.nbsp
 import kotlinx.html.ScriptType.textJavaScript

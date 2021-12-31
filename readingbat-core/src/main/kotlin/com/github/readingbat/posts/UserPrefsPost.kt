@@ -42,10 +42,10 @@ import com.github.readingbat.posts.CreateAccountPost.checkPassword
 import com.github.readingbat.server.Password.Companion.getPassword
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.UsersTable
-import io.ktor.application.*
 import io.ktor.http.*
-import io.ktor.request.*
-import io.ktor.sessions.*
+import io.ktor.server.application.*
+import io.ktor.server.request.*
+import io.ktor.server.sessions.*
 import mu.KLogging
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.update

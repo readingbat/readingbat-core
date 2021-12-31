@@ -35,7 +35,7 @@ import com.github.readingbat.pages.PageUtils.headDefault
 import com.github.readingbat.pages.PageUtils.loadPingdomScript
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
-import io.ktor.application.*
+import io.ktor.server.application.*
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 

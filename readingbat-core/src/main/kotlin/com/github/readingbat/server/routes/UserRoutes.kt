@@ -96,11 +96,11 @@ import com.github.readingbat.server.ServerUtils.respondWithRedisCheck
 import com.github.readingbat.server.ServerUtils.respondWithSuspendingRedirect
 import com.github.readingbat.server.ServerUtils.respondWithSuspendingRedisCheck
 import com.github.readingbat.server.routes.ResourceContent.getResourceAsText
-import io.ktor.application.*
 import io.ktor.http.*
 import io.ktor.http.ContentType.Text.CSS
-import io.ktor.routing.*
-import io.ktor.sessions.*
+import io.ktor.server.application.*
+import io.ktor.server.routing.*
+import io.ktor.server.sessions.*
 import kotlinx.coroutines.withTimeout
 import kotlin.time.Duration
 
@@ -113,7 +113,7 @@ fun Route.routeTimeout(time: Duration, callback: Route.() -> Unit): Route {
   })
 
   // Intercepts calls from this route at the features step
-  routeWithTimeout.intercept(ApplicationCallPipeline.Features) {
+  routeWithTimeout.intercept(ApplicationCallPipeline.Plugins) {
     withTimeout(time.inWholeMilliseconds) {
       proceed()
     }
