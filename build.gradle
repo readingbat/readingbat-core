@@ -5,8 +5,8 @@ plugins {
     id 'org.jetbrains.kotlin.plugin.serialization' version '1.6.10' apply false
     id 'org.jmailen.kotlinter' version "3.8.0" apply false
     id 'com.github.gmazzo.buildconfig' version '3.0.3' apply false
-    id "com.github.ben-manes.versions" version '0.40.0' apply false
-    id "org.flywaydb.flyway" version "8.3.0"
+    id "com.github.ben-manes.versions" version '0.41.0' apply false
+    id "org.flywaydb.flyway" version "8.4.0"
 }
 
 ext {
@@ -171,7 +171,8 @@ subprojects {
                                  '-Xopt-in=kotlinx.coroutines.ObsoleteCoroutinesApi',
                                  '-Xopt-in=kotlin.ExperimentalStdlibApi',
                                  '-Xopt-in=io.ktor.server.locations.KtorExperimentalLocationsAPI',
-                                 '-Xopt-in=kotlinx.coroutines.InternalCoroutinesApi']
+                                 '-Xopt-in=kotlinx.coroutines.InternalCoroutinesApi',
+                                 '-Xopt-in=kotlinx.coroutines.DelicateCoroutinesApi']
         }
     }
 

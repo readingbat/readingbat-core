@@ -57,7 +57,7 @@ class EndpointTest : StringSpec(
         getUrl(HELP_ENDPOINT) { response shouldHaveStatus OK }
         getUrl(PRIVACY_ENDPOINT) { response shouldHaveStatus OK }
 
-        getUrl(pathOf(Python.contentRoot, GROUP_NAME, "boolean_array_test2")) {
+        getUrl(pathOf(Python.contentRoot, GROUP_NAME, "boolean_array_test_WRONG_NAME")) {
           response.content shouldContain CHALLENGE_NOT_FOUND
         }
 

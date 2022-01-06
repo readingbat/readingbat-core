@@ -47,13 +47,13 @@ import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.newSingleThreadContext
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import mu.KLogging
 import java.util.Collections.synchronizedSet
-import java.util.concurrent.Executors.newSingleThreadExecutor
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeSource
 import kotlin.time.measureTime
@@ -71,87 +71,85 @@ internal object LoggingWs : KLogging() {
   }
 
   fun initThreads(contentSrc: () -> ReadingBatContent, resetContentFunc: (String) -> Unit) {
-    newSingleThreadExecutor()
-      .submit {
-        while (true) {
-          try {
-            runBlocking {
-              adminCommandChannel
-                .openSubscription()
-                .consumeAsFlow()
-                .onStart { logger.info { "Starting to read admin command channel values" } }
-                .onCompletion { logger.info { "Finished reading admin command channel values" } }
-                .collect { data ->
-                  redisPool?.withNonNullRedisPool { redis ->
-                    val logToRedis = { s: String -> redis.publishLog(s, data.logId) }
+    newSingleThreadContext("logging-ws-adminCommandChannel").executor.execute {
+      while (true) {
+        try {
+          runBlocking {
+            adminCommandChannel
+              .openSubscription()
+              .consumeAsFlow()
+              .onStart { logger.info { "Starting to read admin command channel values" } }
+              .onCompletion { logger.info { "Finished reading admin command channel values" } }
+              .collect { data ->
+                redisPool?.withNonNullRedisPool { redis ->
+                  val logToRedis = { s: String -> redis.publishLog(s, data.logId) }
 
-                    when (data.command) {
-                      RESET_CONTENT_DSL -> {
-                        measureTime { resetContentFunc.invoke(data.logId) }
-                          .also { dur ->
-                            "DSL content reset in $dur"
-                              .also {
-                                logger.info { it }
-                                logToRedis(it)
-                              }
-                          }
-                      }
-                      RESET_CACHE -> {
-                        val content = contentSrc()
-                        val cnt = content.functionInfoMap.size
-                        content.clearSourcesMap()
-                          .let {
-                            "Challenge cache reset -- $cnt challenges removed"
-                              .also {
-                                logger.info { it }
-                                logToRedis(it)
-                              }
-                          }
-                      }
-                      LOAD_CHALLENGE -> {
-                        val type = Json.decodeFromString<LoadChallengeType>(data.jsonArgs)
-                        type.languageTypes
-                          .forEach { langType ->
-                            content.get().loadChallenges(langType, logToRedis, "", false)
-                              .also {
-                                logger.info { it }
-                                logToRedis(it)
-                              }
-                          }
-                      }
-                      RUN_GC -> {
-                        measureTime { System.gc() }
-                          .also { dur ->
-                            "Garbage collector invoked for $dur"
-                              .also {
-                                logger.info { it }
-                                logToRedis(it)
-                              }
-                          }
-                      }
+                  when (data.command) {
+                    RESET_CONTENT_DSL -> {
+                      measureTime { resetContentFunc.invoke(data.logId) }
+                        .also { dur ->
+                          "DSL content reset in $dur"
+                            .also {
+                              logger.info { it }
+                              logToRedis(it)
+                            }
+                        }
                     }
-                  } ?: throw RedisUnavailableException("adminCommandChannel")
-                }
-            }
-          } catch (e: Throwable) {
-            logger.error { "Exception in dispatcher ${e.simpleClassName} ${e.message}" }
-            Thread.sleep(1.seconds.inWholeMilliseconds)
+                    RESET_CACHE -> {
+                      val content = contentSrc()
+                      val cnt = content.functionInfoMap.size
+                      content.clearSourcesMap()
+                        .let {
+                          "Challenge cache reset -- $cnt challenges removed"
+                            .also {
+                              logger.info { it }
+                              logToRedis(it)
+                            }
+                        }
+                    }
+                    LOAD_CHALLENGE -> {
+                      val type = Json.decodeFromString<LoadChallengeType>(data.jsonArgs)
+                      type.languageTypes
+                        .forEach { langType ->
+                          content.get().loadChallenges(langType, logToRedis, "", false)
+                            .also {
+                              logger.info { it }
+                              logToRedis(it)
+                            }
+                        }
+                    }
+                    RUN_GC -> {
+                      measureTime { System.gc() }
+                        .also { dur ->
+                          "Garbage collector invoked for $dur"
+                            .also {
+                              logger.info { it }
+                              logToRedis(it)
+                            }
+                        }
+                    }
+                  }
+                } ?: throw RedisUnavailableException("adminCommandChannel")
+              }
           }
+        } catch (e: Throwable) {
+          logger.error { "Exception in dispatcher ${e.simpleClassName} ${e.message}" }
+          Thread.sleep(1.seconds.inWholeMilliseconds)
         }
       }
+    }
 
-    newSingleThreadExecutor()
-      .submit {
-        while (true) {
-          try {
-            runBlocking {
-              logWsReadChannel
-                .openSubscription()
-                .consumeAsFlow()
-                .onStart { logger.info { "Starting to read log ws channel values" } }
-                .onCompletion { logger.info { "Finished reading log ws channel values" } }
-                .collect { data ->
-                  val json = Json.encodeToString(data.text)
+    newSingleThreadContext("logging-ws-logWsReadChannel").executor.execute {
+      while (true) {
+        try {
+          runBlocking {
+            logWsReadChannel
+              .openSubscription()
+              .consumeAsFlow()
+              .onStart { logger.info { "Starting to read log ws channel values" } }
+              .onCompletion { logger.info { "Finished reading log ws channel values" } }
+              .collect { data ->
+                val json = Json.encodeToString(data.text)
                   logWsConnections
                     .filter { it.logId == data.logId }
                     .forEach {
@@ -164,7 +162,7 @@ internal object LoggingWs : KLogging() {
             Thread.sleep(1.seconds.inWholeMilliseconds)
           }
         }
-      }
+    }
   }
 
   fun Routing.loggingWsEndpoint(metrics: Metrics) {
