@@ -174,40 +174,30 @@ object Installs : KLogging() {
 
     install(StatusPages) {
 
-      exception<InvalidRequestException> { call: ApplicationCall, cause ->
-        logger.info { "InvalidRequestException caught: ${cause.message}" }
-        call.respondWith {
-          invalidRequestPage(call.request.uri, cause.message ?: UNKNOWN)
-        }
-      }
-
-      exception<IllegalStateException> { call, cause ->
-        logger.info { "IllegalStateException caught: ${cause.message}" }
-        call.respondWith {
-          errorPage()
-        }
-      }
-
-      exception<RedisUnavailableException> { call, cause ->
-        logger.info(cause) { "RedisUnavailableException caught: ${cause.message}" }
-        call.respondWith {
-          dbmsDownPage()
-        }
-      }
-
-      // Catch all
       exception<Throwable> { call, cause ->
-        logger.warn(cause) { "Throwable caught: ${cause.simpleClassName}" }
-        call.respondWith {
-          errorPage()
+        when (cause) {
+          is InvalidRequestException -> {
+            logger.info { "InvalidRequestException caught: ${cause.message}" }
+            call.respondWith { invalidRequestPage(call.request.uri, cause.message ?: UNKNOWN) }
+          }
+          is RedisUnavailableException -> {
+            logger.info(cause) { "RedisUnavailableException caught: ${cause.message}" }
+            call.respondWith { dbmsDownPage() }
+          }
+          is IllegalStateException -> {
+            logger.info { "IllegalStateException caught: ${cause.message}" }
+            call.respondWith { errorPage() }
+          }
+          else -> {
+            logger.warn(cause) { "Throwable caught: ${cause.simpleClassName}" }
+            call.respondWith { errorPage() }
+          }
         }
       }
 
       status(HttpStatusCode.NotFound) { call, cause ->
         //call.respond(TextContent("${it.value} ${it.description}", Plain.withCharset(UTF_8), it))
-        call.respondWith {
-          notFoundPage(call.request.uri.replaceAfter("?", "").replace("?", ""))
-        }
+        call.respondWith { notFoundPage(call.request.uri.replaceAfter("?", "").replace("?", "")) }
       }
     }
 
