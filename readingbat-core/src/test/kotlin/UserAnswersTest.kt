@@ -36,9 +36,10 @@ import io.ktor.server.testing.*
 class UserAnswersTest : StringSpec(
   {
     "Test user answers" {
-      val testContent = readTestContent()
+      testApplication {
+        val testContent = readTestContent()
 
-      withTestApplication({ testModule(testContent) }) {
+        application { testModule(testContent) }
 
         testContent.pythonChallenge(GROUP_NAME, "boolean_array_test") {
           answerFor(0) shouldNotHaveAnswer false
@@ -67,9 +68,11 @@ class UserAnswersTest : StringSpec(
     }
 
     "Test correct answers" {
-      val testContent = readTestContent()
+      testApplication {
+        val testContent = readTestContent()
 
-      withTestApplication({ testModule(testContent) }) {
+        application { testModule(testContent) }
+
         testContent
           .forEachLanguage {
             forEachGroup {

@@ -191,7 +191,7 @@ class ReadingBatContent {
                         val url = pathOf(prefix, CONTENT, challenge.path)
                         logger.info { "Fetching: $url" }
                         get(url, setUp = { header(NO_TRACK_HEADER, "") }) { response ->
-                          val body = response.readText()
+                          val body = response.bodyAsText()
                           logger.info { "Response: ${response.status} ${body.length} chars" }
                           cnt.incrementAndGet()
                         }

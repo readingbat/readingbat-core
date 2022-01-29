@@ -31,8 +31,8 @@ import com.github.readingbat.server.ws.ChallengeWs.challengeWsEndpoint
 import com.github.readingbat.server.ws.ClassSummaryWs.classSummaryWsEndpoint
 import com.github.readingbat.server.ws.LoggingWs.loggingWsEndpoint
 import com.github.readingbat.server.ws.StudentSummaryWs.studentSummaryWsEndpoint
-import io.ktor.routing.*
-import io.ktor.websocket.*
+import io.ktor.server.routing.*
+import io.ktor.server.websocket.*
 import mu.KLogging
 
 object WsCommon : KLogging() {

@@ -45,9 +45,9 @@ import com.github.readingbat.dsl.LanguageType.Python
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.isProduction
 import com.github.readingbat.pages.HelpAndLogin.helpAndLogin
-import io.ktor.application.*
 import io.ktor.http.ContentType.Text.CSS
-import io.ktor.routing.*
+import io.ktor.server.application.*
+import io.ktor.server.routing.*
 import io.ktor.util.pipeline.*
 import kotlinx.html.*
 import kotlinx.html.Entities.nbsp

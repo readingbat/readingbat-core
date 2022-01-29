@@ -42,12 +42,12 @@ import com.github.readingbat.pages.LanguageGroupPage.languageGroupPage
 import com.github.readingbat.pages.PlaygroundPage.playgroundPage
 import com.github.readingbat.server.ServerUtils.fetchUser
 import com.github.readingbat.server.routes.AdminRoutes.assignBrowserSession
-import io.ktor.auth.*
 import io.ktor.http.*
-import io.ktor.locations.*
-import io.ktor.routing.*
+import io.ktor.server.auth.*
+import io.ktor.server.locations.*
+import io.ktor.server.routing.*
 import kotlinx.serialization.Serializable
-import io.ktor.locations.post as locationsPost
+import io.ktor.server.locations.post as locationsPost
 
 object Locations {
   private const val trueStr = true.toString()

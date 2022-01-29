@@ -123,7 +123,7 @@ class GeoInfo(val requireDbmsLookUp: Boolean, val dbmsId: Long, val remoteHost: 
         KtorDsl.httpClient { client ->
           val apiKey = EnvVar.IPGEOLOCATION_KEY.getRequiredEnv()
           client.get("https://api.ipgeolocation.io/ipgeo?apiKey=$apiKey&ip=$ipAddress") { response ->
-            val json = response.readText()
+            val json = response.bodyAsText()
             GeoInfo(true, -1, ipAddress, json).apply { logger.info { "API GEO info for $ipAddress: ${summary()}" } }
           }
         }

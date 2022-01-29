@@ -70,7 +70,7 @@ import com.github.readingbat.server.LanguageName
 import com.github.readingbat.server.LanguageName.Companion.EMPTY_LANGUAGE
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
-import io.ktor.application.*
+import io.ktor.server.application.*
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 import mu.KLogging

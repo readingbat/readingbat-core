@@ -38,6 +38,7 @@ import com.github.readingbat.server.ws.PubSubCommandsWs.PubSubTopic.ADMIN_COMMAN
 import com.github.readingbat.server.ws.PubSubCommandsWs.PubSubTopic.LIKE_DISLIKE
 import com.github.readingbat.server.ws.PubSubCommandsWs.PubSubTopic.LOG_MESSAGE
 import com.github.readingbat.server.ws.PubSubCommandsWs.PubSubTopic.USER_ANSWERS
+import kotlinx.coroutines.newSingleThreadContext
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
@@ -47,7 +48,6 @@ import redis.clients.jedis.Jedis
 import redis.clients.jedis.JedisPubSub
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import java.util.concurrent.Executors.newSingleThreadExecutor
 import kotlin.time.Duration.Companion.seconds
 
 internal object PubSubCommandsWs : KLogging() {
@@ -95,50 +95,49 @@ internal object PubSubCommandsWs : KLogging() {
   }
 
   fun initThreads() {
-    newSingleThreadExecutor()
-      .submit {
-        val pubSub =
-          object : JedisPubSub() {
-            override fun onMessage(channel: String?, message: String?) {
-              if (channel.isNotNull() && message.isNotNull())
-                runBlocking {
-                  when (enumValueOf<PubSubTopic>(channel)) {
-                    ADMIN_COMMAND -> {
-                      val data = Json.decodeFromString<AdminCommandData>(message)
-                      adminCommandChannel.send(data)
-                    }
-                    USER_ANSWERS,
-                    LIKE_DISLIKE -> {
-                      val data = Json.decodeFromString<ChallengeAnswerData>(message)
-                      multiServerWsReadChannel.send(data)
-                    }
-                    LOG_MESSAGE -> {
-                      val data = Json.decodeFromString<LogData>(message)
-                      logWsReadChannel.send(data)
-                    }
-                  }
+    val pubSub =
+      object : JedisPubSub() {
+        override fun onMessage(channel: String?, message: String?) {
+          if (channel.isNotNull() && message.isNotNull())
+            runBlocking {
+              when (enumValueOf<PubSubTopic>(channel)) {
+                ADMIN_COMMAND -> {
+                  val data = Json.decodeFromString<AdminCommandData>(message)
+                  adminCommandChannel.send(data)
                 }
+                USER_ANSWERS,
+                LIKE_DISLIKE -> {
+                  val data = Json.decodeFromString<ChallengeAnswerData>(message)
+                  multiServerWsReadChannel.send(data)
+                }
+                LOG_MESSAGE -> {
+                  val data = Json.decodeFromString<LogData>(message)
+                  logWsReadChannel.send(data)
+                }
+              }
             }
+        }
 
-            override fun onSubscribe(channel: String?, subscribedChannels: Int) {
-              logger.info { "Subscribed to channel: $channel [$subscribedChannels]" }
-            }
+        override fun onSubscribe(channel: String?, subscribedChannels: Int) {
+          logger.info { "Subscribed to channel: $channel [$subscribedChannels]" }
+        }
 
-            override fun onUnsubscribe(channel: String?, subscribedChannels: Int) {
-              logger.info { "Unsubscribed from channel: $channel [$subscribedChannels]" }
-            }
-          }
-
-        while (true) {
-          try {
-            redisPool?.withNonNullRedisPool { redis ->
-              redis.subscribe(pubSub, *PubSubTopic.values().map { it.name }.toTypedArray())
-            } ?: throw RedisUnavailableException("pubsubWs subscriber")
-          } catch (e: Throwable) {
-            logger.error(e) { "Exception in pubsubWs subscriber ${e.simpleClassName} ${e.message}" }
-            Thread.sleep(1.seconds.inWholeMilliseconds)
-          }
+        override fun onUnsubscribe(channel: String?, subscribedChannels: Int) {
+          logger.info { "Unsubscribed from channel: $channel [$subscribedChannels]" }
         }
       }
+
+    newSingleThreadContext("pubsubcommands-ws-redis").executor.execute {
+      while (true) {
+        try {
+          redisPool?.withNonNullRedisPool { redis ->
+            redis.subscribe(pubSub, *PubSubTopic.values().map { it.name }.toTypedArray())
+          } ?: throw RedisUnavailableException("pubsubWs subscriber")
+        } catch (e: Throwable) {
+          logger.error(e) { "Exception in pubsubWs subscriber ${e.simpleClassName} ${e.message}" }
+          Thread.sleep(1.seconds.inWholeMilliseconds)
+        }
+      }
+    }
   }
 }

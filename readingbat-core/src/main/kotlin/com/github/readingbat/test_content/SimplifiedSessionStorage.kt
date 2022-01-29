@@ -17,7 +17,7 @@
 
 package com.github.readingbat.test_content
 
-import io.ktor.sessions.*
+import io.ktor.server.sessions.*
 import io.ktor.utils.io.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

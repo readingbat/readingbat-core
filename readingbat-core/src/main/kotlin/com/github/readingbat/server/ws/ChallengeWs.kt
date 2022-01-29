@@ -38,25 +38,24 @@ import com.github.readingbat.server.ws.WsCommon.CHALLENGE_MD5
 import com.github.readingbat.server.ws.WsCommon.CLASS_CODE
 import com.github.readingbat.server.ws.WsCommon.closeChannels
 import com.github.readingbat.server.ws.WsCommon.validateContext
-import io.ktor.http.cio.websocket.*
-import io.ktor.http.cio.websocket.CloseReason.Codes.*
-import io.ktor.routing.*
+import io.ktor.server.routing.*
+import io.ktor.server.websocket.*
 import io.ktor.websocket.*
+import io.ktor.websocket.CloseReason.Codes.*
 import kotlinx.coroutines.channels.BroadcastChannel
 import kotlinx.coroutines.channels.Channel.Factory.BUFFERED
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.newSingleThreadContext
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Required
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import mu.KLogging
 import java.util.Collections.synchronizedSet
-import java.util.concurrent.Executors.newSingleThreadExecutor
 import kotlin.concurrent.timer
 import kotlin.math.max
 import kotlin.time.Duration.Companion.seconds
@@ -107,56 +106,54 @@ internal object ChallengeWs : KLogging() {
     }
 
     if (isMultiServerEnabled() && isRedisEnabled()) {
-      newSingleThreadExecutor()
-        .submit {
-          while (true) {
-            try {
-              runBlocking {
-                redisPool?.withSuspendingNonNullRedisPool { redis ->
-                  multiServerWsWriteChannel
-                    .openSubscription()
-                    .consumeAsFlow()
-                    .onStart { logger.info { "Starting to read multi-server writer ws channel values" } }
-                    .onCompletion { logger.info { "Finished reading multi-server writer ws channel values" } }
-                    .collect { data ->
-                      redis.publish(data.pubSubTopic.name, data.toJson())
-                    }
-                } ?: throw RedisUnavailableException("multiServerWriteChannel")
-              }
-            } catch (e: Throwable) {
-              logger.error { "Exception in challenge ws writer: ${e.simpleClassName} ${e.message}" }
-              Thread.sleep(1.seconds.inWholeMilliseconds)
-            }
-          }
-        }
-    }
-
-    newSingleThreadExecutor()
-      .submit {
+      newSingleThreadContext("multiServerWsWriteChannel").executor.execute {
         while (true) {
           try {
             runBlocking {
-              (if (isMultiServerEnabled()) multiServerWsReadChannel else singleServerWsChannel)
-                .openSubscription()
-                .consumeAsFlow()
-                .onStart { logger.info { "Starting to read challenge ws channel values" } }
-                .onCompletion { logger.info { "Finished reading challenge ws channel values" } }
-                .collect { data ->
-                  answerWsConnections
-                    .filter { it.targetName == data.target }
-                    .forEach {
-                      it.metrics.wsStudentAnswerResponseCount.labels(agentLaunchId())?.inc()
-                      it.wsSession.outgoing.send(Frame.Text(data.jsonArgs))
-                      logger.debug { "Sent $data ${answerWsConnections.size}" }
-                    }
-                }
+              redisPool?.withSuspendingNonNullRedisPool { redis ->
+                multiServerWsWriteChannel
+                  .openSubscription()
+                  .consumeAsFlow()
+                  .onStart { logger.info { "Starting to read multi-server writer ws channel values" } }
+                  .onCompletion { logger.info { "Finished reading multi-server writer ws channel values" } }
+                  .collect { data ->
+                    redis.publish(data.pubSubTopic.name, data.toJson())
+                  }
+              } ?: throw RedisUnavailableException("multiServerWriteChannel")
             }
           } catch (e: Throwable) {
-            logger.error { "Exception in dispatcher ${e.simpleClassName} ${e.message}" }
+            logger.error { "Exception in challenge ws writer: ${e.simpleClassName} ${e.message}" }
             Thread.sleep(1.seconds.inWholeMilliseconds)
           }
         }
       }
+    }
+
+    newSingleThreadContext("answerWsConnections").executor.execute {
+      while (true) {
+        try {
+          runBlocking {
+            (if (isMultiServerEnabled()) multiServerWsReadChannel else singleServerWsChannel)
+              .openSubscription()
+              .consumeAsFlow()
+              .onStart { logger.info { "Starting to read challenge ws channel values" } }
+              .onCompletion { logger.info { "Finished reading challenge ws channel values" } }
+              .collect { data ->
+                answerWsConnections
+                  .filter { it.targetName == data.target }
+                  .forEach {
+                    it.metrics.wsStudentAnswerResponseCount.labels(agentLaunchId())?.inc()
+                    it.wsSession.outgoing.send(Frame.Text(data.jsonArgs))
+                    logger.debug { "Sent $data ${answerWsConnections.size}" }
+                  }
+              }
+          }
+        } catch (e: Throwable) {
+          logger.error { "Exception in dispatcher ${e.simpleClassName} ${e.message}" }
+          Thread.sleep(1.seconds.inWholeMilliseconds)
+        }
+      }
+    }
   }
 
   fun Routing.challengeWsEndpoint(metrics: Metrics) {

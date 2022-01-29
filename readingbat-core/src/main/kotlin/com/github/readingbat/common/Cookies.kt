@@ -32,9 +32,9 @@ import com.github.readingbat.server.Invocation
 import com.github.readingbat.server.LanguageName
 import com.github.readingbat.server.SessionAnswerHistoryTable
 import com.github.readingbat.server.SessionChallengeInfoTable
-import io.ktor.application.*
-import io.ktor.auth.*
-import io.ktor.sessions.*
+import io.ktor.server.application.*
+import io.ktor.server.auth.*
+import io.ktor.server.sessions.*
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import mu.KLogging

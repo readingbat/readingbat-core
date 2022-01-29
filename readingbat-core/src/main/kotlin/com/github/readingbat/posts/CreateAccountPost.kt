@@ -42,9 +42,9 @@ import com.github.readingbat.server.ServerUtils.queryParam
 import com.github.readingbat.server.UsersTable
 import com.google.common.util.concurrent.RateLimiter
 import com.pambrose.common.exposed.get
-import io.ktor.application.*
-import io.ktor.request.*
-import io.ktor.sessions.*
+import io.ktor.server.application.*
+import io.ktor.server.request.*
+import io.ktor.server.sessions.*
 import mu.KLogging
 import org.jetbrains.exposed.sql.Count
 import org.jetbrains.exposed.sql.select

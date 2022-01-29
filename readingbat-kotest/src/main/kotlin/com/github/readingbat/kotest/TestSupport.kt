@@ -43,12 +43,12 @@ import com.github.readingbat.server.ws.WsCommon.wsRoutes
 import io.kotest.inspectors.forAll
 import io.kotest.matchers.booleans.shouldBeFalse
 import io.kotest.matchers.booleans.shouldBeTrue
-import io.ktor.application.*
 import io.ktor.http.*
 import io.ktor.http.ContentType.Application.FormUrlEncoded
 import io.ktor.http.HttpHeaders.ContentType
-import io.ktor.http.content.*
-import io.ktor.routing.*
+import io.ktor.server.application.*
+import io.ktor.server.http.content.*
+import io.ktor.server.routing.*
 import io.ktor.server.testing.*
 import kotlinx.coroutines.runBlocking
 

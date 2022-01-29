@@ -60,11 +60,11 @@ import com.github.readingbat.server.ws.PubSubCommandsWs
 import com.github.readingbat.server.ws.WsCommon.wsRoutes
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
-import io.ktor.application.*
-import io.ktor.http.content.*
-import io.ktor.routing.*
+import io.ktor.server.application.*
 import io.ktor.server.cio.*
 import io.ktor.server.engine.*
+import io.ktor.server.http.content.*
+import io.ktor.server.routing.*
 import io.prometheus.Agent.Companion.startAsyncAgent
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
