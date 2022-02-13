@@ -1,8 +1,8 @@
 plugins {
     id 'java'
     id 'application'
-    id 'org.jetbrains.kotlin.jvm' version '1.6.10' apply false
-    id 'org.jetbrains.kotlin.plugin.serialization' version '1.6.10' apply false
+    id 'org.jetbrains.kotlin.jvm' version '1.6.20-M1' apply false
+    id 'org.jetbrains.kotlin.plugin.serialization' version '1.6.20-M1' apply false
     id 'org.jmailen.kotlinter' version "3.8.0" apply false
     id 'com.github.gmazzo.buildconfig' version '3.0.3' apply false
     id "com.github.ben-manes.versions" version '0.42.0' apply false
@@ -27,7 +27,6 @@ ext {
             script_utils_java      : "com.github.pambrose.common-utils:script-utils-java:$utils_version",
             script_utils_kotlin    : "com.github.pambrose.common-utils:script-utils-kotlin:$utils_version",
 
-            //guava_utils            : "com.github.pambrose.common-utils:guava-utils:$utils_version",
             service_utils          : "com.github.pambrose.common-utils:service-utils:$utils_version",
             prometheus_utils       : "com.github.pambrose.common-utils:prometheus-utils:$utils_version",
             exposed_utils          : "com.github.pambrose.common-utils:exposed-utils:$utils_version",
@@ -63,7 +62,6 @@ ext {
             socket                 : "com.google.cloud.sql:postgres-socket-factory:$cloud_version",
 
             gson                   : "com.google.code.gson:gson:$gson_version",
-            //guava                  : "com.google.guava:guava:$guava_version",
 
             sendgrid               : "com.sendgrid:sendgrid-java:$sendgrid_version",
 
@@ -84,7 +82,7 @@ ext {
 allprojects {
     description = 'ReadingBat Core'
     group 'com.github.readingbat'
-    version '1.25.0'
+    version '1.26.0'
 
     apply plugin: 'application'
     apply plugin: 'java-library'  // gradle 7
@@ -164,21 +162,23 @@ subprojects {
     compileKotlin {
         kotlinOptions {
             jvmTarget = '1.8'
-            freeCompilerArgs += ['-Xopt-in=kotlin.time.ExperimentalTime',
-                                 '-Xopt-in=kotlinx.coroutines.ExperimentalCoroutinesApi',
-                                 '-Xopt-in=kotlin.contracts.ExperimentalContracts',
-                                 '-Xopt-in=kotlinx.serialization.ExperimentalSerializationApi',
-                                 '-Xopt-in=kotlinx.coroutines.ObsoleteCoroutinesApi',
-                                 '-Xopt-in=kotlin.ExperimentalStdlibApi',
-                                 '-Xopt-in=io.ktor.server.locations.KtorExperimentalLocationsAPI',
-                                 '-Xopt-in=kotlinx.coroutines.InternalCoroutinesApi',
-                                 '-Xopt-in=kotlinx.coroutines.DelicateCoroutinesApi']
+            freeCompilerArgs += ['-Xbackend-threads=8',
+                                 '-opt-in=kotlin.time.ExperimentalTime',
+                                 '-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi',
+                                 '-opt-in=kotlin.contracts.ExperimentalContracts',
+                                 '-opt-in=kotlinx.serialization.ExperimentalSerializationApi',
+                                 '-opt-in=kotlinx.coroutines.ObsoleteCoroutinesApi',
+                                 '-opt-in=kotlin.ExperimentalStdlibApi',
+                                 '-opt-in=io.ktor.server.locations.KtorExperimentalLocationsAPI',
+                                 '-opt-in=kotlinx.coroutines.InternalCoroutinesApi',
+                                 '-opt-in=kotlinx.coroutines.DelicateCoroutinesApi']
         }
     }
 
     compileTestKotlin {
         kotlinOptions {
             jvmTarget = '1.8'
+            freeCompilerArgs += ['-Xbackend-threads=8']
         }
     }
 
