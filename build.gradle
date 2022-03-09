@@ -94,7 +94,6 @@ allprojects {
     apply plugin: 'com.github.ben-manes.versions'
 
     repositories {
-        mavenLocal()
         maven { url "https://maven.pkg.jetbrains.space/kotlin/p/kotlin/kotlin-js-wrappers" }
         maven { url "https://maven.pkg.jetbrains.space/public/p/ktor/eap" }
         google()
@@ -133,6 +132,8 @@ subprojects {
         implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutines_version"
         implementation "org.jetbrains.kotlinx:kotlinx-serialization-core:$serialization_version"
         implementation "io.ktor:ktor-server-locations:$ktor_version"
+
+        //implementation "dev.hayden:khealth:$khealth_version"
 
         implementation "io.github.microutils:kotlin-logging:$logging_version"
         implementation "ch.qos.logback:logback-classic:$logback_version"
