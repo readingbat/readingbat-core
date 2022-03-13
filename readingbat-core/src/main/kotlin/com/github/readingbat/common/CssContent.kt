@@ -95,7 +95,7 @@ internal val cssContent by lazy {
   val textFs = 115.pct
   val codeFs = 95.pct
 
-  CSSBuilder()
+  CssBuilder()
     .apply {
 
       rule("html, body") {

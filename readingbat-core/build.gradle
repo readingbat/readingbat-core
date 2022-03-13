@@ -36,7 +36,6 @@ dependencies {
     implementation libraries.script_engine
 
     implementation libraries.css
-    implementation libraries.css_jvm
 
     implementation libraries.ktor_server_core
     implementation libraries.ktor_server_cio
