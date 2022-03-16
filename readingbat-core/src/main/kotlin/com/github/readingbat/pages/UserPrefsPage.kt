@@ -17,11 +17,11 @@
 
 package com.github.readingbat.pages
 
-import com.github.readingbat.common.CSSNames.INDENT_1EM
-import com.github.readingbat.common.CSSNames.INDENT_2EM
 import com.github.readingbat.common.ClassCode
 import com.github.readingbat.common.ClassCode.Companion.DISABLED_CLASS_CODE
 import com.github.readingbat.common.Constants.LABEL_WIDTH
+import com.github.readingbat.common.CssNames.INDENT_1EM
+import com.github.readingbat.common.CssNames.INDENT_2EM
 import com.github.readingbat.common.Endpoints.CREATE_ACCOUNT_ENDPOINT
 import com.github.readingbat.common.Endpoints.TEACHER_PREFS_ENDPOINT
 import com.github.readingbat.common.Endpoints.USER_PREFS_ENDPOINT

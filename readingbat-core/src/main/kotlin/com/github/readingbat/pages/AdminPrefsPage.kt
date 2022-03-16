@@ -17,7 +17,7 @@
 
 package com.github.readingbat.pages
 
-import com.github.readingbat.common.CSSNames.INDENT_1EM
+import com.github.readingbat.common.CssNames.INDENT_1EM
 import com.github.readingbat.common.Endpoints.CONFIG_ENDPOINT
 import com.github.readingbat.common.Endpoints.SESSIONS_ENDPOINT
 import com.github.readingbat.common.Endpoints.SYSTEM_ADMIN_ENDPOINT

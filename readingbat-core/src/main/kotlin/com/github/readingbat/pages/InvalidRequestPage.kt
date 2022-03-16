@@ -18,8 +18,8 @@
 package com.github.readingbat.pages
 
 import com.github.pambrose.common.util.pathOf
-import com.github.readingbat.common.CSSNames
-import com.github.readingbat.common.CSSNames.CENTER
+import com.github.readingbat.common.CssNames
+import com.github.readingbat.common.CssNames.CENTER
 import com.github.readingbat.common.Endpoints.STATIC_ROOT
 import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyTitle
@@ -44,7 +44,7 @@ internal object InvalidRequestPage {
 
           h2 { +"There seems to be a misunderstanding" }
 
-          div(classes = CSSNames.INDENT_1EM) {
+          div(classes = CssNames.INDENT_1EM) {
             p {
               +"The request "
               i { +uri }

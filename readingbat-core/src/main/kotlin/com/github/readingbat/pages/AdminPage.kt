@@ -18,7 +18,7 @@
 package com.github.readingbat.pages
 
 import com.github.pambrose.common.redis.RedisUtils.scanKeys
-import com.github.readingbat.common.CSSNames.INDENT_1EM
+import com.github.readingbat.common.CssNames.INDENT_1EM
 import com.github.readingbat.common.Endpoints.ADMIN_ENDPOINT
 import com.github.readingbat.common.FormFields.ADMIN_ACTION_PARAM
 import com.github.readingbat.common.FormFields.DELETE_ALL_DATA
