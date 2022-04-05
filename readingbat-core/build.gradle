@@ -24,7 +24,6 @@ dependencies {
     implementation libraries.script_utils_java
     implementation libraries.script_utils_kotlin
 
-    //implementation libraries.guava_utils
     implementation libraries.service_utils
     implementation libraries.prometheus_utils
     implementation libraries.exposed_utils
@@ -62,7 +61,6 @@ dependencies {
     runtimeOnly libraries.postgres
 
     implementation libraries.gson
-    //implementation libraries.guava
 
     implementation libraries.sendgrid
 
@@ -77,7 +75,6 @@ dependencies {
     testImplementation libraries.kotest_runner_junit5
     testImplementation libraries.kotest_assertions_core
     testImplementation libraries.kotest_assertions_ktor
-//    testImplementation libraries.kotest_property
 
     testImplementation project(':readingbat-kotest')
 }
