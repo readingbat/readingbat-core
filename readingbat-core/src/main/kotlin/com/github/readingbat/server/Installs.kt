@@ -195,7 +195,7 @@ object Installs : KLogging() {
         }
       }
 
-      status(HttpStatusCode.NotFound) { call, cause ->
+      status(HttpStatusCode.NotFound) { call, _ ->
         //call.respond(TextContent("${it.value} ${it.description}", Plain.withCharset(UTF_8), it))
         call.respondWith { notFoundPage(call.request.uri.replaceAfter("?", "").replace("?", "")) }
       }
