@@ -205,7 +205,7 @@ subprojects {
 
 flyway {
     driver = 'org.postgresql.Driver'
-    url = 'jdbc:postgresql://localhost:5432/readingbat'
+    url = 'jdbc:postgresql://localhost:5433/readingbat'
     user = 'postgres'
     password = 'docker'
 }
