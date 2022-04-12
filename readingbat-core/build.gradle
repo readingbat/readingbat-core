@@ -46,6 +46,8 @@ dependencies {
     implementation libraries.ktor_locations
     implementation libraries.ktor_metrics
     implementation libraries.ktor_websockets
+    implementation libraries.ktor_compression
+    implementation libraries.ktor_calllogging
 
     implementation libraries.jedis
 

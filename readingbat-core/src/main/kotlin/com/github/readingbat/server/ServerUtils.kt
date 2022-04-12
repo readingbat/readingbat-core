@@ -48,6 +48,7 @@ import io.ktor.server.request.*
 import io.ktor.server.routing.*
 import io.ktor.server.sessions.*
 import io.ktor.server.websocket.*
+import io.ktor.util.*
 import io.ktor.util.pipeline.*
 import kotlinx.coroutines.runBlocking
 import mu.KLogging
@@ -135,7 +136,7 @@ internal object ServerUtils : KLogging() {
       else -> block.invoke()
     }
 
-  @ContextDsl
+  @KtorDsl
   fun Route.get(path: String, metrics: Metrics, body: PipelineInterceptor<Unit, ApplicationCall>) =
     route(path, HttpMethod.Get) {
       runBlocking {
@@ -143,7 +144,7 @@ internal object ServerUtils : KLogging() {
       }
     }
 
-  @ContextDsl
+  @KtorDsl
   fun Route.post(path: String, metrics: Metrics, body: PipelineInterceptor<Unit, ApplicationCall>) =
     route(path, HttpMethod.Post) {
       runBlocking {

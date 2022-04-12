@@ -44,7 +44,7 @@ internal object ConfigureFormAuth : KLogging() {
    *
    * If validation fails, the user will be challenged, e.g. sent to a login page to authenticate.
    */
-  fun Authentication.Configuration.configureFormAuth() {
+  fun AuthenticationConfig.configureFormAuth() {
     form(AuthName.FORM) {
       userParamName = EMAIL_PARAM
       passwordParamName = PASSWORD_PARAM
@@ -100,7 +100,7 @@ internal object ConfigureFormAuth : KLogging() {
      * This is related to the configureAuthCookie method by virtue of the common `PrincipalType` object.
      */
     @Suppress("unused")
-    fun Authentication.Configuration.configureSessionAuth() {
+    fun AuthenticationConfig.configureSessionAuth() {
       session<UserPrincipal>(AuthName.SESSION) {
         challenge {
           // What to do if the user isn't authenticated

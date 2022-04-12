@@ -37,6 +37,7 @@ import io.ktor.server.application.*
 import io.ktor.server.application.ApplicationCallPipeline.ApplicationPhase.Plugins
 import io.ktor.server.logging.*
 import io.ktor.server.plugins.*
+import io.ktor.server.plugins.callid.*
 import io.ktor.server.request.*
 import io.ktor.server.routing.Routing.Plugin.RoutingCallFinished
 import io.ktor.server.routing.Routing.Plugin.RoutingCallStarted
