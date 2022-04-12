@@ -41,8 +41,8 @@ dependencies {
     implementation libraries.ktor_client_core
     implementation libraries.ktor_client_cio
 
-    implementation libraries.server_sessions
-    implementation libraries.html_builder
+    implementation libraries.ktor_sessions
+    implementation libraries.ktor_html
     implementation libraries.ktor_locations
     implementation libraries.ktor_metrics
     implementation libraries.ktor_websockets
