@@ -14,13 +14,13 @@ env:
   - PGUSER=travis
 
 addons:
-  postgresql: "14.2"
+  postgresql: "14"
   apt:
     packages:
       # Ubuntu 16+ does not install libgconf dependency by default, so we need to install it ourselves
       - libgconf-2-4
-      - postgresql-14.2
-      - postgresql-client-14.2
+      - postgresql-14
+      - postgresql-client-14
 
 cache:
   # Caches $HOME/.npm when npm ci is default script command
