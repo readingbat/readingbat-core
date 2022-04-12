@@ -6,9 +6,9 @@
 [![ReadingBat](https://img.shields.io/endpoint?url=https://dashboard.cypress.io/badge/simple/g5z7vz&style=flat&logo=cypress)](https://dashboard.cypress.io/projects/g5z7vz/runs)
 [![Kotlin](https://img.shields.io/badge/%20language-Kotlin-red.svg)](https://kotlinlang.org/)
 
-The framework used to render ReadingBat content.
+Framework used to generate ReadingBat content.
 
-The content for the [www.readingbat.com](https://www.readingbat.com) website is
+The [www.readingbat.com](https://www.readingbat.com) website repo is
 [here](https://github.com/readingbat/readingbat-site).
 
 The template repo for authoring your own content is [here](https://github.com/readingbat/readingbat-template).
