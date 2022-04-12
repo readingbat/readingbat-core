@@ -12,7 +12,9 @@ env:
   global:
     - NODE_VERSION="14.16.1"
     - PGPORT=5433
-    - PGUSER=travis
+    - PGUSER=postgres
+  jobs:
+    - NODE_ENV=test DB_PORT=5433 DB_USERNAME=postgres
 
 addons:
   postgresql: 13
@@ -35,10 +37,18 @@ before_install:
   - nvm install $NODE_VERSION
   - npm install cypress
   - npm install -D cypress-plugin-tab
+  # Use trust instead of peer authentication:
+  - >-
+    sudo sed -i
+    -e '/local.*peer/s/postgres/all/'
+    -e 's/peer\|md5/trust/g'
+    /etc/postgresql/13/main/pg_hba.conf
+  # Restart the PostgreSQL service:
+  - sudo service postgresql@13-main restart
 
 before_script:
   - chmod +x ./gradlew
-  - psql -c 'create database readingbat;' -U travis
+  - psql -c 'create database readingbat;' -U postgres
   - ./gradlew flywayClean flywayMigrate flywayInfo
   #  - sudo redis-server /etc/redis/redis.conf --port 6379 --requirepass 'none'
 
