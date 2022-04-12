@@ -10,12 +10,18 @@ services:
 
 env:
   - NODE_VERSION="14.16.1"
+  global:
+    - PGPORT=5433
+    - PGUSER=travis
 
 addons:
+  postgresql: "14.2"
   apt:
     packages:
       # Ubuntu 16+ does not install this dependency by default, so we need to install it ourselves
       - libgconf-2-4
+      - postgresql-14.2
+      - postgresql-client-14.2
 
 cache:
   # Caches $HOME/.npm when npm ci is default script command
@@ -32,7 +38,7 @@ before_install:
 
 before_script:
   - chmod +x ./gradlew
-  - psql -c 'create database readingbat;' -U postgres
+  - psql -c 'create database readingbat;' -U travis
   - ./gradlew flywayClean flywayMigrate flywayInfo
   #  - sudo redis-server /etc/redis/redis.conf --port 6379 --requirepass 'none'
 
