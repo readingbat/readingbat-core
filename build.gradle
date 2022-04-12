@@ -1,3 +1,9 @@
+buildscript {
+    dependencies {
+        classpath "org.postgresql:postgresql:$postgres_version"
+    }
+}
+
 plugins {
     id 'java'
     id 'application'
@@ -196,10 +202,6 @@ subprojects {
         disabledRules = ["no-wildcard-imports", "indent", "final-newline", "comment-spacing", "max-line-length", "no-multi-spaces", "wrapping"]
     }
 }
-
-//dependencies {
-//    runtime libraries.postgres
-//}
 
 flyway {
     driver = 'org.postgresql.Driver'
