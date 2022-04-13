@@ -180,6 +180,7 @@ object TestSupport {
     funcInfo.checkAnswer(index, answer.toString()).shouldBeIncorrect()
 
   fun ChallengeResults.shouldBeCorrect() = correct.shouldBeTrue()
+
   fun ChallengeResults.shouldBeIncorrect() = correct.shouldBeFalse()
 
   fun Application.testModule(content: ReadingBatContent) {
