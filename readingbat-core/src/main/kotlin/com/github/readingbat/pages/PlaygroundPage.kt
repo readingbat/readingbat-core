@@ -19,9 +19,9 @@ package com.github.readingbat.pages
 
 import com.github.pambrose.common.util.decode
 import com.github.pambrose.common.util.pathOf
-import com.github.readingbat.common.CSSNames.CHALLENGE_DESC
-import com.github.readingbat.common.CSSNames.INDENT_1EM
-import com.github.readingbat.common.CSSNames.KOTLIN_CODE
+import com.github.readingbat.common.CssNames.CHALLENGE_DESC
+import com.github.readingbat.common.CssNames.INDENT_1EM
+import com.github.readingbat.common.CssNames.KOTLIN_CODE
 import com.github.readingbat.common.Endpoints.CHALLENGE_ROOT
 import com.github.readingbat.common.Endpoints.STATIC_ROOT
 import com.github.readingbat.common.StaticFileNames.RUN_BUTTON

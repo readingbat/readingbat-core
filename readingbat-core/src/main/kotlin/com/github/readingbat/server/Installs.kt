@@ -51,10 +51,15 @@ import io.ktor.server.engine.*
 import io.ktor.server.locations.Locations
 import io.ktor.server.logging.*
 import io.ktor.server.plugins.*
+import io.ktor.server.plugins.callid.*
+import io.ktor.server.plugins.callloging.*
+import io.ktor.server.plugins.compression.*
+import io.ktor.server.plugins.defaultheaders.*
+import io.ktor.server.plugins.forwardedheaders.*
+import io.ktor.server.plugins.statuspages.*
 import io.ktor.server.request.*
 import io.ktor.server.sessions.*
 import io.ktor.server.websocket.*
-import io.ktor.websocket.*
 import mu.KLogging
 import org.slf4j.event.Level
 import java.time.Duration.ofSeconds
@@ -85,7 +90,7 @@ object Installs : KLogging() {
       EnvVar.FORWARDED_ENABLED.getEnv(Property.FORWARDED_ENABLED.configValue(this, default = "false").toBoolean())
     if (forwardedHeaderSupportEnabled) {
       logger.info { "Enabling ForwardedHeaderSupport" }
-      install(ForwardedHeaderSupport)
+      install(ForwardedHeaders)
     } else {
       logger.info { "Not enabling ForwardedHeaderSupport" }
     }
@@ -94,7 +99,7 @@ object Installs : KLogging() {
       EnvVar.XFORWARDED_ENABLED.getEnv(Property.XFORWARDED_ENABLED.configValue(this, default = "false").toBoolean())
     if (xforwardedHeaderSupportEnabled) {
       logger.info { "Enabling XForwardedHeaderSupport" }
-      install(XForwardedHeaderSupport)
+      install(XForwardedHeaders)
     } else {
       logger.info { "Not enabling XForwardedHeaderSupport" }
     }
@@ -195,7 +200,7 @@ object Installs : KLogging() {
         }
       }
 
-      status(HttpStatusCode.NotFound) { call, cause ->
+      status(HttpStatusCode.NotFound) { call, _ ->
         //call.respond(TextContent("${it.value} ${it.description}", Plain.withCharset(UTF_8), it))
         call.respondWith { notFoundPage(call.request.uri.replaceAfter("?", "").replace("?", "")) }
       }

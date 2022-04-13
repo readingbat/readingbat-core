@@ -18,9 +18,9 @@
 package com.github.readingbat.pages
 
 import com.github.pambrose.common.util.pathOf
-import com.github.readingbat.common.CSSNames.GROUP_CHOICE
-import com.github.readingbat.common.CSSNames.GROUP_ITEM_SRC
 import com.github.readingbat.common.Constants.MSG
+import com.github.readingbat.common.CssNames.GROUP_CHOICE
+import com.github.readingbat.common.CssNames.GROUP_ITEM_SRC
 import com.github.readingbat.common.Endpoints.CHALLENGE_ROOT
 import com.github.readingbat.common.Endpoints.STATIC_ROOT
 import com.github.readingbat.common.Message

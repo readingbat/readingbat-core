@@ -17,37 +17,37 @@
 
 package com.github.readingbat.common
 
-import com.github.readingbat.common.CSSNames.ADMIN_BUTTON
-import com.github.readingbat.common.CSSNames.ARROW
-import com.github.readingbat.common.CSSNames.BTN
-import com.github.readingbat.common.CSSNames.CENTER
-import com.github.readingbat.common.CSSNames.CHALLENGE_DESC
-import com.github.readingbat.common.CSSNames.CHECK_ANSWERS
-import com.github.readingbat.common.CSSNames.CODE_BLOCK
-import com.github.readingbat.common.CSSNames.CODINGBAT
-import com.github.readingbat.common.CSSNames.DASHBOARD
-import com.github.readingbat.common.CSSNames.EXPERIMENT
-import com.github.readingbat.common.CSSNames.FEEDBACK
-import com.github.readingbat.common.CSSNames.FUNC_COL
-import com.github.readingbat.common.CSSNames.FUNC_ITEM1
-import com.github.readingbat.common.CSSNames.FUNC_ITEM2
-import com.github.readingbat.common.CSSNames.GROUP_CHOICE
-import com.github.readingbat.common.CSSNames.GROUP_ITEM_SRC
-import com.github.readingbat.common.CSSNames.HINT
-import com.github.readingbat.common.CSSNames.INDENT_1EM
-import com.github.readingbat.common.CSSNames.INDENT_2EM
-import com.github.readingbat.common.CSSNames.INVOC_STAT
-import com.github.readingbat.common.CSSNames.INVOC_TABLE
-import com.github.readingbat.common.CSSNames.INVOC_TD
-import com.github.readingbat.common.CSSNames.KOTLIN_CODE
-import com.github.readingbat.common.CSSNames.LIKE_BUTTONS
-import com.github.readingbat.common.CSSNames.SELECTED_TAB
-import com.github.readingbat.common.CSSNames.STATUS
-import com.github.readingbat.common.CSSNames.SUCCESS
-import com.github.readingbat.common.CSSNames.TD_PADDING
-import com.github.readingbat.common.CSSNames.UNDERLINE
-import com.github.readingbat.common.CSSNames.USER_RESP
 import com.github.readingbat.common.Constants.INCOMPLETE_COLOR
+import com.github.readingbat.common.CssNames.ADMIN_BUTTON
+import com.github.readingbat.common.CssNames.ARROW
+import com.github.readingbat.common.CssNames.BTN
+import com.github.readingbat.common.CssNames.CENTER
+import com.github.readingbat.common.CssNames.CHALLENGE_DESC
+import com.github.readingbat.common.CssNames.CHECK_ANSWERS
+import com.github.readingbat.common.CssNames.CODE_BLOCK
+import com.github.readingbat.common.CssNames.CODINGBAT
+import com.github.readingbat.common.CssNames.DASHBOARD
+import com.github.readingbat.common.CssNames.EXPERIMENT
+import com.github.readingbat.common.CssNames.FEEDBACK
+import com.github.readingbat.common.CssNames.FUNC_COL
+import com.github.readingbat.common.CssNames.FUNC_ITEM1
+import com.github.readingbat.common.CssNames.FUNC_ITEM2
+import com.github.readingbat.common.CssNames.GROUP_CHOICE
+import com.github.readingbat.common.CssNames.GROUP_ITEM_SRC
+import com.github.readingbat.common.CssNames.HINT
+import com.github.readingbat.common.CssNames.INDENT_1EM
+import com.github.readingbat.common.CssNames.INDENT_2EM
+import com.github.readingbat.common.CssNames.INVOC_STAT
+import com.github.readingbat.common.CssNames.INVOC_TABLE
+import com.github.readingbat.common.CssNames.INVOC_TD
+import com.github.readingbat.common.CssNames.KOTLIN_CODE
+import com.github.readingbat.common.CssNames.LIKE_BUTTONS
+import com.github.readingbat.common.CssNames.SELECTED_TAB
+import com.github.readingbat.common.CssNames.STATUS
+import com.github.readingbat.common.CssNames.SUCCESS
+import com.github.readingbat.common.CssNames.TD_PADDING
+import com.github.readingbat.common.CssNames.UNDERLINE
+import com.github.readingbat.common.CssNames.USER_RESP
 import kotlinx.css.*
 import kotlinx.css.BorderCollapse.separate
 import kotlinx.css.Display.block
@@ -58,7 +58,7 @@ import kotlinx.css.properties.TextDecoration
 import kotlinx.css.properties.TextDecorationLine.underline
 import kotlinx.css.properties.boxShadow
 
-internal object CSSNames {
+internal object CssNames {
   const val CHECK_ANSWERS = "checkAnswers"
   const val ADMIN_BUTTON = "loadChallenge"
   const val LIKE_BUTTONS = "likeButtons"
@@ -95,7 +95,7 @@ internal val cssContent by lazy {
   val textFs = 115.pct
   val codeFs = 95.pct
 
-  CSSBuilder()
+  CssBuilder()
     .apply {
 
       rule("html, body") {

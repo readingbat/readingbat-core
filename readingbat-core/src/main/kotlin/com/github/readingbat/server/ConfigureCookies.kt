@@ -26,7 +26,7 @@ import kotlin.time.Duration.Companion.days
 
 internal object ConfigureCookies {
 
-  fun Sessions.Configuration.configureSessionIdCookie() {
+  fun SessionsConfig.configureSessionIdCookie() {
     cookie<BrowserSession>("readingbat_session_id") {
       //storage = RedisSessionStorage(redis = pool.resource)) {
       //storage = directorySessionStorage(File("server-sessions"), cached = true)) {
@@ -40,7 +40,7 @@ internal object ConfigureCookies {
     }
   }
 
-  fun Sessions.Configuration.configureAuthCookie() {
+  fun SessionsConfig.configureAuthCookie() {
     cookie<UserPrincipal>(name = AUTH_COOKIE) {
       cookie.path = "/" //CHALLENGE_ROOT + "/"
       cookie.httpOnly = true

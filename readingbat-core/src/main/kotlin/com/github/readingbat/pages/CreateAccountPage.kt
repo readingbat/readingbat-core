@@ -17,7 +17,7 @@
 
 package com.github.readingbat.pages
 
-import com.github.readingbat.common.CSSNames.INDENT_1EM
+import com.github.readingbat.common.CssNames.INDENT_1EM
 import com.github.readingbat.common.Endpoints.CREATE_ACCOUNT_ENDPOINT
 import com.github.readingbat.common.FormFields.CONFIRM_PASSWORD_PARAM
 import com.github.readingbat.common.FormFields.EMAIL_PARAM

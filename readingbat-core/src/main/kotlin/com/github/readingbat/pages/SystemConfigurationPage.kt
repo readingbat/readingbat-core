@@ -19,9 +19,9 @@ package com.github.readingbat.pages
 
 import com.github.pambrose.common.time.format
 import com.github.pambrose.common.util.Version.Companion.versionDesc
-import com.github.readingbat.common.CSSNames.INDENT_1EM
-import com.github.readingbat.common.CSSNames.TD_PADDING
 import com.github.readingbat.common.Constants.UNASSIGNED
+import com.github.readingbat.common.CssNames.INDENT_1EM
+import com.github.readingbat.common.CssNames.TD_PADDING
 import com.github.readingbat.common.Endpoints.ADMIN_PREFS_ENDPOINT
 import com.github.readingbat.common.EnvVar
 import com.github.readingbat.common.FormFields.RETURN_PARAM

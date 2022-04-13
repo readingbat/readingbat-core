@@ -17,8 +17,8 @@
 
 package com.github.readingbat.pages
 
-import com.github.readingbat.common.CSSNames.INDENT_1EM
 import com.github.readingbat.common.Constants.LABEL_WIDTH
+import com.github.readingbat.common.CssNames.INDENT_1EM
 import com.github.readingbat.common.Endpoints.PASSWORD_CHANGE_ENDPOINT
 import com.github.readingbat.common.Endpoints.PASSWORD_RESET_ENDPOINT
 import com.github.readingbat.common.FormFields.CONFIRM_PASSWORD_PARAM

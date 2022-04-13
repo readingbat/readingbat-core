@@ -19,8 +19,8 @@ package com.github.readingbat.pages
 
 import com.github.pambrose.common.time.format
 import com.github.pambrose.common.util.pluralize
-import com.github.readingbat.common.CSSNames.INDENT_1EM
-import com.github.readingbat.common.CSSNames.TD_PADDING
+import com.github.readingbat.common.CssNames.INDENT_1EM
+import com.github.readingbat.common.CssNames.TD_PADDING
 import com.github.readingbat.common.Endpoints.ADMIN_PREFS_ENDPOINT
 import com.github.readingbat.common.FormFields.DAYS_DEFAULT
 import com.github.readingbat.common.FormFields.DAYS_PARAM
