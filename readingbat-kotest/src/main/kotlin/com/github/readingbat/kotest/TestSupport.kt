@@ -43,6 +43,8 @@ import com.github.readingbat.server.ws.WsCommon.wsRoutes
 import io.kotest.inspectors.forAll
 import io.kotest.matchers.booleans.shouldBeFalse
 import io.kotest.matchers.booleans.shouldBeTrue
+import io.ktor.client.request.*
+import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.http.ContentType.Application.FormUrlEncoded
 import io.ktor.http.HttpHeaders.ContentType
@@ -71,8 +73,12 @@ object TestSupport {
   inline fun <T : Challenge> LanguageGroup<T>.forEachGroup(block: ChallengeGroup<T>.() -> Unit) =
     challengeGroups.forEach { it.block() }
 
-  fun <T : Challenge> ChallengeGroup<T>.forEachChallenge(block: Challenge.() -> Unit) =
-    challenges.forAll { it.block() }
+  fun <T : Challenge> ChallengeGroup<T>.forEachChallenge(block: suspend Challenge.() -> Unit) =
+    challenges.forAll {
+      runBlocking {
+        it.block()
+      }
+    }
 
   fun ChallengeGroup<*>.forEachFuncInfo(block: FunctionInfo.() -> Unit) =
     forEachChallenge {
@@ -85,18 +91,18 @@ object TestSupport {
     CHALLENGE_SRC to challengeName.value
   )
 
-  fun Challenge.answerAllWith(
-    engine: TestApplicationEngine,
+  suspend fun Challenge.answerAllWith(
+    engine: ApplicationTestBuilder,
     userResponse: String,
     block: ChallengeResult.() -> Unit
   ) {
     val content =
-      engine.postUrl(CHECK_ANSWERS_ENDPOINT) {
-        addHeader(ContentType, FormUrlEncoded.toString())
+      engine.client.post(CHECK_ANSWERS_ENDPOINT) {
+        header(ContentType, FormUrlEncoded.toString())
         val data = formData()
         functionInfo().invocations.indices.forEach { data += "$RESP$it" to userResponse }
         setBody(data.formUrlEncode())
-      }.response.content
+      }.bodyAsText()
 
     var cnt = 0
     gson.fromJson(content, List::class.java)
@@ -113,14 +119,14 @@ object TestSupport {
       .forAll { it.block() }
   }
 
-  fun Challenge.answerAllWithCorrectAnswer(engine: TestApplicationEngine, block: ChallengeResult.() -> Unit) {
+  suspend fun Challenge.answerAllWithCorrectAnswer(engine: ApplicationTestBuilder, block: ChallengeResult.() -> Unit) {
     val content =
-      engine.postUrl(CHECK_ANSWERS_ENDPOINT) {
-        addHeader(ContentType, FormUrlEncoded.toString())
+      engine.client.post(CHECK_ANSWERS_ENDPOINT) {
+        header(ContentType, FormUrlEncoded.toString())
         val data = formData()
         functionInfo().invocations.indices.forEach { data += "$RESP$it" to functionInfo().correctAnswers[it] }
         setBody(data.formUrlEncode())
-      }.response.content
+      }.bodyAsText()
 
     var cnt = 0
     gson.fromJson(content, List::class.java)
@@ -175,12 +181,6 @@ object TestSupport {
 
   fun ChallengeResults.shouldBeCorrect() = correct.shouldBeTrue()
   fun ChallengeResults.shouldBeIncorrect() = correct.shouldBeFalse()
-
-  fun TestApplicationEngine.getUrl(uri: String, block: TestApplicationCall.() -> Unit) =
-    handleRequest(HttpMethod.Get, uri).apply { block() }
-
-  fun TestApplicationEngine.postUrl(uri: String, block: TestApplicationRequest.() -> Unit) =
-    handleRequest(HttpMethod.Post, uri, block)
 
   fun Application.testModule(content: ReadingBatContent) {
 
