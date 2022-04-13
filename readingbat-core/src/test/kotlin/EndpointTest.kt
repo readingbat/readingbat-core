@@ -48,61 +48,65 @@ import io.ktor.server.testing.*
 class EndpointTest : StringSpec(
   {
     "Simple endpoint tests" {
-      val testContent = readTestContent()
-      testApplication {
-        application { testModule(testContent) }
+      readTestContent()
+        .also { testContent ->
+          testApplication {
+            application { testModule(testContent) }
 
-        client.get("/").also { it shouldHaveStatus OK }
-        client.get(ABOUT_ENDPOINT).also { it shouldHaveStatus OK }
-        client.get(HELP_ENDPOINT).also { it shouldHaveStatus OK }
-        client.get(PRIVACY_ENDPOINT).also { it shouldHaveStatus OK }
+            client.get("/").also { it shouldHaveStatus OK }
+            client.get(ABOUT_ENDPOINT).also { it shouldHaveStatus OK }
+            client.get(HELP_ENDPOINT).also { it shouldHaveStatus OK }
+            client.get(PRIVACY_ENDPOINT).also { it shouldHaveStatus OK }
 
-        client.get(pathOf(Python.contentRoot, GROUP_NAME, "boolean_array_test_WRONG_NAME")).also {
-          it.bodyAsText() shouldContain CHALLENGE_NOT_FOUND
-        }
+            client.get(pathOf(Python.contentRoot, GROUP_NAME, "boolean_array_test_WRONG_NAME")).also {
+              it.bodyAsText() shouldContain CHALLENGE_NOT_FOUND
+            }
 
-        testContent.forEachLanguage {
-          client.get(contentRoot).also { it shouldHaveStatus OK }
-        }
+            testContent.forEachLanguage {
+              client.get(contentRoot).also { it shouldHaveStatus OK }
+            }
 
-        testContent.forEachLanguage {
-          forEachGroup {
-            forEachChallenge {
-              client.get(pathOf(languageType.contentRoot, groupName, challengeName)).also {
-                it.bodyAsText() shouldNotContain CHALLENGE_NOT_FOUND
+            testContent.forEachLanguage {
+              forEachGroup {
+                forEachChallenge {
+                  client.get(pathOf(languageType.contentRoot, groupName, challengeName)).also {
+                    it.bodyAsText() shouldNotContain CHALLENGE_NOT_FOUND
+                  }
+                }
               }
             }
           }
         }
-      }
     }
 
     "Test all challenges" {
-      val testContent = readTestContent()
-      testApplication {
-        application { testModule(testContent) }
+      readTestContent()
+        .also { testContent ->
+          testApplication {
+            application { testModule(testContent) }
 
-        testContent.forEachLanguage {
-          forEachGroup {
-            forEachChallenge {
-              repeat(10) {
-                answerAllWith(this@testApplication, "") {
-                  answerStatus shouldBe NOT_ANSWERED
-                  hint.shouldBeBlank()
-                }
+            testContent.forEachLanguage {
+              forEachGroup {
+                forEachChallenge {
+                  repeat(10) {
+                    answerAllWith(this@testApplication, "") {
+                      answerStatus shouldBe NOT_ANSWERED
+                      hint.shouldBeBlank()
+                    }
 
-                answerAllWith(this@testApplication, "wrong answer") {
-                  answerStatus shouldBe INCORRECT
-                }
+                    answerAllWith(this@testApplication, "wrong answer") {
+                      answerStatus shouldBe INCORRECT
+                    }
 
-                answerAllWithCorrectAnswer(this@testApplication) {
-                  answerStatus shouldBe CORRECT
-                  hint.shouldBeBlank()
+                    answerAllWithCorrectAnswer(this@testApplication) {
+                      answerStatus shouldBe CORRECT
+                      hint.shouldBeBlank()
+                    }
+                  }
                 }
               }
             }
           }
         }
-      }
     }
   })
