@@ -178,7 +178,6 @@ object Installs : KLogging() {
     */
 
     install(StatusPages) {
-
       exception<Throwable> { call, cause ->
         when (cause) {
           is InvalidRequestException -> {
