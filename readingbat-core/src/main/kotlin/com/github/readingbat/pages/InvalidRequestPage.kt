@@ -18,8 +18,8 @@
 package com.github.readingbat.pages
 
 import com.github.pambrose.common.util.pathOf
-import com.github.readingbat.common.CssNames
 import com.github.readingbat.common.CssNames.CENTER
+import com.github.readingbat.common.CssNames.INDENT_1EM
 import com.github.readingbat.common.Endpoints.STATIC_ROOT
 import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyTitle
@@ -38,27 +38,14 @@ internal object InvalidRequestPage {
         body {
           bodyTitle()
 
-          p {
-            img(classes = CENTER) { src = pathOf(STATIC_ROOT, "panic.png") }
-          }
+          p { img(classes = CENTER) { src = pathOf(STATIC_ROOT, "panic.png") } }
 
           h2 { +"There seems to be a misunderstanding" }
 
-          div(classes = CssNames.INDENT_1EM) {
-            p {
-              +"The request "
-              i { +uri }
-              +" has this problem: "
-            }
-
-            p {
-              b { +msg }
-            }
-
-            p {
-              +"Please head back to the"
-              a { href = "/"; +" home directory." }
-            }
+          div(classes = INDENT_1EM) {
+            p { +"The request "; i { +uri }; +" has this problem: " }
+            p { b { +msg } }
+            p { +"Please head back to the"; a { href = "/"; +" home directory." } }
           }
 
           backLink("/")
