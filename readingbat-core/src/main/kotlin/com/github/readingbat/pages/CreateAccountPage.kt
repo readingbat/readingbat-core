@@ -136,7 +136,7 @@ internal object CreateAccountPage {
                   td { }
                   td {
                     submitInput {
-                      style = "font-size:25px; height:35; width:115"
+                      style = "font-size:100%; height:35; width:125"
                       id = createButton
                       value = "Create Account"
                     }

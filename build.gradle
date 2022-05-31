@@ -126,9 +126,6 @@ allprojects {
 subprojects {
 
     dependencies {
-        //implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
-        //implementation "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
-
         // These are required for the annotation args below
         //implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutines_version"
         //implementation "org.jetbrains.kotlinx:kotlinx-serialization-core:$serialization_version"
@@ -169,7 +166,6 @@ subprojects {
                                  '-opt-in=kotlin.time.ExperimentalTime',
                                  '-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi',
                                  '-opt-in=kotlin.contracts.ExperimentalContracts',
-                                 //'-opt-in=kotlinx.serialization.ExperimentalSerializationApi',
                                  '-opt-in=kotlinx.coroutines.ObsoleteCoroutinesApi',
                                  '-opt-in=kotlin.ExperimentalStdlibApi',
                                  '-opt-in=io.ktor.server.locations.KtorExperimentalLocationsAPI',

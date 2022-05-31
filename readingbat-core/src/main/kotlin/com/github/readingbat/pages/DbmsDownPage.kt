@@ -39,20 +39,11 @@ internal object DbmsDownPage {
     createHTML()
       .html {
         head { headDefault() }
-
         body {
           bodyTitle()
-
-          p {
-            img(classes = CENTER) { src = pathOf(STATIC_ROOT, "dbmsdown.jpg") }
-          }
-
+          p { img(classes = CENTER) { src = pathOf(STATIC_ROOT, "dbmsdown.jpg") } }
           h2 { +DBMS_DOWN.toString() }
-
-          p {
-            +"We seem to be having problems with our database. Please check back later."
-          }
-
+          p { +"We seem to be having problems with our database. Please check back later." }
           backLink("/")
           loadPingdomScript()
         }

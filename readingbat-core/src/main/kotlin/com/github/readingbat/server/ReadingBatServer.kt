@@ -175,7 +175,7 @@ object ReadingBatServer : KLogging() {
 
   fun start(args: Array<String>) {
     logger.apply {
-      info { getBanner("banners/readingbat.txt", this) }
+      info { getBanner("banners/readingbat.banner", this) }
       info { ReadingBatServer::class.versionDesc() }
       callerVersion = callerVersion(args)
       info { "Caller Version: $callerVersion" }
