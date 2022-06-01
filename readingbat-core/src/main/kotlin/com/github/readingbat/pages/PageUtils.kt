@@ -174,7 +174,7 @@ internal object PageUtils {
     if (url.isNotEmpty()) {
       div {
         style = "font-size:120%; margin-left:$marginLeft"
-        p { a { href = url; rawHtml("&larr; $text") } }
+        p { a { href = url; rawHtml("⬅ $text") } }
       }
     }
   }
