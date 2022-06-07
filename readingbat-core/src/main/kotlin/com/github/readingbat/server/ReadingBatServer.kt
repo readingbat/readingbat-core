@@ -29,9 +29,15 @@ import com.github.readingbat.common.Constants.REDIS_IS_DOWN
 import com.github.readingbat.common.Constants.UNKNOWN_USER_ID
 import com.github.readingbat.common.Endpoints.STATIC_ROOT
 import com.github.readingbat.common.EnvVar
+import com.github.readingbat.common.EnvVar.CLOUD_SQL_CONNECTION_NAME
+import com.github.readingbat.common.EnvVar.SCRIPT_CLASSPATH
 import com.github.readingbat.common.Metrics
 import com.github.readingbat.common.Property
+import com.github.readingbat.common.Property.CONFIG_FILENAME
 import com.github.readingbat.common.Property.Companion.assignProperties
+import com.github.readingbat.common.Property.DBMS_MAX_LIFETIME_MINS
+import com.github.readingbat.common.Property.DBMS_MAX_POOL_SIZE
+import com.github.readingbat.common.Property.KOTLIN_SCRIPT_CLASSPATH
 import com.github.readingbat.common.User.Companion.createUnknownUser
 import com.github.readingbat.common.User.Companion.userExists
 import com.github.readingbat.dsl.ReadingBatContent
@@ -84,16 +90,16 @@ import kotlin.time.measureTime
 
 @Version(version = BuildConfig.CORE_VERSION, date = BuildConfig.CORE_RELEASE_DATE)
 object ReadingBatServer : KLogging() {
+  private const val CALLER_VERSION = "callerVersion"
   private val startTime = TimeSource.Monotonic.markNow()
   internal val serverSessionId = randomId(10)
   internal val timeStamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("M/d/y H:m:ss"))
+  internal var callerVersion = ""
   internal val content = AtomicReference(ReadingBatContent())
   internal val adminUsers = mutableListOf<String>()
   internal val contentReadCount = AtomicInteger(0)
-  val metrics by lazy { Metrics() }
   internal var redisPool: JedisPool? = null
-  private const val CALLER_VERSION = "callerVersion"
-  internal var callerVersion = ""
+  internal val metrics by lazy { Metrics() }
   internal val dbms by lazy {
     Database.connect(
       HikariDataSource(
@@ -104,7 +110,7 @@ object ReadingBatServer : KLogging() {
             username = EnvVar.DBMS_USERNAME.getEnv(Property.DBMS_USERNAME.getRequiredProperty())
             password = EnvVar.DBMS_PASSWORD.getEnv(Property.DBMS_PASSWORD.getRequiredProperty())
 
-            EnvVar.CLOUD_SQL_CONNECTION_NAME.getEnv("")
+            CLOUD_SQL_CONNECTION_NAME.getEnv("")
               .also {
                 if (it.isNotBlank()) {
                   addDataSourceProperty("cloudSqlInstance", it)
@@ -112,11 +118,10 @@ object ReadingBatServer : KLogging() {
                 }
               }
 
-            maximumPoolSize = Property.DBMS_MAX_POOL_SIZE.getRequiredProperty().toInt()
+            maximumPoolSize = DBMS_MAX_POOL_SIZE.getRequiredProperty().toInt()
             isAutoCommit = false
             transactionIsolation = "TRANSACTION_REPEATABLE_READ"
-            maxLifetime =
-              Property.DBMS_MAX_LIFETIME_MINS.getRequiredProperty().toInt().minutes.inWholeMilliseconds
+            maxLifetime = DBMS_MAX_LIFETIME_MINS.getRequiredProperty().toInt().minutes.inWholeMilliseconds
             validate()
           })
     )
@@ -127,15 +132,15 @@ object ReadingBatServer : KLogging() {
   fun assignKotlinScriptProperty() {
     // If kotlin.script.classpath property is missing, set it based on env var SCRIPT_CLASSPATH
     // This has to take place before reading DSL
-    val scriptClasspathProp = Property.KOTLIN_SCRIPT_CLASSPATH.getPropertyOrNull()
+    val scriptClasspathProp = KOTLIN_SCRIPT_CLASSPATH.getPropertyOrNull()
     if (scriptClasspathProp.isNull()) {
-      val scriptClasspathEnvVar = EnvVar.SCRIPT_CLASSPATH.getEnvOrNull()
+      val scriptClasspathEnvVar = SCRIPT_CLASSPATH.getEnvOrNull()
       if (scriptClasspathEnvVar.isNotNull())
-        Property.KOTLIN_SCRIPT_CLASSPATH.setProperty(scriptClasspathEnvVar)
+        KOTLIN_SCRIPT_CLASSPATH.setProperty(scriptClasspathEnvVar)
       else
-        logger.warn { "Missing ${Property.KOTLIN_SCRIPT_CLASSPATH.propertyValue} and ${EnvVar.SCRIPT_CLASSPATH} values" }
+        logger.warn { "Missing ${KOTLIN_SCRIPT_CLASSPATH.propertyValue} and $SCRIPT_CLASSPATH values" }
     } else {
-      logger.info { "${Property.KOTLIN_SCRIPT_CLASSPATH.propertyValue}: $scriptClasspathProp" }
+      logger.info { "${KOTLIN_SCRIPT_CLASSPATH.propertyValue}: $scriptClasspathProp" }
     }
   }
 
@@ -161,7 +166,7 @@ object ReadingBatServer : KLogging() {
         ?: Property.AGENT_CONFIG.getPropertyOrNull(false)
         ?: "src/main/resources/application.conf"
 
-    Property.CONFIG_FILENAME.setProperty(configFilename)
+    CONFIG_FILENAME.setProperty(configFilename)
 
     return if (args.any { it.startsWith("-config=") })
       args
@@ -245,7 +250,7 @@ fun Application.module() {
 
   if (isAgentEnabled()) {
     if (Property.PROXY_HOSTNAME.getRequiredProperty().isNotEmpty()) {
-      val configFilename = Property.CONFIG_FILENAME.getRequiredProperty()
+      val configFilename = CONFIG_FILENAME.getRequiredProperty()
       val agentInfo = startAsyncAgent(configFilename, true)
       Property.AGENT_LAUNCH_ID.setProperty(agentInfo.launchId)
     } else {
@@ -296,5 +301,10 @@ fun Application.module() {
     }
 
     static(STATIC_ROOT) { resources("static") }
+
+    static("/") {
+      staticBasePackage = "public"
+      resources(".")
+    }
   }
 }

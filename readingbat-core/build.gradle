@@ -49,6 +49,8 @@ dependencies {
     implementation libraries.ktor_compression
     implementation libraries.ktor_calllogging
 
+    implementation libraries.khealth
+
     implementation libraries.jedis
 
     implementation libraries.hikari
