@@ -85,7 +85,7 @@ ext {
 allprojects {
     description = 'ReadingBat Core'
     group 'com.github.readingbat'
-    version '1.29.0'
+    version '1.30.0'
 
     apply plugin: 'application'
     apply plugin: 'java-library'  // gradle 7
@@ -98,7 +98,6 @@ allprojects {
 
     repositories {
         maven { url "https://maven.pkg.jetbrains.space/kotlin/p/kotlin/kotlin-js-wrappers" }
-        //maven { url "https://maven.pkg.jetbrains.space/public/p/ktor/eap" }
         google()
         mavenCentral()
         maven { url = 'https://jitpack.io' }
