@@ -42,6 +42,7 @@ import com.github.readingbat.server.ConfigureFormAuth.configureFormAuth
 import com.github.readingbat.server.Email.Companion.UNKNOWN_EMAIL
 import com.github.readingbat.server.ReadingBatServer.serverSessionId
 import com.github.readingbat.server.ServerUtils.fetchEmailFromCache
+import dev.hayden.KHealth
 import io.ktor.http.*
 import io.ktor.http.HttpHeaders.Location
 import io.ktor.http.HttpStatusCode.Companion.Found
@@ -163,6 +164,16 @@ object Installs : KLogging() {
       retrieveFromHeader(HttpHeaders.XRequestId)
       generate { "$serverSessionId-${requestCounter.incrementAndGet()}" }
       verify { it.isNotEmpty() }
+    }
+
+    install(KHealth) {
+//      readyChecks {
+//        check("check my database is up") { true }
+//      }
+//
+//      healthChecks {
+//        check("another check") { true }
+//      }
     }
 
     /*

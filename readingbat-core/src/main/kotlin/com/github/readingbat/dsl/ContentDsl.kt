@@ -57,6 +57,8 @@ class GitHubContent(
     fileName = fileName
   )
 
+private const val GH_PREFIX = "https://raw.githubusercontent.com"
+
 fun readingBatContent(block: ReadingBatContent.() -> Unit) =
   ReadingBatContent().apply(block).apply { validate() }
 
@@ -93,7 +95,7 @@ private fun saveContentDslToRedis(source: String, dsl: String) {
   if (isContentCachingEnabled()) {
     redisPool?.withNonNullRedisPool(true) { redis ->
       redis.set(contentDslKey(source), dsl)
-      logger.info { "Saved $source to redis" }
+      logger.info { "Saved ${source.removePrefix(GH_PREFIX)} to redis" }
     }
   }
 }
@@ -105,7 +107,7 @@ internal fun readContentDsl(contentSource: ContentSource) =
     } else {
       var dslCode = fetchContentDslFromRedis(contentSource.source)
       if (dslCode.isNotNull()) {
-        logger.info { "Fetched ${contentSource.source} from redis cache" }
+        logger.info { "Fetched ${contentSource.source.removePrefix(GH_PREFIX)} from redis cache" }
       } else {
         dslCode = contentSource.content
         saveContentDslToRedis(contentSource.source, dslCode)
@@ -113,7 +115,7 @@ internal fun readContentDsl(contentSource: ContentSource) =
       dslCode
     }
   }.let {
-    logger.info { "Read content for ${contentSource.source} in ${it.duration}" }
+    logger.info { "Read content for ${contentSource.source.removePrefix(GH_PREFIX)} in ${it.duration}" }
     it.value
   }
 
@@ -124,12 +126,12 @@ internal fun evalContentDsl(
 ) =
   runBlocking {
     measureTimedValue {
-      logger.info { "Starting eval for $source" }
+      logger.info { "Starting eval for ${source.removePrefix(GH_PREFIX)}" }
       val withImports = addImports(code, variableName)
       evalDsl(withImports, source)
     }
   }.let {
-    logger.info { "Evaluated $source in ${it.duration}" }
+    logger.info { "Evaluated ${source.removePrefix(GH_PREFIX)} in ${it.duration}" }
     it.value
   }
 
@@ -163,7 +165,7 @@ private suspend fun evalDsl(code: String, sourceName: String) =
   try {
     kotlinScriptPool.eval { eval(code) as ReadingBatContent }.apply { validate() }
   } catch (e: Throwable) {
-    logger.info { "Error in $sourceName:\n$code" }
+    logger.info { "Error in ${sourceName.removePrefix(GH_PREFIX)}:\n$code" }
     throw e
   }
 
