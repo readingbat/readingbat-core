@@ -99,7 +99,7 @@ object ReadingBatServer : KLogging() {
   internal val adminUsers = mutableListOf<String>()
   internal val contentReadCount = AtomicInteger(0)
   internal var redisPool: JedisPool? = null
-  internal val metrics by lazy { Metrics() }
+  val metrics by lazy { Metrics() }
   internal val dbms by lazy {
     Database.connect(
       HikariDataSource(
