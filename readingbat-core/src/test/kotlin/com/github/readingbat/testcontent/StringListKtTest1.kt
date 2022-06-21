@@ -15,7 +15,7 @@
  *
  */
 
-package com.github.readingbat.com.github.readingbat.test_content
+package com.github.readingbat.testcontent
 
 fun combinel(s1: String, s2: String): List<String> {
   return listOf(s1, s2)

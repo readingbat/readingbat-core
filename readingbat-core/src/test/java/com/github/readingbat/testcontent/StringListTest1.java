@@ -15,18 +15,25 @@
  *
  */
 
-package com.github.readingbat.com.github.readingbat.test_content
+package com.github.readingbat.testcontent;
 
-fun deadEnd(): Boolean {
-  while (true) {
-    println("I am stuck")
-    Thread.sleep(1000)
-  }
-  return true
-}
+import java.util.ArrayList;
+import java.util.List;
 
-fun main() {
-  println(deadEnd())
-  println(deadEnd())
-  println(deadEnd())
+import static com.github.pambrose.common.util.ListUtils.listPrint;
+
+public class StringListTest1 {
+
+    public static List<String> combine(String s1, String s2) {
+        List<String> retval = new ArrayList<>();
+        retval.add(s1);
+        retval.add(s2);
+        return retval;
+    }
+
+    public static void main(String[] args) {
+        listPrint(combine("Car", "wash"));
+        listPrint(combine("Hello", " world"));
+        listPrint(combine("", ""));
+    }
 }

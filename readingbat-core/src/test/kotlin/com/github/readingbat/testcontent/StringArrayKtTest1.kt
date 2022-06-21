@@ -15,19 +15,14 @@
  *
  */
 
-package com.github.readingbat.com.github.readingbat.test_content
+package com.github.readingbat.testcontent
 
-import java.util.*
-
-fun combine2l(strs: List<String>): List<String> {
-  val retval = mutableListOf<String>()
-  for (s in strs) retval += s.uppercase(Locale.getDefault())
-  return retval
+fun combine(s1: String, s2: String): Array<String> {
+  return arrayOf(s1, s2)
 }
 
 fun main() {
-  println(combine2l(listOf("Car", "wash")))
-  println(combine2l(listOf("Hello", " world")))
-  println(combine2l(listOf("Hello")))
-  println(combine2l(listOf()))
+  println(combine("Car", "wash"))
+  println(combine("Hello", " world"))
+  println(combine("", ""))
 }

@@ -15,23 +15,19 @@
  *
  */
 
-package com.github.readingbat.test_content;
+package com.github.readingbat.testcontent;
 
 import static com.github.pambrose.common.util.ArrayUtils.arrayPrint;
 
-public class StringArrayTest2 {
+public class StringArrayTest1 {
 
-    public static String[] combine(String[] strs) {
-        String[] retval = new String[strs.length];
-        for (int i = 0; i < strs.length; i++)
-            retval[i] = strs[i].toUpperCase();
-        return retval;
+    public static String[] combine(String s1, String s2) {
+        return new String[]{s1, s2};
     }
 
     public static void main(String[] args) {
-        arrayPrint(combine(new String[]{"Car", "wash"}));
-        arrayPrint(combine(new String[]{"Hello", " world"}));
-        arrayPrint(combine(new String[]{"Hello"}));
-        arrayPrint(combine(new String[]{}));
+        arrayPrint(combine("Car", "wash"));
+        arrayPrint(combine("Hello", " world"));
+        arrayPrint(combine("", ""));
     }
 }

@@ -15,8 +15,6 @@
  *
  */
 
-package com.github.readingbat
-
 import com.github.readingbat.dsl.addImports
 import com.github.readingbat.dsl.parse.JavaParse.extractJavaInvocations
 import com.github.readingbat.dsl.parse.JavaParse.javaEndRegex

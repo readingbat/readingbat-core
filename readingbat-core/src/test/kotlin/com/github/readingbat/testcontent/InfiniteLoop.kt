@@ -15,14 +15,18 @@
  *
  */
 
-package com.github.readingbat.com.github.readingbat.test_content
+package com.github.readingbat.testcontent
 
-fun combine(s1: String, s2: String): Array<String> {
-  return arrayOf(s1, s2)
+fun deadEnd(): Boolean {
+  while (true) {
+    println("I am stuck")
+    Thread.sleep(1000)
+  }
+  return true
 }
 
 fun main() {
-  println(combine("Car", "wash"))
-  println(combine("Hello", " world"))
-  println(combine("", ""))
+  println(deadEnd())
+  println(deadEnd())
+  println(deadEnd())
 }

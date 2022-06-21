@@ -15,7 +15,7 @@
  *
  */
 
-package com.github.readingbat.com.github.readingbat.test_content
+package com.github.readingbat.testcontent
 
 import java.util.*
 

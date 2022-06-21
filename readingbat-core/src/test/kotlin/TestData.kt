@@ -15,8 +15,6 @@
  *
  */
 
-package com.github.readingbat
-
 import com.github.pambrose.common.util.FileSystemSource
 import com.github.readingbat.dsl.ReturnType.BooleanArrayType
 import com.github.readingbat.dsl.ReturnType.FloatArrayType

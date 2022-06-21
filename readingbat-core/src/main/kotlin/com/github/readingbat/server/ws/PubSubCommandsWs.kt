@@ -134,7 +134,7 @@ internal object PubSubCommandsWs : KLogging() {
             redis.subscribe(pubSub, *PubSubTopic.values().map { it.name }.toTypedArray())
           } ?: throw RedisUnavailableException("pubsubWs subscriber")
         } catch (e: Throwable) {
-          logger.error(e) { "Exception in pubsubWs subscriber ${e.simpleClassName} ${e.message}" }
+          logger.error(e) { "Exception in pubsubWs subscriber ${e.simpleClassName} ${e.message} ${System.currentTimeMillis()} ${Thread.currentThread().name} ${Thread.currentThread().id}" }
           Thread.sleep(10.seconds.inWholeMilliseconds)
         }
       }
