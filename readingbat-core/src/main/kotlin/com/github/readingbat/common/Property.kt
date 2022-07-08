@@ -153,7 +153,6 @@ enum class Property(
     private fun notInitialized(prop: Property) = "Property ${prop.name} not initialized"
 
     internal fun Application.assignProperties() {
-
       val agentEnabled =
         EnvVar.AGENT_ENABLED.getEnv(AGENT_ENABLED.configValue(this, default = "false").toBoolean())
       AGENT_ENABLED.setProperty(agentEnabled.toString())

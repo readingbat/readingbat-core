@@ -73,7 +73,6 @@ internal object Intercepts : KLogging() {
 }
 
 internal fun Application.intercepts() {
-
   intercept(ApplicationCallPipeline.Setup) {
     // Phase for preparing call and it's attributes for processing
   }

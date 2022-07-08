@@ -61,7 +61,8 @@ internal object ClockPage : KLogging() {
                     document.getElementById('$pingMsg').innerText = obj.msg;
                   }
                 };
-              """.trimIndent())
+              """.trimIndent()
+            )
           }
         }
       }

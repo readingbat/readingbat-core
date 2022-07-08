@@ -53,7 +53,6 @@ import redis.clients.jedis.Jedis
 import kotlin.time.measureTime
 
 fun Routing.sysAdminRoutes(metrics: Metrics, resetContentFunc: (String) -> Unit) {
-
   suspend fun ApplicationCall.logId(): String {
     val paranMap = paramMap()
     return paranMap[LOG_ID] ?: throw InvalidRequestException("Missing log id")
@@ -96,9 +95,11 @@ fun Routing.sysAdminRoutes(metrics: Metrics, resetContentFunc: (String) -> Unit)
         }
     }
 
-    return listOf(deleteContentDslInRedis(),
-                  deleteDirContentsInRedis(),
-                  deleteSourceCodeInRedis()).joinToString(", ")
+    return listOf(
+      deleteContentDslInRedis(),
+      deleteDirContentsInRedis(),
+      deleteSourceCodeInRedis()
+    ).joinToString(", ")
   }
 
   post(RESET_CONTENT_DSL_ENDPOINT, metrics) {

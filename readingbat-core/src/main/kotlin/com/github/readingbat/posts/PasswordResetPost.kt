@@ -90,15 +90,19 @@ internal object PasswordResetPost : KLogging() {
 
           logger.info { "Sending password reset email to $email - $remoteStr" }
           try {
-            val msg = Message("""
+            val msg = Message(
+              """
               |This is a password reset message for the ReadingBat.com account for '$email'
               |Go to this URL to set a new password: ${Property.SENDGRID_PREFIX.getProperty("")}$PASSWORD_RESET_ENDPOINT?$RESET_ID_PARAM=$newResetId 
               |If you did not request to reset your password, please ignore this message.
-            """.trimMargin())
-            sendEmail(to = email,
-                      from = Email("reset@readingbat.com"),
-                      subject = "ReadingBat password reset",
-                      msg = msg)
+            """.trimMargin()
+            )
+            sendEmail(
+              to = email,
+              from = Email("reset@readingbat.com"),
+              subject = "ReadingBat password reset",
+              msg = msg
+            )
           } catch (e: IOException) {
             logger.info(e) { e.message }
             throw ResetPasswordException("Unable to send email")

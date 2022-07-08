@@ -124,7 +124,6 @@ internal object PageUtils {
     activeClassCode: ClassCode,
     msg: Message = EMPTY_MESSAGE
   ) {
-
     helpAndLogin(content, user, loginPath, activeClassCode.isEnabled)
     bodyTitle()
 

@@ -82,7 +82,8 @@ internal object RedisAdmin {
                 "$it - ${redis.smembers(it)}"
               }
             }
-          })
+          }
+      )
     }
   }
 }

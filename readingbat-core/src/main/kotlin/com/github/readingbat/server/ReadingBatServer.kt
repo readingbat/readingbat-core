@@ -25,6 +25,7 @@ import com.github.pambrose.common.util.getBanner
 import com.github.pambrose.common.util.isNotNull
 import com.github.pambrose.common.util.isNull
 import com.github.pambrose.common.util.randomId
+import com.github.readingbat.BuildConfig
 import com.github.readingbat.common.Constants.REDIS_IS_DOWN
 import com.github.readingbat.common.Constants.UNKNOWN_USER_ID
 import com.github.readingbat.common.Endpoints.STATIC_ROOT
@@ -48,7 +49,6 @@ import com.github.readingbat.dsl.isDbmsEnabled
 import com.github.readingbat.dsl.isProduction
 import com.github.readingbat.dsl.isRedisEnabled
 import com.github.readingbat.dsl.readContentDsl
-import com.github.readingbat.readingbat_core.BuildConfig
 import com.github.readingbat.server.Installs.installs
 import com.github.readingbat.server.Locations.locations
 import com.github.readingbat.server.ReadingBatServer.adminUsers
@@ -123,7 +123,8 @@ object ReadingBatServer : KLogging() {
             transactionIsolation = "TRANSACTION_REPEATABLE_READ"
             maxLifetime = DBMS_MAX_LIFETIME_MINS.getRequiredProperty().toInt().minutes.inWholeMilliseconds
             validate()
-          })
+          }
+      )
     )
   }
 
@@ -207,7 +208,8 @@ internal fun Application.readContentDsl(fileName: String, variableName: String, 
           maxHistoryLength = Property.MAX_HISTORY_LENGTH.configValue(this@readContentDsl, "10").toInt()
           maxClassCount = Property.MAX_CLASS_COUNT.configValue(this@readContentDsl, "25").toInt()
         }
-        .apply { clearContentMap() })
+        .apply { clearContentMap() }
+    )
     metrics.contentLoadedCount.labels(agentLaunchId()).inc()
   }.also { dur ->
     "Loaded content using $variableName in $fileName in $dur"
@@ -221,7 +223,6 @@ internal fun Application.readContentDsl(fileName: String, variableName: String, 
 }
 
 fun Application.module() {
-
   assignProperties()
 
   adminUsers.addAll(Property.ADMIN_USERS.configValueOrNull(this)?.getList() ?: emptyList())

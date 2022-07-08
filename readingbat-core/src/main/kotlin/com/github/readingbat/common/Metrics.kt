@@ -190,65 +190,85 @@ class Metrics {
       help("Server start time in seconds")
     }.labels(agentLaunchId()).setToCurrentTime()
 
-    SamplerGaugeCollector("request_timing_map_size",
-                          "Request timing map size",
-                          labelNames = listOf(AGENT_ID),
-                          labelValues = listOf(agentLaunchId()),
-                          data = { requestTimingMap.size.toDouble() })
+    SamplerGaugeCollector(
+      "request_timing_map_size",
+      "Request timing map size",
+      labelNames = listOf(AGENT_ID),
+      labelValues = listOf(agentLaunchId()),
+      data = { requestTimingMap.size.toDouble() }
+    )
 
-    SamplerGaugeCollector("geo_map_size",
-                          "IP Geo map size",
-                          labelNames = listOf(AGENT_ID),
-                          labelValues = listOf(agentLaunchId()),
-                          data = { geoInfoMap.size.toDouble() })
+    SamplerGaugeCollector(
+      "geo_map_size",
+      "IP Geo map size",
+      labelNames = listOf(AGENT_ID),
+      labelValues = listOf(agentLaunchId()),
+      data = { geoInfoMap.size.toDouble() }
+    )
 
-    SamplerGaugeCollector("content_map_size",
-                          "Content map size",
-                          labelNames = listOf(AGENT_ID),
-                          labelValues = listOf(agentLaunchId()),
-                          data = { contentSource().contentMap.size.toDouble() })
+    SamplerGaugeCollector(
+      "content_map_size",
+      "Content map size",
+      labelNames = listOf(AGENT_ID),
+      labelValues = listOf(agentLaunchId()),
+      data = { contentSource().contentMap.size.toDouble() }
+    )
 
-    SamplerGaugeCollector("user_id_cache_size",
-                          "User ID cache size",
-                          labelNames = listOf(AGENT_ID),
-                          labelValues = listOf(agentLaunchId()),
-                          data = { userIdCache.size.toDouble() })
+    SamplerGaugeCollector(
+      "user_id_cache_size",
+      "User ID cache size",
+      labelNames = listOf(AGENT_ID),
+      labelValues = listOf(agentLaunchId()),
+      data = { userIdCache.size.toDouble() }
+    )
 
-    SamplerGaugeCollector("user_email_cache_size",
-                          "User email cache size size",
-                          labelNames = listOf(AGENT_ID),
-                          labelValues = listOf(agentLaunchId()),
-                          data = { emailCache.size.toDouble() })
+    SamplerGaugeCollector(
+      "user_email_cache_size",
+      "User email cache size size",
+      labelNames = listOf(AGENT_ID),
+      labelValues = listOf(agentLaunchId()),
+      data = { emailCache.size.toDouble() }
+    )
 
-    SamplerGaugeCollector("sources_cache_size",
-                          "Sources cache size",
-                          labelNames = listOf(AGENT_ID),
-                          labelValues = listOf(agentLaunchId()),
-                          data = { contentSource().functionInfoMap.size.toDouble() })
+    SamplerGaugeCollector(
+      "sources_cache_size",
+      "Sources cache size",
+      labelNames = listOf(AGENT_ID),
+      labelValues = listOf(agentLaunchId()),
+      data = { contentSource().functionInfoMap.size.toDouble() }
+    )
 
-    SamplerGaugeCollector("websocket_connection_list_size",
-                          "Websocket connection list size",
-                          labelNames = listOf(AGENT_ID),
-                          labelValues = listOf(agentLaunchId()),
-                          data = { answerWsConnections.size.toDouble() })
+    SamplerGaugeCollector(
+      "websocket_connection_list_size",
+      "Websocket connection list size",
+      labelNames = listOf(AGENT_ID),
+      labelValues = listOf(agentLaunchId()),
+      data = { answerWsConnections.size.toDouble() }
+    )
 
-    SamplerGaugeCollector("active_users_1min_count",
-                          "Active users in last 1 min count",
-                          labelNames = listOf(AGENT_ID),
-                          labelValues = listOf(agentLaunchId()),
-                          data = { activeSessions(1.minutes).toDouble() })
+    SamplerGaugeCollector(
+      "active_users_1min_count",
+      "Active users in last 1 min count",
+      labelNames = listOf(AGENT_ID),
+      labelValues = listOf(agentLaunchId()),
+      data = { activeSessions(1.minutes).toDouble() }
+    )
 
-    SamplerGaugeCollector("active_users_15mins_count",
-                          "Active users in last 15 mins count",
-                          labelNames = listOf(AGENT_ID),
-                          labelValues = listOf(agentLaunchId()),
-                          data = { activeSessions(15.minutes).toDouble() })
+    SamplerGaugeCollector(
+      "active_users_15mins_count",
+      "Active users in last 15 mins count",
+      labelNames = listOf(AGENT_ID),
+      labelValues = listOf(agentLaunchId()),
+      data = { activeSessions(15.minutes).toDouble() }
+    )
 
-    SamplerGaugeCollector("active_users_60mins_count",
-                          "Active users in last 60 mins count",
-                          labelNames = listOf(AGENT_ID),
-                          labelValues = listOf(agentLaunchId()),
-                          data = { activeSessions(1.hours).toDouble() })
+    SamplerGaugeCollector(
+      "active_users_60mins_count",
+      "Active users in last 60 mins count",
+      labelNames = listOf(AGENT_ID),
+      labelValues = listOf(agentLaunchId()),
+      data = { activeSessions(1.hours).toDouble() }
+    )
   }
 
   suspend fun measureEndpointRequest(endpoint: String, body: suspend () -> Unit) {

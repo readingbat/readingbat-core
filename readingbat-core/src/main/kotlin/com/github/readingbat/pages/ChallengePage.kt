@@ -557,7 +557,6 @@ internal object ChallengePage : KLogging() {
   }
 
   private fun BODY.likeDislike(user: User?, browserSession: BrowserSession?, challenge: Challenge) {
-
     if (!isDbmsEnabled())
       return
 

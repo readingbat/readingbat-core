@@ -49,8 +49,7 @@ class InvokesTest : StringSpec(
     """.trimIndent()
 
       extractPythonInvocations(s, defMainRegex, ifMainEndRegex).map { it.toString() } shouldBe
-          listOf("simple_choice2(True, True)",
-                 "simple_choice2(True, False)")
+          listOf("simple_choice2(True, True)", "simple_choice2(True, False)")
     }
 
     "javaInvokesTest" {
@@ -77,8 +76,10 @@ class InvokesTest : StringSpec(
     """.trimIndent()
 
       extractJavaInvocations(s, psvmRegex, javaEndRegex).map { it.toString() } shouldBe
-          listOf("""joinEnds("Blue zebra")""",
-                 """joinEnds("Tree")""")
+          listOf(
+            """joinEnds("Blue zebra")""",
+            """joinEnds("Tree")"""
+          )
     }
 
     "kotlinInvokesTest" {
@@ -94,8 +95,10 @@ class InvokesTest : StringSpec(
     """.trimIndent()
 
       extractKotlinInvocations(s, funMainRegex, kotlinEndRegex).map { it.toString() } shouldBe
-          listOf("""listOf("a").combine2()""",
-                 """listOf("a", "b", "c", "d").combine2()""")
+          listOf(
+            """listOf("a").combine2()""",
+            """listOf("a", "b", "c", "d").combine2()"""
+          )
     }
 
     "classImportTest" {
@@ -247,4 +250,5 @@ class InvokesTest : StringSpec(
         $variable
         """.trimIndent()
     }
-  })
+  }
+)

@@ -51,7 +51,6 @@ internal object HelpAndLogin {
     loginPath: String,
     teacherMode: Boolean
   ) {
-
     val previousClassCode = queryPreviousTeacherClassCode(user)
     val path =
       if (loginPath in rootVals)

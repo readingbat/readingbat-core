@@ -126,7 +126,6 @@ fun Route.routeTimeout(time: Duration, callback: Route.() -> Unit): Route {
 }
 
 fun Routing.userRoutes(metrics: Metrics, contentSrc: () -> ReadingBatContent) {
-
   route(ROOT) {
     get {
       redirectTo { defaultLanguageTab(contentSrc(), fetchUser()) }

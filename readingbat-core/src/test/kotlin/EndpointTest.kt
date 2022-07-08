@@ -109,4 +109,5 @@ class EndpointTest : StringSpec(
           }
         }
     }
-  })
+  }
+)
