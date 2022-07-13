@@ -88,7 +88,7 @@ buildConfig {
 
     buildConfigField('String', 'CORE_NAME', "\"${project.name}\"")
     buildConfigField('String', 'CORE_VERSION', "\"${project.version}\"")
-    buildConfigField('String', 'CORE_RELEASE_DATE', "\"07/07/2022\"")
+    buildConfigField('String', 'CORE_RELEASE_DATE', "\"07/10/2022\"")
 }
 
 // Include build uberjars in heroku deploy
