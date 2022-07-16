@@ -15,11 +15,9 @@
  *
  */
 
-package com.github.readingbat
-
+import TestData.GROUP_NAME
+import TestData.readTestContent
 import com.github.pambrose.common.util.pathOf
-import com.github.readingbat.TestData.GROUP_NAME
-import com.github.readingbat.TestData.readTestContent
 import com.github.readingbat.common.Constants.CHALLENGE_NOT_FOUND
 import com.github.readingbat.common.Endpoints.ABOUT_ENDPOINT
 import com.github.readingbat.common.Endpoints.HELP_ENDPOINT
@@ -53,13 +51,15 @@ class EndpointTest : StringSpec(
           testApplication {
             application { testModule(testContent) }
 
-            client.get("/").also { it shouldHaveStatus OK }
-            client.get(ABOUT_ENDPOINT).also { it shouldHaveStatus OK }
-            client.get(HELP_ENDPOINT).also { it shouldHaveStatus OK }
-            client.get(PRIVACY_ENDPOINT).also { it shouldHaveStatus OK }
+            client.apply {
+              get("/").also { it shouldHaveStatus OK }
+              get(ABOUT_ENDPOINT).also { it shouldHaveStatus OK }
+              get(HELP_ENDPOINT).also { it shouldHaveStatus OK }
+              get(PRIVACY_ENDPOINT).also { it shouldHaveStatus OK }
 
-            client.get(pathOf(Python.contentRoot, GROUP_NAME, "boolean_array_test_WRONG_NAME")).also {
-              it.bodyAsText() shouldContain CHALLENGE_NOT_FOUND
+              get(pathOf(Python.contentRoot, GROUP_NAME, "boolean_array_test_WRONG_NAME")).also {
+                it.bodyAsText() shouldContain CHALLENGE_NOT_FOUND
+              }
             }
 
             testContent.forEachLanguage {
@@ -109,4 +109,5 @@ class EndpointTest : StringSpec(
           }
         }
     }
-  })
+  }
+)

@@ -184,7 +184,6 @@ object TestSupport {
   fun ChallengeResults.shouldBeIncorrect() = correct.shouldBeFalse()
 
   fun Application.testModule(content: ReadingBatContent) {
-
     Property.IS_TESTING.setProperty("true")
     Property.assignInitialized()
 

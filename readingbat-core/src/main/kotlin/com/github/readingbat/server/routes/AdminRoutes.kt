@@ -58,7 +58,6 @@ import java.time.ZoneId
 object AdminRoutes : KLogging() {
 
   fun Routing.adminRoutes(metrics: Metrics) {
-
     get(PING_ENDPOINT, metrics) {
       call.respondText("pong", Plain)
     }

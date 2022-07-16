@@ -15,25 +15,19 @@
  *
  */
 
-package com.github.readingbat.test_content;
+package com.github.readingbat.testcontent
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*
 
-import static com.github.pambrose.common.util.ListUtils.listPrint;
+fun combine2l(strs: List<String>): List<String> {
+  val retval = mutableListOf<String>()
+  for (s in strs) retval += s.uppercase(Locale.getDefault())
+  return retval
+}
 
-public class StringListTest1 {
-
-    public static List<String> combine(String s1, String s2) {
-        List<String> retval = new ArrayList<>();
-        retval.add(s1);
-        retval.add(s2);
-        return retval;
-    }
-
-    public static void main(String[] args) {
-        listPrint(combine("Car", "wash"));
-        listPrint(combine("Hello", " world"));
-        listPrint(combine("", ""));
-    }
+fun main() {
+  println(combine2l(listOf("Car", "wash")))
+  println(combine2l(listOf("Hello", " world")))
+  println(combine2l(listOf("Hello")))
+  println(combine2l(listOf()))
 }

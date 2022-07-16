@@ -15,11 +15,11 @@
  *
  */
 
-package com.github.readingbat.test_content;
+package com.github.readingbat.testcontent;
 
 import static com.github.pambrose.common.util.ArrayUtils.arrayPrint;
 
-public class StringListTest2 {
+public class StringArrayTest2 {
 
     public static String[] combine(String[] strs) {
         String[] retval = new String[strs.length];

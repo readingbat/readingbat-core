@@ -95,10 +95,14 @@ val dslContent =
 
     include(GitHubContent(Organization, "readingbat", "readingbat-java-content").eval(this).kotlin, "Athenian: ")
 
-    include(GitHubContent(Organization,
-                          "readingbat",
-                          "readingbat-python-content",
-                          srcPath = "src").eval(this).python)
+    include(
+      GitHubContent(
+        Organization,
+        "readingbat",
+        "readingbat-python-content",
+        srcPath = "src"
+      ).eval(this).python
+    )
 
     include(GitHubContent(User, "maleich", "ReadingBat-content").eval(this).python, "Athenian: ")
 

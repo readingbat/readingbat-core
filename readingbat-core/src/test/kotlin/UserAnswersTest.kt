@@ -15,10 +15,8 @@
  *
  */
 
-package com.github.readingbat
-
-import com.github.readingbat.TestData.GROUP_NAME
-import com.github.readingbat.TestData.readTestContent
+import TestData.GROUP_NAME
+import TestData.readTestContent
 import com.github.readingbat.kotest.TestSupport.answerFor
 import com.github.readingbat.kotest.TestSupport.forEachAnswer
 import com.github.readingbat.kotest.TestSupport.forEachChallenge
@@ -85,4 +83,5 @@ class UserAnswersTest : StringSpec(
           }
       }
     }
-  })
+  }
+)

@@ -87,5 +87,6 @@ internal object LikeDislikeJs {
         }
       }
     }
-  """)
+  """
+    )
 }

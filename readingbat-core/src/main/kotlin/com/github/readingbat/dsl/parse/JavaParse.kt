@@ -36,11 +36,13 @@ internal object JavaParse : KLogging() {
   internal val svmRegex = Regex("""\s*static\s+void\s+main\(""")
 
   private val prefixRegex =
-    listOf(Regex("""System\.out\.println\("""),
-           Regex("""ArrayUtils\.arrayPrint\("""),
-           Regex("""ListUtils\.listPrint\("""),
-           Regex("""arrayPrint\("""),
-           Regex("""listPrint\("""))
+    listOf(
+      Regex("""System\.out\.println\("""),
+      Regex("""ArrayUtils\.arrayPrint\("""),
+      Regex("""ListUtils\.listPrint\("""),
+      Regex("""arrayPrint\("""),
+      Regex("""listPrint\(""")
+    )
   private val prefixes =
     listOf("System.out.println", "ArrayUtils.arrayPrint", "ListUtils.listPrint", "arrayPrint", "listPrint")
 
@@ -73,7 +75,8 @@ internal object JavaParse : KLogging() {
             .map { it.trimStart() }
             .filter { it.startsWith("$prefix(") }
             .map { it.substringBetween("$prefix(", ")") }
-            .map { Invocation((it)) })
+            .map { Invocation((it)) }
+        )
       }
     return lines
   }

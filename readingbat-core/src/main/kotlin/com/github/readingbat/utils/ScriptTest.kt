@@ -96,7 +96,6 @@ fun javaTest() {
 
 @Suppress("unused")
 fun pythonTest() {
-
   val correctAnswers = mutableListOf<Any>()
 
   val script = """

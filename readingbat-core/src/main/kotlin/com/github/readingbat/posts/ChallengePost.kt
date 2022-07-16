@@ -358,7 +358,6 @@ internal object ChallengePost : KLogging() {
     userResponses: List<Map.Entry<String, List<String>>>,
     results: List<ChallengeResults>
   ) {
-
     // Save the last answers given
     val invokeList =
       userResponses.indices
@@ -452,10 +451,11 @@ internal object ChallengePost : KLogging() {
     }
 
     // This is done oustide the transaction
-    if (shouldPublish)
+    if (shouldPublish) {
       historyList.forEach {
         user?.publishAnswers(challengeMd5, content.maxHistoryLength, complete, numCorrect, it)
       }
+    }
   }
 
   private suspend fun saveLikeDislike(

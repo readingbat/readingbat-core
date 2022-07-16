@@ -111,5 +111,6 @@ internal object CheckAnswersJs {
         document.getElementById('$NEXTPREVCHANCE_ID').style.display = success ? "inline" : "none";
       }
     }
-  """)
+  """
+    )
 }

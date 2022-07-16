@@ -65,7 +65,6 @@ internal object ClassSummaryWs : KLogging() {
         metrics.wsClassSummaryGauge.labels(agentLaunchId()).inc()
 
         metrics.measureEndpointRequest("/websocket_class_summary") {
-
           val content = contentSrc.invoke()
           val p = call.parameters
           val langName = p[LANGUAGE_NAME]?.let { LanguageName(it) } ?: throw InvalidRequestException("Missing language")

@@ -75,5 +75,6 @@ internal object AdminCommandsJs {
         document.getElementById('$SUCCESS_ID').innerText = success ? "Success! Congratulations!" : "";
       }
     }
-  """)
+  """
+    )
 }

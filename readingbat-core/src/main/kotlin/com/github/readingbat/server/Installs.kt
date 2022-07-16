@@ -69,7 +69,6 @@ import java.util.concurrent.atomic.AtomicLong
 object Installs : KLogging() {
 
   fun Application.installs(production: Boolean) {
-
     install(Locations)
 
     install(Sessions) {

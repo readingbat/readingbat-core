@@ -51,7 +51,6 @@ import java.util.concurrent.atomic.AtomicBoolean
 internal object StudentSummaryWs : KLogging() {
 
   fun Routing.studentSummaryWsEndpoint(metrics: Metrics, contentSrc: () -> ReadingBatContent) {
-
     webSocket("$WS_ROOT$STUDENT_SUMMARY_ENDPOINT/{$LANGUAGE_NAME}/{$STUDENT_ID}/{$CLASS_CODE}") {
       try {
         val finished = AtomicBoolean(false)
@@ -67,7 +66,6 @@ internal object StudentSummaryWs : KLogging() {
         metrics.wsStudentSummaryGauge.labels(agentLaunchId()).inc()
 
         metrics.measureEndpointRequest("/websocket_student_summary") {
-
           val content = contentSrc.invoke()
           val p = call.parameters
           val languageName =

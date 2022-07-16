@@ -70,7 +70,6 @@ internal object SystemAdminPage : KLogging() {
   private fun PipelineCall.systemAdminLoginPage(content: ReadingBatContent, user: User, msg: Message) =
     createHTML()
       .html {
-
         val logId = randomId(10)
 
         head {
