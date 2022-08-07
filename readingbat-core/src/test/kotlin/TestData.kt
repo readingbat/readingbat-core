@@ -36,7 +36,7 @@ object TestData {
         srcPath = "python"
 
         group(GROUP_NAME) {
-          packageName = "test_content"
+          packageName = "testcontent"
 
           challenge("boolean_array_test") { returnType = BooleanArrayType }
           challenge("int_array_test") { returnType = IntArrayType }
@@ -51,7 +51,7 @@ object TestData {
         repo = FileSystemSource("./")
         srcPath = "src/test/java"
         group(GROUP_NAME) {
-          packageName = "com.github.readingbat.test_content"
+          packageName = "com.github.readingbat.testcontent"
 
           challenge("StringArrayTest1")
         }
@@ -62,7 +62,7 @@ object TestData {
         repo = FileSystemSource("./")
         srcPath = "src/test/kotlin"
         group(GROUP_NAME) {
-          packageName = "com.github.readingbat.test_content"
+          packageName = "com.github.readingbat.testcontent"
 
           challenge("StringArrayKtTest1") { returnType = StringArrayType }
         }

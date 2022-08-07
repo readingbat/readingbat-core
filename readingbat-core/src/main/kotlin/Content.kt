@@ -76,18 +76,18 @@ val dslContent =
     include(GitHubContent(Organization, "readingbat", "readingbat-python-content", srcPath = "src").eval(this).python)
     include(GitHubContent(Organization, "readingbat", "readingbat-java-content").eval(this).kotlin)
 */
-/*
-    kotlin {
-      group("Infinite Loop") {
-        packageName = "com.github.readingbat.test_content"
+    /*
+        kotlin {
+          group("Infinite Loop") {
+            packageName = "com.github.readingbat.testcontent"
 
-        challenge("InfiniteLoop") {
-          returnType = ReturnType.BooleanType
+            challenge("InfiniteLoop") {
+              returnType = ReturnType.BooleanType
+            }
+
+          }
         }
-
-      }
-    }
-*/
+    */
 
     //include(GitHubContent(Organization, "readingbat", "readingbat-java-content", fileName = "Content.kt").eval(this, variableName = "content").java)
 
@@ -113,7 +113,7 @@ val dslContent =
       srcPath = "python"
 
       group("Test Cases") {
-        packageName = "test_content"
+        packageName = "testcontent"
         description = "Tests"
 
         challenge("divide1") { returnType = FloatType  /* This should be a float*/ }
@@ -132,7 +132,7 @@ val dslContent =
       branchName = "1.12.0"
 
       group("Java Tests") {
-        packageName = "com.github.readingbat.test_content"
+        packageName = "com.github.readingbat.testcontent"
         description = "Tests"
 
         challenge("StringArrayTest1")
@@ -148,7 +148,7 @@ val dslContent =
       branchName = "1.12.0"
 
       group("Kotlin Tests") {
-        packageName = "com.github.readingbat.test_content"
+        packageName = "com.github.readingbat.testcontent"
         description = "Tests"
 
         challenge("StringArrayKtTest1") { returnType = StringArrayType }
