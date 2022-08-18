@@ -39,7 +39,7 @@ internal object ConfigureFormAuth : KLogging() {
   private val failedLoginLimiter = RateLimiter.create(1.0) // rate 2.0 is "2 permits per second"
 
   /**
-   * Form-based authentication is a interceptor that reads attributes off a POST request in order to validate the user.
+   * Form-based authentication is an interceptor that reads attributes off a POST request in order to validate the user.
    * Only needed by whatever your login form is POSTing to.
    *
    * If validation fails, the user will be challenged, e.g. sent to a login page to authenticate.
@@ -51,7 +51,7 @@ internal object ConfigureFormAuth : KLogging() {
 
       challenge {
         // I don't think form auth supports multiple errors, but we're conservatively assuming there will be at
-        // most one error, which we handle here. Worst case, we just send the user to login with no context.
+        // most one error, which we handle here. Worst case, we just send the user to log in with no context.
 
         // val errors: List<AuthenticationFailedCause> = call.authentication.allFailures
         // logger.info { "Inside challenge: $errors" }

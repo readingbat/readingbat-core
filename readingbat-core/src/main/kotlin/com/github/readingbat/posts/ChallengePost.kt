@@ -207,6 +207,7 @@ internal object ChallengePost : KLogging() {
           UserChallengeInfoTable
             .deleteWhere { (UserChallengeInfoTable.userRef eq fetchUserDbmsIdFromCache(id)) and (UserChallengeInfoTable.md5 eq md5) }
         }
+
       NO_AUTH_KEY ->
         transaction {
           SessionChallengeInfoTable
@@ -217,6 +218,7 @@ internal object ChallengePost : KLogging() {
               )) and (SessionChallengeInfoTable.md5 eq md5)
             }
         }
+
       else -> error("Invalid type: $type")
     }
 
@@ -227,6 +229,7 @@ internal object ChallengePost : KLogging() {
           UserAnswerHistoryTable
             .deleteWhere { (UserAnswerHistoryTable.userRef eq fetchUserDbmsIdFromCache(id)) and (UserAnswerHistoryTable.md5 eq md5) }
         }
+
       NO_AUTH_KEY ->
         transaction {
           SessionAnswerHistoryTable
@@ -237,6 +240,7 @@ internal object ChallengePost : KLogging() {
               )) and (SessionAnswerHistoryTable.md5 eq md5)
             }
         }
+
       else -> error("Invalid type: $type")
     }
 
@@ -336,6 +340,7 @@ internal object ChallengePost : KLogging() {
         LIKE_CLEAR -> 1
         LIKE_COLOR,
         DISLIKE_COLOR -> 0
+
         DISLIKE_CLEAR -> 2
         else -> error("Invalid like/dislike argument: $likeArg")
       }
@@ -385,6 +390,7 @@ internal object ChallengePost : KLogging() {
               row[allCorrect] = complete
               row[answersJson] = invokeStr
             }
+
         browserSession.isNotNull() ->
           SessionChallengeInfoTable
             .upsert(conflictIndex = sessionChallengeInfoIndex) { row ->
@@ -394,6 +400,7 @@ internal object ChallengePost : KLogging() {
               row[allCorrect] = complete
               row[answersJson] = invokeStr
             }
+
         else ->
           logger.warn { "ChallengeInfo not updated" }
       }
@@ -433,6 +440,7 @@ internal object ChallengePost : KLogging() {
                 row[UserAnswerHistoryTable.incorrectAttempts] = incorrectAttempts
                 row[historyJson] = json
               }
+
           browserSession.isNotNull() ->
             SessionAnswerHistoryTable
               .upsert(conflictIndex = sessionAnswerHistoryIndex) { row ->
@@ -444,6 +452,7 @@ internal object ChallengePost : KLogging() {
                 row[SessionAnswerHistoryTable.incorrectAttempts] = incorrectAttempts
                 row[historyJson] = json
               }
+
           else ->
             logger.warn { "Answer history not updated" }
         }
@@ -480,6 +489,7 @@ internal object ChallengePost : KLogging() {
         if (shouldPublish)
           user.publishLikeDislike(challengeMd5, likeDislikeVal)
       }
+
       browserSession.isNotNull() ->
         transaction {
           SessionChallengeInfoTable
@@ -490,6 +500,7 @@ internal object ChallengePost : KLogging() {
               row[likeDislike] = likeDislikeVal.toShort()
             }
         }
+
       else -> {
         // Do nothing
       }

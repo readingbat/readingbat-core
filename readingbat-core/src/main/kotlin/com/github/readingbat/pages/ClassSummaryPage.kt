@@ -104,7 +104,9 @@ internal object ClassSummaryPage : KLogging() {
         val teacherId = classCode.fetchClassTeacherId()
         throw InvalidRequestException("User id ${user.userId} does not match class code's teacher id $teacherId")
       }
+
       else -> {
+        // Do nothing
       }
     }
 

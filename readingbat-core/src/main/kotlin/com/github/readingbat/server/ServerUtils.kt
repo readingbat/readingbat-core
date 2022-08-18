@@ -133,6 +133,7 @@ internal object ServerUtils : KLogging() {
           else -> block.invoke()
         }
       }
+
       else -> block.invoke()
     }
 

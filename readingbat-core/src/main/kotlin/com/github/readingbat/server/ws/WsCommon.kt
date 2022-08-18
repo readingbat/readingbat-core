@@ -72,6 +72,7 @@ object WsCommon : KLogging() {
         val teacherId = classCode.fetchClassTeacherId()
         false to "User id ${user.userId} does not match class code's teacher Id $teacherId"
       }
+
       else -> true to ""
     }.also { (valid, msg) -> if (!valid) throw InvalidRequestException(msg) }
 
