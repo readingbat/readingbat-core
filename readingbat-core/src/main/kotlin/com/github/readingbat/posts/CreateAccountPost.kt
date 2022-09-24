@@ -83,6 +83,7 @@ internal object CreateAccountPost : KLogging() {
       email.isBlank() -> createAccountPage(defaultFullName = fullName, msg = EMPTY_EMAIL_MSG)
       email.isNotValidEmail() ->
         createAccountPage(defaultFullName = fullName, defaultEmail = email, msg = INVALID_EMAIL_MSG)
+
       else -> {
         val passwordError = checkPassword(password, confirmPassword)
         if (passwordError.isNotBlank)

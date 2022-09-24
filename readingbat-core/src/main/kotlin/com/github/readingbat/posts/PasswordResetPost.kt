@@ -71,14 +71,17 @@ internal object PasswordResetPost : KLogging() {
         unknownUserLimiter.acquire()
         passwordResetPage(EMPTY_RESET_ID, Message("Invalid user: $email", true))
       }
+
       email.isBlank() -> passwordResetPage(EMPTY_RESET_ID, unableToSend)
       email.isNotValidEmail() -> {
         passwordResetPage(EMPTY_RESET_ID, Message("Invalid email address: $email", true))
       }
+
       isNotRegisteredEmail(email) -> {
         unknownUserLimiter.acquire()
         passwordResetPage(EMPTY_RESET_ID, Message("Unknown user: $email", true))
       }
+
       else -> {
         try {
           val newResetId = newResetId()

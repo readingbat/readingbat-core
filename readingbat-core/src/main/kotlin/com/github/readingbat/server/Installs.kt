@@ -194,14 +194,17 @@ object Installs : KLogging() {
             logger.info { "InvalidRequestException caught: ${cause.message}" }
             call.respondWith { invalidRequestPage(call.request.uri, cause.message ?: UNKNOWN) }
           }
+
           is RedisUnavailableException -> {
             logger.info(cause) { "RedisUnavailableException caught: ${cause.message}" }
             call.respondWith { dbmsDownPage() }
           }
+
           is IllegalStateException -> {
             logger.info { "IllegalStateException caught: ${cause.message}" }
             call.respondWith { errorPage() }
           }
+
           else -> {
             logger.warn(cause) { "Throwable caught: ${cause.simpleClassName}" }
             call.respondWith { errorPage() }

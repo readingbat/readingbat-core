@@ -75,6 +75,7 @@ internal object TeacherPrefsPost : KLogging() {
             else -> error("Invalid source: $source")
           }
         }
+
         REMOVE_FROM_CLASS -> {
           val studentId = params[USER_ID_PARAM] ?: error("Missing: $USER_ID_PARAM")
           val student = studentId.toUser()
@@ -84,7 +85,9 @@ internal object TeacherPrefsPost : KLogging() {
           logger.info { msg }
           classSummaryPage(content, user, classCode, msg = Message(msg))
         }
+
         DELETE_CLASS -> deleteClass(content, user, params.getClassCode(CLASS_CODE_NAME_PARAM))
+
         else -> error("Invalid action: $action")
       }
     } else {
@@ -122,13 +125,16 @@ internal object TeacherPrefsPost : KLogging() {
       classDesc.isBlank() -> {
         teacherPrefsPage(content, user, Message("Unable to create class [Empty class description]", true))
       }
+
       !user.isUniqueClassDesc(classDesc) -> {
         teacherPrefsPage(content, user, Message("Class description is not unique [$classDesc]", true), classDesc)
       }
+
       user.classCount() == content.maxClassCount -> {
         val msg = Message("Maximum number of classes is: [${content.maxClassCount}]", true)
         teacherPrefsPage(content, user, msg, classDesc)
       }
+
       else -> {
         // Add classcode to list of classes created by user
         val classCode = newClassCode()
@@ -143,6 +149,7 @@ internal object TeacherPrefsPost : KLogging() {
       // student/teacher toggle mode
       queryActiveTeachingClassCode(user) == classCode && classCode.isEnabled ->
         Message("Same active class selected [$classCode]", true)
+
       else -> {
         user.assignActiveClassCode(classCode, true)
         Message(
@@ -162,6 +169,7 @@ internal object TeacherPrefsPost : KLogging() {
         user,
         Message("Invalid class code: $classCode", true)
       )
+
       else -> {
         val activeTeachingClassCode = queryActiveTeachingClassCode(user)
         val enrollees = classCode.fetchEnrollees()

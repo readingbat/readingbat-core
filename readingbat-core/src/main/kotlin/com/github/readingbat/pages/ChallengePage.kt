@@ -690,6 +690,7 @@ internal object ChallengePage : KLogging() {
             ?.let { Json.decodeFromString<Map<String, String>>(it) }
             ?: emptyMap
         }
+
       browserSession.isNotNull() ->
         transaction {
           SessionChallengeInfoTable
@@ -700,6 +701,7 @@ internal object ChallengePage : KLogging() {
             ?.let { Json.decodeFromString<Map<String, String>>(it) }
             ?: emptyMap
         }
+
       else -> emptyMap
     }
 }

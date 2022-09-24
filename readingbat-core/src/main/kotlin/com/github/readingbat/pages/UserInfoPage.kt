@@ -56,6 +56,7 @@ internal object UserInfoPage {
             user.isNotValidUser() -> {
               br { +"Must be logged in for this function" }
             }
+
             else -> {
               val name = user.fullName
               val email = user.email

@@ -95,6 +95,7 @@ internal object LoggingWs : KLogging() {
                             }
                         }
                     }
+
                     RESET_CACHE -> {
                       val content = contentSrc()
                       val cnt = content.functionInfoMap.size
@@ -107,6 +108,7 @@ internal object LoggingWs : KLogging() {
                             }
                         }
                     }
+
                     LOAD_CHALLENGE -> {
                       val type = Json.decodeFromString<LoadChallengeType>(data.jsonArgs)
                       type.languageTypes
@@ -118,6 +120,7 @@ internal object LoggingWs : KLogging() {
                             }
                         }
                     }
+
                     RUN_GC -> {
                       measureTime { System.gc() }
                         .also { dur ->
@@ -150,18 +153,18 @@ internal object LoggingWs : KLogging() {
               .onCompletion { logger.info { "Finished reading log ws channel values" } }
               .collect { data ->
                 val json = Json.encodeToString(data.text)
-                  logWsConnections
-                    .filter { it.logId == data.logId }
-                    .forEach {
-                      it.wsSession.outgoing.send(Frame.Text(json))
-                    }
-                }
-            }
-          } catch (e: Throwable) {
-            logger.error { "Exception in dispatcher ${e.simpleClassName} ${e.message}" }
-            Thread.sleep(1.seconds.inWholeMilliseconds)
+                logWsConnections
+                  .filter { it.logId == data.logId }
+                  .forEach {
+                    it.wsSession.outgoing.send(Frame.Text(json))
+                  }
+              }
           }
+        } catch (e: Throwable) {
+          logger.error { "Exception in dispatcher ${e.simpleClassName} ${e.message}" }
+          Thread.sleep(1.seconds.inWholeMilliseconds)
         }
+      }
     }
   }
 

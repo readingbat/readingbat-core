@@ -62,7 +62,7 @@ internal object ClockWs : KLogging() {
             sessionContext.wsSession.outgoing.send(Frame.Text(json))
           }
         } catch (e: Throwable) {
-          logger.error { "Exception in pinger ${e.simpleClassName} ${e.message}" }
+          logger.error { "Exception in pinger: ${e.simpleClassName} ${e.message}" }
         }
     }
   }
