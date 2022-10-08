@@ -64,6 +64,7 @@ import kotlinx.serialization.json.Json
 import mu.KLogging
 import org.jetbrains.exposed.sql.Count
 import org.jetbrains.exposed.sql.ResultRow
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insert

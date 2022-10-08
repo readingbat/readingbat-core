@@ -47,6 +47,7 @@ import io.ktor.server.sessions.*
 import kotlinx.html.body
 import kotlinx.html.div
 import mu.KLogging
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.io.ByteArrayOutputStream
@@ -115,13 +116,13 @@ object AdminRoutes : KLogging() {
 
     fun PipelineCall.clearSessionId() {
       call.browserSession
-        .also {
-          if (it.isNotNull()) {
-            logger.info { "Clearing browser session id $it" }
+        .also { bs ->
+          if (bs.isNotNull()) {
+            logger.info { "Clearing browser session id $bs" }
             call.sessions.clear<BrowserSession>()
             if (isDbmsEnabled())
               transaction {
-                BrowserSessionsTable.deleteWhere { BrowserSessionsTable.sessionId eq it.id }
+                BrowserSessionsTable.deleteWhere { BrowserSessionsTable.sessionId eq bs.id }
               }
           } else {
             logger.info { "Browser session id not set" }
