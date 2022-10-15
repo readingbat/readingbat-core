@@ -24,6 +24,7 @@ import com.github.readingbat.common.User.Companion.toUser
 import com.github.readingbat.server.ClassesTable
 import com.github.readingbat.server.EnrolleesTable
 import com.github.readingbat.server.UsersTable
+import com.github.readingbat.utils.ExposedUtils.readonlyTx
 import com.pambrose.common.exposed.get
 import io.ktor.http.*
 import mu.KLogging
@@ -45,7 +46,7 @@ data class ClassCode(val classCode: String) {
   private val classCodeDbmsId
     get() =
       measureTimedValue {
-        transaction {
+        readonlyTx {
           ClassesTable
             .slice(ClassesTable.id)
             .select { ClassesTable.classCode eq classCode }
@@ -60,7 +61,7 @@ data class ClassCode(val classCode: String) {
   fun isNotValid() = !isValid()
 
   fun isValid() =
-    transaction {
+    readonlyTx {
       ClassesTable
         .slice(Count(ClassesTable.classCode))
         .select { ClassesTable.classCode eq classCode }
@@ -72,7 +73,7 @@ data class ClassCode(val classCode: String) {
     if (isNotEnabled)
       emptyList()
     else
-      transaction {
+      readonlyTx {
         val userIds =
           (ClassesTable innerJoin EnrolleesTable)
             .slice(EnrolleesTable.userRef)
@@ -100,7 +101,7 @@ data class ClassCode(val classCode: String) {
     EnrolleesTable.deleteWhere { (EnrolleesTable.classesRef eq classCodeDbmsId) and (EnrolleesTable.userRef eq user.userDbmsId) }
 
   fun fetchClassDesc(quoted: Boolean = false) =
-    transaction {
+    readonlyTx {
       (ClassesTable
         .slice(ClassesTable.description)
         .select { ClassesTable.classCode eq classCode }
@@ -112,7 +113,7 @@ data class ClassCode(val classCode: String) {
   fun toDisplayString() = "${fetchClassDesc(true)} [$classCode]"
 
   fun fetchClassTeacherId() =
-    transaction {
+    readonlyTx {
       ((ClassesTable innerJoin UsersTable)
         .slice(UsersTable.userId)
         .select { ClassesTable.classCode eq classCode }

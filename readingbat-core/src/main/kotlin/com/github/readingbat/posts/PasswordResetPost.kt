@@ -47,6 +47,7 @@ import com.github.readingbat.server.ResetId.Companion.EMPTY_RESET_ID
 import com.github.readingbat.server.ResetId.Companion.getResetId
 import com.github.readingbat.server.ResetId.Companion.newResetId
 import com.github.readingbat.server.ServerUtils.queryParam
+import com.github.readingbat.utils.ExposedUtils.readonlyTx
 import com.google.common.util.concurrent.RateLimiter
 import com.pambrose.common.exposed.get
 import io.ktor.server.application.*
@@ -54,7 +55,6 @@ import io.ktor.server.plugins.*
 import io.ktor.server.request.*
 import mu.KLogging
 import org.jetbrains.exposed.sql.select
-import org.jetbrains.exposed.sql.transactions.transaction
 import java.io.IOException
 
 internal object PasswordResetPost : KLogging() {
@@ -137,7 +137,7 @@ internal object PasswordResetPost : KLogging() {
         throw ResetPasswordException(passwordError.value, resetId)
 
       val email =
-        transaction {
+        readonlyTx {
           PasswordResetsTable
             .slice(PasswordResetsTable.email)
             .select { PasswordResetsTable.resetId eq resetId.value }

@@ -24,6 +24,7 @@ import com.github.readingbat.server.FullName
 import com.github.readingbat.server.GeoInfosTable
 import com.github.readingbat.server.ServerRequestsTable
 import com.github.readingbat.server.UsersTable
+import com.github.readingbat.utils.ExposedUtils.readonlyTx
 import com.pambrose.common.exposed.dateTimeExpr
 import com.pambrose.common.exposed.get
 import mu.KLogging
@@ -33,7 +34,6 @@ import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.countDistinct
 import org.jetbrains.exposed.sql.jodatime.DateColumnType
 import org.jetbrains.exposed.sql.select
-import org.jetbrains.exposed.sql.transactions.transaction
 import org.joda.time.DateTime
 import org.joda.time.DateTimeZone
 import kotlin.math.min
@@ -70,7 +70,7 @@ internal object SessionActivites : KLogging() {
   )
 
   fun querySessions(dayCount: Int) =
-    transaction {
+    readonlyTx {
       measureTimedValue {
         val count = Count(UsersTable.id)
         val maxDate = Max(created, DateColumnType(true))
@@ -107,7 +107,7 @@ internal object SessionActivites : KLogging() {
     if (!isDbmsEnabled())
       0
     else
-      transaction {
+      readonlyTx {
         //addLogger(KotlinLoggingSqlLogger)
         measureTimedValue {
           val sessionRef = ServerRequestsTable.sessionRef

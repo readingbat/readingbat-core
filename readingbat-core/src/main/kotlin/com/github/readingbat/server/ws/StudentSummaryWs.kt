@@ -36,6 +36,7 @@ import com.github.readingbat.server.ws.WsCommon.LANGUAGE_NAME
 import com.github.readingbat.server.ws.WsCommon.STUDENT_ID
 import com.github.readingbat.server.ws.WsCommon.closeChannels
 import com.github.readingbat.server.ws.WsCommon.validateContext
+import com.github.readingbat.utils.ExposedUtils.readonlyTx
 import io.ktor.server.routing.*
 import io.ktor.server.websocket.*
 import io.ktor.websocket.*
@@ -45,7 +46,6 @@ import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import mu.KLogging
-import org.jetbrains.exposed.sql.transactions.transaction
 import java.util.concurrent.atomic.AtomicBoolean
 
 internal object StudentSummaryWs : KLogging() {
@@ -96,7 +96,7 @@ internal object StudentSummaryWs : KLogging() {
 
                   val results = mutableListOf<String>()
                   for (invocation in funcInfo.invocations) {
-                    transaction {
+                    readonlyTx {
                       val historyMd5 = md5Of(languageName, groupName, challengeName, invocation)
                       if (student.historyExists(historyMd5, invocation)) {
                         attempted++

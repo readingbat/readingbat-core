@@ -24,7 +24,7 @@ import com.github.pambrose.common.util.md5Of
 import com.github.pambrose.common.util.pathOf
 import com.github.pambrose.common.util.toDoubleQuoted
 import com.github.readingbat.common.BrowserSession
-import com.github.readingbat.common.BrowserSession.Companion.findSessionDbmsId
+import com.github.readingbat.common.BrowserSession.Companion.findOrCreateSessionDbmsId
 import com.github.readingbat.common.Constants
 import com.github.readingbat.common.Constants.CHALLENGE_SRC
 import com.github.readingbat.common.Constants.GROUP_SRC
@@ -213,7 +213,7 @@ internal object ChallengePost : KLogging() {
         transaction {
           SessionChallengeInfoTable
             .deleteWhere {
-              (SessionChallengeInfoTable.sessionRef eq findSessionDbmsId(
+              (SessionChallengeInfoTable.sessionRef eq findOrCreateSessionDbmsId(
                 id,
                 false
               )) and (SessionChallengeInfoTable.md5 eq md5)
@@ -235,7 +235,7 @@ internal object ChallengePost : KLogging() {
         transaction {
           SessionAnswerHistoryTable
             .deleteWhere {
-              (SessionAnswerHistoryTable.sessionRef eq findSessionDbmsId(
+              (SessionAnswerHistoryTable.sessionRef eq findOrCreateSessionDbmsId(
                 id,
                 false
               )) and (SessionAnswerHistoryTable.md5 eq md5)
@@ -395,7 +395,7 @@ internal object ChallengePost : KLogging() {
         browserSession.isNotNull() ->
           SessionChallengeInfoTable
             .upsert(conflictIndex = sessionChallengeInfoIndex) { row ->
-              row[sessionRef] = browserSession.sessionDbmsId()
+              row[sessionRef] = browserSession.queryOrCreateSessionDbmsId()
               row[md5] = challengeMd5
               row[updated] = DateTime.now(DateTimeZone.UTC)
               row[allCorrect] = complete
@@ -445,7 +445,7 @@ internal object ChallengePost : KLogging() {
           browserSession.isNotNull() ->
             SessionAnswerHistoryTable
               .upsert(conflictIndex = sessionAnswerHistoryIndex) { row ->
-                row[sessionRef] = browserSession.sessionDbmsId()
+                row[sessionRef] = browserSession.queryOrCreateSessionDbmsId()
                 row[md5] = historyMd5
                 row[SessionAnswerHistoryTable.invocation] = invocation
                 row[SessionAnswerHistoryTable.updated] = updated
@@ -495,7 +495,7 @@ internal object ChallengePost : KLogging() {
         transaction {
           SessionChallengeInfoTable
             .upsert(conflictIndex = sessionChallengeInfoIndex) { row ->
-              row[sessionRef] = browserSession.sessionDbmsId()
+              row[sessionRef] = browserSession.queryOrCreateSessionDbmsId()
               row[md5] = challengeMd5
               row[updated] = DateTime.now(DateTimeZone.UTC)
               row[likeDislike] = likeDislikeVal.toShort()

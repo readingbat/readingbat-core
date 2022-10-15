@@ -44,12 +44,12 @@ import com.github.readingbat.server.PasswordResetsTable
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ResetId
 import com.github.readingbat.server.ServerUtils.queryParam
+import com.github.readingbat.utils.ExposedUtils.readonlyTx
 import com.pambrose.common.exposed.get
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 import mu.KLogging
 import org.jetbrains.exposed.sql.select
-import org.jetbrains.exposed.sql.transactions.transaction
 import org.joda.time.DateTime
 import org.joda.time.DateTime.now
 import org.joda.time.Seconds
@@ -67,7 +67,7 @@ internal object PasswordResetPage : KLogging() {
     else {
       try {
         val email =
-          transaction {
+          readonlyTx {
             val idAndUpdate =
               PasswordResetsTable
                 .slice(PasswordResetsTable.email, PasswordResetsTable.updated)

@@ -55,6 +55,7 @@ import com.github.readingbat.server.ws.ChallengeWs.singleServerWsChannel
 import com.github.readingbat.server.ws.PubSubCommandsWs.ChallengeAnswerData
 import com.github.readingbat.server.ws.PubSubCommandsWs.PubSubTopic.LIKE_DISLIKE
 import com.github.readingbat.server.ws.PubSubCommandsWs.PubSubTopic.USER_ANSWERS
+import com.github.readingbat.utils.ExposedUtils.readonlyTx
 import com.pambrose.common.exposed.get
 import com.pambrose.common.exposed.upsert
 import kotlinx.html.Entities.nbsp
@@ -91,7 +92,7 @@ class User {
 
     if (initFields && isDbmsEnabled()) {
       measureTime {
-        transaction {
+        readonlyTx {
           UsersTable
             .select { UsersTable.userId eq this@User.userId }
             .map { assignRowVals(it) }
@@ -126,8 +127,8 @@ class User {
   val digest: String
     get() = digestBacking.ifBlank { throw DataException("Missing digest field") }
 
-  private fun sessionDbmsId() =
-    browserSession?.sessionDbmsId() ?: error("Null browser session")
+  private fun queryOrCreateSessionDbmsId() =
+    browserSession?.queryOrCreateSessionDbmsId() ?: error("Null browser session")
 
   private fun assignRowVals(row: ResultRow) {
     userDbmsId = row[UsersTable.id].value
@@ -140,7 +141,7 @@ class User {
   }
 
   fun browserSessions() =
-    transaction {
+    readonlyTx {
       val sessionId = BrowserSessionsTable.sessionId
       val userRef = UserSessionsTable.userRef
       (BrowserSessionsTable innerJoin UserSessionsTable)
@@ -151,7 +152,7 @@ class User {
 
   // Look across all possible browser sessions
   private fun interestedInActiveClassCode(classCode: ClassCode) =
-    transaction {
+    readonlyTx {
       val id = UserSessionsTable.id
       val userRef = UserSessionsTable.userRef
       val activeClassCode = UserSessionsTable.activeClassCode
@@ -163,7 +164,7 @@ class User {
     }
 
   fun correctAnswers() =
-    transaction {
+    readonlyTx {
       val allCorrect = UserChallengeInfoTable.allCorrect
       val userRef = UserChallengeInfoTable.userRef
       UserChallengeInfoTable
@@ -182,7 +183,7 @@ class User {
   fun likeDislikeEmoji(challenge: Challenge) = likeDislikeEmoji(likeDislike(challenge))
 
   fun likeDislike(challenge: Challenge) =
-    transaction {
+    readonlyTx {
       val likeDislike = UserChallengeInfoTable.likeDislike
       val userRef = UserChallengeInfoTable.userRef
       val md5 = UserChallengeInfoTable.md5
@@ -194,16 +195,17 @@ class User {
     }
 
   fun likeDislikes() =
-    transaction {
+    readonlyTx {
       val userRef = UserChallengeInfoTable.userRef
       val likeDislike = UserChallengeInfoTable.likeDislike
-      UserChallengeInfoTable.slice(likeDislike)
+      UserChallengeInfoTable
+        .slice(likeDislike)
         .select { (userRef eq userDbmsId) and ((likeDislike eq 1) or (likeDislike eq 2)) }
         .map { it.toString() }
     }
 
   fun classCount() =
-    transaction {
+    readonlyTx {
       val userRef = ClassesTable.userRef
       ClassesTable
         .slice(Count(ClassesTable.classCode))
@@ -224,7 +226,7 @@ class User {
     }
 
   fun classCodes() =
-    transaction {
+    readonlyTx {
       val classCode = ClassesTable.classCode
       val userRef = ClassesTable.userRef
       ClassesTable
@@ -234,7 +236,7 @@ class User {
     }
 
   fun isInDbms() =
-    transaction {
+    readonlyTx {
       val id = UsersTable.id
       UsersTable
         .slice(Count(id))
@@ -264,7 +266,7 @@ class User {
       }
 
   fun challenges() =
-    transaction {
+    readonlyTx {
       UserChallengeInfoTable
         .slice(UserChallengeInfoTable.md5)
         .select { UserChallengeInfoTable.userRef eq userDbmsId }
@@ -277,7 +279,7 @@ class User {
   private val uahMd5 = UserAnswerHistoryTable.md5
 
   fun invocations() =
-    transaction {
+    readonlyTx {
       UserAnswerHistoryTable
         .slice(uahMd5)
         .select { uahUserRef eq userDbmsId }
@@ -311,7 +313,7 @@ class User {
     transaction {
       UserSessionsTable
         .upsert(conflictIndex = userSessionIndex) { row ->
-          row[sessionRef] = sessionDbmsId()
+          row[sessionRef] = queryOrCreateSessionDbmsId()
           row[userRef] = userDbmsId
           row[updated] = DateTime.now(UTC)
           row[activeClassCode] = classCode.classCode
@@ -324,7 +326,7 @@ class User {
     logger.info { "Resetting $fullName ($email) active class code" }
     UserSessionsTable
       .upsert(conflictIndex = userSessionIndex) { row ->
-        row[sessionRef] = sessionDbmsId()
+        row[sessionRef] = queryOrCreateSessionDbmsId()
         row[userRef] = userDbmsId
         row[updated] = DateTime.now(UTC)
         row[activeClassCode] = DISABLED_CLASS_CODE.classCode
@@ -333,7 +335,7 @@ class User {
   }
 
   fun isEnrolled(classCode: ClassCode) =
-    transaction {
+    readonlyTx {
       EnrolleesTable
         .slice(Count(EnrolleesTable.id))
         .select { EnrolleesTable.userRef eq userDbmsId }
@@ -394,7 +396,7 @@ class User {
   }
 
   fun isUniqueClassDesc(classDesc: String) =
-    transaction {
+    readonlyTx {
       ClassesTable
         .slice(Count(ClassesTable.id))
         .select { ClassesTable.description eq classDesc }
@@ -403,7 +405,7 @@ class User {
     }
 
   fun userPasswordResetId() =
-    transaction {
+    readonlyTx {
       PasswordResetsTable
         .slice(PasswordResetsTable.resetId)
         .select { PasswordResetsTable.userRef eq userDbmsId }
@@ -525,6 +527,7 @@ class User {
         teacherId.isNotEmpty() && teacherId.toUser().interestedInActiveClassCode(classCode)
           .also { logger.debug { "Publishing teacherId: $teacherId for $classCode" } }
       }
+
       else -> false
     }
 
@@ -558,7 +561,7 @@ class User {
           transaction {
             UserSessionsTable
               .slice(UserSessionsTable.activeClassCode)
-              .select { (UserSessionsTable.sessionRef eq user.sessionDbmsId()) and (UserSessionsTable.userRef eq user.userDbmsId) }
+              .select { (UserSessionsTable.sessionRef eq user.queryOrCreateSessionDbmsId()) and (UserSessionsTable.userRef eq user.userDbmsId) }
               .map { it[0] as String }
               .firstOrNull()?.let { ClassCode(it) } ?: DISABLED_CLASS_CODE
           }
@@ -571,14 +574,14 @@ class User {
           transaction {
             UserSessionsTable
               .slice(UserSessionsTable.previousTeacherClassCode)
-              .select { (UserSessionsTable.sessionRef eq user.sessionDbmsId()) and (UserSessionsTable.userRef eq user.userDbmsId) }
+              .select { (UserSessionsTable.sessionRef eq user.queryOrCreateSessionDbmsId()) and (UserSessionsTable.userRef eq user.userDbmsId) }
               .map { it[0] as String }
               .firstOrNull()?.let { ClassCode(it) } ?: DISABLED_CLASS_CODE
           }
       }
 
     fun userExists(userId: String) =
-      transaction {
+      readonlyTx {
         UsersTable
           .slice(Count(UsersTable.id))
           .select { UsersTable.userId eq userId }
@@ -597,7 +600,7 @@ class User {
       }
 
     private fun queryUserDbmsId(userId: String, defaultIfMissing: Long = -1) =
-      transaction {
+      readonlyTx {
         UsersTable
           .slice(UsersTable.id)
           .select { UsersTable.userId eq userId }
@@ -606,7 +609,7 @@ class User {
       }
 
     private fun queryUserEmail(userId: String, defaultIfMissing: Email = UNKNOWN_EMAIL) =
-      transaction {
+      readonlyTx {
         UsersTable
           .slice(UsersTable.email)
           .select { UsersTable.userId eq userId }
@@ -652,7 +655,7 @@ class User {
                 }.value
 
             val browserId =
-              browserSession?.sessionDbmsId() ?: error("Missing browser session")
+              browserSession?.queryOrCreateSessionDbmsId() ?: error("Missing browser session")
 
             UserSessionsTable
               .insert { row ->
@@ -670,7 +673,7 @@ class User {
     fun isNotRegisteredEmail(email: Email) = !isRegisteredEmail(email)
 
     fun queryUserByEmail(email: Email): User? =
-      transaction {
+      readonlyTx {
         UsersTable
           .slice(UsersTable.userId)
           .select { UsersTable.email eq email.value }

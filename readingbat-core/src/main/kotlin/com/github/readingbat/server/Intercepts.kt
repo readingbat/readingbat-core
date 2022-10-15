@@ -19,7 +19,7 @@ package com.github.readingbat.server
 
 import com.github.pambrose.common.util.isNotNull
 import com.github.pambrose.common.util.maxLength
-import com.github.readingbat.common.BrowserSession.Companion.findSessionDbmsId
+import com.github.readingbat.common.BrowserSession.Companion.findOrCreateSessionDbmsId
 import com.github.readingbat.common.Constants.STATIC
 import com.github.readingbat.common.Constants.UNKNOWN_USER_ID
 import com.github.readingbat.common.Endpoints.PING_ENDPOINT
@@ -89,7 +89,7 @@ internal fun Application.intercepts() {
         if (isSaveRequestsEnabled() && browserSession.isNotNull()) {
           val request = call.request
           val ipAddress = request.origin.remoteHost
-          val sessionDbmsId = transaction { findSessionDbmsId(browserSession.id, true) }
+          val sessionDbmsId = transaction { findOrCreateSessionDbmsId(browserSession.id, true) }
           val userDbmsId =
             call.fetchUserDbmsIdFromCache().takeIf { it != -1L } ?: fetchUserDbmsIdFromCache(UNKNOWN_USER_ID)
           val verb = request.httpMethod.value

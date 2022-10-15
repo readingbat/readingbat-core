@@ -102,6 +102,7 @@ import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
 import com.github.readingbat.server.SessionChallengeInfoTable
 import com.github.readingbat.server.UserChallengeInfoTable
+import com.github.readingbat.utils.ExposedUtils.readonlyTx
 import com.pambrose.common.exposed.get
 import io.ktor.http.ContentType.Text.CSS
 import io.ktor.server.application.*
@@ -439,7 +440,7 @@ internal object ChallengePage : KLogging() {
                 funcInfo.invocations
                   .map { invocation ->
                     val history =
-                      transaction {
+                      readonlyTx {
                         val historyMd5 = challenge.md5(invocation)
                         enrollee.answerHistory(historyMd5, invocation)
                       }
@@ -681,7 +682,7 @@ internal object ChallengePage : KLogging() {
     when {
       !isDbmsEnabled() -> emptyMap
       user.isNotNull() ->
-        transaction {
+        readonlyTx {
           UserChallengeInfoTable
             .slice(UserChallengeInfoTable.answersJson)
             .select { (UserChallengeInfoTable.userRef eq user.userDbmsId) and (UserChallengeInfoTable.md5 eq challenge.md5()) }
@@ -695,7 +696,7 @@ internal object ChallengePage : KLogging() {
         transaction {
           SessionChallengeInfoTable
             .slice(SessionChallengeInfoTable.answersJson)
-            .select { (SessionChallengeInfoTable.sessionRef eq browserSession.sessionDbmsId()) and (SessionChallengeInfoTable.md5 eq challenge.md5()) }
+            .select { (SessionChallengeInfoTable.sessionRef eq browserSession.queryOrCreateSessionDbmsId()) and (SessionChallengeInfoTable.md5 eq challenge.md5()) }
             .map { it[0] as String }
             .firstOrNull()
             ?.let { Json.decodeFromString<Map<String, String>>(it) }

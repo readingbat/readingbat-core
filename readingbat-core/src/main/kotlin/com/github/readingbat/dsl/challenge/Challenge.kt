@@ -62,6 +62,7 @@ import com.github.readingbat.server.ReadingBatServer.redisPool
 import com.github.readingbat.server.ScriptPools
 import com.github.readingbat.server.SessionChallengeInfoTable
 import com.github.readingbat.server.UserChallengeInfoTable
+import com.github.readingbat.utils.ExposedUtils.readonlyTx
 import com.github.readingbat.utils.StringUtils.toCapitalized
 import com.pambrose.common.exposed.get
 import kotlinx.coroutines.runBlocking
@@ -198,7 +199,7 @@ sealed class Challenge(
     return when {
       !isDbmsEnabled() -> false
       user.isNotNull() ->
-        transaction {
+        readonlyTx {
           UserChallengeInfoTable
             .slice(UserChallengeInfoTable.allCorrect)
             .select { (UserChallengeInfoTable.userRef eq user.userDbmsId) and (UserChallengeInfoTable.md5 eq challengeMd5) }
@@ -209,7 +210,7 @@ sealed class Challenge(
         transaction {
           SessionChallengeInfoTable
             .slice(SessionChallengeInfoTable.allCorrect)
-            .select { (SessionChallengeInfoTable.sessionRef eq browserSession.sessionDbmsId()) and (SessionChallengeInfoTable.md5 eq challengeMd5) }
+            .select { (SessionChallengeInfoTable.sessionRef eq browserSession.queryOrCreateSessionDbmsId()) and (SessionChallengeInfoTable.md5 eq challengeMd5) }
             .map { it[0] as Boolean }
             .firstOrNull() ?: false
         }

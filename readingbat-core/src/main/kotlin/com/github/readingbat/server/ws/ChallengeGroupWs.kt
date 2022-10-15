@@ -37,6 +37,7 @@ import com.github.readingbat.server.ws.WsCommon.GROUP_NAME
 import com.github.readingbat.server.ws.WsCommon.LANGUAGE_NAME
 import com.github.readingbat.server.ws.WsCommon.closeChannels
 import com.github.readingbat.server.ws.WsCommon.validateContext
+import com.github.readingbat.utils.ExposedUtils.readonlyTx
 import io.ktor.server.routing.*
 import io.ktor.server.websocket.*
 import io.ktor.websocket.*
@@ -47,7 +48,6 @@ import kotlinx.serialization.json.Json
 import mu.KLogging
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.select
-import org.jetbrains.exposed.sql.transactions.transaction
 import java.util.concurrent.atomic.AtomicBoolean
 
 internal object ChallengeGroupWs : KLogging() {
@@ -117,7 +117,7 @@ internal object ChallengeGroupWs : KLogging() {
                     var numCorrect = 0
 
                     for (invocation in funcInfo.invocations) {
-                      transaction {
+                      readonlyTx {
                         val historyMd5 = md5Of(languageName, groupName, challengeName, invocation)
                         if (enrollee.historyExists(historyMd5, invocation)) {
                           attempted++
@@ -134,7 +134,7 @@ internal object ChallengeGroupWs : KLogging() {
                     }
 
                     val likeDislike =
-                      transaction {
+                      readonlyTx {
                         val challengeMd5 = md5Of(languageName, groupName, challengeName)
                         val likeDislike = UserChallengeInfoTable.likeDislike
                         val userRef = UserChallengeInfoTable.userRef

@@ -32,6 +32,7 @@ import com.github.readingbat.server.Invocation
 import com.github.readingbat.server.LanguageName
 import com.github.readingbat.server.SessionAnswerHistoryTable
 import com.github.readingbat.server.SessionChallengeInfoTable
+import com.github.readingbat.utils.ExposedUtils.readonlyTx
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
 import io.ktor.server.sessions.*
@@ -48,7 +49,7 @@ internal data class UserPrincipal(val userId: String, val created: Long = Instan
 
 data class BrowserSession(val id: String, val created: Long = Instant.now().toEpochMilli()) {
 
-  fun sessionDbmsId() =
+  fun queryOrCreateSessionDbmsId() =
     try {
       querySessionDbmsId(id)
     } catch (e: MissingBrowserSessionException) {
@@ -69,7 +70,7 @@ data class BrowserSession(val id: String, val created: Long = Instant.now().toEp
       val md5 = SessionChallengeInfoTable.md5
       SessionChallengeInfoTable
         .slice(likeDislike)
-        .select { (sessionRef eq sessionDbmsId()) and (md5 eq challenge.md5()) }
+        .select { (sessionRef eq queryOrCreateSessionDbmsId()) and (md5 eq challenge.md5()) }
         .map { it[likeDislike].toInt() }
         .firstOrNull() ?: 0
     }
@@ -82,7 +83,7 @@ data class BrowserSession(val id: String, val created: Long = Instant.now().toEp
         SessionAnswerHistoryTable.incorrectAttempts,
         SessionAnswerHistoryTable.historyJson
       )
-      .select { (SessionAnswerHistoryTable.sessionRef eq sessionDbmsId()) and (SessionAnswerHistoryTable.md5 eq md5) }
+      .select { (SessionAnswerHistoryTable.sessionRef eq queryOrCreateSessionDbmsId()) and (SessionAnswerHistoryTable.md5 eq md5) }
       .map {
         val json = it[SessionAnswerHistoryTable.historyJson]
         val history = Json.decodeFromString<List<String>>(json).toMutableList()
@@ -102,7 +103,7 @@ data class BrowserSession(val id: String, val created: Long = Instant.now().toEp
           row[sessionId] = id
         }.value
 
-    fun findSessionDbmsId(id: String, createIfMissing: Boolean) =
+    fun findOrCreateSessionDbmsId(id: String, createIfMissing: Boolean) =
       try {
         querySessionDbmsId(id)
       } catch (e: MissingBrowserSessionException) {
@@ -115,7 +116,7 @@ data class BrowserSession(val id: String, val created: Long = Instant.now().toEp
       }
 
     fun querySessionDbmsId(id: String) =
-      transaction {
+      readonlyTx {
         BrowserSessionsTable
           .slice(BrowserSessionsTable.id)
           .select { BrowserSessionsTable.sessionId eq id }

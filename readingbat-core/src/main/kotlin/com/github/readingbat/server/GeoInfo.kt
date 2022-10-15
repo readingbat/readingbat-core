@@ -21,6 +21,7 @@ import com.github.pambrose.common.dsl.KtorDsl
 import com.github.pambrose.common.dsl.KtorDsl.get
 import com.github.readingbat.common.Constants
 import com.github.readingbat.common.EnvVar
+import com.github.readingbat.utils.ExposedUtils.readonlyTx
 import com.google.gson.Gson
 import com.pambrose.common.exposed.get
 import com.pambrose.common.exposed.upsert
@@ -130,7 +131,7 @@ class GeoInfo(val requireDbmsLookUp: Boolean, val dbmsId: Long, val remoteHost: 
       }
 
     fun queryGeoInfo(ipAddress: String) =
-      transaction {
+      readonlyTx {
         GeoInfosTable
           .slice(GeoInfosTable.id, GeoInfosTable.json)
           .select { GeoInfosTable.ip eq ipAddress }

@@ -119,7 +119,9 @@ object ReadingBatServer : KLogging() {
               }
 
             maximumPoolSize = DBMS_MAX_POOL_SIZE.getRequiredProperty().toInt()
-            isAutoCommit = false
+            // This causes problems. Postgres defaults to false, but setting it here starts a transaction and then
+            // subsequent readOnly sets throw exceptions
+            // isAutoCommit = false
             transactionIsolation = "TRANSACTION_REPEATABLE_READ"
             maxLifetime = DBMS_MAX_LIFETIME_MINS.getRequiredProperty().toInt().minutes.inWholeMilliseconds
             validate()
