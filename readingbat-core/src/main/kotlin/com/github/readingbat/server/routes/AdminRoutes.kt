@@ -121,10 +121,7 @@ object AdminRoutes : KLogging() {
             logger.info { "Clearing browser session id $bs" }
             call.sessions.clear<BrowserSession>()
             if (isDbmsEnabled())
-              transaction {
-                BrowserSessionsTable
-                  .deleteWhere { BrowserSessionsTable.sessionId eq bs.id }
-              }
+              transaction { BrowserSessionsTable.deleteWhere { sessionId eq bs.id } }
           } else {
             logger.info { "Browser session id not set" }
           }

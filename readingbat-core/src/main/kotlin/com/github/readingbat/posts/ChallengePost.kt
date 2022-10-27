@@ -206,18 +206,14 @@ internal object ChallengePost : KLogging() {
       AUTH_KEY ->
         transaction {
           UserChallengeInfoTable
-            .deleteWhere { (UserChallengeInfoTable.userRef eq fetchUserDbmsIdFromCache(id)) and (UserChallengeInfoTable.md5 eq md5) }
+            .deleteWhere { (userRef eq fetchUserDbmsIdFromCache(id)) and (UserChallengeInfoTable.md5 eq md5) }
         }
 
       NO_AUTH_KEY ->
         transaction {
+          val sessionDbmsId = findOrCreateSessionDbmsId(id, false)
           SessionChallengeInfoTable
-            .deleteWhere {
-              (SessionChallengeInfoTable.sessionRef eq findOrCreateSessionDbmsId(
-                id,
-                false
-              )) and (SessionChallengeInfoTable.md5 eq md5)
-            }
+            .deleteWhere { (sessionRef eq sessionDbmsId) and (SessionChallengeInfoTable.md5 eq md5) }
         }
 
       else -> error("Invalid type: $type")
@@ -228,18 +224,14 @@ internal object ChallengePost : KLogging() {
       AUTH_KEY ->
         transaction {
           UserAnswerHistoryTable
-            .deleteWhere { (UserAnswerHistoryTable.userRef eq fetchUserDbmsIdFromCache(id)) and (UserAnswerHistoryTable.md5 eq md5) }
+            .deleteWhere { (userRef eq fetchUserDbmsIdFromCache(id)) and (UserAnswerHistoryTable.md5 eq md5) }
         }
 
       NO_AUTH_KEY ->
         transaction {
+          val sessionDbmsId = findOrCreateSessionDbmsId(id, false)
           SessionAnswerHistoryTable
-            .deleteWhere {
-              (SessionAnswerHistoryTable.sessionRef eq findOrCreateSessionDbmsId(
-                id,
-                false
-              )) and (SessionAnswerHistoryTable.md5 eq md5)
-            }
+            .deleteWhere { (sessionRef eq sessionDbmsId) and (SessionAnswerHistoryTable.md5 eq md5) }
         }
 
       else -> error("Invalid type: $type")

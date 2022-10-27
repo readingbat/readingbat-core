@@ -86,7 +86,7 @@ data class ClassCode(val classCode: String) {
           .also { logger.debug { "fetchEnrollees() returning ${it.size} users" } }
       }
 
-  fun deleteClassCode() = ClassesTable.deleteWhere { ClassesTable.classCode eq classCode }
+  fun deleteClassCode() = ClassesTable.deleteWhere { classCode eq this@ClassCode.classCode }
 
   fun addEnrollee(user: User) =
     transaction {
@@ -98,7 +98,7 @@ data class ClassCode(val classCode: String) {
     }
 
   fun removeEnrollee(user: User) =
-    EnrolleesTable.deleteWhere { (EnrolleesTable.classesRef eq classCodeDbmsId) and (EnrolleesTable.userRef eq user.userDbmsId) }
+    EnrolleesTable.deleteWhere { (classesRef eq this@ClassCode.classCodeDbmsId) and (userRef eq user.userDbmsId) }
 
   fun fetchClassDesc(quoted: Boolean = false) =
     readonlyTx {

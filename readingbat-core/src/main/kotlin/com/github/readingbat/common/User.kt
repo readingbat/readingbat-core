@@ -247,7 +247,7 @@ class User {
 
   fun assignDigest(newDigest: String) =
     transaction {
-      PasswordResetsTable.deleteWhere { PasswordResetsTable.userRef eq userDbmsId }
+      PasswordResetsTable.deleteWhere { userRef eq userDbmsId }
 
       UsersTable
         .update({ UsersTable.id eq userDbmsId }) { row ->
@@ -455,7 +455,7 @@ class User {
       // UserChallengeInfo delete on cascade
       // UserSessions delete on cascade
       // PasswordResets delete on cascade
-      UsersTable.deleteWhere { UsersTable.id eq userDbmsId }
+      UsersTable.deleteWhere { UsersTable.id eq this@User.userDbmsId }
     }
   }
 

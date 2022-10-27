@@ -11,8 +11,8 @@ plugins {
     id 'org.jetbrains.kotlin.plugin.serialization' version '1.7.20' apply false
     id 'org.jmailen.kotlinter' version "3.12.0" apply false
     id 'com.github.gmazzo.buildconfig' version '3.1.0' apply false
-    id "com.github.ben-manes.versions" version '0.42.0' apply false
-    id "org.flywaydb.flyway" version "9.4.0"
+    id "com.github.ben-manes.versions" version '0.43.0' apply false
+    id "org.flywaydb.flyway" version "9.6.0"
 }
 
 ext {
@@ -85,7 +85,7 @@ ext {
 allprojects {
     description = 'ReadingBat Core'
     group 'com.github.readingbat'
-    version '1.33.1'
+    version '1.33.2'
 
     apply plugin: 'application'
     apply plugin: 'java-library'  // gradle 7
