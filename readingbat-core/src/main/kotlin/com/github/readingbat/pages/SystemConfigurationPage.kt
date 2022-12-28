@@ -25,6 +25,7 @@ import com.github.readingbat.common.CssNames.TD_PADDING
 import com.github.readingbat.common.Endpoints.ADMIN_PREFS_ENDPOINT
 import com.github.readingbat.common.EnvVar
 import com.github.readingbat.common.FormFields.RETURN_PARAM
+import com.github.readingbat.common.KtorProperty
 import com.github.readingbat.common.Property
 import com.github.readingbat.common.SessionActivites.activeSessions
 import com.github.readingbat.common.User.Companion.emailCache
@@ -158,7 +159,7 @@ internal object SystemConfigurationPage {
                   "Content map size" to content.contentMap,
                   "User ID cache size" to userIdCache,
                   "User email cache size" to emailCache,
-                      )
+                )
                   .forEach {
                     tr {
                       td { +it.first }
@@ -183,11 +184,13 @@ internal object SystemConfigurationPage {
             h3 { +"Application Properties" }
             div(classes = INDENT_1EM) {
               table {
-                Property.values()
-                  .filter { it.isDefined() }
+                KtorProperty.values()
+                  .filter { it.isADefinedProperty() }
+                  .sortedBy { it.propertyName }
                   .forEach {
                     tr {
-                      td { +it.propertyValue }
+                      td { +it.name }
+                      td { +it.propertyName }
                       td { +it.maskFunc.invoke(it) }
                     }
                   }
@@ -220,6 +223,7 @@ internal object SystemConfigurationPage {
             div(classes = INDENT_1EM) {
               table {
                 EnvVar.values()
+                  .sortedBy { it.name }
                   .forEach {
                     tr {
                       td { +it.name }

@@ -24,6 +24,7 @@ import com.github.readingbat.common.Constants.RESP
 import com.github.readingbat.common.Endpoints
 import com.github.readingbat.common.Endpoints.CHECK_ANSWERS_ENDPOINT
 import com.github.readingbat.common.FunctionInfo
+import com.github.readingbat.common.KtorProperty
 import com.github.readingbat.common.Property
 import com.github.readingbat.dsl.ChallengeGroup
 import com.github.readingbat.dsl.LanguageGroup
@@ -185,7 +186,7 @@ object TestSupport {
 
   fun Application.testModule(content: ReadingBatContent) {
     Property.IS_TESTING.setProperty("true")
-    Property.assignInitialized()
+    KtorProperty.assignInitialized()
 
     installs(false)
 

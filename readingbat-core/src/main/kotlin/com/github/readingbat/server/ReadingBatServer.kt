@@ -32,10 +32,11 @@ import com.github.readingbat.common.Endpoints.STATIC_ROOT
 import com.github.readingbat.common.EnvVar
 import com.github.readingbat.common.EnvVar.CLOUD_SQL_CONNECTION_NAME
 import com.github.readingbat.common.EnvVar.SCRIPT_CLASSPATH
+import com.github.readingbat.common.KtorProperty.Companion.assignProperties
 import com.github.readingbat.common.Metrics
 import com.github.readingbat.common.Property
 import com.github.readingbat.common.Property.CONFIG_FILENAME
-import com.github.readingbat.common.Property.Companion.assignProperties
+import com.github.readingbat.common.Property.Companion.initProperties
 import com.github.readingbat.common.Property.KOTLIN_SCRIPT_CLASSPATH
 import com.github.readingbat.common.User.Companion.createUnknownUser
 import com.github.readingbat.common.User.Companion.userExists
@@ -139,9 +140,9 @@ object ReadingBatServer : KLogging() {
       if (scriptClasspathEnvVar.isNotNull())
         KOTLIN_SCRIPT_CLASSPATH.setProperty(scriptClasspathEnvVar)
       else
-        logger.warn { "Missing ${KOTLIN_SCRIPT_CLASSPATH.propertyValue} and $SCRIPT_CLASSPATH values" }
+        logger.warn { "Missing ${KOTLIN_SCRIPT_CLASSPATH.propertyName} and $SCRIPT_CLASSPATH values" }
     } else {
-      logger.info { "${KOTLIN_SCRIPT_CLASSPATH.propertyValue}: $scriptClasspathProp" }
+      logger.info { "${KOTLIN_SCRIPT_CLASSPATH.propertyName}: $scriptClasspathProp" }
     }
   }
 
@@ -223,7 +224,7 @@ internal fun Application.readContentDsl(fileName: String, variableName: String, 
 }
 
 fun Application.module() {
-  assignProperties()
+  assignProperties(initProperties().sortedBy { it.propertyName })
 
   adminUsers.addAll(Property.ADMIN_USERS.configValueOrNull(this)?.getList() ?: emptyList())
 
