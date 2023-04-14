@@ -32,7 +32,7 @@ import com.github.readingbat.common.UserPrincipal
 import com.github.readingbat.dsl.isDbmsEnabled
 import com.google.common.util.concurrent.RateLimiter
 import io.ktor.server.auth.*
-import mu.KLogging
+import mu.two.KLogging
 
 internal object ConfigureFormAuth : KLogging() {
 

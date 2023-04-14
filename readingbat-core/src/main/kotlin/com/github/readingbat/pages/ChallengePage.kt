@@ -112,7 +112,7 @@ import kotlinx.html.ScriptType.textJavaScript
 import kotlinx.html.stream.createHTML
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
-import mu.KLogging
+import mu.two.KLogging
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction

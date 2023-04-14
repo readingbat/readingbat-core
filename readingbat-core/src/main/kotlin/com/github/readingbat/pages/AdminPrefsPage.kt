@@ -45,7 +45,7 @@ import kotlinx.html.img
 import kotlinx.html.p
 import kotlinx.html.stream.createHTML
 import kotlinx.html.title
-import mu.KLogging
+import mu.two.KLogging
 
 internal object AdminPrefsPage : KLogging() {
 

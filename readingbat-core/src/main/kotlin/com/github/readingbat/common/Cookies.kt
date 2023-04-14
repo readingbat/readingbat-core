@@ -38,7 +38,7 @@ import io.ktor.server.auth.*
 import io.ktor.server.sessions.*
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
-import mu.KLogging
+import mu.two.KLogging
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.insertAndGetId
 import org.jetbrains.exposed.sql.select

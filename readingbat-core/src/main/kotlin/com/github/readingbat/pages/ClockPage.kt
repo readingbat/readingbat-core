@@ -28,7 +28,7 @@ import kotlinx.html.p
 import kotlinx.html.script
 import kotlinx.html.span
 import kotlinx.html.stream.createHTML
-import mu.KLogging
+import mu.two.KLogging
 
 internal object ClockPage : KLogging() {
   private const val pingMsg = "pingMsg"

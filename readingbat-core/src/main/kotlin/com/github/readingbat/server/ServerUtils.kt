@@ -51,7 +51,7 @@ import io.ktor.server.websocket.*
 import io.ktor.util.*
 import io.ktor.util.pipeline.*
 import kotlinx.coroutines.runBlocking
-import mu.KLogging
+import mu.two.KLogging
 import redis.clients.jedis.Jedis
 
 typealias PipelineCall = PipelineContext<Unit, ApplicationCall>

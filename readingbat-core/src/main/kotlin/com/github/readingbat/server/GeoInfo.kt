@@ -27,7 +27,7 @@ import com.pambrose.common.exposed.get
 import com.pambrose.common.exposed.upsert
 import io.ktor.client.statement.*
 import kotlinx.coroutines.runBlocking
-import mu.KLogging
+import mu.two.KLogging
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.util.concurrent.ConcurrentHashMap

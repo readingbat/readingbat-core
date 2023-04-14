@@ -73,7 +73,7 @@ import com.github.readingbat.server.ServerUtils.queryParam
 import io.ktor.server.application.*
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
-import mu.KLogging
+import mu.two.KLogging
 
 internal object ClassSummaryPage : KLogging() {
 

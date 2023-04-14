@@ -52,7 +52,7 @@ import com.github.readingbat.server.RedirectException
 import com.github.readingbat.server.ServerUtils.queryParam
 import io.ktor.server.application.*
 import io.ktor.server.request.*
-import mu.KLogging
+import mu.two.KLogging
 import org.jetbrains.exposed.sql.transactions.transaction
 
 internal object TeacherPrefsPost : KLogging() {

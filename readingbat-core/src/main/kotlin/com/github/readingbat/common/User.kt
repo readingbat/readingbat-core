@@ -62,7 +62,7 @@ import kotlinx.html.Entities.nbsp
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import mu.KLogging
+import mu.two.KLogging
 import org.jetbrains.exposed.sql.Count
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq

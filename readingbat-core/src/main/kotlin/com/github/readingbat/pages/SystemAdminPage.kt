@@ -50,7 +50,7 @@ import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
-import mu.KLogging
+import mu.two.KLogging
 
 internal object SystemAdminPage : KLogging() {
 

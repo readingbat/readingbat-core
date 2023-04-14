@@ -52,7 +52,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import mu.KLogging
+import mu.two.KLogging
 import java.util.Collections.synchronizedSet
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeSource

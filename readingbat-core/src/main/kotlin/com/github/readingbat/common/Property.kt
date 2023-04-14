@@ -30,7 +30,7 @@ import com.github.readingbat.common.PropertyNames.READINGBAT
 import com.github.readingbat.common.PropertyNames.SITE
 import io.ktor.server.application.*
 import io.ktor.server.config.*
-import mu.KLogging
+import mu.two.KLogging
 import java.util.concurrent.atomic.AtomicBoolean
 
 open class KtorProperty(
@@ -66,15 +66,15 @@ open class KtorProperty(
         error(notInitialized(this))
     }
 
-  fun getProperty(default: Boolean) =
+  fun getProperty(default: Boolean, errorOnNonInit: Boolean = true) =
     (System.getProperty(propertyName)?.toBoolean() ?: default).also {
-      if (!initialized.get())
+      if (errorOnNonInit && !initialized.get())
         error(notInitialized(this))
     }
 
-  fun getProperty(default: Int) =
+  fun getProperty(default: Int, errorOnNonInit: Boolean = true) =
     (System.getProperty(propertyName)?.toIntOrNull() ?: default).also {
-      if (!initialized.get())
+      if (errorOnNonInit && !initialized.get())
         error(notInitialized(this))
     }
 
@@ -124,133 +124,234 @@ sealed class Property(
   initFunc: KtorProperty.(application: Application) -> Unit = {},
   maskFunc: KtorProperty.() -> String = { getProperty(UNASSIGNED, false) },
 ) : KtorProperty(propertyValue, initFunc, maskFunc) {
-  object KOTLIN_SCRIPT_CLASSPATH : Property("kotlin.script.classpath")
+  object KOTLIN_SCRIPT_CLASSPATH :
+    Property(propertyValue = "kotlin.script.classpath")
 
-  object CONFIG_FILENAME : Property("$READINGBAT.configFilename")
-  object ADMIN_USERS : Property("$READINGBAT.adminUsers")
-  object LOGBACK_CONFIG_FILE : Property("logback.configurationFile")
-  object AGENT_LAUNCH_ID : Property("$AGENT.launchId")
+  object CONFIG_FILENAME :
+    Property(propertyValue = "$READINGBAT.configFilename")
 
-  object AGENT_CONFIG : Property("agent.config")
+  object ADMIN_USERS :
+    Property(propertyValue = "$READINGBAT.adminUsers")
+
+  object LOGBACK_CONFIG_FILE :
+    Property(propertyValue = "logback.configurationFile")
+
+  object AGENT_LAUNCH_ID :
+    Property(propertyValue = "$AGENT.launchId")
+
+  object AGENT_CONFIG : Property(propertyValue = "agent.config")
 
   // These are used in module()
-  object DSL_FILE_NAME : Property("$READINGBAT.$CONTENT.fileName",
-                                  initFunc = { setPropertyFromConfig(it, "src/Content.kt") })
+  object DSL_FILE_NAME :
+    Property(
+      propertyValue = "$READINGBAT.$CONTENT.fileName",
+      initFunc = { setPropertyFromConfig(it, "src/Content.kt") }
+    )
 
-  object DSL_VARIABLE_NAME : Property("$READINGBAT.$CONTENT.variableName",
-                                      initFunc = { setPropertyFromConfig(it, "content") })
+  object DSL_VARIABLE_NAME :
+    Property(
+      propertyValue = "$READINGBAT.$CONTENT.variableName",
+      initFunc = { setPropertyFromConfig(it, "content") }
+    )
 
-  object PROXY_HOSTNAME : Property("$AGENT.proxy.hostname",
-                                   initFunc = { setPropertyFromConfig(it, "") })
+  object PROXY_HOSTNAME :
+    Property(
+      propertyValue = "$AGENT.proxy.hostname",
+      initFunc = { setPropertyFromConfig(it, "") }
+    )
 
-  object STARTUP_DELAY_SECS : Property("$READINGBAT.$SITE.startupMaxDelaySecs")
+  object STARTUP_DELAY_SECS :
+    Property(propertyValue = "$READINGBAT.$SITE.startupMaxDelaySecs")
 
   // These are defaults for env var values
-  object REDIRECT_HOSTNAME : Property("$READINGBAT.$SITE.redirectHostname")
-  object SENDGRID_PREFIX : Property("$READINGBAT.$SITE.sendGridPrefix",
-                                    initFunc = {
-                                      setProperty(
-                                        EnvVar.SENDGRID_PREFIX.getEnv(configValue(it, "https://www.readingbat.com"))
-                                      )
-                                    })
+  object REDIRECT_HOSTNAME :
+    Property(propertyValue = "$READINGBAT.$SITE.redirectHostname")
 
-  object FORWARDED_ENABLED : Property("$READINGBAT.$SITE.forwardedHeaderSupportEnabled")
-  object XFORWARDED_ENABLED : Property("$READINGBAT.$SITE.xforwardedHeaderSupportEnabled")
+  object SENDGRID_PREFIX :
+    Property(
+      propertyValue = "$READINGBAT.$SITE.sendGridPrefix",
+      initFunc = { setProperty(EnvVar.SENDGRID_PREFIX.getEnv(configValue(it, "https://www.readingbat.com"))) }
+    )
+
+  object FORWARDED_ENABLED :
+    Property(propertyValue = "$READINGBAT.$SITE.forwardedHeaderSupportEnabled")
+
+  object XFORWARDED_ENABLED :
+    Property(propertyValue = "$READINGBAT.$SITE.xforwardedHeaderSupportEnabled")
 
   // These are assigned to ReadingBatContent vals
-  object ANALYTICS_ID : Property("$READINGBAT.$SITE.googleAnalyticsId",
-                                 initFunc = { setPropertyFromConfig(it, "") },
-                                 maskFunc = { getPropertyOrNull(false) ?: UNASSIGNED })
+  object ANALYTICS_ID :
+    Property(
+      propertyValue = "$READINGBAT.$SITE.googleAnalyticsId",
+      initFunc = { setPropertyFromConfig(it, "") },
+      maskFunc = { getPropertyOrNull(false) ?: UNASSIGNED }
+    )
 
-  object MAX_HISTORY_LENGTH : Property("$READINGBAT.$CHALLENGES.maxHistoryLength")
-  object MAX_CLASS_COUNT : Property("$READINGBAT.$CLASSES.maxCount")
+  object MAX_HISTORY_LENGTH :
+    Property("$READINGBAT.$CHALLENGES.maxHistoryLength")
 
-  object KTOR_PORT : Property("ktor.deployment.port",
-                              initFunc = { setPropertyFromConfig(it, "0") })
+  object MAX_CLASS_COUNT :
+    Property("$READINGBAT.$CLASSES.maxCount")
 
-  object KTOR_WATCH : Property("ktor.deployment.watch",
-                               initFunc = { setProperty(configValueOrNull(it)?.getList()?.toString() ?: UNASSIGNED) })
+  object KTOR_PORT :
+    Property(
+      propertyValue = "ktor.deployment.port",
+      initFunc = { setPropertyFromConfig(it, "0") }
+    )
+
+  object KTOR_WATCH :
+    Property(
+      propertyValue = "ktor.deployment.watch",
+      initFunc = { setProperty(configValueOrNull(it)?.getList()?.toString() ?: UNASSIGNED) }
+    )
 
   // These are assigned in ReadingBatServer
-  object IS_PRODUCTION : Property("$READINGBAT.$SITE.production",
-                                  initFunc = { setProperty(configValue(it, "false").toBoolean().toString()) })
+  object IS_PRODUCTION :
+    Property(
+      propertyValue = "$READINGBAT.$SITE.production",
+      initFunc = { setProperty(configValue(it, "false").toBoolean().toString()) }
+    )
 
-  object IS_TESTING : Property("$READINGBAT.$SITE.testing")
+  object IS_TESTING :
+    Property("$READINGBAT.$SITE.testing")
 
-  object DBMS_ENABLED : Property("$READINGBAT.$SITE.dbmsEnabled",
-                                 initFunc = { setProperty(configValue(it, "false").toBoolean().toString()) })
+  object DBMS_ENABLED :
+    Property(
+      propertyValue = "$READINGBAT.$SITE.dbmsEnabled",
+      initFunc = { setProperty(configValue(it, "false").toBoolean().toString()) }
+    )
 
-  object REDIS_ENABLED : Property("$READINGBAT.$SITE.redisEnabled",
-                                  initFunc = { setProperty(configValue(it, "false").toBoolean().toString()) })
+  object REDIS_ENABLED :
+    Property(
+      propertyValue = "$READINGBAT.$SITE.redisEnabled",
+      initFunc = { setProperty(configValue(it, "false").toBoolean().toString()) }
+    )
 
-  object SAVE_REQUESTS_ENABLED : Property("$READINGBAT.$SITE.saveRequestsEnabled",
-                                          initFunc = { setProperty(configValue(it, "true").toBoolean().toString()) })
+  object SAVE_REQUESTS_ENABLED :
+    Property(
+      propertyValue = "$READINGBAT.$SITE.saveRequestsEnabled",
+      initFunc = { setProperty(configValue(it, "true").toBoolean().toString()) }
+    )
 
-  object MULTI_SERVER_ENABLED : Property("$READINGBAT.$SITE.multiServerEnabled",
-                                         initFunc = { setProperty(configValue(it, "false").toBoolean().toString()) })
+  object MULTI_SERVER_ENABLED :
+    Property(
+      propertyValue = "$READINGBAT.$SITE.multiServerEnabled",
+      initFunc = { setProperty(configValue(it, "false").toBoolean().toString()) }
+    )
 
-  object CONTENT_CACHING_ENABLED : Property("$READINGBAT.$SITE.contentCachingEnabled",
-                                            initFunc = { setProperty(configValue(it, "false").toBoolean().toString()) })
+  object CONTENT_CACHING_ENABLED :
+    Property(
+      propertyValue = "$READINGBAT.$SITE.contentCachingEnabled",
+      initFunc = { setProperty(configValue(it, "false").toBoolean().toString()) }
+    )
 
   object AGENT_ENABLED :
-    Property("$AGENT.enabled",
-             initFunc = {
-               val agentEnabled = EnvVar.AGENT_ENABLED.getEnv(configValue(it, default = "false").toBoolean())
-               setProperty(agentEnabled.toString())
-             })
+    Property(
+      propertyValue = "$AGENT.enabled",
+      initFunc = {
+        val agentEnabled = EnvVar.AGENT_ENABLED.getEnv(configValue(it, default = "false").toBoolean())
+        setProperty(agentEnabled.toString())
+      }
+    )
 
-  object PINGDOM_BANNER_ID : Property("$READINGBAT.$SITE.pingdomBannerId",
-                                      initFunc = { setPropertyFromConfig(it, "") },
-                                      maskFunc = { getPropertyOrNull(false) ?: UNASSIGNED })
+  object PINGDOM_BANNER_ID :
+    Property(
+      propertyValue = "$READINGBAT.$SITE.pingdomBannerId",
+      initFunc = { setPropertyFromConfig(it, "") },
+      maskFunc = { getPropertyOrNull(false) ?: UNASSIGNED }
+    )
 
-  object PINGDOM_URL : Property("$READINGBAT.$SITE.pingdomUrl",
-                                initFunc = { setPropertyFromConfig(it, "") },
-                                maskFunc = { getPropertyOrNull(false) ?: UNASSIGNED })
+  object PINGDOM_URL :
+    Property(
+      propertyValue = "$READINGBAT.$SITE.pingdomUrl",
+      initFunc = { setPropertyFromConfig(it, "") },
+      maskFunc = { getPropertyOrNull(false) ?: UNASSIGNED }
+    )
 
-  object STATUS_PAGE_URL : Property("$READINGBAT.$SITE.statusPageUrl",
-                                    initFunc = { setPropertyFromConfig(it, "") },
-                                    maskFunc = { getPropertyOrNull(false) ?: UNASSIGNED })
+  object STATUS_PAGE_URL :
+    Property(
+      propertyValue = "$READINGBAT.$SITE.statusPageUrl",
+      initFunc = { setPropertyFromConfig(it, "") },
+      maskFunc = { getPropertyOrNull(false) ?: UNASSIGNED }
+    )
 
-  object PROMETHEUS_URL : Property("$READINGBAT.prometheus.url",
-                                   initFunc = { setPropertyFromConfig(it, "") })
+  object PROMETHEUS_URL :
+    Property(
+      propertyValue = "$READINGBAT.prometheus.url",
+      initFunc = { setPropertyFromConfig(it, "") }
+    )
 
-  object GRAFANA_URL : Property("$READINGBAT.grafana.url",
-                                initFunc = { setPropertyFromConfig(it, "") })
+  object GRAFANA_URL :
+    Property(
+      propertyValue = "$READINGBAT.grafana.url",
+      initFunc = { setPropertyFromConfig(it, "") }
+    )
 
-  object JAVA_SCRIPTS_POOL_SIZE : Property("$READINGBAT.scripts.javaPoolSize",
-                                           initFunc = { setPropertyFromConfig(it, "5") })
+  object JAVA_SCRIPTS_POOL_SIZE :
+    Property(
+      propertyValue = "$READINGBAT.scripts.javaPoolSize",
+      initFunc = { setPropertyFromConfig(it, "5") }
+    )
 
-  object KOTLIN_SCRIPTS_POOL_SIZE : Property("$READINGBAT.scripts.kotlinPoolSize",
-                                             initFunc = { setPropertyFromConfig(it, "5") })
+  object KOTLIN_SCRIPTS_POOL_SIZE :
+    Property(
+      propertyValue = "$READINGBAT.scripts.kotlinPoolSize",
+      initFunc = { setPropertyFromConfig(it, "5") }
+    )
 
-  object PYTHON_SCRIPTS_POOL_SIZE : Property("$READINGBAT.scripts.pythonPoolSize",
-                                             initFunc = { setPropertyFromConfig(it, "5") })
+  object PYTHON_SCRIPTS_POOL_SIZE :
+    Property(
+      propertyValue = "$READINGBAT.scripts.pythonPoolSize",
+      initFunc = { setPropertyFromConfig(it, "5") }
+    )
 
-  object KOTLIN_EVALUATORS_POOL_SIZE : Property("$READINGBAT.evaluators.kotlinPoolSize",
-                                                initFunc = { setPropertyFromConfig(it, "5") })
+  object KOTLIN_EVALUATORS_POOL_SIZE :
+    Property(
+      propertyValue = "$READINGBAT.evaluators.kotlinPoolSize",
+      initFunc = { setPropertyFromConfig(it, "5") }
+    )
 
-  object PYTHON_EVALUATORS_POOL_SIZE : Property("$READINGBAT.evaluators.pythonPoolSize",
-                                                initFunc = { setPropertyFromConfig(it, "5") })
+  object PYTHON_EVALUATORS_POOL_SIZE :
+    Property(
+      propertyValue = "$READINGBAT.evaluators.pythonPoolSize",
+      initFunc = { setPropertyFromConfig(it, "5") }
+    )
 
   object DBMS_DRIVER_CLASSNAME :
-    Property("$DBMS.driverClassName",
-             initFunc = { setPropertyFromConfig(it, "com.impossibl.postgres.jdbc.PGDriver") })
+    Property(
+      propertyValue = "$DBMS.driverClassName",
+      initFunc = { setPropertyFromConfig(it, "com.impossibl.postgres.jdbc.PGDriver") }
+    )
 
-  object DBMS_URL : Property("$DBMS.jdbcUrl",
-                             initFunc = { setPropertyFromConfig(it, "jdbc:pgsql://localhost:5432/readingbat") })
+  object DBMS_URL :
+    Property(
+      propertyValue = "$DBMS.jdbcUrl",
+      initFunc = { setPropertyFromConfig(it, "jdbc:pgsql://localhost:5432/readingbat") }
+    )
 
-  object DBMS_USERNAME : Property("$DBMS.username",
-                                  initFunc = { setPropertyFromConfig(it, "postgres") })
+  object DBMS_USERNAME :
+    Property(
+      propertyValue = "$DBMS.username",
+      initFunc = { setPropertyFromConfig(it, "postgres") }
+    )
 
-  object DBMS_PASSWORD : Property("$DBMS.password",
-                                  initFunc = { setPropertyFromConfig(it, "") },
-                                  maskFunc = { getPropertyOrNull(false)?.obfuscate(1) ?: UNASSIGNED })
+  object DBMS_PASSWORD : Property(
+    propertyValue = "$DBMS.password",
+    initFunc = { setPropertyFromConfig(it, "") },
+    maskFunc = { getPropertyOrNull(false)?.obfuscate(1) ?: UNASSIGNED }
+  )
 
-  object DBMS_MAX_POOL_SIZE : Property("$DBMS.maxPoolSize",
-                                       initFunc = { setPropertyFromConfig(it, "10") })
+  object DBMS_MAX_POOL_SIZE :
+    Property(
+      propertyValue = "$DBMS.maxPoolSize",
+      initFunc = { setPropertyFromConfig(it, "10") }
+    )
 
-  object DBMS_MAX_LIFETIME_MINS : Property("$DBMS.maxLifetimeMins",
-                                           initFunc = { setPropertyFromConfig(it, "30") })
+  object DBMS_MAX_LIFETIME_MINS :
+    Property(
+      propertyValue = "$DBMS.maxLifetimeMins",
+      initFunc = { setPropertyFromConfig(it, "30") }
+    )
 
   object REDIS_MAX_POOL_SIZE : Property(RedisUtils.REDIS_MAX_POOL_SIZE, initFunc = { setPropertyFromConfig(it, "10") })
   object REDIS_MAX_IDLE_SIZE : Property(RedisUtils.REDIS_MAX_IDLE_SIZE, initFunc = { setPropertyFromConfig(it, "5") })

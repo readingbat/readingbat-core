@@ -27,7 +27,7 @@ import com.github.readingbat.server.UsersTable
 import com.github.readingbat.utils.ExposedUtils.readonlyTx
 import com.pambrose.common.exposed.dateTimeExpr
 import com.pambrose.common.exposed.get
-import mu.KLogging
+import mu.two.KLogging
 import org.jetbrains.exposed.sql.Count
 import org.jetbrains.exposed.sql.Max
 import org.jetbrains.exposed.sql.SortOrder

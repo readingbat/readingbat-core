@@ -23,7 +23,7 @@ import com.github.pambrose.common.script.KotlinScriptPool
 import com.github.pambrose.common.script.PythonExprEvaluatorPool
 import com.github.pambrose.common.script.PythonScriptPool
 import com.github.readingbat.common.Property
-import mu.KLogging
+import mu.two.KLogging
 
 internal object ScriptPools : KLogging() {
 

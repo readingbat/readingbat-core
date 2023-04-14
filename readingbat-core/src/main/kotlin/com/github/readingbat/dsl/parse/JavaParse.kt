@@ -22,7 +22,7 @@ import com.github.pambrose.common.util.substringBetween
 import com.github.readingbat.dsl.ReturnType.Companion.asReturnType
 import com.github.readingbat.server.ChallengeName
 import com.github.readingbat.server.Invocation
-import mu.KLogging
+import mu.two.KLogging
 import kotlin.math.max
 
 internal object JavaParse : KLogging() {

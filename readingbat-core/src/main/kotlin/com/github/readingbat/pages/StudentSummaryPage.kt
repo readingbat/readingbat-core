@@ -64,7 +64,7 @@ import io.ktor.server.application.*
 import kotlinx.html.*
 import kotlinx.html.FormMethod.post
 import kotlinx.html.stream.createHTML
-import mu.KLogging
+import mu.two.KLogging
 
 internal object StudentSummaryPage : KLogging() {
 

@@ -41,7 +41,7 @@ import io.ktor.server.plugins.callid.*
 import io.ktor.server.request.*
 import io.ktor.server.routing.Routing.Plugin.RoutingCallFinished
 import io.ktor.server.routing.Routing.Plugin.RoutingCallStarted
-import mu.KLogging
+import mu.two.KLogging
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.update

@@ -46,7 +46,7 @@ import com.pambrose.common.exposed.get
 import io.ktor.server.application.*
 import io.ktor.server.request.*
 import io.ktor.server.sessions.*
-import mu.KLogging
+import mu.two.KLogging
 import org.jetbrains.exposed.sql.Count
 import org.jetbrains.exposed.sql.select
 
