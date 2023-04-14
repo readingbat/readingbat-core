@@ -54,7 +54,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Required
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import mu.KLogging
+import mu.two.KLogging
 import java.util.Collections.synchronizedSet
 import kotlin.concurrent.timer
 import kotlin.math.max

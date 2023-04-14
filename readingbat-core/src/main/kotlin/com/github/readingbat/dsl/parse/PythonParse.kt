@@ -20,7 +20,7 @@ package com.github.readingbat.dsl.parse
 import com.github.pambrose.common.util.linesBetween
 import com.github.pambrose.common.util.substringBetween
 import com.github.readingbat.server.Invocation
-import mu.KLogging
+import mu.two.KLogging
 
 internal object PythonParse : KLogging() {
 

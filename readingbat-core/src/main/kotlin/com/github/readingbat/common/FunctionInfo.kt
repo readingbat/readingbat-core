@@ -31,7 +31,7 @@ import com.github.readingbat.server.LanguageName
 import com.github.readingbat.server.ScriptPools.kotlinEvaluatorPool
 import com.github.readingbat.server.ScriptPools.pythonEvaluatorPool
 import com.github.readingbat.utils.StringUtils.toCapitalized
-import mu.KLogging
+import mu.two.KLogging
 import javax.script.ScriptException
 
 class FunctionInfo(

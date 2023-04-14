@@ -66,7 +66,7 @@ import com.github.readingbat.utils.ExposedUtils.readonlyTx
 import com.github.readingbat.utils.StringUtils.toCapitalized
 import com.pambrose.common.exposed.get
 import kotlinx.coroutines.runBlocking
-import mu.KLogging
+import mu.two.KLogging
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction

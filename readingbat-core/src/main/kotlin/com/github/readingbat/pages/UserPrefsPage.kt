@@ -60,7 +60,7 @@ import com.github.readingbat.server.ServerUtils.queryParam
 import kotlinx.html.*
 import kotlinx.html.Entities.nbsp
 import kotlinx.html.stream.createHTML
-import mu.KLogging
+import mu.two.KLogging
 
 internal object UserPrefsPage : KLogging() {
 

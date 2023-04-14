@@ -29,7 +29,7 @@ import io.ktor.websocket.*
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.runBlocking
-import mu.KLogging
+import mu.two.KLogging
 import java.util.*
 import kotlin.concurrent.timer
 import kotlin.math.max

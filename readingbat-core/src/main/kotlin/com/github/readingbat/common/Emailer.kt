@@ -23,7 +23,7 @@ import com.sendgrid.Request
 import com.sendgrid.SendGrid
 import com.sendgrid.helpers.mail.Mail
 import com.sendgrid.helpers.mail.objects.Content
-import mu.KLogging
+import mu.two.KLogging
 
 internal object Emailer : KLogging() {
 

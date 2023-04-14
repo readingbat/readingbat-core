@@ -39,7 +39,7 @@ import com.github.readingbat.dsl.challenge.PythonChallenge
 import com.github.readingbat.server.ChallengeName
 import com.github.readingbat.server.GroupName
 import com.github.readingbat.server.ReadingBatServer.redisPool
-import mu.KLogging
+import mu.two.KLogging
 import java.io.File
 import kotlin.reflect.KProperty
 

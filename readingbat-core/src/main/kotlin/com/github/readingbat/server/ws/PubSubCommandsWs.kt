@@ -43,7 +43,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
-import mu.KLogging
+import mu.two.KLogging
 import redis.clients.jedis.Jedis
 import redis.clients.jedis.JedisPubSub
 import java.time.LocalDateTime

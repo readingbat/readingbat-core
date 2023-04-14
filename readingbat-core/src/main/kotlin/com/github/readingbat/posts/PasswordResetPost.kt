@@ -53,7 +53,7 @@ import com.pambrose.common.exposed.get
 import io.ktor.server.application.*
 import io.ktor.server.plugins.*
 import io.ktor.server.request.*
-import mu.KLogging
+import mu.two.KLogging
 import org.jetbrains.exposed.sql.select
 import java.io.IOException
 

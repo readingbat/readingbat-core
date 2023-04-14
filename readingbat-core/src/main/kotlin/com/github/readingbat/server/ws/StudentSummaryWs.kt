@@ -45,7 +45,7 @@ import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import mu.KLogging
+import mu.two.KLogging
 import java.util.concurrent.atomic.AtomicBoolean
 
 internal object StudentSummaryWs : KLogging() {

@@ -25,7 +25,7 @@ import com.github.pambrose.common.util.pathOf
 import com.github.readingbat.dsl.challenge.Challenge
 import com.github.readingbat.server.GroupName
 import com.github.readingbat.server.ReadingBatServer
-import mu.KLogging
+import mu.two.KLogging
 
 @ReadingBatDslMarker
 class LanguageGroup<T : Challenge>(

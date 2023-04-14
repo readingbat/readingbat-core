@@ -33,7 +33,7 @@ import com.github.readingbat.server.ws.LoggingWs.loggingWsEndpoint
 import com.github.readingbat.server.ws.StudentSummaryWs.studentSummaryWsEndpoint
 import io.ktor.server.routing.*
 import io.ktor.server.websocket.*
-import mu.KLogging
+import mu.two.KLogging
 
 object WsCommon : KLogging() {
 

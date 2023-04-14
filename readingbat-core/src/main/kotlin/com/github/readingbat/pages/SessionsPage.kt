@@ -37,7 +37,7 @@ import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
-import mu.KLogging
+import mu.two.KLogging
 import org.joda.time.DateTime
 import org.joda.time.DateTimeZone.UTC
 import kotlin.time.Duration.Companion.days

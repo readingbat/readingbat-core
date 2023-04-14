@@ -65,7 +65,7 @@ import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import mu.KLogging
+import mu.two.KLogging
 
 internal object ChallengeGroupPage : KLogging() {
 

@@ -19,7 +19,7 @@ package com.github.readingbat.dsl
 
 import com.github.pambrose.common.util.GitHubRepo
 import com.github.readingbat.common.Metrics
-import mu.KLogging
+import mu.two.KLogging
 import org.kohsuke.github.GHRepository
 import org.kohsuke.github.GitHub
 import kotlin.time.measureTimedValue

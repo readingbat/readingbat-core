@@ -61,7 +61,7 @@ import io.ktor.server.plugins.statuspages.*
 import io.ktor.server.request.*
 import io.ktor.server.sessions.*
 import io.ktor.server.websocket.*
-import mu.KLogging
+import mu.two.KLogging
 import org.slf4j.event.Level
 import java.time.Duration.ofSeconds
 import java.util.concurrent.atomic.AtomicLong

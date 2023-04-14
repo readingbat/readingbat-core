@@ -7,12 +7,12 @@ buildscript {
 plugins {
     id 'java'
     id 'application'
-    id 'org.jetbrains.kotlin.jvm' version '1.7.21' apply false
-    id 'org.jetbrains.kotlin.plugin.serialization' version '1.7.21' apply false
-    id 'org.jmailen.kotlinter' version "3.12.0" apply false
+    id 'org.jetbrains.kotlin.jvm' version '1.8.20' apply false
+    id 'org.jetbrains.kotlin.plugin.serialization' version '1.8.20' apply false
+    id 'org.jmailen.kotlinter' version "3.13.0" apply false
     id 'com.github.gmazzo.buildconfig' version '3.1.0' apply false
-    id "com.github.ben-manes.versions" version '0.44.0' apply false
-    id "org.flywaydb.flyway" version "9.8.2"
+    id "com.github.ben-manes.versions" version '0.46.0' apply false
+    id "org.flywaydb.flyway" version "9.16.3"
 }
 
 ext {
@@ -85,7 +85,7 @@ ext {
 allprojects {
     description = 'ReadingBat Core'
     group 'com.github.readingbat'
-    version '1.33.3'
+    version '1.33.4'
 
     apply plugin: 'application'
     apply plugin: 'java-library'  // gradle 7
@@ -103,8 +103,8 @@ allprojects {
         maven { url = 'https://jitpack.io' }
     }
 
-    sourceCompatibility = 1.8
-    targetCompatibility = 1.8
+    sourceCompatibility = 17
+    targetCompatibility = 17
 
     // gradle 7
     publishing {
@@ -141,13 +141,13 @@ subprojects {
     }
 
     task sourcesJar(type: Jar, dependsOn: classes) {
-        classifier = 'sources'
         from sourceSets.main.allSource
+        archiveClassifier = 'sources'
     }
 
     task javadocJar(type: Jar, dependsOn: javadoc) {
-        classifier = 'javadoc'
         from javadoc.destinationDir
+        archiveClassifier = 'javadoc'
     }
 
     artifacts {
@@ -161,7 +161,7 @@ subprojects {
 
     compileKotlin {
         kotlinOptions {
-            jvmTarget = '1.8'
+            jvmTarget = '17'
             freeCompilerArgs += ['-Xbackend-threads=8',
                                  '-opt-in=kotlin.time.ExperimentalTime',
                                  '-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi',
@@ -177,7 +177,7 @@ subprojects {
 
     compileTestKotlin {
         kotlinOptions {
-            jvmTarget = '1.8'
+            jvmTarget = '17'
             freeCompilerArgs += ['-Xbackend-threads=8']
         }
     }

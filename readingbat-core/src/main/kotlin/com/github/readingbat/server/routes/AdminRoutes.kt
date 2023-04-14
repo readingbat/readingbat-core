@@ -46,7 +46,7 @@ import io.ktor.server.routing.*
 import io.ktor.server.sessions.*
 import kotlinx.html.body
 import kotlinx.html.div
-import mu.KLogging
+import mu.two.KLogging
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.transactions.transaction

@@ -48,7 +48,7 @@ import com.github.readingbat.utils.ExposedUtils.readonlyTx
 import com.pambrose.common.exposed.get
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
-import mu.KLogging
+import mu.two.KLogging
 import org.jetbrains.exposed.sql.select
 import org.joda.time.DateTime
 import org.joda.time.DateTime.now

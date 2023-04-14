@@ -35,7 +35,7 @@ import com.github.readingbat.server.ReadingBatServer
 import com.github.readingbat.server.ReadingBatServer.redisPool
 import com.github.readingbat.server.ScriptPools.kotlinScriptPool
 import kotlinx.coroutines.runBlocking
-import mu.KLogging
+import mu.two.KLogging
 import kotlin.reflect.KFunction
 import kotlin.time.measureTimedValue
 
@@ -72,16 +72,16 @@ internal fun isDbmsEnabled() = Property.DBMS_ENABLED.getProperty(false)
 internal fun isRedisEnabled() = Property.REDIS_ENABLED.getProperty(false)
 
 internal fun isSaveRequestsEnabled() =
-  Property.SAVE_REQUESTS_ENABLED.getProperty(true) && isDbmsEnabled() && EnvVar.IPGEOLOCATION_KEY.isDefined()
+  Property.SAVE_REQUESTS_ENABLED.getProperty(true, false) && isDbmsEnabled() && EnvVar.IPGEOLOCATION_KEY.isDefined()
 
 internal fun isContentCachingEnabled() =
-  Property.CONTENT_CACHING_ENABLED.getProperty(false) && isDbmsEnabled() && isRedisEnabled()
+  Property.CONTENT_CACHING_ENABLED.getProperty(false, false) && isDbmsEnabled() && isRedisEnabled()
 
 internal fun isMultiServerEnabled() = Property.MULTI_SERVER_ENABLED.getProperty(false)
 
 internal fun isAgentEnabled() = Property.AGENT_ENABLED.getProperty(false)
 
-internal fun agentLaunchId() = Property.AGENT_LAUNCH_ID.getProperty(UNASSIGNED)
+internal fun agentLaunchId() = Property.AGENT_LAUNCH_ID.getProperty(UNASSIGNED, false)
 
 fun ContentSource.eval(enclosingContent: ReadingBatContent, variableName: String = "content"): ReadingBatContent =
   enclosingContent.evalContent(this, variableName)

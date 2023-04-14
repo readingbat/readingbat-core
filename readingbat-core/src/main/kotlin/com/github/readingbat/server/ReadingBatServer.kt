@@ -32,12 +32,11 @@ import com.github.readingbat.common.Endpoints.STATIC_ROOT
 import com.github.readingbat.common.EnvVar
 import com.github.readingbat.common.EnvVar.CLOUD_SQL_CONNECTION_NAME
 import com.github.readingbat.common.EnvVar.SCRIPT_CLASSPATH
+import com.github.readingbat.common.KtorProperty.Companion.assignProperties
 import com.github.readingbat.common.Metrics
 import com.github.readingbat.common.Property
 import com.github.readingbat.common.Property.CONFIG_FILENAME
-import com.github.readingbat.common.Property.Companion.assignProperties
-import com.github.readingbat.common.Property.DBMS_MAX_LIFETIME_MINS
-import com.github.readingbat.common.Property.DBMS_MAX_POOL_SIZE
+import com.github.readingbat.common.Property.Companion.initProperties
 import com.github.readingbat.common.Property.KOTLIN_SCRIPT_CLASSPATH
 import com.github.readingbat.common.User.Companion.createUnknownUser
 import com.github.readingbat.common.User.Companion.userExists
@@ -75,7 +74,7 @@ import io.prometheus.Agent.Companion.startAsyncAgent
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeoutOrNull
-import mu.KLogging
+import mu.two.KLogging
 import org.jetbrains.exposed.sql.Database
 import redis.clients.jedis.JedisPool
 import redis.clients.jedis.exceptions.JedisConnectionException
@@ -118,12 +117,12 @@ object ReadingBatServer : KLogging() {
                 }
               }
 
-            maximumPoolSize = DBMS_MAX_POOL_SIZE.getRequiredProperty().toInt()
+            maximumPoolSize = Property.DBMS_MAX_POOL_SIZE.getRequiredProperty().toInt()
             // This causes problems. Postgres defaults to false, but setting it here starts a transaction and then
             // subsequent readOnly sets throw exceptions
             // isAutoCommit = false
             transactionIsolation = "TRANSACTION_REPEATABLE_READ"
-            maxLifetime = DBMS_MAX_LIFETIME_MINS.getRequiredProperty().toInt().minutes.inWholeMilliseconds
+            maxLifetime = Property.DBMS_MAX_LIFETIME_MINS.getRequiredProperty().toInt().minutes.inWholeMilliseconds
             validate()
           }
       )
@@ -141,9 +140,9 @@ object ReadingBatServer : KLogging() {
       if (scriptClasspathEnvVar.isNotNull())
         KOTLIN_SCRIPT_CLASSPATH.setProperty(scriptClasspathEnvVar)
       else
-        logger.warn { "Missing ${KOTLIN_SCRIPT_CLASSPATH.propertyValue} and $SCRIPT_CLASSPATH values" }
+        logger.warn { "Missing ${KOTLIN_SCRIPT_CLASSPATH.propertyName} and $SCRIPT_CLASSPATH values" }
     } else {
-      logger.info { "${KOTLIN_SCRIPT_CLASSPATH.propertyValue}: $scriptClasspathProp" }
+      logger.info { "${KOTLIN_SCRIPT_CLASSPATH.propertyName}: $scriptClasspathProp" }
     }
   }
 
@@ -225,7 +224,7 @@ internal fun Application.readContentDsl(fileName: String, variableName: String, 
 }
 
 fun Application.module() {
-  assignProperties()
+  assignProperties(initProperties().sortedBy { it.propertyName })
 
   adminUsers.addAll(Property.ADMIN_USERS.configValueOrNull(this)?.getList() ?: emptyList())
 
