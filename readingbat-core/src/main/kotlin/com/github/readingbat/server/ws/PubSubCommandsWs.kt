@@ -41,7 +41,6 @@ import com.github.readingbat.server.ws.PubSubCommandsWs.PubSubTopic.USER_ANSWERS
 import kotlinx.coroutines.newSingleThreadContext
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import mu.two.KLogging
 import redis.clients.jedis.Jedis
@@ -105,11 +104,13 @@ internal object PubSubCommandsWs : KLogging() {
                   val data = Json.decodeFromString<AdminCommandData>(message)
                   adminCommandChannel.send(data)
                 }
+
                 USER_ANSWERS,
                 LIKE_DISLIKE -> {
                   val data = Json.decodeFromString<ChallengeAnswerData>(message)
                   multiServerWsReadChannel.send(data)
                 }
+
                 LOG_MESSAGE -> {
                   val data = Json.decodeFromString<LogData>(message)
                   logWsReadChannel.send(data)
@@ -135,7 +136,9 @@ internal object PubSubCommandsWs : KLogging() {
           } ?: throw RedisUnavailableException("pubsubWs subscriber")
         } catch (e: Throwable) {
           logger.error(e) { "Exception in pubsubWs subscriber ${e.simpleClassName} ${e.message}" }
+          logger.error { "Sleeping for 5 seconds" }
           Thread.sleep(5.seconds.inWholeMilliseconds)
+          logger.error { "Slept for 5 seconds" }
         }
       }
     }

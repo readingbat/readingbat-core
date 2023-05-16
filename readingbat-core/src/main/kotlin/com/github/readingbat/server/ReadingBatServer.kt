@@ -302,11 +302,13 @@ fun Application.module() {
       wsRoutes(metrics) { content.get() }
     }
 
-    static(STATIC_ROOT) { resources("static") }
+    staticResources(STATIC_ROOT, "static")
+//    static(STATIC_ROOT) { resources("static") }
 
-    static("/") {
-      staticBasePackage = "public"
-      resources(".")
-    }
+    staticResources("/", "public")
+//    static("/") {
+//      staticBasePackage = "public"
+//      resources(".")
+//    }
   }
 }

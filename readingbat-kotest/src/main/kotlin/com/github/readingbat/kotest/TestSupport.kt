@@ -196,7 +196,8 @@ object TestSupport {
       userRoutes(ReadingBatServer.metrics) { content }
       sysAdminRoutes(ReadingBatServer.metrics) { }
       wsRoutes(ReadingBatServer.metrics) { content }
-      static(Endpoints.STATIC_ROOT) { resources("static") }
+      staticResources(Endpoints.STATIC_ROOT, "static")
+//      static(Endpoints.STATIC_ROOT) { resources("static") }
     }
   }
 }
