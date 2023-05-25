@@ -55,13 +55,13 @@ internal object ClockWs : KLogging() {
   init {
     timer("clock msg sender", false, 0L, 1.seconds.inWholeMilliseconds) {
       for (sessionContext in wsConnections)
-        try {
+        runCatching {
           val elapsed = sessionContext.start.elapsedNow().format()
           val json = PingMessage("$elapsed [${wsConnections.size}/$maxWsConnections]").toJson()
           runBlocking {
             sessionContext.wsSession.outgoing.send(Frame.Text(json))
           }
-        } catch (e: Throwable) {
+        }.onFailure { e ->
           logger.error { "Exception in pinger: ${e.simpleClassName} ${e.message}" }
         }
     }

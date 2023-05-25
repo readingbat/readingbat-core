@@ -162,12 +162,11 @@ internal fun addImports(code: String, variableName: String): String {
 private val <T> KFunction<T>.fqMethodName get() = "${javaClass.packageName}.$name"
 
 private suspend fun evalDsl(code: String, sourceName: String) =
-  try {
+  runCatching {
     kotlinScriptPool.eval { eval(code) as ReadingBatContent }.apply { validate() }
-  } catch (e: Throwable) {
+  }.onFailure { e ->
     logger.info { "Error in ${sourceName.removePrefix(GH_PREFIX)}:\n$code" }
-    throw e
-  }
+  }.getOrThrow()
 
 @Suppress("unused")
 object ContentDsl : KLogging()

@@ -84,7 +84,7 @@ internal fun Application.intercepts() {
   intercept(Plugins) {
     // Phase for features. Most features should intercept this phase
     if (!isStaticCall())
-      try {
+      runCatching {
         val browserSession = call.browserSession
         if (isSaveRequestsEnabled() && browserSession.isNotNull()) {
           val request = call.request
@@ -121,7 +121,7 @@ internal fun Application.intercepts() {
               }
           }
         }
-      } catch (e: Throwable) {
+      }.onFailure { e ->
 //        logger.warn(e) {}
         logger.info { "Failure saving request: ${e.message}" }
       }

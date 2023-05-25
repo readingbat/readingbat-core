@@ -94,13 +94,13 @@ internal object ChallengeWs : KLogging() {
     timer("pinger", false, 0L, 1.seconds.inWholeMilliseconds) {
       for (sessionContext in answerWsConnections)
         if (sessionContext.enabled)
-          try {
+          runCatching {
             val elapsed = sessionContext.start.elapsedNow().format()
             val json = PingMessage(elapsed).toJson()
             runBlocking {
               sessionContext.wsSession.outgoing.send(Frame.Text(json))
             }
-          } catch (e: Throwable) {
+          }.onFailure { e ->
             logger.error { "Exception in pinger ${e.simpleClassName} ${e.message}" }
           }
     }
@@ -108,7 +108,7 @@ internal object ChallengeWs : KLogging() {
     if (isMultiServerEnabled() && isRedisEnabled()) {
       newSingleThreadContext("multiServerWsWriteChannel").executor.execute {
         while (true) {
-          try {
+          runCatching {
             runBlocking {
               redisPool?.withSuspendingNonNullRedisPool { redis ->
                 multiServerWsWriteChannel
@@ -121,7 +121,7 @@ internal object ChallengeWs : KLogging() {
                   }
               } ?: throw RedisUnavailableException("multiServerWriteChannel")
             }
-          } catch (e: Throwable) {
+          }.onFailure { e ->
             logger.error { "Exception in challenge ws writer: ${e.simpleClassName} ${e.message}" }
             Thread.sleep(1.seconds.inWholeMilliseconds)
           }
@@ -131,7 +131,7 @@ internal object ChallengeWs : KLogging() {
 
     newSingleThreadContext("answerWsConnections").executor.execute {
       while (true) {
-        try {
+        runCatching {
           runBlocking {
             (if (isMultiServerEnabled()) multiServerWsReadChannel else singleServerWsChannel)
               .openSubscription()
@@ -148,7 +148,7 @@ internal object ChallengeWs : KLogging() {
                   }
               }
           }
-        } catch (e: Throwable) {
+        }.onFailure { e ->
           logger.error { "Exception in dispatcher ${e.simpleClassName} ${e.message}" }
           Thread.sleep(1.seconds.inWholeMilliseconds)
         }

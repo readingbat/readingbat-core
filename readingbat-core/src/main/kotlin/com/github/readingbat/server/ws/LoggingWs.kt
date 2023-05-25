@@ -49,7 +49,6 @@ import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.newSingleThreadContext
 import kotlinx.coroutines.runBlocking
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import mu.two.KLogging
@@ -73,7 +72,7 @@ internal object LoggingWs : KLogging() {
   fun initThreads(contentSrc: () -> ReadingBatContent, resetContentFunc: (String) -> Unit) {
     newSingleThreadContext("logging-ws-adminCommandChannel").executor.execute {
       while (true) {
-        try {
+        runCatching {
           runBlocking {
             adminCommandChannel
               .openSubscription()
@@ -135,7 +134,7 @@ internal object LoggingWs : KLogging() {
                 } ?: throw RedisUnavailableException("adminCommandChannel")
               }
           }
-        } catch (e: Throwable) {
+        }.onFailure { e ->
           logger.error { "Exception in dispatcher ${e.simpleClassName} ${e.message}" }
           Thread.sleep(1.seconds.inWholeMilliseconds)
         }
@@ -144,7 +143,7 @@ internal object LoggingWs : KLogging() {
 
     newSingleThreadContext("logging-ws-logWsReadChannel").executor.execute {
       while (true) {
-        try {
+        runCatching {
           runBlocking {
             logWsReadChannel
               .openSubscription()
@@ -160,7 +159,7 @@ internal object LoggingWs : KLogging() {
                   }
               }
           }
-        } catch (e: Throwable) {
+        }.onFailure { e ->
           logger.error { "Exception in dispatcher ${e.simpleClassName} ${e.message}" }
           Thread.sleep(1.seconds.inWholeMilliseconds)
         }

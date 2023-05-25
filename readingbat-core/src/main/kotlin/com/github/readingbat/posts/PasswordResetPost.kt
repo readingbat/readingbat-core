@@ -55,7 +55,6 @@ import io.ktor.server.plugins.*
 import io.ktor.server.request.*
 import mu.two.KLogging
 import org.jetbrains.exposed.sql.select
-import java.io.IOException
 
 internal object PasswordResetPost : KLogging() {
   private val unknownUserLimiter = RateLimiter.create(0.5) // rate 2.0 is "2 permits per second"
@@ -91,24 +90,24 @@ internal object PasswordResetPost : KLogging() {
           //val previousResetId = user2.userPasswordResetId()
           user2.savePasswordResetId(email, newResetId)
 
-          logger.info { "Sending password reset email to $email - $remoteStr" }
-          try {
-            val msg = Message(
-              """
-              |This is a password reset message for the ReadingBat.com account for '$email'
-              |Go to this URL to set a new password: ${Property.SENDGRID_PREFIX.getProperty("")}$PASSWORD_RESET_ENDPOINT?$RESET_ID_PARAM=$newResetId 
-              |If you did not request to reset your password, please ignore this message.
-            """.trimMargin()
-            )
+          runCatching {
             sendEmail(
               to = email,
               from = Email("reset@readingbat.com"),
               subject = "ReadingBat password reset",
-              msg = msg
+              msg = Message(
+                """
+                |This is a password reset message for the ReadingBat.com account for '$email'
+                |Go to this URL to set a new password: ${Property.SENDGRID_PREFIX.getProperty("")}$PASSWORD_RESET_ENDPOINT?$RESET_ID_PARAM=$newResetId 
+                |If you did not request to reset your password, please ignore this message.
+              """.trimMargin()
+              )
             )
-          } catch (e: IOException) {
+          }.onFailure { e ->
             logger.info(e) { e.message }
-            throw ResetPasswordException("Unable to send email")
+            throw ResetPasswordException("Unable to send email to $email - $remoteStr")
+          }.onSuccess {
+            logger.info { "Sent password reset email to $email - $remoteStr" }
           }
 
           val returnPath = queryParam(RETURN_PARAM, "/")

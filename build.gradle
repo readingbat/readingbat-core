@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
 buildscript {
     dependencies {
         classpath "org.postgresql:postgresql:$postgres_version"
@@ -85,7 +87,7 @@ ext {
 allprojects {
     description = 'ReadingBat Core'
     group 'com.github.readingbat'
-    version '1.33.5'
+    version '1.33.6'
 
     apply plugin: 'application'
     apply plugin: 'java-library'  // gradle 7
@@ -103,8 +105,8 @@ allprojects {
         maven { url = 'https://jitpack.io' }
     }
 
-    sourceCompatibility = 17
-    targetCompatibility = 17
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
 
     // gradle 7
     publishing {
@@ -140,12 +142,14 @@ subprojects {
         runtimeOnly "org.jetbrains.kotlin:kotlin-scripting-jsr223:$kotlin_version"
     }
 
-    task sourcesJar(type: Jar, dependsOn: classes) {
+    tasks.register('sourcesJar', Jar) {
+        dependsOn classes
         from sourceSets.main.allSource
         archiveClassifier = 'sources'
     }
 
-    task javadocJar(type: Jar, dependsOn: javadoc) {
+    tasks.register('javadocJar', Jar) {
+        dependsOn javadoc
         from javadoc.destinationDir
         archiveClassifier = 'javadoc'
     }
@@ -159,27 +163,21 @@ subprojects {
         withSourcesJar()
     }
 
-    compileKotlin {
-        kotlinOptions {
-            jvmTarget = '17'
-            freeCompilerArgs += ['-Xbackend-threads=8',
-                                 '-opt-in=kotlin.time.ExperimentalTime',
-                                 '-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi',
-                                 '-opt-in=kotlin.contracts.ExperimentalContracts',
-                                 '-opt-in=kotlinx.coroutines.ObsoleteCoroutinesApi',
-                                 '-opt-in=kotlin.ExperimentalStdlibApi',
-                                 '-opt-in=io.ktor.server.locations.KtorExperimentalLocationsAPI',
-                                 '-opt-in=kotlinx.coroutines.InternalCoroutinesApi',
-                                 '-opt-in=kotlinx.coroutines.DelicateCoroutinesApi',
-            ]
-        }
+    kotlin {
+        jvmToolchain(17)
     }
 
-    compileTestKotlin {
-        kotlinOptions {
-            jvmTarget = '17'
-            freeCompilerArgs += ['-Xbackend-threads=8']
-        }
+    tasks.withType(KotlinCompile).configureEach {
+        kotlinOptions.freeCompilerArgs += ['-Xbackend-threads=8',
+                                           '-opt-in=kotlin.time.ExperimentalTime',
+                                           '-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi',
+                                           '-opt-in=kotlin.contracts.ExperimentalContracts',
+                                           '-opt-in=kotlinx.coroutines.ObsoleteCoroutinesApi',
+                                           '-opt-in=kotlin.ExperimentalStdlibApi',
+                                           '-opt-in=io.ktor.server.locations.KtorExperimentalLocationsAPI',
+                                           '-opt-in=kotlinx.coroutines.InternalCoroutinesApi',
+                                           '-opt-in=kotlinx.coroutines.DelicateCoroutinesApi',
+        ]
     }
 
     test {

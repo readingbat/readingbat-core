@@ -195,29 +195,37 @@ class FunctionInfo(
       val rhs = if (rho.isBlank()) "emptyList<String>()" else "listOf($rho)"
       val compareExpr = "$lhs == $rhs"
       logger.debug { "Check answers expression: $compareExpr" }
-      return try {
+      return runCatching {
         val result = kotlinEvaluatorPool.eval(compareExpr) as Boolean
         result to (if (result) "" else deriveHint())
-      } catch (e: ScriptException) {
-        logger.info { "Caught exception comparing $this and $correctAnswer: ${e.message} in $compareExpr" }
-        false to deriveHint()
-      } catch (e: Exception) {
-        false to deriveHint()
+      }.getOrElse { e ->
+        when (e) {
+          is ScriptException -> {
+            logger.info { "Caught exception comparing $this and $correctAnswer: ${e.message} in $compareExpr" }
+            false to deriveHint()
+          }
+
+          else -> false to deriveHint()
+        }
       }
     }
 
     private suspend fun String.equalsAsPythonList(correctAnswer: String): Pair<Boolean, String> {
       fun deriveHint() = if (isNotBracketed()) "Answer should be bracketed" else ""
       val compareExpr = "${trim()} == ${correctAnswer.trim()}"
-      return try {
+      return runCatching {
         logger.debug { "Check answers expression: $compareExpr" }
         val result = pythonEvaluatorPool.eval(compareExpr) as Boolean
         result to (if (result) "" else deriveHint())
-      } catch (e: ScriptException) {
-        logger.info { "Caught exception comparing $this and $correctAnswer: ${e.message} in: $compareExpr" }
-        false to deriveHint()
-      } catch (e: Exception) {
-        false to deriveHint()
+      }.getOrElse { e ->
+        when (e) {
+          is ScriptException -> {
+            logger.info { "Caught exception comparing $this and $correctAnswer: ${e.message} in: $compareExpr" }
+            false to deriveHint()
+          }
+
+          else -> false to deriveHint()
+        }
       }
     }
 
@@ -236,13 +244,14 @@ class FunctionInfo(
               !isJavaBoolean() -> "Answer should be either true or false"
               else -> ""
             }
+
           returnType == StringType && isNotDoubleQuoted() -> "$languageType strings are double quoted"
           returnType == IntType && isNotInt() -> "Answer should be an int value"
           returnType == FloatType && isNotFloat() -> "Answer should be a float value"
           else -> ""
         }
 
-      return try {
+      return runCatching {
         val result =
           when {
             this.isEmpty() || that.isEmpty() -> false
@@ -252,7 +261,7 @@ class FunctionInfo(
             else -> this.toInt() == that.toInt()
           }
         result to (if (result) "" else deriveHint())
-      } catch (e: Exception) {
+      }.getOrElse { e ->
         false to deriveHint()
       }
     }
@@ -266,13 +275,14 @@ class FunctionInfo(
               !isPythonBoolean() -> "Answer should be either True or False"
               else -> ""
             }
+
           returnType == StringType && isNotQuoted() -> "Python strings are either single or double quoted"
           returnType == IntType && isNotInt() -> "Answer should be an int value"
           returnType == FloatType && isNotFloat() -> "Answer should be a float value"
           else -> ""
         }
 
-      return try {
+      return runCatching {
         val result =
           when {
             isEmpty() || correctAnswer.isEmpty() -> false
@@ -283,7 +293,7 @@ class FunctionInfo(
             else -> toInt() == correctAnswer.toInt()
           }
         result to (if (result) "" else deriveHint())
-      } catch (e: Exception) {
+      }.getOrElse { e ->
         false to deriveHint()
       }
     }

@@ -142,9 +142,9 @@ class GeoInfo(val requireDbmsLookUp: Boolean, val dbmsId: Long, val remoteHost: 
     fun lookupGeoInfo(ipAddress: String) =
       geoInfoMap.computeIfAbsent(ipAddress) { ip ->
         queryGeoInfo(ip)?.apply { logger.info { "Postgres GEO info for $ip: ${summary()}" } }
-          ?: try {
+          ?: runCatching {
             callGeoInfoApi(ip)
-          } catch (e: Throwable) {
+          }.getOrElse { e ->
             GeoInfo(true, -1, ip, "")
               .also { logger.info { "Unable to determine IP geolocation data for ${it.remoteHost} (${e.message})" } }
           }.also { it.insert() }

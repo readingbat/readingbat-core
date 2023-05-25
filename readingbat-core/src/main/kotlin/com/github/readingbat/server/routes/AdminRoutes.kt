@@ -155,9 +155,9 @@ object AdminRoutes : KLogging() {
 
       if (isSaveRequestsEnabled()) {
         val ipAddress = call.request.origin.remoteHost
-        try {
+        runCatching {
           lookupGeoInfo(ipAddress)
-        } catch (e: Throwable) {
+        }.onFailure { e ->
           logger.warn(e) {}
         }
       }

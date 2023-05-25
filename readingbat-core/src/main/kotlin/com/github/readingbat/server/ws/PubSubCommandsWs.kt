@@ -130,15 +130,13 @@ internal object PubSubCommandsWs : KLogging() {
 
     newSingleThreadContext("pubsubcommands-ws-redis").executor.execute {
       while (true) {
-        try {
+        runCatching {
           redisPool?.withNonNullRedisPool { redis ->
             redis.subscribe(pubSub, *PubSubTopic.values().map { it.name }.toTypedArray())
           } ?: throw RedisUnavailableException("pubsubWs subscriber")
-        } catch (e: Throwable) {
+        }.onFailure { e ->
           logger.error(e) { "Exception in pubsubWs subscriber ${e.simpleClassName} ${e.message}" }
-          logger.error { "Sleeping for 5 seconds" }
           Thread.sleep(5.seconds.inWholeMilliseconds)
-          logger.error { "Slept for 5 seconds" }
         }
       }
     }
