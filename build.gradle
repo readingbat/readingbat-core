@@ -163,11 +163,12 @@ subprojects {
         withSourcesJar()
     }
 
-    kotlin {
-        jvmToolchain(17)
-    }
+//    kotlin {
+//        jvmToolchain(17)
+//    }
 
     tasks.withType(KotlinCompile).configureEach {
+        kotlinOptions.jvmTarget = JavaVersion.VERSION_17
         kotlinOptions.freeCompilerArgs += ['-Xbackend-threads=8',
                                            '-opt-in=kotlin.time.ExperimentalTime',
                                            '-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi',
