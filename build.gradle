@@ -99,7 +99,7 @@ allprojects {
     apply plugin: 'com.github.ben-manes.versions'
 
     repositories {
-        maven { url "https://maven.pkg.jetbrains.space/kotlin/p/kotlin/kotlin-js-wrappers" }
+//        maven { url "https://maven.pkg.jetbrains.space/kotlin/p/kotlin/kotlin-js-wrappers" }
         google()
         mavenCentral()
         maven { url = 'https://jitpack.io' }
