@@ -53,7 +53,7 @@ import com.github.readingbat.common.isNotValidUser
 import com.github.readingbat.dsl.InvalidRequestException
 import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.pages.ChallengePage.headerColor
+import com.github.readingbat.pages.ChallengePage.HEADER_COLOR
 import com.github.readingbat.pages.HelpAndLogin.helpAndLogin
 import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyTitle
@@ -160,7 +160,7 @@ internal object ClassSummaryPage : KLogging() {
       tr {
         td {
           h3 {
-            style = "margin-left:15px; margin-bottom:15px; color:$headerColor"; +classCode.toDisplayString()
+            style = "margin-left:15px; margin-bottom:15px; color:$HEADER_COLOR"; +classCode.toDisplayString()
           }
         }
         if (classCode != activeClassCode) {
@@ -189,7 +189,7 @@ internal object ClassSummaryPage : KLogging() {
       style = "border-collapse: separate; border-spacing: 15px 10px"
       tr {
         td { style = "font-size:$BTN_SIZE"; +"Challenge Group: " }
-        LanguageType.values()
+        LanguageType.entries
           .map { content.findLanguage(it) }
           .forEach { langGroup ->
             if (langGroup.challengeGroups.isNotEmpty()) {
@@ -231,7 +231,7 @@ internal object ClassSummaryPage : KLogging() {
     groupName: GroupName
   ) {
     h3 {
-      style = "margin-left: 15px; color: $headerColor"
+      style = "margin-left: 15px; color: $HEADER_COLOR"
       +" "
 
       languageName.toLanguageType().toString()

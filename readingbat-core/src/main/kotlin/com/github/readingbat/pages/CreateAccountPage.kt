@@ -45,7 +45,7 @@ import kotlinx.html.stream.createHTML
 
 internal object CreateAccountPage {
 
-  private const val createButton = "CreateAccountButton"
+  private const val CREATE_BUTTON = "CreateAccountButton"
 
   fun PipelineCall.createAccountPage(
     defaultFullName: FullName = EMPTY_FULLNAME,
@@ -58,7 +58,7 @@ internal object CreateAccountPage {
 
         head {
           headDefault()
-          clickButtonScript(createButton)
+          clickButtonScript(CREATE_BUTTON)
         }
 
         body {
@@ -126,7 +126,7 @@ internal object CreateAccountPage {
                       id = "confirm_passwd"
                       name = CONFIRM_PASSWORD_PARAM
                       value = ""
-                      onKeyPress = "click$createButton(event)"
+                      onKeyPress = "click$CREATE_BUTTON(event)"
                     }
                   }
                   td { hideShowButton(formName, CONFIRM_PASSWORD_PARAM) }
@@ -137,7 +137,7 @@ internal object CreateAccountPage {
                   td {
                     submitInput {
                       style = "font-size:100%; height:35; width:125"
-                      id = createButton
+                      id = CREATE_BUTTON
                       value = "Create Account"
                     }
                   }

@@ -110,7 +110,6 @@ import kotlinx.html.*
 import kotlinx.html.Entities.nbsp
 import kotlinx.html.ScriptType.textJavaScript
 import kotlinx.html.stream.createHTML
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import mu.two.KLogging
 import org.jetbrains.exposed.sql.and
@@ -118,15 +117,15 @@ import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
 
 internal object ChallengePage : KLogging() {
-  private const val spinnerCss = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
-  private const val nameTd = "nameTd"
-  private const val answersTd = "answersTd"
-  private const val likeDislikeSpan = "likeDislikeSpan"
-  private const val answersSpan = "answersSpan"
-  private const val numCorrectSpan = "numCorrectSpan"
-  private const val pingLabel = "pingLabel"
-  private const val pingMsg = "pingMsg"
-  internal const val headerColor = "#419DC1"
+  private const val SPINNER_CSS = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
+  private const val NAME_TD = "nameTd"
+  private const val ANSWER_TD = "answersTd"
+  private const val LIKE_DISLIKE_SPAN = "likeDislikeSpan"
+  private const val ANSWER_SPAN = "answersSpan"
+  private const val NUM_CORRECTION_SPAN = "numCorrectSpan"
+  private const val PING_LABEL = "pingLabel"
+  private const val PING_MSG = "pingMsg"
+  internal const val HEADER_COLOR = "#419DC1"
 
   fun PipelineCall.challengePage(
     content: ReadingBatContent,
@@ -148,7 +147,7 @@ internal object ChallengePage : KLogging() {
         val msg = Message(queryParam(MSG))
 
         head {
-          link { rel = "stylesheet"; href = spinnerCss }
+          link { rel = "stylesheet"; href = SPINNER_CSS }
           link {
             rel = "stylesheet"; href = pathOf(STATIC_ROOT, PRISM, "$languageName-prism.css"); type = CSS.toString()
           }
@@ -171,7 +170,7 @@ internal object ChallengePage : KLogging() {
             displayStudentProgress(challenge, content.maxHistoryLength, funcInfo, activeTeachingClassCode, enrollees)
 
             if (enrollees.isNotEmpty())
-              p { span { id = pingLabel }; span { id = pingMsg } }
+              p { span { id = PING_LABEL }; span { id = PING_MSG } }
           }
 
           backLink(CHALLENGE_ROOT, languageName.value, groupName.value)
@@ -241,13 +240,13 @@ internal object ChallengePage : KLogging() {
         tr {
           th {
             colSpan = "2"
-            style = "color: $headerColor"
+            style = "color: $HEADER_COLOR"
             +"Function Call"
             rawHtml(nbsp.text)
           }
           th {
             colSpan = "2"
-            style = "color: $headerColor"
+            style = "color: $HEADER_COLOR"
             +"Return Value"
           }
         }
@@ -339,8 +338,8 @@ internal object ChallengePage : KLogging() {
           ws.onopen = function (event) {
             //console.log("WebSocket connected.");
             firstTime = false;
-            document.getElementById('$pingLabel').innerText = 'Connected';
-            document.getElementById('$pingMsg').innerText = '';
+            document.getElementById('$PING_LABEL').innerText = 'Connected';
+            document.getElementById('$PING_MSG').innerText = '';
             ws.send("$classCode"); 
           };
           
@@ -351,8 +350,8 @@ internal object ChallengePage : KLogging() {
               msg = 'Reconnecting';
             for (i = 0; i < cnt%4; i++) 
               msg += '.'
-            document.getElementById('$pingLabel').innerText = msg;
-            document.getElementById('$pingMsg').innerText = '';
+            document.getElementById('$PING_LABEL').innerText = msg;
+            document.getElementById('$PING_MSG').innerText = '';
             setTimeout(function() {
               cnt+=1;
               connect();
@@ -368,25 +367,25 @@ internal object ChallengePage : KLogging() {
             var obj = JSON.parse(event.data);
       
             if (obj.hasOwnProperty("type") && obj.type == "$PING_CODE") {
-              document.getElementById('$pingLabel').innerText = 'Connection time: ';
-              document.getElementById('$pingMsg').innerText = obj.msg;
+              document.getElementById('$PING_LABEL').innerText = 'Connection time: ';
+              document.getElementById('$PING_MSG').innerText = obj.msg;
             }
             else if (obj.hasOwnProperty("type") && obj.type == "$LIKE_DISLIKE_CODE") {
-              document.getElementById(obj.userId + '-$likeDislikeSpan').innerHTML = obj.likeDislike;
+              document.getElementById(obj.userId + '-$LIKE_DISLIKE_SPAN').innerHTML = obj.likeDislike;
             }
             else {
-              var name = document.getElementById(obj.userId + '-$nameTd');
+              var name = document.getElementById(obj.userId + '-$NAME_TD');
               name.style.backgroundColor = obj.complete ? '$CORRECT_COLOR' : '$INCOMPLETE_COLOR';
       
-              document.getElementById(obj.userId + '-$numCorrectSpan').innerText = obj.numCorrect;
+              document.getElementById(obj.userId + '-$NUM_CORRECTION_SPAN').innerText = obj.numCorrect;
       
               var prefix = obj.userId + '-' + obj.history.invocation;
               
-              var answers = document.getElementById(prefix + '-$answersTd')
+              var answers = document.getElementById(prefix + '-$ANSWER_TD')
               answers.style.backgroundColor = obj.history.correct ? '$CORRECT_COLOR' 
                                                                   : (obj.history.answers.length > 0 ? '$WRONG_COLOR' 
                                                                                                     : '$INCOMPLETE_COLOR');      
-              document.getElementById(prefix + '-$answersSpan').innerHTML = obj.history.answers;
+              document.getElementById(prefix + '-$ANSWER_SPAN').innerHTML = obj.history.answers;
             }
           };
         }
@@ -410,7 +409,7 @@ internal object ChallengePage : KLogging() {
       val groupName = challenge.groupName
 
       h3 {
-        style = "margin-left: 5px; color: $headerColor"
+        style = "margin-left: 5px; color: $HEADER_COLOR"
         a(classes = UNDERLINE) {
           href = classSummaryEndpoint(classCode, languageName, groupName)
           +classCode.toDisplayString()
@@ -423,11 +422,11 @@ internal object ChallengePage : KLogging() {
           style = "width:100%; border-spacing: 5px 10px"
 
           tr {
-            th { style = "width:15%; white-space:nowrap; text-align:left; color: $headerColor"; +"Student" }
+            th { style = "width:15%; white-space:nowrap; text-align:left; color: $HEADER_COLOR"; +"Student" }
             funcInfo.invocations
               .forEach { invocation ->
                 th {
-                  style = "text-align:left; color: $headerColor"; +(invocation.value.run { substring(indexOf("(")) })
+                  style = "text-align:left; color: $HEADER_COLOR"; +(invocation.value.run { substring(indexOf("(")) })
                 }
               }
           }
@@ -455,11 +454,11 @@ internal object ChallengePage : KLogging() {
 
               tr(classes = DASHBOARD) {
                 td(classes = DASHBOARD) {
-                  id = "${enrollee.userId}-$nameTd"
+                  id = "${enrollee.userId}-$NAME_TD"
                   val color = if (allCorrect) CORRECT_COLOR else INCOMPLETE_COLOR
                   style = "width:15%;white-space:nowrap; background-color:$color"
                   span {
-                    id = "${enrollee.userId}-$numCorrectSpan"
+                    id = "${enrollee.userId}-$NUM_CORRECTION_SPAN"
                     +numCorrect.toString()
                   }
                   +"/$numCalls"
@@ -468,7 +467,7 @@ internal object ChallengePage : KLogging() {
                   rawHtml(nbsp.text)
                   // TODO Optimize this to a single query and grab all values at once
                   span {
-                    id = "${enrollee.userId}-$likeDislikeSpan"
+                    id = "${enrollee.userId}-$LIKE_DISLIKE_SPAN"
                     rawHtml(enrollee.likeDislikeEmoji(challenge))
                   }
                 }
@@ -476,12 +475,12 @@ internal object ChallengePage : KLogging() {
                 results
                   .forEach { (invocation, history) ->
                     td(classes = DASHBOARD) {
-                      id = "${enrollee.userId}-$invocation-$answersTd"
+                      id = "${enrollee.userId}-$invocation-$ANSWER_TD"
                       val color =
                         if (history.correct) CORRECT_COLOR else (if (history.answers.isNotEmpty()) WRONG_COLOR else INCOMPLETE_COLOR)
                       style = "background-color:$color"
                       span {
-                        id = "${enrollee.userId}-$invocation-$answersSpan"
+                        id = "${enrollee.userId}-$invocation-$ANSWER_SPAN"
                         history.answers.asReversed().take(maxHistoryLength).forEach { answer -> +answer; br }
                       }
                     }

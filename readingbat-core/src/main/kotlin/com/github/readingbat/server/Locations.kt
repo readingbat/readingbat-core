@@ -50,42 +50,42 @@ import kotlinx.serialization.Serializable
 import io.ktor.server.locations.post as locationsPost
 
 object Locations {
-  private const val trueStr = true.toString()
-  private const val falseStr = false.toString()
+  private const val TRUE_STR = true.toString()
+  private const val FALSE_STR = false.toString()
 
   fun Routing.locations(metrics: Metrics, content: () -> ReadingBatContent) {
     get<Language> { languageLoc ->
-      metrics.languageGroupRequestCount.labels(agentLaunchId(), GET, languageLoc.languageTypeStr, falseStr).inc()
+      metrics.languageGroupRequestCount.labels(agentLaunchId(), GET, languageLoc.languageTypeStr, FALSE_STR).inc()
       language(content.invoke(), languageLoc, false)
     }
     get<Language.Group> { groupLoc ->
-      metrics.challengeGroupRequestCount.labels(agentLaunchId(), GET, groupLoc.languageTypeStr, falseStr).inc()
+      metrics.challengeGroupRequestCount.labels(agentLaunchId(), GET, groupLoc.languageTypeStr, FALSE_STR).inc()
       group(content.invoke(), groupLoc, false)
     }
     get<Language.Group.Challenge> { challengeLoc ->
-      metrics.challengeRequestCount.labels(agentLaunchId(), GET, challengeLoc.languageTypeStr, falseStr).inc()
+      metrics.challengeRequestCount.labels(agentLaunchId(), GET, challengeLoc.languageTypeStr, FALSE_STR).inc()
       challenge(content.invoke(), challengeLoc, false)
     }
     get<PlaygroundRequest> { request ->
-      metrics.playgroundRequestCount.labels(agentLaunchId(), GET, falseStr).inc()
+      metrics.playgroundRequestCount.labels(agentLaunchId(), GET, FALSE_STR).inc()
       playground(content.invoke(), request, false)
     }
 
     authenticate(FORM) {
       locationsPost<Language> { languageLoc ->
-        metrics.languageGroupRequestCount.labels(agentLaunchId(), POST, languageLoc.languageTypeStr, trueStr).inc()
+        metrics.languageGroupRequestCount.labels(agentLaunchId(), POST, languageLoc.languageTypeStr, TRUE_STR).inc()
         language(content.invoke(), languageLoc, true)
       }
       locationsPost<Language.Group> { groupLoc ->
-        metrics.challengeGroupRequestCount.labels(agentLaunchId(), POST, groupLoc.languageTypeStr, trueStr).inc()
+        metrics.challengeGroupRequestCount.labels(agentLaunchId(), POST, groupLoc.languageTypeStr, TRUE_STR).inc()
         group(content.invoke(), groupLoc, true)
       }
       locationsPost<Language.Group.Challenge> { challengeLoc ->
-        metrics.challengeRequestCount.labels(agentLaunchId(), POST, challengeLoc.languageTypeStr, trueStr).inc()
+        metrics.challengeRequestCount.labels(agentLaunchId(), POST, challengeLoc.languageTypeStr, TRUE_STR).inc()
         challenge(content.invoke(), challengeLoc, true)
       }
       locationsPost<PlaygroundRequest> { request ->
-        metrics.playgroundRequestCount.labels(agentLaunchId(), POST, trueStr).inc()
+        metrics.playgroundRequestCount.labels(agentLaunchId(), POST, TRUE_STR).inc()
         playground(content.invoke(), request, true)
       }
     }
@@ -171,7 +171,7 @@ value class LanguageName(val value: String) {
 
   fun toLanguageType() =
     try {
-      LanguageType.values().first { it.name.equals(value, ignoreCase = true) }
+      LanguageType.entries.first { it.name.equals(value, ignoreCase = true) }
     } catch (e: NoSuchElementException) {
       throw InvalidRequestException("Invalid language: $this")
     }

@@ -50,8 +50,8 @@ import com.github.readingbat.server.FullName.Companion.UNKNOWN_FULLNAME
 import com.github.readingbat.server.ReadingBatServer.adminUsers
 import com.github.readingbat.server.ResetId.Companion.EMPTY_RESET_ID
 import com.github.readingbat.server.ws.ChallengeWs.classTargetName
-import com.github.readingbat.server.ws.ChallengeWs.multiServerWsWriteChannel
-import com.github.readingbat.server.ws.ChallengeWs.singleServerWsChannel
+import com.github.readingbat.server.ws.ChallengeWs.multiServerWsWriteFlow
+import com.github.readingbat.server.ws.ChallengeWs.singleServerWsFlow
 import com.github.readingbat.server.ws.PubSubCommandsWs.ChallengeAnswerData
 import com.github.readingbat.server.ws.PubSubCommandsWs.PubSubTopic.LIKE_DISLIKE
 import com.github.readingbat.server.ws.PubSubCommandsWs.PubSubTopic.USER_ANSWERS
@@ -59,7 +59,6 @@ import com.github.readingbat.utils.ExposedUtils.readonlyTx
 import com.pambrose.common.exposed.get
 import com.pambrose.common.exposed.upsert
 import kotlinx.html.Entities.nbsp
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import mu.two.KLogging
@@ -475,8 +474,8 @@ class User {
     )
     val targetName = classTargetName(enrolledClassCode, challengeMd5)
     val dashboardInfo = DashboardInfo(userId, complete, numCorrect, dashboardHistory)
-    (if (isMultiServerEnabled()) multiServerWsWriteChannel else singleServerWsChannel)
-      .send(ChallengeAnswerData(USER_ANSWERS, targetName, dashboardInfo.toJson()))
+    (if (isMultiServerEnabled()) multiServerWsWriteFlow else singleServerWsFlow)
+      .emit(ChallengeAnswerData(USER_ANSWERS, targetName, dashboardInfo.toJson()))
   }
 
   suspend fun publishLikeDislike(challengeMd5: String, likeDislike: Int) {
@@ -484,8 +483,8 @@ class User {
     val targetName = classTargetName(enrolledClassCode, challengeMd5)
     val emoji = likeDislikeEmoji(likeDislike)
     val likeDislikeInfo = LikeDislikeInfo(userId, emoji)
-    (if (isMultiServerEnabled()) multiServerWsWriteChannel else singleServerWsChannel)
-      .send(ChallengeAnswerData(LIKE_DISLIKE, targetName, likeDislikeInfo.toJson()))
+    (if (isMultiServerEnabled()) multiServerWsWriteFlow else singleServerWsFlow)
+      .emit(ChallengeAnswerData(LIKE_DISLIKE, targetName, likeDislikeInfo.toJson()))
   }
 
   suspend fun resetHistory(funcInfo: FunctionInfo, challenge: Challenge, maxHistoryLength: Int) {

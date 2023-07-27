@@ -37,6 +37,6 @@ enum class ReturnType(val typeStr: String) {
   StringListType("List<String>");
 
   companion object {
-    val String.asReturnType get() = values().firstOrNull { this == it.typeStr }
+    val String.asReturnType get() = entries.firstOrNull { this == it.typeStr }
   }
 }

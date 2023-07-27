@@ -31,9 +31,9 @@ import com.github.readingbat.dsl.LanguageType.Python
 import com.github.readingbat.dsl.RedisUnavailableException
 import com.github.readingbat.server.ReadingBatServer.redisPool
 import com.github.readingbat.server.ReadingBatServer.serverSessionId
-import com.github.readingbat.server.ws.ChallengeWs.multiServerWsReadChannel
-import com.github.readingbat.server.ws.LoggingWs.adminCommandChannel
-import com.github.readingbat.server.ws.LoggingWs.logWsReadChannel
+import com.github.readingbat.server.ws.ChallengeWs.multiServerWsReadFlow
+import com.github.readingbat.server.ws.LoggingWs.adminCommandFlow
+import com.github.readingbat.server.ws.LoggingWs.logWsReadFlow
 import com.github.readingbat.server.ws.PubSubCommandsWs.PubSubTopic.ADMIN_COMMAND
 import com.github.readingbat.server.ws.PubSubCommandsWs.PubSubTopic.LIKE_DISLIKE
 import com.github.readingbat.server.ws.PubSubCommandsWs.PubSubTopic.LOG_MESSAGE
@@ -102,18 +102,18 @@ internal object PubSubCommandsWs : KLogging() {
               when (enumValueOf<PubSubTopic>(channel)) {
                 ADMIN_COMMAND -> {
                   val data = Json.decodeFromString<AdminCommandData>(message)
-                  adminCommandChannel.send(data)
+                  adminCommandFlow.emit(data)
                 }
 
                 USER_ANSWERS,
                 LIKE_DISLIKE -> {
                   val data = Json.decodeFromString<ChallengeAnswerData>(message)
-                  multiServerWsReadChannel.send(data)
+                  multiServerWsReadFlow.emit(data)
                 }
 
                 LOG_MESSAGE -> {
                   val data = Json.decodeFromString<LogData>(message)
-                  logWsReadChannel.send(data)
+                  logWsReadFlow.emit(data)
                 }
               }
             }
@@ -132,7 +132,7 @@ internal object PubSubCommandsWs : KLogging() {
       while (true) {
         runCatching {
           redisPool?.withNonNullRedisPool { redis ->
-            redis.subscribe(pubSub, *PubSubTopic.values().map { it.name }.toTypedArray())
+            redis.subscribe(pubSub, *PubSubTopic.entries.map { it.name }.toTypedArray())
           } ?: throw RedisUnavailableException("pubsubWs subscriber")
         }.onFailure { e ->
           logger.error(e) { "Exception in pubsubWs subscriber ${e.simpleClassName} ${e.message}" }

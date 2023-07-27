@@ -168,7 +168,7 @@ fun Routing.sysAdminRoutes(metrics: Metrics, resetContentFunc: (String) -> Unit)
     }
   }
 
-  LoadChallengeType.values()
+  LoadChallengeType.entries
     .forEach { type ->
       post(type.endPoint) {
         respondWith {

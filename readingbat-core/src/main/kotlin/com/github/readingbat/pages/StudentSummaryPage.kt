@@ -47,7 +47,7 @@ import com.github.readingbat.common.User.Companion.toUser
 import com.github.readingbat.common.isNotValidUser
 import com.github.readingbat.dsl.InvalidRequestException
 import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.pages.ChallengePage.headerColor
+import com.github.readingbat.pages.ChallengePage.HEADER_COLOR
 import com.github.readingbat.pages.ClassSummaryPage.LIKE_DISLIKE
 import com.github.readingbat.pages.ClassSummaryPage.STATS
 import com.github.readingbat.pages.HelpAndLogin.helpAndLogin
@@ -104,19 +104,19 @@ internal object StudentSummaryPage : KLogging() {
           h2 { +"Student Summary" }
 
           h3 {
-            style = "margin-left:15px; color: $headerColor"
+            style = "margin-left:15px; color: $HEADER_COLOR"
             a(classes = UNDERLINE) {
               href = pathOf(CHALLENGE_ROOT, languageName); +languageName.toLanguageType().toString()
             }
           }
 
           h3 {
-            style = "margin-left:15px; color: $headerColor"
+            style = "margin-left:15px; color: $HEADER_COLOR"
             a(classes = UNDERLINE) { href = classSummaryEndpoint(classCode); +classCode.toDisplayString() }
           }
 
           h3 {
-            style = "margin-left:15px; color: $headerColor"
+            style = "margin-left:15px; color: $HEADER_COLOR"
             +"Student: $studentName ${student.email} "
           }
 

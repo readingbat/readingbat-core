@@ -36,7 +36,7 @@ import com.github.readingbat.common.isAdminUser
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.isDbmsEnabled
 import com.github.readingbat.dsl.isProduction
-import com.github.readingbat.pages.ChallengePage.headerColor
+import com.github.readingbat.pages.ChallengePage.HEADER_COLOR
 import com.github.readingbat.pages.PageUtils.rawHtml
 import com.github.readingbat.server.ServerUtils.firstNonEmptyLanguageType
 import kotlinx.html.*
@@ -105,7 +105,7 @@ internal object HelpAndLogin {
             colSpan = "1"
             if (user.isNotNull() && user.enrolledClassCode.isEnabled) {
               span {
-                style = "color: $headerColor"
+                style = "color: $HEADER_COLOR"
                 +user.enrolledClassCode.toDisplayString()
               }
             }

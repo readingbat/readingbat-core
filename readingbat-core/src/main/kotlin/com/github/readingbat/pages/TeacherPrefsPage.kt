@@ -59,7 +59,7 @@ import mu.two.KLogging
 
 internal object TeacherPrefsPage : KLogging() {
 
-  private const val createClassButton = "CreateClassButton"
+  private const val CREATE_CLASS_BUTTON = "CreateClassButton"
 
   fun PipelineCall.teacherPrefsPage(
     content: ReadingBatContent,
@@ -82,7 +82,7 @@ internal object TeacherPrefsPage : KLogging() {
       .html {
         head {
           headDefault()
-          clickButtonScript(createClassButton)
+          clickButtonScript(CREATE_CLASS_BUTTON)
         }
 
         body {
@@ -117,13 +117,13 @@ internal object TeacherPrefsPage : KLogging() {
                 size = "42"
                 name = CLASS_DESC_PARAM
                 value = defaultClassDesc
-                onKeyPress = "click$createClassButton(event)"
+                onKeyPress = "click$CREATE_CLASS_BUTTON(event)"
               }
             }
           }
           tr {
             td {}
-            td { submitInput { id = createClassButton; name = PREFS_ACTION_PARAM; value = CREATE_CLASS } }
+            td { submitInput { id = CREATE_CLASS_BUTTON; name = PREFS_ACTION_PARAM; value = CREATE_CLASS } }
           }
         }
       }

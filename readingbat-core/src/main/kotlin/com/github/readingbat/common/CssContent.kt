@@ -53,10 +53,11 @@ import kotlinx.css.BorderCollapse.separate
 import kotlinx.css.Display.block
 import kotlinx.css.FontWeight.Companion.bold
 import kotlinx.css.LinearDimension.Companion.auto
+import kotlinx.css.properties.BoxShadow
+import kotlinx.css.properties.BoxShadows
 import kotlinx.css.properties.LineHeight
 import kotlinx.css.properties.TextDecoration
 import kotlinx.css.properties.TextDecorationLine.underline
-import kotlinx.css.properties.boxShadow
 
 internal object CssNames {
   const val CHECK_ANSWERS = "checkAnswers"
@@ -188,7 +189,7 @@ internal val cssContent by lazy {
         fontSize = 155.pct
       }
       rule("th, td") {
-        padding = "1px"
+        padding = Padding(1.px)
         textAlign = TextAlign.left
       }
       rule("th") {
@@ -197,9 +198,9 @@ internal val cssContent by lazy {
       rule("div.$GROUP_ITEM_SRC") {
         maxWidth = 300.px
         minWidth = 300.px
-        margin = "15px"
-        padding = "10px"
-        border = "1px solid gray"
+        margin = Margin(15.px)
+        padding = Padding(10.px)
+        border = Border(1.px, BorderStyle.solid, Color.gray)
         borderRadius = LinearDimension("1em")
       }
       rule("td.$FUNC_COL") {
@@ -216,14 +217,14 @@ internal val cssContent by lazy {
       }
       rule("td.$FEEDBACK") {
         width = 10.em
-        border = "7px solid white"
+        border = Border(7.px, BorderStyle.solid, Color.white)
       }
       rule("td.$HINT") {
         //width = 10.em
         //border = "7px solid white"
       }
       rule(".$DASHBOARD") {
-        border = "1px solid #DDDDDD"
+        border = Border(1.px, BorderStyle.solid, Color("#DDDDDD"))
         borderCollapse = BorderCollapse.collapse
       }
       rule(".$CHECK_ANSWERS") {
@@ -280,7 +281,7 @@ internal val cssContent by lazy {
       }
       rule(".$INVOC_TD") {
         borderCollapse = separate
-        border = "1px solid black"
+        border = Border(1.px, BorderStyle.solid, Color.black)
         width = 7.px
         height = 15.px
         backgroundColor = Color(INCOMPLETE_COLOR)
@@ -296,17 +297,17 @@ internal val cssContent by lazy {
       }
       rule("nav ul") {
         listStyleType = ListStyleType.none
-        padding = "0"
-        margin = "0"
+        padding = Padding(0.px)
+        margin = Margin(0.px)
       }
       rule("nav li") {
         display = Display.inline
-        border = "solid"
+        border = Border(1.px, BorderStyle.solid)
         borderWidth = LinearDimension("1px 1px 0 1px")
-        margin = "0 25px 0 6px"
+        margin = Margin(0.px, 25.px, 0.px, 6.px)
       }
       rule("nav li a") {
-        padding = "0 40px"
+        padding = Padding(0.px, 40.px)
       }
       rule(".$EXPERIMENT") {
         marginTop = 1.em
@@ -334,9 +335,13 @@ internal val cssContent by lazy {
       // This takes care of the blue vertical stripe to the left of the code
       rule("pre[class*=\"language-\"] > code") {
         val color = "#0600EE"
-        borderLeft = "10px solid $color"
-        boxShadow(Color(color), (-1).px, 0.px, 0.px, 0.px)
-        boxShadow(Color("#dfdfdf"), 0.px, 0.px, 0.px, 1.px)
+        borderLeft = Border(10.px, BorderStyle.solid, Color(color))
+        boxShadow = BoxShadows().apply {
+          BoxShadow(Color(color), (-1).px, 0.px, 0.px, 0.px)
+        }
+        boxShadow = BoxShadows().apply {
+          BoxShadow(Color("#dfdfdf"), 0.px, 0.px, 0.px, 1.px)
+        }
       }
       rule(".language-java") {
         //width = 950.px  // !important

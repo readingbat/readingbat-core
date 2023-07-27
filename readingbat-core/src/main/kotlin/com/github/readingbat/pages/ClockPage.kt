@@ -31,13 +31,13 @@ import kotlinx.html.stream.createHTML
 import mu.two.KLogging
 
 internal object ClockPage : KLogging() {
-  private const val pingMsg = "pingMsg"
+  private const val PING_MSG = "pingMsg"
 
   fun clockPage() =
     createHTML()
       .html {
         body {
-          p { +"Connection time: "; span { id = pingMsg } }
+          p { +"Connection time: "; span { id = PING_MSG } }
 
           script {
             rawHtml(
@@ -58,7 +58,7 @@ internal object ClockPage : KLogging() {
                 ws.onmessage = function (event) {
                   var obj = JSON.parse(event.data);
                   if (obj.hasOwnProperty("type") && obj.type == "$PING_CODE") {
-                    document.getElementById('$pingMsg').innerText = obj.msg;
+                    document.getElementById('$PING_MSG').innerText = obj.msg;
                   }
                 };
               """.trimIndent()

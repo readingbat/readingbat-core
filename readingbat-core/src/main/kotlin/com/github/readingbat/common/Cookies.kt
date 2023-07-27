@@ -36,7 +36,6 @@ import com.github.readingbat.utils.ExposedUtils.readonlyTx
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
 import io.ktor.server.sessions.*
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import mu.two.KLogging
 import org.jetbrains.exposed.sql.and

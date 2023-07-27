@@ -222,7 +222,7 @@ internal object SystemConfigurationPage {
             h3 { +"Env Vars" }
             div(classes = INDENT_1EM) {
               table {
-                EnvVar.values()
+                EnvVar.entries
                   .sortedBy { it.name }
                   .forEach {
                     tr {

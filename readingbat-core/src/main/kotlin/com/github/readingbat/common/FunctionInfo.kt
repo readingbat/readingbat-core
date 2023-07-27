@@ -261,7 +261,7 @@ class FunctionInfo(
             else -> this.toInt() == that.toInt()
           }
         result to (if (result) "" else deriveHint())
-      }.getOrElse { e ->
+      }.getOrElse { _ ->
         false to deriveHint()
       }
     }
@@ -293,7 +293,7 @@ class FunctionInfo(
             else -> toInt() == correctAnswer.toInt()
           }
         result to (if (result) "" else deriveHint())
-      }.getOrElse { e ->
+      }.getOrElse { _ ->
         false to deriveHint()
       }
     }

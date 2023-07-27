@@ -42,9 +42,8 @@ import io.ktor.server.routing.*
 import io.ktor.server.websocket.*
 import io.ktor.websocket.*
 import io.ktor.websocket.CloseReason.Codes.*
-import kotlinx.coroutines.channels.BroadcastChannel
-import kotlinx.coroutines.channels.Channel.Factory.BUFFERED
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.onCompletion
@@ -63,9 +62,9 @@ import kotlin.time.TimeSource
 
 internal object ChallengeWs : KLogging() {
   private val clock = TimeSource.Monotonic
-  val singleServerWsChannel by lazy { BroadcastChannel<ChallengeAnswerData>(BUFFERED) }
-  val multiServerWsWriteChannel by lazy { BroadcastChannel<ChallengeAnswerData>(BUFFERED) }
-  val multiServerWsReadChannel by lazy { BroadcastChannel<ChallengeAnswerData>(BUFFERED) }
+  val singleServerWsFlow by lazy { MutableSharedFlow<ChallengeAnswerData>(extraBufferCapacity = 64) }
+  val multiServerWsWriteFlow by lazy { MutableSharedFlow<ChallengeAnswerData>(extraBufferCapacity = 64) }
+  val multiServerWsReadFlow by lazy { MutableSharedFlow<ChallengeAnswerData>(extraBufferCapacity = 64) }
   val answerWsConnections: MutableSet<AnswerSessionContext> = synchronizedSet(LinkedHashSet<AnswerSessionContext>())
   var maxAnswerWsConnections = 0
 
@@ -111,9 +110,7 @@ internal object ChallengeWs : KLogging() {
           runCatching {
             runBlocking {
               redisPool?.withSuspendingNonNullRedisPool { redis ->
-                multiServerWsWriteChannel
-                  .openSubscription()
-                  .consumeAsFlow()
+                multiServerWsWriteFlow
                   .onStart { logger.info { "Starting to read multi-server writer ws channel values" } }
                   .onCompletion { logger.info { "Finished reading multi-server writer ws channel values" } }
                   .collect { data ->
@@ -133,9 +130,7 @@ internal object ChallengeWs : KLogging() {
       while (true) {
         runCatching {
           runBlocking {
-            (if (isMultiServerEnabled()) multiServerWsReadChannel else singleServerWsChannel)
-              .openSubscription()
-              .consumeAsFlow()
+            (if (isMultiServerEnabled()) multiServerWsReadFlow else singleServerWsFlow)
               .onStart { logger.info { "Starting to read challenge ws channel values" } }
               .onCompletion { logger.info { "Finished reading challenge ws channel values" } }
               .collect { data ->

@@ -47,7 +47,7 @@ import com.github.readingbat.dsl.ChallengeGroup
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.challenge.Challenge
 import com.github.readingbat.dsl.isDbmsEnabled
-import com.github.readingbat.pages.ChallengePage.headerColor
+import com.github.readingbat.pages.ChallengePage.HEADER_COLOR
 import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyHeader
 import com.github.readingbat.pages.PageUtils.encodeUriElems
@@ -159,7 +159,7 @@ internal object ChallengeGroupPage : KLogging() {
     enrollees: List<User>
   ) {
     h3 {
-      style = "margin-left: 5px; color: $headerColor"
+      style = "margin-left: 5px; color: $HEADER_COLOR"
       a(classes = UNDERLINE) {
         href =
           if (groupName.isNotValid())

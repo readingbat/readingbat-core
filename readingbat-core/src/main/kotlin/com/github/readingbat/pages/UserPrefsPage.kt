@@ -64,9 +64,9 @@ import mu.two.KLogging
 
 internal object UserPrefsPage : KLogging() {
 
-  private const val formName = "pform"
-  private const val passwordButton = "UpdatePasswordButton"
-  private const val joinClassButton = "JoinClassButton"
+  private const val FORM_NAME = "pform"
+  private const val PASSWORD_BUTTON = "UpdatePasswordButton"
+  private const val JOIN_CLASS_BUTTON = "JoinClassButton"
 
   fun PipelineCall.userPrefsPage(
     content: ReadingBatContent,
@@ -89,7 +89,7 @@ internal object UserPrefsPage : KLogging() {
       .html {
         head {
           headDefault()
-          clickButtonScript(passwordButton, joinClassButton)
+          clickButtonScript(PASSWORD_BUTTON, JOIN_CLASS_BUTTON)
         }
 
         body {
@@ -127,8 +127,7 @@ internal object UserPrefsPage : KLogging() {
           method = FormMethod.post
 
           this@table.tr {
-            LanguageType
-              .values()
+            LanguageType.entries
               .forEach { languageType ->
                 td {
                   style = "text-align:center"
@@ -159,19 +158,19 @@ internal object UserPrefsPage : KLogging() {
     div(classes = INDENT_2EM) {
       p { +"Password must contain at least 6 characters" }
       form {
-        name = formName
+        name = FORM_NAME
         action = USER_PREFS_ENDPOINT
         method = FormMethod.post
         table {
           tr {
             td { style = LABEL_WIDTH; label { +"Current Password" } }
             td { passwordInput { size = "42"; name = CURR_PASSWORD_PARAM; value = "" } }
-            td { hideShowButton(formName, CURR_PASSWORD_PARAM) }
+            td { hideShowButton(FORM_NAME, CURR_PASSWORD_PARAM) }
           }
           tr {
             td { style = LABEL_WIDTH; label { +"New Password" } }
             td { passwordInput { size = "42"; name = NEW_PASSWORD_PARAM; value = "" } }
-            td { hideShowButton(formName, NEW_PASSWORD_PARAM) }
+            td { hideShowButton(FORM_NAME, NEW_PASSWORD_PARAM) }
           }
           tr {
             td { style = LABEL_WIDTH; label { +"Confirm Password" } }
@@ -180,14 +179,14 @@ internal object UserPrefsPage : KLogging() {
                 size = "42"
                 name = CONFIRM_PASSWORD_PARAM
                 value = ""
-                onKeyPress = "click$passwordButton(event)"
+                onKeyPress = "click$PASSWORD_BUTTON(event)"
               }
             }
-            td { hideShowButton(formName, CONFIRM_PASSWORD_PARAM) }
+            td { hideShowButton(FORM_NAME, CONFIRM_PASSWORD_PARAM) }
           }
           tr {
             td {}
-            td { submitInput { id = passwordButton; name = PREFS_ACTION_PARAM; value = UPDATE_PASSWORD } }
+            td { submitInput { id = PASSWORD_BUTTON; name = PREFS_ACTION_PARAM; value = UPDATE_PASSWORD } }
           }
         }
       }
@@ -225,13 +224,13 @@ internal object UserPrefsPage : KLogging() {
                   size = "42"
                   name = CLASS_CODE_NAME_PARAM
                   value = defaultClassCode.displayedValue
-                  onKeyPress = "click$joinClassButton(event)"
+                  onKeyPress = "click$JOIN_CLASS_BUTTON(event)"
                 }
               }
             }
             tr {
               td {}
-              td { submitInput { id = joinClassButton; name = PREFS_ACTION_PARAM; value = JOIN_CLASS } }
+              td { submitInput { id = JOIN_CLASS_BUTTON; name = PREFS_ACTION_PARAM; value = JOIN_CLASS } }
             }
           }
         }

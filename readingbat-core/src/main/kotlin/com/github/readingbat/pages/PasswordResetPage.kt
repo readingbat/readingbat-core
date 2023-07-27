@@ -58,8 +58,8 @@ import kotlin.time.Duration.Companion.seconds
 
 internal object PasswordResetPage : KLogging() {
 
-  private const val formName = "pform"
-  private const val passwordButton = "UpdatePasswordButton"
+  private const val FORM_NAME = "pform"
+  private const val PASSWORD_BUTTON = "UpdatePasswordButton"
 
   fun PipelineCall.passwordResetPage(resetId: ResetId, msg: Message = EMPTY_MESSAGE) =
     if (resetId.isBlank())
@@ -147,7 +147,7 @@ internal object PasswordResetPage : KLogging() {
       .html {
         head {
           headDefault()
-          clickButtonScript(passwordButton)
+          clickButtonScript(PASSWORD_BUTTON)
         }
 
         body {
@@ -160,14 +160,14 @@ internal object PasswordResetPage : KLogging() {
           h3 { +"Change password for $email" }
           p { +"Password must contain at least 6 characters" }
           form {
-            name = formName
+            name = FORM_NAME
             action = PASSWORD_CHANGE_ENDPOINT
             method = FormMethod.post
             table {
               tr {
                 td { style = LABEL_WIDTH; label { +"New Password" } }
                 td { passwordInput { size = "42"; name = NEW_PASSWORD_PARAM; value = "" } }
-                td { hideShowButton(formName, NEW_PASSWORD_PARAM) }
+                td { hideShowButton(FORM_NAME, NEW_PASSWORD_PARAM) }
               }
 
               tr {
@@ -177,10 +177,10 @@ internal object PasswordResetPage : KLogging() {
                     size = "42"
                     name = CONFIRM_PASSWORD_PARAM
                     value = ""
-                    onKeyPress = "click$passwordButton(event)"
+                    onKeyPress = "click$PASSWORD_BUTTON(event)"
                   }
                 }
-                td { hideShowButton(formName, CONFIRM_PASSWORD_PARAM) }
+                td { hideShowButton(FORM_NAME, CONFIRM_PASSWORD_PARAM) }
               }
 
               tr {
@@ -188,7 +188,7 @@ internal object PasswordResetPage : KLogging() {
                 td {
                   submitInput {
                     style = "font-size:25px; height:35; width:155"
-                    id = passwordButton
+                    id = PASSWORD_BUTTON
                     name = PREFS_ACTION_PARAM
                     value = UPDATE_PASSWORD
                   }

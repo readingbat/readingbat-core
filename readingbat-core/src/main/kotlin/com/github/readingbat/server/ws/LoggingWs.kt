@@ -41,8 +41,7 @@ import com.github.readingbat.server.ws.WsCommon.validateLogContext
 import io.ktor.server.routing.*
 import io.ktor.server.websocket.*
 import io.ktor.websocket.*
-import kotlinx.coroutines.channels.BroadcastChannel
-import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.onCompletion
@@ -60,8 +59,8 @@ import kotlin.time.measureTime
 internal object LoggingWs : KLogging() {
   private val clock = TimeSource.Monotonic
   private val logWsConnections: MutableSet<LogSessionContext> = synchronizedSet(LinkedHashSet<LogSessionContext>())
-  val adminCommandChannel by lazy { BroadcastChannel<AdminCommandData>(Channel.BUFFERED) }
-  val logWsReadChannel by lazy { BroadcastChannel<PubSubCommandsWs.LogData>(Channel.BUFFERED) }
+  val adminCommandFlow by lazy { MutableSharedFlow<AdminCommandData>(extraBufferCapacity = 64) }
+  val logWsReadFlow by lazy { MutableSharedFlow<PubSubCommandsWs.LogData>(extraBufferCapacity = 64) }
 
   data class LogSessionContext(val wsSession: DefaultWebSocketServerSession, val metrics: Metrics) {
     val start = clock.markNow()
@@ -74,9 +73,7 @@ internal object LoggingWs : KLogging() {
       while (true) {
         runCatching {
           runBlocking {
-            adminCommandChannel
-              .openSubscription()
-              .consumeAsFlow()
+            adminCommandFlow
               .onStart { logger.info { "Starting to read admin command channel values" } }
               .onCompletion { logger.info { "Finished reading admin command channel values" } }
               .collect { data ->
@@ -145,9 +142,7 @@ internal object LoggingWs : KLogging() {
       while (true) {
         runCatching {
           runBlocking {
-            logWsReadChannel
-              .openSubscription()
-              .consumeAsFlow()
+            logWsReadFlow
               .onStart { logger.info { "Starting to read log ws channel values" } }
               .onCompletion { logger.info { "Finished reading log ws channel values" } }
               .collect { data ->

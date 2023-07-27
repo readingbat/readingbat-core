@@ -53,7 +53,7 @@ enum class LanguageType(val useDoubleQuotes: Boolean, val suffix: String, val sr
               }
           }
 
-    fun String.toLanguageType() = values().firstOrNull { it.name.equals(this, ignoreCase = true) }
+    fun String.toLanguageType() = entries.firstOrNull { it.name.equals(this, ignoreCase = true) }
 
     internal fun Parameters.getLanguageType(parameterName: String) =
       this[parameterName]?.let { it.toLanguageType() ?: Java } ?: Java

@@ -72,10 +72,16 @@ internal fun isDbmsEnabled() = Property.DBMS_ENABLED.getProperty(false)
 internal fun isRedisEnabled() = Property.REDIS_ENABLED.getProperty(false)
 
 internal fun isSaveRequestsEnabled() =
-  Property.SAVE_REQUESTS_ENABLED.getProperty(true, false) && isDbmsEnabled() && EnvVar.IPGEOLOCATION_KEY.isDefined()
+  Property.SAVE_REQUESTS_ENABLED.getProperty(
+    default = true,
+    errorOnNonInit = false
+  ) && isDbmsEnabled() && EnvVar.IPGEOLOCATION_KEY.isDefined()
 
 internal fun isContentCachingEnabled() =
-  Property.CONTENT_CACHING_ENABLED.getProperty(false, false) && isDbmsEnabled() && isRedisEnabled()
+  Property.CONTENT_CACHING_ENABLED.getProperty(
+    default = false,
+    errorOnNonInit = false
+  ) && isDbmsEnabled() && isRedisEnabled()
 
 internal fun isMultiServerEnabled() = Property.MULTI_SERVER_ENABLED.getProperty(false)
 
@@ -164,7 +170,7 @@ private val <T> KFunction<T>.fqMethodName get() = "${javaClass.packageName}.$nam
 private suspend fun evalDsl(code: String, sourceName: String) =
   runCatching {
     kotlinScriptPool.eval { eval(code) as ReadingBatContent }.apply { validate() }
-  }.onFailure { e ->
+  }.onFailure { _ ->
     logger.info { "Error in ${sourceName.removePrefix(GH_PREFIX)}:\n$code" }
   }.getOrThrow()
 
