@@ -19,6 +19,7 @@ package com.github.readingbat.server.ws
 
 import com.github.pambrose.common.redis.RedisUtils.withNonNullRedisPool
 import com.github.pambrose.common.util.simpleClassName
+import com.github.readingbat.common.Constants.FLOW_BUFFER_CAPACITY
 import com.github.readingbat.common.Endpoints.LOGGING_ENDPOINT
 import com.github.readingbat.common.Endpoints.WS_ROOT
 import com.github.readingbat.common.Metrics
@@ -59,8 +60,8 @@ import kotlin.time.measureTime
 internal object LoggingWs : KLogging() {
   private val clock = TimeSource.Monotonic
   private val logWsConnections: MutableSet<LogSessionContext> = synchronizedSet(LinkedHashSet<LogSessionContext>())
-  val adminCommandFlow by lazy { MutableSharedFlow<AdminCommandData>(extraBufferCapacity = 64) }
-  val logWsReadFlow by lazy { MutableSharedFlow<PubSubCommandsWs.LogData>(extraBufferCapacity = 64) }
+  val adminCommandFlow by lazy { MutableSharedFlow<AdminCommandData>(extraBufferCapacity = FLOW_BUFFER_CAPACITY) }
+  val logWsReadFlow by lazy { MutableSharedFlow<PubSubCommandsWs.LogData>(extraBufferCapacity = FLOW_BUFFER_CAPACITY) }
 
   data class LogSessionContext(val wsSession: DefaultWebSocketServerSession, val metrics: Metrics) {
     val start = clock.markNow()

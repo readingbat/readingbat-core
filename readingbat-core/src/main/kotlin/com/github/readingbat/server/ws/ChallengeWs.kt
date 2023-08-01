@@ -21,6 +21,7 @@ import com.github.pambrose.common.redis.RedisUtils.withSuspendingNonNullRedisPoo
 import com.github.pambrose.common.time.format
 import com.github.pambrose.common.util.simpleClassName
 import com.github.readingbat.common.ClassCode
+import com.github.readingbat.common.Constants.FLOW_BUFFER_CAPACITY
 import com.github.readingbat.common.Constants.PING_CODE
 import com.github.readingbat.common.Endpoints.CHALLENGE_ENDPOINT
 import com.github.readingbat.common.Endpoints.WS_ROOT
@@ -62,9 +63,9 @@ import kotlin.time.TimeSource
 
 internal object ChallengeWs : KLogging() {
   private val clock = TimeSource.Monotonic
-  val singleServerWsFlow by lazy { MutableSharedFlow<ChallengeAnswerData>(extraBufferCapacity = 64) }
-  val multiServerWsWriteFlow by lazy { MutableSharedFlow<ChallengeAnswerData>(extraBufferCapacity = 64) }
-  val multiServerWsReadFlow by lazy { MutableSharedFlow<ChallengeAnswerData>(extraBufferCapacity = 64) }
+  val singleServerWsFlow by lazy { MutableSharedFlow<ChallengeAnswerData>(extraBufferCapacity = FLOW_BUFFER_CAPACITY) }
+  val multiServerWsWriteFlow by lazy { MutableSharedFlow<ChallengeAnswerData>(extraBufferCapacity = FLOW_BUFFER_CAPACITY) }
+  val multiServerWsReadFlow by lazy { MutableSharedFlow<ChallengeAnswerData>(extraBufferCapacity = FLOW_BUFFER_CAPACITY) }
   val answerWsConnections: MutableSet<AnswerSessionContext> = synchronizedSet(LinkedHashSet<AnswerSessionContext>())
   var maxAnswerWsConnections = 0
 

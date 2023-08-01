@@ -70,6 +70,8 @@ object Constants {
   const val CHALLENGE_NOT_FOUND = "Challenge not found"
 
   val DBMS_DOWN = Message("Database is down", true)
+
+  const val FLOW_BUFFER_CAPACITY = 64
 }
 
 internal object PropertyNames {
