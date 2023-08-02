@@ -26,7 +26,7 @@ internal object ExposedUtils {
   fun <T> readonlyTx(db: Database? = null, statement: Transaction.() -> T): T =
     transaction(
       db.transactionManager.defaultIsolationLevel,
-      db.transactionManager.defaultRepetitionAttempts,
+      //db.transactionManager.defaultRepetitionAttempts,
       true,
       db,
       statement
