@@ -1,5 +1,5 @@
 /*
- * Copyright © 2021 Paul Ambrose (pambrose@mac.com)
+ * Copyright © 2023 Paul Ambrose (pambrose@mac.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,8 +24,8 @@ import com.github.readingbat.common.User.Companion.toUser
 import com.github.readingbat.server.ClassesTable
 import com.github.readingbat.server.EnrolleesTable
 import com.github.readingbat.server.UsersTable
-import com.github.readingbat.utils.ExposedUtils.readonlyTx
 import com.pambrose.common.exposed.get
+import com.pambrose.common.exposed.readonlyTx
 import io.ktor.http.*
 import mu.two.KLogging
 import org.jetbrains.exposed.sql.Count

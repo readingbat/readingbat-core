@@ -1,5 +1,5 @@
 /*
- * Copyright © 2021 Paul Ambrose (pambrose@mac.com)
+ * Copyright © 2023 Paul Ambrose (pambrose@mac.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,8 +55,8 @@ import com.github.readingbat.server.ws.ChallengeWs.singleServerWsFlow
 import com.github.readingbat.server.ws.PubSubCommandsWs.ChallengeAnswerData
 import com.github.readingbat.server.ws.PubSubCommandsWs.PubSubTopic.LIKE_DISLIKE
 import com.github.readingbat.server.ws.PubSubCommandsWs.PubSubTopic.USER_ANSWERS
-import com.github.readingbat.utils.ExposedUtils.readonlyTx
 import com.pambrose.common.exposed.get
+import com.pambrose.common.exposed.readonlyTx
 import com.pambrose.common.exposed.upsert
 import kotlinx.html.Entities.nbsp
 import kotlinx.serialization.encodeToString
