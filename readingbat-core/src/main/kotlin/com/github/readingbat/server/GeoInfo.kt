@@ -1,5 +1,5 @@
 /*
- * Copyright © 2021 Paul Ambrose (pambrose@mac.com)
+ * Copyright © 2023 Paul Ambrose (pambrose@mac.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,9 +21,9 @@ import com.github.pambrose.common.dsl.KtorDsl
 import com.github.pambrose.common.dsl.KtorDsl.get
 import com.github.readingbat.common.Constants
 import com.github.readingbat.common.EnvVar
-import com.github.readingbat.utils.ExposedUtils.readonlyTx
 import com.google.gson.Gson
 import com.pambrose.common.exposed.get
+import com.pambrose.common.exposed.readonlyTx
 import com.pambrose.common.exposed.upsert
 import io.ktor.client.statement.*
 import kotlinx.coroutines.runBlocking

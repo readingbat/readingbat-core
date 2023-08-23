@@ -1,5 +1,5 @@
 /*
- * Copyright © 2021 Paul Ambrose (pambrose@mac.com)
+ * Copyright © 2023 Paul Ambrose (pambrose@mac.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ import com.github.readingbat.server.ws.WsCommon.LANGUAGE_NAME
 import com.github.readingbat.server.ws.WsCommon.STUDENT_ID
 import com.github.readingbat.server.ws.WsCommon.closeChannels
 import com.github.readingbat.server.ws.WsCommon.validateContext
-import com.github.readingbat.utils.ExposedUtils.readonlyTx
+import com.pambrose.common.exposed.readonlyTx
 import io.ktor.server.routing.*
 import io.ktor.server.websocket.*
 import io.ktor.websocket.*

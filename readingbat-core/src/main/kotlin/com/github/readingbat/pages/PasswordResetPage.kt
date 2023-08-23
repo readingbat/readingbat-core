@@ -1,5 +1,5 @@
 /*
- * Copyright © 2021 Paul Ambrose (pambrose@mac.com)
+ * Copyright © 2023 Paul Ambrose (pambrose@mac.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,8 +44,8 @@ import com.github.readingbat.server.PasswordResetsTable
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ResetId
 import com.github.readingbat.server.ServerUtils.queryParam
-import com.github.readingbat.utils.ExposedUtils.readonlyTx
 import com.pambrose.common.exposed.get
+import com.pambrose.common.exposed.readonlyTx
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 import mu.two.KLogging

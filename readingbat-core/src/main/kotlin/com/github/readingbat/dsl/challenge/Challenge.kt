@@ -1,5 +1,5 @@
 /*
- * Copyright © 2021 Paul Ambrose (pambrose@mac.com)
+ * Copyright © 2023 Paul Ambrose (pambrose@mac.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,9 +62,9 @@ import com.github.readingbat.server.ReadingBatServer.redisPool
 import com.github.readingbat.server.ScriptPools
 import com.github.readingbat.server.SessionChallengeInfoTable
 import com.github.readingbat.server.UserChallengeInfoTable
-import com.github.readingbat.utils.ExposedUtils.readonlyTx
 import com.github.readingbat.utils.StringUtils.toCapitalized
 import com.pambrose.common.exposed.get
+import com.pambrose.common.exposed.readonlyTx
 import kotlinx.coroutines.runBlocking
 import mu.two.KLogging
 import org.jetbrains.exposed.sql.and

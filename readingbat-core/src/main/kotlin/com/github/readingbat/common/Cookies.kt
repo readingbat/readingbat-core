@@ -1,5 +1,5 @@
 /*
- * Copyright © 2021 Paul Ambrose (pambrose@mac.com)
+ * Copyright © 2023 Paul Ambrose (pambrose@mac.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ import com.github.readingbat.server.Invocation
 import com.github.readingbat.server.LanguageName
 import com.github.readingbat.server.SessionAnswerHistoryTable
 import com.github.readingbat.server.SessionChallengeInfoTable
-import com.github.readingbat.utils.ExposedUtils.readonlyTx
+import com.pambrose.common.exposed.readonlyTx
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
 import io.ktor.server.sessions.*
