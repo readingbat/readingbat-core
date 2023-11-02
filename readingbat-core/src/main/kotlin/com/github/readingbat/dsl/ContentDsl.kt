@@ -48,13 +48,13 @@ class GitHubContent(
   repo: String,
   branch: String = "master",
   srcPath: String = "src/main/kotlin",
-  fileName: String = "Content.kt"
+  fileName: String = "Content.kt",
 ) :
   GitHubFile(
     GitHubRepo(ownerType, ownerName, repo),
     branchName = branch,
     srcPath = srcPath,
-    fileName = fileName
+    fileName = fileName,
   )
 
 private const val GH_PREFIX = "https://raw.githubusercontent.com"
@@ -74,13 +74,13 @@ internal fun isRedisEnabled() = Property.REDIS_ENABLED.getProperty(false)
 internal fun isSaveRequestsEnabled() =
   Property.SAVE_REQUESTS_ENABLED.getProperty(
     default = true,
-    errorOnNonInit = false
+    errorOnNonInit = false,
   ) && isDbmsEnabled() && EnvVar.IPGEOLOCATION_KEY.isDefined()
 
 internal fun isContentCachingEnabled() =
   Property.CONTENT_CACHING_ENABLED.getProperty(
     default = false,
-    errorOnNonInit = false
+    errorOnNonInit = false,
   ) && isDbmsEnabled() && isRedisEnabled()
 
 internal fun isMultiServerEnabled() = Property.MULTI_SERVER_ENABLED.getProperty(false)
@@ -128,7 +128,7 @@ internal fun readContentDsl(contentSource: ContentSource) =
 internal fun evalContentDsl(
   source: String,
   variableName: String = "content",
-  code: String
+  code: String,
 ) =
   runBlocking {
     measureTimedValue {
@@ -144,7 +144,7 @@ internal fun evalContentDsl(
 internal fun addImports(code: String, variableName: String): String {
   val classImports =
     listOf(ReadingBatServer::class, GitHubContent::class)
-      //.onEach { println("Checking for ${it.javaObjectType.name}") }
+      // .onEach { println("Checking for ${it.javaObjectType.name}") }
       .filter { code.contains("${it.javaObjectType.simpleName}(") }   // See if the class is referenced
       .map { "import ${it.javaObjectType.name}" }                           // Convert to import stmt
       .filterNot { code.contains(it) }                                      // Do not include if import already present
@@ -152,7 +152,7 @@ internal fun addImports(code: String, variableName: String): String {
 
   val funcImports =
     listOf(::readingBatContent)
-      //.onEach { println("Checking for ${it.name}") }
+      // .onEach { println("Checking for ${it.name}") }
       .filter { code.contains("${it.name}(") }  // See if the function is referenced
       .map { "import ${it.fqMethodName}" }            // Convert to import stmt
       .filterNot { code.contains(it) }                // Do not include is import already present
@@ -162,7 +162,9 @@ internal fun addImports(code: String, variableName: String): String {
   return """
       $imports${if (imports.isBlank()) "" else "\n\n"}$code
       $variableName
-    """.trimMargin().lines().joinToString("\n") { it.trimStart() }
+    """.trimMargin().lines().joinToString("\n") {
+    it.trimStart()
+  }
 }
 
 private val <T> KFunction<T>.fqMethodName get() = "${javaClass.packageName}.$name"

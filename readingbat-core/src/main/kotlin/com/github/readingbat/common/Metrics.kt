@@ -33,7 +33,6 @@ import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
 
 class Metrics {
-
   // /reset call count
   val contentLoadedCount =
     counter {
@@ -195,7 +194,7 @@ class Metrics {
       "Request timing map size",
       labelNames = listOf(AGENT_ID),
       labelValues = listOf(agentLaunchId()),
-      data = { requestTimingMap.size.toDouble() }
+      data = { requestTimingMap.size.toDouble() },
     )
 
     SamplerGaugeCollector(
@@ -203,7 +202,7 @@ class Metrics {
       "IP Geo map size",
       labelNames = listOf(AGENT_ID),
       labelValues = listOf(agentLaunchId()),
-      data = { geoInfoMap.size.toDouble() }
+      data = { geoInfoMap.size.toDouble() },
     )
 
     SamplerGaugeCollector(
@@ -211,7 +210,7 @@ class Metrics {
       "Content map size",
       labelNames = listOf(AGENT_ID),
       labelValues = listOf(agentLaunchId()),
-      data = { contentSource().contentMap.size.toDouble() }
+      data = { contentSource().contentMap.size.toDouble() },
     )
 
     SamplerGaugeCollector(
@@ -219,7 +218,7 @@ class Metrics {
       "User ID cache size",
       labelNames = listOf(AGENT_ID),
       labelValues = listOf(agentLaunchId()),
-      data = { userIdCache.size.toDouble() }
+      data = { userIdCache.size.toDouble() },
     )
 
     SamplerGaugeCollector(
@@ -227,7 +226,7 @@ class Metrics {
       "User email cache size size",
       labelNames = listOf(AGENT_ID),
       labelValues = listOf(agentLaunchId()),
-      data = { emailCache.size.toDouble() }
+      data = { emailCache.size.toDouble() },
     )
 
     SamplerGaugeCollector(
@@ -235,7 +234,7 @@ class Metrics {
       "Sources cache size",
       labelNames = listOf(AGENT_ID),
       labelValues = listOf(agentLaunchId()),
-      data = { contentSource().functionInfoMap.size.toDouble() }
+      data = { contentSource().functionInfoMap.size.toDouble() },
     )
 
     SamplerGaugeCollector(
@@ -243,7 +242,7 @@ class Metrics {
       "Websocket connection list size",
       labelNames = listOf(AGENT_ID),
       labelValues = listOf(agentLaunchId()),
-      data = { answerWsConnections.size.toDouble() }
+      data = { answerWsConnections.size.toDouble() },
     )
 
     SamplerGaugeCollector(
@@ -251,7 +250,7 @@ class Metrics {
       "Active users in last 1 min count",
       labelNames = listOf(AGENT_ID),
       labelValues = listOf(agentLaunchId()),
-      data = { activeSessions(1.minutes).toDouble() }
+      data = { activeSessions(1.minutes).toDouble() },
     )
 
     SamplerGaugeCollector(
@@ -259,7 +258,7 @@ class Metrics {
       "Active users in last 15 mins count",
       labelNames = listOf(AGENT_ID),
       labelValues = listOf(agentLaunchId()),
-      data = { activeSessions(15.minutes).toDouble() }
+      data = { activeSessions(15.minutes).toDouble() },
     )
 
     SamplerGaugeCollector(
@@ -267,7 +266,7 @@ class Metrics {
       "Active users in last 60 mins count",
       labelNames = listOf(AGENT_ID),
       labelValues = listOf(agentLaunchId()),
-      data = { activeSessions(1.hours).toDouble() }
+      data = { activeSessions(1.hours).toDouble() },
     )
   }
 

@@ -50,9 +50,9 @@ internal object CheckAnswersJs {
       """
     var re = new XMLHttpRequest();
 
-    function $PROCESS_USER_ANSWERS_FUNC(event, cnt) { 
+    function $PROCESS_USER_ANSWERS_FUNC(event, cnt) {
       // event will equal null on button press
-      if (event != null && (event.keyCode != 13 && event.keyCode != 9)) 
+      if (event != null && (event.keyCode != 13 && event.keyCode != 9))
         return 1;
 
       let data = "$SESSION_ID=${sessionCounter.incrementAndGet()}&$LANG_SRC=$languageName&$GROUP_SRC=$groupName&$CHALLENGE_SRC=$challengeName";
@@ -60,9 +60,9 @@ internal object CheckAnswersJs {
         for (let i = 0; i < cnt; i++) {
           let x = document.getElementById("$FEEDBACK_ID"+i);
           x.style.backgroundColor = "white";
-          
+
           document.getElementById("$HINT_ID"+i).innerText = '';
-          
+
           let ur = document.getElementById("$RESP"+i).value;
           data += "&$RESP" + i + "=" + encodeURIComponent(ur);
         }
@@ -71,14 +71,14 @@ internal object CheckAnswersJs {
         console.log(err.message);
         return 0;
       }
-      
-      re.onreadystatechange = checkAnswerHandleDone;  
+
+      re.onreadystatechange = checkAnswerHandleDone;
       re.open("POST", '$CHECK_ANSWERS_ENDPOINT', true);
       re.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
       re.send(data);
       return 1;
     }
-    
+
     function checkAnswerHandleDone(){
       if(re.readyState == 1) {  // starting
         document.getElementById('$SPINNER_ID').innerHTML = '<i class="fa fa-spinner fa-spin" style="font-size:24px"></i>';
@@ -104,13 +104,13 @@ internal object CheckAnswersJs {
             document.getElementById("$HINT_ID"+i).innerText = results[i][1];
           }
         }
-        
+
         document.getElementById('$SPINNER_ID').innerText = '';
         document.getElementById('$STATUS_ID').innerText = '';
         document.getElementById('$SUCCESS_ID').innerText = success ? "Success! Congratulations!" : "";
         document.getElementById('$NEXTPREVCHANCE_ID').style.display = success ? "inline" : "none";
       }
     }
-  """
+  """,
     )
 }

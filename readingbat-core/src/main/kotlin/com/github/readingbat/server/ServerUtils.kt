@@ -58,7 +58,6 @@ typealias PipelineCall = PipelineContext<Unit, ApplicationCall>
 
 @Suppress("unused")
 internal object ServerUtils : KLogging() {
-
   fun getVersionDesc(asJson: Boolean = false): String = ReadingBatServer::class.versionDesc(asJson)
 
   fun PipelineCall.queryParam(key: String, default: String = "") = call.request.queryParameters[key] ?: default

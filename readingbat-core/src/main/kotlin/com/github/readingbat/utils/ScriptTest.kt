@@ -53,36 +53,37 @@ fun main() {
 @Suppress("unused")
 fun javaTest() {
   val correctAnswers = mutableListOf<Any>()
-  val script = """
-  public class LessThan {
+  val script =
+    """
+      public class LessThan {
 
-      public static boolean compare(int val1, int val2) {
-          boolean result = val1 < val2;
-          return result;
+          public static boolean compare(int val1, int val2) {
+              boolean result = val1 < val2;
+              return result;
+          }
+
+          public List<Object> answers = new ArrayList<Object>();
+
+          public List<Object> getValue() {
+              answers.add(compare(4, 6));
+              answers.add(compare(8, 12));
+              answers.add(compare(19, 19));
+              answers.add(compare(12, 8));
+              answers.add(compare(11, 28));
+
+              return answers;
+          }
       }
-
-      public List<Object> answers = new ArrayList<Object>();
-
-      public List<Object> getValue() {
-          answers.add(compare(4, 6));
-          answers.add(compare(8, 12));
-          answers.add(compare(19, 19));
-          answers.add(compare(12, 8));
-          answers.add(compare(11, 28));
-
-          return answers;
-      }
-  }
-""".trimIndent()
+    """.trimIndent()
 
   val engine = JavaScript()
   measureTime {
     repeat(100) {
-      //JavaScript().use {
+      // JavaScript().use {
       engine.apply {
         import(List::class.java)
         import(ArrayList::class.java)
-        add(KotlinParse.varName, correctAnswers, typeOf<Any>())
+        add(KotlinParse.VAR_NAME, correctAnswers, typeOf<Any>())
         evalScript(script)
         println(it)
         // }
@@ -98,23 +99,24 @@ fun javaTest() {
 fun pythonTest() {
   val correctAnswers = mutableListOf<Any>()
 
-  val script = """
-def less_than(val1, val2):
-    result = val1 < val2
-    return result
+  val script =
+    """
+      def less_than(val1, val2):
+          result = val1 < val2
+          return result
 
-answers.add(less_than(4, 6))
-answers.add(less_than(8, 12))
-answers.add(less_than(19, 19))
-answers.add(less_than(12, 8))
-answers.add(less_than(11, 28))
-  """.trimIndent()
+      answers.add(less_than(4, 6))
+      answers.add(less_than(8, 12))
+      answers.add(less_than(19, 19))
+      answers.add(less_than(12, 8))
+      answers.add(less_than(11, 28))
+    """.trimIndent()
   val engine = PythonScript()
   measureTime {
     repeat(1000) {
-      //engine.use {
+      // engine.use {
       engine.run {
-        add(KotlinParse.varName, correctAnswers)
+        add(KotlinParse.VAR_NAME, correctAnswers)
         measureTime { eval(script) }
       }
       correctAnswers.clear()
@@ -156,7 +158,7 @@ object MultipleScopes {
     engine.reset()
     engine.bindings["x"] = "world"
     engine.eval("print(x)")
-    //engine.eval("print(y)")
+    // engine.eval("print(y)")
     engine.eval("print(x)")
   }
 }

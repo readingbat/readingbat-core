@@ -47,12 +47,11 @@ import kotlinx.html.Entities.nbsp
 import kotlinx.html.stream.createHTML
 
 internal object LanguageGroupPage {
-
   fun PipelineCall.languageGroupPage(
     content: ReadingBatContent,
     user: User?,
     languageType: LanguageType,
-    loginAttempt: Boolean
+    loginAttempt: Boolean,
   ) =
     createHTML()
       .html {
@@ -85,10 +84,13 @@ internal object LanguageGroupPage {
           td {
             div(classes = GROUP_ITEM_SRC) {
               a(classes = GROUP_CHOICE) {
-                href = pathOf(CHALLENGE_ROOT, languageName, groupName); +groupName.toString()
+                href = pathOf(CHALLENGE_ROOT, languageName, groupName)
+                +groupName.toString()
               }
 
-              p { rawHtml(if (challengeGroup.description.isNotBlank()) challengeGroup.parsedDescription else nbsp.text) }
+              p {
+                rawHtml(if (challengeGroup.description.isNotBlank()) challengeGroup.parsedDescription else nbsp.text)
+              }
 
               if (activeTeachingClassCode.isNotEnabled) {
                 if (cnt == 0) {

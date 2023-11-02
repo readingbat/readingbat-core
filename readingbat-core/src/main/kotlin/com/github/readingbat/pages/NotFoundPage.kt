@@ -37,7 +37,6 @@ import kotlinx.html.p
 import kotlinx.html.stream.createHTML
 
 internal object NotFoundPage {
-
   fun notFoundPage(uri: String) =
     createHTML()
       .html {
@@ -61,7 +60,10 @@ internal object NotFoundPage {
 
             p {
               +"Please head back to the"
-              a { href = "/"; +" home directory." }
+              a {
+                href = "/"
+                +" home directory."
+              }
             }
           }
 

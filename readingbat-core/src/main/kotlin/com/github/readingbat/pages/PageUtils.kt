@@ -36,6 +36,7 @@ import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.Message
 import com.github.readingbat.common.Message.Companion.EMPTY_MESSAGE
 import com.github.readingbat.common.Property
+import com.github.readingbat.common.Property.ANALYTICS_ID
 import com.github.readingbat.common.User
 import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.dsl.LanguageType.Companion.languageTypeList
@@ -56,20 +57,44 @@ internal object PageUtils {
   private const val READING_BAT = "ReadingBat"
 
   fun HEAD.headDefault() {
-    link { rel = "stylesheet"; href = CSS_ENDPOINT; type = CSS.toString() }
+    link {
+      rel = "stylesheet"
+      href = CSS_ENDPOINT
+      type = CSS.toString()
+    }
 
     // From: https://favicon.io/emoji-favicons/glasses/
     val prefix = pathOf(STATIC_ROOT, ICONS)
-    link { rel = "apple-touch-icon"; sizes = "180x180"; href = "$prefix/apple-touch-icon.png" }
-    link { rel = "icon"; type = "image/png"; sizes = "32x32"; href = "$prefix/favicon-32x32.png" }
-    link { rel = "icon"; type = "image/png"; sizes = "16x16"; href = "$prefix/favicon-16x16.png" }
-    link { rel = "manifest"; href = "$prefix/site.webmanifest" }
+    link {
+      rel = "apple-touch-icon"
+      sizes = "180x180"
+      href = "$prefix/apple-touch-icon.png"
+    }
+    link {
+      rel = "icon"
+      type = "image/png"
+      sizes = "32x32"
+      href = "$prefix/favicon-32x32.png"
+    }
+    link {
+      rel = "icon"
+      type = "image/png"
+      sizes = "16x16"
+      href = "$prefix/favicon-16x16.png"
+    }
+    link {
+      rel = "manifest"
+      href = "$prefix/site.webmanifest"
+    }
 
     title(READING_BAT)
 
-    val analyticsId = Property.ANALYTICS_ID.getPropertyOrNull() ?: ""
+    val analyticsId = ANALYTICS_ID.getPropertyOrNull() ?: ""
     if (isProduction() && analyticsId.isNotBlank()) {
-      script { async = true; src = "https://www.googletagmanager.com/gtag/js?id=$analyticsId" }
+      script {
+        async = true
+        src = "https://www.googletagmanager.com/gtag/js?id=$analyticsId"
+      }
       script {
         rawHtml(
           """
@@ -77,14 +102,17 @@ internal object PageUtils {
           function gtag(){dataLayer.push(arguments);}
           gtag('js', new Date());
           gtag('config', '$analyticsId');
-        """
+          """,
         )
       }
     }
   }
 
   fun HEAD.loadBootstrap() {
-    link { rel = "stylesheet"; href = "https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css" }
+    link {
+      rel = "stylesheet"
+      href = "https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css"
+    }
     script { src = "https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js" }
     script { src = "https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js" }
   }
@@ -100,7 +128,7 @@ internal object PageUtils {
               document.getElementById('$buttonName').click();
             }
           }
-        """.trimIndent()
+          """.trimIndent(),
         )
       }
     }
@@ -109,8 +137,17 @@ internal object PageUtils {
   fun BODY.bodyTitle() {
     div {
       style = "margin-bottom:0em"
-      a { href = "/"; span { style = "font-size:200%"; +READING_BAT } }
-      span { style = "padding-left:5px"; +"code reading practice" }
+      a {
+        href = "/"
+        span {
+          style = "font-size:200%"
+          +READING_BAT
+        }
+      }
+      span {
+        style = "padding-left:5px"
+        +"code reading practice"
+      }
     }
   }
 
@@ -122,7 +159,7 @@ internal object PageUtils {
     loginPath: String,
     displayWelcomeMsg: Boolean,
     activeClassCode: ClassCode,
-    msg: Message = EMPTY_MESSAGE
+    msg: Message = EMPTY_MESSAGE,
   ) {
     helpAndLogin(content, user, loginPath, activeClassCode.isEnabled)
     bodyTitle()
@@ -132,12 +169,17 @@ internal object PageUtils {
     if (loginAttempt && user.isNull())
       p {
         span {
-          style =
-            "color:red"; +"Failed to login -- incorrect email or password"
+          style = "color:red"
+          +"Failed to login -- incorrect email or password"
         }
       }
 
-    p { span { style = "color:green; max-width:800"; if (msg.isNotBlank) +(msg.toString()) else rawHtml(nbsp.text) } }
+    p {
+      span {
+        style = "color:green; max-width:800"
+        if (msg.isNotBlank) +(msg.toString()) else rawHtml(nbsp.text)
+      }
+    }
 
     div {
       style = "padding-top:10px; min-width:100vw; clear:both"
@@ -162,18 +204,30 @@ internal object PageUtils {
   }
 
   fun BODY.addLink(text: String, url: String, newWindow: Boolean = false) =
-    a { href = url; if (newWindow) target = "_blank"; +text }
+    a {
+      href = url
+      if (newWindow) target = "_blank"
+      +text
+    }
 
   fun BODY.privacyStatement(returnPath: String) =
     p(classes = INDENT_1EM) {
-      a { href = "$PRIVACY_ENDPOINT?$RETURN_PARAM=$returnPath"; +"Privacy Statement" }
+      a {
+        href = "$PRIVACY_ENDPOINT?$RETURN_PARAM=$returnPath"
+        +"Privacy Statement"
+      }
     }
 
   private fun BODY.linkWithIndent(url: String, text: String, marginLeft: String = "1em") {
     if (url.isNotEmpty()) {
       div {
         style = "font-size:120%; margin-left:$marginLeft"
-        p { a { href = url; rawHtml("⬅ $text") } }
+        p {
+          a {
+            href = url
+            rawHtml("⬅ $text")
+          }
+        }
       }
     }
   }
@@ -216,7 +270,13 @@ internal object PageUtils {
   }
 
   fun BODY.loadPingdomScript() {
-    Property.PINGDOM_URL.getPropertyOrNull()?.also { if (it.isNotBlank()) script { src = it; async = true } }
+    Property.PINGDOM_URL.getPropertyOrNull()?.also {
+      if (it.isNotBlank())
+        script {
+          src = it
+          async = true
+        }
+    }
   }
 
   fun BODY.loadStatusPageDisplay() {
@@ -233,13 +293,17 @@ internal object PageUtils {
 
   private fun hideShowJs(formName: String, fieldName: String) =
     """
-      var pw=document.$formName.$fieldName.type=="password"; 
-      document.$formName.$fieldName.type=pw?"text":"password"; 
+      var pw=document.$formName.$fieldName.type=="password";
+      document.$formName.$fieldName.type=pw?"text":"password";
       return false;
     """.trimIndent()
 
   fun FlowOrInteractiveOrPhrasingContent.hideShowButton(formName: String, fieldName: String, sizePct: Int = 85) {
-    button { style = "font-size:$sizePct%"; onClick = hideShowJs(formName, fieldName); +"show/hide" }
+    button {
+      style = "font-size:$sizePct%"
+      onClick = hideShowJs(formName, fieldName)
+      +"show/hide"
+    }
   }
 
   fun encodeUriElems(vararg elems: Any) = elems.joinToString("+'/'+") { "encodeURIComponent('$it')" }

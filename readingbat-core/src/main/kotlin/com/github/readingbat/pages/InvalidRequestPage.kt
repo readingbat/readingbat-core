@@ -29,7 +29,6 @@ import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 
 internal object InvalidRequestPage {
-
   fun invalidRequestPage(uri: String, msg: String) =
     createHTML()
       .html {
@@ -43,9 +42,19 @@ internal object InvalidRequestPage {
           h2 { +"There seems to be a misunderstanding" }
 
           div(classes = INDENT_1EM) {
-            p { +"The request "; i { +uri }; +" has this problem: " }
+            p {
+              +"The request "
+              i { +uri }
+              +" has this problem: "
+            }
             p { b { +msg } }
-            p { +"Please head back to the"; a { href = "/"; +" home directory." } }
+            p {
+              +"Please head back to the"
+              a {
+                href = "/"
+                +" home directory."
+              }
+            }
           }
 
           backLink("/")

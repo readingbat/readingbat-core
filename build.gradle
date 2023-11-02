@@ -9,12 +9,12 @@ buildscript {
 plugins {
     id 'java'
     id 'application'
-    id 'org.jetbrains.kotlin.jvm' version '1.9.10' apply false
-    id 'org.jetbrains.kotlin.plugin.serialization' version '1.9.10' apply false
-    id 'org.jmailen.kotlinter' version "3.13.0" apply false
+  id 'org.jetbrains.kotlin.jvm' version '1.9.20' apply false
+  id 'org.jetbrains.kotlin.plugin.serialization' version '1.9.20' apply false
+  id 'org.jmailen.kotlinter' version "4.0.0" apply false
     id 'com.github.gmazzo.buildconfig' version '4.1.2' apply false
-    id "com.github.ben-manes.versions" version '0.48.0' apply false
-    id "org.flywaydb.flyway" version "9.22.1"
+  id "com.github.ben-manes.versions" version '0.49.0' apply false
+  id "org.flywaydb.flyway" version "10.0.0"
 }
 
 ext {
@@ -167,7 +167,8 @@ subprojects {
     }
 
     tasks.withType(KotlinCompile).configureEach {
-        kotlinOptions.freeCompilerArgs += ['-Xbackend-threads=8',
+      //'-Xlint:-options',
+      kotlinOptions.freeCompilerArgs += ['-Xbackend-threads=8',
                                            '-opt-in=kotlin.time.ExperimentalTime',
                                            '-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi',
                                            '-opt-in=kotlin.contracts.ExperimentalContracts',
@@ -191,17 +192,15 @@ subprojects {
 
     kotlinter {
         ignoreFailures = false
-        // indentSize = 2
         reporters = ['checkstyle', 'plain']
-        experimentalRules = false
-        disabledRules = ["no-wildcard-imports",
-                         "indent",
-                         "final-newline",
-                         "comment-spacing",
-                         "max-line-length",
-                         "no-multi-spaces",
-                         "wrapping",
-                         "multiline-if-else",]
+//        disabledRules = ["no-wildcard-imports",
+//                         "indent",
+//                         "final-newline",
+//                         "comment-spacing",
+//                         "max-line-length",
+//                         "no-multi-spaces",
+//                         "wrapping",
+//                         "multiline-if-else",]
     }
 }
 

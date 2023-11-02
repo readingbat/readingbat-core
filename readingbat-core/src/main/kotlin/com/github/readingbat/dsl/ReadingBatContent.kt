@@ -74,7 +74,7 @@ class ReadingBatContent {
 
   // User properties
   // These are defaults and can be overridden in language specific section
-  //var repo: ContentRoot = defaultContentRoot # Makes repo a required value
+  // var repo: ContentRoot = defaultContentRoot # Makes repo a required value
   var repo: ContentRoot = FileSystemSource("./")
   var branchName = "master"
 
@@ -113,7 +113,7 @@ class ReadingBatContent {
   internal fun findChallenge(
     languageName: LanguageName,
     groupName: GroupName,
-    challengeName: ChallengeName
+    challengeName: ChallengeName,
   ): Challenge =
     findGroup(languageName, groupName).findChallenge(challengeName.value)
 
@@ -175,7 +175,7 @@ class ReadingBatContent {
     languageType: LanguageType,
     log: (String) -> Unit,
     prefix: String = "",
-    useWebApi: Boolean = false
+    useWebApi: Boolean = false,
   ) =
     measureTimedValue {
       val cnt = AtomicInteger(0)

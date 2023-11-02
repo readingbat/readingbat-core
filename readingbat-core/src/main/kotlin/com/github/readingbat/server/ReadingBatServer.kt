@@ -124,8 +124,8 @@ object ReadingBatServer : KLogging() {
             transactionIsolation = "TRANSACTION_REPEATABLE_READ"
             maxLifetime = Property.DBMS_MAX_LIFETIME_MINS.getRequiredProperty().toInt().minutes.inWholeMilliseconds
             validate()
-          }
-      )
+          },
+      ),
     )
   }
 
@@ -209,7 +209,7 @@ internal fun Application.readContentDsl(fileName: String, variableName: String, 
           maxHistoryLength = Property.MAX_HISTORY_LENGTH.configValue(this@readContentDsl, "10").toInt()
           maxClassCount = Property.MAX_CLASS_COUNT.configValue(this@readContentDsl, "25").toInt()
         }
-        .apply { clearContentMap() }
+        .apply { clearContentMap() },
     )
     metrics.contentLoadedCount.labels(agentLaunchId()).inc()
   }.also { dur ->
@@ -236,7 +236,8 @@ fun Application.module() {
         logger.error { "Failed to create Redis pool: $REDIS_IS_DOWN" }
         null  // Return null
       }
-    else null
+    else
+      null
 
   // Only run this in production
   if (isProduction() && isRedisEnabled())

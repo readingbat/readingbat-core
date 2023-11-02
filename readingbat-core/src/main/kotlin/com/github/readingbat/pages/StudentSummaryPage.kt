@@ -67,7 +67,6 @@ import kotlinx.html.stream.createHTML
 import mu.two.KLogging
 
 internal object StudentSummaryPage : KLogging() {
-
   fun PipelineCall.studentSummaryPage(content: ReadingBatContent, user: User?): String {
     val p = call.parameters
     val languageName = p[LANG_TYPE_QP]?.let { LanguageName(it) } ?: throw InvalidRequestException("Missing language")
@@ -78,7 +77,7 @@ internal object StudentSummaryPage : KLogging() {
     when {
       classCode.isNotValid() -> throw InvalidRequestException("Invalid class code: $classCode")
       user.isNotValidUser() -> throw InvalidRequestException("Invalid user")
-      //classCode != activeClassCode -> throw InvalidRequestException("Class code mismatch")
+      // classCode != activeClassCode -> throw InvalidRequestException("Class code mismatch")
       classCode.fetchClassTeacherId() != user.userId -> {
         val teacherId = classCode.fetchClassTeacherId()
         throw InvalidRequestException("User id ${user.userId} does not match class code's teacher Id $teacherId")
@@ -106,13 +105,17 @@ internal object StudentSummaryPage : KLogging() {
           h3 {
             style = "margin-left:15px; color: $HEADER_COLOR"
             a(classes = UNDERLINE) {
-              href = pathOf(CHALLENGE_ROOT, languageName); +languageName.toLanguageType().toString()
+              href = pathOf(CHALLENGE_ROOT, languageName)
+              +languageName.toLanguageType().toString()
             }
           }
 
           h3 {
             style = "margin-left:15px; color: $HEADER_COLOR"
-            a(classes = UNDERLINE) { href = classSummaryEndpoint(classCode); +classCode.toDisplayString() }
+            a(classes = UNDERLINE) {
+              href = classSummaryEndpoint(classCode)
+              +classCode.toDisplayString()
+            }
           }
 
           h3 {
@@ -139,7 +142,10 @@ internal object StudentSummaryPage : KLogging() {
       action = TEACHER_PREFS_ENDPOINT
       method = post
       onSubmit = "return confirm('Are you sure you want to remove $studentName from the class?')"
-      hiddenInput { name = USER_ID_PARAM; value = student.userId }
+      hiddenInput {
+        name = USER_ID_PARAM
+        value = student.userId
+      }
       submitInput {
         style = "vertical-align:middle; margin-top:1; margin-bottom:0; border-radius: 8px; font-size:12px"
         name = PREFS_ACTION_PARAM
@@ -151,7 +157,7 @@ internal object StudentSummaryPage : KLogging() {
   private fun BODY.displayChallengeGroups(
     content: ReadingBatContent,
     @Suppress("UNUSED_PARAMETER") classCode: ClassCode,
-    languageName: LanguageName
+    languageName: LanguageName,
   ) =
     div(classes = INDENT_2EM) {
       table(classes = INVOC_TABLE) {
@@ -168,7 +174,7 @@ internal object StudentSummaryPage : KLogging() {
               td {
                 table(classes = INVOC_TABLE) {
                   tr {
-                    //th { }
+                    // th { }
                     group.challenges
                       .forEach { challenge ->
                         th {
@@ -191,14 +197,17 @@ internal object StudentSummaryPage : KLogging() {
                               challenge.functionInfo().invocations
                                 .forEachIndexed { i, _ ->
                                   td(classes = INVOC_TD) {
-                                    id = "$encodedGroup-$encodedName-$i"; +""
+                                    id = "$encodedGroup-$encodedName-$i"
+                                    +""
                                   }
                                 }
                               td(classes = INVOC_STAT) {
-                                id = "$encodedGroup-$encodedName$STATS"; +""
+                                id = "$encodedGroup-$encodedName$STATS"
+                                +""
                               }
                               td {
-                                id = "$encodedGroup-$encodedName$LIKE_DISLIKE"; +""
+                                id = "$encodedGroup-$encodedName$LIKE_DISLIKE"
+                                +""
                               }
                             }
                           }
@@ -222,14 +231,14 @@ internal object StudentSummaryPage : KLogging() {
             wshost = wshost.replace(/^https:/, 'wss:');
           else
             wshost = wshost.replace(/^http:/, 'ws:');
-      
+
           var wsurl = wshost + '$WS_ROOT$STUDENT_SUMMARY_ENDPOINT/' + ${encodeUriElems(langName, studentId, classCode)};
           var ws = new WebSocket(wsurl);
-      
+
           ws.onopen = function (event) {
-            ws.send("$classCode"); 
+            ws.send("$classCode");
           };
-          
+
           ws.onmessage = function (event) {
             console.log(event.data);
             var obj = JSON.parse(event.data)
@@ -238,14 +247,14 @@ internal object StudentSummaryPage : KLogging() {
             for (i = 0; i < results.length; i++) {
               var prefix = obj.groupName + '-' + obj.challengeName
               var answers = document.getElementById(prefix + '-' + i)
-              answers.style.backgroundColor = obj.results[i] == '$YES' ? '$CORRECT_COLOR' 
-                                                                    : (obj.results[i] == '$NO' ? '$WRONG_COLOR' 
+              answers.style.backgroundColor = obj.results[i] == '$YES' ? '$CORRECT_COLOR'
+                                                                    : (obj.results[i] == '$NO' ? '$WRONG_COLOR'
                                                                                              : '$INCOMPLETE_COLOR');
               document.getElementById(prefix + '$STATS').innerText = obj.stats;
               document.getElementById(prefix + '$LIKE_DISLIKE').innerHTML = obj.likeDislike;
    }
           };
-        """.trimIndent()
+        """.trimIndent(),
       )
     }
   }

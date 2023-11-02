@@ -67,7 +67,6 @@ import java.time.Duration.ofSeconds
 import java.util.concurrent.atomic.AtomicLong
 
 object Installs : KLogging() {
-
   fun Application.installs(production: Boolean) {
     install(Locations)
 
@@ -77,7 +76,7 @@ object Installs : KLogging() {
     }
 
     install(Authentication) {
-      //configureSessionAuth()
+      // configureSessionAuth()
       configureFormAuth()
     }
 
@@ -213,7 +212,7 @@ object Installs : KLogging() {
       }
 
       status(HttpStatusCode.NotFound) { call, _ ->
-        //call.respond(TextContent("${it.value} ${it.description}", Plain.withCharset(UTF_8), it))
+        // call.respond(TextContent("${it.value} ${it.description}", Plain.withCharset(UTF_8), it))
         call.respondWith { notFoundPage(call.request.uri.replaceAfter("?", "").replace("?", "")) }
       }
     }

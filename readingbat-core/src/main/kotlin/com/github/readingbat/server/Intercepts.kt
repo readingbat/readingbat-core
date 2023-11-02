@@ -159,7 +159,10 @@ internal fun Application.intercepts() {
                   requestTimingMap.remove(callId)
                     .also { start ->
                       if (start.isNotNull()) {
-                        logger.debug { "Logged call ${requestTimingMap.size} ${start.elapsedNow()} ${call.callId} ${call.request.toLogString()}" }
+                        logger.debug {
+                          val str = call.request.toLogString()
+                          "Logged call ${requestTimingMap.size} ${start.elapsedNow()} ${call.callId} $str"
+                        }
                         updateServerRequest(callId, start)
                       }
                     }

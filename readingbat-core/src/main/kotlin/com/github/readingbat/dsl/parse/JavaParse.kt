@@ -26,7 +26,6 @@ import mu.two.KLogging
 import kotlin.math.max
 
 internal object JavaParse : KLogging() {
-
   private val spaceRegex = Regex("""\s+""")
   private val staticRegex = Regex("""static.+\(""")
   private val staticStartRegex = Regex("""\sstatic.+\(""")
@@ -41,7 +40,7 @@ internal object JavaParse : KLogging() {
       Regex("""ArrayUtils\.arrayPrint\("""),
       Regex("""ListUtils\.listPrint\("""),
       Regex("""arrayPrint\("""),
-      Regex("""listPrint\(""")
+      Regex("""listPrint\("""),
     )
   private val prefixes =
     listOf("System.out.println", "ArrayUtils.arrayPrint", "ListUtils.listPrint", "arrayPrint", "listPrint")
@@ -75,7 +74,7 @@ internal object JavaParse : KLogging() {
             .map { it.trimStart() }
             .filter { it.startsWith("$prefix(") }
             .map { it.substringBetween("$prefix(", ")") }
-            .map { Invocation((it)) }
+            .map { Invocation((it)) },
         )
       }
     return lines

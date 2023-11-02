@@ -25,12 +25,11 @@ import kotlin.collections.set
 import kotlin.time.Duration.Companion.days
 
 internal object ConfigureCookies {
-
   fun SessionsConfig.configureSessionIdCookie() {
     cookie<BrowserSession>("readingbat_session_id") {
-      //storage = RedisSessionStorage(redis = pool.resource)) {
-      //storage = directorySessionStorage(File("server-sessions"), cached = true)) {
-      cookie.path = "/" //CHALLENGE_ROOT + "/"
+      // storage = RedisSessionStorage(redis = pool.resource)) {
+      // storage = directorySessionStorage(File("server-sessions"), cached = true)) {
+      cookie.path = "/" // CHALLENGE_ROOT + "/"
       cookie.httpOnly = true
 
       // CSRF protection in modern browsers. Make sure your important side-effect-y operations, like ordering,
@@ -42,10 +41,10 @@ internal object ConfigureCookies {
 
   fun SessionsConfig.configureAuthCookie() {
     cookie<UserPrincipal>(name = AUTH_COOKIE) {
-      cookie.path = "/" //CHALLENGE_ROOT + "/"
+      cookie.path = "/" // CHALLENGE_ROOT + "/"
       cookie.httpOnly = true
 
-      //if (production)
+      // if (production)
       //  cookie.secure = true
 
       cookie.maxAgeInSeconds = 14.days.inWholeSeconds

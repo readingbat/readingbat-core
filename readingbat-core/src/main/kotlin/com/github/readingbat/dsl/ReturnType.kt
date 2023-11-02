@@ -18,7 +18,6 @@
 package com.github.readingbat.dsl
 
 enum class ReturnType(val typeStr: String) {
-
   Runtime("runtime"),
 
   BooleanType("boolean"),
@@ -34,7 +33,8 @@ enum class ReturnType(val typeStr: String) {
   BooleanListType("List<Boolean>"),
   IntListType("List<Integer>"),
   FloatListType("List<Float>"),
-  StringListType("List<String>");
+  StringListType("List<String>"),
+  ;
 
   companion object {
     val String.asReturnType get() = entries.firstOrNull { this == it.typeStr }

@@ -32,73 +32,76 @@ class InvokesTest : StringSpec(
   {
 
     "pythonInvokesTest" {
-      val s = """
-        def simple_choice2(sunny, raining):
-            if (sunny or raining):
-                return sunny
-            return not raining
-        
-        
-        def main():
-            print(simple_choice2(True, True))
-            print(simple_choice2(True, False))
-        
-        
-        if __name__ == '__main__':
-            main()
-    """.trimIndent()
+      val s =
+        """
+          def simple_choice2(sunny, raining):
+              if (sunny or raining):
+                  return sunny
+              return not raining
+
+
+          def main():
+              print(simple_choice2(True, True))
+              print(simple_choice2(True, False))
+
+
+          if __name__ == '__main__':
+              main()
+        """.trimIndent()
 
       extractPythonInvocations(s, defMainRegex, ifMainEndRegex).map { it.toString() } shouldBe
-          listOf("simple_choice2(True, True)", "simple_choice2(True, False)")
+        listOf("simple_choice2(True, True)", "simple_choice2(True, False)")
     }
 
     "javaInvokesTest" {
-      val s = """
-      package warmup1;
-      
-      public class JoinEnds {
-      
-          public static String joinEnds(String str) {
-              if (str.length() < 2)
-                  return str;
-      
-              String b = str.substring(0, 1);
-              String e = str.substring(str.length() - 1);
-      
-              return e + b;
+      val s =
+        """
+          package warmup1;
+
+          public class JoinEnds {
+
+              public static String joinEnds(String str) {
+                  if (str.length() < 2)
+                      return str;
+
+                  String b = str.substring(0, 1);
+                  String e = str.substring(str.length() - 1);
+
+                  return e + b;
+              }
+
+              public static void main(String[] args) {
+                  System.out.println(joinEnds("Blue zebra"));
+                  System.out.println(joinEnds("Tree"));
+              }
           }
-      
-          public static void main(String[] args) {
-              System.out.println(joinEnds("Blue zebra"));
-              System.out.println(joinEnds("Tree"));
-          }
-      }
-    """.trimIndent()
+        """.trimIndent()
 
       extractJavaInvocations(s, psvmRegex, javaEndRegex).map { it.toString() } shouldBe
-          listOf(
-            """joinEnds("Blue zebra")""",
-            """joinEnds("Tree")"""
-          )
+        listOf(
+          """joinEnds("Blue zebra")""",
+          """joinEnds("Tree")""",
+        )
     }
 
     "kotlinInvokesTest" {
-      val s = """
-      package lambda1
-      
-      fun List<String>.combine2(): String = mapIndexed { i, s -> i.toString() + s }.joinToString(", ")
-      
-      fun main() {
-        println(listOf("a").combine2())
-        println(listOf("a", "b", "c", "d").combine2())
-      }
-    """.trimIndent()
+      val s =
+        """
+          package lambda1
+
+          fun List<String>.combine2(): String = mapIndexed { i, s -> i.toString() + s }.joinToString(", ")
+
+          fun main() {
+            println(listOf("a").combine2())
+            println(listOf("a", "b", "c", "d").combine2())
+          }
+        """.trimIndent()
 
       extractKotlinInvocations(s, funMainRegex, kotlinEndRegex).map { it.toString() } shouldBe
-          listOf(
-            """listOf("a").combine2()""",
-            """listOf("a", "b", "c", "d").combine2()"""
-          )
+        listOf(
+          """listOf("a").combine2()""",
+          """listOf("a", "b", "c", "d").combine2()""",
+        )
     }
 
     "classImportTest" {
@@ -108,14 +111,14 @@ class InvokesTest : StringSpec(
 
       val s1 = "ReadingBatServer"
       addImports(s1, variable).trimIndent() shouldBe
-          """
+        """
         $s1
         $variable
         """.trimIndent()
 
       val s2 = "ReadingBatServer()"
       addImports(s2, variable).trimIndent() shouldBe
-          """
+        """
         import com.github.readingbat.server.ReadingBatServer
 
         $s2
@@ -124,14 +127,14 @@ class InvokesTest : StringSpec(
 
       val s3 = "GitHubContent"
       addImports(s3, variable).trimIndent() shouldBe
-          """
+        """
         $s3
         $variable
         """.trimIndent()
 
       val s4 = "GitHubContent()"
       addImports(s4, variable).trimIndent() shouldBe
-          """
+        """
         import com.github.readingbat.dsl.GitHubContent
 
         $s4
@@ -140,14 +143,14 @@ class InvokesTest : StringSpec(
 
       val s5 = "ReadingBatServer GitHubContent"
       addImports(s5, variable).trimIndent() shouldBe
-          """
+        """
         $s5
         $variable
         """.trimIndent()
 
       val s6 = "ReadingBatServer() GitHubContent()"
       addImports(s6, variable).trimIndent() shouldBe
-          """
+        """
         import com.github.readingbat.server.ReadingBatServer
         import com.github.readingbat.dsl.GitHubContent
 
@@ -162,23 +165,23 @@ class InvokesTest : StringSpec(
 
       val s1 = "readingBatContent"
       addImports(s1, variable).trimIndent() shouldBe
-          """
+        """
         $s1
         $variable
         """.trimIndent()
 
       val s2 = "readingBatContent()"
       addImports(s2, variable).trimIndent() shouldBe
-          """
+        """
         import com.github.readingbat.dsl.readingBatContent
-        
+
         $s2
         $variable
         """.trimIndent()
 
       val s3 = "oldInclude"
       addImports(s3, variable).trimIndent() shouldBe
-          """
+        """
         $s3
         $variable
         """.trimIndent()
@@ -193,17 +196,17 @@ class InvokesTest : StringSpec(
 //        """.trimIndent()
 
       val s5 = "ReadingBatServer GitHubContent"
-      //println(addImports(s5, variable))
+      // println(addImports(s5, variable))
       addImports(s5, variable).trimIndent() shouldBe
-          """
+        """
         $s5
         $variable
         """.trimIndent()
 
       val s6 = "ReadingBatServer() GitHubContent()"
-      //println(addImports(s6, variable))
+      // println(addImports(s6, variable))
       addImports(s6, variable).trimIndent() shouldBe
-          """
+        """
         import com.github.readingbat.server.ReadingBatServer
         import com.github.readingbat.dsl.GitHubContent
 
@@ -217,38 +220,38 @@ class InvokesTest : StringSpec(
 
       val s1 = "readingBatContent ReadingBatServer"
       addImports(s1, variable).trimIndent() shouldBe
-          """
+        """
         $s1
         $variable
         """.trimIndent()
 
       val s2 = "readingBatContent() ReadingBatServer()"
       addImports(s2, variable).trimIndent() shouldBe
-          """
+        """
         import com.github.readingbat.server.ReadingBatServer
         import com.github.readingbat.dsl.readingBatContent
-        
+
         $s2
         $variable
         """.trimIndent()
 
       val s3 = "oldInclude readingBatContent ReadingBatServer GitHubContent"
       addImports(s3, variable).trimIndent() shouldBe
-          """
+        """
         $s3
         $variable
         """.trimIndent()
 
       val s4 = "oldInclude() readingBatContent() ReadingBatServer() GitHubContent()"
       addImports(s4, variable).trimIndent() shouldBe
-          """
+        """
         import com.github.readingbat.server.ReadingBatServer
         import com.github.readingbat.dsl.GitHubContent
         import com.github.readingbat.dsl.readingBatContent
-        
+
         $s4
         $variable
         """.trimIndent()
     }
-  }
+  },
 )

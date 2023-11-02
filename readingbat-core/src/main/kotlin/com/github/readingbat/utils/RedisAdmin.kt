@@ -25,19 +25,18 @@ import redis.clients.jedis.exceptions.JedisDataException
 
 @Suppress("unused")
 internal object RedisAdmin {
-
-  internal const val docean = ""
-  internal const val heroku = ""
-  internal const val local = "redis://user:none@localhost:6379"
+  internal const val DOCEAN = ""
+  internal const val HEROKU = ""
+  internal const val LOCAL = "redis://user:none@localhost:6379"
 
   @JvmStatic
   fun main(args: Array<String>) {
-    //deleteAll(local)
-    println("Count: " + count(local))
-    //copy(heroku, docean)
-    //println("Heroku count: ${count(heroku)}")
-    //println("DO count: ${count(docean)}")
-    //count(docean)
+    // deleteAll(local)
+    println("Count: " + count(LOCAL))
+    // copy(heroku, docean)
+    // println("Heroku count: ${count(heroku)}")
+    // println("DO count: ${count(docean)}")
+    // count(docean)
   }
 
   private fun copy(urlFrom: String, urlTo: String) {
@@ -82,7 +81,7 @@ internal object RedisAdmin {
                 "$it - ${redis.smembers(it)}"
               }
             }
-          }
+          },
       )
     }
   }

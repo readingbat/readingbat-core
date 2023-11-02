@@ -15,3 +15,16 @@ dependencies {
     implementation libraries.kotest_assertions_ktor
 //    implementation libraries.kotest_property
 }
+
+kotlinter {
+  ignoreFailures = false
+  reporters = ['checkstyle', 'plain']
+//        disabledRules = ["no-wildcard-imports",
+//                         "indent",
+//                         "final-newline",
+//                         "comment-spacing",
+//                         "max-line-length",
+//                         "no-multi-spaces",
+//                         "wrapping",
+//                         "multiline-if-else",]
+}

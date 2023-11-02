@@ -63,7 +63,6 @@ import kotlinx.html.stream.createHTML
 import mu.two.KLogging
 
 internal object UserPrefsPage : KLogging() {
-
   private const val FORM_NAME = "pform"
   private const val PASSWORD_BUTTON = "UpdatePasswordButton"
   private const val JOIN_CLASS_BUTTON = "JoinClassButton"
@@ -72,7 +71,7 @@ internal object UserPrefsPage : KLogging() {
     content: ReadingBatContent,
     user: User?,
     msg: Message = EMPTY_MESSAGE,
-    defaultClassCode: ClassCode = DISABLED_CLASS_CODE
+    defaultClassCode: ClassCode = DISABLED_CLASS_CODE,
   ) =
     if (user.isValidUser())
       userPrefsWithLoginPage(content, user, msg, defaultClassCode)
@@ -83,7 +82,7 @@ internal object UserPrefsPage : KLogging() {
     content: ReadingBatContent,
     user: User,
     msg: Message,
-    defaultClassCode: ClassCode
+    defaultClassCode: ClassCode,
   ) =
     createHTML()
       .html {
@@ -102,7 +101,12 @@ internal object UserPrefsPage : KLogging() {
           h2 { +"User Preferences" }
 
           if (msg.isAssigned())
-            p { span { style = "color:${msg.color}"; this@body.displayMessage(msg) } }
+            p {
+              span {
+                style = "color:${msg.color}"
+                this@body.displayMessage(msg)
+              }
+            }
 
           defaultLanguage(user)
           changePassword()
@@ -110,7 +114,10 @@ internal object UserPrefsPage : KLogging() {
           deleteAccount(user)
 
           p(classes = INDENT_1EM) {
-            a { href = "$TEACHER_PREFS_ENDPOINT?$RETURN_PARAM=$USER_PREFS_ENDPOINT"; +"Teacher Preferences" }
+            a {
+              href = "$TEACHER_PREFS_ENDPOINT?$RETURN_PARAM=$USER_PREFS_ENDPOINT"
+              +"Teacher Preferences"
+            }
           }
 
           privacyStatement(USER_PREFS_ENDPOINT)
@@ -146,7 +153,12 @@ internal object UserPrefsPage : KLogging() {
                 td { rawHtml(nbsp.text) }
               }
             td {}
-            td { submitInput { name = PREFS_ACTION_PARAM; value = UPDATE_DEFAULT_LANGUAGE } }
+            td {
+              submitInput {
+                name = PREFS_ACTION_PARAM
+                value = UPDATE_DEFAULT_LANGUAGE
+              }
+            }
           }
         }
       }
@@ -163,17 +175,38 @@ internal object UserPrefsPage : KLogging() {
         method = FormMethod.post
         table {
           tr {
-            td { style = LABEL_WIDTH; label { +"Current Password" } }
-            td { passwordInput { size = "42"; name = CURR_PASSWORD_PARAM; value = "" } }
+            td {
+              style = LABEL_WIDTH
+              label { +"Current Password" }
+            }
+            td {
+              passwordInput {
+                size = "42"
+                name = CURR_PASSWORD_PARAM
+                value = ""
+              }
+            }
             td { hideShowButton(FORM_NAME, CURR_PASSWORD_PARAM) }
           }
           tr {
-            td { style = LABEL_WIDTH; label { +"New Password" } }
-            td { passwordInput { size = "42"; name = NEW_PASSWORD_PARAM; value = "" } }
+            td {
+              style = LABEL_WIDTH
+              label { +"New Password" }
+            }
+            td {
+              passwordInput {
+                size = "42"
+                name = NEW_PASSWORD_PARAM
+                value = ""
+              }
+            }
             td { hideShowButton(FORM_NAME, NEW_PASSWORD_PARAM) }
           }
           tr {
-            td { style = LABEL_WIDTH; label { +"Confirm Password" } }
+            td {
+              style = LABEL_WIDTH
+              label { +"Confirm Password" }
+            }
             td {
               passwordInput {
                 size = "42"
@@ -186,7 +219,13 @@ internal object UserPrefsPage : KLogging() {
           }
           tr {
             td {}
-            td { submitInput { id = PASSWORD_BUTTON; name = PREFS_ACTION_PARAM; value = UPDATE_PASSWORD } }
+            td {
+              submitInput {
+                id = PASSWORD_BUTTON
+                name = PREFS_ACTION_PARAM
+                value = UPDATE_PASSWORD
+              }
+            }
           }
         }
       }
@@ -205,7 +244,10 @@ internal object UserPrefsPage : KLogging() {
             action = USER_PREFS_ENDPOINT
             method = FormMethod.post
             onSubmit = "return confirm('Are you sure you want to withdraw from class $displayStr?')"
-            submitInput { name = PREFS_ACTION_PARAM; value = WITHDRAW_FROM_CLASS }
+            submitInput {
+              name = PREFS_ACTION_PARAM
+              value = WITHDRAW_FROM_CLASS
+            }
           }
         }
       }
@@ -218,7 +260,10 @@ internal object UserPrefsPage : KLogging() {
           method = FormMethod.post
           table {
             tr {
-              td { style = LABEL_WIDTH; label { +"Class Code" } }
+              td {
+                style = LABEL_WIDTH
+                label { +"Class Code" }
+              }
               td {
                 textInput {
                   size = "42"
@@ -230,7 +275,13 @@ internal object UserPrefsPage : KLogging() {
             }
             tr {
               td {}
-              td { submitInput { id = JOIN_CLASS_BUTTON; name = PREFS_ACTION_PARAM; value = JOIN_CLASS } }
+              td {
+                submitInput {
+                  id = JOIN_CLASS_BUTTON
+                  name = PREFS_ACTION_PARAM
+                  value = JOIN_CLASS
+                }
+              }
             }
           }
         }
@@ -238,49 +289,49 @@ internal object UserPrefsPage : KLogging() {
     }
   }
 
-/*
-  private fun BODY.teacherShare() {
-    h3 { +"Teacher Share" }
-    div {
-      style = divStyle
-      p { +"Enter the email address of the teacher account. This will make your done page and solution code visible to that account." }
+  /*
+    private fun BODY.teacherShare() {
+      h3 { +"Teacher Share" }
+      div {
+        style = divStyle
+        p { +"Enter the email address of the teacher account. This will make your done page and solution code visible to that account." }
+        form {
+          action = USER_PREFS_ENDPOINT
+          method = FormMethod.post
+          table {
+            tr {
+              td { style = LABEL_WIDTH; label { +"Share To" } }
+              td { textInput { size = "42"; name = "pdt"; value = "" } }
+            }
+            tr {
+              td {}
+              td { submitInput { name = USER_PREFS_ACTION; value = "Share" } }
+            }
+          }
+        }
+      }
+    }
+
+    private fun BODY.memo() {
+      h3 { +"Memo" }
+      p { +"Generally this is left blank. A teacher may ask you to fill this in." }
       form {
         action = USER_PREFS_ENDPOINT
         method = FormMethod.post
+        hiddenInput { name = "date"; value = "963892736" }
         table {
           tr {
-            td { style = LABEL_WIDTH; label { +"Share To" } }
-            td { textInput { size = "42"; name = "pdt"; value = "" } }
+            td { style = LABEL_WIDTH; label { +"Memo" } }
+            td { textInput { size = "42"; name = "real"; value = "" } }
           }
           tr {
             td {}
-            td { submitInput { name = USER_PREFS_ACTION; value = "Share" } }
+            td { submitInput { name = USER_PREFS_ACTION; value = "Update Memo" } }
           }
         }
       }
     }
-  }
-
-  private fun BODY.memo() {
-    h3 { +"Memo" }
-    p { +"Generally this is left blank. A teacher may ask you to fill this in." }
-    form {
-      action = USER_PREFS_ENDPOINT
-      method = FormMethod.post
-      hiddenInput { name = "date"; value = "963892736" }
-      table {
-        tr {
-          td { style = LABEL_WIDTH; label { +"Memo" } }
-          td { textInput { size = "42"; name = "real"; value = "" } }
-        }
-        tr {
-          td {}
-          td { submitInput { name = USER_PREFS_ACTION; value = "Update Memo" } }
-        }
-      }
-    }
-  }
-  */
+    */
 
   private fun BODY.deleteAccount(user: User) {
     val email = user.email
@@ -292,7 +343,10 @@ internal object UserPrefsPage : KLogging() {
           action = USER_PREFS_ENDPOINT
           method = FormMethod.post
           onSubmit = "return confirm('Are you sure you want to permanently delete the account for $email ?')"
-          submitInput { name = PREFS_ACTION_PARAM; value = DELETE_ACCOUNT }
+          submitInput {
+            name = PREFS_ACTION_PARAM
+            value = DELETE_ACCOUNT
+          }
         }
       }
     }
@@ -310,13 +364,21 @@ internal object UserPrefsPage : KLogging() {
           bodyTitle()
 
           if (msg.isAssigned())
-            p { span { style = "color:${msg.color}"; this@body.displayMessage(msg) } }
+            p {
+              span {
+                style = "color:${msg.color}"
+                this@body.displayMessage(msg)
+              }
+            }
 
           h2 { +"Log in" }
 
           p {
             +"Please"
-            a { href = "$CREATE_ACCOUNT_ENDPOINT?$RETURN_PARAM=$returnPath"; +" create an account " }
+            a {
+              href = "$CREATE_ACCOUNT_ENDPOINT?$RETURN_PARAM=$returnPath"
+              +" create an account "
+            }
             +"or log in to an existing account to edit preferences."
           }
 

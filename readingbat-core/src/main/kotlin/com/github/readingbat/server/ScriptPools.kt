@@ -26,7 +26,6 @@ import com.github.readingbat.common.Property
 import mu.two.KLogging
 
 internal object ScriptPools : KLogging() {
-
   internal val javaScriptPool by lazy {
     // Global context cannot be null for the java script engine
     JavaScriptPool(Property.JAVA_SCRIPTS_POOL_SIZE.getProperty(5), false)

@@ -51,7 +51,6 @@ import org.jetbrains.exposed.sql.select
 import java.util.concurrent.atomic.AtomicBoolean
 
 internal object ChallengeGroupWs : KLogging() {
-
   fun Routing.challengeGroupWsEndpoint(metrics: Metrics, contentSrc: () -> ReadingBatContent) {
     webSocket("$WS_ROOT$CHALLENGE_GROUP_ENDPOINT/{$LANGUAGE_NAME}/{$GROUP_NAME}/{$CLASS_CODE}") {
       try {
@@ -76,9 +75,9 @@ internal object ChallengeGroupWs : KLogging() {
           val classCode = p[CLASS_CODE]?.let { ClassCode(it) } ?: throw InvalidRequestException("Missing class code")
           val challenges = content.findGroup(languageName, groupName).challenges
           val user = fetchUser() ?: throw InvalidRequestException("Null user")
-          //val email = user.email //fetchEmail()
-          //val remote = call.request.origin.remoteHost
-          //val desc = "${pathOf(WS_ROOT, Endpoints.CHALLENGE_ENDPOINT, languageName, groupName, classCode)} - $remote - $email"
+          // val email = user.email //fetchEmail()
+          // val remote = call.request.origin.remoteHost
+          // val desc = "${pathOf(WS_ROOT, Endpoints.CHALLENGE_ENDPOINT, languageName, groupName, classCode)} - $remote - $email"
 
           validateContext(languageName, groupName, classCode, null, user)
 
@@ -168,7 +167,8 @@ internal object ChallengeGroupWs : KLogging() {
                   val avgCorrectFmt = "%.1f".format(avgCorrect)
 
                   val msg =
-                    " ($numCalls | $totAttemptedAtLeastOne | $totAllCorrect | $avgCorrectFmt | $incorrectAttempts | $likes/$dislikes)"
+                    " ($numCalls | $totAttemptedAtLeastOne | $totAllCorrect | $avgCorrectFmt | " +
+                      "$incorrectAttempts | $likes/$dislikes)"
 
                   metrics.wsClassStatisticsResponseCount.labels(agentLaunchId()).inc()
 

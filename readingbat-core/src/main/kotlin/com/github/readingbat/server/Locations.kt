@@ -94,7 +94,7 @@ object Locations {
   private suspend fun PipelineCall.language(
     content: ReadingBatContent,
     language: Language,
-    loginAttempt: Boolean
+    loginAttempt: Boolean,
   ) =
     respondWith {
       assignBrowserSession()
@@ -106,7 +106,7 @@ object Locations {
   private suspend fun PipelineCall.group(
     content: ReadingBatContent,
     groupLoc: Language.Group,
-    loginAttempt: Boolean
+    loginAttempt: Boolean,
   ) =
     respondWith {
       assignBrowserSession()
@@ -118,7 +118,7 @@ object Locations {
   private suspend fun PipelineCall.challenge(
     content: ReadingBatContent,
     challengeLoc: Language.Group.Challenge,
-    loginAttempt: Boolean
+    loginAttempt: Boolean,
   ) =
     respondWith {
       assignBrowserSession()
@@ -130,7 +130,7 @@ object Locations {
   private suspend fun PipelineCall.playground(
     content: ReadingBatContent,
     request: PlaygroundRequest,
-    loginAttempt: Boolean
+    loginAttempt: Boolean,
   ) =
     respondWith {
       assignBrowserSession()
@@ -176,8 +176,10 @@ value class LanguageName(val value: String) {
       throw InvalidRequestException("Invalid language: $this")
     }
 
-  internal fun isValid() = try {
-    toLanguageType(); true
+  internal fun isValid() =
+    try {
+      toLanguageType()
+      true
   } catch (e: InvalidRequestException) {
     false
   }
@@ -198,7 +200,6 @@ value class LanguageName(val value: String) {
 
 @JvmInline
 value class GroupName(val value: String) {
-
   internal fun isValid() = this != EMPTY_GROUP
 
   internal fun isNotValid() = !isValid()
@@ -212,6 +213,7 @@ value class GroupName(val value: String) {
 
   companion object {
     internal val EMPTY_GROUP = GroupName("")
+
     internal fun Parameters.getGroupName(name: String) = this[name]?.let { GroupName(it) } ?: EMPTY_GROUP
   }
 }
@@ -228,12 +230,14 @@ value class ChallengeName(val value: String) {
 
   companion object {
     private val EMPTY_CHALLENGE = ChallengeName("")
+
     internal fun Parameters.getChallengeName(name: String) = this[name]?.let { ChallengeName(it) } ?: EMPTY_CHALLENGE
   }
 }
 
 class ChallengeMd5(languageName: LanguageName, groupName: GroupName, challengeName: ChallengeName) {
   val value = md5Of(languageName, groupName, challengeName)
+
   override fun toString() = value
 }
 
@@ -251,6 +255,7 @@ value class FullName(val value: String) {
   companion object {
     val EMPTY_FULLNAME = FullName("")
     val UNKNOWN_FULLNAME = FullName(UNKNOWN)
+
     fun Parameters.getFullName(name: String) = this[name]?.let { FullName(it) } ?: EMPTY_FULLNAME
   }
 }
@@ -258,13 +263,16 @@ value class FullName(val value: String) {
 @JvmInline
 value class Password(val value: String) {
   val length get() = value.length
+
   fun isBlank() = value.isBlank()
+
   fun sha256(salt: String) = value.sha256(salt)
 
   override fun toString() = value
 
   companion object {
     private val EMPTY_PASSWORD = Password("")
+
     fun Parameters.getPassword(name: String) = this[name]?.let { Password(it) } ?: EMPTY_PASSWORD
   }
 }
@@ -272,7 +280,9 @@ value class Password(val value: String) {
 @JvmInline
 value class Email(val value: String) {
   fun isBlank() = value.isBlank()
+
   fun isNotBlank() = value.isNotBlank()
+
   fun isNotValidEmail() = value.isNotValidEmail()
 
   override fun toString() = value
@@ -280,6 +290,7 @@ value class Email(val value: String) {
   companion object {
     val EMPTY_EMAIL = Email("")
     val UNKNOWN_EMAIL = Email(UNKNOWN)
+
     fun Parameters.getEmail(name: String) = this[name]?.let { Email(it) } ?: EMPTY_EMAIL
   }
 }
@@ -287,13 +298,16 @@ value class Email(val value: String) {
 @JvmInline
 value class ResetId(val value: String) {
   fun isBlank() = value.isBlank()
+
   fun isNotBlank() = value.isNotBlank()
 
   override fun toString() = value
 
   companion object {
     val EMPTY_RESET_ID = ResetId("")
+
     fun newResetId() = ResetId(randomId(15))
+
     fun Parameters.getResetId(name: String) = this[name]?.let { ResetId(it) } ?: EMPTY_RESET_ID
   }
 }

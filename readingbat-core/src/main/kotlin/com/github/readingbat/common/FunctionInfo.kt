@@ -41,7 +41,7 @@ class FunctionInfo(
   val codeSnippet: String,
   val invocations: List<Invocation>,
   val returnType: ReturnType,
-  rawAnswers: List<*>
+  rawAnswers: List<*>,
 ) {
   val challengeName get() = challenge.challengeName
   val groupName get() = challenge.challengeGroup.groupName
@@ -142,7 +142,9 @@ class FunctionInfo(
   }
 
   init {
-    logger.debug { "In $challengeName return type: $returnType invocations: $invocations computed answers: $correctAnswers" }
+    logger.debug {
+      "In $challengeName return type: $returnType invocations: $invocations computed answers: $correctAnswers"
+    }
     validate()
   }
 
@@ -177,7 +179,7 @@ class FunctionInfo(
       userResponse = userResponse,
       answered = answered,
       correct = correctAndHint.first,
-      hint = correctAndHint.second
+      hint = correctAndHint.second,
     )
   }
 
@@ -232,7 +234,7 @@ class FunctionInfo(
     private fun String.equalsAsJvmScalar(
       that: String,
       returnType: ReturnType,
-      languageName: LanguageName
+      languageName: LanguageName,
     ): Pair<Boolean, String> {
       val languageType = languageName.toLanguageType()
 

@@ -50,17 +50,20 @@ import java.time.format.DateTimeFormatter
 import kotlin.time.Duration.Companion.seconds
 
 internal object PubSubCommandsWs : KLogging() {
-
   enum class PubSubTopic { ADMIN_COMMAND, USER_ANSWERS, LIKE_DISLIKE, LOG_MESSAGE }
 
   enum class AdminCommand { RESET_CONTENT_DSL, RESET_CACHE, LOAD_CHALLENGE, RUN_GC }
 
   @Serializable
-  enum class LoadChallengeType(@Transient val endPoint: String, val languageTypes: List<LanguageType>) {
+  enum class LoadChallengeType(
+    @Transient val endPoint: String,
+    val languageTypes: List<LanguageType>,
+  ) {
     LOAD_JAVA(LOAD_JAVA_ENDPOINT, listOf(Java)),
     LOAD_PYTHON(LOAD_PYTHON_ENDPOINT, listOf(Python)),
     LOAD_KOTLIN(LOAD_KOTLIN_ENDPOINT, listOf(Kotlin)),
-    LOAD_ALL(LOAD_ALL_ENDPOINT, listOf(Java, Python, Kotlin));
+    LOAD_ALL(LOAD_ALL_ENDPOINT, listOf(Java, Python, Kotlin)),
+    ;
 
     fun toJson() = Json.encodeToString(serializer(), this)
   }
@@ -106,7 +109,8 @@ internal object PubSubCommandsWs : KLogging() {
                 }
 
                 USER_ANSWERS,
-                LIKE_DISLIKE -> {
+                LIKE_DISLIKE,
+                -> {
                   val data = Json.decodeFromString<ChallengeAnswerData>(message)
                   multiServerWsReadFlow.emit(data)
                 }

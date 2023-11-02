@@ -102,23 +102,26 @@ data class ClassCode(val classCode: String) {
 
   fun fetchClassDesc(quoted: Boolean = false) =
     readonlyTx {
-      (ClassesTable
-        .slice(ClassesTable.description)
-        .select { ClassesTable.classCode eq classCode }
-        .map { it[0] as String }
-        .firstOrNull() ?: "Missing description")
-        .also { logger.debug { "fetchClassDesc() returned ${it.toDoubleQuoted()} for $classCode" } }
+      (
+        ClassesTable
+          .slice(ClassesTable.description)
+          .select { ClassesTable.classCode eq classCode }
+          .map { it[0] as String }
+          .firstOrNull() ?: "Missing description"
+        ).also { logger.debug { "fetchClassDesc() returned ${it.toDoubleQuoted()} for $classCode" } }
     }.let { if (quoted) it.toDoubleQuoted() else it }
 
   fun toDisplayString() = "${fetchClassDesc(true)} [$classCode]"
 
   fun fetchClassTeacherId() =
     readonlyTx {
-      ((ClassesTable innerJoin UsersTable)
-        .slice(UsersTable.userId)
-        .select { ClassesTable.classCode eq classCode }
-        .map { it[0] as String }
-        .firstOrNull() ?: "").also { logger.debug { "fetchClassTeacherId() returned $it" } }
+      (
+        (ClassesTable innerJoin UsersTable)
+          .slice(UsersTable.userId)
+          .select { ClassesTable.classCode eq classCode }
+          .map { it[0] as String }
+          .firstOrNull() ?: ""
+        ).also { logger.debug { "fetchClassTeacherId() returned $it" } }
     }
 
   override fun toString() = classCode

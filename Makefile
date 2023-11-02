@@ -1,5 +1,8 @@
 default: versioncheck
 
+stop:
+	./gradlew --stop
+
 clean:
 	./gradlew clean
 

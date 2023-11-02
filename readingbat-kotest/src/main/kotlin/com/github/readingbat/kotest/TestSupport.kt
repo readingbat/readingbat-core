@@ -62,12 +62,11 @@ class ChallengeResult(
   val answerStatus: AnswerStatus,
   val hint: String,
   val index: Int,
-  val correctAnswer: String
+  val correctAnswer: String,
 )
 
 @Suppress("unused")
 object TestSupport {
-
   inline infix fun ReadingBatContent.forEachLanguage(block: LanguageGroup<*>.() -> Unit) =
     languages.forEach { it.block() }
 
@@ -86,16 +85,17 @@ object TestSupport {
       functionInfo().block()
     }
 
-  private fun Challenge.formData() = mutableListOf(
-    LANG_SRC to challengeGroup.languageGroup.languageName.value,
-    GROUP_SRC to challengeGroup.groupName.value,
-    CHALLENGE_SRC to challengeName.value
-  )
+  private fun Challenge.formData() =
+    mutableListOf(
+      LANG_SRC to challengeGroup.languageGroup.languageName.value,
+      GROUP_SRC to challengeGroup.groupName.value,
+      CHALLENGE_SRC to challengeName.value,
+    )
 
   suspend fun Challenge.answerAllWith(
     engine: ApplicationTestBuilder,
     userResponse: String,
-    block: ChallengeResult.() -> Unit
+    block: ChallengeResult.() -> Unit,
   ) {
     val content =
       engine.client.post(CHECK_ANSWERS_ENDPOINT) {
@@ -113,7 +113,7 @@ object TestSupport {
             (it[0] as Double).toInt().toAnswerStatus(),
             (it[1] as String),
             cnt,
-            functionInfo().correctAnswers[cnt]
+            functionInfo().correctAnswers[cnt],
           ).also { cnt++ }
         }
       }
@@ -137,7 +137,7 @@ object TestSupport {
             (it[0] as Double).toInt().toAnswerStatus(),
             (it[1] as String),
             cnt,
-            functionInfo().correctAnswers[cnt]
+            functionInfo().correctAnswers[cnt],
           ).also { cnt++ }
         }
       }
@@ -154,7 +154,9 @@ object TestSupport {
     kotlinGroup(groupName).functionInfo(challengeName).apply(block)
 
   fun ReadingBatContent.pythonGroup(name: String) = python[name]
+
   fun ReadingBatContent.javaGroup(name: String) = java[name]
+
   fun ReadingBatContent.kotlinGroup(name: String) = kotlin[name]
 
   fun <T : Challenge> ChallengeGroup<T>.challengeByName(name: String) =

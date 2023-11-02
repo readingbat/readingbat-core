@@ -30,7 +30,7 @@ import mu.two.KLogging
 @ReadingBatDslMarker
 class LanguageGroup<T : Challenge>(
   internal val content: ReadingBatContent,
-  internal val languageType: LanguageType
+  internal val languageType: LanguageType,
 ) {
   internal val metrics get() = ReadingBatServer.metrics
   val languageName get() = languageType.languageName

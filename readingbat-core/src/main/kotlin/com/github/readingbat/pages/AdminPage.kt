@@ -44,12 +44,11 @@ import redis.clients.jedis.Jedis
 import redis.clients.jedis.exceptions.JedisDataException
 
 internal object AdminPage {
-
   fun PipelineCall.adminDataPage(
     content: ReadingBatContent,
     user: User?,
     redis: Jedis,
-    msg: Message = EMPTY_MESSAGE
+    msg: Message = EMPTY_MESSAGE,
   ) =
     createHTML()
       .html {
@@ -65,12 +64,19 @@ internal object AdminPage {
             isProduction() && user.isNotValidUser() -> {
               br { +"Must be logged in for this function" }
             }
+
             isProduction() && user.isNotAdminUser() -> {
               br { +"Must be a system admin for this function" }
             }
+
             else -> {
               if (msg.isAssigned())
-                p { span { style = "color:${msg.color}"; this@body.displayMessage(msg) } }
+                p {
+                  span {
+                    style = "color:${msg.color}"
+                    this@body.displayMessage(msg)
+                  }
+                }
               p { this@body.deleteData() }
               p { this@body.dumpData(redis) }
             }
@@ -89,7 +95,10 @@ internal object AdminPage {
         action = ADMIN_ENDPOINT
         method = FormMethod.post
         onSubmit = "return confirm('Are you sure you want to permanently delete all data ?')"
-        submitInput { name = ADMIN_ACTION_PARAM; value = DELETE_ALL_DATA }
+        submitInput {
+          name = ADMIN_ACTION_PARAM
+          value = DELETE_ALL_DATA
+        }
       }
     }
   }
@@ -114,7 +123,10 @@ internal object AdminPage {
             }
           }
           .forEach {
-            tr { td { +it.first }; td { +it.second } }
+            tr {
+              td { +it.first }
+              td { +it.second }
+            }
           }
       }
     }

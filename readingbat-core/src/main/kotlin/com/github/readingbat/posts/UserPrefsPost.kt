@@ -53,7 +53,6 @@ import org.joda.time.DateTime
 import org.joda.time.DateTimeZone.UTC
 
 internal object UserPrefsPost : KLogging() {
-
   suspend fun PipelineCall.userPrefs(content: ReadingBatContent, user: User?) =
     if (user.isValidUser()) {
       val params = call.receiveParameters()
@@ -72,7 +71,7 @@ internal object UserPrefsPost : KLogging() {
   private fun PipelineCall.updateDefaultLanguage(
     content: ReadingBatContent,
     parameters: Parameters,
-    user: User
+    user: User,
   ) =
     parameters.getLanguageType(DEFAULT_LANGUAGE_CHOICE_PARAM)
       .let {
@@ -90,7 +89,7 @@ internal object UserPrefsPost : KLogging() {
   private fun PipelineCall.updatePassword(
     content: ReadingBatContent,
     parameters: Parameters,
-    user: User
+    user: User,
   ): String {
     val currPassword = parameters.getPassword(CURR_PASSWORD_PARAM)
     val newPassword = parameters.getPassword(NEW_PASSWORD_PARAM)
@@ -104,9 +103,9 @@ internal object UserPrefsPost : KLogging() {
         val oldDigest = user.digest
         if (salt.isNotEmpty() && oldDigest.isNotEmpty() && oldDigest == currPassword.sha256(salt)) {
           val newDigest = newPassword.sha256(salt)
-          if (newDigest == oldDigest)
+          if (newDigest == oldDigest) {
             Message("New password is the same as the current password", true)
-          else {
+          } else {
             transaction {
               user.assignDigest(newDigest)
             }
@@ -123,7 +122,7 @@ internal object UserPrefsPost : KLogging() {
   private fun PipelineCall.enrollInClass(
     content: ReadingBatContent,
     parameters: Parameters,
-    user: User
+    user: User,
   ): String {
     val classCode = parameters.getClassCode(CLASS_CODE_NAME_PARAM)
     return try {

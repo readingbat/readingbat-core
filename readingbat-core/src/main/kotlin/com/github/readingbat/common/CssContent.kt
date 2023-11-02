@@ -220,8 +220,8 @@ internal val cssContent by lazy {
         border = Border(7.px, BorderStyle.solid, Color.white)
       }
       rule("td.$HINT") {
-        //width = 10.em
-        //border = "7px solid white"
+        // width = 10.em
+        // border = "7px solid white"
       }
       rule(".$DASHBOARD") {
         border = Border(1.px, BorderStyle.solid, Color("#DDDDDD"))
@@ -336,21 +336,23 @@ internal val cssContent by lazy {
       rule("pre[class*=\"language-\"] > code") {
         val color = "#0600EE"
         borderLeft = Border(10.px, BorderStyle.solid, Color(color))
-        boxShadow = BoxShadows().apply {
-          BoxShadow(Color(color), (-1).px, 0.px, 0.px, 0.px)
-        }
-        boxShadow = BoxShadows().apply {
-          BoxShadow(Color("#dfdfdf"), 0.px, 0.px, 0.px, 1.px)
-        }
+        boxShadow =
+          BoxShadows().apply {
+            BoxShadow(Color(color), (-1).px, 0.px, 0.px, 0.px)
+          }
+        boxShadow =
+          BoxShadows().apply {
+            BoxShadow(Color("#dfdfdf"), 0.px, 0.px, 0.px, 1.px)
+          }
       }
       rule(".language-java") {
-        //width = 950.px  // !important
+        // width = 950.px  // !important
       }
       rule(".language-python") {
-        //width = 950.px  // !important
+        // width = 950.px  // !important
       }
       rule(".language-kotlin") {
-        //width = 950.px  // !important
+        // width = 950.px  // !important
       }
       rule(".$KOTLIN_CODE") {
         marginLeft = 1.em

@@ -35,7 +35,6 @@ import kotlinx.html.p
 import kotlinx.html.stream.createHTML
 
 internal object PrivacyPage {
-
   fun PipelineCall.privacyPage() =
     createHTML()
       .html {
@@ -49,10 +48,10 @@ internal object PrivacyPage {
           div(classes = INDENT_1EM) {
             p {
               +"""
-            ReadingBat.com is free -- anyone can access the site to learn and practice reading code. We will not send  
-            you any marketing email (spam), and we will not sell your name or contact information to anyone for marketing. 
-            We will not identify you, your name or email address (if we should know them) in anything we make public. 
-            We collect regular web server logs, and may use the data and submitted answers as part of research into 
+            ReadingBat.com is free -- anyone can access the site to learn and practice reading code. We will not send
+            you any marketing email (spam), and we will not sell your name or contact information to anyone for marketing.
+            We will not identify you, your name or email address (if we should know them) in anything we make public.
+            We collect regular web server logs, and may use the data and submitted answers as part of research into
             teaching technology, but we will never make public specific names or email addresses.
               """.trimIndent()
             }

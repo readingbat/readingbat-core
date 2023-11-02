@@ -47,7 +47,6 @@ import mu.two.KLogging
 import java.util.concurrent.atomic.AtomicBoolean
 
 internal object ClassSummaryWs : KLogging() {
-
   fun Routing.classSummaryWsEndpoint(metrics: Metrics, contentSrc: () -> ReadingBatContent) {
     webSocket("$WS_ROOT$CLASS_SUMMARY_ENDPOINT/{$LANGUAGE_NAME}/{$GROUP_NAME}/{$CLASS_CODE}") {
       try {
@@ -72,9 +71,9 @@ internal object ClassSummaryWs : KLogging() {
           val classCode = p[CLASS_CODE]?.let { ClassCode(it) } ?: throw InvalidRequestException("Missing class code")
           val challenges = content.findGroup(langName, groupName).challenges
           val user = fetchUser() ?: throw InvalidRequestException("Null user")
-          //val email = user.email
-          //val remote = call.request.origin.remoteHost
-          //val desc = "${pathOf(WS_ROOT, CLASS_SUMMARY_ENDPOINT, languageName, groupName, classCode)} - $remote - $email"
+          // val email = user.email
+          // val remote = call.request.origin.remoteHost
+          // val desc = "${pathOf(WS_ROOT, CLASS_SUMMARY_ENDPOINT, languageName, groupName, classCode)} - $remote - $email"
 
           validateContext(langName, groupName, classCode, null, user)
 
@@ -87,9 +86,9 @@ internal object ClassSummaryWs : KLogging() {
                 for (challenge in challenges) {
                   val funcInfo = challenge.functionInfo()
                   val challengeName = challenge.challengeName
-                  //val numCalls = funcInfo.invocationCount
-                  //var likes = 0
-                  //var dislikes = 0
+                  // val numCalls = funcInfo.invocationCount
+                  // var likes = 0
+                  // var dislikes = 0
 
                   for (enrollee in enrollees) {
                     var incorrectAttempts = 0
@@ -103,7 +102,11 @@ internal object ClassSummaryWs : KLogging() {
                             enrollee.answerHistory(historyMd5, invocation)
                               .let {
                                 incorrectAttempts += it.incorrectAttempts
-                                if (it.correct) Constants.YES else if (it.incorrectAttempts > 0) Constants.NO else UNANSWERED
+                                if (it.correct) {
+                                  Constants.YES
+                                } else {
+                                  if (it.incorrectAttempts > 0) Constants.NO else UNANSWERED
+                                }
                               }
                         } else {
                           results += UNANSWERED
@@ -116,14 +119,19 @@ internal object ClassSummaryWs : KLogging() {
 
                     val likeDislike = enrollee.likeDislike(challenge)
                     if (incorrectAttempts > 0 || results.any { it != UNANSWERED } || likeDislike != 0) {
+                      val stats =
+                        if (incorrectAttempts == 0 && results.all { it == UNANSWERED })
+                          ""
+                        else
+                          incorrectAttempts.toString()
                       val json =
                         ClassSummary(
-                          enrollee.userId,
-                          challengeName.encode(),
-                          results,
-                          if (incorrectAttempts == 0 && results.all { it == UNANSWERED }) "" else incorrectAttempts.toString(),
+                          userId = enrollee.userId,
+                          challengeName = challengeName.encode(),
+                          results = results,
+                          stats = stats,
                           // TODO Consolidate this into a single call per user
-                          enrollee.likeDislikeEmoji(likeDislike)
+                          likeDislike = enrollee.likeDislikeEmoji(likeDislike),
                         ).toJson()
 
                       metrics.wsClassSummaryResponseCount.labels(agentLaunchId()).inc()
@@ -159,7 +167,7 @@ internal object ClassSummaryWs : KLogging() {
     val challengeName: String,
     val results: List<String>,
     val stats: String,
-    val likeDislike: String
+    val likeDislike: String,
   ) {
     fun toJson() = Json.encodeToString(serializer(), this)
   }

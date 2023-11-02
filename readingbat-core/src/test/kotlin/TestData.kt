@@ -24,14 +24,13 @@ import com.github.readingbat.dsl.ReturnType.StringArrayType
 import com.github.readingbat.dsl.readingBatContent
 
 object TestData {
-
   const val GROUP_NAME = "Test Cases"
 
   fun readTestContent() =
     readingBatContent {
       python {
-        //repo = GitHubRepo(OwnerType.Organization, "readingbat", "readingbat-core")
-        //branchName = "1.12.0"
+        // repo = GitHubRepo(OwnerType.Organization, "readingbat", "readingbat-core")
+        // branchName = "1.12.0"
         repo = FileSystemSource("../")
         srcPath = "python"
 
@@ -47,7 +46,7 @@ object TestData {
       }
 
       java {
-        //repo = GitHubRepo(OwnerType.Organization, "readingbat", "readingbat-core")
+        // repo = GitHubRepo(OwnerType.Organization, "readingbat", "readingbat-core")
         repo = FileSystemSource("./")
         srcPath = "src/test/java"
         group(GROUP_NAME) {
@@ -58,7 +57,7 @@ object TestData {
       }
 
       kotlin {
-        //repo = GitHubRepo(OwnerType.Organization, "readingbat", "readingbat-core")
+        // repo = GitHubRepo(OwnerType.Organization, "readingbat", "readingbat-core")
         repo = FileSystemSource("./")
         srcPath = "src/test/kotlin"
         group(GROUP_NAME) {

@@ -76,11 +76,12 @@ class ChallengeGroup<T : Challenge>(
       null
 
   private fun fetchRemoteFiles(root: GitHubRepo, path: String) =
-    (if (root.ownerType.isUser())
-      root.userDirectoryContents(branchName, path, metrics)
-    else
-      root.organizationDirectoryContents(branchName, path, metrics))
-      .also {
+    (
+      if (root.ownerType.isUser())
+        root.userDirectoryContents(branchName, path, metrics)
+      else
+        root.organizationDirectoryContents(branchName, path, metrics)
+      ).also {
         if (isContentCachingEnabled()) {
           redisPool?.withNonNullRedisPool(true) { redis ->
             val dirContentsKey = dirContentsKey(path)
@@ -105,8 +106,10 @@ class ChallengeGroup<T : Challenge>(
             fetchRemoteFiles(root, path)
           }
         }
+
         is FileSystemSource ->
           File(pathOf(root.pathPrefix, srcPath, packageNameAsPath)).walk().map { it.name }.toList()
+
         else ->
           error("Invalid repo type: $root")
       }
@@ -121,7 +124,9 @@ class ChallengeGroup<T : Challenge>(
 
   private class IncludeFiles<T : Challenge>(val group: ChallengeGroup<T>, val languageType: LanguageType) {
     val includeList = mutableListOf<PatternReturnType>()
+
     operator fun getValue(thisRef: Any?, property: KProperty<*>) = includeList.toString()
+
     operator fun setValue(thisRef: Any?, property: KProperty<*>, value: String) {
       if (languageType.isJava) {
         val prt = PatternReturnType(value, Runtime)
@@ -136,7 +141,9 @@ class ChallengeGroup<T : Challenge>(
 
   private class IncludeFilesWithType<T : Challenge>(val group: ChallengeGroup<T>, val languageType: LanguageType) {
     val includeList = mutableListOf<PatternReturnType>()
+
     operator fun getValue(thisRef: Any?, property: KProperty<*>): PatternReturnType = PatternReturnType("", Runtime)
+
     operator fun setValue(thisRef: Any?, property: KProperty<*>, value: PatternReturnType) {
       if (!languageType.isJava) {
         includeList += value
@@ -179,8 +186,8 @@ class ChallengeGroup<T : Challenge>(
     challenges += challenge
   }
 
-  //@ReadingBatDslMarker
-  //fun includeFiles(vararg patterns: String) = import(patterns.toList())
+  // @ReadingBatDslMarker
+  // fun includeFiles(vararg patterns: String) = import(patterns.toList())
 
   data class PatternReturnType(val pattern: String, val returnType: ReturnType)
 

@@ -63,9 +63,15 @@ import kotlin.time.TimeSource
 
 internal object ChallengeWs : KLogging() {
   private val clock = TimeSource.Monotonic
-  val singleServerWsFlow by lazy { MutableSharedFlow<ChallengeAnswerData>(extraBufferCapacity = FLOW_BUFFER_CAPACITY) }
-  val multiServerWsWriteFlow by lazy { MutableSharedFlow<ChallengeAnswerData>(extraBufferCapacity = FLOW_BUFFER_CAPACITY) }
-  val multiServerWsReadFlow by lazy { MutableSharedFlow<ChallengeAnswerData>(extraBufferCapacity = FLOW_BUFFER_CAPACITY) }
+  val singleServerWsFlow by lazy {
+    MutableSharedFlow<ChallengeAnswerData>(extraBufferCapacity = FLOW_BUFFER_CAPACITY)
+  }
+  val multiServerWsWriteFlow by lazy {
+    MutableSharedFlow<ChallengeAnswerData>(extraBufferCapacity = FLOW_BUFFER_CAPACITY)
+  }
+  val multiServerWsReadFlow by lazy {
+    MutableSharedFlow<ChallengeAnswerData>(extraBufferCapacity = FLOW_BUFFER_CAPACITY)
+  }
   val answerWsConnections: MutableSet<AnswerSessionContext> = synchronizedSet(LinkedHashSet<AnswerSessionContext>())
   var maxAnswerWsConnections = 0
 
@@ -85,6 +91,7 @@ internal object ChallengeWs : KLogging() {
   class PingMessage(val msg: String) {
     @Required
     val type: String = PING_CODE
+
     fun toJson() = Json.encodeToString(serializer(), this)
   }
 

@@ -27,13 +27,12 @@ import kotlin.time.measureTimedValue
 // See https://github-api.kohsuke.org for usage details
 
 internal object GitHubUtils : KLogging() {
-
   private val github by lazy { GitHub.connect() }
 
   fun GitHubRepo.userDirectoryContents(
     branchName: String,
     path: String,
-    metrics: Metrics
+    metrics: Metrics,
   ): List<String> {
     val repo = github.getUser(ownerName).getRepository(repoName)
     return directoryContents(repo, branchName, path, metrics)
@@ -42,7 +41,7 @@ internal object GitHubUtils : KLogging() {
   fun GitHubRepo.organizationDirectoryContents(
     branchName: String,
     path: String,
-    metrics: Metrics
+    metrics: Metrics,
   ): List<String> {
     val repo: GHRepository = github.getOrganization(ownerName).getRepository(repoName)
     return directoryContents(repo, branchName, path, metrics)
@@ -52,7 +51,7 @@ internal object GitHubUtils : KLogging() {
     repo: GHRepository,
     branchName: String,
     path: String,
-    metrics: Metrics
+    metrics: Metrics,
   ): List<String> {
     val timer = metrics.githubDirectoryReadDuration.labels(agentLaunchId()).startTimer()
     try {

@@ -57,7 +57,6 @@ import java.time.LocalDateTime.ofInstant
 import java.time.ZoneId
 
 object AdminRoutes : KLogging() {
-
   fun Routing.adminRoutes(metrics: Metrics) {
     get(PING_ENDPOINT, metrics) {
       call.respondText("pong", Plain)
@@ -85,9 +84,9 @@ object AdminRoutes : KLogging() {
 
       call.respondHtml {
         body {
-          if (principal.isNull() && session.isNull())
+          if (principal.isNull() && session.isNull()) {
             div { +"No cookies are present." }
-          else {
+          } else {
             if (principal.isNotNull()) {
               val date = ofInstant(ofEpochMilli(principal.created), ZoneId.systemDefault())
               div { +"UserPrincipal: ${principal.userId} created on: $date" }
