@@ -26,9 +26,9 @@ val userSessionIndex =
 
 val sessionChallengeInfoIndex =
   Index(
-    listOf(SessionChallengeInfoTable.sessionRef, SessionChallengeInfoTable.md5),
-    true,
-    "session_challenge_info_unique"
+    columns = listOf(SessionChallengeInfoTable.sessionRef, SessionChallengeInfoTable.md5),
+    unique = true,
+    customName = "session_challenge_info_unique",
   )
 
 val userChallengeInfoIndex =
@@ -36,9 +36,9 @@ val userChallengeInfoIndex =
 
 val sessionAnswerHistoryIndex =
   Index(
-    listOf(SessionAnswerHistoryTable.sessionRef, SessionAnswerHistoryTable.md5),
-    true,
-    "session_answer_history_unique"
+    columns = listOf(SessionAnswerHistoryTable.sessionRef, SessionAnswerHistoryTable.md5),
+    unique = true,
+    customName = "session_answer_history_unique",
   )
 
 val userAnswerHistoryIndex =

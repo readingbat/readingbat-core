@@ -42,14 +42,13 @@ import com.github.readingbat.server.ServerUtils.firstNonEmptyLanguageType
 import kotlinx.html.*
 
 internal object HelpAndLogin {
-
   private val rootVals = listOf("", "/")
 
   fun BODY.helpAndLogin(
     content: ReadingBatContent,
     user: User?,
     loginPath: String,
-    teacherMode: Boolean
+    teacherMode: Boolean,
   ) {
     val previousClassCode = queryPreviousTeacherClassCode(user)
     val path =
@@ -80,22 +79,37 @@ internal object HelpAndLogin {
                   ENABLE_STUDENT_MODE_ENDPOINT to "student mode"
                 else
                   ENABLE_TEACHER_MODE_ENDPOINT to "teacher mode"
-              a { href = "$endpoint?$RETURN_PARAM=$loginPath"; +msg }
+              a {
+                href = "$endpoint?$RETURN_PARAM=$loginPath"
+                +msg
+              }
               +" | "
             }
 
-            a { href = "$ABOUT_ENDPOINT?$RETURN_PARAM=$loginPath"; +"about" }
+            a {
+              href = "$ABOUT_ENDPOINT?$RETURN_PARAM=$loginPath"
+              +"about"
+            }
             +" | "
-            a { href = "$HELP_ENDPOINT?$RETURN_PARAM=$loginPath"; +"help" }
+            a {
+              href = "$HELP_ENDPOINT?$RETURN_PARAM=$loginPath"
+              +"help"
+            }
 
             if (isDbmsEnabled()) {
               if (!isProduction() || user.isAdminUser()) {
                 +" | "
-                a { href = "$ADMIN_PREFS_ENDPOINT?$RETURN_PARAM=$loginPath"; +"admin" }
+                a {
+                  href = "$ADMIN_PREFS_ENDPOINT?$RETURN_PARAM=$loginPath"
+                  +"admin"
+                }
               }
 
               +" | "
-              a { href = "$USER_PREFS_ENDPOINT?$RETURN_PARAM=$loginPath"; +"prefs" }
+              a {
+                href = "$USER_PREFS_ENDPOINT?$RETURN_PARAM=$loginPath"
+                +"prefs"
+              }
             }
           }
         }
@@ -122,7 +136,8 @@ internal object HelpAndLogin {
       td {
         +elems[0]
         if (elems.size > 1) {
-          br; +"@${elems[1]}"
+          br
+          +"@${elems[1]}"
         }
       }
     }
@@ -136,7 +151,12 @@ internal object HelpAndLogin {
     }
     }
      */
-        +"["; a { href = "$LOGOUT?$RETURN_PARAM=$loginPath"; +"log out" }; +"]"
+        +"["
+        a {
+          href = "$LOGOUT?$RETURN_PARAM=$loginPath"
+          +"log out"
+        }
+        +"]"
       }
     }
   }
@@ -149,13 +169,20 @@ internal object HelpAndLogin {
       method = FormMethod.post
       action = loginPath
 
-      span { tabIndex = "1"; onFocus = "document.querySelector('.$bottomFocus').focus()" }
+      span {
+        tabIndex = "1"
+        onFocus = "document.querySelector('.$bottomFocus').focus()"
+      }
 
       this@loginOption.tr {
         td { +"id/email" }
         td {
           textInput(classes = topFocus) {
-            id = EMAIL_PARAM; name = EMAIL_PARAM; size = "20"; placeholder = "username"; tabIndex = "2"
+            id = EMAIL_PARAM
+            name = EMAIL_PARAM
+            size = "20"
+            placeholder = "username"
+            tabIndex = "2"
           }
         }
       }
@@ -164,19 +191,35 @@ internal object HelpAndLogin {
         td { +"password" }
         td {
           passwordInput(classes = bottomFocus) {
-            id = PASSWORD_PARAM; name = PASSWORD_PARAM; size = "20"; placeholder = "password"; tabIndex = "3"
+            id = PASSWORD_PARAM
+            name = PASSWORD_PARAM
+            size = "20"
+            placeholder = "password"
+            tabIndex = "3"
           }
         }
       }
 
       this@loginOption.tr {
         td {}
-        td { submitInput { id = "login"; name = "dologin"; value = "log in" } }
+        td {
+          submitInput {
+            id = "login"
+            name = "dologin"
+            value = "log in"
+          }
+        }
       }
 
-      span { tabIndex = "4"; onFocus = "document.querySelector('.$topFocus').focus()" }
+      span {
+        tabIndex = "4"
+        onFocus = "document.querySelector('.$topFocus').focus()"
+      }
 
-      hiddenInput { name = "fromurl"; value = loginPath }
+      hiddenInput {
+        name = "fromurl"
+        value = loginPath
+      }
     }
 
     // Set focus to email field
@@ -185,9 +228,15 @@ internal object HelpAndLogin {
     tr {
       td {
         colSpan = "2"
-        a { href = "$PASSWORD_RESET_ENDPOINT?$RETURN_PARAM=$loginPath"; +"forgot password" }
+        a {
+          href = "$PASSWORD_RESET_ENDPOINT?$RETURN_PARAM=$loginPath"
+          +"forgot password"
+        }
         +" | "
-        a { href = "$CREATE_ACCOUNT_ENDPOINT?$RETURN_PARAM=$loginPath"; +"create account" }
+        a {
+          href = "$CREATE_ACCOUNT_ENDPOINT?$RETURN_PARAM=$loginPath"
+          +"create account"
+        }
       }
     }
   }

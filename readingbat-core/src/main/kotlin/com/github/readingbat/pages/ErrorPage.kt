@@ -36,7 +36,6 @@ import kotlinx.html.p
 import kotlinx.html.stream.createHTML
 
 internal object ErrorPage {
-
   fun errorPage() =
     createHTML()
       .html {
@@ -54,7 +53,10 @@ internal object ErrorPage {
           div(classes = CssNames.INDENT_1EM) {
             p {
               +"Sorry for the inconvenience. We will look into the problem. In the mean time, please head back to the"
-              a { href = "/"; +" home directory." }
+              a {
+                href = "/"
+                +" home directory."
+              }
             }
           }
 

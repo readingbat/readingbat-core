@@ -65,7 +65,8 @@ internal object TeacherPrefsPost : KLogging() {
       when (val action = params[PREFS_ACTION_PARAM] ?: "") {
         CREATE_CLASS -> createClass(content, user, params[CLASS_DESC_PARAM] ?: "")
         UPDATE_ACTIVE_CLASS,
-        MAKE_ACTIVE_CLASS -> {
+        MAKE_ACTIVE_CLASS,
+        -> {
           val source = params[CHOICE_SOURCE_PARAM] ?: ""
           val classCode = params.getClassCode(CLASS_CODE_CHOICE_PARAM)
           val msg = updateActiveClass(user, classCode)
@@ -96,7 +97,7 @@ internal object TeacherPrefsPost : KLogging() {
 
   fun PipelineCall.enableStudentMode(user: User?): String {
     val returnPath = queryParam(RETURN_PARAM, "/")
-    //val browserSession = call.browserSession
+    // val browserSession = call.browserSession
     val msg =
       if (user.isValidUser()) {
         user.assignActiveClassCode(DISABLED_CLASS_CODE, false)
@@ -156,19 +157,22 @@ internal object TeacherPrefsPost : KLogging() {
           if (classCode.isNotEnabled)
             STUDENT_MODE_ENABLED_MSG
           else
-            "Active class updated to ${classCode.toDisplayString()}"
+            "Active class updated to ${classCode.toDisplayString()}",
         )
       }
     }
 
   private fun PipelineCall.deleteClass(content: ReadingBatContent, user: User, classCode: ClassCode) =
     when {
-      classCode.isNotEnabled -> teacherPrefsPage(content, user, Message("Empty class code", true))
-      classCode.isNotValid() -> teacherPrefsPage(
-        content,
-        user,
-        Message("Invalid class code: $classCode", true)
-      )
+      classCode.isNotEnabled ->
+        teacherPrefsPage(content, user, Message("Empty class code", true))
+
+      classCode.isNotValid() ->
+        teacherPrefsPage(
+          content,
+          user,
+          Message("Invalid class code: $classCode", true),
+        )
 
       else -> {
         val activeTeachingClassCode = queryActiveTeachingClassCode(user)

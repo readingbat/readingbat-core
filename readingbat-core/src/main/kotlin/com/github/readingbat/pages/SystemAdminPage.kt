@@ -53,14 +53,13 @@ import kotlinx.html.stream.createHTML
 import mu.two.KLogging
 
 internal object SystemAdminPage : KLogging() {
-
   private const val msgs = "msgs"
   private const val status = "status"
 
   fun PipelineCall.systemAdminPage(
     content: ReadingBatContent,
     user: User?,
-    msg: String = ""
+    msg: String = "",
   ) =
     if (user.isValidUser())
       systemAdminLoginPage(content, user, Message(msg))
@@ -87,38 +86,43 @@ internal object SystemAdminPage : KLogging() {
           h2 { +"System Admin" }
 
           if (msg.isAssigned())
-            p { span { style = "color:${msg.color}"; this@body.displayMessage(msg) } }
+            p {
+              span {
+                style = "color:${msg.color}"
+                this@body.displayMessage(msg)
+              }
+            }
 
           if (!isProduction() || user.isAdminUser()) {
             p {
               this@body.adminButton(
-                "Reset ReadingBat Content",
-                RESET_CONTENT_DSL_ENDPOINT,
-                "Are you sure you want to reset the content? (This can take a while)"
+                text = "Reset ReadingBat Content",
+                endpoint = RESET_CONTENT_DSL_ENDPOINT,
+                confirm = "Are you sure you want to reset the content? (This can take a while)",
               )
             }
 
             p {
               this@body.adminButton(
-                "Reset Challenges Cache",
-                RESET_CACHE_ENDPOINT,
-                "Are you sure you want to reset the challenges cache?"
+                text = "Reset Challenges Cache",
+                endpoint = RESET_CACHE_ENDPOINT,
+                confirm = "Are you sure you want to reset the challenges cache?",
               )
             }
 
             p {
               this@body.adminButton(
-                "Delete all content cached in Redis",
-                DELETE_CONTENT_IN_REDIS_ENDPOINT,
-                "Are you sure you want to delete all content cached in Redis?"
+                text = "Delete all content cached in Redis",
+                endpoint = DELETE_CONTENT_IN_REDIS_ENDPOINT,
+                confirm = "Are you sure you want to delete all content cached in Redis?",
               )
             }
 
             p {
               this@body.adminButton(
-                "Run Garbage Collector",
-                GARBAGE_COLLECTOR_ENDPOINT,
-                "Are you sure you want to run the garbage collector?"
+                text = "Run Garbage Collector",
+                endpoint = GARBAGE_COLLECTOR_ENDPOINT,
+                confirm = "Are you sure you want to run the garbage collector?",
               )
             }
 
@@ -142,21 +146,21 @@ internal object SystemAdminPage : KLogging() {
 
             p {
               this@body.adminButton(
-                "Load All Challenges",
-                LOAD_ALL_ENDPOINT,
-                "Are you sure you want to load all the challenges? (This can take a while)"
+                text = "Load All Challenges",
+                endpoint = LOAD_ALL_ENDPOINT,
+                confirm = "Are you sure you want to load all the challenges? (This can take a while)",
               )
             }
 
             GRAFANA_URL.getPropertyOrNull()
-              ?.also {
-                //if (it.isNotBlank()) p { +"Grafana Dashboard is "; a { href = it; target = "_blank"; +"here" } }
-              }
+//              ?.also {
+//                //if (it.isNotBlank()) p { +"Grafana Dashboard is "; a { href = it; target = "_blank"; +"here" } }
+//              }
 
             PROMETHEUS_URL.getPropertyOrNull()
-              ?.also {
-                //if (it.isNotBlank()) p { +"Prometheus Dashboard is "; a { href = it; target = "_blank"; +"here" } }
-              }
+//              ?.also {
+//                //if (it.isNotBlank()) p { +"Prometheus Dashboard is "; a { href = it; target = "_blank"; +"here" } }
+//              }
           } else {
             p { +"Not authorized" }
           }
@@ -186,7 +190,7 @@ internal object SystemAdminPage : KLogging() {
         function sleep(ms) {
           return new Promise(resolve => setTimeout(resolve, ms));
         }
-            
+
         var cnt = 0;
         var firstTime = true;
         var connected = false;
@@ -196,24 +200,24 @@ internal object SystemAdminPage : KLogging() {
             wshost = wshost.replace(/^https:/, 'wss:');
           else
             wshost = wshost.replace(/^http:/, 'ws:');
-      
+
           var wsurl = wshost + '$WS_ROOT$LOGGING_ENDPOINT/$logId';
           var ws = new WebSocket(wsurl);
-          
+
           ws.onopen = function (event) {
             //console.log("WebSocket connected.");
             firstTime = false;
             document.getElementById('$status').innerText = 'Connected';
             document.getElementById('$msgs').value = '';
-            ws.send("ready"); 
+            ws.send("ready");
           };
-          
+
           ws.onclose = function (event) {
             //console.log('WebSocket closed. Reconnect will be attempted in 1 second.', event.reason);
             var msg = 'Connecting';
             if (!firstTime)
               msg = 'Reconnecting';
-            for (i = 0; i < cnt%4; i++) 
+            for (i = 0; i < cnt%4; i++)
               msg += '.'
             document.getElementById('$status').innerText = msg;
             setTimeout(function() {
@@ -221,12 +225,12 @@ internal object SystemAdminPage : KLogging() {
               connect();
             }, 1000);
           }
-          
+
           ws.onerror = function(err) {
             //console.error(err)
             ws.close();
           };
-          
+
           ws.onmessage = function (event) {
             var obj = JSON.parse(event.data);
             var elem = document.getElementById('$msgs');
@@ -234,7 +238,7 @@ internal object SystemAdminPage : KLogging() {
           };
         }
         connect();
-        """.trimIndent()
+        """.trimIndent(),
       )
     }
   }

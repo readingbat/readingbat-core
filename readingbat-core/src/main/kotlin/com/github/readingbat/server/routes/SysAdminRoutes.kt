@@ -98,7 +98,7 @@ fun Routing.sysAdminRoutes(metrics: Metrics, resetContentFunc: (String) -> Unit)
     return listOf(
       deleteContentDslInRedis(),
       deleteDirContentsInRedis(),
-      deleteSourceCodeInRedis()
+      deleteSourceCodeInRedis(),
     ).joinToString(", ")
   }
 

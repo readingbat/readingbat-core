@@ -35,7 +35,6 @@ import io.ktor.server.sessions.*
 import redis.clients.jedis.Jedis
 
 internal object AdminPost {
-
   private val mustBeLoggedIn = Message("Must be logged in for this function", true)
   private val mustBeSysAdmin = Message("Must be system admin for this function", true)
   private val invalidOption = Message("Invalid option", true)

@@ -30,24 +30,23 @@ import com.github.readingbat.server.ws.WsCommon.LOG_ID
 import kotlinx.html.SCRIPT
 
 internal object AdminCommandsJs {
-
   fun SCRIPT.loadCommandsScript(logId: String) =
     rawHtml(
       """
     var re = new XMLHttpRequest();
 
-    function $ADMIN_FUNC(msg, endPoint) { 
+    function $ADMIN_FUNC(msg, endPoint) {
       if (confirm(msg)) {
         let data = "$LOG_ID=$logId";
-        //re.onreadystatechange = checkLogHandleDone;  
+        //re.onreadystatechange = checkLogHandleDone;
         re.open("POST", endPoint, true);
         re.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
         re.send(data);
-      } 
-      
+      }
+
       return 1;
     }
-    
+
     function checkLogHandleDone(){
       if(re.readyState == 1) {  // starting
         document.getElementById('$SPINNER_ID').innerHTML = '<i      "fa fa-spinner fa-spin" style="font-size:24px"></i>';
@@ -69,12 +68,12 @@ internal object AdminCommandsJs {
             document.getElementById("$HINT_ID"+i).innerText = results[i][1];
           }
         }
-        
+
         document.getElementById('$SPINNER_ID').innerText = '';
         document.getElementById('$STATUS_ID').innerText = '';
         document.getElementById('$SUCCESS_ID').innerText = success ? "Success! Congratulations!" : "";
       }
     }
-  """
+  """,
     )
 }

@@ -34,7 +34,6 @@ import kotlinx.html.p
 import kotlinx.html.stream.createHTML
 
 internal object DbmsDownPage {
-
   fun dbmsDownPage() =
     createHTML()
       .html {

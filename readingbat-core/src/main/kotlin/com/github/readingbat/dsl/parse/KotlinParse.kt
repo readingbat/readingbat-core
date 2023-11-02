@@ -23,11 +23,10 @@ import com.github.pambrose.common.util.substringBetween
 import com.github.readingbat.server.Invocation
 
 internal object KotlinParse {
-
   internal val funMainRegex = Regex("""^\s*fun\s+main.*\)""")
   internal val kotlinEndRegex = Regex("""\s*}\s*""")
-  private const val printlnPrefix = "println("
-  internal const val varName = "answers"
+  private const val PRINT_PREFIX = "println("
+  internal const val VAR_NAME = "answers"
 
   fun extractKotlinFunction(code: List<String>) =
     code.subList(0, code.lastLineNumberOf(funMainRegex)).joinToString("\n").trimIndent()
@@ -37,8 +36,8 @@ internal object KotlinParse {
 
   fun extractKotlinInvocations(code: List<String>, start: Regex, end: Regex) =
     code.linesBetween(start, end)
-      .filter { it.trimStart().startsWith(printlnPrefix) }
-      .map { it.substringBetween(printlnPrefix, ")") }
+      .filter { it.trimStart().startsWith(PRINT_PREFIX) }
+      .map { it.substringBetween(PRINT_PREFIX, ")") }
       .map { Invocation(it) }
 
   fun convertToKotlinScript(code: List<String>) =
@@ -48,9 +47,9 @@ internal object KotlinParse {
       code.forEach { line ->
         when {
           line.contains(funMainRegex) -> insideMain = true
-          insideMain && line.trimStart().startsWith(printlnPrefix) -> {
-            val expr = line.substringBetween(printlnPrefix, ")")
-            appendLine("$varName.add($expr)")
+          insideMain && line.trimStart().startsWith(PRINT_PREFIX) -> {
+            val expr = line.substringBetween(PRINT_PREFIX, ")")
+            appendLine("$VAR_NAME.add($expr)")
           }
           insideMain && line.trimStart().startsWith("}") -> insideMain = false
           else -> appendLine(line)

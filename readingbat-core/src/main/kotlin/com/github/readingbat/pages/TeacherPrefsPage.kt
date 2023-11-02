@@ -58,14 +58,13 @@ import kotlinx.html.stream.createHTML
 import mu.two.KLogging
 
 internal object TeacherPrefsPage : KLogging() {
-
   private const val CREATE_CLASS_BUTTON = "CreateClassButton"
 
   fun PipelineCall.teacherPrefsPage(
     content: ReadingBatContent,
     user: User?,
     msg: Message = EMPTY_MESSAGE,
-    defaultClassDesc: String = ""
+    defaultClassDesc: String = "",
   ) =
     if (user.isValidUser())
       teacherPrefsWithLoginPage(content, user, msg, defaultClassDesc)
@@ -76,7 +75,7 @@ internal object TeacherPrefsPage : KLogging() {
     content: ReadingBatContent,
     user: User,
     msg: Message,
-    defaultClassDesc: String
+    defaultClassDesc: String,
   ) =
     createHTML()
       .html {
@@ -94,7 +93,12 @@ internal object TeacherPrefsPage : KLogging() {
 
           h2 { +"Teacher Preferences" }
           if (msg.isAssigned())
-            p { span { style = "color:${msg.color}"; this@body.displayMessage(msg) } }
+            p {
+              span {
+                style = "color:${msg.color}"
+                this@body.displayMessage(msg)
+              }
+            }
           createClass(defaultClassDesc)
           displayClasses(user, activeTeachingClassCode)
           backLink(returnPath)
@@ -111,7 +115,10 @@ internal object TeacherPrefsPage : KLogging() {
         method = FormMethod.post
         table {
           tr {
-            td { style = LABEL_WIDTH; label { +"Class Description" } }
+            td {
+              style = LABEL_WIDTH
+              label { +"Class Description" }
+            }
             td {
               textInput {
                 size = "42"
@@ -123,7 +130,13 @@ internal object TeacherPrefsPage : KLogging() {
           }
           tr {
             td {}
-            td { submitInput { id = CREATE_CLASS_BUTTON; name = PREFS_ACTION_PARAM; value = CREATE_CLASS } }
+            td {
+              submitInput {
+                id = CREATE_CLASS_BUTTON
+                name = PREFS_ACTION_PARAM
+                value = CREATE_CLASS
+              }
+            }
           }
         }
       }
@@ -137,8 +150,14 @@ internal object TeacherPrefsPage : KLogging() {
       div(classes = INDENT_2EM) {
         table {
           tr {
-            td { style = "vertical-align:top"; this@displayClasses.classList(activeClassCode, classCodes) }
-            td { style = "vertical-align:top"; this@displayClasses.deleteClassButtons(classCodes) }
+            td {
+              style = "vertical-align:top"
+              this@displayClasses.classList(activeClassCode, classCodes)
+            }
+            td {
+              style = "vertical-align:top"
+              this@displayClasses.deleteClassButtons(classCodes)
+            }
           }
         }
       }
@@ -148,7 +167,12 @@ internal object TeacherPrefsPage : KLogging() {
   private fun BODY.classList(activeClassCode: ClassCode, classCodes: List<ClassCode>) {
     table {
       style = "border-spacing: 15px 5px"
-      tr { th { +"Active" }; th { +"Description" }; th { +"Class Code" }; th { +"Enrollees" } }
+      tr {
+        th { +"Active" }
+        th { +"Description" }
+        th { +"Class Code" }
+        th { +"Enrollees" }
+      }
       form {
         action = TEACHER_PREFS_ENDPOINT
         method = FormMethod.post
@@ -167,9 +191,22 @@ internal object TeacherPrefsPage : KLogging() {
               }
 
               val summary = classSummaryEndpoint(classCode, TEACHER_PREFS_ENDPOINT)
-              td { a(classes = UNDERLINE) { href = summary; +classCode.fetchClassDesc() } }
-              td { a(classes = UNDERLINE) { href = summary; +classCode.displayedValue } }
-              td { style = "text-align:center"; +enrolleeCount.toString() }
+              td {
+                a(classes = UNDERLINE) {
+                  href = summary
+                  +classCode.fetchClassDesc()
+                }
+              }
+              td {
+                a(classes = UNDERLINE) {
+                  href = summary
+                  +classCode.displayedValue
+                }
+              }
+              td {
+                style = "text-align:center"
+                +enrolleeCount.toString()
+              }
             }
           }
 
@@ -182,14 +219,25 @@ internal object TeacherPrefsPage : KLogging() {
               checked = activeClassCode.isNotEnabled
             }
           }
-          td { colSpan = "3"; +NO_ACTIVE_CLASS }
+          td {
+            colSpan = "3"
+            +NO_ACTIVE_CLASS
+          }
         }
 
-        hiddenInput { name = CHOICE_SOURCE_PARAM; value = TEACHER_PREF }
+        hiddenInput {
+          name = CHOICE_SOURCE_PARAM
+          value = TEACHER_PREF
+        }
 
         this@table.tr {
           td {}
-          td { submitInput { name = PREFS_ACTION_PARAM; value = UPDATE_ACTIVE_CLASS } }
+          td {
+            submitInput {
+              name = PREFS_ACTION_PARAM
+              value = UPDATE_ACTIVE_CLASS
+            }
+          }
         }
       }
     }
@@ -207,7 +255,10 @@ internal object TeacherPrefsPage : KLogging() {
               action = TEACHER_PREFS_ENDPOINT
               method = FormMethod.post
               onSubmit = "return confirm('Are you sure you want to delete class ${classCode.toDisplayString()}?')"
-              hiddenInput { name = CLASS_CODE_NAME_PARAM; value = classCode.displayedValue }
+              hiddenInput {
+                name = CLASS_CODE_NAME_PARAM
+                value = classCode.displayedValue
+              }
               submitInput {
                 style = "vertical-align:middle; margin-top:1; margin-bottom:0;"
                 name = PREFS_ACTION_PARAM

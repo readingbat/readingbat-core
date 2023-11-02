@@ -23,7 +23,6 @@ import com.github.pambrose.common.util.obfuscate
 import com.github.readingbat.common.Constants.UNASSIGNED
 
 enum class EnvVar(val maskFunc: EnvVar.() -> String = { getEnv(UNASSIGNED) }) {
-
   AGENT_ENABLED,
   AGENT_CONFIG,
   REDIS_URL({ getEnv(UNASSIGNED).maskUrlCredentials() }),
@@ -42,7 +41,8 @@ enum class EnvVar(val maskFunc: EnvVar.() -> String = { getEnv(UNASSIGNED) }) {
   CLOUD_SQL_CONNECTION_NAME,
   FORWARDED_ENABLED,
   XFORWARDED_ENABLED,
-  JAVA_TOOL_OPTIONS;
+  JAVA_TOOL_OPTIONS,
+  ;
 
   fun isDefined(): Boolean = getEnvOrNull().isNotNull()
 

@@ -45,17 +45,17 @@ internal object LikeDislikeJs {
       """
     var re = new XMLHttpRequest();
 
-    function $LIKE_DISLIKE_FUNC(desc) { 
+    function $LIKE_DISLIKE_FUNC(desc) {
       let data = "$SESSION_ID=${sessionCounter.incrementAndGet()}&$LANG_SRC=$languageName&$GROUP_SRC=$groupName&$CHALLENGE_SRC=$challengeName";
       data += "&$LIKE_DESC=" + encodeURIComponent(desc);
-      
-      re.onreadystatechange = likeDislikeHandleDone;  
+
+      re.onreadystatechange = likeDislikeHandleDone;
       re.open("POST", '$LIKE_DISLIKE_ENDPOINT', true);
       re.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
       re.send(data);
       return 1;
     }
-    
+
     function likeDislikeHandleDone() {
       if(re.readyState == 1) {       // starting
         document.getElementById('$LIKE_SPINNER_ID').innerHTML = '<i class="fa fa-spinner fa-spin" style="font-size:24px"></i>';
@@ -63,10 +63,10 @@ internal object LikeDislikeJs {
       }
       else if(re.readyState == 4) {  // done
         let results = eval(re.responseText);
-        
+
         document.getElementById('$LIKE_SPINNER_ID').innerText = '';
         document.getElementById('$LIKE_STATUS_ID').innerText = '';
-        
+
         if (results == 0) {
           document.getElementById('$LIKE_CLEAR').style.display = "inline";
           document.getElementById('$LIKE_COLOR').style.display = "none";
@@ -87,6 +87,6 @@ internal object LikeDislikeJs {
         }
       }
     }
-  """
+  """,
     )
 }

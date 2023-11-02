@@ -54,7 +54,6 @@ import kotlin.collections.set
 // https://jetbrains.github.io/kotlin-playground/examples/
 
 internal object PlaygroundPage {
-
   fun playgroundPage(
     content: ReadingBatContent,
     user: User?,
@@ -72,7 +71,10 @@ internal object PlaygroundPage {
         val activeTeachingClassCode = queryActiveTeachingClassCode(user)
 
         head {
-          script { src = "https://unpkg.com/kotlin-playground@1"; attributes["data-selector"] = ".$KOTLIN_CODE" }
+          script {
+            src = "https://unpkg.com/kotlin-playground@1"
+            attributes["data-selector"] = ".$KOTLIN_CODE"
+          }
           headDefault()
         }
 
@@ -82,7 +84,10 @@ internal object PlaygroundPage {
           h2 {
             val groupPath = pathOf(CHALLENGE_ROOT, languageName, groupName)
             this@body.addLink(groupName.value.decode(), groupPath)
-            span { style = "padding-left:2px; padding-right:2px"; rawHtml("&rarr;") }
+            span {
+              style = "padding-left:2px; padding-right:2px"
+              rawHtml("&rarr;")
+            }
             this@body.addLink(challengeName.value.decode(), pathOf(groupPath, challengeName))
           }
 
@@ -91,22 +96,26 @@ internal object PlaygroundPage {
 
           val options =
             """
-              theme="idea" indent="2" lines="true"  
-              highlight-on-fly="true" data-autocomplete="true" match-brackets="true" 
+              theme="idea" indent="2" lines="true"
+              highlight-on-fly="true" data-autocomplete="true" match-brackets="true"
             """.trimIndent()
 
           rawHtml(
             """
-              <div class=$KOTLIN_CODE $options>  
+              <div class=$KOTLIN_CODE $options>
               ${escapeHtml4(funcInfo.originalCode)}
               </div>
-            """.trimIndent()
+            """.trimIndent(),
           )
 
           br
           div(classes = INDENT_1EM) {
             +"Click on"
-            img { height = "25"; style = "vertical-align: bottom"; src = pathOf(STATIC_ROOT, RUN_BUTTON) }
+            img {
+              height = "25"
+              style = "vertical-align: bottom"
+              src = pathOf(STATIC_ROOT, RUN_BUTTON)
+            }
             +" to run the code"
           }
 

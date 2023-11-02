@@ -36,7 +36,7 @@ object Constants {
   const val LIKE_DESC = "likeDesc"
   const val NO_ANSWER_COLOR = "white"
   const val CORRECT_COLOR = "#4EAA3A"
-  const val WRONG_COLOR = "#FF0000" //red
+  const val WRONG_COLOR = "#FF0000" // red
   const val INCOMPLETE_COLOR = "#F1F1F1"
   const val LABEL_WIDTH = "width:250"
   const val INVALID_RESET_ID = "Invalid reset_id"
@@ -142,8 +142,10 @@ object Endpoints {
   fun classSummaryEndpoint(classCode: ClassCode, languageName: LanguageName, groupName: GroupName) =
     "${classSummaryEndpoint(classCode)}&$LANG_TYPE_QP=$languageName&$GROUP_NAME_QP=$groupName"
 
-  fun classSummaryEndpoint(classCode: ClassCode, returnPath: String = "") =
-    "$CLASS_SUMMARY_ENDPOINT?$CLASS_CODE_QP=$classCode${if (returnPath.isNotBlank()) "&$RETURN_PARAM=$returnPath" else ""}"
+  fun classSummaryEndpoint(classCode: ClassCode, returnPath: String = ""): String {
+    val str = if (returnPath.isNotBlank()) "&$RETURN_PARAM=$returnPath" else ""
+    return "$CLASS_SUMMARY_ENDPOINT?$CLASS_CODE_QP=$classCode$str"
+  }
 
   fun studentSummaryEndpoint(classCode: ClassCode, languageName: LanguageName, student: User) =
     "$STUDENT_SUMMARY_ENDPOINT?$CLASS_CODE_QP=$classCode&$LANG_TYPE_QP=$languageName&$USER_ID_QP=${student.userId}"

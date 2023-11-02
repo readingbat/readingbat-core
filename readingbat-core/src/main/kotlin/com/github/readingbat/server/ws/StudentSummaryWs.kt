@@ -49,7 +49,6 @@ import mu.two.KLogging
 import java.util.concurrent.atomic.AtomicBoolean
 
 internal object StudentSummaryWs : KLogging() {
-
   fun Routing.studentSummaryWsEndpoint(metrics: Metrics, contentSrc: () -> ReadingBatContent) {
     webSocket("$WS_ROOT$STUDENT_SUMMARY_ENDPOINT/{$LANGUAGE_NAME}/{$STUDENT_ID}/{$CLASS_CODE}") {
       try {
@@ -73,9 +72,9 @@ internal object StudentSummaryWs : KLogging() {
           val student = p[STUDENT_ID]?.toUser() ?: throw InvalidRequestException("Missing student id")
           val classCode = p[CLASS_CODE]?.let { ClassCode(it) } ?: throw InvalidRequestException("Missing class code")
           val user = fetchUser() ?: throw InvalidRequestException("Null user")
-          //val email = user.email //fetchEmail()
-          //val remote = call.request.origin.remoteHost
-          //val desc = "${pathOf(WS_ROOT, CLASS_SUMMARY_ENDPOINT, languageName, student.userId, classCode)} - $remote - $email"
+          // val email = user.email //fetchEmail()
+          // val remote = call.request.origin.remoteHost
+          // val desc = "${pathOf(WS_ROOT, CLASS_SUMMARY_ENDPOINT, languageName, student.userId, classCode)} - $remote - $email"
 
           validateContext(languageName, null, classCode, student, user)
 
@@ -88,9 +87,9 @@ internal object StudentSummaryWs : KLogging() {
                   val funcInfo = challenge.functionInfo()
                   val groupName = challengeGroup.groupName
                   val challengeName = challenge.challengeName
-                  //val numCalls = funcInfo.invocationCount
-                  //var likes = 0
-                  //var dislikes = 0
+                  // val numCalls = funcInfo.invocationCount
+                  // var likes = 0
+                  // var dislikes = 0
                   var incorrectAttempts = 0
                   var attempted = 0
 
@@ -104,7 +103,14 @@ internal object StudentSummaryWs : KLogging() {
                           student.answerHistory(historyMd5, invocation)
                             .let {
                               incorrectAttempts += it.incorrectAttempts
-                              if (it.correct) YES else if (it.incorrectAttempts > 0) NO else UNANSWERED
+                              if (it.correct) {
+                                YES
+                              } else {
+                                if (it.incorrectAttempts > 0)
+                                  NO
+                                else
+                                  UNANSWERED
+                              }
                             }
                       } else {
                         results += UNANSWERED
@@ -119,14 +125,17 @@ internal object StudentSummaryWs : KLogging() {
 
                   if (incorrectAttempts > 0 || results.any { it != UNANSWERED } || likeDislike != 0) {
                     val stats =
-                      if (incorrectAttempts == 0 && results.all { it == UNANSWERED }) "" else incorrectAttempts.toString()
+                      if (incorrectAttempts == 0 && results.all { it == UNANSWERED })
+                        ""
+                      else
+                        incorrectAttempts.toString()
                     val json =
                       StudentSummary(
                         groupName.encode(),
                         challengeName.encode(),
                         results,
                         stats,
-                        student.likeDislikeEmoji(likeDislike)
+                        student.likeDislikeEmoji(likeDislike),
                       ).toJson()
 
                     metrics.wsClassSummaryResponseCount.labels(agentLaunchId()).inc()
@@ -161,7 +170,7 @@ internal object StudentSummaryWs : KLogging() {
     val challengeName: String,
     val results: List<String>,
     val stats: String,
-    val likeDislike: String
+    val likeDislike: String,
   ) {
     fun toJson() = Json.encodeToString(serializer(), this)
   }

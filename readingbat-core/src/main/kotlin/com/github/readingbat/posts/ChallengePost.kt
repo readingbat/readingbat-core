@@ -80,7 +80,7 @@ internal data class StudentInfo(val studentId: String, val firstName: String, va
 @Suppress("unused")
 internal data class ClassEnrollment(
   val sessionId: String,
-  val students: List<StudentInfo> = mutableListOf()
+  val students: List<StudentInfo> = mutableListOf(),
 )
 
 data class ChallengeResults(
@@ -88,16 +88,17 @@ data class ChallengeResults(
   val userResponse: String = "",
   val answered: Boolean = false,
   val correct: Boolean = false,
-  val hint: String = ""
+  val hint: String = "",
 )
 
 @Serializable
 internal class LikeDislikeInfo(
   val userId: String,
-  val likeDislike: String
+  val likeDislike: String,
 ) {
   @Required
   val type: String = Constants.LIKE_DISLIKE_CODE
+
   fun toJson() = Json.encodeToString(serializer(), this)
 }
 
@@ -107,7 +108,7 @@ internal class DashboardInfo(
   val userId: String,
   val complete: Boolean,
   val numCorrect: Int,
-  val history: DashboardHistory
+  val history: DashboardHistory,
 ) {
   fun toJson() = Json.encodeToString(serializer(), this)
 }
@@ -116,7 +117,7 @@ internal class DashboardInfo(
 internal class DashboardHistory(
   val invocation: String,
   val correct: Boolean = false,
-  val answers: String
+  val answers: String,
 )
 
 @Serializable
@@ -124,9 +125,8 @@ data class ChallengeHistory(
   var invocation: Invocation,
   var correct: Boolean = false,
   var incorrectAttempts: Int = 0,
-  @Required val answers: MutableList<String> = mutableListOf()
+  @Required val answers: MutableList<String> = mutableListOf(),
 ) {
-
   fun markCorrect(userResponse: String) {
     correct = true
     if (userResponse.isNotBlank()) {
@@ -151,7 +151,10 @@ data class ChallengeHistory(
 }
 
 enum class AnswerStatus(val value: Int) {
-  NOT_ANSWERED(0), CORRECT(1), INCORRECT(2);
+  NOT_ANSWERED(0),
+  CORRECT(1),
+  INCORRECT(2),
+  ;
 
   companion object {
     fun Int.toAnswerStatus() = entries.firstOrNull { this == it.value } ?: error("Invalid AnswerStatus value: $this")
@@ -164,6 +167,7 @@ internal class ChallengeNames(paramMap: Map<String, String>) {
   val challengeName = ChallengeName(paramMap[CHALLENGE_SRC] ?: error("Missing challenge name"))
 
   fun md5() = md5Of(languageName, groupName, challengeName)
+
   fun md5(invocation: Invocation) = md5Of(languageName, groupName, challengeName, invocation)
 }
 
@@ -322,7 +326,7 @@ internal object ChallengePost : KLogging() {
   suspend fun PipelineCall.likeDislike(user: User?) {
     val paramMap = call.paramMap()
     val names = ChallengeNames(paramMap)
-    //val challenge = content.findChallenge(names.languageName, names.groupName, names.challengeName)
+    // val challenge = content.findChallenge(names.languageName, names.groupName, names.challengeName)
 
     val likeArg = paramMap[LIKE_DESC]?.trim() ?: error("Missing like/dislike argument")
 
@@ -330,8 +334,10 @@ internal object ChallengePost : KLogging() {
     val likeVal =
       when (likeArg) {
         LIKE_CLEAR -> 1
+
         LIKE_COLOR,
-        DISLIKE_COLOR -> 0
+        DISLIKE_COLOR,
+        -> 0
 
         DISLIKE_CLEAR -> 2
         else -> error("Invalid like/dislike argument: $likeArg")
@@ -353,7 +359,7 @@ internal object ChallengePost : KLogging() {
     paramMap: Map<String, String>,
     funcInfo: FunctionInfo,
     userResponses: List<Map.Entry<String, List<String>>>,
-    results: List<ChallengeResults>
+    results: List<ChallengeResults>,
   ) {
     // Save the last answers given
     val invokeList =
@@ -463,7 +469,7 @@ internal object ChallengePost : KLogging() {
     user: User?,
     browserSession: BrowserSession?,
     names: ChallengeNames,
-    likeDislikeVal: Int
+    likeDislikeVal: Int,
   ) {
     val challengeMd5 = names.md5()
     val shouldPublish = user?.shouldPublish() ?: false

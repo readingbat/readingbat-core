@@ -35,7 +35,6 @@ import io.ktor.server.auth.*
 import mu.two.KLogging
 
 internal object ConfigureFormAuth : KLogging() {
-
   private val failedLoginLimiter = RateLimiter.create(1.0) // rate 2.0 is "2 permits per second"
 
   /**
@@ -84,7 +83,10 @@ internal object ConfigureFormAuth : KLogging() {
             }
           }
 
-          logger.info { "Login ${if (principal.isNull()) "failure" else "success for $user ${user?.email ?: UNKNOWN}"}" }
+          logger.info {
+            val str = if (principal.isNull()) "failure" else "success for $user ${user?.email ?: UNKNOWN}"
+            "Login $str"
+          }
 
           if (principal.isNull())
             failedLoginLimiter.acquire() // may block
@@ -105,7 +107,7 @@ internal object ConfigureFormAuth : KLogging() {
         challenge {
           // What to do if the user isn't authenticated
           // Uncomment this to send user to login page
-          //call.respondRedirect("${CommonRoutes.LOGIN}?no")
+          // call.respondRedirect("${CommonRoutes.LOGIN}?no")
         }
         validate { principal: UserPrincipal ->
           // If you need to do additional validation on session data, you can do so here.

@@ -81,7 +81,7 @@ import kotlin.time.measureTimedValue
 sealed class Challenge(
   val challengeGroup: ChallengeGroup<*>,
   val challengeName: ChallengeName,
-  val replaceable: Boolean
+  val replaceable: Boolean,
 ) {
   internal val challengeId = counter.incrementAndGet()
   private val fqName by lazy { packageNameAsPath.ensureSuffix("/") + fileName.ensureSuffix(".${languageType.suffix}") }
@@ -188,7 +188,7 @@ sealed class Challenge(
       code.lines().asSequence()
         .filter { it.startsWith(commentPrefix) && it.contains(DESC) }
         .map { it.replaceFirst(commentPrefix, "") }  // Remove comment prefix
-        .map { it.replaceFirst(DESC, "") }          // Remove @desc
+        .map { it.replaceFirst(DESC, "") }           // Remove @desc
         .map { it.trim() }                                    // Strip leading and trailing spaces
         .joinToString("\n")
         .also { logger.debug { """Assigning $challengeName description = "$it"""" } }
@@ -202,18 +202,25 @@ sealed class Challenge(
         readonlyTx {
           UserChallengeInfoTable
             .slice(UserChallengeInfoTable.allCorrect)
-            .select { (UserChallengeInfoTable.userRef eq user.userDbmsId) and (UserChallengeInfoTable.md5 eq challengeMd5) }
+            .select {
+              (UserChallengeInfoTable.userRef eq user.userDbmsId) and (UserChallengeInfoTable.md5 eq challengeMd5)
+            }
             .map { it[0] as Boolean }
             .firstOrNull() ?: false
         }
+
       browserSession.isNotNull() ->
         transaction {
           SessionChallengeInfoTable
             .slice(SessionChallengeInfoTable.allCorrect)
-            .select { (SessionChallengeInfoTable.sessionRef eq browserSession.queryOrCreateSessionDbmsId()) and (SessionChallengeInfoTable.md5 eq challengeMd5) }
+            .select {
+              (SessionChallengeInfoTable.sessionRef eq browserSession.queryOrCreateSessionDbmsId()) and
+                (SessionChallengeInfoTable.md5 eq challengeMd5)
+            }
             .map { it[0] as Boolean }
             .firstOrNull() ?: false
         }
+
       else -> false
     }
   }
@@ -227,7 +234,7 @@ sealed class Challenge(
     internal fun challenge(
       challengeGroup: ChallengeGroup<*>,
       challengeName: ChallengeName,
-      replaceable: Boolean
+      replaceable: Boolean,
     ) =
       when (challengeGroup.languageType) {
         Python -> PythonChallenge(challengeGroup, challengeName, replaceable)
@@ -240,10 +247,8 @@ sealed class Challenge(
 class JavaChallenge(
   challengeGroup: ChallengeGroup<*>,
   challengeName: ChallengeName,
-  replaceable: Boolean
-) :
-  Challenge(challengeGroup, challengeName, replaceable) {
-
+  replaceable: Boolean,
+) : Challenge(challengeGroup, challengeName, replaceable) {
   override suspend fun computeFunctionInfo(code: String): FunctionInfo {
     val lines =
       code.lines()
@@ -262,7 +267,7 @@ class JavaChallenge(
       measureTimedValue {
         ScriptPools.javaScriptPool
           .eval {
-            assignIsolation(Isolation.IsolatedClassLoader)   // https://github.com/eobermuhlner/java-scriptengine
+            assignIsolation(Isolation.IsolatedClassLoader) // https://github.com/eobermuhlner/java-scriptengine
             import(List::class.java)
             import(ArrayList::class.java)
             evalScript(script)
@@ -284,10 +289,8 @@ class JavaChallenge(
 class KotlinChallenge(
   challengeGroup: ChallengeGroup<*>,
   challengeName: ChallengeName,
-  replaceable: Boolean
-) :
-  Challenge(challengeGroup, challengeName, replaceable) {
-
+  replaceable: Boolean,
+) : Challenge(challengeGroup, challengeName, replaceable) {
   // User properties
   lateinit var returnType: ReturnType
 
@@ -316,7 +319,7 @@ class KotlinChallenge(
     measureTime {
       ScriptPools.kotlinScriptPool
         .eval {
-          add(KotlinParse.varName, correctAnswers, typeOf<Any>())
+          add(KotlinParse.VAR_NAME, correctAnswers, typeOf<Any>())
           eval(script)
         }
     }.also {
@@ -330,7 +333,7 @@ class KotlinChallenge(
       funcCode,
       invocations,
       returnType,
-      correctAnswers
+      correctAnswers,
     )
   }
 
@@ -341,10 +344,8 @@ class KotlinChallenge(
 class PythonChallenge(
   challengeGroup: ChallengeGroup<*>,
   challengeName: ChallengeName,
-  replaceable: Boolean
-) :
-  Challenge(challengeGroup, challengeName, replaceable) {
-
+  replaceable: Boolean,
+) : Challenge(challengeGroup, challengeName, replaceable) {
   // User properties
   lateinit var returnType: ReturnType
 
@@ -369,7 +370,7 @@ class PythonChallenge(
     measureTime {
       ScriptPools.pythonScriptPool
         .eval {
-          add(PythonParse.varName, correctAnswers)
+          add(PythonParse.VAR_NAME, correctAnswers)
           eval(script)
         }
     }.also {

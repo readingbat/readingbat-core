@@ -47,7 +47,6 @@ import java.time.Instant
 internal data class UserPrincipal(val userId: String, val created: Long = Instant.now().toEpochMilli()) : Principal
 
 data class BrowserSession(val id: String, val created: Long = Instant.now().toEpochMilli()) {
-
   fun queryOrCreateSessionDbmsId() =
     try {
       querySessionDbmsId(id)
@@ -69,7 +68,9 @@ data class BrowserSession(val id: String, val created: Long = Instant.now().toEp
       val md5 = SessionChallengeInfoTable.md5
       SessionChallengeInfoTable
         .slice(likeDislike)
-        .select { (sessionRef eq queryOrCreateSessionDbmsId()) and (md5 eq challenge.md5()) }
+        .select {
+          (sessionRef eq queryOrCreateSessionDbmsId()) and (md5 eq challenge.md5())
+        }
         .map { it[likeDislike].toInt() }
         .firstOrNull() ?: 0
     }
@@ -80,9 +81,12 @@ data class BrowserSession(val id: String, val created: Long = Instant.now().toEp
         SessionAnswerHistoryTable.invocation,
         SessionAnswerHistoryTable.correct,
         SessionAnswerHistoryTable.incorrectAttempts,
-        SessionAnswerHistoryTable.historyJson
+        SessionAnswerHistoryTable.historyJson,
       )
-      .select { (SessionAnswerHistoryTable.sessionRef eq queryOrCreateSessionDbmsId()) and (SessionAnswerHistoryTable.md5 eq md5) }
+      .select {
+        (SessionAnswerHistoryTable.sessionRef eq queryOrCreateSessionDbmsId()) and
+          (SessionAnswerHistoryTable.md5 eq md5)
+      }
       .map {
         val json = it[SessionAnswerHistoryTable.historyJson]
         val history = Json.decodeFromString<List<String>>(json).toMutableList()
@@ -90,7 +94,7 @@ data class BrowserSession(val id: String, val created: Long = Instant.now().toEp
           Invocation(it[SessionAnswerHistoryTable.invocation]),
           it[SessionAnswerHistoryTable.correct],
           it[SessionAnswerHistoryTable.incorrectAttempts].toInt(),
-          history
+          history,
         )
       }
       .firstOrNull() ?: ChallengeHistory(invocation)

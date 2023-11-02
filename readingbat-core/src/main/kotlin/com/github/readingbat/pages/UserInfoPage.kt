@@ -40,7 +40,6 @@ import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 
 internal object UserInfoPage {
-
   fun PipelineCall.userInfoPage(content: ReadingBatContent, user: User?, msg: Message = EMPTY_MESSAGE) =
     createHTML()
       .html {
@@ -69,7 +68,12 @@ internal object UserInfoPage {
               val classCodes = user.classCodes()
 
               if (msg.isAssigned())
-                p { span { style = "color:${msg.color}"; this@body.displayMessage(msg) } }
+                p {
+                  span {
+                    style = "color:${msg.color}"
+                    this@body.displayMessage(msg)
+                  }
+                }
 
               val principal = call.userPrincipal
               val sessionId = call.browserSession
@@ -77,17 +81,50 @@ internal object UserInfoPage {
               p {
                 table {
                   style = "border-spacing: 5px 10px"
-                  tr { td { +"User Principal" }; td { +principal.toString() } }
-                  tr { td { +"Session Id" }; td { +sessionId.toString() } }
-                  tr { td { +"Name" }; td { +name.value } }
-                  tr { td { +"Id" }; td { +user.userId } }
-                  tr { td { +"Email" }; td { +email.value } }
-                  tr { td { +"Challenges" }; td { +challenges.size.toString() } }
-                  tr { td { +"Invocations" }; td { +invocations.size.toString() } }
-                  tr { td { +"Correct answers" }; td { +correctAnswers.size.toString() } }
-                  tr { td { +"Likes/Dislikes" }; td { +likeDislikes.size.toString() } }
-                  tr { td { +"Class Codes" }; td { +classCodes.joinToString(", ") } }
-                  tr { td { +"$idCnt Session ${"Id".pluralize(idCnt)}" }; td { +browserSessions.joinToString(", ") } }
+                  tr {
+                    td { +"User Principal" }
+                    td { +principal.toString() }
+                  }
+                  tr {
+                    td { +"Session Id" }
+                    td { +sessionId.toString() }
+                  }
+                  tr {
+                    td { +"Name" }
+                    td { +name.value }
+                  }
+                  tr {
+                    td { +"Id" }
+                    td { +user.userId }
+                  }
+                  tr {
+                    td { +"Email" }
+                    td { +email.value }
+                  }
+                  tr {
+                    td { +"Challenges" }
+                    td { +challenges.size.toString() }
+                  }
+                  tr {
+                    td { +"Invocations" }
+                    td { +invocations.size.toString() }
+                  }
+                  tr {
+                    td { +"Correct answers" }
+                    td { +correctAnswers.size.toString() }
+                  }
+                  tr {
+                    td { +"Likes/Dislikes" }
+                    td { +likeDislikes.size.toString() }
+                  }
+                  tr {
+                    td { +"Class Codes" }
+                    td { +classCodes.joinToString(", ") }
+                  }
+                  tr {
+                    td { +"$idCnt Session ${"Id".pluralize(idCnt)}" }
+                    td { +browserSessions.joinToString(", ") }
+                  }
                 }
               }
             }

@@ -37,7 +37,10 @@ internal object ClockPage : KLogging() {
     createHTML()
       .html {
         body {
-          p { +"Connection time: "; span { id = PING_MSG } }
+          p {
+            +"Connection time: "
+            span { id = PING_MSG }
+          }
 
           script {
             rawHtml(
@@ -47,21 +50,21 @@ internal object ClockPage : KLogging() {
                   wshost = wshost.replace(/^https:/, 'wss:');
                 else
                   wshost = wshost.replace(/^http:/, 'ws:');
-      
+
                 var wsurl = wshost + '$WS_ROOT$CLOCK_ENDPOINT';
                 var ws = new WebSocket(wsurl);
-                
+
                 ws.onopen = function (event) {
-                  ws.send("start"); 
+                  ws.send("start");
                 };
-                
+
                 ws.onmessage = function (event) {
                   var obj = JSON.parse(event.data);
                   if (obj.hasOwnProperty("type") && obj.type == "$PING_CODE") {
                     document.getElementById('$PING_MSG').innerText = obj.msg;
                   }
                 };
-              """.trimIndent()
+              """.trimIndent(),
             )
           }
         }

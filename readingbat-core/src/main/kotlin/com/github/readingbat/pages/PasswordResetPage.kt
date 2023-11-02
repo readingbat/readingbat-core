@@ -57,14 +57,13 @@ import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 internal object PasswordResetPage : KLogging() {
-
   private const val FORM_NAME = "pform"
   private const val PASSWORD_BUTTON = "UpdatePasswordButton"
 
   fun PipelineCall.passwordResetPage(resetId: ResetId, msg: Message = EMPTY_MESSAGE) =
-    if (resetId.isBlank())
+    if (resetId.isBlank()) {
       requestPasswordResetPage(msg)
-    else {
+    } else {
       try {
         val email =
           readonlyTx {
@@ -101,7 +100,12 @@ internal object PasswordResetPage : KLogging() {
 
           bodyTitle()
 
-          p { span { style = "color:red"; this@body.displayMessage(msg) } }
+          p {
+            span {
+              style = "color:red"
+              this@body.displayMessage(msg)
+            }
+          }
 
           h2 { +"Password Reset" }
 
@@ -111,8 +115,16 @@ internal object PasswordResetPage : KLogging() {
               method = FormMethod.post
               table {
                 tr {
-                  td { style = LABEL_WIDTH; label { +"Email (used as account id)" } }
-                  td { textInput { name = EMAIL_PARAM; size = "50" } }
+                  td {
+                    style = LABEL_WIDTH
+                    label { +"Email (used as account id)" }
+                  }
+                  td {
+                    textInput {
+                      name = EMAIL_PARAM
+                      size = "50"
+                    }
+                  }
                 }
                 tr {
                   td { }
@@ -128,9 +140,9 @@ internal object PasswordResetPage : KLogging() {
             }
             p {
               +"""
-                This will send an email with a link that will allow you to set your password. 
-                When you get the email, click on the link (or copy and paste the URL into your browser's address bar) 
-                and enter a new password. If the email does not arrive, double-check that the email 
+                This will send an email with a link that will allow you to set your password.
+                When you get the email, click on the link (or copy and paste the URL into your browser's address bar)
+                and enter a new password. If the email does not arrive, double-check that the email
                 address above is entered correctly.
               """.trimIndent()
             }
@@ -155,7 +167,12 @@ internal object PasswordResetPage : KLogging() {
 
           bodyTitle()
 
-          p { span { style = "color:red"; this@body.displayMessage(msg) } }
+          p {
+            span {
+              style = "color:red"
+              this@body.displayMessage(msg)
+            }
+          }
 
           h3 { +"Change password for $email" }
           p { +"Password must contain at least 6 characters" }
@@ -165,13 +182,25 @@ internal object PasswordResetPage : KLogging() {
             method = FormMethod.post
             table {
               tr {
-                td { style = LABEL_WIDTH; label { +"New Password" } }
-                td { passwordInput { size = "42"; name = NEW_PASSWORD_PARAM; value = "" } }
+                td {
+                  style = LABEL_WIDTH
+                  label { +"New Password" }
+                }
+                td {
+                  passwordInput {
+                    size = "42"
+                    name = NEW_PASSWORD_PARAM
+                    value = ""
+                  }
+                }
                 td { hideShowButton(FORM_NAME, NEW_PASSWORD_PARAM) }
               }
 
               tr {
-                td { style = LABEL_WIDTH; label { +"Confirm Password" } }
+                td {
+                  style = LABEL_WIDTH
+                  label { +"Confirm Password" }
+                }
                 td {
                   passwordInput {
                     size = "42"
@@ -184,7 +213,12 @@ internal object PasswordResetPage : KLogging() {
               }
 
               tr {
-                td { hiddenInput { name = RESET_ID_PARAM; value = resetId.value } }
+                td {
+                  hiddenInput {
+                    name = RESET_ID_PARAM
+                    value = resetId.value
+                  }
+                }
                 td {
                   submitInput {
                     style = "font-size:25px; height:35; width:155"

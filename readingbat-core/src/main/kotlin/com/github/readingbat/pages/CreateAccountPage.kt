@@ -44,13 +44,12 @@ import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 
 internal object CreateAccountPage {
-
   private const val CREATE_BUTTON = "CreateAccountButton"
 
   fun PipelineCall.createAccountPage(
     defaultFullName: FullName = EMPTY_FULLNAME,
     defaultEmail: Email = EMPTY_EMAIL,
-    msg: Message = EMPTY_MESSAGE
+    msg: Message = EMPTY_MESSAGE,
   ) =
     createHTML()
       .html {
@@ -69,13 +68,18 @@ internal object CreateAccountPage {
           div(classes = INDENT_1EM) {
             p {
               +"""
-              Please enter information to create a new account. We use your email address as your account id 
-              (just so it's memorable) and for password reset, not for spamming. The password 
+              Please enter information to create a new account. We use your email address as your account id
+              (just so it's memorable) and for password reset, not for spamming. The password
               must have at least 6 characters.
             """.trimIndent()
             }
 
-            p { span { style = "color:red"; this@body.displayMessage(msg) } }
+            p {
+              span {
+                style = "color:red"
+                this@body.displayMessage(msg)
+              }
+            }
 
             val inputFs = "font-size: 95%"
             val labelWidth = "width: 250"
@@ -87,25 +91,40 @@ internal object CreateAccountPage {
               method = FormMethod.post
               table {
                 tr {
-                  td { style = labelWidth; label { +"Name" } }
+                  td {
+                    style = labelWidth
+                    label { +"Name" }
+                  }
                   td {
                     textInput {
-                      style = inputFs; size = "42"; id = "fullname"; name = FULLNAME_PARAM; value =
-                      defaultFullName.value
+                      style = inputFs
+                      size = "42"
+                      id = "fullname"
+                      name = FULLNAME_PARAM
+                      value = defaultFullName.value
                     }
                   }
                 }
                 tr {
-                  td { style = labelWidth; label { +"Email (used as account id)" } }
+                  td {
+                    style = labelWidth
+                    label { +"Email (used as account id)" }
+                  }
                   td {
                     textInput {
-                      style = inputFs; size = "42"; id = "email"; name = EMAIL_PARAM; value =
-                      defaultEmail.value
+                      style = inputFs
+                      size = "42"
+                      id = "email"
+                      name = EMAIL_PARAM
+                      value = defaultEmail.value
                     }
                   }
                 }
                 tr {
-                  td { style = labelWidth; label { +"Password" } }
+                  td {
+                    style = labelWidth
+                    label { +"Password" }
+                  }
                   td {
                     passwordInput {
                       style = inputFs
@@ -118,7 +137,10 @@ internal object CreateAccountPage {
                   td { hideShowButton(formName, PASSWORD_PARAM) }
                 }
                 tr {
-                  td { style = labelWidth; label { +"Confirm Password" } }
+                  td {
+                    style = labelWidth
+                    label { +"Confirm Password" }
+                  }
                   td {
                     passwordInput {
                       style = inputFs
@@ -131,7 +153,10 @@ internal object CreateAccountPage {
                   }
                   td { hideShowButton(formName, CONFIRM_PASSWORD_PARAM) }
                 }
-                hiddenInput { name = RETURN_PARAM; value = returnPath }
+                hiddenInput {
+                  name = RETURN_PARAM
+                  value = returnPath
+                }
                 tr {
                   td { }
                   td {

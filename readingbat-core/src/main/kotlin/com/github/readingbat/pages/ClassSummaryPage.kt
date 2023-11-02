@@ -76,7 +76,6 @@ import kotlinx.html.stream.createHTML
 import mu.two.KLogging
 
 internal object ClassSummaryPage : KLogging() {
-
   internal const val STATS = "-stats"
   internal const val LIKE_DISLIKE = "-likeDislike"
   private const val BTN_SIZE = "130%"
@@ -95,7 +94,7 @@ internal object ClassSummaryPage : KLogging() {
     classCode: ClassCode,
     languageName: LanguageName = EMPTY_LANGUAGE,
     groupName: GroupName = EMPTY_GROUP,
-    msg: Message = EMPTY_MESSAGE
+    msg: Message = EMPTY_MESSAGE,
   ): String {
     when {
       classCode.isNotValid() -> throw InvalidRequestException("Invalid class code: $classCode")
@@ -134,7 +133,12 @@ internal object ClassSummaryPage : KLogging() {
           h2 { +"Class Summary" }
 
           if (msg.isAssigned())
-            p { span { style = "color:${msg.color}"; this@body.displayMessage(msg) } }
+            p {
+              span {
+                style = "color:${msg.color}"
+                this@body.displayMessage(msg)
+              }
+            }
 
           displayClassInfo(classCode, activeTeachingClassCode)
 
@@ -160,7 +164,8 @@ internal object ClassSummaryPage : KLogging() {
       tr {
         td {
           h3 {
-            style = "margin-left:15px; margin-bottom:15px; color:$HEADER_COLOR"; +classCode.toDisplayString()
+            style = "margin-left:15px; margin-bottom:15px; color:$HEADER_COLOR"
+            +classCode.toDisplayString()
           }
         }
         if (classCode != activeClassCode) {
@@ -169,11 +174,18 @@ internal object ClassSummaryPage : KLogging() {
               style = "margin:0"
               action = CLASS_SUMMARY_ENDPOINT
               method = FormMethod.post
-              hiddenInput { name = CHOICE_SOURCE_PARAM; value = CLASS_SUMMARY }
-              hiddenInput { name = CLASS_CODE_CHOICE_PARAM; value = classCode.classCode }
+              hiddenInput {
+                name = CHOICE_SOURCE_PARAM
+                value = CLASS_SUMMARY
+              }
+              hiddenInput {
+                name = CLASS_CODE_CHOICE_PARAM
+                value = classCode.classCode
+              }
               submitInput(classes = BTN) {
                 style =
-                  "padding:2px 5px; margin-top:9; margin-left:20; border-radius:5px; cursor:pointer; border:1px solid black;"
+                  "padding:2px 5px; margin-top:9; margin-left:20; border-radius:5px; " +
+                    "cursor:pointer; border:1px solid black;"
                 name = PREFS_ACTION_PARAM
                 value = MAKE_ACTIVE_CLASS
               }
@@ -188,7 +200,10 @@ internal object ClassSummaryPage : KLogging() {
     table {
       style = "border-collapse: separate; border-spacing: 15px 10px"
       tr {
-        td { style = "font-size:$BTN_SIZE"; +"Challenge Group: " }
+        td {
+          style = "font-size:$BTN_SIZE"
+          +"Challenge Group: "
+        }
         LanguageType.entries
           .map { content.findLanguage(it) }
           .forEach { langGroup ->
@@ -204,7 +219,7 @@ internal object ClassSummaryPage : KLogging() {
                     }
                     dropdownMenu {
                       dropdownHeader(lang)
-                      //divider()
+                      // divider()
                       langGroup.challengeGroups
                         .forEach {
                           li {
@@ -228,7 +243,7 @@ internal object ClassSummaryPage : KLogging() {
     classCode: ClassCode,
     activeClassCode: ClassCode,
     languageName: LanguageName,
-    groupName: GroupName
+    groupName: GroupName,
   ) {
     h3 {
       style = "margin-left: 15px; color: $HEADER_COLOR"
@@ -237,17 +252,26 @@ internal object ClassSummaryPage : KLogging() {
       languageName.toLanguageType().toString()
         .also {
           if (classCode == activeClassCode)
-            a(classes = UNDERLINE) { href = pathOf(CHALLENGE_ROOT, languageName); +it }
+            a(classes = UNDERLINE) {
+              href = pathOf(CHALLENGE_ROOT, languageName)
+              +it
+            }
           else
             +it
         }
 
-      span { style = "padding-left:2px; padding-right:2px"; rawHtml("&rarr;") }
+      span {
+        style = "padding-left:2px; padding-right:2px"
+        rawHtml("&rarr;")
+      }
 
       groupName.toString()
         .also {
           if (classCode == activeClassCode)
-            a(classes = UNDERLINE) { href = pathOf(CHALLENGE_ROOT, languageName, groupName); +it }
+            a(classes = UNDERLINE) {
+              href = pathOf(CHALLENGE_ROOT, languageName, groupName)
+              +it
+            }
           else
             +it
         }
@@ -261,12 +285,12 @@ internal object ClassSummaryPage : KLogging() {
     activeClassCode: ClassCode,
     hasGroup: Boolean,
     languageName: LanguageName,
-    groupName: GroupName
+    groupName: GroupName,
   ) =
     div(classes = INDENT_2EM) {
       val showDetail = hasGroup && classCode == activeClassCode
 
-      if (enrollees.isNotEmpty())
+      if (enrollees.isNotEmpty()) {
         table {
           style = "border-collapse: separate; border-spacing: 15px 5px"
           tr {
@@ -304,8 +328,18 @@ internal object ClassSummaryPage : KLogging() {
                   val returnUrl = classSummaryEndpoint(classCode, languageName, groupName)
                   "${studentSummaryEndpoint(classCode, languageName, student)}&$RETURN_PARAM=${returnUrl.encode()}"
                     .also {
-                      td { a(classes = UNDERLINE) { href = it; +studentName } }
-                      td { a(classes = UNDERLINE) { href = it; +studentEmail } }
+                      td {
+                        a(classes = UNDERLINE) {
+                          href = it
+                          +studentName
+                        }
+                      }
+                      td {
+                        a(classes = UNDERLINE) {
+                          href = it
+                          +studentEmail
+                        }
+                      }
                     }
                 } else {
                   td { this@displayStudents.removeFromClassButton(student, studentName) }
@@ -323,14 +357,17 @@ internal object ClassSummaryPage : KLogging() {
                             challenge.functionInfo().invocations
                               .forEachIndexed { i, _ ->
                                 td(classes = INVOC_TD) {
-                                  id = "${student.userId}-$encodedName-$i"; +""
+                                  id = "${student.userId}-$encodedName-$i"
+                                  +""
                                 }
                               }
                             td(classes = INVOC_STAT) {
-                              id = "${student.userId}-$encodedName$STATS"; +""
+                              id = "${student.userId}-$encodedName$STATS"
+                              +""
                             }
                             td {
-                              id = "${student.userId}-$encodedName$LIKE_DISLIKE"; +""
+                              id = "${student.userId}-$encodedName$LIKE_DISLIKE"
+                              +""
                             }
                           }
                         }
@@ -340,8 +377,11 @@ internal object ClassSummaryPage : KLogging() {
               }
             }
         }
-      else {
-        h4 { style = "padding-left:15px; padding-top:15px"; +"No students enrolled." }
+      } else {
+        h4 {
+          style = "padding-left:15px; padding-top:15px"
+          +"No students enrolled."
+        }
       }
     }
 
@@ -354,14 +394,14 @@ internal object ClassSummaryPage : KLogging() {
             wshost = wshost.replace(/^https:/, 'wss:');
           else
             wshost = wshost.replace(/^http:/, 'ws:');
-      
+
           var wsurl = wshost + '$WS_ROOT$CLASS_SUMMARY_ENDPOINT/' + ${encodeUriElems(langName, groupName, classCode)};
           var ws = new WebSocket(wsurl);
-      
+
           ws.onopen = function (event) {
-            ws.send("$classCode"); 
+            ws.send("$classCode");
           };
-          
+
           ws.onmessage = function (event) {
             console.log(event.data);
             var obj = JSON.parse(event.data)
@@ -370,14 +410,14 @@ internal object ClassSummaryPage : KLogging() {
             for (i = 0; i < results.length; i++) {
               var prefix = obj.userId + '-' + obj.challengeName
               var answers = document.getElementById(prefix + '-' + i)
-              answers.style.backgroundColor = obj.results[i] == '$YES' ? '$CORRECT_COLOR' 
-                                                                    : (obj.results[i] == '$NO' ? '$WRONG_COLOR' 
+              answers.style.backgroundColor = obj.results[i] == '$YES' ? '$CORRECT_COLOR'
+                                                                    : (obj.results[i] == '$NO' ? '$WRONG_COLOR'
                                                                                              : '$INCOMPLETE_COLOR');
               document.getElementById(prefix + '$STATS').innerText = obj.stats;
               document.getElementById(prefix + '$LIKE_DISLIKE').innerHTML = obj.likeDislike;
             }
           };
-        """.trimIndent()
+        """.trimIndent(),
       )
     }
   }
@@ -390,7 +430,8 @@ internal object ClassSummaryPage : KLogging() {
   private fun LI.dropdownToggle(block: A.() -> Unit) {
     a("#", null, "dropdown-toggle") {
       style =
-        "font-size:$BTN_SIZE; text-decoration:none; border-radius: 5px; padding: 0px 7px; cursor: pointer; color: black; border:1px solid black;"
+        "font-size:$BTN_SIZE; text-decoration:none; border-radius: 5px; padding: 0px 7px; " +
+          "cursor: pointer; color: black; border:1px solid black;"
       attributes["data-toggle"] = "dropdown"
       role = "button"
       attributes["aria-expanded"] = "false"
@@ -400,13 +441,18 @@ internal object ClassSummaryPage : KLogging() {
     }
   }
 
-  private fun LI.dropdownMenu(block: UL.() -> Unit): Unit = ul("dropdown-menu") {
-    role = "menu"
-    block()
-  }
+  private fun LI.dropdownMenu(block: UL.() -> Unit): Unit =
+    ul("dropdown-menu") {
+      role = "menu"
+      block()
+    }
 
   private fun UL.dropdownHeader(text: String) =
-    li { style = "font-size:120%"; classes = setOf("dropdown-header"); +text }
+    li {
+      style = "font-size:120%"
+      classes = setOf("dropdown-header")
+      +text
+    }
 
   @Suppress("unused")
   private fun UL.divider() = li { classes = setOf("divider") }

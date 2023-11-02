@@ -41,7 +41,6 @@ import kotlin.time.Duration
 import kotlin.time.measureTimedValue
 
 internal object SessionActivites : KLogging() {
-
   private val session_id = BrowserSessionsTable.sessionId
   private val fullName = UsersTable.fullName
   private val email = UsersTable.email
@@ -66,7 +65,7 @@ internal object SessionActivites : KLogging() {
     val flagUrl: String,
     val userAgent: String,
     val count: Long,
-    val maxDate: DateTime
+    val maxDate: DateTime,
   )
 
   fun querySessions(dayCount: Int) =
@@ -83,18 +82,18 @@ internal object SessionActivites : KLogging() {
           .orderBy(maxDate, SortOrder.DESC)
           .map { row ->
             QueryInfo(
-              row[session_id],
-              FullName(row[fullName]),
-              Email(row[email]),
-              row[ip],
-              row[city],
-              row[state],
-              row[country],
-              row[isp],
-              row[flagUrl],
-              row[userAgent],
-              row[count],
-              row[maxDate] ?: DateTime.now(DateTimeZone.UTC)
+              session_id = row[session_id],
+              fullName = FullName(row[fullName]),
+              email = Email(row[email]),
+              ip = row[ip],
+              city = row[city],
+              state = row[state],
+              country = row[country],
+              isp = row[isp],
+              flagUrl = row[flagUrl],
+              userAgent = row[userAgent],
+              count = row[count],
+              maxDate = row[maxDate] ?: DateTime.now(DateTimeZone.UTC),
             )
           }
       }.let { (query, duration) ->
@@ -108,13 +107,15 @@ internal object SessionActivites : KLogging() {
       0
     else
       readonlyTx {
-        //addLogger(KotlinLoggingSqlLogger)
+        // addLogger(KotlinLoggingSqlLogger)
         measureTimedValue {
           val sessionRef = ServerRequestsTable.sessionRef
           val created = ServerRequestsTable.created
           ServerRequestsTable
             .slice(sessionRef.countDistinct())
-            .select { created greater dateTimeExpr("now() - interval '${duration.inWholeMilliseconds} milliseconds'") }
+            .select {
+              created greater dateTimeExpr("now() - interval '${duration.inWholeMilliseconds} milliseconds'")
+            }
             .map { it[0] as Long }
             .first()
         }.let { (query, duration) ->

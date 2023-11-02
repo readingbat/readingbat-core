@@ -1,5 +1,8 @@
 default: versioncheck
 
+stop:
+	./gradlew --stop
+
 clean:
 	./gradlew clean
 
@@ -54,4 +57,4 @@ depends:
 	./gradlew dependencies
 
 upgrade-wrapper:
-	./gradlew wrapper --gradle-version=8.3 --distribution-type=bin
+	./gradlew wrapper --gradle-version=8.4 --distribution-type=bin

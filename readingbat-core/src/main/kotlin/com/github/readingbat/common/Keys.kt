@@ -45,7 +45,7 @@ internal fun correctAnswersKey(
   browserSession: BrowserSession?,
   languageName: LanguageName,
   groupName: GroupName,
-  challengeName: ChallengeName
+  challengeName: ChallengeName,
 ) =
   user?.correctAnswersKey(languageName, groupName, challengeName)
     ?: browserSession?.correctAnswersKey(languageName, groupName, challengeName)
@@ -56,7 +56,7 @@ internal fun challengeAnswersKey(
   browserSession: BrowserSession?,
   languageName: LanguageName,
   groupName: GroupName,
-  challengeName: ChallengeName
+  challengeName: ChallengeName,
 ) =
   user?.challengeAnswersKey(languageName, groupName, challengeName)
     ?: browserSession?.challengeAnswerKey(languageName, groupName, challengeName)
@@ -68,5 +68,5 @@ internal fun challengeAnswersKey(user: User?, browserSession: BrowserSession?, c
     browserSession,
     challenge.languageType.languageName,
     challenge.groupName,
-    challenge.challengeName
+    challenge.challengeName,
   )

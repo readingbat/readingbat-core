@@ -46,7 +46,6 @@ import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
 
 internal object SessionsPage : KLogging() {
-
   fun PipelineCall.sessionsPage() =
     createHTML()
       .html {

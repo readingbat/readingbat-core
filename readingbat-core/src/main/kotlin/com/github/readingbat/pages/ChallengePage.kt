@@ -131,7 +131,7 @@ internal object ChallengePage : KLogging() {
     content: ReadingBatContent,
     user: User?,
     challenge: Challenge,
-    loginAttempt: Boolean
+    loginAttempt: Boolean,
   ) =
     createHTML()
       .html {
@@ -147,9 +147,14 @@ internal object ChallengePage : KLogging() {
         val msg = Message(queryParam(MSG))
 
         head {
-          link { rel = "stylesheet"; href = SPINNER_CSS }
           link {
-            rel = "stylesheet"; href = pathOf(STATIC_ROOT, PRISM, "$languageName-prism.css"); type = CSS.toString()
+            rel = "stylesheet"
+            href = SPINNER_CSS
+          }
+          link {
+            rel = "stylesheet"
+            href = pathOf(STATIC_ROOT, PRISM, "$languageName-prism.css")
+            type = CSS.toString()
           }
 
           script(type = textJavaScript) { checkAnswersScript(languageName, groupName, challengeName) }
@@ -164,13 +169,16 @@ internal object ChallengePage : KLogging() {
 
           displayChallenge(challenge, funcInfo)
 
-          if (activeTeachingClassCode.isNotEnabled)
+          if (activeTeachingClassCode.isNotEnabled) {
             displayQuestions(user, browserSession, challenge, funcInfo)
-          else {
+          } else {
             displayStudentProgress(challenge, content.maxHistoryLength, funcInfo, activeTeachingClassCode, enrollees)
 
             if (enrollees.isNotEmpty())
-              p { span { id = PING_LABEL }; span { id = PING_MSG } }
+              p {
+                span { id = PING_LABEL }
+                span { id = PING_MSG }
+              }
           }
 
           backLink(CHALLENGE_ROOT, languageName.value, groupName.value)
@@ -195,7 +203,10 @@ internal object ChallengePage : KLogging() {
       style = "margin-bottom:5px"
       val groupPath = pathOf(CHALLENGE_ROOT, languageName, groupName)
       this@displayChallenge.addLink(groupName.value.decode(), groupPath)
-      span { style = "padding-left:2px; padding-right:2px"; rawHtml("&rarr;") }
+      span {
+        style = "padding-left:2px; padding-right:2px"
+        rawHtml("&rarr;")
+      }
       +challengeName.value
     }
 
@@ -231,7 +242,7 @@ internal object ChallengePage : KLogging() {
     user: User?,
     browserSession: BrowserSession?,
     challenge: Challenge,
-    funcInfo: FunctionInfo
+    funcInfo: FunctionInfo,
   ) =
     div {
       style = "margin-top:2em; margin-left:2em"
@@ -257,7 +268,10 @@ internal object ChallengePage : KLogging() {
         val previousResponses = fetchPreviousResponses(user, browserSession, challenge)
 
         // This will cause shift tab to go to bottom input element
-        span { tabIndex = "5"; onFocus = "document.querySelector('.$bottomFocus').focus()" }
+        span {
+          tabIndex = "5"
+          onFocus = "document.querySelector('.$bottomFocus').focus()"
+        }
 
         val cnt = funcInfo.invocationCount
 
@@ -293,7 +307,7 @@ internal object ChallengePage : KLogging() {
                   else
                     placeholder = funcInfo.placeHolder
 
-                  /// See: http://bluegalaxy.info/codewalk/2018/08/04/javascript-how-to-create-looping-tabindex-cycle/
+                  // See: http://bluegalaxy.info/codewalk/2018/08/04/javascript-how-to-create-looping-tabindex-cycle/
                   // We want the first input element to be 2
                   tabIndex = (i + offset).toString()
                   if (i == 0)
@@ -305,7 +319,10 @@ internal object ChallengePage : KLogging() {
             }
           }
         // This will cause tab to circle back to top input element
-        span { tabIndex = (cnt + offset).toString(); onFocus = "document.querySelector('.$topFocus').focus()" }
+        span {
+          tabIndex = (cnt + offset).toString()
+          onFocus = "document.querySelector('.$topFocus').focus()"
+        }
       }
 
       this@displayQuestions.processAnswers(funcInfo, challenge)
@@ -321,7 +338,7 @@ internal object ChallengePage : KLogging() {
         function sleep(ms) {
           return new Promise(resolve => setTimeout(resolve, ms));
         }
-            
+
         var cnt = 0;
         var firstTime = true;
         var connected = false;
@@ -331,24 +348,24 @@ internal object ChallengePage : KLogging() {
             wshost = wshost.replace(/^https:/, 'wss:');
           else
             wshost = wshost.replace(/^http:/, 'ws:');
-      
+
           var wsurl = wshost + '$WS_ROOT$CHALLENGE_ENDPOINT/'+encodeURIComponent('$classCode')+'/'+encodeURIComponent('$challengeMd5');
           var ws = new WebSocket(wsurl);
-          
+
           ws.onopen = function (event) {
             //console.log("WebSocket connected.");
             firstTime = false;
             document.getElementById('$PING_LABEL').innerText = 'Connected';
             document.getElementById('$PING_MSG').innerText = '';
-            ws.send("$classCode"); 
+            ws.send("$classCode");
           };
-          
+
           ws.onclose = function (event) {
             //console.log('WebSocket closed. Reconnect will be attempted in 1 second.', event.reason);
             var msg = 'Connecting';
             if (!firstTime)
               msg = 'Reconnecting';
-            for (i = 0; i < cnt%4; i++) 
+            for (i = 0; i < cnt%4; i++)
               msg += '.'
             document.getElementById('$PING_LABEL').innerText = msg;
             document.getElementById('$PING_MSG').innerText = '';
@@ -357,15 +374,15 @@ internal object ChallengePage : KLogging() {
               connect();
             }, 1000);
           }
-          
+
           ws.onerror = function(err) {
             //console.error(err)
             ws.close();
           };
-          
+
           ws.onmessage = function (event) {
             var obj = JSON.parse(event.data);
-      
+
             if (obj.hasOwnProperty("type") && obj.type == "$PING_CODE") {
               document.getElementById('$PING_LABEL').innerText = 'Connection time: ';
               document.getElementById('$PING_MSG').innerText = obj.msg;
@@ -376,21 +393,21 @@ internal object ChallengePage : KLogging() {
             else {
               var name = document.getElementById(obj.userId + '-$NAME_TD');
               name.style.backgroundColor = obj.complete ? '$CORRECT_COLOR' : '$INCOMPLETE_COLOR';
-      
+
               document.getElementById(obj.userId + '-$NUM_CORRECTION_SPAN').innerText = obj.numCorrect;
-      
+
               var prefix = obj.userId + '-' + obj.history.invocation;
-              
+
               var answers = document.getElementById(prefix + '-$ANSWER_TD')
-              answers.style.backgroundColor = obj.history.correct ? '$CORRECT_COLOR' 
-                                                                  : (obj.history.answers.length > 0 ? '$WRONG_COLOR' 
-                                                                                                    : '$INCOMPLETE_COLOR');      
+              answers.style.backgroundColor = obj.history.correct ? '$CORRECT_COLOR'
+                                                                  : (obj.history.answers.length > 0 ? '$WRONG_COLOR'
+                                                                                                    : '$INCOMPLETE_COLOR');
               document.getElementById(prefix + '-$ANSWER_SPAN').innerHTML = obj.history.answers;
             }
           };
         }
         connect();
-        """.trimIndent()
+        """.trimIndent(),
       )
     }
   }
@@ -400,7 +417,7 @@ internal object ChallengePage : KLogging() {
     maxHistoryLength: Int,
     funcInfo: FunctionInfo,
     classCode: ClassCode,
-    enrollees: List<User>
+    enrollees: List<User>,
   ) =
     div {
       style = "margin-top:2em"
@@ -422,11 +439,15 @@ internal object ChallengePage : KLogging() {
           style = "width:100%; border-spacing: 5px 10px"
 
           tr {
-            th { style = "width:15%; white-space:nowrap; text-align:left; color: $HEADER_COLOR"; +"Student" }
+            th {
+              style = "width:15%; white-space:nowrap; text-align:left; color: $HEADER_COLOR"
+              +"Student"
+            }
             funcInfo.invocations
               .forEach { invocation ->
                 th {
-                  style = "text-align:left; color: $HEADER_COLOR"; +(invocation.value.run { substring(indexOf("(")) })
+                  style = "text-align:left; color: $HEADER_COLOR"
+                  +(invocation.value.run { substring(indexOf("(")) })
                 }
               }
           }
@@ -477,11 +498,18 @@ internal object ChallengePage : KLogging() {
                     td(classes = DASHBOARD) {
                       id = "${enrollee.userId}-$invocation-$ANSWER_TD"
                       val color =
-                        if (history.correct) CORRECT_COLOR else (if (history.answers.isNotEmpty()) WRONG_COLOR else INCOMPLETE_COLOR)
+                        if (history.correct) {
+                          CORRECT_COLOR
+                        } else {
+                          if (history.answers.isNotEmpty()) WRONG_COLOR else INCOMPLETE_COLOR
+                        }
                       style = "background-color:$color"
                       span {
                         id = "${enrollee.userId}-$invocation-$ANSWER_SPAN"
-                        history.answers.asReversed().take(maxHistoryLength).forEach { answer -> +answer; br }
+                        history.answers.asReversed().take(maxHistoryLength).forEach { answer ->
+                          +answer
+                          br
+                        }
                       }
                     }
                   }
@@ -503,7 +531,13 @@ internal object ChallengePage : KLogging() {
             }
           }
 
-          td { style = "vertical-align:middle"; span { style = "margin-left:1em"; id = SPINNER_ID } }
+          td {
+            style = "vertical-align:middle"
+            span {
+              style = "margin-left:1em"
+              id = SPINNER_ID
+            }
+          }
 
           td {
             val challengeName = challenge.challengeName
@@ -533,7 +567,10 @@ internal object ChallengePage : KLogging() {
         if (pos == 0)
           +it
         else
-          a { href = "./${challenges[pos - 1].challengeName.value}"; +it }
+          a {
+            href = "./${challenges[pos - 1].challengeName.value}"
+            +it
+          }
       }
 
       rawHtml("${nbsp.text} | ${nbsp.text}")
@@ -543,7 +580,10 @@ internal object ChallengePage : KLogging() {
       if (pos == challenges.size - 1)
         +it
       else
-        a { href = "./${challenges[pos + 1].challengeName.value}"; +it }
+        a {
+          href = "./${challenges[pos + 1].challengeName.value}"
+          +it
+        }
     }
 
     rawHtml("${nbsp.text} | ${nbsp.text}")
@@ -552,7 +592,10 @@ internal object ChallengePage : KLogging() {
       if (challenges.size == 1)
         +it
       else
-        a { href = "./${challenges[challenges.size.chance(pos)].challengeName.value}"; +it }
+        a {
+          href = "./${challenges[challenges.size.chance(pos)].challengeName.value}"
+          +it
+        }
     }
   }
 
@@ -576,7 +619,10 @@ internal object ChallengePage : KLogging() {
             style = "display:${if (likeDislikeVal == 0 || likeDislikeVal == 2) "inline" else "none"}"
             button(classes = LIKE_BUTTONS) {
               onClick = "$LIKE_DISLIKE_FUNC(${LIKE_CLEAR.toDoubleQuoted()})"
-              img { height = imgSize; src = pathOf(STATIC_ROOT, LIKE_CLEAR_FILE) }
+              img {
+                height = imgSize
+                src = pathOf(STATIC_ROOT, LIKE_CLEAR_FILE)
+              }
             }
           }
           td {
@@ -584,7 +630,10 @@ internal object ChallengePage : KLogging() {
             style = "display:${if (likeDislikeVal == 1) "inline" else "none"}"
             button(classes = LIKE_BUTTONS) {
               onClick = "$LIKE_DISLIKE_FUNC(${LIKE_COLOR.toDoubleQuoted()})"
-              img { height = imgSize; src = pathOf(STATIC_ROOT, LIKE_COLOR_FILE) }
+              img {
+                height = imgSize
+                src = pathOf(STATIC_ROOT, LIKE_COLOR_FILE)
+              }
             }
           }
           td {
@@ -592,7 +641,10 @@ internal object ChallengePage : KLogging() {
             style = "display:${if (likeDislikeVal == 0 || likeDislikeVal == 1) "inline" else "none"}"
             button(classes = LIKE_BUTTONS) {
               onClick = "$LIKE_DISLIKE_FUNC(${DISLIKE_CLEAR.toDoubleQuoted()})"
-              img { height = imgSize; src = pathOf(STATIC_ROOT, DISLIKE_CLEAR_FILE) }
+              img {
+                height = imgSize
+                src = pathOf(STATIC_ROOT, DISLIKE_CLEAR_FILE)
+              }
             }
           }
           td {
@@ -600,13 +652,25 @@ internal object ChallengePage : KLogging() {
             style = "display:${if (likeDislikeVal == 2) "inline" else "none"}"
             button(classes = LIKE_BUTTONS) {
               onClick = "$LIKE_DISLIKE_FUNC(${DISLIKE_COLOR.toDoubleQuoted()})"
-              img { height = imgSize; src = pathOf(STATIC_ROOT, DISLIKE_COLOR_FILE) }
+              img {
+                height = imgSize
+                src = pathOf(STATIC_ROOT, DISLIKE_COLOR_FILE)
+              }
             }
           }
 
-          td { style = "vertical-align:middle"; span { style = "margin-left:1em"; id = LIKE_SPINNER_ID } }
+          td {
+            style = "vertical-align:middle"
+            span {
+              style = "margin-left:1em"
+              id = LIKE_SPINNER_ID
+            }
+          }
 
-          td { style = "vertical-align:middle"; span(classes = STATUS) { id = LIKE_STATUS_ID } }
+          td {
+            style = "vertical-align:middle"
+            span(classes = STATUS) { id = LIKE_STATUS_ID }
+          }
         }
       }
     }
@@ -637,7 +701,7 @@ internal object ChallengePage : KLogging() {
   private fun BODY.clearChallengeAnswerHistoryOption(
     user: User?,
     browserSession: BrowserSession?,
-    challenge: Challenge
+    challenge: Challenge,
   ) {
     val languageName = challenge.languageType.languageName
     val groupName = challenge.groupName
@@ -653,11 +717,26 @@ internal object ChallengePage : KLogging() {
       action = CLEAR_CHALLENGE_ANSWERS_ENDPOINT
       method = FormMethod.post
       onSubmit = """return confirm('Are you sure you want to clear your previous answers for "$challengeName"?')"""
-      hiddenInput { name = LANGUAGE_NAME_PARAM; value = languageName.value }
-      hiddenInput { name = GROUP_NAME_PARAM; value = groupName.value }
-      hiddenInput { name = CHALLENGE_NAME_PARAM; value = challengeName.value }
-      hiddenInput { name = CORRECT_ANSWERS_PARAM; value = correctAnswersKey }
-      hiddenInput { name = CHALLENGE_ANSWERS_PARAM; value = challengeAnswersKey }
+      hiddenInput {
+        name = LANGUAGE_NAME_PARAM
+        value = languageName.value
+      }
+      hiddenInput {
+        name = GROUP_NAME_PARAM
+        value = groupName.value
+      }
+      hiddenInput {
+        name = CHALLENGE_NAME_PARAM
+        value = challengeName.value
+      }
+      hiddenInput {
+        name = CORRECT_ANSWERS_PARAM
+        value = correctAnswersKey
+      }
+      hiddenInput {
+        name = CHALLENGE_ANSWERS_PARAM
+        value = challengeAnswersKey
+      }
       submitInput {
         style = "vertical-align:middle; margin-top:1; margin-bottom:0"
         value = "Clear answer history"
@@ -672,7 +751,7 @@ internal object ChallengePage : KLogging() {
         """
           pre[class*="language-"]:before,
           pre[class*="language-"]:after { display:none; }
-        """.trimIndent()
+        """.trimIndent(),
       )
     }
   }
@@ -684,7 +763,9 @@ internal object ChallengePage : KLogging() {
         readonlyTx {
           UserChallengeInfoTable
             .slice(UserChallengeInfoTable.answersJson)
-            .select { (UserChallengeInfoTable.userRef eq user.userDbmsId) and (UserChallengeInfoTable.md5 eq challenge.md5()) }
+            .select {
+              (UserChallengeInfoTable.userRef eq user.userDbmsId) and (UserChallengeInfoTable.md5 eq challenge.md5())
+            }
             .map { it[0] as String }
             .firstOrNull()
             ?.let { Json.decodeFromString<Map<String, String>>(it) }
@@ -695,7 +776,10 @@ internal object ChallengePage : KLogging() {
         transaction {
           SessionChallengeInfoTable
             .slice(SessionChallengeInfoTable.answersJson)
-            .select { (SessionChallengeInfoTable.sessionRef eq browserSession.queryOrCreateSessionDbmsId()) and (SessionChallengeInfoTable.md5 eq challenge.md5()) }
+            .select {
+              (SessionChallengeInfoTable.sessionRef eq browserSession.queryOrCreateSessionDbmsId()) and
+                (SessionChallengeInfoTable.md5 eq challenge.md5())
+            }
             .map { it[0] as String }
             .firstOrNull()
             ?.let { Json.decodeFromString<Map<String, String>>(it) }

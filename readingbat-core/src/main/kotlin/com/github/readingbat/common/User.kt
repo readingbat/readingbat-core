@@ -80,11 +80,10 @@ import kotlin.contracts.contract
 import kotlin.time.measureTime
 
 class User {
-
   private constructor(
     userId: String,
     browserSession: BrowserSession?,
-    initFields: Boolean
+    initFields: Boolean,
   ) {
     this.userId = userId
     this.browserSession = browserSession
@@ -104,7 +103,7 @@ class User {
   private constructor(
     userId: String,
     browserSession: BrowserSession?,
-    row: ResultRow
+    row: ResultRow,
   ) {
     this.userId = userId
     this.browserSession = browserSession
@@ -157,7 +156,9 @@ class User {
       val activeClassCode = UserSessionsTable.activeClassCode
       UserSessionsTable
         .slice(Count(id))
-        .select { (userRef eq userDbmsId) and (activeClassCode eq classCode.classCode) }
+        .select {
+          (userRef eq userDbmsId) and (activeClassCode eq classCode.classCode)
+        }
         .map { it[0] as Long }
         .first() > 0
     }
@@ -168,7 +169,9 @@ class User {
       val userRef = UserChallengeInfoTable.userRef
       UserChallengeInfoTable
         .slice(allCorrect)
-        .select { (userRef eq userDbmsId) and allCorrect }
+        .select {
+          (userRef eq userDbmsId) and allCorrect
+        }
         .map { (it[0] as Boolean).toString() }
     }
 
@@ -199,7 +202,9 @@ class User {
       val likeDislike = UserChallengeInfoTable.likeDislike
       UserChallengeInfoTable
         .slice(likeDislike)
-        .select { (userRef eq userDbmsId) and ((likeDislike eq 1) or (likeDislike eq 2)) }
+        .select {
+          (userRef eq userDbmsId) and ((likeDislike eq 1) or (likeDislike eq 2))
+        }
         .map { it.toString() }
     }
 
@@ -288,7 +293,9 @@ class User {
   fun historyExists(md5: String, invocation: Invocation) =
     UserAnswerHistoryTable
       .slice(Count(uahId))
-      .select { (uahUserRef eq userDbmsId) and (uahMd5 eq md5) and (uahInvocation eq invocation.value) }
+      .select {
+        (uahUserRef eq userDbmsId) and (uahMd5 eq md5) and (uahInvocation eq invocation.value)
+      }
       .map { it[0] as Long }
       .first() > 0
 
@@ -299,7 +306,9 @@ class User {
 
     return UserAnswerHistoryTable
       .slice(uahInvocation, correct, incorrectAttempts, historyJson)
-      .select { (uahUserRef eq userDbmsId) and (uahMd5 eq md5) and (uahInvocation eq invocation.value) }
+      .select {
+        (uahUserRef eq userDbmsId) and (uahMd5 eq md5) and (uahInvocation eq invocation.value)
+      }
       .map {
         val json = it[historyJson]
         val history = Json.decodeFromString<List<String>>(json).toMutableList()
@@ -463,15 +472,16 @@ class User {
     maxHistoryLength: Int,
     complete: Boolean,
     numCorrect: Int,
-    history: ChallengeHistory
+    history: ChallengeHistory,
   ) {
     // Publish to challenge dashboard
     logger.debug { "Publishing user answers to $enrolledClassCode on $challengeMd5 for $this" }
-    val dashboardHistory = DashboardHistory(
-      history.invocation.value,
-      history.correct,
-      history.answers.asReversed().take(maxHistoryLength).joinToString("<br>")
-    )
+    val dashboardHistory =
+      DashboardHistory(
+        history.invocation.value,
+        history.correct,
+        history.answers.asReversed().take(maxHistoryLength).joinToString("<br>"),
+      )
     val targetName = classTargetName(enrolledClassCode, challengeMd5)
     val dashboardInfo = DashboardInfo(userId, complete, numCorrect, dashboardHistory)
     (if (isMultiServerEnabled()) multiServerWsWriteFlow else singleServerWsFlow)
@@ -523,8 +533,9 @@ class User {
       classCode.isEnabled -> {
         // Check to see if the teacher that owns class has it set as their active class in one of the sessions
         val teacherId = classCode.fetchClassTeacherId()
-        teacherId.isNotEmpty() && teacherId.toUser().interestedInActiveClassCode(classCode)
-          .also { logger.debug { "Publishing teacherId: $teacherId for $classCode" } }
+        teacherId.isNotEmpty() &&
+          teacherId.toUser().interestedInActiveClassCode(classCode)
+            .also { logger.debug { "Publishing teacherId: $teacherId for $classCode" } }
       }
 
       else -> false
@@ -533,18 +544,17 @@ class User {
   override fun toString() = "User(userId='$userId', name='$fullName')"
 
   companion object : KLogging() {
-
     // Class code a user is enrolled in. Will report answers to when in student mode
     // This is not browser-id specific
-    //internal const val ENROLLED_CLASS_CODE_FIELD = "enrolled-class-code"
+    // internal const val ENROLLED_CLASS_CODE_FIELD = "enrolled-class-code"
 
     // Class code you will observe updates on when in teacher mode
     // This is browser-id specific
-    //private const val ACTIVE_CLASS_CODE_FIELD = "active-class-code"
+    // private const val ACTIVE_CLASS_CODE_FIELD = "active-class-code"
 
     // Previous teacher class code that a user had
     // This is browser-id specific
-    //private const val PREVIOUS_TEACHER_CLASS_CODE_FIELD = "previous-teacher-class-code"
+    // private const val PREVIOUS_TEACHER_CLASS_CODE_FIELD = "previous-teacher-class-code"
 
     val userIdCache = ConcurrentHashMap<String, Long>()
     val emailCache = ConcurrentHashMap<String, Email>()
@@ -560,7 +570,10 @@ class User {
           transaction {
             UserSessionsTable
               .slice(UserSessionsTable.activeClassCode)
-              .select { (UserSessionsTable.sessionRef eq user.queryOrCreateSessionDbmsId()) and (UserSessionsTable.userRef eq user.userDbmsId) }
+              .select {
+                (UserSessionsTable.sessionRef eq user.queryOrCreateSessionDbmsId()) and
+                  (UserSessionsTable.userRef eq user.userDbmsId)
+              }
               .map { it[0] as String }
               .firstOrNull()?.let { ClassCode(it) } ?: DISABLED_CLASS_CODE
           }
@@ -573,7 +586,10 @@ class User {
           transaction {
             UserSessionsTable
               .slice(UserSessionsTable.previousTeacherClassCode)
-              .select { (UserSessionsTable.sessionRef eq user.queryOrCreateSessionDbmsId()) and (UserSessionsTable.userRef eq user.userDbmsId) }
+              .select {
+                (UserSessionsTable.sessionRef eq user.queryOrCreateSessionDbmsId()) and
+                  (UserSessionsTable.userRef eq user.userDbmsId)
+              }
               .map { it[0] as String }
               .firstOrNull()?.let { ClassCode(it) } ?: DISABLED_CLASS_CODE
           }
@@ -634,7 +650,7 @@ class User {
       name: FullName,
       email: Email,
       password: Password,
-      browserSession: BrowserSession?
+      browserSession: BrowserSession?,
     ): User =
       User(randomId(25), browserSession, false)
         .also { user ->

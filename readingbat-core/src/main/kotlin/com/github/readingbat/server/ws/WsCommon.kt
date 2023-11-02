@@ -36,7 +36,6 @@ import io.ktor.server.websocket.*
 import mu.two.KLogging
 
 object WsCommon : KLogging() {
-
   const val LANGUAGE_NAME = "languageName"
   const val GROUP_NAME = "groupName"
   const val STUDENT_ID = "studentId"
@@ -50,7 +49,7 @@ object WsCommon : KLogging() {
     classSummaryWsEndpoint(metrics, contentSrc)
     studentSummaryWsEndpoint(metrics, contentSrc)
     loggingWsEndpoint(metrics)
-    //clockWsEndpoint()
+    // clockWsEndpoint()
   }
 
   fun validateContext(
@@ -58,7 +57,7 @@ object WsCommon : KLogging() {
     groupName: GroupName?,
     classCode: ClassCode,
     student: User?,
-    user: User
+    user: User,
   ) =
     when {
       languageName.isNotNull() && languageName.isNotValid() -> false to "Invalid language: $languageName"

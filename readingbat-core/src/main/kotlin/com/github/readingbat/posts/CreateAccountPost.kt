@@ -51,7 +51,6 @@ import org.jetbrains.exposed.sql.Count
 import org.jetbrains.exposed.sql.select
 
 internal object CreateAccountPost : KLogging() {
-
   private val EMPTY_NAME_MSG = Message("Empty name value", true)
   private val EMPTY_EMAIL_MSG = Message("Empty email value", true)
   private val INVALID_EMAIL_MSG = Message("Invalid email value", true)

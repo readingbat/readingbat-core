@@ -31,7 +31,7 @@ import com.github.readingbat.dsl.readingBatContent
 
 val dslContent =
   readingBatContent {
-    //repo = GitHubRepo(organization, "readingbat-java-content")
+    // repo = GitHubRepo(organization, "readingbat-java-content")
 
     repo = FileSystemSource("./")
 
@@ -70,7 +70,6 @@ val dslContent =
       }
     }
 */
-
     /*
     include(GitHubContent(Organization, "readingbat", "readingbat-java-content").eval(this).java)
     include(GitHubContent(Organization, "readingbat", "readingbat-python-content", srcPath = "src").eval(this).python)
@@ -88,8 +87,7 @@ val dslContent =
           }
         }
     */
-
-    //include(GitHubContent(Organization, "readingbat", "readingbat-java-content", fileName = "Content.kt").eval(this, variableName = "content").java)
+    // include(GitHubContent(Organization, "readingbat", "readingbat-java-content", fileName = "Content.kt").eval(this, variableName = "content").java)
 
     include(GitHubContent(Organization, "readingbat", "readingbat-java-content").eval(this).java)
 
@@ -100,15 +98,15 @@ val dslContent =
         Organization,
         "readingbat",
         "readingbat-python-content",
-        srcPath = "src"
-      ).eval(this).python
+        srcPath = "src",
+      ).eval(this).python,
     )
 
     include(GitHubContent(User, "maleich", "ReadingBat-content").eval(this).python, "Athenian: ")
 
     python {
-      //repo = GitHubRepo(Organization, "readingbat", "readingbat-core")
-      //branchName = "1.12.0"
+      // repo = GitHubRepo(Organization, "readingbat", "readingbat-core")
+      // branchName = "1.12.0"
       repo = FileSystemSource("./")
       srcPath = "python"
 
@@ -116,7 +114,7 @@ val dslContent =
         packageName = "testcontent"
         description = "Tests"
 
-        challenge("divide1") { returnType = FloatType  /* This should be a float*/ }
+        challenge("divide1") { returnType = FloatType } // This should be a float
 
         challenge("boolean_array_test") { returnType = BooleanArrayType }
         challenge("int_array_test") { returnType = IntArrayType }

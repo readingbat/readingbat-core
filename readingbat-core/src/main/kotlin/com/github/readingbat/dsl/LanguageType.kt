@@ -27,7 +27,8 @@ import java.util.*
 enum class LanguageType(val useDoubleQuotes: Boolean, val suffix: String, val srcPrefix: String) {
   Java(true, "java", "src/main/java"),
   Python(false, "py", "python"),
-  Kotlin(true, "kt", "src/main/kotlin");
+  Kotlin(true, "kt", "src/main/kotlin"),
+  ;
 
   internal val languageName = LanguageName(name.lowercase(Locale.getDefault()))
   internal val contentRoot = pathOf(CHALLENGE_ROOT, languageName)

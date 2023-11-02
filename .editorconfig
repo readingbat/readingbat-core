@@ -1,0 +1,24 @@
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+indent_size = 2
+insert_final_newline = true
+max_line_length = 120
+trim_trailing_whitespace = true
+
+[*.{kt,kts}]
+ktlint_standard_final-newline = disabled
+ktlint_standard_no-wildcard-imports = disabled
+ktlint_standard_function-signature = disabled
+ktlint_standard_multiline-if-else = disabled
+ktlint_standard_class-signature = disabled
+ktlint_standard_string-template-indent = disabled
+ktlint_standard_no-multi-spaces = disabled
+ktlint_standard_class-naming = disabled
+ktlint_standard_indent = disabled
+ktlint_standard_property-naming = disabled
+ktlint_standard_no-empty-file = disabled
+ktlint_standard_no-consecutive-comments = disabled
+ktlint_standard_block-comment-initial-star-alignment = disabled

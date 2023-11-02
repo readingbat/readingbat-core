@@ -23,12 +23,11 @@ import com.github.readingbat.server.Invocation
 import mu.two.KLogging
 
 internal object PythonParse : KLogging() {
-
   internal val defMainRegex = Regex("""def\s+main\(""")
   internal val ifMainEndRegex = Regex("__main__")
   private val defRegex = Regex("^def.*\\(")
-  private const val printPrefix = "print("
-  internal const val varName = "answers"
+  private const val PRINT_PREFIX = "print("
+  internal const val VAR_NAME = "answers"
 
   fun extractPythonFunction(code: List<String>): String {
     val lineNums =
@@ -46,13 +45,14 @@ internal object PythonParse : KLogging() {
           line.contains(defMainRegex) -> insideMain = true
           insideMain -> {
             // Skip everything after def main(): that does not have a print
-            if (line.contains(printPrefix)) {
-              val expr = line.substringBetween(printPrefix, ")")
-              val str = "$varName.add($expr)"
+            if (line.contains(PRINT_PREFIX)) {
+              val expr = line.substringBetween(PRINT_PREFIX, ")")
+              val str = "$VAR_NAME.add($expr)"
               logger.debug { "Transformed: ${line.trim()} to: $str" }
               appendLine(str)
             }
           }
+
           else -> appendLine(line)
         }
       }
@@ -64,7 +64,7 @@ internal object PythonParse : KLogging() {
 
   fun extractPythonInvocations(code: List<String>, start: Regex, end: Regex) =
     code.linesBetween(start, end)
-      .filter { it.contains(printPrefix) }
-      .map { it.substringBetween(printPrefix, ")") }
+      .filter { it.contains(PRINT_PREFIX) }
+      .map { it.substringBetween(PRINT_PREFIX, ")") }
       .map { Invocation(it) }
 }

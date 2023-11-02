@@ -28,7 +28,7 @@ import com.github.readingbat.common.FormFields.NEW_PASSWORD_PARAM
 import com.github.readingbat.common.FormFields.RESET_ID_PARAM
 import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.Message
-import com.github.readingbat.common.Property
+import com.github.readingbat.common.Property.SENDGRID_PREFIX
 import com.github.readingbat.common.User.Companion.isNotRegisteredEmail
 import com.github.readingbat.common.User.Companion.queryUserByEmail
 import com.github.readingbat.common.isNotValidUser
@@ -87,21 +87,23 @@ internal object PasswordResetPost : KLogging() {
 
           // Lookup and remove previous value if it exists
           val user2 = queryUserByEmail(email) ?: throw ResetPasswordException("Unable to find $email")
-          //val previousResetId = user2.userPasswordResetId()
+          // val previousResetId = user2.userPasswordResetId()
           user2.savePasswordResetId(email, newResetId)
 
           runCatching {
+            val sg = SENDGRID_PREFIX.getProperty("")
             sendEmail(
               to = email,
               from = Email("reset@readingbat.com"),
               subject = "ReadingBat password reset",
-              msg = Message(
+              msg =
+              Message(
                 """
                 |This is a password reset message for the ReadingBat.com account for '$email'
-                |Go to this URL to set a new password: ${Property.SENDGRID_PREFIX.getProperty("")}$PASSWORD_RESET_ENDPOINT?$RESET_ID_PARAM=$newResetId 
+                |Go to this URL to set a new password: $sg$PASSWORD_RESET_ENDPOINT?$RESET_ID_PARAM=$newResetId
                 |If you did not request to reset your password, please ignore this message.
-              """.trimMargin()
-              )
+                """.trimMargin(),
+              ),
             )
           }.onFailure { e ->
             logger.info(e) { e.message }

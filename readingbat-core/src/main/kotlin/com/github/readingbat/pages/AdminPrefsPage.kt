@@ -48,7 +48,6 @@ import kotlinx.html.title
 import mu.two.KLogging
 
 internal object AdminPrefsPage : KLogging() {
-
   fun PipelineCall.adminPrefsPage(content: ReadingBatContent, user: User?) =
     createHTML()
       .html {
@@ -65,15 +64,24 @@ internal object AdminPrefsPage : KLogging() {
 
           if (!isProduction() || user.isAdminUser()) {
             p(classes = INDENT_1EM) {
-              a { href = "$CONFIG_ENDPOINT?$RETURN_PARAM=$returnPath"; +"System Configuration" }
+              a {
+                href = "$CONFIG_ENDPOINT?$RETURN_PARAM=$returnPath"
+                +"System Configuration"
+              }
             }
 
             p(classes = INDENT_1EM) {
-              a { href = "$SESSIONS_ENDPOINT?$RETURN_PARAM=$returnPath&$DAYS_PARAM=$DAYS_DEFAULT"; +"Current Sessions" }
+              a {
+                href = "$SESSIONS_ENDPOINT?$RETURN_PARAM=$returnPath&$DAYS_PARAM=$DAYS_DEFAULT"
+                +"Current Sessions"
+              }
             }
 
             p(classes = INDENT_1EM) {
-              a { href = "$SYSTEM_ADMIN_ENDPOINT?$RETURN_PARAM=$returnPath"; +"System Admin" }
+              a {
+                href = "$SYSTEM_ADMIN_ENDPOINT?$RETURN_PARAM=$returnPath"
+                +"System Admin"
+              }
             }
 
             Property.PINGDOM_BANNER_ID.getPropertyOrNull()

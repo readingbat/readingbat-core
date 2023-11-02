@@ -68,12 +68,11 @@ import kotlinx.serialization.json.Json
 import mu.two.KLogging
 
 internal object ChallengeGroupPage : KLogging() {
-
   fun PipelineCall.challengeGroupPage(
     content: ReadingBatContent,
     user: User?,
     challengeGroup: ChallengeGroup<*>,
-    loginAttempt: Boolean
+    loginAttempt: Boolean,
   ) =
     createHTML()
       .html {
@@ -103,7 +102,10 @@ internal object ChallengeGroupPage : KLogging() {
 
             // This element is dynamically populated by the websocket data
             if (enrollees.isNotEmpty())
-              span { id = challengeName.value; +"" }
+              span {
+                id = challengeName.value
+                +""
+              }
           }
         }
 
@@ -124,8 +126,8 @@ internal object ChallengeGroupPage : KLogging() {
             val size = challenges.size
             val rows = size.rows(COLUMN_CNT)
 
-            //val width = if (enrollees.isNotEmpty()) 1200 else 800
-            //style = "width:${width}px"
+            // val width = if (enrollees.isNotEmpty()) 1200 else 800
+            // style = "width:${width}px"
             style = "width:100%"
 
             repeat(rows) { i ->
@@ -156,7 +158,7 @@ internal object ChallengeGroupPage : KLogging() {
     classCode: ClassCode,
     languageName: LanguageName,
     groupName: GroupName,
-    enrollees: List<User>
+    enrollees: List<User>,
   ) {
     h3 {
       style = "margin-left: 5px; color: $HEADER_COLOR"
@@ -175,7 +177,7 @@ internal object ChallengeGroupPage : KLogging() {
   private fun BODY.enableWebSockets(langName: LanguageName, groupName: GroupName, classCode: ClassCode) {
     script {
       rawHtml(
-        """ 
+        """
           var wshost = location.origin;
           if (wshost.startsWith('https:'))
             wshost = wshost.replace(/^https:/, 'wss:');
@@ -186,15 +188,15 @@ internal object ChallengeGroupPage : KLogging() {
           var ws = new WebSocket(wsurl);
 
           ws.onopen = function (event) {
-            ws.send("$classCode"); 
+            ws.send("$classCode");
           };
-          
+
           ws.onmessage = function (event) {
             //console.log(event.data);
             var obj = JSON.parse(event.data)
             document.getElementById(obj.challengeName).innerText = obj.msg;
           };
-        """.trimIndent()
+        """.trimIndent(),
       )
     }
   }
@@ -204,7 +206,7 @@ internal object ChallengeGroupPage : KLogging() {
     browserSession: BrowserSession?,
     languageName: LanguageName,
     groupName: GroupName,
-    challenges: List<Challenge>
+    challenges: List<Challenge>,
   ) {
     val correctAnswersKeys = challenges.map { correctAnswersKey(user, browserSession, it) }
     val challengeAnswerKeys = challenges.map { challengeAnswersKey(user, browserSession, it) }
@@ -215,10 +217,22 @@ internal object ChallengeGroupPage : KLogging() {
         action = CLEAR_GROUP_ANSWERS_ENDPOINT
         method = FormMethod.post
         onSubmit = """return confirm('Are you sure you want to clear your previous answers for group "$groupName"?')"""
-        hiddenInput { name = LANGUAGE_NAME_PARAM; value = languageName.value }
-        hiddenInput { name = GROUP_NAME_PARAM; value = groupName.value }
-        hiddenInput { name = CORRECT_ANSWERS_PARAM; value = Json.encodeToString(correctAnswersKeys) }
-        hiddenInput { name = CHALLENGE_ANSWERS_PARAM; value = Json.encodeToString(challengeAnswerKeys) }
+        hiddenInput {
+          name = LANGUAGE_NAME_PARAM
+          value = languageName.value
+        }
+        hiddenInput {
+          name = GROUP_NAME_PARAM
+          value = groupName.value
+        }
+        hiddenInput {
+          name = CORRECT_ANSWERS_PARAM
+          value = Json.encodeToString(correctAnswersKeys)
+        }
+        hiddenInput {
+          name = CHALLENGE_ANSWERS_PARAM
+          value = Json.encodeToString(challengeAnswerKeys)
+        }
         submitInput {
           style = "vertical-align:middle; margin-top:1; margin-bottom:0"
           value = "Clear answer history"

@@ -60,7 +60,6 @@ import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
 
 internal object SystemConfigurationPage {
-
   fun PipelineCall.systemConfigurationPage(content: ReadingBatContent) =
     createHTML()
       .html {
