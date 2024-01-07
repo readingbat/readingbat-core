@@ -105,7 +105,8 @@ internal fun Application.intercepts() {
             else
               geoInfo.dbmsId
 
-          logger.debug { "Saving request: ${call.callId} $ipAddress $userDbmsId $verbVal $pathVal $queryStringVal $geoDbmsId" }
+          val s = call.callId
+          logger.debug { "Saving request: $s $ipAddress $userDbmsId $verbVal $pathVal $queryStringVal $geoDbmsId" }
           transaction {
             with(ServerRequestsTable) {
               insert { row ->

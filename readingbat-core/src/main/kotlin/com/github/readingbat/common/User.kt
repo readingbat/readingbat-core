@@ -298,7 +298,7 @@ class User {
             Invocation(it[invocation]),
             it[correct],
             it[incorrectAttempts].toInt(),
-            history
+            history,
           )
         }
         .firstOrNull() ?: ChallengeHistory(invocationVal)

@@ -104,19 +104,22 @@ internal object SessionActivites : KLogging() {
   fun activeSessions(duration: Duration): Long =
     when {
       !isDbmsEnabled() -> 0
-      else -> readonlyTx {
-        // addLogger(KotlinLoggingSqlLogger)
-        measureTimedValue {
-          with(ServerRequestsTable) {
-            select(sessionRef.countDistinct())
-              .where { created greater dateTimeExpr("now() - interval '${duration.inWholeMilliseconds} milliseconds'") }
-              .map { it[0] as Long }
-              .first()
+
+      else ->
+        readonlyTx {
+          // addLogger(KotlinLoggingSqlLogger)
+          measureTimedValue {
+            with(ServerRequestsTable) {
+              val ms = duration.inWholeMilliseconds
+              select(sessionRef.countDistinct())
+                .where { created greater dateTimeExpr("now() - interval '$ms milliseconds'") }
+                .map { it[0] as Long }
+                .first()
+            }
+          }.let { (query, duration) ->
+            logger.debug { "Active sessions query took $duration" }
+            query
           }
-        }.let { (query, duration) ->
-          logger.debug { "Active sessions query took $duration" }
-          query
         }
-      }
     }
 }
