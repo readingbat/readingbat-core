@@ -68,7 +68,6 @@ import com.pambrose.common.exposed.readonlyTx
 import kotlinx.coroutines.runBlocking
 import mu.two.KLogging
 import org.jetbrains.exposed.sql.and
-import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.net.URL
 import java.nio.file.Paths
@@ -200,25 +199,22 @@ sealed class Challenge(
       !isDbmsEnabled() -> false
       user.isNotNull() ->
         readonlyTx {
-          UserChallengeInfoTable
-            .slice(UserChallengeInfoTable.allCorrect)
-            .select {
-              (UserChallengeInfoTable.userRef eq user.userDbmsId) and (UserChallengeInfoTable.md5 eq challengeMd5)
-            }
-            .map { it[0] as Boolean }
-            .firstOrNull() ?: false
+          with(UserChallengeInfoTable) {
+            select(allCorrect)
+              .where { (userRef eq user.userDbmsId) and (md5 eq challengeMd5) }
+              .map { it[0] as Boolean }
+              .firstOrNull() ?: false
+          }
         }
 
       browserSession.isNotNull() ->
         transaction {
-          SessionChallengeInfoTable
-            .slice(SessionChallengeInfoTable.allCorrect)
-            .select {
-              (SessionChallengeInfoTable.sessionRef eq browserSession.queryOrCreateSessionDbmsId()) and
-                (SessionChallengeInfoTable.md5 eq challengeMd5)
-            }
-            .map { it[0] as Boolean }
-            .firstOrNull() ?: false
+          with(SessionChallengeInfoTable) {
+            select(allCorrect)
+              .where { (sessionRef eq browserSession.queryOrCreateSessionDbmsId()) and (md5 eq challengeMd5) }
+              .map { it[0] as Boolean }
+              .firstOrNull() ?: false
+          }
         }
 
       else -> false

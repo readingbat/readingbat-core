@@ -92,11 +92,11 @@ internal fun Application.intercepts() {
           val sessionDbmsId = transaction { findOrCreateSessionDbmsId(browserSession.id, true) }
           val userDbmsId =
             call.fetchUserDbmsIdFromCache().takeIf { it != -1L } ?: fetchUserDbmsIdFromCache(UNKNOWN_USER_ID)
-          val verb = request.httpMethod.value
-          val path = request.path()
-          val queryString = request.queryString()
+          val verbVal = request.httpMethod.value
+          val pathVal = request.path()
+          val queryStringVal = request.queryString()
           // Use https://ipgeolocation.io/documentation/user-agent-api.html to parse userAgent data
-          val userAgent = request.headers[UserAgent] ?: ""
+          val userAgentVal = request.headers[UserAgent] ?: ""
 
           val geoInfo = lookupGeoInfo(ipAddress)
           val geoDbmsId =
@@ -105,20 +105,21 @@ internal fun Application.intercepts() {
             else
               geoInfo.dbmsId
 
-          logger.debug { "Saving request: ${call.callId} $ipAddress $userDbmsId $verb $path $queryString $geoDbmsId" }
+          logger.debug { "Saving request: ${call.callId} $ipAddress $userDbmsId $verbVal $pathVal $queryStringVal $geoDbmsId" }
           transaction {
-            ServerRequestsTable
-              .insert { row ->
+            with(ServerRequestsTable) {
+              insert { row ->
                 row[requestId] = call.callId ?: "None"
                 row[sessionRef] = sessionDbmsId
                 row[userRef] = userDbmsId
                 row[geoRef] = geoDbmsId
-                row[ServerRequestsTable.verb] = verb
-                row[ServerRequestsTable.path] = path.maxLength(256)
-                row[ServerRequestsTable.queryString] = queryString.maxLength(256)
-                row[ServerRequestsTable.userAgent] = userAgent.maxLength(256)
+                row[verb] = verbVal
+                row[path] = pathVal.maxLength(256)
+                row[queryString] = queryStringVal.maxLength(256)
+                row[userAgent] = userAgentVal.maxLength(256)
                 row[duration] = 0
               }
+            }
           }
         }
       }.onFailure { e ->
@@ -178,10 +179,11 @@ internal fun Application.intercepts() {
 
 fun updateServerRequest(callId: String, start: TimeMark) {
   transaction {
-    ServerRequestsTable
-      .update({ ServerRequestsTable.requestId eq callId }) { row ->
+    with(ServerRequestsTable) {
+      update({ requestId eq callId }) { row ->
         row[duration] = start.elapsedNow().inWholeMilliseconds
       }
+    }
   }
 }
 

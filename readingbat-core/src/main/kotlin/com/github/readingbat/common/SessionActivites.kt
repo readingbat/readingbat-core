@@ -33,7 +33,6 @@ import org.jetbrains.exposed.sql.Max
 import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.countDistinct
 import org.jetbrains.exposed.sql.jodatime.DateColumnType
-import org.jetbrains.exposed.sql.select
 import org.joda.time.DateTime
 import org.joda.time.DateTimeZone
 import kotlin.math.min
@@ -76,8 +75,8 @@ internal object SessionActivites : KLogging() {
         val elems = arrayOf(fullName, email, ip, city, state, country, isp, flagUrl, userAgent)
 
         (ServerRequestsTable innerJoin BrowserSessionsTable innerJoin UsersTable innerJoin GeoInfosTable)
-          .slice(session_id, *elems, count, maxDate)
-          .select { created greater dateTimeExpr("now() - interval '${min(dayCount, 14)} day'") }
+          .select(session_id, *elems, count, maxDate)
+          .where { created greater dateTimeExpr("now() - interval '${min(dayCount, 14)} day'") }
           .groupBy(*(arrayOf(session_id) + elems))
           .orderBy(maxDate, SortOrder.DESC)
           .map { row ->
@@ -103,24 +102,21 @@ internal object SessionActivites : KLogging() {
     }
 
   fun activeSessions(duration: Duration): Long =
-    if (!isDbmsEnabled())
-      0
-    else
-      readonlyTx {
+    when {
+      !isDbmsEnabled() -> 0
+      else -> readonlyTx {
         // addLogger(KotlinLoggingSqlLogger)
         measureTimedValue {
-          val sessionRef = ServerRequestsTable.sessionRef
-          val created = ServerRequestsTable.created
-          ServerRequestsTable
-            .slice(sessionRef.countDistinct())
-            .select {
-              created greater dateTimeExpr("now() - interval '${duration.inWholeMilliseconds} milliseconds'")
-            }
-            .map { it[0] as Long }
-            .first()
+          with(ServerRequestsTable) {
+            select(sessionRef.countDistinct())
+              .where { created greater dateTimeExpr("now() - interval '${duration.inWholeMilliseconds} milliseconds'") }
+              .map { it[0] as Long }
+              .first()
+          }
         }.let { (query, duration) ->
           logger.debug { "Active sessions query took $duration" }
           query
         }
       }
+    }
 }

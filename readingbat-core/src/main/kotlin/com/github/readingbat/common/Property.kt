@@ -355,9 +355,14 @@ sealed class Property(
       initFunc = { setPropertyFromConfig(it, "30") },
     )
 
-  object REDIS_MAX_POOL_SIZE : Property(RedisUtils.REDIS_MAX_POOL_SIZE, initFunc = { setPropertyFromConfig(it, "10") })
-  object REDIS_MAX_IDLE_SIZE : Property(RedisUtils.REDIS_MAX_IDLE_SIZE, initFunc = { setPropertyFromConfig(it, "5") })
-  object REDIS_MIN_IDLE_SIZE : Property(RedisUtils.REDIS_MIN_IDLE_SIZE, initFunc = { setPropertyFromConfig(it, "1") })
+  object REDIS_MAX_POOL_SIZE :
+    Property(RedisUtils.REDIS_MAX_POOL_SIZE, initFunc = { setPropertyFromConfig(it, "10") })
+
+  object REDIS_MAX_IDLE_SIZE :
+    Property(RedisUtils.REDIS_MAX_IDLE_SIZE, initFunc = { setPropertyFromConfig(it, "5") })
+
+  object REDIS_MIN_IDLE_SIZE :
+    Property(RedisUtils.REDIS_MIN_IDLE_SIZE, initFunc = { setPropertyFromConfig(it, "1") })
 
   companion object : KLogging() {
     fun initProperties() =

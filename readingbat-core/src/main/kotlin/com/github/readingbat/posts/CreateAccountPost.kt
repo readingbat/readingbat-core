@@ -48,7 +48,6 @@ import io.ktor.server.request.*
 import io.ktor.server.sessions.*
 import mu.two.KLogging
 import org.jetbrains.exposed.sql.Count
-import org.jetbrains.exposed.sql.select
 
 internal object CreateAccountPost : KLogging() {
   private val EMPTY_NAME_MSG = Message("Empty name value", true)
@@ -93,13 +92,14 @@ internal object CreateAccountPost : KLogging() {
     }
   }
 
-  private fun emailExists(email: Email) =
+  private fun emailExists(emailVal: Email) =
     readonlyTx {
-      UsersTable
-        .slice(Count(UsersTable.id))
-        .select { UsersTable.email eq email.value }
-        .map { it[0] as Long }
-        .first() > 0
+      with(UsersTable) {
+        select(Count(id))
+          .where { email eq emailVal.value }
+          .map { it[0] as Long }
+          .first() > 0
+      }
     }
 
   private fun PipelineCall.createAccount(name: FullName, email: Email, password: Password): String {

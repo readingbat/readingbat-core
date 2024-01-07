@@ -49,7 +49,6 @@ import com.pambrose.common.exposed.readonlyTx
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 import mu.two.KLogging
-import org.jetbrains.exposed.sql.select
 import org.joda.time.DateTime
 import org.joda.time.DateTime.now
 import org.joda.time.Seconds
@@ -60,19 +59,20 @@ internal object PasswordResetPage : KLogging() {
   private const val FORM_NAME = "pform"
   private const val PASSWORD_BUTTON = "UpdatePasswordButton"
 
-  fun PipelineCall.passwordResetPage(resetId: ResetId, msg: Message = EMPTY_MESSAGE) =
-    if (resetId.isBlank()) {
+  fun PipelineCall.passwordResetPage(resetIdVal: ResetId, msg: Message = EMPTY_MESSAGE) =
+    if (resetIdVal.isBlank()) {
       requestPasswordResetPage(msg)
     } else {
       try {
         val email =
           readonlyTx {
             val idAndUpdate =
-              PasswordResetsTable
-                .slice(PasswordResetsTable.email, PasswordResetsTable.updated)
-                .select { PasswordResetsTable.resetId eq resetId.value }
-                .map { it[0] as String to it[1] as DateTime }
-                .firstOrNull() ?: throw ResetPasswordException("Invalid reset id. Try again.")
+              with(PasswordResetsTable) {
+                select(email, updated)
+                  .where { resetId eq resetIdVal.value }
+                  .map { it[0] as String to it[1] as DateTime }
+                  .firstOrNull() ?: throw ResetPasswordException("Invalid reset id. Try again.")
+              }
 
             Seconds.secondsBetween(idAndUpdate.second, now()).seconds.seconds
               .let { diff ->
@@ -83,7 +83,7 @@ internal object PasswordResetPage : KLogging() {
               }
           }
 
-        changePasswordPage(Email(email), resetId, msg)
+        changePasswordPage(Email(email), resetIdVal, msg)
       } catch (e: ResetPasswordException) {
         logger.info { e }
         requestPasswordResetPage(Message(e.message ?: "Unable to reset password", true))

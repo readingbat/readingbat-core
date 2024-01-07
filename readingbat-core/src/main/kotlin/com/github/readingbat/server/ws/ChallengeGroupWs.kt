@@ -47,7 +47,6 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import mu.two.KLogging
 import org.jetbrains.exposed.sql.and
-import org.jetbrains.exposed.sql.select
 import java.util.concurrent.atomic.AtomicBoolean
 
 internal object ChallengeGroupWs : KLogging() {
@@ -132,22 +131,20 @@ internal object ChallengeGroupWs : KLogging() {
                         break
                     }
 
-                    val likeDislike =
+                    val likeDislikeVal =
                       readonlyTx {
-                        val challengeMd5 = md5Of(languageName, groupName, challengeName)
-                        val likeDislike = UserChallengeInfoTable.likeDislike
-                        val userRef = UserChallengeInfoTable.userRef
-                        val md5 = UserChallengeInfoTable.md5
-                        UserChallengeInfoTable
-                          .slice(likeDislike)
-                          .select { (userRef eq enrollee.userDbmsId) and (md5 eq challengeMd5) }
-                          .map { it[likeDislike].toInt() }
-                          .firstOrNull() ?: 0
+                        val md5Val = md5Of(languageName, groupName, challengeName)
+                        with(UserChallengeInfoTable) {
+                          select(likeDislike)
+                            .where { (userRef eq enrollee.userDbmsId) and (md5 eq md5Val) }
+                            .map { it[likeDislike].toInt() }
+                            .firstOrNull() ?: 0
+                        }
                       }
 
-                    if (likeDislike == 1)
+                    if (likeDislikeVal == 1)
                       likes++
-                    else if (likeDislike == 2)
+                    else if (likeDislikeVal == 2)
                       dislikes++
 
                     if (attempted > 0)

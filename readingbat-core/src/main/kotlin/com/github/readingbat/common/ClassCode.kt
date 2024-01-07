@@ -33,7 +33,7 @@ import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.select
+import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
 import kotlin.time.measureTimedValue
 
@@ -47,11 +47,12 @@ data class ClassCode(val classCode: String) {
     get() =
       measureTimedValue {
         readonlyTx {
-          ClassesTable
-            .slice(ClassesTable.id)
-            .select { ClassesTable.classCode eq classCode }
-            .map { it[ClassesTable.id].value }
-            .firstOrNull() ?: error("Missing class code $classCode")
+          with(ClassesTable) {
+            select(id)
+              .where { classCode eq this@ClassCode.classCode }
+              .map { it[id].value }
+              .firstOrNull() ?: error("Missing class code $classCode")
+          }
         }
       }.let {
         logger.debug { "Looked up classId in ${it.duration}" }
@@ -62,11 +63,12 @@ data class ClassCode(val classCode: String) {
 
   fun isValid() =
     readonlyTx {
-      ClassesTable
-        .slice(Count(ClassesTable.classCode))
-        .select { ClassesTable.classCode eq classCode }
-        .map { it[0] as Long }
-        .first().also { logger.debug { "ClassCode.isValid() returned $it for $classCode" } } > 0
+      with(ClassesTable) {
+        select(Count(classCode))
+          .where { classCode eq this@ClassCode.classCode }
+          .map { it[0] as Long }
+          .first().also { logger.debug { "ClassCode.isValid() returned $it for $classCode" } } > 0
+      }
     }
 
   fun fetchEnrollees(): List<User> =
@@ -76,38 +78,47 @@ data class ClassCode(val classCode: String) {
       readonlyTx {
         val userIds =
           (ClassesTable innerJoin EnrolleesTable)
-            .slice(EnrolleesTable.userRef)
-            .select { ClassesTable.classCode eq classCode }
+            .select(EnrolleesTable.userRef)
+            .where { ClassesTable.classCode eq classCode }
             .map { it[0] as Long }
 
-        UsersTable
-          .select { UsersTable.id inList userIds }
-          .map { it[UsersTable.userId].toUser(it) }
-          .also { logger.debug { "fetchEnrollees() returning ${it.size} users" } }
+        with(UsersTable) {
+          selectAll()
+            .where { id inList userIds }
+            .map { it[userId].toUser(it) }
+            .also { logger.debug { "fetchEnrollees() returning ${it.size} users" } }
+        }
       }
 
-  fun deleteClassCode() = ClassesTable.deleteWhere { classCode eq this@ClassCode.classCode }
+  fun deleteClassCode() =
+    with(ClassesTable) {
+      deleteWhere { classCode eq this@ClassCode.classCode }
+    }
 
   fun addEnrollee(user: User) =
     transaction {
-      EnrolleesTable
-        .insert { row ->
+      with(EnrolleesTable) {
+        insert { row ->
           row[classesRef] = classCodeDbmsId
           row[userRef] = user.userDbmsId
         }
+      }
     }
 
   fun removeEnrollee(user: User) =
-    EnrolleesTable.deleteWhere { (classesRef eq this@ClassCode.classCodeDbmsId) and (userRef eq user.userDbmsId) }
+    with(EnrolleesTable) {
+      deleteWhere { (classesRef eq this@ClassCode.classCodeDbmsId) and (userRef eq user.userDbmsId) }
+    }
 
   fun fetchClassDesc(quoted: Boolean = false) =
     readonlyTx {
       (
-        ClassesTable
-          .slice(ClassesTable.description)
-          .select { ClassesTable.classCode eq classCode }
-          .map { it[0] as String }
-          .firstOrNull() ?: "Missing description"
+        with(ClassesTable) {
+          select(description)
+            .where { classCode eq this@ClassCode.classCode }
+            .map { it[0] as String }
+            .firstOrNull() ?: "Missing description"
+        }
         ).also { logger.debug { "fetchClassDesc() returned ${it.toDoubleQuoted()} for $classCode" } }
     }.let { if (quoted) it.toDoubleQuoted() else it }
 
@@ -117,8 +128,8 @@ data class ClassCode(val classCode: String) {
     readonlyTx {
       (
         (ClassesTable innerJoin UsersTable)
-          .slice(UsersTable.userId)
-          .select { ClassesTable.classCode eq classCode }
+          .select(UsersTable.userId)
+          .where { ClassesTable.classCode eq this@ClassCode.classCode }
           .map { it[0] as String }
           .firstOrNull() ?: ""
         ).also { logger.debug { "fetchClassTeacherId() returned $it" } }

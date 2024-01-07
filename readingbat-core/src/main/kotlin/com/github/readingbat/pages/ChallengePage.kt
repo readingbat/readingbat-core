@@ -113,7 +113,6 @@ import kotlinx.html.stream.createHTML
 import kotlinx.serialization.json.Json
 import mu.two.KLogging
 import org.jetbrains.exposed.sql.and
-import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
 
 internal object ChallengePage : KLogging() {
@@ -761,29 +760,26 @@ internal object ChallengePage : KLogging() {
       !isDbmsEnabled() -> emptyMap
       user.isNotNull() ->
         readonlyTx {
-          UserChallengeInfoTable
-            .slice(UserChallengeInfoTable.answersJson)
-            .select {
-              (UserChallengeInfoTable.userRef eq user.userDbmsId) and (UserChallengeInfoTable.md5 eq challenge.md5())
-            }
-            .map { it[0] as String }
-            .firstOrNull()
-            ?.let { Json.decodeFromString<Map<String, String>>(it) }
-            ?: emptyMap
+          with(UserChallengeInfoTable) {
+            select(answersJson)
+              .where { (userRef eq user.userDbmsId) and (md5 eq challenge.md5()) }
+              .map { it[0] as String }
+              .firstOrNull()
+              ?.let { Json.decodeFromString<Map<String, String>>(it) }
+              ?: emptyMap
+          }
         }
 
       browserSession.isNotNull() ->
         transaction {
-          SessionChallengeInfoTable
-            .slice(SessionChallengeInfoTable.answersJson)
-            .select {
-              (SessionChallengeInfoTable.sessionRef eq browserSession.queryOrCreateSessionDbmsId()) and
-                (SessionChallengeInfoTable.md5 eq challenge.md5())
-            }
-            .map { it[0] as String }
-            .firstOrNull()
-            ?.let { Json.decodeFromString<Map<String, String>>(it) }
-            ?: emptyMap
+          with(SessionChallengeInfoTable) {
+            select(answersJson)
+              .where { (sessionRef eq browserSession.queryOrCreateSessionDbmsId()) and (md5 eq challenge.md5()) }
+              .map { it[0] as String }
+              .firstOrNull()
+              ?.let { Json.decodeFromString<Map<String, String>>(it) }
+              ?: emptyMap
+          }
         }
 
       else -> emptyMap

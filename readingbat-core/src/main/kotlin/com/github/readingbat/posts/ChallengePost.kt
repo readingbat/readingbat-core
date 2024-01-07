@@ -204,37 +204,41 @@ internal object ChallengePost : KLogging() {
     call.respondText(answerMapping.toString())
   }
 
-  private fun deleteChallengeInfo(type: String, id: String, md5: String) =
+  private fun deleteChallengeInfo(type: String, id: String, md5Val: String) =
     when (type) {
       AUTH_KEY ->
         transaction {
-          UserChallengeInfoTable
-            .deleteWhere { (userRef eq fetchUserDbmsIdFromCache(id)) and (UserChallengeInfoTable.md5 eq md5) }
+          with(UserChallengeInfoTable) {
+            deleteWhere { (userRef eq fetchUserDbmsIdFromCache(id)) and (md5 eq md5Val) }
+          }
         }
 
       NO_AUTH_KEY ->
         transaction {
           val sessionDbmsId = findOrCreateSessionDbmsId(id, false)
-          SessionChallengeInfoTable
-            .deleteWhere { (sessionRef eq sessionDbmsId) and (SessionChallengeInfoTable.md5 eq md5) }
+          with(SessionChallengeInfoTable) {
+            deleteWhere { (sessionRef eq sessionDbmsId) and (md5 eq md5Val) }
+          }
         }
 
       else -> error("Invalid type: $type")
     }
 
-  private fun deleteAnswerHistory(type: String, id: String, md5: String) =
+  private fun deleteAnswerHistory(type: String, id: String, md5Val: String) =
     when (type) {
       AUTH_KEY ->
         transaction {
-          UserAnswerHistoryTable
-            .deleteWhere { (userRef eq fetchUserDbmsIdFromCache(id)) and (UserAnswerHistoryTable.md5 eq md5) }
+          with(UserAnswerHistoryTable) {
+            deleteWhere { (userRef eq fetchUserDbmsIdFromCache(id)) and (md5 eq md5Val) }
+          }
         }
 
       NO_AUTH_KEY ->
         transaction {
           val sessionDbmsId = findOrCreateSessionDbmsId(id, false)
-          SessionAnswerHistoryTable
-            .deleteWhere { (sessionRef eq sessionDbmsId) and (SessionAnswerHistoryTable.md5 eq md5) }
+          with(SessionAnswerHistoryTable) {
+            deleteWhere { (sessionRef eq sessionDbmsId) and (md5 eq md5Val) }
+          }
         }
 
       else -> error("Invalid type: $type")
@@ -380,24 +384,26 @@ internal object ChallengePost : KLogging() {
     transaction {
       when {
         user.isNotNull() ->
-          UserChallengeInfoTable
-            .upsert(conflictIndex = userChallengeInfoIndex) { row ->
+          with(UserChallengeInfoTable) {
+            upsert(conflictIndex = userChallengeInfoIndex) { row ->
               row[userRef] = user.userDbmsId
               row[md5] = challengeMd5
               row[updated] = DateTime.now(DateTimeZone.UTC)
               row[allCorrect] = complete
               row[answersJson] = invokeStr
             }
+          }
 
         browserSession.isNotNull() ->
-          SessionChallengeInfoTable
-            .upsert(conflictIndex = sessionChallengeInfoIndex) { row ->
+          with(SessionChallengeInfoTable) {
+            upsert(conflictIndex = sessionChallengeInfoIndex) { row ->
               row[sessionRef] = browserSession.queryOrCreateSessionDbmsId()
               row[md5] = challengeMd5
               row[updated] = DateTime.now(DateTimeZone.UTC)
               row[allCorrect] = complete
               row[answersJson] = invokeStr
             }
+          }
 
         else ->
           logger.warn { "ChallengeInfo not updated" }
@@ -420,36 +426,38 @@ internal object ChallengePost : KLogging() {
           else -> history.markIncorrect(result.userResponse)
         }
 
-        val invocation = history.invocation.value
-        val updated = DateTime.now(DateTimeZone.UTC)
-        val correct = history.correct
-        val incorrectAttempts = history.incorrectAttempts
+        val invocationVal = history.invocation.value
+        val updatedVal = DateTime.now(DateTimeZone.UTC)
+        val correctVal = history.correct
+        val incorrectAttemptsVal = history.incorrectAttempts
         val json = Json.encodeToString(history.answers)
 
         when {
           user.isNotNull() ->
-            UserAnswerHistoryTable
-              .upsert(conflictIndex = userAnswerHistoryIndex) { row ->
+            with(UserAnswerHistoryTable) {
+              upsert(conflictIndex = userAnswerHistoryIndex) { row ->
                 row[userRef] = user.userDbmsId
                 row[md5] = historyMd5
-                row[UserAnswerHistoryTable.invocation] = invocation
-                row[UserAnswerHistoryTable.updated] = updated
-                row[UserAnswerHistoryTable.correct] = correct
-                row[UserAnswerHistoryTable.incorrectAttempts] = incorrectAttempts
+                row[invocation] = invocationVal
+                row[updated] = updatedVal
+                row[correct] = correctVal
+                row[incorrectAttempts] = incorrectAttemptsVal
                 row[historyJson] = json
               }
+            }
 
           browserSession.isNotNull() ->
-            SessionAnswerHistoryTable
-              .upsert(conflictIndex = sessionAnswerHistoryIndex) { row ->
+            with(SessionAnswerHistoryTable) {
+              upsert(conflictIndex = sessionAnswerHistoryIndex) { row ->
                 row[sessionRef] = browserSession.queryOrCreateSessionDbmsId()
                 row[md5] = historyMd5
-                row[SessionAnswerHistoryTable.invocation] = invocation
-                row[SessionAnswerHistoryTable.updated] = updated
-                row[SessionAnswerHistoryTable.correct] = correct
-                row[SessionAnswerHistoryTable.incorrectAttempts] = incorrectAttempts
+                row[invocation] = invocationVal
+                row[updated] = updatedVal
+                row[correct] = correctVal
+                row[incorrectAttempts] = incorrectAttemptsVal
                 row[historyJson] = json
               }
+            }
 
           else ->
             logger.warn { "Answer history not updated" }
@@ -476,13 +484,14 @@ internal object ChallengePost : KLogging() {
     when {
       user.isNotNull() -> {
         transaction {
-          UserChallengeInfoTable
-            .upsert(conflictIndex = userChallengeInfoIndex) { row ->
+          with(UserChallengeInfoTable) {
+            upsert(conflictIndex = userChallengeInfoIndex) { row ->
               row[userRef] = user.userDbmsId
               row[md5] = challengeMd5
               row[updated] = DateTime.now(DateTimeZone.UTC)
               row[likeDislike] = likeDislikeVal.toShort()
             }
+          }
         }
         if (shouldPublish)
           user.publishLikeDislike(challengeMd5, likeDislikeVal)
@@ -490,13 +499,14 @@ internal object ChallengePost : KLogging() {
 
       browserSession.isNotNull() ->
         transaction {
-          SessionChallengeInfoTable
-            .upsert(conflictIndex = sessionChallengeInfoIndex) { row ->
+          with(SessionChallengeInfoTable) {
+            upsert(conflictIndex = sessionChallengeInfoIndex) { row ->
               row[sessionRef] = browserSession.queryOrCreateSessionDbmsId()
               row[md5] = challengeMd5
               row[updated] = DateTime.now(DateTimeZone.UTC)
               row[likeDislike] = likeDislikeVal.toShort()
             }
+          }
         }
 
       else -> {

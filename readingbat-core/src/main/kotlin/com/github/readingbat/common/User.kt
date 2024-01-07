@@ -70,7 +70,7 @@ import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.insertAndGetId
 import org.jetbrains.exposed.sql.or
-import org.jetbrains.exposed.sql.select
+import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.update
 import org.joda.time.DateTime
@@ -81,20 +81,22 @@ import kotlin.time.measureTime
 
 class User {
   private constructor(
-    userId: String,
+    idStr: String,
     browserSession: BrowserSession?,
     initFields: Boolean,
   ) {
-    this.userId = userId
+    this.userId = idStr
     this.browserSession = browserSession
 
     if (initFields && isDbmsEnabled()) {
       measureTime {
         readonlyTx {
-          UsersTable
-            .select { UsersTable.userId eq this@User.userId }
-            .map { assignRowVals(it) }
-            .firstOrNull() ?: error("UserId not found: ${this@User.userId}")
+          with(UsersTable) {
+            selectAll()
+              .where { userId eq this@User.userId }
+              .map { assignRowVals(it) }
+              .firstOrNull() ?: error("UserId not found: ${this@User.userId}")
+          }
         }
       }.also { logger.debug { "Selected user info in $it" } }
     }
@@ -140,39 +142,30 @@ class User {
 
   fun browserSessions() =
     readonlyTx {
-      val sessionId = BrowserSessionsTable.sessionId
-      val userRef = UserSessionsTable.userRef
       (BrowserSessionsTable innerJoin UserSessionsTable)
-        .slice(sessionId)
-        .select { userRef eq userDbmsId }
+        .select(BrowserSessionsTable.sessionId)
+        .where { UserSessionsTable.userRef eq userDbmsId }
         .map { it[0] as String }
     }
 
   // Look across all possible browser sessions
   private fun interestedInActiveClassCode(classCode: ClassCode) =
     readonlyTx {
-      val id = UserSessionsTable.id
-      val userRef = UserSessionsTable.userRef
-      val activeClassCode = UserSessionsTable.activeClassCode
-      UserSessionsTable
-        .slice(Count(id))
-        .select {
-          (userRef eq userDbmsId) and (activeClassCode eq classCode.classCode)
-        }
-        .map { it[0] as Long }
-        .first() > 0
+      with(UserSessionsTable) {
+        select(Count(id))
+          .where { (userRef eq userDbmsId) and (activeClassCode eq classCode.classCode) }
+          .map { it[0] as Long }
+          .first() > 0
+      }
     }
 
   fun correctAnswers() =
     readonlyTx {
-      val allCorrect = UserChallengeInfoTable.allCorrect
-      val userRef = UserChallengeInfoTable.userRef
-      UserChallengeInfoTable
-        .slice(allCorrect)
-        .select {
-          (userRef eq userDbmsId) and allCorrect
-        }
-        .map { (it[0] as Boolean).toString() }
+      with(UserChallengeInfoTable) {
+        select(allCorrect)
+          .where { (userRef eq userDbmsId) and allCorrect }
+          .map { (it[0] as Boolean).toString() }
+      }
     }
 
   fun likeDislikeEmoji(likeDislike: Int) =
@@ -186,141 +179,135 @@ class User {
 
   fun likeDislike(challenge: Challenge) =
     readonlyTx {
-      val likeDislike = UserChallengeInfoTable.likeDislike
-      val userRef = UserChallengeInfoTable.userRef
-      val md5 = UserChallengeInfoTable.md5
-      UserChallengeInfoTable
-        .slice(likeDislike)
-        .select { (userRef eq userDbmsId) and (md5 eq challenge.md5()) }
-        .map { it[likeDislike].toInt() }
-        .firstOrNull() ?: 0
+      with(UserChallengeInfoTable) {
+        select(likeDislike)
+          .where { (userRef eq userDbmsId) and (md5 eq challenge.md5()) }
+          .map { it[likeDislike].toInt() }
+          .firstOrNull() ?: 0
+      }
     }
 
   fun likeDislikes() =
     readonlyTx {
-      val userRef = UserChallengeInfoTable.userRef
-      val likeDislike = UserChallengeInfoTable.likeDislike
-      UserChallengeInfoTable
-        .slice(likeDislike)
-        .select {
-          (userRef eq userDbmsId) and ((likeDislike eq 1) or (likeDislike eq 2))
-        }
-        .map { it.toString() }
+      with(UserChallengeInfoTable) {
+        select(likeDislike)
+          .where { (userRef eq userDbmsId) and ((likeDislike eq 1) or (likeDislike eq 2)) }
+          .map { it.toString() }
+      }
     }
 
   fun classCount() =
     readonlyTx {
-      val userRef = ClassesTable.userRef
-      ClassesTable
-        .slice(Count(ClassesTable.classCode))
-        .select { userRef eq userDbmsId }
-        .map { it[0] as Long }
-        .first().also { logger.info { "classCount() returned $it" } }
-        .toInt()
+      with(ClassesTable) {
+        select(Count(classCode))
+          .where { userRef eq userDbmsId }
+          .map { it[0] as Long }
+          .first().also { logger.info { "classCount() returned $it" } }
+          .toInt()
+      }
     }
 
-  fun addClassCode(classCode: ClassCode, classDesc: String) =
+  fun addClassCode(classCodeVal: ClassCode, classDesc: String) =
     transaction {
-      ClassesTable
-        .insert { row ->
+      with(ClassesTable) {
+        insert { row ->
           row[userRef] = userDbmsId
-          row[ClassesTable.classCode] = classCode.classCode
+          row[classCode] = classCodeVal.classCode
           row[description] = classDesc.maxLength(256)
         }
+      }
     }
 
   fun classCodes() =
     readonlyTx {
-      val classCode = ClassesTable.classCode
-      val userRef = ClassesTable.userRef
-      ClassesTable
-        .slice(classCode)
-        .select { userRef eq userDbmsId }
-        .map { ClassCode(it[0] as String) }
+      with(ClassesTable) {
+        select(classCode)
+          .where { userRef eq userDbmsId }
+          .map { ClassCode(it[0] as String) }
+      }
     }
 
   fun isInDbms() =
     readonlyTx {
-      val id = UsersTable.id
-      UsersTable
-        .slice(Count(id))
-        .select { id eq userDbmsId }
-        .map { it[0] as Long }
-        .first() > 0
+      with(UsersTable) {
+        select(Count(id))
+          .where { id eq userDbmsId }
+          .map { it[0] as Long }
+          .first() > 0
+      }
     }
 
   fun assignDigest(newDigest: String) =
     transaction {
-      PasswordResetsTable.deleteWhere { userRef eq userDbmsId }
+      with(PasswordResetsTable) {
+        deleteWhere { userRef eq userDbmsId }
+      }
 
-      UsersTable
-        .update({ UsersTable.id eq userDbmsId }) { row ->
+      with(UsersTable) {
+        update({ id eq userDbmsId }) { row ->
           row[updated] = DateTime.now(UTC)
           row[digest] = newDigest
           digestBacking = newDigest
         }
+      }
     }
 
   private fun assignEnrolledClassCode(classCode: ClassCode) =
-    UsersTable
-      .update({ UsersTable.id eq userDbmsId }) { row ->
+    with(UsersTable) {
+      update({ id eq userDbmsId }) { row ->
         row[updated] = DateTime.now(UTC)
         row[enrolledClassCode] = classCode.classCode
         this@User.enrolledClassCode = classCode
       }
+    }
 
   fun challenges() =
     readonlyTx {
-      UserChallengeInfoTable
-        .slice(UserChallengeInfoTable.md5)
-        .select { UserChallengeInfoTable.userRef eq userDbmsId }
-        .map { it[0] as String }.also { logger.info { "challenges() return ${it.size}" } }
+      with(UserChallengeInfoTable) {
+        select(md5)
+          .where { userRef eq userDbmsId }
+          .map { it[0] as String }.also { logger.info { "challenges() return ${it.size}" } }
+      }
     }
-
-  private val uahId = UserAnswerHistoryTable.id
-  private val uahInvocation = UserAnswerHistoryTable.invocation
-  private val uahUserRef = UserAnswerHistoryTable.userRef
-  private val uahMd5 = UserAnswerHistoryTable.md5
 
   fun invocations() =
     readonlyTx {
-      UserAnswerHistoryTable
-        .slice(uahMd5)
-        .select { uahUserRef eq userDbmsId }
-        .map { it[0] as String }.also { logger.info { "invocations() return ${it.size}" } }
+      with(UserAnswerHistoryTable) {
+        select(md5)
+          .where { userRef eq userDbmsId }
+          .map { it[0] as String }.also { logger.info { "invocations() return ${it.size}" } }
+      }
     }
 
-  fun historyExists(md5: String, invocation: Invocation) =
-    UserAnswerHistoryTable
-      .slice(Count(uahId))
-      .select {
-        (uahUserRef eq userDbmsId) and (uahMd5 eq md5) and (uahInvocation eq invocation.value)
-      }
-      .map { it[0] as Long }
-      .first() > 0
+  fun historyExists(md5Val: String, invocationVal: Invocation) =
+    with(UserAnswerHistoryTable) {
+      select(Count(id))
+        .where { (userRef eq userDbmsId) and (md5 eq md5Val) and (invocation eq invocationVal.value) }
+        .map { it[0] as Long }
+        .first() > 0
+    }
 
-  fun answerHistory(md5: String, invocation: Invocation): ChallengeHistory {
-    val correct = UserAnswerHistoryTable.correct
-    val incorrectAttempts = UserAnswerHistoryTable.incorrectAttempts
-    val historyJson = UserAnswerHistoryTable.historyJson
-
-    return UserAnswerHistoryTable
-      .slice(uahInvocation, correct, incorrectAttempts, historyJson)
-      .select {
-        (uahUserRef eq userDbmsId) and (uahMd5 eq md5) and (uahInvocation eq invocation.value)
-      }
-      .map {
-        val json = it[historyJson]
-        val history = Json.decodeFromString<List<String>>(json).toMutableList()
-        ChallengeHistory(Invocation(it[uahInvocation]), it[correct], it[incorrectAttempts].toInt(), history)
-      }
-      .firstOrNull() ?: ChallengeHistory(invocation)
-  }
+  fun answerHistory(md5Val: String, invocationVal: Invocation): ChallengeHistory =
+    with(UserAnswerHistoryTable) {
+      select(invocation, correct, incorrectAttempts, historyJson)
+        .where { (userRef eq userDbmsId) and (md5 eq md5Val) and (invocation eq invocationVal.value) }
+        .map {
+          val json = it[historyJson]
+          val history = Json.decodeFromString<List<String>>(json).toMutableList()
+          ChallengeHistory(
+            Invocation(it[invocation]),
+            it[correct],
+            it[incorrectAttempts].toInt(),
+            history
+          )
+        }
+        .firstOrNull() ?: ChallengeHistory(invocationVal)
+    }
 
   fun assignActiveClassCode(classCode: ClassCode, resetPreviousClassCode: Boolean) =
     transaction {
-      UserSessionsTable
-        .upsert(conflictIndex = userSessionIndex) { row ->
+      with(UserSessionsTable) {
+        upsert(conflictIndex = userSessionIndex) { row ->
           row[sessionRef] = queryOrCreateSessionDbmsId()
           row[userRef] = userDbmsId
           row[updated] = DateTime.now(UTC)
@@ -328,27 +315,30 @@ class User {
           if (resetPreviousClassCode)
             row[previousTeacherClassCode] = classCode.classCode
         }
+      }
     }
 
   fun resetActiveClassCode() {
     logger.info { "Resetting $fullName ($email) active class code" }
-    UserSessionsTable
-      .upsert(conflictIndex = userSessionIndex) { row ->
+    with(UserSessionsTable) {
+      upsert(conflictIndex = userSessionIndex) { row ->
         row[sessionRef] = queryOrCreateSessionDbmsId()
         row[userRef] = userDbmsId
         row[updated] = DateTime.now(UTC)
         row[activeClassCode] = DISABLED_CLASS_CODE.classCode
         row[previousTeacherClassCode] = DISABLED_CLASS_CODE.classCode
       }
+    }
   }
 
   fun isEnrolled(classCode: ClassCode) =
     readonlyTx {
-      EnrolleesTable
-        .slice(Count(EnrolleesTable.id))
-        .select { EnrolleesTable.userRef eq userDbmsId }
-        .map { it[0] as Long }
-        .first().also { logger.info { "isEnrolled() returned $it for $classCode" } } > 0
+      with(EnrolleesTable) {
+        select(Count(id))
+          .where { userRef eq userDbmsId }
+          .map { it[0] as Long }
+          .first().also { logger.info { "isEnrolled() returned $it for $classCode" } } > 0
+      }
     }
 
   fun correctAnswersKey(languageName: LanguageName, groupName: GroupName, challengeName: ChallengeName) =
@@ -395,42 +385,46 @@ class User {
     enrollees
       .forEach { enrollee ->
         logger.info { "Assigning ${enrollee.email} to $DISABLED_CLASS_CODE" }
-        UsersTable
-          .update({ UsersTable.id eq enrollee.userDbmsId }) { row ->
+        with(UsersTable) {
+          update({ id eq enrollee.userDbmsId }) { row ->
             row[updated] = DateTime.now(UTC)
             row[enrolledClassCode] = DISABLED_CLASS_CODE.classCode
           }
+        }
       }
   }
 
   fun isUniqueClassDesc(classDesc: String) =
     readonlyTx {
-      ClassesTable
-        .slice(Count(ClassesTable.id))
-        .select { ClassesTable.description eq classDesc }
-        .map { it[0] as Long }
-        .first() == 0L
+      with(ClassesTable) {
+        select(Count(id))
+          .where { description eq classDesc }
+          .map { it[0] as Long }
+          .first() == 0L
+      }
     }
 
   fun userPasswordResetId() =
     readonlyTx {
-      PasswordResetsTable
-        .slice(PasswordResetsTable.resetId)
-        .select { PasswordResetsTable.userRef eq userDbmsId }
-        .map { it[0] as String }.also { logger.info { "userPasswordResetId() returned $it" } }
-        .map { ResetId(it) }
-        .firstOrNull() ?: EMPTY_RESET_ID
+      with(PasswordResetsTable) {
+        select(resetId)
+          .where { userRef eq userDbmsId }
+          .map { it[0] as String }.also { logger.info { "userPasswordResetId() returned $it" } }
+          .map { ResetId(it) }
+          .firstOrNull() ?: EMPTY_RESET_ID
+      }
     }
 
-  fun savePasswordResetId(email: Email, newResetId: ResetId) {
+  fun savePasswordResetId(emailVal: Email, newResetId: ResetId) {
     transaction {
-      PasswordResetsTable
-        .upsert(conflictIndex = passwordResetsIndex) { row ->
+      with(PasswordResetsTable) {
+        upsert(conflictIndex = passwordResetsIndex) { row ->
           row[userRef] = userDbmsId
           row[updated] = DateTime.now(UTC)
           row[resetId] = newResetId.value
-          row[PasswordResetsTable.email] = email.value
+          row[email] = emailVal.value
         }
+      }
     }
   }
 
@@ -463,7 +457,9 @@ class User {
       // UserChallengeInfo delete on cascade
       // UserSessions delete on cascade
       // PasswordResets delete on cascade
-      UsersTable.deleteWhere { UsersTable.id eq this@User.userDbmsId }
+      with(UsersTable) {
+        deleteWhere { id eq this@User.userDbmsId }
+      }
     }
   }
 
@@ -507,8 +503,8 @@ class User {
         logger.debug { "Resetting invocation: ${result.invocation}" }
         val history = ChallengeHistory(result.invocation).apply { markUnanswered() }
         transaction {
-          UserAnswerHistoryTable
-            .upsert(conflictIndex = userAnswerHistoryIndex) { row ->
+          with(UserAnswerHistoryTable) {
+            upsert(conflictIndex = userAnswerHistoryIndex) { row ->
               row[userRef] = userDbmsId
               row[md5] = challenge.md5(result.invocation)
               row[updated] = DateTime.now(UTC)
@@ -517,6 +513,7 @@ class User {
               row[incorrectAttempts] = 0
               row[historyJson] = Json.encodeToString(emptyList<String>())
             }
+          }
         }
 
         if (shouldPublish())
@@ -568,14 +565,12 @@ class User {
         user.isNull() || !isDbmsEnabled() -> DISABLED_CLASS_CODE
         else ->
           transaction {
-            UserSessionsTable
-              .slice(UserSessionsTable.activeClassCode)
-              .select {
-                (UserSessionsTable.sessionRef eq user.queryOrCreateSessionDbmsId()) and
-                  (UserSessionsTable.userRef eq user.userDbmsId)
-              }
-              .map { it[0] as String }
-              .firstOrNull()?.let { ClassCode(it) } ?: DISABLED_CLASS_CODE
+            with(UserSessionsTable) {
+              select(activeClassCode)
+                .where { (sessionRef eq user.queryOrCreateSessionDbmsId()) and (userRef eq user.userDbmsId) }
+                .map { it[0] as String }
+                .firstOrNull()?.let { ClassCode(it) } ?: DISABLED_CLASS_CODE
+            }
           }
       }
 
@@ -584,24 +579,23 @@ class User {
         user.isNull() || !isDbmsEnabled() -> DISABLED_CLASS_CODE
         else ->
           transaction {
-            UserSessionsTable
-              .slice(UserSessionsTable.previousTeacherClassCode)
-              .select {
-                (UserSessionsTable.sessionRef eq user.queryOrCreateSessionDbmsId()) and
-                  (UserSessionsTable.userRef eq user.userDbmsId)
-              }
-              .map { it[0] as String }
-              .firstOrNull()?.let { ClassCode(it) } ?: DISABLED_CLASS_CODE
+            with(UserSessionsTable) {
+              select(previousTeacherClassCode)
+                .where { (sessionRef eq user.queryOrCreateSessionDbmsId()) and (userRef eq user.userDbmsId) }
+                .map { it[0] as String }
+                .firstOrNull()?.let { ClassCode(it) } ?: DISABLED_CLASS_CODE
+            }
           }
       }
 
-    fun userExists(userId: String) =
+    fun userExists(idVal: String) =
       readonlyTx {
-        UsersTable
-          .slice(Count(UsersTable.id))
-          .select { UsersTable.userId eq userId }
-          .map { it[0] as Long }
-          .first() > 0
+        with(UsersTable) {
+          select(Count(id))
+            .where { userId eq idVal }
+            .map { it[0] as Long }
+            .first() > 0
+        }
       }
 
     fun fetchUserDbmsIdFromCache(userId: String) =
@@ -614,29 +608,31 @@ class User {
         queryUserEmail(userId).also { logger.debug { "Looked up email for $userId: $it" } }
       }
 
-    private fun queryUserDbmsId(userId: String, defaultIfMissing: Long = -1) =
+    private fun queryUserDbmsId(idVal: String, defaultIfMissing: Long = -1) =
       readonlyTx {
-        UsersTable
-          .slice(UsersTable.id)
-          .select { UsersTable.userId eq userId }
-          .map { it[UsersTable.id].value }
-          .firstOrNull() ?: defaultIfMissing
+        with(UsersTable) {
+          select(id)
+            .where { userId eq idVal }
+            .map { it[id].value }
+            .firstOrNull() ?: defaultIfMissing
+        }
       }
 
-    private fun queryUserEmail(userId: String, defaultIfMissing: Email = UNKNOWN_EMAIL) =
+    private fun queryUserEmail(userIdVal: String, defaultIfMissing: Email = UNKNOWN_EMAIL) =
       readonlyTx {
-        UsersTable
-          .slice(UsersTable.email)
-          .select { UsersTable.userId eq userId }
-          .map { Email(it[0] as String) }
-          .firstOrNull() ?: defaultIfMissing
+        with(UsersTable) {
+          select(email)
+            .where { userId eq userIdVal }
+            .map { Email(it[0] as String) }
+            .firstOrNull() ?: defaultIfMissing
+        }
       }
 
-    fun createUnknownUser(userId: String) =
+    fun createUnknownUser(userIdVal: String) =
       transaction {
-        UsersTable
-          .insertAndGetId { row ->
-            row[UsersTable.userId] = userId
+        with(UsersTable) {
+          insertAndGetId { row ->
+            row[userId] = userIdVal
             row[fullName] = UNKNOWN_FULLNAME.value
             row[email] = "${UNKNOWN_EMAIL.value}-${randomId(4)}"
             row[enrolledClassCode] = DISABLED_CLASS_CODE.classCode
@@ -644,57 +640,60 @@ class User {
             row[salt] = UNKNOWN
             row[digest] = UNKNOWN
           }.value.also { logger.info { "Created unknown user $it" } }
+        }
       }
 
     fun createUser(
       name: FullName,
-      email: Email,
+      emailVal: Email,
       password: Password,
       browserSession: BrowserSession?,
     ): User =
       User(randomId(25), browserSession, false)
         .also { user ->
           transaction {
-            val salt = newStringSalt()
-            val digest = password.sha256(salt)
+            val saltVal = newStringSalt()
+            val digestVal = password.sha256(saltVal)
             val userDbmsId =
-              UsersTable
-                .insertAndGetId { row ->
+              with(UsersTable) {
+                insertAndGetId { row ->
                   row[userId] = user.userId
                   row[fullName] = name.value.maxLength(128)
-                  row[UsersTable.email] = email.value.maxLength(128)
+                  row[email] = emailVal.value.maxLength(128)
                   row[enrolledClassCode] = DISABLED_CLASS_CODE.classCode
                   row[defaultLanguage] = defaultLanguageType.languageName.value
-                  row[UsersTable.salt] = salt
-                  row[UsersTable.digest] = digest
+                  row[salt] = saltVal
+                  row[digest] = digestVal
                 }.value
+              }
 
-            val browserId =
-              browserSession?.queryOrCreateSessionDbmsId() ?: error("Missing browser session")
+            val browserId = browserSession?.queryOrCreateSessionDbmsId() ?: error("Missing browser session")
 
-            UserSessionsTable
-              .insert { row ->
+            with(UserSessionsTable) {
+              insert { row ->
                 row[sessionRef] = browserId
                 row[userRef] = userDbmsId
                 row[activeClassCode] = DISABLED_CLASS_CODE.classCode
                 row[previousTeacherClassCode] = DISABLED_CLASS_CODE.classCode
               }
+            }
           }
-          logger.info { "Created user $email ${user.userId}" }
+          logger.info { "Created user $emailVal ${user.userId}" }
         }
 
     private fun isRegisteredEmail(email: Email) = queryUserByEmail(email).isNotNull()
 
     fun isNotRegisteredEmail(email: Email) = !isRegisteredEmail(email)
 
-    fun queryUserByEmail(email: Email): User? =
+    fun queryUserByEmail(emailVal: Email): User? =
       readonlyTx {
-        UsersTable
-          .slice(UsersTable.userId)
-          .select { UsersTable.email eq email.value }
-          .map { (it[0] as String).toUser() }
-          .firstOrNull()
-          .also { logger.info { "queryUserByEmail() returned: ${it?.email ?: " ${email.value} not found"}" } }
+        with(UsersTable) {
+          select(userId)
+            .where { email eq emailVal.value }
+            .map { (it[0] as String).toUser() }
+            .firstOrNull()
+            .also { logger.info { "queryUserByEmail() returned: ${it?.email ?: " ${emailVal.value} not found"}" } }
+        }
       }
   }
 }

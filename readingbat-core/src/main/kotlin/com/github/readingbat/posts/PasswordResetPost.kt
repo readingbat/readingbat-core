@@ -54,7 +54,6 @@ import io.ktor.server.application.*
 import io.ktor.server.plugins.*
 import io.ktor.server.request.*
 import mu.two.KLogging
-import org.jetbrains.exposed.sql.select
 
 internal object PasswordResetPost : KLogging() {
   private val unknownUserLimiter = RateLimiter.create(0.5) // rate 2.0 is "2 permits per second"
@@ -126,7 +125,7 @@ internal object PasswordResetPost : KLogging() {
   suspend fun PipelineCall.updatePassword(): String =
     try {
       val params = call.receiveParameters()
-      val resetId = params.getResetId(RESET_ID_PARAM)
+      val resetIdVal = params.getResetId(RESET_ID_PARAM)
       val newPassword = params.getPassword(NEW_PASSWORD_PARAM)
       val confirmPassword = params.getPassword(CONFIRM_PASSWORD_PARAM)
       val passwordError = checkPassword(newPassword, confirmPassword)
@@ -135,31 +134,32 @@ internal object PasswordResetPost : KLogging() {
         throw ResetPasswordException("Function unavailable without database enabled")
 
       if (passwordError.isNotBlank)
-        throw ResetPasswordException(passwordError.value, resetId)
+        throw ResetPasswordException(passwordError.value, resetIdVal)
 
-      val email =
+      val emailVal =
         readonlyTx {
-          PasswordResetsTable
-            .slice(PasswordResetsTable.email)
-            .select { PasswordResetsTable.resetId eq resetId.value }
-            .map { it[0] as String }
-            .firstOrNull() ?: throw ResetPasswordException(INVALID_RESET_ID)
+          with(PasswordResetsTable) {
+            select(email)
+              .where { resetId eq resetIdVal.value }
+              .map { it[0] as String }
+              .firstOrNull() ?: throw ResetPasswordException(INVALID_RESET_ID)
+          }
         }
 
-      val user = queryUserByEmail(Email(email)) ?: throw ResetPasswordException("Unable to find $email")
+      val user = queryUserByEmail(Email(emailVal)) ?: throw ResetPasswordException("Unable to find $emailVal")
       val salt = user.salt
       val newDigest = newPassword.sha256(salt)
       val oldDigest = user.digest
 
       if (!user.isValidUser())
-        throw ResetPasswordException("Invalid user", resetId)
+        throw ResetPasswordException("Invalid user", resetIdVal)
 
       if (newDigest == oldDigest)
-        throw ResetPasswordException("New password is the same as the current password", resetId)
+        throw ResetPasswordException("New password is the same as the current password", resetIdVal)
 
       user.assignDigest(newDigest)  // Set new password
 
-      throw RedirectException("/?$MSG=${"Password reset for $email".encode()}")
+      throw RedirectException("/?$MSG=${"Password reset for $emailVal".encode()}")
     } catch (e: ResetPasswordException) {
       logger.info { e }
       passwordResetPage(e.resetId, Message(e.msg))

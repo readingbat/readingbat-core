@@ -76,12 +76,13 @@ internal object UserPrefsPost : KLogging() {
     parameters.getLanguageType(DEFAULT_LANGUAGE_CHOICE_PARAM)
       .let {
         transaction {
-          UsersTable
-            .update({ UsersTable.id eq user.userDbmsId }) { row ->
+          with(UsersTable) {
+            update({ id eq user.userDbmsId }) { row ->
               row[updated] = DateTime.now(UTC)
               row[defaultLanguage] = it.languageName.value
               user.defaultLanguage = it
             }
+          }
         }
         userPrefsPage(content, user, Message("Default language updated to $it", false))
       }

@@ -28,7 +28,6 @@ import com.pambrose.common.exposed.upsert
 import io.ktor.client.statement.*
 import kotlinx.coroutines.runBlocking
 import mu.two.KLogging
-import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.util.concurrent.ConcurrentHashMap
 
@@ -82,8 +81,8 @@ class GeoInfo(val requireDbmsLookUp: Boolean, val dbmsId: Long, val remoteHost: 
 
   fun insert() {
     transaction {
-      GeoInfosTable
-        .upsert(conflictIndex = geoInfosUnique) { row ->
+      with(GeoInfosTable) {
+        upsert(conflictIndex = geoInfosUnique) { row ->
           row[ip] = remoteHost
           row[json] = this@GeoInfo.json
 
@@ -110,6 +109,7 @@ class GeoInfo(val requireDbmsLookUp: Boolean, val dbmsId: Long, val remoteHost: 
             row[timeZone] = mapVal { this@GeoInfo.time_zone.toString() }
           }
         }
+      }
     }
   }
 
@@ -132,11 +132,12 @@ class GeoInfo(val requireDbmsLookUp: Boolean, val dbmsId: Long, val remoteHost: 
 
     fun queryGeoInfo(ipAddress: String) =
       readonlyTx {
-        GeoInfosTable
-          .slice(GeoInfosTable.id, GeoInfosTable.json)
-          .select { GeoInfosTable.ip eq ipAddress }
-          .map { GeoInfo(false, it[GeoInfosTable.id].value, ipAddress, it[1] as String) }
-          .firstOrNull()
+        with(GeoInfosTable) {
+          select(id, json)
+            .where { ip eq ipAddress }
+            .map { GeoInfo(false, it[id].value, ipAddress, it[1] as String) }
+            .firstOrNull()
+        }
       }
 
     fun lookupGeoInfo(ipAddress: String) =

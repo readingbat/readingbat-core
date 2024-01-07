@@ -36,11 +36,10 @@ import com.pambrose.common.exposed.readonlyTx
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
 import io.ktor.server.sessions.*
-import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.Json.Default.decodeFromString
 import mu.two.KLogging
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.insertAndGetId
-import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.time.Instant
 
@@ -63,48 +62,35 @@ data class BrowserSession(val id: String, val created: Long = Instant.now().toEp
 
   fun likeDislike(challenge: Challenge) =
     transaction {
-      val likeDislike = SessionChallengeInfoTable.likeDislike
-      val sessionRef = SessionChallengeInfoTable.sessionRef
-      val md5 = SessionChallengeInfoTable.md5
-      SessionChallengeInfoTable
-        .slice(likeDislike)
-        .select {
-          (sessionRef eq queryOrCreateSessionDbmsId()) and (md5 eq challenge.md5())
-        }
-        .map { it[likeDislike].toInt() }
-        .firstOrNull() ?: 0
+      with(SessionChallengeInfoTable) {
+        select(likeDislike)
+          .where { (sessionRef eq queryOrCreateSessionDbmsId()) and (md5 eq challenge.md5()) }
+          .map { it[likeDislike].toInt() }
+          .firstOrNull() ?: 0
+      }
     }
 
-  fun answerHistory(md5: String, invocation: Invocation) =
-    SessionAnswerHistoryTable
-      .slice(
-        SessionAnswerHistoryTable.invocation,
-        SessionAnswerHistoryTable.correct,
-        SessionAnswerHistoryTable.incorrectAttempts,
-        SessionAnswerHistoryTable.historyJson,
-      )
-      .select {
-        (SessionAnswerHistoryTable.sessionRef eq queryOrCreateSessionDbmsId()) and
-          (SessionAnswerHistoryTable.md5 eq md5)
-      }
-      .map {
-        val json = it[SessionAnswerHistoryTable.historyJson]
-        val history = Json.decodeFromString<List<String>>(json).toMutableList()
-        ChallengeHistory(
-          Invocation(it[SessionAnswerHistoryTable.invocation]),
-          it[SessionAnswerHistoryTable.correct],
-          it[SessionAnswerHistoryTable.incorrectAttempts].toInt(),
-          history,
-        )
-      }
-      .firstOrNull() ?: ChallengeHistory(invocation)
+  fun answerHistory(md5Val: String, invocationVal: Invocation) =
+    with(SessionAnswerHistoryTable) {
+      select(invocation, correct, incorrectAttempts, historyJson)
+        .where { (sessionRef eq queryOrCreateSessionDbmsId()) and (md5 eq md5Val) }
+        .map {
+          val json = it[historyJson]
+          val history = decodeFromString<List<String>>(json).toMutableList()
+          ChallengeHistory(
+            Invocation(it[invocation]),
+            it[correct],
+            it[incorrectAttempts].toInt(),
+            history,
+          )
+        }
+    }.firstOrNull() ?: ChallengeHistory(invocationVal)
 
   companion object : KLogging() {
     fun createBrowserSession(id: String) =
-      BrowserSessionsTable
-        .insertAndGetId { row ->
-          row[sessionId] = id
-        }.value
+      with(BrowserSessionsTable) {
+        insertAndGetId { row -> row[sessionId] = id }.value
+      }
 
     fun findOrCreateSessionDbmsId(id: String, createIfMissing: Boolean) =
       try {
@@ -118,13 +104,14 @@ data class BrowserSession(val id: String, val created: Long = Instant.now().toEp
         }
       }
 
-    fun querySessionDbmsId(id: String) =
+    fun querySessionDbmsId(idVal: String) =
       readonlyTx {
-        BrowserSessionsTable
-          .slice(BrowserSessionsTable.id)
-          .select { BrowserSessionsTable.sessionId eq id }
-          .map { it[BrowserSessionsTable.id].value }
-          .firstOrNull() ?: throw MissingBrowserSessionException(id)
+        with(BrowserSessionsTable) {
+          select(id)
+            .where { sessionId eq idVal }
+            .map { it[id].value }
+            .firstOrNull() ?: throw MissingBrowserSessionException(idVal)
+        }
       }
   }
 }
