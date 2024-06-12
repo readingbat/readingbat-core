@@ -46,16 +46,17 @@ import com.github.readingbat.server.ResetId
 import com.github.readingbat.server.ServerUtils.queryParam
 import com.pambrose.common.exposed.get
 import com.pambrose.common.exposed.readonlyTx
+import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
-import mu.two.KLogging
 import org.joda.time.DateTime
 import org.joda.time.DateTime.now
 import org.joda.time.Seconds
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
-internal object PasswordResetPage : KLogging() {
+internal object PasswordResetPage {
+  private val logger = KotlinLogging.logger {}
   private const val FORM_NAME = "pform"
   private const val PASSWORD_BUTTON = "UpdatePasswordButton"
 

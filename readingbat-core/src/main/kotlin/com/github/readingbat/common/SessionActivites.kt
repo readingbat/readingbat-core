@@ -27,7 +27,7 @@ import com.github.readingbat.server.UsersTable
 import com.pambrose.common.exposed.dateTimeExpr
 import com.pambrose.common.exposed.get
 import com.pambrose.common.exposed.readonlyTx
-import mu.two.KLogging
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jetbrains.exposed.sql.Count
 import org.jetbrains.exposed.sql.Max
 import org.jetbrains.exposed.sql.SortOrder
@@ -39,7 +39,8 @@ import kotlin.math.min
 import kotlin.time.Duration
 import kotlin.time.measureTimedValue
 
-internal object SessionActivites : KLogging() {
+internal object SessionActivites {
+  private val logger = KotlinLogging.logger {}
   private val session_id = BrowserSessionsTable.sessionId
   private val fullName = UsersTable.fullName
   private val email = UsersTable.email

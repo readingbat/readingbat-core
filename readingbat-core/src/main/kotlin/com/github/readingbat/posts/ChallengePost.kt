@@ -60,6 +60,7 @@ import com.github.readingbat.server.GroupName.Companion.getGroupName
 import com.github.readingbat.server.LanguageName.Companion.getLanguageName
 import com.github.readingbat.server.ServerUtils.paramMap
 import com.pambrose.common.exposed.upsert
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.server.application.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
@@ -67,7 +68,6 @@ import kotlinx.serialization.Required
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import mu.two.KLogging
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.deleteWhere
@@ -173,7 +173,9 @@ internal class ChallengeNames(paramMap: Map<String, String>) {
 
 private val EMPTY_STRING = "".toDoubleQuoted()
 
-internal object ChallengePost : KLogging() {
+internal object ChallengePost {
+  private val logger = KotlinLogging.logger {}
+
   suspend fun PipelineCall.checkAnswers(content: ReadingBatContent, user: User?) {
     val params = call.receiveParameters()
     val paramMap = params.entries().associate { it.key to it.value[0] }
@@ -182,7 +184,7 @@ internal object ChallengePost : KLogging() {
     val funcInfo = challenge.functionInfo()
     val userResponses = params.entries().filter { it.key.startsWith(RESP) }
 
-    logger.debug("Found ${userResponses.size} user responses in $paramMap")
+    logger.debug { "Found ${userResponses.size} user responses in $paramMap" }
 
     val results =
       userResponses.indices

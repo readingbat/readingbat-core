@@ -31,7 +31,7 @@ import com.github.readingbat.server.LanguageName
 import com.github.readingbat.server.ScriptPools.kotlinEvaluatorPool
 import com.github.readingbat.server.ScriptPools.pythonEvaluatorPool
 import com.github.readingbat.utils.StringUtils.toCapitalized
-import mu.two.KLogging
+import io.github.oshai.kotlinlogging.KotlinLogging
 import javax.script.ScriptException
 
 class FunctionInfo(
@@ -158,7 +158,7 @@ class FunctionInfo(
     val answered = userResponse.isNotBlank()
     val correctAndHint =
       if (answered) {
-        logger.debug("""Comparing user response: "$userResponse" with correct answer: "$correctAnswer"""")
+        logger.debug { """Comparing user response: "$userResponse" with correct answer: "$correctAnswer"""" }
         if (languageName.isJvm) {
           if (correctAnswer.isBracketed())
             userResponse.equalsAsJvmList(correctAnswer)
@@ -183,7 +183,9 @@ class FunctionInfo(
     )
   }
 
-  companion object : KLogging() {
+  companion object {
+    private val logger = KotlinLogging.logger {}
+
     private fun String.isJavaBoolean() = this == "true" || this == "false"
 
     private fun String.isPythonBoolean() = this == "True" || this == "False"

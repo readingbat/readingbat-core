@@ -48,11 +48,12 @@ import com.github.readingbat.pages.UserPrefsPage.requestLogInPage
 import com.github.readingbat.pages.js.AdminCommandsJs.loadCommandsScript
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
+import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
-import mu.two.KLogging
 
-internal object SystemAdminPage : KLogging() {
+internal object SystemAdminPage {
+  private val logger = KotlinLogging.logger {}
   private const val msgs = "msgs"
   private const val status = "status"
 

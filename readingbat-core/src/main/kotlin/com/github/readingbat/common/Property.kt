@@ -28,9 +28,9 @@ import com.github.readingbat.common.PropertyNames.CONTENT
 import com.github.readingbat.common.PropertyNames.DBMS
 import com.github.readingbat.common.PropertyNames.READINGBAT
 import com.github.readingbat.common.PropertyNames.SITE
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.server.application.*
 import io.ktor.server.config.*
-import mu.two.KLogging
 import java.util.concurrent.atomic.AtomicBoolean
 
 open class KtorProperty(
@@ -102,7 +102,8 @@ open class KtorProperty(
 
   override fun toString() = "$name: $propertyName=${maskFunc(this)}"
 
-  companion object : KLogging() {
+  companion object {
+    private val logger = KotlinLogging.logger {}
     private val initialized = AtomicBoolean(false)
     private val instances = mutableListOf<KtorProperty>()
 
@@ -364,7 +365,9 @@ sealed class Property(
   object REDIS_MIN_IDLE_SIZE :
     Property(RedisUtils.REDIS_MIN_IDLE_SIZE, initFunc = { setPropertyFromConfig(it, "1") })
 
-  companion object : KLogging() {
+  companion object {
+    private val logger = KotlinLogging.logger {}
+
     fun initProperties() =
       listOf(
         DSL_FILE_NAME,

@@ -25,7 +25,7 @@ import com.github.pambrose.common.util.pathOf
 import com.github.readingbat.dsl.challenge.Challenge
 import com.github.readingbat.server.GroupName
 import com.github.readingbat.server.ReadingBatServer
-import mu.two.KLogging
+import io.github.oshai.kotlinlogging.KotlinLogging
 
 @ReadingBatDslMarker
 class LanguageGroup<T : Challenge>(
@@ -116,7 +116,8 @@ class LanguageGroup<T : Challenge>(
   override fun toString() =
     "LanguageGroup(languageType=$languageType, srcPath='$srcPath', challengeGroups=$challengeGroups)"
 
-  companion object : KLogging() {
+  companion object {
+    private val logger = KotlinLogging.logger {}
     private val excludes = Regex("^__.*__.*$")
 
     internal val defaultContentRoot =

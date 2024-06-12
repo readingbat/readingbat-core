@@ -65,8 +65,8 @@ import com.github.readingbat.server.UserChallengeInfoTable
 import com.github.readingbat.utils.StringUtils.toCapitalized
 import com.pambrose.common.exposed.get
 import com.pambrose.common.exposed.readonlyTx
+import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.runBlocking
-import mu.two.KLogging
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.net.URL
@@ -223,7 +223,8 @@ sealed class Challenge(
 
   override fun toString() = "$languageName $groupName $challengeName"
 
-  companion object : KLogging() {
+  companion object {
+    internal val logger = KotlinLogging.logger {}
     internal val counter = AtomicInteger(0)
     internal const val DESC = "@desc "
 

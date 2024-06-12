@@ -31,10 +31,11 @@ import com.github.readingbat.common.User.Companion.queryUserByEmail
 import com.github.readingbat.common.UserPrincipal
 import com.github.readingbat.dsl.isDbmsEnabled
 import com.google.common.util.concurrent.RateLimiter
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.server.auth.*
-import mu.two.KLogging
 
-internal object ConfigureFormAuth : KLogging() {
+internal object ConfigureFormAuth {
+  private val logger = KotlinLogging.logger {}
   private val failedLoginLimiter = RateLimiter.create(1.0) // rate 2.0 is "2 permits per second"
 
   /**

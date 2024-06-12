@@ -50,12 +50,13 @@ import com.github.readingbat.server.ServerUtils.queryParam
 import com.google.common.util.concurrent.RateLimiter
 import com.pambrose.common.exposed.get
 import com.pambrose.common.exposed.readonlyTx
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.server.application.*
 import io.ktor.server.plugins.*
 import io.ktor.server.request.*
-import mu.two.KLogging
 
-internal object PasswordResetPost : KLogging() {
+internal object PasswordResetPost {
+  private val logger = KotlinLogging.logger {}
   private val unknownUserLimiter = RateLimiter.create(0.5) // rate 2.0 is "2 permits per second"
   private val unableToSend = Message("Unable to send password reset email -- missing email address", true)
 

@@ -23,9 +23,10 @@ import com.github.pambrose.common.script.KotlinScriptPool
 import com.github.pambrose.common.script.PythonExprEvaluatorPool
 import com.github.pambrose.common.script.PythonScriptPool
 import com.github.readingbat.common.Property
-import mu.two.KLogging
+import io.github.oshai.kotlinlogging.KotlinLogging
 
-internal object ScriptPools : KLogging() {
+internal object ScriptPools {
+  private val logger = KotlinLogging.logger {}
   internal val javaScriptPool by lazy {
     // Global context cannot be null for the java script engine
     JavaScriptPool(Property.JAVA_SCRIPTS_POOL_SIZE.getProperty(5), false)

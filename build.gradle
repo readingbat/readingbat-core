@@ -9,12 +9,12 @@ buildscript {
 plugins {
     id 'java'
     id 'application'
-    id 'org.jetbrains.kotlin.jvm' version '1.9.23' apply false
-    id 'org.jetbrains.kotlin.plugin.serialization' version '1.9.23' apply false
+    id 'org.jetbrains.kotlin.jvm' version '2.0.0' apply false
+    id 'org.jetbrains.kotlin.plugin.serialization' version '2.0.0' apply false
     id 'org.jmailen.kotlinter' version "4.3.0" apply false
     id 'com.github.gmazzo.buildconfig' version '5.3.5' apply false
     id "com.github.ben-manes.versions" version '0.51.0' apply false
-    id "org.flywaydb.flyway" version "10.10.0"
+    id "org.flywaydb.flyway" version "10.15.0"
 }
 
 ext {
@@ -134,7 +134,7 @@ subprojects {
 
         //implementation "dev.hayden:khealth:$khealth_version"
 
-        implementation "io.github.microutils:kotlin-logging:$logging_version"
+        implementation "io.github.oshai:kotlin-logging-jvm:$logging_version"
         implementation "ch.qos.logback:logback-classic:$logback_version"
 
         runtimeOnly "org.jetbrains.kotlin:kotlin-scripting-jsr223:$kotlin_version"

@@ -18,7 +18,8 @@
 package com.github.readingbat.utils
 
 /*
-internal object TransferUsers : KLogging() {
+internal object TransferUsers {
+  private val logger = KotlinLogging.logger {}
 
   internal const val EMAIL_FIELD = "email"
   internal const val NAME_FIELD = "name"

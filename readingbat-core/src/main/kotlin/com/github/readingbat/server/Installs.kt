@@ -43,6 +43,7 @@ import com.github.readingbat.server.Email.Companion.UNKNOWN_EMAIL
 import com.github.readingbat.server.ReadingBatServer.serverSessionId
 import com.github.readingbat.server.ServerUtils.fetchEmailFromCache
 import dev.hayden.KHealth
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.http.*
 import io.ktor.http.HttpHeaders.Location
 import io.ktor.http.HttpStatusCode.Companion.Found
@@ -61,12 +62,13 @@ import io.ktor.server.plugins.statuspages.*
 import io.ktor.server.request.*
 import io.ktor.server.sessions.*
 import io.ktor.server.websocket.*
-import mu.two.KLogging
 import org.slf4j.event.Level
 import java.time.Duration.ofSeconds
 import java.util.concurrent.atomic.AtomicLong
 
-object Installs : KLogging() {
+object Installs {
+  private val logger = KotlinLogging.logger {}
+
   fun Application.installs(production: Boolean) {
     install(Locations)
 

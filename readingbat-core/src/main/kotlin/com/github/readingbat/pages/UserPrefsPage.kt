@@ -57,12 +57,13 @@ import com.github.readingbat.pages.PageUtils.privacyStatement
 import com.github.readingbat.pages.PageUtils.rawHtml
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
+import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.html.*
 import kotlinx.html.Entities.nbsp
 import kotlinx.html.stream.createHTML
-import mu.two.KLogging
 
-internal object UserPrefsPage : KLogging() {
+internal object UserPrefsPage {
+  private val logger = KotlinLogging.logger {}
   private const val FORM_NAME = "pform"
   private const val PASSWORD_BUTTON = "UpdatePasswordButton"
   private const val JOIN_CLASS_BUTTON = "JoinClassButton"

@@ -35,9 +35,9 @@ import com.github.readingbat.pages.PageUtils.rawHtml
 import com.github.readingbat.server.FullName.Companion.UNKNOWN_FULLNAME
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
+import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
-import mu.two.KLogging
 import org.joda.time.DateTime
 import org.joda.time.DateTimeZone.UTC
 import kotlin.time.Duration.Companion.days
@@ -45,7 +45,9 @@ import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
 
-internal object SessionsPage : KLogging() {
+internal object SessionsPage {
+  private val logger = KotlinLogging.logger {}
+
   fun PipelineCall.sessionsPage() =
     createHTML()
       .html {

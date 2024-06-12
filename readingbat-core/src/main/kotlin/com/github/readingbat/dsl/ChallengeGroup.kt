@@ -39,7 +39,7 @@ import com.github.readingbat.dsl.challenge.PythonChallenge
 import com.github.readingbat.server.ChallengeName
 import com.github.readingbat.server.GroupName
 import com.github.readingbat.server.ReadingBatServer.redisPool
-import mu.two.KLogging
+import io.github.oshai.kotlinlogging.KotlinLogging
 import java.io.File
 import kotlin.reflect.KProperty
 
@@ -237,5 +237,7 @@ class ChallengeGroup<T : Challenge>(
 
   override fun toString() = "ChallengeGroup(name='$groupName', challenges=$challenges, packageName='$packageName')"
 
-  companion object : KLogging()
+  companion object {
+    private val logger = KotlinLogging.logger {}
+  }
 }

@@ -23,13 +23,13 @@ import com.github.readingbat.common.Endpoints.CLOCK_ENDPOINT
 import com.github.readingbat.common.Endpoints.WS_ROOT
 import com.github.readingbat.server.ws.ChallengeWs.PingMessage
 import com.github.readingbat.server.ws.WsCommon.closeChannels
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.server.routing.*
 import io.ktor.server.websocket.*
 import io.ktor.websocket.*
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.runBlocking
-import mu.two.KLogging
 import java.util.*
 import kotlin.concurrent.timer
 import kotlin.math.max
@@ -37,7 +37,8 @@ import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeSource
 
 @Suppress("unused")
-internal object ClockWs : KLogging() {
+internal object ClockWs {
+  private val logger = KotlinLogging.logger {}
   private val clock = TimeSource.Monotonic
   private val wsConnections = Collections.synchronizedSet(LinkedHashSet<SessionContext>())
   private var maxWsConnections = 0

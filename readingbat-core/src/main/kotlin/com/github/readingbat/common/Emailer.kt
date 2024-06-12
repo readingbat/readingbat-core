@@ -23,9 +23,11 @@ import com.sendgrid.Request
 import com.sendgrid.SendGrid
 import com.sendgrid.helpers.mail.Mail
 import com.sendgrid.helpers.mail.objects.Content
-import mu.two.KLogging
+import io.github.oshai.kotlinlogging.KotlinLogging
 
-internal object Emailer : KLogging() {
+internal object Emailer {
+  private val logger = KotlinLogging.logger {}
+
   fun sendEmail(to: Email, from: Email, subject: String, msg: Message) {
     val content = Content("text/plain", msg.value)
     val mail =

@@ -50,12 +50,13 @@ import com.github.readingbat.pages.UserPrefsPage.requestLogInPage
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.RedirectException
 import com.github.readingbat.server.ServerUtils.queryParam
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.server.application.*
 import io.ktor.server.request.*
-import mu.two.KLogging
 import org.jetbrains.exposed.sql.transactions.transaction
 
-internal object TeacherPrefsPost : KLogging() {
+internal object TeacherPrefsPost {
+  private val logger = KotlinLogging.logger {}
   private const val STUDENT_MODE_ENABLED_MSG = "Student mode enabled"
   private const val TEACHER_MODE_ENABLED_MSG = "Teacher mode enabled"
 

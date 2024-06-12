@@ -70,12 +70,13 @@ import com.github.readingbat.server.LanguageName
 import com.github.readingbat.server.LanguageName.Companion.EMPTY_LANGUAGE
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.server.application.*
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
-import mu.two.KLogging
 
-internal object ClassSummaryPage : KLogging() {
+internal object ClassSummaryPage {
+  private val logger = KotlinLogging.logger {}
   internal const val STATS = "-stats"
   internal const val LIKE_DISLIKE = "-likeDislike"
   private const val BTN_SIZE = "130%"

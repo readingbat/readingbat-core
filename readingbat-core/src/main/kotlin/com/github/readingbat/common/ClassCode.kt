@@ -26,8 +26,8 @@ import com.github.readingbat.server.EnrolleesTable
 import com.github.readingbat.server.UsersTable
 import com.pambrose.common.exposed.get
 import com.pambrose.common.exposed.readonlyTx
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.http.*
-import mu.two.KLogging
 import org.jetbrains.exposed.sql.Count
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.and
@@ -137,7 +137,9 @@ data class ClassCode(val classCode: String) {
 
   override fun toString() = classCode
 
-  companion object : KLogging() {
+  companion object {
+    private val logger = KotlinLogging.logger {}
+
     internal val DISABLED_CLASS_CODE = ClassCode(DISABLED_MODE)
 
     internal fun newClassCode() = ClassCode(randomId(15))

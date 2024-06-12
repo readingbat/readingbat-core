@@ -58,10 +58,10 @@ import com.github.readingbat.server.ws.PubSubCommandsWs.PubSubTopic.USER_ANSWERS
 import com.pambrose.common.exposed.get
 import com.pambrose.common.exposed.readonlyTx
 import com.pambrose.common.exposed.upsert
+import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.html.Entities.nbsp
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import mu.two.KLogging
 import org.jetbrains.exposed.sql.Count
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
@@ -540,7 +540,7 @@ class User {
 
   override fun toString() = "User(userId='$userId', name='$fullName')"
 
-  companion object : KLogging() {
+  companion object {
     // Class code a user is enrolled in. Will report answers to when in student mode
     // This is not browser-id specific
     // internal const val ENROLLED_CLASS_CODE_FIELD = "enrolled-class-code"
@@ -552,6 +552,8 @@ class User {
     // Previous teacher class code that a user had
     // This is browser-id specific
     // private const val PREVIOUS_TEACHER_CLASS_CODE_FIELD = "previous-teacher-class-code"
+
+    private val logger = KotlinLogging.logger {}
 
     val userIdCache = ConcurrentHashMap<String, Long>()
     val emailCache = ConcurrentHashMap<String, Email>()

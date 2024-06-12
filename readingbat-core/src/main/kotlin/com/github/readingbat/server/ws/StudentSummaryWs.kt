@@ -37,6 +37,7 @@ import com.github.readingbat.server.ws.WsCommon.STUDENT_ID
 import com.github.readingbat.server.ws.WsCommon.closeChannels
 import com.github.readingbat.server.ws.WsCommon.validateContext
 import com.pambrose.common.exposed.readonlyTx
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.server.routing.*
 import io.ktor.server.websocket.*
 import io.ktor.websocket.*
@@ -45,10 +46,11 @@ import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import mu.two.KLogging
 import java.util.concurrent.atomic.AtomicBoolean
 
-internal object StudentSummaryWs : KLogging() {
+internal object StudentSummaryWs {
+  private val logger = KotlinLogging.logger {}
+
   fun Routing.studentSummaryWsEndpoint(metrics: Metrics, contentSrc: () -> ReadingBatContent) {
     webSocket("$WS_ROOT$STUDENT_SUMMARY_ENDPOINT/{$LANGUAGE_NAME}/{$STUDENT_ID}/{$CLASS_CODE}") {
       try {

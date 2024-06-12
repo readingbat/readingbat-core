@@ -39,6 +39,7 @@ import com.github.readingbat.server.ws.WsCommon.CHALLENGE_MD5
 import com.github.readingbat.server.ws.WsCommon.CLASS_CODE
 import com.github.readingbat.server.ws.WsCommon.closeChannels
 import com.github.readingbat.server.ws.WsCommon.validateContext
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.server.routing.*
 import io.ktor.server.websocket.*
 import io.ktor.websocket.*
@@ -54,14 +55,14 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Required
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import mu.two.KLogging
 import java.util.Collections.synchronizedSet
 import kotlin.concurrent.timer
 import kotlin.math.max
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeSource
 
-internal object ChallengeWs : KLogging() {
+internal object ChallengeWs {
+  private val logger = KotlinLogging.logger {}
   private val clock = TimeSource.Monotonic
   val singleServerWsFlow by lazy {
     MutableSharedFlow<ChallengeAnswerData>(extraBufferCapacity = FLOW_BUFFER_CAPACITY)

@@ -20,9 +20,10 @@ package com.github.readingbat.dsl.parse
 import com.github.pambrose.common.util.linesBetween
 import com.github.pambrose.common.util.substringBetween
 import com.github.readingbat.server.Invocation
-import mu.two.KLogging
+import io.github.oshai.kotlinlogging.KotlinLogging
 
-internal object PythonParse : KLogging() {
+internal object PythonParse {
+  private val logger = KotlinLogging.logger {}
   internal val defMainRegex = Regex("""def\s+main\(""")
   internal val ifMainEndRegex = Regex("__main__")
   private val defRegex = Regex("^def.*\\(")

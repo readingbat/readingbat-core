@@ -37,6 +37,7 @@ import com.github.readingbat.server.BrowserSessionsTable
 import com.github.readingbat.server.GeoInfo.Companion.lookupGeoInfo
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.get
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.http.ContentType.Text.Plain
 import io.ktor.server.application.*
 import io.ktor.server.html.*
@@ -46,7 +47,6 @@ import io.ktor.server.routing.*
 import io.ktor.server.sessions.*
 import kotlinx.html.body
 import kotlinx.html.div
-import mu.two.KLogging
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -56,7 +56,9 @@ import java.time.Instant.ofEpochMilli
 import java.time.LocalDateTime.ofInstant
 import java.time.ZoneId
 
-object AdminRoutes : KLogging() {
+object AdminRoutes {
+  private val logger = KotlinLogging.logger {}
+
   fun Routing.adminRoutes(metrics: Metrics) {
     get(PING_ENDPOINT, metrics) {
       call.respondText("pong", Plain)

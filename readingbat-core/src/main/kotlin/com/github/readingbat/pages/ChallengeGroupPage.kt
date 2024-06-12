@@ -60,14 +60,16 @@ import com.github.readingbat.server.LanguageName
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
 import com.github.readingbat.server.ServerUtils.rows
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.server.application.*
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import mu.two.KLogging
 
-internal object ChallengeGroupPage : KLogging() {
+internal object ChallengeGroupPage {
+  private val logger = KotlinLogging.logger {}
+
   fun PipelineCall.challengeGroupPage(
     content: ReadingBatContent,
     user: User?,
