@@ -41,6 +41,7 @@ import com.github.readingbat.dsl.isRedisEnabled
 import com.github.readingbat.server.Email.Companion.UNKNOWN_EMAIL
 import com.github.readingbat.server.ReadingBatServer.redisPool
 import com.github.readingbat.server.ws.PubSubCommandsWs.publishLog
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
@@ -51,13 +52,14 @@ import io.ktor.server.websocket.*
 import io.ktor.util.*
 import io.ktor.util.pipeline.*
 import kotlinx.coroutines.runBlocking
-import mu.two.KLogging
 import redis.clients.jedis.Jedis
 
 typealias PipelineCall = PipelineContext<Unit, ApplicationCall>
 
 @Suppress("unused")
-internal object ServerUtils : KLogging() {
+internal object ServerUtils {
+  private val logger = KotlinLogging.logger {}
+
   fun getVersionDesc(asJson: Boolean = false): String = ReadingBatServer::class.versionDesc(asJson)
 
   fun PipelineCall.queryParam(key: String, default: String = "") = call.request.queryParameters[key] ?: default

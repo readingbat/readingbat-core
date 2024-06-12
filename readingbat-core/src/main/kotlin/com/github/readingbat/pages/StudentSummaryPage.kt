@@ -60,13 +60,15 @@ import com.github.readingbat.pages.PageUtils.rawHtml
 import com.github.readingbat.server.LanguageName
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.server.application.*
 import kotlinx.html.*
 import kotlinx.html.FormMethod.post
 import kotlinx.html.stream.createHTML
-import mu.two.KLogging
 
-internal object StudentSummaryPage : KLogging() {
+internal object StudentSummaryPage {
+  private val logger = KotlinLogging.logger {}
+
   fun PipelineCall.studentSummaryPage(content: ReadingBatContent, user: User?): String {
     val p = call.parameters
     val languageName = p[LANG_TYPE_QP]?.let { LanguageName(it) } ?: throw InvalidRequestException("Missing language")

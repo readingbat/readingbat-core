@@ -32,6 +32,7 @@ import com.github.readingbat.server.Intercepts.clock
 import com.github.readingbat.server.Intercepts.logger
 import com.github.readingbat.server.Intercepts.requestTimingMap
 import com.github.readingbat.server.ServerUtils.fetchUserDbmsIdFromCache
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.http.HttpHeaders.UserAgent
 import io.ktor.server.application.*
 import io.ktor.server.application.ApplicationCallPipeline.ApplicationPhase.Plugins
@@ -41,7 +42,6 @@ import io.ktor.server.plugins.callid.*
 import io.ktor.server.request.*
 import io.ktor.server.routing.Routing.Plugin.RoutingCallFinished
 import io.ktor.server.routing.Routing.Plugin.RoutingCallStarted
-import mu.two.KLogging
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.update
@@ -52,7 +52,8 @@ import kotlin.time.Duration.Companion.minutes
 import kotlin.time.TimeMark
 import kotlin.time.TimeSource
 
-internal object Intercepts : KLogging() {
+internal object Intercepts {
+  internal val logger = KotlinLogging.logger {}
   val clock = TimeSource.Monotonic
   val requestTimingMap = ConcurrentHashMap<String, TimeMark>()
 

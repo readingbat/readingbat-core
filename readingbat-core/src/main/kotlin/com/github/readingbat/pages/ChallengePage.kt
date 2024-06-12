@@ -104,6 +104,7 @@ import com.github.readingbat.server.SessionChallengeInfoTable
 import com.github.readingbat.server.UserChallengeInfoTable
 import com.pambrose.common.exposed.get
 import com.pambrose.common.exposed.readonlyTx
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.http.ContentType.Text.CSS
 import io.ktor.server.application.*
 import kotlinx.html.*
@@ -111,11 +112,11 @@ import kotlinx.html.Entities.nbsp
 import kotlinx.html.ScriptType.textJavaScript
 import kotlinx.html.stream.createHTML
 import kotlinx.serialization.json.Json
-import mu.two.KLogging
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.transactions.transaction
 
-internal object ChallengePage : KLogging() {
+internal object ChallengePage {
+  private val logger = KotlinLogging.logger {}
   private const val SPINNER_CSS = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
   private const val NAME_TD = "nameTd"
   private const val ANSWER_TD = "answersTd"

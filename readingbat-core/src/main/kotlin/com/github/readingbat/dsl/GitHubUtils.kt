@@ -19,14 +19,15 @@ package com.github.readingbat.dsl
 
 import com.github.pambrose.common.util.GitHubRepo
 import com.github.readingbat.common.Metrics
-import mu.two.KLogging
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.kohsuke.github.GHRepository
 import org.kohsuke.github.GitHub
 import kotlin.time.measureTimedValue
 
 // See https://github-api.kohsuke.org for usage details
 
-internal object GitHubUtils : KLogging() {
+internal object GitHubUtils {
+  private val logger = KotlinLogging.logger {}
   private val github by lazy { GitHub.connect() }
 
   fun GitHubRepo.userDirectoryContents(

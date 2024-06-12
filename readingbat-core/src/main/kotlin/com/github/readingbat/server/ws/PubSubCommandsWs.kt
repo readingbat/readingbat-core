@@ -38,18 +38,20 @@ import com.github.readingbat.server.ws.PubSubCommandsWs.PubSubTopic.ADMIN_COMMAN
 import com.github.readingbat.server.ws.PubSubCommandsWs.PubSubTopic.LIKE_DISLIKE
 import com.github.readingbat.server.ws.PubSubCommandsWs.PubSubTopic.LOG_MESSAGE
 import com.github.readingbat.server.ws.PubSubCommandsWs.PubSubTopic.USER_ANSWERS
+import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.newSingleThreadContext
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import mu.two.KLogging
 import redis.clients.jedis.Jedis
 import redis.clients.jedis.JedisPubSub
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import kotlin.time.Duration.Companion.seconds
 
-internal object PubSubCommandsWs : KLogging() {
+internal object PubSubCommandsWs {
+  private val logger = KotlinLogging.logger {}
+
   enum class PubSubTopic { ADMIN_COMMAND, USER_ANSWERS, LIKE_DISLIKE, LOG_MESSAGE }
 
   enum class AdminCommand { RESET_CONTENT_DSL, RESET_CACHE, LOAD_CHALLENGE, RUN_GC }

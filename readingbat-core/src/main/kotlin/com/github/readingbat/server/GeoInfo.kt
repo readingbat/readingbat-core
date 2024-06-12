@@ -25,9 +25,9 @@ import com.google.gson.Gson
 import com.pambrose.common.exposed.get
 import com.pambrose.common.exposed.readonlyTx
 import com.pambrose.common.exposed.upsert
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.client.statement.*
 import kotlinx.coroutines.runBlocking
-import mu.two.KLogging
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.util.concurrent.ConcurrentHashMap
 
@@ -115,7 +115,8 @@ class GeoInfo(val requireDbmsLookUp: Boolean, val dbmsId: Long, val remoteHost: 
 
   override fun toString() = map.toString()
 
-  companion object : KLogging() {
+  companion object {
+    private val logger = KotlinLogging.logger {}
     val gson = Gson()
     val geoInfoMap = ConcurrentHashMap<String, GeoInfo>()
 

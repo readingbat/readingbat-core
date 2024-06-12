@@ -42,17 +42,19 @@ import com.github.readingbat.posts.CreateAccountPost.checkPassword
 import com.github.readingbat.server.Password.Companion.getPassword
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.UsersTable
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.request.*
 import io.ktor.server.sessions.*
-import mu.two.KLogging
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.update
 import org.joda.time.DateTime
 import org.joda.time.DateTimeZone.UTC
 
-internal object UserPrefsPost : KLogging() {
+internal object UserPrefsPost {
+  private val logger = KotlinLogging.logger {}
+
   suspend fun PipelineCall.userPrefs(content: ReadingBatContent, user: User?) =
     if (user.isValidUser()) {
       val params = call.receiveParameters()

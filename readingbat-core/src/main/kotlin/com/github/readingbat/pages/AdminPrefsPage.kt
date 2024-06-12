@@ -36,6 +36,7 @@ import com.github.readingbat.pages.PageUtils.bodyTitle
 import com.github.readingbat.pages.PageUtils.headDefault
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
+import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.html.a
 import kotlinx.html.body
 import kotlinx.html.h2
@@ -45,9 +46,10 @@ import kotlinx.html.img
 import kotlinx.html.p
 import kotlinx.html.stream.createHTML
 import kotlinx.html.title
-import mu.two.KLogging
 
-internal object AdminPrefsPage : KLogging() {
+internal object AdminPrefsPage {
+  private val logger = KotlinLogging.logger {}
+
   fun PipelineCall.adminPrefsPage(content: ReadingBatContent, user: User?) =
     createHTML()
       .html {

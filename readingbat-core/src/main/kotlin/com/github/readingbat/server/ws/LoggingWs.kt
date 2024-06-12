@@ -39,6 +39,7 @@ import com.github.readingbat.server.ws.PubSubCommandsWs.publishLog
 import com.github.readingbat.server.ws.WsCommon.LOG_ID
 import com.github.readingbat.server.ws.WsCommon.closeChannels
 import com.github.readingbat.server.ws.WsCommon.validateLogContext
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.server.routing.*
 import io.ktor.server.websocket.*
 import io.ktor.websocket.*
@@ -51,13 +52,13 @@ import kotlinx.coroutines.newSingleThreadContext
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import mu.two.KLogging
 import java.util.Collections.synchronizedSet
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeSource
 import kotlin.time.measureTime
 
-internal object LoggingWs : KLogging() {
+internal object LoggingWs {
+  private val logger = KotlinLogging.logger {}
   private val clock = TimeSource.Monotonic
   private val logWsConnections: MutableSet<LogSessionContext> = synchronizedSet(LinkedHashSet<LogSessionContext>())
   val adminCommandFlow by lazy { MutableSharedFlow<AdminCommandData>(extraBufferCapacity = FLOW_BUFFER_CAPACITY) }

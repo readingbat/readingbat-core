@@ -22,10 +22,11 @@ import com.github.pambrose.common.util.substringBetween
 import com.github.readingbat.dsl.ReturnType.Companion.asReturnType
 import com.github.readingbat.server.ChallengeName
 import com.github.readingbat.server.Invocation
-import mu.two.KLogging
+import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlin.math.max
 
-internal object JavaParse : KLogging() {
+internal object JavaParse {
+  private val logger = KotlinLogging.logger {}
   private val spaceRegex = Regex("""\s+""")
   private val staticRegex = Regex("""static.+\(""")
   private val staticStartRegex = Regex("""\sstatic.+\(""")
@@ -96,6 +97,7 @@ internal object JavaParse : KLogging() {
             appendLine("")
             appendLine(indent + line.replace(psvmRegex, "public List<Object> getValue()"))
           }
+
           insideMain && prefixRegex.any { line.contains(it) } -> {
             val expr = line.substringBetween("(", ")")
             exprIndent = max(0, prefixRegex.maxOfOrNull { line.indexOf(it.pattern.substring(0, 6)) } ?: 0)
@@ -103,12 +105,14 @@ internal object JavaParse : KLogging() {
             logger.debug { "Transformed:\n$line\nto:\n$str" }
             appendLine(str)
           }
+
           insideMain && line.trimStart().startsWith("}") -> {
             insideMain = false
             appendLine("")
             appendLine("".padStart(exprIndent) + "return $varName;")
             appendLine(line)
           }
+
           else -> appendLine(line)
         }
       }

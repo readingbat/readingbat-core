@@ -63,7 +63,7 @@ internal object AboutPage {
 
               a {
                 href = "https://codingbat.com"
-                +"CodingBat.com "
+                +" CodingBat.com "
               }
 
               +"""

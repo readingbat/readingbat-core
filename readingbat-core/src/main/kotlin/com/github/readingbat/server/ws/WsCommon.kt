@@ -31,11 +31,13 @@ import com.github.readingbat.server.ws.ChallengeWs.challengeWsEndpoint
 import com.github.readingbat.server.ws.ClassSummaryWs.classSummaryWsEndpoint
 import com.github.readingbat.server.ws.LoggingWs.loggingWsEndpoint
 import com.github.readingbat.server.ws.StudentSummaryWs.studentSummaryWsEndpoint
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.server.routing.*
 import io.ktor.server.websocket.*
-import mu.two.KLogging
 
-object WsCommon : KLogging() {
+object WsCommon {
+  private val logger = KotlinLogging.logger {}
+
   const val LANGUAGE_NAME = "languageName"
   const val GROUP_NAME = "groupName"
   const val STUDENT_ID = "studentId"

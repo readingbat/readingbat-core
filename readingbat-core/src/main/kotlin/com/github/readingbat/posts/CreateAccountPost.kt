@@ -43,13 +43,14 @@ import com.github.readingbat.server.UsersTable
 import com.google.common.util.concurrent.RateLimiter
 import com.pambrose.common.exposed.get
 import com.pambrose.common.exposed.readonlyTx
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.server.application.*
 import io.ktor.server.request.*
 import io.ktor.server.sessions.*
-import mu.two.KLogging
 import org.jetbrains.exposed.sql.Count
 
-internal object CreateAccountPost : KLogging() {
+internal object CreateAccountPost {
+  private val logger = KotlinLogging.logger {}
   private val EMPTY_NAME_MSG = Message("Empty name value", true)
   private val EMPTY_EMAIL_MSG = Message("Empty email value", true)
   private val INVALID_EMAIL_MSG = Message("Invalid email value", true)

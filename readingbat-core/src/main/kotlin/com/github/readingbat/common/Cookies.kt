@@ -33,11 +33,11 @@ import com.github.readingbat.server.LanguageName
 import com.github.readingbat.server.SessionAnswerHistoryTable
 import com.github.readingbat.server.SessionChallengeInfoTable
 import com.pambrose.common.exposed.readonlyTx
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
 import io.ktor.server.sessions.*
 import kotlinx.serialization.json.Json.Default.decodeFromString
-import mu.two.KLogging
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.insertAndGetId
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -86,7 +86,9 @@ data class BrowserSession(val id: String, val created: Long = Instant.now().toEp
         }
     }.firstOrNull() ?: ChallengeHistory(invocationVal)
 
-  companion object : KLogging() {
+  companion object {
+    private val logger = KotlinLogging.logger {}
+
     fun createBrowserSession(id: String) =
       with(BrowserSessionsTable) {
         insertAndGetId { row -> row[sessionId] = id }.value

@@ -29,13 +29,21 @@ import com.github.readingbat.common.Constants.UNASSIGNED
 import com.github.readingbat.common.EnvVar
 import com.github.readingbat.common.KeyConstants.CONTENT_DSL_KEY
 import com.github.readingbat.common.KeyConstants.keyOf
-import com.github.readingbat.common.Property
+import com.github.readingbat.common.Property.AGENT_ENABLED
+import com.github.readingbat.common.Property.AGENT_LAUNCH_ID
+import com.github.readingbat.common.Property.CONTENT_CACHING_ENABLED
+import com.github.readingbat.common.Property.DBMS_ENABLED
+import com.github.readingbat.common.Property.IS_PRODUCTION
+import com.github.readingbat.common.Property.IS_TESTING
+import com.github.readingbat.common.Property.MULTI_SERVER_ENABLED
+import com.github.readingbat.common.Property.REDIS_ENABLED
+import com.github.readingbat.common.Property.SAVE_REQUESTS_ENABLED
 import com.github.readingbat.dsl.ContentDsl.logger
 import com.github.readingbat.server.ReadingBatServer
 import com.github.readingbat.server.ReadingBatServer.redisPool
 import com.github.readingbat.server.ScriptPools.kotlinScriptPool
+import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.runBlocking
-import mu.two.KLogging
 import kotlin.reflect.KFunction
 import kotlin.time.measureTimedValue
 
@@ -63,31 +71,31 @@ fun readingBatContent(block: ReadingBatContent.() -> Unit) =
   ReadingBatContent().apply(block).apply { validate() }
 
 // This is accessible from the Content.kt descriptions
-fun isProduction() = Property.IS_PRODUCTION.getProperty(false)
+fun isProduction() = IS_PRODUCTION.getProperty(false)
 
-fun isTesting() = Property.IS_TESTING.getProperty(false)
+fun isTesting() = IS_TESTING.getProperty(false)
 
-internal fun isDbmsEnabled() = Property.DBMS_ENABLED.getProperty(false)
+internal fun isDbmsEnabled() = DBMS_ENABLED.getProperty(false)
 
-internal fun isRedisEnabled() = Property.REDIS_ENABLED.getProperty(false)
+internal fun isRedisEnabled() = REDIS_ENABLED.getProperty(false)
 
 internal fun isSaveRequestsEnabled() =
-  Property.SAVE_REQUESTS_ENABLED.getProperty(
+  SAVE_REQUESTS_ENABLED.getProperty(
     default = true,
     errorOnNonInit = false,
   ) && isDbmsEnabled() && EnvVar.IPGEOLOCATION_KEY.isDefined()
 
 internal fun isContentCachingEnabled() =
-  Property.CONTENT_CACHING_ENABLED.getProperty(
+  CONTENT_CACHING_ENABLED.getProperty(
     default = false,
     errorOnNonInit = false,
   ) && isDbmsEnabled() && isRedisEnabled()
 
-internal fun isMultiServerEnabled() = Property.MULTI_SERVER_ENABLED.getProperty(false)
+internal fun isMultiServerEnabled() = MULTI_SERVER_ENABLED.getProperty(false)
 
-internal fun isAgentEnabled() = Property.AGENT_ENABLED.getProperty(false)
+internal fun isAgentEnabled() = AGENT_ENABLED.getProperty(false)
 
-internal fun agentLaunchId() = Property.AGENT_LAUNCH_ID.getProperty(UNASSIGNED, false)
+internal fun agentLaunchId() = AGENT_LAUNCH_ID.getProperty(UNASSIGNED, false)
 
 fun ContentSource.eval(enclosingContent: ReadingBatContent, variableName: String = "content"): ReadingBatContent =
   enclosingContent.evalContent(this, variableName)
@@ -177,4 +185,6 @@ private suspend fun evalDsl(code: String, sourceName: String) =
   }.getOrThrow()
 
 @Suppress("unused")
-object ContentDsl : KLogging()
+object ContentDsl {
+  internal val logger = KotlinLogging.logger {}
+}

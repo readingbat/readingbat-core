@@ -52,12 +52,13 @@ import com.github.readingbat.pages.PageUtils.rawHtml
 import com.github.readingbat.pages.UserPrefsPage.requestLogInPage
 import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
+import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.html.*
 import kotlinx.html.Entities.nbsp
 import kotlinx.html.stream.createHTML
-import mu.two.KLogging
 
-internal object TeacherPrefsPage : KLogging() {
+internal object TeacherPrefsPage {
+  private val logger = KotlinLogging.logger {}
   private const val CREATE_CLASS_BUTTON = "CreateClassButton"
 
   fun PipelineCall.teacherPrefsPage(

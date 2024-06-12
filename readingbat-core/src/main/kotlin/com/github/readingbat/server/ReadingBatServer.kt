@@ -65,6 +65,7 @@ import com.github.readingbat.server.ws.PubSubCommandsWs
 import com.github.readingbat.server.ws.WsCommon.wsRoutes
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.server.application.*
 import io.ktor.server.cio.*
 import io.ktor.server.engine.*
@@ -74,7 +75,6 @@ import io.prometheus.Agent.Companion.startAsyncAgent
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeoutOrNull
-import mu.two.KLogging
 import org.jetbrains.exposed.sql.Database
 import redis.clients.jedis.JedisPool
 import redis.clients.jedis.exceptions.JedisConnectionException
@@ -88,7 +88,8 @@ import kotlin.time.TimeSource
 import kotlin.time.measureTime
 
 @Version(version = BuildConfig.CORE_VERSION, date = BuildConfig.CORE_RELEASE_DATE)
-object ReadingBatServer : KLogging() {
+object ReadingBatServer {
+  internal val logger = KotlinLogging.logger {}
   private const val CALLER_VERSION = "callerVersion"
   private val startTime = TimeSource.Monotonic.markNow()
   internal val serverSessionId = randomId(10)
@@ -194,11 +195,10 @@ object ReadingBatServer : KLogging() {
 }
 
 internal fun Application.readContentDsl(fileName: String, variableName: String, logId: String = "") {
-  "Loading content using $variableName in $fileName"
-    .also {
-      logger.info { it }
-      logToRedis(it, logId)
-    }
+  "Loading content using $variableName in $fileName".also {
+    logger.info { it }
+    logToRedis(it, logId)
+  }
 
   measureTime {
     val contentSource = FileSource(fileName = fileName)
