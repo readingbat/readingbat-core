@@ -48,6 +48,7 @@ import kotlin.reflect.KFunction
 import kotlin.time.measureTimedValue
 
 @DslMarker
+@Target(AnnotationTarget.CLASS, AnnotationTarget.TYPE)
 annotation class ReadingBatDslMarker
 
 class GitHubContent(
@@ -83,13 +84,17 @@ internal fun isSaveRequestsEnabled() =
   SAVE_REQUESTS_ENABLED.getProperty(
     default = true,
     errorOnNonInit = false,
-  ) && isDbmsEnabled() && EnvVar.IPGEOLOCATION_KEY.isDefined()
+  ) &&
+    isDbmsEnabled() &&
+    EnvVar.IPGEOLOCATION_KEY.isDefined()
 
 internal fun isContentCachingEnabled() =
   CONTENT_CACHING_ENABLED.getProperty(
     default = false,
     errorOnNonInit = false,
-  ) && isDbmsEnabled() && isRedisEnabled()
+  ) &&
+    isDbmsEnabled() &&
+    isRedisEnabled()
 
 internal fun isMultiServerEnabled() = MULTI_SERVER_ENABLED.getProperty(false)
 

@@ -39,8 +39,12 @@ internal object AdminPost {
   private val mustBeSysAdmin = Message("Must be system admin for this function", true)
   private val invalidOption = Message("Invalid option", true)
 
-  suspend fun PipelineCall.adminActions(content: ReadingBatContent, user: User?, redis: Jedis): String {
-    return when {
+  suspend fun PipelineCall.adminActions(
+    content: ReadingBatContent,
+    user: User?,
+    redis: Jedis,
+  ): String =
+    when {
       isProduction() && user.isNotValidUser() -> adminDataPage(content, user, redis = redis, msg = mustBeLoggedIn)
       isProduction() && user.isNotAdminUser() -> adminDataPage(content, user, redis, mustBeSysAdmin)
       else -> {
@@ -50,9 +54,9 @@ internal object AdminPost {
             call.sessions.clear<UserPrincipal>()
             adminDataPage(content, user, redis, Message("$cnt items deleted", false))
           }
+
           else -> adminDataPage(content, user, redis = redis, msg = invalidOption)
         }
       }
     }
-  }
 }

@@ -174,13 +174,11 @@ class ChallengeGroup<T : Challenge>(
     return pos
   }
 
-  @ReadingBatDslMarker
   fun T.unaryPlus() {
     this@ChallengeGroup.checkChallengeName(challengeName)
     this@ChallengeGroup.challenges += this
   }
 
-  @ReadingBatDslMarker
   fun include(challenge: T) {
     checkChallengeName(challenge.challengeName)
     challenges += challenge
@@ -191,7 +189,6 @@ class ChallengeGroup<T : Challenge>(
 
   data class PatternReturnType(val pattern: String, val returnType: ReturnType)
 
-  @ReadingBatDslMarker
   infix fun String.returns(returnType: ReturnType) = PatternReturnType(this, returnType)
 
   internal fun addChallenge(challengeFile: LanguageGroup.ChallengeFile, pattern: String) {
@@ -224,7 +221,6 @@ class ChallengeGroup<T : Challenge>(
     return true
   }
 
-  @ReadingBatDslMarker
   fun challenge(name: String, block: T.() -> Unit = {}) {
     val challengeName = ChallengeName(name)
     logger.debug { "Adding $challengeName" }

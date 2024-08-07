@@ -17,9 +17,7 @@
 
 package com.github.readingbat.testcontent
 
-fun combine(s1: String, s2: String): Array<String> {
-  return arrayOf(s1, s2)
-}
+fun combine(s1: String, s2: String): Array<String> = arrayOf(s1, s2)
 
 fun main() {
   println(combine("Car", "wash"))

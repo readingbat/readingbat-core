@@ -135,23 +135,18 @@ class ReadingBatContent {
   internal fun functionInfoByMd5(md5: String) =
     functionInfoMap.asSequence().firstOrNull { it.component2().challengeMd5.value == md5 }?.value
 
-  @ReadingBatDslMarker
   fun java(block: LanguageGroup<JavaChallenge>.() -> Unit) = java.run(block)
 
-  @ReadingBatDslMarker
   fun python(block: LanguageGroup<PythonChallenge>.() -> Unit) = python.run(block)
 
-  @ReadingBatDslMarker
   fun kotlin(block: LanguageGroup<KotlinChallenge>.() -> Unit) = kotlin.run(block)
 
-  @ReadingBatDslMarker
   @Suppress("UNCHECKED_CAST")
   operator fun <T : Challenge> LanguageGroup<T>.unaryPlus() {
     val languageGroup = this@ReadingBatContent.findLanguage(languageType) as LanguageGroup<T>
     challengeGroups.forEach { languageGroup.addGroup(it) }
   }
 
-  @ReadingBatDslMarker
   fun <T : Challenge> include(languageGroup: LanguageGroup<T>, namePrefix: String = "") {
 //    val langList = languageList
 //    val langMap = languageMap

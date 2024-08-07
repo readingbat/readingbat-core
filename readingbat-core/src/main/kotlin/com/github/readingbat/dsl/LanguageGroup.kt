@@ -75,7 +75,6 @@ class LanguageGroup<T : Challenge>(
 
   internal data class ChallengeFile(val fileName: String, val returnType: ReturnType)
 
-  @ReadingBatDslMarker
   fun group(name: String, block: ChallengeGroup<T>.() -> Unit) {
     val group = ChallengeGroup(this, GroupName(name)).apply(block)
     addGroup(group)
@@ -92,12 +91,10 @@ class LanguageGroup<T : Challenge>(
     }
   }
 
-  @ReadingBatDslMarker
   operator fun ChallengeGroup<T>.unaryPlus() {
     this@LanguageGroup.addGroup(this)
   }
 
-  @ReadingBatDslMarker
   @Suppress("unused")
   fun include(challengeGroup: ChallengeGroup<T>) {
     addGroup(challengeGroup)

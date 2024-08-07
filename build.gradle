@@ -9,12 +9,12 @@ buildscript {
 plugins {
     id 'java'
     id 'application'
-    id 'org.jetbrains.kotlin.jvm' version '2.0.0' apply false
-    id 'org.jetbrains.kotlin.plugin.serialization' version '2.0.0' apply false
-    id 'org.jmailen.kotlinter' version "4.3.0" apply false
-    id 'com.github.gmazzo.buildconfig' version '5.3.5' apply false
+    id 'org.jetbrains.kotlin.jvm' version '2.0.10' apply false
+    id 'org.jetbrains.kotlin.plugin.serialization' version '2.0.10' apply false
+    id 'org.jmailen.kotlinter' version "4.4.1" apply false
+    id 'com.github.gmazzo.buildconfig' version '5.4.0' apply false
     id "com.github.ben-manes.versions" version '0.51.0' apply false
-    id "org.flywaydb.flyway" version "10.15.0"
+    id "org.flywaydb.flyway" version "10.17.0"
 }
 
 ext {
@@ -167,16 +167,18 @@ subprojects {
 
     tasks.withType(KotlinCompile).configureEach {
         //'-Xlint:-options',
-        kotlinOptions.freeCompilerArgs += ['-Xbackend-threads=8',
-                                           '-opt-in=kotlin.time.ExperimentalTime',
-                                           '-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi',
-                                           '-opt-in=kotlin.contracts.ExperimentalContracts',
-                                           '-opt-in=kotlinx.coroutines.ObsoleteCoroutinesApi',
-                                           '-opt-in=kotlin.ExperimentalStdlibApi',
-                                           '-opt-in=io.ktor.server.locations.KtorExperimentalLocationsAPI',
-                                           '-opt-in=kotlinx.coroutines.InternalCoroutinesApi',
-                                           '-opt-in=kotlinx.coroutines.DelicateCoroutinesApi',
-        ]
+        kotlinOptions {
+            freeCompilerArgs += ['-Xbackend-threads=8',
+                                 '-opt-in=kotlin.time.ExperimentalTime',
+                                 '-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi',
+                                 '-opt-in=kotlin.contracts.ExperimentalContracts',
+                                 '-opt-in=kotlinx.coroutines.ObsoleteCoroutinesApi',
+                                 '-opt-in=kotlin.ExperimentalStdlibApi',
+                                 '-opt-in=io.ktor.server.locations.KtorExperimentalLocationsAPI',
+                                 '-opt-in=kotlinx.coroutines.InternalCoroutinesApi',
+                                 '-opt-in=kotlinx.coroutines.DelicateCoroutinesApi',
+            ]
+        }
     }
 
     test {

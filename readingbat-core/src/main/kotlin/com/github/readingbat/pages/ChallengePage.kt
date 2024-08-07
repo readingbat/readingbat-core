@@ -221,7 +221,9 @@ internal object ChallengePage {
 
     div(classes = CODE_BLOCK) {
       pre(classes = "line-numbers") {
-        code(classes = "language-$languageName") { +funcInfo.codeSnippet }
+        code(classes = "language-$languageName") {
+          +funcInfo.codeSnippet
+        }
       }
     }
   }
