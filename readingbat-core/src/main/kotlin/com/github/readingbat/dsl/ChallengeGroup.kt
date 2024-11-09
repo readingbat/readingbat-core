@@ -99,9 +99,7 @@ class ChallengeGroup<T : Challenge>(
 
           if (isContentCachingEnabled()) {
             fetchDirContentsFromRedis(path)
-              .let {
-                if (it.isNotNull() && it.isNotEmpty()) it else fetchRemoteFiles(root, path)
-              }
+              .let { if (it.isNotNull() && it.isNotEmpty()) it else fetchRemoteFiles(root, path) }
           } else {
             fetchRemoteFiles(root, path)
           }

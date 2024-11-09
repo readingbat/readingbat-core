@@ -65,9 +65,9 @@ fun Routing.sysAdminRoutes(metrics: Metrics, resetContentFunc: (String) -> Unit)
       val cnt = keys.count()
       keys.forEach { redis.del(it) }
       return "$cnt content DSLs ${"file".pluralize(cnt)} deleted from Redis"
-        .also {
-          logger.info { it }
-          redis.publishLog(it, logId)
+        .also { msg ->
+          logger.info { msg }
+          redis.publishLog(msg, logId)
         }
     }
 
@@ -77,9 +77,9 @@ fun Routing.sysAdminRoutes(metrics: Metrics, resetContentFunc: (String) -> Unit)
       val cnt = keys.count()
       keys.forEach { redis.del(it) }
       return "$cnt directory ${"content".pluralize(cnt)} deleted from Redis"
-        .also {
-          logger.info { it }
-          redis.publishLog(it, logId)
+        .also { msg ->
+          logger.info { msg }
+          redis.publishLog(msg, logId)
         }
     }
 
@@ -89,9 +89,9 @@ fun Routing.sysAdminRoutes(metrics: Metrics, resetContentFunc: (String) -> Unit)
       val cnt = keys.count()
       keys.forEach { redis.del(it) }
       return "$cnt source code ${"file".pluralize(cnt)} deleted from Redis"
-        .also {
-          logger.info { it }
-          redis.publishLog(it, logId)
+        .also { msg ->
+          logger.info { msg }
+          redis.publishLog(msg, logId)
         }
     }
 

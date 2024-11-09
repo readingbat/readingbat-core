@@ -14,7 +14,7 @@ plugins {
     id 'org.jmailen.kotlinter' version "4.4.1" apply false
     id 'com.github.gmazzo.buildconfig' version '5.5.0' apply false
     id "com.github.ben-manes.versions" version '0.51.0' apply false
-    id "org.flywaydb.flyway" version "10.20.0"
+    id "org.flywaydb.flyway" version "10.21.0"
 }
 
 ext {
@@ -87,7 +87,7 @@ ext {
 allprojects {
     description = 'ReadingBat Core'
     group 'com.github.readingbat'
-    version '1.40.0'
+    version '1.40.1'
 
     apply plugin: 'application'
     apply plugin: 'java-library'
