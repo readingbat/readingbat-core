@@ -359,19 +359,19 @@ sealed class Property(
   object REDIS_MAX_POOL_SIZE :
     Property(
       propertyValue = RedisUtils.REDIS_MAX_POOL_SIZE,
-      initFunc = { setPropertyFromConfig(it, EnvVar.REDIS_MAX_POOL_SIZE.getEnv(configValue(it, "10"))) },
+      initFunc = { setPropertyFromConfig(it, "10") },
     )
 
   object REDIS_MAX_IDLE_SIZE :
     Property(
       propertyValue = RedisUtils.REDIS_MAX_IDLE_SIZE,
-      initFunc = { setPropertyFromConfig(it, EnvVar.REDIS_MAX_IDLE_SIZE.getEnv(configValue(it, "5"))) },
+      initFunc = { setPropertyFromConfig(it, "5") },
     )
 
   object REDIS_MIN_IDLE_SIZE :
     Property(
       propertyValue = RedisUtils.REDIS_MIN_IDLE_SIZE,
-      initFunc = { setPropertyFromConfig(it, EnvVar.REDIS_MIN_IDLE_SIZE.getEnv(configValue(it, "1"))) },
+      initFunc = { setPropertyFromConfig(it, "3") },
     )
 
   companion object {

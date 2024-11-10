@@ -40,9 +40,6 @@ enum class EnvVar(val maskFunc: EnvVar.() -> String = { getEnv(UNASSIGNED) }) {
   DBMS_USERNAME,
   DBMS_PASSWORD({ getEnvOrNull()?.obfuscate(1) ?: UNASSIGNED }),
   REDIS_URL({ getEnv(UNASSIGNED).maskUrlCredentials() }),
-  REDIS_MAX_POOL_SIZE,
-  REDIS_MAX_IDLE_SIZE,
-  REDIS_MIN_IDLE_SIZE,
   FORWARDED_ENABLED,
   XFORWARDED_ENABLED,
   ;

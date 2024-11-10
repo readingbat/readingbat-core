@@ -272,7 +272,7 @@ fun Application.module() {
   val job = launch { readContentDsl(dslFileName, dslVariableName) }
 
   runBlocking {
-    val maxDelay = Property.STARTUP_DELAY_SECS.configValue(this@module, "30").toInt().seconds
+    val maxDelay = Property.STARTUP_DELAY_SECS.configValue(this@module, "60").toInt().seconds
     logger.info { "Delaying start-up by max of $maxDelay" }
     measureTime {
       withTimeoutOrNull(maxDelay) {
