@@ -357,13 +357,22 @@ sealed class Property(
     )
 
   object REDIS_MAX_POOL_SIZE :
-    Property(RedisUtils.REDIS_MAX_POOL_SIZE, initFunc = { setPropertyFromConfig(it, "10") })
+    Property(
+      propertyValue = RedisUtils.REDIS_MAX_POOL_SIZE,
+      initFunc = { setPropertyFromConfig(it, EnvVar.REDIS_MAX_POOL_SIZE.getEnv(configValue(it, "10"))) },
+    )
 
   object REDIS_MAX_IDLE_SIZE :
-    Property(RedisUtils.REDIS_MAX_IDLE_SIZE, initFunc = { setPropertyFromConfig(it, "5") })
+    Property(
+      propertyValue = RedisUtils.REDIS_MAX_IDLE_SIZE,
+      initFunc = { setPropertyFromConfig(it, EnvVar.REDIS_MAX_IDLE_SIZE.getEnv(configValue(it, "5"))) },
+    )
 
   object REDIS_MIN_IDLE_SIZE :
-    Property(RedisUtils.REDIS_MIN_IDLE_SIZE, initFunc = { setPropertyFromConfig(it, "1") })
+    Property(
+      propertyValue = RedisUtils.REDIS_MIN_IDLE_SIZE,
+      initFunc = { setPropertyFromConfig(it, EnvVar.REDIS_MIN_IDLE_SIZE.getEnv(configValue(it, "1"))) },
+    )
 
   companion object {
     private val logger = KotlinLogging.logger {}
