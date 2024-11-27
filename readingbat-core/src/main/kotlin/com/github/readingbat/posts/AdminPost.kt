@@ -45,7 +45,7 @@ internal object AdminPost {
     redis: Jedis,
   ): String =
     when {
-      isProduction() && user.isNotValidUser() -> adminDataPage(content, user, redis = redis, msg = mustBeLoggedIn)
+      isProduction() && user.isNotValidUser() -> adminDataPage(content, user, redis, mustBeLoggedIn)
       isProduction() && user.isNotAdminUser() -> adminDataPage(content, user, redis, mustBeSysAdmin)
       else -> {
         when (call.receiveParameters()[ADMIN_ACTION_PARAM] ?: "") {

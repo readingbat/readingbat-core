@@ -530,8 +530,7 @@ class User {
       classCode.isEnabled -> {
         // Check to see if the teacher that owns class has it set as their active class in one of the sessions
         val teacherId = classCode.fetchClassTeacherId()
-        teacherId.isNotEmpty() &&
-          teacherId.toUser().interestedInActiveClassCode(classCode)
+        teacherId.isNotEmpty() && teacherId.toUser().interestedInActiveClassCode(classCode)
             .also { logger.debug { "Publishing teacherId: $teacherId for $classCode" } }
       }
 

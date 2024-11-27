@@ -99,6 +99,7 @@ internal object PubSubCommandsWs {
   }
 
   fun initThreads() {
+    logger.info { "Initializing PubSubCommandsWs" }
     val pubSub =
       object : JedisPubSub() {
         override fun onMessage(channel: String?, message: String?) {
@@ -135,13 +136,16 @@ internal object PubSubCommandsWs {
       }
 
     newSingleThreadContext("pubsubcommands-ws-redis").executor.execute {
+      logger.info { "Starting pubsubcommands-ws-redis thread" }
       while (true) {
         runCatching {
-          redisPool?.withNonNullRedisPool { redis ->
-            redis.subscribe(pubSub, *PubSubTopic.entries.map { it.name }.toTypedArray())
+          redisPool?.withNonNullRedisPool(true) { redis ->
+            val topics = PubSubTopic.entries.map { it.name }
+            logger.info { "Subscribing to $topics" }
+            redis.subscribe(pubSub, *topics.toTypedArray())
           } ?: throw RedisUnavailableException("pubsubWs subscriber")
         }.onFailure { e ->
-          logger.error(e) { "Exception in pubsubWs subscriber ${e.simpleClassName} ${e.message}" }
+          logger.error(e) { "Exception in pubsubWs subscriber: ${e.simpleClassName} ${e.message}" }
           Thread.sleep(5.seconds.inWholeMilliseconds)
         }
       }

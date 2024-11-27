@@ -254,12 +254,12 @@ fun Routing.userRoutes(metrics: Metrics, contentSrc: () -> ReadingBatContent) {
   }
 
   get(ADMIN_ENDPOINT, metrics) {
-    respondWithRedisCheck { redis -> adminDataPage(contentSrc(), fetchUser(), redis = redis) }
+    respondWithRedisCheck { adminDataPage(contentSrc(), fetchUser(), redis = it) }
   }
 
   post(ADMIN_ENDPOINT) {
     metrics.measureEndpointRequest(ADMIN_ENDPOINT) {
-      respondWithSuspendingRedisCheck { redis -> adminActions(contentSrc(), fetchUser(), redis) }
+      respondWithSuspendingRedisCheck { adminActions(contentSrc(), fetchUser(), redis = it) }
     }
   }
 

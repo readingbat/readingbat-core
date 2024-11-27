@@ -103,7 +103,7 @@ internal object ServerUtils {
       redirectTo { e.redirectUrl }
     }
 
-  suspend fun PipelineCall.respondWithRedisCheck(block: (redis: Jedis) -> String) =
+  suspend fun PipelineCall.respondWithRedisCheck(block: (Jedis) -> String) =
     try {
       val html =
         redisPool?.withRedisPool { redis ->
@@ -114,7 +114,7 @@ internal object ServerUtils {
       redirectTo { e.redirectUrl }
     }
 
-  suspend fun PipelineCall.respondWithSuspendingRedisCheck(block: suspend (redis: Jedis) -> String) =
+  suspend fun PipelineCall.respondWithSuspendingRedisCheck(block: suspend (Jedis) -> String) =
     try {
       val html =
         redisPool?.withSuspendingRedisPool { redis ->

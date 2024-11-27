@@ -374,6 +374,12 @@ sealed class Property(
       initFunc = { setPropertyFromConfig(it, "3") },
     )
 
+  object REDIS_MAX_WAIT_SECS :
+    Property(
+      propertyValue = RedisUtils.REDIS_MAX_WAIT_SECS,
+      initFunc = { setPropertyFromConfig(it, "1") },
+    )
+
   companion object {
     private val logger = KotlinLogging.logger {}
 
@@ -412,6 +418,7 @@ sealed class Property(
         REDIS_MAX_POOL_SIZE,
         REDIS_MAX_IDLE_SIZE,
         REDIS_MIN_IDLE_SIZE,
+        REDIS_MAX_WAIT_SECS,
       )
   }
 }

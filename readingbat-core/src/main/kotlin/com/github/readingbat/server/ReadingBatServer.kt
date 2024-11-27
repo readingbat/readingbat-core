@@ -231,10 +231,11 @@ fun Application.module() {
   ReadingBatServer.redisPool =
     if (isRedisEnabled())
       try {
-        RedisUtils.newJedisPool().also { logger.info { "Created Redis pool" } }
+        RedisUtils.newJedisPool()
+          .apply { logger.info { "Created Redis pool: maxIdle=$maxIdle, minIdle=$minIdle maxWait=$maxWaitDuration" } }
       } catch (e: JedisConnectionException) {
         logger.error { "Failed to create Redis pool: $REDIS_IS_DOWN" }
-        null  // Return null
+        null
       }
     else
       null
