@@ -17,7 +17,6 @@
 
 package com.github.readingbat.server.ws
 
-import com.github.pambrose.common.redis.RedisUtils.withSuspendingNonNullRedisPool
 import com.github.pambrose.common.time.format
 import com.github.pambrose.common.util.simpleClassName
 import com.github.readingbat.common.ClassCode
@@ -28,13 +27,11 @@ import com.github.readingbat.common.Endpoints.WS_ROOT
 import com.github.readingbat.common.KeyConstants.keyOf
 import com.github.readingbat.common.Metrics
 import com.github.readingbat.dsl.InvalidRequestException
-import com.github.readingbat.dsl.RedisUnavailableException
 import com.github.readingbat.dsl.agentLaunchId
 import com.github.readingbat.dsl.isMultiServerEnabled
-import com.github.readingbat.dsl.isRedisEnabled
-import com.github.readingbat.server.ReadingBatServer.redisPool
 import com.github.readingbat.server.ServerUtils.fetchUser
 import com.github.readingbat.server.ws.PubSubCommandsWs.ChallengeAnswerData
+import com.github.readingbat.server.ws.PubSubCommandsWs.publishShim
 import com.github.readingbat.server.ws.WsCommon.CHALLENGE_MD5
 import com.github.readingbat.server.ws.WsCommon.CLASS_CODE
 import com.github.readingbat.server.ws.WsCommon.closeChannels
@@ -120,19 +117,17 @@ internal object ChallengeWs {
       }
     }
 
-    if (isMultiServerEnabled() && isRedisEnabled()) {
+    if (isMultiServerEnabled()) {
       newSingleThreadContext("multiServerWsWriteChannel").executor.execute {
         while (true) {
           runCatching {
             runBlocking {
-              redisPool?.withSuspendingNonNullRedisPool { redis ->
-                multiServerWsWriteFlow
-                  .onStart { logger.info { "Starting to read multi-server writer ws channel values" } }
-                  .onCompletion { logger.info { "Finished reading multi-server writer ws channel values" } }
-                  .collect { data ->
-                    redis.publish(data.pubSubTopic.name, data.toJson())
-                  }
-              } ?: throw RedisUnavailableException("multiServerWriteChannel")
+              multiServerWsWriteFlow
+                .onStart { logger.info { "Starting to read multi-server writer ws channel values" } }
+                .onCompletion { logger.info { "Finished reading multi-server writer ws channel values" } }
+                .collect { data ->
+                  publishShim(data.pubSubTopic.name, data.toJson())
+                }
             }
           }.onFailure { e ->
             logger.error { "Exception in challenge ws writer: ${e.simpleClassName} ${e.message}" }

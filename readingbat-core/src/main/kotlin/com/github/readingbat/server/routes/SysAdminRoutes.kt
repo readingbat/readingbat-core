@@ -17,24 +17,19 @@
 
 package com.github.readingbat.server.routes
 
-import com.github.pambrose.common.redis.RedisUtils.scanKeys
-import com.github.pambrose.common.redis.RedisUtils.withNonNullRedisPool
 import com.github.pambrose.common.response.respondWith
 import com.github.pambrose.common.util.pluralize
-import com.github.readingbat.common.Endpoints.DELETE_CONTENT_IN_REDIS_ENDPOINT
+import com.github.readingbat.common.Endpoints.DELETE_CONTENT_IN_CONTENT_CACHE_ENDPOINT
 import com.github.readingbat.common.Endpoints.GARBAGE_COLLECTOR_ENDPOINT
 import com.github.readingbat.common.Endpoints.RESET_CACHE_ENDPOINT
 import com.github.readingbat.common.Endpoints.RESET_CONTENT_DSL_ENDPOINT
-import com.github.readingbat.common.KeyConstants.CONTENT_DSL_KEY
-import com.github.readingbat.common.KeyConstants.DIR_CONTENTS_KEY
-import com.github.readingbat.common.KeyConstants.SOURCE_CODE_KEY
-import com.github.readingbat.common.KeyConstants.keyOf
 import com.github.readingbat.common.Metrics
+import com.github.readingbat.dsl.ContentCaches.contentDslCache
+import com.github.readingbat.dsl.ContentCaches.dirCache
+import com.github.readingbat.dsl.ContentCaches.sourceCache
 import com.github.readingbat.dsl.InvalidRequestException
-import com.github.readingbat.dsl.RedisUnavailableException
 import com.github.readingbat.dsl.isContentCachingEnabled
 import com.github.readingbat.server.ReadingBatServer.logger
-import com.github.readingbat.server.ReadingBatServer.redisPool
 import com.github.readingbat.server.ServerUtils.authenticateAdminUser
 import com.github.readingbat.server.ServerUtils.fetchUser
 import com.github.readingbat.server.ServerUtils.paramMap
@@ -50,7 +45,6 @@ import com.github.readingbat.server.ws.WsCommon.LOG_ID
 import io.ktor.server.application.ApplicationCall
 import io.ktor.server.routing.Routing
 import io.ktor.server.routing.post
-import redis.clients.jedis.Jedis
 import kotlin.time.measureTime
 
 fun Routing.sysAdminRoutes(metrics: Metrics, resetContentFunc: (String) -> Unit) {
@@ -59,47 +53,42 @@ fun Routing.sysAdminRoutes(metrics: Metrics, resetContentFunc: (String) -> Unit)
     return paranMap[LOG_ID] ?: throw InvalidRequestException("Missing log id")
   }
 
-  fun deleteContentInRedis(redis: Jedis, logId: String): String {
-    fun deleteContentDslInRedis(): String {
-      val pattern = keyOf(CONTENT_DSL_KEY, "*")
-      val keys = redis.scanKeys(pattern).toList()
-      val cnt = keys.count()
-      keys.forEach { redis.del(it) }
-      return "$cnt content DSLs ${"file".pluralize(cnt)} deleted from Redis"
+  fun deleteAllCaches(logId: String): String {
+    fun deleteContentDslCache(): String {
+      val cnt = contentDslCache.count()
+      contentDslCache.clear()
+      return "$cnt content DSLs ${"file".pluralize(cnt)} deleted from cache"
         .also { msg ->
           logger.info { msg }
-          redis.publishLog(msg, logId)
+          publishLog(msg, logId)
         }
     }
 
-    fun deleteDirContentsInRedis(): String {
-      val pattern = keyOf(DIR_CONTENTS_KEY, "*")
-      val keys = redis.scanKeys(pattern).toList()
-      val cnt = keys.count()
-      keys.forEach { redis.del(it) }
-      return "$cnt directory ${"content".pluralize(cnt)} deleted from Redis"
+    fun deleteSourceCodeCache(): String {
+      val cnt = sourceCache.count()
+      sourceCache.clear()
+      return "$cnt source code ${"file".pluralize(cnt)} deleted from cache"
         .also { msg ->
           logger.info { msg }
-          redis.publishLog(msg, logId)
+          publishLog(msg, logId)
         }
     }
 
-    fun deleteSourceCodeInRedis(): String {
-      val pattern = keyOf(SOURCE_CODE_KEY, "*")
-      val keys = redis.scanKeys(pattern).toList()
-      val cnt = keys.count()
-      keys.forEach { redis.del(it) }
-      return "$cnt source code ${"file".pluralize(cnt)} deleted from Redis"
+    fun deleteDirContentsCache(): String {
+      val cnt = dirCache.count()
+      dirCache.clear()
+      return "$cnt directory ${"content".pluralize(cnt)} deleted from cache"
         .also { msg ->
           logger.info { msg }
-          redis.publishLog(msg, logId)
+          publishLog(msg, logId)
         }
     }
+
 
     return listOf(
-      deleteContentDslInRedis(),
-      deleteDirContentsInRedis(),
-      deleteSourceCodeInRedis(),
+      deleteContentDslCache(),
+      deleteSourceCodeCache(),
+      deleteDirContentsCache(),
     ).joinToString(", ")
   }
 
@@ -108,23 +97,20 @@ fun Routing.sysAdminRoutes(metrics: Metrics, resetContentFunc: (String) -> Unit)
       val user = fetchUser()
       val logId = call.logId()
       authenticateAdminUser(user) {
-        redisPool?.withNonNullRedisPool { redis ->
-          deleteContentInRedis(redis, logId)
-
-          // Run on the first server alone initially, to avoid multiple servers caching to redis simultaneously
-          if (isContentCachingEnabled()) {
-            measureTime { resetContentFunc.invoke(logId) }
-              .also { dur ->
-                "Initial DSL content reset in $dur"
-                  .also {
-                    logger.info { it }
-                    redis.publishLog(it, logId)
-                  }
-              }
-          }
-          redis.publishAdminCommand(RESET_CONTENT_DSL, logId)
-          ""
-        } ?: throw RedisUnavailableException(RESET_CONTENT_DSL_ENDPOINT)
+        deleteAllCaches(logId)
+        // Run on the first server alone initially, to avoid multiple servers caching to redis simultaneously
+        if (isContentCachingEnabled()) {
+          measureTime { resetContentFunc.invoke(logId) }
+            .also { dur ->
+              "Initial DSL content reset in $dur"
+                .also {
+                  logger.info { it }
+                  publishLog(it, logId)
+                }
+            }
+        }
+        publishAdminCommand(RESET_CONTENT_DSL, logId)
+        ""
       }
       ""
     }
@@ -135,23 +121,19 @@ fun Routing.sysAdminRoutes(metrics: Metrics, resetContentFunc: (String) -> Unit)
       val user = fetchUser()
       val logId = call.logId()
       authenticateAdminUser(user) {
-        redisPool?.withNonNullRedisPool { redis ->
-          deleteContentInRedis(redis, logId)
-          redis.publishAdminCommand(RESET_CACHE, logId)
-        } ?: throw RedisUnavailableException(RESET_CACHE_ENDPOINT)
+        deleteAllCaches(logId)
+        publishAdminCommand(RESET_CACHE, logId)
         ""
       }
     }
   }
 
-  post(DELETE_CONTENT_IN_REDIS_ENDPOINT, metrics) {
+  post(DELETE_CONTENT_IN_CONTENT_CACHE_ENDPOINT, metrics) {
     respondWith {
       val user = fetchUser()
       val logId = call.logId()
       authenticateAdminUser(user) {
-        redisPool?.withNonNullRedisPool { redis ->
-          deleteContentInRedis(redis, logId)
-        } ?: throw RedisUnavailableException(DELETE_CONTENT_IN_REDIS_ENDPOINT)
+        deleteAllCaches(logId)
       }
     }
   }
@@ -161,9 +143,7 @@ fun Routing.sysAdminRoutes(metrics: Metrics, resetContentFunc: (String) -> Unit)
       val user = fetchUser()
       val logId = call.logId()
       authenticateAdminUser(user) {
-        redisPool?.withNonNullRedisPool { redis ->
-          redis.publishAdminCommand(RUN_GC, logId)
-        } ?: throw RedisUnavailableException(GARBAGE_COLLECTOR_ENDPOINT)
+        publishAdminCommand(RUN_GC, logId)
         ""
       }
     }
@@ -176,9 +156,7 @@ fun Routing.sysAdminRoutes(metrics: Metrics, resetContentFunc: (String) -> Unit)
           val user = fetchUser()
           val logId = call.logId()
           authenticateAdminUser(user) {
-            redisPool?.withNonNullRedisPool { redis ->
-              redis.publishAdminCommand(LOAD_CHALLENGE, logId, type.toJson())
-            } ?: throw RedisUnavailableException(type.endPoint)
+            publishAdminCommand(LOAD_CHALLENGE, logId, type.toJson())
             ""
           }
         }

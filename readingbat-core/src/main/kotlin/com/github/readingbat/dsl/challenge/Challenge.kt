@@ -18,8 +18,6 @@
 package com.github.readingbat.dsl.challenge
 
 import ch.obermuhlner.scriptengine.java.Isolation
-import com.github.pambrose.common.redis.RedisUtils.withNonNullRedisPool
-import com.github.pambrose.common.redis.RedisUtils.withRedisPool
 import com.github.pambrose.common.util.AbstractRepo
 import com.github.pambrose.common.util.FileSystemSource
 import com.github.pambrose.common.util.ensureSuffix
@@ -35,6 +33,7 @@ import com.github.readingbat.common.KeyConstants.SOURCE_CODE_KEY
 import com.github.readingbat.common.KeyConstants.keyOf
 import com.github.readingbat.common.User
 import com.github.readingbat.dsl.ChallengeGroup
+import com.github.readingbat.dsl.ContentCaches.sourceCache
 import com.github.readingbat.dsl.LanguageType.Java
 import com.github.readingbat.dsl.LanguageType.Kotlin
 import com.github.readingbat.dsl.LanguageType.Python
@@ -58,7 +57,6 @@ import com.github.readingbat.dsl.parse.PythonParse.extractPythonFunction
 import com.github.readingbat.dsl.parse.PythonParse.extractPythonInvocations
 import com.github.readingbat.server.ChallengeName
 import com.github.readingbat.server.Invocation
-import com.github.readingbat.server.ReadingBatServer.redisPool
 import com.github.readingbat.server.ScriptPools
 import com.github.readingbat.server.SessionChallengeInfoTable
 import com.github.readingbat.server.UserChallengeInfoTable
@@ -127,8 +125,7 @@ sealed class Challenge(
 
   private val sourceCodeKey by lazy { keyOf(SOURCE_CODE_KEY, languageType.name, md5()) }
 
-  private fun fetchCodeFromRedis() =
-    if (isContentCachingEnabled()) redisPool?.withRedisPool { redis -> redis?.get(sourceCodeKey) } else null
+  private fun fetchSourceCodeFromCache() = if (isContentCachingEnabled()) sourceCache[sourceCodeKey] else null
 
   fun functionInfo() =
     if (repo.remote) {
@@ -136,16 +133,14 @@ sealed class Challenge(
         .computeIfAbsent(challengeId) {
           val timer = metrics.challengeRemoteReadDuration.labels(agentLaunchId()).startTimer()
           val code =
-            fetchCodeFromRedis() ?: try {
+            fetchSourceCodeFromCache() ?: try {
               val path = pathOf((repo as AbstractRepo).rawSourcePrefix, branchName, srcPath, fqName)
               val (text, dur) = measureTimedValue { URL(path).readText() }
               logger.debug { """Fetched "${pathOf(groupName, fileName)}" in: $dur from: $path""" }
 
               if (isContentCachingEnabled()) {
-                redisPool?.withNonNullRedisPool(true) { redis ->
-                  redis.set(sourceCodeKey, text)
-                  logger.debug { """Saved "${pathOf(groupName, fileName)}" to redis""" }
-                }
+                sourceCache[sourceCodeKey] = text
+                logger.debug { """Saved "${pathOf(groupName, fileName)}" to content cache""" }
               }
               text
             } finally {

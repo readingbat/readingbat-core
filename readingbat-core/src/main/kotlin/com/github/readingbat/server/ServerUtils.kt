@@ -17,9 +17,6 @@
 
 package com.github.readingbat.server
 
-import com.github.pambrose.common.redis.RedisUtils.withNonNullRedisPool
-import com.github.pambrose.common.redis.RedisUtils.withRedisPool
-import com.github.pambrose.common.redis.RedisUtils.withSuspendingRedisPool
 import com.github.pambrose.common.response.redirectTo
 import com.github.pambrose.common.response.respondWith
 import com.github.pambrose.common.util.Version.Companion.versionDesc
@@ -35,11 +32,8 @@ import com.github.readingbat.common.userPrincipal
 import com.github.readingbat.dsl.InvalidRequestException
 import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.dsl.RedisUnavailableException
 import com.github.readingbat.dsl.isProduction
-import com.github.readingbat.dsl.isRedisEnabled
 import com.github.readingbat.server.Email.Companion.UNKNOWN_EMAIL
-import com.github.readingbat.server.ReadingBatServer.redisPool
 import com.github.readingbat.server.ws.PubSubCommandsWs.publishLog
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.http.HttpMethod
@@ -47,7 +41,6 @@ import io.ktor.http.formUrlEncode
 import io.ktor.server.application.ApplicationCall
 import io.ktor.server.auth.principal
 import io.ktor.server.request.receiveParameters
-import io.ktor.server.request.uri
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.RoutingContext
 import io.ktor.server.routing.RoutingHandler
@@ -57,7 +50,6 @@ import io.ktor.server.sessions.set
 import io.ktor.server.websocket.WebSocketServerSession
 import io.ktor.utils.io.KtorDsl
 import kotlinx.coroutines.runBlocking
-import redis.clients.jedis.Jedis
 
 @Suppress("unused")
 internal object ServerUtils {
@@ -106,28 +98,6 @@ internal object ServerUtils {
       redirectTo { e.redirectUrl }
     }
 
-  suspend fun RoutingContext.respondWithRedisCheck(block: (Jedis) -> String) =
-    try {
-      val html =
-        redisPool?.withRedisPool { redis ->
-          block.invoke(redis ?: throw RedisUnavailableException(call.request.uri))
-        } ?: throw RedisUnavailableException(call.request.uri)
-      respondWith { html }
-    } catch (e: RedirectException) {
-      redirectTo { e.redirectUrl }
-    }
-
-  suspend fun RoutingContext.respondWithSuspendingRedisCheck(block: suspend (Jedis) -> String) =
-    try {
-      val html =
-        redisPool?.withSuspendingRedisPool { redis ->
-          block.invoke(redis ?: throw RedisUnavailableException(call.request.uri))
-        } ?: throw RedisUnavailableException(call.request.uri)
-      respondWith { html }
-    } catch (e: RedirectException) {
-      redirectTo { e.redirectUrl }
-    }
-
   fun authenticateAdminUser(user: User?, block: () -> String): String =
     when {
       isProduction() -> {
@@ -169,11 +139,9 @@ internal object ServerUtils {
       .filter { content[it].isNotEmpty() }
       .firstOrNull() ?: error("Missing non-empty language")
 
-  fun logToRedis(msg: String, logId: String) {
-    if (logId.isNotEmpty() && isRedisEnabled()) {
-      redisPool?.withNonNullRedisPool { redis ->
-        redis.publishLog(msg, logId)
-      }
+  fun logToShim(msg: String, logId: String) {
+    if (logId.isNotEmpty()) {
+      publishLog(msg, logId)
     }
   }
 

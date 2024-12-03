@@ -17,9 +17,7 @@
 
 package com.github.readingbat.server.ws
 
-import com.github.pambrose.common.redis.RedisUtils.withNonNullRedisPool
 import com.github.pambrose.common.util.isNotNull
-import com.github.pambrose.common.util.simpleClassName
 import com.github.readingbat.common.Endpoints.LOAD_ALL_ENDPOINT
 import com.github.readingbat.common.Endpoints.LOAD_JAVA_ENDPOINT
 import com.github.readingbat.common.Endpoints.LOAD_KOTLIN_ENDPOINT
@@ -28,8 +26,6 @@ import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.dsl.LanguageType.Java
 import com.github.readingbat.dsl.LanguageType.Kotlin
 import com.github.readingbat.dsl.LanguageType.Python
-import com.github.readingbat.dsl.RedisUnavailableException
-import com.github.readingbat.server.ReadingBatServer.redisPool
 import com.github.readingbat.server.ReadingBatServer.serverSessionId
 import com.github.readingbat.server.ws.ChallengeWs.multiServerWsReadFlow
 import com.github.readingbat.server.ws.LoggingWs.adminCommandFlow
@@ -39,15 +35,11 @@ import com.github.readingbat.server.ws.PubSubCommandsWs.PubSubTopic.LIKE_DISLIKE
 import com.github.readingbat.server.ws.PubSubCommandsWs.PubSubTopic.LOG_MESSAGE
 import com.github.readingbat.server.ws.PubSubCommandsWs.PubSubTopic.USER_ANSWERS
 import io.github.oshai.kotlinlogging.KotlinLogging
-import kotlinx.coroutines.newSingleThreadContext
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import redis.clients.jedis.Jedis
-import redis.clients.jedis.JedisPubSub
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import kotlin.time.Duration.Companion.seconds
 
 internal object PubSubCommandsWs {
   private val logger = KotlinLogging.logger {}
@@ -87,68 +79,38 @@ internal object PubSubCommandsWs {
 
   private val timeFormat = DateTimeFormatter.ofPattern("H:m:ss.SSS")
 
-  fun Jedis.publishAdminCommand(command: AdminCommand, logId: String, jsonArgs: String = "") {
+  fun publishAdminCommand(command: AdminCommand, logId: String, jsonArgs: String = "") {
     publishLog("Dispatching ${command.name} $jsonArgs", logId)
     val adminCommandData = AdminCommandData(command, jsonArgs, logId)
-    publish(ADMIN_COMMAND.name, adminCommandData.toJson())
+    publishShim(ADMIN_COMMAND.name, adminCommandData.toJson())
   }
 
-  fun Jedis.publishLog(msg: String, logId: String) {
+  fun publishLog(msg: String, logId: String) {
     val logData = LogData("${LocalDateTime.now().format(timeFormat)} [$serverSessionId] - $msg", logId)
-    publish(LOG_MESSAGE.name, logData.toJson())
+    publishShim(LOG_MESSAGE.name, logData.toJson())
   }
 
-  fun initThreads() {
-    logger.info { "Initializing PubSubCommandsWs" }
-    val pubSub =
-      object : JedisPubSub() {
-        override fun onMessage(channel: String?, message: String?) {
-          if (channel.isNotNull() && message.isNotNull())
-            runBlocking {
-              when (enumValueOf<PubSubTopic>(channel)) {
-                ADMIN_COMMAND -> {
-                  val data = Json.decodeFromString<AdminCommandData>(message)
-                  adminCommandFlow.emit(data)
-                }
+  fun publishShim(channel: String, message: String) {
+    if (channel.isNotNull() && message.isNotNull())
+      runBlocking {
+        when (enumValueOf<PubSubTopic>(channel)) {
+          ADMIN_COMMAND -> {
+            val data = Json.decodeFromString<AdminCommandData>(message)
+            adminCommandFlow.emit(data)
+          }
 
-                USER_ANSWERS,
-                LIKE_DISLIKE,
-                  -> {
-                  val data = Json.decodeFromString<ChallengeAnswerData>(message)
-                  multiServerWsReadFlow.emit(data)
-                }
+          USER_ANSWERS,
+          LIKE_DISLIKE,
+            -> {
+            val data = Json.decodeFromString<ChallengeAnswerData>(message)
+            multiServerWsReadFlow.emit(data)
+          }
 
-                LOG_MESSAGE -> {
-                  val data = Json.decodeFromString<LogData>(message)
-                  logWsReadFlow.emit(data)
-                }
-              }
-            }
-        }
-
-        override fun onSubscribe(channel: String?, subscribedChannels: Int) {
-          logger.info { "Subscribed to channel: $channel [$subscribedChannels]" }
-        }
-
-        override fun onUnsubscribe(channel: String?, subscribedChannels: Int) {
-          logger.info { "Unsubscribed from channel: $channel [$subscribedChannels]" }
+          LOG_MESSAGE -> {
+            val data = Json.decodeFromString<LogData>(message)
+            logWsReadFlow.emit(data)
+          }
         }
       }
-
-    newSingleThreadContext("pubsubcommands-ws-redis").executor.execute {
-      logger.info { "Starting pubsubcommands-ws-redis thread" }
-      while (true) {
-        runCatching {
-          redisPool?.withNonNullRedisPool(true) { redis ->
-            val topics = PubSubTopic.entries.map { it.name }
-            logger.info { "Subscribing to $topics" }
-            redis.subscribe(pubSub, *topics.toTypedArray())
-          } ?: throw RedisUnavailableException("pubsubWs subscriber")
-        }.onFailure { e ->
-          logger.error(e) { "Exception in pubsubWs subscriber: ${e.simpleClassName} ${e.message}" }
-          Thread.sleep(5.seconds.inWholeMilliseconds)
-        }
-      }
-    }
   }
 }

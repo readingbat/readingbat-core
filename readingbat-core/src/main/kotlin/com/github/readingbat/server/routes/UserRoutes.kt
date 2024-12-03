@@ -92,9 +92,7 @@ import com.github.readingbat.server.ServerUtils.fetchUser
 import com.github.readingbat.server.ServerUtils.get
 import com.github.readingbat.server.ServerUtils.queryParam
 import com.github.readingbat.server.ServerUtils.respondWithRedirect
-import com.github.readingbat.server.ServerUtils.respondWithRedisCheck
 import com.github.readingbat.server.ServerUtils.respondWithSuspendingRedirect
-import com.github.readingbat.server.ServerUtils.respondWithSuspendingRedisCheck
 import com.github.readingbat.server.routes.ResourceContent.getResourceAsText
 import io.ktor.http.ContentType
 import io.ktor.http.ContentType.Text.CSS
@@ -259,12 +257,12 @@ fun Routing.userRoutes(metrics: Metrics, contentSrc: () -> ReadingBatContent) {
   }
 
   get(ADMIN_ENDPOINT, metrics) {
-    respondWithRedisCheck { adminDataPage(contentSrc(), fetchUser(), redis = it) }
+    respondWith { adminDataPage(contentSrc(), fetchUser()) }
   }
 
   post(ADMIN_ENDPOINT) {
     metrics.measureEndpointRequest(ADMIN_ENDPOINT) {
-      respondWithSuspendingRedisCheck { adminActions(contentSrc(), fetchUser(), redis = it) }
+      respondWith { adminActions(contentSrc(), fetchUser()) }
     }
   }
 

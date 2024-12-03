@@ -17,7 +17,6 @@
 
 package com.github.readingbat.pages
 
-import com.github.pambrose.common.redis.RedisUtils.scanKeys
 import com.github.readingbat.common.CssNames.INDENT_1EM
 import com.github.readingbat.common.Endpoints.ADMIN_ENDPOINT
 import com.github.readingbat.common.FormFields.ADMIN_ACTION_PARAM
@@ -28,6 +27,9 @@ import com.github.readingbat.common.Message.Companion.EMPTY_MESSAGE
 import com.github.readingbat.common.User
 import com.github.readingbat.common.isNotAdminUser
 import com.github.readingbat.common.isNotValidUser
+import com.github.readingbat.dsl.ContentCaches.contentDslCache
+import com.github.readingbat.dsl.ContentCaches.dirCache
+import com.github.readingbat.dsl.ContentCaches.sourceCache
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.isProduction
 import com.github.readingbat.pages.HelpAndLogin.helpAndLogin
@@ -57,14 +59,11 @@ import kotlinx.html.submitInput
 import kotlinx.html.table
 import kotlinx.html.td
 import kotlinx.html.tr
-import redis.clients.jedis.Jedis
-import redis.clients.jedis.exceptions.JedisDataException
 
 internal object AdminPage {
   fun RoutingContext.adminDataPage(
     content: ReadingBatContent,
     user: User?,
-    redis: Jedis,
     msg: Message = EMPTY_MESSAGE,
   ) =
     createHTML()
@@ -95,7 +94,9 @@ internal object AdminPage {
                   }
                 }
               p { this@body.deleteData() }
-              p { this@body.dumpData(redis) }
+              p { this@body.dumpContentDslCacheData() }
+              p { this@body.dumpSourceCacheData() }
+              p { this@body.dumpDirCacheData() }
             }
           }
 
@@ -120,29 +121,57 @@ internal object AdminPage {
     }
   }
 
-  private fun BODY.dumpData(redis: Jedis) {
-    h3 { +"All Data" }
+  private fun BODY.dumpContentDslCacheData() {
+    h3 { +"Content DSL Cache Data" }
     br
     div(classes = INDENT_1EM) {
-      h4 { +"${redis.scanKeys("*").count()} items:" }
+      h4 { +"${contentDslCache.size} items:" }
       table {
-        redis.scanKeys("*")
+        contentDslCache.keys
           .sorted()
-          .map {
-            try {
-              it to redis[it]
-            } catch (e: JedisDataException) {
-              try {
-                it to redis.hgetAll(it).toString()
-              } catch (e: JedisDataException) {
-                it to redis.smembers(it).toString()
-              }
-            }
-          }
+          .map { it to contentDslCache[it].orEmpty() }
           .forEach {
             tr {
               td { +it.first }
               td { +it.second }
+            }
+          }
+      }
+    }
+  }
+
+  private fun BODY.dumpSourceCacheData() {
+    h3 { +"Source Cache Data" }
+    br
+    div(classes = INDENT_1EM) {
+      h4 { +"${sourceCache.size} items:" }
+      table {
+        sourceCache.keys
+          .sorted()
+          .map { it to sourceCache[it].orEmpty() }
+          .forEach {
+            tr {
+              td { +it.first }
+              td { +it.second }
+            }
+          }
+      }
+    }
+  }
+
+  private fun BODY.dumpDirCacheData() {
+    h3 { +"Dir Cache Data" }
+    br
+    div(classes = INDENT_1EM) {
+      h4 { +"${dirCache.size} items:" }
+      table {
+        dirCache.keys
+          .sorted()
+          .map { it to (dirCache[it] ?: emptyList()) }
+          .forEach {
+            tr {
+              td { +it.first }
+              td { +it.second.toString() }
             }
           }
       }

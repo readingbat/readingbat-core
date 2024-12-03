@@ -17,7 +17,6 @@
 
 package com.github.readingbat.posts
 
-import com.github.pambrose.common.redis.RedisUtils.scanKeys
 import com.github.readingbat.common.FormFields.ADMIN_ACTION_PARAM
 import com.github.readingbat.common.FormFields.DELETE_ALL_DATA
 import com.github.readingbat.common.Message
@@ -25,6 +24,9 @@ import com.github.readingbat.common.User
 import com.github.readingbat.common.UserPrincipal
 import com.github.readingbat.common.isNotAdminUser
 import com.github.readingbat.common.isNotValidUser
+import com.github.readingbat.dsl.ContentCaches.contentDslCache
+import com.github.readingbat.dsl.ContentCaches.dirCache
+import com.github.readingbat.dsl.ContentCaches.sourceCache
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.isProduction
 import com.github.readingbat.pages.AdminPage.adminDataPage
@@ -32,7 +34,6 @@ import io.ktor.server.request.receiveParameters
 import io.ktor.server.routing.RoutingContext
 import io.ktor.server.sessions.clear
 import io.ktor.server.sessions.sessions
-import redis.clients.jedis.Jedis
 
 internal object AdminPost {
   private val mustBeLoggedIn = Message("Must be logged in for this function", true)
@@ -42,20 +43,24 @@ internal object AdminPost {
   suspend fun RoutingContext.adminActions(
     content: ReadingBatContent,
     user: User?,
-    redis: Jedis,
   ): String =
     when {
-      isProduction() && user.isNotValidUser() -> adminDataPage(content, user, redis, mustBeLoggedIn)
-      isProduction() && user.isNotAdminUser() -> adminDataPage(content, user, redis, mustBeSysAdmin)
+      isProduction() && user.isNotValidUser() -> adminDataPage(content, user, mustBeLoggedIn)
+      isProduction() && user.isNotAdminUser() -> adminDataPage(content, user, mustBeSysAdmin)
       else -> {
         when (call.receiveParameters()[ADMIN_ACTION_PARAM] ?: "") {
           DELETE_ALL_DATA -> {
-            val cnt = redis.scanKeys("*").onEach { redis.del(it) }.count()
+            val contentCnt = contentDslCache.size
+            val sourceCnt = sourceCache.size
+            val dirCnt = dirCache.size
+            contentDslCache.clear()
+            sourceCache.clear()
+            dirCache.clear()
             call.sessions.clear<UserPrincipal>()
-            adminDataPage(content, user, redis, Message("$cnt items deleted", false))
+            adminDataPage(content, user, Message("$contentCnt/$sourceCnt/$dirCnt items deleted", false))
           }
 
-          else -> adminDataPage(content, user, redis = redis, msg = invalidOption)
+          else -> adminDataPage(content, user, msg = invalidOption)
         }
       }
     }

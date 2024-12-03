@@ -19,7 +19,7 @@ package com.github.readingbat.pages
 
 import com.github.pambrose.common.util.randomId
 import com.github.readingbat.common.Endpoints.ADMIN_PREFS_ENDPOINT
-import com.github.readingbat.common.Endpoints.DELETE_CONTENT_IN_REDIS_ENDPOINT
+import com.github.readingbat.common.Endpoints.DELETE_CONTENT_IN_CONTENT_CACHE_ENDPOINT
 import com.github.readingbat.common.Endpoints.GARBAGE_COLLECTOR_ENDPOINT
 import com.github.readingbat.common.Endpoints.LOAD_ALL_ENDPOINT
 import com.github.readingbat.common.Endpoints.LOGGING_ENDPOINT
@@ -122,9 +122,9 @@ internal object SystemAdminPage {
 
             p {
               this@body.adminButton(
-                text = "Delete all content cached in Redis",
-                endpoint = DELETE_CONTENT_IN_REDIS_ENDPOINT,
-                confirm = "Are you sure you want to delete all content cached in Redis?",
+                text = "Delete all content in content cache",
+                endpoint = DELETE_CONTENT_IN_CONTENT_CACHE_ENDPOINT,
+                confirm = "Are you sure you want to delete all content cached in Content Cache?",
               )
             }
 

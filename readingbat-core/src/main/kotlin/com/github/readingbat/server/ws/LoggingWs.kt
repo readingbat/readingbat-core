@@ -17,7 +17,6 @@
 
 package com.github.readingbat.server.ws
 
-import com.github.pambrose.common.redis.RedisUtils.withNonNullRedisPool
 import com.github.pambrose.common.util.simpleClassName
 import com.github.readingbat.common.Constants.FLOW_BUFFER_CAPACITY
 import com.github.readingbat.common.Endpoints.LOGGING_ENDPOINT
@@ -25,9 +24,7 @@ import com.github.readingbat.common.Endpoints.WS_ROOT
 import com.github.readingbat.common.Metrics
 import com.github.readingbat.dsl.InvalidRequestException
 import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.dsl.RedisUnavailableException
 import com.github.readingbat.server.ReadingBatServer.content
-import com.github.readingbat.server.ReadingBatServer.redisPool
 import com.github.readingbat.server.ServerUtils.fetchUser
 import com.github.readingbat.server.ws.PubSubCommandsWs.AdminCommand.LOAD_CHALLENGE
 import com.github.readingbat.server.ws.PubSubCommandsWs.AdminCommand.RESET_CACHE
@@ -82,8 +79,7 @@ internal object LoggingWs {
               .onStart { logger.info { "Starting to read admin command channel values" } }
               .onCompletion { logger.info { "Finished reading admin command channel values" } }
               .collect { data ->
-                redisPool?.withNonNullRedisPool { redis ->
-                  val logToRedis = { s: String -> redis.publishLog(s, data.logId) }
+                val logItem = { s: String -> publishLog(s, data.logId) }
 
                   when (data.command) {
                     RESET_CONTENT_DSL -> {
@@ -92,7 +88,7 @@ internal object LoggingWs {
                           "DSL content reset in $dur"
                             .also {
                               logger.info { it }
-                              logToRedis(it)
+                              logItem(it)
                             }
                         }
                     }
@@ -105,7 +101,7 @@ internal object LoggingWs {
                           "Challenge cache reset -- $cnt challenges removed"
                             .also {
                               logger.info { it }
-                              logToRedis(it)
+                              logItem(it)
                             }
                         }
                     }
@@ -114,10 +110,10 @@ internal object LoggingWs {
                       val type = Json.decodeFromString<LoadChallengeType>(data.jsonArgs)
                       type.languageTypes
                         .forEach { langType ->
-                          content.get().loadChallenges(langType, logToRedis, "", false)
+                          content.get().loadChallenges(langType, logItem, "", false)
                             .also {
                               logger.info { it }
-                              logToRedis(it)
+                              logItem(it)
                             }
                         }
                     }
@@ -128,16 +124,15 @@ internal object LoggingWs {
                           "Garbage collector invoked for $dur"
                             .also {
                               logger.info { it }
-                              logToRedis(it)
+                              logItem(it)
                             }
                         }
                     }
                   }
-                } ?: throw RedisUnavailableException("adminCommandChannel")
               }
           }
         }.onFailure { e ->
-          logger.error { "Exception in dispatcher ${e.simpleClassName} ${e.message}" }
+          logger.error(e) { "Exception in dispatcher ${e.simpleClassName} ${e.message}" }
           Thread.sleep(1.seconds.inWholeMilliseconds)
         }
       }

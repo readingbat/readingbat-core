@@ -56,7 +56,6 @@ object Constants {
 
   const val UNKNOWN = "Unknown"
   const val UNASSIGNED = "unassigned"
-  const val REDIS_IS_DOWN = "Redis is down"
 
   const val CLASS_CODE_QP = "class-code"
   const val USER_ID_QP = "user-id"
@@ -127,7 +126,7 @@ object Endpoints {
   const val LOAD_KOTLIN_ENDPOINT = "/load-kotlin"
   const val LOAD_ALL_ENDPOINT = "/load-all"
 
-  const val DELETE_CONTENT_IN_REDIS_ENDPOINT = "/clear-caches"
+  const val DELETE_CONTENT_IN_CONTENT_CACHE_ENDPOINT = "/clear-caches"
 
   const val PING_ENDPOINT = "/ping"
   const val THREAD_DUMP = "/threaddump"

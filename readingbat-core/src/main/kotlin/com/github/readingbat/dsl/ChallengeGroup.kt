@@ -17,8 +17,6 @@
 
 package com.github.readingbat.dsl
 
-import com.github.pambrose.common.redis.RedisUtils.withNonNullRedisPool
-import com.github.pambrose.common.redis.RedisUtils.withRedisPool
 import com.github.pambrose.common.util.FileSystemSource
 import com.github.pambrose.common.util.GitHubRepo
 import com.github.pambrose.common.util.ensureSuffix
@@ -29,6 +27,7 @@ import com.github.pambrose.common.util.toDoubleQuoted
 import com.github.readingbat.common.Constants.CHALLENGE_NOT_FOUND
 import com.github.readingbat.common.KeyConstants.DIR_CONTENTS_KEY
 import com.github.readingbat.common.KeyConstants.keyOf
+import com.github.readingbat.dsl.ContentCaches.dirCache
 import com.github.readingbat.dsl.GitHubUtils.organizationDirectoryContents
 import com.github.readingbat.dsl.GitHubUtils.userDirectoryContents
 import com.github.readingbat.dsl.ReturnType.Runtime
@@ -38,7 +37,6 @@ import com.github.readingbat.dsl.challenge.KotlinChallenge
 import com.github.readingbat.dsl.challenge.PythonChallenge
 import com.github.readingbat.server.ChallengeName
 import com.github.readingbat.server.GroupName
-import com.github.readingbat.server.ReadingBatServer.redisPool
 import io.github.oshai.kotlinlogging.KotlinLogging
 import java.io.File
 import kotlin.reflect.KProperty
@@ -68,11 +66,10 @@ class ChallengeGroup<T : Challenge>(
 
   private fun dirContentsKey(path: String) = keyOf(DIR_CONTENTS_KEY, md5Of(path))
 
-  private fun fetchDirContentsFromRedis(path: String) =
-    if (isContentCachingEnabled())
-      redisPool?.withRedisPool { redis -> redis?.lrange(dirContentsKey(path), 0, -1) }
-        ?.apply { logger.debug { """Retrieved "$path" from redis""" } }
-    else
+  private fun fetchDirContentsFromDirCache(path: String) =
+    if (isContentCachingEnabled()) {
+      dirCache[path]?.toList().apply { logger.debug { """Retrieved "$path" from dir cache""" } }
+    } else
       null
 
   private fun fetchRemoteFiles(root: GitHubRepo, path: String) =
@@ -83,10 +80,11 @@ class ChallengeGroup<T : Challenge>(
         root.organizationDirectoryContents(branchName, path, metrics)
       ).also {
         if (isContentCachingEnabled()) {
-          redisPool?.withNonNullRedisPool(true) { redis ->
+          synchronized(dirCache) {
             val dirContentsKey = dirContentsKey(path)
-            it.forEach { redis.rpush(dirContentsKey, it) }
-            logger.info { "Saved to redis: ${path.toDoubleQuoted()}" }
+            dirCache.computeIfAbsent(dirContentsKey) { mutableListOf() }
+            dirCache[dirContentsKey]!!.addAll(it)
+            logger.info { "Saved to dir cache: ${path.toDoubleQuoted()}" }
           }
         }
       }
@@ -98,7 +96,7 @@ class ChallengeGroup<T : Challenge>(
           val path = "${srcPath.ensureSuffix("/")}$packageNameAsPath"
 
           if (isContentCachingEnabled()) {
-            fetchDirContentsFromRedis(path)
+            fetchDirContentsFromDirCache(path)
               .let { if (it.isNotNull() && it.isNotEmpty()) it else fetchRemoteFiles(root, path) }
           } else {
             fetchRemoteFiles(root, path)

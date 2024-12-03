@@ -17,7 +17,6 @@
 
 package com.github.readingbat.server
 
-import com.github.pambrose.common.redis.RedisUtils
 import com.github.pambrose.common.util.FileSource
 import com.github.pambrose.common.util.Version
 import com.github.pambrose.common.util.Version.Companion.versionDesc
@@ -26,7 +25,6 @@ import com.github.pambrose.common.util.isNotNull
 import com.github.pambrose.common.util.isNull
 import com.github.pambrose.common.util.randomId
 import com.github.readingbat.BuildConfig
-import com.github.readingbat.common.Constants.REDIS_IS_DOWN
 import com.github.readingbat.common.Constants.UNKNOWN_USER_ID
 import com.github.readingbat.common.Endpoints.STATIC_ROOT
 import com.github.readingbat.common.EnvVar
@@ -46,7 +44,6 @@ import com.github.readingbat.dsl.evalContentDsl
 import com.github.readingbat.dsl.isAgentEnabled
 import com.github.readingbat.dsl.isDbmsEnabled
 import com.github.readingbat.dsl.isProduction
-import com.github.readingbat.dsl.isRedisEnabled
 import com.github.readingbat.dsl.readContentDsl
 import com.github.readingbat.server.Installs.installs
 import com.github.readingbat.server.Locations.locations
@@ -56,12 +53,11 @@ import com.github.readingbat.server.ReadingBatServer.content
 import com.github.readingbat.server.ReadingBatServer.contentReadCount
 import com.github.readingbat.server.ReadingBatServer.logger
 import com.github.readingbat.server.ReadingBatServer.metrics
-import com.github.readingbat.server.ServerUtils.logToRedis
+import com.github.readingbat.server.ServerUtils.logToShim
 import com.github.readingbat.server.routes.AdminRoutes.adminRoutes
 import com.github.readingbat.server.routes.sysAdminRoutes
 import com.github.readingbat.server.routes.userRoutes
 import com.github.readingbat.server.ws.LoggingWs
-import com.github.readingbat.server.ws.PubSubCommandsWs
 import com.github.readingbat.server.ws.WsCommon.wsRoutes
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
@@ -76,8 +72,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.exposed.sql.Database
-import redis.clients.jedis.JedisPool
-import redis.clients.jedis.exceptions.JedisConnectionException
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.atomic.AtomicInteger
@@ -99,7 +93,6 @@ object ReadingBatServer {
   internal val content = AtomicReference(ReadingBatContent())
   internal val adminUsers = mutableListOf<String>()
   internal val contentReadCount = AtomicInteger(0)
-  internal var redisPool: JedisPool? = null
   internal val dbms by lazy {
     Database.connect(
       HikariDataSource(
@@ -196,7 +189,7 @@ object ReadingBatServer {
 internal fun Application.readContentDsl(fileName: String, variableName: String, logId: String = "") {
   "Loading content using $variableName in $fileName".also {
     logger.info { it }
-    logToRedis(it, logId)
+    logToShim(it, logId)
   }
 
   measureTime {
@@ -215,7 +208,7 @@ internal fun Application.readContentDsl(fileName: String, variableName: String, 
     "Loaded content using $variableName in $fileName in $dur"
       .also {
         logger.info { it }
-        logToRedis(it, logId)
+        logToShim(it, logId)
       }
   }
 
@@ -226,22 +219,6 @@ fun Application.module() {
   assignProperties(initProperties().sortedBy { it.propertyName })
 
   adminUsers.addAll(Property.ADMIN_USERS.configValueOrNull(this)?.getList() ?: emptyList())
-
-  ReadingBatServer.redisPool =
-    if (isRedisEnabled())
-      try {
-        RedisUtils.newJedisPool()
-          .apply { logger.info { "Created Redis pool: maxIdle=$maxIdle, minIdle=$minIdle maxWait=$maxWaitDuration" } }
-      } catch (e: JedisConnectionException) {
-        logger.error { "Failed to create Redis pool: $REDIS_IS_DOWN" }
-        null
-      }
-    else
-      null
-
-  // Only run this in production
-  if (isProduction() && isRedisEnabled())
-    PubSubCommandsWs.initThreads()
 
   if (isDbmsEnabled()) {
     ReadingBatServer.dbms
@@ -286,8 +263,7 @@ fun Application.module() {
   // readContentDsl() is passed as a lambda because it is Application.readContentDsl()
   val resetContentDslFunc = { logId: String -> readContentDsl(dslFileName, dslVariableName, logId) }
 
-  if (isRedisEnabled())
-    LoggingWs.initThreads({ content.get() }, resetContentDslFunc)
+  LoggingWs.initThreads({ content.get() }, resetContentDslFunc)
 
   installs(isProduction())
 
@@ -298,7 +274,7 @@ fun Application.module() {
     locations(metrics) { content.get() }
     userRoutes(metrics) { content.get() }
 
-    if (isProduction() && isRedisEnabled()) {
+    if (isProduction()) {
       sysAdminRoutes(metrics, resetContentDslFunc)
       wsRoutes(metrics) { content.get() }
     }

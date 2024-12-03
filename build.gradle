@@ -24,7 +24,6 @@ ext {
         core_utils            : "com.github.pambrose.common-utils:core-utils:$utils_version",
         ktor_server_utils     : "com.github.pambrose.common-utils:ktor-server-utils:$utils_version",
         ktor_client_utils     : "com.github.pambrose.common-utils:ktor-client-utils:$utils_version",
-        redis_utils           : "com.github.pambrose.common-utils:redis-utils:$utils_version",
         script_utils_common   : "com.github.pambrose.common-utils:script-utils-common:$utils_version",
         script_utils_python   : "com.github.pambrose.common-utils:script-utils-python:$utils_version",
         script_utils_java     : "com.github.pambrose.common-utils:script-utils-java:$utils_version",
@@ -57,8 +56,6 @@ ext {
 
         khealth               : "dev.hayden:khealth:$khealth_version",
 
-        jedis                 : "redis.clients:jedis:$redis_version",
-
         hikari                : "com.zaxxer:HikariCP:$hikari_version",
         exposed_core          : "org.jetbrains.exposed:exposed-core:$exposed_version",
         exposed_jdbc          : "org.jetbrains.exposed:exposed-jdbc:$exposed_version",
@@ -88,7 +85,7 @@ ext {
 allprojects {
     description = 'ReadingBat Core'
     group 'com.github.readingbat'
-    version '1.40.8'
+    version '2.0.0'
 
     apply plugin: 'application'
     apply plugin: 'java-library'

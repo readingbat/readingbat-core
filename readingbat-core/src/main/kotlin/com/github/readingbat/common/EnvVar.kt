@@ -18,7 +18,6 @@
 package com.github.readingbat.common
 
 import com.github.pambrose.common.util.isNotNull
-import com.github.pambrose.common.util.maskUrlCredentials
 import com.github.pambrose.common.util.obfuscate
 import com.github.readingbat.common.Constants.UNASSIGNED
 
@@ -39,7 +38,6 @@ enum class EnvVar(val maskFunc: EnvVar.() -> String = { getEnv(UNASSIGNED) }) {
   DBMS_URL({ getEnvOrNull()?.obfuscate(4) ?: UNASSIGNED }),
   DBMS_USERNAME,
   DBMS_PASSWORD({ getEnvOrNull()?.obfuscate(1) ?: UNASSIGNED }),
-  REDIS_URL({ getEnv(UNASSIGNED).maskUrlCredentials() }),
   FORWARDED_ENABLED,
   XFORWARDED_ENABLED,
   ;

@@ -17,7 +17,6 @@
 
 package com.github.readingbat.common
 
-import com.github.pambrose.common.redis.RedisUtils
 import com.github.pambrose.common.util.isNotNull
 import com.github.pambrose.common.util.obfuscate
 import com.github.readingbat.common.Constants.UNASSIGNED
@@ -224,12 +223,6 @@ sealed class Property(
       initFunc = { setProperty(configValue(it, "false").toBoolean().toString()) },
     )
 
-  object REDIS_ENABLED :
-    Property(
-      propertyValue = "$READINGBAT.$SITE.redisEnabled",
-      initFunc = { setProperty(configValue(it, "false").toBoolean().toString()) },
-    )
-
   object SAVE_REQUESTS_ENABLED :
     Property(
       propertyValue = "$READINGBAT.$SITE.saveRequestsEnabled",
@@ -356,30 +349,6 @@ sealed class Property(
       initFunc = { setPropertyFromConfig(it, "30") },
     )
 
-  object REDIS_MAX_POOL_SIZE :
-    Property(
-      propertyValue = RedisUtils.REDIS_MAX_POOL_SIZE,
-      initFunc = { setPropertyFromConfig(it, "10") },
-    )
-
-  object REDIS_MAX_IDLE_SIZE :
-    Property(
-      propertyValue = RedisUtils.REDIS_MAX_IDLE_SIZE,
-      initFunc = { setPropertyFromConfig(it, "5") },
-    )
-
-  object REDIS_MIN_IDLE_SIZE :
-    Property(
-      propertyValue = RedisUtils.REDIS_MIN_IDLE_SIZE,
-      initFunc = { setPropertyFromConfig(it, "3") },
-    )
-
-  object REDIS_MAX_WAIT_SECS :
-    Property(
-      propertyValue = RedisUtils.REDIS_MAX_WAIT_SECS,
-      initFunc = { setPropertyFromConfig(it, "1") },
-    )
-
   companion object {
     private val logger = KotlinLogging.logger {}
 
@@ -394,7 +363,6 @@ sealed class Property(
         KTOR_WATCH,
         IS_PRODUCTION,
         DBMS_ENABLED,
-        REDIS_ENABLED,
         SAVE_REQUESTS_ENABLED,
         MULTI_SERVER_ENABLED,
         CONTENT_CACHING_ENABLED,
@@ -415,10 +383,6 @@ sealed class Property(
         DBMS_PASSWORD,
         DBMS_MAX_POOL_SIZE,
         DBMS_MAX_LIFETIME_MINS,
-        REDIS_MAX_POOL_SIZE,
-        REDIS_MAX_IDLE_SIZE,
-        REDIS_MIN_IDLE_SIZE,
-        REDIS_MAX_WAIT_SECS,
       )
   }
 }

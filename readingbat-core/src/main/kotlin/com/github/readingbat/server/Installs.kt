@@ -30,9 +30,7 @@ import com.github.readingbat.common.Endpoints.WS_ROOT
 import com.github.readingbat.common.EnvVar
 import com.github.readingbat.common.Property
 import com.github.readingbat.dsl.InvalidRequestException
-import com.github.readingbat.dsl.RedisUnavailableException
 import com.github.readingbat.dsl.isDbmsEnabled
-import com.github.readingbat.pages.DbmsDownPage.dbmsDownPage
 import com.github.readingbat.pages.ErrorPage.errorPage
 import com.github.readingbat.pages.InvalidRequestPage.invalidRequestPage
 import com.github.readingbat.pages.NotFoundPage.notFoundPage
@@ -202,11 +200,6 @@ object Installs {
           is InvalidRequestException -> {
             logger.info { "InvalidRequestException caught: ${cause.message}" }
             call.respondWith { invalidRequestPage(call.request.uri, cause.message ?: UNKNOWN) }
-          }
-
-          is RedisUnavailableException -> {
-            logger.info(cause) { "RedisUnavailableException caught: ${cause.message}" }
-            call.respondWith { dbmsDownPage() }
           }
 
           is IllegalStateException -> {

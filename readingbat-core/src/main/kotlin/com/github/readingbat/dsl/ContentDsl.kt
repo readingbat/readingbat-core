@@ -17,8 +17,6 @@
 
 package com.github.readingbat.dsl
 
-import com.github.pambrose.common.redis.RedisUtils.withNonNullRedisPool
-import com.github.pambrose.common.redis.RedisUtils.withRedisPool
 import com.github.pambrose.common.util.ContentSource
 import com.github.pambrose.common.util.GitHubFile
 import com.github.pambrose.common.util.GitHubRepo
@@ -36,14 +34,14 @@ import com.github.readingbat.common.Property.DBMS_ENABLED
 import com.github.readingbat.common.Property.IS_PRODUCTION
 import com.github.readingbat.common.Property.IS_TESTING
 import com.github.readingbat.common.Property.MULTI_SERVER_ENABLED
-import com.github.readingbat.common.Property.REDIS_ENABLED
 import com.github.readingbat.common.Property.SAVE_REQUESTS_ENABLED
+import com.github.readingbat.dsl.ContentCaches.contentDslCache
 import com.github.readingbat.dsl.ContentDsl.logger
 import com.github.readingbat.server.ReadingBatServer
-import com.github.readingbat.server.ReadingBatServer.redisPool
 import com.github.readingbat.server.ScriptPools.kotlinScriptPool
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.runBlocking
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.reflect.KFunction
 import kotlin.time.measureTimedValue
 
@@ -68,6 +66,12 @@ class GitHubContent(
 
 private const val GH_PREFIX = "https://raw.githubusercontent.com"
 
+object ContentCaches {
+  val contentDslCache = ConcurrentHashMap<String, String>()
+  val sourceCache = ConcurrentHashMap<String, String>()
+  val dirCache = ConcurrentHashMap<String, MutableList<String>>()
+}
+
 fun readingBatContent(block: ReadingBatContent.() -> Unit) =
   ReadingBatContent().apply(block).apply { validate() }
 
@@ -77,8 +81,6 @@ fun isProduction() = IS_PRODUCTION.getProperty(false)
 fun isTesting() = IS_TESTING.getProperty(false)
 
 internal fun isDbmsEnabled() = DBMS_ENABLED.getProperty(false)
-
-internal fun isRedisEnabled() = REDIS_ENABLED.getProperty(false)
 
 internal fun isSaveRequestsEnabled() =
   SAVE_REQUESTS_ENABLED.getProperty(
@@ -92,9 +94,7 @@ internal fun isContentCachingEnabled() =
   CONTENT_CACHING_ENABLED.getProperty(
     default = false,
     errorOnNonInit = false,
-  ) &&
-    isDbmsEnabled() &&
-    isRedisEnabled()
+  ) && isDbmsEnabled()
 
 internal fun isMultiServerEnabled() = MULTI_SERVER_ENABLED.getProperty(false)
 
@@ -107,15 +107,13 @@ fun ContentSource.eval(enclosingContent: ReadingBatContent, variableName: String
 
 private fun contentDslKey(source: String) = keyOf(CONTENT_DSL_KEY, md5Of(source))
 
-private fun fetchContentDslFromRedis(source: String) =
-  if (isContentCachingEnabled()) redisPool?.withRedisPool { it?.get(contentDslKey(source)) } else null
+private fun fetchContentDslFromCache(source: String) =
+  if (isContentCachingEnabled()) contentDslCache[contentDslKey(source)] else null
 
-private fun saveContentDslToRedis(source: String, dsl: String) {
+private fun saveContentDslToCache(source: String, dsl: String) {
   if (isContentCachingEnabled()) {
-    redisPool?.withNonNullRedisPool(true) { redis ->
-      redis.set(contentDslKey(source), dsl)
-      logger.info { "Saved ${source.removePrefix(GH_PREFIX)} to redis" }
-    }
+    contentDslCache[contentDslKey(source)] = dsl
+    logger.info { "Saved ${source.removePrefix(GH_PREFIX)} to content cache" }
   }
 }
 
@@ -124,12 +122,12 @@ internal fun readContentDsl(contentSource: ContentSource) =
     if (!contentSource.remote) {
       contentSource.content
     } else {
-      var dslCode = fetchContentDslFromRedis(contentSource.source)
+      var dslCode = fetchContentDslFromCache(contentSource.source)
       if (dslCode.isNotNull()) {
-        logger.info { "Fetched ${contentSource.source.removePrefix(GH_PREFIX)} from redis cache" }
+        logger.info { "Fetched ${contentSource.source.removePrefix(GH_PREFIX)} from cache" }
       } else {
         dslCode = contentSource.content
-        saveContentDslToRedis(contentSource.source, dslCode)
+        saveContentDslToCache(contentSource.source, dslCode)
       }
       dslCode
     }
