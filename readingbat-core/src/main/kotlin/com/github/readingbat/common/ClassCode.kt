@@ -27,7 +27,7 @@ import com.github.readingbat.server.UsersTable
 import com.pambrose.common.exposed.get
 import com.pambrose.common.exposed.readonlyTx
 import io.github.oshai.kotlinlogging.KotlinLogging
-import io.ktor.http.*
+import io.ktor.http.Parameters
 import org.jetbrains.exposed.sql.Count
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.and

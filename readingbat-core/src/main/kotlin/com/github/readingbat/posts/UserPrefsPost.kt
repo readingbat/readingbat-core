@@ -40,13 +40,13 @@ import com.github.readingbat.pages.UserPrefsPage.requestLogInPage
 import com.github.readingbat.pages.UserPrefsPage.userPrefsPage
 import com.github.readingbat.posts.CreateAccountPost.checkPassword
 import com.github.readingbat.server.Password.Companion.getPassword
-import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.UsersTable
 import io.github.oshai.kotlinlogging.KotlinLogging
-import io.ktor.http.*
-import io.ktor.server.application.*
-import io.ktor.server.request.*
-import io.ktor.server.sessions.*
+import io.ktor.http.Parameters
+import io.ktor.server.request.receiveParameters
+import io.ktor.server.routing.RoutingContext
+import io.ktor.server.sessions.clear
+import io.ktor.server.sessions.sessions
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.update
 import org.joda.time.DateTime
@@ -55,7 +55,7 @@ import org.joda.time.DateTimeZone.UTC
 internal object UserPrefsPost {
   private val logger = KotlinLogging.logger {}
 
-  suspend fun PipelineCall.userPrefs(content: ReadingBatContent, user: User?) =
+  suspend fun RoutingContext.userPrefs(content: ReadingBatContent, user: User?) =
     if (user.isValidUser()) {
       val params = call.receiveParameters()
       when (val action = params[PREFS_ACTION_PARAM] ?: "") {
@@ -70,7 +70,7 @@ internal object UserPrefsPost {
       requestLogInPage(content)
     }
 
-  private fun PipelineCall.updateDefaultLanguage(
+  private fun RoutingContext.updateDefaultLanguage(
     content: ReadingBatContent,
     parameters: Parameters,
     user: User,
@@ -89,7 +89,7 @@ internal object UserPrefsPost {
         userPrefsPage(content, user, Message("Default language updated to $it", false))
       }
 
-  private fun PipelineCall.updatePassword(
+  private fun RoutingContext.updatePassword(
     content: ReadingBatContent,
     parameters: Parameters,
     user: User,
@@ -122,7 +122,7 @@ internal object UserPrefsPost {
     return userPrefsPage(content, user, msg)
   }
 
-  private fun PipelineCall.enrollInClass(
+  private fun RoutingContext.enrollInClass(
     content: ReadingBatContent,
     parameters: Parameters,
     user: User,
@@ -136,7 +136,7 @@ internal object UserPrefsPost {
     }
   }
 
-  private fun PipelineCall.withdrawFromClass(content: ReadingBatContent, user: User) =
+  private fun RoutingContext.withdrawFromClass(content: ReadingBatContent, user: User) =
     try {
       val enrolledClassCode = user.enrolledClassCode
       user.withdrawFromClass(enrolledClassCode)
@@ -145,7 +145,7 @@ internal object UserPrefsPost {
       userPrefsPage(content, user, Message("Unable to withdraw from class [${e.msg}]", true))
     }
 
-  private fun PipelineCall.deleteAccount(content: ReadingBatContent, user: User): String {
+  private fun RoutingContext.deleteAccount(content: ReadingBatContent, user: User): String {
     val email = user.email
     logger.info { "Deleting user $email" }
     user.deleteUser()

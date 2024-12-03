@@ -21,7 +21,6 @@ import com.github.readingbat.common.Constants.PING_CODE
 import com.github.readingbat.common.Endpoints.CLOCK_ENDPOINT
 import com.github.readingbat.common.Endpoints.WS_ROOT
 import com.github.readingbat.pages.PageUtils.rawHtml
-import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.html.body
 import kotlinx.html.html
 import kotlinx.html.id
@@ -31,7 +30,6 @@ import kotlinx.html.span
 import kotlinx.html.stream.createHTML
 
 internal object ClockPage {
-  private val logger = KotlinLogging.logger {}
   private const val PING_MSG = "pingMsg"
 
   fun clockPage() =

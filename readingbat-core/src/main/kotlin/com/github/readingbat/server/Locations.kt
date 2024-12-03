@@ -42,12 +42,14 @@ import com.github.readingbat.pages.LanguageGroupPage.languageGroupPage
 import com.github.readingbat.pages.PlaygroundPage.playgroundPage
 import com.github.readingbat.server.ServerUtils.fetchUser
 import com.github.readingbat.server.routes.AdminRoutes.assignBrowserSession
-import io.ktor.http.*
-import io.ktor.server.auth.*
-import io.ktor.server.locations.*
-import io.ktor.server.routing.*
+import io.ktor.http.Parameters
+import io.ktor.resources.Resource
+import io.ktor.server.auth.authenticate
+import io.ktor.server.resources.get
+import io.ktor.server.routing.Routing
+import io.ktor.server.routing.RoutingContext
 import kotlinx.serialization.Serializable
-import io.ktor.server.locations.post as locationsPost
+import io.ktor.server.resources.post as locationsPost
 
 object Locations {
   private const val TRUE_STR = true.toString()
@@ -91,7 +93,7 @@ object Locations {
     }
   }
 
-  private suspend fun PipelineCall.language(
+  private suspend fun RoutingContext.language(
     content: ReadingBatContent,
     language: Language,
     loginAttempt: Boolean,
@@ -103,7 +105,7 @@ object Locations {
       languageGroupPage(content, user, language.languageType, loginAttempt)
     }
 
-  private suspend fun PipelineCall.group(
+  private suspend fun RoutingContext.group(
     content: ReadingBatContent,
     groupLoc: Language.Group,
     loginAttempt: Boolean,
@@ -115,7 +117,7 @@ object Locations {
       challengeGroupPage(content, user, content.findGroup(groupLoc), loginAttempt)
     }
 
-  private suspend fun PipelineCall.challenge(
+  private suspend fun RoutingContext.challenge(
     content: ReadingBatContent,
     challengeLoc: Language.Group.Challenge,
     loginAttempt: Boolean,
@@ -127,7 +129,7 @@ object Locations {
       challengePage(content, user, content.findChallenge(challengeLoc), loginAttempt)
     }
 
-  private suspend fun PipelineCall.playground(
+  private suspend fun RoutingContext.playground(
     content: ReadingBatContent,
     request: PlaygroundRequest,
     loginAttempt: Boolean,
@@ -140,21 +142,21 @@ object Locations {
     }
 }
 
-@Location("$CHALLENGE_ROOT/{lname}")
-internal data class Language(val lname: String) {
-  val languageName = LanguageName(lname)
+@Resource("$CHALLENGE_ROOT/{lname}")
+class Language(val lname: String) {
+  val languageName get() = LanguageName(lname)
   val languageType get() = languageName.toLanguageType()
   val languageTypeStr get() = languageType.toString()
 
-  @Location("/{gname}")
-  data class Group(val language: Language, val gname: String) {
-    val groupName = GroupName(gname)
+  @Resource("{gname}")
+  class Group(val language: Language, val gname: String) {
+    val groupName get() = GroupName(gname)
     val languageType get() = language.languageType
     val languageTypeStr get() = languageType.toString()
 
-    @Location("/{cname}")
-    data class Challenge(val group: Group, val cname: String) {
-      val challengeName = ChallengeName(cname)
+    @Resource("{cname}")
+    class Challenge(val group: Group, val cname: String) {
+      val challengeName get() = ChallengeName(cname)
       val languageType get() = group.languageType
       val languageTypeStr get() = languageType.toString()
       val groupName get() = group.groupName
@@ -162,12 +164,12 @@ internal data class Language(val lname: String) {
   }
 }
 
-@Location("$PLAYGROUND_ROOT/{groupName}/{challengeName}")
-internal class PlaygroundRequest(val groupName: String, val challengeName: String)
+@Resource("$PLAYGROUND_ROOT/{groupName}/{challengeName}")
+class PlaygroundRequest(val groupName: String, val challengeName: String)
 
 @JvmInline
 value class LanguageName(val value: String) {
-  val isJvm get() = this in jmvLanguages
+  val isJvm get() = value in listOf("kotlin", "java") // jmvLanguages
 
   fun toLanguageType() =
     try {
@@ -180,9 +182,9 @@ value class LanguageName(val value: String) {
     try {
       toLanguageType()
       true
-  } catch (e: InvalidRequestException) {
-    false
-  }
+    } catch (e: InvalidRequestException) {
+      false
+    }
 
   internal fun isNotValid() = !isValid()
 

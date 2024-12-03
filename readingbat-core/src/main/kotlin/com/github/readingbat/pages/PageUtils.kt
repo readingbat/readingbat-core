@@ -47,11 +47,34 @@ import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.isProduction
 import com.github.readingbat.pages.HelpAndLogin.helpAndLogin
 import io.ktor.http.ContentType.Text.CSS
-import io.ktor.server.application.*
-import io.ktor.server.routing.*
-import io.ktor.util.pipeline.*
-import kotlinx.html.*
+import io.ktor.server.routing.Route
+import io.ktor.server.routing.RoutingHandler
+import io.ktor.server.routing.get
+import io.ktor.server.routing.post
+import kotlinx.html.BODY
 import kotlinx.html.Entities.nbsp
+import kotlinx.html.FlowOrInteractiveOrPhrasingContent
+import kotlinx.html.FormMethod
+import kotlinx.html.HEAD
+import kotlinx.html.HTMLTag
+import kotlinx.html.a
+import kotlinx.html.button
+import kotlinx.html.div
+import kotlinx.html.form
+import kotlinx.html.id
+import kotlinx.html.li
+import kotlinx.html.link
+import kotlinx.html.nav
+import kotlinx.html.onClick
+import kotlinx.html.onSubmit
+import kotlinx.html.p
+import kotlinx.html.script
+import kotlinx.html.span
+import kotlinx.html.style
+import kotlinx.html.submitInput
+import kotlinx.html.title
+import kotlinx.html.ul
+import kotlinx.html.unsafe
 
 internal object PageUtils {
   private const val READING_BAT = "ReadingBat"
@@ -286,7 +309,7 @@ internal object PageUtils {
   fun HTMLTag.rawHtml(html: String) = unsafe { raw(html) }
 
   @Suppress("unused")
-  fun Route.getAndPost(path: String, body: PipelineInterceptor<Unit, ApplicationCall>) {
+  fun Route.getAndPost(path: String, body: RoutingHandler) {
     get(path, body)
     post(path, body)
   }

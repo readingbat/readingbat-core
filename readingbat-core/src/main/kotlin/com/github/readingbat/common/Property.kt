@@ -29,8 +29,8 @@ import com.github.readingbat.common.PropertyNames.DBMS
 import com.github.readingbat.common.PropertyNames.READINGBAT
 import com.github.readingbat.common.PropertyNames.SITE
 import io.github.oshai.kotlinlogging.KotlinLogging
-import io.ktor.server.application.*
-import io.ktor.server.config.*
+import io.ktor.server.application.Application
+import io.ktor.server.config.ApplicationConfigurationException
 import java.util.concurrent.atomic.AtomicBoolean
 
 open class KtorProperty(

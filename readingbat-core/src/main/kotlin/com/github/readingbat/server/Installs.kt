@@ -42,35 +42,43 @@ import com.github.readingbat.server.ConfigureFormAuth.configureFormAuth
 import com.github.readingbat.server.Email.Companion.UNKNOWN_EMAIL
 import com.github.readingbat.server.ReadingBatServer.serverSessionId
 import com.github.readingbat.server.ServerUtils.fetchEmailFromCache
-import dev.hayden.KHealth
 import io.github.oshai.kotlinlogging.KotlinLogging
-import io.ktor.http.*
+import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpHeaders.Location
+import io.ktor.http.HttpStatusCode
 import io.ktor.http.HttpStatusCode.Companion.Found
-import io.ktor.server.application.*
-import io.ktor.server.auth.*
-import io.ktor.server.engine.*
-import io.ktor.server.locations.Locations
-import io.ktor.server.logging.*
-import io.ktor.server.plugins.*
-import io.ktor.server.plugins.callid.*
-import io.ktor.server.plugins.callloging.*
-import io.ktor.server.plugins.compression.*
-import io.ktor.server.plugins.defaultheaders.*
-import io.ktor.server.plugins.forwardedheaders.*
-import io.ktor.server.plugins.statuspages.*
-import io.ktor.server.request.*
-import io.ktor.server.sessions.*
-import io.ktor.server.websocket.*
+import io.ktor.server.application.Application
+import io.ktor.server.application.install
+import io.ktor.server.auth.Authentication
+import io.ktor.server.engine.ShutDownUrl
+import io.ktor.server.logging.toLogString
+import io.ktor.server.plugins.callid.CallId
+import io.ktor.server.plugins.calllogging.CallLogging
+import io.ktor.server.plugins.compression.Compression
+import io.ktor.server.plugins.compression.deflate
+import io.ktor.server.plugins.compression.gzip
+import io.ktor.server.plugins.compression.minimumSize
+import io.ktor.server.plugins.defaultheaders.DefaultHeaders
+import io.ktor.server.plugins.forwardedheaders.ForwardedHeaders
+import io.ktor.server.plugins.forwardedheaders.XForwardedHeaders
+import io.ktor.server.plugins.origin
+import io.ktor.server.plugins.statuspages.StatusPages
+import io.ktor.server.request.path
+import io.ktor.server.request.uri
+import io.ktor.server.resources.Resources
+import io.ktor.server.sessions.Sessions
+import io.ktor.server.websocket.WebSockets
+import io.ktor.server.websocket.pingPeriod
+import io.ktor.server.websocket.timeout
 import org.slf4j.event.Level
-import java.time.Duration.ofSeconds
 import java.util.concurrent.atomic.AtomicLong
+import kotlin.time.Duration.Companion.seconds
 
 object Installs {
   private val logger = KotlinLogging.logger {}
 
   fun Application.installs(production: Boolean) {
-    install(Locations)
+    install(Resources)
 
     install(Sessions) {
       configureSessionIdCookie()
@@ -83,8 +91,8 @@ object Installs {
     }
 
     install(WebSockets) {
-      pingPeriod = ofSeconds(15)  // Duration between pings or `0` to disable pings
-      timeout = ofSeconds(15)
+      pingPeriod = 15.seconds  // Duration between pings or `0` to disable pings
+      timeout = 15.seconds
     }
 
     val forwardedHeaderSupportEnabled =
@@ -166,15 +174,15 @@ object Installs {
       verify { it.isNotEmpty() }
     }
 
-    install(KHealth) {
-//      readyChecks {
-//        check("check my database is up") { true }
-//      }
-//
-//      healthChecks {
-//        check("another check") { true }
-//      }
-    }
+//    install(KHealth) {
+////      readyChecks {
+////        check("check my database is up") { true }
+////      }
+////
+////      healthChecks {
+////        check("another check") { true }
+////      }
+//    }
 
     /*
     install(DropwizardMetrics) {

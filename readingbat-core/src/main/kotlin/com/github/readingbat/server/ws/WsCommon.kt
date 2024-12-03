@@ -32,8 +32,8 @@ import com.github.readingbat.server.ws.ClassSummaryWs.classSummaryWsEndpoint
 import com.github.readingbat.server.ws.LoggingWs.loggingWsEndpoint
 import com.github.readingbat.server.ws.StudentSummaryWs.studentSummaryWsEndpoint
 import io.github.oshai.kotlinlogging.KotlinLogging
-import io.ktor.server.routing.*
-import io.ktor.server.websocket.*
+import io.ktor.server.routing.Routing
+import io.ktor.server.websocket.DefaultWebSocketServerSession
 
 object WsCommon {
   private val logger = KotlinLogging.logger {}

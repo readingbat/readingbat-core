@@ -66,11 +66,11 @@ import com.github.readingbat.server.ws.WsCommon.wsRoutes
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import io.github.oshai.kotlinlogging.KotlinLogging
-import io.ktor.server.application.*
-import io.ktor.server.cio.*
-import io.ktor.server.engine.*
-import io.ktor.server.http.content.*
-import io.ktor.server.routing.*
+import io.ktor.server.application.Application
+import io.ktor.server.cio.EngineMain
+import io.ktor.server.engine.CommandLineConfig
+import io.ktor.server.http.content.staticResources
+import io.ktor.server.routing.routing
 import io.prometheus.Agent.Companion.startAsyncAgent
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -89,6 +89,7 @@ import kotlin.time.measureTime
 
 @Version(version = BuildConfig.CORE_VERSION, date = BuildConfig.CORE_RELEASE_DATE)
 object ReadingBatServer {
+  val metrics by lazy { Metrics() }
   internal val logger = KotlinLogging.logger {}
   private const val CALLER_VERSION = "callerVersion"
   private val startTime = TimeSource.Monotonic.markNow()
@@ -99,7 +100,6 @@ object ReadingBatServer {
   internal val adminUsers = mutableListOf<String>()
   internal val contentReadCount = AtomicInteger(0)
   internal var redisPool: JedisPool? = null
-  val metrics by lazy { Metrics() }
   internal val dbms by lazy {
     Database.connect(
       HikariDataSource(
@@ -148,7 +148,7 @@ object ReadingBatServer {
   }
 
   @Suppress("unused")
-  fun configEnvironment(arg: String) = commandLineEnvironment(withConfigArg(arg))
+  fun configEnvironment(arg: String) = CommandLineConfig(withConfigArg(arg))
 
   private fun withConfigArg(arg: String) = deriveArgs(arrayOf("-config=$arg"))
 
@@ -189,8 +189,7 @@ object ReadingBatServer {
       info { "Caller Version: $callerVersion" }
     }
 
-    val environment = commandLineEnvironment(deriveArgs(args))
-    embeddedServer(CIO, environment).start(wait = true)
+    EngineMain.main(deriveArgs(args))
   }
 }
 
@@ -305,12 +304,6 @@ fun Application.module() {
     }
 
     staticResources(STATIC_ROOT, "static")
-//    static(STATIC_ROOT) { resources("static") }
-
     staticResources("/", "public")
-//    static("/") {
-//      staticBasePackage = "public"
-//      resources(".")
-//    }
   }
 }

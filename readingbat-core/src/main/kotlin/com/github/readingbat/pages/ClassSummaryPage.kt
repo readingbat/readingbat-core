@@ -68,12 +68,40 @@ import com.github.readingbat.server.GroupName
 import com.github.readingbat.server.GroupName.Companion.EMPTY_GROUP
 import com.github.readingbat.server.LanguageName
 import com.github.readingbat.server.LanguageName.Companion.EMPTY_LANGUAGE
-import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
 import io.github.oshai.kotlinlogging.KotlinLogging
-import io.ktor.server.application.*
-import kotlinx.html.*
+import io.ktor.server.routing.RoutingContext
+import kotlinx.html.A
+import kotlinx.html.BODY
+import kotlinx.html.FormMethod
+import kotlinx.html.LI
+import kotlinx.html.UL
+import kotlinx.html.a
+import kotlinx.html.body
+import kotlinx.html.classes
+import kotlinx.html.div
+import kotlinx.html.form
+import kotlinx.html.h2
+import kotlinx.html.h3
+import kotlinx.html.h4
+import kotlinx.html.head
+import kotlinx.html.hiddenInput
+import kotlinx.html.html
+import kotlinx.html.id
+import kotlinx.html.li
+import kotlinx.html.p
+import kotlinx.html.role
+import kotlinx.html.script
+import kotlinx.html.span
 import kotlinx.html.stream.createHTML
+import kotlinx.html.style
+import kotlinx.html.submitInput
+import kotlinx.html.table
+import kotlinx.html.td
+import kotlinx.html.th
+import kotlinx.html.tr
+import kotlinx.html.ul
+import kotlin.collections.set
 
 internal object ClassSummaryPage {
   private val logger = KotlinLogging.logger {}
@@ -81,7 +109,7 @@ internal object ClassSummaryPage {
   internal const val LIKE_DISLIKE = "-likeDislike"
   private const val BTN_SIZE = "130%"
 
-  fun PipelineCall.classSummaryPage(content: ReadingBatContent, user: User?): String {
+  fun RoutingContext.classSummaryPage(content: ReadingBatContent, user: User?): String {
     val p = call.parameters
     val languageName = p[LANG_TYPE_QP]?.let { LanguageName(it) } ?: EMPTY_LANGUAGE
     val groupName = p[GROUP_NAME_QP]?.let { GroupName(it) } ?: EMPTY_GROUP
@@ -89,7 +117,7 @@ internal object ClassSummaryPage {
     return classSummaryPage(content, user, classCode, languageName, groupName)
   }
 
-  fun PipelineCall.classSummaryPage(
+  fun RoutingContext.classSummaryPage(
     content: ReadingBatContent,
     user: User?,
     classCode: ClassCode,

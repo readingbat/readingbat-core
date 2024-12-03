@@ -42,13 +42,31 @@ import com.github.readingbat.posts.ChallengeResults
 import com.github.readingbat.posts.DashboardHistory
 import com.github.readingbat.posts.DashboardInfo
 import com.github.readingbat.posts.LikeDislikeInfo
-import com.github.readingbat.server.*
+import com.github.readingbat.server.BrowserSessionsTable
+import com.github.readingbat.server.ChallengeName
+import com.github.readingbat.server.ClassesTable
+import com.github.readingbat.server.Email
 import com.github.readingbat.server.Email.Companion.EMPTY_EMAIL
 import com.github.readingbat.server.Email.Companion.UNKNOWN_EMAIL
+import com.github.readingbat.server.EnrolleesTable
+import com.github.readingbat.server.FullName
 import com.github.readingbat.server.FullName.Companion.EMPTY_FULLNAME
 import com.github.readingbat.server.FullName.Companion.UNKNOWN_FULLNAME
+import com.github.readingbat.server.GroupName
+import com.github.readingbat.server.Invocation
+import com.github.readingbat.server.LanguageName
+import com.github.readingbat.server.Password
+import com.github.readingbat.server.PasswordResetsTable
 import com.github.readingbat.server.ReadingBatServer.adminUsers
+import com.github.readingbat.server.ResetId
 import com.github.readingbat.server.ResetId.Companion.EMPTY_RESET_ID
+import com.github.readingbat.server.UserAnswerHistoryTable
+import com.github.readingbat.server.UserChallengeInfoTable
+import com.github.readingbat.server.UserSessionsTable
+import com.github.readingbat.server.UsersTable
+import com.github.readingbat.server.passwordResetsIndex
+import com.github.readingbat.server.userAnswerHistoryIndex
+import com.github.readingbat.server.userSessionIndex
 import com.github.readingbat.server.ws.ChallengeWs.classTargetName
 import com.github.readingbat.server.ws.ChallengeWs.multiServerWsWriteFlow
 import com.github.readingbat.server.ws.ChallengeWs.singleServerWsFlow
@@ -530,7 +548,8 @@ class User {
       classCode.isEnabled -> {
         // Check to see if the teacher that owns class has it set as their active class in one of the sessions
         val teacherId = classCode.fetchClassTeacherId()
-        teacherId.isNotEmpty() && teacherId.toUser().interestedInActiveClassCode(classCode)
+        teacherId.isNotEmpty() &&
+          teacherId.toUser().interestedInActiveClassCode(classCode)
             .also { logger.debug { "Publishing teacherId: $teacherId for $classCode" } }
       }
 

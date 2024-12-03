@@ -38,18 +38,19 @@ dependencies {
 
     implementation libraries.ktor_server_core
     implementation libraries.ktor_server_cio
+    implementation libraries.ktor_server_auth
     implementation libraries.ktor_client_core
     implementation libraries.ktor_client_cio
 
     implementation libraries.ktor_sessions
     implementation libraries.ktor_html
-    implementation libraries.ktor_locations
     implementation libraries.ktor_metrics
     implementation libraries.ktor_websockets
     implementation libraries.ktor_compression
     implementation libraries.ktor_calllogging
+    implementation libraries.ktor_resources
 
-    implementation libraries.khealth
+//    implementation libraries.khealth
 
     implementation libraries.jedis
 
@@ -116,7 +117,7 @@ buildConfig {
 
     buildConfigField('String', 'CORE_NAME', "\"${project.name}\"")
     buildConfigField('String', 'CORE_VERSION', "\"${project.version}\"")
-    buildConfigField('String', 'CORE_RELEASE_DATE', "\"11/08/24\"")
+    buildConfigField('String', 'CORE_RELEASE_DATE', "\"12/2/24\"")
 }
 
 // Include build uberjars in heroku deploy

@@ -28,10 +28,10 @@ import com.github.readingbat.common.isNotValidUser
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.isProduction
 import com.github.readingbat.pages.AdminPage.adminDataPage
-import com.github.readingbat.server.PipelineCall
-import io.ktor.server.application.*
-import io.ktor.server.request.*
-import io.ktor.server.sessions.*
+import io.ktor.server.request.receiveParameters
+import io.ktor.server.routing.RoutingContext
+import io.ktor.server.sessions.clear
+import io.ktor.server.sessions.sessions
 import redis.clients.jedis.Jedis
 
 internal object AdminPost {
@@ -39,7 +39,7 @@ internal object AdminPost {
   private val mustBeSysAdmin = Message("Must be system admin for this function", true)
   private val invalidOption = Message("Invalid option", true)
 
-  suspend fun PipelineCall.adminActions(
+  suspend fun RoutingContext.adminActions(
     content: ReadingBatContent,
     user: User?,
     redis: Jedis,

@@ -55,12 +55,35 @@ import com.github.readingbat.pages.PageUtils.hideShowButton
 import com.github.readingbat.pages.PageUtils.loadPingdomScript
 import com.github.readingbat.pages.PageUtils.privacyStatement
 import com.github.readingbat.pages.PageUtils.rawHtml
-import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
 import io.github.oshai.kotlinlogging.KotlinLogging
-import kotlinx.html.*
+import io.ktor.server.routing.RoutingContext
+import kotlinx.html.BODY
 import kotlinx.html.Entities.nbsp
+import kotlinx.html.FormMethod
+import kotlinx.html.a
+import kotlinx.html.body
+import kotlinx.html.div
+import kotlinx.html.form
+import kotlinx.html.h2
+import kotlinx.html.h3
+import kotlinx.html.head
+import kotlinx.html.html
+import kotlinx.html.id
+import kotlinx.html.label
+import kotlinx.html.onKeyPress
+import kotlinx.html.onSubmit
+import kotlinx.html.p
+import kotlinx.html.passwordInput
+import kotlinx.html.radioInput
+import kotlinx.html.span
 import kotlinx.html.stream.createHTML
+import kotlinx.html.style
+import kotlinx.html.submitInput
+import kotlinx.html.table
+import kotlinx.html.td
+import kotlinx.html.textInput
+import kotlinx.html.tr
 
 internal object UserPrefsPage {
   private val logger = KotlinLogging.logger {}
@@ -68,7 +91,7 @@ internal object UserPrefsPage {
   private const val PASSWORD_BUTTON = "UpdatePasswordButton"
   private const val JOIN_CLASS_BUTTON = "JoinClassButton"
 
-  fun PipelineCall.userPrefsPage(
+  fun RoutingContext.userPrefsPage(
     content: ReadingBatContent,
     user: User?,
     msg: Message = EMPTY_MESSAGE,
@@ -79,7 +102,7 @@ internal object UserPrefsPage {
     else
       requestLogInPage(content)
 
-  private fun PipelineCall.userPrefsWithLoginPage(
+  private fun RoutingContext.userPrefsWithLoginPage(
     content: ReadingBatContent,
     user: User,
     msg: Message,
@@ -353,7 +376,7 @@ internal object UserPrefsPage {
     }
   }
 
-  fun PipelineCall.requestLogInPage(content: ReadingBatContent, msg: Message = EMPTY_MESSAGE) =
+  fun RoutingContext.requestLogInPage(content: ReadingBatContent, msg: Message = EMPTY_MESSAGE) =
     createHTML()
       .html {
         head { headDefault() }

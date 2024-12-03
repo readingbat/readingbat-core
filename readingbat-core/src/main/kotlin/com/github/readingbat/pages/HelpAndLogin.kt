@@ -39,7 +39,26 @@ import com.github.readingbat.dsl.isProduction
 import com.github.readingbat.pages.ChallengePage.HEADER_COLOR
 import com.github.readingbat.pages.PageUtils.rawHtml
 import com.github.readingbat.server.ServerUtils.firstNonEmptyLanguageType
-import kotlinx.html.*
+import kotlinx.html.BODY
+import kotlinx.html.FormMethod
+import kotlinx.html.TABLE
+import kotlinx.html.a
+import kotlinx.html.br
+import kotlinx.html.div
+import kotlinx.html.form
+import kotlinx.html.hiddenInput
+import kotlinx.html.id
+import kotlinx.html.onFocus
+import kotlinx.html.passwordInput
+import kotlinx.html.script
+import kotlinx.html.span
+import kotlinx.html.style
+import kotlinx.html.submitInput
+import kotlinx.html.tabIndex
+import kotlinx.html.table
+import kotlinx.html.td
+import kotlinx.html.textInput
+import kotlinx.html.tr
 
 internal object HelpAndLogin {
   private val rootVals = listOf("", "/")

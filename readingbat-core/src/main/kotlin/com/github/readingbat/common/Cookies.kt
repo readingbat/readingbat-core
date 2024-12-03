@@ -34,17 +34,20 @@ import com.github.readingbat.server.SessionAnswerHistoryTable
 import com.github.readingbat.server.SessionChallengeInfoTable
 import com.pambrose.common.exposed.readonlyTx
 import io.github.oshai.kotlinlogging.KotlinLogging
-import io.ktor.server.application.*
-import io.ktor.server.auth.*
-import io.ktor.server.sessions.*
+import io.ktor.server.application.ApplicationCall
+import io.ktor.server.sessions.get
+import io.ktor.server.sessions.sessions
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json.Default.decodeFromString
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.insertAndGetId
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.time.Instant
 
-internal data class UserPrincipal(val userId: String, val created: Long = Instant.now().toEpochMilli()) : Principal
+@Serializable
+internal data class UserPrincipal(val userId: String, val created: Long = Instant.now().toEpochMilli())
 
+@Serializable
 data class BrowserSession(val id: String, val created: Long = Instant.now().toEpochMilli()) {
   fun queryOrCreateSessionDbmsId() =
     try {

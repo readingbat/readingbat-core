@@ -33,14 +33,22 @@ import com.github.readingbat.pages.PageUtils.bodyTitle
 import com.github.readingbat.pages.PageUtils.displayMessage
 import com.github.readingbat.pages.PageUtils.headDefault
 import com.github.readingbat.pages.PageUtils.loadPingdomScript
-import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
-import io.ktor.server.application.*
-import kotlinx.html.*
+import io.ktor.server.routing.RoutingContext
+import kotlinx.html.body
+import kotlinx.html.br
+import kotlinx.html.head
+import kotlinx.html.html
+import kotlinx.html.p
+import kotlinx.html.span
 import kotlinx.html.stream.createHTML
+import kotlinx.html.style
+import kotlinx.html.table
+import kotlinx.html.td
+import kotlinx.html.tr
 
 internal object UserInfoPage {
-  fun PipelineCall.userInfoPage(content: ReadingBatContent, user: User?, msg: Message = EMPTY_MESSAGE) =
+  fun RoutingContext.userInfoPage(content: ReadingBatContent, user: User?, msg: Message = EMPTY_MESSAGE) =
     createHTML()
       .html {
         head { headDefault() }

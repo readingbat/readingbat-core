@@ -41,14 +41,34 @@ import com.github.readingbat.pages.PageUtils.privacyStatement
 import com.github.readingbat.posts.PasswordResetPost.ResetPasswordException
 import com.github.readingbat.server.Email
 import com.github.readingbat.server.PasswordResetsTable
-import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ResetId
 import com.github.readingbat.server.ServerUtils.queryParam
 import com.pambrose.common.exposed.get
 import com.pambrose.common.exposed.readonlyTx
 import io.github.oshai.kotlinlogging.KotlinLogging
-import kotlinx.html.*
+import io.ktor.server.routing.RoutingContext
+import kotlinx.html.FormMethod
+import kotlinx.html.body
+import kotlinx.html.div
+import kotlinx.html.form
+import kotlinx.html.h2
+import kotlinx.html.h3
+import kotlinx.html.head
+import kotlinx.html.hiddenInput
+import kotlinx.html.html
+import kotlinx.html.id
+import kotlinx.html.label
+import kotlinx.html.onKeyPress
+import kotlinx.html.p
+import kotlinx.html.passwordInput
+import kotlinx.html.span
 import kotlinx.html.stream.createHTML
+import kotlinx.html.style
+import kotlinx.html.submitInput
+import kotlinx.html.table
+import kotlinx.html.td
+import kotlinx.html.textInput
+import kotlinx.html.tr
 import org.joda.time.DateTime
 import org.joda.time.DateTime.now
 import org.joda.time.Seconds
@@ -60,7 +80,7 @@ internal object PasswordResetPage {
   private const val FORM_NAME = "pform"
   private const val PASSWORD_BUTTON = "UpdatePasswordButton"
 
-  fun PipelineCall.passwordResetPage(resetIdVal: ResetId, msg: Message = EMPTY_MESSAGE) =
+  fun RoutingContext.passwordResetPage(resetIdVal: ResetId, msg: Message = EMPTY_MESSAGE) =
     if (resetIdVal.isBlank()) {
       requestPasswordResetPage(msg)
     } else {
@@ -91,7 +111,7 @@ internal object PasswordResetPage {
       }
     }
 
-  private fun PipelineCall.requestPasswordResetPage(msg: Message = EMPTY_MESSAGE) =
+  private fun RoutingContext.requestPasswordResetPage(msg: Message = EMPTY_MESSAGE) =
     createHTML()
       .html {
         head { headDefault() }
@@ -155,7 +175,7 @@ internal object PasswordResetPage {
         }
       }
 
-  private fun PipelineCall.changePasswordPage(email: Email, resetId: ResetId, msg: Message) =
+  private fun RoutingContext.changePasswordPage(email: Email, resetId: ResetId, msg: Message) =
     createHTML()
       .html {
         head {

@@ -57,20 +57,40 @@ import com.github.readingbat.pages.PageUtils.loadPingdomScript
 import com.github.readingbat.pages.PageUtils.rawHtml
 import com.github.readingbat.server.GroupName
 import com.github.readingbat.server.LanguageName
-import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
 import com.github.readingbat.server.ServerUtils.rows
 import io.github.oshai.kotlinlogging.KotlinLogging
-import io.ktor.server.application.*
-import kotlinx.html.*
+import io.ktor.server.routing.RoutingContext
+import kotlinx.html.BODY
+import kotlinx.html.FormMethod
+import kotlinx.html.TR
+import kotlinx.html.a
+import kotlinx.html.body
+import kotlinx.html.form
+import kotlinx.html.h2
+import kotlinx.html.h3
+import kotlinx.html.head
+import kotlinx.html.hiddenInput
+import kotlinx.html.html
+import kotlinx.html.id
+import kotlinx.html.img
+import kotlinx.html.onSubmit
+import kotlinx.html.p
+import kotlinx.html.script
+import kotlinx.html.span
 import kotlinx.html.stream.createHTML
+import kotlinx.html.style
+import kotlinx.html.submitInput
+import kotlinx.html.table
+import kotlinx.html.td
+import kotlinx.html.tr
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
 internal object ChallengeGroupPage {
   private val logger = KotlinLogging.logger {}
 
-  fun PipelineCall.challengeGroupPage(
+  fun RoutingContext.challengeGroupPage(
     content: ReadingBatContent,
     user: User?,
     challengeGroup: ChallengeGroup<*>,

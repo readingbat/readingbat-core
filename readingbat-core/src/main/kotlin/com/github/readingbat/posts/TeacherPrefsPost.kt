@@ -47,12 +47,11 @@ import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.pages.ClassSummaryPage.classSummaryPage
 import com.github.readingbat.pages.TeacherPrefsPage.teacherPrefsPage
 import com.github.readingbat.pages.UserPrefsPage.requestLogInPage
-import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.RedirectException
 import com.github.readingbat.server.ServerUtils.queryParam
 import io.github.oshai.kotlinlogging.KotlinLogging
-import io.ktor.server.application.*
-import io.ktor.server.request.*
+import io.ktor.server.request.receiveParameters
+import io.ktor.server.routing.RoutingContext
 import org.jetbrains.exposed.sql.transactions.transaction
 
 internal object TeacherPrefsPost {
@@ -60,14 +59,14 @@ internal object TeacherPrefsPost {
   private const val STUDENT_MODE_ENABLED_MSG = "Student mode enabled"
   private const val TEACHER_MODE_ENABLED_MSG = "Teacher mode enabled"
 
-  suspend fun PipelineCall.teacherPrefs(content: ReadingBatContent, user: User?) =
+  suspend fun RoutingContext.teacherPrefs(content: ReadingBatContent, user: User?) =
     if (user.isValidUser()) {
       val params = call.receiveParameters()
       when (val action = params[PREFS_ACTION_PARAM] ?: "") {
         CREATE_CLASS -> createClass(content, user, params[CLASS_DESC_PARAM] ?: "")
         UPDATE_ACTIVE_CLASS,
         MAKE_ACTIVE_CLASS,
-        -> {
+          -> {
           val source = params[CHOICE_SOURCE_PARAM] ?: ""
           val classCode = params.getClassCode(CLASS_CODE_CHOICE_PARAM)
           val msg = updateActiveClass(user, classCode)
@@ -96,7 +95,7 @@ internal object TeacherPrefsPost {
       requestLogInPage(content)
     }
 
-  fun PipelineCall.enableStudentMode(user: User?): String {
+  fun RoutingContext.enableStudentMode(user: User?): String {
     val returnPath = queryParam(RETURN_PARAM, "/")
     // val browserSession = call.browserSession
     val msg =
@@ -109,7 +108,7 @@ internal object TeacherPrefsPost {
     throw RedirectException("$returnPath?$MSG=${msg.encode()}")
   }
 
-  fun PipelineCall.enableTeacherMode(user: User?): String {
+  fun RoutingContext.enableTeacherMode(user: User?): String {
     val returnPath = queryParam(RETURN_PARAM, "/")
     val msg =
       if (user.isValidUser()) {
@@ -122,7 +121,7 @@ internal object TeacherPrefsPost {
     throw RedirectException("$returnPath?$MSG=${msg.encode()}")
   }
 
-  private fun PipelineCall.createClass(content: ReadingBatContent, user: User, classDesc: String) =
+  private fun RoutingContext.createClass(content: ReadingBatContent, user: User, classDesc: String) =
     when {
       classDesc.isBlank() -> {
         teacherPrefsPage(content, user, Message("Unable to create class [Empty class description]", true))
@@ -163,7 +162,7 @@ internal object TeacherPrefsPost {
       }
     }
 
-  private fun PipelineCall.deleteClass(content: ReadingBatContent, user: User, classCode: ClassCode) =
+  private fun RoutingContext.deleteClass(content: ReadingBatContent, user: User, classCode: ClassCode) =
     when {
       classCode.isNotEnabled ->
         teacherPrefsPage(content, user, Message("Empty class code", true))

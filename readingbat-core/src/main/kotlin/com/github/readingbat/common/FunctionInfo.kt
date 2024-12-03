@@ -17,12 +17,34 @@
 
 package com.github.readingbat.common
 
-import com.github.pambrose.common.util.*
+import com.github.pambrose.common.util.asBracketed
+import com.github.pambrose.common.util.isBracketed
+import com.github.pambrose.common.util.isDoubleQuoted
+import com.github.pambrose.common.util.isNotBracketed
+import com.github.pambrose.common.util.isNotDoubleQuoted
+import com.github.pambrose.common.util.isNotFloat
+import com.github.pambrose.common.util.isNotInt
+import com.github.pambrose.common.util.isNotQuoted
+import com.github.pambrose.common.util.isSingleQuoted
+import com.github.pambrose.common.util.singleToDoubleQuoted
+import com.github.pambrose.common.util.toDoubleQuoted
 import com.github.readingbat.dsl.LanguageType.Java
 import com.github.readingbat.dsl.LanguageType.Kotlin
 import com.github.readingbat.dsl.LanguageType.Python
 import com.github.readingbat.dsl.ReturnType
-import com.github.readingbat.dsl.ReturnType.*
+import com.github.readingbat.dsl.ReturnType.BooleanArrayType
+import com.github.readingbat.dsl.ReturnType.BooleanListType
+import com.github.readingbat.dsl.ReturnType.BooleanType
+import com.github.readingbat.dsl.ReturnType.FloatArrayType
+import com.github.readingbat.dsl.ReturnType.FloatListType
+import com.github.readingbat.dsl.ReturnType.FloatType
+import com.github.readingbat.dsl.ReturnType.IntArrayType
+import com.github.readingbat.dsl.ReturnType.IntListType
+import com.github.readingbat.dsl.ReturnType.IntType
+import com.github.readingbat.dsl.ReturnType.Runtime
+import com.github.readingbat.dsl.ReturnType.StringArrayType
+import com.github.readingbat.dsl.ReturnType.StringListType
+import com.github.readingbat.dsl.ReturnType.StringType
 import com.github.readingbat.dsl.challenge.Challenge
 import com.github.readingbat.posts.ChallengeResults
 import com.github.readingbat.server.ChallengeMd5

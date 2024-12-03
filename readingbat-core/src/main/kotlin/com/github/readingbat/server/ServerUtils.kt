@@ -42,19 +42,22 @@ import com.github.readingbat.server.Email.Companion.UNKNOWN_EMAIL
 import com.github.readingbat.server.ReadingBatServer.redisPool
 import com.github.readingbat.server.ws.PubSubCommandsWs.publishLog
 import io.github.oshai.kotlinlogging.KotlinLogging
-import io.ktor.http.*
-import io.ktor.server.application.*
-import io.ktor.server.auth.*
-import io.ktor.server.request.*
-import io.ktor.server.routing.*
-import io.ktor.server.sessions.*
-import io.ktor.server.websocket.*
-import io.ktor.util.*
-import io.ktor.util.pipeline.*
+import io.ktor.http.HttpMethod
+import io.ktor.http.formUrlEncode
+import io.ktor.server.application.ApplicationCall
+import io.ktor.server.auth.principal
+import io.ktor.server.request.receiveParameters
+import io.ktor.server.request.uri
+import io.ktor.server.routing.Route
+import io.ktor.server.routing.RoutingContext
+import io.ktor.server.routing.RoutingHandler
+import io.ktor.server.routing.route
+import io.ktor.server.sessions.sessions
+import io.ktor.server.sessions.set
+import io.ktor.server.websocket.WebSocketServerSession
+import io.ktor.utils.io.KtorDsl
 import kotlinx.coroutines.runBlocking
 import redis.clients.jedis.Jedis
-
-typealias PipelineCall = PipelineContext<Unit, ApplicationCall>
 
 @Suppress("unused")
 internal object ServerUtils {
@@ -62,15 +65,15 @@ internal object ServerUtils {
 
   fun getVersionDesc(asJson: Boolean = false): String = ReadingBatServer::class.versionDesc(asJson)
 
-  fun PipelineCall.queryParam(key: String, default: String = "") = call.request.queryParameters[key] ?: default
+  fun RoutingContext.queryParam(key: String, default: String = "") = call.request.queryParameters[key] ?: default
 
-  fun PipelineCall.fetchUser(loginAttempt: Boolean = false): User? =
+  fun RoutingContext.fetchUser(loginAttempt: Boolean = false): User? =
     fetchPrincipal(loginAttempt)?.userId?.toUser(call.browserSession)
 
-  private fun PipelineCall.fetchPrincipal(loginAttempt: Boolean): UserPrincipal? =
+  private fun RoutingContext.fetchPrincipal(loginAttempt: Boolean): UserPrincipal? =
     if (loginAttempt) assignPrincipal() else call.userPrincipal
 
-  private fun PipelineCall.assignPrincipal(): UserPrincipal? =
+  private fun RoutingContext.assignPrincipal(): UserPrincipal? =
     call.principal<UserPrincipal>().apply { if (isNotNull()) call.sessions.set(this) }  // Set the cookie
 
   fun WebSocketServerSession.fetchUser(): User? =
@@ -86,7 +89,7 @@ internal object ServerUtils {
   fun ApplicationCall.fetchEmailFromCache() =
     userPrincipal?.userId?.let { User.fetchEmailFromCache(it) } ?: UNKNOWN_EMAIL
 
-  suspend fun PipelineCall.respondWithRedirect(block: () -> String) =
+  suspend fun RoutingContext.respondWithRedirect(block: () -> String) =
     try {
       // Do this outside of respondWith{} so that exceptions will be caught
       val html = block.invoke()
@@ -95,7 +98,7 @@ internal object ServerUtils {
       redirectTo { e.redirectUrl }
     }
 
-  suspend fun PipelineCall.respondWithSuspendingRedirect(block: suspend () -> String) =
+  suspend fun RoutingContext.respondWithSuspendingRedirect(block: suspend () -> String) =
     try {
       val html = block.invoke()
       respondWith { html }
@@ -103,7 +106,7 @@ internal object ServerUtils {
       redirectTo { e.redirectUrl }
     }
 
-  suspend fun PipelineCall.respondWithRedisCheck(block: (Jedis) -> String) =
+  suspend fun RoutingContext.respondWithRedisCheck(block: (Jedis) -> String) =
     try {
       val html =
         redisPool?.withRedisPool { redis ->
@@ -114,7 +117,7 @@ internal object ServerUtils {
       redirectTo { e.redirectUrl }
     }
 
-  suspend fun PipelineCall.respondWithSuspendingRedisCheck(block: suspend (Jedis) -> String) =
+  suspend fun RoutingContext.respondWithSuspendingRedisCheck(block: suspend (Jedis) -> String) =
     try {
       val html =
         redisPool?.withSuspendingRedisPool { redis ->
@@ -139,7 +142,7 @@ internal object ServerUtils {
     }
 
   @KtorDsl
-  fun Route.get(path: String, metrics: Metrics, body: PipelineInterceptor<Unit, ApplicationCall>) =
+  fun Route.get(path: String, metrics: Metrics, body: RoutingHandler) =
     route(path, HttpMethod.Get) {
       runBlocking {
         metrics.measureEndpointRequest(path) { handle(body) }
@@ -147,14 +150,14 @@ internal object ServerUtils {
     }
 
   @KtorDsl
-  fun Route.post(path: String, metrics: Metrics, body: PipelineInterceptor<Unit, ApplicationCall>) =
+  fun Route.post(path: String, metrics: Metrics, body: RoutingHandler) =
     route(path, HttpMethod.Post) {
       runBlocking {
         metrics.measureEndpointRequest(path) { handle(body) }
       }
     }
 
-  fun PipelineCall.defaultLanguageTab(content: ReadingBatContent, user: User?): String {
+  fun RoutingContext.defaultLanguageTab(content: ReadingBatContent, user: User?): String {
     val langRoot = firstNonEmptyLanguageType(content, user?.defaultLanguage).contentRoot
     val params = call.parameters.formUrlEncode()
     return "$langRoot${if (params.isNotEmpty()) "?$params" else ""}"

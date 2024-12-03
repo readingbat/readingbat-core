@@ -54,16 +54,28 @@ import com.github.readingbat.dsl.isDbmsEnabled
 import com.github.readingbat.posts.AnswerStatus.CORRECT
 import com.github.readingbat.posts.AnswerStatus.INCORRECT
 import com.github.readingbat.posts.AnswerStatus.NOT_ANSWERED
-import com.github.readingbat.server.*
+import com.github.readingbat.server.ChallengeName
 import com.github.readingbat.server.ChallengeName.Companion.getChallengeName
+import com.github.readingbat.server.GroupName
 import com.github.readingbat.server.GroupName.Companion.getGroupName
+import com.github.readingbat.server.Invocation
+import com.github.readingbat.server.LanguageName
 import com.github.readingbat.server.LanguageName.Companion.getLanguageName
+import com.github.readingbat.server.RedirectException
 import com.github.readingbat.server.ServerUtils.paramMap
+import com.github.readingbat.server.SessionAnswerHistoryTable
+import com.github.readingbat.server.SessionChallengeInfoTable
+import com.github.readingbat.server.UserAnswerHistoryTable
+import com.github.readingbat.server.UserChallengeInfoTable
+import com.github.readingbat.server.sessionAnswerHistoryIndex
+import com.github.readingbat.server.sessionChallengeInfoIndex
+import com.github.readingbat.server.userAnswerHistoryIndex
+import com.github.readingbat.server.userChallengeInfoIndex
 import com.pambrose.common.exposed.upsert
 import io.github.oshai.kotlinlogging.KotlinLogging
-import io.ktor.server.application.*
-import io.ktor.server.request.*
-import io.ktor.server.response.*
+import io.ktor.server.request.receiveParameters
+import io.ktor.server.response.respondText
+import io.ktor.server.routing.RoutingContext
 import kotlinx.serialization.Required
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
@@ -176,7 +188,7 @@ private val EMPTY_STRING = "".toDoubleQuoted()
 internal object ChallengePost {
   private val logger = KotlinLogging.logger {}
 
-  suspend fun PipelineCall.checkAnswers(content: ReadingBatContent, user: User?) {
+  suspend fun RoutingContext.checkAnswers(content: ReadingBatContent, user: User?) {
     val params = call.receiveParameters()
     val paramMap = params.entries().associate { it.key to it.value[0] }
     val names = ChallengeNames(paramMap)
@@ -246,7 +258,7 @@ internal object ChallengePost {
       else -> error("Invalid type: $type")
     }
 
-  suspend fun PipelineCall.clearChallengeAnswers(content: ReadingBatContent, user: User?): String {
+  suspend fun RoutingContext.clearChallengeAnswers(content: ReadingBatContent, user: User?): String {
     val params = call.receiveParameters()
 
     val languageName = params.getLanguageName(LANGUAGE_NAME_PARAM)
@@ -280,7 +292,7 @@ internal object ChallengePost {
     throw RedirectException("$path?$MSG=${"Answers cleared".encode()}")
   }
 
-  suspend fun PipelineCall.clearGroupAnswers(content: ReadingBatContent, user: User?): String {
+  suspend fun RoutingContext.clearGroupAnswers(content: ReadingBatContent, user: User?): String {
     val parameters = call.receiveParameters()
 
     val languageName = parameters.getLanguageName(LANGUAGE_NAME_PARAM)
@@ -329,7 +341,7 @@ internal object ChallengePost {
     throw RedirectException("$path?$MSG=${"Answers cleared".encode()}")
   }
 
-  suspend fun PipelineCall.likeDislike(user: User?) {
+  suspend fun RoutingContext.likeDislike(user: User?) {
     val paramMap = call.paramMap()
     val names = ChallengeNames(paramMap)
     // val challenge = content.findChallenge(names.languageName, names.groupName, names.challengeName)
@@ -343,7 +355,7 @@ internal object ChallengePost {
 
         LIKE_COLOR,
         DISLIKE_COLOR,
-        -> 0
+          -> 0
 
         DISLIKE_CLEAR -> 2
         else -> error("Invalid like/dislike argument: $likeArg")

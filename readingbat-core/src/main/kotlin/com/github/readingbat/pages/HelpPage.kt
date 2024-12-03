@@ -37,13 +37,27 @@ import com.github.readingbat.pages.PageUtils.bodyTitle
 import com.github.readingbat.pages.PageUtils.headDefault
 import com.github.readingbat.pages.PageUtils.loadPingdomScript
 import com.github.readingbat.pages.PageUtils.rawHtml
-import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
-import kotlinx.html.*
+import io.ktor.server.routing.RoutingContext
+import kotlinx.html.a
+import kotlinx.html.b
+import kotlinx.html.body
+import kotlinx.html.div
+import kotlinx.html.h2
+import kotlinx.html.h3
+import kotlinx.html.h4
+import kotlinx.html.head
+import kotlinx.html.html
+import kotlinx.html.i
+import kotlinx.html.img
+import kotlinx.html.li
+import kotlinx.html.ol
+import kotlinx.html.p
 import kotlinx.html.stream.createHTML
+import kotlinx.html.style
 
 internal object HelpPage {
-  fun PipelineCall.helpPage(content: ReadingBatContent, user: User?) =
+  fun RoutingContext.helpPage(content: ReadingBatContent, user: User?) =
     createHTML()
       .html {
         head { headDefault() }

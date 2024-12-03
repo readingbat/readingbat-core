@@ -96,11 +96,20 @@ import com.github.readingbat.server.ServerUtils.respondWithRedisCheck
 import com.github.readingbat.server.ServerUtils.respondWithSuspendingRedirect
 import com.github.readingbat.server.ServerUtils.respondWithSuspendingRedisCheck
 import com.github.readingbat.server.routes.ResourceContent.getResourceAsText
-import io.ktor.http.*
+import io.ktor.http.ContentType
 import io.ktor.http.ContentType.Text.CSS
-import io.ktor.server.application.*
-import io.ktor.server.routing.*
-import io.ktor.server.sessions.*
+import io.ktor.server.application.ApplicationCallPipeline
+import io.ktor.server.routing.Route
+import io.ktor.server.routing.RouteSelector
+import io.ktor.server.routing.RouteSelectorEvaluation
+import io.ktor.server.routing.Routing
+import io.ktor.server.routing.RoutingResolveContext
+import io.ktor.server.routing.get
+import io.ktor.server.routing.intercept
+import io.ktor.server.routing.post
+import io.ktor.server.routing.route
+import io.ktor.server.sessions.clear
+import io.ktor.server.sessions.sessions
 import kotlinx.coroutines.withTimeout
 import kotlin.time.Duration
 
@@ -110,7 +119,7 @@ fun Route.routeTimeout(time: Duration, callback: Route.() -> Unit): Route {
   val routeWithTimeout =
     this.createChild(
       object : RouteSelector() {
-        override fun evaluate(context: RoutingResolveContext, segmentIndex: Int): RouteSelectorEvaluation =
+        override suspend fun evaluate(context: RoutingResolveContext, segmentIndex: Int) =
           RouteSelectorEvaluation.Constant
       },
     )
@@ -150,15 +159,11 @@ fun Routing.userRoutes(metrics: Metrics, contentSrc: () -> ReadingBatContent) {
   }
 
   get(CONFIG_ENDPOINT) {
-    respondWith {
-      authenticateAdminUser(fetchUser()) { systemConfigurationPage(contentSrc()) }
-    }
+    respondWith { authenticateAdminUser(fetchUser()) { systemConfigurationPage(contentSrc()) } }
   }
 
   get(SESSIONS_ENDPOINT) {
-    respondWith {
-      authenticateAdminUser(fetchUser()) { sessionsPage() }
-    }
+    respondWith { authenticateAdminUser(fetchUser()) { sessionsPage() } }
   }
 
   get(PRIVACY_ENDPOINT) {

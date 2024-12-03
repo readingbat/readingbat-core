@@ -36,7 +36,6 @@ import com.github.readingbat.server.FullName
 import com.github.readingbat.server.FullName.Companion.getFullName
 import com.github.readingbat.server.Password
 import com.github.readingbat.server.Password.Companion.getPassword
-import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.RedirectException
 import com.github.readingbat.server.ServerUtils.queryParam
 import com.github.readingbat.server.UsersTable
@@ -44,9 +43,10 @@ import com.google.common.util.concurrent.RateLimiter
 import com.pambrose.common.exposed.get
 import com.pambrose.common.exposed.readonlyTx
 import io.github.oshai.kotlinlogging.KotlinLogging
-import io.ktor.server.application.*
-import io.ktor.server.request.*
-import io.ktor.server.sessions.*
+import io.ktor.server.request.receiveParameters
+import io.ktor.server.routing.RoutingContext
+import io.ktor.server.sessions.sessions
+import io.ktor.server.sessions.set
 import org.jetbrains.exposed.sql.Count
 
 internal object CreateAccountPost {
@@ -70,7 +70,7 @@ internal object CreateAccountPost {
       else -> EMPTY_MESSAGE
     }
 
-  suspend fun PipelineCall.createAccount(): String {
+  suspend fun RoutingContext.createAccount(): String {
     val params = call.receiveParameters()
     val fullName = params.getFullName(FULLNAME_PARAM)
     val email = params.getEmail(EMAIL_PARAM)
@@ -103,7 +103,7 @@ internal object CreateAccountPost {
       }
     }
 
-  private fun PipelineCall.createAccount(name: FullName, email: Email, password: Password): String {
+  private fun RoutingContext.createAccount(name: FullName, email: Email, password: Password): String {
     createAccountLimiter.acquire() // may wait
 
     // Check if email already exists

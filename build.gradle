@@ -9,9 +9,9 @@ buildscript {
 plugins {
     id 'java'
     id 'application'
-    id 'org.jetbrains.kotlin.jvm' version '2.0.21' apply false
-    id 'org.jetbrains.kotlin.plugin.serialization' version '2.0.21' apply false
-    id 'org.jmailen.kotlinter' version "4.5.0" apply false
+    id 'org.jetbrains.kotlin.jvm' version '2.1.0' apply false
+    id 'org.jetbrains.kotlin.plugin.serialization' version '2.1.0' apply false
+    // id 'org.jmailen.kotlinter' version "4.5.0" apply false
     id 'com.github.gmazzo.buildconfig' version '5.5.1' apply false
     id "com.github.ben-manes.versions" version '0.51.0' apply false
     id "org.flywaydb.flyway" version "11.0.0"
@@ -46,9 +46,10 @@ ext {
 
         ktor_server_core      : "io.ktor:ktor-server:$ktor_version",
         ktor_server_cio       : "io.ktor:ktor-server-cio:$ktor_version",
+        ktor_server_auth : "io.ktor:ktor-server-auth-jvm:$ktor_version",
         ktor_sessions         : "io.ktor:ktor-server-sessions:$ktor_version",
         ktor_html             : "io.ktor:ktor-server-html-builder:$ktor_version",
-        ktor_locations        : "io.ktor:ktor-server-locations:$ktor_version",
+        ktor_resources   : "io.ktor:ktor-server-resources:$ktor_version",
         ktor_metrics          : "io.ktor:ktor-server-metrics:$ktor_version",
         ktor_websockets       : "io.ktor:ktor-server-websockets:$ktor_version",
         ktor_compression      : "io.ktor:ktor-server-compression:$ktor_version",
@@ -75,7 +76,7 @@ ext {
 
         github                : "org.kohsuke:github-api:$github_api_version",
 
-        ktor_server_tests     : "io.ktor:ktor-server-tests:$ktor_version",
+        ktor_server_tests: "org.jetbrains.kotlin:kotlin-test:$kotlin_version",
         ktor_server_test_host : "io.ktor:ktor-server-test-host:$ktor_version",
 
         kotest_runner_junit5  : "io.kotest:kotest-runner-junit5:$kotest_version",
@@ -87,12 +88,12 @@ ext {
 allprojects {
     description = 'ReadingBat Core'
     group 'com.github.readingbat'
-    version '1.40.5'
+    version '1.40.7'
 
     apply plugin: 'application'
     apply plugin: 'java-library'
     apply plugin: 'maven-publish'
-    apply plugin: 'org.jmailen.kotlinter'
+//    apply plugin: 'org.jmailen.kotlinter'
     apply plugin: 'org.jetbrains.kotlin.jvm'
     apply plugin: 'org.jetbrains.kotlin.plugin.serialization'
     apply plugin: 'com.github.gmazzo.buildconfig'
@@ -104,8 +105,8 @@ allprojects {
         maven { url = 'https://jitpack.io' }
     }
 
-    sourceCompatibility = JavaVersion.VERSION_17
-    targetCompatibility = JavaVersion.VERSION_17
+//    sourceCompatibility = JavaVersion.VERSION_17
+//    targetCompatibility = JavaVersion.VERSION_17
 
 //    publishing {
 //        publications {
@@ -130,9 +131,6 @@ subprojects {
         //implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutines_version"
         //implementation "org.jetbrains.kotlinx:kotlinx-serialization-core:$serialization_version"
 
-        implementation "io.ktor:ktor-server-locations:$ktor_version"
-
-        //implementation "dev.hayden:khealth:$khealth_version"
 
         implementation "io.github.oshai:kotlin-logging-jvm:$logging_version"
         implementation "ch.qos.logback:logback-classic:$logback_version"
@@ -174,7 +172,6 @@ subprojects {
                                  '-opt-in=kotlin.contracts.ExperimentalContracts',
                                  '-opt-in=kotlinx.coroutines.ObsoleteCoroutinesApi',
                                  '-opt-in=kotlin.ExperimentalStdlibApi',
-                                 '-opt-in=io.ktor.server.locations.KtorExperimentalLocationsAPI',
                                  '-opt-in=kotlinx.coroutines.InternalCoroutinesApi',
                                  '-opt-in=kotlinx.coroutines.DelicateCoroutinesApi',
             ]
@@ -191,10 +188,10 @@ subprojects {
         }
     }
 
-    kotlinter {
-        ignoreFailures = false
-        reporters = ['checkstyle', 'plain']
-    }
+//    kotlinter {
+//        ignoreFailures = false
+//        reporters = ['checkstyle', 'plain']
+//    }
 }
 
 flyway {

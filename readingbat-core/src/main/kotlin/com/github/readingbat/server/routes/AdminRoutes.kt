@@ -35,16 +35,18 @@ import com.github.readingbat.dsl.isDbmsEnabled
 import com.github.readingbat.dsl.isSaveRequestsEnabled
 import com.github.readingbat.server.BrowserSessionsTable
 import com.github.readingbat.server.GeoInfo.Companion.lookupGeoInfo
-import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.get
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.http.ContentType.Text.Plain
-import io.ktor.server.application.*
-import io.ktor.server.html.*
-import io.ktor.server.plugins.*
-import io.ktor.server.response.*
-import io.ktor.server.routing.*
-import io.ktor.server.sessions.*
+import io.ktor.server.html.respondHtml
+import io.ktor.server.plugins.origin
+import io.ktor.server.response.respondText
+import io.ktor.server.routing.Routing
+import io.ktor.server.routing.RoutingContext
+import io.ktor.server.routing.get
+import io.ktor.server.sessions.clear
+import io.ktor.server.sessions.sessions
+import io.ktor.server.sessions.set
 import kotlinx.html.body
 import kotlinx.html.div
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
@@ -103,7 +105,7 @@ object AdminRoutes {
       }
     }
 
-    fun PipelineCall.clearPrincipal() {
+    fun RoutingContext.clearPrincipal() {
       call.userPrincipal
         .also {
           if (it.isNotNull()) {
@@ -115,7 +117,7 @@ object AdminRoutes {
         }
     }
 
-    fun PipelineCall.clearSessionId() {
+    fun RoutingContext.clearSessionId() {
       call.browserSession
         .also { bs ->
           if (bs.isNotNull()) {
@@ -150,7 +152,7 @@ object AdminRoutes {
     }
   }
 
-  fun PipelineCall.assignBrowserSession() {
+  fun RoutingContext.assignBrowserSession() {
     if (call.request.headers.contains(NO_TRACK_HEADER))
       return
 

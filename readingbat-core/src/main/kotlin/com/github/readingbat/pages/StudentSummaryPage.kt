@@ -58,18 +58,35 @@ import com.github.readingbat.pages.PageUtils.headDefault
 import com.github.readingbat.pages.PageUtils.loadPingdomScript
 import com.github.readingbat.pages.PageUtils.rawHtml
 import com.github.readingbat.server.LanguageName
-import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
 import io.github.oshai.kotlinlogging.KotlinLogging
-import io.ktor.server.application.*
-import kotlinx.html.*
+import io.ktor.server.routing.RoutingContext
+import kotlinx.html.BODY
 import kotlinx.html.FormMethod.post
+import kotlinx.html.a
+import kotlinx.html.body
+import kotlinx.html.div
+import kotlinx.html.form
+import kotlinx.html.h2
+import kotlinx.html.h3
+import kotlinx.html.head
+import kotlinx.html.hiddenInput
+import kotlinx.html.html
+import kotlinx.html.id
+import kotlinx.html.onSubmit
+import kotlinx.html.script
 import kotlinx.html.stream.createHTML
+import kotlinx.html.style
+import kotlinx.html.submitInput
+import kotlinx.html.table
+import kotlinx.html.td
+import kotlinx.html.th
+import kotlinx.html.tr
 
 internal object StudentSummaryPage {
   private val logger = KotlinLogging.logger {}
 
-  fun PipelineCall.studentSummaryPage(content: ReadingBatContent, user: User?): String {
+  fun RoutingContext.studentSummaryPage(content: ReadingBatContent, user: User?): String {
     val p = call.parameters
     val languageName = p[LANG_TYPE_QP]?.let { LanguageName(it) } ?: throw InvalidRequestException("Missing language")
     val student = p[USER_ID_QP]?.toUser() ?: throw InvalidRequestException("Missing user id")

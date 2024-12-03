@@ -17,11 +17,9 @@
 
 package com.github.readingbat.testcontent
 
-import java.util.*
-
 fun combine2(strs: Array<String>): Array<String> {
   val retval = arrayOf(*strs)
-  for (i in strs.indices) retval[i] = strs[i].uppercase(Locale.getDefault())
+  for (i in strs.indices) retval[i] = strs[i].uppercase()
   return retval
 }
 

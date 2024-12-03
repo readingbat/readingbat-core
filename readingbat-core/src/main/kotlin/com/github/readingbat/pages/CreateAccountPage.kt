@@ -38,15 +38,34 @@ import com.github.readingbat.server.Email
 import com.github.readingbat.server.Email.Companion.EMPTY_EMAIL
 import com.github.readingbat.server.FullName
 import com.github.readingbat.server.FullName.Companion.EMPTY_FULLNAME
-import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
-import kotlinx.html.*
+import io.ktor.server.routing.RoutingContext
+import kotlinx.html.FormMethod
+import kotlinx.html.body
+import kotlinx.html.div
+import kotlinx.html.form
+import kotlinx.html.h2
+import kotlinx.html.head
+import kotlinx.html.hiddenInput
+import kotlinx.html.html
+import kotlinx.html.id
+import kotlinx.html.label
+import kotlinx.html.onKeyPress
+import kotlinx.html.p
+import kotlinx.html.passwordInput
+import kotlinx.html.span
 import kotlinx.html.stream.createHTML
+import kotlinx.html.style
+import kotlinx.html.submitInput
+import kotlinx.html.table
+import kotlinx.html.td
+import kotlinx.html.textInput
+import kotlinx.html.tr
 
 internal object CreateAccountPage {
   private const val CREATE_BUTTON = "CreateAccountButton"
 
-  fun PipelineCall.createAccountPage(
+  fun RoutingContext.createAccountPage(
     defaultFullName: FullName = EMPTY_FULLNAME,
     defaultEmail: Email = EMPTY_EMAIL,
     msg: Message = EMPTY_MESSAGE,

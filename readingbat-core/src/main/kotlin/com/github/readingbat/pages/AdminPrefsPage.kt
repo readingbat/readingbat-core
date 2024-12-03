@@ -34,9 +34,9 @@ import com.github.readingbat.pages.HelpAndLogin.helpAndLogin
 import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyTitle
 import com.github.readingbat.pages.PageUtils.headDefault
-import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
 import io.github.oshai.kotlinlogging.KotlinLogging
+import io.ktor.server.routing.RoutingContext
 import kotlinx.html.a
 import kotlinx.html.body
 import kotlinx.html.h2
@@ -50,7 +50,7 @@ import kotlinx.html.title
 internal object AdminPrefsPage {
   private val logger = KotlinLogging.logger {}
 
-  fun PipelineCall.adminPrefsPage(content: ReadingBatContent, user: User?) =
+  fun RoutingContext.adminPrefsPage(content: ReadingBatContent, user: User?) =
     createHTML()
       .html {
         head { headDefault() }

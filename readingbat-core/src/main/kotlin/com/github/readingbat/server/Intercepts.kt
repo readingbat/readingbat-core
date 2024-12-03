@@ -34,18 +34,31 @@ import com.github.readingbat.server.Intercepts.requestTimingMap
 import com.github.readingbat.server.ServerUtils.fetchUserDbmsIdFromCache
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.http.HttpHeaders.UserAgent
-import io.ktor.server.application.*
+import io.ktor.server.application.Application
+import io.ktor.server.application.ApplicationCallPipeline
 import io.ktor.server.application.ApplicationCallPipeline.ApplicationPhase.Plugins
-import io.ktor.server.logging.*
-import io.ktor.server.plugins.*
-import io.ktor.server.plugins.callid.*
-import io.ktor.server.request.*
-import io.ktor.server.routing.Routing.Plugin.RoutingCallFinished
-import io.ktor.server.routing.Routing.Plugin.RoutingCallStarted
+import io.ktor.server.application.ApplicationStarted
+import io.ktor.server.application.PipelineCall
+import io.ktor.server.application.ServerReady
+import io.ktor.server.application.call
+import io.ktor.server.application.host
+import io.ktor.server.application.port
+import io.ktor.server.logging.toLogString
+import io.ktor.server.plugins.callid.callId
+import io.ktor.server.plugins.origin
+import io.ktor.server.request.httpMethod
+import io.ktor.server.request.path
+import io.ktor.server.request.queryString
+import io.ktor.server.routing.RoutingRoot.Plugin.RoutingCallFinished
+import io.ktor.server.routing.RoutingRoot.Plugin.RoutingCallStarted
+import io.ktor.util.pipeline.PipelineContext
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.update
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.collections.component1
+import kotlin.collections.component2
+import kotlin.collections.set
 import kotlin.concurrent.timer
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
@@ -138,44 +151,48 @@ internal fun Application.intercepts() {
     // Phase for handling unprocessed calls
   }
 
-  if (isSaveRequestsEnabled()) {
-    environment.monitor
-      .apply {
-        subscribe(RoutingCallStarted) { call ->
-          val path = call.request.path()
-          if (!path.startsWith("/$STATIC/") && path != PING_ENDPOINT) {
-            call.callId
-              .also { callId ->
-                if (callId.isNotNull()) {
-                  requestTimingMap[callId] = clock.markNow()
-                }
-              }
-          }
-        }
+  monitor.subscribe(ApplicationStarted) { call ->
+    logger.info { "Application started" }
+  }
+  monitor.subscribe(ServerReady) { call ->
+    logger.info { "Server ready: ${call.config.host}:${call.config.port}" }
+  }
 
-        subscribe(RoutingCallFinished) { call ->
-          val path = call.request.path()
-          if (!path.startsWith("/$STATIC/") && path != PING_ENDPOINT) {
-            call.callId
-              .also { callId ->
-                if (callId.isNotNull()) {
-                  requestTimingMap.remove(callId)
-                    .also { start ->
-                      if (start.isNotNull()) {
-                        logger.debug {
-                          val str = call.request.toLogString()
-                          "Logged call ${requestTimingMap.size} ${start.elapsedNow()} ${call.callId} $str"
-                        }
-                        updateServerRequest(callId, start)
-                      }
-                    }
-                } else {
-                  logger.error { "Null requestId for $path" }
-                }
-              }
+  if (isSaveRequestsEnabled()) {
+    monitor.subscribe(RoutingCallStarted) { call ->
+      val path = call.request.path()
+      if (!path.startsWith("/$STATIC/") && path != PING_ENDPOINT) {
+        call.callId
+          .also { callId ->
+            if (callId.isNotNull()) {
+              requestTimingMap[callId] = clock.markNow()
+            }
           }
-        }
       }
+    }
+
+    monitor.subscribe(RoutingCallFinished) { call ->
+      val path = call.request.path()
+      if (!path.startsWith("/$STATIC/") && path != PING_ENDPOINT) {
+        call.callId
+          .also { callId ->
+            if (callId.isNotNull()) {
+              requestTimingMap.remove(callId)
+                .also { start ->
+                  if (start.isNotNull()) {
+                    logger.debug {
+                      val str = call.request.toLogString()
+                      "Logged call ${requestTimingMap.size} ${start.elapsedNow()} ${call.callId} $str"
+                    }
+                    updateServerRequest(callId, start)
+                  }
+                }
+            } else {
+              logger.error { "Null requestId for $path" }
+            }
+          }
+      }
+    }
   }
 }
 
@@ -189,4 +206,4 @@ fun updateServerRequest(callId: String, start: TimeMark) {
   }
 }
 
-fun PipelineCall.isStaticCall() = context.request.path().startsWith("/$STATIC/")
+fun PipelineContext<Unit, PipelineCall>.isStaticCall() = context.request.path().startsWith("/$STATIC/")

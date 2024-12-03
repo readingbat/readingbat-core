@@ -46,18 +46,27 @@ import com.github.readingbat.pages.PageUtils.loadStatusPageDisplay
 import com.github.readingbat.pages.PageUtils.rawHtml
 import com.github.readingbat.pages.UserPrefsPage.requestLogInPage
 import com.github.readingbat.pages.js.AdminCommandsJs.loadCommandsScript
-import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
-import io.github.oshai.kotlinlogging.KotlinLogging
-import kotlinx.html.*
+import io.ktor.server.routing.RoutingContext
+import kotlinx.html.BODY
+import kotlinx.html.ScriptType
+import kotlinx.html.body
+import kotlinx.html.h2
+import kotlinx.html.head
+import kotlinx.html.html
+import kotlinx.html.id
+import kotlinx.html.p
+import kotlinx.html.script
+import kotlinx.html.span
 import kotlinx.html.stream.createHTML
+import kotlinx.html.style
+import kotlinx.html.textArea
 
 internal object SystemAdminPage {
-  private val logger = KotlinLogging.logger {}
-  private const val msgs = "msgs"
-  private const val status = "status"
+  private const val MSGS = "msgs"
+  private const val STATUS = "status"
 
-  fun PipelineCall.systemAdminPage(
+  fun RoutingContext.systemAdminPage(
     content: ReadingBatContent,
     user: User?,
     msg: String = "",
@@ -67,7 +76,7 @@ internal object SystemAdminPage {
     else
       requestLogInPage(content)
 
-  private fun PipelineCall.systemAdminLoginPage(content: ReadingBatContent, user: User, msg: Message) =
+  private fun RoutingContext.systemAdminLoginPage(content: ReadingBatContent, user: User, msg: Message) =
     createHTML()
       .html {
         val logId = randomId(10)
@@ -168,7 +177,7 @@ internal object SystemAdminPage {
 
           p {
             textArea {
-              id = msgs
+              id = MSGS
               readonly = true
               rows = "20"
               cols = "120"
@@ -176,7 +185,7 @@ internal object SystemAdminPage {
             }
           }
 
-          p { span { id = status } }
+          p { span { id = STATUS } }
 
           backLink("$ADMIN_PREFS_ENDPOINT?$RETURN_PARAM=${queryParam(RETURN_PARAM, "/")}")
           enableWebSockets(logId)
@@ -208,8 +217,8 @@ internal object SystemAdminPage {
           ws.onopen = function (event) {
             //console.log("WebSocket connected.");
             firstTime = false;
-            document.getElementById('$status').innerText = 'Connected';
-            document.getElementById('$msgs').value = '';
+            document.getElementById('$STATUS').innerText = 'Connected';
+            document.getElementById('$MSGS').value = '';
             ws.send("ready");
           };
 
@@ -220,7 +229,7 @@ internal object SystemAdminPage {
               msg = 'Reconnecting';
             for (i = 0; i < cnt%4; i++)
               msg += '.'
-            document.getElementById('$status').innerText = msg;
+            document.getElementById('$STATUS').innerText = msg;
             setTimeout(function() {
               cnt+=1;
               connect();
@@ -234,7 +243,7 @@ internal object SystemAdminPage {
 
           ws.onmessage = function (event) {
             var obj = JSON.parse(event.data);
-            var elem = document.getElementById('$msgs');
+            var elem = document.getElementById('$MSGS');
             elem.value = obj + '\n' + elem.value;
           };
         }

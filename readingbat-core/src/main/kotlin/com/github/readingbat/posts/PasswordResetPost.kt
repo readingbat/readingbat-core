@@ -40,7 +40,6 @@ import com.github.readingbat.server.Email
 import com.github.readingbat.server.Email.Companion.getEmail
 import com.github.readingbat.server.Password.Companion.getPassword
 import com.github.readingbat.server.PasswordResetsTable
-import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.RedirectException
 import com.github.readingbat.server.ResetId
 import com.github.readingbat.server.ResetId.Companion.EMPTY_RESET_ID
@@ -51,16 +50,16 @@ import com.google.common.util.concurrent.RateLimiter
 import com.pambrose.common.exposed.get
 import com.pambrose.common.exposed.readonlyTx
 import io.github.oshai.kotlinlogging.KotlinLogging
-import io.ktor.server.application.*
-import io.ktor.server.plugins.*
-import io.ktor.server.request.*
+import io.ktor.server.plugins.origin
+import io.ktor.server.request.receiveParameters
+import io.ktor.server.routing.RoutingContext
 
 internal object PasswordResetPost {
   private val logger = KotlinLogging.logger {}
   private val unknownUserLimiter = RateLimiter.create(0.5) // rate 2.0 is "2 permits per second"
   private val unableToSend = Message("Unable to send password reset email -- missing email address", true)
 
-  suspend fun PipelineCall.sendPasswordReset(): String {
+  suspend fun RoutingContext.sendPasswordReset(): String {
     val email = call.receiveParameters().getEmail(EMAIL_PARAM)
     val remoteStr = call.request.origin.remoteHost
     logger.info { "Password change request for $email - $remoteStr" }
@@ -97,13 +96,13 @@ internal object PasswordResetPost {
               from = Email("reset@readingbat.com"),
               subject = "ReadingBat password reset",
               msg =
-              Message(
-                """
+                Message(
+                  """
                 |This is a password reset message for the ReadingBat.com account for '$email'
                 |Go to this URL to set a new password: $sg$PASSWORD_RESET_ENDPOINT?$RESET_ID_PARAM=$newResetId
                 |If you did not request to reset your password, please ignore this message.
                 """.trimMargin(),
-              ),
+                ),
             )
           }.onFailure { e ->
             logger.info(e) { e.message }
@@ -123,7 +122,7 @@ internal object PasswordResetPost {
     }
   }
 
-  suspend fun PipelineCall.updatePassword(): String =
+  suspend fun RoutingContext.updatePassword(): String =
     try {
       val params = call.receiveParameters()
       val resetIdVal = params.getResetId(RESET_ID_PARAM)

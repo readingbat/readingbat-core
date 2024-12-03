@@ -33,11 +33,21 @@ import com.github.readingbat.pages.PageUtils.headDefault
 import com.github.readingbat.pages.PageUtils.loadStatusPageDisplay
 import com.github.readingbat.pages.PageUtils.rawHtml
 import com.github.readingbat.server.FullName.Companion.UNKNOWN_FULLNAME
-import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
 import io.github.oshai.kotlinlogging.KotlinLogging
-import kotlinx.html.*
+import io.ktor.server.routing.RoutingContext
+import kotlinx.html.body
+import kotlinx.html.div
+import kotlinx.html.h2
+import kotlinx.html.h3
+import kotlinx.html.head
+import kotlinx.html.html
+import kotlinx.html.img
 import kotlinx.html.stream.createHTML
+import kotlinx.html.table
+import kotlinx.html.td
+import kotlinx.html.th
+import kotlinx.html.tr
 import org.joda.time.DateTime
 import org.joda.time.DateTimeZone.UTC
 import kotlin.time.Duration.Companion.days
@@ -48,7 +58,7 @@ import kotlin.time.Duration.Companion.minutes
 internal object SessionsPage {
   private val logger = KotlinLogging.logger {}
 
-  fun PipelineCall.sessionsPage() =
+  fun RoutingContext.sessionsPage() =
     createHTML()
       .html {
         head { headDefault() }

@@ -38,16 +38,25 @@ import com.github.readingbat.pages.PageUtils.headDefault
 import com.github.readingbat.pages.PageUtils.loadPingdomScript
 import com.github.readingbat.pages.PageUtils.rawHtml
 import com.github.readingbat.server.GroupName.Companion.EMPTY_GROUP
-import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
 import com.github.readingbat.server.ServerUtils.rows
-import io.ktor.server.application.*
-import kotlinx.html.*
+import io.ktor.server.routing.RoutingContext
 import kotlinx.html.Entities.nbsp
+import kotlinx.html.TR
+import kotlinx.html.a
+import kotlinx.html.body
+import kotlinx.html.div
+import kotlinx.html.head
+import kotlinx.html.html
+import kotlinx.html.img
+import kotlinx.html.p
 import kotlinx.html.stream.createHTML
+import kotlinx.html.table
+import kotlinx.html.td
+import kotlinx.html.tr
 
 internal object LanguageGroupPage {
-  fun PipelineCall.languageGroupPage(
+  fun RoutingContext.languageGroupPage(
     content: ReadingBatContent,
     user: User?,
     languageType: LanguageType,

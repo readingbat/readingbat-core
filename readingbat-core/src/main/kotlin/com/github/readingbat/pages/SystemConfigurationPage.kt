@@ -47,20 +47,29 @@ import com.github.readingbat.pages.PageUtils.headDefault
 import com.github.readingbat.pages.PageUtils.loadStatusPageDisplay
 import com.github.readingbat.server.GeoInfo.Companion.geoInfoMap
 import com.github.readingbat.server.Intercepts.requestTimingMap
-import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ReadingBatServer
 import com.github.readingbat.server.ServerUtils.queryParam
 import com.github.readingbat.server.ws.ChallengeWs.answerWsConnections
 import com.github.readingbat.server.ws.ChallengeWs.maxAnswerWsConnections
+import io.ktor.server.routing.RoutingContext
 import io.prometheus.Agent
-import kotlinx.html.*
+import kotlinx.html.body
+import kotlinx.html.div
+import kotlinx.html.h2
+import kotlinx.html.h3
+import kotlinx.html.head
+import kotlinx.html.html
 import kotlinx.html.stream.createHTML
+import kotlinx.html.table
+import kotlinx.html.td
+import kotlinx.html.th
+import kotlinx.html.tr
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
 
 internal object SystemConfigurationPage {
-  fun PipelineCall.systemConfigurationPage(content: ReadingBatContent) =
+  fun RoutingContext.systemConfigurationPage(content: ReadingBatContent) =
     createHTML()
       .html {
         head { headDefault() }

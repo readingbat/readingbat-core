@@ -113,7 +113,7 @@ internal object PubSubCommandsWs {
 
                 USER_ANSWERS,
                 LIKE_DISLIKE,
-                -> {
+                  -> {
                   val data = Json.decodeFromString<ChallengeAnswerData>(message)
                   multiServerWsReadFlow.emit(data)
                 }

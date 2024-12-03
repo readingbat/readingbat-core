@@ -98,7 +98,6 @@ import com.github.readingbat.pages.PageUtils.rawHtml
 import com.github.readingbat.pages.js.CheckAnswersJs.checkAnswersScript
 import com.github.readingbat.pages.js.LikeDislikeJs.likeDislikeScript
 import com.github.readingbat.server.ChallengeMd5
-import com.github.readingbat.server.PipelineCall
 import com.github.readingbat.server.ServerUtils.queryParam
 import com.github.readingbat.server.SessionChallengeInfoTable
 import com.github.readingbat.server.UserChallengeInfoTable
@@ -106,11 +105,46 @@ import com.pambrose.common.exposed.get
 import com.pambrose.common.exposed.readonlyTx
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.http.ContentType.Text.CSS
-import io.ktor.server.application.*
-import kotlinx.html.*
+import io.ktor.server.routing.RoutingContext
+import kotlinx.html.BODY
 import kotlinx.html.Entities.nbsp
+import kotlinx.html.FormMethod
+import kotlinx.html.HEAD
 import kotlinx.html.ScriptType.textJavaScript
+import kotlinx.html.a
+import kotlinx.html.body
+import kotlinx.html.br
+import kotlinx.html.button
+import kotlinx.html.code
+import kotlinx.html.div
+import kotlinx.html.emptyMap
+import kotlinx.html.form
+import kotlinx.html.h2
+import kotlinx.html.h3
+import kotlinx.html.head
+import kotlinx.html.hiddenInput
+import kotlinx.html.html
+import kotlinx.html.id
+import kotlinx.html.img
+import kotlinx.html.link
+import kotlinx.html.onClick
+import kotlinx.html.onFocus
+import kotlinx.html.onFocusOut
+import kotlinx.html.onKeyDown
+import kotlinx.html.onSubmit
+import kotlinx.html.p
+import kotlinx.html.pre
+import kotlinx.html.script
+import kotlinx.html.span
 import kotlinx.html.stream.createHTML
+import kotlinx.html.style
+import kotlinx.html.submitInput
+import kotlinx.html.tabIndex
+import kotlinx.html.table
+import kotlinx.html.td
+import kotlinx.html.textInput
+import kotlinx.html.th
+import kotlinx.html.tr
 import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -127,7 +161,7 @@ internal object ChallengePage {
   private const val PING_MSG = "pingMsg"
   internal const val HEADER_COLOR = "#419DC1"
 
-  fun PipelineCall.challengePage(
+  fun RoutingContext.challengePage(
     content: ReadingBatContent,
     user: User?,
     challenge: Challenge,
