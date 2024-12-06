@@ -14,7 +14,7 @@ plugins {
     // id 'org.jmailen.kotlinter' version "4.5.0" apply false
     id 'com.github.gmazzo.buildconfig' version '5.5.1' apply false
     id "com.github.ben-manes.versions" version '0.51.0' apply false
-    id "org.flywaydb.flyway" version "11.0.0"
+    id "org.flywaydb.flyway" version "11.0.1"
 }
 
 ext {
