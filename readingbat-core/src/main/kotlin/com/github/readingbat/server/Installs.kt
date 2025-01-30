@@ -74,6 +74,7 @@ import kotlin.time.Duration.Companion.seconds
 
 object Installs {
   private val logger = KotlinLogging.logger {}
+  private val excludedEndpoints = listOf("/", "/$STATIC/", "$WS_ROOT/")
 
   fun Application.installs(production: Boolean) {
     install(Resources)
@@ -136,14 +137,15 @@ object Installs {
       }
     }
 
+    fun String.startsWithList(prefixes: Iterable<String>) = prefixes.any { startsWith(it) }
+
     install(CallLogging) {
       level = Level.INFO
 
       if (EnvVar.FILTER_LOG.getEnv(true))
         filter { call ->
-          call.request.path().let {
-            it.startsWith("/") && !it.startsWith("/$STATIC/") && it != PING_ENDPOINT && !it.startsWith("$WS_ROOT/")
-          }
+          call.request.path()
+            .let { it != PING_ENDPOINT && !it.startsWithList(excludedEndpoints) && !it.endsWith(".php") }
         }
 
       format { call ->

@@ -18,8 +18,8 @@
 package com.github.readingbat.server
 
 import com.github.pambrose.common.util.FileSource
-import com.github.pambrose.common.util.Version2
-import com.github.pambrose.common.util.Version2.Companion.versionDesc2
+import com.github.pambrose.common.util.Version
+import com.github.pambrose.common.util.Version.Companion.versionDesc
 import com.github.pambrose.common.util.getBanner
 import com.github.pambrose.common.util.isNotNull
 import com.github.pambrose.common.util.isNull
@@ -81,7 +81,7 @@ import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeSource
 import kotlin.time.measureTime
 
-@Version2(
+@Version(
   version = BuildConfig.CORE_VERSION,
   releaseDate = BuildConfig.CORE_RELEASE_DATE,
   buildTime = BuildConfig.BUILD_TIME,
@@ -181,7 +181,7 @@ object ReadingBatServer {
   fun start(args: Array<String>) {
     logger.apply {
       info { getBanner("banners/readingbat.banner", this) }
-      info { ReadingBatServer::class.versionDesc2() }
+      info { ReadingBatServer::class.versionDesc() }
       callerVersion = callerVersion(args)
       info { "Caller Version: $callerVersion" }
     }

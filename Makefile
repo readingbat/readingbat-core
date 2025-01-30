@@ -58,4 +58,4 @@ depends:
 	./gradlew dependencies
 
 upgrade-wrapper:
-	./gradlew wrapper --gradle-version=8.11.1 --distribution-type=bin
+	./gradlew wrapper --gradle-version=8.12.1 --distribution-type=bin
