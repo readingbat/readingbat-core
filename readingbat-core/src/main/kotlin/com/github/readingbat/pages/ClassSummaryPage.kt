@@ -457,7 +457,7 @@ internal object ClassSummaryPage {
   }
 
   private fun LI.dropdownToggle(block: A.() -> Unit) {
-    a("#", null, "dropdown-toggle") {
+    a("#", null, classes = "dropdown-toggle") {
       style =
         "font-size:$BTN_SIZE; text-decoration:none; border-radius: 5px; padding: 0px 7px; " +
           "cursor: pointer; color: black; border:1px solid black;"

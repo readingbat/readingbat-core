@@ -78,7 +78,6 @@ import com.pambrose.common.exposed.readonlyTx
 import com.pambrose.common.exposed.upsert
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.html.Entities.nbsp
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.sql.Count
 import org.jetbrains.exposed.sql.ResultRow
@@ -355,7 +354,7 @@ class User {
         select(Count(id))
           .where { userRef eq userDbmsId }
           .map { it[0] as Long }
-          .first().also { logger.info { "isEnrolled() returned $it for $classCode" } } > 0
+          .first().also { logger.debug { "isEnrolled() returned $it for $classCode" } } > 0
       }
     }
 

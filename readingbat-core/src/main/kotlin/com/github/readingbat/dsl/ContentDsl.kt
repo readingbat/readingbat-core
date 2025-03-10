@@ -91,10 +91,7 @@ internal fun isSaveRequestsEnabled() =
     EnvVar.IPGEOLOCATION_KEY.isDefined()
 
 internal fun isContentCachingEnabled() =
-  CONTENT_CACHING_ENABLED.getProperty(
-    default = false,
-    errorOnNonInit = false,
-  ) && isDbmsEnabled()
+  CONTENT_CACHING_ENABLED.getProperty(default = false, errorOnNonInit = false) && isDbmsEnabled()
 
 internal fun isMultiServerEnabled() = MULTI_SERVER_ENABLED.getProperty(false)
 

@@ -175,13 +175,13 @@ object Installs {
     }
 
 //    install(KHealth) {
-////      readyChecks {
-////        check("check my database is up") { true }
-////      }
-////
-////      healthChecks {
-////        check("another check") { true }
-////      }
+//      readyChecks {
+//        check("check my database is up") { true }
+//      }
+//
+//      healthChecks {
+//        check("another check") { true }
+//      }
 //    }
 
     /*

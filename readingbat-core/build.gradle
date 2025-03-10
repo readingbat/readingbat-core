@@ -113,7 +113,7 @@ buildConfig {
 
     buildConfigField('String', 'CORE_NAME', "\"${project.name}\"")
     buildConfigField('String', 'CORE_VERSION', "\"${project.version}\"")
-    buildConfigField('String', 'CORE_RELEASE_DATE', "\"1/29/25\"")
+    buildConfigField('String', 'CORE_RELEASE_DATE', "\"3/9/25\"")
     buildConfigField("long", "BUILD_TIME", "${System.currentTimeMillis()}L")
 }
 

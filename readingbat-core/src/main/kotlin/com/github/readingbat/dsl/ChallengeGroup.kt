@@ -69,8 +69,9 @@ class ChallengeGroup<T : Challenge>(
   private fun fetchDirContentsFromDirCache(path: String) =
     if (isContentCachingEnabled()) {
       dirCache[path]?.toList().apply { logger.debug { """Retrieved "$path" from dir cache""" } }
-    } else
+    } else {
       null
+    }
 
   private fun fetchRemoteFiles(root: GitHubRepo, path: String) =
     (
