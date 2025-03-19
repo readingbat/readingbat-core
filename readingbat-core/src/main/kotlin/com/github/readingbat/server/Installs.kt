@@ -60,6 +60,7 @@ import io.ktor.server.plugins.defaultheaders.DefaultHeaders
 import io.ktor.server.plugins.forwardedheaders.ForwardedHeaders
 import io.ktor.server.plugins.forwardedheaders.XForwardedHeaders
 import io.ktor.server.plugins.origin
+import io.ktor.server.plugins.ratelimit.RateLimit
 import io.ktor.server.plugins.statuspages.StatusPages
 import io.ktor.server.request.path
 import io.ktor.server.request.uri
@@ -134,6 +135,15 @@ object Installs {
       deflate {
         priority = 10.0
         minimumSize(1024) // condition
+      }
+    }
+
+    install(RateLimit) {
+      register {
+        rateLimiter(
+          limit = EnvVar.RATE_LIMIT_COUNT.getEnv(10),
+          refillPeriod = EnvVar.RATE_LIMIT_SECS.getEnv(1).seconds
+        )
       }
     }
 

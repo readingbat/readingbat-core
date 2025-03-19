@@ -40,6 +40,8 @@ enum class EnvVar(val maskFunc: EnvVar.() -> String = { getEnv(UNASSIGNED) }) {
   DBMS_PASSWORD({ getEnvOrNull()?.obfuscate(1) ?: UNASSIGNED }),
   FORWARDED_ENABLED,
   XFORWARDED_ENABLED,
+  RATE_LIMIT_COUNT,
+  RATE_LIMIT_SECS,
   ;
 
   fun isDefined(): Boolean = getEnvOrNull().isNotNull()

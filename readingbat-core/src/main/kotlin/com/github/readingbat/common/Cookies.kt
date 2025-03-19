@@ -53,7 +53,7 @@ data class BrowserSession(val id: String, val created: Long = Instant.now().toEp
     try {
       querySessionDbmsId(id)
     } catch (e: MissingBrowserSessionException) {
-      logger.debug { "Creating BrowserSession in sessionDbmsId() - ${e.message}" }
+      logger.info { "Creating BrowserSession in sessionDbmsId() - ${e.message}" }
       createBrowserSession(id)
     }
 
