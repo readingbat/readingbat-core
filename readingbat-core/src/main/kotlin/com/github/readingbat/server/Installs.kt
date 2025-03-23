@@ -70,7 +70,8 @@ import io.ktor.server.websocket.WebSockets
 import io.ktor.server.websocket.pingPeriod
 import io.ktor.server.websocket.timeout
 import org.slf4j.event.Level
-import java.util.concurrent.atomic.AtomicLong
+import kotlin.concurrent.atomics.AtomicLong
+import kotlin.concurrent.atomics.incrementAndFetch
 import kotlin.time.Duration.Companion.seconds
 
 object Installs {
@@ -142,7 +143,7 @@ object Installs {
       register {
         rateLimiter(
           limit = EnvVar.RATE_LIMIT_COUNT.getEnv(10),
-          refillPeriod = EnvVar.RATE_LIMIT_SECS.getEnv(1).seconds
+          refillPeriod = EnvVar.RATE_LIMIT_SECS.getEnv(1).seconds,
         )
       }
     }
@@ -176,11 +177,11 @@ object Installs {
       header("X-Engine", "Ktor")
     }
 
-    val requestCounter = AtomicLong()
+    val requestCounter = AtomicLong(0)
 
     install(CallId) {
       retrieveFromHeader(HttpHeaders.XRequestId)
-      generate { "$serverSessionId-${requestCounter.incrementAndGet()}" }
+      generate { "$serverSessionId-${requestCounter.incrementAndFetch()}" }
       verify { it.isNotEmpty() }
     }
 

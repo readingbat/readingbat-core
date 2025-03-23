@@ -30,7 +30,7 @@ import com.github.readingbat.common.PropertyNames.SITE
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.server.application.Application
 import io.ktor.server.config.ApplicationConfigurationException
-import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.concurrent.atomics.AtomicBoolean
 
 open class KtorProperty(
   val propertyName: String,
@@ -61,29 +61,29 @@ open class KtorProperty(
 
   fun getProperty(default: String, errorOnNonInit: Boolean = true) =
     (System.getProperty(propertyName) ?: default).also {
-      if (errorOnNonInit && !initialized.get())
+      if (errorOnNonInit && !initialized.load())
         error(notInitialized(this))
     }
 
   fun getProperty(default: Boolean, errorOnNonInit: Boolean = true) =
     (System.getProperty(propertyName)?.toBoolean() ?: default).also {
-      if (errorOnNonInit && !initialized.get())
+      if (errorOnNonInit && !initialized.load())
         error(notInitialized(this))
     }
 
   fun getProperty(default: Int, errorOnNonInit: Boolean = true) =
     (System.getProperty(propertyName)?.toIntOrNull() ?: default).also {
-      if (errorOnNonInit && !initialized.get())
+      if (errorOnNonInit && !initialized.load())
         error(notInitialized(this))
     }
 
   fun getPropertyOrNull(errorOnNonInit: Boolean = true): String? =
-    System.getProperty(propertyName).also { if (errorOnNonInit && !initialized.get()) error(notInitialized(this)) }
+    System.getProperty(propertyName).also { if (errorOnNonInit && !initialized.load()) error(notInitialized(this)) }
 
   fun getRequiredProperty() =
     (
       getPropertyOrNull() ?: error("Missing $propertyName value")
-      ).also { if (!initialized.get()) error(notInitialized(this)) }
+      ).also { if (!initialized.load()) error(notInitialized(this)) }
 
   fun setProperty(value: String) {
     System.setProperty(propertyName, value)
@@ -106,7 +106,7 @@ open class KtorProperty(
     private val initialized = AtomicBoolean(false)
     private val instances = mutableListOf<KtorProperty>()
 
-    fun assignInitialized() = initialized.set(true)
+    fun assignInitialized() = initialized.store(true)
 
     private fun notInitialized(prop: KtorProperty) = "Property ${prop.name} not initialized"
 

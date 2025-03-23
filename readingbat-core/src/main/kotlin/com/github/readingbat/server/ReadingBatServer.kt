@@ -74,8 +74,9 @@ import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.exposed.sql.Database
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.atomic.AtomicReference
+import kotlin.concurrent.atomics.AtomicInt
+import kotlin.concurrent.atomics.AtomicReference
+import kotlin.concurrent.atomics.plusAssign
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeSource
@@ -96,7 +97,7 @@ object ReadingBatServer {
   internal var callerVersion = ""
   internal val content = AtomicReference(ReadingBatContent())
   internal val adminUsers = mutableListOf<String>()
-  internal val contentReadCount = AtomicInteger(0)
+  internal val contentReadCount = AtomicInt(0)
   internal val dbms by lazy {
     Database.connect(
       HikariDataSource(
@@ -199,7 +200,7 @@ internal fun Application.readContentDsl(fileName: String, variableName: String, 
   measureTime {
     val contentSource = FileSource(fileName = fileName)
     val dslCode = readContentDsl(contentSource)
-    content.set(
+    content.store(
       evalContentDsl(contentSource.source, variableName, dslCode)
         .apply {
           maxHistoryLength = Property.MAX_HISTORY_LENGTH.configValue(this@readContentDsl, "10").toInt()
@@ -216,7 +217,7 @@ internal fun Application.readContentDsl(fileName: String, variableName: String, 
       }
   }
 
-  contentReadCount.incrementAndGet()
+  contentReadCount += 1
 }
 
 fun Application.module() {
@@ -243,7 +244,7 @@ fun Application.module() {
   }
 
   // This is done *after* AGENT_LAUNCH_ID is assigned because metrics depend on it
-  metrics.init { content.get() }
+  metrics.init { content.load() }
 
   assignKotlinScriptProperty()
 
@@ -267,7 +268,7 @@ fun Application.module() {
   // readContentDsl() is passed as a lambda because it is Application.readContentDsl()
   val resetContentDslFunc = { logId: String -> readContentDsl(dslFileName, dslVariableName, logId) }
 
-  LoggingWs.initThreads({ content.get() }, resetContentDslFunc)
+  LoggingWs.initThreads({ content.load() }, resetContentDslFunc)
 
   installs(isProduction())
 
@@ -275,12 +276,12 @@ fun Application.module() {
 
   routing {
     adminRoutes(metrics)
-    locations(metrics) { content.get() }
-    userRoutes(metrics) { content.get() }
+    locations(metrics) { content.load() }
+    userRoutes(metrics) { content.load() }
 
     if (isProduction()) {
       sysAdminRoutes(metrics, resetContentDslFunc)
-      wsRoutes(metrics) { content.get() }
+      wsRoutes(metrics) { content.load() }
     }
 
     staticResources(STATIC_ROOT, "static")

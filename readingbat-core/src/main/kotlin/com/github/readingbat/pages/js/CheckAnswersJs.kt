@@ -40,10 +40,11 @@ import com.github.readingbat.server.ChallengeName
 import com.github.readingbat.server.GroupName
 import com.github.readingbat.server.LanguageName
 import kotlinx.html.SCRIPT
-import java.util.concurrent.atomic.AtomicInteger
+import kotlin.concurrent.atomics.AtomicInt
+import kotlin.concurrent.atomics.incrementAndFetch
 
 internal object CheckAnswersJs {
-  private val sessionCounter = AtomicInteger(0)
+  private val sessionCounter = AtomicInt(0)
 
   fun SCRIPT.checkAnswersScript(languageName: LanguageName, groupName: GroupName, challengeName: ChallengeName) =
     rawHtml(
@@ -55,7 +56,7 @@ internal object CheckAnswersJs {
       if (event != null && (event.keyCode != 13 && event.keyCode != 9))
         return 1;
 
-      let data = "$SESSION_ID=${sessionCounter.incrementAndGet()}&$LANG_SRC=$languageName&$GROUP_SRC=$groupName&$CHALLENGE_SRC=$challengeName";
+      let data = "$SESSION_ID=${sessionCounter.incrementAndFetch()}&$LANG_SRC=$languageName&$GROUP_SRC=$groupName&$CHALLENGE_SRC=$challengeName";
       try {
         for (let i = 0; i < cnt; i++) {
           let x = document.getElementById("$FEEDBACK_ID"+i);

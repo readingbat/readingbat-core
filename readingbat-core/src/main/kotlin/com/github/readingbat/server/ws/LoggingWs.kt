@@ -50,7 +50,6 @@ import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.newSingleThreadContext
 import kotlinx.coroutines.runBlocking
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.util.Collections.synchronizedSet
 import kotlin.time.Duration.Companion.seconds
@@ -110,7 +109,7 @@ internal object LoggingWs {
                       val type = Json.decodeFromString<LoadChallengeType>(data.jsonArgs)
                       type.languageTypes
                         .forEach { langType ->
-                          content.get().loadChallenges(langType, logItem, "", false)
+                          content.load().loadChallenges(langType, logItem, "", false)
                             .also {
                               logger.info { it }
                               logItem(it)

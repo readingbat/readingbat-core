@@ -49,7 +49,7 @@ import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.sql.and
-import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.concurrent.atomics.AtomicBoolean
 
 internal object ChallengeGroupWs {
   private val logger = KotlinLogging.logger {}
@@ -62,7 +62,7 @@ internal object ChallengeGroupWs {
 
         outgoing.invokeOnClose {
           logger.debug { "Close received for class statistics websocket" }
-          finished.set(true)
+          finished.store(true)
           incoming.cancel()
         }
 
@@ -131,7 +131,7 @@ internal object ChallengeGroupWs {
                         }
                       }
 
-                      if (finished.get())
+                      if (finished.load())
                         break
                     }
 
@@ -159,7 +159,7 @@ internal object ChallengeGroupWs {
 
                     totCorrect += numCorrect
 
-                    if (finished.get())
+                    if (finished.load())
                       break
                   }
 
@@ -175,7 +175,7 @@ internal object ChallengeGroupWs {
 
                   val json = ChallengeStats(challengeName.value, msg).toJson()
                   logger.debug { "Sending data $json" }
-                  if (finished.get())
+                  if (finished.load())
                     break
                   outgoing.send(Frame.Text(json))
                 }

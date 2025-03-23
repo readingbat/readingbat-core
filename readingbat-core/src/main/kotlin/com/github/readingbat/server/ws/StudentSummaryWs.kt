@@ -48,7 +48,7 @@ import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.concurrent.atomics.AtomicBoolean
 
 internal object StudentSummaryWs {
   private val logger = KotlinLogging.logger {}
@@ -61,7 +61,7 @@ internal object StudentSummaryWs {
 
         outgoing.invokeOnClose {
           logger.debug { "Close received for student summary websocket" }
-          finished.set(true)
+          finished.store(true)
           incoming.cancel()
         }
 
@@ -121,7 +121,7 @@ internal object StudentSummaryWs {
                       }
                     }
 
-                    if (finished.get())
+                    if (finished.load())
                       break
                   }
 
@@ -144,11 +144,11 @@ internal object StudentSummaryWs {
 
                     metrics.wsClassSummaryResponseCount.labels(agentLaunchId()).inc()
                     logger.debug { "Sending data $json" }
-                    if (!finished.get())
+                    if (!finished.load())
                       outgoing.send(Frame.Text(json))
                   }
 
-                  if (finished.get())
+                  if (finished.load())
                     break
                 }
               }

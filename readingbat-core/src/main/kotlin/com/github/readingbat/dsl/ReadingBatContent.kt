@@ -47,7 +47,8 @@ import kotlinx.coroutines.runBlocking
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.atomic.AtomicInteger
+import kotlin.concurrent.atomics.AtomicInt
+import kotlin.concurrent.atomics.plusAssign
 import kotlin.time.measureTimedValue
 
 @ReadingBatDslMarker
@@ -173,7 +174,7 @@ class ReadingBatContent {
     useWebApi: Boolean = false,
   ) =
     measureTimedValue {
-      val cnt = AtomicInteger(0)
+      val cnt = AtomicInt(0)
       runBlocking {
         findLanguage(languageType).challengeGroups
           .forEach { challengeGroup ->
@@ -188,7 +189,7 @@ class ReadingBatContent {
                         get(url, setUp = { header(NO_TRACK_HEADER, "") }) { response ->
                           val body = response.bodyAsText()
                           logger.info { "Response: ${response.status} ${body.length} chars" }
-                          cnt.incrementAndGet()
+                          cnt += 1
                         }
                       }
                     }
@@ -196,12 +197,12 @@ class ReadingBatContent {
                   logger.info { "Loading: ${challenge.path}" }
                   log("Loading: ${challenge.path}")
                   challenge.functionInfo()
-                  cnt.incrementAndGet()
+                  cnt += 1
                 }
               }
           }
       }
-      cnt.get()
+      cnt.load()
     }.let {
       "${it.value} $languageType ${"exercise".pluralize(it.value)} loaded in ${it.duration}"
     }

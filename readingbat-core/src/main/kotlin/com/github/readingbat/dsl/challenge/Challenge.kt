@@ -69,7 +69,8 @@ import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.net.URL
 import java.nio.file.Paths
-import java.util.concurrent.atomic.AtomicInteger
+import kotlin.concurrent.atomics.AtomicInt
+import kotlin.concurrent.atomics.incrementAndFetch
 import kotlin.reflect.typeOf
 import kotlin.time.measureTime
 import kotlin.time.measureTimedValue
@@ -80,7 +81,7 @@ sealed class Challenge(
   val challengeName: ChallengeName,
   val replaceable: Boolean,
 ) {
-  internal val challengeId = counter.incrementAndGet()
+  internal val challengeId = counter.incrementAndFetch()
   private val fqName by lazy { packageNameAsPath.ensureSuffix("/") + fileName.ensureSuffix(".${languageType.suffix}") }
 
   // Allow description updates only if not found in the Content.kt decl
@@ -220,7 +221,7 @@ sealed class Challenge(
 
   companion object {
     internal val logger = KotlinLogging.logger {}
-    internal val counter = AtomicInteger(0)
+    internal val counter = AtomicInt(0)
     internal const val DESC = "@desc "
 
     internal fun challenge(
