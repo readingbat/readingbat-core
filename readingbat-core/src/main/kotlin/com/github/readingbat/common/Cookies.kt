@@ -53,7 +53,7 @@ data class BrowserSession(val id: String, val created: Long = Instant.now().toEp
     try {
       querySessionDbmsId(id)
     } catch (e: MissingBrowserSessionException) {
-      logger.info { "Creating BrowserSession in sessionDbmsId() - ${e.message}" }
+      logger.debug { "Creating BrowserSession in sessionDbmsId() - ${e.message}" }
       createBrowserSession(id)
     }
 
@@ -102,7 +102,7 @@ data class BrowserSession(val id: String, val created: Long = Instant.now().toEp
         querySessionDbmsId(id)
       } catch (e: MissingBrowserSessionException) {
         if (createIfMissing) {
-          logger.info { "Creating BrowserSession in findSessionDbmsId() - ${e.message}" }
+          logger.debug { "Creating BrowserSession in findSessionDbmsId() - ${e.message}" }
           createBrowserSession(id)
         } else {
           -1
