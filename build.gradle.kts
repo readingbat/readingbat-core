@@ -65,14 +65,14 @@ fun Project.configureKotlin() {
       jvmTarget.set(JvmTarget.JVM_11)
       freeCompilerArgs.addAll(
         listOf(
-          "-opt-in=kotlin.time.ExperimentalTime",
-          "-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi",
-          "-opt-in=kotlin.contracts.ExperimentalContracts",
-          "-opt-in=kotlinx.coroutines.ObsoleteCoroutinesApi",
           "-opt-in=kotlin.ExperimentalStdlibApi",
-          "-opt-in=kotlinx.coroutines.InternalCoroutinesApi",
-          "-opt-in=kotlinx.coroutines.DelicateCoroutinesApi",
           "-opt-in=kotlin.concurrent.atomics.ExperimentalAtomicApi",
+          "-opt-in=kotlin.contracts.ExperimentalContracts",
+          "-opt-in=kotlin.time.ExperimentalTime",
+          "-opt-in=kotlinx.coroutines.DelicateCoroutinesApi",
+          "-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi",
+          "-opt-in=kotlinx.coroutines.InternalCoroutinesApi",
+          "-opt-in=kotlinx.coroutines.ObsoleteCoroutinesApi",
         )
       )
     }
