@@ -1,4 +1,0 @@
-rootProject.name = 'readingbat-core'
-
-include ':readingbat-core'
-include ':readingbat-kotest'
