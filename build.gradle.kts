@@ -32,7 +32,7 @@ allprojects {
   apply(plugin = "com.github.gmazzo.buildconfig")
   apply(plugin = "com.github.ben-manes.versions")
 
-  extra["versionStr"] = "2.0.5"
+  extra["versionStr"] = "2.1.0"
   description = "ReadingBat Core"
   group = "com.github.readingbat"
   version = versionStr
@@ -49,75 +49,6 @@ subprojects {
   configurePublishing()
   configureTesting()
   configureKotlinter()
-
-//  dependencies {
-//    // These are required for the annotation args below
-//    //implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${property("coroutines_version")}")
-//    //implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:${property("serialization_version")}")
-//
-//    implementation(libs.logging)
-//    implementation(libs.logback)
-//
-//    runtimeOnly(libs.kotlin.scripting.jsr223)
-//  }
-
-//  tasks.register<Jar>("sourcesJar") {
-//    dependsOn(tasks.classes)
-//    from(sourceSets.main.get().allSource)
-//    archiveClassifier.set("sources")
-//  }
-//
-//  tasks.register<Jar>("javadocJar") {
-//    dependsOn(tasks.javadoc)
-//    from(tasks.javadoc.get().destinationDir)
-//    archiveClassifier.set("javadoc")
-//  }
-
-//  artifacts {
-//    archives(tasks.named("sourcesJar"))
-//    //archives(tasks.named("javadocJar"))
-//  }
-//
-//  java {
-//    withSourcesJar()
-//  }
-//
-//  kotlin {
-//    jvmToolchain(17)
-//  }
-
-//  tasks.withType<KotlinJvmCompile>().configureEach {
-//    compilerOptions {
-//      jvmTarget.set(JvmTarget.JVM_11)
-//      freeCompilerArgs.addAll(
-//        listOf(
-//          "-opt-in=kotlin.time.ExperimentalTime",
-//          "-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi",
-//          "-opt-in=kotlin.contracts.ExperimentalContracts",
-//          "-opt-in=kotlinx.coroutines.ObsoleteCoroutinesApi",
-//          "-opt-in=kotlin.ExperimentalStdlibApi",
-//          "-opt-in=kotlinx.coroutines.InternalCoroutinesApi",
-//          "-opt-in=kotlinx.coroutines.DelicateCoroutinesApi",
-//          "-opt-in=kotlin.concurrent.atomics.ExperimentalAtomicApi",
-//        )
-//      )
-//    }
-//  }
-
-
-//  tasks.withType<Test> {
-//    useJUnitPlatform()
-//
-//    testLogging {
-//      events("passed", "skipped", "failed", "standardOut", "standardError")
-//      exceptionFormat = TestExceptionFormat.FULL
-//      showStandardStreams = true
-//    }
-//  }
-//
-//  configure<org.jmailen.gradle.kotlinter.KotlinterExtension> {
-//    reporters = arrayOf("checkstyle", "plain")
-//  }
 }
 
 fun Project.configureKotlin() {

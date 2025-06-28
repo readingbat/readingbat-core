@@ -71,9 +71,6 @@ dependencies {
 
   implementation(libs.github)
 
-  implementation(libs.logging)
-  implementation(libs.logback)
-
   runtimeOnly(libs.kotlin.scripting.jsr223)
 
   testImplementation(libs.kotlin.test)
