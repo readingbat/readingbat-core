@@ -32,7 +32,7 @@ allprojects {
   apply(plugin = "com.github.gmazzo.buildconfig")
   apply(plugin = "com.github.ben-manes.versions")
 
-  extra["versionStr"] = "2.1.0"
+  extra["versionStr"] = "2.1.1-SNAPSHOT"
   description = "ReadingBat Core"
   group = "com.github.readingbat"
   version = versionStr
@@ -58,23 +58,30 @@ fun Project.configureKotlin() {
 
   kotlin {
     jvmToolchain(11)
+
+    sourceSets.all {
+      listOf(
+        "kotlin.ExperimentalStdlibApi",
+        "kotlin.concurrent.atomics.ExperimentalAtomicApi",
+        "kotlin.contracts.ExperimentalContracts",
+        "kotlin.time.ExperimentalTime",
+        "kotlinx.coroutines.DelicateCoroutinesApi",
+        "kotlinx.coroutines.ExperimentalCoroutinesApi",
+        "kotlinx.coroutines.InternalCoroutinesApi",
+        "kotlinx.coroutines.ObsoleteCoroutinesApi",
+      ).forEach {
+        languageSettings.optIn(it)
+      }
+    }
+  }
+
+  tasks.named("build") {
+    mustRunAfter("clean")
   }
 
   tasks.withType<KotlinJvmCompile>().configureEach {
     compilerOptions {
       jvmTarget.set(JvmTarget.JVM_11)
-      freeCompilerArgs.addAll(
-        listOf(
-          "-opt-in=kotlin.ExperimentalStdlibApi",
-          "-opt-in=kotlin.concurrent.atomics.ExperimentalAtomicApi",
-          "-opt-in=kotlin.contracts.ExperimentalContracts",
-          "-opt-in=kotlin.time.ExperimentalTime",
-          "-opt-in=kotlinx.coroutines.DelicateCoroutinesApi",
-          "-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi",
-          "-opt-in=kotlinx.coroutines.InternalCoroutinesApi",
-          "-opt-in=kotlinx.coroutines.ObsoleteCoroutinesApi",
-        )
-      )
     }
   }
 }

@@ -12,7 +12,7 @@ application {
 dependencies {
   implementation(libs.serialization)
 
-  implementation(libs.core.utils)
+  api(libs.core.utils)
 
   implementation(libs.ktor.server.utils)
   implementation(libs.ktor.client.utils)
@@ -60,8 +60,6 @@ dependencies {
   implementation(libs.pgjdbc)
   implementation(libs.socket)
 
-  runtimeOnly(libs.postgres)
-
   implementation(libs.gson)
 
   implementation(libs.sendgrid)
@@ -72,6 +70,7 @@ dependencies {
   implementation(libs.github)
 
   runtimeOnly(libs.kotlin.scripting.jsr223)
+  runtimeOnly(libs.postgres)
 
   testImplementation(libs.kotlin.test)
   testImplementation(libs.ktor.server.test.host)
@@ -88,15 +87,11 @@ buildConfig {
 
   buildConfigField("String", "CORE_NAME", "\"${project.name}\"")
   buildConfigField("String", "CORE_VERSION", "\"${project.version}\"")
-  buildConfigField("String", "CORE_RELEASE_DATE", "\"6/28/25\"")
+  buildConfigField("String", "CORE_RELEASE_DATE", "\"6/29/25\"")
   buildConfigField("long", "BUILD_TIME", "${System.currentTimeMillis()}L")
 }
 
 // Include build uberjars in heroku deploy
 tasks.register("stage") {
   dependsOn("uberjar", "build", "clean")
-}
-
-tasks.named("build") {
-  mustRunAfter("clean")
 }

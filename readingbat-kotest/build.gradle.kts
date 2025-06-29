@@ -1,7 +1,5 @@
 description = "readingbat-kotest"
 
-//mainClassName = 'TestMain' // This prevents a gradle error
-
 dependencies {
   implementation(project(":readingbat-core"))
 
