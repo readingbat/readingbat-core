@@ -49,8 +49,6 @@ dependencies {
   implementation(libs.ktor.calllogging)
   implementation(libs.ktor.resources)
 
-//    implementation(libs.khealth)
-
   implementation(libs.hikari)
 
   implementation(libs.exposed.core)
@@ -72,7 +70,7 @@ dependencies {
   runtimeOnly(libs.kotlin.scripting.jsr223)
   runtimeOnly(libs.postgres)
 
-  testImplementation(libs.kotlin.test)
+//  testImplementation(libs.kotlin.test)
   testImplementation(libs.ktor.server.test.host)
 
   testImplementation(libs.kotest.runner.junit5)
