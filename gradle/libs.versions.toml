@@ -27,7 +27,7 @@ prometheus = "0.16.0"
 proxy = "2.3.0"
 sendgrid = "5.0.0-rc.1"
 serialization = "1.9.0"
-utils = "2.4.0"
+utils = "2.4.1-SNAPSHOT"
 
 [libraries]
 # Kotlin
