@@ -156,7 +156,13 @@ object Installs {
       if (EnvVar.FILTER_LOG.getEnv(true))
         filter { call ->
           call.request.path()
-            .let { it != PING_ENDPOINT && !it.startsWithList(excludedEndpoints) && !it.endsWith(".php") }
+            .run {
+              this != PING_ENDPOINT &&
+                !startsWithList(excludedEndpoints) &&
+                !endsWith(".php") &&
+                !endsWith("error.log") &&
+                !endsWith("error.txt")
+            }
         }
 
       format { call ->
