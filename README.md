@@ -223,13 +223,6 @@ ReadingBat Core includes comprehensive monitoring:
 - **User Analytics**: Challenge completion and progress tracking
 - **Database Monitoring**: Connection pool and query performance
 
-### Code Standards
-
-- Follow [Kotlin coding conventions](https://kotlinlang.org/docs/coding-conventions.html)
-- Use kotlinter for code formatting
-- Write tests for new features
-- Update documentation as needed
-
 ## 📚 Related Projects
 
 - **[ReadingBat Template](https://github.com/readingbat/readingbat-template)**: Template for creating custom content
