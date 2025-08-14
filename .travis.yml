@@ -2,8 +2,8 @@ language: java
 
 jdk:
   #- openjdk8
-  #- oraclejdk11
-  - openjdk11
+  #- oraclejdk17
+  - openjdk17
 
 # https://alphahydrae.com/2021/02/how-to-run-postgresql-13-on-travis-ci/
 
