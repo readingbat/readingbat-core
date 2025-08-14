@@ -1,3 +1,6 @@
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+
 description = "readingbat-core"
 
 // These are for the uber target
@@ -80,12 +83,14 @@ dependencies {
   testImplementation(project(":readingbat-kotest"))
 }
 
+val formatter = DateTimeFormatter.ofPattern("MM/dd/yyyy")
+
 buildConfig {
   packageName("com.github.readingbat")
 
   buildConfigField("String", "CORE_NAME", "\"${project.name}\"")
   buildConfigField("String", "CORE_VERSION", "\"${project.version}\"")
-  buildConfigField("String", "CORE_RELEASE_DATE", "\"6/29/25\"")
+  buildConfigField("String", "CORE_RELEASE_DATE", "\"${LocalDate.now().format(formatter)}\"")
   buildConfigField("long", "BUILD_TIME", "${System.currentTimeMillis()}L")
 }
 
