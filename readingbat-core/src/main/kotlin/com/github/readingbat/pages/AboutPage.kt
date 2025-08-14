@@ -67,8 +67,8 @@ internal object AboutPage {
               }
 
               +"""
-              (so much so, that we shamelessly copied its look and feel). However, we observed
-              that students often start using it to write code, prior to being equipped
+              (so much so that we shamelessly copied its look and feel). However, we observed
+              that students often start using it to write code prior to being equipped
               with the skill of reading code. It is difficult to write code without first learning
               how to read and follow code! So we set out to create ReadingBat.com, which attempts
               to make students comfortable reading code challenges and learning code idioms. Once a student
