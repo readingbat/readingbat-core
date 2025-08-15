@@ -31,9 +31,9 @@ dependencies {
 
   implementation(libs.simple.client)
 
-//  runtimeOnly(libs.java.scripting)
-//  runtimeOnly(libs.python.scripting)
-//  runtimeOnly(libs.kotlin.scripting)
+  implementation(libs.java.scripting)
+  runtimeOnly(libs.python.scripting)
+  runtimeOnly(libs.kotlin.scripting)
 
   implementation(libs.css)
 

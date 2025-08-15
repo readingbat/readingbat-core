@@ -54,10 +54,10 @@ exposed-utils = { module = "com.github.pambrose.common-utils:exposed-utils", ver
 prometheus-proxy = { module = "com.github.pambrose:prometheus-proxy", version.ref = "proxy" }
 simple-client = { module = "io.prometheus:simpleclient", version.ref = "prometheus" }
 
-# Script Engined
-#java-scripting = { module = "ch.obermuhlner:java-scriptengine", version.ref = "java" }
-#python-scripting = { module = "org.python:jython-standalone", version.ref = "python" }
-#kotlin-scripting = { module = "org.jetbrains.kotlin:kotlin-scripting-jsr223", version.ref = "kotlin" }
+# Script Engines
+java-scripting = { module = "ch.obermuhlner:java-scriptengine", version.ref = "java" }
+python-scripting = { module = "org.python:jython-standalone", version.ref = "python" }
+kotlin-scripting = { module = "org.jetbrains.kotlin:kotlin-scripting-jsr223", version.ref = "kotlin" }
 
 # CSS
 css = { module = "org.jetbrains.kotlin-wrappers:kotlin-css", version.ref = "css" }
