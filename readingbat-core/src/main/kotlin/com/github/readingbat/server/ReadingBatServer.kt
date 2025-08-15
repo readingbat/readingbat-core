@@ -88,8 +88,8 @@ import kotlin.time.measureTime
   buildTime = BuildConfig.BUILD_TIME,
 )
 object ReadingBatServer {
-  val metrics by lazy { Metrics() }
   internal val logger = KotlinLogging.logger {}
+  val metrics by lazy { Metrics() }
   private const val CALLER_VERSION = "callerVersion"
   private val startTime = TimeSource.Monotonic.markNow()
   internal val serverSessionId = randomId(10)
