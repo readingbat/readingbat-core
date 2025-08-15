@@ -233,7 +233,7 @@ fun Application.module() {
   if (isDbmsEnabled()) {
     ReadingBatServer.dbms
 
-    // Create unknown user if it does not already exist
+    // Create an unknown user if it does not already exist
     if (!userExists(UNKNOWN_USER_ID))
       createUnknownUser(UNKNOWN_USER_ID)
   }
