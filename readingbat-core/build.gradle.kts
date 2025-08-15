@@ -5,11 +5,9 @@ description = "readingbat-core"
 
 // These are for the uber target
 val mainName = "TestMain"
-val appName = "server"
 
-// This is for ./gradlew run
 application {
-  mainClass.set(mainName)
+  mainClass = mainName
 }
 
 dependencies {
@@ -33,7 +31,9 @@ dependencies {
 
   implementation(libs.simple.client)
 
-  implementation(libs.script.engine)
+  runtimeOnly(libs.java.scripting)
+  runtimeOnly(libs.python.scripting)
+  runtimeOnly(libs.kotlin.scripting)
 
   implementation(libs.css)
 

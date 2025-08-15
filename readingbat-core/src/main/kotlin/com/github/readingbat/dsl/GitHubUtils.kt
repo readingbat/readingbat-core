@@ -45,7 +45,7 @@ internal object GitHubUtils {
     path: String,
     metrics: Metrics,
   ): List<String> {
-    logger.info { "In GH org $ownerName/$repoName/$branchName fetching $path" }
+    logger.info { "In GH org [$ownerName]/[$repoName]/[$branchName] fetching $path" }
     val repo: GHRepository = github.getOrganization(ownerName).getRepository(repoName)
     return directoryContents(repo, branchName, path, metrics)
   }

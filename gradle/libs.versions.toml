@@ -14,7 +14,7 @@ flexmark = "0.64.8"
 github-api = "1.324"
 gson = "2.13.1"
 hikari = "7.0.1"
-java-script = "2.0.0"
+java = "2.0.0"
 khealth = "3.0.1"
 kotest = "6.0.0.M16"
 kotest-ktor = "6.0.0.M16"
@@ -25,6 +25,7 @@ pgjdbc = "0.8.9"
 postgres = "42.7.7"
 prometheus = "0.16.0"
 proxy = "2.3.0"
+python = "2.7.4"
 sendgrid = "5.0.0-rc.1"
 serialization = "1.9.0"
 utils = "2.4.1-SNAPSHOT"
@@ -53,8 +54,10 @@ exposed-utils = { module = "com.github.pambrose.common-utils:exposed-utils", ver
 prometheus-proxy = { module = "com.github.pambrose:prometheus-proxy", version.ref = "proxy" }
 simple-client = { module = "io.prometheus:simpleclient", version.ref = "prometheus" }
 
-# Script Engine
-script-engine = { module = "ch.obermuhlner:java-scriptengine", version.ref = "java-script" }
+# Script Engined
+java-scripting = { module = "ch.obermuhlner:java-scriptengine", version.ref = "java" }
+python-scripting = { module = "org.python:jython-standalone", version.ref = "python" }
+kotlin-scripting = { module = "org.jetbrains.kotlin:kotlin-scripting-jsr223", version.ref = "kotlin" }
 
 # CSS
 css = { module = "org.jetbrains.kotlin-wrappers:kotlin-css", version.ref = "css" }
