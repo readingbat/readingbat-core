@@ -157,7 +157,7 @@ object ReadingBatServer {
       .firstOrNull() ?: "None specified"
 
   private fun deriveArgs(args: Array<String>): Array<String> {
-    // Grab config filename from CLI args and then try ENV var
+    // Grab the config filename from CLI args and then try ENV var
     val configFilename =
       args.asSequence()
         .filter { it.startsWith("-config=") }
