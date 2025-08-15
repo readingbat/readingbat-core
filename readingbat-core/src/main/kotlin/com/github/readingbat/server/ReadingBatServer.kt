@@ -74,6 +74,7 @@ import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.exposed.sql.Database
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import javax.script.ScriptEngineManager
 import kotlin.concurrent.atomics.AtomicInt
 import kotlin.concurrent.atomics.AtomicReference
 import kotlin.concurrent.atomics.plusAssign
@@ -222,6 +223,9 @@ internal fun Application.readContentDsl(fileName: String, variableName: String, 
 
 fun Application.module() {
   assignProperties(initProperties().sortedBy { it.propertyName })
+
+  logger.info { "Loaded script engines: ${ScriptEngineManager().engineFactories.map { it.engineName }}" }
+  check(ScriptEngineManager().engineFactories.count() == 4) { "Missing script engines" }
 
   adminUsers.addAll(Property.ADMIN_USERS.configValueOrNull(this)?.getList() ?: emptyList())
 
