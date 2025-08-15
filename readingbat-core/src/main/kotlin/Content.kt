@@ -98,7 +98,7 @@ val dslContent =
         Organization,
         "readingbat",
         "readingbat-python-content",
-        srcPath = "src",
+//        srcPath = "src",
       ).eval(this).python,
     )
 
