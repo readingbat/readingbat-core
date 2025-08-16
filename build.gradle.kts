@@ -21,8 +21,14 @@ val kotlinLib = libs.plugins.kotlin.jvm.get().toString().split(":").first()
 val serializationLib = libs.plugins.kotlin.serialization.get().toString().split(":").first()
 val ktlinterLib = libs.plugins.kotlinter.get().toString().split(":").first()
 
-allprojects {
+// These are for the uber target
+val mainName = "TestMain"
 
+application {
+  mainClass = mainName
+}
+
+allprojects {
   apply(plugin = "application")
   apply(plugin = "java-library")
   apply(plugin = "maven-publish")

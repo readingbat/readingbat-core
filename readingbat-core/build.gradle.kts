@@ -3,13 +3,6 @@ import java.time.format.DateTimeFormatter
 
 description = "readingbat-core"
 
-// These are for the uber target
-val mainName = "TestMain"
-
-application {
-  mainClass = mainName
-}
-
 dependencies {
   implementation(libs.serialization)
 

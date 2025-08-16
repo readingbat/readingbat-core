@@ -176,13 +176,13 @@ class ReadingBatContent {
     measureTimedValue {
       val cnt = AtomicInt(0)
       runBlocking {
-        findLanguage(languageType).challengeGroups
-          .forEach { challengeGroup ->
-            challengeGroup.challenges
-              .forEach { challenge ->
-                if (useWebApi) {
-                  HttpClient(CIO) { expectSuccess = false }
-                    .use { httpClient ->
+        HttpClient(CIO) { expectSuccess = false }
+          .use { httpClient ->
+            findLanguage(languageType).challengeGroups
+              .forEach { challengeGroup ->
+                challengeGroup.challenges
+                  .forEach { challenge ->
+                    if (useWebApi) {
                       withHttpClient(httpClient) {
                         val url = pathOf(prefix, CONTENT, challenge.path)
                         logger.info { "Fetching: $url" }
@@ -192,13 +192,13 @@ class ReadingBatContent {
                           cnt += 1
                         }
                       }
+                    } else {
+                      logger.info { "Loading: ${challenge.path}" }
+                      log("Loading: ${challenge.path}")
+                      challenge.functionInfo()
+                      cnt += 1
                     }
-                } else {
-                  logger.info { "Loading: ${challenge.path}" }
-                  log("Loading: ${challenge.path}")
-                  challenge.functionInfo()
-                  cnt += 1
-                }
+                  }
               }
           }
       }
