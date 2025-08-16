@@ -55,6 +55,7 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.server.plugins.origin
 import io.ktor.server.request.receiveParameters
 import io.ktor.server.routing.RoutingContext
+import kotlinx.html.a
 import kotlinx.html.h2
 import kotlinx.html.p
 
@@ -103,11 +104,14 @@ internal object PasswordResetPost {
                 email {
                   h2 { +"ReadingBat Password Reset" }
                   p { +"This is a password reset message for the ReadingBat.com account for '$email'." }
-                  p {
-                    val url = "$prefix$PASSWORD_RESET_ENDPOINT?$RESET_ID_PARAM=$newResetId"
-                    +"Go to this URL to set a new password: $url"
-                  }
+                  p { +"Please click the link below to reset your password." }
+                  p { a("$prefix$PASSWORD_RESET_ENDPOINT?$RESET_ID_PARAM=$newResetId") { +"Reset password" } }
                   p { +"If you did not request to reset your password, please ignore this message." }
+//                  p {
+//                    val url = "$prefix$PASSWORD_RESET_ENDPOINT?$RESET_ID_PARAM=$newResetId"
+//                    +"Go to this URL to set a new password: $url"
+//                  }
+
                 }
             )
           }.onFailure { e ->
