@@ -37,6 +37,7 @@ import com.github.readingbat.common.Message
 import com.github.readingbat.common.Message.Companion.EMPTY_MESSAGE
 import com.github.readingbat.common.Property
 import com.github.readingbat.common.Property.ANALYTICS_ID
+import com.github.readingbat.common.Property.RECAPTCHA_SITE_KEY
 import com.github.readingbat.common.User
 import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.dsl.LanguageType.Companion.languageTypeList
@@ -45,6 +46,7 @@ import com.github.readingbat.dsl.LanguageType.Kotlin
 import com.github.readingbat.dsl.LanguageType.Python
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.isProduction
+import com.github.readingbat.dsl.isRecaptchaEnabled
 import com.github.readingbat.pages.HelpAndLogin.helpAndLogin
 import io.ktor.http.ContentType.Text.CSS
 import io.ktor.server.routing.Route
@@ -53,6 +55,7 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import kotlinx.html.BODY
 import kotlinx.html.Entities.nbsp
+import kotlinx.html.FlowContent
 import kotlinx.html.FlowOrInteractiveOrPhrasingContent
 import kotlinx.html.FormMethod
 import kotlinx.html.HEAD
@@ -127,6 +130,18 @@ internal object PageUtils {
           gtag('config', '$analyticsId');
           """,
         )
+      }
+    }
+
+    // Load reCAPTCHA script if enabled
+    if (isRecaptchaEnabled()) {
+      val siteKey = RECAPTCHA_SITE_KEY.getPropertyOrNull(false)
+      if (!siteKey.isNullOrBlank()) {
+        script {
+          src = "https://www.google.com/recaptcha/api.js"
+          async = true
+          defer = true
+        }
       }
     }
   }
@@ -330,4 +345,15 @@ internal object PageUtils {
   }
 
   fun encodeUriElems(vararg elems: Any) = elems.joinToString("+'/'+") { "encodeURIComponent('$it')" }
+
+  fun FlowContent.recaptchaWidget() {
+    if (isRecaptchaEnabled()) {
+      val siteKey = RECAPTCHA_SITE_KEY.getPropertyOrNull(errorOnNonInit = false)
+      if (!siteKey.isNullOrBlank()) {
+        div(classes = "g-recaptcha") {
+          attributes["data-sitekey"] = siteKey
+        }
+      }
+    }
+  }
 }

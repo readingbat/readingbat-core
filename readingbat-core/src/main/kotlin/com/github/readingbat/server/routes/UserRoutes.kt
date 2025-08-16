@@ -85,6 +85,7 @@ import com.github.readingbat.posts.TeacherPrefsPost.enableStudentMode
 import com.github.readingbat.posts.TeacherPrefsPost.enableTeacherMode
 import com.github.readingbat.posts.TeacherPrefsPost.teacherPrefs
 import com.github.readingbat.posts.UserPrefsPost.userPrefs
+import com.github.readingbat.server.RecaptchaService
 import com.github.readingbat.server.ResetId
 import com.github.readingbat.server.ServerUtils.authenticateAdminUser
 import com.github.readingbat.server.ServerUtils.defaultLanguageTab
@@ -96,44 +97,70 @@ import com.github.readingbat.server.ServerUtils.respondWithSuspendingRedirect
 import com.github.readingbat.server.routes.ResourceContent.getResourceAsText
 import io.ktor.http.ContentType
 import io.ktor.http.ContentType.Text.CSS
-import io.ktor.server.application.ApplicationCallPipeline
-import io.ktor.server.routing.Route
-import io.ktor.server.routing.RouteSelector
-import io.ktor.server.routing.RouteSelectorEvaluation
+import io.ktor.http.HttpStatusCode
+import io.ktor.server.plugins.origin
+import io.ktor.server.request.receiveParameters
+import io.ktor.server.response.respondText
 import io.ktor.server.routing.Routing
-import io.ktor.server.routing.RoutingResolveContext
 import io.ktor.server.routing.get
-import io.ktor.server.routing.intercept
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
 import io.ktor.server.sessions.clear
 import io.ktor.server.sessions.sessions
-import kotlinx.coroutines.withTimeout
-import kotlin.time.Duration
 
-@Suppress("unused")
-fun Route.routeTimeout(time: Duration, callback: Route.() -> Unit): Route {
-  // With createChild, we create a child node for this received Route
-  val routeWithTimeout =
-    this.createChild(
-      object : RouteSelector() {
-        override suspend fun evaluate(context: RoutingResolveContext, segmentIndex: Int) =
-          RouteSelectorEvaluation.Constant
-      },
-    )
-
-  // Intercepts calls from this route at the features step
-  routeWithTimeout.intercept(ApplicationCallPipeline.Plugins) {
-    withTimeout(time.inWholeMilliseconds) {
-      proceed()
-    }
+suspend fun validateRecaptchaInRoute(call: io.ktor.server.application.ApplicationCall): Boolean {
+  if (!RecaptchaService.isRecaptchaEnabled()) {
+    return true
   }
 
-  // Configure this route with the block provided by the user
-  callback(routeWithTimeout)
+  val parameters = call.receiveParameters()
+  val recaptchaResponse = parameters["g-recaptcha-response"]
 
-  return routeWithTimeout
+  if (recaptchaResponse.isNullOrBlank()) {
+    call.respondText(
+      "reCAPTCHA verification required",
+      status = HttpStatusCode.BadRequest,
+    )
+    return false
+  }
+
+  val remoteIp = call.request.origin.remoteHost
+  val isValid = RecaptchaService.verifyRecaptcha(recaptchaResponse, remoteIp)
+
+  if (!isValid) {
+    call.respondText(
+      "reCAPTCHA verification failed",
+      status = HttpStatusCode.BadRequest,
+    )
+    return false
+  }
+
+  return true
 }
+
+// @Suppress("unused")
+// fun Route.routeTimeout(time: Duration, callback: Route.() -> Unit): Route {
+//  // With createChild, we create a child node for this received Route
+//  val routeWithTimeout =
+//    this.createChild(
+//      object : RouteSelector() {
+//        override suspend fun evaluate(context: RoutingResolveContext, segmentIndex: Int) =
+//          RouteSelectorEvaluation.Constant
+//      },
+//    )
+//
+//  // Intercepts calls from this route at the features step
+//  routeWithTimeout.intercept(ApplicationCallPipeline.Plugins) {
+//    withTimeout(time.inWholeMilliseconds) {
+//      proceed()
+//    }
+//  }
+//
+//  // Configure this route with the block provided by the user
+//  callback(routeWithTimeout)
+//
+//  return routeWithTimeout
+// }
 
 fun Routing.userRoutes(metrics: Metrics, contentSrc: () -> ReadingBatContent) {
   route(ROOT) {
@@ -201,7 +228,9 @@ fun Routing.userRoutes(metrics: Metrics, contentSrc: () -> ReadingBatContent) {
   }
 
   post(CREATE_ACCOUNT_ENDPOINT) {
-    respondWithSuspendingRedirect { createAccount() }
+    if (validateRecaptchaInRoute(call)) {
+      respondWithSuspendingRedirect { createAccount() }
+    }
   }
 
   get(ADMIN_PREFS_ENDPOINT) {

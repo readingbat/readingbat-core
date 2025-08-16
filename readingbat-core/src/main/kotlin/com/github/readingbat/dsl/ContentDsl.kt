@@ -34,6 +34,7 @@ import com.github.readingbat.common.Property.DBMS_ENABLED
 import com.github.readingbat.common.Property.IS_PRODUCTION
 import com.github.readingbat.common.Property.IS_TESTING
 import com.github.readingbat.common.Property.MULTI_SERVER_ENABLED
+import com.github.readingbat.common.Property.RECAPTCHA_ENABLED
 import com.github.readingbat.common.Property.SAVE_REQUESTS_ENABLED
 import com.github.readingbat.dsl.ContentCaches.contentDslCache
 import com.github.readingbat.dsl.ContentDsl.logger
@@ -183,6 +184,8 @@ private suspend fun evalDsl(code: String, sourceName: String) =
   }.onFailure { _ ->
     logger.info { "Error in ${sourceName.removePrefix(GH_PREFIX)}:\n$code" }
   }.getOrThrow()
+
+fun isRecaptchaEnabled() = RECAPTCHA_ENABLED.getProperty(false, false)
 
 @Suppress("unused")
 object ContentDsl {

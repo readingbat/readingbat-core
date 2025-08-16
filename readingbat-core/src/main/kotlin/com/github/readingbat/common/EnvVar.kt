@@ -42,6 +42,9 @@ enum class EnvVar(val maskFunc: EnvVar.() -> String = { getEnv(UNASSIGNED) }) {
   XFORWARDED_ENABLED,
   RATE_LIMIT_COUNT,
   RATE_LIMIT_SECS,
+  RECAPTCHA_ENABLED,
+  RECAPTCHA_SITE_KEY,
+  RECAPTCHA_SECRET_KEY({ getEnvOrNull()?.obfuscate(4) ?: UNASSIGNED }),
   ;
 
   fun isDefined(): Boolean = getEnvOrNull().isNotNull()

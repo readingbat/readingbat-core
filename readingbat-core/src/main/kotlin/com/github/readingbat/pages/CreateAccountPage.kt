@@ -34,6 +34,7 @@ import com.github.readingbat.pages.PageUtils.headDefault
 import com.github.readingbat.pages.PageUtils.hideShowButton
 import com.github.readingbat.pages.PageUtils.loadPingdomScript
 import com.github.readingbat.pages.PageUtils.privacyStatement
+import com.github.readingbat.pages.PageUtils.recaptchaWidget
 import com.github.readingbat.server.Email
 import com.github.readingbat.server.Email.Companion.EMPTY_EMAIL
 import com.github.readingbat.server.FullName
@@ -112,7 +113,7 @@ internal object CreateAccountPage {
                 tr {
                   td {
                     style = labelWidth
-                    label { +"Name" }
+                    label { +"Name:" }
                   }
                   td {
                     textInput {
@@ -127,7 +128,7 @@ internal object CreateAccountPage {
                 tr {
                   td {
                     style = labelWidth
-                    label { +"Email (used as account id)" }
+                    label { +"Email (used as account id):" }
                   }
                   td {
                     textInput {
@@ -142,7 +143,7 @@ internal object CreateAccountPage {
                 tr {
                   td {
                     style = labelWidth
-                    label { +"Password" }
+                    label { +"Password:" }
                   }
                   td {
                     passwordInput {
@@ -158,7 +159,7 @@ internal object CreateAccountPage {
                 tr {
                   td {
                     style = labelWidth
-                    label { +"Confirm Password" }
+                    label { +"Confirm Password:" }
                   }
                   td {
                     passwordInput {
@@ -177,10 +178,18 @@ internal object CreateAccountPage {
                   value = returnPath
                 }
                 tr {
+                  td {}
+                  td {
+                    style = "padding-top:10"
+                    recaptchaWidget()
+                  }
+                }
+                tr {
                   td { }
                   td {
+                    style = "padding-top:10"
                     submitInput {
-                      style = "font-size:100%; height:35; width:125"
+                      style = "font-size:90%; height:35; width:130"
                       id = CREATE_BUTTON
                       value = "Create Account"
                     }

@@ -38,6 +38,7 @@ import com.github.readingbat.pages.PageUtils.headDefault
 import com.github.readingbat.pages.PageUtils.hideShowButton
 import com.github.readingbat.pages.PageUtils.loadPingdomScript
 import com.github.readingbat.pages.PageUtils.privacyStatement
+import com.github.readingbat.pages.PageUtils.recaptchaWidget
 import com.github.readingbat.posts.PasswordResetPost.ResetPasswordException
 import com.github.readingbat.server.Email
 import com.github.readingbat.server.PasswordResetsTable
@@ -138,13 +139,20 @@ internal object PasswordResetPage {
                 tr {
                   td {
                     style = LABEL_WIDTH
-                    label { +"Email (used as account id)" }
+                    label { +"Email (used as account id):" }
                   }
                   td {
                     textInput {
                       name = EMAIL_PARAM
-                      size = "50"
+                      size = "40"
                     }
+                  }
+                }
+                tr {
+                  td {}
+                  td {
+                    style = "padding-top:10"
+                    recaptchaWidget()
                   }
                 }
                 tr {
@@ -152,13 +160,14 @@ internal object PasswordResetPage {
                   td {
                     style = "padding-top:10"
                     submitInput {
-                      style = "font-size:25px; height:35; width:  155"
+                      style = "font-size:90%;; height:35; width:  155"
                       value = "Send Password Reset"
                     }
                   }
                 }
               }
             }
+
             p {
               +"""
                 This will send an email with a link that will allow you to set your password.

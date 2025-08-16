@@ -84,7 +84,6 @@ import kotlinx.html.submitInput
 import kotlinx.html.table
 import kotlinx.html.td
 import kotlinx.html.tr
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
 internal object ChallengeGroupPage {

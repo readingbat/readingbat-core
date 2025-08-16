@@ -349,6 +349,28 @@ sealed class Property(
       initFunc = { setPropertyFromConfig(it, "30") },
     )
 
+  object RECAPTCHA_ENABLED :
+    Property(
+      propertyValue = "$READINGBAT.$SITE.recaptchaEnabled",
+      initFunc = {
+        val agentEnabled = EnvVar.RECAPTCHA_ENABLED.getEnv(configValue(it, default = "false").toBoolean())
+        setProperty(agentEnabled.toString())
+      },
+    )
+
+  object RECAPTCHA_SITE_KEY :
+    Property(
+      propertyValue = "$READINGBAT.$SITE.recaptchaSiteKey",
+      initFunc = { setProperty(EnvVar.RECAPTCHA_SITE_KEY.getEnv(configValue(it, ""))) },
+    )
+
+  object RECAPTCHA_SECRET_KEY :
+    Property(
+      propertyValue = "$READINGBAT.$SITE.recaptchaSecretKey",
+      initFunc = { setProperty(EnvVar.RECAPTCHA_SECRET_KEY.getEnv(configValue(it, ""))) },
+      maskFunc = { getPropertyOrNull(false)?.obfuscate(4) ?: UNASSIGNED },
+    )
+
   companion object {
     private val logger = KotlinLogging.logger {}
 
@@ -383,6 +405,9 @@ sealed class Property(
         DBMS_PASSWORD,
         DBMS_MAX_POOL_SIZE,
         DBMS_MAX_LIFETIME_MINS,
+        RECAPTCHA_ENABLED,
+        RECAPTCHA_SITE_KEY,
+        RECAPTCHA_SECRET_KEY,
       )
   }
 }
