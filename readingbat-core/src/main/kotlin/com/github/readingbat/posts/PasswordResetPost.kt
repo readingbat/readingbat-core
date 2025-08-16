@@ -20,7 +20,7 @@ package com.github.readingbat.posts
 import com.github.pambrose.common.util.encode
 import com.github.readingbat.common.Constants.INVALID_RESET_ID
 import com.github.readingbat.common.Constants.MSG
-import com.github.readingbat.common.Emailer.sendEmail
+import com.github.readingbat.common.EmailUtils.email
 import com.github.readingbat.common.Endpoints.PASSWORD_RESET_ENDPOINT
 import com.github.readingbat.common.FormFields.CONFIRM_PASSWORD_PARAM
 import com.github.readingbat.common.FormFields.EMAIL_PARAM
@@ -28,7 +28,9 @@ import com.github.readingbat.common.FormFields.NEW_PASSWORD_PARAM
 import com.github.readingbat.common.FormFields.RESET_ID_PARAM
 import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.Message
-import com.github.readingbat.common.Property.SENDGRID_PREFIX
+import com.github.readingbat.common.Property
+import com.github.readingbat.common.ResendUtils.envResendSender
+import com.github.readingbat.common.ResendUtils.sendEmail
 import com.github.readingbat.common.User.Companion.isNotRegisteredEmail
 import com.github.readingbat.common.User.Companion.queryUserByEmail
 import com.github.readingbat.common.isNotValidUser
@@ -53,6 +55,8 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.server.plugins.origin
 import io.ktor.server.request.receiveParameters
 import io.ktor.server.routing.RoutingContext
+import kotlinx.html.h2
+import kotlinx.html.p
 
 internal object PasswordResetPost {
   private val logger = KotlinLogging.logger {}
@@ -90,19 +94,21 @@ internal object PasswordResetPost {
           user2.savePasswordResetId(email, newResetId)
 
           runCatching {
-            val sg = SENDGRID_PREFIX.getProperty("")
+            val prefix = Property.EMAIL_PREFIX.getProperty("")
             sendEmail(
-              to = email,
-              from = Email("reset@readingbat.com"),
+              from = envResendSender,
+              to = listOf(email),
               subject = "ReadingBat password reset",
-              msg =
-                Message(
-                  """
-                |This is a password reset message for the ReadingBat.com account for '$email'
-                |Go to this URL to set a new password: $sg$PASSWORD_RESET_ENDPOINT?$RESET_ID_PARAM=$newResetId
-                |If you did not request to reset your password, please ignore this message.
-                """.trimMargin(),
-                ),
+              html =
+                email {
+                  h2 { +"ReadingBat Password Reset" }
+                  p { +"This is a password reset message for the ReadingBat.com account for '$email'." }
+                  p {
+                    val url = "$prefix$PASSWORD_RESET_ENDPOINT?$RESET_ID_PARAM=$newResetId"
+                    +"Go to this URL to set a new password: $url"
+                  }
+                  p { +"If you did not request to reset your password, please ignore this message." }
+                }
             )
           }.onFailure { e ->
             logger.info(e) { e.message }

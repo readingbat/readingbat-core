@@ -50,6 +50,7 @@ object Constants {
   const val ADMIN_FUNC = "loadChallenge"
   const val LIKE_DISLIKE_FUNC = "likeDislike"
   const val NO_TRACK_HEADER = "NO_TRACK"
+  const val EMPTY = "empty"
 
   // Do not change this value without adjusting values in DBMS
   const val UNKNOWN_USER_ID = "unknown-user"
@@ -137,6 +138,8 @@ object Endpoints {
 
   // This is a dynamic page
   const val CSS_ENDPOINT = "/$STATIC/styles.css"
+
+  const val EMAIL_CSS_FILE_PATH = "css/email.css"
 
   fun classSummaryEndpoint(classCode: ClassCode, languageName: LanguageName, groupName: GroupName) =
     "${classSummaryEndpoint(classCode)}&$LANG_TYPE_QP=$languageName&$GROUP_NAME_QP=$groupName"

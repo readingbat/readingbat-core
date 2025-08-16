@@ -222,7 +222,7 @@ object Installs {
           }
 
           is IllegalStateException -> {
-            logger.info { "IllegalStateException caught: ${cause.message}" }
+            logger.info(cause) { "IllegalStateException caught: ${cause.message}" }
             call.respondWith { errorPage() }
           }
 

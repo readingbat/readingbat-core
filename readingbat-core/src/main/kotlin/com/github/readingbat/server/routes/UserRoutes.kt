@@ -98,6 +98,7 @@ import com.github.readingbat.server.routes.ResourceContent.getResourceAsText
 import io.ktor.http.ContentType
 import io.ktor.http.ContentType.Text.CSS
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.Parameters
 import io.ktor.server.plugins.origin
 import io.ktor.server.request.receiveParameters
 import io.ktor.server.response.respondText
@@ -108,13 +109,13 @@ import io.ktor.server.routing.route
 import io.ktor.server.sessions.clear
 import io.ktor.server.sessions.sessions
 
-suspend fun validateRecaptchaInRoute(call: io.ktor.server.application.ApplicationCall): Boolean {
+suspend fun validateRecaptchaInRoute(call: io.ktor.server.application.ApplicationCall, params: Parameters): Boolean {
   if (!RecaptchaService.isRecaptchaEnabled()) {
     return true
   }
 
-  val parameters = call.receiveParameters()
-  val recaptchaResponse = parameters["g-recaptcha-response"]
+//  val params = call.receiveParameters()
+  val recaptchaResponse = params["g-recaptcha-response"]
 
   if (recaptchaResponse.isNullOrBlank()) {
     call.respondText(
@@ -228,8 +229,9 @@ fun Routing.userRoutes(metrics: Metrics, contentSrc: () -> ReadingBatContent) {
   }
 
   post(CREATE_ACCOUNT_ENDPOINT) {
-    if (validateRecaptchaInRoute(call)) {
-      respondWithSuspendingRedirect { createAccount() }
+    val params = call.receiveParameters()
+    if (validateRecaptchaInRoute(call, params)) {
+      respondWithSuspendingRedirect { createAccount(params) }
     }
   }
 

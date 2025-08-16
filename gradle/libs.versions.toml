@@ -26,7 +26,7 @@ postgres = "42.7.7"
 prometheus = "0.16.0"
 proxy = "2.3.0"
 python = "2.7.4"
-sendgrid = "5.0.0-rc.1"
+resend = "4.5.0"
 serialization = "1.9.0"
 utils = "2.4.1"
 
@@ -94,7 +94,7 @@ socket = { module = "com.google.cloud.sql:postgres-socket-factory", version.ref 
 
 # Other
 gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
-sendgrid = { module = "com.sendgrid:sendgrid-java", version.ref = "sendgrid" }
+resend = { group = "com.resend", name = "resend-java", version.ref = "resend" }
 commons = { module = "org.apache.commons:commons-text", version.ref = "commons" }
 flexmark = { module = "com.vladsch.flexmark:flexmark", version.ref = "flexmark" }
 github = { module = "org.kohsuke:github-api", version.ref = "github-api" }

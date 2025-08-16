@@ -43,7 +43,7 @@ import com.google.common.util.concurrent.RateLimiter
 import com.pambrose.common.exposed.get
 import com.pambrose.common.exposed.readonlyTx
 import io.github.oshai.kotlinlogging.KotlinLogging
-import io.ktor.server.request.receiveParameters
+import io.ktor.http.Parameters
 import io.ktor.server.routing.RoutingContext
 import io.ktor.server.sessions.sessions
 import io.ktor.server.sessions.set
@@ -70,8 +70,7 @@ internal object CreateAccountPost {
       else -> EMPTY_MESSAGE
     }
 
-  suspend fun RoutingContext.createAccount(): String {
-    val params = call.receiveParameters()
+  fun RoutingContext.createAccount(params: Parameters): String {
     val fullName = params.getFullName(FULLNAME_PARAM)
     val email = params.getEmail(EMAIL_PARAM)
     val password = params.getPassword(PASSWORD_PARAM)

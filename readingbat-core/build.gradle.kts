@@ -58,7 +58,7 @@ dependencies {
 
   implementation(libs.gson)
 
-  implementation(libs.sendgrid)
+  implementation(libs.resend)
 
   implementation(libs.commons)
   implementation(libs.flexmark)

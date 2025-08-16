@@ -169,10 +169,23 @@ sealed class Property(
   object REDIRECT_HOSTNAME :
     Property(propertyValue = "$READINGBAT.$SITE.redirectHostname")
 
-  object SENDGRID_PREFIX :
+  object EMAIL_PREFIX :
     Property(
       propertyValue = "$READINGBAT.$SITE.sendGridPrefix",
-      initFunc = { setProperty(EnvVar.SENDGRID_PREFIX.getEnv(configValue(it, "https://www.readingbat.com"))) },
+      initFunc = { setProperty(EnvVar.EMAIL_PREFIX.getEnv(configValue(it, "https://www.readingbat.com"))) },
+    )
+
+  object RESEND_API_KEY :
+    Property(
+      propertyValue = "$READINGBAT.$SITE.resendApiKey",
+      initFunc = { setProperty(EnvVar.RESEND_API_KEY.getEnv(configValue(it, ""))) },
+      maskFunc = { getPropertyOrNull(false)?.obfuscate(4) ?: UNASSIGNED },
+    )
+
+  object RESEND_SENDER_EMAIL :
+    Property(
+      propertyValue = "$READINGBAT.$SITE.resendSenderEmail",
+      initFunc = { setProperty(EnvVar.RESEND_SENDER_EMAIL.getEnv(configValue(it, ""))) },
     )
 
   object FORWARDED_ENABLED :
@@ -379,7 +392,9 @@ sealed class Property(
         DSL_FILE_NAME,
         DSL_VARIABLE_NAME,
         PROXY_HOSTNAME,
-        SENDGRID_PREFIX,
+        EMAIL_PREFIX,
+        RESEND_API_KEY,
+        RESEND_SENDER_EMAIL,
         ANALYTICS_ID,
         KTOR_PORT,
         KTOR_WATCH,
