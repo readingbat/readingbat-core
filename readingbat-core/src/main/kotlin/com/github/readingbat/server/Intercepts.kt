@@ -56,9 +56,6 @@ import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.update
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.collections.component1
-import kotlin.collections.component2
-import kotlin.collections.set
 import kotlin.concurrent.timer
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
@@ -95,8 +92,8 @@ internal fun Application.intercepts() {
     // Phase for tracing calls, useful for logging, metrics, error handling and so on
   }
 
+  // Phase for features. Most features should intercept this phase
   intercept(Plugins) {
-    // Phase for features. Most features should intercept this phase
     if (!isStaticCall())
       runCatching {
         val browserSession = call.browserSession
