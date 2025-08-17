@@ -53,6 +53,7 @@ import com.google.common.util.concurrent.RateLimiter
 import com.pambrose.common.exposed.get
 import com.pambrose.common.exposed.readonlyTx
 import io.github.oshai.kotlinlogging.KotlinLogging
+import io.ktor.http.Parameters
 import io.ktor.server.plugins.origin
 import io.ktor.server.request.receiveParameters
 import io.ktor.server.routing.RoutingContext
@@ -66,8 +67,8 @@ internal object PasswordResetPost {
   private val unableToSend = Message("Unable to send password reset email -- missing email address", true)
   private val resend = ResendService(envResendApiKey)
 
-  suspend fun RoutingContext.sendPasswordReset(): String {
-    val email = call.receiveParameters().getEmail(EMAIL_PARAM)
+  fun RoutingContext.sendPasswordReset(params: Parameters): String {
+    val email = params.getEmail(EMAIL_PARAM)
     val remoteStr = call.request.origin.remoteHost
     logger.info { "Password change request for $email - $remoteStr" }
     val user = queryUserByEmail(email)

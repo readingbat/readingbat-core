@@ -302,7 +302,10 @@ fun Routing.userRoutes(metrics: Metrics, contentSrc: () -> ReadingBatContent) {
   }
 
   post(PASSWORD_RESET_ENDPOINT) {
-    respondWithSuspendingRedirect { sendPasswordReset() }
+    val params = call.receiveParameters()
+    if (validateRecaptchaInRoute(call, params)) {
+      respondWithSuspendingRedirect { sendPasswordReset(params) }
+    }
   }
 
   // RESET_ID is passed here when user clicks on email URL
