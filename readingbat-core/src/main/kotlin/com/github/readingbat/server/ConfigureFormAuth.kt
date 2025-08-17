@@ -19,6 +19,7 @@
 
 package com.github.readingbat.server
 
+import com.github.pambrose.common.email.Email
 import com.github.pambrose.common.util.isNotNull
 import com.github.pambrose.common.util.isNull
 import com.github.pambrose.common.util.sha256

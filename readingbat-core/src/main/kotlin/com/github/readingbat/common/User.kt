@@ -17,6 +17,9 @@
 
 package com.github.readingbat.common
 
+import com.github.pambrose.common.email.Email
+import com.github.pambrose.common.email.Email.Companion.EMPTY_EMAIL
+import com.github.pambrose.common.email.Email.Companion.UNKNOWN_EMAIL
 import com.github.pambrose.common.util.isNotNull
 import com.github.pambrose.common.util.isNull
 import com.github.pambrose.common.util.maxLength
@@ -45,9 +48,6 @@ import com.github.readingbat.posts.LikeDislikeInfo
 import com.github.readingbat.server.BrowserSessionsTable
 import com.github.readingbat.server.ChallengeName
 import com.github.readingbat.server.ClassesTable
-import com.github.readingbat.server.Email
-import com.github.readingbat.server.Email.Companion.EMPTY_EMAIL
-import com.github.readingbat.server.Email.Companion.UNKNOWN_EMAIL
 import com.github.readingbat.server.EnrolleesTable
 import com.github.readingbat.server.FullName
 import com.github.readingbat.server.FullName.Companion.EMPTY_FULLNAME

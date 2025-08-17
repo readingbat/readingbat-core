@@ -17,6 +17,7 @@
 
 package com.github.readingbat.pages
 
+import com.github.pambrose.common.email.Email
 import com.github.readingbat.common.Constants.LABEL_WIDTH
 import com.github.readingbat.common.CssNames.INDENT_1EM
 import com.github.readingbat.common.Endpoints.PASSWORD_CHANGE_ENDPOINT
@@ -40,7 +41,6 @@ import com.github.readingbat.pages.PageUtils.loadPingdomScript
 import com.github.readingbat.pages.PageUtils.privacyStatement
 import com.github.readingbat.pages.PageUtils.recaptchaWidget
 import com.github.readingbat.posts.PasswordResetPost.ResetPasswordException
-import com.github.readingbat.server.Email
 import com.github.readingbat.server.PasswordResetsTable
 import com.github.readingbat.server.ResetId
 import com.github.readingbat.server.ServerUtils.queryParam

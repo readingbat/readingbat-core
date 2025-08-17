@@ -17,60 +17,7 @@
 
 package com.github.readingbat.common
 
-import com.github.readingbat.common.Endpoints.EMAIL_CSS_FILE_PATH
-import kotlinx.html.BODY
-import kotlinx.html.FlowOrMetaDataContent
-import kotlinx.html.HTML
-import kotlinx.html.body
-import kotlinx.html.head
-import kotlinx.html.html
-import kotlinx.html.meta
-import kotlinx.html.stream.createHTML
-import kotlinx.html.style
-import kotlinx.html.unsafe
-
 object EmailUtils {
-  fun readResourceFile(filename: String): String {
-    val classLoader = this::class.java.classLoader
-    return classLoader.getResource(filename)?.readText()
-      ?: throw IllegalArgumentException("Invalid file name: $filename")
-  }
-
-  fun email(block: BODY.() -> Unit) =
-    createHTML()
-      .html {
-        emailHead()
-        body {
-          block()
-        }
-      }
-
-  fun HTML.emailHead() {
-    head {
-      embedCss()
-      setBackground()
-    }
-  }
-
-  fun FlowOrMetaDataContent.embedCss() {
-    style {
-      unsafe {
-        raw(readResourceFile(EMAIL_CSS_FILE_PATH))
-      }
-    }
-  }
-
-  fun FlowOrMetaDataContent.setBackground(color: String = "light") {
-    meta {
-      name = "color-scheme"
-      content = color
-    }
-    meta {
-      name = "supported-color-schemes"
-      content = color
-    }
-  }
-
 //  fun sendVerificationEmail(
 //    uuid: Uuid,
 //    recipient: Email,

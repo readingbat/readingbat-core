@@ -17,6 +17,7 @@
 
 package com.github.readingbat.server
 
+import com.github.pambrose.common.email.Email.Companion.UNKNOWN_EMAIL
 import com.github.pambrose.common.features.HerokuHttpsRedirect
 import com.github.pambrose.common.response.respondWith
 import com.github.pambrose.common.util.simpleClassName
@@ -37,7 +38,6 @@ import com.github.readingbat.pages.NotFoundPage.notFoundPage
 import com.github.readingbat.server.ConfigureCookies.configureAuthCookie
 import com.github.readingbat.server.ConfigureCookies.configureSessionIdCookie
 import com.github.readingbat.server.ConfigureFormAuth.configureFormAuth
-import com.github.readingbat.server.Email.Companion.UNKNOWN_EMAIL
 import com.github.readingbat.server.ReadingBatServer.serverSessionId
 import com.github.readingbat.server.ServerUtils.fetchEmailFromCache
 import io.github.oshai.kotlinlogging.KotlinLogging

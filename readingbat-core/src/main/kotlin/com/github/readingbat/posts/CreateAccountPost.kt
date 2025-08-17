@@ -17,6 +17,8 @@
 
 package com.github.readingbat.posts
 
+import com.github.pambrose.common.email.Email
+import com.github.pambrose.common.email.Email.Companion.getEmail
 import com.github.pambrose.common.util.encode
 import com.github.readingbat.common.Constants.MSG
 import com.github.readingbat.common.FormFields.CONFIRM_PASSWORD_PARAM
@@ -30,8 +32,6 @@ import com.github.readingbat.common.User.Companion.createUser
 import com.github.readingbat.common.UserPrincipal
 import com.github.readingbat.common.browserSession
 import com.github.readingbat.pages.CreateAccountPage.createAccountPage
-import com.github.readingbat.server.Email
-import com.github.readingbat.server.Email.Companion.getEmail
 import com.github.readingbat.server.FullName
 import com.github.readingbat.server.FullName.Companion.getFullName
 import com.github.readingbat.server.Password

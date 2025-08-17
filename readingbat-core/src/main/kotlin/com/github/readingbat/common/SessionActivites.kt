@@ -17,9 +17,9 @@
 
 package com.github.readingbat.common
 
+import com.github.pambrose.common.email.Email
 import com.github.readingbat.dsl.isDbmsEnabled
 import com.github.readingbat.server.BrowserSessionsTable
-import com.github.readingbat.server.Email
 import com.github.readingbat.server.FullName
 import com.github.readingbat.server.GeoInfosTable
 import com.github.readingbat.server.ServerRequestsTable

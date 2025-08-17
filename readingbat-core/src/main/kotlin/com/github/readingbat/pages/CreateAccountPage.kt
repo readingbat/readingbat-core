@@ -17,6 +17,8 @@
 
 package com.github.readingbat.pages
 
+import com.github.pambrose.common.email.Email
+import com.github.pambrose.common.email.Email.Companion.EMPTY_EMAIL
 import com.github.readingbat.common.CssNames.INDENT_1EM
 import com.github.readingbat.common.Endpoints.CREATE_ACCOUNT_ENDPOINT
 import com.github.readingbat.common.FormFields.CONFIRM_PASSWORD_PARAM
@@ -35,8 +37,6 @@ import com.github.readingbat.pages.PageUtils.hideShowButton
 import com.github.readingbat.pages.PageUtils.loadPingdomScript
 import com.github.readingbat.pages.PageUtils.privacyStatement
 import com.github.readingbat.pages.PageUtils.recaptchaWidget
-import com.github.readingbat.server.Email
-import com.github.readingbat.server.Email.Companion.EMPTY_EMAIL
 import com.github.readingbat.server.FullName
 import com.github.readingbat.server.FullName.Companion.EMPTY_FULLNAME
 import com.github.readingbat.server.ServerUtils.queryParam

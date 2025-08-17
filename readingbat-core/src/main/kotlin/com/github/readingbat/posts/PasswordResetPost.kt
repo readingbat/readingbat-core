@@ -17,10 +17,13 @@
 
 package com.github.readingbat.posts
 
+import com.github.pambrose.common.email.Email
+import com.github.pambrose.common.email.Email.Companion.getEmail
+import com.github.pambrose.common.email.EmailUtils.email
+import com.github.pambrose.common.email.ResendService
 import com.github.pambrose.common.util.encode
 import com.github.readingbat.common.Constants.INVALID_RESET_ID
 import com.github.readingbat.common.Constants.MSG
-import com.github.readingbat.common.EmailUtils.email
 import com.github.readingbat.common.Endpoints.PASSWORD_RESET_ENDPOINT
 import com.github.readingbat.common.FormFields.CONFIRM_PASSWORD_PARAM
 import com.github.readingbat.common.FormFields.EMAIL_PARAM
@@ -29,8 +32,8 @@ import com.github.readingbat.common.FormFields.RESET_ID_PARAM
 import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.Message
 import com.github.readingbat.common.Property
-import com.github.readingbat.common.ResendUtils.envResendSender
-import com.github.readingbat.common.ResendUtils.sendEmail
+import com.github.readingbat.common.Property.Companion.envResendApiKey
+import com.github.readingbat.common.Property.Companion.envResendSender
 import com.github.readingbat.common.User.Companion.isNotRegisteredEmail
 import com.github.readingbat.common.User.Companion.queryUserByEmail
 import com.github.readingbat.common.isNotValidUser
@@ -38,8 +41,6 @@ import com.github.readingbat.common.isValidUser
 import com.github.readingbat.dsl.isDbmsEnabled
 import com.github.readingbat.pages.PasswordResetPage.passwordResetPage
 import com.github.readingbat.posts.CreateAccountPost.checkPassword
-import com.github.readingbat.server.Email
-import com.github.readingbat.server.Email.Companion.getEmail
 import com.github.readingbat.server.Password.Companion.getPassword
 import com.github.readingbat.server.PasswordResetsTable
 import com.github.readingbat.server.RedirectException
@@ -63,6 +64,7 @@ internal object PasswordResetPost {
   private val logger = KotlinLogging.logger {}
   private val unknownUserLimiter = RateLimiter.create(0.5) // rate 2.0 is "2 permits per second"
   private val unableToSend = Message("Unable to send password reset email -- missing email address", true)
+  private val resend = ResendService(envResendApiKey)
 
   suspend fun RoutingContext.sendPasswordReset(): String {
     val email = call.receiveParameters().getEmail(EMAIL_PARAM)
@@ -96,7 +98,7 @@ internal object PasswordResetPost {
 
           runCatching {
             val prefix = Property.EMAIL_PREFIX.getProperty("")
-            sendEmail(
+            resend.sendEmail(
               from = envResendSender,
               to = listOf(email),
               subject = "ReadingBat password reset",
@@ -111,8 +113,7 @@ internal object PasswordResetPost {
 //                    val url = "$prefix$PASSWORD_RESET_ENDPOINT?$RESET_ID_PARAM=$newResetId"
 //                    +"Go to this URL to set a new password: $url"
 //                  }
-
-                }
+                },
             )
           }.onFailure { e ->
             logger.info(e) { e.message }

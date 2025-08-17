@@ -19,6 +19,7 @@ dependencies {
   implementation(libs.service.utils)
   implementation(libs.prometheus.utils)
   implementation(libs.exposed.utils)
+  implementation(libs.email.utils)
 
   implementation(libs.prometheus.proxy)
 

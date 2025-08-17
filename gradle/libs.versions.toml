@@ -28,7 +28,7 @@ proxy = "2.3.0"
 python = "2.7.4"
 resend = "4.5.0"
 serialization = "1.9.0"
-utils = "2.4.1"
+utils = "2.4.2-SNAPSHOT"
 
 [libraries]
 # Kotlin
@@ -49,6 +49,7 @@ script-utils-kotlin = { module = "com.github.pambrose.common-utils:script-utils-
 service-utils = { module = "com.github.pambrose.common-utils:service-utils", version.ref = "utils" }
 prometheus-utils = { module = "com.github.pambrose.common-utils:prometheus-utils", version.ref = "utils" }
 exposed-utils = { module = "com.github.pambrose.common-utils:exposed-utils", version.ref = "utils" }
+email-utils = { module = "com.github.pambrose.common-utils:email-utils", version.ref = "utils" }
 
 # Prometheus
 prometheus-proxy = { module = "com.github.pambrose:prometheus-proxy", version.ref = "proxy" }

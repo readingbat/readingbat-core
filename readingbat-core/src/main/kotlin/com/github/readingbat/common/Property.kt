@@ -17,6 +17,8 @@
 
 package com.github.readingbat.common
 
+import com.github.pambrose.common.email.Email
+import com.github.pambrose.common.email.Email.Companion.toResendEmail
 import com.github.pambrose.common.util.isNotNull
 import com.github.pambrose.common.util.obfuscate
 import com.github.readingbat.common.Constants.UNASSIGNED
@@ -386,6 +388,9 @@ sealed class Property(
 
   companion object {
     private val logger = KotlinLogging.logger {}
+
+    val envResendApiKey: String by lazy { Property.RESEND_API_KEY.getRequiredProperty() }
+    val envResendSender: Email by lazy { Property.RESEND_SENDER_EMAIL.getRequiredProperty().toResendEmail() }
 
     fun initProperties() =
       listOf(
