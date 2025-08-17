@@ -6,53 +6,24 @@ description = "readingbat-core"
 dependencies {
   implementation(libs.serialization)
 
-  api(libs.common.core.utils)
+  api(libs.bundles.common.utils)
 
-  implementation(libs.common.ktor.server.utils)
-  implementation(libs.common.ktor.client.utils)
-  implementation(libs.common.script.utils.common)
-  implementation(libs.common.script.utils.python)
-  implementation(libs.common.script.utils.java)
-  implementation(libs.common.script.utils.kotlin)
-  implementation(libs.common.service.utils)
-  implementation(libs.common.prometheus.utils)
-  implementation(libs.common.exposed.utils)
-  implementation(libs.common.email.utils)
-  implementation(libs.common.recaptcha.utils)
+  implementation(libs.bundles.ktor.client)
+  implementation(libs.bundles.ktor.server)
+  implementation(libs.bundles.exposed)
 
   implementation(libs.prometheus.proxy)
 
   implementation(libs.simple.client)
 
-  implementation(libs.java.scripting)
+  runtimeOnly(libs.kotlin.scripting.jsr223)
   runtimeOnly(libs.python.scripting)
   runtimeOnly(libs.kotlin.scripting)
+  implementation(libs.java.scripting)
 
   implementation(libs.css)
 
-  implementation(libs.ktor.server.core)
-  implementation(libs.ktor.server.cio)
-  implementation(libs.ktor.server.auth)
-  implementation(libs.ktor.client.core)
-  implementation(libs.ktor.client.cio)
-  implementation(libs.ktor.client.content.negotiation)
-  implementation(libs.ktor.serialization.kotlinx.json)
-
-  implementation(libs.ktor.sessions)
-  implementation(libs.ktor.rate.limit)
-  implementation(libs.ktor.html)
-  implementation(libs.ktor.metrics)
-  implementation(libs.ktor.websockets)
-  implementation(libs.ktor.compression)
-  implementation(libs.ktor.calllogging)
-  implementation(libs.ktor.resources)
-
   implementation(libs.hikari)
-
-  runtimeOnly(libs.kotlin.scripting.jsr223)
-  implementation(libs.exposed.core)
-  implementation(libs.exposed.jdbc)
-  implementation(libs.exposed.jodatime)
 
   runtimeOnly(libs.postgres)
   implementation(libs.pgjdbc)
@@ -66,7 +37,6 @@ dependencies {
   implementation(libs.flexmark)
 
   implementation(libs.github)
-
 
   testImplementation(libs.ktor.server.test.host)
   testImplementation(libs.kotest.runner.junit5)

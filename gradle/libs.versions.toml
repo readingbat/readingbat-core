@@ -68,10 +68,10 @@ css = { module = "org.jetbrains.kotlin-wrappers:kotlin-css", version.ref = "css"
 ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
 ktor-client-cio = { module = "io.ktor:ktor-client-cio", version.ref = "ktor" }
 ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktor" }
-ktor-serialization-kotlinx-json = { module = "io.ktor:ktor-serialization-kotlinx-json", version.ref = "ktor" }
 ktor-server-core = { module = "io.ktor:ktor-server", version.ref = "ktor" }
 ktor-server-cio = { module = "io.ktor:ktor-server-cio", version.ref = "ktor" }
 ktor-server-auth = { module = "io.ktor:ktor-server-auth-jvm", version.ref = "ktor" }
+ktor-serialization-kotlinx-json = { module = "io.ktor:ktor-serialization-kotlinx-json", version.ref = "ktor" }
 ktor-sessions = { module = "io.ktor:ktor-server-sessions", version.ref = "ktor" }
 ktor-rate-limit = { module = "io.ktor:ktor-server-rate-limit", version.ref = "ktor" }
 ktor-html = { module = "io.ktor:ktor-server-html-builder", version.ref = "ktor" }
@@ -116,3 +116,47 @@ kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", versi
 kotlinter = { id = "org.jmailen.kotlinter", version.ref = "kotlinter" }
 buildconfig = { id = "com.github.gmazzo.buildconfig", version.ref = "buildconfig" }
 versions = { id = "com.github.ben-manes.versions", version.ref = "versions" }
+
+[bundles]
+ktor-client = [
+  "ktor-client-core",
+  "ktor-client-cio",
+  "ktor-client-content-negotiation",
+]
+
+ktor-server = [
+  "ktor-server-core",
+  "ktor-server-cio",
+  "ktor-server-auth",
+  "ktor-serialization-kotlinx-json",
+  "ktor-sessions",
+  "ktor-rate-limit",
+  "ktor-html",
+  "ktor-resources",
+  "ktor-metrics",
+  "ktor-websockets",
+  "ktor-compression",
+  "ktor-calllogging",
+  "ktor-server-test-host"
+]
+
+common-utils = [
+  "common-core-utils",
+  "common-ktor-server-utils",
+  "common-ktor-client-utils",
+  "common-script-utils-common",
+  "common-script-utils-python",
+  "common-script-utils-java",
+  "common-script-utils-kotlin",
+  "common-service-utils",
+  "common-prometheus-utils",
+  "common-exposed-utils",
+  "common-email-utils",
+  "common-recaptcha-utils"
+]
+
+exposed = [
+  "exposed-core",
+  "exposed-jdbc",
+  "exposed-jodatime"
+]
