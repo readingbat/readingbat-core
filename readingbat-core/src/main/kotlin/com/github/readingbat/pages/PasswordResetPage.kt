@@ -251,7 +251,7 @@ internal object PasswordResetPage {
                 }
                 td {
                   submitInput {
-                    style = "font-size:25px; height:35; width:155"
+                    style = "font-size:90%; height:35; width:155"
                     id = PASSWORD_BUTTON
                     name = PREFS_ACTION_PARAM
                     value = UPDATE_PASSWORD

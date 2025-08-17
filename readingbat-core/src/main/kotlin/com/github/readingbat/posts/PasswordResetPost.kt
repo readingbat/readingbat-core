@@ -75,7 +75,13 @@ internal object PasswordResetPost {
     return when {
       user.isNotValidUser() -> {
         unknownUserLimiter.acquire()
-        passwordResetPage(EMPTY_RESET_ID, Message("Invalid user: $email", true))
+        passwordResetPage(
+          EMPTY_RESET_ID,
+          if (email.isBlank())
+            Message("Missing email value", true)
+          else
+            Message("Invalid user: $email", true),
+        )
       }
 
       email.isBlank() -> passwordResetPage(EMPTY_RESET_ID, unableToSend)
@@ -102,7 +108,7 @@ internal object PasswordResetPost {
             resend.sendEmail(
               from = envResendSender,
               to = listOf(email),
-              subject = "ReadingBat password reset",
+              subject = "ReadingBat Password Reset",
               html =
                 email {
                   h2 { +"ReadingBat Password Reset" }
@@ -110,10 +116,6 @@ internal object PasswordResetPost {
                   p { +"Please click the link below to reset your password." }
                   p { a("$prefix$PASSWORD_RESET_ENDPOINT?$RESET_ID_PARAM=$newResetId") { +"Reset password" } }
                   p { +"If you did not request to reset your password, please ignore this message." }
-//                  p {
-//                    val url = "$prefix$PASSWORD_RESET_ENDPOINT?$RESET_ID_PARAM=$newResetId"
-//                    +"Go to this URL to set a new password: $url"
-//                  }
                 },
             )
           }.onFailure { e ->
