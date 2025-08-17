@@ -17,6 +17,7 @@
 
 package com.github.readingbat.pages
 
+import com.github.pambrose.common.recaptcha.RecaptchaService.loadRecaptchaScript
 import com.github.pambrose.common.util.isNull
 import com.github.pambrose.common.util.pathOf
 import com.github.pambrose.common.util.pluralize
@@ -47,7 +48,6 @@ import com.github.readingbat.dsl.LanguageType.Python
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.isProduction
 import com.github.readingbat.pages.HelpAndLogin.helpAndLogin
-import com.github.readingbat.server.RecaptchaService.loadRecaptchaScript
 import io.ktor.http.ContentType.Text.CSS
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.RoutingHandler

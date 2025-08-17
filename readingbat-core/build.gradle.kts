@@ -20,7 +20,7 @@ dependencies {
   implementation(libs.common.prometheus.utils)
   implementation(libs.common.exposed.utils)
   implementation(libs.common.email.utils)
-  //implementation(libs.common.recaptcha.utils)
+  implementation(libs.common.recaptcha.utils)
 
   implementation(libs.prometheus.proxy)
 

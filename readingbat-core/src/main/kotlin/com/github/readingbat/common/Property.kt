@@ -19,6 +19,7 @@ package com.github.readingbat.common
 
 import com.github.pambrose.common.email.Email
 import com.github.pambrose.common.email.Email.Companion.toResendEmail
+import com.github.pambrose.common.recaptcha.RecaptchaConfig
 import com.github.pambrose.common.util.isNotNull
 import com.github.pambrose.common.util.obfuscate
 import com.github.readingbat.common.Constants.UNASSIGNED
@@ -29,7 +30,6 @@ import com.github.readingbat.common.PropertyNames.CONTENT
 import com.github.readingbat.common.PropertyNames.DBMS
 import com.github.readingbat.common.PropertyNames.READINGBAT
 import com.github.readingbat.common.PropertyNames.SITE
-import com.github.readingbat.server.RecaptchaConfig
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.server.application.Application
 import io.ktor.server.config.ApplicationConfigurationException

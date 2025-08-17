@@ -17,6 +17,7 @@
 
 package com.github.readingbat.server.routes
 
+import com.github.pambrose.common.recaptcha.RecaptchaService.validateRecaptcha
 import com.github.pambrose.common.response.redirectTo
 import com.github.pambrose.common.response.respondWith
 import com.github.pambrose.common.util.pathOf
@@ -86,7 +87,6 @@ import com.github.readingbat.posts.TeacherPrefsPost.enableStudentMode
 import com.github.readingbat.posts.TeacherPrefsPost.enableTeacherMode
 import com.github.readingbat.posts.TeacherPrefsPost.teacherPrefs
 import com.github.readingbat.posts.UserPrefsPost.userPrefs
-import com.github.readingbat.server.RecaptchaService.validateRecaptcha
 import com.github.readingbat.server.ResetId
 import com.github.readingbat.server.ServerUtils.authenticateAdminUser
 import com.github.readingbat.server.ServerUtils.defaultLanguageTab
