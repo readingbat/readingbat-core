@@ -6,20 +6,21 @@ description = "readingbat-core"
 dependencies {
   implementation(libs.serialization)
 
-  api(libs.core.utils)
+  api(libs.common.core.utils)
 
-  implementation(libs.ktor.server.utils)
-  implementation(libs.ktor.client.utils)
+  implementation(libs.common.ktor.server.utils)
+  implementation(libs.common.ktor.client.utils)
 
-  implementation(libs.script.utils.common)
-  implementation(libs.script.utils.python)
-  implementation(libs.script.utils.java)
-  implementation(libs.script.utils.kotlin)
+  implementation(libs.common.script.utils.common)
+  implementation(libs.common.script.utils.python)
+  implementation(libs.common.script.utils.java)
+  implementation(libs.common.script.utils.kotlin)
 
-  implementation(libs.service.utils)
-  implementation(libs.prometheus.utils)
-  implementation(libs.exposed.utils)
-  implementation(libs.email.utils)
+  implementation(libs.common.service.utils)
+  implementation(libs.common.prometheus.utils)
+  implementation(libs.common.exposed.utils)
+  implementation(libs.common.email.utils)
+  //implementation(libs.common.recaptcha.utils)
 
   implementation(libs.prometheus.proxy)
 

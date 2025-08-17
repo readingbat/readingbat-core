@@ -41,14 +41,10 @@ import com.github.readingbat.pages.LanguageGroupPage.languageGroupPage
 import com.github.readingbat.pages.PlaygroundPage.playgroundPage
 import com.github.readingbat.server.ServerUtils.fetchUser
 import com.github.readingbat.server.routes.AdminRoutes.assignBrowserSession
-import io.ktor.http.HttpStatusCode
 import io.ktor.http.Parameters
 import io.ktor.resources.Resource
 import io.ktor.server.auth.authenticate
-import io.ktor.server.plugins.origin
-import io.ktor.server.request.receiveParameters
 import io.ktor.server.resources.get
-import io.ktor.server.response.respondText
 import io.ktor.server.routing.Routing
 import io.ktor.server.routing.RoutingContext
 import kotlinx.serialization.Serializable
@@ -82,52 +78,18 @@ object Locations {
         language(content.invoke(), languageLoc, true)
       }
       locationsPost<Language.Group> { groupLoc ->
-        if (validateRecaptcha()) {
-          metrics.challengeGroupRequestCount.labels(agentLaunchId(), POST, groupLoc.languageTypeStr, TRUE_STR).inc()
-          group(content.invoke(), groupLoc, true)
-        }
+        metrics.challengeGroupRequestCount.labels(agentLaunchId(), POST, groupLoc.languageTypeStr, TRUE_STR).inc()
+        group(content.invoke(), groupLoc, true)
       }
       locationsPost<Language.Group.Challenge> { challengeLoc ->
-        if (validateRecaptcha()) {
-          metrics.challengeRequestCount.labels(agentLaunchId(), POST, challengeLoc.languageTypeStr, TRUE_STR).inc()
-          challenge(content.invoke(), challengeLoc, true)
-        }
+        metrics.challengeRequestCount.labels(agentLaunchId(), POST, challengeLoc.languageTypeStr, TRUE_STR).inc()
+        challenge(content.invoke(), challengeLoc, true)
       }
       locationsPost<PlaygroundRequest> { request ->
         metrics.playgroundRequestCount.labels(agentLaunchId(), POST, TRUE_STR).inc()
         playground(content.invoke(), request, true)
       }
     }
-  }
-
-  private suspend fun RoutingContext.validateRecaptcha(): Boolean {
-    if (!RecaptchaService.isRecaptchaEnabled()) {
-      return true
-    }
-
-    val parameters = call.receiveParameters()
-    val recaptchaResponse = parameters["g-recaptcha-response"]
-
-    if (recaptchaResponse.isNullOrBlank()) {
-      call.respondText(
-        "reCAPTCHA verification required",
-        status = HttpStatusCode.BadRequest,
-      )
-      return false
-    }
-
-    val remoteIp = call.request.origin.remoteHost
-    val isValid = RecaptchaService.verifyRecaptcha(recaptchaResponse, remoteIp)
-
-    if (!isValid) {
-      call.respondText(
-        "reCAPTCHA verification failed",
-        status = HttpStatusCode.BadRequest,
-      )
-      return false
-    }
-
-    return true
   }
 
   private suspend fun RoutingContext.language(

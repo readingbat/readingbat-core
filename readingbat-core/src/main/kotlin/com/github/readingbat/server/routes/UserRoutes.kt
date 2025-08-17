@@ -54,6 +54,7 @@ import com.github.readingbat.common.Endpoints.USER_PREFS_ENDPOINT
 import com.github.readingbat.common.FormFields.RESET_ID_PARAM
 import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.Metrics
+import com.github.readingbat.common.Property.Companion.recaptchaConfig
 import com.github.readingbat.common.UserPrincipal
 import com.github.readingbat.common.cssContent
 import com.github.readingbat.dsl.ReadingBatContent
@@ -85,7 +86,7 @@ import com.github.readingbat.posts.TeacherPrefsPost.enableStudentMode
 import com.github.readingbat.posts.TeacherPrefsPost.enableTeacherMode
 import com.github.readingbat.posts.TeacherPrefsPost.teacherPrefs
 import com.github.readingbat.posts.UserPrefsPost.userPrefs
-import com.github.readingbat.server.RecaptchaService
+import com.github.readingbat.server.RecaptchaService.validateRecaptcha
 import com.github.readingbat.server.ResetId
 import com.github.readingbat.server.ServerUtils.authenticateAdminUser
 import com.github.readingbat.server.ServerUtils.defaultLanguageTab
@@ -97,47 +98,13 @@ import com.github.readingbat.server.ServerUtils.respondWithSuspendingRedirect
 import com.github.readingbat.server.routes.ResourceContent.getResourceAsText
 import io.ktor.http.ContentType
 import io.ktor.http.ContentType.Text.CSS
-import io.ktor.http.HttpStatusCode
-import io.ktor.http.Parameters
-import io.ktor.server.plugins.origin
 import io.ktor.server.request.receiveParameters
-import io.ktor.server.response.respondText
 import io.ktor.server.routing.Routing
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
 import io.ktor.server.sessions.clear
 import io.ktor.server.sessions.sessions
-
-suspend fun validateRecaptchaInRoute(call: io.ktor.server.application.ApplicationCall, params: Parameters): Boolean {
-  if (!RecaptchaService.isRecaptchaEnabled()) {
-    return true
-  }
-
-//  val params = call.receiveParameters()
-  val recaptchaResponse = params["g-recaptcha-response"]
-
-  if (recaptchaResponse.isNullOrBlank()) {
-    call.respondText(
-      "reCAPTCHA verification required",
-      status = HttpStatusCode.BadRequest,
-    )
-    return false
-  }
-
-  val remoteIp = call.request.origin.remoteHost
-  val isValid = RecaptchaService.verifyRecaptcha(recaptchaResponse, remoteIp)
-
-  if (!isValid) {
-    call.respondText(
-      "reCAPTCHA verification failed",
-      status = HttpStatusCode.BadRequest,
-    )
-    return false
-  }
-
-  return true
-}
 
 // @Suppress("unused")
 // fun Route.routeTimeout(time: Duration, callback: Route.() -> Unit): Route {
@@ -230,7 +197,7 @@ fun Routing.userRoutes(metrics: Metrics, contentSrc: () -> ReadingBatContent) {
 
   post(CREATE_ACCOUNT_ENDPOINT) {
     val params = call.receiveParameters()
-    if (validateRecaptchaInRoute(call, params)) {
+    if (validateRecaptcha(recaptchaConfig, params)) {
       respondWithSuspendingRedirect { createAccount(params) }
     }
   }
@@ -303,7 +270,7 @@ fun Routing.userRoutes(metrics: Metrics, contentSrc: () -> ReadingBatContent) {
 
   post(PASSWORD_RESET_ENDPOINT) {
     val params = call.receiveParameters()
-    if (validateRecaptchaInRoute(call, params)) {
+    if (validateRecaptcha(recaptchaConfig, params)) {
       respondWithSuspendingRedirect { sendPasswordReset(params) }
     }
   }

@@ -29,6 +29,7 @@ import com.github.readingbat.common.PropertyNames.CONTENT
 import com.github.readingbat.common.PropertyNames.DBMS
 import com.github.readingbat.common.PropertyNames.READINGBAT
 import com.github.readingbat.common.PropertyNames.SITE
+import com.github.readingbat.server.RecaptchaConfig
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.server.application.Application
 import io.ktor.server.config.ApplicationConfigurationException
@@ -387,10 +388,16 @@ sealed class Property(
     )
 
   companion object {
-    private val logger = KotlinLogging.logger {}
-
     val envResendApiKey: String by lazy { Property.RESEND_API_KEY.getRequiredProperty() }
     val envResendSender: Email by lazy { Property.RESEND_SENDER_EMAIL.getRequiredProperty().toResendEmail() }
+
+    val recaptchaConfig by lazy {
+      object : RecaptchaConfig {
+        override val isRecaptchaEnabled = RECAPTCHA_ENABLED.getProperty(default = false, errorOnNonInit = false)
+        override val recaptchaSiteKey = RECAPTCHA_SITE_KEY.getPropertyOrNull(errorOnNonInit = false)
+        override val recaptchaSecretKey = RECAPTCHA_SECRET_KEY.getPropertyOrNull(errorOnNonInit = false)
+      }
+    }
 
     fun initProperties() =
       listOf(

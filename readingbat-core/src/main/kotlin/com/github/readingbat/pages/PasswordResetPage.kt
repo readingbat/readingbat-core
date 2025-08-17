@@ -31,6 +31,7 @@ import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.FormFields.UPDATE_PASSWORD
 import com.github.readingbat.common.Message
 import com.github.readingbat.common.Message.Companion.EMPTY_MESSAGE
+import com.github.readingbat.common.Property.Companion.recaptchaConfig
 import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyTitle
 import com.github.readingbat.pages.PageUtils.clickButtonScript
@@ -39,9 +40,9 @@ import com.github.readingbat.pages.PageUtils.headDefault
 import com.github.readingbat.pages.PageUtils.hideShowButton
 import com.github.readingbat.pages.PageUtils.loadPingdomScript
 import com.github.readingbat.pages.PageUtils.privacyStatement
-import com.github.readingbat.pages.PageUtils.recaptchaWidget
 import com.github.readingbat.posts.PasswordResetPost.ResetPasswordException
 import com.github.readingbat.server.PasswordResetsTable
+import com.github.readingbat.server.RecaptchaService.recaptchaWidget
 import com.github.readingbat.server.ResetId
 import com.github.readingbat.server.ServerUtils.queryParam
 import com.pambrose.common.exposed.get
@@ -152,7 +153,7 @@ internal object PasswordResetPage {
                   td {}
                   td {
                     style = "padding-top:10"
-                    recaptchaWidget()
+                    recaptchaWidget(recaptchaConfig)
                   }
                 }
                 tr {

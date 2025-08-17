@@ -17,15 +17,22 @@
 
 package com.github.readingbat.server
 
-import com.github.readingbat.common.Property
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.forms.submitForm
+import io.ktor.http.HttpStatusCode
 import io.ktor.http.Parameters
 import io.ktor.serialization.kotlinx.json.json
+import io.ktor.server.plugins.origin
+import io.ktor.server.response.respondText
+import io.ktor.server.routing.RoutingContext
+import kotlinx.html.FlowContent
+import kotlinx.html.HEAD
+import kotlinx.html.div
+import kotlinx.html.script
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -33,7 +40,6 @@ import kotlinx.serialization.json.Json
 object RecaptchaService {
   private val logger = KotlinLogging.logger {}
   private const val RECAPTCHA_VERIFY_URL = "https://www.google.com/recaptcha/api/siteverify"
-
   private val httpClient =
     HttpClient(CIO) {
       install(ContentNegotiation) {
@@ -56,17 +62,17 @@ object RecaptchaService {
     val challengeTs: String? = null,
   )
 
-  fun isRecaptchaEnabled(): Boolean =
-    Property.RECAPTCHA_ENABLED.getProperty(default = false, errorOnNonInit = false) &&
-      Property.RECAPTCHA_SECRET_KEY.getPropertyOrNull(errorOnNonInit = false)?.isNotBlank() == true
-
-  suspend fun verifyRecaptcha(recaptchaResponse: String, remoteIp: String? = null): Boolean {
-    if (!isRecaptchaEnabled()) {
+  private suspend fun verifyRecaptcha(
+    config: RecaptchaConfig,
+    recaptchaResponse: String,
+    remoteIp: String? = null,
+  ): Boolean {
+    if (!isRecaptchaConfigured(config)) {
       logger.debug { "reCAPTCHA is disabled, skipping verification" }
       return true
     }
 
-    val secretKey = Property.RECAPTCHA_SECRET_KEY.getPropertyOrNull(errorOnNonInit = false)
+    val secretKey = config.recaptchaSecretKey
     if (secretKey.isNullOrBlank()) {
       logger.warn { "reCAPTCHA secret key is not configured" }
       return false
@@ -90,7 +96,7 @@ object RecaptchaService {
         ).body()
 
       if (response.success) {
-        logger.info { "reCAPTCHA verification successful" }
+        logger.debug { "reCAPTCHA verification successful" }
         true
       } else {
         logger.warn { "reCAPTCHA verification failed: ${response.errorCodes.joinToString()}" }
@@ -102,5 +108,63 @@ object RecaptchaService {
     }
   }
 
-  fun getSiteKey(): String? = Property.RECAPTCHA_SITE_KEY.getPropertyOrNull(errorOnNonInit = false)
+  suspend fun RoutingContext.validateRecaptcha(config: RecaptchaConfig, params: Parameters): Boolean {
+    if (isRecaptchaConfigured(config)) {
+      val recaptchaResponse = params["g-recaptcha-response"]
+
+      if (recaptchaResponse.isNullOrBlank()) {
+        call.respondText(
+          "reCAPTCHA verification required",
+          status = HttpStatusCode.BadRequest,
+        )
+        return false
+      }
+
+      val remoteIp = call.request.origin.remoteHost
+      val isValid = verifyRecaptcha(config, recaptchaResponse, remoteIp)
+
+      if (!isValid) {
+        call.respondText(
+          "reCAPTCHA verification failed",
+          status = HttpStatusCode.BadRequest,
+        )
+        return false
+      }
+    }
+
+    return true
+  }
+
+  fun HEAD.loadRecaptchaScript(config: RecaptchaConfig) {
+    // Load reCAPTCHA script if enabled
+    if (config.isRecaptchaEnabled) {
+      if (!config.recaptchaSiteKey.isNullOrBlank()) {
+        script {
+          src = "https://www.google.com/recaptcha/api.js"
+          async = true
+          defer = true
+        }
+      }
+    }
+  }
+
+  fun FlowContent.recaptchaWidget(config: RecaptchaConfig) {
+    if (config.isRecaptchaEnabled) {
+      val siteKey = config.recaptchaSiteKey
+      if (!siteKey.isNullOrBlank()) {
+        div(classes = "g-recaptcha") {
+          attributes["data-sitekey"] = siteKey
+        }
+      }
+    }
+  }
+
+  private fun isRecaptchaConfigured(config: RecaptchaConfig): Boolean =
+    config.isRecaptchaEnabled && config.recaptchaSecretKey?.isNotBlank() == true
+}
+
+interface RecaptchaConfig {
+  val isRecaptchaEnabled: Boolean
+  val recaptchaSiteKey: String?
+  val recaptchaSecretKey: String?
 }

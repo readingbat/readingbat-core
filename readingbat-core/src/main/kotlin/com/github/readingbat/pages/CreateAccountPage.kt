@@ -28,6 +28,7 @@ import com.github.readingbat.common.FormFields.PASSWORD_PARAM
 import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.Message
 import com.github.readingbat.common.Message.Companion.EMPTY_MESSAGE
+import com.github.readingbat.common.Property.Companion.recaptchaConfig
 import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyTitle
 import com.github.readingbat.pages.PageUtils.clickButtonScript
@@ -36,9 +37,9 @@ import com.github.readingbat.pages.PageUtils.headDefault
 import com.github.readingbat.pages.PageUtils.hideShowButton
 import com.github.readingbat.pages.PageUtils.loadPingdomScript
 import com.github.readingbat.pages.PageUtils.privacyStatement
-import com.github.readingbat.pages.PageUtils.recaptchaWidget
 import com.github.readingbat.server.FullName
 import com.github.readingbat.server.FullName.Companion.EMPTY_FULLNAME
+import com.github.readingbat.server.RecaptchaService.recaptchaWidget
 import com.github.readingbat.server.ServerUtils.queryParam
 import io.ktor.server.routing.RoutingContext
 import kotlinx.html.FormMethod
@@ -181,7 +182,7 @@ internal object CreateAccountPage {
                   td {}
                   td {
                     style = "padding-top:10"
-                    recaptchaWidget()
+                    recaptchaWidget(recaptchaConfig)
                   }
                 }
                 tr {

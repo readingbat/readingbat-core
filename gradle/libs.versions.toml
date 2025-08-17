@@ -39,17 +39,18 @@ kotlin-scripting-jsr223 = { module = "org.jetbrains.kotlin:kotlin-scripting-jsr2
 serialization = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "serialization" }
 
 # Common Utils
-core-utils = { module = "com.github.pambrose.common-utils:core-utils", version.ref = "utils" }
-ktor-server-utils = { module = "com.github.pambrose.common-utils:ktor-server-utils", version.ref = "utils" }
-ktor-client-utils = { module = "com.github.pambrose.common-utils:ktor-client-utils", version.ref = "utils" }
-script-utils-common = { module = "com.github.pambrose.common-utils:script-utils-common", version.ref = "utils" }
-script-utils-python = { module = "com.github.pambrose.common-utils:script-utils-python", version.ref = "utils" }
-script-utils-java = { module = "com.github.pambrose.common-utils:script-utils-java", version.ref = "utils" }
-script-utils-kotlin = { module = "com.github.pambrose.common-utils:script-utils-kotlin", version.ref = "utils" }
-service-utils = { module = "com.github.pambrose.common-utils:service-utils", version.ref = "utils" }
-prometheus-utils = { module = "com.github.pambrose.common-utils:prometheus-utils", version.ref = "utils" }
-exposed-utils = { module = "com.github.pambrose.common-utils:exposed-utils", version.ref = "utils" }
-email-utils = { module = "com.github.pambrose.common-utils:email-utils", version.ref = "utils" }
+common-core-utils = { module = "com.github.pambrose.common-utils:core-utils", version.ref = "utils" }
+common-ktor-server-utils = { module = "com.github.pambrose.common-utils:ktor-server-utils", version.ref = "utils" }
+common-ktor-client-utils = { module = "com.github.pambrose.common-utils:ktor-client-utils", version.ref = "utils" }
+common-script-utils-common = { module = "com.github.pambrose.common-utils:script-utils-common", version.ref = "utils" }
+common-script-utils-python = { module = "com.github.pambrose.common-utils:script-utils-python", version.ref = "utils" }
+common-script-utils-java = { module = "com.github.pambrose.common-utils:script-utils-java", version.ref = "utils" }
+common-script-utils-kotlin = { module = "com.github.pambrose.common-utils:script-utils-kotlin", version.ref = "utils" }
+common-service-utils = { module = "com.github.pambrose.common-utils:service-utils", version.ref = "utils" }
+common-prometheus-utils = { module = "com.github.pambrose.common-utils:prometheus-utils", version.ref = "utils" }
+common-exposed-utils = { module = "com.github.pambrose.common-utils:exposed-utils", version.ref = "utils" }
+common-email-utils = { module = "com.github.pambrose.common-utils:email-utils", version.ref = "utils" }
+common-recaptcha-utils = { module = "com.github.pambrose.common-utils:recaptcha-utils", version.ref = "utils" }
 
 # Prometheus
 prometheus-proxy = { module = "com.github.pambrose:prometheus-proxy", version.ref = "proxy" }
