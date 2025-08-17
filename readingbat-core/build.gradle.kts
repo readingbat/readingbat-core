@@ -49,10 +49,12 @@ dependencies {
 
   implementation(libs.hikari)
 
+  runtimeOnly(libs.kotlin.scripting.jsr223)
   implementation(libs.exposed.core)
   implementation(libs.exposed.jdbc)
   implementation(libs.exposed.jodatime)
 
+  runtimeOnly(libs.postgres)
   implementation(libs.pgjdbc)
   implementation(libs.socket)
 
@@ -65,12 +67,8 @@ dependencies {
 
   implementation(libs.github)
 
-  runtimeOnly(libs.kotlin.scripting.jsr223)
-  runtimeOnly(libs.postgres)
 
-//  testImplementation(libs.kotlin.test)
   testImplementation(libs.ktor.server.test.host)
-
   testImplementation(libs.kotest.runner.junit5)
   testImplementation(libs.kotest.assertions.core)
   testImplementation(libs.kotest.assertions.ktor)
