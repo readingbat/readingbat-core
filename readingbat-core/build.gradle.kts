@@ -10,12 +10,10 @@ dependencies {
 
   implementation(libs.common.ktor.server.utils)
   implementation(libs.common.ktor.client.utils)
-
   implementation(libs.common.script.utils.common)
   implementation(libs.common.script.utils.python)
   implementation(libs.common.script.utils.java)
   implementation(libs.common.script.utils.kotlin)
-
   implementation(libs.common.service.utils)
   implementation(libs.common.prometheus.utils)
   implementation(libs.common.exposed.utils)
