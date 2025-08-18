@@ -3,8 +3,8 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
 
 plugins {
-  `java`
-  `application`
+  java
+  application
   `java-library`
   `maven-publish`
 
@@ -85,10 +85,6 @@ fun Project.configureKotlin() {
     mustRunAfter("clean")
   }
 
-  configurations.all {
-    resolutionStrategy.cacheChangingModulesFor(0, "seconds")
-  }
-
   tasks.withType<KotlinJvmCompile>().configureEach {
     compilerOptions {
       jvmTarget.set(JvmTarget.JVM_17)
@@ -142,3 +138,8 @@ fun Project.configureTesting() {
     }
   }
 }
+
+configurations.all {
+  resolutionStrategy.cacheChangingModulesFor(0, "seconds")
+}
+
