@@ -97,6 +97,8 @@ data class BrowserSession(val id: String, val created: Long = Instant.now().toEp
         insertAndGetId { row -> row[sessionId] = id }.value
       }
 
+    // TODO This is a choke point, but we are seeing rapid-fire requests trying to insert the same session id
+    @Synchronized
     fun findOrCreateSessionDbmsId(id: String, createIfMissing: Boolean) =
       try {
         querySessionDbmsId(id)
