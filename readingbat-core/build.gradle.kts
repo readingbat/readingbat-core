@@ -6,10 +6,13 @@ description = "readingbat-core"
 dependencies {
   implementation(libs.serialization)
 
+  api(platform(libs.common.utils.bom))
   api(libs.bundles.common.utils)
 
+  implementation(platform(libs.ktor.bom))
   implementation(libs.bundles.ktor.client)
   implementation(libs.bundles.ktor.server)
+
   implementation(libs.bundles.exposed)
 
   implementation(libs.prometheus.proxy)
