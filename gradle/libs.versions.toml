@@ -1,34 +1,34 @@
 [versions]
 # Plugin versions
-kotlin = "2.2.10"
+kotlin = "2.2.20"
 kotlinter = "5.2.0"
-buildconfig = "5.6.7"
+buildconfig = "5.6.8"
 versions = "0.52.0"
 
 # Library versions
 cloud = "1.25.3"
 commons = "1.14.0"
-css = "2025.8.16"
+css = "2025.9.7"
 exposed = "0.61.0"
 flexmark = "0.64.8"
 github-api = "1.324"
-gson = "2.13.1"
+gson = "2.13.2"
 hikari = "7.0.2"
 java = "2.0.0"
 khealth = "3.0.1"
-kotest = "6.0.0.M16"
-kotest-ktor = "6.0.0"
-ktor = "3.2.3"
+kotest = "6.0.3"
+kotest-ktor = "6.0.3"
+ktor = "3.3.0"
 logback = "1.5.18"
 logging = "7.0.12"
 pgjdbc = "0.8.9"
 postgres = "42.7.7"
 prometheus = "0.16.0"
-proxy = "2.3.0"
+proxy = "2.4.0"
 python = "2.7.4"
-resend = "4.5.0"
+resend = "4.5.1"
 serialization = "1.9.0"
-utils = "2.4.3"
+utils = "2.4.5"
 
 [libraries]
 # Kotlin
@@ -67,41 +67,41 @@ css = { module = "org.jetbrains.kotlin-wrappers:kotlin-css", version.ref = "css"
 
 # Ktor
 ktor-bom = { module = "io.ktor:ktor-bom", version.ref = "ktor" }
-ktor-client-core = { module = "io.ktor:ktor-client-core" }
+ktor-calllogging = { module = "io.ktor:ktor-server-call-logging" }
 ktor-client-cio = { module = "io.ktor:ktor-client-cio" }
 ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negotiation" }
-ktor-server-core = { module = "io.ktor:ktor-server" }
-ktor-server-cio = { module = "io.ktor:ktor-server-cio" }
-ktor-server-auth = { module = "io.ktor:ktor-server-auth-jvm" }
-ktor-serialization-kotlinx-json = { module = "io.ktor:ktor-serialization-kotlinx-json" }
-ktor-sessions = { module = "io.ktor:ktor-server-sessions" }
-ktor-rate-limit = { module = "io.ktor:ktor-server-rate-limit" }
-ktor-html = { module = "io.ktor:ktor-server-html-builder" }
-ktor-resources = { module = "io.ktor:ktor-server-resources" }
-ktor-metrics = { module = "io.ktor:ktor-server-metrics" }
-ktor-websockets = { module = "io.ktor:ktor-server-websockets" }
+ktor-client-core = { module = "io.ktor:ktor-client-core" }
 ktor-compression = { module = "io.ktor:ktor-server-compression" }
-ktor-calllogging = { module = "io.ktor:ktor-server-call-logging" }
+ktor-html = { module = "io.ktor:ktor-server-html-builder" }
+ktor-metrics = { module = "io.ktor:ktor-server-metrics" }
+ktor-rate-limit = { module = "io.ktor:ktor-server-rate-limit" }
+ktor-resources = { module = "io.ktor:ktor-server-resources" }
+ktor-serialization-kotlinx-json = { module = "io.ktor:ktor-serialization-kotlinx-json" }
+ktor-server-auth = { module = "io.ktor:ktor-server-auth-jvm" }
+ktor-server-cio = { module = "io.ktor:ktor-server-cio" }
+ktor-server-core = { module = "io.ktor:ktor-server" }
 ktor-server-test-host = { module = "io.ktor:ktor-server-test-host" }
+ktor-sessions = { module = "io.ktor:ktor-server-sessions" }
+ktor-websockets = { module = "io.ktor:ktor-server-websockets" }
 
 # KHealth
 khealth = { module = "dev.hayden:khealth", version.ref = "khealth" }
 
 # Database
-hikari = { module = "com.zaxxer:HikariCP", version.ref = "hikari" }
 exposed-core = { module = "org.jetbrains.exposed:exposed-core", version.ref = "exposed" }
 exposed-jdbc = { module = "org.jetbrains.exposed:exposed-jdbc", version.ref = "exposed" }
 exposed-jodatime = { module = "org.jetbrains.exposed:exposed-jodatime", version.ref = "exposed" }
+hikari = { module = "com.zaxxer:HikariCP", version.ref = "hikari" }
 pgjdbc = { module = "com.impossibl.pgjdbc-ng:pgjdbc-ng-all", version.ref = "pgjdbc" }
 postgres = { module = "org.postgresql:postgresql", version.ref = "postgres" }
 socket = { module = "com.google.cloud.sql:postgres-socket-factory", version.ref = "cloud" }
 
 # Other
-gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
-resend = { group = "com.resend", name = "resend-java", version.ref = "resend" }
 commons = { module = "org.apache.commons:commons-text", version.ref = "commons" }
 flexmark = { module = "com.vladsch.flexmark:flexmark", version.ref = "flexmark" }
 github = { module = "org.kohsuke:github-api", version.ref = "github-api" }
+gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
+resend = { group = "com.resend", name = "resend-java", version.ref = "resend" }
 
 # Logging
 logging = { module = "io.github.oshai:kotlin-logging-jvm", version.ref = "logging" }
@@ -113,10 +113,10 @@ kotest-assertions-core = { module = "io.kotest:kotest-assertions-core", version.
 kotest-assertions-ktor = { module = "io.kotest:kotest-assertions-ktor", version.ref = "kotest-ktor" }
 
 [plugins]
+buildconfig = { id = "com.github.gmazzo.buildconfig", version.ref = "buildconfig" }
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 kotlinter = { id = "org.jmailen.kotlinter", version.ref = "kotlinter" }
-buildconfig = { id = "com.github.gmazzo.buildconfig", version.ref = "buildconfig" }
 versions = { id = "com.github.ben-manes.versions", version.ref = "versions" }
 
 [bundles]
@@ -127,34 +127,34 @@ ktor-client = [
 ]
 
 ktor-server = [
-  "ktor-server-core",
-  "ktor-server-cio",
-  "ktor-server-auth",
-  "ktor-serialization-kotlinx-json",
-  "ktor-sessions",
-  "ktor-rate-limit",
-  "ktor-html",
-  "ktor-resources",
-  "ktor-metrics",
-  "ktor-websockets",
-  "ktor-compression",
   "ktor-calllogging",
-  "ktor-server-test-host"
+  "ktor-compression",
+  "ktor-html",
+  "ktor-metrics",
+  "ktor-rate-limit",
+  "ktor-resources",
+  "ktor-serialization-kotlinx-json",
+  "ktor-server-auth",
+  "ktor-server-cio",
+  "ktor-server-core",
+  "ktor-server-test-host",
+  "ktor-sessions",
+  "ktor-websockets",
 ]
 
 common-utils = [
   "common-core-utils",
-  "common-ktor-server-utils",
+  "common-email-utils",
+  "common-exposed-utils",
   "common-ktor-client-utils",
+  "common-ktor-server-utils",
+  "common-prometheus-utils",
+  "common-recaptcha-utils",
   "common-script-utils-common",
-  "common-script-utils-python",
   "common-script-utils-java",
   "common-script-utils-kotlin",
+  "common-script-utils-python",
   "common-service-utils",
-  "common-prometheus-utils",
-  "common-exposed-utils",
-  "common-email-utils",
-  "common-recaptcha-utils"
 ]
 
 exposed = [
