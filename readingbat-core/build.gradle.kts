@@ -6,7 +6,7 @@ description = "readingbat-core"
 dependencies {
   implementation(libs.serialization)
 
-  api(platform(libs.common.utils.bom))
+  api(platform(libs.common.bom))
   api(libs.bundles.common.utils)
 
   implementation(platform(libs.ktor.bom))

@@ -1,8 +1,8 @@
 [versions]
 # Plugin versions
+buildconfig = "5.6.8"
 kotlin = "2.2.20"
 kotlinter = "5.2.0"
-buildconfig = "5.6.8"
 versions = "0.52.0"
 
 # Library versions
@@ -39,19 +39,19 @@ kotlin-scripting-jsr223 = { module = "org.jetbrains.kotlin:kotlin-scripting-jsr2
 serialization = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "serialization" }
 
 # Common Utils
-common-utils-bom = { module = "com.github.pambrose.common-utils:common-utils-bom", version.ref = "utils" }
+common-bom = { module = "com.github.pambrose.common-utils:common-utils-bom", version.ref = "utils" }
 common-core-utils = { module = "com.github.pambrose.common-utils:core-utils" }
-common-ktor-server-utils = { module = "com.github.pambrose.common-utils:ktor-server-utils" }
+common-email-utils = { module = "com.github.pambrose.common-utils:email-utils" }
+common-exposed-utils = { module = "com.github.pambrose.common-utils:exposed-utils" }
 common-ktor-client-utils = { module = "com.github.pambrose.common-utils:ktor-client-utils" }
+common-ktor-server-utils = { module = "com.github.pambrose.common-utils:ktor-server-utils" }
+common-prometheus-utils = { module = "com.github.pambrose.common-utils:prometheus-utils" }
+common-recaptcha-utils = { module = "com.github.pambrose.common-utils:recaptcha-utils" }
 common-script-utils-common = { module = "com.github.pambrose.common-utils:script-utils-common" }
-common-script-utils-python = { module = "com.github.pambrose.common-utils:script-utils-python" }
 common-script-utils-java = { module = "com.github.pambrose.common-utils:script-utils-java" }
 common-script-utils-kotlin = { module = "com.github.pambrose.common-utils:script-utils-kotlin" }
+common-script-utils-python = { module = "com.github.pambrose.common-utils:script-utils-python" }
 common-service-utils = { module = "com.github.pambrose.common-utils:service-utils" }
-common-prometheus-utils = { module = "com.github.pambrose.common-utils:prometheus-utils" }
-common-exposed-utils = { module = "com.github.pambrose.common-utils:exposed-utils" }
-common-email-utils = { module = "com.github.pambrose.common-utils:email-utils" }
-common-recaptcha-utils = { module = "com.github.pambrose.common-utils:recaptcha-utils" }
 
 # Prometheus
 prometheus-proxy = { module = "com.github.pambrose:prometheus-proxy", version.ref = "proxy" }
@@ -121,9 +121,9 @@ versions = { id = "com.github.ben-manes.versions", version.ref = "versions" }
 
 [bundles]
 ktor-client = [
-  "ktor-client-core",
   "ktor-client-cio",
   "ktor-client-content-negotiation",
+  "ktor-client-core",
 ]
 
 ktor-server = [
