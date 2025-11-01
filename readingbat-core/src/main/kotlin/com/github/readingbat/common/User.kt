@@ -314,7 +314,7 @@ class User {
           ChallengeHistory(
             Invocation(it[invocation]),
             it[correct],
-            it[incorrectAttempts].toInt(),
+            it[incorrectAttempts],
             history,
           )
         }

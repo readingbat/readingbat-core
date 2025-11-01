@@ -83,7 +83,7 @@ data class BrowserSession(val id: String, val created: Long = Instant.now().toEp
           ChallengeHistory(
             Invocation(it[invocation]),
             it[correct],
-            it[incorrectAttempts].toInt(),
+            it[incorrectAttempts],
             history,
           )
         }

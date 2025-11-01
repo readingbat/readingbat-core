@@ -78,7 +78,6 @@ import io.ktor.server.response.respondText
 import io.ktor.server.routing.RoutingContext
 import kotlinx.serialization.Required
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.and
@@ -482,7 +481,7 @@ internal object ChallengePost {
     // This is done oustide the transaction
     if (shouldPublish) {
       historyList.forEach {
-        user?.publishAnswers(challengeMd5, content.maxHistoryLength, complete, numCorrect, it)
+        user.publishAnswers(challengeMd5, content.maxHistoryLength, complete, numCorrect, it)
       }
     }
   }
