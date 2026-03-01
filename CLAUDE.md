@@ -4,104 +4,115 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Development Commands
 
-### Build and Testing
+### Build and Test
 
 - Build project: `make build` or `./gradlew build -xtest`
-- Run tests: `make tests` or `./gradlew check`
-- Clean build: `make clean` or `./gradlew clean`
+- Run all tests: `make tests` or `./gradlew check`
+- Run a single test class: `./gradlew :readingbat-core:test --tests "EndpointTest"`
+- Run a single test by name: `./gradlew :readingbat-core:test --tests "EndpointTest.Simple endpoint tests"`
 - Continuous build: `make cc` or `./gradlew build --continuous -x test`
+- Run application: `make run` or `./gradlew run`
 
 ### Code Quality
 
-- Lint Kotlin code: `make lint` or `./gradlew lintKotlinMain lintKotlinTest`
-- Format code: `./gradlew formatKotlinMain formatKotlinTest`
+- Lint: `make lint` or `./gradlew lintKotlinMain lintKotlinTest`
+- Format: `./gradlew formatKotlinMain formatKotlinTest`
+- Kotlinter enforces ktlint code style — run format before committing
 
-### Running the Application
+### Database
 
-- Run application: `make run` or `./gradlew run`
-- Create uberjar: `make uberjar` or `./gradlew uberjar`
-- Run uberjar: `make uber` (builds and runs uberjar)
-
-### Database Operations
-
-- Database info: `make dbinfo` or `./gradlew flywayInfo`
-- Migrate database: `make dbmigrate` or `./gradlew flywayMigrate`
 - Reset database: `make dbreset` (clean + migrate)
-- Clean database: `make dbclean` or `./gradlew flywayClean`
-- Validate database: `make dbvalidate` or `./gradlew flywayValidate`
+- Migrate: `make dbmigrate` or `./gradlew flywayMigrate`
+- Migration SQL lives in `src/main/resources/db/migration/`
+- Requires PostgreSQL running locally (Docker setup in README.md)
 
-### E2E Testing
+### Secrets
 
-- Open Cypress tests: `make test` or `~/node_modules/.bin/cypress open`
-- Run Cypress tests: `~/node_modules/.bin/cypress run --record --key 5ee5de19-1e84-4807-a199-5c70fda2fe5d`
-
-### Dependency Management
-
-- Check for dependency updates: `make versioncheck` or `./gradlew dependencyUpdates`
-- View dependencies: `make depends` or `./gradlew dependencies`
-- Upgrade Gradle wrapper: `make upgrade-wrapper`
-
-### Publishing
-
-- Publish to Maven Local: `make publish` or `./gradlew publishToMavenLocal`
+Secrets are loaded from `secrets/secrets.env` (not committed). The root `build.gradle.kts` `configureSecrets()` function
+reads this file and injects env vars into `JavaExec` and `Test` tasks.
 
 ## Project Architecture
 
-### Multi-module Gradle Structure
+### Module Structure
 
-- **readingbat-core/**: Main application module containing the web server, DSL engine, and core business logic
-- **readingbat-kotest/**: Testing utilities module with Kotest support
+Two Gradle submodules under the root project:
 
-### Core Components
+- **readingbat-core/**: Main application — Ktor web server, DSL engine, database layer, HTML page generation
+- **readingbat-kotest/**: Test utilities module providing `TestSupport` helpers for Kotest-based integration tests
 
-#### Web Server (Ktor-based)
+### Content DSL Pipeline
 
-- Main server class: `ReadingBatServer` in `com.github.readingbat.server`
-- Configuration driven by HOCON files and environment variables
-- Supports multiple deployment targets (localhost, Digital Ocean, Google Cloud Run)
-- Uses form-based authentication with session management
+The core innovation is a Kotlin DSL that defines programming challenges, which are evaluated at runtime via JSR-223
+script engines:
 
-#### Content DSL Engine
+1. **`Content.kt`** (in readingbat-core/src/main/kotlin/) defines content using `readingBatContent { }` DSL
+2. **`ReadingBatContent`** holds three `LanguageGroup`s: `java`, `python`, `kotlin`
+3. Each `LanguageGroup` contains `ChallengeGroup`s, each containing `Challenge`s
+4. Content can be loaded from local files (`FileSystemSource`) or GitHub repos (`GitHubContent`)
+5. **`ContentDsl.kt`** handles reading and evaluating DSL code — `readContentDsl()` reads source, `evalContentDsl()`
+   evaluates it via Kotlin scripting
+6. The DSL file and variable name are configured via `Property.DSL_FILE_NAME` and `Property.DSL_VARIABLE_NAME` (HOCON
+   properties)
 
-- **ReadingBatContent**: Core DSL class for defining programming challenges
-- **Language Support**: Java, Kotlin, and Python challenge types
-- **Script Execution**: Sandboxed execution using JSR-223 scripting engines
-- **Content Loading**: Dynamic loading from files or GitHub repositories
+### Server Entry Point
 
-#### Database Layer
+- `ReadingBatServer.start()` launches the Ktor CIO engine via `EngineMain`
+- `Application.module()` is the Ktor entry point — initializes properties, database, metrics, content DSL, and routing
+- Configuration is supplied via HOCON `-config=` argument (defaults to `src/main/resources/application.conf`)
 
-- **ORM**: JetBrains Exposed with PostgreSQL
-- **Connection Pooling**: HikariCP
-- **Migrations**: Flyway for database versioning
-- **Multi-environment**: Supports local Docker, cloud databases
+### Dual Configuration System
 
-#### Key Packages
+The app uses a two-layer configuration pattern where most settings can come from either source:
 
-- `com.github.readingbat.dsl`: Content DSL and language-specific challenge types
-- `com.github.readingbat.pages`: HTML page generation using Kotlinx.html
-- `com.github.readingbat.server`: Core server infrastructure and routing
-- `com.github.readingbat.posts`: Form handling for user interactions
-- `com.github.readingbat.common`: Shared utilities, metrics, and constants
+- **`Property`** (sealed class): HOCON-based properties read from Ktor's `ApplicationConfig`. Each is a singleton
+  object (e.g., `Property.DBMS_URL`, `Property.IS_PRODUCTION`). Properties are initialized in `Application.module()` via
+  `assignProperties()`.
+- **`EnvVar`** (enum): Environment variables that override HOCON values. Pattern:
+  `EnvVar.X.getEnv(Property.X.configValue(...))`.
+- Properties are backed by `System.setProperty()` after initialization, making them globally accessible.
 
-### Technology Stack
+### Routing Architecture
 
-- **Language**: Kotlin with JVM target 17
-- **Web Framework**: Ktor 3.2.3
-- **Database**: PostgreSQL with Exposed ORM
-- **Build Tool**: Gradle with Kotlin DSL
-- **Testing**: Kotest framework + Cypress for E2E
-- **Deployment**: Docker, Heroku, Google Cloud Run, Digital Ocean
+- **Type-safe routing** via Ktor `@Resource` annotations in `Locations.kt`: `Language` → `Language.Group` →
+  `Language.Group.Challenge` (nested resources mapping to URL paths like `/content/java/Warmup-1/hello`)
+- **User routes** in `UserRoutes.kt`: standard GET/POST endpoints for pages, authentication, admin
+- **Admin routes** in `AdminRoutes.kt` and **SysAdmin routes** in `SysAdminRoutes.kt`
+- **WebSocket routes** in `server/ws/`: real-time updates for challenge answers, class summaries, student progress
 
-### Configuration
+### Page Generation
 
-- Application configuration via HOCON files in `src/main/resources/`
-- Environment-specific configs for test, development, and production
-- Environment variables for sensitive data (database credentials, API keys)
-- Properties system with fallback to environment variables
+All HTML pages are generated server-side using Kotlinx.html (no templates). Each page has its own file in
+`com.github.readingbat.pages` with a companion object function pattern (e.g., `ChallengePage.challengePage()`).
+JavaScript for client-side interactivity is generated in `pages/js/`.
 
-### Development Workflow
+### Database Schema
 
-- Kotlin code style enforced by kotlinter plugin
-- Continuous integration with Travis CI
-- Docker-based local PostgreSQL development
-- Live reload during development with continuous build mode
+Exposed ORM table definitions in `PostgresTables.kt`. Key tables:
+
+- `UsersTable` — user accounts with salted password hashes
+- `BrowserSessionsTable` / `UserSessionsTable` — session tracking
+- `UserChallengeInfoTable` / `SessionChallengeInfoTable` — answer state per challenge
+- `UserAnswerHistoryTable` / `SessionAnswerHistoryTable` — answer history
+- `ClassesTable` / `EnrolleesTable` — teacher class management
+- `ServerRequestsTable` / `GeoInfosTable` — request logging with geolocation
+
+### Value Types
+
+The codebase uses Kotlin `@JvmInline value class` extensively for type safety: `LanguageName`, `GroupName`,
+`ChallengeName`, `ChallengeMd5`, `Password`, `FullName`, `ResetId` (all in `Locations.kt`).
+
+### Testing
+
+Tests use Kotest with `StringSpec` style. The `readingbat-kotest` module provides `TestSupport` with helpers:
+
+- `testModule()` — sets up a Ktor test application with content
+- `forEachLanguage` / `forEachGroup` / `forEachChallenge` — DSL for iterating content
+- `answerAllWith()` / `answerAllWithCorrectAnswer()` — integration test helpers for checking answers via HTTP
+- Test content is defined in `readingbat-core/src/test/kotlin/TestData.kt`
+
+### Key Dependencies
+
+- **common-utils** (BOM from `com.github.pambrose`): shared utility library providing core-utils, email-utils,
+  exposed-utils, ktor-client/server-utils, script-utils, etc.
+- **prometheus-proxy**: metrics collection
+- Dependency versions managed in `gradle/libs.versions.toml`
