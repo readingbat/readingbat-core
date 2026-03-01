@@ -55,6 +55,8 @@ subprojects {
   configurePublishing()
   configureTesting()
   configureKotlinter()
+  configureSecrets()
+  configureVersions()
 }
 
 fun Project.configureKotlin() {
@@ -143,3 +145,36 @@ configurations.all {
   resolutionStrategy.cacheChangingModulesFor(0, "seconds")
 }
 
+fun Project.configureVersions() {
+  fun isNonStable(version: String): Boolean {
+    // val stableKeyword = listOf("RELEASE", "FINAL", "GA").any { version.uppercase().contains(it) }
+    val betaKeyword = listOf("-RC", "-BETA", "-ALPHA", "-M").any { version.uppercase().contains(it) }
+    // val regex = "^[0-9,.v-]+(-r)?$".toRegex()
+    val isStable = !betaKeyword // (stableKeyword || regex.matches(version)) && !betaKeyword
+    return !isStable
+  }
+
+  tasks.withType<com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask> {
+    rejectVersionIf {
+      isNonStable(candidate.version)
+    }
+  }
+}
+
+fun Project.configureSecrets() {
+  val secretsFile = file("secrets/secrets.env")
+  if (secretsFile.exists()) {
+    val envVars =
+      secretsFile.readLines()
+        .map { it.trim() }
+        .filter { it.isNotEmpty() && !it.startsWith("#") }
+        .mapNotNull { line ->
+          val idx = line.indexOf('=')
+          if (idx > 0) line.substring(0, idx) to line.substring(idx + 1) else null
+        }
+        .toMap()
+
+    tasks.withType<JavaExec> { environment(envVars) }
+    tasks.withType<Test> { environment(envVars) }
+  }
+}
