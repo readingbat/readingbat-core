@@ -146,15 +146,10 @@ configurations.all {
 }
 
 fun Project.configureVersions() {
-  fun isNonStable(version: String): Boolean {
-    // val stableKeyword = listOf("RELEASE", "FINAL", "GA").any { version.uppercase().contains(it) }
-    val betaKeyword = listOf("-RC", "-BETA", "-ALPHA", "-M").any { version.uppercase().contains(it) }
-    // val regex = "^[0-9,.v-]+(-r)?$".toRegex()
-    val isStable = !betaKeyword // (stableKeyword || regex.matches(version)) && !betaKeyword
-    return !isStable
-  }
+  fun isNonStable(version: String): Boolean =
+    listOf("-RC", "-BETA", "-ALPHA", "-M").any { version.uppercase().contains(it) }
 
-  tasks.withType<com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask> {
+  tasks.withType<com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask>().configureEach {
     rejectVersionIf {
       isNonStable(candidate.version)
     }
@@ -170,11 +165,11 @@ fun Project.configureSecrets() {
         .filter { it.isNotEmpty() && !it.startsWith("#") }
         .mapNotNull { line ->
           val idx = line.indexOf('=')
-          if (idx > 0) line.substring(0, idx) to line.substring(idx + 1) else null
+          if (idx > 0) line.substring(0, idx).trim() to line.substring(idx + 1).trim().removeSurrounding("\"") else null
         }
         .toMap()
 
-    tasks.withType<JavaExec> { environment(envVars) }
-    tasks.withType<Test> { environment(envVars) }
+    tasks.withType<JavaExec>().configureEach { environment(envVars) }
+    tasks.withType<Test>().configureEach { environment(envVars) }
   }
 }
