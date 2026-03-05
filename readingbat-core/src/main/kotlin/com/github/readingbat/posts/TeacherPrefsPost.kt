@@ -52,7 +52,7 @@ import com.github.readingbat.server.ServerUtils.queryParam
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.server.request.receiveParameters
 import io.ktor.server.routing.RoutingContext
-import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 
 internal object TeacherPrefsPost {
   private val logger = KotlinLogging.logger {}
@@ -63,7 +63,10 @@ internal object TeacherPrefsPost {
     if (user.isValidUser()) {
       val params = call.receiveParameters()
       when (val action = params[PREFS_ACTION_PARAM] ?: "") {
-        CREATE_CLASS -> createClass(content, user, params[CLASS_DESC_PARAM] ?: "")
+        CREATE_CLASS -> {
+          createClass(content, user, params[CLASS_DESC_PARAM] ?: "")
+        }
+
         UPDATE_ACTIVE_CLASS,
         MAKE_ACTIVE_CLASS,
           -> {
@@ -87,9 +90,13 @@ internal object TeacherPrefsPost {
           classSummaryPage(content, user, classCode, msg = Message(msg))
         }
 
-        DELETE_CLASS -> deleteClass(content, user, params.getClassCode(CLASS_CODE_NAME_PARAM))
+        DELETE_CLASS -> {
+          deleteClass(content, user, params.getClassCode(CLASS_CODE_NAME_PARAM))
+        }
 
-        else -> error("Invalid action: $action")
+        else -> {
+          error("Invalid action: $action")
+        }
       }
     } else {
       requestLogInPage(content)
@@ -148,8 +155,9 @@ internal object TeacherPrefsPost {
     when {
       // Do not allow this for classCode.isStudentMode because turns off the
       // student/teacher toggle mode
-      queryActiveTeachingClassCode(user) == classCode && classCode.isEnabled ->
+      queryActiveTeachingClassCode(user) == classCode && classCode.isEnabled -> {
         Message("Same active class selected [$classCode]", true)
+      }
 
       else -> {
         user.assignActiveClassCode(classCode, true)
@@ -164,15 +172,17 @@ internal object TeacherPrefsPost {
 
   private fun RoutingContext.deleteClass(content: ReadingBatContent, user: User, classCode: ClassCode) =
     when {
-      classCode.isNotEnabled ->
+      classCode.isNotEnabled -> {
         teacherPrefsPage(content, user, Message("Empty class code", true))
+      }
 
-      classCode.isNotValid() ->
+      classCode.isNotValid() -> {
         teacherPrefsPage(
           content,
           user,
           Message("Invalid class code: $classCode", true),
         )
+      }
 
       else -> {
         val activeTeachingClassCode = queryActiveTeachingClassCode(user)

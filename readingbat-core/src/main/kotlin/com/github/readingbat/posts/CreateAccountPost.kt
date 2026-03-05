@@ -47,7 +47,9 @@ import io.ktor.http.Parameters
 import io.ktor.server.routing.RoutingContext
 import io.ktor.server.sessions.sessions
 import io.ktor.server.sessions.set
-import org.jetbrains.exposed.sql.Count
+import org.jetbrains.exposed.v1.core.Count
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.jdbc.select
 
 internal object CreateAccountPost {
   private val logger = KotlinLogging.logger {}
@@ -77,10 +79,17 @@ internal object CreateAccountPost {
     val confirmPassword = params.getPassword(CONFIRM_PASSWORD_PARAM)
 
     return when {
-      fullName.isBlank() -> createAccountPage(defaultEmail = email, msg = EMPTY_NAME_MSG)
-      email.isBlank() -> createAccountPage(defaultFullName = fullName, msg = EMPTY_EMAIL_MSG)
-      email.isNotValidEmail() ->
+      fullName.isBlank() -> {
+        createAccountPage(defaultEmail = email, msg = EMPTY_NAME_MSG)
+      }
+
+      email.isBlank() -> {
+        createAccountPage(defaultFullName = fullName, msg = EMPTY_EMAIL_MSG)
+      }
+
+      email.isNotValidEmail() -> {
         createAccountPage(defaultFullName = fullName, defaultEmail = email, msg = INVALID_EMAIL_MSG)
+      }
 
       else -> {
         val passwordError = checkPassword(password, confirmPassword)

@@ -47,8 +47,9 @@ import io.ktor.server.request.receiveParameters
 import io.ktor.server.routing.RoutingContext
 import io.ktor.server.sessions.clear
 import io.ktor.server.sessions.sessions
-import org.jetbrains.exposed.sql.transactions.transaction
-import org.jetbrains.exposed.sql.update
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.jdbc.transactions.transaction
+import org.jetbrains.exposed.v1.jdbc.update
 import org.joda.time.DateTime
 import org.joda.time.DateTimeZone.UTC
 

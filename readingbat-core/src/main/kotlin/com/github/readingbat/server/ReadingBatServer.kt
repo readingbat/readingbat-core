@@ -71,7 +71,7 @@ import io.prometheus.Agent.Companion.startAsyncAgent
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeoutOrNull
-import org.jetbrains.exposed.sql.Database
+import org.jetbrains.exposed.v1.jdbc.Database
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import javax.script.ScriptEngineManager

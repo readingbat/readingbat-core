@@ -94,8 +94,14 @@ internal object StudentSummaryPage {
     val activeTeachingClassCode = queryActiveTeachingClassCode(user)
 
     when {
-      classCode.isNotValid() -> throw InvalidRequestException("Invalid class code: $classCode")
-      user.isNotValidUser() -> throw InvalidRequestException("Invalid user")
+      classCode.isNotValid() -> {
+        throw InvalidRequestException("Invalid class code: $classCode")
+      }
+
+      user.isNotValidUser() -> {
+        throw InvalidRequestException("Invalid user")
+      }
+
       // classCode != activeClassCode -> throw InvalidRequestException("Class code mismatch")
       classCode.fetchClassTeacherId() != user.userId -> {
         val teacherId = classCode.fetchClassTeacherId()

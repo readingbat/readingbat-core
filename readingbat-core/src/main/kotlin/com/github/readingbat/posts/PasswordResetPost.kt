@@ -60,6 +60,8 @@ import io.ktor.server.routing.RoutingContext
 import kotlinx.html.a
 import kotlinx.html.h2
 import kotlinx.html.p
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.jdbc.select
 
 internal object PasswordResetPost {
   private val logger = KotlinLogging.logger {}
@@ -84,7 +86,10 @@ internal object PasswordResetPost {
         )
       }
 
-      email.isBlank() -> passwordResetPage(EMPTY_RESET_ID, unableToSend)
+      email.isBlank() -> {
+        passwordResetPage(EMPTY_RESET_ID, unableToSend)
+      }
+
       email.isNotValidEmail() -> {
         passwordResetPage(EMPTY_RESET_ID, Message("Invalid email address: $email", true))
       }

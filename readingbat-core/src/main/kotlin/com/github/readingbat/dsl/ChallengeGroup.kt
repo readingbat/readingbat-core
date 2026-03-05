@@ -104,11 +104,13 @@ class ChallengeGroup<T : Challenge>(
           }
         }
 
-        is FileSystemSource ->
+        is FileSystemSource -> {
           File(pathOf(root.pathPrefix, srcPath, packageNameAsPath)).walk().map { it.name }.toList()
+        }
 
-        else ->
+        else -> {
           error("Invalid repo type: $root")
+        }
       }
     }
   }

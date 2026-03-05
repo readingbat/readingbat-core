@@ -43,7 +43,10 @@ internal object PythonParse {
       var insideMain = false
       code.forEach { line ->
         when {
-          line.contains(defMainRegex) -> insideMain = true
+          line.contains(defMainRegex) -> {
+            insideMain = true
+          }
+
           insideMain -> {
             // Skip everything after def main(): that does not have a print
             if (line.contains(PRINT_PREFIX)) {
@@ -54,7 +57,9 @@ internal object PythonParse {
             }
           }
 
-          else -> appendLine(line)
+          else -> {
+            appendLine(line)
+          }
         }
       }
       appendLine("")

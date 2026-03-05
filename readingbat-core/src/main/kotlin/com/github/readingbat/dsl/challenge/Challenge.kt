@@ -65,8 +65,10 @@ import com.pambrose.common.exposed.get
 import com.pambrose.common.exposed.readonlyTx
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.exposed.sql.and
-import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.v1.core.and
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.jdbc.select
+import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import java.net.URL
 import java.nio.file.Paths
 import kotlin.concurrent.atomics.AtomicInt
@@ -192,8 +194,11 @@ sealed class Challenge(
   internal fun isCorrect(user: User?, browserSession: BrowserSession?): Boolean {
     val challengeMd5 = md5()
     return when {
-      !isDbmsEnabled() -> false
-      user.isNotNull() ->
+      !isDbmsEnabled() -> {
+        false
+      }
+
+      user.isNotNull() -> {
         readonlyTx {
           with(UserChallengeInfoTable) {
             select(allCorrect)
@@ -202,8 +207,9 @@ sealed class Challenge(
               .firstOrNull() ?: false
           }
         }
+      }
 
-      browserSession.isNotNull() ->
+      browserSession.isNotNull() -> {
         transaction {
           with(SessionChallengeInfoTable) {
             select(allCorrect)
@@ -212,8 +218,11 @@ sealed class Challenge(
               .firstOrNull() ?: false
           }
         }
+      }
 
-      else -> false
+      else -> {
+        false
+      }
     }
   }
 

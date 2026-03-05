@@ -62,19 +62,42 @@ object WsCommon {
     user: User,
   ) =
     when {
-      languageName.isNotNull() && languageName.isNotValid() -> false to "Invalid language: $languageName"
-      groupName.isNotNull() && groupName.isNotValid() -> false to "Invalid group: $groupName"
-      classCode.isNotValid() -> false to "Invalid class code: $classCode"
-      classCode.isNotEnabled -> false to "Class code not enabled"
-      student.isNotNull() && student.isNotValidUser() -> false to "Invalid student id: ${student.userId}"
-      student.isNotNull() && student.isNotEnrolled(classCode) -> false to "Student not enrolled in class"
-      user.isNotValidUser() -> false to "Invalid user id: ${user.userId}"
+      languageName.isNotNull() && languageName.isNotValid() -> {
+        false to "Invalid language: $languageName"
+      }
+
+      groupName.isNotNull() && groupName.isNotValid() -> {
+        false to "Invalid group: $groupName"
+      }
+
+      classCode.isNotValid() -> {
+        false to "Invalid class code: $classCode"
+      }
+
+      classCode.isNotEnabled -> {
+        false to "Class code not enabled"
+      }
+
+      student.isNotNull() && student.isNotValidUser() -> {
+        false to "Invalid student id: ${student.userId}"
+      }
+
+      student.isNotNull() && student.isNotEnrolled(classCode) -> {
+        false to "Student not enrolled in class"
+      }
+
+      user.isNotValidUser() -> {
+        false to "Invalid user id: ${user.userId}"
+      }
+
       classCode.fetchClassTeacherId() != user.userId -> {
         val teacherId = classCode.fetchClassTeacherId()
         false to "User id ${user.userId} does not match class code's teacher Id $teacherId"
       }
 
-      else -> true to ""
+      else -> {
+        true to ""
+      }
     }.also { (valid, msg) -> if (!valid) throw InvalidRequestException(msg) }
 
   fun validateLogContext(user: User) =

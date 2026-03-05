@@ -79,10 +79,10 @@ import io.ktor.server.routing.RoutingContext
 import kotlinx.serialization.Required
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import org.jetbrains.exposed.sql.and
-import org.jetbrains.exposed.sql.deleteWhere
-import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.v1.core.and
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.jdbc.deleteWhere
+import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.joda.time.DateTime
 import org.joda.time.DateTimeZone
 
@@ -219,42 +219,50 @@ internal object ChallengePost {
 
   private fun deleteChallengeInfo(type: String, id: String, md5Val: String) =
     when (type) {
-      AUTH_KEY ->
+      AUTH_KEY -> {
         transaction {
           with(UserChallengeInfoTable) {
             deleteWhere { (userRef eq fetchUserDbmsIdFromCache(id)) and (md5 eq md5Val) }
           }
         }
+      }
 
-      NO_AUTH_KEY ->
+      NO_AUTH_KEY -> {
         transaction {
           val sessionDbmsId = findOrCreateSessionDbmsId(id, false)
           with(SessionChallengeInfoTable) {
             deleteWhere { (sessionRef eq sessionDbmsId) and (md5 eq md5Val) }
           }
         }
+      }
 
-      else -> error("Invalid type: $type")
+      else -> {
+        error("Invalid type: $type")
+      }
     }
 
   private fun deleteAnswerHistory(type: String, id: String, md5Val: String) =
     when (type) {
-      AUTH_KEY ->
+      AUTH_KEY -> {
         transaction {
           with(UserAnswerHistoryTable) {
             deleteWhere { (userRef eq fetchUserDbmsIdFromCache(id)) and (md5 eq md5Val) }
           }
         }
+      }
 
-      NO_AUTH_KEY ->
+      NO_AUTH_KEY -> {
         transaction {
           val sessionDbmsId = findOrCreateSessionDbmsId(id, false)
           with(SessionAnswerHistoryTable) {
             deleteWhere { (sessionRef eq sessionDbmsId) and (md5 eq md5Val) }
           }
         }
+      }
 
-      else -> error("Invalid type: $type")
+      else -> {
+        error("Invalid type: $type")
+      }
     }
 
   suspend fun RoutingContext.clearChallengeAnswers(content: ReadingBatContent, user: User?): String {
@@ -357,6 +365,7 @@ internal object ChallengePost {
           -> 0
 
         DISLIKE_CLEAR -> 2
+
         else -> error("Invalid like/dislike argument: $likeArg")
       }
 
@@ -396,7 +405,7 @@ internal object ChallengePost {
 
     transaction {
       when {
-        user.isNotNull() ->
+        user.isNotNull() -> {
           with(UserChallengeInfoTable) {
             upsert(conflictIndex = userChallengeInfoIndex) { row ->
               row[userRef] = user.userDbmsId
@@ -406,8 +415,9 @@ internal object ChallengePost {
               row[answersJson] = invokeStr
             }
           }
+        }
 
-        browserSession.isNotNull() ->
+        browserSession.isNotNull() -> {
           with(SessionChallengeInfoTable) {
             upsert(conflictIndex = sessionChallengeInfoIndex) { row ->
               row[sessionRef] = browserSession.queryOrCreateSessionDbmsId()
@@ -417,9 +427,11 @@ internal object ChallengePost {
               row[answersJson] = invokeStr
             }
           }
+        }
 
-        else ->
+        else -> {
           logger.warn { "ChallengeInfo not updated" }
+        }
       }
 
       // Save the history of each answer on a per-invocation basis
@@ -446,7 +458,7 @@ internal object ChallengePost {
         val json = Json.encodeToString(history.answers)
 
         when {
-          user.isNotNull() ->
+          user.isNotNull() -> {
             with(UserAnswerHistoryTable) {
               upsert(conflictIndex = userAnswerHistoryIndex) { row ->
                 row[userRef] = user.userDbmsId
@@ -458,8 +470,9 @@ internal object ChallengePost {
                 row[historyJson] = json
               }
             }
+          }
 
-          browserSession.isNotNull() ->
+          browserSession.isNotNull() -> {
             with(SessionAnswerHistoryTable) {
               upsert(conflictIndex = sessionAnswerHistoryIndex) { row ->
                 row[sessionRef] = browserSession.queryOrCreateSessionDbmsId()
@@ -471,9 +484,11 @@ internal object ChallengePost {
                 row[historyJson] = json
               }
             }
+          }
 
-          else ->
+          else -> {
             logger.warn { "Answer history not updated" }
+          }
         }
       }
     }
@@ -510,7 +525,7 @@ internal object ChallengePost {
           user.publishLikeDislike(challengeMd5, likeDislikeVal)
       }
 
-      browserSession.isNotNull() ->
+      browserSession.isNotNull() -> {
         transaction {
           with(SessionChallengeInfoTable) {
             upsert(conflictIndex = sessionChallengeInfoIndex) { row ->
@@ -521,6 +536,7 @@ internal object ChallengePost {
             }
           }
         }
+      }
 
       else -> {
         // Do nothing

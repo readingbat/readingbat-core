@@ -46,13 +46,22 @@ internal object KotlinParse {
 
       code.forEach { line ->
         when {
-          line.contains(funMainRegex) -> insideMain = true
+          line.contains(funMainRegex) -> {
+            insideMain = true
+          }
+
           insideMain && line.trimStart().startsWith(PRINT_PREFIX) -> {
             val expr = line.substringBetween(PRINT_PREFIX, ")")
             appendLine("$VAR_NAME.add($expr)")
           }
-          insideMain && line.trimStart().startsWith("}") -> insideMain = false
-          else -> appendLine(line)
+
+          insideMain && line.trimStart().startsWith("}") -> {
+            insideMain = false
+          }
+
+          else -> {
+            appendLine(line)
+          }
         }
       }
       appendLine("")

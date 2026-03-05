@@ -52,9 +52,10 @@ import io.ktor.server.request.queryString
 import io.ktor.server.routing.RoutingRoot.Plugin.RoutingCallFinished
 import io.ktor.server.routing.RoutingRoot.Plugin.RoutingCallStarted
 import io.ktor.util.pipeline.PipelineContext
-import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.transactions.transaction
-import org.jetbrains.exposed.sql.update
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.jdbc.insert
+import org.jetbrains.exposed.v1.jdbc.transactions.transaction
+import org.jetbrains.exposed.v1.jdbc.update
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.concurrent.timer
 import kotlin.time.Duration.Companion.hours

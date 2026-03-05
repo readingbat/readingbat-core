@@ -79,17 +79,18 @@ import com.pambrose.common.exposed.upsert
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.html.Entities.nbsp
 import kotlinx.serialization.json.Json
-import org.jetbrains.exposed.sql.Count
-import org.jetbrains.exposed.sql.ResultRow
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import org.jetbrains.exposed.sql.and
-import org.jetbrains.exposed.sql.deleteWhere
-import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.insertAndGetId
-import org.jetbrains.exposed.sql.or
-import org.jetbrains.exposed.sql.selectAll
-import org.jetbrains.exposed.sql.transactions.transaction
-import org.jetbrains.exposed.sql.update
+import org.jetbrains.exposed.v1.core.Count
+import org.jetbrains.exposed.v1.core.ResultRow
+import org.jetbrains.exposed.v1.core.and
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.or
+import org.jetbrains.exposed.v1.jdbc.deleteWhere
+import org.jetbrains.exposed.v1.jdbc.insert
+import org.jetbrains.exposed.v1.jdbc.insertAndGetId
+import org.jetbrains.exposed.v1.jdbc.select
+import org.jetbrains.exposed.v1.jdbc.selectAll
+import org.jetbrains.exposed.v1.jdbc.transactions.transaction
+import org.jetbrains.exposed.v1.jdbc.update
 import org.joda.time.DateTime
 import org.joda.time.DateTimeZone.UTC
 import java.util.concurrent.ConcurrentHashMap
@@ -368,10 +369,19 @@ class User {
 
   fun enrollInClass(classCode: ClassCode) {
     when {
-      classCode.isNotEnabled -> throw DataException("Not reportable class code")
-      classCode.isNotValid() -> throw DataException("Invalid class code: $classCode")
-      isEnrolled(classCode) -> throw DataException("Already enrolled in class $classCode")
-      else ->
+      classCode.isNotEnabled -> {
+        throw DataException("Not reportable class code")
+      }
+
+      classCode.isNotValid() -> {
+        throw DataException("Invalid class code: $classCode")
+      }
+
+      isEnrolled(classCode) -> {
+        throw DataException("Already enrolled in class $classCode")
+      }
+
+      else -> {
         transaction {
           val previousClassCode = enrolledClassCode
           if (previousClassCode.isEnabled)
@@ -379,6 +389,7 @@ class User {
           assignEnrolledClassCode(classCode)
           classCode.addEnrollee(this@User)
         }
+      }
     }
   }
 
@@ -543,7 +554,10 @@ class User {
 
   fun shouldPublish(classCode: ClassCode = enrolledClassCode) =
     when {
-      !isDbmsEnabled() -> false
+      !isDbmsEnabled() -> {
+        false
+      }
+
       classCode.isEnabled -> {
         // Check to see if the teacher that owns class has it set as their active class in one of the sessions
         val teacherId = classCode.fetchClassTeacherId()
@@ -552,7 +566,9 @@ class User {
             .also { logger.debug { "Publishing teacherId: $teacherId for $classCode" } }
       }
 
-      else -> false
+      else -> {
+        false
+      }
     }
 
   override fun toString() = "User(userId='$userId', name='$fullName')"
@@ -581,8 +597,11 @@ class User {
 
     fun queryActiveTeachingClassCode(user: User?) =
       when {
-        user.isNull() || !isDbmsEnabled() -> DISABLED_CLASS_CODE
-        else ->
+        user.isNull() || !isDbmsEnabled() -> {
+          DISABLED_CLASS_CODE
+        }
+
+        else -> {
           transaction {
             with(UserSessionsTable) {
               select(activeClassCode)
@@ -591,12 +610,16 @@ class User {
                 .firstOrNull()?.let { ClassCode(it) } ?: DISABLED_CLASS_CODE
             }
           }
+        }
       }
 
     fun queryPreviousTeacherClassCode(user: User?) =
       when {
-        user.isNull() || !isDbmsEnabled() -> DISABLED_CLASS_CODE
-        else ->
+        user.isNull() || !isDbmsEnabled() -> {
+          DISABLED_CLASS_CODE
+        }
+
+        else -> {
           transaction {
             with(UserSessionsTable) {
               select(previousTeacherClassCode)
@@ -605,6 +628,7 @@ class User {
                 .firstOrNull()?.let { ClassCode(it) } ?: DISABLED_CLASS_CODE
             }
           }
+        }
       }
 
     fun userExists(idVal: String) =

@@ -108,7 +108,9 @@ internal object ServerUtils {
         }
       }
 
-      else -> block.invoke()
+      else -> {
+        block.invoke()
+      }
     }
 
   @KtorDsl

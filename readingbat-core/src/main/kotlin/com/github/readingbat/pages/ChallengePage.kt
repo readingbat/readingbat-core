@@ -146,8 +146,10 @@ import kotlinx.html.textInput
 import kotlinx.html.th
 import kotlinx.html.tr
 import kotlinx.serialization.json.Json
-import org.jetbrains.exposed.sql.and
-import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.v1.core.and
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.jdbc.select
+import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 
 internal object ChallengePage {
   private val logger = KotlinLogging.logger {}
@@ -794,8 +796,11 @@ internal object ChallengePage {
 
   fun fetchPreviousResponses(user: User?, browserSession: BrowserSession?, challenge: Challenge) =
     when {
-      !isDbmsEnabled() -> emptyMap
-      user.isNotNull() ->
+      !isDbmsEnabled() -> {
+        emptyMap
+      }
+
+      user.isNotNull() -> {
         readonlyTx {
           with(UserChallengeInfoTable) {
             select(answersJson)
@@ -806,8 +811,9 @@ internal object ChallengePage {
               ?: emptyMap
           }
         }
+      }
 
-      browserSession.isNotNull() ->
+      browserSession.isNotNull() -> {
         transaction {
           with(SessionChallengeInfoTable) {
             select(answersJson)
@@ -818,7 +824,10 @@ internal object ChallengePage {
               ?: emptyMap
           }
         }
+      }
 
-      else -> emptyMap
+      else -> {
+        emptyMap
+      }
     }
 }

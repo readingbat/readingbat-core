@@ -126,8 +126,14 @@ internal object ClassSummaryPage {
     msg: Message = EMPTY_MESSAGE,
   ): String {
     when {
-      classCode.isNotValid() -> throw InvalidRequestException("Invalid class code: $classCode")
-      user.isNotValidUser() -> throw InvalidRequestException("Invalid user")
+      classCode.isNotValid() -> {
+        throw InvalidRequestException("Invalid class code: $classCode")
+      }
+
+      user.isNotValidUser() -> {
+        throw InvalidRequestException("Invalid user")
+      }
+
       classCode.fetchClassTeacherId() != user.userId -> {
         val teacherId = classCode.fetchClassTeacherId()
         throw InvalidRequestException("User id ${user.userId} does not match class code's teacher id $teacherId")

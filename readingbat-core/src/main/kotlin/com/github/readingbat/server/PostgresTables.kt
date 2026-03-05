@@ -17,9 +17,9 @@
 
 package com.github.readingbat.server
 
-import org.jetbrains.exposed.dao.id.LongIdTable
-import org.jetbrains.exposed.sql.Index
-import org.jetbrains.exposed.sql.jodatime.datetime
+import org.jetbrains.exposed.v1.core.Index
+import org.jetbrains.exposed.v1.core.dao.id.LongIdTable
+import org.jetbrains.exposed.v1.jodatime.datetime
 
 val userSessionIndex =
   Index(listOf(UserSessionsTable.sessionRef, UserSessionsTable.userRef), true, "user_sessions_unique")
