@@ -1,0 +1,76 @@
+# ReadingBat Core
+
+> A Kotlin-based framework for creating interactive programming challenges, powering the ReadingBat platform for teaching Java, Kotlin, and Python programming concepts.
+
+ReadingBat Core is a web application built with Ktor that serves programming challenges defined via a Kotlin DSL. Challenges are evaluated at runtime using JSR-223 script engines for Java, Kotlin, and Python. The platform supports user accounts, teacher-managed classes, progress tracking, and real-time WebSocket updates.
+
+## Key Technologies
+
+- Kotlin 2.3, Ktor 3.4 (CIO engine), Exposed ORM 1.1, PostgreSQL
+- Kotlinx.html for server-side HTML generation (no templates)
+- Kotest for testing, Cypress for E2E tests
+- Gradle multi-module build with version catalog (libs.versions.toml)
+- Java 17 toolchain
+
+## Project Structure
+
+Two Gradle submodules:
+
+- **readingbat-core/**: Main application - Ktor web server, DSL engine, database layer, HTML page generation
+- **readingbat-kotest/**: Test utilities module providing TestSupport helpers for Kotest-based integration tests
+
+### Source Layout (readingbat-core)
+
+- `dsl/` - Content DSL and challenge type definitions
+- `pages/` - Server-side HTML page generation using Kotlinx.html
+- `pages/js/` - Generated JavaScript for client-side interactivity
+- `server/` - Core server infrastructure, routing, WebSocket handlers
+- `server/ws/` - WebSocket routes for real-time updates
+- `posts/` - Form handling
+- `common/` - Shared utilities and value types
+
+## Content DSL
+
+The core abstraction is a Kotlin DSL (`readingBatContent { }`) that defines programming challenges:
+
+- `ReadingBatContent` holds three `LanguageGroup`s: java, python, kotlin
+- Each `LanguageGroup` contains `ChallengeGroup`s, each containing `Challenge`s
+- Content can be loaded from local files (`FileSystemSource`) or GitHub repos (`GitHubContent`)
+- `ContentDsl.kt` handles reading and evaluating DSL code via Kotlin scripting
+
+## Configuration
+
+Dual configuration system:
+
+- `Property` (sealed class): HOCON-based properties from Ktor's ApplicationConfig
+- `EnvVar` (enum): Environment variables that override HOCON values
+- Secrets loaded from `secrets/secrets.env` (not committed)
+
+## Database
+
+Exposed ORM with PostgreSQL. Key tables: UsersTable, BrowserSessionsTable, UserSessionsTable, UserChallengeInfoTable, SessionChallengeInfoTable, UserAnswerHistoryTable, SessionAnswerHistoryTable, ClassesTable, EnrolleesTable, ServerRequestsTable, GeoInfosTable.
+
+Migrations managed by Flyway in `src/main/resources/db/migration/`.
+
+## Routing
+
+Type-safe routing via Ktor `@Resource` annotations in `Locations.kt`: Language -> Language.Group -> Language.Group.Challenge (nested resources mapping to URL paths like `/content/java/Warmup-1/hello`).
+
+## Value Types
+
+Extensive use of Kotlin `@JvmInline value class` for type safety: LanguageName, GroupName, ChallengeName, ChallengeMd5, Password, FullName, ResetId.
+
+## Development
+
+- Build: `make build` or `./gradlew build -xtest`
+- Test: `make tests` or `./gradlew check`
+- Run: `make run` or `./gradlew run`
+- Lint: `make lint` (ktlint via Kotlinter)
+- Format: `./gradlew formatKotlinMain formatKotlinTest`
+- DB reset: `make dbreset`
+- DB migrate: `make dbmigrate`
+
+## Links
+
+- [Source](https://github.com/readingbat/readingbat-core)
+- [Template Repository](https://github.com/readingbat/readingbat-template)
