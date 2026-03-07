@@ -300,7 +300,7 @@ internal object HelpAndLogin {
           span {
             style = "font-size:100%; color:gray"
             a {
-              href = "$LOGOUT?$RETURN_PARAM=$loginPath"
+              href = LOGOUT
               +"log out"
             }
           }
