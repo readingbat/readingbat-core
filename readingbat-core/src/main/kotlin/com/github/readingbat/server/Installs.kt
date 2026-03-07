@@ -36,6 +36,7 @@ import com.github.readingbat.pages.ErrorPage.errorPage
 import com.github.readingbat.pages.InvalidRequestPage.invalidRequestPage
 import com.github.readingbat.pages.NotFoundPage.notFoundPage
 import com.github.readingbat.server.ConfigureCookies.configureAuthCookie
+import com.github.readingbat.server.ConfigureCookies.configureOAuthReturnUrlCookie
 import com.github.readingbat.server.ConfigureCookies.configureSessionIdCookie
 import com.github.readingbat.server.ConfigureOAuth.configureGitHubOAuth
 import com.github.readingbat.server.ConfigureOAuth.configureGoogleOAuth
@@ -85,6 +86,7 @@ object Installs {
     install(Sessions) {
       configureSessionIdCookie()
       configureAuthCookie()
+      configureOAuthReturnUrlCookie()
     }
 
     install(Authentication) {

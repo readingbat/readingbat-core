@@ -80,3 +80,8 @@ data class BrowserSession(val id: String, val created: Long = Instant.now().toEp
 internal val ApplicationCall.browserSession get() = sessions.get<BrowserSession>()
 
 internal val ApplicationCall.userPrincipal get() = sessions.get<UserPrincipal>()
+
+@Serializable
+internal data class OAuthReturnUrl(val url: String)
+
+internal val ApplicationCall.oauthReturnUrl get() = sessions.get<OAuthReturnUrl>()

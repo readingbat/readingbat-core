@@ -19,9 +19,12 @@ package com.github.readingbat.pages
 
 import com.github.readingbat.common.Endpoints.OAUTH_LOGIN_GITHUB_ENDPOINT
 import com.github.readingbat.common.Endpoints.OAUTH_LOGIN_GOOGLE_ENDPOINT
+import com.github.readingbat.pages.HelpAndLogin.GITHUB_SVG
+import com.github.readingbat.pages.HelpAndLogin.GOOGLE_SVG
 import com.github.readingbat.pages.PageUtils.bodyTitle
 import com.github.readingbat.pages.PageUtils.headDefault
 import com.github.readingbat.pages.PageUtils.loadPingdomScript
+import com.github.readingbat.pages.PageUtils.rawHtml
 import kotlinx.html.a
 import kotlinx.html.body
 import kotlinx.html.div
@@ -51,26 +54,10 @@ internal object OAuthLoginPage {
             div {
               style = "margin: 20px 0"
               a {
-                href = OAUTH_LOGIN_GITHUB_ENDPOINT
-                style =
-                  """
-                  display: inline-block;
-                  padding: 10px 20px;
-                  margin: 5px;
-                  background-color: #333;
-                  color: white;
-                  text-decoration: none;
-                  border-radius: 4px;
-                  font-size: 14px;
-                  """.trimIndent()
-                +"Sign in with GitHub"
-              }
-
-              a {
                 href = OAUTH_LOGIN_GOOGLE_ENDPOINT
                 style =
                   """
-                  display: inline-block;
+                  display: inline-flex; align-items: center; gap: 10px;
                   padding: 10px 20px;
                   margin: 5px;
                   background-color: #4285f4;
@@ -79,7 +66,25 @@ internal object OAuthLoginPage {
                   border-radius: 4px;
                   font-size: 14px;
                   """.trimIndent()
+                rawHtml(GOOGLE_SVG)
                 +"Sign in with Google"
+              }
+
+              a {
+                href = OAUTH_LOGIN_GITHUB_ENDPOINT
+                style =
+                  """
+                  display: inline-flex; align-items: center; gap: 10px;
+                  padding: 10px 20px;
+                  margin: 5px;
+                  background-color: #333;
+                  color: white;
+                  text-decoration: none;
+                  border-radius: 4px;
+                  font-size: 14px;
+                  """.trimIndent()
+                rawHtml(GITHUB_SVG)
+                +"Sign in with GitHub"
               }
             }
           }

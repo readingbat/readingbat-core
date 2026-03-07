@@ -23,6 +23,7 @@ import com.github.readingbat.common.BrowserSession.Companion.findOrCreateSession
 import com.github.readingbat.common.Constants.STATIC
 import com.github.readingbat.common.Constants.UNKNOWN_USER_ID
 import com.github.readingbat.common.Endpoints.ABOUT_ENDPOINT
+import com.github.readingbat.common.Endpoints.CHALLENGE_ROOT
 import com.github.readingbat.common.Endpoints.HELP_ENDPOINT
 import com.github.readingbat.common.Endpoints.OAUTH_CALLBACK_GITHUB_ENDPOINT
 import com.github.readingbat.common.Endpoints.OAUTH_CALLBACK_GOOGLE_ENDPOINT
@@ -31,6 +32,8 @@ import com.github.readingbat.common.Endpoints.OAUTH_LOGIN_GITHUB_ENDPOINT
 import com.github.readingbat.common.Endpoints.OAUTH_LOGIN_GOOGLE_ENDPOINT
 import com.github.readingbat.common.Endpoints.PING_ENDPOINT
 import com.github.readingbat.common.Endpoints.PRIVACY_ENDPOINT
+import com.github.readingbat.common.Endpoints.ROOT
+import com.github.readingbat.common.OAuthReturnUrl
 import com.github.readingbat.common.User.Companion.fetchUserDbmsIdFromCache
 import com.github.readingbat.common.browserSession
 import com.github.readingbat.common.userPrincipal
@@ -65,6 +68,8 @@ import io.ktor.server.request.queryString
 import io.ktor.server.response.respondRedirect
 import io.ktor.server.routing.RoutingRoot.Plugin.RoutingCallFinished
 import io.ktor.server.routing.RoutingRoot.Plugin.RoutingCallStarted
+import io.ktor.server.sessions.sessions
+import io.ktor.server.sessions.set
 import io.ktor.util.pipeline.PipelineContext
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.insert
@@ -84,6 +89,7 @@ internal object Intercepts {
 
   val publicPaths =
     setOf(
+    ROOT,
     OAUTH_LOGIN_ENDPOINT,
     OAUTH_LOGIN_GITHUB_ENDPOINT,
     OAUTH_LOGIN_GOOGLE_ENDPOINT,
@@ -122,6 +128,13 @@ internal object Intercepts {
     }
 }
 
+private fun isBrowsableContentPath(path: String): Boolean {
+  if (!path.startsWith("$CHALLENGE_ROOT/") && path != CHALLENGE_ROOT) return false
+  val suffix = path.removePrefix(CHALLENGE_ROOT).trimStart('/')
+  if (suffix.isEmpty()) return true
+  return suffix.split('/').size <= 2 // /content/java (1) or /content/java/Warmup-1 (2)
+}
+
 internal fun Application.intercepts() {
   intercept(ApplicationCallPipeline.Setup) {
     // Phase for preparing call and it's attributes for processing
@@ -132,13 +145,24 @@ internal fun Application.intercepts() {
   }
 
   // Mandatory auth: redirect unauthenticated users to OAuth login page
+  // Language pages (/content/java) and group pages (/content/java/Warmup-1) are browsable without auth;
+  // only individual challenges require authentication.
   if (isDbmsEnabled()) {
     intercept(Plugins) {
       val path = call.request.path()
-      val isPublic = path in publicPaths || publicPrefixes.any { path.startsWith(it) }
+      val isPublic = path in publicPaths || publicPrefixes.any { path.startsWith(it) } || isBrowsableContentPath(path)
       if (!isPublic && call.userPrincipal == null) {
+        val returnUrl = path + call.request.queryString().let { if (it.isNotEmpty()) "?$it" else "" }
+        call.sessions.set(OAuthReturnUrl(returnUrl))
         call.respondRedirect(OAUTH_LOGIN_ENDPOINT)
         finish()
+      }
+
+      // Capture return URL from OAuth login links (e.g., /oauth/login/github?return=/content/java/Warmup-1/hello)
+      if (path == OAUTH_LOGIN_GITHUB_ENDPOINT || path == OAUTH_LOGIN_GOOGLE_ENDPOINT) {
+        call.request.queryParameters["return"]
+          ?.takeIf { it.startsWith("/") }
+          ?.let { call.sessions.set(OAuthReturnUrl(it)) }
       }
     }
   }

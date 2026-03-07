@@ -26,6 +26,7 @@ import com.github.readingbat.common.Endpoints.OAUTH_CALLBACK_GOOGLE_ENDPOINT
 import com.github.readingbat.common.Endpoints.OAUTH_LOGIN_ENDPOINT
 import com.github.readingbat.common.Endpoints.OAUTH_LOGIN_GITHUB_ENDPOINT
 import com.github.readingbat.common.Endpoints.OAUTH_LOGIN_GOOGLE_ENDPOINT
+import com.github.readingbat.common.OAuthReturnUrl
 import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.queryUserByEmail
 import com.github.readingbat.common.UserPrincipal
@@ -45,6 +46,8 @@ import io.ktor.server.auth.principal
 import io.ktor.server.response.respondRedirect
 import io.ktor.server.routing.Routing
 import io.ktor.server.routing.get
+import io.ktor.server.sessions.clear
+import io.ktor.server.sessions.get
 import io.ktor.server.sessions.sessions
 import io.ktor.server.sessions.set
 import kotlinx.serialization.SerialName
@@ -136,7 +139,9 @@ fun Routing.oauthRoutes() {
 
       val user = findOrCreateOAuthUser("github", providerId, Email(email), FullName(name), accessToken, avatarUrl)
       call.sessions.set(UserPrincipal(userId = user.userId))
-      call.respondRedirect("/content/java")
+      val returnUrl = call.sessions.get<OAuthReturnUrl>()?.url?.takeIf { it.startsWith("/") } ?: "/"
+      call.sessions.clear<OAuthReturnUrl>()
+      call.respondRedirect(returnUrl)
     }
   }
 
@@ -171,7 +176,9 @@ fun Routing.oauthRoutes() {
 
       val user = findOrCreateOAuthUser("google", providerId, Email(email), FullName(name), accessToken, avatarUrl)
       call.sessions.set(UserPrincipal(userId = user.userId))
-      call.respondRedirect("/")
+      val returnUrl = call.sessions.get<OAuthReturnUrl>()?.url?.takeIf { it.startsWith("/") } ?: "/"
+      call.sessions.clear<OAuthReturnUrl>()
+      call.respondRedirect(returnUrl)
     }
   }
 }
@@ -228,7 +235,7 @@ private fun findOrCreateOAuthUser(
     return User.Companion.run { userId.toUser() }
   }
 
-  // 2. No link found — check if email matches an existing user with same provider
+  // 2. No link found — check if email matches an existing user
   if (email.isNotBlank()) {
     val existingUser = queryUserByEmail(email)
     if (existingUser != null) {
@@ -242,30 +249,29 @@ private fun findOrCreateOAuthUser(
         }
       }
 
-      // Only auto-link if provider matches or user has no provider yet (legacy password user)
-      if (userProvider == null || userProvider == provider) {
-        oauthLogger.info { "OAuth login: auto-linking $provider to existing user ${existingUser.email}" }
-        transaction {
-          // Link OAuth provider to existing user
-          with(OAuthLinksTable) {
-            insert { row ->
-              row[userRef] = existingUser.userDbmsId
-              row[OAuthLinksTable.provider] = provider
-              row[OAuthLinksTable.providerId] = providerId
-              row[providerEmail] = email.value
-              row[OAuthLinksTable.accessToken] = accessToken
-            }
-          }
-          // Set auth_provider if not already set, and update avatar
-          if (userProvider == null || avatarUrl != null) {
-            UsersTable.update({ UsersTable.id eq existingUser.userDbmsId }) { row ->
-              if (userProvider == null) row[authProvider] = provider
-              if (avatarUrl != null) row[UsersTable.avatarUrl] = avatarUrl
-            }
+      // Auto-link any OAuth provider to existing user with matching email.
+      // This is safe because both GitHub and Google only return verified emails.
+      oauthLogger.info { "OAuth login: auto-linking $provider to existing user ${existingUser.email}" }
+      transaction {
+        // Link OAuth provider to existing user
+        with(OAuthLinksTable) {
+          insert { row ->
+            row[userRef] = existingUser.userDbmsId
+            row[OAuthLinksTable.provider] = provider
+            row[OAuthLinksTable.providerId] = providerId
+            row[providerEmail] = email.value
+            row[OAuthLinksTable.accessToken] = accessToken
           }
         }
-        return existingUser
+        // Set auth_provider if not already set, and update avatar
+        if (userProvider == null || avatarUrl != null) {
+          UsersTable.update({ UsersTable.id eq existingUser.userDbmsId }) { row ->
+            if (userProvider == null) row[authProvider] = provider
+            if (avatarUrl != null) row[UsersTable.avatarUrl] = avatarUrl
+          }
+        }
       }
+      return existingUser
     }
   }
 

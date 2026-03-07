@@ -72,6 +72,7 @@ import kotlinx.html.hiddenInput
 import kotlinx.html.html
 import kotlinx.html.id
 import kotlinx.html.img
+import kotlinx.html.onClick
 import kotlinx.html.onSubmit
 import kotlinx.html.p
 import kotlinx.html.script
@@ -112,9 +113,13 @@ internal object ChallengeGroupPage {
             if (activeTeachingClassCode.isNotEnabled)
               img { src = pathOf(STATIC_ROOT, if (allCorrect) GREEN_CHECK else WHITE_CHECK) }
 
+            val challengePath = pathOf(CHALLENGE_ROOT, languageName, groupName, challengeName)
             a {
               style = "font-Size:110%; padding-left:2px"
-              href = pathOf(CHALLENGE_ROOT, languageName, groupName, challengeName)
+              href = challengePath
+              if (user == null) {
+                onClick = "openOAuthModal('$challengePath'); return false;"
+              }
               +challengeName.value
             }
 
