@@ -15,7 +15,7 @@ node_modules/
 
 cypress/videos
 cypress/screenshots
-cypress/examplesF
+cypress/examples
 
 ### Kotlin template
 # Compiled class file
