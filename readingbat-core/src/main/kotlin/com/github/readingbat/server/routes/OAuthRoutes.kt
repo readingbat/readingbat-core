@@ -18,19 +18,16 @@
 package com.github.readingbat.server.routes
 
 import com.github.pambrose.common.email.Email
-import com.github.pambrose.common.response.respondWith
 import com.github.pambrose.common.util.randomId
 import com.github.readingbat.common.AuthName
 import com.github.readingbat.common.Endpoints.OAUTH_CALLBACK_GITHUB_ENDPOINT
 import com.github.readingbat.common.Endpoints.OAUTH_CALLBACK_GOOGLE_ENDPOINT
-import com.github.readingbat.common.Endpoints.OAUTH_LOGIN_ENDPOINT
 import com.github.readingbat.common.Endpoints.OAUTH_LOGIN_GITHUB_ENDPOINT
 import com.github.readingbat.common.Endpoints.OAUTH_LOGIN_GOOGLE_ENDPOINT
 import com.github.readingbat.common.OAuthReturnUrl
 import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.queryUserByEmail
 import com.github.readingbat.common.UserPrincipal
-import com.github.readingbat.pages.OAuthLoginPage.oauthLoginPage
 import com.github.readingbat.server.ConfigureOAuth
 import com.github.readingbat.server.FullName
 import com.github.readingbat.server.OAuthLinksTable
@@ -92,10 +89,6 @@ private val json = Json { ignoreUnknownKeys = true }
 fun Routing.oauthRoutes() {
   val logger = KotlinLogging.logger {}
 
-  get(OAUTH_LOGIN_ENDPOINT) {
-    respondWith { oauthLoginPage() }
-  }
-
   authenticate(AuthName.GITHUB_OAUTH) {
     get(OAUTH_LOGIN_GITHUB_ENDPOINT) {
       // Ktor redirects to GitHub automatically
@@ -105,7 +98,7 @@ fun Routing.oauthRoutes() {
       val principal =
         call.principal<OAuthAccessTokenResponse.OAuth2>()
         ?: run {
-          call.respondRedirect(OAUTH_LOGIN_ENDPOINT)
+          call.respondRedirect("/")
           return@get
         }
 
@@ -154,7 +147,7 @@ fun Routing.oauthRoutes() {
       val principal =
         call.principal<OAuthAccessTokenResponse.OAuth2>()
         ?: run {
-          call.respondRedirect(OAUTH_LOGIN_ENDPOINT)
+          call.respondRedirect("/")
           return@get
         }
 

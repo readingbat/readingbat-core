@@ -27,7 +27,6 @@ import com.github.readingbat.common.Endpoints.CHALLENGE_ROOT
 import com.github.readingbat.common.Endpoints.HELP_ENDPOINT
 import com.github.readingbat.common.Endpoints.OAUTH_CALLBACK_GITHUB_ENDPOINT
 import com.github.readingbat.common.Endpoints.OAUTH_CALLBACK_GOOGLE_ENDPOINT
-import com.github.readingbat.common.Endpoints.OAUTH_LOGIN_ENDPOINT
 import com.github.readingbat.common.Endpoints.OAUTH_LOGIN_GITHUB_ENDPOINT
 import com.github.readingbat.common.Endpoints.OAUTH_LOGIN_GOOGLE_ENDPOINT
 import com.github.readingbat.common.Endpoints.PING_ENDPOINT
@@ -90,7 +89,6 @@ internal object Intercepts {
   val publicPaths =
     setOf(
     ROOT,
-    OAUTH_LOGIN_ENDPOINT,
     OAUTH_LOGIN_GITHUB_ENDPOINT,
     OAUTH_LOGIN_GOOGLE_ENDPOINT,
     OAUTH_CALLBACK_GITHUB_ENDPOINT,
@@ -144,7 +142,7 @@ internal fun Application.intercepts() {
     // Phase for tracing calls, useful for logging, metrics, error handling and so on
   }
 
-  // Mandatory auth: redirect unauthenticated users to OAuth login page
+  // Mandatory auth: redirect unauthenticated users to homepage
   // Language pages (/content/java) and group pages (/content/java/Warmup-1) are browsable without auth;
   // only individual challenges require authentication.
   if (isDbmsEnabled()) {
@@ -154,7 +152,7 @@ internal fun Application.intercepts() {
       if (!isPublic && call.userPrincipal == null) {
         val returnUrl = path + call.request.queryString().let { if (it.isNotEmpty()) "?$it" else "" }
         call.sessions.set(OAuthReturnUrl(returnUrl))
-        call.respondRedirect(OAUTH_LOGIN_ENDPOINT)
+        call.respondRedirect(ROOT)
         finish()
       }
 
