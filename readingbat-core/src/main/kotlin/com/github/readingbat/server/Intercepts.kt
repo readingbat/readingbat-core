@@ -152,7 +152,7 @@ internal fun Application.intercepts() {
       if (!isPublic && call.userPrincipal == null) {
         val returnUrl = path + call.request.queryString().let { if (it.isNotEmpty()) "?$it" else "" }
         call.sessions.set(OAuthReturnUrl(returnUrl))
-        call.respondRedirect(ROOT)
+        call.respondRedirect("$ROOT?login=required")
         finish()
       }
 

@@ -272,6 +272,10 @@ internal object HelpAndLogin {
         }
         document.getElementById('oauth-modal').style.display = 'flex';
       }
+      if (new URLSearchParams(window.location.search).get('login') === 'required') {
+        openOAuthModal();
+        history.replaceState(null, '', window.location.pathname);
+      }
       </script>
       """.trimIndent(),
     )
