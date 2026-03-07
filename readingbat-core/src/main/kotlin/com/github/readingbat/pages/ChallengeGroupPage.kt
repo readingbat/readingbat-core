@@ -18,7 +18,6 @@
 package com.github.readingbat.pages
 
 import com.github.pambrose.common.util.pathOf
-import com.github.readingbat.common.BrowserSession
 import com.github.readingbat.common.ClassCode
 import com.github.readingbat.common.Constants.COLUMN_CNT
 import com.github.readingbat.common.Constants.MSG
@@ -40,7 +39,6 @@ import com.github.readingbat.common.StaticFileNames.GREEN_CHECK
 import com.github.readingbat.common.StaticFileNames.WHITE_CHECK
 import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.queryActiveTeachingClassCode
-import com.github.readingbat.common.browserSession
 import com.github.readingbat.common.challengeAnswersKey
 import com.github.readingbat.common.correctAnswersKey
 import com.github.readingbat.dsl.ChallengeGroup
@@ -97,7 +95,6 @@ internal object ChallengeGroupPage {
   ) =
     createHTML()
       .html {
-        val browserSession = call.browserSession
         val languageType = challengeGroup.languageType
         val languageName = languageType.languageName
         val groupName = challengeGroup.groupName
@@ -109,7 +106,7 @@ internal object ChallengeGroupPage {
 
         fun TR.displayFunctionCall(user: User?, challenge: Challenge) {
           val challengeName = challenge.challengeName
-          val allCorrect = challenge.isCorrect(user, browserSession)
+          val allCorrect = challenge.isCorrect(user)
 
           td(classes = if (activeTeachingClassCode.isEnabled && enrollees.isNotEmpty()) FUNC_ITEM1 else FUNC_ITEM2) {
             if (activeTeachingClassCode.isNotEnabled)
@@ -164,7 +161,7 @@ internal object ChallengeGroupPage {
           }
 
           if (isDbmsEnabled() && activeTeachingClassCode.isNotEnabled && challenges.isNotEmpty())
-            clearGroupAnswerHistoryOption(user, browserSession, languageName, groupName, challenges)
+            clearGroupAnswerHistoryOption(user, languageName, groupName, challenges)
 
           backLink(CHALLENGE_ROOT, languageName.value)
 
@@ -224,13 +221,12 @@ internal object ChallengeGroupPage {
 
   private fun BODY.clearGroupAnswerHistoryOption(
     user: User?,
-    browserSession: BrowserSession?,
     languageName: LanguageName,
     groupName: GroupName,
     challenges: List<Challenge>,
   ) {
-    val correctAnswersKeys = challenges.map { correctAnswersKey(user, browserSession, it) }
-    val challengeAnswerKeys = challenges.map { challengeAnswersKey(user, browserSession, it) }
+    val correctAnswersKeys = challenges.map { correctAnswersKey(user, it) }
+    val challengeAnswerKeys = challenges.map { challengeAnswersKey(user, it) }
 
     p {
       form {

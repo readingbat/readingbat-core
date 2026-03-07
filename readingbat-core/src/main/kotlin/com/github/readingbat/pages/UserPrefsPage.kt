@@ -22,21 +22,17 @@ import com.github.readingbat.common.ClassCode.Companion.DISABLED_CLASS_CODE
 import com.github.readingbat.common.Constants.LABEL_WIDTH
 import com.github.readingbat.common.CssNames.INDENT_1EM
 import com.github.readingbat.common.CssNames.INDENT_2EM
-import com.github.readingbat.common.Endpoints.CREATE_ACCOUNT_ENDPOINT
+import com.github.readingbat.common.Endpoints.OAUTH_LOGIN_ENDPOINT
 import com.github.readingbat.common.Endpoints.TEACHER_PREFS_ENDPOINT
 import com.github.readingbat.common.Endpoints.USER_PREFS_ENDPOINT
 import com.github.readingbat.common.FormFields.CLASS_CODE_NAME_PARAM
-import com.github.readingbat.common.FormFields.CONFIRM_PASSWORD_PARAM
-import com.github.readingbat.common.FormFields.CURR_PASSWORD_PARAM
 import com.github.readingbat.common.FormFields.DEFAULT_LANGUAGE_CHOICE_PARAM
 import com.github.readingbat.common.FormFields.DELETE_ACCOUNT
 import com.github.readingbat.common.FormFields.JOIN_A_CLASS
 import com.github.readingbat.common.FormFields.JOIN_CLASS
-import com.github.readingbat.common.FormFields.NEW_PASSWORD_PARAM
 import com.github.readingbat.common.FormFields.PREFS_ACTION_PARAM
 import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.FormFields.UPDATE_DEFAULT_LANGUAGE
-import com.github.readingbat.common.FormFields.UPDATE_PASSWORD
 import com.github.readingbat.common.FormFields.WITHDRAW_FROM_CLASS
 import com.github.readingbat.common.Message
 import com.github.readingbat.common.Message.Companion.EMPTY_MESSAGE
@@ -51,7 +47,6 @@ import com.github.readingbat.pages.PageUtils.bodyTitle
 import com.github.readingbat.pages.PageUtils.clickButtonScript
 import com.github.readingbat.pages.PageUtils.displayMessage
 import com.github.readingbat.pages.PageUtils.headDefault
-import com.github.readingbat.pages.PageUtils.hideShowButton
 import com.github.readingbat.pages.PageUtils.loadPingdomScript
 import com.github.readingbat.pages.PageUtils.privacyStatement
 import com.github.readingbat.pages.PageUtils.rawHtml
@@ -74,7 +69,6 @@ import kotlinx.html.label
 import kotlinx.html.onKeyPress
 import kotlinx.html.onSubmit
 import kotlinx.html.p
-import kotlinx.html.passwordInput
 import kotlinx.html.radioInput
 import kotlinx.html.span
 import kotlinx.html.stream.createHTML
@@ -87,8 +81,6 @@ import kotlinx.html.tr
 
 internal object UserPrefsPage {
   private val logger = KotlinLogging.logger {}
-  private const val FORM_NAME = "pform"
-  private const val PASSWORD_BUTTON = "UpdatePasswordButton"
   private const val JOIN_CLASS_BUTTON = "JoinClassButton"
 
   fun RoutingContext.userPrefsPage(
@@ -112,7 +104,7 @@ internal object UserPrefsPage {
       .html {
         head {
           headDefault()
-          clickButtonScript(PASSWORD_BUTTON, JOIN_CLASS_BUTTON)
+          clickButtonScript(JOIN_CLASS_BUTTON)
         }
 
         body {
@@ -133,7 +125,6 @@ internal object UserPrefsPage {
             }
 
           defaultLanguage(user)
-          changePassword()
           joinOrWithdrawFromClass(user, defaultClassCode)
           deleteAccount(user)
 
@@ -181,73 +172,6 @@ internal object UserPrefsPage {
               submitInput {
                 name = PREFS_ACTION_PARAM
                 value = UPDATE_DEFAULT_LANGUAGE
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-
-  private fun BODY.changePassword() {
-    h3 { +"Change password" }
-    div(classes = INDENT_2EM) {
-      p { +"Password must contain at least 6 characters" }
-      form {
-        name = FORM_NAME
-        action = USER_PREFS_ENDPOINT
-        method = FormMethod.post
-        table {
-          tr {
-            td {
-              style = LABEL_WIDTH
-              label { +"Current Password" }
-            }
-            td {
-              passwordInput {
-                size = "42"
-                name = CURR_PASSWORD_PARAM
-                value = ""
-              }
-            }
-            td { hideShowButton(FORM_NAME, CURR_PASSWORD_PARAM) }
-          }
-          tr {
-            td {
-              style = LABEL_WIDTH
-              label { +"New Password" }
-            }
-            td {
-              passwordInput {
-                size = "42"
-                name = NEW_PASSWORD_PARAM
-                value = ""
-              }
-            }
-            td { hideShowButton(FORM_NAME, NEW_PASSWORD_PARAM) }
-          }
-          tr {
-            td {
-              style = LABEL_WIDTH
-              label { +"Confirm Password" }
-            }
-            td {
-              passwordInput {
-                size = "42"
-                name = CONFIRM_PASSWORD_PARAM
-                value = ""
-                onKeyPress = "click$PASSWORD_BUTTON(event)"
-              }
-            }
-            td { hideShowButton(FORM_NAME, CONFIRM_PASSWORD_PARAM) }
-          }
-          tr {
-            td {}
-            td {
-              submitInput {
-                id = PASSWORD_BUTTON
-                name = PREFS_ACTION_PARAM
-                value = UPDATE_PASSWORD
               }
             }
           }
@@ -400,10 +324,10 @@ internal object UserPrefsPage {
           p {
             +"Please"
             a {
-              href = "$CREATE_ACCOUNT_ENDPOINT?$RETURN_PARAM=$returnPath"
-              +" create an account "
+              href = OAUTH_LOGIN_ENDPOINT
+              +" log in "
             }
-            +"or log in to an existing account to edit preferences."
+            +"to edit preferences."
           }
 
           privacyStatement(USER_PREFS_ENDPOINT)

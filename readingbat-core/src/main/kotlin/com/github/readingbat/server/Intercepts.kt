@@ -22,18 +22,31 @@ import com.github.pambrose.common.util.maxLength
 import com.github.readingbat.common.BrowserSession.Companion.findOrCreateSessionDbmsId
 import com.github.readingbat.common.Constants.STATIC
 import com.github.readingbat.common.Constants.UNKNOWN_USER_ID
+import com.github.readingbat.common.Endpoints.ABOUT_ENDPOINT
+import com.github.readingbat.common.Endpoints.HELP_ENDPOINT
+import com.github.readingbat.common.Endpoints.OAUTH_CALLBACK_GITHUB_ENDPOINT
+import com.github.readingbat.common.Endpoints.OAUTH_CALLBACK_GOOGLE_ENDPOINT
+import com.github.readingbat.common.Endpoints.OAUTH_LOGIN_ENDPOINT
+import com.github.readingbat.common.Endpoints.OAUTH_LOGIN_GITHUB_ENDPOINT
+import com.github.readingbat.common.Endpoints.OAUTH_LOGIN_GOOGLE_ENDPOINT
 import com.github.readingbat.common.Endpoints.PING_ENDPOINT
+import com.github.readingbat.common.Endpoints.PRIVACY_ENDPOINT
 import com.github.readingbat.common.User.Companion.fetchUserDbmsIdFromCache
 import com.github.readingbat.common.browserSession
+import com.github.readingbat.common.userPrincipal
+import com.github.readingbat.dsl.isDbmsEnabled
 import com.github.readingbat.dsl.isSaveRequestsEnabled
 import com.github.readingbat.server.GeoInfo.Companion.lookupGeoInfo
 import com.github.readingbat.server.GeoInfo.Companion.queryGeoInfo
 import com.github.readingbat.server.Intercepts.clock
 import com.github.readingbat.server.Intercepts.logger
+import com.github.readingbat.server.Intercepts.publicPaths
+import com.github.readingbat.server.Intercepts.publicPrefixes
 import com.github.readingbat.server.Intercepts.requestTimingMap
 import com.github.readingbat.server.ServerUtils.fetchUserDbmsIdFromCache
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.http.HttpHeaders.UserAgent
+import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationCallPipeline
 import io.ktor.server.application.ApplicationCallPipeline.ApplicationPhase.Plugins
@@ -49,6 +62,7 @@ import io.ktor.server.plugins.origin
 import io.ktor.server.request.httpMethod
 import io.ktor.server.request.path
 import io.ktor.server.request.queryString
+import io.ktor.server.response.respondRedirect
 import io.ktor.server.routing.RoutingRoot.Plugin.RoutingCallFinished
 import io.ktor.server.routing.RoutingRoot.Plugin.RoutingCallStarted
 import io.ktor.util.pipeline.PipelineContext
@@ -67,6 +81,30 @@ internal object Intercepts {
   internal val logger = KotlinLogging.logger {}
   val clock = TimeSource.Monotonic
   val requestTimingMap = ConcurrentHashMap<String, TimeMark>()
+
+  val publicPaths =
+    setOf(
+    OAUTH_LOGIN_ENDPOINT,
+    OAUTH_LOGIN_GITHUB_ENDPOINT,
+    OAUTH_LOGIN_GOOGLE_ENDPOINT,
+    OAUTH_CALLBACK_GITHUB_ENDPOINT,
+    OAUTH_CALLBACK_GOOGLE_ENDPOINT,
+    HELP_ENDPOINT,
+    ABOUT_ENDPOINT,
+    PRIVACY_ENDPOINT,
+    PING_ENDPOINT,
+    "/favicon.ico",
+    "/robots.txt",
+    "/css.css",
+    "/ktor/application/shutdown",
+  )
+
+  val publicPrefixes =
+    listOf(
+    "/oauth/",
+    "/$STATIC/",
+    "/static/",
+  )
 
   @Suppress("unused")
   val timer =
@@ -91,6 +129,18 @@ internal fun Application.intercepts() {
 
   intercept(ApplicationCallPipeline.Monitoring) {
     // Phase for tracing calls, useful for logging, metrics, error handling and so on
+  }
+
+  // Mandatory auth: redirect unauthenticated users to OAuth login page
+  if (isDbmsEnabled()) {
+    intercept(Plugins) {
+      val path = call.request.path()
+      val isPublic = path in publicPaths || publicPrefixes.any { path.startsWith(it) }
+      if (!isPublic && call.userPrincipal == null) {
+        call.respondRedirect(OAUTH_LOGIN_ENDPOINT)
+        finish()
+      }
+    }
   }
 
   // Phase for features. Most features should intercept this phase

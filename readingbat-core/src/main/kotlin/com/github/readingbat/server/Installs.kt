@@ -37,7 +37,8 @@ import com.github.readingbat.pages.InvalidRequestPage.invalidRequestPage
 import com.github.readingbat.pages.NotFoundPage.notFoundPage
 import com.github.readingbat.server.ConfigureCookies.configureAuthCookie
 import com.github.readingbat.server.ConfigureCookies.configureSessionIdCookie
-import com.github.readingbat.server.ConfigureFormAuth.configureFormAuth
+import com.github.readingbat.server.ConfigureOAuth.configureGitHubOAuth
+import com.github.readingbat.server.ConfigureOAuth.configureGoogleOAuth
 import com.github.readingbat.server.ReadingBatServer.serverSessionId
 import com.github.readingbat.server.ServerUtils.fetchEmailFromCache
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -87,8 +88,8 @@ object Installs {
     }
 
     install(Authentication) {
-      // configureSessionAuth()
-      configureFormAuth()
+      configureGitHubOAuth()
+      configureGoogleOAuth()
     }
 
     install(WebSockets) {

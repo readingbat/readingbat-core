@@ -172,10 +172,12 @@ sealed class Property(
   object REDIRECT_HOSTNAME :
     Property(propertyValue = "$READINGBAT.$SITE.redirectHostname")
 
-  object EMAIL_PREFIX :
+  object OAUTH_CALLBACK_URL_PREFIX :
     Property(
-      propertyValue = "$READINGBAT.$SITE.sendGridPrefix",
-      initFunc = { setProperty(EnvVar.EMAIL_PREFIX.getEnv(configValue(it, "https://www.readingbat.com"))) },
+      propertyValue = "$READINGBAT.$SITE.oauthCallbackUrlPrefix",
+      initFunc = {
+        setProperty(EnvVar.OAUTH_CALLBACK_URL_PREFIX.getEnv(configValue(it, "https://www.readingbat.com")))
+      },
     )
 
   object RESEND_API_KEY :
@@ -365,6 +367,32 @@ sealed class Property(
       initFunc = { setPropertyFromConfig(it, "30") },
     )
 
+  object GITHUB_OAUTH_CLIENT_ID :
+    Property(
+      propertyValue = "$READINGBAT.$SITE.githubOAuthClientId",
+      initFunc = { setProperty(EnvVar.GITHUB_OAUTH_CLIENT_ID.getEnv(configValue(it, ""))) },
+    )
+
+  object GITHUB_OAUTH_CLIENT_SECRET :
+    Property(
+      propertyValue = "$READINGBAT.$SITE.githubOAuthClientSecret",
+      initFunc = { setProperty(EnvVar.GITHUB_OAUTH_CLIENT_SECRET.getEnv(configValue(it, ""))) },
+      maskFunc = { getPropertyOrNull(false)?.obfuscate(4) ?: UNASSIGNED },
+    )
+
+  object GOOGLE_OAUTH_CLIENT_ID :
+    Property(
+      propertyValue = "$READINGBAT.$SITE.googleOAuthClientId",
+      initFunc = { setProperty(EnvVar.GOOGLE_OAUTH_CLIENT_ID.getEnv(configValue(it, ""))) },
+    )
+
+  object GOOGLE_OAUTH_CLIENT_SECRET :
+    Property(
+      propertyValue = "$READINGBAT.$SITE.googleOAuthClientSecret",
+      initFunc = { setProperty(EnvVar.GOOGLE_OAUTH_CLIENT_SECRET.getEnv(configValue(it, ""))) },
+      maskFunc = { getPropertyOrNull(false)?.obfuscate(4) ?: UNASSIGNED },
+    )
+
   object RECAPTCHA_ENABLED :
     Property(
       propertyValue = "$READINGBAT.$SITE.recaptchaEnabled",
@@ -388,8 +416,8 @@ sealed class Property(
     )
 
   companion object {
-    val envResendApiKey: String by lazy { Property.RESEND_API_KEY.getRequiredProperty() }
-    val envResendSender: Email by lazy { Property.RESEND_SENDER_EMAIL.getRequiredProperty().toResendEmail() }
+    val envResendApiKey: String by lazy { RESEND_API_KEY.getRequiredProperty() }
+    val envResendSender: Email by lazy { RESEND_SENDER_EMAIL.getRequiredProperty().toResendEmail() }
 
     val recaptchaConfig by lazy {
       object : RecaptchaConfig {
@@ -404,7 +432,7 @@ sealed class Property(
         DSL_FILE_NAME,
         DSL_VARIABLE_NAME,
         PROXY_HOSTNAME,
-        EMAIL_PREFIX,
+        OAUTH_CALLBACK_URL_PREFIX,
         RESEND_API_KEY,
         RESEND_SENDER_EMAIL,
         ANALYTICS_ID,
@@ -432,6 +460,10 @@ sealed class Property(
         DBMS_PASSWORD,
         DBMS_MAX_POOL_SIZE,
         DBMS_MAX_LIFETIME_MINS,
+        GITHUB_OAUTH_CLIENT_ID,
+        GITHUB_OAUTH_CLIENT_SECRET,
+        GOOGLE_OAUTH_CLIENT_ID,
+        GOOGLE_OAUTH_CLIENT_SECRET,
         RECAPTCHA_ENABLED,
         RECAPTCHA_SITE_KEY,
         RECAPTCHA_SECRET_KEY,

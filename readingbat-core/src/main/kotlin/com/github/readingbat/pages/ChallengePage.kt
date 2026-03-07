@@ -23,7 +23,6 @@ import com.github.pambrose.common.util.isNull
 import com.github.pambrose.common.util.pathOf
 import com.github.pambrose.common.util.random
 import com.github.pambrose.common.util.toDoubleQuoted
-import com.github.readingbat.common.BrowserSession
 import com.github.readingbat.common.ClassCode
 import com.github.readingbat.common.Constants.CORRECT_COLOR
 import com.github.readingbat.common.Constants.INCOMPLETE_COLOR
@@ -82,7 +81,6 @@ import com.github.readingbat.common.StaticFileNames.LIKE_CLEAR_FILE
 import com.github.readingbat.common.StaticFileNames.LIKE_COLOR_FILE
 import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.queryActiveTeachingClassCode
-import com.github.readingbat.common.browserSession
 import com.github.readingbat.common.challengeAnswersKey
 import com.github.readingbat.common.correctAnswersKey
 import com.github.readingbat.dsl.ReadingBatContent
@@ -99,7 +97,6 @@ import com.github.readingbat.pages.js.CheckAnswersJs.checkAnswersScript
 import com.github.readingbat.pages.js.LikeDislikeJs.likeDislikeScript
 import com.github.readingbat.server.ChallengeMd5
 import com.github.readingbat.server.ServerUtils.queryParam
-import com.github.readingbat.server.SessionChallengeInfoTable
 import com.github.readingbat.server.UserChallengeInfoTable
 import com.pambrose.common.exposed.get
 import com.pambrose.common.exposed.readonlyTx
@@ -149,7 +146,6 @@ import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.select
-import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 
 internal object ChallengePage {
   private val logger = KotlinLogging.logger {}
@@ -171,7 +167,6 @@ internal object ChallengePage {
   ) =
     createHTML()
       .html {
-        val browserSession = call.browserSession
         val languageType = challenge.languageType
         val languageName = languageType.languageName
         val groupName = challenge.groupName
@@ -206,7 +201,7 @@ internal object ChallengePage {
           displayChallenge(challenge, funcInfo)
 
           if (activeTeachingClassCode.isNotEnabled) {
-            displayQuestions(user, browserSession, challenge, funcInfo)
+            displayQuestions(user, challenge, funcInfo)
           } else {
             displayStudentProgress(challenge, content.maxHistoryLength, funcInfo, activeTeachingClassCode, enrollees)
 
@@ -278,7 +273,6 @@ internal object ChallengePage {
 
   private fun BODY.displayQuestions(
     user: User?,
-    browserSession: BrowserSession?,
     challenge: Challenge,
     funcInfo: FunctionInfo,
   ) =
@@ -303,7 +297,7 @@ internal object ChallengePage {
         val topFocus = "topFocus"
         val bottomFocus = "bottomFocus"
         val offset = 5 // The login dialog takes tabIndex values 1-4
-        val previousResponses = fetchPreviousResponses(user, browserSession, challenge)
+        val previousResponses = fetchPreviousResponses(user, challenge)
 
         // This will cause shift tab to go to bottom input element
         span {
@@ -364,9 +358,9 @@ internal object ChallengePage {
       }
 
       this@displayQuestions.processAnswers(funcInfo, challenge)
-      this@displayQuestions.likeDislike(user, browserSession, challenge)
+      this@displayQuestions.likeDislike(user, challenge)
       this@displayQuestions.otherLinks(challenge)
-      this@displayQuestions.clearChallengeAnswerHistoryOption(user, browserSession, challenge)
+      this@displayQuestions.clearChallengeAnswerHistoryOption(user, challenge)
     }
 
   private fun BODY.enableWebSockets(classCode: ClassCode, challengeMd5: ChallengeMd5) {
@@ -637,16 +631,11 @@ internal object ChallengePage {
     }
   }
 
-  private fun BODY.likeDislike(user: User?, browserSession: BrowserSession?, challenge: Challenge) {
+  private fun BODY.likeDislike(user: User?, challenge: Challenge) {
     if (!isDbmsEnabled())
       return
 
-    val likeDislikeVal =
-      when {
-        user.isNotNull() -> user.likeDislike(challenge)
-        browserSession.isNotNull() -> browserSession.likeDislike(challenge)
-        else -> 0
-      }
+    val likeDislikeVal = user?.likeDislike(challenge) ?: 0
 
     p {
       table {
@@ -738,14 +727,13 @@ internal object ChallengePage {
 
   private fun BODY.clearChallengeAnswerHistoryOption(
     user: User?,
-    browserSession: BrowserSession?,
     challenge: Challenge,
   ) {
     val languageName = challenge.languageType.languageName
     val groupName = challenge.groupName
     val challengeName = challenge.challengeName
-    val correctAnswersKey = correctAnswersKey(user, browserSession, languageName, groupName, challengeName)
-    val challengeAnswersKey = challengeAnswersKey(user, browserSession, languageName, groupName, challengeName)
+    val correctAnswersKey = correctAnswersKey(user, languageName, groupName, challengeName)
+    val challengeAnswersKey = challengeAnswersKey(user, languageName, groupName, challengeName)
 
     if (!isDbmsEnabled())
       return
@@ -794,13 +782,13 @@ internal object ChallengePage {
     }
   }
 
-  fun fetchPreviousResponses(user: User?, browserSession: BrowserSession?, challenge: Challenge) =
+  fun fetchPreviousResponses(user: User?, challenge: Challenge) =
     when {
-      !isDbmsEnabled() -> {
+      !isDbmsEnabled() || user == null -> {
         emptyMap
       }
 
-      user.isNotNull() -> {
+      else -> {
         readonlyTx {
           with(UserChallengeInfoTable) {
             select(answersJson)
@@ -811,23 +799,6 @@ internal object ChallengePage {
               ?: emptyMap
           }
         }
-      }
-
-      browserSession.isNotNull() -> {
-        transaction {
-          with(SessionChallengeInfoTable) {
-            select(answersJson)
-              .where { (sessionRef eq browserSession.queryOrCreateSessionDbmsId()) and (md5 eq challenge.md5()) }
-              .map { it[0] as String }
-              .firstOrNull()
-              ?.let { Json.decodeFromString<Map<String, String>>(it) }
-              ?: emptyMap
-          }
-        }
-      }
-
-      else -> {
-        emptyMap
       }
     }
 }

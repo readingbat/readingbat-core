@@ -56,8 +56,8 @@ internal object AboutPage {
           div(classes = INDENT_1EM) {
             p {
               +"""
-              ReadingBat.com is a father-son effort, by Paul and Matthew Ambrose, to make learning how to program
-              a little easier.
+              ReadingBat.com is a father-son effort, by Paul and Matthew Ambrose, intended to make learning
+              how to program a little easier.
               We are big fans of
               """.trimIndent()
 

@@ -132,7 +132,7 @@ internal object PageUtils {
       }
     }
 
-    loadRecaptchaScript(recaptchaConfig)
+    // loadRecaptchaScript(recaptchaConfig)
   }
 
   fun HEAD.loadBootstrap() {

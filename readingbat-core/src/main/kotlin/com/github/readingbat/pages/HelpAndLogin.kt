@@ -21,14 +21,11 @@ import com.github.pambrose.common.util.isNotNull
 import com.github.readingbat.common.AuthRoutes.LOGOUT
 import com.github.readingbat.common.Endpoints.ABOUT_ENDPOINT
 import com.github.readingbat.common.Endpoints.ADMIN_PREFS_ENDPOINT
-import com.github.readingbat.common.Endpoints.CREATE_ACCOUNT_ENDPOINT
 import com.github.readingbat.common.Endpoints.ENABLE_STUDENT_MODE_ENDPOINT
 import com.github.readingbat.common.Endpoints.ENABLE_TEACHER_MODE_ENDPOINT
 import com.github.readingbat.common.Endpoints.HELP_ENDPOINT
-import com.github.readingbat.common.Endpoints.PASSWORD_RESET_ENDPOINT
+import com.github.readingbat.common.Endpoints.OAUTH_LOGIN_ENDPOINT
 import com.github.readingbat.common.Endpoints.USER_PREFS_ENDPOINT
-import com.github.readingbat.common.FormFields.EMAIL_PARAM
-import com.github.readingbat.common.FormFields.PASSWORD_PARAM
 import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.queryPreviousTeacherClassCode
@@ -37,27 +34,17 @@ import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.isDbmsEnabled
 import com.github.readingbat.dsl.isProduction
 import com.github.readingbat.pages.ChallengePage.HEADER_COLOR
-import com.github.readingbat.pages.PageUtils.rawHtml
 import com.github.readingbat.server.ServerUtils.firstNonEmptyLanguageType
 import kotlinx.html.BODY
-import kotlinx.html.FormMethod
-import kotlinx.html.TABLE
+import kotlinx.html.TD
 import kotlinx.html.a
 import kotlinx.html.br
 import kotlinx.html.div
-import kotlinx.html.form
-import kotlinx.html.hiddenInput
-import kotlinx.html.id
-import kotlinx.html.onFocus
-import kotlinx.html.passwordInput
-import kotlinx.html.script
+import kotlinx.html.img
 import kotlinx.html.span
 import kotlinx.html.style
-import kotlinx.html.submitInput
-import kotlinx.html.tabIndex
 import kotlinx.html.table
 import kotlinx.html.td
-import kotlinx.html.textInput
 import kotlinx.html.tr
 
 internal object HelpAndLogin {
@@ -76,21 +63,27 @@ internal object HelpAndLogin {
       else
         loginPath
 
-    if (isDbmsEnabled())
-      div {
-        style = "float:right; margin:0px; border: 1px solid lightgray; margin-left: 10px; padding: 5px"
-        table {
-          if (user.isNotNull()) logoutOption(user, path) else loginOption(path)
-        }
-      }
-
     div {
-      style = "float:right"
+      style = "float:right; padding-top:10px"
       table {
+        if (isDbmsEnabled()) {
+          tr {
+            td {
+              style = "text-align:right; white-space:nowrap"
+              if (user.isNotNull()) {
+                userInfoBlock(user, path)
+              } else {
+                a {
+                  href = OAUTH_LOGIN_ENDPOINT
+                  +"log in"
+                }
+              }
+            }
+          }
+        }
         tr {
           td {
-            style = "padding-top:10px; text-align:center"
-            colSpan = "1"
+            style = "text-align:right; white-space:nowrap; padding-top:6px"
 
             if (previousClassCode.isEnabled) {
               val (endpoint, msg) =
@@ -132,11 +125,10 @@ internal object HelpAndLogin {
             }
           }
         }
-        tr {
-          td {
-            style = "padding-top:10px; text-align:center"
-            colSpan = "1"
-            if (user.isNotNull() && user.enrolledClassCode.isEnabled) {
+        if (user.isNotNull() && user.enrolledClassCode.isEnabled) {
+          tr {
+            td {
+              style = "text-align:right; padding-top:4px"
               span {
                 style = "color: $HEADER_COLOR"
                 +user.enrolledClassCode.toDisplayString()
@@ -148,113 +140,33 @@ internal object HelpAndLogin {
     }
   }
 
-  private fun TABLE.logoutOption(user: User, loginPath: String) {
-    tr {
-      val email = user.email
-      val elems = email.value.split("@")
-      td {
-        +elems[0]
-        if (elems.size > 1) {
+  private fun TD.userInfoBlock(user: User, loginPath: String) {
+    table {
+      tr {
+        val avatarUrl = user.avatarUrl
+        if (avatarUrl != null) {
+          td {
+            style = "vertical-align:middle; padding:0; padding-right:8px"
+            img {
+              src = avatarUrl
+              width = "36"
+              alt = "avatar"
+              style = "border-radius:50%; display:block"
+              attributes["referrerpolicy"] = "no-referrer"
+            }
+          }
+        }
+        td {
+          style = "vertical-align:middle; padding:0; text-align:right"
+          +user.email.value
           br
-          +"@${elems[1]}"
-        }
-      }
-    }
-
-    tr {
-      td {
-        /*
-    a {
-      href = "/doc/practice/code-badges.html"; img {
-      width = "30"; style = "vertical-align: middle"; src = "$STATIC_ROOT/s5j.png"
-    }
-    }
-     */
-        +"["
-        a {
-          href = "$LOGOUT?$RETURN_PARAM=$loginPath"
-          +"log out"
-        }
-        +"]"
-      }
-    }
-  }
-
-  private fun TABLE.loginOption(loginPath: String) {
-    val topFocus = "loginTpFocus"
-    val bottomFocus = "loginBottomFocus"
-
-    form {
-      method = FormMethod.post
-      action = loginPath
-
-      span {
-        tabIndex = "1"
-        onFocus = "document.querySelector('.$bottomFocus').focus()"
-      }
-
-      this@loginOption.tr {
-        td { +"id/email" }
-        td {
-          textInput(classes = topFocus) {
-            id = EMAIL_PARAM
-            name = EMAIL_PARAM
-            size = "20"
-            placeholder = "username"
-            tabIndex = "2"
+          span {
+            style = "font-size:100%; color:gray"
+            a {
+              href = "$LOGOUT?$RETURN_PARAM=$loginPath"
+              +"log out"
+            }
           }
-        }
-      }
-
-      this@loginOption.tr {
-        td { +"password" }
-        td {
-          passwordInput(classes = bottomFocus) {
-            id = PASSWORD_PARAM
-            name = PASSWORD_PARAM
-            size = "20"
-            placeholder = "password"
-            tabIndex = "3"
-          }
-        }
-      }
-
-      this@loginOption.tr {
-        td {}
-        td {
-          submitInput {
-            id = "login"
-            name = "dologin"
-            value = "log in"
-          }
-        }
-      }
-
-      span {
-        tabIndex = "4"
-        onFocus = "document.querySelector('.$topFocus').focus()"
-      }
-
-      hiddenInput {
-        name = "fromurl"
-        value = loginPath
-      }
-    }
-
-    // Set focus to email field
-    script { rawHtml("""document.getElementById("$EMAIL_PARAM").focus()""") }
-
-    tr {
-      td {
-        colSpan = "2"
-        a {
-          href = "$PASSWORD_RESET_ENDPOINT?$RETURN_PARAM=$loginPath"
-          +"forgot password"
-        }
-        +" | "
-        a {
-          href = "$CREATE_ACCOUNT_ENDPOINT?$RETURN_PARAM=$loginPath"
-          +"create account"
         }
       }
     }

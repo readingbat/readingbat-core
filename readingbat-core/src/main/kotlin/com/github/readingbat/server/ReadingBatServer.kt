@@ -55,6 +55,7 @@ import com.github.readingbat.server.ReadingBatServer.logger
 import com.github.readingbat.server.ReadingBatServer.metrics
 import com.github.readingbat.server.ServerUtils.logToShim
 import com.github.readingbat.server.routes.AdminRoutes.adminRoutes
+import com.github.readingbat.server.routes.oauthRoutes
 import com.github.readingbat.server.routes.sysAdminRoutes
 import com.github.readingbat.server.routes.userRoutes
 import com.github.readingbat.server.ws.LoggingWs
@@ -281,6 +282,7 @@ fun Application.module() {
 
   routing {
     adminRoutes(metrics)
+    oauthRoutes()
     locations(metrics) { content.load() }
     userRoutes(metrics) { content.load() }
 

@@ -39,7 +39,6 @@ object Constants {
   const val WRONG_COLOR = "#FF0000" // red
   const val INCOMPLETE_COLOR = "#F1F1F1"
   const val LABEL_WIDTH = "width:250"
-  const val INVALID_RESET_ID = "Invalid reset_id"
   const val PING_CODE = "P"
   const val LIKE_DISLIKE_CODE = "LD"
   const val COLUMN_CNT = 3
@@ -105,10 +104,12 @@ object Endpoints {
   const val PRIVACY_ENDPOINT = "/privacy"
   const val CONFIG_ENDPOINT = "/config"
   const val SESSIONS_ENDPOINT = "/sessions"
-  const val CREATE_ACCOUNT_ENDPOINT = "/create-account"
-  const val PASSWORD_RESET_ENDPOINT = "/password-reset"
   const val ADMIN_ENDPOINT = "/admin"
-  const val PASSWORD_CHANGE_ENDPOINT = "/password-change"
+  const val OAUTH_LOGIN_ENDPOINT = "/oauth/login"
+  const val OAUTH_LOGIN_GITHUB_ENDPOINT = "/oauth/login/github"
+  const val OAUTH_LOGIN_GOOGLE_ENDPOINT = "/oauth/login/google"
+  const val OAUTH_CALLBACK_GITHUB_ENDPOINT = "/oauth/callback/github"
+  const val OAUTH_CALLBACK_GOOGLE_ENDPOINT = "/oauth/callback/google"
   const val FAV_ICON_ENDPOINT = "/favicon.ico"
   const val ROBOTS_ENDPOINT = "/robots.txt"
   const val CHALLENGE_ENDPOINT = "/challenge"
@@ -181,10 +182,7 @@ internal object ParameterIds {
 internal object FormFields {
   const val RETURN_PARAM = "returnPath"
 
-  const val FULLNAME_PARAM = "fullname"
   const val EMAIL_PARAM = "email"
-  const val PASSWORD_PARAM = "passwd"
-  const val CONFIRM_PASSWORD_PARAM = "confirm_passwd"
   const val CLASS_CODE_NAME_PARAM = "class_code"
   const val CLASS_DESC_PARAM = "class_desc"
   const val CLASS_CODE_CHOICE_PARAM = "class_code_choice"
@@ -193,10 +191,7 @@ internal object FormFields {
   const val TEACHER_PREF = "teacher_prefs"
   const val CLASS_SUMMARY = "class_summary"
   const val DISABLED_MODE = "classes_disabled"
-  const val CURR_PASSWORD_PARAM = "curr_passwd"
-  const val NEW_PASSWORD_PARAM = "new_passwd"
   const val PREFS_ACTION_PARAM = "pref_action"
-  const val RESET_ID_PARAM = "reset_id"
   const val ADMIN_ACTION_PARAM = "admin_action"
   const val USER_ID_PARAM = "user_id"
   const val DAYS_PARAM = "days"
@@ -208,7 +203,6 @@ internal object FormFields {
   const val CORRECT_ANSWERS_PARAM = "correct_answers_key"
   const val CHALLENGE_ANSWERS_PARAM = "challenge_answers_key"
 
-  const val UPDATE_PASSWORD = "Update Password"
   const val JOIN_CLASS = "Join Class"
   const val CREATE_CLASS = "Create Class"
   const val DELETE_CLASS = "Delete Class"
@@ -225,8 +219,9 @@ internal object FormFields {
 
 internal object AuthName {
   const val SESSION = "session"
-  const val FORM = "form"
   const val AUTH_COOKIE = "auth"
+  const val GITHUB_OAUTH = "github-oauth"
+  const val GOOGLE_OAUTH = "google-oauth"
 }
 
 internal object AuthRoutes {

@@ -9,11 +9,13 @@ build
 *.iws
 secrets
 
+.kotlin
+
 node_modules/
 
 cypress/videos
 cypress/screenshots
-cypress/examples
+cypress/examplesF
 
 ### Kotlin template
 # Compiled class file

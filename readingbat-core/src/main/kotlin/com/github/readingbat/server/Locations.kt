@@ -20,9 +20,6 @@ package com.github.readingbat.server
 import com.github.pambrose.common.response.respondWith
 import com.github.pambrose.common.util.encode
 import com.github.pambrose.common.util.md5Of
-import com.github.pambrose.common.util.randomId
-import com.github.pambrose.common.util.sha256
-import com.github.readingbat.common.AuthName.FORM
 import com.github.readingbat.common.Constants.UNKNOWN
 import com.github.readingbat.common.Endpoints.CHALLENGE_ROOT
 import com.github.readingbat.common.Endpoints.PLAYGROUND_ROOT
@@ -43,7 +40,6 @@ import com.github.readingbat.server.ServerUtils.fetchUser
 import com.github.readingbat.server.routes.AdminRoutes.assignBrowserSession
 import io.ktor.http.Parameters
 import io.ktor.resources.Resource
-import io.ktor.server.auth.authenticate
 import io.ktor.server.resources.get
 import io.ktor.server.routing.Routing
 import io.ktor.server.routing.RoutingContext
@@ -72,23 +68,21 @@ object Locations {
       playground(content.invoke(), request, false)
     }
 
-    authenticate(FORM) {
-      locationsPost<Language> { languageLoc ->
-        metrics.languageGroupRequestCount.labels(agentLaunchId(), POST, languageLoc.languageTypeStr, TRUE_STR).inc()
-        language(content.invoke(), languageLoc, true)
-      }
-      locationsPost<Language.Group> { groupLoc ->
-        metrics.challengeGroupRequestCount.labels(agentLaunchId(), POST, groupLoc.languageTypeStr, TRUE_STR).inc()
-        group(content.invoke(), groupLoc, true)
-      }
-      locationsPost<Language.Group.Challenge> { challengeLoc ->
-        metrics.challengeRequestCount.labels(agentLaunchId(), POST, challengeLoc.languageTypeStr, TRUE_STR).inc()
-        challenge(content.invoke(), challengeLoc, true)
-      }
-      locationsPost<PlaygroundRequest> { request ->
-        metrics.playgroundRequestCount.labels(agentLaunchId(), POST, TRUE_STR).inc()
-        playground(content.invoke(), request, true)
-      }
+    locationsPost<Language> { languageLoc ->
+      metrics.languageGroupRequestCount.labels(agentLaunchId(), POST, languageLoc.languageTypeStr, TRUE_STR).inc()
+      language(content.invoke(), languageLoc, false)
+    }
+    locationsPost<Language.Group> { groupLoc ->
+      metrics.challengeGroupRequestCount.labels(agentLaunchId(), POST, groupLoc.languageTypeStr, TRUE_STR).inc()
+      group(content.invoke(), groupLoc, false)
+    }
+    locationsPost<Language.Group.Challenge> { challengeLoc ->
+      metrics.challengeRequestCount.labels(agentLaunchId(), POST, challengeLoc.languageTypeStr, TRUE_STR).inc()
+      challenge(content.invoke(), challengeLoc, false)
+    }
+    locationsPost<PlaygroundRequest> { request ->
+      metrics.playgroundRequestCount.labels(agentLaunchId(), POST, TRUE_STR).inc()
+      playground(content.invoke(), request, false)
     }
   }
 
@@ -258,39 +252,5 @@ value class FullName(val value: String) {
     val UNKNOWN_FULLNAME = FullName(UNKNOWN)
 
     fun Parameters.getFullName(name: String) = this[name]?.let { FullName(it) } ?: EMPTY_FULLNAME
-  }
-}
-
-@JvmInline
-value class Password(val value: String) {
-  val length get() = value.length
-
-  fun isBlank() = value.isBlank()
-
-  fun sha256(salt: String) = value.sha256(salt)
-
-  override fun toString() = value
-
-  companion object {
-    private val EMPTY_PASSWORD = Password("")
-
-    fun Parameters.getPassword(name: String) = this[name]?.let { Password(it) } ?: EMPTY_PASSWORD
-  }
-}
-
-@JvmInline
-value class ResetId(val value: String) {
-  fun isBlank() = value.isBlank()
-
-  fun isNotBlank() = value.isNotBlank()
-
-  override fun toString() = value
-
-  companion object {
-    val EMPTY_RESET_ID = ResetId("")
-
-    fun newResetId() = ResetId(randomId(15))
-
-    fun Parameters.getResetId(name: String) = this[name]?.let { ResetId(it) } ?: EMPTY_RESET_ID
   }
 }

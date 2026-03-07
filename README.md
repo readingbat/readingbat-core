@@ -98,7 +98,6 @@ export DBMS_PASSWORD="docker"
 
 # Optional: External services
 export GITHUB_OAUTH="your_github_token"
-export SENDGRID_API_KEY="your_sendgrid_key"
 export IPGEOLOCATION_KEY="your_geo_key"
 ```
 
@@ -185,7 +184,7 @@ Required environment variables for production:
 
 - `DBMS_URL`, `DBMS_USERNAME`, `DBMS_PASSWORD`
 - `AGENT_ENABLED=true` (for monitoring)
-- `SENDGRID_API_KEY` (for email notifications)
+- `RESEND_API_KEY` (for email notifications)
 
 ## 🧪 Testing
 

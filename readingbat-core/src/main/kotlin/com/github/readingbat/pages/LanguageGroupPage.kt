@@ -28,7 +28,6 @@ import com.github.readingbat.common.StaticFileNames.GREEN_CHECK
 import com.github.readingbat.common.StaticFileNames.WHITE_CHECK
 import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.queryActiveTeachingClassCode
-import com.github.readingbat.common.browserSession
 import com.github.readingbat.dsl.ChallengeGroup
 import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.dsl.ReadingBatContent
@@ -64,7 +63,6 @@ internal object LanguageGroupPage {
   ) =
     createHTML()
       .html {
-        val browserSession = call.browserSession
         val languageName = languageType.languageName
         val loginPath = pathOf(CHALLENGE_ROOT, languageName)
         val groups = content[languageType].challengeGroups
@@ -81,7 +79,7 @@ internal object LanguageGroupPage {
 
           if (activeTeachingClassCode.isNotEnabled) {
             for (challenge in challenges) {
-              if (challenge.isCorrect(user, browserSession))
+              if (challenge.isCorrect(user))
                 cnt++
               if (cnt == maxCnt + 1) {
                 maxFound = true
