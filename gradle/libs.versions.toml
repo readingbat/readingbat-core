@@ -1,6 +1,6 @@
 [versions]
 # Plugin versions
-buildconfig = "6.0.7"
+buildconfig = "6.0.9"
 kotlin = "2.3.10"
 kotlinter = "5.4.2"
 versions = "0.53.0"

@@ -38,9 +38,9 @@ allprojects {
   apply(plugin = "com.github.gmazzo.buildconfig")
   apply(plugin = "com.github.ben-manes.versions")
 
-  extra["versionStr"] = "2.1.3"
+  extra["versionStr"] = "3.0.0"
   description = "ReadingBat Core"
-  group = "com.github.readingbat"
+  group = "com.github.pambrose.readingbat"
   version = versionStr
 
   repositories {
@@ -48,6 +48,8 @@ allprojects {
     mavenCentral()
     maven { url = uri("https://jitpack.io") }
   }
+
+  configureVersions()
 }
 
 subprojects {

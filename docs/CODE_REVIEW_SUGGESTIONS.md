@@ -1,7 +1,7 @@
 # Code Review Suggestions - ReadingBat Core
 
 **Date:** March 4, 2026
-**Updated:** March 7, 2026
+**Updated:** March 8, 2026
 **Reviewed by:** Claude Code
 
 ## Executive Summary
@@ -14,7 +14,7 @@ security-critical paths (auth, authorization, WebSocket) is notably absent.
 
 ### Progress Since Initial Review
 
-Of the 15 issues identified, 1 has been fully resolved, 2 are partially addressed, and 12 remain open. All 3 critical
+Of the 15 issues identified, 1 has been fully resolved, 1 is partially addressed, and 13 remain open. All 3 critical
 issues and all 5 high-severity issues remain unaddressed.
 
 ## Strengths
