@@ -28,11 +28,7 @@ import com.github.readingbat.common.Constants.LANG_TYPE_QP
 import com.github.readingbat.common.Constants.NO
 import com.github.readingbat.common.Constants.WRONG_COLOR
 import com.github.readingbat.common.Constants.YES
-import com.github.readingbat.common.CssNames.BTN
-import com.github.readingbat.common.CssNames.INDENT_2EM
-import com.github.readingbat.common.CssNames.INVOC_STAT
-import com.github.readingbat.common.CssNames.INVOC_TD
-import com.github.readingbat.common.CssNames.UNDERLINE
+import com.github.readingbat.common.CssNames
 import com.github.readingbat.common.Endpoints.CHALLENGE_ROOT
 import com.github.readingbat.common.Endpoints.CLASS_SUMMARY_ENDPOINT
 import com.github.readingbat.common.Endpoints.TEACHER_PREFS_ENDPOINT
@@ -47,6 +43,7 @@ import com.github.readingbat.common.FormFields.PREFS_ACTION_PARAM
 import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.Message
 import com.github.readingbat.common.Message.Companion.EMPTY_MESSAGE
+import com.github.readingbat.common.TwClasses
 import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.queryActiveTeachingClassCode
 import com.github.readingbat.common.isNotValidUser
@@ -217,7 +214,7 @@ internal object ClassSummaryPage {
                 name = CLASS_CODE_CHOICE_PARAM
                 value = classCode.classCode
               }
-              submitInput(classes = BTN) {
+              submitInput(classes = "${CssNames.BTN} ${TwClasses.BTN}") {
                 style =
                   "padding:2px 5px; margin-top:9; margin-left:20; border-radius:5px; " +
                     "cursor:pointer; border:1px solid black;"
@@ -249,7 +246,7 @@ internal object ClassSummaryPage {
                   dropdown {
                     val lang = langGroup.languageType.name
                     dropdownToggle {
-                      classes = setOf(BTN)
+                      classes = setOf(CssNames.BTN)
                       +"$lang "
                     }
                     dropdownMenu {
@@ -287,7 +284,7 @@ internal object ClassSummaryPage {
       languageName.toLanguageType().toString()
         .also {
           if (classCode == activeClassCode)
-            a(classes = UNDERLINE) {
+            a(classes = "${CssNames.UNDERLINE} ${TwClasses.UNDERLINE}") {
               href = pathOf(CHALLENGE_ROOT, languageName)
               +it
             }
@@ -303,7 +300,7 @@ internal object ClassSummaryPage {
       groupName.toString()
         .also {
           if (classCode == activeClassCode)
-            a(classes = UNDERLINE) {
+            a(classes = "${CssNames.UNDERLINE} ${TwClasses.UNDERLINE}") {
               href = pathOf(CHALLENGE_ROOT, languageName, groupName)
               +it
             }
@@ -322,7 +319,7 @@ internal object ClassSummaryPage {
     languageName: LanguageName,
     groupName: GroupName,
   ) =
-    div(classes = INDENT_2EM) {
+    div(classes = "${CssNames.INDENT_2EM} ${TwClasses.INDENT_2EM}") {
       val showDetail = hasGroup && classCode == activeClassCode
 
       if (enrollees.isNotEmpty()) {
@@ -340,7 +337,7 @@ internal object ClassSummaryPage {
                     challenge.challengeName.value
                       .also {
                         if (classCode == activeClassCode)
-                          a(classes = UNDERLINE) {
+                          a(classes = "${CssNames.UNDERLINE} ${TwClasses.UNDERLINE}") {
                             href = pathOf(CHALLENGE_ROOT, languageName, groupName, challenge.challengeName)
                             +it
                           }
@@ -364,13 +361,13 @@ internal object ClassSummaryPage {
                   "${studentSummaryEndpoint(classCode, languageName, student)}&$RETURN_PARAM=${returnUrl.encode()}"
                     .also {
                       td {
-                        a(classes = UNDERLINE) {
+                        a(classes = "${CssNames.UNDERLINE} ${TwClasses.UNDERLINE}") {
                           href = it
                           +studentName
                         }
                       }
                       td {
-                        a(classes = UNDERLINE) {
+                        a(classes = "${CssNames.UNDERLINE} ${TwClasses.UNDERLINE}") {
                           href = it
                           +studentEmail
                         }
@@ -391,12 +388,12 @@ internal object ClassSummaryPage {
                           tr {
                             challenge.functionInfo().invocations
                               .forEachIndexed { i, _ ->
-                                td(classes = INVOC_TD) {
+                                td(classes = "${CssNames.INVOC_TD} ${TwClasses.INVOC_TD}") {
                                   id = "${student.userId}-$encodedName-$i"
                                   +""
                                 }
                               }
-                            td(classes = INVOC_STAT) {
+                            td(classes = "${CssNames.INVOC_STAT} ${TwClasses.INVOC_STAT}") {
                               id = "${student.userId}-$encodedName$STATS"
                               +""
                             }

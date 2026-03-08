@@ -19,8 +19,7 @@ package com.github.readingbat.pages
 
 import com.github.readingbat.common.ClassCode
 import com.github.readingbat.common.Constants.LABEL_WIDTH
-import com.github.readingbat.common.CssNames.INDENT_2EM
-import com.github.readingbat.common.CssNames.UNDERLINE
+import com.github.readingbat.common.CssNames
 import com.github.readingbat.common.Endpoints.TEACHER_PREFS_ENDPOINT
 import com.github.readingbat.common.Endpoints.classSummaryEndpoint
 import com.github.readingbat.common.FormFields.CHOICE_SOURCE_PARAM
@@ -37,6 +36,7 @@ import com.github.readingbat.common.FormFields.TEACHER_PREF
 import com.github.readingbat.common.FormFields.UPDATE_ACTIVE_CLASS
 import com.github.readingbat.common.Message
 import com.github.readingbat.common.Message.Companion.EMPTY_MESSAGE
+import com.github.readingbat.common.TwClasses
 import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.queryActiveTeachingClassCode
 import com.github.readingbat.common.isValidUser
@@ -133,7 +133,7 @@ internal object TeacherPrefsPage {
 
   private fun BODY.createClass(defaultClassDesc: String) {
     h3 { +"Create a class" }
-    div(classes = INDENT_2EM) {
+    div(classes = "${CssNames.INDENT_2EM} ${TwClasses.INDENT_2EM}") {
       p { +"Enter a description of the class." }
       form {
         action = TEACHER_PREFS_ENDPOINT
@@ -172,7 +172,7 @@ internal object TeacherPrefsPage {
     val classCodes = user.classCodes()
     if (classCodes.isNotEmpty()) {
       h3 { +"Classes" }
-      div(classes = INDENT_2EM) {
+      div(classes = "${CssNames.INDENT_2EM} ${TwClasses.INDENT_2EM}") {
         table {
           tr {
             td {
@@ -217,13 +217,13 @@ internal object TeacherPrefsPage {
 
               val summary = classSummaryEndpoint(classCode, TEACHER_PREFS_ENDPOINT)
               td {
-                a(classes = UNDERLINE) {
+                a(classes = "${CssNames.UNDERLINE} ${TwClasses.UNDERLINE}") {
                   href = summary
                   +classCode.fetchClassDesc()
                 }
               }
               td {
-                a(classes = UNDERLINE) {
+                a(classes = "${CssNames.UNDERLINE} ${TwClasses.UNDERLINE}") {
                   href = summary
                   +classCode.displayedValue
                 }

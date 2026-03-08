@@ -17,7 +17,7 @@
 
 package com.github.readingbat.pages
 
-import com.github.readingbat.common.CssNames.INDENT_1EM
+import com.github.readingbat.common.CssNames
 import com.github.readingbat.common.Endpoints.CONFIG_ENDPOINT
 import com.github.readingbat.common.Endpoints.SESSIONS_ENDPOINT
 import com.github.readingbat.common.Endpoints.SYSTEM_ADMIN_ENDPOINT
@@ -25,6 +25,7 @@ import com.github.readingbat.common.FormFields.DAYS_DEFAULT
 import com.github.readingbat.common.FormFields.DAYS_PARAM
 import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.Property
+import com.github.readingbat.common.TwClasses
 import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.queryActiveTeachingClassCode
 import com.github.readingbat.common.isAdminUser
@@ -65,21 +66,21 @@ internal object AdminPrefsPage {
           h2 { +"Admin Preferences" }
 
           if (!isProduction() || user.isAdminUser()) {
-            p(classes = INDENT_1EM) {
+            p(classes = "${CssNames.INDENT_1EM} ${TwClasses.INDENT_1EM}") {
               a {
                 href = "$CONFIG_ENDPOINT?$RETURN_PARAM=$returnPath"
                 +"System Configuration"
               }
             }
 
-            p(classes = INDENT_1EM) {
+            p(classes = "${CssNames.INDENT_1EM} ${TwClasses.INDENT_1EM}") {
               a {
                 href = "$SESSIONS_ENDPOINT?$RETURN_PARAM=$returnPath&$DAYS_PARAM=$DAYS_DEFAULT"
                 +"Current Sessions"
               }
             }
 
-            p(classes = INDENT_1EM) {
+            p(classes = "${CssNames.INDENT_1EM} ${TwClasses.INDENT_1EM}") {
               a {
                 href = "$SYSTEM_ADMIN_ENDPOINT?$RETURN_PARAM=$returnPath"
                 +"System Admin"
@@ -88,7 +89,7 @@ internal object AdminPrefsPage {
 
             Property.PINGDOM_BANNER_ID.getPropertyOrNull()
               ?.also {
-                p(classes = INDENT_1EM) {
+                p(classes = "${CssNames.INDENT_1EM} ${TwClasses.INDENT_1EM}") {
                   a {
                     href = "https://share.pingdom.com/banners/$it"
                     img {

@@ -20,8 +20,7 @@ package com.github.readingbat.pages
 import com.github.readingbat.common.ClassCode
 import com.github.readingbat.common.ClassCode.Companion.DISABLED_CLASS_CODE
 import com.github.readingbat.common.Constants.LABEL_WIDTH
-import com.github.readingbat.common.CssNames.INDENT_1EM
-import com.github.readingbat.common.CssNames.INDENT_2EM
+import com.github.readingbat.common.CssNames
 import com.github.readingbat.common.Endpoints.OAUTH_LOGIN_ENDPOINT
 import com.github.readingbat.common.Endpoints.TEACHER_PREFS_ENDPOINT
 import com.github.readingbat.common.Endpoints.USER_PREFS_ENDPOINT
@@ -36,6 +35,7 @@ import com.github.readingbat.common.FormFields.UPDATE_DEFAULT_LANGUAGE
 import com.github.readingbat.common.FormFields.WITHDRAW_FROM_CLASS
 import com.github.readingbat.common.Message
 import com.github.readingbat.common.Message.Companion.EMPTY_MESSAGE
+import com.github.readingbat.common.TwClasses
 import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.queryActiveTeachingClassCode
 import com.github.readingbat.common.isValidUser
@@ -128,7 +128,7 @@ internal object UserPrefsPage {
           joinOrWithdrawFromClass(user, defaultClassCode)
           deleteAccount(user)
 
-          p(classes = INDENT_1EM) {
+          p(classes = "${CssNames.INDENT_1EM} ${TwClasses.INDENT_1EM}") {
             a {
               href = "$TEACHER_PREFS_ENDPOINT?$RETURN_PARAM=$USER_PREFS_ENDPOINT"
               +"Teacher Preferences"
@@ -142,7 +142,7 @@ internal object UserPrefsPage {
 
   private fun BODY.defaultLanguage(user: User) {
     h3 { +"Default Language" }
-    div(classes = INDENT_2EM) {
+    div(classes = "${CssNames.INDENT_2EM} ${TwClasses.INDENT_2EM}") {
       table {
         form {
           action = USER_PREFS_ENDPOINT
@@ -185,7 +185,7 @@ internal object UserPrefsPage {
     if (enrolledClass.isEnabled) {
       h3 { +"Enrolled class" }
       val displayStr = enrolledClass.toDisplayString()
-      div(classes = INDENT_2EM) {
+      div(classes = "${CssNames.INDENT_2EM} ${TwClasses.INDENT_2EM}") {
         p { +"Currently enrolled in class $displayStr." }
         p {
           form {
@@ -201,7 +201,7 @@ internal object UserPrefsPage {
       }
     } else {
       h3 { +JOIN_A_CLASS }
-      div(classes = INDENT_2EM) {
+      div(classes = "${CssNames.INDENT_2EM} ${TwClasses.INDENT_2EM}") {
         p { +"Enter the class code your teacher gave you. This will make your progress visible to your teacher." }
         form {
           action = USER_PREFS_ENDPOINT
@@ -285,7 +285,7 @@ internal object UserPrefsPage {
     val email = user.email
     if (email.isNotBlank()) {
       h3 { +"Delete account" }
-      div(classes = INDENT_2EM) {
+      div(classes = "${CssNames.INDENT_2EM} ${TwClasses.INDENT_2EM}") {
         p { +"Permanently delete account [$email] -- this cannot be undone!" }
         form {
           action = USER_PREFS_ENDPOINT

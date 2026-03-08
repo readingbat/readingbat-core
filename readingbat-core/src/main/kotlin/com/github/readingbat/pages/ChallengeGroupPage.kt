@@ -21,9 +21,7 @@ import com.github.pambrose.common.util.pathOf
 import com.github.readingbat.common.ClassCode
 import com.github.readingbat.common.Constants.COLUMN_CNT
 import com.github.readingbat.common.Constants.MSG
-import com.github.readingbat.common.CssNames.FUNC_ITEM1
-import com.github.readingbat.common.CssNames.FUNC_ITEM2
-import com.github.readingbat.common.CssNames.UNDERLINE
+import com.github.readingbat.common.CssNames
 import com.github.readingbat.common.Endpoints.CHALLENGE_GROUP_ENDPOINT
 import com.github.readingbat.common.Endpoints.CHALLENGE_ROOT
 import com.github.readingbat.common.Endpoints.CLEAR_GROUP_ANSWERS_ENDPOINT
@@ -37,6 +35,7 @@ import com.github.readingbat.common.FormFields.LANGUAGE_NAME_PARAM
 import com.github.readingbat.common.Message
 import com.github.readingbat.common.StaticFileNames.GREEN_CHECK
 import com.github.readingbat.common.StaticFileNames.WHITE_CHECK
+import com.github.readingbat.common.TwClasses
 import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.queryActiveTeachingClassCode
 import com.github.readingbat.common.challengeAnswersKey
@@ -109,7 +108,15 @@ internal object ChallengeGroupPage {
           val challengeName = challenge.challengeName
           val allCorrect = challenge.isCorrect(user)
 
-          td(classes = if (activeTeachingClassCode.isEnabled && enrollees.isNotEmpty()) FUNC_ITEM1 else FUNC_ITEM2) {
+          td(
+            classes =
+            if (activeTeachingClassCode.isEnabled &&
+            enrollees.isNotEmpty()
+            )
+            "${CssNames.FUNC_ITEM1} ${TwClasses.FUNC_ITEM1}"
+            else
+            "${CssNames.FUNC_ITEM2} ${TwClasses.FUNC_ITEM2}",
+            ) {
             if (activeTeachingClassCode.isNotEnabled)
               img { src = pathOf(STATIC_ROOT, if (allCorrect) GREEN_CHECK else WHITE_CHECK) }
 
@@ -185,7 +192,7 @@ internal object ChallengeGroupPage {
   ) {
     h3 {
       style = "margin-left: 5px; color: $HEADER_COLOR"
-      a(classes = UNDERLINE) {
+      a(classes = "${CssNames.UNDERLINE} ${TwClasses.UNDERLINE}") {
         href =
           if (groupName.isNotValid())
             classSummaryEndpoint(classCode)

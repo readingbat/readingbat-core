@@ -33,21 +33,7 @@ import com.github.readingbat.common.Constants.PRISM
 import com.github.readingbat.common.Constants.PROCESS_USER_ANSWERS_FUNC
 import com.github.readingbat.common.Constants.RESP
 import com.github.readingbat.common.Constants.WRONG_COLOR
-import com.github.readingbat.common.CssNames.ARROW
-import com.github.readingbat.common.CssNames.CHALLENGE_DESC
-import com.github.readingbat.common.CssNames.CHECK_ANSWERS
-import com.github.readingbat.common.CssNames.CODE_BLOCK
-import com.github.readingbat.common.CssNames.CODING_BAT
-import com.github.readingbat.common.CssNames.DASHBOARD
-import com.github.readingbat.common.CssNames.EXPERIMENT
-import com.github.readingbat.common.CssNames.FEEDBACK
-import com.github.readingbat.common.CssNames.FUNC_COL
-import com.github.readingbat.common.CssNames.HINT
-import com.github.readingbat.common.CssNames.LIKE_BUTTONS
-import com.github.readingbat.common.CssNames.STATUS
-import com.github.readingbat.common.CssNames.SUCCESS
-import com.github.readingbat.common.CssNames.UNDERLINE
-import com.github.readingbat.common.CssNames.USER_RESP
+import com.github.readingbat.common.CssNames
 import com.github.readingbat.common.Endpoints.CHALLENGE_ENDPOINT
 import com.github.readingbat.common.Endpoints.CHALLENGE_ROOT
 import com.github.readingbat.common.Endpoints.CLEAR_CHALLENGE_ANSWERS_ENDPOINT
@@ -78,6 +64,7 @@ import com.github.readingbat.common.StaticFileNames.DISLIKE_CLEAR_FILE
 import com.github.readingbat.common.StaticFileNames.DISLIKE_COLOR_FILE
 import com.github.readingbat.common.StaticFileNames.LIKE_CLEAR_FILE
 import com.github.readingbat.common.StaticFileNames.LIKE_COLOR_FILE
+import com.github.readingbat.common.TwClasses
 import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.queryActiveTeachingClassCode
 import com.github.readingbat.common.challengeAnswersKey
@@ -247,9 +234,9 @@ internal object ChallengePage {
     }
 
     if (challenge.description.isNotBlank())
-      div(classes = CHALLENGE_DESC) { rawHtml(challenge.parsedDescription) }
+      div(classes = "${CssNames.CHALLENGE_DESC} ${TwClasses.CHALLENGE_DESC}") { rawHtml(challenge.parsedDescription) }
 
-    div(classes = CODE_BLOCK) {
+    div(classes = "${CssNames.CODE_BLOCK} ${TwClasses.CODE_BLOCK}") {
       pre(classes = "line-numbers") {
         code(classes = "language-$languageName") {
           +funcInfo.codeSnippet
@@ -309,14 +296,14 @@ internal object ChallengePage {
         funcInfo.invocations.withIndex()
           .forEach { (i, invocation) ->
             tr {
-              td(classes = FUNC_COL) {
+              td(classes = "${CssNames.FUNC_COL} ${TwClasses.FUNC_COL}") {
                 +invocation.value
                 // Pad short invocation calls
                 val minLength = 10
                 if (invocation.value.length < minLength)
                   rawHtml(" " + List(minLength - invocation.value.length) { nbsp.text }.joinToString(" "))
               }
-              td(classes = ARROW) { rawHtml("&rarr;") }
+              td(classes = "${CssNames.ARROW} ${TwClasses.ARROW}") { rawHtml("&rarr;") }
               td {
                 val cls =
                   when (i) {
@@ -324,7 +311,7 @@ internal object ChallengePage {
                     0 -> " $topFocus"
                     else -> ""
                   }
-                textInput(classes = USER_RESP + cls) {
+                textInput(classes = "${CssNames.USER_RESP} ${TwClasses.USER_RESP}" + cls) {
                   id = "$RESP$i"
 
                   if (user.isNull() || user.enrolledClassCode.isNotEnabled)
@@ -345,8 +332,8 @@ internal object ChallengePage {
                     autoFocus = true
                 }
               }
-              td(classes = FEEDBACK) { id = "$FEEDBACK_ID$i" }
-              td(classes = HINT) { id = "$HINT_ID$i" }
+              td(classes = "${CssNames.FEEDBACK} ${TwClasses.FEEDBACK}") { id = "$FEEDBACK_ID$i" }
+              td(classes = CssNames.HINT) { id = "$HINT_ID$i" }
             }
           }
         // This will cause tab to circle back to top input element
@@ -458,7 +445,7 @@ internal object ChallengePage {
 
       h3 {
         style = "margin-left: 5px; color: $HEADER_COLOR"
-        a(classes = UNDERLINE) {
+        a(classes = "${CssNames.UNDERLINE} ${TwClasses.UNDERLINE}") {
           href = classSummaryEndpoint(classCode, languageName, groupName)
           +classCode.toDisplayString()
         }
@@ -504,8 +491,8 @@ internal object ChallengePage {
 
               val allCorrect = numCorrect == numCalls
 
-              tr(classes = DASHBOARD) {
-                td(classes = DASHBOARD) {
+              tr(classes = "${CssNames.DASHBOARD} ${TwClasses.DASHBOARD}") {
+                td(classes = "${CssNames.DASHBOARD} ${TwClasses.DASHBOARD}") {
                   id = "${enrollee.userId}-$NAME_TD"
                   val color = if (allCorrect) CORRECT_COLOR else INCOMPLETE_COLOR
                   style = "width:15%;white-space:nowrap; background-color:$color"
@@ -526,7 +513,7 @@ internal object ChallengePage {
 
                 results
                   .forEach { (invocation, history) ->
-                    td(classes = DASHBOARD) {
+                    td(classes = "${CssNames.DASHBOARD} ${TwClasses.DASHBOARD}") {
                       id = "${enrollee.userId}-$invocation-$ANSWER_TD"
                       val color =
                         if (history.correct) {
@@ -556,7 +543,7 @@ internal object ChallengePage {
       table {
         tr {
           td {
-            button(classes = CHECK_ANSWERS) {
+            button(classes = "${CssNames.CHECK_ANSWERS} ${TwClasses.CHECK_ANSWERS}") {
               onClick = "$PROCESS_USER_ANSWERS_FUNC(null, ${funcInfo.questionCount})"
               +"Check My Answers"
             }
@@ -584,8 +571,8 @@ internal object ChallengePage {
 
           td {
             style = "vertical-align:middle"
-            span(classes = STATUS) { id = STATUS_ID }
-            span(classes = SUCCESS) { id = SUCCESS_ID }
+            span(classes = "${CssNames.STATUS} ${TwClasses.STATUS}") { id = STATUS_ID }
+            span(classes = "${CssNames.SUCCESS} ${TwClasses.SUCCESS}") { id = SUCCESS_ID }
           }
         }
       }
@@ -643,7 +630,7 @@ internal object ChallengePage {
           td {
             id = LIKE_CLEAR
             style = "display:${if (likeDislikeVal == 0 || likeDislikeVal == 2) "inline" else "none"}"
-            button(classes = LIKE_BUTTONS) {
+            button(classes = "${CssNames.LIKE_BUTTONS} ${TwClasses.LIKE_BUTTONS}") {
               onClick = "$LIKE_DISLIKE_FUNC(${LIKE_CLEAR.toDoubleQuoted()})"
               img {
                 height = imgSize
@@ -654,7 +641,7 @@ internal object ChallengePage {
           td {
             id = LIKE_COLOR
             style = "display:${if (likeDislikeVal == 1) "inline" else "none"}"
-            button(classes = LIKE_BUTTONS) {
+            button(classes = "${CssNames.LIKE_BUTTONS} ${TwClasses.LIKE_BUTTONS}") {
               onClick = "$LIKE_DISLIKE_FUNC(${LIKE_COLOR.toDoubleQuoted()})"
               img {
                 height = imgSize
@@ -665,7 +652,7 @@ internal object ChallengePage {
           td {
             id = DISLIKE_CLEAR
             style = "display:${if (likeDislikeVal == 0 || likeDislikeVal == 1) "inline" else "none"}"
-            button(classes = LIKE_BUTTONS) {
+            button(classes = "${CssNames.LIKE_BUTTONS} ${TwClasses.LIKE_BUTTONS}") {
               onClick = "$LIKE_DISLIKE_FUNC(${DISLIKE_CLEAR.toDoubleQuoted()})"
               img {
                 height = imgSize
@@ -676,7 +663,7 @@ internal object ChallengePage {
           td {
             id = DISLIKE_COLOR
             style = "display:${if (likeDislikeVal == 2) "inline" else "none"}"
-            button(classes = LIKE_BUTTONS) {
+            button(classes = "${CssNames.LIKE_BUTTONS} ${TwClasses.LIKE_BUTTONS}") {
               onClick = "$LIKE_DISLIKE_FUNC(${DISLIKE_COLOR.toDoubleQuoted()})"
               img {
                 height = imgSize
@@ -695,7 +682,7 @@ internal object ChallengePage {
 
           td {
             style = "vertical-align:middle"
-            span(classes = STATUS) { id = LIKE_STATUS_ID }
+            span(classes = "${CssNames.STATUS} ${TwClasses.STATUS}") { id = LIKE_STATUS_ID }
           }
         }
       }
@@ -707,7 +694,7 @@ internal object ChallengePage {
     val groupName = challenge.groupName
     val challengeName = challenge.challengeName
 
-    p(classes = EXPERIMENT) {
+    p(classes = "${CssNames.EXPERIMENT} ${TwClasses.EXPERIMENT}") {
       +"Experiment with this code on "
       this@otherLinks.addLink("Gitpod.io", "https://gitpod.io/#${challenge.gitpodUrl}", true)
       if (languageType.isKotlin) {
@@ -717,7 +704,7 @@ internal object ChallengePage {
     }
 
     if (challenge.codingBatEquiv.isNotEmpty() && (languageType.isJava || languageType.isPython)) {
-      p(classes = CODING_BAT) {
+      p(classes = "${CssNames.CODING_BAT} ${TwClasses.CODING_BAT}") {
         +"Work on a similar problem on "
         this@otherLinks.addLink("CodingBat.com", "https://codingbat.com/prob/${challenge.codingBatEquiv}", true)
       }

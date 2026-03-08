@@ -19,12 +19,11 @@ package com.github.readingbat.pages
 
 import com.github.pambrose.common.util.decode
 import com.github.pambrose.common.util.pathOf
-import com.github.readingbat.common.CssNames.CHALLENGE_DESC
-import com.github.readingbat.common.CssNames.INDENT_1EM
-import com.github.readingbat.common.CssNames.KOTLIN_CODE
+import com.github.readingbat.common.CssNames
 import com.github.readingbat.common.Endpoints.CHALLENGE_ROOT
 import com.github.readingbat.common.Endpoints.STATIC_ROOT
 import com.github.readingbat.common.StaticFileNames.RUN_BUTTON
+import com.github.readingbat.common.TwClasses
 import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.queryActiveTeachingClassCode
 import com.github.readingbat.dsl.ReadingBatContent
@@ -73,7 +72,7 @@ internal object PlaygroundPage {
         head {
           script {
             src = "https://unpkg.com/kotlin-playground@1"
-            attributes["data-selector"] = ".$KOTLIN_CODE"
+            attributes["data-selector"] = ".${CssNames.KOTLIN_CODE}"
           }
           headDefault()
         }
@@ -92,7 +91,9 @@ internal object PlaygroundPage {
           }
 
           if (challenge.description.isNotBlank())
-            div(classes = CHALLENGE_DESC) { rawHtml(challenge.parsedDescription) }
+            div(classes = "${CssNames.CHALLENGE_DESC} ${TwClasses.CHALLENGE_DESC}") {
+              rawHtml(challenge.parsedDescription)
+            }
 
           val options =
             """
@@ -102,14 +103,14 @@ internal object PlaygroundPage {
 
           rawHtml(
             """
-              <div class=$KOTLIN_CODE $options>
+              <div class=${CssNames.KOTLIN_CODE} $options>
               ${escapeHtml4(funcInfo.originalCode)}
               </div>
             """.trimIndent(),
           )
 
           br
-          div(classes = INDENT_1EM) {
+          div(classes = "${CssNames.INDENT_1EM} ${TwClasses.INDENT_1EM}") {
             +"Click on"
             img {
               height = "25"

@@ -19,13 +19,13 @@ package com.github.readingbat.pages
 
 import com.github.pambrose.common.util.pathOf
 import com.github.readingbat.common.Constants.MSG
-import com.github.readingbat.common.CssNames.GROUP_CHOICE
-import com.github.readingbat.common.CssNames.GROUP_ITEM_SRC
+import com.github.readingbat.common.CssNames
 import com.github.readingbat.common.Endpoints.CHALLENGE_ROOT
 import com.github.readingbat.common.Endpoints.STATIC_ROOT
 import com.github.readingbat.common.Message
 import com.github.readingbat.common.StaticFileNames.GREEN_CHECK
 import com.github.readingbat.common.StaticFileNames.WHITE_CHECK
+import com.github.readingbat.common.TwClasses
 import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.queryActiveTeachingClassCode
 import com.github.readingbat.dsl.ChallengeGroup
@@ -89,8 +89,8 @@ internal object LanguageGroupPage {
           }
 
           td {
-            div(classes = GROUP_ITEM_SRC) {
-              a(classes = GROUP_CHOICE) {
+            div(classes = "${CssNames.GROUP_ITEM_SRC} ${TwClasses.GROUP_ITEM_SRC}") {
+              a(classes = "${CssNames.GROUP_CHOICE} ${TwClasses.GROUP_CHOICE}") {
                 href = pathOf(CHALLENGE_ROOT, languageName, groupName)
                 +groupName.toString()
               }

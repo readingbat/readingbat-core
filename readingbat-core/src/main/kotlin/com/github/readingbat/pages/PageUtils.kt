@@ -25,9 +25,7 @@ import com.github.pambrose.common.util.toRootPath
 import com.github.readingbat.common.ClassCode
 import com.github.readingbat.common.Constants.ADMIN_FUNC
 import com.github.readingbat.common.Constants.ICONS
-import com.github.readingbat.common.CssNames.ADMIN_BUTTON
-import com.github.readingbat.common.CssNames.INDENT_1EM
-import com.github.readingbat.common.CssNames.SELECTED_TAB
+import com.github.readingbat.common.CssNames
 import com.github.readingbat.common.Endpoints.CHALLENGE_ROOT
 import com.github.readingbat.common.Endpoints.CSS_ENDPOINT
 import com.github.readingbat.common.Endpoints.PRIVACY_ENDPOINT
@@ -39,6 +37,7 @@ import com.github.readingbat.common.Message.Companion.EMPTY_MESSAGE
 import com.github.readingbat.common.Property
 import com.github.readingbat.common.Property.ANALYTICS_ID
 import com.github.readingbat.common.Property.TAILWIND_ENABLED
+import com.github.readingbat.common.TwClasses
 import com.github.readingbat.common.User
 import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.dsl.LanguageType.Companion.languageTypeList
@@ -234,7 +233,7 @@ internal object PageUtils {
             .forEach { lang ->
               li(classes = "h2") {
                 if (languageType == lang)
-                  id = SELECTED_TAB
+                  id = CssNames.SELECTED_TAB
                 this@bodyHeader.addLink(lang.name, pathOf(CHALLENGE_ROOT, lang.languageName))
               }
             }
@@ -255,7 +254,7 @@ internal object PageUtils {
     }
 
   fun BODY.privacyStatement(returnPath: String) =
-    p(classes = INDENT_1EM) {
+    p(classes = "${CssNames.INDENT_1EM} ${TwClasses.INDENT_1EM}") {
       a {
         href = "$PRIVACY_ENDPOINT?$RETURN_PARAM=$returnPath"
         +"Privacy Statement"
@@ -296,7 +295,7 @@ internal object PageUtils {
   }
 
   fun BODY.adminButton(text: String, endpoint: String, confirm: String) {
-    button(classes = ADMIN_BUTTON) {
+    button(classes = "${CssNames.ADMIN_BUTTON} ${TwClasses.ADMIN_BUTTON}") {
       onClick = "$ADMIN_FUNC(${confirm.toDoubleQuoted()}, ${endpoint.toDoubleQuoted()})"
       +text
     }
