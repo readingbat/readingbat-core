@@ -28,8 +28,49 @@ internal object KotlinParse {
   private const val PRINT_PREFIX = "println("
   internal const val VAR_NAME = "answers"
 
-  fun extractKotlinFunction(code: List<String>) =
-    code.subList(0, code.lastLineNumberOf(funMainRegex)).joinToString("\n").trimIndent()
+  fun extractKotlinFunction(code: List<String>): String {
+    val endLine = code.lastLineNumberOf(funMainRegex)
+    val snippet = code.subList(0, endLine)
+    return stripLeadingComments(snippet).joinToString("\n").trimIndent()
+  }
+
+  private fun stripLeadingComments(lines: List<String>): List<String> {
+    var i = 0
+    while (i < lines.size) {
+      val trimmed = lines[i].trim()
+      when {
+        trimmed.startsWith("/*") -> {
+          // Collect the entire block comment to check for "Copyright"
+          val blockStart = i
+          val isSingleLine = trimmed.contains("*/")
+          if (isSingleLine) {
+            if (trimmed.contains("Copyright", ignoreCase = true)) {
+              i++
+            } else {
+              break
+            }
+          } else {
+            // Find the end of the block comment
+            i++
+            while (i < lines.size && !lines[i].contains("*/")) i++
+            if (i < lines.size) i++ // skip the closing */ line
+            // Check if any line in the block contains "Copyright"
+            val blockLines = lines.subList(blockStart, i)
+            if (blockLines.any { it.contains("Copyright", ignoreCase = true) }) {
+              // Copyright block removed, continue scanning
+            } else {
+              // Not a copyright comment — keep it
+              return lines.subList(blockStart, lines.size)
+            }
+          }
+        }
+        trimmed.startsWith("//") && trimmed.contains("Copyright", ignoreCase = true) -> i++
+        trimmed.isEmpty() -> i++
+        else -> break
+      }
+    }
+    return lines.subList(i, lines.size)
+  }
 
   fun extractKotlinInvocations(code: String, start: Regex, end: Regex) =
     extractKotlinInvocations(code.lines(), start, end)
