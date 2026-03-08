@@ -18,6 +18,7 @@
 package com.github.readingbat.pages
 
 import com.github.pambrose.common.util.pathOf
+import com.github.readingbat.common.CssNames
 import com.github.readingbat.common.Endpoints.STATIC_ROOT
 import com.github.readingbat.common.TwClasses
 import com.github.readingbat.pages.PageUtils.backLink
@@ -45,12 +46,12 @@ internal object NotFoundPage {
           bodyTitle()
 
           p {
-            img(classes = TwClasses.CENTER) { src = pathOf(STATIC_ROOT, "nervous.png") }
+            img(classes = "${CssNames.CENTER} ${TwClasses.CENTER}") { src = pathOf(STATIC_ROOT, "nervous.png") }
           }
 
           h2 { +"On no! We are afraid that page that does not exist" }
 
-          div(classes = TwClasses.INDENT_1EM) {
+          div(classes = "${CssNames.INDENT_1EM} ${TwClasses.INDENT_1EM}") {
             p {
               +"We cannot find the page: \""
               b { +uri }

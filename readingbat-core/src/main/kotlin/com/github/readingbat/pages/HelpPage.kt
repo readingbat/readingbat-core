@@ -18,6 +18,7 @@
 package com.github.readingbat.pages
 
 import com.github.pambrose.common.util.pathOf
+import com.github.readingbat.common.CssNames
 import com.github.readingbat.common.Endpoints.ABOUT_ENDPOINT
 import com.github.readingbat.common.Endpoints.STATIC_ROOT
 import com.github.readingbat.common.Endpoints.TEACHER_PREFS_ENDPOINT
@@ -69,10 +70,10 @@ internal object HelpPage {
 
           h2 { +"ReadingBat Help" }
 
-          div(classes = TwClasses.INDENT_1EM) {
+          div(classes = "${CssNames.INDENT_1EM} ${TwClasses.INDENT_1EM}") {
             h3 { +"Student Tips" }
 
-            div(classes = TwClasses.INDENT_1EM) {
+            div(classes = "${CssNames.INDENT_1EM} ${TwClasses.INDENT_1EM}") {
               h4 {
                 rawHtml("&bull;")
                 +" $JOIN_A_CLASS"
@@ -135,7 +136,7 @@ internal object HelpPage {
               +"page."
             }
 
-            div(classes = TwClasses.INDENT_1EM) {
+            div(classes = "${CssNames.INDENT_1EM} ${TwClasses.INDENT_1EM}") {
               h4 {
                 rawHtml("&bull;")
                 +" Create a Class"
