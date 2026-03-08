@@ -13,6 +13,7 @@ module.exports = {
         'rb-incomplete': '#F1F1F1',
         'rb-correct': '#4EAA3A',
         'rb-wrong': '#FF0000',
+        'rb-header': '#419DC1',
         'rb-code-stripe': '#0600EE',
       },
       fontFamily: {

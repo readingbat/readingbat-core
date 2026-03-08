@@ -18,9 +18,8 @@
 package com.github.readingbat.pages
 
 import com.github.pambrose.common.util.pathOf
-import com.github.readingbat.common.CssNames
-import com.github.readingbat.common.CssNames.CENTER
 import com.github.readingbat.common.Endpoints.STATIC_ROOT
+import com.github.readingbat.common.TwClasses
 import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyTitle
 import com.github.readingbat.pages.PageUtils.headDefault
@@ -45,12 +44,12 @@ internal object ErrorPage {
           bodyTitle()
 
           p {
-            img(classes = CENTER) { src = pathOf(STATIC_ROOT, "bscod-small.jpg") }
+            img(classes = TwClasses.CENTER) { src = pathOf(STATIC_ROOT, "bscod-small.jpg") }
           }
 
           h2 { +"Ouch! Not sure what happened, but we seem to have had a problem!" }
 
-          div(classes = CssNames.INDENT_1EM) {
+          div(classes = TwClasses.INDENT_1EM) {
             p {
               +"Sorry for the inconvenience. We will look into the problem. In the mean time, please head back to the"
               a {

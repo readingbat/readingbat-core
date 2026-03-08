@@ -18,7 +18,6 @@
 package com.github.readingbat.pages
 
 import com.github.pambrose.common.util.pathOf
-import com.github.readingbat.common.CssNames.INDENT_1EM
 import com.github.readingbat.common.Endpoints.ABOUT_ENDPOINT
 import com.github.readingbat.common.Endpoints.STATIC_ROOT
 import com.github.readingbat.common.Endpoints.TEACHER_PREFS_ENDPOINT
@@ -28,6 +27,7 @@ import com.github.readingbat.common.FormFields.JOIN_A_CLASS
 import com.github.readingbat.common.FormFields.NO_ACTIVE_CLASS
 import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.FormFields.UPDATE_ACTIVE_CLASS
+import com.github.readingbat.common.TwClasses
 import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.queryActiveTeachingClassCode
 import com.github.readingbat.dsl.ReadingBatContent
@@ -69,10 +69,10 @@ internal object HelpPage {
 
           h2 { +"ReadingBat Help" }
 
-          div(classes = INDENT_1EM) {
+          div(classes = TwClasses.INDENT_1EM) {
             h3 { +"Student Tips" }
 
-            div(classes = INDENT_1EM) {
+            div(classes = TwClasses.INDENT_1EM) {
               h4 {
                 rawHtml("&bull;")
                 +" $JOIN_A_CLASS"
@@ -135,7 +135,7 @@ internal object HelpPage {
               +"page."
             }
 
-            div(classes = INDENT_1EM) {
+            div(classes = TwClasses.INDENT_1EM) {
               h4 {
                 rawHtml("&bull;")
                 +" Create a Class"

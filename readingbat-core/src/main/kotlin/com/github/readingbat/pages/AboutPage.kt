@@ -17,9 +17,9 @@
 
 package com.github.readingbat.pages
 
-import com.github.readingbat.common.CssNames.INDENT_1EM
 import com.github.readingbat.common.Endpoints.ABOUT_ENDPOINT
 import com.github.readingbat.common.FormFields.RETURN_PARAM
+import com.github.readingbat.common.TwClasses
 import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.queryActiveTeachingClassCode
 import com.github.readingbat.dsl.ReadingBatContent
@@ -53,7 +53,7 @@ internal object AboutPage {
 
           h2 { +"About ReadingBat" }
 
-          div(classes = INDENT_1EM) {
+          div(classes = TwClasses.INDENT_1EM) {
             p {
               +"""
               ReadingBat.com is a father-son effort, by Paul and Matthew Ambrose, intended to make learning

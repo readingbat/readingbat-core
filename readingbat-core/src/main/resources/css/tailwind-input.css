@@ -1,3 +1,5 @@
-@tailwind base;
+/* Preflight (base) intentionally omitted during migration to avoid
+   conflicting with CssContent.kt's global resets. Re-enable after
+   CssContent.kt is fully retired (Phase 6). */
 @tailwind components;
 @tailwind utilities;
