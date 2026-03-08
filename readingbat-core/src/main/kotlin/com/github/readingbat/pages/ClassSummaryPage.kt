@@ -56,7 +56,6 @@ import com.github.readingbat.pages.PageUtils.bodyTitle
 import com.github.readingbat.pages.PageUtils.displayMessage
 import com.github.readingbat.pages.PageUtils.encodeUriElems
 import com.github.readingbat.pages.PageUtils.headDefault
-import com.github.readingbat.pages.PageUtils.loadBootstrap
 import com.github.readingbat.pages.PageUtils.loadPingdomScript
 import com.github.readingbat.pages.PageUtils.rawHtml
 import com.github.readingbat.pages.StudentSummaryPage.removeFromClassButton
@@ -67,14 +66,11 @@ import com.github.readingbat.server.LanguageName.Companion.EMPTY_LANGUAGE
 import com.github.readingbat.server.ServerUtils.queryParam
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.server.routing.RoutingContext
-import kotlinx.html.A
 import kotlinx.html.BODY
 import kotlinx.html.FormMethod
-import kotlinx.html.LI
-import kotlinx.html.UL
 import kotlinx.html.a
 import kotlinx.html.body
-import kotlinx.html.classes
+import kotlinx.html.button
 import kotlinx.html.div
 import kotlinx.html.form
 import kotlinx.html.h2
@@ -84,9 +80,8 @@ import kotlinx.html.head
 import kotlinx.html.hiddenInput
 import kotlinx.html.html
 import kotlinx.html.id
-import kotlinx.html.li
+import kotlinx.html.onClick
 import kotlinx.html.p
-import kotlinx.html.role
 import kotlinx.html.script
 import kotlinx.html.span
 import kotlinx.html.stream.createHTML
@@ -96,8 +91,6 @@ import kotlinx.html.table
 import kotlinx.html.td
 import kotlinx.html.th
 import kotlinx.html.tr
-import kotlinx.html.ul
-import kotlin.collections.set
 
 internal object ClassSummaryPage {
   private val logger = KotlinLogging.logger {}
@@ -147,7 +140,6 @@ internal object ClassSummaryPage {
         val enrollees = classCode.fetchEnrollees()
 
         head {
-          loadBootstrap()
           headDefault()
         }
 
@@ -231,45 +223,67 @@ internal object ClassSummaryPage {
   }
 
   private fun BODY.displayClassChoices(content: ReadingBatContent, classCode: ClassCode) {
-    table(classes = "tw-border-separate tw-border-spacing-x-[15px] tw-border-spacing-y-[10px]") {
-      style = "border-collapse: separate; border-spacing: 15px 10px"
-      tr {
-        td(classes = "tw-text-[128%]") {
-          style = "font-size:128%"
-          +"Challenge Group: "
-        }
-        LanguageType.entries
-          .map { content.findLanguage(it) }
-          .forEach { langGroup ->
-            if (langGroup.challengeGroups.isNotEmpty()) {
-              td {
-                ul(classes = "tw-pl-0 tw-mb-0 tw-list-none") {
-                  style = "padding-left:0; margin-bottom:0; list-style-type:none"
-                  dropdown {
-                    val lang = langGroup.languageType.name
-                    dropdownToggle {
-                      classes = setOf("btn")
-                      +"$lang "
-                    }
-                    dropdownMenu {
-                      dropdownHeader(lang)
-                      // divider()
-                      langGroup.challengeGroups
-                        .forEach {
-                          li(classes = "tw-text-[110%]") {
-                            style = "font-size:110%"
-                            a(classSummaryEndpoint(classCode, langGroup.languageName, it.groupName)) {
-                              +it.groupName.toString()
-                            }
-                          }
-                        }
+    div {
+      style = "display:flex; align-items:center; gap:15px; padding:10px 0"
+      span {
+        style = "font-size:128%"
+        +"Challenge Group: "
+      }
+      LanguageType.entries
+        .map { content.findLanguage(it) }
+        .forEach { langGroup ->
+          if (langGroup.challengeGroups.isNotEmpty()) {
+            val lang = langGroup.languageType.name
+            div {
+              style = "position:relative; display:inline-block"
+              button {
+                style =
+                  "font-size:$BTN_SIZE; text-decoration:none; border-radius:5px; padding:0 7px; " +
+                    "cursor:pointer; color:black; border:1px solid black; background:white"
+                onClick = "toggleDropdown(this.parentNode); event.stopPropagation();"
+                +"$lang ▾"
+              }
+              div {
+                style =
+                  "display:none; position:absolute; top:100%; left:0; z-index:100; " +
+                    "background:white; border:1px solid #ccc; border-radius:4px; " +
+                    "box-shadow:0 4px 8px rgba(0,0,0,0.15); min-width:200px; padding:4px 0; margin-top:2px"
+                div {
+                  style = "font-size:120%; font-weight:bold; padding:4px 12px; color:#333"
+                  +lang
+                }
+                langGroup.challengeGroups
+                  .forEach {
+                    div {
+                      style = "font-size:110%; padding:2px 12px"
+                      a(classSummaryEndpoint(classCode, langGroup.languageName, it.groupName)) {
+                        +it.groupName.toString()
+                      }
                     }
                   }
-                }
               }
             }
           }
-      }
+        }
+    }
+    script {
+      rawHtml(
+        """
+          function toggleDropdown(container) {
+            var menu = container.querySelector('div[style*="position:absolute"]');
+            var isOpen = menu.style.display !== 'none';
+            document.querySelectorAll('div[style*="position:absolute"]').forEach(function(el) {
+              el.style.display = 'none';
+            });
+            if (!isOpen) menu.style.display = 'block';
+          }
+          document.addEventListener('click', function() {
+            document.querySelectorAll('div[style*="position:absolute"]').forEach(function(el) {
+              el.style.display = 'none';
+            });
+          });
+        """.trimIndent(),
+      )
     }
   }
 
@@ -461,39 +475,4 @@ internal object ClassSummaryPage {
       )
     }
   }
-
-  // See: https://github.com/Kotlin/kotlinx.html/wiki/Micro-templating-and-DSL-customizing
-  private fun UL.dropdown(block: LI.() -> Unit) {
-    li("dropdown") { block() }
-  }
-
-  private fun LI.dropdownToggle(block: A.() -> Unit) {
-    a("#", null, classes = "dropdown-toggle") {
-      style =
-        "font-size:$BTN_SIZE; text-decoration:none; border-radius: 5px; padding: 0px 7px; " +
-          "cursor: pointer; color: black; border:1px solid black;"
-      attributes["data-toggle"] = "dropdown"
-      role = "button"
-      attributes["aria-expanded"] = "false"
-      block()
-
-      span { classes = setOf("caret") }
-    }
-  }
-
-  private fun LI.dropdownMenu(block: UL.() -> Unit): Unit =
-    ul("dropdown-menu") {
-      role = "menu"
-      block()
-    }
-
-  private fun UL.dropdownHeader(text: String) =
-    li {
-      style = "font-size:120%"
-      classes = setOf("dropdown-header")
-      +text
-    }
-
-  @Suppress("unused")
-  private fun UL.divider() = li { classes = setOf("divider") }
 }
