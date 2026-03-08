@@ -234,8 +234,8 @@ internal object ClassSummaryPage {
     table(classes = "tw-border-separate tw-border-spacing-x-[15px] tw-border-spacing-y-[10px]") {
       style = "border-collapse: separate; border-spacing: 15px 10px"
       tr {
-        td(classes = "tw-text-[130%]") {
-          style = "font-size:$BTN_SIZE"
+        td(classes = "tw-text-[128%]") {
+          style = "font-size:128%"
           +"Challenge Group: "
         }
         LanguageType.entries
@@ -280,7 +280,7 @@ internal object ClassSummaryPage {
     groupName: GroupName,
   ) {
     h3(classes = "tw-ml-[15px] tw-text-rb-header") {
-      style = "margin-left: 15px; color: $HEADER_COLOR"
+      style = "margin-left: 15px; color: $HEADER_COLOR; font-size:18px"
       +" "
 
       languageName.toLanguageType().toString()
@@ -326,7 +326,7 @@ internal object ClassSummaryPage {
 
       if (enrollees.isNotEmpty()) {
         table(classes = "tw-border-separate tw-border-spacing-x-[15px] tw-border-spacing-y-[5px]") {
-          style = "border-collapse: separate; border-spacing: 15px 5px"
+          style = "border-collapse: separate; border-spacing: 15px 5px; font-size:14px"
           tr {
             if (!showDetail)
               th { +"" }
@@ -386,13 +386,18 @@ internal object ClassSummaryPage {
                     .forEach { challenge ->
                       td {
                         table {
+                          style = "border-collapse:separate; border-spacing:1px"
                           val encodedName = challenge.challengeName.encode()
                           tr {
+                            style = "height:15px"
                             challenge.functionInfo().invocations
                               .forEachIndexed { i, _ ->
-                                td(classes = TwClasses.INVOC_TD) {
-                                  id = "${student.userId}-$encodedName-$i"
-                                  +""
+                                td {
+                                  style = "padding:0; border:none"
+                                  div {
+                                    style = "width:7px; height:15px; border:1px solid black; background-color:#F1F1F1"
+                                    id = "${student.userId}-$encodedName-$i"
+                                  }
                                 }
                               }
                             td(classes = TwClasses.INVOC_STAT) {
@@ -400,6 +405,7 @@ internal object ClassSummaryPage {
                               +""
                             }
                             td {
+                              style = "position:relative; top:-2px"
                               id = "${student.userId}-$encodedName$LIKE_DISLIKE"
                               +""
                             }

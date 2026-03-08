@@ -88,6 +88,10 @@ tasks.register<Exec>("tailwindBuildFull") {
   )
 }
 
+tasks.named("processResources") {
+  dependsOn("tailwindBuild")
+}
+
 // Include build uberjars in heroku deploy
 tasks.register("stage") {
   dependsOn("uberjar", "build", "clean")
