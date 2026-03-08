@@ -150,8 +150,7 @@ internal object UserPrefsPage {
           this@table.tr {
             LanguageType.entries
               .forEach { languageType ->
-                td(classes = "tw-text-center") {
-                  style = "text-align:center"
+                td(classes = "text-center") {
                   radioInput {
                     id = languageType.languageName.value
                     name = DEFAULT_LANGUAGE_CHOICE_PARAM

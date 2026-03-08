@@ -120,8 +120,7 @@ internal object ChallengeGroupPage {
               img { src = pathOf(STATIC_ROOT, if (allCorrect) GREEN_CHECK else WHITE_CHECK) }
 
             val challengePath = pathOf(CHALLENGE_ROOT, languageName, groupName, challengeName)
-            a(classes = "tw-text-[110%] tw-pl-0.5") {
-              style = "font-Size:110%; padding-left:2px"
+            a(classes = "text-[110%] pl-0.5") {
               href = challengePath
               if (user == null) {
                 onClick = "openOAuthModal('$challengePath'); return false;"
@@ -151,17 +150,12 @@ internal object ChallengeGroupPage {
           if (enrollees.isNotEmpty())
             p { +"(# of questions | # that started | # completed | Avg correct | Incorrect attempts | Likes/Dislikes)" }
 
-          table(classes = "tw-w-full") {
+          table(classes = "w-full") {
             val size = challenges.size
             val rows = size.rows(COLUMN_CNT)
 
-            // val width = if (enrollees.isNotEmpty()) 1200 else 800
-            // style = "width:${width}px"
-            style = "width:100%"
-
             repeat(rows) { i ->
-              tr(classes = "tw-h-[30px]") {
-                style = "height:30"
+              tr(classes = "h-[30px]") {
                 challenges.apply {
                   displayFunctionCall(user, elementAt(i))
                   elementAtOrNull(i + rows)?.also { displayFunctionCall(user, it) } ?: td {}
@@ -189,7 +183,7 @@ internal object ChallengeGroupPage {
     groupName: GroupName,
     enrollees: List<User>,
   ) {
-    h3(classes = "tw-ml-1 tw-text-rb-header") {
+    h3(classes = "ml-1 text-rb-header") {
       style = "margin-left: 5px; color: $HEADER_COLOR"
       a(classes = TwClasses.UNDERLINE) {
         href =
@@ -240,8 +234,7 @@ internal object ChallengeGroupPage {
     val challengeAnswerKeys = challenges.map { challengeAnswersKey(user, it) }
 
     p {
-      form(classes = "tw-m-0") {
-        style = "margin:0"
+      form(classes = "m-0") {
         action = CLEAR_GROUP_ANSWERS_ENDPOINT
         method = FormMethod.post
         onSubmit = """return confirm('Are you sure you want to clear your previous answers for group "$groupName"?')"""
@@ -261,8 +254,7 @@ internal object ChallengeGroupPage {
           name = CHALLENGE_ANSWERS_PARAM
           value = Json.encodeToString(challengeAnswerKeys)
         }
-        submitInput(classes = "tw-px-4 tw-py-1 tw-text-[85%] tw-bg-rb-incomplete tw-border tw-border-gray-300 tw-rounded tw-shadow tw-cursor-pointer hover:tw-bg-gray-200 active:tw-shadow-inner active:tw-translate-y-px") {
-          style = "vertical-align:middle; margin-top:1; margin-bottom:0"
+        submitInput(classes = TwClasses.CLEAR_HISTORY) {
           value = "Clear answer history"
         }
       }

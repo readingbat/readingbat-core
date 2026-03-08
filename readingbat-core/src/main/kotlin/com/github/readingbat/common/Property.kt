@@ -259,12 +259,6 @@ sealed class Property(
       initFunc = { setProperty(configValue(it, "false").toBoolean().toString()) },
     )
 
-  object TAILWIND_ENABLED :
-    Property(
-      propertyValue = "$READINGBAT.$SITE.tailwindEnabled",
-      initFunc = { setProperty(configValue(it, "false").toBoolean().toString()) },
-    )
-
   object AGENT_ENABLED :
     Property(
       propertyValue = "$AGENT.enabled",
@@ -449,7 +443,6 @@ sealed class Property(
         SAVE_REQUESTS_ENABLED,
         MULTI_SERVER_ENABLED,
         CONTENT_CACHING_ENABLED,
-        TAILWIND_ENABLED,
         AGENT_ENABLED,
         PINGDOM_BANNER_ID,
         PINGDOM_URL,

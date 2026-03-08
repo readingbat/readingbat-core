@@ -89,13 +89,11 @@ internal object HelpAndLogin {
       else
         loginPath
 
-    div(classes = "tw-float-right tw-pt-2.5") {
-      style = "float:right; padding-top:10px"
+    div(classes = "float-right pt-2.5") {
       table {
         if (isDbmsEnabled()) {
           tr {
-            td(classes = "tw-text-right tw-whitespace-nowrap") {
-              style = "text-align:right; white-space:nowrap"
+            td(classes = "text-right whitespace-nowrap") {
               if (user.isNotNull()) {
                 userInfoBlock(user, path)
               } else {
@@ -109,9 +107,7 @@ internal object HelpAndLogin {
           }
         }
         tr {
-          td(classes = "tw-text-right tw-whitespace-nowrap tw-pt-1.5") {
-            style = "text-align:right; white-space:nowrap; padding-top:6px"
-
+          td(classes = "text-right whitespace-nowrap pt-1.5") {
             if (previousClassCode.isEnabled) {
               val (endpoint, msg) =
                 if (teacherMode)
@@ -154,9 +150,8 @@ internal object HelpAndLogin {
         }
         if (user.isNotNull() && user.enrolledClassCode.isEnabled) {
           tr {
-            td(classes = "tw-text-right tw-pt-1") {
-              style = "text-align:right; padding-top:4px"
-              span(classes = "tw-text-rb-header") {
+            td(classes = "text-right pt-1") {
+              span(classes = "text-rb-header") {
                 style = "color: $HEADER_COLOR"
                 +user.enrolledClassCode.toDisplayString()
               }
@@ -207,13 +202,11 @@ internal object HelpAndLogin {
           rawHtml("&times;")
         }
 
-        div(classes = "tw-text-lg tw-font-bold tw-mb-2") {
-          style = "font-size:18px; font-weight:bold; margin-bottom:8px;"
+        div(classes = "text-lg font-bold mb-2") {
           +"Sign In"
         }
 
-        div(classes = "tw-text-[#666] tw-mb-5") {
-          style = "color:#666; margin-bottom:20px;"
+        div(classes = "text-[#666] mb-5") {
           +"Choose a provider to continue:"
         }
 
@@ -287,23 +280,19 @@ internal object HelpAndLogin {
       tr {
         val avatarUrl = user.avatarUrl
         if (avatarUrl != null) {
-          td(classes = "tw-align-middle tw-p-0 tw-pr-2") {
-            style = "vertical-align:middle; padding:0; padding-right:8px"
-            img(classes = "tw-rounded-full tw-block") {
+          td(classes = "align-middle p-0 pr-2") {
+            img(classes = "rounded-full block") {
               src = avatarUrl
               width = "36"
               alt = "avatar"
-              style = "border-radius:50%; display:block"
               attributes["referrerpolicy"] = "no-referrer"
             }
           }
         }
-        td(classes = "tw-align-middle tw-p-0 tw-text-right") {
-          style = "vertical-align:middle; padding:0; text-align:right"
+        td(classes = "align-middle p-0 text-right") {
           +user.email.value
           br
-          span(classes = "tw-text-[100%] tw-text-gray-500") {
-            style = "font-size:100%; color:gray"
+          span(classes = "text-[100%] text-gray-500") {
             a {
               href = LOGOUT
               +"log out"

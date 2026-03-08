@@ -24,8 +24,6 @@ dependencies {
   runtimeOnly(libs.kotlin.scripting)
   implementation(libs.java.scripting)
 
-  implementation(libs.css)
-
   implementation(libs.hikari)
 
   runtimeOnly(libs.postgres)

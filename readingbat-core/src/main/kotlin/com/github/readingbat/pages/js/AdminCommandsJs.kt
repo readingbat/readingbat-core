@@ -49,7 +49,7 @@ internal object AdminCommandsJs {
 
     function checkLogHandleDone(){
       if(re.readyState == 1) {  // starting
-        document.getElementById('$SPINNER_ID').innerHTML = '<i class="fa fa-spinner fa-spin tw-text-2xl" style="font-size:24px"></i>';
+        document.getElementById('$SPINNER_ID').innerHTML = '<i class="fa fa-spinner fa-spin text-2xl" style="font-size:24px"></i>';
         document.getElementById('$STATUS_ID').innerText = 'Checking answers...';
         document.getElementById('$SUCCESS_ID').innerText = '';
       }

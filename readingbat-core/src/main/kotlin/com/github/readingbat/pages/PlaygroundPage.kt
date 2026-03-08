@@ -43,7 +43,6 @@ import kotlinx.html.img
 import kotlinx.html.script
 import kotlinx.html.span
 import kotlinx.html.stream.createHTML
-import kotlinx.html.style
 import org.apache.commons.text.StringEscapeUtils.escapeHtml4
 import kotlin.collections.set
 
@@ -82,8 +81,7 @@ internal object PlaygroundPage {
           h2 {
             val groupPath = pathOf(CHALLENGE_ROOT, languageName, groupName)
             this@body.addLink(groupName.value.decode(), groupPath)
-            span(classes = "tw-px-0.5") {
-              style = "padding-left:2px; padding-right:2px"
+            span(classes = "px-0.5") {
               rawHtml("&rarr;")
             }
             this@body.addLink(challengeName.value.decode(), pathOf(groupPath, challengeName))
@@ -111,9 +109,8 @@ internal object PlaygroundPage {
           br
           div(classes = TwClasses.INDENT_1EM) {
             +"Click on"
-            img(classes = "tw-align-bottom") {
+            img(classes = "align-bottom") {
               height = "25"
-              style = "vertical-align: bottom"
               src = pathOf(STATIC_ROOT, RUN_BUTTON)
             }
             +" to run the code"

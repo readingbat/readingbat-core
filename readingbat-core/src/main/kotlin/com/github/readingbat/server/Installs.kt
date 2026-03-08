@@ -23,7 +23,6 @@ import com.github.pambrose.common.response.respondWith
 import com.github.pambrose.common.util.simpleClassName
 import com.github.readingbat.common.Constants.STATIC
 import com.github.readingbat.common.Constants.UNKNOWN
-import com.github.readingbat.common.Endpoints.CSS_ENDPOINT
 import com.github.readingbat.common.Endpoints.FAV_ICON_ENDPOINT
 import com.github.readingbat.common.Endpoints.PING_ENDPOINT
 import com.github.readingbat.common.Endpoints.STATIC_ROOT
@@ -125,7 +124,6 @@ object Installs {
         permanentRedirect = false
 
         excludePrefix("$STATIC_ROOT/")
-        excludeSuffix(CSS_ENDPOINT)
         excludeSuffix(FAV_ICON_ENDPOINT)
       }
     } else {

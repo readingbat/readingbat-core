@@ -157,7 +157,7 @@ internal object TeacherPrefsPage {
             td {}
             td {
               submitInput {
-                style = "font-size:12px"
+                style = "font-size:10px"
                 id = CREATE_CLASS_BUTTON
                 name = PREFS_ACTION_PARAM
                 value = CREATE_CLASS
@@ -176,12 +176,10 @@ internal object TeacherPrefsPage {
       div(classes = TwClasses.INDENT_2EM) {
         table {
           tr {
-            td(classes = "tw-align-top") {
-              style = "vertical-align:top"
+            td(classes = "align-top") {
               this@displayClasses.classList(activeClassCode, classCodes)
             }
-            td(classes = "tw-align-top") {
-              style = "vertical-align:top"
+            td(classes = "align-top") {
               this@displayClasses.deleteClassButtons(classCodes)
             }
           }
@@ -191,8 +189,7 @@ internal object TeacherPrefsPage {
   }
 
   private fun BODY.classList(activeClassCode: ClassCode, classCodes: List<ClassCode>) {
-    table(classes = "tw-border-separate tw-border-spacing-x-[15px] tw-border-spacing-y-[5px]") {
-      style = "border-spacing: 15px 5px"
+    table(classes = "border-separate border-spacing-x-[15px] border-spacing-y-[5px]") {
       tr {
         th { +"Active" }
         th { +"Description" }
@@ -207,8 +204,7 @@ internal object TeacherPrefsPage {
           .forEach { classCode ->
             val enrolleeCount = classCode.fetchEnrollees().count()
             this@table.tr {
-              td(classes = "tw-text-center") {
-                style = "text-align:center"
+              td(classes = "text-center") {
                 radioInput {
                   name = CLASS_CODE_CHOICE_PARAM
                   value = classCode.classCode
@@ -229,16 +225,14 @@ internal object TeacherPrefsPage {
                   +classCode.displayedValue
                 }
               }
-              td(classes = "tw-text-center") {
-                style = "text-align:center"
+              td(classes = "text-center") {
                 +enrolleeCount.toString()
               }
             }
           }
 
         this@table.tr {
-          td(classes = "tw-text-center") {
-            style = "text-align:center"
+          td(classes = "text-center") {
             radioInput {
               name = CLASS_CODE_CHOICE_PARAM
               value = DISABLED_MODE
@@ -260,7 +254,7 @@ internal object TeacherPrefsPage {
           td {}
           td {
             submitInput {
-              style = "font-size:12px"
+              style = "font-size:10px"
               name = PREFS_ACTION_PARAM
               value = UPDATE_ACTIVE_CLASS
             }
@@ -271,14 +265,12 @@ internal object TeacherPrefsPage {
   }
 
   private fun BODY.deleteClassButtons(classCodes: List<ClassCode>) {
-    table(classes = "tw-border-separate tw-border-spacing-[5px]") {
-      style = "border-spacing: 5px 5px"
+    table(classes = "border-separate border-spacing-[5px]") {
       tr { th { rawHtml(nbsp.text) } }
       classCodes.forEach { classCode ->
         tr {
           td {
-            form(classes = "tw-m-0") {
-              style = "margin:0"
+            form(classes = "m-0") {
               action = TEACHER_PREFS_ENDPOINT
               method = FormMethod.post
               onSubmit = "return confirm('Are you sure you want to delete class ${classCode.toDisplayString()}?')"
@@ -286,8 +278,8 @@ internal object TeacherPrefsPage {
                 name = CLASS_CODE_NAME_PARAM
                 value = classCode.displayedValue
               }
-              submitInput(classes = "tw-align-middle tw-mt-px tw-mb-0") {
-                style = "vertical-align:middle; margin-top:1; margin-bottom:0; font-size:12px"
+              submitInput(classes = "align-middle mt-px mb-0") {
+                style = "font-size:10px"
                 name = PREFS_ACTION_PARAM
                 value = DELETE_CLASS
               }

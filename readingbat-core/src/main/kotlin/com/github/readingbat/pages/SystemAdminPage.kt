@@ -180,7 +180,7 @@ internal object SystemAdminPage {
               style = "font-size:9px"
               id = MSGS
               readonly = true
-              rows = "20"
+              rows = "25"
               cols = "150"
               +""
             }

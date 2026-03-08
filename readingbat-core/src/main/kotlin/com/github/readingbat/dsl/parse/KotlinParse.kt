@@ -64,9 +64,18 @@ internal object KotlinParse {
             }
           }
         }
-        trimmed.startsWith("//") && trimmed.contains("Copyright", ignoreCase = true) -> i++
-        trimmed.isEmpty() -> i++
-        else -> break
+
+        trimmed.startsWith("//") && trimmed.contains("Copyright", ignoreCase = true) -> {
+          i++
+        }
+
+        trimmed.isEmpty() -> {
+          i++
+        }
+
+        else -> {
+          break
+        }
       }
     }
     return lines.subList(i, lines.size)

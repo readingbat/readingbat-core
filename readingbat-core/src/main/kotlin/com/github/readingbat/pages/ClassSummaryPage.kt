@@ -186,15 +186,14 @@ internal object ClassSummaryPage {
     table {
       tr {
         td {
-          h3(classes = "tw-ml-[15px] tw-mb-[15px] tw-text-rb-header") {
+          h3(classes = "ml-[15px] mb-[15px] text-rb-header") {
             style = "margin-left:15px; margin-bottom:15px; color:$HEADER_COLOR; font-size:22px"
             +classCode.toDisplayString()
           }
         }
         if (classCode != activeClassCode) {
           td {
-            form(classes = "tw-m-0") {
-              style = "margin:0"
+            form(classes = "m-0") {
               action = CLASS_SUMMARY_ENDPOINT
               method = FormMethod.post
               hiddenInput {
@@ -206,12 +205,9 @@ internal object ClassSummaryPage {
                 value = classCode.classCode
               }
               val btnTwClasses =
-                "${TwClasses.BTN} tw-px-1 tw-py-0.5 tw-mt-[9px] " +
-                  "tw-ml-5 tw-rounded tw-cursor-pointer tw-border tw-border-black"
+                "${TwClasses.BTN} px-1 py-0.5 mt-[9px] " +
+                  "ml-5 rounded cursor-pointer border border-black"
               submitInput(classes = btnTwClasses) {
-                style =
-                  "padding:2px 5px; margin-top:9; margin-left:20; border-radius:5px; " +
-                    "cursor:pointer; border:1px solid black; font-size:14px"
                 name = PREFS_ACTION_PARAM
                 value = MAKE_ACTIVE_CLASS
               }
@@ -293,7 +289,7 @@ internal object ClassSummaryPage {
     languageName: LanguageName,
     groupName: GroupName,
   ) {
-    h3(classes = "tw-ml-[15px] tw-text-rb-header") {
+    h3(classes = "ml-[15px] text-rb-header") {
       style = "margin-left: 15px; color: $HEADER_COLOR; font-size:18px"
       +" "
 
@@ -308,8 +304,7 @@ internal object ClassSummaryPage {
             +it
         }
 
-      span(classes = "tw-px-0.5") {
-        style = "padding-left:2px; padding-right:2px"
+      span(classes = "px-0.5") {
         rawHtml("&rarr;")
       }
 
@@ -339,8 +334,7 @@ internal object ClassSummaryPage {
       val showDetail = hasGroup && classCode == activeClassCode
 
       if (enrollees.isNotEmpty()) {
-        table(classes = "tw-border-separate tw-border-spacing-x-[15px] tw-border-spacing-y-[5px]") {
-          style = "border-collapse: separate; border-spacing: 15px 5px; font-size:14px"
+        table(classes = "border-separate border-spacing-x-[15px] border-spacing-y-[5px]") {
           tr {
             if (!showDetail)
               th { +"" }
@@ -432,8 +426,7 @@ internal object ClassSummaryPage {
             }
         }
       } else {
-        h4(classes = "tw-pl-[15px] tw-pt-[15px]") {
-          style = "padding-left:15px; padding-top:15px; font-size:18px"
+        h4(classes = "pl-[15px] pt-[15px]") {
           +"No students enrolled."
         }
       }

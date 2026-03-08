@@ -31,7 +31,6 @@ import com.github.readingbat.common.Endpoints.CLEAR_CHALLENGE_ANSWERS_ENDPOINT
 import com.github.readingbat.common.Endpoints.CLEAR_GROUP_ANSWERS_ENDPOINT
 import com.github.readingbat.common.Endpoints.CLOCK_ENDPOINT
 import com.github.readingbat.common.Endpoints.CONFIG_ENDPOINT
-import com.github.readingbat.common.Endpoints.CSS_ENDPOINT
 import com.github.readingbat.common.Endpoints.ENABLE_STUDENT_MODE_ENDPOINT
 import com.github.readingbat.common.Endpoints.ENABLE_TEACHER_MODE_ENDPOINT
 import com.github.readingbat.common.Endpoints.FAV_ICON_ENDPOINT
@@ -52,7 +51,6 @@ import com.github.readingbat.common.Endpoints.USER_PREFS_ENDPOINT
 import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.Metrics
 import com.github.readingbat.common.UserPrincipal
-import com.github.readingbat.common.cssContent
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.pages.AboutPage.aboutPage
 import com.github.readingbat.pages.AdminPage.adminDataPage
@@ -245,10 +243,6 @@ fun Routing.userRoutes(metrics: Metrics, contentSrc: () -> ReadingBatContent) {
     // Purge UserPrincipal from cookie data
     call.sessions.clear<UserPrincipal>()
     redirectTo { queryParam(RETURN_PARAM, "/") }
-  }
-
-  get(CSS_ENDPOINT) {
-    respondWith(CSS) { cssContent }
   }
 
   get(TAILWIND_CSS_ENDPOINT) {

@@ -21,7 +21,6 @@ module.exports = {
       },
     },
   },
-  // Prefix Tailwind classes to avoid conflicts with existing CSS during migration
-  prefix: 'tw-',
+  prefix: '',
   plugins: [],
 }
