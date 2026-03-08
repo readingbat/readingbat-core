@@ -177,10 +177,11 @@ internal object SystemAdminPage {
 
           p {
             textArea {
+              style = "font-size:9px"
               id = MSGS
               readonly = true
               rows = "20"
-              cols = "120"
+              cols = "150"
               +""
             }
           }

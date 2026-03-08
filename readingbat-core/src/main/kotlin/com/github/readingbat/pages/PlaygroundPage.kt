@@ -19,7 +19,6 @@ package com.github.readingbat.pages
 
 import com.github.pambrose.common.util.decode
 import com.github.pambrose.common.util.pathOf
-import com.github.readingbat.common.CssNames
 import com.github.readingbat.common.Endpoints.CHALLENGE_ROOT
 import com.github.readingbat.common.Endpoints.STATIC_ROOT
 import com.github.readingbat.common.StaticFileNames.RUN_BUTTON
@@ -72,7 +71,7 @@ internal object PlaygroundPage {
         head {
           script {
             src = "https://unpkg.com/kotlin-playground@1"
-            attributes["data-selector"] = ".${CssNames.KOTLIN_CODE}"
+            attributes["data-selector"] = ".kotlin-code"
           }
           headDefault()
         }
@@ -91,7 +90,7 @@ internal object PlaygroundPage {
           }
 
           if (challenge.description.isNotBlank())
-            div(classes = "${CssNames.CHALLENGE_DESC} ${TwClasses.CHALLENGE_DESC}") {
+            div(classes = TwClasses.CHALLENGE_DESC) {
               rawHtml(challenge.parsedDescription)
             }
 
@@ -103,14 +102,14 @@ internal object PlaygroundPage {
 
           rawHtml(
             """
-              <div class=${CssNames.KOTLIN_CODE} $options>
+              <div class=kotlin-code $options>
               ${escapeHtml4(funcInfo.originalCode)}
               </div>
             """.trimIndent(),
           )
 
           br
-          div(classes = "${CssNames.INDENT_1EM} ${TwClasses.INDENT_1EM}") {
+          div(classes = TwClasses.INDENT_1EM) {
             +"Click on"
             img(classes = "tw-align-bottom") {
               height = "25"

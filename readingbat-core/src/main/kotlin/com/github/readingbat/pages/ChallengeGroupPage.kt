@@ -21,7 +21,6 @@ import com.github.pambrose.common.util.pathOf
 import com.github.readingbat.common.ClassCode
 import com.github.readingbat.common.Constants.COLUMN_CNT
 import com.github.readingbat.common.Constants.MSG
-import com.github.readingbat.common.CssNames
 import com.github.readingbat.common.Endpoints.CHALLENGE_GROUP_ENDPOINT
 import com.github.readingbat.common.Endpoints.CHALLENGE_ROOT
 import com.github.readingbat.common.Endpoints.CLEAR_GROUP_ANSWERS_ENDPOINT
@@ -113,9 +112,9 @@ internal object ChallengeGroupPage {
             if (activeTeachingClassCode.isEnabled &&
             enrollees.isNotEmpty()
             )
-            "${CssNames.FUNC_ITEM1} ${TwClasses.FUNC_ITEM1}"
+            TwClasses.FUNC_ITEM1
             else
-            "${CssNames.FUNC_ITEM2} ${TwClasses.FUNC_ITEM2}",
+            TwClasses.FUNC_ITEM2,
             ) {
             if (activeTeachingClassCode.isNotEnabled)
               img { src = pathOf(STATIC_ROOT, if (allCorrect) GREEN_CHECK else WHITE_CHECK) }
@@ -192,7 +191,7 @@ internal object ChallengeGroupPage {
   ) {
     h3(classes = "tw-ml-1 tw-text-rb-header") {
       style = "margin-left: 5px; color: $HEADER_COLOR"
-      a(classes = "${CssNames.UNDERLINE} ${TwClasses.UNDERLINE}") {
+      a(classes = TwClasses.UNDERLINE) {
         href =
           if (groupName.isNotValid())
             classSummaryEndpoint(classCode)
@@ -262,7 +261,7 @@ internal object ChallengeGroupPage {
           name = CHALLENGE_ANSWERS_PARAM
           value = Json.encodeToString(challengeAnswerKeys)
         }
-        submitInput(classes = "tw-align-middle tw-mt-px tw-mb-0") {
+        submitInput(classes = "tw-px-4 tw-py-1 tw-text-[85%] tw-bg-rb-incomplete tw-border tw-border-gray-300 tw-rounded tw-shadow tw-cursor-pointer hover:tw-bg-gray-200 active:tw-shadow-inner active:tw-translate-y-px") {
           style = "vertical-align:middle; margin-top:1; margin-bottom:0"
           value = "Clear answer history"
         }

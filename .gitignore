@@ -9,6 +9,8 @@ build
 *.iws
 secrets
 
+.DS_Store
+
 .kotlin
 
 node_modules/

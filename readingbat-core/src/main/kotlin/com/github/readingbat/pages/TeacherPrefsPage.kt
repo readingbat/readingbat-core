@@ -19,7 +19,6 @@ package com.github.readingbat.pages
 
 import com.github.readingbat.common.ClassCode
 import com.github.readingbat.common.Constants.LABEL_WIDTH
-import com.github.readingbat.common.CssNames
 import com.github.readingbat.common.Endpoints.TEACHER_PREFS_ENDPOINT
 import com.github.readingbat.common.Endpoints.classSummaryEndpoint
 import com.github.readingbat.common.FormFields.CHOICE_SOURCE_PARAM
@@ -133,7 +132,7 @@ internal object TeacherPrefsPage {
 
   private fun BODY.createClass(defaultClassDesc: String) {
     h3 { +"Create a class" }
-    div(classes = "${CssNames.INDENT_2EM} ${TwClasses.INDENT_2EM}") {
+    div(classes = TwClasses.INDENT_2EM) {
       p { +"Enter a description of the class." }
       form {
         action = TEACHER_PREFS_ENDPOINT
@@ -146,6 +145,7 @@ internal object TeacherPrefsPage {
             }
             td {
               textInput {
+                style = "font-size:12px; padding:4px; border-radius:4px"
                 size = "42"
                 name = CLASS_DESC_PARAM
                 value = defaultClassDesc
@@ -157,6 +157,7 @@ internal object TeacherPrefsPage {
             td {}
             td {
               submitInput {
+                style = "font-size:12px"
                 id = CREATE_CLASS_BUTTON
                 name = PREFS_ACTION_PARAM
                 value = CREATE_CLASS
@@ -172,7 +173,7 @@ internal object TeacherPrefsPage {
     val classCodes = user.classCodes()
     if (classCodes.isNotEmpty()) {
       h3 { +"Classes" }
-      div(classes = "${CssNames.INDENT_2EM} ${TwClasses.INDENT_2EM}") {
+      div(classes = TwClasses.INDENT_2EM) {
         table {
           tr {
             td(classes = "tw-align-top") {
@@ -217,13 +218,13 @@ internal object TeacherPrefsPage {
 
               val summary = classSummaryEndpoint(classCode, TEACHER_PREFS_ENDPOINT)
               td {
-                a(classes = "${CssNames.UNDERLINE} ${TwClasses.UNDERLINE}") {
+                a(classes = TwClasses.UNDERLINE) {
                   href = summary
                   +classCode.fetchClassDesc()
                 }
               }
               td {
-                a(classes = "${CssNames.UNDERLINE} ${TwClasses.UNDERLINE}") {
+                a(classes = TwClasses.UNDERLINE) {
                   href = summary
                   +classCode.displayedValue
                 }
@@ -259,6 +260,7 @@ internal object TeacherPrefsPage {
           td {}
           td {
             submitInput {
+              style = "font-size:12px"
               name = PREFS_ACTION_PARAM
               value = UPDATE_ACTIVE_CLASS
             }
@@ -285,7 +287,7 @@ internal object TeacherPrefsPage {
                 value = classCode.displayedValue
               }
               submitInput(classes = "tw-align-middle tw-mt-px tw-mb-0") {
-                style = "vertical-align:middle; margin-top:1; margin-bottom:0;"
+                style = "vertical-align:middle; margin-top:1; margin-bottom:0; font-size:12px"
                 name = PREFS_ACTION_PARAM
                 value = DELETE_CLASS
               }

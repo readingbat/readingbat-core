@@ -33,7 +33,6 @@ import com.github.readingbat.common.Constants.PRISM
 import com.github.readingbat.common.Constants.PROCESS_USER_ANSWERS_FUNC
 import com.github.readingbat.common.Constants.RESP
 import com.github.readingbat.common.Constants.WRONG_COLOR
-import com.github.readingbat.common.CssNames
 import com.github.readingbat.common.Endpoints.CHALLENGE_ENDPOINT
 import com.github.readingbat.common.Endpoints.CHALLENGE_ROOT
 import com.github.readingbat.common.Endpoints.CLEAR_CHALLENGE_ANSWERS_ENDPOINT
@@ -234,9 +233,9 @@ internal object ChallengePage {
     }
 
     if (challenge.description.isNotBlank())
-      div(classes = "${CssNames.CHALLENGE_DESC} ${TwClasses.CHALLENGE_DESC}") { rawHtml(challenge.parsedDescription) }
+      div(classes = TwClasses.CHALLENGE_DESC) { rawHtml(challenge.parsedDescription) }
 
-    div(classes = "${CssNames.CODE_BLOCK} ${TwClasses.CODE_BLOCK}") {
+    div(classes = TwClasses.CODE_BLOCK) {
       pre(classes = "line-numbers") {
         code(classes = "language-$languageName") {
           +funcInfo.codeSnippet
@@ -296,14 +295,14 @@ internal object ChallengePage {
         funcInfo.invocations.withIndex()
           .forEach { (i, invocation) ->
             tr {
-              td(classes = "${CssNames.FUNC_COL} ${TwClasses.FUNC_COL}") {
+              td(classes = TwClasses.FUNC_COL) {
                 +invocation.value
                 // Pad short invocation calls
                 val minLength = 10
                 if (invocation.value.length < minLength)
                   rawHtml(" " + List(minLength - invocation.value.length) { nbsp.text }.joinToString(" "))
               }
-              td(classes = "${CssNames.ARROW} ${TwClasses.ARROW}") { rawHtml("&rarr;") }
+              td(classes = TwClasses.ARROW) { rawHtml("&rarr;") }
               td {
                 val cls =
                   when (i) {
@@ -311,7 +310,7 @@ internal object ChallengePage {
                     0 -> " $topFocus"
                     else -> ""
                   }
-                textInput(classes = "${CssNames.USER_RESP} ${TwClasses.USER_RESP}" + cls) {
+                textInput(classes = TwClasses.USER_RESP + cls) {
                   id = "$RESP$i"
 
                   if (user.isNull() || user.enrolledClassCode.isNotEnabled)
@@ -332,8 +331,8 @@ internal object ChallengePage {
                     autoFocus = true
                 }
               }
-              td(classes = "${CssNames.FEEDBACK} ${TwClasses.FEEDBACK}") { id = "$FEEDBACK_ID$i" }
-              td(classes = CssNames.HINT) { id = "$HINT_ID$i" }
+              td(classes = TwClasses.FEEDBACK) { id = "$FEEDBACK_ID$i" }
+              td { id = "$HINT_ID$i" }
             }
           }
         // This will cause tab to circle back to top input element
@@ -445,7 +444,7 @@ internal object ChallengePage {
 
       h3(classes = "tw-ml-1 tw-text-rb-header") {
         style = "margin-left: 5px; color: $HEADER_COLOR"
-        a(classes = "${CssNames.UNDERLINE} ${TwClasses.UNDERLINE}") {
+        a(classes = TwClasses.UNDERLINE) {
           href = classSummaryEndpoint(classCode, languageName, groupName)
           +classCode.toDisplayString()
         }
@@ -491,8 +490,8 @@ internal object ChallengePage {
 
               val allCorrect = numCorrect == numCalls
 
-              tr(classes = "${CssNames.DASHBOARD} ${TwClasses.DASHBOARD}") {
-                td(classes = "${CssNames.DASHBOARD} ${TwClasses.DASHBOARD}") {
+              tr(classes = TwClasses.DASHBOARD) {
+                td(classes = TwClasses.DASHBOARD) {
                   id = "${enrollee.userId}-$NAME_TD"
                   val color = if (allCorrect) CORRECT_COLOR else INCOMPLETE_COLOR
                   style = "width:15%;white-space:nowrap; background-color:$color"
@@ -513,7 +512,7 @@ internal object ChallengePage {
 
                 results
                   .forEach { (invocation, history) ->
-                    td(classes = "${CssNames.DASHBOARD} ${TwClasses.DASHBOARD}") {
+                    td(classes = TwClasses.DASHBOARD) {
                       id = "${enrollee.userId}-$invocation-$ANSWER_TD"
                       val color =
                         if (history.correct) {
@@ -543,7 +542,7 @@ internal object ChallengePage {
       table {
         tr {
           td {
-            button(classes = "${CssNames.CHECK_ANSWERS} ${TwClasses.CHECK_ANSWERS}") {
+            button(classes = TwClasses.CHECK_ANSWERS) {
               onClick = "$PROCESS_USER_ANSWERS_FUNC(null, ${funcInfo.questionCount})"
               +"Check My Answers"
             }
@@ -571,8 +570,8 @@ internal object ChallengePage {
 
           td(classes = "tw-align-middle") {
             style = "vertical-align:middle"
-            span(classes = "${CssNames.STATUS} ${TwClasses.STATUS}") { id = STATUS_ID }
-            span(classes = "${CssNames.SUCCESS} ${TwClasses.SUCCESS}") { id = SUCCESS_ID }
+            span(classes = TwClasses.STATUS) { id = STATUS_ID }
+            span(classes = TwClasses.SUCCESS) { id = SUCCESS_ID }
           }
         }
       }
@@ -630,10 +629,10 @@ internal object ChallengePage {
           td {
             id = LIKE_CLEAR
             style = "display:${if (likeDislikeVal == 0 || likeDislikeVal == 2) "inline" else "none"}"
-            button(classes = "${CssNames.LIKE_BUTTONS} ${TwClasses.LIKE_BUTTONS}") {
+            button(classes = TwClasses.LIKE_BUTTONS) {
               onClick = "$LIKE_DISLIKE_FUNC(${LIKE_CLEAR.toDoubleQuoted()})"
               img {
-                height = imgSize
+                style = "height:${imgSize}px; width:${imgSize}px"
                 src = pathOf(STATIC_ROOT, LIKE_CLEAR_FILE)
               }
             }
@@ -641,10 +640,10 @@ internal object ChallengePage {
           td {
             id = LIKE_COLOR
             style = "display:${if (likeDislikeVal == 1) "inline" else "none"}"
-            button(classes = "${CssNames.LIKE_BUTTONS} ${TwClasses.LIKE_BUTTONS}") {
+            button(classes = TwClasses.LIKE_BUTTONS) {
               onClick = "$LIKE_DISLIKE_FUNC(${LIKE_COLOR.toDoubleQuoted()})"
               img {
-                height = imgSize
+                style = "height:${imgSize}px; width:${imgSize}px"
                 src = pathOf(STATIC_ROOT, LIKE_COLOR_FILE)
               }
             }
@@ -652,10 +651,10 @@ internal object ChallengePage {
           td {
             id = DISLIKE_CLEAR
             style = "display:${if (likeDislikeVal == 0 || likeDislikeVal == 1) "inline" else "none"}"
-            button(classes = "${CssNames.LIKE_BUTTONS} ${TwClasses.LIKE_BUTTONS}") {
+            button(classes = TwClasses.LIKE_BUTTONS) {
               onClick = "$LIKE_DISLIKE_FUNC(${DISLIKE_CLEAR.toDoubleQuoted()})"
               img {
-                height = imgSize
+                style = "height:${imgSize}px; width:${imgSize}px"
                 src = pathOf(STATIC_ROOT, DISLIKE_CLEAR_FILE)
               }
             }
@@ -663,10 +662,10 @@ internal object ChallengePage {
           td {
             id = DISLIKE_COLOR
             style = "display:${if (likeDislikeVal == 2) "inline" else "none"}"
-            button(classes = "${CssNames.LIKE_BUTTONS} ${TwClasses.LIKE_BUTTONS}") {
+            button(classes = TwClasses.LIKE_BUTTONS) {
               onClick = "$LIKE_DISLIKE_FUNC(${DISLIKE_COLOR.toDoubleQuoted()})"
               img {
-                height = imgSize
+                style = "height:${imgSize}px; width:${imgSize}px"
                 src = pathOf(STATIC_ROOT, DISLIKE_COLOR_FILE)
               }
             }
@@ -682,7 +681,7 @@ internal object ChallengePage {
 
           td(classes = "tw-align-middle") {
             style = "vertical-align:middle"
-            span(classes = "${CssNames.STATUS} ${TwClasses.STATUS}") { id = LIKE_STATUS_ID }
+            span(classes = TwClasses.STATUS) { id = LIKE_STATUS_ID }
           }
         }
       }
@@ -694,7 +693,7 @@ internal object ChallengePage {
     val groupName = challenge.groupName
     val challengeName = challenge.challengeName
 
-    p(classes = "${CssNames.EXPERIMENT} ${TwClasses.EXPERIMENT}") {
+    p(classes = TwClasses.EXPERIMENT) {
       +"Experiment with this code on "
       this@otherLinks.addLink("Gitpod.io", "https://gitpod.io/#${challenge.gitpodUrl}", true)
       if (languageType.isKotlin) {
@@ -704,7 +703,7 @@ internal object ChallengePage {
     }
 
     if (challenge.codingBatEquiv.isNotEmpty() && (languageType.isJava || languageType.isPython)) {
-      p(classes = "${CssNames.CODING_BAT} ${TwClasses.CODING_BAT}") {
+      p(classes = TwClasses.CODING_BAT) {
         +"Work on a similar problem on "
         this@otherLinks.addLink("CodingBat.com", "https://codingbat.com/prob/${challenge.codingBatEquiv}", true)
       }
@@ -749,7 +748,7 @@ internal object ChallengePage {
         name = CHALLENGE_ANSWERS_PARAM
         value = challengeAnswersKey
       }
-      submitInput(classes = "tw-align-middle tw-mt-px tw-mb-0") {
+      submitInput(classes = "tw-px-4 tw-py-1 tw-text-[85%] tw-bg-rb-incomplete tw-border tw-border-gray-300 tw-rounded tw-shadow tw-cursor-pointer hover:tw-bg-gray-200 active:tw-shadow-inner active:tw-translate-y-px") {
         style = "vertical-align:middle; margin-top:1; margin-bottom:0"
         value = "Clear answer history"
       }

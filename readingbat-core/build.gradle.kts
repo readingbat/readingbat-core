@@ -66,11 +66,12 @@ buildConfig {
 tasks.register<Exec>("tailwindBuild") {
   group = "frontend"
   description = "Build Tailwind CSS output from Kotlin source files"
+  workingDir = rootProject.projectDir
   commandLine(
-    "../bin/tailwindcss",
-    "-c", "${rootProject.projectDir}/tailwind.config.js",
-    "-i", "src/main/resources/css/tailwind-input.css",
-    "-o", "src/main/resources/static/tailwind.css",
+    "./bin/tailwindcss-v3",
+    "-c", "tailwind.config.js",
+    "-i", "readingbat-core/src/main/resources/css/tailwind-input.css",
+    "-o", "readingbat-core/src/main/resources/static/tailwind.css",
     "--minify",
   )
 }
@@ -78,11 +79,12 @@ tasks.register<Exec>("tailwindBuild") {
 tasks.register<Exec>("tailwindBuildFull") {
   group = "frontend"
   description = "Build Tailwind CSS output from Kotlin source files"
+  workingDir = rootProject.projectDir
   commandLine(
-    "../bin/tailwindcss",
-    "-c", "${rootProject.projectDir}/tailwind.config.js",
-    "-i", "src/main/resources/css/tailwind-input.css",
-    "-o", "src/main/resources/static/tailwind.css",
+    "./bin/tailwindcss-v3",
+    "-c", "tailwind.config.js",
+    "-i", "readingbat-core/src/main/resources/css/tailwind-input.css",
+    "-o", "readingbat-core/src/main/resources/static/tailwind.css",
   )
 }
 

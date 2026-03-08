@@ -6,13 +6,13 @@ stop:
 clean:
 	./gradlew clean
 
-build: clean
+build: clean tw-css
 	./gradlew build -xtest
 
 tw-css:
 	./gradlew :readingbat-core:tailwindBuild
 
-tw-css-full:
+tw-full-css:
 	./gradlew :readingbat-core:tailwindBuildFull
 
 publish:

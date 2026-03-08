@@ -18,32 +18,27 @@
 package com.github.readingbat.common
 
 /**
- * Tailwind CSS class constants — the Tailwind equivalent of [CssNames].
- *
- * Each constant maps to one [CssNames] entry and reproduces its CSS rule
- * using `tw-` prefixed Tailwind utilities. During migration, pages switch
- * from `CssNames.X` to `TwClasses.X` one at a time.
+ * Tailwind CSS class constants used across all page files.
  *
  * IMPORTANT: Always use complete, literal class name strings here.
  * Never construct class names dynamically — the Tailwind content scanner
  * uses regex and cannot evaluate Kotlin expressions.
  *
- * After migration is complete and [CssContent] is retired:
+ * After Phase 7 (remove inline styles and tw- prefix):
  * 1. Remove the `tw-` prefix from `tailwind.config.js`
  * 2. Find-and-replace `tw-` with `` in this file
- * 3. Delete [CssNames] and [CssContent]
  */
 internal object TwClasses {
   // -- Buttons --
 
-  /** Check Answers button: w:14em h:2em bg:#f1f1f1 font-size:115% bold rounded:6px */
-  const val CHECK_ANSWERS = "tw-w-56 tw-h-8 tw-bg-rb-incomplete tw-text-[115%] tw-font-bold tw-rounded-md"
+  /** Check Answers button: w:14em h:2em bg:#f1f1f1 font-size:100% bold rounded:6px */
+  const val CHECK_ANSWERS = "tw-w-56 tw-h-8 tw-bg-rb-incomplete tw-text-[100%] tw-font-bold tw-rounded-md tw-shadow tw-border tw-border-gray-300 active:tw-shadow-inner active:tw-translate-y-px"
 
   /** Admin action button: px:1em h:2em bg:#f1f1f1 font-size:80% bold rounded:6px */
-  const val ADMIN_BUTTON = "tw-px-4 tw-h-8 tw-bg-rb-incomplete tw-text-[80%] tw-font-bold tw-rounded-md"
+  const val ADMIN_BUTTON = "tw-px-[14px] tw-h-[30px] tw-bg-rb-incomplete tw-text-[75%] tw-font-bold tw-rounded-md tw-shadow tw-border tw-border-gray-300 active:tw-shadow-inner active:tw-translate-y-px"
 
-  /** Like/dislike button: bg:#f1f1f1 w:4em h:4em rounded:6px */
-  const val LIKE_BUTTONS = "tw-bg-rb-incomplete tw-w-16 tw-h-16 tw-rounded-md"
+  /** Like/dislike button: bg:#f1f1f1 rounded:6px border shadow */
+  const val LIKE_BUTTONS = "tw-bg-rb-incomplete tw-p-[5px] tw-rounded-md tw-border tw-border-gray-300 tw-shadow tw-mx-[3px] active:tw-shadow-inner active:tw-translate-y-px"
 
   /** Generic button: white bg, gray on hover */
   const val BTN = "tw-bg-white hover:tw-bg-gray-200"
@@ -53,14 +48,14 @@ internal object TwClasses {
   /** Challenge description: font-size:115% ml:1em mb:1em */
   const val CHALLENGE_DESC = "tw-text-[115%] tw-ml-4 tw-mb-4"
 
-  /** Function column: font-size:115% */
-  const val FUNC_COL = "tw-text-[115%]"
+  /** Function column: font-size:115% with vertical padding */
+  const val FUNC_COL = "tw-text-[115%] tw-py-1"
 
-  /** Arrow column: w:2em font-size:115% text-center */
-  const val ARROW = "tw-w-8 tw-text-[115%] tw-text-center"
+  /** Arrow column: w:2em font-size:115% text-center px-spacing */
+  const val ARROW = "tw-w-8 tw-text-[115%] tw-text-center tw-px-2"
 
-  /** User response input: w:15em font-size:90% */
-  const val USER_RESP = "tw-w-60 tw-text-[90%]"
+  /** User response input: w:15em font-size:90% border rounded */
+  const val USER_RESP = "tw-w-60 tw-text-[90%] tw-border tw-border-gray-400 tw-rounded tw-py-[5px] tw-pr-[5px] tw-pl-[7px]"
 
   /** Feedback cell: w:10em border:7px solid white */
   const val FEEDBACK = "tw-w-40 tw-border-[7px] tw-border-solid tw-border-white"
@@ -108,8 +103,8 @@ internal object TwClasses {
   /** Function list item (with width): mt:1em w:300px */
   const val FUNC_ITEM2 = "tw-mt-4 tw-w-[300px]"
 
-  /** Group item card: w:300px m:15px p:10px border:1px solid gray rounded:1em */
-  const val GROUP_ITEM_SRC = "tw-w-[300px] tw-m-[15px] tw-p-2.5 tw-border tw-border-gray-400 tw-rounded-2xl"
+  /** Group item: w:322px (300px content + 2×10px padding + 2×1px border for border-box) m:15px p:10px border:1px solid gray rounded:1em */
+  const val GROUP_ITEM_SRC = "tw-w-[322px] tw-m-[15px] tw-p-2.5 tw-border tw-border-gray-500 tw-rounded-[1em]"
 
   // -- Layout utilities --
 

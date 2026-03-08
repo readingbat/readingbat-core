@@ -28,7 +28,6 @@ import com.github.readingbat.common.Constants.LANG_TYPE_QP
 import com.github.readingbat.common.Constants.NO
 import com.github.readingbat.common.Constants.WRONG_COLOR
 import com.github.readingbat.common.Constants.YES
-import com.github.readingbat.common.CssNames
 import com.github.readingbat.common.Endpoints.CHALLENGE_ROOT
 import com.github.readingbat.common.Endpoints.CLASS_SUMMARY_ENDPOINT
 import com.github.readingbat.common.Endpoints.TEACHER_PREFS_ENDPOINT
@@ -196,7 +195,7 @@ internal object ClassSummaryPage {
       tr {
         td {
           h3(classes = "tw-ml-[15px] tw-mb-[15px] tw-text-rb-header") {
-            style = "margin-left:15px; margin-bottom:15px; color:$HEADER_COLOR"
+            style = "margin-left:15px; margin-bottom:15px; color:$HEADER_COLOR; font-size:22px"
             +classCode.toDisplayString()
           }
         }
@@ -215,12 +214,12 @@ internal object ClassSummaryPage {
                 value = classCode.classCode
               }
               val btnTwClasses =
-                "${CssNames.BTN} ${TwClasses.BTN} tw-px-1 tw-py-0.5 tw-mt-[9px] " +
+                "${TwClasses.BTN} tw-px-1 tw-py-0.5 tw-mt-[9px] " +
                   "tw-ml-5 tw-rounded tw-cursor-pointer tw-border tw-border-black"
               submitInput(classes = btnTwClasses) {
                 style =
                   "padding:2px 5px; margin-top:9; margin-left:20; border-radius:5px; " +
-                    "cursor:pointer; border:1px solid black;"
+                    "cursor:pointer; border:1px solid black; font-size:14px"
                 name = PREFS_ACTION_PARAM
                 value = MAKE_ACTIVE_CLASS
               }
@@ -249,7 +248,7 @@ internal object ClassSummaryPage {
                   dropdown {
                     val lang = langGroup.languageType.name
                     dropdownToggle {
-                      classes = setOf(CssNames.BTN)
+                      classes = setOf("btn")
                       +"$lang "
                     }
                     dropdownMenu {
@@ -287,7 +286,7 @@ internal object ClassSummaryPage {
       languageName.toLanguageType().toString()
         .also {
           if (classCode == activeClassCode)
-            a(classes = "${CssNames.UNDERLINE} ${TwClasses.UNDERLINE}") {
+            a(classes = TwClasses.UNDERLINE) {
               href = pathOf(CHALLENGE_ROOT, languageName)
               +it
             }
@@ -303,7 +302,7 @@ internal object ClassSummaryPage {
       groupName.toString()
         .also {
           if (classCode == activeClassCode)
-            a(classes = "${CssNames.UNDERLINE} ${TwClasses.UNDERLINE}") {
+            a(classes = TwClasses.UNDERLINE) {
               href = pathOf(CHALLENGE_ROOT, languageName, groupName)
               +it
             }
@@ -322,7 +321,7 @@ internal object ClassSummaryPage {
     languageName: LanguageName,
     groupName: GroupName,
   ) =
-    div(classes = "${CssNames.INDENT_2EM} ${TwClasses.INDENT_2EM}") {
+    div(classes = TwClasses.INDENT_2EM) {
       val showDetail = hasGroup && classCode == activeClassCode
 
       if (enrollees.isNotEmpty()) {
@@ -340,7 +339,7 @@ internal object ClassSummaryPage {
                     challenge.challengeName.value
                       .also {
                         if (classCode == activeClassCode)
-                          a(classes = "${CssNames.UNDERLINE} ${TwClasses.UNDERLINE}") {
+                          a(classes = TwClasses.UNDERLINE) {
                             href = pathOf(CHALLENGE_ROOT, languageName, groupName, challenge.challengeName)
                             +it
                           }
@@ -364,13 +363,13 @@ internal object ClassSummaryPage {
                   "${studentSummaryEndpoint(classCode, languageName, student)}&$RETURN_PARAM=${returnUrl.encode()}"
                     .also {
                       td {
-                        a(classes = "${CssNames.UNDERLINE} ${TwClasses.UNDERLINE}") {
+                        a(classes = TwClasses.UNDERLINE) {
                           href = it
                           +studentName
                         }
                       }
                       td {
-                        a(classes = "${CssNames.UNDERLINE} ${TwClasses.UNDERLINE}") {
+                        a(classes = TwClasses.UNDERLINE) {
                           href = it
                           +studentEmail
                         }
@@ -391,12 +390,12 @@ internal object ClassSummaryPage {
                           tr {
                             challenge.functionInfo().invocations
                               .forEachIndexed { i, _ ->
-                                td(classes = "${CssNames.INVOC_TD} ${TwClasses.INVOC_TD}") {
+                                td(classes = TwClasses.INVOC_TD) {
                                   id = "${student.userId}-$encodedName-$i"
                                   +""
                                 }
                               }
-                            td(classes = "${CssNames.INVOC_STAT} ${TwClasses.INVOC_STAT}") {
+                            td(classes = TwClasses.INVOC_STAT) {
                               id = "${student.userId}-$encodedName$STATS"
                               +""
                             }
@@ -414,7 +413,7 @@ internal object ClassSummaryPage {
         }
       } else {
         h4(classes = "tw-pl-[15px] tw-pt-[15px]") {
-          style = "padding-left:15px; padding-top:15px"
+          style = "padding-left:15px; padding-top:15px; font-size:18px"
           +"No students enrolled."
         }
       }

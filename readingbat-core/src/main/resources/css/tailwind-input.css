@@ -1,5 +1,152 @@
-/* Preflight (base) intentionally omitted during migration to avoid
-   conflicting with CssContent.kt's global resets. Re-enable after
-   CssContent.kt is fully retired (Phase 6). */
+@tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Global base styles migrated from CssContent.kt (Phase 6) */
+@layer base {
+  html, body {
+    font-size: 16px;
+    font-family: verdana, arial, helvetica, sans-serif;
+  }
+  body {
+    display: block;
+    margin: 8px;
+    line-height: normal;
+    background-color: white;
+  }
+  h1, h2, h3, h4 {
+    font-weight: bold;
+  }
+  h2 {
+    font-size: 150%;
+    margin: 0.83em 0;
+  }
+  h3 {
+    margin: 1em 0;
+  }
+  ol {
+    list-style-type: decimal;
+    padding-left: 2em;
+  }
+  ul {
+    list-style-type: disc;
+    padding-left: 2em;
+  }
+  li {
+    margin-top: 10px;
+  }
+  p {
+    max-width: 800px;
+    line-height: 1.5;
+    margin-top: 1em;
+    margin-bottom: 1em;
+  }
+  p.max {
+    max-width: 800px;
+  }
+  :link {
+    color: #0000DD;
+  }
+  :visited {
+    color: #551A8B;
+  }
+  td {
+    vertical-align: middle;
+  }
+  img {
+    display: inline;
+    max-width: none;
+  }
+  table {
+    border-collapse: separate;
+  }
+  a {
+    text-decoration: none;
+  }
+  a:hover {
+    color: red;
+  }
+  th, td {
+    padding: 1px;
+    text-align: left;
+  }
+  th {
+    font-size: 115%;
+  }
+
+  /* Heading utility classes */
+  .h1 { font-size: 300%; }
+  .h2 { font-size: 166%; text-decoration: none; }
+  .h3 { font-size: 120%; }
+
+  /* Answer feedback cells */
+  td.no { min-width: 22px; background-color: red; }
+  td.ok { min-width: 22px; background-color: green; }
+
+  /* Navigation tabs */
+  nav ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+  }
+  nav li {
+    display: inline;
+    border: 1px solid;
+    border-width: 1px 1px 0 1px;
+    margin: 0 25px 0 6px;
+  }
+  nav li a {
+    padding: 0 40px;
+  }
+
+  /* Restore native form element appearance stripped by preflight */
+  input[type="text"], input[type="password"] {
+    border: 1px solid #767676;
+    background-color: white;
+  }
+  textarea {
+    border: 1px solid #767676;
+    background-color: white;
+  }
+
+  /* Global button base styles (preflight strips native appearance) */
+  input[type="submit"], button {
+    background-color: #F1F1F1;
+    border: 1px solid #D1D5DB;
+    border-radius: 0.25rem;
+    padding: 2px 8px;
+    cursor: pointer;
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  }
+  input[type="submit"]:active, button:active {
+    box-shadow: inset 0 2px 4px 0 rgb(0 0 0 / 0.05);
+    transform: translateY(1px);
+  }
+
+  /* Selected tab (used as id) */
+  #selected {
+    position: relative;
+    top: 1px;
+    background: white;
+  }
+
+  /* Prism.js code block left stripe */
+  pre[class*="language-"] > code {
+    border-left: 10px solid #0600EE;
+    box-shadow: -1px 0 0 0 #0600EE, 0 0 0 1px #dfdfdf;
+  }
+
+  /* CodeMirror (Kotlin Playground) fixes */
+  .CodeMirror { font-size: 95%; }
+  .CodeMirror-scroll { height: auto; }
+
+  /* Kotlin playground code block */
+  .kotlin-code {
+    margin-left: 1em;
+    margin-right: 1em;
+  }
+
+  /* TD padding descendant selector */
+  div.tdPadding th { margin-top: 1em; padding-right: 1em; }
+  div.tdPadding td { margin-top: 1em; padding-right: 1em; }
+}

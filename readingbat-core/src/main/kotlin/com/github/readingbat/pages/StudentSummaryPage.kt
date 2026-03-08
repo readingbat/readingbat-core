@@ -27,7 +27,6 @@ import com.github.readingbat.common.Constants.NO
 import com.github.readingbat.common.Constants.USER_ID_QP
 import com.github.readingbat.common.Constants.WRONG_COLOR
 import com.github.readingbat.common.Constants.YES
-import com.github.readingbat.common.CssNames
 import com.github.readingbat.common.Endpoints.CHALLENGE_ROOT
 import com.github.readingbat.common.Endpoints.STUDENT_SUMMARY_ENDPOINT
 import com.github.readingbat.common.Endpoints.TEACHER_PREFS_ENDPOINT
@@ -126,7 +125,7 @@ internal object StudentSummaryPage {
 
           h3(classes = "tw-ml-[15px] tw-text-rb-header") {
             style = "margin-left:15px; color: $HEADER_COLOR"
-            a(classes = "${CssNames.UNDERLINE} ${TwClasses.UNDERLINE}") {
+            a(classes = TwClasses.UNDERLINE) {
               href = pathOf(CHALLENGE_ROOT, languageName)
               +languageName.toLanguageType().toString()
             }
@@ -134,7 +133,7 @@ internal object StudentSummaryPage {
 
           h3(classes = "tw-ml-[15px] tw-text-rb-header") {
             style = "margin-left:15px; color: $HEADER_COLOR"
-            a(classes = "${CssNames.UNDERLINE} ${TwClasses.UNDERLINE}") {
+            a(classes = TwClasses.UNDERLINE) {
               href = classSummaryEndpoint(classCode)
               +classCode.toDisplayString()
             }
@@ -181,26 +180,26 @@ internal object StudentSummaryPage {
     @Suppress("UNUSED_PARAMETER") classCode: ClassCode,
     languageName: LanguageName,
   ) =
-    div(classes = "${CssNames.INDENT_2EM} ${TwClasses.INDENT_2EM}") {
-      table(classes = "${CssNames.INVOC_TABLE} ${TwClasses.INVOC_TABLE}") {
+    div(classes = TwClasses.INDENT_2EM) {
+      table(classes = TwClasses.INVOC_TABLE) {
         content.findLanguage(languageName).challengeGroups
           .forEach { group ->
             tr {
               td {
-                a(classes = "${CssNames.UNDERLINE} ${TwClasses.UNDERLINE}") {
+                a(classes = TwClasses.UNDERLINE) {
                   href = pathOf(CHALLENGE_ROOT, languageName, group.groupName)
                   +group.groupName.toString()
                 }
               }
 
               td {
-                table(classes = "${CssNames.INVOC_TABLE} ${TwClasses.INVOC_TABLE}") {
+                table(classes = TwClasses.INVOC_TABLE) {
                   tr {
                     // th { }
                     group.challenges
                       .forEach { challenge ->
                         th {
-                          a(classes = "${CssNames.UNDERLINE} ${TwClasses.UNDERLINE}") {
+                          a(classes = TwClasses.UNDERLINE) {
                             href = pathOf(CHALLENGE_ROOT, languageName, group.groupName, challenge.challengeName)
                             +challenge.challengeName.toString()
                           }
@@ -218,12 +217,12 @@ internal object StudentSummaryPage {
                             tr {
                               challenge.functionInfo().invocations
                                 .forEachIndexed { i, _ ->
-                                  td(classes = "${CssNames.INVOC_TD} ${TwClasses.INVOC_TD}") {
+                                  td(classes = TwClasses.INVOC_TD) {
                                     id = "$encodedGroup-$encodedName-$i"
                                     +""
                                   }
                                 }
-                              td(classes = "${CssNames.INVOC_STAT} ${TwClasses.INVOC_STAT}") {
+                              td(classes = TwClasses.INVOC_STAT) {
                                 id = "$encodedGroup-$encodedName$STATS"
                                 +""
                               }

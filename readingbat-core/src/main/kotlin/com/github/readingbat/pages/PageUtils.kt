@@ -25,7 +25,6 @@ import com.github.pambrose.common.util.toRootPath
 import com.github.readingbat.common.ClassCode
 import com.github.readingbat.common.Constants.ADMIN_FUNC
 import com.github.readingbat.common.Constants.ICONS
-import com.github.readingbat.common.CssNames
 import com.github.readingbat.common.Endpoints.CHALLENGE_ROOT
 import com.github.readingbat.common.Endpoints.CSS_ENDPOINT
 import com.github.readingbat.common.Endpoints.PRIVACY_ENDPOINT
@@ -123,6 +122,81 @@ internal object PageUtils {
       } else {
         // Development: use Tailwind CDN for instant exploration (not for production use)
         script { src = "https://cdn.tailwindcss.com" }
+        // CDN config with addBase plugin to override preflight rules that conflict
+        // with CssContent.kt. Mirrors tailwind-input.css @layer base rules.
+        // Plugin addBase() is guaranteed to inject after preflight in the base layer.
+        script {
+          rawHtml(
+            """
+            tailwind.config = {
+              prefix: 'tw-',
+              theme: {
+                extend: {
+                  colors: {
+                    'rb-link': '#0000DD',
+                    'rb-visited': '#551A8B',
+                    'rb-incomplete': '#F1F1F1',
+                    'rb-correct': '#4EAA3A',
+                    'rb-wrong': '#FF0000',
+                    'rb-header': '#419DC1',
+                    'rb-code-stripe': '#0600EE',
+                  },
+                  fontFamily: {
+                    'sans': ['verdana', 'arial', 'helvetica', 'sans-serif'],
+                  },
+                },
+              },
+              plugins: [
+                function({ addBase }) {
+                  addBase({
+                    'html, body': { 'font-size': '16px', 'font-family': 'verdana, arial, helvetica, sans-serif' },
+                    'body': { 'display': 'block', 'margin': '8px', 'line-height': 'normal', 'background-color': 'white' },
+                    'h1, h2, h3, h4': { 'font-weight': 'bold' },
+                    'h2': { 'font-size': '150%', 'margin': '0.83em 0' },
+                    'h3': { 'margin': '1em 0' },
+                    'ol': { 'list-style-type': 'decimal', 'padding-left': '2em' },
+                    'ul': { 'list-style-type': 'disc', 'padding-left': '2em' },
+                    'li': { 'margin-top': '10px' },
+                    'p': { 'max-width': '800px', 'line-height': '1.5', 'margin-top': '1em', 'margin-bottom': '1em' },
+                    'img': { 'display': 'inline', 'max-width': 'none' },
+                    'table': { 'border-collapse': 'separate' },
+                    ':link': { 'color': '#0000DD' },
+                    ':visited': { 'color': '#551A8B' },
+                    'td': { 'vertical-align': 'middle' },
+                    'a': { 'text-decoration': 'none' },
+                    'a:hover': { 'color': 'red' },
+                    'th, td': { 'padding': '1px', 'text-align': 'left' },
+                    'th': { 'font-size': '115%' },
+                    '.h1': { 'font-size': '300%' },
+                    '.h2': { 'font-size': '166%', 'text-decoration': 'none' },
+                    '.h3': { 'font-size': '120%' },
+                    'td.no': { 'min-width': '22px', 'background-color': 'red' },
+                    'td.ok': { 'min-width': '22px', 'background-color': 'green' },
+                    'nav ul': { 'list-style-type': 'none', 'padding': '0', 'margin': '0' },
+                    'nav li': { 'display': 'inline', 'border': '1px solid', 'border-width': '1px 1px 0 1px', 'margin': '0 25px 0 6px' },
+                    'nav li a': { 'padding': '0 40px' },
+                    '#selected': { 'position': 'relative', 'top': '1px', 'background': 'white' },
+                    'input[type="submit"], button': {
+                      'background-color': '#F1F1F1',
+                      'border': '1px solid #D1D5DB',
+                      'border-radius': '0.25rem',
+                      'padding': '2px 8px',
+                      'cursor': 'pointer',
+                      'box-shadow': '0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)',
+                    },
+                    'input[type="submit"]:active, button:active': {
+                      'box-shadow': 'inset 0 2px 4px 0 rgb(0 0 0 / 0.05)',
+                      'transform': 'translateY(1px)',
+                    },
+                    'input[type="text"], input[type="password"]': { 'border': '1px solid #767676', 'background-color': 'white' },
+                    'textarea': { 'border': '1px solid #767676', 'background-color': 'white' },
+                  })
+                }
+              ],
+            }
+            """,
+          )
+        }
       }
     }
 
@@ -233,7 +307,7 @@ internal object PageUtils {
             .forEach { lang ->
               li(classes = "h2") {
                 if (languageType == lang)
-                  id = CssNames.SELECTED_TAB
+                  id = "selected"
                 this@bodyHeader.addLink(lang.name, pathOf(CHALLENGE_ROOT, lang.languageName))
               }
             }
@@ -254,7 +328,7 @@ internal object PageUtils {
     }
 
   fun BODY.privacyStatement(returnPath: String) =
-    p(classes = "${CssNames.INDENT_1EM} ${TwClasses.INDENT_1EM}") {
+    p(classes = TwClasses.INDENT_1EM) {
       a {
         href = "$PRIVACY_ENDPOINT?$RETURN_PARAM=$returnPath"
         +"Privacy Statement"
@@ -295,7 +369,7 @@ internal object PageUtils {
   }
 
   fun BODY.adminButton(text: String, endpoint: String, confirm: String) {
-    button(classes = "${CssNames.ADMIN_BUTTON} ${TwClasses.ADMIN_BUTTON}") {
+    button(classes = TwClasses.ADMIN_BUTTON) {
       onClick = "$ADMIN_FUNC(${confirm.toDoubleQuoted()}, ${endpoint.toDoubleQuoted()})"
       +text
     }

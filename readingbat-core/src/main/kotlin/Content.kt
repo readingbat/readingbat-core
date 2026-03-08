@@ -17,8 +17,8 @@
 
 import com.github.pambrose.common.util.FileSystemSource
 import com.github.pambrose.common.util.GitHubRepo
+import com.github.pambrose.common.util.OwnerType
 import com.github.pambrose.common.util.OwnerType.Organization
-import com.github.pambrose.common.util.OwnerType.User
 import com.github.readingbat.dsl.GitHubContent
 import com.github.readingbat.dsl.ReturnType.BooleanArrayType
 import com.github.readingbat.dsl.ReturnType.FloatArrayType
@@ -89,9 +89,9 @@ val dslContent =
     */
     // include(GitHubContent(Organization, "readingbat", "readingbat-java-content", fileName = "Content.kt").eval(this, variableName = "content").java)
 
-    include(GitHubContent(Organization, "readingbat", "readingbat-java-content").eval(this).java)
-
-    include(GitHubContent(Organization, "readingbat", "readingbat-java-content").eval(this).kotlin, "Athenian: ")
+//    include(GitHubContent(Organization, "readingbat", "readingbat-java-content").eval(this).java)
+//
+//    include(GitHubContent(Organization, "readingbat", "readingbat-java-content").eval(this).kotlin, "Athenian: ")
 
     include(
       GitHubContent(
@@ -102,7 +102,7 @@ val dslContent =
       ).eval(this).python,
     )
 
-    include(GitHubContent(User, "maleich", "ReadingBat-content").eval(this).python, "Athenian: ")
+    include(GitHubContent(OwnerType.User, "maleich", "ReadingBat-content").eval(this).python, "Athenian: ")
 
     python {
       // repo = GitHubRepo(Organization, "readingbat", "readingbat-core")

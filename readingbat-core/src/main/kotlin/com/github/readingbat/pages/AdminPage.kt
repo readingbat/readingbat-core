@@ -17,7 +17,6 @@
 
 package com.github.readingbat.pages
 
-import com.github.readingbat.common.CssNames
 import com.github.readingbat.common.Endpoints.ADMIN_ENDPOINT
 import com.github.readingbat.common.FormFields.ADMIN_ACTION_PARAM
 import com.github.readingbat.common.FormFields.DELETE_ALL_DATA
@@ -108,7 +107,7 @@ internal object AdminPage {
 
   private fun BODY.deleteData() {
     h3 { +"Delete All Data" }
-    div(classes = "${CssNames.INDENT_1EM} ${TwClasses.INDENT_1EM}") {
+    div(classes = TwClasses.INDENT_1EM) {
       p { +"Permanently delete all data -- this cannot be undone!" }
       form {
         action = ADMIN_ENDPOINT
@@ -125,7 +124,7 @@ internal object AdminPage {
   private fun BODY.dumpContentDslCacheData() {
     h3 { +"Content DSL Cache Data" }
     br
-    div(classes = "${CssNames.INDENT_1EM} ${TwClasses.INDENT_1EM}") {
+    div(classes = TwClasses.INDENT_1EM) {
       h4 { +"${contentDslCache.size} items:" }
       table {
         contentDslCache.keys
@@ -144,7 +143,7 @@ internal object AdminPage {
   private fun BODY.dumpSourceCacheData() {
     h3 { +"Source Cache Data" }
     br
-    div(classes = "${CssNames.INDENT_1EM} ${TwClasses.INDENT_1EM}") {
+    div(classes = TwClasses.INDENT_1EM) {
       h4 { +"${sourceCache.size} items:" }
       table {
         sourceCache.keys
@@ -163,7 +162,7 @@ internal object AdminPage {
   private fun BODY.dumpDirCacheData() {
     h3 { +"Dir Cache Data" }
     br
-    div(classes = "${CssNames.INDENT_1EM} ${TwClasses.INDENT_1EM}") {
+    div(classes = TwClasses.INDENT_1EM) {
       h4 { +"${dirCache.size} items:" }
       table {
         dirCache.keys

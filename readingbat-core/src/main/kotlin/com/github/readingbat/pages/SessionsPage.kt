@@ -19,7 +19,6 @@ package com.github.readingbat.pages
 
 import com.github.pambrose.common.time.format
 import com.github.pambrose.common.util.pluralize
-import com.github.readingbat.common.CssNames
 import com.github.readingbat.common.Endpoints.ADMIN_PREFS_ENDPOINT
 import com.github.readingbat.common.FormFields.DAYS_DEFAULT
 import com.github.readingbat.common.FormFields.DAYS_PARAM
@@ -69,7 +68,7 @@ internal object SessionsPage {
           h2 { +"ReadingBat Sessions" }
 
           h3 { +"Active Users" }
-          div(classes = "${CssNames.INDENT_1EM} ${TwClasses.INDENT_1EM}") {
+          div(classes = TwClasses.INDENT_1EM) {
             table {
               tr {
                 td { +"Active users in the last minute: " }
@@ -101,8 +100,8 @@ internal object SessionsPage {
 
           h3 { +"${rows.size} User $sessions in $dayCount $days" }
 
-          div(classes = CssNames.TD_PADDING) {
-            div(classes = "${CssNames.INDENT_1EM} ${TwClasses.INDENT_1EM}") {
+          div(classes = "tdPadding") {
+            div(classes = TwClasses.INDENT_1EM) {
               table {
                 tr {
                   th { +"Session Id" }

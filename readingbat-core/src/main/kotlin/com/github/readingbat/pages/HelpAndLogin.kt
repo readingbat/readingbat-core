@@ -283,6 +283,7 @@ internal object HelpAndLogin {
 
   private fun TD.userInfoBlock(user: User, loginPath: String) {
     table {
+      style = "margin-left:auto"
       tr {
         val avatarUrl = user.avatarUrl
         if (avatarUrl != null) {

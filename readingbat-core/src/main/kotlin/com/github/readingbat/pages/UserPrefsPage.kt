@@ -20,7 +20,6 @@ package com.github.readingbat.pages
 import com.github.readingbat.common.ClassCode
 import com.github.readingbat.common.ClassCode.Companion.DISABLED_CLASS_CODE
 import com.github.readingbat.common.Constants.LABEL_WIDTH
-import com.github.readingbat.common.CssNames
 import com.github.readingbat.common.Endpoints.OAUTH_LOGIN_ENDPOINT
 import com.github.readingbat.common.Endpoints.TEACHER_PREFS_ENDPOINT
 import com.github.readingbat.common.Endpoints.USER_PREFS_ENDPOINT
@@ -128,7 +127,7 @@ internal object UserPrefsPage {
           joinOrWithdrawFromClass(user, defaultClassCode)
           deleteAccount(user)
 
-          p(classes = "${CssNames.INDENT_1EM} ${TwClasses.INDENT_1EM}") {
+          p(classes = TwClasses.INDENT_1EM) {
             a {
               href = "$TEACHER_PREFS_ENDPOINT?$RETURN_PARAM=$USER_PREFS_ENDPOINT"
               +"Teacher Preferences"
@@ -142,7 +141,7 @@ internal object UserPrefsPage {
 
   private fun BODY.defaultLanguage(user: User) {
     h3 { +"Default Language" }
-    div(classes = "${CssNames.INDENT_2EM} ${TwClasses.INDENT_2EM}") {
+    div(classes = TwClasses.INDENT_2EM) {
       table {
         form {
           action = USER_PREFS_ENDPOINT
@@ -170,6 +169,7 @@ internal object UserPrefsPage {
             td {}
             td {
               submitInput {
+                style = "font-size:12px"
                 name = PREFS_ACTION_PARAM
                 value = UPDATE_DEFAULT_LANGUAGE
               }
@@ -185,7 +185,7 @@ internal object UserPrefsPage {
     if (enrolledClass.isEnabled) {
       h3 { +"Enrolled class" }
       val displayStr = enrolledClass.toDisplayString()
-      div(classes = "${CssNames.INDENT_2EM} ${TwClasses.INDENT_2EM}") {
+      div(classes = TwClasses.INDENT_2EM) {
         p { +"Currently enrolled in class $displayStr." }
         p {
           form {
@@ -193,6 +193,7 @@ internal object UserPrefsPage {
             method = FormMethod.post
             onSubmit = "return confirm('Are you sure you want to withdraw from class $displayStr?')"
             submitInput {
+              style = "font-size:12px"
               name = PREFS_ACTION_PARAM
               value = WITHDRAW_FROM_CLASS
             }
@@ -201,7 +202,7 @@ internal object UserPrefsPage {
       }
     } else {
       h3 { +JOIN_A_CLASS }
-      div(classes = "${CssNames.INDENT_2EM} ${TwClasses.INDENT_2EM}") {
+      div(classes = TwClasses.INDENT_2EM) {
         p { +"Enter the class code your teacher gave you. This will make your progress visible to your teacher." }
         form {
           action = USER_PREFS_ENDPOINT
@@ -214,6 +215,7 @@ internal object UserPrefsPage {
               }
               td {
                 textInput {
+                  style = "font-size:12px; padding:4px; border-radius:4px"
                   size = "42"
                   name = CLASS_CODE_NAME_PARAM
                   value = defaultClassCode.displayedValue
@@ -225,6 +227,7 @@ internal object UserPrefsPage {
               td {}
               td {
                 submitInput {
+                  style = "font-size:12px; margin-top:2px"
                   id = JOIN_CLASS_BUTTON
                   name = PREFS_ACTION_PARAM
                   value = JOIN_CLASS
@@ -253,7 +256,7 @@ internal object UserPrefsPage {
             }
             tr {
               td {}
-              td { submitInput { name = USER_PREFS_ACTION; value = "Share" } }
+              td { submitInput { style = "font-size:12px"; name = USER_PREFS_ACTION; value = "Share" } }
             }
           }
         }
@@ -274,7 +277,7 @@ internal object UserPrefsPage {
           }
           tr {
             td {}
-            td { submitInput { name = USER_PREFS_ACTION; value = "Update Memo" } }
+            td { submitInput { style = "font-size:12px"; name = USER_PREFS_ACTION; value = "Update Memo" } }
           }
         }
       }
@@ -285,13 +288,14 @@ internal object UserPrefsPage {
     val email = user.email
     if (email.isNotBlank()) {
       h3 { +"Delete account" }
-      div(classes = "${CssNames.INDENT_2EM} ${TwClasses.INDENT_2EM}") {
+      div(classes = TwClasses.INDENT_2EM) {
         p { +"Permanently delete account [$email] -- this cannot be undone!" }
         form {
           action = USER_PREFS_ENDPOINT
           method = FormMethod.post
           onSubmit = "return confirm('Are you sure you want to permanently delete the account for $email ?')"
           submitInput {
+            style = "font-size:12px"
             name = PREFS_ACTION_PARAM
             value = DELETE_ACCOUNT
           }
