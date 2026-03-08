@@ -1,33 +1,34 @@
 [versions]
 # Plugin versions
-kotlin = "2.2.10"
-kotlinter = "5.2.0"
-buildconfig = "5.6.7"
-versions = "0.52.0"
+buildconfig = "6.0.9"
+kotlin = "2.3.10"
+kotlinter = "5.4.2"
+versions = "0.53.0"
 
 # Library versions
-cloud = "1.25.3"
-commons = "1.14.0"
-css = "2025.8.12"
-exposed = "0.61.0"
+cloud = "1.28.1"
+commons = "1.15.0"
+css = "2026.3.2"
+exposed = "1.1.1"
 flexmark = "0.64.8"
-github-api = "1.324"
-gson = "2.13.1"
-hikari = "7.0.1"
-java-script = "2.0.0"
+github-api = "1.330"
+gson = "2.13.2"
+hikari = "7.0.2"
+java = "2.0.0"
 khealth = "3.0.1"
-kotest = "6.0.0.M16"
-kotest-ktor = "6.0.0.M16"
-ktor = "3.2.3"
+kotest = "6.1.4"
+kotest-ktor = "6.1.4"
+ktor = "3.4.1"
 logback = "1.5.18"
 logging = "7.0.12"
 pgjdbc = "0.8.9"
-postgres = "42.7.7"
+postgres = "42.7.10"
 prometheus = "0.16.0"
-proxy = "2.3.0"
-sendgrid = "5.0.0-rc.1"
-serialization = "1.9.0"
-utils = "2.4.1-SNAPSHOT"
+proxy = "3.0.0"
+python = "2.7.4"
+resend = "4.12.0"
+serialization = "1.10.0"
+utils = "2.6.1"
 
 [libraries]
 # Kotlin
@@ -38,61 +39,69 @@ kotlin-scripting-jsr223 = { module = "org.jetbrains.kotlin:kotlin-scripting-jsr2
 serialization = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "serialization" }
 
 # Common Utils
-core-utils = { module = "com.github.pambrose.common-utils:core-utils", version.ref = "utils" }
-ktor-server-utils = { module = "com.github.pambrose.common-utils:ktor-server-utils", version.ref = "utils" }
-ktor-client-utils = { module = "com.github.pambrose.common-utils:ktor-client-utils", version.ref = "utils" }
-script-utils-common = { module = "com.github.pambrose.common-utils:script-utils-common", version.ref = "utils" }
-script-utils-python = { module = "com.github.pambrose.common-utils:script-utils-python", version.ref = "utils" }
-script-utils-java = { module = "com.github.pambrose.common-utils:script-utils-java", version.ref = "utils" }
-script-utils-kotlin = { module = "com.github.pambrose.common-utils:script-utils-kotlin", version.ref = "utils" }
-service-utils = { module = "com.github.pambrose.common-utils:service-utils", version.ref = "utils" }
-prometheus-utils = { module = "com.github.pambrose.common-utils:prometheus-utils", version.ref = "utils" }
-exposed-utils = { module = "com.github.pambrose.common-utils:exposed-utils", version.ref = "utils" }
+common-bom = { module = "com.github.pambrose.common-utils:common-utils-bom", version.ref = "utils" }
+common-core-utils = { module = "com.github.pambrose.common-utils:core-utils" }
+common-email-utils = { module = "com.github.pambrose.common-utils:email-utils" }
+common-exposed-utils = { module = "com.github.pambrose.common-utils:exposed-utils" }
+common-ktor-client-utils = { module = "com.github.pambrose.common-utils:ktor-client-utils" }
+common-ktor-server-utils = { module = "com.github.pambrose.common-utils:ktor-server-utils" }
+common-prometheus-utils = { module = "com.github.pambrose.common-utils:prometheus-utils" }
+common-recaptcha-utils = { module = "com.github.pambrose.common-utils:recaptcha-utils" }
+common-script-utils-common = { module = "com.github.pambrose.common-utils:script-utils-common" }
+common-script-utils-java = { module = "com.github.pambrose.common-utils:script-utils-java" }
+common-script-utils-kotlin = { module = "com.github.pambrose.common-utils:script-utils-kotlin" }
+common-script-utils-python = { module = "com.github.pambrose.common-utils:script-utils-python" }
+common-service-utils = { module = "com.github.pambrose.common-utils:service-utils" }
 
 # Prometheus
 prometheus-proxy = { module = "com.github.pambrose:prometheus-proxy", version.ref = "proxy" }
 simple-client = { module = "io.prometheus:simpleclient", version.ref = "prometheus" }
 
-# Script Engine
-script-engine = { module = "ch.obermuhlner:java-scriptengine", version.ref = "java-script" }
+# Script Engines
+java-scripting = { module = "ch.obermuhlner:java-scriptengine", version.ref = "java" }
+python-scripting = { module = "org.python:jython-standalone", version.ref = "python" }
+kotlin-scripting = { module = "org.jetbrains.kotlin:kotlin-scripting-jsr223", version.ref = "kotlin" }
 
 # CSS
 css = { module = "org.jetbrains.kotlin-wrappers:kotlin-css", version.ref = "css" }
 
 # Ktor
-ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
-ktor-client-cio = { module = "io.ktor:ktor-client-cio", version.ref = "ktor" }
-ktor-server-core = { module = "io.ktor:ktor-server", version.ref = "ktor" }
-ktor-server-cio = { module = "io.ktor:ktor-server-cio", version.ref = "ktor" }
-ktor-server-auth = { module = "io.ktor:ktor-server-auth-jvm", version.ref = "ktor" }
-ktor-sessions = { module = "io.ktor:ktor-server-sessions", version.ref = "ktor" }
-ktor-rate-limit = { module = "io.ktor:ktor-server-rate-limit", version.ref = "ktor" }
-ktor-html = { module = "io.ktor:ktor-server-html-builder", version.ref = "ktor" }
-ktor-resources = { module = "io.ktor:ktor-server-resources", version.ref = "ktor" }
-ktor-metrics = { module = "io.ktor:ktor-server-metrics", version.ref = "ktor" }
-ktor-websockets = { module = "io.ktor:ktor-server-websockets", version.ref = "ktor" }
-ktor-compression = { module = "io.ktor:ktor-server-compression", version.ref = "ktor" }
-ktor-calllogging = { module = "io.ktor:ktor-server-call-logging", version.ref = "ktor" }
-ktor-server-test-host = { module = "io.ktor:ktor-server-test-host", version.ref = "ktor" }
+ktor-bom = { module = "io.ktor:ktor-bom", version.ref = "ktor" }
+ktor-calllogging = { module = "io.ktor:ktor-server-call-logging" }
+ktor-client-cio = { module = "io.ktor:ktor-client-cio" }
+ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negotiation" }
+ktor-client-core = { module = "io.ktor:ktor-client-core" }
+ktor-compression = { module = "io.ktor:ktor-server-compression" }
+ktor-html = { module = "io.ktor:ktor-server-html-builder" }
+ktor-metrics = { module = "io.ktor:ktor-server-metrics" }
+ktor-rate-limit = { module = "io.ktor:ktor-server-rate-limit" }
+ktor-resources = { module = "io.ktor:ktor-server-resources" }
+ktor-serialization-kotlinx-json = { module = "io.ktor:ktor-serialization-kotlinx-json" }
+ktor-server-auth = { module = "io.ktor:ktor-server-auth-jvm" }
+ktor-server-cio = { module = "io.ktor:ktor-server-cio" }
+ktor-server-core = { module = "io.ktor:ktor-server" }
+ktor-server-test-host = { module = "io.ktor:ktor-server-test-host" }
+ktor-sessions = { module = "io.ktor:ktor-server-sessions" }
+ktor-websockets = { module = "io.ktor:ktor-server-websockets" }
 
 # KHealth
 khealth = { module = "dev.hayden:khealth", version.ref = "khealth" }
 
 # Database
-hikari = { module = "com.zaxxer:HikariCP", version.ref = "hikari" }
 exposed-core = { module = "org.jetbrains.exposed:exposed-core", version.ref = "exposed" }
 exposed-jdbc = { module = "org.jetbrains.exposed:exposed-jdbc", version.ref = "exposed" }
 exposed-jodatime = { module = "org.jetbrains.exposed:exposed-jodatime", version.ref = "exposed" }
+hikari = { module = "com.zaxxer:HikariCP", version.ref = "hikari" }
 pgjdbc = { module = "com.impossibl.pgjdbc-ng:pgjdbc-ng-all", version.ref = "pgjdbc" }
 postgres = { module = "org.postgresql:postgresql", version.ref = "postgres" }
 socket = { module = "com.google.cloud.sql:postgres-socket-factory", version.ref = "cloud" }
 
 # Other
-gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
-sendgrid = { module = "com.sendgrid:sendgrid-java", version.ref = "sendgrid" }
 commons = { module = "org.apache.commons:commons-text", version.ref = "commons" }
 flexmark = { module = "com.vladsch.flexmark:flexmark", version.ref = "flexmark" }
 github = { module = "org.kohsuke:github-api", version.ref = "github-api" }
+gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
+resend = { group = "com.resend", name = "resend-java", version.ref = "resend" }
 
 # Logging
 logging = { module = "io.github.oshai:kotlin-logging-jvm", version.ref = "logging" }
@@ -104,8 +113,52 @@ kotest-assertions-core = { module = "io.kotest:kotest-assertions-core", version.
 kotest-assertions-ktor = { module = "io.kotest:kotest-assertions-ktor", version.ref = "kotest-ktor" }
 
 [plugins]
+buildconfig = { id = "com.github.gmazzo.buildconfig", version.ref = "buildconfig" }
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 kotlinter = { id = "org.jmailen.kotlinter", version.ref = "kotlinter" }
-buildconfig = { id = "com.github.gmazzo.buildconfig", version.ref = "buildconfig" }
 versions = { id = "com.github.ben-manes.versions", version.ref = "versions" }
+
+[bundles]
+ktor-client = [
+  "ktor-client-cio",
+  "ktor-client-content-negotiation",
+  "ktor-client-core",
+]
+
+ktor-server = [
+  "ktor-calllogging",
+  "ktor-compression",
+  "ktor-html",
+  "ktor-metrics",
+  "ktor-rate-limit",
+  "ktor-resources",
+  "ktor-serialization-kotlinx-json",
+  "ktor-server-auth",
+  "ktor-server-cio",
+  "ktor-server-core",
+  "ktor-server-test-host",
+  "ktor-sessions",
+  "ktor-websockets",
+]
+
+common-utils = [
+  "common-core-utils",
+  "common-email-utils",
+  "common-exposed-utils",
+  "common-ktor-client-utils",
+  "common-ktor-server-utils",
+  "common-prometheus-utils",
+  "common-recaptcha-utils",
+  "common-script-utils-common",
+  "common-script-utils-java",
+  "common-script-utils-kotlin",
+  "common-script-utils-python",
+  "common-service-utils",
+]
+
+exposed = [
+  "exposed-core",
+  "exposed-jdbc",
+  "exposed-jodatime"
+]

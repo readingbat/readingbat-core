@@ -17,14 +17,15 @@
 
 package com.github.readingbat.common
 
+import com.github.pambrose.common.email.Email
+import com.github.pambrose.common.email.Email.Companion.EMPTY_EMAIL
+import com.github.pambrose.common.email.Email.Companion.UNKNOWN_EMAIL
 import com.github.pambrose.common.util.isNotNull
 import com.github.pambrose.common.util.isNull
 import com.github.pambrose.common.util.maxLength
 import com.github.pambrose.common.util.md5Of
-import com.github.pambrose.common.util.newStringSalt
 import com.github.pambrose.common.util.randomId
 import com.github.readingbat.common.ClassCode.Companion.DISABLED_CLASS_CODE
-import com.github.readingbat.common.Constants.UNKNOWN
 import com.github.readingbat.common.Endpoints.THUMBS_DOWN
 import com.github.readingbat.common.Endpoints.THUMBS_UP
 import com.github.readingbat.common.KeyConstants.AUTH_KEY
@@ -45,9 +46,6 @@ import com.github.readingbat.posts.LikeDislikeInfo
 import com.github.readingbat.server.BrowserSessionsTable
 import com.github.readingbat.server.ChallengeName
 import com.github.readingbat.server.ClassesTable
-import com.github.readingbat.server.Email
-import com.github.readingbat.server.Email.Companion.EMPTY_EMAIL
-import com.github.readingbat.server.Email.Companion.UNKNOWN_EMAIL
 import com.github.readingbat.server.EnrolleesTable
 import com.github.readingbat.server.FullName
 import com.github.readingbat.server.FullName.Companion.EMPTY_FULLNAME
@@ -55,16 +53,12 @@ import com.github.readingbat.server.FullName.Companion.UNKNOWN_FULLNAME
 import com.github.readingbat.server.GroupName
 import com.github.readingbat.server.Invocation
 import com.github.readingbat.server.LanguageName
-import com.github.readingbat.server.Password
-import com.github.readingbat.server.PasswordResetsTable
+import com.github.readingbat.server.OAuthLinksTable
 import com.github.readingbat.server.ReadingBatServer.adminUsers
-import com.github.readingbat.server.ResetId
-import com.github.readingbat.server.ResetId.Companion.EMPTY_RESET_ID
 import com.github.readingbat.server.UserAnswerHistoryTable
 import com.github.readingbat.server.UserChallengeInfoTable
 import com.github.readingbat.server.UserSessionsTable
 import com.github.readingbat.server.UsersTable
-import com.github.readingbat.server.passwordResetsIndex
 import com.github.readingbat.server.userAnswerHistoryIndex
 import com.github.readingbat.server.userSessionIndex
 import com.github.readingbat.server.ws.ChallengeWs.classTargetName
@@ -79,17 +73,18 @@ import com.pambrose.common.exposed.upsert
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.html.Entities.nbsp
 import kotlinx.serialization.json.Json
-import org.jetbrains.exposed.sql.Count
-import org.jetbrains.exposed.sql.ResultRow
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import org.jetbrains.exposed.sql.and
-import org.jetbrains.exposed.sql.deleteWhere
-import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.insertAndGetId
-import org.jetbrains.exposed.sql.or
-import org.jetbrains.exposed.sql.selectAll
-import org.jetbrains.exposed.sql.transactions.transaction
-import org.jetbrains.exposed.sql.update
+import org.jetbrains.exposed.v1.core.Count
+import org.jetbrains.exposed.v1.core.ResultRow
+import org.jetbrains.exposed.v1.core.and
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.or
+import org.jetbrains.exposed.v1.jdbc.deleteWhere
+import org.jetbrains.exposed.v1.jdbc.insert
+import org.jetbrains.exposed.v1.jdbc.insertAndGetId
+import org.jetbrains.exposed.v1.jdbc.select
+import org.jetbrains.exposed.v1.jdbc.selectAll
+import org.jetbrains.exposed.v1.jdbc.transactions.transaction
+import org.jetbrains.exposed.v1.jdbc.update
 import org.joda.time.DateTime
 import org.joda.time.DateTimeZone.UTC
 import java.util.concurrent.ConcurrentHashMap
@@ -136,13 +131,7 @@ class User {
   var fullName: FullName = EMPTY_FULLNAME
   var enrolledClassCode: ClassCode = DISABLED_CLASS_CODE
   var defaultLanguage = defaultLanguageType
-  private var saltBacking: String = ""
-  private var digestBacking: String = ""
-
-  val salt: String
-    get() = saltBacking.ifBlank { throw DataException("Missing salt field") }
-  val digest: String
-    get() = digestBacking.ifBlank { throw DataException("Missing digest field") }
+  var avatarUrl: String? = null
 
   private fun queryOrCreateSessionDbmsId() =
     browserSession?.queryOrCreateSessionDbmsId() ?: error("Null browser session")
@@ -153,8 +142,7 @@ class User {
     fullName = FullName(row[UsersTable.fullName])
     enrolledClassCode = ClassCode(row[UsersTable.enrolledClassCode])
     defaultLanguage = row[UsersTable.defaultLanguage].toLanguageType() ?: defaultLanguageType
-    saltBacking = row[UsersTable.salt]
-    digestBacking = row[UsersTable.digest]
+    avatarUrl = row[UsersTable.avatarUrl]
   }
 
   fun browserSessions() =
@@ -254,21 +242,6 @@ class User {
       }
     }
 
-  fun assignDigest(newDigest: String) =
-    transaction {
-      with(PasswordResetsTable) {
-        deleteWhere { userRef eq userDbmsId }
-      }
-
-      with(UsersTable) {
-        update({ id eq userDbmsId }) { row ->
-          row[updated] = DateTime.now(UTC)
-          row[digest] = newDigest
-          digestBacking = newDigest
-        }
-      }
-    }
-
   private fun assignEnrolledClassCode(classCode: ClassCode) =
     with(UsersTable) {
       update({ id eq userDbmsId }) { row ->
@@ -314,7 +287,7 @@ class User {
           ChallengeHistory(
             Invocation(it[invocation]),
             it[correct],
-            it[incorrectAttempts].toInt(),
+            it[incorrectAttempts],
             history,
           )
         }
@@ -368,10 +341,19 @@ class User {
 
   fun enrollInClass(classCode: ClassCode) {
     when {
-      classCode.isNotEnabled -> throw DataException("Not reportable class code")
-      classCode.isNotValid() -> throw DataException("Invalid class code: $classCode")
-      isEnrolled(classCode) -> throw DataException("Already enrolled in class $classCode")
-      else ->
+      classCode.isNotEnabled -> {
+        throw DataException("Not reportable class code")
+      }
+
+      classCode.isNotValid() -> {
+        throw DataException("Invalid class code: $classCode")
+      }
+
+      isEnrolled(classCode) -> {
+        throw DataException("Already enrolled in class $classCode")
+      }
+
+      else -> {
         transaction {
           val previousClassCode = enrolledClassCode
           if (previousClassCode.isEnabled)
@@ -379,6 +361,7 @@ class User {
           assignEnrolledClassCode(classCode)
           classCode.addEnrollee(this@User)
         }
+      }
     }
   }
 
@@ -420,30 +403,6 @@ class User {
           .first() == 0L
       }
     }
-
-  fun userPasswordResetId() =
-    readonlyTx {
-      with(PasswordResetsTable) {
-        select(resetId)
-          .where { userRef eq userDbmsId }
-          .map { it[0] as String }.also { logger.info { "userPasswordResetId() returned $it" } }
-          .map { ResetId(it) }
-          .firstOrNull() ?: EMPTY_RESET_ID
-      }
-    }
-
-  fun savePasswordResetId(emailVal: Email, newResetId: ResetId) {
-    transaction {
-      with(PasswordResetsTable) {
-        upsert(conflictIndex = passwordResetsIndex) { row ->
-          row[userRef] = userDbmsId
-          row[updated] = DateTime.now(UTC)
-          row[resetId] = newResetId.value
-          row[email] = emailVal.value
-        }
-      }
-    }
-  }
 
   fun deleteUser() {
     val classCodes = classCodes()
@@ -543,7 +502,10 @@ class User {
 
   fun shouldPublish(classCode: ClassCode = enrolledClassCode) =
     when {
-      !isDbmsEnabled() -> false
+      !isDbmsEnabled() -> {
+        false
+      }
+
       classCode.isEnabled -> {
         // Check to see if the teacher that owns class has it set as their active class in one of the sessions
         val teacherId = classCode.fetchClassTeacherId()
@@ -552,7 +514,9 @@ class User {
             .also { logger.debug { "Publishing teacherId: $teacherId for $classCode" } }
       }
 
-      else -> false
+      else -> {
+        false
+      }
     }
 
   override fun toString() = "User(userId='$userId', name='$fullName')"
@@ -581,8 +545,11 @@ class User {
 
     fun queryActiveTeachingClassCode(user: User?) =
       when {
-        user.isNull() || !isDbmsEnabled() -> DISABLED_CLASS_CODE
-        else ->
+        user.isNull() || !isDbmsEnabled() -> {
+          DISABLED_CLASS_CODE
+        }
+
+        else -> {
           transaction {
             with(UserSessionsTable) {
               select(activeClassCode)
@@ -591,12 +558,16 @@ class User {
                 .firstOrNull()?.let { ClassCode(it) } ?: DISABLED_CLASS_CODE
             }
           }
+        }
       }
 
     fun queryPreviousTeacherClassCode(user: User?) =
       when {
-        user.isNull() || !isDbmsEnabled() -> DISABLED_CLASS_CODE
-        else ->
+        user.isNull() || !isDbmsEnabled() -> {
+          DISABLED_CLASS_CODE
+        }
+
+        else -> {
           transaction {
             with(UserSessionsTable) {
               select(previousTeacherClassCode)
@@ -605,6 +576,7 @@ class User {
                 .firstOrNull()?.let { ClassCode(it) } ?: DISABLED_CLASS_CODE
             }
           }
+        }
       }
 
     fun userExists(idVal: String) =
@@ -656,23 +628,21 @@ class User {
             row[email] = "${UNKNOWN_EMAIL.value}-${randomId(4)}"
             row[enrolledClassCode] = DISABLED_CLASS_CODE.classCode
             row[defaultLanguage] = defaultLanguageType.languageName.value
-            row[salt] = UNKNOWN
-            row[digest] = UNKNOWN
           }.value.also { logger.info { "Created unknown user $it" } }
         }
       }
 
-    fun createUser(
+    fun createOAuthUser(
       name: FullName,
       emailVal: Email,
-      password: Password,
-      browserSession: BrowserSession?,
+      provider: String,
+      providerId: String,
+      accessToken: String,
+      avatarUrlVal: String? = null,
     ): User =
-      User(randomId(25), browserSession, false)
+      User(randomId(25), null, false)
         .also { user ->
           transaction {
-            val saltVal = newStringSalt()
-            val digestVal = password.sha256(saltVal)
             val userDbmsId =
               with(UsersTable) {
                 insertAndGetId { row ->
@@ -681,23 +651,22 @@ class User {
                   row[email] = emailVal.value.maxLength(128)
                   row[enrolledClassCode] = DISABLED_CLASS_CODE.classCode
                   row[defaultLanguage] = defaultLanguageType.languageName.value
-                  row[salt] = saltVal
-                  row[digest] = digestVal
+                  row[authProvider] = provider
+                  row[avatarUrl] = avatarUrlVal
                 }.value
               }
 
-            val browserId = browserSession?.queryOrCreateSessionDbmsId() ?: error("Missing browser session")
-
-            with(UserSessionsTable) {
+            with(OAuthLinksTable) {
               insert { row ->
-                row[sessionRef] = browserId
                 row[userRef] = userDbmsId
-                row[activeClassCode] = DISABLED_CLASS_CODE.classCode
-                row[previousTeacherClassCode] = DISABLED_CLASS_CODE.classCode
+                row[OAuthLinksTable.provider] = provider
+                row[OAuthLinksTable.providerId] = providerId
+                row[providerEmail] = emailVal.value
+                row[OAuthLinksTable.accessToken] = accessToken
               }
             }
           }
-          logger.info { "Created user $emailVal ${user.userId}" }
+          logger.info { "Created OAuth user $emailVal ${user.userId} via $provider" }
         }
 
     private fun isRegisteredEmail(email: Email) = queryUserByEmail(email).isNotNull()

@@ -1,3 +1,5 @@
+VERSION := $(shell grep 'extra\["versionStr"\]' build.gradle.kts | grep -o '"[0-9][^"]*"' | tr -d '"')
+
 default: versioncheck
 
 stop:
@@ -6,8 +8,14 @@ stop:
 clean:
 	./gradlew clean
 
-build: clean
+build: clean tw-css
 	./gradlew build -xtest
+
+tw-css:
+	./gradlew :readingbat-core:tailwindBuild
+
+tw-full-css:
+	./gradlew :readingbat-core:tailwindBuildFull
 
 publish:
 	./gradlew publishToMavenLocal
@@ -57,5 +65,12 @@ versioncheck:
 depends:
 	./gradlew dependencies
 
+trigger-jitpack:
+	curl -s "https://jitpack.io/com/github/pambrose/readingbat-core/${VERSION}/build.log"
+
+view-jitpack:
+	curl -s "https://jitpack.io/api/builds/com.github.pambrose/readingbat-core/${VERSION}" | python3 -m json.tool
+
+
 upgrade-wrapper:
-	./gradlew wrapper --gradle-version=9.0.0 --distribution-type=bin
+	./gradlew wrapper --gradle-version=9.4.0 --distribution-type=bin

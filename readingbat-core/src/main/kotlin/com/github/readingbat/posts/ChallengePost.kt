@@ -23,8 +23,6 @@ import com.github.pambrose.common.util.maxLength
 import com.github.pambrose.common.util.md5Of
 import com.github.pambrose.common.util.pathOf
 import com.github.pambrose.common.util.toDoubleQuoted
-import com.github.readingbat.common.BrowserSession
-import com.github.readingbat.common.BrowserSession.Companion.findOrCreateSessionDbmsId
 import com.github.readingbat.common.Constants
 import com.github.readingbat.common.Constants.CHALLENGE_SRC
 import com.github.readingbat.common.Constants.GROUP_SRC
@@ -41,14 +39,12 @@ import com.github.readingbat.common.FormFields.LANGUAGE_NAME_PARAM
 import com.github.readingbat.common.FunctionInfo
 import com.github.readingbat.common.KeyConstants.AUTH_KEY
 import com.github.readingbat.common.KeyConstants.KEY_SEP
-import com.github.readingbat.common.KeyConstants.NO_AUTH_KEY
 import com.github.readingbat.common.ParameterIds.DISLIKE_CLEAR
 import com.github.readingbat.common.ParameterIds.DISLIKE_COLOR
 import com.github.readingbat.common.ParameterIds.LIKE_CLEAR
 import com.github.readingbat.common.ParameterIds.LIKE_COLOR
 import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.fetchUserDbmsIdFromCache
-import com.github.readingbat.common.browserSession
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.isDbmsEnabled
 import com.github.readingbat.posts.AnswerStatus.CORRECT
@@ -63,12 +59,8 @@ import com.github.readingbat.server.LanguageName
 import com.github.readingbat.server.LanguageName.Companion.getLanguageName
 import com.github.readingbat.server.RedirectException
 import com.github.readingbat.server.ServerUtils.paramMap
-import com.github.readingbat.server.SessionAnswerHistoryTable
-import com.github.readingbat.server.SessionChallengeInfoTable
 import com.github.readingbat.server.UserAnswerHistoryTable
 import com.github.readingbat.server.UserChallengeInfoTable
-import com.github.readingbat.server.sessionAnswerHistoryIndex
-import com.github.readingbat.server.sessionChallengeInfoIndex
 import com.github.readingbat.server.userAnswerHistoryIndex
 import com.github.readingbat.server.userChallengeInfoIndex
 import com.pambrose.common.exposed.upsert
@@ -78,12 +70,11 @@ import io.ktor.server.response.respondText
 import io.ktor.server.routing.RoutingContext
 import kotlinx.serialization.Required
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import org.jetbrains.exposed.sql.and
-import org.jetbrains.exposed.sql.deleteWhere
-import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.v1.core.and
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.jdbc.deleteWhere
+import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.joda.time.DateTime
 import org.joda.time.DateTimeZone
 
@@ -204,7 +195,7 @@ internal object ChallengePost {
         .mapIndexed { i, userResponse -> funcInfo.checkResponse(i, userResponse) }
 
     if (isDbmsEnabled())
-      saveChallengeAnswers(user, call.browserSession, content, names, paramMap, funcInfo, userResponses, results)
+      saveChallengeAnswers(user, content, names, paramMap, funcInfo, userResponses, results)
 
     val answerMapping =
       results
@@ -220,42 +211,32 @@ internal object ChallengePost {
 
   private fun deleteChallengeInfo(type: String, id: String, md5Val: String) =
     when (type) {
-      AUTH_KEY ->
+      AUTH_KEY -> {
         transaction {
           with(UserChallengeInfoTable) {
             deleteWhere { (userRef eq fetchUserDbmsIdFromCache(id)) and (md5 eq md5Val) }
           }
         }
+      }
 
-      NO_AUTH_KEY ->
-        transaction {
-          val sessionDbmsId = findOrCreateSessionDbmsId(id, false)
-          with(SessionChallengeInfoTable) {
-            deleteWhere { (sessionRef eq sessionDbmsId) and (md5 eq md5Val) }
-          }
-        }
-
-      else -> error("Invalid type: $type")
+      else -> {
+        error("Invalid type: $type")
+      }
     }
 
   private fun deleteAnswerHistory(type: String, id: String, md5Val: String) =
     when (type) {
-      AUTH_KEY ->
+      AUTH_KEY -> {
         transaction {
           with(UserAnswerHistoryTable) {
             deleteWhere { (userRef eq fetchUserDbmsIdFromCache(id)) and (md5 eq md5Val) }
           }
         }
+      }
 
-      NO_AUTH_KEY ->
-        transaction {
-          val sessionDbmsId = findOrCreateSessionDbmsId(id, false)
-          with(SessionAnswerHistoryTable) {
-            deleteWhere { (sessionRef eq sessionDbmsId) and (md5 eq md5Val) }
-          }
-        }
-
-      else -> error("Invalid type: $type")
+      else -> {
+        error("Invalid type: $type")
+      }
     }
 
   suspend fun RoutingContext.clearChallengeAnswers(content: ReadingBatContent, user: User?): String {
@@ -358,20 +339,19 @@ internal object ChallengePost {
           -> 0
 
         DISLIKE_CLEAR -> 2
+
         else -> error("Invalid like/dislike argument: $likeArg")
       }
 
     logger.debug { "Like/dislike arg -- response: $likeArg -- $likeVal" }
 
-    val browserSession = call.browserSession
-    saveLikeDislike(user, browserSession, names, likeVal)
+    saveLikeDislike(user, names, likeVal)
 
     call.respondText(likeVal.toString())
   }
 
   private suspend fun saveChallengeAnswers(
     user: User?,
-    browserSession: BrowserSession?,
     content: ReadingBatContent,
     names: ChallengeNames,
     paramMap: Map<String, String>,
@@ -395,137 +375,72 @@ internal object ChallengePost {
     val invokeStr = Json.encodeToString(invokeMap)
     val historyList = mutableListOf<ChallengeHistory>()
 
-    transaction {
-      when {
-        user.isNotNull() ->
-          with(UserChallengeInfoTable) {
-            upsert(conflictIndex = userChallengeInfoIndex) { row ->
-              row[userRef] = user.userDbmsId
-              row[md5] = challengeMd5
-              row[updated] = DateTime.now(DateTimeZone.UTC)
-              row[allCorrect] = complete
-              row[answersJson] = invokeStr
-            }
+    if (user.isNotNull()) {
+      transaction {
+        with(UserChallengeInfoTable) {
+          upsert(conflictIndex = userChallengeInfoIndex) { row ->
+            row[userRef] = user.userDbmsId
+            row[md5] = challengeMd5
+            row[updated] = DateTime.now(DateTimeZone.UTC)
+            row[allCorrect] = complete
+            row[answersJson] = invokeStr
           }
+        }
 
-        browserSession.isNotNull() ->
-          with(SessionChallengeInfoTable) {
-            upsert(conflictIndex = sessionChallengeInfoIndex) { row ->
-              row[sessionRef] = browserSession.queryOrCreateSessionDbmsId()
-              row[md5] = challengeMd5
-              row[updated] = DateTime.now(DateTimeZone.UTC)
-              row[allCorrect] = complete
-              row[answersJson] = invokeStr
-            }
-          }
+        // Save the history of each answer on a per-invocation basis
+        for (result in results) {
+          val historyMd5 = names.md5(result.invocation)
+          val history = user.answerHistory(historyMd5, result.invocation)
+          historyList += history
 
-        else ->
-          logger.warn { "ChallengeInfo not updated" }
-      }
-
-      // Save the history of each answer on a per-invocation basis
-      for (result in results) {
-        val historyMd5 = names.md5(result.invocation)
-        val history =
           when {
-            user.isNotNull() -> user.answerHistory(historyMd5, result.invocation)
-            browserSession.isNotNull() -> browserSession.answerHistory(historyMd5, result.invocation)
-            else -> ChallengeHistory(result.invocation)
+            !result.answered -> history.markUnanswered()
+            result.correct -> history.markCorrect(result.userResponse)
+            else -> history.markIncorrect(result.userResponse)
           }
-        historyList += history
 
-        when {
-          !result.answered -> history.markUnanswered()
-          result.correct -> history.markCorrect(result.userResponse)
-          else -> history.markIncorrect(result.userResponse)
-        }
-
-        val invocationVal = history.invocation.value
-        val updatedVal = DateTime.now(DateTimeZone.UTC)
-        val correctVal = history.correct
-        val incorrectAttemptsVal = history.incorrectAttempts
-        val json = Json.encodeToString(history.answers)
-
-        when {
-          user.isNotNull() ->
-            with(UserAnswerHistoryTable) {
-              upsert(conflictIndex = userAnswerHistoryIndex) { row ->
-                row[userRef] = user.userDbmsId
-                row[md5] = historyMd5
-                row[invocation] = invocationVal
-                row[updated] = updatedVal
-                row[correct] = correctVal
-                row[incorrectAttempts] = incorrectAttemptsVal
-                row[historyJson] = json
-              }
+          with(UserAnswerHistoryTable) {
+            upsert(conflictIndex = userAnswerHistoryIndex) { row ->
+              row[userRef] = user.userDbmsId
+              row[md5] = historyMd5
+              row[invocation] = history.invocation.value
+              row[updated] = DateTime.now(DateTimeZone.UTC)
+              row[correct] = history.correct
+              row[incorrectAttempts] = history.incorrectAttempts
+              row[historyJson] = Json.encodeToString(history.answers)
             }
-
-          browserSession.isNotNull() ->
-            with(SessionAnswerHistoryTable) {
-              upsert(conflictIndex = sessionAnswerHistoryIndex) { row ->
-                row[sessionRef] = browserSession.queryOrCreateSessionDbmsId()
-                row[md5] = historyMd5
-                row[invocation] = invocationVal
-                row[updated] = updatedVal
-                row[correct] = correctVal
-                row[incorrectAttempts] = incorrectAttemptsVal
-                row[historyJson] = json
-              }
-            }
-
-          else ->
-            logger.warn { "Answer history not updated" }
+          }
         }
       }
-    }
 
-    // This is done oustide the transaction
-    if (shouldPublish) {
-      historyList.forEach {
-        user?.publishAnswers(challengeMd5, content.maxHistoryLength, complete, numCorrect, it)
+      // This is done outside the transaction
+      if (shouldPublish) {
+        historyList.forEach {
+          user.publishAnswers(challengeMd5, content.maxHistoryLength, complete, numCorrect, it)
+        }
       }
     }
   }
 
   private suspend fun saveLikeDislike(
     user: User?,
-    browserSession: BrowserSession?,
     names: ChallengeNames,
     likeDislikeVal: Int,
   ) {
-    val challengeMd5 = names.md5()
-    val shouldPublish = user?.shouldPublish() ?: false
-    when {
-      user.isNotNull() -> {
-        transaction {
-          with(UserChallengeInfoTable) {
-            upsert(conflictIndex = userChallengeInfoIndex) { row ->
-              row[userRef] = user.userDbmsId
-              row[md5] = challengeMd5
-              row[updated] = DateTime.now(DateTimeZone.UTC)
-              row[likeDislike] = likeDislikeVal.toShort()
-            }
+    if (user.isNotNull()) {
+      val challengeMd5 = names.md5()
+      transaction {
+        with(UserChallengeInfoTable) {
+          upsert(conflictIndex = userChallengeInfoIndex) { row ->
+            row[userRef] = user.userDbmsId
+            row[md5] = challengeMd5
+            row[updated] = DateTime.now(DateTimeZone.UTC)
+            row[likeDislike] = likeDislikeVal.toShort()
           }
         }
-        if (shouldPublish)
-          user.publishLikeDislike(challengeMd5, likeDislikeVal)
       }
-
-      browserSession.isNotNull() ->
-        transaction {
-          with(SessionChallengeInfoTable) {
-            upsert(conflictIndex = sessionChallengeInfoIndex) { row ->
-              row[sessionRef] = browserSession.queryOrCreateSessionDbmsId()
-              row[md5] = challengeMd5
-              row[updated] = DateTime.now(DateTimeZone.UTC)
-              row[likeDislike] = likeDislikeVal.toShort()
-            }
-          }
-        }
-
-      else -> {
-        // Do nothing
-      }
+      if (user.shouldPublish())
+        user.publishLikeDislike(challengeMd5, likeDislikeVal)
     }
   }
 }

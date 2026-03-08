@@ -17,12 +17,12 @@
 
 package com.github.readingbat.server
 
+import com.github.pambrose.common.email.Email.Companion.UNKNOWN_EMAIL
 import com.github.pambrose.common.features.HerokuHttpsRedirect
 import com.github.pambrose.common.response.respondWith
 import com.github.pambrose.common.util.simpleClassName
 import com.github.readingbat.common.Constants.STATIC
 import com.github.readingbat.common.Constants.UNKNOWN
-import com.github.readingbat.common.Endpoints.CSS_ENDPOINT
 import com.github.readingbat.common.Endpoints.FAV_ICON_ENDPOINT
 import com.github.readingbat.common.Endpoints.PING_ENDPOINT
 import com.github.readingbat.common.Endpoints.STATIC_ROOT
@@ -35,9 +35,10 @@ import com.github.readingbat.pages.ErrorPage.errorPage
 import com.github.readingbat.pages.InvalidRequestPage.invalidRequestPage
 import com.github.readingbat.pages.NotFoundPage.notFoundPage
 import com.github.readingbat.server.ConfigureCookies.configureAuthCookie
+import com.github.readingbat.server.ConfigureCookies.configureOAuthReturnUrlCookie
 import com.github.readingbat.server.ConfigureCookies.configureSessionIdCookie
-import com.github.readingbat.server.ConfigureFormAuth.configureFormAuth
-import com.github.readingbat.server.Email.Companion.UNKNOWN_EMAIL
+import com.github.readingbat.server.ConfigureOAuth.configureGitHubOAuth
+import com.github.readingbat.server.ConfigureOAuth.configureGoogleOAuth
 import com.github.readingbat.server.ReadingBatServer.serverSessionId
 import com.github.readingbat.server.ServerUtils.fetchEmailFromCache
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -84,11 +85,12 @@ object Installs {
     install(Sessions) {
       configureSessionIdCookie()
       configureAuthCookie()
+      configureOAuthReturnUrlCookie()
     }
 
     install(Authentication) {
-      // configureSessionAuth()
-      configureFormAuth()
+      configureGitHubOAuth()
+      configureGoogleOAuth()
     }
 
     install(WebSockets) {
@@ -122,7 +124,6 @@ object Installs {
         permanentRedirect = false
 
         excludePrefix("$STATIC_ROOT/")
-        excludeSuffix(CSS_ENDPOINT)
         excludeSuffix(FAV_ICON_ENDPOINT)
       }
     } else {
@@ -222,7 +223,7 @@ object Installs {
           }
 
           is IllegalStateException -> {
-            logger.info { "IllegalStateException caught: ${cause.message}" }
+            logger.info(cause) { "IllegalStateException caught: ${cause.message}" }
             call.respondWith { errorPage() }
           }
 

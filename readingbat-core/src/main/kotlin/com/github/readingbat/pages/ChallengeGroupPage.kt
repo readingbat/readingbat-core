@@ -18,13 +18,9 @@
 package com.github.readingbat.pages
 
 import com.github.pambrose.common.util.pathOf
-import com.github.readingbat.common.BrowserSession
 import com.github.readingbat.common.ClassCode
 import com.github.readingbat.common.Constants.COLUMN_CNT
 import com.github.readingbat.common.Constants.MSG
-import com.github.readingbat.common.CssNames.FUNC_ITEM1
-import com.github.readingbat.common.CssNames.FUNC_ITEM2
-import com.github.readingbat.common.CssNames.UNDERLINE
 import com.github.readingbat.common.Endpoints.CHALLENGE_GROUP_ENDPOINT
 import com.github.readingbat.common.Endpoints.CHALLENGE_ROOT
 import com.github.readingbat.common.Endpoints.CLEAR_GROUP_ANSWERS_ENDPOINT
@@ -38,9 +34,9 @@ import com.github.readingbat.common.FormFields.LANGUAGE_NAME_PARAM
 import com.github.readingbat.common.Message
 import com.github.readingbat.common.StaticFileNames.GREEN_CHECK
 import com.github.readingbat.common.StaticFileNames.WHITE_CHECK
+import com.github.readingbat.common.TwClasses
 import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.queryActiveTeachingClassCode
-import com.github.readingbat.common.browserSession
 import com.github.readingbat.common.challengeAnswersKey
 import com.github.readingbat.common.correctAnswersKey
 import com.github.readingbat.dsl.ChallengeGroup
@@ -74,6 +70,7 @@ import kotlinx.html.hiddenInput
 import kotlinx.html.html
 import kotlinx.html.id
 import kotlinx.html.img
+import kotlinx.html.onClick
 import kotlinx.html.onSubmit
 import kotlinx.html.p
 import kotlinx.html.script
@@ -84,7 +81,6 @@ import kotlinx.html.submitInput
 import kotlinx.html.table
 import kotlinx.html.td
 import kotlinx.html.tr
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
 internal object ChallengeGroupPage {
@@ -98,7 +94,6 @@ internal object ChallengeGroupPage {
   ) =
     createHTML()
       .html {
-        val browserSession = call.browserSession
         val languageType = challengeGroup.languageType
         val languageName = languageType.languageName
         val groupName = challengeGroup.groupName
@@ -110,15 +105,26 @@ internal object ChallengeGroupPage {
 
         fun TR.displayFunctionCall(user: User?, challenge: Challenge) {
           val challengeName = challenge.challengeName
-          val allCorrect = challenge.isCorrect(user, browserSession)
+          val allCorrect = challenge.isCorrect(user)
 
-          td(classes = if (activeTeachingClassCode.isEnabled && enrollees.isNotEmpty()) FUNC_ITEM1 else FUNC_ITEM2) {
+          td(
+            classes =
+            if (activeTeachingClassCode.isEnabled &&
+            enrollees.isNotEmpty()
+            )
+            TwClasses.FUNC_ITEM1
+            else
+            TwClasses.FUNC_ITEM2,
+            ) {
             if (activeTeachingClassCode.isNotEnabled)
               img { src = pathOf(STATIC_ROOT, if (allCorrect) GREEN_CHECK else WHITE_CHECK) }
 
-            a {
-              style = "font-Size:110%; padding-left:2px"
-              href = pathOf(CHALLENGE_ROOT, languageName, groupName, challengeName)
+            val challengePath = pathOf(CHALLENGE_ROOT, languageName, groupName, challengeName)
+            a(classes = "text-[110%] pl-0.5") {
+              href = challengePath
+              if (user == null) {
+                onClick = "openOAuthModal('$challengePath'); return false;"
+              }
               +challengeName.value
             }
 
@@ -144,17 +150,12 @@ internal object ChallengeGroupPage {
           if (enrollees.isNotEmpty())
             p { +"(# of questions | # that started | # completed | Avg correct | Incorrect attempts | Likes/Dislikes)" }
 
-          table {
+          table(classes = "w-full") {
             val size = challenges.size
             val rows = size.rows(COLUMN_CNT)
 
-            // val width = if (enrollees.isNotEmpty()) 1200 else 800
-            // style = "width:${width}px"
-            style = "width:100%"
-
             repeat(rows) { i ->
-              tr {
-                style = "height:30"
+              tr(classes = "h-[30px]") {
                 challenges.apply {
                   displayFunctionCall(user, elementAt(i))
                   elementAtOrNull(i + rows)?.also { displayFunctionCall(user, it) } ?: td {}
@@ -165,7 +166,7 @@ internal object ChallengeGroupPage {
           }
 
           if (isDbmsEnabled() && activeTeachingClassCode.isNotEnabled && challenges.isNotEmpty())
-            clearGroupAnswerHistoryOption(user, browserSession, languageName, groupName, challenges)
+            clearGroupAnswerHistoryOption(user, languageName, groupName, challenges)
 
           backLink(CHALLENGE_ROOT, languageName.value)
 
@@ -182,9 +183,9 @@ internal object ChallengeGroupPage {
     groupName: GroupName,
     enrollees: List<User>,
   ) {
-    h3 {
+    h3(classes = "ml-1 text-rb-header") {
       style = "margin-left: 5px; color: $HEADER_COLOR"
-      a(classes = UNDERLINE) {
+      a(classes = TwClasses.UNDERLINE) {
         href =
           if (groupName.isNotValid())
             classSummaryEndpoint(classCode)
@@ -225,17 +226,15 @@ internal object ChallengeGroupPage {
 
   private fun BODY.clearGroupAnswerHistoryOption(
     user: User?,
-    browserSession: BrowserSession?,
     languageName: LanguageName,
     groupName: GroupName,
     challenges: List<Challenge>,
   ) {
-    val correctAnswersKeys = challenges.map { correctAnswersKey(user, browserSession, it) }
-    val challengeAnswerKeys = challenges.map { challengeAnswersKey(user, browserSession, it) }
+    val correctAnswersKeys = challenges.map { correctAnswersKey(user, it) }
+    val challengeAnswerKeys = challenges.map { challengeAnswersKey(user, it) }
 
     p {
-      form {
-        style = "margin:0"
+      form(classes = "m-0") {
         action = CLEAR_GROUP_ANSWERS_ENDPOINT
         method = FormMethod.post
         onSubmit = """return confirm('Are you sure you want to clear your previous answers for group "$groupName"?')"""
@@ -255,8 +254,7 @@ internal object ChallengeGroupPage {
           name = CHALLENGE_ANSWERS_PARAM
           value = Json.encodeToString(challengeAnswerKeys)
         }
-        submitInput {
-          style = "vertical-align:middle; margin-top:1; margin-bottom:0"
+        submitInput(classes = TwClasses.CLEAR_HISTORY) {
           value = "Clear answer history"
         }
       }

@@ -19,12 +19,10 @@ package com.github.readingbat.pages
 
 import com.github.pambrose.common.util.decode
 import com.github.pambrose.common.util.pathOf
-import com.github.readingbat.common.CssNames.CHALLENGE_DESC
-import com.github.readingbat.common.CssNames.INDENT_1EM
-import com.github.readingbat.common.CssNames.KOTLIN_CODE
 import com.github.readingbat.common.Endpoints.CHALLENGE_ROOT
 import com.github.readingbat.common.Endpoints.STATIC_ROOT
 import com.github.readingbat.common.StaticFileNames.RUN_BUTTON
+import com.github.readingbat.common.TwClasses
 import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.queryActiveTeachingClassCode
 import com.github.readingbat.dsl.ReadingBatContent
@@ -45,7 +43,6 @@ import kotlinx.html.img
 import kotlinx.html.script
 import kotlinx.html.span
 import kotlinx.html.stream.createHTML
-import kotlinx.html.style
 import org.apache.commons.text.StringEscapeUtils.escapeHtml4
 import kotlin.collections.set
 
@@ -73,7 +70,7 @@ internal object PlaygroundPage {
         head {
           script {
             src = "https://unpkg.com/kotlin-playground@1"
-            attributes["data-selector"] = ".$KOTLIN_CODE"
+            attributes["data-selector"] = ".kotlin-code"
           }
           headDefault()
         }
@@ -84,15 +81,16 @@ internal object PlaygroundPage {
           h2 {
             val groupPath = pathOf(CHALLENGE_ROOT, languageName, groupName)
             this@body.addLink(groupName.value.decode(), groupPath)
-            span {
-              style = "padding-left:2px; padding-right:2px"
+            span(classes = "px-0.5") {
               rawHtml("&rarr;")
             }
             this@body.addLink(challengeName.value.decode(), pathOf(groupPath, challengeName))
           }
 
           if (challenge.description.isNotBlank())
-            div(classes = CHALLENGE_DESC) { rawHtml(challenge.parsedDescription) }
+            div(classes = TwClasses.CHALLENGE_DESC) {
+              rawHtml(challenge.parsedDescription)
+            }
 
           val options =
             """
@@ -102,18 +100,17 @@ internal object PlaygroundPage {
 
           rawHtml(
             """
-              <div class=$KOTLIN_CODE $options>
+              <div class=kotlin-code $options>
               ${escapeHtml4(funcInfo.originalCode)}
               </div>
             """.trimIndent(),
           )
 
           br
-          div(classes = INDENT_1EM) {
+          div(classes = TwClasses.INDENT_1EM) {
             +"Click on"
-            img {
+            img(classes = "align-bottom") {
               height = "25"
-              style = "vertical-align: bottom"
               src = pathOf(STATIC_ROOT, RUN_BUTTON)
             }
             +" to run the code"

@@ -25,18 +25,16 @@ import com.github.pambrose.common.util.toRootPath
 import com.github.readingbat.common.ClassCode
 import com.github.readingbat.common.Constants.ADMIN_FUNC
 import com.github.readingbat.common.Constants.ICONS
-import com.github.readingbat.common.CssNames.ADMIN_BUTTON
-import com.github.readingbat.common.CssNames.INDENT_1EM
-import com.github.readingbat.common.CssNames.SELECTED_TAB
 import com.github.readingbat.common.Endpoints.CHALLENGE_ROOT
-import com.github.readingbat.common.Endpoints.CSS_ENDPOINT
 import com.github.readingbat.common.Endpoints.PRIVACY_ENDPOINT
 import com.github.readingbat.common.Endpoints.STATIC_ROOT
+import com.github.readingbat.common.Endpoints.TAILWIND_CSS_ENDPOINT
 import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.Message
 import com.github.readingbat.common.Message.Companion.EMPTY_MESSAGE
 import com.github.readingbat.common.Property
 import com.github.readingbat.common.Property.ANALYTICS_ID
+import com.github.readingbat.common.TwClasses
 import com.github.readingbat.common.User
 import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.dsl.LanguageType.Companion.languageTypeList
@@ -80,12 +78,6 @@ internal object PageUtils {
   private const val READING_BAT = "ReadingBat"
 
   fun HEAD.headDefault() {
-    link {
-      rel = "stylesheet"
-      href = CSS_ENDPOINT
-      type = CSS.toString()
-    }
-
     // From: https://favicon.io/emoji-favicons/glasses/
     val prefix = pathOf(STATIC_ROOT, ICONS)
     link {
@@ -110,6 +102,13 @@ internal object PageUtils {
       href = "$prefix/site.webmanifest"
     }
 
+    // Tailwind CSS v4 — built by ./gradlew :readingbat-core:tailwindBuild
+    link {
+      rel = "stylesheet"
+      href = TAILWIND_CSS_ENDPOINT
+      type = CSS.toString()
+    }
+
     title(READING_BAT)
 
     val analyticsId = ANALYTICS_ID.getPropertyOrNull() ?: ""
@@ -129,15 +128,8 @@ internal object PageUtils {
         )
       }
     }
-  }
 
-  fun HEAD.loadBootstrap() {
-    link {
-      rel = "stylesheet"
-      href = "https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css"
-    }
-    script { src = "https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js" }
-    script { src = "https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js" }
+    // loadRecaptchaScript(recaptchaConfig)
   }
 
   fun HEAD.clickButtonScript(vararg buttonNames: String) {
@@ -158,17 +150,16 @@ internal object PageUtils {
   }
 
   fun BODY.bodyTitle() {
-    div {
-      style = "margin-bottom:0em"
+    // Tailwind equivalents: mb-0, text-4xl, pl-1
+    // Inline styles kept as fallback when Tailwind is disabled
+    div(classes = "mb-0") {
       a {
         href = "/"
-        span {
-          style = "font-size:200%"
+        span(classes = "text-4xl") {
           +READING_BAT
         }
       }
-      span {
-        style = "padding-left:5px"
+      span(classes = "pl-1") {
         +"code reading practice"
       }
     }
@@ -191,21 +182,18 @@ internal object PageUtils {
 
     if (loginAttempt && user.isNull())
       p {
-        span {
-          style = "color:red"
+        span(classes = "text-red-500") {
           +"Failed to login -- incorrect email or password"
         }
       }
 
     p {
-      span {
-        style = "color:green; max-width:800"
+      span(classes = "text-green-500 max-w-[800px]") {
         if (msg.isNotBlank) +(msg.toString()) else rawHtml(nbsp.text)
       }
     }
 
-    div {
-      style = "padding-top:10px; min-width:100vw; clear:both"
+    div(classes = "pt-2.5 min-w-screen clear-both") {
       nav {
         ul {
           languageTypeList
@@ -213,7 +201,7 @@ internal object PageUtils {
             .forEach { lang ->
               li(classes = "h2") {
                 if (languageType == lang)
-                  id = SELECTED_TAB
+                  id = "selected"
                 this@bodyHeader.addLink(lang.name, pathOf(CHALLENGE_ROOT, lang.languageName))
               }
             }
@@ -221,8 +209,7 @@ internal object PageUtils {
       }
     }
 
-    div {
-      style = "border-top: 1px solid; clear: both"
+    div(classes = "border-t border-black clear-both") {
     }
   }
 
@@ -234,7 +221,7 @@ internal object PageUtils {
     }
 
   fun BODY.privacyStatement(returnPath: String) =
-    p(classes = INDENT_1EM) {
+    p(classes = TwClasses.INDENT_1EM) {
       a {
         href = "$PRIVACY_ENDPOINT?$RETURN_PARAM=$returnPath"
         +"Privacy Statement"
@@ -262,20 +249,18 @@ internal object PageUtils {
 
   @Suppress("unused")
   fun BODY.confirmingButton(text: String, endpoint: String, msg: String) {
-    form {
-      style = "margin:0"
+    form(classes = "m-0") {
       action = endpoint
       method = FormMethod.get
       onSubmit = "return confirm('$msg')"
-      submitInput {
-        style = "vertical-align:middle; margin-top:1; margin-bottom:0"
+      submitInput(classes = "align-middle mt-px mb-0") {
         value = text
       }
     }
   }
 
   fun BODY.adminButton(text: String, endpoint: String, confirm: String) {
-    button(classes = ADMIN_BUTTON) {
+    button(classes = TwClasses.ADMIN_BUTTON) {
       onClick = "$ADMIN_FUNC(${confirm.toDoubleQuoted()}, ${endpoint.toDoubleQuoted()})"
       +text
     }

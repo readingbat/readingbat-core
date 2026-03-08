@@ -19,8 +19,6 @@ package com.github.readingbat.pages
 
 import com.github.readingbat.common.ClassCode
 import com.github.readingbat.common.Constants.LABEL_WIDTH
-import com.github.readingbat.common.CssNames.INDENT_2EM
-import com.github.readingbat.common.CssNames.UNDERLINE
 import com.github.readingbat.common.Endpoints.TEACHER_PREFS_ENDPOINT
 import com.github.readingbat.common.Endpoints.classSummaryEndpoint
 import com.github.readingbat.common.FormFields.CHOICE_SOURCE_PARAM
@@ -37,6 +35,7 @@ import com.github.readingbat.common.FormFields.TEACHER_PREF
 import com.github.readingbat.common.FormFields.UPDATE_ACTIVE_CLASS
 import com.github.readingbat.common.Message
 import com.github.readingbat.common.Message.Companion.EMPTY_MESSAGE
+import com.github.readingbat.common.TwClasses
 import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.queryActiveTeachingClassCode
 import com.github.readingbat.common.isValidUser
@@ -133,7 +132,7 @@ internal object TeacherPrefsPage {
 
   private fun BODY.createClass(defaultClassDesc: String) {
     h3 { +"Create a class" }
-    div(classes = INDENT_2EM) {
+    div(classes = TwClasses.INDENT_2EM) {
       p { +"Enter a description of the class." }
       form {
         action = TEACHER_PREFS_ENDPOINT
@@ -146,6 +145,7 @@ internal object TeacherPrefsPage {
             }
             td {
               textInput {
+                style = "font-size:12px; padding:4px; border-radius:4px"
                 size = "42"
                 name = CLASS_DESC_PARAM
                 value = defaultClassDesc
@@ -157,6 +157,7 @@ internal object TeacherPrefsPage {
             td {}
             td {
               submitInput {
+                style = "font-size:10px"
                 id = CREATE_CLASS_BUTTON
                 name = PREFS_ACTION_PARAM
                 value = CREATE_CLASS
@@ -172,15 +173,13 @@ internal object TeacherPrefsPage {
     val classCodes = user.classCodes()
     if (classCodes.isNotEmpty()) {
       h3 { +"Classes" }
-      div(classes = INDENT_2EM) {
+      div(classes = TwClasses.INDENT_2EM) {
         table {
           tr {
-            td {
-              style = "vertical-align:top"
+            td(classes = "align-top") {
               this@displayClasses.classList(activeClassCode, classCodes)
             }
-            td {
-              style = "vertical-align:top"
+            td(classes = "align-top") {
               this@displayClasses.deleteClassButtons(classCodes)
             }
           }
@@ -190,8 +189,7 @@ internal object TeacherPrefsPage {
   }
 
   private fun BODY.classList(activeClassCode: ClassCode, classCodes: List<ClassCode>) {
-    table {
-      style = "border-spacing: 15px 5px"
+    table(classes = "border-separate border-spacing-x-[15px] border-spacing-y-[5px]") {
       tr {
         th { +"Active" }
         th { +"Description" }
@@ -206,8 +204,7 @@ internal object TeacherPrefsPage {
           .forEach { classCode ->
             val enrolleeCount = classCode.fetchEnrollees().count()
             this@table.tr {
-              td {
-                style = "text-align:center"
+              td(classes = "text-center") {
                 radioInput {
                   name = CLASS_CODE_CHOICE_PARAM
                   value = classCode.classCode
@@ -217,27 +214,25 @@ internal object TeacherPrefsPage {
 
               val summary = classSummaryEndpoint(classCode, TEACHER_PREFS_ENDPOINT)
               td {
-                a(classes = UNDERLINE) {
+                a(classes = TwClasses.UNDERLINE) {
                   href = summary
                   +classCode.fetchClassDesc()
                 }
               }
               td {
-                a(classes = UNDERLINE) {
+                a(classes = TwClasses.UNDERLINE) {
                   href = summary
                   +classCode.displayedValue
                 }
               }
-              td {
-                style = "text-align:center"
+              td(classes = "text-center") {
                 +enrolleeCount.toString()
               }
             }
           }
 
         this@table.tr {
-          td {
-            style = "text-align:center"
+          td(classes = "text-center") {
             radioInput {
               name = CLASS_CODE_CHOICE_PARAM
               value = DISABLED_MODE
@@ -259,6 +254,7 @@ internal object TeacherPrefsPage {
           td {}
           td {
             submitInput {
+              style = "font-size:10px"
               name = PREFS_ACTION_PARAM
               value = UPDATE_ACTIVE_CLASS
             }
@@ -269,14 +265,12 @@ internal object TeacherPrefsPage {
   }
 
   private fun BODY.deleteClassButtons(classCodes: List<ClassCode>) {
-    table {
-      style = "border-spacing: 5px 5px"
+    table(classes = "border-separate border-spacing-[5px]") {
       tr { th { rawHtml(nbsp.text) } }
       classCodes.forEach { classCode ->
         tr {
           td {
-            form {
-              style = "margin:0"
+            form(classes = "m-0") {
               action = TEACHER_PREFS_ENDPOINT
               method = FormMethod.post
               onSubmit = "return confirm('Are you sure you want to delete class ${classCode.toDisplayString()}?')"
@@ -284,8 +278,8 @@ internal object TeacherPrefsPage {
                 name = CLASS_CODE_NAME_PARAM
                 value = classCode.displayedValue
               }
-              submitInput {
-                style = "vertical-align:middle; margin-top:1; margin-bottom:0;"
+              submitInput(classes = "align-middle mt-px mb-0") {
+                style = "font-size:10px"
                 name = PREFS_ACTION_PARAM
                 value = DELETE_CLASS
               }

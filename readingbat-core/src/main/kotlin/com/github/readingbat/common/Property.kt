@@ -17,6 +17,9 @@
 
 package com.github.readingbat.common
 
+import com.github.pambrose.common.email.Email
+import com.github.pambrose.common.email.Email.Companion.toResendEmail
+import com.github.pambrose.common.recaptcha.RecaptchaConfig
 import com.github.pambrose.common.util.isNotNull
 import com.github.pambrose.common.util.obfuscate
 import com.github.readingbat.common.Constants.UNASSIGNED
@@ -169,10 +172,25 @@ sealed class Property(
   object REDIRECT_HOSTNAME :
     Property(propertyValue = "$READINGBAT.$SITE.redirectHostname")
 
-  object SENDGRID_PREFIX :
+  object OAUTH_CALLBACK_URL_PREFIX :
     Property(
-      propertyValue = "$READINGBAT.$SITE.sendGridPrefix",
-      initFunc = { setProperty(EnvVar.SENDGRID_PREFIX.getEnv(configValue(it, "https://www.readingbat.com"))) },
+      propertyValue = "$READINGBAT.$SITE.oauthCallbackUrlPrefix",
+      initFunc = {
+        setProperty(EnvVar.OAUTH_CALLBACK_URL_PREFIX.getEnv(configValue(it, "https://www.readingbat.com")))
+      },
+    )
+
+  object RESEND_API_KEY :
+    Property(
+      propertyValue = "$READINGBAT.$SITE.resendApiKey",
+      initFunc = { setProperty(EnvVar.RESEND_API_KEY.getEnv(configValue(it, ""))) },
+      maskFunc = { getPropertyOrNull(false)?.obfuscate(4) ?: UNASSIGNED },
+    )
+
+  object RESEND_SENDER_EMAIL :
+    Property(
+      propertyValue = "$READINGBAT.$SITE.resendSenderEmail",
+      initFunc = { setProperty(EnvVar.RESEND_SENDER_EMAIL.getEnv(configValue(it, ""))) },
     )
 
   object FORWARDED_ENABLED :
@@ -349,15 +367,74 @@ sealed class Property(
       initFunc = { setPropertyFromConfig(it, "30") },
     )
 
+  object GITHUB_OAUTH_CLIENT_ID :
+    Property(
+      propertyValue = "$READINGBAT.$SITE.githubOAuthClientId",
+      initFunc = { setProperty(EnvVar.GITHUB_OAUTH_CLIENT_ID.getEnv(configValue(it, ""))) },
+    )
+
+  object GITHUB_OAUTH_CLIENT_SECRET :
+    Property(
+      propertyValue = "$READINGBAT.$SITE.githubOAuthClientSecret",
+      initFunc = { setProperty(EnvVar.GITHUB_OAUTH_CLIENT_SECRET.getEnv(configValue(it, ""))) },
+      maskFunc = { getPropertyOrNull(false)?.obfuscate(4) ?: UNASSIGNED },
+    )
+
+  object GOOGLE_OAUTH_CLIENT_ID :
+    Property(
+      propertyValue = "$READINGBAT.$SITE.googleOAuthClientId",
+      initFunc = { setProperty(EnvVar.GOOGLE_OAUTH_CLIENT_ID.getEnv(configValue(it, ""))) },
+    )
+
+  object GOOGLE_OAUTH_CLIENT_SECRET :
+    Property(
+      propertyValue = "$READINGBAT.$SITE.googleOAuthClientSecret",
+      initFunc = { setProperty(EnvVar.GOOGLE_OAUTH_CLIENT_SECRET.getEnv(configValue(it, ""))) },
+      maskFunc = { getPropertyOrNull(false)?.obfuscate(4) ?: UNASSIGNED },
+    )
+
+  object RECAPTCHA_ENABLED :
+    Property(
+      propertyValue = "$READINGBAT.$SITE.recaptchaEnabled",
+      initFunc = {
+        val agentEnabled = EnvVar.RECAPTCHA_ENABLED.getEnv(configValue(it, default = "false").toBoolean())
+        setProperty(agentEnabled.toString())
+      },
+    )
+
+  object RECAPTCHA_SITE_KEY :
+    Property(
+      propertyValue = "$READINGBAT.$SITE.recaptchaSiteKey",
+      initFunc = { setProperty(EnvVar.RECAPTCHA_SITE_KEY.getEnv(configValue(it, ""))) },
+    )
+
+  object RECAPTCHA_SECRET_KEY :
+    Property(
+      propertyValue = "$READINGBAT.$SITE.recaptchaSecretKey",
+      initFunc = { setProperty(EnvVar.RECAPTCHA_SECRET_KEY.getEnv(configValue(it, ""))) },
+      maskFunc = { getPropertyOrNull(false)?.obfuscate(4) ?: UNASSIGNED },
+    )
+
   companion object {
-    private val logger = KotlinLogging.logger {}
+    val envResendApiKey: String by lazy { RESEND_API_KEY.getRequiredProperty() }
+    val envResendSender: Email by lazy { RESEND_SENDER_EMAIL.getRequiredProperty().toResendEmail() }
+
+    val recaptchaConfig by lazy {
+      object : RecaptchaConfig {
+        override val isRecaptchaEnabled = RECAPTCHA_ENABLED.getProperty(default = false, errorOnNonInit = false)
+        override val recaptchaSiteKey = RECAPTCHA_SITE_KEY.getPropertyOrNull(errorOnNonInit = false)
+        override val recaptchaSecretKey = RECAPTCHA_SECRET_KEY.getPropertyOrNull(errorOnNonInit = false)
+      }
+    }
 
     fun initProperties() =
       listOf(
         DSL_FILE_NAME,
         DSL_VARIABLE_NAME,
         PROXY_HOSTNAME,
-        SENDGRID_PREFIX,
+        OAUTH_CALLBACK_URL_PREFIX,
+        RESEND_API_KEY,
+        RESEND_SENDER_EMAIL,
         ANALYTICS_ID,
         KTOR_PORT,
         KTOR_WATCH,
@@ -383,6 +460,13 @@ sealed class Property(
         DBMS_PASSWORD,
         DBMS_MAX_POOL_SIZE,
         DBMS_MAX_LIFETIME_MINS,
+        GITHUB_OAUTH_CLIENT_ID,
+        GITHUB_OAUTH_CLIENT_SECRET,
+        GOOGLE_OAUTH_CLIENT_ID,
+        GOOGLE_OAUTH_CLIENT_SECRET,
+        RECAPTCHA_ENABLED,
+        RECAPTCHA_SITE_KEY,
+        RECAPTCHA_SECRET_KEY,
       )
   }
 }

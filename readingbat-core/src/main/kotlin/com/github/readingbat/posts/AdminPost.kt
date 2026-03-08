@@ -45,8 +45,14 @@ internal object AdminPost {
     user: User?,
   ): String =
     when {
-      isProduction() && user.isNotValidUser() -> adminDataPage(content, user, mustBeLoggedIn)
-      isProduction() && user.isNotAdminUser() -> adminDataPage(content, user, mustBeSysAdmin)
+      isProduction() && user.isNotValidUser() -> {
+        adminDataPage(content, user, mustBeLoggedIn)
+      }
+
+      isProduction() && user.isNotAdminUser() -> {
+        adminDataPage(content, user, mustBeSysAdmin)
+      }
+
       else -> {
         when (call.receiveParameters()[ADMIN_ACTION_PARAM] ?: "") {
           DELETE_ALL_DATA -> {
@@ -60,7 +66,9 @@ internal object AdminPost {
             adminDataPage(content, user, Message("$contentCnt/$sourceCnt/$dirCnt items deleted", false))
           }
 
-          else -> adminDataPage(content, user, msg = invalidOption)
+          else -> {
+            adminDataPage(content, user, msg = invalidOption)
+          }
         }
       }
     }

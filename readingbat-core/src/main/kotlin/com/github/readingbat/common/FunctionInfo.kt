@@ -86,65 +86,80 @@ class FunctionInfo(
           .asBracketed()
 
       when (returnType) {
-        BooleanType ->
+        BooleanType -> {
           when (languageType) {
             Python -> raw.toString().toCapitalized()
             Java, Kotlin -> raw.toString()
           }
+        }
 
-        IntType, FloatType -> raw.toString()
+        IntType, FloatType -> {
+          raw.toString()
+        }
 
-        StringType -> raw.toString().toDoubleQuoted()
+        StringType -> {
+          raw.toString().toDoubleQuoted()
+        }
 
-        BooleanArrayType ->
+        BooleanArrayType -> {
           when (languageType) {
             Python -> raw.pythonAdjust(false)
             Java, Kotlin -> (raw as BooleanArray).map { it }.joinToString().asBracketed()
           }
+        }
 
-        IntArrayType ->
+        IntArrayType -> {
           when (languageType) {
             Python -> raw.pythonAdjust(false)
             Java, Kotlin -> (raw as IntArray).map { it }.joinToString().asBracketed()
           }
+        }
 
-        FloatArrayType ->
+        FloatArrayType -> {
           when (languageType) {
             Python -> raw.pythonAdjust(false)
             Java, Kotlin -> (raw as FloatArray).map { it }.joinToString().asBracketed()
           }
+        }
 
-        StringArrayType ->
+        StringArrayType -> {
           when (languageType) {
             Python -> raw.pythonAdjust(true)
             Java, Kotlin -> (raw as Array<String>).joinToString { it.toDoubleQuoted() }.asBracketed()
           }
+        }
 
-        BooleanListType ->
+        BooleanListType -> {
           when (languageType) {
             Python -> raw.pythonAdjust(false)
             Java, Kotlin -> (raw as List<Boolean>).toString()
           }
+        }
 
-        IntListType ->
+        IntListType -> {
           when (languageType) {
             Python -> raw.pythonAdjust(false)
             Java, Kotlin -> (raw as List<Int>).toString()
           }
+        }
 
-        FloatListType ->
+        FloatListType -> {
           when (languageType) {
             Python -> raw.pythonAdjust(false)
             Java, Kotlin -> (raw as List<Float>).toString()
           }
+        }
 
-        StringListType ->
+        StringListType -> {
           when (languageType) {
             Python -> raw.pythonAdjust(true)
             Java, Kotlin -> "[${(raw as List<String>).joinToString { it.toDoubleQuoted() }}]"
           }
+        }
 
-        Runtime -> error("Invalid return type")
+        Runtime -> {
+          error("Invalid return type")
+        }
       }
     }
   }
@@ -231,7 +246,9 @@ class FunctionInfo(
             false to deriveHint()
           }
 
-          else -> false to deriveHint()
+          else -> {
+            false to deriveHint()
+          }
         }
       }
     }
@@ -250,7 +267,9 @@ class FunctionInfo(
             false to deriveHint()
           }
 
-          else -> false to deriveHint()
+          else -> {
+            false to deriveHint()
+          }
         }
       }
     }
@@ -264,17 +283,29 @@ class FunctionInfo(
 
       fun deriveHint() =
         when {
-          returnType == BooleanType ->
+          returnType == BooleanType -> {
             when {
               isPythonBoolean() -> "$languageType boolean values are either true or false"
               !isJavaBoolean() -> "Answer should be either true or false"
               else -> ""
             }
+          }
 
-          returnType == StringType && isNotDoubleQuoted() -> "$languageType strings are double quoted"
-          returnType == IntType && isNotInt() -> "Answer should be an int value"
-          returnType == FloatType && isNotFloat() -> "Answer should be a float value"
-          else -> ""
+          returnType == StringType && isNotDoubleQuoted() -> {
+            "$languageType strings are double quoted"
+          }
+
+          returnType == IntType && isNotInt() -> {
+            "Answer should be an int value"
+          }
+
+          returnType == FloatType && isNotFloat() -> {
+            "Answer should be a float value"
+          }
+
+          else -> {
+            ""
+          }
         }
 
       return runCatching {
@@ -295,17 +326,29 @@ class FunctionInfo(
     private fun String.equalsAsPythonScalar(correctAnswer: String, returnType: ReturnType): Pair<Boolean, String> {
       fun deriveHint() =
         when {
-          returnType == BooleanType ->
+          returnType == BooleanType -> {
             when {
               isJavaBoolean() -> "Python boolean values are either True or False"
               !isPythonBoolean() -> "Answer should be either True or False"
               else -> ""
             }
+          }
 
-          returnType == StringType && isNotQuoted() -> "Python strings are either single or double quoted"
-          returnType == IntType && isNotInt() -> "Answer should be an int value"
-          returnType == FloatType && isNotFloat() -> "Answer should be a float value"
-          else -> ""
+          returnType == StringType && isNotQuoted() -> {
+            "Python strings are either single or double quoted"
+          }
+
+          returnType == IntType && isNotInt() -> {
+            "Answer should be an int value"
+          }
+
+          returnType == FloatType && isNotFloat() -> {
+            "Answer should be a float value"
+          }
+
+          else -> {
+            ""
+          }
         }
 
       return runCatching {

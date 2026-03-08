@@ -17,9 +17,9 @@
 
 package com.github.readingbat.common
 
+import com.github.pambrose.common.email.Email
 import com.github.readingbat.dsl.isDbmsEnabled
 import com.github.readingbat.server.BrowserSessionsTable
-import com.github.readingbat.server.Email
 import com.github.readingbat.server.FullName
 import com.github.readingbat.server.GeoInfosTable
 import com.github.readingbat.server.ServerRequestsTable
@@ -28,11 +28,13 @@ import com.pambrose.common.exposed.dateTimeExpr
 import com.pambrose.common.exposed.get
 import com.pambrose.common.exposed.readonlyTx
 import io.github.oshai.kotlinlogging.KotlinLogging
-import org.jetbrains.exposed.sql.Count
-import org.jetbrains.exposed.sql.Max
-import org.jetbrains.exposed.sql.SortOrder
-import org.jetbrains.exposed.sql.countDistinct
-import org.jetbrains.exposed.sql.jodatime.DateColumnType
+import org.jetbrains.exposed.v1.core.Count
+import org.jetbrains.exposed.v1.core.Max
+import org.jetbrains.exposed.v1.core.SortOrder
+import org.jetbrains.exposed.v1.core.countDistinct
+import org.jetbrains.exposed.v1.core.greater
+import org.jetbrains.exposed.v1.jdbc.select
+import org.jetbrains.exposed.v1.jodatime.JodaLocalDateTimeColumnType
 import org.joda.time.DateTime
 import org.joda.time.DateTimeZone
 import kotlin.math.min
@@ -72,7 +74,7 @@ internal object SessionActivites {
     readonlyTx {
       measureTimedValue {
         val count = Count(UsersTable.id)
-        val maxDate = Max(created, DateColumnType(true))
+        val maxDate = Max(created, JodaLocalDateTimeColumnType())
         val elems = arrayOf(fullName, email, ip, city, state, country, isp, flagUrl, userAgent)
 
         (ServerRequestsTable innerJoin BrowserSessionsTable innerJoin UsersTable innerJoin GeoInfosTable)
@@ -104,9 +106,11 @@ internal object SessionActivites {
 
   fun activeSessions(duration: Duration): Long =
     when {
-      !isDbmsEnabled() -> 0
+      !isDbmsEnabled() -> {
+        0
+      }
 
-      else ->
+      else -> {
         readonlyTx {
           // addLogger(KotlinLoggingSqlLogger)
           measureTimedValue {
@@ -122,5 +126,6 @@ internal object SessionActivites {
             query
           }
         }
+      }
     }
 }

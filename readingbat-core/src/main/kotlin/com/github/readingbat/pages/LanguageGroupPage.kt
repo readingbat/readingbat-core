@@ -19,16 +19,14 @@ package com.github.readingbat.pages
 
 import com.github.pambrose.common.util.pathOf
 import com.github.readingbat.common.Constants.MSG
-import com.github.readingbat.common.CssNames.GROUP_CHOICE
-import com.github.readingbat.common.CssNames.GROUP_ITEM_SRC
 import com.github.readingbat.common.Endpoints.CHALLENGE_ROOT
 import com.github.readingbat.common.Endpoints.STATIC_ROOT
 import com.github.readingbat.common.Message
 import com.github.readingbat.common.StaticFileNames.GREEN_CHECK
 import com.github.readingbat.common.StaticFileNames.WHITE_CHECK
+import com.github.readingbat.common.TwClasses
 import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.queryActiveTeachingClassCode
-import com.github.readingbat.common.browserSession
 import com.github.readingbat.dsl.ChallengeGroup
 import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.dsl.ReadingBatContent
@@ -64,7 +62,6 @@ internal object LanguageGroupPage {
   ) =
     createHTML()
       .html {
-        val browserSession = call.browserSession
         val languageName = languageType.languageName
         val loginPath = pathOf(CHALLENGE_ROOT, languageName)
         val groups = content[languageType].challengeGroups
@@ -81,7 +78,7 @@ internal object LanguageGroupPage {
 
           if (activeTeachingClassCode.isNotEnabled) {
             for (challenge in challenges) {
-              if (challenge.isCorrect(user, browserSession))
+              if (challenge.isCorrect(user))
                 cnt++
               if (cnt == maxCnt + 1) {
                 maxFound = true
@@ -91,8 +88,8 @@ internal object LanguageGroupPage {
           }
 
           td {
-            div(classes = GROUP_ITEM_SRC) {
-              a(classes = GROUP_CHOICE) {
+            div(classes = TwClasses.GROUP_ITEM_SRC) {
+              a(classes = TwClasses.GROUP_CHOICE) {
                 href = pathOf(CHALLENGE_ROOT, languageName, groupName)
                 +groupName.toString()
               }

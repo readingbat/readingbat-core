@@ -3,8 +3,8 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
 
 plugins {
-  `java`
-  `application`
+  java
+  application
   `java-library`
   `maven-publish`
 
@@ -21,8 +21,14 @@ val kotlinLib = libs.plugins.kotlin.jvm.get().toString().split(":").first()
 val serializationLib = libs.plugins.kotlin.serialization.get().toString().split(":").first()
 val ktlinterLib = libs.plugins.kotlinter.get().toString().split(":").first()
 
-allprojects {
+// These are for the uber target
+val mainName = "TestMain"
 
+application {
+  mainClass = mainName
+}
+
+allprojects {
   apply(plugin = "application")
   apply(plugin = "java-library")
   apply(plugin = "maven-publish")
@@ -32,9 +38,9 @@ allprojects {
   apply(plugin = "com.github.gmazzo.buildconfig")
   apply(plugin = "com.github.ben-manes.versions")
 
-  extra["versionStr"] = "2.1.3"
+  extra["versionStr"] = "3.0.0"
   description = "ReadingBat Core"
-  group = "com.github.readingbat"
+  group = "com.github.pambrose.readingbat"
   version = versionStr
 
   repositories {
@@ -42,6 +48,8 @@ allprojects {
     mavenCentral()
     maven { url = uri("https://jitpack.io") }
   }
+
+  configureVersions()
 }
 
 subprojects {
@@ -49,6 +57,8 @@ subprojects {
   configurePublishing()
   configureTesting()
   configureKotlinter()
+  configureSecrets()
+  configureVersions()
 }
 
 fun Project.configureKotlin() {
@@ -77,10 +87,6 @@ fun Project.configureKotlin() {
 
   tasks.named("build") {
     mustRunAfter("clean")
-  }
-
-  configurations.all {
-    resolutionStrategy.cacheChangingModulesFor(0, "seconds")
   }
 
   tasks.withType<KotlinJvmCompile>().configureEach {
@@ -134,5 +140,38 @@ fun Project.configureTesting() {
       exceptionFormat = TestExceptionFormat.FULL
       showStandardStreams = true
     }
+  }
+}
+
+configurations.all {
+  resolutionStrategy.cacheChangingModulesFor(0, "seconds")
+}
+
+fun Project.configureVersions() {
+  fun isNonStable(version: String): Boolean =
+    listOf("-RC", "-BETA", "-ALPHA", "-M").any { version.uppercase().contains(it) }
+
+  tasks.withType<com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask>().configureEach {
+    rejectVersionIf {
+      isNonStable(candidate.version)
+    }
+  }
+}
+
+fun Project.configureSecrets() {
+  val secretsFile = file("secrets/secrets.env")
+  if (secretsFile.exists()) {
+    val envVars =
+      secretsFile.readLines()
+        .map { it.trim() }
+        .filter { it.isNotEmpty() && !it.startsWith("#") }
+        .mapNotNull { line ->
+          val idx = line.indexOf('=')
+          if (idx > 0) line.substring(0, idx).trim() to line.substring(idx + 1).trim().removeSurrounding("\"") else null
+        }
+        .toMap()
+
+    tasks.withType<JavaExec>().configureEach { environment(envVars) }
+    tasks.withType<Test>().configureEach { environment(envVars) }
   }
 }

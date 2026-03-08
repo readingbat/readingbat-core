@@ -9,7 +9,14 @@ build
 *.iws
 secrets
 
+.DS_Store
+
+.kotlin
+
 node_modules/
+
+# Generated Tailwind CSS (built by ./gradlew :readingbat-core:tailwindBuild)
+readingbat-core/src/main/resources/static/tailwind.css
 
 cypress/videos
 cypress/screenshots

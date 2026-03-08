@@ -52,14 +52,14 @@ annotation class ReadingBatDslMarker
 class GitHubContent(
   ownerType: OwnerType,
   ownerName: String,
-  repo: String,
-  branch: String = "master",
+  repoName: String,
+  branchName: String = "master",
   srcPath: String = "src/main/kotlin",
   fileName: String = "Content.kt",
 ) :
   GitHubFile(
-    GitHubRepo(ownerType, ownerName, repo),
-    branchName = branch,
+    repo = GitHubRepo(ownerType, ownerName, repoName),
+    branchName = branchName,
     srcPath = srcPath,
     fileName = fileName,
   )

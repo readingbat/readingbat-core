@@ -55,6 +55,7 @@ import com.github.readingbat.server.ReadingBatServer.logger
 import com.github.readingbat.server.ReadingBatServer.metrics
 import com.github.readingbat.server.ServerUtils.logToShim
 import com.github.readingbat.server.routes.AdminRoutes.adminRoutes
+import com.github.readingbat.server.routes.oauthRoutes
 import com.github.readingbat.server.routes.sysAdminRoutes
 import com.github.readingbat.server.routes.userRoutes
 import com.github.readingbat.server.ws.LoggingWs
@@ -71,9 +72,10 @@ import io.prometheus.Agent.Companion.startAsyncAgent
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeoutOrNull
-import org.jetbrains.exposed.sql.Database
+import org.jetbrains.exposed.v1.jdbc.Database
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import javax.script.ScriptEngineManager
 import kotlin.concurrent.atomics.AtomicInt
 import kotlin.concurrent.atomics.AtomicReference
 import kotlin.concurrent.atomics.plusAssign
@@ -88,8 +90,8 @@ import kotlin.time.measureTime
   buildTime = BuildConfig.BUILD_TIME,
 )
 object ReadingBatServer {
-  val metrics by lazy { Metrics() }
   internal val logger = KotlinLogging.logger {}
+  val metrics by lazy { Metrics() }
   private const val CALLER_VERSION = "callerVersion"
   private val startTime = TimeSource.Monotonic.markNow()
   internal val serverSessionId = randomId(10)
@@ -157,7 +159,7 @@ object ReadingBatServer {
       .firstOrNull() ?: "None specified"
 
   private fun deriveArgs(args: Array<String>): Array<String> {
-    // Grab config filename from CLI args and then try ENV var
+    // Grab the config filename from CLI args and then try ENV var
     val configFilename =
       args.asSequence()
         .filter { it.startsWith("-config=") }
@@ -223,12 +225,16 @@ internal fun Application.readContentDsl(fileName: String, variableName: String, 
 fun Application.module() {
   assignProperties(initProperties().sortedBy { it.propertyName })
 
+  // Verifu all the script engines loaded
+  logger.info { "Loaded script engines: ${ScriptEngineManager().engineFactories.map { it.engineName }}" }
+  check(ScriptEngineManager().engineFactories.count() == 3) { "Missing script engines" }
+
   adminUsers.addAll(Property.ADMIN_USERS.configValueOrNull(this)?.getList() ?: emptyList())
 
   if (isDbmsEnabled()) {
     ReadingBatServer.dbms
 
-    // Create unknown user if it does not already exist
+    // Create an unknown user if it does not already exist
     if (!userExists(UNKNOWN_USER_ID))
       createUnknownUser(UNKNOWN_USER_ID)
   }
@@ -276,6 +282,7 @@ fun Application.module() {
 
   routing {
     adminRoutes(metrics)
+    oauthRoutes()
     locations(metrics) { content.load() }
     userRoutes(metrics) { content.load() }
 

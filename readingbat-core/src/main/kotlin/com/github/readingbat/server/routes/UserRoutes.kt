@@ -31,16 +31,12 @@ import com.github.readingbat.common.Endpoints.CLEAR_CHALLENGE_ANSWERS_ENDPOINT
 import com.github.readingbat.common.Endpoints.CLEAR_GROUP_ANSWERS_ENDPOINT
 import com.github.readingbat.common.Endpoints.CLOCK_ENDPOINT
 import com.github.readingbat.common.Endpoints.CONFIG_ENDPOINT
-import com.github.readingbat.common.Endpoints.CREATE_ACCOUNT_ENDPOINT
-import com.github.readingbat.common.Endpoints.CSS_ENDPOINT
 import com.github.readingbat.common.Endpoints.ENABLE_STUDENT_MODE_ENDPOINT
 import com.github.readingbat.common.Endpoints.ENABLE_TEACHER_MODE_ENDPOINT
 import com.github.readingbat.common.Endpoints.FAV_ICON_ENDPOINT
 import com.github.readingbat.common.Endpoints.HELP_ENDPOINT
 import com.github.readingbat.common.Endpoints.LIKE_DISLIKE_ENDPOINT
 import com.github.readingbat.common.Endpoints.LOGOUT_ENDPOINT
-import com.github.readingbat.common.Endpoints.PASSWORD_CHANGE_ENDPOINT
-import com.github.readingbat.common.Endpoints.PASSWORD_RESET_ENDPOINT
 import com.github.readingbat.common.Endpoints.PRIVACY_ENDPOINT
 import com.github.readingbat.common.Endpoints.ROBOTS_ENDPOINT
 import com.github.readingbat.common.Endpoints.ROOT
@@ -48,23 +44,20 @@ import com.github.readingbat.common.Endpoints.SESSIONS_ENDPOINT
 import com.github.readingbat.common.Endpoints.STATIC_ROOT
 import com.github.readingbat.common.Endpoints.STUDENT_SUMMARY_ENDPOINT
 import com.github.readingbat.common.Endpoints.SYSTEM_ADMIN_ENDPOINT
+import com.github.readingbat.common.Endpoints.TAILWIND_CSS_ENDPOINT
 import com.github.readingbat.common.Endpoints.TEACHER_PREFS_ENDPOINT
 import com.github.readingbat.common.Endpoints.USER_INFO_ENDPOINT
 import com.github.readingbat.common.Endpoints.USER_PREFS_ENDPOINT
-import com.github.readingbat.common.FormFields.RESET_ID_PARAM
 import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.Metrics
 import com.github.readingbat.common.UserPrincipal
-import com.github.readingbat.common.cssContent
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.pages.AboutPage.aboutPage
 import com.github.readingbat.pages.AdminPage.adminDataPage
 import com.github.readingbat.pages.AdminPrefsPage.adminPrefsPage
 import com.github.readingbat.pages.ClassSummaryPage.classSummaryPage
 import com.github.readingbat.pages.ClockPage.clockPage
-import com.github.readingbat.pages.CreateAccountPage.createAccountPage
 import com.github.readingbat.pages.HelpPage.helpPage
-import com.github.readingbat.pages.PasswordResetPage.passwordResetPage
 import com.github.readingbat.pages.PrivacyPage.privacyPage
 import com.github.readingbat.pages.SessionsPage.sessionsPage
 import com.github.readingbat.pages.StudentSummaryPage.studentSummaryPage
@@ -78,14 +71,10 @@ import com.github.readingbat.posts.ChallengePost.checkAnswers
 import com.github.readingbat.posts.ChallengePost.clearChallengeAnswers
 import com.github.readingbat.posts.ChallengePost.clearGroupAnswers
 import com.github.readingbat.posts.ChallengePost.likeDislike
-import com.github.readingbat.posts.CreateAccountPost.createAccount
-import com.github.readingbat.posts.PasswordResetPost.sendPasswordReset
-import com.github.readingbat.posts.PasswordResetPost.updatePassword
 import com.github.readingbat.posts.TeacherPrefsPost.enableStudentMode
 import com.github.readingbat.posts.TeacherPrefsPost.enableTeacherMode
 import com.github.readingbat.posts.TeacherPrefsPost.teacherPrefs
 import com.github.readingbat.posts.UserPrefsPost.userPrefs
-import com.github.readingbat.server.ResetId
 import com.github.readingbat.server.ServerUtils.authenticateAdminUser
 import com.github.readingbat.server.ServerUtils.defaultLanguageTab
 import com.github.readingbat.server.ServerUtils.fetchUser
@@ -96,44 +85,36 @@ import com.github.readingbat.server.ServerUtils.respondWithSuspendingRedirect
 import com.github.readingbat.server.routes.ResourceContent.getResourceAsText
 import io.ktor.http.ContentType
 import io.ktor.http.ContentType.Text.CSS
-import io.ktor.server.application.ApplicationCallPipeline
-import io.ktor.server.routing.Route
-import io.ktor.server.routing.RouteSelector
-import io.ktor.server.routing.RouteSelectorEvaluation
 import io.ktor.server.routing.Routing
-import io.ktor.server.routing.RoutingResolveContext
 import io.ktor.server.routing.get
-import io.ktor.server.routing.intercept
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
 import io.ktor.server.sessions.clear
 import io.ktor.server.sessions.sessions
-import kotlinx.coroutines.withTimeout
-import kotlin.time.Duration
 
-@Suppress("unused")
-fun Route.routeTimeout(time: Duration, callback: Route.() -> Unit): Route {
-  // With createChild, we create a child node for this received Route
-  val routeWithTimeout =
-    this.createChild(
-      object : RouteSelector() {
-        override suspend fun evaluate(context: RoutingResolveContext, segmentIndex: Int) =
-          RouteSelectorEvaluation.Constant
-      },
-    )
-
-  // Intercepts calls from this route at the features step
-  routeWithTimeout.intercept(ApplicationCallPipeline.Plugins) {
-    withTimeout(time.inWholeMilliseconds) {
-      proceed()
-    }
-  }
-
-  // Configure this route with the block provided by the user
-  callback(routeWithTimeout)
-
-  return routeWithTimeout
-}
+// @Suppress("unused")
+// fun Route.routeTimeout(time: Duration, callback: Route.() -> Unit): Route {
+//  // With createChild, we create a child node for this received Route
+//  val routeWithTimeout =
+//    this.createChild(
+//      object : RouteSelector() {
+//        override suspend fun evaluate(context: RoutingResolveContext, segmentIndex: Int) =
+//          RouteSelectorEvaluation.Constant
+//      },
+//    )
+//
+//  // Intercepts calls from this route at the features step
+//  routeWithTimeout.intercept(ApplicationCallPipeline.Plugins) {
+//    withTimeout(time.inWholeMilliseconds) {
+//      proceed()
+//    }
+//  }
+//
+//  // Configure this route with the block provided by the user
+//  callback(routeWithTimeout)
+//
+//  return routeWithTimeout
+// }
 
 fun Routing.userRoutes(metrics: Metrics, contentSrc: () -> ReadingBatContent) {
   route(ROOT) {
@@ -194,14 +175,6 @@ fun Routing.userRoutes(metrics: Metrics, contentSrc: () -> ReadingBatContent) {
 
   post(CLEAR_CHALLENGE_ANSWERS_ENDPOINT) {
     respondWithSuspendingRedirect { clearChallengeAnswers(contentSrc(), fetchUser()) }
-  }
-
-  get(CREATE_ACCOUNT_ENDPOINT, metrics) {
-    respondWith { createAccountPage() }
-  }
-
-  post(CREATE_ACCOUNT_ENDPOINT) {
-    respondWithSuspendingRedirect { createAccount() }
   }
 
   get(ADMIN_PREFS_ENDPOINT) {
@@ -266,27 +239,14 @@ fun Routing.userRoutes(metrics: Metrics, contentSrc: () -> ReadingBatContent) {
     }
   }
 
-  post(PASSWORD_CHANGE_ENDPOINT) {
-    respondWithSuspendingRedirect { updatePassword() }
-  }
-
-  post(PASSWORD_RESET_ENDPOINT) {
-    respondWithSuspendingRedirect { sendPasswordReset() }
-  }
-
-  // RESET_ID is passed here when user clicks on email URL
-  get(PASSWORD_RESET_ENDPOINT, metrics) {
-    respondWith { passwordResetPage(ResetId(queryParam(RESET_ID_PARAM))) }
-  }
-
   get(LOGOUT_ENDPOINT, metrics) {
     // Purge UserPrincipal from cookie data
     call.sessions.clear<UserPrincipal>()
     redirectTo { queryParam(RETURN_PARAM, "/") }
   }
 
-  get(CSS_ENDPOINT) {
-    respondWith(CSS) { cssContent }
+  get(TAILWIND_CSS_ENDPOINT) {
+    respondWith(CSS) { getResourceAsText("/static/tailwind.css") }
   }
 
   get(FAV_ICON_ENDPOINT) {

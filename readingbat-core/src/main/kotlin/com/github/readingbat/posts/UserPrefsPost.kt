@@ -19,15 +19,11 @@ package com.github.readingbat.posts
 
 import com.github.readingbat.common.ClassCode.Companion.getClassCode
 import com.github.readingbat.common.FormFields.CLASS_CODE_NAME_PARAM
-import com.github.readingbat.common.FormFields.CONFIRM_PASSWORD_PARAM
-import com.github.readingbat.common.FormFields.CURR_PASSWORD_PARAM
 import com.github.readingbat.common.FormFields.DEFAULT_LANGUAGE_CHOICE_PARAM
 import com.github.readingbat.common.FormFields.DELETE_ACCOUNT
 import com.github.readingbat.common.FormFields.JOIN_CLASS
-import com.github.readingbat.common.FormFields.NEW_PASSWORD_PARAM
 import com.github.readingbat.common.FormFields.PREFS_ACTION_PARAM
 import com.github.readingbat.common.FormFields.UPDATE_DEFAULT_LANGUAGE
-import com.github.readingbat.common.FormFields.UPDATE_PASSWORD
 import com.github.readingbat.common.FormFields.WITHDRAW_FROM_CLASS
 import com.github.readingbat.common.Message
 import com.github.readingbat.common.User
@@ -38,8 +34,6 @@ import com.github.readingbat.dsl.LanguageType.Companion.getLanguageType
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.pages.UserPrefsPage.requestLogInPage
 import com.github.readingbat.pages.UserPrefsPage.userPrefsPage
-import com.github.readingbat.posts.CreateAccountPost.checkPassword
-import com.github.readingbat.server.Password.Companion.getPassword
 import com.github.readingbat.server.UsersTable
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.http.Parameters
@@ -47,8 +41,9 @@ import io.ktor.server.request.receiveParameters
 import io.ktor.server.routing.RoutingContext
 import io.ktor.server.sessions.clear
 import io.ktor.server.sessions.sessions
-import org.jetbrains.exposed.sql.transactions.transaction
-import org.jetbrains.exposed.sql.update
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.jdbc.transactions.transaction
+import org.jetbrains.exposed.v1.jdbc.update
 import org.joda.time.DateTime
 import org.joda.time.DateTimeZone.UTC
 
@@ -60,7 +55,6 @@ internal object UserPrefsPost {
       val params = call.receiveParameters()
       when (val action = params[PREFS_ACTION_PARAM] ?: "") {
         UPDATE_DEFAULT_LANGUAGE -> updateDefaultLanguage(content, params, user)
-        UPDATE_PASSWORD -> updatePassword(content, params, user)
         JOIN_CLASS -> enrollInClass(content, params, user)
         WITHDRAW_FROM_CLASS -> withdrawFromClass(content, user)
         DELETE_ACCOUNT -> deleteAccount(content, user)
@@ -88,39 +82,6 @@ internal object UserPrefsPost {
         }
         userPrefsPage(content, user, Message("Default language updated to $it", false))
       }
-
-  private fun RoutingContext.updatePassword(
-    content: ReadingBatContent,
-    parameters: Parameters,
-    user: User,
-  ): String {
-    val currPassword = parameters.getPassword(CURR_PASSWORD_PARAM)
-    val newPassword = parameters.getPassword(NEW_PASSWORD_PARAM)
-    val confirmPassword = parameters.getPassword(CONFIRM_PASSWORD_PARAM)
-    val passwordError = checkPassword(newPassword, confirmPassword)
-    val msg =
-      if (passwordError.isNotBlank) {
-        passwordError
-      } else {
-        val salt = user.salt
-        val oldDigest = user.digest
-        if (salt.isNotEmpty() && oldDigest.isNotEmpty() && oldDigest == currPassword.sha256(salt)) {
-          val newDigest = newPassword.sha256(salt)
-          if (newDigest == oldDigest) {
-            Message("New password is the same as the current password", true)
-          } else {
-            transaction {
-              user.assignDigest(newDigest)
-            }
-            Message("Password changed")
-          }
-        } else {
-          Message("Incorrect current password", true)
-        }
-      }
-
-    return userPrefsPage(content, user, msg)
-  }
 
   private fun RoutingContext.enrollInClass(
     content: ReadingBatContent,

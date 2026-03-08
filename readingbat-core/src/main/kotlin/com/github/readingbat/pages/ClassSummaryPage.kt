@@ -28,11 +28,6 @@ import com.github.readingbat.common.Constants.LANG_TYPE_QP
 import com.github.readingbat.common.Constants.NO
 import com.github.readingbat.common.Constants.WRONG_COLOR
 import com.github.readingbat.common.Constants.YES
-import com.github.readingbat.common.CssNames.BTN
-import com.github.readingbat.common.CssNames.INDENT_2EM
-import com.github.readingbat.common.CssNames.INVOC_STAT
-import com.github.readingbat.common.CssNames.INVOC_TD
-import com.github.readingbat.common.CssNames.UNDERLINE
 import com.github.readingbat.common.Endpoints.CHALLENGE_ROOT
 import com.github.readingbat.common.Endpoints.CLASS_SUMMARY_ENDPOINT
 import com.github.readingbat.common.Endpoints.TEACHER_PREFS_ENDPOINT
@@ -47,6 +42,7 @@ import com.github.readingbat.common.FormFields.PREFS_ACTION_PARAM
 import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.Message
 import com.github.readingbat.common.Message.Companion.EMPTY_MESSAGE
+import com.github.readingbat.common.TwClasses
 import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.queryActiveTeachingClassCode
 import com.github.readingbat.common.isNotValidUser
@@ -60,7 +56,6 @@ import com.github.readingbat.pages.PageUtils.bodyTitle
 import com.github.readingbat.pages.PageUtils.displayMessage
 import com.github.readingbat.pages.PageUtils.encodeUriElems
 import com.github.readingbat.pages.PageUtils.headDefault
-import com.github.readingbat.pages.PageUtils.loadBootstrap
 import com.github.readingbat.pages.PageUtils.loadPingdomScript
 import com.github.readingbat.pages.PageUtils.rawHtml
 import com.github.readingbat.pages.StudentSummaryPage.removeFromClassButton
@@ -71,14 +66,11 @@ import com.github.readingbat.server.LanguageName.Companion.EMPTY_LANGUAGE
 import com.github.readingbat.server.ServerUtils.queryParam
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.server.routing.RoutingContext
-import kotlinx.html.A
 import kotlinx.html.BODY
 import kotlinx.html.FormMethod
-import kotlinx.html.LI
-import kotlinx.html.UL
 import kotlinx.html.a
 import kotlinx.html.body
-import kotlinx.html.classes
+import kotlinx.html.button
 import kotlinx.html.div
 import kotlinx.html.form
 import kotlinx.html.h2
@@ -88,9 +80,8 @@ import kotlinx.html.head
 import kotlinx.html.hiddenInput
 import kotlinx.html.html
 import kotlinx.html.id
-import kotlinx.html.li
+import kotlinx.html.onClick
 import kotlinx.html.p
-import kotlinx.html.role
 import kotlinx.html.script
 import kotlinx.html.span
 import kotlinx.html.stream.createHTML
@@ -100,8 +91,6 @@ import kotlinx.html.table
 import kotlinx.html.td
 import kotlinx.html.th
 import kotlinx.html.tr
-import kotlinx.html.ul
-import kotlin.collections.set
 
 internal object ClassSummaryPage {
   private val logger = KotlinLogging.logger {}
@@ -126,8 +115,14 @@ internal object ClassSummaryPage {
     msg: Message = EMPTY_MESSAGE,
   ): String {
     when {
-      classCode.isNotValid() -> throw InvalidRequestException("Invalid class code: $classCode")
-      user.isNotValidUser() -> throw InvalidRequestException("Invalid user")
+      classCode.isNotValid() -> {
+        throw InvalidRequestException("Invalid class code: $classCode")
+      }
+
+      user.isNotValidUser() -> {
+        throw InvalidRequestException("Invalid user")
+      }
+
       classCode.fetchClassTeacherId() != user.userId -> {
         val teacherId = classCode.fetchClassTeacherId()
         throw InvalidRequestException("User id ${user.userId} does not match class code's teacher id $teacherId")
@@ -145,7 +140,6 @@ internal object ClassSummaryPage {
         val enrollees = classCode.fetchEnrollees()
 
         head {
-          loadBootstrap()
           headDefault()
         }
 
@@ -192,15 +186,14 @@ internal object ClassSummaryPage {
     table {
       tr {
         td {
-          h3 {
-            style = "margin-left:15px; margin-bottom:15px; color:$HEADER_COLOR"
+          h3(classes = "ml-[15px] mb-[15px] text-rb-header") {
+            style = "margin-left:15px; margin-bottom:15px; color:$HEADER_COLOR; font-size:22px"
             +classCode.toDisplayString()
           }
         }
         if (classCode != activeClassCode) {
           td {
-            form {
-              style = "margin:0"
+            form(classes = "m-0") {
               action = CLASS_SUMMARY_ENDPOINT
               method = FormMethod.post
               hiddenInput {
@@ -211,10 +204,10 @@ internal object ClassSummaryPage {
                 name = CLASS_CODE_CHOICE_PARAM
                 value = classCode.classCode
               }
-              submitInput(classes = BTN) {
-                style =
-                  "padding:2px 5px; margin-top:9; margin-left:20; border-radius:5px; " +
-                    "cursor:pointer; border:1px solid black;"
+              val btnTwClasses =
+                "${TwClasses.BTN} px-1 py-0.5 mt-[9px] " +
+                  "ml-5 rounded cursor-pointer border border-black"
+              submitInput(classes = btnTwClasses) {
                 name = PREFS_ACTION_PARAM
                 value = MAKE_ACTIVE_CLASS
               }
@@ -226,45 +219,67 @@ internal object ClassSummaryPage {
   }
 
   private fun BODY.displayClassChoices(content: ReadingBatContent, classCode: ClassCode) {
-    table {
-      style = "border-collapse: separate; border-spacing: 15px 10px"
-      tr {
-        td {
-          style = "font-size:$BTN_SIZE"
-          +"Challenge Group: "
-        }
-        LanguageType.entries
-          .map { content.findLanguage(it) }
-          .forEach { langGroup ->
-            if (langGroup.challengeGroups.isNotEmpty()) {
-              td {
-                ul {
-                  style = "padding-left:0; margin-bottom:0; list-style-type:none"
-                  dropdown {
-                    val lang = langGroup.languageType.name
-                    dropdownToggle {
-                      classes = setOf(BTN)
-                      +"$lang "
-                    }
-                    dropdownMenu {
-                      dropdownHeader(lang)
-                      // divider()
-                      langGroup.challengeGroups
-                        .forEach {
-                          li {
-                            style = "font-size:110%"
-                            a(classSummaryEndpoint(classCode, langGroup.languageName, it.groupName)) {
-                              +it.groupName.toString()
-                            }
-                          }
-                        }
+    div {
+      style = "display:flex; align-items:center; gap:15px; padding:10px 0"
+      span {
+        style = "font-size:128%"
+        +"Challenge Group: "
+      }
+      LanguageType.entries
+        .map { content.findLanguage(it) }
+        .forEach { langGroup ->
+          if (langGroup.challengeGroups.isNotEmpty()) {
+            val lang = langGroup.languageType.name
+            div {
+              style = "position:relative; display:inline-block"
+              button {
+                style =
+                  "font-size:$BTN_SIZE; text-decoration:none; border-radius:5px; padding:0 7px; " +
+                    "cursor:pointer; color:black; border:1px solid black; background:white"
+                onClick = "toggleDropdown(this.parentNode); event.stopPropagation();"
+                +"$lang ▾"
+              }
+              div {
+                style =
+                  "display:none; position:absolute; top:100%; left:0; z-index:100; " +
+                    "background:white; border:1px solid #ccc; border-radius:4px; " +
+                    "box-shadow:0 4px 8px rgba(0,0,0,0.15); min-width:200px; padding:4px 0; margin-top:2px"
+                div {
+                  style = "font-size:120%; font-weight:bold; padding:4px 12px; color:#333"
+                  +lang
+                }
+                langGroup.challengeGroups
+                  .forEach {
+                    div {
+                      style = "font-size:110%; padding:2px 12px"
+                      a(classSummaryEndpoint(classCode, langGroup.languageName, it.groupName)) {
+                        +it.groupName.toString()
+                      }
                     }
                   }
-                }
               }
             }
           }
-      }
+        }
+    }
+    script {
+      rawHtml(
+        """
+          function toggleDropdown(container) {
+            var menu = container.querySelector('div[style*="position:absolute"]');
+            var isOpen = menu.style.display !== 'none';
+            document.querySelectorAll('div[style*="position:absolute"]').forEach(function(el) {
+              el.style.display = 'none';
+            });
+            if (!isOpen) menu.style.display = 'block';
+          }
+          document.addEventListener('click', function() {
+            document.querySelectorAll('div[style*="position:absolute"]').forEach(function(el) {
+              el.style.display = 'none';
+            });
+          });
+        """.trimIndent(),
+      )
     }
   }
 
@@ -274,14 +289,14 @@ internal object ClassSummaryPage {
     languageName: LanguageName,
     groupName: GroupName,
   ) {
-    h3 {
-      style = "margin-left: 15px; color: $HEADER_COLOR"
+    h3(classes = "ml-[15px] text-rb-header") {
+      style = "margin-left: 15px; color: $HEADER_COLOR; font-size:18px"
       +" "
 
       languageName.toLanguageType().toString()
         .also {
           if (classCode == activeClassCode)
-            a(classes = UNDERLINE) {
+            a(classes = TwClasses.UNDERLINE) {
               href = pathOf(CHALLENGE_ROOT, languageName)
               +it
             }
@@ -289,15 +304,14 @@ internal object ClassSummaryPage {
             +it
         }
 
-      span {
-        style = "padding-left:2px; padding-right:2px"
+      span(classes = "px-0.5") {
         rawHtml("&rarr;")
       }
 
       groupName.toString()
         .also {
           if (classCode == activeClassCode)
-            a(classes = UNDERLINE) {
+            a(classes = TwClasses.UNDERLINE) {
               href = pathOf(CHALLENGE_ROOT, languageName, groupName)
               +it
             }
@@ -316,12 +330,11 @@ internal object ClassSummaryPage {
     languageName: LanguageName,
     groupName: GroupName,
   ) =
-    div(classes = INDENT_2EM) {
+    div(classes = TwClasses.INDENT_2EM) {
       val showDetail = hasGroup && classCode == activeClassCode
 
       if (enrollees.isNotEmpty()) {
-        table {
-          style = "border-collapse: separate; border-spacing: 15px 5px"
+        table(classes = "border-separate border-spacing-x-[15px] border-spacing-y-[5px]") {
           tr {
             if (!showDetail)
               th { +"" }
@@ -334,7 +347,7 @@ internal object ClassSummaryPage {
                     challenge.challengeName.value
                       .also {
                         if (classCode == activeClassCode)
-                          a(classes = UNDERLINE) {
+                          a(classes = TwClasses.UNDERLINE) {
                             href = pathOf(CHALLENGE_ROOT, languageName, groupName, challenge.challengeName)
                             +it
                           }
@@ -358,13 +371,13 @@ internal object ClassSummaryPage {
                   "${studentSummaryEndpoint(classCode, languageName, student)}&$RETURN_PARAM=${returnUrl.encode()}"
                     .also {
                       td {
-                        a(classes = UNDERLINE) {
+                        a(classes = TwClasses.UNDERLINE) {
                           href = it
                           +studentName
                         }
                       }
                       td {
-                        a(classes = UNDERLINE) {
+                        a(classes = TwClasses.UNDERLINE) {
                           href = it
                           +studentEmail
                         }
@@ -381,20 +394,26 @@ internal object ClassSummaryPage {
                     .forEach { challenge ->
                       td {
                         table {
+                          style = "border-collapse:separate; border-spacing:1px"
                           val encodedName = challenge.challengeName.encode()
                           tr {
+                            style = "height:15px"
                             challenge.functionInfo().invocations
                               .forEachIndexed { i, _ ->
-                                td(classes = INVOC_TD) {
-                                  id = "${student.userId}-$encodedName-$i"
-                                  +""
+                                td {
+                                  style = "padding:0; border:none"
+                                  div {
+                                    style = "width:7px; height:15px; border:1px solid black; background-color:#F1F1F1"
+                                    id = "${student.userId}-$encodedName-$i"
+                                  }
                                 }
                               }
-                            td(classes = INVOC_STAT) {
+                            td(classes = TwClasses.INVOC_STAT) {
                               id = "${student.userId}-$encodedName$STATS"
                               +""
                             }
                             td {
+                              style = "position:relative; top:-2px"
                               id = "${student.userId}-$encodedName$LIKE_DISLIKE"
                               +""
                             }
@@ -407,8 +426,7 @@ internal object ClassSummaryPage {
             }
         }
       } else {
-        h4 {
-          style = "padding-left:15px; padding-top:15px"
+        h4(classes = "pl-[15px] pt-[15px]") {
           +"No students enrolled."
         }
       }
@@ -450,39 +468,4 @@ internal object ClassSummaryPage {
       )
     }
   }
-
-  // See: https://github.com/Kotlin/kotlinx.html/wiki/Micro-templating-and-DSL-customizing
-  private fun UL.dropdown(block: LI.() -> Unit) {
-    li("dropdown") { block() }
-  }
-
-  private fun LI.dropdownToggle(block: A.() -> Unit) {
-    a("#", null, classes = "dropdown-toggle") {
-      style =
-        "font-size:$BTN_SIZE; text-decoration:none; border-radius: 5px; padding: 0px 7px; " +
-          "cursor: pointer; color: black; border:1px solid black;"
-      attributes["data-toggle"] = "dropdown"
-      role = "button"
-      attributes["aria-expanded"] = "false"
-      block()
-
-      span { classes = setOf("caret") }
-    }
-  }
-
-  private fun LI.dropdownMenu(block: UL.() -> Unit): Unit =
-    ul("dropdown-menu") {
-      role = "menu"
-      block()
-    }
-
-  private fun UL.dropdownHeader(text: String) =
-    li {
-      style = "font-size:120%"
-      classes = setOf("dropdown-header")
-      +text
-    }
-
-  @Suppress("unused")
-  private fun UL.divider() = li { classes = setOf("divider") }
 }

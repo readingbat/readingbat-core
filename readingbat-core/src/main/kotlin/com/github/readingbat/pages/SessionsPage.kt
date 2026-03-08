@@ -19,14 +19,13 @@ package com.github.readingbat.pages
 
 import com.github.pambrose.common.time.format
 import com.github.pambrose.common.util.pluralize
-import com.github.readingbat.common.CssNames.INDENT_1EM
-import com.github.readingbat.common.CssNames.TD_PADDING
 import com.github.readingbat.common.Endpoints.ADMIN_PREFS_ENDPOINT
 import com.github.readingbat.common.FormFields.DAYS_DEFAULT
 import com.github.readingbat.common.FormFields.DAYS_PARAM
 import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.SessionActivites.activeSessions
 import com.github.readingbat.common.SessionActivites.querySessions
+import com.github.readingbat.common.TwClasses
 import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyTitle
 import com.github.readingbat.pages.PageUtils.headDefault
@@ -69,7 +68,7 @@ internal object SessionsPage {
           h2 { +"ReadingBat Sessions" }
 
           h3 { +"Active Users" }
-          div(classes = INDENT_1EM) {
+          div(classes = TwClasses.INDENT_1EM) {
             table {
               tr {
                 td { +"Active users in the last minute: " }
@@ -101,8 +100,8 @@ internal object SessionsPage {
 
           h3 { +"${rows.size} User $sessions in $dayCount $days" }
 
-          div(classes = TD_PADDING) {
-            div(classes = INDENT_1EM) {
+          div(classes = "tdPadding") {
+            div(classes = TwClasses.INDENT_1EM) {
               table {
                 tr {
                   th { +"Session Id" }

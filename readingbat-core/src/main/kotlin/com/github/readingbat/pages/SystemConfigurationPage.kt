@@ -20,14 +20,13 @@ package com.github.readingbat.pages
 import com.github.pambrose.common.time.format
 import com.github.pambrose.common.util.Version.Companion.versionDesc
 import com.github.readingbat.common.Constants.UNASSIGNED
-import com.github.readingbat.common.CssNames.INDENT_1EM
-import com.github.readingbat.common.CssNames.TD_PADDING
 import com.github.readingbat.common.Endpoints.ADMIN_PREFS_ENDPOINT
 import com.github.readingbat.common.EnvVar
 import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.KtorProperty
 import com.github.readingbat.common.Property
 import com.github.readingbat.common.SessionActivites.activeSessions
+import com.github.readingbat.common.TwClasses
 import com.github.readingbat.common.User.Companion.emailCache
 import com.github.readingbat.common.User.Companion.userIdCache
 import com.github.readingbat.dsl.LanguageType.Java
@@ -79,9 +78,9 @@ internal object SystemConfigurationPage {
 
           h2 { +"ReadingBat Configuration" }
 
-          div(classes = TD_PADDING) {
+          div(classes = "tdPadding") {
             h3 { +"Server Configuration" }
-            div(classes = INDENT_1EM) {
+            div(classes = TwClasses.INDENT_1EM) {
               table {
                 tr {
                   td { +"Core version:" }
@@ -159,7 +158,7 @@ internal object SystemConfigurationPage {
             }
 
             h3 { +"System Maps" }
-            div(classes = INDENT_1EM) {
+            div(classes = TwClasses.INDENT_1EM) {
               table {
                 listOf(
                   "Request timing map size" to requestTimingMap,
@@ -190,7 +189,7 @@ internal object SystemConfigurationPage {
             }
 
             h3 { +"Application Properties" }
-            div(classes = INDENT_1EM) {
+            div(classes = TwClasses.INDENT_1EM) {
               table {
                 KtorProperty.values()
                   .filter { it.isADefinedProperty() }
@@ -206,7 +205,7 @@ internal object SystemConfigurationPage {
             }
 
             h3 { +"System Properties" }
-            div(classes = INDENT_1EM) {
+            div(classes = TwClasses.INDENT_1EM) {
               table {
                 tr {
                   td { +"java.runtime.name" }
@@ -228,7 +227,7 @@ internal object SystemConfigurationPage {
             }
 
             h3 { +"Env Vars" }
-            div(classes = INDENT_1EM) {
+            div(classes = TwClasses.INDENT_1EM) {
               table {
                 EnvVar.entries
                   .sortedBy { it.name }
@@ -243,7 +242,7 @@ internal object SystemConfigurationPage {
 
             if (isAgentEnabled()) {
               h3 { +"Prometheus Agent" }
-              div(classes = INDENT_1EM) {
+              div(classes = TwClasses.INDENT_1EM) {
                 table {
                   tr {
                     td { +"Agent Id:" }
@@ -262,7 +261,7 @@ internal object SystemConfigurationPage {
             }
 
             h3 { +"Active Users" }
-            div(classes = INDENT_1EM) {
+            div(classes = TwClasses.INDENT_1EM) {
               table {
                 tr {
                   td { +"Active users in the last minute:" }
@@ -288,7 +287,7 @@ internal object SystemConfigurationPage {
             }
 
             h3 { +"Content Configuration" }
-            div(classes = INDENT_1EM) {
+            div(classes = TwClasses.INDENT_1EM) {
               table {
                 tr {
                   td { +"Content last read:" }
@@ -302,7 +301,7 @@ internal object SystemConfigurationPage {
             }
 
             h3 { +"Script Configuration" }
-            div(classes = INDENT_1EM) {
+            div(classes = TwClasses.INDENT_1EM) {
               table {
                 tr {
                   th { +"Language" }

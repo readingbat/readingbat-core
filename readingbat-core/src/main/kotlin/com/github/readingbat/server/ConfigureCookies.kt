@@ -19,6 +19,7 @@ package com.github.readingbat.server
 
 import com.github.readingbat.common.AuthName.AUTH_COOKIE
 import com.github.readingbat.common.BrowserSession
+import com.github.readingbat.common.OAuthReturnUrl
 import com.github.readingbat.common.UserPrincipal
 import io.ktor.server.sessions.SessionsConfig
 import io.ktor.server.sessions.cookie
@@ -53,6 +54,15 @@ internal object ConfigureCookies {
       // CSRF protection in modern browsers. Make sure your important side-effect-y operations, like ordering,
       // uploads, and changing settings, use "unsafe" HTTP verbs like POST and PUT, not GET or HEAD.
       // https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies#SameSite_cookies
+      cookie.extensions["SameSite"] = "lax"
+    }
+  }
+
+  fun SessionsConfig.configureOAuthReturnUrlCookie() {
+    cookie<OAuthReturnUrl>("readingbat_oauth_return") {
+      cookie.path = "/"
+      cookie.httpOnly = true
+      cookie.maxAgeInSeconds = 600 // 10 min — survives OAuth round-trip
       cookie.extensions["SameSite"] = "lax"
     }
   }

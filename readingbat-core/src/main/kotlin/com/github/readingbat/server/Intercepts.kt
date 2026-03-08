@@ -22,18 +22,33 @@ import com.github.pambrose.common.util.maxLength
 import com.github.readingbat.common.BrowserSession.Companion.findOrCreateSessionDbmsId
 import com.github.readingbat.common.Constants.STATIC
 import com.github.readingbat.common.Constants.UNKNOWN_USER_ID
+import com.github.readingbat.common.Endpoints.ABOUT_ENDPOINT
+import com.github.readingbat.common.Endpoints.CHALLENGE_ROOT
+import com.github.readingbat.common.Endpoints.HELP_ENDPOINT
+import com.github.readingbat.common.Endpoints.OAUTH_CALLBACK_GITHUB_ENDPOINT
+import com.github.readingbat.common.Endpoints.OAUTH_CALLBACK_GOOGLE_ENDPOINT
+import com.github.readingbat.common.Endpoints.OAUTH_LOGIN_GITHUB_ENDPOINT
+import com.github.readingbat.common.Endpoints.OAUTH_LOGIN_GOOGLE_ENDPOINT
 import com.github.readingbat.common.Endpoints.PING_ENDPOINT
+import com.github.readingbat.common.Endpoints.PRIVACY_ENDPOINT
+import com.github.readingbat.common.Endpoints.ROOT
+import com.github.readingbat.common.OAuthReturnUrl
 import com.github.readingbat.common.User.Companion.fetchUserDbmsIdFromCache
 import com.github.readingbat.common.browserSession
+import com.github.readingbat.common.userPrincipal
+import com.github.readingbat.dsl.isDbmsEnabled
 import com.github.readingbat.dsl.isSaveRequestsEnabled
 import com.github.readingbat.server.GeoInfo.Companion.lookupGeoInfo
 import com.github.readingbat.server.GeoInfo.Companion.queryGeoInfo
 import com.github.readingbat.server.Intercepts.clock
 import com.github.readingbat.server.Intercepts.logger
+import com.github.readingbat.server.Intercepts.publicPaths
+import com.github.readingbat.server.Intercepts.publicPrefixes
 import com.github.readingbat.server.Intercepts.requestTimingMap
 import com.github.readingbat.server.ServerUtils.fetchUserDbmsIdFromCache
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.http.HttpHeaders.UserAgent
+import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationCallPipeline
 import io.ktor.server.application.ApplicationCallPipeline.ApplicationPhase.Plugins
@@ -49,16 +64,17 @@ import io.ktor.server.plugins.origin
 import io.ktor.server.request.httpMethod
 import io.ktor.server.request.path
 import io.ktor.server.request.queryString
+import io.ktor.server.response.respondRedirect
 import io.ktor.server.routing.RoutingRoot.Plugin.RoutingCallFinished
 import io.ktor.server.routing.RoutingRoot.Plugin.RoutingCallStarted
+import io.ktor.server.sessions.sessions
+import io.ktor.server.sessions.set
 import io.ktor.util.pipeline.PipelineContext
-import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.transactions.transaction
-import org.jetbrains.exposed.sql.update
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.jdbc.insert
+import org.jetbrains.exposed.v1.jdbc.transactions.transaction
+import org.jetbrains.exposed.v1.jdbc.update
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.collections.component1
-import kotlin.collections.component2
-import kotlin.collections.set
 import kotlin.concurrent.timer
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
@@ -69,6 +85,30 @@ internal object Intercepts {
   internal val logger = KotlinLogging.logger {}
   val clock = TimeSource.Monotonic
   val requestTimingMap = ConcurrentHashMap<String, TimeMark>()
+
+  val publicPaths =
+    setOf(
+    ROOT,
+    OAUTH_LOGIN_GITHUB_ENDPOINT,
+    OAUTH_LOGIN_GOOGLE_ENDPOINT,
+    OAUTH_CALLBACK_GITHUB_ENDPOINT,
+    OAUTH_CALLBACK_GOOGLE_ENDPOINT,
+    HELP_ENDPOINT,
+    ABOUT_ENDPOINT,
+    PRIVACY_ENDPOINT,
+    PING_ENDPOINT,
+    "/favicon.ico",
+    "/robots.txt",
+    "/css.css",
+    "/ktor/application/shutdown",
+  )
+
+  val publicPrefixes =
+    listOf(
+    "/oauth/",
+    "/$STATIC/",
+    "/static/",
+  )
 
   @Suppress("unused")
   val timer =
@@ -86,6 +126,13 @@ internal object Intercepts {
     }
 }
 
+private fun isBrowsableContentPath(path: String): Boolean {
+  if (!path.startsWith("$CHALLENGE_ROOT/") && path != CHALLENGE_ROOT) return false
+  val suffix = path.removePrefix(CHALLENGE_ROOT).trimStart('/')
+  if (suffix.isEmpty()) return true
+  return suffix.split('/').size <= 2 // /content/java (1) or /content/java/Warmup-1 (2)
+}
+
 internal fun Application.intercepts() {
   intercept(ApplicationCallPipeline.Setup) {
     // Phase for preparing call and it's attributes for processing
@@ -95,8 +142,31 @@ internal fun Application.intercepts() {
     // Phase for tracing calls, useful for logging, metrics, error handling and so on
   }
 
+  // Mandatory auth: redirect unauthenticated users to homepage
+  // Language pages (/content/java) and group pages (/content/java/Warmup-1) are browsable without auth;
+  // only individual challenges require authentication.
+  if (isDbmsEnabled()) {
+    intercept(Plugins) {
+      val path = call.request.path()
+      val isPublic = path in publicPaths || publicPrefixes.any { path.startsWith(it) } || isBrowsableContentPath(path)
+      if (!isPublic && call.userPrincipal == null) {
+        val returnUrl = path + call.request.queryString().let { if (it.isNotEmpty()) "?$it" else "" }
+        call.sessions.set(OAuthReturnUrl(returnUrl))
+        call.respondRedirect("$ROOT?login=required")
+        finish()
+      }
+
+      // Capture return URL from OAuth login links (e.g., /oauth/login/github?return=/content/java/Warmup-1/hello)
+      if (path == OAUTH_LOGIN_GITHUB_ENDPOINT || path == OAUTH_LOGIN_GOOGLE_ENDPOINT) {
+        call.request.queryParameters["return"]
+          ?.takeIf { it.startsWith("/") }
+          ?.let { call.sessions.set(OAuthReturnUrl(it)) }
+      }
+    }
+  }
+
+  // Phase for features. Most features should intercept this phase
   intercept(Plugins) {
-    // Phase for features. Most features should intercept this phase
     if (!isStaticCall())
       runCatching {
         val browserSession = call.browserSession

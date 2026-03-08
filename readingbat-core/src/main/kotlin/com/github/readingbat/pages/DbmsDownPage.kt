@@ -19,8 +19,8 @@ package com.github.readingbat.pages
 
 import com.github.pambrose.common.util.pathOf
 import com.github.readingbat.common.Constants.DBMS_DOWN
-import com.github.readingbat.common.CssNames.CENTER
 import com.github.readingbat.common.Endpoints.STATIC_ROOT
+import com.github.readingbat.common.TwClasses
 import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyTitle
 import com.github.readingbat.pages.PageUtils.headDefault
@@ -40,7 +40,7 @@ internal object DbmsDownPage {
         head { headDefault() }
         body {
           bodyTitle()
-          p { img(classes = CENTER) { src = pathOf(STATIC_ROOT, "dbmsdown.jpg") } }
+          p { img(classes = TwClasses.CENTER) { src = pathOf(STATIC_ROOT, "dbmsdown.jpg") } }
           h2 { +DBMS_DOWN.toString() }
           p { +"We seem to be having problems with our database. Please check back later." }
           backLink("/")

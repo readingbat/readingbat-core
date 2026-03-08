@@ -27,11 +27,6 @@ import com.github.readingbat.common.Constants.NO
 import com.github.readingbat.common.Constants.USER_ID_QP
 import com.github.readingbat.common.Constants.WRONG_COLOR
 import com.github.readingbat.common.Constants.YES
-import com.github.readingbat.common.CssNames.INDENT_2EM
-import com.github.readingbat.common.CssNames.INVOC_STAT
-import com.github.readingbat.common.CssNames.INVOC_TABLE
-import com.github.readingbat.common.CssNames.INVOC_TD
-import com.github.readingbat.common.CssNames.UNDERLINE
 import com.github.readingbat.common.Endpoints.CHALLENGE_ROOT
 import com.github.readingbat.common.Endpoints.STUDENT_SUMMARY_ENDPOINT
 import com.github.readingbat.common.Endpoints.TEACHER_PREFS_ENDPOINT
@@ -41,6 +36,7 @@ import com.github.readingbat.common.FormFields.PREFS_ACTION_PARAM
 import com.github.readingbat.common.FormFields.REMOVE_FROM_CLASS
 import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.FormFields.USER_ID_PARAM
+import com.github.readingbat.common.TwClasses
 import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.queryActiveTeachingClassCode
 import com.github.readingbat.common.User.Companion.toUser
@@ -94,8 +90,14 @@ internal object StudentSummaryPage {
     val activeTeachingClassCode = queryActiveTeachingClassCode(user)
 
     when {
-      classCode.isNotValid() -> throw InvalidRequestException("Invalid class code: $classCode")
-      user.isNotValidUser() -> throw InvalidRequestException("Invalid user")
+      classCode.isNotValid() -> {
+        throw InvalidRequestException("Invalid class code: $classCode")
+      }
+
+      user.isNotValidUser() -> {
+        throw InvalidRequestException("Invalid user")
+      }
+
       // classCode != activeClassCode -> throw InvalidRequestException("Class code mismatch")
       classCode.fetchClassTeacherId() != user.userId -> {
         val teacherId = classCode.fetchClassTeacherId()
@@ -121,29 +123,28 @@ internal object StudentSummaryPage {
 
           h2 { +"Student Summary" }
 
-          h3 {
+          h3(classes = "ml-[15px] text-rb-header") {
             style = "margin-left:15px; color: $HEADER_COLOR"
-            a(classes = UNDERLINE) {
+            a(classes = TwClasses.UNDERLINE) {
               href = pathOf(CHALLENGE_ROOT, languageName)
               +languageName.toLanguageType().toString()
             }
           }
 
-          h3 {
+          h3(classes = "ml-[15px] text-rb-header") {
             style = "margin-left:15px; color: $HEADER_COLOR"
-            a(classes = UNDERLINE) {
+            a(classes = TwClasses.UNDERLINE) {
               href = classSummaryEndpoint(classCode)
               +classCode.toDisplayString()
             }
           }
 
-          h3 {
+          h3(classes = "ml-[15px] text-rb-header") {
             style = "margin-left:15px; color: $HEADER_COLOR"
             +"Student: $studentName ${student.email} "
           }
 
-          div {
-            style = "margin-left:15px; margin-bottom:10px"
+          div(classes = "ml-[15px] mb-2.5") {
             this@body.removeFromClassButton(student, studentName)
           }
 
@@ -156,8 +157,7 @@ internal object StudentSummaryPage {
   }
 
   internal fun BODY.removeFromClassButton(student: User, studentName: String) {
-    form {
-      style = "margin:0"
+    form(classes = "m-0") {
       action = TEACHER_PREFS_ENDPOINT
       method = post
       onSubmit = "return confirm('Are you sure you want to remove $studentName from the class?')"
@@ -165,8 +165,7 @@ internal object StudentSummaryPage {
         name = USER_ID_PARAM
         value = student.userId
       }
-      submitInput {
-        style = "vertical-align:middle; margin-top:1; margin-bottom:0; border-radius: 8px; font-size:12px"
+      submitInput(classes = "align-middle mt-px mb-0 rounded-lg text-xs") {
         name = PREFS_ACTION_PARAM
         value = REMOVE_FROM_CLASS
       }
@@ -178,26 +177,26 @@ internal object StudentSummaryPage {
     @Suppress("UNUSED_PARAMETER") classCode: ClassCode,
     languageName: LanguageName,
   ) =
-    div(classes = INDENT_2EM) {
-      table(classes = INVOC_TABLE) {
+    div(classes = TwClasses.INDENT_2EM) {
+      table(classes = TwClasses.INVOC_TABLE) {
         content.findLanguage(languageName).challengeGroups
           .forEach { group ->
             tr {
               td {
-                a(classes = UNDERLINE) {
+                a(classes = TwClasses.UNDERLINE) {
                   href = pathOf(CHALLENGE_ROOT, languageName, group.groupName)
                   +group.groupName.toString()
                 }
               }
 
               td {
-                table(classes = INVOC_TABLE) {
+                table(classes = TwClasses.INVOC_TABLE) {
                   tr {
                     // th { }
                     group.challenges
                       .forEach { challenge ->
                         th {
-                          a(classes = UNDERLINE) {
+                          a(classes = TwClasses.UNDERLINE) {
                             href = pathOf(CHALLENGE_ROOT, languageName, group.groupName, challenge.challengeName)
                             +challenge.challengeName.toString()
                           }
@@ -215,12 +214,12 @@ internal object StudentSummaryPage {
                             tr {
                               challenge.functionInfo().invocations
                                 .forEachIndexed { i, _ ->
-                                  td(classes = INVOC_TD) {
+                                  td(classes = TwClasses.INVOC_TD) {
                                     id = "$encodedGroup-$encodedName-$i"
                                     +""
                                   }
                                 }
-                              td(classes = INVOC_STAT) {
+                              td(classes = TwClasses.INVOC_STAT) {
                                 id = "$encodedGroup-$encodedName$STATS"
                                 +""
                               }

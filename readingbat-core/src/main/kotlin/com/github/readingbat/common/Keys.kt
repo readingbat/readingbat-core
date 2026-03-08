@@ -35,37 +35,28 @@ internal object KeyConstants {
   fun keyOf(vararg keys: Any) = keys.joinToString(KEY_SEP) { it.toString() }
 }
 
-internal fun correctAnswersKey(user: User?, browserSession: BrowserSession?, challenge: Challenge) =
-  user?.correctAnswersKey(challenge.languageName, challenge.groupName, challenge.challengeName)
-    ?: browserSession?.correctAnswersKey(challenge.languageName, challenge.groupName, challenge.challengeName)
-    ?: ""
+internal fun correctAnswersKey(user: User?, challenge: Challenge) =
+  user?.correctAnswersKey(challenge.languageName, challenge.groupName, challenge.challengeName) ?: ""
 
 internal fun correctAnswersKey(
   user: User?,
-  browserSession: BrowserSession?,
   languageName: LanguageName,
   groupName: GroupName,
   challengeName: ChallengeName,
 ) =
-  user?.correctAnswersKey(languageName, groupName, challengeName)
-    ?: browserSession?.correctAnswersKey(languageName, groupName, challengeName)
-    ?: ""
+  user?.correctAnswersKey(languageName, groupName, challengeName) ?: ""
 
 internal fun challengeAnswersKey(
   user: User?,
-  browserSession: BrowserSession?,
   languageName: LanguageName,
   groupName: GroupName,
   challengeName: ChallengeName,
 ) =
-  user?.challengeAnswersKey(languageName, groupName, challengeName)
-    ?: browserSession?.challengeAnswerKey(languageName, groupName, challengeName)
-    ?: ""
+  user?.challengeAnswersKey(languageName, groupName, challengeName) ?: ""
 
-internal fun challengeAnswersKey(user: User?, browserSession: BrowserSession?, challenge: Challenge) =
+internal fun challengeAnswersKey(user: User?, challenge: Challenge) =
   challengeAnswersKey(
     user,
-    browserSession,
     challenge.languageType.languageName,
     challenge.groupName,
     challenge.challengeName,

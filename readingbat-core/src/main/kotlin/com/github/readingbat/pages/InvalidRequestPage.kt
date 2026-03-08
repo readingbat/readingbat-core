@@ -18,9 +18,8 @@
 package com.github.readingbat.pages
 
 import com.github.pambrose.common.util.pathOf
-import com.github.readingbat.common.CssNames.CENTER
-import com.github.readingbat.common.CssNames.INDENT_1EM
 import com.github.readingbat.common.Endpoints.STATIC_ROOT
+import com.github.readingbat.common.TwClasses
 import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyTitle
 import com.github.readingbat.pages.PageUtils.headDefault
@@ -46,11 +45,11 @@ internal object InvalidRequestPage {
         body {
           bodyTitle()
 
-          p { img(classes = CENTER) { src = pathOf(STATIC_ROOT, "panic.png") } }
+          p { img(classes = TwClasses.CENTER) { src = pathOf(STATIC_ROOT, "panic.png") } }
 
           h2 { +"There seems to be a misunderstanding" }
 
-          div(classes = INDENT_1EM) {
+          div(classes = TwClasses.INDENT_1EM) {
             p {
               +"The request "
               i { +uri }

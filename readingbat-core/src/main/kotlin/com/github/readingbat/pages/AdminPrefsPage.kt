@@ -17,7 +17,6 @@
 
 package com.github.readingbat.pages
 
-import com.github.readingbat.common.CssNames.INDENT_1EM
 import com.github.readingbat.common.Endpoints.CONFIG_ENDPOINT
 import com.github.readingbat.common.Endpoints.SESSIONS_ENDPOINT
 import com.github.readingbat.common.Endpoints.SYSTEM_ADMIN_ENDPOINT
@@ -25,6 +24,7 @@ import com.github.readingbat.common.FormFields.DAYS_DEFAULT
 import com.github.readingbat.common.FormFields.DAYS_PARAM
 import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.Property
+import com.github.readingbat.common.TwClasses
 import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.queryActiveTeachingClassCode
 import com.github.readingbat.common.isAdminUser
@@ -45,6 +45,7 @@ import kotlinx.html.html
 import kotlinx.html.img
 import kotlinx.html.p
 import kotlinx.html.stream.createHTML
+import kotlinx.html.style
 import kotlinx.html.title
 
 internal object AdminPrefsPage {
@@ -65,21 +66,21 @@ internal object AdminPrefsPage {
           h2 { +"Admin Preferences" }
 
           if (!isProduction() || user.isAdminUser()) {
-            p(classes = INDENT_1EM) {
+            p(classes = TwClasses.INDENT_1EM) {
               a {
                 href = "$CONFIG_ENDPOINT?$RETURN_PARAM=$returnPath"
                 +"System Configuration"
               }
             }
 
-            p(classes = INDENT_1EM) {
+            p(classes = TwClasses.INDENT_1EM) {
               a {
                 href = "$SESSIONS_ENDPOINT?$RETURN_PARAM=$returnPath&$DAYS_PARAM=$DAYS_DEFAULT"
                 +"Current Sessions"
               }
             }
 
-            p(classes = INDENT_1EM) {
+            p(classes = TwClasses.INDENT_1EM) {
               a {
                 href = "$SYSTEM_ADMIN_ENDPOINT?$RETURN_PARAM=$returnPath"
                 +"System Admin"
@@ -88,15 +89,14 @@ internal object AdminPrefsPage {
 
             Property.PINGDOM_BANNER_ID.getPropertyOrNull()
               ?.also {
-                p(classes = INDENT_1EM) {
+                p(classes = TwClasses.INDENT_1EM) {
                   a {
                     href = "https://share.pingdom.com/banners/$it"
                     img {
+                      style = "width:300px; height:165px"
                       src = "https://share.pingdom.com/banners/$it"
                       alt = "Uptime Report for ReadingBat.com: Last 30 days"
                       title = "Uptime Report for ReadingBat.com: Last 30 days"
-                      width = "300"
-                      height = "165"
                     }
                   }
                 }

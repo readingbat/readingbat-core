@@ -17,8 +17,8 @@
 
 package com.github.readingbat.pages
 
-import com.github.readingbat.common.CssNames.INDENT_1EM
 import com.github.readingbat.common.FormFields.RETURN_PARAM
+import com.github.readingbat.common.TwClasses
 import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyTitle
 import com.github.readingbat.pages.PageUtils.headDefault
@@ -45,7 +45,7 @@ internal object PrivacyPage {
 
           h2 { +"ReadingBat Privacy" }
 
-          div(classes = INDENT_1EM) {
+          div(classes = TwClasses.INDENT_1EM) {
             p {
               +"""
             ReadingBat.com is free -- anyone can access the site to learn and practice reading code. We will not send

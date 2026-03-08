@@ -27,7 +27,6 @@ import com.github.pambrose.common.util.pathOf
 import com.github.pambrose.common.util.toDoubleQuoted
 import com.github.pambrose.common.util.toSingleQuoted
 import com.github.pambrose.common.util.withLineNumbers
-import com.github.readingbat.common.BrowserSession
 import com.github.readingbat.common.FunctionInfo
 import com.github.readingbat.common.KeyConstants.SOURCE_CODE_KEY
 import com.github.readingbat.common.KeyConstants.keyOf
@@ -58,15 +57,15 @@ import com.github.readingbat.dsl.parse.PythonParse.extractPythonInvocations
 import com.github.readingbat.server.ChallengeName
 import com.github.readingbat.server.Invocation
 import com.github.readingbat.server.ScriptPools
-import com.github.readingbat.server.SessionChallengeInfoTable
 import com.github.readingbat.server.UserChallengeInfoTable
 import com.github.readingbat.utils.StringUtils.toCapitalized
 import com.pambrose.common.exposed.get
 import com.pambrose.common.exposed.readonlyTx
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.exposed.sql.and
-import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.v1.core.and
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.jdbc.select
 import java.net.URL
 import java.nio.file.Paths
 import kotlin.concurrent.atomics.AtomicInt
@@ -189,11 +188,14 @@ sealed class Challenge(
         .also { logger.debug { """Assigning $challengeName description = "$it"""" } }
     }
 
-  internal fun isCorrect(user: User?, browserSession: BrowserSession?): Boolean {
+  internal fun isCorrect(user: User?): Boolean {
     val challengeMd5 = md5()
     return when {
-      !isDbmsEnabled() -> false
-      user.isNotNull() ->
+      !isDbmsEnabled() || user == null -> {
+        false
+      }
+
+      else -> {
         readonlyTx {
           with(UserChallengeInfoTable) {
             select(allCorrect)
@@ -202,18 +204,7 @@ sealed class Challenge(
               .firstOrNull() ?: false
           }
         }
-
-      browserSession.isNotNull() ->
-        transaction {
-          with(SessionChallengeInfoTable) {
-            select(allCorrect)
-              .where { (sessionRef eq browserSession.queryOrCreateSessionDbmsId()) and (md5 eq challengeMd5) }
-              .map { it[0] as Boolean }
-              .firstOrNull() ?: false
-          }
-        }
-
-      else -> false
+      }
     }
   }
 

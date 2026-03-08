@@ -17,42 +17,34 @@
 
 package com.github.readingbat.common
 
-import com.github.readingbat.server.Email
-import com.sendgrid.Method
-import com.sendgrid.Request
-import com.sendgrid.SendGrid
-import com.sendgrid.helpers.mail.Mail
-import com.sendgrid.helpers.mail.objects.Content
-import io.github.oshai.kotlinlogging.KotlinLogging
-
 internal object Emailer {
-  private val logger = KotlinLogging.logger {}
+//  private val logger = KotlinLogging.logger {}
 
-  fun sendEmail(to: Email, from: Email, subject: String, msg: Message) {
-    val content = Content("text/plain", msg.value)
-    val mail =
-      Mail(
-        com.sendgrid.helpers.mail.objects.Email(from.value),
-        subject,
-        com.sendgrid.helpers.mail.objects.Email(to.value),
-        content,
-      )
-    val sendGrid = SendGrid(EnvVar.SENDGRID_API_KEY.getRequiredEnv())
-
-    val request =
-      Request()
-        .apply {
-          method = Method.POST
-          endpoint = "mail/send"
-          body = mail.build()
-        }
-
-    sendGrid.api(request)
-      .apply {
-        logger.info { "SendGrid response status code: $statusCode to: $to from: $from" }
-        if (body.isNotBlank())
-          logger.info { "Response body: $body" }
-        logger.info { "Response headers: $headers" }
-      }
-  }
+//  fun sendEmail(to: Email, from: Email, subject: String, msg: Message) {
+//    val content = Content("text/plain", msg.value)
+//    val mail =
+//      Mail(
+//        com.sendgrid.helpers.mail.objects.Email(from.value),
+//        subject,
+//        com.sendgrid.helpers.mail.objects.Email(to.value),
+//        content,
+//      )
+//    val sendGrid = SendGrid(EnvVar.SENDGRID_API_KEY.getRequiredEnv())
+//
+//    val request =
+//      Request()
+//        .apply {
+//          method = Method.POST
+//          endpoint = "mail/send"
+//          body = mail.build()
+//        }
+//
+//    sendGrid.api(request)
+//      .apply {
+//        logger.info { "SendGrid response status code: $statusCode to: $to from: $from" }
+//        if (body.isNotBlank())
+//          logger.info { "Response body: $body" }
+//        logger.info { "Response headers: $headers" }
+//      }
+//  }
 }

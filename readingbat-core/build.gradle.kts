@@ -3,79 +3,43 @@ import java.time.format.DateTimeFormatter
 
 description = "readingbat-core"
 
-// These are for the uber target
-val mainName = "TestMain"
-val appName = "server"
-
-// This is for ./gradlew run
-application {
-  mainClass.set(mainName)
-}
-
 dependencies {
   implementation(libs.serialization)
 
-  api(libs.core.utils)
+  api(platform(libs.common.bom))
+  api(libs.bundles.common.utils)
 
-  implementation(libs.ktor.server.utils)
-  implementation(libs.ktor.client.utils)
+  implementation(platform(libs.ktor.bom))
+  implementation(libs.bundles.ktor.client)
+  implementation(libs.bundles.ktor.server)
 
-  implementation(libs.script.utils.common)
-  implementation(libs.script.utils.python)
-  implementation(libs.script.utils.java)
-  implementation(libs.script.utils.kotlin)
-
-  implementation(libs.service.utils)
-  implementation(libs.prometheus.utils)
-  implementation(libs.exposed.utils)
+  implementation(libs.bundles.exposed)
 
   implementation(libs.prometheus.proxy)
 
   implementation(libs.simple.client)
 
-  implementation(libs.script.engine)
-
-  implementation(libs.css)
-
-  implementation(libs.ktor.server.core)
-  implementation(libs.ktor.server.cio)
-  implementation(libs.ktor.server.auth)
-  implementation(libs.ktor.client.core)
-  implementation(libs.ktor.client.cio)
-
-  implementation(libs.ktor.sessions)
-  implementation(libs.ktor.rate.limit)
-  implementation(libs.ktor.html)
-  implementation(libs.ktor.metrics)
-  implementation(libs.ktor.websockets)
-  implementation(libs.ktor.compression)
-  implementation(libs.ktor.calllogging)
-  implementation(libs.ktor.resources)
+  runtimeOnly(libs.kotlin.scripting.jsr223)
+  runtimeOnly(libs.python.scripting)
+  runtimeOnly(libs.kotlin.scripting)
+  implementation(libs.java.scripting)
 
   implementation(libs.hikari)
 
-  implementation(libs.exposed.core)
-  implementation(libs.exposed.jdbc)
-  implementation(libs.exposed.jodatime)
-
+  runtimeOnly(libs.postgres)
   implementation(libs.pgjdbc)
   implementation(libs.socket)
 
   implementation(libs.gson)
 
-  implementation(libs.sendgrid)
+  implementation(libs.resend)
 
   implementation(libs.commons)
   implementation(libs.flexmark)
 
   implementation(libs.github)
 
-  runtimeOnly(libs.kotlin.scripting.jsr223)
-  runtimeOnly(libs.postgres)
-
-//  testImplementation(libs.kotlin.test)
   testImplementation(libs.ktor.server.test.host)
-
   testImplementation(libs.kotest.runner.junit5)
   testImplementation(libs.kotest.assertions.core)
   testImplementation(libs.kotest.assertions.ktor)
@@ -92,6 +56,35 @@ buildConfig {
   buildConfigField("String", "CORE_VERSION", "\"${project.version}\"")
   buildConfigField("String", "CORE_RELEASE_DATE", "\"${LocalDate.now().format(formatter)}\"")
   buildConfigField("long", "BUILD_TIME", "${System.currentTimeMillis()}L")
+}
+
+// Tailwind CSS v4 build via standalone CLI
+// Usage: ./gradlew :readingbat-core:tailwindBuild
+tasks.register<Exec>("tailwindBuild") {
+  group = "frontend"
+  description = "Build Tailwind CSS output from Kotlin source files"
+  workingDir = rootProject.projectDir
+  commandLine(
+    "./bin/tailwindcss-v4",
+    "-i", "readingbat-core/src/main/resources/css/tailwind-input.css",
+    "-o", "readingbat-core/src/main/resources/static/tailwind.css",
+    "--minify",
+  )
+}
+
+tasks.register<Exec>("tailwindBuildFull") {
+  group = "frontend"
+  description = "Build Tailwind CSS output from Kotlin source files (unminified)"
+  workingDir = rootProject.projectDir
+  commandLine(
+    "./bin/tailwindcss-v4",
+    "-i", "readingbat-core/src/main/resources/css/tailwind-input.css",
+    "-o", "readingbat-core/src/main/resources/static/tailwind.css",
+  )
+}
+
+tasks.named("processResources") {
+  dependsOn("tailwindBuild")
 }
 
 // Include build uberjars in heroku deploy

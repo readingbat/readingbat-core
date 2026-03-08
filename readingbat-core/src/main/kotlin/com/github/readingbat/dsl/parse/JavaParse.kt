@@ -113,7 +113,9 @@ internal object JavaParse {
             appendLine(line)
           }
 
-          else -> appendLine(line)
+          else -> {
+            appendLine(line)
+          }
         }
       }
       appendLine("")
