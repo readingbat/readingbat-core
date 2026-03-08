@@ -45,6 +45,7 @@ import com.github.readingbat.common.Endpoints.SESSIONS_ENDPOINT
 import com.github.readingbat.common.Endpoints.STATIC_ROOT
 import com.github.readingbat.common.Endpoints.STUDENT_SUMMARY_ENDPOINT
 import com.github.readingbat.common.Endpoints.SYSTEM_ADMIN_ENDPOINT
+import com.github.readingbat.common.Endpoints.TAILWIND_CSS_ENDPOINT
 import com.github.readingbat.common.Endpoints.TEACHER_PREFS_ENDPOINT
 import com.github.readingbat.common.Endpoints.USER_INFO_ENDPOINT
 import com.github.readingbat.common.Endpoints.USER_PREFS_ENDPOINT
@@ -248,6 +249,10 @@ fun Routing.userRoutes(metrics: Metrics, contentSrc: () -> ReadingBatContent) {
 
   get(CSS_ENDPOINT) {
     respondWith(CSS) { cssContent }
+  }
+
+  get(TAILWIND_CSS_ENDPOINT) {
+    respondWith(CSS) { getResourceAsText("/static/tailwind.css") }
   }
 
   get(FAV_ICON_ENDPOINT) {

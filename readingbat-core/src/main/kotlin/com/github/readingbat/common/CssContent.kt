@@ -25,7 +25,7 @@ import com.github.readingbat.common.CssNames.CENTER
 import com.github.readingbat.common.CssNames.CHALLENGE_DESC
 import com.github.readingbat.common.CssNames.CHECK_ANSWERS
 import com.github.readingbat.common.CssNames.CODE_BLOCK
-import com.github.readingbat.common.CssNames.CODINGBAT
+import com.github.readingbat.common.CssNames.CODING_BAT
 import com.github.readingbat.common.CssNames.DASHBOARD
 import com.github.readingbat.common.CssNames.EXPERIMENT
 import com.github.readingbat.common.CssNames.FEEDBACK
@@ -120,7 +120,7 @@ internal object CssNames {
   const val FUNC_COL = "funcCol"
   const val ARROW = "arrow"
   const val EXPERIMENT = "experiment"
-  const val CODINGBAT = "codingbat"
+  const val CODING_BAT = "codingbat"
   const val CODE_BLOCK = "codeBlock"
   const val KOTLIN_CODE = "kotlin-code"
   const val USER_RESP = "userResponse"
@@ -150,7 +150,6 @@ internal val cssContent by lazy {
 
   CssBuilder()
     .apply {
-
       rule("html, body") {
         fontSize = 16.px
         fontFamily = "verdana, arial, helvetica, sans-serif"
@@ -365,7 +364,7 @@ internal val cssContent by lazy {
         marginTop = 1.em
         fontSize = textFs
       }
-      rule(".$CODINGBAT") {
+      rule(".$CODING_BAT") {
         marginTop = 2.em
         fontSize = textFs
       }

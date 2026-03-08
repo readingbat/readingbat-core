@@ -60,6 +60,32 @@ buildConfig {
   buildConfigField("long", "BUILD_TIME", "${System.currentTimeMillis()}L")
 }
 
+// Tailwind CSS build via standalone CLI (requires `tailwindcss` binary on PATH)
+// Install: https://tailwindcss.com/blog/standalone-cli
+// Usage: ./gradlew :readingbat-core:tailwindBuild
+tasks.register<Exec>("tailwindBuild") {
+  group = "frontend"
+  description = "Build Tailwind CSS output from Kotlin source files"
+  commandLine(
+    "../bin/tailwindcss",
+    "-c", "${rootProject.projectDir}/tailwind.config.js",
+    "-i", "src/main/resources/css/tailwind-input.css",
+    "-o", "src/main/resources/static/tailwind.css",
+    "--minify",
+  )
+}
+
+tasks.register<Exec>("tailwindBuildFull") {
+  group = "frontend"
+  description = "Build Tailwind CSS output from Kotlin source files"
+  commandLine(
+    "../bin/tailwindcss",
+    "-c", "${rootProject.projectDir}/tailwind.config.js",
+    "-i", "src/main/resources/css/tailwind-input.css",
+    "-o", "src/main/resources/static/tailwind.css",
+  )
+}
+
 // Include build uberjars in heroku deploy
 tasks.register("stage") {
   dependsOn("uberjar", "build", "clean")

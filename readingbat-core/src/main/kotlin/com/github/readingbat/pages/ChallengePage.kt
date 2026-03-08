@@ -18,7 +18,6 @@
 package com.github.readingbat.pages
 
 import com.github.pambrose.common.util.decode
-import com.github.pambrose.common.util.isNotNull
 import com.github.pambrose.common.util.isNull
 import com.github.pambrose.common.util.pathOf
 import com.github.pambrose.common.util.random
@@ -38,7 +37,7 @@ import com.github.readingbat.common.CssNames.ARROW
 import com.github.readingbat.common.CssNames.CHALLENGE_DESC
 import com.github.readingbat.common.CssNames.CHECK_ANSWERS
 import com.github.readingbat.common.CssNames.CODE_BLOCK
-import com.github.readingbat.common.CssNames.CODINGBAT
+import com.github.readingbat.common.CssNames.CODING_BAT
 import com.github.readingbat.common.CssNames.DASHBOARD
 import com.github.readingbat.common.CssNames.EXPERIMENT
 import com.github.readingbat.common.CssNames.FEEDBACK
@@ -718,7 +717,7 @@ internal object ChallengePage {
     }
 
     if (challenge.codingBatEquiv.isNotEmpty() && (languageType.isJava || languageType.isPython)) {
-      p(classes = CODINGBAT) {
+      p(classes = CODING_BAT) {
         +"Work on a similar problem on "
         this@otherLinks.addLink("CodingBat.com", "https://codingbat.com/prob/${challenge.codingBatEquiv}", true)
       }

@@ -9,6 +9,12 @@ clean:
 build: clean
 	./gradlew build -xtest
 
+tw-css:
+	./gradlew :readingbat-core:tailwindBuild
+
+tw-css-full:
+	./gradlew :readingbat-core:tailwindBuildFull
+
 publish:
 	./gradlew publishToMavenLocal
 
