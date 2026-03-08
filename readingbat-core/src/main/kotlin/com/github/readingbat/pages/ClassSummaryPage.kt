@@ -195,14 +195,14 @@ internal object ClassSummaryPage {
     table {
       tr {
         td {
-          h3 {
+          h3(classes = "tw-ml-[15px] tw-mb-[15px] tw-text-rb-header") {
             style = "margin-left:15px; margin-bottom:15px; color:$HEADER_COLOR"
             +classCode.toDisplayString()
           }
         }
         if (classCode != activeClassCode) {
           td {
-            form {
+            form(classes = "tw-m-0") {
               style = "margin:0"
               action = CLASS_SUMMARY_ENDPOINT
               method = FormMethod.post
@@ -214,7 +214,10 @@ internal object ClassSummaryPage {
                 name = CLASS_CODE_CHOICE_PARAM
                 value = classCode.classCode
               }
-              submitInput(classes = "${CssNames.BTN} ${TwClasses.BTN}") {
+              val btnTwClasses =
+                "${CssNames.BTN} ${TwClasses.BTN} tw-px-1 tw-py-0.5 tw-mt-[9px] " +
+                  "tw-ml-5 tw-rounded tw-cursor-pointer tw-border tw-border-black"
+              submitInput(classes = btnTwClasses) {
                 style =
                   "padding:2px 5px; margin-top:9; margin-left:20; border-radius:5px; " +
                     "cursor:pointer; border:1px solid black;"
@@ -229,10 +232,10 @@ internal object ClassSummaryPage {
   }
 
   private fun BODY.displayClassChoices(content: ReadingBatContent, classCode: ClassCode) {
-    table {
+    table(classes = "tw-border-separate tw-border-spacing-x-[15px] tw-border-spacing-y-[10px]") {
       style = "border-collapse: separate; border-spacing: 15px 10px"
       tr {
-        td {
+        td(classes = "tw-text-[130%]") {
           style = "font-size:$BTN_SIZE"
           +"Challenge Group: "
         }
@@ -241,7 +244,7 @@ internal object ClassSummaryPage {
           .forEach { langGroup ->
             if (langGroup.challengeGroups.isNotEmpty()) {
               td {
-                ul {
+                ul(classes = "tw-pl-0 tw-mb-0 tw-list-none") {
                   style = "padding-left:0; margin-bottom:0; list-style-type:none"
                   dropdown {
                     val lang = langGroup.languageType.name
@@ -254,7 +257,7 @@ internal object ClassSummaryPage {
                       // divider()
                       langGroup.challengeGroups
                         .forEach {
-                          li {
+                          li(classes = "tw-text-[110%]") {
                             style = "font-size:110%"
                             a(classSummaryEndpoint(classCode, langGroup.languageName, it.groupName)) {
                               +it.groupName.toString()
@@ -277,7 +280,7 @@ internal object ClassSummaryPage {
     languageName: LanguageName,
     groupName: GroupName,
   ) {
-    h3 {
+    h3(classes = "tw-ml-[15px] tw-text-rb-header") {
       style = "margin-left: 15px; color: $HEADER_COLOR"
       +" "
 
@@ -292,7 +295,7 @@ internal object ClassSummaryPage {
             +it
         }
 
-      span {
+      span(classes = "tw-px-0.5") {
         style = "padding-left:2px; padding-right:2px"
         rawHtml("&rarr;")
       }
@@ -323,7 +326,7 @@ internal object ClassSummaryPage {
       val showDetail = hasGroup && classCode == activeClassCode
 
       if (enrollees.isNotEmpty()) {
-        table {
+        table(classes = "tw-border-separate tw-border-spacing-x-[15px] tw-border-spacing-y-[5px]") {
           style = "border-collapse: separate; border-spacing: 15px 5px"
           tr {
             if (!showDetail)
@@ -410,7 +413,7 @@ internal object ClassSummaryPage {
             }
         }
       } else {
-        h4 {
+        h4(classes = "tw-pl-[15px] tw-pt-[15px]") {
           style = "padding-left:15px; padding-top:15px"
           +"No students enrolled."
         }

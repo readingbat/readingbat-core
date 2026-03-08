@@ -87,7 +87,7 @@ internal object UserInfoPage {
               val sessionId = call.browserSession
 
               p {
-                table {
+                table(classes = "tw-border-separate tw-border-spacing-x-[5px] tw-border-spacing-y-[10px]") {
                   style = "border-spacing: 5px 10px"
                   tr {
                     td { +"User Principal" }

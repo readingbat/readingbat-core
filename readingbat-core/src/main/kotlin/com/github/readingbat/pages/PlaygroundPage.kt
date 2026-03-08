@@ -83,7 +83,7 @@ internal object PlaygroundPage {
           h2 {
             val groupPath = pathOf(CHALLENGE_ROOT, languageName, groupName)
             this@body.addLink(groupName.value.decode(), groupPath)
-            span {
+            span(classes = "tw-px-0.5") {
               style = "padding-left:2px; padding-right:2px"
               rawHtml("&rarr;")
             }
@@ -112,7 +112,7 @@ internal object PlaygroundPage {
           br
           div(classes = "${CssNames.INDENT_1EM} ${TwClasses.INDENT_1EM}") {
             +"Click on"
-            img {
+            img(classes = "tw-align-bottom") {
               height = "25"
               style = "vertical-align: bottom"
               src = pathOf(STATIC_ROOT, RUN_BUTTON)

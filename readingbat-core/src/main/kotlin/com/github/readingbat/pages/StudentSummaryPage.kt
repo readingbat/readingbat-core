@@ -124,7 +124,7 @@ internal object StudentSummaryPage {
 
           h2 { +"Student Summary" }
 
-          h3 {
+          h3(classes = "tw-ml-[15px] tw-text-rb-header") {
             style = "margin-left:15px; color: $HEADER_COLOR"
             a(classes = "${CssNames.UNDERLINE} ${TwClasses.UNDERLINE}") {
               href = pathOf(CHALLENGE_ROOT, languageName)
@@ -132,7 +132,7 @@ internal object StudentSummaryPage {
             }
           }
 
-          h3 {
+          h3(classes = "tw-ml-[15px] tw-text-rb-header") {
             style = "margin-left:15px; color: $HEADER_COLOR"
             a(classes = "${CssNames.UNDERLINE} ${TwClasses.UNDERLINE}") {
               href = classSummaryEndpoint(classCode)
@@ -140,12 +140,12 @@ internal object StudentSummaryPage {
             }
           }
 
-          h3 {
+          h3(classes = "tw-ml-[15px] tw-text-rb-header") {
             style = "margin-left:15px; color: $HEADER_COLOR"
             +"Student: $studentName ${student.email} "
           }
 
-          div {
+          div(classes = "tw-ml-[15px] tw-mb-2.5") {
             style = "margin-left:15px; margin-bottom:10px"
             this@body.removeFromClassButton(student, studentName)
           }
@@ -159,7 +159,7 @@ internal object StudentSummaryPage {
   }
 
   internal fun BODY.removeFromClassButton(student: User, studentName: String) {
-    form {
+    form(classes = "tw-m-0") {
       style = "margin:0"
       action = TEACHER_PREFS_ENDPOINT
       method = post
@@ -168,7 +168,7 @@ internal object StudentSummaryPage {
         name = USER_ID_PARAM
         value = student.userId
       }
-      submitInput {
+      submitInput(classes = "tw-align-middle tw-mt-px tw-mb-0 tw-rounded-lg tw-text-xs") {
         style = "vertical-align:middle; margin-top:1; margin-bottom:0; border-radius: 8px; font-size:12px"
         name = PREFS_ACTION_PARAM
         value = REMOVE_FROM_CLASS

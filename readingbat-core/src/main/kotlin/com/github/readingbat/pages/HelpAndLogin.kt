@@ -89,12 +89,12 @@ internal object HelpAndLogin {
       else
         loginPath
 
-    div {
+    div(classes = "tw-float-right tw-pt-2.5") {
       style = "float:right; padding-top:10px"
       table {
         if (isDbmsEnabled()) {
           tr {
-            td {
+            td(classes = "tw-text-right tw-whitespace-nowrap") {
               style = "text-align:right; white-space:nowrap"
               if (user.isNotNull()) {
                 userInfoBlock(user, path)
@@ -109,7 +109,7 @@ internal object HelpAndLogin {
           }
         }
         tr {
-          td {
+          td(classes = "tw-text-right tw-whitespace-nowrap tw-pt-1.5") {
             style = "text-align:right; white-space:nowrap; padding-top:6px"
 
             if (previousClassCode.isEnabled) {
@@ -154,9 +154,9 @@ internal object HelpAndLogin {
         }
         if (user.isNotNull() && user.enrolledClassCode.isEnabled) {
           tr {
-            td {
+            td(classes = "tw-text-right tw-pt-1") {
               style = "text-align:right; padding-top:4px"
-              span {
+              span(classes = "tw-text-rb-header") {
                 style = "color: $HEADER_COLOR"
                 +user.enrolledClassCode.toDisplayString()
               }
@@ -207,12 +207,12 @@ internal object HelpAndLogin {
           rawHtml("&times;")
         }
 
-        div {
+        div(classes = "tw-text-lg tw-font-bold tw-mb-2") {
           style = "font-size:18px; font-weight:bold; margin-bottom:8px;"
           +"Sign In"
         }
 
-        div {
+        div(classes = "tw-text-[#666] tw-mb-5") {
           style = "color:#666; margin-bottom:20px;"
           +"Choose a provider to continue:"
         }
@@ -286,9 +286,9 @@ internal object HelpAndLogin {
       tr {
         val avatarUrl = user.avatarUrl
         if (avatarUrl != null) {
-          td {
+          td(classes = "tw-align-middle tw-p-0 tw-pr-2") {
             style = "vertical-align:middle; padding:0; padding-right:8px"
-            img {
+            img(classes = "tw-rounded-full tw-block") {
               src = avatarUrl
               width = "36"
               alt = "avatar"
@@ -297,11 +297,11 @@ internal object HelpAndLogin {
             }
           }
         }
-        td {
+        td(classes = "tw-align-middle tw-p-0 tw-text-right") {
           style = "vertical-align:middle; padding:0; text-align:right"
           +user.email.value
           br
-          span {
+          span(classes = "tw-text-[100%] tw-text-gray-500") {
             style = "font-size:100%; color:gray"
             a {
               href = LOGOUT

@@ -175,11 +175,11 @@ internal object TeacherPrefsPage {
       div(classes = "${CssNames.INDENT_2EM} ${TwClasses.INDENT_2EM}") {
         table {
           tr {
-            td {
+            td(classes = "tw-align-top") {
               style = "vertical-align:top"
               this@displayClasses.classList(activeClassCode, classCodes)
             }
-            td {
+            td(classes = "tw-align-top") {
               style = "vertical-align:top"
               this@displayClasses.deleteClassButtons(classCodes)
             }
@@ -190,7 +190,7 @@ internal object TeacherPrefsPage {
   }
 
   private fun BODY.classList(activeClassCode: ClassCode, classCodes: List<ClassCode>) {
-    table {
+    table(classes = "tw-border-separate tw-border-spacing-x-[15px] tw-border-spacing-y-[5px]") {
       style = "border-spacing: 15px 5px"
       tr {
         th { +"Active" }
@@ -206,7 +206,7 @@ internal object TeacherPrefsPage {
           .forEach { classCode ->
             val enrolleeCount = classCode.fetchEnrollees().count()
             this@table.tr {
-              td {
+              td(classes = "tw-text-center") {
                 style = "text-align:center"
                 radioInput {
                   name = CLASS_CODE_CHOICE_PARAM
@@ -228,7 +228,7 @@ internal object TeacherPrefsPage {
                   +classCode.displayedValue
                 }
               }
-              td {
+              td(classes = "tw-text-center") {
                 style = "text-align:center"
                 +enrolleeCount.toString()
               }
@@ -236,7 +236,7 @@ internal object TeacherPrefsPage {
           }
 
         this@table.tr {
-          td {
+          td(classes = "tw-text-center") {
             style = "text-align:center"
             radioInput {
               name = CLASS_CODE_CHOICE_PARAM
@@ -269,13 +269,13 @@ internal object TeacherPrefsPage {
   }
 
   private fun BODY.deleteClassButtons(classCodes: List<ClassCode>) {
-    table {
+    table(classes = "tw-border-separate tw-border-spacing-[5px]") {
       style = "border-spacing: 5px 5px"
       tr { th { rawHtml(nbsp.text) } }
       classCodes.forEach { classCode ->
         tr {
           td {
-            form {
+            form(classes = "tw-m-0") {
               style = "margin:0"
               action = TEACHER_PREFS_ENDPOINT
               method = FormMethod.post
@@ -284,7 +284,7 @@ internal object TeacherPrefsPage {
                 name = CLASS_CODE_NAME_PARAM
                 value = classCode.displayedValue
               }
-              submitInput {
+              submitInput(classes = "tw-align-middle tw-mt-px tw-mb-0") {
                 style = "vertical-align:middle; margin-top:1; margin-bottom:0;"
                 name = PREFS_ACTION_PARAM
                 value = DELETE_CLASS

@@ -216,18 +216,18 @@ internal object ChallengePage {
     val challengeGroup = challenge.challengeGroup
     val challenges = challenge.challengeGroup.challenges
 
-    h2 {
+    h2(classes = "tw-mb-1") {
       style = "margin-bottom:5px"
       val groupPath = pathOf(CHALLENGE_ROOT, languageName, groupName)
       this@displayChallenge.addLink(groupName.value.decode(), groupPath)
-      span {
+      span(classes = "tw-px-0.5") {
         style = "padding-left:2px; padding-right:2px"
         rawHtml("&rarr;")
       }
       +challengeName.value
     }
 
-    span {
+    span(classes = "tw-pl-5") {
       style = "padding-left: 20px"
       val pos = challengeGroup.indexOf(challengeName)
       this@displayChallenge.nextPrevChance(pos, challenges, true)
@@ -262,18 +262,18 @@ internal object ChallengePage {
     challenge: Challenge,
     funcInfo: FunctionInfo,
   ) =
-    div {
+    div(classes = "tw-mt-8 tw-ml-8") {
       style = "margin-top:2em; margin-left:2em"
 
       table {
         tr {
-          th {
+          th(classes = "tw-text-rb-header") {
             colSpan = "2"
             style = "color: $HEADER_COLOR"
             +"Function Call"
             rawHtml(nbsp.text)
           }
-          th {
+          th(classes = "tw-text-rb-header") {
             colSpan = "2"
             style = "color: $HEADER_COLOR"
             +"Return Value"
@@ -437,13 +437,13 @@ internal object ChallengePage {
     classCode: ClassCode,
     enrollees: List<User>,
   ) =
-    div {
+    div(classes = "tw-mt-8") {
       style = "margin-top:2em"
 
       val languageName = challenge.languageType.languageName
       val groupName = challenge.groupName
 
-      h3 {
+      h3(classes = "tw-ml-1 tw-text-rb-header") {
         style = "margin-left: 5px; color: $HEADER_COLOR"
         a(classes = "${CssNames.UNDERLINE} ${TwClasses.UNDERLINE}") {
           href = classSummaryEndpoint(classCode, languageName, groupName)
@@ -453,17 +453,17 @@ internal object ChallengePage {
       }
 
       if (enrollees.isNotEmpty()) {
-        table {
+        table(classes = "tw-w-full tw-border-separate tw-border-spacing-x-[5px] tw-border-spacing-y-[10px]") {
           style = "width:100%; border-spacing: 5px 10px"
 
           tr {
-            th {
+            th(classes = "tw-w-[15%] tw-whitespace-nowrap tw-text-left tw-text-rb-header") {
               style = "width:15%; white-space:nowrap; text-align:left; color: $HEADER_COLOR"
               +"Student"
             }
             funcInfo.invocations
               .forEach { invocation ->
-                th {
+                th(classes = "tw-text-left tw-text-rb-header") {
                   style = "text-align:left; color: $HEADER_COLOR"
                   +(invocation.value.run { substring(indexOf("(")) })
                 }
@@ -538,7 +538,7 @@ internal object ChallengePage {
     }
 
   private fun BODY.processAnswers(funcInfo: FunctionInfo, challenge: Challenge) {
-    div {
+    div(classes = "tw-mt-8") {
       style = "margin-top:2em"
       table {
         tr {
@@ -549,9 +549,9 @@ internal object ChallengePage {
             }
           }
 
-          td {
+          td(classes = "tw-align-middle") {
             style = "vertical-align:middle"
-            span {
+            span(classes = "tw-ml-4") {
               style = "margin-left:1em"
               id = SPINNER_ID
             }
@@ -562,14 +562,14 @@ internal object ChallengePage {
             val challengeGroup = challenge.challengeGroup
             val pos = challengeGroup.indexOf(challengeName)
 
-            span {
+            span(classes = "tw-hidden") {
               id = NEXTPREVCHANCE_ID
               style = "display:none"
               this@processAnswers.nextPrevChance(pos, challengeGroup.challenges, false)
             }
           }
 
-          td {
+          td(classes = "tw-align-middle") {
             style = "vertical-align:middle"
             span(classes = "${CssNames.STATUS} ${TwClasses.STATUS}") { id = STATUS_ID }
             span(classes = "${CssNames.SUCCESS} ${TwClasses.SUCCESS}") { id = SUCCESS_ID }
@@ -672,15 +672,15 @@ internal object ChallengePage {
             }
           }
 
-          td {
+          td(classes = "tw-align-middle") {
             style = "vertical-align:middle"
-            span {
+            span(classes = "tw-ml-4") {
               style = "margin-left:1em"
               id = LIKE_SPINNER_ID
             }
           }
 
-          td {
+          td(classes = "tw-align-middle") {
             style = "vertical-align:middle"
             span(classes = "${CssNames.STATUS} ${TwClasses.STATUS}") { id = LIKE_STATUS_ID }
           }
@@ -724,7 +724,7 @@ internal object ChallengePage {
     if (!isDbmsEnabled())
       return
 
-    form {
+    form(classes = "tw-m-0") {
       style = "margin:0"
       action = CLEAR_CHALLENGE_ANSWERS_ENDPOINT
       method = FormMethod.post
@@ -749,7 +749,7 @@ internal object ChallengePage {
         name = CHALLENGE_ANSWERS_PARAM
         value = challengeAnswersKey
       }
-      submitInput {
+      submitInput(classes = "tw-align-middle tw-mt-px tw-mb-0") {
         style = "vertical-align:middle; margin-top:1; margin-bottom:0"
         value = "Clear answer history"
       }

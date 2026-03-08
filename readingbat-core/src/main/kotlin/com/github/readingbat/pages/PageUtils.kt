@@ -211,20 +211,20 @@ internal object PageUtils {
 
     if (loginAttempt && user.isNull())
       p {
-        span {
+        span(classes = "tw-text-red-500") {
           style = "color:red"
           +"Failed to login -- incorrect email or password"
         }
       }
 
     p {
-      span {
+      span(classes = "tw-text-green-500 tw-max-w-[800px]") {
         style = "color:green; max-width:800"
         if (msg.isNotBlank) +(msg.toString()) else rawHtml(nbsp.text)
       }
     }
 
-    div {
+    div(classes = "tw-pt-2.5 tw-min-w-screen tw-clear-both") {
       style = "padding-top:10px; min-width:100vw; clear:both"
       nav {
         ul {
@@ -241,7 +241,7 @@ internal object PageUtils {
       }
     }
 
-    div {
+    div(classes = "tw-border-t tw-clear-both") {
       style = "border-top: 1px solid; clear: both"
     }
   }
@@ -282,12 +282,12 @@ internal object PageUtils {
 
   @Suppress("unused")
   fun BODY.confirmingButton(text: String, endpoint: String, msg: String) {
-    form {
+    form(classes = "tw-m-0") {
       style = "margin:0"
       action = endpoint
       method = FormMethod.get
       onSubmit = "return confirm('$msg')"
-      submitInput {
+      submitInput(classes = "tw-align-middle tw-mt-px tw-mb-0") {
         style = "vertical-align:middle; margin-top:1; margin-bottom:0"
         value = text
       }
