@@ -59,7 +59,7 @@ internal object LikeDislikeJs {
 
     function likeDislikeHandleDone() {
       if(re.readyState == 1) {       // starting
-        document.getElementById('$LIKE_SPINNER_ID').innerHTML = '<i class="fa fa-spinner fa-spin" style="font-size:24px"></i>';
+        document.getElementById('$LIKE_SPINNER_ID').innerHTML = '<i class="fa fa-spinner fa-spin tw-text-2xl" style="font-size:24px"></i>';
         document.getElementById('$LIKE_STATUS_ID').innerText = 'Setting like/dislike...';
       }
       else if(re.readyState == 4) {  // done

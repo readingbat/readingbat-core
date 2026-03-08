@@ -781,6 +781,7 @@ internal object ChallengePage {
               .where { (userRef eq user.userDbmsId) and (md5 eq challenge.md5()) }
               .map { it[0] as String }
               .firstOrNull()
+              ?.takeIf { it.isNotBlank() }
               ?.let { Json.decodeFromString<Map<String, String>>(it) }
               ?: emptyMap
           }
