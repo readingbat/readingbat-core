@@ -1,8 +1,21 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
-/* Global base styles migrated from CssContent.kt (Phase 6) */
+/* Scan Kotlin source files for Tailwind class names */
+@source "../../kotlin/**/*.kt";
+
+/* Custom theme tokens */
+@theme {
+  --color-rb-link: #0000DD;
+  --color-rb-visited: #551A8B;
+  --color-rb-incomplete: #F1F1F1;
+  --color-rb-correct: #4EAA3A;
+  --color-rb-wrong: #FF0000;
+  --color-rb-header: #419DC1;
+  --color-rb-code-stripe: #0600EE;
+  --font-sans: verdana, arial, helvetica, sans-serif;
+}
+
+/* Global base styles */
 @layer base {
   html, body {
     font-size: 16px;

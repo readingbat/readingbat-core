@@ -58,16 +58,14 @@ buildConfig {
   buildConfigField("long", "BUILD_TIME", "${System.currentTimeMillis()}L")
 }
 
-// Tailwind CSS build via standalone CLI (requires `tailwindcss` binary on PATH)
-// Install: https://tailwindcss.com/blog/standalone-cli
+// Tailwind CSS v4 build via standalone CLI
 // Usage: ./gradlew :readingbat-core:tailwindBuild
 tasks.register<Exec>("tailwindBuild") {
   group = "frontend"
   description = "Build Tailwind CSS output from Kotlin source files"
   workingDir = rootProject.projectDir
   commandLine(
-    "./bin/tailwindcss-v3",
-    "-c", "tailwind.config.js",
+    "./bin/tailwindcss-v4",
     "-i", "readingbat-core/src/main/resources/css/tailwind-input.css",
     "-o", "readingbat-core/src/main/resources/static/tailwind.css",
     "--minify",
@@ -76,11 +74,10 @@ tasks.register<Exec>("tailwindBuild") {
 
 tasks.register<Exec>("tailwindBuildFull") {
   group = "frontend"
-  description = "Build Tailwind CSS output from Kotlin source files"
+  description = "Build Tailwind CSS output from Kotlin source files (unminified)"
   workingDir = rootProject.projectDir
   commandLine(
-    "./bin/tailwindcss-v3",
-    "-c", "tailwind.config.js",
+    "./bin/tailwindcss-v4",
     "-i", "readingbat-core/src/main/resources/css/tailwind-input.css",
     "-o", "readingbat-core/src/main/resources/static/tailwind.css",
   )
