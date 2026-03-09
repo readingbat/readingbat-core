@@ -70,7 +70,9 @@ import io.ktor.server.routing.RoutingContext
 import kotlinx.serialization.Required
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import org.jetbrains.exposed.v1.core.Column
 import org.jetbrains.exposed.v1.core.and
+import org.jetbrains.exposed.v1.core.dao.id.LongIdTable
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
@@ -208,20 +210,44 @@ internal object ChallengePost {
     call.respondText(answerMapping.toString())
   }
 
-  private fun deleteChallengeInfo(type: String, id: String, md5Val: String) =
-    when (type) {
-      AUTH_KEY -> {
-        transaction {
-          with(UserChallengeInfoTable) {
-            deleteWhere { (userRef eq fetchUserDbmsIdFromCache(id)) and (md5 eq md5Val) }
-          }
-        }
-      }
-
-      else -> {
-        error("Invalid type: $type")
+  private fun deleteFromTable(
+    table: LongIdTable,
+    userRefCol: Column<Long>,
+    md5Col: Column<String>,
+    type: String,
+    id: String,
+    md5Val: String,
+  ) = when (type) {
+    AUTH_KEY -> {
+      transaction {
+        table.deleteWhere { (userRefCol eq fetchUserDbmsIdFromCache(id)) and (md5Col eq md5Val) }
       }
     }
+
+    else -> {
+      error("Invalid type: $type")
+    }
+  }
+
+  private fun deleteChallengeInfo(type: String, id: String, md5Val: String) =
+    deleteFromTable(
+      UserChallengeInfoTable,
+      UserChallengeInfoTable.userRef,
+      UserChallengeInfoTable.md5,
+      type,
+      id,
+      md5Val,
+    )
+
+  private fun deleteAnswerHistory(type: String, id: String, md5Val: String) =
+    deleteFromTable(
+      UserAnswerHistoryTable,
+      UserAnswerHistoryTable.userRef,
+      UserAnswerHistoryTable.md5,
+      type,
+      id,
+      md5Val,
+    )
 
   private fun splitKeyAndDelete(key: String, label: String, user: User?, action: (String, String, String) -> Int) {
     if (key.isNotEmpty()) {
@@ -239,21 +265,6 @@ internal object ChallengePost {
       }
     }
   }
-
-  private fun deleteAnswerHistory(type: String, id: String, md5Val: String) =
-    when (type) {
-      AUTH_KEY -> {
-        transaction {
-          with(UserAnswerHistoryTable) {
-            deleteWhere { (userRef eq fetchUserDbmsIdFromCache(id)) and (md5 eq md5Val) }
-          }
-        }
-      }
-
-      else -> {
-        error("Invalid type: $type")
-      }
-    }
 
   suspend fun RoutingContext.clearChallengeAnswers(content: ReadingBatContent, user: User?): String {
     val params = call.receiveParameters()
