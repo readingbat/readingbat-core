@@ -54,13 +54,12 @@ import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Required
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import java.util.Collections.synchronizedSet
-import kotlin.concurrent.timer
 import kotlin.math.max
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeSource
@@ -104,17 +103,17 @@ internal object ChallengeWs {
   init {
     logger.info { "Initializing ChallengeWs" }
 
-    timer("pinger", false, 0L, 1.seconds.inWholeMilliseconds) {
-      for (sessionContext in answerWsConnections) {
-        if (sessionContext.enabled) {
-          runCatching {
-            val elapsed = sessionContext.start.elapsedNow().format()
-            val json = PingMessage(elapsed).toJson()
-            runBlocking {
+    scope.launch(CoroutineName("pinger")) {
+      while (isActive) {
+        delay(1.seconds)
+        for (sessionContext in answerWsConnections) {
+          if (sessionContext.enabled) {
+            runCatching {
+              val json = PingMessage(sessionContext.start.elapsedNow().format()).toJson()
               sessionContext.wsSession.outgoing.send(Frame.Text(json))
+            }.onFailure { e ->
+              logger.error { "Exception in pinger ${e.simpleClassName} ${e.message}" }
             }
-          }.onFailure { e ->
-            logger.error { "Exception in pinger ${e.simpleClassName} ${e.message}" }
           }
         }
       }
