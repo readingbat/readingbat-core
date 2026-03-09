@@ -50,9 +50,8 @@ import com.github.readingbat.posts.ChallengeResults
 import com.github.readingbat.server.ChallengeMd5
 import com.github.readingbat.server.Invocation
 import com.github.readingbat.server.LanguageName
-import com.github.readingbat.server.ScriptPools.kotlinEvaluatorPool
 import com.github.readingbat.server.ScriptPools.pythonEvaluatorPool
-import com.github.readingbat.utils.StringUtils.toCapitalized
+import com.github.readingbat.utils.toCapitalized
 import io.github.oshai.kotlinlogging.KotlinLogging
 import javax.script.ScriptException
 

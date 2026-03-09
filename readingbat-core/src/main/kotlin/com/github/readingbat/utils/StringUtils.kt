@@ -17,14 +17,4 @@
 
 package com.github.readingbat.utils
 
-import java.util.*
-
-object StringUtils {
-  fun String.toCapitalized() =
-    replaceFirstChar {
-      if (it.isLowerCase())
-        it.titlecase(Locale.getDefault())
-      else
-        it.toString()
-    }
-}
+fun String.toCapitalized(): String = replaceFirstChar(Char::titlecase)

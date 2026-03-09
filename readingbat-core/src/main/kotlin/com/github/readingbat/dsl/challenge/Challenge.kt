@@ -58,7 +58,7 @@ import com.github.readingbat.server.ChallengeName
 import com.github.readingbat.server.Invocation
 import com.github.readingbat.server.ScriptPools
 import com.github.readingbat.server.UserChallengeInfoTable
-import com.github.readingbat.utils.StringUtils.toCapitalized
+import com.github.readingbat.utils.toCapitalized
 import com.pambrose.common.exposed.get
 import com.pambrose.common.exposed.readonlyTx
 import io.github.oshai.kotlinlogging.KotlinLogging
