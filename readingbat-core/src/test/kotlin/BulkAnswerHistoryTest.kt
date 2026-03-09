@@ -62,7 +62,7 @@ class BulkAnswerHistoryTest : StringSpec(
       val missing = historyMap["xyz789"] ?: ChallengeHistory(Invocation("test(2)"))
       missing.correct shouldBe false
       missing.answers.shouldBeEmpty()
-      missing.invocation shouldBe Invocation("test(2)")
+      missing.invocation.value shouldBe "test(2)"
     }
 
     "Multiple invocations map to distinct entries" {
