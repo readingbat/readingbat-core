@@ -273,11 +273,13 @@ class User {
     }
 
   fun historyExists(md5Val: String, invocationVal: Invocation) =
-    with(UserAnswerHistoryTable) {
-      select(Count(id))
-        .where { (userRef eq userDbmsId) and (md5 eq md5Val) and (invocation eq invocationVal.value) }
-        .map { it[0] as Long }
-        .first() > 0
+    readonlyTx {
+      with(UserAnswerHistoryTable) {
+        select(Count(id))
+          .where { (userRef eq userDbmsId) and (md5 eq md5Val) and (invocation eq invocationVal.value) }
+          .map { it[0] as Long }
+          .first() > 0
+      }
     }
 
   fun answerHistory(md5Val: String, invocationVal: Invocation): ChallengeHistory =
