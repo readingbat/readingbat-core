@@ -18,7 +18,6 @@
 package com.github.readingbat.dsl.parse
 
 import com.github.pambrose.common.util.linesBetween
-import com.github.pambrose.common.util.substringBetween
 import com.github.readingbat.dsl.ReturnType.Companion.asReturnType
 import com.github.readingbat.server.ChallengeName
 import com.github.readingbat.server.Invocation
@@ -74,7 +73,7 @@ internal object JavaParse {
           code.linesBetween(start, end)
             .map { it.trimStart() }
             .filter { it.startsWith("$prefix(") }
-            .map { it.substringBetween("$prefix(", ")") }
+            .map { it.extractBalancedContent("$prefix(") }
             .map { Invocation((it)) },
         )
       }
@@ -99,7 +98,8 @@ internal object JavaParse {
           }
 
           insideMain && prefixRegex.any { line.contains(it) } -> {
-            val expr = line.substringBetween("(", ")")
+            val matchedPrefix = prefixes.first { line.contains("$it(") }
+            val expr = line.trimStart().extractBalancedContent("$matchedPrefix(")
             exprIndent = max(0, prefixRegex.maxOfOrNull { line.indexOf(it.pattern.substring(0, 6)) } ?: 0)
             val str = "".padStart(exprIndent) + "$varName.add($expr);"
             logger.debug { "Transformed:\n$line\nto:\n$str" }
