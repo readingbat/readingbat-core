@@ -19,6 +19,7 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.ints.shouldBeGreaterThan
 import io.kotest.matchers.ints.shouldBeLessThan
 import io.kotest.matchers.shouldBe
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -105,7 +106,8 @@ class CoroutineScopeLifecycleTest : StringSpec() {
     }
 
     "SupervisorJob allows sibling coroutines to survive failures" {
-      val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+      val handler = CoroutineExceptionHandler { _, _ -> }
+      val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default + handler)
       val survivorCount = AtomicInteger(0)
 
       // This coroutine will fail
