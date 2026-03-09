@@ -102,16 +102,14 @@ internal object ChallengeWs {
     timer("pinger", false, 0L, 1.seconds.inWholeMilliseconds) {
       for (sessionContext in answerWsConnections) {
         if (sessionContext.enabled) {
-          {
-            runCatching {
-              val elapsed = sessionContext.start.elapsedNow().format()
-              val json = PingMessage(elapsed).toJson()
-              runBlocking {
-                sessionContext.wsSession.outgoing.send(Frame.Text(json))
-              }
-            }.onFailure { e ->
-              logger.error { "Exception in pinger ${e.simpleClassName} ${e.message}" }
+          runCatching {
+            val elapsed = sessionContext.start.elapsedNow().format()
+            val json = PingMessage(elapsed).toJson()
+            runBlocking {
+              sessionContext.wsSession.outgoing.send(Frame.Text(json))
             }
+          }.onFailure { e ->
+            logger.error { "Exception in pinger ${e.simpleClassName} ${e.message}" }
           }
         }
       }
