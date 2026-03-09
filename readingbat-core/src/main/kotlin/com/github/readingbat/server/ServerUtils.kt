@@ -49,7 +49,6 @@ import io.ktor.server.sessions.sessions
 import io.ktor.server.sessions.set
 import io.ktor.server.websocket.WebSocketServerSession
 import io.ktor.utils.io.KtorDsl
-import kotlinx.coroutines.runBlocking
 
 @Suppress("unused")
 internal object ServerUtils {
@@ -119,16 +118,16 @@ internal object ServerUtils {
   @KtorDsl
   fun Route.get(path: String, metrics: Metrics, body: RoutingHandler) =
     route(path, HttpMethod.Get) {
-      runBlocking {
-        metrics.measureEndpointRequest(path) { handle(body) }
+      handle {
+        metrics.measureEndpointRequest(path) { body() }
       }
     }
 
   @KtorDsl
   fun Route.post(path: String, metrics: Metrics, body: RoutingHandler) =
     route(path, HttpMethod.Post) {
-      runBlocking {
-        metrics.measureEndpointRequest(path) { handle(body) }
+      handle {
+        metrics.measureEndpointRequest(path) { body() }
       }
     }
 
