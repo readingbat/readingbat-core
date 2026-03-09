@@ -191,9 +191,10 @@ internal object ChallengePost {
     logger.debug { "Found ${userResponses.size} user responses in $paramMap" }
 
     val results =
-      userResponses.indices
-        .map { paramMap[RESP + it]?.trim() ?: error("Missing user response") }
-        .mapIndexed { i, userResponse -> funcInfo.checkResponse(i, userResponse) }
+      userResponses.indices.map { i ->
+        val userResponse = paramMap[RESP + i]?.trim() ?: error("Missing user response")
+        funcInfo.checkResponse(i, userResponse)
+      }
 
     if (isDbmsEnabled())
       saveChallengeAnswers(user, content, names, paramMap, funcInfo, userResponses, results)

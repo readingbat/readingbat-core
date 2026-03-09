@@ -565,39 +565,39 @@ internal object ChallengePage {
 
   private fun BODY.nextPrevChance(pos: Int, challenges: List<Challenge>, includePrev: Boolean) {
     if (includePrev) {
-      "prev".also {
-        if (pos == 0)
-          +it
-        else
-          a {
-            href = "./${challenges[pos - 1].challengeName.value}"
-            +it
-          }
+      val prevLabel = "prev"
+      if (pos == 0) {
+        +prevLabel
+      } else {
+        a {
+          href = "./${challenges[pos - 1].challengeName.value}"
+          +prevLabel
+        }
       }
 
       rawHtml("${nbsp.text} | ${nbsp.text}")
     }
 
-    "next".also {
-      if (pos == challenges.size - 1)
-        +it
-      else
-        a {
-          href = "./${challenges[pos + 1].challengeName.value}"
-          +it
-        }
+    val nextLabel = "next"
+    if (pos == challenges.size - 1) {
+      +nextLabel
+    } else {
+      a {
+        href = "./${challenges[pos + 1].challengeName.value}"
+        +nextLabel
+      }
     }
 
     rawHtml("${nbsp.text} | ${nbsp.text}")
 
-    "chance".also {
-      if (challenges.size == 1)
-        +it
-      else
-        a {
-          href = "./${challenges[challenges.size.chance(pos)].challengeName.value}"
-          +it
-        }
+    val chanceLabel = "chance"
+    if (challenges.size == 1) {
+      +chanceLabel
+    } else {
+      a {
+        href = "./${challenges[challenges.size.chance(pos)].challengeName.value}"
+        +chanceLabel
+      }
     }
   }
 

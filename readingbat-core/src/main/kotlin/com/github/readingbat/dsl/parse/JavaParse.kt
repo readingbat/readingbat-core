@@ -65,20 +65,13 @@ internal object JavaParse {
   fun extractJavaInvocations(code: String, start: Regex, end: Regex) =
     extractJavaInvocations(code.lines(), start, end)
 
-  fun extractJavaInvocations(code: List<String>, start: Regex, end: Regex): List<Invocation> {
-    val lines = mutableListOf<Invocation>()
-    prefixes
-      .forEach { prefix ->
-        lines.addAll(
-          code.linesBetween(start, end)
-            .map { it.trimStart() }
-            .filter { it.startsWith("$prefix(") }
-            .map { it.extractBalancedContent("$prefix(") }
-            .map { Invocation((it)) },
-        )
-      }
-    return lines
-  }
+  fun extractJavaInvocations(code: List<String>, start: Regex, end: Regex): List<Invocation> =
+    prefixes.flatMap { prefix ->
+      code.linesBetween(start, end)
+        .map { it.trimStart() }
+        .filter { it.startsWith("$prefix(") }
+        .map { Invocation(it.extractBalancedContent("$prefix(")) }
+    }
 
   fun convertToScript(code: List<String>) =
     buildString {
