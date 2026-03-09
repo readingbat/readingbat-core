@@ -159,7 +159,7 @@ internal fun Application.intercepts() {
       // Capture return URL from OAuth login links (e.g., /oauth/login/github?return=/content/java/Warmup-1/hello)
       if (path == OAUTH_LOGIN_GITHUB_ENDPOINT || path == OAUTH_LOGIN_GOOGLE_ENDPOINT) {
         call.request.queryParameters["return"]
-          ?.takeIf { it.startsWith("/") }
+          ?.takeIf { it.startsWith("/") && !it.startsWith("//") }
           ?.let { call.sessions.set(OAuthReturnUrl(it)) }
       }
     }

@@ -13,9 +13,10 @@ security-critical paths (auth, authorization, WebSocket) is notably absent.
 
 ### Progress Since Initial Review
 
-Of the 15 issues identified, 5 have been fully resolved, 2 are partially addressed, and 8 remain open. Of the 3
-critical issues, 2 have been resolved (#2 cookie secure flag, #3 admin endpoint auth). Of the 5 high-severity issues, 2
-have been resolved (#4 via OAuth migration, #5 via caching).
+Of the 15 issues identified, 7 have been fully resolved, 2 are partially addressed, and 6 remain open. Of the 3
+critical issues, 2 have been resolved (#2 cookie secure flag, #3 admin endpoint auth). Of the 5 high-severity issues, 4
+have been resolved (#4 via OAuth migration, #5 via caching, #6 via redirect validation, #7 via userId authorization
+check).
 
 ## Strengths
 
@@ -110,32 +111,26 @@ Fixed in commit `e5e81bb` ("Cache user DB existence and add bounds checking to k
 their DB existence status at construction time via an `existsInDbms` flag, eliminating the redundant `SELECT COUNT(id)`
 query on every call to `isValidUser()`.
 
-### 6. Unbounded Open Redirect at Logout
+### 6. ~~Unbounded Open Redirect at Logout~~
 
-**Status:** OPEN
+**Status:** RESOLVED
 
-**File:** `readingbat-core/src/main/kotlin/com/github/readingbat/server/routes/UserRoutes.kt` (line ~247)
+~~**File:** `readingbat-core/src/main/kotlin/com/github/readingbat/server/routes/UserRoutes.kt` (line ~247)~~
 
-The `RETURN_PARAM` value is taken directly from the query string and used as a redirect destination with no validation.
-An attacker can craft `GET /logout?returnPath=https://evil.com` to phish users post-logout. The same pattern appears in
-`CreateAccountPost.kt` and `PasswordResetPost.kt`.
+A `safeRedirectPath()` utility function in `ServerUtils.kt` now validates that redirect targets start with `/` and do
+not start with `//` (protocol-relative). Invalid paths default to `/`. The logout endpoint in `UserRoutes.kt` wraps
+the `RETURN_PARAM` value through `safeRedirectPath()` before redirecting.
 
-**Recommendation:** Validate that the redirect target is a relative path (starts with `/` and does not start with `//`).
-Reject or default to `/` for any absolute URL.
+### 7. ~~`clearChallengeAnswers` / `clearGroupAnswers` — No Authorization Check~~
 
-### 7. `clearChallengeAnswers` / `clearGroupAnswers` — No Authorization Check
+**Status:** RESOLVED
 
-**Status:** OPEN
+~~**File:** `readingbat-core/src/main/kotlin/com/github/readingbat/posts/ChallengePost.kt` (lines ~258-268)~~
 
-**File:** `readingbat-core/src/main/kotlin/com/github/readingbat/posts/ChallengePost.kt` (lines ~258-268)
-
-Both functions accept a compound key from the POST body (e.g., `correct-answers:auth:userId:md5`) and split it to
-determine which user's data to delete. There is no verification that the authenticated user matches the `userId`
-embedded in the key. An authenticated user could craft a POST request with another user's `userId` to delete their
-answer history.
-
-**Recommendation:** After splitting the key, compare the `userId` from the key against `user?.userId` and reject
-mismatches.
+The `splitKeyAndDelete()` function now accepts a `User?` parameter and compares the userId embedded in the compound
+key against the authenticated user's `userId`. If the user is null or the IDs don't match, the operation is skipped
+with a warning log. Both `clearChallengeAnswers` and `clearGroupAnswers` pass the authenticated user through to
+`splitKeyAndDelete()`.
 
 ### 8. `newSingleThreadContext` — Deprecated API, Resource Leak
 
@@ -264,8 +259,8 @@ timeout.
 | 3  | Admin endpoint auth                | Critical | RESOLVED            |
 | 4  | Password hashing (SHA-256)         | High     | RESOLVED            |
 | 5  | User validation N+1 queries        | High     | RESOLVED            |
-| 6  | Open redirect                      | High     | OPEN                |
-| 7  | Authorization check gap            | High     | OPEN                |
+| 6  | Open redirect                      | High     | RESOLVED            |
+| 7  | Authorization check gap            | High     | RESOLVED            |
 | 8  | Thread context leak                | High     | OPEN                |
 | 9  | Dead code (`configureSessionAuth`) | Medium   | RESOLVED            |
 | 10 | Global mutable state               | Medium   | OPEN                |
@@ -280,7 +275,7 @@ timeout.
 | Priority | Items                                                                          | Effort |
 |----------|--------------------------------------------------------------------------------|--------|
 | Critical | Script sandboxing (#1)                                                         | Medium |
-| High     | Open redirect (#6), Authorization check (#7), Thread context leak (#8)         | Medium |
+| High     | ~~Open redirect (#6)~~, ~~Authorization check (#7)~~, Thread context leak (#8)  | Medium |
 | Medium   | Global state (#10), Rate limiting (#11), runBlocking (#12), Test coverage (#13) | High   |
 | Low      | Index fix (#14), Connection pool tuning (#15)                                  | Low    |
 

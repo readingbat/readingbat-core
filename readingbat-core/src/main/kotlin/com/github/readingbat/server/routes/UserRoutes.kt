@@ -82,6 +82,7 @@ import com.github.readingbat.server.ServerUtils.get
 import com.github.readingbat.server.ServerUtils.queryParam
 import com.github.readingbat.server.ServerUtils.respondWithRedirect
 import com.github.readingbat.server.ServerUtils.respondWithSuspendingRedirect
+import com.github.readingbat.server.ServerUtils.safeRedirectPath
 import com.github.readingbat.server.routes.ResourceContent.getResourceAsText
 import io.ktor.http.ContentType
 import io.ktor.http.ContentType.Text.CSS
@@ -242,7 +243,7 @@ fun Routing.userRoutes(metrics: Metrics, contentSrc: () -> ReadingBatContent) {
   get(LOGOUT_ENDPOINT, metrics) {
     // Purge UserPrincipal from cookie data
     call.sessions.clear<UserPrincipal>()
-    redirectTo { queryParam(RETURN_PARAM, "/") }
+    redirectTo { safeRedirectPath(queryParam(RETURN_PARAM, "/")) }
   }
 
   get(TAILWIND_CSS_ENDPOINT) {

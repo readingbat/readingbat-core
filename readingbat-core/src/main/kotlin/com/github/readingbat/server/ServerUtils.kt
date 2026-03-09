@@ -59,6 +59,9 @@ internal object ServerUtils {
 
   fun RoutingContext.queryParam(key: String, default: String = "") = call.request.queryParameters[key] ?: default
 
+  fun safeRedirectPath(path: String): String =
+    if (path.startsWith("/") && !path.startsWith("//")) path else "/"
+
   fun RoutingContext.fetchUser(loginAttempt: Boolean = false): User? =
     fetchPrincipal(loginAttempt)?.userId?.toUser(call.browserSession)
 

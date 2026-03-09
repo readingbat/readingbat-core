@@ -224,11 +224,16 @@ internal object ChallengePost {
       }
     }
 
-  private fun splitKeyAndDelete(key: String, label: String, action: (String, String, String) -> Int) {
+  private fun splitKeyAndDelete(key: String, label: String, user: User?, action: (String, String, String) -> Int) {
     if (key.isNotEmpty()) {
       val parts = key.split(KEY_SEP)
       if (parts.size >= 4) {
-        action(parts[1], parts[2], parts[3])
+        val keyUserId = parts[2]
+        if (user == null || user.userId != keyUserId) {
+          logger.warn { "Authorization mismatch for $label: key userId=$keyUserId does not match authenticated user" }
+          return
+        }
+        action(parts[1], keyUserId, parts[3])
           .also { logger.info { "Deleted $it $label for $key" } }
       } else {
         logger.warn { "Malformed $label: $key" }
@@ -266,8 +271,8 @@ internal object ChallengePost {
     val path = pathOf(CHALLENGE_ROOT, languageName, groupName, challengeName)
 
     // Clears answer history
-    splitKeyAndDelete(correctAnswersKey, "correctAnswers", ::deleteChallengeInfo)
-    splitKeyAndDelete(challengeAnswersKey, "challengeAnswers", ::deleteAnswerHistory)
+    splitKeyAndDelete(correctAnswersKey, "correctAnswers", user, ::deleteChallengeInfo)
+    splitKeyAndDelete(challengeAnswersKey, "challengeAnswers", user, ::deleteAnswerHistory)
 
     user?.resetHistory(funcInfo, challenge, content.maxHistoryLength)
 
@@ -291,8 +296,8 @@ internal object ChallengePost {
     if (!isDbmsEnabled())
       throw RedirectException("$path?$MSG=${"Database not enabled"}")
 
-    correctAnswersKeys.forEach { splitKeyAndDelete(it, "correctAnswers", ::deleteChallengeInfo) }
-    challengeAnswersKeys.forEach { splitKeyAndDelete(it, "challengeAnswers", ::deleteAnswerHistory) }
+    correctAnswersKeys.forEach { splitKeyAndDelete(it, "correctAnswers", user, ::deleteChallengeInfo) }
+    challengeAnswersKeys.forEach { splitKeyAndDelete(it, "challengeAnswers", user, ::deleteAnswerHistory) }
 
     if (user.isNotNull()) {
       content.findGroup(languageName, groupName).challenges

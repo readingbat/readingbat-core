@@ -49,6 +49,7 @@ import com.github.readingbat.pages.TeacherPrefsPage.teacherPrefsPage
 import com.github.readingbat.pages.UserPrefsPage.requestLogInPage
 import com.github.readingbat.server.RedirectException
 import com.github.readingbat.server.ServerUtils.queryParam
+import com.github.readingbat.server.ServerUtils.safeRedirectPath
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.server.request.receiveParameters
 import io.ktor.server.routing.RoutingContext
@@ -103,7 +104,7 @@ internal object TeacherPrefsPost {
     }
 
   fun RoutingContext.enableStudentMode(user: User?): String {
-    val returnPath = queryParam(RETURN_PARAM, "/")
+    val returnPath = safeRedirectPath(queryParam(RETURN_PARAM, "/"))
     // val browserSession = call.browserSession
     val msg =
       if (user.isValidUser()) {
@@ -116,7 +117,7 @@ internal object TeacherPrefsPost {
   }
 
   fun RoutingContext.enableTeacherMode(user: User?): String {
-    val returnPath = queryParam(RETURN_PARAM, "/")
+    val returnPath = safeRedirectPath(queryParam(RETURN_PARAM, "/"))
     val msg =
       if (user.isValidUser()) {
         val previousTeacherClassCode = queryPreviousTeacherClassCode(user)

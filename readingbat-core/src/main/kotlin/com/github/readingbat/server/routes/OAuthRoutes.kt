@@ -31,6 +31,7 @@ import com.github.readingbat.common.UserPrincipal
 import com.github.readingbat.server.ConfigureOAuth
 import com.github.readingbat.server.FullName
 import com.github.readingbat.server.OAuthLinksTable
+import com.github.readingbat.server.ServerUtils.safeRedirectPath
 import com.github.readingbat.server.UsersTable
 import com.pambrose.common.exposed.readonlyTx
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -132,7 +133,7 @@ fun Routing.oauthRoutes() {
 
       val user = findOrCreateOAuthUser("github", providerId, Email(email), FullName(name), accessToken, avatarUrl)
       call.sessions.set(UserPrincipal(userId = user.userId))
-      val returnUrl = call.sessions.get<OAuthReturnUrl>()?.url?.takeIf { it.startsWith("/") } ?: "/"
+      val returnUrl = safeRedirectPath(call.sessions.get<OAuthReturnUrl>()?.url ?: "/")
       call.sessions.clear<OAuthReturnUrl>()
       call.respondRedirect(returnUrl)
     }
@@ -169,7 +170,7 @@ fun Routing.oauthRoutes() {
 
       val user = findOrCreateOAuthUser("google", providerId, Email(email), FullName(name), accessToken, avatarUrl)
       call.sessions.set(UserPrincipal(userId = user.userId))
-      val returnUrl = call.sessions.get<OAuthReturnUrl>()?.url?.takeIf { it.startsWith("/") } ?: "/"
+      val returnUrl = safeRedirectPath(call.sessions.get<OAuthReturnUrl>()?.url ?: "/")
       call.sessions.clear<OAuthReturnUrl>()
       call.respondRedirect(returnUrl)
     }
