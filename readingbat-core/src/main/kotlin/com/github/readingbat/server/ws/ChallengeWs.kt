@@ -119,7 +119,7 @@ internal object ChallengeWs {
 
     if (isMultiServerEnabled()) {
       scope.launch(CoroutineName("multiServerWsWriteChannel")) {
-        while (true) {
+        while (isActive) {
           runCatching {
             multiServerWsWriteFlow
               .onStart { logger.info { "Starting to read multi-server writer ws channel values" } }
@@ -136,7 +136,7 @@ internal object ChallengeWs {
     }
 
     scope.launch(CoroutineName("answerWsConnections")) {
-      while (true) {
+      while (isActive) {
         runCatching {
           (if (isMultiServerEnabled()) multiServerWsReadFlow else singleServerWsFlow)
             .onStart { logger.info { "Starting to read challenge ws channel values" } }

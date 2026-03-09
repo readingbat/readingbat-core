@@ -53,6 +53,7 @@ import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import java.util.Collections.synchronizedSet
@@ -76,7 +77,7 @@ internal object LoggingWs {
 
   fun initThreads(contentSrc: () -> ReadingBatContent, resetContentFunc: (String) -> Unit) {
     scope.launch(CoroutineName("logging-ws-adminCommandChannel")) {
-      while (true) {
+      while (isActive) {
         runCatching {
           adminCommandFlow
             .onStart { logger.info { "Starting to read admin command channel values" } }
@@ -141,7 +142,7 @@ internal object LoggingWs {
     }
 
     scope.launch(CoroutineName("logging-ws-logWsReadChannel")) {
-      while (true) {
+      while (isActive) {
         runCatching {
           logWsReadFlow
             .onStart { logger.info { "Starting to read log ws channel values" } }

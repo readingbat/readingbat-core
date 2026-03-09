@@ -31,11 +31,16 @@ import io.ktor.server.websocket.webSocket
 import io.ktor.websocket.CloseReason
 import io.ktor.websocket.Frame
 import io.ktor.websocket.close
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.mapNotNull
-import kotlinx.coroutines.runBlocking
-import java.util.*
-import kotlin.concurrent.timer
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
+import java.util.Collections
 import kotlin.math.max
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeSource
@@ -44,6 +49,7 @@ import kotlin.time.TimeSource
 internal object ClockWs {
   private val logger = KotlinLogging.logger {}
   private val clock = TimeSource.Monotonic
+  private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
   private val wsConnections = Collections.synchronizedSet(LinkedHashSet<SessionContext>())
   private var maxWsConnections = 0
 
@@ -58,16 +64,17 @@ internal object ClockWs {
   }
 
   init {
-    timer("clock msg sender", false, 0L, 1.seconds.inWholeMilliseconds) {
-      for (sessionContext in wsConnections) {
-        runCatching {
-          val elapsed = sessionContext.start.elapsedNow().format()
-          val json = PingMessage("$elapsed [${wsConnections.size}/$maxWsConnections]").toJson()
-          runBlocking {
+    scope.launch(CoroutineName("clock-pinger")) {
+      while (isActive) {
+        delay(1.seconds)
+        for (sessionContext in wsConnections) {
+          runCatching {
+            val elapsed = sessionContext.start.elapsedNow().format()
+            val json = PingMessage("$elapsed [${wsConnections.size}/$maxWsConnections]").toJson()
             sessionContext.wsSession.outgoing.send(Frame.Text(json))
+          }.onFailure { e ->
+            logger.error { "Exception in pinger: ${e.simpleClassName} ${e.message}" }
           }
-        }.onFailure { e ->
-          logger.error { "Exception in pinger: ${e.simpleClassName} ${e.message}" }
         }
       }
     }
