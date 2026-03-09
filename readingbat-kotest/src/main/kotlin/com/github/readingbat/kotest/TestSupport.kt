@@ -186,10 +186,13 @@ object TestSupport {
 
   fun ChallengeResults.shouldBeIncorrect() = correct.shouldBeFalse()
 
-  fun Application.testModule(content: ReadingBatContent) {
+  fun initTestProperties() {
+    Property.IS_PRODUCTION.setProperty("false")
     Property.IS_TESTING.setProperty("true")
     KtorProperty.assignInitialized()
+  }
 
+  fun Application.testModule(content: ReadingBatContent) {
     installs(false)
 
     routing {

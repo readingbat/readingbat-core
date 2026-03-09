@@ -12,4 +12,11 @@ dependencies {
   implementation(libs.kotest.assertions.core)
   implementation(libs.kotest.assertions.ktor)
   implementation(libs.kotest.runner.junit5)
+
+  implementation(libs.bundles.exposed)
+  implementation(libs.postgres)
+  implementation(libs.flyway.core)
+  implementation(libs.flyway.postgres)
+
+  implementation(libs.testcontainers.postgresql)
 }

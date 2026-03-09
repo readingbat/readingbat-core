@@ -28,9 +28,8 @@ import com.github.readingbat.dsl.parse.PythonParse.ifMainEndRegex
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 
-class InvokesTest : StringSpec(
-  {
-
+class InvokesTest : StringSpec() {
+  init {
     "pythonInvokesTest" {
       val s =
         """
@@ -253,5 +252,5 @@ class InvokesTest : StringSpec(
         $variable
         """.trimIndent()
     }
-  },
-)
+  }
+}

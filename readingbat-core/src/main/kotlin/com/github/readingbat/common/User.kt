@@ -323,12 +323,11 @@ class User {
 
   fun isEnrolled(classCode: ClassCode) =
     readonlyTx {
-      with(EnrolleesTable) {
-        select(Count(id))
-          .where { userRef eq userDbmsId }
-          .map { it[0] as Long }
-          .first().also { logger.debug { "isEnrolled() returned $it for $classCode" } } > 0
-      }
+      val count = Count(EnrolleesTable.id)
+      (ClassesTable innerJoin EnrolleesTable)
+        .select(count)
+        .where { (EnrolleesTable.userRef eq userDbmsId) and (ClassesTable.classCode eq classCode.classCode) }
+        .single()[count].also { logger.debug { "isEnrolled() returned $it for $classCode" } } > 0
     }
 
   fun correctAnswersKey(languageName: LanguageName, groupName: GroupName, challengeName: ChallengeName) =
@@ -643,7 +642,7 @@ class User {
       User(randomId(25), null, false)
         .also { user ->
           transaction {
-            val userDbmsId =
+            user.userDbmsId =
               with(UsersTable) {
                 insertAndGetId { row ->
                   row[userId] = user.userId
@@ -658,7 +657,7 @@ class User {
 
             with(OAuthLinksTable) {
               insert { row ->
-                row[userRef] = userDbmsId
+                row[userRef] = user.userDbmsId
                 row[OAuthLinksTable.provider] = provider
                 row[OAuthLinksTable.providerId] = providerId
                 row[providerEmail] = emailVal.value
