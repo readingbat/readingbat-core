@@ -30,14 +30,18 @@ import com.github.readingbat.common.Endpoints.THREAD_DUMP
 import com.github.readingbat.common.Metrics
 import com.github.readingbat.common.UserPrincipal
 import com.github.readingbat.common.browserSession
+import com.github.readingbat.common.isAdminUser
 import com.github.readingbat.common.userPrincipal
 import com.github.readingbat.dsl.isDbmsEnabled
+import com.github.readingbat.dsl.isProduction
 import com.github.readingbat.dsl.isSaveRequestsEnabled
 import com.github.readingbat.server.BrowserSessionsTable
 import com.github.readingbat.server.GeoInfo.Companion.lookupGeoInfo
+import com.github.readingbat.server.ServerUtils.fetchUser
 import com.github.readingbat.server.ServerUtils.get
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.http.ContentType.Text.Plain
+import io.ktor.http.HttpStatusCode
 import io.ktor.server.html.respondHtml
 import io.ktor.server.plugins.origin
 import io.ktor.server.response.respondText
@@ -61,12 +65,25 @@ import java.time.ZoneId
 object AdminRoutes {
   private val logger = KotlinLogging.logger {}
 
+  private suspend fun RoutingContext.requireAdminUser(): Boolean {
+    if (isProduction()) {
+      val user = fetchUser()
+      if (user.isNull() || !user.isAdminUser()) {
+        call.respondText("Forbidden", Plain, HttpStatusCode.Forbidden)
+        return false
+      }
+    }
+    return true
+  }
+
   fun Routing.adminRoutes(metrics: Metrics) {
     get(PING_ENDPOINT, metrics) {
       call.respondText("pong", Plain)
     }
 
     get(THREAD_DUMP, metrics) {
+      if (!requireAdminUser()) return@get
+
       try {
         ByteArrayOutputStream()
           .apply {
@@ -82,6 +99,8 @@ object AdminRoutes {
     }
 
     get(COOKIES) {
+      if (!requireAdminUser()) return@get
+
       val principal = call.userPrincipal
       val session = call.browserSession
       logger.info { "UserPrincipal: $principal BrowserSession: $session" }
@@ -136,17 +155,20 @@ object AdminRoutes {
     }
 
     get("/clear-cookies") {
+      if (!requireAdminUser()) return@get
       clearPrincipal()
       clearSessionId()
       redirectTo { "/" }
     }
 
     get("/clear-principal") {
+      if (!requireAdminUser()) return@get
       clearPrincipal()
       redirectTo { "/" }
     }
 
     get("/clear-sessionid") {
+      if (!requireAdminUser()) return@get
       clearSessionId()
       redirectTo { "/" }
     }

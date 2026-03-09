@@ -192,8 +192,8 @@ object TestSupport {
     KtorProperty.assignInitialized()
   }
 
-  fun Application.testModule(content: ReadingBatContent) {
-    installs(false)
+  fun Application.testModule(content: ReadingBatContent, production: Boolean = false) {
+    installs(production)
 
     routing {
       adminRoutes(ReadingBatServer.metrics)
@@ -202,7 +202,6 @@ object TestSupport {
       sysAdminRoutes(ReadingBatServer.metrics) { }
       wsRoutes(ReadingBatServer.metrics) { content }
       staticResources(Endpoints.STATIC_ROOT, "static")
-//      static(Endpoints.STATIC_ROOT) { resources("static") }
     }
   }
 }

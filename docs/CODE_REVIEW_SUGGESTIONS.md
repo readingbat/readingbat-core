@@ -13,9 +13,9 @@ security-critical paths (auth, authorization, WebSocket) is notably absent.
 
 ### Progress Since Initial Review
 
-Of the 15 issues identified, 4 have been fully resolved, 2 are partially addressed, and 9 remain open. Of the 3
-critical issues, 1 has been resolved (#2 cookie secure flag). Of the 5 high-severity issues, 2 have been resolved (#4
-via OAuth migration, #5 via caching).
+Of the 15 issues identified, 5 have been fully resolved, 2 are partially addressed, and 8 remain open. Of the 3
+critical issues, 2 have been resolved (#2 cookie secure flag, #3 admin endpoint auth). Of the 5 high-severity issues, 2
+have been resolved (#4 via OAuth migration, #5 via caching).
 
 ## Strengths
 
@@ -73,24 +73,15 @@ All three cookies (`BrowserSession`, `UserPrincipal`, and `OAuthReturnUrl`) now 
 `production` flag is true. The `production` parameter is threaded from `installs()` into each cookie configuration
 function, ensuring cookies are only transmitted over HTTPS in production.
 
-### 3. Unauthenticated Sensitive Admin Endpoints
+### 3. ~~Unauthenticated Sensitive Admin Endpoints~~
 
-**Status:** OPEN
+**Status:** RESOLVED
 
-**File:** `readingbat-core/src/main/kotlin/com/github/readingbat/server/routes/AdminRoutes.kt` (lines 65-179)
+~~**File:** `readingbat-core/src/main/kotlin/com/github/readingbat/server/routes/AdminRoutes.kt` (lines 65-179)~~
 
-The following endpoints are registered with no authentication checks:
-
-- `GET /threaddump` — returns a full JVM thread dump (line 69)
-- `GET /cookies` — exposes raw cookie data (line 84)
-- `GET /clear-cookies`, `GET /clear-principal`, `GET /clear-sessionid` (lines 138-152)
-
-The `/threaddump` endpoint reveals internal thread names, active database connections, coroutine stack frames, and other
-implementation details. Unlike sys-admin routes (gated on `isProduction()` and `authenticateAdminUser()`), these routes
-have no protection.
-
-**Recommendation:** Wrap these endpoints with `authenticateAdminUser(fetchUser()) { ... }` or move them behind a
-production-only routing block.
+All sensitive admin endpoints (`/threaddump`, `/cookies`, `/clear-cookies`, `/clear-principal`, `/clear-sessionid`) are
+now guarded by a `requireAdminUser()` check that returns HTTP 403 Forbidden in production when the caller is not a
+logged-in admin user. The `/ping` health check endpoint remains open as intended.
 
 ---
 
@@ -270,7 +261,7 @@ timeout.
 |----|------------------------------------|----------|---------------------|
 | 1  | Script sandboxing                  | Critical | OPEN                |
 | 2  | Cookie secure flag                 | Critical | RESOLVED            |
-| 3  | Admin endpoint auth                | Critical | OPEN                |
+| 3  | Admin endpoint auth                | Critical | RESOLVED            |
 | 4  | Password hashing (SHA-256)         | High     | RESOLVED            |
 | 5  | User validation N+1 queries        | High     | RESOLVED            |
 | 6  | Open redirect                      | High     | OPEN                |
@@ -288,7 +279,7 @@ timeout.
 
 | Priority | Items                                                                          | Effort |
 |----------|--------------------------------------------------------------------------------|--------|
-| Critical | Script sandboxing (#1), Admin endpoints (#3)                                   | Medium |
+| Critical | Script sandboxing (#1)                                                         | Medium |
 | High     | Open redirect (#6), Authorization check (#7), Thread context leak (#8)         | Medium |
 | Medium   | Global state (#10), Rate limiting (#11), runBlocking (#12), Test coverage (#13) | High   |
 | Low      | Index fix (#14), Connection pool tuning (#15)                                  | Low    |
