@@ -284,21 +284,27 @@ class User {
 
   fun answerHistory(md5Val: String, invocationVal: Invocation): ChallengeHistory =
     readonlyTx {
-      with(UserAnswerHistoryTable) {
-        select(invocation, correct, incorrectAttempts, historyJson)
-          .where { (userRef eq userDbmsId) and (md5 eq md5Val) and (invocation eq invocationVal.value) }
-          .map {
-            val json = it[historyJson]
-            val history = Json.decodeFromString<List<String>>(json).toMutableList()
-            ChallengeHistory(
-              Invocation(it[invocation]),
-              it[correct],
-              it[incorrectAttempts],
-              history,
-            )
-          }
-          .firstOrNull() ?: ChallengeHistory(invocationVal)
-      }
+      answerHistoryQuery(md5Val, invocationVal)
+    }
+
+  fun answerHistoryInTransaction(md5Val: String, invocationVal: Invocation): ChallengeHistory =
+    answerHistoryQuery(md5Val, invocationVal)
+
+  private fun answerHistoryQuery(md5Val: String, invocationVal: Invocation): ChallengeHistory =
+    with(UserAnswerHistoryTable) {
+      select(invocation, correct, incorrectAttempts, historyJson)
+        .where { (userRef eq userDbmsId) and (md5 eq md5Val) and (invocation eq invocationVal.value) }
+        .map {
+          val json = it[historyJson]
+          val history = Json.decodeFromString<List<String>>(json).toMutableList()
+          ChallengeHistory(
+            Invocation(it[invocation]),
+            it[correct],
+            it[incorrectAttempts],
+            history,
+          )
+        }
+        .firstOrNull() ?: ChallengeHistory(invocationVal)
     }
 
   fun answerHistoryBulk(challengeMd5s: List<String>): Map<String, ChallengeHistory> =

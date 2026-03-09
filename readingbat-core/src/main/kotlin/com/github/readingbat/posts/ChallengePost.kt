@@ -78,6 +78,7 @@ import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.joda.time.DateTime
 import org.joda.time.DateTimeZone
+import java.sql.Connection
 
 internal data class StudentInfo(val studentId: String, val firstName: String, val lastName: String)
 
@@ -368,48 +369,51 @@ internal object ChallengePost {
     val invokeMap = invokeList.associate { it.first.value to it.second }
     val invokeStr = Json.encodeToString(invokeMap)
     if (user != null) {
-      // Pre-fetch all histories before the write transaction to avoid
-      // mixing read and write transaction semantics
+      // Read-modify-write in a single SERIALIZABLE transaction to prevent
+      // concurrent requests from overwriting each other's incorrectAttempts counts
       val historyPairs =
-        results.map { result ->
-          val historyMd5 = names.md5(result.invocation)
-          val history = user.answerHistory(historyMd5, result.invocation)
+        transaction(transactionIsolation = Connection.TRANSACTION_SERIALIZABLE) {
+          val pairs =
+            results.map { result ->
+              val historyMd5 = names.md5(result.invocation)
+              val history = user.answerHistoryInTransaction(historyMd5, result.invocation)
 
-          when {
-            !result.answered -> history.markUnanswered()
-            result.correct -> history.markCorrect(result.userResponse)
-            else -> history.markIncorrect(result.userResponse)
-          }
+              when {
+                !result.answered -> history.markUnanswered()
+                result.correct -> history.markCorrect(result.userResponse)
+                else -> history.markIncorrect(result.userResponse)
+              }
 
-          historyMd5 to history
-        }
+              historyMd5 to history
+            }
 
-      transaction {
-        with(UserChallengeInfoTable) {
-          upsert(conflictIndex = userChallengeInfoIndex) { row ->
-            row[userRef] = user.userDbmsId
-            row[md5] = challengeMd5
-            row[updated] = DateTime.now(DateTimeZone.UTC)
-            row[allCorrect] = complete
-            row[answersJson] = invokeStr
-          }
-        }
-
-        // Save the history of each answer on a per-invocation basis
-        historyPairs.forEach { (historyMd5, history) ->
-          with(UserAnswerHistoryTable) {
-            upsert(conflictIndex = userAnswerHistoryIndex) { row ->
+          with(UserChallengeInfoTable) {
+            upsert(conflictIndex = userChallengeInfoIndex) { row ->
               row[userRef] = user.userDbmsId
-              row[md5] = historyMd5
-              row[invocation] = history.invocation.value
+              row[md5] = challengeMd5
               row[updated] = DateTime.now(DateTimeZone.UTC)
-              row[correct] = history.correct
-              row[incorrectAttempts] = history.incorrectAttempts
-              row[historyJson] = Json.encodeToString(history.answers)
+              row[allCorrect] = complete
+              row[answersJson] = invokeStr
             }
           }
+
+          // Save the history of each answer on a per-invocation basis
+          pairs.forEach { (historyMd5, history) ->
+            with(UserAnswerHistoryTable) {
+              upsert(conflictIndex = userAnswerHistoryIndex) { row ->
+                row[userRef] = user.userDbmsId
+                row[md5] = historyMd5
+                row[invocation] = history.invocation.value
+                row[updated] = DateTime.now(DateTimeZone.UTC)
+                row[correct] = history.correct
+                row[incorrectAttempts] = history.incorrectAttempts
+                row[historyJson] = Json.encodeToString(history.answers)
+              }
+            }
+          }
+
+          pairs
         }
-      }
 
       // This is done outside the transaction
       if (shouldPublish) {
