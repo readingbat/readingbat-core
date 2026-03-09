@@ -19,8 +19,8 @@ import com.github.readingbat.dsl.parse.KotlinParse.stripLeadingComments
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 
-class StripLeadingCommentsTest : StringSpec(
-  {
+class StripLeadingCommentsTest : StringSpec() {
+  init {
     "strips multi-line copyright block comment" {
       val lines =
         listOf(
@@ -153,5 +153,5 @@ class StripLeadingCommentsTest : StringSpec(
       )
       stripLeadingComments(lines) shouldBe lines
     }
-  },
-)
+  }
+}

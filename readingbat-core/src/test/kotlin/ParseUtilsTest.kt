@@ -20,8 +20,8 @@ import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 
-class ParseUtilsTest : StringSpec(
-  {
+class ParseUtilsTest : StringSpec() {
+  init {
     "simple print with no nesting" {
       "print(42)".extractBalancedContent("print(") shouldBe "42"
     }
@@ -65,5 +65,5 @@ class ParseUtilsTest : StringSpec(
         "print(foo(a, b)".extractBalancedContent("print(")
       }
     }
-  },
-)
+  }
+}

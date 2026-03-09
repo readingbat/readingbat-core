@@ -26,8 +26,8 @@ import io.kotest.matchers.string.shouldNotContain
 import io.ktor.client.request.get
 import io.ktor.server.testing.testApplication
 
-class CookieSecurityTest : StringSpec(
-  {
+class CookieSecurityTest : StringSpec() {
+  init {
     afterEach {
       Property.IS_PRODUCTION.setProperty("false")
     }
@@ -68,5 +68,5 @@ class CookieSecurityTest : StringSpec(
           }
         }
     }
-  },
-)
+  }
+}

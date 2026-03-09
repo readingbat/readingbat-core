@@ -28,8 +28,8 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.ktor.server.testing.testApplication
 
-class UserValidationTest : StringSpec(
-  {
+class UserValidationTest : StringSpec() {
+  init {
     "null user is not valid" {
       val user: User? = null
       user.isValidUser() shouldBe false
@@ -64,5 +64,5 @@ class UserValidationTest : StringSpec(
           }
         }
     }
-  },
-)
+  }
+}

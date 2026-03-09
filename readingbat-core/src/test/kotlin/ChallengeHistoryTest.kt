@@ -23,8 +23,8 @@ import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.shouldBe
 
-class ChallengeHistoryTest : StringSpec(
-  {
+class ChallengeHistoryTest : StringSpec() {
+  init {
     "markCorrect sets correct flag and appends answer" {
       val history = ChallengeHistory(Invocation("test(1)"))
       history.correct shouldBe false
@@ -147,5 +147,5 @@ class ChallengeHistoryTest : StringSpec(
       history.incorrectAttempts shouldBe 2 // unchanged
       history.answers shouldContainExactly listOf("attempt1", "attempt2", "correct_answer")
     }
-  },
-)
+  }
+}

@@ -23,8 +23,8 @@ import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 
-class GeoInfoCacheTest : StringSpec(
-  {
+class GeoInfoCacheTest : StringSpec() {
+  init {
     beforeEach {
       geoInfoMap.clear()
     }
@@ -72,5 +72,5 @@ class GeoInfoCacheTest : StringSpec(
       lookupGeoInfo("10.0.0.1").dbmsId shouldBe 1
       lookupGeoInfo("10.0.0.2").dbmsId shouldBe 2
     }
-  },
-)
+  }
+}

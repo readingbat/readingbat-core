@@ -103,7 +103,19 @@ The codebase uses Kotlin `@JvmInline value class` extensively for type safety: `
 
 ### Testing
 
-Tests use Kotest with `StringSpec` style. The `readingbat-kotest` module provides `TestSupport` with helpers:
+Tests use Kotest with `StringSpec` style. Use `StringSpec()` with an `init {}` block (not the constructor lambda pattern):
+
+```kotlin
+class FooTest : StringSpec() {
+  init {
+    "test name" {
+      // ...
+    }
+  }
+}
+```
+
+The `readingbat-kotest` module provides `TestSupport` with helpers:
 
 - `testModule()` — sets up a Ktor test application with content
 - `forEachLanguage` / `forEachGroup` / `forEachChallenge` — DSL for iterating content

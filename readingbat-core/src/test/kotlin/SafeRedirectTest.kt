@@ -28,8 +28,8 @@ import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpStatusCode.Companion.Found
 import io.ktor.server.testing.testApplication
 
-class SafeRedirectTest : StringSpec(
-  {
+class SafeRedirectTest : StringSpec() {
+  init {
     afterEach {
       Property.IS_PRODUCTION.setProperty("false")
     }
@@ -107,5 +107,5 @@ class SafeRedirectTest : StringSpec(
           }
         }
     }
-  },
-)
+  }
+}

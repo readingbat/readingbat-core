@@ -40,8 +40,8 @@ import io.ktor.http.HttpStatusCode.Companion.Found
 import io.ktor.http.formUrlEncode
 import io.ktor.server.testing.testApplication
 
-class AuthorizationCheckTest : StringSpec(
-  {
+class AuthorizationCheckTest : StringSpec() {
+  init {
     afterEach {
       Property.IS_PRODUCTION.setProperty("false")
     }
@@ -104,5 +104,5 @@ class AuthorizationCheckTest : StringSpec(
           }
         }
     }
-  },
-)
+  }
+}

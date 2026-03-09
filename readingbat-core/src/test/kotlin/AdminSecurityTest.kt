@@ -29,8 +29,8 @@ import io.ktor.http.HttpStatusCode.Companion.Forbidden
 import io.ktor.http.HttpStatusCode.Companion.OK
 import io.ktor.server.testing.testApplication
 
-class AdminSecurityTest : StringSpec(
-  {
+class AdminSecurityTest : StringSpec() {
+  init {
     afterEach {
       Property.IS_PRODUCTION.setProperty("false")
     }
@@ -84,5 +84,5 @@ class AdminSecurityTest : StringSpec(
           }
         }
     }
-  },
-)
+  }
+}

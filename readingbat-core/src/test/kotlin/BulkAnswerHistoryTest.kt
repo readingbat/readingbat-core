@@ -22,8 +22,8 @@ import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.shouldBe
 
-class BulkAnswerHistoryTest : StringSpec(
-  {
+class BulkAnswerHistoryTest : StringSpec() {
+  init {
     "Default ChallengeHistory has correct defaults" {
       val history = ChallengeHistory(Invocation("test(1)"))
       history.correct shouldBe false
@@ -113,5 +113,5 @@ class BulkAnswerHistoryTest : StringSpec(
         it.answers.shouldBeEmpty()
       }
     }
-  },
-)
+  }
+}

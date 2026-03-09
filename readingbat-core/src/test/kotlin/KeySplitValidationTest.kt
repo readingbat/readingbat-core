@@ -22,8 +22,8 @@ import io.kotest.matchers.ints.shouldBeGreaterThanOrEqual
 import io.kotest.matchers.ints.shouldBeLessThan
 import io.kotest.matchers.shouldBe
 
-class KeySplitValidationTest : StringSpec(
-  {
+class KeySplitValidationTest : StringSpec() {
+  init {
     "valid key with 4 segments passes bounds check" {
       val key = keyOf("prefix", "auth", "userId123", "md5hash")
       val parts = key.split(KEY_SEP)
@@ -93,5 +93,5 @@ class KeySplitValidationTest : StringSpec(
       parts[2] shouldBe "id"
       parts[3] shouldBe "md5"
     }
-  },
-)
+  }
+}

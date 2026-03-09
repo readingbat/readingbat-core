@@ -28,8 +28,8 @@ import io.ktor.client.request.get
 import io.ktor.client.statement.bodyAsText
 import io.ktor.server.testing.testApplication
 
-class AuthenticateAdminUserTest : StringSpec(
-  {
+class AuthenticateAdminUserTest : StringSpec() {
+  init {
     afterEach {
       Property.IS_PRODUCTION.setProperty("false")
     }
@@ -68,5 +68,5 @@ class AuthenticateAdminUserTest : StringSpec(
           }
         }
     }
-  },
-)
+  }
+}
