@@ -92,16 +92,18 @@ class ChallengeHistoryTest : StringSpec(
 
     "pre-fetched histories produce correct marking results" {
       // Simulate the pre-fetch pattern: create histories first, then mark them
-      val invocations = listOf(
-        Invocation("test(1)"),
-        Invocation("test(2)"),
-        Invocation("test(3)"),
-      )
-      val results = listOf(
-        ChallengeResults(invocations[0], userResponse = "42", answered = true, correct = true),
-        ChallengeResults(invocations[1], userResponse = "wrong", answered = true, correct = false),
-        ChallengeResults(invocations[2], userResponse = "", answered = false, correct = false),
-      )
+      val invocations =
+        listOf(
+          Invocation("test(1)"),
+          Invocation("test(2)"),
+          Invocation("test(3)"),
+        )
+      val results =
+        listOf(
+          ChallengeResults(invocations[0], userResponse = "42", answered = true, correct = true),
+          ChallengeResults(invocations[1], userResponse = "wrong", answered = true, correct = false),
+          ChallengeResults(invocations[2], userResponse = "", answered = false, correct = false),
+        )
 
       // Pre-fetch: create histories before processing (simulates reading from DB before write tx)
       val histories = invocations.map { ChallengeHistory(it) }
@@ -130,12 +132,13 @@ class ChallengeHistoryTest : StringSpec(
 
     "history with existing state is updated correctly by marking" {
       // Simulate a history that was previously fetched from the DB with existing answers
-      val history = ChallengeHistory(
-        invocation = Invocation("test(1)"),
-        correct = false,
-        incorrectAttempts = 2,
-        answers = mutableListOf("attempt1", "attempt2"),
-      )
+      val history =
+        ChallengeHistory(
+          invocation = Invocation("test(1)"),
+          correct = false,
+          incorrectAttempts = 2,
+          answers = mutableListOf("attempt1", "attempt2"),
+        )
 
       // User now submits the correct answer
       history.markCorrect("correct_answer")
