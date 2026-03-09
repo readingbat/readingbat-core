@@ -72,7 +72,7 @@ internal object ChallengeGroupWs {
         metrics.wsClassStatisticsGauge.labels(agentLaunchId()).inc()
 
         metrics.measureEndpointRequest("/websocket_class_statistics") {
-          val content = contentSrc.invoke()
+          val content = contentSrc()
           val p = call.parameters
           val languageName =
             p[LANGUAGE_NAME]?.let { LanguageName(it) } ?: throw InvalidRequestException("Missing language")

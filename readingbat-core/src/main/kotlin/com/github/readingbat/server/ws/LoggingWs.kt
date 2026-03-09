@@ -43,13 +43,17 @@ import io.ktor.server.websocket.webSocket
 import io.ktor.websocket.CloseReason
 import io.ktor.websocket.Frame
 import io.ktor.websocket.close
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onStart
-import kotlinx.coroutines.newSingleThreadContext
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import java.util.Collections.synchronizedSet
 import kotlin.time.Duration.Companion.seconds
@@ -59,6 +63,7 @@ import kotlin.time.measureTime
 internal object LoggingWs {
   private val logger = KotlinLogging.logger {}
   private val clock = TimeSource.Monotonic
+  private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
   private val logWsConnections: MutableSet<LogSessionContext> = synchronizedSet(LinkedHashSet<LogSessionContext>())
   val adminCommandFlow by lazy { MutableSharedFlow<AdminCommandData>(extraBufferCapacity = FLOW_BUFFER_CAPACITY) }
   val logWsReadFlow by lazy { MutableSharedFlow<PubSubCommandsWs.LogData>(extraBufferCapacity = FLOW_BUFFER_CAPACITY) }
@@ -70,92 +75,88 @@ internal object LoggingWs {
   }
 
   fun initThreads(contentSrc: () -> ReadingBatContent, resetContentFunc: (String) -> Unit) {
-    newSingleThreadContext("logging-ws-adminCommandChannel").executor.execute {
+    scope.launch(CoroutineName("logging-ws-adminCommandChannel")) {
       while (true) {
         runCatching {
-          runBlocking {
-            adminCommandFlow
-              .onStart { logger.info { "Starting to read admin command channel values" } }
-              .onCompletion { logger.info { "Finished reading admin command channel values" } }
-              .collect { data ->
-                val logItem = { s: String -> publishLog(s, data.logId) }
+          adminCommandFlow
+            .onStart { logger.info { "Starting to read admin command channel values" } }
+            .onCompletion { logger.info { "Finished reading admin command channel values" } }
+            .collect { data ->
+              val logItem = { s: String -> publishLog(s, data.logId) }
 
-                  when (data.command) {
-                    RESET_CONTENT_DSL -> {
-                      measureTime { resetContentFunc.invoke(data.logId) }
-                        .also { dur ->
-                          "DSL content reset in $dur"
-                            .also {
-                              logger.info { it }
-                              logItem(it)
-                            }
-                        }
-                    }
-
-                    RESET_CACHE -> {
-                      val content = contentSrc()
-                      val cnt = content.functionInfoMap.size
-                      content.clearSourcesMap()
-                        .let {
-                          "Challenge cache reset -- $cnt challenges removed"
-                            .also {
-                              logger.info { it }
-                              logItem(it)
-                            }
-                        }
-                    }
-
-                    LOAD_CHALLENGE -> {
-                      val type = Json.decodeFromString<LoadChallengeType>(data.jsonArgs)
-                      type.languageTypes
-                        .forEach { langType ->
-                          content.load().loadChallenges(langType, logItem, "", false)
-                            .also {
-                              logger.info { it }
-                              logItem(it)
-                            }
-                        }
-                    }
-
-                    RUN_GC -> {
-                      measureTime { System.gc() }
-                        .also { dur ->
-                          "Garbage collector invoked for $dur"
-                            .also {
-                              logger.info { it }
-                              logItem(it)
-                            }
-                        }
-                    }
+                when (data.command) {
+                  RESET_CONTENT_DSL -> {
+                    measureTime { resetContentFunc(data.logId) }
+                      .also { dur ->
+                        "DSL content reset in $dur"
+                          .also {
+                            logger.info { it }
+                            logItem(it)
+                          }
+                      }
                   }
-              }
-          }
+
+                  RESET_CACHE -> {
+                    val content = contentSrc()
+                    val cnt = content.functionInfoMap.size
+                    content.clearSourcesMap()
+                      .let {
+                        "Challenge cache reset -- $cnt challenges removed"
+                          .also {
+                            logger.info { it }
+                            logItem(it)
+                          }
+                      }
+                  }
+
+                  LOAD_CHALLENGE -> {
+                    val type = Json.decodeFromString<LoadChallengeType>(data.jsonArgs)
+                    type.languageTypes
+                      .forEach { langType ->
+                        content.load().loadChallenges(langType, logItem, "", false)
+                          .also {
+                            logger.info { it }
+                            logItem(it)
+                          }
+                      }
+                  }
+
+                  RUN_GC -> {
+                    measureTime { System.gc() }
+                      .also { dur ->
+                        "Garbage collector invoked for $dur"
+                          .also {
+                            logger.info { it }
+                            logItem(it)
+                          }
+                      }
+                  }
+                }
+            }
         }.onFailure { e ->
           logger.error(e) { "Exception in dispatcher ${e.simpleClassName} ${e.message}" }
-          Thread.sleep(1.seconds.inWholeMilliseconds)
+          delay(1.seconds)
         }
       }
     }
 
-    newSingleThreadContext("logging-ws-logWsReadChannel").executor.execute {
+    scope.launch(CoroutineName("logging-ws-logWsReadChannel")) {
       while (true) {
         runCatching {
-          runBlocking {
-            logWsReadFlow
-              .onStart { logger.info { "Starting to read log ws channel values" } }
-              .onCompletion { logger.info { "Finished reading log ws channel values" } }
-              .collect { data ->
-                val json = Json.encodeToString(data.text)
-                logWsConnections
-                  .filter { it.logId == data.logId }
-                  .forEach {
-                    it.wsSession.outgoing.send(Frame.Text(json))
-                  }
-              }
-          }
+          logWsReadFlow
+            .onStart { logger.info { "Starting to read log ws channel values" } }
+            .onCompletion { logger.info { "Finished reading log ws channel values" } }
+            .collect { data ->
+              val json = Json.encodeToString(data.text)
+              logWsConnections
+                .filter { it.logId == data.logId }
+                .forEach {
+                  it.wsSession.outgoing.send(Frame.Text(json))
+                }
+            }
         }.onFailure { e ->
           logger.error { "Exception in dispatcher ${e.simpleClassName} ${e.message}" }
-          Thread.sleep(1.seconds.inWholeMilliseconds)
+          delay(1.seconds)
         }
       }
     }

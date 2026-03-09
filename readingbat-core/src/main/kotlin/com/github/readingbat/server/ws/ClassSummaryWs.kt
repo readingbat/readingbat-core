@@ -68,7 +68,7 @@ internal object ClassSummaryWs {
         metrics.wsClassSummaryGauge.labels(agentLaunchId()).inc()
 
         metrics.measureEndpointRequest("/websocket_class_summary") {
-          val content = contentSrc.invoke()
+          val content = contentSrc()
           val p = call.parameters
           val langName = p[LANGUAGE_NAME]?.let { LanguageName(it) } ?: throw InvalidRequestException("Missing language")
           val groupName = p[GROUP_NAME]?.let { GroupName(it) } ?: throw InvalidRequestException("Missing group name")

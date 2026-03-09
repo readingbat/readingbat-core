@@ -87,7 +87,7 @@ internal object ServerUtils {
   suspend fun RoutingContext.respondWithRedirect(block: () -> String) =
     try {
       // Do this outside of respondWith{} so that exceptions will be caught
-      val html = block.invoke()
+      val html = block()
       respondWith { html }
     } catch (e: RedirectException) {
       redirectTo { e.redirectUrl }
@@ -95,7 +95,7 @@ internal object ServerUtils {
 
   suspend fun RoutingContext.respondWithSuspendingRedirect(block: suspend () -> String) =
     try {
-      val html = block.invoke()
+      val html = block()
       respondWith { html }
     } catch (e: RedirectException) {
       redirectTo { e.redirectUrl }
@@ -107,12 +107,12 @@ internal object ServerUtils {
         when {
           user.isNotValidUser() -> throw InvalidRequestException("Must be logged in for this function")
           user.isNotAdminUser() -> throw InvalidRequestException("Must be system admin for this function")
-          else -> block.invoke()
+          else -> block()
         }
       }
 
       else -> {
-        block.invoke()
+        block()
       }
     }
 

@@ -69,7 +69,7 @@ internal object StudentSummaryWs {
         metrics.wsStudentSummaryGauge.labels(agentLaunchId()).inc()
 
         metrics.measureEndpointRequest("/websocket_student_summary") {
-          val content = contentSrc.invoke()
+          val content = contentSrc()
           val p = call.parameters
           val languageName =
             p[LANGUAGE_NAME]?.let { LanguageName(it) } ?: throw InvalidRequestException("Missing language")

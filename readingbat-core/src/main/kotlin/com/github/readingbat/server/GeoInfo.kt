@@ -75,7 +75,7 @@ class GeoInfo(val requireDbmsLookUp: Boolean, val dbmsId: Long, val remoteHost: 
 
   fun mapVal(block: () -> String) =
     try {
-      block.invoke()
+      block()
     } catch (e: NoSuchElementException) {
       logger.warn { e.message }
       "Unknown"

@@ -99,7 +99,7 @@ fun Routing.sysAdminRoutes(metrics: Metrics, resetContentFunc: (String) -> Unit)
         deleteAllCaches(logId)
         // Run on the first server alone initially, to avoid multiple servers caching to redis simultaneously
         if (isContentCachingEnabled()) {
-          measureTime { resetContentFunc.invoke(logId) }
+          measureTime { resetContentFunc(logId) }
             .also { dur ->
               "Initial DSL content reset in $dur"
                 .also {
