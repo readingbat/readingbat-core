@@ -47,7 +47,7 @@ import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.pages.ClassSummaryPage.classSummaryPage
 import com.github.readingbat.pages.TeacherPrefsPage.teacherPrefsPage
 import com.github.readingbat.pages.UserPrefsPage.requestLogInPage
-import com.github.readingbat.server.RedirectException
+import com.github.readingbat.server.PageResult
 import com.github.readingbat.server.ServerUtils.queryParam
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.server.request.receiveParameters
@@ -102,9 +102,8 @@ internal object TeacherPrefsPost {
       requestLogInPage(content)
     }
 
-  fun RoutingContext.enableStudentMode(user: User?): String {
+  fun RoutingContext.enableStudentMode(user: User?): PageResult {
     val returnPath = queryParam(RETURN_PARAM, "/")
-    // val browserSession = call.browserSession
     val msg =
       if (user.isValidUser()) {
         user.assignActiveClassCode(DISABLED_CLASS_CODE, false)
@@ -112,10 +111,10 @@ internal object TeacherPrefsPost {
       } else {
         "Invalid user"
       }
-    throw RedirectException("$returnPath?$MSG=${msg.encode()}")
+    return PageResult.Redirect("$returnPath?$MSG=${msg.encode()}")
   }
 
-  fun RoutingContext.enableTeacherMode(user: User?): String {
+  fun RoutingContext.enableTeacherMode(user: User?): PageResult {
     val returnPath = queryParam(RETURN_PARAM, "/")
     val msg =
       if (user.isValidUser()) {
@@ -125,7 +124,7 @@ internal object TeacherPrefsPost {
       } else {
         "Invalid user"
       }
-    throw RedirectException("$returnPath?$MSG=${msg.encode()}")
+    return PageResult.Redirect("$returnPath?$MSG=${msg.encode()}")
   }
 
   private fun RoutingContext.createClass(content: ReadingBatContent, user: User, classDesc: String) =

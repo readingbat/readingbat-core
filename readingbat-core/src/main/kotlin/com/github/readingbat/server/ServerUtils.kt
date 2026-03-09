@@ -81,21 +81,16 @@ internal object ServerUtils {
   fun ApplicationCall.fetchEmailFromCache() =
     userPrincipal?.userId?.let { User.fetchEmailFromCache(it) } ?: UNKNOWN_EMAIL
 
-  suspend fun RoutingContext.respondWithRedirect(block: () -> String) =
-    try {
-      // Do this outside of respondWith{} so that exceptions will be caught
-      val html = block.invoke()
-      respondWith { html }
-    } catch (e: RedirectException) {
-      redirectTo { e.redirectUrl }
+  suspend fun RoutingContext.respondWithPageResult(block: () -> PageResult) =
+    when (val result = block()) {
+      is PageResult.Html -> respondWith { result.content }
+      is PageResult.Redirect -> redirectTo { result.url }
     }
 
-  suspend fun RoutingContext.respondWithSuspendingRedirect(block: suspend () -> String) =
-    try {
-      val html = block.invoke()
-      respondWith { html }
-    } catch (e: RedirectException) {
-      redirectTo { e.redirectUrl }
+  suspend fun RoutingContext.respondWithSuspendingPageResult(block: suspend () -> PageResult) =
+    when (val result = block()) {
+      is PageResult.Html -> respondWith { result.content }
+      is PageResult.Redirect -> redirectTo { result.url }
     }
 
   fun authenticateAdminUser(user: User?, block: () -> String): String =
@@ -150,4 +145,8 @@ internal object ServerUtils {
   fun Int.rows(cols: Int) = if (this % cols == 0) this / cols else (this / cols) + 1
 }
 
-class RedirectException(val redirectUrl: String) : Exception()
+sealed class PageResult {
+  data class Html(val content: String) : PageResult()
+
+  data class Redirect(val url: String) : PageResult()
+}

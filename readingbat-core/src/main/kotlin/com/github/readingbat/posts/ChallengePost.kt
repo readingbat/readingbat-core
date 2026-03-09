@@ -57,7 +57,7 @@ import com.github.readingbat.server.GroupName.Companion.getGroupName
 import com.github.readingbat.server.Invocation
 import com.github.readingbat.server.LanguageName
 import com.github.readingbat.server.LanguageName.Companion.getLanguageName
-import com.github.readingbat.server.RedirectException
+import com.github.readingbat.server.PageResult
 import com.github.readingbat.server.ServerUtils.paramMap
 import com.github.readingbat.server.UserAnswerHistoryTable
 import com.github.readingbat.server.UserChallengeInfoTable
@@ -239,7 +239,7 @@ internal object ChallengePost {
       }
     }
 
-  suspend fun RoutingContext.clearChallengeAnswers(content: ReadingBatContent, user: User?): String {
+  suspend fun RoutingContext.clearChallengeAnswers(content: ReadingBatContent, user: User?): PageResult {
     val params = call.receiveParameters()
 
     val languageName = params.getLanguageName(LANGUAGE_NAME_PARAM)
@@ -270,10 +270,10 @@ internal object ChallengePost {
 
     user?.resetHistory(funcInfo, challenge, content.maxHistoryLength)
 
-    throw RedirectException("$path?$MSG=${"Answers cleared".encode()}")
+    return PageResult.Redirect("$path?$MSG=${"Answers cleared".encode()}")
   }
 
-  suspend fun RoutingContext.clearGroupAnswers(content: ReadingBatContent, user: User?): String {
+  suspend fun RoutingContext.clearGroupAnswers(content: ReadingBatContent, user: User?): PageResult {
     val parameters = call.receiveParameters()
 
     val languageName = parameters.getLanguageName(LANGUAGE_NAME_PARAM)
@@ -288,7 +288,7 @@ internal object ChallengePost {
     val path = pathOf(CHALLENGE_ROOT, languageName, groupName)
 
     if (!isDbmsEnabled())
-      throw RedirectException("$path?$MSG=${"Database not enabled"}")
+      return PageResult.Redirect("$path?$MSG=${"Database not enabled"}")
 
     correctAnswersKeys
       .forEach { correctAnswersKey ->
@@ -319,7 +319,7 @@ internal object ChallengePost {
         }
     }
 
-    throw RedirectException("$path?$MSG=${"Answers cleared".encode()}")
+    return PageResult.Redirect("$path?$MSG=${"Answers cleared".encode()}")
   }
 
   suspend fun RoutingContext.likeDislike(user: User?) {

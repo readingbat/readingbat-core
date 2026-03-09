@@ -80,8 +80,8 @@ import com.github.readingbat.server.ServerUtils.defaultLanguageTab
 import com.github.readingbat.server.ServerUtils.fetchUser
 import com.github.readingbat.server.ServerUtils.get
 import com.github.readingbat.server.ServerUtils.queryParam
-import com.github.readingbat.server.ServerUtils.respondWithRedirect
-import com.github.readingbat.server.ServerUtils.respondWithSuspendingRedirect
+import com.github.readingbat.server.ServerUtils.respondWithPageResult
+import com.github.readingbat.server.ServerUtils.respondWithSuspendingPageResult
 import com.github.readingbat.server.routes.ResourceContent.getResourceAsText
 import io.ktor.http.ContentType
 import io.ktor.http.ContentType.Text.CSS
@@ -170,11 +170,11 @@ fun Routing.userRoutes(metrics: Metrics, contentSrc: () -> ReadingBatContent) {
   }
 
   post(CLEAR_GROUP_ANSWERS_ENDPOINT) {
-    respondWithSuspendingRedirect { clearGroupAnswers(contentSrc(), fetchUser()) }
+    respondWithSuspendingPageResult { clearGroupAnswers(contentSrc(), fetchUser()) }
   }
 
   post(CLEAR_CHALLENGE_ANSWERS_ENDPOINT) {
-    respondWithSuspendingRedirect { clearChallengeAnswers(contentSrc(), fetchUser()) }
+    respondWithSuspendingPageResult { clearChallengeAnswers(contentSrc(), fetchUser()) }
   }
 
   get(ADMIN_PREFS_ENDPOINT) {
@@ -218,11 +218,11 @@ fun Routing.userRoutes(metrics: Metrics, contentSrc: () -> ReadingBatContent) {
   }
 
   get(ENABLE_STUDENT_MODE_ENDPOINT, metrics) {
-    respondWithRedirect { enableStudentMode(fetchUser()) }
+    respondWithPageResult { enableStudentMode(fetchUser()) }
   }
 
   get(ENABLE_TEACHER_MODE_ENDPOINT, metrics) {
-    respondWithRedirect { enableTeacherMode(fetchUser()) }
+    respondWithPageResult { enableTeacherMode(fetchUser()) }
   }
 
   get(USER_INFO_ENDPOINT, metrics) {
