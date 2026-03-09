@@ -121,60 +121,28 @@ internal object AdminPage {
     }
   }
 
-  private fun BODY.dumpContentDslCacheData() {
-    h3 { +"Content DSL Cache Data" }
+  private fun BODY.dumpCacheData(title: String, entries: List<Pair<String, String>>) {
+    h3 { +title }
     br
     div(classes = TwClasses.INDENT_1EM) {
-      h4 { +"${contentDslCache.size} items:" }
+      h4 { +"${entries.size} items:" }
       table {
-        contentDslCache.keys
-          .sorted()
-          .map { it to contentDslCache[it].orEmpty() }
-          .forEach {
-            tr {
-              td { +it.first }
-              td { +it.second }
-            }
+        entries.forEach { (key, value) ->
+          tr {
+            td { +key }
+            td { +value }
           }
+        }
       }
     }
   }
 
-  private fun BODY.dumpSourceCacheData() {
-    h3 { +"Source Cache Data" }
-    br
-    div(classes = TwClasses.INDENT_1EM) {
-      h4 { +"${sourceCache.size} items:" }
-      table {
-        sourceCache.keys
-          .sorted()
-          .map { it to sourceCache[it].orEmpty() }
-          .forEach {
-            tr {
-              td { +it.first }
-              td { +it.second }
-            }
-          }
-      }
-    }
-  }
+  private fun BODY.dumpContentDslCacheData() =
+    dumpCacheData("Content DSL Cache Data", contentDslCache.keys.sorted().map { it to contentDslCache[it].orEmpty() })
 
-  private fun BODY.dumpDirCacheData() {
-    h3 { +"Dir Cache Data" }
-    br
-    div(classes = TwClasses.INDENT_1EM) {
-      h4 { +"${dirCache.size} items:" }
-      table {
-        dirCache.keys
-          .sorted()
-          .map { it to (dirCache[it] ?: emptyList()) }
-          .forEach {
-            tr {
-              td { +it.first }
-              td { +it.second.toString() }
-            }
-          }
-      }
-    }
-  }
+  private fun BODY.dumpSourceCacheData() =
+    dumpCacheData("Source Cache Data", sourceCache.keys.sorted().map { it to sourceCache[it].orEmpty() })
+
+  private fun BODY.dumpDirCacheData() =
+    dumpCacheData("Dir Cache Data", dirCache.keys.sorted().map { it to (dirCache[it] ?: emptyList()).toString() })
 }
