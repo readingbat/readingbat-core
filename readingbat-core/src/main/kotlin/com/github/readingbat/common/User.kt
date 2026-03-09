@@ -315,13 +315,15 @@ class User {
 
   fun resetActiveClassCode() {
     logger.info { "Resetting $fullName ($email) active class code" }
-    with(UserSessionsTable) {
-      upsert(conflictIndex = userSessionIndex) { row ->
-        row[sessionRef] = queryOrCreateSessionDbmsId()
-        row[userRef] = userDbmsId
-        row[updated] = DateTime.now(UTC)
-        row[activeClassCode] = DISABLED_CLASS_CODE.classCode
-        row[previousTeacherClassCode] = DISABLED_CLASS_CODE.classCode
+    transaction {
+      with(UserSessionsTable) {
+        upsert(conflictIndex = userSessionIndex) { row ->
+          row[sessionRef] = queryOrCreateSessionDbmsId()
+          row[userRef] = userDbmsId
+          row[updated] = DateTime.now(UTC)
+          row[activeClassCode] = DISABLED_CLASS_CODE.classCode
+          row[previousTeacherClassCode] = DISABLED_CLASS_CODE.classCode
+        }
       }
     }
   }
