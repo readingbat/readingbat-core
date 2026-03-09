@@ -35,7 +35,6 @@ import com.github.readingbat.server.ws.PubSubCommandsWs.PubSubTopic.LIKE_DISLIKE
 import com.github.readingbat.server.ws.PubSubCommandsWs.PubSubTopic.LOG_MESSAGE
 import com.github.readingbat.server.ws.PubSubCommandsWs.PubSubTopic.USER_ANSWERS
 import io.github.oshai.kotlinlogging.KotlinLogging
-import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import java.time.LocalDateTime
@@ -92,24 +91,25 @@ internal object PubSubCommandsWs {
 
   fun publishShim(channel: String, message: String) {
     if (channel.isNotNull() && message.isNotNull())
-      runBlocking {
-        when (enumValueOf<PubSubTopic>(channel)) {
-          ADMIN_COMMAND -> {
-            val data = Json.decodeFromString<AdminCommandData>(message)
-            adminCommandFlow.emit(data)
-          }
+      when (enumValueOf<PubSubTopic>(channel)) {
+        ADMIN_COMMAND -> {
+          val data = Json.decodeFromString<AdminCommandData>(message)
+          if (!adminCommandFlow.tryEmit(data))
+            logger.warn { "adminCommandFlow buffer full, dropping AdminCommand: ${data.command}" }
+        }
 
-          USER_ANSWERS,
-          LIKE_DISLIKE,
-            -> {
-            val data = Json.decodeFromString<ChallengeAnswerData>(message)
-            multiServerWsReadFlow.emit(data)
-          }
+        USER_ANSWERS,
+        LIKE_DISLIKE,
+          -> {
+          val data = Json.decodeFromString<ChallengeAnswerData>(message)
+          if (!multiServerWsReadFlow.tryEmit(data))
+            logger.warn { "multiServerWsReadFlow buffer full, dropping ${data.pubSubTopic}" }
+        }
 
-          LOG_MESSAGE -> {
-            val data = Json.decodeFromString<LogData>(message)
-            logWsReadFlow.emit(data)
-          }
+        LOG_MESSAGE -> {
+          val data = Json.decodeFromString<LogData>(message)
+          if (!logWsReadFlow.tryEmit(data))
+            logger.warn { "logWsReadFlow buffer full, dropping log message" }
         }
       }
   }
