@@ -34,26 +34,29 @@ class BulkAnswerHistoryTest : StringSpec(
 
     "ChallengeHistory with data preserves all fields" {
       val answers = mutableListOf("wrong1", "wrong2", "correct")
-      val history = ChallengeHistory(
-        invocation = Invocation("foo(2)"),
-        correct = true,
-        incorrectAttempts = 2,
-        answers = answers,
-      )
+      val history =
+        ChallengeHistory(
+          invocation = Invocation("foo(2)"),
+          correct = true,
+          incorrectAttempts = 2,
+          answers = answers,
+        )
       history.correct shouldBe true
       history.incorrectAttempts shouldBe 2
       history.answers shouldContainExactly listOf("wrong1", "wrong2", "correct")
     }
 
     "Bulk result map lookup falls back to default for missing md5" {
-      val historyMap = mapOf(
-        "abc123" to ChallengeHistory(
-          invocation = Invocation("test(1)"),
-          correct = true,
-          incorrectAttempts = 0,
-          answers = mutableListOf("42"),
-        ),
-      )
+      val historyMap =
+        mapOf(
+          "abc123" to
+            ChallengeHistory(
+              invocation = Invocation("test(1)"),
+              correct = true,
+              incorrectAttempts = 0,
+              answers = mutableListOf("42"),
+            ),
+        )
 
       val found = historyMap["abc123"] ?: ChallengeHistory(Invocation("test(1)"))
       found.correct shouldBe true
@@ -66,32 +69,19 @@ class BulkAnswerHistoryTest : StringSpec(
     }
 
     "Multiple invocations map to distinct entries" {
-      val historyMap = mapOf(
-        "md5_1" to ChallengeHistory(
-          Invocation("foo(1)"),
-          true,
-          0,
-          mutableListOf("1"),
-        ),
-        "md5_2" to ChallengeHistory(
-          Invocation("foo(2)"),
-          false,
-          3,
-          mutableListOf("a", "b", "c"),
-        ),
-        "md5_3" to ChallengeHistory(
-          Invocation("foo(3)"),
-          true,
-          1,
-          mutableListOf("x", "3"),
-        ),
-      )
+      val historyMap =
+        mapOf(
+          "md5_1" to ChallengeHistory(Invocation("foo(1)"), true, 0, mutableListOf("1")),
+          "md5_2" to ChallengeHistory(Invocation("foo(2)"), false, 3, mutableListOf("a", "b", "c")),
+          "md5_3" to ChallengeHistory(Invocation("foo(3)"), true, 1, mutableListOf("x", "3")),
+        )
 
-      val invocations = listOf(
-        Invocation("foo(1)") to "md5_1",
-        Invocation("foo(2)") to "md5_2",
-        Invocation("foo(3)") to "md5_3",
-      )
+      val invocations =
+        listOf(
+          Invocation("foo(1)") to "md5_1",
+          Invocation("foo(2)") to "md5_2",
+          Invocation("foo(3)") to "md5_3",
+        )
 
       var numCorrect = 0
       val results =

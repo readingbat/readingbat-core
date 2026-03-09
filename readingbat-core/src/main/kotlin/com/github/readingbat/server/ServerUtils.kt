@@ -100,20 +100,11 @@ internal object ServerUtils {
       redirectTo { e.redirectUrl }
     }
 
-  fun authenticateAdminUser(user: User?, block: () -> String): String =
-    when {
-      isProduction() -> {
-        when {
-          user.isNotValidUser() -> throw InvalidRequestException("Must be logged in for this function")
-          user.isNotAdminUser() -> throw InvalidRequestException("Must be system admin for this function")
-          else -> block()
-        }
-      }
-
-      else -> {
-        block()
-      }
-    }
+  fun authenticateAdminUser(user: User?, block: () -> String): String {
+    if (user.isNotValidUser()) throw InvalidRequestException("Must be logged in for this function")
+    if (isProduction() && user.isNotAdminUser()) throw InvalidRequestException("Must be system admin for this function")
+    return block()
+  }
 
   @KtorDsl
   fun Route.get(path: String, metrics: Metrics, body: RoutingHandler) =
