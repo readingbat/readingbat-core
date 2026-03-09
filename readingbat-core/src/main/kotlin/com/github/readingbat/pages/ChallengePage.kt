@@ -467,11 +467,8 @@ internal object ChallengePage {
               val results =
                 funcInfo.invocations
                   .map { invocation ->
-                    val history =
-                      readonlyTx {
-                        val historyMd5 = challenge.md5(invocation)
-                        enrollee.answerHistory(historyMd5, invocation)
-                      }
+                    val historyMd5 = challenge.md5(invocation)
+                    val history = enrollee.answerHistory(historyMd5, invocation)
 
                     if (history.correct)
                       numCorrect++

@@ -13,10 +13,10 @@ security-critical paths (auth, authorization, WebSocket) is notably absent.
 
 ### Progress Since Initial Review
 
-Of the 15 issues identified, 7 have been fully resolved, 2 are partially addressed, and 6 remain open. Of the 3
-critical issues, 2 have been resolved (#2 cookie secure flag, #3 admin endpoint auth). Of the 5 high-severity issues, 4
+Of the 15 issues identified, 8 have been fully resolved, 2 are partially addressed, and 5 remain open. Of the 3
+critical issues, 2 have been resolved (#2 cookie secure flag, #3 admin endpoint auth). All 5 high-severity issues
 have been resolved (#4 via OAuth migration, #5 via caching, #6 via redirect validation, #7 via userId authorization
-check).
+check, #8 via CoroutineScope replacement).
 
 ## Strengths
 
@@ -132,20 +132,19 @@ key against the authenticated user's `userId`. If the user is null or the IDs do
 with a warning log. Both `clearChallengeAnswers` and `clearGroupAnswers` pass the authenticated user through to
 `splitKeyAndDelete()`.
 
-### 8. `newSingleThreadContext` — Deprecated API, Resource Leak
+### 8. ~~`newSingleThreadContext` — Deprecated API, Resource Leak~~
 
-**Status:** OPEN
+**Status:** RESOLVED
 
-**Files:**
+~~**Files:**~~
 
-- `readingbat-core/src/main/kotlin/com/github/readingbat/server/ws/ChallengeWs.kt` (lines 121, 140)
-- `readingbat-core/src/main/kotlin/com/github/readingbat/server/ws/LoggingWs.kt` (line 73)
+~~- `readingbat-core/src/main/kotlin/com/github/readingbat/server/ws/ChallengeWs.kt` (lines 121, 140)~~
+~~- `readingbat-core/src/main/kotlin/com/github/readingbat/server/ws/LoggingWs.kt` (line 73)~~
 
-`newSingleThreadContext()` is `@DelicateCoroutinesApi` and creates threads that are never `close()`d. Each context holds
-an OS thread and a thread pool. If `initThreads()` were called more than once (e.g., in tests), leaks would accumulate.
-
-**Recommendation:** Use a named `CoroutineScope` backed by `Dispatchers.IO` or a fixed-thread-pool dispatcher. Cancel it
-on application shutdown via `ApplicationStopped` monitor.
+All `newSingleThreadContext().executor.execute { ... }` patterns have been replaced with
+`CoroutineScope(SupervisorJob() + Dispatchers.IO)` and `scope.launch(CoroutineName(...))`. The `runBlocking` wrappers
+inside the loops were removed (now running in a proper coroutine context), and `Thread.sleep()` calls were replaced
+with `delay()`. Each object holds a `scope` property that can be cancelled on shutdown.
 
 ---
 
@@ -261,7 +260,7 @@ timeout.
 | 5  | User validation N+1 queries        | High     | RESOLVED            |
 | 6  | Open redirect                      | High     | RESOLVED            |
 | 7  | Authorization check gap            | High     | RESOLVED            |
-| 8  | Thread context leak                | High     | OPEN                |
+| 8  | Thread context leak                | High     | RESOLVED            |
 | 9  | Dead code (`configureSessionAuth`) | Medium   | RESOLVED            |
 | 10 | Global mutable state               | Medium   | OPEN                |
 | 11 | Global rate limiting               | Medium   | OPEN                |
@@ -275,7 +274,7 @@ timeout.
 | Priority | Items                                                                          | Effort |
 |----------|--------------------------------------------------------------------------------|--------|
 | Critical | Script sandboxing (#1)                                                         | Medium |
-| High     | ~~Open redirect (#6)~~, ~~Authorization check (#7)~~, Thread context leak (#8)  | Medium |
+| High     | ~~Open redirect (#6)~~, ~~Authorization check (#7)~~, ~~Thread context leak (#8)~~  | Medium |
 | Medium   | Global state (#10), Rate limiting (#11), runBlocking (#12), Test coverage (#13) | High   |
 | Low      | Index fix (#14), Connection pool tuning (#15)                                  | Low    |
 

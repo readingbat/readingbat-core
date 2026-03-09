@@ -283,20 +283,22 @@ class User {
     }
 
   fun answerHistory(md5Val: String, invocationVal: Invocation): ChallengeHistory =
-    with(UserAnswerHistoryTable) {
-      select(invocation, correct, incorrectAttempts, historyJson)
-        .where { (userRef eq userDbmsId) and (md5 eq md5Val) and (invocation eq invocationVal.value) }
-        .map {
-          val json = it[historyJson]
-          val history = Json.decodeFromString<List<String>>(json).toMutableList()
-          ChallengeHistory(
-            Invocation(it[invocation]),
-            it[correct],
-            it[incorrectAttempts],
-            history,
-          )
-        }
-        .firstOrNull() ?: ChallengeHistory(invocationVal)
+    readonlyTx {
+      with(UserAnswerHistoryTable) {
+        select(invocation, correct, incorrectAttempts, historyJson)
+          .where { (userRef eq userDbmsId) and (md5 eq md5Val) and (invocation eq invocationVal.value) }
+          .map {
+            val json = it[historyJson]
+            val history = Json.decodeFromString<List<String>>(json).toMutableList()
+            ChallengeHistory(
+              Invocation(it[invocation]),
+              it[correct],
+              it[incorrectAttempts],
+              history,
+            )
+          }
+          .firstOrNull() ?: ChallengeHistory(invocationVal)
+      }
     }
 
   fun assignActiveClassCode(classCode: ClassCode, resetPreviousClassCode: Boolean) =

@@ -36,7 +36,6 @@ import com.github.readingbat.server.ws.WsCommon.LANGUAGE_NAME
 import com.github.readingbat.server.ws.WsCommon.STUDENT_ID
 import com.github.readingbat.server.ws.WsCommon.closeChannels
 import com.github.readingbat.server.ws.WsCommon.validateContext
-import com.pambrose.common.exposed.readonlyTx
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.server.routing.Routing
 import io.ktor.server.websocket.webSocket
@@ -99,26 +98,24 @@ internal object StudentSummaryWs {
 
                   val results = mutableListOf<String>()
                   for (invocation in funcInfo.invocations) {
-                    readonlyTx {
-                      val historyMd5 = md5Of(languageName, groupName, challengeName, invocation)
-                      if (student.historyExists(historyMd5, invocation)) {
-                        attempted++
-                        results +=
-                          student.answerHistory(historyMd5, invocation)
-                            .let {
-                              incorrectAttempts += it.incorrectAttempts
-                              if (it.correct) {
-                                YES
-                              } else {
-                                if (it.incorrectAttempts > 0)
-                                  NO
-                                else
-                                  UNANSWERED
-                              }
+                    val historyMd5 = md5Of(languageName, groupName, challengeName, invocation)
+                    if (student.historyExists(historyMd5, invocation)) {
+                      attempted++
+                      results +=
+                        student.answerHistory(historyMd5, invocation)
+                          .let {
+                            incorrectAttempts += it.incorrectAttempts
+                            if (it.correct) {
+                              YES
+                            } else {
+                              if (it.incorrectAttempts > 0)
+                                NO
+                              else
+                                UNANSWERED
                             }
-                      } else {
-                        results += UNANSWERED
-                      }
+                          }
+                    } else {
+                      results += UNANSWERED
                     }
 
                     if (finished.load())

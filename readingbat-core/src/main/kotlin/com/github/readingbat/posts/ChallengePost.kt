@@ -362,9 +362,23 @@ internal object ChallengePost {
     val numCorrect = results.count { it.correct }
     val invokeMap = invokeList.associate { it.first.value to it.second }
     val invokeStr = Json.encodeToString(invokeMap)
-    val historyList = mutableListOf<ChallengeHistory>()
-
     if (user.isNotNull()) {
+      // Pre-fetch all histories before the write transaction to avoid
+      // mixing read and write transaction semantics
+      val historyPairs =
+        results.map { result ->
+          val historyMd5 = names.md5(result.invocation)
+          val history = user.answerHistory(historyMd5, result.invocation)
+
+          when {
+            !result.answered -> history.markUnanswered()
+            result.correct -> history.markCorrect(result.userResponse)
+            else -> history.markIncorrect(result.userResponse)
+          }
+
+          historyMd5 to history
+        }
+
       transaction {
         with(UserChallengeInfoTable) {
           upsert(conflictIndex = userChallengeInfoIndex) { row ->
@@ -377,17 +391,7 @@ internal object ChallengePost {
         }
 
         // Save the history of each answer on a per-invocation basis
-        for (result in results) {
-          val historyMd5 = names.md5(result.invocation)
-          val history = user.answerHistory(historyMd5, result.invocation)
-          historyList += history
-
-          when {
-            !result.answered -> history.markUnanswered()
-            result.correct -> history.markCorrect(result.userResponse)
-            else -> history.markIncorrect(result.userResponse)
-          }
-
+        for ((historyMd5, history) in historyPairs) {
           with(UserAnswerHistoryTable) {
             upsert(conflictIndex = userAnswerHistoryIndex) { row ->
               row[userRef] = user.userDbmsId
@@ -404,8 +408,8 @@ internal object ChallengePost {
 
       // This is done outside the transaction
       if (shouldPublish) {
-        historyList.forEach {
-          user.publishAnswers(challengeMd5, content.maxHistoryLength, complete, numCorrect, it)
+        historyPairs.forEach { (_, history) ->
+          user.publishAnswers(challengeMd5, content.maxHistoryLength, complete, numCorrect, history)
         }
       }
     }

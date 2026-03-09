@@ -121,16 +121,14 @@ internal object ChallengeGroupWs {
                     var numCorrect = 0
 
                     for (invocation in funcInfo.invocations) {
-                      readonlyTx {
-                        val historyMd5 = md5Of(languageName, groupName, challengeName, invocation)
-                        if (enrollee.historyExists(historyMd5, invocation)) {
-                          attempted++
-                          val history = enrollee.answerHistory(historyMd5, invocation)
-                          if (history.correct)
-                            numCorrect++
+                      val historyMd5 = md5Of(languageName, groupName, challengeName, invocation)
+                      if (enrollee.historyExists(historyMd5, invocation)) {
+                        attempted++
+                        val history = enrollee.answerHistory(historyMd5, invocation)
+                        if (history.correct)
+                          numCorrect++
 
-                          incorrectAttempts += history.incorrectAttempts
-                        }
+                        incorrectAttempts += history.incorrectAttempts
                       }
 
                       if (finished.load())

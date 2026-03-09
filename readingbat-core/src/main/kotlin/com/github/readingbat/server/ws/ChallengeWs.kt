@@ -44,13 +44,17 @@ import io.ktor.websocket.CloseReason
 import io.ktor.websocket.CloseReason.Codes.GOING_AWAY
 import io.ktor.websocket.Frame
 import io.ktor.websocket.close
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onStart
-import kotlinx.coroutines.newSingleThreadContext
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Required
 import kotlinx.serialization.Serializable
@@ -73,6 +77,7 @@ internal object ChallengeWs {
   val multiServerWsReadFlow by lazy {
     MutableSharedFlow<ChallengeAnswerData>(extraBufferCapacity = FLOW_BUFFER_CAPACITY)
   }
+  private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
   val answerWsConnections: MutableSet<AnswerSessionContext> = synchronizedSet(LinkedHashSet<AnswerSessionContext>())
   var maxAnswerWsConnections = 0
 
@@ -116,45 +121,41 @@ internal object ChallengeWs {
     }
 
     if (isMultiServerEnabled()) {
-      newSingleThreadContext("multiServerWsWriteChannel").executor.execute {
+      scope.launch(CoroutineName("multiServerWsWriteChannel")) {
         while (true) {
           runCatching {
-            runBlocking {
-              multiServerWsWriteFlow
-                .onStart { logger.info { "Starting to read multi-server writer ws channel values" } }
-                .onCompletion { logger.info { "Finished reading multi-server writer ws channel values" } }
-                .collect { data ->
-                  publishShim(data.pubSubTopic.name, data.toJson())
-                }
-            }
+            multiServerWsWriteFlow
+              .onStart { logger.info { "Starting to read multi-server writer ws channel values" } }
+              .onCompletion { logger.info { "Finished reading multi-server writer ws channel values" } }
+              .collect { data ->
+                publishShim(data.pubSubTopic.name, data.toJson())
+              }
           }.onFailure { e ->
             logger.error { "Exception in challenge ws writer: ${e.simpleClassName} ${e.message}" }
-            Thread.sleep(1.seconds.inWholeMilliseconds)
+            delay(1.seconds)
           }
         }
       }
     }
 
-    newSingleThreadContext("answerWsConnections").executor.execute {
+    scope.launch(CoroutineName("answerWsConnections")) {
       while (true) {
         runCatching {
-          runBlocking {
-            (if (isMultiServerEnabled()) multiServerWsReadFlow else singleServerWsFlow)
-              .onStart { logger.info { "Starting to read challenge ws channel values" } }
-              .onCompletion { logger.info { "Finished reading challenge ws channel values" } }
-              .collect { data ->
-                answerWsConnections
-                  .filter { it.targetName == data.target }
-                  .forEach {
-                    it.metrics.wsStudentAnswerResponseCount.labels(agentLaunchId())?.inc()
-                    it.wsSession.outgoing.send(Frame.Text(data.jsonArgs))
-                    logger.debug { "Sent $data ${answerWsConnections.size}" }
-                  }
-              }
-          }
+          (if (isMultiServerEnabled()) multiServerWsReadFlow else singleServerWsFlow)
+            .onStart { logger.info { "Starting to read challenge ws channel values" } }
+            .onCompletion { logger.info { "Finished reading challenge ws channel values" } }
+            .collect { data ->
+              answerWsConnections
+                .filter { it.targetName == data.target }
+                .forEach {
+                  it.metrics.wsStudentAnswerResponseCount.labels(agentLaunchId())?.inc()
+                  it.wsSession.outgoing.send(Frame.Text(data.jsonArgs))
+                  logger.debug { "Sent $data ${answerWsConnections.size}" }
+                }
+            }
         }.onFailure { e ->
           logger.error { "Exception in dispatcher ${e.simpleClassName} ${e.message}" }
-          Thread.sleep(1.seconds.inWholeMilliseconds)
+          delay(1.seconds)
         }
       }
     }
