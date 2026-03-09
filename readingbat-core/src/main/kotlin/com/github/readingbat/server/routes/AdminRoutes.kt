@@ -172,7 +172,7 @@ object AdminRoutes {
     }
   }
 
-  fun RoutingContext.assignBrowserSession() {
+  suspend fun RoutingContext.assignBrowserSession() {
     if (call.request.headers.contains(NO_TRACK_HEADER))
       return
 
