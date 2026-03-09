@@ -224,6 +224,18 @@ internal object ChallengePost {
       }
     }
 
+  private fun splitKeyAndDelete(key: String, label: String, action: (String, String, String) -> Int) {
+    if (key.isNotEmpty()) {
+      val parts = key.split(KEY_SEP)
+      if (parts.size >= 4) {
+        action(parts[1], parts[2], parts[3])
+          .also { logger.info { "Deleted $it $label for $key" } }
+      } else {
+        logger.warn { "Malformed $label: $key" }
+      }
+    }
+  }
+
   private fun deleteAnswerHistory(type: String, id: String, md5Val: String) =
     when (type) {
       AUTH_KEY -> {
@@ -254,19 +266,8 @@ internal object ChallengePost {
     val path = pathOf(CHALLENGE_ROOT, languageName, groupName, challengeName)
 
     // Clears answer history
-    if (correctAnswersKey.isNotEmpty()) {
-      correctAnswersKey.split(KEY_SEP).let { deleteChallengeInfo(it[1], it[2], it[3]) }
-        .also {
-          logger.info { "Deleted $it correctAnswers vals for ${challenge.challengeName} $correctAnswersKey" }
-        }
-    }
-
-    if (challengeAnswersKey.isNotEmpty()) {
-      challengeAnswersKey.split(KEY_SEP).let { deleteAnswerHistory(it[1], it[2], it[3]) }
-        .also {
-          logger.info { "Deleted $it challengeAnswers for ${challenge.challengeName} $challengeAnswersKey" }
-        }
-    }
+    splitKeyAndDelete(correctAnswersKey, "correctAnswers", ::deleteChallengeInfo)
+    splitKeyAndDelete(challengeAnswersKey, "challengeAnswers", ::deleteAnswerHistory)
 
     user?.resetHistory(funcInfo, challenge, content.maxHistoryLength)
 
@@ -290,25 +291,8 @@ internal object ChallengePost {
     if (!isDbmsEnabled())
       throw RedirectException("$path?$MSG=${"Database not enabled"}")
 
-    correctAnswersKeys
-      .forEach { correctAnswersKey ->
-        if (correctAnswersKey.isNotEmpty()) {
-          correctAnswersKey.split(KEY_SEP).let { deleteChallengeInfo(it[1], it[2], it[3]) }
-            .also {
-              logger.info { "Deleted $it correctAnswers vals for $correctAnswersKey" }
-            }
-        }
-      }
-
-    challengeAnswersKeys
-      .forEach { challengeAnswersKey ->
-        if (challengeAnswersKey.isNotEmpty()) {
-          challengeAnswersKey.split(KEY_SEP).let { deleteAnswerHistory(it[1], it[2], it[3]) }
-            .also {
-              logger.info { "Deleted $it challengeAnswers for $challengeAnswersKey" }
-            }
-        }
-      }
+    correctAnswersKeys.forEach { splitKeyAndDelete(it, "correctAnswers", ::deleteChallengeInfo) }
+    challengeAnswersKeys.forEach { splitKeyAndDelete(it, "challengeAnswers", ::deleteAnswerHistory) }
 
     if (user.isNotNull()) {
       content.findGroup(languageName, groupName).challenges

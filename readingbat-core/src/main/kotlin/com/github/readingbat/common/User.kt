@@ -132,6 +132,8 @@ class User {
   var enrolledClassCode: ClassCode = DISABLED_CLASS_CODE
   var defaultLanguage = defaultLanguageType
   var avatarUrl: String? = null
+  var existsInDbms: Boolean = false
+    private set
 
   private fun queryOrCreateSessionDbmsId() =
     browserSession?.queryOrCreateSessionDbmsId() ?: error("Null browser session")
@@ -143,6 +145,7 @@ class User {
     enrolledClassCode = ClassCode(row[UsersTable.enrolledClassCode])
     defaultLanguage = row[UsersTable.defaultLanguage].toLanguageType() ?: defaultLanguageType
     avatarUrl = row[UsersTable.avatarUrl]
+    existsInDbms = true
   }
 
   fun browserSessions() =
@@ -665,6 +668,7 @@ class User {
               }
             }
           }
+          user.existsInDbms = true
           logger.info { "Created OAuth user $emailVal ${user.userId} via $provider" }
         }
 
@@ -700,5 +704,5 @@ internal fun User?.isValidUser(): Boolean {
   contract {
     returns(true) implies (this@isValidUser is User)
   }
-  return if (isNull()) false else isInDbms()
+  return if (isNull()) false else existsInDbms
 }
