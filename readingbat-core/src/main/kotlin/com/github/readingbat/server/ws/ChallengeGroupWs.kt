@@ -37,6 +37,7 @@ import com.github.readingbat.server.ws.WsCommon.GROUP_NAME
 import com.github.readingbat.server.ws.WsCommon.LANGUAGE_NAME
 import com.github.readingbat.server.ws.WsCommon.closeChannels
 import com.github.readingbat.server.ws.WsCommon.validateContext
+import com.github.readingbat.utils.toJson
 import com.pambrose.common.exposed.readonlyTx
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.server.routing.Routing
@@ -47,7 +48,6 @@ import io.ktor.websocket.close
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.select
@@ -196,7 +196,5 @@ internal object ChallengeGroupWs {
   }
 
   @Serializable
-  class ChallengeStats(val challengeName: String, val msg: String) {
-    fun toJson() = Json.encodeToString(serializer(), this)
-  }
+  data class ChallengeStats(val challengeName: String, val msg: String)
 }

@@ -33,6 +33,7 @@ import com.github.readingbat.server.ws.PubSubCommandsWs.PubSubTopic.ADMIN_COMMAN
 import com.github.readingbat.server.ws.PubSubCommandsWs.PubSubTopic.LIKE_DISLIKE
 import com.github.readingbat.server.ws.PubSubCommandsWs.PubSubTopic.LOG_MESSAGE
 import com.github.readingbat.server.ws.PubSubCommandsWs.PubSubTopic.USER_ANSWERS
+import com.github.readingbat.utils.toJson
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -61,19 +62,13 @@ internal object PubSubCommandsWs {
   }
 
   @Serializable
-  class AdminCommandData(val command: AdminCommand, val jsonArgs: String, val logId: String) {
-    fun toJson() = Json.encodeToString(serializer(), this)
-  }
+  data class AdminCommandData(val command: AdminCommand, val jsonArgs: String, val logId: String)
 
   @Serializable
-  class ChallengeAnswerData(val pubSubTopic: PubSubTopic, val target: String, val jsonArgs: String) {
-    fun toJson() = Json.encodeToString(serializer(), this)
-  }
+  data class ChallengeAnswerData(val pubSubTopic: PubSubTopic, val target: String, val jsonArgs: String)
 
   @Serializable
-  class LogData(val text: String, val logId: String) {
-    fun toJson() = Json.encodeToString(serializer(), this)
-  }
+  data class LogData(val text: String, val logId: String)
 
   private val timeFormat = DateTimeFormatter.ofPattern("H:m:ss.SSS")
 

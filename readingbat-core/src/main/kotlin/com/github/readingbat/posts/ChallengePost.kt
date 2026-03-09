@@ -96,29 +96,23 @@ data class ChallengeResults(
 )
 
 @Serializable
-internal class LikeDislikeInfo(
+internal data class LikeDislikeInfo(
   val userId: String,
   val likeDislike: String,
-) {
-  @Required
-  val type: String = Constants.LIKE_DISLIKE_CODE
-
-  fun toJson() = Json.encodeToString(serializer(), this)
-}
+  @Required val type: String = Constants.LIKE_DISLIKE_CODE,
+)
 
 @Suppress("unused")
 @Serializable
-internal class DashboardInfo(
+internal data class DashboardInfo(
   val userId: String,
   val complete: Boolean,
   val numCorrect: Int,
   val history: DashboardHistory,
-) {
-  fun toJson() = Json.encodeToString(serializer(), this)
-}
+)
 
 @Serializable
-internal class DashboardHistory(
+internal data class DashboardHistory(
   val invocation: String,
   val correct: Boolean = false,
   val answers: String,
@@ -402,7 +396,7 @@ internal object ChallengePost {
         }
 
         // Save the history of each answer on a per-invocation basis
-        for ((historyMd5, history) in historyPairs) {
+        historyPairs.forEach { (historyMd5, history) ->
           with(UserAnswerHistoryTable) {
             upsert(conflictIndex = userAnswerHistoryIndex) { row ->
               row[userRef] = user.userDbmsId

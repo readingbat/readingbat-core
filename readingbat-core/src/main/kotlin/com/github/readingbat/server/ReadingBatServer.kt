@@ -96,7 +96,8 @@ object ReadingBatServer {
   internal val timeStamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("M/d/y H:m:ss"))
   internal var callerVersion = ""
   internal val content = AtomicReference(ReadingBatContent())
-  internal val adminUsers = mutableListOf<String>()
+  internal var adminUsers: List<String> = emptyList()
+    internal set
   internal val contentReadCount = AtomicInt(0)
   internal val dbms by lazy {
     Database.connect(
@@ -227,7 +228,7 @@ fun Application.module() {
   logger.info { "Loaded script engines: ${ScriptEngineManager().engineFactories.map { it.engineName }}" }
   check(ScriptEngineManager().engineFactories.count() == 3) { "Missing script engines" }
 
-  adminUsers.addAll(Property.ADMIN_USERS.configValueOrNull(this)?.getList() ?: emptyList())
+  adminUsers = Property.ADMIN_USERS.configValueOrNull(this)?.getList() ?: emptyList()
 
   if (isDbmsEnabled()) {
     ReadingBatServer.dbms

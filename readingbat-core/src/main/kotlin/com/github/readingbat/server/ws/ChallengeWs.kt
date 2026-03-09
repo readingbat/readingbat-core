@@ -36,6 +36,7 @@ import com.github.readingbat.server.ws.WsCommon.CHALLENGE_MD5
 import com.github.readingbat.server.ws.WsCommon.CLASS_CODE
 import com.github.readingbat.server.ws.WsCommon.closeChannels
 import com.github.readingbat.server.ws.WsCommon.validateContext
+import com.github.readingbat.utils.toJson
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.server.routing.Routing
 import io.ktor.server.websocket.DefaultWebSocketServerSession
@@ -58,7 +59,6 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Required
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
 import java.util.Collections.synchronizedSet
 import kotlin.math.max
 import kotlin.time.Duration.Companion.seconds
@@ -93,12 +93,10 @@ internal object ChallengeWs {
   }
 
   @Serializable
-  class PingMessage(val msg: String) {
-    @Required
-    val type: String = PING_CODE
-
-    fun toJson() = Json.encodeToString(serializer(), this)
-  }
+  data class PingMessage(
+    val msg: String,
+    @Required val type: String = PING_CODE,
+  )
 
   init {
     logger.info { "Initializing ChallengeWs" }
