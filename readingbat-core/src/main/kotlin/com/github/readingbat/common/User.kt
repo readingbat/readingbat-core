@@ -384,16 +384,18 @@ class User {
   fun unenrollEnrolleesClassCode(classCode: ClassCode, enrollees: List<User>) {
     logger.info { "Deleting ${enrollees.size} enrollees for class code $classCode for $fullName ($email)" }
     // Reset every enrollee's enrolled class and remove from class
-    enrollees
-      .forEach { enrollee ->
-        logger.info { "Assigning ${enrollee.email} to $DISABLED_CLASS_CODE" }
-        with(UsersTable) {
-          update({ id eq enrollee.userDbmsId }) { row ->
-            row[updated] = DateTime.now(UTC)
-            row[enrolledClassCode] = DISABLED_CLASS_CODE.classCode
+    transaction {
+      enrollees
+        .forEach { enrollee ->
+          logger.info { "Assigning ${enrollee.email} to $DISABLED_CLASS_CODE" }
+          with(UsersTable) {
+            update({ id eq enrollee.userDbmsId }) { row ->
+              row[updated] = DateTime.now(UTC)
+              row[enrolledClassCode] = DISABLED_CLASS_CODE.classCode
+            }
           }
         }
-      }
+    }
   }
 
   fun isUniqueClassDesc(classDesc: String) =
