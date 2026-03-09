@@ -57,8 +57,7 @@ internal object JavaParse {
       .firstOrNull() ?: error("In $challengeName unable to determine return type")
 
   fun extractJavaFunction(code: List<String>): String {
-    val lineNums =
-      code.mapIndexed { i, str -> i to str }.filter { it.second.contains(staticRegex) }.map { it.first }
+    val lineNums = code.indices.filter { code[it].contains(staticRegex) }
     return code.subList(lineNums.first(), lineNums.last() - 1).joinToString("\n").trimIndent()
   }
 

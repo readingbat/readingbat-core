@@ -30,10 +30,7 @@ internal object PythonParse {
   internal const val VAR_NAME = "answers"
 
   fun extractPythonFunction(code: List<String>): String {
-    val lineNums =
-      code.mapIndexed { i, str -> i to str }
-        .filter { it.second.contains(defRegex) }
-        .map { it.first }
+    val lineNums = code.indices.filter { code[it].contains(defRegex) }
     return code.subList(lineNums.first(), lineNums.last() - 1).joinToString("\n").trimIndent()
   }
 

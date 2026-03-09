@@ -19,7 +19,6 @@ package com.github.readingbat.pages
 
 import com.github.pambrose.common.util.decode
 import com.github.pambrose.common.util.pathOf
-import com.github.pambrose.common.util.random
 import com.github.pambrose.common.util.toDoubleQuoted
 import com.github.readingbat.common.ClassCode
 import com.github.readingbat.common.Constants.CORRECT_COLOR
@@ -243,14 +242,8 @@ internal object ChallengePage {
 
   // Make sure we do not return the same challenge on a chance click
   private fun Int.chance(current: Int): Int {
-    if (this == 1)
-      return 0
-
-    while (true) {
-      val v = random()
-      if (v != current)
-        return v
-    }
+    if (this == 1) return 0
+    return (0 until this).filter { it != current }.random()
   }
 
   private fun BODY.displayQuestions(

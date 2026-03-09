@@ -84,7 +84,7 @@ internal data class StudentInfo(val studentId: String, val firstName: String, va
 @Suppress("unused")
 internal data class ClassEnrollment(
   val sessionId: String,
-  val students: List<StudentInfo> = mutableListOf(),
+  val students: List<StudentInfo> = emptyList(),
 )
 
 data class ChallengeResults(
