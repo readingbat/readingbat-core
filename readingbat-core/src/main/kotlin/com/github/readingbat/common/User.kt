@@ -75,6 +75,7 @@ import org.jetbrains.exposed.v1.core.Count
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.inList
 import org.jetbrains.exposed.v1.core.or
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insert
@@ -296,6 +297,25 @@ class User {
             )
           }
           .firstOrNull() ?: ChallengeHistory(invocationVal)
+      }
+    }
+
+  fun answerHistoryBulk(challengeMd5s: List<String>): Map<String, ChallengeHistory> =
+    readonlyTx {
+      with(UserAnswerHistoryTable) {
+        select(md5, invocation, correct, incorrectAttempts, historyJson)
+          .where { (userRef eq userDbmsId) and (md5 inList challengeMd5s) }
+          .associate {
+            val json = it[historyJson]
+            val history = Json.decodeFromString<List<String>>(json).toMutableList()
+            it[md5] to
+              ChallengeHistory(
+                Invocation(it[invocation]),
+                it[correct],
+                it[incorrectAttempts],
+                history,
+              )
+          }
       }
     }
 

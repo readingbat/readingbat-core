@@ -79,6 +79,7 @@ import com.github.readingbat.pages.PageUtils.loadPingdomScript
 import com.github.readingbat.pages.PageUtils.rawHtml
 import com.github.readingbat.pages.js.CheckAnswersJs.checkAnswersScript
 import com.github.readingbat.pages.js.LikeDislikeJs.likeDislikeScript
+import com.github.readingbat.posts.ChallengeHistory
 import com.github.readingbat.server.ChallengeMd5
 import com.github.readingbat.server.ServerUtils.queryParam
 import com.github.readingbat.server.UserChallengeInfoTable
@@ -459,15 +460,18 @@ internal object ChallengePage {
               }
           }
 
+          val challengeMd5s = funcInfo.invocations.map { challenge.md5(it) }
+
           enrollees
             .forEach { enrollee ->
               val numCalls = funcInfo.invocationCount
               var numCorrect = 0
+              val historyMap = enrollee.answerHistoryBulk(challengeMd5s)
               val results =
                 funcInfo.invocations
                   .map { invocation ->
                     val historyMd5 = challenge.md5(invocation)
-                    val history = enrollee.answerHistory(historyMd5, invocation)
+                    val history = historyMap[historyMd5] ?: ChallengeHistory(invocation)
 
                     if (history.correct)
                       numCorrect++
@@ -490,7 +494,6 @@ internal object ChallengePage {
                   rawHtml(nbsp.text)
                   +enrollee.fullName.value
                   rawHtml(nbsp.text)
-                  // TODO Optimize this to a single query and grab all values at once
                   span {
                     id = "${enrollee.userId}-$LIKE_DISLIKE_SPAN"
                     rawHtml(enrollee.likeDislikeEmoji(challenge))

@@ -36,7 +36,8 @@ class GeoInfoCacheTest : StringSpec(
     }
 
     "GeoInfo with valid json parses summary fields" {
-      val json = """{"ip":"8.8.8.8","city":"Mountain View","state_prov":"California","country_name":"United States","organization":"Google LLC"}"""
+      val json =
+        """{"ip":"8.8.8.8","city":"Mountain View","state_prov":"California","country_name":"United States","organization":"Google LLC"}"""
       val info = GeoInfo(false, 1, "8.8.8.8", json)
       info.summary() shouldBe "Mountain View, California, United States, Google LLC"
     }
@@ -54,9 +55,10 @@ class GeoInfoCacheTest : StringSpec(
       val cached = GeoInfo(false, 99, "192.168.1.1", "")
       geoInfoMap["192.168.1.1"] = cached
 
-      val results = (1..10).map {
-        async { lookupGeoInfo("192.168.1.1") }
-      }.awaitAll()
+      val results =
+        (1..10).map {
+          async { lookupGeoInfo("192.168.1.1") }
+        }.awaitAll()
 
       results.forEach { it shouldBe cached }
     }
