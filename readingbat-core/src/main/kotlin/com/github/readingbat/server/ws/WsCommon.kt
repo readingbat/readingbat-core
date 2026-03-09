@@ -17,7 +17,6 @@
 
 package com.github.readingbat.server.ws
 
-import com.github.pambrose.common.util.isNotNull
 import com.github.readingbat.common.ClassCode
 import com.github.readingbat.common.Metrics
 import com.github.readingbat.common.User
@@ -62,11 +61,11 @@ object WsCommon {
     user: User,
   ) =
     when {
-      languageName.isNotNull() && languageName.isNotValid() -> {
+      languageName != null && languageName.isNotValid() -> {
         false to "Invalid language: $languageName"
       }
 
-      groupName.isNotNull() && groupName.isNotValid() -> {
+      groupName != null && groupName.isNotValid() -> {
         false to "Invalid group: $groupName"
       }
 
@@ -78,11 +77,11 @@ object WsCommon {
         false to "Class code not enabled"
       }
 
-      student.isNotNull() && student.isNotValidUser() -> {
+      student != null && student.isNotValidUser() -> {
         false to "Invalid student id: ${student.userId}"
       }
 
-      student.isNotNull() && student.isNotEnrolled(classCode) -> {
+      student != null && student.isNotEnrolled(classCode) -> {
         false to "Student not enrolled in class"
       }
 

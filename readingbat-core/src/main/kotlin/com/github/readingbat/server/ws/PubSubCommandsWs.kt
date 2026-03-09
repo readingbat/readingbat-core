@@ -17,7 +17,6 @@
 
 package com.github.readingbat.server.ws
 
-import com.github.pambrose.common.util.isNotNull
 import com.github.readingbat.common.Endpoints.LOAD_ALL_ENDPOINT
 import com.github.readingbat.common.Endpoints.LOAD_JAVA_ENDPOINT
 import com.github.readingbat.common.Endpoints.LOAD_KOTLIN_ENDPOINT
@@ -90,7 +89,7 @@ internal object PubSubCommandsWs {
   }
 
   fun publishShim(channel: String, message: String) {
-    if (channel.isNotNull() && message.isNotNull())
+    if (channel != null && message != null)
       when (enumValueOf<PubSubTopic>(channel)) {
         ADMIN_COMMAND -> {
           val data = Json.decodeFromString<AdminCommandData>(message)

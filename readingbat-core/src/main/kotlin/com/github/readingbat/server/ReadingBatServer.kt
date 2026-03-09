@@ -21,8 +21,6 @@ import com.github.pambrose.common.util.FileSource
 import com.github.pambrose.common.util.Version
 import com.github.pambrose.common.util.Version.Companion.versionDesc
 import com.github.pambrose.common.util.getBanner
-import com.github.pambrose.common.util.isNotNull
-import com.github.pambrose.common.util.isNull
 import com.github.pambrose.common.util.randomId
 import com.github.readingbat.BuildConfig
 import com.github.readingbat.common.Constants.UNKNOWN_USER_ID
@@ -136,9 +134,9 @@ object ReadingBatServer {
     // If kotlin.script.classpath property is missing, set it based on env var SCRIPT_CLASSPATH
     // This has to take place before reading DSL
     val scriptClasspathProp = KOTLIN_SCRIPT_CLASSPATH.getPropertyOrNull()
-    if (scriptClasspathProp.isNull()) {
+    if (scriptClasspathProp == null) {
       val scriptClasspathEnvVar = SCRIPT_CLASSPATH.getEnvOrNull()
-      if (scriptClasspathEnvVar.isNotNull())
+      if (scriptClasspathEnvVar != null)
         KOTLIN_SCRIPT_CLASSPATH.setProperty(scriptClasspathEnvVar)
       else
         logger.warn { "Missing ${KOTLIN_SCRIPT_CLASSPATH.propertyName} and $SCRIPT_CLASSPATH values" }

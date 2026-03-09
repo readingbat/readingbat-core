@@ -20,7 +20,6 @@ package com.github.readingbat.common
 import com.github.pambrose.common.email.Email
 import com.github.pambrose.common.email.Email.Companion.toResendEmail
 import com.github.pambrose.common.recaptcha.RecaptchaConfig
-import com.github.pambrose.common.util.isNotNull
 import com.github.pambrose.common.util.obfuscate
 import com.github.readingbat.common.Constants.UNASSIGNED
 import com.github.readingbat.common.PropertyNames.AGENT
@@ -98,7 +97,7 @@ open class KtorProperty(
       setProperty(configValue(application, default))
   }
 
-  fun isADefinedProperty() = System.getProperty(propertyName).isNotNull()
+  fun isADefinedProperty() = System.getProperty(propertyName) != null
 
   val name: String get() = this::class.simpleName!!
 

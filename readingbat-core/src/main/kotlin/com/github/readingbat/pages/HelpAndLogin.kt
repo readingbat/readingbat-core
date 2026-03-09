@@ -17,7 +17,6 @@
 
 package com.github.readingbat.pages
 
-import com.github.pambrose.common.util.isNotNull
 import com.github.readingbat.common.AuthRoutes.LOGOUT
 import com.github.readingbat.common.Endpoints.ABOUT_ENDPOINT
 import com.github.readingbat.common.Endpoints.ADMIN_PREFS_ENDPOINT
@@ -94,7 +93,7 @@ internal object HelpAndLogin {
         if (isDbmsEnabled()) {
           tr {
             td(classes = "text-right whitespace-nowrap") {
-              if (user.isNotNull()) {
+              if (user != null) {
                 userInfoBlock(user, path)
               } else {
                 a {
@@ -131,7 +130,7 @@ internal object HelpAndLogin {
               +"help"
             }
 
-            if (isDbmsEnabled() && user.isNotNull()) {
+            if (isDbmsEnabled() && user != null) {
               if (!isProduction() || user.isAdminUser()) {
                 +" | "
                 a {
@@ -148,7 +147,7 @@ internal object HelpAndLogin {
             }
           }
         }
-        if (user.isNotNull() && user.enrolledClassCode.isEnabled) {
+        if (user != null && user.enrolledClassCode.isEnabled) {
           tr {
             td(classes = "text-right pt-1") {
               span(classes = "text-rb-header") {

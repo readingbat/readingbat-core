@@ -19,8 +19,6 @@ package com.github.readingbat.server.routes
 
 import com.codahale.metrics.jvm.ThreadDump
 import com.github.pambrose.common.response.redirectTo
-import com.github.pambrose.common.util.isNotNull
-import com.github.pambrose.common.util.isNull
 import com.github.pambrose.common.util.randomId
 import com.github.readingbat.common.AuthRoutes.COOKIES
 import com.github.readingbat.common.BrowserSession
@@ -68,7 +66,7 @@ object AdminRoutes {
   private suspend fun RoutingContext.requireAdminUser(): Boolean {
     if (isProduction()) {
       val user = fetchUser()
-      if (user.isNull() || !user.isAdminUser()) {
+      if (user == null || !user.isAdminUser()) {
         call.respondText("Forbidden", Plain, HttpStatusCode.Forbidden)
         return false
       }
@@ -107,15 +105,15 @@ object AdminRoutes {
 
       call.respondHtml {
         body {
-          if (principal.isNull() && session.isNull()) {
+          if (principal == null && session == null) {
             div { +"No cookies are present." }
           } else {
-            if (principal.isNotNull()) {
+            if (principal != null) {
               val date = ofInstant(ofEpochMilli(principal.created), ZoneId.systemDefault())
               div { +"UserPrincipal: ${principal.userId} created on: $date" }
             }
 
-            if (session.isNotNull()) {
+            if (session != null) {
               val date = ofInstant(ofEpochMilli(session.created), ZoneId.systemDefault())
               div { +"BrowserSession id: [${session.id}] created on: $date" }
             }
@@ -127,7 +125,7 @@ object AdminRoutes {
     fun RoutingContext.clearPrincipal() {
       call.userPrincipal
         .also {
-          if (it.isNotNull()) {
+          if (it != null) {
             logger.info { "Clearing principal $it" }
             call.sessions.clear<UserPrincipal>()
           } else {
@@ -139,7 +137,7 @@ object AdminRoutes {
     fun RoutingContext.clearSessionId() {
       call.browserSession
         .also { bs ->
-          if (bs.isNotNull()) {
+          if (bs != null) {
             logger.info { "Clearing browser session id $bs" }
             call.sessions.clear<BrowserSession>()
             if (isDbmsEnabled())
@@ -178,7 +176,7 @@ object AdminRoutes {
     if (call.request.headers.contains(NO_TRACK_HEADER))
       return
 
-    if (call.browserSession.isNull()) {
+    if (call.browserSession == null) {
       val browserSession = BrowserSession(id = randomId(15))
       call.sessions.set(browserSession)
 

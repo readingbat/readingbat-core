@@ -18,7 +18,6 @@
 package com.github.readingbat.posts
 
 import com.github.pambrose.common.util.encode
-import com.github.pambrose.common.util.isNotNull
 import com.github.pambrose.common.util.maxLength
 import com.github.pambrose.common.util.md5Of
 import com.github.pambrose.common.util.pathOf
@@ -299,7 +298,7 @@ internal object ChallengePost {
     correctAnswersKeys.forEach { splitKeyAndDelete(it, "correctAnswers", user, ::deleteChallengeInfo) }
     challengeAnswersKeys.forEach { splitKeyAndDelete(it, "challengeAnswers", user, ::deleteAnswerHistory) }
 
-    if (user.isNotNull()) {
+    if (user != null) {
       content.findGroup(languageName, groupName).challenges
         .forEach { challenge ->
           logger.info { "Clearing answers for challengeName ${challenge.challengeName}" }
@@ -362,7 +361,7 @@ internal object ChallengePost {
     val numCorrect = results.count { it.correct }
     val invokeMap = invokeList.associate { it.first.value to it.second }
     val invokeStr = Json.encodeToString(invokeMap)
-    if (user.isNotNull()) {
+    if (user != null) {
       // Pre-fetch all histories before the write transaction to avoid
       // mixing read and write transaction semantics
       val historyPairs =
@@ -420,7 +419,7 @@ internal object ChallengePost {
     names: ChallengeNames,
     likeDislikeVal: Int,
   ) {
-    if (user.isNotNull()) {
+    if (user != null) {
       val challengeMd5 = names.md5()
       transaction {
         with(UserChallengeInfoTable) {

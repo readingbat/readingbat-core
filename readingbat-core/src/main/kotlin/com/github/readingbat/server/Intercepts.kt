@@ -17,7 +17,6 @@
 
 package com.github.readingbat.server
 
-import com.github.pambrose.common.util.isNotNull
 import com.github.pambrose.common.util.maxLength
 import com.github.readingbat.common.BrowserSession.Companion.findOrCreateSessionDbmsId
 import com.github.readingbat.common.Constants.STATIC
@@ -170,7 +169,7 @@ internal fun Application.intercepts() {
     if (!isStaticCall())
       runCatching {
         val browserSession = call.browserSession
-        if (isSaveRequestsEnabled() && browserSession.isNotNull()) {
+        if (isSaveRequestsEnabled() && browserSession != null) {
           val request = call.request
           val ipAddress = request.origin.remoteHost
           val sessionDbmsId = transaction { findOrCreateSessionDbmsId(browserSession.id, true) }
@@ -234,7 +233,7 @@ internal fun Application.intercepts() {
       if (!path.startsWith("/$STATIC/") && path != PING_ENDPOINT) {
         call.callId
           .also { callId ->
-            if (callId.isNotNull()) {
+            if (callId != null) {
               requestTimingMap[callId] = clock.markNow()
             }
           }
@@ -246,10 +245,10 @@ internal fun Application.intercepts() {
       if (!path.startsWith("/$STATIC/") && path != PING_ENDPOINT) {
         call.callId
           .also { callId ->
-            if (callId.isNotNull()) {
+            if (callId != null) {
               requestTimingMap.remove(callId)
                 .also { start ->
-                  if (start.isNotNull()) {
+                  if (start != null) {
                     logger.debug {
                       val str = call.request.toLogString()
                       "Logged call ${requestTimingMap.size} ${start.elapsedNow()} ${call.callId} $str"

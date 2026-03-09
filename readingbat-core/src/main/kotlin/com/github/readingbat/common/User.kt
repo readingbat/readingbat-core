@@ -20,8 +20,6 @@ package com.github.readingbat.common
 import com.github.pambrose.common.email.Email
 import com.github.pambrose.common.email.Email.Companion.EMPTY_EMAIL
 import com.github.pambrose.common.email.Email.Companion.UNKNOWN_EMAIL
-import com.github.pambrose.common.util.isNotNull
-import com.github.pambrose.common.util.isNull
 import com.github.pambrose.common.util.maxLength
 import com.github.pambrose.common.util.md5Of
 import com.github.pambrose.common.util.randomId
@@ -555,7 +553,7 @@ class User {
 
     fun queryActiveTeachingClassCode(user: User?) =
       when {
-        user.isNull() || !isDbmsEnabled() -> {
+        user == null || !isDbmsEnabled() -> {
           DISABLED_CLASS_CODE
         }
 
@@ -573,7 +571,7 @@ class User {
 
     fun queryPreviousTeacherClassCode(user: User?) =
       when {
-        user.isNull() || !isDbmsEnabled() -> {
+        user == null || !isDbmsEnabled() -> {
           DISABLED_CLASS_CODE
         }
 
@@ -680,7 +678,7 @@ class User {
           logger.info { "Created OAuth user $emailVal ${user.userId} via $provider" }
         }
 
-    private fun isRegisteredEmail(email: Email) = queryUserByEmail(email).isNotNull()
+    private fun isRegisteredEmail(email: Email) = queryUserByEmail(email) != null
 
     fun isNotRegisteredEmail(email: Email) = !isRegisteredEmail(email)
 
@@ -712,5 +710,5 @@ internal fun User?.isValidUser(): Boolean {
   contract {
     returns(true) implies (this@isValidUser is User)
   }
-  return if (isNull()) false else existsInDbms
+  return if (this == null) false else existsInDbms
 }

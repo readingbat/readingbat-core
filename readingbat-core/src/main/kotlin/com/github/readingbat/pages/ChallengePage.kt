@@ -18,7 +18,6 @@
 package com.github.readingbat.pages
 
 import com.github.pambrose.common.util.decode
-import com.github.pambrose.common.util.isNull
 import com.github.pambrose.common.util.pathOf
 import com.github.pambrose.common.util.random
 import com.github.pambrose.common.util.toDoubleQuoted
@@ -308,7 +307,7 @@ internal object ChallengePage {
                 textInput(classes = TwClasses.USER_RESP + cls) {
                   id = "$RESP$i"
 
-                  if (user.isNull() || user.enrolledClassCode.isNotEnabled)
+                  if (user == null || user.enrolledClassCode.isNotEnabled)
                     onKeyDown = "$PROCESS_USER_ANSWERS_FUNC(event, ${funcInfo.questionCount})"
                   else
                     onFocusOut = "$PROCESS_USER_ANSWERS_FUNC(null, ${funcInfo.questionCount})"

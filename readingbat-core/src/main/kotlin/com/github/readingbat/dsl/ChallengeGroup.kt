@@ -20,7 +20,6 @@ package com.github.readingbat.dsl
 import com.github.pambrose.common.util.FileSystemSource
 import com.github.pambrose.common.util.GitHubRepo
 import com.github.pambrose.common.util.ensureSuffix
-import com.github.pambrose.common.util.isNotNull
 import com.github.pambrose.common.util.md5Of
 import com.github.pambrose.common.util.pathOf
 import com.github.pambrose.common.util.toDoubleQuoted
@@ -98,7 +97,7 @@ class ChallengeGroup<T : Challenge>(
 
           if (isContentCachingEnabled()) {
             fetchDirContentsFromDirCache(path)
-              .let { if (it.isNotNull() && it.isNotEmpty()) it else fetchRemoteFiles(root, path) }
+              .let { if (it != null && it.isNotEmpty()) it else fetchRemoteFiles(root, path) }
           } else {
             fetchRemoteFiles(root, path)
           }
