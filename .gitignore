@@ -10,7 +10,7 @@ build
 secrets
 
 .DS_Store
-
+*.lock
 .kotlin
 
 node_modules/

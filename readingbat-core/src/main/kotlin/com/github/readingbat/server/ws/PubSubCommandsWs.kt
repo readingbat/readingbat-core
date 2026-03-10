@@ -84,27 +84,26 @@ internal object PubSubCommandsWs {
   }
 
   fun publishShim(channel: String, message: String) {
-    if (channel != null && message != null)
-      when (enumValueOf<PubSubTopic>(channel)) {
-        ADMIN_COMMAND -> {
-          val data = Json.decodeFromString<AdminCommandData>(message)
-          if (!adminCommandFlow.tryEmit(data))
-            logger.warn { "adminCommandFlow buffer full, dropping AdminCommand: ${data.command}" }
-        }
-
-        USER_ANSWERS,
-        LIKE_DISLIKE,
-          -> {
-          val data = Json.decodeFromString<ChallengeAnswerData>(message)
-          if (!multiServerWsReadFlow.tryEmit(data))
-            logger.warn { "multiServerWsReadFlow buffer full, dropping ${data.pubSubTopic}" }
-        }
-
-        LOG_MESSAGE -> {
-          val data = Json.decodeFromString<LogData>(message)
-          if (!logWsReadFlow.tryEmit(data))
-            logger.warn { "logWsReadFlow buffer full, dropping log message" }
-        }
+    when (enumValueOf<PubSubTopic>(channel)) {
+      ADMIN_COMMAND -> {
+        val data = Json.decodeFromString<AdminCommandData>(message)
+        if (!adminCommandFlow.tryEmit(data))
+          logger.warn { "adminCommandFlow buffer full, dropping AdminCommand: ${data.command}" }
       }
+
+      USER_ANSWERS,
+      LIKE_DISLIKE,
+        -> {
+        val data = Json.decodeFromString<ChallengeAnswerData>(message)
+        if (!multiServerWsReadFlow.tryEmit(data))
+          logger.warn { "multiServerWsReadFlow buffer full, dropping ${data.pubSubTopic}" }
+      }
+
+      LOG_MESSAGE -> {
+        val data = Json.decodeFromString<LogData>(message)
+        if (!logWsReadFlow.tryEmit(data))
+          logger.warn { "logWsReadFlow buffer full, dropping log message" }
+      }
+    }
   }
 }
