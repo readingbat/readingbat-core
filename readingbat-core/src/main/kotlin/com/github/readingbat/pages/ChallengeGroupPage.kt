@@ -51,6 +51,7 @@ import com.github.readingbat.pages.PageUtils.enrolleesDesc
 import com.github.readingbat.pages.PageUtils.headDefault
 import com.github.readingbat.pages.PageUtils.loadPingdomScript
 import com.github.readingbat.pages.PageUtils.rawHtml
+import com.github.readingbat.server.ChallengeProgressService
 import com.github.readingbat.server.GroupName
 import com.github.readingbat.server.LanguageName
 import com.github.readingbat.server.ServerUtils.queryParam
@@ -105,7 +106,7 @@ internal object ChallengeGroupPage {
 
         fun TR.displayFunctionCall(user: User?, challenge: Challenge) {
           val challengeName = challenge.challengeName
-          val allCorrect = challenge.isCorrect(user)
+          val allCorrect = ChallengeProgressService.isCorrect(user, challenge.md5())
 
           td(
             classes =
