@@ -81,7 +81,6 @@ import com.github.readingbat.server.ServerUtils.fetchUser
 import com.github.readingbat.server.ServerUtils.get
 import com.github.readingbat.server.ServerUtils.queryParam
 import com.github.readingbat.server.ServerUtils.respondWithPageResult
-import com.github.readingbat.server.ServerUtils.respondWithSuspendingPageResult
 import com.github.readingbat.server.routes.ResourceContent.getResourceAsText
 import io.ktor.http.ContentType
 import io.ktor.http.ContentType.Text.CSS
@@ -170,11 +169,11 @@ fun Routing.userRoutes(metrics: Metrics, contentSrc: () -> ReadingBatContent) {
   }
 
   post(CLEAR_GROUP_ANSWERS_ENDPOINT) {
-    respondWithSuspendingPageResult { clearGroupAnswers(contentSrc(), fetchUser()) }
+    respondWithPageResult { clearGroupAnswers(contentSrc(), fetchUser()) }
   }
 
   post(CLEAR_CHALLENGE_ANSWERS_ENDPOINT) {
-    respondWithSuspendingPageResult { clearChallengeAnswers(contentSrc(), fetchUser()) }
+    respondWithPageResult { clearChallengeAnswers(contentSrc(), fetchUser()) }
   }
 
   get(ADMIN_PREFS_ENDPOINT) {

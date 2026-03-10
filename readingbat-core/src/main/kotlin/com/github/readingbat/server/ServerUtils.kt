@@ -81,13 +81,7 @@ internal object ServerUtils {
   fun ApplicationCall.fetchEmailFromCache() =
     userPrincipal?.userId?.let { User.fetchEmailFromCache(it) } ?: UNKNOWN_EMAIL
 
-  suspend fun RoutingContext.respondWithPageResult(block: () -> PageResult) =
-    when (val result = block()) {
-      is PageResult.Html -> respondWith { result.content }
-      is PageResult.Redirect -> redirectTo { result.url }
-    }
-
-  suspend fun RoutingContext.respondWithSuspendingPageResult(block: suspend () -> PageResult) =
+  suspend fun RoutingContext.respondWithPageResult(block: suspend () -> PageResult) =
     when (val result = block()) {
       is PageResult.Html -> respondWith { result.content }
       is PageResult.Redirect -> redirectTo { result.url }
