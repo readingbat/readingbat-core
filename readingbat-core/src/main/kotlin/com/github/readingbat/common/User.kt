@@ -24,6 +24,12 @@ import com.github.pambrose.common.util.maxLength
 import com.github.pambrose.common.util.md5Of
 import com.github.pambrose.common.util.randomId
 import com.github.readingbat.common.ClassCode.Companion.DISABLED_CLASS_CODE
+import com.github.readingbat.common.ClassCodeRepository.addEnrollee
+import com.github.readingbat.common.ClassCodeRepository.fetchClassTeacherId
+import com.github.readingbat.common.ClassCodeRepository.fetchEnrollees
+import com.github.readingbat.common.ClassCodeRepository.isNotValid
+import com.github.readingbat.common.ClassCodeRepository.isValid
+import com.github.readingbat.common.ClassCodeRepository.removeEnrollee
 import com.github.readingbat.common.Endpoints.THUMBS_DOWN
 import com.github.readingbat.common.Endpoints.THUMBS_UP
 import com.github.readingbat.common.KeyConstants.AUTH_KEY
@@ -35,12 +41,8 @@ import com.github.readingbat.dsl.LanguageType.Companion.defaultLanguageType
 import com.github.readingbat.dsl.LanguageType.Companion.toLanguageType
 import com.github.readingbat.dsl.challenge.Challenge
 import com.github.readingbat.dsl.isDbmsEnabled
-import com.github.readingbat.dsl.isMultiServerEnabled
 import com.github.readingbat.posts.ChallengeHistory
 import com.github.readingbat.posts.ChallengeResults
-import com.github.readingbat.posts.DashboardHistory
-import com.github.readingbat.posts.DashboardInfo
-import com.github.readingbat.posts.LikeDislikeInfo
 import com.github.readingbat.server.BrowserSessionsTable
 import com.github.readingbat.server.ChallengeName
 import com.github.readingbat.server.ClassesTable
@@ -59,13 +61,6 @@ import com.github.readingbat.server.UserSessionsTable
 import com.github.readingbat.server.UsersTable
 import com.github.readingbat.server.userAnswerHistoryIndex
 import com.github.readingbat.server.userSessionIndex
-import com.github.readingbat.server.ws.ChallengeWs.classTargetName
-import com.github.readingbat.server.ws.ChallengeWs.multiServerWsWriteFlow
-import com.github.readingbat.server.ws.ChallengeWs.singleServerWsFlow
-import com.github.readingbat.server.ws.PubSubCommandsWs.ChallengeAnswerData
-import com.github.readingbat.server.ws.PubSubCommandsWs.PubSubTopic.LIKE_DISLIKE
-import com.github.readingbat.server.ws.PubSubCommandsWs.PubSubTopic.USER_ANSWERS
-import com.github.readingbat.utils.toJson
 import com.pambrose.common.exposed.get
 import com.pambrose.common.exposed.readonlyTx
 import com.pambrose.common.exposed.upsert
@@ -474,36 +469,6 @@ class User {
     }
   }
 
-  suspend fun publishAnswers(
-    challengeMd5: String,
-    maxHistoryLength: Int,
-    complete: Boolean,
-    numCorrect: Int,
-    history: ChallengeHistory,
-  ) {
-    // Publish to challenge dashboard
-    logger.debug { "Publishing user answers to $enrolledClassCode on $challengeMd5 for $this" }
-    val dashboardHistory =
-      DashboardHistory(
-        history.invocation.value,
-        history.correct,
-        history.answers.asReversed().take(maxHistoryLength).joinToString("<br>"),
-      )
-    val targetName = classTargetName(enrolledClassCode, challengeMd5)
-    val dashboardInfo = DashboardInfo(userId, complete, numCorrect, dashboardHistory)
-    (if (isMultiServerEnabled()) multiServerWsWriteFlow else singleServerWsFlow)
-      .emit(ChallengeAnswerData(USER_ANSWERS, targetName, dashboardInfo.toJson()))
-  }
-
-  suspend fun publishLikeDislike(challengeMd5: String, likeDislike: Int) {
-    logger.debug { "Publishing user likeDislike to $enrolledClassCode on $challengeMd5 for $this" }
-    val targetName = classTargetName(enrolledClassCode, challengeMd5)
-    val emoji = likeDislikeEmoji(likeDislike)
-    val likeDislikeInfo = LikeDislikeInfo(userId, emoji)
-    (if (isMultiServerEnabled()) multiServerWsWriteFlow else singleServerWsFlow)
-      .emit(ChallengeAnswerData(LIKE_DISLIKE, targetName, likeDislikeInfo.toJson()))
-  }
-
   suspend fun resetHistory(funcInfo: FunctionInfo, challenge: Challenge, maxHistoryLength: Int) {
     logger.debug { "Resetting challenge: $challenge" }
 
@@ -529,8 +494,8 @@ class User {
 
         if (shouldPublish())
           funcInfo.challengeMd5.value.also { md5 ->
-            publishAnswers(md5, maxHistoryLength, false, 0, history)
-            publishLikeDislike(md5, 0)
+            AnswerPublisher.publishAnswers(this@User, md5, maxHistoryLength, false, 0, history)
+            AnswerPublisher.publishLikeDislike(this@User, md5, 0)
           }
       }
   }
@@ -737,5 +702,5 @@ internal fun User?.isValidUser(): Boolean {
   contract {
     returns(true) implies (this@isValidUser is User)
   }
-  return if (this == null) false else existsInDbms
+  return this?.existsInDbms ?: false
 }

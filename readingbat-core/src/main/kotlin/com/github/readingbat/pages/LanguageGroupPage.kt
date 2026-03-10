@@ -18,6 +18,7 @@
 package com.github.readingbat.pages
 
 import com.github.pambrose.common.util.pathOf
+import com.github.readingbat.common.ClassCodeRepository.fetchEnrollees
 import com.github.readingbat.common.Constants.MSG
 import com.github.readingbat.common.Endpoints.CHALLENGE_ROOT
 import com.github.readingbat.common.Endpoints.STATIC_ROOT
@@ -35,6 +36,7 @@ import com.github.readingbat.pages.PageUtils.bodyHeader
 import com.github.readingbat.pages.PageUtils.headDefault
 import com.github.readingbat.pages.PageUtils.loadPingdomScript
 import com.github.readingbat.pages.PageUtils.rawHtml
+import com.github.readingbat.server.ChallengeProgressService
 import com.github.readingbat.server.GroupName.Companion.EMPTY_GROUP
 import com.github.readingbat.server.ServerUtils.queryParam
 import com.github.readingbat.server.ServerUtils.rows
@@ -78,7 +80,7 @@ internal object LanguageGroupPage {
 
           if (activeTeachingClassCode.isNotEnabled) {
             for (challenge in challenges) {
-              if (challenge.isCorrect(user))
+              if (ChallengeProgressService.isCorrect(user, challenge.md5()))
                 cnt++
               if (cnt == maxCnt + 1) {
                 maxFound = true

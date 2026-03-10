@@ -18,7 +18,6 @@
 package com.github.readingbat.server.routes
 
 import com.github.pambrose.common.email.Email
-import com.github.pambrose.common.util.randomId
 import com.github.readingbat.common.AuthName
 import com.github.readingbat.common.Endpoints.OAUTH_CALLBACK_GITHUB_ENDPOINT
 import com.github.readingbat.common.Endpoints.OAUTH_CALLBACK_GOOGLE_ENDPOINT
@@ -54,7 +53,6 @@ import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.insert
-import org.jetbrains.exposed.v1.jdbc.insertAndGetId
 import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.jetbrains.exposed.v1.jdbc.update
@@ -226,7 +224,7 @@ private fun findOrCreateOAuthUser(
       }
     }
 
-    return User.Companion.run { userId.toUser() }
+    return User.run { userId.toUser() }
   }
 
   // 2. No link found — check if email matches an existing user

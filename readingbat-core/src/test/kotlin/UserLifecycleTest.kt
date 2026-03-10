@@ -1,5 +1,6 @@
 import TestData.readTestContent
 import com.github.pambrose.common.email.Email
+import com.github.readingbat.common.ClassCodeRepository.isNotValid
 import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.queryUserByEmail
 import com.github.readingbat.common.User.Companion.userExists
@@ -41,10 +42,10 @@ class UserLifecycleTest : StringSpec() {
             user.userDbmsId shouldBeGreaterThan 0
 
             // Verify user can be found by email in the database
-            User.queryUserByEmail(Email("alice-lifecycle@test.com")).shouldNotBeNull()
+            queryUserByEmail(Email("alice-lifecycle@test.com")).shouldNotBeNull()
 
             // Verify userExists works
-            User.userExists(user.userId) shouldBe true
+            userExists(user.userId) shouldBe true
           }
         }
     }

@@ -19,11 +19,13 @@ package com.github.readingbat.server.ws
 
 import com.github.pambrose.common.util.md5Of
 import com.github.readingbat.common.ClassCode
+import com.github.readingbat.common.ClassCodeRepository.fetchEnrollees
 import com.github.readingbat.common.Constants
 import com.github.readingbat.common.Constants.UNANSWERED
 import com.github.readingbat.common.Endpoints.CLASS_SUMMARY_ENDPOINT
 import com.github.readingbat.common.Endpoints.WS_ROOT
 import com.github.readingbat.common.Metrics
+import com.github.readingbat.common.WsProtocol
 import com.github.readingbat.dsl.InvalidRequestException
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.agentLaunchId
@@ -44,6 +46,7 @@ import io.ktor.websocket.Frame
 import io.ktor.websocket.close
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlin.concurrent.atomics.AtomicBoolean
 
@@ -164,10 +167,10 @@ internal object ClassSummaryWs {
   @Suppress("unused")
   @Serializable
   data class ClassSummary(
-    val userId: String,
-    val challengeName: String,
-    val results: List<String>,
-    val stats: String,
-    val likeDislike: String,
+    @SerialName(WsProtocol.USER_ID_FIELD) val userId: String,
+    @SerialName(WsProtocol.CHALLENGE_NAME_FIELD) val challengeName: String,
+    @SerialName(WsProtocol.RESULTS_FIELD) val results: List<String>,
+    @SerialName(WsProtocol.STATS_FIELD) val stats: String,
+    @SerialName(WsProtocol.LIKE_DISLIKE_FIELD) val likeDislike: String,
   )
 }

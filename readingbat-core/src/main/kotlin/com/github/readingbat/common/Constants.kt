@@ -227,3 +227,25 @@ internal object AuthRoutes {
   const val LOGOUT = "/logout"
   const val COOKIES = "/cookies"
 }
+
+/**
+ * Shared constants for WebSocket JSON protocol field names.
+ * These are the single source of truth for field names used in both
+ * Kotlin serialization (via @SerialName) and client-side JavaScript.
+ */
+object WsProtocol {
+  const val TYPE_FIELD = "type"
+  const val MSG_FIELD = "msg"
+  const val USER_ID_FIELD = "userId"
+  const val LIKE_DISLIKE_FIELD = "likeDislike"
+  const val COMPLETE_FIELD = "complete"
+  const val NUM_CORRECT_FIELD = "numCorrect"
+  const val HISTORY_FIELD = "history"
+  const val INVOCATION_FIELD = "invocation"
+  const val CORRECT_FIELD = "correct"
+  const val ANSWERS_FIELD = "answers"
+  const val CHALLENGE_NAME_FIELD = "challengeName"
+  const val RESULTS_FIELD = "results"
+  const val STATS_FIELD = "stats"
+  const val GROUP_NAME_FIELD = "groupName"
+}

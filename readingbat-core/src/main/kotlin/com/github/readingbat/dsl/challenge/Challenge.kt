@@ -21,7 +21,6 @@ import ch.obermuhlner.scriptengine.java.Isolation
 import com.github.pambrose.common.util.AbstractRepo
 import com.github.pambrose.common.util.FileSystemSource
 import com.github.pambrose.common.util.ensureSuffix
-import com.github.pambrose.common.util.isNotNull
 import com.github.pambrose.common.util.md5Of
 import com.github.pambrose.common.util.pathOf
 import com.github.pambrose.common.util.toDoubleQuoted
@@ -30,7 +29,6 @@ import com.github.pambrose.common.util.withLineNumbers
 import com.github.readingbat.common.FunctionInfo
 import com.github.readingbat.common.KeyConstants.SOURCE_CODE_KEY
 import com.github.readingbat.common.KeyConstants.keyOf
-import com.github.readingbat.common.User
 import com.github.readingbat.dsl.ChallengeGroup
 import com.github.readingbat.dsl.ContentCaches.sourceCache
 import com.github.readingbat.dsl.LanguageType.Java
@@ -41,7 +39,6 @@ import com.github.readingbat.dsl.ReadingBatDslMarker
 import com.github.readingbat.dsl.ReturnType
 import com.github.readingbat.dsl.agentLaunchId
 import com.github.readingbat.dsl.isContentCachingEnabled
-import com.github.readingbat.dsl.isDbmsEnabled
 import com.github.readingbat.dsl.parse.JavaParse
 import com.github.readingbat.dsl.parse.JavaParse.convertToScript
 import com.github.readingbat.dsl.parse.JavaParse.deriveJavaReturnType
@@ -57,15 +54,9 @@ import com.github.readingbat.dsl.parse.PythonParse.extractPythonInvocations
 import com.github.readingbat.server.ChallengeName
 import com.github.readingbat.server.Invocation
 import com.github.readingbat.server.ScriptPools
-import com.github.readingbat.server.UserChallengeInfoTable
 import com.github.readingbat.utils.toCapitalized
-import com.pambrose.common.exposed.get
-import com.pambrose.common.exposed.readonlyTx
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.exposed.v1.core.and
-import org.jetbrains.exposed.v1.core.eq
-import org.jetbrains.exposed.v1.jdbc.select
 import java.net.URL
 import java.nio.file.Paths
 import kotlin.concurrent.atomics.AtomicInt
@@ -183,30 +174,9 @@ sealed class Challenge(
         .filter { it.startsWith(commentPrefix) && it.contains(DESC) }
         .map { it.replaceFirst(commentPrefix, "") }  // Remove comment prefix
         .map { it.replaceFirst(DESC, "") }           // Remove @desc
-        .map { it.trim() }                                    // Strip leading and trailing spaces
-        .joinToString("\n")
+        .joinToString("\n") { it.trim() }                      // Strip leading and trailing spaces
         .also { logger.debug { """Assigning $challengeName description = "$it"""" } }
     }
-
-  internal fun isCorrect(user: User?): Boolean {
-    val challengeMd5 = md5()
-    return when {
-      !isDbmsEnabled() || user == null -> {
-        false
-      }
-
-      else -> {
-        readonlyTx {
-          with(UserChallengeInfoTable) {
-            select(allCorrect)
-              .where { (userRef eq user.userDbmsId) and (md5 eq challengeMd5) }
-              .map { it[0] as Boolean }
-              .firstOrNull() ?: false
-          }
-        }
-      }
-    }
-  }
 
   override fun toString() = "$languageName $groupName $challengeName"
 

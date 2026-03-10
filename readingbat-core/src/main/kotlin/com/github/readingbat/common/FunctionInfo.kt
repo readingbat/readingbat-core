@@ -274,8 +274,8 @@ class FunctionInfo(
       val languageType = languageName.toLanguageType()
 
       fun deriveHint() =
-        when {
-          returnType == BooleanType -> {
+        when (returnType) {
+          BooleanType -> {
             when {
               isPythonBoolean() -> "$languageType boolean values are either true or false"
               !isJavaBoolean() -> "Answer should be either true or false"
@@ -283,15 +283,15 @@ class FunctionInfo(
             }
           }
 
-          returnType == StringType && isNotDoubleQuoted() -> {
+          StringType if isNotDoubleQuoted() -> {
             "$languageType strings are double quoted"
           }
 
-          returnType == IntType && isNotInt() -> {
+          IntType if isNotInt() -> {
             "Answer should be an int value"
           }
 
-          returnType == FloatType && isNotFloat() -> {
+          FloatType if isNotFloat() -> {
             "Answer should be a float value"
           }
 
@@ -317,8 +317,8 @@ class FunctionInfo(
 
     private fun String.equalsAsPythonScalar(correctAnswer: String, returnType: ReturnType): Pair<Boolean, String> {
       fun deriveHint() =
-        when {
-          returnType == BooleanType -> {
+        when (returnType) {
+          BooleanType -> {
             when {
               isJavaBoolean() -> "Python boolean values are either True or False"
               !isPythonBoolean() -> "Answer should be either True or False"
@@ -326,15 +326,15 @@ class FunctionInfo(
             }
           }
 
-          returnType == StringType && isNotQuoted() -> {
+          StringType if isNotQuoted() -> {
             "Python strings are either single or double quoted"
           }
 
-          returnType == IntType && isNotInt() -> {
+          IntType if isNotInt() -> {
             "Answer should be an int value"
           }
 
-          returnType == FloatType && isNotFloat() -> {
+          FloatType if isNotFloat() -> {
             "Answer should be a float value"
           }
 

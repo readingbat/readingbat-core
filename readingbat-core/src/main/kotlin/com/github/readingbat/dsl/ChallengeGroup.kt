@@ -96,8 +96,7 @@ class ChallengeGroup<T : Challenge>(
           val path = "${srcPath.ensureSuffix("/")}$packageNameAsPath"
 
           if (isContentCachingEnabled()) {
-            fetchDirContentsFromDirCache(path)
-              .let { if (it != null && it.isNotEmpty()) it else fetchRemoteFiles(root, path) }
+            fetchDirContentsFromDirCache(path).let { if (!it.isNullOrEmpty()) it else fetchRemoteFiles(root, path) }
           } else {
             fetchRemoteFiles(root, path)
           }

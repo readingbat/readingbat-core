@@ -18,6 +18,7 @@
 package com.github.readingbat.pages
 
 import com.github.readingbat.common.AuthRoutes.LOGOUT
+import com.github.readingbat.common.ClassCodeRepository.toDisplayString
 import com.github.readingbat.common.Endpoints.ABOUT_ENDPOINT
 import com.github.readingbat.common.Endpoints.ADMIN_PREFS_ENDPOINT
 import com.github.readingbat.common.Endpoints.ENABLE_STUDENT_MODE_ENDPOINT

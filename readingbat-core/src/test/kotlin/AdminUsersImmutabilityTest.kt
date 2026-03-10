@@ -18,23 +18,30 @@
 import com.github.readingbat.server.ReadingBatServer
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
-import io.kotest.matchers.types.shouldBeInstanceOf
 
 class AdminUsersImmutabilityTest : StringSpec() {
   init {
-    "adminUsers should default to empty list" {
-      ReadingBatServer.adminUsers shouldBe emptyList()
+    "adminUsers should default to empty set" {
+      ReadingBatServer.adminUsers shouldBe emptySet()
     }
 
-    "adminUsers should be an immutable List type" {
-      ReadingBatServer.adminUsers.shouldBeInstanceOf<List<String>>()
+    "adminUsers should be a Set type" {
+      val users = ReadingBatServer.adminUsers
+      users shouldBe emptySet<String>()
     }
 
-    "adminUsers assignment should replace the entire list" {
+    "adminUsers store should replace the entire set atomically" {
       val original = ReadingBatServer.adminUsers
-      ReadingBatServer.adminUsers = listOf("admin1@test.com", "admin2@test.com")
-      ReadingBatServer.adminUsers shouldBe listOf("admin1@test.com", "admin2@test.com")
-      ReadingBatServer.adminUsers = original
+      ReadingBatServer.adminUsersRef.store(setOf("admin1@test.com", "admin2@test.com"))
+      ReadingBatServer.adminUsers shouldBe setOf("admin1@test.com", "admin2@test.com")
+      ReadingBatServer.adminUsersRef.store(original)
+    }
+
+    "adminUsers should support concurrent-safe contains check" {
+      ReadingBatServer.adminUsersRef.store(setOf("admin@test.com"))
+      ("admin@test.com" in ReadingBatServer.adminUsers) shouldBe true
+      ("other@test.com" in ReadingBatServer.adminUsers) shouldBe false
+      ReadingBatServer.adminUsersRef.store(emptySet())
     }
   }
 }

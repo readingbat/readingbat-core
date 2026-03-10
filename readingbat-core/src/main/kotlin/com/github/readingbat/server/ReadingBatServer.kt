@@ -31,6 +31,7 @@ import com.github.readingbat.common.EnvVar.SCRIPT_CLASSPATH
 import com.github.readingbat.common.KtorProperty.Companion.assignProperties
 import com.github.readingbat.common.Metrics
 import com.github.readingbat.common.Property
+import com.github.readingbat.common.Property.ADMIN_USERS
 import com.github.readingbat.common.Property.CONFIG_FILENAME
 import com.github.readingbat.common.Property.Companion.initProperties
 import com.github.readingbat.common.Property.KOTLIN_SCRIPT_CLASSPATH
@@ -45,7 +46,7 @@ import com.github.readingbat.dsl.isProduction
 import com.github.readingbat.dsl.readContentDsl
 import com.github.readingbat.server.Installs.installs
 import com.github.readingbat.server.Locations.locations
-import com.github.readingbat.server.ReadingBatServer.adminUsers
+import com.github.readingbat.server.ReadingBatServer.adminUsersRef
 import com.github.readingbat.server.ReadingBatServer.assignKotlinScriptProperty
 import com.github.readingbat.server.ReadingBatServer.content
 import com.github.readingbat.server.ReadingBatServer.contentReadCount
@@ -96,8 +97,7 @@ object ReadingBatServer {
   internal val timeStamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("M/d/y H:m:ss"))
   internal var callerVersion = ""
   internal val content = AtomicReference(ReadingBatContent())
-  internal var adminUsers: List<String> = emptyList()
-    internal set
+  internal val adminUsersRef = AtomicReference<Set<String>>(emptySet())
   internal val contentReadCount = AtomicInt(0)
   internal val dbms by lazy {
     Database.connect(
@@ -128,6 +128,8 @@ object ReadingBatServer {
       ),
     )
   }
+
+  internal val adminUsers get() = adminUsersRef.load()
 
   internal val upTime get() = startTime.elapsedNow()
 
@@ -224,11 +226,11 @@ internal fun Application.readContentDsl(fileName: String, variableName: String, 
 fun Application.module() {
   assignProperties(initProperties().sortedBy { it.propertyName })
 
-  // Verifu all the script engines loaded
+  // Verify all the script engines loaded
   logger.info { "Loaded script engines: ${ScriptEngineManager().engineFactories.map { it.engineName }}" }
   check(ScriptEngineManager().engineFactories.count() == 3) { "Missing script engines" }
 
-  adminUsers = Property.ADMIN_USERS.configValueOrNull(this)?.getList() ?: emptyList()
+  adminUsersRef.store((ADMIN_USERS.configValueOrNull(this)?.getList() ?: emptyList()).toHashSet())
 
   if (isDbmsEnabled()) {
     ReadingBatServer.dbms

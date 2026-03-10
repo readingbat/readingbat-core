@@ -19,6 +19,7 @@ package com.github.readingbat.pages
 
 import com.github.readingbat.common.ClassCode
 import com.github.readingbat.common.ClassCode.Companion.DISABLED_CLASS_CODE
+import com.github.readingbat.common.ClassCodeRepository.toDisplayString
 import com.github.readingbat.common.Constants.LABEL_WIDTH
 import com.github.readingbat.common.Endpoints.OAUTH_LOGIN_ENDPOINT
 import com.github.readingbat.common.Endpoints.TEACHER_PREFS_ENDPOINT
