@@ -22,6 +22,7 @@ import com.github.pambrose.common.util.maxLength
 import com.github.pambrose.common.util.md5Of
 import com.github.pambrose.common.util.pathOf
 import com.github.pambrose.common.util.toDoubleQuoted
+import com.github.readingbat.common.AnswerPublisher
 import com.github.readingbat.common.Constants
 import com.github.readingbat.common.Constants.CHALLENGE_SRC
 import com.github.readingbat.common.Constants.GROUP_SRC
@@ -420,7 +421,7 @@ internal object ChallengePost {
       // This is done outside the transaction
       if (shouldPublish) {
         historyPairs.forEach { (_, history) ->
-          user.publishAnswers(challengeMd5, content.maxHistoryLength, complete, numCorrect, history)
+          AnswerPublisher.publishAnswers(user, challengeMd5, content.maxHistoryLength, complete, numCorrect, history)
         }
       }
     }
@@ -444,7 +445,7 @@ internal object ChallengePost {
         }
       }
       if (user.shouldPublish())
-        user.publishLikeDislike(challengeMd5, likeDislikeVal)
+        AnswerPublisher.publishLikeDislike(user, challengeMd5, likeDislikeVal)
     }
   }
 }
