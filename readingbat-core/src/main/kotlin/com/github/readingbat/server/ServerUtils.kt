@@ -120,8 +120,7 @@ internal object ServerUtils {
   fun firstNonEmptyLanguageType(content: ReadingBatContent, defaultLanguage: LanguageType? = null) =
     LanguageType.languageTypes(defaultLanguage)
       .asSequence()
-      .filter { content[it].isNotEmpty() }
-      .firstOrNull() ?: error("Missing non-empty language")
+      .firstOrNull { content[it].isNotEmpty() } ?: error("Missing non-empty language")
 
   fun logToShim(msg: String, logId: String) {
     if (logId.isNotEmpty()) {

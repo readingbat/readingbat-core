@@ -41,10 +41,10 @@ class UserLifecycleTest : StringSpec() {
             user.userDbmsId shouldBeGreaterThan 0
 
             // Verify user can be found by email in the database
-            User.queryUserByEmail(Email("alice-lifecycle@test.com")).shouldNotBeNull()
+            queryUserByEmail(Email("alice-lifecycle@test.com")).shouldNotBeNull()
 
             // Verify userExists works
-            User.userExists(user.userId) shouldBe true
+            userExists(user.userId) shouldBe true
           }
         }
     }

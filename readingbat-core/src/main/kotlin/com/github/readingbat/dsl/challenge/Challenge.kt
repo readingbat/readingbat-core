@@ -21,7 +21,6 @@ import ch.obermuhlner.scriptengine.java.Isolation
 import com.github.pambrose.common.util.AbstractRepo
 import com.github.pambrose.common.util.FileSystemSource
 import com.github.pambrose.common.util.ensureSuffix
-import com.github.pambrose.common.util.isNotNull
 import com.github.pambrose.common.util.md5Of
 import com.github.pambrose.common.util.pathOf
 import com.github.pambrose.common.util.toDoubleQuoted
@@ -183,8 +182,7 @@ sealed class Challenge(
         .filter { it.startsWith(commentPrefix) && it.contains(DESC) }
         .map { it.replaceFirst(commentPrefix, "") }  // Remove comment prefix
         .map { it.replaceFirst(DESC, "") }           // Remove @desc
-        .map { it.trim() }                                    // Strip leading and trailing spaces
-        .joinToString("\n")
+        .joinToString("\n") { it.trim() }                      // Strip leading and trailing spaces
         .also { logger.debug { """Assigning $challengeName description = "$it"""" } }
     }
 

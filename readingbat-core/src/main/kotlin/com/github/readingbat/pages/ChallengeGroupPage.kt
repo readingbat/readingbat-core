@@ -56,7 +56,6 @@ import com.github.readingbat.server.GroupName
 import com.github.readingbat.server.LanguageName
 import com.github.readingbat.server.ServerUtils.queryParam
 import com.github.readingbat.server.ServerUtils.rows
-import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.server.routing.RoutingContext
 import kotlinx.html.BODY
 import kotlinx.html.FormMethod
@@ -85,8 +84,6 @@ import kotlinx.html.tr
 import kotlinx.serialization.json.Json
 
 internal object ChallengeGroupPage {
-  private val logger = KotlinLogging.logger {}
-
   fun RoutingContext.challengeGroupPage(
     content: ReadingBatContent,
     user: User?,

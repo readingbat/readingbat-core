@@ -85,7 +85,6 @@ import com.github.readingbat.server.ServerUtils.queryParam
 import com.github.readingbat.server.UserChallengeInfoTable
 import com.pambrose.common.exposed.get
 import com.pambrose.common.exposed.readonlyTx
-import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.http.ContentType.Text.CSS
 import io.ktor.server.routing.RoutingContext
 import kotlinx.html.BODY
@@ -133,7 +132,6 @@ import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.select
 
 internal object ChallengePage {
-  private val logger = KotlinLogging.logger {}
   private const val SPINNER_CSS = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
   private const val NAME_TD = "nameTd"
   private const val ANSWER_TD = "answersTd"
