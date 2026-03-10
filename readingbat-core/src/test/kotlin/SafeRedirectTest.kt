@@ -24,7 +24,6 @@ import com.github.readingbat.server.ServerUtils.safeRedirectPath
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.ktor.client.request.get
-import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpStatusCode.Companion.Found
 import io.ktor.server.testing.testApplication
 

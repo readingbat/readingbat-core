@@ -64,7 +64,6 @@ import com.github.readingbat.server.GroupName.Companion.EMPTY_GROUP
 import com.github.readingbat.server.LanguageName
 import com.github.readingbat.server.LanguageName.Companion.EMPTY_LANGUAGE
 import com.github.readingbat.server.ServerUtils.queryParam
-import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.server.routing.RoutingContext
 import kotlinx.html.BODY
 import kotlinx.html.FormMethod
@@ -93,7 +92,6 @@ import kotlinx.html.th
 import kotlinx.html.tr
 
 internal object ClassSummaryPage {
-  private val logger = KotlinLogging.logger {}
   internal const val STATS = "-stats"
   internal const val LIKE_DISLIKE = "-likeDislike"
   private const val BTN_SIZE = "130%"

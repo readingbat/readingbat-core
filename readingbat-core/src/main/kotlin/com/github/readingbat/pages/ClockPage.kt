@@ -58,7 +58,7 @@ internal object ClockPage {
                 };
 
                 ws.onmessage = function (event) {
-                  var obj = JSON.parse(event.data);
+                  var obj = pwdJSON.parse(event.data);
                   if (obj.hasOwnProperty("type") && obj.type == "$PING_CODE") {
                     document.getElementById('$PING_MSG').innerText = obj.msg;
                   }

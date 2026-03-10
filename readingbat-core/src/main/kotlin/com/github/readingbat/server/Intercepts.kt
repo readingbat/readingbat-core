@@ -47,7 +47,6 @@ import com.github.readingbat.server.Intercepts.requestTimingMap
 import com.github.readingbat.server.ServerUtils.fetchUserDbmsIdFromCache
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.http.HttpHeaders.UserAgent
-import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationCallPipeline
 import io.ktor.server.application.ApplicationCallPipeline.ApplicationPhase.Plugins

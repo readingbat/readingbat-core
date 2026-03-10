@@ -97,7 +97,6 @@ object ReadingBatServer {
   internal var callerVersion = ""
   internal val content = AtomicReference(ReadingBatContent())
   internal var adminUsers: List<String> = emptyList()
-    internal set
   internal val contentReadCount = AtomicInt(0)
   internal val dbms by lazy {
     Database.connect(

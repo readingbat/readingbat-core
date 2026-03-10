@@ -737,5 +737,5 @@ internal fun User?.isValidUser(): Boolean {
   contract {
     returns(true) implies (this@isValidUser is User)
   }
-  return if (this == null) false else existsInDbms
+  return this?.existsInDbms ?: false
 }
