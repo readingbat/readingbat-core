@@ -18,26 +18,8 @@
 package com.github.readingbat.common
 
 import com.github.pambrose.common.util.randomId
-import com.github.pambrose.common.util.toDoubleQuoted
 import com.github.readingbat.common.FormFields.DISABLED_MODE
-import com.github.readingbat.common.User.Companion.toUser
-import com.github.readingbat.server.ClassesTable
-import com.github.readingbat.server.EnrolleesTable
-import com.github.readingbat.server.UsersTable
-import com.pambrose.common.exposed.get
-import com.pambrose.common.exposed.readonlyTx
-import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.http.Parameters
-import org.jetbrains.exposed.v1.core.Count
-import org.jetbrains.exposed.v1.core.and
-import org.jetbrains.exposed.v1.core.eq
-import org.jetbrains.exposed.v1.core.inList
-import org.jetbrains.exposed.v1.jdbc.deleteWhere
-import org.jetbrains.exposed.v1.jdbc.insert
-import org.jetbrains.exposed.v1.jdbc.select
-import org.jetbrains.exposed.v1.jdbc.selectAll
-import org.jetbrains.exposed.v1.jdbc.transactions.transaction
-import kotlin.time.measureTimedValue
 
 data class ClassCode(val classCode: String) {
   val isNotEnabled by lazy { classCode == DISABLED_MODE || classCode.isBlank() }
@@ -45,101 +27,9 @@ data class ClassCode(val classCode: String) {
 
   val displayedValue get() = if (classCode == DISABLED_MODE) "" else classCode
 
-  private val classCodeDbmsId
-    get() =
-      measureTimedValue {
-        readonlyTx {
-          with(ClassesTable) {
-            select(id)
-              .where { classCode eq this@ClassCode.classCode }
-              .map { it[id].value }
-              .firstOrNull() ?: error("Missing class code $classCode")
-          }
-        }
-      }.let {
-        logger.debug { "Looked up classId in ${it.duration}" }
-        it.value
-      }
-
-  fun isNotValid() = !isValid()
-
-  fun isValid() =
-    readonlyTx {
-      with(ClassesTable) {
-        select(Count(classCode))
-          .where { classCode eq this@ClassCode.classCode }
-          .map { it[0] as Long }
-          .first().also { logger.debug { "ClassCode.isValid() returned $it for $classCode" } } > 0
-      }
-    }
-
-  fun fetchEnrollees(): List<User> =
-    if (isNotEnabled)
-      emptyList()
-    else
-      readonlyTx {
-        val userIds =
-          (ClassesTable innerJoin EnrolleesTable)
-            .select(EnrolleesTable.userRef)
-            .where { ClassesTable.classCode eq classCode }
-            .map { it[0] as Long }
-
-        with(UsersTable) {
-          selectAll()
-            .where { id inList userIds }
-            .map { it[userId].toUser(it) }
-            .also { logger.debug { "fetchEnrollees() returning ${it.size} users" } }
-        }
-      }
-
-  fun deleteClassCode() =
-    with(ClassesTable) {
-      deleteWhere { classCode eq this@ClassCode.classCode }
-    }
-
-  fun addEnrollee(user: User) =
-    transaction {
-      with(EnrolleesTable) {
-        insert { row ->
-          row[classesRef] = classCodeDbmsId
-          row[userRef] = user.userDbmsId
-        }
-      }
-    }
-
-  fun removeEnrollee(user: User) =
-    with(EnrolleesTable) {
-      deleteWhere { (classesRef eq this@ClassCode.classCodeDbmsId) and (userRef eq user.userDbmsId) }
-    }
-
-  fun fetchClassDesc(quoted: Boolean = false) =
-    readonlyTx {
-      with(ClassesTable) {
-        select(description)
-          .where { classCode eq this@ClassCode.classCode }
-          .map { it[0] as String }
-          .firstOrNull() ?: "Missing description"
-      }.also { logger.debug { "fetchClassDesc() returned ${it.toDoubleQuoted()} for $classCode" } }
-    }.let { if (quoted) it.toDoubleQuoted() else it }
-
-  fun toDisplayString() = "${fetchClassDesc(true)} [$classCode]"
-
-  fun fetchClassTeacherId() =
-    readonlyTx {
-      (
-        (ClassesTable innerJoin UsersTable)
-          .select(UsersTable.userId)
-          .where { ClassesTable.classCode eq this@ClassCode.classCode }
-          .map { it[0] as String }
-          .firstOrNull() ?: ""
-        ).also { logger.debug { "fetchClassTeacherId() returned $it" } }
-    }
-
   override fun toString() = classCode
 
   companion object {
-    private val logger = KotlinLogging.logger {}
-
     internal val DISABLED_CLASS_CODE = ClassCode(DISABLED_MODE)
 
     internal fun newClassCode() = ClassCode(randomId(15))

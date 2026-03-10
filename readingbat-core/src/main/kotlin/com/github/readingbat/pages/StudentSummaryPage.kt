@@ -19,6 +19,9 @@ package com.github.readingbat.pages
 
 import com.github.pambrose.common.util.pathOf
 import com.github.readingbat.common.ClassCode
+import com.github.readingbat.common.ClassCodeRepository.fetchClassTeacherId
+import com.github.readingbat.common.ClassCodeRepository.isNotValid
+import com.github.readingbat.common.ClassCodeRepository.toDisplayString
 import com.github.readingbat.common.Constants.CLASS_CODE_QP
 import com.github.readingbat.common.Constants.CORRECT_COLOR
 import com.github.readingbat.common.Constants.INCOMPLETE_COLOR
