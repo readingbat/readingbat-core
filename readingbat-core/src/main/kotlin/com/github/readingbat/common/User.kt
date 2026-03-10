@@ -681,7 +681,7 @@ class User {
   }
 }
 
-internal fun User?.isAdminUser() = isValidUser() && email.value in adminUsers.load()
+internal fun User?.isAdminUser() = isValidUser() && email.value in adminUsers
 
 internal fun User?.isNotAdminUser() = !isAdminUser()
 

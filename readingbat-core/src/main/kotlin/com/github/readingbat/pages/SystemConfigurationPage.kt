@@ -152,7 +152,7 @@ internal object SystemConfigurationPage {
                 }
                 tr {
                   td { +"Admin Users:" }
-                  td { +ReadingBatServer.adminUsers.load().joinToString(", ") }
+                  td { +ReadingBatServer.adminUsers.joinToString(", ") }
                 }
               }
             }

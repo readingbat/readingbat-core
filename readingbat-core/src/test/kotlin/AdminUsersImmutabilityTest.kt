@@ -22,26 +22,26 @@ import io.kotest.matchers.shouldBe
 class AdminUsersImmutabilityTest : StringSpec() {
   init {
     "adminUsers should default to empty set" {
-      ReadingBatServer.adminUsers.load() shouldBe emptySet()
+      ReadingBatServer.adminUsers shouldBe emptySet()
     }
 
     "adminUsers should be a Set type" {
-      val users = ReadingBatServer.adminUsers.load()
+      val users = ReadingBatServer.adminUsers
       users shouldBe emptySet<String>()
     }
 
     "adminUsers store should replace the entire set atomically" {
-      val original = ReadingBatServer.adminUsers.load()
-      ReadingBatServer.adminUsers.store(setOf("admin1@test.com", "admin2@test.com"))
-      ReadingBatServer.adminUsers.load() shouldBe setOf("admin1@test.com", "admin2@test.com")
-      ReadingBatServer.adminUsers.store(original)
+      val original = ReadingBatServer.adminUsers
+      ReadingBatServer.adminUsersRef.store(setOf("admin1@test.com", "admin2@test.com"))
+      ReadingBatServer.adminUsers shouldBe setOf("admin1@test.com", "admin2@test.com")
+      ReadingBatServer.adminUsersRef.store(original)
     }
 
     "adminUsers should support concurrent-safe contains check" {
-      ReadingBatServer.adminUsers.store(setOf("admin@test.com"))
-      ("admin@test.com" in ReadingBatServer.adminUsers.load()) shouldBe true
-      ("other@test.com" in ReadingBatServer.adminUsers.load()) shouldBe false
-      ReadingBatServer.adminUsers.store(emptySet())
+      ReadingBatServer.adminUsersRef.store(setOf("admin@test.com"))
+      ("admin@test.com" in ReadingBatServer.adminUsers) shouldBe true
+      ("other@test.com" in ReadingBatServer.adminUsers) shouldBe false
+      ReadingBatServer.adminUsersRef.store(emptySet())
     }
   }
 }
