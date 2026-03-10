@@ -40,6 +40,7 @@ import com.github.readingbat.common.TwClasses
 import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.queryActiveTeachingClassCode
 import com.github.readingbat.common.User.Companion.toUser
+import com.github.readingbat.common.WsProtocol
 import com.github.readingbat.common.isNotValidUser
 import com.github.readingbat.dsl.InvalidRequestException
 import com.github.readingbat.dsl.ReadingBatContent
@@ -260,16 +261,16 @@ internal object StudentSummaryPage {
           ws.onmessage = function (event) {
             console.log(event.data);
             var obj = JSON.parse(event.data)
-            var results = obj.results
+            var results = obj["${WsProtocol.RESULTS_FIELD}"]
             var i;
             for (i = 0; i < results.length; i++) {
-              var prefix = obj.groupName + '-' + obj.challengeName
+              var prefix = obj["${WsProtocol.GROUP_NAME_FIELD}"] + '-' + obj["${WsProtocol.CHALLENGE_NAME_FIELD}"]
               var answers = document.getElementById(prefix + '-' + i)
-              answers.style.backgroundColor = obj.results[i] == '$YES' ? '$CORRECT_COLOR'
-                                                                    : (obj.results[i] == '$NO' ? '$WRONG_COLOR'
+              answers.style.backgroundColor = results[i] == '$YES' ? '$CORRECT_COLOR'
+                                                                    : (results[i] == '$NO' ? '$WRONG_COLOR'
                                                                                              : '$INCOMPLETE_COLOR');
-              document.getElementById(prefix + '$STATS').innerText = obj.stats;
-              document.getElementById(prefix + '$LIKE_DISLIKE').innerHTML = obj.likeDislike;
+              document.getElementById(prefix + '$STATS').innerText = obj["${WsProtocol.STATS_FIELD}"];
+              document.getElementById(prefix + '$LIKE_DISLIKE').innerHTML = obj["${WsProtocol.LIKE_DISLIKE_FIELD}"];
    }
           };
         """.trimIndent(),

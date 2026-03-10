@@ -20,6 +20,7 @@ package com.github.readingbat.pages
 import com.github.readingbat.common.Constants.PING_CODE
 import com.github.readingbat.common.Endpoints.CLOCK_ENDPOINT
 import com.github.readingbat.common.Endpoints.WS_ROOT
+import com.github.readingbat.common.WsProtocol
 import com.github.readingbat.pages.PageUtils.rawHtml
 import kotlinx.html.body
 import kotlinx.html.html
@@ -58,9 +59,9 @@ internal object ClockPage {
                 };
 
                 ws.onmessage = function (event) {
-                  var obj = pwdJSON.parse(event.data);
-                  if (obj.hasOwnProperty("type") && obj.type == "$PING_CODE") {
-                    document.getElementById('$PING_MSG').innerText = obj.msg;
+                  var obj = JSON.parse(event.data);
+                  if (obj.hasOwnProperty("${WsProtocol.TYPE_FIELD}") && obj["${WsProtocol.TYPE_FIELD}"] == "$PING_CODE") {
+                    document.getElementById('$PING_MSG').innerText = obj["${WsProtocol.MSG_FIELD}"];
                   }
                 };
               """.trimIndent(),
