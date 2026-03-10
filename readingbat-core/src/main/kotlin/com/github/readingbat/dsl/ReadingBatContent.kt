@@ -179,26 +179,24 @@ class ReadingBatContent {
         HttpClient(CIO) { expectSuccess = false }
           .use { httpClient ->
             findLanguage(languageType).challengeGroups
-              .forEach { challengeGroup ->
-                challengeGroup.challenges
-                  .forEach { challenge ->
-                    if (useWebApi) {
-                      withHttpClient(httpClient) {
-                        val url = pathOf(prefix, CONTENT, challenge.path)
-                        logger.info { "Fetching: $url" }
-                        get(url, setUp = { header(NO_TRACK_HEADER, "") }) { response ->
-                          val body = response.bodyAsText()
-                          logger.info { "Response: ${response.status} ${body.length} chars" }
-                          cnt += 1
-                        }
-                      }
-                    } else {
-                      logger.info { "Loading: ${challenge.path}" }
-                      log("Loading: ${challenge.path}")
-                      challenge.functionInfo()
+              .flatMap { it.challenges }
+              .forEach { challenge ->
+                if (useWebApi) {
+                  withHttpClient(httpClient) {
+                    val url = pathOf(prefix, CONTENT, challenge.path)
+                    logger.info { "Fetching: $url" }
+                    get(url, setUp = { header(NO_TRACK_HEADER, "") }) { response ->
+                      val body = response.bodyAsText()
+                      logger.info { "Response: ${response.status} ${body.length} chars" }
                       cnt += 1
                     }
                   }
+                } else {
+                  logger.info { "Loading: ${challenge.path}" }
+                  log("Loading: ${challenge.path}")
+                  challenge.functionInfo()
+                  cnt += 1
+                }
               }
           }
       }

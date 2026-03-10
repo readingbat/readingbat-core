@@ -1,21 +1,22 @@
 # Code Review Suggestions - ReadingBat Core
 
 **Date:** March 4, 2026
-**Updated:** March 8, 2026
+**Updated:** March 9, 2026
 **Reviewed by:** Claude Code
 
 ## Executive Summary
 
 ReadingBat Core is a well-architected Kotlin web application with good separation of concerns and proper use of modern
-frameworks. The main concerns center on script execution security (no sandboxing or timeouts), authentication weaknesses
-(SHA-256 password hashing, insecure cookie flags), and exposed admin endpoints. Code quality is high with consistent
+frameworks. The main concerns center on script execution security (no sandboxing or timeouts) and exposed admin endpoints. Code quality is high with consistent
 patterns, good use of Kotlin idioms, and effective use of inline value classes for type safety. Test coverage for
 security-critical paths (auth, authorization, WebSocket) is notably absent.
 
 ### Progress Since Initial Review
 
-Of the 15 issues identified, 1 has been fully resolved, 1 is partially addressed, and 13 remain open. All 3 critical
-issues and all 5 high-severity issues remain unaddressed.
+Of the 15 issues identified, 8 have been fully resolved, 2 are partially addressed, and 5 remain open. Of the 3
+critical issues, 2 have been resolved (#2 cookie secure flag, #3 admin endpoint auth). All 5 high-severity issues
+have been resolved (#4 via OAuth migration, #5 via caching, #6 via redirect validation, #7 via userId authorization
+check, #8 via CoroutineScope replacement).
 
 ## Strengths
 
@@ -29,7 +30,6 @@ issues and all 5 high-severity issues remain unaddressed.
 
 ### Security Positives
 
-- Guava `RateLimiter` on login and account creation provides brute-force mitigation
 - `KtorProperty` system with `maskFunc` properly redacts sensitive values in log output
 - Environment variable obfuscation for sensitive data (`EnvVar.kt`)
 - Session-based authentication with cookie configuration
@@ -64,113 +64,87 @@ complete denial of service. Python and Java script engines execute in the same J
 **Recommendation:** Wrap each pool `eval` call in `withTimeout(30.seconds)` and catch `TimeoutCancellationException` to
 return the pool slot cleanly. Implement resource limits (CPU, memory) and restricted class access.
 
-### 2. Auth Cookie Missing `secure` Flag in Production
+### 2. ~~Auth Cookie Missing `secure` Flag in Production~~
 
-**Status:** OPEN
+**Status:** RESOLVED
 
-**File:** `readingbat-core/src/main/kotlin/com/github/readingbat/server/ConfigureCookies.kt` (lines 49-50)
+~~**File:** `readingbat-core/src/main/kotlin/com/github/readingbat/server/ConfigureCookies.kt` (lines 49-50)~~
 
-The `UserPrincipal` authentication cookie has `cookie.secure = true` commented out with no compensating mechanism. The
-`HerokuHttpsRedirect` plugin is installed only when `production && redirectHostname.isNotBlank()`, meaning if the
-redirect hostname is not configured, TLS enforcement is absent. The auth cookie can be transmitted over plain HTTP,
-allowing session hijacking via network observation. The `BrowserSession` cookie has the same problem.
+All three cookies (`BrowserSession`, `UserPrincipal`, and `OAuthReturnUrl`) now set `cookie.secure = true` when the
+`production` flag is true. The `production` parameter is threaded from `installs()` into each cookie configuration
+function, ensuring cookies are only transmitted over HTTPS in production.
 
-**Recommendation:** Unconditionally set `cookie.secure = true` in production, gated on the `production` parameter
-already threaded through `installs()`.
+### 3. ~~Unauthenticated Sensitive Admin Endpoints~~
 
-### 3. Unauthenticated Sensitive Admin Endpoints
+**Status:** RESOLVED
 
-**Status:** OPEN
+~~**File:** `readingbat-core/src/main/kotlin/com/github/readingbat/server/routes/AdminRoutes.kt` (lines 65-179)~~
 
-**File:** `readingbat-core/src/main/kotlin/com/github/readingbat/server/routes/AdminRoutes.kt` (lines 65-179)
-
-The following endpoints are registered with no authentication checks:
-
-- `GET /threaddump` — returns a full JVM thread dump (line 69)
-- `GET /cookies` — exposes raw cookie data (line 84)
-- `GET /clear-cookies`, `GET /clear-principal`, `GET /clear-sessionid` (lines 138-152)
-
-The `/threaddump` endpoint reveals internal thread names, active database connections, coroutine stack frames, and other
-implementation details. Unlike sys-admin routes (gated on `isProduction()` and `authenticateAdminUser()`), these routes
-have no protection.
-
-**Recommendation:** Wrap these endpoints with `authenticateAdminUser(fetchUser()) { ... }` or move them behind a
-production-only routing block.
+All sensitive admin endpoints (`/threaddump`, `/cookies`, `/clear-cookies`, `/clear-principal`, `/clear-sessionid`) are
+now guarded by a `requireAdminUser()` check that returns HTTP 403 Forbidden in production when the caller is not a
+logged-in admin user. The `/ping` health check endpoint remains open as intended.
 
 ---
 
 ## High Severity
 
-### 4. Password Hashing with SHA-256 — Insufficient for Passwords
+### 4. ~~Password Hashing with SHA-256 — Insufficient for Passwords~~
 
-**Status:** OPEN
+**Status:** RESOLVED
 
-**Files:**
+~~**Files:**~~
 
-- `readingbat-core/src/main/kotlin/com/github/readingbat/common/User.kt` (line ~699)
-- `readingbat-core/src/main/kotlin/com/github/readingbat/server/ConfigureFormAuth.kt` (line ~85)
+~~- `readingbat-core/src/main/kotlin/com/github/readingbat/common/User.kt` (line ~699)~~
+~~- `readingbat-core/src/main/kotlin/com/github/readingbat/server/ConfigureFormAuth.kt` (line ~85)~~
 
-Passwords are stored as `sha256(password + salt)`. SHA-256 is a general-purpose hash, not a key derivation function. It
-can be computed at billions of hashes per second on commodity GPUs, making brute-force of stolen hashes practical even
-with a salt. Industry standard is bcrypt, scrypt, Argon2, or PBKDF2 with high iteration counts.
+Authentication has been migrated from form-based login with SHA-256 password hashing to OAuth (GitHub and Google). The
+application no longer performs password hashing. The `salt` and `digest` columns remain in the `UsersTable` schema for
+backwards compatibility but are no longer used in authentication flows.
 
-**Recommendation:** Replace with Argon2 or bcrypt. Provide a migration path: on next successful login with the old
-SHA-256 digest, re-hash with the new algorithm.
+### 5. ~~`isValidUser()` Issues Database Query on Every Call~~
 
-### 5. `isValidUser()` Issues Database Query on Every Call
+**Status:** RESOLVED
 
-**Status:** OPEN
+~~**File:** `readingbat-core/src/main/kotlin/com/github/readingbat/common/User.kt` (lines ~235-243)~~
 
-**File:** `readingbat-core/src/main/kotlin/com/github/readingbat/common/User.kt` (lines ~235-243)
+Fixed in commit `e5e81bb` ("Cache user DB existence and add bounds checking to key splitting"). `User` objects now cache
+their DB existence status at construction time via an `existsInDbms` flag, eliminating the redundant `SELECT COUNT(id)`
+query on every call to `isValidUser()`.
 
-`isInDbms()` issues a `SELECT COUNT(id)` query every invocation. `isValidUser()` is called transitively by
-`isAdminUser()`, `isNotAdminUser()`, `isNotValidUser()`, and `fetchUser()`. In `authenticateAdminUser()` alone there are
-two calls per request. A simple page render may hit the database 3-5 times just to validate the user.
+### 6. ~~Unbounded Open Redirect at Logout~~
 
-**Recommendation:** Cache the `isInDbms()` result as a field on `User` at construction time. A once-loaded `User` object
-with a valid `userDbmsId` does not need to re-query existence.
+**Status:** RESOLVED
 
-### 6. Unbounded Open Redirect at Logout
+~~**File:** `readingbat-core/src/main/kotlin/com/github/readingbat/server/routes/UserRoutes.kt` (line ~247)~~
 
-**Status:** OPEN
+A `safeRedirectPath()` utility function in `ServerUtils.kt` now validates that redirect targets start with `/` and do
+not start with `//` (protocol-relative). Invalid paths default to `/`. The logout endpoint in `UserRoutes.kt` wraps
+the `RETURN_PARAM` value through `safeRedirectPath()` before redirecting.
 
-**File:** `readingbat-core/src/main/kotlin/com/github/readingbat/server/routes/UserRoutes.kt` (line ~247)
+### 7. ~~`clearChallengeAnswers` / `clearGroupAnswers` — No Authorization Check~~
 
-The `RETURN_PARAM` value is taken directly from the query string and used as a redirect destination with no validation.
-An attacker can craft `GET /logout?returnPath=https://evil.com` to phish users post-logout. The same pattern appears in
-`CreateAccountPost.kt` and `PasswordResetPost.kt`.
+**Status:** RESOLVED
 
-**Recommendation:** Validate that the redirect target is a relative path (starts with `/` and does not start with `//`).
-Reject or default to `/` for any absolute URL.
+~~**File:** `readingbat-core/src/main/kotlin/com/github/readingbat/posts/ChallengePost.kt` (lines ~258-268)~~
 
-### 7. `clearChallengeAnswers` / `clearGroupAnswers` — No Authorization Check
+The `splitKeyAndDelete()` function now accepts a `User?` parameter and compares the userId embedded in the compound
+key against the authenticated user's `userId`. If the user is null or the IDs don't match, the operation is skipped
+with a warning log. Both `clearChallengeAnswers` and `clearGroupAnswers` pass the authenticated user through to
+`splitKeyAndDelete()`.
 
-**Status:** OPEN
+### 8. ~~`newSingleThreadContext` — Deprecated API, Resource Leak~~
 
-**File:** `readingbat-core/src/main/kotlin/com/github/readingbat/posts/ChallengePost.kt` (lines ~258-268)
+**Status:** RESOLVED
 
-Both functions accept a compound key from the POST body (e.g., `correct-answers:auth:userId:md5`) and split it to
-determine which user's data to delete. There is no verification that the authenticated user matches the `userId`
-embedded in the key. An authenticated user could craft a POST request with another user's `userId` to delete their
-answer history.
+~~**Files:**~~
 
-**Recommendation:** After splitting the key, compare the `userId` from the key against `user?.userId` and reject
-mismatches.
+~~- `readingbat-core/src/main/kotlin/com/github/readingbat/server/ws/ChallengeWs.kt` (lines 121, 140)~~
+~~- `readingbat-core/src/main/kotlin/com/github/readingbat/server/ws/LoggingWs.kt` (line 73)~~
 
-### 8. `newSingleThreadContext` — Deprecated API, Resource Leak
-
-**Status:** OPEN
-
-**Files:**
-
-- `readingbat-core/src/main/kotlin/com/github/readingbat/server/ws/ChallengeWs.kt` (lines 121, 140)
-- `readingbat-core/src/main/kotlin/com/github/readingbat/server/ws/LoggingWs.kt` (line 73)
-
-`newSingleThreadContext()` is `@DelicateCoroutinesApi` and creates threads that are never `close()`d. Each context holds
-an OS thread and a thread pool. If `initThreads()` were called more than once (e.g., in tests), leaks would accumulate.
-
-**Recommendation:** Use a named `CoroutineScope` backed by `Dispatchers.IO` or a fixed-thread-pool dispatcher. Cancel it
-on application shutdown via `ApplicationStopped` monitor.
+All `newSingleThreadContext().executor.execute { ... }` patterns have been replaced with
+`CoroutineScope(SupervisorJob() + Dispatchers.IO)` and `scope.launch(CoroutineName(...))`. The `runBlocking` wrappers
+inside the loops were removed (now running in a proper coroutine context), and `Thread.sleep()` calls were replaced
+with `delay()`. Each object holds a `scope` property that can be cancelled on shutdown.
 
 ---
 
@@ -226,16 +200,16 @@ do it at a higher level before routing configuration.
 
 ### 13. No Test Coverage for Auth, Authorization, or WebSocket Flows
 
-**Status:** OPEN
+**Status:** PARTIALLY ADDRESSED
 
 **Files:** All files under `readingbat-core/src/test/kotlin/`
 
-The test suite has three test classes (`EndpointTest`, `UserAnswersTest`, `InvokesTest`). There are no tests for:
+The test suite has grown from three test classes to eight, with new additions including `KeySplitValidationTest` (9 test
+cases for key splitting and bounds checking) and `UserValidationTest` (3 test cases for user validation). However, there
+are still no tests for:
 
-- Login / logout flows
+- Login / logout flows (now OAuth-based)
 - Admin-only endpoint access control
-- Password reset flow
-- Account creation with invalid inputs
 - WebSocket connection and message delivery
 - Database interactions (all tests run without DBMS)
 - Rate limiting behavior
@@ -280,29 +254,29 @@ timeout.
 | #  | Issue                              | Severity | Status              |
 |----|------------------------------------|----------|---------------------|
 | 1  | Script sandboxing                  | Critical | OPEN                |
-| 2  | Cookie secure flag                 | Critical | OPEN                |
-| 3  | Admin endpoint auth                | Critical | OPEN                |
-| 4  | Password hashing (SHA-256)         | High     | OPEN                |
-| 5  | User validation N+1 queries        | High     | OPEN                |
-| 6  | Open redirect                      | High     | OPEN                |
-| 7  | Authorization check gap            | High     | OPEN                |
-| 8  | Thread context leak                | High     | OPEN                |
+| 2  | Cookie secure flag                 | Critical | RESOLVED            |
+| 3  | Admin endpoint auth                | Critical | RESOLVED            |
+| 4  | Password hashing (SHA-256)         | High     | RESOLVED            |
+| 5  | User validation N+1 queries        | High     | RESOLVED            |
+| 6  | Open redirect                      | High     | RESOLVED            |
+| 7  | Authorization check gap            | High     | RESOLVED            |
+| 8  | Thread context leak                | High     | RESOLVED            |
 | 9  | Dead code (`configureSessionAuth`) | Medium   | RESOLVED            |
 | 10 | Global mutable state               | Medium   | OPEN                |
 | 11 | Global rate limiting               | Medium   | OPEN                |
 | 12 | `runBlocking` in routes            | Medium   | OPEN                |
-| 13 | Security test coverage             | Medium   | OPEN                |
+| 13 | Security test coverage             | Medium   | PARTIALLY ADDRESSED |
 | 14 | Redundant index                    | Low      | OPEN                |
 | 15 | Connection pool tuning             | Low      | PARTIALLY ADDRESSED |
 
 ## Priority Summary
 
-| Priority | Items                                                                                                                   | Effort      |
-|----------|-------------------------------------------------------------------------------------------------------------------------|-------------|
-| Critical | Script sandboxing (#1), Cookie security (#2), Admin endpoints (#3)                                                      | Medium      |
-| High     | Password hashing (#4), User validation N+1 (#5), Open redirect (#6), Authorization check (#7), Thread context leak (#8) | Medium-High |
-| Medium   | Global state (#10), Rate limiting (#11), runBlocking (#12), Test coverage (#13)                                         | High        |
-| Low      | Index fix (#14), Connection pool tuning (#15)                                                                           | Low         |
+| Priority | Items                                                                          | Effort |
+|----------|--------------------------------------------------------------------------------|--------|
+| Critical | Script sandboxing (#1)                                                         | Medium |
+| High     | ~~Open redirect (#6)~~, ~~Authorization check (#7)~~, ~~Thread context leak (#8)~~  | Medium |
+| Medium   | Global state (#10), Rate limiting (#11), runBlocking (#12), Test coverage (#13) | High   |
+| Low      | Index fix (#14), Connection pool tuning (#15)                                  | Low    |
 
 ---
 

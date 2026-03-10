@@ -35,7 +35,7 @@ class Limiter(private val maxConcurrencySize: Int = 1) {
   suspend fun request(func: suspend () -> Unit) {
     val token = channel.receive()
     try {
-      func.invoke()
+      func()
     } finally {
       channel.send(token)
     }

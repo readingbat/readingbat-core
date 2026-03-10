@@ -18,9 +18,7 @@
 package com.github.readingbat.pages
 
 import com.github.pambrose.common.util.decode
-import com.github.pambrose.common.util.isNull
 import com.github.pambrose.common.util.pathOf
-import com.github.pambrose.common.util.random
 import com.github.pambrose.common.util.toDoubleQuoted
 import com.github.readingbat.common.ClassCode
 import com.github.readingbat.common.Constants.CORRECT_COLOR
@@ -80,6 +78,7 @@ import com.github.readingbat.pages.PageUtils.loadPingdomScript
 import com.github.readingbat.pages.PageUtils.rawHtml
 import com.github.readingbat.pages.js.CheckAnswersJs.checkAnswersScript
 import com.github.readingbat.pages.js.LikeDislikeJs.likeDislikeScript
+import com.github.readingbat.posts.ChallengeHistory
 import com.github.readingbat.server.ChallengeMd5
 import com.github.readingbat.server.ServerUtils.queryParam
 import com.github.readingbat.server.UserChallengeInfoTable
@@ -243,14 +242,8 @@ internal object ChallengePage {
 
   // Make sure we do not return the same challenge on a chance click
   private fun Int.chance(current: Int): Int {
-    if (this == 1)
-      return 0
-
-    while (true) {
-      val v = random()
-      if (v != current)
-        return v
-    }
+    if (this == 1) return 0
+    return (0 until this).filter { it != current }.random()
   }
 
   private fun BODY.displayQuestions(
@@ -308,7 +301,7 @@ internal object ChallengePage {
                 textInput(classes = TwClasses.USER_RESP + cls) {
                   id = "$RESP$i"
 
-                  if (user.isNull() || user.enrolledClassCode.isNotEnabled)
+                  if (user == null || user.enrolledClassCode.isNotEnabled)
                     onKeyDown = "$PROCESS_USER_ANSWERS_FUNC(event, ${funcInfo.questionCount})"
                   else
                     onFocusOut = "$PROCESS_USER_ANSWERS_FUNC(null, ${funcInfo.questionCount})"
@@ -460,18 +453,18 @@ internal object ChallengePage {
               }
           }
 
+          val challengeMd5s = funcInfo.invocations.map { challenge.md5(it) }
+
           enrollees
             .forEach { enrollee ->
               val numCalls = funcInfo.invocationCount
               var numCorrect = 0
+              val historyMap = enrollee.answerHistoryBulk(challengeMd5s)
               val results =
                 funcInfo.invocations
                   .map { invocation ->
-                    val history =
-                      readonlyTx {
-                        val historyMd5 = challenge.md5(invocation)
-                        enrollee.answerHistory(historyMd5, invocation)
-                      }
+                    val historyMd5 = challenge.md5(invocation)
+                    val history = historyMap[historyMd5] ?: ChallengeHistory(invocation)
 
                     if (history.correct)
                       numCorrect++
@@ -494,7 +487,6 @@ internal object ChallengePage {
                   rawHtml(nbsp.text)
                   +enrollee.fullName.value
                   rawHtml(nbsp.text)
-                  // TODO Optimize this to a single query and grab all values at once
                   span {
                     id = "${enrollee.userId}-$LIKE_DISLIKE_SPAN"
                     rawHtml(enrollee.likeDislikeEmoji(challenge))
@@ -566,39 +558,39 @@ internal object ChallengePage {
 
   private fun BODY.nextPrevChance(pos: Int, challenges: List<Challenge>, includePrev: Boolean) {
     if (includePrev) {
-      "prev".also {
-        if (pos == 0)
-          +it
-        else
-          a {
-            href = "./${challenges[pos - 1].challengeName.value}"
-            +it
-          }
+      val prevLabel = "prev"
+      if (pos == 0) {
+        +prevLabel
+      } else {
+        a {
+          href = "./${challenges[pos - 1].challengeName.value}"
+          +prevLabel
+        }
       }
 
       rawHtml("${nbsp.text} | ${nbsp.text}")
     }
 
-    "next".also {
-      if (pos == challenges.size - 1)
-        +it
-      else
-        a {
-          href = "./${challenges[pos + 1].challengeName.value}"
-          +it
-        }
+    val nextLabel = "next"
+    if (pos == challenges.size - 1) {
+      +nextLabel
+    } else {
+      a {
+        href = "./${challenges[pos + 1].challengeName.value}"
+        +nextLabel
+      }
     }
 
     rawHtml("${nbsp.text} | ${nbsp.text}")
 
-    "chance".also {
-      if (challenges.size == 1)
-        +it
-      else
-        a {
-          href = "./${challenges[challenges.size.chance(pos)].challengeName.value}"
-          +it
-        }
+    val chanceLabel = "chance"
+    if (challenges.size == 1) {
+      +chanceLabel
+    } else {
+      a {
+        href = "./${challenges[challenges.size.chance(pos)].challengeName.value}"
+        +chanceLabel
+      }
     }
   }
 

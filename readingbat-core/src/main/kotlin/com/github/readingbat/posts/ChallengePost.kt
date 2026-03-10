@@ -18,7 +18,6 @@
 package com.github.readingbat.posts
 
 import com.github.pambrose.common.util.encode
-import com.github.pambrose.common.util.isNotNull
 import com.github.pambrose.common.util.maxLength
 import com.github.pambrose.common.util.md5Of
 import com.github.pambrose.common.util.pathOf
@@ -71,19 +70,22 @@ import io.ktor.server.routing.RoutingContext
 import kotlinx.serialization.Required
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import org.jetbrains.exposed.v1.core.Column
 import org.jetbrains.exposed.v1.core.and
+import org.jetbrains.exposed.v1.core.dao.id.LongIdTable
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.joda.time.DateTime
 import org.joda.time.DateTimeZone
+import java.sql.Connection
 
 internal data class StudentInfo(val studentId: String, val firstName: String, val lastName: String)
 
 @Suppress("unused")
 internal data class ClassEnrollment(
   val sessionId: String,
-  val students: List<StudentInfo> = mutableListOf(),
+  val students: List<StudentInfo> = emptyList(),
 )
 
 data class ChallengeResults(
@@ -95,29 +97,23 @@ data class ChallengeResults(
 )
 
 @Serializable
-internal class LikeDislikeInfo(
+internal data class LikeDislikeInfo(
   val userId: String,
   val likeDislike: String,
-) {
-  @Required
-  val type: String = Constants.LIKE_DISLIKE_CODE
-
-  fun toJson() = Json.encodeToString(serializer(), this)
-}
+  @Required val type: String = Constants.LIKE_DISLIKE_CODE,
+)
 
 @Suppress("unused")
 @Serializable
-internal class DashboardInfo(
+internal data class DashboardInfo(
   val userId: String,
   val complete: Boolean,
   val numCorrect: Int,
   val history: DashboardHistory,
-) {
-  fun toJson() = Json.encodeToString(serializer(), this)
-}
+)
 
 @Serializable
-internal class DashboardHistory(
+internal data class DashboardHistory(
   val invocation: String,
   val correct: Boolean = false,
   val answers: String,
@@ -190,9 +186,10 @@ internal object ChallengePost {
     logger.debug { "Found ${userResponses.size} user responses in $paramMap" }
 
     val results =
-      userResponses.indices
-        .map { paramMap[RESP + it]?.trim() ?: error("Missing user response") }
-        .mapIndexed { i, userResponse -> funcInfo.checkResponse(i, userResponse) }
+      userResponses.indices.map { i ->
+        val userResponse = paramMap[RESP + i]?.trim() ?: error("Missing user response")
+        funcInfo.checkResponse(i, userResponse)
+      }
 
     if (isDbmsEnabled())
       saveChallengeAnswers(user, content, names, paramMap, funcInfo, userResponses, results)
@@ -209,35 +206,61 @@ internal object ChallengePost {
     call.respondText(answerMapping.toString())
   }
 
-  private fun deleteChallengeInfo(type: String, id: String, md5Val: String) =
-    when (type) {
-      AUTH_KEY -> {
-        transaction {
-          with(UserChallengeInfoTable) {
-            deleteWhere { (userRef eq fetchUserDbmsIdFromCache(id)) and (md5 eq md5Val) }
-          }
-        }
-      }
-
-      else -> {
-        error("Invalid type: $type")
+  private fun deleteFromTable(
+    table: LongIdTable,
+    userRefCol: Column<Long>,
+    md5Col: Column<String>,
+    type: String,
+    id: String,
+    md5Val: String,
+  ) = when (type) {
+    AUTH_KEY -> {
+      transaction {
+        table.deleteWhere { (userRefCol eq fetchUserDbmsIdFromCache(id)) and (md5Col eq md5Val) }
       }
     }
+
+    else -> {
+      error("Invalid type: $type")
+    }
+  }
+
+  private fun deleteChallengeInfo(type: String, id: String, md5Val: String) =
+    deleteFromTable(
+      UserChallengeInfoTable,
+      UserChallengeInfoTable.userRef,
+      UserChallengeInfoTable.md5,
+      type,
+      id,
+      md5Val,
+    )
 
   private fun deleteAnswerHistory(type: String, id: String, md5Val: String) =
-    when (type) {
-      AUTH_KEY -> {
-        transaction {
-          with(UserAnswerHistoryTable) {
-            deleteWhere { (userRef eq fetchUserDbmsIdFromCache(id)) and (md5 eq md5Val) }
-          }
-        }
-      }
+    deleteFromTable(
+      UserAnswerHistoryTable,
+      UserAnswerHistoryTable.userRef,
+      UserAnswerHistoryTable.md5,
+      type,
+      id,
+      md5Val,
+    )
 
-      else -> {
-        error("Invalid type: $type")
+  private fun splitKeyAndDelete(key: String, label: String, user: User?, action: (String, String, String) -> Int) {
+    if (key.isNotEmpty()) {
+      val parts = key.split(KEY_SEP)
+      if (parts.size >= 4) {
+        val keyUserId = parts[2]
+        if (user == null || user.userId != keyUserId) {
+          logger.warn { "Authorization mismatch for $label: key userId=$keyUserId does not match authenticated user" }
+          return
+        }
+        action(parts[1], keyUserId, parts[3])
+          .also { logger.info { "Deleted $it $label for $key" } }
+      } else {
+        logger.warn { "Malformed $label: $key" }
       }
     }
+  }
 
   suspend fun RoutingContext.clearChallengeAnswers(content: ReadingBatContent, user: User?): PageResult {
     val params = call.receiveParameters()
@@ -254,19 +277,8 @@ internal object ChallengePost {
     val path = pathOf(CHALLENGE_ROOT, languageName, groupName, challengeName)
 
     // Clears answer history
-    if (correctAnswersKey.isNotEmpty()) {
-      correctAnswersKey.split(KEY_SEP).let { deleteChallengeInfo(it[1], it[2], it[3]) }
-        .also {
-          logger.info { "Deleted $it correctAnswers vals for ${challenge.challengeName} $correctAnswersKey" }
-        }
-    }
-
-    if (challengeAnswersKey.isNotEmpty()) {
-      challengeAnswersKey.split(KEY_SEP).let { deleteAnswerHistory(it[1], it[2], it[3]) }
-        .also {
-          logger.info { "Deleted $it challengeAnswers for ${challenge.challengeName} $challengeAnswersKey" }
-        }
-    }
+    splitKeyAndDelete(correctAnswersKey, "correctAnswers", user, ::deleteChallengeInfo)
+    splitKeyAndDelete(challengeAnswersKey, "challengeAnswers", user, ::deleteAnswerHistory)
 
     user?.resetHistory(funcInfo, challenge, content.maxHistoryLength)
 
@@ -290,27 +302,10 @@ internal object ChallengePost {
     if (!isDbmsEnabled())
       return PageResult.Redirect("$path?$MSG=${"Database not enabled"}")
 
-    correctAnswersKeys
-      .forEach { correctAnswersKey ->
-        if (correctAnswersKey.isNotEmpty()) {
-          correctAnswersKey.split(KEY_SEP).let { deleteChallengeInfo(it[1], it[2], it[3]) }
-            .also {
-              logger.info { "Deleted $it correctAnswers vals for $correctAnswersKey" }
-            }
-        }
-      }
+    correctAnswersKeys.forEach { splitKeyAndDelete(it, "correctAnswers", user, ::deleteChallengeInfo) }
+    challengeAnswersKeys.forEach { splitKeyAndDelete(it, "challengeAnswers", user, ::deleteAnswerHistory) }
 
-    challengeAnswersKeys
-      .forEach { challengeAnswersKey ->
-        if (challengeAnswersKey.isNotEmpty()) {
-          challengeAnswersKey.split(KEY_SEP).let { deleteAnswerHistory(it[1], it[2], it[3]) }
-            .also {
-              logger.info { "Deleted $it challengeAnswers for $challengeAnswersKey" }
-            }
-        }
-      }
-
-    if (user.isNotNull()) {
+    if (user != null) {
       content.findGroup(languageName, groupName).challenges
         .forEach { challenge ->
           logger.info { "Clearing answers for challengeName ${challenge.challengeName}" }
@@ -373,50 +368,57 @@ internal object ChallengePost {
     val numCorrect = results.count { it.correct }
     val invokeMap = invokeList.associate { it.first.value to it.second }
     val invokeStr = Json.encodeToString(invokeMap)
-    val historyList = mutableListOf<ChallengeHistory>()
+    if (user != null) {
+      // Read-modify-write in a single SERIALIZABLE transaction to prevent
+      // concurrent requests from overwriting each other's incorrectAttempts counts
+      val historyPairs =
+        transaction(transactionIsolation = Connection.TRANSACTION_SERIALIZABLE) {
+          val pairs =
+            results.map { result ->
+              val historyMd5 = names.md5(result.invocation)
+              val history = user.answerHistoryInTransaction(historyMd5, result.invocation)
 
-    if (user.isNotNull()) {
-      transaction {
-        with(UserChallengeInfoTable) {
-          upsert(conflictIndex = userChallengeInfoIndex) { row ->
-            row[userRef] = user.userDbmsId
-            row[md5] = challengeMd5
-            row[updated] = DateTime.now(DateTimeZone.UTC)
-            row[allCorrect] = complete
-            row[answersJson] = invokeStr
-          }
-        }
+              when {
+                !result.answered -> history.markUnanswered()
+                result.correct -> history.markCorrect(result.userResponse)
+                else -> history.markIncorrect(result.userResponse)
+              }
 
-        // Save the history of each answer on a per-invocation basis
-        for (result in results) {
-          val historyMd5 = names.md5(result.invocation)
-          val history = user.answerHistory(historyMd5, result.invocation)
-          historyList += history
+              historyMd5 to history
+            }
 
-          when {
-            !result.answered -> history.markUnanswered()
-            result.correct -> history.markCorrect(result.userResponse)
-            else -> history.markIncorrect(result.userResponse)
-          }
-
-          with(UserAnswerHistoryTable) {
-            upsert(conflictIndex = userAnswerHistoryIndex) { row ->
+          with(UserChallengeInfoTable) {
+            upsert(conflictIndex = userChallengeInfoIndex) { row ->
               row[userRef] = user.userDbmsId
-              row[md5] = historyMd5
-              row[invocation] = history.invocation.value
+              row[md5] = challengeMd5
               row[updated] = DateTime.now(DateTimeZone.UTC)
-              row[correct] = history.correct
-              row[incorrectAttempts] = history.incorrectAttempts
-              row[historyJson] = Json.encodeToString(history.answers)
+              row[allCorrect] = complete
+              row[answersJson] = invokeStr
             }
           }
+
+          // Save the history of each answer on a per-invocation basis
+          pairs.forEach { (historyMd5, history) ->
+            with(UserAnswerHistoryTable) {
+              upsert(conflictIndex = userAnswerHistoryIndex) { row ->
+                row[userRef] = user.userDbmsId
+                row[md5] = historyMd5
+                row[invocation] = history.invocation.value
+                row[updated] = DateTime.now(DateTimeZone.UTC)
+                row[correct] = history.correct
+                row[incorrectAttempts] = history.incorrectAttempts
+                row[historyJson] = Json.encodeToString(history.answers)
+              }
+            }
+          }
+
+          pairs
         }
-      }
 
       // This is done outside the transaction
       if (shouldPublish) {
-        historyList.forEach {
-          user.publishAnswers(challengeMd5, content.maxHistoryLength, complete, numCorrect, it)
+        historyPairs.forEach { (_, history) ->
+          user.publishAnswers(challengeMd5, content.maxHistoryLength, complete, numCorrect, history)
         }
       }
     }
@@ -427,7 +429,7 @@ internal object ChallengePost {
     names: ChallengeNames,
     likeDislikeVal: Int,
   ) {
-    if (user.isNotNull()) {
+    if (user != null) {
       val challengeMd5 = names.md5()
       transaction {
         with(UserChallengeInfoTable) {

@@ -53,36 +53,36 @@ object Locations {
   fun Routing.locations(metrics: Metrics, content: () -> ReadingBatContent) {
     get<Language> { languageLoc ->
       metrics.languageGroupRequestCount.labels(agentLaunchId(), GET, languageLoc.languageTypeStr, FALSE_STR).inc()
-      language(content.invoke(), languageLoc, false)
+      language(content(), languageLoc, false)
     }
     get<Language.Group> { groupLoc ->
       metrics.challengeGroupRequestCount.labels(agentLaunchId(), GET, groupLoc.languageTypeStr, FALSE_STR).inc()
-      group(content.invoke(), groupLoc, false)
+      group(content(), groupLoc, false)
     }
     get<Language.Group.Challenge> { challengeLoc ->
       metrics.challengeRequestCount.labels(agentLaunchId(), GET, challengeLoc.languageTypeStr, FALSE_STR).inc()
-      challenge(content.invoke(), challengeLoc, false)
+      challenge(content(), challengeLoc, false)
     }
     get<PlaygroundRequest> { request ->
       metrics.playgroundRequestCount.labels(agentLaunchId(), GET, FALSE_STR).inc()
-      playground(content.invoke(), request, false)
+      playground(content(), request, false)
     }
 
     locationsPost<Language> { languageLoc ->
       metrics.languageGroupRequestCount.labels(agentLaunchId(), POST, languageLoc.languageTypeStr, TRUE_STR).inc()
-      language(content.invoke(), languageLoc, false)
+      language(content(), languageLoc, false)
     }
     locationsPost<Language.Group> { groupLoc ->
       metrics.challengeGroupRequestCount.labels(agentLaunchId(), POST, groupLoc.languageTypeStr, TRUE_STR).inc()
-      group(content.invoke(), groupLoc, false)
+      group(content(), groupLoc, false)
     }
     locationsPost<Language.Group.Challenge> { challengeLoc ->
       metrics.challengeRequestCount.labels(agentLaunchId(), POST, challengeLoc.languageTypeStr, TRUE_STR).inc()
-      challenge(content.invoke(), challengeLoc, false)
+      challenge(content(), challengeLoc, false)
     }
     locationsPost<PlaygroundRequest> { request ->
       metrics.playgroundRequestCount.labels(agentLaunchId(), POST, TRUE_STR).inc()
-      playground(content.invoke(), request, false)
+      playground(content(), request, false)
     }
   }
 

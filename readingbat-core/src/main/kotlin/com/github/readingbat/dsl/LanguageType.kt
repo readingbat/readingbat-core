@@ -17,7 +17,6 @@
 
 package com.github.readingbat.dsl
 
-import com.github.pambrose.common.util.isNull
 import com.github.pambrose.common.util.pathOf
 import com.github.readingbat.common.Endpoints.CHALLENGE_ROOT
 import com.github.readingbat.server.LanguageName
@@ -40,18 +39,15 @@ enum class LanguageType(val useDoubleQuotes: Boolean, val suffix: String, val sr
     val defaultLanguageType = Java
     val languageTypeList = listOf(Java, Python, Kotlin)
 
-    fun languageTypes(defaultLanguage: LanguageType? = null) =
-      if (defaultLanguage.isNull())
+    fun languageTypes(defaultLanguage: LanguageType? = null): List<LanguageType> =
+      if (defaultLanguage == null) {
         languageTypeList
-      else
-        mutableListOf(defaultLanguage)
-          .also { list ->
-            languageTypeList
-              .filterNot { it == defaultLanguage }
-              .forEach {
-                list += it
-              }
-          }
+      } else {
+        buildList {
+          add(defaultLanguage)
+          addAll(languageTypeList.filterNot { it == defaultLanguage })
+        }
+      }
 
     fun String.toLanguageType() = entries.firstOrNull { it.name.equals(this, ignoreCase = true) }
 

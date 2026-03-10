@@ -19,7 +19,6 @@ package com.github.readingbat.dsl.parse
 
 import com.github.pambrose.common.util.lastLineNumberOf
 import com.github.pambrose.common.util.linesBetween
-import com.github.pambrose.common.util.substringBetween
 import com.github.readingbat.server.Invocation
 
 internal object KotlinParse {
@@ -34,51 +33,41 @@ internal object KotlinParse {
     return stripLeadingComments(snippet).joinToString("\n").trimIndent()
   }
 
-  private fun stripLeadingComments(lines: List<String>): List<String> {
+  internal fun stripLeadingComments(lines: List<String>): List<String> {
     var i = 0
     while (i < lines.size) {
       val trimmed = lines[i].trim()
-      when {
-        trimmed.startsWith("/*") -> {
-          // Collect the entire block comment to check for "Copyright"
-          val blockStart = i
-          val isSingleLine = trimmed.contains("*/")
-          if (isSingleLine) {
-            if (trimmed.contains("Copyright", ignoreCase = true)) {
-              i++
-            } else {
-              break
-            }
-          } else {
-            // Find the end of the block comment
-            i++
-            while (i < lines.size && !lines[i].contains("*/")) i++
-            if (i < lines.size) i++ // skip the closing */ line
-            // Check if any line in the block contains "Copyright"
-            val blockLines = lines.subList(blockStart, i)
-            if (blockLines.any { it.contains("Copyright", ignoreCase = true) }) {
-              // Copyright block removed, continue scanning
-            } else {
-              // Not a copyright comment — keep it
-              return lines.subList(blockStart, lines.size)
-            }
-          }
+      i =
+        when {
+          trimmed.isEmpty() -> i + 1
+          trimmed.startsWith("//") && trimmed.contains("Copyright", ignoreCase = true) -> i + 1
+          trimmed.startsWith("/*") -> skipBlockComment(lines, i) ?: return lines.subList(i, lines.size)
+          else -> return lines.subList(i, lines.size)
         }
-
-        trimmed.startsWith("//") && trimmed.contains("Copyright", ignoreCase = true) -> {
-          i++
-        }
-
-        trimmed.isEmpty() -> {
-          i++
-        }
-
-        else -> {
-          break
-        }
-      }
     }
     return lines.subList(i, lines.size)
+  }
+
+  /**
+   * Scans past a block comment starting at [start]. Returns the index after the block comment
+   * if it was a copyright block (should be stripped), or null if the block is not a copyright
+   * comment (should be kept).
+   */
+  private fun skipBlockComment(lines: List<String>, start: Int): Int? {
+    val trimmed = lines[start].trim()
+    val isSingleLine = trimmed.contains("*/")
+
+    if (isSingleLine) {
+      return if (trimmed.contains("Copyright", ignoreCase = true)) start + 1 else null
+    }
+
+    // Multi-line block comment: find the closing */
+    var end = start + 1
+    while (end < lines.size && !lines[end].contains("*/")) end++
+    if (end < lines.size) end++ // skip the closing */ line
+
+    val blockLines = lines.subList(start, end)
+    return if (blockLines.any { it.contains("Copyright", ignoreCase = true) }) end else null
   }
 
   fun extractKotlinInvocations(code: String, start: Regex, end: Regex) =
@@ -87,7 +76,7 @@ internal object KotlinParse {
   fun extractKotlinInvocations(code: List<String>, start: Regex, end: Regex) =
     code.linesBetween(start, end)
       .filter { it.trimStart().startsWith(PRINT_PREFIX) }
-      .map { it.substringBetween(PRINT_PREFIX, ")") }
+      .map { it.trimStart().extractBalancedContent(PRINT_PREFIX) }
       .map { Invocation(it) }
 
   fun convertToKotlinScript(code: List<String>) =
@@ -101,7 +90,7 @@ internal object KotlinParse {
           }
 
           insideMain && line.trimStart().startsWith(PRINT_PREFIX) -> {
-            val expr = line.substringBetween(PRINT_PREFIX, ")")
+            val expr = line.trimStart().extractBalancedContent(PRINT_PREFIX)
             appendLine("$VAR_NAME.add($expr)")
           }
 

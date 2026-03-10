@@ -36,6 +36,7 @@ import com.github.readingbat.server.ws.WsCommon.CHALLENGE_MD5
 import com.github.readingbat.server.ws.WsCommon.CLASS_CODE
 import com.github.readingbat.server.ws.WsCommon.closeChannels
 import com.github.readingbat.server.ws.WsCommon.validateContext
+import com.github.readingbat.utils.toJson
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.server.routing.Routing
 import io.ktor.server.websocket.DefaultWebSocketServerSession
@@ -44,19 +45,21 @@ import io.ktor.websocket.CloseReason
 import io.ktor.websocket.CloseReason.Codes.GOING_AWAY
 import io.ktor.websocket.Frame
 import io.ktor.websocket.close
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onStart
-import kotlinx.coroutines.newSingleThreadContext
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import kotlinx.serialization.Required
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
 import java.util.Collections.synchronizedSet
-import kotlin.concurrent.timer
 import kotlin.math.max
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeSource
@@ -73,6 +76,7 @@ internal object ChallengeWs {
   val multiServerWsReadFlow by lazy {
     MutableSharedFlow<ChallengeAnswerData>(extraBufferCapacity = FLOW_BUFFER_CAPACITY)
   }
+  private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
   val answerWsConnections: MutableSet<AnswerSessionContext> = synchronizedSet(LinkedHashSet<AnswerSessionContext>())
   var maxAnswerWsConnections = 0
 
@@ -89,26 +93,22 @@ internal object ChallengeWs {
   }
 
   @Serializable
-  class PingMessage(val msg: String) {
-    @Required
-    val type: String = PING_CODE
-
-    fun toJson() = Json.encodeToString(serializer(), this)
-  }
+  data class PingMessage(
+    val msg: String,
+    @Required val type: String = PING_CODE,
+  )
 
   init {
     logger.info { "Initializing ChallengeWs" }
 
-    timer("pinger", false, 0L, 1.seconds.inWholeMilliseconds) {
-      for (sessionContext in answerWsConnections) {
-        if (sessionContext.enabled) {
-          {
+    scope.launch(CoroutineName("pinger")) {
+      while (isActive) {
+        delay(1.seconds)
+        for (sessionContext in answerWsConnections) {
+          if (sessionContext.enabled) {
             runCatching {
-              val elapsed = sessionContext.start.elapsedNow().format()
-              val json = PingMessage(elapsed).toJson()
-              runBlocking {
-                sessionContext.wsSession.outgoing.send(Frame.Text(json))
-              }
+              val json = PingMessage(sessionContext.start.elapsedNow().format()).toJson()
+              sessionContext.wsSession.outgoing.send(Frame.Text(json))
             }.onFailure { e ->
               logger.error { "Exception in pinger ${e.simpleClassName} ${e.message}" }
             }
@@ -118,45 +118,41 @@ internal object ChallengeWs {
     }
 
     if (isMultiServerEnabled()) {
-      newSingleThreadContext("multiServerWsWriteChannel").executor.execute {
-        while (true) {
+      scope.launch(CoroutineName("multiServerWsWriteChannel")) {
+        while (isActive) {
           runCatching {
-            runBlocking {
-              multiServerWsWriteFlow
-                .onStart { logger.info { "Starting to read multi-server writer ws channel values" } }
-                .onCompletion { logger.info { "Finished reading multi-server writer ws channel values" } }
-                .collect { data ->
-                  publishShim(data.pubSubTopic.name, data.toJson())
-                }
-            }
+            multiServerWsWriteFlow
+              .onStart { logger.info { "Starting to read multi-server writer ws channel values" } }
+              .onCompletion { logger.info { "Finished reading multi-server writer ws channel values" } }
+              .collect { data ->
+                publishShim(data.pubSubTopic.name, data.toJson())
+              }
           }.onFailure { e ->
             logger.error { "Exception in challenge ws writer: ${e.simpleClassName} ${e.message}" }
-            Thread.sleep(1.seconds.inWholeMilliseconds)
+            delay(1.seconds)
           }
         }
       }
     }
 
-    newSingleThreadContext("answerWsConnections").executor.execute {
-      while (true) {
+    scope.launch(CoroutineName("answerWsConnections")) {
+      while (isActive) {
         runCatching {
-          runBlocking {
-            (if (isMultiServerEnabled()) multiServerWsReadFlow else singleServerWsFlow)
-              .onStart { logger.info { "Starting to read challenge ws channel values" } }
-              .onCompletion { logger.info { "Finished reading challenge ws channel values" } }
-              .collect { data ->
-                answerWsConnections
-                  .filter { it.targetName == data.target }
-                  .forEach {
-                    it.metrics.wsStudentAnswerResponseCount.labels(agentLaunchId())?.inc()
-                    it.wsSession.outgoing.send(Frame.Text(data.jsonArgs))
-                    logger.debug { "Sent $data ${answerWsConnections.size}" }
-                  }
-              }
-          }
+          (if (isMultiServerEnabled()) multiServerWsReadFlow else singleServerWsFlow)
+            .onStart { logger.info { "Starting to read challenge ws channel values" } }
+            .onCompletion { logger.info { "Finished reading challenge ws channel values" } }
+            .collect { data ->
+              answerWsConnections
+                .filter { it.targetName == data.target }
+                .forEach {
+                  it.metrics.wsStudentAnswerResponseCount.labels(agentLaunchId())?.inc()
+                  it.wsSession.outgoing.send(Frame.Text(data.jsonArgs))
+                  logger.debug { "Sent $data ${answerWsConnections.size}" }
+                }
+            }
         }.onFailure { e ->
           logger.error { "Exception in dispatcher ${e.simpleClassName} ${e.message}" }
-          Thread.sleep(1.seconds.inWholeMilliseconds)
+          delay(1.seconds)
         }
       }
     }

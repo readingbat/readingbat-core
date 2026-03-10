@@ -49,7 +49,6 @@ import io.ktor.server.sessions.sessions
 import io.ktor.server.sessions.set
 import io.ktor.server.websocket.WebSocketServerSession
 import io.ktor.utils.io.KtorDsl
-import kotlinx.coroutines.runBlocking
 
 @Suppress("unused")
 internal object ServerUtils {
@@ -58,6 +57,9 @@ internal object ServerUtils {
   fun getVersionDesc(asJson: Boolean = false): String = ReadingBatServer::class.versionDesc(asJson)
 
   fun RoutingContext.queryParam(key: String, default: String = "") = call.request.queryParameters[key] ?: default
+
+  fun safeRedirectPath(path: String): String =
+    if (path.startsWith("/") && !path.startsWith("//")) path else "/"
 
   fun RoutingContext.fetchUser(loginAttempt: Boolean = false): User? =
     fetchPrincipal(loginAttempt)?.userId?.toUser(call.browserSession)
@@ -87,34 +89,25 @@ internal object ServerUtils {
       is PageResult.Redirect -> redirectTo { result.url }
     }
 
-  fun authenticateAdminUser(user: User?, block: () -> String): String =
-    when {
-      isProduction() -> {
-        when {
-          user.isNotValidUser() -> throw InvalidRequestException("Must be logged in for this function")
-          user.isNotAdminUser() -> throw InvalidRequestException("Must be system admin for this function")
-          else -> block.invoke()
-        }
-      }
-
-      else -> {
-        block.invoke()
-      }
-    }
+  fun authenticateAdminUser(user: User?, block: () -> String): String {
+    if (user.isNotValidUser()) throw InvalidRequestException("Must be logged in for this function")
+    if (isProduction() && user.isNotAdminUser()) throw InvalidRequestException("Must be system admin for this function")
+    return block()
+  }
 
   @KtorDsl
   fun Route.get(path: String, metrics: Metrics, body: RoutingHandler) =
     route(path, HttpMethod.Get) {
-      runBlocking {
-        metrics.measureEndpointRequest(path) { handle(body) }
+      handle {
+        metrics.measureEndpointRequest(path) { body() }
       }
     }
 
   @KtorDsl
   fun Route.post(path: String, metrics: Metrics, body: RoutingHandler) =
     route(path, HttpMethod.Post) {
-      runBlocking {
-        metrics.measureEndpointRequest(path) { handle(body) }
+      handle {
+        metrics.measureEndpointRequest(path) { body() }
       }
     }
 

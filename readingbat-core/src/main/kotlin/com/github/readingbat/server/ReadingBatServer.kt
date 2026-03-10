@@ -21,8 +21,6 @@ import com.github.pambrose.common.util.FileSource
 import com.github.pambrose.common.util.Version
 import com.github.pambrose.common.util.Version.Companion.versionDesc
 import com.github.pambrose.common.util.getBanner
-import com.github.pambrose.common.util.isNotNull
-import com.github.pambrose.common.util.isNull
 import com.github.pambrose.common.util.randomId
 import com.github.readingbat.BuildConfig
 import com.github.readingbat.common.Constants.UNKNOWN_USER_ID
@@ -98,7 +96,8 @@ object ReadingBatServer {
   internal val timeStamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("M/d/y H:m:ss"))
   internal var callerVersion = ""
   internal val content = AtomicReference(ReadingBatContent())
-  internal val adminUsers = mutableListOf<String>()
+  internal var adminUsers: List<String> = emptyList()
+    internal set
   internal val contentReadCount = AtomicInt(0)
   internal val dbms by lazy {
     Database.connect(
@@ -136,9 +135,9 @@ object ReadingBatServer {
     // If kotlin.script.classpath property is missing, set it based on env var SCRIPT_CLASSPATH
     // This has to take place before reading DSL
     val scriptClasspathProp = KOTLIN_SCRIPT_CLASSPATH.getPropertyOrNull()
-    if (scriptClasspathProp.isNull()) {
+    if (scriptClasspathProp == null) {
       val scriptClasspathEnvVar = SCRIPT_CLASSPATH.getEnvOrNull()
-      if (scriptClasspathEnvVar.isNotNull())
+      if (scriptClasspathEnvVar != null)
         KOTLIN_SCRIPT_CLASSPATH.setProperty(scriptClasspathEnvVar)
       else
         logger.warn { "Missing ${KOTLIN_SCRIPT_CLASSPATH.propertyName} and $SCRIPT_CLASSPATH values" }
@@ -229,7 +228,7 @@ fun Application.module() {
   logger.info { "Loaded script engines: ${ScriptEngineManager().engineFactories.map { it.engineName }}" }
   check(ScriptEngineManager().engineFactories.count() == 3) { "Missing script engines" }
 
-  adminUsers.addAll(Property.ADMIN_USERS.configValueOrNull(this)?.getList() ?: emptyList())
+  adminUsers = Property.ADMIN_USERS.configValueOrNull(this)?.getList() ?: emptyList()
 
   if (isDbmsEnabled()) {
     ReadingBatServer.dbms

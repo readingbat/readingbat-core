@@ -19,8 +19,6 @@ package com.github.readingbat.server.routes
 
 import com.codahale.metrics.jvm.ThreadDump
 import com.github.pambrose.common.response.redirectTo
-import com.github.pambrose.common.util.isNotNull
-import com.github.pambrose.common.util.isNull
 import com.github.pambrose.common.util.randomId
 import com.github.readingbat.common.AuthRoutes.COOKIES
 import com.github.readingbat.common.BrowserSession
@@ -30,14 +28,18 @@ import com.github.readingbat.common.Endpoints.THREAD_DUMP
 import com.github.readingbat.common.Metrics
 import com.github.readingbat.common.UserPrincipal
 import com.github.readingbat.common.browserSession
+import com.github.readingbat.common.isAdminUser
 import com.github.readingbat.common.userPrincipal
 import com.github.readingbat.dsl.isDbmsEnabled
+import com.github.readingbat.dsl.isProduction
 import com.github.readingbat.dsl.isSaveRequestsEnabled
 import com.github.readingbat.server.BrowserSessionsTable
 import com.github.readingbat.server.GeoInfo.Companion.lookupGeoInfo
+import com.github.readingbat.server.ServerUtils.fetchUser
 import com.github.readingbat.server.ServerUtils.get
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.http.ContentType.Text.Plain
+import io.ktor.http.HttpStatusCode
 import io.ktor.server.html.respondHtml
 import io.ktor.server.plugins.origin
 import io.ktor.server.response.respondText
@@ -61,12 +63,25 @@ import java.time.ZoneId
 object AdminRoutes {
   private val logger = KotlinLogging.logger {}
 
+  private suspend fun RoutingContext.requireAdminUser(): Boolean {
+    if (isProduction()) {
+      val user = fetchUser()
+      if (user == null || !user.isAdminUser()) {
+        call.respondText("Forbidden", Plain, HttpStatusCode.Forbidden)
+        return false
+      }
+    }
+    return true
+  }
+
   fun Routing.adminRoutes(metrics: Metrics) {
     get(PING_ENDPOINT, metrics) {
       call.respondText("pong", Plain)
     }
 
     get(THREAD_DUMP, metrics) {
+      if (!requireAdminUser()) return@get
+
       try {
         ByteArrayOutputStream()
           .apply {
@@ -82,21 +97,23 @@ object AdminRoutes {
     }
 
     get(COOKIES) {
+      if (!requireAdminUser()) return@get
+
       val principal = call.userPrincipal
       val session = call.browserSession
       logger.info { "UserPrincipal: $principal BrowserSession: $session" }
 
       call.respondHtml {
         body {
-          if (principal.isNull() && session.isNull()) {
+          if (principal == null && session == null) {
             div { +"No cookies are present." }
           } else {
-            if (principal.isNotNull()) {
+            if (principal != null) {
               val date = ofInstant(ofEpochMilli(principal.created), ZoneId.systemDefault())
               div { +"UserPrincipal: ${principal.userId} created on: $date" }
             }
 
-            if (session.isNotNull()) {
+            if (session != null) {
               val date = ofInstant(ofEpochMilli(session.created), ZoneId.systemDefault())
               div { +"BrowserSession id: [${session.id}] created on: $date" }
             }
@@ -108,7 +125,7 @@ object AdminRoutes {
     fun RoutingContext.clearPrincipal() {
       call.userPrincipal
         .also {
-          if (it.isNotNull()) {
+          if (it != null) {
             logger.info { "Clearing principal $it" }
             call.sessions.clear<UserPrincipal>()
           } else {
@@ -120,7 +137,7 @@ object AdminRoutes {
     fun RoutingContext.clearSessionId() {
       call.browserSession
         .also { bs ->
-          if (bs.isNotNull()) {
+          if (bs != null) {
             logger.info { "Clearing browser session id $bs" }
             call.sessions.clear<BrowserSession>()
             if (isDbmsEnabled())
@@ -136,27 +153,30 @@ object AdminRoutes {
     }
 
     get("/clear-cookies") {
+      if (!requireAdminUser()) return@get
       clearPrincipal()
       clearSessionId()
       redirectTo { "/" }
     }
 
     get("/clear-principal") {
+      if (!requireAdminUser()) return@get
       clearPrincipal()
       redirectTo { "/" }
     }
 
     get("/clear-sessionid") {
+      if (!requireAdminUser()) return@get
       clearSessionId()
       redirectTo { "/" }
     }
   }
 
-  fun RoutingContext.assignBrowserSession() {
+  suspend fun RoutingContext.assignBrowserSession() {
     if (call.request.headers.contains(NO_TRACK_HEADER))
       return
 
-    if (call.browserSession.isNull()) {
+    if (call.browserSession == null) {
       val browserSession = BrowserSession(id = randomId(15))
       call.sessions.set(browserSession)
 

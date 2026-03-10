@@ -7,6 +7,7 @@ versions = "0.53.0"
 
 # Library versions
 cloud = "1.28.1"
+flyway = "12.0.3"
 commons = "1.15.0"
 css = "2026.3.2"
 exposed = "1.1.1"
@@ -28,6 +29,7 @@ proxy = "3.0.0"
 python = "2.7.4"
 resend = "4.12.0"
 serialization = "1.10.0"
+testcontainers = "1.21.4"
 utils = "2.6.1"
 
 [libraries]
@@ -111,6 +113,9 @@ logback = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
 kotest-runner-junit5 = { module = "io.kotest:kotest-runner-junit5", version.ref = "kotest" }
 kotest-assertions-core = { module = "io.kotest:kotest-assertions-core", version.ref = "kotest" }
 kotest-assertions-ktor = { module = "io.kotest:kotest-assertions-ktor", version.ref = "kotest-ktor" }
+testcontainers-postgresql = { module = "org.testcontainers:postgresql", version.ref = "testcontainers" }
+flyway-core = { module = "org.flywaydb:flyway-core", version.ref = "flyway" }
+flyway-postgres = { module = "org.flywaydb:flyway-database-postgresql", version.ref = "flyway" }
 
 [plugins]
 buildconfig = { id = "com.github.gmazzo.buildconfig", version.ref = "buildconfig" }

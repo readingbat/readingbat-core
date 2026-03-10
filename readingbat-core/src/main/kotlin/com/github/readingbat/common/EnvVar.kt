@@ -17,7 +17,6 @@
 
 package com.github.readingbat.common
 
-import com.github.pambrose.common.util.isNotNull
 import com.github.pambrose.common.util.obfuscate
 import com.github.readingbat.common.Constants.UNASSIGNED
 
@@ -51,7 +50,7 @@ enum class EnvVar(val maskFunc: EnvVar.() -> String = { getEnv(UNASSIGNED) }) {
   RECAPTCHA_SECRET_KEY({ getEnvOrNull()?.obfuscate(4) ?: UNASSIGNED }),
   ;
 
-  fun isDefined(): Boolean = getEnvOrNull().isNotNull()
+  fun isDefined(): Boolean = getEnvOrNull() != null
 
   fun getEnvOrNull(): String? = System.getenv(name)
 

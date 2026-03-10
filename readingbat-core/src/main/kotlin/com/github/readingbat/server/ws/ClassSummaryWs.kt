@@ -35,7 +35,7 @@ import com.github.readingbat.server.ws.WsCommon.GROUP_NAME
 import com.github.readingbat.server.ws.WsCommon.LANGUAGE_NAME
 import com.github.readingbat.server.ws.WsCommon.closeChannels
 import com.github.readingbat.server.ws.WsCommon.validateContext
-import com.pambrose.common.exposed.readonlyTx
+import com.github.readingbat.utils.toJson
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.server.routing.Routing
 import io.ktor.server.websocket.webSocket
@@ -45,7 +45,6 @@ import io.ktor.websocket.close
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
 import kotlin.concurrent.atomics.AtomicBoolean
 
 internal object ClassSummaryWs {
@@ -68,7 +67,7 @@ internal object ClassSummaryWs {
         metrics.wsClassSummaryGauge.labels(agentLaunchId()).inc()
 
         metrics.measureEndpointRequest("/websocket_class_summary") {
-          val content = contentSrc.invoke()
+          val content = contentSrc()
           val p = call.parameters
           val langName = p[LANGUAGE_NAME]?.let { LanguageName(it) } ?: throw InvalidRequestException("Missing language")
           val groupName = p[GROUP_NAME]?.let { GroupName(it) } ?: throw InvalidRequestException("Missing group name")
@@ -99,22 +98,20 @@ internal object ClassSummaryWs {
 
                     val results = mutableListOf<String>()
                     for (invocation in funcInfo.invocations) {
-                      readonlyTx {
-                        val historyMd5 = md5Of(langName, groupName, challengeName, invocation)
-                        if (enrollee.historyExists(historyMd5, invocation)) {
-                          results +=
-                            enrollee.answerHistory(historyMd5, invocation)
-                              .let {
-                                incorrectAttempts += it.incorrectAttempts
-                                if (it.correct) {
-                                  Constants.YES
-                                } else {
-                                  if (it.incorrectAttempts > 0) Constants.NO else UNANSWERED
-                                }
+                      val historyMd5 = md5Of(langName, groupName, challengeName, invocation)
+                      if (enrollee.historyExists(historyMd5, invocation)) {
+                        results +=
+                          enrollee.answerHistory(historyMd5, invocation)
+                            .let {
+                              incorrectAttempts += it.incorrectAttempts
+                              if (it.correct) {
+                                Constants.YES
+                              } else {
+                                if (it.incorrectAttempts > 0) Constants.NO else UNANSWERED
                               }
-                        } else {
-                          results += UNANSWERED
-                        }
+                            }
+                      } else {
+                        results += UNANSWERED
                       }
 
                       if (finished.load())
@@ -166,13 +163,11 @@ internal object ClassSummaryWs {
 
   @Suppress("unused")
   @Serializable
-  class ClassSummary(
+  data class ClassSummary(
     val userId: String,
     val challengeName: String,
     val results: List<String>,
     val stats: String,
     val likeDislike: String,
-  ) {
-    fun toJson() = Json.encodeToString(serializer(), this)
-  }
+  )
 }

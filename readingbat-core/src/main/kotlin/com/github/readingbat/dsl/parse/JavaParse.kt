@@ -18,7 +18,6 @@
 package com.github.readingbat.dsl.parse
 
 import com.github.pambrose.common.util.linesBetween
-import com.github.pambrose.common.util.substringBetween
 import com.github.readingbat.dsl.ReturnType.Companion.asReturnType
 import com.github.readingbat.server.ChallengeName
 import com.github.readingbat.server.Invocation
@@ -58,28 +57,20 @@ internal object JavaParse {
       .firstOrNull() ?: error("In $challengeName unable to determine return type")
 
   fun extractJavaFunction(code: List<String>): String {
-    val lineNums =
-      code.mapIndexed { i, str -> i to str }.filter { it.second.contains(staticRegex) }.map { it.first }
+    val lineNums = code.indices.filter { code[it].contains(staticRegex) }
     return code.subList(lineNums.first(), lineNums.last() - 1).joinToString("\n").trimIndent()
   }
 
   fun extractJavaInvocations(code: String, start: Regex, end: Regex) =
     extractJavaInvocations(code.lines(), start, end)
 
-  fun extractJavaInvocations(code: List<String>, start: Regex, end: Regex): List<Invocation> {
-    val lines = mutableListOf<Invocation>()
-    prefixes
-      .forEach { prefix ->
-        lines.addAll(
-          code.linesBetween(start, end)
-            .map { it.trimStart() }
-            .filter { it.startsWith("$prefix(") }
-            .map { it.substringBetween("$prefix(", ")") }
-            .map { Invocation((it)) },
-        )
-      }
-    return lines
-  }
+  fun extractJavaInvocations(code: List<String>, start: Regex, end: Regex): List<Invocation> =
+    prefixes.flatMap { prefix ->
+      code.linesBetween(start, end)
+        .map { it.trimStart() }
+        .filter { it.startsWith("$prefix(") }
+        .map { Invocation(it.extractBalancedContent("$prefix(")) }
+    }
 
   fun convertToScript(code: List<String>) =
     buildString {
@@ -99,7 +90,8 @@ internal object JavaParse {
           }
 
           insideMain && prefixRegex.any { line.contains(it) } -> {
-            val expr = line.substringBetween("(", ")")
+            val matchedPrefix = prefixes.first { line.contains("$it(") }
+            val expr = line.trimStart().extractBalancedContent("$matchedPrefix(")
             exprIndent = max(0, prefixRegex.maxOfOrNull { line.indexOf(it.pattern.substring(0, 6)) } ?: 0)
             val str = "".padStart(exprIndent) + "$varName.add($expr);"
             logger.debug { "Transformed:\n$line\nto:\n$str" }

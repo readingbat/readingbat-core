@@ -18,7 +18,6 @@
 package com.github.readingbat.dsl.parse
 
 import com.github.pambrose.common.util.linesBetween
-import com.github.pambrose.common.util.substringBetween
 import com.github.readingbat.server.Invocation
 import io.github.oshai.kotlinlogging.KotlinLogging
 
@@ -31,10 +30,7 @@ internal object PythonParse {
   internal const val VAR_NAME = "answers"
 
   fun extractPythonFunction(code: List<String>): String {
-    val lineNums =
-      code.mapIndexed { i, str -> i to str }
-        .filter { it.second.contains(defRegex) }
-        .map { it.first }
+    val lineNums = code.indices.filter { code[it].contains(defRegex) }
     return code.subList(lineNums.first(), lineNums.last() - 1).joinToString("\n").trimIndent()
   }
 
@@ -50,7 +46,7 @@ internal object PythonParse {
           insideMain -> {
             // Skip everything after def main(): that does not have a print
             if (line.contains(PRINT_PREFIX)) {
-              val expr = line.substringBetween(PRINT_PREFIX, ")")
+              val expr = line.trimStart().extractBalancedContent(PRINT_PREFIX)
               val str = "$VAR_NAME.add($expr)"
               logger.debug { "Transformed: ${line.trim()} to: $str" }
               appendLine(str)
@@ -71,6 +67,6 @@ internal object PythonParse {
   fun extractPythonInvocations(code: List<String>, start: Regex, end: Regex) =
     code.linesBetween(start, end)
       .filter { it.contains(PRINT_PREFIX) }
-      .map { it.substringBetween(PRINT_PREFIX, ")") }
+      .map { it.trimStart().extractBalancedContent(PRINT_PREFIX) }
       .map { Invocation(it) }
 }

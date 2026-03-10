@@ -114,14 +114,12 @@ data class ClassCode(val classCode: String) {
 
   fun fetchClassDesc(quoted: Boolean = false) =
     readonlyTx {
-      (
-        with(ClassesTable) {
-          select(description)
-            .where { classCode eq this@ClassCode.classCode }
-            .map { it[0] as String }
-            .firstOrNull() ?: "Missing description"
-        }
-        ).also { logger.debug { "fetchClassDesc() returned ${it.toDoubleQuoted()} for $classCode" } }
+      with(ClassesTable) {
+        select(description)
+          .where { classCode eq this@ClassCode.classCode }
+          .map { it[0] as String }
+          .firstOrNull() ?: "Missing description"
+      }.also { logger.debug { "fetchClassDesc() returned ${it.toDoubleQuoted()} for $classCode" } }
     }.let { if (quoted) it.toDoubleQuoted() else it }
 
   fun toDisplayString() = "${fetchClassDesc(true)} [$classCode]"

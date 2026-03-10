@@ -27,12 +27,13 @@ import kotlin.collections.set
 import kotlin.time.Duration.Companion.days
 
 internal object ConfigureCookies {
-  fun SessionsConfig.configureSessionIdCookie() {
+  fun SessionsConfig.configureSessionIdCookie(production: Boolean) {
     cookie<BrowserSession>("readingbat_session_id") {
       // storage = RedisSessionStorage(redis = pool.resource)) {
       // storage = directorySessionStorage(File("server-sessions"), cached = true)) {
       cookie.path = "/" // CHALLENGE_ROOT + "/"
       cookie.httpOnly = true
+      if (production) cookie.secure = true
 
       // CSRF protection in modern browsers. Make sure your important side-effect-y operations, like ordering,
       // uploads, and changing settings, use "unsafe" HTTP verbs like POST and PUT, not GET or HEAD.
@@ -41,13 +42,11 @@ internal object ConfigureCookies {
     }
   }
 
-  fun SessionsConfig.configureAuthCookie() {
+  fun SessionsConfig.configureAuthCookie(production: Boolean) {
     cookie<UserPrincipal>(name = AUTH_COOKIE) {
       cookie.path = "/" // CHALLENGE_ROOT + "/"
       cookie.httpOnly = true
-
-      // if (production)
-      //  cookie.secure = true
+      if (production) cookie.secure = true
 
       cookie.maxAgeInSeconds = 14.days.inWholeSeconds
 
@@ -58,10 +57,11 @@ internal object ConfigureCookies {
     }
   }
 
-  fun SessionsConfig.configureOAuthReturnUrlCookie() {
+  fun SessionsConfig.configureOAuthReturnUrlCookie(production: Boolean) {
     cookie<OAuthReturnUrl>("readingbat_oauth_return") {
       cookie.path = "/"
       cookie.httpOnly = true
+      if (production) cookie.secure = true
       cookie.maxAgeInSeconds = 600 // 10 min — survives OAuth round-trip
       cookie.extensions["SameSite"] = "lax"
     }

@@ -22,6 +22,7 @@ import com.github.readingbat.kotest.TestSupport.forEachAnswer
 import com.github.readingbat.kotest.TestSupport.forEachChallenge
 import com.github.readingbat.kotest.TestSupport.forEachGroup
 import com.github.readingbat.kotest.TestSupport.forEachLanguage
+import com.github.readingbat.kotest.TestSupport.initTestProperties
 import com.github.readingbat.kotest.TestSupport.javaChallenge
 import com.github.readingbat.kotest.TestSupport.kotlinChallenge
 import com.github.readingbat.kotest.TestSupport.pythonChallenge
@@ -29,11 +30,12 @@ import com.github.readingbat.kotest.TestSupport.shouldHaveAnswer
 import com.github.readingbat.kotest.TestSupport.shouldNotHaveAnswer
 import com.github.readingbat.kotest.TestSupport.testModule
 import io.kotest.core.spec.style.StringSpec
-import io.ktor.server.testing.*
+import io.ktor.server.testing.testApplication
 
-class UserAnswersTest : StringSpec(
-  {
+class UserAnswersTest : StringSpec() {
+  init {
     "Test user answers" {
+      initTestProperties()
       testApplication {
         val testContent = readTestContent()
 
@@ -66,6 +68,7 @@ class UserAnswersTest : StringSpec(
     }
 
     "Test correct answers" {
+      initTestProperties()
       testApplication {
         val testContent = readTestContent()
 
@@ -83,5 +86,5 @@ class UserAnswersTest : StringSpec(
           }
       }
     }
-  },
-)
+  }
+}

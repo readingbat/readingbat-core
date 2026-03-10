@@ -42,6 +42,7 @@ import com.github.readingbat.server.ws.PubSubCommandsWs.LoadChallengeType
 import com.github.readingbat.server.ws.PubSubCommandsWs.publishAdminCommand
 import com.github.readingbat.server.ws.PubSubCommandsWs.publishLog
 import com.github.readingbat.server.ws.WsCommon.LOG_ID
+import com.github.readingbat.utils.toJson
 import io.ktor.server.application.ApplicationCall
 import io.ktor.server.routing.Routing
 import io.ktor.server.routing.post
@@ -99,7 +100,7 @@ fun Routing.sysAdminRoutes(metrics: Metrics, resetContentFunc: (String) -> Unit)
         deleteAllCaches(logId)
         // Run on the first server alone initially, to avoid multiple servers caching to redis simultaneously
         if (isContentCachingEnabled()) {
-          measureTime { resetContentFunc.invoke(logId) }
+          measureTime { resetContentFunc(logId) }
             .also { dur ->
               "Initial DSL content reset in $dur"
                 .also {

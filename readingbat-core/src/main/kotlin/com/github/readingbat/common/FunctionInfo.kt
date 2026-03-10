@@ -50,9 +50,8 @@ import com.github.readingbat.posts.ChallengeResults
 import com.github.readingbat.server.ChallengeMd5
 import com.github.readingbat.server.Invocation
 import com.github.readingbat.server.LanguageName
-import com.github.readingbat.server.ScriptPools.kotlinEvaluatorPool
 import com.github.readingbat.server.ScriptPools.pythonEvaluatorPool
-import com.github.readingbat.utils.StringUtils.toCapitalized
+import com.github.readingbat.utils.toCapitalized
 import io.github.oshai.kotlinlogging.KotlinLogging
 import javax.script.ScriptException
 
@@ -227,30 +226,23 @@ class FunctionInfo(
 
     private fun String.isPythonBoolean() = this == "True" || this == "False"
 
-    private suspend fun String.equalsAsJvmList(correctAnswer: String): Pair<Boolean, String> {
+    private fun String.equalsAsJvmList(correctAnswer: String): Pair<Boolean, String> {
       fun deriveHint() = if (isNotBracketed()) "Answer should be bracketed" else ""
       val lho = if (isBracketed()) removeSurrounding("[", "]") else this
       val rho = if (correctAnswer.isBracketed()) correctAnswer.removeSurrounding("[", "]") else correctAnswer
-      // Use <String> here because a type is required. It doesn't matter which type is used.
-      val lhs = if (lho.isBlank()) "emptyList<String>()" else "listOf($lho)"
-      val rhs = if (rho.isBlank()) "emptyList<String>()" else "listOf($rho)"
-      val compareExpr = "$lhs == $rhs"
-      logger.debug { "Check answers expression: $compareExpr" }
-      return runCatching {
-        val result = kotlinEvaluatorPool.eval(compareExpr) as Boolean
-        result to (if (result) "" else deriveHint())
-      }.getOrElse { e ->
-        when (e) {
-          is ScriptException -> {
-            logger.info { "Caught exception comparing $this and $correctAnswer: ${e.message} in $compareExpr" }
-            false to deriveHint()
-          }
 
-          else -> {
-            false to deriveHint()
-          }
-        }
-      }
+      // Compare parsed list elements directly instead of using the Kotlin script engine,
+      // which has a psi2ir bug that corrupts engine pool state on repeated evaluations
+      val lhElements = parseListElements(lho)
+      val rhElements = parseListElements(rho)
+      val result = lhElements == rhElements
+      logger.debug { "Check answers list comparison: $lhElements == $rhElements -> $result" }
+      return result to (if (result) "" else deriveHint())
+    }
+
+    private fun parseListElements(csv: String): List<String> {
+      if (csv.isBlank()) return emptyList()
+      return csv.split(",").map { it.trim() }
     }
 
     private suspend fun String.equalsAsPythonList(correctAnswer: String): Pair<Boolean, String> {

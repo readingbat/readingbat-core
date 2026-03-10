@@ -186,11 +186,14 @@ object TestSupport {
 
   fun ChallengeResults.shouldBeIncorrect() = correct.shouldBeFalse()
 
-  fun Application.testModule(content: ReadingBatContent) {
+  fun initTestProperties() {
+    Property.IS_PRODUCTION.setProperty("false")
     Property.IS_TESTING.setProperty("true")
     KtorProperty.assignInitialized()
+  }
 
-    installs(false)
+  fun Application.testModule(content: ReadingBatContent, production: Boolean = false) {
+    installs(production)
 
     routing {
       adminRoutes(ReadingBatServer.metrics)
@@ -199,7 +202,6 @@ object TestSupport {
       sysAdminRoutes(ReadingBatServer.metrics) { }
       wsRoutes(ReadingBatServer.metrics) { content }
       staticResources(Endpoints.STATIC_ROOT, "static")
-//      static(Endpoints.STATIC_ROOT) { resources("static") }
     }
   }
 }

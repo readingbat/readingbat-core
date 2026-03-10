@@ -20,7 +20,6 @@ package com.github.readingbat.common
 import com.github.pambrose.common.email.Email
 import com.github.pambrose.common.email.Email.Companion.toResendEmail
 import com.github.pambrose.common.recaptcha.RecaptchaConfig
-import com.github.pambrose.common.util.isNotNull
 import com.github.pambrose.common.util.obfuscate
 import com.github.readingbat.common.Constants.UNASSIGNED
 import com.github.readingbat.common.PropertyNames.AGENT
@@ -63,25 +62,25 @@ open class KtorProperty(
     application.environment.config.propertyOrNull(propertyName)
 
   fun getProperty(default: String, errorOnNonInit: Boolean = true) =
-    (System.getProperty(propertyName) ?: default).also {
+    (configStore[propertyName] ?: default).also {
       if (errorOnNonInit && !initialized.load())
         error(notInitialized(this))
     }
 
   fun getProperty(default: Boolean, errorOnNonInit: Boolean = true) =
-    (System.getProperty(propertyName)?.toBoolean() ?: default).also {
+    (configStore[propertyName]?.toBoolean() ?: default).also {
       if (errorOnNonInit && !initialized.load())
         error(notInitialized(this))
     }
 
   fun getProperty(default: Int, errorOnNonInit: Boolean = true) =
-    (System.getProperty(propertyName)?.toIntOrNull() ?: default).also {
+    (configStore[propertyName]?.toIntOrNull() ?: default).also {
       if (errorOnNonInit && !initialized.load())
         error(notInitialized(this))
     }
 
   fun getPropertyOrNull(errorOnNonInit: Boolean = true): String? =
-    System.getProperty(propertyName).also { if (errorOnNonInit && !initialized.load()) error(notInitialized(this)) }
+    configStore[propertyName].also { if (errorOnNonInit && !initialized.load()) error(notInitialized(this)) }
 
   fun getRequiredProperty() =
     (
@@ -89,7 +88,7 @@ open class KtorProperty(
       ).also { if (!initialized.load()) error(notInitialized(this)) }
 
   fun setProperty(value: String) {
-    System.setProperty(propertyName, value)
+    configStore[propertyName] = value
     logger.info { "$this" }
   }
 
@@ -98,7 +97,7 @@ open class KtorProperty(
       setProperty(configValue(application, default))
   }
 
-  fun isADefinedProperty() = System.getProperty(propertyName).isNotNull()
+  fun isADefinedProperty() = configStore.containsKey(propertyName)
 
   val name: String get() = this::class.simpleName!!
 
@@ -108,8 +107,14 @@ open class KtorProperty(
     private val logger = KotlinLogging.logger {}
     private val initialized = AtomicBoolean(false)
     private val instances = mutableListOf<KtorProperty>()
+    internal val configStore = java.util.concurrent.ConcurrentHashMap<String, String>()
 
     fun assignInitialized() = initialized.store(true)
+
+    fun resetForTesting() {
+      configStore.clear()
+      initialized.store(false)
+    }
 
     private fun notInitialized(prop: KtorProperty) = "Property ${prop.name} not initialized"
 

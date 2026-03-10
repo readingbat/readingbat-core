@@ -198,7 +198,7 @@ internal object SystemConfigurationPage {
                     tr {
                       td { +it.name }
                       td { +it.propertyName }
-                      td { +it.maskFunc.invoke(it) }
+                      td { +it.maskFunc(it) }
                     }
                   }
               }
@@ -234,7 +234,7 @@ internal object SystemConfigurationPage {
                   .forEach {
                     tr {
                       td { +it.name }
-                      td { +it.maskFunc.invoke(it) }
+                      td { +it.maskFunc(it) }
                     }
                   }
               }

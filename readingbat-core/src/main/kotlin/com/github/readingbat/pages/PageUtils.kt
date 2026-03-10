@@ -17,7 +17,6 @@
 
 package com.github.readingbat.pages
 
-import com.github.pambrose.common.util.isNull
 import com.github.pambrose.common.util.pathOf
 import com.github.pambrose.common.util.pluralize
 import com.github.pambrose.common.util.toDoubleQuoted
@@ -180,7 +179,7 @@ internal object PageUtils {
 
     p { if (displayWelcomeMsg) +"Welcome to ReadingBat." else rawHtml(nbsp.text) }
 
-    if (loginAttempt && user.isNull())
+    if (loginAttempt && user == null)
       p {
         span(classes = "text-red-500") {
           +"Failed to login -- incorrect email or password"

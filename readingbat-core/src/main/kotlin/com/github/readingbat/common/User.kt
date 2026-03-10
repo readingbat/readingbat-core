@@ -20,8 +20,6 @@ package com.github.readingbat.common
 import com.github.pambrose.common.email.Email
 import com.github.pambrose.common.email.Email.Companion.EMPTY_EMAIL
 import com.github.pambrose.common.email.Email.Companion.UNKNOWN_EMAIL
-import com.github.pambrose.common.util.isNotNull
-import com.github.pambrose.common.util.isNull
 import com.github.pambrose.common.util.maxLength
 import com.github.pambrose.common.util.md5Of
 import com.github.pambrose.common.util.randomId
@@ -67,6 +65,7 @@ import com.github.readingbat.server.ws.ChallengeWs.singleServerWsFlow
 import com.github.readingbat.server.ws.PubSubCommandsWs.ChallengeAnswerData
 import com.github.readingbat.server.ws.PubSubCommandsWs.PubSubTopic.LIKE_DISLIKE
 import com.github.readingbat.server.ws.PubSubCommandsWs.PubSubTopic.USER_ANSWERS
+import com.github.readingbat.utils.toJson
 import com.pambrose.common.exposed.get
 import com.pambrose.common.exposed.readonlyTx
 import com.pambrose.common.exposed.upsert
@@ -77,6 +76,7 @@ import org.jetbrains.exposed.v1.core.Count
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.inList
 import org.jetbrains.exposed.v1.core.or
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insert
@@ -132,6 +132,8 @@ class User {
   var enrolledClassCode: ClassCode = DISABLED_CLASS_CODE
   var defaultLanguage = defaultLanguageType
   var avatarUrl: String? = null
+  var existsInDbms: Boolean = false
+    private set
 
   private fun queryOrCreateSessionDbmsId() =
     browserSession?.queryOrCreateSessionDbmsId() ?: error("Null browser session")
@@ -143,6 +145,7 @@ class User {
     enrolledClassCode = ClassCode(row[UsersTable.enrolledClassCode])
     defaultLanguage = row[UsersTable.defaultLanguage].toLanguageType() ?: defaultLanguageType
     avatarUrl = row[UsersTable.avatarUrl]
+    existsInDbms = true
   }
 
   fun browserSessions() =
@@ -270,14 +273,24 @@ class User {
     }
 
   fun historyExists(md5Val: String, invocationVal: Invocation) =
-    with(UserAnswerHistoryTable) {
-      select(Count(id))
-        .where { (userRef eq userDbmsId) and (md5 eq md5Val) and (invocation eq invocationVal.value) }
-        .map { it[0] as Long }
-        .first() > 0
+    readonlyTx {
+      with(UserAnswerHistoryTable) {
+        select(Count(id))
+          .where { (userRef eq userDbmsId) and (md5 eq md5Val) and (invocation eq invocationVal.value) }
+          .map { it[0] as Long }
+          .first() > 0
+      }
     }
 
   fun answerHistory(md5Val: String, invocationVal: Invocation): ChallengeHistory =
+    readonlyTx {
+      answerHistoryQuery(md5Val, invocationVal)
+    }
+
+  fun answerHistoryInTransaction(md5Val: String, invocationVal: Invocation): ChallengeHistory =
+    answerHistoryQuery(md5Val, invocationVal)
+
+  private fun answerHistoryQuery(md5Val: String, invocationVal: Invocation): ChallengeHistory =
     with(UserAnswerHistoryTable) {
       select(invocation, correct, incorrectAttempts, historyJson)
         .where { (userRef eq userDbmsId) and (md5 eq md5Val) and (invocation eq invocationVal.value) }
@@ -292,6 +305,25 @@ class User {
           )
         }
         .firstOrNull() ?: ChallengeHistory(invocationVal)
+    }
+
+  fun answerHistoryBulk(challengeMd5s: List<String>): Map<String, ChallengeHistory> =
+    readonlyTx {
+      with(UserAnswerHistoryTable) {
+        select(md5, invocation, correct, incorrectAttempts, historyJson)
+          .where { (userRef eq userDbmsId) and (md5 inList challengeMd5s) }
+          .associate {
+            val json = it[historyJson]
+            val history = Json.decodeFromString<List<String>>(json).toMutableList()
+            it[md5] to
+              ChallengeHistory(
+                Invocation(it[invocation]),
+                it[correct],
+                it[incorrectAttempts],
+                history,
+              )
+          }
+      }
     }
 
   fun assignActiveClassCode(classCode: ClassCode, resetPreviousClassCode: Boolean) =
@@ -310,25 +342,26 @@ class User {
 
   fun resetActiveClassCode() {
     logger.info { "Resetting $fullName ($email) active class code" }
-    with(UserSessionsTable) {
-      upsert(conflictIndex = userSessionIndex) { row ->
-        row[sessionRef] = queryOrCreateSessionDbmsId()
-        row[userRef] = userDbmsId
-        row[updated] = DateTime.now(UTC)
-        row[activeClassCode] = DISABLED_CLASS_CODE.classCode
-        row[previousTeacherClassCode] = DISABLED_CLASS_CODE.classCode
+    transaction {
+      with(UserSessionsTable) {
+        upsert(conflictIndex = userSessionIndex) { row ->
+          row[sessionRef] = queryOrCreateSessionDbmsId()
+          row[userRef] = userDbmsId
+          row[updated] = DateTime.now(UTC)
+          row[activeClassCode] = DISABLED_CLASS_CODE.classCode
+          row[previousTeacherClassCode] = DISABLED_CLASS_CODE.classCode
+        }
       }
     }
   }
 
   fun isEnrolled(classCode: ClassCode) =
     readonlyTx {
-      with(EnrolleesTable) {
-        select(Count(id))
-          .where { userRef eq userDbmsId }
-          .map { it[0] as Long }
-          .first().also { logger.debug { "isEnrolled() returned $it for $classCode" } } > 0
-      }
+      val count = Count(EnrolleesTable.id)
+      (ClassesTable innerJoin EnrolleesTable)
+        .select(count)
+        .where { (EnrolleesTable.userRef eq userDbmsId) and (ClassesTable.classCode eq classCode.classCode) }
+        .single()[count].also { logger.debug { "isEnrolled() returned $it for $classCode" } } > 0
     }
 
   fun correctAnswersKey(languageName: LanguageName, groupName: GroupName, challengeName: ChallengeName) =
@@ -382,16 +415,18 @@ class User {
   fun unenrollEnrolleesClassCode(classCode: ClassCode, enrollees: List<User>) {
     logger.info { "Deleting ${enrollees.size} enrollees for class code $classCode for $fullName ($email)" }
     // Reset every enrollee's enrolled class and remove from class
-    enrollees
-      .forEach { enrollee ->
-        logger.info { "Assigning ${enrollee.email} to $DISABLED_CLASS_CODE" }
-        with(UsersTable) {
-          update({ id eq enrollee.userDbmsId }) { row ->
-            row[updated] = DateTime.now(UTC)
-            row[enrolledClassCode] = DISABLED_CLASS_CODE.classCode
+    transaction {
+      enrollees
+        .forEach { enrollee ->
+          logger.info { "Assigning ${enrollee.email} to $DISABLED_CLASS_CODE" }
+          with(UsersTable) {
+            update({ id eq enrollee.userDbmsId }) { row ->
+              row[updated] = DateTime.now(UTC)
+              row[enrolledClassCode] = DISABLED_CLASS_CODE.classCode
+            }
           }
         }
-      }
+    }
   }
 
   fun isUniqueClassDesc(classDesc: String) =
@@ -545,7 +580,7 @@ class User {
 
     fun queryActiveTeachingClassCode(user: User?) =
       when {
-        user.isNull() || !isDbmsEnabled() -> {
+        user == null || !isDbmsEnabled() -> {
           DISABLED_CLASS_CODE
         }
 
@@ -563,7 +598,7 @@ class User {
 
     fun queryPreviousTeacherClassCode(user: User?) =
       when {
-        user.isNull() || !isDbmsEnabled() -> {
+        user == null || !isDbmsEnabled() -> {
           DISABLED_CLASS_CODE
         }
 
@@ -643,7 +678,7 @@ class User {
       User(randomId(25), null, false)
         .also { user ->
           transaction {
-            val userDbmsId =
+            user.userDbmsId =
               with(UsersTable) {
                 insertAndGetId { row ->
                   row[userId] = user.userId
@@ -658,7 +693,7 @@ class User {
 
             with(OAuthLinksTable) {
               insert { row ->
-                row[userRef] = userDbmsId
+                row[userRef] = user.userDbmsId
                 row[OAuthLinksTable.provider] = provider
                 row[OAuthLinksTable.providerId] = providerId
                 row[providerEmail] = emailVal.value
@@ -666,10 +701,11 @@ class User {
               }
             }
           }
+          user.existsInDbms = true
           logger.info { "Created OAuth user $emailVal ${user.userId} via $provider" }
         }
 
-    private fun isRegisteredEmail(email: Email) = queryUserByEmail(email).isNotNull()
+    private fun isRegisteredEmail(email: Email) = queryUserByEmail(email) != null
 
     fun isNotRegisteredEmail(email: Email) = !isRegisteredEmail(email)
 
@@ -701,5 +737,5 @@ internal fun User?.isValidUser(): Boolean {
   contract {
     returns(true) implies (this@isValidUser is User)
   }
-  return if (isNull()) false else isInDbms()
+  return if (this == null) false else existsInDbms
 }

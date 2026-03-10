@@ -28,24 +28,24 @@ import com.github.readingbat.kotest.TestSupport.answerAllWithCorrectAnswer
 import com.github.readingbat.kotest.TestSupport.forEachChallenge
 import com.github.readingbat.kotest.TestSupport.forEachGroup
 import com.github.readingbat.kotest.TestSupport.forEachLanguage
+import com.github.readingbat.kotest.TestSupport.initTestProperties
 import com.github.readingbat.kotest.TestSupport.testModule
-import com.github.readingbat.posts.AnswerStatus.CORRECT
-import com.github.readingbat.posts.AnswerStatus.INCORRECT
-import com.github.readingbat.posts.AnswerStatus.NOT_ANSWERED
+import com.github.readingbat.posts.AnswerStatus
 import io.kotest.assertions.ktor.client.shouldHaveStatus
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldBeBlank
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldNotContain
-import io.ktor.client.request.*
-import io.ktor.client.statement.*
+import io.ktor.client.request.get
+import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpStatusCode.Companion.OK
-import io.ktor.server.testing.*
+import io.ktor.server.testing.testApplication
 
-class EndpointTest : StringSpec(
-  {
+class EndpointTest : StringSpec() {
+  init {
     "Simple endpoint tests" {
+      initTestProperties()
       readTestContent()
         .also { testContent ->
           testApplication {
@@ -80,6 +80,7 @@ class EndpointTest : StringSpec(
     }
 
     "Test all challenges" {
+      initTestProperties()
       readTestContent()
         .also { testContent ->
           testApplication {
@@ -90,16 +91,16 @@ class EndpointTest : StringSpec(
                 forEachChallenge {
                   repeat(10) {
                     answerAllWith(this@testApplication, "") {
-                      answerStatus shouldBe NOT_ANSWERED
+                      answerStatus shouldBe AnswerStatus.NOT_ANSWERED
                       hint.shouldBeBlank()
                     }
 
                     answerAllWith(this@testApplication, "wrong answer") {
-                      answerStatus shouldBe INCORRECT
+                      answerStatus shouldBe AnswerStatus.INCORRECT
                     }
 
                     answerAllWithCorrectAnswer(this@testApplication) {
-                      answerStatus shouldBe CORRECT
+                      answerStatus shouldBe AnswerStatus.CORRECT
                       hint.shouldBeBlank()
                     }
                   }
@@ -109,5 +110,5 @@ class EndpointTest : StringSpec(
           }
         }
     }
-  },
-)
+  }
+}

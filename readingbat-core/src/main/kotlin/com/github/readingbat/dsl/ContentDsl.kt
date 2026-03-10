@@ -21,7 +21,6 @@ import com.github.pambrose.common.util.ContentSource
 import com.github.pambrose.common.util.GitHubFile
 import com.github.pambrose.common.util.GitHubRepo
 import com.github.pambrose.common.util.OwnerType
-import com.github.pambrose.common.util.isNotNull
 import com.github.pambrose.common.util.md5Of
 import com.github.readingbat.common.Constants.UNASSIGNED
 import com.github.readingbat.common.EnvVar
@@ -120,7 +119,7 @@ internal fun readContentDsl(contentSource: ContentSource) =
       contentSource.content
     } else {
       var dslCode = fetchContentDslFromCache(contentSource.source)
-      if (dslCode.isNotNull()) {
+      if (dslCode != null) {
         logger.info { "Fetched ${contentSource.source.removePrefix(GH_PREFIX)} from cache" }
       } else {
         dslCode = contentSource.content

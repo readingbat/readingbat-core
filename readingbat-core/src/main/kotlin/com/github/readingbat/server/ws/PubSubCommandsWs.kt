@@ -17,7 +17,6 @@
 
 package com.github.readingbat.server.ws
 
-import com.github.pambrose.common.util.isNotNull
 import com.github.readingbat.common.Endpoints.LOAD_ALL_ENDPOINT
 import com.github.readingbat.common.Endpoints.LOAD_JAVA_ENDPOINT
 import com.github.readingbat.common.Endpoints.LOAD_KOTLIN_ENDPOINT
@@ -34,8 +33,8 @@ import com.github.readingbat.server.ws.PubSubCommandsWs.PubSubTopic.ADMIN_COMMAN
 import com.github.readingbat.server.ws.PubSubCommandsWs.PubSubTopic.LIKE_DISLIKE
 import com.github.readingbat.server.ws.PubSubCommandsWs.PubSubTopic.LOG_MESSAGE
 import com.github.readingbat.server.ws.PubSubCommandsWs.PubSubTopic.USER_ANSWERS
+import com.github.readingbat.utils.toJson
 import io.github.oshai.kotlinlogging.KotlinLogging
-import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import java.time.LocalDateTime
@@ -63,19 +62,13 @@ internal object PubSubCommandsWs {
   }
 
   @Serializable
-  class AdminCommandData(val command: AdminCommand, val jsonArgs: String, val logId: String) {
-    fun toJson() = Json.encodeToString(serializer(), this)
-  }
+  data class AdminCommandData(val command: AdminCommand, val jsonArgs: String, val logId: String)
 
   @Serializable
-  class ChallengeAnswerData(val pubSubTopic: PubSubTopic, val target: String, val jsonArgs: String) {
-    fun toJson() = Json.encodeToString(serializer(), this)
-  }
+  data class ChallengeAnswerData(val pubSubTopic: PubSubTopic, val target: String, val jsonArgs: String)
 
   @Serializable
-  class LogData(val text: String, val logId: String) {
-    fun toJson() = Json.encodeToString(serializer(), this)
-  }
+  data class LogData(val text: String, val logId: String)
 
   private val timeFormat = DateTimeFormatter.ofPattern("H:m:ss.SSS")
 
@@ -91,25 +84,26 @@ internal object PubSubCommandsWs {
   }
 
   fun publishShim(channel: String, message: String) {
-    if (channel.isNotNull() && message.isNotNull())
-      runBlocking {
-        when (enumValueOf<PubSubTopic>(channel)) {
-          ADMIN_COMMAND -> {
-            val data = Json.decodeFromString<AdminCommandData>(message)
-            adminCommandFlow.emit(data)
-          }
+    if (channel != null && message != null)
+      when (enumValueOf<PubSubTopic>(channel)) {
+        ADMIN_COMMAND -> {
+          val data = Json.decodeFromString<AdminCommandData>(message)
+          if (!adminCommandFlow.tryEmit(data))
+            logger.warn { "adminCommandFlow buffer full, dropping AdminCommand: ${data.command}" }
+        }
 
-          USER_ANSWERS,
-          LIKE_DISLIKE,
-            -> {
-            val data = Json.decodeFromString<ChallengeAnswerData>(message)
-            multiServerWsReadFlow.emit(data)
-          }
+        USER_ANSWERS,
+        LIKE_DISLIKE,
+          -> {
+          val data = Json.decodeFromString<ChallengeAnswerData>(message)
+          if (!multiServerWsReadFlow.tryEmit(data))
+            logger.warn { "multiServerWsReadFlow buffer full, dropping ${data.pubSubTopic}" }
+        }
 
-          LOG_MESSAGE -> {
-            val data = Json.decodeFromString<LogData>(message)
-            logWsReadFlow.emit(data)
-          }
+        LOG_MESSAGE -> {
+          val data = Json.decodeFromString<LogData>(message)
+          if (!logWsReadFlow.tryEmit(data))
+            logger.warn { "logWsReadFlow buffer full, dropping log message" }
         }
       }
   }

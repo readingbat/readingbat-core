@@ -273,7 +273,7 @@ class Metrics {
   suspend fun measureEndpointRequest(endpoint: String, body: suspend () -> Unit) {
     val timer = endpointRequestDuration.labels(agentLaunchId(), endpoint).startTimer()
     try {
-      body.invoke()
+      body()
     } finally {
       timer.observeDuration()
     }

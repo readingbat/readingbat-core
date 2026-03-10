@@ -83,9 +83,9 @@ object Installs {
     install(Resources)
 
     install(Sessions) {
-      configureSessionIdCookie()
-      configureAuthCookie()
-      configureOAuthReturnUrlCookie()
+      configureSessionIdCookie(production)
+      configureAuthCookie(production)
+      configureOAuthReturnUrlCookie(production)
     }
 
     install(Authentication) {

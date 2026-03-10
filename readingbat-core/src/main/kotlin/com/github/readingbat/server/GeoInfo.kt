@@ -27,7 +27,8 @@ import com.pambrose.common.exposed.readonlyTx
 import com.pambrose.common.exposed.upsert
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.client.statement.bodyAsText
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
@@ -75,7 +76,7 @@ class GeoInfo(val requireDbmsLookUp: Boolean, val dbmsId: Long, val remoteHost: 
 
   fun mapVal(block: () -> String) =
     try {
-      block.invoke()
+      block()
     } catch (e: NoSuchElementException) {
       logger.warn { e.message }
       "Unknown"
@@ -121,15 +122,14 @@ class GeoInfo(val requireDbmsLookUp: Boolean, val dbmsId: Long, val remoteHost: 
     private val logger = KotlinLogging.logger {}
     val gson = Gson()
     val geoInfoMap = ConcurrentHashMap<String, GeoInfo>()
+    private val mutex = Mutex()
 
-    private fun callGeoInfoApi(ipAddress: String) =
-      runBlocking {
-        KtorDsl.httpClient { client ->
-          val apiKey = EnvVar.IPGEOLOCATION_KEY.getRequiredEnv()
-          client.get("https://api.ipgeolocation.io/ipgeo?apiKey=$apiKey&ip=$ipAddress") { response ->
-            val json = response.bodyAsText()
-            GeoInfo(true, -1, ipAddress, json).apply { logger.info { "API GEO info for $ipAddress: ${summary()}" } }
-          }
+    private suspend fun callGeoInfoApi(ipAddress: String) =
+      KtorDsl.httpClient { client ->
+        val apiKey = EnvVar.IPGEOLOCATION_KEY.getRequiredEnv()
+        client.get("https://api.ipgeolocation.io/ipgeo?apiKey=$apiKey&ip=$ipAddress") { response ->
+          val json = response.bodyAsText()
+          GeoInfo(true, -1, ipAddress, json).apply { logger.info { "API GEO info for $ipAddress: ${summary()}" } }
         }
       }
 
@@ -143,15 +143,19 @@ class GeoInfo(val requireDbmsLookUp: Boolean, val dbmsId: Long, val remoteHost: 
         }
       }
 
-    fun lookupGeoInfo(ipAddress: String) =
-      geoInfoMap.computeIfAbsent(ipAddress) { ip ->
-        queryGeoInfo(ip)?.apply { logger.info { "Postgres GEO info for $ip: ${summary()}" } }
-          ?: runCatching {
-            callGeoInfoApi(ip)
-          }.getOrElse { e ->
-            GeoInfo(true, -1, ip, "")
-              .also { logger.info { "Unable to determine IP geolocation data for ${it.remoteHost} (${e.message})" } }
-          }.also { it.insert() }
+    suspend fun lookupGeoInfo(ipAddress: String): GeoInfo =
+      geoInfoMap[ipAddress] ?: mutex.withLock {
+        geoInfoMap.getOrPut(ipAddress) {
+          queryGeoInfo(ipAddress)?.apply { logger.info { "Postgres GEO info for $ipAddress: ${summary()}" } }
+            ?: runCatching {
+              callGeoInfoApi(ipAddress)
+            }.getOrElse { e ->
+              GeoInfo(true, -1, ipAddress, "")
+                .also {
+                  logger.info { "Unable to determine IP geolocation data for ${it.remoteHost} (${e.message})" }
+                }
+            }.also { it.insert() }
+        }
       }
   }
 }
