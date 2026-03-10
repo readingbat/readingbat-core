@@ -2,6 +2,12 @@ import TestData.readTestContent
 import com.github.pambrose.common.email.Email
 import com.github.readingbat.common.ClassCode
 import com.github.readingbat.common.ClassCode.Companion.DISABLED_CLASS_CODE
+import com.github.readingbat.common.ClassCodeRepository.deleteClassCode
+import com.github.readingbat.common.ClassCodeRepository.fetchClassDesc
+import com.github.readingbat.common.ClassCodeRepository.fetchClassTeacherId
+import com.github.readingbat.common.ClassCodeRepository.fetchEnrollees
+import com.github.readingbat.common.ClassCodeRepository.isNotValid
+import com.github.readingbat.common.ClassCodeRepository.isValid
 import com.github.readingbat.common.User
 import com.github.readingbat.kotest.TestDatabase
 import com.github.readingbat.kotest.TestSupport.initTestProperties

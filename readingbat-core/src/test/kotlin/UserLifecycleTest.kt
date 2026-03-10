@@ -1,5 +1,6 @@
 import TestData.readTestContent
 import com.github.pambrose.common.email.Email
+import com.github.readingbat.common.ClassCodeRepository.isNotValid
 import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.queryUserByEmail
 import com.github.readingbat.common.User.Companion.userExists

@@ -19,6 +19,7 @@ package com.github.readingbat.server.ws
 
 import com.github.pambrose.common.util.md5Of
 import com.github.readingbat.common.ClassCode
+import com.github.readingbat.common.ClassCodeRepository.fetchEnrollees
 import com.github.readingbat.common.Constants
 import com.github.readingbat.common.Constants.UNANSWERED
 import com.github.readingbat.common.Endpoints.CLASS_SUMMARY_ENDPOINT

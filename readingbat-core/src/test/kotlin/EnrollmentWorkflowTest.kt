@@ -2,6 +2,7 @@ import TestData.readTestContent
 import com.github.pambrose.common.email.Email
 import com.github.readingbat.common.ClassCode
 import com.github.readingbat.common.ClassCode.Companion.DISABLED_CLASS_CODE
+import com.github.readingbat.common.ClassCodeRepository.fetchEnrollees
 import com.github.readingbat.common.User
 import com.github.readingbat.dsl.DataException
 import com.github.readingbat.kotest.TestDatabase

@@ -24,6 +24,12 @@ import com.github.pambrose.common.util.maxLength
 import com.github.pambrose.common.util.md5Of
 import com.github.pambrose.common.util.randomId
 import com.github.readingbat.common.ClassCode.Companion.DISABLED_CLASS_CODE
+import com.github.readingbat.common.ClassCodeRepository.addEnrollee
+import com.github.readingbat.common.ClassCodeRepository.fetchClassTeacherId
+import com.github.readingbat.common.ClassCodeRepository.fetchEnrollees
+import com.github.readingbat.common.ClassCodeRepository.isNotValid
+import com.github.readingbat.common.ClassCodeRepository.isValid
+import com.github.readingbat.common.ClassCodeRepository.removeEnrollee
 import com.github.readingbat.common.Endpoints.THUMBS_DOWN
 import com.github.readingbat.common.Endpoints.THUMBS_UP
 import com.github.readingbat.common.KeyConstants.AUTH_KEY

@@ -18,6 +18,7 @@
 package com.github.readingbat.posts
 
 import com.github.readingbat.common.ClassCode.Companion.getClassCode
+import com.github.readingbat.common.ClassCodeRepository.toDisplayString
 import com.github.readingbat.common.FormFields.CLASS_CODE_NAME_PARAM
 import com.github.readingbat.common.FormFields.DEFAULT_LANGUAGE_CHOICE_PARAM
 import com.github.readingbat.common.FormFields.DELETE_ACCOUNT

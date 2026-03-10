@@ -18,6 +18,9 @@
 package com.github.readingbat.pages
 
 import com.github.readingbat.common.ClassCode
+import com.github.readingbat.common.ClassCodeRepository.fetchClassDesc
+import com.github.readingbat.common.ClassCodeRepository.fetchEnrollees
+import com.github.readingbat.common.ClassCodeRepository.toDisplayString
 import com.github.readingbat.common.Constants.LABEL_WIDTH
 import com.github.readingbat.common.Endpoints.TEACHER_PREFS_ENDPOINT
 import com.github.readingbat.common.Endpoints.classSummaryEndpoint
