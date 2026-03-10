@@ -26,6 +26,7 @@ import com.github.readingbat.common.Endpoints.CHALLENGE_ENDPOINT
 import com.github.readingbat.common.Endpoints.WS_ROOT
 import com.github.readingbat.common.KeyConstants.keyOf
 import com.github.readingbat.common.Metrics
+import com.github.readingbat.common.WsProtocol
 import com.github.readingbat.dsl.InvalidRequestException
 import com.github.readingbat.dsl.agentLaunchId
 import com.github.readingbat.dsl.isMultiServerEnabled
@@ -58,6 +59,7 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Required
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import java.util.Collections.synchronizedSet
 import kotlin.math.max
@@ -94,8 +96,8 @@ internal object ChallengeWs {
 
   @Serializable
   data class PingMessage(
-    val msg: String,
-    @Required val type: String = PING_CODE,
+    @SerialName(WsProtocol.MSG_FIELD) val msg: String,
+    @SerialName(WsProtocol.TYPE_FIELD) @Required val type: String = PING_CODE,
   )
 
   init {

@@ -61,7 +61,7 @@ internal object GitHubUtils {
           val elems = path.split("/").filter { it.isNotEmpty() }
           var currRoot = repo.getTree(branchName)
           elems.forEach { elem ->
-            currRoot = currRoot.tree.asSequence().filter { it.path == elem }.firstOrNull()?.asTree()
+            currRoot = currRoot.tree.asSequence().firstOrNull { it.path == elem }?.asTree()
           }
           currRoot?.tree?.map { it.path } ?: emptyList()
         }

@@ -37,6 +37,7 @@ import com.github.readingbat.common.StaticFileNames.WHITE_CHECK
 import com.github.readingbat.common.TwClasses
 import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.queryActiveTeachingClassCode
+import com.github.readingbat.common.WsProtocol
 import com.github.readingbat.common.challengeAnswersKey
 import com.github.readingbat.common.correctAnswersKey
 import com.github.readingbat.dsl.ChallengeGroup
@@ -55,7 +56,6 @@ import com.github.readingbat.server.GroupName
 import com.github.readingbat.server.LanguageName
 import com.github.readingbat.server.ServerUtils.queryParam
 import com.github.readingbat.server.ServerUtils.rows
-import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.server.routing.RoutingContext
 import kotlinx.html.BODY
 import kotlinx.html.FormMethod
@@ -84,8 +84,6 @@ import kotlinx.html.tr
 import kotlinx.serialization.json.Json
 
 internal object ChallengeGroupPage {
-  private val logger = KotlinLogging.logger {}
-
   fun RoutingContext.challengeGroupPage(
     content: ReadingBatContent,
     user: User?,
@@ -217,7 +215,7 @@ internal object ChallengeGroupPage {
           ws.onmessage = function (event) {
             //console.log(event.data);
             var obj = JSON.parse(event.data)
-            document.getElementById(obj.challengeName).innerText = obj.msg;
+            document.getElementById(obj["${WsProtocol.CHALLENGE_NAME_FIELD}"]).innerText = obj["${WsProtocol.MSG_FIELD}"];
           };
         """.trimIndent(),
       )

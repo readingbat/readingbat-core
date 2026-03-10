@@ -64,6 +64,7 @@ import com.github.readingbat.common.StaticFileNames.LIKE_COLOR_FILE
 import com.github.readingbat.common.TwClasses
 import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.queryActiveTeachingClassCode
+import com.github.readingbat.common.WsProtocol
 import com.github.readingbat.common.challengeAnswersKey
 import com.github.readingbat.common.correctAnswersKey
 import com.github.readingbat.dsl.ReadingBatContent
@@ -84,7 +85,6 @@ import com.github.readingbat.server.ServerUtils.queryParam
 import com.github.readingbat.server.UserChallengeInfoTable
 import com.pambrose.common.exposed.get
 import com.pambrose.common.exposed.readonlyTx
-import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.http.ContentType.Text.CSS
 import io.ktor.server.routing.RoutingContext
 import kotlinx.html.BODY
@@ -132,7 +132,6 @@ import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.select
 
 internal object ChallengePage {
-  private val logger = KotlinLogging.logger {}
   private const val SPINNER_CSS = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
   private const val NAME_TD = "nameTd"
   private const val ANSWER_TD = "answersTd"
@@ -387,27 +386,37 @@ internal object ChallengePage {
 
           ws.onmessage = function (event) {
             var obj = JSON.parse(event.data);
+            var typeField = "${WsProtocol.TYPE_FIELD}";
+            var msgField = "${WsProtocol.MSG_FIELD}";
+            var userIdField = "${WsProtocol.USER_ID_FIELD}";
+            var likeDislikeField = "${WsProtocol.LIKE_DISLIKE_FIELD}";
+            var completeField = "${WsProtocol.COMPLETE_FIELD}";
+            var numCorrectField = "${WsProtocol.NUM_CORRECT_FIELD}";
+            var historyField = "${WsProtocol.HISTORY_FIELD}";
+            var invocationField = "${WsProtocol.INVOCATION_FIELD}";
+            var correctField = "${WsProtocol.CORRECT_FIELD}";
+            var answersField = "${WsProtocol.ANSWERS_FIELD}";
 
-            if (obj.hasOwnProperty("type") && obj.type == "$PING_CODE") {
+            if (obj.hasOwnProperty(typeField) && obj[typeField] == "$PING_CODE") {
               document.getElementById('$PING_LABEL').innerText = 'Connection time: ';
-              document.getElementById('$PING_MSG').innerText = obj.msg;
+              document.getElementById('$PING_MSG').innerText = obj[msgField];
             }
-            else if (obj.hasOwnProperty("type") && obj.type == "$LIKE_DISLIKE_CODE") {
-              document.getElementById(obj.userId + '-$LIKE_DISLIKE_SPAN').innerHTML = obj.likeDislike;
+            else if (obj.hasOwnProperty(typeField) && obj[typeField] == "$LIKE_DISLIKE_CODE") {
+              document.getElementById(obj[userIdField] + '-$LIKE_DISLIKE_SPAN').innerHTML = obj[likeDislikeField];
             }
             else {
-              var name = document.getElementById(obj.userId + '-$NAME_TD');
-              name.style.backgroundColor = obj.complete ? '$CORRECT_COLOR' : '$INCOMPLETE_COLOR';
+              var name = document.getElementById(obj[userIdField] + '-$NAME_TD');
+              name.style.backgroundColor = obj[completeField] ? '$CORRECT_COLOR' : '$INCOMPLETE_COLOR';
 
-              document.getElementById(obj.userId + '-$NUM_CORRECTION_SPAN').innerText = obj.numCorrect;
+              document.getElementById(obj[userIdField] + '-$NUM_CORRECTION_SPAN').innerText = obj[numCorrectField];
 
-              var prefix = obj.userId + '-' + obj.history.invocation;
+              var prefix = obj[userIdField] + '-' + obj[historyField][invocationField];
 
               var answers = document.getElementById(prefix + '-$ANSWER_TD')
-              answers.style.backgroundColor = obj.history.correct ? '$CORRECT_COLOR'
-                                                                  : (obj.history.answers.length > 0 ? '$WRONG_COLOR'
+              answers.style.backgroundColor = obj[historyField][correctField] ? '$CORRECT_COLOR'
+                                                                  : (obj[historyField][answersField].length > 0 ? '$WRONG_COLOR'
                                                                                                     : '$INCOMPLETE_COLOR');
-              document.getElementById(prefix + '-$ANSWER_SPAN').innerHTML = obj.history.answers;
+              document.getElementById(prefix + '-$ANSWER_SPAN').innerHTML = obj[historyField][answersField];
             }
           };
         }

@@ -223,7 +223,7 @@ internal fun Application.readContentDsl(fileName: String, variableName: String, 
 fun Application.module() {
   assignProperties(initProperties().sortedBy { it.propertyName })
 
-  // Verifu all the script engines loaded
+  // Verify all the script engines loaded
   logger.info { "Loaded script engines: ${ScriptEngineManager().engineFactories.map { it.engineName }}" }
   check(ScriptEngineManager().engineFactories.count() == 3) { "Missing script engines" }
 

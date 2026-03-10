@@ -4,7 +4,6 @@ import com.github.readingbat.common.User
 import com.github.readingbat.kotest.TestDatabase
 import com.github.readingbat.kotest.TestSupport.initTestProperties
 import com.github.readingbat.kotest.TestSupport.testModule
-import com.github.readingbat.posts.ChallengeHistory
 import com.github.readingbat.server.FullName
 import com.github.readingbat.server.Invocation
 import com.github.readingbat.server.UserAnswerHistoryTable

@@ -26,6 +26,7 @@ import com.github.readingbat.common.Endpoints.STUDENT_SUMMARY_ENDPOINT
 import com.github.readingbat.common.Endpoints.WS_ROOT
 import com.github.readingbat.common.Metrics
 import com.github.readingbat.common.User.Companion.toUser
+import com.github.readingbat.common.WsProtocol
 import com.github.readingbat.dsl.InvalidRequestException
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.agentLaunchId
@@ -46,6 +47,7 @@ import io.ktor.websocket.Frame
 import io.ktor.websocket.close
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlin.concurrent.atomics.AtomicBoolean
 
@@ -167,10 +169,10 @@ internal object StudentSummaryWs {
   @Serializable
   @Suppress("unused")
   data class StudentSummary(
-    val groupName: String,
-    val challengeName: String,
-    val results: List<String>,
-    val stats: String,
-    val likeDislike: String,
+    @SerialName(WsProtocol.GROUP_NAME_FIELD) val groupName: String,
+    @SerialName(WsProtocol.CHALLENGE_NAME_FIELD) val challengeName: String,
+    @SerialName(WsProtocol.RESULTS_FIELD) val results: List<String>,
+    @SerialName(WsProtocol.STATS_FIELD) val stats: String,
+    @SerialName(WsProtocol.LIKE_DISLIKE_FIELD) val likeDislike: String,
   )
 }
