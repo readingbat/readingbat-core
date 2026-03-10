@@ -44,6 +44,7 @@ import com.github.readingbat.common.ParameterIds.LIKE_CLEAR
 import com.github.readingbat.common.ParameterIds.LIKE_COLOR
 import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.fetchUserDbmsIdFromCache
+import com.github.readingbat.common.WsProtocol
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.isDbmsEnabled
 import com.github.readingbat.posts.AnswerStatus.CORRECT
@@ -68,6 +69,7 @@ import io.ktor.server.request.receiveParameters
 import io.ktor.server.response.respondText
 import io.ktor.server.routing.RoutingContext
 import kotlinx.serialization.Required
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.v1.core.Column
@@ -98,25 +100,25 @@ data class ChallengeResults(
 
 @Serializable
 internal data class LikeDislikeInfo(
-  val userId: String,
-  val likeDislike: String,
-  @Required val type: String = Constants.LIKE_DISLIKE_CODE,
+  @SerialName(WsProtocol.USER_ID_FIELD) val userId: String,
+  @SerialName(WsProtocol.LIKE_DISLIKE_FIELD) val likeDislike: String,
+  @SerialName(WsProtocol.TYPE_FIELD) @Required val type: String = Constants.LIKE_DISLIKE_CODE,
 )
 
 @Suppress("unused")
 @Serializable
 internal data class DashboardInfo(
-  val userId: String,
-  val complete: Boolean,
-  val numCorrect: Int,
-  val history: DashboardHistory,
+  @SerialName(WsProtocol.USER_ID_FIELD) val userId: String,
+  @SerialName(WsProtocol.COMPLETE_FIELD) val complete: Boolean,
+  @SerialName(WsProtocol.NUM_CORRECT_FIELD) val numCorrect: Int,
+  @SerialName(WsProtocol.HISTORY_FIELD) val history: DashboardHistory,
 )
 
 @Serializable
 internal data class DashboardHistory(
-  val invocation: String,
-  val correct: Boolean = false,
-  val answers: String,
+  @SerialName(WsProtocol.INVOCATION_FIELD) val invocation: String,
+  @SerialName(WsProtocol.CORRECT_FIELD) val correct: Boolean = false,
+  @SerialName(WsProtocol.ANSWERS_FIELD) val answers: String,
 )
 
 @Serializable

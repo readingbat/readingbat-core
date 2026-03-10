@@ -23,6 +23,7 @@ import com.github.readingbat.common.Constants
 import com.github.readingbat.common.Endpoints.CHALLENGE_GROUP_ENDPOINT
 import com.github.readingbat.common.Endpoints.WS_ROOT
 import com.github.readingbat.common.Metrics
+import com.github.readingbat.common.WsProtocol
 import com.github.readingbat.dsl.InvalidRequestException
 import com.github.readingbat.dsl.ReadingBatContent
 import com.github.readingbat.dsl.agentLaunchId
@@ -47,6 +48,7 @@ import io.ktor.websocket.Frame
 import io.ktor.websocket.close
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
@@ -196,5 +198,8 @@ internal object ChallengeGroupWs {
   }
 
   @Serializable
-  data class ChallengeStats(val challengeName: String, val msg: String)
+  data class ChallengeStats(
+    @SerialName(WsProtocol.CHALLENGE_NAME_FIELD) val challengeName: String,
+    @SerialName(WsProtocol.MSG_FIELD) val msg: String,
+  )
 }

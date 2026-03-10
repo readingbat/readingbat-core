@@ -37,6 +37,7 @@ import com.github.readingbat.common.StaticFileNames.WHITE_CHECK
 import com.github.readingbat.common.TwClasses
 import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.queryActiveTeachingClassCode
+import com.github.readingbat.common.WsProtocol
 import com.github.readingbat.common.challengeAnswersKey
 import com.github.readingbat.common.correctAnswersKey
 import com.github.readingbat.dsl.ChallengeGroup
@@ -217,7 +218,7 @@ internal object ChallengeGroupPage {
           ws.onmessage = function (event) {
             //console.log(event.data);
             var obj = JSON.parse(event.data)
-            document.getElementById(obj.challengeName).innerText = obj.msg;
+            document.getElementById(obj["${WsProtocol.CHALLENGE_NAME_FIELD}"]).innerText = obj["${WsProtocol.MSG_FIELD}"];
           };
         """.trimIndent(),
       )
