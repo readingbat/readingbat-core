@@ -168,7 +168,6 @@ internal object PageUtils {
     content: ReadingBatContent,
     user: User?,
     languageType: LanguageType,
-    loginAttempt: Boolean,
     loginPath: String,
     displayWelcomeMsg: Boolean,
     activeClassCode: ClassCode,
@@ -177,22 +176,15 @@ internal object PageUtils {
     helpAndLogin(content, user, loginPath, activeClassCode.isEnabled)
     bodyTitle()
 
-    p { if (displayWelcomeMsg) +"Welcome to ReadingBat." else rawHtml(nbsp.text) }
+    p(classes = "mb-0") { if (displayWelcomeMsg) +"Welcome to ReadingBat." else rawHtml(nbsp.text) }
 
-    if (loginAttempt && user == null)
-      p {
-        span(classes = "text-red-500") {
-          +"Failed to login -- incorrect email or password"
-        }
-      }
-
-    p {
+    p(classes = "mt-2 mb-0") {
       span(classes = "text-green-500 max-w-[800px]") {
         if (msg.isNotBlank) +(msg.toString()) else rawHtml(nbsp.text)
       }
     }
 
-    div(classes = "pt-2.5 min-w-screen clear-both") {
+    div(classes = "pt-1.5 min-w-screen clear-both") {
       nav {
         ul {
           languageTypeList

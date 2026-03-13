@@ -91,7 +91,6 @@ internal object ChallengeGroupPage {
     content: ReadingBatContent,
     user: User?,
     challengeGroup: ChallengeGroup<*>,
-    loginAttempt: Boolean,
   ) =
     createHTML()
       .html {
@@ -141,7 +140,7 @@ internal object ChallengeGroupPage {
         head { headDefault() }
 
         body {
-          bodyHeader(content, user, languageType, loginAttempt, loginPath, false, activeTeachingClassCode, msg)
+          bodyHeader(content, user, languageType, loginPath, false, activeTeachingClassCode, msg)
 
           h2 { +groupName.toString() }
 

@@ -60,7 +60,6 @@ internal object LanguageGroupPage {
     content: ReadingBatContent,
     user: User?,
     languageType: LanguageType,
-    loginAttempt: Boolean,
   ) =
     createHTML()
       .html {
@@ -117,7 +116,7 @@ internal object LanguageGroupPage {
         body {
           val msg = Message(queryParam(MSG))
 
-          bodyHeader(content, user, languageType, loginAttempt, loginPath, true, activeTeachingClassCode, msg)
+          bodyHeader(content, user, languageType, loginPath, true, activeTeachingClassCode, msg)
 
           if (activeTeachingClassCode.isEnabled)
             displayClassDescription(activeTeachingClassCode, languageName, EMPTY_GROUP, enrollees)
