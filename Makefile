@@ -66,10 +66,10 @@ depends:
 	./gradlew dependencies
 
 trigger-jitpack:
-	curl -s "https://jitpack.io/com/github/pambrose/readingbat-core/${VERSION}/build.log"
+	curl -s "https://jitpack.io/com/github/readingbat/readingbat-core/${VERSION}/build.log"
 
 view-jitpack:
-	curl -s "https://jitpack.io/api/builds/com.github.pambrose/readingbat-core/${VERSION}" | python3 -m json.tool
+	curl -s "https://jitpack.io/api/builds/com.github.readingbat/readingbat-core/${VERSION}" | python3 -m json.tool
 
 
 upgrade-wrapper:
