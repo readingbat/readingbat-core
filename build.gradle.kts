@@ -40,7 +40,7 @@ allprojects {
 
   extra["versionStr"] = "3.0.0"
   description = "ReadingBat Core"
-  group = "com.github.pambrose.readingbat"
+  group = "com.github.readingbat"
   version = versionStr
 
   repositories {
