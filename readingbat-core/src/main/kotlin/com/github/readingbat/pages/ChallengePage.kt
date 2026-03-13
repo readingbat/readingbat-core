@@ -148,7 +148,6 @@ internal object ChallengePage {
     content: ReadingBatContent,
     user: User?,
     challenge: Challenge,
-    loginAttempt: Boolean,
   ) =
     createHTML()
       .html {
@@ -181,7 +180,7 @@ internal object ChallengePage {
         }
 
         body {
-          bodyHeader(content, user, languageType, loginAttempt, loginPath, false, activeTeachingClassCode, msg)
+          bodyHeader(content, user, languageType, loginPath, false, activeTeachingClassCode, msg)
 
           displayChallenge(challenge, funcInfo)
 

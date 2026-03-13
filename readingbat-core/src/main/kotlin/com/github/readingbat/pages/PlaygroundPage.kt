@@ -55,7 +55,6 @@ internal object PlaygroundPage {
     content: ReadingBatContent,
     user: User?,
     challenge: Challenge,
-    loginAttempt: Boolean,
   ) =
     createHTML()
       .html {
@@ -76,7 +75,7 @@ internal object PlaygroundPage {
         }
 
         body {
-          bodyHeader(content, user, languageType, loginAttempt, loginPath, false, activeTeachingClassCode)
+          bodyHeader(content, user, languageType, loginPath, false, activeTeachingClassCode)
 
           h2 {
             val groupPath = pathOf(CHALLENGE_ROOT, languageName, groupName)

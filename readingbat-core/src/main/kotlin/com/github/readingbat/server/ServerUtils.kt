@@ -21,11 +21,9 @@ import com.github.pambrose.common.email.Email.Companion.UNKNOWN_EMAIL
 import com.github.pambrose.common.response.redirectTo
 import com.github.pambrose.common.response.respondWith
 import com.github.pambrose.common.util.Version.Companion.versionDesc
-import com.github.pambrose.common.util.isNotNull
 import com.github.readingbat.common.Metrics
 import com.github.readingbat.common.User
 import com.github.readingbat.common.User.Companion.toUser
-import com.github.readingbat.common.UserPrincipal
 import com.github.readingbat.common.browserSession
 import com.github.readingbat.common.isNotAdminUser
 import com.github.readingbat.common.isNotValidUser
@@ -39,14 +37,11 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.http.HttpMethod
 import io.ktor.http.formUrlEncode
 import io.ktor.server.application.ApplicationCall
-import io.ktor.server.auth.principal
 import io.ktor.server.request.receiveParameters
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.RoutingContext
 import io.ktor.server.routing.RoutingHandler
 import io.ktor.server.routing.route
-import io.ktor.server.sessions.sessions
-import io.ktor.server.sessions.set
 import io.ktor.server.websocket.WebSocketServerSession
 import io.ktor.utils.io.KtorDsl
 
@@ -61,14 +56,8 @@ internal object ServerUtils {
   fun safeRedirectPath(path: String): String =
     if (path.startsWith("/") && !path.startsWith("//")) path else "/"
 
-  fun RoutingContext.fetchUser(loginAttempt: Boolean = false): User? =
-    fetchPrincipal(loginAttempt)?.userId?.toUser(call.browserSession)
-
-  private fun RoutingContext.fetchPrincipal(loginAttempt: Boolean): UserPrincipal? =
-    if (loginAttempt) assignPrincipal() else call.userPrincipal
-
-  private fun RoutingContext.assignPrincipal(): UserPrincipal? =
-    call.principal<UserPrincipal>().apply { if (isNotNull()) call.sessions.set(this) }  // Set the cookie
+  fun RoutingContext.fetchUser(): User? =
+    call.userPrincipal?.userId?.toUser(call.browserSession)
 
   fun WebSocketServerSession.fetchUser(): User? =
     call.userPrincipal?.userId?.toUser(call.browserSession)

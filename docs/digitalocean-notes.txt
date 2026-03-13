@@ -1,4 +1,4 @@
-To determine the IP address of your local machine for white-listing, use:
+To determine the IP address of your local machine for whitelisting, use:
  curl ifconfig.me
 
 URL: jdbc:postgresql://name.ondigitalocean.com:45060/readingbat?sslmode=require

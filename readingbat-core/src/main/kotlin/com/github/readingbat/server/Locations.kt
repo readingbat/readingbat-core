@@ -53,85 +53,81 @@ object Locations {
   fun Routing.locations(metrics: Metrics, content: () -> ReadingBatContent) {
     get<Language> { languageLoc ->
       metrics.languageGroupRequestCount.labels(agentLaunchId(), GET, languageLoc.languageTypeStr, FALSE_STR).inc()
-      language(content(), languageLoc, false)
+      language(content(), languageLoc)
     }
     get<Language.Group> { groupLoc ->
       metrics.challengeGroupRequestCount.labels(agentLaunchId(), GET, groupLoc.languageTypeStr, FALSE_STR).inc()
-      group(content(), groupLoc, false)
+      group(content(), groupLoc)
     }
     get<Language.Group.Challenge> { challengeLoc ->
       metrics.challengeRequestCount.labels(agentLaunchId(), GET, challengeLoc.languageTypeStr, FALSE_STR).inc()
-      challenge(content(), challengeLoc, false)
+      challenge(content(), challengeLoc)
     }
     get<PlaygroundRequest> { request ->
       metrics.playgroundRequestCount.labels(agentLaunchId(), GET, FALSE_STR).inc()
-      playground(content(), request, false)
+      playground(content(), request)
     }
 
     locationsPost<Language> { languageLoc ->
       metrics.languageGroupRequestCount.labels(agentLaunchId(), POST, languageLoc.languageTypeStr, TRUE_STR).inc()
-      language(content(), languageLoc, false)
+      language(content(), languageLoc)
     }
     locationsPost<Language.Group> { groupLoc ->
       metrics.challengeGroupRequestCount.labels(agentLaunchId(), POST, groupLoc.languageTypeStr, TRUE_STR).inc()
-      group(content(), groupLoc, false)
+      group(content(), groupLoc)
     }
     locationsPost<Language.Group.Challenge> { challengeLoc ->
       metrics.challengeRequestCount.labels(agentLaunchId(), POST, challengeLoc.languageTypeStr, TRUE_STR).inc()
-      challenge(content(), challengeLoc, false)
+      challenge(content(), challengeLoc)
     }
     locationsPost<PlaygroundRequest> { request ->
       metrics.playgroundRequestCount.labels(agentLaunchId(), POST, TRUE_STR).inc()
-      playground(content(), request, false)
+      playground(content(), request)
     }
   }
 
   private suspend fun RoutingContext.language(
     content: ReadingBatContent,
     language: Language,
-    loginAttempt: Boolean,
   ) =
     respondWith {
       assignBrowserSession()
       content.checkLanguage(language.languageType)
-      val user = fetchUser(loginAttempt)
-      languageGroupPage(content, user, language.languageType, loginAttempt)
+      val user = fetchUser()
+      languageGroupPage(content, user, language.languageType)
     }
 
   private suspend fun RoutingContext.group(
     content: ReadingBatContent,
     groupLoc: Language.Group,
-    loginAttempt: Boolean,
   ) =
     respondWith {
       assignBrowserSession()
       content.checkLanguage(groupLoc.languageType)
-      val user = fetchUser(loginAttempt)
-      challengeGroupPage(content, user, content.findGroup(groupLoc), loginAttempt)
+      val user = fetchUser()
+      challengeGroupPage(content, user, content.findGroup(groupLoc))
     }
 
   private suspend fun RoutingContext.challenge(
     content: ReadingBatContent,
     challengeLoc: Language.Group.Challenge,
-    loginAttempt: Boolean,
   ) =
     respondWith {
       assignBrowserSession()
       content.checkLanguage(challengeLoc.languageType)
-      val user = fetchUser(loginAttempt)
-      challengePage(content, user, content.findChallenge(challengeLoc), loginAttempt)
+      val user = fetchUser()
+      challengePage(content, user, content.findChallenge(challengeLoc))
     }
 
   private suspend fun RoutingContext.playground(
     content: ReadingBatContent,
     request: PlaygroundRequest,
-    loginAttempt: Boolean,
   ) =
     respondWith {
       assignBrowserSession()
-      val user = fetchUser(loginAttempt)
+      val user = fetchUser()
       val languageGroup = content.findLanguage(Kotlin).findChallenge(request.groupName, request.challengeName)
-      playgroundPage(content, user, languageGroup, loginAttempt)
+      playgroundPage(content, user, languageGroup)
     }
 }
 
