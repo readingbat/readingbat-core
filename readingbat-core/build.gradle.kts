@@ -83,8 +83,12 @@ tasks.register<Exec>("tailwindBuildFull") {
   )
 }
 
-tasks.named("processResources") {
-  dependsOn("tailwindBuild")
+// On macOS, regenerate Tailwind CSS before processing resources.
+// On Linux (e.g., jitpack.io), the checked-in tailwind.css is used as-is.
+if (System.getProperty("os.name").lowercase().contains("mac")) {
+  tasks.named("processResources") {
+    dependsOn("tailwindBuild")
+  }
 }
 
 // Include build uberjars in heroku deploy
