@@ -1,4 +1,6 @@
 VERSION := $(shell grep 'extra\["versionStr"\]' build.gradle.kts | grep -o '"[0-9][^"]*"' | tr -d '"')
+JITPACK_BUILD_LOG := https://jitpack.io/com/github/readingbat/readingbat-core/$(VERSION)/build.log
+JITPACK_BUILD_API := https://jitpack.io/api/builds/com.github.readingbat/readingbat-core/$(VERSION)
 
 default: versioncheck
 
@@ -66,14 +68,15 @@ depends:
 	./gradlew dependencies
 
 trigger-jitpack:
-	until curl -s "https://jitpack.io/com/github/readingbat/readingbat-core/${VERSION}/build.log" | grep -qv "not found"; do \
+	until curl -s "$(JITPACK_BUILD_LOG)" | grep -qv "not found"; do \
 		echo "Waiting for JitPack..."; \
 		sleep 10; \
 	done
+	echo "JitPack build complete for version ${VERSION}"
 
 view-jitpack:
-	curl -s "https://jitpack.io/com/github/readingbat/readingbat-core/${VERSION}/build.log"
-	curl -s "https://jitpack.io/api/builds/com.github.readingbat/readingbat-core/${VERSION}" | python3 -m json.tool
+	curl -s "$(JITPACK_BUILD_LOG)"
+	curl -s "$(JITPACK_BUILD_API)" | jq
 
 upgrade-wrapper:
 	./gradlew wrapper --gradle-version=9.4.0 --distribution-type=bin
