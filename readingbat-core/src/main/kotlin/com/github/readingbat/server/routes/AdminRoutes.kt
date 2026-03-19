@@ -31,7 +31,6 @@ import com.github.readingbat.common.browserSession
 import com.github.readingbat.common.isAdminUser
 import com.github.readingbat.common.userPrincipal
 import com.github.readingbat.dsl.isDbmsEnabled
-import com.github.readingbat.dsl.isProduction
 import com.github.readingbat.dsl.isSaveRequestsEnabled
 import com.github.readingbat.server.BrowserSessionsTable
 import com.github.readingbat.server.GeoInfo.Companion.lookupGeoInfo
@@ -64,12 +63,10 @@ object AdminRoutes {
   private val logger = KotlinLogging.logger {}
 
   private suspend fun RoutingContext.requireAdminUser(): Boolean {
-    if (isProduction()) {
-      val user = fetchUser()
-      if (user == null || !user.isAdminUser()) {
-        call.respondText("Forbidden", Plain, HttpStatusCode.Forbidden)
-        return false
-      }
+    val user = fetchUser()
+    if (user == null || !user.isAdminUser()) {
+      call.respondText("Forbidden", Plain, HttpStatusCode.Forbidden)
+      return false
     }
     return true
   }

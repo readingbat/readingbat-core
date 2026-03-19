@@ -181,7 +181,13 @@ object Installs {
     }
 
     install(DefaultHeaders) {
-      header("X-Engine", "Ktor")
+      header("X-Content-Type-Options", "nosniff")
+      header("X-Frame-Options", "DENY")
+      header("Referrer-Policy", "strict-origin-when-cross-origin")
+      header("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
+      if (production) {
+        header("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
+      }
     }
 
     val requestCounter = AtomicLong(0)

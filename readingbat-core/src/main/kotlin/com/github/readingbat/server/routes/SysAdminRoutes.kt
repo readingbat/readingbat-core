@@ -29,11 +29,11 @@ import com.github.readingbat.dsl.ContentCaches.dirCache
 import com.github.readingbat.dsl.ContentCaches.sourceCache
 import com.github.readingbat.dsl.InvalidRequestException
 import com.github.readingbat.dsl.isContentCachingEnabled
-import com.github.readingbat.server.ReadingBatServer.logger
 import com.github.readingbat.server.ServerUtils.authenticateAdminUser
 import com.github.readingbat.server.ServerUtils.fetchUser
 import com.github.readingbat.server.ServerUtils.paramMap
 import com.github.readingbat.server.ServerUtils.post
+import com.github.readingbat.server.routes.SysAdminRoutes.logger
 import com.github.readingbat.server.ws.PubSubCommandsWs.AdminCommand.LOAD_CHALLENGE
 import com.github.readingbat.server.ws.PubSubCommandsWs.AdminCommand.RESET_CACHE
 import com.github.readingbat.server.ws.PubSubCommandsWs.AdminCommand.RESET_CONTENT_DSL
@@ -42,10 +42,15 @@ import com.github.readingbat.server.ws.PubSubCommandsWs.LoadChallengeType
 import com.github.readingbat.server.ws.PubSubCommandsWs.publishAdminCommand
 import com.github.readingbat.server.ws.PubSubCommandsWs.publishLog
 import com.github.readingbat.server.ws.WsCommon.LOG_ID
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.server.application.ApplicationCall
 import io.ktor.server.routing.Routing
 import io.ktor.server.routing.post
 import kotlin.time.measureTime
+
+object SysAdminRoutes {
+  internal val logger = KotlinLogging.logger {}
+}
 
 fun Routing.sysAdminRoutes(metrics: Metrics, resetContentFunc: (String) -> Unit) {
   suspend fun ApplicationCall.logId(): String {

@@ -55,7 +55,7 @@ internal object AdminCommandsJs {
       }
       else if(re.readyState == 4) {  // done
         let success = true;
-        let results = eval(re.responseText);
+        let results = JSON.parse(re.responseText);
         for (let i = 0; i < results.length; i++) {
           let x = document.getElementById("$FEEDBACK_ID"+i);
           if (results[i][0] == 0) {
