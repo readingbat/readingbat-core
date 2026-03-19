@@ -66,11 +66,14 @@ depends:
 	./gradlew dependencies
 
 trigger-jitpack:
-	curl -s "https://jitpack.io/com/github/readingbat/readingbat-core/${VERSION}/build.log"
+	until curl -s "https://jitpack.io/com/github/readingbat/readingbat-core/${VERSION}/build.log" | grep -qv "not found"; do \
+		echo "Waiting for JitPack..."; \
+		sleep 10; \
+	done
 
 view-jitpack:
+	curl -s "https://jitpack.io/com/github/readingbat/readingbat-core/${VERSION}/build.log"
 	curl -s "https://jitpack.io/api/builds/com.github.readingbat/readingbat-core/${VERSION}" | python3 -m json.tool
-
 
 upgrade-wrapper:
 	./gradlew wrapper --gradle-version=9.4.0 --distribution-type=bin
