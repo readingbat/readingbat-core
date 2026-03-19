@@ -1,13 +1,13 @@
 [versions]
 # Plugin versions
 buildconfig = "6.0.9"
-kotlin = "2.3.10"
+kotlin = "2.3.20"
 kotlinter = "5.4.2"
 versions = "0.53.0"
 
 # Library versions
-cloud = "1.28.1"
-flyway = "12.1.0"
+cloud = "1.28.2"
+flyway = "12.1.1"
 commons = "1.15.0"
 css = "2026.3.2"
 exposed = "1.1.1"
@@ -17,20 +17,20 @@ gson = "2.13.2"
 hikari = "7.0.2"
 java = "2.0.0"
 khealth = "3.0.1"
-kotest = "6.1.6"
-kotest-ktor = "6.1.6"
+kotest = "6.1.7"
+kotest-ktor = "6.1.7"
 ktor = "3.4.1"
 logback = "1.5.18"
 logging = "7.0.12"
 pgjdbc = "0.8.9"
 postgres = "42.7.10"
 prometheus = "0.16.0"
-proxy = "3.0.0"
+prometheus-proxy = "3.0.3"
 python = "2.7.4"
-resend = "4.12.0"
+resend = "4.13.0"
 serialization = "1.10.0"
 testcontainers = "1.21.4"
-utils = "2.6.1"
+utils = "2.6.2"
 
 [libraries]
 # Kotlin
@@ -56,7 +56,7 @@ common-script-utils-python = { module = "com.github.pambrose.common-utils:script
 common-service-utils = { module = "com.github.pambrose.common-utils:service-utils" }
 
 # Prometheus
-prometheus-proxy = { module = "com.github.pambrose:prometheus-proxy", version.ref = "proxy" }
+prometheus-proxy = { module = "com.github.pambrose:prometheus-proxy", version.ref = "prometheus-proxy" }
 simple-client = { module = "io.prometheus:simpleclient", version.ref = "prometheus" }
 
 # Script Engines

@@ -23,7 +23,7 @@ ReadingBat platform for teaching Java, Kotlin, and Python programming concepts.
 
 ReadingBat Core is built using modern Kotlin technologies:
 
-- **Web Framework**: Ktor 3.2.3 with CIO engine
+- **Web Framework**: Ktor 3.4.1 with CIO engine
 - **Database**: PostgreSQL with Exposed ORM and HikariCP connection pooling
 - **Authentication**: Form-based auth with session management
 - **Script Execution**: JSR-223 scripting engines for safe code evaluation
