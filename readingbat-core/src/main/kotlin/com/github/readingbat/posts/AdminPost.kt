@@ -28,7 +28,6 @@ import com.github.readingbat.dsl.ContentCaches.contentDslCache
 import com.github.readingbat.dsl.ContentCaches.dirCache
 import com.github.readingbat.dsl.ContentCaches.sourceCache
 import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.dsl.isProduction
 import com.github.readingbat.pages.AdminPage.adminDataPage
 import io.ktor.server.request.receiveParameters
 import io.ktor.server.routing.RoutingContext
@@ -45,11 +44,11 @@ internal object AdminPost {
     user: User?,
   ): String =
     when {
-      isProduction() && user.isNotValidUser() -> {
+      user.isNotValidUser() -> {
         adminDataPage(content, user, mustBeLoggedIn)
       }
 
-      isProduction() && user.isNotAdminUser() -> {
+      user.isNotAdminUser() -> {
         adminDataPage(content, user, mustBeSysAdmin)
       }
 

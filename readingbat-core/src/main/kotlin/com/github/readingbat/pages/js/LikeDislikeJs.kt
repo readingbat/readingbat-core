@@ -63,7 +63,7 @@ internal object LikeDislikeJs {
         document.getElementById('$LIKE_STATUS_ID').innerText = 'Setting like/dislike...';
       }
       else if(re.readyState == 4) {  // done
-        let results = eval(re.responseText);
+        let results = JSON.parse(re.responseText);
 
         document.getElementById('$LIKE_SPINNER_ID').innerText = '';
         document.getElementById('$LIKE_STATUS_ID').innerText = '';

@@ -69,7 +69,7 @@ class AdminSecurityTest : StringSpec() {
         }
     }
 
-    "Admin endpoints are accessible in non-production mode" {
+    "Admin endpoints require auth even in non-production mode" {
       initTestProperties()
 
       readTestContent()
@@ -78,8 +78,8 @@ class AdminSecurityTest : StringSpec() {
             application { testModule(testContent) }
 
             client.apply {
-              get(THREAD_DUMP).also { it shouldHaveStatus OK }
-              get(COOKIES).also { it shouldHaveStatus OK }
+              get(THREAD_DUMP).also { it shouldHaveStatus Forbidden }
+              get(COOKIES).also { it shouldHaveStatus Forbidden }
             }
           }
         }

@@ -31,7 +31,6 @@ import com.github.readingbat.dsl.ContentCaches.contentDslCache
 import com.github.readingbat.dsl.ContentCaches.dirCache
 import com.github.readingbat.dsl.ContentCaches.sourceCache
 import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.dsl.isProduction
 import com.github.readingbat.pages.HelpAndLogin.helpAndLogin
 import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyTitle
@@ -77,11 +76,11 @@ internal object AdminPage {
           bodyTitle()
 
           when {
-            isProduction() && user.isNotValidUser() -> {
+            user.isNotValidUser() -> {
               br { +"Must be logged in for this function" }
             }
 
-            isProduction() && user.isNotAdminUser() -> {
+            user.isNotAdminUser() -> {
               br { +"Must be a system admin for this function" }
             }
 

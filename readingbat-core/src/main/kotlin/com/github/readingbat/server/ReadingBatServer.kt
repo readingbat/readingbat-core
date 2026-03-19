@@ -89,10 +89,10 @@ import kotlin.time.measureTime
   buildTime = BuildConfig.BUILD_TIME,
 )
 object ReadingBatServer {
-  internal val logger = KotlinLogging.logger {}
-  val metrics by lazy { Metrics() }
   private const val CALLER_VERSION = "callerVersion"
   private val startTime = TimeSource.Monotonic.markNow()
+
+  internal val logger = KotlinLogging.logger {}
   internal val serverSessionId = randomId(10)
   internal val timeStamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("M/d/y H:m:ss"))
   internal var callerVersion = ""
@@ -132,6 +132,8 @@ object ReadingBatServer {
   internal val adminUsers get() = adminUsersRef.load()
 
   internal val upTime get() = startTime.elapsedNow()
+
+  val metrics by lazy { Metrics() }
 
   fun assignKotlinScriptProperty() {
     // If kotlin.script.classpath property is missing, set it based on env var SCRIPT_CLASSPATH

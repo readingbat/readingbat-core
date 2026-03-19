@@ -21,7 +21,6 @@ import com.github.pambrose.common.util.encode
 import com.github.pambrose.common.util.maxLength
 import com.github.pambrose.common.util.md5Of
 import com.github.pambrose.common.util.pathOf
-import com.github.pambrose.common.util.toDoubleQuoted
 import com.github.readingbat.common.AnswerPublisher
 import com.github.readingbat.common.Constants
 import com.github.readingbat.common.Constants.CHALLENGE_SRC
@@ -66,6 +65,7 @@ import com.github.readingbat.server.userAnswerHistoryIndex
 import com.github.readingbat.server.userChallengeInfoIndex
 import com.pambrose.common.exposed.upsert
 import io.github.oshai.kotlinlogging.KotlinLogging
+import io.ktor.http.ContentType
 import io.ktor.server.request.receiveParameters
 import io.ktor.server.response.respondText
 import io.ktor.server.routing.RoutingContext
@@ -73,6 +73,9 @@ import kotlinx.serialization.Required
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.addJsonArray
+import kotlinx.serialization.json.buildJsonArray
 import org.jetbrains.exposed.v1.core.Column
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.dao.id.LongIdTable
@@ -173,8 +176,6 @@ internal class ChallengeNames(paramMap: Map<String, String>) {
   fun md5(invocation: Invocation) = md5Of(languageName, groupName, challengeName, invocation)
 }
 
-private val EMPTY_STRING = "".toDoubleQuoted()
-
 internal object ChallengePost {
   private val logger = KotlinLogging.logger {}
 
@@ -198,15 +199,22 @@ internal object ChallengePost {
       saveChallengeAnswers(user, content, names, paramMap, funcInfo, userResponses, results)
 
     val answerMapping =
-      results
-        .map {
-          when {
-            !it.answered -> listOf(NOT_ANSWERED.value, EMPTY_STRING)
-            it.correct -> listOf(CORRECT.value, EMPTY_STRING)
-            else -> listOf(INCORRECT.value, it.hint.toDoubleQuoted())
+      buildJsonArray {
+        results.forEach {
+          val status =
+            when {
+              !it.answered -> NOT_ANSWERED.value
+              it.correct -> CORRECT.value
+              else -> INCORRECT.value
+            }
+          val hint = if (!it.answered || it.correct) "" else it.hint
+          addJsonArray {
+            add(JsonPrimitive(status))
+            add(JsonPrimitive(hint))
           }
         }
-    call.respondText(answerMapping.toString())
+      }
+    call.respondText(answerMapping.toString(), ContentType.Application.Json)
   }
 
   private fun deleteFromTable(

@@ -27,7 +27,7 @@ class AdminUsersImmutabilityTest : StringSpec() {
 
     "adminUsers should be a Set type" {
       val users = ReadingBatServer.adminUsers
-      users shouldBe emptySet<String>()
+      users shouldBe emptySet()
     }
 
     "adminUsers store should replace the entire set atomically" {

@@ -31,7 +31,6 @@ import com.github.readingbat.common.userPrincipal
 import com.github.readingbat.dsl.InvalidRequestException
 import com.github.readingbat.dsl.LanguageType
 import com.github.readingbat.dsl.ReadingBatContent
-import com.github.readingbat.dsl.isProduction
 import com.github.readingbat.server.ws.PubSubCommandsWs.publishLog
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.http.HttpMethod
@@ -80,7 +79,7 @@ internal object ServerUtils {
 
   fun authenticateAdminUser(user: User?, block: () -> String): String {
     if (user.isNotValidUser()) throw InvalidRequestException("Must be logged in for this function")
-    if (isProduction() && user.isNotAdminUser()) throw InvalidRequestException("Must be system admin for this function")
+    if (user.isNotAdminUser()) throw InvalidRequestException("Must be system admin for this function")
     return block()
   }
 
@@ -108,7 +107,6 @@ internal object ServerUtils {
 
   fun firstNonEmptyLanguageType(content: ReadingBatContent, defaultLanguage: LanguageType? = null) =
     LanguageType.languageTypes(defaultLanguage)
-      .asSequence()
       .firstOrNull { content[it].isNotEmpty() } ?: error("Missing non-empty language")
 
   fun logToShim(msg: String, logId: String) {
