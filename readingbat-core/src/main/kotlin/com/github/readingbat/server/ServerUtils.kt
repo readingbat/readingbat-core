@@ -42,7 +42,6 @@ import io.ktor.server.routing.RoutingContext
 import io.ktor.server.routing.RoutingHandler
 import io.ktor.server.routing.route
 import io.ktor.server.websocket.WebSocketServerSession
-import io.ktor.utils.io.KtorDsl
 
 @Suppress("unused")
 internal object ServerUtils {
@@ -83,7 +82,6 @@ internal object ServerUtils {
     return block()
   }
 
-  @KtorDsl
   fun Route.get(path: String, metrics: Metrics, body: RoutingHandler) =
     route(path, HttpMethod.Get) {
       handle {
@@ -91,7 +89,6 @@ internal object ServerUtils {
       }
     }
 
-  @KtorDsl
   fun Route.post(path: String, metrics: Metrics, body: RoutingHandler) =
     route(path, HttpMethod.Post) {
       handle {

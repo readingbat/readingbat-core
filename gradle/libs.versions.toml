@@ -30,7 +30,7 @@ python = "2.7.4"
 resend = "4.13.0"
 serialization = "1.10.0"
 testcontainers = "1.21.4"
-utils = "2.6.2"
+utils = "2.6.3"
 
 [libraries]
 # Kotlin
