@@ -6,7 +6,7 @@ ReadingBat Core is a web application built with Ktor that serves programming cha
 
 ## Key Technologies
 
-- Kotlin 2.3, Ktor 3.4 (CIO engine), Exposed ORM 1.1, PostgreSQL
+- Kotlin 2.3.10, Ktor 3.4.1 (CIO engine), Exposed ORM 1.1.1, PostgreSQL
 - Kotlinx.html for server-side HTML generation (no templates)
 - Kotest for testing, Cypress for E2E tests
 - Gradle multi-module build with version catalog (libs.versions.toml)
