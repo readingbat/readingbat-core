@@ -285,11 +285,11 @@ fun Application.module() {
 
   routing {
     adminRoutes(metrics)
-    oauthRoutes()
     locations(metrics) { content.load() }
     userRoutes(metrics) { content.load() }
 
     if (isProduction()) {
+      oauthRoutes()
       sysAdminRoutes(metrics, resetContentDslFunc)
       wsRoutes(metrics) { content.load() }
     }

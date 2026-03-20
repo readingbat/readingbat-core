@@ -227,7 +227,7 @@ private fun findOrCreateOAuthUser(
     return User.run { userId.toUser() }
   }
 
-  // 2. No link found — check if email matches an existing user
+  // 2. No link found — check if the email matches an existing user
   if (email.isNotBlank()) {
     val existingUser = queryUserByEmail(email)
     if (existingUser != null) {

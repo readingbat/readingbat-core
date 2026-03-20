@@ -89,8 +89,10 @@ object Installs {
     }
 
     install(Authentication) {
-      configureGitHubOAuth()
-      configureGoogleOAuth()
+      if (production) {
+        configureGitHubOAuth()
+        configureGoogleOAuth()
+      }
     }
 
     install(WebSockets) {
