@@ -25,9 +25,10 @@ import com.github.readingbat.common.ClassCode
 import com.github.readingbat.common.Constants.ADMIN_FUNC
 import com.github.readingbat.common.Constants.ICONS
 import com.github.readingbat.common.Endpoints.CHALLENGE_ROOT
-import com.github.readingbat.common.Endpoints.PRIVACY_ENDPOINT
+import com.github.readingbat.common.Endpoints.PRIVACY_POLICY_ENDPOINT
 import com.github.readingbat.common.Endpoints.STATIC_ROOT
 import com.github.readingbat.common.Endpoints.TAILWIND_CSS_ENDPOINT
+import com.github.readingbat.common.Endpoints.TOS_ENDPOINT
 import com.github.readingbat.common.FormFields.RETURN_PARAM
 import com.github.readingbat.common.Message
 import com.github.readingbat.common.Message.Companion.EMPTY_MESSAGE
@@ -211,11 +212,19 @@ internal object PageUtils {
       +text
     }
 
-  fun BODY.privacyStatement(returnPath: String) =
+  fun BODY.privacyPolicy(returnPath: String) =
     p(classes = TwClasses.INDENT_1EM) {
       a {
-        href = "$PRIVACY_ENDPOINT?$RETURN_PARAM=$returnPath"
-        +"Privacy Statement"
+        href = "$PRIVACY_POLICY_ENDPOINT?$RETURN_PARAM=$returnPath"
+        +"Privacy Policy"
+      }
+    }
+
+  fun BODY.tosPolicy(returnPath: String) =
+    p(classes = TwClasses.INDENT_1EM) {
+      a {
+        href = "$TOS_ENDPOINT?$RETURN_PARAM=$returnPath"
+        +"Terms Of Service"
       }
     }
 
@@ -269,13 +278,13 @@ internal object PageUtils {
   }
 
   fun BODY.loadPingdomScript() {
-    Property.PINGDOM_URL.getPropertyOrNull()?.also {
-      if (it.isNotBlank())
-        script {
-          src = it
-          async = true
-        }
-    }
+//    Property.PINGDOM_URL.getPropertyOrNull()?.also {
+//      if (it.isNotBlank())
+//        script {
+//          src = it
+//          async = true
+//        }
+//    }
   }
 
   fun BODY.loadStatusPageDisplay() {

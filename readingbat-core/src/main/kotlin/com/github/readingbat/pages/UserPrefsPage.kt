@@ -48,7 +48,7 @@ import com.github.readingbat.pages.PageUtils.clickButtonScript
 import com.github.readingbat.pages.PageUtils.displayMessage
 import com.github.readingbat.pages.PageUtils.headDefault
 import com.github.readingbat.pages.PageUtils.loadPingdomScript
-import com.github.readingbat.pages.PageUtils.privacyStatement
+import com.github.readingbat.pages.PageUtils.privacyPolicy
 import com.github.readingbat.pages.PageUtils.rawHtml
 import com.github.readingbat.server.ServerUtils.queryParam
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -135,7 +135,6 @@ internal object UserPrefsPage {
             }
           }
 
-          privacyStatement(USER_PREFS_ENDPOINT)
           backLink(returnPath)
         }
       }
@@ -334,7 +333,7 @@ internal object UserPrefsPage {
             +"to edit preferences."
           }
 
-          privacyStatement(USER_PREFS_ENDPOINT)
+          privacyPolicy(USER_PREFS_ENDPOINT)
           backLink(returnPath)
           loadPingdomScript()
         }
