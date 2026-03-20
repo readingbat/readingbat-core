@@ -22,6 +22,7 @@ import com.github.readingbat.common.Constants.CHALLENGE_NOT_FOUND
 import com.github.readingbat.common.Endpoints.ABOUT_ENDPOINT
 import com.github.readingbat.common.Endpoints.HELP_ENDPOINT
 import com.github.readingbat.common.Endpoints.PRIVACY_POLICY_ENDPOINT
+import com.github.readingbat.common.Endpoints.TOS_ENDPOINT
 import com.github.readingbat.dsl.LanguageType.Python
 import com.github.readingbat.kotest.TestSupport.answerAllWith
 import com.github.readingbat.kotest.TestSupport.answerAllWithCorrectAnswer
@@ -56,6 +57,7 @@ class EndpointTest : StringSpec() {
               get(ABOUT_ENDPOINT).also { it shouldHaveStatus OK }
               get(HELP_ENDPOINT).also { it shouldHaveStatus OK }
               get(PRIVACY_POLICY_ENDPOINT).also { it shouldHaveStatus OK }
+              get(TOS_ENDPOINT).also { it shouldHaveStatus OK }
 
               get(pathOf(Python.contentRoot, GROUP_NAME, "boolean_array_test_WRONG_NAME")).also {
                 it.bodyAsText() shouldContain CHALLENGE_NOT_FOUND
