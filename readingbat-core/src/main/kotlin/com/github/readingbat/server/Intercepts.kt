@@ -29,8 +29,9 @@ import com.github.readingbat.common.Endpoints.OAUTH_CALLBACK_GOOGLE_ENDPOINT
 import com.github.readingbat.common.Endpoints.OAUTH_LOGIN_GITHUB_ENDPOINT
 import com.github.readingbat.common.Endpoints.OAUTH_LOGIN_GOOGLE_ENDPOINT
 import com.github.readingbat.common.Endpoints.PING_ENDPOINT
-import com.github.readingbat.common.Endpoints.PRIVACY_ENDPOINT
+import com.github.readingbat.common.Endpoints.PRIVACY_POLICY_ENDPOINT
 import com.github.readingbat.common.Endpoints.ROOT
+import com.github.readingbat.common.Endpoints.TOS_ENDPOINT
 import com.github.readingbat.common.OAuthReturnUrl
 import com.github.readingbat.common.User.Companion.fetchUserDbmsIdFromCache
 import com.github.readingbat.common.browserSession
@@ -86,19 +87,20 @@ internal object Intercepts {
 
   val publicPaths =
     setOf(
-    ROOT,
-    OAUTH_LOGIN_GITHUB_ENDPOINT,
-    OAUTH_LOGIN_GOOGLE_ENDPOINT,
-    OAUTH_CALLBACK_GITHUB_ENDPOINT,
-    OAUTH_CALLBACK_GOOGLE_ENDPOINT,
-    HELP_ENDPOINT,
-    ABOUT_ENDPOINT,
-    PRIVACY_ENDPOINT,
-    PING_ENDPOINT,
-    "/favicon.ico",
-    "/robots.txt",
-    "/css.css",
-    "/ktor/application/shutdown",
+      ROOT,
+      OAUTH_LOGIN_GITHUB_ENDPOINT,
+      OAUTH_LOGIN_GOOGLE_ENDPOINT,
+      OAUTH_CALLBACK_GITHUB_ENDPOINT,
+      OAUTH_CALLBACK_GOOGLE_ENDPOINT,
+      HELP_ENDPOINT,
+      ABOUT_ENDPOINT,
+      PRIVACY_POLICY_ENDPOINT,
+      TOS_ENDPOINT,
+      PING_ENDPOINT,
+      "/favicon.ico",
+      "/robots.txt",
+      "/css.css",
+      "/ktor/application/shutdown",
   )
 
   val publicPrefixes =

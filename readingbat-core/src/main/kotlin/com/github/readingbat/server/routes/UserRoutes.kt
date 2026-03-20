@@ -37,7 +37,7 @@ import com.github.readingbat.common.Endpoints.FAV_ICON_ENDPOINT
 import com.github.readingbat.common.Endpoints.HELP_ENDPOINT
 import com.github.readingbat.common.Endpoints.LIKE_DISLIKE_ENDPOINT
 import com.github.readingbat.common.Endpoints.LOGOUT_ENDPOINT
-import com.github.readingbat.common.Endpoints.PRIVACY_ENDPOINT
+import com.github.readingbat.common.Endpoints.PRIVACY_POLICY_ENDPOINT
 import com.github.readingbat.common.Endpoints.ROBOTS_ENDPOINT
 import com.github.readingbat.common.Endpoints.ROOT
 import com.github.readingbat.common.Endpoints.SESSIONS_ENDPOINT
@@ -46,6 +46,7 @@ import com.github.readingbat.common.Endpoints.STUDENT_SUMMARY_ENDPOINT
 import com.github.readingbat.common.Endpoints.SYSTEM_ADMIN_ENDPOINT
 import com.github.readingbat.common.Endpoints.TAILWIND_CSS_ENDPOINT
 import com.github.readingbat.common.Endpoints.TEACHER_PREFS_ENDPOINT
+import com.github.readingbat.common.Endpoints.TOS_ENDPOINT
 import com.github.readingbat.common.Endpoints.USER_INFO_ENDPOINT
 import com.github.readingbat.common.Endpoints.USER_PREFS_ENDPOINT
 import com.github.readingbat.common.FormFields.RETURN_PARAM
@@ -58,11 +59,12 @@ import com.github.readingbat.pages.AdminPrefsPage.adminPrefsPage
 import com.github.readingbat.pages.ClassSummaryPage.classSummaryPage
 import com.github.readingbat.pages.ClockPage.clockPage
 import com.github.readingbat.pages.HelpPage.helpPage
-import com.github.readingbat.pages.PrivacyPage.privacyPage
+import com.github.readingbat.pages.PrivacyPolicyPage.privacyPolicyPage
 import com.github.readingbat.pages.SessionsPage.sessionsPage
 import com.github.readingbat.pages.StudentSummaryPage.studentSummaryPage
 import com.github.readingbat.pages.SystemAdminPage.systemAdminPage
 import com.github.readingbat.pages.SystemConfigurationPage.systemConfigurationPage
+import com.github.readingbat.pages.TOSPage.tosPage
 import com.github.readingbat.pages.TeacherPrefsPage.teacherPrefsPage
 import com.github.readingbat.pages.UserInfoPage.userInfoPage
 import com.github.readingbat.pages.UserPrefsPage.userPrefsPage
@@ -145,8 +147,12 @@ fun Routing.userRoutes(metrics: Metrics, contentSrc: () -> ReadingBatContent) {
     respondWith { authenticateAdminUser(fetchUser()) { sessionsPage() } }
   }
 
-  get(PRIVACY_ENDPOINT) {
-    respondWith { privacyPage() }
+  get(PRIVACY_POLICY_ENDPOINT) {
+    respondWith { privacyPolicyPage() }
+  }
+
+  get(TOS_ENDPOINT) {
+    respondWith { tosPage() }
   }
 
   get(ABOUT_ENDPOINT) {

@@ -28,6 +28,8 @@ import com.github.readingbat.pages.PageUtils.backLink
 import com.github.readingbat.pages.PageUtils.bodyTitle
 import com.github.readingbat.pages.PageUtils.headDefault
 import com.github.readingbat.pages.PageUtils.loadPingdomScript
+import com.github.readingbat.pages.PageUtils.privacyPolicy
+import com.github.readingbat.pages.PageUtils.tosPolicy
 import com.github.readingbat.server.ServerUtils.queryParam
 import io.ktor.server.routing.RoutingContext
 import kotlinx.html.a
@@ -100,6 +102,9 @@ internal object AboutPage {
               }
             }
           }
+
+          privacyPolicy(ABOUT_ENDPOINT)
+          tosPolicy(ABOUT_ENDPOINT)
 
           backLink(queryParam(RETURN_PARAM))
           loadPingdomScript()

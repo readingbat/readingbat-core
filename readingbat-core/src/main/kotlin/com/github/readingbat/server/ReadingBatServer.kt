@@ -189,7 +189,7 @@ object ReadingBatServer {
       info { getBanner("banners/readingbat.banner", this) }
       info { ReadingBatServer::class.versionDesc() }
       callerVersion = callerVersion(args)
-      info { "Caller Version: $callerVersion" }
+      info { "Site Version: $callerVersion" }
     }
 
     EngineMain.main(deriveArgs(args))

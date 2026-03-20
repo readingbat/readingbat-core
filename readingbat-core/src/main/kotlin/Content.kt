@@ -102,7 +102,8 @@ val dslContent =
       ).eval(this).python,
     )
 
-    include(GitHubContent(OwnerType.User, "maleich", "ReadingBat-content").eval(this).python, "Athenian: ")
+    val athenian = GitHubContent(OwnerType.User, "maleich", "ReadingBat-content").eval(this)
+    include(athenian.python, "Athenian: ")
 
     python {
       // repo = GitHubRepo(Organization, "readingbat", "readingbat-core")
