@@ -24,6 +24,7 @@ enum class ReturnType(val typeStr: String) {
   IntType("int"),
   FloatType("float"),
   StringType("String"),
+  CharType("char"),
 
   BooleanArrayType("boolean[]"),
   IntArrayType("int[]"),

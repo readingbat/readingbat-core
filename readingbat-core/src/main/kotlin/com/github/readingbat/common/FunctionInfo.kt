@@ -25,9 +25,11 @@ import com.github.pambrose.common.util.isNotDoubleQuoted
 import com.github.pambrose.common.util.isNotFloat
 import com.github.pambrose.common.util.isNotInt
 import com.github.pambrose.common.util.isNotQuoted
+import com.github.pambrose.common.util.isNotSingleQuoted
 import com.github.pambrose.common.util.isSingleQuoted
 import com.github.pambrose.common.util.singleToDoubleQuoted
 import com.github.pambrose.common.util.toDoubleQuoted
+import com.github.pambrose.common.util.toSingleQuoted
 import com.github.readingbat.dsl.LanguageType.Java
 import com.github.readingbat.dsl.LanguageType.Kotlin
 import com.github.readingbat.dsl.LanguageType.Python
@@ -35,6 +37,7 @@ import com.github.readingbat.dsl.ReturnType
 import com.github.readingbat.dsl.ReturnType.BooleanArrayType
 import com.github.readingbat.dsl.ReturnType.BooleanListType
 import com.github.readingbat.dsl.ReturnType.BooleanType
+import com.github.readingbat.dsl.ReturnType.CharType
 import com.github.readingbat.dsl.ReturnType.FloatArrayType
 import com.github.readingbat.dsl.ReturnType.FloatListType
 import com.github.readingbat.dsl.ReturnType.FloatType
@@ -98,6 +101,10 @@ class FunctionInfo(
 
         StringType -> {
           raw.toString().toDoubleQuoted()
+        }
+
+        CharType -> {
+          raw.toString().toSingleQuoted()
         }
 
         BooleanArrayType -> {
@@ -169,6 +176,7 @@ class FunctionInfo(
       IntType -> "0"
       FloatType -> "0.0"
       StringType -> if (languageType.isPython) "''" else """"""""
+      CharType -> "' '"
       BooleanListType, BooleanArrayType -> if (languageType.isPython) "[True, False]" else "[true, false]"
       IntListType, IntArrayType -> "[0, 1]"
       FloatListType, FloatArrayType -> "[0.0, 1.0]"
@@ -276,15 +284,15 @@ class FunctionInfo(
       fun deriveHint() =
         when (returnType) {
           BooleanType -> {
-            when {
-              isPythonBoolean() -> "$languageType boolean values are either true or false"
-              !isJavaBoolean() -> "Answer should be either true or false"
-              else -> ""
-            }
+            "$languageType booleans are either true or false"
           }
 
           StringType if isNotDoubleQuoted() -> {
             "$languageType strings are double quoted"
+          }
+
+          CharType if isNotSingleQuoted() -> {
+            "$languageType chars are single quoted"
           }
 
           IntType if isNotInt() -> {
@@ -305,6 +313,7 @@ class FunctionInfo(
           when {
             this.isEmpty() || that.isEmpty() -> false
             returnType == StringType -> this == that
+            returnType == CharType -> this == that
             this.contains(".") || that.contains(".") -> this.toDouble() == that.toDouble()
             this.isJavaBoolean() && that.isJavaBoolean() -> this.toBoolean() == that.toBoolean()
             else -> this.toInt() == that.toInt()
@@ -319,11 +328,7 @@ class FunctionInfo(
       fun deriveHint() =
         when (returnType) {
           BooleanType -> {
-            when {
-              isJavaBoolean() -> "Python boolean values are either True or False"
-              !isPythonBoolean() -> "Answer should be either True or False"
-              else -> ""
-            }
+            "Python boolean values are either True or False"
           }
 
           StringType if isNotQuoted() -> {
@@ -338,6 +343,7 @@ class FunctionInfo(
             "Answer should be a float value"
           }
 
+          // CharType does not have a Python equivalent
           else -> {
             ""
           }
