@@ -126,25 +126,40 @@ val dslContent =
     }
 
     java {
-      repo = GitHubRepo(Organization, "readingbat", "readingbat-core")
+      repo = FileSystemSource("./")
       srcPath = "readingbat-core/src/test/java"
-      branchName = "2.1.2"
 
-      group("Java Tests") {
+      group("Java Tests 2") {
         packageName = "com.github.readingbat.testcontent"
-        description = "Tests"
+        description = "Tests 2"
 
-        challenge("StringArrayTest1")
+        challenge("CharAt1")
         challenge("StringArrayTest2")
         challenge("StringListTest1")
         challenge("StringListTest2")
       }
     }
 
+//    java {
+//      repo = GitHubRepo(Organization, "readingbat", "readingbat-core")
+//      srcPath = "readingbat-core/src/test/java"
+//      // branchName = "2.1.2"
+//
+//      group("Java Tests") {
+//        packageName = "com.github.readingbat.testcontent"
+//        description = "Tests"
+//
+//        challenge("CharAt1")
+//        challenge("StringArrayTest2")
+//        challenge("StringListTest1")
+//        challenge("StringListTest2")
+//      }
+//    }
+
     kotlin {
       repo = GitHubRepo(Organization, "readingbat", "readingbat-core")
       srcPath = "readingbat-core/src/test/kotlin"
-      branchName = "2.1.2"
+      // branchName = "2.1.2"
 
       group("Kotlin Tests") {
         packageName = "com.github.readingbat.testcontent"

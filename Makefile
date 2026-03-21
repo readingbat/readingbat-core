@@ -72,7 +72,7 @@ trigger-jitpack:
 		echo "Waiting for JitPack..."; \
 		sleep 10; \
 	done
-	echo "JitPack build complete for version ${VERSION}"
+	echo "JitPack build triggered for version ${VERSION}"
 
 view-jitpack:
 	curl -s "$(JITPACK_BUILD_LOG)"

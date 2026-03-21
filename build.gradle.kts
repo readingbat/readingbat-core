@@ -1,4 +1,5 @@
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
+import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
 
@@ -37,7 +38,7 @@ allprojects {
   apply(plugin = "com.github.gmazzo.buildconfig")
   apply(plugin = "com.github.ben-manes.versions")
 
-  extra["versionStr"] = "3.0.4"
+  extra["versionStr"] = "3.0.5"
   description = "ReadingBat Core"
   group = "com.github.readingbat"
   version = versionStr
@@ -141,7 +142,7 @@ fun Project.configureTesting() {
     jvmArgs("-Dapi.version=$dockerApiVersion")
 
     testLogging {
-      events("passed", "skipped", "failed", "standardOut", "standardError")
+      events = setOf(TestLogEvent.PASSED, TestLogEvent.SKIPPED, TestLogEvent.FAILED)
       exceptionFormat = TestExceptionFormat.FULL
       showStandardStreams = true
     }
