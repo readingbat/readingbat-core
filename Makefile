@@ -79,4 +79,4 @@ view-jitpack:
 	curl -s "$(JITPACK_BUILD_API)" | jq
 
 upgrade-wrapper:
-	./gradlew wrapper --gradle-version=9.4.0 --distribution-type=bin
+	./gradlew wrapper --gradle-version=9.4.1 --distribution-type=bin
