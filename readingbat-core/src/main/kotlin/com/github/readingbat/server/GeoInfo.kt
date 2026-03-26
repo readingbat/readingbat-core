@@ -17,29 +17,37 @@
 
 package com.github.readingbat.server
 
-import com.github.pambrose.common.dsl.KtorDsl
 import com.github.pambrose.common.dsl.KtorDsl.get
+import com.github.pambrose.common.dsl.KtorDsl.withHttpClient
 import com.github.readingbat.common.Constants
 import com.github.readingbat.common.EnvVar
-import com.google.gson.Gson
 import com.pambrose.common.exposed.get
 import com.pambrose.common.exposed.readonlyTx
 import com.pambrose.common.exposed.upsert
 import io.github.oshai.kotlinlogging.KotlinLogging
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.cio.CIO
 import io.ktor.client.statement.bodyAsText
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import java.util.concurrent.ConcurrentHashMap
 
 class GeoInfo(val requireDbmsLookUp: Boolean, val dbmsId: Long, val remoteHost: String, val json: String) {
-  private val valid get() = json.isNotBlank()
+  private val valid = json.isNotBlank()
 
-  // private val map = if (json.isNotBlank()) Json.decodeFromString<Map<String, Any?>>(json) else emptyMap()
-  @Suppress("UNCHECKED_CAST")
-  private val map = if (json.isNotBlank()) gson.fromJson(json, Map::class.java) as Map<String, Any?> else emptyMap()
+  private val map: Map<String, Any?> =
+    if (valid)
+      Json.decodeFromString<JsonObject>(json).mapValues { (_, v) ->
+        if (v is JsonPrimitive) v.content else v.toString()
+      }
+    else
+      emptyMap()
 
   @Suppress("unused")
   private val ip by map
@@ -120,16 +128,18 @@ class GeoInfo(val requireDbmsLookUp: Boolean, val dbmsId: Long, val remoteHost: 
 
   companion object {
     private val logger = KotlinLogging.logger {}
-    val gson = Gson()
     val geoInfoMap = ConcurrentHashMap<String, GeoInfo>()
     private val mutex = Mutex()
+    private val httpClient = HttpClient(CIO)
 
     private suspend fun callGeoInfoApi(ipAddress: String) =
-      KtorDsl.httpClient { client ->
+      withHttpClient(httpClient) {
         val apiKey = EnvVar.IPGEOLOCATION_KEY.getRequiredEnv()
-        client.get("https://api.ipgeolocation.io/ipgeo?apiKey=$apiKey&ip=$ipAddress") { response ->
+        get("https://api.ipgeolocation.io/ipgeo?apiKey=$apiKey&ip=$ipAddress") { response ->
           val json = response.bodyAsText()
-          GeoInfo(true, -1, ipAddress, json).apply { logger.info { "API GEO info for $ipAddress: ${summary()}" } }
+          GeoInfo(true, -1, ipAddress, json).apply {
+            logger.debug { "API GEO info for $ipAddress: ${summary()}" }
+          }
         }
       }
 
@@ -146,7 +156,9 @@ class GeoInfo(val requireDbmsLookUp: Boolean, val dbmsId: Long, val remoteHost: 
     suspend fun lookupGeoInfo(ipAddress: String): GeoInfo =
       geoInfoMap[ipAddress] ?: mutex.withLock {
         geoInfoMap.getOrPut(ipAddress) {
-          queryGeoInfo(ipAddress)?.apply { logger.info { "Postgres GEO info for $ipAddress: ${summary()}" } }
+          queryGeoInfo(ipAddress)?.apply {
+            logger.debug { "Postgres GEO info for $ipAddress: ${summary()}" }
+          }
             ?: runCatching {
               callGeoInfoApi(ipAddress)
             }.getOrElse { e ->

@@ -33,7 +33,6 @@ import com.github.readingbat.dsl.challenge.Challenge
 import com.github.readingbat.posts.AnswerStatus
 import com.github.readingbat.posts.AnswerStatus.Companion.toAnswerStatus
 import com.github.readingbat.posts.ChallengeResults
-import com.github.readingbat.server.GeoInfo.Companion.gson
 import com.github.readingbat.server.Installs.installs
 import com.github.readingbat.server.Locations.locations
 import com.github.readingbat.server.ReadingBatServer
@@ -54,6 +53,11 @@ import io.ktor.server.http.content.*
 import io.ktor.server.routing.*
 import io.ktor.server.testing.*
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.int
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonPrimitive
 
 class ChallengeAnswer(val funcInfo: FunctionInfo, val index: Int)
 
@@ -92,6 +96,21 @@ object TestSupport {
       CHALLENGE_SRC to challengeName.value,
     )
 
+  private fun Challenge.parseChallengeResults(content: String): List<ChallengeResult> {
+    var cnt = 0
+    return Json.decodeFromString<JsonArray>(content)
+      .map { v ->
+        v.jsonArray.let {
+          ChallengeResult(
+            it[0].jsonPrimitive.int.toAnswerStatus(),
+            it[1].jsonPrimitive.content,
+            cnt,
+            functionInfo().correctAnswers[cnt],
+          ).also { cnt++ }
+        }
+      }
+  }
+
   suspend fun Challenge.answerAllWith(
     engine: ApplicationTestBuilder,
     userResponse: String,
@@ -105,19 +124,7 @@ object TestSupport {
         setBody(data.formUrlEncode())
       }.bodyAsText()
 
-    var cnt = 0
-    gson.fromJson(content, List::class.java)
-      .map { v ->
-        (v as List<Any?>).let {
-          ChallengeResult(
-            (it[0] as Double).toInt().toAnswerStatus(),
-            (it[1] as String),
-            cnt,
-            functionInfo().correctAnswers[cnt],
-          ).also { cnt++ }
-        }
-      }
-      .forAll { it.block() }
+    parseChallengeResults(content).forAll { it.block() }
   }
 
   suspend fun Challenge.answerAllWithCorrectAnswer(engine: ApplicationTestBuilder, block: ChallengeResult.() -> Unit) {
@@ -129,19 +136,7 @@ object TestSupport {
         setBody(data.formUrlEncode())
       }.bodyAsText()
 
-    var cnt = 0
-    gson.fromJson(content, List::class.java)
-      .map { v ->
-        (v as List<Any?>).let {
-          ChallengeResult(
-            (it[0] as Double).toInt().toAnswerStatus(),
-            (it[1] as String),
-            cnt,
-            functionInfo().correctAnswers[cnt],
-          ).also { cnt++ }
-        }
-      }
-      .forAll { it.block() }
+    parseChallengeResults(content).forAll { it.block() }
   }
 
   fun ReadingBatContent.pythonChallenge(groupName: String, challengeName: String, block: FunctionInfo.() -> Unit) =
