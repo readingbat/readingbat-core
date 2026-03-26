@@ -38,7 +38,7 @@ allprojects {
   apply(plugin = "com.github.gmazzo.buildconfig")
   apply(plugin = "com.github.ben-manes.versions")
 
-  extra["versionStr"] = "3.0.6"
+  extra["versionStr"] = "3.0.7"
   description = "ReadingBat Core"
   group = "com.github.readingbat"
   version = versionStr
