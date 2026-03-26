@@ -13,7 +13,6 @@ css = "2026.3.2"
 exposed = "1.1.1"
 flexmark = "0.64.8"
 github-api = "1.330"
-gson = "2.13.2"
 hikari = "7.0.2"
 java = "2.0.0"
 khealth = "3.0.1"
@@ -102,7 +101,6 @@ socket = { module = "com.google.cloud.sql:postgres-socket-factory", version.ref 
 commons = { module = "org.apache.commons:commons-text", version.ref = "commons" }
 flexmark = { module = "com.vladsch.flexmark:flexmark", version.ref = "flexmark" }
 github = { module = "org.kohsuke:github-api", version.ref = "github-api" }
-gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
 resend = { group = "com.resend", name = "resend-java", version.ref = "resend" }
 
 # Logging

@@ -30,8 +30,6 @@ dependencies {
   implementation(libs.pgjdbc)
   implementation(libs.socket)
 
-  implementation(libs.gson)
-
   implementation(libs.resend)
 
   implementation(libs.commons)

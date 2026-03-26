@@ -3,7 +3,7 @@ description = "readingbat-kotest"
 dependencies {
   implementation(project(":readingbat-core"))
 
-  implementation(libs.gson)
+  implementation(libs.serialization)
 
   // implementation(libs.kotlin.test)
   implementation(platform(libs.ktor.bom))
