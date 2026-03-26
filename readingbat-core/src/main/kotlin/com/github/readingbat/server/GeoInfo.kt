@@ -17,8 +17,8 @@
 
 package com.github.readingbat.server
 
-import com.github.pambrose.common.dsl.KtorDsl
 import com.github.pambrose.common.dsl.KtorDsl.get
+import com.github.pambrose.common.dsl.KtorDsl.withHttpClient
 import com.github.readingbat.common.Constants
 import com.github.readingbat.common.EnvVar
 import com.google.gson.Gson
@@ -26,6 +26,8 @@ import com.pambrose.common.exposed.get
 import com.pambrose.common.exposed.readonlyTx
 import com.pambrose.common.exposed.upsert
 import io.github.oshai.kotlinlogging.KotlinLogging
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.cio.CIO
 import io.ktor.client.statement.bodyAsText
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -123,11 +125,12 @@ class GeoInfo(val requireDbmsLookUp: Boolean, val dbmsId: Long, val remoteHost: 
     val gson = Gson()
     val geoInfoMap = ConcurrentHashMap<String, GeoInfo>()
     private val mutex = Mutex()
+    private val httpClient = HttpClient(CIO)
 
     private suspend fun callGeoInfoApi(ipAddress: String) =
-      KtorDsl.httpClient { client ->
+      withHttpClient(httpClient) {
         val apiKey = EnvVar.IPGEOLOCATION_KEY.getRequiredEnv()
-        client.get("https://api.ipgeolocation.io/ipgeo?apiKey=$apiKey&ip=$ipAddress") { response ->
+        get("https://api.ipgeolocation.io/ipgeo?apiKey=$apiKey&ip=$ipAddress") { response ->
           val json = response.bodyAsText()
           GeoInfo(true, -1, ipAddress, json).apply {
             logger.debug { "API GEO info for $ipAddress: ${summary()}" }
