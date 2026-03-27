@@ -158,8 +158,10 @@ object Installs {
 
       if (EnvVar.FILTER_LOG.getEnv(true))
         filter { call ->
+          val email = if (isDbmsEnabled()) call.fetchEmailFromCache() else UNKNOWN_EMAIL
           call.request.path()
             .run {
+              email != UNKNOWN_EMAIL &&
               this != PING_ENDPOINT &&
                 !startsWithList(excludedEndpoints) &&
                 !endsWith(".php") &&
