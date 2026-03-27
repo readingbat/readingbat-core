@@ -77,7 +77,8 @@ import kotlin.time.Duration.Companion.seconds
 
 object Installs {
   private val logger = KotlinLogging.logger {}
-  private val excludedEndpoints = listOf("/", "/$STATIC/", "$WS_ROOT/")
+  // private val excludedEndpoints = listOf("/", "/$STATIC/", "$WS_ROOT/")
+  private val excludedEndpoints = listOf("/$STATIC/", "$WS_ROOT/")
 
   fun Application.installs(production: Boolean) {
     install(Resources)

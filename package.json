@@ -1,8 +1,5 @@
 {
   "devDependencies": {
-    "@playwright/test": "^1.58.2",
-    "@types/node": "^25.5.0",
-    "cypress": "7.1.0"
-  },
-  "scripts": {}
+    "cypress": "15.13.0"
+  }
 }
