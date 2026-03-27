@@ -40,6 +40,9 @@ run:
 tests:
 	./gradlew check
 
+remote-tests:
+	TEST_BASE_URL=https://readingbat.com ./gradlew :readingbat-core:test --tests "PlaywrightEndpointTest"
+
 dbinfo:
 	./gradlew flywayInfo
 

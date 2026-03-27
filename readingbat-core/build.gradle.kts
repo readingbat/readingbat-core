@@ -42,6 +42,8 @@ dependencies {
   testImplementation(libs.kotest.assertions.core)
   testImplementation(libs.kotest.assertions.ktor)
 
+  testImplementation(libs.playwright)
+
   testImplementation(project(":readingbat-kotest"))
 }
 

@@ -7,7 +7,7 @@ versions = "0.53.0"
 
 # Library versions
 cloud = "1.28.2"
-flyway = "12.1.1"
+flyway = "12.2.0"
 commons = "1.15.0"
 css = "2026.3.2"
 exposed = "1.1.1"
@@ -16,12 +16,13 @@ github-api = "1.330"
 hikari = "7.0.2"
 java = "2.0.0"
 khealth = "3.0.1"
-kotest = "6.1.8"
-kotest-ktor = "6.1.8"
+kotest = "6.1.9"
+kotest-ktor = "6.1.9"
 ktor = "3.4.1"
 logback = "1.5.18"
 logging = "7.0.12"
 pgjdbc = "0.8.9"
+playwright = "1.58.0"
 postgres = "42.7.10"
 prometheus = "0.16.0"
 prometheus-proxy = "3.0.3"
@@ -114,6 +115,7 @@ kotest-assertions-ktor = { module = "io.kotest:kotest-assertions-ktor", version.
 testcontainers-postgresql = { module = "org.testcontainers:postgresql", version.ref = "testcontainers" }
 flyway-core = { module = "org.flywaydb:flyway-core", version.ref = "flyway" }
 flyway-postgres = { module = "org.flywaydb:flyway-database-postgresql", version.ref = "flyway" }
+playwright = { module = "com.microsoft.playwright:playwright", version.ref = "playwright" }
 
 [plugins]
 buildconfig = { id = "com.github.gmazzo.buildconfig", version.ref = "buildconfig" }
