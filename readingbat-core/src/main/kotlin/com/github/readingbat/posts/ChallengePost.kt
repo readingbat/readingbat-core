@@ -80,6 +80,7 @@ import org.jetbrains.exposed.v1.core.Column
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.dao.id.LongIdTable
 import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.exceptions.ExposedSQLException
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.joda.time.DateTime
@@ -381,49 +382,52 @@ internal object ChallengePost {
     val invokeStr = Json.encodeToString(invokeMap)
     if (user != null) {
       // Read-modify-write in a single SERIALIZABLE transaction to prevent
-      // concurrent requests from overwriting each other's incorrectAttempts counts
+      // concurrent requests from overwriting each other's incorrectAttempts counts.
+      // Retry on serialization failures caused by concurrent tab-through submissions.
       val historyPairs =
-        transaction(transactionIsolation = Connection.TRANSACTION_SERIALIZABLE) {
-          val pairs =
-            results.map { result ->
-              val historyMd5 = names.md5(result.invocation)
-              val history = user.answerHistoryInTransaction(historyMd5, result.invocation)
+        retryOnSerializationFailure {
+          transaction(transactionIsolation = Connection.TRANSACTION_SERIALIZABLE) {
+            val pairs =
+              results.map { result ->
+                val historyMd5 = names.md5(result.invocation)
+                val history = user.answerHistoryInTransaction(historyMd5, result.invocation)
 
-              when {
-                !result.answered -> history.markUnanswered()
-                result.correct -> history.markCorrect(result.userResponse)
-                else -> history.markIncorrect(result.userResponse)
+                when {
+                  !result.answered -> history.markUnanswered()
+                  result.correct -> history.markCorrect(result.userResponse)
+                  else -> history.markIncorrect(result.userResponse)
+                }
+
+                historyMd5 to history
               }
 
-              historyMd5 to history
-            }
-
-          with(UserChallengeInfoTable) {
-            upsert(conflictIndex = userChallengeInfoIndex) { row ->
-              row[userRef] = user.userDbmsId
-              row[md5] = challengeMd5
-              row[updated] = DateTime.now(DateTimeZone.UTC)
-              row[allCorrect] = complete
-              row[answersJson] = invokeStr
-            }
-          }
-
-          // Save the history of each answer on a per-invocation basis
-          pairs.forEach { (historyMd5, history) ->
-            with(UserAnswerHistoryTable) {
-              upsert(conflictIndex = userAnswerHistoryIndex) { row ->
+            with(UserChallengeInfoTable) {
+              upsert(conflictIndex = userChallengeInfoIndex) { row ->
                 row[userRef] = user.userDbmsId
-                row[md5] = historyMd5
-                row[invocation] = history.invocation.value
+                row[md5] = challengeMd5
                 row[updated] = DateTime.now(DateTimeZone.UTC)
-                row[correct] = history.correct
-                row[incorrectAttempts] = history.incorrectAttempts
-                row[historyJson] = Json.encodeToString(history.answers)
+                row[allCorrect] = complete
+                row[answersJson] = invokeStr
               }
             }
-          }
 
-          pairs
+            // Save the history of each answer on a per-invocation basis
+            pairs.forEach { (historyMd5, history) ->
+              with(UserAnswerHistoryTable) {
+                upsert(conflictIndex = userAnswerHistoryIndex) { row ->
+                  row[userRef] = user.userDbmsId
+                  row[md5] = historyMd5
+                  row[invocation] = history.invocation.value
+                  row[updated] = DateTime.now(DateTimeZone.UTC)
+                  row[correct] = history.correct
+                  row[incorrectAttempts] = history.incorrectAttempts
+                  row[historyJson] = Json.encodeToString(history.answers)
+                }
+              }
+            }
+
+            pairs
+          }
         }
 
       // This is done outside the transaction
@@ -433,6 +437,21 @@ internal object ChallengePost {
         }
       }
     }
+  }
+
+  private fun <T> retryOnSerializationFailure(maxRetries: Int = 3, block: () -> T): T {
+    repeat(maxRetries - 1) { attempt ->
+      try {
+        return block()
+      } catch (e: ExposedSQLException) {
+        if (e.message?.contains("could not serialize access") == true) {
+          logger.debug { "Serialization failure on attempt ${attempt + 1}, retrying" }
+        } else {
+          throw e
+        }
+      }
+    }
+    return block()
   }
 
   private suspend fun saveLikeDislike(
