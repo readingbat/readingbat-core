@@ -80,12 +80,10 @@ import org.jetbrains.exposed.v1.core.Column
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.dao.id.LongIdTable
 import org.jetbrains.exposed.v1.core.eq
-import org.jetbrains.exposed.v1.exceptions.ExposedSQLException
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.joda.time.DateTime
 import org.joda.time.DateTimeZone
-import java.sql.Connection
 
 internal data class StudentInfo(val studentId: String, val firstName: String, val lastName: String)
 
@@ -332,7 +330,6 @@ internal object ChallengePost {
   suspend fun RoutingContext.likeDislike(user: User?) {
     val paramMap = call.paramMap()
     val names = ChallengeNames(paramMap)
-    // val challenge = content.findChallenge(names.languageName, names.groupName, names.challengeName)
 
     val likeArg = paramMap[LIKE_DESC]?.trim() ?: error("Missing like/dislike argument")
 
@@ -381,12 +378,11 @@ internal object ChallengePost {
     val invokeMap = invokeList.associate { it.first.value to it.second }
     val invokeStr = Json.encodeToString(invokeMap)
     if (user != null) {
-      // Read-modify-write in a single SERIALIZABLE transaction to prevent
+      // Serialize DB writes per user via a coroutine channel to prevent
       // concurrent requests from overwriting each other's incorrectAttempts counts.
-      // Retry on serialization failures caused by concurrent tab-through submissions.
       val historyPairs =
-        retryOnSerializationFailure {
-          transaction(transactionIsolation = Connection.TRANSACTION_SERIALIZABLE) {
+        UserAnswerQueue.submitForUser(user.userDbmsId) {
+          transaction {
             val pairs =
               results.map { result ->
                 val historyMd5 = names.md5(result.invocation)
@@ -437,21 +433,6 @@ internal object ChallengePost {
         }
       }
     }
-  }
-
-  private fun <T> retryOnSerializationFailure(maxRetries: Int = 3, block: () -> T): T {
-    repeat(maxRetries - 1) { attempt ->
-      try {
-        return block()
-      } catch (e: ExposedSQLException) {
-        if (e.message?.contains("could not serialize access") == true) {
-          logger.debug { "Serialization failure on attempt ${attempt + 1}, retrying" }
-        } else {
-          throw e
-        }
-      }
-    }
-    return block()
   }
 
   private suspend fun saveLikeDislike(

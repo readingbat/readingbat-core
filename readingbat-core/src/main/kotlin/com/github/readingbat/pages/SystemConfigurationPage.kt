@@ -87,7 +87,7 @@ internal object SystemConfigurationPage {
                   td { +ReadingBatServer::class.versionDesc() }
                 }
                 tr {
-                  td { +"Caller version:" }
+                  td { +"Site version:" }
                   td { +ReadingBatServer.callerVersion }
                 }
                 tr {

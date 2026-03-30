@@ -18,6 +18,7 @@
 package com.github.readingbat.server
 
 import com.github.readingbat.common.AuthName
+import com.github.readingbat.common.Constants.OAUTH_ERROR
 import com.github.readingbat.common.Endpoints.OAUTH_CALLBACK_GITHUB_ENDPOINT
 import com.github.readingbat.common.Endpoints.OAUTH_CALLBACK_GOOGLE_ENDPOINT
 import com.github.readingbat.common.Property
@@ -30,6 +31,7 @@ import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.auth.AuthenticationConfig
 import io.ktor.server.auth.OAuthServerSettings
 import io.ktor.server.auth.oauth
+import io.ktor.server.response.respondRedirect
 import kotlinx.serialization.json.Json
 
 internal object ConfigureOAuth {
@@ -65,6 +67,10 @@ internal object ConfigureOAuth {
         )
       }
       client = httpClient
+      fallback = { cause ->
+        logger.warn { "GitHub OAuth failed: ${cause.message}" }
+        respondRedirect("/?$OAUTH_ERROR=github")
+      }
     }
     logger.info { "GitHub OAuth configured" }
   }
@@ -92,6 +98,10 @@ internal object ConfigureOAuth {
         )
       }
       client = httpClient
+      fallback = { cause ->
+        logger.warn { "Google OAuth failed: ${cause.message}" }
+        respondRedirect("/?$OAUTH_ERROR=google")
+      }
     }
     logger.info { "Google OAuth configured" }
   }
