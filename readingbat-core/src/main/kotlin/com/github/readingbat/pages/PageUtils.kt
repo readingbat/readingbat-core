@@ -180,7 +180,8 @@ internal object PageUtils {
     p(classes = "mb-0") { if (displayWelcomeMsg) +"Welcome to ReadingBat." else rawHtml(nbsp.text) }
 
     p(classes = "mt-2 mb-0") {
-      span(classes = "text-green-500 max-w-[800px]") {
+      val colorClass = if (msg.isError) "text-red-500" else "text-green-500"
+      span(classes = "$colorClass max-w-[800px]") {
         if (msg.isNotBlank) +(msg.toString()) else rawHtml(nbsp.text)
       }
     }

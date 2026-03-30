@@ -20,6 +20,7 @@ package com.github.readingbat.pages
 import com.github.pambrose.common.util.pathOf
 import com.github.readingbat.common.ClassCodeRepository.fetchEnrollees
 import com.github.readingbat.common.Constants.MSG
+import com.github.readingbat.common.Constants.OAUTH_ERROR
 import com.github.readingbat.common.Endpoints.CHALLENGE_ROOT
 import com.github.readingbat.common.Endpoints.STATIC_ROOT
 import com.github.readingbat.common.Message
@@ -40,6 +41,7 @@ import com.github.readingbat.server.ChallengeProgressService
 import com.github.readingbat.server.GroupName.Companion.EMPTY_GROUP
 import com.github.readingbat.server.ServerUtils.queryParam
 import com.github.readingbat.server.ServerUtils.rows
+import com.github.readingbat.utils.toCapitalized
 import io.ktor.server.routing.RoutingContext
 import kotlinx.html.Entities.nbsp
 import kotlinx.html.TR
@@ -114,7 +116,12 @@ internal object LanguageGroupPage {
         head { headDefault() }
 
         body {
-          val msg = Message(queryParam(MSG))
+          val oauthError = queryParam(OAUTH_ERROR).takeIf { it in listOf("github", "google") } ?: ""
+          val msg =
+            if (oauthError.isNotBlank())
+              Message("Sign-in with ${oauthError.toCapitalized()} failed. Please try again.", isError = true)
+            else
+              Message(queryParam(MSG))
 
           bodyHeader(content, user, languageType, loginPath, true, activeTeachingClassCode, msg)
 

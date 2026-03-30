@@ -30,6 +30,7 @@ object Constants {
   const val SESSION_ID = "sessionid"
   const val ICONS = "icons"
   const val MSG = "msg"
+  const val OAUTH_ERROR = "oauth_error"
   const val STATIC = "static"
   const val PRISM = "prism"
   const val RESP = "response"
