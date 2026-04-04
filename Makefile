@@ -1,6 +1,4 @@
 VERSION := $(shell grep 'extra\["versionStr"\]' build.gradle.kts | grep -o '"[0-9][^"]*"' | tr -d '"')
-JITPACK_BUILD_LOG := https://jitpack.io/com/github/readingbat/readingbat-core/$(VERSION)/build.log
-JITPACK_BUILD_API := https://jitpack.io/api/builds/com.github.readingbat/readingbat-core/$(VERSION)
 
 default: versioncheck
 
@@ -64,22 +62,37 @@ lint:
 test:
 	~/node_modules/.bin/cypress open
 
-versioncheck:
-	./gradlew dependencyUpdates
-
 depends:
 	./gradlew dependencies
 
-trigger-jitpack:
-	until curl -s "$(JITPACK_BUILD_LOG)" | grep -qv "not found"; do \
-		echo "Waiting for JitPack..."; \
-		sleep 10; \
-	done
-	echo "JitPack build triggered for version ${VERSION}"
+versioncheck:
+	./gradlew dependencyUpdates
 
-view-jitpack:
-	curl -s "$(JITPACK_BUILD_LOG)"
-	curl -s "$(JITPACK_BUILD_API)" | jq
+kdocs:
+	./gradlew dokkaGeneratePublicationHtml
+
+clean-docs:
+	rm -rf website/readingbat-core/site
+	rm -rf website/readingbat-core/.cache
+
+site: clean-docs
+	cd website/readingbat-core && uv run zensical serve
+
+publish-local:
+	./gradlew publishToMavenLocal
+
+publish-local-snapshot:
+	./gradlew -PoverrideVersion=$(VERSION)-SNAPSHOT publishToMavenLocal
+
+GPG_ENV = \
+	ORG_GRADLE_PROJECT_signingInMemoryKey="$$(gpg --armor --export-secret-keys $$GPG_SIGNING_KEY_ID)" \
+	ORG_GRADLE_PROJECT_signingInMemoryKeyPassword=$$(security find-generic-password -a "gpg-signing" -s "gradle-signing-password" -w)
+
+publish-snapshot:
+	$(GPG_ENV) ./gradlew -PoverrideVersion=$(VERSION)-SNAPSHOT publishToMavenCentral
+
+publish-maven-central:
+	$(GPG_ENV) ./gradlew publishAndReleaseToMavenCentral
 
 upgrade-wrapper:
 	./gradlew wrapper --gradle-version=9.4.1 --distribution-type=bin

@@ -51,3 +51,11 @@ hs_err_pid*
 /blob-report/
 /playwright/.cache/
 /playwright/.auth/
+
+### Python ###
+.venv/
+__pycache__/
+
+### Zensical build output ###
+website/**/site/
+website/**/.cache/

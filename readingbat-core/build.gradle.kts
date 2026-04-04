@@ -1,15 +1,13 @@
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
-description = "readingbat-core"
+description = "Ktor web server, DSL engine, and database layer for ReadingBat programming challenges"
 
 dependencies {
   implementation(libs.serialization)
 
-  api(platform(libs.common.bom))
-  api(libs.bundles.common.utils)
+  implementation(libs.bundles.common.utils)
 
-  implementation(platform(libs.ktor.bom))
   implementation(libs.bundles.ktor.client)
   implementation(libs.bundles.ktor.server)
 
@@ -47,10 +45,10 @@ dependencies {
   testImplementation(project(":readingbat-kotest"))
 }
 
-val formatter = DateTimeFormatter.ofPattern("MM/dd/yyyy")
+val formatter: DateTimeFormatter = DateTimeFormatter.ofPattern("MM/dd/yyyy")
 
 buildConfig {
-  packageName("com.github.readingbat")
+  packageName("com.readingbat")
 
   buildConfigField("String", "CORE_NAME", "\"${project.name}\"")
   buildConfigField("String", "CORE_VERSION", "\"${project.version}\"")

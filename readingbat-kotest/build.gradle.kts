@@ -1,12 +1,10 @@
-description = "readingbat-kotest"
+description = "Kotest test utilities and helpers for ReadingBat integration testing"
 
 dependencies {
   implementation(project(":readingbat-core"))
 
   implementation(libs.serialization)
 
-  // implementation(libs.kotlin.test)
-  implementation(platform(libs.ktor.bom))
   implementation(libs.ktor.server.test.host)
 
   implementation(libs.kotest.assertions.core)

@@ -1,9 +1,6 @@
 # ReadingBat Core
 
-[![Release](https://jitpack.io/v/readingbat/readingbat-core.svg)](https://jitpack.io/#readingbat/readingbat-core)
-[![Build Status](https://app.travis-ci.com/readingbat/readingbat-core.svg?branch=master)](https://app.travis-ci.com/readingbat/readingbat-core)
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/8a5c67f5892042559490559142af30ec)](https://www.codacy.com/gh/readingbat/readingbat-core?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=readingbat/readingbat-core&amp;utm_campaign=Badge_Grade)
-[![ReadingBat](https://img.shields.io/endpoint?url=https://dashboard.cypress.io/badge/simple/g5z7vz&style=flat&logo=cypress)](https://dashboard.cypress.io/projects/g5z7vz/runs)
+[![Tests](https://github.com/readingbat/readingbat-core/actions/workflows/test.yml/badge.svg)](https://github.com/readingbat/readingbat-core/actions/workflows/test.yml)
 [![Kotlin](https://img.shields.io/badge/%20language-Kotlin-red.svg)](https://kotlinlang.org/)
 [![ktlint](https://img.shields.io/badge/ktlint%20code--style-%E2%9D%A4-FF4081)](https://pinterest.github.io/ktlint/)
 
@@ -23,12 +20,13 @@ ReadingBat platform for teaching Java, Kotlin, and Python programming concepts.
 
 ReadingBat Core is built using modern Kotlin technologies:
 
-- **Web Framework**: Ktor 3.4.1 with CIO engine
+- **Web Framework**: Ktor 3.4.2 with CIO engine
 - **Database**: PostgreSQL with Exposed ORM and HikariCP connection pooling
 - **Authentication**: Form-based auth with session management
 - **Script Execution**: JSR-223 scripting engines for safe code evaluation
 - **Build System**: Gradle with Kotlin DSL and multi-module structure
-- **Testing**: Kotest framework with Cypress for E2E testing
+- **Serialization**: kotlinx.serialization for JSON processing
+- **Testing**: Kotest framework with Playwright for E2E testing
 
 ## 📁 Project Structure
 
@@ -36,7 +34,7 @@ ReadingBat Core is built using modern Kotlin technologies:
 readingbat-core/
 ├── readingbat-core/          # Main application module
 │   ├── src/main/kotlin/
-│   │   └── com/github/readingbat/
+│   │   └── com/readingbat/
 │   │       ├── dsl/          # Content DSL and challenge types
 │   │       ├── pages/        # HTML page generation
 │   │       ├── server/       # Core server infrastructure
@@ -44,7 +42,6 @@ readingbat-core/
 │   │       └── common/       # Shared utilities
 │   └── src/main/resources/   # Configuration and static assets
 ├── readingbat-kotest/        # Testing utilities module
-├── cypress/                  # E2E test suite
 ├── docs/                     # Documentation
 └── sql/                      # Database migration scripts
 ```
@@ -55,7 +52,6 @@ readingbat-core/
 
 - Java 17+
 - Docker (for PostgreSQL)
-- Node.js (for Cypress testing)
 
 ### Development Setup
 
@@ -131,8 +127,7 @@ make uber           # Build and run JAR
 ### Testing
 
 ```bash
-make test           # Open Cypress test runner
-npm run cypress:run # Run headless E2E tests
+make tests          # Run all tests
 ```
 
 ## 🎯 Creating Content
@@ -143,7 +138,7 @@ ReadingBat uses a powerful DSL for creating programming challenges:
 readingBatContent {
   java {
     group("Warm-Up") {
-      packageName = "com.github.readingbat.java.warmup"
+      packageName = "com.readingbat.java.warmup"
 
       challenge("simple_addition") {
         returnType = IntType
@@ -197,20 +192,8 @@ Required environment variables for production:
 ### End-to-End Tests
 
 ```bash
-# Start test database
-make dbreset
-
-# Run Cypress tests
-make test                    # Interactive mode
-~/node_modules/.bin/cypress run  # Headless mode
-```
-
-### Performance Testing
-
-```bash
-# Load testing endpoints
-./gradlew build
-java -jar build/libs/server.jar  # Run with JVM profiling
+# Playwright-based browser tests run as part of the Kotest suite
+./gradlew :readingbat-core:test
 ```
 
 ## 📊 Monitoring & Metrics

@@ -1,0 +1,327 @@
+/*
+ * Copyright © 2026 Paul Ambrose (pambrose@mac.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+
+package com.readingbat.pages
+
+import com.pambrose.common.util.pathOf
+import com.pambrose.common.util.pluralize
+import com.pambrose.common.util.toDoubleQuoted
+import com.pambrose.common.util.toRootPath
+import com.readingbat.common.ClassCode
+import com.readingbat.common.Constants.ADMIN_FUNC
+import com.readingbat.common.Constants.ICONS
+import com.readingbat.common.Endpoints.CHALLENGE_ROOT
+import com.readingbat.common.Endpoints.PRIVACY_POLICY_ENDPOINT
+import com.readingbat.common.Endpoints.STATIC_ROOT
+import com.readingbat.common.Endpoints.TAILWIND_CSS_ENDPOINT
+import com.readingbat.common.Endpoints.TOS_ENDPOINT
+import com.readingbat.common.FormFields.RETURN_PARAM
+import com.readingbat.common.Message
+import com.readingbat.common.Message.Companion.EMPTY_MESSAGE
+import com.readingbat.common.Property
+import com.readingbat.common.Property.ANALYTICS_ID
+import com.readingbat.common.TwClasses
+import com.readingbat.common.User
+import com.readingbat.dsl.LanguageType
+import com.readingbat.dsl.LanguageType.Companion.languageTypeList
+import com.readingbat.dsl.LanguageType.Java
+import com.readingbat.dsl.LanguageType.Kotlin
+import com.readingbat.dsl.LanguageType.Python
+import com.readingbat.dsl.ReadingBatContent
+import com.readingbat.dsl.isProduction
+import com.readingbat.pages.HelpAndLogin.helpAndLogin
+import io.ktor.http.ContentType.Text.CSS
+import io.ktor.server.routing.Route
+import io.ktor.server.routing.RoutingHandler
+import io.ktor.server.routing.get
+import io.ktor.server.routing.post
+import kotlinx.html.BODY
+import kotlinx.html.Entities.nbsp
+import kotlinx.html.FlowOrInteractiveOrPhrasingContent
+import kotlinx.html.FormMethod
+import kotlinx.html.HEAD
+import kotlinx.html.HTMLTag
+import kotlinx.html.a
+import kotlinx.html.button
+import kotlinx.html.div
+import kotlinx.html.form
+import kotlinx.html.id
+import kotlinx.html.li
+import kotlinx.html.link
+import kotlinx.html.nav
+import kotlinx.html.onClick
+import kotlinx.html.onSubmit
+import kotlinx.html.p
+import kotlinx.html.script
+import kotlinx.html.span
+import kotlinx.html.style
+import kotlinx.html.submitInput
+import kotlinx.html.title
+import kotlinx.html.ul
+import kotlinx.html.unsafe
+
+/**
+ * Shared utility functions for server-side HTML page generation using kotlinx.html.
+ *
+ * Provides common page elements such as the site header, navigation bar, favicon links,
+ * Google Analytics integration, back/home links, and various HTML helper extensions.
+ */
+internal object PageUtils {
+  private const val READING_BAT = "ReadingBat"
+
+  /** Sets up the default HTML head with favicons, Tailwind CSS, page title, and Google Analytics. */
+  fun HEAD.headDefault() {
+    // From: https://favicon.io/emoji-favicons/glasses/
+    val prefix = pathOf(STATIC_ROOT, ICONS)
+    link {
+      rel = "apple-touch-icon"
+      sizes = "180x180"
+      href = "$prefix/apple-touch-icon.png"
+    }
+    link {
+      rel = "icon"
+      type = "image/png"
+      sizes = "32x32"
+      href = "$prefix/favicon-32x32.png"
+    }
+    link {
+      rel = "icon"
+      type = "image/png"
+      sizes = "16x16"
+      href = "$prefix/favicon-16x16.png"
+    }
+    link {
+      rel = "manifest"
+      href = "$prefix/site.webmanifest"
+    }
+
+    // Tailwind CSS v4 — built by ./gradlew :readingbat-core:tailwindBuild
+    link {
+      rel = "stylesheet"
+      href = TAILWIND_CSS_ENDPOINT
+      type = CSS.toString()
+    }
+
+    title(READING_BAT)
+
+    val analyticsId = ANALYTICS_ID.getPropertyOrNull() ?: ""
+    if (isProduction() && analyticsId.isNotBlank()) {
+      script {
+        async = true
+        src = "https://www.googletagmanager.com/gtag/js?id=$analyticsId"
+      }
+      script {
+        rawHtml(
+          """
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+          gtag('config', '$analyticsId');
+          """,
+        )
+      }
+    }
+
+    // loadRecaptchaScript(recaptchaConfig)
+  }
+
+  fun HEAD.clickButtonScript(vararg buttonNames: String) {
+    buttonNames.forEach { buttonName ->
+      script {
+        rawHtml(
+          """
+          function click$buttonName(event) {
+            if (event != null && event.keyCode == 13) {
+              event.preventDefault();
+              document.getElementById('$buttonName').click();
+            }
+          }
+          """.trimIndent(),
+        )
+      }
+    }
+  }
+
+  fun BODY.bodyTitle() {
+    // Tailwind equivalents: mb-0, text-4xl, pl-1
+    // Inline styles kept as fallback when Tailwind is disabled
+    div(classes = "mb-0") {
+      a {
+        href = "/"
+        span(classes = "text-4xl") {
+          +READING_BAT
+        }
+      }
+      span(classes = "pl-1") {
+        +"code reading practice"
+      }
+    }
+  }
+
+  /** Renders the full page header including help/login bar, site title, welcome message, and language tabs. */
+  fun BODY.bodyHeader(
+    content: ReadingBatContent,
+    user: User?,
+    languageType: LanguageType,
+    loginPath: String,
+    displayWelcomeMsg: Boolean,
+    activeClassCode: ClassCode,
+    msg: Message = EMPTY_MESSAGE,
+  ) {
+    helpAndLogin(content, user, loginPath, activeClassCode.isEnabled)
+    bodyTitle()
+
+    p(classes = "mb-0") { if (displayWelcomeMsg) +"Welcome to ReadingBat." else rawHtml(nbsp.text) }
+
+    p(classes = "mt-2 mb-0") {
+      val colorClass = if (msg.isError) "text-red-500" else "text-green-500"
+      span(classes = "$colorClass max-w-[800px]") {
+        if (msg.isNotBlank) +(msg.toString()) else rawHtml(nbsp.text)
+      }
+    }
+
+    div(classes = "pt-1.5 min-w-screen clear-both") {
+      nav {
+        ul {
+          languageTypeList
+            .filter { content[it].isNotEmpty() }
+            .forEach { lang ->
+              li(classes = "h2") {
+                if (languageType == lang)
+                  id = "selected"
+                this@bodyHeader.addLink(lang.name, pathOf(CHALLENGE_ROOT, lang.languageName))
+              }
+            }
+        }
+      }
+    }
+
+    div(classes = "border-t border-black clear-both") {
+    }
+  }
+
+  fun BODY.addLink(text: String, url: String, newWindow: Boolean = false) =
+    a {
+      href = url
+      if (newWindow) target = "_blank"
+      +text
+    }
+
+  fun BODY.privacyPolicy(returnPath: String) =
+    p(classes = TwClasses.INDENT_1EM) {
+      a {
+        href = "$PRIVACY_POLICY_ENDPOINT?$RETURN_PARAM=$returnPath"
+        +"Privacy Policy"
+      }
+    }
+
+  fun BODY.tosPolicy(returnPath: String) =
+    p(classes = TwClasses.INDENT_1EM) {
+      a {
+        href = "$TOS_ENDPOINT?$RETURN_PARAM=$returnPath"
+        +"Terms Of Service"
+      }
+    }
+
+  private fun BODY.linkWithIndent(url: String, text: String, marginLeft: String = "1em") {
+    if (url.isNotEmpty()) {
+      div {
+        style = "font-size:120%; margin-left:$marginLeft"
+        p {
+          a {
+            href = url
+            rawHtml("⬅ $text")
+          }
+        }
+      }
+    }
+  }
+
+  fun enrolleesDesc(enrollees: List<User>): String {
+    val studentCount = if (enrollees.isEmpty()) "No" else enrollees.count().toString()
+    return " - $studentCount ${"student".pluralize(enrollees.count())} enrolled"
+  }
+
+  @Suppress("unused")
+  fun BODY.confirmingButton(text: String, endpoint: String, msg: String) {
+    form(classes = "m-0") {
+      action = endpoint
+      method = FormMethod.get
+      onSubmit = "return confirm('$msg')"
+      submitInput(classes = "align-middle mt-px mb-0") {
+        value = text
+      }
+    }
+  }
+
+  fun BODY.adminButton(text: String, endpoint: String, confirm: String) {
+    button(classes = TwClasses.ADMIN_BUTTON) {
+      onClick = "$ADMIN_FUNC(${confirm.toDoubleQuoted()}, ${endpoint.toDoubleQuoted()})"
+      +text
+    }
+  }
+
+  fun BODY.displayMessage(msg: Message) = if (msg.isNotBlank) +(msg.toString()) else rawHtml(nbsp.text)
+
+  private val rootVals = listOf("", "/", Java.contentRoot, Python.contentRoot, Kotlin.contentRoot)
+
+  fun BODY.backLink(vararg pathElems: String = arrayOf("/")) {
+    if (pathElems.size == 1 && pathElems[0] in rootVals)
+      linkWithIndent(pathElems.toList().toRootPath(), "Home")
+    else
+      linkWithIndent(pathElems.toList().toRootPath(), "Back")
+  }
+
+  fun BODY.loadPingdomScript() {
+//    Property.PINGDOM_URL.getPropertyOrNull()?.also {
+//      if (it.isNotBlank())
+//        script {
+//          src = it
+//          async = true
+//        }
+//    }
+  }
+
+  fun BODY.loadStatusPageDisplay() {
+    Property.STATUS_PAGE_URL.getPropertyOrNull()?.also { if (it.isNotBlank()) script { src = it } }
+  }
+
+  fun HTMLTag.rawHtml(html: String) = unsafe { raw(html) }
+
+  @Suppress("unused")
+  fun Route.getAndPost(path: String, body: RoutingHandler) {
+    get(path, body)
+    post(path, body)
+  }
+
+  private fun hideShowJs(formName: String, fieldName: String) =
+    """
+      var pw=document.$formName.$fieldName.type=="password";
+      document.$formName.$fieldName.type=pw?"text":"password";
+      return false;
+    """.trimIndent()
+
+  fun FlowOrInteractiveOrPhrasingContent.hideShowButton(formName: String, fieldName: String, sizePct: Int = 85) {
+    button {
+      style = "font-size:$sizePct%"
+      onClick = hideShowJs(formName, fieldName)
+      +"show/hide"
+    }
+  }
+
+  fun encodeUriElems(vararg elems: Any) = elems.joinToString("+'/'+") { "encodeURIComponent('$it')" }
+}

@@ -82,7 +82,7 @@ The app uses a two-layer configuration pattern where most settings can come from
 ### Page Generation
 
 All HTML pages are generated server-side using Kotlinx.html (no templates). Each page has its own file in
-`com.github.readingbat.pages` with a companion object function pattern (e.g., `ChallengePage.challengePage()`).
+`com.readingbat.pages` with a companion object function pattern (e.g., `ChallengePage.challengePage()`).
 JavaScript for client-side interactivity is generated in `pages/js/`.
 
 ### Database Schema

@@ -1,0 +1,108 @@
+[project]
+site_name = "ReadingBat Core"
+site_description = "Documentation for ReadingBat Core — a Kotlin DSL framework for interactive programming challenges"
+site_author = "Paul Ambrose"
+# site_url = "https://readingbat.com/docs/"
+copyright = "Copyright &copy; 2026 Paul Ambrose"
+
+repo_url = "https://github.com/readingbat/readingbat-core"
+repo_name = "readingbat/readingbat-core"
+
+nav = [
+  { "Home" = "index.md" },
+  { "Content DSL" = [
+    { "Overview" = "dsl/index.md" },
+    { "Language Groups" = "dsl/languages.md" },
+    { "Challenge Groups" = "dsl/groups.md" },
+    { "Challenges" = "dsl/challenges.md" },
+    { "Return Types" = "dsl/return-types.md" },
+    { "Content Inclusion" = "dsl/content-inclusion.md" },
+  ] },
+  { "Configuration" = [
+    { "Overview" = "configuration/index.md" },
+  ] },
+  { "Server" = [
+    { "Overview" = "server/index.md" },
+  ] },
+  { "Testing" = [
+    { "Overview" = "testing/index.md" },
+  ] },
+  { "KDocs" = "https://readingbat.github.io/readingbat-core/" },
+]
+
+# ---------------------------------------------------------------------------
+# Theme
+# ---------------------------------------------------------------------------
+[project.theme]
+language = "en"
+
+features = [
+    "announce.dismiss",
+    "content.code.annotate",
+    "content.code.copy",
+    "content.code.select",
+    "content.footnote.tooltips",
+    "content.tabs.link",
+    "content.tooltips",
+    "navigation.footer",
+    "navigation.indexes",
+    "navigation.instant",
+    "navigation.instant.prefetch",
+    "navigation.path",
+    "navigation.sections",
+    "navigation.top",
+    "navigation.tracking",
+    "search.highlight",
+]
+
+[project.theme.icon]
+repo = "fontawesome/brands/github"
+
+# ---------------------------------------------------------------------------
+# Color palette — dark mode is listed first to make it the default
+# ---------------------------------------------------------------------------
+[[project.theme.palette]]
+scheme = "slate"
+primary = "deep purple"
+accent = "amber"
+toggle.icon = "lucide/moon"
+toggle.name = "Switch to light mode"
+
+[[project.theme.palette]]
+scheme = "default"
+primary = "deep purple"
+accent = "amber"
+toggle.icon = "lucide/sun"
+toggle.name = "Switch to dark mode"
+
+# ---------------------------------------------------------------------------
+# Social links
+# ---------------------------------------------------------------------------
+[[project.extra.social]]
+icon = "fontawesome/brands/github"
+link = "https://github.com/readingbat/readingbat-core"
+
+# ---------------------------------------------------------------------------
+# Markdown extensions
+# ---------------------------------------------------------------------------
+
+# Snippets — resolve paths relative to the docs dir and the code examples dir
+[project.markdown_extensions.pymdownx.snippets]
+base_path = ["docs", "../../readingbat-core/src/test/kotlin/website"]
+check_paths = true
+
+# Superfences — enable Mermaid diagrams
+[[project.markdown_extensions.pymdownx.superfences.custom_fences]]
+name = "mermaid"
+class = "mermaid"
+format = "pymdownx.superfences.fence_div_format"
+
+# Tabbed content
+[project.markdown_extensions.pymdownx.tabbed]
+alternate_style = true
+
+# Highlighting
+[project.markdown_extensions.pymdownx.highlight]
+anchor_linenums = true
+line_spans = "__span"
+pygments_lang_class = true

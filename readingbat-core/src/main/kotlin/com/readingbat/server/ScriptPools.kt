@@ -1,0 +1,63 @@
+/*
+ * Copyright © 2026 Paul Ambrose (pambrose@mac.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+
+package com.readingbat.server
+
+import com.pambrose.common.script.JavaScriptPool
+import com.pambrose.common.script.KotlinExprEvaluatorPool
+import com.pambrose.common.script.KotlinScriptPool
+import com.pambrose.common.script.PythonExprEvaluatorPool
+import com.pambrose.common.script.PythonScriptPool
+import com.readingbat.common.Property
+import io.github.oshai.kotlinlogging.KotlinLogging
+
+/**
+ * Lazily initialized pools of JSR-223 script engines and expression evaluators.
+ *
+ * Maintains separate pools for Java, Python, and Kotlin script engines, as well as
+ * Python and Kotlin expression evaluators. Pool sizes are configurable via [Property]
+ * values. Engines are reused across challenge evaluations to avoid the overhead of
+ * creating new engine instances for each request.
+ */
+internal object ScriptPools {
+  private val logger = KotlinLogging.logger {}
+  internal val javaScriptPool by lazy {
+    // Global context cannot be null for the java script engine
+    JavaScriptPool(Property.JAVA_SCRIPTS_POOL_SIZE.getProperty(5), false)
+      .also { logger.info { "Created Java script pool with size ${it.size}" } }
+  }
+
+  internal val pythonScriptPool by lazy {
+    PythonScriptPool(Property.PYTHON_SCRIPTS_POOL_SIZE.getProperty(5), true)
+      .also { logger.info { "Created Python script pool with size ${it.size}" } }
+  }
+
+  internal val kotlinScriptPool by lazy {
+    KotlinScriptPool(Property.KOTLIN_SCRIPTS_POOL_SIZE.getProperty(5), true)
+      .also { logger.info { "Created Kotlin script pool with size ${it.size}" } }
+  }
+
+  internal val pythonEvaluatorPool by lazy {
+    PythonExprEvaluatorPool(Property.PYTHON_EVALUATORS_POOL_SIZE.getProperty(5))
+      .also { logger.info { "Created Python evaluator pool with size ${it.size}" } }
+  }
+
+  internal val kotlinEvaluatorPool by lazy {
+    KotlinExprEvaluatorPool(Property.KOTLIN_EVALUATORS_POOL_SIZE.getProperty(5))
+      .also { logger.info { "Created Kotlin evaluator pool with size ${it.size}" } }
+  }
+}
