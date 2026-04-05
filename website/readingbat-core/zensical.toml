@@ -27,7 +27,7 @@ nav = [
   { "Testing" = [
     { "Overview" = "testing/index.md" },
   ] },
-  { "KDocs" = "https://readingbat.github.io/readingbat-core/" },
+  { "KDocs" = "kdocs/" },
 ]
 
 # ---------------------------------------------------------------------------
