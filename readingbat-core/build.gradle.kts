@@ -6,7 +6,7 @@ description = "Ktor web server, DSL engine, and database layer for ReadingBat pr
 dependencies {
   implementation(libs.serialization)
 
-  implementation(libs.bundles.common.utils)
+  api(libs.bundles.common.utils)
 
   implementation(libs.bundles.ktor.client)
   implementation(libs.bundles.ktor.server)
