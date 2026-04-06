@@ -22,13 +22,13 @@ jobs:
       - uses: actions/checkout@v6
 
       - name: Set up JDK 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           java-version: '17'
           distribution: 'temurin'
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@v6
 
       - name: Generate KDocs
         run: ./gradlew dokkaGenerateHtml
@@ -37,7 +37,7 @@ jobs:
         with:
           python-version: 3.x
 
-      - run: pip install zensical
+      - run: pip install zensical mkdocs-material
 
       - run: zensical build --clean
         working-directory: website/readingbat-core
