@@ -46,7 +46,7 @@ A local PostgreSQL instance is required. See the README for Docker setup. Run mi
 
 ### Secrets
 
-Copy `secrets/secrets.env.example` to `secrets/secrets.env` and fill in the required values. This file is not committed.
+Copy `.env.example` to `.env` and fill in the required values. This file is not committed.
 
 ## Making Changes
 

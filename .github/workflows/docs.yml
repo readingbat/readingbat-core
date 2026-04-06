@@ -43,9 +43,9 @@ jobs:
         working-directory: website/readingbat-core
 
       - name: Copy KDocs into Zensical site
-        run: cp -r readingbat-core/build/dokka/html website/readingbat-core/site/kdocs
+        run: cp -r readingbat-core/build/dokka/html/* website/readingbat-core/site/kdocs/
 
-      - uses: actions/upload-pages-artifact@v4
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: website/readingbat-core/site
 
