@@ -91,6 +91,16 @@ link = "https://github.com/readingbat/readingbat-core"
 # Markdown extensions
 # ---------------------------------------------------------------------------
 
+[project.markdown_extensions.attr_list]
+[project.markdown_extensions.md_in_html]
+[project.markdown_extensions.admonition]
+[project.markdown_extensions."pymdownx.details"]
+
+# Emoji / icon shortcodes
+[project.markdown_extensions.pymdownx.emoji]
+emoji_index = "material.extensions.emoji.twemoji"
+emoji_generator = "material.extensions.emoji.to_svg"
+
 # Snippets — resolve paths relative to the docs dir and the code examples dir
 [project.markdown_extensions.pymdownx.snippets]
 base_path = ["docs", "../../readingbat-core/src/test/kotlin/website"]
@@ -100,7 +110,7 @@ check_paths = true
 [[project.markdown_extensions.pymdownx.superfences.custom_fences]]
 name = "mermaid"
 class = "mermaid"
-format = "pymdownx.superfences.fence_div_format"
+format = "pymdownx.superfences.fence_code_format"
 
 # Tabbed content
 [project.markdown_extensions.pymdownx.tabbed]

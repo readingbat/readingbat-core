@@ -76,8 +76,7 @@ ReadingBat supports challenges in all three languages within a single content de
 
 ## API Reference
 
-Full API documentation (KDocs) is available at
-[https://readingbat.github.io/readingbat-core/](https://readingbat.github.io/readingbat-core/).
+Full API documentation (KDocs) is available at [KDocs](kdocs/).
 
 ## Next Steps
 
@@ -121,6 +120,6 @@ Full API documentation (KDocs) is available at
 
     Browse the full API reference documentation
 
-    [:octicons-arrow-right-24: KDocs](https://readingbat.github.io/readingbat-core/)
+    [:octicons-arrow-right-24: KDocs](kdocs/)
 
 </div>
