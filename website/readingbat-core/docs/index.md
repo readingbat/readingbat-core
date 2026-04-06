@@ -5,8 +5,9 @@ icon: lucide/rocket
 # ReadingBat Core
 
 ReadingBat Core is a Kotlin-based web application framework for creating interactive programming
-challenges. It provides a powerful DSL for defining challenges in **Java**, **Python**, and **Kotlin**,
-a Ktor-based web server, and real-time feedback via WebSockets.
+challenges, powering the [ReadingBat](https://readingbat.com) platform. It provides a powerful DSL
+for defining challenges in **Java**, **Python**, and **Kotlin**, a Ktor-based web server, and
+real-time feedback via WebSockets.
 
 ## Key Features
 
