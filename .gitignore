@@ -9,6 +9,7 @@ build
 *.iws
 .junie
 secrets
+.env
 
 .DS_Store
 *.lock
