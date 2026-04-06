@@ -44,10 +44,9 @@ allprojects {
   version = versionStr
 
   repositories {
-    mavenLocal()
+    // mavenLocal()
     google()
     mavenCentral()
-    maven { url = uri("https://jitpack.io") }
   }
 
   configureVersions()

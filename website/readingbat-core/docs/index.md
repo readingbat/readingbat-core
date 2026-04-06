@@ -115,12 +115,4 @@ Full API documentation (KDocs) is available at [KDocs](kdocs/).
 
     [:octicons-arrow-right-24: Testing](testing/index.md)
 
--   :material-book-open-variant: **KDocs**
-
-    ---
-
-    Browse the full API reference documentation
-
-    [:octicons-arrow-right-24: KDocs](kdocs/)
-
 </div>
