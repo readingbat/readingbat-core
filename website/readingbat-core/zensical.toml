@@ -11,7 +11,7 @@ repo_name = "readingbat/readingbat-core"
 nav = [
   { "Home" = "index.md" },
   { "Content DSL" = [
-    { "Overview" = "dsl/index.md" },
+    { "Content DSL" = "dsl/index.md" },
     { "Language Groups" = "dsl/languages.md" },
     { "Challenge Groups" = "dsl/groups.md" },
     { "Challenges" = "dsl/challenges.md" },
@@ -27,7 +27,7 @@ nav = [
   { "Testing" = [
     { "Overview" = "testing/index.md" },
   ] },
-  { "KDocs" = "kdocs/" },
+  { "KDocs" = "kdocs.md" },
 ]
 
 # ---------------------------------------------------------------------------
@@ -54,8 +54,6 @@ features = [
   "navigation.instant.progress",
   "navigation.path",
   "navigation.sections",
-  "navigation.tabs",
-  "navigation.tabs.sticky",
   "navigation.top",
   "navigation.tracking",
   "search.highlight",
