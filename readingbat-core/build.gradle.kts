@@ -56,6 +56,16 @@ buildConfig {
   buildConfigField("long", "BUILD_TIME", "${System.currentTimeMillis()}L")
 }
 
+// Exclude top-level entry points from KDocs
+extensions.configure<org.jetbrains.dokka.gradle.DokkaExtension> {
+  dokkaSourceSets.configureEach {
+    suppressedFiles.from(
+      "src/main/kotlin/Content.kt",
+      "src/main/kotlin/TestMain.kt",
+    )
+  }
+}
+
 // Tailwind CSS v4 build via standalone CLI
 // Usage: ./gradlew :readingbat-core:tailwindBuild
 tasks.register<Exec>("tailwindBuild") {
