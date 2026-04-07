@@ -7,13 +7,12 @@ dependencies {
   implementation(libs.serialization)
 
   api(libs.bundles.common.utils)
+  implementation(libs.prometheus.proxy)
 
   implementation(libs.bundles.ktor.client)
   implementation(libs.bundles.ktor.server)
 
   implementation(libs.bundles.exposed)
-
-  implementation(libs.prometheus.proxy)
 
   implementation(libs.simple.client)
 

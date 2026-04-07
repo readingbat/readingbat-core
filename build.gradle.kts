@@ -38,16 +38,15 @@ allprojects {
   apply(plugin = "com.github.gmazzo.buildconfig")
   apply(plugin = "com.github.ben-manes.versions")
 
-  extra["versionStr"] = findProperty("overrideVersion")?.toString() ?: "3.1.0"
+  extra["versionStr"] = findProperty("overrideVersion")?.toString() ?: "3.1.1"
   group = "com.readingbat"
   description = "ReadingBat Core"
   version = versionStr
 
   repositories {
-    mavenLocal()
+    // mavenLocal()
     google()
     mavenCentral()
-    maven { url = uri("https://jitpack.io") }
   }
 
   configureVersions()

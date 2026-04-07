@@ -27,12 +27,12 @@ pgjdbc = "0.8.9"
 playwright = "1.58.0"
 postgres = "42.7.10"
 prometheus = "0.16.0"
-prometheus-proxy = "3.0.3"
+prometheus-proxy = "3.1.0"
 python = "2.7.4"
 resend = "4.13.0"
 serialization = "1.10.0"
 testcontainers = "1.21.4"
-utils = "2.7.0"
+utils = "2.7.1"
 
 [libraries]
 # Kotlin
@@ -57,7 +57,7 @@ common-script-utils-python = { module = "com.pambrose.common-utils:script-utils-
 common-service-utils = { module = "com.pambrose.common-utils:service-utils", version.ref = "utils" }
 
 # Prometheus
-prometheus-proxy = { module = "com.github.pambrose:prometheus-proxy", version.ref = "prometheus-proxy" }
+prometheus-proxy = { module = "com.pambrose:prometheus-proxy", version.ref = "prometheus-proxy" }
 simple-client = { module = "io.prometheus:simpleclient", version.ref = "prometheus" }
 
 # Script Engines
