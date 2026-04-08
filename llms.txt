@@ -6,9 +6,9 @@ ReadingBat Core is a web application built with Ktor that serves programming cha
 
 ## Key Technologies
 
-- Kotlin 2.3.10, Ktor 3.4.1 (CIO engine), Exposed ORM 1.1.1, PostgreSQL
+- Kotlin 2.3.10, Ktor 3.4.2 (CIO engine), Exposed ORM 1.1.1, PostgreSQL
 - Kotlinx.html for server-side HTML generation (no templates)
-- Kotest for testing, Cypress for E2E tests
+- Kotest for testing, Playwright for E2E tests
 - Gradle multi-module build with version catalog (libs.versions.toml)
 - Java 17 toolchain
 
@@ -55,6 +55,10 @@ Migrations managed by Flyway in `src/main/resources/db/migration/`.
 ## Routing
 
 Type-safe routing via Ktor `@Resource` annotations in `Locations.kt`: Language -> Language.Group -> Language.Group.Challenge (nested resources mapping to URL paths like `/content/java/Warmup-1/hello`).
+
+## Authentication
+
+Form-based auth with session management and OAuth (GitHub, Google). OAuth providers are auto-configured when credentials are present (not gated on production mode). Provider identification uses the `OAuthProvider` enum for type safety.
 
 ## Value Types
 

@@ -152,7 +152,7 @@ internal object ChallengePage {
   internal const val HEADER_COLOR = "#419DC1"
 
   /** Renders the challenge page HTML for the given challenge, including code, answer inputs, and teacher dashboard. */
-  suspend fun RoutingContext.challengePage(
+  fun RoutingContext.challengePage(
     content: ReadingBatContent,
     user: User?,
     challenge: Challenge,

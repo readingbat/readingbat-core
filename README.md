@@ -22,7 +22,7 @@ ReadingBat Core is built using modern Kotlin technologies:
 
 - **Web Framework**: Ktor 3.4.2 with CIO engine
 - **Database**: PostgreSQL with Exposed ORM and HikariCP connection pooling
-- **Authentication**: Form-based auth with session management
+- **Authentication**: Form-based auth with session management and OAuth (GitHub, Google)
 - **Script Execution**: JSR-223 scripting engines for safe code evaluation
 - **Build System**: Gradle with Kotlin DSL and multi-module structure
 - **Serialization**: kotlinx.serialization for JSON processing
@@ -92,7 +92,7 @@ export DBMS_URL="jdbc:pgsql://localhost:5432/readingbat"
 export DBMS_USERNAME="postgres"
 export DBMS_PASSWORD="docker"
 
-# Optional: External services
+# Optional: OAuth (auto-configured when credentials are present)
 export GITHUB_OAUTH="your_github_token"
 export IPGEOLOCATION_KEY="your_geo_key"
 ```

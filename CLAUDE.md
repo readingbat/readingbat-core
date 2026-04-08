@@ -76,8 +76,16 @@ The app uses a two-layer configuration pattern where most settings can come from
 - **Type-safe routing** via Ktor `@Resource` annotations in `Locations.kt`: `Language` → `Language.Group` →
   `Language.Group.Challenge` (nested resources mapping to URL paths like `/content/java/Warmup-1/hello`)
 - **User routes** in `UserRoutes.kt`: standard GET/POST endpoints for pages, authentication, admin
+- **OAuth routes** in `OAuthRoutes.kt`: GitHub and Google login/callback, conditionally registered per provider via
+  `ConfigureOAuth.githubOAuthConfigured` / `googleOAuthConfigured` flags
 - **Admin routes** in `AdminRoutes.kt` and **SysAdmin routes** in `SysAdminRoutes.kt`
 - **WebSocket routes** in `server/ws/`: real-time updates for challenge answers, class summaries, student progress
+
+### Authentication
+
+- Form-based auth with salted password hashes and session cookies
+- OAuth (GitHub, Google) via `ConfigureOAuth` — providers are auto-configured when credentials are present in env vars,
+  not gated on production mode. The `OAuthProvider` enum in `OAuthRoutes.kt` provides type-safe provider identification.
 
 ### Page Generation
 
@@ -93,6 +101,7 @@ Exposed ORM table definitions in `PostgresTables.kt`. Key tables:
 - `BrowserSessionsTable` / `UserSessionsTable` — session tracking
 - `UserChallengeInfoTable` / `SessionChallengeInfoTable` — answer state per challenge
 - `UserAnswerHistoryTable` / `SessionAnswerHistoryTable` — answer history
+- `OAuthLinksTable` — links OAuth provider accounts to users
 - `ClassesTable` / `EnrolleesTable` — teacher class management
 - `ServerRequestsTable` / `GeoInfosTable` — request logging with geolocation
 
