@@ -152,23 +152,23 @@ internal object ChallengePage {
   internal const val HEADER_COLOR = "#419DC1"
 
   /** Renders the challenge page HTML for the given challenge, including code, answer inputs, and teacher dashboard. */
-  fun RoutingContext.challengePage(
+  suspend fun RoutingContext.challengePage(
     content: ReadingBatContent,
     user: User?,
     challenge: Challenge,
-  ) =
-    createHTML()
-      .html {
-        val languageType = challenge.languageType
-        val languageName = languageType.languageName
-        val groupName = challenge.groupName
-        val challengeName = challenge.challengeName
-        val funcInfo = challenge.functionInfo()
-        val loginPath = pathOf(CHALLENGE_ROOT, languageName, groupName, challengeName)
-        val activeTeachingClassCode = queryActiveTeachingClassCode(user)
-        val enrollees = activeTeachingClassCode.fetchEnrollees()
-        val msg = Message(queryParam(MSG))
+  ): String {
+    val languageType = challenge.languageType
+    val languageName = languageType.languageName
+    val groupName = challenge.groupName
+    val challengeName = challenge.challengeName
+    val funcInfo = challenge.functionInfo()
+    val loginPath = pathOf(CHALLENGE_ROOT, languageName, groupName, challengeName)
+    val activeTeachingClassCode = queryActiveTeachingClassCode(user)
+    val enrollees = activeTeachingClassCode.fetchEnrollees()
+    val msg = Message(queryParam(MSG))
 
+    return createHTML()
+      .html {
         head {
           link {
             rel = "stylesheet"
@@ -214,6 +214,7 @@ internal object ChallengePage {
           loadPingdomScript()
         }
       }
+  }
 
   private fun BODY.displayChallenge(challenge: Challenge, funcInfo: FunctionInfo) {
     val languageName = challenge.languageType.languageName

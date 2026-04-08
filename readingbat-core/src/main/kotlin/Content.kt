@@ -123,6 +123,7 @@ val dslContent =
         challenge("float_test") { returnType = FloatType }
         challenge("float_array_test") { returnType = FloatArrayType }
         challenge("string_array_test") { returnType = StringArrayType }
+        challenge("for_loop1") { returnType = StringArrayType }
       }
     }
 

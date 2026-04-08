@@ -52,6 +52,7 @@ import com.readingbat.server.ReadingBatServer.content
 import com.readingbat.server.ReadingBatServer.contentReadCount
 import com.readingbat.server.ReadingBatServer.logger
 import com.readingbat.server.ReadingBatServer.metrics
+import com.readingbat.server.ReadingBatServer.start
 import com.readingbat.server.ServerUtils.logToShim
 import com.readingbat.server.routes.AdminRoutes.adminRoutes
 import com.readingbat.server.routes.oauthRoutes
@@ -313,8 +314,11 @@ fun Application.module() {
     locations(metrics) { content.load() }
     userRoutes(metrics) { content.load() }
 
-    if (isProduction()) {
+    if (ConfigureOAuth.isOAuthConfigured) {
       oauthRoutes()
+    }
+
+    if (isProduction()) {
       sysAdminRoutes(metrics, resetContentDslFunc)
       wsRoutes(metrics) { content.load() }
     }

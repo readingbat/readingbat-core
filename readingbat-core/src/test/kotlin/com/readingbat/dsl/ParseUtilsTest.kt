@@ -56,6 +56,10 @@ class ParseUtilsTest : StringSpec() {
       "print(a(b(c(d))))".extractBalancedContent("print(") shouldBe "a(b(c(d)))"
     }
 
+    "print with paren in string" {
+      """print("hello :)")""".extractBalancedContent("print(") shouldBe """"hello :)""""
+    }
+
     "missing prefix throws" {
       shouldThrow<IllegalStateException> {
         "foo(42)".extractBalancedContent("print(")

@@ -97,12 +97,13 @@ private val json = Json { ignoreUnknownKeys = true }
 fun Routing.oauthRoutes() {
   val logger = KotlinLogging.logger {}
 
-  authenticate(AuthName.GITHUB_OAUTH) {
-    get(OAUTH_LOGIN_GITHUB_ENDPOINT) {
-      // Ktor redirects to GitHub automatically
-    }
+  if (ConfigureOAuth.githubOAuthConfigured) {
+    authenticate(AuthName.GITHUB_OAUTH) {
+      get(OAUTH_LOGIN_GITHUB_ENDPOINT) {
+        // Ktor redirects to GitHub automatically
+      }
 
-    get(OAUTH_CALLBACK_GITHUB_ENDPOINT) {
+      get(OAUTH_CALLBACK_GITHUB_ENDPOINT) {
       val principal =
         call.principal<OAuthAccessTokenResponse.OAuth2>()
         ?: run {
@@ -145,13 +146,15 @@ fun Routing.oauthRoutes() {
       call.respondRedirect(returnUrl)
     }
   }
+  }
 
-  authenticate(AuthName.GOOGLE_OAUTH) {
-    get(OAUTH_LOGIN_GOOGLE_ENDPOINT) {
-      // Ktor redirects to Google automatically
-    }
+  if (ConfigureOAuth.googleOAuthConfigured) {
+    authenticate(AuthName.GOOGLE_OAUTH) {
+      get(OAUTH_LOGIN_GOOGLE_ENDPOINT) {
+        // Ktor redirects to Google automatically
+      }
 
-    get(OAUTH_CALLBACK_GOOGLE_ENDPOINT) {
+      get(OAUTH_CALLBACK_GOOGLE_ENDPOINT) {
       val principal =
         call.principal<OAuthAccessTokenResponse.OAuth2>()
         ?: run {
@@ -181,6 +184,7 @@ fun Routing.oauthRoutes() {
       call.sessions.clear<OAuthReturnUrl>()
       call.respondRedirect(returnUrl)
     }
+  }
   }
 }
 

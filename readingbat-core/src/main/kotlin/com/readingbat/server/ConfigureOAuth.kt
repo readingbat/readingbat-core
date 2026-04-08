@@ -22,6 +22,8 @@ import com.readingbat.common.Constants.OAUTH_ERROR
 import com.readingbat.common.Endpoints.OAUTH_CALLBACK_GITHUB_ENDPOINT
 import com.readingbat.common.Endpoints.OAUTH_CALLBACK_GOOGLE_ENDPOINT
 import com.readingbat.common.Property
+import com.readingbat.server.ConfigureOAuth.configureGitHubOAuth
+import com.readingbat.server.ConfigureOAuth.configureGoogleOAuth
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
@@ -44,6 +46,17 @@ import kotlinx.serialization.json.Json
  */
 internal object ConfigureOAuth {
   private val logger = KotlinLogging.logger {}
+
+  /** True after [configureGitHubOAuth] successfully registered the provider. */
+  var githubOAuthConfigured = false
+    private set
+
+  /** True after [configureGoogleOAuth] successfully registered the provider. */
+  var googleOAuthConfigured = false
+    private set
+
+  /** True if at least one OAuth provider was successfully configured. */
+  val isOAuthConfigured get() = githubOAuthConfigured || googleOAuthConfigured
 
   val httpClient =
     HttpClient(CIO) {
@@ -81,6 +94,7 @@ internal object ConfigureOAuth {
         respondRedirect("/?$OAUTH_ERROR=github")
       }
     }
+    githubOAuthConfigured = true
     logger.info { "GitHub OAuth configured" }
   }
 
@@ -113,6 +127,7 @@ internal object ConfigureOAuth {
         respondRedirect("/?$OAUTH_ERROR=google")
       }
     }
+    googleOAuthConfigured = true
     logger.info { "Google OAuth configured" }
   }
 
