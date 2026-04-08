@@ -4,6 +4,31 @@ All notable changes to ReadingBat Core are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased] (3.1.2)
+
+### Changed
+
+- OAuth providers are now auto-configured based on credential availability instead of requiring production mode
+- Replaced stringly-typed OAuth provider parameter with `OAuthProvider` enum
+- Set test configuration to non-production mode
+- Bumped version to 3.1.2
+
+### Fixed
+
+- `extractBalancedContent` now correctly handles parentheses inside single- and double-quoted strings
+
+### Added
+
+- `for_loop1` Python challenge
+- `OAuthProvider` enum for type-safe OAuth provider identification
+- Test for parentheses inside quoted strings in `ParseUtilsTest`
+
+### Removed
+
+- `.travis.yml` (obsolete CI configuration)
+- Redundant `isOAuthConfigured` property and outer OAuth route guard
+- Unnecessary self-imports in `ConfigureOAuth` and `ReadingBatServer`
+
 ## [Unreleased] (3.0.12)
 
 ### Changed

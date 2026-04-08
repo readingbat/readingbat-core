@@ -38,7 +38,7 @@ allprojects {
   apply(plugin = "com.github.gmazzo.buildconfig")
   apply(plugin = "com.github.ben-manes.versions")
 
-  extra["versionStr"] = findProperty("overrideVersion")?.toString() ?: "3.1.1"
+  extra["versionStr"] = findProperty("overrideVersion")?.toString() ?: "3.1.2"
   group = "com.readingbat"
   description = "ReadingBat Core"
   version = versionStr

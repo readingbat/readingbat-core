@@ -33,8 +33,18 @@ internal fun String.extractBalancedContent(prefix: String): String {
   val parenStart = openIndex + prefix.length - 1
   if (parenStart >= length || this[parenStart] != '(') error("Expected '(' at end of prefix '$prefix' in: $this")
   var depth = 0
-  for (i in parenStart until length) {
+  var i = parenStart
+  while (i < length) {
     when (this[i]) {
+      '"', '\'' -> {
+        val quote = this[i]
+        i++
+        while (i < length && this[i] != quote) {
+          if (this[i] == '\\') i++ // skip escaped character
+          i++
+        }
+      }
+
       '(' -> {
         depth++
       }
@@ -44,6 +54,7 @@ internal fun String.extractBalancedContent(prefix: String): String {
         if (depth == 0) return substring(parenStart + 1, i)
       }
     }
+    i++
   }
   error("Unbalanced parentheses in: $this")
 }

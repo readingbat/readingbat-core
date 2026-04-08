@@ -87,7 +87,7 @@ object Installs {
   private val logger = KotlinLogging.logger {}
   private val excludedEndpoints = listOf("/$STATIC/", "$WS_ROOT/")
 
-  /** Installs all Ktor plugins, conditionally enabling production-only features like OAuth and HTTPS redirect. */
+  /** Installs all Ktor plugins. OAuth providers are auto-configured when credentials are present; [production] controls cookie security and HTTPS redirect. */
   fun Application.installs(production: Boolean) {
     install(Resources)
 
@@ -98,10 +98,8 @@ object Installs {
     }
 
     install(Authentication) {
-      if (production) {
-        configureGitHubOAuth()
-        configureGoogleOAuth()
-      }
+      configureGitHubOAuth()
+      configureGoogleOAuth()
     }
 
     install(WebSockets) {
