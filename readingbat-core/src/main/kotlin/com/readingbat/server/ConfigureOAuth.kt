@@ -55,9 +55,6 @@ internal object ConfigureOAuth {
   var googleOAuthConfigured = false
     private set
 
-  /** True if at least one OAuth provider was successfully configured. */
-  val isOAuthConfigured get() = githubOAuthConfigured || googleOAuthConfigured
-
   val httpClient =
     HttpClient(CIO) {
       install(ContentNegotiation) {

@@ -83,6 +83,14 @@ private data class GoogleUser(
   val picture: String? = null,
 )
 
+enum class OAuthProvider {
+  GITHUB,
+  GOOGLE,
+  ;
+
+  val providerName: String get() = name.lowercase()
+}
+
 private val json = Json { ignoreUnknownKeys = true }
 
 /**
@@ -104,48 +112,49 @@ fun Routing.oauthRoutes() {
       }
 
       get(OAUTH_CALLBACK_GITHUB_ENDPOINT) {
-      val principal =
-        call.principal<OAuthAccessTokenResponse.OAuth2>()
-        ?: run {
-          call.respondRedirect("/")
-          return@get
-        }
+        val principal =
+          call.principal<OAuthAccessTokenResponse.OAuth2>()
+            ?: run {
+              call.respondRedirect("/")
+              return@get
+            }
 
-      val accessToken = principal.accessToken
+        val accessToken = principal.accessToken
 
-      // Fetch user info from GitHub
-      val userResponse =
-        ConfigureOAuth.httpClient.get("https://api.github.com/user") {
-        bearerAuth(accessToken)
+        // Fetch user info from GitHub
+        val userResponse =
+          ConfigureOAuth.httpClient.get("https://api.github.com/user") {
+            bearerAuth(accessToken)
+          }
+        val ghUser = json.decodeFromString<GitHubUser>(userResponse.body<String>())
+
+        // Fetch primary email (handles private emails)
+        val email =
+          ghUser.email ?: run {
+            val emailsResponse =
+              ConfigureOAuth.httpClient.get("https://api.github.com/user/emails") {
+                bearerAuth(accessToken)
+              }
+            val emails = json.decodeFromString<List<GitHubEmail>>(emailsResponse.body<String>())
+            emails.firstOrNull { it.primary && it.verified }?.email
+              ?: emails.firstOrNull { it.verified }?.email
+              ?: ""
+          }
+
+        val name = ghUser.name ?: ghUser.login
+        val providerId = ghUser.id.toString()
+        val avatarUrl = ghUser.avatarUrl
+
+        logger.info { "GitHub OAuth callback: name=$name email=$email providerId=$providerId" }
+
+        val user =
+          findOrCreateOAuthUser(OAuthProvider.GITHUB, providerId, Email(email), FullName(name), accessToken, avatarUrl)
+        call.sessions.set(UserPrincipal(userId = user.userId))
+        val returnUrl = safeRedirectPath(call.sessions.get<OAuthReturnUrl>()?.url ?: "/")
+        call.sessions.clear<OAuthReturnUrl>()
+        call.respondRedirect(returnUrl)
       }
-      val ghUser = json.decodeFromString<GitHubUser>(userResponse.body<String>())
-
-      // Fetch primary email (handles private emails)
-      val email =
-        ghUser.email ?: run {
-        val emailsResponse =
-          ConfigureOAuth.httpClient.get("https://api.github.com/user/emails") {
-          bearerAuth(accessToken)
-        }
-        val emails = json.decodeFromString<List<GitHubEmail>>(emailsResponse.body<String>())
-        emails.firstOrNull { it.primary && it.verified }?.email
-          ?: emails.firstOrNull { it.verified }?.email
-          ?: ""
-      }
-
-      val name = ghUser.name ?: ghUser.login
-      val providerId = ghUser.id.toString()
-      val avatarUrl = ghUser.avatarUrl
-
-      logger.info { "GitHub OAuth callback: name=$name email=$email providerId=$providerId" }
-
-      val user = findOrCreateOAuthUser("github", providerId, Email(email), FullName(name), accessToken, avatarUrl)
-      call.sessions.set(UserPrincipal(userId = user.userId))
-      val returnUrl = safeRedirectPath(call.sessions.get<OAuthReturnUrl>()?.url ?: "/")
-      call.sessions.clear<OAuthReturnUrl>()
-      call.respondRedirect(returnUrl)
     }
-  }
   }
 
   if (ConfigureOAuth.googleOAuthConfigured) {
@@ -155,43 +164,44 @@ fun Routing.oauthRoutes() {
       }
 
       get(OAUTH_CALLBACK_GOOGLE_ENDPOINT) {
-      val principal =
-        call.principal<OAuthAccessTokenResponse.OAuth2>()
-        ?: run {
-          call.respondRedirect("/")
-          return@get
-        }
+        val principal =
+          call.principal<OAuthAccessTokenResponse.OAuth2>()
+            ?: run {
+              call.respondRedirect("/")
+              return@get
+            }
 
-      val accessToken = principal.accessToken
+        val accessToken = principal.accessToken
 
-      // Fetch user info from Google
-      val userResponse =
-        ConfigureOAuth.httpClient.get("https://www.googleapis.com/oauth2/v2/userinfo") {
-        bearerAuth(accessToken)
+        // Fetch user info from Google
+        val userResponse =
+          ConfigureOAuth.httpClient.get("https://www.googleapis.com/oauth2/v2/userinfo") {
+            bearerAuth(accessToken)
+          }
+        val googleUser = json.decodeFromString<GoogleUser>(userResponse.body<String>())
+
+        val email = googleUser.email ?: ""
+        val name = googleUser.name ?: "${googleUser.givenName ?: ""} ${googleUser.familyName ?: ""}".trim()
+        val providerId = googleUser.id
+        val avatarUrl = googleUser.picture
+
+        logger.info { "Google OAuth callback: name=$name email=$email providerId=$providerId" }
+
+        val user =
+          findOrCreateOAuthUser(OAuthProvider.GOOGLE, providerId, Email(email), FullName(name), accessToken, avatarUrl)
+        call.sessions.set(UserPrincipal(userId = user.userId))
+        val returnUrl = safeRedirectPath(call.sessions.get<OAuthReturnUrl>()?.url ?: "/")
+        call.sessions.clear<OAuthReturnUrl>()
+        call.respondRedirect(returnUrl)
       }
-      val googleUser = json.decodeFromString<GoogleUser>(userResponse.body<String>())
-
-      val email = googleUser.email ?: ""
-      val name = googleUser.name ?: "${googleUser.givenName ?: ""} ${googleUser.familyName ?: ""}".trim()
-      val providerId = googleUser.id
-      val avatarUrl = googleUser.picture
-
-      logger.info { "Google OAuth callback: name=$name email=$email providerId=$providerId" }
-
-      val user = findOrCreateOAuthUser("google", providerId, Email(email), FullName(name), accessToken, avatarUrl)
-      call.sessions.set(UserPrincipal(userId = user.userId))
-      val returnUrl = safeRedirectPath(call.sessions.get<OAuthReturnUrl>()?.url ?: "/")
-      call.sessions.clear<OAuthReturnUrl>()
-      call.respondRedirect(returnUrl)
     }
-  }
   }
 }
 
 private val oauthLogger = KotlinLogging.logger {}
 
 private fun findOrCreateOAuthUser(
-  provider: String,
+  provider: OAuthProvider,
   providerId: String,
   email: Email,
   name: FullName,
@@ -203,7 +213,7 @@ private fun findOrCreateOAuthUser(
     readonlyTx {
     with(OAuthLinksTable) {
       select(userRef)
-        .where { (OAuthLinksTable.provider eq provider) and (OAuthLinksTable.providerId eq providerId) }
+        .where { (OAuthLinksTable.provider eq provider.providerName) and (OAuthLinksTable.providerId eq providerId) }
         .map { it[userRef] }
         .firstOrNull()
     }
@@ -225,7 +235,7 @@ private fun findOrCreateOAuthUser(
     // Update access token and avatar URL
     transaction {
       OAuthLinksTable.update({
-        (OAuthLinksTable.provider eq provider) and (OAuthLinksTable.providerId eq providerId)
+        (OAuthLinksTable.provider eq provider.providerName) and (OAuthLinksTable.providerId eq providerId)
       }) { row ->
         row[OAuthLinksTable.accessToken] = accessToken
         row[updated] = org.joda.time.DateTime.now(org.joda.time.DateTimeZone.UTC)
@@ -262,7 +272,7 @@ private fun findOrCreateOAuthUser(
         with(OAuthLinksTable) {
           insert { row ->
             row[userRef] = existingUser.userDbmsId
-            row[OAuthLinksTable.provider] = provider
+            row[OAuthLinksTable.provider] = provider.providerName
             row[OAuthLinksTable.providerId] = providerId
             row[providerEmail] = email.value
             row[OAuthLinksTable.accessToken] = accessToken
@@ -271,7 +281,7 @@ private fun findOrCreateOAuthUser(
         // Set auth_provider if not already set, and update avatar
         if (userProvider == null || avatarUrl != null) {
           UsersTable.update({ UsersTable.id eq existingUser.userDbmsId }) { row ->
-            if (userProvider == null) row[authProvider] = provider
+            if (userProvider == null) row[authProvider] = provider.providerName
             if (avatarUrl != null) row[UsersTable.avatarUrl] = avatarUrl
           }
         }
@@ -282,5 +292,5 @@ private fun findOrCreateOAuthUser(
 
   // 3. No link, no matching email — create new user
   oauthLogger.info { "OAuth login: creating new user for $provider/$providerId email=$email" }
-  return User.createOAuthUser(name, email, provider, providerId, accessToken, avatarUrl)
+  return User.createOAuthUser(name, email, provider.providerName, providerId, accessToken, avatarUrl)
 }

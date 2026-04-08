@@ -314,9 +314,7 @@ fun Application.module() {
     locations(metrics) { content.load() }
     userRoutes(metrics) { content.load() }
 
-    if (ConfigureOAuth.isOAuthConfigured) {
-      oauthRoutes()
-    }
+    oauthRoutes()
 
     if (isProduction()) {
       sysAdminRoutes(metrics, resetContentDslFunc)

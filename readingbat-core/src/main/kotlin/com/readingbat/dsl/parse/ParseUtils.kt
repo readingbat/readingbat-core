@@ -36,9 +36,10 @@ internal fun String.extractBalancedContent(prefix: String): String {
   var i = parenStart
   while (i < length) {
     when (this[i]) {
-      '"' -> {
+      '"', '\'' -> {
+        val quote = this[i]
         i++
-        while (i < length && this[i] != '"') {
+        while (i < length && this[i] != quote) {
           if (this[i] == '\\') i++ // skip escaped character
           i++
         }
