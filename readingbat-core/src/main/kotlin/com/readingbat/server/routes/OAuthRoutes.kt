@@ -238,7 +238,7 @@ private fun findOrCreateOAuthUser(
         (OAuthLinksTable.provider eq provider.providerName) and (OAuthLinksTable.providerId eq providerId)
       }) { row ->
         row[OAuthLinksTable.accessToken] = accessToken
-        row[updated] = org.joda.time.DateTime.now(org.joda.time.DateTimeZone.UTC)
+        row[updated] = com.readingbat.common.nowInstant()
       }
       if (avatarUrl != null) {
         UsersTable.update({ UsersTable.id eq existingUserId }) { row ->

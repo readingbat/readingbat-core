@@ -24,13 +24,13 @@ ktor = "3.4.2"
 logback = "1.5.18"
 logging = "7.0.12"
 pgjdbc = "0.8.9"
-playwright = "1.58.0"
+playwright = "1.59.0"
 postgres = "42.7.10"
 prometheus = "0.16.0"
 prometheus-proxy = "3.1.0"
 python = "2.7.4"
 resend = "4.13.0"
-serialization = "1.10.0"
+serialization = "1.11.0"
 testcontainers = "1.21.4"
 utils = "2.7.1"
 
@@ -92,7 +92,7 @@ khealth = { module = "dev.hayden:khealth", version.ref = "khealth" }
 # Database
 exposed-core = { module = "org.jetbrains.exposed:exposed-core", version.ref = "exposed" }
 exposed-jdbc = { module = "org.jetbrains.exposed:exposed-jdbc", version.ref = "exposed" }
-exposed-jodatime = { module = "org.jetbrains.exposed:exposed-jodatime", version.ref = "exposed" }
+exposed-kotlin-datetime = { module = "org.jetbrains.exposed:exposed-kotlin-datetime", version.ref = "exposed" }
 hikari = { module = "com.zaxxer:HikariCP", version.ref = "hikari" }
 pgjdbc = { module = "com.impossibl.pgjdbc-ng:pgjdbc-ng-all", version.ref = "pgjdbc" }
 postgres = { module = "org.postgresql:postgresql", version.ref = "postgres" }
@@ -167,5 +167,5 @@ common-utils = [
 exposed = [
   "exposed-core",
   "exposed-jdbc",
-  "exposed-jodatime"
+  "exposed-kotlin-datetime"
 ]

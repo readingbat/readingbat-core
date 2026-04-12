@@ -18,7 +18,6 @@
 package com.readingbat.common
 
 import com.pambrose.common.email.Email
-import com.pambrose.common.exposed.dateTimeExpr
 import com.pambrose.common.exposed.get
 import com.pambrose.common.exposed.readonlyTx
 import com.readingbat.dsl.isDbmsEnabled
@@ -33,12 +32,11 @@ import org.jetbrains.exposed.v1.core.Max
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.countDistinct
 import org.jetbrains.exposed.v1.core.greater
+import org.jetbrains.exposed.v1.datetime.KotlinInstantColumnType
 import org.jetbrains.exposed.v1.jdbc.select
-import org.jetbrains.exposed.v1.jodatime.JodaLocalDateTimeColumnType
-import org.joda.time.DateTime
-import org.joda.time.DateTimeZone
 import kotlin.math.min
 import kotlin.time.Duration
+import kotlin.time.Instant
 import kotlin.time.measureTimedValue
 
 /**
@@ -75,7 +73,7 @@ internal object SessionActivites {
     val flagUrl: String,
     val userAgent: String,
     val count: Long,
-    val maxDate: DateTime,
+    val maxDate: Instant,
   )
 
   /** Queries active sessions within the last [dayCount] days (max 14), grouped by session and user. */
@@ -83,12 +81,12 @@ internal object SessionActivites {
     readonlyTx {
       measureTimedValue {
         val count = Count(UsersTable.id)
-        val maxDate = Max(created, JodaLocalDateTimeColumnType())
+        val maxDate = Max(created, KotlinInstantColumnType())
         val elems = arrayOf(fullName, email, ip, city, state, country, isp, flagUrl, userAgent)
 
         (ServerRequestsTable innerJoin BrowserSessionsTable innerJoin UsersTable innerJoin GeoInfosTable)
           .select(session_id, *elems, count, maxDate)
-          .where { created greater dateTimeExpr("now() - interval '${min(dayCount, 14)} day'") }
+          .where { created greater instantExpr("now() - interval '${min(dayCount, 14)} day'") }
           .groupBy(*(arrayOf(session_id) + elems))
           .orderBy(maxDate, SortOrder.DESC)
           .map { row ->
@@ -104,7 +102,7 @@ internal object SessionActivites {
               flagUrl = row[flagUrl],
               userAgent = row[userAgent],
               count = row[count],
-              maxDate = row[maxDate] ?: DateTime.now(DateTimeZone.UTC),
+              maxDate = row[maxDate] ?: nowInstant(),
             )
           }
       }.let { (query, duration) ->
@@ -127,7 +125,7 @@ internal object SessionActivites {
             with(ServerRequestsTable) {
               val ms = duration.inWholeMilliseconds
               select(sessionRef.countDistinct())
-                .where { created greater dateTimeExpr("now() - interval '$ms milliseconds'") }
+                .where { created greater instantExpr("now() - interval '$ms milliseconds'") }
                 .map { it[0] as Long }
                 .first()
             }

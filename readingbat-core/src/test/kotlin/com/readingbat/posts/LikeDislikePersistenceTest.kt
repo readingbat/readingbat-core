@@ -22,6 +22,7 @@ import com.pambrose.common.exposed.upsert
 import com.readingbat.TestData
 import com.readingbat.common.Endpoints
 import com.readingbat.common.User
+import com.readingbat.common.nowInstant
 import com.readingbat.kotest.TestDatabase
 import com.readingbat.kotest.TestSupport.initTestProperties
 import com.readingbat.kotest.TestSupport.testModule
@@ -35,8 +36,6 @@ import io.kotest.matchers.shouldBe
 import io.ktor.server.testing.testApplication
 import kotlinx.html.Entities
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
-import org.joda.time.DateTime
-import org.joda.time.DateTimeZone
 
 class LikeDislikePersistenceTest : StringSpec() {
   init {
@@ -89,7 +88,7 @@ class LikeDislikePersistenceTest : StringSpec() {
                 upsert(conflictIndex = userChallengeInfoIndex) { row ->
                   row[userRef] = user.userDbmsId
                   row[md5] = challengeMd5
-                  row[updated] = DateTime.now(DateTimeZone.UTC)
+                  row[updated] = nowInstant()
                   row[likeDislike] = 1
                 }
               }
@@ -126,7 +125,7 @@ class LikeDislikePersistenceTest : StringSpec() {
                 upsert(conflictIndex = userChallengeInfoIndex) { row ->
                   row[userRef] = user.userDbmsId
                   row[md5] = challengeMd5
-                  row[updated] = DateTime.now(DateTimeZone.UTC)
+                  row[updated] = nowInstant()
                   row[likeDislike] = 2
                 }
               }
@@ -188,7 +187,7 @@ class LikeDislikePersistenceTest : StringSpec() {
                 upsert(conflictIndex = userChallengeInfoIndex) { row ->
                   row[userRef] = user.userDbmsId
                   row[md5] = challengeMd5
-                  row[updated] = DateTime.now(DateTimeZone.UTC)
+                  row[updated] = nowInstant()
                   row[likeDislike] = 1
                 }
               }
@@ -202,7 +201,7 @@ class LikeDislikePersistenceTest : StringSpec() {
                 upsert(conflictIndex = userChallengeInfoIndex) { row ->
                   row[userRef] = user.userDbmsId
                   row[md5] = challengeMd5
-                  row[updated] = DateTime.now(DateTimeZone.UTC)
+                  row[updated] = nowInstant()
                   row[likeDislike] = 2
                 }
               }
