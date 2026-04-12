@@ -46,6 +46,7 @@ import com.readingbat.common.ParameterIds.LIKE_COLOR
 import com.readingbat.common.User
 import com.readingbat.common.User.Companion.fetchUserDbmsIdFromCache
 import com.readingbat.common.WsProtocol
+import com.readingbat.common.nowInstant
 import com.readingbat.dsl.ReadingBatContent
 import com.readingbat.dsl.isDbmsEnabled
 import com.readingbat.posts.AnswerStatus.CORRECT
@@ -82,8 +83,6 @@ import org.jetbrains.exposed.v1.core.dao.id.LongIdTable
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
-import org.joda.time.DateTime
-import org.joda.time.DateTimeZone
 
 internal data class StudentInfo(val studentId: String, val firstName: String, val lastName: String)
 
@@ -415,7 +414,7 @@ internal object ChallengePost {
               upsert(conflictIndex = userChallengeInfoIndex) { row ->
                 row[userRef] = user.userDbmsId
                 row[md5] = challengeMd5
-                row[updated] = DateTime.now(DateTimeZone.UTC)
+                row[updated] = nowInstant()
                 row[allCorrect] = complete
                 row[answersJson] = invokeStr
               }
@@ -428,7 +427,7 @@ internal object ChallengePost {
                   row[userRef] = user.userDbmsId
                   row[md5] = historyMd5
                   row[invocation] = history.invocation.value
-                  row[updated] = DateTime.now(DateTimeZone.UTC)
+                  row[updated] = nowInstant()
                   row[correct] = history.correct
                   row[incorrectAttempts] = history.incorrectAttempts
                   row[historyJson] = Json.encodeToString(history.answers)
@@ -461,7 +460,7 @@ internal object ChallengePost {
           upsert(conflictIndex = userChallengeInfoIndex) { row ->
             row[userRef] = user.userDbmsId
             row[md5] = challengeMd5
-            row[updated] = DateTime.now(DateTimeZone.UTC)
+            row[updated] = nowInstant()
             row[likeDislike] = likeDislikeVal.toShort()
           }
         }

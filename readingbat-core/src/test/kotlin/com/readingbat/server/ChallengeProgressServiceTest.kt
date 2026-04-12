@@ -21,6 +21,7 @@ import com.pambrose.common.email.Email
 import com.pambrose.common.exposed.upsert
 import com.readingbat.TestData
 import com.readingbat.common.User
+import com.readingbat.common.nowInstant
 import com.readingbat.kotest.TestDatabase
 import com.readingbat.kotest.TestSupport.initTestProperties
 import com.readingbat.kotest.TestSupport.testModule
@@ -28,8 +29,6 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.ktor.server.testing.testApplication
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
-import org.joda.time.DateTime
-import org.joda.time.DateTimeZone.UTC
 
 class ChallengeProgressServiceTest : StringSpec() {
   init {
@@ -95,8 +94,8 @@ class ChallengeProgressServiceTest : StringSpec() {
                 upsert(conflictIndex = userChallengeInfoIndex) { row ->
                   row[userRef] = user.userDbmsId
                   row[UserChallengeInfoTable.md5] = md5
-                  row[created] = DateTime.now(UTC)
-                  row[updated] = DateTime.now(UTC)
+                  row[created] = nowInstant()
+                  row[updated] = nowInstant()
                   row[allCorrect] = true
                   row[likeDislike] = 0
                   row[answersJson] = "{}"
@@ -134,8 +133,8 @@ class ChallengeProgressServiceTest : StringSpec() {
                 upsert(conflictIndex = userChallengeInfoIndex) { row ->
                   row[userRef] = user.userDbmsId
                   row[UserChallengeInfoTable.md5] = md5
-                  row[created] = DateTime.now(UTC)
-                  row[updated] = DateTime.now(UTC)
+                  row[created] = nowInstant()
+                  row[updated] = nowInstant()
                   row[allCorrect] = false
                   row[likeDislike] = 0
                   row[answersJson] = "{}"

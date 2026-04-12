@@ -26,6 +26,7 @@ import com.readingbat.common.FormFields.RETURN_PARAM
 import com.readingbat.common.SessionActivites.activeSessions
 import com.readingbat.common.SessionActivites.querySessions
 import com.readingbat.common.TwClasses
+import com.readingbat.common.nowInstant
 import com.readingbat.pages.PageUtils.backLink
 import com.readingbat.pages.PageUtils.bodyTitle
 import com.readingbat.pages.PageUtils.headDefault
@@ -47,11 +48,8 @@ import kotlinx.html.table
 import kotlinx.html.td
 import kotlinx.html.th
 import kotlinx.html.tr
-import org.joda.time.DateTime
-import org.joda.time.DateTimeZone.UTC
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
-import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
 
 /**
@@ -122,7 +120,7 @@ internal object SessionsPage {
                   th { +"" }
                   th { +"User Agent" }
                 }
-                val now = DateTime.now(UTC)
+                val now = nowInstant()
                 rows
                   .forEach { row ->
                     tr {
@@ -136,7 +134,7 @@ internal object SessionsPage {
                           +"Not logged in"
                         }
                       }
-                      td { +(now.millis - row.maxDate.millis).milliseconds.format() }
+                      td { +(now - row.maxDate).format() }
                       td { +row.count.toString() }
                       td { +row.ip }
                       td { +row.city }

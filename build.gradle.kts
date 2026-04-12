@@ -9,12 +9,12 @@ plugins {
   application
   `java-library`
 
-  alias(libs.plugins.kotlin.jvm) apply true
+  alias(libs.plugins.kotlin.jvm)
   alias(libs.plugins.kotlin.serialization) apply false
-  alias(libs.plugins.kotlinter) apply true
-  alias(libs.plugins.versions) apply true
   alias(libs.plugins.buildconfig) apply false
-  alias(libs.plugins.dokka) apply true
+  alias(libs.plugins.kotlinter)
+  alias(libs.plugins.versions)
+  alias(libs.plugins.dokka)
   alias(libs.plugins.maven.publish) apply false
   // id("org.jetbrains.kotlinx.kover") version "0.5.0"
 }

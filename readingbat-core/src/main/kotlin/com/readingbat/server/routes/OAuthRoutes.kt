@@ -28,6 +28,7 @@ import com.readingbat.common.OAuthReturnUrl
 import com.readingbat.common.User
 import com.readingbat.common.User.Companion.queryUserByEmail
 import com.readingbat.common.UserPrincipal
+import com.readingbat.common.nowInstant
 import com.readingbat.server.ConfigureOAuth
 import com.readingbat.server.FullName
 import com.readingbat.server.OAuthLinksTable
@@ -238,7 +239,7 @@ private fun findOrCreateOAuthUser(
         (OAuthLinksTable.provider eq provider.providerName) and (OAuthLinksTable.providerId eq providerId)
       }) { row ->
         row[OAuthLinksTable.accessToken] = accessToken
-        row[updated] = org.joda.time.DateTime.now(org.joda.time.DateTimeZone.UTC)
+        row[updated] = nowInstant()
       }
       if (avatarUrl != null) {
         UsersTable.update({ UsersTable.id eq existingUserId }) { row ->

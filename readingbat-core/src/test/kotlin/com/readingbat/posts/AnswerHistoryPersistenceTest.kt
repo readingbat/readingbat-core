@@ -21,6 +21,7 @@ import com.pambrose.common.email.Email
 import com.pambrose.common.exposed.upsert
 import com.readingbat.TestData
 import com.readingbat.common.User
+import com.readingbat.common.nowInstant
 import com.readingbat.kotest.TestDatabase
 import com.readingbat.kotest.TestSupport.initTestProperties
 import com.readingbat.kotest.TestSupport.testModule
@@ -38,8 +39,6 @@ import io.kotest.matchers.shouldBe
 import io.ktor.server.testing.testApplication
 import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
-import org.joda.time.DateTime
-import org.joda.time.DateTimeZone
 
 class AnswerHistoryPersistenceTest : StringSpec() {
   init {
@@ -96,7 +95,7 @@ class AnswerHistoryPersistenceTest : StringSpec() {
                 upsert(conflictIndex = userAnswerHistoryIndex) { row ->
                   row[userRef] = user.userDbmsId
                   row[UserAnswerHistoryTable.md5] = md5
-                  row[updated] = DateTime.now(DateTimeZone.UTC)
+                  row[updated] = nowInstant()
                   row[UserAnswerHistoryTable.invocation] = invocation.value
                   row[correct] = true
                   row[incorrectAttempts] = 2
@@ -142,7 +141,7 @@ class AnswerHistoryPersistenceTest : StringSpec() {
                 upsert(conflictIndex = userAnswerHistoryIndex) { row ->
                   row[userRef] = user.userDbmsId
                   row[UserAnswerHistoryTable.md5] = md5
-                  row[updated] = DateTime.now(DateTimeZone.UTC)
+                  row[updated] = nowInstant()
                   row[UserAnswerHistoryTable.invocation] = invocation.value
                   row[correct] = false
                   row[incorrectAttempts] = 0
@@ -184,7 +183,7 @@ class AnswerHistoryPersistenceTest : StringSpec() {
                 upsert(conflictIndex = userAnswerHistoryIndex) { row ->
                   row[userRef] = user.userDbmsId
                   row[md5] = md5A
-                  row[updated] = DateTime.now(DateTimeZone.UTC)
+                  row[updated] = nowInstant()
                   row[invocation] = "invokeA()"
                   row[correct] = true
                   row[incorrectAttempts] = 0
@@ -193,7 +192,7 @@ class AnswerHistoryPersistenceTest : StringSpec() {
                 upsert(conflictIndex = userAnswerHistoryIndex) { row ->
                   row[userRef] = user.userDbmsId
                   row[md5] = md5B
-                  row[updated] = DateTime.now(DateTimeZone.UTC)
+                  row[updated] = nowInstant()
                   row[invocation] = "invokeB()"
                   row[correct] = false
                   row[incorrectAttempts] = 3
@@ -239,7 +238,7 @@ class AnswerHistoryPersistenceTest : StringSpec() {
                 upsert(conflictIndex = userAnswerHistoryIndex) { row ->
                   row[userRef] = user.userDbmsId
                   row[UserAnswerHistoryTable.md5] = md5
-                  row[updated] = DateTime.now(DateTimeZone.UTC)
+                  row[updated] = nowInstant()
                   row[UserAnswerHistoryTable.invocation] = invocation.value
                   row[correct] = false
                   row[incorrectAttempts] = 1
@@ -256,7 +255,7 @@ class AnswerHistoryPersistenceTest : StringSpec() {
                 upsert(conflictIndex = userAnswerHistoryIndex) { row ->
                   row[userRef] = user.userDbmsId
                   row[UserAnswerHistoryTable.md5] = md5
-                  row[updated] = DateTime.now(DateTimeZone.UTC)
+                  row[updated] = nowInstant()
                   row[UserAnswerHistoryTable.invocation] = invocation.value
                   row[correct] = true
                   row[incorrectAttempts] = 1
@@ -299,7 +298,7 @@ class AnswerHistoryPersistenceTest : StringSpec() {
                 upsert(conflictIndex = userChallengeInfoIndex) { row ->
                   row[userRef] = user.userDbmsId
                   row[md5] = challengeMd5
-                  row[updated] = DateTime.now(DateTimeZone.UTC)
+                  row[updated] = nowInstant()
                   row[allCorrect] = false
                   row[answersJson] = """{"invoke1":"wrong"}"""
                 }
@@ -314,7 +313,7 @@ class AnswerHistoryPersistenceTest : StringSpec() {
                 upsert(conflictIndex = userChallengeInfoIndex) { row ->
                   row[userRef] = user.userDbmsId
                   row[md5] = challengeMd5
-                  row[updated] = DateTime.now(DateTimeZone.UTC)
+                  row[updated] = nowInstant()
                   row[allCorrect] = true
                   row[answersJson] = """{"invoke1":"right"}"""
                 }
@@ -353,7 +352,7 @@ class AnswerHistoryPersistenceTest : StringSpec() {
                 upsert(conflictIndex = userChallengeInfoIndex) { row ->
                   row[userRef] = user.userDbmsId
                   row[md5] = "activity-challenge-md5"
-                  row[updated] = DateTime.now(DateTimeZone.UTC)
+                  row[updated] = nowInstant()
                   row[allCorrect] = false
                   row[answersJson] = "{}"
                 }
@@ -366,7 +365,7 @@ class AnswerHistoryPersistenceTest : StringSpec() {
                 upsert(conflictIndex = userAnswerHistoryIndex) { row ->
                   row[userRef] = user.userDbmsId
                   row[md5] = "activity-invocation-md5"
-                  row[updated] = DateTime.now(DateTimeZone.UTC)
+                  row[updated] = nowInstant()
                   row[invocation] = "test()"
                   row[correct] = false
                   row[incorrectAttempts] = 0

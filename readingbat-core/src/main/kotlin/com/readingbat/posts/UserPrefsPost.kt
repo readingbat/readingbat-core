@@ -30,6 +30,7 @@ import com.readingbat.common.Message
 import com.readingbat.common.User
 import com.readingbat.common.UserPrincipal
 import com.readingbat.common.isValidUser
+import com.readingbat.common.nowInstant
 import com.readingbat.dsl.DataException
 import com.readingbat.dsl.LanguageType.Companion.getLanguageType
 import com.readingbat.dsl.ReadingBatContent
@@ -45,8 +46,6 @@ import io.ktor.server.sessions.sessions
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.jetbrains.exposed.v1.jdbc.update
-import org.joda.time.DateTime
-import org.joda.time.DateTimeZone.UTC
 
 /**
  * Handles POST submissions from the user preferences page.
@@ -81,7 +80,7 @@ internal object UserPrefsPost {
         transaction {
           with(UsersTable) {
             update({ id eq user.userDbmsId }) { row ->
-              row[updated] = DateTime.now(UTC)
+              row[updated] = nowInstant()
               row[defaultLanguage] = it.languageName.value
               user.defaultLanguage = it
             }

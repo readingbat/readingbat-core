@@ -19,7 +19,7 @@ package com.readingbat.server
 
 import org.jetbrains.exposed.v1.core.Index
 import org.jetbrains.exposed.v1.core.dao.id.LongIdTable
-import org.jetbrains.exposed.v1.jodatime.datetime
+import org.jetbrains.exposed.v1.datetime.timestamp
 
 // Exposed ORM table definitions for the ReadingBat PostgreSQL schema.
 //
@@ -44,14 +44,14 @@ val geoInfosUnique = Index(listOf(GeoInfosTable.id), true, "geo_info_unique")
 
 /** Tracks anonymous browser sessions identified by a random session ID cookie. */
 object BrowserSessionsTable : LongIdTable("browser_sessions") {
-  val created = datetime("created")
+  val created = timestamp("created")
   val sessionId = text("session_id")
 }
 
 /** Registered user accounts with salted password hashes, enrolled class code, and default language preference. */
 object UsersTable : LongIdTable("users") {
-  val created = datetime("created")
-  val updated = datetime("updated")
+  val created = timestamp("created")
+  val updated = timestamp("updated")
   val userId = text("user_id")
   val email = text("email")
   val fullName = text("name")
@@ -65,8 +65,8 @@ object UsersTable : LongIdTable("users") {
 
 /** Links OAuth provider identities (GitHub, Google) to local user accounts. */
 object OAuthLinksTable : LongIdTable("oauth_links") {
-  val created = datetime("created")
-  val updated = datetime("updated")
+  val created = timestamp("created")
+  val updated = timestamp("updated")
   val userRef = long("user_ref").references(UsersTable.id)
   val provider = text("provider")
   val providerId = text("provider_id")
@@ -76,8 +76,8 @@ object OAuthLinksTable : LongIdTable("oauth_links") {
 
 /** Maps browser sessions to authenticated users, tracking active class code and previous teacher class code. */
 object UserSessionsTable : LongIdTable("user_sessions") {
-  val created = datetime("created")
-  val updated = datetime("updated")
+  val created = timestamp("created")
+  val updated = timestamp("updated")
   val sessionRef = long("session_ref").references(BrowserSessionsTable.id)
   val userRef = long("user_ref").references(UsersTable.id)
   val activeClassCode = text("active_class_code")
@@ -89,8 +89,8 @@ object UserSessionsTable : LongIdTable("user_sessions") {
  * JSON map of invocation strings to the user's most recent answer for that invocation.
  */
 object UserChallengeInfoTable : LongIdTable("user_challenge_info") {
-  val created = datetime("created")
-  val updated = datetime("updated")
+  val created = timestamp("created")
+  val updated = timestamp("updated")
   val userRef = long("user_ref").references(UsersTable.id)
   val md5 = text("md5")
   val allCorrect = bool("all_correct")
@@ -100,8 +100,8 @@ object UserChallengeInfoTable : LongIdTable("user_challenge_info") {
 
 /** Per-invocation answer history for a user, tracking correctness and the number of incorrect attempts. */
 object UserAnswerHistoryTable : LongIdTable("user_answer_history") {
-  val created = datetime("created")
-  val updated = datetime("updated")
+  val created = timestamp("created")
+  val updated = timestamp("updated")
   val userRef = long("user_ref").references(UsersTable.id)
   val md5 = text("md5")
   val invocation = text("invocation")
@@ -113,8 +113,8 @@ object UserAnswerHistoryTable : LongIdTable("user_answer_history") {
 /** Teacher-created classes, each identified by a unique [classCode]. */
 @Suppress("unused")
 object ClassesTable : LongIdTable("classes") {
-  val created = datetime("created")
-  val updated = datetime("updated")
+  val created = timestamp("created")
+  val updated = timestamp("updated")
   val userRef = long("user_ref").references(UsersTable.id)
   val classCode = text("class_code")
   val description = text("description")
@@ -122,14 +122,14 @@ object ClassesTable : LongIdTable("classes") {
 
 /** Junction table linking students (users) to the classes they are enrolled in. */
 object EnrolleesTable : LongIdTable("enrollees") {
-  val created = datetime("created")
+  val created = timestamp("created")
   val classesRef = long("classes_ref").references(ClassesTable.id)
   val userRef = long("user_ref").references(UsersTable.id)
 }
 
 /** Cached IP geolocation data fetched from the ipgeolocation.io API. */
 object GeoInfosTable : LongIdTable("geo_info") {
-  val created = datetime("created")
+  val created = timestamp("created")
   val ip = text("ip")
   val json = text("json")
   val continentCode = text("continent_code")
@@ -156,7 +156,7 @@ object GeoInfosTable : LongIdTable("geo_info") {
 
 /** Logs each HTTP request with session, user, geolocation, verb, path, and response duration. */
 object ServerRequestsTable : LongIdTable("server_requests") {
-  val created = datetime("created")
+  val created = timestamp("created")
   val requestId = text("request_id")
   val sessionRef = long("session_ref").references(BrowserSessionsTable.id)
   val userRef = long("user_ref").references(UsersTable.id)

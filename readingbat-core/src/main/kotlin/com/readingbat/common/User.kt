@@ -80,8 +80,6 @@ import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.jetbrains.exposed.v1.jdbc.update
-import org.joda.time.DateTime
-import org.joda.time.DateTimeZone.UTC
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.contracts.contract
 import kotlin.time.measureTime
@@ -275,7 +273,7 @@ class User {
   private fun assignEnrolledClassCode(classCode: ClassCode) =
     with(UsersTable) {
       update({ id eq userDbmsId }) { row ->
-        row[updated] = DateTime.now(UTC)
+        row[updated] = nowInstant()
         row[enrolledClassCode] = classCode.classCode
         this@User.enrolledClassCode = classCode
       }
@@ -359,7 +357,7 @@ class User {
         upsert(conflictIndex = userSessionIndex) { row ->
           row[sessionRef] = queryOrCreateSessionDbmsId()
           row[userRef] = userDbmsId
-          row[updated] = DateTime.now(UTC)
+          row[updated] = nowInstant()
           row[activeClassCode] = classCode.classCode
           if (resetPreviousClassCode)
             row[previousTeacherClassCode] = classCode.classCode
@@ -374,7 +372,7 @@ class User {
         upsert(conflictIndex = userSessionIndex) { row ->
           row[sessionRef] = queryOrCreateSessionDbmsId()
           row[userRef] = userDbmsId
-          row[updated] = DateTime.now(UTC)
+          row[updated] = nowInstant()
           row[activeClassCode] = DISABLED_CLASS_CODE.classCode
           row[previousTeacherClassCode] = DISABLED_CLASS_CODE.classCode
         }
@@ -449,7 +447,7 @@ class User {
           logger.info { "Assigning ${enrollee.email} to $DISABLED_CLASS_CODE" }
           with(UsersTable) {
             update({ id eq enrollee.userDbmsId }) { row ->
-              row[updated] = DateTime.now(UTC)
+              row[updated] = nowInstant()
               row[enrolledClassCode] = DISABLED_CLASS_CODE.classCode
             }
           }
@@ -518,7 +516,7 @@ class User {
             upsert(conflictIndex = userAnswerHistoryIndex) { row ->
               row[userRef] = userDbmsId
               row[md5] = challenge.md5(result.invocation)
-              row[updated] = DateTime.now(UTC)
+              row[updated] = nowInstant()
               row[invocation] = history.invocation.value
               row[correct] = false
               row[incorrectAttempts] = 0
