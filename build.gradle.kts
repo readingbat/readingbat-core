@@ -38,7 +38,7 @@ allprojects {
   apply(plugin = "com.github.gmazzo.buildconfig")
   apply(plugin = "com.github.ben-manes.versions")
 
-  extra["versionStr"] = findProperty("overrideVersion")?.toString() ?: "3.1.2"
+  extra["versionStr"] = findProperty("overrideVersion")?.toString() ?: "3.1.3"
   group = "com.readingbat"
   description = "ReadingBat Core"
   version = versionStr
@@ -194,7 +194,7 @@ fun Project.configureTesting() {
     testLogging {
       events = setOf(TestLogEvent.PASSED, TestLogEvent.SKIPPED, TestLogEvent.FAILED)
       exceptionFormat = TestExceptionFormat.FULL
-      showStandardStreams = true
+      showStandardStreams = false
     }
   }
 }

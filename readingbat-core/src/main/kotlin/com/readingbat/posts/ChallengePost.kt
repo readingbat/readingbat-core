@@ -167,6 +167,12 @@ enum class AnswerStatus(val value: Int) {
   }
 }
 
+enum class LikeDislike(val value: Short) {
+  NONE(0),
+  LIKE(1),
+  DISLIKE(2),
+}
+
 internal class ChallengeNames(paramMap: Map<String, String>) {
   val languageName = LanguageName(paramMap[LANG_SRC] ?: error("Missing language"))
   val groupName = GroupName(paramMap[GROUP_SRC] ?: error("Missing group name"))
@@ -346,25 +352,19 @@ internal object ChallengePost {
 
     val likeArg = paramMap[LIKE_DESC]?.trim() ?: error("Missing like/dislike argument")
 
-    // Return values: 0 = not answered, 1 = like selected, 2 = dislike selected
     val likeVal =
       when (likeArg) {
-        LIKE_CLEAR -> 1
-
-        LIKE_COLOR,
-        DISLIKE_COLOR,
-          -> 0
-
-        DISLIKE_CLEAR -> 2
-
+        LIKE_CLEAR -> LikeDislike.LIKE
+        DISLIKE_CLEAR -> LikeDislike.DISLIKE
+        LIKE_COLOR, DISLIKE_COLOR -> LikeDislike.NONE
         else -> error("Invalid like/dislike argument: $likeArg")
       }
 
     logger.debug { "Like/dislike arg -- response: $likeArg -- $likeVal" }
 
-    saveLikeDislike(user, names, likeVal)
+    saveLikeDislike(user, names, likeVal.value.toInt())
 
-    call.respondText(likeVal.toString())
+    call.respondText(likeVal.value.toString())
   }
 
   private suspend fun saveChallengeAnswers(

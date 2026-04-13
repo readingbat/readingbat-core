@@ -18,7 +18,6 @@
 package com.readingbat.common
 
 import com.pambrose.common.email.Email
-import com.readingbat.TestData
 import com.readingbat.common.ClassCode.Companion.DISABLED_CLASS_CODE
 import com.readingbat.common.ClassCodeRepository.deleteClassCode
 import com.readingbat.common.ClassCodeRepository.fetchClassDesc
@@ -26,288 +25,203 @@ import com.readingbat.common.ClassCodeRepository.fetchClassTeacherId
 import com.readingbat.common.ClassCodeRepository.fetchEnrollees
 import com.readingbat.common.ClassCodeRepository.isNotValid
 import com.readingbat.common.ClassCodeRepository.isValid
-import com.readingbat.kotest.TestDatabase
-import com.readingbat.kotest.TestSupport.initTestProperties
-import com.readingbat.kotest.TestSupport.testModule
 import com.readingbat.server.FullName
+import com.readingbat.withTestApp
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
-import io.ktor.server.testing.testApplication
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 
 class ClassManagementTest : StringSpec() {
   init {
     "addClassCode should create a class and classCount should reflect it" {
-      initTestProperties()
-      TestDatabase.connectAndMigrate()
+      withTestApp {
+        val teacher =
+          User.createOAuthUser(
+            name = FullName("Teacher ClassMgmt"),
+            emailVal = Email("teacher-classmgmt@test.com"),
+            provider = OAuthProvider.GITHUB,
+            providerId = "teacher-classmgmt-001",
+          )
 
-      TestData.readTestContent()
-        .also { testContent ->
-          testApplication {
-            application { testModule(testContent) }
+        teacher.classCount() shouldBe 0
 
-            val teacher =
-              User.createOAuthUser(
-                name = FullName("Teacher ClassMgmt"),
-                emailVal = Email("teacher-classmgmt@test.com"),
-                provider = "github",
-                providerId = "teacher-classmgmt-001",
-                accessToken = "token-teacher-classmgmt",
-              )
+        val classCode = ClassCode.newClassCode()
+        teacher.addClassCode(classCode, "Intro to Java")
 
-            teacher.classCount() shouldBe 0
-
-            val classCode = ClassCode.newClassCode()
-            teacher.addClassCode(classCode, "Intro to Java")
-
-            teacher.classCount() shouldBe 1
-            teacher.classCodes() shouldContain classCode
-          }
-        }
+        teacher.classCount() shouldBe 1
+        teacher.classCodes() shouldContain classCode
+      }
     }
 
     "classCodes should list all classes created by teacher" {
-      initTestProperties()
-      TestDatabase.connectAndMigrate()
+      withTestApp {
+        val teacher =
+          User.createOAuthUser(
+            name = FullName("Teacher MultiClass"),
+            emailVal = Email("teacher-multiclass@test.com"),
+            provider = OAuthProvider.GITHUB,
+            providerId = "teacher-multiclass-001",
+          )
 
-      TestData.readTestContent()
-        .also { testContent ->
-          testApplication {
-            application { testModule(testContent) }
+        val classA = ClassCode.newClassCode()
+        val classB = ClassCode.newClassCode()
+        val classC = ClassCode.newClassCode()
 
-            val teacher =
-              User.createOAuthUser(
-                name = FullName("Teacher MultiClass"),
-                emailVal = Email("teacher-multiclass@test.com"),
-                provider = "github",
-                providerId = "teacher-multiclass-001",
-                accessToken = "token-teacher-multiclass",
-              )
+        teacher.addClassCode(classA, "Class A")
+        teacher.addClassCode(classB, "Class B")
+        teacher.addClassCode(classC, "Class C")
 
-            val classA = ClassCode.newClassCode()
-            val classB = ClassCode.newClassCode()
-            val classC = ClassCode.newClassCode()
-
-            teacher.addClassCode(classA, "Class A")
-            teacher.addClassCode(classB, "Class B")
-            teacher.addClassCode(classC, "Class C")
-
-            val codes = teacher.classCodes()
-            codes shouldHaveSize 3
-            codes shouldContain classA
-            codes shouldContain classB
-            codes shouldContain classC
-          }
-        }
+        val codes = teacher.classCodes()
+        codes shouldHaveSize 3
+        codes shouldContain classA
+        codes shouldContain classB
+        codes shouldContain classC
+      }
     }
 
     "isValid and isNotValid should reflect class existence" {
-      initTestProperties()
-      TestDatabase.connectAndMigrate()
+      withTestApp {
+        val teacher =
+          User.createOAuthUser(
+            name = FullName("Teacher Valid"),
+            emailVal = Email("teacher-valid@test.com"),
+            provider = OAuthProvider.GITHUB,
+            providerId = "teacher-valid-001",
+          )
 
-      TestData.readTestContent()
-        .also { testContent ->
-          testApplication {
-            application { testModule(testContent) }
+        val classCode = ClassCode.newClassCode()
+        teacher.addClassCode(classCode, "Valid Class")
 
-            val teacher =
-              User.createOAuthUser(
-                name = FullName("Teacher Valid"),
-                emailVal = Email("teacher-valid@test.com"),
-                provider = "github",
-                providerId = "teacher-valid-001",
-                accessToken = "token-teacher-valid",
-              )
+        classCode.isValid() shouldBe true
+        classCode.isNotValid() shouldBe false
 
-            val classCode = ClassCode.newClassCode()
-            teacher.addClassCode(classCode, "Valid Class")
-
-            classCode.isValid() shouldBe true
-            classCode.isNotValid() shouldBe false
-
-            ClassCode("nonexistent-class-code").isValid() shouldBe false
-          }
-        }
+        ClassCode("nonexistent-class-code").isValid() shouldBe false
+      }
     }
 
     "fetchClassDesc should return the class description" {
-      initTestProperties()
-      TestDatabase.connectAndMigrate()
+      withTestApp {
+        val teacher =
+          User.createOAuthUser(
+            name = FullName("Teacher Desc"),
+            emailVal = Email("teacher-desc@test.com"),
+            provider = OAuthProvider.GITHUB,
+            providerId = "teacher-desc-001",
+          )
 
-      TestData.readTestContent()
-        .also { testContent ->
-          testApplication {
-            application { testModule(testContent) }
+        val classCode = ClassCode.newClassCode()
+        teacher.addClassCode(classCode, "Advanced Python")
 
-            val teacher =
-              User.createOAuthUser(
-                name = FullName("Teacher Desc"),
-                emailVal = Email("teacher-desc@test.com"),
-                provider = "github",
-                providerId = "teacher-desc-001",
-                accessToken = "token-teacher-desc",
-              )
-
-            val classCode = ClassCode.newClassCode()
-            teacher.addClassCode(classCode, "Advanced Python")
-
-            classCode.fetchClassDesc() shouldBe "Advanced Python"
-            classCode.fetchClassDesc(quoted = true) shouldBe "\"Advanced Python\""
-          }
-        }
+        classCode.fetchClassDesc() shouldBe "Advanced Python"
+        classCode.fetchClassDesc(quoted = true) shouldBe "\"Advanced Python\""
+      }
     }
 
     "fetchClassTeacherId should return the teacher userId" {
-      initTestProperties()
-      TestDatabase.connectAndMigrate()
+      withTestApp {
+        val teacher =
+          User.createOAuthUser(
+            name = FullName("Teacher TeacherId"),
+            emailVal = Email("teacher-teacherid@test.com"),
+            provider = OAuthProvider.GITHUB,
+            providerId = "teacher-teacherid-001",
+          )
 
-      TestData.readTestContent()
-        .also { testContent ->
-          testApplication {
-            application { testModule(testContent) }
+        val classCode = ClassCode.newClassCode()
+        teacher.addClassCode(classCode, "TeacherId Test Class")
 
-            val teacher =
-              User.createOAuthUser(
-                name = FullName("Teacher TeacherId"),
-                emailVal = Email("teacher-teacherid@test.com"),
-                provider = "github",
-                providerId = "teacher-teacherid-001",
-                accessToken = "token-teacher-teacherid",
-              )
-
-            val classCode = ClassCode.newClassCode()
-            teacher.addClassCode(classCode, "TeacherId Test Class")
-
-            classCode.fetchClassTeacherId() shouldBe teacher.userId
-          }
-        }
+        classCode.fetchClassTeacherId() shouldBe teacher.userId
+      }
     }
 
     "fetchEnrollees should list enrolled students" {
-      initTestProperties()
-      TestDatabase.connectAndMigrate()
+      withTestApp {
+        val teacher =
+          User.createOAuthUser(
+            name = FullName("Teacher Enrollees"),
+            emailVal = Email("teacher-enrollees@test.com"),
+            provider = OAuthProvider.GITHUB,
+            providerId = "teacher-enrollees-001",
+          )
 
-      TestData.readTestContent()
-        .also { testContent ->
-          testApplication {
-            application { testModule(testContent) }
+        val classCode = ClassCode.newClassCode()
+        teacher.addClassCode(classCode, "Enrollees Test")
 
-            val teacher =
-              User.createOAuthUser(
-                name = FullName("Teacher Enrollees"),
-                emailVal = Email("teacher-enrollees@test.com"),
-                provider = "github",
-                providerId = "teacher-enrollees-001",
-                accessToken = "token-teacher-enrollees",
-              )
+        classCode.fetchEnrollees().shouldBeEmpty()
 
-            val classCode = ClassCode.newClassCode()
-            teacher.addClassCode(classCode, "Enrollees Test")
+        val student1 =
+          User.createOAuthUser(
+            name = FullName("Student One"),
+            emailVal = Email("student-one-enrollees@test.com"),
+            provider = OAuthProvider.GITHUB,
+            providerId = "student-one-enrollees-001",
+          )
+        val student2 =
+          User.createOAuthUser(
+            name = FullName("Student Two"),
+            emailVal = Email("student-two-enrollees@test.com"),
+            provider = OAuthProvider.GITHUB,
+            providerId = "student-two-enrollees-001",
+          )
 
-            classCode.fetchEnrollees().shouldBeEmpty()
+        student1.enrollInClass(classCode)
+        student2.enrollInClass(classCode)
 
-            val student1 =
-              User.createOAuthUser(
-                name = FullName("Student One"),
-                emailVal = Email("student-one-enrollees@test.com"),
-                provider = "github",
-                providerId = "student-one-enrollees-001",
-                accessToken = "token-student-one-enrollees",
-              )
-            val student2 =
-              User.createOAuthUser(
-                name = FullName("Student Two"),
-                emailVal = Email("student-two-enrollees@test.com"),
-                provider = "github",
-                providerId = "student-two-enrollees-001",
-                accessToken = "token-student-two-enrollees",
-              )
-
-            student1.enrollInClass(classCode)
-            student2.enrollInClass(classCode)
-
-            val enrollees = classCode.fetchEnrollees()
-            enrollees shouldHaveSize 2
-          }
-        }
+        val enrollees = classCode.fetchEnrollees()
+        enrollees shouldHaveSize 2
+      }
     }
 
     "isUniqueClassDesc should detect duplicate descriptions" {
-      initTestProperties()
-      TestDatabase.connectAndMigrate()
+      withTestApp {
+        val teacher =
+          User.createOAuthUser(
+            name = FullName("Teacher Unique"),
+            emailVal = Email("teacher-unique@test.com"),
+            provider = OAuthProvider.GITHUB,
+            providerId = "teacher-unique-001",
+          )
 
-      TestData.readTestContent()
-        .also { testContent ->
-          testApplication {
-            application { testModule(testContent) }
+        teacher.isUniqueClassDesc("Unique Class Name") shouldBe true
 
-            val teacher =
-              User.createOAuthUser(
-                name = FullName("Teacher Unique"),
-                emailVal = Email("teacher-unique@test.com"),
-                provider = "github",
-                providerId = "teacher-unique-001",
-                accessToken = "token-teacher-unique",
-              )
+        val classCode = ClassCode.newClassCode()
+        teacher.addClassCode(classCode, "Unique Class Name")
 
-            teacher.isUniqueClassDesc("Unique Class Name") shouldBe true
-
-            val classCode = ClassCode.newClassCode()
-            teacher.addClassCode(classCode, "Unique Class Name")
-
-            teacher.isUniqueClassDesc("Unique Class Name") shouldBe false
-            teacher.isUniqueClassDesc("Different Class Name") shouldBe true
-          }
-        }
+        teacher.isUniqueClassDesc("Unique Class Name") shouldBe false
+        teacher.isUniqueClassDesc("Different Class Name") shouldBe true
+      }
     }
 
     "deleteClassCode should remove the class" {
-      initTestProperties()
-      TestDatabase.connectAndMigrate()
+      withTestApp {
+        val teacher =
+          User.createOAuthUser(
+            name = FullName("Teacher DeleteClass"),
+            emailVal = Email("teacher-deleteclass@test.com"),
+            provider = OAuthProvider.GITHUB,
+            providerId = "teacher-deleteclass-001",
+          )
 
-      TestData.readTestContent()
-        .also { testContent ->
-          testApplication {
-            application { testModule(testContent) }
+        val classCode = ClassCode.newClassCode()
+        teacher.addClassCode(classCode, "Doomed Class")
 
-            val teacher =
-              User.createOAuthUser(
-                name = FullName("Teacher DeleteClass"),
-                emailVal = Email("teacher-deleteclass@test.com"),
-                provider = "github",
-                providerId = "teacher-deleteclass-001",
-                accessToken = "token-teacher-deleteclass",
-              )
+        classCode.isValid() shouldBe true
 
-            val classCode = ClassCode.newClassCode()
-            teacher.addClassCode(classCode, "Doomed Class")
-
-            classCode.isValid() shouldBe true
-
-            transaction {
-              classCode.deleteClassCode()
-            }
-
-            classCode.isValid() shouldBe false
-          }
+        transaction {
+          classCode.deleteClassCode()
         }
+
+        classCode.isValid() shouldBe false
+      }
     }
 
     "DISABLED_CLASS_CODE fetchEnrollees should return empty list" {
-      initTestProperties()
-      TestDatabase.connectAndMigrate()
-
-      TestData.readTestContent()
-        .also { testContent ->
-          testApplication {
-            application { testModule(testContent) }
-
-            DISABLED_CLASS_CODE.fetchEnrollees().shouldBeEmpty()
-          }
-        }
+      withTestApp {
+        DISABLED_CLASS_CODE.fetchEnrollees().shouldBeEmpty()
+      }
     }
   }
 }

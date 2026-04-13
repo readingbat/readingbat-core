@@ -58,8 +58,10 @@ internal object ServerUtils {
 
   fun RoutingContext.queryParam(key: String, default: String = "") = call.request.queryParameters[key] ?: default
 
-  fun safeRedirectPath(path: String): String =
-    if (path.startsWith("/") && !path.startsWith("//")) path else "/"
+  fun safeRedirectPath(path: String): String {
+    val normalized = path.replace('\\', '/')
+    return if (normalized.startsWith("/") && !normalized.startsWith("//")) normalized else "/"
+  }
 
   fun RoutingContext.fetchUser(): User? =
     call.userPrincipal?.userId?.toUser(call.browserSession)

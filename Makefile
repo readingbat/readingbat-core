@@ -36,7 +36,7 @@ run:
 	./gradlew run
 
 tests:
-	./gradlew check
+	./gradlew check --rerun-tasks
 
 remote-tests:
 	TEST_BASE_URL=https://readingbat.com ./gradlew :readingbat-core:test --tests "PlaywrightEndpointTest"
@@ -56,8 +56,7 @@ dbvalidate:
 	./gradlew flywayValidate
 
 lint:
-	./gradlew lintKotlinMain
-	./gradlew lintKotlinTest
+	./gradlew lintKotlinMain lintKotlinTest
 
 test:
 	~/node_modules/.bin/cypress open

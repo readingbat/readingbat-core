@@ -18,7 +18,6 @@
 package com.readingbat.common
 
 import com.pambrose.common.email.Email
-import com.readingbat.TestData
 import com.readingbat.common.ClassCode.Companion.DISABLED_CLASS_CODE
 import com.readingbat.common.ClassCodeRepository.addEnrollee
 import com.readingbat.common.ClassCodeRepository.deleteClassCode
@@ -29,17 +28,14 @@ import com.readingbat.common.ClassCodeRepository.isNotValid
 import com.readingbat.common.ClassCodeRepository.isValid
 import com.readingbat.common.ClassCodeRepository.removeEnrollee
 import com.readingbat.common.ClassCodeRepository.toDisplayString
-import com.readingbat.kotest.TestDatabase
-import com.readingbat.kotest.TestSupport.initTestProperties
-import com.readingbat.kotest.TestSupport.testModule
 import com.readingbat.server.FullName
+import com.readingbat.withTestApp
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldNotBeEmpty
-import io.ktor.server.testing.testApplication
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 
 class ClassCodeRepositoryTest : StringSpec() {
@@ -59,220 +55,149 @@ class ClassCodeRepositoryTest : StringSpec() {
     }
 
     "isValid returns false for nonexistent class code" {
-      initTestProperties()
-      TestDatabase.connectAndMigrate()
-
-      TestData.readTestContent()
-        .also { testContent ->
-          testApplication {
-            application { testModule(testContent) }
-
-            ClassCode("nonexistent-repo-test").isValid() shouldBe false
-            ClassCode("nonexistent-repo-test").isNotValid() shouldBe true
-          }
-        }
+      withTestApp {
+        ClassCode("nonexistent-repo-test").isValid() shouldBe false
+        ClassCode("nonexistent-repo-test").isNotValid() shouldBe true
+      }
     }
 
     "isValid returns true for existing class code" {
-      initTestProperties()
-      TestDatabase.connectAndMigrate()
+      withTestApp {
+        val teacher =
+          User.createOAuthUser(
+            name = FullName("Teacher RepoValid"),
+            emailVal = Email("teacher-repovalid@test.com"),
+            provider = OAuthProvider.GITHUB,
+            providerId = "teacher-repovalid-001",
+          )
 
-      TestData.readTestContent()
-        .also { testContent ->
-          testApplication {
-            application { testModule(testContent) }
+        val classCode = ClassCode.newClassCode()
+        teacher.addClassCode(classCode, "Repo Valid Class")
 
-            val teacher =
-              User.createOAuthUser(
-                name = FullName("Teacher RepoValid"),
-                emailVal = Email("teacher-repovalid@test.com"),
-                provider = "github",
-                providerId = "teacher-repovalid-001",
-                accessToken = "token-teacher-repovalid",
-              )
-
-            val classCode = ClassCode.newClassCode()
-            teacher.addClassCode(classCode, "Repo Valid Class")
-
-            classCode.isValid() shouldBe true
-            classCode.isNotValid() shouldBe false
-          }
-        }
+        classCode.isValid() shouldBe true
+        classCode.isNotValid() shouldBe false
+      }
     }
 
     "fetchClassDesc returns description via repository extension" {
-      initTestProperties()
-      TestDatabase.connectAndMigrate()
+      withTestApp {
+        val teacher =
+          User.createOAuthUser(
+            name = FullName("Teacher RepoDesc"),
+            emailVal = Email("teacher-repodesc@test.com"),
+            provider = OAuthProvider.GITHUB,
+            providerId = "teacher-repodesc-001",
+          )
 
-      TestData.readTestContent()
-        .also { testContent ->
-          testApplication {
-            application { testModule(testContent) }
+        val classCode = ClassCode.newClassCode()
+        teacher.addClassCode(classCode, "Repository Test Class")
 
-            val teacher =
-              User.createOAuthUser(
-                name = FullName("Teacher RepoDesc"),
-                emailVal = Email("teacher-repodesc@test.com"),
-                provider = "github",
-                providerId = "teacher-repodesc-001",
-                accessToken = "token-teacher-repodesc",
-              )
-
-            val classCode = ClassCode.newClassCode()
-            teacher.addClassCode(classCode, "Repository Test Class")
-
-            classCode.fetchClassDesc() shouldBe "Repository Test Class"
-            classCode.fetchClassDesc(quoted = true) shouldBe "\"Repository Test Class\""
-          }
-        }
+        classCode.fetchClassDesc() shouldBe "Repository Test Class"
+        classCode.fetchClassDesc(quoted = true) shouldBe "\"Repository Test Class\""
+      }
     }
 
     "toDisplayString returns formatted description with class code" {
-      initTestProperties()
-      TestDatabase.connectAndMigrate()
+      withTestApp {
+        val teacher =
+          User.createOAuthUser(
+            name = FullName("Teacher RepoDisplay"),
+            emailVal = Email("teacher-repodisplay@test.com"),
+            provider = OAuthProvider.GITHUB,
+            providerId = "teacher-repodisplay-001",
+          )
 
-      TestData.readTestContent()
-        .also { testContent ->
-          testApplication {
-            application { testModule(testContent) }
+        val classCode = ClassCode.newClassCode()
+        teacher.addClassCode(classCode, "Display Test")
 
-            val teacher =
-              User.createOAuthUser(
-                name = FullName("Teacher RepoDisplay"),
-                emailVal = Email("teacher-repodisplay@test.com"),
-                provider = "github",
-                providerId = "teacher-repodisplay-001",
-                accessToken = "token-teacher-repodisplay",
-              )
-
-            val classCode = ClassCode.newClassCode()
-            teacher.addClassCode(classCode, "Display Test")
-
-            val display = classCode.toDisplayString()
-            display shouldContain "Display Test"
-            display shouldContain classCode.classCode
-          }
-        }
+        val display = classCode.toDisplayString()
+        display shouldContain "Display Test"
+        display shouldContain classCode.classCode
+      }
     }
 
     "fetchClassTeacherId returns teacher userId" {
-      initTestProperties()
-      TestDatabase.connectAndMigrate()
+      withTestApp {
+        val teacher =
+          User.createOAuthUser(
+            name = FullName("Teacher RepoTeacher"),
+            emailVal = Email("teacher-repoteacher@test.com"),
+            provider = OAuthProvider.GITHUB,
+            providerId = "teacher-repoteacher-001",
+          )
 
-      TestData.readTestContent()
-        .also { testContent ->
-          testApplication {
-            application { testModule(testContent) }
+        val classCode = ClassCode.newClassCode()
+        teacher.addClassCode(classCode, "Teacher Id Test")
 
-            val teacher =
-              User.createOAuthUser(
-                name = FullName("Teacher RepoTeacher"),
-                emailVal = Email("teacher-repoteacher@test.com"),
-                provider = "github",
-                providerId = "teacher-repoteacher-001",
-                accessToken = "token-teacher-repoteacher",
-              )
-
-            val classCode = ClassCode.newClassCode()
-            teacher.addClassCode(classCode, "Teacher Id Test")
-
-            classCode.fetchClassTeacherId() shouldBe teacher.userId
-            classCode.fetchClassTeacherId().shouldNotBeEmpty()
-          }
-        }
+        classCode.fetchClassTeacherId() shouldBe teacher.userId
+        classCode.fetchClassTeacherId().shouldNotBeEmpty()
+      }
     }
 
     "addEnrollee and removeEnrollee work via repository extensions" {
-      initTestProperties()
-      TestDatabase.connectAndMigrate()
+      withTestApp {
+        val teacher =
+          User.createOAuthUser(
+            name = FullName("Teacher RepoEnrollee"),
+            emailVal = Email("teacher-repoenrollee@test.com"),
+            provider = OAuthProvider.GITHUB,
+            providerId = "teacher-repoenrollee-001",
+          )
 
-      TestData.readTestContent()
-        .also { testContent ->
-          testApplication {
-            application { testModule(testContent) }
+        val classCode = ClassCode.newClassCode()
+        teacher.addClassCode(classCode, "Enrollee Repo Test")
 
-            val teacher =
-              User.createOAuthUser(
-                name = FullName("Teacher RepoEnrollee"),
-                emailVal = Email("teacher-repoenrollee@test.com"),
-                provider = "github",
-                providerId = "teacher-repoenrollee-001",
-                accessToken = "token-teacher-repoenrollee",
-              )
+        val student =
+          User.createOAuthUser(
+            name = FullName("Student RepoEnrollee"),
+            emailVal = Email("student-repoenrollee@test.com"),
+            provider = OAuthProvider.GITHUB,
+            providerId = "student-repoenrollee-001",
+          )
 
-            val classCode = ClassCode.newClassCode()
-            teacher.addClassCode(classCode, "Enrollee Repo Test")
+        classCode.fetchEnrollees().shouldBeEmpty()
 
-            val student =
-              User.createOAuthUser(
-                name = FullName("Student RepoEnrollee"),
-                emailVal = Email("student-repoenrollee@test.com"),
-                provider = "github",
-                providerId = "student-repoenrollee-001",
-                accessToken = "token-student-repoenrollee",
-              )
-
-            classCode.fetchEnrollees().shouldBeEmpty()
-
-            transaction {
-              classCode.addEnrollee(student)
-            }
-
-            classCode.fetchEnrollees() shouldHaveSize 1
-
-            transaction {
-              classCode.removeEnrollee(student)
-            }
-
-            classCode.fetchEnrollees().shouldBeEmpty()
-          }
+        transaction {
+          classCode.addEnrollee(student)
         }
+
+        classCode.fetchEnrollees() shouldHaveSize 1
+
+        transaction {
+          classCode.removeEnrollee(student)
+        }
+
+        classCode.fetchEnrollees().shouldBeEmpty()
+      }
     }
 
     "deleteClassCode removes the class via repository extension" {
-      initTestProperties()
-      TestDatabase.connectAndMigrate()
+      withTestApp {
+        val teacher =
+          User.createOAuthUser(
+            name = FullName("Teacher RepoDelete"),
+            emailVal = Email("teacher-repodelete@test.com"),
+            provider = OAuthProvider.GITHUB,
+            providerId = "teacher-repodelete-001",
+          )
 
-      TestData.readTestContent()
-        .also { testContent ->
-          testApplication {
-            application { testModule(testContent) }
+        val classCode = ClassCode.newClassCode()
+        teacher.addClassCode(classCode, "Delete Repo Test")
 
-            val teacher =
-              User.createOAuthUser(
-                name = FullName("Teacher RepoDelete"),
-                emailVal = Email("teacher-repodelete@test.com"),
-                provider = "github",
-                providerId = "teacher-repodelete-001",
-                accessToken = "token-teacher-repodelete",
-              )
+        classCode.isValid() shouldBe true
 
-            val classCode = ClassCode.newClassCode()
-            teacher.addClassCode(classCode, "Delete Repo Test")
-
-            classCode.isValid() shouldBe true
-
-            transaction {
-              classCode.deleteClassCode()
-            }
-
-            classCode.isValid() shouldBe false
-          }
+        transaction {
+          classCode.deleteClassCode()
         }
+
+        classCode.isValid() shouldBe false
+      }
     }
 
     "DISABLED_CLASS_CODE fetchEnrollees returns empty list" {
-      initTestProperties()
-      TestDatabase.connectAndMigrate()
-
-      TestData.readTestContent()
-        .also { testContent ->
-          testApplication {
-            application { testModule(testContent) }
-
-            DISABLED_CLASS_CODE.fetchEnrollees().shouldBeEmpty()
-          }
-        }
+      withTestApp {
+        DISABLED_CLASS_CODE.fetchEnrollees().shouldBeEmpty()
+      }
     }
   }
 }

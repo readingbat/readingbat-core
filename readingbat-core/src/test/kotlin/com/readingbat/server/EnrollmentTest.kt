@@ -18,61 +18,48 @@
 package com.readingbat.server
 
 import com.pambrose.common.email.Email
-import com.readingbat.TestData
 import com.readingbat.common.ClassCode
+import com.readingbat.common.OAuthProvider
 import com.readingbat.common.User
-import com.readingbat.kotest.TestDatabase
-import com.readingbat.kotest.TestSupport.initTestProperties
-import com.readingbat.kotest.TestSupport.testModule
+import com.readingbat.withTestApp
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
-import io.ktor.server.testing.testApplication
 
 class EnrollmentTest : StringSpec() {
   init {
     "isEnrolled should only match the enrolled class" {
-      initTestProperties()
-      TestDatabase.connectAndMigrate()
+      withTestApp {
+        // Create a teacher who owns both classes
+        val teacher =
+          User.createOAuthUser(
+            name = FullName("Teacher"),
+            emailVal = Email("teacher@test.com"),
+            provider = OAuthProvider.GITHUB,
+            providerId = "teacher-001",
+          )
 
-      TestData.readTestContent()
-        .also { testContent ->
-          testApplication {
-            application { testModule(testContent) }
+        // Create two distinct classes
+        val classA = ClassCode.newClassCode()
+        val classB = ClassCode.newClassCode()
+        teacher.addClassCode(classA, "Class A")
+        teacher.addClassCode(classB, "Class B")
 
-            // Create a teacher who owns both classes
-            val teacher =
-              User.createOAuthUser(
-                name = FullName("Teacher"),
-                emailVal = Email("teacher@test.com"),
-                provider = "github",
-                providerId = "teacher-001",
-                accessToken = "token-teacher",
-              )
+        // Create a student
+        val student =
+          User.createOAuthUser(
+            name = FullName("Student"),
+            emailVal = Email("student@test.com"),
+            provider = OAuthProvider.GITHUB,
+            providerId = "student-001",
+          )
 
-            // Create two distinct classes
-            val classA = ClassCode.newClassCode()
-            val classB = ClassCode.newClassCode()
-            teacher.addClassCode(classA, "Class A")
-            teacher.addClassCode(classB, "Class B")
+        // Enroll student in class A only
+        student.enrollInClass(classA)
 
-            // Create a student
-            val student =
-              User.createOAuthUser(
-                name = FullName("Student"),
-                emailVal = Email("student@test.com"),
-                provider = "github",
-                providerId = "student-001",
-                accessToken = "token-student",
-              )
-
-            // Enroll student in class A only
-            student.enrollInClass(classA)
-
-            // Verify enrollment: student is in classA but NOT in classB
-            student.isEnrolled(classA) shouldBe true
-            student.isEnrolled(classB) shouldBe false
-          }
-        }
+        // Verify enrollment: student is in classA but NOT in classB
+        student.isEnrolled(classA) shouldBe true
+        student.isEnrolled(classB) shouldBe false
+      }
     }
   }
 }

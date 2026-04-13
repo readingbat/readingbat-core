@@ -18,197 +18,138 @@
 package com.readingbat.common
 
 import com.pambrose.common.email.Email
-import com.readingbat.TestData
 import com.readingbat.common.ClassCodeRepository.isNotValid
 import com.readingbat.common.User.Companion.queryUserByEmail
 import com.readingbat.common.User.Companion.userExists
-import com.readingbat.kotest.TestDatabase
-import com.readingbat.kotest.TestSupport.initTestProperties
-import com.readingbat.kotest.TestSupport.testModule
 import com.readingbat.server.FullName
+import com.readingbat.withTestApp
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.longs.shouldBeGreaterThan
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldNotBeEmpty
-import io.ktor.server.testing.testApplication
 
 class UserLifecycleTest : StringSpec() {
   init {
     "createOAuthUser should persist user with correct fields" {
-      initTestProperties()
-      TestDatabase.connectAndMigrate()
+      withTestApp {
+        val user =
+          User.createOAuthUser(
+            name = FullName("Alice Smith"),
+            emailVal = Email("alice-lifecycle@test.com"),
+            provider = OAuthProvider.GITHUB,
+            providerId = "alice-lifecycle-001",
+            avatarUrlVal = "https://example.com/avatar.png",
+          )
 
-      TestData.readTestContent()
-        .also { testContent ->
-          testApplication {
-            application { testModule(testContent) }
+        user.existsInDbms shouldBe true
+        user.userId.shouldNotBeEmpty()
+        user.userDbmsId shouldBeGreaterThan 0
 
-            val user =
-              User.createOAuthUser(
-                name = FullName("Alice Smith"),
-                emailVal = Email("alice-lifecycle@test.com"),
-                provider = "github",
-                providerId = "alice-lifecycle-001",
-                accessToken = "token-alice-lifecycle",
-                avatarUrlVal = "https://example.com/avatar.png",
-              )
+        // Verify user can be found by email in the database
+        queryUserByEmail(Email("alice-lifecycle@test.com")).shouldNotBeNull()
 
-            user.existsInDbms shouldBe true
-            user.userId.shouldNotBeEmpty()
-            user.userDbmsId shouldBeGreaterThan 0
-
-            // Verify user can be found by email in the database
-            queryUserByEmail(Email("alice-lifecycle@test.com")).shouldNotBeNull()
-
-            // Verify userExists works
-            userExists(user.userId) shouldBe true
-          }
-        }
+        // Verify userExists works
+        userExists(user.userId) shouldBe true
+      }
     }
 
     "userExists should return true for existing user and false for unknown" {
-      initTestProperties()
-      TestDatabase.connectAndMigrate()
+      withTestApp {
+        val user =
+          User.createOAuthUser(
+            name = FullName("Bob Exists"),
+            emailVal = Email("bob-exists@test.com"),
+            provider = OAuthProvider.GITHUB,
+            providerId = "bob-exists-001",
+          )
 
-      TestData.readTestContent()
-        .also { testContent ->
-          testApplication {
-            application { testModule(testContent) }
-
-            val user =
-              User.createOAuthUser(
-                name = FullName("Bob Exists"),
-                emailVal = Email("bob-exists@test.com"),
-                provider = "github",
-                providerId = "bob-exists-001",
-                accessToken = "token-bob-exists",
-              )
-
-            userExists(user.userId) shouldBe true
-            userExists("nonexistent-user-id-12345") shouldBe false
-          }
-        }
+        userExists(user.userId) shouldBe true
+        userExists("nonexistent-user-id-12345") shouldBe false
+      }
     }
 
     "queryUserByEmail should find existing user and return null for unknown" {
-      initTestProperties()
-      TestDatabase.connectAndMigrate()
+      withTestApp {
+        User.createOAuthUser(
+          name = FullName("Carol Query"),
+          emailVal = Email("carol-query@test.com"),
+          provider = OAuthProvider.GITHUB,
+          providerId = "carol-query-001",
+        )
 
-      TestData.readTestContent()
-        .also { testContent ->
-          testApplication {
-            application { testModule(testContent) }
-
-            User.createOAuthUser(
-              name = FullName("Carol Query"),
-              emailVal = Email("carol-query@test.com"),
-              provider = "github",
-              providerId = "carol-query-001",
-              accessToken = "token-carol-query",
-            )
-
-            queryUserByEmail(Email("carol-query@test.com")).shouldNotBeNull()
-            queryUserByEmail(Email("nonexistent@test.com")).shouldBeNull()
-          }
-        }
+        queryUserByEmail(Email("carol-query@test.com")).shouldNotBeNull()
+        queryUserByEmail(Email("nonexistent@test.com")).shouldBeNull()
+      }
     }
 
     "isInDbms should return true after user creation" {
-      initTestProperties()
-      TestDatabase.connectAndMigrate()
+      withTestApp {
+        val user =
+          User.createOAuthUser(
+            name = FullName("Dave InDbms"),
+            emailVal = Email("dave-indbms@test.com"),
+            provider = OAuthProvider.GITHUB,
+            providerId = "dave-indbms-001",
+          )
 
-      TestData.readTestContent()
-        .also { testContent ->
-          testApplication {
-            application { testModule(testContent) }
-
-            val user =
-              User.createOAuthUser(
-                name = FullName("Dave InDbms"),
-                emailVal = Email("dave-indbms@test.com"),
-                provider = "github",
-                providerId = "dave-indbms-001",
-                accessToken = "token-dave-indbms",
-              )
-
-            user.isInDbms() shouldBe true
-          }
-        }
+        user.isInDbms() shouldBe true
+      }
     }
 
     "deleteUser should remove user and cascade to related records" {
-      initTestProperties()
-      TestDatabase.connectAndMigrate()
+      withTestApp {
+        val user =
+          User.createOAuthUser(
+            name = FullName("Eve Delete"),
+            emailVal = Email("eve-delete@test.com"),
+            provider = OAuthProvider.GITHUB,
+            providerId = "eve-delete-001",
+          )
 
-      TestData.readTestContent()
-        .also { testContent ->
-          testApplication {
-            application { testModule(testContent) }
+        val userId = user.userId
+        userExists(userId) shouldBe true
 
-            val user =
-              User.createOAuthUser(
-                name = FullName("Eve Delete"),
-                emailVal = Email("eve-delete@test.com"),
-                provider = "github",
-                providerId = "eve-delete-001",
-                accessToken = "token-eve-delete",
-              )
+        user.deleteUser()
 
-            val userId = user.userId
-            userExists(userId) shouldBe true
-
-            user.deleteUser()
-
-            userExists(userId) shouldBe false
-            queryUserByEmail(Email("eve-delete@test.com")).shouldBeNull()
-          }
-        }
+        userExists(userId) shouldBe false
+        queryUserByEmail(Email("eve-delete@test.com")).shouldBeNull()
+      }
     }
 
     "deleteUser should cascade to classes and unenroll students" {
-      initTestProperties()
-      TestDatabase.connectAndMigrate()
+      withTestApp {
+        // Create a teacher with a class
+        val teacher =
+          User.createOAuthUser(
+            name = FullName("Teacher Cascade"),
+            emailVal = Email("teacher-cascade@test.com"),
+            provider = OAuthProvider.GITHUB,
+            providerId = "teacher-cascade-001",
+          )
 
-      TestData.readTestContent()
-        .also { testContent ->
-          testApplication {
-            application { testModule(testContent) }
+        val classCode = ClassCode.newClassCode()
+        teacher.addClassCode(classCode, "Cascade Test Class")
 
-            // Create a teacher with a class
-            val teacher =
-              User.createOAuthUser(
-                name = FullName("Teacher Cascade"),
-                emailVal = Email("teacher-cascade@test.com"),
-                provider = "github",
-                providerId = "teacher-cascade-001",
-                accessToken = "token-teacher-cascade",
-              )
+        // Create and enroll a student
+        val student =
+          User.createOAuthUser(
+            name = FullName("Student Cascade"),
+            emailVal = Email("student-cascade@test.com"),
+            provider = OAuthProvider.GITHUB,
+            providerId = "student-cascade-001",
+          )
 
-            val classCode = ClassCode.newClassCode()
-            teacher.addClassCode(classCode, "Cascade Test Class")
+        student.enrollInClass(classCode)
+        student.isEnrolled(classCode) shouldBe true
 
-            // Create and enroll a student
-            val student =
-              User.createOAuthUser(
-                name = FullName("Student Cascade"),
-                emailVal = Email("student-cascade@test.com"),
-                provider = "github",
-                providerId = "student-cascade-001",
-                accessToken = "token-student-cascade",
-              )
+        // Delete the teacher - should cascade to classes and unenroll students
+        teacher.deleteUser()
 
-            student.enrollInClass(classCode)
-            student.isEnrolled(classCode) shouldBe true
-
-            // Delete the teacher - should cascade to classes and unenroll students
-            teacher.deleteUser()
-
-            // Class should no longer be valid
-            classCode.isNotValid() shouldBe true
-          }
-        }
+        // Class should no longer be valid
+        classCode.isNotValid() shouldBe true
+      }
     }
   }
 }
