@@ -48,15 +48,13 @@ object BrowserSessionsTable : LongIdTable("browser_sessions") {
   val sessionId = text("session_id")
 }
 
-/** Registered user accounts with salted password hashes, enrolled class code, and default language preference. */
+/** Registered user accounts with enrolled class code and default language preference. */
 object UsersTable : LongIdTable("users") {
   val created = timestamp("created")
   val updated = timestamp("updated")
   val userId = text("user_id")
   val email = text("email")
   val fullName = text("name")
-  val salt = text("salt").nullable()
-  val digest = text("digest").nullable()
   val enrolledClassCode = text("enrolled_class_code")
   val defaultLanguage = text("default_language")
   val authProvider = text("auth_provider").nullable()
