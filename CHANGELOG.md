@@ -4,7 +4,7 @@ All notable changes to ReadingBat Core are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [Unreleased] (3.1.2)
+## [Unreleased] (3.1.3)
 
 ### Changed
 
@@ -19,7 +19,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Replaced 6 materializing queries with COUNT queries in `deleteUser` logging
 - Pre-fetched active session counts before HTML rendering in SessionsPage
 - Set test configuration to non-production mode
-- Bumped version to 3.1.2
+- Bumped version to 3.1.3
 
 ### Fixed
 
