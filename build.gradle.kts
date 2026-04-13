@@ -194,7 +194,7 @@ fun Project.configureTesting() {
     testLogging {
       events = setOf(TestLogEvent.PASSED, TestLogEvent.SKIPPED, TestLogEvent.FAILED)
       exceptionFormat = TestExceptionFormat.FULL
-      showStandardStreams = true
+      showStandardStreams = false
     }
   }
 }
