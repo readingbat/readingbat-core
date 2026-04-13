@@ -8,23 +8,42 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- Migrated Exposed ORM from Joda-Time (`exposed-jodatime`) to kotlinx-datetime (`exposed-kotlin-datetime`)
+- All datetime columns now use `timestamp()` with `kotlin.time.Instant` instead of Joda `datetime()` with `DateTime`
 - OAuth providers are now auto-configured based on credential availability instead of requiring production mode
-- Replaced stringly-typed OAuth provider parameter with `OAuthProvider` enum
+- Replaced stringly-typed OAuth provider parameter with `OAuthProvider` enum moved to `common` package
+- Deduplicated `queryActiveTeachingClassCode`/`queryPreviousTeacherClassCode` into shared `queryClassCode` helper
+- Extracted `completeOAuthLogin` from duplicate GitHub/Google OAuth callback sequences
+- Replaced like/dislike magic numbers (0/1/2) with `LikeDislike` enum
+- Replaced per-enrollee UPDATE loop with bulk `inList` update in `unenrollEnrolleesClassCode`
+- Replaced 6 materializing queries with COUNT queries in `deleteUser` logging
+- Pre-fetched active session counts before HTML rendering in SessionsPage
 - Set test configuration to non-production mode
 - Bumped version to 3.1.2
 
 ### Fixed
 
 - `extractBalancedContent` now correctly handles parentheses inside single- and double-quoted strings
+- Added cache invalidation for `userIdCache` and `emailCache` in `deleteUser`
 
 ### Added
 
-- `for_loop1` Python challenge
+- `InstantExpr.kt` with `nowInstant()` and `instantExpr()` helpers for kotlinx-datetime migration
+- `LikeDislike` enum for type-safe like/dislike state
 - `OAuthProvider` enum for type-safe OAuth provider identification
+- `withTestApp` test helper eliminating repeated 5-line setup boilerplate across test files
+- `DateTimeMigrationTest` with 8 tests covering datetime migration
+- `CodeQualityFixesTest` with 14 tests covering code quality fixes
+- `for_loop1` Python challenge
 - Test for parentheses inside quoted strings in `ParseUtilsTest`
+- Flyway V004 migration to drop unused `salt` and `digest` columns
 
 ### Removed
 
+- Joda-Time dependency (`exposed-jodatime`)
+- Unused `salt` and `digest` columns from `UsersTable`
+- Commented-out dead code constants in `User.companion`
+- Redundant `apply true` from Gradle plugin declarations
 - `.travis.yml` (obsolete CI configuration)
 - Redundant `isOAuthConfigured` property and outer OAuth route guard
 - Unnecessary self-imports in `ConfigureOAuth` and `ReadingBatServer`
