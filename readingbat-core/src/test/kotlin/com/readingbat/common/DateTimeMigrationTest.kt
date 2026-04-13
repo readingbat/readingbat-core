@@ -42,6 +42,12 @@ import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 
+// PostgreSQL TIMESTAMPTZ stores microsecond precision, so nanosecond digits are truncated on round-trip
+private fun Instant.truncateToMicros(): Instant {
+  val epochMicros = toEpochMilliseconds() * 1_000 + (nanosecondsOfSecond % 1_000_000_000L / 1_000)
+  return Instant.fromEpochSeconds(epochMicros / 1_000_000, (epochMicros % 1_000_000) * 1_000)
+}
+
 class DateTimeMigrationTest : StringSpec() {
   init {
     "nowInstant should return a recent timestamp" {
@@ -144,8 +150,8 @@ class DateTimeMigrationTest : StringSpec() {
 
         val challengeMd5 = "upsert-timestamp-md5"
 
-        // First insert
-        val firstInsertTime = nowInstant()
+        // Truncate to microseconds since PostgreSQL TIMESTAMPTZ doesn't store nanoseconds
+        val firstInsertTime = nowInstant().truncateToMicros()
         transaction {
           with(UserChallengeInfoTable) {
             upsert(conflictIndex = userChallengeInfoIndex) { row ->
@@ -170,8 +176,7 @@ class DateTimeMigrationTest : StringSpec() {
             }
         }
 
-        // Update with new timestamp
-        val updateTime = nowInstant()
+        val updateTime = nowInstant().truncateToMicros()
         transaction {
           with(UserChallengeInfoTable) {
             upsert(conflictIndex = userChallengeInfoIndex) { row ->
@@ -212,7 +217,7 @@ class DateTimeMigrationTest : StringSpec() {
 
         val historyMd5 = "history-timestamp-md5"
         val invocationText = "test_func(1, 2)"
-        val timestamp = nowInstant()
+        val timestamp = nowInstant().truncateToMicros()
 
         transaction {
           with(UserAnswerHistoryTable) {
