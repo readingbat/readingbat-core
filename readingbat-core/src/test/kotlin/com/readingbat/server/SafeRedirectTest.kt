@@ -52,6 +52,12 @@ class SafeRedirectTest : StringSpec() {
       safeRedirectPath("//evil.com/path") shouldBe "/"
     }
 
+    "safeRedirectPath rejects backslash-based open redirect bypasses" {
+      safeRedirectPath("/\\evil.com") shouldBe "/"
+      safeRedirectPath("/\\\\evil.com") shouldBe "/"
+      safeRedirectPath("\\\\evil.com") shouldBe "/"
+    }
+
     "safeRedirectPath rejects empty and non-slash paths" {
       safeRedirectPath("") shouldBe "/"
       safeRedirectPath("evil.com") shouldBe "/"

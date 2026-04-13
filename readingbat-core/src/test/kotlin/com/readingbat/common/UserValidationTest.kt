@@ -43,7 +43,6 @@ class UserValidationTest : StringSpec() {
             emailVal = Email("validation-test@test.com"),
             provider = OAuthProvider.GITHUB,
             providerId = "validation-test-001",
-            accessToken = "token-validation",
           )
 
         user.existsInDbms shouldBe true

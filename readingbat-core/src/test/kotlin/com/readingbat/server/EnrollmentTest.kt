@@ -36,7 +36,6 @@ class EnrollmentTest : StringSpec() {
             emailVal = Email("teacher@test.com"),
             provider = OAuthProvider.GITHUB,
             providerId = "teacher-001",
-            accessToken = "token-teacher",
           )
 
         // Create two distinct classes
@@ -52,7 +51,6 @@ class EnrollmentTest : StringSpec() {
             emailVal = Email("student@test.com"),
             provider = OAuthProvider.GITHUB,
             providerId = "student-001",
-            accessToken = "token-student",
           )
 
         // Enroll student in class A only

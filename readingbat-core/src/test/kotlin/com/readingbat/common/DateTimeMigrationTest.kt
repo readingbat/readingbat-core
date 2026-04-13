@@ -75,7 +75,6 @@ class DateTimeMigrationTest : StringSpec() {
             emailVal = Email("datetime-migration@test.com"),
             provider = OAuthProvider.GITHUB,
             providerId = "datetime-migration-001",
-            accessToken = "token-datetime-migration",
           )
 
         val afterCreate = nowInstant()
@@ -112,7 +111,6 @@ class DateTimeMigrationTest : StringSpec() {
           emailVal = Email("oauth-timestamp@test.com"),
           provider = OAuthProvider.GITHUB,
           providerId = "oauth-timestamp-001",
-          accessToken = "token-oauth-timestamp",
         )
 
         val afterCreate = nowInstant()
@@ -145,7 +143,6 @@ class DateTimeMigrationTest : StringSpec() {
             emailVal = Email("upsert-timestamp@test.com"),
             provider = OAuthProvider.GITHUB,
             providerId = "upsert-timestamp-001",
-            accessToken = "token-upsert-timestamp",
           )
 
         val challengeMd5 = "upsert-timestamp-md5"
@@ -212,7 +209,6 @@ class DateTimeMigrationTest : StringSpec() {
             emailVal = Email("history-timestamp@test.com"),
             provider = OAuthProvider.GITHUB,
             providerId = "history-timestamp-001",
-            accessToken = "token-history-timestamp",
           )
 
         val historyMd5 = "history-timestamp-md5"
@@ -256,7 +252,6 @@ class DateTimeMigrationTest : StringSpec() {
             emailVal = Email("instantexpr@test.com"),
             provider = OAuthProvider.GITHUB,
             providerId = "instantexpr-001",
-            accessToken = "token-instantexpr",
           )
 
         val challengeMd5 = "instantexpr-md5"

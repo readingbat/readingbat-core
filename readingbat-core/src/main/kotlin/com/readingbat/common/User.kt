@@ -662,7 +662,6 @@ class User {
       emailVal: Email,
       provider: OAuthProvider,
       providerId: String,
-      accessToken: String,
       avatarUrlVal: String? = null,
     ): User =
       User(randomId(25), null, false)
@@ -687,7 +686,6 @@ class User {
                 row[OAuthLinksTable.provider] = provider.providerName
                 row[OAuthLinksTable.providerId] = providerId
                 row[providerEmail] = emailVal.value
-                row[OAuthLinksTable.accessToken] = accessToken
               }
             }
           }

@@ -41,7 +41,6 @@ class EnrollmentWorkflowTest : StringSpec() {
             emailVal = Email("teacher-enrollwf@test.com"),
             provider = OAuthProvider.GITHUB,
             providerId = "teacher-enrollwf-001",
-            accessToken = "token-teacher-enrollwf",
           )
 
         val classCode = ClassCode.newClassCode()
@@ -53,7 +52,6 @@ class EnrollmentWorkflowTest : StringSpec() {
             emailVal = Email("student-enrollwf@test.com"),
             provider = OAuthProvider.GITHUB,
             providerId = "student-enrollwf-001",
-            accessToken = "token-student-enrollwf",
           )
 
         student.enrolledClassCode shouldBe DISABLED_CLASS_CODE
@@ -73,7 +71,6 @@ class EnrollmentWorkflowTest : StringSpec() {
             emailVal = Email("teacher-withdraw@test.com"),
             provider = OAuthProvider.GITHUB,
             providerId = "teacher-withdraw-001",
-            accessToken = "token-teacher-withdraw",
           )
 
         val classCode = ClassCode.newClassCode()
@@ -85,7 +82,6 @@ class EnrollmentWorkflowTest : StringSpec() {
             emailVal = Email("student-withdraw@test.com"),
             provider = OAuthProvider.GITHUB,
             providerId = "student-withdraw-001",
-            accessToken = "token-student-withdraw",
           )
 
         student.enrollInClass(classCode)
@@ -106,7 +102,6 @@ class EnrollmentWorkflowTest : StringSpec() {
             emailVal = Email("student-invalid@test.com"),
             provider = OAuthProvider.GITHUB,
             providerId = "student-invalid-001",
-            accessToken = "token-student-invalid",
           )
 
         val exception =
@@ -126,7 +121,6 @@ class EnrollmentWorkflowTest : StringSpec() {
             emailVal = Email("teacher-dupenroll@test.com"),
             provider = OAuthProvider.GITHUB,
             providerId = "teacher-dupenroll-001",
-            accessToken = "token-teacher-dupenroll",
           )
 
         val classCode = ClassCode.newClassCode()
@@ -138,7 +132,6 @@ class EnrollmentWorkflowTest : StringSpec() {
             emailVal = Email("student-dupenroll@test.com"),
             provider = OAuthProvider.GITHUB,
             providerId = "student-dupenroll-001",
-            accessToken = "token-student-dupenroll",
           )
 
         student.enrollInClass(classCode)
@@ -160,7 +153,6 @@ class EnrollmentWorkflowTest : StringSpec() {
             emailVal = Email("teacher-switch@test.com"),
             provider = OAuthProvider.GITHUB,
             providerId = "teacher-switch-001",
-            accessToken = "token-teacher-switch",
           )
 
         val classA = ClassCode.newClassCode()
@@ -174,7 +166,6 @@ class EnrollmentWorkflowTest : StringSpec() {
             emailVal = Email("student-switch@test.com"),
             provider = OAuthProvider.GITHUB,
             providerId = "student-switch-001",
-            accessToken = "token-student-switch",
           )
 
         student.enrollInClass(classA)
@@ -198,7 +189,6 @@ class EnrollmentWorkflowTest : StringSpec() {
             emailVal = Email("student-notenrolled@test.com"),
             provider = OAuthProvider.GITHUB,
             providerId = "student-notenrolled-001",
-            accessToken = "token-student-notenrolled",
           )
 
         shouldThrow<DataException> {
@@ -215,7 +205,6 @@ class EnrollmentWorkflowTest : StringSpec() {
             emailVal = Email("teacher-enrolleecount@test.com"),
             provider = OAuthProvider.GITHUB,
             providerId = "teacher-enrolleecount-001",
-            accessToken = "token-teacher-enrolleecount",
           )
 
         val classCode = ClassCode.newClassCode()
@@ -227,7 +216,6 @@ class EnrollmentWorkflowTest : StringSpec() {
             emailVal = Email("student-enrolleecount@test.com"),
             provider = OAuthProvider.GITHUB,
             providerId = "student-enrolleecount-001",
-            accessToken = "token-student-enrolleecount",
           )
 
         student.enrollInClass(classCode)

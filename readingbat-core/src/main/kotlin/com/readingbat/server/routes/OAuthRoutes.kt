@@ -142,7 +142,7 @@ fun Routing.oauthRoutes() {
 
         logger.info { "GitHub OAuth callback: name=$name email=$email providerId=$providerId" }
 
-        completeOAuthLogin(OAuthProvider.GITHUB, providerId, Email(email), FullName(name), accessToken, avatarUrl)
+        completeOAuthLogin(OAuthProvider.GITHUB, providerId, Email(email), FullName(name), avatarUrl)
       }
     }
   }
@@ -177,7 +177,7 @@ fun Routing.oauthRoutes() {
 
         logger.info { "Google OAuth callback: name=$name email=$email providerId=$providerId" }
 
-        completeOAuthLogin(OAuthProvider.GOOGLE, providerId, Email(email), FullName(name), accessToken, avatarUrl)
+        completeOAuthLogin(OAuthProvider.GOOGLE, providerId, Email(email), FullName(name), avatarUrl)
       }
     }
   }
@@ -190,10 +190,9 @@ private suspend fun RoutingContext.completeOAuthLogin(
   providerId: String,
   email: Email,
   name: FullName,
-  accessToken: String,
   avatarUrl: String?,
 ) {
-  val user = findOrCreateOAuthUser(provider, providerId, email, name, accessToken, avatarUrl)
+  val user = findOrCreateOAuthUser(provider, providerId, email, name, avatarUrl)
   call.sessions.set(UserPrincipal(userId = user.userId))
   val returnUrl = safeRedirectPath(call.sessions.get<OAuthReturnUrl>()?.url ?: "/")
   call.sessions.clear<OAuthReturnUrl>()
@@ -205,7 +204,6 @@ private fun findOrCreateOAuthUser(
   providerId: String,
   email: Email,
   name: FullName,
-  accessToken: String,
   avatarUrl: String? = null,
 ): User {
   // 1. Check if oauth_links entry exists for this provider+providerId
@@ -232,12 +230,11 @@ private fun findOrCreateOAuthUser(
     }
     oauthLogger.info { "OAuth login: existing link for $provider/$providerId -> user $userId" }
 
-    // Update access token and avatar URL
+    // Update timestamp and avatar URL
     transaction {
       OAuthLinksTable.update({
         (OAuthLinksTable.provider eq provider.providerName) and (OAuthLinksTable.providerId eq providerId)
       }) { row ->
-        row[OAuthLinksTable.accessToken] = accessToken
         row[updated] = nowInstant()
       }
       if (avatarUrl != null) {
@@ -275,7 +272,6 @@ private fun findOrCreateOAuthUser(
             row[OAuthLinksTable.provider] = provider.providerName
             row[OAuthLinksTable.providerId] = providerId
             row[providerEmail] = email.value
-            row[OAuthLinksTable.accessToken] = accessToken
           }
         }
         // Set auth_provider if not already set, and update avatar
@@ -292,5 +288,5 @@ private fun findOrCreateOAuthUser(
 
   // 3. No link, no matching email — create new user
   oauthLogger.info { "OAuth login: creating new user for $provider/$providerId email=$email" }
-  return User.createOAuthUser(name, email, provider, providerId, accessToken, avatarUrl)
+  return User.createOAuthUser(name, email, provider, providerId, avatarUrl)
 }

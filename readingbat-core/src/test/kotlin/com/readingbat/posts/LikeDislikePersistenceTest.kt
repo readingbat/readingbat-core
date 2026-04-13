@@ -44,7 +44,6 @@ class LikeDislikePersistenceTest : StringSpec() {
             emailVal = Email("user-likedefault@test.com"),
             provider = OAuthProvider.GITHUB,
             providerId = "user-likedefault-001",
-            accessToken = "token-user-likedefault",
           )
 
         user.likeDislikes().shouldBeEmpty()
@@ -59,7 +58,6 @@ class LikeDislikePersistenceTest : StringSpec() {
             emailVal = Email("user-likepersist@test.com"),
             provider = OAuthProvider.GITHUB,
             providerId = "user-likepersist-001",
-            accessToken = "token-user-likepersist",
           )
 
         val challengeMd5 = "like-persist-md5"
@@ -88,7 +86,6 @@ class LikeDislikePersistenceTest : StringSpec() {
             emailVal = Email("user-dislikepersist@test.com"),
             provider = OAuthProvider.GITHUB,
             providerId = "user-dislikepersist-001",
-            accessToken = "token-user-dislikepersist",
           )
 
         val challengeMd5 = "dislike-persist-md5"
@@ -117,7 +114,6 @@ class LikeDislikePersistenceTest : StringSpec() {
             emailVal = Email("user-emoji@test.com"),
             provider = OAuthProvider.GITHUB,
             providerId = "user-emoji-001",
-            accessToken = "token-user-emoji",
           )
 
         user.likeDislikeEmoji(1) shouldBe Endpoints.THUMBS_UP
@@ -134,7 +130,6 @@ class LikeDislikePersistenceTest : StringSpec() {
             emailVal = Email("user-likeupdate@test.com"),
             provider = OAuthProvider.GITHUB,
             providerId = "user-likeupdate-001",
-            accessToken = "token-user-likeupdate",
           )
 
         val challengeMd5 = "like-update-md5"

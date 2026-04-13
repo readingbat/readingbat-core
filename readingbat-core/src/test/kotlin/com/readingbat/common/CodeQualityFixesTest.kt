@@ -86,7 +86,6 @@ class CodeQualityFixesTest : StringSpec() {
             emailVal = Email("likedislike-enum@test.com"),
             provider = OAuthProvider.GITHUB,
             providerId = "likedislike-enum-001",
-            accessToken = "token-likedislike-enum",
           )
 
         user.likeDislikeEmoji(LikeDislike.LIKE.value.toInt()) shouldBe Endpoints.THUMBS_UP
@@ -103,7 +102,6 @@ class CodeQualityFixesTest : StringSpec() {
             emailVal = Email("likedislike-query@test.com"),
             provider = OAuthProvider.GITHUB,
             providerId = "likedislike-query-001",
-            accessToken = "token-likedislike-query",
           )
 
         // Initially empty
@@ -139,7 +137,6 @@ class CodeQualityFixesTest : StringSpec() {
             emailVal = Email("oauthprovider-enum@test.com"),
             provider = OAuthProvider.GITHUB,
             providerId = "oauthprovider-enum-001",
-            accessToken = "token-oauthprovider-enum",
           )
 
         user.existsInDbms shouldBe true
@@ -156,7 +153,6 @@ class CodeQualityFixesTest : StringSpec() {
             emailVal = Email("bulk-teacher@test.com"),
             provider = OAuthProvider.GITHUB,
             providerId = "bulk-teacher-001",
-            accessToken = "token-bulk-teacher",
           )
 
         val classCode = ClassCode.newClassCode()
@@ -170,7 +166,6 @@ class CodeQualityFixesTest : StringSpec() {
               emailVal = Email("bulk-student-$i@test.com"),
               provider = OAuthProvider.GITHUB,
               providerId = "bulk-student-$i-001",
-              accessToken = "token-bulk-student-$i",
             ).also { it.enrollInClass(classCode) }
           }
 
@@ -204,7 +199,6 @@ class CodeQualityFixesTest : StringSpec() {
             emailVal = Email("empty-bulk-teacher@test.com"),
             provider = OAuthProvider.GITHUB,
             providerId = "empty-bulk-teacher-001",
-            accessToken = "token-empty-bulk-teacher",
           )
 
         val classCode = ClassCode.newClassCode()
@@ -224,7 +218,6 @@ class CodeQualityFixesTest : StringSpec() {
             emailVal = Email("cache-invalidation@test.com"),
             provider = OAuthProvider.GITHUB,
             providerId = "cache-invalidation-001",
-            accessToken = "token-cache-invalidation",
           )
 
         val userId = user.userId
@@ -254,7 +247,6 @@ class CodeQualityFixesTest : StringSpec() {
             emailVal = Email("delete-count@test.com"),
             provider = OAuthProvider.GITHUB,
             providerId = "delete-count-001",
-            accessToken = "token-delete-count",
           )
 
         // Add some challenge data so COUNT queries have rows to count
@@ -299,7 +291,6 @@ class CodeQualityFixesTest : StringSpec() {
             emailVal = Email("cascade-teacher@test.com"),
             provider = OAuthProvider.GITHUB,
             providerId = "cascade-teacher-001",
-            accessToken = "token-cascade-teacher",
           )
 
         val classCode = ClassCode.newClassCode()
@@ -311,7 +302,6 @@ class CodeQualityFixesTest : StringSpec() {
             emailVal = Email("cascade-student-1@test.com"),
             provider = OAuthProvider.GITHUB,
             providerId = "cascade-student-1-001",
-            accessToken = "token-cascade-student-1",
           )
         val student2 =
           User.createOAuthUser(
@@ -319,7 +309,6 @@ class CodeQualityFixesTest : StringSpec() {
             emailVal = Email("cascade-student-2@test.com"),
             provider = OAuthProvider.GITHUB,
             providerId = "cascade-student-2-001",
-            accessToken = "token-cascade-student-2",
           )
 
         student1.enrollInClass(classCode)
@@ -357,7 +346,6 @@ class CodeQualityFixesTest : StringSpec() {
             emailVal = Email("withtestapp@test.com"),
             provider = OAuthProvider.GITHUB,
             providerId = "withtestapp-001",
-            accessToken = "token-withtestapp",
           )
         user.existsInDbms shouldBe true
       }

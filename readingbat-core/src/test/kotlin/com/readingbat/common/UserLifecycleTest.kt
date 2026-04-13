@@ -40,7 +40,6 @@ class UserLifecycleTest : StringSpec() {
             emailVal = Email("alice-lifecycle@test.com"),
             provider = OAuthProvider.GITHUB,
             providerId = "alice-lifecycle-001",
-            accessToken = "token-alice-lifecycle",
             avatarUrlVal = "https://example.com/avatar.png",
           )
 
@@ -64,7 +63,6 @@ class UserLifecycleTest : StringSpec() {
             emailVal = Email("bob-exists@test.com"),
             provider = OAuthProvider.GITHUB,
             providerId = "bob-exists-001",
-            accessToken = "token-bob-exists",
           )
 
         userExists(user.userId) shouldBe true
@@ -79,7 +77,6 @@ class UserLifecycleTest : StringSpec() {
           emailVal = Email("carol-query@test.com"),
           provider = OAuthProvider.GITHUB,
           providerId = "carol-query-001",
-          accessToken = "token-carol-query",
         )
 
         queryUserByEmail(Email("carol-query@test.com")).shouldNotBeNull()
@@ -95,7 +92,6 @@ class UserLifecycleTest : StringSpec() {
             emailVal = Email("dave-indbms@test.com"),
             provider = OAuthProvider.GITHUB,
             providerId = "dave-indbms-001",
-            accessToken = "token-dave-indbms",
           )
 
         user.isInDbms() shouldBe true
@@ -110,7 +106,6 @@ class UserLifecycleTest : StringSpec() {
             emailVal = Email("eve-delete@test.com"),
             provider = OAuthProvider.GITHUB,
             providerId = "eve-delete-001",
-            accessToken = "token-eve-delete",
           )
 
         val userId = user.userId
@@ -132,7 +127,6 @@ class UserLifecycleTest : StringSpec() {
             emailVal = Email("teacher-cascade@test.com"),
             provider = OAuthProvider.GITHUB,
             providerId = "teacher-cascade-001",
-            accessToken = "token-teacher-cascade",
           )
 
         val classCode = ClassCode.newClassCode()
@@ -145,7 +139,6 @@ class UserLifecycleTest : StringSpec() {
             emailVal = Email("student-cascade@test.com"),
             provider = OAuthProvider.GITHUB,
             providerId = "student-cascade-001",
-            accessToken = "token-student-cascade",
           )
 
         student.enrollInClass(classCode)

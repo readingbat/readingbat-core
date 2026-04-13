@@ -44,7 +44,6 @@ class ClassManagementTest : StringSpec() {
             emailVal = Email("teacher-classmgmt@test.com"),
             provider = OAuthProvider.GITHUB,
             providerId = "teacher-classmgmt-001",
-            accessToken = "token-teacher-classmgmt",
           )
 
         teacher.classCount() shouldBe 0
@@ -65,7 +64,6 @@ class ClassManagementTest : StringSpec() {
             emailVal = Email("teacher-multiclass@test.com"),
             provider = OAuthProvider.GITHUB,
             providerId = "teacher-multiclass-001",
-            accessToken = "token-teacher-multiclass",
           )
 
         val classA = ClassCode.newClassCode()
@@ -92,7 +90,6 @@ class ClassManagementTest : StringSpec() {
             emailVal = Email("teacher-valid@test.com"),
             provider = OAuthProvider.GITHUB,
             providerId = "teacher-valid-001",
-            accessToken = "token-teacher-valid",
           )
 
         val classCode = ClassCode.newClassCode()
@@ -113,7 +110,6 @@ class ClassManagementTest : StringSpec() {
             emailVal = Email("teacher-desc@test.com"),
             provider = OAuthProvider.GITHUB,
             providerId = "teacher-desc-001",
-            accessToken = "token-teacher-desc",
           )
 
         val classCode = ClassCode.newClassCode()
@@ -132,7 +128,6 @@ class ClassManagementTest : StringSpec() {
             emailVal = Email("teacher-teacherid@test.com"),
             provider = OAuthProvider.GITHUB,
             providerId = "teacher-teacherid-001",
-            accessToken = "token-teacher-teacherid",
           )
 
         val classCode = ClassCode.newClassCode()
@@ -150,7 +145,6 @@ class ClassManagementTest : StringSpec() {
             emailVal = Email("teacher-enrollees@test.com"),
             provider = OAuthProvider.GITHUB,
             providerId = "teacher-enrollees-001",
-            accessToken = "token-teacher-enrollees",
           )
 
         val classCode = ClassCode.newClassCode()
@@ -164,7 +158,6 @@ class ClassManagementTest : StringSpec() {
             emailVal = Email("student-one-enrollees@test.com"),
             provider = OAuthProvider.GITHUB,
             providerId = "student-one-enrollees-001",
-            accessToken = "token-student-one-enrollees",
           )
         val student2 =
           User.createOAuthUser(
@@ -172,7 +165,6 @@ class ClassManagementTest : StringSpec() {
             emailVal = Email("student-two-enrollees@test.com"),
             provider = OAuthProvider.GITHUB,
             providerId = "student-two-enrollees-001",
-            accessToken = "token-student-two-enrollees",
           )
 
         student1.enrollInClass(classCode)
@@ -191,7 +183,6 @@ class ClassManagementTest : StringSpec() {
             emailVal = Email("teacher-unique@test.com"),
             provider = OAuthProvider.GITHUB,
             providerId = "teacher-unique-001",
-            accessToken = "token-teacher-unique",
           )
 
         teacher.isUniqueClassDesc("Unique Class Name") shouldBe true
@@ -212,7 +203,6 @@ class ClassManagementTest : StringSpec() {
             emailVal = Email("teacher-deleteclass@test.com"),
             provider = OAuthProvider.GITHUB,
             providerId = "teacher-deleteclass-001",
-            accessToken = "token-teacher-deleteclass",
           )
 
         val classCode = ClassCode.newClassCode()

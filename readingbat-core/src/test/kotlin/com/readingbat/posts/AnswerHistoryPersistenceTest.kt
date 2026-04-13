@@ -47,7 +47,6 @@ class AnswerHistoryPersistenceTest : StringSpec() {
             emailVal = Email("user-histdefault@test.com"),
             provider = OAuthProvider.GITHUB,
             providerId = "user-histdefault-001",
-            accessToken = "token-user-histdefault",
           )
 
         val history = user.answerHistory("nonexistent-md5", Invocation("someInvocation"))
@@ -65,7 +64,6 @@ class AnswerHistoryPersistenceTest : StringSpec() {
             emailVal = Email("user-histpersist@test.com"),
             provider = OAuthProvider.GITHUB,
             providerId = "user-histpersist-001",
-            accessToken = "token-user-histpersist",
           )
 
         val md5 = "test-md5-persist"
@@ -102,7 +100,6 @@ class AnswerHistoryPersistenceTest : StringSpec() {
             emailVal = Email("user-histexists@test.com"),
             provider = OAuthProvider.GITHUB,
             providerId = "user-histexists-001",
-            accessToken = "token-user-histexists",
           )
 
         val md5 = "test-md5-exists"
@@ -136,7 +133,6 @@ class AnswerHistoryPersistenceTest : StringSpec() {
             emailVal = Email("user-bulkhist@test.com"),
             provider = OAuthProvider.GITHUB,
             providerId = "user-bulkhist-001",
-            accessToken = "token-user-bulkhist",
           )
 
         val md5A = "bulk-md5-a"
@@ -184,7 +180,6 @@ class AnswerHistoryPersistenceTest : StringSpec() {
             emailVal = Email("user-upserThist@test.com"),
             provider = OAuthProvider.GITHUB,
             providerId = "user-upserThist-001",
-            accessToken = "token-user-upserThist",
           )
 
         val md5 = "upsert-md5"
@@ -237,7 +232,6 @@ class AnswerHistoryPersistenceTest : StringSpec() {
             emailVal = Email("user-chalinfo@test.com"),
             provider = OAuthProvider.GITHUB,
             providerId = "user-chalinfo-001",
-            accessToken = "token-user-chalinfo",
           )
 
         val challengeMd5 = "challenge-info-md5"
@@ -282,7 +276,6 @@ class AnswerHistoryPersistenceTest : StringSpec() {
             emailVal = Email("user-activity@test.com"),
             provider = OAuthProvider.GITHUB,
             providerId = "user-activity-001",
-            accessToken = "token-user-activity",
           )
 
         user.challenges().shouldBeEmpty()

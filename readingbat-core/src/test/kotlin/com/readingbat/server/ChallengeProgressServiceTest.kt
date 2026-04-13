@@ -43,7 +43,6 @@ class ChallengeProgressServiceTest : StringSpec() {
             emailVal = Email("progress-unknown@test.com"),
             provider = OAuthProvider.GITHUB,
             providerId = "progress-unknown-001",
-            accessToken = "token-progress-unknown",
           )
 
         ChallengeProgressService.isCorrect(user, "nonexistent-md5") shouldBe false
@@ -58,7 +57,6 @@ class ChallengeProgressServiceTest : StringSpec() {
             emailVal = Email("progress-correct@test.com"),
             provider = OAuthProvider.GITHUB,
             providerId = "progress-correct-001",
-            accessToken = "token-progress-correct",
           )
 
         val md5 = "test-challenge-md5-correct"
@@ -89,7 +87,6 @@ class ChallengeProgressServiceTest : StringSpec() {
             emailVal = Email("progress-incorrect@test.com"),
             provider = OAuthProvider.GITHUB,
             providerId = "progress-incorrect-001",
-            accessToken = "token-progress-incorrect",
           )
 
         val md5 = "test-challenge-md5-incorrect"

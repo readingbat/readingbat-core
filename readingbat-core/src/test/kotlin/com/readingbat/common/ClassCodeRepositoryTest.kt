@@ -69,7 +69,6 @@ class ClassCodeRepositoryTest : StringSpec() {
             emailVal = Email("teacher-repovalid@test.com"),
             provider = OAuthProvider.GITHUB,
             providerId = "teacher-repovalid-001",
-            accessToken = "token-teacher-repovalid",
           )
 
         val classCode = ClassCode.newClassCode()
@@ -88,7 +87,6 @@ class ClassCodeRepositoryTest : StringSpec() {
             emailVal = Email("teacher-repodesc@test.com"),
             provider = OAuthProvider.GITHUB,
             providerId = "teacher-repodesc-001",
-            accessToken = "token-teacher-repodesc",
           )
 
         val classCode = ClassCode.newClassCode()
@@ -107,7 +105,6 @@ class ClassCodeRepositoryTest : StringSpec() {
             emailVal = Email("teacher-repodisplay@test.com"),
             provider = OAuthProvider.GITHUB,
             providerId = "teacher-repodisplay-001",
-            accessToken = "token-teacher-repodisplay",
           )
 
         val classCode = ClassCode.newClassCode()
@@ -127,7 +124,6 @@ class ClassCodeRepositoryTest : StringSpec() {
             emailVal = Email("teacher-repoteacher@test.com"),
             provider = OAuthProvider.GITHUB,
             providerId = "teacher-repoteacher-001",
-            accessToken = "token-teacher-repoteacher",
           )
 
         val classCode = ClassCode.newClassCode()
@@ -146,7 +142,6 @@ class ClassCodeRepositoryTest : StringSpec() {
             emailVal = Email("teacher-repoenrollee@test.com"),
             provider = OAuthProvider.GITHUB,
             providerId = "teacher-repoenrollee-001",
-            accessToken = "token-teacher-repoenrollee",
           )
 
         val classCode = ClassCode.newClassCode()
@@ -158,7 +153,6 @@ class ClassCodeRepositoryTest : StringSpec() {
             emailVal = Email("student-repoenrollee@test.com"),
             provider = OAuthProvider.GITHUB,
             providerId = "student-repoenrollee-001",
-            accessToken = "token-student-repoenrollee",
           )
 
         classCode.fetchEnrollees().shouldBeEmpty()
@@ -185,7 +179,6 @@ class ClassCodeRepositoryTest : StringSpec() {
             emailVal = Email("teacher-repodelete@test.com"),
             provider = OAuthProvider.GITHUB,
             providerId = "teacher-repodelete-001",
-            accessToken = "token-teacher-repodelete",
           )
 
         val classCode = ClassCode.newClassCode()

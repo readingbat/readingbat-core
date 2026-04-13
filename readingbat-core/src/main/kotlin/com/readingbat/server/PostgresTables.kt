@@ -69,7 +69,6 @@ object OAuthLinksTable : LongIdTable("oauth_links") {
   val provider = text("provider")
   val providerId = text("provider_id")
   val providerEmail = text("provider_email")
-  val accessToken = text("access_token")
 }
 
 /** Maps browser sessions to authenticated users, tracking active class code and previous teacher class code. */
