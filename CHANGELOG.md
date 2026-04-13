@@ -25,6 +25,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - `extractBalancedContent` now correctly handles parentheses inside single- and double-quoted strings
 - Added cache invalidation for `userIdCache` and `emailCache` in `deleteUser`
+- `safeRedirectPath` now normalizes backslashes before validation, preventing potential open redirect via browser backslash-to-slash normalization
 
 ### Added
 
@@ -37,6 +38,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `for_loop1` Python challenge
 - Test for parentheses inside quoted strings in `ParseUtilsTest`
 - Flyway V004 migration to drop unused `salt` and `digest` columns
+- Flyway V005 migration to drop unused `access_token` column from `oauth_links`
+- Test coverage for backslash-based open redirect bypass in `SafeRedirectTest`
 
 ### Removed
 
@@ -47,6 +50,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `.travis.yml` (obsolete CI configuration)
 - Redundant `isOAuthConfigured` property and outer OAuth route guard
 - Unnecessary self-imports in `ConfigureOAuth` and `ReadingBatServer`
+- Plaintext `access_token` column from `OAuthLinksTable` — tokens were stored but never read back after OAuth login
 
 ## [Unreleased] (3.0.12)
 
