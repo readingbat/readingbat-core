@@ -56,8 +56,7 @@ dbvalidate:
 	./gradlew flywayValidate
 
 lint:
-	./gradlew lintKotlinMain
-	./gradlew lintKotlinTest
+	./gradlew lintKotlinMain lintKotlinTest
 
 test:
 	~/node_modules/.bin/cypress open
