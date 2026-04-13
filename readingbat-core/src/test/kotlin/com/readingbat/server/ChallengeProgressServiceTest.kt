@@ -19,132 +19,97 @@ package com.readingbat.server
 
 import com.pambrose.common.email.Email
 import com.pambrose.common.exposed.upsert
-import com.readingbat.TestData
+import com.readingbat.common.OAuthProvider
 import com.readingbat.common.User
 import com.readingbat.common.nowInstant
-import com.readingbat.kotest.TestDatabase
-import com.readingbat.kotest.TestSupport.initTestProperties
-import com.readingbat.kotest.TestSupport.testModule
+import com.readingbat.withTestApp
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
-import io.ktor.server.testing.testApplication
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 
 class ChallengeProgressServiceTest : StringSpec() {
   init {
     "isCorrect returns false when user is null" {
-      initTestProperties()
-      TestDatabase.connectAndMigrate()
-
-      TestData.readTestContent()
-        .also { testContent ->
-          testApplication {
-            application { testModule(testContent) }
-
-            ChallengeProgressService.isCorrect(null, "some-md5") shouldBe false
-          }
-        }
+      withTestApp {
+        ChallengeProgressService.isCorrect(null, "some-md5") shouldBe false
+      }
     }
 
     "isCorrect returns false for unknown challenge md5" {
-      initTestProperties()
-      TestDatabase.connectAndMigrate()
+      withTestApp {
+        val user =
+          User.createOAuthUser(
+            name = FullName("Progress Unknown"),
+            emailVal = Email("progress-unknown@test.com"),
+            provider = OAuthProvider.GITHUB,
+            providerId = "progress-unknown-001",
+            accessToken = "token-progress-unknown",
+          )
 
-      TestData.readTestContent()
-        .also { testContent ->
-          testApplication {
-            application { testModule(testContent) }
-
-            val user =
-              User.createOAuthUser(
-                name = FullName("Progress Unknown"),
-                emailVal = Email("progress-unknown@test.com"),
-                provider = "github",
-                providerId = "progress-unknown-001",
-                accessToken = "token-progress-unknown",
-              )
-
-            ChallengeProgressService.isCorrect(user, "nonexistent-md5") shouldBe false
-          }
-        }
+        ChallengeProgressService.isCorrect(user, "nonexistent-md5") shouldBe false
+      }
     }
 
     "isCorrect returns true when allCorrect is set" {
-      initTestProperties()
-      TestDatabase.connectAndMigrate()
+      withTestApp {
+        val user =
+          User.createOAuthUser(
+            name = FullName("Progress Correct"),
+            emailVal = Email("progress-correct@test.com"),
+            provider = OAuthProvider.GITHUB,
+            providerId = "progress-correct-001",
+            accessToken = "token-progress-correct",
+          )
 
-      TestData.readTestContent()
-        .also { testContent ->
-          testApplication {
-            application { testModule(testContent) }
+        val md5 = "test-challenge-md5-correct"
 
-            val user =
-              User.createOAuthUser(
-                name = FullName("Progress Correct"),
-                emailVal = Email("progress-correct@test.com"),
-                provider = "github",
-                providerId = "progress-correct-001",
-                accessToken = "token-progress-correct",
-              )
-
-            val md5 = "test-challenge-md5-correct"
-
-            transaction {
-              with(UserChallengeInfoTable) {
-                upsert(conflictIndex = userChallengeInfoIndex) { row ->
-                  row[userRef] = user.userDbmsId
-                  row[UserChallengeInfoTable.md5] = md5
-                  row[created] = nowInstant()
-                  row[updated] = nowInstant()
-                  row[allCorrect] = true
-                  row[likeDislike] = 0
-                  row[answersJson] = "{}"
-                }
-              }
+        transaction {
+          with(UserChallengeInfoTable) {
+            upsert(conflictIndex = userChallengeInfoIndex) { row ->
+              row[userRef] = user.userDbmsId
+              row[UserChallengeInfoTable.md5] = md5
+              row[created] = nowInstant()
+              row[updated] = nowInstant()
+              row[allCorrect] = true
+              row[likeDislike] = 0
+              row[answersJson] = "{}"
             }
-
-            ChallengeProgressService.isCorrect(user, md5) shouldBe true
           }
         }
+
+        ChallengeProgressService.isCorrect(user, md5) shouldBe true
+      }
     }
 
     "isCorrect returns false when allCorrect is false" {
-      initTestProperties()
-      TestDatabase.connectAndMigrate()
+      withTestApp {
+        val user =
+          User.createOAuthUser(
+            name = FullName("Progress Incorrect"),
+            emailVal = Email("progress-incorrect@test.com"),
+            provider = OAuthProvider.GITHUB,
+            providerId = "progress-incorrect-001",
+            accessToken = "token-progress-incorrect",
+          )
 
-      TestData.readTestContent()
-        .also { testContent ->
-          testApplication {
-            application { testModule(testContent) }
+        val md5 = "test-challenge-md5-incorrect"
 
-            val user =
-              User.createOAuthUser(
-                name = FullName("Progress Incorrect"),
-                emailVal = Email("progress-incorrect@test.com"),
-                provider = "github",
-                providerId = "progress-incorrect-001",
-                accessToken = "token-progress-incorrect",
-              )
-
-            val md5 = "test-challenge-md5-incorrect"
-
-            transaction {
-              with(UserChallengeInfoTable) {
-                upsert(conflictIndex = userChallengeInfoIndex) { row ->
-                  row[userRef] = user.userDbmsId
-                  row[UserChallengeInfoTable.md5] = md5
-                  row[created] = nowInstant()
-                  row[updated] = nowInstant()
-                  row[allCorrect] = false
-                  row[likeDislike] = 0
-                  row[answersJson] = "{}"
-                }
-              }
+        transaction {
+          with(UserChallengeInfoTable) {
+            upsert(conflictIndex = userChallengeInfoIndex) { row ->
+              row[userRef] = user.userDbmsId
+              row[UserChallengeInfoTable.md5] = md5
+              row[created] = nowInstant()
+              row[updated] = nowInstant()
+              row[allCorrect] = false
+              row[likeDislike] = 0
+              row[answersJson] = "{}"
             }
-
-            ChallengeProgressService.isCorrect(user, md5) shouldBe false
           }
         }
+
+        ChallengeProgressService.isCorrect(user, md5) shouldBe false
+      }
     }
   }
 }

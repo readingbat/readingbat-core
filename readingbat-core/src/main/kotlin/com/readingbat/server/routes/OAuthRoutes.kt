@@ -24,6 +24,7 @@ import com.readingbat.common.Endpoints.OAUTH_CALLBACK_GITHUB_ENDPOINT
 import com.readingbat.common.Endpoints.OAUTH_CALLBACK_GOOGLE_ENDPOINT
 import com.readingbat.common.Endpoints.OAUTH_LOGIN_GITHUB_ENDPOINT
 import com.readingbat.common.Endpoints.OAUTH_LOGIN_GOOGLE_ENDPOINT
+import com.readingbat.common.OAuthProvider
 import com.readingbat.common.OAuthReturnUrl
 import com.readingbat.common.User
 import com.readingbat.common.User.Companion.queryUserByEmail
@@ -43,6 +44,7 @@ import io.ktor.server.auth.authenticate
 import io.ktor.server.auth.principal
 import io.ktor.server.response.respondRedirect
 import io.ktor.server.routing.Routing
+import io.ktor.server.routing.RoutingContext
 import io.ktor.server.routing.get
 import io.ktor.server.sessions.clear
 import io.ktor.server.sessions.get
@@ -83,14 +85,6 @@ private data class GoogleUser(
   @SerialName("family_name") val familyName: String? = null,
   val picture: String? = null,
 )
-
-enum class OAuthProvider {
-  GITHUB,
-  GOOGLE,
-  ;
-
-  val providerName: String get() = name.lowercase()
-}
 
 private val json = Json { ignoreUnknownKeys = true }
 
@@ -148,12 +142,7 @@ fun Routing.oauthRoutes() {
 
         logger.info { "GitHub OAuth callback: name=$name email=$email providerId=$providerId" }
 
-        val user =
-          findOrCreateOAuthUser(OAuthProvider.GITHUB, providerId, Email(email), FullName(name), accessToken, avatarUrl)
-        call.sessions.set(UserPrincipal(userId = user.userId))
-        val returnUrl = safeRedirectPath(call.sessions.get<OAuthReturnUrl>()?.url ?: "/")
-        call.sessions.clear<OAuthReturnUrl>()
-        call.respondRedirect(returnUrl)
+        completeOAuthLogin(OAuthProvider.GITHUB, providerId, Email(email), FullName(name), accessToken, avatarUrl)
       }
     }
   }
@@ -188,18 +177,28 @@ fun Routing.oauthRoutes() {
 
         logger.info { "Google OAuth callback: name=$name email=$email providerId=$providerId" }
 
-        val user =
-          findOrCreateOAuthUser(OAuthProvider.GOOGLE, providerId, Email(email), FullName(name), accessToken, avatarUrl)
-        call.sessions.set(UserPrincipal(userId = user.userId))
-        val returnUrl = safeRedirectPath(call.sessions.get<OAuthReturnUrl>()?.url ?: "/")
-        call.sessions.clear<OAuthReturnUrl>()
-        call.respondRedirect(returnUrl)
+        completeOAuthLogin(OAuthProvider.GOOGLE, providerId, Email(email), FullName(name), accessToken, avatarUrl)
       }
     }
   }
 }
 
 private val oauthLogger = KotlinLogging.logger {}
+
+private suspend fun RoutingContext.completeOAuthLogin(
+  provider: OAuthProvider,
+  providerId: String,
+  email: Email,
+  name: FullName,
+  accessToken: String,
+  avatarUrl: String?,
+) {
+  val user = findOrCreateOAuthUser(provider, providerId, email, name, accessToken, avatarUrl)
+  call.sessions.set(UserPrincipal(userId = user.userId))
+  val returnUrl = safeRedirectPath(call.sessions.get<OAuthReturnUrl>()?.url ?: "/")
+  call.sessions.clear<OAuthReturnUrl>()
+  call.respondRedirect(returnUrl)
+}
 
 private fun findOrCreateOAuthUser(
   provider: OAuthProvider,
@@ -293,5 +292,5 @@ private fun findOrCreateOAuthUser(
 
   // 3. No link, no matching email — create new user
   oauthLogger.info { "OAuth login: creating new user for $provider/$providerId email=$email" }
-  return User.createOAuthUser(name, email, provider.providerName, providerId, accessToken, avatarUrl)
+  return User.createOAuthUser(name, email, provider, providerId, accessToken, avatarUrl)
 }

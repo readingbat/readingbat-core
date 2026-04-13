@@ -46,6 +46,7 @@ import com.readingbat.dsl.challenge.Challenge
 import com.readingbat.dsl.isDbmsEnabled
 import com.readingbat.posts.ChallengeHistory
 import com.readingbat.posts.ChallengeResults
+import com.readingbat.posts.LikeDislike
 import com.readingbat.server.BrowserSessionsTable
 import com.readingbat.server.ChallengeName
 import com.readingbat.server.ClassesTable
@@ -67,6 +68,7 @@ import com.readingbat.server.userSessionIndex
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.html.Entities.nbsp
 import kotlinx.serialization.json.Json
+import org.jetbrains.exposed.v1.core.Column
 import org.jetbrains.exposed.v1.core.Count
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.and
@@ -202,9 +204,9 @@ class User {
     }
 
   fun likeDislikeEmoji(likeDislike: Int) =
-    when (likeDislike) {
-      1 -> THUMBS_UP
-      2 -> THUMBS_DOWN
+    when (likeDislike.toShort()) {
+      LikeDislike.LIKE.value -> THUMBS_UP
+      LikeDislike.DISLIKE.value -> THUMBS_DOWN
       else -> nbsp.text
     }
 
@@ -224,7 +226,10 @@ class User {
     readonlyTx {
       with(UserChallengeInfoTable) {
         select(likeDislike)
-          .where { (userRef eq userDbmsId) and ((likeDislike eq 1) or (likeDislike eq 2)) }
+          .where {
+            (userRef eq userDbmsId) and
+            ((likeDislike eq LikeDislike.LIKE.value) or (likeDislike eq LikeDislike.DISLIKE.value))
+              }
           .map { it.toString() }
       }
     }
@@ -439,19 +444,16 @@ class User {
   }
 
   fun unenrollEnrolleesClassCode(classCode: ClassCode, enrollees: List<User>) {
-    logger.info { "Deleting ${enrollees.size} enrollees for class code $classCode for $fullName ($email)" }
-    // Reset every enrollee's enrolled class and remove from class
+    logger.info { "Unenrolling ${enrollees.size} enrollees for class code $classCode for $fullName ($email)" }
+    if (enrollees.isEmpty()) return
     transaction {
-      enrollees
-        .forEach { enrollee ->
-          logger.info { "Assigning ${enrollee.email} to $DISABLED_CLASS_CODE" }
-          with(UsersTable) {
-            update({ id eq enrollee.userDbmsId }) { row ->
-              row[updated] = nowInstant()
-              row[enrolledClassCode] = DISABLED_CLASS_CODE.classCode
-            }
-          }
+      val enrolleeIds = enrollees.map { it.userDbmsId }
+      with(UsersTable) {
+        update({ id inList enrolleeIds }) { row ->
+          row[updated] = nowInstant()
+          row[enrolledClassCode] = DISABLED_CLASS_CODE.classCode
         }
+      }
     }
   }
 
@@ -468,37 +470,49 @@ class User {
   /** Deletes this user and all associated data, unenrolling all enrollees from classes this user owns. */
   fun deleteUser() {
     val classCodes = classCodes()
-    val browserSessions = browserSessions()
-    val correctAnswers = correctAnswers()
-    val likeDislikes = likeDislikes()
-    val challenges = challenges()
-    val invocations = invocations()
-
     val enrolleePairs = classCodes.map { it to it.fetchEnrollees() }
 
-    logger.info { "Deleting User: $userId $fullName" }
-    logger.info { "User Email: $email" }
-    logger.info { "UserId: $userId" }
-    logger.info { "User Info browser sessions: ${browserSessions.size}" }
-    logger.info { "Correct Answers: ${correctAnswers.size}" }
-    logger.info { "Likes/Dislikes: ${likeDislikes.size}" }
-    logger.info { "Challenges: ${challenges.size}" }
-    logger.info { "Invocations: ${invocations.size}" }
-    logger.info { "User Classes: $classCodes" }
+    readonlyTx {
+      val browserSessionCount =
+        with(UserSessionsTable) {
+        select(Count(id)).where { userRef eq userDbmsId }.map { it[0] as Long }.first()
+      }
+      val correctAnswerCount =
+        with(UserChallengeInfoTable) {
+        select(Count(id)).where { (userRef eq userDbmsId) and allCorrect }.map { it[0] as Long }.first()
+      }
+      val likeDislikeCount =
+        with(UserChallengeInfoTable) {
+        select(Count(id))
+          .where {
+            (userRef eq userDbmsId) and
+            ((likeDislike eq LikeDislike.LIKE.value) or (likeDislike eq LikeDislike.DISLIKE.value))
+              }
+          .map { it[0] as Long }.first()
+      }
+      val challengeCount =
+        with(UserChallengeInfoTable) {
+        select(Count(id)).where { userRef eq userDbmsId }.map { it[0] as Long }.first()
+      }
+      val invocationCount =
+        with(UserAnswerHistoryTable) {
+        select(Count(id)).where { userRef eq userDbmsId }.map { it[0] as Long }.first()
+      }
+
+      logger.info { "Deleting User: $userId $fullName ($email)" }
+      logger.info { "Browser sessions: $browserSessionCount, Correct: $correctAnswerCount, Likes: $likeDislikeCount" }
+      logger.info { "Challenges: $challengeCount, Invocations: $invocationCount, Classes: $classCodes" }
+    }
 
     transaction {
-      // Reset enrollees in all classes created by User
       enrolleePairs.forEach { (classCode, enrollees) -> unenrollEnrolleesClassCode(classCode, enrollees) }
-
-      // Classes delete on cascade
-      // UserAnswerHistory delete on cascade
-      // UserChallengeInfo delete on cascade
-      // UserSessions delete on cascade
-      // PasswordResets delete on cascade
       with(UsersTable) {
         deleteWhere { id eq this@User.userDbmsId }
       }
     }
+
+    userIdCache.remove(userId)
+    emailCache.remove(userId)
   }
 
   /** Resets the answer history for all invocations of the given challenge, publishing updates if applicable. */
@@ -556,18 +570,6 @@ class User {
   override fun toString() = "User(userId='$userId', name='$fullName')"
 
   companion object {
-    // Class code a user is enrolled in. Will report answers to when in student mode
-    // This is not browser-id specific
-    // internal const val ENROLLED_CLASS_CODE_FIELD = "enrolled-class-code"
-
-    // Class code you will observe updates on when in teacher mode
-    // This is browser-id specific
-    // private const val ACTIVE_CLASS_CODE_FIELD = "active-class-code"
-
-    // Previous teacher class code that a user had
-    // This is browser-id specific
-    // private const val PREVIOUS_TEACHER_CLASS_CODE_FIELD = "previous-teacher-class-code"
-
     private val logger = KotlinLogging.logger {}
 
     val userIdCache = ConcurrentHashMap<String, Long>()
@@ -578,26 +580,13 @@ class User {
 
     fun String.toUser(row: ResultRow) = User(this, null, row)
 
-    /** Returns the class code the user is actively monitoring as a teacher, or [DISABLED_CLASS_CODE] if none. */
     fun queryActiveTeachingClassCode(user: User?) =
-      when {
-        user == null || !isDbmsEnabled() -> {
-          DISABLED_CLASS_CODE
-        }
-
-        else -> {
-          transaction {
-            with(UserSessionsTable) {
-              select(activeClassCode)
-                .where { (sessionRef eq user.queryOrCreateSessionDbmsId()) and (userRef eq user.userDbmsId) }
-                .map { it[0] as String }
-                .firstOrNull()?.let { ClassCode(it) } ?: DISABLED_CLASS_CODE
-            }
-          }
-        }
-      }
+      queryClassCode(user, UserSessionsTable.activeClassCode)
 
     fun queryPreviousTeacherClassCode(user: User?) =
+      queryClassCode(user, UserSessionsTable.previousTeacherClassCode)
+
+    private fun queryClassCode(user: User?, column: Column<String>) =
       when {
         user == null || !isDbmsEnabled() -> {
           DISABLED_CLASS_CODE
@@ -605,13 +594,13 @@ class User {
 
         else -> {
           transaction {
-            with(UserSessionsTable) {
-              select(previousTeacherClassCode)
-                .where { (sessionRef eq user.queryOrCreateSessionDbmsId()) and (userRef eq user.userDbmsId) }
-                .map { it[0] as String }
-                .firstOrNull()?.let { ClassCode(it) } ?: DISABLED_CLASS_CODE
-            }
+          with(UserSessionsTable) {
+            select(column)
+              .where { (sessionRef eq user.queryOrCreateSessionDbmsId()) and (userRef eq user.userDbmsId) }
+              .map { it[0] as String }
+              .firstOrNull()?.let { ClassCode(it) } ?: DISABLED_CLASS_CODE
           }
+        }
         }
       }
 
@@ -668,11 +657,10 @@ class User {
         }
       }
 
-    /** Creates a new user account via an OAuth provider (e.g., GitHub, Google). */
     fun createOAuthUser(
       name: FullName,
       emailVal: Email,
-      provider: String,
+      provider: OAuthProvider,
       providerId: String,
       accessToken: String,
       avatarUrlVal: String? = null,
@@ -688,7 +676,7 @@ class User {
                   row[email] = emailVal.value.maxLength(128)
                   row[enrolledClassCode] = DISABLED_CLASS_CODE.classCode
                   row[defaultLanguage] = defaultLanguageType.languageName.value
-                  row[authProvider] = provider
+                  row[authProvider] = provider.providerName
                   row[avatarUrl] = avatarUrlVal
                 }.value
               }
@@ -696,7 +684,7 @@ class User {
             with(OAuthLinksTable) {
               insert { row ->
                 row[userRef] = user.userDbmsId
-                row[OAuthLinksTable.provider] = provider
+                row[OAuthLinksTable.provider] = provider.providerName
                 row[OAuthLinksTable.providerId] = providerId
                 row[providerEmail] = emailVal.value
                 row[OAuthLinksTable.accessToken] = accessToken
@@ -704,7 +692,7 @@ class User {
             }
           }
           user.existsInDbms = true
-          logger.info { "Created OAuth user $emailVal ${user.userId} via $provider" }
+          logger.info { "Created OAuth user $emailVal ${user.userId} via ${provider.providerName}" }
         }
 
     private fun isRegisteredEmail(email: Email) = queryUserByEmail(email) != null

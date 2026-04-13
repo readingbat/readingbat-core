@@ -18,14 +18,10 @@
 package com.readingbat.common
 
 import com.pambrose.common.email.Email
-import com.readingbat.TestData
-import com.readingbat.kotest.TestDatabase
-import com.readingbat.kotest.TestSupport.initTestProperties
-import com.readingbat.kotest.TestSupport.testModule
 import com.readingbat.server.FullName
+import com.readingbat.withTestApp
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
-import io.ktor.server.testing.testApplication
 
 class UserValidationTest : StringSpec() {
   init {
@@ -40,28 +36,20 @@ class UserValidationTest : StringSpec() {
     }
 
     "OAuth user has existsInDbms set to true after creation" {
-      initTestProperties()
-      TestDatabase.connectAndMigrate()
+      withTestApp {
+        val user =
+          User.createOAuthUser(
+            name = FullName("Test User"),
+            emailVal = Email("validation-test@test.com"),
+            provider = OAuthProvider.GITHUB,
+            providerId = "validation-test-001",
+            accessToken = "token-validation",
+          )
 
-      TestData.readTestContent()
-        .also { testContent ->
-          testApplication {
-            application { testModule(testContent) }
-
-            val user =
-              User.createOAuthUser(
-                name = FullName("Test User"),
-                emailVal = Email("validation-test@test.com"),
-                provider = "github",
-                providerId = "validation-test-001",
-                accessToken = "token-validation",
-              )
-
-            user.existsInDbms shouldBe true
-            user.isValidUser() shouldBe true
-            user.isNotValidUser() shouldBe false
-          }
-        }
+        user.existsInDbms shouldBe true
+        user.isValidUser() shouldBe true
+        user.isNotValidUser() shouldBe false
+      }
     }
   }
 }
