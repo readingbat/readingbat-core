@@ -1,46 +1,46 @@
-select 'browser_sessions' as tablename, count(*) as count
-from browser_sessions
-union
-select 'classes', count(*)
-from classes
-union
-select 'enrollees', count(*)
-from enrollees
-union
-select 'geo_info', count(*)
-from geo_info
-union
-select 'server_requests', count(*)
-from server_requests
-union
-select 'user_answer_history', count(*)
-from user_answer_history
-union
-select 'user_challenge_info', count(*)
-from user_challenge_info
-union
-select 'user_sessions', count(*)
-from user_sessions
-union
-select 'users', count(*)
-from users;
+SELECT 'browser_sessions' AS tablename, count(*) AS count
+FROM browser_sessions
+UNION
+SELECT 'classes', count(*)
+FROM classes
+UNION
+SELECT 'enrollees', count(*)
+FROM enrollees
+UNION
+SELECT 'geo_info', count(*)
+FROM geo_info
+UNION
+SELECT 'server_requests', count(*)
+FROM server_requests
+UNION
+SELECT 'user_answer_history', count(*)
+FROM user_answer_history
+UNION
+SELECT 'user_challenge_info', count(*)
+FROM user_challenge_info
+UNION
+SELECT 'user_sessions', count(*)
+FROM user_sessions
+UNION
+SELECT 'users', count(*)
+FROM users;
 
 
-delete
-from server_requests;
+DELETE
+FROM server_requests;
 
-delete
-from browser_sessions;
+DELETE
+FROM browser_sessions;
 
-delete
-from user_answer_history
-where EXTRACT(YEAR FROM created) < 2026;
+DELETE
+FROM user_answer_history
+WHERE EXTRACT(YEAR FROM created) < 2026;
 
-delete
-from user_challenge_info
-where EXTRACT(YEAR FROM created) < 2026;
+DELETE
+FROM user_challenge_info
+WHERE EXTRACT(YEAR FROM created) < 2026;
 
-delete
-from geo_info
-where EXTRACT(YEAR FROM created) < 2026;
+DELETE
+FROM geo_info
+WHERE EXTRACT(YEAR FROM created) < 2026;
 
