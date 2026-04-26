@@ -11,16 +11,13 @@ build
 secrets
 .env
 
+.claude/worktrees
+
 .DS_Store
 *.lock
 .kotlin
 
 node_modules/
-
-
-cypress/videos
-cypress/screenshots
-cypress/examples
 
 ### Kotlin template
 # Compiled class file

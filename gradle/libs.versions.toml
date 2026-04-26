@@ -1,26 +1,25 @@
 [versions]
 # Plugin versions
 buildconfig = "6.0.9"
-kotlin = "2.3.20"
+kotlin = "2.3.21"
 kotlinter = "5.4.2"
 dokka = "2.2.0"
 maven-publish = "0.36.0"
 versions = "0.53.0"
 
 # Library versions
-cloud = "1.28.2"
+cloud = "1.28.3"
 commons = "1.15.0"
 css = "2026.3.2"
 exposed = "1.2.0"
 flexmark = "0.64.8"
-flyway = "12.3.0"
+flyway = "12.4.0"
 github-api = "1.330"
 hikari = "7.0.2"
-java = "2.0.0"
+java-scripting = "2.0.0"
 khealth = "3.0.1"
 kotest = "6.1.11"
-kotest-ktor = "6.1.11"
-ktor = "3.4.2"
+ktor = "3.4.3"
 logback = "1.5.18"
 logging = "7.0.12"
 pgjdbc = "0.8.9"
@@ -32,13 +31,9 @@ python = "2.7.4"
 resend = "4.13.0"
 serialization = "1.11.0"
 testcontainers = "1.21.4"
-utils = "2.7.1"
+utils = "2.8.1"
 
 [libraries]
-# Kotlin
-kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
-kotlin-scripting-jsr223 = { module = "org.jetbrains.kotlin:kotlin-scripting-jsr223", version.ref = "kotlin" }
-
 # Serialization
 serialization = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "serialization" }
 
@@ -61,7 +56,7 @@ prometheus-proxy = { module = "com.pambrose:prometheus-proxy", version.ref = "pr
 simple-client = { module = "io.prometheus:simpleclient", version.ref = "prometheus" }
 
 # Script Engines
-java-scripting = { module = "ch.obermuhlner:java-scriptengine", version.ref = "java" }
+java-scripting = { module = "ch.obermuhlner:java-scriptengine", version.ref = "java-scripting" }
 python-scripting = { module = "org.python:jython-standalone", version.ref = "python" }
 kotlin-scripting = { module = "org.jetbrains.kotlin:kotlin-scripting-jsr223", version.ref = "kotlin" }
 
@@ -111,7 +106,7 @@ logback = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
 # Testing
 kotest-runner-junit5 = { module = "io.kotest:kotest-runner-junit5", version.ref = "kotest" }
 kotest-assertions-core = { module = "io.kotest:kotest-assertions-core", version.ref = "kotest" }
-kotest-assertions-ktor = { module = "io.kotest:kotest-assertions-ktor", version.ref = "kotest-ktor" }
+kotest-assertions-ktor = { module = "io.kotest:kotest-assertions-ktor", version.ref = "kotest" }
 testcontainers-postgresql = { module = "org.testcontainers:postgresql", version.ref = "testcontainers" }
 flyway-core = { module = "org.flywaydb:flyway-core", version.ref = "flyway" }
 flyway-postgres = { module = "org.flywaydb:flyway-database-postgresql", version.ref = "flyway" }

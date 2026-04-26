@@ -1,7 +1,16 @@
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
+plugins {
+  application
+  alias(libs.plugins.buildconfig)
+}
+
 description = "Ktor web server, DSL engine, and database layer for ReadingBat programming challenges"
+
+application {
+  mainClass = "TestMain"
+}
 
 dependencies {
   implementation(libs.serialization)
@@ -16,7 +25,6 @@ dependencies {
 
   implementation(libs.simple.client)
 
-  runtimeOnly(libs.kotlin.scripting.jsr223)
   runtimeOnly(libs.python.scripting)
   runtimeOnly(libs.kotlin.scripting)
   implementation(libs.java.scripting)
@@ -45,14 +53,16 @@ dependencies {
 }
 
 val formatter: DateTimeFormatter = DateTimeFormatter.ofPattern("MM/dd/yyyy")
+val releaseDate = (findProperty("releaseDate") as? String) ?: LocalDate.now().format(formatter)
+val buildTime = (findProperty("buildTime") as? String)?.toLong() ?: System.currentTimeMillis()
 
 buildConfig {
   packageName("com.readingbat")
 
   buildConfigField("String", "CORE_NAME", "\"${project.name}\"")
   buildConfigField("String", "CORE_VERSION", "\"${project.version}\"")
-  buildConfigField("String", "CORE_RELEASE_DATE", "\"${LocalDate.now().format(formatter)}\"")
-  buildConfigField("long", "BUILD_TIME", "${System.currentTimeMillis()}L")
+  buildConfigField("String", "CORE_RELEASE_DATE", "\"$releaseDate\"")
+  buildConfigField("long", "BUILD_TIME", "${buildTime}L")
 }
 
 // Exclude top-level entry points from KDocs
@@ -100,5 +110,5 @@ if (System.getProperty("os.name").lowercase().contains("mac")) {
 
 // Include build uberjars in heroku deploy
 tasks.register("stage") {
-  dependsOn("uberjar", "build", "clean")
+  dependsOn("build")
 }

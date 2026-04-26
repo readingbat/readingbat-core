@@ -6,9 +6,6 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
 
 plugins {
-  application
-  `java-library`
-
   alias(libs.plugins.kotlin.jvm)
   alias(libs.plugins.kotlin.serialization) apply false
   alias(libs.plugins.buildconfig) apply false
@@ -19,37 +16,15 @@ plugins {
   // id("org.jetbrains.kotlinx.kover") version "0.5.0"
 }
 
-val versionStr: String by extra
-val kotlinLib = libs.plugins.kotlin.jvm.get().toString().split(":").first()
-val serializationLib = libs.plugins.kotlin.serialization.get().toString().split(":").first()
-val ktlinterLib = libs.plugins.kotlinter.get().toString().split(":").first()
-
-// These are for the uber target
-val mainName = "TestMain"
-
-application {
-  mainClass = mainName
-}
+val versionStr = findProperty("overrideVersion")?.toString() ?: "3.1.4"
+val kotlinLib = libs.plugins.kotlin.jvm.get().pluginId
+val serializationLib = libs.plugins.kotlin.serialization.get().pluginId
+val ktlinterLib = libs.plugins.kotlinter.get().pluginId
 
 allprojects {
-  apply(plugin = "org.jmailen.kotlinter")
-  apply(plugin = "org.jetbrains.kotlin.jvm")
-  apply(plugin = "org.jetbrains.kotlin.plugin.serialization")
-  apply(plugin = "com.github.gmazzo.buildconfig")
-  apply(plugin = "com.github.ben-manes.versions")
-
-  extra["versionStr"] = findProperty("overrideVersion")?.toString() ?: "3.1.3"
   group = "com.readingbat"
   description = "ReadingBat Core"
   version = versionStr
-
-  repositories {
-    // mavenLocal()
-    google()
-    mavenCentral()
-  }
-
-  configureVersions()
 }
 
 dependencies {
@@ -66,8 +41,8 @@ dokka {
 }
 
 subprojects {
-  apply(plugin = "application")
   apply(plugin = "java-library")
+  apply(plugin = "com.github.ben-manes.versions")
 
   configureKotlin()
   configurePublishing()
@@ -75,6 +50,10 @@ subprojects {
   configureKotlinter()
   configureSecrets()
   configureVersions()
+}
+
+project(":readingbat-core") {
+  apply(plugin = serializationLib)
 }
 
 fun Project.configureKotlin() {
@@ -133,7 +112,6 @@ fun Project.configurePublishing() {
         sourcesJar = SourcesJar.Sources(),
       ),
     )
-    coordinates("com.readingbat", project.name, version.toString())
 
     pom {
       name.set(project.name)
@@ -160,12 +138,10 @@ fun Project.configurePublishing() {
     }
 
     publishToMavenCentral(automaticRelease = true)
-    signAllPublications()
-  }
-
-// Skip signing when no GPG key is provided (e.g., local publishing)
-  tasks.withType<Sign>().configureEach {
-    isEnabled = project.findProperty("signingInMemoryKey") != null
+    // Skip signing when no GPG key is provided (e.g., local publishing)
+    if (project.findProperty("signingInMemoryKey") != null) {
+      signAllPublications()
+    }
   }
 }
 
@@ -199,8 +175,10 @@ fun Project.configureTesting() {
   }
 }
 
-configurations.all {
-  resolutionStrategy.cacheChangingModulesFor(0, "seconds")
+allprojects {
+  configurations.all {
+    resolutionStrategy.cacheChangingModulesFor(0, "seconds")
+  }
 }
 
 fun Project.configureVersions() {

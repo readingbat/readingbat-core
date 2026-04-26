@@ -1,4 +1,4 @@
-VERSION := $(shell grep 'extra\["versionStr"\]' build.gradle.kts | grep -o '"[0-9][^"]*"' | tr -d '"')
+VERSION := $(shell grep -E '^val versionStr' build.gradle.kts | grep -o '"[0-9][^"]*"' | tail -1 | tr -d '"')
 
 default: versioncheck
 
@@ -9,16 +9,16 @@ clean:
 	./gradlew clean
 
 build: clean tw-css
-	./gradlew build -xtest
+	./gradlew build -PreleaseDate=2026-04-25  -xtest
+
+local-build: clean tw-css
+	./gradlew build -PuseMavenLocal=true -PreleaseDate=2026-04-25 -xtest
 
 tw-css:
 	./gradlew :readingbat-core:tailwindBuild
 
 tw-full-css:
 	./gradlew :readingbat-core:tailwindBuildFull
-
-publish:
-	./gradlew publishToMavenLocal
 
 scan:
 	./gradlew build --scan -xtest
@@ -57,9 +57,6 @@ dbvalidate:
 
 lint:
 	./gradlew lintKotlinMain lintKotlinTest
-
-test:
-	~/node_modules/.bin/cypress open
 
 depends:
 	./gradlew dependencies
