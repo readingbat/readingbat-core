@@ -17,7 +17,7 @@ Setup:
 * Connect to shell with: `heroku ps:exec --app readingbat`
 * hprof files are put in */tmp*
 * Copy hprof file with: `heroku ps:copy /tmp/filename --app readingbat`
-* Open in jvisualvm with file: File->Load... 
+* Open in jvisualvm with file: File->Load...
 * https://devcenter.heroku.com/articles/exec#using-java-debugging-tools
 
 ## Prometheus
@@ -44,7 +44,7 @@ Setup:
 * https://sdkman.io/install
 * apt-get install unzip zip make
 * curl -s "https://get.sdkman.io" | bash
-* sdk install java 
+* sdk install java
 * sdk install kotlin
 * sdk install gradle
 * docker login
@@ -78,12 +78,3 @@ Setup:
 
 * https://github.com/GoogleCloudPlatform/cloud-sql-jdbc-socket-factory
 * ./bin/cloud_sql_proxy -instances=${ID}:${region}:readingbat-postgres=tcp:5432
-
-## Cypress.io
-
-* tab plugin: https://github.com/Bkucera/cypress-plugin-tab
-* Start test server with: `./testdata.sh`
-* Clear data with: `make dbreset`
-* To start locally from repo root: `~/node_modules/.bin/cypress open`
-* To run: `~/node_modules/.bin/cypress run --record --key 5ee5de19-1e84-4807-a199-5c70fda2fe5d`
-* https://levelup.gitconnected.com/what-ive-learnt-using-cypress-io-for-the-past-three-weeks-c1597999cd2f

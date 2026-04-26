@@ -58,9 +58,6 @@ dbvalidate:
 lint:
 	./gradlew lintKotlinMain lintKotlinTest
 
-test:
-	~/node_modules/.bin/cypress open
-
 depends:
 	./gradlew dependencies
 
