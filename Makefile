@@ -9,16 +9,16 @@ clean:
 	./gradlew clean
 
 build: clean tw-css
-	./gradlew build -xtest
+	./gradlew build -PreleaseDate=2026-04-25  -xtest
+
+local-build: clean tw-css
+	./gradlew build -PuseMavenLocal=true -PreleaseDate=2026-04-25 -xtest
 
 tw-css:
 	./gradlew :readingbat-core:tailwindBuild
 
 tw-full-css:
 	./gradlew :readingbat-core:tailwindBuildFull
-
-publish:
-	./gradlew publishToMavenLocal
 
 scan:
 	./gradlew build --scan -xtest

@@ -38,16 +38,10 @@ allprojects {
   apply(plugin = "com.github.gmazzo.buildconfig")
   apply(plugin = "com.github.ben-manes.versions")
 
-  extra["versionStr"] = findProperty("overrideVersion")?.toString() ?: "3.1.3"
+  extra["versionStr"] = findProperty("overrideVersion")?.toString() ?: "3.1.4"
   group = "com.readingbat"
   description = "ReadingBat Core"
   version = versionStr
-
-  repositories {
-    // mavenLocal()
-    google()
-    mavenCentral()
-  }
 
   configureVersions()
 }
@@ -133,7 +127,6 @@ fun Project.configurePublishing() {
         sourcesJar = SourcesJar.Sources(),
       ),
     )
-    coordinates("com.readingbat", project.name, version.toString())
 
     pom {
       name.set(project.name)
@@ -160,12 +153,10 @@ fun Project.configurePublishing() {
     }
 
     publishToMavenCentral(automaticRelease = true)
-    signAllPublications()
-  }
-
-// Skip signing when no GPG key is provided (e.g., local publishing)
-  tasks.withType<Sign>().configureEach {
-    isEnabled = project.findProperty("signingInMemoryKey") != null
+    // Skip signing when no GPG key is provided (e.g., local publishing)
+    if (project.findProperty("signingInMemoryKey") != null) {
+      signAllPublications()
+    }
   }
 }
 
