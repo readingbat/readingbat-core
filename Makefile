@@ -1,4 +1,4 @@
-VERSION := $(shell grep 'extra\["versionStr"\]' build.gradle.kts | grep -o '"[0-9][^"]*"' | tr -d '"')
+VERSION := $(shell grep -E '^val versionStr' build.gradle.kts | grep -o '"[0-9][^"]*"' | tail -1 | tr -d '"')
 
 default: versioncheck
 
