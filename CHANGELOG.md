@@ -4,7 +4,27 @@ All notable changes to ReadingBat Core are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [Unreleased] (3.1.3)
+## [3.1.4] - 2026-04-25
+
+### Changed
+
+- Centralized repository declarations in `settings.gradle.kts` (`FAIL_ON_PROJECT_REPOS`)
+- Refactored root `build.gradle.kts` to scope Kotlin/publishing/lint/test config per-subproject via helpers
+- Bumped dependencies: Kotlin 2.3.21, Ktor 3.4.3, Exposed 1.2.0, Kotest 6.1.11, Kotlinter 5.4.2, Dokka 2.2.0, Postgres 42.7.10, Hikari 7.0.2, Flyway 12.4.0, Playwright 1.59.0, common-utils 2.8.1, plus other minor bumps
+- Cleaned up unused libraries from the version catalog
+- Bumped version to 3.1.4
+
+### Added
+
+- Playwright-based browser tests (`PlaywrightAuthTest`, `PlaywrightEndpointTest`) replacing legacy Cypress specs
+- `.claude/skills/playwright-cli/` documentation and references for Playwright CLI workflows
+
+### Removed
+
+- Legacy Cypress example specs, integration tests, fixtures, and `package.json`
+- Unused `EmailUtils.kt` and `Emailer.kt`
+
+## [3.1.3] - 2026-04-12
 
 ### Changed
 
@@ -133,7 +153,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - Initial tracked release
 
-[Unreleased]: https://github.com/readingbat/readingbat-core/compare/3.0.11...HEAD
+[Unreleased]: https://github.com/readingbat/readingbat-core/compare/3.1.4...HEAD
+[3.1.4]: https://github.com/readingbat/readingbat-core/compare/3.1.3...3.1.4
+[3.1.3]: https://github.com/readingbat/readingbat-core/compare/3.1.2...3.1.3
 [3.0.11]: https://github.com/readingbat/readingbat-core/compare/3.0.10...3.0.11
 [3.0.10]: https://github.com/readingbat/readingbat-core/compare/3.0.9...3.0.10
 [3.0.9]: https://github.com/readingbat/readingbat-core/compare/3.0.8...3.0.9

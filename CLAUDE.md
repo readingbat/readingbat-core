@@ -130,6 +130,9 @@ The `readingbat-kotest` module provides `TestSupport` with helpers:
 - `forEachLanguage` / `forEachGroup` / `forEachChallenge` — DSL for iterating content
 - `answerAllWith()` / `answerAllWithCorrectAnswer()` — integration test helpers for checking answers via HTTP
 - Test content is defined in `readingbat-core/src/test/kotlin/TestData.kt`
+- Browser tests use Playwright (`com.microsoft.playwright:playwright`) and live in
+  `readingbat-core/src/test/kotlin/com/readingbat/playwright/` (e.g., `PlaywrightAuthTest`, `PlaywrightEndpointTest`).
+  These replaced the old Cypress specs.
 
 ### Key Dependencies
 
