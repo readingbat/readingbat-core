@@ -16,7 +16,7 @@ plugins {
   // id("org.jetbrains.kotlinx.kover") version "0.5.0"
 }
 
-val versionStr = findProperty("overrideVersion")?.toString() ?: "3.1.4"
+val versionStr = findProperty("overrideVersion")?.toString() ?: "3.1.5"
 val kotlinLib = libs.plugins.kotlin.jvm.get().pluginId
 val serializationLib = libs.plugins.kotlin.serialization.get().pluginId
 val ktlinterLib = libs.plugins.kotlinter.get().pluginId
