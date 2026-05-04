@@ -40,6 +40,7 @@ import com.readingbat.common.browserSession
 import com.readingbat.common.userPrincipal
 import com.readingbat.dsl.isDbmsEnabled
 import com.readingbat.dsl.isSaveRequestsEnabled
+import com.readingbat.pages.ContentLoadingPage
 import com.readingbat.pages.ContentLoadingPage.contentLoadingPage
 import com.readingbat.server.GeoInfo.Companion.lookupGeoInfo
 import com.readingbat.server.GeoInfo.Companion.queryGeoInfo
@@ -192,7 +193,7 @@ internal fun Application.intercepts() {
       val path = call.request.path()
       val isAllowed = path in readinessAllowedPaths || readinessAllowedPrefixes.any { path.startsWith(it) }
       if (!isAllowed) {
-        call.response.header(HttpHeaders.RetryAfter, "5")
+        call.response.header(HttpHeaders.RetryAfter, ContentLoadingPage.RETRY_AFTER_SECS.toString())
         call.respondText(contentLoadingPage(), ContentType.Text.Html, HttpStatusCode.ServiceUnavailable)
         finish()
       }

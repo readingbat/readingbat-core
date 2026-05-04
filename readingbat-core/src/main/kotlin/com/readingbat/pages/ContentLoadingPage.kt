@@ -33,6 +33,9 @@ import kotlinx.html.stream.createHTML
  * browsers retry automatically once the content is ready.
  */
 internal object ContentLoadingPage {
+  /** Suggested retry interval shown to clients (browser meta-refresh, HTTP `Retry-After`). */
+  const val RETRY_AFTER_SECS = 5
+
   // Cached at first access so the per-request readiness intercept doesn't rebuild this static HTML.
   private val rendered: String by lazy {
     createHTML()
@@ -40,7 +43,7 @@ internal object ContentLoadingPage {
         head {
           meta {
             httpEquiv = "refresh"
-            content = "5"
+            content = RETRY_AFTER_SECS.toString()
           }
           headDefault()
         }
