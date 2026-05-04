@@ -33,7 +33,8 @@ import kotlinx.html.stream.createHTML
  * browsers retry automatically once the content is ready.
  */
 internal object ContentLoadingPage {
-  fun contentLoadingPage() =
+  // Cached at first access so the per-request readiness intercept doesn't rebuild this static HTML.
+  private val rendered: String by lazy {
     createHTML()
       .html {
         head {
@@ -50,4 +51,7 @@ internal object ContentLoadingPage {
           loadPingdomScript()
         }
       }
+  }
+
+  fun contentLoadingPage(): String = rendered
 }

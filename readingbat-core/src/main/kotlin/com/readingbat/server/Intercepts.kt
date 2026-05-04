@@ -23,6 +23,7 @@ import com.readingbat.common.Constants.STATIC
 import com.readingbat.common.Constants.UNKNOWN_USER_ID
 import com.readingbat.common.Endpoints.ABOUT_ENDPOINT
 import com.readingbat.common.Endpoints.CHALLENGE_ROOT
+import com.readingbat.common.Endpoints.FAV_ICON_ENDPOINT
 import com.readingbat.common.Endpoints.HELP_ENDPOINT
 import com.readingbat.common.Endpoints.OAUTH_CALLBACK_GITHUB_ENDPOINT
 import com.readingbat.common.Endpoints.OAUTH_CALLBACK_GOOGLE_ENDPOINT
@@ -30,6 +31,7 @@ import com.readingbat.common.Endpoints.OAUTH_LOGIN_GITHUB_ENDPOINT
 import com.readingbat.common.Endpoints.OAUTH_LOGIN_GOOGLE_ENDPOINT
 import com.readingbat.common.Endpoints.PING_ENDPOINT
 import com.readingbat.common.Endpoints.PRIVACY_POLICY_ENDPOINT
+import com.readingbat.common.Endpoints.ROBOTS_ENDPOINT
 import com.readingbat.common.Endpoints.ROOT
 import com.readingbat.common.Endpoints.TOS_ENDPOINT
 import com.readingbat.common.OAuthReturnUrl
@@ -131,8 +133,8 @@ internal object Intercepts {
   val readinessAllowedPaths =
     setOf(
       PING_ENDPOINT,
-      "/favicon.ico",
-      "/robots.txt",
+      FAV_ICON_ENDPOINT,
+      ROBOTS_ENDPOINT,
       "/ktor/application/shutdown",
     )
 
