@@ -16,6 +16,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Reverted the separate `healthRoutes` registration introduced in 3.1.6 — `/ping` is back inside `adminRoutes` because the new readiness gate makes the early registration unnecessary
 - Bumped version to 3.1.7
 
+### Added
+
+- `ContentLoadingPageTest` covering the `RETRY_AFTER_SECS` constant, rendered HTML markers, and the by-lazy cache invariant
+- `ContentReadinessInterceptorTest` exercising the gate end-to-end: 503 + `Retry-After` + loading body for blocked paths, allowlisted `/ping` and `/static/*` pass-through, and post-`markContentLoaded()` request flow
+- `clean-all` Makefile target that runs `clean` + `clean-docs` and removes per-project `.gradle` caches
+
 ### Removed
 
 - `Property.STARTUP_DELAY_SECS` and the matching `startupMaxDelaySecs` keys from `application-test.conf` and `application-travis.conf`

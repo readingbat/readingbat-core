@@ -11,6 +11,8 @@ Background DSL content loading and a readiness gate so platform health checks pa
 - **Heartbeat warnings.** A 10-second polling loop logs `Content not loaded after Ns` until the load finishes — useful for spotting deploys where the DSL evaluation has stalled or failed. Replaces the old one-shot `STARTUP_DELAY_SECS` warning.
 - **Encapsulated readiness flag.** `ReadingBatServer.contentReadCount` is now private; the interceptor uses `isContentReady: Boolean` and the admin diagnostics page uses `contentLoadCount: Int`. `Property.STARTUP_DELAY_SECS` and its `application-test.conf` / `application-travis.conf` entries are removed.
 - **Revert of the 3.1.6 health-route split.** `/ping` is folded back into `adminRoutes`; the new readiness gate makes the early `healthRoutes` registration unnecessary.
+- **Test coverage.** New `ContentLoadingPageTest` pins down the rendered HTML and the lazy-cache invariant, and `ContentReadinessInterceptorTest` drives the gate end-to-end through Ktor `testApplication` (blocked path → 503 + loading page; allowlisted paths → 200; post-`markContentLoaded()` → handler reached).
+- **Makefile.** New `clean-all` target runs `clean` + `clean-docs` and wipes the per-project `.gradle` caches.
 
 **Full Changelog**: https://github.com/readingbat/readingbat-core/compare/3.1.6...3.1.7
 
