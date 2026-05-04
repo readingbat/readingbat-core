@@ -4,6 +4,18 @@ All notable changes to ReadingBat Core are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [3.1.6] - 2026-05-03
+
+### Changed
+
+- Health/liveness route (`/ping`) split out of `adminRoutes` into a new `healthRoutes` and registered in `Application.module()` before `readContentDsl(...)`, so probes succeed while GitHub-backed content is still loading
+- `TestSupport` updated to mirror the new health route registration order
+- `releaseDate` resolution in `readingbat-core/build.gradle.kts` softened: falls back to today's date when the gradle property is absent or blank instead of erroring
+- Removed now-redundant `releaseDate` from `gradle.properties`
+- Hoisted `DokkaExtension` import and added explicit types in `readingbat-core/build.gradle.kts` for clarity
+- Bumped Kover to 0.9.8
+- Bumped version to 3.1.6
+
 ## [3.1.5] - 2026-05-03
 
 ### Changed

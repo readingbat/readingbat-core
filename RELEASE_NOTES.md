@@ -1,5 +1,20 @@
 # Release Notes
 
+## v3.1.6 — 2026-05-03
+
+Health-check routing fix, build-script polish, and a Kover patch bump.
+
+### Highlights
+
+- **Health route registered early.** The `/ping` endpoint is now split out of `adminRoutes` into a dedicated `healthRoutes` function and wired into `Application.module()` before `readContentDsl(...)` runs. Liveness/readiness probes succeed while GitHub-backed content is still loading, so platforms that gate traffic on `/ping` no longer black-hole during cold starts. `TestSupport` mirrors the new registration order.
+- **`releaseDate` fallback.** `releaseDate` resolution in `readingbat-core/build.gradle.kts` now falls back to today's date when the gradle property is missing or blank, instead of failing the build. The corresponding `releaseDate=` line was dropped from `gradle.properties`.
+- **Build-script polish.** Hoisted the `DokkaExtension` import and added explicit types in `readingbat-core/build.gradle.kts` to keep the file readable as it grows.
+- **Kover 0.9.8.** Patch bump from 0.9.1.
+
+**Full Changelog**: https://github.com/readingbat/readingbat-core/compare/3.1.5...3.1.6
+
+---
+
 ## v3.1.5 — 2026-05-03
 
 Gradle 9.5.0 upgrade, Kover code coverage, Codecov integration, and a focused round of build-script hardening.
@@ -31,4 +46,4 @@ Build modernization, dependency bumps, and frontend test migration from Cypress 
 
 ---
 
-For history prior to 3.1.5, see [CHANGELOG.md](CHANGELOG.md).
+For history prior to 3.1.6, see [CHANGELOG.md](CHANGELOG.md).
