@@ -1,5 +1,21 @@
 # Release Notes
 
+## v3.1.7 — 2026-05-04
+
+Background DSL content loading and a readiness gate so platform health checks pass during cold starts.
+
+### Highlights
+
+- **Non-blocking startup.** `Application.module()` no longer waits for `readContentDsl(...)` before returning. The DSL load runs on `Dispatchers.IO`, so the Ktor engine starts serving immediately and `/ping` is reachable from the first second of the deploy. This fixes DigitalOcean (and similar platforms) timing out the deployment health check while GitHub-backed content is still being fetched and evaluated.
+- **Loading page.** A new `Plugins`-phase interceptor in `Intercepts.kt` returns `503 Service Unavailable` with `Retry-After: 5` and a cached `ContentLoadingPage` for any user-facing path until the first DSL load completes. The page meta-refreshes every 5 seconds, so browsers automatically pick up the site once content is ready. A small allowlist (`/ping`, `/static/*`, favicon, robots, ktor shutdown) stays available throughout startup.
+- **Heartbeat warnings.** A 10-second polling loop logs `Content not loaded after Ns` until the load finishes — useful for spotting deploys where the DSL evaluation has stalled or failed. Replaces the old one-shot `STARTUP_DELAY_SECS` warning.
+- **Encapsulated readiness flag.** `ReadingBatServer.contentReadCount` is now private; the interceptor uses `isContentReady: Boolean` and the admin diagnostics page uses `contentLoadCount: Int`. `Property.STARTUP_DELAY_SECS` and its `application-test.conf` / `application-travis.conf` entries are removed.
+- **Revert of the 3.1.6 health-route split.** `/ping` is folded back into `adminRoutes`; the new readiness gate makes the early `healthRoutes` registration unnecessary.
+
+**Full Changelog**: https://github.com/readingbat/readingbat-core/compare/3.1.6...3.1.7
+
+---
+
 ## v3.1.6 — 2026-05-03
 
 Health-check routing fix, build-script polish, and a Kover patch bump.
