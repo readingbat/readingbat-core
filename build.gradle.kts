@@ -1,35 +1,43 @@
 import com.vanniktech.maven.publish.JavadocJar
 import com.vanniktech.maven.publish.SourcesJar
+import org.gradle.api.provider.ValueSource
+import org.gradle.api.provider.ValueSourceParameters
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
 
 plugins {
   alias(libs.plugins.kotlin.jvm)
   alias(libs.plugins.kotlin.serialization) apply false
   alias(libs.plugins.buildconfig) apply false
   alias(libs.plugins.kotlinter)
+  alias(libs.plugins.kover)
   alias(libs.plugins.versions)
   alias(libs.plugins.dokka)
   alias(libs.plugins.maven.publish) apply false
-  // id("org.jetbrains.kotlinx.kover") version "0.5.0"
 }
 
-val versionStr = findProperty("overrideVersion")?.toString() ?: "3.1.4"
 val kotlinLib = libs.plugins.kotlin.jvm.get().pluginId
 val serializationLib = libs.plugins.kotlin.serialization.get().pluginId
 val ktlinterLib = libs.plugins.kotlinter.get().pluginId
+val koverLib = libs.plugins.kover.get().pluginId
+
+// Version resolution: gradle.properties (`version=...`) is the source of truth.
+// `-PoverrideVersion=...` on the CLI overrides it on the root project, and the
+// `subprojects {}` block below propagates `rootProject.version` to every module.
+providers.gradleProperty("overrideVersion").orNull?.let { version = it }
 
 allprojects {
-  group = "com.readingbat"
-  description = "ReadingBat Core"
-  version = versionStr
+  configurations.all {
+    resolutionStrategy.cacheChangingModulesFor(0, "seconds")
+  }
 }
 
 dependencies {
   dokka(project(":readingbat-core"))
   dokka(project(":readingbat-kotest"))
+
+  kover(project(":readingbat-core"))
+  kover(project(":readingbat-kotest"))
 }
 
 dokka {
@@ -41,8 +49,12 @@ dokka {
 }
 
 subprojects {
+  group = rootProject.group
+  version = rootProject.version
+
   apply(plugin = "java-library")
   apply(plugin = "com.github.ben-manes.versions")
+  apply(plugin = koverLib)
 
   configureKotlin()
   configurePublishing()
@@ -59,6 +71,10 @@ project(":readingbat-core") {
 fun Project.configureKotlin() {
   apply {
     plugin(kotlinLib)
+  }
+
+  tasks.named("build") {
+    mustRunAfter("clean")
   }
 
   kotlin {
@@ -79,30 +95,12 @@ fun Project.configureKotlin() {
       }
     }
   }
-
-  tasks.named("build") {
-    mustRunAfter("clean")
-  }
-
-  tasks.withType<KotlinJvmCompile>().configureEach {
-    compilerOptions {
-      jvmTarget.set(JvmTarget.JVM_17)
-    }
-  }
 }
 
 fun Project.configurePublishing() {
   apply {
     plugin("org.jetbrains.dokka")
     plugin("com.vanniktech.maven.publish")
-  }
-
-  extensions.configure<org.jetbrains.dokka.gradle.DokkaExtension> {
-    moduleName.set(project.name)
-    pluginsConfiguration.named<org.jetbrains.dokka.gradle.engine.plugins.DokkaHtmlPluginParameters>("html") {
-      homepageLink.set("https://github.com/readingbat/readingbat-core")
-      footerMessage.set(project.name)
-    }
   }
 
   extensions.configure<com.vanniktech.maven.publish.MavenPublishBaseExtension> {
@@ -139,7 +137,7 @@ fun Project.configurePublishing() {
 
     publishToMavenCentral(automaticRelease = true)
     // Skip signing when no GPG key is provided (e.g., local publishing)
-    if (project.findProperty("signingInMemoryKey") != null) {
+    if (providers.gradleProperty("signingInMemoryKey").isPresent) {
       signAllPublications()
     }
   }
@@ -175,37 +173,49 @@ fun Project.configureTesting() {
   }
 }
 
-allprojects {
-  configurations.all {
-    resolutionStrategy.cacheChangingModulesFor(0, "seconds")
-  }
-}
-
 fun Project.configureVersions() {
-  fun isNonStable(version: String): Boolean =
-    listOf("-RC", "-BETA", "-ALPHA", "-M").any { version.uppercase().contains(it) }
+  // Match preview/unstable qualifiers anchored on a separator so plain substrings like
+  // "DEV" inside a real version (e.g. "1.0-developer") don't trigger false rejections.
+  val nonStableRegex = Regex("(?i)[-.](RC|BETA|ALPHA|M\\d+|SNAPSHOT|DEV|PREVIEW|EAP|CR)\\b")
 
   tasks.withType<com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask>().configureEach {
     rejectVersionIf {
-      isNonStable(candidate.version)
+      nonStableRegex.containsMatchIn(candidate.version)
     }
   }
 }
 
-fun Project.configureSecrets() {
-  val secretsFile = file("secrets/secrets.env")
-  if (secretsFile.exists()) {
-    val envVars =
-      secretsFile.readLines()
-        .map { it.trim() }
-        .filter { it.isNotEmpty() && !it.startsWith("#") }
-        .mapNotNull { line ->
-          val idx = line.indexOf('=')
-          if (idx > 0) line.substring(0, idx).trim() to line.substring(idx + 1).trim().removeSurrounding("\"") else null
-        }
-        .toMap()
+abstract class SecretsEnvSource : ValueSource<Map<String, String>, SecretsEnvSource.Params> {
+  interface Params : ValueSourceParameters {
+    val secretsFile: org.gradle.api.file.RegularFileProperty
+  }
 
-    tasks.withType<JavaExec>().configureEach { environment(envVars) }
-    tasks.withType<Test>().configureEach { environment(envVars) }
+  override fun obtain(): Map<String, String> {
+    val file = parameters.secretsFile.asFile.orNull ?: return emptyMap()
+    if (!file.exists()) return emptyMap()
+    return file.readLines()
+      .map { it.trim() }
+      .filter { it.isNotEmpty() && !it.startsWith("#") }
+      .mapNotNull { line ->
+        val idx = line.indexOf('=')
+        if (idx > 0) line.substring(0, idx).trim() to line.substring(idx + 1).trim().removeSurrounding("\"") else null
+      }
+      .toMap()
+  }
+}
+
+fun Project.configureSecrets() {
+  val secretsFile = rootProject.layout.projectDirectory.file("secrets/secrets.env")
+  val envVarsProvider = providers.of(SecretsEnvSource::class.java) {
+    parameters.secretsFile.set(secretsFile)
+  }
+
+  tasks.withType<JavaExec>().configureEach {
+    inputs.property("secretsEnv", envVarsProvider)
+    environment(envVarsProvider.get())
+  }
+  tasks.withType<Test>().configureEach {
+    inputs.property("secretsEnv", envVarsProvider)
+    environment(envVarsProvider.get())
   }
 }

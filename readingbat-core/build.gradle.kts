@@ -1,6 +1,3 @@
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
-
 plugins {
   application
   alias(libs.plugins.buildconfig)
@@ -43,18 +40,16 @@ dependencies {
   implementation(libs.github)
 
   testImplementation(libs.ktor.server.test.host)
-  testImplementation(libs.kotest.runner.junit5)
-  testImplementation(libs.kotest.assertions.core)
-  testImplementation(libs.kotest.assertions.ktor)
+  testImplementation(libs.bundles.kotest)
 
   testImplementation(libs.playwright)
 
   testImplementation(project(":readingbat-kotest"))
 }
 
-val formatter: DateTimeFormatter = DateTimeFormatter.ofPattern("MM/dd/yyyy")
-val releaseDate = (findProperty("releaseDate") as? String) ?: LocalDate.now().format(formatter)
-val buildTime = (findProperty("buildTime") as? String)?.toLong() ?: System.currentTimeMillis()
+val releaseDate = providers.gradleProperty("releaseDate").orNull
+  ?: error("releaseDate not set in gradle.properties")
+val buildTime = providers.gradleProperty("buildTime").orNull?.toLong() ?: System.currentTimeMillis()
 
 buildConfig {
   packageName("com.readingbat")
@@ -102,7 +97,8 @@ tasks.register<Exec>("tailwindBuildFull") {
 
 // On macOS, regenerate Tailwind CSS before processing resources.
 // On Linux (e.g., jitpack.io), the checked-in tailwind.css is used as-is.
-if (System.getProperty("os.name").lowercase().contains("mac")) {
+val isMac = providers.systemProperty("os.name").map { it.lowercase().contains("mac") }.getOrElse(false)
+if (isMac) {
   tasks.named("processResources") {
     dependsOn("tailwindBuild")
   }
@@ -110,5 +106,5 @@ if (System.getProperty("os.name").lowercase().contains("mac")) {
 
 // Include build uberjars in heroku deploy
 tasks.register("stage") {
-  dependsOn("build")
+  dependsOn(tasks.named("build"))
 }

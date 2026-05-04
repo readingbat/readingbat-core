@@ -7,9 +7,7 @@ dependencies {
 
   implementation(libs.ktor.server.test.host)
 
-  implementation(libs.kotest.assertions.core)
-  implementation(libs.kotest.assertions.ktor)
-  implementation(libs.kotest.runner.junit5)
+  implementation(libs.bundles.kotest)
 
   implementation(libs.bundles.exposed)
   implementation(libs.postgres)

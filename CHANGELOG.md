@@ -4,6 +4,37 @@ All notable changes to ReadingBat Core are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [3.1.5] - 2026-05-03
+
+### Changed
+
+- Upgraded Gradle wrapper to 9.5.0 and `foojay-resolver-convention` to 1.0.0
+- Enabled `org.gradle.configuration-cache=true` and `org.gradle.parallel=true`
+- Moved `group`, `version`, and `releaseDate` from `build.gradle.kts` into `gradle.properties` as the source of truth (`-PoverrideVersion=...` overrides on the CLI)
+- Consolidated the two `subprojects {}` blocks and inlined the kover plugin application
+- Replaced ad-hoc secrets loading with a `ValueSource` registered as a task input on `Test`/`JavaExec`, so config-cache and up-to-date checks invalidate on `secrets/secrets.env` changes
+- Tightened `dependencyUpdates` unstable-version detection with an anchored regex
+- Restored lazy `provider { project.description }` so subproject POMs publish a non-empty `<description>`
+- Restored `mustRunAfter("clean")` on `build` to keep `clean build` safe under parallel execution
+- Use assignment form `mainClass = "TestMain"` and modern `tasks.named("build")` for the `stage` Heroku task
+- Bumped dependencies: `prometheus-proxy` 3.1.1, `common-utils` 2.8.2, `flyway` 12.5.0, `postgres` 42.7.11, `versions` plugin 0.54.0
+- Catalog: introduced a `kotest` bundle, factored out `flyway-core`/`flyway-postgres`, renamed `java-scripting` version key to `java-scriptengine` to match the artifact, restored kebab-case `simple-client` alias
+- `dependencyUpdates` now invoked with `--no-parallel`
+- Bumped version to 3.1.5
+
+### Added
+
+- `org.jetbrains.kotlinx.kover` 0.9.1 plugin with aggregated coverage reports at the root project
+- CI step running `koverXmlReport` and uploading coverage to Codecov via `codecov-action@v5`
+- `make coverage`, `make coverage-html`, and `make coverage-verify` targets
+
+### Removed
+
+- Unused `kotlin-css` dependency from the version catalog
+- `useMavenLocal` flag and corresponding `mavenLocal()` repository declarations
+- `local-build` Makefile target and the inline `-PreleaseDate=...` flag (now read from `gradle.properties`)
+- `cc` Makefile target
+
 ## [3.1.4] - 2026-04-25
 
 ### Changed
