@@ -3,6 +3,7 @@
 buildconfig = "6.0.9"
 kotlin = "2.3.21"
 kotlinter = "5.4.2"
+kover = "0.9.1"
 dokka = "2.2.0"
 maven-publish = "0.36.0"
 versions = "0.54.0"
@@ -10,13 +11,12 @@ versions = "0.54.0"
 # Library versions
 cloud = "1.28.3"
 commons = "1.15.0"
-css = "2026.3.2"
 exposed = "1.2.0"
 flexmark = "0.64.8"
 flyway = "12.5.0"
 github-api = "1.330"
 hikari = "7.0.2"
-java-scripting = "2.0.0"
+java-scriptengine = "2.0.0"
 khealth = "3.0.1"
 kotest = "6.1.11"
 ktor = "3.4.3"
@@ -26,12 +26,12 @@ pgjdbc = "0.8.9"
 playwright = "1.59.0"
 postgres = "42.7.11"
 prometheus = "0.16.0"
-prometheus-proxy = "3.1.0"
+prometheus-proxy = "3.1.1"
 python = "2.7.4"
 resend = "4.13.0"
 serialization = "1.11.0"
 testcontainers = "1.21.4"
-utils = "2.8.1"
+utils = "2.8.2"
 
 [libraries]
 # Serialization
@@ -53,15 +53,12 @@ common-service-utils = { module = "com.pambrose.common-utils:service-utils", ver
 
 # Prometheus
 prometheus-proxy = { module = "com.pambrose:prometheus-proxy", version.ref = "prometheus-proxy" }
-simple-client = { module = "io.prometheus:simpleclient", version.ref = "prometheus" }
+simpleclient = { module = "io.prometheus:simpleclient", version.ref = "prometheus" }
 
 # Script Engines
-java-scripting = { module = "ch.obermuhlner:java-scriptengine", version.ref = "java-scripting" }
+java-scripting = { module = "ch.obermuhlner:java-scriptengine", version.ref = "java-scriptengine" }
 python-scripting = { module = "org.python:jython-standalone", version.ref = "python" }
 kotlin-scripting = { module = "org.jetbrains.kotlin:kotlin-scripting-jsr223", version.ref = "kotlin" }
-
-# CSS
-css = { module = "org.jetbrains.kotlin-wrappers:kotlin-css", version.ref = "css" }
 
 # Ktor
 ktor-calllogging = { module = "io.ktor:ktor-server-call-logging", version.ref = "ktor" }
@@ -103,14 +100,16 @@ resend = { group = "com.resend", name = "resend-java", version.ref = "resend" }
 logging = { module = "io.github.oshai:kotlin-logging-jvm", version.ref = "logging" }
 logback = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
 
-# Testing
-kotest-runner-junit5 = { module = "io.kotest:kotest-runner-junit5", version.ref = "kotest" }
-kotest-assertions-core = { module = "io.kotest:kotest-assertions-core", version.ref = "kotest" }
-kotest-assertions-ktor = { module = "io.kotest:kotest-assertions-ktor", version.ref = "kotest" }
-testcontainers-postgresql = { module = "org.testcontainers:postgresql", version.ref = "testcontainers" }
+# Migrations (runtime + test)
 flyway-core = { module = "org.flywaydb:flyway-core", version.ref = "flyway" }
 flyway-postgres = { module = "org.flywaydb:flyway-database-postgresql", version.ref = "flyway" }
+
+# Testing
+kotest-assertions-core = { module = "io.kotest:kotest-assertions-core", version.ref = "kotest" }
+kotest-assertions-ktor = { module = "io.kotest:kotest-assertions-ktor", version.ref = "kotest" }
+kotest-runner-junit5 = { module = "io.kotest:kotest-runner-junit5", version.ref = "kotest" }
 playwright = { module = "com.microsoft.playwright:playwright", version.ref = "playwright" }
+testcontainers-postgresql = { module = "org.testcontainers:postgresql", version.ref = "testcontainers" }
 
 [plugins]
 buildconfig = { id = "com.github.gmazzo.buildconfig", version.ref = "buildconfig" }
@@ -119,6 +118,7 @@ kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", versi
 dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
 maven-publish = { id = "com.vanniktech.maven.publish", version.ref = "maven-publish" }
 kotlinter = { id = "org.jmailen.kotlinter", version.ref = "kotlinter" }
+kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }
 versions = { id = "com.github.ben-manes.versions", version.ref = "versions" }
 
 [bundles]
@@ -139,9 +139,14 @@ ktor-server = [
   "ktor-server-auth",
   "ktor-server-cio",
   "ktor-server-core",
-  "ktor-server-test-host",
   "ktor-sessions",
   "ktor-websockets",
+]
+
+kotest = [
+  "kotest-assertions-core",
+  "kotest-assertions-ktor",
+  "kotest-runner-junit5",
 ]
 
 common-utils = [

@@ -3,6 +3,7 @@
 [![GitHub release](https://img.shields.io/github/v/release/readingbat/readingbat-core?logo=github)](https://github.com/readingbat/readingbat-core/releases)
 [![Maven Central](https://img.shields.io/maven-central/v/com.readingbat/readingbat-core?logo=apachemaven)](https://central.sonatype.com/artifact/com.readingbat/readingbat-core)
 [![Tests](https://github.com/readingbat/readingbat-core/actions/workflows/test.yml/badge.svg)](https://github.com/readingbat/readingbat-core/actions/workflows/test.yml)
+[![codecov](https://codecov.io/gh/readingbat/readingbat-core/branch/master/graph/badge.svg)](https://codecov.io/gh/readingbat/readingbat-core)
 [![Kotlin](https://img.shields.io/badge/%20language-Kotlin-red.svg)](https://kotlinlang.org/)
 [![ktlint](https://img.shields.io/badge/ktlint%20code--style-%E2%9D%A4-FF4081)](https://pinterest.github.io/ktlint/)
 
