@@ -248,7 +248,7 @@ internal fun Application.readContentDsl(fileName: String, variableName: String, 
     )
     metrics.contentLoadedCount.labels(agentLaunchId()).inc()
   }.also { dur ->
-    "Loaded content using $variableName in $fileName in $dur"
+    "Loaded content using $variableName in $fileName in ${dur.inWholeSeconds}s"
       .also {
         logger.info { it }
         logToShim(it, logId)
@@ -305,12 +305,15 @@ fun Application.module() {
   // starve — request-handling threads on the default dispatcher.
   launch(Dispatchers.IO) { readContentDsl(dslFileName, dslVariableName) }
 
-  // Warn (do not block) if the content load is still pending after STARTUP_DELAY_SECS.
+  // Poll every 10 seconds and keep warning until the content has finished loading.
   launch {
-    val maxDelay = Property.STARTUP_DELAY_SECS.configValue(this@module, "10").toInt().seconds
-    delay(maxDelay)
-    if (!isContentReady)
-      logger.warn { "Content still not loaded after $maxDelay" }
+    val pollInterval = 10.seconds
+    val start = TimeSource.Monotonic.markNow()
+    while (true) {
+      delay(pollInterval)
+      if (isContentReady) break
+      logger.warn { "Content not loaded after ${start.elapsedNow().inWholeSeconds}s" }
+    }
   }
 
   // readContentDsl() is passed as a lambda because it is Application.readContentDsl()
