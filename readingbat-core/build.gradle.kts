@@ -6,7 +6,7 @@ plugins {
 description = "Ktor web server, DSL engine, and database layer for ReadingBat programming challenges"
 
 application {
-  mainClass.set("TestMain")
+  mainClass = "TestMain"
 }
 
 dependencies {
@@ -20,7 +20,7 @@ dependencies {
 
   implementation(libs.bundles.exposed)
 
-  implementation(libs.simpleclient)
+  implementation(libs.simple.client)
 
   runtimeOnly(libs.python.scripting)
   runtimeOnly(libs.kotlin.scripting)

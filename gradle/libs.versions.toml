@@ -53,7 +53,7 @@ common-service-utils = { module = "com.pambrose.common-utils:service-utils", ver
 
 # Prometheus
 prometheus-proxy = { module = "com.pambrose:prometheus-proxy", version.ref = "prometheus-proxy" }
-simpleclient = { module = "io.prometheus:simpleclient", version.ref = "prometheus" }
+simple-client = { module = "io.prometheus:simpleclient", version.ref = "prometheus" }
 
 # Script Engines
 java-scripting = { module = "ch.obermuhlner:java-scriptengine", version.ref = "java-scriptengine" }

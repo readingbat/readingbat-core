@@ -1,5 +1,7 @@
 import com.vanniktech.maven.publish.JavadocJar
 import com.vanniktech.maven.publish.SourcesJar
+import org.gradle.api.provider.ValueSource
+import org.gradle.api.provider.ValueSourceParameters
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 
@@ -19,17 +21,15 @@ val serializationLib = libs.plugins.kotlin.serialization.get().pluginId
 val ktlinterLib = libs.plugins.kotlinter.get().pluginId
 val koverLib = libs.plugins.kover.get().pluginId
 
+// Version resolution: gradle.properties (`version=...`) is the source of truth.
+// `-PoverrideVersion=...` on the CLI overrides it on the root project, and the
+// `subprojects {}` block below propagates `rootProject.version` to every module.
 providers.gradleProperty("overrideVersion").orNull?.let { version = it }
 
 allprojects {
   configurations.all {
     resolutionStrategy.cacheChangingModulesFor(0, "seconds")
   }
-}
-
-subprojects {
-  group = rootProject.group
-  version = rootProject.version
 }
 
 dependencies {
@@ -49,14 +49,17 @@ dokka {
 }
 
 subprojects {
+  group = rootProject.group
+  version = rootProject.version
+
   apply(plugin = "java-library")
   apply(plugin = "com.github.ben-manes.versions")
+  apply(plugin = koverLib)
 
   configureKotlin()
   configurePublishing()
   configureTesting()
   configureKotlinter()
-  configureKover()
   configureSecrets()
   configureVersions()
 }
@@ -68,6 +71,10 @@ project(":readingbat-core") {
 fun Project.configureKotlin() {
   apply {
     plugin(kotlinLib)
+  }
+
+  tasks.named("build") {
+    mustRunAfter("clean")
   }
 
   kotlin {
@@ -104,10 +111,9 @@ fun Project.configurePublishing() {
       ),
     )
 
-    val projectDesc = project.description
     pom {
       name.set(project.name)
-      description.set(projectDesc)
+      description.set(provider { project.description })
       url.set("https://github.com/readingbat/readingbat-core")
       licenses {
         license {
@@ -149,12 +155,6 @@ fun Project.configureKotlinter() {
   }
 }
 
-fun Project.configureKover() {
-  apply {
-    plugin(koverLib)
-  }
-}
-
 fun Project.configureTesting() {
   tasks.test {
     useJUnitPlatform()
@@ -174,36 +174,48 @@ fun Project.configureTesting() {
 }
 
 fun Project.configureVersions() {
-  fun isNonStable(version: String): Boolean {
-    val upper = version.uppercase()
-    return listOf("-RC", "-BETA", "-ALPHA", "-M", "SNAPSHOT", "-DEV", "-PREVIEW", "-EAP", "-CR")
-      .any { it in upper }
-  }
+  // Match preview/unstable qualifiers anchored on a separator so plain substrings like
+  // "DEV" inside a real version (e.g. "1.0-developer") don't trigger false rejections.
+  val nonStableRegex = Regex("(?i)[-.](RC|BETA|ALPHA|M\\d+|SNAPSHOT|DEV|PREVIEW|EAP|CR)\\b")
 
   tasks.withType<com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask>().configureEach {
     rejectVersionIf {
-      isNonStable(candidate.version)
+      nonStableRegex.containsMatchIn(candidate.version)
     }
   }
 }
 
-fun Project.configureSecrets() {
-  val secretsFile = rootProject.layout.projectDirectory.file("secrets/secrets.env").asFile
-  val envVarsProvider = providers.provider {
-    if (secretsFile.exists()) {
-      secretsFile.readLines()
-        .map { it.trim() }
-        .filter { it.isNotEmpty() && !it.startsWith("#") }
-        .mapNotNull { line ->
-          val idx = line.indexOf('=')
-          if (idx > 0) line.substring(0, idx).trim() to line.substring(idx + 1).trim().removeSurrounding("\"") else null
-        }
-        .toMap()
-    } else {
-      emptyMap()
-    }
+abstract class SecretsEnvSource : ValueSource<Map<String, String>, SecretsEnvSource.Params> {
+  interface Params : ValueSourceParameters {
+    val secretsFile: org.gradle.api.file.RegularFileProperty
   }
 
-  tasks.withType<JavaExec>().configureEach { doFirst { environment(envVarsProvider.get()) } }
-  tasks.withType<Test>().configureEach { doFirst { environment(envVarsProvider.get()) } }
+  override fun obtain(): Map<String, String> {
+    val file = parameters.secretsFile.asFile.orNull ?: return emptyMap()
+    if (!file.exists()) return emptyMap()
+    return file.readLines()
+      .map { it.trim() }
+      .filter { it.isNotEmpty() && !it.startsWith("#") }
+      .mapNotNull { line ->
+        val idx = line.indexOf('=')
+        if (idx > 0) line.substring(0, idx).trim() to line.substring(idx + 1).trim().removeSurrounding("\"") else null
+      }
+      .toMap()
+  }
+}
+
+fun Project.configureSecrets() {
+  val secretsFile = rootProject.layout.projectDirectory.file("secrets/secrets.env")
+  val envVarsProvider = providers.of(SecretsEnvSource::class.java) {
+    parameters.secretsFile.set(secretsFile)
+  }
+
+  tasks.withType<JavaExec>().configureEach {
+    inputs.property("secretsEnv", envVarsProvider)
+    environment(envVarsProvider.get())
+  }
+  tasks.withType<Test>().configureEach {
+    inputs.property("secretsEnv", envVarsProvider)
+    environment(envVarsProvider.get())
+  }
 }
