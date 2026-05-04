@@ -1,5 +1,19 @@
 # Release Notes
 
+## v3.1.8 — 2026-05-04
+
+Hot-fix for DigitalOcean App Platform deploys: the 3.1.7 readiness gate returned `503` for user-facing paths during the loading window, but DO's edge router substitutes its own body for upstream 5xx responses, so the `ContentLoadingPage` HTML never reached the browser.
+
+### Highlights
+
+- **Readiness response is now `200 OK`.** The loading-page response status flips from `503 Service Unavailable` to `200 OK`. The page's `meta http-equiv="refresh"` and the `Retry-After: 5` header still drive automatic client retries, but DO no longer treats the response as a failed upstream and substitutes its own page.
+- **`Cache-Control: no-store` on the loading page.** Prevents intermediate proxies and browser caches from serving the loading page after content is ready.
+- **Health-check guidance.** `docs/digitalocean-notes.txt` now documents pointing the App Platform HTTP health check at `/ping` so the instance stays healthy through cold starts.
+
+**Full Changelog**: https://github.com/readingbat/readingbat-core/compare/3.1.7...3.1.8
+
+---
+
 ## v3.1.7 — 2026-05-04
 
 Background DSL content loading and a readiness gate so platform health checks pass during cold starts.

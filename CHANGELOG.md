@@ -4,6 +4,16 @@ All notable changes to ReadingBat Core are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [3.1.8] - 2026-05-04
+
+### Changed
+
+- Readiness interceptor now responds with `200 OK` instead of `503 Service Unavailable` so DigitalOcean's edge router does not substitute its own error body for the `ContentLoadingPage`. The page's meta-refresh and the `Retry-After` header still drive client retries
+- Added `Cache-Control: no-store` to the loading-page response so proxies and browsers don't cache it past the loading window
+- `ContentReadinessInterceptorTest` updated to assert the new `200` status and `Cache-Control` header
+- Documented the recommended DigitalOcean App Platform health-check path (`/ping`) in `docs/digitalocean-notes.txt`
+- Bumped version to 3.1.8
+
 ## [3.1.7] - 2026-05-04
 
 ### Changed

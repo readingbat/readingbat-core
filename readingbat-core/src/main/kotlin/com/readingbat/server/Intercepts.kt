@@ -193,8 +193,13 @@ internal fun Application.intercepts() {
       val path = call.request.path()
       val isAllowed = path in readinessAllowedPaths || readinessAllowedPrefixes.any { path.startsWith(it) }
       if (!isAllowed) {
+        // Respond 200 (not 503): the DigitalOcean edge router substitutes its own body for upstream
+        // 5xx responses, so a 503 loading page never reaches the user. The page's meta-refresh and
+        // the Retry-After header still drive client retries.
         call.response.header(HttpHeaders.RetryAfter, ContentLoadingPage.RETRY_AFTER_SECS.toString())
-        call.respondText(contentLoadingPage(), ContentType.Text.Html, HttpStatusCode.ServiceUnavailable)
+        // Prevent proxies/browsers from caching the loading page past the brief loading window.
+        call.response.header(HttpHeaders.CacheControl, "no-store")
+        call.respondText(contentLoadingPage(), ContentType.Text.Html, HttpStatusCode.OK)
         finish()
       }
     }
