@@ -39,10 +39,10 @@ import io.ktor.server.testing.testApplication
 
 /**
  * Exercises the readiness interceptor registered by [intercepts]: while the DSL content has not
- * yet been loaded, user-facing paths return [HttpStatusCode.ServiceUnavailable] with the
- * [ContentLoadingPage] body and a `Retry-After` header; allowlisted paths (ping, static) pass
- * through; once [markContentLoaded] is called, the gate flips and previously-blocked paths
- * reach their handlers.
+ * yet been loaded, user-facing paths return the [ContentLoadingPage] body with a `Retry-After`
+ * header and `Cache-Control: no-store` (status `200 OK` so platform edge routers don't substitute
+ * their own error body); allowlisted paths (ping, static) pass through to their handlers; once
+ * [markContentLoaded] is called, the gate flips and previously-blocked paths reach their handlers.
  *
  * Note: this test mutates [ReadingBatServer.contentReadCount] (a JVM-global `AtomicInt`) and
  * leaves it incremented. No other tests currently consume `isContentReady`, so this is safe;
@@ -69,8 +69,9 @@ class ContentReadinessInterceptorTest : StringSpec() {
         }
 
         client.get("/anything").also {
-          it.status shouldBe HttpStatusCode.ServiceUnavailable
+          it.status shouldBe HttpStatusCode.OK
           it.headers[HttpHeaders.RetryAfter] shouldBe ContentLoadingPage.RETRY_AFTER_SECS.toString()
+          it.headers[HttpHeaders.CacheControl] shouldBe "no-store"
           it.bodyAsText() shouldContain "Site is loading"
         }
         client.get(PING_ENDPOINT).status shouldBe HttpStatusCode.OK

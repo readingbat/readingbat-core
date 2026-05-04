@@ -2,3 +2,27 @@ To determine the IP address of your local machine for whitelisting, use:
  curl ifconfig.me
 
 URL: jdbc:postgresql://name.ondigitalocean.com:45060/readingbat?sslmode=require
+
+App Platform health check
+=========================
+Point the service's HTTP health check at /ping (not /). The /ping endpoint
+is in the readiness allowlist and returns 200 immediately, so the instance
+stays "healthy" while the DSL content is still loading in the background.
+If the health check probes / (or any user-facing path), the readiness
+interceptor returns the loading page during cold starts and DO will mark
+the instance unhealthy.
+
+Recommended .do/app.yaml health_check stanza:
+
+  services:
+    - name: readingbat
+      health_check:
+        http_path: /ping
+        initial_delay_seconds: 5
+        period_seconds: 10
+        timeout_seconds: 3
+        success_threshold: 1
+        failure_threshold: 5
+
+Or set the same values under Settings -> Components -> <service> ->
+Health Checks in the App Platform dashboard.
