@@ -29,6 +29,7 @@ import com.readingbat.common.Endpoints.OAUTH_CALLBACK_GITHUB_ENDPOINT
 import com.readingbat.common.Endpoints.OAUTH_CALLBACK_GOOGLE_ENDPOINT
 import com.readingbat.common.Endpoints.OAUTH_LOGIN_GITHUB_ENDPOINT
 import com.readingbat.common.Endpoints.OAUTH_LOGIN_GOOGLE_ENDPOINT
+import com.readingbat.common.Endpoints.OAUTH_PREFIX
 import com.readingbat.common.Endpoints.PING_ENDPOINT
 import com.readingbat.common.Endpoints.PRIVACY_POLICY_ENDPOINT
 import com.readingbat.common.Endpoints.ROBOTS_ENDPOINT
@@ -116,18 +117,16 @@ internal object Intercepts {
       PRIVACY_POLICY_ENDPOINT,
       TOS_ENDPOINT,
       PING_ENDPOINT,
-      "/favicon.ico",
-      "/robots.txt",
-      "/css.css",
+      FAV_ICON_ENDPOINT,
+      ROBOTS_ENDPOINT,
       "/ktor/application/shutdown",
-  )
+    )
 
   val publicPrefixes =
     listOf(
-    "/oauth/",
-    "/$STATIC/",
-    "/static/",
-  )
+      "$OAUTH_PREFIX/",
+      "/$STATIC/",
+    )
 
   // Paths that must remain available before the DSL content has finished loading.
   // Anything else gets a 503 + ContentLoadingPage until ReadingBatServer.isContentReady is true.
@@ -142,7 +141,6 @@ internal object Intercepts {
   val readinessAllowedPrefixes =
     listOf(
       "/$STATIC/",
-      "/static/",
     )
 
   @Suppress("unused")
