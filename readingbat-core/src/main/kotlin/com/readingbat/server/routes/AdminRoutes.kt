@@ -80,13 +80,11 @@ object AdminRoutes {
     return true
   }
 
-  fun Routing.healthRoutes(metrics: Metrics) {
+  fun Routing.adminRoutes(metrics: Metrics) {
     get(PING_ENDPOINT, metrics) {
       call.respondText("pong", Plain)
     }
-  }
 
-  fun Routing.adminRoutes(metrics: Metrics) {
     get(THREAD_DUMP, metrics) {
       if (!requireAdminUser()) return@get
 

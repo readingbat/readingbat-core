@@ -37,7 +37,6 @@ import com.readingbat.server.Installs.installs
 import com.readingbat.server.Locations.locations
 import com.readingbat.server.ReadingBatServer
 import com.readingbat.server.routes.AdminRoutes.adminRoutes
-import com.readingbat.server.routes.AdminRoutes.healthRoutes
 import com.readingbat.server.routes.sysAdminRoutes
 import com.readingbat.server.routes.userRoutes
 import com.readingbat.server.ws.WsCommon.wsRoutes
@@ -194,7 +193,6 @@ object TestSupport {
     installs(production)
 
     routing {
-      healthRoutes(ReadingBatServer.metrics)
       adminRoutes(ReadingBatServer.metrics)
       locations(ReadingBatServer.metrics) { content }
       userRoutes(ReadingBatServer.metrics) { content }
