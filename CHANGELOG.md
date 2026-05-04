@@ -4,6 +4,28 @@ All notable changes to ReadingBat Core are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [3.1.7] - 2026-05-04
+
+### Changed
+
+- `Application.module()` no longer blocks on `readContentDsl(...)`. The DSL load runs on `Dispatchers.IO` so the Ktor engine starts serving immediately and platform health checks (`/ping`) are reachable during cold starts
+- New `Plugins`-phase interceptor in `Intercepts.kt` returns `503 Service Unavailable` + `Retry-After` and a cached `ContentLoadingPage` for any user-facing path until the first DSL load completes; `/ping`, `/static/*`, favicon, and robots stay available
+- Replaced the one-shot `STARTUP_DELAY_SECS` warning with a 10-second polling loop that logs `Content not loaded after Ns` until the load finishes
+- `ContentLoadingPage` HTML built once via `by lazy`; the meta-refresh interval and the `Retry-After` header share a single `RETRY_AFTER_SECS` constant
+- `ReadingBatServer.contentReadCount` is now `private`; readers use `isContentReady: Boolean` (interceptor + warning loop) and `contentLoadCount: Int` (admin diagnostics page); `markContentLoaded()` encapsulates the increment
+- Reverted the separate `healthRoutes` registration introduced in 3.1.6 — `/ping` is back inside `adminRoutes` because the new readiness gate makes the early registration unnecessary
+- Bumped version to 3.1.7
+
+### Added
+
+- `ContentLoadingPageTest` covering the `RETRY_AFTER_SECS` constant, rendered HTML markers, and the by-lazy cache invariant
+- `ContentReadinessInterceptorTest` exercising the gate end-to-end: 503 + `Retry-After` + loading body for blocked paths, allowlisted `/ping` and `/static/*` pass-through, and post-`markContentLoaded()` request flow
+- `clean-all` Makefile target that runs `clean` + `clean-docs` and removes per-project `.gradle` caches
+
+### Removed
+
+- `Property.STARTUP_DELAY_SECS` and the matching `startupMaxDelaySecs` keys from `application-test.conf` and `application-travis.conf`
+
 ## [3.1.6] - 2026-05-03
 
 ### Changed

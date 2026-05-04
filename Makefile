@@ -1,6 +1,6 @@
 VERSION := $(shell grep -E '^version=' gradle.properties | cut -d= -f2)
 
-.PHONY: default stop tw-css tw-full-css clean build scan uberjar uber run tests remote-tests \
+.PHONY: default stop tw-css tw-full-css clean clean-all build scan uberjar uber run tests remote-tests \
         coverage coverage-html coverage-verify \
         dbinfo dbclean dbmigrate dbreset dbvalidate lint depends versioncheck kdocs clean-docs \
         site publish-local publish-local-snapshot check-gpg-env publish-snapshot \
@@ -19,6 +19,9 @@ tw-full-css:
 
 clean:
 	./gradlew clean
+
+clean-all: clean clean-docs
+	rm -rf .gradle readingbat-core/.gradle readingbat-kotest/.gradle
 
 build: tw-css
 	./gradlew build -xtest

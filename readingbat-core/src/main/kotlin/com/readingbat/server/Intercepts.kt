@@ -23,6 +23,7 @@ import com.readingbat.common.Constants.STATIC
 import com.readingbat.common.Constants.UNKNOWN_USER_ID
 import com.readingbat.common.Endpoints.ABOUT_ENDPOINT
 import com.readingbat.common.Endpoints.CHALLENGE_ROOT
+import com.readingbat.common.Endpoints.FAV_ICON_ENDPOINT
 import com.readingbat.common.Endpoints.HELP_ENDPOINT
 import com.readingbat.common.Endpoints.OAUTH_CALLBACK_GITHUB_ENDPOINT
 import com.readingbat.common.Endpoints.OAUTH_CALLBACK_GOOGLE_ENDPOINT
@@ -30,6 +31,7 @@ import com.readingbat.common.Endpoints.OAUTH_LOGIN_GITHUB_ENDPOINT
 import com.readingbat.common.Endpoints.OAUTH_LOGIN_GOOGLE_ENDPOINT
 import com.readingbat.common.Endpoints.PING_ENDPOINT
 import com.readingbat.common.Endpoints.PRIVACY_POLICY_ENDPOINT
+import com.readingbat.common.Endpoints.ROBOTS_ENDPOINT
 import com.readingbat.common.Endpoints.ROOT
 import com.readingbat.common.Endpoints.TOS_ENDPOINT
 import com.readingbat.common.OAuthReturnUrl
@@ -38,16 +40,23 @@ import com.readingbat.common.browserSession
 import com.readingbat.common.userPrincipal
 import com.readingbat.dsl.isDbmsEnabled
 import com.readingbat.dsl.isSaveRequestsEnabled
+import com.readingbat.pages.ContentLoadingPage
+import com.readingbat.pages.ContentLoadingPage.contentLoadingPage
 import com.readingbat.server.GeoInfo.Companion.lookupGeoInfo
 import com.readingbat.server.GeoInfo.Companion.queryGeoInfo
 import com.readingbat.server.Intercepts.clock
 import com.readingbat.server.Intercepts.logger
 import com.readingbat.server.Intercepts.publicPaths
 import com.readingbat.server.Intercepts.publicPrefixes
+import com.readingbat.server.Intercepts.readinessAllowedPaths
+import com.readingbat.server.Intercepts.readinessAllowedPrefixes
 import com.readingbat.server.Intercepts.requestTimingMap
 import com.readingbat.server.ServerUtils.fetchUserDbmsIdFromCache
 import io.github.oshai.kotlinlogging.KotlinLogging
+import io.ktor.http.ContentType
+import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpHeaders.UserAgent
+import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationCallPipeline
 import io.ktor.server.application.ApplicationCallPipeline.ApplicationPhase.Plugins
@@ -63,7 +72,9 @@ import io.ktor.server.plugins.origin
 import io.ktor.server.request.httpMethod
 import io.ktor.server.request.path
 import io.ktor.server.request.queryString
+import io.ktor.server.response.header
 import io.ktor.server.response.respondRedirect
+import io.ktor.server.response.respondText
 import io.ktor.server.routing.RoutingRoot.Plugin.RoutingCallFinished
 import io.ktor.server.routing.RoutingRoot.Plugin.RoutingCallStarted
 import io.ktor.server.sessions.sessions
@@ -118,6 +129,22 @@ internal object Intercepts {
     "/static/",
   )
 
+  // Paths that must remain available before the DSL content has finished loading.
+  // Anything else gets a 503 + ContentLoadingPage until ReadingBatServer.isContentReady is true.
+  val readinessAllowedPaths =
+    setOf(
+      PING_ENDPOINT,
+      FAV_ICON_ENDPOINT,
+      ROBOTS_ENDPOINT,
+      "/ktor/application/shutdown",
+    )
+
+  val readinessAllowedPrefixes =
+    listOf(
+      "/$STATIC/",
+      "/static/",
+    )
+
   @Suppress("unused")
   val timer =
     timer("requestTimingMap admin", false, 1.minutes.inWholeMilliseconds, 1.minutes.inWholeMilliseconds) {
@@ -156,6 +183,21 @@ internal fun Application.intercepts() {
 
   intercept(ApplicationCallPipeline.Monitoring) {
     // Phase for tracing calls, useful for logging, metrics, error handling and so on
+  }
+
+  // Short-circuit user-facing requests with a "site loading" page until the DSL content has
+  // finished loading at least once. Health, static assets, and a few other path-independent
+  // endpoints stay available so platform health checks pass during startup.
+  intercept(Plugins) {
+    if (!ReadingBatServer.isContentReady) {
+      val path = call.request.path()
+      val isAllowed = path in readinessAllowedPaths || readinessAllowedPrefixes.any { path.startsWith(it) }
+      if (!isAllowed) {
+        call.response.header(HttpHeaders.RetryAfter, ContentLoadingPage.RETRY_AFTER_SECS.toString())
+        call.respondText(contentLoadingPage(), ContentType.Text.Html, HttpStatusCode.ServiceUnavailable)
+        finish()
+      }
+    }
   }
 
   // Mandatory auth: redirect unauthenticated users to homepage

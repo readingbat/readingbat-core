@@ -49,13 +49,13 @@ import com.readingbat.server.Locations.locations
 import com.readingbat.server.ReadingBatServer.adminUsersRef
 import com.readingbat.server.ReadingBatServer.assignKotlinScriptProperty
 import com.readingbat.server.ReadingBatServer.content
-import com.readingbat.server.ReadingBatServer.contentReadCount
+import com.readingbat.server.ReadingBatServer.isContentReady
 import com.readingbat.server.ReadingBatServer.logger
+import com.readingbat.server.ReadingBatServer.markContentLoaded
 import com.readingbat.server.ReadingBatServer.metrics
 import com.readingbat.server.ReadingBatServer.start
 import com.readingbat.server.ServerUtils.logToShim
 import com.readingbat.server.routes.AdminRoutes.adminRoutes
-import com.readingbat.server.routes.AdminRoutes.healthRoutes
 import com.readingbat.server.routes.oauthRoutes
 import com.readingbat.server.routes.sysAdminRoutes
 import com.readingbat.server.routes.userRoutes
@@ -70,9 +70,9 @@ import io.ktor.server.engine.CommandLineConfig
 import io.ktor.server.http.content.staticResources
 import io.ktor.server.routing.routing
 import io.prometheus.Agent.Companion.startAsyncAgent
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.exposed.v1.jdbc.Database
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -107,7 +107,18 @@ object ReadingBatServer {
   internal var callerVersion = ""
   internal val content = AtomicReference(ReadingBatContent())
   internal val adminUsersRef = AtomicReference<Set<String>>(emptySet())
-  internal val contentReadCount = AtomicInt(0)
+  private val contentReadCount = AtomicInt(0)
+
+  /** True once the DSL content has been successfully loaded at least once. */
+  internal val isContentReady: Boolean get() = contentReadCount.load() > 0
+
+  /** Cumulative number of times the DSL content has been (re)loaded; used for the admin diagnostics page. */
+  internal val contentLoadCount: Int get() = contentReadCount.load()
+
+  /** Records that a DSL content load has just completed successfully. */
+  internal fun markContentLoaded() {
+    contentReadCount += 1
+  }
 
   /** Lazily initialized database connection using HikariCP connection pooling. */
   internal val dbms by lazy {
@@ -215,7 +226,7 @@ object ReadingBatServer {
 
 /**
  * Loads and evaluates the content DSL from [fileName], extracting the [ReadingBatContent]
- * instance bound to [variableName]. Increments [contentReadCount] and publishes metrics
+ * instance bound to [variableName]. Calls [markContentLoaded] and publishes metrics
  * on each successful load.
  */
 internal fun Application.readContentDsl(fileName: String, variableName: String, logId: String = "") {
@@ -237,14 +248,14 @@ internal fun Application.readContentDsl(fileName: String, variableName: String, 
     )
     metrics.contentLoadedCount.labels(agentLaunchId()).inc()
   }.also { dur ->
-    "Loaded content using $variableName in $fileName in $dur"
+    "Loaded content using $variableName in $fileName in ${dur.inWholeSeconds}s"
       .also {
         logger.info { it }
         logToShim(it, logId)
       }
   }
 
-  contentReadCount += 1
+  markContentLoaded()
 }
 
 /**
@@ -287,22 +298,21 @@ fun Application.module() {
   val dslFileName = Property.DSL_FILE_NAME.getRequiredProperty()
   val dslVariableName = Property.DSL_VARIABLE_NAME.getRequiredProperty()
 
-  // Initialize this early so that we do not fail the health check while loading the GitHub content
-  routing {
-    healthRoutes(metrics)
-  }
+  // Load content in the background so the Ktor module returns immediately and the platform
+  // health check (e.g. /ping) becomes available right away. The readiness interceptor in
+  // Intercepts.kt serves a "loading" page on user-facing routes until isContentReady is true.
+  // Use Dispatchers.IO so the (blocking) DSL read + script eval cannot be starved by — or
+  // starve — request-handling threads on the default dispatcher.
+  launch(Dispatchers.IO) { readContentDsl(dslFileName, dslVariableName) }
 
-  val job = launch { readContentDsl(dslFileName, dslVariableName) }
-
-  runBlocking {
-    val maxDelay = Property.STARTUP_DELAY_SECS.configValue(this@module, "60").toInt().seconds
-    logger.info { "Delaying start-up by max of $maxDelay" }
-    measureTime {
-      withTimeoutOrNull(maxDelay) {
-        job.join()
-      } ?: logger.error { "Timed-out after waiting $maxDelay" }
-    }.also {
-      logger.info { "Continued start-up after delaying $it" }
+  // Poll every 10 seconds and keep warning until the content has finished loading.
+  launch {
+    val pollInterval = 10.seconds
+    val start = TimeSource.Monotonic.markNow()
+    while (true) {
+      delay(pollInterval)
+      if (isContentReady) break
+      logger.warn { "Content not loaded after ${start.elapsedNow().inWholeSeconds}s" }
     }
   }
 

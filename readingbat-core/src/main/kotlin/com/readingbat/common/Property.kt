@@ -205,9 +205,6 @@ sealed class Property(
       initFunc = { setPropertyFromConfig(it, "") },
     )
 
-  object STARTUP_DELAY_SECS :
-    Property(propertyValue = "$READINGBAT.$SITE.startupMaxDelaySecs")
-
   // These are defaults for env var values
   object REDIRECT_HOSTNAME :
     Property(propertyValue = "$READINGBAT.$SITE.redirectHostname")
