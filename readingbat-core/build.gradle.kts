@@ -1,3 +1,4 @@
+import org.jetbrains.dokka.gradle.DokkaExtension
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
@@ -50,9 +51,10 @@ dependencies {
   testImplementation(project(":readingbat-kotest"))
 }
 
-val formatter = DateTimeFormatter.ofPattern("MM/dd/yyyy")
-val releaseDate = (findProperty("releaseDate") as? String)?.takeIf { it.isNotBlank() } ?: LocalDate.now().format(formatter)
-val buildTime = providers.gradleProperty("buildTime").orNull?.toLong() ?: System.currentTimeMillis()
+val formatter: DateTimeFormatter = DateTimeFormatter.ofPattern("MM/dd/yyyy")
+val releaseDate: String =
+  (findProperty("releaseDate") as? String)?.takeIf { it.isNotBlank() } ?: LocalDate.now().format(formatter)
+val buildTime: Long = providers.gradleProperty("buildTime").orNull?.toLong() ?: System.currentTimeMillis()
 
 buildConfig {
   packageName("com.readingbat")
@@ -64,7 +66,7 @@ buildConfig {
 }
 
 // Exclude top-level entry points from KDocs
-extensions.configure<org.jetbrains.dokka.gradle.DokkaExtension> {
+extensions.configure<DokkaExtension> {
   dokkaSourceSets.configureEach {
     suppressedFiles.from(
       "src/main/kotlin/Content.kt",
