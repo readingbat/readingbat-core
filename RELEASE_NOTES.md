@@ -1,5 +1,19 @@
 # Release Notes
 
+## v3.1.9 — Unreleased
+
+Cleanup release: dedupes the `/oauth` URL literal, trims redundant entries from the auth/readiness allowlists, and adds a Codecov configuration.
+
+### Highlights
+
+- **`/oauth` URL deduped.** New `Endpoints.OAUTH_PREFIX` constant; `OAUTH_LOGIN_*` and `OAUTH_CALLBACK_*` endpoints derive from it, and `Intercepts.publicPrefixes` references the constant instead of a duplicated literal.
+- **Allowlist cleanup.** Removed the redundant `"/static/"` entries from `publicPrefixes` / `readinessAllowedPrefixes` (already covered by `"/$STATIC/"`) and the unused `"/css.css"` entry from `publicPaths`.
+- **Codecov config.** Added `codecov.yml` with auto project target (1% threshold), informational 70% patch target, ignores for build/generated/test sources, and per-area components (`server`, `dsl`, `pages`, `common`).
+
+**Full Changelog**: https://github.com/readingbat/readingbat-core/compare/3.1.8...3.1.9
+
+---
+
 ## v3.1.8 — 2026-05-04
 
 Hot-fix for DigitalOcean App Platform deploys: the 3.1.7 readiness gate returned `503` for user-facing paths during the loading window, but DO's edge router substitutes its own body for upstream 5xx responses, so the `ContentLoadingPage` HTML never reached the browser.
