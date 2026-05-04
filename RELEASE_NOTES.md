@@ -1,5 +1,21 @@
 # Release Notes
 
+## v3.1.5 — 2026-05-03
+
+Gradle 9.5.0 upgrade, Kover code coverage, Codecov integration, and a focused round of build-script hardening.
+
+### Highlights
+
+- **Gradle 9.5.0.** Wrapper upgraded; `foojay-resolver-convention` bumped to 1.0.0. Configuration cache and parallel project execution are now enabled by default (`org.gradle.configuration-cache=true`, `org.gradle.parallel=true`).
+- **Kover + Codecov.** New `org.jetbrains.kotlinx.kover` plugin (0.9.1) applied across subprojects with aggregated reports at the root. CI now runs `./gradlew build koverXmlReport` and uploads `build/reports/kover/report.xml` via `codecov-action@v5`. New `make coverage`, `make coverage-html`, and `make coverage-verify` targets.
+- **Build-script hardening.** Secrets loading from `secrets/secrets.env` now goes through a proper `ValueSource` registered as a task input on `Test`/`JavaExec`, so config-cache and up-to-date checks invalidate when secrets change. `dependencyUpdates` rejection regex anchored on separators to avoid false positives. `mustRunAfter("clean")` restored on `build`. Lazy `provider { project.description }` restored so subproject POMs publish a non-empty `<description>`.
+- **`gradle.properties` consolidation.** `group`, `version`, and `releaseDate` moved out of the build script and into `gradle.properties` as the source of truth; `-PoverrideVersion=...` overrides on the CLI. The two `subprojects {}` blocks were merged.
+- **Dependency bumps.** `prometheus-proxy` 3.1.1, `common-utils` 2.8.2, `flyway` 12.5.0, `postgres` 42.7.11, `versions` plugin 0.54.0. Catalog cleanup: dropped unused `kotlin-css`, renamed `java-scripting` version key to `java-scriptengine` to match the artifact, restored the kebab-case `simple-client` alias, and added a `kotest` bundle.
+
+**Full Changelog**: https://github.com/readingbat/readingbat-core/compare/3.1.4...3.1.5
+
+---
+
 ## v3.1.4 — 2026-04-25
 
 Build modernization, dependency bumps, and frontend test migration from Cypress to Playwright.
@@ -15,4 +31,4 @@ Build modernization, dependency bumps, and frontend test migration from Cypress 
 
 ---
 
-For history prior to 3.1.4, see [CHANGELOG.md](CHANGELOG.md).
+For history prior to 3.1.5, see [CHANGELOG.md](CHANGELOG.md).

@@ -27,7 +27,7 @@ ReadingBat Core is built using modern Kotlin technologies:
 - **Database**: PostgreSQL with Exposed ORM (`exposed-kotlin-datetime`) and HikariCP connection pooling
 - **Authentication**: OAuth (GitHub, Google) with session management
 - **Script Execution**: JSR-223 scripting engines for safe code evaluation
-- **Build System**: Gradle with Kotlin DSL and multi-module structure
+- **Build System**: Gradle 9.5 with Kotlin DSL, multi-module structure, and configuration cache enabled
 - **Serialization**: kotlinx.serialization for JSON processing
 - **Testing**: Kotest framework with Playwright for E2E testing
 
@@ -105,10 +105,11 @@ export IPGEOLOCATION_KEY="your_geo_key"
 ### Build & Test
 
 ```bash
-make build          # Build project (skip tests)
-make tests          # Run unit tests
-make lint           # Lint Kotlin code
-make cc             # Continuous build mode
+make build              # Build project (skip tests)
+make tests              # Run unit tests
+make lint               # Lint Kotlin code
+make coverage           # Generate Kover HTML coverage report
+make coverage-verify    # Enforce coverage thresholds via Kover
 ```
 
 ### Database Operations

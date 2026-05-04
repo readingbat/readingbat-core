@@ -10,14 +10,24 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Run all tests: `make tests` or `./gradlew check`
 - Run a single test class: `./gradlew :readingbat-core:test --tests "EndpointTest"`
 - Run a single test by name: `./gradlew :readingbat-core:test --tests "EndpointTest.Simple endpoint tests"`
-- Continuous build: `make cc` or `./gradlew build --continuous -x test`
 - Run application: `make run` or `./gradlew run`
+
+Gradle 9.5.0 with `org.gradle.parallel=true` and `org.gradle.configuration-cache=true` enabled by default. The version
+catalog (`gradle/libs.versions.toml`) is the source of truth for plugin and dependency versions; project version comes
+from `gradle.properties` (`-PoverrideVersion=...` overrides on the CLI).
 
 ### Code Quality
 
 - Lint: `make lint` or `./gradlew lintKotlinMain lintKotlinTest`
 - Format: `./gradlew formatKotlinMain formatKotlinTest`
 - Kotlinter enforces ktlint code style — run format before committing
+
+### Coverage
+
+- HTML report: `make coverage` or `make coverage-html` (`./gradlew koverHtmlReport`)
+- XML report (CI/Codecov): `./gradlew koverXmlReport` (output at `build/reports/kover/report.xml`)
+- Threshold check: `make coverage-verify` (`./gradlew koverVerify`)
+- Aggregated at the root project across `readingbat-core` and `readingbat-kotest`
 
 ### Database
 
@@ -28,8 +38,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Secrets
 
-Secrets are loaded from `secrets/secrets.env` (not committed). The root `build.gradle.kts` `configureSecrets()` function
-reads this file and injects env vars into `JavaExec` and `Test` tasks.
+Secrets are loaded from `secrets/secrets.env` (not committed). The root `build.gradle.kts` exposes a `SecretsEnvSource`
+`ValueSource` (registered via `configureSecrets()`) and wires the resulting map as a task input on every `JavaExec` and
+`Test` task. Edits to `secrets/secrets.env` invalidate the configuration cache and trigger a re-run of affected tasks.
 
 ## Project Architecture
 
@@ -136,7 +147,9 @@ The `readingbat-kotest` module provides `TestSupport` with helpers:
 
 ### Key Dependencies
 
-- **common-utils** (BOM from `com.github.pambrose`): shared utility library providing core-utils, email-utils,
+- **common-utils** 2.8.2 (BOM from `com.github.pambrose`): shared utility library providing core-utils, email-utils,
   exposed-utils, ktor-client/server-utils, script-utils, etc.
-- **prometheus-proxy**: metrics collection
+- **prometheus-proxy** 3.1.1: metrics collection
+- **Kover** 0.9.1: code coverage, applied to every subproject and aggregated at the root; CI uploads
+  `build/reports/kover/report.xml` to Codecov via `codecov-action@v5`
 - Dependency versions managed in `gradle/libs.versions.toml`

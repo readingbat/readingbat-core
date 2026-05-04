@@ -9,7 +9,8 @@ ReadingBat Core is a web application built with Ktor that serves programming cha
 - Kotlin 2.3.21, Ktor 3.4.3 (CIO engine), Exposed ORM 1.2.0 with kotlinx-datetime, PostgreSQL
 - Kotlinx.html for server-side HTML generation (no templates)
 - Kotest for testing, Playwright for E2E tests
-- Gradle multi-module build with version catalog (libs.versions.toml)
+- Gradle 9.5.0 multi-module build with version catalog (libs.versions.toml), parallel project execution and configuration cache enabled
+- Kover 0.9.1 for code coverage, uploaded to Codecov from CI
 - Java 17 toolchain
 
 ## Project Structure
@@ -71,8 +72,11 @@ Extensive use of Kotlin `@JvmInline value class` for type safety: LanguageName, 
 - Run: `make run` or `./gradlew run`
 - Lint: `make lint` (ktlint via Kotlinter)
 - Format: `./gradlew formatKotlinMain formatKotlinTest`
+- Coverage: `make coverage` (HTML), `./gradlew koverXmlReport` (CI/Codecov), `make coverage-verify` (thresholds)
 - DB reset: `make dbreset`
 - DB migrate: `make dbmigrate`
+
+Project version, group, and `releaseDate` are defined in `gradle.properties`. Override the version on the CLI with `-PoverrideVersion=...`. Secrets in `secrets/secrets.env` are loaded via a Gradle `ValueSource` and registered as task inputs on `Test`/`JavaExec`, so edits invalidate the configuration cache.
 
 ## Links
 
