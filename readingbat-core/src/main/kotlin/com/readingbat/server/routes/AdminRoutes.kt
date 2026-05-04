@@ -36,6 +36,7 @@ import com.readingbat.server.BrowserSessionsTable
 import com.readingbat.server.GeoInfo.Companion.lookupGeoInfo
 import com.readingbat.server.ServerUtils.fetchUser
 import com.readingbat.server.ServerUtils.get
+import com.readingbat.server.routes.AdminRoutes.assignBrowserSession
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.http.ContentType.Text.Plain
 import io.ktor.http.HttpStatusCode
@@ -79,11 +80,13 @@ object AdminRoutes {
     return true
   }
 
-  fun Routing.adminRoutes(metrics: Metrics) {
+  fun Routing.healthRoutes(metrics: Metrics) {
     get(PING_ENDPOINT, metrics) {
       call.respondText("pong", Plain)
     }
+  }
 
+  fun Routing.adminRoutes(metrics: Metrics) {
     get(THREAD_DUMP, metrics) {
       if (!requireAdminUser()) return@get
 

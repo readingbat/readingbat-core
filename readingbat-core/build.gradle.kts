@@ -1,3 +1,6 @@
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+
 plugins {
   application
   alias(libs.plugins.buildconfig)
@@ -47,8 +50,8 @@ dependencies {
   testImplementation(project(":readingbat-kotest"))
 }
 
-val releaseDate = providers.gradleProperty("releaseDate").orNull
-  ?: error("releaseDate not set in gradle.properties")
+val formatter = DateTimeFormatter.ofPattern("MM/dd/yyyy")
+val releaseDate = (findProperty("releaseDate") as? String)?.takeIf { it.isNotBlank() } ?: LocalDate.now().format(formatter)
 val buildTime = providers.gradleProperty("buildTime").orNull?.toLong() ?: System.currentTimeMillis()
 
 buildConfig {

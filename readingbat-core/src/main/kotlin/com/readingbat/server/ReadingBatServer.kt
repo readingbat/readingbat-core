@@ -55,6 +55,7 @@ import com.readingbat.server.ReadingBatServer.metrics
 import com.readingbat.server.ReadingBatServer.start
 import com.readingbat.server.ServerUtils.logToShim
 import com.readingbat.server.routes.AdminRoutes.adminRoutes
+import com.readingbat.server.routes.AdminRoutes.healthRoutes
 import com.readingbat.server.routes.oauthRoutes
 import com.readingbat.server.routes.sysAdminRoutes
 import com.readingbat.server.routes.userRoutes
@@ -285,6 +286,11 @@ fun Application.module() {
 
   val dslFileName = Property.DSL_FILE_NAME.getRequiredProperty()
   val dslVariableName = Property.DSL_VARIABLE_NAME.getRequiredProperty()
+
+  // Initialize this early so that we do not fail the health check while loading the GitHub content
+  routing {
+    healthRoutes(metrics)
+  }
 
   val job = launch { readContentDsl(dslFileName, dslVariableName) }
 
