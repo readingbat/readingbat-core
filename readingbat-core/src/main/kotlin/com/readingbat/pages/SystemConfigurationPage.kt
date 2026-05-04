@@ -301,7 +301,7 @@ internal object SystemConfigurationPage {
                 }
                 tr {
                   td { +"Content read count:" }
-                  td { +ReadingBatServer.contentReadCount.load().toString() }
+                  td { +ReadingBatServer.contentLoadCount.toString() }
                 }
               }
             }
