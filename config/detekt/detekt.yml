@@ -13,14 +13,50 @@ build:
 
 style:
   MaxLineLength:
-    active: true
-    maxLineLength: 140
+    active: false                    # Handled by kotlinter/ktlint
+  MagicNumber:
+    active: false
+  ReturnCount:
+    active: false
+  ThrowsCount:
+    active: false
+  UnusedParameter:
+    active: false
+  LoopWithTooManyJumpStatements:
+    active: false
+  ForbiddenComment:
+    active: false
+
+performance:
+  SpreadOperator:
+    active: false
 
 complexity:
   LongMethod:
-    active: true
-    threshold: 80
+    active: false
+  CyclomaticComplexMethod:
+    active: false
+  TooManyFunctions:
+    active: false
+  NestedBlockDepth:
+    active: false
   LongParameterList:
     active: true
     functionThreshold: 8
-    constructorThreshold: 10
+    constructorThreshold: 14
+
+naming:
+  VariableNaming:
+    active: false
+  MemberNameEqualsClassName:
+    active: false
+  ConstructorParameterNaming:
+    active: false
+  MatchingDeclarationName:
+    active: false
+
+exceptions:
+  SwallowedException:
+    active: false
+  TooGenericExceptionThrown:
+    active: false

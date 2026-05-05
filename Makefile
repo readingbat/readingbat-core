@@ -92,10 +92,7 @@ dbvalidate:
 	./gradlew flywayValidate
 
 lint:
-	./gradlew lintKotlinMain lintKotlinTest
-
-detekt:
-	./gradlew detekt
+	./gradlew lintKotlinMain lintKotlinTest detekt
 
 detekt-baseline:
 	./gradlew detektBaseline
