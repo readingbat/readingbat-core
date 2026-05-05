@@ -38,6 +38,8 @@ ignore:
   - "**/src/test/**"
   - "readingbat-kotest/**"
   - "**/pages/js/**"
+  - "readingbat-core/src/main/kotlin/Content.kt"
+  - "readingbat-core/src/main/kotlin/TestMain.kt"
 
 component_management:
   default_rules:

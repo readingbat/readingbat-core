@@ -2,7 +2,7 @@ VERSION := $(shell grep -E '^version=' gradle.properties | cut -d= -f2)
 
 .PHONY: default stop tw-css tw-full-css clean clean-all build scan uberjar uber run tests remote-tests \
         coverage coverage-html coverage-verify \
-        dbinfo dbclean dbmigrate dbreset dbvalidate lint depends versioncheck kdocs clean-docs \
+        dbinfo dbclean dbmigrate dbreset dbvalidate lint detekt detekt-baseline depends versioncheck kdocs clean-docs \
         site publish-local publish-local-snapshot check-gpg-env publish-snapshot \
         publish-maven-central upgrade-wrapper
 
@@ -41,13 +41,38 @@ run:
 tests:
 	./gradlew check
 
-coverage: coverage-html
+coverage: coverage-html coverage-xml
 
 coverage-html:
 	./gradlew koverHtmlReport
 
+coverage-xml:
+	./gradlew koverXmlReport
+
+coverage-log:
+	./gradlew koverLog
+
 coverage-verify:
 	./gradlew koverVerify
+
+coverage-open: coverage-html
+	open build/reports/kover/html/index.html
+
+coverage-packages: coverage-xml
+	@python3 -c "import xml.etree.ElementTree as ET; \
+r = ET.parse('build/reports/kover/report.xml').getroot(); \
+pkgs = []; \
+[pkgs.append((p.get('name'), int(c.get('covered')), int(c.get('missed')))) \
+ for p in r.findall('package') for c in p.findall('counter') if c.get('type') == 'INSTRUCTION']; \
+pkgs.sort(key=lambda x: -x[2]); \
+print(f\"{'package':<55} {'cov%':>6} {'covered':>9} {'missed':>9} {'total':>9}\"); \
+[print(f'{n:<55} {(c/(c+m)*100 if c+m else 0):6.1f} {c:9d} {m:9d} {c+m:9d}') for n,c,m in pkgs]; \
+tc=sum(p[1] for p in pkgs); tm=sum(p[2] for p in pkgs); \
+print(f'\nOVERALL: {tc/(tc+tm)*100:.2f}% ({tc}/{tc+tm} instructions, {tm} missed)')"
+
+coverage-clean:
+	./gradlew cleanAllTests
+	rm -rf build/reports/kover build/kover
 
 remote-tests:
 	TEST_BASE_URL=https://readingbat.com ./gradlew :readingbat-core:test --tests "PlaywrightEndpointTest"
@@ -68,6 +93,12 @@ dbvalidate:
 
 lint:
 	./gradlew lintKotlinMain lintKotlinTest
+
+detekt:
+	./gradlew detekt
+
+detekt-baseline:
+	./gradlew detektBaseline
 
 depends:
 	./gradlew dependencies

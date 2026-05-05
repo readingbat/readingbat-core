@@ -1,0 +1,26 @@
+# Detekt configuration overrides. Merged on top of detekt's default config
+# (see `buildUponDefaultConfig = true` in build.gradle.kts).
+#
+# Generate the full default to inspect available rules:
+#   ./gradlew detektGenerateConfig
+#
+# Generate a baseline to suppress existing issues without changing rules:
+#   ./gradlew detektBaseline
+
+build:
+  maxIssues: 0
+  excludeCorrectable: false
+
+style:
+  MaxLineLength:
+    active: true
+    maxLineLength: 140
+
+complexity:
+  LongMethod:
+    active: true
+    threshold: 80
+  LongParameterList:
+    active: true
+    functionThreshold: 8
+    constructorThreshold: 10
