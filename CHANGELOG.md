@@ -4,6 +4,19 @@ All notable changes to ReadingBat Core are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [3.1.9] - Unreleased
+
+### Changed
+
+- Deduplicated the `/oauth` URL literal: introduced `Endpoints.OAUTH_PREFIX` and derived `OAUTH_LOGIN_*` / `OAUTH_CALLBACK_*` from it; `Intercepts.publicPrefixes` now references `OAUTH_PREFIX` instead of a duplicated string
+- Trimmed redundant `"/static/"` entries from `publicPrefixes` and `readinessAllowedPrefixes` (already covered by `"/$STATIC/"`)
+- Removed the unused `"/css.css"` entry from `Intercepts.publicPaths`
+- Bumped version to 3.1.9
+
+### Added
+
+- `codecov.yml` with project/patch status checks, ignore rules for build/generated/test sources, and `server` / `dsl` / `pages` / `common` components for per-area coverage visibility
+
 ## [3.1.8] - 2026-05-04
 
 ### Changed

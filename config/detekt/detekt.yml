@@ -1,0 +1,62 @@
+# Detekt configuration overrides. Merged on top of detekt's default config
+# (see `buildUponDefaultConfig = true` in build.gradle.kts).
+#
+# Generate the full default to inspect available rules:
+#   ./gradlew detektGenerateConfig
+#
+# Generate a baseline to suppress existing issues without changing rules:
+#   ./gradlew detektBaseline
+
+build:
+  maxIssues: 0
+  excludeCorrectable: false
+
+style:
+  MaxLineLength:
+    active: false                    # Handled by kotlinter/ktlint
+  MagicNumber:
+    active: false
+  ReturnCount:
+    active: false
+  ThrowsCount:
+    active: false
+  UnusedParameter:
+    active: false
+  LoopWithTooManyJumpStatements:
+    active: false
+  ForbiddenComment:
+    active: false
+
+performance:
+  SpreadOperator:
+    active: false
+
+complexity:
+  LongMethod:
+    active: false
+  CyclomaticComplexMethod:
+    active: false
+  TooManyFunctions:
+    active: false
+  NestedBlockDepth:
+    active: false
+  LongParameterList:
+    active: true
+    functionThreshold: 8
+    constructorThreshold: 14
+
+naming:
+  VariableNaming:
+    active: false
+  MemberNameEqualsClassName:
+    active: false
+  ConstructorParameterNaming:
+    active: false
+  MatchingDeclarationName:
+    active: false
+
+exceptions:
+  SwallowedException:
+    active: false
+  TooGenericExceptionThrown:
+    active: false

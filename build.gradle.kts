@@ -1,5 +1,7 @@
 import com.vanniktech.maven.publish.JavadocJar
 import com.vanniktech.maven.publish.SourcesJar
+import io.gitlab.arturbosch.detekt.Detekt
+import io.gitlab.arturbosch.detekt.extensions.DetektExtension
 import org.gradle.api.provider.ValueSource
 import org.gradle.api.provider.ValueSourceParameters
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
@@ -9,6 +11,7 @@ plugins {
   alias(libs.plugins.kotlin.jvm)
   alias(libs.plugins.kotlin.serialization) apply false
   alias(libs.plugins.buildconfig) apply false
+  alias(libs.plugins.detekt) apply false
   alias(libs.plugins.kotlinter)
   alias(libs.plugins.kover)
   alias(libs.plugins.versions)
@@ -19,6 +22,7 @@ plugins {
 val kotlinLib = libs.plugins.kotlin.jvm.get().pluginId
 val serializationLib = libs.plugins.kotlin.serialization.get().pluginId
 val ktlinterLib = libs.plugins.kotlinter.get().pluginId
+val detektLib = libs.plugins.detekt.get().pluginId
 val koverLib = libs.plugins.kover.get().pluginId
 
 // Version resolution: gradle.properties (`version=...`) is the source of truth.
@@ -60,6 +64,7 @@ subprojects {
   configurePublishing()
   configureTesting()
   configureKotlinter()
+  configureDetekt()
   configureSecrets()
   configureVersions()
 }
@@ -152,6 +157,33 @@ fun Project.configureKotlinter() {
     ignoreFormatFailures = false
     ignoreLintFailures = false
     reporters = arrayOf("checkstyle", "plain")
+  }
+}
+
+fun Project.configureDetekt() {
+  apply {
+    plugin(detektLib)
+  }
+
+  extensions.configure<DetektExtension> {
+    parallel = true
+    buildUponDefaultConfig = true
+    autoCorrect = false
+    val cfg = rootProject.file("config/detekt/detekt.yml")
+    if (cfg.exists()) config.setFrom(cfg)
+    val base = rootProject.file("config/detekt/baseline.xml")
+    if (base.exists()) baseline = base
+  }
+
+  tasks.withType<Detekt>().configureEach {
+    jvmTarget = "17"
+    reports {
+      html.required.set(true)
+      xml.required.set(true)
+      txt.required.set(false)
+      sarif.required.set(false)
+      md.required.set(false)
+    }
   }
 }
 

@@ -286,8 +286,8 @@ class DateTimeMigrationTest : StringSpec() {
     "instant arithmetic should produce correct duration" {
       val earlier = nowInstant()
       // Small busy loop to ensure measurable time difference
-      @Suppress("ControlFlowWithEmptyBody")
       while (nowInstant() == earlier) {
+        Thread.yield()
       }
       val later = nowInstant()
 

@@ -90,8 +90,8 @@ class LanguageGroup<T : Challenge>(
 
   fun hasGroup(groupName: String) = challengeGroups.any { it.groupName.value == groupName }
 
-  private fun hasGroupNameSuffix(groupNameSuffix: GroupName) =
-    challengeGroups.any { it.groupNameSuffix.value == groupNameSuffix.value }
+//  private fun hasGroupNameSuffix(groupNameSuffix: GroupName) =
+//    challengeGroups.any { it.groupNameSuffix.value == groupNameSuffix.value }
 
   internal data class ChallengeFile(val fileName: String, val returnType: ReturnType)
 

@@ -28,7 +28,6 @@ import com.readingbat.common.Metrics.Companion.GET
 import com.readingbat.common.Metrics.Companion.POST
 import com.readingbat.dsl.InvalidRequestException
 import com.readingbat.dsl.LanguageType
-import com.readingbat.dsl.LanguageType.Java
 import com.readingbat.dsl.LanguageType.Kotlin
 import com.readingbat.dsl.ReadingBatContent
 import com.readingbat.dsl.agentLaunchId
@@ -200,7 +199,6 @@ value class LanguageName(val value: String) {
 
   companion object {
     internal val EMPTY_LANGUAGE = LanguageName("")
-    private val jmvLanguages by lazy { listOf(Java.languageName, Kotlin.languageName) }
 
     internal fun Parameters.getLanguageName(name: String) = this[name]?.let { LanguageName(it) } ?: EMPTY_LANGUAGE
   }

@@ -1,0 +1,66 @@
+codecov:
+  require_ci_to_pass: true
+  notify:
+    wait_for_ci: true
+
+coverage:
+  precision: 2
+  round: down
+  range: "60...90"
+
+  status:
+    project:
+      default:
+        target: auto
+        threshold: 1%
+        informational: false
+        if_ci_failed: error
+        only_pulls: false
+    patch:
+      default:
+        target: 70%
+        threshold: 5%
+        informational: true
+        if_ci_failed: error
+
+comment:
+  layout: "header, diff, flags, components, files, footer"
+  behavior: default
+  require_changes: true
+  require_base: false
+  require_head: true
+
+ignore:
+  - "**/build/**"
+  - "**/generated/**"
+  - "**/*.kts"
+  - "**/test/**"
+  - "**/src/test/**"
+  - "readingbat-kotest/**"
+  - "**/pages/js/**"
+  - "readingbat-core/src/main/kotlin/Content.kt"
+  - "readingbat-core/src/main/kotlin/TestMain.kt"
+
+component_management:
+  default_rules:
+    statuses:
+      - type: project
+        target: auto
+        threshold: 1%
+  individual_components:
+    - component_id: server
+      name: server
+      paths:
+        - readingbat-core/src/main/kotlin/com/readingbat/server/**
+    - component_id: dsl
+      name: dsl
+      paths:
+        - readingbat-core/src/main/kotlin/com/readingbat/dsl/**
+    - component_id: pages
+      name: pages
+      paths:
+        - readingbat-core/src/main/kotlin/com/readingbat/pages/**
+    - component_id: common
+      name: common
+      paths:
+        - readingbat-core/src/main/kotlin/com/readingbat/common/**
