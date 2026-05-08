@@ -1,9 +1,8 @@
+
 import com.vanniktech.maven.publish.JavadocJar
 import com.vanniktech.maven.publish.SourcesJar
 import io.gitlab.arturbosch.detekt.Detekt
 import io.gitlab.arturbosch.detekt.extensions.DetektExtension
-import org.gradle.api.provider.ValueSource
-import org.gradle.api.provider.ValueSourceParameters
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 
@@ -25,6 +24,14 @@ val ktlinterLib = libs.plugins.kotlinter.get().pluginId
 val detektLib = libs.plugins.detekt.get().pluginId
 val koverLib = libs.plugins.kover.get().pluginId
 
+val coreModule = ":readingbat-core"
+val kotestModule = ":readingbat-kotest"
+val projectName = "readingbat-core"
+val repoUrl = "https://github.com/readingbat/readingbat-core"
+val scmPath = "github.com/readingbat/readingbat-core.git"
+val secretsEnvKey = "secretsEnv"
+val jvmTargetVersion = libs.versions.jvm.get()
+
 // Version resolution: gradle.properties (`version=...`) is the source of truth.
 // `-PoverrideVersion=...` on the CLI overrides it on the root project, and the
 // `subprojects {}` block below propagates `rootProject.version` to every module.
@@ -37,18 +44,18 @@ allprojects {
 }
 
 dependencies {
-  dokka(project(":readingbat-core"))
-  dokka(project(":readingbat-kotest"))
+  dokka(project(coreModule))
+  dokka(project(kotestModule))
 
-  kover(project(":readingbat-core"))
-  kover(project(":readingbat-kotest"))
+  kover(project(coreModule))
+  kover(project(kotestModule))
 }
 
 dokka {
   moduleName.set("ReadingBat")
   pluginsConfiguration.html {
-    homepageLink.set("https://github.com/readingbat/readingbat-core")
-    footerMessage.set("readingbat-core")
+    homepageLink.set(repoUrl)
+    footerMessage.set(projectName)
   }
 }
 
@@ -69,7 +76,7 @@ subprojects {
   configureVersions()
 }
 
-project(":readingbat-core") {
+project(coreModule) {
   apply(plugin = serializationLib)
 }
 
@@ -83,7 +90,7 @@ fun Project.configureKotlin() {
   }
 
   kotlin {
-    jvmToolchain(17)
+    jvmToolchain(jvmTargetVersion.toInt())
 
     sourceSets.all {
       listOf(
@@ -119,7 +126,7 @@ fun Project.configurePublishing() {
     pom {
       name.set(project.name)
       description.set(provider { project.description })
-      url.set("https://github.com/readingbat/readingbat-core")
+      url.set(repoUrl)
       licenses {
         license {
           name.set("Apache License 2.0")
@@ -128,15 +135,15 @@ fun Project.configurePublishing() {
       }
       developers {
         developer {
-          id.set("readingbat")
+          id.set("pambrose")
           name.set("Paul Ambrose")
           email.set("pambrose@readingbat.com")
         }
       }
       scm {
-        connection.set("scm:git:git://github.com/readingbat/readingbat-core.git")
-        developerConnection.set("scm:git:ssh://github.com/readingbat/readingbat-core.git")
-        url.set("https://github.com/readingbat/readingbat-core")
+        connection.set("scm:git:git://$scmPath")
+        developerConnection.set("scm:git:ssh://$scmPath")
+        url.set(repoUrl)
       }
     }
 
@@ -176,7 +183,7 @@ fun Project.configureDetekt() {
   }
 
   tasks.withType<Detekt>().configureEach {
-    jvmTarget = "17"
+    jvmTarget = jvmTargetVersion
     reports {
       html.required.set(true)
       xml.required.set(true)
@@ -243,11 +250,11 @@ fun Project.configureSecrets() {
   }
 
   tasks.withType<JavaExec>().configureEach {
-    inputs.property("secretsEnv", envVarsProvider)
+    inputs.property(secretsEnvKey, envVarsProvider)
     environment(envVarsProvider.get())
   }
   tasks.withType<Test>().configureEach {
-    inputs.property("secretsEnv", envVarsProvider)
+    inputs.property(secretsEnvKey, envVarsProvider)
     environment(envVarsProvider.get())
   }
 }
