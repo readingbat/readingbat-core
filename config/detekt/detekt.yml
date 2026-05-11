@@ -7,10 +7,6 @@
 # Generate a baseline to suppress existing issues without changing rules:
 #   ./gradlew detektBaseline
 
-build:
-  maxIssues: 0
-  excludeCorrectable: false
-
 style:
   MaxLineLength:
     active: false                    # Handled by kotlinter/ktlint
@@ -42,8 +38,8 @@ complexity:
     active: false
   LongParameterList:
     active: true
-    functionThreshold: 8
-    constructorThreshold: 14
+    allowedFunctionParameters: 8
+    allowedConstructorParameters: 14
 
 naming:
   VariableNaming:

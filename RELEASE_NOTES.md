@@ -2,13 +2,18 @@
 
 ## v3.1.9 — Unreleased
 
-Cleanup release: dedupes the `/oauth` URL literal, trims redundant entries from the auth/readiness allowlists, and adds a Codecov configuration.
+Cleanup release: dedupes the `/oauth` URL literal, trims redundant entries from the auth/readiness allowlists, adds a Codecov configuration, centralizes toolchain versions in the version catalog, migrates detekt to the 2.0 alpha line, and tightens the Makefile.
 
 ### Highlights
 
 - **`/oauth` URL deduped.** New `Endpoints.OAUTH_PREFIX` constant; `OAUTH_LOGIN_*` and `OAUTH_CALLBACK_*` endpoints derive from it, and `Intercepts.publicPrefixes` references the constant instead of a duplicated literal.
 - **Allowlist cleanup.** Removed the redundant `"/static/"` entries from `publicPrefixes` / `readinessAllowedPrefixes` (already covered by `"/$STATIC/"`) and the unused `"/css.css"` entry from `publicPaths`.
 - **Codecov config.** Added `codecov.yml` with auto project target (1% threshold), informational 70% patch target, ignores for build/generated/test sources, and per-area components (`server`, `dsl`, `pages`, `common`).
+- **Toolchain versions in the catalog.** `gradle` and `jvm` keys land in `gradle/libs.versions.toml` so the version catalog is the single source of truth for the build toolchain. `build.gradle.kts` reads the JVM target from `libs.versions.jvm`, and `make upgrade-wrapper` derives the Gradle version from the same place — no more drift between the wrapper, Makefile, and build script.
+- **Build-script literal cleanup.** Repeated string literals in the root `build.gradle.kts` (module paths, repo URL, SCM path, project name, secrets-env input key) collapsed into named `val`s.
+- **Detekt 2.0 alpha.** Plugin id moves from `io.gitlab.arturbosch.detekt` to `dev.detekt` (1.23.8 → 2.0.0-alpha.3). Imports updated, the report block switches to `checkstyle.required` / `markdown.required`, and `config/detekt/detekt.yml` is migrated (obsolete `build:` block removed; `LongParameterList.functionThreshold` / `constructorThreshold` renamed to `allowedFunctionParameters` / `allowedConstructorParameters`).
+- **Kotlin serialization plugin wired explicitly.** `readingbat-core/build.gradle.kts` now applies `libs.plugins.kotlin.serialization` via the catalog alias so the compiler plugin is in effect for the subproject (root keeps the `apply false` declaration).
+- **Makefile tightening.** New `make help` target prints a self-documenting index of every target with a `## description` annotation, and a bare `make` invokes it. `make lint` now runs Kotlinter and detekt in a single Gradle invocation instead of double-running detekt via a prerequisite. The inline Python in `make coverage-packages` moves to `scripts/coverage_packages.py`. Inline `ifeq` version guards become explicit prerequisite targets (`_check-gpg-env`, `_require-version`, `_require-gradle-version`), and `$GPG_SIGNING_KEY_ID` is properly quoted in the signing block.
 
 **Full Changelog**: https://github.com/readingbat/readingbat-core/compare/3.1.8...3.1.9
 

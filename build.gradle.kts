@@ -1,8 +1,8 @@
 
 import com.vanniktech.maven.publish.JavadocJar
 import com.vanniktech.maven.publish.SourcesJar
-import io.gitlab.arturbosch.detekt.Detekt
-import io.gitlab.arturbosch.detekt.extensions.DetektExtension
+import dev.detekt.gradle.Detekt
+import dev.detekt.gradle.extensions.DetektExtension
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 
@@ -19,7 +19,6 @@ plugins {
 }
 
 val kotlinLib = libs.plugins.kotlin.jvm.get().pluginId
-val serializationLib = libs.plugins.kotlin.serialization.get().pluginId
 val ktlinterLib = libs.plugins.kotlinter.get().pluginId
 val detektLib = libs.plugins.detekt.get().pluginId
 val koverLib = libs.plugins.kover.get().pluginId
@@ -35,13 +34,7 @@ val jvmTargetVersion = libs.versions.jvm.get()
 // Version resolution: gradle.properties (`version=...`) is the source of truth.
 // `-PoverrideVersion=...` on the CLI overrides it on the root project, and the
 // `subprojects {}` block below propagates `rootProject.version` to every module.
-providers.gradleProperty("overrideVersion").orNull?.let { version = it }
-
-allprojects {
-  configurations.all {
-    resolutionStrategy.cacheChangingModulesFor(0, "seconds")
-  }
-}
+version = providers.gradleProperty("overrideVersion").getOrElse(version.toString())
 
 dependencies {
   dokka(project(coreModule))
@@ -74,10 +67,6 @@ subprojects {
   configureDetekt()
   configureSecrets()
   configureVersions()
-}
-
-project(coreModule) {
-  apply(plugin = serializationLib)
 }
 
 fun Project.configureKotlin() {
@@ -186,10 +175,9 @@ fun Project.configureDetekt() {
     jvmTarget = jvmTargetVersion
     reports {
       html.required.set(true)
-      xml.required.set(true)
-      txt.required.set(false)
+      checkstyle.required.set(true)
       sarif.required.set(false)
-      md.required.set(false)
+      markdown.required.set(false)
     }
   }
 }
