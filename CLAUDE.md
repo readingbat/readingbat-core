@@ -6,6 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Build and Test
 
+- List Makefile targets: `make help` (self-documenting index — every target with a `## description` annotation)
 - Build project: `make build` or `./gradlew build -xtest`
 - Run all tests: `make tests` or `./gradlew check`
 - Run a single test class: `./gradlew :readingbat-core:test --tests "EndpointTest"`
@@ -13,21 +14,26 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Run application: `make run` or `./gradlew run`
 
 Gradle 9.5.0 with `org.gradle.parallel=true` and `org.gradle.configuration-cache=true` enabled by default. The version
-catalog (`gradle/libs.versions.toml`) is the source of truth for plugin and dependency versions; project version comes
-from `gradle.properties` (`-PoverrideVersion=...` overrides on the CLI).
+catalog (`gradle/libs.versions.toml`) is the single source of truth for plugin, dependency, **and toolchain** versions —
+the `gradle` and `jvm` keys are read by `build.gradle.kts` (via `libs.versions.jvm`) and by the Makefile (the
+`upgrade-wrapper` target derives `GRADLE_VERSION` from the catalog). Project version comes from `gradle.properties`
+(`-PoverrideVersion=...` overrides on the CLI).
 
 ### Code Quality
 
-- Lint: `make lint` or `./gradlew lintKotlinMain lintKotlinTest`
+- Lint: `make lint` (runs `lintKotlinMain`, `lintKotlinTest`, and `detekt` in a single Gradle invocation)
 - Format: `./gradlew formatKotlinMain formatKotlinTest`
 - Kotlinter enforces ktlint code style — run format before committing
+- Detekt static analysis via the `dev.detekt` 2.0 alpha plugin; config in `config/detekt/detekt.yml`, run standalone with `make detekt` or refresh the baseline with `make detekt-baseline`
 
 ### Coverage
 
 - HTML report: `make coverage` or `make coverage-html` (`./gradlew koverHtmlReport`)
 - XML report (CI/Codecov): `./gradlew koverXmlReport` (output at `build/reports/kover/report.xml`)
 - Threshold check: `make coverage-verify` (`./gradlew koverVerify`)
+- Per-package breakdown: `make coverage-packages` (runs `scripts/coverage_packages.py` against the XML report)
 - Aggregated at the root project across `readingbat-core` and `readingbat-kotest`
+- Codecov configuration in `codecov.yml` defines `server` / `dsl` / `pages` / `common` components for per-area visibility
 
 ### Database
 

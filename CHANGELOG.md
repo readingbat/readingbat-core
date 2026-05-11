@@ -11,11 +11,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Deduplicated the `/oauth` URL literal: introduced `Endpoints.OAUTH_PREFIX` and derived `OAUTH_LOGIN_*` / `OAUTH_CALLBACK_*` from it; `Intercepts.publicPrefixes` now references `OAUTH_PREFIX` instead of a duplicated string
 - Trimmed redundant `"/static/"` entries from `publicPrefixes` and `readinessAllowedPrefixes` (already covered by `"/$STATIC/"`)
 - Removed the unused `"/css.css"` entry from `Intercepts.publicPaths`
+- Centralized toolchain versions in `gradle/libs.versions.toml`: added `gradle` and `jvm` keys so the version catalog is the single source of truth. The root `build.gradle.kts` now reads the JVM target from `libs.versions.jvm`, and the Makefile derives `GRADLE_VERSION` from `libs.versions.toml` so `make upgrade-wrapper` stays in sync with the catalog
+- Extracted repeated string literals in the root `build.gradle.kts` into named `val`s (module paths, repo URL, SCM path, project name, secrets-env input key, JVM target)
+- Migrated detekt from `io.gitlab.arturbosch.detekt` 1.23.8 to `dev.detekt` 2.0.0-alpha.3: updated plugin id and imports, switched the report block to `checkstyle.required` / `markdown.required`, dropped the obsolete top-level `build:` block from `config/detekt/detekt.yml`, and renamed `LongParameterList.functionThreshold` / `constructorThreshold` to `allowedFunctionParameters` / `allowedConstructorParameters`
+- Applied the `kotlin.serialization` plugin to `readingbat-core/build.gradle.kts` via the catalog alias (root declares it `apply false`); the subproject already pulled in the `serialization` runtime dependency, this wires the compiler plugin so adapters generate correctly
+- `make lint` now runs `lintKotlinMain`, `lintKotlinTest`, and `detekt` in a single Gradle invocation instead of invoking detekt twice via a prerequisite target
+- Quoted `$GPG_SIGNING_KEY_ID` in the Makefile `GPG_ENV` block so a key id containing spaces or shell metacharacters can't break the export
 - Bumped version to 3.1.9
 
 ### Added
 
 - `codecov.yml` with project/patch status checks, ignore rules for build/generated/test sources, and `server` / `dsl` / `pages` / `common` components for per-area coverage visibility
+- Self-documenting `make help` target that lists all public targets with their `## description` annotations; `default` now invokes `help` so a bare `make` prints the index
+- `scripts/coverage_packages.py` — extracted the inline Python in `make coverage-packages` into a standalone script for readability and reuse
+- Makefile private helper targets (`_check-gpg-env`, `_require-version`, `_require-gradle-version`) replacing inline `ifeq` error guards; publish targets now declare them as prerequisites
 
 ## [3.1.8] - 2026-05-04
 

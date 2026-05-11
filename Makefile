@@ -1,23 +1,15 @@
 .PHONY: default help stop tw-css tw-full-css clean clean-all build scan uberjar uber run tests remote-tests \
         coverage coverage-html coverage-xml coverage-log coverage-verify coverage-open coverage-packages coverage-clean \
         dbinfo dbclean dbmigrate dbreset dbvalidate lint detekt detekt-baseline depends versioncheck kdocs clean-docs \
-        site publish-local publish-local-snapshot check-gpg-env publish-snapshot \
-        publish-maven-central upgrade-wrapper
+        site publish-local publish-local-snapshot publish-snapshot \
+        publish-maven-central upgrade-wrapper \
+        _check-gpg-env _require-version _require-gradle-version
 
 VERSION := $(shell grep -E '^version=' gradle.properties | cut -d= -f2)
-
-ifeq ($(strip $(VERSION)),)
-$(error Could not determine project version from gradle.properties)
-endif
-
 GRADLE_VERSION := $(shell grep -E '^gradle[[:space:]]*=' gradle/libs.versions.toml | sed -E 's/.*"([^"]+)".*/\1/')
 
-ifeq ($(strip $(GRADLE_VERSION)),)
-$(error Could not determine gradle version from gradle/libs.versions.toml)
-endif
-
 GPG_ENV = \
-	ORG_GRADLE_PROJECT_signingInMemoryKey="$$(gpg --armor --export-secret-keys $$GPG_SIGNING_KEY_ID)" \
+	ORG_GRADLE_PROJECT_signingInMemoryKey="$$(gpg --armor --export-secret-keys "$$GPG_SIGNING_KEY_ID")" \
 	ORG_GRADLE_PROJECT_signingInMemoryKeyId="$$GPG_SIGNING_KEY_ID" \
 	ORG_GRADLE_PROJECT_signingInMemoryKeyPassword="$$(security find-generic-password -a "gpg-signing" -s "gradle-signing-password" -w)"
 
@@ -78,16 +70,7 @@ coverage-open: coverage-html ## Open the HTML coverage report in a browser
 	open build/reports/kover/html/index.html
 
 coverage-packages: coverage-xml ## Print per-package coverage breakdown
-	@python3 -c "import xml.etree.ElementTree as ET; \
-r = ET.parse('build/reports/kover/report.xml').getroot(); \
-pkgs = []; \
-[pkgs.append((p.get('name'), int(c.get('covered')), int(c.get('missed')))) \
- for p in r.findall('package') for c in p.findall('counter') if c.get('type') == 'INSTRUCTION']; \
-pkgs.sort(key=lambda x: -x[2]); \
-print(f\"{'package':<55} {'cov%':>6} {'covered':>9} {'missed':>9} {'total':>9}\"); \
-[print(f'{n:<55} {(c/(c+m)*100 if c+m else 0):6.1f} {c:9d} {m:9d} {c+m:9d}') for n,c,m in pkgs]; \
-tc=sum(p[1] for p in pkgs); tm=sum(p[2] for p in pkgs); \
-print(f'\nOVERALL: {tc/(tc+tm)*100:.2f}% ({tc}/{tc+tm} instructions, {tm} missed)')"
+	@python3 scripts/coverage_packages.py
 
 coverage-clean: ## Remove coverage reports and test results
 	./gradlew cleanAllTests
@@ -105,13 +88,11 @@ dbclean: ## Drop all database objects via Flyway
 dbmigrate: ## Run Flyway migrations
 	./gradlew flywayMigrate
 
-dbreset: dbclean dbmigrate ## Drop and re-apply all migrations
-
 dbvalidate: ## Validate applied migrations against scripts
 	./gradlew flywayValidate
 
-lint: detekt ## Run Kotlinter and detekt
-	./gradlew lintKotlinMain lintKotlinTest
+lint: ## Run Kotlinter and detekt
+	./gradlew lintKotlinMain lintKotlinTest detekt
 
 detekt: ## Run detekt static analysis
 	./gradlew detekt
@@ -137,25 +118,31 @@ site: clean-docs ## Serve the docs site locally with zensical
 publish-local: ## Publish artifacts to the local Maven repo
 	./gradlew publishToMavenLocal
 
-publish-local-snapshot: ## Publish a -SNAPSHOT to the local Maven repo
+publish-local-snapshot: _require-version ## Publish a -SNAPSHOT to the local Maven repo
 	./gradlew -PoverrideVersion=$(VERSION)-SNAPSHOT publishToMavenLocal
 
-check-gpg-env: ## Verify GPG signing env and keychain entry are present
-	@if [ -z "$$GPG_SIGNING_KEY_ID" ]; then \
-		echo "Error: GPG_SIGNING_KEY_ID is not set" >&2; exit 1; \
-	fi
-	@if ! gpg --list-secret-keys "$$GPG_SIGNING_KEY_ID" >/dev/null 2>&1; then \
-		echo "Error: no GPG secret key found for GPG_SIGNING_KEY_ID=$$GPG_SIGNING_KEY_ID" >&2; exit 1; \
-	fi
-	@if ! security find-generic-password -a "gpg-signing" -s "gradle-signing-password" -w >/dev/null 2>&1; then \
-		echo "Error: keychain entry 'gradle-signing-password' (account 'gpg-signing') not found" >&2; exit 1; \
-	fi
-
-publish-snapshot: check-gpg-env ## Publish a signed -SNAPSHOT to Maven Central
+publish-snapshot: _require-version _check-gpg-env ## Publish a signed -SNAPSHOT to Maven Central
 	$(GPG_ENV) ./gradlew -PoverrideVersion=$(VERSION)-SNAPSHOT publishToMavenCentral
 
-publish-maven-central: check-gpg-env ## Publish and release a signed version to Maven Central
+publish-maven-central: _check-gpg-env ## Publish and release a signed version to Maven Central
 	$(GPG_ENV) ./gradlew publishAndReleaseToMavenCentral
 
-upgrade-wrapper: ## Upgrade the Gradle wrapper to the catalog version
+upgrade-wrapper: _require-gradle-version ## Upgrade the Gradle wrapper to the catalog version
 	./gradlew wrapper --gradle-version=$(GRADLE_VERSION) --distribution-type=bin
+
+_check-gpg-env:
+	@if [ -z "$$GPG_SIGNING_KEY_ID" ]; then \
+		echo "ERROR: GPG_SIGNING_KEY_ID is not set" >&2; exit 1; \
+	fi
+	@if ! gpg --list-secret-keys "$$GPG_SIGNING_KEY_ID" >/dev/null 2>&1; then \
+		echo "ERROR: no GPG secret key found for GPG_SIGNING_KEY_ID=$$GPG_SIGNING_KEY_ID" >&2; exit 1; \
+	fi
+	@if ! security find-generic-password -a "gpg-signing" -s "gradle-signing-password" -w >/dev/null 2>&1; then \
+		echo "ERROR: keychain entry 'gradle-signing-password' (account 'gpg-signing') not found" >&2; exit 1; \
+	fi
+
+_require-version:
+	@[ -n "$(VERSION)" ] || { echo "ERROR: Could not determine project version from gradle.properties" >&2; exit 1; }
+
+_require-gradle-version:
+	@[ -n "$(GRADLE_VERSION)" ] || { echo "ERROR: Could not determine gradle version from gradle/libs.versions.toml" >&2; exit 1; }

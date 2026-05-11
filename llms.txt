@@ -9,8 +9,9 @@ ReadingBat Core is a web application built with Ktor that serves programming cha
 - Kotlin 2.3.21, Ktor 3.4.3 (CIO engine), Exposed ORM 1.2.0 with kotlinx-datetime, PostgreSQL
 - Kotlinx.html for server-side HTML generation (no templates)
 - Kotest for testing, Playwright for E2E tests
-- Gradle 9.5.0 multi-module build with version catalog (libs.versions.toml), parallel project execution and configuration cache enabled
-- Kover 0.9.1 for code coverage, uploaded to Codecov from CI
+- Gradle 9.5.0 multi-module build with version catalog (libs.versions.toml) as the single source of truth for plugin, dependency, and toolchain (`gradle`, `jvm`) versions; parallel project execution and configuration cache enabled
+- Kover 0.9.1 for code coverage, uploaded to Codecov from CI (per-area components defined in `codecov.yml`)
+- Detekt 2.0 alpha (`dev.detekt` plugin) for static analysis; Kotlinter for ktlint style
 - Java 17 toolchain
 
 ## Project Structure
@@ -67,12 +68,13 @@ Extensive use of Kotlin `@JvmInline value class` for type safety: LanguageName, 
 
 ## Development
 
+- List all Makefile targets: `make help`
 - Build: `make build` or `./gradlew build -xtest`
 - Test: `make tests` or `./gradlew check`
 - Run: `make run` or `./gradlew run`
-- Lint: `make lint` (ktlint via Kotlinter)
+- Lint: `make lint` (Kotlinter + detekt in one Gradle invocation)
 - Format: `./gradlew formatKotlinMain formatKotlinTest`
-- Coverage: `make coverage` (HTML), `./gradlew koverXmlReport` (CI/Codecov), `make coverage-verify` (thresholds)
+- Coverage: `make coverage` (HTML), `./gradlew koverXmlReport` (CI/Codecov), `make coverage-verify` (thresholds), `make coverage-packages` (per-package breakdown via `scripts/coverage_packages.py`)
 - DB reset: `make dbreset`
 - DB migrate: `make dbmigrate`
 

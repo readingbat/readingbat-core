@@ -105,11 +105,13 @@ export IPGEOLOCATION_KEY="your_geo_key"
 ### Build & Test
 
 ```bash
+make help               # Self-documenting index of every Makefile target
 make build              # Build project (skip tests)
 make tests              # Run unit tests
-make lint               # Lint Kotlin code
+make lint               # Kotlinter (ktlint) + detekt static analysis
 make coverage           # Generate Kover HTML coverage report
 make coverage-verify    # Enforce coverage thresholds via Kover
+make coverage-packages  # Per-package coverage breakdown from the XML report
 ```
 
 ### Database Operations
