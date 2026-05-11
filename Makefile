@@ -115,7 +115,7 @@ clean-docs: ## Remove generated website artifacts
 site: clean-docs ## Serve the docs site locally with zensical
 	(cd website/readingbat-core && uv run zensical serve)
 
-publish-local: ## Publish artifacts to the local Maven repo
+publish-local: _require-version ## Publish artifacts to the local Maven repo
 	./gradlew publishToMavenLocal
 
 publish-local-snapshot: _require-version ## Publish a -SNAPSHOT to the local Maven repo
@@ -124,7 +124,7 @@ publish-local-snapshot: _require-version ## Publish a -SNAPSHOT to the local Mav
 publish-snapshot: _require-version _check-gpg-env ## Publish a signed -SNAPSHOT to Maven Central
 	$(GPG_ENV) ./gradlew -PoverrideVersion=$(VERSION)-SNAPSHOT publishToMavenCentral
 
-publish-maven-central: _check-gpg-env ## Publish and release a signed version to Maven Central
+publish-maven-central: _require-version _check-gpg-env ## Publish and release a signed version to Maven Central
 	$(GPG_ENV) ./gradlew publishAndReleaseToMavenCentral
 
 upgrade-wrapper: _require-gradle-version ## Upgrade the Gradle wrapper to the catalog version
