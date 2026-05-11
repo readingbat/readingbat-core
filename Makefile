@@ -1,6 +1,6 @@
 .PHONY: default help stop tw-css tw-full-css clean clean-all build scan uberjar uber run tests remote-tests \
         coverage coverage-html coverage-xml coverage-log coverage-verify coverage-open coverage-packages coverage-clean \
-        dbinfo dbclean dbmigrate dbreset dbvalidate lint detekt detekt-baseline depends versioncheck kdocs clean-docs \
+        dbinfo dbclean dbmigrate dbvalidate lint detekt detekt-baseline depends versioncheck kdocs clean-docs \
         site publish-local publish-local-snapshot publish-snapshot \
         publish-maven-central upgrade-wrapper \
         _check-gpg-env _require-version _require-gradle-version
@@ -35,10 +35,10 @@ clean-all: clean clean-docs ## Clean build outputs, .gradle caches, and docs
 	rm -rf .gradle readingbat-core/.gradle readingbat-kotest/.gradle
 
 build: tw-css ## Build the project (skips tests)
-	./gradlew build -xtest
+	./gradlew build -x test
 
 scan: ## Build with a Gradle build scan (skips tests)
-	./gradlew build --scan -xtest
+	./gradlew build --scan -x test
 
 uberjar: ## Build the executable uberjar
 	./gradlew uberjar
@@ -73,7 +73,7 @@ coverage-packages: coverage-xml ## Print per-package coverage breakdown
 	@python3 scripts/coverage_packages.py
 
 coverage-clean: ## Remove coverage reports and test results
-	./gradlew cleanAllTests
+	./gradlew cleanTest
 	rm -rf build/reports/kover build/kover
 
 remote-tests: ## Run Playwright endpoint tests against readingbat.com
@@ -92,7 +92,7 @@ dbvalidate: ## Validate applied migrations against scripts
 	./gradlew flywayValidate
 
 lint: ## Run Kotlinter and detekt
-	./gradlew lintKotlinMain lintKotlinTest detekt
+	./gradlew lintKotlin detekt
 
 detekt: ## Run detekt static analysis
 	./gradlew detekt
